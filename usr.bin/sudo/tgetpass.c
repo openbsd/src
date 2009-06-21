@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2005, 2007-2008
+ * Copyright (c) 1996, 1998-2005, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -57,7 +57,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.130 2009/02/15 20:53:49 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.131 2009/05/25 12:02:42 millert Exp $";
 #endif /* lint */
 
 static volatile sig_atomic_t signo;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.12 2009/06/03 15:53:08 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.13 2009/06/21 14:48:41 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -7,6 +7,12 @@
  * configure --prefix=/usr --with-insults --with-bsdauth \
  *	     --with-env-editor --disable-path-info --with-logfac=authpriv
  */
+
+#define PACKAGE_BUGREPORT "http://www.sudo.ws/bugs/"
+#define PACKAGE_NAME "sudo"
+#define PACKAGE_STRING "sudo 1.7.2"
+#define PACKAGE_TARNAME "sudo"
+#define PACKAGE_VERSION "1.7.2"
 
 #define HAVE_ASPRINTF 1
 #define HAVE_BSD_AUTH_H 1

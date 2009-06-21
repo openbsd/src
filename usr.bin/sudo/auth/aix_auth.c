@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005, 2007-2008 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2007-2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: aix_auth.c,v 1.26 2009/03/01 00:58:41 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: aix_auth.c,v 1.27 2009/05/25 12:02:42 millert Exp $";
 #endif /* lint */
 
 /*

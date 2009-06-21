@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2005, 2007-2008
+ * Copyright (c) 1996, 1998-2005, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -85,18 +85,18 @@
 #include "parse.h"
 #include "redblack.h"
 #include <gram.h>
-#include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.231 2009/04/16 12:22:04 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.234 2009/05/25 12:02:42 millert Exp $";
 #endif /* lint */
 
 struct sudoersfile {
     char *path;
-    int fd;
     char *tpath;
+    int fd;
     int tfd;
     int modified;
+    int doedit;
     struct sudoersfile *next;
 };
 
@@ -172,7 +172,7 @@ main(argc, argv)
     while ((ch = getopt(argc, argv, "Vcf:sq")) != -1) {
 	switch (ch) {
 	    case 'V':
-		(void) printf("%s version %s\n", getprogname(), version);
+		(void) printf("%s version %s\n", getprogname(), PACKAGE_VERSION);
 		exit(0);
 	    case 'c':
 		checkonly++;		/* check mode */
@@ -215,8 +215,9 @@ main(argc, argv)
      * Parse the existing sudoers file(s) in quiet mode to highlight any
      * existing errors and to pull in editor and env_editor conf values.
      */
-    if ((yyin = open_sudoers(sudoers_path, NULL)) == NULL)
+    if ((yyin = open_sudoers(sudoers_path, TRUE, NULL)) == NULL) {
 	error(1, "%s", sudoers_path);
+    }
     init_parser(sudoers_path, 0);
     yyparse();
     (void) update_defaults(SETDEF_GENERIC|SETDEF_HOST|SETDEF_USER);
@@ -228,6 +229,8 @@ main(argc, argv)
 
     /* Edit the sudoers file(s) */
     tq_foreach_fwd(&sudoerslist, sp) {
+	if (!sp->doedit)
+	    continue;
 	if (sp != tq_first(&sudoerslist)) {
 	    printf("press return to edit %s: ", sp->path);
 	    while ((ch = getchar()) != EOF && ch != '\n')
@@ -747,8 +750,9 @@ check_syntax(sudoers_path, quiet, strict)
  * any subsequent files #included via a callback from the parser.
  */
 FILE *
-open_sudoers(path, keepopen)
+open_sudoers(path, doedit, keepopen)
     const char *path;
+    int doedit;
     int *keepopen;
 {
     struct sudoersfile *entry;
@@ -766,6 +770,8 @@ open_sudoers(path, keepopen)
 	entry->next = NULL;
 	entry->fd = open(entry->path, O_RDWR | O_CREAT, SUDOERS_MODE);
 	entry->tpath = NULL;
+	entry->tfd = -1;
+	entry->doedit = doedit;
 	if (entry->fd == -1) {
 	    warning("%s", entry->path);
 	    efree(entry);

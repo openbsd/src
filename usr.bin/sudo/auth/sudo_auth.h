@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005, 2007-2008 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2007-2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: sudo_auth.h,v 1.28 2008/12/02 17:30:39 millert Exp $
+ * $Sudo: sudo_auth.h,v 1.29 2009/05/25 12:02:42 millert Exp $
  */
 
 #ifndef SUDO_AUTH_H

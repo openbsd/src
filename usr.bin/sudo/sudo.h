@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996, 1998-2005, 2007-2008
+ * Copyright (c) 1993-1996, 1998-2005, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: sudo.h,v 1.270 2009/03/01 00:58:40 millert Exp $
+ * $Sudo: sudo.h,v 1.273 2009/05/25 12:02:41 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -129,6 +129,8 @@ struct sudo_user {
 #define PERM_RUNAS               0x04
 #define PERM_FULL_RUNAS          0x05
 #define PERM_TIMESTAMP           0x06
+#define PERM_NOEXIT              0x10 /* flag */
+#define PERM_MASK                0xf0
 
 /*
  * Shortcuts for sudo_user contents.
@@ -269,7 +271,7 @@ int sudo_file_display_cmnd __P((struct sudo_nss *, struct passwd *));
 int sudo_file_display_defaults __P((struct sudo_nss *, struct passwd *, struct lbuf *));
 int sudo_file_display_bound_defaults __P((struct sudo_nss *, struct passwd *, struct lbuf *));
 int sudo_file_display_privs __P((struct sudo_nss *, struct passwd *, struct lbuf *));
-void set_perms		__P((int));
+int set_perms		__P((int));
 void remove_timestamp	__P((int));
 int check_secureware	__P((char *));
 void sia_attempt_auth	__P((void));
@@ -298,7 +300,7 @@ char *sudo_getepw	__P((const struct passwd *));
 int pam_prep_user	__P((struct passwd *));
 void zero_bytes		__P((volatile void *, size_t));
 int gettime		__P((struct timespec *));
-FILE *open_sudoers	__P((const char *, int *));
+FILE *open_sudoers	__P((const char *, int, int *));
 void display_privs	__P((struct sudo_nss_list *, struct passwd *));
 int display_cmnd	__P((struct sudo_nss_list *, struct passwd *));
 int get_ttycols		__P((void));

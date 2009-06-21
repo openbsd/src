@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005, 2007-2008 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2004-2005, 2007-2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,7 @@
 #include <gram.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.c,v 1.239 2009/03/28 13:07:16 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.c,v 1.242 2009/05/25 12:02:41 millert Exp $";
 #endif /* lint */
 
 /* Characters that must be quoted in sudoers */
@@ -89,7 +89,7 @@ sudo_file_open(nss)
 {
     if (def_ignore_local_sudoers)
 	return(-1);
-    nss->handle = open_sudoers(_PATH_SUDOERS, NULL);
+    nss->handle = open_sudoers(_PATH_SUDOERS, FALSE, NULL);
     return(nss->handle ? 0 : -1);
 }
 
@@ -328,8 +328,10 @@ sudo_file_display_priv_short(pw, us, lbuf)
 		    print_member(lbuf, m->name, m->type, m->negated,
 			RUNASALIAS);
 		}
-	    } else {
+	    } else if (tq_empty(&cs->runasgrouplist)) {
 		lbuf_append(lbuf, def_runas_default, NULL);
+	    } else {
+		lbuf_append(lbuf, pw->pw_name, NULL);
 	    }
 	    if (!tq_empty(&cs->runasgrouplist)) {
 		lbuf_append(lbuf, " : ", NULL);
@@ -377,8 +379,10 @@ sudo_file_display_priv_long(pw, us, lbuf)
 		    print_member(lbuf, m->name, m->type, m->negated,
 			RUNASALIAS);
 		}
-	    } else {
+	    } else if (tq_empty(&cs->runasgrouplist)) {
 		lbuf_append(lbuf, def_runas_default, NULL);
+	    } else {
+		lbuf_append(lbuf, pw->pw_name, NULL);
 	    }
 	    lbuf_print(lbuf);
 	    if (!tq_empty(&cs->runasgrouplist)) {

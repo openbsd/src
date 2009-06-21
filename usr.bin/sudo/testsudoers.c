@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2005, 2007-2008
+ * Copyright (c) 1996, 1998-2005, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -71,7 +71,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.128 2008/11/19 17:01:20 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: testsudoers.c,v 1.131 2009/05/25 12:02:42 millert Exp $";
 #endif /* lint */
 
 
@@ -373,8 +373,9 @@ set_fqdn()
 }
 
 FILE *
-open_sudoers(path, keepopen)
+open_sudoers(path, isdir, keepopen)
     const char *path;
+    int isdir;
     int *keepopen;
 {
     return(fopen(path, "r"));
@@ -386,11 +387,11 @@ init_envtables()
     return;
 }
 
-void
+int
 set_perms(perm)
     int perm;
 {
-    return;
+    return(1);
 }
 
 void

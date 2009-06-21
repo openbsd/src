@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005m, 2007-2008
+ * Copyright (c) 2004-2005m, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -47,7 +47,7 @@
 #include <gram.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: alias.c,v 1.17 2009/04/05 16:25:04 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: alias.c,v 1.18 2009/05/25 12:02:41 millert Exp $";
 #endif /* lint */
 
 /*

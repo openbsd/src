@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2000, 2004, 2007-2008
+ * Copyright (c) 1996, 1998-2000, 2004, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: parse.h,v 1.47 2009/04/05 16:25:04 millert Exp $
+ * $Sudo: parse.h,v 1.49 2009/05/25 12:02:41 millert Exp $
  */
 
 #ifndef _SUDO_PARSE_H
@@ -185,6 +185,7 @@ struct alias *alias_remove __P((char *, int));
 void alias_free		__P((void *));
 void alias_apply	__P((int (*)(void *, void *), void *));
 void init_aliases	__P((void));
+void init_lexer		__P((void));
 void init_parser	__P((char *, int));
 int alias_compare	__P((const void *, const void *));
 

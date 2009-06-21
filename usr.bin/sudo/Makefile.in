@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1996, 1998-2005, 2007-2008
+# Copyright (c) 1996, 1998-2005, 2007-2009
 #	Todd C. Miller <Todd.Miller@courtesan.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -21,7 +21,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.334 2009/03/11 23:19:56 millert Exp $
+# $Sudo: Makefile.in,v 1.340 2009/06/15 21:18:53 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -33,7 +33,7 @@ top_builddir = .
 
 # Compiler & tools to use
 CC = @CC@
-LEX = flex
+FLEX = @FLEX@
 YACC = @YACC@
 NROFF = nroff -Tascii
 LIBTOOL = @LIBTOOL@
@@ -109,8 +109,8 @@ SRCS = aix.c alias.c alloc.c audit.c bsm_audit.c check.c closefrom.c \
        mkstemp.c memrchr.c parse.c pwutil.c  set_perms.c sigaction.c \
        snprintf.c strcasecmp.c strerror.c strlcat.c strlcpy.c sudo.c \
        sudo_noexec.c sudo_edit.c sudo_nss.c term.c testsudoers.c tgetpass.c \
-       toke.c toke.l tsgetgrpw.c utimes.c visudo.c zero_bytes.c redblack.c \
-       selinux.c sesh.c $(AUTH_SRCS)
+       toke.c toke.l tsgetgrpw.c utimes.c vasgroups.c visudo.c zero_bytes.c \
+       redblack.c selinux.c sesh.c $(AUTH_SRCS)
 
 AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
 	    auth/kerb4.c auth/kerb5.c auth/pam.c auth/passwd.c auth/rfc1938.c \
@@ -119,15 +119,15 @@ AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
 
 HDRS = bsm_audit.h compat.h def_data.h defaults.h error.h ins_2001.h \
        ins_classic.h ins_csops.h ins_goons.h insults.h interfaces.h lbuf.h \
-       list.h logging.h parse.h sudo.h sudo_nss.h gram.h version.h \
+       list.h logging.h nonunix.h redblack.h parse.h sudo.h sudo_nss.h gram.h \
        auth/sudo_auth.h emul/charclass.h emul/fnmatch.h emul/glob.h \
-       emul/timespec.h emul/utime.h redblack.h
+       emul/timespec.h emul/utime.h
 
 AUTH_OBJS = sudo_auth.o @AUTH_OBJS@
 
 # Note: gram.o must come first here
 COMMON_OBJS = gram.o alias.o alloc.o defaults.o error.o list.o match.o \
-	      toke.o redblack.o zero_bytes.o
+	      toke.o redblack.o zero_bytes.o @NONUNIX_GROUPS_IMPL@
 
 SUDO_OBJS = $(COMMON_OBJS) $(AUTH_OBJS) @SUDO_OBJS@ audit.o check.o env.o \
 	    getspwuid.o gettime.o goodpath.o fileops.o find_path.o \
@@ -141,7 +141,7 @@ TEST_OBJS = $(COMMON_OBJS) interfaces.o testsudoers.o tsgetgrpw.o tspwutil.o
 
 LIB_OBJS = @LIBOBJS@
 
-VERSION = 1.7.1
+VERSION = @PACKAGE_VERSION@
 
 DISTFILES = $(SRCS) $(HDRS) ChangeLog HISTORY INSTALL INSTALL.configure \
             LICENSE Makefile.in PORTING README README.LDAP TROUBLESHOOTING \
@@ -182,8 +182,8 @@ all: $(PROGS)
 	$(LIBTOOL) --mode=compile $(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $<
 
 .man.cat:
-	@rm -f $(srcdir)/$@
-	sed '1s/^/.if n .ll 78n/' $< | $(NROFF) -man > $(srcdir)/$@
+	@rm -f $@
+	sed '1s/^/.if n .ll 78n/' $< | $(NROFF) -man > $@
 
 sudo: $(SUDO_OBJS) $(LIB_OBJS)
 	$(CC) -o $@ $(SUDO_OBJS) $(LIB_OBJS) $(SUDO_LDFLAGS) $(SUDO_LIBS)
@@ -212,7 +212,7 @@ $(devdir)/gram.c: $(srcdir)/gram.y
 
 # Uncomment the lines before -@true if you intend to modify toke.l
 $(devdir)/toke.c: $(srcdir)/toke.l
-@DEV@	$(LEX) $(srcdir)/toke.l
+@DEV@	$(FLEX) $(srcdir)/toke.l
 @DEV@	mv -f lex.yy.c toke.c
 	-@true
 
@@ -301,7 +301,7 @@ strlcpy.o: $(srcdir)/strlcpy.c $(srcdir)/compat.h config.h
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/strlcpy.c
 selinux.o: $(srcdir)/selinux.c $(SUDODEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/selinux.c
-sudo.o: $(srcdir)/sudo.c $(SUDODEP) sudo_usage.h $(srcdir)/interfaces.h $(srcdir)/version.h
+sudo.o: $(srcdir)/sudo.c $(SUDODEP) sudo_usage.h $(srcdir)/interfaces.h
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo.c
 sudo_edit.o: $(srcdir)/sudo_edit.c $(SUDODEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo_edit.c
@@ -321,7 +321,9 @@ tsgetgrpw.o: $(srcdir)/tsgetgrpw.c $(SUDODEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/tsgetgrpw.c
 utimes.o: $(srcdir)/utimes.c $(srcdir)/compat.h $(srcdir)/emul/utime.h config.h
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/utimes.c
-visudo.o: $(srcdir)/visudo.c $(SUDODEP) $(srcdir)/version.h $(devdir)/gram.h
+vasgroups.o: $(srcdir)/vasgroups.c $(srcdir)/nonunix.h $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/vasgroups.c
+visudo.o: $(srcdir)/visudo.c $(SUDODEP) $(devdir)/gram.h
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/visudo.c
 zero_bytes.o: $(srcdir)/zero_bytes.c $(srcdir)/compat.h config.h
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/zero_bytes.c

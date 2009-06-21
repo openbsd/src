@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-1996, 1998-2008 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1994-1996, 1998-2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,7 +58,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: logging.c,v 1.203 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: logging.c,v 1.205 2009/05/25 12:02:41 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -371,7 +371,7 @@ log_error(flags, fmt, va_alist)
 #endif
 
     /* Become root if we are not already to avoid user interference */
-    set_perms(PERM_ROOT);
+    set_perms(PERM_ROOT|PERM_NOEXIT);
 
     /* Expand printf-style format + args. */
     evasprintf(&message, fmt, ap);
@@ -555,10 +555,10 @@ send_mail(line)
 		 * (so user cannot kill it) or as the user (for the paranoid).
 		 */
 #ifndef NO_ROOT_MAILER
-		set_perms(PERM_ROOT);
+		set_perms(PERM_ROOT|PERM_NOEXIT);
 		execve(mpath, argv, root_envp);
 #else
-		set_perms(PERM_FULL_USER);
+		set_perms(PERM_FULL_USER|PERM_NOEXIT);
 		execv(mpath, argv);
 #endif /* NO_ROOT_MAILER */
 		mysyslog(LOG_ERR, "cannot execute %s: %m", mpath);

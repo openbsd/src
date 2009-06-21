@@ -1,4 +1,4 @@
-Copyright (c) 1994-1996, 1998-2005, 2007-2008
+Copyright (c) 1994-1996, 1998-2005, 2007-2009
 	Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.163 2009/03/08 15:51:01 millert Exp $
+$Sudo: sudoers.pod,v 1.170 2009/06/15 21:19:47 millert Exp $
 =pod
 
 =head1 NAME
@@ -116,6 +116,7 @@ The definitions of what constitutes a valid I<alias> member follow.
 	  '!'* '#'uid |
 	  '!'* '%'group |
 	  '!'* '+'netgroup |
+	  '!'* '%:'nonunix_group |
 	  '!'* User_Alias
 
 A C<User_List> is made up of one or more usernames, uids (prefixed
@@ -123,6 +124,33 @@ with '#'), system groups (prefixed with '%'), netgroups (prefixed
 with '+') and C<User_Alias>es.  Each list item may be prefixed with
 zero or more '!' operators.  An odd number of '!' operators negate
 the value of the item; an even number just cancel each other out.
+
+A C<username>, C<group>, C<netgroup> and C<nonunix_groups> may
+be enclosed in double quotes to avoid the need for escaping special
+characters.  Alternately, special characters may be specified in
+escaped hex mode, e.g. \x20 for space.
+
+The C<nonunix_group> syntax depends on the underlying implementation.
+For instance, the QAS AD backend supports the following formats:
+
+=over 4
+
+=item *
+
+Group in the same domain: "Group Name"
+
+=item *
+
+Group in any domain: "Group Name@FULLY.QUALIFIED.DOMAIN"
+
+=item *
+
+Group SID: "S-1-2-34-5678901234-5678901234-5678901234-567"
+
+=back
+
+Note that quotes around group names are optional.  Unquoted strings must
+use a backslash (\) to escape spaces and the '@' symbol.
 
  Runas_List ::= Runas_Member |
 		Runas_Member ',' Runas_List
@@ -259,7 +287,8 @@ A B<user specification> determines which commands a user may run
 (and as what user) on specified hosts.  By default, commands are
 run as B<root>, but this can be changed on a per-command basis.
 
-Let's break that down into its constituent parts:
+The basic structure of a user specification is `who = where (as_whom)
+what'.  Let's break that down into its constituent parts:
 
 =head2 Runas_Spec
 
@@ -441,13 +470,15 @@ with B<any> arguments.
 =head2 Including other files from within sudoers
 
 It is possible to include other I<sudoers> files from within the
-I<sudoers> file currently being parsed using the C<#include>
-directive, similar to the one used by the C preprocessor.  This is
-useful, for example, for keeping a site-wide I<sudoers> file in
-addition to a per-machine local one.  For the sake of this example
-the site-wide I<sudoers> will be F</etc/sudoers> and the per-machine
-one will be F</etc/sudoers.local>.  To include F</etc/sudoers.local>
-from within F</etc/sudoers> we would use the following line in F</etc/sudoers>:
+I<sudoers> file currently being parsed using the C<#include> and
+C<#includedir> directives.
+
+This can be used, for example, to keep a site-wide I<sudoers> file
+in addition to a local, per-machine file.  For the sake of this
+example the site-wide I<sudoers> will be F</etc/sudoers> and the
+per-machine one will be F</etc/sudoers.local>.  To include
+F</etc/sudoers.local> from within F</etc/sudoers> we would use the
+following line in F</etc/sudoers>:
 
 =over 4
 
@@ -465,9 +496,31 @@ files is enforced to prevent include file loops.
 The filename may include the C<%h> escape, signifying the short form
 of the hostname.  I.e., if the machine's hostname is "xerxes", then
 
- #include /etc/sudoers.%h
+C<#include /etc/sudoers.%h>
 
 will cause B<sudo> to include the file F</etc/sudoers.xerxes>.
+
+The C<#includedir> directive can be used to create a F<sudo.d>
+directory that the system package manager can drop I<sudoers> rules
+into as part of package installation.  For example, given:
+
+C<#includedir /etc/sudoers.d>
+
+B<sudo> will read each file in F</etc/sudoers.d>, skipping file
+names that end in C<~> or contain a C<.> character to avoid causing
+problems with package manager or editor temporary/backup files.
+Files are parsed in sorted lexical order.  That is,
+F</etc/sudoers.d/01_first> will be parsed before
+F</etc/sudoers.d/10_second>.  Be aware that because the sorting is
+lexical, not numeric, F</etc/sudoers.d/1_whoops> would be loaded
+B<after> F</etc/sudoers.d/10_second>.  Using a consistent number
+of leading zeroes in the file names can be used to avoid such
+problems.
+
+Note that unlike files included via C<#include>, B<visudo> will not
+edit the files in a C<#includedir> directory unless one of them
+contains a syntax error.  It is still possible to run B<visudo>
+with the C<-f> flag to edit the files directly.
 
 =head2 Other special characters and reserved words
 
@@ -937,6 +990,13 @@ two consecutive C<%> characters are collapsed into a single C<%> character
 
 The default value is C<@passprompt@>.
 
+=item role
+
+The default SELinux role to use when constructing a new security
+context to run the command.  The default role may be overridden on
+a per-command basis in I<sudoers> or via command line options.
+This option is only available whe B<sudo> is built with SELinux support.
+
 =item runas_default
 
 The default user to run commands as if the B<-u> option is not specified
@@ -969,6 +1029,13 @@ The default is F<@timedir@>.
 
 The owner of the timestamp directory and the timestamps stored therein.
 The default is C<root>.
+
+=item type
+
+The default SELinux type to use when constructing a new security
+context to run the command.  The default type may be overridden on
+a per-command basis in I<sudoers> or via command line options.
+This option is only available whe B<sudo> is built with SELinux support.
 
 =back
 
@@ -1220,6 +1287,7 @@ these are a bit contrived.  First, we define our I<aliases>:
  # Runas alias specification
  Runas_Alias	OP = root, operator
  Runas_Alias	DB = oracle, sybase
+ Runas_Alias	ADMINGRP = adm, oper
 
  # Host alias specification
  Host_Alias	SPARC = bigtime, eclipse, moet, anchor :\
@@ -1312,6 +1380,12 @@ directory F</usr/oper/bin/>.
 The user B<joe> may only L<su(1)> to operator.
 
  pete		HPPA = /usr/bin/passwd [A-Za-z]*, !/usr/bin/passwd root
+
+ %opers		ALL = (: ADMINGRP) /usr/sbin/
+
+Users in the B<opers> group may run commands in F</usr/sbin/> as themselves
+with any group in the I<ADMINGRP> C<Runas_Alias> (the B<adm> and B<oper>
+groups).
 
 The user B<pete> is allowed to change anyone's password except for
 root on the I<HPPA> machines.  Note that this assumes L<passwd(1)>

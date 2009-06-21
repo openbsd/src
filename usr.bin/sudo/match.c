@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2005, 2007-2008
+ * Copyright (c) 1996, 1998-2005, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -89,9 +89,12 @@
 #ifndef HAVE_EXTENDED_GLOB
 # include "emul/glob.h"
 #endif /* HAVE_EXTENDED_GLOB */
+#ifdef USING_NONUNIX_GROUPS
+# include "nonunix.h"
+#endif /* USING_NONUNIX_GROUPS */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: match.c,v 1.42 2009/03/28 13:07:16 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: match.c,v 1.46 2009/05/27 00:49:07 millert Exp $";
 #endif /* lint */
 
 static struct member_list empty;
@@ -174,9 +177,13 @@ _runaslist_matches(user_list, group_list)
     struct alias *a;
     int rval, matched = UNSPEC;
 
-    /* Deny if user specified a group but there is no group in sudoers */
-    if (runas_gr != NULL && tq_empty(group_list))
-	return(DENY);
+    if (runas_gr != NULL) {
+	if (tq_empty(group_list))
+	    return(DENY); /* group was specified but none in sudoers */
+	if (runas_pw != NULL && strcmp(runas_pw->pw_name, user_name) &&
+	    tq_empty(user_list))
+	    return(DENY); /* user was specified but none in sudoers */
+    }
 
     if (tq_empty(user_list) && tq_empty(group_list))
 	return(userpw_matches(def_runas_default, runas_pw->pw_name, runas_pw));
@@ -805,7 +812,6 @@ group_matches(sudoers_group, gr)
 /*
  *  Returns TRUE if the given user belongs to the named group,
  *  else returns FALSE.
- *  XXX - reduce the number of group lookups
  */
 int
 usergr_matches(group, user, pw)
@@ -813,7 +819,7 @@ usergr_matches(group, user, pw)
     char *user;
     struct passwd *pw;
 {
-    struct group *grp;
+    struct group *grp = NULL;
     char **cur;
     int i;
 
@@ -821,14 +827,18 @@ usergr_matches(group, user, pw)
     if (*group++ != '%')
 	return(FALSE);
 
+#ifdef USING_NONUNIX_GROUPS
+    if (*group == ':')
+	return(sudo_nonunix_groupcheck(++group, user, pw));   
+#endif /* USING_NONUNIX_GROUPS */
+
     /* look up user's primary gid in the passwd file */
     if (pw == NULL && (pw = sudo_getpwnam(user)) == NULL)
-	return(FALSE);
-
-    if ((grp = sudo_getgrnam(group)) == NULL)
-	return(FALSE);
+	goto try_supplementary;
 
     /* check against user's primary (passwd file) gid */
+    if ((grp = sudo_getgrnam(group)) == NULL)
+	goto try_supplementary;
     if (grp->gr_gid == pw->pw_gid)
 	return(TRUE);
 
@@ -841,11 +851,20 @@ usergr_matches(group, user, pw)
 	    if (grp->gr_gid == user_groups[i])
 		return(TRUE);
     }
-    if (grp->gr_mem != NULL) {
+
+try_supplementary:
+    if (grp != NULL && grp->gr_mem != NULL) {
 	for (cur = grp->gr_mem; *cur; cur++)
 	    if (strcmp(*cur, user) == 0)
 		return(TRUE);
     }
+
+#ifdef USING_NONUNIX_GROUPS
+    /* not a Unix group, could be an AD group */
+    if (sudo_nonunix_groupcheck_available() &&
+	sudo_nonunix_groupcheck(group, user, pw))
+    	return(TRUE);
+#endif /* USING_NONUNIX_GROUPS */
 
     return(FALSE);
 }

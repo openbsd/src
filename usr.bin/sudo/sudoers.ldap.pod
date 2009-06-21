@@ -1,4 +1,4 @@
-Copyright (c) 2003-2008
+Copyright (c) 2003-2009
 	Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
@@ -14,7 +14,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-$Sudo: sudoers.ldap.pod,v 1.12 2009/03/10 21:08:18 millert Exp $
+$Sudo: sudoers.ldap.pod,v 1.14 2009/05/29 13:43:12 millert Exp $
 =pod
 
 =head1 NAME
@@ -620,12 +620,20 @@ determines sudoers source order on AIX
   #tls_cert /etc/certs/client_cert.pem
   #tls_key  /etc/certs/client_key.pem
   #
-  # For SunONE or iPlanet LDAP, the file specified by tls_cert may
-  # contain CA certs and/or the client's cert.  If the client's
-  # cert is included, tls_key should be specified as well.
-  # For backward compatibility, sslpath may be used in place of tls_cert.
-  #tls_cert /var/ldap/cert7.db
-  #tls_key /var/ldap/key3.db
+  # For SunONE or iPlanet LDAP, tls_cert and tls_key may specify either
+  # a directory, in which case the files in the directory must have the
+  # default names (e.g. cert8.db and key4.db), or the path to the cert
+  # and key files themselves.  However, a bug in version 5.0 of the LDAP
+  # SDK will prevent specific file names from working.  For this reason
+  # it is suggested that tls_cert and tls_key be set to a directory,
+  # not a file name.
+  #
+  # The certificate database specified by tls_cert may contain CA certs
+  # and/or the client's cert.  If the client's cert is included, tls_key
+  # should be specified as well.
+  # For backward compatibility, "sslpath" may be used in place of tls_cert.
+  #tls_cert /var/ldap
+  #tls_key /var/ldap
   #
   # If using SASL authentication for LDAP (OpenSSL)
   # use_sasl yes

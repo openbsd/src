@@ -1,3 +1,206 @@
+2009-06-15 17:19  millert
+
+	* sudo.pod, sudoers.pod: Add non-unix group bits, adapted from
+	  Quest
+
+2009-06-15 17:18  millert
+
+	* Makefile.in: build the .cat page in the current working dir, not
+	  the src dir
+
+2009-06-15 09:10  millert
+
+	* env.c: Return EINVAL in setenv() if var is NULL or the empty
+	  string to match glibc behavior.
+
+2009-06-13 16:52  millert
+
+	* configure, configure.in: Use AS_HELP_STRING for AC_ARG_WITH and
+	  AC_ARG_ENABLE
+
+2009-06-11 16:29  millert
+
+	* sudo.cat, sudo.man.in, sudoers.cat, sudoers.ldap.cat,
+	  sudoers.ldap.man.in, sudoers.man.in, visudo.cat, visudo.man.in:
+	  regen
+
+2009-06-09 10:08  millert
+
+	* INSTALL: Document --with-libvas and --with-libvas-rpath
+
+2009-05-29 09:43  millert
+
+	* ldap.c, sudoers.ldap.pod: For netscape-derived LDAP SDKs the cert
+	  and key paths may be a directory or a file.  However, version 5.0
+	  of the SDK only seems to support using a directory.  If
+	  ldapssl_clientauth_init fails and the cert or key paths look like
+	  they could be files, strip off the last path element and try
+	  again.
+
+2009-05-29 09:40  millert
+
+	* Makefile.in: Add non-Unix group .o to COMMON_OBJS and substitute
+	  in path to flex.
+
+2009-05-26 20:49  millert
+
+	* configure, configure.in, match.c, sudo.c, vasgroups.c: Update
+	  non-Unix group support from Quest, as reworked by me.
+
+2009-05-26 20:47  millert
+
+	* toke.c: regen
+
+2009-05-26 20:46  millert
+
+	* toke.l: Add support for escaped hex chars in names, e.g. \x20 for
+	  space.
+
+2009-05-25 08:02  millert
+
+	* LICENSE, Makefile.in, aclocal.m4, alias.c, check.c, env.c,
+	  fileops.c, glob.c, gram.y, interfaces.c, lbuf.c, ldap.c,
+	  logging.c, logging.h, match.c, parse.c, parse.h, pathnames.h.in,
+	  pwutil.c, set_perms.c, sudo.c, sudo.h, sudo.pod, sudo_nss.c,
+	  sudo_nss.h, sudo_usage.h.in, sudoers.ldap.pod, sudoers.pod,
+	  testsudoers.c, tgetpass.c, toke.l, visudo.c, auth/aix_auth.c,
+	  auth/pam.c, auth/sudo_auth.c, auth/sudo_auth.h: Update copyright
+	  years.
+
+2009-05-24 08:33  millert
+
+	* interfaces.c, lbuf.c: Minor fixes for Minix-3
+
+2009-05-22 06:37  millert
+
+	* set_perms.c: Handle getgroups() returning 0.	Also add missing
+	  check for HAVE_GETGROUPS.
+
+2009-05-19 17:24  millert
+
+	* Makefile.in, config.h.in, configure, configure.in, sudo.c,
+	  version.h, visudo.c: Replace version.h with PACKAGE_VERSION set
+	  via AC_INIT in configure.
+
+2009-05-18 06:33  millert
+
+	* set_perms.c: Remove group setting code in setusercontext case, we
+	  will do it ourselves later on in runas_setup.  Set the gid after
+	  initgroups/setgroups is called, since on Mac OS X it seems to
+	  change the egid.
+
+2009-05-17 18:19  millert
+
+	* LICENSE, Makefile.in, config.h.in, match.c, nonunix.h, sudo.c,
+	  vasgroups.c: Initial bits of non-unix group support using Quest
+	  Authentication Services
+
+2009-05-17 16:52  millert
+
+	* toke.c, toke.l: Accept %:foo as a non-Unix group
+
+2009-05-17 16:22  millert
+
+	* toke.c, toke.l: Allow user/group to be double quoted in the case
+	  of non-Unix groups which contain spaces.
+
+2009-05-11 12:47  millert
+
+	* match.c: Don't allow the user to specify the default runas user
+	  if their sudoers entry only allows them to run as a group.
+
+2009-05-10 07:59  millert
+
+	* sudo.c: Must call audit_success before we change uids.
+
+2009-05-10 07:52  millert
+
+	* logging.c, set_perms.c, sudo.h, testsudoers.c: Add option for
+	  set_perm to not exit on failure and use this in the logging
+	  routines.
+
+2009-05-10 07:33  millert
+
+	* parse.c: In -l mode, if the user is only allowed to run as a
+	  group, display the user's name, not root's before the allowed
+	  group.
+
+2009-05-09 21:00  millert
+
+	* sudo.c: Fix -g mode, broken by rev 1.503 which had the side
+	  effect of setting the runas user to root unilaterally.
+
+2009-05-08 16:19  millert
+
+	* fileops.c: When unlocking a file with fcntl, use F_SETLK, not
+	  F_SETLKW.
+
+2009-05-08 13:07  millert
+
+	* pwutil.c: Only cache by the method we fetched for pwd and grp
+	  lookups.  Previously we cached both by namd and id but this can
+	  cause problems for entries that share the same id.  Also add more
+	  info in the error message in case the insert fails (which should
+	  now be impossible).
+
+2009-04-30 15:04  millert
+
+	* sudoers.pod: Add a clarification from Nick Sieger
+
+2009-04-25 12:49  millert
+
+	* env.c: Inline the setting of the environment string.
+
+2009-04-24 14:53  millert
+
+	* env.c: setenv(3) in Linux treats a NUL value as the empty string
+	  setenv(3) in BSD doesn't return an error if the name has '=' in
+	  it, it just treats the '=' as end of string.
+
+2009-04-22 16:32  millert
+
+	* toke.c, toke.l: Not all systems have d_namlen
+
+2009-04-20 13:53  millert
+
+	* sudoers.pod: Fix up some pod2html issues.
+
+2009-04-19 14:09  millert
+
+	* interfaces.c: Check for NULL ifa_addr and ifa_netmask.  Adapted
+	  from a diff from Quest Software.
+
+2009-04-19 09:01  millert
+
+	* sudoers.pod: Ignore files ending in '~' in sudo.d (emacs backup
+	  files)
+
+2009-04-19 08:56  millert
+
+	* toke.c, toke.l: Ignore files ending in '~' in sudo.d (emacs
+	  backup files)
+
+2009-04-18 19:37  millert
+
+	* sudoers.cat, sudoers.man.in, sudoers.pod, toke.c, toke.l: For
+	  #includedir, ignore any file containing a dot
+
+2009-04-18 19:25  millert
+
+	* Makefile.in, version.h: Bump version
+
+2009-04-18 19:25  millert
+
+	* gram.c, gram.y, parse.c, parse.h, sudo.c, sudo.h, sudoers.cat,
+	  sudoers.man.in, sudoers.pod, testsudoers.c, toke.c, toke.l,
+	  visudo.c: Implement #includedir directive.  Files in an
+	  includedir are not edited by visudo unless they contain a syntax
+	  error.
+
+2009-04-18 12:06  millert
+
+	* ChangeLog: sync
+
 2009-04-18 10:27  millert
 
 	* WHATSNEW: Forgot umask_override
@@ -4846,7 +5049,7 @@
 2004-10-01 10:58  millert
 
 	* sample.pam, sample.sudoers, sample.syslog.conf, sudoers: Add
-	  $Sudo: ChangeLog,v 1.21 2009/04/18 16:06:05 millert Exp $ tags.
+	  $Sudo$ tags.
 
 2004-10-01 10:47  millert
 

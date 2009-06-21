@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1996, 1998-2005, 2007-2008
+ * Copyright (c) 1996, 1998-2005, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -54,7 +54,7 @@
 #include "parse.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: gram.y,v 1.34 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: gram.y,v 1.36 2009/05/25 12:02:41 millert Exp $";
 #endif /* lint */
 
 /*
@@ -766,11 +766,14 @@ init_parser(path, quiet)
 
     init_aliases();
 
+    init_lexer();
+
     efree(sudoers);
     sudoers = path ? estrdup(path) : NULL;
 
     parse_error = FALSE;
     errorlineno = -1;
+    errorfile = NULL;
     sudolineno = 1;
     verbose = !quiet;
 }

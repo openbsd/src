@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996,1998-2005, 2007-2008
+ * Copyright (c) 1993-1996,1998-2005, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -59,7 +59,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: check.c,v 1.246 2009/02/24 13:04:39 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: check.c,v 1.247 2009/05/25 12:02:41 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */

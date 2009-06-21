@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-1996,1998-2008 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1994-1996,1998-2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -52,7 +52,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: set_perms.c,v 1.44 2008/03/06 17:19:56 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: set_perms.c,v 1.48 2009/05/25 12:02:41 millert Exp $";
 #endif /* lint */
 
 #ifdef __TANDEM
@@ -77,14 +77,18 @@ static int current_perm = -1;
  * We only flip the effective gid since it only changes for PERM_SUDOERS.
  * This version of set_perms() works fine with the "stay_setuid" option.
  */
-void
+int
 set_perms(perm)
     int perm;
 {
     const char *errstr;
+    int noexit;
+
+    noexit = ISSET(perm, PERM_NOEXIT);
+    CLR(perm, PERM_MASK);
 
     if (perm == current_perm)
-	return;
+	return(1);
 
     switch (perm) {
 	case PERM_ROOT:
@@ -169,10 +173,13 @@ set_perms(perm)
     }
 
     current_perm = perm;
-    return;
+    return(1);
 bad:
-    errorx(1, "%s: %s", errstr,
+    warningx("%s: %s", errstr,
 	errno == EAGAIN ? "too many processes" : strerror(errno));
+    if (noexit)
+	return(0);
+    exit(1);
 }
 
 #else
@@ -184,14 +191,18 @@ bad:
  * we are headed for an exec().
  * This version of set_perms() works fine with the "stay_setuid" option.
  */
-void
+int
 set_perms(perm)
     int perm;
 {
     const char *errstr;
+    int noexit;
+
+    noexit = ISSET(perm, PERM_NOEXIT);
+    CLR(perm, PERM_MASK);
 
     if (perm == current_perm)
-	return;
+	return(1);
 
     switch (perm) {
 	case PERM_ROOT:
@@ -279,10 +290,13 @@ set_perms(perm)
     }
 
     current_perm = perm;
-    return;
+    return(1);
 bad:
-    errorx(1, "%s: %s", errstr,
+    warningx("%s: %s", errstr,
 	errno == EAGAIN ? "too many processes" : strerror(errno));
+    if (noexit)
+	return(0);
+    exit(1);
 }
 
 # else /* !HAVE_SETRESUID && !HAVE_SETREUID */
@@ -292,14 +306,18 @@ bad:
  * Set real and effective uids and gids based on perm.
  * NOTE: does not support the "stay_setuid" option.
  */
-void
+int
 set_perms(perm)
     int perm;
 {
     const char *errstr;
+    int noexit;
+
+    noexit = ISSET(perm, PERM_NOEXIT);
+    CLR(perm, PERM_MASK);
 
     if (perm == current_perm)
-	return;
+	return(1);
 
     /*
      * Since we only have setuid() and seteuid() and semantics
@@ -391,10 +409,13 @@ set_perms(perm)
     }
 
     current_perm = perm;
-    return;
+    return(1);
 bad:
-    errorx(1, "%s: %s", errstr,
+    warningx("%s: %s", errstr,
 	errno == EAGAIN ? "too many processes" : strerror(errno));
+    if (noexit)
+	return(0);
+    exit(1);
 }
 
 # else /* !HAVE_SETRESUID && !HAVE_SETREUID && !HAVE_SETEUID */
@@ -404,14 +425,18 @@ bad:
  * NOTE: does not support the "stay_setuid" or timestampowner options.
  *       Also, SUDOERS_UID and SUDOERS_GID are not used.
  */
-void
+int
 set_perms(perm)
     int perm;
 {
     const char *errstr;
+    int noexit;
+
+    noexit = ISSET(perm, PERM_NOEXIT);
+    CLR(perm, PERM_MASK);
 
     if (perm == current_perm)
-	return;
+	return(1);
 
     switch (perm) {
 	case PERM_ROOT:
@@ -448,10 +473,13 @@ set_perms(perm)
     }
 
     current_perm = perm;
-    return;
+    return(1);
 bad:
-    errorx(1, "%s: %s", errstr,
+    warningx("%s: %s", errstr,
 	errno == EAGAIN ? "too many processes" : strerror(errno));
+    if (noexit)
+	return(0);
+    exit(1);
 }
 #  endif /* HAVE_SETEUID */
 # endif /* HAVE_SETREUID */
@@ -462,7 +490,9 @@ static void
 runas_setgroups()
 {
     static int ngroups = -1;
+#ifdef HAVE_GETGROUPS
     static GETGROUPS_T *groups;
+#endif
     struct passwd *pw;
 
     if (def_preserve_groups)
@@ -475,14 +505,16 @@ runas_setgroups()
 	pw = runas_pw ? runas_pw : sudo_user.pw;
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0)
 	    log_error(USE_ERRNO|MSG_ONLY, "can't set runas group vector");
-	if ((ngroups = getgroups(0, NULL)) < 0)
-	    log_error(USE_ERRNO|MSG_ONLY, "can't get runas ngroups");
-	groups = emalloc2(ngroups, sizeof(GETGROUPS_T));
-	if (getgroups(ngroups, groups) < 0)
-	    log_error(USE_ERRNO|MSG_ONLY, "can't get runas group vector");
+#ifdef HAVE_GETGROUPS
+	if ((ngroups = getgroups(0, NULL)) > 0) {
+	    groups = emalloc2(ngroups, sizeof(GETGROUPS_T));
+	    if (getgroups(ngroups, groups) < 0)
+		log_error(USE_ERRNO|MSG_ONLY, "can't get runas group vector");
+	}
     } else {
 	if (setgroups(ngroups, groups) < 0)
 	    log_error(USE_ERRNO|MSG_ONLY, "can't set runas group vector");
+#endif /* HAVE_GETGROUPS */
     }
 }
 
@@ -530,13 +562,9 @@ runas_setup()
 #ifdef HAVE_LOGIN_CAP_H
 	if (def_use_loginclass) {
 	    /*
-             * We only use setusercontext() set the nice value and rlimits.
+             * We only use setusercontext() to set the nice value and rlimits.
 	     */
 	    flags = LOGIN_SETRESOURCES|LOGIN_SETPRIORITY;
-	    if (!def_preserve_groups)
-		SET(flags, LOGIN_SETGROUP);
-	    else if (setgid(gid))
-		warning("cannot set gid to runas gid");
 	    if (setusercontext(lc, runas_pw, runas_pw->pw_uid, flags)) {
 		if (runas_pw->pw_uid != ROOT_UID)
 		    error(1, "unable to set user context");
@@ -545,11 +573,11 @@ runas_setup()
 	    }
 	}
 #endif /* HAVE_LOGIN_CAP_H */
-	if (setgid(gid))
-	    warning("cannot set gid to runas gid");
 	/*
 	 * Initialize group vector
 	 */
 	runas_setgroups();
+	if (setegid(gid) || setgid(gid))
+	    warning("cannot set gid to runas gid");
     }
 }

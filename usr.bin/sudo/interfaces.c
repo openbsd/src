@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2005, 2007-2008
+ * Copyright (c) 1996, 1998-2005, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -85,9 +85,13 @@ struct rtentry;
 #include "interfaces.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: interfaces.c,v 1.84 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: interfaces.c,v 1.87 2009/05/25 12:02:41 millert Exp $";
 #endif /* lint */
 
+/* Minix apparently lacks IFF_LOOPBACK */
+#ifndef IFF_LOOPBACK
+# define IFF_LOOPBACK	0
+#endif
 
 #ifdef HAVE_GETIFADDRS
 
@@ -139,9 +143,13 @@ load_interfaces()
 	switch(ifa->ifa_addr->sa_family) {
 	    case AF_INET:
 		sin = (struct sockaddr_in *)ifa->ifa_addr;
+		if (sin == NULL)
+		    continue;
 		memcpy(&interfaces[i].addr, &sin->sin_addr,
 		    sizeof(struct in_addr));
 		sin = (struct sockaddr_in *)ifa->ifa_netmask;
+		if (sin == NULL)
+		    continue;
 		memcpy(&interfaces[i].netmask, &sin->sin_addr,
 		    sizeof(struct in_addr));
 		interfaces[i].family = AF_INET;
@@ -150,9 +158,13 @@ load_interfaces()
 #ifdef HAVE_IN6_ADDR
 	    case AF_INET6:
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+		if (sin6 == NULL)
+		    continue;
 		memcpy(&interfaces[i].addr, &sin6->sin6_addr,
 		    sizeof(struct in6_addr));
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_netmask;
+		if (sin6 == NULL)
+		    continue;
 		memcpy(&interfaces[i].netmask, &sin6->sin6_addr,
 		    sizeof(struct in6_addr));
 		interfaces[i].family = AF_INET6;

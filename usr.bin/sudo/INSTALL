@@ -335,6 +335,16 @@ Special features/options:
 	Enable support for role based access control (RBAC) on
 	systems that support SELinux.
 
+  --with-libvas=[NAME]
+        Enable non-Unix group support using Quest Authentication
+        Services.  If NAME is specified, it should be the name of
+	the shared library providing QAS support (libvas.so by default).
+
+  --with-libvas-rpath=[PATH]
+	The path to search when loading libvas.so (or an alternate
+	name as specified by --with-libvas).  This option only has
+	an effect when --with-libvas is specified.
+
 The following options are also configurable at runtime:
 
   --with-long-otp-prompt

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005, 2008
+ * Copyright (c) 1999-2005, 2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: logging.h,v 1.14 2009/02/21 13:37:47 millert Exp $
+ * $Sudo: logging.h,v 1.15 2009/05/25 12:02:41 millert Exp $
  */
 
 #ifndef _LOGGING_H

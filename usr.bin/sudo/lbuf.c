@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2007-2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,12 +41,19 @@
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 #include <ctype.h>
+#ifdef HAVE_TERMIOS_H
+# include <termios.h>
+#else
+# ifdef HAVE_TERMIO_H
+#  include <termio.h>
+# endif
+#endif
 
 #include "sudo.h"
 #include "lbuf.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: lbuf.c,v 1.7 2008/12/09 20:55:49 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: lbuf.c,v 1.9 2009/05/25 12:02:41 millert Exp $";
 #endif /* lint */
 
 #if !defined(TIOCGSIZE) && defined(TIOCGWINSZ)

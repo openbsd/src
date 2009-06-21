@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996, 1998-2008 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996, 1998-2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -99,10 +99,13 @@
 #include "sudo.h"
 #include "lbuf.h"
 #include "interfaces.h"
-#include "version.h"
+
+#ifdef USING_NONUNIX_GROUPS
+# include "nonunix.h"
+#endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo.c,v 1.510 2009/03/10 20:44:05 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo.c,v 1.517 2009/05/27 00:49:07 millert Exp $";
 #endif /* lint */
 
 /*
@@ -271,6 +274,10 @@ main(argc, argv, envp)
 
     init_vars(sudo_mode, envp);		/* XXX - move this later? */
 
+#ifdef USING_NONUNIX_GROUPS
+    sudo_nonunix_groupcheck_init();	/* initialise nonunix groups impl */
+#endif /* USING_NONUNIX_GROUPS */
+
     /* Parse nsswitch.conf for sudoers order. */
     snl = sudo_read_nss();
 
@@ -355,6 +362,12 @@ main(argc, argv, envp)
 		break;
 	}
     }
+
+#ifdef USING_NONUNIX_GROUPS
+    /* Finished with the groupcheck code */
+    sudo_nonunix_groupcheck_cleanup();
+#endif
+
     if (safe_cmnd == NULL)
 	safe_cmnd = estrdup(user_cmnd);
 
@@ -482,6 +495,9 @@ main(argc, argv, envp)
 	(void) setrlimit(RLIMIT_CORE, &corelimit);
 #endif /* RLIMIT_CORE && !SUDO_DEVEL */
 
+	/* Must audit before uid change. */
+	audit_success(NewArgv);
+
 	/* Become specified user or root if executing a command. */
 	if (ISSET(sudo_mode, MODE_RUN))
 	    set_perms(PERM_FULL_RUNAS);
@@ -529,7 +545,6 @@ main(argc, argv, envp)
 #ifndef PROFILING
 	if (ISSET(sudo_mode, MODE_BACKGROUND) && fork() > 0) {
 	    syslog(LOG_AUTH|LOG_ERR, "fork");
-	    audit_success(NewArgv);
 	    exit(0);
 	} else {
 #ifdef HAVE_SELINUX
@@ -537,7 +552,6 @@ main(argc, argv, envp)
 		selinux_exec(user_role, user_type, NewArgv,
 		    ISSET(sudo_mode, MODE_LOGIN_SHELL));
 #endif
-	    audit_success(NewArgv);
 	    execv(safe_cmnd, NewArgv);
 	}
 #else
@@ -826,7 +840,7 @@ set_cmnd(sudo_mode)
     if (!update_defaults(SETDEF_CMND))
 	log_error(NO_STDERR|NO_EXIT, "problem with defaults entries");
 
-    if (!runas_user)
+    if (!runas_user && !runas_group)
 	set_runaspw(def_runas_default);	/* may have been updated above */
 
     return(rval);
@@ -1072,8 +1086,9 @@ parse_args(argc, argv)
  * Returns a handle to the sudoers file or NULL on error.
  */
 FILE *
-open_sudoers(sudoers, keepopen)
+open_sudoers(sudoers, doedit, keepopen)
     const char *sudoers;
+    int doedit;
     int *keepopen;
 {
     struct stat statbuf;
@@ -1436,7 +1451,7 @@ cleanup(gotsignal)
 static void
 show_version()
 {
-    (void) printf("Sudo version %s\n", version);
+    (void) printf("Sudo version %s\n", PACKAGE_VERSION);
     if (getuid() == 0) {
 	putchar('\n');
 	(void) printf("Sudoers path: %s\n", _PATH_SUDOERS);

@@ -1,4 +1,4 @@
-Copyright (c) 1994-1996, 1998-2005, 2007-2008
+Copyright (c) 1994-1996, 1998-2005, 2007-2009
 	Todd C. Miller <Todd.Miller@courtesan.com>
 
 Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudo.pod,v 1.122 2009/02/25 11:17:26 millert Exp $
+$Sudo: sudo.pod,v 1.124 2009/06/15 21:19:47 millert Exp $
 =pod
 
 =head1 NAME
@@ -571,14 +571,22 @@ To get a file listing of an unreadable directory:
 
  $ sudo ls /usr/local/protected
 
-To list the home directory of user yazza on a machine where the
-file system holding ~yazza is not exported as root:
+To list the home directory of user yaz on a machine where the
+file system holding ~yaz is not exported as root:
 
- $ sudo -u yazza ls ~yazza
+ $ sudo -u yaz ls ~yaz
 
 To edit the F<index.html> file as user www:
 
  $ sudo -u www vi ~www/htdocs/index.html
+
+To view system logs only accessible to root and users in the adm group:
+
+ $ sudo -g adm view /var/log/syslog
+
+To run an editor as jim with a different primary group:
+
+ $ sudo -u jim -g audio vi ~jim/sound.txt
 
 To shutdown a machine:
 

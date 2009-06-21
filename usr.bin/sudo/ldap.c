@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2008 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2003-2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * This code is derived from software contributed by Aaron Spangler.
  *
@@ -82,7 +82,7 @@
 #include "lbuf.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: ldap.c,v 1.106 2009/03/16 16:11:28 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: ldap.c,v 1.108 2009/05/29 13:43:12 millert Exp $";
 #endif /* lint */
 
 #ifndef LDAP_OPT_SUCCESS
@@ -386,10 +386,32 @@ sudo_ldap_init(ldp, host, port)
 	    ldap_conf.tls_keyfile ? ldap_conf.tls_keyfile : "NULL"), 2);
 	rc = ldapssl_clientauth_init(ldap_conf.tls_certfile, NULL,
 	    ldap_conf.tls_keyfile != NULL, ldap_conf.tls_keyfile, NULL);
+	/*
+	 * Mozilla-derived SDKs have a bug starting with version 5.0
+	 * where the path can no longer be a file name and must be a dir.
+	 */
 	if (rc != LDAP_SUCCESS) {
-	    warningx("unable to initialize SSL cert and key db: %s",
-		ldapssl_err2string(rc));
-	    goto done;
+	    char *cp;
+	    if (ldap_conf.tls_certfile) {
+		cp = strrchr(ldap_conf.tls_certfile, '/');
+		if (cp != NULL && strncmp(cp + 1, "cert", 4) == 0)
+		    *cp = '\0';
+	    }
+	    if (ldap_conf.tls_keyfile) {
+		cp = strrchr(ldap_conf.tls_keyfile, '/');
+		if (cp != NULL && strncmp(cp + 1, "key", 3) == 0)
+		    *cp = '\0';
+	    }
+	    DPRINTF(("ldapssl_clientauth_init(%s, %s)",
+		ldap_conf.tls_certfile ? ldap_conf.tls_certfile : "NULL",
+		ldap_conf.tls_keyfile ? ldap_conf.tls_keyfile : "NULL"), 2);
+	    rc = ldapssl_clientauth_init(ldap_conf.tls_certfile, NULL,
+		ldap_conf.tls_keyfile != NULL, ldap_conf.tls_keyfile, NULL);
+	    if (rc != LDAP_SUCCESS) {
+		warningx("unable to initialize SSL cert and key db: %s",
+		    ldapssl_err2string(rc));
+		goto done;
+	    }
 	}
 
 	DPRINTF(("ldapssl_init(%s, %d, 1)", host, port), 2);

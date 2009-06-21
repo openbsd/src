@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2005, 2007-2008
+ * Copyright (c) 2000-2005, 2007-2009
  *	Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -49,7 +49,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: env.c,v 1.101 2009/03/11 23:01:10 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: env.c,v 1.105 2009/06/15 13:10:01 millert Exp $";
 #endif /* lint */
 
 /*
@@ -249,24 +249,35 @@ setenv(var, val, overwrite)
     const char *val;
     int overwrite;
 {
-    char *estring;
+    char *estring, *ep;
+    const char *cp;
     size_t esize;
 
-    if (strchr(var, '=') != NULL) {
-	errno = EINVAL;
-	return(-1);
+    if (!var || *var == '\0')
+	return(EINVAL);
+
+    /*
+     * POSIX says a var name with '=' is an error but BSD
+     * just ignores the '=' and anything after it.
+     */
+    for (cp = var; *cp && *cp != '='; cp++)
+	;
+    esize = (size_t)(cp - var) + 2;
+    if (val) {
+	esize += strlen(val);	/* glibc treats a NULL val as "" */
     }
 
-    esize = strlen(var) + 1 + strlen(val) + 1;
-    estring = emalloc(esize);
-
-    /* Build environment string and insert it. */
-    if (strlcpy(estring, var, esize) >= esize ||
-	strlcat(estring, "=", esize) >= esize ||
-	strlcat(estring, val, esize) >= esize) {
-
-	errorx(1, "internal error, setenv() overflow");
+    /* Allocate and fill in estring. */
+    estring = ep = emalloc(esize);
+    for (cp = var; *cp && *cp != '='; cp++)
+	*ep++ = *cp;
+    *ep++ = '=';
+    if (val) {
+	for (cp = val; *cp; cp++)
+	    *ep++ = *cp;
     }
+    *ep = '\0';
+
     /* Sync env.envp with environ as needed. */
     if (env.envp != environ) {
 	char **ep;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2005, 2008 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999-2005, 2008-2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -53,7 +53,7 @@
 #include "insults.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.39 2009/02/11 01:18:02 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.40 2009/05/25 12:02:42 millert Exp $";
 #endif /* lint */
 
 sudo_auth auth_switch[] = {
