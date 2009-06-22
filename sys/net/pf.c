@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.652 2009/06/22 13:55:39 jsing Exp $ */
+/*	$OpenBSD: pf.c,v 1.653 2009/06/22 16:55:14 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5562,14 +5562,12 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 		break;
 	}
 
-#ifdef INET6
 	case IPPROTO_ICMPV6: {
 		action = PF_DROP;
 		DPFPRINTF(PF_DEBUG_MISC,
 		    ("pf: dropping IPv4 packet with ICMPv6 payload\n"));
 		goto done;
 	}
-#endif
 
 	default:
 		action = pf_test_state_other(&s, dir, kif, m, &pd);
