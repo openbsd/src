@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.57 2009/06/11 22:37:58 sthen Exp $	*/
+/*	$OpenBSD: hme.c,v 1.58 2009/06/22 14:31:04 sthen Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ void		hme_init(struct hme_softc *);
 void		hme_meminit(struct hme_softc *);
 void		hme_mifinit(struct hme_softc *);
 void		hme_reset(struct hme_softc *);
-void		hme_setladrf(struct hme_softc *);
+void		hme_iff(struct hme_softc *);
 void		hme_fill_rx_ring(struct hme_softc *);
 int		hme_newbuf(struct hme_softc *, struct hme_sxd *);
 
@@ -539,7 +539,7 @@ hme_init(sc)
 
 
 	/* step 5. RX MAC registers & counters */
-	hme_setladrf(sc);
+	hme_iff(sc);
 
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
 	bus_space_write_4(t, etx, HME_ETXI_RING, sc->sc_rb.rb_txddma);
@@ -631,7 +631,6 @@ hme_init(sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	ifp->if_timer = 0;
 
 	hme_start(ifp);
 }
@@ -1302,7 +1301,6 @@ hme_ioctl(ifp, cmd, data)
 			if (ifp->if_flags & IFF_RUNNING)
 				hme_stop(sc);
 		}
-
 #ifdef HMEDEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
 #endif
@@ -1319,7 +1317,7 @@ hme_ioctl(ifp, cmd, data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			hme_setladrf(sc);
+			hme_iff(sc);
 		error = 0;
 	}
 
@@ -1334,81 +1332,52 @@ hme_shutdown(arg)
 	hme_stop((struct hme_softc *)arg);
 }
 
-/*
- * Set up the logical address filter.
- */
 void
-hme_setladrf(sc)
-	struct hme_softc *sc;
+hme_iff(struct hme_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	struct arpcom *ac = &sc->sc_arpcom;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
 	u_int32_t hash[4];
-	u_int32_t v, crc;
+	u_int32_t rxcfg, crc;
 
-	/* Clear hash table */
-	hash[3] = hash[2] = hash[1] = hash[0] = 0;
-
-	/* Get current RX configuration */
-	v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
-
-	if ((ifp->if_flags & IFF_PROMISC) != 0) {
-		/* Turn on promiscuous mode; turn off the hash filter */
-		v |= HME_MAC_RXCFG_PMISC;
-		v &= ~HME_MAC_RXCFG_HENABLE;
-		ifp->if_flags |= IFF_ALLMULTI;
-		goto chipit;
-	}
-
-	/* Turn off promiscuous mode; turn on the hash filter */
-	v &= ~HME_MAC_RXCFG_PMISC;
-	v |= HME_MAC_RXCFG_HENABLE;
-
-	/*
-	 * Set up multicast address filter by passing all multicast addresses
-	 * through a crc generator, and then using the high order 6 bits as an
-	 * index into the 64 bit logical address filter.  The high order bit
-	 * selects the word, while the rest of the bits select the bit within
-	 * the word.
-	 */
-
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/*
-			 * We must listen to a range of multicast addresses.
-			 * For now, just accept all multicasts, rather than
-			 * trying to set only those filter bits needed to match
-			 * the range.  (At this time, the only use of address
-			 * ranges is for IP multicast routing, for which the
-			 * range is big enough to require all bits set.)
-			 */
-			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto chipit;
-		}
-
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN)>> 26; 
-
-		/* Set the corresponding bit in the filter. */
-		hash[crc >> 4] |= 1 << (crc & 0xf);
-
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
+	rxcfg = bus_space_read_4(t, mac, HME_MACI_RXCFG);
+	rxcfg &= ~(HME_MAC_RXCFG_HENABLE | HME_MAC_RXCFG_PMISC);
 	ifp->if_flags &= ~IFF_ALLMULTI;
+	/* Clear hash table */
+	hash[0] = hash[1] = hash[2] = hash[3] = 0;
 
-chipit:
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		rxcfg |= HME_MAC_RXCFG_PMISC;
+	} else if (ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		rxcfg |= HME_MAC_RXCFG_HENABLE;
+		hash[0] = hash[1] = hash[2] = hash[3] = 0xffff;
+	} else {
+		rxcfg |= HME_MAC_RXCFG_HENABLE;
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			crc = ether_crc32_le(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26; 
+
+			/* Set the corresponding bit in the filter. */
+			hash[crc >> 4] |= 1 << (crc & 0xf);
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
+
 	/* Now load the hash table into the chip */
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB0, hash[0]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB1, hash[1]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB2, hash[2]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB3, hash[3]);
-	bus_space_write_4(t, mac, HME_MACI_RXCFG, v);
+	bus_space_write_4(t, mac, HME_MACI_RXCFG, rxcfg);
 }
 
 void
