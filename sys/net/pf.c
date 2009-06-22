@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.653 2009/06/22 16:55:14 jsing Exp $ */
+/*	$OpenBSD: pf.c,v 1.654 2009/06/22 17:04:02 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2798,6 +2798,9 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			break;
 #ifdef INET
 		case IPPROTO_ICMP:
+			if (af != AF_INET)
+				break;
+
 			if (PF_ANEQ(saddr, &nk->addr[pd->sidx], AF_INET))
 				pf_change_a(&saddr->v4.s_addr, pd->ip_sum,
 				    nk->addr[pd->sidx].v4.s_addr, 0);
@@ -2819,6 +2822,9 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 #endif /* INET */
 #ifdef INET6
 		case IPPROTO_ICMPV6:
+			if (af != AF_INET6)
+				break;
+
 			if (PF_ANEQ(saddr, &nk->addr[pd->sidx], AF_INET6))
 				pf_change_a6(saddr, &pd->hdr.icmp6->icmp6_cksum,
 				    &nk->addr[pd->sidx], 0);
