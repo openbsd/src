@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.92 2009/06/18 18:49:34 claudio Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.93 2009/06/22 22:14:21 claudio Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1326,7 +1326,7 @@ sis_rxeof(struct sis_softc *sc)
 		 * if the allocation fails, then use m_devget and leave the
 		 * existing buffer in the receive ring.
 		 */
-		if (1) {
+		{
 			struct mbuf *m0;
 			m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN,
 			    ifp, NULL);
@@ -1336,12 +1336,11 @@ sis_rxeof(struct sis_softc *sc)
 				continue;
 			}
 			m = m0;
-		} else
-#endif
-		{
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len = total_len;
 		}
+#else
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = total_len;
+#endif
 		ifp->if_ipackets++;
 
 #if NBPFILTER > 0
