@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.651 2009/06/08 03:56:14 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.652 2009/06/22 13:55:39 jsing Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5915,6 +5915,13 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 		} else if (s == NULL)
 			action = pf_test_rule(&r, &s, dir, kif,
 			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
+
+		if (s) {
+			if (s->max_mss)
+				pf_normalize_mss(m, off, &pd, s->max_mss);
+		} else if (r->max_mss)
+			pf_normalize_mss(m, off, &pd, r->max_mss);
+
 		break;
 	}
 
