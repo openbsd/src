@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.11 2009/06/21 19:09:58 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.12 2009/06/23 23:02:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -99,7 +99,6 @@ static	int	err_child_gt(struct mdoc *, const char *, int);
 static	int	warn_child_gt(struct mdoc *, const char *, int);
 static	int	err_child_eq(struct mdoc *, const char *, int);
 static	int	warn_child_eq(struct mdoc *, const char *, int);
-static	int	count_child(struct mdoc *);
 static	int	warn_print(struct mdoc *, int, int);
 static	int	warn_count(struct mdoc *, const char *, 
 			int, const char *, int);
@@ -548,19 +547,6 @@ err_count(struct mdoc *m, const char *k,
 }
 
 
-static inline int
-count_child(struct mdoc *mdoc)
-{
-	int		  i;
-	struct mdoc_node *n;
-
-	for (i = 0, n = mdoc->last->child; n; n = n->next, i++)
-		/* Do nothing */ ;
-
-	return(i);
-}
-
-
 /*
  * Build these up with macros because they're basically the same check
  * for different inequalities.  Yes, this could be done with functions,
@@ -571,10 +557,9 @@ count_child(struct mdoc *mdoc)
 static int 							\
 lvl##_child_##name(struct mdoc *mdoc, const char *p, int sz) 	\
 { 								\
-	int i; 							\
-	if ((i = count_child(mdoc)) ineq sz) 			\
+	if (mdoc->last->nchild ineq sz)				\
 		return(1); 					\
-	return(lvl##_count(mdoc, #ineq, sz, p, i)); 		\
+	return(lvl##_count(mdoc, #ineq, sz, p, mdoc->last->nchild)); \
 }
 
 #define CHECK_BODY_DEFN(name, lvl, func, num) 			\

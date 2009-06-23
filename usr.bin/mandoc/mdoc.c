@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.9 2009/06/19 07:20:19 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.10 2009/06/23 23:02:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -442,6 +442,8 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 		/* NOTREACHED */
 	}
 
+	p->parent->nchild++;
+
 	if ( ! mdoc_valid_pre(mdoc, p))
 		return(0);
 	if ( ! mdoc_action_pre(mdoc, p))
@@ -597,6 +599,8 @@ void
 mdoc_node_free(struct mdoc_node *p)
 {
 
+	if (p->parent)
+		p->parent->nchild--;
 	if (p->string)
 		free(p->string);
 	if (p->args)
@@ -614,6 +618,7 @@ mdoc_node_freelist(struct mdoc_node *p)
 	if (p->next)
 		mdoc_node_freelist(p->next);
 
+	assert(0 == p->nchild);
 	mdoc_node_free(p);
 }
 
