@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: libman.h,v 1.3 2009/06/23 22:05:42 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -38,8 +38,30 @@ struct	man {
 	struct man_meta	 meta;
 };
 
+enum	merr {
+	WNPRINT,
+	WNMEM,
+	WMSEC,
+	WDATE,
+	WLNSCOPE,
+	WTSPACE,
+	WTQUOTE,
+	WNODATA,
+	WNOTITLE
+};
+
 __BEGIN_DECLS
 
+#define		  man_perr(m, l, p, t) \
+		  man_err((m), l, p, 1, (t))
+#define		  man_pwarn(m, l, p, t) \
+		  man_err((m), l, p, 0, (t))
+#define		  man_nerr(m, n, t) \
+		  man_err((m), (n)->line, (n)->pos, 1, (t))
+#define		  man_nwarn(m, n, t) \
+		  man_err((m), (n)->line, (n)->pos, 0, (t))
+
+int		  man_err(struct man *, int, int, int, enum merr);
 int		  man_word_alloc(struct man *, int, int, const char *);
 int		  man_elem_alloc(struct man *, int, int, int);
 void		  man_node_free(struct man_node *);

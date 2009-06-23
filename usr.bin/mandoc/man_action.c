@@ -1,4 +1,4 @@
-/*	$Id: man_action.c,v 1.3 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: man_action.c,v 1.4 2009/06/23 22:05:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -104,8 +104,7 @@ post_TH(struct man *m)
 	assert(n);
 
 	if (NULL == (m->meta.title = strdup(n->string)))
-		return(man_verr(m, n->line, n->pos, 
-					"memory exhausted"));
+		return(man_nerr(m, n, WNMEM));
 
 	/* TITLE ->MSEC<- DATE SOURCE VOL */
 
@@ -116,7 +115,7 @@ post_TH(struct man *m)
 	lval = strtol(n->string, &ep, 10);
 	if (n->string[0] != '\0' && *ep == '\0')
 		m->meta.msec = (int)lval;
-	else if ( ! man_vwarn(m, n->line, n->pos, "invalid section"))
+	else if ( ! man_nwarn(m, n, WMSEC))
 		return(0);
 
 	/* TITLE MSEC ->DATE<- SOURCE VOL */
@@ -124,7 +123,7 @@ post_TH(struct man *m)
 	if (NULL == (n = n->next))
 		m->meta.date = time(NULL);
 	else if (0 == (m->meta.date = man_atotime(n->string))) {
-		if ( ! man_vwarn(m, n->line, n->pos, "invalid date"))
+		if ( ! man_nwarn(m, n, WDATE))
 			return(0);
 		m->meta.date = time(NULL);
 	}
@@ -133,15 +132,13 @@ post_TH(struct man *m)
 
 	if (n && (n = n->next))
 		if (NULL == (m->meta.source = strdup(n->string)))
-			return(man_verr(m, n->line, n->pos, 
-						"memory exhausted"));
+			return(man_nerr(m, n, WNMEM));
 
 	/* TITLE MSEC DATE SOURCE ->VOL<- */
 
 	if (n && (n = n->next))
 		if (NULL == (m->meta.vol = strdup(n->string)))
-			return(man_verr(m, n->line, n->pos, 
-						"memory exhausted"));
+			return(man_nerr(m, n, WNMEM));
 
 	/* 
 	 * The end document shouldn't have the prologue macros as part
@@ -174,7 +171,7 @@ man_atotime(const char *p)
 	struct tm	 tm;
 	char		*pp;
 
-	(void)memset(&tm, 0, sizeof(struct tm));
+	bzero(&tm, sizeof(struct tm));
 
 	if ((pp = strptime(p, "%b %d %Y", &tm)) && 0 == *pp)
 		return(mktime(&tm));

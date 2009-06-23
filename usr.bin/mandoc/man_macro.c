@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.3 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.4 2009/06/23 22:05:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -82,16 +82,14 @@ man_macro(struct man *man, int tok, int line,
 
 	if (n == man->last && (FL_NLINE & man_flags[tok])) {
 		if (MAN_NLINE & man->flags) 
-			return(man_verr(man, line, ppos, 
-				"next-line scope already open"));
+			return(man_perr(man, line, ppos, WLNSCOPE));
 		man->flags |= MAN_NLINE;
 		return(1);
 	}
 
 	if (FL_TLINE & man_flags[tok]) {
 		if (MAN_NLINE & man->flags) 
-			return(man_verr(man, line, ppos, 
-				"next-line scope already open"));
+			return(man_perr(man, line, ppos, WLNSCOPE));
 		man->flags |= MAN_NLINE;
 		return(1);
 	}
@@ -186,7 +184,7 @@ man_args(struct man *m, int line,
 		if (buf[*pos])
 			return(1);
 
-		if ( ! man_vwarn(m, line, *pos, "trailing spaces"))
+		if ( ! man_pwarn(m, line, *pos, WTSPACE))
 			return(-1);
 
 		return(1);
@@ -204,7 +202,7 @@ man_args(struct man *m, int line,
 		(*pos)++;
 
 	if (0 == buf[*pos]) {
-		if ( ! man_vwarn(m, line, *pos, "unterminated quote"))
+		if ( ! man_pwarn(m, line, *pos, WTQUOTE))
 			return(-1);
 		return(1);
 	}
@@ -219,7 +217,7 @@ man_args(struct man *m, int line,
 	if (buf[*pos])
 		return(1);
 
-	if ( ! man_vwarn(m, line, *pos, "trailing spaces"))
+	if ( ! man_pwarn(m, line, *pos, WTSPACE))
 		return(-1);
 	return(1);
 }
