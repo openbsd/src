@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1478 2009/06/18 08:19:34 jsg Exp $
+$OpenBSD: pcidevs,v 1.1479 2009/06/23 21:07:02 sthen Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -715,6 +715,7 @@ product AMD 8132_PCIX		0x7458	8132 PCIX
 product AMD 8132_PCIX_IOAPIC	0x7459	8132 PCIX IOAPIC
 product AMD 8111_PPB		0x7460	8111 PCI-PCI
 product AMD 8111_ETHER		0x7462	8111 Ether
+product AMD 8111_EHCI		0x7463	8111 USB
 product AMD 8111_USB		0x7464	8111 USB
 product AMD PBC8111_LPC		0x7468	8111 LPC
 product AMD 8111_IDE		0x7469	8111 IDE
