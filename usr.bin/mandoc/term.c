@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.4 2009/06/21 19:53:47 schwarze Exp $ */
+/*	$Id: term.c,v 1.5 2009/06/23 23:53:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -200,12 +200,15 @@ term_isopendelim(const char *p, int len)
  *  Otherwise, the line will break at the right margin.  Extremely long
  *  lines will cause the system to emit a warning (TODO: hyphenate, if
  *  possible).
+ *
+ *  FIXME: newline breaks occur (in groff) also occur when a single
+ *  space follows a NOBREAK!
  */
 void
 term_flushln(struct termp *p)
 {
 	int		 i, j;
-	size_t		 vsz, vis, maxvis, mmax, bp;
+	size_t		 vbl, vsz, vis, maxvis, mmax, bp;
 
 	/*
 	 * First, establish the maximum columns of "visible" content.
@@ -250,35 +253,37 @@ term_flushln(struct termp *p)
 		}
 
 		/*
-		 * Do line-breaking.  If we're greater than our
-		 * break-point and already in-line, break to the next
-		 * line and start writing.  If we're at the line start,
-		 * then write out the word (TODO: hyphenate) and break
-		 * in a subsequent loop invocation.
+		 * Choose the number of blanks to prepend: no blank at the
+		 * beginning of a line, one between words -- but do not
+		 * actually write them yet.
 		 */
+		vbl = (size_t)(0 == vis ? 0 : 1);
 
-		if ( ! (TERMP_NOBREAK & p->flags)) {
-			if (vis && vis + vsz > bp) {
-				putchar('\n');
+		/*
+		 * Find out whether we would exceed the right margin.
+		 * If so, break to the next line.  (TODO: hyphenate)
+		 * Otherwise, write the chosen number of blanks now.
+		 */
+		if (vis && vis + vbl + vsz > bp) {
+			putchar('\n');
+			if (TERMP_NOBREAK & p->flags) {
+				for (j = 0; j < (int)p->rmargin; j++)
+					putchar(' ');
+				vis = p->rmargin - p->offset;
+			} else {
 				for (j = 0; j < (int)p->offset; j++)
 					putchar(' ');
 				vis = 0;
-			} 
-		} else if (vis && vis + vsz > bp) {
-			putchar('\n');
-			for (j = 0; j < (int)p->rmargin; j++)
+			}
+		} else {
+			for (j = 0; j < (int)vbl; j++)
 				putchar(' ');
-			vis = p->rmargin - p->offset;
+			vis += vbl;
 		}
 
 		/*
-		 * Prepend a space if we're not already at the beginning
-		 * of the line, then the word.
+		 * Finally, write out the word.
 		 */
-
-		if (0 < vis++)
-			putchar(' ');
-
 		for ( ; i < (int)p->col; i++) {
 			if (' ' == p->buf[i])
 				break;
@@ -292,7 +297,7 @@ term_flushln(struct termp *p)
 	 * cause a newline and offset at the right margin.
 	 */
 
-	if ((TERMP_NOBREAK & p->flags) && vis > maxvis) {
+	if ((TERMP_NOBREAK & p->flags) && vis >= maxvis) {
 		if ( ! (TERMP_NONOBREAK & p->flags)) {
 			putchar('\n');
 			for (i = 0; i < (int)p->rmargin; i++)
@@ -309,7 +314,7 @@ term_flushln(struct termp *p)
 
 	if (p->flags & TERMP_NOBREAK) {
 		if ( ! (TERMP_NONOBREAK & p->flags))
-			for ( ; vis <= maxvis; vis++)
+			for ( ; vis < maxvis; vis++)
 				putchar(' ');
 	} else
 		putchar('\n');
@@ -408,7 +413,8 @@ term_nescape(struct termp *p, const char *word, size_t len)
 	size_t		 sz;
 	int		 i;
 
-	if ((rhs = term_a2ascii(p->symtab, word, len, &sz))) 
+	rhs = term_a2ascii(p->symtab, word, len, &sz);
+	if (rhs)
 		for (i = 0; i < (int)sz; i++) 
 			term_encodea(p, rhs[i]);
 }
