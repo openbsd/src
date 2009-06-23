@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.156 2009/06/19 02:59:42 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.157 2009/06/23 15:51:35 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -206,7 +206,7 @@ struct sr_meta_driver {
 } smd[] = {
 	{ SR_META_OFFSET, SR_META_SIZE * 512,
 	  sr_meta_native_probe, sr_meta_native_attach, NULL,
-	  sr_meta_native_read , sr_meta_native_write, NULL },
+	  sr_meta_native_read, sr_meta_native_write, NULL },
 #define SR_META_F_NATIVE	0
 	{ 0, 0, NULL, NULL, NULL, NULL }
 #define SR_META_F_INVALID	-1
@@ -223,7 +223,7 @@ sr_meta_attach(struct sr_discipline *sd, int force)
 	DNPRINTF(SR_D_META, "%s: sr_meta_attach(%d)\n", DEVNAME(sc));
 
 	/* in memory copy of metadata */
-	sd->sd_meta = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_ZERO);
+	sd->sd_meta = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO);
 	if (!sd->sd_meta) {
 		printf("%s: could not allocate memory for metadata\n",
 		    DEVNAME(sc));
@@ -428,7 +428,7 @@ sr_meta_clear(struct sr_discipline *sd)
 		goto done;
 	}
 
-	m = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_WAITOK | M_ZERO);
+	m = malloc(SR_META_SIZE * 512, M_DEVBUF, M_WAITOK | M_ZERO);
 	SLIST_FOREACH(ch_entry, cl, src_link) {
 		if (sr_meta_native_write(sd, ch_entry->src_dev_mm, m, NULL)) {
 			/* XXX mark disk offline */
@@ -685,7 +685,7 @@ sr_meta_read(struct sr_discipline *sd)
 	sm = malloc(SR_META_SIZE * 512, M_DEVBUF, M_WAITOK | M_ZERO);
 	s = &smd[sd->sd_meta_type];
 	if (sd->sd_meta_type != SR_META_F_NATIVE)
-		fm = malloc(s->smd_size , M_DEVBUF, M_WAITOK | M_ZERO);
+		fm = malloc(s->smd_size, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	cp = (struct sr_meta_chunk *)(sm + 1);
 	SLIST_FOREACH(ch_entry, cl, src_link) {
@@ -856,7 +856,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 	error = (*bdsw->d_open)(dev, FREAD, S_IFCHR, curproc);
 	if (error) {
 		DNPRINTF(SR_D_META, "%s: sr_meta_native_bootprobe open "
-		    "failed\n" , DEVNAME(sc));
+		    "failed\n", DEVNAME(sc));
 		goto done;
 	}
 
@@ -878,7 +878,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 		goto done;
 	}
 
-	md = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_ZERO);
+	md = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO);
 	if (md == NULL) {
 		printf("%s: not enough memory for metadata buffer\n",
 		    DEVNAME(sc));
@@ -886,7 +886,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 	}
 
 	/* create fake sd to use utility functions */
-	fake_sd = malloc(sizeof(struct sr_discipline) , M_DEVBUF, M_ZERO);
+	fake_sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_ZERO);
 	if (fake_sd == NULL) {
 		printf("%s: not enough memory for fake discipline\n",
 		    DEVNAME(sc));
@@ -1083,7 +1083,7 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 	/* make sure the partition is of the right type */
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
 		DNPRINTF(SR_D_META,
-		    "%s: %s partition not of type RAID (%d)\n", DEVNAME(sc) ,
+		    "%s: %s partition not of type RAID (%d)\n", DEVNAME(sc),
 		    devname,
 		    label.d_partitions[part].p_fstype);
 		goto unwind;
@@ -1985,7 +1985,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev)
 	}
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
 		printf("%s: %s partition not of type RAID (%d)\n",
-		    DEVNAME(sc) , devname,
+		    DEVNAME(sc), devname,
 		    label.d_partitions[part].p_fstype);
 		goto done;
 	}
