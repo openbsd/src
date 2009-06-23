@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.17 2009/06/03 16:02:44 schwarze Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.18 2009/06/23 18:52:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -209,16 +209,24 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 			goto out;
 
 		/* First scan the static netid file. */
-		if (ret = _read_netid(key, pwstore.pw_uid,
-				      groups, &ngroups, maxgroups))
+		switch (_read_netid(key, pwstore.pw_uid,
+		    groups, &ngroups, maxgroups)) {
+		case -1:
+			ret = -1;
+			/* FALLTHROUGH */
+		case 1:
 			goto out;
+		default:
+			break;
+		}
 
 		/* Only access YP when there is no static entry. */
 		if (!yp_bind(__ypdomain) &&
 		    !yp_match(__ypdomain, "netid.byname", key,
 			     (int)strlen(key), &ypdata, &ypdatalen))
-			ret = _parse_netid(ypdata, pwstore.pw_uid,
-			    		   groups, &ngroups, maxgroups);
+			if (_parse_netid(ypdata, pwstore.pw_uid,
+			    groups, &ngroups, maxgroups) == -1)
+				ret = -1;
 
 		free(key);
 		free(ypdata);
