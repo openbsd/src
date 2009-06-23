@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1478 2009/06/18 08:19:34 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1479 2009/06/23 21:07:02 sthen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -720,6 +720,7 @@
 #define	PCI_PRODUCT_AMD_8132_PCIX_IOAPIC	0x7459		/* 8132 PCIX IOAPIC */
 #define	PCI_PRODUCT_AMD_8111_PPB	0x7460		/* 8111 PCI-PCI */
 #define	PCI_PRODUCT_AMD_8111_ETHER	0x7462		/* 8111 Ether */
+#define	PCI_PRODUCT_AMD_8111_EHCI	0x7463		/* 8111 USB */
 #define	PCI_PRODUCT_AMD_8111_USB	0x7464		/* 8111 USB */
 #define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* 8111 LPC */
 #define	PCI_PRODUCT_AMD_8111_IDE	0x7469		/* 8111 IDE */
