@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.25 2008/10/25 22:30:43 jakemsr Exp $ */
+/*      $OpenBSD: sv.c,v 1.26 2009/06/23 06:39:48 jsg Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -1421,7 +1421,7 @@ sv_init_mixer(sc)
   sv_mixer_set_port(sc, &cp);
 
   for (idx = 0; idx < ARRAY_SIZE(ports); idx++) {
-    if (ports[idx].audio == AudioNdac) {
+    if (strcmp(ports[idx].audio, AudioNdac) == 0) {
       cp.type = AUDIO_MIXER_ENUM;
       cp.dev = SV_FIRST_MIXER + idx * SV_DEVICES_PER_PORT + 1;
       cp.un.ord = 0;
