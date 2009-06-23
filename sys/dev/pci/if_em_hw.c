@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.33 2009/06/04 05:08:43 claudio Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.34 2009/06/23 14:09:51 claudio Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -220,6 +220,12 @@ em_set_phy_type(struct em_hw *hw)
     case IFE_C_E_PHY_ID:
         hw->phy_type = em_phy_ife;
         break;
+    case BME1000_E_PHY_ID:
+        if (hw->phy_revision == 1) {
+            hw->phy_type = em_phy_bm;
+            break;
+        }
+        /* FALLTHROUGH */
     case GG82563_E_PHY_ID:
         if (hw->mac_type == em_80003es2lan) {
             hw->phy_type = em_phy_gg82563;
@@ -440,6 +446,9 @@ em_set_mac_type(struct em_hw *hw)
     case E1000_DEV_ID_82573V_PM:
         hw->mac_type = em_82573;
         break;
+    case E1000_DEV_ID_82574L:
+        hw->mac_type = em_82574;
+        break;
     case E1000_DEV_ID_82575EB_PT:
     case E1000_DEV_ID_82575EB_PF:
     case E1000_DEV_ID_82575GB_QP:
@@ -492,6 +501,7 @@ em_set_mac_type(struct em_hw *hw)
     case em_82571:
     case em_82572:
     case em_82573:
+    case em_82574:
         hw->eeprom_semaphore_present = TRUE;
         /* FALLTHROUGH */
     case em_82541:
@@ -543,6 +553,7 @@ em_set_media_type(struct em_hw *hw)
         case em_ich8lan:
         case em_ich9lan:
         case em_82573:
+        case em_82574:
             /* The STATUS_TBIMODE bit is reserved or reused for the this
              * device.
              */
@@ -626,7 +637,7 @@ em_reset_hw(struct em_hw *hw)
 
     /* Must acquire the MDIO ownership before MAC reset.
      * Ownership defaults to firmware after a reset. */
-    if (hw->mac_type == em_82573) {
+    if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
         timeout = 10;
 
         extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
@@ -723,6 +734,7 @@ em_reset_hw(struct em_hw *hw)
             msec_delay(20);
             break;
         case em_82573:
+        case em_82574:
             if (em_is_onboard_nvm_eeprom(hw) == FALSE) {
                 usec_delay(10);
                 ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
@@ -826,6 +838,7 @@ em_initialize_hardware_bits(struct em_hw *hw)
                 E1000_WRITE_REG(hw, TARC1, reg_tarc1);
                 break;
             case em_82573:
+            case em_82574:
                 reg_ctrl_ext = E1000_READ_REG(hw, CTRL_EXT);
                 reg_ctrl = E1000_READ_REG(hw, CTRL);
 
@@ -1023,7 +1036,7 @@ em_init_hw(struct em_hw *hw)
         E1000_WRITE_REG(hw, TXDCTL, ctrl);
     }
 
-    if (hw->mac_type == em_82573) {
+    if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) { 
         em_enable_tx_pkt_filtering(hw);
     }
 
@@ -1063,7 +1076,7 @@ em_init_hw(struct em_hw *hw)
         break;
     }
 
-    if (hw->mac_type == em_82573) {
+    if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
         uint32_t gcr = E1000_READ_REG(hw, GCR);
         gcr |= E1000_GCR_L1_ACT_WITHOUT_L0S_RX;
         E1000_WRITE_REG(hw, GCR, gcr);
@@ -1175,6 +1188,7 @@ em_setup_link(struct em_hw *hw)
         case em_ich8lan:
         case em_ich9lan:
         case em_82573:
+        case em_82574:
             hw->fc = E1000_FC_FULL;
             break;
         default:
@@ -1801,8 +1815,10 @@ em_copper_link_mgp_setup(struct em_hw *hw)
     if (ret_val)
         return ret_val;
 
-    phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
-
+    /* For BM PHY this bit is downshift enable */
+    if (hw->phy_type != em_phy_bm)
+        phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
+                                
     /* Options:
      *   MDI/MDI-X = 0 (default)
      *   0 - Auto for all speeds
@@ -1837,11 +1853,17 @@ em_copper_link_mgp_setup(struct em_hw *hw)
     phy_data &= ~M88E1000_PSCR_POLARITY_REVERSAL;
     if (hw->disable_polarity_correction == 1)
         phy_data |= M88E1000_PSCR_POLARITY_REVERSAL;
+
+    /* Enable downshift on BM (disabled by default) */
+    if (hw->phy_type == em_phy_bm)
+        phy_data |= BME1000_PSCR_ENABLE_DOWNSHIFT;
+
     ret_val = em_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
     if (ret_val)
         return ret_val;
 
-    if (hw->phy_revision < M88E1011_I_REV_4) {
+    if ((hw->phy_type == em_phy_m88) &&
+        (hw->phy_revision < M88E1011_I_REV_4)) {
         /* Force TX_CLK in the Extended PHY Specific Control Register
          * to 25MHz clock.
          */
@@ -1871,6 +1893,22 @@ em_copper_link_mgp_setup(struct em_hw *hw)
             if (ret_val)
                return ret_val;
         }
+    }
+
+    if ((hw->phy_type == em_phy_bm) && (hw->phy_revision == 1)) {
+        /*
+    	 * Set PHY page 0, register 29 to 0x0003
+         * The next two writes are supposed to lower BER for gig
+         * conection
+	 */
+        ret_val = em_write_phy_reg(hw, BM_REG_BIAS1, 0x0003);
+      	if (ret_val)
+            return ret_val;
+
+        /* Set PHY page 0, register 30 to 0x0000 */
+        ret_val = em_write_phy_reg(hw, BM_REG_BIAS2, 0x0000);
+        if (ret_val)
+            return ret_val;
     }
 
     /* SW Reset the PHY so all changes take effect */
@@ -2054,7 +2092,8 @@ em_setup_copper_link(struct em_hw *hw)
         ret_val = em_copper_link_igp_setup(hw);
         if (ret_val)
             return ret_val;
-    } else if (hw->phy_type == em_phy_m88) {
+    } else if (hw->phy_type == em_phy_m88 ||
+               hw->phy_type == em_phy_bm) {
         ret_val = em_copper_link_mgp_setup(hw);
         if (ret_val)
             return ret_val;
@@ -2411,7 +2450,8 @@ em_phy_force_speed_duplex(struct em_hw *hw)
     E1000_WRITE_REG(hw, CTRL, ctrl);
 
     if ((hw->phy_type == em_phy_m88) ||
-        (hw->phy_type == em_phy_gg82563)) {
+        (hw->phy_type == em_phy_gg82563) ||
+        (hw->phy_type == em_phy_bm)) {
         ret_val = em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
         if (ret_val)
             return ret_val;
@@ -2493,7 +2533,8 @@ em_phy_force_speed_duplex(struct em_hw *hw)
         }
         if ((i == 0) &&
            ((hw->phy_type == em_phy_m88) ||
-            (hw->phy_type == em_phy_gg82563))) {
+            (hw->phy_type == em_phy_gg82563) ||
+            (hw->phy_type == em_phy_bm))) {
             /* We didn't get link.  Reset the DSP and wait again for link. */
             ret_val = em_phy_reset_dsp(hw);
             if (ret_val) {
@@ -2518,7 +2559,8 @@ em_phy_force_speed_duplex(struct em_hw *hw)
         }
     }
 
-    if (hw->phy_type == em_phy_m88) {
+    if (hw->phy_type == em_phy_m88 ||
+        hw->phy_type == em_phy_bm) {
         /* Because we reset the PHY above, we need to re-force TX_CLK in the
          * Extended PHY Specific Control Register to 25MHz clock.  This value
          * defaults back to a 2.5MHz clock when the PHY is reset.
@@ -3563,7 +3605,15 @@ em_read_phy_reg(struct em_hw *hw,
                 return ret_val;
             }
         }
-    }
+    } else if ((hw->phy_type == em_phy_bm) && (hw->phy_revision == 1)) {
+        if (reg_addr > MAX_PHY_MULTI_PAGE_REG) {
+            ret_val = em_write_phy_reg_ex(hw, BM_PHY_PAGE_SELECT,
+                              (uint16_t)((uint16_t)reg_addr >> PHY_PAGE_SHIFT));
+            if (ret_val)
+                return ret_val;
+        }
+    } 
+
 
     ret_val = em_read_phy_reg_ex(hw, MAX_PHY_REG_ADDRESS & reg_addr,
                                     phy_data);
@@ -3701,7 +3751,14 @@ em_write_phy_reg(struct em_hw *hw, uint32_t reg_addr,
                 return ret_val;
             }
         }
-    }
+    } else if ((hw->phy_type == em_phy_bm) && (hw->phy_revision == 1)) {
+        if (reg_addr > MAX_PHY_MULTI_PAGE_REG) { 
+            ret_val = em_write_phy_reg_ex(hw, BM_PHY_PAGE_SELECT,
+        		      (uint16_t)((uint16_t)reg_addr >> PHY_PAGE_SHIFT));
+            if (ret_val)
+                return ret_val;
+        }
+    } 
 
     ret_val = em_write_phy_reg_ex(hw, MAX_PHY_REG_ADDRESS & reg_addr,
                                      phy_data);
@@ -4118,6 +4175,9 @@ em_detect_gig_phy(struct em_hw *hw)
     case em_82573:
         if (hw->phy_id == M88E1111_I_PHY_ID) match = TRUE;
         break;
+    case em_82574:
+        if (hw->phy_id == BME1000_E_PHY_ID) match = TRUE;
+        break;
     case em_80003es2lan:
         if (hw->phy_id == GG82563_E_PHY_ID) match = TRUE;
         break;
@@ -4263,6 +4323,7 @@ em_init_eeprom_params(struct em_hw *hw)
         eeprom->use_eewr = FALSE;
         break;
     case em_82573:
+    case em_82574:
         eeprom->type = em_eeprom_spi;
         eeprom->opcode_bits = 8;
         eeprom->delay_usec = 1;
@@ -4515,7 +4576,7 @@ em_acquire_eeprom(struct em_hw *hw)
         return -E1000_ERR_SWFW_SYNC;
     eecd = E1000_READ_REG(hw, EECD);
 
-    if (hw->mac_type != em_82573) {
+    if ((hw->mac_type != em_82573) &&(hw->mac_type != em_82574)) {
         /* Request EEPROM Access */
         if (hw->mac_type > em_82544) {
             eecd |= E1000_EECD_REQ;
@@ -4923,7 +4984,7 @@ em_is_onboard_nvm_eeprom(struct em_hw *hw)
     if (hw->mac_type == em_ich8lan || hw->mac_type == em_ich9lan)
         return FALSE;
 
-    if (hw->mac_type == em_82573) {
+    if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
         eecd = E1000_READ_REG(hw, EECD);
 
         /* Isolate bits 15 & 16 */
@@ -4954,7 +5015,7 @@ em_validate_eeprom_checksum(struct em_hw *hw)
 
     DEBUGFUNC("em_validate_eeprom_checksum");
 
-    if ((hw->mac_type == em_82573) &&
+    if (((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) &&
         (em_is_onboard_nvm_eeprom(hw) == FALSE)) {
         /* Check bit 4 of word 10h.  If it is 0, firmware is done updating
          * 10h-12h.  Checksum may need to be fixed. */
@@ -5080,7 +5141,7 @@ em_write_eeprom(struct em_hw *hw,
         return -E1000_ERR_EEPROM;
     }
 
-    /* 82573 writes only through eewr */
+    /* 82573/4 writes only through eewr */
     if (eeprom->use_eewr == TRUE)
         return em_write_eeprom_eewr(hw, offset, words, data);
 
@@ -5280,7 +5341,7 @@ em_commit_shadow_ram(struct em_hw *hw)
     uint8_t high_byte = 0;
     boolean_t sector_write_failed = FALSE;
 
-    if (hw->mac_type == em_82573) {
+    if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
         /* The flop register will be used to determine if flash type is STM */
         flop = E1000_READ_REG(hw, FLOP);
         for (i=0; i < attempts; i++) {
@@ -5826,7 +5887,7 @@ em_clear_vfta(struct em_hw *hw)
     if (hw->mac_type == em_ich8lan || hw->mac_type == em_ich9lan)
         return;
 
-    if (hw->mac_type == em_82573) {
+    if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) {
         if (hw->mng_cookie.vlan_id != 0) {
             /* The VFTA is a 4096b bit-field, each identifying a single VLAN
              * ID.  The following operations determine which 32b entry
@@ -6129,6 +6190,7 @@ em_get_bus_info(struct em_hw *hw)
     case em_82571:
     case em_82572:
     case em_82573:
+    case em_82574:
     case em_82575:
     case em_80003es2lan:
         hw->bus_type = em_bus_type_pci_express;
@@ -7279,6 +7341,7 @@ em_get_auto_rd_done(struct em_hw *hw)
     case em_82571:
     case em_82572:
     case em_82573:
+    case em_82574:
     case em_82575:
     case em_80003es2lan:
     case em_ich8lan:
@@ -7300,7 +7363,7 @@ em_get_auto_rd_done(struct em_hw *hw)
     /* PHY configuration from NVM just starts after EECD_AUTO_RD sets to high.
      * Need to wait for PHY configuration completion before accessing NVM
      * and PHY. */
-    if (hw->mac_type == em_82573)
+    if ((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) 
         msec_delay(25);
 
     return E1000_SUCCESS;

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.212 2009/06/05 16:27:40 naddy Exp $ */
+/* $OpenBSD: if_em.c,v 1.213 2009/06/23 14:09:51 claudio Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -116,6 +116,7 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L_PL_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L_PL_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573V_PM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82574L },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575EB_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575EB_SERDES },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575GB_QUAD_CPR },
@@ -329,6 +330,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		}
 		case em_82571:
 		case em_82572:
+		case em_82574:
 		case em_82575:
 		case em_ich9lan:
 		case em_80003es2lan:	/* Limit Jumbo Frame size */
@@ -694,6 +696,9 @@ em_init(void *arg)
 	case em_82573: /* 82573: Total Packet Buffer is 32K */
 		/* Jumbo frames not supported */
 		pba = E1000_PBA_12K; /* 12K for Rx, 20K for Tx */
+		break;
+	case em_82574: /* Total Packet Buffer is 40k */
+		pba = E1000_PBA_30K; /* 30K for Rx, 10K for Tx */
 		break;
 	case em_ich8lan:
 		pba = E1000_PBA_8K;
