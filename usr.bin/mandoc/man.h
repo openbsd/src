@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.3 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: man.h,v 1.4 2009/06/23 22:31:26 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -63,6 +63,7 @@ struct	man_node {
 	struct man_node	*child;
 	struct man_node	*next;
 	struct man_node	*prev;
+	int		 nchild;
 	int		 line;
 	int		 pos;
 	int		 tok;
@@ -73,7 +74,8 @@ struct	man_node {
 	char		*string;
 };
 
-#define	MAN_IGN_MACRO	 (1 << 0) /* Ignore unknown macros. */
+#define	MAN_IGN_MACRO	 (1 << 0)
+#define	MAN_IGN_CHARS	 (1 << 1)
 
 extern	const char *const *man_macronames;
 

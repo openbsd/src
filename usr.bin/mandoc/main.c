@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.7 2009/06/21 20:10:31 schwarze Exp $ */
+/*	$Id: main.c,v 1.8 2009/06/23 22:31:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -219,10 +219,12 @@ man_init(struct curparse *curp)
 
 	/* Defaults from mandoc.1. */
 
-	pflags = MAN_IGN_MACRO;
+	pflags = MAN_IGN_MACRO | MAN_IGN_CHARS;
 
 	if (curp->fflags & NO_IGN_MACRO)
 		pflags &= ~MAN_IGN_MACRO;
+	if (curp->fflags & NO_IGN_CHARS)
+		pflags &= ~MAN_IGN_CHARS;
 
 	if (NULL == (man = man_alloc(curp, pflags, &mancb)))
 		warnx("memory exhausted");

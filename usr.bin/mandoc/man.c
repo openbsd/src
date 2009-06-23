@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.4 2009/06/23 22:05:42 schwarze Exp $ */
+/*	$Id: man.c,v 1.5 2009/06/23 22:31:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -182,6 +182,8 @@ man_node_append(struct man *man, struct man_node *p)
 		abort();
 		/* NOTREACHED */
 	}
+	
+	p->parent->nchild++;
 
 	man->last = p;
 
@@ -250,6 +252,8 @@ man_node_free(struct man_node *p)
 
 	if (p->string)
 		free(p->string);
+	if (p->parent)
+		p->parent->nchild--;
 	free(p);
 }
 
@@ -263,6 +267,7 @@ man_node_freelist(struct man_node *p)
 	if (p->next)
 		man_node_freelist(p->next);
 
+	assert(0 == p->nchild);
 	man_node_free(p);
 }
 
