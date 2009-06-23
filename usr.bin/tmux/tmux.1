@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.13 2009/06/23 22:13:11 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.14 2009/06/23 23:26:08 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -109,10 +109,13 @@ flag is ignored.
 Unlock the server.
 .It Fl u
 .Nm
-attempts to guess if the terminal is likely to support UTF-8 by checking
-the
+attempts to guess if the terminal is likely to support UTF-8 by checking the
+first of the
+.Ev LC_ALL ,
+.Ev LC_CTYPE
+and
 .Ev LANG
-environment variable for the string "UTF-8".
+environment variables to be set for the string "UTF-8".
 This is not always correct: the
 .Fl u
 flag explicitly informs
