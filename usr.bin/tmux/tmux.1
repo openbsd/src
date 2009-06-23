@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.12 2009/06/04 13:36:25 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.13 2009/06/23 22:13:11 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2009 $
+.Dd $Mdocdate: June 23 2009 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -189,6 +189,43 @@ lists the current key bindings in the current window; up and down may be used
 to navigate the list or
 .Ql q
 to exit from it.
+.Pp
+Commands to be run when the
+.Nm
+server is started may be placed in the
+.Pa ~/.tmux.conf 
+configuration file.
+Common examples include:
+.Bl -ohang -width Ds
+.It Changing the default prefix key:
+.Bd -literal -offset indent
+set-option -g prefix C-a
+unbind-key C-b
+bind-key C-a send-prefix
+.Ed
+.Pp
+.It Xo
+Turning the status line off, or changing its colour:
+.Xc
+.Bd -literal -offset indent
+set-option -g status off
+set-option -g status-bg blue
+.Ed
+.Pp
+.It Xo
+Setting other options, such as the default command, or locking after 30 minutes 
+of inactivity:
+.Xc
+.Bd -literal -offset indent
+set-option -g default-command "exec /bin/ksh"
+set-option -g lock-after-time 1800
+.Ed
+.It Creating new key bindings:
+.Bd -literal -offset indent
+bind-key b set-option status
+bind-key / command-prompt "split-window 'exec man %%'"
+.Ed
+.El
 .Sh KEY BINDINGS
 .Nm
 may be controlled from an attached client by using a key combination of a
