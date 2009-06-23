@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.182 2009/06/19 14:05:32 henning Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.183 2009/06/23 18:48:07 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 19 2009 $
+.Dd $Mdocdate: June 23 2009 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -258,9 +258,7 @@ Disable
 on the given interface and remove all configured
 .Xr inet6 4
 addresses, including the link-local ones.
-To turn
-.Xr inet6 4
-on again assign any inet6 address or run
+To turn it on again, assign any inet6 address or run
 .Xr rtsol 8 .
 .It Cm instance Ar minst
 Set the media instance to
@@ -950,7 +948,7 @@ Unset the source address.
 The options are as follows:
 .Bl -tag -width Ds
 .It Cm defer
-Defer transmission of the first packet in a state until a peer has 
+Defer transmission of the first packet in a state until a peer has
 acknowledged that the associated state has been inserted.
 See
 .Xr pfsync 4

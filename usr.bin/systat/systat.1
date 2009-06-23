@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.79 2009/06/19 07:48:45 jasper Exp $
+.\"	$OpenBSD: systat.1,v 1.80 2009/06/23 18:52:16 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: June 19 2009 $
+.Dd $Mdocdate: June 23 2009 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -118,8 +118,6 @@ argument expects to be one of:
 .Ic sensors ,
 .Ic mbufs ,
 .Ic netstat ,
-.Ic nfsclient ,
-.Ic nfsserver ,
 .Ic swap ,
 .Ic states ,
 .Ic rules ,
@@ -127,8 +125,10 @@ argument expects to be one of:
 .Ic pf ,
 .Ic pool ,
 .Ic malloc ,
+.Ic buckets ,
+.Ic nfsclient ,
 or
-.Ic buckets .
+.Ic nfsserver .
 These displays can also be requested interactively and are described in
 full detail below.
 .Ar view
@@ -333,12 +333,12 @@ with each shown symbolically, when possible.
 .\"Display only network connections using the indicated protocol.
 .\".El
 .It Ic nfsclient
-Display statistics about the NFS client activity.
+Display statistics about NFS client activity.
 Output ressembles
 .Cm nfsstat Fl c .
 .It Ic nfsserver
-Display statistics about the NFS server activity.
-Ooutput ressembles
+Display statistics about NFS server activity.
+Output ressembles
 .Cm nfsstat Fl s .
 .It Ic pf
 Display filter information about
