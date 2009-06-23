@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.54 2009/06/10 03:42:20 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.55 2009/06/23 13:21:48 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -392,8 +392,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		acpicpu_getppc(sc);
 		if (acpicpu_getpct(sc))
 			sc->sc_flags |= FLAGS_NOPCT;
-		else {
-
+		else if (sc->sc_pss_len > 0) {
 			/* Notify BIOS we are handing p-states */
 			if (sc->sc_acpi->sc_fadt->pstate_cnt)
 				acpi_write_pmreg(sc->sc_acpi, ACPIREG_SMICMD, 0,
