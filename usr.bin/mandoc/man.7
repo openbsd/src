@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.3 2009/06/18 23:34:53 schwarze Exp $
+.\"	$Id: man.7,v 1.4 2009/06/23 22:50:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2009 $
+.Dd $Mdocdate: June 23 2009 $
 .Dt MAN 7
 .Os
 .\" SECTION
@@ -52,9 +52,11 @@ Other lines are interpreted within the current state.
 .\" SECTION
 .Sh INPUT ENCODING
 .Nm
-documents may contain only graphable 7-bit ASCII characters and the
+documents may contain only graphable 7-bit ASCII characters, the
 space character
-.Sq \  .
+.Sq \  ,
+and tabs
+.Sq \et . 
 All manuals must have
 .Ux
 .Sq \en
@@ -95,7 +97,7 @@ Characters may alternatively be escaped by a slash-asterisk,
 .Sq \e* ,
 with the same combinations as described above.  This form is deprecated.  
 .\" SECTION
-.Sh STRUCTURE
+.Sh SYNTAX
 Macros are one to three three characters in length and begin with a
 control character ,
 .Sq \&. ,
@@ -153,7 +155,20 @@ The
 .Sq \&.TP
 macro is similar, but does not need an empty argument line to trigger
 the behaviour.
-.\" PARAGRAPH
+.\" SECTION
+.Sh STRUCTURE
+Each
+.Nm
+document must contain contains at least the
+.Sq \&.TH
+macro describing the document's section and title.  It may occur
+anywhere in the document, although conventionally, it appears as the
+first macro.
+.Pp
+Beyond the 
+.Sq \&.TH ,
+at least one macro or text node must appear in the document.
+.\" SECTION
 .Sh MACROS
 This section contains a complete list of all 
 .Nm
