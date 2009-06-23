@@ -1,4 +1,4 @@
-/*	$Id: man_hash.c,v 1.3 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: man_hash.c,v 1.4 2009/06/23 22:43:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -37,9 +37,13 @@ man_hash_alloc(void)
 	int		*htab;
 	int		 i, j, x;
 
-	htab = calloc(26 * 5, sizeof(int));
+	/* Initialised to -1. */
+
+	htab = malloc(26 * 5 * sizeof(int));
 	if (NULL == htab)
 		return(NULL);
+	for (i = 0; i < 26 * 5; i++)
+		htab[i] = -1;
 
 	for (i = 0; i < MAN_MAX; i++) {
 		x = man_macronames[i][0];
@@ -51,7 +55,7 @@ man_hash_alloc(void)
 		x *= 5;
 
 		for (j = 0; j < 5; j++)
-			if (0 == htab[x + j]) {
+			if (-1 == htab[x + j]) {
 				htab[x + j] = i;
 				break;
 			}
@@ -80,7 +84,7 @@ man_hash_find(const void *arg, const char *tmp)
 	x *= 5;
 
 	for (i = 0; i < 5; i++) {
-		if (0 == (tok = htab[x + i]))
+		if (-1 == (tok = htab[x + i]))
 			return(MAN_MAX);
 		if (0 == strcmp(tmp, man_macronames[tok]))
 			return(tok);
