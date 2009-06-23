@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.157 2009/06/23 15:51:35 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.158 2009/06/23 15:54:44 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2292,7 +2292,14 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 
 	/* metadata SHALL be fully filled in at this point */
 
-	if (sr_discipline_init(sd, bc->bc_level)) {
+	/* Make sure that metadata level matches assembly level. */
+	if (sd->sd_meta->ssdi.ssd_level != bc->bc_level) {
+		printf("%s: volume level does not match metadata level!\n",
+		    DEVNAME(sc));
+		goto unwind;
+	}
+
+	if (sr_discipline_init(sd, sd->sd_meta->ssdi.ssd_level)) {
 		printf("%s: could not initialize discipline\n", DEVNAME(sc));
 		goto unwind;
 	}
