@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.4 2009/03/05 03:09:37 mcbride Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.5 2009/06/24 13:27:34 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -512,7 +512,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	if (*sn != NULL)
 		PF_ACPY(&(*sn)->raddr, naddr, af);
 
-	if (pf_status.debug >= PF_DEBUG_MISC &&
+	if (pf_status.debug >= PF_DEBUG_NOISY &&
 	    (rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_NONE) {
 		printf("pf_map_addr: selected address ");
 		pf_print_host(naddr, 0, af);
