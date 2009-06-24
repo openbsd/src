@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.13 2008/06/26 05:42:21 ray Exp $ */
+/*	$OpenBSD: stat.c,v 1.14 2009/06/24 09:44:25 sobrado Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.13 2008/06/26 05:42:21 ray Exp $";
+    "$OpenBSD: stat.c,v 1.14 2009/06/24 09:44:25 sobrado Exp $";
 #endif
 
 #include <sys/types.h>
@@ -174,7 +174,8 @@ main(int argc, char *argv[])
 	timefmt = NULL;
 
 	options = "f:FlLnqrst:x";
-	synopsis = "[-FlLnqrsx] [-f format] [-t timefmt] [file ...]";
+	synopsis = "[-FLnq] [-f format | -l | -r | -s | -x] "
+	    "[-t timefmt] [file ...]";
 
 	while ((ch = getopt(argc, argv, options)) != -1)
 		switch (ch) {
