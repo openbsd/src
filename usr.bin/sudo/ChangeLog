@@ -1,3 +1,18 @@
+2009-06-23 14:29  millert
+
+	* sudoers.pod: Document that we accept env_pam-style environment
+	  files
+
+2009-06-23 14:24  millert
+
+	* env.c: Adapt to accept pam_env-style /etc/environment which
+	  allows shell-style lines such as: export EDITOR="/usr/bin/vi"
+
+2009-06-23 12:22  millert
+
+	* sudoers.pod: Make it clear that env_delete only works when
+	  !env_reset.  From Loïc Minier
+
 2009-06-15 17:19  millert
 
 	* sudo.pod, sudoers.pod: Add non-unix group bits, adapted from

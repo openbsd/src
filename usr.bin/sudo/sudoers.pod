@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.170 2009/06/15 21:19:47 millert Exp $
+$Sudo: sudoers.pod,v 1.172 2009/06/23 18:29:02 millert Exp $
 =pod
 
 =head1 NAME
@@ -990,13 +990,6 @@ two consecutive C<%> characters are collapsed into a single C<%> character
 
 The default value is C<@passprompt@>.
 
-=item role
-
-The default SELinux role to use when constructing a new security
-context to run the command.  The default role may be overridden on
-a per-command basis in I<sudoers> or via command line options.
-This option is only available whe B<sudo> is built with SELinux support.
-
 =item runas_default
 
 The default user to run commands as if the B<-u> option is not specified
@@ -1030,13 +1023,6 @@ The default is F<@timedir@>.
 The owner of the timestamp directory and the timestamps stored therein.
 The default is C<root>.
 
-=item type
-
-The default SELinux type to use when constructing a new security
-context to run the command.  The default type may be overridden on
-a per-command basis in I<sudoers> or via command line options.
-This option is only available whe B<sudo> is built with SELinux support.
-
 =back
 
 B<Strings that can be used in a boolean context>:
@@ -1056,11 +1042,13 @@ environment variable.
 
 =item env_file
 
-The I<env_file> options specifies the fully qualified path to a file
-containing variables to be set in the environment of the program
-being run.  Entries in this file should be of the form C<VARIABLE=value>.
-Variables in this file are subject to other B<sudo> environment
-settings such as I<env_keep> and I<env_check>.
+The I<env_file> options specifies the fully qualified path to a
+file containing variables to be set in the environment of the program
+being run.  Entries in this file should either be of the form
+C<VARIABLE=value> or C<export VARIABLE=value>.  The value may
+optionally be surrounded by single or double quotes.  Variables in
+this file are subject to other B<sudo> environment settings such
+as I<env_keep> and I<env_check>.
 
 =item exempt_group
 
@@ -1225,15 +1213,16 @@ the I<-V> option.
 
 =item env_delete
 
-Environment variables to be removed from the user's environment.
-The argument may be a double-quoted, space-separated list or a
-single value without double-quotes.  The list can be replaced, added
-to, deleted from, or disabled by using the C<=>, C<+=>, C<-=>, and
-C<!> operators respectively.  The default list of environment
-variables to remove is displayed when B<sudo> is run by root with the
-I<-V> option.  Note that many operating systems will remove potentially
-dangerous variables from the environment of any setuid process (such
-as B<sudo>).
+Environment variables to be removed from the user's environment
+when the I<env_reset> option is not in effect.  The argument may
+be a double-quoted, space-separated list or a single value without
+double-quotes.  The list can be replaced, added to, deleted from,
+or disabled by using the C<=>, C<+=>, C<-=>, and C<!> operators
+respectively.  The default list of environment variables to remove
+is displayed when B<sudo> is run by root with the I<-V> option.
+Note that many operating systems will remove potentially dangerous
+variables from the environment of any setuid process (such as
+B<sudo>).
 
 =item env_keep
 

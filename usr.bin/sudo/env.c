@@ -43,13 +43,14 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif /* HAVE_UNISTD_H */
+#include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
 
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: env.c,v 1.105 2009/06/15 13:10:01 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: env.c,v 1.106 2009/06/23 18:24:42 millert Exp $";
 #endif /* lint */
 
 /*
@@ -849,7 +850,11 @@ validate_env_vars(env_vars)
 
 /*
  * Read in /etc/environment ala AIX and Linux.
- * Lines are in the form of NAME=VALUE
+ * Lines may be in either of three formats:
+ *  NAME=VALUE
+ *  NAME="VALUE"
+ *  NAME='VALUE'
+ * with an optional "export" prefix so the shell can source the file.
  * Invalid lines, blank lines, or lines consisting solely of a comment
  * character are skipped.
  */
@@ -859,21 +864,45 @@ read_env_file(path, overwrite)
     int overwrite;
 {
     FILE *fp;
-    char *cp;
+    char *cp, *var, *val;
+    size_t var_len, val_len;
 
     if ((fp = fopen(path, "r")) == NULL)
 	return;
 
-    while ((cp = sudo_parseln(fp)) != NULL) {
+    while ((var = sudo_parseln(fp)) != NULL) {
 	/* Skip blank or comment lines */
-	if (*cp == '\0')
+	if (*var == '\0')
 	    continue;
 
-	/* Must be of the form name=value */
-	if (strchr(cp, '=') == NULL)
-	    continue;
+	/* Skip optional "export " */
+	if (strncmp(var, "export", 6) == 0 && isspace((unsigned char) var[6])) {
+	    var += 7;
+	    while (isspace((unsigned char) *var)) {
+		var++;
+	    }
+	}
 
-	sudo_putenv(estrdup(cp), TRUE, overwrite);
+	/* Must be of the form name=["']value['"] */
+	for (val = var; *val != '\0' && *val != '='; val++)
+	    ;
+	if (var == val || *val != '=')
+	    continue;
+	var_len = (size_t)(val - var);
+	val_len = strlen(++val);
+
+	/* Strip leading and trailing single/double quotes */
+	if ((val[0] == '\'' || val[0] == '\"') && val[0] == val[val_len - 1]) {
+	    val[val_len - 1] = '\0';
+	    val++;
+	    val_len -= 2;
+	}
+
+	cp = emalloc(var_len + 1 + val_len + 1);
+	memcpy(cp, var, var_len + 1); /* includes '=' */
+	memcpy(cp + var_len + 1, val, val_len + 1); /* includes NUL */
+
+	sudo_putenv(cp, TRUE, overwrite);
     }
     fclose(fp);
 }
