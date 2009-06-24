@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.5 2009/06/21 19:09:58 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.6 2009/06/24 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" 
-.Dd $Mdocdate: June 21 2009 $
+.Dd $Mdocdate: June 24 2009 $
 .Dt MDOC 7
 .Os
 .\" SECTION
@@ -139,6 +139,20 @@ Characters may alternatively be escaped by a slash-asterisk,
 with the same combinations as described above.  This form is deprecated.  
 .\" SECTION
 .Sh STRUCTURE
+Each
+.Nm
+document must begin with the document prologue, containing, in order, 
+.Sq \&.Dd ,
+.Sq \&.Dt ,
+and
+.Sq \&.Os .
+Following these, the document body must begin with the NAME section
+containing at least one 
+.Sq \&.Nm
+followed by a
+.Sq \&.Nd
+macro.
+.Pp
 Macros are classified in an ontology described by their scope rules.
 Some macros are allowed to deviate from their classifications to
 preserve backward-compatibility with old macro combinations still found
@@ -278,7 +292,7 @@ In-lines have \(>=0 scoped arguments.
 
 \&.Yy \(lB\-arg \(lBval...\(rB\(rB arg0 arg1 argN
 .Ed
-.\"
+.\" SECTION
 .Sh MACROS
 This section contains a complete list of all 
 .Nm
@@ -618,4 +632,9 @@ etc.).
 There's no way to refer to references in
 .Sq \&.Rs/.Re
 blocks.
+.\" LIST-ITEM
+.It
+The \-split and \-nosplit arguments to 
+.Sq \&.An
+are inane.
 .El
