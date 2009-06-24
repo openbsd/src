@@ -2435,3 +2435,11 @@
 ./usr/sbin/wsfontload
 ./usr/sbin/ztsscale
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/arm-openbsd/ntfs/ntfs.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/ntfs/ntfs_compr.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/ntfs/ntfs_ihash.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/ntfs/ntfs_inode.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/ntfs/ntfs_subr.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/ntfs/ntfs_vfsops.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/ntfs/ntfsmount.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/ntfs

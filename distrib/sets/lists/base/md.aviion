@@ -2240,3 +2240,11 @@
 ./usr/local/libdata/perl5/site_perl/m88k-openbsd
 ./usr/mdec/a2coff
 ./usr/mdec/netboot
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_compr.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_ihash.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_inode.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_subr.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_vfsops.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfsmount.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs

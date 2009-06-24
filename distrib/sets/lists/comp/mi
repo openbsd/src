@@ -1232,6 +1232,14 @@
 ./usr/include/nnpfs/nnpfs_vfsops.h
 ./usr/include/nnpfs/nnpfs_vnodeops.h
 ./usr/include/nnpfs/nnpfs_vopdefs.h
+./usr/include/ntfs
+./usr/include/ntfs/ntfs.h
+./usr/include/ntfs/ntfs_compr.h
+./usr/include/ntfs/ntfs_ihash.h
+./usr/include/ntfs/ntfs_inode.h
+./usr/include/ntfs/ntfs_subr.h
+./usr/include/ntfs/ntfs_vfsops.h
+./usr/include/ntfs/ntfsmount.h
 ./usr/include/objc
 ./usr/include/objc/NXConstStr.h
 ./usr/include/objc/Object.h

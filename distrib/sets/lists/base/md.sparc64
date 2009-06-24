@@ -2420,3 +2420,11 @@
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/sparc64-openbsd/ntfs/ntfs.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/ntfs/ntfs_compr.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/ntfs/ntfs_ihash.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/ntfs/ntfs_inode.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/ntfs/ntfs_subr.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/ntfs/ntfs_vfsops.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/ntfs/ntfsmount.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/ntfs

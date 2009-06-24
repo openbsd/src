@@ -2436,3 +2436,11 @@
 ./usr/mdec/mkboot
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_compr.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_ihash.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_inode.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_subr.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_vfsops.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfsmount.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs

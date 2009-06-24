@@ -2479,3 +2479,11 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/libdata/perl5/site_perl/i386-openbsd/ntfs/ntfs.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/ntfs/ntfs_compr.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/ntfs/ntfs_ihash.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/ntfs/ntfs_inode.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/ntfs/ntfs_subr.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/ntfs/ntfs_vfsops.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/ntfs/ntfsmount.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/ntfs
