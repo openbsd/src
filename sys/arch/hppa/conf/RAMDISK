@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.88 2009/04/28 17:10:24 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.89 2009/06/24 15:02:18 todd Exp $
 #
 # Diskless kernel config
 #
@@ -245,6 +245,8 @@ siop*	at pci?			# NCR 53C8XX SCSI controllers
 scsibus* at siop?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
 #scsibus* at ahd?
+softraid0	at root		# Software RAID
+scsibus* at softraid?
 
 em*	at pci?			# Intel Pro/1000 ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet

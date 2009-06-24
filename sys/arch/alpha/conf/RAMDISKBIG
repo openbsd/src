@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.78 2009/04/28 17:10:23 deraadt Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.79 2009/06/24 15:02:18 todd Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -169,6 +169,8 @@ pcscp*	at pci?				# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 twe*	at pci?				# 3ware Escalade RAID controllers
 scsibus* at twe?
+softraid0	at root			# Software RAID
+scsibus* at softraid?
 
 #UNTESTED: the following drivers are untested.
 adw*	at pci?				# AdvanSys ULTRA WIDE SCSI
