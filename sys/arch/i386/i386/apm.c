@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.83 2009/02/26 17:19:47 oga Exp $	*/
+/*	$OpenBSD: apm.c,v 1.84 2009/06/24 13:54:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -750,10 +750,8 @@ apmprobe(struct device *parent, void *match, void *aux)
 	bus_space_handle_t ch, dh;
 
 	if (apm_cd.cd_ndevs || strcmp(ba->ba_name, "apm") ||
-	    !(ba->ba_apmp->apm_detail & APM_32BIT_SUPPORTED)) {
-		DPRINTF(("%s: %x\n", ba->ba_name, ba->ba_apmp->apm_detail));
+	    !(ap->apm_detail & APM_32BIT_SUPPORTED))
 		return 0;
-	}
 
 	/* addresses check
 	   since pc* console and vga* probes much later
