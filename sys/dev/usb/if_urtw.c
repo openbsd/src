@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.22 2009/06/21 00:49:13 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.23 2009/06/24 01:07:12 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -612,11 +612,11 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t data8;
 	uint32_t data;
 	int i;
-	const char *urtw_name = NULL;
 
 	sc->sc_udev = uaa->device;
-
 	sc->sc_hwrev = urtw_lookup(uaa->vendor, uaa->product)->rev;
+
+	printf("%s: ", sc->sc_dev.dv_xname);
 
 	if (sc->sc_hwrev & URTW_HWREV_8187) {
 		urtw_read32_m(sc, URTW_TX_CONF, &data);
@@ -624,7 +624,7 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 		switch (data) {
 		case URTW_TX_HWREV_8187_D:
 			sc->sc_hwrev |= URTW_HWREV_8187_D;
-			urtw_name = "RTL8187 rev. D";
+			printf("RTL8187 rev D");
 			break;
 		case URTW_TX_HWREV_8187B_D:
 			/*
@@ -632,11 +632,11 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 			 * USB IDs of RTL8187.
 			 */
 			sc->sc_hwrev = URTW_HWREV_8187B | URTW_HWREV_8187B_B;
-			urtw_name = "RTL8187B rev. B (early)";
+			printf("RTL8187B rev B (early)");
 			break;
 		default:
 			sc->sc_hwrev |= URTW_HWREV_8187_B;
-			urtw_name = "RTL8187 rev. B (default)";
+			printf("RTL8187 rev 0x%02x", data >> 25);
 			break;
 		}
 	} else {
@@ -645,24 +645,22 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 		switch (data8) {
 		case URTW_8187B_HWREV_8187B_B:
 			sc->sc_hwrev |= URTW_HWREV_8187B_B;
-			urtw_name = "RTL8187B rev. B";
+			printf("RTL8187B rev B");
 			break;
 		case URTW_8187B_HWREV_8187B_D:
 			sc->sc_hwrev |= URTW_HWREV_8187B_D;
-			urtw_name = "RTL8187B rev. D";
+			printf("RTL8187B rev D");
 			break;
 		case URTW_8187B_HWREV_8187B_E:
 			sc->sc_hwrev |= URTW_HWREV_8187B_E;
-			urtw_name = "RTL8187B rev. E";
+			printf("RTL8187B rev E");
 			break;
 		default:
 			sc->sc_hwrev |= URTW_HWREV_8187B_B;
-			urtw_name = "RTL8187B rev. B (default)";
+			printf("RTL8187B rev 0x%02x", data8);
 			break;
 		}
 	}
-
-	printf("%s: %s", sc->sc_dev.dv_xname, urtw_name);
 
 	urtw_read32_m(sc, URTW_RX, &data);
 	sc->sc_epromtype = (data & URTW_RX_9356SEL) ? URTW_EEPROM_93C56 :
@@ -1283,10 +1281,12 @@ urtw_get_rfchip(struct urtw_softc *sc)
 				rf->init = urtw_8225_rf_init;
 				rf->set_chan = urtw_8225_rf_set_chan;
 				rf->set_sens = urtw_8225_rf_set_sens;
+				printf(", RFv1");
 			} else {
 				rf->init = urtw_8225v2_rf_init;
 				rf->set_chan = urtw_8225v2_rf_set_chan;
 				rf->set_sens = NULL;
+				printf(", RFv2");
 			}
 			break;
 		default:
