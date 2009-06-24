@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.47 2009/06/24 11:00:53 krw Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.48 2009/06/24 11:38:40 deraadt Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -44,15 +44,63 @@
 #include <mips64/archtype.h>
 #endif
 
-#include <dev/microcode/isp/asm_1040.h>
-#include <dev/microcode/isp/asm_1080.h>
-#include <dev/microcode/isp/asm_12160.h>
-#include <dev/microcode/isp/asm_2100.h>
-#include <dev/microcode/isp/asm_2200.h>
-#include <dev/microcode/isp/asm_2300.h>
-#include <dev/microcode/isp/asm_2400.h>
+#ifndef ISP_NOFIRMWARE
+#define	ISP_FIRMWARE_1040
+#define	ISP_FIRMWARE_1080
+#define	ISP_FIRMWARE_12160
+#define	ISP_FIRMWARE_2100
+#define	ISP_FIRMWARE_2200
+#define	ISP_FIRMWARE_2300
+#endif
 
-#define	BUS_PROBE_DEFAULT	0
+#if	defined(ISP_FIRMWARE_1040)
+#define	ISP_1040_RISC_CODE	(u_int16_t *) isp_1040_risc_code
+#include <dev/microcode/isp/asm_1040.h>
+#else
+#define	ISP_1040_RISC_CODE	NULL
+#endif
+
+#if	defined(ISP_FIRMWARE_1080)
+#define	ISP_1080_RISC_CODE	(u_int16_t *) isp_1080_risc_code
+#include <dev/microcode/isp/asm_1080.h>
+#else
+#define	ISP_1080_RISC_CODE	NULL
+#endif
+
+#if	defined(ISP_FIRMWARE_12160)
+#define	ISP_12160_RISC_CODE	(u_int16_t *) isp_12160_risc_code
+#include <dev/microcode/isp/asm_12160.h>
+#else
+#define	ISP_12160_RISC_CODE	NULL
+#endif
+
+#if	defined(ISP_FIRMWARE_2100)
+#define	ISP_2100_RISC_CODE	(u_int16_t *) isp_2100_risc_code
+#include <dev/microcode/isp/asm_2100.h>
+#else
+#define	ISP_2100_RISC_CODE	NULL
+#endif
+
+#if	defined(ISP_FIRMWARE_2200)
+#define	ISP_2200_RISC_CODE	(u_int16_t *) isp_2200_risc_code
+#include <dev/microcode/isp/asm_2200.h>
+#else
+#define	ISP_2200_RISC_CODE	NULL
+#endif
+
+#if	defined(ISP_FIRMWARE_2300)
+#define	ISP_2300_RISC_CODE	(u_int16_t *) isp_2300_risc_code
+#include <dev/microcode/isp/asm_2300.h>
+#else
+#define	ISP_2300_RISC_CODE	NULL
+#endif
+
+#if	defined(ISP_FIRMWARE_2400)
+#define	ISP_2400_RISC_CODE	(u_int16_t *) isp_2400_risc_code
+#include <dev/microcode/isp/asm_2400.h>
+#else
+#define	ISP_2400_RISC_CODE	NULL
+#endif
 
 uint32_t isp_pci_rd_reg(ispsoftc_t *, int);
 void isp_pci_wr_reg(ispsoftc_t *, int, uint32_t);
@@ -84,7 +132,7 @@ static struct ispmdvec mdvec = {
 	isp_pci_reset0,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	NULL,
+	ISP_1040_RISC_CODE,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64
 };
 
@@ -98,7 +146,7 @@ static struct ispmdvec mdvec_1080 = {
 	isp_pci_reset0,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	isp_1080_risc_code,
+	ISP_1080_RISC_CODE,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64
 };
 
@@ -112,7 +160,7 @@ static struct ispmdvec mdvec_12160 = {
 	isp_pci_reset0,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	isp_12160_risc_code,
+	ISP_12160_RISC_CODE,
 	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64
 };
 
@@ -126,7 +174,7 @@ static struct ispmdvec mdvec_2100 = {
 	isp_pci_reset0,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	isp_2100_risc_code
+	ISP_2100_RISC_CODE
 };
 
 static struct ispmdvec mdvec_2200 = {
@@ -139,7 +187,7 @@ static struct ispmdvec mdvec_2200 = {
 	isp_pci_reset0,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	isp_2200_risc_code
+	ISP_2200_RISC_CODE
 };
 
 static struct ispmdvec mdvec_2300 = {
@@ -152,7 +200,7 @@ static struct ispmdvec mdvec_2300 = {
 	isp_pci_reset0,
 	isp_pci_reset1,
 	isp_pci_dumpregs,
-	isp_2300_risc_code
+	ISP_2300_RISC_CODE
 };
 
 static struct ispmdvec mdvec_2400 = {

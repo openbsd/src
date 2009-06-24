@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.239 2009/06/04 00:26:17 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.240 2009/06/24 11:38:40 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -111,7 +111,6 @@ scsibus* at ahc?
 siop*	at pci?			# NCR 538XX SCSI controllers
 scsibus* at siop?
 isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
-option ISP_COMPILE_FW=1
 pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 mpi*	at pci?			# LSI Logic Fusion MPT Message Passing Interface
@@ -394,9 +393,7 @@ wd*	at wdc? flags 0x0000
 dma*	at sbus?				# SBus
 esp*	at dma?					# SBus
 esp*	at sbus?
-
 isp*	at sbus?
-option ISP_COMPILE_1000_FW=1
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.

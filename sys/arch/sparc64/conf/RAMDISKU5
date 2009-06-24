@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKU5,v 1.15 2009/06/04 00:26:17 kettenis Exp $
+#	$OpenBSD: RAMDISKU5,v 1.16 2009/06/24 11:38:40 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -60,9 +60,8 @@ atapiscsi* at pciide?
 scsibus* at atapiscsi?
 
 siop*	at pci?
-#isp*	at pci?
-#option	ISP_COMPILE_FW=1
 scsibus*	at siop?
+#isp*	at pci?
 #scsibus*	at isp?
 
 # These entries find devices on all SCSI busses and assign

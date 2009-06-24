@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.91 2009/05/20 18:22:32 miod Exp $
+#	$OpenBSD: GENERIC,v 1.92 2009/06/24 11:38:40 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -160,7 +160,6 @@ esp*	at dma? flags 0x00ff000f			# depending on model
 
 #sun4c, sun4m
 isp*	at sbus?
-options ISP_COMPILE_1000_FW=1
 
 # sun4m Ethernet - an AMD 7990 LANCE behind
 # specialized DMA glue

@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.74 2009/05/20 18:22:33 miod Exp $
+#	$OpenBSD: SUN4M,v 1.75 2009/06/24 11:38:40 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -115,7 +115,6 @@ esp*	at dma? flags 0x00ff000f			# depending on model
 
 #sun4c, sun4m
 isp*	at sbus?
-options ISP_COMPILE_1000_FW=1
 
 # sun4m Ethernet - an AMD 7990 LANCE behind
 # specialized DMA glue

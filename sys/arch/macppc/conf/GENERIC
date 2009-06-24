@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.192 2009/06/09 01:13:47 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.193 2009/06/24 11:38:40 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -64,7 +64,6 @@ pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
 isp*		at pci?		# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mpi*		at pci?		# LSI Logic MPT-Fusion Message Passing Interface
 arc*		at pci?		# Areca RAID Controllers
-option		ISP_COMPILE_FW
 pciide*		at pci?
 kauaiata*	at pci?		# Apple ATA 100
 wdc*		at kauaiata?

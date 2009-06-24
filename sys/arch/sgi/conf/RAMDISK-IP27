@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.4 2009/06/21 18:01:54 miod Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.5 2009/06/24 11:38:40 deraadt Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -68,7 +68,6 @@ owserial*	at onewire?
 
 #### SCSI controllers
 isp*		at pci?
-option		ISP_COMPILE_FW
 siop*		at pci?
 
 # USB Controllers

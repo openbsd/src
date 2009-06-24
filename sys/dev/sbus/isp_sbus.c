@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.13 2009/06/24 11:00:53 krw Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.14 2009/06/24 11:38:40 deraadt Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 
 /*
@@ -72,9 +72,17 @@
 #include <machine/autoconf.h>
 
 #include <dev/ic/isp_openbsd.h>
-#if	defined(ISP_COMPILE_FW) || defined(ISP_COMPILE_1000_FW)
-#include <dev/microcode/isp/asm_sbus.h>
+
+#ifndef ISP_NOFIRMWARE
+#define ISP_FIRMWARE_1000
 #endif
+
+#if	defined(ISP_FIRMWARE_1000)
+#include <dev/microcode/isp/asm_sbus.h>
+#else
+#define	ISP_1000_RISC_CODE	NULL
+#endif
+
 #include <dev/sbus/sbusvar.h>
 
 static int isp_sbus_intr(void *);
@@ -86,10 +94,6 @@ static int isp_sbus_mbxdma(struct ispsoftc *);
 static int isp_sbus_dmasetup(struct ispsoftc *, XS_T *, ispreq_t *, u_int32_t *,
     u_int32_t);
 static void isp_sbus_dmateardown(struct ispsoftc *, XS_T *, u_int32_t);
-
-#ifndef	ISP_1000_RISC_CODE
-#define	ISP_1000_RISC_CODE	NULL
-#endif
 
 static struct ispmdvec mdvec = {
 	isp_sbus_rd_isr,

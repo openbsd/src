@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.27 2009/06/24 11:00:53 krw Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.28 2009/06/24 11:38:40 deraadt Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -43,8 +43,15 @@
 #include <sparc/sparc/cpuvar.h>
 
 #include <dev/ic/isp_openbsd.h>
-#if	defined(ISP_COMPILE_FW) || defined(ISP_COMPILE_1000_FW)
+
+#ifndef ISP_NOFIRMWARE
+#define ISP_FIRMWARE_1000
+#endif
+
+#if	defined(ISP_FIRMWARE_1000)
 #include <dev/microcode/isp/asm_sbus.h>
+#else
+#define	ISP_1000_RISC_CODE	NULL
 #endif
 
 #define ISP_SBUSIFY_ISPHDR(isp, hdrp)					\
@@ -66,10 +73,6 @@ static int isp_sbus_dmasetup(struct ispsoftc *, struct scsi_xfer *,
 static void
 isp_sbus_dmateardown(struct ispsoftc *, struct scsi_xfer *, u_int32_t);
 static int isp_sbus_intr(void *);
-
-#ifndef	ISP_1000_RISC_CODE
-#define	ISP_1000_RISC_CODE	NULL
-#endif
 
 static struct ispmdvec mdvec = {
 	isp_sbus_rd_isr,
