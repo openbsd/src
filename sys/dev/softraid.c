@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.159 2009/06/24 12:06:00 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.160 2009/06/24 12:08:15 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2015,6 +2015,9 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev)
 				goto done;
 			}
 	}
+
+	/* Reset rebuild counter since we rebuilding onto a new chunk. */
+	sd->sd_meta->ssd_rebuild = 0;
 
 	/* recreate metadata */
 	open = 0; /* leave dev open from here on out */
