@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_tpublic.h,v 1.11 2008/11/01 18:54:27 krw Exp $ */
+/* $OpenBSD: isp_tpublic.h,v 1.12 2009/06/24 11:00:53 krw Exp $ */
 /* $FreeBSD: src/sys/dev/isp/isp_tpublic.h,v 1.19 2007/05/05 20:17:23 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -39,10 +39,11 @@
  */
 typedef enum {
  	QOUT_HBA_REG=0,	/* the argument is a pointer to a hba_register_t */
-	QOUT_TMD_START,	/* the argument is a pointer to a tmd_cmd_t */
-	QOUT_TMD_DONE,	/* the argument is a pointer to a tmd_cmd_t */
-	QOUT_TEVENT,	/* the argument is a pointer to a tmd_event_t */
-	QOUT_TMSG,	/* the argument is a pointer to a tmd_msg_t */
+ 	QOUT_ENABLE,	/* the argument is a pointer to a enadis_t */
+ 	QOUT_DISABLE,	/* the argument is a pointer to a enadis_t */
+ 	QOUT_TMD_START,	/* the argument is a pointer to a tmd_cmd_t */
+ 	QOUT_TMD_DONE,	/* the argument is a pointer to a tmd_cmd_t */
+ 	QOUT_NOTIFY,	/* the argument is a pointer to a tmd_notify_t */
  	QOUT_HBA_UNREG	/* the argument is a pointer to a hba_register_t */
 } tact_e;
 
@@ -51,27 +52,17 @@ typedef enum {
  * MD driver to figure out what to do with.
  */
 typedef enum {
-	QIN_HBA_REG=6,	/* the argument is a pointer to a hba_register_t */
-	QIN_ENABLE,	/* the argument is a pointer to a tmd_cmd_t */
-	QIN_DISABLE,	/* the argument is a pointer to a tmd_cmd_t */
+	QIN_HBA_REG=99,	/* the argument is a pointer to a hba_register_t */
+	QIN_GETINFO,	/* the argument is a pointer to a info_t */
+	QIN_SETINFO,	/* the argument is a pointer to a info_t */
+	QIN_GETDLIST,	/* the argument is a pointer to a fc_dlist_t */
+	QIN_ENABLE,	/* the argument is a pointer to a enadis_t */
+	QIN_DISABLE,	/* the argument is a pointer to a enadis_t */
 	QIN_TMD_CONT,	/* the argument is a pointer to a tmd_cmd_t */
 	QIN_TMD_FIN,	/* the argument is a pointer to a tmd_cmd_t */
+	QIN_NOTIFY_ACK,	/* the argument is a pointer to a tmd_notify_t */
 	QIN_HBA_UNREG	/* the argument is a pointer to a hba_register_t */
 } qact_e;
-
-#ifndef	IN_MSGLEN
-#define	IN_MSGLEN	8
-#endif
-typedef struct {
-	void *		nt_hba;			/* HBA tag */
-	u_int64_t	nt_iid;			/* initiator id */
-	u_int64_t	nt_tgt;			/* target id */
-	u_int64_t	nt_lun;			/* logical unit */
-	u_int8_t	nt_bus;			/* bus */
-	u_int8_t	nt_tagtype;		/* tag type */
-	u_int16_t	nt_tagval;		/* tag value */
-	u_int8_t	nt_msg[IN_MSGLEN];	/* message content */
-} tmd_msg_t;
 
 /*
  * This structure is used to register to other software modules the
@@ -85,19 +76,17 @@ typedef struct {
  */
 #define    QR_VERSION    16
 typedef struct {
-	void *	r_identity;
-	char	r_name[8];
-	int	r_inst;
-	int	r_lunwidth;
-	int	r_buswidth;
-	void   (*r_action)(int, void *);
+    /* NB: tags from here to r_version must never change */
+    void *                  r_identity;
+    void                    (*r_action)(qact_e, void *);
+    char                    r_name[8];
+    int                     r_inst;
+    int                     r_version;
+    u_int32_t               r_locator;
+    u_int32_t               r_nchannels;
+    enum { R_FC, R_SPI }    r_type;
+    void *                  r_private;
 } hba_register_t;
-
-typedef struct {
-	void *		ev_hba;			/* HBA tag */
-	u_int16_t	ev_bus;			/* bus */
-	u_int16_t	ev_event;		/* type of async event */
-} tmd_event_t;
 
 /*
  * An information structure that is used to get or set per-channel transport layer parameters.
@@ -295,26 +284,6 @@ typedef struct {
  * 
  */
 
-#ifndef	_LP64
-#if	defined(__alpha__) || defined(__sparcv9cpu) || defined(__sparc_v9__) ||\
-    defined(__ia64__)
-#define	_LP64
-#endif
-#endif
-
-#ifndef	_TMD_PAD_LEN
-#ifdef	_LP64
-#define	_TMD_PAD_LEN	12
-#else
-#define	_TMD_PAD_LEN	24
-#endif
-#endif
-#ifndef	ATIO_CDBLEN
-#define	ATIO_CDBLEN	26
-#endif
-#ifndef	QLTM_SENSELEN
-#define	QLTM_SENSELEN	18
-#endif
 #ifndef    TMD_CDBLEN
 #define    TMD_CDBLEN       16
 #endif
@@ -331,20 +300,26 @@ typedef struct tmd_cmd {
 	void *			cd_data;	/* 'pointer' to data */
 	u_int64_t		cd_iid;		/* initiator ID */
 	u_int64_t		cd_tgt;		/* target id */
-	u_int64_t		cd_lun;		/* logical unit */
-	u_int8_t		cd_bus;		/* bus */
-	u_int8_t		cd_tagtype;	/* tag type */
-	u_int32_t		cd_tagval;	/* tag value */
-	u_int8_t		cd_cdb[ATIO_CDBLEN];	/* Command */
-	u_int8_t		cd_lflags;	/* flags lower level sets */
-	u_int8_t		cd_hflags;	/* flags higher level sets */
-	u_int32_t		cd_totlen;	/* total data requirement */
+	u_int8_t		cd_lun[8];	/* logical unit */
+	u_int64_t		cd_tagval;	/* tag value */
+	u_int32_t		cd_channel;	/* channel index */
+	u_int32_t		cd_lflags;	/* flags lower level sets */
+	u_int32_t		cd_hflags;	/* flags higher level sets */
+	u_int32_t		cd_totlen;	/* total data load */
 	u_int32_t		cd_resid;	/* total data residual */
 	u_int32_t		cd_xfrlen;	/* current data load */
 	int32_t			cd_error;	/* current error */
-	u_int8_t		cd_sense[QLTM_SENSELEN];
-	u_int16_t		cd_scsi_status;	/* closing SCSI status */
-	u_int8_t		cd_reserved[_TMD_PAD_LEN];
+	u_int8_t		cd_tagtype;	/* tag type */
+	u_int8_t		cd_scsi_status;
+	u_int8_t		cd_sense[TMD_SENSELEN];
+	u_int8_t		cd_cdb[TMD_CDBLEN];
+	union {
+		void *		ptrs[QCDS / sizeof (void *)];
+		u_int64_t	llongs[QCDS / sizeof (u_int64_t)];
+		u_int32_t	longs[QCDS / sizeof (u_int32_t)];
+		u_int16_t	shorts[QCDS / sizeof (u_int16_t)];
+		u_int8_t	bytes[QCDS];
+	} cd_lreserved[4], cd_hreserved[4];
 } tmd_cmd_t;
 
 /* defined tags */
@@ -389,22 +364,21 @@ typedef struct tmd_cmd {
  * flags CDFH_DATA_IN and CDFH_DATA_OUT define which direction.
  */
 #define	CDFL_SNSVALID	0x01	/* sense data (from f/w) good */
-#define	CDFL_NODISC	0x02	/* disconnects disabled */
-#define	CDFL_SENTSENSE	0x04	/* last action sent sense data */
-#define	CDFL_SENTSTATUS	0x08	/* last action sent status */
-#define	CDFL_BIDIR      0x0C	/* bidirectional data */
-#define	CDFL_ERROR	0x10	/* last action ended in error */
-#define	CDFL_BUSY	0x40	/* this command is not on a free list */
-#define	CDFL_PRIVATE_0	0x80	/* private layer flags */
-	
+#define	CDFL_SENTSTATUS	0x02	/* last action sent status */
+#define	CDFL_DATA_IN	0x04	/* target (us) -> initiator (them) */
+#define CDFL_DATA_OUT	0x08	/* initiator (them) -> target (us) */
+#define    CDFL_BIDIR           0x0C            /* bidirectional data */
+#define    CDFL_ERROR           0x10            /* last action ended in error */
+#define    CDFL_NODISC          0x20            /* disconnects disabled */
+#define    CDFL_SENTSENSE       0x40            /* last action sent sense data */
+#define    CDFL_BUSY            0x80            /* this command is not on a free list */
+#define    CDFL_PRIVATE         0xFF000000      /* private layer flags */
 
-#define    CDFH_NODATA          0x00		/* no data transfer expected */
 #define    CDFH_SNSVALID        0x01            /* sense data (from outer layer) good */
 #define    CDFH_STSVALID        0x02            /* status valid */
 #define    CDFH_DATA_IN         0x04            /* target (us) -> initiator (them) */
 #define    CDFH_DATA_OUT        0x08            /* initiator (them) -> target (us) */
 #define    CDFH_DATA_MASK       0x0C            /* mask to cover data direction */
-#define    CDFH_PRIVATE_0       0x80            /* private layer flags */
 #define    CDFH_PRIVATE         0xFF000000      /* private layer flags */
 
 

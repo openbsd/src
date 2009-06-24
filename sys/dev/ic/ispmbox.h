@@ -1,4 +1,4 @@
-/*     $OpenBSD: ispmbox.h,v 1.22 2008/11/02 03:17:22 krw Exp $ */
+/*     $OpenBSD: ispmbox.h,v 1.23 2009/06/24 11:00:53 krw Exp $ */
 /* $FreeBSD: src/sys/dev/isp/ispmbox.h,v 1.59 2007/03/10 02:39:54 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -165,10 +165,6 @@
 
 #define	MBOX_BUSY			0x04
 
-typedef struct {
-	u_int16_t param[8];
-} mbreg_t;
-
 /*
  * Mailbox Command Complete Status Codes
  */
@@ -254,18 +250,6 @@ typedef struct {
  */
 #define	QENTRY_LEN			64
 
-#define	WRITE_REQUEST_QUEUE_IN_POINTER(isp, value)	\
-	ISP_WRITE(isp, isp->isp_rqstinrp, value)
-
-#define	READ_REQUEST_QUEUE_OUT_POINTER(isp)		\
-	ISP_READ(isp, isp->isp_rqstoutrp)
-
-#define	READ_RESPONSE_QUEUE_IN_POINTER(isp)		\
-	ISP_READ(isp, isp->isp_respinrp)
-
-#define	WRITE_RESPONSE_QUEUE_OUT_POINTER(isp, value)	\
-	ISP_WRITE(isp, isp->isp_respoutrp, value)
-
 /*
  * Command Structure Definitions
  */
@@ -337,7 +321,7 @@ typedef struct {
 #define	RQSTYPE_T4RQS		0x15
 #define	RQSTYPE_ATIO2		0x16	/* Target Mode */
 #define	RQSTYPE_CTIO2		0x17	/* Target Mode */
-#define	RQSTYPE_CSET0		0x18
+#define	RQSTYPE_T7RQS		0x18
 #define	RQSTYPE_T3RQS		0x19
 #define	RQSTYPE_IP_XMIT_64	0x1b
 #define	RQSTYPE_CTIO4		0x1e	/* Target Mode */
@@ -362,7 +346,6 @@ typedef struct {
 	u_int8_t	req_lun_trn;
 	u_int8_t	req_target;
 	u_int16_t	req_cdblen;
-#define	req_modifier	req_cdblen	/* marker packet */
 	u_int16_t	req_flags;
 	u_int16_t	req_reserved;
 	u_int16_t	req_time;
@@ -826,7 +809,7 @@ typedef struct {
  *
  * Version One (prime) format.
  */
-typedef struct isp_icb {
+typedef struct {
 	u_int8_t	icb_version;
 	u_int8_t	icb_reserved0;
 	u_int16_t	icb_fwoptions;
@@ -898,16 +881,15 @@ typedef struct isp_icb {
 #define	ICBXOPT_RIO_32BIT	2
 #define	ICBXOPT_RIO_16BIT_IOCB	3
 #define	ICBXOPT_RIO_32BIT_IOCB	4
-#define	ICBXOPT_ZIO		(1 << 5)
+#define	ICBXOPT_ZIO		5	
 #define	ICBXOPT_TIMER_MASK	0x7
 
+#define	ICBZOPT_RATE_MASK	0xC000
+#define	ICBZOPT_RATE_ONEGB	0x0000
+#define	ICBZOPT_RATE_AUTO	0x8000
+#define	ICBZOPT_RATE_TWOGB	0x4000
 #define	ICBZOPT_50_OHM		0x2000
 #define	ICBZOPT_ENA_OOF		0x0040	/* out of order frame handling */
-/* These 3 only apply to the 2300 */
-#define	ICBZOPT_RATE_ONEGB	(MBGSD_ONEGB << 14)
-#define	ICBZOPT_RATE_TWOGB	(MBGSD_TWOGB << 14)
-#define	ICBZOPT_RATE_AUTO	(MBGSD_AUTO << 14)
-
 #define	ICBZOPT_RSPSZ_MASK	0x0030
 #define	ICBZOPT_RSPSZ_24	0x0000
 #define	ICBZOPT_RSPSZ_12	0x0010
@@ -1030,22 +1012,6 @@ typedef struct {
 	array[ICB_NNM6] = (u_int8_t) ((wwn >> 48) & 0xff), \
 	array[ICB_NNM7] = (u_int8_t) ((wwn >> 56) & 0xff)
 
-/*
- * FC-AL Position Map
- *
- * This is an at most 128 byte map that returns either
- * the LILP or Firmware generated list of ports.
- *
- * We deviate a bit from the returned QLogic format to
- * use an extra bit to say whether this was a LILP or
- * f/w generated map.
- */
-typedef struct {
-	u_int8_t	fwmap	: 1,
-			count	: 7;
-	u_int8_t	map[127];
-} fcpos_map_t;
-
 #define	MAKE_WWN_FROM_NODE_NAME(wwn, array)	\
 	wwn =	((u_int64_t) array[ICB_NNM0]) | \
 		((u_int64_t) array[ICB_NNM1] <<  8) | \
@@ -1099,7 +1065,7 @@ typedef struct {
 	u_int16_t	pdb_loopid;
 	u_int16_t	pdb_il_ptr;
 	u_int16_t	pdb_sl_ptr;
-} isp_pdb_t;
+} isp_pdb_21xx_t;
 
 #define	PDB_OPTIONS_XMITTING	(1<<11)
 #define	PDB_OPTIONS_LNKXMIT	(1<<10)
@@ -1158,13 +1124,14 @@ typedef struct {
 /*
  * Common elements from the above two structures that are actually useful to us.
  */
-
-#define	FS_ACC	0x8002
-#define	FS_RJT	0x8001
-
-#define	FC4_IP		5 /* ISO/EEC 8802-2 LLC/SNAP "Out of Order Delivery" */
-#define	FC4_SCSI	8 /* SCSI-3 via Fivre Channel Protocol (FCP) */
-#define	FC4_FC_SVC	0x20	/* Fibre Channel Services */
+typedef struct {
+	u_int16_t	handle;
+	u_int16_t	reserved;
+	u_int32_t	s3_role	: 8,
+			portid	: 24;
+	u_int8_t	portname[8];
+	u_int8_t	nodename[8];
+} isp_pdb_t;
 
 /*
  * Genericized Port Login/Logout software structure

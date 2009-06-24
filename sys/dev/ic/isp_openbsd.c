@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.35 2009/02/16 21:19:06 miod Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.36 2009/06/24 11:00:53 krw Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -40,8 +40,6 @@
  *  San Francisco, CA, 94131
  */
 
-/* expand expensive inline functions here. */
-#define EXPENSIVE_INLINE
 #include <dev/ic/isp_openbsd.h>
 
 /*
@@ -66,18 +64,28 @@ static void ispminphys(struct buf *, struct scsi_link *);
 static int32_t ispcmd_slow(XS_T *);
 static int32_t ispcmd(XS_T *);
 
-static struct scsi_device isp_dev = { NULL, NULL, NULL, NULL };
+struct scsi_device isp_dev = { NULL, NULL, NULL, NULL };
 
-static int isp_polled_cmd (struct ispsoftc *, XS_T *);
-static void isp_wdog (void *);
-static void isp_requeue(void *);
-static void isp_trestart(void *);
-static void isp_restart(struct ispsoftc *);
+int isp_polled_cmd (struct ispsoftc *, XS_T *);
+void isp_wdog (void *);
+void isp_make_here(ispsoftc_t *, int);
+void isp_make_gone(ispsoftc_t *, int);
+void isp_requeue(void *);
+void isp_trestart(void *);
+void isp_restart(struct ispsoftc *);
+void isp_add2_blocked_queue(struct ispsoftc *isp, XS_T *xs);
+int isp_mstohz(int ms);
 
 struct cfdriver isp_cd = {
 	NULL, "isp", DV_DULL
 };
 
+static const char *roles[4] = {
+    "(none)", "Target", "Initiator", "Target/Initiator"
+};
+static const char prom3[] =
+    "PortID 0x%06x Departed from Target %u because of %s";
+#define	isp_change_is_bad	0
 
 /*
  * Complete attachment of hardware, include subdevices.
@@ -104,8 +112,7 @@ isp_attach(struct ispsoftc *isp)
 	isp->isp_osinfo._adapter.scsi_cmd = ispcmd_slow;
 	if (IS_FC(isp)) {
 		lptr->adapter_buswidth = MAX_FC_TARG;
-		/* We can set max lun width here */
-		/* loopid set below */
+		lptr->adapter_target = MAX_FC_TARG; /* i.e. ignore. */
 	} else {
 		sdparam *sdp = isp->isp_param;
 		lptr->adapter_buswidth = MAX_TARGETS;
@@ -147,17 +154,10 @@ isp_attach(struct ispsoftc *isp)
 		 */
 		delay(4 * 1000000);
 	} else {
-		fcparam *fcp = isp->isp_param;
-		int defid = MAX_FC_TARG;
 		delay(2 * 1000000);
 		ISP_LOCK(isp);
 		isp_fc_runstate(isp, 10 * 1000000);
-		if (fcp->isp_fwstate == FW_READY &&
-		    fcp->isp_loopstate >= LOOP_PDB_RCVD) {
-			defid = fcp->isp_loopid;
-		}
 		ISP_UNLOCK(isp);
-		lptr->adapter_target = defid;
 	}
 
 	bzero(&saa, sizeof(saa));
@@ -195,7 +195,7 @@ ispminphys(struct buf *bp, struct scsi_link *sl)
 	minphys(bp);
 }
 
-static int32_t
+int32_t
 ispcmd_slow(XS_T *xs)
 {
 	sdparam *sdp;
@@ -273,9 +273,7 @@ ispcmd_slow(XS_T *xs)
 	return (ispcmd(xs));
 }
 
-static INLINE void isp_add2_blocked_queue(struct ispsoftc *, XS_T *);
-
-static INLINE void
+void
 isp_add2_blocked_queue(struct ispsoftc *isp, XS_T *xs)
 {
 	if (isp->isp_osinfo.wqf != NULL) {
@@ -287,7 +285,7 @@ isp_add2_blocked_queue(struct ispsoftc *isp, XS_T *xs)
 	xs->free_list.le_next = NULL;
 }
 
-static int32_t
+int32_t
 ispcmd(XS_T *xs)
 {
 	struct ispsoftc *isp;
@@ -308,16 +306,16 @@ ispcmd(XS_T *xs)
 
 	ISP_LOCK(isp);
 	if (isp->isp_state < ISP_RUNSTATE) {
-		DISABLE_INTS(isp);
+		ISP_DISABLE_INTS(isp);
 		isp_init(isp);
 		if (isp->isp_state != ISP_INITSTATE) {
-			ENABLE_INTS(isp);
+			ISP_ENABLE_INTS(isp);
 			ISP_UNLOCK(isp);
 			XS_SETERR(xs, HBA_BOTCH);
 			return (CMD_COMPLETE);
 		}
 		isp->isp_state = ISP_RUNSTATE;
-		ENABLE_INTS(isp);
+		ISP_ENABLE_INTS(isp);
 	}
 
 	/*
@@ -385,7 +383,7 @@ ispcmd(XS_T *xs)
 	return (result);
 }
 
-static int
+int
 isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 {
 	int result;
@@ -418,7 +416,8 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 		infinite = 1;
 
 	while (mswait || infinite) {
-		u_int16_t isr, sema, mbox;
+		u_int32_t isr;
+		u_int16_t sema, mbox;
 		if (ISP_READ_ISR(isp, &isr, &sema, &mbox)) {
 			isp_intr(isp, isr, sema, mbox);
 			if (XS_CMD_DONE_P(xs)) {
@@ -470,7 +469,7 @@ isp_done(XS_T *xs)
 	}
 }
 
-static void
+void
 isp_wdog(void *arg)
 {
 	XS_T *xs = arg;
@@ -485,7 +484,8 @@ isp_wdog(void *arg)
 	ISP_LOCK(isp);
 	handle = isp_find_handle(isp, xs);
 	if (handle) {
-		u_int16_t isr, sema, mbox;
+		u_int32_t isr;
+		u_int16_t sema, mbox;
 
 		if (XS_CMD_DONE_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
@@ -534,7 +534,7 @@ isp_wdog(void *arg)
 			XS_CMD_S_CLEAR(xs);
 			isp_done(xs);
 		} else {
-			u_int16_t nxti, optr;
+			u_int32_t optr, nxti;
 			ispreq_t local, *mp = &local, *qe;
 
 			isp_prt(isp, ISP_LOGWARN,
@@ -551,7 +551,7 @@ isp_wdog(void *arg)
 			MEMZERO((void *) mp, sizeof (*mp));
 			mp->req_header.rqs_entry_count = 1;
 			mp->req_header.rqs_entry_type = RQSTYPE_MARKER;
-			mp->req_modifier = SYNC_ALL;
+			mp->req_cdblen = SYNC_ALL;
 			mp->req_target = XS_CHANNEL(xs) << 7;
 			isp_put_request(isp, mp, qe);
 			ISP_ADD_REQUEST(isp, nxti);
@@ -560,6 +560,18 @@ isp_wdog(void *arg)
 		isp_prt(isp, ISP_LOGDEBUG1, "watchdog with no command");
 	}
 	ISP_UNLOCK(isp);
+}
+
+void
+isp_make_here(ispsoftc_t *isp, int tgt)
+{
+	isp_prt(isp, ISP_LOGINFO, "target %d has arrived", tgt);
+}
+
+void
+isp_make_gone(ispsoftc_t *isp, int tgt)
+{
+	isp_prt(isp, ISP_LOGINFO, "target %d has departed", tgt);
 }
 
 /*
@@ -576,7 +588,7 @@ isp_uninit(struct ispsoftc *isp)
 	/*
 	 * Leave with interrupts disabled.
 	 */
-	DISABLE_INTS(isp);
+	ISP_DISABLE_INTS(isp);
 
 	ISP_UNLOCK(isp);
 }
@@ -584,7 +596,7 @@ isp_uninit(struct ispsoftc *isp)
 /*
  * Restart function for a command to be requeued later.
  */
-static void
+void
 isp_requeue(void *arg)
 {
 	int r;
@@ -629,7 +641,7 @@ isp_requeue(void *arg)
  * Restart function after a LOOP UP event or a command completing,
  * sometimes done as a timeout for some hysteresis.
  */
-static void
+void
 isp_trestart(void *arg)
 {
 	struct ispsoftc *isp = arg;
@@ -657,7 +669,7 @@ isp_trestart(void *arg)
 	}
 }
 
-static void
+void
 isp_restart(struct ispsoftc *isp)
 {
 	struct scsi_xfer *list;
@@ -683,6 +695,14 @@ int
 isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 {
 	int bus, tgt;
+	char *msg = NULL;
+	static const char prom[] =
+	    "PortID 0x%06x handle 0x%x role %s %s\n"
+	    "      WWNN 0x%08x%08x WWPN 0x%08x%08x";
+	static const char prom2[] =
+	    "PortID 0x%06x handle 0x%x role %s %s tgt %u\n"
+	    "      WWNN 0x%08x%08x WWPN 0x%08x%08x";
+	fcportdb_t *lp;
 
 	switch (cmd) {
 	case ISPASYNC_NEW_TGT_PARAMS:
@@ -779,147 +799,157 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		timeout_add(&isp->isp_osinfo.rqt, 1);
 		isp_prt(isp, ISP_LOGINFO, "Loop UP");
 		break;
-	case ISPASYNC_PROMENADE:
-	if (IS_FC(isp) && isp->isp_dblev) {
-		const char *fmt = "Target %d (Loop 0x%x) Port ID 0x%x "
-		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
-		const static char *roles[4] = {
-		    "No", "Target", "Initiator", "Target/Initiator"
-		};
-		fcparam *fcp = isp->isp_param;
-		int tgt = *((int *) arg);
-		struct lportdb *lp = &fcp->portdb[tgt]; 
+	case ISPASYNC_DEV_ARRIVED:
+		lp = arg;
+		lp->reserved = 0;
+		if ((isp->isp_role & ISP_ROLE_INITIATOR) &&
+		    (lp->roles & (SVC3_TGT_ROLE >> SVC3_ROLE_SHIFT))) {
+			int dbidx = lp - FCPARAM(isp)->portdb;
+			int i;
 
-		isp_prt(isp, ISP_LOGINFO, fmt, tgt, lp->loopid, lp->portid,
-		    roles[lp->roles & 0x3],
-		    (lp->valid)? "Arrived" : "Departed",
-		    (u_int32_t) (lp->port_wwn >> 32),
-		    (u_int32_t) (lp->port_wwn & 0xffffffffLL),
-		    (u_int32_t) (lp->node_wwn >> 32),
-		    (u_int32_t) (lp->node_wwn & 0xffffffffLL));
-		break;
-	}
-	case ISPASYNC_CHANGE_NOTIFY:
-		if (arg == (void *) 1) {
-			isp_prt(isp, ISP_LOGINFO,
-			    "Name Server Database Changed");
+			for (i = 0; i < MAX_FC_TARG; i++) {
+				if (i >= FL_ID && i <= SNS_ID) {
+					continue;
+				}
+				if (FCPARAM(isp)->isp_ini_map[i] == 0) {
+					break;
+				}
+			}
+			if (i < MAX_FC_TARG) {
+				FCPARAM(isp)->isp_ini_map[i] = dbidx + 1;
+				lp->ini_map_idx = i + 1;
+				printf("ISPASYNC_DEV_ARRIVED: %d/%d\n",
+				    i, FCPARAM(isp)->isp_ini_map[i]);
+			} else {
+				isp_prt(isp, ISP_LOGWARN, "out of target ids");
+				isp_dump_portdb(isp);
+			}
+		}
+		if (lp->ini_map_idx) {
+			tgt = lp->ini_map_idx - 1;
+			isp_prt(isp, ISP_LOGCONFIG, prom2,
+			    lp->portid, lp->handle,
+		            roles[lp->roles], "arrived at", tgt,
+		    	    (uint32_t) (lp->node_wwn >> 32),
+			    (uint32_t) lp->node_wwn,
+		    	    (uint32_t) (lp->port_wwn >> 32),
+			    (uint32_t) lp->port_wwn);
+			isp_make_here(isp, tgt);
 		} else {
-			isp_prt(isp, ISP_LOGINFO,
-			    "Name Server Database Changed");
+			isp_prt(isp, ISP_LOGCONFIG, prom,
+			    lp->portid, lp->handle,
+		            roles[lp->roles], "arrived",
+		    	    (uint32_t) (lp->node_wwn >> 32),
+			    (uint32_t) lp->node_wwn,
+		    	    (uint32_t) (lp->port_wwn >> 32),
+			    (uint32_t) lp->port_wwn);
 		}
 		break;
-	case ISPASYNC_FABRIC_DEV:
-	{
-		int target, base, lim;
-		fcparam *fcp = isp->isp_param;
-		struct lportdb *lp = NULL;
-		struct lportdb *clp = (struct lportdb *) arg;
-		char *pt;
-
-		switch (clp->port_type) {
-		case 1:
-			pt = "   N_Port";
-			break;
-		case 2:
-			pt = "  NL_Port";
-			break;
-		case 3:
-			pt = "F/NL_Port";
-			break;
-		case 0x7f:
-			pt = "  Nx_Port";
-			break;
-		case 0x81:
-			pt = "  F_port";
-			break;
-		case 0x82:
-			pt = "  FL_Port";
-			break;
-		case 0x84:
-			pt = "   E_port";
-			break;
-		default:
-			pt = " ";
-			break;
-		}
-
-		isp_prt(isp, ISP_LOGINFO,
-		    "%s Fabric Device @ PortID 0x%x", pt, clp->portid);
-
-		/*
-		 * If we don't have an initiator role we bail.
-		 *
-		 * We just use ISPASYNC_FABRIC_DEV for announcement purposes.
-		 */
-
-		if ((isp->isp_role & ISP_ROLE_INITIATOR) == 0) {
-			break;
-		}
-
-		/*
-		 * Is this entry for us? If so, we bail.
-		 */
-
-		if (fcp->isp_portid == clp->portid) {
-			break;
-		}
-
-		/*
-		 * Else, the default policy is to find room for it in
-		 * our local port database. Later, when we execute
-		 * the call to isp_pdb_sync either this newly arrived
-		 * or already logged in device will be (re)announced.
-		 */
-
-		if (fcp->isp_topo == TOPO_FL_PORT)
-			base = FC_SNS_ID+1;
-		else
-			base = 0;
-
-		if (fcp->isp_topo == TOPO_N_PORT)
-			lim = 1;
-		else
-			lim = MAX_FC_TARG;
-
-		/*
-		 * Is it already in our list?
-		 */
-		for (target = base; target < lim; target++) {
-			if (target >= FL_PORT_ID && target <= FC_SNS_ID) {
-				continue;
+	case ISPASYNC_DEV_CHANGED:
+		lp = arg;
+		if (isp_change_is_bad) {
+			lp->state = FC_PORTDB_STATE_NIL;
+			if (lp->ini_map_idx) {
+				tgt = lp->ini_map_idx - 1;
+				FCPARAM(isp)->isp_ini_map[tgt] = 0;
+				printf("ISPASYNC_DEV_CHANGED: %d/%d\n",
+				    tgt, FCPARAM(isp)->isp_ini_map[tgt]);
+				lp->ini_map_idx = 0;
+				isp_prt(isp, ISP_LOGCONFIG, prom3,
+				    lp->portid, tgt, "change is bad");
+				isp_make_gone(isp, tgt);
+			} else {
+				isp_prt(isp, ISP_LOGCONFIG, prom,
+				    lp->portid, lp->handle,
+				    roles[lp->roles],
+				    "changed and departed",
+				    (uint32_t) (lp->node_wwn >> 32),
+				    (uint32_t) lp->node_wwn,
+				    (uint32_t) (lp->port_wwn >> 32),
+				    (uint32_t) lp->port_wwn);
 			}
-			lp = &fcp->portdb[target];
-			if (lp->port_wwn == clp->port_wwn &&
-			    lp->node_wwn == clp->node_wwn) {
-				lp->fabric_dev = 1;
-				break;
+		} else {
+			lp->portid = lp->new_portid;
+			lp->roles = lp->new_roles;
+			if (lp->ini_map_idx) {
+				int t = lp->ini_map_idx - 1;
+				FCPARAM(isp)->isp_ini_map[t] =
+				    (lp - FCPARAM(isp)->portdb) + 1;
+				printf("ISPASYNC_DEV_CHANGED(2): %d/%d\n",
+				    t, FCPARAM(isp)->isp_ini_map[t]);
+				tgt = lp->ini_map_idx - 1;
+				isp_prt(isp, ISP_LOGCONFIG, prom2,
+				    lp->portid, lp->handle,
+				    roles[lp->roles], "changed at", tgt,
+				    (uint32_t) (lp->node_wwn >> 32),
+				    (uint32_t) lp->node_wwn,
+				    (uint32_t) (lp->port_wwn >> 32),
+				    (uint32_t) lp->port_wwn);
+			} else {
+				isp_prt(isp, ISP_LOGCONFIG, prom,
+				    lp->portid, lp->handle,
+				    roles[lp->roles], "changed",
+				    (uint32_t) (lp->node_wwn >> 32),
+				    (uint32_t) lp->node_wwn,
+				    (uint32_t) (lp->port_wwn >> 32),
+				    (uint32_t) lp->port_wwn);
 			}
 		}
-		if (target < lim) {
-			break;
-		}
-		for (target = base; target < lim; target++) {
-			if (target >= FL_PORT_ID && target <= FC_SNS_ID) {
-				continue;
-			}
-			lp = &fcp->portdb[target];
-			if (lp->port_wwn == 0) {
-				break;
-			}
-		}
-		if (target == lim) {
-			isp_prt(isp, ISP_LOGWARN,
-			    "out of space for fabric devices");
-			break;
-		}
-		lp->port_type = clp->port_type;
-		lp->fc4_type = clp->fc4_type;
-		lp->node_wwn = clp->node_wwn;
-		lp->port_wwn = clp->port_wwn;
-		lp->portid = clp->portid;
-		lp->fabric_dev = 1;
 		break;
-	}
+	case ISPASYNC_DEV_STAYED:
+		lp = arg;
+		if (lp->ini_map_idx) {
+			tgt = lp->ini_map_idx - 1;
+			isp_prt(isp, ISP_LOGCONFIG, prom2,
+			    lp->portid, lp->handle,
+		    	    roles[lp->roles], "stayed at", tgt,
+			    (uint32_t) (lp->node_wwn >> 32),
+			    (uint32_t) lp->node_wwn,
+		    	    (uint32_t) (lp->port_wwn >> 32),
+			    (uint32_t) lp->port_wwn);
+		} else {
+			isp_prt(isp, ISP_LOGCONFIG, prom,
+			    lp->portid, lp->handle,
+		    	    roles[lp->roles], "stayed",
+			    (uint32_t) (lp->node_wwn >> 32),
+			    (uint32_t) lp->node_wwn,
+		    	    (uint32_t) (lp->port_wwn >> 32),
+			    (uint32_t) lp->port_wwn);
+		}
+		break;
+	case ISPASYNC_DEV_GONE:
+		lp = arg;
+		if (lp->ini_map_idx && lp->reserved == 0) {
+			lp->reserved = 1;
+			lp->state = FC_PORTDB_STATE_ZOMBIE;
+			tgt = lp->ini_map_idx - 1;
+			isp_prt(isp, ISP_LOGCONFIG, prom2,
+			    lp->portid, lp->handle,
+		            roles[lp->roles], "gone zombie at", tgt,
+		    	    (uint32_t) (lp->node_wwn >> 32),
+			    (uint32_t) lp->node_wwn,
+		    	    (uint32_t) (lp->port_wwn >> 32),
+			    (uint32_t) lp->port_wwn);
+		} else if (lp->reserved == 0) {
+			isp_prt(isp, ISP_LOGCONFIG, prom,
+			    lp->portid, lp->handle,
+			    roles[lp->roles], "departed",
+			    (uint32_t) (lp->node_wwn >> 32),
+			    (uint32_t) lp->node_wwn,
+			    (uint32_t) (lp->port_wwn >> 32),
+			    (uint32_t) lp->port_wwn);
+		}
+		break;
+	case ISPASYNC_CHANGE_NOTIFY:
+		if (arg == ISPASYNC_CHANGE_PDB) {
+			msg = "Port Database Changed";
+		} else if (arg == ISPASYNC_CHANGE_SNS) {
+			msg = "Name Server Database Changed";
+		} else {
+			msg = "Other Change Notify";
+		}
+		isp_prt(isp, ISP_LOGINFO, msg);
+		break;
 	case ISPASYNC_FW_CRASH:
 	{
 		u_int16_t mbox1, mbox6;
@@ -960,4 +990,136 @@ isp_prt(struct ispsoftc *isp, int level, const char *fmt, ...)
 	vprintf(fmt, ap);
 	va_end(ap);
 	printf("\n");
+}
+
+int
+isp_mbox_acquire(ispsoftc_t *isp)
+{
+	if (isp->isp_osinfo.mboxbsy) {
+		return (1);
+	} else {
+		isp->isp_osinfo.mboxcmd_done = 0;
+		isp->isp_osinfo.mboxbsy = 1;
+		return (0);
+	}
+}
+
+void
+isp_lock(struct ispsoftc *isp)
+{
+	int s = splbio();
+	if (isp->isp_osinfo.islocked++ == 0) {
+		isp->isp_osinfo.splsaved = s;
+	} else {
+		splx(s);
+	}
+}
+
+void
+isp_unlock(struct ispsoftc *isp)
+{
+	if (isp->isp_osinfo.islocked-- <= 1) {
+		isp->isp_osinfo.islocked = 0;
+		splx(isp->isp_osinfo.splsaved);
+	}
+}
+
+u_int64_t
+isp_nanotime_sub(struct timespec *b, struct timespec *a)
+{
+	struct timespec x;
+	u_int64_t elapsed;
+	timespecsub(b, a, &x);
+	elapsed = GET_NANOSEC(&x);
+	if (elapsed == 0)
+		elapsed++;
+	return (elapsed);
+}
+
+void
+isp_mbox_wait_complete(ispsoftc_t *isp, mbreg_t *mbp)
+{
+	unsigned int usecs = mbp->timeout;
+	unsigned int max, olim, ilim;
+
+	if (usecs == 0) {
+		usecs = MBCMD_DEFAULT_TIMEOUT;
+	}
+	max = isp->isp_mbxwrk0 + 1;
+
+	if (isp->isp_osinfo.mbox_sleep_ok) {
+		unsigned int ms = (usecs + 999) / 1000;
+
+		isp->isp_osinfo.mbox_sleep_ok = 0;
+		isp->isp_osinfo.mbox_sleeping = 1;
+		for (olim = 0; olim < max; olim++) {
+			tsleep(&isp->isp_mbxworkp, PRIBIO, "ispmbx_sleep",
+			    isp_mstohz(ms));
+			if (isp->isp_osinfo.mboxcmd_done) {
+				break;
+			}
+		}
+		isp->isp_osinfo.mbox_sleep_ok = 1;
+		isp->isp_osinfo.mbox_sleeping = 0;
+	} else {
+		for (olim = 0; olim < max; olim++) {
+			for (ilim = 0; ilim < usecs; ilim += 100) {
+				uint32_t isr;
+				uint16_t sema, mbox;
+				if (isp->isp_osinfo.mboxcmd_done) {
+					break;
+				}
+				if (ISP_READ_ISR(isp, &isr, &sema, &mbox)) {
+					isp_intr(isp, isr, sema, mbox);
+					if (isp->isp_osinfo.mboxcmd_done) {
+						break;
+					}
+				}
+				USEC_DELAY(100);
+			}
+			if (isp->isp_osinfo.mboxcmd_done) {
+				break;
+			}
+		}
+	}
+	if (isp->isp_osinfo.mboxcmd_done == 0) {
+		isp_prt(isp, ISP_LOGWARN,
+		    "%s Mailbox Command (0x%x) Timeout (%uus)",
+		    isp->isp_osinfo.mbox_sleep_ok? "Interrupting" : "Polled",
+		    isp->isp_lastmbxcmd, usecs);
+		mbp->param[0] = MBOX_TIMEOUT;
+		isp->isp_osinfo.mboxcmd_done = 1;
+	}
+}
+
+void
+isp_mbox_notify_done(ispsoftc_t *isp)
+{
+	if (isp->isp_osinfo.mbox_sleeping) {
+		wakeup(&isp->isp_mbxworkp);
+	}
+	isp->isp_osinfo.mboxcmd_done = 1;
+}
+
+void
+isp_mbox_release(ispsoftc_t *isp)
+{
+	isp->isp_osinfo.mboxbsy = 0;
+}
+
+int
+isp_mstohz(int ms)
+{
+	int hz;
+	struct timeval t;
+	t.tv_sec = ms / 1000;
+	t.tv_usec = (ms % 1000) * 1000;
+	hz = tvtohz(&t);
+	if (hz < 0) {
+		hz = 0x7fffffff;
+	}
+	if (hz == 0) {
+		hz = 1;
+	}
+	return (hz);
 }

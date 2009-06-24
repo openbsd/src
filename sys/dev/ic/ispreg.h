@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispreg.h,v 1.15 2008/10/25 22:53:30 krw Exp $ */
+/*	$OpenBSD: ispreg.h,v 1.16 2009/06/24 11:00:53 krw Exp $ */
 /* $FreeBSD: src/sys/dev/isp/ispreg.h,v 1.29 2007/03/10 02:39:54 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -203,7 +203,6 @@
 #define		BIU2100_FB_REGS		(1 << 4)	/* FrameBuffer Regs */
 #define		BIU2100_FPM0_REGS	(2 << 4)	/* FPM 0 Regs */
 #define		BIU2100_FPM1_REGS	(3 << 4)	/* FPM 1 Regs */
-#define	BIU2100_PCI64			0x04	/*  R: 64 Bit PCI slot */
 #define	BIU2100_NVRAM_OFFSET		(1 << 14)
 #define	BIU2100_FLASH_UPPER_64K		0x04	/* RW: Upper 64K Bank Select */
 #define	BIU2100_FLASH_ENABLE		0x02	/* RW: Enable Flash RAM */
@@ -230,16 +229,7 @@
 #define	BIU2100_ICR_ENABLE_TXDMA_INT	0x0001
 #define	BIU2100_ICR_DISABLE_ALL_INTS	0x0000
 
-#define	ENABLE_INTS(isp)	(IS_SCSI(isp))?  \
- ISP_WRITE(isp, BIU_ICR, BIU_ICR_ENABLE_RISC_INT | BIU_ICR_ENABLE_ALL_INTS) : \
- ISP_WRITE(isp, BIU_ICR, BIU2100_ICR_ENA_RISC_INT | BIU2100_ICR_ENABLE_ALL_INTS)
-
-#define	INTS_ENABLED(isp)	((IS_SCSI(isp))?  \
- (ISP_READ(isp, BIU_ICR) & (BIU_ICR_ENABLE_RISC_INT|BIU_ICR_ENABLE_ALL_INTS)) :\
- (ISP_READ(isp, BIU_ICR) & \
-	(BIU2100_ICR_ENA_RISC_INT|BIU2100_ICR_ENABLE_ALL_INTS)))
-
-#define	DISABLE_INTS(isp)	ISP_WRITE(isp, BIU_ICR, 0)
+#define	BIU2100_IMASK	(BIU2100_ICR_ENA_RISC_INT|BIU2100_ICR_ENABLE_ALL_INTS)
 
 /* BUS STATUS REGISTER */
 #define	BIU_ISR_DMA_INT			0x0020	/* DMA interrupt pending */
@@ -256,11 +246,14 @@
 #define	BIU2100_ISR_RXDMA_INT_PENDING	0x0002	/* Global interrupt pending */
 #define	BIU2100_ISR_TXDMA_INT_PENDING	0x0001	/* Global interrupt pending */
 
-#define	INT_PENDING(isp, isr)	(IS_FC(isp)? \
-	((isr & BIU2100_ISR_RISC_INT) != 0) : ((isr & BIU_ISR_RISC_INT) != 0))
+#define	INT_PENDING(isp, isr)						\
+ IS_FC(isp)?								\
+  (IS_24XX(isp)? (isr & BIU2400_ISR_RISC_INT) : (isr & BIU2100_ISR_RISC_INT)) :\
+  (isr & BIU_ISR_RISC_INT)
 
 #define	INT_PENDING_MASK(isp)	\
-	(IS_FC(isp)? BIU2100_ISR_RISC_INT: BIU_ISR_RISC_INT)
+ (IS_FC(isp)? (IS_24XX(isp)? BIU2400_ISR_RISC_INT : BIU2100_ISR_RISC_INT) : \
+ (BIU_ISR_RISC_INT))
 
 /* BUS SEMAPHORE REGISTER */
 #define	BIU_SEMA_STATUS		0x0002	/* Semaphore Status Bit */
@@ -464,12 +457,23 @@
 #define	MBOX_OFF(n)	(MBOX_BLOCK + ((n) << 1))
 #define	NMBOX(isp)	\
 	(((((isp)->isp_type & ISP_HA_SCSI) >= ISP_HA_SCSI_1040A) || \
-	 ((isp)->isp_type & ISP_HA_FC))? 8 : 6)
+	 ((isp)->isp_type & ISP_HA_FC))? 12 : 6)
 #define	NMBOX_BMASK(isp)	\
 	(((((isp)->isp_type & ISP_HA_SCSI) >= ISP_HA_SCSI_1040A) || \
-	 ((isp)->isp_type & ISP_HA_FC))? 0xff : 0x3f)
+	 ((isp)->isp_type & ISP_HA_FC))? 0xfff : 0x3f)
 
-#define	MAX_MAILBOX	8
+#define	MAX_MAILBOX(isp)	((IS_FC(isp))? 12 : 8)
+#define	MAILBOX_STORAGE		12
+/* if timeout == 0, then default timeout is picked */
+#define	MBCMD_DEFAULT_TIMEOUT	100000	/* 100 ms */
+typedef struct {
+	u_int16_t param[MAILBOX_STORAGE];
+	u_int16_t ibits;
+	u_int16_t obits;
+	u_int32_t	: 28,
+		logval	: 4;
+	u_int32_t timeout;
+} mbreg_t;
 
 /*
  * Fibre Protocol Module and Frame Buffer Register Offsets/Definitions (2X00).
@@ -1046,7 +1050,7 @@
 #define	ISP2100_NVRAM_SIZE	256
 /* ISP_NVRAM_VERSION is in same overall place */
 #define	ISP2100_NVRAM_RISCVER(c)		(c)[6]
-#define	ISP2100_NVRAM_OPTIONS(c)		(c)[8]
+#define	ISP2100_NVRAM_OPTIONS(c)		((c)[8] | ((c)[9] << 8))
 #define	ISP2100_NVRAM_MAXFRAMELENGTH(c)		(((c)[10]) | ((c)[11] << 8))
 #define	ISP2100_NVRAM_MAXIOCBALLOCATION(c)	(((c)[12]) | ((c)[13] << 8))
 #define	ISP2100_NVRAM_EXECUTION_THROTTLE(c)	(((c)[14]) | ((c)[15] << 8))
@@ -1063,10 +1067,10 @@
 		(((u_int64_t)(c)[24]) <<  8) | \
 		(((u_int64_t)(c)[25]) <<  0))
 
-#define	ISP2100_NVRAM_HARDLOOPID(c)		(c)[26]
+#define	ISP2100_NVRAM_HARDLOOPID(c)		((c)[26] | ((c)[27] << 8))
 #define	ISP2100_NVRAM_TOV(c)			((c)[29])
 
-#define	ISP2200_NVRAM_NODE_NAME(c)	(\
+#define	ISP2100_NVRAM_NODE_NAME(c)	(\
 		(((u_int64_t)(c)[30]) << 56) | \
 		(((u_int64_t)(c)[31]) << 48) | \
 		(((u_int64_t)(c)[32]) << 40) | \
@@ -1076,7 +1080,6 @@
 		(((u_int64_t)(c)[36]) <<  8) | \
 		(((u_int64_t)(c)[37]) <<  0))
 
-#define	ISP2100_NVRAM_HBA_OPTIONS(c)		(c)[70]
 #define	ISP2100_XFW_OPTIONS(c)			((c)[38] | ((c)[39] << 8))
 
 #define	ISP2100_RACC_TIMER(c)			(c)[40]
@@ -1086,6 +1089,7 @@
 
 #define	ISP2100_SERIAL_LINK(c)			((c)[68] | ((c)[69] << 8))
 
+#define	ISP2100_NVRAM_HBA_OPTIONS(c)		((c)[70] | ((c)[71] << 8))
 #define	ISP2100_NVRAM_HBA_DISABLE(c)		ISPBSMX(c, 70, 0, 0x01)
 #define	ISP2100_NVRAM_BIOS_DISABLE(c)		ISPBSMX(c, 70, 1, 0x01)
 #define	ISP2100_NVRAM_LUN_DISABLE(c)		ISPBSMX(c, 70, 2, 0x01)
@@ -1106,7 +1110,7 @@
 #define	ISP2100_NVRAM_BOOT_LUN(c)		(c)[80]
 #define	ISP2100_RESET_DELAY(c)			(c)[81]
 
-#define	ISP2200_HBA_FEATURES(c)			(c)[232] | ((c)[233] << 8)
+#define	ISP2100_HBA_FEATURES(c)			((c)[232] | ((c)[233] << 8))
 
 /*
  * Qlogic 2400 NVRAM is an array of 512 bytes with a 32 bit checksum.

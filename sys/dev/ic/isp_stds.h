@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_stds.h,v 1.1 2008/11/02 03:06:26 krw Exp $ */
+/* $OpenBSD: isp_stds.h,v 1.2 2009/06/24 11:00:53 krw Exp $ */
 /* $FreeBSD: src/sys/dev/isp/isp_stds.h,v 1.4 2007/03/10 02:39:54 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -109,14 +109,14 @@ typedef struct {
 
 typedef struct {
 	uint8_t		ct_revision;
-	uint8_t		ct_portid[3];
+	uint8_t		ct_in_id[3];
 	uint8_t		ct_fcs_type;
 	uint8_t		ct_fcs_subtype;
 	uint8_t		ct_options;
-	uint8_t		ct_res0;
-	uint16_t	ct_response;
-	uint16_t	ct_resid;
-	uint8_t		ct_res1;
+	uint8_t		ct_reserved0;
+	uint16_t	ct_cmd_resp;
+	uint16_t	ct_bcnt_resid;
+	uint8_t		ct_reserved1;
 	uint8_t		ct_reason;
 	uint8_t		ct_explanation;
 	uint8_t		ct_vunique;

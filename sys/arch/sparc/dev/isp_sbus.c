@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.26 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.27 2009/06/24 11:00:53 krw Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -57,14 +57,14 @@
 
 
 static int
-isp_sbus_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
-static u_int16_t isp_sbus_rd_reg(struct ispsoftc *, int);
-static void isp_sbus_wr_reg(struct ispsoftc *, int, u_int16_t);
+isp_sbus_rd_isr(struct ispsoftc *, u_int32_t *, u_int16_t *, u_int16_t *);
+static u_int32_t isp_sbus_rd_reg(struct ispsoftc *, int);
+static void isp_sbus_wr_reg(struct ispsoftc *, int, u_int32_t);
 static int isp_sbus_mbxdma(struct ispsoftc *);
 static int isp_sbus_dmasetup(struct ispsoftc *, struct scsi_xfer *,
-	ispreq_t *, u_int16_t *, u_int16_t);
+	ispreq_t *, u_int32_t *, u_int32_t);
 static void
-isp_sbus_dmateardown(struct ispsoftc *, struct scsi_xfer *, u_int16_t);
+isp_sbus_dmateardown(struct ispsoftc *, struct scsi_xfer *, u_int32_t);
 static int isp_sbus_intr(void *);
 
 #ifndef	ISP_1000_RISC_CODE
@@ -247,7 +247,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 		ISP_UNLOCK(isp);
 		return;
 	}
-	ENABLE_INTS(isp);
+	ISP_ENABLE_INTS(isp);
 	isp_init(isp);
 	if (isp->isp_state != ISP_INITSTATE) {
 		isp_uninit(isp);
@@ -288,7 +288,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 #define	BXR2(pcs, off)		(sbc->sbus_reg[off >> 1])
 
 static int
-isp_sbus_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
+isp_sbus_rd_isr(struct ispsoftc *isp, u_int32_t *isrp,
     u_int16_t *semap, u_int16_t *mbp)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
@@ -309,7 +309,7 @@ isp_sbus_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
 	return (1);
 }
 
-static u_int16_t
+static u_int32_t
 isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
@@ -319,7 +319,7 @@ isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
 }
 
 static void
-isp_sbus_wr_reg(struct ispsoftc *isp, int regoff, u_int16_t val)
+isp_sbus_wr_reg(struct ispsoftc *isp, int regoff, u_int32_t val)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
@@ -390,7 +390,7 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 
 static int
 isp_sbus_dmasetup(struct ispsoftc *isp, struct scsi_xfer *xs, ispreq_t *rq,
-    u_int16_t *iptrp, u_int16_t optr)
+    u_int32_t *iptrp, u_int32_t optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	ispreq_t *qe;
@@ -462,7 +462,7 @@ mbxsync:
 }
 
 static void
-isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
+isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int32_t handle)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	vaddr_t kdvma;
@@ -484,7 +484,8 @@ isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
 static int
 isp_sbus_intr(void *arg)
 {
-	u_int16_t isr, sema, mbox;
+	u_int32_t isr;
+	u_int16_t sema, mbox;
 	struct ispsoftc *isp = (struct ispsoftc *)arg;
 
 	isp->isp_intcnt++;

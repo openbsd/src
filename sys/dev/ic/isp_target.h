@@ -1,30 +1,5 @@
-/*	$OpenBSD: isp_target.h,v 1.13 2008/11/02 02:01:47 krw Exp $	*/
+/*	$OpenBSD: isp_target.h,v 1.14 2009/06/24 11:00:53 krw Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_target.h,v 1.30 2007/03/10 02:39:54 mjacob Exp $ */
-/*
- * Copyright (c) 1997, 1998
- * Patrick Stirling
- * pms@psconsult.com
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice immediately at the beginning of the file, without modification,
- *    this list of conditions, and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
  *  All rights reserved.
@@ -170,32 +145,12 @@ typedef struct {
 /*
  * Values for the in_task_flags field- should only get one at a time!
  */
-#define	TASK_FLAGS_ABORT_TASK		(1<<9)
-#define	TASK_FLAGS_CLEAR_TASK_SET	(1<<10)
-#define	TASK_FLAGS_TARGET_RESET		(1<<13)
 #define	TASK_FLAGS_RESERVED_MASK	(0xe700)
 #define	TASK_FLAGS_CLEAR_ACA		(1<<14)
-#define	TASK_FLAGS_TERMINATE_TASK	(1<<15)
 #define	TASK_FLAGS_TARGET_RESET		(1<<13)
 #define	TASK_FLAGS_LUN_RESET		(1<<12)
 #define	TASK_FLAGS_CLEAR_TASK_SET	(1<<10)
 #define	TASK_FLAGS_ABORT_TASK_SET	(1<<9)
-
-#ifndef	MSG_ABORT_TAG
-#define	MSG_ABORT_TAG		0x06
-#endif
-#ifndef	MSG_CLEAR_QUEUE
-#define	MSG_CLEAR_QUEUE		0x0e
-#endif
-#ifndef	MSG_BUS_DEV_RESET
-#define	MSG_BUS_DEV_RESET	0x0b
-#endif
-#ifndef	MSG_REL_RECOVERY
-#define	MSG_REL_RECOVERY	0x10
-#endif
-#ifndef	MSG_TERM_IO_PROC
-#define	MSG_TERM_IO_PROC	0x11
-#endif
 
 /*
  * ISP24XX Immediate Notify
@@ -268,9 +223,9 @@ typedef struct {
 typedef struct {
 	isphdr_t	na_header;
 	u_int32_t	na_reserved;
-	u_int8_t	na_lun;		/* lun */
-	u_int8_t	na_iid;		/* initiator */
-	u_int16_t	na_scclun;
+	u_int8_t	na_reserved1;
+	u_int8_t	na_iid;		/* initiator loop id */
+	u_int16_t	na_response;
 	u_int16_t	na_flags;
 	u_int16_t	na_reserved2;
 	u_int16_t	na_status;
@@ -367,21 +322,29 @@ typedef struct {
  * Macros to create and fetch and test concatenated handle and tag value macros
  */
 
-#define	AT_MAKE_TAGID(tid, aep)						\
-	tid = ((aep)->at_handle << 16);					\
-	if ((aep)->at_flags & AT_TQAE)					\
-		(tid) |= ((aep)->at_tag_val + 1)
+#define	AT_MAKE_TAGID(tid, bus, inst, aep)				\
+	tid = aep->at_handle;						\
+	if (aep->at_flags & AT_TQAE) {					\
+		tid |= (aep->at_tag_val << 16);				\
+		tid |= (1 << 24);					\
+	}								\
+	tid |= (bus << 25);						\
+	tid |= (inst << 26)
 
-#define	CT_MAKE_TAGID(tid, ct)						\
-	tid = ((ct)->ct_fwhandle << 16);				\
-	if ((ct)->ct_flags & CT_TQAE)					\
-		(tid) |= ((ct)->ct_tag_val + 1)
+#define	CT_MAKE_TAGID(tid, bus, inst, ct)				\
+	tid = ct->ct_fwhandle;						\
+	if (ct->ct_flags & CT_TQAE) {					\
+		tid |= (ct->ct_tag_val << 16);				\
+		tid |= (1 << 24);					\
+	}								\
+	tid |= ((bus & 0x1) << 25);					\
+	tid |= (inst << 26)
 
-#define	AT_HAS_TAG(val)		((val) & 0xffff)
-#define	AT_GET_TAG(val)		AT_HAS_TAG(val) - 1
+#define	AT_HAS_TAG(val)		((val) & (1 << 24))
+#define	AT_GET_TAG(val)		(((val) >> 16) & 0xff)
 #define	AT_GET_INST(val)	(((val) >> 26) & 0x3f)
 #define	AT_GET_BUS(val)		(((val) >> 25) & 0x1)
-#define	AT_GET_HANDLE(val)	((val) >> 16)
+#define	AT_GET_HANDLE(val)	((val) & 0xffff)
 
 #define	IN_MAKE_TAGID(tid, bus, inst, inp)				\
 	tid = inp->in_seqid;						\
@@ -411,7 +374,7 @@ typedef struct {
 	u_int16_t	at_rxid; 	/* response ID */
 	u_int16_t	at_flags;
 	u_int16_t	at_status;	/* firmware status */
-	u_int8_t	at_reserved1;
+	u_int8_t	at_crn;		/* command reference number */
 	u_int8_t	at_taskcodes;
 	u_int8_t	at_taskflags;
 	u_int8_t	at_execodes;
@@ -523,8 +486,7 @@ typedef struct {
  */
 typedef struct {
 	isphdr_t	ct_header;
-	u_int16_t	ct_reserved;
-#define	ct_syshandle	ct_reserved	/* we use this */
+	u_int16_t	ct_syshandle;
 	u_int16_t	ct_fwhandle;	/* required by f/w */
 	u_int8_t	ct_lun;	/* lun */
 	u_int8_t	ct_iid;	/* initiator id */
@@ -539,14 +501,7 @@ typedef struct {
 	u_int32_t	ct_resid;	/* residual length */
 	u_int16_t	ct_timeout;
 	u_int16_t	ct_seg_count;
-	/*
-	 * This is so we can share tag name space with
-	 * CTIO{2,3,4} with the minimum of pain.
-	 */
-	union {
-		ispds_t		ct_a[ISP_RQDSEG];
-	} _u;
-#define	ct_dataseg	_u.ct_a
+	ispds_t		ct_dataseg[ISP_RQDSEG];
 } ct_entry_t;
 
 /*
@@ -598,7 +553,7 @@ typedef struct {
 #define	CT_DATA_UNDER	0x15	/* (FC only) Data Underrun */
 #define CT_BDR_MSG	0x17	/* Bus Device Reset msg received */
 #define CT_TERMINATED	0x19	/* due to Terminate Transfer mbox cmd */
-#define	CT_PORTNOTAVAIL	0x28	/* port not available */
+#define	CT_PORTUNAVAIL	0x28	/* port not available */
 #define	CT_LOGOUT	0x29	/* port logout */
 #define	CT_PORTCHANGED	0x2A	/* port changed */
 #define	CT_IDE		0x33	/* Initiator Detected Error */
@@ -627,8 +582,7 @@ typedef struct {
 #define	MAXRESPLEN	26
 typedef struct {
 	isphdr_t	ct_header;
-	u_int16_t	ct_reserved;
-	u_int16_t	ct_fwhandle;	/* just to match CTIO */
+	u_int32_t	ct_syshandle;
 	u_int8_t	ct_lun;		/* lun */
 	u_int8_t	ct_iid;		/* initiator id */
 	u_int16_t	ct_rxid;	/* response ID */
@@ -658,13 +612,10 @@ typedef struct {
 			u_int16_t ct_scsi_status;
 			u_int32_t ct_xfrlen;
 			union {
-				ispds_t ct_a[ISP_RQDSEG_T2];	/* CTIO2 */
-				ispds64_t ct_b[ISP_RQDSEG_T3];	/* CTIO3 */
-				ispdslist_t ct_c;		/* CTIO4 */
-			} _u;
-#define	ct_dataseg	_u.ct_a
-#define	ct_dataseg64	_u.ct_b
-#define	ct_dslist	_u.ct_c
+				ispds_t ct_dataseg[ISP_RQDSEG_T2];
+				ispds64_t ct_dataseg64[ISP_RQDSEG_T3];
+				ispdslist_t ct_dslist;
+			} u;
 		} m0;
 		struct {
 			u_int16_t _reserved;
@@ -681,14 +632,6 @@ typedef struct {
 			u_int32_t ct_datalen;
 			ispds_t ct_fcp_rsp_iudata;
 		} m2;
-		/*
-		 * CTIO2 returned from F/W...
-		 */
-		struct {
-			u_int32_t _reserved[4];
-			u_int16_t ct_scsi_status;
-			u_int8_t  ct_sense[QLTM_SENSELEN];
-		} fw;
 	} rsp;
 } ct2_entry_t;
 
@@ -740,10 +683,10 @@ typedef struct {
 #define	CT2_FLAG_MODE1	0x0001
 #define	CT2_FLAG_MODE2	0x0002
 #define		CT2_FLAG_MMASK	0x0003
-#define CT2_DATA_IN	CT_DATA_IN
-#define CT2_DATA_OUT	CT_DATA_OUT
-#define CT2_NO_DATA	CT_NO_DATA
-#define CT2_DATAMASK	CT_DATAMASK
+#define CT2_DATA_IN	0x0040
+#define CT2_DATA_OUT	0x0080
+#define CT2_NO_DATA	0x00C0
+#define 	CT2_DATAMASK	0x00C0
 #define	CT2_CCINCR	0x0100
 #define	CT2_FASTPOST	0x0200
 #define	CT2_CONFIRM	0x2000
@@ -948,7 +891,7 @@ typedef struct {
 #define	ISP_TDQE(isp, msg, idx, arg)	\
     if (isp->isp_dblev & ISP_LOGTDEBUG2) isp_print_qentry(isp, msg, idx, arg)
 
-#ifdef	ISP_TARGET_FUNCTIONS
+#ifndef	ISP_TOOLS
 /*
  * The functions below are for the publicly available
  * target mode functions that are internal to the QLogic driver.
@@ -957,7 +900,7 @@ typedef struct {
 /*
  * This function handles new response queue entry appropriate for target mode.
  */
-int isp_target_notify(struct ispsoftc *, void *, u_int16_t *);
+int isp_target_notify(ispsoftc_t *, void *, u_int32_t *);
 
 /*
  * This function externalizes the ability to acknowledge an Immediate Notify
@@ -970,13 +913,13 @@ void isp_notify_ack(ispsoftc_t *, void *);
  * (softc, cmd, bus, tgt, lun, cmd_cnt, inotify_cnt, opaque)
  */
 #define	DFLT_CMND_CNT	0xfe	/* unmonitored */
-#define	DFLT_INOT_CNT	16
-int isp_lun_cmd(struct ispsoftc *, int, int, int, int, int, int, u_int32_t);
+#define	DFLT_INOT_CNT	0xfe	/* unmonitored */
+int isp_lun_cmd(ispsoftc_t *, int, int, int, int, int, int, u_int32_t);
 
 /*
  * General request queue 'put' routine for target mode entries.
  */
-int isp_target_put_entry(struct ispsoftc *isp, void *);
+int isp_target_put_entry(ispsoftc_t *isp, void *);
 
 /*
  * General routine to put back an ATIO entry-
@@ -984,13 +927,13 @@ int isp_target_put_entry(struct ispsoftc *isp, void *);
  * The argument is a pointer to a source ATIO
  * or ATIO2.
  */
-int isp_target_put_atio(struct ispsoftc *, void *);
+int isp_target_put_atio(ispsoftc_t *, void *);
 
 /*
  * General routine to send a final CTIO for a command- used mostly for
  * local responses.
  */
-int isp_endcmd(struct ispsoftc *, void *, u_int32_t, u_int16_t);
+int isp_endcmd(ispsoftc_t *, void *, u_int32_t, u_int32_t);
 #define	ECMD_SVALID	0x100
 
 /*
@@ -998,7 +941,6 @@ int isp_endcmd(struct ispsoftc *, void *, u_int32_t, u_int16_t);
  *
  * Return nonzero if the interrupt that generated this event has been dismissed.
  */
-
-int isp_target_async(struct ispsoftc *, int, int);
+int isp_target_async(ispsoftc_t *, int, int);
 #endif
 #endif	/* _ISP_TARGET_H */
