@@ -1,4 +1,4 @@
-/*	$OpenBSD: watchdogd.c,v 1.12 2008/05/12 19:15:02 pyr Exp $ */
+/*	$OpenBSD: watchdogd.c,v 1.13 2009/06/24 14:28:19 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Marc Balmer <mbalmer@openbsd.org>
@@ -52,6 +52,7 @@ sighdlr(int signum)
 int
 main(int argc, char *argv[])
 {
+	struct rlimit	 rlim;
 	const char	*errstr;
 	size_t		 len;
 	u_int		 interval = 0, period = 30, nperiod;
@@ -139,6 +140,14 @@ main(int argc, char *argv[])
 		warn("can't daemonize, restoring original values");
 		goto restore;
 	}
+
+	/*
+	 * mlockall() below will wire the whole stack up to the limit
+	 * thus we have to reduce stack size to avoid resource abuse
+	 */
+	rlim.rlim_cur = 256 * 1024;
+	rlim.rlim_max = 256 * 1024;
+	(void)setrlimit(RLIMIT_STACK, &rlim);
 
 	(void)mlockall(MCL_CURRENT | MCL_FUTURE);
 	setpriority(PRIO_PROCESS, getpid(), -5);
