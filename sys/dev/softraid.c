@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.158 2009/06/23 15:54:44 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.159 2009/06/24 12:06:00 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2040,6 +2040,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev)
 	printf("%s: trying to rebuild %s to %s\n", DEVNAME(sc),
 	    sd->sd_meta->ssd_devname, devname);
 
+	sd->sd_reb_abort = 0;
 	kthread_create_deferred(sr_rebuild, sd);
 
 	rv = 0;
@@ -2881,7 +2882,7 @@ sr_shutdown(void *arg)
 	    DEVNAME(sc), sd->sd_meta->ssd_devname);
 
 	/* abort rebuild and drain io */
-	sd->sd_going_down = 1;
+	sd->sd_reb_abort = 1;
 	while (sd->sd_reb_active)
 		tsleep(sd, PWAIT, "sr_shutdown", 1);
 
@@ -3131,7 +3132,7 @@ queued:
 			old_percent = percent;
 		}
 
-		if (sd->sd_going_down)
+		if (sd->sd_reb_abort)
 			goto abort;
 	}
 

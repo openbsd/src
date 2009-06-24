@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.15 2009/06/18 15:55:15 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.16 2009/06/24 12:06:00 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -163,7 +163,10 @@ sr_raid1_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 	case BIOC_SDREBUILD:
 		switch (new_state) {
 		case BIOC_SDONLINE:
+			break;
 		case BIOC_SDOFFLINE:
+			/* Abort rebuild since the rebuild chunk disappeared. */
+			sd->sd_reb_abort = 1;
 			break;
 		default:
 			goto die;
