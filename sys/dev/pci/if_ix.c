@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.18 2009/06/04 22:27:31 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.19 2009/06/24 13:36:56 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -206,10 +206,8 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	sc->rx_process_limit = 100;	// XXX
 
 	/* Do base PCI setup - map BAR0 */
-	if (ixgbe_allocate_pci_resources(sc)) {
-		printf(": allocation of PCI resources failed\n");
+	if (ixgbe_allocate_pci_resources(sc))
 		goto err_out;
-	}
 
 	/* Allocate our TX/RX Queues */
 	if (ixgbe_allocate_queues(sc))

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.52 2008/11/28 02:44:18 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.53 2009/06/24 13:36:56 deraadt Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -201,11 +201,8 @@ ixgb_attach(struct device *parent, struct device *self, void *aux)
 	/* Set the max frame size assuming standard ethernet sized frames */
 	sc->hw.max_frame_size = IXGB_MAX_JUMBO_FRAME_SIZE;
 
-	if (ixgb_allocate_pci_resources(sc)) {
-		printf("%s: Allocation of PCI resources failed\n",
-		       sc->sc_dv.dv_xname);
+	if (ixgb_allocate_pci_resources(sc))
 		goto err_pci;
-	}
 
 	tsize = IXGB_ROUNDUP(sc->num_tx_desc * sizeof(struct ixgb_tx_desc),
 	    IXGB_MAX_TXD * sizeof(struct ixgb_tx_desc));
