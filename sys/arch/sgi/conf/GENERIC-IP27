@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.9 2009/06/24 11:38:40 deraadt Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.10 2009/06/24 16:31:34 deraadt Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -129,6 +129,13 @@ wsdisplay*	at udl?
 
 #### NICs
 dc*		at pci?		# 21143, "tulip" clone ethernet
+fxp*		at pci?		# EtherExpress 10/100B ethernet
+skc*		at pci?		# SysKonnect GEnesis 984x
+sk*		at skc?		#  each port of above
+mskc*		at pci?		# Marvell Yukon-2
+msk*		at mskc?	#  each port of above
+bge*		at pci?		# Broadcom BCM57xx (aka Tigon3)
+bnx*		at pci?		# Broadcom BCM5706/5708 GigE
 em*		at pci?		# Intel Pro/1000 ethernet
 ep*		at pci?		# 3Com 3c59x
 fxp*		at pci?		# EtherExpress 10/100B ethernet
