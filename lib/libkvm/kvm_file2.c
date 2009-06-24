@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.8 2009/06/20 20:20:43 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.9 2009/06/24 13:04:24 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.8 2009/06/20 20:20:43 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.9 2009/06/24 13:04:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -623,8 +623,8 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
 	return (0);
 }
 
-static mode_t
-getftype(enum vtype v_type)
+mode_t
+_kvm_getftype(enum vtype v_type)
 {
 	mode_t ftype = 0;
 
@@ -732,7 +732,7 @@ msdos_filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 
 	kf->va_fsid = de.de_dev & 0xffff;
 	kf->va_fileid = 0; /* XXX see msdosfs_vptofh() for more info */
-	kf->va_mode = (mp.pm_mask & 0777) | getftype(vp->v_type);
+	kf->va_mode = (mp.pm_mask & 0777) | _kvm_getftype(vp->v_type);
 	kf->va_size = de.de_FileSize;
 	kf->va_rdev = 0;  /* msdosfs doesn't support device files */
 
@@ -753,7 +753,7 @@ nfs_filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 	kf->va_fileid = nfsnode.n_vattr.va_fileid;
 	kf->va_size = nfsnode.n_size;
 	kf->va_rdev = nfsnode.n_vattr.va_rdev;
-	kf->va_mode = (mode_t)nfsnode.n_vattr.va_mode | getftype(vp->v_type);
+	kf->va_mode = (mode_t)nfsnode.n_vattr.va_mode | _kvm_getftype(vp->v_type);
 
 	return (0);
 }
@@ -831,6 +831,9 @@ filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 			break;
 		case VT_UDF:
 			ret = _kvm_stat_udf(kd, kf, vp);
+			break;
+		case VT_NTFS:
+			ret = _kvm_stat_ntfs(kd, kf, vp);
 			break;
 		case VT_NON:
 			if (vp->v_flag & VCLONE)

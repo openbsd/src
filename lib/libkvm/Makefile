@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2009/06/20 19:50:05 millert Exp $
+#	$OpenBSD: Makefile,v 1.11 2009/06/24 13:04:24 millert Exp $
 #	$NetBSD: Makefile,v 1.11 1996/03/18 22:33:07 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
@@ -16,7 +16,7 @@ SRCS=	kvm_${MACHINE_ARCH}.c
 .endif
 
 SRCS+=	kvm.c kvm_file.c kvm_file2.c kvm_getloadavg.c kvm_proc.c \
-	kvm_cd9660.c kvm_udf.c
+	kvm_cd9660.c kvm_udf.c kvm_ntfs.c
 
 MAN=	kvm.3 kvm_dump.3 kvm_geterr.3 kvm_getfiles.3 kvm_getloadavg.3 \
 	kvm_getprocs.3 kvm_nlist.3 kvm_open.3 kvm_read.3
