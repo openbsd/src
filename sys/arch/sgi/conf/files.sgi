@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.26 2009/06/13 21:48:03 miod Exp $
+#	$OpenBSD: files.sgi,v 1.27 2009/06/24 17:27:40 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -8,6 +8,7 @@ maxusers 2 8 64
 
 #	Required files
 
+file	dev/cninit.c
 file	arch/sgi/sgi/autoconf.c
 file	arch/sgi/sgi/bus_dma.c
 file	arch/sgi/sgi/conf.c
@@ -20,6 +21,9 @@ file	arch/sgi/sgi/mainbus.c
 file	arch/sgi/sgi/mutex.c
 file	arch/sgi/sgi/sginode.c			tgt_origin200 | tgt_origin2000
 file	arch/sgi/sgi/wscons_machdep.c		wsdisplay
+
+# RAM disk for boot
+major	{rd = 8}
 
 #
 # Media Indepedent Interface (mii)
@@ -80,7 +84,17 @@ major	{cd = 3}
 
 include	"dev/i2o/files.i2o"
 
+#
+#	PCI Bus support
+#
+
 include	"dev/pci/files.pci"
+
+# Sun HME Ethernet controllers
+device	hme: ether, ifnet, mii, ifmedia
+file	dev/ic/hme.c				hme
+attach	hme at pci with hme_pci
+file	dev/pci/if_hme_pci.c			hme_pci
 
 # IOC3
 define	ioc {[base = -1]}
@@ -143,10 +157,6 @@ include	"dev/wsfont/files.wsfont"
 include	"dev/wscons/files.wscons"
 
 #
-#	PCI Bus support
-#
-
-#
 # Machine-independent USB drivers
 #
 include	"dev/usb/files.usb"
@@ -164,15 +174,3 @@ device	owserial
 attach	owserial at onewire
 file	arch/sgi/dev/owserial.c			owserial
 file	arch/sgi/dev/owmem_subr.c		owmac | owserial
-
-#
-# Specials.
-#
-# RAM disk for boot
-major	{rd = 8}
-
-#
-#	Common files
-#
-
-file	dev/cninit.c
