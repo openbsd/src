@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.59 2009/06/20 09:40:29 sthen Exp $	*/
+/*	$OpenBSD: hme.c,v 1.60 2009/06/24 07:42:03 sthen Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -248,7 +248,6 @@ hmeattach(parent, self, aux)
 	ifp->if_watchdog = hmewatchdog;
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, HME_TX_RING_SIZE);
 	IFQ_SET_READY(&ifp->if_snd);
@@ -394,55 +393,24 @@ hmeioctl(ifp, cmd, data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if (ifp->if_flags & IFF_UP)
-				hme_mcreset(sc);
-			else {
-				ifp->if_flags |= IFF_UP;
-				hmeinit(sc);
-			}
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-#endif /* INET */
-		default:
-			ifp->if_flags |= IFF_UP;
+		ifp->if_flags |= IFF_UP;
+		if (!(ifp->if_flags & IFF_RUNNING))
 			hmeinit(sc);
-			break;
-		}
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(&sc->sc_arpcom, ifa);
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			hmestop(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			hmeinit(sc);
-		} else {
-			/*
-			 * If setting debug or promiscuous mode, do not reset
-			 * the chip; for everything else, call hmeinit()
-			 * which will trigger a reset.
-			 */
-#define RESETIGN (IFF_CANTCHANGE | IFF_DEBUG)
-			if (ifp->if_flags == sc->sc_if_flags)
-				break;
-			if ((ifp->if_flags & (~RESETIGN))
-			    == (sc->sc_if_flags & (~RESETIGN)))
-				hme_mcreset(sc);
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
 			else
 				hmeinit(sc);
-#undef RESETIGN
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				hmestop(sc);
 		}
 		break;
 
@@ -461,7 +429,6 @@ hmeioctl(ifp, cmd, data)
 		error = 0;
 	}
 
-	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
@@ -605,7 +572,6 @@ hmeinit(sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	sc->sc_if_flags = ifp->if_flags;
 }
 
 void
@@ -1230,5 +1196,4 @@ hme_mii_statchg(self)
 		cr->tx_cfg &= ~CR_TXCFG_FULLDPLX;
 		sc->sc_arpcom.ac_if.if_flags &= ~IFF_SIMPLEX;
 	}
-	sc->sc_if_flags = sc->sc_arpcom.ac_if.if_flags;
 }
