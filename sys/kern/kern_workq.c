@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.9 2008/10/30 23:55:22 dlg Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.10 2009/06/24 14:56:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -186,7 +186,7 @@ workq_next_task(struct workq *wq)
 		} else if (wq->wq_flags & WQ_F_RUNNING)
 			msleep(wq, &wq->wq_mtx, PWAIT, "bored", 0);
 		else {
-			if (--wq->wq_running == 0);
+			if (--wq->wq_running == 0)
 				wakeup_one(&wq->wq_running);
 			break;
 		}
