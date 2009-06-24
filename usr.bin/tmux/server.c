@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.2 2009/06/24 17:36:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -966,7 +966,7 @@ server_check_window_content(
 	return (1);
 }
 
-/* Check if window still exists.. */
+/* Check if window still exists. */
 void
 server_check_window(struct window *w)
 {
@@ -984,13 +984,18 @@ server_check_window(struct window *w)
 	wp = TAILQ_FIRST(&w->panes);
 	while (wp != NULL) {
 		wq = TAILQ_NEXT(wp, entry);
-		if (wp->fd != -1)
-			destroyed = 0;
-		else if (!flag) {
+		/*
+		 * If the pane has died and the remain-on-exit flag is not set,
+		 * remove the pane; otherwise, if the flag is set, don't allow
+		 * the window to be destroyed (or it'll close when the last
+		 * pane dies).
+		 */
+		if (wp->fd == -1 && !flag) {
 			window_remove_pane(w, wp);
 			server_redraw_window(w);
 			layout_refresh(w, 0);
-		}
+		} else 
+			destroyed = 0;
 		wp = wq;
 	}
 
