@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.665 2009/06/14 01:01:39 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.666 2009/06/25 14:22:58 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -364,7 +364,7 @@ agp*		at sisagp?	# AGP bridges
 agp*		at viaagp?	# AGP bridges
 
 #option		DRM_DEBUG
-inteldrm*	at vga? disable	# Intel i915, i945 DRM driver
+inteldrm*	at vga?		# Intel i915, i945 DRM driver
 drm*		at inteldrm?
 #machdrm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
 #drm*		at machdrm?
