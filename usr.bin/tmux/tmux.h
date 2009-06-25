@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.13 2009/06/25 06:23:10 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.14 2009/06/25 22:08:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -73,7 +73,9 @@ extern const char    *__progname;
 #define printflike5 __attribute__ ((format (printf, 5, 6)))
 
 /* Number of items in array. */
+#ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 /* Buffer macros. */
 #define BUFFER_USED(b) ((b)->size)
