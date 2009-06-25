@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.53 2009/06/25 20:39:02 okan Exp $	 */
+/* $Id: main.c,v 1.54 2009/06/25 20:45:43 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -97,7 +97,7 @@ print_header(void)
 
 	tb_start();
 
-	getloadavg(avenrun, nitems(avenrun));
+	getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
 
 	time(&now);
 	strlcpy(tbuf, ctime(&now), sizeof tbuf);

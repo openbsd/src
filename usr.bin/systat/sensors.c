@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.16 2009/06/25 20:40:33 okan Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.17 2009/06/25 20:45:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -244,7 +244,7 @@ showsensor(struct sensinfo *s)
 		break;
 	case SENSOR_DRIVE:
 		if (0 < s->sn_value &&
-		    s->sn_value < nitems(drvstat)) {
+		    s->sn_value < sizeof(drvstat)/sizeof(drvstat[0])) {
 			tbprintf("%15s", drvstat[s->sn_value]);
 			break;
 		}
