@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.117 2009/04/07 13:26:23 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.118 2009/06/25 09:30:28 sthen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -113,7 +113,7 @@ void			 pf_free_fragment(struct pf_fragment *);
 struct pf_fragment	*pf_find_fragment(struct ip *, struct pf_frag_tree *);
 struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment **,
 			    struct pf_frent *, int);
-void			 pf_scrub_ip(struct mbuf **, u_int8_t, u_int8_t,
+void			 pf_scrub_ip(struct mbuf **, u_int16_t, u_int8_t,
 			    u_int8_t);
 #ifdef INET6
 void			 pf_scrub_ip6(struct mbuf **, u_int8_t);
@@ -1373,7 +1373,7 @@ pf_normalize_mss(struct mbuf *m, int off, struct pf_pdesc *pd, u_int16_t maxmss)
 }
 
 void
-pf_scrub_ip(struct mbuf **m0, u_int8_t flags, u_int8_t min_ttl, u_int8_t tos)
+pf_scrub_ip(struct mbuf **m0, u_int16_t flags, u_int8_t min_ttl, u_int8_t tos)
 {
 	struct mbuf		*m = *m0;
 	struct ip		*h = mtod(m, struct ip *);

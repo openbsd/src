@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.289 2009/06/08 02:39:15 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.290 2009/06/25 09:30:28 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -504,8 +504,8 @@ struct pf_rule_actions {
 	u_int8_t	log;
 	u_int8_t	set_tos;
 	u_int8_t	min_ttl;
-	u_int8_t	flags;
-	u_int8_t	pad[2];
+	u_int8_t	pad[1];
+	u_int16_t	flags;
 };
 
 union pf_rule_ptr {
@@ -615,8 +615,8 @@ struct pf_rule {
 #define PF_FLUSH		0x01
 #define PF_FLUSH_GLOBAL		0x02
 	u_int8_t		 flush;
-	u_int8_t		 scrub_flags;
-	u_int8_t		 pad2[3];
+	u_int16_t		 scrub_flags;
+	u_int8_t		 pad2[2];
 
 	struct {
 		struct pf_addr		addr;
@@ -1715,7 +1715,7 @@ int	pf_normalize_tcp_stateful(struct mbuf *, int, struct pf_pdesc *,
 	    u_short *, struct tcphdr *, struct pf_state *,
 	    struct pf_state_peer *, struct pf_state_peer *, int *);
 int	pf_normalize_mss(struct mbuf *, int, struct pf_pdesc *, u_int16_t);
-void	pf_scrub_ip(struct mbuf **, u_int8_t, u_int8_t, u_int8_t);
+void	pf_scrub_ip(struct mbuf **, u_int16_t, u_int8_t, u_int8_t);
 void	pf_scrub_ip6(struct mbuf **, u_int8_t);
 u_int32_t
 	pf_state_expires(const struct pf_state *);
