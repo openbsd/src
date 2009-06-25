@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.53 2009/06/06 18:06:22 art Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.54 2009/06/25 15:49:26 thib Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -448,6 +448,7 @@ loop:
 			continue;
 		}
 
+		bremfree(bp);
 		buf_acquire(bp);
 		bp->b_flags |= B_SCANNED;
 		splx(s);

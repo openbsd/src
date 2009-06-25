@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.114 2009/06/06 18:06:22 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.115 2009/06/25 15:49:26 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2827,6 +2827,7 @@ again:
 			if ((bp->b_flags & (B_BUSY | B_DELWRI | B_NEEDCOMMIT))
 				!= (B_DELWRI | B_NEEDCOMMIT))
 				continue;
+			bremfree(bp);
 			bp->b_flags |= B_WRITEINPROG;
 			buf_acquire(bp);
 			/*
@@ -2905,6 +2906,7 @@ loop:
 			panic("nfs_fsync: not dirty");
 		if ((passone || !commit) && (bp->b_flags & B_NEEDCOMMIT))
 			continue;
+		bremfree(bp);
 		if (passone || !commit) {
 			bp->b_flags |= B_ASYNC;
 		} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.178 2009/06/15 17:01:26 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.179 2009/06/25 15:49:26 thib Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1687,6 +1687,7 @@ vfs_syncwait(int verbose)
 			 */
 			if (bp->b_flags & B_DELWRI) {
 				s = splbio();
+				bremfree(bp);
 				buf_acquire(bp);
 				splx(s);
 				nbusy++;
@@ -1857,6 +1858,7 @@ loop:
 				}
 				break;
 			}
+			bremfree(bp);
 			buf_acquire(bp);
 			/*
 			 * XXX Since there are no node locks for NFS, I believe
@@ -1894,6 +1896,7 @@ loop:
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("vflushbuf: not dirty");
+		bremfree(bp);
 		buf_acquire(bp);
 		splx(s);
 		/*

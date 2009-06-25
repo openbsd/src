@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.117 2009/06/15 17:01:26 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.118 2009/06/25 15:49:26 thib Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -812,6 +812,7 @@ start:
 		if (!ISSET(bp->b_flags, B_INVAL)) {
 			bcstats.cachehits++;
 			SET(bp->b_flags, B_CACHE);
+			bremfree(bp);
 			buf_acquire(bp);
 			splx(s);
 			return (bp);
@@ -973,6 +974,7 @@ buf_daemon(struct proc *p)
 			if (bcstats.numdirtypages < lodirtypages)
 				break;
 
+			bremfree(bp);
 			buf_acquire(bp);
 			splx(s);
 
