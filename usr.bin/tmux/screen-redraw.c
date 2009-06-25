@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.2 2009/06/25 05:56:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -67,7 +67,6 @@ screen_redraw_screen(struct client *c)
 	struct window		*w = c->session->curw->window;
 	struct tty		*tty = &c->tty;
 	struct window_pane	*wp;
-	struct screen		*s;
 	u_int		 	 i, j, sx, sy;
 	int		 	 status, has_acs;
 	u_char			 choriz, cvert, cbackg;
@@ -110,7 +109,6 @@ screen_redraw_screen(struct client *c)
 
 		tty_reset(tty);
 
-		s = wp->screen;
 		sx = wp->sx;
 		sy = wp->sy;
 
