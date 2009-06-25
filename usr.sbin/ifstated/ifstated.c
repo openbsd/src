@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.33 2008/05/12 19:15:02 pyr Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.34 2009/06/25 09:33:03 sthen Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -159,6 +159,7 @@ void
 startup_handler(int fd, short event, void *arg)
 {
 	int rt_fd;
+	unsigned int rtfilter;
 
 	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
 		err(1, "no routing socket");
@@ -168,6 +169,11 @@ startup_handler(int fd, short event, void *arg)
 		exit(1);
 	}
 
+	rtfilter = ROUTE_FILTER(RTM_IFINFO);
+	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_MSGFILTER,
+	    &rtfilter, sizeof(rtfilter)) == -1)         /* not fatal */
+		log_warn("kr_init: setsockopt ROUTE_MSGFILTER");
+	
 	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST, rt_msg_handler, NULL);
 	event_add(&rt_msg_ev, NULL);
 
