@@ -236,7 +236,8 @@ doit:
 	}
 	do {
 		l = read(s, (char *)&m_rtmsg, sizeof(m_rtmsg));
-	} while (l > 0 && (rtm->rtm_seq != seq || rtm->rtm_pid != pid));
+	} while (l > 0 && (rtm->rtm_version != RTM_VERSION ||
+	    rtm->rtm_seq != seq || rtm->rtm_pid != pid));
 	if (l < 0)
 		syslog(LOG_ERR, "arptab_set: read from routing socket: %m");
 	return (0);
