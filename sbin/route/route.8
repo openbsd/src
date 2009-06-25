@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.58 2009/05/30 21:06:34 claudio Exp $
+.\"	$OpenBSD: route.8,v 1.59 2009/06/25 10:22:54 michele Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: May 30 2009 $
+.Dd $Mdocdate: June 25 2009 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -291,6 +291,9 @@ IPsec
 .Xr ipsec 4 )
 .It Fl link
 Hardware (link-level) addresses
+.It Fl mpls
+.Xr mpls 4
+addresses
 .It Fl sa
 Actual
 .Vt sockaddr
@@ -345,6 +348,29 @@ multiple routes with the same priority are used equally;
 if set to 0,
 the first route selected will be used for subsequent packets to that
 destination regardless of source.
+.Pp
+When inserting
+.Xr mpls 4
+routes, particular modifiers must be used.
+The
+.Fl mplslabel
+modifier needs to be specified in an ingress LSR to associate a particular
+label to an IPv4/IPv6 route.
+The
+.Xr mpls 4
+traffic
+.Fl in
+and
+.Fl out
+modifiers are intended to identify the ingress label and, optionally,
+the outgoing one.
+Additionally, one of the following operations must be used:
+.Fl push ,
+.Fl pop
+and
+.Fl swap .
+Route's nexthop can be specified with the modifier
+.Fl inet .
 .Pp
 Routes have associated flags which influence operation of the protocols
 when sending to destinations matched by the routes.
