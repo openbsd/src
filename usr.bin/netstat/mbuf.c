@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.29 2009/01/27 13:49:21 claudio Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.30 2009/06/25 22:31:18 deraadt Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ mbpr(void)
 
 		if (!strncmp(name, "mbpl", strlen("mbpl")))
 			bcopy(&pool, &mbpool, sizeof(struct pool));
-		else if (mclp < nitems(mclpools) &&
+		else if (mclp < sizeof(mclpools) / sizeof(mclpools[0]) &&
 		    !strncmp(name, *mclnamep, strlen(*mclnamep))) {
 			bcopy(&pool, &mclpools[mclp++],
 			    sizeof(struct pool));
