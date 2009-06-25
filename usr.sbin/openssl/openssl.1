@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.64 2009/04/19 07:39:37 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.65 2009/06/25 14:33:50 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: April 19 2009 $
+.Dd $Mdocdate: June 25 2009 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -5078,7 +5078,7 @@ The options are as follows:
 These options encrypt the private key with the AES, DES,
 or the triple DES ciphers, respectively, before outputting it.
 A pass phrase is prompted for.
-If none of these options is specified the key is written in plain text.
+If none of these options are specified, the key is written in plain text.
 This means that using the
 .Nm rsa
 utility to read in an encrypted key with no encryption option can be used
