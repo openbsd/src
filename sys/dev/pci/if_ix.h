@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.5 2009/06/04 22:27:31 jsg Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.6 2009/06/25 17:01:32 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -151,9 +151,16 @@
 /* Used for auto RX queue configuration */
 extern int mp_ncpus;
 
+struct ixgbe_tx_buf {
+	struct mbuf	*m_head;
+	bus_dmamap_t	map;
+};
+
 struct ixgbe_rx_buf {
 	struct mbuf	*m_head;
-	bus_dmamap_t	 map;
+	int		 bigbuf;
+	/* one small and one large map */
+	bus_dmamap_t	 map[2];
 };
 
 /*
@@ -167,15 +174,6 @@ struct ixgbe_dma_alloc {
 	bus_size_t		dma_size;
 	int			dma_nseg;
 };
-
-struct ix_pkt {
-	TAILQ_ENTRY(ix_pkt)	 pkt_entry;
-	bus_dmamap_t		 pkt_dmamap;
-	struct mbuf		*pkt_mbuf;
-	u_int16_t		 pkt_start_desc;
-};
-
-TAILQ_HEAD(ix_pkt_list, ix_pkt);
 
 /*
  * The transmit ring, one per tx queue
@@ -193,10 +191,7 @@ struct tx_ring {
 	struct ixgbe_dma_alloc	txwbdma;
 	uint32_t		next_avail_tx_desc;
 	uint32_t		next_tx_to_clean;
-	struct mutex		tx_pkt_mtx;
-	u_int			tx_pkt_count;
-	struct ix_pkt_list	tx_free_pkts;
-	struct ix_pkt_list	tx_used_pkts;
+	struct ixgbe_tx_buf	*tx_buffers;
 	volatile uint16_t	tx_avail;
 	uint32_t		txd_cmd;
 	bus_dma_tag_t		txtag;
@@ -223,11 +218,11 @@ struct rx_ring {
 #if 0
 	struct lro_ctrl		lro;
 #endif
-        unsigned int		last_rx_desc_filled;
+        unsigned int		last_cleaned;
         unsigned int		next_to_check;
-	int			rx_ndescs;
 	struct ixgbe_rx_buf	*rx_buffers;
-	bus_dma_tag_t		rxtag;
+	bus_dma_tag_t		rxtag[2];
+	bus_dmamap_t		spare_map[2];
 	struct mbuf		*fmp;
 	struct mbuf		*lmp;
 	/* Soft stats */
@@ -245,10 +240,6 @@ struct ix_softc {
 	struct ixgbe_osdep	 osdep;
 	void			*powerhook;
 	void			*shutdownhook;
-
-	/* general flags */
-	int			 ix_flags;
-#define IX_ALLOC_PKTS_FLAG		0x01
 
 	struct resource	*pci_mem;
 	struct resource	*msix_mem;
