@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.44 2009/06/17 15:31:23 claudio Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.45 2009/06/25 15:44:43 claudio Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -898,7 +898,8 @@ doit:
 	}
 	do {
 		l = read(s, (char *)&m_rtmsg, sizeof(m_rtmsg));
-	} while (l > 0 && (rtm->rtm_seq != seq || rtm->rtm_pid != pid));
+	} while (l > 0 && (rtm->rtm_version != RTM_VERSION ||
+	    rtm->rtm_seq != seq || rtm->rtm_pid != pid));
 	if (l < 0)
 		(void) fprintf(stderr, "ndp: read from routing socket: %s\n",
 		    strerror(errno));
