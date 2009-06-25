@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2007/12/20 17:08:47 henning Exp $
-
-.PATH:		${.CURDIR}/..
+#	$OpenBSD: Makefile,v 1.28 2009/06/25 14:14:54 deraadt Exp $
 
 PROG=	bgpd
 SRCS=	bgpd.c buffer.c session.c log.c parse.y config.c imsg.c \

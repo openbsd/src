@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2006/12/28 13:55:53 niallo Exp $
-
-.PATH: ${.CURDIR}/..
+#	$OpenBSD: Makefile,v 1.38 2009/06/25 14:14:54 deraadt Exp $
 
 PROG=	rcs
 MAN=	ci.1 co.1 ident.1 merge.1 rcs.1 rcsclean.1 rcsdiff.1 rcsmerge.1 rlog.1
