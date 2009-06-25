@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.36 2009/06/05 22:40:24 chris Exp $
+ * $OpenBSD: route.c,v 1.37 2009/06/25 15:59:28 claudio Exp $
  */
 
 #include <sys/param.h>
@@ -250,6 +250,8 @@ Index2Nam(int idx)
     have = 0;
     for (ptr = buf; ptr < end; ptr += ifm->ifm_msglen) {
       ifm = (struct if_msghdr *)ptr;
+      if (ifm->ifm_version != RTM_VERSION)
+        continue;
       if (ifm->ifm_type != RTM_IFINFO)
         continue;
       dl = (struct sockaddr_dl *)(ifm + 1);
@@ -363,6 +365,9 @@ route_Show(struct cmdargs const *arg)
   for (cp = sp; cp < ep; cp += rtm->rtm_msglen) {
     rtm = (struct rt_msghdr *)cp;
 
+    if (rtm->rtm_version != RTM_VERSION)
+      continue;
+
     route_ParseHdr(rtm, sa);
 
     if (sa[RTAX_DST] && sa[RTAX_GATEWAY]) {
@@ -431,6 +436,9 @@ route_IfDelete(struct bundle *bundle, int all)
       continue;
     for (cp = sp; cp < ep; cp += rtm->rtm_msglen) {
       rtm = (struct rt_msghdr *)cp;
+      if (rtm->rtm_version != RTM_VERSION)
+        continue;
+
       route_ParseHdr(rtm, sa);
       if (rtm->rtm_index == bundle->iface->index &&
           sa[RTAX_DST] && sa[RTAX_GATEWAY] &&
@@ -511,6 +519,8 @@ route_UpdateMTU(struct bundle *bundle)
 
   for (cp = sp; cp < ep; cp += rtm->rtm_msglen) {
     rtm = (struct rt_msghdr *)cp;
+    if (rtm->rtm_version != RTM_VERSION)
+      continue;
     route_ParseHdr(rtm, sa);
     if (sa[RTAX_DST] && (sa[RTAX_DST]->sa_family == AF_INET
 #ifndef NOINET6

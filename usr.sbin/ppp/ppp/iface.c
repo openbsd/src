@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.c,v 1.27 2005/07/17 19:13:24 brad Exp $
+ *	$OpenBSD: iface.c,v 1.28 2009/06/25 15:59:28 claudio Exp $
  */
 
 #include <sys/param.h>
@@ -140,6 +140,8 @@ iface_Create(const char *name)
 
   while (ptr < end && iface == NULL) {
     ifm = (struct if_msghdr *)ptr;			/* On if_msghdr */
+    if (ifm->ifm_version != RTM_VERSION)
+      continue;
     if (ifm->ifm_type != RTM_IFINFO)
       break;
     dl = (struct sockaddr_dl *)(ifm + 1);		/* Single _dl at end */
@@ -162,6 +164,8 @@ iface_Create(const char *name)
 
       if (ifam->ifam_type != RTM_NEWADDR)		/* finished this if */
         break;
+      if (ifm->ifm_version != RTM_VERSION)
+        continue;
 
       if (iface != NULL && ifam->ifam_addrs & RTA_IFA) {
         /* Found a configured interface ! */
