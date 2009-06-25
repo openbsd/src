@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.133 2009/06/06 20:30:22 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.134 2009/06/25 15:42:24 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1140,7 +1140,8 @@ rtmsg(int cmd, int flags, int fmask, u_char prio)
 	if (cmd == RTM_GET) {
 		do {
 			l = read(s, &m_rtmsg, sizeof(m_rtmsg));
-		} while (l > 0 && (rtm.rtm_seq != seq || rtm.rtm_pid != pid));
+		} while (l > 0 && (rtm.rtm_version != RTM_VERSION ||
+		    rtm.rtm_seq != seq || rtm.rtm_pid != pid));
 		if (l == -1)
 			warn("read from routing socket");
 		else
