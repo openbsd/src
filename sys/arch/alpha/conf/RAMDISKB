@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.35 2009/06/24 11:38:39 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.36 2009/06/25 13:06:16 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -70,7 +70,7 @@ pci*	at ppb?
 ahc*	at pci?				# AHA-28xx SCSI (NOT 64-BIT)
 de*	at pci?				# 21x4[012]-based Ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet
-fxp*	at pci?				# EtherExpress 10/100B ethernet cards
+#fxp*	at pci?				# EtherExpress 10/100B ethernet cards
 #ne*	at pci?				# NE2000-compat ethernet cards
 #en*	at pci?				# ENI PCI ATM (untested)
 #ep*	at pci?				# 3COM 3c59x (untested)
@@ -96,8 +96,8 @@ dcphy*	at mii?				# Digital Clone PHYs
 #icsphy* at mii?			# ICS 1890 PHYs
 lxtphy* at mii?				# Level1 LXT970 PHYs
 mtdphy* at mii?				# Myson MTD972 PHYs
-nsphy*	at mii?				# NS and compatible PHYs
-nsphyter* at mii?			# NS and compatible PHYs
+#nsphy*	at mii?				# NS and compatible PHYs
+#nsphyter* at mii?			# NS and compatible PHYs
 #qsphy*	at mii?				# Quality Semi QS6612 PHYs
 sqphy*	at mii?				# Seeq 8x220 PHYs
 tqphy*	at mii?				# TDK 78Q212x PHYs
