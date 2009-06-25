@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.34 2009/06/25 09:33:03 sthen Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.35 2009/06/25 17:14:57 sthen Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -172,7 +172,7 @@ startup_handler(int fd, short event, void *arg)
 	rtfilter = ROUTE_FILTER(RTM_IFINFO);
 	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)         /* not fatal */
-		log_warn("kr_init: setsockopt ROUTE_MSGFILTER");
+		log_warn("startup_handler: setsockopt");
 	
 	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST, rt_msg_handler, NULL);
 	event_add(&rt_msg_ev, NULL);
