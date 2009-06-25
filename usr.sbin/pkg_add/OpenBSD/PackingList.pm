@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.88 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.89 2009/06/25 07:41:04 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -48,13 +48,8 @@ sub set_cwd
 package OpenBSD::PackingList::hashpath;
 sub match
 {
-	my ($a, $b) = @_;
-	for my $i (keys %$a) {
-		if ($b->{$i}) {
-			return 1;
-		} 
-	}
-	return 0;
+	my ($h, $plist) = @_;
+	return $h->{$plist->{extrainfo}->{subdir}};
 }
 
 package OpenBSD::PackingList;
@@ -414,7 +409,8 @@ sub pkgpath
 sub match_pkgpath
 {
 	my ($self, $plist2) = @_;
-	return $self->pkgpath->match($plist2->pkgpath);
+	return $self->pkgpath->match($plist2) || 
+	    $plist2->pkgpath->match($self);
 }
 
 our @unique_categories =
