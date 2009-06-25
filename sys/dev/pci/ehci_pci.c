@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.15 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.16 2009/06/25 01:01:44 deraadt Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -65,6 +65,11 @@ struct ehci_pci_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
+int ehci_sb700_match(struct pci_attach_args *pa);
+
+#define EHCI_SBx00_WORKAROUND_REG	0x50
+#define EHCI_SBx00_WORKAROUND_ENABLE	(1 << 3)
+
 int	ehci_pci_match(struct device *, void *, void *);
 void	ehci_pci_attach(struct device *, struct device *, void *);
 int	ehci_pci_detach(struct device *, int);
@@ -76,7 +81,6 @@ struct cfattach ehci_pci_ca = {
 	sizeof(struct ehci_pci_softc), ehci_pci_match, ehci_pci_attach,
 	ehci_pci_detach, ehci_activate
 };
-
 
 int
 ehci_pci_match(struct device *parent, void *match, void *aux)
@@ -121,6 +125,21 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 	DPRINTF(("%s: offs=%d\n", devname, sc->sc.sc_offs));
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
+
+	/* Handle quirks */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
+	    ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_EHCI ||
+	      (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB700_EHCI &&
+	       pci_find_device(NULL, ehci_sb700_match))))) {
+		pcireg_t value;
+
+		/* apply the ATI SB600/SB700 workaround */
+		value = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    EHCI_SBx00_WORKAROUND_REG);
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    EHCI_SBx00_WORKAROUND_REG, value |
+		    EHCI_SBx00_WORKAROUND_ENABLE);
+	}
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -270,4 +289,16 @@ ehci_pci_shutdown(void *v)
 	/* best not to do this anymore; BIOS SMM spins? */
 	ehci_pci_givecontroller(sc);
 #endif
+}
+
+int
+ehci_sb700_match(struct pci_attach_args *pa)
+{
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SBX00_SMB &&
+	    (PCI_REVISION(pa->pa_class) == 0x3a ||
+	     PCI_REVISION(pa->pa_class) == 0x3b))
+		return (1);
+
+	return (0);
 }
