@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.9 2009/06/25 18:50:22 sthen Exp $	*/
+/*	$OpenBSD: carp.c,v 1.10 2009/06/26 13:25:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -224,9 +224,9 @@ carp_read_message(fd_set *fds)
 int
 carp_init(void)
 {
-	cfgstate.route_socket = -1;
 	unsigned int rtfilter;
 
+	cfgstate.route_socket = -1;
 	if (cfgstate.lockedstate != INIT) {
 		cfgstate.runstate = cfgstate.lockedstate;
 		log_msg(1, "carp_init: locking runstate to %s",
