@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.654 2009/06/22 17:04:02 jsing Exp $ */
+/*	$OpenBSD: pf.c,v 1.655 2009/06/26 19:39:49 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -195,7 +195,7 @@ int			 pf_test_state_udp(struct pf_state **, int,
 int			 pf_icmp_state_lookup(struct pf_state_key_cmp *,
 			    struct pf_pdesc *, struct pf_state **, struct mbuf *,
 			    int, struct pfi_kif *, u_int16_t, u_int16_t,
-			    int, int *, int);
+			    int, int *, int, int);
 int			 pf_test_state_icmp(struct pf_state **, int,
 			    struct pfi_kif *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, u_short *);
@@ -4050,7 +4050,8 @@ pf_test_state_udp(struct pf_state **state, int direction, struct pfi_kif *kif,
 int
 pf_icmp_state_lookup(struct pf_state_key_cmp *key, struct pf_pdesc *pd,
     struct pf_state **state, struct mbuf *m, int direction, struct pfi_kif *kif,
-    u_int16_t icmpid, u_int16_t type, int icmp_dir, int *iidx, int multi)
+    u_int16_t icmpid, u_int16_t type, int icmp_dir, int *iidx, int multi,
+    int inner)
 {
 	key->af = pd->af;
 	key->proto = pd->proto;
@@ -4087,7 +4088,8 @@ pf_icmp_state_lookup(struct pf_state_key_cmp *key, struct pf_pdesc *pd,
 
 	/* Is this ICMP message flowing in right direction? */
 	if ((*state)->rule.ptr->type && 
-	    (((*state)->direction == direction) ?
+	    (((!inner && (*state)->direction == direction) ||
+	    (inner && (*state)->direction != direction)) ?
 	    PF_IN : PF_OUT) != icmp_dir) {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
 			printf("pf: icmp type %d in wrong direction (%d): ",
@@ -4135,13 +4137,13 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		 */
 		ret = pf_icmp_state_lookup(&key, pd, state, m, direction,
 		    kif, virtual_id, virtual_type, icmp_dir, &iidx,
-		    PF_ICMP_MULTI_NONE);
+		    PF_ICMP_MULTI_NONE, 0);
 		if (ret >= 0) {
 			if (ret == PF_DROP && pd->af == AF_INET6 &&
 			    icmp_dir == PF_OUT) {
 				ret = pf_icmp_state_lookup(&key, pd, state, m,
 				    direction, kif, virtual_id, virtual_type,
-				    icmp_dir, &iidx, multi);
+				    icmp_dir, &iidx, multi, 0);
 				if (ret >= 0)
 					return (ret);
 			} else
@@ -4532,7 +4534,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 
 			ret = pf_icmp_state_lookup(&key, &pd2, state, m,
 			    direction, kif, virtual_id, virtual_type,
-			    icmp_dir, &iidx, PF_ICMP_MULTI_NONE);
+			    icmp_dir, &iidx, PF_ICMP_MULTI_NONE, 1);
 			if (ret >= 0)
 				return (ret);
 
@@ -4587,14 +4589,14 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			    &icmp_dir, &multi, &virtual_id, &virtual_type);
 			ret = pf_icmp_state_lookup(&key, &pd2, state, m,
 			    direction, kif, virtual_id, virtual_type,
-			    icmp_dir, &iidx, PF_ICMP_MULTI_NONE);
+			    icmp_dir, &iidx, PF_ICMP_MULTI_NONE, 1);
 			if (ret >= 0) {
 				if (ret == PF_DROP && pd->af == AF_INET6 &&
 				    icmp_dir == PF_OUT) {
 					ret = pf_icmp_state_lookup(&key, pd,
 					    state, m, direction, kif,
 					    virtual_id, virtual_type,
-					    icmp_dir, &iidx, multi);
+					    icmp_dir, &iidx, multi, 1);
 					if (ret >= 0)
 						return (ret);
 				} else
