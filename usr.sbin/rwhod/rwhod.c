@@ -35,7 +35,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.31 2006/01/02 16:29:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.32 2009/06/26 09:44:55 claudio Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -500,6 +500,8 @@ configure(void)
 	sdl = NULL;		/* XXX just to keep gcc -Wall happy */
 	for (next = buf; next < lim; next += ifm->ifm_msglen) {
 		ifm = (struct if_msghdr *)next;
+		if (ifm->ifm_version != RTM_VERSION)
+			continue;
 		if (ifm->ifm_type == RTM_IFINFO) {
 			sdl = (struct sockaddr_dl *)(ifm + 1);
 			flags = ifm->ifm_flags;
