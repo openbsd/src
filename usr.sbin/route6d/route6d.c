@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.53 2009/06/05 22:40:24 chris Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.54 2009/06/26 09:50:12 claudio Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.53 2009/06/05 22:40:24 chris Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.54 2009/06/26 09:50:12 claudio Exp $";
 #endif
 
 #include <stdio.h>
@@ -1579,6 +1579,9 @@ rtrecv(void)
 				((struct rt_msghdr *)p)->rtm_msglen);
 			break;
 		}
+		if (((struct rt_msghdr *)p)->rtm_version != RTM_VERSION)
+			continue;
+
 		rtm = NULL;
 		ifam = NULL;
 		ifm = NULL;
@@ -1598,12 +1601,6 @@ rtrecv(void)
 			rtm = (struct rt_msghdr *)p;
 			addrs = rtm->rtm_addrs;
 			q = (char *)(p + rtm->rtm_hdrlen);
-			if (rtm->rtm_version != RTM_VERSION) {
-				trace(1, "unexpected rtmsg version %d "
-					"(should be %d)\n",
-					rtm->rtm_version, RTM_VERSION);
-				continue;
-			}
 			if (rtm->rtm_pid == pid) {
 #if 0
 				trace(1, "rtmsg looped back to me, ignored\n");
@@ -2479,6 +2476,8 @@ krtread(int again)
 	lim = buf + msize;
 	for (p = buf; p < lim; p += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)p;
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
 		rt_entry(rtm, again);
 	}
 	free(buf);
@@ -2806,7 +2805,8 @@ getroute(struct netinfo6 *np, struct in6_addr *gw)
 			exit(1);
 		}
 		rtm = (struct rt_msghdr *)buf;
-	} while (rtm->rtm_seq != myseq || rtm->rtm_pid != pid);
+	} while (rtm->rtm_version != RTM_VERSION ||
+	    rtm->rtm_seq != myseq || rtm->rtm_pid != pid);
 	sin6 = (struct sockaddr_in6 *)&buf[sizeof(struct rt_msghdr)];
 	if (rtm->rtm_addrs & RTA_DST) {
 		sin6 = (struct sockaddr_in6 *)
