@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.91 2009/06/22 19:01:56 blambert Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.92 2009/06/26 10:14:24 blambert Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -123,51 +123,37 @@ int
 route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
 {
+	struct rawcb	*rp;
+	int		 s, af;
 	int		 error = 0;
-	struct rawcb	*rp = sotorawcb(so);
-	int		 s;
 
-	/*
-	 * use the rawcb but allocate a rooutecb, this code does not care
-	 * about the additional fields and works directly on the raw socket.
-	 */
-	if (req == PRU_ATTACH) {
+	s = splsoftnet();
+	rp = sotorawcb(so);
+
+	switch (req) {
+	case PRU_ATTACH:
+		/*
+		 * use the rawcb but allocate a routecb, this
+		 * code does not care about the additional fields
+		 * and works directly on the raw socket.
+		 */
 		rp = malloc(sizeof(struct routecb), M_PCB, M_WAITOK|M_ZERO);
 		so->so_pcb = rp;
-	}
-	if (req == PRU_DETACH && rp) {
-		int af = rp->rcb_proto.sp_protocol;
-		if (af == AF_INET)
-			route_cb.ip_count--;
-		else if (af == AF_INET6)
-			route_cb.ip6_count--;
-#ifdef MPLS
-		else if (af == AF_MPLS)
-			route_cb.mpls_count--;
-#endif /* MPLS */
-		route_cb.any_count--;
-	}
-	s = splsoftnet();
-	/*
-	 * Don't call raw_usrreq() in the attach case, because
-	 * we want to allow non-privileged processes to listen on
-	 * and send "safe" commands to the routing socket.
-	 */
-	if (req == PRU_ATTACH) {
+		/*
+		 * Don't call raw_usrreq() in the attach case, because
+		 * we want to allow non-privileged processes to listen
+		 * on and send "safe" commands to the routing socket.
+		 */
 		if (curproc == 0)
 			error = EACCES;
 		else
 			error = raw_attach(so, (int)(long)nam);
-	} else
-		error = raw_usrreq(so, req, m, nam, control, p);
-
-	if (req == PRU_ATTACH && rp) {
-		int af = rp->rcb_proto.sp_protocol;
 		if (error) {
 			free(rp, M_PCB);
 			splx(s);
 			return (error);
 		}
+		af = rp->rcb_proto.sp_protocol;
 		if (af == AF_INET)
 			route_cb.ip_count++;
 		else if (af == AF_INET6)
@@ -180,7 +166,26 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		route_cb.any_count++;
 		soisconnected(so);
 		so->so_options |= SO_USELOOPBACK;
+		break;
+
+	case PRU_DETACH:
+		if (rp) {
+			af = rp->rcb_proto.sp_protocol;
+			if (af == AF_INET)
+				route_cb.ip_count--;
+			else if (af == AF_INET6)
+				route_cb.ip6_count--;
+#ifdef MPLS
+			else if (af == AF_MPLS)
+				route_cb.mpls_count--;
+#endif /* MPLS */
+			route_cb.any_count--;
+		}
+		/* FALLTHROUGH */
+	default:
+		error = raw_usrreq(so, req, m, nam, control, p);
 	}
+
 	splx(s);
 	return (error);
 }
