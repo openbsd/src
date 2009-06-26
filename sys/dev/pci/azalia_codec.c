@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.132 2009/06/09 05:16:42 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.133 2009/06/26 01:48:22 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1134,45 +1134,41 @@ azalia_mixer_init(codec_t *this)
 		this->nmixers++;
 	}
 
-	/* if the codec has multiple DAC groups, create "inputs.usingdac" */
+	/* if the codec has more than one DAC group, the first is analog
+	 * and the second is digital.
+	 */
 	if (this->dacs.ngroups > 1) {
 		MIXER_REG_PROLOG;
-		strlcpy(d->label.name, "usingdac", sizeof(d->label.name));
+		strlcpy(d->label.name, AudioNmode, sizeof(d->label.name));
 		d->type = AUDIO_MIXER_ENUM;
-		d->mixer_class = AZ_CLASS_INPUT;
+		d->mixer_class = AZ_CLASS_OUTPUT;
 		m->target = MI_TARGET_DAC;
-		for (i = 0; i < this->dacs.ngroups && i < 32; i++) {
-			d->un.e.member[i].ord = i;
-			for (j = 0; j < this->dacs.groups[i].nconv; j++) {
-				if (j * 2 >= MAX_AUDIO_DEV_LEN)
-					break;
-				snprintf(d->un.e.member[i].label.name + j*2,
-				    MAX_AUDIO_DEV_LEN - j*2, "%2.2x",
-				    this->dacs.groups[i].conv[j]);
-			}
-		}
-		d->un.e.num_mem = i;
+		d->un.e.member[0].ord = 0;
+		strlcpy(d->un.e.member[0].label.name, "analog",
+		    MAX_AUDIO_DEV_LEN);
+		d->un.e.member[1].ord = 1;
+		strlcpy(d->un.e.member[1].label.name, "digital",
+		    MAX_AUDIO_DEV_LEN);
+		d->un.e.num_mem = 2;
 		this->nmixers++;
 	}
 
-	/* if the codec has multiple ADC groups, create "record.usingadc" */
+	/* if the codec has more than one ADC group, the first is analog
+	 * and the second is digital.
+	 */
 	if (this->adcs.ngroups > 1) {
 		MIXER_REG_PROLOG;
-		strlcpy(d->label.name, "usingadc", sizeof(d->label.name));
+		strlcpy(d->label.name, AudioNmode, sizeof(d->label.name));
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_RECORD;
 		m->target = MI_TARGET_ADC;
-		for (i = 0; i < this->adcs.ngroups && i < 32; i++) {
-			d->un.e.member[i].ord = i;
-			for (j = 0; j < this->adcs.groups[i].nconv; j++) {
-				if (j * 2 >= MAX_AUDIO_DEV_LEN)
-					break;
-				snprintf(d->un.e.member[i].label.name + j*2,
-				    MAX_AUDIO_DEV_LEN - j*2, "%2.2x",
-				    this->adcs.groups[i].conv[j]);
-			}
-		}
-		d->un.e.num_mem = i;
+		d->un.e.member[0].ord = 0;
+		strlcpy(d->un.e.member[0].label.name, "analog",
+		    MAX_AUDIO_DEV_LEN);
+		d->un.e.member[1].ord = 1;
+		strlcpy(d->un.e.member[1].label.name, "digital",
+		    MAX_AUDIO_DEV_LEN);
+		d->un.e.num_mem = 2;
 		this->nmixers++;
 	}
 
