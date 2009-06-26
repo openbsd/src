@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.24 2008/10/19 13:35:34 jmc Exp $
+ * $OpenBSD: calendar.music,v 1.25 2009/06/26 22:45:20 martynas Exp $
  */
 
 #ifndef _calendar_music_
@@ -267,6 +267,7 @@
 06/24	Jeff Beck is born in Surrey, England, 1944
 06/25	Alberto Ginastera dies in Geneva, Switzerland, 1983
 06/25	Georg Philipp Telemann dies in Hamburg, Germany, 1767
+06/25	Michael Joseph Jackson dies in Los Angeles, California, 2009
 06/27	Elvis Presley's last concert, 1977
 06/27	John Entwistle dies in Las Vegas, 2002
 07/01	Erik Satie dies in Paris, France, 1925
@@ -343,6 +344,7 @@
 08/26	Jimi Hendrix's Electric Ladyland Studios opens in New York, 1970
 08/26	Ralph Vaughan Williams dies, 1958
 08/27	Josquin Des Prez dies in Conde, 1521
+08/29	Michael Joseph Jackson is born in Gary, Indiana, 1958
 09/01	Engelbert Humperdinck is born in Siegburg, Germany, 1854
 09/04	Edvard Grieg dies in Bergen, Norway, 1907
 09/04	Anton Bruckner is born in Ansfelden, Austria, 1824
