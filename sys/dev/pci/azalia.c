@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.140 2009/06/18 08:19:03 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.141 2009/06/26 01:24:05 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -311,6 +311,9 @@ static const char *wtypes[16] = {
 	"dac", "adc", "mix", "sel", "pin", "pow", "volume",
 	"beep", "wid08", "wid09", "wid0a", "wid0b", "wid0c",
 	"wid0d", "wid0e", "vendor"};
+static const char *line_colors[16] = {
+	"unk", "blk", "gry", "blu", "grn", "red", "org", "yel",
+	"pur", "pnk", "0xa", "0xb", "0xc", "0xd", "wht", "oth"};
 
 /* ================================================================
  * PCI functions
@@ -1319,11 +1322,13 @@ azalia_codec_init(codec_t *this)
 				switch (this->w[i].d.pin.device) {
 				case CORB_CD_SPEAKER:
 					this->speaker = i;
-					this->spkr_dac = azalia_codec_find_defdac(this, i, 0);
+					this->spkr_dac =
+					    azalia_codec_find_defdac(this, i, 0);
 					break;
 				case CORB_CD_MICIN:
 					this->mic = i;
-					this->mic_adc = azalia_codec_find_defadc(this, i, 0);
+					this->mic_adc =
+					    azalia_codec_find_defadc(this, i, 0);
 					break;
 				}
 				break;
@@ -2636,10 +2641,28 @@ azalia_widget_label_widgets(codec_t *codec)
 	widget_t *w;
 	int types[16];
 	int pins[16];
+	int colors_used, use_colors;
 	int i, j;
 
 	bzero(&pins, sizeof(pins));
 	bzero(&types, sizeof(types));
+
+	/* If codec has more than one line-out jack, check if the jacks
+	 * have unique colors.  If so, use the colors in the mixer names.
+	 */
+	use_colors = 1;
+	colors_used = 0;
+	if (codec->nout_jacks < 2)
+		use_colors = 0;
+	for (i = 0; use_colors && i < codec->nopins; i++) {
+		w = &codec->w[codec->opins[i].nid];
+		if (w->d.pin.device != CORB_CD_LINEOUT)
+			continue;
+		if (colors_used & (1 << w->d.pin.color))
+			use_colors = 0;
+		else
+			colors_used |= (1 << w->d.pin.color);
+	}
 
 	FOR_EACH_WIDGET(codec, i) {
 		w = &codec->w[i];
@@ -2650,13 +2673,18 @@ azalia_widget_label_widgets(codec_t *codec)
 		switch (w->type) {
 		case COP_AWTYPE_PIN_COMPLEX:
 			pins[w->d.pin.device]++;
-			if (pins[w->d.pin.device] > 1)
+			if (use_colors && w->d.pin.device == CORB_CD_LINEOUT) {
+				snprintf(w->name, sizeof(w->name), "%s-%s",
+				    pin_devices[w->d.pin.device],
+				    line_colors[w->d.pin.color]);
+			} else if (pins[w->d.pin.device] > 1) {
 				snprintf(w->name, sizeof(w->name), "%s%d",
 				    pin_devices[w->d.pin.device],
 				    pins[w->d.pin.device]);
-			else
+			} else {
 				snprintf(w->name, sizeof(w->name), "%s",
 				    pin_devices[w->d.pin.device]);
+			}
 			break;
 		case COP_AWTYPE_AUDIO_OUTPUT:
 			if (codec->dacs.ngroups < 1)
