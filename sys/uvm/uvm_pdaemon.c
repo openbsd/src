@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.50 2009/06/17 00:13:59 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.51 2009/06/26 20:26:02 oga Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -823,8 +823,13 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			/* released during I/O? */
 			if (p->pg_flags & PG_RELEASED) {
 				if (anon) {
-					/* remove page so we can get nextpg */
+					/*
+					 * remove page so we can get nextpg,
+					 * also zero out anon so we don't use
+					 * it after the free.
+					 */
 					anon->an_page = NULL;
+					p->uanon = NULL;
 
 					simple_unlock(&anon->an_lock);
 					uvm_anfree(anon);	/* kills anon */
