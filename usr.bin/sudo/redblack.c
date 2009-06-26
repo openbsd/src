@@ -58,7 +58,7 @@
 #include "redblack.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: redblack.c,v 1.10 2008/11/22 15:01:25 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: redblack.c,v 1.11 2009/06/26 20:40:17 millert Exp $";
 #endif /* lint */
 
 static void rbrepair		__P((struct rbtree *, struct rbnode *));
@@ -421,7 +421,7 @@ rbrepair(tree, node)
 {
     struct rbnode *sibling;
 
-    while (node->color == black) {
+    while (node->color == black && node != rbroot(tree)) {
 	if (node == node->parent->left) {
 	    sibling = node->parent->right;
 	    if (sibling->color == red) {
