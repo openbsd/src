@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.10 2009/06/10 18:50:43 guenther Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.11 2009/06/26 01:06:04 kurt Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -174,8 +174,15 @@ sigchild(int signum)
 	sdata.log_fac = _LOG_FACILITY;
 	sdata.log_stat = _LOG_OPT;
 
-	pid = waitpid(WAIT_ANY, &status, 0);
-	if (pid != -1) {
+	while ((pid = waitpid(WAIT_ANY, &status, WNOHANG)) != 0) {
+		if (pid == -1) {
+			if (errno == EINTR)
+				continue;
+			if (errno != ECHILD)
+				syslog_r(LOG_ERR, &sdata, "waitpid: %m");
+			break;
+		}
+
 		if (WIFEXITED(status)) {
 			if (WEXITSTATUS(status) != 0) {
 				syslog_r(LOG_NOTICE, &sdata,
@@ -186,8 +193,6 @@ sigchild(int signum)
 			syslog_r(LOG_NOTICE, &sdata,
 			    "child is terminated abnormally");
 		}
-	} else if (errno != ECHILD) {
-		syslog_r(LOG_ERR, &sdata, "waitpid: %m");
 	}
 
 	errno = saved_errno;
