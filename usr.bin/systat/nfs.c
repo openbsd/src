@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.2 2009/06/19 12:11:34 jasper Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.3 2009/06/26 06:39:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -138,7 +138,7 @@ initnfs(void)
 
 /*
  * We get all the information in one go and don't care about
- * server or client fields (those will be '0' if not applicable.
+ * server or client fields (those will be '0' if not applicable).
  */
 int
 read_nfs(void)

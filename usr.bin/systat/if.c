@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.14 2009/06/25 15:53:12 claudio Exp $ */
+/*	$OpenBSD: if.c,v 1.15 2009/06/26 06:39:47 jasper Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -22,9 +23,11 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <sys/sockio.h>
+#include <sys/ioctl.h>
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "systat.h"
 
