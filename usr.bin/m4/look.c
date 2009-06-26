@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.18 2006/01/20 23:10:19 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.19 2009/06/26 22:03:17 guenther Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -223,7 +223,8 @@ macro_for_all(void (*f)(const char *, struct macro_definition *))
 
 	for (n = ohash_first(&macros, &i); n != NULL; 
 	    n = ohash_next(&macros, &i))
-		f(n->name, n->d);
+		if (n->d != NULL)
+			f(n->name, n->d);
 }
 
 void 
