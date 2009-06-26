@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.29 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.30 2009/06/26 09:51:29 claudio Exp $	*/
 /*	$KAME: faithd.c,v 1.58 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -857,12 +857,8 @@ update_myaddrs()
 		syslog(LOG_ERR, "read(PF_ROUTE) short read");
 		return;
 	}
-	if (rtm->rtm_version != RTM_VERSION) {
-		syslog(LOG_ERR, "routing socket version mismatch");
-		close(sockfd);
-		sockfd = 0;
+	if (rtm->rtm_version != RTM_VERSION)
 		return;
-	}
 	switch (rtm->rtm_type) {
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
