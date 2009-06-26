@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.66 2009/06/11 20:10:51 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.67 2009/06/26 18:55:20 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -126,7 +126,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * allocated cache lines for this new pcb.  But for some reason
 	 * that is not the case...
 	 */
-	pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
 	pdtlb(HPPA_SID_KERNEL, pa);
 	pitlb(HPPA_SID_KERNEL, pa);
 
