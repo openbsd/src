@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.128 2009/06/06 18:31:42 pyr Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.129 2009/06/26 11:48:00 okan Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -18,6 +18,10 @@
  */
 
 #include			 <imsg.h>
+
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 #define IMSG_SIZE_CHECK(p) do {					\
 	if (IMSG_DATA_SIZE(&imsg) != sizeof(*p))		\
