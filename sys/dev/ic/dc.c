@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.109 2009/06/02 15:39:35 jsg Exp $	*/
+/*	$OpenBSD: dc.c,v 1.110 2009/06/26 16:58:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1651,6 +1651,7 @@ dc_attach(struct dc_softc *sc)
 		    &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 		break;
 	case DC_TYPE_XIRCOM:
+		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr, 3, 3, 0);
 		break;
 	default:
 		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr,

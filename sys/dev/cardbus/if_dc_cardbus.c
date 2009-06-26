@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.28 2009/06/02 15:39:35 jsg Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.29 2009/06/26 16:58:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -157,9 +157,11 @@ dc_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	dc_cardbus_setup(csc);
 
-	/* Get the eeprom width, but XIRCOM has no eeprom */
-	if (!(PCI_VENDOR(ca->ca_id) == PCI_VENDOR_XIRCOM &&
+	/* Get the eeprom width */
+	if ((PCI_VENDOR(ca->ca_id) == PCI_VENDOR_XIRCOM &&
 	      PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_XIRCOM_X3201_3_21143))
+		;	/* XIRCOM has non-standard eeprom */
+	else
 		dc_eeprom_width(sc);
 
 	switch (PCI_VENDOR(ca->ca_id)) {
@@ -179,10 +181,6 @@ dc_cardbus_attach(struct device *parent, struct device *self, void *aux)
 			sc->dc_flags |= DC_TX_INTR_ALWAYS|DC_TX_COALESCE |
 					DC_TX_ALIGN;
 			sc->dc_pmode = DC_PMODE_MII;
-
-			bcopy(ca->ca_cis.funce.network.netid,
-			    &sc->sc_arpcom.ac_enaddr,
-			    sizeof sc->sc_arpcom.ac_enaddr);
 		}
 		break;
 	case PCI_VENDOR_ADMTEK:
