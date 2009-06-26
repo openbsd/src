@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.110 2009/06/26 16:58:46 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.111 2009/06/26 19:11:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1651,6 +1651,17 @@ dc_attach(struct dc_softc *sc)
 		    &sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 		break;
 	case DC_TYPE_XIRCOM:
+		/* Some newer units have the MAC at offset 8 */
+		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr, 8, 3, 0);
+
+		if (sc->sc_arpcom.ac_enaddr[0] == 0x00 &&
+		    sc->sc_arpcom.ac_enaddr[1] == 0x10 &&
+		    sc->sc_arpcom.ac_enaddr[2] == 0xa4)
+			break;
+		if (sc->sc_arpcom.ac_enaddr[0] == 0x00 &&
+		    sc->sc_arpcom.ac_enaddr[1] == 0x80 &&
+		    sc->sc_arpcom.ac_enaddr[2] == 0xc7)
+			break;
 		dc_read_eeprom(sc, (caddr_t)&sc->sc_arpcom.ac_enaddr, 3, 3, 0);
 		break;
 	default:
