@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.11 2009/06/27 16:14:03 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.12 2009/06/27 22:21:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -576,9 +576,10 @@ void
 xbow_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     uint8_t *buf, bus_size_t len)
 {
+	volatile uint16_t *addr = (volatile uint16_t *)(h + o);
 	len >>= 1;
 	while (len-- != 0) {
-		*(uint16_t *)buf = *(volatile uint16_t *)(h + o);
+		*(uint16_t *)buf = *addr;
 		buf += 2;
 	}
 }
@@ -587,9 +588,10 @@ void
 xbow_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     const uint8_t *buf, bus_size_t len)
 {
+	volatile uint16_t *addr = (volatile uint16_t *)(h + o);
 	len >>= 1;
 	while (len-- != 0) {
-		*(volatile uint16_t *)(h + o) = *(uint16_t *)buf;
+		*addr = *(uint16_t *)buf;
 		buf += 2;
 	}
 }
@@ -598,9 +600,10 @@ void
 xbow_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     uint8_t *buf, bus_size_t len)
 {
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
 	len >>= 2;
 	while (len-- != 0) {
-		*(uint32_t *)buf = *(volatile uint32_t *)(h + o);
+		*(uint32_t *)buf = *addr;
 		buf += 4;
 	}
 }
@@ -609,9 +612,10 @@ void
 xbow_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     const uint8_t *buf, bus_size_t len)
 {
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
 	len >>= 2;
 	while (len-- != 0) {
-		*(volatile uint32_t *)(h + o) = *(uint32_t *)buf;
+		*addr = *(uint32_t *)buf;
 		buf += 4;
 	}
 }
@@ -620,9 +624,10 @@ void
 xbow_read_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     uint8_t *buf, bus_size_t len)
 {
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
 	len >>= 3;
 	while (len-- != 0) {
-		*(uint64_t *)buf = *(volatile uint64_t *)(h + o);
+		*(uint64_t *)buf = *addr;
 		buf += 8;
 	}
 }
@@ -631,9 +636,10 @@ void
 xbow_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
     const uint8_t *buf, bus_size_t len)
 {
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
 	len >>= 3;
 	while (len-- != 0) {
-		*(volatile uint64_t *)(h + o) = *(uint64_t *)buf;
+		*addr = *(uint64_t *)buf;
 		buf += 8;
 	}
 }
