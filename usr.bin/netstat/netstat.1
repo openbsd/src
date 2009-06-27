@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.55 2009/06/04 18:59:34 mk Exp $
+.\"	$OpenBSD: netstat.1,v 1.56 2009/06/27 11:35:57 michele Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: June 4 2009 $
+.Dd $Mdocdate: June 27 2009 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -341,6 +341,7 @@ M	RTF_MODIFIED	Modified dynamically (by redirect).
 P	RTF_MPATH	Multipath route.
 R	RTF_REJECT	Host or net unreachable.
 S	RTF_STATIC	Manually added.
+T	RTF_MPLS	MPLS route.
 U	RTF_UP	Route usable.
 X	RTF_XRESOLVE	External daemon translates proto to link address.
 .El
