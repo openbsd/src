@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.60 2009/03/24 15:47:36 sobrado Exp $
+.\"	$OpenBSD: audio.4,v 1.61 2009/06/27 14:28:39 jmc Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 24 2009 $
+.Dd $Mdocdate: June 27 2009 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -385,7 +385,7 @@ is the maximum value and for
 .Va hiwat .
 .Bd -literal
 struct audio_prinfo {
-	u_int	sample_rate;	/* sample rate in samples/s */
+	u_int	sample_rate;	/* sample rate in bit/s */
 	u_int	channels;	/* number of channels, usually 1 or 2 */
 	u_int	precision;	/* number of bits/sample */
 	u_int	encoding;	/* data encoding (AUDIO_ENCODING_* below) */
@@ -394,7 +394,7 @@ struct audio_prinfo {
 	u_int	seek;		/* BSD extension */
 	u_int	avail_ports;	/* available I/O ports */
 	u_int	buffer_size;	/* total size audio buffer */
-	u_int	_ispare[1];
+	u_int	block_size;     /* size a block */
 	/* Current state of device: */
 	u_int	samples;	/* number of samples */
 	u_int	eof;		/* End Of File (zero-size writes) counter */
