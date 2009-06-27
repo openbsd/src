@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.16 2009/06/27 11:56:05 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.17 2009/06/27 12:04:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -601,7 +601,7 @@ arg_offset(const struct mdoc_argv *arg)
 	if (0 == strcmp(*arg->value, "left"))
 		return(0);
 	if (0 == strcmp(*arg->value, "indent"))
-		return(INDENT);
+		return(INDENT + 1);
 	if (0 == strcmp(*arg->value, "indent-two"))
 		return(INDENT * 2);
 
