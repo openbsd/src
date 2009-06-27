@@ -1,4 +1,4 @@
-/*     $OpenBSD: ldscript.tail,v 1.3 2009/05/08 02:57:32 drahn Exp $         */
+/*     $OpenBSD: ldscript.tail,v 1.4 2009/06/27 14:44:39 drahn Exp $         */
   } =0
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
@@ -24,7 +24,6 @@
   __bss_start = .;
   __bss_start__ = .;
   .sbss      :
-  AT (LOADADDR(.sdata) + (ADDR(.sbss) - ADDR(.sdata)))
   {
     PROVIDE (__sbss_start = .);
     PROVIDE (___sbss_start = .);
@@ -36,7 +35,6 @@
     PROVIDE (___sbss_end = .);
   }
   .bss       :
-  AT (LOADADDR(.sbss) + (ADDR(.bss) - ADDR(.sbss)))
   {
    *(.dynbss)
    *(.bss)
