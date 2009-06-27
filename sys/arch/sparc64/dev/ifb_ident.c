@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb_ident.c,v 1.1 2008/12/29 22:07:35 miod Exp $	*/
+/*	$OpenBSD: ifb_ident.c,v 1.2 2009/06/27 22:43:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -30,19 +30,11 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
 #include <machine/fbvar.h>
-
-static const struct pci_matchid ifb_devices[] = {
-    { PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_EXPERT3D },
-    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_6210 },
-    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_5110 },/* Sun XVR-500 */
-    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_7210 },
-};
 
 int
 ifb_ident(void *aux)
@@ -51,14 +43,14 @@ ifb_ident(void *aux)
 	int node;
 	char *name;
 
-	if (pci_matchbyid(paa, ifb_devices,
-	    sizeof(ifb_devices) / sizeof(ifb_devices[0])) != 0)
-		return 1;
-
 	node = PCITAG_NODE(paa->pa_tag);
 	name = getpropstring(node, "name");
+
 	if (strcmp(name, "SUNW,Expert3D") == 0 ||
-	    strcmp(name, "SUNW,Expert3D-Lite") == 0)
+	    strcmp(name, "SUNW,Expert3D-Lite") == 0 ||
+	    strcmp(name, "SUNW,XVR-500") == 0 ||
+	    strcmp(name, "SUNW,XVR-600") == 0 ||
+	    strcmp(name, "SUNW,XVR-1200") == 0)
 		return 1;
 
 	return 0;
