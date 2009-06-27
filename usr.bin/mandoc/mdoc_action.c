@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.8 2009/06/23 23:02:54 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.9 2009/06/27 12:43:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -89,7 +89,7 @@ const	struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ad */ 
 	{ NULL, NULL }, /* An */
 	{ NULL, post_ar }, /* Ar */
-	{ NULL, NULL }, /* Cd */
+	{ NULL, NULL }, /* Cd */ /* FIXME: tabs are accepted! */
 	{ NULL, NULL }, /* Cm */
 	{ NULL, NULL }, /* Dv */ 
 	{ NULL, NULL }, /* Er */ 
@@ -609,7 +609,7 @@ post_bl_width(struct mdoc *m)
 	 */
 
 	if (0 == strcmp(p, "Ds"))
-		width = 8;
+		width = 6;
 	else if (MDOC_MAX == (tok = mdoc_hash_find(m->htab, p)))
 		return(1);
 	else if (0 == (width = mdoc_macro2len(tok))) 

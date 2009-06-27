@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.17 2009/06/27 12:04:45 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.18 2009/06/27 12:43:11 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -543,11 +543,11 @@ arg_width(const struct mdoc_argv *arg, int pos)
 		if ('n' == arg->value[pos][len - 1] ||
 				'm' == arg->value[pos][len - 1]) {
 			v = (size_t)atoi(arg->value[pos]);
-			return(v);
+			return(v + 2);
 		}
 
 	}
-	return(strlen(arg->value[pos]) + 1);
+	return(strlen(arg->value[pos]) + 2);
 }
 
 
