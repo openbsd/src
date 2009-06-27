@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.18 2009/06/27 12:43:11 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.19 2009/06/27 13:03:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -771,11 +771,13 @@ termp_it_pre(DECL_ARGS)
 		/* FALLTHROUGH */
 	case (MDOC_Dash):
 		/* FALLTHROUGH */
-	case (MDOC_Enum):
-		/* FALLTHROUGH */
 	case (MDOC_Hyphen):
 		if (width < 4)
 			width = 4;
+		break;
+	case (MDOC_Enum):
+		if (width < 5)
+			width = 5;
 		break;
 	case (MDOC_Tag):
 		if (0 == width)
