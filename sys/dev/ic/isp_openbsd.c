@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.36 2009/06/24 11:00:53 krw Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.37 2009/06/27 15:23:20 kettenis Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -818,8 +818,6 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 			if (i < MAX_FC_TARG) {
 				FCPARAM(isp)->isp_ini_map[i] = dbidx + 1;
 				lp->ini_map_idx = i + 1;
-				printf("ISPASYNC_DEV_ARRIVED: %d/%d\n",
-				    i, FCPARAM(isp)->isp_ini_map[i]);
 			} else {
 				isp_prt(isp, ISP_LOGWARN, "out of target ids");
 				isp_dump_portdb(isp);
@@ -852,8 +850,6 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 			if (lp->ini_map_idx) {
 				tgt = lp->ini_map_idx - 1;
 				FCPARAM(isp)->isp_ini_map[tgt] = 0;
-				printf("ISPASYNC_DEV_CHANGED: %d/%d\n",
-				    tgt, FCPARAM(isp)->isp_ini_map[tgt]);
 				lp->ini_map_idx = 0;
 				isp_prt(isp, ISP_LOGCONFIG, prom3,
 				    lp->portid, tgt, "change is bad");
@@ -875,8 +871,6 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 				int t = lp->ini_map_idx - 1;
 				FCPARAM(isp)->isp_ini_map[t] =
 				    (lp - FCPARAM(isp)->portdb) + 1;
-				printf("ISPASYNC_DEV_CHANGED(2): %d/%d\n",
-				    t, FCPARAM(isp)->isp_ini_map[t]);
 				tgt = lp->ini_map_idx - 1;
 				isp_prt(isp, ISP_LOGCONFIG, prom2,
 				    lp->portid, lp->handle,
