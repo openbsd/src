@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.27 2009/06/21 18:03:16 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.28 2009/06/27 16:34:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1905,7 +1905,8 @@ xbridge_resource_manage(struct xbridge_softc *sc, pcitag_t tag,
 			 */
 			break;
 		case PCI_MAPREG_TYPE_IO:
-			if (base != 0) {
+			if (base != 0 && base >= ioex->ex_start &&
+			    base + size - 1 <= ioex->ex_end) {
 				if (extent_alloc_region(ioex, base, size,
 				    EX_NOWAIT))
 					printf("io address conflict"
