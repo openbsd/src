@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.100 2009/06/07 08:39:13 ray Exp $	*/
+/*	$OpenBSD: import.c,v 1.101 2009/06/27 16:55:31 martynas Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -210,6 +210,8 @@ import_printf(const char *fmt, ...)
 
 	cvs_printf("%s", str);
 	cvs_buf_puts(logbuf, str);
+
+	xfree(str);
 }
 
 void
