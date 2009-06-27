@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.10 2009/06/17 18:20:24 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.11 2009/06/27 16:14:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -245,9 +245,11 @@ xbowsubmatch(struct device *parent, void *vcf, void *aux)
 	struct xbow_attach_args *xaa = aux;
 	struct cfdata *cf = vcf;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != xaa->xaa_vendor)
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != xaa->xaa_widget)
 		return 0;
-	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != xaa->xaa_product)
+	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != xaa->xaa_vendor)
+		return 0;
+	if (cf->cf_loc[2] != -1 && cf->cf_loc[2] != xaa->xaa_product)
 		return 0;
 
 	return (*cf->cf_attach->ca_match)(parent, vcf, aux);
