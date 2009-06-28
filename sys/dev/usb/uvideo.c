@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.125 2009/04/18 07:30:50 mk Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.126 2009/06/28 17:01:17 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -665,7 +665,7 @@ uvideo_vc_parse_desc_pu(struct uvideo_softc *sc,
 
 	/* XXX support variable bmControls fields */
 	if (d->bControlSize != 2) {
-		printf("%s: just 2 bytes bmControls supported yet!\n",
+		printf("%s: video control not supported for this device.\n",
 		    DEVNAME(sc));
 		return (USBD_INVAL);
 	}
