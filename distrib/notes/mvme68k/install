@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.35 2009/05/13 18:38:29 miod Exp $
+dnl	$OpenBSD: install,v 1.36 2009/06/28 13:37:41 sthen Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -220,7 +220,7 @@ If this command prints an error message and returns to the BUG prompt
 immediately, it might be necessary to switch directories, using the SD
 command (the prompt will change from 147-Bug to 147-Diag), before retrying.
 
-Then, the contents of the ``sboot'' file should be sent From the terminal
+Then, the contents of the ``sboot'' file should be sent from the terminal
 emulator. Depending on the speed of the serial link, this will take some
 time, but no more than a couple of minutes.
 
