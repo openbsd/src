@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.29 2009/06/27 22:23:17 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.30 2009/06/28 21:52:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -153,8 +153,10 @@ void	xbridge_ate_write(struct xbridge_softc *, uint, uint64_t);
 void	xbridge_setup(struct xbridge_softc *);
 
 void	xbridge_ate_setup(struct xbridge_softc *);
+void	xbridge_resource_explore(struct xbridge_softc *, pcitag_t,
+	    int *, int *);
 void	xbridge_resource_manage(struct xbridge_softc *, pcitag_t,
-	    struct extent *);
+	    struct extent *, int);
 void	xbridge_resource_setup(struct xbridge_softc *);
 void	xbridge_rrb_setup(struct xbridge_softc *, int);
 
@@ -204,6 +206,7 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	struct xbridge_softc *sc = (struct xbridge_softc *)self;
 	struct pcibus_attach_args pba;
 	struct xbow_attach_args *xaa = aux;
+	int direct_io_avail = 0;
 
 	sc->sc_nasid = xaa->xaa_nasid;
 	sc->sc_widget = xaa->xaa_widget;
@@ -254,9 +257,30 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mem_bus_space->_space_map = xbridge_space_map_devio;
 #endif
 
-#ifdef notyet
 	if (ISSET(sc->sc_flags, XBRIDGE_FLAGS_XBRIDGE) ||
 	    xaa->xaa_revision >= 4) {
+		switch (sys_config.system_type) {
+		default:
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+		case SGI_O200:
+		case SGI_O300:
+			/*
+			 * In N mode, the large window is truncated and the
+			 * direct I/O area is not accessible.
+			 */
+			if (kl_n_mode == 0)
+				direct_io_avail = 1;
+			break;
+#endif
+#if defined(TGT_OCTANE)
+		case SGI_OCTANE:
+			direct_io_avail = 1;
+			break;
+#endif
+		}
+	}
+#ifdef notyet
+	if (direct_io_avail) {
 #else
 	if (0) {
 #endif
@@ -1770,8 +1794,9 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 	pcireg_t id, bhlcr;
 	const struct pci_quirkdata *qd;
 	uint32_t devio, basewin;
+	int io, mem;
 	int need_setup;
-	struct extent *ioex;
+	struct extent *ex;
 
 	for (dev = 0; dev < BRIDGE_NSLOTS; dev++) {
 		id = sc->sc_devices[dev];
@@ -1831,11 +1856,12 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 		(void)bus_space_read_4(sc->sc_iot, sc->sc_regh, WIDGET_TFLUSH);
 
 		/*
-		 * If we can manage I/O resource allocation in the MI code,
-		 * we do not need to do anything more at this stage...
+		 * If we can manage I/O and memory resource allocation in
+		 * the MI code, we do not need to do anything more at this
+		 * stage...
 		 */
 
-		if (sc->sc_io_ex != NULL)
+		if (sc->sc_io_ex != NULL && sc->sc_mem_ex != NULL)
 			continue;
 
 		/*
@@ -1848,10 +1874,10 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 		if (need_setup == 0)
 			continue;
 
-		ioex = extent_create("pciio",
+		ex = extent_create("pcires",
 		    basewin, basewin + BRIDGE_DEVIO_SIZE(dev) - 1,
 		    M_DEVBUF, NULL, 0, EX_NOWAIT);
-		if (ioex == NULL)
+		if (ex == NULL)
 			continue;
 
 		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
@@ -1864,6 +1890,12 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 		else
 			nfuncs = 1;
 
+		/*
+		 * Count how many I/O and memory mappings are necessary.
+		 */
+
+		io = mem = 0;
+
 		for (function = 0; function < nfuncs; function++) {
 			tag = pci_make_tag(pc, 0, dev, function);
 			id = pci_conf_read(pc, tag, PCI_ID_REG);
@@ -1872,16 +1904,96 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 			    PCI_VENDOR(id) == 0)
 				continue;
 
-			xbridge_resource_manage(sc, tag, ioex);
+			xbridge_resource_explore(sc, tag, &io, &mem);
 		}
 
-		extent_destroy(ioex);
+		/*
+		 * As long as the memory area in the large window 
+		 * isn't working as well as we'd like it to,
+		 * we can only use devio mappings in the short window.
+		 *
+		 * For devices having both I/O and memory resources, we
+		 * favour the I/O resources so far. Eventually this code
+		 * should attempt to steal a devio from an unpopulated
+		 * slot.
+		 */
+
+		if (io == 0 && mem != 0) {
+			/* swap devio type */
+			devio |= BRIDGE_DEVICE_IO_MEM;
+			bus_space_write_4(sc->sc_iot, sc->sc_regh,
+			    BRIDGE_DEVICE(dev), devio);
+			(void)bus_space_read_4(sc->sc_iot, sc->sc_regh,
+			    WIDGET_TFLUSH);
+		} else
+			mem = 0;
+
+		for (function = 0; function < nfuncs; function++) {
+			tag = pci_make_tag(pc, 0, dev, function);
+			id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID ||
+			    PCI_VENDOR(id) == 0)
+				continue;
+
+			xbridge_resource_manage(sc, tag, ex, mem != 0);
+		}
+
+		extent_destroy(ex);
+	}
+}
+
+void
+xbridge_resource_explore(struct xbridge_softc *sc, pcitag_t tag,
+    int *nio, int *nmem)
+{
+	pci_chipset_tag_t pc = &sc->sc_pc;
+	pcireg_t bhlc, type;
+	int reg, reg_start, reg_end;
+
+	bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	switch (PCI_HDRTYPE(bhlc)) {
+	case 0:
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_END;
+		break;
+	case 1:	/* PCI-PCI bridge */
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_PPB_END;
+		break;
+	case 2:	/* PCI-CardBus bridge */
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_PCB_END;
+		break;
+	default:
+		return;
+	}
+
+	for (reg = reg_start; reg < reg_end; reg += 4) {
+		if (pci_mapreg_probe(pc, tag, reg, &type) == 0)
+			continue;
+
+		if (pci_mapreg_info(pc, tag, reg, type, NULL, NULL, NULL))
+			continue;
+
+		switch (type) {
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+			(*nmem)++;
+			break;
+		case PCI_MAPREG_TYPE_IO:
+			(*nio)++;
+			break;
+		}
+
+		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+			reg += 4;
 	}
 }
 
 void
 xbridge_resource_manage(struct xbridge_softc *sc, pcitag_t tag,
-    struct extent *ioex)
+    struct extent *ex, int prefer_mem)
 {
 	pci_chipset_tag_t pc = &sc->sc_pc;
 	pcireg_t bhlc, type;
@@ -1917,26 +2029,34 @@ xbridge_resource_manage(struct xbridge_softc *sc, pcitag_t tag,
 		switch (type) {
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-			/*
-			 * XXX Eventually do something if sc->sc_mem_ex is
-			 * XXX NULL...
-			 */
+			if (sc->sc_mem_ex == NULL && prefer_mem != 0) {
+				if (extent_alloc(ex, size, size, 0, 0, 0,
+				    &base) != 0)
+					base = 0;
+			} else
+				base = 0;
 			break;
 		case PCI_MAPREG_TYPE_IO:
-			if (base != 0 && base >= ioex->ex_start &&
-			    base + size - 1 <= ioex->ex_end) {
-				if (extent_alloc_region(ioex, base, size,
-				    EX_NOWAIT))
-					printf("io address conflict"
-					    " 0x%x/0x%x\n", base, size);
-			} else {
-				if (extent_alloc(ioex, size, size, 0, 0, 0,
-				    &base) == 0)
-					pci_conf_write(pc, tag, reg, base);
-				/* otherwise the resource remains disabled */
-			}
+			if (sc->sc_io_ex == NULL && prefer_mem == 0) {
+				if (base != 0 && base >= ex->ex_start &&
+				    base + size - 1 <= ex->ex_end) {
+					if (extent_alloc_region(ex, base, size,
+					    EX_NOWAIT)) {
+						printf("io address conflict"
+						    " 0x%x/0x%x\n", base, size);
+						base = 0;
+					}
+				} else {
+					if (extent_alloc(ex, size, size, 0, 0,
+					    0, &base) != 0)
+						base = 0;
+				}
+			} else
+				base = 0;
 			break;
 		}
+
+		pci_conf_write(pc, tag, reg, base);
 
 		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
 			reg += 4;
