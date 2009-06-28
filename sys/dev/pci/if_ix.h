@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.6 2009/06/25 17:01:32 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.7 2009/06/28 22:20:20 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -158,9 +158,7 @@ struct ixgbe_tx_buf {
 
 struct ixgbe_rx_buf {
 	struct mbuf	*m_head;
-	int		 bigbuf;
-	/* one small and one large map */
-	bus_dmamap_t	 map[2];
+	bus_dmamap_t	 map;
 };
 
 /*
@@ -218,11 +216,11 @@ struct rx_ring {
 #if 0
 	struct lro_ctrl		lro;
 #endif
-        unsigned int		last_cleaned;
+        unsigned int		last_rx_desc_filled;
         unsigned int		next_to_check;
+	int			rx_ndescs;
 	struct ixgbe_rx_buf	*rx_buffers;
-	bus_dma_tag_t		rxtag[2];
-	bus_dmamap_t		spare_map[2];
+	bus_dma_tag_t		rxtag;
 	struct mbuf		*fmp;
 	struct mbuf		*lmp;
 	/* Soft stats */

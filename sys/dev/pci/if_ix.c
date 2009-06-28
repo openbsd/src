@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.21 2009/06/28 22:05:36 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.22 2009/06/28 22:20:20 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -85,7 +85,7 @@ void	ixgbe_setup_interface(struct ix_softc *);
 
 int	ixgbe_allocate_transmit_buffers(struct tx_ring *);
 int	ixgbe_setup_transmit_structures(struct ix_softc *);
-void	ixgbe_setup_transmit_ring(struct tx_ring *);
+int	ixgbe_setup_transmit_ring(struct tx_ring *);
 void	ixgbe_initialize_transmit_units(struct ix_softc *);
 void	ixgbe_free_transmit_structures(struct ix_softc *);
 void	ixgbe_free_transmit_buffers(struct tx_ring *);
@@ -96,6 +96,7 @@ int	ixgbe_setup_receive_ring(struct rx_ring *);
 void	ixgbe_initialize_receive_units(struct ix_softc *);
 void	ixgbe_free_receive_structures(struct ix_softc *);
 void	ixgbe_free_receive_buffers(struct rx_ring *);
+int	ixgbe_rxfill(struct rx_ring *);
 
 void	ixgbe_enable_intr(struct ix_softc *);
 void	ixgbe_disable_intr(struct ix_softc *);
@@ -110,7 +111,7 @@ void	ixgbe_set_multi(struct ix_softc *);
 void	ixgbe_print_hw_stats(struct ix_softc *);
 #endif
 void	ixgbe_update_link_status(struct ix_softc *);
-int	ixgbe_get_buf(struct rx_ring *, int, struct mbuf *);
+int	ixgbe_get_buf(struct rx_ring *, int);
 int	ixgbe_encap(struct tx_ring *, struct mbuf *);
 void	ixgbe_enable_hw_vlans(struct ix_softc * sc);
 int	ixgbe_dma_malloc(struct ix_softc *, bus_size_t,
@@ -698,7 +699,7 @@ ixgbe_legacy_irq(void *arg)
 	struct tx_ring	*txr = sc->tx_rings;
 	struct rx_ring	*rxr = sc->rx_rings;
 	struct ixgbe_hw	*hw = &sc->hw;
-	int		 claimed = 0;
+	int		 claimed = 0, refill = 0;
 
 	for (;;) {
 		reg_eicr = IXGBE_READ_REG(&sc->hw, IXGBE_EICR);
@@ -706,10 +707,12 @@ ixgbe_legacy_irq(void *arg)
 			break;
 
 		claimed = 1;
+		refill = 0;
 
 		if (ifp->if_flags & IFF_RUNNING) {
 			ixgbe_rxeof(rxr, -1);
 			ixgbe_txeof(txr);
+			refill = 1;
 		}
 
 		/* Check for fan failure */
@@ -726,6 +729,12 @@ ixgbe_legacy_irq(void *arg)
 			timeout_del(&sc->timer);
 		        ixgbe_update_link_status(sc);
 			timeout_add_sec(&sc->timer, 1);
+		}
+
+		if (refill && ixgbe_rxfill(rxr)) {
+			/* Advance the Rx Queue "Tail Pointer" */
+			IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(rxr->me),
+			    rxr->last_rx_desc_filled);
 		}
 	}
 
@@ -863,7 +872,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	/*
 	 * Map the packet for DMA.
 	 */
-	error = bus_dmamap_load_mbuf(txr->txtag, map,
+	error = bus_dmamap_load_mbuf(txr->txdma.dma_tag, map,
 	    m_head, BUS_DMA_NOWAIT);
 
 	if (error == ENOMEM) {
@@ -932,7 +941,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	txbuf->m_head = m_head;
 	txbuf_mapped->map = txbuf->map;
 	txbuf->map = map;
-	bus_dmamap_sync(txr->txtag, map, 0, map->dm_mapsize,
+	bus_dmamap_sync(txr->txdma.dma_tag, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
         /* Set the index of the descriptor that will be marked done */
@@ -942,7 +951,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	return (0);
 
 xmit_fail:
-	bus_dmamap_unload(txr->txtag, txbuf->map);
+	bus_dmamap_unload(txr->txdma.dma_tag, txbuf->map);
 	return (error);
 
 }
@@ -1150,11 +1159,11 @@ ixgbe_stop(void *arg)
 	struct ix_softc *sc = arg;
 	struct ifnet   *ifp = &sc->arpcom.ac_if;
 
-	INIT_DEBUGOUT("ixgbe_stop: begin\n");
-	ixgbe_disable_intr(sc);
-
 	/* Tell the stack that the interface is no longer active */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	INIT_DEBUGOUT("ixgbe_stop: begin\n");
+	ixgbe_disable_intr(sc);
 
 	ixgbe_hw(&sc->hw, reset_hw);
 	sc->hw.adapter_stopped = FALSE;
@@ -1163,6 +1172,9 @@ ixgbe_stop(void *arg)
 
 	/* reprogram the RAR[0] in case user changed it. */
 	ixgbe_hw(&sc->hw, set_rar, 0, sc->hw.mac.addr, 0, IXGBE_RAH_AV);
+
+	ixgbe_free_transmit_structures(sc);
+	ixgbe_free_receive_structures(sc);
 }
 
 
@@ -1384,6 +1396,8 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	    ETHER_HDR_LEN - ETHER_CRC_LEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 	IFQ_SET_READY(&ifp->if_snd);
+	
+	m_clsetwms(ifp, MCLBYTES, 4, sc->num_rx_desc);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -1443,21 +1457,22 @@ ixgbe_dma_malloc(struct ix_softc *sc, bus_size_t size,
 	int			 r;
 
 	dma->dma_tag = os->os_pa->pa_dmat;
-	r = bus_dmamap_create(dma->dma_tag, size, 1, size, 0,
-	    BUS_DMA_NOWAIT, &dma->dma_map);
+	r = bus_dmamap_create(dma->dma_tag, size, 1,
+	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map);
 	if (r != 0) {
 		printf("%s: ixgbe_dma_malloc: bus_dma_tag_create failed; "
 		       "error %u\n", ifp->if_xname, r);
 		goto fail_0;
 	}
 
-	r = bus_dmamem_alloc(dma->dma_tag, size, PAGE_SIZE, 0,
-	    &dma->dma_seg, 1, &dma->dma_nseg, BUS_DMA_NOWAIT);
+	r = bus_dmamem_alloc(dma->dma_tag, size, PAGE_SIZE, 0, &dma->dma_seg,
+	    1, &dma->dma_nseg, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		printf("%s: ixgbe_dma_malloc: bus_dmamem_alloc failed; "
 		       "error %u\n", ifp->if_xname, r);
 		goto fail_1;
 	}
+
 	r = bus_dmamem_map(dma->dma_tag, &dma->dma_seg, dma->dma_nseg, size,
 	    &dma->dma_vaddr, BUS_DMA_NOWAIT);
 	if (r != 0) {
@@ -1465,6 +1480,7 @@ ixgbe_dma_malloc(struct ix_softc *sc, bus_size_t size,
 		       "error %u\n", ifp->if_xname, r);
 		goto fail_2;
 	}
+
 	r = bus_dmamap_load(dma->dma_tag, dma->dma_map,
 	    dma->dma_vaddr, size, NULL, 
 	    mapflags | BUS_DMA_NOWAIT);
@@ -1473,6 +1489,7 @@ ixgbe_dma_malloc(struct ix_softc *sc, bus_size_t size,
 		       "error %u\n", ifp->if_xname, r);
 		goto fail_3;
 	}
+
 	dma->dma_size = size;
 	return (0);
 fail_3:
@@ -1501,6 +1518,7 @@ ixgbe_dma_free(struct ix_softc *sc, struct ixgbe_dma_alloc *dma)
 		bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
 		bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
 		bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
+		dma->dma_map = NULL;
 	}
 }
 
@@ -1577,15 +1595,6 @@ ixgbe_allocate_queues(struct ix_softc *sc)
 		}
 		txr->tx_hwb = (uint32_t *)txr->txwbdma.dma_vaddr;
 		*txr->tx_hwb = 0;
-
-        	/* Now allocate transmit buffers for the ring */
-        	if (ixgbe_allocate_transmit_buffers(txr)) {
-			printf("%s: Critical Failure setting up transmit buffers\n",
-			    ifp->if_xname);
-			error = ENOMEM;
-			goto err_tx_desc;
-        	}
-
 	}
 
 	/*
@@ -1611,14 +1620,6 @@ ixgbe_allocate_queues(struct ix_softc *sc)
 		}
 		rxr->rx_base = (union ixgbe_adv_rx_desc *)rxr->rxdma.dma_vaddr;
 		bzero((void *)rxr->rx_base, rsize);
-
-        	/* Allocate receive buffers for the ring*/
-		if (ixgbe_allocate_receive_buffers(rxr)) {
-			printf("%s: Critical Failure setting up receive buffers\n",
-			    ifp->if_xname);
-			error = ENOMEM;
-			goto err_rx_desc;
-		}
 	}
 
 	return (0);
@@ -1632,8 +1633,10 @@ err_tx_desc:
 		ixgbe_dma_free(sc, &txr->txwbdma);
 	}
 	free(sc->rx_rings, M_DEVBUF);
+	sc->rx_rings = NULL;
 rx_fail:
 	free(sc->tx_rings, M_DEVBUF);
+	sc->tx_rings = NULL;
 fail:
 	return (error);
 }
@@ -1648,37 +1651,42 @@ fail:
 int
 ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 {
-	struct ix_softc *sc = txr->sc;
-	struct ixgbe_osdep *os = &sc->osdep;
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
-	struct ixgbe_tx_buf *txbuf;
-	int error, i;
+	struct ix_softc 	*sc;
+	struct ixgbe_osdep	*os;
+	struct ifnet		*ifp;
+	struct ixgbe_tx_buf	*txbuf;
+	int			 error, i;
 
-	txr->txtag = os->os_pa->pa_dmat;
+	sc = txr->sc;
+	os = &sc->osdep;
+	ifp = &sc->arpcom.ac_if;
+
 	if (!(txr->tx_buffers =
 	    (struct ixgbe_tx_buf *) malloc(sizeof(struct ixgbe_tx_buf) *
 	    sc->num_tx_desc, M_DEVBUF, M_NOWAIT | M_ZERO))) {
-		printf("%s: Unable to allocate tx_buffer memory\n", ifp->if_xname);
+		printf("%s: Unable to allocate tx_buffer memory\n",
+		    ifp->if_xname);
 		error = ENOMEM;
 		goto fail;
 	}
+	txr->txtag = txr->txdma.dma_tag;
 
         /* Create the descriptor buffer dma maps */
-	txbuf = txr->tx_buffers;
-	for (i = 0; i < sc->num_tx_desc; i++, txbuf++) {
-		error = bus_dmamap_create(txr->txtag, IXGBE_TSO_SIZE,
+	for (i = 0; i < sc->num_tx_desc; i++) {
+		txbuf = &txr->tx_buffers[i];
+		error = bus_dmamap_create(txr->txdma.dma_tag, IXGBE_TSO_SIZE,
 			    IXGBE_MAX_SCATTER, PAGE_SIZE, 0,
 			    BUS_DMA_NOWAIT, &txbuf->map);
+
 		if (error != 0) {
-			printf("%s: Unable to create TX DMA map\n", ifp->if_xname);
+			printf("%s: Unable to create TX DMA map\n",
+			    ifp->if_xname);
 			goto fail;
 		}
 	}
 
 	return 0;
 fail:
-	/* We free all, it handles case where we are in the middle */
-	ixgbe_free_transmit_structures(sc);
 	return (error);
 }
 
@@ -1687,32 +1695,23 @@ fail:
  *  Initialize a transmit ring.
  *
  **********************************************************************/
-void
+int
 ixgbe_setup_transmit_ring(struct tx_ring *txr)
 {
-	struct ix_softc *sc = txr->sc;
-	struct ixgbe_tx_buf *txbuf;
-	int i;
+	struct ix_softc		*sc = txr->sc;
+	int			 error;
+
+	/* Now allocate transmit buffers for the ring */
+	if ((error = ixgbe_allocate_transmit_buffers(txr)) != 0)
+		return (error);
 
 	/* Clear the old ring contents */
 	bzero((void *)txr->tx_base,
 	      (sizeof(union ixgbe_adv_tx_desc)) * sc->num_tx_desc);
+
 	/* Reset indices */
 	txr->next_avail_tx_desc = 0;
 	txr->next_tx_to_clean = 0;
-
-	/* Free any existing tx buffers. */
-        txbuf = txr->tx_buffers;
-	for (i = 0; i < sc->num_tx_desc; i++, txbuf++) {
-		if (txbuf->m_head != NULL) {
-			bus_dmamap_sync(txr->txtag, txbuf->map,
-			    0, txbuf->map->dm_mapsize,
-			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(txr->txtag, txbuf->map);
-			m_freem(txbuf->m_head);
-		}
-		txbuf->m_head = NULL;
-        }
 
 	/* Set number of descriptors available */
 	txr->tx_avail = sc->num_tx_desc;
@@ -1721,6 +1720,7 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 	    0, txr->txdma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+	return (0);
 }
 
 /*********************************************************************
@@ -1732,12 +1732,17 @@ int
 ixgbe_setup_transmit_structures(struct ix_softc *sc)
 {
 	struct tx_ring *txr = sc->tx_rings;
-	int	i;
+	int		i, error;
 
-	for (i = 0; i < sc->num_tx_queues; i++, txr++)
-		ixgbe_setup_transmit_ring(txr);
+	for (i = 0; i < sc->num_tx_queues; i++, txr++) {
+		if ((error = ixgbe_setup_transmit_ring(txr)) != 0)
+			goto fail;
+	}
 
 	return (0);
+fail:
+	ixgbe_free_transmit_structures(sc);
+	return (error);
 }
 
 /*********************************************************************
@@ -1806,10 +1811,7 @@ ixgbe_free_transmit_structures(struct ix_softc *sc)
 
 	for (i = 0; i < sc->num_tx_queues; i++, txr++) {
 		ixgbe_free_transmit_buffers(txr);
-		ixgbe_dma_free(sc, &txr->txdma);
-		ixgbe_dma_free(sc, &txr->txwbdma);
 	}
-	free(sc->tx_rings, M_DEVBUF);
 }
 
 /*********************************************************************
@@ -1831,29 +1833,28 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
 
 	tx_buffer = txr->tx_buffers;
 	for (i = 0; i < sc->num_tx_desc; i++, tx_buffer++) {
-		if (tx_buffer->m_head != NULL) {
-			bus_dmamap_sync(txr->txtag, tx_buffer->map,
+		if (tx_buffer->map != NULL && tx_buffer->map->dm_nsegs > 0) {
+			bus_dmamap_sync(txr->txdma.dma_tag, tx_buffer->map,
 			    0, tx_buffer->map->dm_mapsize,
 			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(txr->txtag,
-			    tx_buffer->map);
-			m_freem(tx_buffer->m_head);
-			if (tx_buffer->map != NULL) {
-				bus_dmamap_destroy(txr->txtag,
-				    tx_buffer->map);
-			}
-		} else if (tx_buffer->map != NULL) {
-			bus_dmamap_unload(txr->txtag,
-			    tx_buffer->map);
-			bus_dmamap_destroy(txr->txtag,
+			bus_dmamap_unload(txr->txdma.dma_tag,
 			    tx_buffer->map);
 		}
-		tx_buffer->m_head = NULL;
-		tx_buffer->map = NULL;
+		if (tx_buffer->m_head != NULL) {
+			m_freem(tx_buffer->m_head);
+			tx_buffer->m_head = NULL;
+		}
+		if (tx_buffer->map != NULL) {
+			bus_dmamap_destroy(txr->txdma.dma_tag,
+			    tx_buffer->map);
+			tx_buffer->map = NULL;
+		}
 	}
 
-	if (txr->tx_buffers != NULL)
+	if (txr->tx_buffers != NULL) {
 		free(txr->tx_buffers, M_DEVBUF);
+		txr->tx_buffers = NULL;
+	}
 	txr->tx_buffers = NULL;
 	txr->txtag = NULL;
 }
@@ -2154,11 +2155,11 @@ ixgbe_txeof(struct tx_ring *txr)
 
 			if (tx_buffer->m_head) {
 				ifp->if_opackets++;
-				bus_dmamap_sync(txr->txtag,
+				bus_dmamap_sync(txr->txdma.dma_tag,
 				    tx_buffer->map,
 				    0, tx_buffer->map->dm_mapsize,
 				    BUS_DMASYNC_POSTWRITE);
-				bus_dmamap_unload(txr->txtag,
+				bus_dmamap_unload(txr->txdma.dma_tag,
 				    tx_buffer->map);
 				m_freem(tx_buffer->m_head);
 				tx_buffer->m_head = NULL;
@@ -2221,91 +2222,78 @@ ixgbe_txeof(struct tx_ring *txr)
  *
  **********************************************************************/
 int
-ixgbe_get_buf(struct rx_ring *rxr, int i, struct mbuf *nmp)
+ixgbe_get_buf(struct rx_ring *rxr, int i)
 {
-	struct ix_softc	*sc = rxr->sc;
-	struct mbuf	*mp = nmp;
-	bus_dmamap_t	map;
-	int		error, old, s = 0;
-	int		size = MCLBYTES;
+	struct ix_softc		*sc = rxr->sc;
+	struct mbuf		*m;
+	int			error;
+	int			size = MCLBYTES;
 	struct ixgbe_rx_buf	*rxbuf;
+	union ixgbe_adv_rx_desc	*rxdesc;
+	size_t			 dsize = sizeof(union ixgbe_adv_rx_desc);
 
-#ifdef notyet
-	/* Are we going to Jumbo clusters? */
-	if (sc->bigbufs) {
-		size = MJUMPAGESIZE;
-		s = 1;
-	};
+	rxbuf = &rxr->rx_buffers[i];
+	rxdesc = &rxr->rx_base[i];
 
-	mp = m_getjcl(M_DONTWAIT, MT_DATA, M_PKTHDR, size);
-	if (mp == NULL) {
+	if (rxbuf->m_head != NULL) {
+		printf("%s: ixgbe_get_buf: slot %d already has an mbuf\n",
+		    sc->dev.dv_xname, i);
+		return (ENOBUFS);
+	}
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL) {
 		sc->mbuf_alloc_failed++;
 		return (ENOBUFS);
 	}
-#endif
-
-	if (mp == NULL) {
-		MGETHDR(mp, M_DONTWAIT, MT_DATA);
-		if (mp == NULL) {
-			sc->mbuf_alloc_failed++;
-			return (ENOBUFS);
-		}
-		MCLGET(mp, M_DONTWAIT);
-		if ((mp->m_flags & M_EXT) == 0) {
-			m_freem(mp);
-			sc->mbuf_cluster_failed++;
-			return (ENOBUFS);
-		}
-		mp->m_len = mp->m_pkthdr.len = size;
-	} else {
-		mp->m_len = mp->m_pkthdr.len = size;
-		mp->m_data = mp->m_ext.ext_buf;
-		mp->m_next = NULL;
+	MCLGETI(m, M_DONTWAIT, &sc->arpcom.ac_if, size);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		sc->mbuf_cluster_failed++;
+		return (ENOBUFS);
 	}
+	m->m_len = m->m_pkthdr.len = size;
+	if (sc->max_frame_size <= (size - ETHER_ALIGN))
+		m_adj(m, ETHER_ALIGN);
 
-	if (sc->max_frame_size <= (MCLBYTES - ETHER_ALIGN))
-		m_adj(mp, ETHER_ALIGN);
-
-	/*
-	 * Using memory from the mbuf cluster pool, invoke the bus_dma
-	 * machinery to arrange the memory mapping.
-	 */
-	error = bus_dmamap_load_mbuf(rxr->rxtag[s], rxr->spare_map[s],
-	    mp, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(rxr->rxdma.dma_tag, rxbuf->map,
+	    m, BUS_DMA_NOWAIT);
 	if (error) {
-		m_freem(mp);
+		m_freem(m);
 		return (error);
 	}
 
-	/* Now check our target buffer for existing mapping */
-	rxbuf = &rxr->rx_buffers[i];
-	old = rxbuf->bigbuf;
-	if (rxbuf->m_head != NULL)
-		bus_dmamap_unload(rxr->rxtag[old], rxbuf->map[old]);
+        bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->map,
+	    0, rxbuf->map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	rxbuf->m_head = m;
 
-        map = rxbuf->map[old];
-        rxbuf->map[s] = rxr->spare_map[s];
-        rxr->spare_map[old] = map;
-        rxbuf->m_head = mp;
-        rxbuf->bigbuf = s;
+	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
+	    dsize * i, dsize, BUS_DMASYNC_POSTWRITE);
 
-        rxr->rx_base[i].read.pkt_addr =
-	    htole64(rxbuf->map[s]->dm_segs[0].ds_addr);
-
-        bus_dmamap_sync(rxr->rxtag[s], rxbuf->map[s],
-	    0, rxbuf->map[s]->dm_mapsize, BUS_DMASYNC_PREREAD);
+	bzero(rxdesc, dsize);
+	rxdesc->read.pkt_addr = htole64(rxbuf->map->dm_segs[0].ds_addr);
 
 #ifndef NO_82598_A0_SUPPORT
         /* A0 needs to One's Compliment descriptors */
 	if (sc->hw.revision_id == 0) {
-        	struct dhack {uint32_t a1; uint32_t a2; uint32_t b1; uint32_t b2;};
+        	struct dhack {
+			uint32_t a1;
+			uint32_t a2;
+			uint32_t b1;
+			uint32_t b2;
+		};
         	struct dhack *d;   
 
-        	d = (struct dhack *)&rxr->rx_base[i];
+        	d = (struct dhack *)rxdesc;
         	d->a1 = ~(d->a1);
         	d->a2 = ~(d->a2);
 	}
 #endif
+
+	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
+	    dsize * i, dsize, BUS_DMASYNC_PREWRITE);
+
+	rxr->rx_ndescs++;
 
         return (0);
 }
@@ -2323,57 +2311,37 @@ ixgbe_allocate_receive_buffers(struct rx_ring *rxr)
 {
 	struct ix_softc		*sc = rxr->sc;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
-	struct ixgbe_osdep	*os = &sc->osdep;
 	struct ixgbe_rx_buf 	*rxbuf;
-	int             	i, bsize, error;
+	int             	i, bsize, error, size = MCLBYTES;
 
 	bsize = sizeof(struct ixgbe_rx_buf) * sc->num_rx_desc;
-	if (!(rxr->rx_buffers =
-	    (struct ixgbe_rx_buf *) malloc(bsize,
+	if (!(rxr->rx_buffers = (struct ixgbe_rx_buf *) malloc(bsize,
 	    M_DEVBUF, M_NOWAIT | M_ZERO))) {
-		printf("%s: Unable to allocate rx_buffer memory\n", ifp->if_xname);
+		printf("%s: Unable to allocate rx_buffer memory\n",
+		    ifp->if_xname);
 		error = ENOMEM;
 		goto fail;
 	}
-	rxr->rxtag[0] = rxr->rxtag[1] = os->os_pa->pa_dmat;
+	rxr->rxtag = rxr->rxdma.dma_tag;
 
-	/* Create the spare maps (used by getbuf) */
-        error = bus_dmamap_create(rxr->rxtag[0],
-	    MCLBYTES, 1, MCLBYTES, 0, BUS_DMA_NOWAIT, &rxr->spare_map[0]);
-	if (error) {
-		printf("%s: %s: bus_dmamap_create failed: %d\n", ifp->if_xname,
-		    __func__, error);
-		goto fail;
-	}
-        error = bus_dmamap_create(rxr->rxtag[1],
-	    MJUMPAGESIZE, 1, MJUMPAGESIZE, 0, BUS_DMA_NOWAIT, &rxr->spare_map[1]);
-	if (error) {
-		printf("%s: %s: bus_dmamap_create failed: %d\n", ifp->if_xname,
-		    __func__, error);
-		goto fail;
-	}
-
+	rxbuf = rxr->rx_buffers;
 	for (i = 0; i < sc->num_rx_desc; i++, rxbuf++) {
-		rxbuf = &rxr->rx_buffers[i];
-		error = bus_dmamap_create(rxr->rxtag[0], MCLBYTES, 1, MCLBYTES,
-		    0, BUS_DMA_NOWAIT, &rxbuf->map[0]);
+		error = bus_dmamap_create(rxr->rxdma.dma_tag, size, 1,
+		    size, 0, BUS_DMA_NOWAIT, &rxbuf->map);
 		if (error) {
-			printf("%s: Unable to create Small RX DMA map\n", ifp->if_xname);
+			printf("%s: Unable to create Rx DMA map\n",
+			    ifp->if_xname);
 			goto fail;
 		}
-		error = bus_dmamap_create(rxr->rxtag[1], MJUMPAGESIZE, 1, MJUMPAGESIZE,
-		    0, BUS_DMA_NOWAIT, &rxbuf->map[1]);
-		if (error) {
-			printf("%s: Unable to create Large RX DMA map\n", ifp->if_xname);
-			goto fail;
-		}
+		rxbuf->m_head = NULL;
 	}
+	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map, 0,
+	    rxr->rxdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (0);
 
 fail:
-	/* Frees all, but can handle partial completion */
-	ixgbe_free_receive_structures(sc);
 	return (error);
 }
 
@@ -2386,69 +2354,50 @@ int
 ixgbe_setup_receive_ring(struct rx_ring *rxr)
 {
 	struct ix_softc		*sc = rxr->sc;
-	struct ixgbe_rx_buf	*rxbuf;
-	int			j, rsize, s = 0, i;
+	int			 rsize, error;
 
 	rsize = roundup2(sc->num_rx_desc *
 	    sizeof(union ixgbe_adv_rx_desc), 4096);
 	/* Clear the ring contents */
 	bzero((void *)rxr->rx_base, rsize);
 
-	/*
-	** Free current RX buffers: the size buffer
-	** that is loaded is indicated by the buffer
-	** bigbuf value.
-	*/
-	for (i = 0; i < sc->num_rx_desc; i++) {
-		rxbuf = &rxr->rx_buffers[i];
-		s = rxbuf->bigbuf;
-		if (rxbuf->m_head != NULL) {
-			bus_dmamap_sync(rxr->rxtag[s], rxbuf->map[s],
-			    0, rxbuf->map[s]->dm_mapsize,
-			    BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(rxr->rxtag[s], rxbuf->map[s]);
-			m_freem(rxbuf->m_head);
-			rxbuf->m_head = NULL;
-		}
-	}
-
-	for (j = 0; j < sc->num_rx_desc; j++) {
-		if (ixgbe_get_buf(rxr, j, NULL) == ENOBUFS) {
-			rxr->rx_buffers[j].m_head = NULL;
-			rxr->rx_base[j].read.pkt_addr = 0;
-			/* If we fail some may have change size */
-			s = sc->bigbufs;
-			goto fail;
-		}
-	}
+	if ((error = ixgbe_allocate_receive_buffers(rxr)) != 0)
+		return (error);
 
 	/* Setup our descriptor indices */
 	rxr->next_to_check = 0;
-	rxr->last_cleaned = 0;
+	rxr->last_rx_desc_filled = sc->num_rx_desc - 1;
 
-	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
-	    0, rxr->rxdma.dma_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	ixgbe_rxfill(rxr);
+	if (rxr->rx_ndescs < 1) {
+		printf("%s: unable to fill any rx descriptors\n",
+		    sc->dev.dv_xname);
+		return (ENOBUFS);
+	}
 
 	return (0);
-fail:
-	/*
-	 * We need to clean up any buffers allocated so far
-	 * 'j' is the failing index, decrement it to get the
-	 * last success.
-	 */
-	for (--j; j < 0; j--) {
-		rxbuf = &rxr->rx_buffers[j];
-		if (rxbuf->m_head != NULL) {
-			bus_dmamap_sync(rxr->rxtag[s], rxbuf->map[s],
-			    0, rxbuf->map[s]->dm_mapsize,
-			    BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(rxr->rxtag[s], rxbuf->map[s]);
-			m_freem(rxbuf->m_head);
-			rxbuf->m_head = NULL;
-		}
+}
+
+int
+ixgbe_rxfill(struct rx_ring *rxr)
+{
+	struct ix_softc *sc = rxr->sc;
+	int		 post = 0;
+	int		 i;
+
+	i = rxr->last_rx_desc_filled;
+	while (rxr->rx_ndescs < sc->num_rx_desc) {
+		if (++i == sc->num_rx_desc)
+			i = 0;
+
+		if (ixgbe_get_buf(rxr, i) != 0)
+			break;
+
+		rxr->last_rx_desc_filled = i;
+		post = 1;
 	}
-	return (ENOBUFS);
+
+	return (post);
 }
 
 /*********************************************************************
@@ -2460,36 +2409,16 @@ int
 ixgbe_setup_receive_structures(struct ix_softc *sc)
 {
 	struct rx_ring *rxr = sc->rx_rings;
-	int i, j, s;
+	int i;
 
 	for (i = 0; i < sc->num_rx_queues; i++, rxr++)
 		if (ixgbe_setup_receive_ring(rxr))
 			goto fail;
 
 	return (0);
-fail:
-	/*
-	 * Free RX buffers allocated so far, we will only handle
-	 * the rings that completed, the failing case will have
-	 * cleaned up for itself. The value of 'i' will be the
-	 * failed ring so we must pre-decrement it.
-	 */
-	rxr = sc->rx_rings;
-	for (--i; i > 0; i--, rxr++) {
-		for (j = 0; j < sc->num_rx_desc; j++) {
-			struct ixgbe_rx_buf *rxbuf;
-			rxbuf = &rxr->rx_buffers[j];
-			s = rxbuf->bigbuf;
-			if (rxbuf->m_head != NULL) {
-				bus_dmamap_sync(rxr->rxtag[s], rxbuf->map[s],
-				    0, rxbuf->map[s]->dm_mapsize, BUS_DMASYNC_POSTREAD);
-				bus_dmamap_unload(rxr->rxtag[s], rxbuf->map[s]);
-				m_freem(rxbuf->m_head);
-				rxbuf->m_head = NULL;
-			}
-		}
-	}
 
+fail:
+	ixgbe_free_receive_structures(sc);
 	return (ENOBUFS);
 }
 
@@ -2558,7 +2487,7 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		/* Setup the HW Rx Head and Tail Descriptor Pointers */
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDH(i), 0);
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(i),
-		    sc->num_rx_desc - 1);
+		    rxr->last_rx_desc_filled);
 	}
 
 	rxcsum = IXGBE_READ_REG(&sc->hw, IXGBE_RXCSUM);
@@ -2638,11 +2567,7 @@ ixgbe_free_receive_structures(struct ix_softc *sc)
 
 	for (i = 0; i < sc->num_rx_queues; i++, rxr++) {
 		ixgbe_free_receive_buffers(rxr);
-		/* Free the ring memory as well */
-		ixgbe_dma_free(sc, &rxr->rxdma);
 	}
-
-	free(sc->rx_rings, M_DEVBUF);
 }
 
 /*********************************************************************
@@ -2655,34 +2580,38 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 {
 	struct ix_softc		*sc = NULL;
 	struct ixgbe_rx_buf	*rxbuf = NULL;
-	int			 i, s;
+	int			 i;
 
 	INIT_DEBUGOUT("free_receive_buffers: begin");
 	sc = rxr->sc;
 	if (rxr->rx_buffers != NULL) {
-		rxbuf = &rxr->rx_buffers[0];
-		for (i = 0; i < sc->num_rx_desc; i++) {
-			int s = rxbuf->bigbuf;
-			if (rxbuf->map != NULL) {
-				bus_dmamap_unload(rxr->rxtag[s], rxbuf->map[s]);
-				bus_dmamap_destroy(rxr->rxtag[s], rxbuf->map[s]);
-			}
+		rxbuf = rxr->rx_buffers;
+		for (i = 0; i < sc->num_rx_desc; i++, rxbuf++) {
 			if (rxbuf->m_head != NULL) {
+				bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->map,
+				    0, rxbuf->map->dm_mapsize,
+				    BUS_DMASYNC_POSTREAD);
+				bus_dmamap_unload(rxr->rxdma.dma_tag, rxbuf->map);
 				m_freem(rxbuf->m_head);
+				rxbuf->m_head = NULL;
 			}
-			rxbuf->m_head = NULL;
-			++rxbuf;
+			bus_dmamap_destroy(rxr->rxdma.dma_tag, rxbuf->map);
+			rxbuf->map = NULL;
 		}
 	}
 	if (rxr->rx_buffers != NULL) {
 		free(rxr->rx_buffers, M_DEVBUF);
 		rxr->rx_buffers = NULL;
 	}
-	for (s = 0; s < 2; s++) {
-		if (rxr->rxtag[s] != NULL)
-			rxr->rxtag[s] = NULL;
+
+	if (rxr->rxtag != NULL)
+		rxr->rxtag = NULL;
+
+	if (rxr->fmp != NULL) {
+		m_freem(rxr->fmp);
+		rxr->fmp = NULL;
+		rxr->lmp = NULL;
 	}
-	return;
 }
 
 /*********************************************************************
@@ -2700,129 +2629,153 @@ ixgbe_rxeof(struct rx_ring *rxr, int count)
 {
 	struct ix_softc 	*sc = rxr->sc;
 	struct ifnet   		*ifp = &sc->arpcom.ac_if;
-	struct mbuf    		*mp;
-	int             	 len, i, eop = 0;
-	uint8_t		 accept_frame = 0;
+	struct mbuf    		*m;
+	uint8_t			 accept_frame = 0;
+	uint8_t		    	 eop = 0;
+	uint16_t		 len, desc_len, prev_len_adj;
 	uint32_t		 staterr;
-	union ixgbe_adv_rx_desc	*cur;
+	struct ixgbe_rx_buf	*rxbuf;
+	union ixgbe_adv_rx_desc	*rxdesc;
+	size_t			 dsize = sizeof(union ixgbe_adv_rx_desc);
+	int			 i;
 
-	i = rxr->next_to_check;
-	cur = &rxr->rx_base[i];
-
-	bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map, 0,
-	    rxr->rxdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-
-	staterr = cur->wb.upper.status_error;
-	if (!(staterr & IXGBE_RXD_STAT_DD))
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return FALSE;
 
-	while ((staterr & IXGBE_RXD_STAT_DD) && (count != 0) &&
-	    (ifp->if_flags & IFF_RUNNING)) {
-		struct mbuf *m = NULL;
-		int s;
+	i = rxr->next_to_check;
 
-		mp = rxr->rx_buffers[i].m_head;
-		s = rxr->rx_buffers[i].bigbuf;
-		bus_dmamap_sync(rxr->rxtag[s], rxr->rx_buffers[i].map[s],
-		    0, rxr->rx_buffers[i].map[s]->dm_mapsize,
+	while (count != 0 && rxr->rx_ndescs > 0) {
+		m = NULL;
+
+		rxdesc = &rxr->rx_base[i];
+		rxbuf = &rxr->rx_buffers[i];
+
+		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
+		    dsize * i, dsize,
 		    BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(rxr->rxtag[s],
-		    rxr->rx_buffers[i].map[s]);
+
+		staterr = letoh32(rxdesc->wb.upper.status_error);
+		if (!ISSET(staterr, IXGBE_RXD_STAT_DD)) {
+			bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
+			    dsize * i, dsize,
+			    BUS_DMASYNC_PREREAD);
+			break;
+		}
+
+		/* pull the mbuf off the ring */
+		bus_dmamap_sync(rxr->rxdma.dma_tag, rxbuf->map, 0,
+		    rxbuf->map->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(rxr->rxdma.dma_tag, rxbuf->map);
+		m = rxbuf->m_head;
+		rxbuf->m_head = NULL;
+
+		if (m == NULL) {
+			panic("%s: ixgbe_rxeof: NULL mbuf in slot %d "
+			    "(nrx %d, filled %d)", sc->dev.dv_xname,
+			    i, rxr->rx_ndescs,
+			    rxr->last_rx_desc_filled);
+		}
+
+		m_cluncount(m, 1);
+		rxr->rx_ndescs--;
 
 		accept_frame = 1;
+		prev_len_adj = 0;
+		desc_len = letoh16(rxdesc->wb.upper.length);
+
 		if (staterr & IXGBE_RXD_STAT_EOP) {
 			count--;
 			eop = 1;
 		} else {
 			eop = 0;
 		}
-		len = cur->wb.upper.length;
+		len = desc_len;
 
 		if (staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK)
 			accept_frame = 0;
 
 		if (accept_frame) {
-			/* Get a fresh buffer */
-			if (ixgbe_get_buf(rxr, i, NULL) != 0) {
-				ifp->if_iqdrops++;
-				goto discard;
-			}
+			m->m_len = len;
 
-			/* Assign correct length to the current fragment */
-			mp->m_len = len;
+			/* XXX ixgbe_realign() STRICT_ALIGN */
 
 			if (rxr->fmp == NULL) {
-				mp->m_pkthdr.len = len;
-				rxr->fmp = mp; /* Store the first mbuf */
-				rxr->lmp = mp;
+				m->m_pkthdr.len = m->m_len;
+				rxr->fmp = m; /* Store the first mbuf */
+				rxr->lmp = m;
 			} else {
 				/* Chain mbuf's together */
-				mp->m_flags &= ~M_PKTHDR;
-				rxr->lmp->m_next = mp;
-				rxr->lmp = rxr->lmp->m_next;
-				rxr->fmp->m_pkthdr.len += len;
+				m->m_flags &= ~M_PKTHDR;
+#if 0
+				/*
+				 * Adjust length of previous mbuf in chain if
+				 * we received less than 4 bytes in the last
+				 * descriptor.
+				 */
+				if (prev_len_adj > 0) {
+					rxr->lmp->m_len -= prev_len_adj;
+					rxr->fmp->m_pkthdr.len -= prev_len_adj;
+				}
+#endif
+				rxr->lmp->m_next = m;
+				rxr->lmp = m;
+				rxr->fmp->m_pkthdr.len += m->m_len;
 			}
 
 			if (eop) {
-				rxr->fmp->m_pkthdr.rcvif = ifp;
 				ifp->if_ipackets++;
+
+				m = rxr->fmp;
+				m->m_pkthdr.rcvif = ifp;
+
 				rxr->packet_count++;
 				rxr->byte_count += rxr->fmp->m_pkthdr.len;
-				ixgbe_rx_checksum(sc, staterr, rxr->fmp);
+
+				ixgbe_rx_checksum(sc, staterr, m);
 
 #if NVLAN > 0
 				if (staterr & IXGBE_RXD_STAT_VP) {
-					rxr->fmp->m_pkthdr.ether_vtag =
-					    letoh16(cur->wb.upper.vlan);
-					rxr->fmp->m_flags |= M_VLANTAG;
+					m->m_pkthdr.ether_vtag =
+					    letoh16(rxdesc->wb.upper.vlan);
+					m->m_flags |= M_VLANTAG;
 				}
 #endif
+#if NBPFILTER > 0
+				if (ifp->if_bpf)
+					bpf_mtap_ether(ifp->if_bpf, m,
+					    BPF_DIRECTION_IN);
+#endif
 
-				m = rxr->fmp;
+				ether_input_mbuf(ifp, m);
+
 				rxr->fmp = NULL;
 				rxr->lmp = NULL;
 			}
 		} else {
-discard:
-			ixgbe_get_buf(rxr, i, mp);
+			sc->dropped_pkts++;
+
 			if (rxr->fmp != NULL) {
 				m_freem(rxr->fmp);
 				rxr->fmp = NULL;
 				rxr->lmp = NULL;
 			}
-			m = NULL;
+
+			m_freem(m);
 		}
 
 		/* Zero out the receive descriptors status  */
-		cur->wb.upper.status_error = 0;
+		rxdesc->wb.upper.status_error = 0;
+
 		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
-		    0, rxr->rxdma.dma_map->dm_mapsize,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		    dsize * i, dsize,
+		    BUS_DMASYNC_PREREAD);
 
-		rxr->last_cleaned = i; /* for updating tail */
-
+		/* Advance our pointers to the next descriptor. */
 		if (++i == sc->num_rx_desc)
 			i = 0;
-
-		/* Now send up to the stack */
-                if (m != NULL) {
-                        rxr->next_to_check = i;
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap_ether(ifp->if_bpf, m,
-				    BPF_DIRECTION_IN);
-#endif
-			ether_input_mbuf(ifp, m);
-			i = rxr->next_to_check;
-                }
-		/* Get next descriptor */
-		cur = &rxr->rx_base[i];
-		staterr = cur->wb.upper.status_error;
 	}
 	rxr->next_to_check = i;
-
-	/* Advance the IXGB's Receive Queue "Tail Pointer" */
-	IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(rxr->me), rxr->last_cleaned);
 
 	if (!(staterr & IXGBE_RXD_STAT_DD))
 		return FALSE;
