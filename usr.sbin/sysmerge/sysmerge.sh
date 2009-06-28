@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.46 2009/06/28 18:23:43 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.47 2009/06/28 21:08:06 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -535,13 +535,13 @@ do_compare() {
 		if [ "${AUTOMODE}" -a "${COMPFILE}" != "./etc/fbtab" \
 		    -a "${COMPFILE}" != "./etc/login.conf" \
 		    -a "${COMPFILE}" != "./etc/sysctl.conf" \
-		    -a "${COMPFILE}" != "./etc/ttys" ]; then
+		    -a "${COMPFILE}" != "./etc/ttys" -a -z "${IS_LINK}" ]; then
 			CVSID1=`grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2> /dev/null`
 			CVSID2=`grep "[$]OpenBSD:" ${COMPFILE} 2> /dev/null` || CVSID2=none
 			if [ "${CVSID2}" = "${CVSID1}" ]; then rm "${COMPFILE}"; fi
 		fi
 
-		if [ -f "${COMPFILE}" ]; then
+		if [ -f "${COMPFILE}" -a -z "${IS_LINK}" ]; then
 			# make sure files are different; if not, delete the one in temproot
 			if diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" > /dev/null 2>&1; then
 				rm "${COMPFILE}"
