@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.20 2009/06/25 17:01:32 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.21 2009/06/28 22:05:36 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -930,6 +930,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	txr->next_avail_tx_desc = i;
 
 	txbuf->m_head = m_head;
+	txbuf_mapped->map = txbuf->map;
 	txbuf->map = map;
 	bus_dmamap_sync(txr->txtag, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
