@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.9 2009/06/28 12:36:33 kettenis Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.10 2009/06/28 13:40:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -59,6 +59,9 @@
 #define PM2_OUT_FIFO		0x2000
 #define  PM2_SYNC_TAG			0x00000188
 
+#define PM2_PALETTE_WRITE_ADDR	0x4000
+#define PM2_PALETTE_DATA	0x4008
+
 #define PM2V_INDEX_LOW		0x4020
 #define PM2V_INDEX_HIGH		0x4028
 #define PM2V_INDEX_DATA		0x4030
@@ -111,6 +114,9 @@ struct gfxp_softc {
 	pcitag_t	sc_pcitag;
 
 	int		sc_mode;
+	u_int8_t	sc_cmap_red[256];
+	u_int8_t	sc_cmap_green[256];
+	u_int8_t	sc_cmap_blue[256];
 
 	/* Saved state to clean up after X11. */
 	uint32_t	sc_read_mode;
@@ -145,6 +151,9 @@ struct cfdriver gfxp_cd = {
 };
 
 int	gfxp_is_console(int);
+int	gfxp_getcmap(struct gfxp_softc *, struct wsdisplay_cmap *);
+int	gfxp_putcmap(struct gfxp_softc *, struct wsdisplay_cmap *);
+void	gfxp_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 void	gfxp_copycols(void *, int, int, int, int);
 void	gfxp_erasecols(void *, int, int, int, long);
@@ -234,6 +243,7 @@ gfxp_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	fbwscons_init(&sc->sc_sunfb, flags, console);
+	fbwscons_setcolormap(&sc->sc_sunfb, gfxp_setcolor);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	gfxp_init(sc);
@@ -260,15 +270,22 @@ gfxp_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
-		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+			fbwscons_setcolormap(&sc->sc_sunfb, gfxp_setcolor);
+
+			/* Clean up the mess left behind by X. */
 			gfxp_reinit(sc);
+		}
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width  = sc->sc_sunfb.sf_width;
 		wdf->depth  = sc->sc_sunfb.sf_depth;
-		wdf->cmsize = 0;
+		if (sc->sc_sunfb.sf_depth == 32)
+			wdf->cmsize = 0;
+		else
+			wdf->cmsize = 256;
 		break;
 	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
 		if (sc->sc_sunfb.sf_depth == 32)
@@ -279,6 +296,11 @@ gfxp_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
+
+	case WSDISPLAYIO_GETCMAP:
+		return gfxp_getcmap(sc, (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_PUTCMAP:
+		return gfxp_putcmap(sc, (struct wsdisplay_cmap *)data);
 
 	case WSDISPLAYIO_GPCIID:
 		sel = (struct pcisel *)data;
@@ -296,8 +318,6 @@ gfxp_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
-	case WSDISPLAYIO_GETCMAP:
-	case WSDISPLAYIO_PUTCMAP:
 	default:
 		return -1; /* not supported yet */
         }
@@ -352,6 +372,84 @@ gfxp_is_console(int node)
 	extern int fbnode;
 
 	return (fbnode == node);
+}
+
+int
+gfxp_getcmap(struct gfxp_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 256 || count > 256 - index)
+		return (EINVAL);
+
+	error = copyout(&sc->sc_cmap_red[index], cm->red, count);
+	if (error)
+		return (error);
+	error = copyout(&sc->sc_cmap_green[index], cm->green, count);
+	if (error)
+		return (error);
+	error = copyout(&sc->sc_cmap_blue[index], cm->blue, count);
+	if (error)
+		return (error);
+	return (0);
+}
+
+int
+gfxp_putcmap(struct gfxp_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	u_int i;
+	int error;
+	u_char *r, *g, *b;
+
+	if (index >= 256 || count > 256 - index)
+		return (EINVAL);
+
+	if ((error = copyin(cm->red, &sc->sc_cmap_red[index], count)) != 0)
+		return (error);
+	if ((error = copyin(cm->green, &sc->sc_cmap_green[index], count)) != 0)
+		return (error);
+	if ((error = copyin(cm->blue, &sc->sc_cmap_blue[index], count)) != 0)
+		return (error);
+
+	r = &sc->sc_cmap_red[index];
+	g = &sc->sc_cmap_green[index];
+	b = &sc->sc_cmap_blue[index];
+
+	gfxp_wait_fifo(sc, 1);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+	    PM2_PALETTE_WRITE_ADDR, index);
+	for (i = 0; i < count; i++) {
+		gfxp_wait_fifo(sc, 3);
+		bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+		    PM2_PALETTE_DATA, *r);
+		bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+		    PM2_PALETTE_DATA, *g);
+		bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+		    PM2_PALETTE_DATA, *b);
+		r++, g++, b++;
+	}
+	return (0);
+}
+
+void
+gfxp_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
+{
+	struct gfxp_softc *sc = v;
+
+	sc->sc_cmap_red[index] = r;
+	sc->sc_cmap_green[index] = g;
+	sc->sc_cmap_blue[index] = b;
+
+	gfxp_wait_fifo(sc, 4);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+	    PM2_PALETTE_WRITE_ADDR, index);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_PALETTE_DATA, r);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_PALETTE_DATA, g);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_PALETTE_DATA, b);
 }
 
 /*
