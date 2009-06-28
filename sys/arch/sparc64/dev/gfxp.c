@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.8 2009/06/05 19:28:33 kettenis Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.9 2009/06/28 12:36:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -182,7 +182,7 @@ gfxp_attach(struct device *parent, struct device *self, void *aux)
 	struct gfxp_softc *sc = (struct gfxp_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct rasops_info *ri;
-	int node, console;
+	int node, console, flags;
 	char *model;
 
 	sc->sc_pcitag = pa->pa_tag;
@@ -222,14 +222,18 @@ gfxp_attach(struct device *parent, struct device *self, void *aux)
 	ri->ri_bits = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
 	ri->ri_hw = sc;
 
-	ri->ri_rnum = 8;
-	ri->ri_rpos = 16;
-	ri->ri_gnum = 8;
-	ri->ri_gpos = 8;
-	ri->ri_bnum = 8;
-	ri->ri_bpos = 0;
+	flags = RI_BSWAP;
+	if (sc->sc_sunfb.sf_depth == 32) {
+		ri->ri_rnum = 8;
+		ri->ri_rpos = 16;
+		ri->ri_gnum = 8;
+		ri->ri_gpos = 8;
+		ri->ri_bnum = 8;
+		ri->ri_bpos = 0;
+		flags &= ~RI_BSWAP;
+	}
 
-	fbwscons_init(&sc->sc_sunfb, 0, console);
+	fbwscons_init(&sc->sc_sunfb, flags, console);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	gfxp_init(sc);
@@ -267,7 +271,10 @@ gfxp_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
-		*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
+		if (sc->sc_sunfb.sf_depth == 32)
+			*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
+		else
+			return (-1);
 		break;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
