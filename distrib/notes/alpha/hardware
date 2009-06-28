@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.101 2009/04/09 16:02:24 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.102 2009/06/28 12:32:14 jsg Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run OpenBSD,
 or if you are able to run OpenBSD on hardware not listed here, please
@@ -140,7 +140,6 @@ Supported hardware:
     At this time none of the following systems are supported:
 	DECpc AXP150 (2000/300) ``Jensen'' systems (EISA-bus PC-like systems)
 	AlphaServer 2000, 2100 and 2100A
-	AlphaServer 4100
 	AlphaServer 8200, 8400 and GS60
 	AlphaServer DS15, DS15A, DS25, ES45 and TS202C
 	AlphaServer ES47, ES80 and GS1280
