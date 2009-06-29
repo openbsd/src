@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.22 2009/06/05 17:36:49 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.23 2009/06/29 12:22:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -277,16 +277,16 @@ struct mrt {
 	u_int32_t		peer_id;
 	u_int32_t		group_id;
 	enum mrt_type		type;
+	enum mrt_state		state;
 	u_int16_t		seqnum;
 };
 
 struct mrt_config {
 	struct mrt		conf;
-	time_t			ReopenTimer;
-	time_t			ReopenTimerInterval;
-	enum mrt_state		state;
 	char			name[MRT_FILE_LEN];	/* base file name */
 	char			file[MRT_FILE_LEN];	/* actual file name */
+	time_t			ReopenTimer;
+	time_t			ReopenTimerInterval;
 };
 
 #define	MRT2MC(x)	((struct mrt_config *)(x))

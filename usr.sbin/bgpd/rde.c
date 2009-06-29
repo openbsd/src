@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.263 2009/06/22 11:14:14 sthen Exp $ */
+/*	$OpenBSD: rde.c,v 1.264 2009/06/29 12:22:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -120,8 +120,8 @@ struct rde_dump_ctx {
 };
 
 struct rde_mrt_ctx {
+	struct mrt		 mrt;
 	struct rib_context	 ribctx;
-	struct mrt		*mrt;
 };
 
 struct mrt_head rde_mrts = LIST_HEAD_INITIALIZER(rde_mrts);
@@ -332,7 +332,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 			    pfd[j].revents & POLLOUT)
 				mrt_write(mrt);
 			if (mrt->wbuf.queued == 0 && 
-			    mrt->type == MRT_STATE_REMOVE) {
+			    mrt->state == MRT_STATE_REMOVE) {
 				close(mrt->wbuf.fd);
 				LIST_REMOVE(mrt, entry);
 				free(mrt);
@@ -1957,19 +1957,17 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 	struct rde_mrt_ctx	*ctx;
 	u_int16_t		 id;
 
-	if ((ctx = calloc(1, sizeof(*ctx))) == NULL ||
-	    (ctx->mrt = calloc(1, sizeof(struct mrt))) == NULL) {
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
 		log_warn("rde_dump_mrt_new");
 		return;
 	}
-	memcpy(ctx->mrt, mrt, sizeof(struct mrt));
-	TAILQ_INIT(&ctx->mrt->wbuf.bufs);
-	ctx->mrt->wbuf.fd = fd;
-	ctx->mrt->type = MRT_STATE_RUNNING;
-	id = rib_find(ctx->mrt->rib);
+	memcpy(&ctx->mrt, mrt, sizeof(struct mrt));
+	TAILQ_INIT(&ctx->mrt.wbuf.bufs);
+	ctx->mrt.wbuf.fd = fd;
+	ctx->mrt.state = MRT_STATE_RUNNING;
+	id = rib_find(ctx->mrt.rib);
 	if (id == RIB_FAILED) {
-		log_warnx("non existing RIB %s for mrt dump", ctx->mrt->rib);
-		free(ctx->mrt);
+		log_warnx("non existing RIB %s for mrt dump", ctx->mrt.rib);
 		free(ctx);
 		return;
 	}
@@ -1977,9 +1975,9 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 	ctx->ribctx.ctx_rib = &ribs[id];
 	ctx->ribctx.ctx_upcall = mrt_dump_upcall;
 	ctx->ribctx.ctx_done = mrt_dump_done;
-	ctx->ribctx.ctx_arg = ctx->mrt;
+	ctx->ribctx.ctx_arg = &ctx->mrt;
 	ctx->ribctx.ctx_af = AF_UNSPEC;
-	LIST_INSERT_HEAD(&rde_mrts, ctx->mrt, entry);
+	LIST_INSERT_HEAD(&rde_mrts, &ctx->mrt, entry);
 	rde_mrt_cnt++;
 	rib_dump_r(&ctx->ribctx);
 }

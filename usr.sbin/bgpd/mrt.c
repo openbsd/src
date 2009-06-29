@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.62 2009/06/05 17:36:49 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.63 2009/06/29 12:22:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -391,7 +391,7 @@ mrt_dump_done(void *ptr)
 {
 	struct mrt		*mrtbuf = ptr;
 
-	mrtbuf->type = MRT_STATE_REMOVE;
+	mrtbuf->state = MRT_STATE_REMOVE;
 }
 
 int
@@ -585,7 +585,7 @@ mrt_open(struct mrt *mrt, time_t now)
 		return (1);
 	}
 
-	if (MRT2MC(mrt)->state == MRT_STATE_OPEN)
+	if (mrt->state == MRT_STATE_OPEN)
 		type = IMSG_MRT_OPEN;
 	else
 		type = IMSG_MRT_REOPEN;
@@ -609,7 +609,7 @@ mrt_timeout(struct mrt_head *mrt)
 
 	now = time(NULL);
 	LIST_FOREACH(m, mrt, entry) {
-		if (MRT2MC(m)->state == MRT_STATE_RUNNING &&
+		if (m->state == MRT_STATE_RUNNING &&
 		    MRT2MC(m)->ReopenTimerInterval != 0) {
 			if (MRT2MC(m)->ReopenTimer <= now) {
 				mrt_open(m, now);
@@ -632,16 +632,16 @@ mrt_reconfigure(struct mrt_head *mrt)
 	now = time(NULL);
 	for (m = LIST_FIRST(mrt); m != NULL; m = xm) {
 		xm = LIST_NEXT(m, entry);
-		if (MRT2MC(m)->state == MRT_STATE_OPEN ||
-		    MRT2MC(m)->state == MRT_STATE_REOPEN) {
+		if (m->state == MRT_STATE_OPEN ||
+		    m->state == MRT_STATE_REOPEN) {
 			if (mrt_open(m, now) == -1)
 				continue;
 			if (MRT2MC(m)->ReopenTimerInterval != 0)
 				MRT2MC(m)->ReopenTimer =
 				    now + MRT2MC(m)->ReopenTimerInterval;
-			MRT2MC(m)->state = MRT_STATE_RUNNING;
+			m->state = MRT_STATE_RUNNING;
 		}
-		if (MRT2MC(m)->state == MRT_STATE_REMOVE) {
+		if (m->state == MRT_STATE_REMOVE) {
 			LIST_REMOVE(m, entry);
 			free(m);
 			continue;
@@ -657,7 +657,7 @@ mrt_handler(struct mrt_head *mrt)
 
 	now = time(NULL);
 	LIST_FOREACH(m, mrt, entry) {
-		if (MRT2MC(m)->state == MRT_STATE_RUNNING &&
+		if (m->state == MRT_STATE_RUNNING &&
 		    (MRT2MC(m)->ReopenTimerInterval != 0 ||
 		     m->type == MRT_TABLE_DUMP)) {
 			if (mrt_open(m, now) == -1)
@@ -696,7 +696,7 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 			if ((xm = calloc(1, sizeof(struct mrt_config))) == NULL)
 				fatal("mrt_mergeconfig");
 			memcpy(xm, m, sizeof(struct mrt_config));
-			MRT2MC(xm)->state = MRT_STATE_OPEN;
+			xm->state = MRT_STATE_OPEN;
 			LIST_INSERT_HEAD(xconf, xm, entry);
 		} else {
 			/* MERGE */
@@ -706,14 +706,14 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 				fatalx("mrt_mergeconfig: strlcpy");
 			MRT2MC(xm)->ReopenTimerInterval =
 			    MRT2MC(m)->ReopenTimerInterval;
-			MRT2MC(xm)->state = MRT_STATE_REOPEN;
+			xm->state = MRT_STATE_REOPEN;
 		}
 	}
 
 	LIST_FOREACH(xm, xconf, entry)
 		if (mrt_get(nconf, xm) == NULL)
 			/* REMOVE */
-			MRT2MC(xm)->state = MRT_STATE_REMOVE;
+			xm->state = MRT_STATE_REMOVE;
 
 	/* free config */
 	while ((m = LIST_FIRST(nconf)) != NULL) {
