@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.22 2009/06/28 22:20:20 jsg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.23 2009/06/29 16:40:46 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -117,10 +117,8 @@ void	ixgbe_enable_hw_vlans(struct ix_softc * sc);
 int	ixgbe_dma_malloc(struct ix_softc *, bus_size_t,
 		    struct ixgbe_dma_alloc *, int);
 void	ixgbe_dma_free(struct ix_softc *, struct ixgbe_dma_alloc *);
-#ifdef IX_CSUM_OFFLOAD
-int ixgbe_tx_ctx_setup(struct tx_ring *, struct mbuf *);
-int ixgbe_tso_setup(struct tx_ring *, struct mbuf *, uint32_t *);
-#endif
+int	ixgbe_tx_ctx_setup(struct tx_ring *, struct mbuf *);
+int	ixgbe_tso_setup(struct tx_ring *, struct mbuf *, uint32_t *);
 void	ixgbe_set_ivar(struct ix_softc *, uint16_t, uint8_t);
 void	ixgbe_configure_ivars(struct ix_softc *);
 uint8_t	*ixgbe_mc_array_itr(struct ixgbe_hw *, uint8_t **, uint32_t *);
@@ -832,7 +830,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	bus_dmamap_t	map;
 	struct ixgbe_tx_buf *txbuf, *txbuf_mapped;
 	union ixgbe_adv_tx_desc *txd = NULL;
-#ifdef IX_CSUM_OFFLOAD
+#ifdef notyet
 	uint32_t	paylen = 0;
 #endif
 
@@ -890,21 +888,22 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 		goto xmit_fail;
 	}
 
-#ifdef IX_CSUM_OFFLOAD
 	/*
 	 * Set the appropriate offload context
 	 * this becomes the first descriptor of 
 	 * a packet.
 	 */
+#ifdef notyet
 	if (ixgbe_tso_setup(txr, m_head, &paylen)) {
 		cmd_type_len |= IXGBE_ADVTXD_DCMD_TSE;
 		olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
 		olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
 		olinfo_status |= paylen << IXGBE_ADVTXD_PAYLEN_SHIFT;
 		++sc->tso_tx;
-	} else if (ixgbe_tx_ctx_setup(txr, m_head))
-		olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
+	} else
 #endif
+	if (ixgbe_tx_ctx_setup(txr, m_head))
+		olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
 
 	i = txr->next_avail_tx_desc;
 	for (j = 0; j < map->dm_nsegs; j++) {
@@ -1401,7 +1400,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
-#ifdef IX_VLAN_HWTAGGING
+#if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
@@ -1859,7 +1858,6 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
 	txr->txtag = NULL;
 }
 
-#ifdef IX_CSUM_OFFLOAD
 /*********************************************************************
  *
  *  Advanced Context Descriptor setup for VLAN or CSUM
@@ -1876,9 +1874,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 	uint32_t vlan_macip_lens = 0, type_tucmd_mlhl = 0;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
+	uint8_t ipproto = 0;
 	int  ehdrlen, ip_hlen = 0;
 	uint16_t etype;
-	uint8_t ipproto = 0;
 	int offload = TRUE;
 	int ctxd = txr->next_avail_tx_desc;
 #if NVLAN > 0
@@ -1928,8 +1926,10 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 
 	/* Set the ether header length */
 	vlan_macip_lens |= ehdrlen << IXGBE_ADVTXD_MACLEN_SHIFT;
+	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
 
-	switch (etype) {
+	if (offload == TRUE) {
+		switch (etype) {
 		case ETHERTYPE_IP:
 			ip = (struct ip *)(mp->m_data + ehdrlen);
 			ip_hlen = ip->ip_hl << 2;
@@ -1951,23 +1951,23 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp)
 		default:
 			offload = FALSE;
 			break;
-	}
+		}
 
-	vlan_macip_lens |= ip_hlen;
-	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
+		vlan_macip_lens |= ip_hlen;
 
-	switch (ipproto) {
-	case IPPROTO_TCP:
-		if (mp->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
-			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
-		break;
-	case IPPROTO_UDP:
-		if (mp->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
-			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
-		break;
-	default:
-		offload = FALSE;
-		break;
+		switch (ipproto) {
+		case IPPROTO_TCP:
+			if (mp->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
+			break;
+		case IPPROTO_UDP:
+			if (mp->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
+			break;
+		default:
+			offload = FALSE;
+			break;
+		}
 	}
 
 	/* Now copy bits into descriptor */
@@ -2098,14 +2098,13 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, uint32_t *paylen)
 	return TRUE;
 }
 
-#else	/* For 6.2 RELEASE */
+#else
 /* This makes it easy to keep the code common */
 int
 ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, uint32_t *paylen)
 {
 	return (FALSE);
 }
-#endif
 #endif
 
 /**********************************************************************
@@ -2824,6 +2823,7 @@ ixgbe_enable_hw_vlans(struct ix_softc *sc)
 	ctrl = IXGBE_READ_REG(&sc->hw, IXGBE_VLNCTRL);
 	ctrl |= IXGBE_VLNCTRL_VME;
 	ctrl &= ~IXGBE_VLNCTRL_CFIEN;
+	ctrl &= ~IXGBE_VLNCTRL_VFE;
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_VLNCTRL, ctrl);
 	ixgbe_enable_intr(sc);
 }
