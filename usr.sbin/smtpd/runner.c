@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.52 2009/06/06 04:14:21 pyr Exp $	*/
+/*	$OpenBSD: runner.c,v 1.53 2009/06/29 10:11:07 martynas Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -734,14 +734,14 @@ runner_message_schedule(struct message *messagep, time_t tm)
 		if (messagep->status & S_MESSAGE_LOCKFAILURE) {
 			if (messagep->retry < 128)
 				return 1;
-			delay = (messagep->retry * 60) + arc4random() % 60;
+			delay = (messagep->retry * 60) + arc4random_uniform(60);
 		}
 		else {
 			if (messagep->retry < 5)
 				return 1;
 			
 			if (messagep->retry < 15)
-				delay = (messagep->retry * 60) + arc4random() % 60;
+				delay = (messagep->retry * 60) + arc4random_uniform(60);
 		}
 	}
 
