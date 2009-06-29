@@ -734,7 +734,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/if_wivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/iha.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/intersil7170.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/isp_inline.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/isp_library.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/isp_openbsd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/isp_stds.ph
