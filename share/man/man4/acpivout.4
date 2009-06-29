@@ -1,0 +1,47 @@
+.\"	$OpenBSD: acpivout.4,v 1.1 2009/06/29 19:11:25 pirofti Exp $
+.\"
+.\" Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"
+.Dd $Mdocdate: June 29 2009 $
+.Dt ACPIVOUT 4
+.Os
+.Sh NAME
+.Nm acpivout
+.Nd ACPI video output
+.Sh SYNOPSIS
+.Cd "acpivout* at acpivideo?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports brightness adjustment.
+It allows brightness to be adjusted either using brightness hotkey, or with
+.Xr wsconsctl 8 .
+.Sh SEE ALSO
+.Xr acpi 4 ,
+.Xr acpivideo 4 ,
+.Xr intro 4
+.Xr wsconsctl 8 ,
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.6 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Paul Irofti Aq pirofti@openbsd.org .
