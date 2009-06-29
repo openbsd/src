@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.62 2009/06/03 06:09:21 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.63 2009/06/29 19:19:17 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -591,9 +591,13 @@ pci_reserve_resources(struct pci_attach_args *pa)
 	else
 		size = 0;
 	if (pa->pa_ioex && base > 0 && size > 0) {
-		if (extent_alloc_region(pa->pa_ioex, base, size, EX_NOWAIT))
+		if (extent_alloc_region(pa->pa_ioex, base, size, EX_NOWAIT)) {
 			printf("bridge io address conflict 0x%x/0x%x\n",
 			       base, size);
+			blr &= 0xffff0000;
+			blr |= 0x000000f0;
+			pci_conf_write(pc, tag, PPB_REG_IOSTATUS, blr);
+		}
 	}
 
 	/* Figure out the memory mapped I/O address range of the bridge. */
@@ -605,9 +609,11 @@ pci_reserve_resources(struct pci_attach_args *pa)
 	else
 		size = 0;
 	if (pa->pa_memex && base > 0 && size > 0) {
-		if (extent_alloc_region(pa->pa_memex, base, size, EX_NOWAIT))
+		if (extent_alloc_region(pa->pa_memex, base, size, EX_NOWAIT)) {
 			printf("bridge mem address conflict 0x%x/0x%x\n",
 			       base, size);
+			pci_conf_write(pc, tag, PPB_REG_MEM, 0x0000fff0);
+		}
 	}
 
 	/* Figure out the prefetchable memory address range of the bridge. */
@@ -619,13 +625,17 @@ pci_reserve_resources(struct pci_attach_args *pa)
 	else
 		size = 0;
 	if (pa->pa_pmemex && base > 0 && size > 0) {
-		if (extent_alloc_region(pa->pa_pmemex, base, size, EX_NOWAIT))
+		if (extent_alloc_region(pa->pa_pmemex, base, size, EX_NOWAIT)) {
 			printf("bridge mem address conflict 0x%x/0x%x\n",
 			       base, size);
+			pci_conf_write(pc, tag, PPB_REG_PREFMEM, 0x0000fff0);
+		}
 	} else if (pa->pa_memex && base > 0 && size > 0) {
-		if (extent_alloc_region(pa->pa_memex, base, size, EX_NOWAIT))
+		if (extent_alloc_region(pa->pa_memex, base, size, EX_NOWAIT)) {
 			printf("bridge mem address conflict 0x%x/0x%x\n",
 			       base, size);
+			pci_conf_write(pc, tag, PPB_REG_PREFMEM, 0x0000fff0);
+		}
 	}
 
 	return (0);
