@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.90 2009/06/13 20:01:10 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.91 2009/06/29 09:58:40 halex Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -583,8 +583,8 @@ again:
 	case 200:	/* OK */
 #ifndef SMALL
 	case 206:	/* Partial Content */
-		break;
 #endif /* !SMALL */
+		break;
 	case 301:	/* Moved Permanently */
 	case 302:	/* Found */
 	case 303:	/* See Other */
