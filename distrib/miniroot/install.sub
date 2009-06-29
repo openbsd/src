@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.587 2009/06/19 00:42:04 krw Exp $
+#	$OpenBSD: install.sub,v 1.588 2009/06/29 23:56:49 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1398,13 +1398,20 @@ set_timezone() {
 	# If configured in a previous call, return immediately
 	[[ -n $TZ ]] && return
 
+	if [[ -L /mnt/etc/localtime ]]; then
+		TZ=$(ls -l /mnt/etc/localtime 2>/dev/null)
+		TZ=${TZ#*${_zoneroot#/mnt}/}
+	fi
+
 	waitftplist
 	if [[ -s $SERVERLISTALL ]]; then
 		_tz=$(sed -ne '/^TZ=/s/TZ=//p' <$SERVERLISTALL)
 		[[ -n $_tz ]] && isin "$_tz" `cat $_zonefile` && TZ=$_tz
 	fi
 
-	: ${TZ:=GMT}
+	# If neither the base or SERVERLIST gave a hint, and this is the
+	# early question, give up, and ask after the sets are installed
+	[[ $_zonefile = /var/tzlist && -z $TZ ]] && return
 
 	while :; do
 		_zonepath=""
