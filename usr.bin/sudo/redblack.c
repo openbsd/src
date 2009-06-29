@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005, 2007 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2004-2005, 2007,2009 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,7 +58,7 @@
 #include "redblack.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: redblack.c,v 1.11 2009/06/26 20:40:17 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: redblack.c,v 1.12 2009/06/29 13:36:20 millert Exp $";
 #endif /* lint */
 
 static void rbrepair		__P((struct rbtree *, struct rbnode *));
@@ -77,10 +77,11 @@ static void _rbdestroy		__P((struct rbtree *, struct rbnode *,
  * In addition to the ordinary requirements imposed on binary search
  * trees, we make the following additional requirements of any valid
  * red-black tree:
- *  1) The root is black.
- *  2) All leaves are black.
- *  3) Both children of each red node are black.
- *  4) The paths from each leaf up to the root each contain the same
+ *  1) Every node is either red or black.
+ *  2) The root is black.
+ *  3) All leaves are black.
+ *  4) Both children of each red node are black.
+ *  5) The paths from each leaf up to the root each contain the same
  *     number of black nodes.
  */
 
@@ -372,8 +373,8 @@ rbdestroy(tree, destroy)
  * Delete node 'z' from the tree and return its data pointer.
  */
 void *rbdelete(tree, z)
-    struct rbtree* tree;
-    struct rbnode* z;
+    struct rbtree *tree;
+    struct rbnode *z;
 {
     struct rbnode *x, *y;
     void *data = z->data;
@@ -444,7 +445,7 @@ rbrepair(tree, node)
 		node->parent->color = black;
 		sibling->right->color = black;
 		rotate_left(tree, node->parent);
-		break;
+		node = rbroot(tree); /* exit loop */
 	    }
 	} else { /* if (node == node->parent->right) */
 	    sibling = node->parent->left;
@@ -468,8 +469,9 @@ rbrepair(tree, node)
 		node->parent->color = black;
 		sibling->left->color = black;
 		rotate_right(tree, node->parent);
-		break;
+		node = rbroot(tree); /* exit loop */
 	    }
 	}
     }
+    node->color = black;
 }

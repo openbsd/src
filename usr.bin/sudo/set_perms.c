@@ -52,7 +52,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: set_perms.c,v 1.48 2009/05/25 12:02:41 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: set_perms.c,v 1.49 2009/06/25 12:44:33 millert Exp $";
 #endif /* lint */
 
 #ifdef __TANDEM
@@ -577,7 +577,11 @@ runas_setup()
 	 * Initialize group vector
 	 */
 	runas_setgroups();
-	if (setegid(gid) || setgid(gid))
+#ifdef HAVE_SETEUID
+	if (setegid(gid))
+	    warning("cannot set egid to runas gid");
+#endif
+	if (setgid(gid))
 	    warning("cannot set gid to runas gid");
     }
 }

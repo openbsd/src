@@ -1,3 +1,22 @@
+2009-06-29 09:36  millert
+
+	* redblack.c: In rbrepair, re-color the root or the first non-block
+	  node we find to be black.  Re-coloring the root is probably not
+	  needed but won't hurt.
+
+2009-06-29 09:35  millert
+
+	* sudo.cat, sudoers.cat, sudo.man.in, sudoers.man.in: regen
+
+2009-06-26 16:40  millert
+
+	* redblack.c: When repairing the tree, don't touch the root node.
+
+2009-06-25 08:44  millert
+
+	* set_perms.c: Protect call to setegid in runas_setup with #ifdef
+	  HAVE_SETEUID.  Reported by Josef Schmid.
+
 2009-06-23 14:29  millert
 
 	* sudoers.pod: Document that we accept env_pam-style environment
