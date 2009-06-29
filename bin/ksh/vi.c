@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.25 2009/06/10 15:08:46 merdely Exp $	*/
+/*	$OpenBSD: vi.c,v 1.26 2009/06/29 22:50:19 martynas Exp $	*/
 
 /*
  *	vi command editing
@@ -413,13 +413,18 @@ vi_hook(int ch)
 			refresh(0);
 			return 0;
 		} else if (ch == edchars.werase) {
+			struct edstate new_es, *save_es;
 			int i;
 			int n = srchlen;
 
-			while (n > 0 && !is_wordch(locpat[n - 1]))
-				n--;
-			while (n > 0 && is_wordch(locpat[n - 1]))
-				n--;
+			new_es.cursor = n;
+			new_es.cbuf = locpat;
+
+			save_es = es;
+			es = &new_es;
+			n = backword(1);
+			es = save_es;
+
 			for (i = srchlen; --i >= n; )
 				es->linelen -= char_len((unsigned char)locpat[i]);
 			srchlen = n;
