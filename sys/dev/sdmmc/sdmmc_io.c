@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.13 2009/04/07 16:35:52 blambert Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.14 2009/06/29 19:42:09 mk Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -616,6 +616,7 @@ sdmmc_intr_establish(struct device *sdmmc, int (*fun)(void *),
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)sdmmc;
 	struct sdmmc_intr_handler *ih;
 	int s;
+	size_t namesz;
 
 	if (sc->sct->card_intr_mask == NULL)
 		return NULL;
@@ -624,12 +625,13 @@ sdmmc_intr_establish(struct device *sdmmc, int (*fun)(void *),
 	if (ih == NULL)
 		return NULL;
 
-	ih->ih_name = malloc(strlen(name), M_DEVBUF, M_WAITOK | M_CANFAIL);
+	namesz = strlen(name) + 1;
+	ih->ih_name = malloc(namesz, M_DEVBUF, M_WAITOK | M_CANFAIL);
 	if (ih->ih_name == NULL) {
 		free(ih, M_DEVBUF);
 		return NULL;
 	}
-	strlcpy(ih->ih_name, name, strlen(name));
+	strlcpy(ih->ih_name, name, namesz);
 	ih->ih_softc = sc;
 	ih->ih_fun = fun;
 	ih->ih_arg = arg;
