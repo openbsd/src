@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpivideo.4,v 1.1 2009/06/29 19:11:25 pirofti Exp $
+.\"	$OpenBSD: acpivideo.4,v 1.2 2009/06/29 20:21:43 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
 .\"
@@ -39,12 +39,6 @@ The
 .Nm
 driver first appeared in
 .Ox 4.6 .
-.Sh CAVEATS
-On IBM and Lenovo Thinkpad systems,
-.Nm
-functionality is handled by the
-.Xr acpithinkpad 4
-driver.
 .Sh AUTHORS
 .An -nosplit
 The
@@ -53,3 +47,9 @@ driver was written by
 .An Federico G. Schwindt Aq fgsch@openbsd.org
 and
 .An Paul Irofti Aq pirofti@openbsd.org .
+.Sh CAVEATS
+On IBM and Lenovo Thinkpad systems,
+.Nm
+functionality is handled by the
+.Xr acpithinkpad 4
+driver.
