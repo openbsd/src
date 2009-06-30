@@ -3,7 +3,7 @@
 # done by the userland pfctl tool and by the kernel PF dynamic code.
 
 if2ip_user() {
-    echo "pass in from $1" | pfctl -nvf- 2>/dev/null \
+    echo "pass in from $1" | pfctl -o none -nvf- 2>/dev/null \
 	| awk '{print  "   "(($3=="on")?$7:$5)}' | sort -u
 }
 
