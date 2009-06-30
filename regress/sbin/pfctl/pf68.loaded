@@ -22,7 +22,7 @@
   [ Skip steps: i=13 d=25 f=9 p=end sa=7 sp=39 da=9 dp=31 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@6 match in proto tcp all
+@6 match in proto tcp all scrub (reassemble tcp)
   [ Skip steps: i=13 d=25 f=9 p=end sp=39 da=9 dp=31 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

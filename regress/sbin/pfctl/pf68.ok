@@ -4,7 +4,7 @@ match proto tcp all
 match proto tcp all
 match in proto tcp all
 match in proto tcp all
-match in proto tcp all
+match in proto tcp all scrub (reassemble tcp)
 match in proto tcp from <regress.1> to any
 match in proto tcp from ! <regress.2> to any
 match in inet proto tcp from 10.0.0.1 to 10.0.0.3
