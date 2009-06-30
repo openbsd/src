@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.327 2009/06/30 15:23:51 robert Exp $
+#	$OpenBSD: rc,v 1.328 2009/06/30 15:30:24 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -106,7 +106,7 @@ random_seed()
 		    > /dev/null 2>&1
 		dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 \
 		    > /dev/null 2>&1
-	
+
 		# reset seed file, so that if a shutdown-less reboot occurs,
 		# the next seed is not a repeat
 		dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 \
@@ -122,7 +122,7 @@ fill_baddynamic()
 	local _sysctl="net.inet.${_service}.baddynamic"
 	local _name _port _srv _junk _ban
 	local _i=0
-	grep "/${_service}" /etc/services | { 
+	grep "/${_service}" /etc/services | {
 		IFS=" 	/"
 		while read _name _port _srv _junk; do
 			[ "x${_srv}" = "x${_service}" ] || continue;
@@ -137,7 +137,7 @@ fill_baddynamic()
 				_ban=""
 				_i=0
 			fi
-		done; 
+		done;
 		if [ "x${_ban}" != "x" ]; then
 			sysctl ${_sysctl}=${_ban} >/dev/null
 		fi
