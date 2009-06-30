@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.197 2009/05/12 07:22:58 ajacoutot Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.198 2009/06/30 15:23:51 robert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -2783,6 +2783,12 @@ vi.recover	 mode=01777
 
 # ./www
 www type=dir uname=root gname=daemon mode=755
+
+# ./www/dev
+dev type=dir uname=root gname=daemon mode=755
+
+# ./www
+..
 
 # ./www/icons
 icons  type=dir uname=root gname=daemon mode=755
