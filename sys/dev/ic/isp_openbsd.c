@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.37 2009/06/27 15:23:20 kettenis Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.38 2009/07/01 20:55:57 kettenis Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -1015,6 +1015,24 @@ isp_unlock(struct ispsoftc *isp)
 	if (isp->isp_osinfo.islocked-- <= 1) {
 		isp->isp_osinfo.islocked = 0;
 		splx(isp->isp_osinfo.splsaved);
+	}
+}
+
+/*
+ * XXX Since the clocks aren't running yet during autoconf, we have to
+ * keep track of time ourselves, otherwise we may end up waiting
+ * forever for the FC link to go up.
+ */
+struct timespec isp_nanotime;
+
+void
+isp_delay(int usec)
+{
+	delay(usec);
+	isp_nanotime.tv_nsec += (usec * 1000);
+	if (isp_nanotime.tv_nsec >= 1000000000L) {
+		isp_nanotime.tv_sec++;
+		isp_nanotime.tv_nsec -= 1000000000L;
 	}
 }
 

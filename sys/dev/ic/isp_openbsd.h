@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.31 2009/06/24 11:00:53 krw Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.32 2009/07/01 20:55:57 kettenis Exp $ */
 /*
  * OpenBSD Specific definitions for the QLogic ISP Host Adapter
  */
@@ -125,11 +125,12 @@ struct isposinfo {
 #define	MEMZERO			bzero
 #define	MEMCPY(dst, src, amt)	bcopy((src), (dst), (amt))
 #define	SNPRINTF		snprintf
-#define	USEC_DELAY		delay
+#define	USEC_DELAY		isp_delay
 #define	USEC_SLEEP(isp, x)	delay(x)
 
+extern struct timespec isp_nanotime;
 #define	NANOTIME_T		struct timespec
-#define	GET_NANOTIME		nanotime
+#define	GET_NANOTIME(x)		*(x) = isp_nanotime
 #define	GET_NANOSEC(x)		(((x)->tv_sec * 1000000000 + (x)->tv_nsec))
 #define	NANOTIME_SUB		isp_nanotime_sub
 
@@ -339,6 +340,7 @@ void isp_uninit(struct ispsoftc *);
 void isp_lock(struct ispsoftc *);
 void isp_unlock(struct ispsoftc *);
 void isp_prt(struct ispsoftc *, int level, const char *, ...);
+void isp_delay(int);
 u_int64_t isp_nanotime_sub(struct timespec *, struct timespec *);
 int isp_mbox_acquire(ispsoftc_t *);
 void isp_mbox_wait_complete(ispsoftc_t *, mbreg_t *);
