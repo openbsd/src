@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.12 2009/06/27 22:21:31 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.13 2009/07/01 21:56:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -87,10 +87,6 @@ uint32_t xbow_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 uint64_t xbow_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 void	xbow_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint32_t);
 void	xbow_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint64_t);
-void	xbow_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    uint8_t *, bus_size_t);
-void	xbow_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    const uint8_t *, bus_size_t);
 void	xbow_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    uint8_t *, bus_size_t);
 void	xbow_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
@@ -100,12 +96,8 @@ void	xbow_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 void	xbow_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    const uint8_t *, bus_size_t);
 
-int	xbow_space_map_long(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *);
 void	xbow_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int	xbow_space_region_short(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	    bus_size_t, bus_space_handle_t *);
-int	xbow_space_region_long(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+int	xbow_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    bus_size_t, bus_space_handle_t *);
 void	*xbow_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 
@@ -119,7 +111,7 @@ struct cfdriver xbow_cd = {
 	NULL, "xbow", DV_DULL
 };
 
-static const bus_space_t xbowbus_short_tag = {
+static const bus_space_t xbowbus_tag = {
 	NULL,
 	(bus_addr_t)0,		/* will be modified in widgets bus_space_t */
 	NULL,
@@ -138,34 +130,9 @@ static const bus_space_t xbowbus_short_tag = {
 	xbow_write_raw_4,
 	xbow_read_raw_8,
 	xbow_write_raw_8,
-	xbow_space_map_short,
+	xbow_space_map,
 	xbow_space_unmap,
-	xbow_space_region_short
-
-};
-
-static const bus_space_t xbowbus_long_tag = {
-	NULL,
-	(bus_addr_t)0,		/* will be modified in widgets bus_space_t */
-	NULL,
-	0,
-	xbow_read_1,
-	xbow_write_1,
-	xbow_read_2,
-	xbow_write_2,
-	xbow_read_4,
-	xbow_write_4,
-	xbow_read_8,
-	xbow_write_8,
-	xbow_read_raw_2,
-	xbow_write_raw_2,
-	xbow_read_raw_4,
-	xbow_write_raw_4,
-	xbow_read_raw_8,
-	xbow_write_raw_8,
-	xbow_space_map_long,
-	xbow_space_unmap,
-	xbow_space_region_long
+	xbow_space_region
 
 };
 
@@ -173,9 +140,7 @@ static const bus_space_t xbowbus_long_tag = {
  * Function pointers to hide widget window mapping differences accross
  * systems.
  */
-paddr_t	(*xbow_widget_short)(int16_t, u_int);
-paddr_t	(*xbow_widget_long)(int16_t, u_int);
-unsigned int xbow_long_shift = 29;
+paddr_t	(*xbow_widget_base)(int16_t, u_int);
 
 int	(*xbow_widget_id)(int16_t, u_int, uint32_t *);
 
@@ -390,26 +355,16 @@ xbow_attach_widget(struct device *self, int16_t nasid, int widget,
 {
 	struct xbow_attach_args xaa;
 	uint32_t wid;
-	struct mips_bus_space *bs, *bl;
+	struct mips_bus_space bs;
 	int rc;
 
 	if ((rc = xbow_widget_id(nasid, widget, &wid)) != 0)
 		return rc;
 
 	/*
-	 * Build a pair of bus_space_t suitable for this widget.
+	 * Build a bus_space_t suitable for this widget.
 	 */
-	bs = malloc(sizeof (*bs), M_DEVBUF, M_NOWAIT);
-	if (bs == NULL)
-		return ENOMEM;
-	bl = malloc(sizeof (*bl), M_DEVBUF, M_NOWAIT);
-	if (bl == NULL) {
-		free(bs, M_DEVBUF);
-		return ENOMEM;
-	}
-
-	xbow_build_bus_space(bs, nasid, widget, 0);
-	xbow_build_bus_space(bl, nasid, widget, 1);
+	xbow_build_bus_space(&bs, nasid, widget);
 
 	xaa.xaa_nasid = nasid;
 	xaa.xaa_widget = widget;
@@ -418,16 +373,10 @@ xbow_attach_widget(struct device *self, int16_t nasid, int widget,
 	xaa.xaa_product = (wid & WIDGET_ID_PRODUCT_MASK) >>
 	    WIDGET_ID_PRODUCT_SHIFT;
 	xaa.xaa_revision = (wid & WIDGET_ID_REV_MASK) >> WIDGET_ID_REV_SHIFT;
-	xaa.xaa_short_tag = bs;
-	xaa.xaa_long_tag = bl;
+	xaa.xaa_iot = &bs;
 
-	if (config_found_sm(self, &xaa, print, sm) == NULL) {
-		/* nothing attached, no need to keep the bus_space */
-		free(bs, M_DEVBUF);
-		free(bl, M_DEVBUF);
-
+	if (config_found_sm(self, &xaa, print, sm) == NULL)
 		return ENOENT;
-	}
 
 	return 0;
 }
@@ -513,15 +462,10 @@ xbow_kl_search_mplane(klinfo_t *c, void *arg)
  */
 
 void
-xbow_build_bus_space(struct mips_bus_space *bs, int nasid, int widget, int lwin)
+xbow_build_bus_space(struct mips_bus_space *bs, int nasid, int widget)
 {
-	if (lwin) {
-		bcopy(&xbowbus_long_tag, bs, sizeof (*bs));
-		bs->bus_base = (*xbow_widget_long)(nasid, widget);
-	} else {
-		bcopy(&xbowbus_short_tag, bs, sizeof (*bs));
-		bs->bus_base = (*xbow_widget_short)(nasid, widget);
-	}
+	bcopy(&xbowbus_tag, bs, sizeof (*bs));
+	bs->bus_base = (*xbow_widget_base)(nasid, widget);
 }
 
 uint8_t
@@ -645,7 +589,7 @@ xbow_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
 }
 
 int
-xbow_space_map_short(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
+xbow_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int cacheable, bus_space_handle_t *bshp)
 {
 	bus_addr_t bpa;
@@ -660,48 +604,15 @@ xbow_space_map_short(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	return 0;
 }
 
-int
-xbow_space_map_long(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
-{
-	bus_addr_t bpa;
-
-	bpa = t->bus_base + offs;
-
-	/* check that this does not overflow the window */
-	if (((bpa + size - 1) >> xbow_long_shift) !=
-	    (t->bus_base >> xbow_long_shift))
-		return (EINVAL);
-
-	*bshp = bpa;
-	return 0;
-}
-
 void
 xbow_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 }
 
 int
-xbow_space_region_short(bus_space_tag_t t, bus_space_handle_t bsh,
+xbow_space_region(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
-	/* check that this does not overflow the window */
-	if (((bsh + offset) >> 24) != (bsh >> 24))
-		return (EINVAL);
-
-	*nbshp = bsh + offset;
-	return 0;
-}
-
-int
-xbow_space_region_long(bus_space_tag_t t, bus_space_handle_t bsh,
-    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
-{
-	/* check that this does not overflow the window */
-	if (((bsh + offset) >> xbow_long_shift) != (bsh >> xbow_long_shift))
-		return (EINVAL);
-
 	*nbshp = bsh + offset;
 	return 0;
 }

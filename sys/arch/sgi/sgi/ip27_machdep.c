@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.14 2009/06/13 21:48:03 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.15 2009/07/01 21:56:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -55,6 +55,8 @@ int	ip27_widget_id(int16_t, u_int, uint32_t *);
 
 void	ip27_halt(int);
 
+unsigned int xbow_long_shift = 29;
+
 static paddr_t io_base;
 static gda_t *gda;
 static int ip35 = 0;
@@ -84,8 +86,7 @@ ip27_setup()
 
 	ip35 = sys_config.system_type == SGI_O300;
 
-	xbow_widget_short = ip27_widget_short;
-	xbow_widget_long = ip27_widget_long;
+	xbow_widget_base = ip27_widget_short;
 	xbow_widget_id = ip27_widget_id;
 
 	md_halt = ip27_halt;
@@ -139,8 +140,8 @@ ip27_setup()
 	 * This assumes IOC3 is accessible through a widget small window.
 	 */
 
-	xbow_build_bus_space(&sys_config.console_io, 0, 8 /* whatever */, 0);
-	/* Constrain to a short window */
+	xbow_build_bus_space(&sys_config.console_io, 0, 8 /* whatever */);
+	/* Constrain to the correct window */
 	sys_config.console_io.bus_base =
 	    kl_get_console_base() & 0xffffffffff000000UL;
 

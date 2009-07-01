@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.6 2009/04/18 14:48:08 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.7 2009/07/01 21:56:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -93,8 +93,7 @@ ip30_setup()
 	}
 #endif
 
-	xbow_widget_short = ip30_widget_short;
-	xbow_widget_long = ip30_widget_long;
+	xbow_widget_base = ip30_widget_short;
 	xbow_widget_id = ip30_widget_id;
 
 	/*
@@ -111,8 +110,8 @@ ip30_setup()
 	 * exactly what we need, since the IOC3 doesn't need any. Some
 	 * may consider this an evil abuse of bus_space knowledge, though.
 	 */
-	xbow_build_bus_space(&sys_config.console_io, 0, 15, 1);
-	sys_config.console_io.bus_base += BRIDGE_PCI_MEM_SPACE_BASE;
+	xbow_build_bus_space(&sys_config.console_io, 0, 15);
+	sys_config.console_io.bus_base = ip30_widget_short(0, 15);
 
 	comconsaddr = 0x500000 + IOC3_UARTA_BASE;
 	comconsfreq = 22000000 / 3;

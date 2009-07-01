@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.17 2009/06/21 18:03:15 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.18 2009/07/01 21:56:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -182,12 +182,13 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mem_bus_space->bus_base = memh;
 	sc->sc_mem_bus_space->_space_read_1 = xbow_read_1;
 	sc->sc_mem_bus_space->_space_read_2 = xbow_read_2;
+	sc->sc_mem_bus_space->_space_read_raw_2 = xbow_read_raw_2;
 	sc->sc_mem_bus_space->_space_write_1 = xbow_write_1;
 	sc->sc_mem_bus_space->_space_write_2 = xbow_write_2;
+	sc->sc_mem_bus_space->_space_write_raw_2 = xbow_write_raw_2;
 
-	/* XXX undo IP27 xbridge weird mapping */
-	if (sys_config.system_type != SGI_OCTANE)
-		sc->sc_mem_bus_space->_space_map = xbow_space_map_short;
+	/* XXX undo xbridge mapping games */
+	sc->sc_mem_bus_space->_space_map = xbow_space_map;
 
 	sc->sc_memt = sc->sc_mem_bus_space;
 	sc->sc_memh = memh;

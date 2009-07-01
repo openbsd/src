@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.h,v 1.4 2009/06/13 21:48:03 miod Exp $	*/
+/*	$OpenBSD: xbow.h,v 1.5 2009/07/01 21:56:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -39,9 +39,7 @@
  * two parameters needed to map a widget.
  */
 
-extern	paddr_t (*xbow_widget_short)(int16_t, u_int);
-extern	paddr_t (*xbow_widget_long)(int16_t, u_int);
-extern	unsigned int xbow_long_shift;
+extern	paddr_t (*xbow_widget_base)(int16_t, u_int);
 
 extern	int	(*xbow_widget_id)(int16_t, u_int, uint32_t *);
 extern	int	xbow_intr_widget;
@@ -115,21 +113,24 @@ struct xbow_attach_args {
 	uint32_t	xaa_product;
 	uint32_t	xaa_revision;
 
-	bus_space_tag_t xaa_short_tag;
-	bus_space_tag_t xaa_long_tag;
+	bus_space_tag_t xaa_iot;
 };
 
-void	xbow_build_bus_space(struct mips_bus_space *, int, int, int);
+void	xbow_build_bus_space(struct mips_bus_space *, int, int);
 int	xbow_intr_register(int, int, int *);
 int	xbow_intr_establish(int (*)(void *), void *, int, int, const char *);
 void	xbow_intr_disestablish(int);
 
-int	xbow_space_map_short(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+int	xbow_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 uint8_t xbow_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 uint16_t xbow_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	xbow_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
 void	xbow_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint8_t);
 void	xbow_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    uint16_t);
+void	xbow_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
 
 #endif	/* _XBOW_H_ */
