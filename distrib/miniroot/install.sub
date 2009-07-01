@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.588 2009/06/29 23:56:49 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.589 2009/07/01 19:12:53 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1475,7 +1475,7 @@ install_sets() {
 	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs" ; : ${_d:=cd} ; }
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
-	: ${_d:=disk}
+	: ${_d:=ftp}
 
 	if ! isin "$_d" $_locs; then
 		for a in ftp http cd nfs tape disk; do 
