@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.36 2008/05/20 00:30:30 fgsch Exp $	*/
+/*	$OpenBSD: history.c,v 1.37 2009/07/02 16:29:15 martynas Exp $	*/
 
 /*
  * command history
@@ -674,7 +674,8 @@ hist_init(Source *s)
 			if (base != MAP_FAILED)
 				munmap((caddr_t)base, hsize);
 			hist_finish();
-			unlink(hname);
+			if (unlink(hname) != 0)
+				return;
 			goto retry;
 		}
 		if (hsize > 2) {
@@ -682,7 +683,8 @@ hist_init(Source *s)
 			if (lines > histsize) {
 				/* we need to make the file smaller */
 				if (hist_shrink(base, hsize))
-					unlink(hname);
+					if (unlink(hname) != 0)
+						return;
 				munmap((caddr_t)base, hsize);
 				hist_finish();
 				goto retry;
