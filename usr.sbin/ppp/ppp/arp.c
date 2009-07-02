@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: arp.c,v 1.15 2008/05/06 06:34:10 claudio Exp $
+ * $OpenBSD: arp.c,v 1.16 2009/07/02 16:08:29 claudio Exp $
  *
  */
 
@@ -38,6 +38,7 @@
 #include <sys/un.h>
 
 #include <errno.h>
+#include <ifaddrs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -229,93 +230,58 @@ int
 arp_EtherAddr(int s, struct in_addr ipaddr, struct sockaddr_dl *hwaddr,
               int verbose)
 {
-  int mib[6], skip;
-  size_t needed;
-  char *buf, *ptr, *end;
-  struct if_msghdr *ifm;
-  struct ifa_msghdr *ifam;
-  struct sockaddr_dl *dl;
-  struct sockaddr *sa[RTAX_MAX];
+  struct sockaddr_dl *dl = NULL;
+  struct ifaddrs *ifa, *ifap;
+  int skip = 1;
 
-  mib[0] = CTL_NET;
-  mib[1] = PF_ROUTE;
-  mib[2] = 0;
-  mib[3] = 0;
-  mib[4] = NET_RT_IFLIST;
-  mib[5] = 0;
-
-  if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0) {
-    log_Printf(LogERROR, "arp_EtherAddr: sysctl: estimate: %s\n",
-              strerror(errno));
+  if (getifaddrs(&ifap) != 0) {
+    log_Printf(LogERROR, "arp_EtherAddr: getifaddrs: %s\n", strerror(errno));
     return 0;
   }
 
-  if ((buf = malloc(needed)) == NULL)
-    return 0;
-
-  if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
-    free(buf);
-    return 0;
-  }
-  end = buf + needed;
-
-  ptr = buf;
-  while (ptr < end) {
-    ifm = (struct if_msghdr *)ptr;		/* On if_msghdr */
-    if (ifm->ifm_type != RTM_IFINFO)
-      break;
-    ptr += ifm->ifm_msglen;
-    if (ifm->ifm_version != RTM_VERSION)
-      continue;
-    dl = (struct sockaddr_dl *)(ifm + 1);	/* Single _dl at end */
-    skip = (ifm->ifm_flags & (IFF_UP | IFF_BROADCAST | IFF_POINTOPOINT |
+  for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr->sa_family == AF_LINK) {
+      dl = (struct sockaddr_dl *)ifa->ifa_addr;
+      skip = (ifa->ifa_flags & (IFF_UP | IFF_BROADCAST | IFF_POINTOPOINT |
             IFF_NOARP | IFF_LOOPBACK)) != (IFF_UP | IFF_BROADCAST);
-    while (ptr < end) {
-      ifam = (struct ifa_msghdr *)ptr;	/* Next ifa_msghdr (alias) */
-      if (ifam->ifam_type != RTM_NEWADDR)	/* finished ? */
-        break;
-      ptr += ifam->ifam_msglen;
-      if (ifam->ifam_version != RTM_VERSION)
-        continue;
-      if (skip || (ifam->ifam_addrs & (RTA_NETMASK|RTA_IFA)) !=
-          (RTA_NETMASK|RTA_IFA))
-        continue;
-      /* Found a candidate.  Do the addresses match ? */
-      if (log_IsKept(LogDEBUG) &&
-          ptr == (char *)ifm + ifm->ifm_msglen + ifam->ifam_msglen)
-        log_Printf(LogDEBUG, "%.*s interface is a candidate for proxy\n",
-                  dl->sdl_nlen, dl->sdl_data);
+      continue;
+    }
+    if (skip)
+      /* Skip unusable interface */
+      continue;
 
-      iface_ParseHdr(ifam, sa);
+    /* Found a candidate.  Do the addresses match ? */
+    if (log_IsKept(LogDEBUG))
+      log_Printf(LogDEBUG, "%.*s interface is a candidate for proxy\n",
+                dl->sdl_nlen, dl->sdl_data);
 
-      if (sa[RTAX_IFA]->sa_family == AF_INET) {
-        struct sockaddr_in *ifa, *netmask;
+    if (ifa->ifa_addr->sa_family == AF_INET) {
+      struct sockaddr_in *addr, *netmask;
 
-        ifa = (struct sockaddr_in *)sa[RTAX_IFA];
-        netmask = (struct sockaddr_in *)sa[RTAX_NETMASK];
+      addr = (struct sockaddr_in *)ifa->ifa_addr;
+      netmask = (struct sockaddr_in *)ifa->ifa_netmask;
 
-        if (log_IsKept(LogDEBUG)) {
-          char a[16];
+      if (log_IsKept(LogDEBUG)) {
+        char a[16];
 
-          strncpy(a, inet_ntoa(netmask->sin_addr), sizeof a - 1);
-          a[sizeof a - 1] = '\0';
-          log_Printf(LogDEBUG, "Check addr %s, mask %s\n",
-                     inet_ntoa(ifa->sin_addr), a);
-        }
+        strncpy(a, inet_ntoa(netmask->sin_addr), sizeof a - 1);
+        a[sizeof a - 1] = '\0';
+        log_Printf(LogDEBUG, "Check addr %s, mask %s\n",
+                   inet_ntoa(addr->sin_addr), a);
+      }
 
-        if ((ifa->sin_addr.s_addr & netmask->sin_addr.s_addr) ==
-            (ipaddr.s_addr & netmask->sin_addr.s_addr)) {
-          log_Printf(verbose ? LogPHASE : LogDEBUG,
-                     "Found interface %.*s for %s\n", dl->sdl_nlen,
-                     dl->sdl_data, inet_ntoa(ipaddr));
-          memcpy(hwaddr, dl, dl->sdl_len);
-          free(buf);
-          return 1;
-        }
+      if ((addr->sin_addr.s_addr & netmask->sin_addr.s_addr) ==
+          (ipaddr.s_addr & netmask->sin_addr.s_addr)) {
+        log_Printf(verbose ? LogPHASE : LogDEBUG,
+                   "Found interface %.*s for %s\n", dl->sdl_nlen,
+                   dl->sdl_data, inet_ntoa(ipaddr));
+        memcpy(hwaddr, dl, dl->sdl_len);
+        freeifaddrs(ifap);
+        return 1;
       }
     }
   }
-  free(buf);
+  freeifaddrs(ifap);
 
   return 0;
 }

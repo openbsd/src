@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.c,v 1.28 2009/06/25 15:59:28 claudio Exp $
+ *	$OpenBSD: iface.c,v 1.29 2009/07/02 16:08:29 claudio Exp $
  */
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@
 #include <sys/un.h>
 
 #include <errno.h>
+#include <ifaddrs.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -90,114 +91,64 @@ static const struct in6_addr in6mask128 = IN6MASK128;
 struct iface *
 iface_Create(const char *name)
 {
-  int mib[6], maxtries, err;
-  size_t needed, namelen;
-  char *buf, *ptr, *end;
-  struct if_msghdr *ifm;
-  struct ifa_msghdr *ifam;
+  size_t namelen;
   struct sockaddr_dl *dl;
-  struct sockaddr *sa[RTAX_MAX];
+  struct ifaddrs *ifap, *ifa;
   struct iface *iface;
   struct iface_addr *addr;
 
-  mib[0] = CTL_NET;
-  mib[1] = PF_ROUTE;
-  mib[2] = 0;
-  mib[3] = 0;
-  mib[4] = NET_RT_IFLIST;
-  mib[5] = 0;
+  if (getifaddrs(&ifap) != 0) {
+    fprintf(stderr, "iface_Create: getifaddrs: %s\n", strerror(errno));
+    return NULL;
+  }
 
-  maxtries = 20;
-  err = 0;
-  do {
-    if (maxtries-- == 0 || (err && err != ENOMEM)) {
-      fprintf(stderr, "iface_Create: sysctl: %s\n", strerror(err));
-      return NULL;
-    }
-
-    if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0) {
-      fprintf(stderr, "iface_Create: sysctl: estimate: %s\n",
-                strerror(errno));
-      return NULL;
-    }
-
-    if ((buf = (char *)malloc(needed)) == NULL) {
-      fprintf(stderr, "iface_Create: malloc failed: %s\n", strerror(errno));
-      return NULL;
-    }
-
-    if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
-      err = errno;
-      free(buf);
-      buf = NULL;
-    }
-  } while (buf == NULL);
-
-  ptr = buf;
-  end = buf + needed;
   iface = NULL;
   namelen = strlen(name);
 
-  while (ptr < end && iface == NULL) {
-    ifm = (struct if_msghdr *)ptr;			/* On if_msghdr */
-    if (ifm->ifm_version != RTM_VERSION)
+  for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+    if (strcmp(name, ifa->ifa_name))
       continue;
-    if (ifm->ifm_type != RTM_IFINFO)
-      break;
-    dl = (struct sockaddr_dl *)(ifm + 1);		/* Single _dl at end */
-    if (dl->sdl_nlen == namelen && !strncmp(name, dl->sdl_data, namelen)) {
+    if (ifa->ifa_addr->sa_family == AF_LINK) {
+      dl = (struct sockaddr_dl *)ifa->ifa_addr;
       iface = (struct iface *)malloc(sizeof *iface);
       if (iface == NULL) {
         fprintf(stderr, "iface_Create: malloc: %s\n", strerror(errno));
+        freeifaddrs(ifap);
         return NULL;
       }
       iface->name = strdup(name);
-      iface->index = ifm->ifm_index;
-      iface->flags = ifm->ifm_flags;
+      iface->index = if_nametoindex(name);
+      iface->flags = ifa->ifa_flags;
       iface->mtu = 0;
       iface->addrs = 0;
       iface->addr = NULL;
     }
-    ptr += ifm->ifm_msglen;				/* First ifa_msghdr */
-    for (; ptr < end; ptr += ifam->ifam_msglen) {
-      ifam = (struct ifa_msghdr *)ptr;			/* Next if address */
 
-      if (ifam->ifam_type != RTM_NEWADDR)		/* finished this if */
-        break;
-      if (ifm->ifm_version != RTM_VERSION)
-        continue;
-
-      if (iface != NULL && ifam->ifam_addrs & RTA_IFA) {
-        /* Found a configured interface ! */
-        iface_ParseHdr(ifam, sa);
-
-        if (sa[RTAX_IFA] && (sa[RTAX_IFA]->sa_family == AF_INET
+    if (ifa->ifa_addr->sa_family == AF_INET
 #ifndef NOINET6
-                             || sa[RTAX_IFA]->sa_family == AF_INET6
+        || ifa->ifa_addr->sa_family == AF_INET6
 #endif
-                             )) {
-          /* Record the address */
+       ) {
+      /* Record the address */
 
-          addr = (struct iface_addr *)
-            realloc(iface->addr, (iface->addrs + 1) * sizeof iface->addr[0]);
-          if (addr == NULL)
-            break;
-          iface->addr = addr;
+      addr = (struct iface_addr *)
+        realloc(iface->addr, (iface->addrs + 1) * sizeof iface->addr[0]);
+      if (addr == NULL)
+        break;
+      iface->addr = addr;
 
-          addr += iface->addrs;
-          iface->addrs++;
+      addr += iface->addrs;
+      iface->addrs++;
 
-          ncprange_setsa(&addr->ifa, sa[RTAX_IFA], sa[RTAX_NETMASK]);
-          if (sa[RTAX_BRD])
-            ncpaddr_setsa(&addr->peer, sa[RTAX_BRD]);
-          else
-            ncpaddr_init(&addr->peer);
-        }
-      }
+      ncprange_setsa(&addr->ifa, ifa->ifa_addr, ifa->ifa_netmask);
+      if (ifa->ifa_broadaddr)
+        ncpaddr_setsa(&addr->peer, ifa->ifa_broadaddr);
+      else
+        ncpaddr_init(&addr->peer);
     }
   }
 
-  free(buf);
+  freeifaddrs(ifap);
 
   return iface;
 }
@@ -700,20 +651,4 @@ iface_Show(struct cmdargs const *arg)
   }
 
   return 0;
-}
-
-void
-iface_ParseHdr(struct ifa_msghdr *ifam, struct sockaddr *sa[RTAX_MAX])
-{
-  char *wp;
-  int rtax;
-
-  wp = (char *)(ifam + 1);
-
-  for (rtax = 0; rtax < RTAX_MAX; rtax++)
-    if (ifam->ifam_addrs & (1 << rtax)) {
-      sa[rtax] = (struct sockaddr *)wp;
-      wp += ROUNDUP(sa[rtax]->sa_len);
-    } else
-      sa[rtax] = NULL;
 }
