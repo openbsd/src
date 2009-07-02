@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.203 2009/06/27 08:33:27 ajacoutot Exp $
+#	$OpenBSD: install.sh,v 1.204 2009/07/02 23:48:34 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -121,9 +121,11 @@ while :; do
 			continue
 		fi
 
-		# newfs 'ffs' filesystems and add them to the list.
+		# Add ffs filesystems to list after newfs'ing them. Ignore
+		# other filesystems.
 		_i=${#_fsent[*]}
-		while read _pp _mp _rest; do
+		while read _pp _mp _fstype _rest; do
+			[[ $_fstype == ffs ]] || continue
 			_OPT=
 			[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
 			newfs -q $_OPT ${_pp##/dev/}
