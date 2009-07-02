@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.2 2009/07/02 16:15:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -423,7 +423,7 @@ window_copy_copy_selection(struct window_pane *wp, struct client *c)
 	/* Find start and end. */
 	xx = data->cx + data->ox;
 	yy = screen_hsize(&wp->base) + data->cy - data->oy;
-	if (xx < data->selx || (yy == data->sely && xx < data->selx)) {
+	if (yy < data->sely || (yy == data->sely && xx < data->selx)) {
 		sx = xx; sy = yy;
 		ex = data->selx; ey = data->sely;
 	} else {
