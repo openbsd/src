@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.86 2009/06/04 00:59:21 naddy Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.87 2009/07/03 04:54:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -92,6 +92,7 @@ void	brgphy_adc_bug(struct mii_softc *);
 void	brgphy_5704_a0_bug(struct mii_softc *);
 void	brgphy_ber_bug(struct mii_softc *);
 void	brgphy_crc_bug(struct mii_softc *);
+void	brgphy_disable_early_dac(struct mii_softc *sc);
 void	brgphy_jumbo_settings(struct mii_softc *);
 void	brgphy_eth_wirespeed(struct mii_softc *);
 
@@ -150,6 +151,10 @@ static const struct mii_phydesc brgphys[] = {
 	  MII_STR_xxBROADCOM_BCM5708C },
 	{ MII_OUI_xxBROADCOM2,		MII_MODEL_xxBROADCOM2_BCM5708S,
 	  MII_STR_xxBROADCOM2_BCM5708S },
+	{ MII_OUI_xxBROADCOM2,		MII_MODEL_xxBROADCOM2_BCM5709C,
+	  MII_STR_xxBROADCOM2_BCM5709C },
+	{ MII_OUI_xxBROADCOM2,		MII_MODEL_xxBROADCOM2_BCM5709CAX,
+	  MII_STR_xxBROADCOM2_BCM5709CAX },
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5906,
 	  MII_STR_BROADCOM2_BCM5906 },
 
@@ -288,8 +293,8 @@ setit:
 			}
 
 			PHY_WRITE(sc, BRGPHY_MII_1000CTL, 0);
-			PHY_WRITE(sc, BRGPHY_MII_BMCR, speed);
 			PHY_WRITE(sc, BRGPHY_MII_ANAR, BRGPHY_SEL_TYPE);
+			PHY_WRITE(sc, BRGPHY_MII_BMCR, speed);
 
 			if ((IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T) &&
 			    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_SX) &&
@@ -688,7 +693,9 @@ brgphy_reset(struct mii_softc *sc)
 	} else if (strcmp(devname, "bnx") == 0) {
 		bnx_sc = sc->mii_pdata->mii_ifp->if_softc;
 
-		if (sc->mii_model == MII_MODEL_xxBROADCOM2_BCM5708S) {
+		if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5708 &&
+		    ISSET(BNX_CHIP_BOND_ID(bnx_sc),
+		     BNX_CHIP_BOND_ID_SERDES_BIT)) {
 			/* Store autoneg capabilities/results in digital block (Page 0) */
 			PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR, BRGPHY_5708S_DIG3_PG2);
 			PHY_WRITE(sc, BRGPHY_5708S_PG2_DIGCTL_3_0, 
@@ -736,6 +743,16 @@ brgphy_reset(struct mii_softc *sc)
 					PHY_WRITE(sc, BRGPHY_5708S_BLOCK_ADDR,
 						BRGPHY_5708S_DIG_PG0);
 			}
+		} else if (BNX_CHIP_NUM(bnx_sc) == BNX_CHIP_NUM_5709) {
+			if (BNX_CHIP_REV(bnx_sc) == BNX_CHIP_REV_Ax ||
+			    BNX_CHIP_REV(bnx_sc) == BNX_CHIP_REV_Bx)
+				brgphy_disable_early_dac(sc);
+
+			/* Set Jumbo frame settings in the PHY. */
+			brgphy_jumbo_settings(sc);
+
+			/* Enable Ethernet@Wirespeed */
+			brgphy_eth_wirespeed(sc);
 		} else {
 			if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
 				brgphy_ber_bug(sc);
@@ -912,6 +929,18 @@ brgphy_crc_bug(struct mii_softc *sc)
 
 	for (i = 0; dspcode[i].reg != 0; i++)
 		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+void
+brgphy_disable_early_dac(struct mii_softc *sc)
+{
+	uint32_t val;
+
+	PHY_WRITE(sc, BRGPHY_MII_DSP_ADDR_REG, 0x0f08);
+	val = PHY_READ(sc, BRGPHY_MII_DSP_RW_PORT);
+	val &= ~(1 << 8);
+	PHY_WRITE(sc, BRGPHY_MII_DSP_RW_PORT, val);
+
 }
 
 void

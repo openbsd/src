@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.30 2009/07/03 04:34:51 dlg Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.31 2009/07/03 04:54:05 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -212,7 +212,7 @@
 #define BRCM_DEVICEID_BCM5706		0x164A
 #define BRCM_DEVICEID_BCM5706S		0x16AA
 #define BRCM_DEVICEID_BCM5708		0x164C
-#define BRCM_DEVICEID_BCM5708S		0x16AC
+#define BRCM_DEVICEID_BCMj708S		0x16AC
 
 #define HP_VENDORID					0x103C
 
@@ -223,6 +223,8 @@
 #define BNX_CHIP_NUM(sc)			(((sc)->bnx_chipid) & 0xffff0000)
 #define BNX_CHIP_NUM_5706			0x57060000
 #define BNX_CHIP_NUM_5708			0x57080000
+#define BNX_CHIP_NUM_5709			0x57090000
+#define BNX_CHIP_NUM_5716			0x57160000
 
 #define BNX_CHIP_REV(sc)			(((sc)->bnx_chipid) & 0x0000f000)
 #define BNX_CHIP_REV_Ax				0x00000000
@@ -241,6 +243,13 @@
 #define BNX_CHIP_ID_5708_B0			0x57081000
 #define BNX_CHIP_ID_5708_B1			0x57081010
 #define BNX_CHIP_ID_5708_B2			0x57081020
+#define BNX_CHIP_ID_5709_A0			0x57090000
+#define BNX_CHIP_ID_5709_A1			0x57090010
+#define BNX_CHIP_ID_5709_B0			0x57091000
+#define BNX_CHIP_ID_5709_B1			0x57091010
+#define BNX_CHIP_ID_5709_B2			0x57091020
+#define BNX_CHIP_ID_5709_C0			0x57092000
+#define BNX_CHIP_ID_5716_C0			0x57162000
 
 #define BNX_CHIP_BOND_ID(sc)		(((sc)->bnx_chipid) & 0xf)
 
@@ -314,6 +323,11 @@ struct bnx_type {
 #define ST_MICRO_FLASH_PAGE_SIZE		256
 #define ST_MICRO_FLASH_BASE_TOTAL_SIZE	65536
 
+#define BCM5709_FLASH_PAGE_BITS			8
+#define BCM5709_FLASH_PHY_PAGE_SIZE		(1 << BCM5709_FLASH_PAGE_BITS)
+#define BCM5709_FLASH_BYTE_ADDR_MASK	(BCM5709_FLASH_PHY_PAGE_SIZE-1)
+#define BCM5709_FLASH_PAGE_SIZE			256
+
 #define NVRAM_TIMEOUT_COUNT				30000
 #define BNX_FLASHDESC_MAX				64
 
@@ -330,7 +344,10 @@ struct flash_spec {
 	u_int32_t config2;
 	u_int32_t config3;
 	u_int32_t write1;
-	u_int32_t buffered;
+#define BNX_NV_BUFFERED		0x00000001
+#define BNX_NV_TRANSLATE	0x00000002
+#define BNX_NV_WREN		0x00000004
+	u_int32_t flags;
 	u_int32_t page_bits;
 	u_int32_t page_size;
 	u_int32_t addr_mask;
@@ -359,7 +376,7 @@ struct flash_spec {
  * running and there won't be any firmware-driver synchronization during a
  * driver reset. 
  */
-#define FW_ACK_TIME_OUT_MS                  100
+#define FW_ACK_TIME_OUT_MS                  1000
 
 
 #define BNX_DRV_RESET_SIGNATURE				0x00000000
@@ -959,6 +976,7 @@ struct l2_fhdr {
 #define BNX_L2CTX_TYPE_TYPE_EMPTY			 (0<<28)
 #define BNX_L2CTX_TYPE_TYPE_L2				 (1<<28)
 
+#define BNX_L2CTX_TYPE_XI				0x00000080
 #define BNX_L2CTX_TX_HOST_BIDX				0x00000088
 #define BNX_L2CTX_EST_NBD				0x00000088
 #define BNX_L2CTX_CMD_TYPE				0x00000088
@@ -977,6 +995,9 @@ struct l2_fhdr {
 #define BNX_L2CTX_TXP_BIDX				0x000000a8
 #define BNX_L2CTX_TXP_BSEQ				0x000000ac
 
+#define BNX_L2CTX_CMD_TYPE_XI			0x00000240
+#define BNX_L2CTX_TBDR_BHADDR_HI_XI		0x00000258
+#define BNX_L2CTX_TBDR_BHADDR_LO_XI		0x0000025c
 
 /*
  *  l2_bd_chain_context definition
@@ -995,6 +1016,47 @@ struct l2_fhdr {
 #define BNX_L2CTX_NX_BDHADDR_HI			0x00000010
 #define BNX_L2CTX_NX_BDHADDR_LO			0x00000014
 #define BNX_L2CTX_NX_BDIDX				0x00000018
+
+/*
+ *  l2_rx_context definition (5706, 5708, 5709, and 5716)
+ */
+#define BNX_L2CTX_RX_WATER_MARK                         0x00000000
+#define BNX_L2CTX_RX_LO_WATER_MARK_SHIFT        0
+#define BNX_L2CTX_RX_LO_WATER_MARK_DEFAULT      32
+#define BNX_L2CTX_RX_LO_WATER_MARK_SCALE        4
+#define BNX_L2CTX_RX_LO_WATER_MARK_DIS          0
+#define BNX_L2CTX_RX_HI_WATER_MARK_SHIFT        4
+#define BNX_L2CTX_RX_HI_WATER_MARK_SCALE        16
+#define BNX_L2CTX_RX_WATER_MARKS_MSK            0x000000ff
+
+#define BNX_L2CTX_RX_BD_PRE_READ                        0x00000000
+#define BNX_L2CTX_RX_BD_PRE_READ_SHIFT          8
+
+#define BNX_L2CTX_RX_CTX_SIZE                           0x00000000
+#define BNX_L2CTX_RX_CTX_SIZE_SHIFT                     16
+#define BNX_L2CTX_RX_CTX_TYPE_SIZE_L2           ((0x20/20)<<BNX_L2CTX_RX_CTX_SIZE_SHIFT)
+
+#define BNX_L2CTX_RX_CTX_TYPE                           0x00000000
+#define BNX_L2CTX_RX_CTX_TYPE_SHIFT                     24
+
+#define BNX_L2CTX_RX_CTX_TYPE_CTX_BD_CHN_TYPE   (0xf<<28)
+#define BNX_L2CTX_RX_CTX_TYPE_CTX_BD_CHN_TYPE_UNDEFINED (0<<28)
+#define BNX_L2CTX_RX_CTX_TYPE_CTX_BD_CHN_TYPE_VALUE     (1<<28)
+
+#define BNX_L2CTX_RX_HOST_BDIDX                         0x00000004
+#define BNX_L2CTX_RX_HOST_BSEQ                          0x00000008
+#define BNX_L2CTX_RX_NX_BSEQ                            0x0000000c
+#define BNX_L2CTX_RX_NX_BDHADDR_HI                      0x00000010
+#define BNX_L2CTX_RX_NX_BDHADDR_LO                      0x00000014
+#define BNX_L2CTX_RX_NX_BDIDX                           0x00000018
+
+#define BNX_L2CTX_RX_HOST_PG_BDIDX                      0x00000044
+#define BNX_L2CTX_RX_PG_BUF_SIZE                        0x00000048
+#define BNX_L2CTX_RX_RBDC_KEY                           0x0000004c
+#define BNX_L2CTX_RX_RBDC_JUMBO_KEY                     0x3ffe
+#define BNX_L2CTX_RX_NX_PG_BDHADDR_HI           0x00000050
+#define BNX_L2CTX_RX_NX_PG_BDHADDR_LO           0x00000054
+#define BNX_L2CTX_RX_NX_PG_BDIDX                        0x00000058
 
 
 /*
@@ -1259,10 +1321,20 @@ struct l2_fhdr {
 #define BNX_MISC_COMMAND				0x00000800
 #define BNX_MISC_COMMAND_ENABLE_ALL			 (1L<<0)
 #define BNX_MISC_COMMAND_DISABLE_ALL			 (1L<<1)
-#define BNX_MISC_COMMAND_CORE_RESET			 (1L<<4)
-#define BNX_MISC_COMMAND_HARD_RESET			 (1L<<5)
+#define BNX_MISC_COMMAND_SW_RESET			 (1L<<4)
+#define BNX_MISC_COMMAND_POR_RESET			 (1L<<5)
+#define BNX_MISC_COMMAND_HD_RESET			 (1L<<6)
+#define BNX_MISC_COMMAND_CMN_SW_RESET			 (1L<<7)
 #define BNX_MISC_COMMAND_PAR_ERROR			 (1L<<8)
+#define BNX_MISC_COMMAND_CS16_ERR			 (1L<<9)
+#define BNX_MISC_COMMAND_CS16_ERR_LOC			 (0xfL<<12)
 #define BNX_MISC_COMMAND_PAR_ERR_RAM			 (0x7fL<<16)
+#define BNX_MISC_COMMAND_POWERDOWN_EVENT		 (1L<<23)
+#define BNX_MISC_COMMAND_SW_SHUTDOWN			 (1L<<24)
+#define BNX_MISC_COMMAND_SHUTDOWN_EN			 (1L<<25)
+#define BNX_MISC_COMMAND_DINTEG_ATTN_EN			 (1L<<26)
+#define BNX_MISC_COMMAND_PCIE_LINK_IN_L23		 (1L<<27)
+#define BNX_MISC_COMMAND_PCIE_DIS			 (1L<<28)
 
 #define BNX_MISC_CFG					0x00000804
 #define BNX_MISC_CFG_PCI_GRC_TMOUT			 (1L<<0)
@@ -1346,6 +1418,9 @@ struct l2_fhdr {
 #define BNX_MISC_ENABLE_SET_BITS_TIMER_ENABLE		 (1L<<25)
 #define BNX_MISC_ENABLE_SET_BITS_DMA_ENGINE_ENABLE	 (1L<<26)
 #define BNX_MISC_ENABLE_SET_BITS_UMP_ENABLE		 (1L<<27)
+
+#define BNX_MISC_ENABLE_DEFAULT				0x05ffffff
+#define BNX_MISC_ENABLE_DEFAULT_XI			0x17ffffff
 
 #define BNX_MISC_ENABLE_CLR_BITS			0x00000814
 #define BNX_MISC_ENABLE_CLR_BITS_TX_SCHEDULER_ENABLE	 (1L<<0)
@@ -1689,6 +1764,38 @@ struct l2_fhdr {
 #define BNX_MISC_FINAL_CLK_CTL_VAL			0x000008b8
 #define BNX_MISC_FINAL_CLK_CTL_VAL_MISC_FINAL_CLK_CTL_VAL	 (0x3ffffffL<<6)
 
+#define BNX_MISC_NEW_CORE_CTL				0x000008c8
+#define BNX_MISC_NEW_CORE_CTL_LINK_HOLDOFF_SUCCESS	 (1L<<0)
+#define BNX_MISC_NEW_CORE_CTL_LINK_HOLDOFF_REQ		 (1L<<1)
+#define BNX_MISC_NEW_CORE_CTL_DMA_ENABLE		 (1L<<16)
+#define BNX_MISC_NEW_CORE_CTL_RESERVED_CMN		 (0x3fffL<<2)
+#define BNX_MISC_NEW_CORE_CTL_RESERVED_TC		 (0xffffL<<16)
+
+#define BNX_MISC_DUAL_MEDIA_CTRL			0x000008ec
+#define BNX_MISC_DUAL_MEDIA_CTRL_BOND_ID		 (0xffL<<0)
+#define BNX_MISC_DUAL_MEDIA_CTRL_BOND_ID_X		 (0L<<0)
+#define BNX_MISC_DUAL_MEDIA_CTRL_BOND_ID_C		 (3L<<0)
+#define BNX_MISC_DUAL_MEDIA_CTRL_BOND_ID_S		 (12L<<0)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY_CTRL_STRAP	 (0x7L<<8)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PORT_SWAP_PIN		 (1L<<11)
+#define BNX_MISC_DUAL_MEDIA_CTRL_SERDES1_SIGDET	 (1L<<12)
+#define BNX_MISC_DUAL_MEDIA_CTRL_SERDES0_SIGDET	 (1L<<13)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY1_SIGDET		 (1L<<14)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY0_SIGDET		 (1L<<15)
+#define BNX_MISC_DUAL_MEDIA_CTRL_LCPLL_RST		 (1L<<16)
+#define BNX_MISC_DUAL_MEDIA_CTRL_SERDES1_RST		 (1L<<17)
+#define BNX_MISC_DUAL_MEDIA_CTRL_SERDES0_RST		 (1L<<18)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY1_RST		 (1L<<19)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY0_RST		 (1L<<20)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY_CTRL		 (0x7L<<21)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PORT_SWAP		 (1L<<24)
+#define BNX_MISC_DUAL_MEDIA_CTRL_STRAP_OVERRIDE	 (1L<<25)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY_SERDES_IDDQ	 (0xfL<<26)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY_SERDES_IDDQ_SER1_IDDQ	 (1L<<26)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY_SERDES_IDDQ_SER0_IDDQ	 (2L<<26)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY_SERDES_IDDQ_PHY1_IDDQ	 (4L<<26)
+#define BNX_MISC_DUAL_MEDIA_CTRL_PHY_SERDES_IDDQ_PHY0_IDDQ	 (8L<<26)
+
 #define BNX_MISC_UNUSED0				0x000008bc
 
 
@@ -2011,8 +2118,27 @@ struct l2_fhdr {
  *  context_reg definition
  *  offset: 0x1000
  */
-#define BNX_CTX_COMMAND				0x00001000
-#define BNX_CTX_COMMAND_ENABLED			 (1L<<0)
+#define BNX_CTX_COMMAND					0x00001000
+#define BNX_CTX_COMMAND_ENABLED				 (1L<<0)
+#define BNX_CTX_COMMAND_DISABLE_USAGE_CNT		 (1L<<1)
+#define BNX_CTX_COMMAND_DISABLE_PLRU			 (1L<<2)
+#define BNX_CTX_COMMAND_DISABLE_COMBINE_READ		 (1L<<3)
+#define BNX_CTX_COMMAND_FLUSH_AHEAD			 (0x1fL<<8)
+#define BNX_CTX_COMMAND_MEM_INIT			 (1L<<13)
+#define BNX_CTX_COMMAND_PAGE_SIZE			 (0xfL<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_256			 (0L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_512			 (1L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_1K			 (2L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_2K			 (3L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_4K			 (4L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_8K			 (5L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_16K			 (6L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_32K			 (7L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_64K			 (8L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_128K			 (9L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_256K			 (10L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_512K			 (11L<<16)
+#define BNX_CTX_COMMAND_PAGE_SIZE_1M			 (12L<<16)
 
 #define BNX_CTX_STATUS					0x00001004
 #define BNX_CTX_STATUS_LOCK_WAIT			 (1L<<0)
@@ -2047,12 +2173,26 @@ struct l2_fhdr {
 #define BNX_CTX_LOCK_STATUS				 (1L<<30)
 #define BNX_CTX_LOCK_REQ				 (1L<<31)
 
+#define BNX_CTX_CTX_CTRL				0x0000101c
+#define BNX_CTX_CTX_CTRL_CTX_ADDR			(0x7ffffL<<2)
+#define BNX_CTX_CTX_CTRL_MOD_USAGE_CNT			(0x3L<<21)
+#define BNX_CTX_CTX_CTRL_NO_RAM_ACC			(1L<<23)
+#define BNX_CTX_CTX_CTRL_PREFETCH_SIZE			(0x3L<<24)
+#define BNX_CTX_CTX_CTRL_ATTR				(1L<<26)
+#define BNX_CTX_CTX_CTRL_WRITE_REQ			(1L<<30)
+#define BNX_CTX_CTX_CTRL_READ_REQ			(1L<<31)
+
+#define BNX_CTX_CTX_DATA				0x00001020
+
 #define BNX_CTX_ACCESS_STATUS				0x00001040
 #define BNX_CTX_ACCESS_STATUS_MASTERENCODED		 (0xfL<<0)
 #define BNX_CTX_ACCESS_STATUS_ACCESSMEMORYSM		 (0x3L<<10)
 #define BNX_CTX_ACCESS_STATUS_PAGETABLEINITSM		 (0x3L<<12)
 #define BNX_CTX_ACCESS_STATUS_ACCESSMEMORYINITSM	 (0x3L<<14)
-#define BNX_CTX_ACCESS_STATUS_QUALIFIED_REQUEST	 (0x7ffL<<17)
+#define BNX_CTX_ACCESS_STATUS_QUALIFIED_REQUEST		 (0x7ffL<<17)
+#define BNX_CTX_ACCESS_STATUS_CAMMASTERENCODED_XI	 (0x1fL<<0)
+#define BNX_CTX_ACCESS_STATUS_CACHEMASTERENCODED_XI	 (0x1fL<<5)
+#define BNX_CTX_ACCESS_STATUS_REQUEST_XI		 (0x3fffffL<<10)
 
 #define BNX_CTX_DBG_LOCK_STATUS			0x00001044
 #define BNX_CTX_DBG_LOCK_STATUS_SM			 (0x3ffL<<0)
@@ -2072,6 +2212,17 @@ struct l2_fhdr {
 #define BNX_CTX_CHNL_LOCK_STATUS_7			0x0000109c
 #define BNX_CTX_CHNL_LOCK_STATUS_8			0x000010a0
 
+#define BNX_CTX_CACHE_DATA				0x000010c4
+#define BNX_CTX_HOST_PAGE_TBL_CTRL			0x000010c8
+#define BNX_CTX_HOST_PAGE_TBL_CTRL_PAGE_TBL_ADDR	 (0x1ffL<<0)
+#define BNX_CTX_HOST_PAGE_TBL_CTRL_WRITE_REQ		 (1L<<30)
+#define BNX_CTX_HOST_PAGE_TBL_CTRL_READ_REQ		 (1L<<31)
+
+#define BNX_CTX_HOST_PAGE_TBL_DATA0			0x000010cc
+#define BNX_CTX_HOST_PAGE_TBL_DATA0_VALID		 (1L<<0)
+#define BNX_CTX_HOST_PAGE_TBL_DATA0_VALUE		 (0xffffffL<<8)
+
+#define BNX_CTX_HOST_PAGE_TBL_DATA1			0x000010d0
 
 /*
  *  emac_reg definition
@@ -3155,14 +3306,16 @@ struct l2_fhdr {
 #define BNX_MQ_CONFIG					0x00003c08
 #define BNX_MQ_CONFIG_TX_HIGH_PRI			 (1L<<0)
 #define BNX_MQ_CONFIG_HALT_DIS				 (1L<<1)
+#define BNX_MQ_CONFIG_BIN_MQ_MODE			 (1L<<2)
+#define BNX_MQ_CONFIG_DIS_IDB_DROP			 (1L<<3)
 #define BNX_MQ_CONFIG_KNL_BYP_BLK_SIZE			 (0x7L<<4)
 #define BNX_MQ_CONFIG_KNL_BYP_BLK_SIZE_256		 (0L<<4)
 #define BNX_MQ_CONFIG_KNL_BYP_BLK_SIZE_512		 (1L<<4)
 #define BNX_MQ_CONFIG_KNL_BYP_BLK_SIZE_1K		 (2L<<4)
 #define BNX_MQ_CONFIG_KNL_BYP_BLK_SIZE_2K		 (3L<<4)
 #define BNX_MQ_CONFIG_KNL_BYP_BLK_SIZE_4K		 (4L<<4)
-#define BNX_MQ_CONFIG_MAX_DEPTH			 (0x7fL<<8)
-#define BNX_MQ_CONFIG_CUR_DEPTH			 (0x7fL<<20)
+#define BNX_MQ_CONFIG_MAX_DEPTH				 (0x7fL<<8)
+#define BNX_MQ_CONFIG_CUR_DEPTH				 (0x7fL<<20)
 
 #define BNX_MQ_ENQUEUE1				0x00003c0c
 #define BNX_MQ_ENQUEUE1_OFFSET				 (0x3fL<<2)
@@ -3223,6 +3376,14 @@ struct l2_fhdr {
 #define BNX_MQ_MEM_RD_DATA2				0x00003c90
 #define BNX_MQ_MEM_RD_DATA2_VALUE			 (0x3fffffffL<<0)
 
+#define BNX_MQ_MAP_L2_5					0x00003d34
+#define BNX_MQ_MAP_L2_5_MQ_OFFSET			 (0xffL<<0)
+#define BNX_MQ_MAP_L2_5_SZ				 (0x3L<<8)
+#define BNX_MQ_MAP_L2_5_CTX_OFFSET			 (0x2ffL<<10)
+#define BNX_MQ_MAP_L2_5_BIN_OFFSET			 (0x7L<<23)
+#define BNX_MQ_MAP_L2_5_ARM				 (0x3L<<26)
+#define BNX_MQ_MAP_L2_5_ENA				 (0x1L<<31)
+#define BNX_MQ_MAP_L2_5_DEFAULT				 0x83000b08
 
 
 /*
@@ -4735,6 +4896,14 @@ struct bnx_softc {
 	struct status_block	*status_block;		/* virtual address */
 	bus_addr_t		status_block_paddr;	/* Physical address */
 
+	/* H/W maintained context block */
+	int			ctx_pages;
+	bus_dma_segment_t	ctx_segs[4];
+	int			ctx_rsegs[4];
+	bus_dmamap_t		ctx_map[4];
+	void			*ctx_block[4];
+	
+
 	/* Driver maintained status block values. */
 	u_int16_t		last_status_idx;
 	u_int16_t		hw_rx_cons;
@@ -4946,5 +5115,21 @@ struct bnx_rv2p_header {
 	 * the (rather obvious) block length stated above.
 	 */
 };
+
+/*
+ * The RV2P block must be configured for the system
+ * page size, or more specifically, the number of
+ * usable rx_bd's per page, and should be called
+ * as follows prior to loading the RV2P firmware:
+ *
+ * BNX_RV2P_PROC2_CHG_MAX_BD_PAGE(USABLE_RX_BD_PER_PAGE)
+ *
+ * The default value is 0xFF.
+ */
+#define BNX_RV2P_PROC2_MAX_BD_PAGE_LOC  5
+#define BNX_RV2P_PROC2_CHG_MAX_BD_PAGE(_rv2p, _v)  {			\
+	_rv2p[BNX_RV2P_PROC2_MAX_BD_PAGE_LOC] =				\
+	(_rv2p[BNX_RV2P_PROC2_MAX_BD_PAGE_LOC] & ~0xFFFF) | (_v);	\
+}
 
 #endif /* #ifndef _BNX_H_DEFINED */

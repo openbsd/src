@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.80 2009/07/03 04:34:51 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.81 2009/07/03 04:54:05 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -41,12 +41,16 @@ __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $"
  *   BCM5706S A2, A3
  *   BCM5708C B1, B2
  *   BCM5708S B1, B2
+ *   BCM5709C A1, C0
+ *   BCM5716  C0
  *
  * The following controllers are not supported by this driver:
  *   BCM5706C A0, A1
  *   BCM5706S A0, A1
  *   BCM5708C A0, B0
  *   BCM5708S A0, B0
+ *   BCM5709C A0  B0, B1, B2 (pre-production)
+ *   BCM5709S A0, A1, B0, B1, B2, C0 (pre-production)
  */
 
 #include <dev/pci/if_bnxreg.h>
@@ -153,11 +157,12 @@ const struct pci_matchid bnx_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706S },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S }
-#if 0
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S },
+
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709S }
-#endif
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709S },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5716 }
+
 };
 
 /****************************************************************************/
@@ -165,14 +170,17 @@ const struct pci_matchid bnx_devices[] = {
 /****************************************************************************/
 static struct flash_spec flash_table[] =
 {
+#define BUFFERED_FLAGS		(BNX_NV_BUFFERED | BNX_NV_TRANSLATE)
+#define NONBUFFERED_FLAGS	(BNX_NV_WREN)
+
 	/* Slow EEPROM */
 	{0x00000000, 0x40830380, 0x009f0081, 0xa184a053, 0xaf000400,
-	 1, SEEPROM_PAGE_BITS, SEEPROM_PAGE_SIZE,
+	 BUFFERED_FLAGS, SEEPROM_PAGE_BITS, SEEPROM_PAGE_SIZE,
 	 SEEPROM_BYTE_ADDR_MASK, SEEPROM_TOTAL_SIZE,
 	 "EEPROM - slow"},
 	/* Expansion entry 0001 */
 	{0x08000002, 0x4b808201, 0x00050081, 0x03840253, 0xaf020406,
-	 0, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
 	 SAIFUN_FLASH_BYTE_ADDR_MASK, 0,
 	 "Entry 0001"},
 	/* Saifun SA25F010 (non-buffered flash) */
@@ -184,70 +192,86 @@ static struct flash_spec flash_table[] =
 	/* Saifun SA25F020 (non-buffered flash) */
 	/* strap, cfg1, & write1 need updates */
 	{0x0c000003, 0x4f808201, 0x00050081, 0x03840253, 0xaf020406,
-	 0, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
 	 SAIFUN_FLASH_BYTE_ADDR_MASK, SAIFUN_FLASH_BASE_TOTAL_SIZE*4,
 	 "Non-buffered flash (256kB)"},
 	/* Expansion entry 0100 */
 	{0x11000000, 0x53808201, 0x00050081, 0x03840253, 0xaf020406,
-	 0, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
 	 SAIFUN_FLASH_BYTE_ADDR_MASK, 0,
 	 "Entry 0100"},
 	/* Entry 0101: ST M45PE10 (non-buffered flash, TetonII B0) */
 	{0x19000002, 0x5b808201, 0x000500db, 0x03840253, 0xaf020406,
-	 0, ST_MICRO_FLASH_PAGE_BITS, ST_MICRO_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, ST_MICRO_FLASH_PAGE_BITS, ST_MICRO_FLASH_PAGE_SIZE,
 	 ST_MICRO_FLASH_BYTE_ADDR_MASK, ST_MICRO_FLASH_BASE_TOTAL_SIZE*2,
 	 "Entry 0101: ST M45PE10 (128kB non-bufferred)"},
 	/* Entry 0110: ST M45PE20 (non-buffered flash)*/
 	{0x15000001, 0x57808201, 0x000500db, 0x03840253, 0xaf020406,
-	 0, ST_MICRO_FLASH_PAGE_BITS, ST_MICRO_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, ST_MICRO_FLASH_PAGE_BITS, ST_MICRO_FLASH_PAGE_SIZE,
 	 ST_MICRO_FLASH_BYTE_ADDR_MASK, ST_MICRO_FLASH_BASE_TOTAL_SIZE*4,
 	 "Entry 0110: ST M45PE20 (256kB non-bufferred)"},
 	/* Saifun SA25F005 (non-buffered flash) */
 	/* strap, cfg1, & write1 need updates */
 	{0x1d000003, 0x5f808201, 0x00050081, 0x03840253, 0xaf020406,
-	 0, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
 	 SAIFUN_FLASH_BYTE_ADDR_MASK, SAIFUN_FLASH_BASE_TOTAL_SIZE,
 	 "Non-buffered flash (64kB)"},
 	/* Fast EEPROM */
 	{0x22000000, 0x62808380, 0x009f0081, 0xa184a053, 0xaf000400,
-	 1, SEEPROM_PAGE_BITS, SEEPROM_PAGE_SIZE,
+	 BUFFERED_FLAGS, SEEPROM_PAGE_BITS, SEEPROM_PAGE_SIZE,
 	 SEEPROM_BYTE_ADDR_MASK, SEEPROM_TOTAL_SIZE,
 	 "EEPROM - fast"},
 	/* Expansion entry 1001 */
 	{0x2a000002, 0x6b808201, 0x00050081, 0x03840253, 0xaf020406,
-	 0, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
 	 SAIFUN_FLASH_BYTE_ADDR_MASK, 0,
 	 "Entry 1001"},
 	/* Expansion entry 1010 */
 	{0x26000001, 0x67808201, 0x00050081, 0x03840253, 0xaf020406,
-	 0, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
 	 SAIFUN_FLASH_BYTE_ADDR_MASK, 0,
 	 "Entry 1010"},
 	/* ATMEL AT45DB011B (buffered flash) */
 	{0x2e000003, 0x6e808273, 0x00570081, 0x68848353, 0xaf000400,
-	 1, BUFFERED_FLASH_PAGE_BITS, BUFFERED_FLASH_PAGE_SIZE,
+	 BUFFERED_FLAGS, BUFFERED_FLASH_PAGE_BITS, BUFFERED_FLASH_PAGE_SIZE,
 	 BUFFERED_FLASH_BYTE_ADDR_MASK, BUFFERED_FLASH_TOTAL_SIZE,
 	 "Buffered flash (128kB)"},
 	/* Expansion entry 1100 */
 	{0x33000000, 0x73808201, 0x00050081, 0x03840253, 0xaf020406,
-	 0, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
 	 SAIFUN_FLASH_BYTE_ADDR_MASK, 0,
 	 "Entry 1100"},
 	/* Expansion entry 1101 */
 	{0x3b000002, 0x7b808201, 0x00050081, 0x03840253, 0xaf020406,
-	 0, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
+	 NONBUFFERED_FLAGS, SAIFUN_FLASH_PAGE_BITS, SAIFUN_FLASH_PAGE_SIZE,
 	 SAIFUN_FLASH_BYTE_ADDR_MASK, 0,
 	 "Entry 1101"},
 	/* Ateml Expansion entry 1110 */
 	{0x37000001, 0x76808273, 0x00570081, 0x68848353, 0xaf000400,
-	 1, BUFFERED_FLASH_PAGE_BITS, BUFFERED_FLASH_PAGE_SIZE,
+	 BUFFERED_FLAGS, BUFFERED_FLASH_PAGE_BITS, BUFFERED_FLASH_PAGE_SIZE,
 	 BUFFERED_FLASH_BYTE_ADDR_MASK, 0,
 	 "Entry 1110 (Atmel)"},
 	/* ATMEL AT45DB021B (buffered flash) */
 	{0x3f000003, 0x7e808273, 0x00570081, 0x68848353, 0xaf000400,
-	 1, BUFFERED_FLASH_PAGE_BITS, BUFFERED_FLASH_PAGE_SIZE,
+	 BUFFERED_FLAGS, BUFFERED_FLASH_PAGE_BITS, BUFFERED_FLASH_PAGE_SIZE,
 	 BUFFERED_FLASH_BYTE_ADDR_MASK, BUFFERED_FLASH_TOTAL_SIZE*2,
 	 "Buffered flash (256kB)"},
+};
+
+/*
+ * The BCM5709 controllers transparently handle the
+ * differences between Atmel 264 byte pages and all
+ * flash devices which use 256 byte pages, so no
+ * logical-to-physical mapping is required in the
+ * driver.
+ */
+static struct flash_spec flash_5709 = {
+	.flags		= BNX_NV_BUFFERED,
+	.page_bits	= BCM5709_FLASH_PAGE_BITS,
+	.page_size	= BCM5709_FLASH_PAGE_SIZE,
+	.addr_mask	= BCM5709_FLASH_BYTE_ADDR_MASK,
+	.total_size	= BUFFERED_FLASH_TOTAL_SIZE * 2,
+	.name		= "5709 buffered flash (256kB)",
 };
 
 /****************************************************************************/
@@ -316,6 +340,7 @@ int	bnx_nvram_write(struct bnx_softc *, u_int32_t, u_int8_t *, int);
 /****************************************************************************/
 /*                                                                          */
 /****************************************************************************/
+void	bnx_get_media(struct bnx_softc *);
 int	bnx_dma_alloc(struct bnx_softc *);
 void	bnx_dma_free(struct bnx_softc *);
 void	bnx_release_resources(struct bnx_softc *);
@@ -337,7 +362,9 @@ int	bnx_blockinit(struct bnx_softc *);
 int	bnx_get_buf(struct bnx_softc *, u_int16_t *, u_int16_t *, u_int32_t *);
 
 int	bnx_init_tx_chain(struct bnx_softc *);
+void	bnx_init_tx_context(struct bnx_softc *);
 void	bnx_fill_rx_chain(struct bnx_softc *);
+void	bnx_init_rx_context(struct bnx_softc *);
 int	bnx_init_rx_chain(struct bnx_softc *);
 void	bnx_free_rx_chain(struct bnx_softc *);
 void	bnx_free_tx_chain(struct bnx_softc *);
@@ -667,7 +694,8 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	val = REG_RD_IND(sc, BNX_SHM_HDR_SIGNATURE);
 	if ((val & BNX_SHM_HDR_SIGNATURE_SIG_MASK) == BNX_SHM_HDR_SIGNATURE_SIG)
-		sc->bnx_shmem_base = REG_RD_IND(sc, BNX_SHM_HDR_ADDR_0);
+		sc->bnx_shmem_base = REG_RD_IND(sc, BNX_SHM_HDR_ADDR_0 +
+		    (sc->bnx_pa.pa_function << 2));
 	else
 		sc->bnx_shmem_base = HOST_VIEW_SHMEM_BASE;
 
@@ -745,16 +773,25 @@ bnx_attachhook(void *xsc)
 	struct bnx_softc *sc = xsc;
 	struct pci_attach_args *pa = &sc->bnx_pa;
 	struct ifnet		*ifp;
-	u_int32_t		val;
 	int			error, mii_flags = 0;
+	int			fw = BNX_FW_B06;
+	int			rv2p = BNX_RV2P;
 
-	if ((error = bnx_read_firmware(sc, BNX_FW_B06)) != 0) {
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		fw = BNX_FW_B09;
+		if ((BNX_CHIP_REV(sc) == BNX_CHIP_REV_Ax))
+			rv2p = BNX_XI90_RV2P;
+		else
+			rv2p = BNX_XI_RV2P;
+	}
+
+	if ((error = bnx_read_firmware(sc, fw)) != 0) {
 		printf("%s: error %d, could not read firmware\n",
 		    sc->bnx_dev.dv_xname, error);
 		return;
 	}
 
-	if ((error = bnx_read_rv2p(sc, BNX_RV2P)) != 0) {
+	if ((error = bnx_read_rv2p(sc, rv2p)) != 0) {
 		printf("%s: error %d, could not read rv2p\n",
 		    sc->bnx_dev.dv_xname, error);
 		return;
@@ -816,27 +853,8 @@ bnx_attachhook(void *xsc)
 	/* Update statistics once every second. */
 	sc->bnx_stats_ticks = 1000000 & 0xffff00;
 
-	/*
-	 * The SerDes based NetXtreme II controllers
-	 * that support 2.5Gb operation (currently 
-	 * 5708S) use a PHY at address 2, otherwise 
-	 * the PHY is present at address 1.
-	 */
-	sc->bnx_phy_addr = 1;
-
-	if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT) {
-		sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
-		sc->bnx_flags |= BNX_NO_WOL_FLAG;
-		if (BNX_CHIP_NUM(sc) != BNX_CHIP_NUM_5706) {
-			sc->bnx_phy_addr = 2;
-			val = REG_RD_IND(sc, sc->bnx_shmem_base +
-					 BNX_SHARED_HW_CFG_CONFIG);
-			if (val & BNX_SHARED_HW_CFG_PHY_2_5G) {
-				sc->bnx_phy_flags |= BNX_PHY_2_5G_CAPABLE_FLAG;
-				DBPRINT(sc, BNX_WARN, "Found 2.5Gb capable adapter\n");
-			}
-		}
-	}
+	/* Find the media type for the adapter. */
+	bnx_get_media(sc);
 
 	/*
 	 * Store config data needed by the PHY driver for
@@ -1050,16 +1068,35 @@ bnx_reg_wr_ind(struct bnx_softc *sc, u_int32_t offset, u_int32_t val)
 /*   Nothing.                                                               */
 /****************************************************************************/
 void
-bnx_ctx_wr(struct bnx_softc *sc, u_int32_t cid_addr, u_int32_t offset,
-    u_int32_t val)
+bnx_ctx_wr(struct bnx_softc *sc, u_int32_t cid_addr, u_int32_t ctx_offset,
+    u_int32_t ctx_val)
 {
+	u_int32_t idx, offset = ctx_offset + cid_addr;
+	u_int32_t val, retry_cnt = 5;
 
-	DBPRINT(sc, BNX_EXCESSIVE, "%s(); cid_addr = 0x%08X, offset = 0x%08X, "
-		"val = 0x%08X\n", __FUNCTION__, cid_addr, offset, val);
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		REG_WR(sc, BNX_CTX_CTX_DATA, ctx_val);
+		REG_WR(sc, BNX_CTX_CTX_CTRL,
+		    (offset | BNX_CTX_CTX_CTRL_WRITE_REQ));
 
-	offset += cid_addr;
-	REG_WR(sc, BNX_CTX_DATA_ADR, offset);
-	REG_WR(sc, BNX_CTX_DATA, val);
+		for (idx = 0; idx < retry_cnt; idx++) {
+			val = REG_RD(sc, BNX_CTX_CTX_CTRL);
+			if ((val & BNX_CTX_CTX_CTRL_WRITE_REQ) == 0)
+				break;
+			DELAY(5);
+		}
+
+#if 0
+		if (val & BNX_CTX_CTX_CTRL_WRITE_REQ)
+			BNX_PRINTF("%s(%d); Unable to write CTX memory: "
+				"cid_addr = 0x%08X, offset = 0x%08X!\n",
+				__FILE__, __LINE__, cid_addr, ctx_offset);
+#endif
+
+	} else {
+		REG_WR(sc, BNX_CTX_DATA_ADR, offset);
+		REG_WR(sc, BNX_CTX_DATA, ctx_val);
+	}
 }
 
 /****************************************************************************/
@@ -1358,7 +1395,7 @@ bnx_enable_nvram_write(struct bnx_softc *sc)
 	val = REG_RD(sc, BNX_MISC_CFG);
 	REG_WR(sc, BNX_MISC_CFG, val | BNX_MISC_CFG_NVM_WR_EN_PCI);
 
-	if (!sc->bnx_flash_info->buffered) {
+	if (!ISSET(sc->bnx_flash_info->flags, BNX_NV_BUFFERED)) {
 		int j;
 
 		REG_WR(sc, BNX_NVM_COMMAND, BNX_NVM_COMMAND_DONE);
@@ -1464,7 +1501,7 @@ bnx_nvram_erase_page(struct bnx_softc *sc, u_int32_t offset)
 	int			j;
 
 	/* Buffered flash doesn't require an erase. */
-	if (sc->bnx_flash_info->buffered)
+	if (ISSET(sc->bnx_flash_info->flags, BNX_NV_BUFFERED))
 		return (0);
 
 	DBPRINT(sc, BNX_VERBOSE, "Erasing NVRAM page.\n");
@@ -1520,11 +1557,12 @@ bnx_nvram_read_dword(struct bnx_softc *sc, u_int32_t offset,
 	/* Build the command word. */
 	cmd = BNX_NVM_COMMAND_DOIT | cmd_flags;
 
-	/* Calculate the offset for buffered flash. */
-	if (sc->bnx_flash_info->buffered)
+	/* Calculate the offset for buffered flash if translation is used. */
+	if (ISSET(sc->bnx_flash_info->flags, BNX_NV_TRANSLATE)) {
 		offset = ((offset / sc->bnx_flash_info->page_size) <<
 		    sc->bnx_flash_info->page_bits) +
 		    (offset % sc->bnx_flash_info->page_size);
+	}
 
 	/*
 	 * Clear the DONE bit separately, set the address to read,
@@ -1581,11 +1619,12 @@ bnx_nvram_write_dword(struct bnx_softc *sc, u_int32_t offset, u_int8_t *val,
 	/* Build the command word. */
 	cmd = BNX_NVM_COMMAND_DOIT | BNX_NVM_COMMAND_WR | cmd_flags;
 
-	/* Calculate the offset for buffered flash. */
-	if (sc->bnx_flash_info->buffered)
+	/* Calculate the offset for buffered flash if translation is used. */
+	if (ISSET(sc->bnx_flash_info->flags, BNX_NV_TRANSLATE)) {
 		offset = ((offset / sc->bnx_flash_info->page_size) <<
 		    sc->bnx_flash_info->page_bits) +
 		    (offset % sc->bnx_flash_info->page_size);
+	}
 
 	/*
 	 * Clear the DONE bit separately, convert NVRAM data to big-endian,
@@ -1628,17 +1667,20 @@ int
 bnx_init_nvram(struct bnx_softc *sc)
 {
 	u_int32_t		val;
-	int			j, entry_count, rc;
+	int			j, entry_count, rc = 0;
 	struct flash_spec	*flash;
 
 	DBPRINT(sc,BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
+
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		sc->bnx_flash_info = &flash_5709;
+		goto bnx_init_nvram_get_flash_size;
+	}
 
 	/* Determine the selected interface. */
 	val = REG_RD(sc, BNX_NVM_CFG1);
 
 	entry_count = sizeof(flash_table) / sizeof(struct flash_spec);
-
-	rc = 0;
 
 	/*
 	 * Flash reconfiguration is required to support additional
@@ -1707,6 +1749,7 @@ bnx_init_nvram(struct bnx_softc *sc)
 		rc = ENODEV;
 	}
 
+bnx_init_nvram_get_flash_size:
 	/* Write the flash config data to the shared memory interface. */
 	val = REG_RD_IND(sc, sc->bnx_shmem_base + BNX_SHARED_HW_CFG_CONFIG2);
 	val &= BNX_SHARED_HW_CFG2_NVM_SIZE_MASK;
@@ -1922,7 +1965,7 @@ bnx_nvram_write(struct bnx_softc *sc, u_int32_t offset, u_int8_t *data_buf,
 		bnx_enable_nvram_access(sc);
 
 		cmd_flags = BNX_NVM_COMMAND_FIRST;
-		if (sc->bnx_flash_info->buffered == 0) {
+		if (!ISSET(sc->bnx_flash_info->flags, BNX_NV_BUFFERED)) {
 			int j;
 
 			/* Read the whole page into the buffer
@@ -1957,7 +2000,7 @@ bnx_nvram_write(struct bnx_softc *sc, u_int32_t offset, u_int8_t *data_buf,
 		/* Loop to write back the buffer data from page_start to
 		 * data_start */
 		i = 0;
-		if (sc->bnx_flash_info->buffered == 0) {
+		if (!ISSET(sc->bnx_flash_info->flags, BNX_NV_BUFFERED)) {
 			for (addr = page_start; addr < data_start;
 				addr += 4, i += 4) {
 
@@ -1974,8 +2017,8 @@ bnx_nvram_write(struct bnx_softc *sc, u_int32_t offset, u_int8_t *data_buf,
 		/* Loop to write the new data from data_start to data_end */
 		for (addr = data_start; addr < data_end; addr += 4, i++) {
 			if ((addr == page_end - 4) ||
-			    ((sc->bnx_flash_info->buffered) &&
-			    (addr == data_end - 4))) {
+			    (ISSET(sc->bnx_flash_info->flags, BNX_NV_BUFFERED)
+			    && (addr == data_end - 4))) {
 
 				cmd_flags |= BNX_NVM_COMMAND_LAST;
 			}
@@ -1991,7 +2034,7 @@ bnx_nvram_write(struct bnx_softc *sc, u_int32_t offset, u_int8_t *data_buf,
 
 		/* Loop to write back the buffer data from data_end
 		 * to page_end */
-		if (sc->bnx_flash_info->buffered == 0) {
+		if (!ISSET(sc->bnx_flash_info->flags, BNX_NV_BUFFERED)) {
 			for (addr = data_end; addr < page_end;
 			    addr += 4, i += 4) {
 
@@ -2089,6 +2132,97 @@ bnx_nvram_test_done:
 }
 
 /****************************************************************************/
+/* Identifies the current media type of the controller and sets the PHY     */
+/* address.                                                                 */
+/*                                                                          */
+/* Returns:                                                                 */
+/*   Nothing.                                                               */
+/****************************************************************************/
+void
+bnx_get_media(struct bnx_softc *sc)
+{
+	u_int32_t val;
+ 
+	sc->bnx_phy_addr = 1;
+ 
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		u_int32_t val = REG_RD(sc, BNX_MISC_DUAL_MEDIA_CTRL);
+		u_int32_t bond_id = val & BNX_MISC_DUAL_MEDIA_CTRL_BOND_ID;
+		u_int32_t strap;
+
+		/*
+		 * The BCM5709S is software configurable
+		 * for Copper or SerDes operation.
+		 */
+		if (bond_id == BNX_MISC_DUAL_MEDIA_CTRL_BOND_ID_C) {
+			DBPRINT(sc, BNX_INFO_LOAD,
+			    "5709 bonded for copper.\n");
+			goto bnx_get_media_exit;
+		} else if (bond_id == BNX_MISC_DUAL_MEDIA_CTRL_BOND_ID_S) {
+			DBPRINT(sc, BNX_INFO_LOAD,
+			    "5709 bonded for dual media.\n");
+			sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
+			goto bnx_get_media_exit;
+		}
+
+		if (val & BNX_MISC_DUAL_MEDIA_CTRL_STRAP_OVERRIDE)
+			strap = (val & BNX_MISC_DUAL_MEDIA_CTRL_PHY_CTRL) >> 21;
+		else {
+			strap = (val & BNX_MISC_DUAL_MEDIA_CTRL_PHY_CTRL_STRAP)
+			    >> 8;
+		}
+
+		if (sc->bnx_pa.pa_function == 0) {
+			switch (strap) {
+			case 0x4:
+			case 0x5:
+			case 0x6:
+				DBPRINT(sc, BNX_INFO_LOAD, 
+					"BCM5709 s/w configured for SerDes.\n");
+				sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
+			default:
+				DBPRINT(sc, BNX_INFO_LOAD, 
+					"BCM5709 s/w configured for Copper.\n");
+			}
+		} else {
+			switch (strap) {
+			case 0x1:
+			case 0x2:
+			case 0x4:
+				DBPRINT(sc, BNX_INFO_LOAD, 
+					"BCM5709 s/w configured for SerDes.\n");
+				sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
+			default:
+				DBPRINT(sc, BNX_INFO_LOAD, 
+					"BCM5709 s/w configured for Copper.\n");
+			}
+		}
+
+	} else if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT)
+		sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
+
+	if (sc->bnx_phy_flags && BNX_PHY_SERDES_FLAG) {
+		sc->bnx_flags |= BNX_NO_WOL_FLAG;
+		if (BNX_CHIP_NUM(sc) != BNX_CHIP_NUM_5706) {
+			sc->bnx_phy_addr = 2;
+			val = REG_RD_IND(sc, sc->bnx_shmem_base +
+				 BNX_SHARED_HW_CFG_CONFIG);
+			if (val & BNX_SHARED_HW_CFG_PHY_2_5G) {
+				sc->bnx_phy_flags |= BNX_PHY_2_5G_CAPABLE_FLAG;
+				DBPRINT(sc, BNX_INFO_LOAD,
+				    "Found 2.5Gb capable adapter\n");
+			}
+		}
+	} else if ((BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5706) ||
+		   (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5708))
+		sc->bnx_phy_flags |= BNX_PHY_CRC_FIX_FLAG;
+
+bnx_get_media_exit:
+	DBPRINT(sc, (BNX_INFO_LOAD | BNX_INFO_PHY), 
+		"Using PHY address %d.\n", sc->bnx_phy_addr);
+}
+
+/****************************************************************************/
 /* Free any DMA memory owned by the driver.                                 */
 /*                                                                          */
 /* Scans through each data structre that requires DMA memory and frees      */
@@ -2126,6 +2260,24 @@ bnx_dma_free(struct bnx_softc *sc)
 		bus_dmamap_destroy(sc->bnx_dmatag, sc->stats_map);
 		sc->stats_block = NULL;
 		sc->stats_map = NULL;
+	}
+
+	/* Free, unmap and destroy all context memory pages. */
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		for (i = 0; i < sc->ctx_pages; i++) {
+			if (sc->ctx_block[i] != NULL) {
+				bus_dmamap_unload(sc->bnx_dmatag,
+				    sc->ctx_map[i]);
+				bus_dmamem_unmap(sc->bnx_dmatag,
+				    (caddr_t)sc->ctx_block[i],
+				    BCM_PAGE_SIZE);
+				bus_dmamem_free(sc->bnx_dmatag,
+				    &sc->ctx_segs[i], sc->ctx_rsegs[i]);
+				bus_dmamap_destroy(sc->bnx_dmatag,
+				    sc->ctx_map[i]);
+				sc->ctx_block[i] = NULL;
+			}
+		}
 	}
 
 	/* Free, unmap and destroy all TX buffer descriptor chain pages. */
@@ -2232,6 +2384,54 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	/* DRC - Fix for 64 bit addresses. */
 	DBPRINT(sc, BNX_INFO, "status_block_paddr = 0x%08X\n",
 		(u_int32_t) sc->status_block_paddr);
+
+	/* BCM5709 uses host memory as cache for context memory. */
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		sc->ctx_pages = 0x2000 / BCM_PAGE_SIZE;
+		if (sc->ctx_pages == 0)
+			sc->ctx_pages = 1;
+		if (sc->ctx_pages > 4) /* XXX */
+			sc->ctx_pages = 4;
+
+		DBRUNIF((sc->ctx_pages > 512),
+			BCE_PRINTF("%s(%d): Too many CTX pages! %d > 512\n",
+				__FILE__, __LINE__, sc->ctx_pages));
+
+
+		for (i = 0; i < sc->ctx_pages; i++) {
+			if (bus_dmamap_create(sc->bnx_dmatag, BCM_PAGE_SIZE,
+			    1, BCM_PAGE_SIZE, BNX_DMA_BOUNDARY,
+			    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+			    &sc->ctx_map[i]) != 0) {
+				rc = ENOMEM;
+				goto bnx_dma_alloc_exit;
+			}
+
+			if (bus_dmamem_alloc(sc->bnx_dmatag, BCM_PAGE_SIZE,
+			    BCM_PAGE_SIZE, BNX_DMA_BOUNDARY, &sc->ctx_segs[i],
+			    1, &sc->ctx_rsegs[i], BUS_DMA_NOWAIT) != 0) {
+				rc = ENOMEM;
+				goto bnx_dma_alloc_exit;
+			}
+
+			if (bus_dmamem_map(sc->bnx_dmatag, &sc->ctx_segs[i],
+			    sc->ctx_rsegs[i], BCM_PAGE_SIZE,
+			    (caddr_t *)&sc->ctx_block[i],
+			    BUS_DMA_NOWAIT) != 0) {
+				rc = ENOMEM;
+				goto bnx_dma_alloc_exit;
+			}
+
+			if (bus_dmamap_load(sc->bnx_dmatag, sc->ctx_map[i],
+			    sc->ctx_block[i], BCM_PAGE_SIZE, NULL,
+			    BUS_DMA_NOWAIT) != 0) {
+				rc = ENOMEM;
+				goto bnx_dma_alloc_exit;
+			}
+
+			bzero(sc->ctx_block[i], BCM_PAGE_SIZE);
+		}
+	}
 
 	/*
 	 * Allocate DMA memory for the statistics block, map the memory into
@@ -2492,6 +2692,12 @@ bnx_load_rv2p_fw(struct bnx_softc *sc, u_int32_t *rv2p_code,
 	int			i;
 	u_int32_t		val;
 
+	/* Set the page size used by RV2P. */
+	if (rv2p_proc == RV2P_PROC2) {
+		BNX_RV2P_PROC2_CHG_MAX_BD_PAGE(rv2p_code,
+		    USABLE_RX_BD_PER_PAGE);
+	}
+
 	for (i = 0; i < rv2p_code_len; i += 8) {
 		REG_WR(sc, BNX_RV2P_INSTR_HIGH, *rv2p_code);
 		rv2p_code++;
@@ -2501,8 +2707,7 @@ bnx_load_rv2p_fw(struct bnx_softc *sc, u_int32_t *rv2p_code,
 		if (rv2p_proc == RV2P_PROC1) {
 			val = (i / 8) | BNX_RV2P_PROC1_ADDR_CMD_RDWR;
 			REG_WR(sc, BNX_RV2P_PROC1_ADDR_CMD, val);
-		}
-		else {
+		} else {
 			val = (i / 8) | BNX_RV2P_PROC2_ADDR_CMD_RDWR;
 			REG_WR(sc, BNX_RV2P_PROC2_ADDR_CMD, val);
 		}
@@ -2609,6 +2814,14 @@ bnx_init_cpus(struct bnx_softc *sc)
 	struct bnx_rv2p *rv2p = &bnx_rv2ps[BNX_RV2P];
 	struct cpu_reg cpu_reg;
 	struct fw_info fw;
+
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		bfw = &bnx_firmwares[BNX_FW_B09];
+		if ((BNX_CHIP_REV(sc) == BNX_CHIP_REV_Ax))
+			rv2p = &bnx_rv2ps[BNX_XI90_RV2P];
+		else
+			rv2p = &bnx_rv2ps[BNX_XI_RV2P];
+	}
 
 	/* Initialize the RV2P processor. */
 	bnx_load_rv2p_fw(sc, rv2p->bnx_rv2p_proc1,
@@ -2816,27 +3029,79 @@ bnx_init_cpus(struct bnx_softc *sc)
 void
 bnx_init_context(struct bnx_softc *sc)
 {
-	u_int32_t		vcid;
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		/* DRC: Replace this constant value with a #define. */
+		int i, retry_cnt = 10;
+		u_int32_t val;
+ 
+		/*
+		 * BCM5709 context memory may be cached
+		 * in host memory so prepare the host memory
+		 * for access.
+		 */
+		val = BNX_CTX_COMMAND_ENABLED | BNX_CTX_COMMAND_MEM_INIT
+		    | (1 << 12);
+		val |= (BCM_PAGE_BITS - 8) << 16;
+		REG_WR(sc, BNX_CTX_COMMAND, val);
 
-	vcid = 96;
-	while (vcid) {
-		u_int32_t vcid_addr, pcid_addr, offset;
+		/* Wait for mem init command to complete. */
+		for (i = 0; i < retry_cnt; i++) {
+			val = REG_RD(sc, BNX_CTX_COMMAND);
+			if (!(val & BNX_CTX_COMMAND_MEM_INIT))
+				break;
+			DELAY(2);
+		}
 
-		vcid--;
+		/* ToDo: Consider returning an error here. */
+ 
+		for (i = 0; i < sc->ctx_pages; i++) {
+			int j;
 
-   		vcid_addr = GET_CID_ADDR(vcid);
-		pcid_addr = vcid_addr;
+			/* Set the physaddr of the context memory cache. */
+			val = (u_int32_t)(sc->ctx_segs[i].ds_addr);
+			REG_WR(sc, BNX_CTX_HOST_PAGE_TBL_DATA0, val |
+				BNX_CTX_HOST_PAGE_TBL_DATA0_VALID);
+			val = (u_int32_t)
+			    ((u_int64_t)sc->ctx_segs[i].ds_addr >> 32);
+			REG_WR(sc, BNX_CTX_HOST_PAGE_TBL_DATA1, val);
+			REG_WR(sc, BNX_CTX_HOST_PAGE_TBL_CTRL, i |
+				BNX_CTX_HOST_PAGE_TBL_CTRL_WRITE_REQ);
 
-		REG_WR(sc, BNX_CTX_VIRT_ADDR, 0x00);
-		REG_WR(sc, BNX_CTX_PAGE_TBL, pcid_addr);
+			/* Verify that the context memory write was successful. */
+			for (j = 0; j < retry_cnt; j++) {
+				val = REG_RD(sc, BNX_CTX_HOST_PAGE_TBL_CTRL);
+				if ((val & BNX_CTX_HOST_PAGE_TBL_CTRL_WRITE_REQ) == 0)
+					break;
+				DELAY(5);
+			}
 
-		/* Zero out the context. */
-		for (offset = 0; offset < PHY_CTX_SIZE; offset += 4)
-			CTX_WR(sc, 0x00, offset, 0);
+			/* ToDo: Consider returning an error here. */
+		}
+	} else {
+		u_int32_t vcid_addr, offset;
 
-		REG_WR(sc, BNX_CTX_VIRT_ADDR, vcid_addr);
-		REG_WR(sc, BNX_CTX_PAGE_TBL, pcid_addr);
-	}
+		/*
+		 * For the 5706/5708, context memory is local to
+		 * the controller, so initialize the controller
+		 * context memory.
+		 */
+
+		vcid_addr = GET_CID_ADDR(96);
+		while (vcid_addr) {
+
+			vcid_addr -= PHY_CTX_SIZE;
+
+			REG_WR(sc, BNX_CTX_VIRT_ADDR, 0);
+			REG_WR(sc, BNX_CTX_PAGE_TBL, vcid_addr);
+ 
+			for(offset = 0; offset < PHY_CTX_SIZE; offset += 4) {
+				CTX_WR(sc, 0x00, offset, 0);
+			}
+
+			REG_WR(sc, BNX_CTX_VIRT_ADDR, vcid_addr);
+			REG_WR(sc, BNX_CTX_PAGE_TBL, vcid_addr);
+		}
+ 	}
 }
 
 /****************************************************************************/
@@ -2966,6 +3231,7 @@ bnx_stop(struct bnx_softc *sc)
 int
 bnx_reset(struct bnx_softc *sc, u_int32_t reset_code)
 {
+	struct pci_attach_args	*pa = &(sc->bnx_pa);
 	u_int32_t		val;
 	int			i, rc = 0;
 
@@ -2979,6 +3245,13 @@ bnx_reset(struct bnx_softc *sc, u_int32_t reset_code)
 	    BNX_MISC_ENABLE_CLR_BITS_HOST_COALESCE_ENABLE);
 	val = REG_RD(sc, BNX_MISC_ENABLE_CLR_BITS);
 	DELAY(5);
+
+	/* Disable DMA */
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		val = REG_RD(sc, BNX_MISC_NEW_CORE_CTL);
+		val &= ~BNX_MISC_NEW_CORE_CTL_DMA_ENABLE;
+		REG_WR(sc, BNX_MISC_NEW_CORE_CTL, val);
+	}
 
 	/* Assume bootcode is running. */
 	sc->bnx_fw_timed_out = 0;
@@ -2996,27 +3269,40 @@ bnx_reset(struct bnx_softc *sc, u_int32_t reset_code)
 	val = REG_RD(sc, BNX_MISC_ID);
 
 	/* Chip reset. */
-	val = BNX_PCICFG_MISC_CONFIG_CORE_RST_REQ |
-	    BNX_PCICFG_MISC_CONFIG_REG_WINDOW_ENA |
-	    BNX_PCICFG_MISC_CONFIG_TARGET_MB_WORD_SWAP;
-	REG_WR(sc, BNX_PCICFG_MISC_CONFIG, val);
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		REG_WR(sc, BNX_MISC_COMMAND, BNX_MISC_COMMAND_SW_RESET);
+		REG_RD(sc, BNX_MISC_COMMAND);
+		DELAY(5);
 
-	/* Allow up to 30us for reset to complete. */
-	for (i = 0; i < 10; i++) {
-		val = REG_RD(sc, BNX_PCICFG_MISC_CONFIG);
-		if ((val & (BNX_PCICFG_MISC_CONFIG_CORE_RST_REQ |
-		    BNX_PCICFG_MISC_CONFIG_CORE_RST_BSY)) == 0)
-			break;
+		val = BNX_PCICFG_MISC_CONFIG_REG_WINDOW_ENA |
+		      BNX_PCICFG_MISC_CONFIG_TARGET_MB_WORD_SWAP;
 
-		DELAY(10);
-	}
+		pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCICFG_MISC_CONFIG,
+		    val);
+	} else {
+		val = BNX_PCICFG_MISC_CONFIG_CORE_RST_REQ |
+			BNX_PCICFG_MISC_CONFIG_REG_WINDOW_ENA |
+			BNX_PCICFG_MISC_CONFIG_TARGET_MB_WORD_SWAP;
+		REG_WR(sc, BNX_PCICFG_MISC_CONFIG, val);
 
-	/* Check that reset completed successfully. */
-	if (val & (BNX_PCICFG_MISC_CONFIG_CORE_RST_REQ |
-	    BNX_PCICFG_MISC_CONFIG_CORE_RST_BSY)) {
-		BNX_PRINTF(sc, "%s(%d): Reset failed!\n", __FILE__, __LINE__);
-		rc = EBUSY;
-		goto bnx_reset_exit;
+		/* Allow up to 30us for reset to complete. */
+		for (i = 0; i < 10; i++) {
+			val = REG_RD(sc, BNX_PCICFG_MISC_CONFIG);
+			if ((val & (BNX_PCICFG_MISC_CONFIG_CORE_RST_REQ |
+				BNX_PCICFG_MISC_CONFIG_CORE_RST_BSY)) == 0) {
+				break;
+			}
+			DELAY(10);
+		}
+
+		/* Check that reset completed successfully. */
+		if (val & (BNX_PCICFG_MISC_CONFIG_CORE_RST_REQ |
+		    BNX_PCICFG_MISC_CONFIG_CORE_RST_BSY)) {
+			BNX_PRINTF(sc, "%s(%d): Reset failed!\n",
+			    __FILE__, __LINE__);
+			rc = EBUSY;
+			goto bnx_reset_exit;
+		}
 	}
 
 	/* Make sure byte swapping is properly configured. */
@@ -3083,12 +3369,14 @@ bnx_chipinit(struct bnx_softc *sc)
 
 	REG_WR(sc, BNX_DMA_CONFIG, val);
 
+#if 1
 	/* Clear the PCI-X relaxed ordering bit. See errata E3_5708CA0_570. */
 	if (sc->bnx_flags & BNX_PCIX_FLAG) {
 		val = pci_conf_read(pa->pa_pc, pa->pa_tag, BNX_PCI_PCIX_CMD);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCI_PCIX_CMD,
 		    val & ~0x20000);
 	}
+#endif
 
 	/* Enable the RX_V2P and Context state machines before access. */
 	REG_WR(sc, BNX_MISC_ENABLE_SET_BITS,
@@ -3112,6 +3400,14 @@ bnx_chipinit(struct bnx_softc *sc)
 	val = REG_RD(sc, BNX_MQ_CONFIG);
 	val &= ~BNX_MQ_CONFIG_KNL_BYP_BLK_SIZE;
 	val |= BNX_MQ_CONFIG_KNL_BYP_BLK_SIZE_256;
+
+	/* Enable bins used on the 5709. */
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		val |= BNX_MQ_CONFIG_BIN_MQ_MODE;
+		if (BNX_CHIP_ID(sc) == BNX_CHIP_ID_5709_A1)
+			val |= BNX_MQ_CONFIG_HALT_DIS;
+	}
+
 	REG_WR(sc, BNX_MQ_CONFIG, val);
 
 	val = 0x10000 + (MAX_CID_CNT * MB_KERNEL_CTX_SIZE);
@@ -3126,6 +3422,11 @@ bnx_chipinit(struct bnx_softc *sc)
 	val &= ~BNX_TBDR_CONFIG_PAGE_SIZE;
 	val |= (BCM_PAGE_BITS - 8) << 24 | 0x40;
 	REG_WR(sc, BNX_TBDR_CONFIG, val);
+
+#if 0
+	/* Set the perfect match control register to default. */
+	REG_WR_IND(sc, BNX_RXP_PM_CTRL, 0);
+#endif
 
 bnx_chipinit_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
@@ -3226,11 +3527,22 @@ bnx_blockinit(struct bnx_softc *sc)
 
 	DBPRINT(sc, BNX_INFO, "bootcode rev = 0x%08X\n", sc->bnx_fw_ver);
 
+	/* Enable DMA */
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		val = REG_RD(sc, BNX_MISC_NEW_CORE_CTL);
+		val |= BNX_MISC_NEW_CORE_CTL_DMA_ENABLE;
+		REG_WR(sc, BNX_MISC_NEW_CORE_CTL, val);
+	}
+
 	/* Allow bootcode to apply any additional fixes before enabling MAC. */
 	rc = bnx_fw_sync(sc, BNX_DRV_MSG_DATA_WAIT2 | BNX_DRV_MSG_CODE_RESET);
 
 	/* Enable link state change interrupt generation. */
-	REG_WR(sc, BNX_HC_ATTN_BITS_ENABLE, STATUS_ATTN_BITS_LINK_STATE);
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		REG_WR(sc, BNX_MISC_ENABLE_SET_BITS,
+		    BNX_MISC_ENABLE_DEFAULT_XI);
+	} else 
+		REG_WR(sc, BNX_MISC_ENABLE_SET_BITS, BNX_MISC_ENABLE_DEFAULT);
 
 	/* Enable all remaining blocks in the MAC. */
 	REG_WR(sc, BNX_MISC_ENABLE_SET_BITS, 0x5ffffff);
@@ -3410,6 +3722,47 @@ put:
 }
 
 /****************************************************************************/
+/* Initialize the TX context memory.                                        */
+/*                                                                          */
+/* Returns:                                                                 */
+/*   Nothing                                                                */
+/****************************************************************************/
+void
+bnx_init_tx_context(struct bnx_softc *sc)
+{
+	u_int32_t val;
+
+	/* Initialize the context ID for an L2 TX chain. */
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		/* Set the CID type to support an L2 connection. */
+		val = BNX_L2CTX_TYPE_TYPE_L2 | BNX_L2CTX_TYPE_SIZE_L2;
+		CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_TYPE_XI, val);
+		val = BNX_L2CTX_CMD_TYPE_TYPE_L2 | (8 << 16);
+		CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_CMD_TYPE_XI, val);
+
+		/* Point the hardware to the first page in the chain. */
+		val = (u_int32_t)((u_int64_t)sc->tx_bd_chain_paddr[0] >> 32);
+		CTX_WR(sc, GET_CID_ADDR(TX_CID),
+		    BNX_L2CTX_TBDR_BHADDR_HI_XI, val);
+		val = (u_int32_t)(sc->tx_bd_chain_paddr[0]);
+		CTX_WR(sc, GET_CID_ADDR(TX_CID),
+		    BNX_L2CTX_TBDR_BHADDR_LO_XI, val);
+	} else {
+		/* Set the CID type to support an L2 connection. */
+		val = BNX_L2CTX_TYPE_TYPE_L2 | BNX_L2CTX_TYPE_SIZE_L2;
+		CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_TYPE, val);
+		val = BNX_L2CTX_CMD_TYPE_TYPE_L2 | (8 << 16);
+		CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_CMD_TYPE, val);
+
+		/* Point the hardware to the first page in the chain. */
+		val = (u_int32_t)((u_int64_t)sc->tx_bd_chain_paddr[0] >> 32);
+		CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_TBDR_BHADDR_HI, val);
+		val = (u_int32_t)(sc->tx_bd_chain_paddr[0]);
+		CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_TBDR_BHADDR_LO, val);
+	}
+}
+
+/****************************************************************************/
 /* Allocate memory and initialize the TX data structures.                   */
 /*                                                                          */
 /* Returns:                                                                 */
@@ -3419,7 +3772,7 @@ int
 bnx_init_tx_chain(struct bnx_softc *sc)
 {
 	struct tx_bd		*txbd;
-	u_int32_t		val, addr;
+	u_int32_t		addr;
 	int			i, rc = 0;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
@@ -3467,20 +3820,7 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 	/*
 	 * Initialize the context ID for an L2 TX chain.
 	 */
-	val = BNX_L2CTX_TYPE_TYPE_L2;
-	val |= BNX_L2CTX_TYPE_SIZE_L2;
-	CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_TYPE, val);
-
-	val = BNX_L2CTX_CMD_TYPE_TYPE_L2 | (8 << 16);
-	CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_CMD_TYPE, val);
-
-	/* Point the hardware to the first page in the chain. */
-	val = (u_int32_t)((u_int64_t)sc->tx_bd_chain_paddr[0] >> 32);
-	CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_TBDR_BHADDR_HI, val);
-	val = (u_int32_t)(sc->tx_bd_chain_paddr[0]);
-	CTX_WR(sc, GET_CID_ADDR(TX_CID), BNX_L2CTX_TBDR_BHADDR_LO, val);
-
-	DBRUN(BNX_VERBOSE_SEND, bnx_dump_tx_chain(sc, 0, TOTAL_TX_BD));
+	bnx_init_tx_context(sc);
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 
@@ -3542,6 +3882,53 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 	    sc->tx_mbuf_alloc));
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
+}
+
+/****************************************************************************/
+/* Initialize the RX context memory.                                        */
+/*                                                                          */
+/* Returns:                                                                 */
+/*   Nothing                                                                */
+/****************************************************************************/
+void
+bnx_init_rx_context(struct bnx_softc *sc)
+{
+	u_int32_t val;
+
+	/* Initialize the context ID for an L2 RX chain. */
+	val = BNX_L2CTX_CTX_TYPE_CTX_BD_CHN_TYPE_VALUE |
+		BNX_L2CTX_CTX_TYPE_SIZE_L2 | (0x02 << 8);
+
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		u_int32_t lo_water, hi_water;
+
+		lo_water = BNX_L2CTX_RX_LO_WATER_MARK_DEFAULT;
+		hi_water = USABLE_RX_BD / 4;
+
+		lo_water /= BNX_L2CTX_RX_LO_WATER_MARK_SCALE;
+		hi_water /= BNX_L2CTX_RX_HI_WATER_MARK_SCALE;
+
+		if (hi_water > 0xf)
+			hi_water = 0xf;
+		else if (hi_water == 0)
+			lo_water = 0;
+		val |= lo_water |
+		    (hi_water << BNX_L2CTX_RX_HI_WATER_MARK_SHIFT);
+	}
+
+ 	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_CTX_TYPE, val);
+
+	/* Setup the MQ BIN mapping for l2_ctx_host_bseq. */
+	if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5709) {
+		val = REG_RD(sc, BNX_MQ_MAP_L2_5);
+		REG_WR(sc, BNX_MQ_MAP_L2_5, val | BNX_MQ_MAP_L2_5_ARM);
+	}
+
+	/* Point the hardware to the first page in the chain. */
+	val = (u_int32_t)((u_int64_t)sc->rx_bd_chain_paddr[0] >> 32);
+	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_NX_BDHADDR_HI, val);
+	val = (u_int32_t)(sc->rx_bd_chain_paddr[0]);
+	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_NX_BDHADDR_LO, val);
 }
 
 /****************************************************************************/
@@ -3609,7 +3996,7 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 {
 	struct rx_bd		*rxbd;
 	int			i, rc = 0;
-	u_int32_t		val, addr;
+	u_int32_t		addr;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
@@ -3641,18 +4028,6 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 		rxbd->rx_bd_haddr_lo = htole32(addr);
 	}
 
-	/* Initialize the context ID for an L2 RX chain. */
-	val = BNX_L2CTX_CTX_TYPE_CTX_BD_CHN_TYPE_VALUE;
-	val |= BNX_L2CTX_CTX_TYPE_SIZE_L2;
-	val |= 0x02 << 8;
-	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_CTX_TYPE, val);
-
-	/* Point the hardware to the first page in the chain. */
-	val = (u_int32_t)((u_int64_t)sc->rx_bd_chain_paddr[0] >> 32);
-	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_NX_BDHADDR_HI, val);
-	val = (u_int32_t)(sc->rx_bd_chain_paddr[0]);
-	CTX_WR(sc, GET_CID_ADDR(RX_CID), BNX_L2CTX_NX_BDHADDR_LO, val);
-
 	/* Fill up the RX chain. */
 	bnx_fill_rx_chain(sc);
 
@@ -3660,6 +4035,8 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 		bus_dmamap_sync(sc->bnx_dmatag, sc->rx_bd_chain_map[i], 0,
 		    sc->rx_bd_chain_map[i]->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	bnx_init_rx_context(sc);
 
 	DBRUN(BNX_VERBOSE_RECV, bnx_dump_rx_chain(sc, 0, TOTAL_RX_BD));
 
