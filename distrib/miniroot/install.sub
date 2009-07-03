@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.589 2009/07/01 19:12:53 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.590 2009/07/03 00:42:47 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -324,7 +324,7 @@ user_setup() {
 	userpass=$_password
 
 	if [[ $sshd == y ]]; then
-		ask_yn "Since you setup a user, disable sshd(8) logins to root?" yes
+		ask_yn "Since you set up a user, disable sshd(8) logins to root?" yes
 		sshd_disableroot=$resp
 	fi
 
