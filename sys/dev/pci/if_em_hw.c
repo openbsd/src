@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.35 2009/06/26 14:30:35 claudio Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.36 2009/07/03 06:54:39 markus Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -5613,6 +5613,7 @@ em_read_mac_addr(struct em_hw * hw)
     case em_82546:
     case em_82546_rev_3:
     case em_82571:
+    case em_82575:
     case em_80003es2lan:
         if (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)
             hw->perm_mac_addr[5] ^= 0x01;
