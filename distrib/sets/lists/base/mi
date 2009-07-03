@@ -4762,11 +4762,11 @@
 ./var/www/conf
 ./var/www/conf/modules
 ./var/www/conf/modules.sample
+./var/www/dev
 ./var/www/htdocs
 ./var/www/icons
 ./var/www/icons/small
 ./var/www/logs
-./var/www/dev
 ./var/www/users
 ./var/yp
 ./var/yp/Makefile.main

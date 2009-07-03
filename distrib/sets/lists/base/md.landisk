@@ -1961,6 +1961,14 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/nnpfs/nnpfs_vfsops.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/nnpfs/nnpfs_vnodeops.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/nnpfs/nnpfs_vopdefs.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/ntfs
+./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_compr.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_ihash.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_inode.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_subr.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_vfsops.ph
+./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfsmount.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/objc
 ./usr/libdata/perl5/site_perl/sh-openbsd/objc/NXConstStr.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/objc/Object.ph
@@ -2425,11 +2433,3 @@
 ./usr/mdec/xxboot
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
-./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_compr.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_ihash.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_inode.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_subr.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfs_vfsops.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/ntfs/ntfsmount.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/ntfs

@@ -1969,6 +1969,14 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/nnpfs/nnpfs_vfsops.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/nnpfs/nnpfs_vnodeops.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/nnpfs/nnpfs_vopdefs.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_compr.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_ihash.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_inode.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_subr.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_vfsops.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfsmount.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/objc
 ./usr/libdata/perl5/site_perl/m88k-openbsd/objc/NXConstStr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/objc/Object.ph
@@ -2374,11 +2382,3 @@
 ./usr/mdec/netboot
 ./usr/mdec/stboot
 ./usr/mdec/tftpboot
-./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_compr.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_ihash.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_inode.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_subr.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfs_vfsops.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs/ntfsmount.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/ntfs

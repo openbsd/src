@@ -1269,6 +1269,14 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/nnpfs/nnpfs_vfsops.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nnpfs/nnpfs_vnodeops.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nnpfs/nnpfs_vopdefs.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ntfs
+./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_compr.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_ihash.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_inode.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_subr.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_vfsops.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfsmount.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/objc
 ./usr/libdata/perl5/site_perl/vax-openbsd/objc/NXConstStr.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/objc/Object.ph
@@ -2339,11 +2347,3 @@
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_compr.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_ihash.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_inode.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_subr.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfs_vfsops.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ntfs/ntfsmount.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/ntfs

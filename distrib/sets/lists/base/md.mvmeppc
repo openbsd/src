@@ -1847,6 +1847,14 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/nnpfs/nnpfs_vfsops.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/nnpfs/nnpfs_vnodeops.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/nnpfs/nnpfs_vopdefs.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_compr.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_ihash.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_inode.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_subr.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_vfsops.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfsmount.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/objc
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/objc/NXConstStr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/objc/Object.ph
@@ -2296,11 +2304,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_compr.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_ihash.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_inode.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_subr.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfs_vfsops.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs/ntfsmount.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ntfs
