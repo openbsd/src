@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.31 2009/07/03 04:54:05 dlg Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.32 2009/07/03 06:20:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -212,7 +212,7 @@
 #define BRCM_DEVICEID_BCM5706		0x164A
 #define BRCM_DEVICEID_BCM5706S		0x16AA
 #define BRCM_DEVICEID_BCM5708		0x164C
-#define BRCM_DEVICEID_BCMj708S		0x16AC
+#define BRCM_DEVICEID_BCM5708S		0x16AC
 
 #define HP_VENDORID					0x103C
 
