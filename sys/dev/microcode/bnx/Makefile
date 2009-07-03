@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2007/04/21 16:31:53 reyk Exp $
+# $OpenBSD: Makefile,v 1.4 2009/07/03 04:34:51 dlg Exp $
 
 NOPROG=
 NOMAN=
@@ -10,7 +10,7 @@ CC=${HOSTCC}
     (${MACHINE} == "hppa64") || (${MACHINE} == "i386") || \
     (${MACHINE} == "sgi") || (${MACHINE} == "sparc64")
 
-FIRM=	bnx
+FIRM=	bnx-b06 bnx-b09 bnx-rv2p bnx-xi-rv2p bnx-xi90-rv2p
 
 PROG=	build
 
