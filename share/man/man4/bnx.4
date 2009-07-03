@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bnx.4,v 1.24 2008/10/28 06:27:28 brad Exp $
+.\"	$OpenBSD: bnx.4,v 1.25 2009/07/03 04:55:40 dlg Exp $
 .\"
 .\"Copyright (c) 2006 Broadcom Corporation
 .\" David Christensen <davidch@broadcom.com>.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/bce.4,v 1.2 2006/04/10 20:12:17 brueffer Exp $
 .\"
-.Dd $Mdocdate: October 28 2008 $
+.Dd $Mdocdate: July 3 2009 $
 .Dt BNX 4
 .Os
 .Sh NAME
@@ -42,17 +42,35 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Broadcom's NetXtreme II product family, such as the
-BCM5706 PCI-X and BCM5708 PCI Express Ethernet controllers, which
-includes the following:
+driver supports Broadcom's NetXtreme II product family which is made up of
+the BCM5706, BCM5708, BCM5709, and BCM5716 Ethernet controller chips.
+Products using these controller chips include:
 .Pp
 .Bl -bullet -compact
 .It
 Dell PowerEdge 1950 integrated BCM5708 NIC (10/100/1000baseT)
 .It
+Dell PowerEdge 2900 integrated BCM5708 NIC (10/100/1000baseT)
+.It
 Dell PowerEdge 2950 integrated BCM5708 NIC (10/100/1000baseT)
 .It
 Dell PowerEdge 2970 integrated BCM5708 NIC (10/100/1000baseT)
+.It
+Dell PowerEdge R410 integrated BCM5716 NIC (10/100/1000baseT)
+.It
+Dell PowerEdge R610 integrated BCM5709 NIC (10/100/1000baseT)
+.It
+Dell PowerEdge R710 integrated BCM5709 NIC (10/100/1000baseT)
+.It
+Dell PowerEdge R805 integrated BCM5708 NIC (10/100/1000baseT)
+.It
+Dell PowerEdge R900 integrated BCM5708 NIC (10/100/1000baseT)
+.It
+Dell PowerEdge R905 integrated BCM5708 NIC (10/100/1000baseT)
+.It
+Dell PowerEdge T410 integrated BCM5716 NIC (10/100/1000baseT)
+.It
+Dell PowerEdge T610 integrated BCM5709 NIC (10/100/1000baseT)
 .It
 HP NC370F PCI-X Multifunction Gigabit server adapter (1000baseSX)
 .It
@@ -150,11 +168,15 @@ Force half duplex operation.
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh FILES
-The adapter needs a firmware file, which is loaded on demand by the
+The adapter needs firmware files to run, which are loaded on demand by the
 driver when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/bnx
+.It Pa /etc/firmware/bnx-b06
+.It Pa /etc/firmware/bnx-b09
+.It Pa /etc/firmware/bnx-rv2p
+.It Pa /etc/firmware/bnx-xi-rv2p
+.It Pa /etc/firmware/bnx-xi90-rv2p
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
