@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.h,v 1.4 2008/11/04 23:08:47 hshoexer Exp $	*/
+/*	$OpenBSD: rmd160.h,v 1.5 2009/07/05 19:33:46 millert Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -32,7 +32,7 @@
 typedef struct RMD160Context {
 	u_int32_t state[5];			/* state */
 	u_int64_t count;			/* number of bits, mod 2^64 */
-	u_char buffer[RMD160_DIGEST_LENGTH];	/* input buffer */
+	u_char buffer[RMD160_BLOCK_LENGTH];	/* input buffer */
 } RMD160_CTX;
 
 __BEGIN_DECLS
