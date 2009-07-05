@@ -52,6 +52,7 @@
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b
+./sbin/wsconsctl
 ./usr/bin/gccbug
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
@@ -2447,3 +2448,4 @@
 ./usr/mdec/mkboot
 ./usr/sbin/hotplugd
 ./usr/sbin/pcidump
+./usr/sbin/wsconscfg
