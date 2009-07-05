@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2009/07/05 16:50:18 kettenis Exp $
 
 REV=	${OSrev}
 
@@ -99,7 +99,7 @@ clean cleandir:
 
 .ifdef RELEASEDIR
 install:
-	cp ${BSD.RD} ${BSD_BIN} ${RELEASEDIR}
+	cp ${BSD_RD} ${BSD_BIN} ${RELEASEDIR}
 .endif
 
 .include <bsd.obj.mk>
