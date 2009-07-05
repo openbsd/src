@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.92 2009/06/24 15:02:18 todd Exp $
+#	$OpenBSD: RAMDISK,v 1.93 2009/07/05 17:13:25 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -293,6 +293,8 @@ machfb*		at pci?			# PGX/PGX64 framebuffers
 wsdisplay*	at machfb?
 mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
 wsdisplay*	at mgx?
+radeonfb*	at pci?			# XVR-100 framebuffer
+wsdisplay*	at radeonfb?
 raptor*		at pci?			# Raptor framebuffer
 wsdisplay*	at raptor?
 rfx*		at sbus?		# RasterFlex framebuffer series
