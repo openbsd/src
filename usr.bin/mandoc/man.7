@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.4 2009/06/23 22:50:29 schwarze Exp $
+.\"	$Id: man.7,v 1.5 2009/07/06 23:54:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2009 $
+.Dd $Mdocdate: July 6 2009 $
 .Dt MAN 7
 .Os
 .\" SECTION
@@ -95,7 +95,31 @@ or a single one-character sequence.
 .Pp
 Characters may alternatively be escaped by a slash-asterisk,
 .Sq \e* ,
-with the same combinations as described above.  This form is deprecated.  
+with the same combinations as described above.
+.Pp
+Terms may also be text-decorated using the
+.Sq \ef
+escape followed by a text-decoration letter: B (bold), I, (italic), or P
+and R (Roman, or reset).
+.\" SUB-SECTION
+.Ss Whitespace
+Unless specifically escaped, consecutive blocks of whitespace are pruned
+from input.  These are later re-added, if applicable, by a front-end
+utility such as
+.Xr mandoc 1 .
+.\" SECTION
+.Sh STRUCTURE
+Each
+.Nm
+document must contain contains at least the
+.Sq \&.TH
+macro describing the document's section and title.  It may occur
+anywhere in the document, although conventionally, it appears as the
+first macro.
+.Pp
+Beyond the 
+.Sq \&.TH ,
+at least one macro or text node must appear in the document.
 .\" SECTION
 .Sh SYNTAX
 Macros are one to three three characters in length and begin with a
@@ -156,19 +180,6 @@ The
 macro is similar, but does not need an empty argument line to trigger
 the behaviour.
 .\" SECTION
-.Sh STRUCTURE
-Each
-.Nm
-document must contain contains at least the
-.Sq \&.TH
-macro describing the document's section and title.  It may occur
-anywhere in the document, although conventionally, it appears as the
-first macro.
-.Pp
-Beyond the 
-.Sq \&.TH ,
-at least one macro or text node must appear in the document.
-.\" SECTION
 .Sh MACROS
 This section contains a complete list of all 
 .Nm
@@ -211,6 +222,11 @@ system, the following macros are also supported:
 These follow the same calling conventions as the above
 .Nm
 macros.
+.\" SECTION
+.Sh COMPATIBILITY
+See
+.Xr mdoc 7
+for groff compatibility notes.
 .\" SECTION
 .Sh SEE ALSO
 .Xr mandoc 1 ,
