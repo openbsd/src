@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.20 2009/07/06 22:55:33 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.21 2009/07/06 23:37:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -756,7 +756,7 @@ termp_it_pre(DECL_ARGS)
 		if (vals[0] >= 0) 
 			width = arg_width(&bl->args->argv[vals[0]], 0);
 		if (vals[1] >= 0) 
-			offset = arg_offset(&bl->args->argv[vals[1]]);
+			offset += arg_offset(&bl->args->argv[vals[1]]);
 		break;
 	}
 
