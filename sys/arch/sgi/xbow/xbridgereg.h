@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridgereg.h,v 1.6 2009/05/24 17:33:12 miod Exp $	*/
+/*	$OpenBSD: xbridgereg.h,v 1.7 2009/07/06 22:46:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -87,13 +87,20 @@
  */
 
 #define	BRIDGE_DEVICE(d)		(0x00000204 + 8 * (d))
-#define	BRIDGE_DEVICE_SWAP_PMU			0x00080000	/* ??? */
-#define	BRIDGE_DEVICE_SWAP_DIR			0x00040000	/* ??? */
+/* flags applying to the device itself */
+/* byteswap DMA done through ATE */
+#define	BRIDGE_DEVICE_SWAP_PMU			0x00100000
+/* byteswap DMA done through the direct window */
+#define	BRIDGE_DEVICE_SWAP_DIR			0x00080000
+/* flags applying to the mapping in this devio register */
+#define	BRIDGE_DEVICE_PREFETCH			0x00040000
 #define	BRIDGE_DEVICE_PRECISE			0x00020000
 #define	BRIDGE_DEVICE_COHERENT			0x00010000
 #define	BRIDGE_DEVICE_BARRIER			0x00008000
+/* byteswap PIO */
 #define	BRIDGE_DEVICE_SWAP			0x00002000
-#define	BRIDGE_DEVICE_IO_MEM			0x00001000 /* clear if I/O */
+/* set if memory space, clear if I/O space */
+#define	BRIDGE_DEVICE_IO_MEM			0x00001000
 #define	BRIDGE_DEVICE_BASE_MASK			0x00000fff
 #define	BRIDGE_DEVICE_BASE_SHIFT		20
 

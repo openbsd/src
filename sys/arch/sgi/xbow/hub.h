@@ -1,4 +1,4 @@
-/*	$OpenBSD: hub.h,v 1.3 2009/06/13 16:28:11 miod Exp $	*/
+/*	$OpenBSD: hub.h,v 1.4 2009/07/06 22:46:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -30,12 +30,13 @@
 #define	IP27_RHUB_ADDR(_n, _x) \
 	((volatile uint64_t *)(NODE_LWIN_BASE(_n, 1) + 0x800000 + (_x)))
 #define	IP27_RHUB_PI_ADDR(_n, _sn, _x) \
-	((volatile uint64_t *)(NODE_LWIN_BASE(_n, 1) + 0x800000 + (_x)))
+	((volatile uint64_t *)(NODE_LWIN_BASE(_n, 1) + 0x800000 + \
+	    ((_sn) ? HUBPI_OFFSET : 0) + (_x)))
 
 #define	IP27_LHUB_L(r)			*(IP27_LHUB_ADDR(r))
 #define	IP27_LHUB_S(r, d)		*(IP27_LHUB_ADDR(r)) = (d)
-#define	IP27_RHUB_L(n, r)		*(IP27_RHUB_ADDR((n), (r))
-#define	IP27_RHUB_S(n, r, d)		*(IP27_RHUB_ADDR((n), (r)) = (d)
+#define	IP27_RHUB_L(n, r)		*(IP27_RHUB_ADDR((n), (r)))
+#define	IP27_RHUB_S(n, r, d)		*(IP27_RHUB_ADDR((n), (r))) = (d)
 #define IP27_RHUB_PI_L(n, s, r)		*(IP27_RHUB_PI_ADDR((n), (s), (r)))
 #define	IP27_RHUB_PI_S(n, s, r, d)	*(IP27_RHUB_PI_ADDR((n), (s), (r))) = (d)
 
@@ -48,8 +49,10 @@
  */
 
 /*
- * HUB PI
+ * HUB PI - Processor Interface
  */
+
+#define	HUBPIBASE			0x00000000
 
 #define	HUBPI_REGION_PRESENT		0x00000018
 #define	HUBPI_CPU_NUMBER		0x00000020
@@ -72,19 +75,66 @@
 #define	HUBPI_CPU1_IMR0			0x000000b8
 #define	HUBPI_CPU1_IMR1			0x000000c0
 
+/*
+ * Offset to use to access the second PI over the remote hub interface
+ * on IP35.
+ */
+#define	HUBPI_OFFSET			0x00200000
 
 /*
- * HUB NI
+ * HUB MD - Memory/Directory
  */
 
-#define	HUBNI_IP27			0x00600000
-#define	HUBNI_IP35			0x00680000
+#define	HUBMDBASE_IP27			0x00200000
+#define	HUBMDBASE_IP35			0x00780000
+
+
+/*
+ * HUB IO - Widget I/O
+ */
+
+#define	HUBIOBASE			0x00400000
+
+#define	HUBIO_IOTTE(x)			(0x00000160 + (x) * 8)
+#define	IOTTE_MAX				7
+#define	IOTTE_SWIN0				(IOTTE_MAX - 1)
+
+#define	IOTTE(space,widget,offset) \
+	(((space) << 12) | ((widget) << 8) | (offset))
+#define	IOTTE_SPACE_DEVICE		1
+#define	IOTTE_SPACE_MEMORY		0
+#define	IOTTE_SPACE(iotte)		(((iotte) >> 12) & 0x01)
+#define	IOTTE_WIDGET(iotte)		(((iotte) >> 8) & 0x0f)
+#define	IOTTE_OFFSET(iotte)		((iotte) & 0xff)
+
+
+/*
+ * HUB LB - Local Bedrock
+ */
+
+#define	HUBLBBASE_IP35			0x00600000
+
+/*
+ * HUB NI - Network Interface
+ */
+
+#define	HUBNIBASE_IP27			0x00600000
+#define	HUBNIBASE_IP35			0x00680000
 
 #define	HUBNI_STATUS			0x00000000
 #define	NI_MORENODES				0x0000000000040000
 #define	HUBNI_RESET			0x00000008
-#define	NI_RESET_ACTION				0x01
-#define	NI_RESET_PORT				0x02
-#define	NI_RESET_LOCAL				0x04
+#define	NI_RESET_ACTION_IP27			0x02
+#define	NI_RESET_PORT_IP27			0x80
+#define	NI_RESET_LOCAL_IP27			0x01
+#define	NI_RESET_ACTION_IP35			0x01
+#define	NI_RESET_PORT_IP35			0x02
+#define	NI_RESET_LOCAL_IP35			0x04
 #define	HUBNI_RESET_ENABLE		0x00000010
 #define	NI_RESET_ENABLE				0x01
+
+/*
+ * HUB XB - Crossbar interface
+ */
+
+#define	HUBXBBASE_IP35			0x00700000

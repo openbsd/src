@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.7 2009/07/01 21:56:38 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.8 2009/07/06 22:46:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -45,6 +45,7 @@
 
 paddr_t	ip30_widget_short(int16_t, u_int);
 paddr_t	ip30_widget_long(int16_t, u_int);
+paddr_t	ip30_widget_map(int16_t, u_int, bus_addr_t *, bus_size_t *);
 int	ip30_widget_id(int16_t, u_int, uint32_t *);
 
 void
@@ -94,6 +95,7 @@ ip30_setup()
 #endif
 
 	xbow_widget_base = ip30_widget_short;
+	xbow_widget_map = ip30_widget_map;
 	xbow_widget_id = ip30_widget_id;
 
 	/*
@@ -111,7 +113,8 @@ ip30_setup()
 	 * may consider this an evil abuse of bus_space knowledge, though.
 	 */
 	xbow_build_bus_space(&sys_config.console_io, 0, 15);
-	sys_config.console_io.bus_base = ip30_widget_short(0, 15);
+	sys_config.console_io.bus_base = ip30_widget_long(0, 15) +
+	    BRIDGE_PCI_MEM_SPACE_BASE;
 
 	comconsaddr = 0x500000 + IOC3_UARTA_BASE;
 	comconsfreq = 22000000 / 3;
@@ -133,6 +136,21 @@ paddr_t
 ip30_widget_long(int16_t nasid, u_int widget)
 {
 	return ((uint64_t)(widget) << 36) | uncached_base;
+}
+
+paddr_t
+ip30_widget_map(int16_t nasid, u_int widget, bus_addr_t *offs, bus_size_t *len)
+{
+	paddr_t base;
+
+	/*
+	 * On Octane, the whole widget space is always accessible.
+	 */
+
+	base = ip30_widget_long(nasid, widget);
+	*len = (1ULL << 36) - *offs;
+
+	return base + *offs;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.13 2009/07/01 21:56:38 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.14 2009/07/06 22:46:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -103,8 +103,13 @@ void	*xbow_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 
 const struct xbow_product *xbow_identify(uint32_t, uint32_t);
 
+struct	xbow_softc {
+	struct device	sc_dev;
+	int16_t		sc_nasid;
+};
+
 const struct cfattach xbow_ca = {
-	sizeof(struct device), xbowmatch, xbowattach
+	sizeof(struct xbow_softc), xbowmatch, xbowattach
 };
 
 struct cfdriver xbow_cd = {
@@ -141,6 +146,7 @@ static const bus_space_t xbowbus_tag = {
  * systems.
  */
 paddr_t	(*xbow_widget_base)(int16_t, u_int);
+paddr_t	(*xbow_widget_map)(int16_t, u_int, bus_addr_t *, bus_size_t *);
 
 int	(*xbow_widget_id)(int16_t, u_int, uint32_t *);
 
@@ -261,6 +267,7 @@ struct xbow_kl_config {
 void
 xbowattach(struct device *parent, struct device *self, void *aux)
 {
+	struct xbow_softc *sc = (struct xbow_softc *)self;
 	struct confargs *ca = aux;
 	int16_t nasid = ca->ca_nasid;
 	uint32_t wid, vendor, product;
@@ -268,6 +275,8 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 	struct xbow_config cfg;
 	struct xbow_kl_config klcfg;
 	uint widget;
+
+	sc->sc_nasid = nasid;
 
 	/*
 	 * This assumes widget 0 is the XBow itself (or an XXBow).
@@ -664,4 +673,20 @@ xbow_intr_disestablish(int intrbit)
 		return;
 
 	(*xbow_intr_widget_intr_disestablish)(intrbit);
+}
+
+/*
+ * Widget mapping code.
+ */
+
+paddr_t
+xbow_widget_map_space(struct device *dev, u_int widget, bus_addr_t *offs,
+    bus_size_t *len)
+{
+	struct xbow_softc *sc = (struct xbow_softc *)dev;
+
+	if (xbow_widget_map == NULL)
+		return 0UL;
+
+	return (*xbow_widget_map)(sc->sc_nasid, widget, offs, len);
 }
