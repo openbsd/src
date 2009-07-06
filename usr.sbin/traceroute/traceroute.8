@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.41 2009/06/05 06:47:12 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.42 2009/07/06 06:50:03 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 5 2009 $
+.Dd $Mdocdate: July 6 2009 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -204,7 +204,7 @@ and
 .Dv UNREACHABLE Ns s
 are listed.
 .It Fl w Ar waittime
-Set the time (in seconds) to wait for a response to a probe (default 3).
+Set the time (in seconds) to wait for a response to a probe (default 5).
 .El
 .Pp
 This program attempts to trace the route an IP packet would follow to some
