@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.8 2009/06/23 22:31:26 schwarze Exp $ */
+/*	$Id: main.c,v 1.9 2009/07/06 22:12:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -119,19 +119,19 @@ main(int argc, char *argv[])
 		switch (c) {
 		case ('f'):
 			if ( ! foptions(&curp.fflags, optarg))
-				return(0);
+				return(EXIT_FAILURE);
 			break;
 		case ('m'):
 			if ( ! moptions(&curp.inttype, optarg))
-				return(0);
+				return(EXIT_FAILURE);
 			break;
 		case ('T'):
 			if ( ! toptions(&curp.outtype, optarg))
-				return(0);
+				return(EXIT_FAILURE);
 			break;
 		case ('W'):
 			if ( ! woptions(&curp.wflags, optarg))
-				return(0);
+				return(EXIT_FAILURE);
 			break;
 		case ('V'):
 			version();
@@ -305,7 +305,7 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 	 */
 
 	if (-1 == fstat(curp->fd, &st))
-		warnx("%s", curp->file);
+		warn("%s", curp->file);
 	else if ((size_t)st.st_blksize > sz)
 		sz = st.st_blksize;
 
@@ -568,7 +568,7 @@ foptions(int *fflags, char *arg)
 			 	   NO_IGN_MACRO | NO_IGN_CHARS;
 			break;
 		default:
-			warnx("bad argument: -f%s", arg);
+			warnx("bad argument: -f%s", suboptarg);
 			return(0);
 		}
 
@@ -603,7 +603,7 @@ woptions(int *wflags, char *arg)
 			*wflags |= WARN_WERR;
 			break;
 		default:
-			warnx("bad argument: -W%s", arg);
+			warnx("bad argument: -W%s", suboptarg);
 			return(0);
 		}
 
