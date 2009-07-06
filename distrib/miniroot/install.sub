@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.590 2009/07/03 00:42:47 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.591 2009/07/06 22:11:11 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1174,7 +1174,7 @@ waitftplist() {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	and FTPOPTS must be global.
 install_url() {
-	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd _default
+	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd
 	local _server_ip_var=_${_url_type}_server_ip \
 		_server_dir_var=_${_url_type}_server_dir
 
@@ -1186,11 +1186,10 @@ install_url() {
 
 	if [[ -s $SERVERLISTALL ]]; then
 		_prompt="Server? (hostname, list#, 'done' or '?')"
-		sed -n "s,^${_url_type}://"'\([[A-Za-z0-9\:_][]A-Za-z0-9:._-]*/[^ 	]\),\1,p' \
+		sed -n "s,^${_url_type}://"'\([[A-Za-z0-9\:_][]A-Za-z0-9:._-]*\),\1,p' \
 			$SERVERLISTALL > $SERVERLIST
 		set -- $(sed q $SERVERLIST)
 		eval $_server_ip_var=\${1%%/*}
-		_default=$1
 	else
 		echo "(Was not able to get ftplist from ftp.openbsd.org, but that is OK)"
 		_prompt="Server? (hostname or 'done')"
@@ -1211,27 +1210,30 @@ install_url() {
 			[[ -s $SERVERLIST ]] || continue
 			set -- $(sed -n "${resp}p" $SERVERLIST)
 			[[ $# -lt 1 ]] && { echo "There is no line $resp." ; continue ; }
-			echo "Using	$*"
 			eval $_server_ip_var=\${1%%/*}
-			eval $_server_dir_var=\${1#*/}/\$FTPSETDIR
-			_default=$1
 			# Repeat loop to get user to confirm server address.
 			;;
 		+([A-Za-z0-9\:.\[\]_-]))
 			eval $_server_ip_var=\$resp
-			if [[ $resp = "${_default%%/*}" ]]; then
-				eval $_server_dir_var=\${_default#*/}/\$FTPSETDIR
-			else
-				eval $_server_dir_var=pub/OpenBSD/\$FTPSETDIR
-			fi
 			break
 			;;
 		*)	echo "'$resp' is not a valid hostname."
 		esac
 	done
 
-	# Get server directory
-	eval resp=\$$_server_dir_var
+	# Get directory info from *last* line starting with the server
+	# name. This means the last install from a mirror will not keep
+	# the specific directory info. But an install from a local
+	# server *will* remember the specific directory info.
+	set -- $(eval grep -s "^\$$_server_ip_var" $SERVERLIST | sed '$!d') 
+	resp=${1#*/}
+	# If there is no directory specified, don't use the server name!
+	[[ $resp == "$1" ]] && resp=
+	if (( $# > 1 )); then
+		# It's a mirror, since it has location info.
+		resp=$resp/$FTPSETDIR
+	fi
+
 	ask_until "Server directory?" "${resp:-pub/OpenBSD/$FTPSETDIR}"
 	eval $_server_dir_var=\$resp
 
@@ -1281,7 +1283,7 @@ install_url() {
 	install_files "$_url_base" "$_file_list"
 
 	# Remember where we installed from
-	eval installedfrom=$_url_type://\$$_server_ip_var/\${$_server_dir_var%\"/\$FTPSETDIR\"}
+	eval installedfrom=$_url_type://\$$_server_ip_var/\$$_server_dir_var
 }
 
 install_mounted_fs() {
