@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.13 2009/06/26 22:43:40 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.14 2009/07/06 22:33:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -55,7 +55,6 @@ enum	mwarn {
 	WNOWIDTH,
 	WMISSWIDTH,
 	WESCAPE,
-	WDEPCOL,
 	WWRONGMSEC,
 	WSECOOO,
 	WSECREP,
@@ -462,10 +461,6 @@ pwarn(struct mdoc *m, int line, int pos, enum mwarn type)
 		break;
 	case (WPROLOOO):
 		p = "prologue macros out-of-order";
-		c = WARN_COMPAT;
-		break;
-	case (WDEPCOL):
-		p = "deprecated column argument syntax";
 		c = WARN_COMPAT;
 		break;
 	case (WNOWIDTH):
