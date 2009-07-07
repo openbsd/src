@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.4 2009/06/23 22:31:26 schwarze Exp $ */
+/*	$Id: man.h,v 1.5 2009/07/07 00:54:46 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -76,6 +76,7 @@ struct	man_node {
 
 #define	MAN_IGN_MACRO	 (1 << 0)
 #define	MAN_IGN_CHARS	 (1 << 1)
+#define	MAN_IGN_ESCAPE	 (1 << 2)
 
 extern	const char *const *man_macronames;
 

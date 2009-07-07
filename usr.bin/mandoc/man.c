@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.5 2009/06/23 22:31:26 schwarze Exp $ */
+/*	$Id: man.c,v 1.6 2009/07/07 00:54:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -471,6 +471,9 @@ man_err(struct man *m, int line, int pos,
 		break;
 	case (WNOTITLE):
 		p = "document has no title/section";
+		break;
+	case (WESCAPE):
+		p = "invalid escape sequence";
 		break;
 	}
 	assert(p);
