@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.16 2009/06/05 22:40:24 chris Exp $ */
+/*	$OpenBSD: kroute.c,v 1.17 2009/07/07 12:07:23 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -178,7 +178,7 @@ kr_change(struct kroute *kroute)
 			action = RTM_CHANGE;
 		else {	/* a non-rip route already exists. not a problem */
 			if (!(kr->r.flags & (F_BGPD_INSERTED|
-			    F_OSPFD_INSERTED))) {
+			    F_OSPFD_INSERTED|F_LDPD_INSERTED))) {
 				kr->r.flags |= F_RIPD_INSERTED;
 				return (0);
 			}
@@ -1113,6 +1113,8 @@ dispatch_rtmsg(void)
 					flags |= F_BGPD_INSERTED;
 				if (rtm->rtm_flags & RTF_PROTO2)
 					flags |= F_OSPFD_INSERTED;
+				if (rtm->rtm_flags & RTF_MPLS)
+					flags |= F_LDPD_INSERTED;
 				break;
 			default:
 				continue;

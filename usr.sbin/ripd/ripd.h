@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.15 2009/06/06 18:31:42 pyr Exp $ */
+/*	$OpenBSD: ripd.h,v 1.16 2009/07/07 12:07:23 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -59,6 +59,7 @@
 #define	F_REDISTRIBUTED		0x0100
 #define	F_REJECT		0x0200
 #define	F_BLACKHOLE		0x0400
+#define	F_LDPD_INSERTED		0x0800
 
 #define REDISTRIBUTE_ON		0x01
 
