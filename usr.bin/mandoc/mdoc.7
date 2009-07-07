@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.6 2009/06/24 00:16:52 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.7 2009/07/07 00:10:44 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" 
-.Dd $Mdocdate: June 24 2009 $
+.Dd $Mdocdate: July 7 2009 $
 .Dt MDOC 7
 .Os
 .\" SECTION
@@ -28,8 +28,8 @@ The
 language is used to format 
 .Bx 
 .Ux
-manuals.  In this reference document, we describe the syntax, ontology
-and structure of the 
+manuals.  In this reference document, we describe the syntax and
+structure of the 
 .Nm
 language.  Our reference implementation is
 .Xr mandoc 1 .
@@ -136,7 +136,18 @@ or a single one-character sequence.
 .Pp
 Characters may alternatively be escaped by a slash-asterisk,
 .Sq \e* ,
-with the same combinations as described above.  This form is deprecated.  
+with the same combinations as described above.
+.Pp
+Terms may also be text-decorated using the
+.Sq \ef
+escape followed by a text-decoration letter: B (bold), I, (italic), or P
+and R (Roman, or reset).  This form is not recommended.
+.\" SUB-SECTION
+.Ss Whitespace
+Unless in literal mode or specifically escaped, consecutive blocks of
+whitespace are pruned from input.  These are later re-added, if
+applicable, by a front-end utility such as
+.Xr mandoc 1 .
 .\" SECTION
 .Sh STRUCTURE
 Each
@@ -153,11 +164,13 @@ followed by a
 .Sq \&.Nd
 macro.
 .Pp
-Macros are classified in an ontology described by their scope rules.
-Some macros are allowed to deviate from their classifications to
-preserve backward-compatibility with old macro combinations still found
-in the manual corpus.  These are specifically noted on a per-macro
-basis.
+At least one free-form or macro line must follow this prologue.
+.\"
+.Ss Classification
+Macros are classified by their scope rules.  Some macros are allowed to
+deviate from their classifications to preserve backward-compatibility
+with old macro combinations still found in the manual corpus.  These are
+specifically noted on a per-macro basis.
 .\" SUB-SECTION
 .Ss Scope
 .Bl -inset 
@@ -296,7 +309,7 @@ In-lines have \(>=0 scoped arguments.
 .Sh MACROS
 This section contains a complete list of all 
 .Nm
-macros, arranged ontologically.  A 
+macros, arranged by classification.  A 
 .Qq callable
 macro is invoked subsequent to the initial macro-line macro.  A
 .Qq parsable
@@ -514,13 +527,27 @@ file re-write
 .Bl -dash -compact
 .\" LIST-ITEM
 .It
+Some character sequences in groff are not handled depending on escape
+style, e.g., 
+.Sq \e(ba
+and
+.Sq \e*(Ba
+may not be interchanged.  This is no longer the case: all character
+sequences resolve to the same symbol, regardless the escape style.
+.\" LIST-ITEM
+.It
+Blocks of whitespace are stripped from both macro and free-form text
+lines (except when in literal mode), while groff would retain whitespace
+in free-form text lines.
+.\" LIST-ITEM
+.It
 Historic groff has many un-callable macros.  Most of these (excluding
 some block-level macros) are now callable, conforming to the
 non-historic groff version.
 .\" LIST-ITEM
 .It
 The vertical bar 
-.Sq \(Ba
+.Sq \(ba
 made historic groff
 .Qq go orbital
 but is a proper delimiter in this implementation.
@@ -549,11 +576,10 @@ incorrectly by following it with a reserved character and expecting the
 delimiter to render.  This is not supported.
 .\" LIST-ITEM
 .It
-If an special-character control character 
-.Sq \e 
-is escaped, it will
-obviously not render the sequence.  Even newer versions of groff seem to
-dither on this.
+If an special-character control character is escaped
+.Sq \e\e ,
+it will obviously not render the subsequent sequence.  Even newer
+versions of groff seem to dither on this.
 .El
 .\" SECTION
 .Sh SEE ALSO
