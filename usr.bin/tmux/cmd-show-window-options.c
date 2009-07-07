@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-window-options.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-show-window-options.c,v 1.2 2009/07/07 19:49:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,7 +54,7 @@ cmd_show_window_options_exec(struct cmd *self, struct cmd_ctx *ctx)
 	long long			 vn;
 
 	if (data->flags & CMD_GFLAG)
-		oo = &global_window_options;
+		oo = &global_w_options;
 	else {
 		if ((wl = cmd_find_window(ctx, data->target, NULL)) == NULL)
 			return (-1);
