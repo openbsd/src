@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.53 2009/03/15 19:40:41 miod Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.54 2009/07/08 15:01:50 claudio Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -726,6 +726,16 @@ pppoutput(ifp, m0, dst, rtp)
 	error = ENETDOWN;	/* sort of */
 	goto bad;
     }
+
+#ifdef DIAGNOSTIC
+    if (ifp->if_rdomain != m0->m_pkthdr.rdomain) {
+	printf("%s: trying to send packet on wrong domain. "
+	    "%d vs. %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
+	    m0->m_pkthdr.rdomain, dst->sa_family);
+	error = ENETDOWN;
+	goto bad;
+    }
+#endif
 
     /*
      * Compute PPP header.
@@ -1465,6 +1475,9 @@ ppp_inproc(sc, m)
     }
     m->m_pkthdr.len = ilen;
     m->m_pkthdr.rcvif = ifp;
+
+    /* mark incomming routing domain */
+    m->m_pkthdr.rdomain = ifp->if_rdomain;
 
     if ((proto & 0x8000) == 0) {
 #if NBPFILTER > 0

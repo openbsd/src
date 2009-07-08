@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.55 2009/06/05 00:05:21 claudio Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.56 2009/07/08 15:01:50 claudio Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -147,6 +147,15 @@ fddi_output(ifp0, m0, dst, rt0)
 	struct arpcom *ac = (struct arpcom *)ifp0;
 	short mflags;
 	struct ifnet *ifp = ifp0;
+
+#ifdef DIAGNOSTIC
+	if (ifp->if_rdomain != m->m_pkthdr.rdomain) {
+		printf("%s: trying to send packet on wrong domain. "
+		    "%d vs. %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
+		    m->m_pkthdr.rdomain, dst->sa_family);
+		senderr(ENETDOWN);
+	}
+#endif
 
 #if NCARP > 0
 	if (ifp->if_type == IFT_CARP) {
@@ -383,6 +392,9 @@ fddi_input(ifp, fh, m)
 		m_freem(m);
 		return;
 	}
+	/* mark incomming routing domain */
+	m->m_pkthdr.rdomain = ifp->if_rdomain;
+
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof (*fh);
 	if (bcmp((caddr_t)fddibroadcastaddr, (caddr_t)fh->fddi_dhost,
 	    sizeof(fddibroadcastaddr)) == 0)
