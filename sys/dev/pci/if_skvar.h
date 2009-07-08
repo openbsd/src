@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skvar.h,v 1.4 2009/03/30 19:09:43 kettenis Exp $	*/
+/*	$OpenBSD: if_skvar.h,v 1.5 2009/07/08 20:18:05 sthen Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -26,7 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_skvar.h,v 1.4 2009/03/30 19:09:43 kettenis Exp $	*/
+/*	$OpenBSD: if_skvar.h,v 1.5 2009/07/08 20:18:05 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -81,6 +81,11 @@
 #ifndef _DEV_PCI_IF_SKVAR_H_
 #define _DEV_PCI_IF_SKVAR_H_
 
+struct sk_jpool_entry {
+	int                             slot;
+	LIST_ENTRY(sk_jpool_entry)	jpool_entries;
+};
+
 struct sk_chain {
 	void			*sk_desc;
 	struct mbuf		*sk_mbuf;
@@ -106,12 +111,17 @@ struct sk_chain_data {
 	struct sk_chain		sk_rx_chain[SK_RX_RING_CNT];
 	struct sk_txmap_entry	*sk_tx_map[SK_TX_RING_CNT];
 	bus_dmamap_t		sk_rx_map[SK_RX_RING_CNT];
+	bus_dmamap_t		sk_rx_jumbo_map;
 	int			sk_tx_prod;
 	int			sk_tx_cons;
 	int			sk_tx_cnt;
 	int			sk_rx_prod;
 	int			sk_rx_cons;
 	int			sk_rx_cnt;
+	/* Stick the jumbo mem management stuff here too. */
+	caddr_t			sk_jslots[SK_JSLOTS];
+	void			*sk_jumbo_buf;
+
 };
 
 struct sk_ring_data {
@@ -210,6 +220,8 @@ struct sk_if_softc {
 	struct sk_softc		*sk_softc;	/* parent controller */
 	int			sk_tx_bmu;	/* TX BMU register */
 	int			sk_if_flags;
+	LIST_HEAD(__sk_jfreehead, sk_jpool_entry)	sk_jfree_listhead;
+	LIST_HEAD(__sk_jinusehead, sk_jpool_entry)	sk_jinuse_listhead;
 	SIMPLEQ_HEAD(__sk_txmaphead, sk_txmap_entry)	sk_txmap_head;
 };
 
