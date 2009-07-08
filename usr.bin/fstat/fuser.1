@@ -1,0 +1,144 @@
+.\"	$OpenBSD: fuser.1,v 1.1 2009/07/08 16:04:00 millert Exp $
+.\"
+.\" Copyright (c) 2002 Peter Werner <peterw@ifost.org.au>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: July 8 2009 $
+.Dt FUSER 1
+.Os
+.Sh NAME
+.Nm fuser
+.Nd identify process IDs holding specific files open
+.Sh SYNOPSIS
+.Nm
+.Op Fl cfku
+.Op Fl M Ar core
+.Op Fl N Ar system
+.Op Fl s Ar signal
+.Ar
+.Sh DESCRIPTION
+The
+.Nm
+utility writes to standard output the process IDs of processes running
+on the local system that have one or more of the named files open.
+If
+.Ar file
+is a mounted block device, the output will show all processes having
+files opened on that file system.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+The file is treated as a mount point and
+.Nm
+will report on any files open in the file system.
+.It Fl f
+Report only for the named file(s).
+.It Fl k
+Send the SIGKILL signal to each process.
+.It Fl M Ar core
+Extract values associated with the name list from the specified core
+instead of the running kernel.
+.It Fl N Ar system
+Extract the name list from the specified system instead of the running kernel.
+.It Fl s Ar signal
+Send the specified
+.Ar signal
+to each process.
+The
+.Ar signal
+may be specified as a signal number or as a symbolic name either with
+or without the
+.Dq SIG
+prefix.
+Signal names are not case sensitive.
+For example, the following signal arguments are equivalent:
+.Dq 9 ,
+.Dq kill ,
+.Dq SIGKILL .
+.It Fl u
+The real user ID of the the process using the file will be printed in brackets
+to standard error.
+If the username is unable to be determined, the real user ID will be printed
+instead.
+.El
+.Pp
+The
+.Fl c
+and
+.Fl f
+options are mutually exclusive.
+.Pp
+The name of the file followed by a colon
+.Pq Sq \&:
+is printed to standard error.
+The following characters may be printed to standard error after the process ID
+if the described conditions are true:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It c
+The file is the process's current working directory.
+.It r
+The file is the process's root directory.
+.El
+.Pp
+.Ex -std fuser
+.Sh EXAMPLES
+Print the process IDs of any processes holding files open under the
+.Ar /mnt
+filesystem:
+.Pp
+.Dl $ fuser -c /mnt
+.Pp
+Send SIGTERM to any process holding a file open under the
+.Ar /mnt
+filesystem:
+.Pp
+.Dl # fuser -c -s term /mnt
+.Pp
+Report on all files opened under the filesystem on which
+.Ar /dev/wd0a
+is mounted:
+.Pp
+.Dl $ fuser /dev/wd0a
+.Pp
+Report on all processes currently holding
+.Ar /dev/wd0a
+open:
+.Pp
+.Dl $ fuser -f /dev/wd0a
+.Sh SEE ALSO
+.Xr fstat 1 ,
+.Xr kill 1 ,
+.Xr signal 3 ,
+.Xr mount 8
+.Sh STANDARDS
+The
+.Nm
+utility is compliant with the
+.St -p1003.1-2008
+specification.
+.Pp
+The flags
+.Op Fl ks
+are extensions to that specification.

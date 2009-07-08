@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.67 2009/06/15 04:19:59 miod Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.68 2009/07/08 16:04:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,17 +46,19 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.67 2009/06/15 04:19:59 miod Exp $";
+/*static const char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
+static const char rcsid[] = "$OpenBSD: fstat.c,v 1.68 2009/07/08 16:04:00 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/socket.h>
@@ -82,6 +84,7 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.67 2009/06/15 04:19:59 miod Exp $";
 #include <limits.h>
 #include <nlist.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -89,13 +92,9 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.67 2009/06/15 04:19:59 miod Exp $";
 #include <unistd.h>
 #include <err.h>
 
-typedef struct devs {
-	struct	devs *next;
-	long	fsid;
-	ino_t	ino;
-	char	*name;
-} DEVS;
-DEVS *devs;
+#include "fstat.h"
+
+struct fileargs fileargs = SLIST_HEAD_INITIALIZER(fileargs);
 
 int	fsflg;	/* show files on same filesystem as file(s) argument */
 int	pflg;	/* show files open by a particular pid */
@@ -105,12 +104,17 @@ int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
 int	oflg;	/* display file offset */
 int	sflg;	/* display file xfer/bytes counters */
 int	vflg;	/* display errors in locating kernel data objects etc... */
+int 	cflg; 	/* fuser only */
+
+int 	fuser;	/* 1 if we are fuser, 0 if we are fstat */
+int 	signo;	/* signal to send (fuser only) */
 
 kvm_t *kd;
 uid_t uid;
 
-
-void dofiles(struct kinfo_file2 *);
+void fstat_dofile(struct kinfo_file2 *);
+void fstat_header(void);
+void fuser_dofile(struct kinfo_file2 *);
 void getinetproto(int);
 void usage(void);
 int getfname(char *);
@@ -121,6 +125,7 @@ void socktrans(struct kinfo_file2 *);
 void systracetrans(struct kinfo_file2 *);
 void vtrans(struct kinfo_file2 *);
 const char *inet6_addrstr(struct in6_addr *);
+int signame_to_signum(char *);
 
 int
 main(int argc, char *argv[])
@@ -128,7 +133,7 @@ main(int argc, char *argv[])
 	struct passwd *passwd;
 	struct kinfo_file2 *kf, *kflast;
 	int arg, ch, what;
-	char *memf, *nlistf;
+	char *memf, *nlistf, *optstr;
 	char buf[_POSIX2_LINE_MAX];
 	const char *errstr;
 	int cnt, flags;
@@ -137,10 +142,36 @@ main(int argc, char *argv[])
 	what = KERN_FILE_BYPID;
 	nlistf = memf = NULL;
 	oflg = 0;
-	while ((ch = getopt(argc, argv, "fnop:su:vN:M:")) != -1)
+
+	/* are we fstat(1) or fuser(1)? */
+	if (strcmp(__progname, "fuser") == 0) {
+		fuser = 1;
+		optstr = "cfks:uM:N:";
+	} else {
+		fuser = 0;
+		optstr = "fnop:su:vN:M:";
+	}
+
+	/*
+	 * fuser and fstat share three flags: -f, -s and -u.  In both cases
+	 * -f is a boolean, but for -u fstat wants an argument while fuser
+	 * does not and for -s fuser wants an argument whereas fstat does not.
+	 */
+	while ((ch = getopt(argc, argv, optstr)) != -1)
 		switch ((char)ch) {
+		case 'c':
+			if (fsflg)
+				usage();
+			cflg = 1;
+			break;
 		case 'f':
+			if (cflg)
+				usage();
 			fsflg = 1;
+			break;
+		case 'k':
+			sflg = 1;
+			signo = SIGKILL;
 			break;
 		case 'M':
 			memf = optarg;
@@ -167,14 +198,23 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			sflg = 1;
+			if (fuser) {
+				signo = signame_to_signum(optarg);
+				if (signo == -1) {
+					warnx("invalid signal %s", optarg);
+					usage();
+				}
+			}
 			break;
 		case 'u':
 			if (uflg++)
 				usage();
-			if (!(passwd = getpwnam(optarg)))
-				errx(1, "%s: unknown uid", optarg);
-			what = KERN_FILE_BYUID;
-			arg = passwd->pw_uid;
+			if (!fuser) {
+				if (!(passwd = getpwnam(optarg)))
+					errx(1, "%s: unknown uid", optarg);
+				what = KERN_FILE_BYUID;
+				arg = passwd->pw_uid;
+			}
 			break;
 		case 'v':
 			vflg = 1;
@@ -204,12 +244,14 @@ main(int argc, char *argv[])
 			if (getfname(*argv))
 				checkfile = 1;
 		}
-		if (!checkfile)	/* file(s) specified, but none accessible */
+		/* file(s) specified, but none accessible */
+		if (!checkfile)
 			exit(1);
-	}
+	} else if (fuser)
+		usage();
 
-	if (fsflg && !checkfile) {
-		/* -f with no files means use wd */
+	if (!fuser && fsflg && !checkfile) {
+		/* fstat -f with no files means use wd */
 		if (getfname(".") == 0)
 			exit(1);
 		checkfile = 1;
@@ -217,6 +259,24 @@ main(int argc, char *argv[])
 
 	if ((kf = kvm_getfile2(kd, what, arg, sizeof(*kf), &cnt)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
+
+	if (!fuser)
+		fstat_header();
+	for (kflast = &kf[cnt]; kf < kflast; ++kf) {
+		if (fuser)
+			fuser_check(kf);
+		else
+			fstat_dofile(kf);
+	}
+	if (fuser)
+		fuser_run();
+
+	exit(0);
+}
+
+void
+fstat_header(void)
+{
 	if (nflg)
 		printf("%s",
 "USER     CMD          PID   FD  DEV      INUM       MODE R/W    SZ|DV");
@@ -230,10 +290,6 @@ main(int argc, char *argv[])
 	if (sflg)
 		printf("    XFERS   KBYTES");
 	putchar('\n');
-
-	for (kflast = &kf[cnt]; kf < kflast; ++kf)
-		dofiles(kf);
-	exit(0);
 }
 
 char	*Uname, *Comm;
@@ -265,7 +321,7 @@ pid_t	Pid;
  * print open files attributed to this process
  */
 void
-dofiles(struct kinfo_file2 *kf)
+fstat_dofile(struct kinfo_file2 *kf)
 {
 
 	Uname = user_from_uid(kf->p_uid, 0);
@@ -322,15 +378,15 @@ vtrans(struct kinfo_file2 *kf)
 
 	if (checkfile) {
 		int fsmatch = 0;
-		DEVS *d;
+		struct filearg *fa;
 
 		if (badtype)
 			return;
-		for (d = devs; d != NULL; d = d->next) {
-			if (d->fsid == kf->va_fsid) {
+		SLIST_FOREACH(fa, &fileargs, next) {
+			if (fa->dev == kf->va_fsid) {
 				fsmatch = 1;
-				if (d->ino == kf->va_fileid) {
-					filename = d->name;
+				if (fa->ino == kf->va_fileid) {
+					filename = fa->name;
 					break;
 				}
 			}
@@ -537,7 +593,7 @@ socktrans(struct kinfo_file2 *kf)
 		memcpy(&faddr, kf->inp_faddru, sizeof(faddr));
 		getinetproto(kf->so_protocol);
 		if (kf->so_protocol == IPPROTO_TCP) {
-			printf(" %p", kf->inp_ppcb);
+			printf(" %p", (void *)(uintptr_t)kf->inp_ppcb);
 			printf(" %s:%d", laddr.s_addr == INADDR_ANY ? "*" :
 			    inet_ntoa(laddr), ntohs(kf->inp_lport));
 			if (kf->inp_fport) {
@@ -558,7 +614,7 @@ socktrans(struct kinfo_file2 *kf)
 				    inet_ntoa(faddr), ntohs(kf->inp_fport));
 			}
 		} else if (kf->so_pcb)
-			printf(" %p", kf->so_pcb);
+			printf(" %p", (void *)(uintptr_t)kf->so_pcb);
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -567,7 +623,7 @@ socktrans(struct kinfo_file2 *kf)
 		memcpy(&faddr6, kf->inp_faddru, sizeof(faddr6));
 		getinetproto(kf->so_protocol);
 		if (kf->so_protocol == IPPROTO_TCP) {
-			printf(" %p", kf->inp_ppcb);
+			printf(" %p", (void *)(uintptr_t)kf->inp_ppcb);
 			snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
 			    inet6_addrstr(&laddr6));
 			printf(" %s:%d",
@@ -598,14 +654,14 @@ socktrans(struct kinfo_file2 *kf)
 				    xaddrbuf, ntohs(kf->inp_fport));
 			}
 		} else if (kf->so_pcb)
-			printf(" %p", kf->so_pcb);
+			printf(" %p", (void *)(uintptr_t)kf->so_pcb);
 		break;
 #endif
 	case AF_UNIX:
 		/* print address of pcb and connected pcb */
 		printf("* unix %s", stype);
 		if (kf->so_pcb) {
-			printf(" %p", kf->so_pcb);
+			printf(" %p", (void *)(uintptr_t)kf->so_pcb);
 			if (kf->unp_conn) {
 				char shoconn[4], *cp;
 
@@ -686,28 +742,80 @@ getinetproto(number)
 int
 getfname(char *filename)
 {
-	struct stat statbuf;
-	DEVS *cur;
+	static struct statfs *mntbuf;
+	static int nmounts;
+	int i;
+	struct stat sb;
+	struct filearg *cur;
 
-	if (stat(filename, &statbuf)) {
+	if (stat(filename, &sb)) {
 		warn("%s", filename);
-		return(0);
+		return (0);
 	}
-	if ((cur = malloc(sizeof(DEVS))) == NULL)
-		err(1, "malloc");
-	cur->next = devs;
-	devs = cur;
 
-	cur->ino = statbuf.st_ino;
-	cur->fsid = statbuf.st_dev & 0xffff;
+	/*
+	 * POSIX specifies "For block special devices, all processes using any
+	 * file on that device are listed".  However the -f flag description
+	 * states "The report shall be only for the named files", so we only
+	 * look up a block device if the -f flag has not be specified.
+	 */
+	if (fuser && !fsflg && S_ISBLK(sb.st_mode)) {
+		if (mntbuf == NULL) {
+			nmounts = getmntinfo(&mntbuf, MNT_NOWAIT);
+			if (nmounts == -1)
+				err(1, "getmntinfo");
+		}
+		for (i = 0; i < nmounts; i++) {
+			if (!strcmp(mntbuf[i].f_mntfromname, filename)) {
+				if (stat(mntbuf[i].f_mntonname, &sb) == -1) {
+					warn("%s", filename);
+					return (0);
+				}
+				cflg = 1;
+				break;
+			}
+		}
+	}
+
+	if ((cur = malloc(sizeof(*cur))) == NULL)
+		err(1, NULL);
+
+	cur->ino = sb.st_ino;
+	cur->dev = sb.st_dev & 0xffff;
 	cur->name = filename;
-	return(1);
+	TAILQ_INIT(&cur->fusers);
+	SLIST_INSERT_HEAD(&fileargs, cur, next);
+	return (1);
+}
+
+int
+signame_to_signum(char *sig)
+{
+	int n;
+	const char *errstr = NULL;
+
+	if (isdigit((unsigned char)*sig)) {
+		n = strtonum(sig, 0, NSIG - 1, &errstr);
+		return (errstr ? -1 : n);
+	}
+	if (!strncasecmp(sig, "sig", 3))
+		sig += 3;
+	for (n = 1; n < NSIG; n++) {
+		if (!strcasecmp(sys_signame[n], sig))
+			return (n);
+	}
+	return (-1);
 }
 
 void
 usage(void)
 {
-	fprintf(stderr, "usage: fstat [-fnosv] [-M core] [-N system] "
-	    "[-p pid] [-u user] [file ...]\n");
+	if (fuser) {
+		fprintf(stderr, "usage: fuser [-cfku] [-M core] "
+		    "[-N system] [-s signal] file ...\n");
+	} else {
+		fprintf(stderr, "usage: fstat [-fnosv] [-M core] [-N system] "
+		    "[-p pid] [-u user] [file ...]\n");
+	}
 	exit(1);
 }
