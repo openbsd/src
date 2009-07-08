@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.9 2009/06/24 13:04:24 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.10 2009/07/08 18:59:11 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.9 2009/06/24 13:04:24 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.10 2009/07/08 18:59:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -159,7 +159,7 @@ kvm_getfile2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		if (rv == -1) {
 			if (kd->vmfd != -1)
 				goto deadway;
-			_kvm_syserr(kd, kd->program, "kvm_getfiles");
+			_kvm_syserr(kd, kd->program, "kvm_getfile2");
 			return (NULL);
 		}
 		kd->filebase = _kvm_malloc(kd, size);
@@ -170,7 +170,7 @@ kvm_getfile2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		mib[5] = size / esize;
 		rv = sysctl(mib, 6, kd->filebase, &size, NULL, 0);
 		if (rv == -1) {
-			_kvm_syserr(kd, kd->program, "kvm_getfiles");
+			_kvm_syserr(kd, kd->program, "kvm_getfile2");
 			return (NULL);
 		}
 		*cnt = size / esize;
