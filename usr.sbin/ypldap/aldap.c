@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.19 2009/01/29 11:43:31 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.19 2009/01/29 11:43:31 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.20 2009/07/08 13:13:17 blambert Exp $ */
+/*	$OpenBSD: aldap.c,v 1.20 2009/07/08 13:13:17 blambert Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -781,11 +781,11 @@ ldap_do_parse_search_filter(struct ber_element *prev, char **cpp)
 				if ((parsed_val = parseval(attr_val, len)) ==
 				    NULL)
 					goto callfail;
-				if ((elm =
-				    ber_add_nstring(elm, parsed_val,
-					    strlen(parsed_val))) == NULL)
-					goto callfail;
+				elm = ber_add_nstring(elm, parsed_val,
+				    strlen(parsed_val));
 				free(parsed_val);
+				if (elm == NULL)
+					goto callfail;
 				ber_set_header(elm, BER_CLASS_CONTEXT, type);
 				if (type == LDAP_FILT_SUBS_FIN)
 					break;
@@ -795,10 +795,10 @@ ldap_do_parse_search_filter(struct ber_element *prev, char **cpp)
 
 		if ((parsed_val = parseval(attr_val, len)) == NULL)
 			goto callfail;
-		if ((elm = ber_add_nstring(elm, parsed_val,
-				    strlen(parsed_val))) == NULL)
-			goto callfail;
+		elm = ber_add_nstring(elm, parsed_val, strlen(parsed_val));
 		free(parsed_val);
+		if (elm == NULL)
+			goto callfail;
 		break;
 	}
 
