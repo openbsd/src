@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.5 2009/06/24 22:51:47 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.6 2009/07/08 05:56:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,7 +54,7 @@ screen_reinit(struct screen *s)
 	
 	screen_reset_tabs(s);
 
-	grid_clear_lines(s->grid, s->grid->hsize, s->grid->sy - 1);
+	grid_clear_lines(s->grid, s->grid->hsize, s->grid->sy);
 
 	screen_clear_selection(s);
 }
