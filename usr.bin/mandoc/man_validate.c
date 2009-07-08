@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.4 2009/06/23 22:31:26 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.5 2009/07/08 00:04:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "libman.h"
+#include "libmandoc.h"
 
 #define	POSTARGS  struct man *m, const struct man_node *n
 
@@ -118,12 +119,26 @@ static int
 check_text(POSTARGS) 
 {
 	const char	*p;
-	int		 pos;
+	int		 pos, c;
 
 	assert(n->string);
 
 	for (p = n->string, pos = n->pos + 1; *p; p++, pos++) {
-		if ('\t' == *p || isprint((u_char)*p))
+		if ('\\' == *p) {
+			c = mandoc_special(p);
+			if (c) {
+				p += c - 1;
+				pos += c - 1;
+				continue;
+			}
+			if ( ! (MAN_IGN_ESCAPE & m->pflags))
+				return(man_perr(m, n->line, pos, WESCAPE));
+			if ( ! man_pwarn(m, n->line, pos, WESCAPE))
+				return(0);
+			continue;
+		}
+
+		if ('\t' == *p || isprint((u_char)*p)) 
 			continue;
 
 		if (MAN_IGN_CHARS & m->pflags)

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.7 2009/06/21 20:21:09 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.8 2009/07/08 00:04:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -17,7 +17,6 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -53,82 +52,6 @@ static	const struct mdoc_secname secnames[SECNAME_MAX] = {
 	{ "CAVEATS", SEC_CAVEATS },
 	{ "BUGS", SEC_BUGS },
 };
-
-
-size_t
-mdoc_isescape(const char *p)
-{
-	size_t		 c;
-	
-	if ('\\' != *p++)
-		return(0);
-
-	switch (*p) {
-	case ('\\'):
-		/* FALLTHROUGH */
-	case ('\''):
-		/* FALLTHROUGH */
-	case ('`'):
-		/* FALLTHROUGH */
-	case ('q'):
-		/* FALLTHROUGH */
-	case ('-'):
-		/* FALLTHROUGH */
-	case ('~'):
-		/* FALLTHROUGH */
-	case ('^'):
-		/* FALLTHROUGH */
-	case ('%'):
-		/* FALLTHROUGH */
-	case ('0'):
-		/* FALLTHROUGH */
-	case (' '):
-		/* FALLTHROUGH */
-	case ('|'):
-		/* FALLTHROUGH */
-	case ('&'):
-		/* FALLTHROUGH */
-	case ('.'):
-		/* FALLTHROUGH */
-	case (':'):
-		/* FALLTHROUGH */
-	case ('e'):
-		return(2);
-	case ('*'):
-		if (0 == *++p || ! isgraph((u_char)*p))
-			return(0);
-		switch (*p) {
-		case ('('):
-			if (0 == *++p || ! isgraph((u_char)*p))
-				return(0);
-			return(4);
-		case ('['):
-			for (c = 3, p++; *p && ']' != *p; p++, c++)
-				if ( ! isgraph((u_char)*p))
-					break;
-			return(*p == ']' ? c : 0);
-		default:
-			break;
-		}
-		return(3);
-	case ('('):
-		if (0 == *++p || ! isgraph((u_char)*p))
-			return(0);
-		if (0 == *++p || ! isgraph((u_char)*p))
-			return(0);
-		return(4);
-	case ('['):
-		break;
-	default:
-		return(0);
-	}
-
-	for (c = 3, p++; *p && ']' != *p; p++, c++)
-		if ( ! isgraph((u_char)*p))
-			break;
-
-	return(*p == ']' ? c : 0);
-}
 
 
 int
@@ -217,6 +140,7 @@ mdoc_atotime(const char *p)
 }
 
 
+/* FIXME: move this into an editable .in file. */
 size_t
 mdoc_macro2len(int macro)
 {
