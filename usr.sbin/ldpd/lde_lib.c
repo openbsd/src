@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.3 2009/06/19 17:10:09 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.4 2009/07/08 18:59:29 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -162,7 +162,7 @@ lde_assign_label()
 }
 
 void
-lde_insert(struct kroute *kr)
+lde_kernel_insert(struct kroute *kr)
 {
 	struct rt_node		*rn;
 	struct rt_label		*rl;
@@ -181,8 +181,35 @@ lde_insert(struct kroute *kr)
 		rt_insert(rn);
 	}
 
-	if (rn->present)
+	if (rn->present) {
+		if (kr->nexthop.s_addr == rn->nexthop.s_addr)
+			return;
+
+		/* The nexthop has changed, change also the label associated
+		   with prefix */
+		rn->remote_label = 0;
+		rn->nexthop.s_addr = kr->nexthop.s_addr;
+
+		if ((ldeconf->mode & MODE_RET_LIBERAL) == 0) {
+			/* XXX: we support just liberal retention for now */
+			return;
+		}
+
+		TAILQ_FOREACH(rl, &rn->labels_list, entry) {
+			addr = lde_address_find(rl->nexthop, &rn->nexthop);
+			if (addr != NULL) {
+				rn->remote_label =
+				    htonl(rl->label << MPLS_LABEL_OFFSET);
+				break;
+			}
+		}
+
+		log_debug("lde_kernel_insert: prefix %s, changing label to %u",
+		    inet_ntoa(rn->prefix), rl->label);
+
+		lde_send_change_klabel(rn);
 		return;
+	}
 
 	rn->present = 1;
 	rn->nexthop.s_addr = kr->nexthop.s_addr;
@@ -201,8 +228,6 @@ lde_insert(struct kroute *kr)
 			if (addr != NULL) {
 				rn->remote_label =
 				    htonl(rl->label << MPLS_LABEL_OFFSET);
-				TAILQ_REMOVE(&rn->labels_list, rl, entry);
-				free(rl);
 				break;
 			}
 		}

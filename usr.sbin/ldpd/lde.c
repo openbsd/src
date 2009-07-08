@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.3 2009/06/06 08:09:43 pyr Exp $ */
+/*	$OpenBSD: lde.c,v 1.4 2009/07/08 18:59:29 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -381,7 +381,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			}
 			memcpy(&rr, imsg.data, sizeof(rr));
 
-			lde_insert(&rr.kr);
+			lde_kernel_insert(&rr.kr);
 
 			break;
 		case IMSG_NETWORK_DEL:
