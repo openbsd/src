@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsproto.h,v 1.9 2009/05/30 17:20:29 thib Exp $	*/
+/*	$OpenBSD: nfsproto.h,v 1.10 2009/07/08 14:39:31 thib Exp $	*/
 /*	$NetBSD: nfsproto.h,v 1.1 1996/02/18 11:54:06 fvdl Exp $	*/
 
 /*
@@ -37,11 +37,6 @@
 
 #ifndef _NFS_NFSPROTO_H_
 #define _NFS_NFSPROTO_H_
-
-
-/*
- * nfs definitions as per the Version 2 and 3 specs
- */
 
 /*
  * Constants as defined in the Sun NFS Version 2 and 3 specs.
