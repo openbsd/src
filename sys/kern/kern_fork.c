@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.103 2009/04/14 09:13:25 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.104 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;
 	if (p2->p_textvp)
-		VREF(p2->p_textvp);
+		vref(p2->p_textvp);
 
 	if (flags & FORK_CLEANFILES)
 		p2->p_fd = fdinit(p1);
@@ -332,7 +332,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	if (p1->p_traceflag & KTRFAC_INHERIT) {
 		p2->p_traceflag = p1->p_traceflag;
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
-			VREF(p2->p_tracep);
+			vref(p2->p_tracep);
 	}
 #endif
 

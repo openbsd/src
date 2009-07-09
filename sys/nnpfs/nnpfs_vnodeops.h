@@ -44,8 +44,8 @@
 
 #ifdef __osf__			/* XXX - what about VN_LOCK? */
 
-#define nnpfs_vfs_readlock(vp, proc) VREF((vp))
-#define nnpfs_vfs_writelock(vp, proc) VREF((vp))
+#define nnpfs_vfs_readlock(vp, proc) vref((vp))
+#define nnpfs_vfs_writelock(vp, proc) vref((vp))
 #define nnpfs_vfs_unlock(vp, proc) vrele((vp))
 
 /* XXX - should this do anything? */

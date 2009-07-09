@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.52 2008/11/24 00:01:20 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.53 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -914,7 +914,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 	/*
 	 * Set up a generation number for this inode if it does not
 	 * already have one. This should only happen on old filesystems.

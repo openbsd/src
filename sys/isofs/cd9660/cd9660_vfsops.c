@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.49 2009/05/21 23:45:48 krw Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.50 2009/07/09 22:29:55 thib Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -847,7 +847,7 @@ retry:
 
 	ip->i_mnt = imp;
 	ip->i_devvp = imp->im_devvp;
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 
 	if (relocated) {
 		/*

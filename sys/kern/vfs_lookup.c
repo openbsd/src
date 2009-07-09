@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.39 2009/03/09 16:56:55 blambert Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.40 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -166,10 +166,10 @@ namei(struct nameidata *ndp)
 	 */
 	if (cnp->cn_pnbuf[0] == '/') {
 		dp = ndp->ni_rootdir;
-		VREF(dp);
+		vref(dp);
 	} else {
 		dp = fdp->fd_cdir;
-		VREF(dp);
+		vref(dp);
 	}
 	for (;;) {
 		if (!dp->v_mount) {
@@ -243,7 +243,7 @@ badlink:
 		if (cnp->cn_pnbuf[0] == '/') {
 			vrele(dp);
 			dp = ndp->ni_rootdir;
-			VREF(dp);
+			vref(dp);
 		}
 	}
 	pool_put(&namei_pool, cnp->cn_pnbuf);
@@ -434,7 +434,7 @@ dirloop:
 			if (dp == ndp->ni_rootdir || dp == rootvnode) {
 				ndp->ni_dvp = dp;
 				ndp->ni_vp = dp;
-				VREF(dp);
+				vref(dp);
 				goto nextname;
 			}
 			if ((dp->v_flag & VROOT) == 0 ||
@@ -443,7 +443,7 @@ dirloop:
 			tdp = dp;
 			dp = dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
-			VREF(dp);
+			vref(dp);
 			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY, p);
 		}
 	}
@@ -488,7 +488,7 @@ dirloop:
 		 */
 		if (cnp->cn_flags & SAVESTART) {
 			ndp->ni_startdir = ndp->ni_dvp;
-			VREF(ndp->ni_startdir);
+			vref(ndp->ni_startdir);
 		}
 		return (0);
 	}
@@ -583,7 +583,7 @@ terminal:
 	if (ndp->ni_dvp != NULL) {
 		if (cnp->cn_flags & SAVESTART) {
 			ndp->ni_startdir = ndp->ni_dvp;
-			VREF(ndp->ni_startdir);
+			vref(ndp->ni_startdir);
 		}
 		if (!wantparent)
 			vrele(ndp->ni_dvp);
@@ -684,7 +684,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		}
 		/* ASSERT(dvp == ndp->ni_startdir) */
 		if (cnp->cn_flags & SAVESTART)
-			VREF(dvp);
+			vref(dvp);
 		/*
 		 * We return with ni_vp NULL to indicate that the entry
 		 * doesn't currently exist, leaving a pointer to the
@@ -719,7 +719,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	}
 	/* ASSERT(dvp == ndp->ni_startdir) */
 	if (cnp->cn_flags & SAVESTART)
-		VREF(dvp);
+		vref(dvp);
 	if (!wantparent)
 		vrele(dvp);
 	if ((cnp->cn_flags & LOCKLEAF) == 0)

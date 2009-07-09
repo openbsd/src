@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.24 2007/10/09 00:38:59 krw Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.25 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -573,7 +573,7 @@ found:
 		else
 			dp->i_count = dp->i_offset - prevoff;
 		if (dp->i_number == dp->i_ino) {
-			VREF(vdp);
+			vref(vdp);
 			*vpp = vdp;
 			return (0);
 		}
@@ -664,7 +664,7 @@ found:
 		}
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0)

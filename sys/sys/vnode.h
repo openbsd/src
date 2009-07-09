@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.100 2009/06/15 17:01:26 beck Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.101 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -230,7 +230,6 @@ extern struct freelst vnode_hold_list;	/* free vnodes referencing buffers */
 extern struct freelst vnode_free_list;	/* vnode free list */
 
 #define	VATTR_NULL(vap)	vattr_null(vap)
-#define	VREF(vp)	vref(vp)		/* increase reference */
 #define	NULLVP	((struct vnode *)NULL)
 #define	VN_KNOTE(vp, b)					\
 	KNOTE(&vp->v_selectinfo.si_note, (b))

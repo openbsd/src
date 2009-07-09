@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.20 2007/11/27 16:22:13 martynas Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.21 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -482,7 +482,7 @@ foundroot:;
 		 * Save directory inode pointer in ndp->ni_dvp for dirremove().
 		 */
 		if (dp->de_StartCluster == scn && isadir) {	/* "." */
-			VREF(vdp);
+			vref(vdp);
 			*vpp = vdp;
 			return (0);
 		}
@@ -565,7 +565,7 @@ foundroot:;
 		}
 		*vpp = DETOV(tdp);
 	} else if (dp->de_StartCluster == scn && isadir) {
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)

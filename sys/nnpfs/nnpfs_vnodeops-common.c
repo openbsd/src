@@ -577,7 +577,7 @@ nnpfs_lookup_common(struct vnode *dvp,
 
     if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 	*vpp = dvp;
-	VREF(*vpp);
+	vref(*vpp);
 	return 0;
     }
     

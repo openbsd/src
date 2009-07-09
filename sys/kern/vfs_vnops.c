@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.62 2009/01/29 22:08:45 guenther Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.63 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -438,7 +438,7 @@ vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 			if (p->p_session->s_ttyvp)
 				vrele(p->p_session->s_ttyvp);
 			p->p_session->s_ttyvp = vp;
-			VREF(vp);
+			vref(vp);
 		}
 		return (error);
 	}

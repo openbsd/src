@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.46 2008/11/01 21:35:35 pedro Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.47 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ ktrsettracevnode(struct proc *p, struct vnode *newvp)
 		return;
 
 	if (newvp != NULL)
-		VREF(newvp);
+		vref(newvp);
 
 	vp = p->p_tracep;
 	p->p_tracep = newvp;

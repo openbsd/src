@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.66 2009/06/17 00:13:59 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.67 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -191,10 +191,10 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	 */
 	if (uvn->u_flags & UVM_VNODE_VALID) {	/* already active? */
 
-		/* regain VREF if we were persisting */
+		/* regain vref if we were persisting */
 		if (uvn->u_obj.uo_refs == 0) {
-			VREF(vp);
-			UVMHIST_LOG(maphist," VREF (reclaim persisting vnode)",
+			vref(vp);
+			UVMHIST_LOG(maphist," vref (reclaim persisting vnode)",
 			    0,0,0,0);
 		}
 		uvn->u_obj.uo_refs++;		/* bump uvn ref! */
@@ -292,12 +292,12 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	 * as there is a valid mapping of the vnode.   dropped when the
 	 * reference count goes to zero [and we either free or persist].
 	 */
-	VREF(vp);
+	vref(vp);
 	simple_unlock(&uvn->u_obj.vmobjlock);
 	if (oldflags & UVM_VNODE_WANTED)
 		wakeup(uvn);
 
-	UVMHIST_LOG(maphist,"<- done/VREF, ret %p", &uvn->u_obj,0,0,0);
+	UVMHIST_LOG(maphist,"<- done/vref, ret %p", &uvn->u_obj,0,0,0);
 	return(&uvn->u_obj);
 }
 
@@ -609,7 +609,7 @@ uvm_vnp_terminate(struct vnode *vp)
 	} else {
 
 		/*
-		 * free the uvn now.   note that the VREF reference is already
+		 * free the uvn now.   note that the vref reference is already
 		 * gone [it is dropped when we enter the persist state].
 		 */
 		if (uvn->u_flags & UVM_VNODE_IOSYNCWANTED)
@@ -1771,7 +1771,7 @@ uvm_vnp_uncache(struct vnode *vp)
 	 * it so that we can call uvn_detach to kill the uvn.
 	 */
 
-	VREF(vp);			/* seems ok, even with VOP_LOCK */
+	vref(vp);			/* seems ok, even with VOP_LOCK */
 	uvn->u_obj.uo_refs++;		/* value is now 1 */
 	simple_unlock(&uvn->u_obj.vmobjlock);
 
@@ -1903,7 +1903,7 @@ uvm_vnp_sync(struct mount *mp)
 		 * regain vnode REF).
 		 */
 		if (uvn->u_obj.uo_refs == 0)
-			VREF(vp);
+			vref(vp);
 		uvn->u_obj.uo_refs++;
 
 		SIMPLEQ_INSERT_HEAD(&uvn_sync_q, uvn, u_syncq);

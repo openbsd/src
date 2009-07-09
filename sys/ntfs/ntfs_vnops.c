@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.14 2009/06/02 20:48:48 jasper Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.15 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -734,7 +734,7 @@ ntfs_lookup(ap)
 		dprintf(("ntfs_lookup: faking . directory in %d\n",
 			dip->i_number));
 
-		VREF(dvp);
+		vref(dvp);
 		*ap->a_vpp = dvp;
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {

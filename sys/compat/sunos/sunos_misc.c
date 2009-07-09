@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.46 2004/06/24 19:35:23 tholo Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.47 2009/07/09 22:29:55 thib Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -603,7 +603,7 @@ sunos_sys_fchroot(p, v, retval)
 		FRELE(fp);
 		return (error);
 	}
-	VREF(vp);
+	vref(vp);
 	if (fdp->fd_rdir != NULL)
 		vrele(fdp->fd_rdir);
 	fdp->fd_rdir = vp;

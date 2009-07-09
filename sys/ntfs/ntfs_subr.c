@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.16 2009/03/25 20:39:47 oga Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.17 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -440,7 +440,7 @@ ntfs_ntlookup(
 	ip->i_mp = ntmp;
 
 	LIST_INIT(&ip->i_fnlist);
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 
 	/* init lock and lock the newborn ntnode */
 	rw_init(&ip->i_lock, "ntnode");
@@ -1019,7 +1019,7 @@ ntfs_ntlookupfile(
 			     (attrname && fp->f_attrname &&
 			      !strcmp(attrname, fp->f_attrname))))
 			{
-				VREF(vp);
+				vref(vp);
 				*vpp = vp;
 				error = 0;
 				goto fail;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.35 2008/01/13 21:27:09 krw Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.36 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ retry:
 	 * Directory entry was not in cache, have to create a vnode and
 	 * copy it from the passed disk buffer.
 	 */
-	/* getnewvnode() does a VREF() on the vnode */
+	/* getnewvnode() does a vref() on the vnode */
 	error = getnewvnode(VT_MSDOSFS, pmp->pm_mountp,
 			    msdosfs_vnodeop_p, &nvp);
 	if (error) {
@@ -329,7 +329,7 @@ retry:
 		}
 	} else
 		nvp->v_type = VREG;
-	VREF(ldep->de_devvp);
+	vref(ldep->de_devvp);
 	*depp = ldep;
 	return (0);
 }

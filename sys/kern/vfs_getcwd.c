@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.14 2009/04/17 15:17:27 blambert Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.15 2009/07/09 22:29:56 thib Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -279,8 +279,8 @@ vfs_getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 			rvp = rootvnode;
 	}
 
-	VREF(rvp);
-	VREF(lvp);
+	vref(rvp);
+	vref(lvp);
 
 	error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (error) {
@@ -333,7 +333,7 @@ vfs_getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 				goto out;
 			}
 
-			VREF(lvp);
+			vref(lvp);
 
 			error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY, p);
 			if (error) {

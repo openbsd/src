@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.23 2008/11/02 11:37:32 thib Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.24 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ portal_root(struct mount *mp, struct vnode **vpp)
 	 * Return locked reference to root.
 	 */
 	vp = VFSTOPORTAL(mp)->pm_root;
-	VREF(vp);
+	vref(vp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	*vpp = vp;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.15 2007/10/29 13:02:19 chl Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.16 2009/07/09 22:29:55 thib Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -398,7 +398,7 @@ found:
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
 		brelse(bp);
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,

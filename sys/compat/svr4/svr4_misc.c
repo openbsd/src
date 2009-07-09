@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.49 2007/10/01 12:10:55 martin Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.50 2009/07/09 22:29:55 thib Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -440,7 +440,7 @@ svr4_sys_fchroot(p, v, retval)
 		FRELE(fp);
 		return error;
 	}
-	VREF(vp);
+	vref(vp);
 	if (fdp->fd_rdir != NULL)
 		vrele(fdp->fd_rdir);
 	fdp->fd_rdir = vp;

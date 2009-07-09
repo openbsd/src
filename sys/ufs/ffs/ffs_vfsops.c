@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.119 2008/11/06 18:13:31 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.120 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1257,7 +1257,7 @@ retry:
 	ip = pool_get(&ffs_ino_pool, PR_WAITOK|PR_ZERO);
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	ip->i_ump = ump;
-	VREF(ip->i_devvp);
+	vref(ip->i_devvp);
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_fs = fs = ump->um_fs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.37 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.38 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -484,7 +484,7 @@ found:
 		else
 			dp->i_count = dp->i_offset - prevoff;
 		if (dp->i_number == dp->i_ino) {
-			VREF(vdp);
+			vref(vdp);
 			*vpp = vdp;
 			return (0);
 		}
@@ -579,7 +579,7 @@ found:
 		}
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);

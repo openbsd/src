@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.96 2009/05/30 17:20:29 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.97 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1284,7 +1284,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p)
 		error = ENOTDIR;
 		goto out;
 	}
-	VREF(dp);
+	vref(dp);
 	*retdirp = dp;
 	ndp->ni_startdir = dp;
 	if (rdonly)

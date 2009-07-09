@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.29 2008/10/24 00:22:57 tedu Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.30 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	vp = ncp->nc_vp;
 	vpid = vp->v_id;
 	if (vp == dvp) {	/* lookup on "." */
-		VREF(dvp);
+		vref(dvp);
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp, 0, p);

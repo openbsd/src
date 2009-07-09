@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.159 2009/04/19 17:53:38 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.160 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -463,7 +463,7 @@ main(void *framep)
 	if (VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode))
 		panic("cannot find root vnode");
 	p->p_fd->fd_cdir = rootvnode;
-	VREF(p->p_fd->fd_cdir);
+	vref(p->p_fd->fd_cdir);
 	VOP_UNLOCK(rootvnode, 0, p);
 	p->p_fd->fd_rdir = NULL;
 
@@ -473,7 +473,7 @@ main(void *framep)
 	 * share proc0's CWD info.
 	 */
 	initproc->p_fd->fd_cdir = rootvnode;
-	VREF(initproc->p_fd->fd_cdir);
+	vref(initproc->p_fd->fd_cdir);
 	initproc->p_fd->fd_rdir = NULL;
 
 	/*

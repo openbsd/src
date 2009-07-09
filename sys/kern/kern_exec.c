@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.109 2009/01/04 00:28:42 thib Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.110 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -464,7 +464,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* record proc's vnode, for use by procfs and others */
 	if (p->p_textvp)
 		vrele(p->p_textvp);
-	VREF(pack.ep_vp);
+	vref(pack.ep_vp);
 	p->p_textvp = pack.ep_vp;
 
 	atomic_setbits_int(&p->p_flag, P_EXEC);

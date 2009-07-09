@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.35 2009/06/05 04:35:25 krw Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.36 2009/07/09 22:29:56 thib Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -1006,7 +1006,7 @@ udf_lookup(void *v)
 	 * If dvp is what's being looked up, then return it.
 	 */
 	if (ap->a_cnp->cn_namelen == 1 && ap->a_cnp->cn_nameptr[0] == '.') {
-		VREF(dvp);
+		vref(dvp);
 		*vpp = dvp;
 		return (0);
 	}

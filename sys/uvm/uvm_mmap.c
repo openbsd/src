@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.76 2009/06/17 00:13:59 oga Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.77 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1138,7 +1138,7 @@ uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 			}
 #else
 			/* XXX for now, attach doesn't gain a ref */
-			VREF(vp);
+			vref(vp);
 #endif
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,

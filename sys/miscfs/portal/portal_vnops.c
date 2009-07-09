@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.28 2008/11/02 11:37:32 thib Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.29 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ portal_lookup(void *v)
 
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
-		VREF(dvp);
+		vref(dvp);
 		return (0);
 	}
 

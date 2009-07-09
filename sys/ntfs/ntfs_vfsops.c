@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.13 2008/05/13 02:24:08 brad Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.14 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -596,7 +596,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 			if(error)
 				goto out1;
 			ntmp->ntm_sysvn[pi[i]]->v_flag |= VSYSTEM;
-			VREF(ntmp->ntm_sysvn[pi[i]]);
+			vref(ntmp->ntm_sysvn[pi[i]]);
 			vput(ntmp->ntm_sysvn[pi[i]]);
 		}
 	}

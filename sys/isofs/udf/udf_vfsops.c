@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.28 2009/06/05 04:35:25 krw Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.29 2009/07/09 22:29:56 thib Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -577,7 +577,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	up->u_dev = ump->um_dev;
 	up->u_ump = ump;
 	vp->v_data = up;
-	VREF(ump->um_devvp);
+	vref(ump->um_devvp);
 
 	lockinit(&up->u_lock, PINOD, "unode", 0, 0);
 

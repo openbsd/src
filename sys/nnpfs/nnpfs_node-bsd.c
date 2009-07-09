@@ -653,7 +653,7 @@ nnpfs_dnlc_lock(struct vnode *dvp,
      */
 
     if (*res == dvp) {		/* "." */
-	VREF(dvp);
+	vref(dvp);
     } else if (cnp->cn_flags & ISDOTDOT) { /* ".." */
 	u_long vpid = dvp->v_id;
 

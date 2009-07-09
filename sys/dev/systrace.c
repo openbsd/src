@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.49 2008/11/09 05:13:53 deraadt Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.50 2009/07/09 22:29:55 thib Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -1186,9 +1186,9 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 	fst->fd_rdir = myfdp->fd_rdir;
 
 	if ((myfdp->fd_cdir = fdp->fd_cdir) != NULL)
-		VREF(myfdp->fd_cdir);
+		vref(myfdp->fd_cdir);
 	if ((myfdp->fd_rdir = fdp->fd_rdir) != NULL)
-		VREF(myfdp->fd_rdir);
+		vref(myfdp->fd_rdir);
 
 	return (0);
 }

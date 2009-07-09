@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.115 2009/06/25 15:49:26 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.116 2009/07/09 22:29:56 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -845,7 +845,7 @@ dorpc:
 	 */
 
 	if (NFS_CMPFH(np, fhp, fhsize)) {
-		VREF(dvp);
+		vref(dvp);
 		newvp = dvp;
 		if (v3) {
 			nfsm_postop_attr(newvp, attrflag);
@@ -2438,7 +2438,7 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 			    if (doit) {
 				nfsm_getfh(fhp, fhsize, 1);
 				if (NFS_CMPFH(dnp, fhp, fhsize)) {
-				    VREF(vp);
+				    vref(vp);
 				    newvp = vp;
 				    np = dnp;
 				} else {
@@ -2545,7 +2545,7 @@ nfs_sillyrename(dvp, vp, cnp)
 	sp = malloc(sizeof(struct sillyrename), M_NFSREQ, M_WAITOK);
 	sp->s_cred = crdup(cnp->cn_cred);
 	sp->s_dvp = dvp;
-	VREF(dvp);
+	vref(dvp);
 
 	if (vp->v_type == VDIR) {
 #ifdef DIAGNOSTIC
@@ -2632,7 +2632,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 		    np->n_fhsize = fhlen;
 		    newvp = NFSTOV(np);
 		} else if (NFS_CMPFH(dnp, nfhp, fhlen)) {
-		    VREF(dvp);
+		    vref(dvp);
 		    newvp = dvp;
 		    np = dnp;
 		} else {
