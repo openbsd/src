@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.161 2009/06/26 14:50:44 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.162 2009/07/09 19:24:42 mglocker Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1799,7 +1799,7 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 
 	return (SUCCESSFULLY_QUEUED);
 stuffup:
-	if (sd->sd_scsi_sense.error_code) {
+	if (sd && sd->sd_scsi_sense.error_code) {
 		xs->error = XS_SENSE;
 		bcopy(&sd->sd_scsi_sense, &xs->sense, sizeof(xs->sense));
 		bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
