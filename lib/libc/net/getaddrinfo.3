@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.46 2009/05/06 19:03:09 jacekm Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.47 2009/07/09 10:14:41 eric Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2009 $
+.Dd $Mdocdate: July 9 2009 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -325,12 +325,12 @@ s = -1;
 for (res = res0; res; res = res->ai_next) {
 	s = socket(res->ai_family, res->ai_socktype,
 	    res->ai_protocol);
-	if (s < 0) {
+	if (s == -1) {
 		cause = "socket";
 		continue;
 	}
 
-	if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+	if (connect(s, res->ai_addr, res->ai_addrlen) == -1) {
 		cause = "connect";
 		save_errno = errno;
 		close(s);
@@ -341,7 +341,7 @@ for (res = res0; res; res = res->ai_next) {
 
 	break;	/* okay we got one */
 }
-if (s < 0)
+if (s == -1)
 	err(1, "%s", cause);
 freeaddrinfo(res0);
 .Ed
@@ -368,12 +368,12 @@ nsock = 0;
 for (res = res0; res && nsock < MAXSOCK; res = res->ai_next) {
 	s[nsock] = socket(res->ai_family, res->ai_socktype,
 	    res->ai_protocol);
-	if (s[nsock] < 0) {
+	if (s[nsock] == -1) {
 		cause = "socket";
 		continue;
 	}
 
-	if (bind(s[nsock], res->ai_addr, res->ai_addrlen) < 0) {
+	if (bind(s[nsock], res->ai_addr, res->ai_addrlen) == -1) {
 		cause = "bind";
 		save_errno = errno;
 		close(s[nsock]);

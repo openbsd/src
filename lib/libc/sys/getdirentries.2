@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdirentries.2,v 1.21 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: getdirentries.2,v 1.22 2009/07/09 10:14:41 eric Exp $
 .\"	$NetBSD: getdirentries.2,v 1.7 1995/10/12 15:40:50 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)getdirentries.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 9 2009 $
 .Dt GETDIRENTRIES 2
 .Os
 .Sh NAME
@@ -154,9 +154,9 @@ char *path;
 struct stat sb;
 struct dirent *dp;
 
-if ((fd = open(path, O_RDONLY)) < 0)
+if ((fd = open(path, O_RDONLY)) == -1)
 	err(2, "cannot open %s", path);
-if (fstat(fd, &sb) < 0)
+if (fstat(fd, &sb) == -1)
 	err(2, "fstat");
 bufsize = sb.st_size;
 if (bufsize < sb.st_blksize)
@@ -173,7 +173,7 @@ while ((nbytes = getdirentries(fd, buf, bufsize, &base)) > 0) {
 		cp += dp->d_reclen;
 	}
 }
-if (nbytes < 0)
+if (nbytes == -1)
 	err(2, "getdirentries");
 free(buf);
 .Ed

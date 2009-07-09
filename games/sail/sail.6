@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sail.6,v 1.16 2008/03/17 09:17:56 sobrado Exp $
+.\"	$OpenBSD: sail.6,v 1.17 2009/07/09 10:14:41 eric Exp $
 .\"	$NetBSD: sail.6,v 1.4 1995/04/22 10:37:24 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sail.6	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: March 17 2008 $
+.Dd $Mdocdate: July 9 2009 $
 .Dt SAIL 6
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@ uses a technique stolen from an old game called
 by Jeff Cohen.
 Processes do a busy wait in the loop
 .Bd -literal -offset indent
-for (n = 0; link(sync_file, sync_lock) < 0 && n < 30; n++)
+for (n = 0; link(sync_file, sync_lock) == -1 && n < 30; n++)
 	sleep(2);
 .Ed
 .Pp

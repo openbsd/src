@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.23 2007/05/31 19:19:51 jmc Exp $
+.\" $OpenBSD: midi.4,v 1.24 2009/07/09 10:14:41 eric Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 9 2009 $
 .Dt MIDI 4
 .Os
 .Sh NAME
@@ -166,23 +166,23 @@ ssize_t iused, oused, i;
 ifd[0].events = ifd[1].events = POLLIN;
 for (;;) {
 	oused = 0;
-	if (poll(ifd, 2, -1) < 0)
+	if (poll(ifd, 2, -1) == -1)
 		errx(1, "poll");
 	if (ifd[0].revents & POLLIN) {
-		if ((iused = read(ifd[0].fd, ibuf, BUFSIZE)) < 0)
+		if ((iused = read(ifd[0].fd, ibuf, BUFSIZE)) == -1)
 			errx(1, "read");
 		for (i = 0; i < iused; i++)
 			if (ISTIMING(ibuf[i]))
 				obuf[oused++] = ibuf[i];
 	}
 	if (ifd[1].revents & POLLIN) {
-		if ((iused = read(ifd[1].fd, ibuf, BUFSIZE)) < 0)
+		if ((iused = read(ifd[1].fd, ibuf, BUFSIZE)) == -1)
 			errx(1, "read");
 		for (i = 0; i < iused; i++)
 			if (ISCOMMON(ibuf[i]))
 				obuf[oused++] = ibuf[i];
 	}
-	if (write(ofd, obuf, oused) < 0)
+	if (write(ofd, obuf, oused) == -1)
 		errx(1, "write");
 }
 .Ed
