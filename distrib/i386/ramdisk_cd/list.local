@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.25 2009/07/03 04:34:59 deraadt Exp $
+# $OpenBSD: list.local,v 1.26 2009/07/09 15:54:42 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					bin/sha256
@@ -14,7 +14,7 @@ LINK	instbin					sbin/bioctl
 #COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
 #COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
-COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
+#COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
 
 COPY	${DESTDIR}/etc/firmware/bnx-b06		etc/firmware/bnx-b06
 COPY	${DESTDIR}/etc/firmware/bnx-b09		etc/firmware/bnx-b09
