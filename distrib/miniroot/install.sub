@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.591 2009/07/06 22:11:11 krw Exp $
+#	$OpenBSD: install.sub,v 1.592 2009/07/09 23:45:20 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1494,7 +1494,7 @@ install_sets() {
 		ask "Location of sets? ($_locs or 'done')" "$_d"
 		case $resp in
 		done)	sane_install && return ;;
-		c*|C*)	isin cd $_locs && install_cdrom && method=cdrom ;;
+		c*|C*)	isin cd $_locs && install_cdrom && method=cd ;;
 		d*|D*)	install_disk && method=disk ;;
 		f*|F*)	isin ftp $_locs && install_url ftp && method=ftp ;;
 		h*|H*)	isin http $_locs && install_url http && method=http ;;
