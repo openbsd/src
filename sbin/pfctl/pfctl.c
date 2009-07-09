@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.282 2009/04/16 04:40:19 david Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.283 2009/07/09 23:52:25 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1900,8 +1900,15 @@ pfctl_set_interface_flags(struct pfctl *pf, char *ifname, int flags, int how)
 void
 pfctl_debug(int dev, u_int32_t level, int opts)
 {
-	if (ioctl(dev, DIOCSETDEBUG, &level))
-		err(1, "DIOCSETDEBUG");
+	struct pfr_buffer t;
+
+	memset(&t, 0, sizeof(t));
+	t.pfrb_type = PFRB_TRANS;
+	if (pfctl_trans(dev, &t, DIOCXBEGIN, 0) ||
+	    ioctl(dev, DIOCSETDEBUG, &level) ||
+	    pfctl_trans(dev, &t, DIOCXCOMMIT, 0))
+		err(1, "pfctl_debug ioctl");
+
 	if ((opts & PF_OPT_QUIET) == 0) {
 		fprintf(stderr, "debug level set to '");
 		switch (level) {
