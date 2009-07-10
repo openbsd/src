@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdtemp.c,v 1.8 2009/07/10 00:03:06 cnst Exp $	*/
+/*	$OpenBSD: sdtemp.c,v 1.9 2009/07/10 00:07:37 cnst Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -25,7 +25,6 @@
 
 /* JEDEC JC-42.4 registers */
 #define JC_TEMP			0x05
-#define  JC_TEMP_SIGN		0x1000
 
 /* Sensors */
 #define JCTEMP_TEMP		0
@@ -107,9 +106,9 @@ sdtemp_refresh(void *arg)
 	cmd = JC_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
 	    &cmd, sizeof cmd, &data, sizeof data, 0) == 0) {
-		sdata = betoh16(data) & 0x0fff;
-		if (betoh16(data) & JC_TEMP_SIGN)
-			sdata = -sdata;
+		sdata = betoh16(data) & 0x1fff;
+		if (sdata & 0x1000)
+			sdata = -0x2000;
 		sc->sc_sensor[JCTEMP_TEMP].value =
 		    273150000 + 62500 * sdata;
 		sc->sc_sensor[JCTEMP_TEMP].flags &= ~SENSOR_FINVALID;
