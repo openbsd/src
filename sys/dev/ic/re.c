@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.108 2009/07/03 16:55:27 deraadt Exp $	*/
+/*	$OpenBSD: re.c,v 1.109 2009/07/10 21:29:57 sthen Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -232,7 +232,7 @@ static const struct re_revision {
 	{ RL_HWREV_8168C_SPIN2,	"RTL8168C/8111C" },
 	{ RL_HWREV_8168CP,	"RTL8168CP/8111CP" },
 	{ RL_HWREV_8168D,	"RTL8168D/8111D" },
-	{ RL_HWREV_8168DP,      "RTL8168DP" },
+	{ RL_HWREV_8168DP,      "RTL8168DP/8111DP" },
 	{ RL_HWREV_8169,	"RTL8169" },
 	{ RL_HWREV_8169_8110SB,	"RTL8169/8110SB" },
 	{ RL_HWREV_8169_8110SBL, "RTL8169SBL" },
