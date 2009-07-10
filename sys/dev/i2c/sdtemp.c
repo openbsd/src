@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdtemp.c,v 1.10 2009/07/10 00:17:30 cnst Exp $	*/
+/*	$OpenBSD: sdtemp.c,v 1.11 2009/07/10 18:12:56 cnst Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -109,7 +109,7 @@ sdtemp_refresh(void *arg)
 	    &cmd, sizeof cmd, &data, sizeof data, 0) == 0) {
 		sdata = betoh16(data) & 0x1fff;
 		if (sdata & 0x1000)
-			sdata = -0x2000;
+			sdata -= 0x2000;
 		sc->sc_sensor[JCTEMP_TEMP].value =
 		    273150000 + 62500 * sdata;
 		sc->sc_sensor[JCTEMP_TEMP].flags &= ~SENSOR_FINVALID;
