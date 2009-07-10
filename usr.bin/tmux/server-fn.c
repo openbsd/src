@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.3 2009/06/30 13:40:30 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.4 2009/07/10 05:50:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,8 +29,8 @@ int	server_lock_callback(void *, const char *);
 const char **
 server_fill_environ(struct session *s)
 {
-	static const char *env[] = { NULL /* TMUX= */, "TERM=screen", NULL };
-	static char	tmuxvar[MAXPATHLEN + 256];
+	static const char *env[] = { NULL /* TMUX= */, NULL /* TERM */, NULL };
+	static char	tmuxvar[MAXPATHLEN + 256], termvar[256];
 	u_int		idx;
 
 	if (session_index(s, &idx) != 0)
@@ -39,6 +39,10 @@ server_fill_environ(struct session *s)
 	xsnprintf(tmuxvar, sizeof tmuxvar,
 	    "TMUX=%s,%ld,%u", socket_path, (long) getpid(), idx);
 	env[0] = tmuxvar;
+
+	xsnprintf(termvar, sizeof termvar,
+	    "TERM=%s", options_get_string(&s->options, "default-terminal"));
+	env[1] = termvar;
 
 	return (env);
 }
