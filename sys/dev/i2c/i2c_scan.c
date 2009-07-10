@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.132 2009/07/10 00:17:30 cnst Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.133 2009/07/10 19:58:41 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -855,31 +855,31 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	} else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 	    iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40)) {
 		name = "adm1026";
-	} else if ((addr & 0x18) == 0x18 && iicprobew(0x06) == 0x1131 &&
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1131 &&
 	    iicprobew(0x07) == 0xa101 &&
 	    (iicprobew(0x00) & 0xfff0) == 0x0010) {
 		name = "se98";
-	} else if ((addr & 0x18) == 0x18 && iicprobew(0x06) == 0x1131 &&
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1131 &&
 	    iicprobew(0x07) == 0xa200 &&
 	    (iicprobew(0x00) & 0xfff0) == 0x0010) {
 		name = "se97";
-	} else if ((addr & 0x18) == 0x18 && iicprobew(0x06) == 0x0054 &&
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x0054 &&
 	    iicprobew(0x07) == 0x0000 &&
 	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
 		name = "mcp9805";
-	} else if ((addr & 0x18) == 0x18 && iicprobew(0x06) == 0x0054 &&
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x0054 &&
 	    iicprobew(0x07) == 0x2000 &&
 	    (iicprobew(0x00) & 0xffe0) == 0x0000) {
 		name = "mcp98242";
-	} else if ((addr & 0x18) == 0x18 && iicprobew(0x06) == 0x11d4 &&
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x11d4 &&
 	    (iicprobew(0x07) & 0xfff0) == 0x0800 &&
 	    iicprobew(0x00) == 0x001d) {
 		name = "adt7408";
-	} else if ((addr & 0x18) == 0x18 && iicprobew(0x06) == 0x104a &&
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x104a &&
 	    (iicprobew(0x07) & 0xfffe) == 0x0000 &&
 	    (iicprobew(0x00) == 0x002d || iicprobew(0x00) == 0x002e)) {
 		name = "stts424e02";
-	} else if ((addr & 0x18) == 0x18 && iicprobew(0x06) == 0x1b09 &&
+	} else if ((addr & 0x78) == 0x18 && iicprobew(0x06) == 0x1b09 &&
 	    (iicprobew(0x07) & 0xffe0) == 0x0800 &&
 	    iicprobew(0x00) == 0x001f) {
 		name = "cat34ts02";		/* or cat6095 */
