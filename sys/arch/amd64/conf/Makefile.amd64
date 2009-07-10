@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.16 2009/03/23 18:51:51 guenther Exp $
+#	$OpenBSD: Makefile.amd64,v 1.17 2009/07/10 13:51:47 jsg Exp $
 
 # Makefile for OpenBSD
 #
@@ -48,7 +48,7 @@ CMACHFLAGS+=	-fno-stack-protector
 
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+AFLAGS=		-x assembler-with-cpp -D_LOCORE
 LINKFLAGS=	-Ttext 0xffffffff801001e0 -e start -X
 STRIPFLAGS=	-g -x
 
