@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rename-session.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-rename-session.c,v 1.2 2009/07/10 17:34:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -52,6 +52,8 @@ cmd_rename_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	xfree(s->name);
 	s->name = xstrdup(data->arg);
+
+	server_status_session(s);
 
 	return (0);
 }
