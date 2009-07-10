@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.87 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: malo.c,v 1.88 2009/07/10 07:34:02 blambert Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1133,7 +1133,7 @@ malo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 			malo_cmd_set_channel(sc, chan);
 		}
-		timeout_add(&sc->sc_scan_to, hz / 2);
+		timeout_add_msec(&sc->sc_scan_to, 500);
 		break;
 	case IEEE80211_S_AUTH:
 		DPRINTF(1, "%s: newstate AUTH\n", sc->sc_dev.dv_xname);
