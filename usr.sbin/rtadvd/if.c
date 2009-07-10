@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.20 2009/07/07 20:58:47 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.21 2009/07/10 13:15:43 sthen Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -498,8 +498,10 @@ parse_iflist(struct if_msghdr ***ifmlist_p, char *buf, size_t bufsize)
 			    buf, lim, ifm);
 			return;
 		}
-		if (ifm->ifm_version != RTM_VERSION)
+		if (ifm->ifm_version != RTM_VERSION) {
+			ifm += ifm->ifm_msglen;
 			continue;
+		}
 
 		if (ifm->ifm_type == RTM_IFINFO) {
 			(*ifmlist_p)[ifm->ifm_index] = ifm;
