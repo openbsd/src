@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.84 2009/03/27 14:59:31 jsg Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.85 2009/07/10 07:40:04 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -668,7 +668,7 @@ rum_task(void *arg)
 
 	case IEEE80211_S_SCAN:
 		rum_set_chan(sc, ic->ic_bss->ni_chan);
-		timeout_add(&sc->scan_to, hz / 5);
+		timeout_add_msec(&sc->scan_to, 200);
 		break;
 
 	case IEEE80211_S_AUTH:

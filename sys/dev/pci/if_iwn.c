@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.59 2009/06/02 16:28:21 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.60 2009/07/10 07:44:04 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1566,7 +1566,7 @@ iwn_calib_timeout(void *arg)
 		sc->calib_cnt = 0;
 	}
 	/* Automatic rate control triggered every 500ms. */
-	timeout_add(&sc->calib_to, hz / 2);
+	timeout_add_msec(&sc->calib_to, 500);
 }
 
 int
@@ -4170,7 +4170,7 @@ iwn_run(struct iwn_softc *sc)
 	/* Start periodic calibration timer. */
 	sc->calib.state = IWN_CALIB_STATE_ASSOC;
 	sc->calib_cnt = 0;
-	timeout_add(&sc->calib_to, hz / 2);
+	timeout_add_msec(&sc->calib_to, 500);
 
 	/* Link LED always on while associated. */
 	iwn_set_led(sc, IWN_LED_LINK, 0, 1);

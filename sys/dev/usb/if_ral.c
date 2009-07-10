@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.109 2008/10/15 19:12:18 blambert Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.110 2009/07/10 07:47:38 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -572,7 +572,7 @@ ural_task(void *arg)
 
 	case IEEE80211_S_SCAN:
 		ural_set_chan(sc, ic->ic_bss->ni_chan);
-		timeout_add(&sc->scan_to, hz / 5);
+		timeout_add_msec(&sc->scan_to, 200);
 		break;
 
 	case IEEE80211_S_AUTH:
