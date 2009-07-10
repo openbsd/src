@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.204 2009/07/02 23:48:34 krw Exp $
+#	$OpenBSD: install.sh,v 1.205 2009/07/10 02:59:32 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -204,7 +204,7 @@ fi
 
 # If we managed to talk to the ftplist server before, tell it what
 # location we used... so it can perform magic next time
-if [[ -s $SERVERLIST ]]; then
+if [[ -s $SERVERLISTALL ]]; then
 	_i=
 	[[ -n $installedfrom ]] && _i="install=$installedfrom"
 	[[ -n $TZ ]] && _i="$_i&TZ=$TZ"
@@ -258,7 +258,7 @@ done )
 
 # Feed the random pool some junk before we read from it
 dmesg >/dev/urandom
-cat $SERVERLIST >/dev/urandom 2>/dev/null
+cat $SERVERLISTALL >/dev/urandom 2>/dev/null
 
 echo -n "done.\nGenerating initial host.random file..."
 /mnt/bin/dd if=/mnt/dev/urandom of=/mnt/var/db/host.random \
