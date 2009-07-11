@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopd.c,v 1.15 2006/04/17 18:55:36 maja Exp $ */
+/*	$OpenBSD: mopd.c,v 1.16 2009/07/11 13:42:32 sobrado Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,14 +26,13 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: mopd.c,v 1.15 2006/04/17 18:55:36 maja Exp $";
+    "$OpenBSD: mopd.c,v 1.16 2009/07/11 13:42:32 sobrado Exp $";
 #endif
 
 /*
  * mopd - MOP Dump/Load Daemon
  *
- * Usage:	mopd -a [ -d -f -v ] [ -3 | -4 ]
- *		mopd [ -d -f -v ] [ -3 | -4 ] interface
+ * Usage:	mopd [-3 | -4] [-adfv] interface
  */
 
 #include "os.h"
@@ -160,8 +159,7 @@ main(int argc, char *argv[])
 void
 Usage()
 {
-	fprintf(stderr, "usage: %s -a [ -d -f -v ] [ -3 | -4 ]\n", __progname);
-	fprintf(stderr, "       %s [ -d -f -v ] [ -3 | -4 ] interface\n",
+	fprintf(stderr, "usage: %s [-3 | -4] [-adfv] interface\n",
 	    __progname);
 	exit(1);
 }

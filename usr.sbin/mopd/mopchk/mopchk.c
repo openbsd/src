@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopchk.c,v 1.12 2006/04/29 16:26:56 maja Exp $	*/
+/*	$OpenBSD: mopchk.c,v 1.13 2009/07/11 13:42:32 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -25,13 +25,13 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: mopchk.c,v 1.12 2006/04/29 16:26:56 maja Exp $";
+static const char rcsid[] = "$OpenBSD: mopchk.c,v 1.13 2009/07/11 13:42:32 sobrado Exp $";
 #endif
 
 /*
  * mopchk - MOP Check Utility
  *
- * Usage:	mopchk [-a] [-v] [filename...]
+ * Usage:	mopchk [-av] [file ...]
  */
 
 #include "os.h"
@@ -149,7 +149,7 @@ main(argc, argv)
 void
 Usage()
 {
-	fprintf(stderr, "usage: %s [-a] [-v] [filename...]\n", __progname);
+	fprintf(stderr, "usage: %s [-av] [file ...]\n", __progname);
 	exit(1);
 }
 

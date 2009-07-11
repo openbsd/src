@@ -1,4 +1,4 @@
-.\"	$OpenBSD: moptrace.1,v 1.9 2007/05/31 19:20:25 jmc Exp $
+.\"	$OpenBSD: moptrace.1,v 1.10 2009/07/11 13:42:32 sobrado Exp $
 .\"
 .\" Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
 .\"
@@ -22,9 +22,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: moptrace.1,v 1.9 2007/05/31 19:20:25 jmc Exp $
+.\" @(#) $OpenBSD: moptrace.1,v 1.10 2009/07/11 13:42:32 sobrado Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 11 2009 $
 .Dt MOPTRACE 1
 .Os
 .Sh NAME
@@ -32,14 +32,9 @@
 .Nd MOP Trace Utility
 .Sh SYNOPSIS
 .Nm moptrace
-.Op Fl a
-.Op Fl d
 .Op Fl 3 | 4
-.Pp
-.Nm moptrace
-.Op Fl d
-.Op Fl 3 | 4
-.Op Ar interface
+.Op Fl ad
+.Ar interface
 .Sh DESCRIPTION
 .Nm
 prints the contents of MOP packages on the Ethernet connected to
@@ -50,6 +45,10 @@ is given.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 3
+Ignore MOP V3 messages (Ethernet II).
+.It Fl 4
+Ignore MOP V4 messages (Ethernet 802.3).
 .It Fl a
 Listen on all the Ethernets attached to the system.
 If
@@ -57,10 +56,6 @@ If
 is omitted, an interface must be specified.
 .It Fl d
 Run in debug mode, with all the output to stderr.
-.It Fl 3
-Ignore MOP V3 messages (Ethernet II).
-.It Fl 4
-Ignore MOP V4 messages (Ethernet 802.3).
 .El
 .Sh SEE ALSO
 .Xr mopa.out 1 ,

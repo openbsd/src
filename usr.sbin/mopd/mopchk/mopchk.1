@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopchk.1,v 1.11 2008/09/06 11:11:02 maja Exp $
+.\"	$OpenBSD: mopchk.1,v 1.12 2009/07/11 13:42:32 sobrado Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson.  All rights reserved.
 .\"
@@ -22,9 +22,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopchk.1,v 1.11 2008/09/06 11:11:02 maja Exp $
+.\" @(#) $OpenBSD: mopchk.1,v 1.12 2009/07/11 13:42:32 sobrado Exp $
 .\"
-.Dd $Mdocdate: September 6 2008 $
+.Dd $Mdocdate: July 11 2009 $
 .Dt MOPCHK 1
 .Os
 .Sh NAME
@@ -32,16 +32,15 @@
 .Nd MOP check utility
 .Sh SYNOPSIS
 .Nm mopchk
-.Op Fl a
-.Op Fl v
-.Op Ar filename
+.Op Fl av
+.Op Ar
 .Sh DESCRIPTION
 .Nm
 shows information about which devices are known, version of mopd suite or
 information about a MOP-image.
 .Pp
 If
-.Ar filename
+.Ar file
 is given, information about the MOP-image is read from the header of the
 file.
 .Pp
@@ -50,7 +49,8 @@ The options are as follows:
 .It Fl a
 Show all the Ethernets attached to the system.
 .It Fl v
-Show version of mopchk.
+Show version of
+.Nm .
 .El
 .Sh SEE ALSO
 .Xr mopa.out 1 ,

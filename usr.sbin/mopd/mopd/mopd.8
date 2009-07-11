@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mopd.8,v 1.13 2007/05/31 19:20:25 jmc Exp $
+.\"	$OpenBSD: mopd.8,v 1.14 2009/07/11 13:42:32 sobrado Exp $
 .\"
 .\" Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
 .\"
@@ -22,9 +22,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: mopd.8,v 1.13 2007/05/31 19:20:25 jmc Exp $
+.\" @(#) $OpenBSD: mopd.8,v 1.14 2009/07/11 13:42:32 sobrado Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: July 11 2009 $
 .Dt MOPD 8
 .Os
 .Sh NAME
@@ -32,8 +32,9 @@
 .Nd MOP loader daemon
 .Sh SYNOPSIS
 .Nm mopd
-.Op Fl adf
-.Op Ar interface
+.Op Fl 3 | 4
+.Op Fl adfv
+.Ar interface
 .Sh DESCRIPTION
 .Nm
 services MOP Load requests on the Ethernet connected to
@@ -76,6 +77,10 @@ Anomalies and errors are reported via
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 3
+Ignore MOP V3 messages (Ethernet II).
+.It Fl 4
+Ignore MOP V4 messages (Ethernet 802.3).
 .It Fl a
 Listen on all the Ethernets attached to the system.
 If
@@ -86,6 +91,9 @@ Run in debug mode, with all the output to stdout.
 The process will run in the foreground.
 .It Fl f
 Run in the foreground.
+.It Fl v
+Show version of
+.Nm .
 .El
 .Sh FILES
 .Bl -tag -width Pa -compact
