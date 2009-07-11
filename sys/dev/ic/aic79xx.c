@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.44 2008/06/25 18:21:48 deraadt Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.45 2009/07/11 17:31:22 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -7049,8 +7049,8 @@ ahd_resume(struct ahd_softc *ahd)
  * scbid that should be restored once manipualtion
  * of the TCL entry is complete.
  */
-__inline u_int ahd_index_busy_tcl(struct ahd_softc *, u_int *, u_int);
-__inline u_int
+u_int ahd_index_busy_tcl(struct ahd_softc *, u_int *, u_int);
+u_int
 ahd_index_busy_tcl(struct ahd_softc *ahd, u_int *saved_scbid, u_int tcl)
 {
 	/*
