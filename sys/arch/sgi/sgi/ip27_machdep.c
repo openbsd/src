@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.16 2009/07/06 22:46:43 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.17 2009/07/11 19:56:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -397,17 +397,49 @@ ip27_widget_id(int16_t nasid, u_int widget, uint32_t *wid)
 void
 ip27_halt(int howto)
 {
+	uint32_t promop;
+
 	/*
 	 * Even if ARCBios TLB and exception vectors are restored,
 	 * returning to ARCBios doesn't work.
 	 *
 	 * So, instead, send a reset through the network interface
-	 * of the Hub space.  Unfortunately there is no known way
-	 * to tell the PROM which action we want it to take afterwards.
+	 * of the Hub space.  Although there seems to be a way to tell
+	 * the PROM which action we want it to take afterwards, it
+	 * always reboots for me...
 	 */
 
-	if (howto & RB_HALT)
+	if (howto & RB_HALT) {
+#if 0
+		if (howto & RB_POWERDOWN)
+			promop = GDA_PROMOP_HALT;
+		else
+			promop = GDA_PROMOP_EIM;
+#else
 		return;	/* caller will spin */
+#endif
+	} else
+		promop = GDA_PROMOP_REBOOT;
+
+	promop |= GDA_PROMOP_MAGIC | GDA_PROMOP_NO_DIAGS |
+	    GDA_PROMOP_NO_MEMINIT;
+
+#if 0
+	/*
+	 * That's what one would expect, based on the gda layout...
+	 */
+	gda->promop = promop;
+#else
+	/*
+	 * ...but the magic location is in a different castle.
+	 * And it's not even the same between IP27 and IP35.
+	 * Laugh, everyone! It's what SGI wants us to.
+	 */
+	if (ip35)
+		IP27_LHUB_S(HUBLBBASE_IP35 + 0x8010, promop);
+	else
+		IP27_LHUB_S(HUBPIBASE + 0x418, promop);
+#endif
 
 	if (ip35) {
 		IP27_LHUB_S(HUBNIBASE_IP35 + HUBNI_RESET_ENABLE,
