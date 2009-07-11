@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.5 2009/06/25 06:15:04 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.6 2009/07/11 20:11:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -172,7 +172,7 @@ grid_scroll_line(struct grid *gd)
 
  	GRID_DEBUG(gd, "");
 
-	if (gd->hsize >= gd->hlimit - 1) {
+	if (gd->hsize >= gd->hlimit) {
 		/* If the limit is hit, free the bottom 10% and shift up. */
 		yy = gd->hlimit / 10;
 		if (yy < 1)
