@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.88 2009/06/02 16:28:21 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.89 2009/07/11 13:28:36 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1095,7 +1095,7 @@ wpi_calib_timeout(void *arg)
 		sc->calib_cnt = 0;
 	}
 	/* Automatic rate control triggered every 500ms. */
-	timeout_add(&sc->calib_to, hz / 2);
+	timeout_add_msec(&sc->calib_to, 500);
 }
 
 int
