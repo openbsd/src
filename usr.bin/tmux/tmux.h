@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.20 2009/07/10 05:50:54 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.21 2009/07/11 19:14:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -858,6 +858,7 @@ struct cmd_entry {
 #define CMD_UFLAG 0x100
 #define CMD_BIGDFLAG 0x200
 #define CMD_BIGUFLAG 0x400
+#define CMD_RFLAG 0x800
 
 	int		 flags;
 
