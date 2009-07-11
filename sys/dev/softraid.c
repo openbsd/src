@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.162 2009/07/09 19:24:42 mglocker Exp $ */
+/* $OpenBSD: softraid.c,v 1.163 2009/07/11 15:42:50 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1126,7 +1126,10 @@ sr_boot_assembly(struct sr_softc *sc)
 		bc.bc_dev_list_len = vol->sbv_chunk_no * sizeof(dev_t);
 		bc.bc_dev_list = devs;
 		bc.bc_flags = BIOC_SCDEVT;
+
+		rw_enter_write(&sc->sc_lock);
 		sr_ioctl_createraid(sc, &bc, 0);
+		rw_exit_write(&sc->sc_lock);
 
 		rv++;
 	}
