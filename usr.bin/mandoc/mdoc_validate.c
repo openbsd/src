@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.20 2009/07/12 21:45:44 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.21 2009/07/12 22:35:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -31,26 +31,6 @@
 #define	PRE_ARGS	struct mdoc *mdoc, const struct mdoc_node *n
 #define	POST_ARGS	struct mdoc *mdoc
 
-enum	mwarn {
-	WPRINT,
-	WNOWIDTH,
-	WMISSWIDTH,
-	WESCAPE,
-	WWRONGMSEC,
-	WSECOOO,
-	WSECREP,
-	WBADSTAND,
-	WNAMESECINC,
-	WNOMULTILINE,
-	WMULTILINE,
-	WLINE,
-	WNOLINE,
-	WPROLOOO,
-	WPROLREP,
-	WARGVAL,
-	WBADSEC,
-	WBADMSEC
-};
 
 typedef	int	(*v_pre)(PRE_ARGS);
 typedef	int	(*v_post)(POST_ARGS);
@@ -60,7 +40,6 @@ struct	valids {
 	v_post	*post;
 };
 
-static	int	pwarn(struct mdoc *, int, int, enum mwarn);
 static	int	check_parent(PRE_ARGS, int, enum mdoc_type);
 static	int	check_msec(PRE_ARGS, ...);
 static	int	check_sec(PRE_ARGS, ...);
@@ -124,9 +103,6 @@ static	int	post_sh(POST_ARGS);
 static	int	post_sh_body(POST_ARGS);
 static	int	post_sh_head(POST_ARGS);
 static	int	post_st(POST_ARGS);
-
-#define	vwarn(m, t) nwarn((m), (m)->last, (t))
-#define	nwarn(m, n, t) pwarn((m), (n)->line, (n)->pos, (t))
 
 static	v_pre	pres_an[] = { pre_an, NULL };
 static	v_pre	pres_bd[] = { pre_display, pre_bd, NULL };
@@ -349,86 +325,11 @@ mdoc_valid_post(struct mdoc *mdoc)
 
 
 static int
-pwarn(struct mdoc *m, int line, int pos, enum mwarn type)
-{
-	char		 *p;
-	enum mdoc_warn	  c;
-
-	c = WARN_SYNTAX;
-	p = NULL;
-	switch (type) {
-	case (WBADMSEC):
-		p = "inappropriate manual section";
-		c = WARN_COMPAT;
-		break;
-	case (WBADSEC):
-		p = "inappropriate document section";
-		c = WARN_COMPAT;
-		break;
-	case (WARGVAL):
-		p = "argument value suggested";
-		c = WARN_COMPAT;
-		break;
-	case (WPROLREP):
-		p = "prologue macros repeated";
-		c = WARN_COMPAT;
-		break;
-	case (WPROLOOO):
-		p = "prologue macros out-of-order";
-		c = WARN_COMPAT;
-		break;
-	case (WNOWIDTH):
-		p = "superfluous width argument";
-		break;
-	case (WMISSWIDTH):
-		p = "missing width argument";
-		break;
-	case (WPRINT):
-		p = "invalid character";
-		break;
-	case (WESCAPE):
-		p = "invalid escape sequence";
-		break;
-	case (WNOLINE):
-		p = "suggested no line arguments";
-		break;
-	case (WLINE):
-		p = "suggested line arguments";
-		break;
-	case (WMULTILINE):
-		p = "suggested multi-line arguments";
-		break;
-	case (WNOMULTILINE):
-		p = "suggested no multi-line arguments";
-		break;
-	case (WWRONGMSEC):
-		p = "document section in wrong manual section";
-		c = WARN_COMPAT;
-		break;
-	case (WSECOOO):
-		p = "document section out of conventional order";
-		break;
-	case (WSECREP):
-		p = "document section repeated";
-		break;
-	case (WBADSTAND):
-		p = "unknown standard";
-		break;
-	case (WNAMESECINC):
-		p = "NAME section contents incomplete/badly-ordered";
-		break;
-	}
-	assert(p);
-	return(mdoc_pwarn(m, line, pos, c, p));
-}
-
-
-static int
 warn_print(struct mdoc *m, int ln, int pos)
 {
 
 	if (MDOC_IGN_CHARS & m->pflags)
-		return(pwarn(m, ln, pos, WPRINT));
+		return(mdoc_pwarn(m, ln, pos, EPRINT));
 	return(mdoc_perr(m, ln, pos, EPRINT));
 }
 
@@ -522,7 +423,7 @@ check_stdarg(PRE_ARGS)
 	if (n->args && 1 == n->args->argc)
 		if (MDOC_Std == n->args->argv[0].arg)
 			return(1);
-	return(nwarn(mdoc, n, WARGVAL));
+	return(mdoc_nwarn(mdoc, n, EARGVAL));
 }
 
 
@@ -546,7 +447,7 @@ check_sec(PRE_ARGS, ...)
 	}
 
 	va_end(ap);
-	return(nwarn(mdoc, n, WBADSEC));
+	return(mdoc_nwarn(mdoc, n, EBADSEC));
 }
 
 
@@ -568,7 +469,7 @@ check_msec(PRE_ARGS, ...)
 	}
 
 	va_end(ap);
-	return(nwarn(mdoc, n, WBADMSEC));
+	return(mdoc_nwarn(mdoc, n, EBADMSEC));
 }
 
 
@@ -749,7 +650,7 @@ pre_bl(PRE_ARGS)
 
 	switch (type) {
 	case (MDOC_Tag):
-		if (-1 == width && ! nwarn(mdoc, n, WMISSWIDTH))
+		if (-1 == width && ! mdoc_nwarn(mdoc, n, EMISSWIDTH))
 			return(0);
 		break;
 	case (MDOC_Column):
@@ -759,7 +660,7 @@ pre_bl(PRE_ARGS)
 	case (MDOC_Inset):
 		/* FALLTHROUGH */
 	case (MDOC_Item):
-		if (-1 != width && ! nwarn(mdoc, n, WNOWIDTH))
+		if (-1 != width && ! mdoc_nwarn(mdoc, n, ENOWIDTH))
 			return(0);
 		break;
 	default:
@@ -898,10 +799,10 @@ pre_dt(PRE_ARGS)
 {
 
 	if (0 == mdoc->meta.date || mdoc->meta.os)
-		if ( ! nwarn(mdoc, n, WPROLOOO))
+		if ( ! mdoc_nwarn(mdoc, n, EPROLOOO))
 			return(0);
 	if (mdoc->meta.title)
-		if ( ! nwarn(mdoc, n, WPROLREP))
+		if ( ! mdoc_nwarn(mdoc, n, EPROLREP))
 			return(0);
 	return(1);
 }
@@ -912,10 +813,10 @@ pre_os(PRE_ARGS)
 {
 
 	if (NULL == mdoc->meta.title || 0 == mdoc->meta.date)
-		if ( ! nwarn(mdoc, n, WPROLOOO))
+		if ( ! mdoc_nwarn(mdoc, n, EPROLOOO))
 			return(0);
 	if (mdoc->meta.os)
-		if ( ! nwarn(mdoc, n, WPROLREP))
+		if ( ! mdoc_nwarn(mdoc, n, EPROLREP))
 			return(0);
 	return(1);
 }
@@ -926,10 +827,10 @@ pre_dd(PRE_ARGS)
 {
 
 	if (mdoc->meta.title || mdoc->meta.os)
-		if ( ! nwarn(mdoc, n, WPROLOOO))
+		if ( ! mdoc_nwarn(mdoc, n, EPROLOOO))
 			return(0);
 	if (mdoc->meta.date)
-		if ( ! nwarn(mdoc, n, WPROLREP))
+		if ( ! mdoc_nwarn(mdoc, n, EPROLREP))
 			return(0);
 	return(1);
 }
@@ -1073,7 +974,7 @@ post_it(POST_ARGS)
 	switch (type) {
 	case (MDOC_Tag):
 		if (NULL == mdoc->last->head->child)
-			if ( ! vwarn(mdoc, WLINE))
+			if ( ! mdoc_nwarn(mdoc, mdoc->last, ELINE))
 				return(0);
 		break;
 	case (MDOC_Hang):
@@ -1084,10 +985,10 @@ post_it(POST_ARGS)
 		/* FALLTHROUGH */
 	case (MDOC_Diag):
 		if (NULL == mdoc->last->head->child)
-			if ( ! vwarn(mdoc, WLINE))
+			if ( ! mdoc_nwarn(mdoc, mdoc->last, ELINE))
 				return(0);
 		if (NULL == mdoc->last->body->child)
-			if ( ! vwarn(mdoc, WMULTILINE))
+			if ( ! mdoc_nwarn(mdoc, mdoc->last, EMULTILINE))
 				return(0);
 		break;
 	case (MDOC_Bullet):
@@ -1100,18 +1001,18 @@ post_it(POST_ARGS)
 		/* FALLTHROUGH */
 	case (MDOC_Item):
 		if (mdoc->last->head->child)
-			if ( ! vwarn(mdoc, WNOLINE))
+			if ( ! mdoc_nwarn(mdoc, mdoc->last, ENOLINE))
 				return(0);
 		if (NULL == mdoc->last->body->child)
-			if ( ! vwarn(mdoc, WMULTILINE))
+			if ( ! mdoc_nwarn(mdoc, mdoc->last, EMULTILINE))
 				return(0);
 		break;
 	case (MDOC_Column):
 		if (NULL == mdoc->last->head->child)
-			if ( ! vwarn(mdoc, WLINE))
+			if ( ! mdoc_nwarn(mdoc, mdoc->last, ELINE))
 				return(0);
 		if (mdoc->last->body->child)
-			if ( ! vwarn(mdoc, WNOMULTILINE))
+			if ( ! mdoc_nwarn(mdoc, mdoc->last, ENOMULTILINE))
 				return(0);
 		c = mdoc->last->child;
 		for (i = 0; c && MDOC_HEAD == c->type; c = c->next)
@@ -1224,7 +1125,7 @@ post_st(POST_ARGS)
 
 	if (mdoc_a2st(mdoc->last->child->string))
 		return(1);
-	return(vwarn(mdoc, WBADSTAND));
+	return(mdoc_nwarn(mdoc, mdoc->last, EBADSTAND));
 }
 
 
@@ -1256,20 +1157,20 @@ post_sh_body(POST_ARGS)
 	 */
 
 	if (NULL == (n = mdoc->last->child))
-		return(vwarn(mdoc, WNAMESECINC));
+		return(mdoc_nwarn(mdoc, mdoc->last, ENAMESECINC));
 
 	for ( ; n && n->next; n = n->next) {
 		if (MDOC_ELEM == n->type && MDOC_Nm == n->tok)
 			continue;
 		if (MDOC_TEXT == n->type)
 			continue;
-		if ( ! vwarn(mdoc, WNAMESECINC))
+		if ( ! mdoc_nwarn(mdoc, mdoc->last, ENAMESECINC))
 			return(0);
 	}
 
 	if (MDOC_ELEM == n->type && MDOC_Nd == n->tok)
 		return(1);
-	return(vwarn(mdoc, WNAMESECINC));
+	return(mdoc_nwarn(mdoc, mdoc->last, ENAMESECINC));
 }
 
 
@@ -1313,9 +1214,9 @@ post_sh_head(POST_ARGS)
 	if (SEC_CUSTOM == sec)
 		return(1);
 	if (sec == mdoc->lastnamed)
-		return(vwarn(mdoc, WSECREP));
+		return(mdoc_nwarn(mdoc, mdoc->last, ESECREP));
 	if (sec < mdoc->lastnamed)
-		return(vwarn(mdoc, WSECOOO));
+		return(mdoc_nwarn(mdoc, mdoc->last, ESECOOO));
 
 	/* 
 	 * Check particular section/manual conventions.  LIBRARY can
@@ -1330,7 +1231,7 @@ post_sh_head(POST_ARGS)
 		case (3):
 			break;
 		default:
-			return(vwarn(mdoc, WWRONGMSEC));
+			return(mdoc_nwarn(mdoc, mdoc->last, EWRONGMSEC));
 		}
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.13 2009/07/12 21:45:44 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.14 2009/07/12 22:35:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -24,12 +24,6 @@
 
 #include "libmdoc.h"
 
-enum	mwarn {
-	WBADSEC,
-	WNOWIDTH,
-	WBADDATE
-};
-
 #define	PRE_ARGS  struct mdoc *m, const struct mdoc_node *n
 #define	POST_ARGS struct mdoc *m
 
@@ -38,7 +32,6 @@ struct	actions {
 	int	(*post)(POST_ARGS);
 };
 
-static	int	  pwarn(struct mdoc *, int, int, enum mwarn);
 static	int	  concat(struct mdoc *, const struct mdoc_node *, 
 			char *, size_t);
 
@@ -59,8 +52,6 @@ static	int	  post_std(POST_ARGS);
 
 static	int	  pre_bd(PRE_ARGS);
 static	int	  pre_dl(PRE_ARGS);
-
-#define	vwarn(m, t) pwarn((m), (m)->last->line, (m)->last->pos, (t))
 
 const	struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ap */
@@ -246,31 +237,6 @@ concat(struct mdoc *m, const struct mdoc_node *n,
 
 
 static int
-pwarn(struct mdoc *m, int line, int pos, enum mwarn type)
-{
-	char		*p;
-	int		 c;
-
-	p = NULL;
-	c = WARN_SYNTAX;
-	switch (type) {
-	case (WBADSEC):
-		p = "inappropriate document section in manual section";
-		c = WARN_COMPAT;
-		break;
-	case (WNOWIDTH):
-		p = "cannot determine default width";
-		break;
-	case (WBADDATE):
-		p = "malformed date syntax";
-		break;
-	}
-	assert(p);
-	return(mdoc_pwarn(m, line, pos, c, p));
-}
-
-
-static int
 post_std(POST_ARGS)
 {
 
@@ -351,7 +317,7 @@ post_sh(POST_ARGS)
 		case (9):
 			break;
 		default:
-			return(vwarn(m, WBADSEC));
+			return(mdoc_nwarn(m, m->last, EBADSEC));
 		}
 		break;
 	default:
@@ -514,7 +480,7 @@ post_bl_tagwidth(struct mdoc *m)
 	if (n) {
 		if (MDOC_TEXT != n->type) {
 			if (0 == (sz = (int)mdoc_macro2len(n->tok)))
-				if ( ! vwarn(m, WNOWIDTH))
+				if ( ! mdoc_nwarn(m, m->last, ENOWIDTH))
 					return(0);
 		} else
 			sz = (int)strlen(n->string) + 1;
@@ -582,7 +548,7 @@ post_bl_width(struct mdoc *m)
 	else if (MDOC_MAX == (tok = mdoc_hash_find(m->htab, p)))
 		return(1);
 	else if (0 == (width = mdoc_macro2len(tok))) 
-		return(vwarn(m, WNOWIDTH));
+		return(mdoc_nwarn(m, m->last, ENOWIDTH));
 
 	/* The value already exists: free and reallocate it. */
 
@@ -739,7 +705,7 @@ post_dd(POST_ARGS)
 		return(0);
 
 	if (0 == (m->meta.date = mdoc_atotime(buf))) {
-		if ( ! vwarn(m, WBADDATE))
+		if ( ! mdoc_nwarn(m, m->last, EBADDATE))
 			return(0);
 		m->meta.date = time(NULL);
 	}

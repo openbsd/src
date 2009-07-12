@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.8 2009/07/12 18:28:29 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.9 2009/07/12 22:35:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -178,12 +178,6 @@
 #define	MDOC_Symbolic	 24
 #define	MDOC_Nested	 25
 #define	MDOC_ARG_MAX	 26
-
-/* Warnings are either syntax or groff-compatibility. */
-enum	mdoc_warn {
-	WARN_SYNTAX,
-	WARN_COMPAT
-};
 
 /* Type of a syntax node. */
 enum	mdoc_type {

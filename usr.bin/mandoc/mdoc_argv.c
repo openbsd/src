@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.7 2009/07/12 21:45:44 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.8 2009/07/12 22:35:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -47,13 +47,6 @@
 
 #define	MULTI_STEP	 5
 
-enum 	mwarn {
-	WQUOTPARM,
-	WARGVPARM,
-	WCOLEMPTY,
-	WTAILWS	
-};
-
 static	int		 argv_a2arg(int, const char *);
 static	int		 args(struct mdoc *, int, int *, 
 				char *, int, char **);
@@ -65,7 +58,6 @@ static	int		 argv_opt_single(struct mdoc *, int,
 				struct mdoc_argv *, int *, char *);
 static	int		 argv_multi(struct mdoc *, int, 
 				struct mdoc_argv *, int *, char *);
-static	int		 pwarn(struct mdoc *, int, int, enum mwarn);
 
 /* Per-argument flags. */
 
@@ -275,7 +267,7 @@ mdoc_argv(struct mdoc *m, int line, int tok,
 		/* XXX - restore saved zeroed byte. */
 		if (sv)
 			buf[*pos - 1] = sv;
-		if ( ! pwarn(m, line, i, WARGVPARM))
+		if ( ! mdoc_pwarn(m, line, i, EARGVPARM))
 			return(ARGV_ERROR);
 		return(ARGV_WORD);
 	}
@@ -342,37 +334,8 @@ mdoc_argv_free(struct mdoc_arg *p)
 }
 
 
-static int
-pwarn(struct mdoc *mdoc, int line, int pos, enum mwarn code)
-{
-	char		*p;
-	int		 c;
-
-	p = NULL;
-	c = WARN_SYNTAX;
-	switch (code) {
-	case (WQUOTPARM):
-		p = "unexpected quoted parameter";
-		break;
-	case (WARGVPARM):
-		p = "argument-like parameter";
-		break;
-	case (WCOLEMPTY):
-		p = "last list column is empty";
-		c = WARN_COMPAT;
-		break;
-	case (WTAILWS):
-		p = "trailing whitespace";
-		c = WARN_COMPAT;
-		break;
-	}
-	assert(p);
-	return(mdoc_pwarn(mdoc, line, pos, c, p));
-}
-
-
 int
-mdoc_args(struct mdoc *mdoc, int line, 
+mdoc_args(struct mdoc *m, int line, 
 		int *pos, char *buf, int tok, char **v)
 {
 	int		  fl, c, i;
@@ -388,7 +351,7 @@ mdoc_args(struct mdoc *mdoc, int line,
 
 	switch (tok) {
 	case (MDOC_It):
-		for (n = mdoc->last; n; n = n->parent)
+		for (n = m->last; n; n = n->parent)
 			if (MDOC_BLOCK == n->type && MDOC_Bl == n->tok)
 				break;
 
@@ -423,12 +386,12 @@ mdoc_args(struct mdoc *mdoc, int line,
 		break;
 	}
 
-	return(args(mdoc, line, pos, buf, fl, v));
+	return(args(m, line, pos, buf, fl, v));
 }
 
 
 static int
-args(struct mdoc *mdoc, int line, 
+args(struct mdoc *m, int line, 
 		int *pos, char *buf, int fl, char **v)
 {
 	int		  i;
@@ -440,11 +403,11 @@ args(struct mdoc *mdoc, int line,
 		return(ARGS_EOLN);
 
 	if ('\"' == buf[*pos] && ! (fl & ARGS_QUOTED))
-		if ( ! pwarn(mdoc, line, *pos, WQUOTPARM))
+		if ( ! mdoc_pwarn(m, line, *pos, EQUOTPARM))
 			return(ARGS_ERROR);
 
 	if ( ! (fl & ARGS_ARGVLIKE) && '-' == buf[*pos]) 
-		if ( ! pwarn(mdoc, line, *pos, WARGVPARM))
+		if ( ! mdoc_pwarn(m, line, *pos, EARGVPARM))
 			return(ARGS_ERROR);
 
 	/* 
@@ -536,10 +499,10 @@ args(struct mdoc *mdoc, int line,
 			} 
 
 			if (p && 0 == *p)
-				if ( ! pwarn(mdoc, line, *pos, WCOLEMPTY))
+				if ( ! mdoc_pwarn(m, line, *pos, ECOLEMPTY))
 					return(0);
 			if (p && 0 == *p && p > *v && ' ' == *(p - 1))
-				if ( ! pwarn(mdoc, line, *pos, WTAILWS))
+				if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
 					return(0);
 
 			if (p)
@@ -551,7 +514,7 @@ args(struct mdoc *mdoc, int line,
 			assert(p);
 
 			if (p > *v && ' ' == *(p - 1))
-				if ( ! pwarn(mdoc, line, *pos, WTAILWS))
+				if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
 					return(0);
 			*pos += (int)(p - *v);
 
@@ -583,7 +546,7 @@ args(struct mdoc *mdoc, int line,
 		if (buf[*pos])
 			return(ARGS_WORD);
 
-		if ( ! pwarn(mdoc, line, *pos, WTAILWS))
+		if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
 			return(ARGS_ERROR);
 
 		return(ARGS_WORD);
@@ -601,7 +564,7 @@ args(struct mdoc *mdoc, int line,
 		(*pos)++;
 
 	if (0 == buf[*pos]) {
-		(void)mdoc_perr(mdoc, line, *pos, EQUOTTERM);
+		(void)mdoc_perr(m, line, *pos, EQUOTTERM);
 		return(ARGS_ERROR);
 	}
 
@@ -615,7 +578,7 @@ args(struct mdoc *mdoc, int line,
 	if (buf[*pos])
 		return(ARGS_QWORD);
 
-	if ( ! pwarn(mdoc, line, *pos, WTAILWS))
+	if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
 		return(ARGS_ERROR);
 
 	return(ARGS_QWORD);

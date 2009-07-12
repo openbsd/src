@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.12 2009/07/12 21:45:44 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.13 2009/07/12 22:35:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -118,13 +118,14 @@ extern	const struct mdoc_macro *const mdoc_macros;
 
 __BEGIN_DECLS
 
-int		  mdoc_warn(struct mdoc *, enum mdoc_warn, const char *, ...);
-int		  mdoc_pwarn(struct mdoc *, int, int,
-			enum mdoc_warn,const char *, ...);
 #define		  mdoc_perr(m, l, p, t) \
 		  mdoc_err((m), (l), (p), 1, (t))
+#define		  mdoc_pwarn(m, l, p, t) \
+		  mdoc_err((m), (l), (p), 0, (t))
 #define		  mdoc_nerr(m, n, t) \
 		  mdoc_err((m), (n)->line, (n)->pos, 0, (t))
+#define		  mdoc_nwarn(m, n, t) \
+		  mdoc_err((m), (n)->line, (n)->pos, 1, (t))
 
 int		  mdoc_err(struct mdoc *, int, int, int, enum merr);
 int		  mdoc_verr(struct mdoc *, int, int, const char *, ...);
