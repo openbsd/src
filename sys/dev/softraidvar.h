@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.78 2009/06/26 14:50:44 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.79 2009/07/12 16:31:56 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -25,6 +25,9 @@
 struct sr_uuid {
 	u_int8_t		sui_id[SR_UUID_MAX];
 } __packed;
+
+#define SR_HOTSPARE_LEVEL	0xffffffff
+#define SR_HOTSPARE_VOLID	0xffffffff
 
 #define SR_META_SIZE		64	/* save space at chunk beginning */
 #define SR_META_OFFSET		16	/* skip 8192 bytes at chunk beginning */
@@ -474,6 +477,11 @@ struct sr_softc {
 
 	struct rwlock		sc_lock;
 
+	struct sr_chunk_head	sc_hotspare_list;	/* List of hotspares. */
+	struct sr_chunk		**sc_hotspares;	/* Array to hotspare chunks. */
+	struct rwlock		sc_hs_lock;	/* Lock for hotspares list. */
+	int			sc_hotspare_no; /* Number of hotspares. */
+
 	int			sc_sensors_running;
 	/*
 	 * during scsibus attach this is the discipline that is in use
@@ -492,6 +500,9 @@ struct sr_softc {
 /* hotplug */
 void			sr_hotplug_register(struct sr_discipline *, void *);
 void			sr_hotplug_unregister(struct sr_discipline *, void *);
+
+/* Hotspare and rebuild. */
+void			sr_hotspare_rebuild_callback(void *, void *);
 
 /* work units & ccbs */
 int			sr_ccb_alloc(struct sr_discipline *);
