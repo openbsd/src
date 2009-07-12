@@ -1,7 +1,8 @@
-/* $OpenBSD: softraid.c,v 1.166 2009/07/12 21:46:36 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.167 2009/07/12 21:48:03 jsing Exp $ */
 /*
- * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
+ * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
+ * Copyright (c) 2009 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
