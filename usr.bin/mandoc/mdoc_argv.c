@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.8 2009/07/12 22:35:08 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.9 2009/07/12 23:26:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -33,7 +33,6 @@
  */
 
 /* FIXME .Bf Li raises "macro-like parameter". */
-/* FIXME .Bl -column should deprecate old-groff syntax. */
 
 #define	ARGS_QUOTED	(1 << 0)
 #define	ARGS_DELIM	(1 << 1)
