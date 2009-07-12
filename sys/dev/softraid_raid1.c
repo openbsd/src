@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.16 2009/06/24 12:06:00 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.17 2009/07/12 16:33:02 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -323,6 +323,10 @@ die:
 	}
 
 	sd->sd_vol_status = new_state;
+
+	/* If we have just become degraded, look for a hotspare. */
+	if (new_state == BIOC_SVDEGRADED)
+		workq_add_task(NULL, 0, sr_hotspare_rebuild_callback, sd, NULL);
 }
 
 int
