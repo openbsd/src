@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.88 2009/07/10 07:34:02 blambert Exp $ */
+/*	$OpenBSD: malo.c,v 1.89 2009/07/12 18:24:23 mglocker Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -931,9 +931,9 @@ malo_init(struct ifnet *ifp)
 
 fail:
 	/* reset adapter */
-	DPRINTF(1, "%s: malo_init failed, reseting card\n",
+	DPRINTF(1, "%s: malo_init failed, resetting card\n",
 	    sc->sc_dev.dv_xname);
-	malo_ctl_write4(sc, 0x0c18, (1 << 15));
+	malo_stop(sc);
 	return (error);
 }
 
