@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.165 2009/07/12 16:31:56 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.166 2009/07/12 21:46:36 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2013,7 +2013,11 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 		if (bv->bv_status == BIOC_SVREBUILD) {
 			sz = sd->sd_meta->ssdi.ssd_size;
 			rb = sd->sd_meta->ssd_rebuild;
-			bv->bv_percent = 100 - ((sz * 100 - rb * 100) / sz);
+			if (rb > 0)
+				bv->bv_percent = 100 -
+				    ((sz * 100 - rb * 100) / sz) - 1;
+			else
+				bv->bv_percent = 0;
 		}
 		strlcpy(bv->bv_dev, sd->sd_meta->ssd_devname,
 		    sizeof(bv->bv_dev));
@@ -3578,7 +3582,10 @@ sr_rebuild_thread(void *arg)
 		 */
 		psz = sd->sd_meta->ssdi.ssd_size;
 		rb = sd->sd_meta->ssd_rebuild;
-		percent = 100 - ((psz * 100 - rb * 100) / psz);
+		if (rb > 0)
+			percent = 100 - ((psz * 100 - rb * 100) / psz) - 1;
+		else
+			percent = 0;
 		printf("%s: resuming rebuild on %s at %llu%%\n",
 		    DEVNAME(sc), sd->sd_meta->ssd_devname, percent);
 	}
@@ -3675,7 +3682,10 @@ queued:
 		/* save metadata every percent */
 		psz = sd->sd_meta->ssdi.ssd_size;
 		rb = sd->sd_meta->ssd_rebuild;
-		percent = 100 - ((psz * 100 - rb * 100) / psz);
+		if (rb > 0)
+			percent = 100 - ((psz * 100 - rb * 100) / psz) - 1;
+		else
+			percent = 0;
 		if (percent != old_percent && blk != whole_blk) {
 			if (sr_meta_save(sd, SR_META_DIRTY))
 				printf("%s: could not save metadata to %s\n",
