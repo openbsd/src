@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.16 2009/07/12 18:35:57 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.17 2009/07/12 19:05:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -534,7 +534,7 @@ err_count(struct mdoc *m, const char *k,
 		int want, const char *v, int has)
 {
 
-	return(mdoc_err(m, 
+	return(mdoc_verr(m, m->last->line, m->last->pos,
 		"requires %s %s %d (has %d)", v, k, want, has));
 }
 
@@ -740,7 +740,7 @@ check_parent(PRE_ARGS, int tok, enum mdoc_type t)
 			(t == n->parent->type))
 		return(1);
 
-	return(mdoc_nerr(mdoc, n, "require parent %s",
+	return(mdoc_verr(mdoc, n->line, n->pos, "require parent %s",
 		MDOC_ROOT == t ? "<root>" : mdoc_macronames[tok]));
 }
 
@@ -930,7 +930,8 @@ pre_an(PRE_ARGS)
 
 	if (NULL == n->args || 1 == n->args->argc)
 		return(1);
-	return(mdoc_nerr(mdoc, n, "only one argument allowed"));
+	return(mdoc_verr(mdoc, n->line, n->pos, 
+				"only one argument allowed"));
 }
 
 
@@ -1203,8 +1204,9 @@ post_it(POST_ARGS)
 			i++;
 		if (i == cols)
 			break;
-		return(mdoc_err(mdoc, "column mismatch (have "
-					"%d, want %d)", i, cols));
+		return(mdoc_verr(mdoc, mdoc->last->line, mdoc->last->pos,
+				"column mismatch (have %d, want %d)", 
+				i, cols));
 	default:
 		break;
 	}
@@ -1253,7 +1255,8 @@ post_bl(POST_ARGS)
 		if (MDOC_BLOCK == n->type) 
 			if (MDOC_It == n->tok)
 				continue;
-		return(mdoc_nerr(mdoc, n, "bad child of parent %s",
+		return(mdoc_verr(mdoc, n->line, n->pos, 
+				"bad child of parent %s",
 				mdoc_macronames[mdoc->last->tok]));
 	}
 

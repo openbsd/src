@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.12 2009/07/12 18:35:57 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.13 2009/07/12 19:05:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -648,7 +648,7 @@ static int
 macrowarn(struct mdoc *m, int ln, const char *buf)
 {
 	if ( ! (MDOC_IGN_MACRO & m->pflags))
-		return(mdoc_perr(m, ln, 1, 
+		return(mdoc_verr(m, ln, 1, 
 				"unknown macro: %s%s", 
 				buf, strlen(buf) > 3 ? "..." : ""));
 	return(mdoc_vwarn(m, ln, 1, "unknown macro: %s%s",
