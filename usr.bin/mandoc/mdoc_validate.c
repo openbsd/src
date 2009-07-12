@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.18 2009/07/12 20:30:27 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.19 2009/07/12 21:08:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -669,7 +669,7 @@ check_argv(struct mdoc *m, const struct mdoc_node *n,
 		/* `Nm' name must be set. */
 		if (v->sz || m->meta.name)
 			return(1);
-		return(nerr(m, n, ENAME));
+		return(mdoc_nerr(m, n, ENAME));
 	}
 
 	return(1);
@@ -744,7 +744,7 @@ pre_display(PRE_ARGS)
 	if (NULL == node)
 		return(1);
 
-	return(nerr(mdoc, n, ENESTDISP));
+	return(mdoc_nerr(mdoc, n, ENESTDISP));
 }
 
 
@@ -756,7 +756,7 @@ pre_bl(PRE_ARGS)
 	if (MDOC_BLOCK != n->type)
 		return(1);
 	if (NULL == n->args)
-		return(nerr(mdoc, n, ELISTTYPE));
+		return(mdoc_nerr(mdoc, n, ELISTTYPE));
 
 	/* Make sure that only one type of list is specified.  */
 
@@ -787,17 +787,17 @@ pre_bl(PRE_ARGS)
 			/* FALLTHROUGH */
 		case (MDOC_Column):
 			if (-1 != type) 
-				return(nerr(mdoc, n, EMULTILIST));
+				return(mdoc_nerr(mdoc, n, EMULTILIST));
 			type = n->args->argv[pos].arg;
 			break;
 		case (MDOC_Width):
 			if (-1 != width)
-				return(nerr(mdoc, n, EARGREP));
+				return(mdoc_nerr(mdoc, n, EARGREP));
 			width = n->args->argv[pos].arg;
 			break;
 		case (MDOC_Offset):
 			if (-1 != offset)
-				return(nerr(mdoc, n, EARGREP));
+				return(mdoc_nerr(mdoc, n, EARGREP));
 			offset = n->args->argv[pos].arg;
 			break;
 		default:
@@ -805,7 +805,7 @@ pre_bl(PRE_ARGS)
 		}
 
 	if (-1 == type)
-		return(nerr(mdoc, n, ELISTTYPE));
+		return(mdoc_nerr(mdoc, n, ELISTTYPE));
 
 	/* 
 	 * Validate the width field.  Some list types don't need width
@@ -844,7 +844,7 @@ pre_bd(PRE_ARGS)
 	if (MDOC_BLOCK != n->type)
 		return(1);
 	if (NULL == n->args) 
-		return(nerr(mdoc, n, EDISPTYPE));
+		return(mdoc_nerr(mdoc, n, EDISPTYPE));
 
 	/* Make sure that only one type of display is specified.  */
 
@@ -863,14 +863,14 @@ pre_bd(PRE_ARGS)
 		case (MDOC_File):
 			if (0 == type++) 
 				break;
-			return(nerr(mdoc, n, EMULTIDISP));
+			return(mdoc_nerr(mdoc, n, EMULTIDISP));
 		default:
 			break;
 		}
 
 	if (type)
 		return(1);
-	return(nerr(mdoc, n, EDISPTYPE));
+	return(mdoc_nerr(mdoc, n, EDISPTYPE));
 }
 
 
@@ -1013,12 +1013,12 @@ post_bf(POST_ARGS)
 	head = mdoc->last->head;
 
 	if (mdoc->last->args && head->child)
-		return(mdoc_nerr(mdoc, mdoc->last, "one argument expected"));
+		return(mdoc_nerr(mdoc, mdoc->last, ELINE));
 	else if (mdoc->last->args)
 		return(1);
 
 	if (NULL == head->child || MDOC_TEXT != head->child->type)
-		return(mdoc_nerr(mdoc, mdoc->last, "text argument expected"));
+		return(mdoc_nerr(mdoc, mdoc->last, ELINE));
 
 	p = head->child->string;
 
@@ -1029,7 +1029,7 @@ post_bf(POST_ARGS)
 	else if (0 == strcmp(p, "Sm"))
 		return(1);
 
-	return(mdoc_nerr(mdoc, head->child, "invalid font mode"));
+	return(mdoc_nerr(mdoc, head, EFONT));
 }
 
 
@@ -1041,7 +1041,7 @@ post_nm(POST_ARGS)
 		return(1);
 	if (mdoc->meta.name)
 		return(1);
-	return(verr(mdoc, ENAME));
+	return(mdoc_nerr(mdoc, mdoc->last, ENAME));
 }
 
 
@@ -1052,10 +1052,10 @@ post_at(POST_ARGS)
 	if (NULL == mdoc->last->child)
 		return(1);
 	if (MDOC_TEXT != mdoc->last->child->type)
-		return(verr(mdoc, EATT));
+		return(mdoc_nerr(mdoc, mdoc->last, EATT));
 	if (mdoc_a2att(mdoc->last->child->string))
 		return(1);
-	return(verr(mdoc, EATT));
+	return(mdoc_nerr(mdoc, mdoc->last, EATT));
 }
 
 
@@ -1066,12 +1066,12 @@ post_an(POST_ARGS)
 	if (mdoc->last->args) {
 		if (NULL == mdoc->last->child)
 			return(1);
-		return(verr(mdoc, ELINE));
+		return(mdoc_nerr(mdoc, mdoc->last, ELINE));
 	}
 
 	if (mdoc->last->child)
 		return(1);
-	return(verr(mdoc, ELINE));
+	return(mdoc_nerr(mdoc, mdoc->last, ELINE));
 }
 
 
@@ -1081,7 +1081,7 @@ post_args(POST_ARGS)
 
 	if (mdoc->last->args)
 		return(1);
-	return(verr(mdoc, ELINE));
+	return(mdoc_nerr(mdoc, mdoc->last, ELINE));
 }
 
 
@@ -1096,7 +1096,7 @@ post_it(POST_ARGS)
 
 	n = mdoc->last->parent->parent;
 	if (NULL == n->args)
-		return(verr(mdoc, ELISTTYPE));
+		return(mdoc_nerr(mdoc, mdoc->last, ELISTTYPE));
 
 	/* Some types require block-head, some not. */
 
@@ -1134,7 +1134,7 @@ post_it(POST_ARGS)
 		}
 
 	if (-1 == type)
-		return(verr(mdoc, ELISTTYPE));
+		return(mdoc_nerr(mdoc, mdoc->last, ELISTTYPE));
 
 	switch (type) {
 	case (MDOC_Tag):
@@ -1212,7 +1212,7 @@ post_bl_head(POST_ARGS)
 		return(1);
 
 	if (n->args->argv[i].sz && mdoc->last->child)
-		return(nerr(mdoc, n, ECOLMIS));
+		return(mdoc_nerr(mdoc, n, ECOLMIS));
 
 	return(1);
 }
@@ -1262,7 +1262,7 @@ ebool(struct mdoc *mdoc)
 
 	if (NULL == n)
 		return(1);
-	return(nerr(mdoc, n, EBOOL));
+	return(mdoc_nerr(mdoc, n, EBOOL));
 }
 
 
@@ -1271,14 +1271,14 @@ post_root(POST_ARGS)
 {
 
 	if (NULL == mdoc->first->child)
-		return(verr(mdoc, ENODAT));
+		return(mdoc_nerr(mdoc, mdoc->first, ENODAT));
 	if ( ! (MDOC_PBODY & mdoc->flags))
-		return(verr(mdoc, ENOPROLOGUE));
+		return(mdoc_nerr(mdoc, mdoc->first, ENOPROLOGUE));
 
 	if (MDOC_BLOCK != mdoc->first->child->type)
-		return(verr(mdoc, ENODAT));
+		return(mdoc_nerr(mdoc, mdoc->first, ENODAT));
 	if (MDOC_Sh != mdoc->first->child->tok)
-		return(verr(mdoc, ENODAT));
+		return(mdoc_nerr(mdoc, mdoc->first, ENODAT));
 
 	return(1);
 }
@@ -1360,11 +1360,11 @@ post_sh_head(POST_ARGS)
 		assert(MDOC_TEXT == n->type);
 
 		if (strlcat(buf, n->string, 64) >= 64)
-			return(nerr(mdoc, n, ETOOLONG));
+			return(mdoc_nerr(mdoc, n, ETOOLONG));
 		if (NULL == n->next)
 			continue;
 		if (strlcat(buf, " ", 64) >= 64)
-			return(nerr(mdoc, n, ETOOLONG));
+			return(mdoc_nerr(mdoc, n, ETOOLONG));
 	}
 
 	sec = mdoc_atosec(buf);
@@ -1375,7 +1375,7 @@ post_sh_head(POST_ARGS)
 	 */
 
 	if (SEC_NAME != sec && SEC_NONE == mdoc->lastnamed)
-		return(verr(mdoc, ESECNAME));
+		return(mdoc_nerr(mdoc, mdoc->last, ESECNAME));
 	if (SEC_CUSTOM == sec)
 		return(1);
 	if (sec == mdoc->lastnamed)

@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.14 2009/07/12 20:30:27 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.15 2009/07/12 21:08:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -329,24 +329,6 @@ mdoc_vwarn(struct mdoc *mdoc, int ln, int pos, const char *fmt, ...)
 
 
 int
-mdoc_nerr(struct mdoc *mdoc, const struct mdoc_node *node, 
-		const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_err)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_err)(mdoc->data, 
-				node->line, node->pos, buf));
-}
-
-
-int
 mdoc_warn(struct mdoc *mdoc, enum mdoc_warn type, 
 		const char *fmt, ...)
 {
@@ -534,8 +516,7 @@ node_alloc(struct mdoc *mdoc, int line,
 	struct mdoc_node *p;
 
 	if (NULL == (p = calloc(1, sizeof(struct mdoc_node)))) {
-		(void)perr(mdoc, (mdoc)->last->line, 
-				(mdoc)->last->pos, EMALLOC);
+		(void)mdoc_nerr(mdoc, mdoc->last, EMALLOC);
 		return(NULL);
 	}
 
@@ -631,10 +612,10 @@ mdoc_word_alloc(struct mdoc *mdoc,
 	if (NULL == p)
 		return(0);
 	if (NULL == (p->string = strdup(word))) {
-		(void)perr(mdoc, (mdoc)->last->line, 
-				(mdoc)->last->pos, EMALLOC);
+		(void)mdoc_nerr(mdoc, mdoc->last, EMALLOC);
 		return(0);
 	}
+
 	return(node_append(mdoc, p));
 }
 

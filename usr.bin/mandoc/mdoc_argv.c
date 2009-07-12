@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.5 2009/07/12 20:30:27 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.6 2009/07/12 21:08:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -229,7 +229,7 @@ static	int mdoc_argflags[MDOC_MAX] = {
  * one mandatory value, an optional single value, or no value.
  */
 int
-mdoc_argv(struct mdoc *mdoc, int line, int tok,
+mdoc_argv(struct mdoc *m, int line, int tok,
 		struct mdoc_arg **v, int *pos, char *buf)
 {
 	int		  i;
@@ -278,7 +278,7 @@ mdoc_argv(struct mdoc *mdoc, int line, int tok,
 		/* XXX - restore saved zeroed byte. */
 		if (sv)
 			buf[*pos - 1] = sv;
-		if ( ! pwarn(mdoc, line, i, WARGVPARM))
+		if ( ! pwarn(m, line, i, WARGVPARM))
 			return(ARGV_ERROR);
 		return(ARGV_WORD);
 	}
@@ -286,13 +286,13 @@ mdoc_argv(struct mdoc *mdoc, int line, int tok,
 	while (buf[*pos] && ' ' == buf[*pos])
 		(*pos)++;
 
-	if ( ! argv(mdoc, line, &tmp, pos, buf))
+	if ( ! argv(m, line, &tmp, pos, buf))
 		return(ARGV_ERROR);
 
 	if (NULL == (arg = *v)) {
 		*v = calloc(1, sizeof(struct mdoc_arg));
 		if (NULL == *v) {
-			(void)verr(mdoc, EMALLOC);
+			(void)mdoc_nerr(m, m->last, EMALLOC);
 			return(ARGV_ERROR);
 		}
 		arg = *v;
@@ -303,7 +303,7 @@ mdoc_argv(struct mdoc *mdoc, int line, int tok,
 			sizeof(struct mdoc_argv));
 
 	if (NULL == arg->argv) {
-		(void)verr(mdoc, EMALLOC);
+		(void)mdoc_nerr(m, m->last, EMALLOC);
 		return(ARGV_ERROR);
 	}
 
@@ -747,7 +747,7 @@ argv_a2arg(int tok, const char *argv)
 
 
 static int
-argv_multi(struct mdoc *mdoc, int line, 
+argv_multi(struct mdoc *m, int line, 
 		struct mdoc_argv *v, int *pos, char *buf)
 {
 	int		 c;
@@ -756,7 +756,7 @@ argv_multi(struct mdoc *mdoc, int line,
 	for (v->sz = 0; ; v->sz++) {
 		if ('-' == buf[*pos])
 			break;
-		c = args(mdoc, line, pos, buf, ARGS_QUOTED, &p);
+		c = args(m, line, pos, buf, ARGS_QUOTED, &p);
 		if (ARGS_ERROR == c)
 			return(0);
 		else if (ARGS_EOLN == c)
@@ -766,12 +766,12 @@ argv_multi(struct mdoc *mdoc, int line,
 			v->value = realloc(v->value, 
 				(v->sz + MULTI_STEP) * sizeof(char *));
 			if (NULL == v->value) {
-				(void)verr(mdoc, EMALLOC);
+				(void)mdoc_nerr(m, m->last, EMALLOC);
 				return(ARGV_ERROR);
 			}
 		}
 		if (NULL == (v->value[(int)v->sz] = strdup(p)))
-			return(verr(mdoc, EMALLOC));
+			return(mdoc_nerr(m, m->last, EMALLOC));
 	}
 
 	return(1);
@@ -779,7 +779,7 @@ argv_multi(struct mdoc *mdoc, int line,
 
 
 static int
-argv_opt_single(struct mdoc *mdoc, int line, 
+argv_opt_single(struct mdoc *m, int line, 
 		struct mdoc_argv *v, int *pos, char *buf)
 {
 	int		 c;
@@ -788,7 +788,7 @@ argv_opt_single(struct mdoc *mdoc, int line,
 	if ('-' == buf[*pos])
 		return(1);
 
-	c = args(mdoc, line, pos, buf, ARGS_QUOTED, &p);
+	c = args(m, line, pos, buf, ARGS_QUOTED, &p);
 	if (ARGS_ERROR == c)
 		return(0);
 	if (ARGS_EOLN == c)
@@ -796,9 +796,9 @@ argv_opt_single(struct mdoc *mdoc, int line,
 
 	v->sz = 1;
 	if (NULL == (v->value = calloc(1, sizeof(char *))))
-		return(verr(mdoc, EMALLOC));
+		return(mdoc_nerr(m, m->last, EMALLOC));
 	if (NULL == (v->value[0] = strdup(p)))
-		return(verr(mdoc, EMALLOC));
+		return(mdoc_nerr(m, m->last, EMALLOC));
 
 	return(1);
 }
@@ -808,7 +808,7 @@ argv_opt_single(struct mdoc *mdoc, int line,
  * Parse a single, mandatory value from the stream.
  */
 static int
-argv_single(struct mdoc *mdoc, int line, 
+argv_single(struct mdoc *m, int line, 
 		struct mdoc_argv *v, int *pos, char *buf)
 {
 	int		 c, ppos;
@@ -816,17 +816,17 @@ argv_single(struct mdoc *mdoc, int line,
 
 	ppos = *pos;
 
-	c = args(mdoc, line, pos, buf, ARGS_QUOTED, &p);
+	c = args(m, line, pos, buf, ARGS_QUOTED, &p);
 	if (ARGS_ERROR == c)
 		return(0);
 	if (ARGS_EOLN == c)
-		return(perr(mdoc, line, ppos, EARGVAL));
+		return(perr(m, line, ppos, EARGVAL));
 
 	v->sz = 1;
 	if (NULL == (v->value = calloc(1, sizeof(char *))))
-		return(verr(mdoc, EMALLOC));
+		return(mdoc_nerr(m, m->last, EMALLOC));
 	if (NULL == (v->value[0] = strdup(p)))
-		return(verr(mdoc, EMALLOC));
+		return(mdoc_nerr(m, m->last, EMALLOC));
 
 	return(1);
 }

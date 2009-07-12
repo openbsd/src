@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.7 2009/07/12 20:30:27 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.8 2009/07/12 21:08:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -305,7 +305,7 @@ mdoc_macroend(struct mdoc *mdoc)
 			continue;
 		if ( ! (MDOC_EXPLICIT & mdoc_macros[n->tok].flags))
 			continue;
-		return(nerr(mdoc, n, EOPEN));
+		return(mdoc_nerr(mdoc, n, EOPEN));
 	}
 
 	return(rew_last(mdoc, mdoc->first));
