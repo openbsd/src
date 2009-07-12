@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.17 2009/07/12 16:33:02 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.18 2009/07/12 16:34:58 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -239,14 +239,18 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 	else if (states[BIOC_SDOFFLINE] != 0)
 		new_state = BIOC_SVDEGRADED;
 	else {
-		printf("old_state = %d, ", old_state);
+#ifdef SR_DEBUG
+		DNPRINTF(SR_D_STATE, "%s: invalid volume state, old state "
+		    "was %d\n", DEVNAME(sd->sd_sc), old_state);
 		for (i = 0; i < nd; i++)
-			printf("%d = %d, ", i,
+			DNPRINTF(SR_D_STATE, "%s: chunk %d status = %d\n",
+			    DEVNAME(sd->sd_sc), i,
 			    sd->sd_vol.sv_chunks[i]->src_meta.scm_status);
-		panic("invalid new_state");
+#endif
+		panic("invalid volume state");
 	}
 
-	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid_set_vol_state %d -> %d\n",
+	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid1_set_vol_state %d -> %d\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
 	    old_state, new_state);
 
