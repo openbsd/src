@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.10 2009/07/06 21:40:30 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.11 2009/07/12 20:30:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -28,13 +28,6 @@ enum	mwarn {
 	WBADSEC,
 	WNOWIDTH,
 	WBADDATE
-};
-
-enum	merr {
-	ETOOLONG,
-	EMALLOC,
-	EUTSNAME,
-	ENUMFMT
 };
 
 #define	PRE_ARGS  struct mdoc *m, const struct mdoc_node *n

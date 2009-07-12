@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.9 2009/07/12 19:05:52 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.10 2009/07/12 20:30:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -41,6 +41,64 @@ struct	mdoc {
 	enum mdoc_sec	  lastsec;
 };
 
+enum	merr {
+	ETAILWS = 0,
+	ECOLEMPTY,
+	EARGVPARM,
+	EQUOTPARM,
+	EQUOTTERM,
+	EMALLOC,
+	EARGVAL,	
+	ENOCALL,
+	EBODYPROL,
+	EPROLBODY,
+	ETEXTPROL,
+	ENOBLANK,
+	ETOOLONG,
+	EESCAPE,
+	EPRINT,
+	ENODAT,
+	ENOPROLOGUE,
+	ELINE,
+	EATT,
+	ENAME,
+	ELISTTYPE,
+	EDISPTYPE,
+	EMULTIDISP,
+	EMULTILIST,
+	ESECNAME,
+	ENAMESECINC,
+	EARGREP,
+	EBOOL,
+	ECOLMIS,
+	ENESTDISP,
+	EMISSWIDTH,
+	EWRONGMSEC,
+	ESECOOO,
+	ESECREP,
+	EBADSTAND,
+	ENOMULTILINE,
+	EMULTILINE,
+	ENOLINE,
+	EPROLOOO,
+	EPROLREP,
+	EBADMSEC,
+	EBADSEC,
+	EFONT,
+	EBADDATE,
+	ENUMFMT,
+	ENOWIDTH,
+	EUTSNAME,
+	EOBS,
+	EMACPARM,
+	EIMPBRK,
+	EIGNE,
+	EOPEN,
+	EQUOTPHR,
+	ENOCTX,
+	ESPACE,
+	MERRMAX
+};
 
 #define	MACRO_PROT_ARGS	struct mdoc *mdoc, int tok, int line, \
 			int ppos, int *pos, char *buf
@@ -67,11 +125,11 @@ __BEGIN_DECLS
 int		  mdoc_nerr(struct mdoc *, const struct mdoc_node *,
 			const char *, ...);
 int		  mdoc_warn(struct mdoc *, enum mdoc_warn, const char *, ...);
-int		  mdoc_err(struct mdoc *, const char *, ...);
 int		  mdoc_pwarn(struct mdoc *, int, int,
 			enum mdoc_warn,const char *, ...);
 int		  mdoc_perr(struct mdoc *, int, int, const char *, ...);
 
+int		  mdoc_err(struct mdoc *, int, int, int, enum merr);
 int		  mdoc_verr(struct mdoc *, int, int, const char *, ...);
 int		  mdoc_vwarn(struct mdoc *, int, int, const char *, ...);
 

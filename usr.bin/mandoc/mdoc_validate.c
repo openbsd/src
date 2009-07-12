@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.17 2009/07/12 19:05:52 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.18 2009/07/12 20:30:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -30,26 +30,6 @@
 
 #define	PRE_ARGS	struct mdoc *mdoc, const struct mdoc_node *n
 #define	POST_ARGS	struct mdoc *mdoc
-
-enum	merr {
-	ETOOLONG,
-	EESCAPE,
-	EPRINT,
-	ENODATA,
-	ENOPROLOGUE,
-	ELINE,
-	EATT,
-	ENAME,
-	ELISTTYPE,
-	EDISPTYPE,
-	EMULTIDISP,
-	ESECNAME,
-	EMULTILIST,
-	EARGREP,
-	EBOOL,
-	ECOLMIS,
-	ENESTDISP
-};
 
 enum	mwarn {
 	WPRINT,
@@ -417,7 +397,7 @@ perr(struct mdoc *m, int line, int pos, enum merr type)
 	case (ENOPROLOGUE):
 		p = "document has no prologue";
 		break;
-	case (ENODATA):
+	case (ENODAT):
 		p = "document has no data";
 		break;
 	case (ECOLMIS):
@@ -1033,12 +1013,12 @@ post_bf(POST_ARGS)
 	head = mdoc->last->head;
 
 	if (mdoc->last->args && head->child)
-		return(mdoc_err(mdoc, "one argument expected"));
+		return(mdoc_nerr(mdoc, mdoc->last, "one argument expected"));
 	else if (mdoc->last->args)
 		return(1);
 
 	if (NULL == head->child || MDOC_TEXT != head->child->type)
-		return(mdoc_err(mdoc, "text argument expected"));
+		return(mdoc_nerr(mdoc, mdoc->last, "text argument expected"));
 
 	p = head->child->string;
 
@@ -1291,14 +1271,14 @@ post_root(POST_ARGS)
 {
 
 	if (NULL == mdoc->first->child)
-		return(verr(mdoc, ENODATA));
+		return(verr(mdoc, ENODAT));
 	if ( ! (MDOC_PBODY & mdoc->flags))
 		return(verr(mdoc, ENOPROLOGUE));
 
 	if (MDOC_BLOCK != mdoc->first->child->type)
-		return(verr(mdoc, ENODATA));
+		return(verr(mdoc, ENODAT));
 	if (MDOC_Sh != mdoc->first->child->tok)
-		return(verr(mdoc, ENODATA));
+		return(verr(mdoc, ENODAT));
 
 	return(1);
 }

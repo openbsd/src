@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.13 2009/07/12 19:05:52 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.14 2009/07/12 20:30:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,14 +23,62 @@
 
 #include "libmdoc.h"
 
-enum	merr {
-	ENOCALL,
-	EBODYPROL,
-	EPROLBODY,
-	ESPACE,
-	ETEXTPROL,
-	ENOBLANK,
-	EMALLOC
+const	char *const __mdoc_merrnames[MERRMAX] = {		 
+	"trailing whitespace", /* ETAILWS */
+	"empty last list column", /* ECOLEMPTY */
+	"argument-like parameter", /* EARGVPARM */
+	"unexpected quoted parameter", /* EQUOTPARM */
+	"unterminated quoted parameter", /* EQUOTTERM */
+	"system: malloc error", /* EMALLOC */
+	"argument parameter suggested", /* EARGVAL */
+	"macro not callable", /* ENOCALL */
+	"macro disallowed in prologue", /* EBODYPROL */
+	"macro disallowed in body", /* EPROLBODY */
+	"text disallowed in prologue", /* ETEXTPROL */
+	"blank line disallowed", /* ENOBLANK */
+	"text parameter too long", /* ETOOLONG */
+	"invalid escape sequence", /* EESCAPE */
+	"invalid character", /* EPRINT */
+	"document has no body", /* ENODAT */
+	"document has no prologue", /* ENOPROLOGUE */
+	"expected line arguments", /* ELINE */
+	"invalid AT&T argument", /* EATT */
+	"default name not yet set", /* ENAME */
+	"missing list type", /* ELISTTYPE */
+	"missing display type", /* EDISPTYPE */
+	"too many display types", /* EMULTIDISP */
+	"too many list types", /* EMULTILIST */
+	"NAME section must be first", /* ESECNAME */
+	"badly-formed NAME section", /* ENAMESECINC */
+	"argument repeated", /* EARGREP */
+	"expected boolean parameter", /* EBOOL */
+	"inconsistent column syntax", /* ECOLMIS */
+	"nested display invalid", /* ENESTDISP */
+	"width argument missing", /* EMISSWIDTH */
+	"invalid section for this manual section", /* EWRONGMSEC */
+	"section out of conventional order", /* ESECOOO */
+	"section repeated", /* ESECREP */
+	"invalid standard argument", /* EBADSTAND */
+	"multi-line arguments discouraged", /* ENOMULTILINE */
+	"multi-line arguments suggested", /* EMULTILINE */
+	"line arguments discouraged", /* ENOLINE */
+	"prologue macro out of conventional order", /* EPROLOOO */
+	"prologue macro repeated", /* EPROLREP */
+	"invalid manual section", /* EBADMSEC */
+	"invalid section", /* EBADSEC */
+	"invalid font mode", /* EFONT */
+	"invalid date syntax", /* EBADDATE */
+	"invalid number format", /* ENUMFMT */
+	"superfluous width argument", /* ENOWIDTH */
+	"system: utsname error", /* EUTSNAME */
+	"obsolete macro", /* EOBS */
+	"macro-like parameter", /* EMACPARM */
+	"end-of-line scope violation", /* EIMPBRK */
+	"empty macro ignored", /* EIGNE */
+	"unclosed explicit scope", /* EOPEN */
+	"unterminated quoted phrase", /* EQUOTPHR */
+	"closure macro without prior context", /* ENOCTX */
+	"invalid whitespace after control character", /* ESPACE */
 };
 
 const	char *const __mdoc_macronames[MDOC_MAX] = {		 
@@ -317,19 +365,16 @@ mdoc_warn(struct mdoc *mdoc, enum mdoc_warn type,
 
 
 int
-mdoc_err(struct mdoc *mdoc, const char *fmt, ...)
+mdoc_err(struct mdoc *m, int line, int pos, int iserr, enum merr type)
 {
-	char		 buf[256];
-	va_list		 ap;
+	const char	*p;
 
-	if (NULL == mdoc->cb.mdoc_err)
-		return(0);
+	p = __mdoc_merrnames[(int)type];
+	assert(p);
 
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_err)(mdoc->data, mdoc->last->line,
-				mdoc->last->pos, buf));
+	if (iserr)
+		return(mdoc_verr(m, line, pos, p));
+	return(mdoc_vwarn(m, line, pos, p));
 }
 
 
