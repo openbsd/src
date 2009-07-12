@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.63 2009/06/29 12:22:16 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.64 2009/07/12 15:36:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -300,7 +300,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 fail:
 	if (hbuf)
 		buf_free(hbuf);
-	if (h2buf);
+	if (h2buf)
 		buf_free(h2buf);
 	buf_free(buf);
 	return (-1);
