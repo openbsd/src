@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.7 2009/06/19 07:20:19 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.8 2009/07/12 18:35:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -64,8 +64,6 @@ __BEGIN_DECLS
  * When GCC2 is deprecated, most of these can be reverted to #define
  * as mdoc_vXXX using __VA_ARGS__.  Until then, use real functions.
  */
-int		  mdoc_vwarn(struct mdoc *, int, int, 
-			enum mdoc_warn, const char *, ...);
 int		  mdoc_verr(struct mdoc *, int, int, 
 			const char *, ...);
 int		  mdoc_nerr(struct mdoc *, const struct mdoc_node *,
@@ -75,6 +73,9 @@ int		  mdoc_err(struct mdoc *, const char *, ...);
 int		  mdoc_pwarn(struct mdoc *, int, int,
 			enum mdoc_warn,const char *, ...);
 int		  mdoc_perr(struct mdoc *, int, int, const char *, ...);
+
+int		  mdoc_vwarn(struct mdoc *, int, int, const char *, ...);
+
 int		  mdoc_macro(MACRO_PROT_ARGS);
 int		  mdoc_word_alloc(struct mdoc *, 
 			int, int, const char *);

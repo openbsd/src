@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.11 2009/07/12 18:28:29 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.12 2009/07/12 18:35:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -259,13 +259,13 @@ mdoc_verr(struct mdoc *mdoc, int ln, int pos,
 	va_start(ap, fmt);
 	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
+
 	return((*mdoc->cb.mdoc_err)(mdoc->data, ln, pos, buf));
 }
 
 
 int
-mdoc_vwarn(struct mdoc *mdoc, int ln, int pos, 
-		enum mdoc_warn type, const char *fmt, ...)
+mdoc_vwarn(struct mdoc *mdoc, int ln, int pos, const char *fmt, ...)
 {
 	char		 buf[256];
 	va_list		 ap;
@@ -651,8 +651,7 @@ macrowarn(struct mdoc *m, int ln, const char *buf)
 		return(mdoc_perr(m, ln, 1, 
 				"unknown macro: %s%s", 
 				buf, strlen(buf) > 3 ? "..." : ""));
-	return(mdoc_pwarn(m, ln, 1, WARN_SYNTAX,
-				"unknown macro: %s%s",
+	return(mdoc_vwarn(m, ln, 1, "unknown macro: %s%s",
 				buf, strlen(buf) > 3 ? "..." : ""));
 }
 

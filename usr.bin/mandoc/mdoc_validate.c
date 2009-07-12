@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.15 2009/07/08 00:04:10 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.16 2009/07/12 18:35:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -524,7 +524,7 @@ warn_count(struct mdoc *m, const char *k,
 		int want, const char *v, int has)
 {
 
-	return(mdoc_warn(m, WARN_SYNTAX, 
+	return(mdoc_vwarn(m, m->last->line, m->last->pos, 
 		"suggests %s %s %d (has %d)", v, k, want, has));
 }
 
