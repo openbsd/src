@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.21 2009/07/11 19:14:56 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.22 2009/07/12 16:07:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,8 +40,9 @@
 
 extern const char    *__progname;
 
-/* Default configuration file. */
+/* Default configuration files. */
 #define DEFAULT_CFG ".tmux.conf"
+#define SYSTEM_CFG "/etc/tmux.conf"
 
 /* Default prompt history length. */
 #define PROMPT_HISTORY 100

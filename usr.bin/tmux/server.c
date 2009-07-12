@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.6 2009/07/07 19:49:19 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.7 2009/07/12 16:07:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -171,6 +171,17 @@ server_start(char *path)
 	start_time = time(NULL);
 	socket_path = path;
 
+	if (access(SYSTEM_CFG, R_OK) != 0) {
+		if (errno != ENOENT) {
+			log_warn("%s", SYSTEM_CFG);
+			exit(1);
+		}
+	} else {
+		if (load_cfg(SYSTEM_CFG, &cause) != 0) {
+			log_warnx("%s", cause);
+			exit(1);
+		}
+	}
 	if (cfg_file != NULL && load_cfg(cfg_file, &cause) != 0) {
 		log_warnx("%s", cause);
 		exit(1);
