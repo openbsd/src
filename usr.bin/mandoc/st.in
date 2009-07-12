@@ -1,4 +1,4 @@
-/*	$Id: st.in,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: st.in,v 1.3 2009/07/12 23:23:10 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -35,6 +35,7 @@ LINE("-p1003.1b",	"IEEE Std 1003.1b (\\(lqPOSIX\\(rq)")
 LINE("-p1003.1b-93",	"IEEE Std 1003.1b-1993 (\\(lqPOSIX\\(rq)")
 LINE("-p1003.1c-95",	"IEEE Std 1003.1c-1995 (\\(lqPOSIX\\(rq)")
 LINE("-p1003.1g-2000",	"IEEE Std 1003.1g-2000 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1i-95",	"IEEE Std 1003.1i-1995 (\\(lqPOSIX.1\\rq)")
 LINE("-p1003.2-92",	"IEEE Std 1003.2-1992 (\\(lqPOSIX.2\\(rq)")
 LINE("-p1387.2-95",	"IEEE Std 1387.2-1995 (\\(lqPOSIX.7.2\\(rq)")
 LINE("-p1003.2",	"IEEE Std 1003.2 (\\(lqPOSIX.2\\(rq)")
