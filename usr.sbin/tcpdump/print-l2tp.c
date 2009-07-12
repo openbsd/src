@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-l2tp.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-l2tp.c,v 1.4 2009/07/12 18:11:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-l2tp.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $";
+    "@(#) $Id: print-l2tp.c,v 1.4 2009/07/12 18:11:03 jsg Exp $";
 #endif
 
 #include <sys/types.h>
@@ -691,7 +691,7 @@ l2tp_print(const u_char *dat, u_int length)
 
 	if (flag_o) {
 		pad =  ntohs(*ptr++);
-		(u_char *)ptr += pad;
+		ptr = (u_char *)ptr + pad;
 		cnt += (2 + pad);
 	}
 
