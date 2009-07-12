@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.11 2009/07/07 00:54:46 schwarze Exp $ */
+/*	$Id: main.c,v 1.12 2009/07/12 18:28:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -85,9 +85,7 @@ static	int		  toptions(enum outt *, char *);
 static	int		  moptions(enum intt *, char *);
 static	int		  woptions(int *, char *);
 static	int		  merr(void *, int, int, const char *);
-static	int		  manwarn(void *, int, int, const char *);
-static	int		  mdocwarn(void *, int, int, 
-				enum mdoc_warn, const char *);
+static	int		  mwarn(void *, int, int, const char *);
 static	int		  ffile(struct buf *, struct buf *, 
 				const char *, struct curparse *);
 static	int		  fdesc(struct buf *, struct buf *,
@@ -215,7 +213,7 @@ man_init(struct curparse *curp)
 	struct man_cb	 mancb;
 
 	mancb.man_err = merr;
-	mancb.man_warn = manwarn;
+	mancb.man_warn = mwarn;
 
 	/* Defaults from mandoc.1. */
 
@@ -243,7 +241,7 @@ mdoc_init(struct curparse *curp)
 	struct mdoc_cb	 mdoccb;
 
 	mdoccb.mdoc_err = merr;
-	mdoccb.mdoc_warn = mdocwarn;
+	mdoccb.mdoc_warn = mwarn;
 
 	/* Defaults from mandoc.1. */
 
@@ -632,31 +630,17 @@ merr(void *arg, int line, int col, const char *msg)
 
 
 static int
-mdocwarn(void *arg, int line, int col, 
-		enum mdoc_warn type, const char *msg)
+mwarn(void *arg, int line, int col, const char *msg)
 {
 	struct curparse *curp;
-	char		*wtype;
 
 	curp = (struct curparse *)arg;
-	wtype = NULL;
 
-	switch (type) {
-	case (WARN_COMPAT):
-		wtype = "compat";
-		if (curp->wflags & WARN_WCOMPAT)
-			break;
+	if ( ! (curp->wflags & WARN_WALL))
 		return(1);
-	case (WARN_SYNTAX):
-		wtype = "syntax";
-		if (curp->wflags & WARN_WSYNTAX)
-			break;
-		return(1);
-	}
 
-	assert(wtype);
-	warnx("%s:%d: %s warning: %s (column %d)", 
-			curp->file, line, wtype, msg, col);
+	warnx("%s:%d: warning: %s (column %d)", 
+			curp->file, line, msg, col);
 
 	if ( ! (curp->wflags & WARN_WERR))
 		return(1);
@@ -665,23 +649,3 @@ mdocwarn(void *arg, int line, int col,
 	return(0);
 }
 
-
-static int
-manwarn(void *arg, int line, int col, const char *msg)
-{
-	struct curparse *curp;
-
-	curp = (struct curparse *)arg;
-
-	if ( ! (curp->wflags & WARN_WSYNTAX))
-		return(1);
-
-	warnx("%s:%d: syntax warning: %s (column %d)", 
-			curp->file, line, msg, col);
-
-	if ( ! (curp->wflags & WARN_WERR))
-		return(1);
-
-	warnx("considering warnings as errors");
-	return(0);
-}

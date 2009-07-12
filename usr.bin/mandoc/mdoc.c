@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.10 2009/06/23 23:02:54 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.11 2009/07/12 18:28:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -276,7 +276,7 @@ mdoc_vwarn(struct mdoc *mdoc, int ln, int pos,
 	va_start(ap, fmt);
 	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
-	return((*mdoc->cb.mdoc_warn)(mdoc->data, ln, pos, type, buf));
+	return((*mdoc->cb.mdoc_warn)(mdoc->data, ln, pos, buf));
 }
 
 
@@ -312,7 +312,7 @@ mdoc_warn(struct mdoc *mdoc, enum mdoc_warn type,
 	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
 	return((*mdoc->cb.mdoc_warn)(mdoc->data, mdoc->last->line,
-				mdoc->last->pos, type, buf));
+				mdoc->last->pos, buf));
 }
 
 
@@ -346,8 +346,7 @@ mdoc_pwarn(struct mdoc *mdoc, int line, int pos, enum mdoc_warn type,
 	va_start(ap, fmt);
 	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
-	return((*mdoc->cb.mdoc_warn)(mdoc->data, 
-				line, pos, type, buf));
+	return((*mdoc->cb.mdoc_warn)(mdoc->data, line, pos, buf));
 }
 
 int
