@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.36 2007/06/25 15:57:28 jmc Exp $
+# $OpenBSD: termtypes.master,v 1.37 2009/07/12 21:09:37 nicm Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -3211,28 +3211,39 @@ eterm|gnu emacs term.el terminal emulation,
 #                   (\E[39m / \E[49m).
 #      S0   (str)   Switch charset 'G0' to the specified charset.
 #      E0   (str)   Switch charset 'G0' back to standard charset.
-screen|VT 100/ANSI X3.64 virtual terminal, 
-	OTbs, OTpt, am, km, mir, msgr, xenl, G0, 
-	colors#8, cols#80, it#8, lines#24, pairs#64, 
-	acsc=++\,\,--..00``aaffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
-	bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z, civis=\E[?25l, 
-	clear=\E[H\E[J, cnorm=\E[34h\E[?25h, cr=^M, 
-	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=^H, 
-	cud=\E[%p1%dB, cud1=^J, cuf=\E[%p1%dC, cuf1=\E[C, 
-	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\EM, 
-	cvvis=\E[34l, dch=\E[%p1%dP, dch1=\E[P, dl=\E[%p1%dM, 
-	dl1=\E[M, ed=\E[J, el=\E[K, el1=\E[1K, enacs=\E(B\E)0, 
-	flash=\Eg, home=\E[H, ht=^I, hts=\EH, ich=\E[%p1%d@, 
-	il=\E[%p1%dL, il1=\E[L, ind=^J, is2=\E)0, kbs=^H, kcub1=\EOD, 
-	kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA, kdch1=\E[3~, kf1=\EOP, 
-	kf10=\E[21~, kf11=\E[23~, kf12=\E[24~, kf2=\EOQ, kf3=\EOR, 
-	kf4=\EOS, kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, 
-	kf9=\E[20~, khome=\E[1~, kich1=\E[2~, kll=\E[4~, 
-	kmous=\E[M, knp=\E[6~, kpp=\E[5~, nel=\EE, rc=\E8, rev=\E[7m, 
-	ri=\EM, rmacs=^O, rmir=\E[4l, rmkx=\E[?1l\E>, rmso=\E[23m, 
-	rmul=\E[24m, rs2=\Ec, sc=\E7, sgr0=\E[m, smacs=^N, 
-	smir=\E[4h, smkx=\E[?1h\E=, smso=\E[3m, smul=\E[4m, 
-	tbc=\E[3g, E0=\E(B, S0=\E(%p1%c, use=ecma+color, 
+#
+# tested with screen 3.09.08
+screen|VT 100/ANSI X3.64 virtual terminal,
+	OTbs, OTpt, am, km, mir, msgr, xenl, G0,
+	colors#8, cols#80, it#8, lines#24, pairs#64,
+	acsc=++\,\,--..00``aaffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z, civis=\E[?25l,
+	clear=\E[H\E[J, cnorm=\E[34h\E[?25h, cr=^M,
+	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=^H,
+	cud=\E[%p1%dB, cud1=^J, cuf=\E[%p1%dC, cuf1=\E[C,
+	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\EM,
+	cvvis=\E[34l, dch=\E[%p1%dP, dch1=\E[P, dl=\E[%p1%dM,
+	dl1=\E[M, ed=\E[J, el=\E[K, el1=\E[1K, enacs=\E(B\E)0,
+	flash=\Eg, home=\E[H, ht=^I, hts=\EH, ich=\E[%p1%d@,
+	il=\E[%p1%dL, il1=\E[L, ind=^J, is2=\E)0, kbs=^H, kcbt=\E[Z,
+	kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA,
+	kdch1=\E[3~, kend=\E[4~, kf1=\EOP, kf10=\E[21~,
+	kf11=\E[23~, kf12=\E[24~, kf2=\EOQ, kf3=\EOR, kf4=\EOS,
+	kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~,
+	khome=\E[1~, kich1=\E[2~, kmous=\E[M, knp=\E[6~, kpp=\E[5~,
+	nel=\EE, rc=\E8, rev=\E[7m, ri=\EM, rmacs=^O,
+	rmcup=\E[?1049l, rmir=\E[4l, rmkx=\E[?1l\E>, rmso=\E[23m,
+	rmul=\E[24m, rs2=\Ec\E[?1000l\E[?25h, sc=\E7,
+	sgr=\E[0%?%p6%t;1%;%?%p1%t;3%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;,
+	sgr0=\E[m\017, smacs=^N, smcup=\E[?1049h, smir=\E[4h,
+	smkx=\E[?1h\E=, smso=\E[3m, smul=\E[4m, tbc=\E[3g, E0=\E(B,
+	S0=\E(%p1%c, use=ecma+color,
+# The bce and status-line entries are from screen 3.9.13 (and require some
+# changes to .screenrc).
+screen-bce|VT 100/ANSI X3.64 virtual terminal with bce,
+	bce, use=screen,
+screen-s|VT 100/ANSI X3.64 virtual terminal with hardstatus line,
+	dsl=\E_\E\\, fsl=\E\\, tsl=\E_, use=screen,
 
 screen-w|VT 100/ANSI X3.64 virtual terminal with 132 cols, 
 	cols#132, use=screen, 
