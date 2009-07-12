@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemreg.h,v 1.16 2009/03/22 21:46:31 kettenis Exp $	*/
+/*	$OpenBSD: gemreg.h,v 1.17 2009/07/12 15:54:32 kettenis Exp $	*/
 /*	$NetBSD: gemreg.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -69,6 +69,8 @@
 #define	GEM_SEB_RXWON		0x000000004
 
 /* Bits in GEM_SBUS_CONFIG register */
+#define GEM_SBUS_CFG_BSIZE32	0x00000001
+#define GEM_SBUS_CFG_BSIZE64	0x00000002
 #define GEM_SBUS_CFG_BSIZE128	0x00000004
 #define GEM_SBUS_CFG_BMODE64	0x00000008
 #define GEM_SBUS_CFG_PARITY	0x00000200
