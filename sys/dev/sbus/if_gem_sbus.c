@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_sbus.c,v 1.5 2008/11/07 17:44:14 brad Exp $	*/
+/*	$OpenBSD: if_gem_sbus.c,v 1.6 2009/07/12 21:27:09 kettenis Exp $	*/
 /*	$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $	*/
 
 /*-
@@ -92,16 +92,20 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	struct sbus_attach_args *sa = aux;
 	struct gem_sbus_softc *gsc = (void *)self;
 	struct gem_softc *sc = &gsc->gsc_gem;
-	/* XXX the following declarations should be elsewhere */
+	/* XXX the following declaration should be elsewhere */
 	extern void myetheraddr(u_char *);
 
 	/* Pass on the bus tags */
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 
+	if (sa->sa_nintr < 1) {
+		printf(": no interrupt\n");
+		return;
+	}
+
 	if (sa->sa_nreg < 2) {
-		printf("%s: only %d register sets\n",
-			self->dv_xname, sa->sa_nreg);
+		printf(": only %d register sets\n", sa->sa_nreg);
 		return;
 	}
 
@@ -118,14 +122,14 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 			 (bus_addr_t)sa->sa_reg[0].sbr_offset,
 			 (bus_size_t)sa->sa_reg[0].sbr_size, 0, 0,
 			 &sc->sc_h2) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		printf(": can't map registers\n");
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 			 (bus_addr_t)sa->sa_reg[1].sbr_offset,
 			 (bus_size_t)sa->sa_reg[1].sbr_size, 0, 0,
 			 &sc->sc_h1) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		printf(": can't map registers\n");
 		return;
 	}
 
@@ -142,9 +146,8 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	    GEM_SBUS_CFG_BSIZE128|GEM_SBUS_CFG_PARITY|GEM_SBUS_CFG_BMODE64);
 
 	/* Establish interrupt handler */
-	if (sa->sa_nintr != 0)
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
-					gem_intr, sc, self->dv_xname);
+	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0, gem_intr,
+	    sc, self->dv_xname);
 
 	gem_config(sc);
 }
