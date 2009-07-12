@@ -1,4 +1,4 @@
-/*	$OpenBSD: fread.c,v 1.6 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: fread.c,v 1.7 2009/07/12 18:45:21 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,9 +44,7 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 	size_t total;
 
 	/*
-	 * The ANSI standard requires a return value of 0 for a count
-	 * or a size of 0.  Peculiarily, it imposes no such requirements
-	 * on fwrite; it only requires fread to be broken.
+	 * ANSI and SUSv2 require a return value of 0 if size or count are 0.
 	 */
 	if ((resid = count * size) == 0)
 		return (0);

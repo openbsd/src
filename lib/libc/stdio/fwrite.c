@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwrite.c,v 1.5 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: fwrite.c,v 1.6 2009/07/12 18:45:21 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,8 +46,14 @@ fwrite(const void *buf, size_t size, size_t count, FILE *fp)
 	struct __suio uio;
 	struct __siov iov;
 
+	/*
+	 * ANSI and SUSv2 require a return value of 0 if size or count are 0.
+	 */
+	if ((n = count * size) == 0)
+		return (0);
+
 	iov.iov_base = (void *)buf;
-	uio.uio_resid = iov.iov_len = n = count * size;
+	uio.uio_resid = iov.iov_len = n;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
 
