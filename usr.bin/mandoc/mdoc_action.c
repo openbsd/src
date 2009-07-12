@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.12 2009/07/12 21:08:29 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.13 2009/07/12 21:45:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -39,7 +39,6 @@ struct	actions {
 };
 
 static	int	  pwarn(struct mdoc *, int, int, enum mwarn);
-static	int	  perr(struct mdoc *, int, int, enum merr);
 static	int	  concat(struct mdoc *, const struct mdoc_node *, 
 			char *, size_t);
 
@@ -62,8 +61,6 @@ static	int	  pre_bd(PRE_ARGS);
 static	int	  pre_dl(PRE_ARGS);
 
 #define	vwarn(m, t) pwarn((m), (m)->last->line, (m)->last->pos, (t))
-#define	verr(m, t) perr((m), (m)->last->line, (m)->last->pos, (t))
-#define	nerr(m, n, t) perr((m), (n)->line, (n)->pos, (t))
 
 const	struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ap */
@@ -245,31 +242,6 @@ concat(struct mdoc *m, const struct mdoc_node *n,
 	}
 
 	return(1);
-}
-
-
-static int
-perr(struct mdoc *m, int line, int pos, enum merr type)
-{
-	char		*p;
-
-	p = NULL;
-	switch (type) {
-	case (ENUMFMT):
-		p = "bad number format";
-		break;
-	case (ETOOLONG):
-		p = "argument text too long";
-		break;
-	case (EUTSNAME):
-		p = "utsname";
-		break;
-	case (EMALLOC):
-		p = "memory exhausted";
-		break;
-	}
-	assert(p);
-	return(mdoc_perr(m, line, pos, p));
 }
 
 

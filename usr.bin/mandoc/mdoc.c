@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.15 2009/07/12 21:08:29 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.16 2009/07/12 21:45:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -143,7 +143,7 @@ static	int		  node_append(struct mdoc *,
 static	int		  parsetext(struct mdoc *, int, char *);
 static	int		  parsemacro(struct mdoc *, int, char *);
 static	int		  macrowarn(struct mdoc *, int, const char *);
-static	int		  perr(struct mdoc *, int, int, enum merr);
+
 
 const struct mdoc_node *
 mdoc_node(const struct mdoc *m)
@@ -356,6 +356,7 @@ mdoc_err(struct mdoc *m, int line, int pos, int iserr, enum merr type)
 
 	if (iserr)
 		return(mdoc_verr(m, line, pos, p));
+
 	return(mdoc_vwarn(m, line, pos, p));
 }
 
@@ -377,71 +378,21 @@ mdoc_pwarn(struct mdoc *mdoc, int line, int pos, enum mdoc_warn type,
 }
 
 int
-mdoc_perr(struct mdoc *mdoc, int line, int pos, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_err)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_err)(mdoc->data, line, pos, buf));
-}
-
-
-int
 mdoc_macro(struct mdoc *m, int tok, 
 		int ln, int pp, int *pos, char *buf)
 {
 
 	if (MDOC_PROLOGUE & mdoc_macros[tok].flags && 
 			MDOC_PBODY & m->flags)
-		return(perr(m, ln, pp, EPROLBODY));
+		return(mdoc_perr(m, ln, pp, EPROLBODY));
 	if ( ! (MDOC_PROLOGUE & mdoc_macros[tok].flags) && 
 			! (MDOC_PBODY & m->flags))
-		return(perr(m, ln, pp, EBODYPROL));
+		return(mdoc_perr(m, ln, pp, EBODYPROL));
 
 	if (1 != pp && ! (MDOC_CALLABLE & mdoc_macros[tok].flags))
-		return(perr(m, ln, pp, ENOCALL));
+		return(mdoc_perr(m, ln, pp, ENOCALL));
 
 	return((*mdoc_macros[tok].fp)(m, tok, ln, pp, pos, buf));
-}
-
-
-static int
-perr(struct mdoc *m, int line, int pos, enum merr type)
-{
-	char		*p;
-
-	p = NULL;
-	switch (type) {
-	case (ENOCALL):
-		p = "not callable";
-		break;
-	case (EPROLBODY):
-		p = "macro disallowed in document body";
-		break;
-	case (EBODYPROL):
-		p = "macro disallowed in document prologue";
-		break;
-	case (EMALLOC):
-		p = "memory exhausted";
-		break;
-	case (ETEXTPROL):
-		p = "text disallowed in document prologue";
-		break;
-	case (ENOBLANK):
-		p = "blank lines disallowed in non-literal contexts";
-		break;
-	case (ESPACE):
-		p = "whitespace disallowed after delimiter";
-		break;
-	}
-	assert(p);
-	return(mdoc_perr(m, line, pos, p));
 }
 
 
@@ -657,10 +608,10 @@ parsetext(struct mdoc *m, int line, char *buf)
 {
 
 	if (SEC_NONE == m->lastnamed)
-		return(perr(m, line, 0, ETEXTPROL));
+		return(mdoc_perr(m, line, 0, ETEXTPROL));
 
 	if (0 == buf[0] && ! (MDOC_LITERAL & m->flags))
-		return(perr(m, line, 0, ENOBLANK));
+		return(mdoc_perr(m, line, 0, ENOBLANK));
 
 	if ( ! mdoc_word_alloc(m, line, 0, buf))
 		return(0);
@@ -703,7 +654,7 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 			i++;
 		if (0 == buf[i])
 			return(1);
-		return(perr(m, ln, 1, ESPACE));
+		return(mdoc_perr(m, ln, 1, ESPACE));
 	}
 
 	/* Copy the first word into a nil-terminated buffer. */

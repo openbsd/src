@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.6 2009/07/12 21:08:29 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.7 2009/07/12 21:45:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -66,9 +66,6 @@ static	int		 argv_opt_single(struct mdoc *, int,
 static	int		 argv_multi(struct mdoc *, int, 
 				struct mdoc_argv *, int *, char *);
 static	int		 pwarn(struct mdoc *, int, int, enum mwarn);
-static	int		 perr(struct mdoc *, int, int, enum merr);
-
-#define verr(m, t) perr((m), (m)->last->line, (m)->last->pos, (t))
 
 /* Per-argument flags. */
 
@@ -345,29 +342,6 @@ mdoc_argv_free(struct mdoc_arg *p)
 }
 
 
-
-static int
-perr(struct mdoc *mdoc, int line, int pos, enum merr code)
-{
-	char		*p;
-
-	p = NULL;
-	switch (code) {
-	case (EMALLOC):
-		p = "memory exhausted";
-		break;
-	case (EQUOTTERM):
-		p = "unterminated quoted parameter";
-		break;
-	case (EARGVAL):
-		p = "argument requires a value";
-		break;
-	}
-	assert(p);
-	return(mdoc_perr(mdoc, line, pos, p));
-}
-
-
 static int
 pwarn(struct mdoc *mdoc, int line, int pos, enum mwarn code)
 {
@@ -627,7 +601,7 @@ args(struct mdoc *mdoc, int line,
 		(*pos)++;
 
 	if (0 == buf[*pos]) {
-		(void)perr(mdoc, line, *pos, EQUOTTERM);
+		(void)mdoc_perr(mdoc, line, *pos, EQUOTTERM);
 		return(ARGS_ERROR);
 	}
 
@@ -820,7 +794,7 @@ argv_single(struct mdoc *m, int line,
 	if (ARGS_ERROR == c)
 		return(0);
 	if (ARGS_EOLN == c)
-		return(perr(m, line, ppos, EARGVAL));
+		return(mdoc_perr(m, line, ppos, EARGVAL));
 
 	v->sz = 1;
 	if (NULL == (v->value = calloc(1, sizeof(char *))))

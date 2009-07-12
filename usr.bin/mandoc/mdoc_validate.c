@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.19 2009/07/12 21:08:29 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.20 2009/07/12 21:45:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -61,7 +61,6 @@ struct	valids {
 };
 
 static	int	pwarn(struct mdoc *, int, int, enum mwarn);
-static	int	perr(struct mdoc *, int, int, enum merr);
 static	int	check_parent(PRE_ARGS, int, enum mdoc_type);
 static	int	check_msec(PRE_ARGS, ...);
 static	int	check_sec(PRE_ARGS, ...);
@@ -127,9 +126,7 @@ static	int	post_sh_head(POST_ARGS);
 static	int	post_st(POST_ARGS);
 
 #define	vwarn(m, t) nwarn((m), (m)->last, (t))
-#define	verr(m, t) nerr((m), (m)->last, (t))
 #define	nwarn(m, n, t) pwarn((m), (n)->line, (n)->pos, (t))
-#define	nerr(m, n, t) perr((m), (n)->line, (n)->pos, (t))
 
 static	v_pre	pres_an[] = { pre_an, NULL };
 static	v_pre	pres_bd[] = { pre_display, pre_bd, NULL };
@@ -352,70 +349,6 @@ mdoc_valid_post(struct mdoc *mdoc)
 
 
 static int
-perr(struct mdoc *m, int line, int pos, enum merr type)
-{
-	char		 *p;
-	
-	p = NULL;
-	switch (type) {
-	case (ETOOLONG):
-		p = "text argument too long";
-		break;
-	case (EESCAPE):
-		p = "invalid escape sequence";
-		break;
-	case (EPRINT):
-		p = "invalid character";
-		break;
-	case (ENESTDISP):
-		p = "displays may not be nested";
-		break;
-	case (EBOOL):
-		p = "expected boolean value";
-		break;
-	case (EARGREP):
-		p = "argument repeated";
-		break;
-	case (EMULTIDISP):
-		p = "multiple display types specified";
-		break;
-	case (EMULTILIST):
-		p = "multiple list types specified";
-		break;
-	case (ELISTTYPE):
-		p = "missing list type";
-		break;
-	case (EDISPTYPE):
-		p = "missing display type";
-		break;
-	case (ESECNAME):
-		p = "the NAME section must come first";
-		break;
-	case (ELINE):
-		p = "expected line arguments";
-		break;
-	case (ENOPROLOGUE):
-		p = "document has no prologue";
-		break;
-	case (ENODAT):
-		p = "document has no data";
-		break;
-	case (ECOLMIS):
-		p = "column syntax style mismatch";
-		break;
-	case (EATT):
-		p = "expected valid AT&T symbol";
-		break;
-	case (ENAME):
-		p = "default name not yet set";
-		break;
-	}
-	assert(p);
-	return(mdoc_perr(m, line, pos, p));
-}
-
-
-static int
 pwarn(struct mdoc *m, int line, int pos, enum mwarn type)
 {
 	char		 *p;
@@ -493,9 +426,10 @@ pwarn(struct mdoc *m, int line, int pos, enum mwarn type)
 static int
 warn_print(struct mdoc *m, int ln, int pos)
 {
+
 	if (MDOC_IGN_CHARS & m->pflags)
 		return(pwarn(m, ln, pos, WPRINT));
-	return(perr(m, ln, pos, EPRINT));
+	return(mdoc_perr(m, ln, pos, EPRINT));
 }
 
 
@@ -700,8 +634,8 @@ check_text(struct mdoc *mdoc, int line, int pos, const char *p)
 			continue;
 		}
 		if ( ! (MDOC_IGN_ESCAPE & mdoc->pflags))
-			return(perr(mdoc, line, pos, EESCAPE));
-		if ( ! pwarn(mdoc, line, pos, WESCAPE))
+			return(mdoc_perr(mdoc, line, pos, EESCAPE));
+		if ( ! mdoc_perr(mdoc, line, pos, EESCAPE))
 			return(0);
 	}
 

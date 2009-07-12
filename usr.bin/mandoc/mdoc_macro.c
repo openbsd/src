@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.8 2009/07/12 21:08:29 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.9 2009/07/12 21:45:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -56,11 +56,8 @@ static	int	  rew_last(struct mdoc *, struct mdoc_node *);
 static	int	  append_delims(struct mdoc *, int, int *, char *);
 static	int	  lookup(struct mdoc *, int, int, int, const char *);
 static	int	  pwarn(struct mdoc *, int, int, enum mwarn);
-static	int	  perr(struct mdoc *, int, int, enum merr);
 static	int	  swarn(struct mdoc *, enum mdoc_type, int, int, 
 			const struct mdoc_node *);
-
-#define	nerr(m, n, t) perr((m), (n)->line, (n)->pos, (t))
 
 /* Central table of library: who gets parsed how. */
 
@@ -186,31 +183,6 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 };
 
 const	struct mdoc_macro * const mdoc_macros = __mdoc_macros;
-
-
-static int
-perr(struct mdoc *mdoc, int line, int pos, enum merr type)
-{
-	char		*p;
-
-	p = NULL;
-	switch (type) {
-	case (EOPEN):
-		p = "explicit scope still open on exit";
-		break;
-	case (EQUOTPHR):
-		p = "unterminated quotation";
-		break;
-	case (ENOCTX):
-		p = "closure has no prior context";
-		break;
-	case (ENOLINE):
-		p = "unexpect line arguments";
-		break;
-	}
-	assert(p);
-	return(mdoc_perr(mdoc, line, pos, p));
-}
 
 
 static int
@@ -630,7 +602,7 @@ rew_expblock(struct mdoc *mdoc, int tok, int line, int ppos)
 	for (n = mdoc->last; n; n = n->parent) {
 		c = rew_dohalt(tok, MDOC_BLOCK, n);
 		if (REWIND_HALT == c)
-			return(perr(mdoc, line, ppos, ENOCTX));
+			return(mdoc_perr(mdoc, line, ppos, ENOCTX));
 		if (REWIND_REWIND == c)
 			break;
 		else if (rew_dobreak(tok, n))
@@ -721,7 +693,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 				return(0);
 			return(rew_expblock(mdoc, tok, line, ppos));
 		}
-		return(perr(mdoc, line, ppos, ENOLINE));
+		return(mdoc_perr(mdoc, line, ppos, ENOLINE));
 	}
 
 	if ( ! rew_subblock(MDOC_BODY, mdoc, tok, line, ppos))
@@ -1443,7 +1415,7 @@ phrase(struct mdoc *mdoc, int line, int ppos, char *buf)
 				else if ('\\' != buf[i - 1])
 					break;
 			if (0 == buf[i]) 
-				return(perr(mdoc, line, la, EQUOTPHR));
+				return(mdoc_perr(mdoc, line, la, EQUOTPHR));
 			quoted = 1;
 		} else
 			for ( ; buf[i]; i++)
