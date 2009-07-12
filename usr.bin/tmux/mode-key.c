@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.2 2009/07/12 16:15:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -105,8 +105,9 @@ mode_key_lookup_vi(struct mode_key_data *mdata, int key)
 			return (MODEKEYCMD_CHOOSE);
 		return (MODEKEYCMD_COPYSELECTION);
 	case '0':
-	case '^':
 		return (MODEKEYCMD_STARTOFLINE);
+	case '^':
+		return (MODEKEYCMD_BACKTOINDENTATION);
 	case '\033':
 		return (MODEKEYCMD_CLEARSELECTION);
 	case 'j':
@@ -160,6 +161,8 @@ mode_key_lookup_emacs(struct mode_key_data *mdata, int key)
 		return (MODEKEYCMD_CHOOSE);
 	case '\001':
 		return (MODEKEYCMD_STARTOFLINE);
+	case KEYC_ADDESC('m'):
+		return (MODEKEYCMD_BACKTOINDENTATION);
 	case '\007':
 		return (MODEKEYCMD_CLEARSELECTION);
 	case '\027':

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.22 2009/07/12 16:07:56 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.23 2009/07/12 16:15:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -357,6 +357,7 @@ struct msg_resize_data {
 /* Editing keys. */
 enum mode_key_cmd {
 	MODEKEYCMD_BACKSPACE = 0x1000,
+	MODEKEYCMD_BACKTOINDENTATION,
 	MODEKEYCMD_CHOOSE,
 	MODEKEYCMD_CLEARSELECTION,
 	MODEKEYCMD_COMPLETE,

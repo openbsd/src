@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.5 2009/06/26 15:13:39 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.6 2009/07/12 16:15:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -709,6 +709,7 @@ status_prompt_key(struct client *c, int key)
 		}
 		break;
 	case MODEKEYCMD_STARTOFLINE:
+	case MODEKEYCMD_BACKTOINDENTATION:
 		if (c->prompt_index != 0) {
 			c->prompt_index = 0;
 			c->flags |= CLIENT_STATUS;
