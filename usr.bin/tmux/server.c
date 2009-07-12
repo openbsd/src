@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.7 2009/07/12 16:07:56 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.8 2009/07/12 17:33:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -346,6 +346,9 @@ server_main(int srv_fd)
 		server_handle_windows(&pfd);
 		server_handle_clients(&pfd);
 
+		/* Collect any unset key bindings. */
+		key_bindings_clean();
+		
 		/*
 		 * If we have no sessions and clients left, let's get out
 		 * of here...
