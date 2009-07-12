@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.16 2007/05/04 03:44:44 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.17 2009/07/12 20:07:53 kettenis Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
@@ -44,6 +44,9 @@
 /*
  * Autoconfiguration information.
  */
+
+#ifndef _MACHINE_AUTOCONF_H_
+#define _MACHINE_AUTOCONF_H_
 
 /*
  * Most devices are configured according to information kept in
@@ -201,3 +204,5 @@ int	findroot(void);
 int	findnode(int, const char *);
 int	opennode(char *);
 int	node_has_property(int, const char *);
+
+#endif /* _MACHINE_AUTOCONF_H_ */
