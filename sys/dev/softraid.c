@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.163 2009/07/11 15:42:50 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.164 2009/07/12 13:30:59 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -120,6 +120,7 @@ int			sr_already_assembled(struct sr_discipline *);
 int			sr_rebuild_init(struct sr_discipline *, dev_t);
 void			sr_rebuild(void *);
 void			sr_rebuild_thread(void *);
+void			sr_roam_chunks(struct sr_discipline *);
 
 /* don't include these on RAMDISK */
 #ifndef SMALL_KERNEL
@@ -766,7 +767,9 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_meta_driver	*s;
+#ifdef SR_DEBUG
 	struct sr_meta_chunk	*mc;
+#endif
 	char			devname[32];
 	int			rv = 1;
 	u_int8_t		checksum[MD5_DIGEST_LENGTH];
@@ -807,12 +810,15 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 
 	/* XXX do other checksums */
 
+#ifdef SR_DEBUG
 	/* warn if disk changed order */
 	mc = (struct sr_meta_chunk *)(sm + 1);
 	if (strncmp(mc[sm->ssdi.ssd_chunk_id].scmi.scm_devname, devname,
 	    sizeof(mc[sm->ssdi.ssd_chunk_id].scmi.scm_devname)))
-		printf("%s: roaming device %s -> %s\n", DEVNAME(sc),
-		    mc[sm->ssdi.ssd_chunk_id].scmi.scm_devname, devname);
+		DNPRINTF(SR_D_META, "%s: roaming device %s -> %s\n",
+		    DEVNAME(sc), mc[sm->ssdi.ssd_chunk_id].scmi.scm_devname,
+		    devname);
+#endif
 
 	/* we have meta data on disk */
 	DNPRINTF(SR_D_META, "%s: sr_meta_validate valid metadata %s\n",
@@ -2159,6 +2165,36 @@ done:
 	return (rv);
 }
 
+void
+sr_roam_chunks(struct sr_discipline *sd)
+{
+	struct sr_softc		*sc = sd->sd_sc;
+	struct sr_chunk		*chunk;
+	struct sr_meta_chunk	*meta;
+	int			roamed = 0;
+
+	/* Have any chunks roamed? */
+	SLIST_FOREACH(chunk, &sd->sd_vol.sv_chunk_list, src_link) {
+		
+		meta = &chunk->src_meta;
+	
+		if (strncmp(meta->scmi.scm_devname, chunk->src_devname,
+		    sizeof(meta->scmi.scm_devname))) {
+
+			printf("%s: roaming device %s -> %s\n", DEVNAME(sc),
+			    meta->scmi.scm_devname, chunk->src_devname);
+
+			strlcpy(meta->scmi.scm_devname, chunk->src_devname,
+			    sizeof(meta->scmi.scm_devname));
+
+			roamed++;
+		}
+	}
+
+	if (roamed)
+		sr_meta_save(sd, SR_META_DIRTY);
+}
+
 int
 sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 {
@@ -2491,6 +2527,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 				    sizeof(sd->sd_meta->ssd_devname));
 			}
 		}
+
+		/* Update device name on any chunks which roamed. */
+		sr_roam_chunks(sd);
+
 #ifndef SMALL_KERNEL
 		if (sr_sensors_create(sd))
 			printf("%s: unable to create sensor for %s\n",
