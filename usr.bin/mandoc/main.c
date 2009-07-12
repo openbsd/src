@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.12 2009/07/12 18:28:29 schwarze Exp $ */
+/*	$Id: main.c,v 1.13 2009/07/12 22:44:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -52,9 +52,7 @@ struct	curparse {
 	const char	 *file;		/* Current parse. */
 	int		  fd;		/* Current parse. */
 	int		  wflags;
-#define	WARN_WALL	  0x03		/* All-warnings mask. */
-#define	WARN_WCOMPAT	 (1 << 0)	/* Compatibility warnings. */
-#define	WARN_WSYNTAX	 (1 << 1)	/* Syntax warnings. */
+#define	WARN_WALL	 (1 << 0)	/* All-warnings mask. */
 #define	WARN_WERR	 (1 << 2)	/* Warnings->errors. */
 	int		  fflags;
 #define	IGN_SCOPE	 (1 << 0) 	/* Ignore scope errors. */
@@ -582,13 +580,11 @@ static int
 woptions(int *wflags, char *arg)
 {
 	char		*v, *o;
-	char		*toks[5]; 
+	char		*toks[3]; 
 
 	toks[0] = "all";
-	toks[1] = "compat";
-	toks[2] = "syntax";
-	toks[3] = "error";
-	toks[4] = NULL;
+	toks[1] = "error";
+	toks[2] = NULL;
 
 	while (*arg) {
 		o = arg;
@@ -597,12 +593,6 @@ woptions(int *wflags, char *arg)
 			*wflags |= WARN_WALL;
 			break;
 		case (1):
-			*wflags |= WARN_WCOMPAT;
-			break;
-		case (2):
-			*wflags |= WARN_WSYNTAX;
-			break;
-		case (3):
 			*wflags |= WARN_WERR;
 			break;
 		default:
@@ -622,6 +612,7 @@ merr(void *arg, int line, int col, const char *msg)
 	struct curparse *curp;
 
 	curp = (struct curparse *)arg;
+
 	warnx("%s:%d: error: %s (column %d)", 
 			curp->file, line, msg, col);
 

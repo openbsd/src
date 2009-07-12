@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.7 2009/06/23 23:40:59 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.8 2009/07/12 22:44:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2009 $
+.Dd $Mdocdate: July 12 2009 $
 .Dt MANDOC 1
 .Os
 .\" SECTION
@@ -60,15 +60,11 @@ for available formats.  Defaults to
 Print version and exit.
 .\" ITEM
 .It Fl W Ns Ar err...
-Print warning messages.  May be set to 
+Configure warning messages.  Use
 .Fl W Ns Ar all
-for all warnings, 
-.Ar compat
-for groff/troff-compatibility warnings, or
-.Ar syntax
-for syntax warnings.  If
+to print warnings,
 .Fl W Ns Ar error 
-is specified, warnings are considered errors and cause utility
+for warnings to be considered errors and cause utility
 termination.  Multiple 
 .Fl W
 arguments may be comma-separated, such as
