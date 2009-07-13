@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_mfc.c,v 1.5 2009/03/14 15:32:55 michele Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.6 2009/07/13 18:58:46 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -34,6 +34,8 @@
 #include "rde.h"
 
 /* multicast forwarding cache */
+
+void	 mfc_send_prune(struct rt_node *, struct mfc_node *);
 
 void	 mfc_expire_timer(int, short, void *);
 int	 mfc_start_expire_timer(struct mfc_node *);
@@ -236,16 +238,35 @@ mfc_find_origin(struct in_addr group)
 }
 
 void
+mfc_send_prune(struct rt_node *rn, struct mfc_node *mn)
+{
+	struct prune	p;
+
+	bzero(&p, sizeof(p));
+
+	p.origin.s_addr = (mn->origin.s_addr &
+	    htonl(prefixlen2mask(rn->prefixlen)));
+	p.netmask.s_addr = htonl(prefixlen2mask(rn->prefixlen));
+	p.group.s_addr = mn->group.s_addr;
+	p.nexthop.s_addr = rn->nexthop.s_addr;
+	p.ifindex = mn->ifindex;
+
+	rde_imsg_compose_dvmrpe(IMSG_SEND_PRUNE, 0, 0, &p, sizeof(p));
+
+	mfc_start_prune_timer(mn);
+}
+
+void
 mfc_update_source(struct rt_node *rn)
 {
 	struct mfc_node		*mn;
 	struct mfc		 m;
-	struct prune		 p;
 	int			 i;
 	u_int8_t		 found;
 
 	RB_FOREACH(mn, mfc_tree, &mfc) {
-		if (rn->prefix.s_addr == mn->origin.s_addr) {
+		if (rn->prefix.s_addr == (mn->origin.s_addr &
+		    htonl(prefixlen2mask(rn->prefixlen)))) {
 			mn->ifindex = rn->ifindex;
 
 			found = 0;
@@ -267,23 +288,8 @@ mfc_update_source(struct rt_node *rn)
 
 			mfc_reset_expire_timer(mn);
 
-			if (!found) {
-				/* We have removed all downstream interfaces,
-				   start the pruning process */
-				bzero(&p, sizeof(p));
-
-				p.origin.s_addr = mn->origin.s_addr;
-				p.netmask.s_addr =
-				    prefixlen2mask(rn->prefixlen);
-				p.group.s_addr = mn->group.s_addr;
-				p.nexthop.s_addr = rn->nexthop.s_addr;
-				p.ifindex = mn->ifindex;
-
-				rde_imsg_compose_dvmrpe(IMSG_SEND_PRUNE, 0, 0,
-				    &p, sizeof(p));
-
-				mfc_start_prune_timer(mn);
-			}
+			if (!found && !rn->connected)
+				mfc_send_prune(rn, mn);
 		}
 	}
 }
@@ -291,9 +297,11 @@ mfc_update_source(struct rt_node *rn)
 void
 mfc_update(struct mfc *nmfc)
 {
-	struct timespec		 now;
 	struct mfc_node		*mn;
+	struct rt_node		*rn;
+	struct timespec		 now;
 	int			 i;
+	u_int8_t		 found = 0;
 
 	clock_gettime(CLOCK_MONOTONIC, &now);
 
@@ -305,8 +313,11 @@ mfc_update(struct mfc *nmfc)
 		mn->group.s_addr = nmfc->group.s_addr;
 		mn->ifindex = nmfc->ifindex;
 		mn->uptime = now.tv_sec;
-		for (i = 0; i < MAXVIFS; i++)
+		for (i = 0; i < MAXVIFS; i++) {
 			mn->ttls[i] = nmfc->ttls[i];
+			if (mn->ttls[i] != 0)
+				found = 1;
+		}
 
 		if (mfc_insert(mn) == 0) {
 			rde_imsg_compose_parent(IMSG_MFC_ADD, 0, nmfc,
@@ -316,6 +327,18 @@ mfc_update(struct mfc *nmfc)
 		evtimer_set(&mn->expiration_timer, mfc_expire_timer, mn);
 		evtimer_set(&mn->prune_timer, mfc_expire_timer, mn);
 		mfc_start_expire_timer(mn);
+
+		if (!found) {
+			/* We removed all downstream interfaces,
+			   start the pruning process */
+			rn = rt_match_origin(mn->origin.s_addr);
+			if (rn == NULL) {
+				fatal("mfc_update: cannot find information "
+				    " about source");
+			}
+
+			mfc_send_prune(rn, mn);
+		}
 	}
 }
 
