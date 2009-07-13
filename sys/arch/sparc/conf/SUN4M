@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.75 2009/06/24 11:38:40 deraadt Exp $
+#	$OpenBSD: SUN4M,v 1.76 2009/07/13 19:53:58 kettenis Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -141,6 +141,9 @@ qec*	at sbus?
 qe*	at qec?
 be*	at qec?
 
+# Gigabit ethernet
+gem*	at sbus?
+
 # Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
 # systems.
 bwtwo*	at sbus?				# sun4c and sun4m
@@ -220,6 +223,7 @@ ep*	at pcmcia?		# PCMCIA based 3C5xx ethernet
 
 # Media Independent Interface (mii) drivers (required by hme, ne, ep)
 bmtphy*	at mii?			# Broadcom 10/100 PHYs
+gentbi*	at mii?			# Generic 1000BASE-X ten-bit PHY
 lxtphy*	at mii?			# Level1 LXT970 PHYs
 nsphy*	at mii?			# NS and compatible PHYs
 nsphyter* at mii?
