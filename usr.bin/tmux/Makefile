@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.5 2009/07/09 15:47:49 nicm Exp $
+# $OpenBSD: Makefile,v 1.6 2009/07/13 17:47:46 nicm Exp $
 
 PROG=	tmux
-SRCS=	arg.c attributes.c buffer-poll.c buffer.c cfg.c client-fn.c \
+SRCS=	attributes.c buffer-poll.c buffer.c cfg.c client-fn.c \
 	client-msg.c client.c clock.c cmd-attach-session.c cmd-bind-key.c \
 	cmd-break-pane.c cmd-choose-session.c cmd-choose-window.c \
 	cmd-clear-history.c cmd-clock-mode.c cmd-command-prompt.c \

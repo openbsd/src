@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-move-window.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-move-window.c,v 1.2 2009/07/13 17:47:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,19 +54,8 @@ cmd_move_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	if ((wl_src = cmd_find_window(ctx, data->src, &src)) == NULL)
 		return (-1);
-
-	if (arg_parse_window(data->dst, &dst, &idx) != 0) {
-		ctx->error(ctx, "bad window: %s", data->dst);
+	if ((idx = cmd_find_index(ctx, data->dst, &dst)) == -2)
 		return (-1);
-	}
-	if (dst == NULL)
-		dst = ctx->cursession;
-	if (dst == NULL)
-		dst = cmd_current_session(ctx);
-	if (dst == NULL) {
-		ctx->error(ctx, "session not found: %s", data->dst);
-		return (-1);
-	}
 
 	wl_dst = NULL;
 	if (idx != -1)
