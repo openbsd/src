@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.4 2009/06/06 18:31:42 pyr Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.5 2009/07/13 19:04:26 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -396,7 +396,7 @@ u_int16_t	 iso_cksum(void *, u_int16_t, u_int16_t);
 /* kroute.c */
 int		 kif_init(void);
 int		 kr_init(int);
-int		 kr_change(struct kroute *, int);
+int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
 void		 kr_shutdown(void);
 void		 kr_lfib_couple(void);
