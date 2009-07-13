@@ -130,6 +130,7 @@
 ./usr/share/man/cat1/fsplit.0
 ./usr/share/man/cat1/fstat.0
 ./usr/share/man/cat1/ftp.0
+./usr/share/man/cat1/fuser.0
 ./usr/share/man/cat1/g77.0
 ./usr/share/man/cat1/gencat.0
 ./usr/share/man/cat1/getcap.0
