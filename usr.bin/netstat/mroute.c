@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.18 2009/02/07 15:06:04 chl Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.19 2009/07/13 19:13:41 michele Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -146,8 +146,8 @@ mroutepr(u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
 			banner_printed = 1;
 		}
 
-		printf(" %3u     %3u  %5u  %-15.15s",
-		    vifi, v->v_threshold, v->v_rate_limit,
+		printf(" %3u     %3u  %-15.15s",
+		    vifi, v->v_threshold,
 		    routename4(v->v_lcl_addr.s_addr));
 		printf("  %-15.15s  %6lu  %7lu\n", (v->v_flags & VIFF_TUNNEL) ?
 		    routename4(v->v_rmt_addr.s_addr) : "",
