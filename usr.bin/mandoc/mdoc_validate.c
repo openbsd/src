@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.23 2009/07/13 00:33:40 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.24 2009/07/13 01:00:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -534,7 +534,7 @@ check_text(struct mdoc *mdoc, int line, int pos, const char *p)
 		}
 		if ( ! (MDOC_IGN_ESCAPE & mdoc->pflags))
 			return(mdoc_perr(mdoc, line, pos, EESCAPE));
-		if ( ! mdoc_perr(mdoc, line, pos, EESCAPE))
+		if ( ! mdoc_pwarn(mdoc, line, pos, EESCAPE))
 			return(0);
 	}
 
