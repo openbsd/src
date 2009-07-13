@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.23 2009/07/12 23:19:48 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.24 2009/07/13 00:26:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1129,8 +1129,16 @@ termp_ex_pre(DECL_ARGS)
 static int
 termp_nd_pre(DECL_ARGS)
 {
-
+	/* 
+	 * XXX: signed off by jmc@openbsd.org.  This technically
+	 * produces a minus sign after the Nd, which is wrong, but is
+	 * consistent with the historic OpenBSD tmac file.
+	 */
+#ifdef __OpenBSD__
 	term_word(p, "\\-");
+#else
+	term_word(p, "\\(em");
+#endif
 	return(1);
 }
 
