@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.27 2009/06/24 17:27:40 miod Exp $
+#	$OpenBSD: files.sgi,v 1.28 2009/07/13 21:19:22 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -72,6 +72,7 @@ include "dev/onewire/files.onewire"
 #
 #	PCI Bus bridges
 #
+
 device	macepcibr {} : pcibus
 attach	macepcibr at macebus
 file	arch/sgi/pci/macepcibridge.c		macepcibr needs-flag
@@ -89,6 +90,7 @@ include	"dev/i2o/files.i2o"
 #
 
 include	"dev/pci/files.pci"
+file	arch/sgi/pci/pci_machdep.c		pci
 
 # Sun HME Ethernet controllers
 device	hme: ether, ifnet, mii, ifmedia

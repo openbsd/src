@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.4 2008/02/16 18:42:21 miod Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.5 2009/07/13 21:19:26 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -77,3 +77,6 @@ struct mips_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
+
+void	ppb_initialize(pci_chipset_tag_t, pcitag_t, uint, uint, bus_addr_t,
+	    bus_addr_t, bus_addr_t, bus_addr_t);
