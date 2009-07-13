@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-start-server.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-start-server.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,7 +29,7 @@ int	cmd_start_server_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_start_server_entry = {
 	"start-server", "start",
 	"",
-	CMD_STARTSERVER,
+	CMD_STARTSERVER, 0,
 	NULL,
 	NULL,
 	cmd_start_server_exec,

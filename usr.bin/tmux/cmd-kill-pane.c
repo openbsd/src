@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-pane.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-kill-pane.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@ int	cmd_kill_pane_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_kill_pane_entry = {
 	"kill-pane", "killp",
 	CMD_PANE_WINDOW_USAGE,
-	0,
+	0, 0,
 	cmd_pane_init,
 	cmd_pane_parse,
 	cmd_kill_pane_exec,

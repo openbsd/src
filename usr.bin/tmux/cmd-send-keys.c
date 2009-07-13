@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,7 +43,7 @@ struct cmd_send_keys_data {
 const struct cmd_entry cmd_send_keys_entry = {
 	"send-keys", "send",
 	"[-t target-window] key ...",
-	0,
+	0, 0,
 	NULL,
 	cmd_send_keys_parse,
 	cmd_send_keys_exec,

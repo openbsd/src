@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.2 2009/07/07 19:49:19 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.3 2009/07/13 23:11:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,7 +42,7 @@ struct cmd_new_session_data {
 const struct cmd_entry cmd_new_session_entry = {
 	"new-session", "new",
 	"[-d] [-n window-name] [-s session-name] [command]",
-	CMD_STARTSERVER|CMD_CANTNEST,
+	CMD_STARTSERVER|CMD_CANTNEST, 0,
 	cmd_new_session_init,
 	cmd_new_session_parse,
 	cmd_new_session_exec,

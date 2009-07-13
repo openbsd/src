@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.2 2009/06/03 07:51:24 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.3 2009/07/13 23:11:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -46,7 +46,7 @@ struct cmd_swap_pane_data {
 const struct cmd_entry cmd_swap_pane_entry = {
 	"swap-pane", "swapp",
 	"[-dDU] [-t target-window] [-p src-index] [-q dst-index]",
-	0,
+	0, 0,
 	cmd_swap_pane_init,
 	cmd_swap_pane_parse,
 	cmd_swap_pane_exec,

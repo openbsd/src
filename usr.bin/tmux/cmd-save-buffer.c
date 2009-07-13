@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -33,7 +33,7 @@ int	cmd_save_buffer_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_save_buffer_entry = {
 	"save-buffer", "saveb",
 	"[-a] " CMD_BUFFER_SESSION_USAGE " path",
-	CMD_AFLAG|CMD_ARG1,
+	CMD_ARG1, CMD_CHFLAG('a'),
 	cmd_buffer_init,
 	cmd_buffer_parse,
 	cmd_save_buffer_exec,
@@ -68,7 +68,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 
 	mask = umask(S_IRWXG | S_IRWXO);
-	if (data->flags & CMD_AFLAG)
+	if (data->chflags & CMD_CHFLAG('a'))
 		f = fopen(data->arg, "ab");
 	else
 		f = fopen(data->arg, "wb");

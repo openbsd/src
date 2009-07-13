@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@ int	cmd_set_buffer_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_set_buffer_entry = {
 	"set-buffer", "setb",
 	CMD_BUFFER_SESSION_USAGE " data",
-	CMD_ARG1,
+	CMD_ARG1, 0,
 	cmd_buffer_init,
 	cmd_buffer_parse,
 	cmd_set_buffer_exec,

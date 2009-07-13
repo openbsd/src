@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,7 +42,7 @@ struct cmd_switch_client_data {
 const struct cmd_entry cmd_switch_client_entry = {
 	"switch-client", "switchc",
 	"[-c target-client] [-t target-session]",
-	0,
+	0, 0,
 	NULL,
 	cmd_switch_client_parse,
 	cmd_switch_client_exec,

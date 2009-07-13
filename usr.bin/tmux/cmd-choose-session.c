@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-session.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-choose-session.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@ void	cmd_choose_session_callback(void *, int);
 const struct cmd_entry cmd_choose_session_entry = {
 	"choose-session", NULL,
 	CMD_TARGET_WINDOW_USAGE,
-	0,
+	0, 0,
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_choose_session_exec,
