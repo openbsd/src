@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-view.c,v 1.5 2009/07/09 07:58:14 nicm Exp $ */
+/* $OpenBSD: grid-view.c,v 1.6 2009/07/13 10:43:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -92,7 +92,7 @@ grid_view_scroll_region_up(struct grid *gd, u_int rupper, u_int rlower)
 {
 	GRID_DEBUG(gd, "rupper=%u, rlower=%u", rupper, rlower);
 
-	if (rupper == 0 && rlower == gd->sy - 1) {
+	if (gd->flags & GRID_HISTORY && rupper == 0 && rlower == gd->sy - 1) {
 		grid_scroll_line(gd);
 		return;
 	}
