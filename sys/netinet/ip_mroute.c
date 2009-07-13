@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.54 2009/07/09 13:04:29 michele Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.55 2009/07/13 19:14:29 michele Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -131,7 +131,6 @@ u_int		mrtdebug = 0;	  /* debug level 	*/
 
 #define		VIFI_INVALID	((vifi_t) -1)
 
-u_int		tbfdebug = 0;     /* tbf debug level 	*/
 #ifdef RSVP_ISI
 u_int		rsvpdebug = 0;	  /* rsvp debug level   */
 extern struct socket *ip_rsvpd;
@@ -141,12 +140,6 @@ extern int rsvp_on;
 #define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
 struct timeout	expire_upcalls_ch;
-
-/*
- * Define the token bucket filter structures
- */
-
-#define		TBF_REPROCESS	(hz / 100)	/* 100x / second */
 
 static int get_sg_cnt(struct sioc_sg_req *);
 static int get_vif_cnt(struct sioc_vif_req *);
@@ -177,15 +170,7 @@ static int ip_mdq(struct mbuf *, struct ifnet *, struct mfc *);
 #endif
 static void phyint_send(struct ip *, struct vif *, struct mbuf *);
 static void encap_send(struct ip *, struct vif *, struct mbuf *);
-static void tbf_control(struct vif *, struct mbuf *, struct ip *,
-			     u_int32_t);
-static void tbf_queue(struct vif *, struct mbuf *);
-static void tbf_process_q(struct vif *);
-static void tbf_reprocess_q(void *);
-static int tbf_dq_sel(struct vif *, struct ip *);
-static void tbf_send_packet(struct vif *, struct mbuf *);
-static void tbf_update_tokens(struct vif *);
-static int priority(struct vif *, struct ip *);
+static void send_packet(struct vif *, struct mbuf *);
 
 /*
  * Bandwidth monitoring
@@ -882,18 +867,8 @@ add_vif(struct mbuf *m)
 
 	s = splsoftnet();
 
-	/* Define parameters for the tbf structure. */
-	vifp->tbf_q = NULL;
-	vifp->tbf_t = &vifp->tbf_q;
-	microtime(&vifp->tbf_last_pkt_t);
-	vifp->tbf_n_tok = 0;
-	vifp->tbf_q_len = 0;
-	vifp->tbf_max_q_len = MAXQSIZE;
-
 	vifp->v_flags = vifcp->vifc_flags;
 	vifp->v_threshold = vifcp->vifc_threshold;
-	/* scaling up here allows division by 1024 in critical code */
-	vifp->v_rate_limit = vifcp->vifc_rate_limit * 1024 / 1000;
 	vifp->v_lcl_addr = vifcp->vifc_lcl_addr;
 	vifp->v_rmt_addr = vifcp->vifc_rmt_addr;
 	vifp->v_ifp = ifp;
@@ -918,13 +893,12 @@ add_vif(struct mbuf *m)
 
 	if (mrtdebug)
 		log(LOG_DEBUG, "add_vif #%d, lcladdr %x, %s %x, "
-		    "thresh %x, rate %d\n",
+		    "thresh %x\n",
 		    vifcp->vifc_vifi,
 		    ntohl(vifcp->vifc_lcl_addr.s_addr),
 		    (vifcp->vifc_flags & VIFF_TUNNEL) ? "rmtaddr" : "mask",
 		    ntohl(vifcp->vifc_rmt_addr.s_addr),
-		    vifcp->vifc_threshold,
-		    vifcp->vifc_rate_limit);
+		    vifcp->vifc_threshold);
 
 	return (0);
 }
@@ -932,19 +906,8 @@ add_vif(struct mbuf *m)
 void
 reset_vif(struct vif *vifp)
 {
-	struct mbuf *m, *n;
 	struct ifnet *ifp;
 	struct ifreq ifr;
-
-	timeout_set(&vifp->v_repq_ch, tbf_reprocess_q, vifp);
-
-	/*
-	 * Free packets queued at the interface
-	 */
-	for (m = vifp->tbf_q; m != NULL; m = n) {
-		n = m->m_nextpkt;
-		m_freem(m);
-	}
 
 	if (vifp->v_flags & VIFF_TUNNEL) {
 		/* empty */
@@ -1835,11 +1798,7 @@ phyint_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	if (mb_copy == NULL)
 		return;
 
-	if (vifp->v_rate_limit <= 0)
-		tbf_send_packet(vifp, mb_copy);
-	else
-		tbf_control(vifp, mb_copy, mtod(mb_copy, struct ip *),
-		    ntohs(ip->ip_len));
+	send_packet(vifp, mb_copy);
 }
 
 static void
@@ -1899,155 +1858,11 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	ip->ip_sum = in_cksum(mb_copy, ip->ip_hl << 2);
 	mb_copy->m_data -= sizeof(multicast_encap_iphdr);
 
-	if (vifp->v_rate_limit <= 0)
-		tbf_send_packet(vifp, mb_copy);
-	else
-		tbf_control(vifp, mb_copy, ip, ntohs(ip_copy->ip_len));
-}
-
-/*
- * Token bucket filter module
- */
-static void
-tbf_control(struct vif *vifp, struct mbuf *m, struct ip *ip, u_int32_t len)
-{
-
-	if (len > MAX_BKT_SIZE) {
-		/* drop if packet is too large */
-		mrtstat.mrts_pkt2large++;
-		m_freem(m);
-		return;
-	}
-
-	tbf_update_tokens(vifp);
-
-	/*
-	 * If there are enough tokens, and the queue is empty, send this packet
-	 * out immediately.  Otherwise, try to insert it on this vif's queue.
-	 */
-	if (vifp->tbf_q_len == 0) {
-		if (len <= vifp->tbf_n_tok) {
-			vifp->tbf_n_tok -= len;
-			tbf_send_packet(vifp, m);
-		} else {
-			/* queue packet and timeout till later */
-			tbf_queue(vifp, m);
-			timeout_add(&vifp->v_repq_ch, TBF_REPROCESS);
-		}
-	} else {
-		if (vifp->tbf_q_len >= vifp->tbf_max_q_len &&
-		    !tbf_dq_sel(vifp, ip)) {
-			/* queue full, and couldn't make room */
-			mrtstat.mrts_q_overflow++;
-			m_freem(m);
-		} else {
-			/* queue length low enough, or made room */
-			tbf_queue(vifp, m);
-			tbf_process_q(vifp);
-		}
-	}
-}
-
-/*
- * adds a packet to the queue at the interface
- */
-static void
-tbf_queue(struct vif *vifp, struct mbuf *m)
-{
-	int s = splsoftnet();
-
-	/* insert at tail */
-	*vifp->tbf_t = m;
-	vifp->tbf_t = &m->m_nextpkt;
-	vifp->tbf_q_len++;
-
-	splx(s);
-}
-
-
-/*
- * processes the queue at the interface
- */
-static void
-tbf_process_q(struct vif *vifp)
-{
-	struct mbuf *m;
-	int len;
-	int s = splsoftnet();
-
-	/*
-	 * Loop through the queue at the interface and send as many packets
-	 * as possible.
-	 */
-	for (m = vifp->tbf_q; m != NULL; m = vifp->tbf_q) {
-		len = ntohs(mtod(m, struct ip *)->ip_len);
-
-		/* determine if the packet can be sent */
-		if (len <= vifp->tbf_n_tok) {
-			/* if so,
-			 * reduce no of tokens, dequeue the packet,
-			 * send the packet.
-			 */
-			if ((vifp->tbf_q = m->m_nextpkt) == NULL)
-				vifp->tbf_t = &vifp->tbf_q;
-			--vifp->tbf_q_len;
-
-			m->m_nextpkt = NULL;
-			vifp->tbf_n_tok -= len;
-			tbf_send_packet(vifp, m);
-		} else
-			break;
-	}
-	splx(s);
+	send_packet(vifp, mb_copy);
 }
 
 static void
-tbf_reprocess_q(void *arg)
-{
-	struct vif *vifp = arg;
-
-	if (ip_mrouter == NULL)
-		return;
-
-	tbf_update_tokens(vifp);
-	tbf_process_q(vifp);
-
-	if (vifp->tbf_q_len != 0)
-		timeout_add(&vifp->v_repq_ch, TBF_REPROCESS);
-}
-
-/* function that will selectively discard a member of the queue
- * based on the precedence value and the priority
- */
-static int
-tbf_dq_sel(struct vif *vifp, struct ip *ip)
-{
-	u_int p;
-	struct mbuf **mp, *m;
-	int s = splsoftnet();
-
-	p = priority(vifp, ip);
-
-	for (mp = &vifp->tbf_q, m = *mp;
-	    m != NULL;
-	    mp = &m->m_nextpkt, m = *mp) {
-		if (p > priority(vifp, mtod(m, struct ip *))) {
-			if ((*mp = m->m_nextpkt) == NULL)
-				vifp->tbf_t = mp;
-			--vifp->tbf_q_len;
-
-			m_freem(m);
-			mrtstat.mrts_drop_sel++;
-			splx(s);
-			return (1);
-		}
-	}
-	splx(s);
-	return (0);
-}
-
-static void
-tbf_send_packet(struct vif *vifp, struct mbuf *m)
+send_packet(struct vif *vifp, struct mbuf *m)
 {
 	int error;
 	int s = splsoftnet();
@@ -2065,7 +1880,7 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 		struct ip_moptions imo;
 
 		imo.imo_multicast_ifp = vifp->v_ifp;
-		imo.imo_multicast_ttl = mtod(m, struct ip *)->ip_ttl - 1;
+		imo.imo_multicast_ttl = mtod(m, struct ip *)->ip_ttl - IPTTLDEC;
 		imo.imo_multicast_loop = 1;
 #ifdef RSVP_ISI
 		imo.imo_multicast_vif = -1;
@@ -2082,80 +1897,6 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 	splx(s);
 }
 
-/* determine the current time and then
- * the elapsed time (between the last time and time now)
- * in milliseconds & update the no. of tokens in the bucket
- */
-static void
-tbf_update_tokens(struct vif *vifp)
-{
-	struct timeval tp;
-	u_int32_t tm;
-	int s = splsoftnet();
-
-	microtime(&tp);
-
-	TV_DELTA(tp, vifp->tbf_last_pkt_t, tm);
-
-	/*
-	 * This formula is actually
-	 * "time in seconds" * "bytes/second".
-	 *
-	 * (tm / 1000000) * (v_rate_limit * 1000 * (1000/1024) / 8)
-	 *
-	 * The (1000/1024) was introduced in add_vif to optimize
-	 * this divide into a shift.
-	 */
-	vifp->tbf_n_tok += tm * vifp->v_rate_limit / 8192;
-	vifp->tbf_last_pkt_t = tp;
-
-	if (vifp->tbf_n_tok > MAX_BKT_SIZE)
-		vifp->tbf_n_tok = MAX_BKT_SIZE;
-
-	splx(s);
-}
-
-static int
-priority(struct vif *vifp, struct ip *ip)
-{
-	int prio = 50;	/* the lowest priority -- default case */
-
-	/* temporary hack; may add general packet classifier some day */
-
-	/*
-	 * The UDP port space is divided up into four priority ranges:
-	 * [0, 16384)     : unclassified - lowest priority
-	 * [16384, 32768) : audio - highest priority
-	 * [32768, 49152) : whiteboard - medium priority
-	 * [49152, 65536) : video - low priority
-	 */
-	if (ip->ip_p == IPPROTO_UDP) {
-		struct udphdr *udp =
-		    (struct udphdr *)(((char *)ip) + (ip->ip_hl << 2));
-
-		switch (ntohs(udp->uh_dport) & 0xc000) {
-		case 0x4000:
-			prio = 70;
-			break;
-		case 0x8000:
-			prio = 60;
-			break;
-		case 0xc000:
-			prio = 55;
-			break;
-		}
-
-		if (tbfdebug > 1)
-			log(LOG_DEBUG, "port %x prio %d\n",
-			    ntohs(udp->uh_dport), prio);
-	}
-
-	return (prio);
-}
-
-/*
- * End of token bucket filter modifications
- */
 #ifdef RSVP_ISI
 int
 ip_rsvp_vif_init(struct socket *so, struct mbuf *m)
@@ -3145,10 +2886,7 @@ pim_register_send_rp(struct ip *ip, struct vif *vifp,
 	pimhdr->pim.pim_cksum = in_cksum(mb_first, sizeof(pim_encap_pimhdr));
 	mb_first->m_data -= sizeof(pim_encap_iphdr);
 
-	if (vifp->v_rate_limit == 0)
-		tbf_send_packet(vifp, mb_first);
-	else
-		tbf_control(vifp, mb_first, ip, ntohs(ip_outer->ip_len));
+	send_packet(vifp, mb_first);
 
 	/* Keep statistics */
 	pimstat.pims_snd_registers_msgs++;

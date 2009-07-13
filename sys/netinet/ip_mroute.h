@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.14 2006/04/25 15:49:35 claudio Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.15 2009/07/13 19:14:29 michele Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -67,7 +67,7 @@ struct vifctl {
 	vifi_t	  vifc_vifi;	    	/* the index of the vif to be added */
 	u_int8_t  vifc_flags;     	/* VIFF_ flags defined above */
 	u_int8_t  vifc_threshold; 	/* min ttl required to forward on vif */
-	u_int32_t vifc_rate_limit;	/* max rate */
+	u_int32_t vifc_rate_limit;	/* ignored */
 	struct	  in_addr vifc_lcl_addr;/* local interface address */
 	struct	  in_addr vifc_rmt_addr;/* remote address (tunnels only) */
 };
@@ -220,15 +220,8 @@ struct mrtstat {
  * The kernel's virtual-interface structure.
  */
 struct vif {
-	struct	  mbuf *tbf_q, **tbf_t;	/* packet queue */
-	struct	  timeval tbf_last_pkt_t; /* arr. time of last pkt */
-	u_int32_t tbf_n_tok;		/* no of tokens in bucket */
-	u_int32_t tbf_q_len;		/* length of queue at this vif */
-	u_int32_t tbf_max_q_len;	/* max. queue length */
-
 	u_int8_t  v_flags;		/* VIFF_ flags defined above */
 	u_int8_t  v_threshold;		/* min ttl required to forward on vif */
-	u_int32_t v_rate_limit;		/* max rate */
 	struct	  in_addr v_lcl_addr;	/* local interface address */
 	struct	  in_addr v_rmt_addr;	/* remote address (tunnels only) */
 	struct	  ifnet *v_ifp;		/* pointer to interface */
@@ -298,12 +291,6 @@ struct rtdetq {
 
 #define	MFCTBLSIZ	256
 #define	MAX_UPQ		4		/* max. no of pkts in upcall Q */
-
-/*
- * Token bucket filter code
- */
-#define	MAX_BKT_SIZE    10000		/* 10K bytes size */
-#define	MAXQSIZE        10		/* max. no of pkts in token queue */
 
 /*
  * Structure for measuring the bandwidth and sending an upcall if the
