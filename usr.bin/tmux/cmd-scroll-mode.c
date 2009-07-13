@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-scroll-mode.c,v 1.2 2009/06/29 07:11:20 nicm Exp $ */
+/* $OpenBSD: cmd-scroll-mode.c,v 1.3 2009/07/13 18:44:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,7 +29,7 @@ int	cmd_scroll_mode_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_scroll_mode_entry = {
 	"scroll-mode", NULL,
-	CMD_TARGET_WINDOW_USAGE,
+	"[-u] " CMD_TARGET_WINDOW_USAGE,
 	CMD_UFLAG,
 	cmd_scroll_mode_init,
 	cmd_target_parse,
