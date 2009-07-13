@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.22 2009/07/12 23:19:48 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.23 2009/07/13 00:33:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1212,9 +1212,11 @@ post_sh_head(POST_ARGS)
 	if (SEC_CUSTOM == sec)
 		return(1);
 	if (sec == mdoc->lastnamed)
-		return(mdoc_nwarn(mdoc, mdoc->last, ESECREP));
+		if ( ! mdoc_nwarn(mdoc, mdoc->last, ESECREP))
+			return(0);
 	if (sec < mdoc->lastnamed)
-		return(mdoc_nwarn(mdoc, mdoc->last, ESECOOO));
+		if ( ! mdoc_nwarn(mdoc, mdoc->last, ESECOOO))
+			return(0);
 
 	/* 
 	 * Check particular section/manual conventions.  LIBRARY can
