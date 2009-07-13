@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.83 2009/06/04 00:31:42 blambert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.84 2009/07/13 15:39:55 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -126,20 +126,16 @@ nfs_statfs(mp, sbp, p)
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3));
 	nfsm_fhtom(&mb, vp, v3);
-	if ((error = nfs_request(vp, mreq, NFSPROC_FSSTAT, p, cred, &mrep,
-	    &md, &dpos)) != 0) {
-		if (error & NFSERR_RETERR)
-			error &= ~NFSERR_RETERR;
-		else
-			goto nfsmout;
-	}
+
+	error = nfs_request(vp, mreq, NFSPROC_FSSTAT, p, cred, &mrep,
+	    &md, &dpos);
 	if (v3)
 		nfsm_postop_attr(vp, retattr);
 	if (error) {
-		if (mrep != NULL)
-			m_freem(mrep);
+		m_freem(mrep);
 		goto nfsmout;
 	}
+
 	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
 	sbp->f_iosize = min(nmp->nm_rsize, nmp->nm_wsize);
 	if (v3) {
@@ -193,47 +189,48 @@ nfs_fsinfo(nmp, vp, cred, p)
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(1));
 	nfsm_fhtom(&mb, vp, 1);
-	if ((error = nfs_request(vp, mreq, NFSPROC_FSINFO, p, cred, &mrep,
-	    &md, &dpos)) != 0) {
-		if (error & NFSERR_RETERR)
-			error &= ~NFSERR_RETERR;
-		else
-			goto nfsmout;
-	}
+
+	error = nfs_request(vp, mreq, NFSPROC_FSINFO, p, cred, &mrep,
+	    &md, &dpos);
+
 	nfsm_postop_attr(vp, retattr);
-	if (!error) {
-		nfsm_dissect(fsp, struct nfsv3_fsinfo *, NFSX_V3FSINFO);
-		pref = fxdr_unsigned(u_int32_t, fsp->fs_wtpref);
-		if (pref < nmp->nm_wsize)
-			nmp->nm_wsize = (pref + NFS_FABLKSIZE - 1) &
-				~(NFS_FABLKSIZE - 1);
-		max = fxdr_unsigned(u_int32_t, fsp->fs_wtmax);
-		if (max < nmp->nm_wsize) {
-			nmp->nm_wsize = max & ~(NFS_FABLKSIZE - 1);
-			if (nmp->nm_wsize == 0)
-				nmp->nm_wsize = max;
-		}
-		pref = fxdr_unsigned(u_int32_t, fsp->fs_rtpref);
-		if (pref < nmp->nm_rsize)
-			nmp->nm_rsize = (pref + NFS_FABLKSIZE - 1) &
-				~(NFS_FABLKSIZE - 1);
-		max = fxdr_unsigned(u_int32_t, fsp->fs_rtmax);
-		if (max < nmp->nm_rsize) {
-			nmp->nm_rsize = max & ~(NFS_FABLKSIZE - 1);
-			if (nmp->nm_rsize == 0)
-				nmp->nm_rsize = max;
-		}
-		pref = fxdr_unsigned(u_int32_t, fsp->fs_dtpref);
-		if (pref < nmp->nm_readdirsize)
-			nmp->nm_readdirsize = (pref + NFS_DIRBLKSIZ - 1) &
-				~(NFS_DIRBLKSIZ - 1);
-		if (max < nmp->nm_readdirsize) {
-			nmp->nm_readdirsize = max & ~(NFS_DIRBLKSIZ - 1);
-			if (nmp->nm_readdirsize == 0)
-				nmp->nm_readdirsize = max;
-		}
-		nmp->nm_flag |= NFSMNT_GOTFSINFO;
+	if (error) {
+		m_freem(mrep);
+		goto nfsmout;
 	}
+
+	nfsm_dissect(fsp, struct nfsv3_fsinfo *, NFSX_V3FSINFO);
+	pref = fxdr_unsigned(u_int32_t, fsp->fs_wtpref);
+	if (pref < nmp->nm_wsize)
+		nmp->nm_wsize = (pref + NFS_FABLKSIZE - 1) &
+			~(NFS_FABLKSIZE - 1);
+	max = fxdr_unsigned(u_int32_t, fsp->fs_wtmax);
+	if (max < nmp->nm_wsize) {
+		nmp->nm_wsize = max & ~(NFS_FABLKSIZE - 1);
+		if (nmp->nm_wsize == 0)
+			nmp->nm_wsize = max;
+	}
+	pref = fxdr_unsigned(u_int32_t, fsp->fs_rtpref);
+	if (pref < nmp->nm_rsize)
+		nmp->nm_rsize = (pref + NFS_FABLKSIZE - 1) &
+			~(NFS_FABLKSIZE - 1);
+	max = fxdr_unsigned(u_int32_t, fsp->fs_rtmax);
+	if (max < nmp->nm_rsize) {
+		nmp->nm_rsize = max & ~(NFS_FABLKSIZE - 1);
+		if (nmp->nm_rsize == 0)
+			nmp->nm_rsize = max;
+	}
+	pref = fxdr_unsigned(u_int32_t, fsp->fs_dtpref);
+	if (pref < nmp->nm_readdirsize)
+		nmp->nm_readdirsize = (pref + NFS_DIRBLKSIZ - 1) &
+			~(NFS_DIRBLKSIZ - 1);
+	if (max < nmp->nm_readdirsize) {
+		nmp->nm_readdirsize = max & ~(NFS_DIRBLKSIZ - 1);
+		if (nmp->nm_readdirsize == 0)
+			nmp->nm_readdirsize = max;
+	}
+	nmp->nm_flag |= NFSMNT_GOTFSINFO;
+
 	m_freem(mrep);
 nfsmout: 
 	return (error);

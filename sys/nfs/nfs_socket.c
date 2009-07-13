@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.85 2009/06/04 19:19:27 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.86 2009/07/13 15:39:55 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1052,28 +1052,17 @@ tryagain:
 			 */
 			if (error == ESTALE)
 				cache_purge(rep->r_vp);
-
-			if (nmp->nm_flag & NFSMNT_NFSV3 || error == ESTALE) {
-				*mrp = mrep;
-				*mdp = md;
-				*dposp = dpos;
-				error |= NFSERR_RETERR;
-			} else
-				m_freem(mrep);
-			m_freem(rep->r_mreq);
-			pool_put(&nfsreqpl, rep);
-			return (error);
 		}
 
 		*mrp = mrep;
 		*mdp = md;
 		*dposp = dpos;
-		m_freem(rep->r_mreq);
-		pool_put(&nfsreqpl, rep);
-		return (0);
+
+		goto nfsmout;
 	}
-	m_freem(mrep);
+
 	error = EPROTONOSUPPORT;
+
 nfsmout:
 	m_freem(rep->r_mreq);
 	pool_put(&nfsreqpl, rep);
