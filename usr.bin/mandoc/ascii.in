@@ -1,4 +1,4 @@
-/*	$Id: ascii.in,v 1.3 2009/06/15 01:36:23 schwarze Exp $ */
+/*	$Id: ascii.in,v 1.4 2009/07/13 00:18:12 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -87,6 +87,7 @@ LINE("a~", 2, 	  "~", 1)
 LINE("ga", 2, 	  "`", 1)
 LINE("en", 2, 	  "-", 1)
 LINE("em", 2, 	  "--", 2)
+LINE("hy", 2, 	  "-", 1)
 LINE("Pi", 2, 	  "pi", 2)
 LINE("Fo", 2,	  "<<", 2)
 LINE("Fc", 2,	  ">>", 2)
