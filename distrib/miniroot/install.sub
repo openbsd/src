@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.592 2009/07/09 23:45:20 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.593 2009/07/14 23:45:16 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -972,6 +972,7 @@ enable_network() {
 					cmd="$cmd $bcaddr"
 					;;
 				*)	cmd="$cmd $mask $bcaddr"
+					;;
 				esac
 				cmd="$cmd $ext1 $ext2$rtcmd" rtcmd=
 				;;
@@ -1218,6 +1219,7 @@ install_url() {
 			break
 			;;
 		*)	echo "'$resp' is not a valid hostname."
+			;;
 		esac
 	done
 
