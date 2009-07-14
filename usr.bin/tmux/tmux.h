@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.28 2009/07/14 07:23:36 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.29 2009/07/14 19:03:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1395,9 +1395,8 @@ void	 screen_write_cell(
     	     struct screen_write_ctx *, const struct grid_cell *, u_char *);
 
 /* screen-redraw.c */
-void	 screen_redraw_screen(struct client *);
+void	 screen_redraw_screen(struct client *, int);
 void	 screen_redraw_pane(struct client *, struct window_pane *);
-void	 screen_redraw_status(struct client *);
 
 /* screen.c */
 void	 screen_init(struct screen *, u_int, u_int, u_int);
