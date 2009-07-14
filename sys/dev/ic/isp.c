@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.46 2009/06/24 11:00:53 krw Exp $ */
+/* 	$OpenBSD: isp.c,v 1.47 2009/07/14 18:41:02 miod Exp $ */
 /*	$FreeBSD: src/sys/dev/isp/isp.c,v 1.150 2008/12/15 21:42:38 marius Exp $*/
 /*-
  *  Copyright (c) 1997-2007 by Matthew Jacob
@@ -7396,7 +7396,10 @@ isp_read_nvram(struct ispsoftc *isp)
 	if (nvram_data[0] != 'I' || nvram_data[1] != 'S' ||
 	    nvram_data[2] != 'P') {
 		if (isp->isp_bustype != ISP_BT_SBUS) {
-			isp_prt(isp, ISP_LOGWARN, "invalid NVRAM header");
+			if (nvram_data[0] != 0 || nvram_data[1] != 0 ||
+			    nvram_data[2] != 0)
+				isp_prt(isp, ISP_LOGWARN,
+				    "invalid NVRAM header");
 			isp_prt(isp, ISP_LOGDEBUG0, "%x %x %x",
 			    nvram_data[0], nvram_data[1], nvram_data[2]);
 		}
