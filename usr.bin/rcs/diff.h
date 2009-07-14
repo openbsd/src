@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.7 2007/07/03 00:56:23 ray Exp $	*/
+/*	$OpenBSD: diff.h,v 1.8 2009/07/14 14:09:46 jsg Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -118,7 +118,7 @@ int		ed_patch_lines(struct rcs_lines *, struct rcs_lines *);
 extern int       diff_context;
 extern int       diff_format;
 extern int	 diff3_conflicts;
-extern char	*diff_file, *diff_ignore_pats;
+extern char	*diff_file;
 extern char	 diffargs[512]; /* XXX */
 extern BUF	*diffbuf;
 extern RCSNUM	*diff_rev1;
