@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.12 2009/06/10 03:42:58 canacar Exp $	 */
+/* $Id: pftop.c,v 1.13 2009/07/14 17:58:14 jsg Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -449,7 +449,7 @@ compare_addr(int af, const struct pf_addr *a, const struct pf_addr *b)
 	return 0;
 }
 
-__inline int
+static __inline int
 sort_addr_callback(const struct pfsync_state *s1,
 		   const struct pfsync_state *s2, int dir)
 {
@@ -496,7 +496,7 @@ sort_addr_callback(const struct pfsync_state *s1,
 	return -sortdir;
 }
 
-__inline int
+static __inline int
 sort_port_callback(const struct pfsync_state *s1,
 		   const struct pfsync_state *s2, int dir)
 {
