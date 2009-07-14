@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.12 2009/07/09 17:57:11 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.13 2009/07/14 14:47:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -553,7 +553,7 @@ screen_write_scrollregion(
 		rupper = screen_size_y(s) - 1;
 	if (rlower > screen_size_y(s) - 1)
 		rlower = screen_size_y(s) - 1;
-	if (rupper > rlower)
+	if (rupper >= rlower)	/* cannot be one line */
 		return;
 
 	/* Cursor moves to top-left. */
