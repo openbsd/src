@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2xx0_intr.c,v 1.2 2008/12/08 20:50:20 drahn Exp $ */
+/*	$OpenBSD: s3c2xx0_intr.c,v 1.3 2009/07/14 13:59:49 drahn Exp $ */
 /* $NetBSD: s3c2xx0_intr.c,v 1.13 2008/04/27 18:58:45 matt Exp $ */
 
 /*
@@ -144,7 +144,7 @@ s3c2xx0_update_intr_masks(int irqno, int level)
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	s3c2xx0_imask[IPL_VM] &= s3c2xx0_imask[IPL_SOFTSERIAL];
+	s3c2xx0_imask[IPL_VM] &= s3c2xx0_imask[IPL_SOFTTTY];
 	s3c2xx0_imask[IPL_CLOCK] &= s3c2xx0_imask[IPL_VM];
 	s3c2xx0_imask[IPL_HIGH] &= s3c2xx0_imask[IPL_CLOCK];
 
@@ -157,8 +157,8 @@ s3c2xx0_update_intr_masks(int irqno, int level)
 			s3c2xx0_smask[i] |= SI_TO_IRQBIT(SI_SOFTCLOCK);
 		if (i < IPL_SOFTNET)
 			s3c2xx0_smask[i] |= SI_TO_IRQBIT(SI_SOFTNET);
-		if (i < IPL_SOFTSERIAL)
-			s3c2xx0_smask[i] |= SI_TO_IRQBIT(SI_SOFTSERIAL);
+		if (i < IPL_SOFTTTY)
+			s3c2xx0_smask[i] |= SI_TO_IRQBIT(SI_SOFTTTY);
 #if 0
 		printf("mask[%d]: %x %x\n", i, s3c2xx0_smask[i],
 		    s3c2xx0_sk[i]);
@@ -346,7 +346,7 @@ s3c2xx0_irq_do_pending(void)
 	}
 
 	do {
-		DO_SOFTINT(SI_SOFTSERIAL, IPL_SOFTSERIAL);
+		DO_SOFTINT(SI_SOFTTTY, IPL_SOFTTTY);
 		DO_SOFTINT(SI_SOFTNET, IPL_SOFTNET);
 		DO_SOFTINT(SI_SOFTCLOCK, IPL_SOFTCLOCK);
 		DO_SOFTINT(SI_SOFT, IPL_SOFT);

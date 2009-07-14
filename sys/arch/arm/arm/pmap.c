@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2009/05/24 04:56:19 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2009/07/14 13:59:49 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4692,7 +4692,7 @@ pmap_pte_init_generic(void)
 	pte_l1_c_proto = L1_C_PROTO_generic;
 	pte_l2_s_proto = L2_S_PROTO_generic;
 
-	pmap_copy_page_func = pmap_copy_page_v7;
+	pmap_copy_page_func = pmap_copy_page_generic;
 	pmap_zero_page_func = pmap_zero_page_generic;
 }
 
@@ -4808,6 +4808,7 @@ pmap_pte_init_armv7(void)
 	pte_l1_c_proto = L1_C_PROTO_v7;
 	pte_l2_s_proto = L2_S_PROTO_v7;
 
+	pmap_copy_page_func = pmap_copy_page_v7;
 }
 #endif /* CPU_ARMv7 */
 

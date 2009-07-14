@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2410_intr.c,v 1.2 2008/12/08 20:50:20 drahn Exp $ */
+/*	$OpenBSD: s3c2410_intr.c,v 1.3 2009/07/14 13:59:49 drahn Exp $ */
 /* $NetBSD: s3c2410_intr.c,v 1.11 2008/11/24 11:29:52 dogcow Exp $ */
 
 /*
@@ -84,7 +84,7 @@ static const int si_to_ipl[] = {
 #endif
 	[SI_SOFTCLOCK]	= IPL_SOFTCLOCK,
 	[SI_SOFTNET]	= IPL_SOFTNET,
-	[SI_SOFTSERIAL] = IPL_SOFTSERIAL,
+	[SI_SOFTTTY] = IPL_SOFTTTY,
 };
 #endif
 

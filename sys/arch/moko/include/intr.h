@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1 2008/11/26 14:47:50 drahn Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 2009/07/14 13:59:49 drahn Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #define	IPL_SOFTNET	3	/* software network interrupt */
 #define	IPL_BIO		4	/* block I/O */
 #define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	6	/* software serial interrupt */
+#define	IPL_SOFTTTY	6	/* software serial interrupt */
 #define	IPL_TTY		7	/* terminals */
 #define	IPL_VM		8	/* memory allocation */
 #define	IPL_AUDIO	9	/* audio device */
