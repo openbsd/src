@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.16 2006/05/17 13:31:22 grunk Exp $	*/
+/*	$OpenBSD: time.c,v 1.17 2009/07/14 17:24:08 sobrado Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: time.c,v 1.16 2006/05/17 13:31:22 grunk Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.17 2009/07/14 17:24:08 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -195,6 +195,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [-lp] command\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-lp] utility [argument ...]\n",
+	    __progname);
 	exit(1);
 }
