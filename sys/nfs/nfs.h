@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.44 2009/06/04 02:06:40 blambert Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.45 2009/07/14 16:40:29 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -96,8 +96,8 @@
 #define	B_INVAFTERWRITE	B_INVAL
 
 /*
- * Structures for the nfssvc(2) syscall. Not that anyone but nfsd and mount_nfs
- * should ever try and use it.
+ * Structures for the nfssvc(2) syscall.
+ * Not that anyone besides nfsd(8) should ever use it.
  */
 struct nfsd_args {
 	int	sock;		/* Socket to serve */
