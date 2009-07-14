@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.4 2009/07/10 05:50:54 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.5 2009/07/14 06:59:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -17,9 +17,9 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
 
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "tmux.h"
