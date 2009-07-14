@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.63 2009/06/29 19:19:17 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.64 2009/07/14 18:20:02 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -815,10 +815,6 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			   io->pi_sel.pc_func);
 
 	switch(cmd) {
-	case PCIOCGETCONF:
-		error = ENODEV;
-		break;
-
 	case PCIOCREAD:
 		switch(io->pi_width) {
 		case 4:
