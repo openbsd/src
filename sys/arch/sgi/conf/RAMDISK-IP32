@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.5 2009/06/24 17:27:40 miod Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.6 2009/07/15 18:15:21 miod Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -65,6 +65,8 @@ pci*		at macepcibr?	# PCI is on pci bridge
 
 #### SCSI controllers
 ahc*		at pci?
+isp*		at pci?
+mpi*		at pci?
 siop*		at pci?
 
 # USB Controllers
@@ -176,6 +178,8 @@ wskbd*		at pckbd? console ?
 
 #### SCSI Bus devices
 scsibus*	at ahc?
+scsibus*	at isp?
+scsibus*	at mpi?
 scsibus*	at siop?
 
 sd*		at scsibus?
