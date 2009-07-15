@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.11 2009/07/14 16:52:50 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.12 2009/07/15 08:00:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -79,6 +79,19 @@ int
 winlink_cmp(struct winlink *wl1, struct winlink *wl2)
 {
 	return (wl1->idx - wl2->idx);
+}
+
+struct winlink *
+winlink_find_by_window(struct winlinks *wwl, struct window *w)
+{
+	struct winlink	*wl;
+
+	RB_FOREACH(wl, winlinks, wwl) {
+		if (wl->window == w)
+			return (wl);
+	}
+
+	return (NULL);
 }
 
 struct winlink *
