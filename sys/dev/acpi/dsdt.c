@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.150 2009/06/01 22:36:12 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.151 2009/07/15 21:06:25 martynas Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3353,6 +3353,7 @@ aml_seterror(struct aml_scope *scope, const char *fmt, ...)
 	printf("### AML PARSE ERROR (0x%x): ", aml_pc(scope->pos));
 	vprintf(fmt, ap);
 	printf("\n");
+	va_end(ap);
 
 	while (scope) {
 		scope->pos = scope->end;
