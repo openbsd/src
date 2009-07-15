@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.66 2009/04/19 16:48:02 martynas Exp $
+#  $OpenBSD: Makefile,v 1.67 2009/07/15 20:08:43 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -54,7 +54,8 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
 .elif (${MACHINE_ARCH} == "hppa")
 .PATH:	${.CURDIR}/arch/hppa
 ARCH_SRCS = e_sqrt.c e_sqrtf.c e_remainder.c e_remainderf.c \
-	    s_ceil.c s_ceilf.c s_floor.c s_floorf.c s_rint.c s_rintf.c
+	    s_ceil.c s_ceilf.c s_floor.c s_floorf.c s_rint.c s_rintf.c \
+	    s_round.c s_roundf.c s_trunc.c s_truncf.c
 .elif (${MACHINE_ARCH} == "sh")
 .PATH:	${.CURDIR}/arch/sh
 ARCH_SRCS = e_sqrt.c e_sqrtf.c s_fabsf.c
