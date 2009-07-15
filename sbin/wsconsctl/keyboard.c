@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.6 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.7 2009/07/15 20:32:28 martynas Exp $	*/
 /*	$NetBSD: keyboard.c 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -127,7 +127,7 @@ keyboard_get_values(const char *pre, int fd)
 			warn("WSKBDIO_GETENCODING");
 }
 
-void
+int
 keyboard_put_values(const char *pre, int fd)
 {
 	bell.which = 0;
@@ -137,18 +137,9 @@ keyboard_put_values(const char *pre, int fd)
 		bell.which |= WSKBD_BELL_DOPERIOD;
 	if (field_by_value(keyboard_field_tab, &bell.volume)->flags & FLG_SET)
 		bell.which |= WSKBD_BELL_DOVOLUME;
-	if (bell.which != 0 && ioctl(fd, WSKBDIO_SETBELL, &bell) < 0)
+	if (bell.which != 0 && ioctl(fd, WSKBDIO_SETBELL, &bell) < 0) {
 		warn("WSKBDIO_SETBELL");
-	else {
-		if (bell.which & WSKBD_BELL_DOPITCH)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &bell.pitch), " -> ");
-		if (bell.which & WSKBD_BELL_DOPERIOD)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &bell.period), " -> ");
-		if (bell.which & WSKBD_BELL_DOVOLUME)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &bell.volume), " -> ");
+		return 1;
 	}
 
 	dfbell.which = 0;
@@ -159,23 +150,16 @@ keyboard_put_values(const char *pre, int fd)
 	if (field_by_value(keyboard_field_tab, &dfbell.volume)->flags & FLG_SET)
 		dfbell.which |= WSKBD_BELL_DOVOLUME;
 	if (dfbell.which != 0 &&
-	    ioctl(fd, WSKBDIO_SETDEFAULTBELL, &dfbell) < 0)
+	    ioctl(fd, WSKBDIO_SETDEFAULTBELL, &dfbell) < 0) {
 		warn("WSKBDIO_SETDEFAULTBELL");
-	else {
-		if (dfbell.which & WSKBD_BELL_DOPITCH)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &dfbell.pitch), " -> ");
-		if (dfbell.which & WSKBD_BELL_DOPERIOD)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &dfbell.period), " -> ");
-		if (dfbell.which & WSKBD_BELL_DOVOLUME)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &dfbell.volume), " -> ");
+		return 1;
 	}
 
 	if (field_by_value(keyboard_field_tab, &kbmap)->flags & FLG_SET) {
-		if (ioctl(fd, WSKBDIO_SETMAP, &kbmap) < 0)
+		if (ioctl(fd, WSKBDIO_SETMAP, &kbmap) < 0) {
 			warn("WSKBDIO_SETMAP");
+			return 1;
+		}
 	}
 
 	repeat.which = 0;
@@ -184,15 +168,9 @@ keyboard_put_values(const char *pre, int fd)
 	if (field_by_value(keyboard_field_tab, &repeat.delN)->flags & FLG_SET)
 		repeat.which |= WSKBD_KEYREPEAT_DODELN;
 	if (repeat.which != 0 &&
-	    ioctl(fd, WSKBDIO_SETKEYREPEAT, &repeat) < 0)
+	    ioctl(fd, WSKBDIO_SETKEYREPEAT, &repeat) < 0) {
 		warn("WSKBDIO_SETKEYREPEAT");
-	else {
-		if (repeat.which & WSKBD_KEYREPEAT_DODEL1)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &repeat.del1), " -> ");
-		if (repeat.which & WSKBD_KEYREPEAT_DODELN)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &repeat.delN), " -> ");
+		return 1;
 	}
 
 	dfrepeat.which = 0;
@@ -201,32 +179,24 @@ keyboard_put_values(const char *pre, int fd)
 	if (field_by_value(keyboard_field_tab, &dfrepeat.delN)->flags & FLG_SET)
 		dfrepeat.which |= WSKBD_KEYREPEAT_DODELN;
 	if (dfrepeat.which != 0 &&
-	    ioctl(fd, WSKBDIO_SETDEFAULTKEYREPEAT, &dfrepeat) < 0)
+	    ioctl(fd, WSKBDIO_SETDEFAULTKEYREPEAT, &dfrepeat) < 0) {
 		warn("WSKBDIO_SETDEFAULTKEYREPEAT");
-	else {
-		if (dfrepeat.which &WSKBD_KEYREPEAT_DODEL1)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &dfrepeat.del1), " -> ");
-		if (dfrepeat.which & WSKBD_KEYREPEAT_DODELN)
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &dfrepeat.delN), " -> ");
+		return 1;
 	}
 
 	if (field_by_value(keyboard_field_tab, &ledstate)->flags & FLG_SET) {
-		if (ioctl(fd, WSKBDIO_SETLEDS, &ledstate) < 0)
+		if (ioctl(fd, WSKBDIO_SETLEDS, &ledstate) < 0) {
 			warn("WSKBDIO_SETLEDS");
-		else {
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &ledstate), " -> ");
+			return 1;
 		}
 	}
 
 	if (field_by_value(keyboard_field_tab, &kbdencoding)->flags & FLG_SET) {
-		if (ioctl(fd, WSKBDIO_SETENCODING, &kbdencoding) < 0)
+		if (ioctl(fd, WSKBDIO_SETENCODING, &kbdencoding) < 0) {
 			warn("WSKBDIO_SETENCODING");
-		else {
-			pr_field(pre, field_by_value(keyboard_field_tab,
-			    &kbdencoding), " -> ");
+			return 1;
 		}
 	}
+
+	return 0;
 }

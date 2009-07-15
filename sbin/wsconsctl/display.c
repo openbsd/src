@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.11 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: display.c,v 1.12 2009/07/15 20:32:28 martynas Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -141,7 +141,7 @@ display_get_values(const char *pre, int fd)
 	}
 }
 
-void
+int
 display_put_values(const char *pre, int fd)
 {
 	struct wsdisplay_param param;
@@ -215,10 +215,12 @@ display_put_values(const char *pre, int fd)
 			if (errno == ENOTTY) {
 				pf->flags |= FLG_DEAD;
 				continue;
-			} else
+			} else {
 				warn(cmd_str);
+				return 1;
+			}
 		}
-
-		pr_field(pre, pf, " -> ");
 	}
+
+	return 0;
 }

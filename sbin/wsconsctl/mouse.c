@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.7 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.8 2009/07/15 20:32:28 martynas Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -81,23 +81,19 @@ mouse_get_values(const char *pre, int fd)
 	}	
 }
 
-void
+int
 mouse_put_values(const char *pre, int fd)
 {
 	if (field_by_value(mouse_field_tab, &resolution)->flags & FLG_SET) {
-		if (ioctl(fd, WSMOUSEIO_SRES, &resolution) < 0)
+		if (ioctl(fd, WSMOUSEIO_SRES, &resolution) < 0) {
 			warn("WSMOUSEIO_SRES");
-		else {
-			pr_field(pre, field_by_value(mouse_field_tab,
-			    &resolution), " -> ");
+			return 1;
 		}
 	}
 	if (field_by_value(mouse_field_tab, &samplerate)->flags & FLG_SET) {
-		if (ioctl(fd, WSMOUSEIO_SRATE, &samplerate) < 0)
+		if (ioctl(fd, WSMOUSEIO_SRATE, &samplerate) < 0) {
 			warn("WSMOUSEIO_SRATE");
-		else {
-			pr_field(pre, field_by_value(mouse_field_tab,
-			    &samplerate), " -> ");
+			return 1;
 		}
 	}
 	if (field_by_value(mouse_field_tab, &rawmode)->flags & FLG_SET) { 
@@ -106,11 +102,10 @@ mouse_put_values(const char *pre, int fd)
 			if (errno == ENOTTY) {
 				field_by_value(mouse_field_tab,
 				    &rawmode)->flags |= FLG_DEAD;
-			} else
+			} else {
 				warn("WSMOUSEIO_SCALIBCOORDS");
-		} else {
-			pr_field(pre, field_by_value(mouse_field_tab,
-			    &rawmode), " -> ");
+				return 1;
+			}
 		}
 	}
 	if (field_by_value(mouse_field_tab, &wmcoords)->flags & FLG_SET) {
@@ -118,11 +113,12 @@ mouse_put_values(const char *pre, int fd)
 			if (errno == ENOTTY) {
 				field_by_value(mouse_field_tab,
 				    &wmcoords)->flags |= FLG_DEAD;
-			} else
+			} else {
 				warn("WSMOUSEIO_SCALIBCOORDS");
-		} else {
-			pr_field(pre, field_by_value(mouse_field_tab,
-			    &wmcoords), " -> ");
+				return 1;
+			}
 		}
 	}
+
+	return 0;
 }

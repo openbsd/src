@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.h,v 1.8 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: wsconsctl.h,v 1.9 2009/07/15 20:32:28 martynas Exp $	*/
 /*	$NetBSD: wsconsctl.h 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -69,11 +69,11 @@ int name2ksym(char *);
 char *ksym2name(int);
 keysym_t ksym_upcase(keysym_t);
 void keyboard_get_values(const char *,int);
-void keyboard_put_values(const char *,int);
+int keyboard_put_values(const char *,int);
 void mouse_get_values(const char *,int);
-void mouse_put_values(const char *,int);
+int mouse_put_values(const char *,int);
 void display_get_values(const char *,int);
-void display_put_values(const char *,int);
+int display_put_values(const char *,int);
 int yyparse(void);
 void yyerror(char *);
 int yylex(void);
