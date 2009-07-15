@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.110 2009/07/11 16:51:58 sthen Exp $	*/
+/*	$OpenBSD: re.c,v 1.111 2009/07/15 19:50:04 naddy Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1948,18 +1948,19 @@ re_init(struct ifnet *ifp)
 	 * Enable C+ RX and TX mode, as well as RX checksum offload.
 	 * We must configure the C+ register before all others.
 	 */
-	cfg = RL_CPLUSCMD_PCI_MRW;
+	cfg = RL_CPLUSCMD_TXENB | RL_CPLUSCMD_PCI_MRW;
+
 	if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
 		cfg |= RL_CPLUSCMD_RXCSUM_ENB;
+
 	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
 		cfg |= RL_CPLUSCMD_VLANSTRIP;
-	if (sc->rl_flags & RL_FLAG_MACSTAT) {
+
+	if (sc->rl_flags & RL_FLAG_MACSTAT)
 		cfg |= RL_CPLUSCMD_MACSTAT_DIS;
-		/* XXX magic. */
-		cfg |= 0x0001;
-	} else {
-		cfg |= RL_CPLUSCMD_RXENB | RL_CPLUSCMD_TXENB;
-	}
+	else
+		cfg |= RL_CPLUSCMD_RXENB;
+
 	CSR_WRITE_2(sc, RL_CPLUS_CMD, cfg);
 
 	/*
