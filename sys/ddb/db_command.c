@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.53 2009/06/17 01:30:30 thib Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.54 2009/07/15 19:05:14 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -587,7 +587,8 @@ db_error(char *s)
 	if (s)
 		db_printf("%s", s);
 	db_flush_lex();
-	longjmp(db_recover);
+	if (db_recover != NULL)
+		longjmp(db_recover);
 }
 
 
