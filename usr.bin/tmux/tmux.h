@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.30 2009/07/14 20:20:04 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.31 2009/07/15 07:50:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -941,8 +941,6 @@ struct set_option_entry {
 };
 extern const struct set_option_entry set_option_table[];
 extern const struct set_option_entry set_window_option_table[];
-#define NSETOPTION 26
-#define NSETWINDOWOPTION 20
 
 /* tmux.c */
 extern volatile sig_atomic_t sigwinch;
