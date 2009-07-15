@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.18 2008/04/04 17:42:39 millert Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.19 2009/07/15 07:53:56 schwarze Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	BSDI $From: auth_subr.3,v 2.5 2000/03/30 19:11:27 polk Exp $
-.Dd $Mdocdate: April 4 2008 $
+.Dd $Mdocdate: July 15 2009 $
 .Dt BSD_AUTH 3
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@
 .Nm auth_setstate
 .Nd interface to the BSD Authentication system
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <login_cap.h>
 .Fd #include <bsd_auth.h>
 .Ft auth_session_t *
