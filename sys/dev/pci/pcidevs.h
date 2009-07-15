@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1482 2009/07/10 21:37:18 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1483 2009/07/15 09:23:58 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5234,7 +5234,8 @@
 #define	PCI_PRODUCT_VMWARE_VIRTUAL	0x0710		/* Virtual SVGA */
 #define	PCI_PRODUCT_VMWARE_NET	0x0720		/* Virtual NIC */
 #define	PCI_PRODUCT_VMWARE_EHCI	0x0770		/* Virtual EHCI */
-#define	PCI_PRODUCT_VMWARE_PPB	0x0790		/* Virtual PCI-PCI */
+#define	PCI_PRODUCT_VMWARE_PCI	0x0790		/* Virtual PCI-PCI */
+#define	PCI_PRODUCT_VMWARE_PCIE	0x07a0		/* Virtual PCIE-PCIE */
 
 /* Weitek products */
 #define	PCI_PRODUCT_WEITEK_P9000	0x9001		/* P9000 */
