@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskio.c,v 1.4 2009/05/09 18:08:59 miod Exp $ */
+/*	$OpenBSD: diskio.c,v 1.5 2009/07/15 20:34:57 martynas Exp $ */
 
 /*
  * Copyright (c) 2000 Opsycon AB  (www.opsycon.se)
@@ -77,9 +77,10 @@ dioopen(struct open_file *f, ...)
 	va_list ap;
 
 	va_start(ap, f);
-
 	ctlr = va_arg(ap, char *);
 	partition = va_arg(ap, int);
+	va_end(ap);
+
 	if (partition >= MAXPARTITIONS)
 		return (ENXIO);
 
