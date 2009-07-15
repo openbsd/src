@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.22 2009/07/15 20:32:28 martynas Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.23 2009/07/15 21:38:16 martynas Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 {
 	int i, ch, error = 0, aflag = 0, do_merge, putval;
 	struct vartypesw *sw = NULL;
-	char *sep = "=", *p;
+	char *getsep = "=", *setsep = " -> ", *p;
 	char *wdev = NULL;
 	struct field *f;
 
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 			wdev = optarg;
 			break;
 		case 'n':
-			sep = NULL;
+			getsep = setsep = NULL;
 			break;
 		case 'w':
 			/* compat */
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 					warnx("Use explicit arg to view %s.%s.",
 					      sw->name, f->name);
 				else if (f->flags & FLG_GET)
-					pr_field(sw->name, f, sep);
+					pr_field(sw->name, f, getsep);
 		}
 	} else if (argc > 0) {
 		for (i = 0; i < argc; i++) {
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 				(*sw->getval)(sw->name, sw->fd);
 				if (f->flags & FLG_DEAD)
 					continue;
-				pr_field(sw->name, f, sep);
+				pr_field(sw->name, f, getsep);
 				continue;
 			}
 			if (p > argv[i] &&
@@ -217,13 +217,13 @@ main(int argc, char *argv[])
 			if (putval != 0 || f->flags & FLG_DEAD)
 				continue;
 			if (f->flags & FLG_WRONLY) {
-				pr_field(sw->name, f, " -> ");
+				pr_field(sw->name, f, setsep);
 			} else {
 				f->flags |= FLG_GET;
 				(*sw->getval)(sw->name, sw->fd);
 				if (f->flags & FLG_DEAD)
 					continue;
-				pr_field(sw->name, f, " -> ");
+				pr_field(sw->name, f, setsep);
 			}
 		}
 	} else
