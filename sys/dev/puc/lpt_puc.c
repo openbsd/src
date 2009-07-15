@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.4 2006/07/31 11:06:36 mickey Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.5 2009/07/15 17:18:14 deraadt Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ lpt_puc_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": interrupting at %s", intrstr);
+	printf(" %s", intrstr);
 
 	sc->sc_state = 0;
 
