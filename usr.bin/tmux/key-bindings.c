@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.2 2009/07/12 17:33:18 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.3 2009/07/15 17:39:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -194,7 +194,7 @@ key_bindings_error(struct cmd_ctx *ctx, const char *fmt, ...)
 	va_end(ap);
 
 	*msg = toupper((u_char) *msg);
- 	status_message_set(ctx->curclient, msg);
+ 	status_message_set(ctx->curclient, "%s", msg);
 	xfree(msg);
 }
 
@@ -227,7 +227,7 @@ key_bindings_info(struct cmd_ctx *ctx, const char *fmt, ...)
 	va_end(ap);
 
 	*msg = toupper((u_char) *msg);
- 	status_message_set(ctx->curclient, msg);
+ 	status_message_set(ctx->curclient, "%s", msg);
 	xfree(msg);
 }
 

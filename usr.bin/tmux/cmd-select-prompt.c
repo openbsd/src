@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-prompt.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
+/* $OpenBSD: cmd-select-prompt.c,v 1.3 2009/07/15 17:39:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -74,14 +74,14 @@ cmd_select_prompt_callback(void *data, const char *s)
 	idx = strtonum(s, 0, UINT_MAX, &errstr);
 	if (errstr != NULL) {
 		xsnprintf(msg, sizeof msg, "Index %s: %s", errstr, s);
-		status_message_set(c, msg);
+		status_message_set(c, "%s", msg);
 		return (0);
 	}
 
 	if (winlink_find_by_index(&c->session->windows, idx) == NULL) {
 		xsnprintf(msg, sizeof msg,
 		    "Window not found: %s:%d", c->session->name, idx);
-		status_message_set(c, msg);
+		status_message_set(c, "%s", msg);
 		return (0);
 	}
 
