@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.37 2009/02/07 15:06:04 chl Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.38 2009/07/16 23:14:10 tedu Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -380,23 +380,19 @@ ip6_stats(char *name)
 	p(ip6s_cantfrag, "\t%llu datagram%s that can't be fragmented\n");
 	p(ip6s_badscope, "\t%llu packet%s that violated scope rules\n");
 	p(ip6s_notmember, "\t%llu multicast packet%s which we don't join\n");
-	for (first = 1, i = 0; i < 256; i++)
+	for (i = 0; i < 256; i++)
 		if (ip6stat.ip6s_nxthist[i] != 0) {
-			if (first) {
-				printf("\tInput packet histogram:\n");
-				first = 0;
-			}
 			n = NULL;
 			if (ip6nh[i])
 				n = ip6nh[i];
 			else if ((ep = getprotobynumber(i)) != NULL)
 				n = ep->p_name;
 			if (n)
-				printf("\t\t%s: %llu\n", n,
-				    (unsigned long long)ip6stat.ip6s_nxthist[i]);
+				printf("\t%llu %s packets\n",
+				    (unsigned long long)ip6stat.ip6s_nxthist[i], n);
 			else
-				printf("\t\t#%d: %llu\n", i,
-				    (unsigned long long)ip6stat.ip6s_nxthist[i]);
+				printf("\t%llu proto %d packets\n",
+				    (unsigned long long)ip6stat.ip6s_nxthist[i], i);
 		}
 	printf("\tMbuf statistics:\n");
 	p(ip6s_m1, "\t\t%llu one mbuf%s\n");
@@ -404,7 +400,7 @@ ip6_stats(char *name)
 		char ifbuf[IFNAMSIZ];
 		if (ip6stat.ip6s_m2m[i] != 0) {
 			if (first) {
-				printf("\t\ttwo or more mbuf:\n");
+				printf("\t\ttwo or more mbufs:\n");
 				first = 0;
 			}
 			printf("\t\t\t%s = %llu\n",
@@ -819,7 +815,7 @@ void
 icmp6_stats(char *name)
 {
 	struct icmp6stat icmp6stat;
-	int i, first;
+	int i;
 	int mib[] = { CTL_NET, AF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_STATS };
 	size_t len = sizeof(icmp6stat);
 
@@ -841,12 +837,8 @@ icmp6_stats(char *name)
 	    "\t%llu error%s not generated because old message was icmp6 or so\n");
 	p(icp6s_toofreq,
 	    "\t%llu error%s not generated because of rate limitation\n");
-	for (first = 1, i = 0; i < 256; i++)
+	for (i = 0; i < 256; i++)
 		if (icmp6stat.icp6s_outhist[i] != 0) {
-			if (first) {
-				printf("\tOutput packet histogram:\n");
-				first = 0;
-			}
 			printf("\t\t%s: %llu\n", icmp6names[i],
 			    (unsigned long long)icmp6stat.icp6s_outhist[i]);
 		}
@@ -854,16 +846,11 @@ icmp6_stats(char *name)
 	p(icp6s_tooshort, "\t%llu message%s < minimum length\n");
 	p(icp6s_checksum, "\t%llu bad checksum%s\n");
 	p(icp6s_badlen, "\t%llu message%s with bad length\n");
-	for (first = 1, i = 0; i < ICMP6_MAXTYPE; i++)
+	for (i = 0; i < ICMP6_MAXTYPE; i++)
 		if (icmp6stat.icp6s_inhist[i] != 0) {
-			if (first) {
-				printf("\tInput packet histogram:\n");
-				first = 0;
-			}
 			printf("\t\t%s: %llu\n", icmp6names[i],
 			    (unsigned long long)icmp6stat.icp6s_inhist[i]);
 		}
-	printf("\tHistogram of error messages to be generated:\n");
 	p_5(icp6s_odst_unreach_noroute, "\t\t%llu no route\n");
 	p_5(icp6s_odst_unreach_admin, "\t\t%llu administratively prohibited\n");
 	p_5(icp6s_odst_unreach_beyondscope, "\t\t%llu beyond scope\n");
