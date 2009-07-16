@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.21 2009/04/25 15:28:59 kettenis Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.22 2009/07/16 21:00:51 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -343,15 +343,13 @@ mace_pcibr_bus_maxdevs(cpv, busno)
 }
 
 pcireg_t
-mace_pcibr_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+mace_pcibr_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct mace_pcibr_softc *sc = cpv;
 	bus_space_tag_t memt = sc->sc_memt;
 	bus_space_handle_t memh = sc->sc_memh;
 	pcireg_t data, stat;
+	int bus, dev;
 	int s;
 
 	s = splhigh();
@@ -361,6 +359,14 @@ mace_pcibr_conf_read(cpv, tag, offset)
 	bus_space_write_4(memt, memh, MACE_PCI_CFGADDR, data);
 	data = bus_space_read_4(memt, memh, MACE_PCI_CFGDATA);
 	bus_space_write_4(memt, memh, MACE_PCI_CFGADDR, 0);
+
+	/*
+	 * Onboard ahc on O2 can do Ultra speed despite not
+	 * having SEEPROM nor external precision resistors.
+	 */
+	mace_pcibr_decompose_tag(cpv, tag, &bus, &dev, NULL);
+	if (bus == 0 && (dev == 1 || dev == 2) && offset == 0x40)
+		data |= 0x1000;	/* REXTVALID */
 
 	/* Check and clear any PCI error, returns -1 if error is found */
 	stat = bus_space_read_4(memt, memh, MACE_PCI_ERROR_FLAGS);
