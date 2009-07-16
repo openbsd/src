@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.2 2009/07/16 21:02:56 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.3 2009/07/16 21:52:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -133,7 +133,7 @@ ppb_initialize(pci_chipset_tag_t pc, pcitag_t ppbtag, uint secondary,
 	    ((iostart & 0xffff0000) >> 16) | (ioend & 0xffff0000));
 	pci_conf_write(pc, ppbtag, PPB_REG_PREFMEM, 0x0000fff0);
 	pci_conf_write(pc, ppbtag, PPB_REG_PREFBASE_HI32, 0);
-	pci_conf_write(pc, ppbtag, PPB_REG_PREFBASE_HI32, 0);
+	pci_conf_write(pc, ppbtag, PPB_REG_PREFLIM_HI32, 0);
 
 	if (iostart <= ioend)
 		csr |= PCI_COMMAND_IO_ENABLE;
