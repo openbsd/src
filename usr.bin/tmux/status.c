@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.10 2009/07/15 17:39:00 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.11 2009/07/16 23:25:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,10 +57,6 @@ status_redraw(struct client *c)
 	if (c->tty.sy == 0 || !options_get_number(&s->options, "status"))
 		return (1);
 	larrow = rarrow = 0;
-
-	/* Create the target screen. */
-	memcpy(&old_status, &c->status, sizeof old_status);
-	screen_init(&c->status, c->tty.sx, 1, 0);
 
 	/* Create the target screen. */
 	memcpy(&old_status, &c->status, sizeof old_status);
