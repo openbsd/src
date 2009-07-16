@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.40 2008/12/27 17:23:01 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.41 2009/07/16 21:03:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -227,6 +227,19 @@ creator_ioctl(v, cmd, data, flags, p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+			struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
+			long attr;
+
+			if ((sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags &
+			    CREATOR_CFFLAG_NOACCEL) == 0)
+				creator_ras_init(sc);
+
+			/* Clear screen. */
+			ri->ri_ops.alloc_attr(ri,
+			    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &attr);
+			ri->ri_ops.eraserows(ri, 0, ri->ri_rows, attr);
+		} 
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
