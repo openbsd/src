@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.7 2009/07/13 10:43:52 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.8 2009/07/16 07:34:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -554,7 +554,7 @@ grid_duplicate_lines(
 		if (src->usize[sy] == 0)
 			dst->udata[dy] = NULL;
 		else {
-			dst->udata[sy] = xcalloc(
+			dst->udata[dy] = xcalloc(
 			    src->usize[sy], sizeof **dst->udata);
 			memcpy(dst->udata[dy], src->udata[sy],
 			    src->usize[sy] * (sizeof **dst->udata));
