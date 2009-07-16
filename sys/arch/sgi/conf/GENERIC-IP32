@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.8 2009/07/15 18:15:21 miod Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.9 2009/07/16 21:02:54 miod Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -128,6 +128,9 @@ video*		at uvideo?
 
 udl*		at uhub?
 wsdisplay*	at udl?
+
+ppb*		at pci?		# PCI-PCI bridges
+pci*		at ppb?
 
 #### NICs
 dc*		at pci?		# 21143, "tulip" clone ethernet
