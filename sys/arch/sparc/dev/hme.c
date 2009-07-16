@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.60 2009/06/24 07:42:03 sthen Exp $	*/
+/*	$OpenBSD: hme.c,v 1.61 2009/07/16 07:18:47 sthen Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -91,6 +91,8 @@ void	hmestart(struct ifnet *);
 void	hmestop(struct hme_softc *);
 void	hmeinit(struct hme_softc *);
 void	hme_meminit(struct hme_softc *);
+
+void	hme_tick(void *);
 
 void	hme_tcvr_bb_writeb(struct hme_softc *, int);
 int	hme_tcvr_bb_readb(struct hme_softc *, int);
@@ -262,6 +264,8 @@ hmeattach(parent, self, aux)
 	     (strcmp(bp->name, "qfe") == 0) ||
 	     (strcmp(bp->name, "SUNW,hme") == 0)))
 		bp->dev = &sc->sc_dev;
+
+	timeout_set(&sc->sc_tick, hme_tick, sc);
 }
 
 /*
@@ -333,18 +337,21 @@ hmestop(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int tries = 0;
 
+	timeout_del(&sc->sc_tick);
+
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
+	mii_down(&sc->sc_mii);
+
 	sc->sc_gr->reset = GR_RESET_ALL;
 	while (sc->sc_gr->reset && (++tries != MAX_STOP_TRIES))
 		DELAY(20);
 	if (tries == MAX_STOP_TRIES)
 		printf("%s: stop failed\n", sc->sc_dev.dv_xname);
-	sc->sc_mii.mii_media_status &= ~IFM_ACTIVE;
 }
 
 /*
@@ -360,6 +367,19 @@ hmereset(sc)
 	hmestop(sc);
 	hmeinit(sc);
 	splx(s);
+}
+
+void
+hme_tick(void *arg)
+{
+	struct hme_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 /*
@@ -569,6 +589,8 @@ hmeinit(sc)
 	cr->rx_cfg |= CR_RXCFG_ENABLE;	/* enable rx */
 
 	mii_mediachg(&sc->sc_mii);
+
+	timeout_add_sec(&sc->sc_tick, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;

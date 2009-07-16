@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.13 2009/06/24 07:42:03 sthen Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.14 2009/07/16 07:18:47 sthen Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -32,6 +32,7 @@ struct hme_softc {
 	int	sc_node;		/* which sbus node */
 
 	mii_data_t	sc_mii;		/* mii bus */
+	struct timeout	sc_tick;	/* tick timeout */
 
 	struct	arpcom sc_arpcom;	/* ethernet common */
 
