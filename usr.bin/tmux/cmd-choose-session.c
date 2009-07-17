@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-session.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
+/* $OpenBSD: cmd-choose-session.c,v 1.3 2009/07/17 07:05:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -84,7 +84,7 @@ cmd_choose_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	cdata->client = server_client_index(ctx->curclient);
 
 	window_choose_ready(
-	    wl->window->active, cur, cmd_choose_session_callback, cdata);
+	    wl->window->active, cur, cmd_choose_session_callback, xfree, cdata);
 
 	return (0);
 }
@@ -103,5 +103,4 @@ cmd_choose_session_callback(void *data, int idx)
 			server_redraw_client(c);
 		}
 	}
-	xfree(cdata);
 }
