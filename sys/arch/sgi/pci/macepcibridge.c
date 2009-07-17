@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.23 2009/07/16 21:02:56 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.24 2009/07/17 18:06:51 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -133,6 +133,7 @@ struct machine_bus_dma_tag pci_bus_dma_tag = {
 	_dmamap_load_mbuf,
 	_dmamap_load_uio,
 	_dmamap_load_raw,
+	_dmamap_load_buffer,
 	_dmamap_unload,
 	_dmamap_sync,
 	_dmamem_alloc,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.36 2009/07/17 07:14:00 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.37 2009/07/17 18:06:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -154,11 +154,8 @@ int	xbridge_space_map_io(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 int	xbridge_space_map_mem(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 
-int	xbridge_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
-	    struct proc *, int);
-int	xbridge_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t, struct mbuf *,
-	    int);
-int	xbridge_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t, struct uio *, int);
+int	xbridge_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 void	xbridge_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 int	xbridge_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
 	    bus_dma_segment_t *, int, int *, int);
@@ -195,10 +192,11 @@ const struct machine_bus_dma_tag xbridge_dma_tag = {
 	NULL,			/* _cookie */
 	_dmamap_create,
 	_dmamap_destroy,
-	xbridge_dmamap_load,
-	xbridge_dmamap_load_mbuf,
-	xbridge_dmamap_load_uio,
+	_dmamap_load,
+	_dmamap_load_mbuf,
+	_dmamap_load_uio,
 	_dmamap_load_raw,
+	xbridge_dmamap_load_buffer,
 	xbridge_dmamap_unload,
 	_dmamap_sync,
 	xbridge_dmamem_alloc,
@@ -1351,49 +1349,43 @@ xbridge_address_unmap(struct xbridge_softc *sc, bus_addr_t ba, bus_size_t len)
 }
 
 /*
- * bus_dmamap_load() implementation.
+ * bus_dmamap_loadXXX() bowels implementation.
  */
 int
-xbridge_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags)
+xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
+    int *segp, int first)
 {
 	struct xbridge_softc *sc = t->_cookie;
-	paddr_t pa;
-	bus_addr_t lastaddr, busaddr, endaddr;
 	bus_size_t sgsize;
-	bus_addr_t baddr, bmask;
-	caddr_t vaddr = buf;
-	int first, seg;
+	bus_addr_t lastaddr, baddr, bmask;
+	bus_addr_t busaddr, endaddr;
+	paddr_t pa;
+	vaddr_t vaddr = (vaddr_t)buf;
+	int seg;
 	pmap_t pmap;
-	bus_size_t saved_buflen;
 	int rc;
 
-	/*
-	 * Make sure that on error condition we return "no valid mappings".
-	 */
-	map->dm_nsegs = 0;
-	map->dm_mapsize = 0;
-	for (seg = 0; seg < map->_dm_segcnt; seg++)
-		map->dm_segs[seg].ds_addr = 0;
-
-	if (buflen > map->_dm_size)
-		return EINVAL;
+	if (first) {
+		for (seg = 0; seg < map->_dm_segcnt; seg++)
+			map->dm_segs[seg].ds_addr = 0;
+	}
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
 	else
 		pmap = pmap_kernel();
 
+	lastaddr = *lastaddrp;
 	bmask  = ~(map->_dm_boundary - 1);
 	if (t->_dma_mask != 0)
 		bmask &= t->_dma_mask;
 
-	saved_buflen = buflen;
-	for (first = 1, seg = 0; buflen > 0; ) {
+	for (seg = *segp; buflen > 0; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (pmap_extract(pmap, (vaddr_t)vaddr, &pa) == FALSE)
+		if (pmap_extract(pmap, vaddr, &pa) == FALSE)
 			panic("%s: pmap_extract(%x, %x) failed",
 			    __func__, pmap, vaddr);
 
@@ -1461,6 +1453,9 @@ xbridge_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		buflen -= sgsize;
 	}
 
+	*segp = seg;
+	*lastaddrp = lastaddr;
+
 	/*
 	 * Did we fit?
 	 */
@@ -1469,8 +1464,6 @@ xbridge_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		goto fail_unmap;
 	}
 
-	map->dm_nsegs = seg + 1;
-	map->dm_mapsize = saved_buflen;
 	return 0;
 
 fail_unmap:
@@ -1484,112 +1477,6 @@ fail_unmap:
 	}
 
 	return rc;
-}
-
-/*
- * bus_dmamap_load_mbuf() implementation.
- */
-int
-xbridge_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m,
-    int flags)
-{
-	struct xbridge_softc *sc = t->_cookie;
-	bus_addr_t lastaddr, busaddr, endaddr;
-	bus_size_t sgsize;
-	paddr_t pa;
-	vaddr_t lastva;
-	int seg;
-	size_t len;
-	int rc;
-
-	map->dm_nsegs = 0;
-	map->dm_mapsize = 0;
-	for (seg = 0; seg < map->_dm_segcnt; seg++)
-		map->dm_segs[seg].ds_addr = 0;
-
-	seg = 0;
-	len = 0;
-	while (m != NULL) {
-		vaddr_t vaddr = mtod(m, vaddr_t);
-		long buflen = (long)m->m_len;
-
-		len += buflen;
-		while (buflen > 0 && seg < map->_dm_segcnt) {
-			if (pmap_extract(pmap_kernel(), vaddr, &pa) == FALSE)
-				panic("%s: pmap_extract(%x, %x) failed",
-				    __func__, pmap_kernel(), vaddr);
-
-			/*
-			 * Compute the DMA address and the physical range
-			 * this mapping can cover.
-			 */
-			if (xbridge_address_map(sc, pa, &busaddr,
-			    &endaddr) != 0) {
-				rc = ENOMEM;
-				goto fail_unmap;
-			}
-
-			sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
-			sgsize = min(buflen, sgsize);
-			sgsize = min(endaddr - busaddr, sgsize);
-
-			/*
-			 * Try to coalesce with previous entry.
-			 * We need both the physical addresses and
-			 * the virtual address to be contiguous, for
-			 * bus_dmamap_sync() to behave correctly.
-			 */
-			if (seg > 0 &&
-			    busaddr == lastaddr && vaddr == lastva &&
-			    (map->dm_segs[seg - 1].ds_len + sgsize <=
-			     map->_dm_maxsegsz))
-				map->dm_segs[seg - 1].ds_len += sgsize;
-			else {
-				map->dm_segs[seg].ds_addr = busaddr;
-				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg]._ds_vaddr = vaddr;
-				seg++;
-			}
-
-			lastaddr = busaddr + sgsize;
-			if (lastaddr == endaddr)
-				lastaddr = ~0;	/* can't coalesce */
-			vaddr += sgsize;
-			lastva = vaddr;
-			buflen -= sgsize;
-		}
-		m = m->m_next;
-		if (m && seg >= map->_dm_segcnt) {
-			/* Exceeded the size of our dmamap */
-			rc = EFBIG;
-			goto fail_unmap;
-		}
-	}
-	map->dm_nsegs = seg;
-	map->dm_mapsize = len;
-	return 0;
-
-fail_unmap:
-	/*
-	 * If control goes there, we need to unref all our ATE, if any.
-	 */
-	for (seg = 0; seg < map->_dm_segcnt; seg++) {
-		xbridge_address_unmap(sc, map->dm_segs[seg].ds_addr,
-		    map->dm_segs[seg].ds_len);
-		map->dm_segs[seg].ds_addr = 0;
-	}
-
-	return rc;
-}
-
-/*
- * bus_dmamap_load_uio() non-implementation.
- */
-int
-xbridge_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
-    int flags)
-{
-	return EOPNOTSUPP;
 }
 
 /*

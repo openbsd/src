@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.38 2009/03/20 18:41:07 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.39 2009/07/17 18:06:51 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -151,6 +151,7 @@ struct machine_bus_dma_tag mace_bus_dma_tag = {
 	_dmamap_load_mbuf,
 	_dmamap_load_uio,
 	_dmamap_load_raw,
+	_dmamap_load_buffer,
 	_dmamap_unload,
 	_dmamap_sync,
 	_dmamem_alloc,
