@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-pane.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
+/* $OpenBSD: cmd-kill-pane.c,v 1.3 2009/07/17 20:37:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -61,8 +61,9 @@ cmd_kill_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 
 	if (window_count_panes(wl->window) == 1) {
-		ctx->error(ctx, "can't kill pane: %d", data->pane);
-		return (-1);
+		/* Only one pane, kill the window. */
+		server_kill_window(wl->window);
+		return (0);
 	}
 
 	window_remove_pane(wl->window, wp);

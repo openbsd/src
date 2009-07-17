@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.36 2009/07/17 18:45:08 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.37 2009/07/17 20:37:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1284,6 +1284,7 @@ void	 server_redraw_window(struct window *);
 void	 server_status_window(struct window *);
 void	 server_lock(void);
 int	 server_unlock(const char *);
+void	 server_kill_window(struct window *);
 
 /* status.c */
 int	 status_redraw(struct client *);
