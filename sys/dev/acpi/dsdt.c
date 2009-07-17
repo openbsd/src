@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.151 2009/07/15 21:06:25 martynas Exp $ */
+/* $OpenBSD: dsdt.c,v 1.152 2009/07/17 21:44:48 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -159,7 +159,7 @@ struct aml_opcode aml_table[] = {
 	/* Control flow */
 	{ AMLOP_IF,		"If",		"piI",	},
 	{ AMLOP_ELSE,		"Else",		"pT" },
-	{ AMLOP_WHILE,		"While",	"pW",	},
+	{ AMLOP_WHILE,		"While",	"piT",	},
 	{ AMLOP_BREAK,		"Break",	"" },
 	{ AMLOP_CONTINUE,	"Continue",	"" },
 	{ AMLOP_RETURN,		"Return",	"t",	},
@@ -1795,13 +1795,11 @@ aml_xfindscope(struct aml_scope *scope, int type, int endscope)
 			break;
 		case AMLOP_CONTINUE:
 			scope->pos = scope->end;
-			if (scope->type == type)
-			  	scope->pos = scope->start;
 			break;
 		case AMLOP_BREAK:
 			scope->pos = scope->end;
 			if (scope->type == type)
-				scope->pos = NULL;
+				scope->parent->pos = scope->end;
 			break;
 		}
 		if (scope->type == type)
@@ -3129,6 +3127,7 @@ aml_xeval(struct aml_scope *scope, struct aml_value *my_ret, int ret_type,
 #endif
 		
 		/* Evaluate method scope */
+		aml_root.start = tmp->v_method.base;
 		if (tmp->v_method.fneval != NULL) {
 			my_ret = tmp->v_method.fneval(ms, NULL);
 		}
@@ -3370,6 +3369,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	struct aml_opcode *htab;
 	struct aml_value *opargs[8], *my_ret, *rv;
 	struct aml_scope *mscope, *iscope;
+	uint8_t *start, *end;
 	const char *ch;
 	int64_t ival;
 
@@ -3386,6 +3386,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	iscope = scope;
  start:
 	/* --== Stage 0: Get Opcode ==-- */
+	start = scope->pos;
 	pc = aml_pc(scope->pos);
 	aml_debugger(scope);
 
@@ -3401,8 +3402,6 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	memset(opargs, 0, sizeof(opargs));
 	idx = 0;
 	for (ch = htab->args; *ch; ch++) {
-		uint8_t *end;
-
 		rv = NULL;
 		switch (*ch) {
 		case AML_ARG_OBJLEN:
@@ -3433,7 +3432,6 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 			break;
 
 			/* Simple arguments */
-		case AML_ARG_WHILE:
 		case AML_ARG_BUFFER:
 		case AML_ARG_METHOD:
 		case AML_ARG_FIELDLIST:
@@ -4045,23 +4043,12 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		}
 		break;
 	case AMLOP_WHILE:
-		mscope = aml_xpushscope(scope, opargs[0], scope->node,
-		    AMLOP_WHILE);
-		while (mscope->pos != NULL) {
-			/* At beginning of scope.. reset and perform test */
-			mscope->pos = mscope->start;
-			rv = aml_xparse(mscope, AML_ARG_INTEGER, "While-Test");
-			ival = rv->v_integer;
-			aml_xdelref(&rv, "while");
-
-			dnprintf(10,"@@@@@@ WHILE: %llx @ %x\n", ival, pc);
-			if (ival == 0) {
-				break;
-			}
-			aml_xparse(mscope, 'T', "While");
+		if (opargs[0]->v_integer) {
+			/* Set parent position to start of WHILE */
+			scope->pos = start;
+			mscope = aml_xpushscope(scope, opargs[1], scope->node,
+			    AMLOP_WHILE);
 		}
-		aml_xpopscope(mscope);
-		mscope = NULL;
 		break;
 	case AMLOP_BREAK:
 		/* Break: Find While Scope parent, mark type as null */
