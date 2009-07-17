@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.35 2009/07/16 21:02:58 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.36 2009/07/17 07:14:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -674,11 +674,11 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	if (new) {
 		/*
 		 * XXX The interrupt dispatcher is always registered
-		 * XXX at IPL_TTY, in case the interrupt will be shared
+		 * XXX at IPL_BIO, in case the interrupt will be shared
 		 * XXX between devices of different levels.
 		 */
 		if (xbow_intr_establish(xbridge_intr_handler, xi, intrsrc,
-		    IPL_TTY, NULL)) {
+		    IPL_BIO, NULL)) {
 			printf("%s: unable to register interrupt handler\n",
 			    sc->sc_dev.dv_xname);
 			return NULL;
