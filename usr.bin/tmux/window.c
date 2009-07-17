@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.12 2009/07/15 08:00:49 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.13 2009/07/17 18:45:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -377,6 +377,21 @@ window_pane_at_index(struct window *w, u_int idx)
 		n++;
 	}
 	return (NULL);
+}
+
+u_int
+window_pane_index(struct window *w, struct window_pane *wp)
+{
+	struct window_pane	*wq;
+	u_int			 n;
+
+	n = 0;
+	TAILQ_FOREACH(wq, &w->panes, entry) {
+		if (wp == wq)
+			break;
+		n++;
+	}
+	return (n);
 }
 
 u_int
