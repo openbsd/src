@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.7 2009/06/06 08:20:55 eric Exp $
+/*	$OpenBSD: ripctl.c,v 1.8 2009/07/17 09:14:26 michele Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -385,7 +385,7 @@ show_fib_msg(struct imsg *imsg)
 		else
 			printf("*");
 
-		if (!(k->flags & F_KERNEL))
+		if (k->flags & F_RIPD_INSERTED)
 			printf("R");
 		else if (k->flags & F_CONNECTED)
 			printf("C");
