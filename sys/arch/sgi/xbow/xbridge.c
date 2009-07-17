@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.37 2009/07/17 18:06:51 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.38 2009/07/17 19:40:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -146,6 +146,14 @@ void	xbridge_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    uint8_t *, bus_size_t);
 void	xbridge_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    const uint8_t *, bus_size_t);
+void	xbridge_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	xbridge_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
+void	xbridge_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    uint8_t *, bus_size_t);
+void	xbridge_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const uint8_t *, bus_size_t);
 
 int	xbridge_space_map_devio(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
@@ -286,6 +294,10 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mem_bus_space->_space_write_2 = xbridge_write_2;
 	sc->sc_mem_bus_space->_space_read_raw_2 = xbridge_read_raw_2;
 	sc->sc_mem_bus_space->_space_write_raw_2 = xbridge_write_raw_2;
+	sc->sc_mem_bus_space->_space_read_raw_4 = xbridge_read_raw_4;
+	sc->sc_mem_bus_space->_space_write_raw_4 = xbridge_write_raw_4;
+	sc->sc_mem_bus_space->_space_read_raw_8 = xbridge_read_raw_8;
+	sc->sc_mem_bus_space->_space_write_raw_8 = xbridge_write_raw_8;
 
 	bcopy(xaa->xaa_iot, sc->sc_io_bus_space,
 	    sizeof(*sc->sc_io_bus_space));
@@ -297,6 +309,10 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_io_bus_space->_space_write_2 = xbridge_write_2;
 	sc->sc_io_bus_space->_space_read_raw_2 = xbridge_read_raw_2;
 	sc->sc_io_bus_space->_space_write_raw_2 = xbridge_write_raw_2;
+	sc->sc_io_bus_space->_space_read_raw_4 = xbridge_read_raw_4;
+	sc->sc_io_bus_space->_space_write_raw_4 = xbridge_write_raw_4;
+	sc->sc_io_bus_space->_space_read_raw_8 = xbridge_read_raw_8;
+	sc->sc_io_bus_space->_space_write_raw_8 = xbridge_write_raw_8;
 
 	sc->sc_dmat = malloc(sizeof (*sc->sc_dmat), M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dmat == NULL)
@@ -879,7 +895,7 @@ xbridge_read_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
 	volatile uint16_t *addr = (volatile uint16_t *)((h + o) ^ 2);
 	len >>= 1;
 	while (len-- != 0) {
-		*(uint16_t *)buf = *addr;
+		*(uint16_t *)buf = letoh16(*addr);
 		buf += 2;
 	}
 }
@@ -891,8 +907,56 @@ xbridge_write_raw_2(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
 	volatile uint16_t *addr = (volatile uint16_t *)((h + o) ^ 2);
 	len >>= 1;
 	while (len-- != 0) {
-		*addr = *(uint16_t *)buf;
+		*addr = htole16(*(uint16_t *)buf);
 		buf += 2;
+	}
+}
+
+void
+xbridge_read_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*(uint32_t *)buf = letoh32(*addr);
+		buf += 4;
+	}
+}
+
+void
+xbridge_write_raw_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	volatile uint32_t *addr = (volatile uint32_t *)(h + o);
+	len >>= 2;
+	while (len-- != 0) {
+		*addr = htole32(*(uint32_t *)buf);
+		buf += 4;
+	}
+}
+
+void
+xbridge_read_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    uint8_t *buf, bus_size_t len)
+{
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*(uint64_t *)buf = letoh64(*addr);
+		buf += 8;
+	}
+}
+
+void
+xbridge_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    const uint8_t *buf, bus_size_t len)
+{
+	volatile uint64_t *addr = (volatile uint64_t *)(h + o);
+	len >>= 3;
+	while (len-- != 0) {
+		*addr = htole64(*(uint64_t *)buf);
+		buf += 8;
 	}
 }
 
