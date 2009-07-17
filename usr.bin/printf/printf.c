@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.14 2008/09/08 17:04:20 martynas Exp $	*/
+/*	$OpenBSD: printf.c,v 1.15 2009/07/17 17:39:30 martynas Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.14 2008/09/08 17:04:20 martynas Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.15 2009/07/17 17:39:30 martynas Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 	gargv = ++argv;
 
 #define SKIP1	"#-+ 0"
-#define SKIP2	"*0123456789"
+#define SKIP2	"0123456789"
 	do {
 		/*
 		 * Basic algorithm is to scan the format string for conversion
@@ -163,16 +163,28 @@ main(int argc, char *argv[])
 				}
 
 				/* skip to field width */
-				for (; strchr(SKIP1, *fmt); ++fmt) ;
-				fieldwidth = *fmt == '*' ? getint() : 0;
-
-				/* skip to possible '.', get following precision */
-				for (; strchr(SKIP2, *fmt); ++fmt) ;
-				if (*fmt == '.')
+				for (; strchr(SKIP1, *fmt); ++fmt)
+					;
+				if (*fmt == '*') {
 					++fmt;
-				precision = *fmt == '*' ? getint() : 0;
+					fieldwidth = getint();
+				} else
+					fieldwidth = 0;
 
-				for (; strchr(SKIP2, *fmt); ++fmt) ;
+				/* skip to field precision */
+				for (; strchr(SKIP2, *fmt); ++fmt)
+					;
+				precision = 0;
+				if (*fmt == '.') {
+					++fmt;
+					if (*fmt == '*') {
+						++fmt;
+						precision = getint();
+					}
+					for (; strchr(SKIP2, *fmt); ++fmt)
+						;
+				}
+
 				if (!*fmt) {
 					warnx ("missing format character");
 					return(1);
