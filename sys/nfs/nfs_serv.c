@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.75 2009/06/06 23:40:30 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.76 2009/07/17 12:36:21 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -522,7 +522,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	int i;
-	int error = 0, rdonly, cnt, len, left, siz, tlen, getret;
+	int error = 0, rdonly, cnt, len, left, siz, tlen, getret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), reqlen;
 	char *cp2;
 	struct mbuf *mb, *mreq;
