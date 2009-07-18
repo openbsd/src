@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.29 2009/07/18 18:46:42 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.30 2009/07/18 19:00:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1193,7 +1193,11 @@ static void
 termp_vt_post(DECL_ARGS)
 {
 
-	if (node->sec == SEC_SYNOPSIS)
+	if (node->sec != SEC_SYNOPSIS)
+		return;
+	if (node->next && MDOC_Vt == node->next->tok)
+		term_newln(p);
+	else if (node->next)
 		term_vspace(p);
 }
 
