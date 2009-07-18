@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.27 2009/07/18 17:11:44 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.28 2009/07/18 17:26:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -82,9 +82,7 @@ const	int ttypes[TTYPE_NMAX] = {
 
 struct	termpair {
 	struct termpair	 *ppair;
-	int	  	  flag;
-	size_t	  	  offset;	/* Left margin. */
-	size_t	  	  rmargin;	/* Right margin. */
+	int	  	  flag;	
 	int		  count;
 };
 
@@ -339,12 +337,13 @@ print_node(DECL_ARGS)
 {
 	int		 dochild;
 	struct termpair	 npair;
-
-	/* Pre-processing. */
+	size_t		 offset, rmargin;
 
 	dochild = 1;
+	offset = p->offset;
+	rmargin = p->rmargin;
+
 	npair.ppair = pair;
-	npair.offset = npair.rmargin = 0;
 	npair.flag = 0;
 	npair.count = 0;
 
@@ -369,6 +368,9 @@ print_node(DECL_ARGS)
 	if (MDOC_TEXT != node->type)
 		if (termacts[node->tok].post)
 			(*termacts[node->tok].post)(p, &npair, meta, node);
+
+	p->offset = offset;
+	p->rmargin = rmargin;
 }
 
 
@@ -687,7 +689,7 @@ termp_it_pre(DECL_ARGS)
 {
 	const struct mdoc_node *bl, *n;
 	char		        buf[7];
-	int		        i, type, keys[3], vals[3], sv;
+	int		        i, type, keys[3], vals[3];
 	size_t		        width, offset;
 
 	if (MDOC_BLOCK == node->type)
@@ -697,8 +699,6 @@ termp_it_pre(DECL_ARGS)
 
 	/* Save parent attributes. */
 
-	pair->offset = p->offset;
-	pair->rmargin = p->rmargin;
 	pair->flag = p->flags;
 
 	/* Get list width and offset. */
@@ -878,7 +878,6 @@ termp_it_pre(DECL_ARGS)
 	 * HEAD character (temporarily bold, in some cases).  
 	 */
 
-	sv = p->flags;
 	if (MDOC_HEAD == node->type)
 		switch (type) {
 		case (MDOC_Bullet):
@@ -900,8 +899,6 @@ termp_it_pre(DECL_ARGS)
 		default:
 			break;
 		}
-
-	p->flags = sv; /* Restore saved flags. */
 
 	/* 
 	 * If we're not going to process our children, indicate so here.
@@ -961,8 +958,6 @@ termp_it_post(DECL_ARGS)
 		break;
 	}
 
-	p->offset = pair->offset;
-	p->rmargin = pair->rmargin;
 	p->flags = pair->flag;
 }
 
@@ -1325,8 +1320,7 @@ termp_d1_pre(DECL_ARGS)
 	if (MDOC_BLOCK != node->type)
 		return(1);
 	term_newln(p);
-	pair->offset = INDENT + 1;
-	p->offset += pair->offset;
+	p->offset += (INDENT + 1);
 	return(1);
 }
 
@@ -1339,7 +1333,6 @@ termp_d1_post(DECL_ARGS)
 	if (MDOC_BLOCK != node->type) 
 		return;
 	term_newln(p);
-	p->offset -= pair->offset;
 }
 
 
@@ -1508,8 +1501,6 @@ termp_bd_pre(DECL_ARGS)
 	if (NULL == node->parent->args)
 		errx(1, "missing display type");
 
-	pair->offset = p->offset;
-
 	for (type = -1, i = 0; 
 			i < (int)node->parent->args->argc; i++) {
 		switch (node->parent->args->argv[i].arg) {
@@ -1579,7 +1570,6 @@ termp_bd_post(DECL_ARGS)
 
 	term_flushln(p);
 	p->flags &= ~TERMP_LITERAL;
-	p->offset = pair->offset;
 	p->flags |= TERMP_NOSPACE;
 }
 
