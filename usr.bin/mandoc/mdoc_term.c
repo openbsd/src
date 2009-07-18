@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.34 2009/07/18 21:16:49 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.35 2009/07/18 22:07:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -922,12 +922,14 @@ termp_it_pre(DECL_ARGS)
 		case (MDOC_Bullet):
 			p->flags |= TERMP_BOLD;
 			term_word(p, "\\[bu]");
+			p->flags &= ~TERMP_BOLD;
 			break;
 		case (MDOC_Dash):
 			/* FALLTHROUGH */
 		case (MDOC_Hyphen):
 			p->flags |= TERMP_BOLD;
-			term_word(p, "\\-");
+			term_word(p, "\\(hy");
+			p->flags &= ~TERMP_BOLD;
 			break;
 		case (MDOC_Enum):
 			(pair->ppair->ppair->count)++;
@@ -1080,12 +1082,9 @@ termp_rv_pre(DECL_ARGS)
 {
 	int		 i;
 
-	/* FIXME: mandated by parser. */
-
-	if (-1 == (i = arg_getattr(MDOC_Std, node)))
-		errx(1, "expected -std argument");
-	if (1 != node->args->argv[i].sz)
-		errx(1, "expected -std argument");
+	i = arg_getattr(MDOC_Std, node);
+	assert(-1 != i);
+	assert(node->args->argv[i].sz);
 
 	term_newln(p);
 	term_word(p, "The");
@@ -1115,12 +1114,9 @@ termp_ex_pre(DECL_ARGS)
 {
 	int		 i;
 
-	/* FIXME: mandated by parser? */
-
-	if (-1 == (i = arg_getattr(MDOC_Std, node)))
-		errx(1, "expected -std argument");
-	if (1 != node->args->argv[i].sz)
-		errx(1, "expected -std argument");
+	i = arg_getattr(MDOC_Std, node);
+	assert(-1 != i);
+	assert(node->args->argv[i].sz);
 
 	term_word(p, "The");
 	p->flags |= ttypes[TTYPE_PROG];
@@ -1734,14 +1730,8 @@ static void
 termp_ss_post(DECL_ARGS)
 {
 
-	switch (node->type) {
-	case (MDOC_HEAD):
+	if (MDOC_HEAD == node->type)
 		term_newln(p);
-		p->offset = INDENT;
-		break;
-	default:
-		break;
-	}
 }
 
 
