@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.14 2009/07/13 00:33:40 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.15 2009/07/18 19:44:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -97,6 +97,7 @@ enum	merr {
 	EQUOTPHR,
 	ENOCTX,
 	ESPACE,
+	ELIB,
 	MERRMAX
 };
 
@@ -153,6 +154,9 @@ enum	mdoc_sec  mdoc_atosec(const char *);
 time_t		  mdoc_atotime(const char *);
 
 size_t		  mdoc_macro2len(int);
+const char	 *mdoc_a2att(const char *);
+const char	 *mdoc_a2lib(const char *);
+const char	 *mdoc_a2st(const char *);
 const char	 *mdoc_a2arch(const char *);
 const char	 *mdoc_a2vol(const char *);
 const char	 *mdoc_a2msec(const char *);

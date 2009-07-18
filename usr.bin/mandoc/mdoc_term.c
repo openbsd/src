@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.31 2009/07/18 19:13:44 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.32 2009/07/18 19:44:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -127,7 +127,6 @@ static	int	  termp__t_pre(DECL_ARGS);
 static	int	  termp_ap_pre(DECL_ARGS);
 static	int	  termp_aq_pre(DECL_ARGS);
 static	int	  termp_ar_pre(DECL_ARGS);
-static	int	  termp_at_pre(DECL_ARGS);
 static	int	  termp_bd_pre(DECL_ARGS);
 static	int	  termp_bf_pre(DECL_ARGS);
 static	int	  termp_bq_pre(DECL_ARGS);
@@ -148,7 +147,6 @@ static	int	  termp_ft_pre(DECL_ARGS);
 static	int	  termp_ic_pre(DECL_ARGS);
 static	int	  termp_in_pre(DECL_ARGS);
 static	int	  termp_it_pre(DECL_ARGS);
-static	int	  termp_lb_pre(DECL_ARGS);
 static	int	  termp_lk_pre(DECL_ARGS);
 static	int	  termp_ms_pre(DECL_ARGS);
 static	int	  termp_mt_pre(DECL_ARGS);
@@ -167,7 +165,6 @@ static	int	  termp_sh_pre(DECL_ARGS);
 static	int	  termp_sm_pre(DECL_ARGS);
 static	int	  termp_sq_pre(DECL_ARGS);
 static	int	  termp_ss_pre(DECL_ARGS);
-static	int	  termp_st_pre(DECL_ARGS);
 static	int	  termp_sx_pre(DECL_ARGS);
 static	int	  termp_sy_pre(DECL_ARGS);
 static	int	  termp_ud_pre(DECL_ARGS);
@@ -214,7 +211,7 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ot */
 	{ termp_pa_pre, NULL }, /* Pa */
 	{ termp_rv_pre, NULL }, /* Rv */
-	{ termp_st_pre, NULL }, /* St */ 
+	{ NULL, NULL }, /* St */ 
 	{ termp_va_pre, NULL }, /* Va */
 	{ termp_vt_pre, termp_vt_post }, /* Vt */ 
 	{ termp_xr_pre, NULL }, /* Xr */
@@ -232,7 +229,7 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ac */
 	{ termp_aq_pre, termp_aq_post }, /* Ao */
 	{ termp_aq_pre, termp_aq_post }, /* Aq */
-	{ termp_at_pre, NULL }, /* At */
+	{ NULL, NULL }, /* At */
 	{ NULL, NULL }, /* Bc */
 	{ termp_bf_pre, NULL }, /* Bf */ 
 	{ termp_bq_pre, termp_bq_post }, /* Bo */
@@ -283,7 +280,7 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Hf */
 	{ NULL, NULL }, /* Fr */
 	{ termp_ud_pre, NULL }, /* Ud */
-	{ termp_lb_pre, termp_lb_post }, /* Lb */
+	{ NULL, termp_lb_post }, /* Lb */
 	{ termp_pp_pre, NULL }, /* Lp */ 
 	{ termp_lk_pre, NULL }, /* Lk */ 
 	{ termp_mt_pre, NULL }, /* Mt */ 
@@ -322,7 +319,6 @@ mdoc_run(struct termp *p, const struct mdoc *m)
 	 * Main output function.  When this is called, assume that the
 	 * tree is properly formed.
 	 */
-
 	print_head(p, mdoc_meta(m));
 	assert(mdoc_node(m));
 	assert(MDOC_ROOT == mdoc_node(m)->type);
@@ -1037,18 +1033,6 @@ termp_pp_pre(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-termp_st_pre(DECL_ARGS)
-{
-	const char	*cp;
-
-	if (node->child && (cp = mdoc_a2st(node->child->string)))
-		term_word(p, cp);
-	return(0);
-}
-
-
-/* ARGSUSED */
-static int
 termp_rs_pre(DECL_ARGS)
 {
 
@@ -1288,23 +1272,6 @@ termp_bt_pre(DECL_ARGS)
 {
 
 	term_word(p, "is currently in beta test.");
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp_lb_pre(DECL_ARGS)
-{
-	const char	*lb;
-
-	assert(node->child && MDOC_TEXT == node->child->type);
-	lb = mdoc_a2lib(node->child->string);
-	if (lb) {
-		term_word(p, lb);
-		return(0);
-	}
-	term_word(p, "library");
 	return(1);
 }
 
@@ -1834,24 +1801,6 @@ termp_in_post(DECL_ARGS)
 	 */
 	if (node->next && MDOC_In != node->next->tok)
 		term_vspace(p);
-}
-
-
-/* ARGSUSED */
-static int
-termp_at_pre(DECL_ARGS)
-{
-	const char	*att;
-
-	att = NULL;
-
-	if (node->child)
-		att = mdoc_a2att(node->child->string);
-	if (NULL == att)
-		att = "AT&T UNIX";
-
-	term_word(p, att);
-	return(0);
 }
 
 

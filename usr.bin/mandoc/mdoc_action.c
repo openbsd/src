@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.14 2009/07/12 22:35:08 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.15 2009/07/18 19:44:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -32,22 +32,22 @@ struct	actions {
 	int	(*post)(POST_ARGS);
 };
 
-static	int	  concat(struct mdoc *, const struct mdoc_node *, 
-			char *, size_t);
-
 static	int	  post_ar(POST_ARGS);
+static	int	  post_at(POST_ARGS);
 static	int	  post_bl(POST_ARGS);
 static	int	  post_bl_head(POST_ARGS);
-static	int	  post_bl_width(POST_ARGS);
 static	int	  post_bl_tagwidth(POST_ARGS);
+static	int	  post_bl_width(POST_ARGS);
 static	int	  post_dd(POST_ARGS);
 static	int	  post_display(POST_ARGS);
 static	int	  post_dt(POST_ARGS);
+static	int	  post_lb(POST_ARGS);
 static	int	  post_lk(POST_ARGS);
 static	int	  post_nm(POST_ARGS);
 static	int	  post_os(POST_ARGS);
 static	int	  post_prol(POST_ARGS);
 static	int	  post_sh(POST_ARGS);
+static	int	  post_st(POST_ARGS);
 static	int	  post_std(POST_ARGS);
 
 static	int	  pre_bd(PRE_ARGS);
@@ -91,7 +91,7 @@ const	struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ot */
 	{ NULL, NULL }, /* Pa */
 	{ NULL, post_std }, /* Rv */
-	{ NULL, NULL }, /* St */
+	{ NULL, post_st }, /* St */
 	{ NULL, NULL }, /* Va */
 	{ NULL, NULL }, /* Vt */ 
 	{ NULL, NULL }, /* Xr */
@@ -109,7 +109,7 @@ const	struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ac */
 	{ NULL, NULL }, /* Ao */
 	{ NULL, NULL }, /* Aq */
-	{ NULL, NULL }, /* At */ 
+	{ NULL, post_at }, /* At */ 
 	{ NULL, NULL }, /* Bc */
 	{ NULL, NULL }, /* Bf */ 
 	{ NULL, NULL }, /* Bo */
@@ -160,7 +160,7 @@ const	struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Hf */
 	{ NULL, NULL }, /* Fr */
 	{ NULL, NULL }, /* Ud */
-	{ NULL, NULL }, /* Lb */
+	{ NULL, post_lb }, /* Lb */
 	{ NULL, NULL }, /* Lp */
 	{ NULL, post_lk }, /* Lk */
 	{ NULL, NULL }, /* Mt */
@@ -173,6 +173,9 @@ const	struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Dx */
 	{ NULL, NULL }, /* %Q */
 };
+
+static	int	  concat(struct mdoc *, const struct mdoc_node *, 
+			char *, size_t);
 
 
 int
@@ -280,6 +283,81 @@ post_nm(POST_ARGS)
 	if (NULL == (m->meta.name = strdup(buf)))
 		return(mdoc_nerr(m, m->last, EMALLOC));
 
+	return(1);
+}
+
+
+static int
+post_lb(POST_ARGS)
+{
+	const char	*p;
+	char		*buf;
+	size_t		 sz;
+
+	assert(MDOC_TEXT == m->last->child->type);
+	p = mdoc_a2lib(m->last->child->string);
+	if (NULL == p) {
+		sz = strlen(m->last->child->string) +
+			2 + strlen("\\(lqlibrary\\(rq");
+		buf = malloc(sz);
+		if (NULL == buf)
+			return(mdoc_nerr(m, m->last, EMALLOC));
+		(void)snprintf(buf, sz, "library \\(lq%s\\(rq", 
+				m->last->child->string);
+		free(m->last->child->string);
+		m->last->child->string = buf;
+		return(1);
+	}
+
+	free(m->last->child->string);
+	m->last->child->string = strdup(p);
+	if (NULL == m->last->child->string)
+		return(mdoc_nerr(m, m->last, EMALLOC));
+	return(1);
+}
+
+
+static int
+post_st(POST_ARGS)
+{
+	const char	*p;
+
+	assert(MDOC_TEXT == m->last->child->type);
+	p = mdoc_a2st(m->last->child->string);
+	assert(p);
+	free(m->last->child->string);
+	m->last->child->string = strdup(p);
+	if (NULL == m->last->child->string)
+		return(mdoc_nerr(m, m->last, EMALLOC));
+	return(1);
+}
+
+
+static int
+post_at(POST_ARGS)
+{
+	struct mdoc_node *n;
+	const char	 *p;
+
+	if (m->last->child) {
+		assert(MDOC_TEXT == m->last->child->type);
+		p = mdoc_a2att(m->last->child->string);
+		assert(p);
+		free(m->last->child->string);
+		m->last->child->string = strdup(p);
+		if (NULL == m->last->child->string)
+			return(mdoc_nerr(m, m->last, EMALLOC));
+		return(1);
+	}
+
+	n = m->last;
+	m->next = MDOC_NEXT_CHILD;
+
+	if ( ! mdoc_word_alloc(m, n->line, n->pos, "AT&T UNIX"))
+		return(0);
+
+	m->last = n;
+	m->next = MDOC_NEXT_SIBLING;
 	return(1);
 }
 
@@ -660,9 +738,9 @@ post_lk(POST_ARGS)
 	
 	n = m->last;
 	m->next = MDOC_NEXT_CHILD;
-	/* FIXME: this isn't documented anywhere! */
-	if ( ! mdoc_word_alloc(m, m->last->line,
-				m->last->pos, "~"))
+
+	/* XXX: this isn't documented anywhere! */
+	if ( ! mdoc_word_alloc(m, m->last->line, m->last->pos, "~"))
 		return(0);
 
 	m->last = n;
@@ -681,12 +759,10 @@ post_ar(POST_ARGS)
 	
 	n = m->last;
 	m->next = MDOC_NEXT_CHILD;
-	if ( ! mdoc_word_alloc(m, m->last->line,
-				m->last->pos, "file"))
+	if ( ! mdoc_word_alloc(m, m->last->line, m->last->pos, "file"))
 		return(0);
 	m->next = MDOC_NEXT_SIBLING;
-	if ( ! mdoc_word_alloc(m, m->last->line, 
-				m->last->pos, "..."))
+	if ( ! mdoc_word_alloc(m, m->last->line, m->last->pos, "..."))
 		return(0);
 
 	m->last = n;
