@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.66 2009/06/04 19:01:30 sthen Exp $	*/
+/*	$OpenBSD: top.c,v 1.67 2009/07/18 06:12:41 jmc Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -165,8 +165,8 @@ parseargs(int ac, char **av)
 		}
 
 		case 'S':	/* show system processes */
-			ps.system = Yes;
-			old_system = Yes;
+			ps.system = !ps.system;
+			old_system = !old_system;
 			break;
 
 		case 'T':	/* show threads */
