@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.25 2009/07/18 15:34:27 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.26 2009/07/18 16:38:10 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -141,16 +141,13 @@ DECL_PRE(termp_ap);
 DECL_PRE(termp_ar);
 DECL_PRE(termp_at);
 DECL_PRE(termp_bf);
-DECL_PRE(termp_bsx);
 DECL_PRE(termp_bt);
 DECL_PRE(termp_cd);
 DECL_PRE(termp_cm);
-DECL_PRE(termp_dx);
 DECL_PRE(termp_em);
 DECL_PRE(termp_ex);
 DECL_PRE(termp_fa);
 DECL_PRE(termp_fl);
-DECL_PRE(termp_fx);
 DECL_PRE(termp_ic);
 DECL_PRE(termp_lk);
 DECL_PRE(termp_ms);
@@ -158,8 +155,6 @@ DECL_PRE(termp_mt);
 DECL_PRE(termp_nd);
 DECL_PRE(termp_nm);
 DECL_PRE(termp_ns);
-DECL_PRE(termp_nx);
-DECL_PRE(termp_ox);
 DECL_PRE(termp_pa);
 DECL_PRE(termp_pp);
 DECL_PRE(termp_rs);
@@ -169,9 +164,9 @@ DECL_PRE(termp_st);
 DECL_PRE(termp_sx);
 DECL_PRE(termp_sy);
 DECL_PRE(termp_ud);
-DECL_PRE(termp_ux);
 DECL_PRE(termp_va);
 DECL_PRE(termp_xr);
+DECL_PRE(termp_xx);
 
 DECL_POST(termp___);
 DECL_POST(termp_bl);
@@ -243,7 +238,7 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ termp_bf_pre, NULL }, /* Bf */ 
 	{ termp_bq_pre, termp_bq_post }, /* Bo */
 	{ termp_bq_pre, termp_bq_post }, /* Bq */
-	{ termp_bsx_pre, NULL }, /* Bsx */
+	{ termp_xx_pre, NULL }, /* Bsx */
 	{ NULL, termp_bx_post }, /* Bx */
 	{ NULL, NULL }, /* Db */
 	{ NULL, NULL }, /* Dc */
@@ -253,12 +248,12 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ef */
 	{ termp_em_pre, NULL }, /* Em */ 
 	{ NULL, NULL }, /* Eo */
-	{ termp_fx_pre, NULL }, /* Fx */
+	{ termp_xx_pre, NULL }, /* Fx */
 	{ termp_ms_pre, NULL }, /* Ms */
 	{ NULL, NULL }, /* No */
 	{ termp_ns_pre, NULL }, /* Ns */
-	{ termp_nx_pre, NULL }, /* Nx */
-	{ termp_ox_pre, NULL }, /* Ox */
+	{ termp_xx_pre, NULL }, /* Nx */
+	{ termp_xx_pre, NULL }, /* Ox */
 	{ NULL, NULL }, /* Pc */
 	{ termp_pf_pre, termp_pf_post }, /* Pf */
 	{ termp_pq_pre, termp_pq_post }, /* Po */
@@ -276,7 +271,7 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ termp_sx_pre, NULL }, /* Sx */
 	{ termp_sy_pre, NULL }, /* Sy */
 	{ NULL, NULL }, /* Tn */
-	{ termp_ux_pre, NULL }, /* Ux */
+	{ termp_xx_pre, NULL }, /* Ux */
 	{ NULL, NULL }, /* Xc */
 	{ NULL, NULL }, /* Xo */
 	{ termp_fo_pre, termp_fo_post }, /* Fo */ 
@@ -299,7 +294,7 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* %C */ 
 	{ NULL, NULL }, /* Es */ 
 	{ NULL, NULL }, /* En */ 
-	{ termp_dx_pre, NULL }, /* Dx */ 
+	{ termp_xx_pre, NULL }, /* Dx */ 
 	{ NULL, NULL }, /* %Q */ 
 };
 
@@ -1630,16 +1625,6 @@ termp_qq_post(DECL_ARGS)
 
 
 /* ARGSUSED */
-static int
-termp_bsx_pre(DECL_ARGS)
-{
-
-	term_word(p, "BSDI BSD/OS");
-	return(1);
-}
-
-
-/* ARGSUSED */
 static void
 termp_bx_post(DECL_ARGS)
 {
@@ -1652,50 +1637,36 @@ termp_bx_post(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-termp_ox_pre(DECL_ARGS)
+termp_xx_pre(DECL_ARGS)
 {
+	const char	*pp;
 
-	term_word(p, "OpenBSD");
-	return(1);
-}
+	pp = NULL;
+	switch (node->tok) {
+	case (MDOC_Bsx):
+		pp = "BSDI BSD/OS";
+		break;
+	case (MDOC_Dx):
+		pp = "DragonFlyBSD";
+		break;
+	case (MDOC_Fx):
+		pp = "FreeBSD";
+		break;
+	case (MDOC_Nx):
+		pp = "NetBSD";
+		break;
+	case (MDOC_Ox):
+		pp = "OpenBSD";
+		break;
+	case (MDOC_Ux):
+		pp = "UNIX";
+		break;
+	default:
+		break;
+	}
 
-
-/* ARGSUSED */
-static int
-termp_dx_pre(DECL_ARGS)
-{
-
-	term_word(p, "DragonFly");
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp_ux_pre(DECL_ARGS)
-{
-
-	term_word(p, "UNIX");
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp_fx_pre(DECL_ARGS)
-{
-
-	term_word(p, "FreeBSD");
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp_nx_pre(DECL_ARGS)
-{
-
-	term_word(p, "NetBSD");
+	assert(pp);
+	term_word(p, pp);
 	return(1);
 }
 
