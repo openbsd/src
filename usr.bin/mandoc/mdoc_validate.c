@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.24 2009/07/13 01:00:50 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.25 2009/07/18 15:34:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -85,6 +85,7 @@ static	int	eerr_le2(POST_ARGS);
 static	int	eerr_eq1(POST_ARGS);
 static	int	eerr_ge1(POST_ARGS);
 static	int	ewarn_eq0(POST_ARGS);
+static	int	berr_ge1(POST_ARGS);
 static	int	bwarn_ge1(POST_ARGS);
 static	int	hwarn_eq1(POST_ARGS);
 static	int	ewarn_ge1(POST_ARGS);
@@ -139,6 +140,7 @@ static	v_post	posts_rv[] = { eerr_eq0, post_args, NULL };
 static	v_post	posts_an[] = { post_an, NULL };
 static	v_post	posts_at[] = { post_at, NULL };
 static	v_post	posts_xr[] = { eerr_ge1, eerr_le2, NULL };
+static	v_post	posts_nd[] = { berr_ge1, NULL };
 static	v_post	posts_nm[] = { post_nm, NULL };
 static	v_post	posts_bf[] = { hwarn_le1, post_bf, NULL };
 static	v_post	posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
@@ -175,7 +177,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_text },			/* Ic */ 
 	{ NULL, posts_in },			/* In */ 
 	{ NULL, NULL },				/* Li */
-	{ NULL, posts_wtext },			/* Nd */
+	{ NULL, posts_nd },			/* Nd */
 	{ NULL, posts_nm },			/* Nm */
 	{ NULL, posts_wline },			/* Op */
 	{ NULL, NULL },				/* Ot */
@@ -402,6 +404,7 @@ CHECK_CHILD_DEFN(err, eq, ==)			/* err_child_eq() */
 CHECK_CHILD_DEFN(err, lt, <)			/* err_child_lt() */
 CHECK_CHILD_DEFN(warn, lt, <)			/* warn_child_lt() */
 CHECK_BODY_DEFN(ge1, warn, warn_child_gt, 0)	/* bwarn_ge1() */
+CHECK_BODY_DEFN(ge1, err, err_child_gt, 0)	/* berr_ge1() */
 CHECK_ELEM_DEFN(eq0, warn, warn_child_eq, 0)	/* ewarn_eq0() */
 CHECK_ELEM_DEFN(ge1, warn, warn_child_gt, 0)	/* ewarn_gt1() */
 CHECK_ELEM_DEFN(eq1, err, err_child_eq, 1)	/* eerr_eq1() */
@@ -1166,7 +1169,7 @@ post_sh_body(POST_ARGS)
 			return(0);
 	}
 
-	if (MDOC_ELEM == n->type && MDOC_Nd == n->tok)
+	if (MDOC_BLOCK == n->type && MDOC_Nd == n->tok)
 		return(1);
 	return(mdoc_nwarn(mdoc, mdoc->last, ENAMESECINC));
 }

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.11 2009/07/12 23:19:48 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.12 2009/07/18 15:34:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -85,7 +85,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ic */ 
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* In */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Li */
-	{ in_line_eoln, 0 }, /* Nd */ 
+	{ blk_full, 0 }, /* Nd */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Nm */ 
 	{ blk_part_imp, MDOC_CALLABLE | MDOC_PARSED }, /* Op */
 	{ obsolete, 0 }, /* Ot */
@@ -386,6 +386,8 @@ rew_dohalt(int tok, enum mdoc_type type, const struct mdoc_node *p)
 		if (type == p->type && tok == p->tok)
 			return(REWIND_REWIND);
 		break;
+	case (MDOC_Nd):
+		/* FALLTHROUGH */
 	case (MDOC_Ss):
 		assert(MDOC_TAIL != type);
 		if (type == p->type && tok == p->tok)
@@ -491,9 +493,13 @@ rew_dobreak(int tok, const struct mdoc_node *p)
 	switch (tok) {
 	case (MDOC_It):
 		return(MDOC_It == p->tok);
+	case (MDOC_Nd):
+		return(MDOC_Nd == p->tok);
 	case (MDOC_Ss):
 		return(MDOC_Ss == p->tok);
 	case (MDOC_Sh):
+		if (MDOC_Nd == p->tok)
+			return(1);
 		if (MDOC_Ss == p->tok)
 			return(1);
 		return(MDOC_Sh == p->tok);
@@ -875,9 +881,25 @@ in_line(MACRO_PROT_ARGS)
 static int
 blk_full(MACRO_PROT_ARGS)
 {
-	int		  c, lastarg, reopen;
+	int		  c, lastarg, reopen, dohead;
 	struct mdoc_arg	 *arg;
 	char		 *p;
+
+	/* 
+	 * Whether to process a block-head section.  If this is
+	 * non-zero, then a head will be opened for all line arguments.
+	 * If not, then the head will always be empty and only a body
+	 * will be opened, which will stay open at the eoln.
+	 */
+
+	switch (tok) {
+	case (MDOC_Nd):
+		dohead = 0;
+		break;
+	default:
+		dohead = 1;
+		break;
+	}
 
 	if ( ! (MDOC_EXPLICIT & mdoc_macros[tok].flags)) {
 		if ( ! rew_subblock(MDOC_BODY, mdoc, 
@@ -923,6 +945,16 @@ blk_full(MACRO_PROT_ARGS)
 
 	if ( ! mdoc_head_alloc(mdoc, line, ppos, tok))
 		return(0);
+
+	/* Immediately close out head and enter body, if applicable. */
+
+	if (0 == dohead) {
+		if ( ! rew_subblock(MDOC_HEAD, mdoc, tok, line, ppos))
+			return(0);
+		if ( ! mdoc_body_alloc(mdoc, line, ppos, tok))
+			return(0);
+	} 
+
 	mdoc->next = MDOC_NEXT_CHILD;
 
 	for (reopen = 0;; ) {
@@ -934,6 +966,7 @@ blk_full(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == c)
 			break;
 		if (ARGS_PHRASE == c) {
+			assert(dohead);
 			if (reopen && ! mdoc_head_alloc
 					(mdoc, line, ppos, tok))
 				return(0);
@@ -970,9 +1003,13 @@ blk_full(MACRO_PROT_ARGS)
 	
 	if (1 == ppos && ! append_delims(mdoc, line, pos, buf))
 		return(0);
+
+	/* If the body's already open, then just return. */
+	if (0 == dohead) 
+		return(1);
+
 	if ( ! rew_subblock(MDOC_HEAD, mdoc, tok, line, ppos))
 		return(0);
-
 	if ( ! mdoc_body_alloc(mdoc, line, ppos, tok))
 		return(0);
 	mdoc->next = MDOC_NEXT_CHILD;
