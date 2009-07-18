@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 2005/05/17 18:48:52 jason Exp $	*/
+/*	$OpenBSD: build.c,v 1.4 2009/07/18 09:58:06 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/uio.h>
 #include <fcntl.h>
 #include <sys/param.h>
+#include <stdio.h>
 
 #include <dev/usb/ezload.h>
 #include "uyap_firmware.h"
