@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.28 2009/07/18 20:15:07 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.29 2009/07/18 20:19:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1129,7 +1129,7 @@ post_st(POST_ARGS)
 
 	if (mdoc_a2st(mdoc->last->child->string))
 		return(1);
-	return(mdoc_nwarn(mdoc, mdoc->last, EBADSTAND));
+	return(mdoc_nerr(mdoc, mdoc->last, EBADSTAND));
 }
 
 
