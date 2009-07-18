@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.5 2009/07/06 23:54:56 schwarze Exp $
+.\"	$Id: man.7,v 1.6 2009/07/18 21:03:18 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 6 2009 $
+.Dd $Mdocdate: July 18 2009 $
 .Dt MAN 7
 .Os
 .\" SECTION
@@ -27,13 +27,15 @@ The
 .Nm man
 language was historically used to format 
 .Ux
-manuals.  This reference document describes the syntax and structure of
-this language.
+manuals.  This reference document describes its syntax, structure, and
+usage.
 .Pp
-.Em \&Do not
-use 
+.Bf Em
+Do not use 
 .Nm
-to write your manuals.  Use the
+to write your manuals.  
+.Ef
+Use the
 .Xr mdoc 7
 language, instead.
 .\" PARAGRAPH
@@ -53,13 +55,8 @@ Other lines are interpreted within the current state.
 .Sh INPUT ENCODING
 .Nm
 documents may contain only graphable 7-bit ASCII characters, the
-space character
-.Sq \  ,
-and tabs
-.Sq \et . 
-All manuals must have
+space character, and the tabs character.  All manuals must have
 .Ux
-.Sq \en
 line termination.  
 .Pp
 Blank lines are acceptable; where found, the output will assert a
