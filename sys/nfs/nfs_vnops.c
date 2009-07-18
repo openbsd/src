@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.117 2009/07/13 15:39:55 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.118 2009/07/18 14:40:31 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1034,17 +1034,19 @@ nfs_readrpc(vp, uiop)
 
 		error = nfs_request(vp, mreq, NFSPROC_READ, uiop->uio_procp,
 		    VTONFS(vp)->n_rcred, &mrep, &md, &dpos);
+		if (v3)
+			nfsm_postop_attr(vp, attrflag);
+		if (error) {
+			m_freem(mrep);
+			goto nfsmout;
+		}
 
 		if (v3) {
-			nfsm_postop_attr(vp, attrflag);
-			if (error) {
-				m_freem(mrep);
-				goto nfsmout;
-			}
 			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			eof = fxdr_unsigned(int, *(tl + 1));
-		} else if (error == 0)
+		} else {
 			nfsm_loadattr(vp, NULL);
+		}
 
 		nfsm_strsiz(retlen, nmp->nm_rsize);
 		nfsm_mtouio(uiop, retlen);
@@ -1115,56 +1117,58 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 
 		error = nfs_request(vp, mreq, NFSPROC_WRITE, uiop->uio_procp,
 		    VTONFS(vp)->n_wcred, &mrep, &md, &dpos);
-
-		if (error && !v3)
-			goto nfsmout;
-
 		if (v3) {
 			wccflag = NFSV3_WCCCHK;
 			nfsm_wcc_data(vp, wccflag);
-			if (!error) {
-				nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED
-					+ NFSX_V3WRITEVERF);
-				rlen = fxdr_unsigned(int, *tl++);
-				if (rlen == 0) {
-					error = NFSERR_IO;
-					break;
-				} else if (rlen < len) {
-					backup = len - rlen;
-					uiop->uio_iov->iov_base =
-					    (char *)uiop->uio_iov->iov_base -
-					    backup;
-					uiop->uio_iov->iov_len += backup;
-					uiop->uio_offset -= backup;
-					uiop->uio_resid += backup;
-					len = rlen;
-				}
-				commit = fxdr_unsigned(int, *tl++);
+		}
 
-				/*
-				 * Return the lowest committment level
-				 * obtained by any of the RPCs.
-				 */
-				if (committed == NFSV3WRITE_FILESYNC)
-					committed = commit;
-				else if (committed == NFSV3WRITE_DATASYNC &&
-					commit == NFSV3WRITE_UNSTABLE)
-					committed = commit;
-				if ((nmp->nm_flag & NFSMNT_HASWRITEVERF) == 0) {
-				    bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
-					NFSX_V3WRITEVERF);
-				    nmp->nm_flag |= NFSMNT_HASWRITEVERF;
-				} else if (bcmp((caddr_t)tl,
-				    (caddr_t)nmp->nm_verf, NFSX_V3WRITEVERF)) {
-				    *must_commit = 1;
-				    bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
-					NFSX_V3WRITEVERF);
-				}
+		if (error) {
+			m_freem(mrep);
+			goto nfsmout;
+		}
+
+		if (v3) {
+			wccflag = NFSV3_WCCCHK;
+			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED
+				+ NFSX_V3WRITEVERF);
+			rlen = fxdr_unsigned(int, *tl++);
+			if (rlen == 0) {
+				error = NFSERR_IO;
+				break;
+			} else if (rlen < len) {
+				backup = len - rlen;
+				uiop->uio_iov->iov_base =
+				    (char *)uiop->uio_iov->iov_base -
+				    backup;
+				uiop->uio_iov->iov_len += backup;
+				uiop->uio_offset -= backup;
+				uiop->uio_resid += backup;
+				len = rlen;
+			}
+			commit = fxdr_unsigned(int, *tl++);
+
+			/*
+			 * Return the lowest committment level
+			 * obtained by any of the RPCs.
+			 */
+			if (committed == NFSV3WRITE_FILESYNC)
+				committed = commit;
+			else if (committed == NFSV3WRITE_DATASYNC &&
+				commit == NFSV3WRITE_UNSTABLE)
+				committed = commit;
+			if ((nmp->nm_flag & NFSMNT_HASWRITEVERF) == 0) {
+			    bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
+				NFSX_V3WRITEVERF);
+			    nmp->nm_flag |= NFSMNT_HASWRITEVERF;
+			} else if (bcmp((caddr_t)tl,
+			    (caddr_t)nmp->nm_verf, NFSX_V3WRITEVERF)) {
+			    *must_commit = 1;
+			    bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
+				NFSX_V3WRITEVERF);
 			}
 		} else {
 			nfsm_loadattr(vp, NULL);
 		}
-
 		if (wccflag)
 		    VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr.va_mtime;
 		m_freem(mrep);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.86 2009/07/13 15:39:55 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.87 2009/07/18 14:40:31 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -994,11 +994,8 @@ tryagain:
 	mrep = rep->r_mrep;
 	md = rep->r_md;
 	dpos = rep->r_dpos;
-	if (error) {
-		m_freem(rep->r_mreq);
-		pool_put(&nfsreqpl, rep);
-		return (error);
-	}
+	if (error)
+		goto nfsmout;
 
 	/*
 	 * break down the rpc header and check if ok
@@ -1008,11 +1005,8 @@ tryagain:
 		if (*tl == rpc_mismatch)
 			error = EOPNOTSUPP;
 		else
-			error = EACCES;
-		m_freem(mrep);
-		m_freem(rep->r_mreq);
-		pool_put(&nfsreqpl, rep);
-		return (error);
+			error = EACCES;	/* Should be EAUTH. */
+		goto nfsmout;
 	}
 
 	/*
@@ -1053,17 +1047,15 @@ tryagain:
 			if (error == ESTALE)
 				cache_purge(rep->r_vp);
 		}
-
-		*mrp = mrep;
-		*mdp = md;
-		*dposp = dpos;
-
 		goto nfsmout;
 	}
 
 	error = EPROTONOSUPPORT;
 
 nfsmout:
+	*mrp = mrep;
+	*mdp = md;
+	*dposp = dpos;
 	m_freem(rep->r_mreq);
 	pool_put(&nfsreqpl, rep);
 	return (error);
