@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.33 2009/07/18 20:50:38 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.34 2009/07/18 21:16:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -513,28 +513,26 @@ print_head(struct termp *p, const struct mdoc_meta *meta)
 static size_t
 arg_width(const struct mdoc_argv *arg, int pos)
 {
-	size_t		 v;
 	int		 i, len;
+	const char	*p;
 
 	assert(pos < (int)arg->sz && pos >= 0);
 	assert(arg->value[pos]);
 
-	if (0 == (len = (int)strlen(arg->value[pos])))
+	p = arg->value[pos];
+
+	if (0 == (len = (int)strlen(p)))
 		return(0);
 
 	for (i = 0; i < len - 1; i++) 
-		if ( ! isdigit((u_char)arg->value[pos][i]))
+		if ( ! isdigit((u_char)p[i]))
 			break;
 
-	if (i == len - 1) {
-		if ('n' == arg->value[pos][len - 1] ||
-				'm' == arg->value[pos][len - 1]) {
-			v = (size_t)atoi(arg->value[pos]);
-			return(v + 2);
-		}
+	if (i == len - 1) 
+		if ('n' == p[len - 1] || 'm' == p[len - 1])
+			return((size_t)atoi(p) + 2);
 
-	}
-	return(strlen(arg->value[pos]) + 2);
+	return((size_t)len + 2);
 }
 
 
@@ -582,18 +580,31 @@ arg_listtype(const struct mdoc_node *n)
 static size_t
 arg_offset(const struct mdoc_argv *arg)
 {
+	int		 len, i;
+	const char	*p;
 
 	assert(*arg->value);
-	if (0 == strcmp(*arg->value, "left"))
+	p = *arg->value;
+
+	if (0 == strcmp(p, "left"))
 		return(0);
-	if (0 == strcmp(*arg->value, "indent"))
+	if (0 == strcmp(p, "indent"))
 		return(INDENT + 1);
-	if (0 == strcmp(*arg->value, "indent-two"))
+	if (0 == strcmp(p, "indent-two"))
 		return((INDENT + 1) * 2);
 
-	/* FIXME: needs to support field-widths (10n, etc.). */
+	if (0 == (len = (int)strlen(p)))
+		return(0);
 
-	return(strlen(*arg->value));
+	for (i = 0; i < len - 1; i++) 
+		if ( ! isdigit((u_char)p[i]))
+			break;
+
+	if (i == len - 1) 
+		if ('n' == p[len - 1] || 'm' == p[len - 1])
+			return((size_t)atoi(p));
+
+	return((size_t)len);
 }
 
 
