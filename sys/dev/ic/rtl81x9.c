@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.64 2009/06/02 17:27:39 jsg Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.65 2009/07/18 11:24:39 sthen Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -158,7 +158,7 @@ int rl_miibus_readreg(struct device *, int, int);
 void rl_miibus_writereg(struct device *, int, int, int);
 void rl_miibus_statchg(struct device *);
 
-void rl_setmulti(struct rl_softc *);
+void rl_iff(struct rl_softc *);
 void rl_reset(struct rl_softc *);
 int rl_list_tx_init(struct rl_softc *);
 
@@ -457,63 +457,56 @@ int rl_mii_writereg(sc, frame)
 	return(0);
 }
 
-/*
- * Program the 64-bit multicast hash filter.
- */
-void rl_setmulti(sc)
+void rl_iff(sc)
 	struct rl_softc		*sc;
 {
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	int			h = 0;
-	u_int32_t		hashes[2] = { 0, 0 };
+	u_int32_t		hashes[2];
 	struct arpcom		*ac = &sc->sc_arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	u_int32_t		rxfilt;
-	int			mcnt = 0;
-
-	ifp = &sc->sc_arpcom.ac_if;
 
 	rxfilt = CSR_READ_4(sc, RL_RXCFG);
+	rxfilt &= ~(RL_RXCFG_RX_ALLPHYS | RL_RXCFG_RX_BROAD |
+	    RL_RXCFG_RX_INDIV | RL_RXCFG_RX_MULTI);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-allmulti:
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	/*
+	 * Always accept frames destined to our station address.
+	 * Always accept broadcast frames.
+	 */
+	rxfilt |= RL_RXCFG_RX_INDIV | RL_RXCFG_RX_BROAD;
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp ->if_flags |= IFF_ALLMULTI;
 		rxfilt |= RL_RXCFG_RX_MULTI;
-		CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
-		CSR_WRITE_4(sc, RL_MAR0, 0xFFFFFFFF);
-		CSR_WRITE_4(sc, RL_MAR4, 0xFFFFFFFF);
-		return;
-	}
+		if (ifp->if_flags & IFF_PROMISC)
+			rxfilt |= RL_RXCFG_RX_ALLPHYS;
+		hashes[0] = hashes[1] = 0xFFFFFFFF;
+	} else {
+		rxfilt |= RL_RXCFG_RX_MULTI;
+		/* Program new filter. */
+		bzero(hashes, sizeof(hashes));
 
-	/* first, zot all the existing hash bits */
-	CSR_WRITE_4(sc, RL_MAR0, 0);
-	CSR_WRITE_4(sc, RL_MAR4, 0);
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
 
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
+			if (h < 32)
+				hashes[0] |= (1 << h);
+			else
+				hashes[1] |= (1 << (h - 32));
+
+			ETHER_NEXT_MULTI(step, enm);
 		}
-		mcnt++;
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
-		if (h < 32)
-			hashes[0] |= (1 << h);
-		else
-			hashes[1] |= (1 << (h - 32));
-		mcnt++;
-		ETHER_NEXT_MULTI(step, enm);
 	}
 
-	if (mcnt)
-		rxfilt |= RL_RXCFG_RX_MULTI;
-	else
-		rxfilt &= ~RL_RXCFG_RX_MULTI;
-
-	CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
 	CSR_WRITE_4(sc, RL_MAR0, hashes[0]);
 	CSR_WRITE_4(sc, RL_MAR4, hashes[1]);
+	CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
 }
 
 void
@@ -958,7 +951,6 @@ void rl_init(xsc)
 	struct rl_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	int			s;
-	u_int32_t		rxcfg = 0;
 
 	s = splnet();
 
@@ -996,30 +988,10 @@ void rl_init(xsc)
 	CSR_WRITE_4(sc, RL_TXCFG, RL_TXCFG_CONFIG);
 	CSR_WRITE_4(sc, RL_RXCFG, RL_RXCFG_CONFIG);
 
-	/* Set the individual bit to receive frames for this host only. */
-	rxcfg = CSR_READ_4(sc, RL_RXCFG);
-	rxcfg |= RL_RXCFG_RX_INDIV;
-
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
-		rxcfg |= RL_RXCFG_RX_ALLPHYS;
-	else
-		rxcfg &= ~RL_RXCFG_RX_ALLPHYS;
-	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-
 	/*
-	 * Set capture broadcast bit to capture broadcast frames.
+	 * Program promiscuous mode and multicast filters.
 	 */
-	if (ifp->if_flags & IFF_BROADCAST)
-		rxcfg |= RL_RXCFG_RX_BROAD;
-	else
-		rxcfg &= ~RL_RXCFG_RX_BROAD;
-	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-
-	/*
-	 * Program the multicast filter, if necessary.
-	 */
-	rl_setmulti(sc);
+	rl_iff(sc);
 
 	/*
 	 * Enable interrupts.
@@ -1089,38 +1061,38 @@ int rl_ioctl(ifp, command, data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			rl_init(sc);
 #ifdef INET
-		case AF_INET:
-			rl_init(sc);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
 #endif /* INET */
-		default:
-			rl_init(sc);
-			break;
-		}
 		break;
+
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			rl_init(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				rl_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				rl_stop(sc);
 		}
-		error = 0;
 		break;
+
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			rl_setmulti(sc);
+			rl_iff(sc);
 		error = 0;
 	}
 
