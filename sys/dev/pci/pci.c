@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.64 2009/07/14 18:20:02 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.65 2009/07/18 16:19:28 miod Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -586,6 +586,9 @@ pci_reserve_resources(struct pci_attach_args *pa)
 	blr = pci_conf_read(pc, tag, PPB_REG_IOSTATUS);
 	base = (blr & 0x000000f0) << 8;
 	limit = (blr & 0x000f000) | 0x00000fff;
+	blr = pci_conf_read(pc, tag, PPB_REG_IO_HI);
+	base |= (blr & 0x0000ffff) << 16;
+	limit |= (blr & 0xffff0000);
 	if (limit > base)
 		size = (limit - base + 1);
 	else
