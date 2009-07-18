@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.87 2009/07/18 14:40:31 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.88 2009/07/18 20:30:22 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1011,7 +1011,7 @@ tryagain:
 
 	/*
 	 * Since we only support RPCAUTH_UNIX atm we step over the
-	 * reply verifer type, and if the (error) case that there really
+	 * reply verifer type, and in the (error) case that there really
 	 * is any data in it, we advance over it.
 	 */
 	tl++;			/* Step over verifer type */
