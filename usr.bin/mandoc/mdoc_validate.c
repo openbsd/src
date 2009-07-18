@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.27 2009/07/18 19:44:38 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.28 2009/07/18 20:15:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -28,9 +28,8 @@
 /* FIXME: .Bl -diag can't have non-text children in HEAD. */
 /* TODO: ignoring Pp (it's superfluous in some invocations). */
 
-#define	PRE_ARGS	struct mdoc *mdoc, const struct mdoc_node *n
-#define	POST_ARGS	struct mdoc *mdoc
-
+#define	PRE_ARGS  struct mdoc *mdoc, const struct mdoc_node *n
+#define	POST_ARGS struct mdoc *mdoc
 
 typedef	int	(*v_pre)(PRE_ARGS);
 typedef	int	(*v_post)(POST_ARGS);
@@ -40,110 +39,113 @@ struct	valids {
 	v_post	*post;
 };
 
-static	int	check_parent(PRE_ARGS, int, enum mdoc_type);
-static	int	check_msec(PRE_ARGS, ...);
-static	int	check_sec(PRE_ARGS, ...);
-static	int	check_stdarg(PRE_ARGS);
-static	int	check_text(struct mdoc *, int, int, const char *);
-static	int	check_argv(struct mdoc *, 
+static	int	 check_parent(PRE_ARGS, int, enum mdoc_type);
+static	int	 check_msec(PRE_ARGS, ...);
+static	int	 check_sec(PRE_ARGS, ...);
+static	int	 check_stdarg(PRE_ARGS);
+static	int	 check_text(struct mdoc *, int, int, const char *);
+static	int	 check_argv(struct mdoc *, 
 			const struct mdoc_node *,
 			const struct mdoc_argv *);
-static	int	check_args(struct mdoc *, 
+static	int	 check_args(struct mdoc *, 
 			const struct mdoc_node *);
-static	int	err_child_lt(struct mdoc *, const char *, int);
-static	int	warn_child_lt(struct mdoc *, const char *, int);
-static	int	err_child_gt(struct mdoc *, const char *, int);
-static	int	warn_child_gt(struct mdoc *, const char *, int);
-static	int	err_child_eq(struct mdoc *, const char *, int);
-static	int	warn_child_eq(struct mdoc *, const char *, int);
-static	int	warn_print(struct mdoc *, int, int);
-static	int	warn_count(struct mdoc *, const char *, 
+static	int	 err_child_lt(struct mdoc *, const char *, int);
+static	int	 warn_child_lt(struct mdoc *, const char *, int);
+static	int	 err_child_gt(struct mdoc *, const char *, int);
+static	int	 warn_child_gt(struct mdoc *, const char *, int);
+static	int	 err_child_eq(struct mdoc *, const char *, int);
+static	int	 warn_child_eq(struct mdoc *, const char *, int);
+static	int	 warn_print(struct mdoc *, int, int);
+static	int	 warn_count(struct mdoc *, const char *, 
 			int, const char *, int);
-static	int	err_count(struct mdoc *, const char *, 
+static	int	 err_count(struct mdoc *, const char *, 
 			int, const char *, int);
-static	int	pre_an(PRE_ARGS);
-static	int	pre_bd(PRE_ARGS);
-static	int	pre_bl(PRE_ARGS);
-static	int	pre_cd(PRE_ARGS);
-static	int	pre_dd(PRE_ARGS);
-static	int	pre_display(PRE_ARGS);
-static	int	pre_dt(PRE_ARGS);
-static	int	pre_er(PRE_ARGS);
-static	int	pre_ex(PRE_ARGS);
-static	int	pre_fd(PRE_ARGS);
-static	int	pre_it(PRE_ARGS);
-static	int	pre_lb(PRE_ARGS);
-static	int	pre_os(PRE_ARGS);
-static	int	pre_rv(PRE_ARGS);
-static	int	pre_sh(PRE_ARGS);
-static	int	pre_ss(PRE_ARGS);
-static	int	herr_ge1(POST_ARGS);
-static	int	hwarn_le1(POST_ARGS);
-static	int	herr_eq0(POST_ARGS);
-static	int	eerr_eq0(POST_ARGS);
-static	int	eerr_le2(POST_ARGS);
-static	int	eerr_eq1(POST_ARGS);
-static	int	eerr_ge1(POST_ARGS);
-static	int	ewarn_eq0(POST_ARGS);
-static	int	berr_ge1(POST_ARGS);
-static	int	bwarn_ge1(POST_ARGS);
-static	int	hwarn_eq1(POST_ARGS);
-static	int	ewarn_ge1(POST_ARGS);
-static	int	ebool(POST_ARGS);
-static	int	post_an(POST_ARGS);
-static	int	post_args(POST_ARGS);
-static	int	post_at(POST_ARGS);
-static	int	post_bf(POST_ARGS);
-static	int	post_bl(POST_ARGS);
-static	int	post_bl_head(POST_ARGS);
-static	int	post_it(POST_ARGS);
-static	int	post_nm(POST_ARGS);
-static	int	post_root(POST_ARGS);
-static	int	post_sh(POST_ARGS);
-static	int	post_sh_body(POST_ARGS);
-static	int	post_sh_head(POST_ARGS);
-static	int	post_st(POST_ARGS);
 
-static	v_pre	pres_an[] = { pre_an, NULL };
-static	v_pre	pres_bd[] = { pre_display, pre_bd, NULL };
-static	v_pre	pres_bl[] = { pre_bl, NULL };
-static	v_pre	pres_cd[] = { pre_cd, NULL };
-static	v_pre	pres_dd[] = { pre_dd, NULL };
-static	v_pre	pres_d1[] = { pre_display, NULL };
-static	v_pre	pres_dt[] = { pre_dt, NULL };
-static	v_pre	pres_er[] = { pre_er, NULL };
-static	v_pre	pres_ex[] = { pre_ex, NULL };
-static	v_pre	pres_fd[] = { pre_fd, NULL };
-static	v_pre	pres_it[] = { pre_it, NULL };
-static	v_pre	pres_lb[] = { pre_lb, NULL };
-static	v_pre	pres_os[] = { pre_os, NULL };
-static	v_pre	pres_rv[] = { pre_rv, NULL };
-static	v_pre	pres_sh[] = { pre_sh, NULL };
-static	v_pre	pres_ss[] = { pre_ss, NULL };
-static	v_post	posts_bool[] = { eerr_eq1, ebool, NULL };
-static	v_post	posts_bd[] = { herr_eq0, bwarn_ge1, NULL };
-static	v_post	posts_text[] = { eerr_ge1, NULL };
-static	v_post	posts_wtext[] = { ewarn_ge1, NULL };
-static	v_post	posts_notext[] = { eerr_eq0, NULL };
-static	v_post	posts_wline[] = { bwarn_ge1, herr_eq0, NULL };
-static	v_post	posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
-static	v_post	posts_bl[] = { bwarn_ge1, post_bl, NULL };
-static	v_post	posts_it[] = { post_it, NULL };
-static	v_post	posts_in[] = { eerr_eq1, NULL };
-static	v_post	posts_ss[] = { herr_ge1, NULL };
-static	v_post	posts_pf[] = { eerr_eq1, NULL };
-static	v_post	posts_lb[] = { eerr_eq1, NULL };
-static	v_post	posts_st[] = { eerr_eq1, post_st, NULL };
-static	v_post	posts_pp[] = { ewarn_eq0, NULL };
-static	v_post	posts_ex[] = { eerr_eq0, post_args, NULL };
-static	v_post	posts_rv[] = { eerr_eq0, post_args, NULL };
-static	v_post	posts_an[] = { post_an, NULL };
-static	v_post	posts_at[] = { post_at, NULL };
-static	v_post	posts_xr[] = { eerr_ge1, eerr_le2, NULL };
-static	v_post	posts_nd[] = { berr_ge1, NULL };
-static	v_post	posts_nm[] = { post_nm, NULL };
-static	v_post	posts_bf[] = { hwarn_le1, post_bf, NULL };
-static	v_post	posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
+static	int	 berr_ge1(POST_ARGS);
+static	int	 bwarn_ge1(POST_ARGS);
+static	int	 ebool(POST_ARGS);
+static	int	 eerr_eq0(POST_ARGS);
+static	int	 eerr_eq1(POST_ARGS);
+static	int	 eerr_ge1(POST_ARGS);
+static	int	 eerr_le2(POST_ARGS);
+static	int	 ewarn_eq0(POST_ARGS);
+static	int	 ewarn_ge1(POST_ARGS);
+static	int	 herr_eq0(POST_ARGS);
+static	int	 herr_ge1(POST_ARGS);
+static	int	 hwarn_eq1(POST_ARGS);
+static	int	 hwarn_le1(POST_ARGS);
+
+static	int	 post_an(POST_ARGS);
+static	int	 post_args(POST_ARGS);
+static	int	 post_at(POST_ARGS);
+static	int	 post_bf(POST_ARGS);
+static	int	 post_bl(POST_ARGS);
+static	int	 post_bl_head(POST_ARGS);
+static	int	 post_it(POST_ARGS);
+static	int	 post_lb(POST_ARGS);
+static	int	 post_nm(POST_ARGS);
+static	int	 post_root(POST_ARGS);
+static	int	 post_sh(POST_ARGS);
+static	int	 post_sh_body(POST_ARGS);
+static	int	 post_sh_head(POST_ARGS);
+static	int	 post_st(POST_ARGS);
+static	int	 pre_an(PRE_ARGS);
+static	int	 pre_bd(PRE_ARGS);
+static	int	 pre_bl(PRE_ARGS);
+static	int	 pre_cd(PRE_ARGS);
+static	int	 pre_dd(PRE_ARGS);
+static	int	 pre_display(PRE_ARGS);
+static	int	 pre_dt(PRE_ARGS);
+static	int	 pre_er(PRE_ARGS);
+static	int	 pre_ex(PRE_ARGS);
+static	int	 pre_fd(PRE_ARGS);
+static	int	 pre_it(PRE_ARGS);
+static	int	 pre_lb(PRE_ARGS);
+static	int	 pre_os(PRE_ARGS);
+static	int	 pre_rv(PRE_ARGS);
+static	int	 pre_sh(PRE_ARGS);
+static	int	 pre_ss(PRE_ARGS);
+
+static	v_post	 posts_an[] = { post_an, NULL };
+static	v_post	 posts_at[] = { post_at, NULL };
+static	v_post	 posts_bd[] = { herr_eq0, bwarn_ge1, NULL };
+static	v_post	 posts_bf[] = { hwarn_le1, post_bf, NULL };
+static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
+static	v_post	 posts_bool[] = { eerr_eq1, ebool, NULL };
+static	v_post	 posts_ex[] = { eerr_eq0, post_args, NULL };
+static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
+static	v_post	 posts_in[] = { eerr_eq1, NULL };
+static	v_post	 posts_it[] = { post_it, NULL };
+static	v_post	 posts_lb[] = { eerr_eq1, post_lb, NULL };
+static	v_post	 posts_nd[] = { berr_ge1, NULL };
+static	v_post	 posts_nm[] = { post_nm, NULL };
+static	v_post	 posts_notext[] = { eerr_eq0, NULL };
+static	v_post	 posts_pf[] = { eerr_eq1, NULL };
+static	v_post	 posts_pp[] = { ewarn_eq0, NULL };
+static	v_post	 posts_rv[] = { eerr_eq0, post_args, NULL };
+static	v_post	 posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
+static	v_post	 posts_ss[] = { herr_ge1, NULL };
+static	v_post	 posts_st[] = { eerr_eq1, post_st, NULL };
+static	v_post	 posts_text[] = { eerr_ge1, NULL };
+static	v_post	 posts_wline[] = { bwarn_ge1, herr_eq0, NULL };
+static	v_post	 posts_wtext[] = { ewarn_ge1, NULL };
+static	v_post	 posts_xr[] = { eerr_ge1, eerr_le2, NULL };
+static	v_pre	 pres_an[] = { pre_an, NULL };
+static	v_pre	 pres_bd[] = { pre_display, pre_bd, NULL };
+static	v_pre	 pres_bl[] = { pre_bl, NULL };
+static	v_pre	 pres_cd[] = { pre_cd, NULL };
+static	v_pre	 pres_d1[] = { pre_display, NULL };
+static	v_pre	 pres_dd[] = { pre_dd, NULL };
+static	v_pre	 pres_dt[] = { pre_dt, NULL };
+static	v_pre	 pres_er[] = { pre_er, NULL };
+static	v_pre	 pres_ex[] = { pre_ex, NULL };
+static	v_pre	 pres_fd[] = { pre_fd, NULL };
+static	v_pre	 pres_it[] = { pre_it, NULL };
+static	v_pre	 pres_lb[] = { pre_lb, NULL };
+static	v_pre	 pres_os[] = { pre_os, NULL };
+static	v_pre	 pres_rv[] = { pre_rv, NULL };
+static	v_pre	 pres_sh[] = { pre_sh, NULL };
+static	v_pre	 pres_ss[] = { pre_ss, NULL };
 
 const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ap */
@@ -268,8 +270,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 
 
 int
-mdoc_valid_pre(struct mdoc *mdoc, 
-		const struct mdoc_node *n)
+mdoc_valid_pre(struct mdoc *mdoc, const struct mdoc_node *n)
 {
 	v_pre		*p;
 	int		 line, pos;
@@ -297,14 +298,6 @@ int
 mdoc_valid_post(struct mdoc *mdoc)
 {
 	v_post		*p;
-
-	/*
-	 * This check occurs after the macro's children have been filled
-	 * in: postfix validation.  Since this happens when we're
-	 * rewinding the scope tree, it's possible to have multiple
-	 * invocations (as by design, for now), we set bit MDOC_VALID to
-	 * indicate that we've validated.
-	 */
 
 	if (MDOC_VALID & mdoc->last->flags)
 		return(1);
