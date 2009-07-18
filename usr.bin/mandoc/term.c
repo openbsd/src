@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.5 2009/06/23 23:53:43 schwarze Exp $ */
+/*	$Id: term.c,v 1.6 2009/07/18 20:50:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -176,8 +176,7 @@ term_isopendelim(const char *p, int len)
  * Specifically, a line is whatever's in p->buf of length p->col, which
  * is zeroed after this function returns.
  *
- * The variables TERMP_NOLPAD, TERMP_LITERAL and TERMP_NOBREAK are of
- * critical importance here.  Their behaviour follows:
+ * The usage of termp:flags is as follows:
  *
  *  - TERMP_NOLPAD: when beginning to write the line, don't left-pad the
  *    offset value.  This is useful when doing columnar lists where the
@@ -187,7 +186,12 @@ term_isopendelim(const char *p, int len)
  *    columns.  In short: don't print a newline and instead pad to the
  *    right margin.  Used in conjunction with TERMP_NOLPAD.
  *
- *  - TERMP_NONOBREAK: don't newline when TERMP_NOBREAK is specified.
+ *  - TERMP_DANGLE: don't newline when TERMP_NOBREAK is specified and
+ *    the line is overrun, and don't pad-right if it's underrun.
+ *
+ *  - TERMP_HANG: like TERMP_DANGLE, but doesn't newline when
+ *    overruning, instead save the position and continue at that point
+ *    when the next invocation.
  *
  *  In-line line breaking:
  *
@@ -209,6 +213,7 @@ term_flushln(struct termp *p)
 {
 	int		 i, j;
 	size_t		 vbl, vsz, vis, maxvis, mmax, bp;
+	static int	 sv = -1;
 
 	/*
 	 * First, establish the maximum columns of "visible" content.
@@ -222,6 +227,11 @@ term_flushln(struct termp *p)
 	mmax = p->maxrmargin - p->offset;
 	bp = TERMP_NOBREAK & p->flags ? mmax : maxvis;
 	vis = 0;
+
+	if (sv >= 0) {
+		vis = (size_t)sv;
+		sv = -1;
+	}
 
 	/*
 	 * If in the standard case (left-justified), then begin with our
@@ -298,11 +308,14 @@ term_flushln(struct termp *p)
 	 */
 
 	if ((TERMP_NOBREAK & p->flags) && vis >= maxvis) {
-		if ( ! (TERMP_NONOBREAK & p->flags)) {
+		if ( ! (TERMP_DANGLE & p->flags) &&
+				! (TERMP_HANG & p->flags)) {
 			putchar('\n');
 			for (i = 0; i < (int)p->rmargin; i++)
 				putchar(' ');
 		}
+		if (TERMP_HANG & p->flags)
+			sv = (int)(vis - maxvis);
 		p->col = 0;
 		return;
 	}
@@ -313,7 +326,7 @@ term_flushln(struct termp *p)
 	 */
 
 	if (p->flags & TERMP_NOBREAK) {
-		if ( ! (TERMP_NONOBREAK & p->flags))
+		if ( ! (TERMP_DANGLE & p->flags))
 			for ( ; vis < maxvis; vis++)
 				putchar(' ');
 	} else

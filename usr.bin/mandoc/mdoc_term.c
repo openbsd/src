@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.32 2009/07/18 19:44:38 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.33 2009/07/18 20:50:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -567,16 +567,15 @@ arg_listtype(const struct mdoc_node *n)
 			/* FALLTHROUGH */
 		case (MDOC_Column):
 			/* FALLTHROUGH */
+		case (MDOC_Hang):
+			/* FALLTHROUGH */
 		case (MDOC_Ohang):
 			return(n->args->argv[i].arg);
 		default:
 			break;
 		}
 
-	/* FIXME: mandated by parser. */
-
-	errx(1, "list type not supported");
-	/* NOTREACHED */
+	return(-1);
 }
 
 
@@ -722,6 +721,7 @@ termp_it_pre(DECL_ARGS)
 	(void)arg_getattrs(keys, vals, 3, bl);
 
 	type = arg_listtype(bl);
+	assert(-1 != type);
 
 	/* Calculate real width and offset. */
 
@@ -748,7 +748,7 @@ termp_it_pre(DECL_ARGS)
 	/* 
 	 * List-type can override the width in the case of fixed-head
 	 * values (bullet, dash/hyphen, enum).  Tags need a non-zero
-	 * offset.
+	 * offset.  FIXME: double-check that correct.
 	 */
 
 	switch (type) {
@@ -763,6 +763,10 @@ termp_it_pre(DECL_ARGS)
 	case (MDOC_Enum):
 		if (width < 5)
 			width = 5;
+		break;
+	case (MDOC_Hang):
+		if (0 == width)
+			width = 8;
 		break;
 	case (MDOC_Tag):
 		if (0 == width)
@@ -821,16 +825,30 @@ termp_it_pre(DECL_ARGS)
 	case (MDOC_Enum):
 		/* FALLTHROUGH */
 	case (MDOC_Hyphen):
-		/* FALLTHROUGH */
+		if (MDOC_HEAD == node->type)
+			p->flags |= TERMP_NOBREAK;
+		else
+			p->flags |= TERMP_NOLPAD;
+		break;
+	case (MDOC_Hang):
+		if (MDOC_HEAD == node->type)
+			p->flags |= TERMP_NOBREAK;
+		else
+			p->flags |= TERMP_NOLPAD;
+
+		if (MDOC_HEAD == node->type)
+			p->flags |= TERMP_HANG;
+		break;
 	case (MDOC_Tag):
 		if (MDOC_HEAD == node->type)
 			p->flags |= TERMP_NOBREAK;
 		else
 			p->flags |= TERMP_NOLPAD;
-		if (MDOC_HEAD == node->type && MDOC_Tag == type)
-			if (NULL == node->next ||
-					NULL == node->next->child)
-				p->flags |= TERMP_NONOBREAK;
+
+		if (MDOC_HEAD != node->type)
+			break;
+		if (NULL == node->next || NULL == node->next->child)
+			p->flags |= TERMP_DANGLE;
 		break;
 	case (MDOC_Column):
 		if (MDOC_HEAD == node->type) {
@@ -867,6 +885,8 @@ termp_it_pre(DECL_ARGS)
 	case (MDOC_Enum):
 		/* FALLTHROUGH */
 	case (MDOC_Hyphen):
+		/* FALLTHROUGH */
+	case (MDOC_Hang):
 		/* FALLTHROUGH */
 	case (MDOC_Tag):
 		if (MDOC_HEAD == node->type)
@@ -947,6 +967,7 @@ termp_it_post(DECL_ARGS)
 		return;
 
 	type = arg_listtype(node->parent->parent->parent);
+	assert(-1 != type);
 
 	switch (type) {
 	case (MDOC_Diag):
