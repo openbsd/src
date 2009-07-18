@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.28 2009/07/18 17:26:21 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.29 2009/07/18 18:46:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -86,83 +86,95 @@ struct	termpair {
 	int		  count;
 };
 
-
-#define	DECL_ARGS \
-	struct termp *p, struct termpair *pair, \
-	const struct mdoc_meta *meta, \
-	const struct mdoc_node *node
-
-#define	DECL_PRE(name) \
-static	int	 	  name##_pre(DECL_ARGS)
-#define	DECL_POST(name) \
-static	void	 	  name##_post(DECL_ARGS)
-#define	DECL_PREPOST(name) \
-DECL_PRE(name); \
-DECL_POST(name);
-
-DECL_PREPOST(termp__t);
-DECL_PREPOST(termp_aq);
-DECL_PREPOST(termp_bd);
-DECL_PREPOST(termp_bq);
-DECL_PREPOST(termp_brq);
-DECL_PREPOST(termp_d1);
-DECL_PREPOST(termp_dq);
-DECL_PREPOST(termp_fd);
-DECL_PREPOST(termp_fn);
-DECL_PREPOST(termp_fo);
-DECL_PREPOST(termp_ft);
-DECL_PREPOST(termp_in);
-DECL_PREPOST(termp_it);
-DECL_PREPOST(termp_lb);
-DECL_PREPOST(termp_op);
-DECL_PREPOST(termp_pf);
-DECL_PREPOST(termp_pq);
-DECL_PREPOST(termp_qq);
-DECL_PREPOST(termp_sh);
-DECL_PREPOST(termp_ss);
-DECL_PREPOST(termp_sq);
-DECL_PREPOST(termp_vt);
-
-DECL_PRE(termp__j);
-DECL_PRE(termp_ap);
-DECL_PRE(termp_ar);
-DECL_PRE(termp_at);
-DECL_PRE(termp_bf);
-DECL_PRE(termp_bt);
-DECL_PRE(termp_cd);
-DECL_PRE(termp_cm);
-DECL_PRE(termp_em);
-DECL_PRE(termp_ex);
-DECL_PRE(termp_fa);
-DECL_PRE(termp_fl);
-DECL_PRE(termp_ic);
-DECL_PRE(termp_lk);
-DECL_PRE(termp_ms);
-DECL_PRE(termp_mt);
-DECL_PRE(termp_nd);
-DECL_PRE(termp_nm);
-DECL_PRE(termp_ns);
-DECL_PRE(termp_pa);
-DECL_PRE(termp_pp);
-DECL_PRE(termp_rs);
-DECL_PRE(termp_rv);
-DECL_PRE(termp_sm);
-DECL_PRE(termp_st);
-DECL_PRE(termp_sx);
-DECL_PRE(termp_sy);
-DECL_PRE(termp_ud);
-DECL_PRE(termp_va);
-DECL_PRE(termp_xr);
-DECL_PRE(termp_xx);
-
-DECL_POST(termp___);
-DECL_POST(termp_bl);
-DECL_POST(termp_bx);
+#define	DECL_ARGS struct termp *p, \
+		  struct termpair *pair, \
+	  	  const struct mdoc_meta *meta, \
+		  const struct mdoc_node *node
 
 struct	termact {
 	int	(*pre)(DECL_ARGS);
 	void	(*post)(DECL_ARGS);
 };
+
+static	void	  termp____post(DECL_ARGS);
+static	void	  termp__t_post(DECL_ARGS);
+static	void	  termp_aq_post(DECL_ARGS);
+static	void	  termp_bd_post(DECL_ARGS);
+static	void	  termp_bl_post(DECL_ARGS);
+static	void	  termp_bq_post(DECL_ARGS);
+static	void	  termp_brq_post(DECL_ARGS);
+static	void	  termp_bx_post(DECL_ARGS);
+static	void	  termp_d1_post(DECL_ARGS);
+static	void	  termp_dq_post(DECL_ARGS);
+static	void	  termp_fd_post(DECL_ARGS);
+static	void	  termp_fn_post(DECL_ARGS);
+static	void	  termp_fo_post(DECL_ARGS);
+static	void	  termp_ft_post(DECL_ARGS);
+static	void	  termp_in_post(DECL_ARGS);
+static	void	  termp_it_post(DECL_ARGS);
+static	void	  termp_lb_post(DECL_ARGS);
+static	void	  termp_op_post(DECL_ARGS);
+static	void	  termp_pf_post(DECL_ARGS);
+static	void	  termp_pq_post(DECL_ARGS);
+static	void	  termp_qq_post(DECL_ARGS);
+static	void	  termp_sh_post(DECL_ARGS);
+static	void	  termp_sq_post(DECL_ARGS);
+static	void	  termp_ss_post(DECL_ARGS);
+static	void	  termp_vt_post(DECL_ARGS);
+
+static	int	  termp__j_pre(DECL_ARGS);
+static	int	  termp__t_pre(DECL_ARGS);
+static	int	  termp_ap_pre(DECL_ARGS);
+static	int	  termp_aq_pre(DECL_ARGS);
+static	int	  termp_ar_pre(DECL_ARGS);
+static	int	  termp_at_pre(DECL_ARGS);
+static	int	  termp_bd_pre(DECL_ARGS);
+static	int	  termp_bf_pre(DECL_ARGS);
+static	int	  termp_bq_pre(DECL_ARGS);
+static	int	  termp_brq_pre(DECL_ARGS);
+static	int	  termp_bt_pre(DECL_ARGS);
+static	int	  termp_cd_pre(DECL_ARGS);
+static	int	  termp_cm_pre(DECL_ARGS);
+static	int	  termp_d1_pre(DECL_ARGS);
+static	int	  termp_dq_pre(DECL_ARGS);
+static	int	  termp_em_pre(DECL_ARGS);
+static	int	  termp_ex_pre(DECL_ARGS);
+static	int	  termp_fa_pre(DECL_ARGS);
+static	int	  termp_fd_pre(DECL_ARGS);
+static	int	  termp_fl_pre(DECL_ARGS);
+static	int	  termp_fn_pre(DECL_ARGS);
+static	int	  termp_fo_pre(DECL_ARGS);
+static	int	  termp_ft_pre(DECL_ARGS);
+static	int	  termp_ic_pre(DECL_ARGS);
+static	int	  termp_in_pre(DECL_ARGS);
+static	int	  termp_it_pre(DECL_ARGS);
+static	int	  termp_lb_pre(DECL_ARGS);
+static	int	  termp_lk_pre(DECL_ARGS);
+static	int	  termp_ms_pre(DECL_ARGS);
+static	int	  termp_mt_pre(DECL_ARGS);
+static	int	  termp_nd_pre(DECL_ARGS);
+static	int	  termp_nm_pre(DECL_ARGS);
+static	int	  termp_ns_pre(DECL_ARGS);
+static	int	  termp_op_pre(DECL_ARGS);
+static	int	  termp_pa_pre(DECL_ARGS);
+static	int	  termp_pf_pre(DECL_ARGS);
+static	int	  termp_pp_pre(DECL_ARGS);
+static	int	  termp_pq_pre(DECL_ARGS);
+static	int	  termp_qq_pre(DECL_ARGS);
+static	int	  termp_rs_pre(DECL_ARGS);
+static	int	  termp_rv_pre(DECL_ARGS);
+static	int	  termp_sh_pre(DECL_ARGS);
+static	int	  termp_sm_pre(DECL_ARGS);
+static	int	  termp_sq_pre(DECL_ARGS);
+static	int	  termp_ss_pre(DECL_ARGS);
+static	int	  termp_st_pre(DECL_ARGS);
+static	int	  termp_sx_pre(DECL_ARGS);
+static	int	  termp_sy_pre(DECL_ARGS);
+static	int	  termp_ud_pre(DECL_ARGS);
+static	int	  termp_va_pre(DECL_ARGS);
+static	int	  termp_vt_pre(DECL_ARGS);
+static	int	  termp_xr_pre(DECL_ARGS);
+static	int	  termp_xx_pre(DECL_ARGS);
 
 static const struct termact termacts[MDOC_MAX] = {
 	{ termp_ap_pre, NULL }, /* Ap */
