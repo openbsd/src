@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2007/11/16 16:30:03 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2009/07/18 09:53:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/uio.h>
 #include <fcntl.h>
 #include <sys/param.h>
+#include <stdio.h>
 
 #include <dev/usb/ezload.h>
 #include "tusb3410.h"
