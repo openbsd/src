@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.38 2009/07/17 19:40:12 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.39 2009/07/18 16:38:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -104,10 +104,18 @@ struct xbridge_softc {
 	LIST_HEAD(, xbridge_ate) sc_used_ate;
 
 	/*
-	 * Resource extents for the large resource views, used during
-	 * resource setup and destroyed afterwards.
+	 * Large resource view sizes
 	 */
+	bus_addr_t	sc_iostart, sc_ioend;
+	bus_addr_t	sc_memstart, sc_memend;
+
+	/*
+	 * Resource extents for the large resource views, used during
+	 * resource setup, then cleaned up for the MI code.
+	 */
+	char		sc_ioexname[32];
 	struct extent	*sc_ioex;
+	char		sc_memexname[32];
 	struct extent	*sc_memex;
 };
 
@@ -190,6 +198,7 @@ void	xbridge_resource_manage(struct xbridge_softc *, pcitag_t,
 
 void	xbridge_ate_setup(struct xbridge_softc *);
 void	xbridge_device_setup(struct xbridge_softc *, int, int, uint32_t);
+void	xbridge_extent_setup(struct xbridge_softc *);
 struct extent *
 	xbridge_mapping_setup(struct xbridge_softc *, int);
 void	xbridge_resource_setup(struct xbridge_softc *);
@@ -349,13 +358,15 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach children.
 	 */
 
+	xbridge_extent_setup(sc);
+
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = sc->sc_io_bus_space;
 	pba.pba_memt = sc->sc_mem_bus_space;
 	pba.pba_dmat = sc->sc_dmat;
-	pba.pba_ioex = NULL;
-	pba.pba_memex = NULL;
+	pba.pba_ioex = sc->sc_ioex;
+	pba.pba_memex = sc->sc_memex;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
@@ -809,6 +820,7 @@ xbridge_intr_handler(void *v)
 		spurious = 0;
 
 	LIST_FOREACH(xih, &xi->xi_handlers, xih_nxt) {
+		splraise(imask[xih->xih_level]);
 		if ((*xih->xih_func)(xih->xih_arg) != 0) {
 			xih->xih_count.ec_count++;
 			rc = 1;
@@ -1821,7 +1833,7 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 	pcireg_t id, bhlcr;
 	uint32_t devio;
 	int need_setup;
-	uint curppb, nppb;
+	uint secondary, nppb, ppbstride;
 	const struct pci_quirkdata *qd;
 
 	/*
@@ -1845,13 +1857,13 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 	if (sys_config.system_type == SGI_OCTANE) {
 		sc->sc_ioex = xbridge_mapping_setup(sc, 1);
 		sc->sc_memex = xbridge_mapping_setup(sc, 0);
-	} else
+	}
 
 	/*
 	 * Configure all regular PCI devices.
 	 */
 
-	curppb = nppb = 0;
+	nppb = 0;
 	for (dev = 0; dev < BRIDGE_NSLOTS; dev++) {
 		id = sc->sc_devices[dev].id;
 
@@ -1889,9 +1901,8 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 #ifdef DEBUG
 		printf("device %d: devio %08x\n", dev, devio);
 #endif
-		if (sys_config.system_type == SGI_OCTANE &&
-		    sc->sc_widget == WIDGET_MAX)
-			need_setup = 0;
+		if (id != PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3))
+			need_setup = 1;
 		else
 			need_setup = sc->sc_devio_skew !=
 			    ((devio & BRIDGE_DEVICE_BASE_MASK) >>
@@ -1923,10 +1934,10 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 		 */
 		devio |= BRIDGE_DEVICE_COHERENT;
 
-		xbridge_set_devio(sc, dev, devio);
-
-		if (need_setup == 0)
+		if (need_setup == 0) {
+			xbridge_set_devio(sc, dev, devio);
 			continue;
+		}
 
 		/*
 		 * Clear any residual devio mapping.
@@ -1957,36 +1968,128 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 	 * in order to favour them during resource allocation.
 	 */
 
-	for (dev = 0; dev < BRIDGE_NSLOTS; dev++) {
-		id = sc->sc_devices[dev].id;
+	secondary = 1;
 
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID || PCI_VENDOR(id) == 0)
-			continue;
+	if (nppb != 0) {
+		ppbstride = (256 - secondary) / nppb;
+		for (dev = 0; dev < BRIDGE_NSLOTS; dev++) {
+			id = sc->sc_devices[dev].id;
 
-		tag = pci_make_tag(pc, 0, dev, 0);
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID ||
+			    PCI_VENDOR(id) == 0)
+				continue;
 
-		if (PCI_HDRTYPE_TYPE(bhlcr) != 1)
-			continue;
+			tag = pci_make_tag(pc, 0, dev, 0);
+			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 
-		/*
-		 * Being PCI bus #0, we can allocate #1-#255 bus numbers
-		 * to the PCI-PCI bridges.
-		 * We'll simply split this 255 bus number space accross
-		 * all bridges.
-		 * Thus, given N bridges on the bus, bridge #M will get
-		 * 1 + M * (255/N) .. (M + 1) * (255 / N).
-		 */
-
-		ppb_initialize(pc, tag, 1 + curppb * (255 / nppb),
-		    (curppb + 1) * (255 / nppb));
-		curppb++;
+			if (PCI_HDRTYPE_TYPE(bhlcr) == 1) {
+				ppb_initialize(pc, tag, secondary,
+				    secondary + ppbstride - 1);
+				secondary += ppbstride;
+			}
+		}
 	}
 
-	if (sc->sc_ioex != NULL)
+	if (sc->sc_ioex != NULL) {
 		extent_destroy(sc->sc_ioex);
-	if (sc->sc_memex != NULL)
+		sc->sc_ioex = NULL;
+	}
+	if (sc->sc_memex != NULL) {
 		extent_destroy(sc->sc_memex);
+		sc->sc_memex = NULL;
+	}
+}
+
+/*
+ * Build resource extents for the MI PCI code to play with.
+ * These extents cover the configured devio areas, and the large resource
+ * views, if applicable.
+ */
+void
+xbridge_extent_setup(struct xbridge_softc *sc)
+{
+	int dev;
+	int errors;
+	bus_addr_t start;
+	uint32_t devio;
+
+	snprintf(sc->sc_ioexname, sizeof(sc->sc_ioexname), "%s_io",
+	    sc->sc_dev.dv_xname);
+	sc->sc_ioex = extent_create(sc->sc_ioexname, 0, 0xffffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
+
+	if (sc->sc_ioex != NULL) {
+		errors = 0;
+		/* make all configured devio ranges available... */
+		for (dev = 0; dev < BRIDGE_NSLOTS; dev++) {
+			devio = sc->sc_devices[dev].devio;
+			if (devio == 0)
+				continue;
+			if (ISSET(devio, BRIDGE_DEVICE_IO_MEM))
+				continue;
+			start = (devio & BRIDGE_DEVICE_BASE_MASK) <<
+			    BRIDGE_DEVICE_BASE_SHIFT;
+			if (start == 0)
+				continue;
+			if (extent_free(sc->sc_ioex, start,
+			    BRIDGE_DEVIO_SIZE(dev), EX_NOWAIT) != 0) {
+				errors++;
+				break;
+			}
+		}
+		/* ...as well as the large views, if any */
+		if (sc->sc_ioend != 0) {
+			start = (sc->sc_devio_skew + 1) << 24;
+			if (start < sc->sc_iostart)
+				start = sc->sc_iostart;
+			if (extent_free(sc->sc_ioex, start,
+			    sc->sc_ioend + 1 - start, EX_NOWAIT) != 0)
+				errors++;
+		}
+
+		if (errors != 0) {
+			extent_destroy(sc->sc_ioex);
+			sc->sc_ioex = NULL;
+		}
+	}
+
+	snprintf(sc->sc_memexname, sizeof(sc->sc_memexname), "%s_mem",
+	    sc->sc_dev.dv_xname);
+	sc->sc_memex = extent_create(sc->sc_memexname, 0, 0xffffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
+
+	if (sc->sc_memex != NULL) {
+		errors = 0;
+		/* make all configured devio ranges available... */
+		for (dev = 0; dev < BRIDGE_NSLOTS; dev++) {
+			devio = sc->sc_devices[dev].devio;
+			if (devio == 0 || !ISSET(devio, BRIDGE_DEVICE_IO_MEM))
+				continue;
+			start = (devio & BRIDGE_DEVICE_BASE_MASK) <<
+			    BRIDGE_DEVICE_BASE_SHIFT;
+			if (start == 0)
+				continue;
+			if (extent_free(sc->sc_memex, start,
+			    BRIDGE_DEVIO_SIZE(dev), EX_NOWAIT) != 0) {
+				errors++;
+				break;
+			}
+		}
+		/* ...as well as the large views, if any */
+		if (sc->sc_memend != 0) {
+			start = (sc->sc_devio_skew + 1) << 24;
+			if (start < sc->sc_memstart)
+				start = sc->sc_memstart;
+			if (extent_free(sc->sc_memex, start,
+			    sc->sc_memend + 1 - start, EX_NOWAIT) != 0)
+				errors++;
+		}
+
+		if (errors != 0) {
+			extent_destroy(sc->sc_memex);
+			sc->sc_memex = NULL;
+		}
+	}
 }
 
 struct extent *
@@ -2034,6 +2137,9 @@ xbridge_mapping_setup(struct xbridge_softc *sc, int io)
 				sc->sc_io_bus_space->bus_base = base - offs;
 				sc->sc_io_bus_space->_space_map =
 				    xbridge_space_map_io;
+
+				sc->sc_iostart = offs;
+				sc->sc_ioend = offs + len - 1;
 			}
 		}
 	} else {
@@ -2072,6 +2178,9 @@ xbridge_mapping_setup(struct xbridge_softc *sc, int io)
 				sc->sc_mem_bus_space->bus_base = base - offs;
 				sc->sc_mem_bus_space->_space_map =
 				    xbridge_space_map_mem;
+
+				sc->sc_memstart = offs;
+				sc->sc_memend = offs + len - 1;
 			}
 		}
 	}
@@ -2079,22 +2188,14 @@ xbridge_mapping_setup(struct xbridge_softc *sc, int io)
 	if (ex != NULL) {
 		/*
 		 * Remove the devio mapping range from the extent
-		 * to avoid ambiguous mappings.
+		 * to avoid ambiguous mappings (all addresses under
+		 * the devio area need to be expelled).
 		 *
 		 * Note that xbow_widget_map_space() may have returned
 		 * a range in which the devio area does not appear.
 		 */
-#if 0
-		start = sc->sc_devio_skew << 24;
-		end = start + (1 << 24) - 1;
-#else
-		/*
-		 * Apparently, all addresses under devio need to be
-		 * expelled...
-		 */
 		start = 0;
 		end = ((sc->sc_devio_skew + 1) << 24) - 1;
-#endif
 
 		if (end >= ex->ex_start && start <= ex->ex_end) {
 			if (start < ex->ex_start)
@@ -2483,7 +2584,7 @@ xbridge_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 			    (base >> BRIDGE_DEVICE_BASE_SHIFT));
 			*memstart = base;
 			*memend = base + BRIDGE_DEVIO_SIZE(devio_idx) - 1;
-		} else {
+		} else if (sc->sc_memex != NULL) {
 			/*
 			 * We know that the direct memory resource range fits
 			 * within the 32 bit address space, and is limited to
@@ -2538,7 +2639,7 @@ xbridge_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 			    (base >> BRIDGE_DEVICE_BASE_SHIFT));
 			*iostart = base;
 			*ioend = base + BRIDGE_DEVIO_SIZE(devio_idx) - 1;
-		} else {
+		} else if (sc->sc_ioex != NULL) {
 			/*
 			 * We know that the direct I/O resource range fits
 			 * within the 32 bit address space, so our allocation,
