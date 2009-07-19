@@ -19,9 +19,10 @@ struct fuser {
 	uid_t uid;
 	pid_t pid;
 	int flags;
-#define F_ROOT 0x01     /* is procs root directory */
-#define F_CWD  0x02     /* is procs cwd */
-#define F_OPEN 0x04     /* just has it open */
+#define F_ROOT 0x01	/* is procs root directory */
+#define F_CWD  0x02	/* is procs cwd */
+#define F_OPEN 0x04	/* just has it open */
+#define F_TEXT 0x08	/* is procs executable text */
 };
 
 struct filearg {

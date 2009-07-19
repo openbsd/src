@@ -1,4 +1,4 @@
-/*	$OpenBSD: fuser.c,v 1.1 2009/07/08 16:04:00 millert Exp $	*/
+/*	$OpenBSD: fuser.c,v 1.2 2009/07/19 12:56:19 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -114,8 +114,10 @@ fuser_check(struct kinfo_file2 *kf)
 		case KERN_FILE_RDIR:
 			fu->flags |= F_ROOT;
 			break;
-		case KERN_FILE_TRACE:
 		case KERN_FILE_TEXT:
+			fu->flags |= F_TEXT;
+			break;
+		case KERN_FILE_TRACE:
 			/* ignore */
 			break;
 		default:
@@ -141,6 +143,9 @@ printfu(struct fuser *fu)
 
 	if (fu->flags & F_ROOT)
 		fprintf(stderr, "r");
+
+	if (fu->flags & F_TEXT)
+		fprintf(stderr, "t");
 
 	if (uflg) {
 		pwd = getpwuid(fu->uid);

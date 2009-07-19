@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.175 2009/06/15 17:59:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.176 2009/07/19 12:56:19 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1232,6 +1232,8 @@ sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
 				continue;
 			}
 			fdp = pp->p_fd;
+			if (pp->p_textvp)
+				FILLIT(NULL, NULL, KERN_FILE_TEXT, pp->p_textvp, pp);
 			if (fdp->fd_cdir)
 				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pp);
 			if (fdp->fd_rdir)
