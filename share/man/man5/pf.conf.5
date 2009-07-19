@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.444 2009/07/18 20:28:15 sobrado Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.445 2009/07/19 14:05:36 sobrado Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 18 2009 $
+.Dd $Mdocdate: July 19 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -758,10 +758,10 @@ different port.
 rules can optionally specify port ranges instead of single ports.
 For instance:
 .Bl -tag -width Ds
-.It Ar rdr ... port 2000:2999 -\*(Gt ... port 4000
+.It rdr ... port 2000:2999 -\*(Gt ... port 4000
 redirects ports 2000 to 2999 (inclusive) to port 4000.
 .Pp
-.It Ar rdr ... port 2000:2999 -\*(Gt ... port 4000:*
+.It rdr ... port 2000:2999 -\*(Gt ... port 4000:*
 redirects port 2000 to 4000, port 2001 to 4001, ..., port 2999 to 4999.
 .El
 .El
@@ -1177,15 +1177,15 @@ and
 are binary operators (they take two arguments).
 For instance:
 .Bl -tag -width Ds
-.It Ar port 2000:2004
+.It port 2000:2004
 means
 .Sq all ports \*(Ge 2000 and \*(Le 2004 ,
 hence ports 2000, 2001, 2002, 2003, and 2004.
-.It Ar port 2000 \*(Gt\*(Lt 2004
+.It port 2000 \*(Gt\*(Lt 2004
 means
 .Sq all ports \*(Gt 2000 and \*(Lt 2004 ,
 hence ports 2001, 2002, and 2003.
-.It Ar port 2000 \*(Lt\*(Gt 2004
+.It port 2000 \*(Lt\*(Gt 2004
 means
 .Sq all ports \*(Lt 2000 or \*(Gt 2004 ,
 hence ports 1\(en1999 and 2005\(en65535.
