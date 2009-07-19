@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.24 2009/07/17 18:06:51 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.25 2009/07/19 19:02:03 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -73,8 +73,10 @@ void	 mace_pcibr_intr_disestablish(void *, void *);
 bus_addr_t mace_pcibr_pa_to_device(paddr_t);
 paddr_t	 mace_pcibr_device_to_pa(bus_addr_t);
 
-void	 mace_pcibr_configure(struct mace_pcibr_softc *);
 int	 mace_pcibr_errintr(void *);
+
+void	 mace_pcibr_configure(struct mace_pcibr_softc *);
+void	 mace_pcibr_device_fixup(struct mace_pcibr_softc *, int, int);
 int	 mace_pcibr_ppb_setup(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
 	    bus_addr_t *, bus_addr_t *);
 
@@ -238,12 +240,8 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_ppb_setup = mace_pcibr_ppb_setup;
 
 	/*
-	 *  Firmware sucks. Remap PCI BAR registers. (sigh)
-	 */
-	pciaddr_remap(&sc->sc_pc);
-
-	/*
-	 * Setup any PCI-PCI bridge.
+	 * The O2 firmware sucks.  It makes a mess off I/O BARs and
+	 * an even bigger mess for PCI-PCI bridges.
 	 */
 	mace_pcibr_configure(sc);
 
@@ -677,10 +675,11 @@ void
 mace_pcibr_configure(struct mace_pcibr_softc *sc)
 {
 	pci_chipset_tag_t pc = &sc->sc_pc;
-	int dev;
-	uint curppb, nppb;
 	pcitag_t tag;
 	pcireg_t id, bhlcr;
+	int dev, nfuncs;
+	uint curppb, nppb;
+	const struct pci_quirkdata *qd;
 
 	nppb = 0;
 	for (dev = 0; dev < pci_bus_maxdevs(pc, 0); dev++) {
@@ -694,6 +693,15 @@ mace_pcibr_configure(struct mace_pcibr_softc *sc)
 		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 		if (PCI_HDRTYPE_TYPE(bhlcr) == 1)
 			nppb++;
+
+		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
+		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
+		    (qd != NULL && (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+			nfuncs = 8;
+		else
+			nfuncs = 1;
+
+		mace_pcibr_device_fixup(sc, dev, nfuncs);
 	}
 
 	/*
@@ -720,6 +728,63 @@ mace_pcibr_configure(struct mace_pcibr_softc *sc)
 		ppb_initialize(pc, tag, 1 + curppb * (255 / nppb),
 		    (curppb + 1) * (255 / nppb));
 		curppb++;
+	}
+}
+
+void
+mace_pcibr_device_fixup(struct mace_pcibr_softc *sc, int dev, int nfuncs)
+{
+	pci_chipset_tag_t pc = &sc->sc_pc;
+	pcitag_t tag;
+	pcireg_t csr, bhlcr, type;
+	int function;
+	int reg, reg_start, reg_end;
+
+	for (function = 0; function < nfuncs; function++) {
+		tag = pci_make_tag(pc, 0, dev, function);
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		switch (PCI_HDRTYPE_TYPE(bhlcr)) {
+		case 0:
+			reg_start = PCI_MAPREG_START;
+			reg_end = PCI_MAPREG_END;
+			break;
+		case 1:	/* PCI-PCI bridge */
+			reg_start = PCI_MAPREG_START;
+			reg_end = PCI_MAPREG_PPB_END;
+			break;
+		case 2:	/* PCI-CardBus bridge */
+			reg_start = PCI_MAPREG_START;
+			reg_end = PCI_MAPREG_PCB_END;
+			break;
+		default:
+			continue;
+		}
+
+		/*
+		 * The firmware fails to initialize I/O BARs.  Worse, it
+		 * fills them with crap.  So here we disable I/O space and
+		 * reset the I/O BARs to 0.  Device drivers will allocate
+		 * resources themselves and enable I/O space on an as-needed
+		 * basis.
+		 */
+		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+	            csr & ~PCI_COMMAND_IO_ENABLE);
+
+		for (reg = reg_start; reg < reg_end; reg += 4) {
+			if (pci_mapreg_probe(pc, tag, reg, &type) == 0)
+				continue;
+
+			switch (type) {
+			case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+				reg += 4;
+				break;
+			case PCI_MAPREG_TYPE_IO:
+				pci_conf_write(pc, tag, reg, 0);
+				break;
+			}
+		}
 	}
 }
 
