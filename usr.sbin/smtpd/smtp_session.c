@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.107 2009/06/06 04:14:21 pyr Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.108 2009/07/19 19:06:02 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -841,7 +841,7 @@ session_read_data(struct session *s, char *line, size_t nread)
 
 	len = strlen(line);
 
-	if (fwrite(line, len, 1, s->datafp) != 1 ||
+	if (fwrite(line, 1, len, s->datafp) != len ||
 	    fwrite("\n", 1, 1, s->datafp) != 1) {
 		s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 		return;
