@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.57 2009/06/05 20:18:03 yuo Exp $ */
+/*	$OpenBSD: ugen.c,v 1.58 2009/07/19 08:16:06 blambert Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -323,8 +323,7 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 			sce->ibuf = malloc(isize, M_USBDEV, M_WAITOK);
 			DPRINTFN(5, ("ugenopen: intr endpt=%d,isize=%d\n",
 				     endpt, isize));
-			if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1)
-				return (ENOMEM);
+			clalloc(&sce->q, UGEN_IBSIZE, 0);
 			err = usbd_open_pipe_intr(sce->iface,
 				  edesc->bEndpointAddress,
 				  USBD_SHORT_XFER_OK, &sce->pipeh, sce,

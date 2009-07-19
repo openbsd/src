@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.22 2006/08/17 06:27:05 miod Exp $	*/
+/*	$OpenBSD: tty.h,v 1.23 2009/07/19 08:16:06 blambert Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -305,7 +305,7 @@ int	cttywrite(dev_t, struct uio *, int);
 int	cttyioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	cttypoll(dev_t, int, struct proc *);
 
-int	clalloc(struct clist *, int, int);
+void	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \

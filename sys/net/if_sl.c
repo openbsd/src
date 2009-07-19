@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.37 2009/07/08 15:01:50 claudio Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.38 2009/07/19 08:16:06 blambert Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -325,11 +325,7 @@ slopen(dev, tp)
 				sc->sc_oldbufquot = tp->t_outq.c_cq != 0;
 
 				clfree(&tp->t_outq);
-				error = clalloc(&tp->t_outq, 3*SLMTU, 0);
-				if (error) {
-					splx(s);
-					return (error);
-				}
+				clalloc(&tp->t_outq, 3*SLMTU, 0);
 			} else
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
 			splx(s);
