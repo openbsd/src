@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.29 2009/07/18 20:19:50 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.30 2009/07/19 12:26:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -855,7 +855,7 @@ post_bf(POST_ARGS)
 		return(1);
 	else if (0 == strcmp(p, "Li"))
 		return(1);
-	else if (0 == strcmp(p, "Sm"))
+	else if (0 == strcmp(p, "Sy"))
 		return(1);
 
 	return(mdoc_nerr(mdoc, head, EFONT));
