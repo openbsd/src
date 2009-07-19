@@ -1,3 +1,46 @@
+What's new in Sudo 1.7.2?
+
+ * A new #includedir directive is available in sudoers.  This can be
+   used to implement an /etc/sudo.d directory.  Files in an includedir
+   are not edited by visudo unless they contain a syntax error.
+
+ * The -g option did not work properly when only setting the group
+   (and not the user).  Also, in -l mode the wrong user was displayed
+   for sudoers entries where only the group was allowed to be set.
+
+ * Fixed a problem with the alias checking in visudo which
+   could prevent visudo from exiting.
+
+ * Sudo will now correctly parse the shell-style /etc/environment
+   file format used by pam_env on Linux.
+
+ * When doing password and group database lookups, sudo will only
+   cache an entry by name or by id, depending on how the entry was
+   looked up.  Previously, sudo would cache by both name and id
+   from a single lookup, but this breaks sites that have multiple
+   password or group database names that map to the same uid or
+   gid.
+
+ * User and group names in sudoers may now be enclosed in double
+   quotes to avoid having to escape special characters.
+
+ * BSM audit fixes when changing to a non-root uid.
+
+ * Experimental non-Unix group support.  Currently only works with
+   Quest Authorization Services and allows Active Directory groups
+   fixes for Minix-3.
+
+ * For Netscape/Mozilla-derived LDAP SDKs the certificate and key
+   paths may be specified as a directory or a file.  However, version
+   5.0 of the SDK only appears to support using a directory (despite
+   documentation to the contrary).  If SSL client initialization
+   fails and the certificate or key paths look like they could be
+   default file name, strip off the last path element and try again.
+
+ * A setenv() compatibility fix for Linux systems, where a NULL
+   value is treated the same as an empty string and the variable
+   name is checked against the NULL pointer.
+
 What's new in Sudo 1.7.1?
 
  * A new Defaults option "pwfeedback" will cause sudo to provide visual
