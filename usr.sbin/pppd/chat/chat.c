@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.23 2007/09/11 16:30:59 gilles Exp $	*/
+/*	$OpenBSD: chat.c,v 1.24 2009/07/19 15:33:06 martynas Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -83,7 +83,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.23 2007/09/11 16:30:59 gilles Exp $";
+static char rcsid[] = "$OpenBSD: chat.c,v 1.24 2009/07/19 15:33:06 martynas Exp $";
 #endif
 #endif
 
@@ -457,6 +457,7 @@ void fatal(int code, const char *fmt, ...)
 
     va_start(args, fmt);
     vfmtmsg(line, sizeof(line), fmt, args);
+    va_end(args);
     if (to_log)
 	syslog(LOG_ERR, "%s", line);
     if (to_stderr)
