@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.23 2009/07/15 21:38:16 martynas Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.24 2009/07/19 15:34:45 martynas Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -214,7 +214,7 @@ main(int argc, char *argv[])
 			f->flags |= FLG_SET;
 			putval = (*sw->putval)(sw->name, sw->fd);
 			f->flags &= ~FLG_SET;
-			if (putval != 0 || f->flags & FLG_DEAD)
+			if (putval != 0 || f->flags & (FLG_DEAD | FLG_NOAUTO))
 				continue;
 			if (f->flags & FLG_WRONLY) {
 				pr_field(sw->name, f, setsep);
