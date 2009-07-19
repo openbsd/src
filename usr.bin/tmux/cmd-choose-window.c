@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-window.c,v 1.3 2009/07/17 07:05:58 nicm Exp $ */
+/* $OpenBSD: cmd-choose-window.c,v 1.4 2009/07/19 13:21:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -76,8 +76,8 @@ cmd_choose_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		idx++;
 
 		window_choose_add(wl->window->active,
-		    wm->idx, "%3d: %s [%ux%u %s] (%u panes)", wm->idx, w->name,
-		    w->sx, w->sy, layout_name(w), window_count_panes(w));
+		    wm->idx, "%3d: %s [%ux%u] (%u panes)",
+		    wm->idx, w->name, w->sx, w->sy, window_count_panes(w));
 	}
 
 	cdata = xmalloc(sizeof *cdata);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.3 2009/07/19 13:21:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -78,9 +78,8 @@ cmd_list_windows_exec(struct cmd *self, struct cmd_ctx *ctx)
 			else
 				name = "unknown";
 			ctx->print(ctx,
-			    "     %s [%ux%u %s] [history %u/%u, %llu bytes]",
-			    name, wp->sx, wp->sy, layout_name(w), gd->hsize,
-			    gd->hlimit, size);
+			    "     %s [%ux%u] [history %u/%u, %llu bytes]",
+			    name, wp->sx, wp->sy, gd->hsize, gd->hlimit, size);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.3 2009/07/19 13:21:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -74,17 +74,17 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 		if (wl->window->active == NULL)
 			wl->window->active = TAILQ_NEXT(wp, entry);
 	}
- 	layout_refresh(wl->window, 0);
+ 	layout_close_pane(wp);
 
  	w = wp->window = window_create1(s->sx, s->sy);
  	TAILQ_INSERT_HEAD(&w->panes, wp, entry);
  	w->active = wp;
  	w->name = default_window_name(w);
+	layout_init(w);
 
  	wl = session_attach(s, w, -1, &cause); /* can't fail */
  	if (!(data->chflags & CMD_CHFLAG('d')))
  		session_select(s, wl->idx);
- 	layout_refresh(w, 0);
 
 	server_redraw_session(s);
 

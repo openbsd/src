@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.2 2009/07/14 07:23:36 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.3 2009/07/19 13:21:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -132,6 +132,7 @@ recalculate_sizes(void)
 		log_debug(
 		    "window size %u,%u (was %u,%u)", ssx, ssy, w->sx, w->sy);
 
+		layout_resize(w, ssx, ssy);
 		window_resize(w, ssx, ssy);
 
 		/*
@@ -148,6 +149,5 @@ recalculate_sizes(void)
 		}
 
 		server_redraw_window(w);
-		layout_refresh(w, 0);
 	}
 }
