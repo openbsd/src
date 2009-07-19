@@ -72,7 +72,7 @@
 #include <gram.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: toke.l,v 1.37 2009/05/27 00:46:51 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: toke.l,v 1.38 2009/07/18 13:55:37 millert Exp $";
 #endif /* lint */
 
 extern YYSTYPE yylval;
@@ -971,6 +971,7 @@ parse_include(base)
 		memcpy(pp, user_shost, shost_len);
 		pp += shost_len;
 		cp += 2;
+		continue;
 	    }
 	    *pp++ = *cp++;
 	}
