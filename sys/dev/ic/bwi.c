@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.87 2009/06/02 11:54:00 deraadt Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.88 2009/07/19 11:35:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -492,7 +492,7 @@ static const struct {
 } bwi_bbpid_map[] = {
 	{ 0x4301, 0x4301, 0x4301 },
 	{ 0x4305, 0x4307, 0x4307 },
-	{ 0x4403, 0x4403, 0x4402 },
+	{ 0x4402, 0x4403, 0x4402 },
 	{ 0x4610, 0x4615, 0x4610 },
 	{ 0x4710, 0x4715, 0x4710 },
 	{ 0x4720, 0x4725, 0x4309 }
