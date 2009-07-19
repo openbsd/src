@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.35 2009/05/27 15:04:34 stevesk Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.36 2009/07/19 00:18:02 stevesk Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -440,9 +440,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	 */
 	pl = NULL;
 	for (lp = client->leases; lp; lp = lp->next) {
-		if (lp->address.len == lease->address.len &&
-		    !memcmp(lp->address.iabuf, lease->address.iabuf,
-		    lease->address.len)) {
+		if (addr_eq(lp->address, lease->address)) {
 			if (pl)
 				pl->next = lp->next;
 			else
@@ -480,10 +478,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	if (client->active) {
 		if (client->active->expiry < cur_time)
 			free_client_lease(client->active);
-		else if (client->active->address.len ==
-		    lease->address.len &&
-		    !memcmp(client->active->address.iabuf,
-		    lease->address.iabuf, lease->address.len))
+		else if (addr_eq(client->active->address, lease->address))
 			free_client_lease(client->active);
 		else {
 			client->active->next = client->leases;
