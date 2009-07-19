@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.15 2009/07/17 17:39:30 martynas Exp $	*/
+/*	$OpenBSD: printf.c,v 1.16 2009/07/19 15:47:57 martynas Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -30,16 +30,14 @@
  */
 
 #ifndef lint
-#if !defined(SHELL) && !defined(BUILTIN)
 char copyright[] =
 "@(#) Copyright (c) 1989 The Regents of the University of California.\n\
  All rights reserved.\n";
-#endif
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.15 2009/07/17 17:39:30 martynas Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.16 2009/07/19 15:47:57 martynas Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -71,26 +69,6 @@ static char  **gargv;
 #define octtobin(c)	((c) - '0')
 #define hextobin(c)	((c) >= 'A' && (c) <= 'F' ? c - 'A' + 10 : (c) >= 'a' && (c) <= 'f' ? c - 'a' + 10 : c - '0')
 
-#ifdef SHELL
-#define main printfcmd
-#include "../../bin/sh/bltin/bltin.h"
-#include <stdarg.h>
-
-static void 
-warnx(const char *fmt, ...)
-{
-	
-	char buf[64];
-	va_list ap;
-
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof buf, fmt, ap);
-	va_end(ap);
-
-	error(buf);
-}
-#endif /* SHELL */
-
 #define PF(f, func) { \
 	if (fieldwidth) \
 		if (precision) \
@@ -104,20 +82,14 @@ warnx(const char *fmt, ...)
 }
 
 int
-#ifdef BUILTIN
-progprintf(int argc, char *argv[])
-#else
 main(int argc, char *argv[])
-#endif
 {
 	char *fmt, *start;
 	int fieldwidth, precision;
 	char convch, nextch;
 	char *format;
 
-#if !defined(SHELL) && !defined(BUILTIN)
 	setlocale (LC_ALL, "");
-#endif
 
 	/* Need to accept/ignore "--" option. */
 	if (argc > 1 && strcmp(argv[1], "--") == 0) {
