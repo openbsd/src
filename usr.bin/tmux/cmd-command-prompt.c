@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.4 2009/07/17 06:13:27 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.5 2009/07/20 07:31:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -140,6 +140,8 @@ cmd_command_prompt_callback(void *data, const char *s)
 			}
 		}
 
+		if (buf == NULL)
+			return (0);
 		buf[len] = '\0';
 		s = buf;
 	}
