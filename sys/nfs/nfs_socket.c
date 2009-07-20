@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.89 2009/07/20 11:47:58 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.90 2009/07/20 16:49:40 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ nfs_connect(nmp, rep)
 	struct sockaddr_in *sin;
 	struct mbuf *m;
 
-	nmp->nm_so = (struct socket *)0;
+	nmp->nm_so = NULL;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
 	error = socreate(saddr->sa_family, &nmp->nm_so, nmp->nm_sotype, 
 		nmp->nm_soproto);
@@ -424,7 +424,7 @@ nfs_disconnect(nmp)
 
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
-		nmp->nm_so = (struct socket *)0;
+		nmp->nm_so = NULL;
 		soshutdown(so, SHUT_RDWR);
 		soclose(so);
 	}
@@ -468,7 +468,7 @@ nfs_send(so, nam, top, rep)
 	} else
 		soflags = so->so_proto->pr_flags;
 	if ((soflags & PR_CONNREQUIRED) || (so->so_state & SS_ISCONNECTED))
-		sendnam = (struct mbuf *)0;
+		sendnam = NULL;
 	else
 		sendnam = nam;
 	if (so->so_type == SOCK_SEQPACKET)
@@ -476,8 +476,7 @@ nfs_send(so, nam, top, rep)
 	else
 		flags = 0;
 
-	error = sosend(so, sendnam, (struct uio *)0, top,
-		(struct mbuf *)0, flags);
+	error = sosend(so, sendnam, NULL, top, NULL, flags);
 	if (error) {
 		if (rep) {
 			/*
@@ -528,8 +527,8 @@ nfs_receive(rep, aname, mp)
 	/*
 	 * Set up arguments for soreceive()
 	 */
-	*mp = (struct mbuf *)0;
-	*aname = (struct mbuf *)0;
+	*mp = NULL;
+	*aname = NULL;
 	sotype = rep->r_nmp->nm_sotype;
 
 	/*
@@ -595,9 +594,8 @@ tryagain:
 			auio.uio_procp = p;
 			do {
 			   rcvflg = MSG_WAITALL;
-			   error = soreceive(so, (struct mbuf **)0, &auio,
-				(struct mbuf **)0, (struct mbuf **)0, &rcvflg,
-				0);
+			   error = soreceive(so, NULL, &auio, NULL, NULL,
+			       &rcvflg, 0);
 			   if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
 					return (EINTR);
@@ -640,8 +638,8 @@ tryagain:
 			auio.uio_resid = len;
 			do {
 			    rcvflg = MSG_WAITALL;
-			    error =  soreceive(so, (struct mbuf **)0,
-				&auio, mp, (struct mbuf **)0, &rcvflg, 0);
+			    error =  soreceive(so, NULL, &auio, mp, NULL,
+			        &rcvflg, 0);
 			} while (error == EWOULDBLOCK || error == EINTR ||
 				 error == ERESTART);
 			if (!error && auio.uio_resid > 0) {
@@ -664,8 +662,8 @@ tryagain:
 			auio.uio_procp = p;
 			do {
 			    rcvflg = 0;
-			    error =  soreceive(so, (struct mbuf **)0,
-				&auio, mp, &control, &rcvflg, 0);
+			    error =  soreceive(so, NULL, &auio, mp, &control,
+			        &rcvflg, 0);
 			    if (control)
 				m_freem(control);
 			    if (error == EWOULDBLOCK && rep) {
@@ -683,7 +681,7 @@ tryagain:
 errout:
 		if (error && error != EINTR && error != ERESTART) {
 			m_freem(*mp);
-			*mp = (struct mbuf *)0;
+			*mp = NULL;
 			if (error != EPIPE)
 				log(LOG_INFO,
 				    "receive error %d from nfs server %s\n",
@@ -701,15 +699,15 @@ errout:
 		if ((so = rep->r_nmp->nm_so) == NULL)
 			return (EACCES);
 		if (so->so_state & SS_ISCONNECTED)
-			getnam = (struct mbuf **)0;
+			getnam = NULL;
 		else
 			getnam = aname;
 		auio.uio_resid = len = 1000000;
 		auio.uio_procp = p;
 		do {
 			rcvflg = 0;
-			error =  soreceive(so, getnam, &auio, mp,
-				(struct mbuf **)0, &rcvflg, 0);
+			error =  soreceive(so, getnam, &auio, mp, NULL,
+			    &rcvflg, 0);
 			if (error == EWOULDBLOCK &&
 			    (rep->r_flags & R_SOFTTERM))
 				return (EINTR);
@@ -718,7 +716,7 @@ errout:
 	}
 	if (error) {
 		m_freem(*mp);
-		*mp = (struct mbuf *)0;
+		*mp = NULL;
 	}
 	/*
 	 * Search for any mbufs that are not a multiple of 4 bytes long
@@ -1226,10 +1224,10 @@ nfs_timer(arg)
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 			if ((nmp->nm_flag & NFSMNT_NOCONN) == 0)
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    (struct mbuf *)0, (struct mbuf *)0, curproc);
+			    NULL, NULL, curproc);
 			else
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    nmp->nm_nam, (struct mbuf *)0, curproc);
+			    nmp->nm_nam, NULL, curproc);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error))
 					so->so_error = 0;
@@ -1313,7 +1311,7 @@ nfs_sndlock(flagp, rep)
 		if (rep->r_nmp->nm_flag & NFSMNT_INT)
 			slpflag = PCATCH;
 	} else
-		p = (struct proc *)0;
+		p = NULL;
 	while (*flagp & NFSMNT_SNDLOCK) {
 		if (rep && nfs_sigintr(rep->r_nmp, rep, p))
 			return (EINTR);
@@ -1663,9 +1661,9 @@ nfsrv_rcv(so, arg, waitflag)
 		 */
 		auio.uio_resid = 1000000000;
 		flags = MSG_DONTWAIT;
-		error = soreceive(so, &nam, &auio, &mp, (struct mbuf **)0,
+		error = soreceive(so, &nam, &auio, &mp, NULL,
 		    &flags, 0);
-		if (error || mp == (struct mbuf *)0) {
+		if (error || mp == NULL) {
 			if (error == EWOULDBLOCK)
 				slp->ns_flag |= SLP_NEEDQ;
 			else
@@ -1699,7 +1697,7 @@ nfsrv_rcv(so, arg, waitflag)
 			auio.uio_resid = 1000000000;
 			flags = MSG_DONTWAIT;
 			error = soreceive(so, &nam, &auio, &mp,
-			    (struct mbuf **)0, &flags, 0);
+			    NULL, &flags, 0);
 			if (mp) {
 				if (nam) {
 					m = nam;
@@ -1711,7 +1709,7 @@ nfsrv_rcv(so, arg, waitflag)
 				else
 					slp->ns_rec = m;
 				slp->ns_recend = m;
-				m->m_nextpkt = (struct mbuf *)0;
+				m->m_nextpkt = NULL;
 			}
 			if (error) {
 				if ((so->so_proto->pr_flags & PR_CONNREQUIRED)
@@ -1794,12 +1792,12 @@ nfsrv_getstream(slp, waitflag)
 	    recm = NULL;
 	    if (slp->ns_cc == slp->ns_reclen) {
 		recm = slp->ns_raw;
-		slp->ns_raw = slp->ns_rawend = (struct mbuf *)0;
+		slp->ns_raw = slp->ns_rawend = NULL;
 		slp->ns_cc = slp->ns_reclen = 0;
 	    } else if (slp->ns_cc > slp->ns_reclen) {
 		len = 0;
 		m = slp->ns_raw;
-		om = (struct mbuf *)0;
+		om = NULL;
 		while (len < slp->ns_reclen) {
 			if ((len + m->m_len) > slp->ns_reclen) {
 				m2 = m_copym(m, 0, slp->ns_reclen - len,
@@ -1822,7 +1820,7 @@ nfsrv_getstream(slp, waitflag)
 				len += m->m_len;
 				m = m->m_next;
 				recm = slp->ns_raw;
-				om->m_next = (struct mbuf *)0;
+				om->m_next = NULL;
 			} else {
 				om = m;
 				len += m->m_len;
@@ -1850,7 +1848,7 @@ nfsrv_getstream(slp, waitflag)
 		else
 		    slp->ns_rec = slp->ns_frag;
 		slp->ns_recend = slp->ns_frag;
-		slp->ns_frag = (struct mbuf *)0;
+		slp->ns_frag = NULL;
 	    }
 	}
 }
@@ -1870,13 +1868,13 @@ nfsrv_dorec(slp, nfsd, ndp)
 
 	*ndp = NULL;
 	if ((slp->ns_flag & SLP_VALID) == 0 ||
-	    (m = slp->ns_rec) == (struct mbuf *)0)
+	    (m = slp->ns_rec) == NULL)
 		return (ENOBUFS);
 	slp->ns_rec = m->m_nextpkt;
 	if (slp->ns_rec)
-		m->m_nextpkt = (struct mbuf *)0;
+		m->m_nextpkt = NULL;
 	else
-		slp->ns_recend = (struct mbuf *)0;
+		slp->ns_recend = NULL;
 	if (m->m_type == MT_SONAME) {
 		nam = m;
 		m = m->m_next;

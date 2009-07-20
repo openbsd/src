@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.97 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.98 2009/07/20 16:49:40 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1231,7 +1231,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p)
 	int error, rdonly;
 	struct componentname *cnp = &ndp->ni_cnd;
 
-	*retdirp = (struct vnode *)0;
+	*retdirp = NULL;
 	cnp->cn_pnbuf = pool_get(&namei_pool, PR_WAITOK);
 	/*
 	 * Copy the name from the mbuf list to ndp->ni_pnbuf
@@ -1348,7 +1348,7 @@ nfsm_adj(mp, len, nul)
 	m = mp;
 	for (;;) {
 		count += m->m_len;
-		if (m->m_next == (struct mbuf *)0)
+		if (m->m_next == NULL)
 			break;
 		m = m->m_next;
 	}
@@ -1506,7 +1506,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 	int error, exflags;
 	struct sockaddr_in *saddr;
 
-	*vpp = (struct vnode *)0;
+	*vpp = NULL;
 	mp = vfs_getvfs(&fhp->fh_fsid);
 
 	if (!mp)

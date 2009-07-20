@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.118 2009/07/18 14:40:31 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.119 2009/07/20 16:49:40 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -815,7 +815,7 @@ dorpc:
 			nfsm_postop_attr(newvp, attrflag);
 			nfsm_postop_attr(dvp, attrflag);
 		} else
-			nfsm_loadattr(newvp, (struct vattr *)0);
+			nfsm_loadattr(newvp, NULL);
 		*vpp = newvp;
 		m_freem(mrep);
 		cnp->cn_flags |= SAVENAME;
@@ -839,7 +839,7 @@ dorpc:
 			nfsm_postop_attr(newvp, attrflag);
 			nfsm_postop_attr(dvp, attrflag);
 		} else
-			nfsm_loadattr(newvp, (struct vattr *)0);
+			nfsm_loadattr(newvp, NULL);
 	} else if (flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp, 0, p);
 		cnp->cn_flags |= PDIRUNLOCK;
@@ -857,7 +857,7 @@ dorpc:
 			nfsm_postop_attr(newvp, attrflag);
 			nfsm_postop_attr(dvp, attrflag);
 		} else
-			nfsm_loadattr(newvp, (struct vattr *)0);
+			nfsm_loadattr(newvp, NULL);
 
 		if (lockparent && (flags & ISLASTCN)) {
 			if ((error = vn_lock(dvp, LK_EXCLUSIVE, p))) {
@@ -879,7 +879,7 @@ dorpc:
 			nfsm_postop_attr(newvp, attrflag);
 			nfsm_postop_attr(dvp, attrflag);
 		} else
-			nfsm_loadattr(newvp, (struct vattr *)0);
+			nfsm_loadattr(newvp, NULL);
 		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(dvp, 0, p);
 			cnp->cn_flags |= PDIRUNLOCK;
@@ -1196,7 +1196,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	struct nfsv2_sattr *sp;
 	u_int32_t *tl;
 	int32_t t1;
-	struct vnode *newvp = (struct vnode *)0;
+	struct vnode *newvp = NULL;
 	struct nfsnode *np = NULL;
 	char *cp2;
 	caddr_t dpos;
@@ -1246,7 +1246,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 		if (!gotvp) {
 			if (newvp) {
 				vrele(newvp);
-				newvp = (struct vnode *)0;
+				newvp = NULL;
 			}
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
 			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_proc, &np);
@@ -1306,8 +1306,8 @@ nfs_create(v)
 	struct nfsv2_sattr *sp;
 	u_int32_t *tl;
 	int32_t t1;
-	struct nfsnode *np = (struct nfsnode *)0;
-	struct vnode *newvp = (struct vnode *)0;
+	struct nfsnode *np = NULL;
+	struct vnode *newvp = NULL;
 	caddr_t dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
@@ -1356,7 +1356,7 @@ again:
 		if (!gotvp) {
 			if (newvp) {
 				vrele(newvp);
-				newvp = (struct vnode *)0;
+				newvp = NULL;
 			}
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
 			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_proc, &np);
@@ -1472,7 +1472,7 @@ nfs_removeit(sp)
 {
 
 	return (nfs_removerpc(sp->s_dvp, sp->s_name, sp->s_namlen, sp->s_cred,
-		(struct proc *)0));
+		NULL));
 }
 
 /*
@@ -1715,7 +1715,7 @@ nfs_symlink(v)
 	caddr_t dpos, cp2;
 	int slen, error = 0, wccflag = NFSV3_WCCRATTR, gotvp;
 	struct mbuf *mreq, *mrep, *md, *mb;
-	struct vnode *newvp = (struct vnode *)0;
+	struct vnode *newvp = NULL;
 	int v3 = NFS_ISV3(dvp);
 
 	nfsstats.rpccnt[NFSPROC_SYMLINK]++;
@@ -1771,8 +1771,8 @@ nfs_mkdir(v)
 	u_int32_t *tl;
 	int32_t t1;
 	int len;
-	struct nfsnode *np = (struct nfsnode *)0;
-	struct vnode *newvp = (struct vnode *)0;
+	struct nfsnode *np = NULL;
+	struct vnode *newvp = NULL;
 	caddr_t dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	int gotvp = 0;
@@ -2409,7 +2409,7 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 				dpos = dpossav1;
 				mdsav2 = md;
 				md = mdsav1;
-				nfsm_loadattr(newvp, (struct vattr *)0);
+				nfsm_loadattr(newvp, NULL);
 				dpos = dpossav2;
 				md = mdsav2;
 				dp->d_type =
@@ -2517,7 +2517,7 @@ nfs_sillyrename(dvp, vp, cnp)
 
 	/* Try lookitups until we get one that isn't there */
 	while (nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,
-		cnp->cn_proc, (struct nfsnode **)0) == 0) {
+		cnp->cn_proc, NULL) == 0) {
 		sp->s_name[4]++;
 		if (sp->s_name[4] > 'z') {
 			error = EINVAL;
@@ -2557,7 +2557,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 {
 	u_int32_t *tl;
 	int32_t t1;
-	struct vnode *newvp = (struct vnode *)0;
+	struct vnode *newvp = NULL;
 	struct nfsnode *np, *dnp = VTONFS(dvp);
 	caddr_t dpos, cp2;
 	int error = 0, fhlen, attrflag;
@@ -2606,7 +2606,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 				return (ENOENT);
 			}
 		} else
-			nfsm_loadattr(newvp, (struct vattr *)0);
+			nfsm_loadattr(newvp, NULL);
 	}
 	m_freem(mrep);
 nfsmout: 
@@ -2847,7 +2847,7 @@ loop:
 				"nfsfsync", slptimeo);
 			splx(s);
 			if (error) {
-			    if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
+			    if (nfs_sigintr(nmp, NULL, p))
 				return (EINTR);
 			    if (slpflag == PCATCH) {
 				slpflag = 0;
@@ -2882,7 +2882,7 @@ loop:
 		error = vwaitforio(vp, slpflag, "nfs_fsync", slptimeo);
 		splx(s);
 		if (error) {
-			if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
+			if (nfs_sigintr(nmp, NULL, p))
 				return (EINTR);
 			if (slpflag == PCATCH) {
 				slpflag = 0;

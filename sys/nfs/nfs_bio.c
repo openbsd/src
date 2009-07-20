@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.59 2009/06/23 08:08:50 jasper Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.60 2009/07/20 16:49:40 thib Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ again:
 			if (error)
 				return (error);
 		} else if ((n + on) == biosize) {
-			bp->b_proc = (struct proc *)0;
+			bp->b_proc = NULL;
 			bp->b_flags |= B_ASYNC;
 			(void)nfs_writebp(bp, 0);
 		} else {
@@ -463,9 +463,9 @@ nfs_getcacheblk(vp, bn, size, p)
 
 	if (nmp->nm_flag & NFSMNT_INT) {
 		bp = getblk(vp, bn, size, PCATCH, 0);
-		while (bp == (struct buf *)0) {
-			if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
-				return ((struct buf *)0);
+		while (bp == NULL) {
+			if (nfs_sigintr(nmp, NULL, p))
+				return (NULL);
 			bp = getblk(vp, bn, size, 0, 2 * hz);
 		}
 	} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.76 2009/07/17 12:36:21 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.77 2009/07/20 16:49:40 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -462,7 +462,7 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	uiop->uio_resid = len;
 	uiop->uio_rw = UIO_READ;
 	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_procp = (struct proc *)0;
+	uiop->uio_procp = NULL;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		m_freem(mp3);
@@ -797,7 +797,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	    uiop->uio_resid = len;
 	    uiop->uio_rw = UIO_WRITE;
 	    uiop->uio_segflg = UIO_SYSSPACE;
-	    uiop->uio_procp = (struct proc *)0;
+	    uiop->uio_procp = NULL;
 	    uiop->uio_offset = off;
 	    error = VOP_WRITE(vp, uiop, ioflags, cred);
 	    nfsstats.srvvop_writes++;
@@ -1040,7 +1040,7 @@ loop1:
 		    ioflags = (IO_SYNC | IO_NODELOCKED);
 		uiop->uio_rw = UIO_WRITE;
 		uiop->uio_segflg = UIO_SYSSPACE;
-		uiop->uio_procp = (struct proc *)0;
+		uiop->uio_procp = NULL;
 		uiop->uio_offset = nfsd->nd_off;
 		uiop->uio_resid = nfsd->nd_eoff - nfsd->nd_off;
 		if (uiop->uio_resid > 0) {
@@ -1253,7 +1253,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = NULL;
 		}
 	}
 	if (error) {
@@ -1471,7 +1471,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	enum vtype vtyp;
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	struct vnode *vp, *dirp = (struct vnode *)0;
+	struct vnode *vp, *dirp = NULL;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 
@@ -1728,7 +1728,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(fdirp);
-			fdirp = (struct vnode *)0;
+			fdirp = NULL;
 		}
 	}
 	if (error) {
@@ -1755,7 +1755,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(tdirp);
-			tdirp = (struct vnode *)0;
+			tdirp = NULL;
 		}
 	}
 	if (error) {
@@ -1879,7 +1879,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 	int getret = 1, v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	struct vnode *vp, *xp, *dirp = (struct vnode *)0;
+	struct vnode *vp, *xp, *dirp = NULL;
 	struct vattr dirfor, diraft, at;
 	nfsfh_t nfh, dnfh;
 	fhandle_t *fhp, *dfhp;
@@ -1909,7 +1909,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = NULL;
 		}
 	}
 	if (error)
@@ -1978,7 +1978,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	int error = 0, len, len2, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	struct mbuf *mb, *mreq;
-	struct vnode *dirp = (struct vnode *)0;
+	struct vnode *dirp = NULL;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 
@@ -1996,7 +1996,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = NULL;
 		}
 	}
 	if (error)
@@ -2016,7 +2016,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	io.uio_iovcnt = 1;
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_procp = (struct proc *)0;
+	io.uio_procp = NULL;
 	nfsm_mtouio(&io, len2);
 	if (!v3) {
 		nfsm_dissect(sp, struct nfsv2_sattr *, NFSX_V2SATTR);
@@ -2118,7 +2118,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	struct vnode *vp, *dirp = (struct vnode *)0;
+	struct vnode *vp, *dirp = NULL;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 
@@ -2135,7 +2135,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = NULL;
 		}
 	}
 	if (error) {
@@ -2229,7 +2229,7 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	struct vnode *vp, *dirp = (struct vnode *)0;
+	struct vnode *vp, *dirp = NULL;
 	struct vattr dirfor, diraft;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
@@ -2248,7 +2248,7 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = NULL;
 		}
 	}
 	if (error) {
@@ -2415,7 +2415,7 @@ again:
 	io.uio_resid = fullsiz;
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_procp = (struct proc *)0;
+	io.uio_procp = NULL;
 	eofflag = 0;
 
 	if (cookies) {
@@ -2628,7 +2628,7 @@ again:
 	io.uio_resid = fullsiz;
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_procp = (struct proc *)0;
+	io.uio_procp = NULL;
 	eofflag = 0;
 
 	if (cookies) {
