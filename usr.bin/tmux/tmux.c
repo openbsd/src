@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.17 2009/07/20 09:15:18 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.18 2009/07/20 14:32:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -303,6 +303,7 @@ main(int argc, char **argv)
 	options_set_number(&global_s_options, "status-fg", 0);
 	options_set_number(&global_s_options, "status-interval", 15);
 	options_set_number(&global_s_options, "status-keys", MODEKEY_EMACS);
+	options_set_number(&global_s_options, "status-justify", 0);
 	options_set_number(&global_s_options, "status-left-length", 10);
 	options_set_number(&global_s_options, "status-right-length", 40);
 	options_set_string(&global_s_options, "status-left", "[#S]");
