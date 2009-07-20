@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-up-pane.c,v 1.4 2009/07/19 13:21:40 nicm Exp $ */
+/* $OpenBSD: cmd-up-pane.c,v 1.5 2009/07/20 19:35:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -55,6 +55,7 @@ cmd_up_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 		if (w->active == NULL)
 			w->active = TAILQ_LAST(&w->panes, window_panes);
 	} while (!window_pane_visible(w->active));
+	server_status_window(wl->window);
 
 	return (0);
 }
