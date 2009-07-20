@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.231 2009/06/06 01:10:29 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.232 2009/07/20 14:56:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -397,7 +397,7 @@ conf_main	: AS as4number		{
 				free($3);
 				YYERROR;
 			}
-			if (!add_rib($3, F_RIB_NOEVALUATE)) {
+			if (!add_rib($3, F_RIB_NOFIB | F_RIB_NOEVALUATE)) {
 				free($3);
 				YYERROR;
 			}
