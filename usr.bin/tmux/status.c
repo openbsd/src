@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.13 2009/07/17 18:45:08 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.14 2009/07/20 09:15:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -460,8 +460,18 @@ status_print(struct session *s, struct winlink *wl, struct grid_cell *gc)
 	flag = ' ';
  	if (wl == SLIST_FIRST(&s->lastw))
 		flag = '-';
-	if (wl == s->curw)
+	if (wl == s->curw) {
+		fg = options_get_number(&wl->window->options, "window-status-current-fg");
+		if (fg != 8)
+			gc->fg = fg;
+		bg = options_get_number(&wl->window->options, "window-status-current-bg");
+		if (bg != 8)
+			gc->bg = bg;
+		attr = options_get_number(&wl->window->options, "window-status-current-attr");
+		if (attr != 0)
+			gc->attr = attr;
 		flag = '*';
+	}
 
 	if (session_alert_has(s, wl, WINDOW_ACTIVITY)) {
 		flag = '#';
