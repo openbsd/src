@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.82 2009/06/25 15:49:26 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.83 2009/07/20 11:47:58 blambert Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -81,6 +81,8 @@ struct nfssvc_sock *nfs_udpsock;
 int nfsd_waiting = 0;
 
 #ifdef NFSSERVER
+struct pool nfsrv_descript_pl;
+
 int nfsrv_getslp(struct nfsd *nfsd);
 
 static int nfs_numnfsd = 0;
@@ -353,7 +355,7 @@ nfssvc_nfsd(struct nfsd *nfsd)
 		}
 		if (error || (slp->ns_flag & SLP_VALID) == 0) {
 			if (nd) {
-				free((caddr_t)nd, M_NFSRVDESC);
+				pool_put(&nfsrv_descript_pl, nd);
 				nd = NULL;
 			}
 			nfsd->nfsd_slp = (struct nfssvc_sock *)0;
@@ -450,7 +452,7 @@ nfssvc_nfsd(struct nfsd *nfsd)
 			if (solockp)
 				nfs_sndunlock(solockp);
 			if (error == EINTR || error == ERESTART) {
-				free((caddr_t)nd, M_NFSRVDESC);
+		    		pool_put(&nfsrv_descript_pl, nd);
 				nfsrv_slpderef(slp);
 				s = splsoftnet();
 				goto done;
@@ -462,7 +464,7 @@ nfssvc_nfsd(struct nfsd *nfsd)
 			break;
 		    };
 		    if (nd) {
-		    	free(nd, M_NFSRVDESC);
+		    	pool_put(&nfsrv_descript_pl, nd);
 			nd = NULL;
 		    }
 
@@ -535,7 +537,7 @@ nfsrv_zapsock(slp)
 		for (nwp = LIST_FIRST(&slp->ns_tq); nwp != NULL; nwp = nnwp) {
 			nnwp = LIST_NEXT(nwp, nd_tq);
 			LIST_REMOVE(nwp, nd_tq);
-			free((caddr_t)nwp, M_NFSRVDESC);
+			pool_put(&nfsrv_descript_pl, nwp);
 		}
 		LIST_INIT(&slp->ns_tq);
 		splx(s);
@@ -595,6 +597,9 @@ nfsrv_init(terminating)
 	nfs_udpsock =  malloc(sizeof(struct nfssvc_sock), M_NFSSVC,
 	    M_WAITOK|M_ZERO);
 	TAILQ_INSERT_HEAD(&nfssvc_sockhead, nfs_udpsock, ns_chain);
+
+	pool_init(&nfsrv_descript_pl, sizeof(struct nfsrv_descript), 0, 0, 0,
+	    "ndscpl", &pool_allocator_nointr);
 }
 #endif /* NFSSERVER */
 

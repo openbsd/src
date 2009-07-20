@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.88 2009/07/18 20:30:22 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.89 2009/07/20 11:47:58 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,8 @@ extern int nfsv3_procid[NFS_NPROCS];
 extern int nfs_ticks;
 
 struct nfsreqhead nfs_reqq;
+
+extern struct pool nfsrv_descript_pl;
 
 /*
  * There is a congestion window for outstanding rpcs maintained per mount
@@ -1881,7 +1883,7 @@ nfsrv_dorec(slp, nfsd, ndp)
 		nam->m_next = NULL;
 	} else
 		nam = NULL;
-	nd = malloc(sizeof(struct nfsrv_descript), M_NFSRVDESC, M_WAITOK);
+	nd = pool_get(&nfsrv_descript_pl, PR_WAITOK);
 	nfs_realign(&m, 10 * NFSX_UNSIGNED);
 	nd->nd_md = nd->nd_mrep = m;
 	nd->nd_nam2 = nam;
@@ -1889,7 +1891,7 @@ nfsrv_dorec(slp, nfsd, ndp)
 	error = nfs_getreq(nd, nfsd, 1);
 	if (error) {
 		m_freem(nam);
-		free(nd, M_NFSRVDESC);
+		pool_put(&nfsrv_descript_pl, nd);
 		return (error);
 	}
 	*ndp = nd;
