@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.39 2009/07/19 13:21:40 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.40 2009/07/20 14:37:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -998,6 +998,7 @@ extern struct options global_s_options;
 extern struct options global_w_options;
 extern char	*cfg_file;
 extern int	 server_locked;
+extern u_int	 password_failures;
 extern char	*server_password;
 extern time_t	 server_activity;
 extern int	 debug_level;
