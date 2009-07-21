@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.4 2009/07/17 06:13:27 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.5 2009/07/21 18:52:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -68,7 +68,7 @@ cmd_confirm_before_init(struct cmd *self, int key)
 }
 
 int
-cmd_confirm_before_exec(unused struct cmd *self, struct cmd_ctx *ctx)
+cmd_confirm_before_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct cmd_target_data		*data = self->data;
 	struct cmd_confirm_before_data	*cdata;

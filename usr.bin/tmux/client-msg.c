@@ -1,4 +1,4 @@
-/* $OpenBSD: client-msg.c,v 1.2 2009/06/02 11:17:03 ray Exp $ */
+/* $OpenBSD: client-msg.c,v 1.3 2009/07/21 18:52:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -85,7 +85,7 @@ client_msg_fn_error(struct hdr *hdr, struct client_ctx *cctx, char **error)
 
 int
 client_msg_fn_detach(
-    struct hdr *hdr, unused struct client_ctx *cctx, unused char **error)
+    struct hdr *hdr, struct client_ctx *cctx, unused char **error)
 {
 	if (hdr->size != 0)
 		fatalx("bad MSG_DETACH size");
@@ -98,7 +98,7 @@ client_msg_fn_detach(
 
 int
 client_msg_fn_shutdown(
-    struct hdr *hdr, unused struct client_ctx *cctx, unused char **error)
+    struct hdr *hdr, struct client_ctx *cctx, unused char **error)
 {
 	if (hdr->size != 0)
 		fatalx("bad MSG_SHUTDOWN size");
@@ -111,7 +111,7 @@ client_msg_fn_shutdown(
 
 int
 client_msg_fn_exit(
-    struct hdr *hdr, unused struct client_ctx *cctx, unused char **error)
+    struct hdr *hdr, struct client_ctx *cctx, unused char **error)
 {
 	if (hdr->size != 0)
 		fatalx("bad MSG_EXIT size");
