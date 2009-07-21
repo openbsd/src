@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.c,v 1.12 2009/07/21 21:20:05 miod Exp $	*/
+/*	$OpenBSD: rbus.c,v 1.13 2009/07/21 21:22:17 miod Exp $	*/
 /*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
@@ -54,9 +54,6 @@
 #define DPRINTF(a)
 #endif
 
-
-STATIC rbus_tag_t rbus_new_body(bus_space_tag_t, rbus_tag_t, struct extent *,
-		      bus_addr_t, bus_addr_t, bus_addr_t, int);
 
 int
 rbus_space_alloc(rbus_tag_t rbt, bus_addr_t addr, bus_size_t size,
@@ -189,13 +186,13 @@ rbus_space_free(rbus_tag_t rbt, bus_space_handle_t bsh, bus_size_t size,
 }
 
 /*
- * STATIC rbus_tag_t
+ * rbus_tag_t
  * rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent,
  *               struct extent *ex, bus_addr_t start, bus_size_t end,
  *               bus_addr_t offset, int flags)
  *
  */
-STATIC rbus_tag_t
+rbus_tag_t
 rbus_new_body(bus_space_tag_t bt, rbus_tag_t parent, struct extent *ex,
     bus_addr_t start, bus_addr_t end, bus_addr_t offset, int flags)
 {
