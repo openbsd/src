@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-password.c,v 1.2 2009/07/13 23:11:35 nicm Exp $ */
+/* $OpenBSD: cmd-set-password.c,v 1.3 2009/07/21 21:20:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -118,7 +118,6 @@ cmd_set_password_exec(struct cmd *self, struct cmd_ctx *ctx)
 		server_password = NULL;
 	else
 		server_password = xstrdup(data->password);
-	log_debug("pw now %s", server_password);
 
  	return (0);
 }
