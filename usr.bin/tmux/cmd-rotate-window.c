@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-rotate-window.c,v 1.7 2009/07/19 13:21:40 nicm Exp $ */
+/* $OpenBSD: cmd-rotate-window.c,v 1.8 2009/07/21 17:57:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -48,7 +48,7 @@ cmd_rotate_window_init(struct cmd *self, int key)
 	cmd_target_init(self, key);
 	data = self->data;
 
-	if (key == KEYC_ADDESC('o'))
+	if (key == ('o' | KEYC_ESCAPE))
 		data->chflags |= CMD_CHFLAG('D');
 }
 

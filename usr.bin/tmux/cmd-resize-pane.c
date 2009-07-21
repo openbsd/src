@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.3 2009/07/19 13:21:40 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.4 2009/07/21 17:57:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -51,28 +51,28 @@ cmd_resize_pane_init(struct cmd *self, int key)
 	cmd_pane_init(self, key);
 	data = self->data;
 
-	if (key == KEYC_ADDCTL(KEYC_UP))
+	if (key == (KEYC_UP | KEYC_CTRL))
 		data->chflags |= CMD_CHFLAG('U');
-	if (key == KEYC_ADDCTL(KEYC_DOWN))
+	if (key == (KEYC_DOWN | KEYC_CTRL))
 		data->chflags |= CMD_CHFLAG('D');
-	if (key == KEYC_ADDCTL(KEYC_LEFT))
+	if (key == (KEYC_LEFT | KEYC_CTRL))
 		data->chflags |= CMD_CHFLAG('L');
-	if (key == KEYC_ADDCTL(KEYC_RIGHT))
+	if (key == (KEYC_RIGHT | KEYC_CTRL))
 		data->chflags |= CMD_CHFLAG('R');
-
-	if (key == KEYC_ADDESC(KEYC_UP)) {
+	
+	if (key == (KEYC_UP | KEYC_ESCAPE)) {
 		data->chflags |= CMD_CHFLAG('U');
 		data->arg = xstrdup("5");
 	}
-	if (key == KEYC_ADDESC(KEYC_DOWN)) {
+	if (key == (KEYC_DOWN | KEYC_ESCAPE)) {
 		data->chflags |= CMD_CHFLAG('D');
 		data->arg = xstrdup("5");
 	}
-	if (key == KEYC_ADDESC(KEYC_LEFT)) {
+	if (key == (KEYC_LEFT | KEYC_ESCAPE)) {
 		data->chflags |= CMD_CHFLAG('L');
 		data->arg = xstrdup("5");
 	}
-	if (key == KEYC_ADDESC(KEYC_RIGHT)) {
+	if (key == (KEYC_RIGHT | KEYC_ESCAPE)) {
 		data->chflags |= CMD_CHFLAG('R');
 		data->arg = xstrdup("5");
 	}
