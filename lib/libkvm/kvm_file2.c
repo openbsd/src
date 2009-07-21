@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.11 2009/07/21 14:10:15 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.12 2009/07/21 14:37:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.11 2009/07/21 14:10:15 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.12 2009/07/21 14:37:00 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -356,6 +356,17 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		}
 		proc.p_fd = &filed;
 
+		if (proc.p_textvp) {
+			if (buflen < sizeof(struct kinfo_file2))
+				goto done;
+			kf = (struct kinfo_file2 *)where;
+			where += sizeof(struct kinfo_file2);
+			buflen -= sizeof(struct kinfo_file2);
+			n++;
+			if (fill_file2(kd, kf, NULL, proc.p_textvp, &proc,
+			    KERN_FILE_TEXT) == -1)
+				return (NULL);
+		}
 		if (filed.fd_cdir) {
 			if (buflen < sizeof(struct kinfo_file2))
 				goto done;
