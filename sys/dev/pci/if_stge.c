@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.45 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.46 2009/07/21 17:27:46 sthen Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -101,7 +101,7 @@ void	stge_tick(void *);
 
 void	stge_stats_update(struct stge_softc *);
 
-void	stge_set_filter(struct stge_softc *);
+void	stge_iff(struct stge_softc *);
 
 int	stge_intr(void *);
 void	stge_txintr(struct stge_softc *);
@@ -720,19 +720,14 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->stge_if_flags) &
-			     IFF_PROMISC) {
-				stge_set_filter(sc);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					stge_init(ifp);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				stge_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				stge_stop(ifp, 1);
 		}
-		sc->stge_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCSIFMEDIA:
@@ -746,7 +741,7 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			stge_set_filter(sc);
+			stge_iff(sc);
 		error = 0;
 	}
 
@@ -1226,8 +1221,8 @@ stge_init(struct ifnet *ifp)
 	    (1U << 13) | (1U << 14) | (1U << 15) | (1U << 19) | (1U << 20) |
 	    (1U << 21));
 
-	/* Set up the receive filter. */
-	stge_set_filter(sc);
+	/* Program promiscuous mode and multicast filters. */
+	stge_iff(sc);
 
 	/*
 	 * Give the transmit and receive ring to the chip.
@@ -1521,12 +1516,12 @@ stge_add_rxbuf(struct stge_softc *sc, int idx)
 }
 
 /*
- * stge_set_filter:
+ * stge_iff:
  *
  *	Set up the receive filter.
  */
 void
-stge_set_filter(struct stge_softc *sc)
+stge_iff(struct stge_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1535,75 +1530,53 @@ stge_set_filter(struct stge_softc *sc)
 	uint32_t crc;
 	uint32_t mchash[2];
 
-	sc->sc_ReceiveMode = RM_ReceiveUnicast;
-	if (ifp->if_flags & IFF_BROADCAST)
-		sc->sc_ReceiveMode |= RM_ReceiveBroadcast;
+	memset(mchash, 0, sizeof(mchash));
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	/*
+	 * Always accept broadcast packets.
+	 * Always accept frames destined to our station address.
+	 */
+	sc->sc_ReceiveMode = RM_ReceiveBroadcast | RM_ReceiveUnicast;
 
 	/* XXX: ST1023 only works in promiscuous mode */
 	if (sc->sc_stge1023)
 		ifp->if_flags |= IFF_PROMISC;
 
-	if (ifp->if_flags & IFF_PROMISC) {
-		sc->sc_ReceiveMode |= RM_ReceiveAllFrames;
-		goto allmulti;
-	}
-
-	/*
-	 * Set up the multicast address filter by passing all multicast
-	 * addresses through a CRC generator, and then using the low-order
-	 * 6 bits as an index into the 64 bit multicast hash table.  The
-	 * high order bits select the register, while the rest of the bits
-	 * select the bit within the register.
-	 */
-
-	memset(mchash, 0, sizeof(mchash));
-
-	ETHER_FIRST_MULTI(step, ac, enm);
-	if (enm == NULL)
-		goto done;
-
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/*
-			 * We must listen to a range of multicast addresses.
-			 * For now, just accept all multicasts, rather than
-			 * trying to set only those filter bits needed to match
-			 * the range.  (At this time, the only use of address
-			 * ranges is for IP multicast routing, for which the
-			 * range is big enough to require all bits set.)
-			 */
-			goto allmulti;
-		}
-
-		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-
-		/* Just want the 6 least significant bits. */
-		crc &= 0x3f;
-
-		/* Set the corresponding bit in the hash table. */
-		mchash[crc >> 5] |= 1 << (crc & 0x1f);
-
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	sc->sc_ReceiveMode |= RM_ReceiveMulticastHash;
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	goto done;
-
- allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
-	sc->sc_ReceiveMode |= RM_ReceiveMulticast;
-
- done:
-	if ((ifp->if_flags & IFF_ALLMULTI) == 0) {
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			sc->sc_ReceiveMode |= RM_ReceiveAllFrames;
+		else
+			sc->sc_ReceiveMode |= RM_ReceiveMulticast;
+	} else {
 		/*
-		 * Program the multicast hash table.
+		 * Set up the multicast address filter by passing all
+		 * multicast addresses through a CRC generator, and then
+		 * using the low-order 6 bits as an index into the 64 bit
+		 * multicast hash table.  The high order bits select the
+		 * register, while the rest of the bits select the bit
+		 * within the register.
 		 */
-		CSR_WRITE_4(sc, STGE_HashTable0, mchash[0]);
-		CSR_WRITE_4(sc, STGE_HashTable1, mchash[1]);
+		sc->sc_ReceiveMode |= RM_ReceiveMulticastHash;
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			crc = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN);
+
+			/* Just want the 6 least significant bits. */
+			crc &= 0x3f;
+
+			/* Set the corresponding bit in the hash table. */
+			mchash[crc >> 5] |= 1 << (crc & 0x1f);
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
+	CSR_WRITE_4(sc, STGE_HashTable0, mchash[0]);
+	CSR_WRITE_4(sc, STGE_HashTable1, mchash[1]);
 	CSR_WRITE_2(sc, STGE_ReceiveMode, sc->sc_ReceiveMode);
 }
 
