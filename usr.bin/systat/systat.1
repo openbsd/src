@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.80 2009/06/23 18:52:16 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.81 2009/07/21 17:07:38 sthen Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: June 23 2009 $
+.Dd $Mdocdate: July 21 2009 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -96,8 +96,14 @@ Exit after
 screen updates.
 .It Fl i
 Interactive mode.
+.It Fl N
+Resolve network addresses to names.
+This is the opposite of the
+.Fl n
+option.
 .It Fl n
 Do not try to reverse map IP addresses.
+This is the default.
 .It Fl s Ar delay
 Specifies the screen refresh time interval in seconds.
 This option is overridden by the final

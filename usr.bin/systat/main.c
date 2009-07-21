@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.54 2009/06/25 20:45:43 deraadt Exp $	 */
+/* $Id: main.c,v 1.55 2009/07/21 17:07:38 sthen Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -197,7 +197,7 @@ void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-abin] [-d count] "
+	fprintf(stderr, "usage: %s [-abiNn] [-d count] "
 	    "[-s delay] [-w width] [view] [delay]\n", __progname);
 	exit(1);
 }
@@ -388,7 +388,7 @@ main(int argc, char *argv[])
 	if (setresgid(gid, gid, gid) == -1)
 		err(1, "setresgid");
 
-	while ((ch = getopt(argc, argv, "abd:ins:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "Nabd:ins:w:")) != -1) {
 		switch (ch) {
 		case 'a':
 			maxlines = -1;
@@ -405,7 +405,11 @@ main(int argc, char *argv[])
 		case 'i':
 			interactive = 1;
 			break;
+		case 'N':
+			nflag = 0;
+			break;
 		case 'n':
+			/* this is a noop, -n is the default */
 			nflag = 1;
 			break;
 		case 's':
