@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.10 2009/07/08 18:59:11 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.11 2009/07/21 14:10:15 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.10 2009/07/08 18:59:11 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.11 2009/07/21 14:10:15 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -525,6 +525,8 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
 			return (-1);
 		}
 		kf->so_family = domain.dom_family;
+		if (!sock.so_pcb)
+			break;
 		switch (kf->so_family) {
 		case AF_INET: {
 			struct inpcb inpcb;
