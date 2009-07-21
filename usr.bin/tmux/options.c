@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.2 2009/07/21 19:54:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -83,20 +83,19 @@ options_find(struct options *oo, const char *name)
 	return (o);
 }
 
-int
+void
 options_remove(struct options *oo, const char *name)
 {
 	struct options_entry	*o;
 
 	if ((o = options_find1(oo, name)) == NULL)
-		return (-1);
+		return;
 
 	SPLAY_REMOVE(options_tree, &oo->tree, o);
 	xfree(o->name);
 	if (o->type == OPTIONS_STRING)
 		xfree(o->value.string);
 	xfree(o);
-	return (0);
 }
 
 void printflike3
