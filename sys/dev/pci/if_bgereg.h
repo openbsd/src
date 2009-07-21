@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.97 2009/06/19 21:31:54 naddy Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.98 2009/07/21 13:09:41 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2598,6 +2598,7 @@ struct bge_softc {
 #define BGE_5750_PLUS		0x00400000
 #define BGE_5755_PLUS		0x00800000
 #define BGE_5714_FAMILY		0x01000000
+#define BGE_5700_FAMILY		0x02000000
 
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;
