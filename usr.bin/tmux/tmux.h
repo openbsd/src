@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.42 2009/07/21 18:38:52 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.43 2009/07/21 18:40:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1349,7 +1349,6 @@ extern const struct grid_cell grid_default_cell;
 struct grid *grid_create(u_int, u_int, u_int);
 void	 grid_destroy(struct grid *);
 int	 grid_compare(struct grid *, struct grid *);
-void	 grid_reduce_line(struct grid *, u_int, u_int);
 void	 grid_expand_line(struct grid *, u_int, u_int);
 void	 grid_expand_line_utf8(struct grid *, u_int, u_int);
 void	 grid_scroll_line(struct grid *);
@@ -1603,7 +1602,6 @@ void printflike1 log_warnx(const char *, ...);
 void printflike1 log_info(const char *, ...);
 void printflike1 log_debug(const char *, ...);
 void printflike1 log_debug2(const char *, ...);
-void printflike1 log_debug3(const char *, ...);
 __dead void	 log_fatal(const char *, ...);
 __dead void	 log_fatalx(const char *, ...);
 

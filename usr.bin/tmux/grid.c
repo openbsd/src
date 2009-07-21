@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.8 2009/07/16 07:34:37 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.9 2009/07/21 18:40:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -197,20 +197,6 @@ grid_scroll_line(struct grid *gd)
 	gd->udata[yy] = NULL;
 
 	gd->hsize++;
-}
-
-/* Reduce line to fit to cell. */
-void
-grid_reduce_line(struct grid *gd, u_int py, u_int sx)
-{
-	if (sx < gd->size[py]) {
-		gd->data[py] = xrealloc(gd->data[py], sx, sizeof **gd->data);
-		gd->size[py] = sx;
-	}
-	if (sx < gd->usize[py]) {
-		gd->udata[py] = xrealloc(gd->udata[py], sx, sizeof **gd->udata);
-		gd->usize[py] = sx;
-	}
 }
 
 /* Expand line to fit to cell. */

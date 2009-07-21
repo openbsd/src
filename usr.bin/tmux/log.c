@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.2 2009/06/25 06:23:10 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.3 2009/07/21 18:40:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -165,19 +165,6 @@ log_debug2(const char *msg, ...)
 	va_list	ap;
 
 	if (log_level > 1) {
-		va_start(ap, msg);
-		log_vwrite(LOG_DEBUG, msg, ap);
-		va_end(ap);
-	}
-}
-
-/* Log a debug message at level 3. */
-void printflike1
-log_debug3(const char *msg, ...)
-{
-	va_list	ap;
-
-	if (log_level > 2) {
 		va_start(ap, msg);
 		log_vwrite(LOG_DEBUG, msg, ap);
 		va_end(ap);

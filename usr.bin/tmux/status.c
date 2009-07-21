@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.15 2009/07/20 14:32:09 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.16 2009/07/21 18:40:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -350,7 +350,7 @@ status_replace(struct session *s, const char *fmt, time_t t)
 						  wl->window->active));
 					ptr = tmp;
 				}
-				/* FALLTHOUGH */
+				/* FALLTHROUGH */
 			case 'S':
 				if (ptr == NULL)
 					ptr = s->name;
