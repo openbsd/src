@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.6 2009/07/16 21:02:56 miod Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.7 2009/07/21 21:25:19 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -52,9 +52,13 @@ struct mips_pci_chipset {
     void	*(*pc_intr_establish)(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *, char *);
     void	(*pc_intr_disestablish)(void *, void *);
+    int		(*pc_intr_line)(void *, pci_intr_handle_t);
 
     int		(*pc_ppb_setup)(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
 		    bus_addr_t *, bus_addr_t *);
+
+    void	*(*pc_rbus_parent_io)(struct pci_attach_args *);
+    void	*(*pc_rbus_parent_mem)(struct pci_attach_args *);
 };
 
 /*
@@ -80,5 +84,12 @@ struct mips_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
+#define pci_intr_line(c, ih)						\
+    (*(c)->pc_intr_line)((c)->pc_intr_v, (ih))
+#define	rbus_pccbb_parent_io(dev, pa)					\
+    (rbus_tag_t)((*(pa)->pa_pc->pc_rbus_parent_io)(pa))
+#define	rbus_pccbb_parent_mem(dev, pa)					\
+    (rbus_tag_t)((*(pa)->pa_pc->pc_rbus_parent_mem)(pa))
 
-void	ppb_initialize(pci_chipset_tag_t, pcitag_t, uint, uint);
+void	pccbb_initialize(pci_chipset_tag_t, pcitag_t, uint, uint, uint);
+void	ppb_initialize(pci_chipset_tag_t, pcitag_t, uint, uint, uint);

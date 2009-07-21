@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.3 2009/07/16 21:52:22 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.4 2009/07/21 21:25:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -24,6 +24,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pccbbreg.h>
 #include <dev/pci/ppbreg.h>
 #include <dev/pci/pcidevs.h>
 
@@ -36,8 +37,8 @@ void	ppb_function_explore(pci_chipset_tag_t, pcitag_t, struct extent *,
  * Configure a PCI-PCI bridge.
  */
 void
-ppb_initialize(pci_chipset_tag_t pc, pcitag_t ppbtag, uint secondary,
-    uint subordinate)
+ppb_initialize(pci_chipset_tag_t pc, pcitag_t ppbtag, uint primary,
+    uint secondary, uint subordinate)
 {
 	int dev, nfuncs;
 	pcireg_t id, csr, bhlcr;
@@ -62,7 +63,7 @@ ppb_initialize(pci_chipset_tag_t pc, pcitag_t ppbtag, uint secondary,
 	pci_conf_write(pc, ppbtag, PCI_COMMAND_STATUS_REG, csr);
 
 	pci_conf_write(pc, ppbtag, PPB_REG_BUSINFO,
-	    (secondary << 8) | (subordinate << 16));
+	    primary | (secondary << 8) | (subordinate << 16));
 
 	ioex = extent_create("ppb_io", 0, 0xffffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
@@ -237,4 +238,29 @@ ppb_function_explore(pci_chipset_tag_t pc, pcitag_t tag, struct extent *ioex,
 	 * Note that we do not try to be recursive and configure PCI-PCI
 	 * bridges behind PCI-PCI bridges.
 	 */
+}
+
+/*
+ * Configure a PCI-CardBus bridge.
+ */
+void
+pccbb_initialize(pci_chipset_tag_t pc, pcitag_t tag, uint primary,
+    uint secondary, uint subordinate)
+{
+	pcireg_t csr;
+
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	pci_conf_write(pc, tag, PCI_BUSNUM,
+	    primary | (secondary << 8) | (subordinate << 16));
+
+#if 0	/* done by pccbb(4) */
+	csr |= PCI_COMMAND_IO_ENABLE;
+	csr |= PCI_COMMAND_MEM_ENABLE;
+
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr |
+	    PCI_COMMAND_MASTER_ENABLE);
+#endif
 }

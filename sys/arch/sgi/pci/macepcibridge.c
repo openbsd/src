@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.25 2009/07/19 19:02:03 kettenis Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.26 2009/07/21 21:25:19 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -49,10 +49,14 @@
 #include <dev/pci/ppbreg.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/cardbus/rbus.h>
+
 #include <mips64/archtype.h>
 #include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
 #include <sgi/pci/macepcibrvar.h>
+
+#include "cardbus.h"
 
 int	 mace_pcibrmatch(struct device *, void *, void *);
 void	 mace_pcibrattach(struct device *, struct device *, void *);
@@ -69,16 +73,23 @@ const char *mace_pcibr_intr_string(void *, pci_intr_handle_t);
 void	*mace_pcibr_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *, char *);
 void	 mace_pcibr_intr_disestablish(void *, void *);
+int	 mace_pcibr_intr_line(void *, pci_intr_handle_t);
+int	 mace_pcibr_ppb_setup(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
+	    bus_addr_t *, bus_addr_t *);
+void	*mace_pcibr_rbus_parent_io(struct pci_attach_args *);
+void	*mace_pcibr_rbus_parent_mem(struct pci_attach_args *);
 
 bus_addr_t mace_pcibr_pa_to_device(paddr_t);
 paddr_t	 mace_pcibr_device_to_pa(bus_addr_t);
 
-int	 mace_pcibr_errintr(void *);
+int	mace_pcibr_rbus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
+	    int, bus_space_handle_t *);
+void	mace_pcibr_rbus_space_unmap(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, bus_addr_t *);
 
-void	 mace_pcibr_configure(struct mace_pcibr_softc *);
-void	 mace_pcibr_device_fixup(struct mace_pcibr_softc *, int, int);
-int	 mace_pcibr_ppb_setup(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
-	    bus_addr_t *, bus_addr_t *);
+void	mace_pcibr_configure(struct mace_pcibr_softc *);
+void	mace_pcibr_device_fixup(struct mace_pcibr_softc *, int, int);
+int	mace_pcibr_errintr(void *);
 
 extern void pciaddr_remap(pci_chipset_tag_t);
 
@@ -189,14 +200,6 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	pcireg_t pcireg;
 
-	/*
-	 *  Common to all bridge chips.
-	 */
-	sc->sc_pc.pc_conf_v = sc;
-	sc->sc_pc.pc_attach_hook = mace_pcibr_attach_hook;
-	sc->sc_pc.pc_make_tag = mace_pcibr_make_tag;
-	sc->sc_pc.pc_decompose_tag = mace_pcibr_decompose_tag;
-
 	/* Create extents for PCI mappings */
 	mace_pcibbus_io_tag.bus_extent = extent_create("pci_io",
 	    MACE_PCI_IO_BASE, MACE_PCI_IO_BASE + MACE_PCI_IO_SIZE - 1,
@@ -228,16 +231,24 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	macebus_intr_establish(NULL, 8, IST_LEVEL, IPL_HIGH,
 	    mace_pcibr_errintr, (void *)sc, sc->sc_dev.dv_xname);
 
+	sc->sc_pc.pc_conf_v = sc;
+	sc->sc_pc.pc_attach_hook = mace_pcibr_attach_hook;
+	sc->sc_pc.pc_make_tag = mace_pcibr_make_tag;
+	sc->sc_pc.pc_decompose_tag = mace_pcibr_decompose_tag;
 	sc->sc_pc.pc_bus_maxdevs = mace_pcibr_bus_maxdevs;
 	sc->sc_pc.pc_conf_read = mace_pcibr_conf_read;
 	sc->sc_pc.pc_conf_write = mace_pcibr_conf_write;
-
 	sc->sc_pc.pc_intr_v = NULL;
 	sc->sc_pc.pc_intr_map = mace_pcibr_intr_map;
 	sc->sc_pc.pc_intr_string = mace_pcibr_intr_string;
 	sc->sc_pc.pc_intr_establish = mace_pcibr_intr_establish;
 	sc->sc_pc.pc_intr_disestablish = mace_pcibr_intr_disestablish;
+	sc->sc_pc.pc_intr_line = mace_pcibr_intr_line;
 	sc->sc_pc.pc_ppb_setup = mace_pcibr_ppb_setup;
+#if NCARDBUS > 0
+	sc->sc_pc.pc_rbus_parent_io = mace_pcibr_rbus_parent_io;
+	sc->sc_pc.pc_rbus_parent_mem = mace_pcibr_rbus_parent_mem;
+#endif
 
 	/*
 	 * The O2 firmware sucks.  It makes a mess off I/O BARs and
@@ -455,6 +466,12 @@ void
 mace_pcibr_intr_disestablish(void *lcv, void *cookie)
 {
 	macebus_intr_disestablish(lcv, cookie);
+}
+
+int
+mace_pcibr_intr_line(void *lcv, pci_intr_handle_t ih)
+{
+	return ih;
 }
 
 /*
@@ -678,10 +695,10 @@ mace_pcibr_configure(struct mace_pcibr_softc *sc)
 	pcitag_t tag;
 	pcireg_t id, bhlcr;
 	int dev, nfuncs;
-	uint curppb, nppb;
+	uint nppb, npccbb;
 	const struct pci_quirkdata *qd;
 
-	nppb = 0;
+	nppb = npccbb = 0;
 	for (dev = 0; dev < pci_bus_maxdevs(pc, 0); dev++) {
 		tag = pci_make_tag(pc, 0, dev, 0);
 
@@ -693,6 +710,8 @@ mace_pcibr_configure(struct mace_pcibr_softc *sc)
 		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 		if (PCI_HDRTYPE_TYPE(bhlcr) == 1)
 			nppb++;
+		if (PCI_HDRTYPE_TYPE(bhlcr) == 2)
+			npccbb++;
 
 		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
 		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
@@ -706,13 +725,12 @@ mace_pcibr_configure(struct mace_pcibr_softc *sc)
 
 	/*
 	 * Since there is only one working slot, there should be only
-	 * up to one bridge, which we'll map after the on-board device
-	 * resources.
+	 * up to one bridge (PCI-PCI or PCI-CardBus), which we'll map
+	 * after the on-board device resources.
 	 */
-	if (nppb != 1)
+	if (nppb + npccbb != 1)
 		return;
 
-	curppb = 0;
 	for (dev = 0; dev < pci_bus_maxdevs(pc, 0); dev++) {
 		tag = pci_make_tag(pc, 0, dev, 0);
 
@@ -722,12 +740,14 @@ mace_pcibr_configure(struct mace_pcibr_softc *sc)
 			continue;
 
 		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_HDRTYPE_TYPE(bhlcr) != 1)
-			continue;
-
-		ppb_initialize(pc, tag, 1 + curppb * (255 / nppb),
-		    (curppb + 1) * (255 / nppb));
-		curppb++;
+		switch (PCI_HDRTYPE_TYPE(bhlcr)) {
+		case 1:
+			ppb_initialize(pc, tag, 0, 1, 255);
+			break;
+		case 2:
+			pccbb_initialize(pc, tag, 0, 1, 1);
+			break;
+		}
 	}
 }
 
@@ -807,7 +827,7 @@ mace_pcibr_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 		/*
 		 * Give all resources to the bridge.
 		 */
-		*iostart = 0x01000000;
+		*iostart = 0x00010000;
 		*ioend = MACE_PCI_IO_SIZE - *iostart;
 	} else {
 		*iostart = 0xffffffff;
@@ -816,3 +836,89 @@ mace_pcibr_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 
 	return 0;
 }
+
+#if NCARDBUS > 0
+
+static struct rb_md_fnptr mace_pcibr_rb_md_fn = {
+	mace_pcibr_rbus_space_map,
+	mace_pcibr_rbus_space_unmap
+};
+
+int
+mace_pcibr_rbus_space_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
+    int flags, bus_space_handle_t *bshp)
+{
+	return bus_space_map(t, addr, size, flags, bshp);
+}
+
+void
+mace_pcibr_rbus_space_unmap(bus_space_tag_t t, bus_space_handle_t h,
+    bus_size_t size, bus_addr_t *addrp)
+{
+	bus_addr_t sva;
+	bus_size_t off, len;
+	paddr_t paddr;
+
+	/* should this verify that the proper size is freed? */
+	sva = trunc_page(h);
+	off = h - sva;
+	len = size + off;
+
+	if (pmap_extract(pmap_kernel(), h, &paddr) == 0) {
+		printf("bus_space_unmap: no pa for va %p\n", h);
+		*addrp = 0;	/* XXX */
+		return;
+	}
+
+	if (extent_free(t->bus_extent, (u_long)paddr, size,
+	    EX_NOWAIT | extent_malloc_flags)) {
+		printf("bus_space_map: pa %p, size %p\n", paddr, size);
+		printf("bus_space_map: can't free region\n");
+	}
+
+	*addrp = paddr - t->bus_base;
+	if (t->bus_base == MACE_PCI_MEM_BASE)
+		*addrp += 0x80000000;
+}
+
+void *
+mace_pcibr_rbus_parent_io(struct pci_attach_args *pa)
+{
+	rbus_tag_t rb;
+	bus_addr_t start, end;
+
+	/*
+	 * Give all resources to the CardBus bridge.
+	 */
+
+	start = 0x2000;	/* leave some I/O for ahc */
+	end = 0x10000;
+
+	rb = rbus_new_root_delegate(pa->pa_iot, start, end - start, 0);
+	if (rb != NULL)
+		rb->rb_md = &mace_pcibr_rb_md_fn;
+
+	return rb;
+}
+
+void *
+mace_pcibr_rbus_parent_mem(struct pci_attach_args *pa)
+{
+	rbus_tag_t rb;
+	bus_addr_t start, end;
+
+	/*
+	 * Give all resources to the CardBus bridge.
+	 */
+
+	start = 0x90000000;
+	end = 0x100000000UL;
+
+	rb = rbus_new_root_delegate(pa->pa_memt, start, end - start, 0);
+	if (rb != NULL)
+		rb->rb_md = &mace_pcibr_rb_md_fn;
+
+	return rb;
+}
+
+#endif	/* NCARDBUS > 0 */
