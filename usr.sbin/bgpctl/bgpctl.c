@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.143 2009/07/20 15:04:50 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.144 2009/07/21 11:49:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -848,8 +848,7 @@ show_fib_msg(struct imsg *imsg)
 void
 show_nexthop_head(void)
 {
-	printf("%-20s %-20s %-10s %-10s %s\n", "Nexthop", "Gateway", "State",
-	    "Interface", "Link State");
+	printf("%-20s %-10s\n", "Nexthop", "State");
 }
 
 int
@@ -861,21 +860,23 @@ show_nexthop_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEXTHOP:
 		p = imsg->data;
-		printf("%-20s ", log_addr(&p->addr));
-		printf("%-20s %-10s ",
-		    p->connected ? "connected" : log_addr(&p->gateway),
+		printf("%-20s %-10s", log_addr(&p->addr),
 		    p->valid ? "valid" : "invalid");
 		if (p->kif.ifname[0]) {
-			printf("%-10s ", p->kif.ifname);
+			printf("%-8s", p->kif.ifname);
 			if (p->kif.flags & IFF_UP) {
+				printf("UP");
 				ifms_type = ift2ifm(p->kif.media_type);
-				if (ifms_type)
-					printf("%s", get_linkstate(ifms_type,
+				if (ifms_type != 0)
+					printf(", %s, %s",
+					    get_media_descr(ifms_type),
+					    get_linkstate(ifms_type,
 					    p->kif.link_state));
-				else
-					printf("up, unknown");
-			} else
-				printf("admin down");
+				if (p->kif.baudrate) {
+					printf(", ");
+					print_baudrate(p->kif.baudrate);
+				}
+			}
 		}
 		printf("\n");
 		break;
