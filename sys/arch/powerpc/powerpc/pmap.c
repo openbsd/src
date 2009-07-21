@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.107 2008/10/17 14:04:07 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.108 2009/07/21 22:34:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 Dale Rahn.
@@ -102,7 +102,7 @@ void pmap_page_ro32(pmap_t pm, vaddr_t va);
 
 
 /* VP routines */
-void pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted);
+int pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags);
 struct pte_desc *pmap_vp_remove(pmap_t pm, vaddr_t va);
 void pmap_vp_destroy(pmap_t pm);
 struct pte_desc *pmap_vp_lookup(pmap_t pm, vaddr_t va);
@@ -309,8 +309,8 @@ pmap_vp_remove(pmap_t pm, vaddr_t va)
  * 
  * Should this be called under splvm?
  */
-void
-pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
+int
+pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 {
 	struct pmapvp *vp1;
 	struct pmapvp *vp2;
@@ -323,8 +323,11 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
 		s = splvm();
 		vp1 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
 		splx(s);
-		if (vp1 == NULL)
-			panic("pmap_vp_enter: failed to allocate vp1");
+		if (vp1 == NULL) {
+			if ((flags & PMAP_CANFAIL) == 0)
+				panic("pmap_vp_enter: failed to allocate vp1");
+			return ENOMEM;
+		}
 		pm->pm_vp[VP_SR(va)] = vp1;
 	}
 
@@ -333,14 +336,19 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted)
 		s = splvm();
 		vp2 = pool_get(&pmap_vp_pool, PR_NOWAIT | PR_ZERO);
 		splx(s);
-		if (vp2 == NULL)
-			panic("pmap_vp_enter: failed to allocate vp2");
+		if (vp2 == NULL) {
+			if ((flags & PMAP_CANFAIL) == 0)
+				panic("pmap_vp_enter: failed to allocate vp2");
+			return ENOMEM;
+		}
 		vp1->vp[VP_IDX1(va)] = vp2;
 	}
 
 	vp2->vp[VP_IDX2(va)] = pted;
 
 	pmap_simpleunlock_pm(pm);
+
+	return 0;
 }
 
 /* PTE manipulation/calculations */
@@ -502,6 +510,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	int s;
 	int need_sync = 0;
 	int cache;
+	int error;
 
 	/* MP - Acquire lock for this pmap */
 
@@ -519,9 +528,16 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
 		pted = pool_get(&pmap_pted_pool, PR_NOWAIT | PR_ZERO);	
-		if (pted == NULL)
+		if (pted == NULL) {
+			if ((flags & PMAP_CANFAIL) == 0)
+				return ENOMEM;
 			panic("pmap_enter: failed to allocate pted");
-		pmap_vp_enter(pm, va, pted);
+		}
+		error = pmap_vp_enter(pm, va, pted, flags);
+		if (error) {
+			pool_put(&pmap_pted_pool, pted);
+			return error;
+		}
 	}
 
 	/* Calculate PTE */
