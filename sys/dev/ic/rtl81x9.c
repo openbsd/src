@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.65 2009/07/18 11:24:39 sthen Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.66 2009/07/21 07:30:18 sthen Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1016,7 +1016,6 @@ void rl_init(xsc)
 
 	splx(s);
 
-	timeout_set(&sc->sc_tick_tmo, rl_tick, sc);
 	timeout_add_sec(&sc->sc_tick_tmo, 1);
 }
 
@@ -1255,6 +1254,8 @@ rl_attach(sc)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+	timeout_set(&sc->sc_tick_tmo, rl_tick, sc);
 
 	/*
 	 * Initialize our media structures and probe the MII.
