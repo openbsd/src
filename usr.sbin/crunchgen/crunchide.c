@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.2 2008/08/22 15:38:37 deraadt Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.3 2009/07/21 17:19:13 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -137,7 +137,7 @@ void
 add_to_keep_list(char *symbol)
 {
 	struct keep    *newp, *prevp, *curp;
-	int             cmp;
+	int             cmp = 0;
 
 	for (curp = keep_list, prevp = NULL; curp; prevp = curp, curp = curp->next)
 		if ((cmp = strcmp(symbol, curp->sym)) <= 0)
