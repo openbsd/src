@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.118 2009/06/25 09:30:28 sthen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.119 2009/07/21 14:48:08 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -113,11 +113,6 @@ void			 pf_free_fragment(struct pf_fragment *);
 struct pf_fragment	*pf_find_fragment(struct ip *, struct pf_frag_tree *);
 struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment **,
 			    struct pf_frent *, int);
-void			 pf_scrub_ip(struct mbuf **, u_int16_t, u_int8_t,
-			    u_int8_t);
-#ifdef INET6
-void			 pf_scrub_ip6(struct mbuf **, u_int8_t);
-#endif
 
 #define	DPFPRINTF(x) do {				\
 	if (pf_status.debug >= PF_DEBUG_MISC) {		\
