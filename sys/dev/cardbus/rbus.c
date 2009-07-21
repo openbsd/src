@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.c,v 1.11 2007/09/17 20:29:47 miod Exp $	*/
+/*	$OpenBSD: rbus.c,v 1.12 2009/07/21 21:20:05 miod Exp $	*/
 /*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
@@ -144,7 +144,7 @@ rbus_space_alloc_subregion(rbus_tag_t rbt, bus_addr_t substart,
 			}
 		}
 
-		if (md_space_map(rbt->rb_bt, result, size, flags, bshp)) {
+		if (md_space_map(rbt, result, size, flags, bshp)) {
 			/* map failed */
 			extent_free(rbt->rb_ext, result, size, exflags);
 			return (1);
@@ -172,7 +172,7 @@ rbus_space_free(rbus_tag_t rbt, bus_space_handle_t bsh, bus_size_t size,
 		status = rbus_space_free(rbt->rb_parent, bsh, size, &addr);
 	} else if (rbt->rb_flags == RBUS_SPACE_SHARE ||
 	    rbt->rb_flags == RBUS_SPACE_DEDICATE) {
-		md_space_unmap(rbt->rb_bt, bsh, size, &addr);
+		md_space_unmap(rbt, bsh, size, &addr);
 
 		extent_free(rbt->rb_ext, addr, size, exflags);
 

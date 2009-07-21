@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.2 2007/11/25 00:38:49 kettenis Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.3 2009/07/21 21:20:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -24,12 +24,13 @@ struct pci_attach_args;
 rbus_tag_t rbus_pccbb_parent_io(struct device *, struct pci_attach_args *);
 rbus_tag_t rbus_pccbb_parent_mem(struct device *, struct pci_attach_args *);
 
-#define md_space_map(t, addr, size, flags, hp) \
-	bus_space_map((t), (addr), (size), (flags), (hp))
-#define md_space_unmap(t, h, size, addrp) \
+#define md_space_map(rbt, addr, size, flags, hp) \
+	bus_space_map((rbt)->rb_bt, (addr), (size), (flags), (hp))
+#define md_space_unmap(rbt, h, size, addrp) \
 	do { \
-		*addrp = (t)->sparc_bus_addr((t), (t), (h)); \
-		bus_space_unmap((t), (h), (size)); \
+		*addrp = (rbt)->rb_bt->sparc_bus_addr((rbt)->rb_bt, \
+		    (rbt)->rb_bt, (h)); \
+		bus_space_unmap((rbt)->rb_bt, (h), (size)); \
 	} while (0)
 
 void pccbb_attach_hook(struct device *, struct device *,

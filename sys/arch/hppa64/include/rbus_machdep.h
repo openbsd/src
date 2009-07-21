@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.3 2007/12/20 13:58:01 kettenis Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.4 2009/07/21 21:20:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -22,7 +22,8 @@
 #define _ARCH_HPPA64_HPPA64_RBUS_MACHDEP_H_
 
 static __inline int
-md_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t  size, int flags, bus_space_handle_t *bshp)
+md_space_map(rbus_tag_t rbt, bus_addr_t bpa, bus_size_t size, int flags,
+    bus_space_handle_t *bshp)
 {
 	if (bshp)
 		*(bshp) = bpa;
@@ -30,7 +31,7 @@ md_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t  size, int flags, bus
 	return (0);
 }
 
-#define md_space_unmap(t,bsh,s,addrp)	do { *(addrp) = (bsh); } while (0)
+#define md_space_unmap(rbt,bsh,s,addrp)	do { *(addrp) = (bsh); } while (0)
 
 struct pci_attach_args;
 

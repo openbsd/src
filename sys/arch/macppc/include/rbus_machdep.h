@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.3 2007/12/09 17:02:56 kettenis Exp $ */
+/*	$OpenBSD: rbus_machdep.h,v 1.4 2009/07/21 21:20:05 miod Exp $ */
 /*	$NetBSD: rbus_machdep.h,v 1.2 1999/10/15 06:43:05 haya Exp $	*/
 
 /*
@@ -40,18 +40,18 @@ struct pci_attach_args;		/* XXX */
 void _bus_space_unmap(bus_space_tag_t, bus_space_handle_t,
 			     bus_size_t, bus_addr_t *);
 
-#define md_space_map(bt, physaddr, size, flags, bshp) \
-	bus_space_map((bt), (physaddr), (size), (flags), (bshp))
+#define md_space_map(rbt, physaddr, size, flags, bshp) \
+	bus_space_map((rbt)->rb_bt, (physaddr), (size), (flags), (bshp))
 
 /* XXX */
 bus_addr_t bus_space_unmap_p(bus_space_tag_t t, bus_space_handle_t bsh,
                           bus_size_t size);
 
 
-#define md_space_unmap(bt, bsh, size, adrp) \
+#define md_space_unmap(rbt, bsh, size, adrp) \
 	do { \
-		*adrp = bus_space_unmap_p((bt), (bsh), (size)); \
-		if (bt->bus_io) { \
+		*adrp = bus_space_unmap_p((rbt)->rb_bt, (bsh), (size)); \
+		if ((rbt)->rb_bt->bus_io) { \
 			*adrp = *adrp & 0xffff; \
 		} \
 	} while (0)
