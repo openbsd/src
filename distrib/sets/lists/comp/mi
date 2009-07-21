@@ -6179,6 +6179,7 @@
 ./usr/share/man/cat9/crypto_done.0
 ./usr/share/man/cat9/crypto_freereq.0
 ./usr/share/man/cat9/crypto_freesession.0
+./usr/share/man/cat9/crypto_get_driverid.0
 ./usr/share/man/cat9/crypto_getreq.0
 ./usr/share/man/cat9/crypto_kdispatch.0
 ./usr/share/man/cat9/crypto_kdone.0
@@ -6192,7 +6193,7 @@
 ./usr/share/man/cat9/disk.0
 ./usr/share/man/cat9/disk_attach.0
 ./usr/share/man/cat9/disk_busy.0
-./usr/share/man/cat9/disk_detatch.0
+./usr/share/man/cat9/disk_detach.0
 ./usr/share/man/cat9/disk_init.0
 ./usr/share/man/cat9/disk_unbusy.0
 ./usr/share/man/cat9/disklabel.0
