@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.65 2009/07/20 23:40:43 miod Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.66 2009/07/21 20:59:45 miod Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -1028,9 +1028,9 @@ pccbbintr_function(struct pccbb_softc *sc)
 	for (pil = sc->sc_pil; pil != NULL; pil = pil->pil_next) {
 		/*
 		 * XXX priority change.  gross.  I use if-else
-		 * sentense instead of switch-case sentense because of
-		 * avoiding duplicate case value error.  More than one
-		 * IPL_XXX use same value.  It depends on
+		 * sentences instead of switch-case sentences in order
+		 * to avoid duplicate case value error.  More than one
+		 * IPL_XXX may use the same value.  It depends on the
 		 * implementation.
 		 */
 		splchanged = 1;
@@ -2844,10 +2844,10 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 	win[0].win_flags = win[1].win_flags = 0;
 
 	chainp = TAILQ_FIRST(&sc->sc_iowindow);
-	offs = 0x2c;
+	offs = PCI_CB_IOBASE0;
 	if (sc->sc_memt == bst) {
 		chainp = TAILQ_FIRST(&sc->sc_memwindow);
-		offs = 0x1c;
+		offs = PCI_CB_MEMBASE0;
 	}
 
 	if (chainp != NULL) {
@@ -2906,7 +2906,7 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 				win[1].win_flags = chainp->wc_flags;
 			}
 		} else {
-			/* the flags of win[0] and win[1] is different */
+			/* the flags of win[0] and win[1] are different */
 			if (win[0].win_flags == chainp->wc_flags) {
 				win[0].win_limit = chainp->wc_end & mask;
 				/*
@@ -2969,14 +2969,14 @@ pccbb_powerhook(int why, void *arg)
 	}
 
 	if (why == PWR_RESUME) {
-		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
+		if (pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_SOCKBASE) == 0)
 			/* BIOS did not recover this register */
-			pci_conf_write (sc->sc_pc, sc->sc_tag,
-					PCI_SOCKBASE, sc->sc_sockbase);
-		if (pci_conf_read (sc->sc_pc, sc->sc_tag, PCI_BUSNUM) == 0)
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    PCI_SOCKBASE, sc->sc_sockbase);
+		if (pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BUSNUM) == 0)
 			/* BIOS did not recover this register */
-			pci_conf_write (sc->sc_pc, sc->sc_tag,
-					PCI_BUSNUM, sc->sc_busnum);
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    PCI_BUSNUM, sc->sc_busnum);
 		/* CSC Interrupt: Card detect interrupt on */
 		reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
 		/* Card detect intr is turned on. */
