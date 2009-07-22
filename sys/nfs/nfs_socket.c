@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.90 2009/07/20 16:49:40 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.91 2009/07/22 13:04:56 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -896,7 +896,7 @@ nfs_request1(struct nfsreq *rep, struct ucred *cred, struct mbuf **mrp,
 	u_int32_t *tl;
 	struct nfsmount *nmp;
 	struct mbuf *md;
-	time_t waituntil;
+	struct timeval tv;
 	caddr_t dpos, cp2;
 	int t1, i, s, error = 0;
 	int trylater_delay;
@@ -1026,13 +1026,12 @@ tryagain:
 		if (*tl != 0) {
 			error = fxdr_unsigned(int, *tl);
 			if ((nmp->nm_flag & NFSMNT_NFSV3) &&
-				error == NFSERR_TRYLATER) {
+			    error == NFSERR_TRYLATER) {
 				m_freem(mrep);
 				error = 0;
-				waituntil = time_second + trylater_delay;
-				while (time_second < waituntil)
-					(void) tsleep((caddr_t)&lbolt,
-						PSOCK, "nqnfstry", 0);
+				tv.tv_sec = time_second + trylater_delay;
+				tv.tv_usec = 0;
+				tsleep(&tv, PSOCK, "nfsretry", hzto(&tv));
 				trylater_delay *= NFS_TIMEOUTMUL;
 				if (trylater_delay > NFS_MAXTIMEO)
 					trylater_delay = NFS_MAXTIMEO;
