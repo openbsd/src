@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2009/06/15 17:01:26 beck Exp $ */
+/*	$OpenBSD: machdep.c,v 1.75 2009/07/22 21:29:05 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -104,8 +104,6 @@ int	bufcachepercent = BUFCACHEPERCENT;
 
 vm_map_t exec_map;
 vm_map_t phys_map;
-
-int	extent_malloc_flags = 0;
 
 caddr_t	msgbufbase;
 vaddr_t	uncached_base;
@@ -790,8 +788,6 @@ cpu_startup()
 #endif
 	printf("avail mem = %u (%uMB)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free)/1024/1024);
-
-	extent_malloc_flags = EX_MALLOCOK;
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.

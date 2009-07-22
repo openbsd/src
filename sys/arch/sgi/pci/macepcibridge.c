@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.28 2009/07/22 21:28:44 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.29 2009/07/22 21:29:04 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -610,8 +610,6 @@ mace_pcib_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
 		buf += 8;
 	}
 }
-
-extern int extent_malloc_flags;
 
 int
 mace_pcib_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
