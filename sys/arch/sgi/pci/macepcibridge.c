@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.27 2009/07/22 20:28:21 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.28 2009/07/22 21:28:44 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -117,10 +117,8 @@ struct cfdriver macepcibr_cd = {
 };
 
 bus_space_t mace_pcibbus_mem_tag = {
+	PHYS_TO_XKPHYS(MACE_PCI_MEM_BASE, CCA_NC),
 	NULL,
-	0ULL,
-	NULL,
-	0,
 	mace_pcib_read_1, mace_pcib_write_1,
 	mace_pcib_read_2, mace_pcib_write_2,
 	mace_pcib_read_4, mace_pcib_write_4,
@@ -132,10 +130,8 @@ bus_space_t mace_pcibbus_mem_tag = {
 };
 
 bus_space_t mace_pcibbus_io_tag = {
+	PHYS_TO_XKPHYS(MACE_PCI_IO_BASE, CCA_NC),
 	NULL,
-	0ULL,
-	NULL,
-	0,
 	mace_pcib_read_1, mace_pcib_write_1,
 	mace_pcib_read_2, mace_pcib_write_2,
 	mace_pcib_read_4, mace_pcib_write_4,
@@ -213,11 +209,6 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	struct confargs *ca = aux;
 	pcireg_t pcireg;
-
-	mace_pcibbus_io_tag.bus_base =
-	    PHYS_TO_XKPHYS(MACE_PCI_IO_BASE, CCA_NC);
-	mace_pcibbus_mem_tag.bus_base =
-	    PHYS_TO_XKPHYS(MACE_PCI_MEM_BASE, CCA_NC);
 
 	sc->sc_mem_bus_space = &mace_pcibbus_mem_tag;
 	sc->sc_io_bus_space = &mace_pcibbus_io_tag;

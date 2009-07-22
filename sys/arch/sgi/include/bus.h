@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.17 2009/07/22 20:06:20 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.18 2009/07/22 21:28:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -46,10 +46,8 @@ typedef struct mips_bus_space *bus_space_tag_t;
 typedef struct mips_bus_space bus_space_t;
 
 struct mips_bus_space {
-	struct extent	*bus_extent;
 	bus_addr_t	bus_base;
 	void		*bus_private;
-	int32_t		bus_reverse;
 	u_int8_t	(*_space_read_1)(bus_space_tag_t , bus_space_handle_t,
 			  bus_size_t);
 	void		(*_space_write_1)(bus_space_tag_t , bus_space_handle_t,

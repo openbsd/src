@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.14 2009/07/06 22:46:43 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.15 2009/07/22 21:28:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -117,10 +117,8 @@ struct cfdriver xbow_cd = {
 };
 
 static const bus_space_t xbowbus_tag = {
-	NULL,
 	(bus_addr_t)0,		/* will be modified in widgets bus_space_t */
 	NULL,
-	0,
 	xbow_read_1,
 	xbow_write_1,
 	xbow_read_2,

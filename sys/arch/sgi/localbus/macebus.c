@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.41 2009/07/22 21:28:08 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.42 2009/07/22 21:28:42 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -105,10 +105,8 @@ struct cfdriver macebus_cd = {
 };
 
 bus_space_t macebus_tag = {
-	NULL,
 	PHYS_TO_XKPHYS(MACEBUS_BASE, CCA_NC),
 	NULL,
-	0,
 	mace_read_1, mace_write_1,
 	mace_read_2, mace_write_2,
 	mace_read_4, mace_write_4,
@@ -121,10 +119,8 @@ bus_space_t macebus_tag = {
 };
 
 bus_space_t crimebus_tag = {
-	NULL,
 	PHYS_TO_XKPHYS(CRIMEBUS_BASE, CCA_NC),
 	NULL,
-	0,
 	mace_read_1, mace_write_1,
 	mace_read_2, mace_write_2,
 	mace_read_4, mace_write_4,
