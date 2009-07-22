@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.39 2009/07/17 18:06:51 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.40 2009/07/22 20:08:23 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -538,7 +538,7 @@ macebus_intr_establish(void *icp, u_long irq, int type, int level,
 		initialized = 1;
 	}
 
-	if (irq > 62 || irq < 1) {
+	if (irq > SPL_CLOCK || irq < 1) {
 		panic("intr_establish: illegal irq %d", irq);
 	}
 	irq -= 1;	/* Adjust for 1 being first (0 is no int) */
@@ -592,7 +592,7 @@ macebus_intr_establish(void *icp, u_long irq, int type, int level,
 	ih->ih_arg = ih_arg;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
-	ih->ih_irq = irq;
+	ih->ih_irq = irq + 1;
 	ih->ih_what = ih_what;
 	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
 	    &evcount_intr);
@@ -742,16 +742,31 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 
 #ifdef DIAGNOSTIC
 	if (pending != 0) {
-		printf("stray interrupt, mace mask %lx stat %lx\n"
-		    "crime mask %lx stat %lx hard %lx (pending %lx caught %lx)\n",
-		    bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK),
-		    bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT),
-		    bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_MASK),
-		    bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_STAT),
-		    bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_HARD),
-		    pending, caught);
-		if (++spurious >= 10)
-			panic("too many stray interrupts");
+		intstat = bus_space_read_8(&crimebus_tag, crime_h,
+		    CRIME_INT_STAT) &
+		    bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_MASK);
+		isastat = bus_space_read_8(&macebus_tag, mace_h,
+		    MACE_ISA_INT_STAT) &
+		    bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK);
+
+		if (intstat != 0 || isastat != 0) {
+			printf("stray interrupt, mace mask %lx stat %lx\n"
+			    "crime mask %lx stat %lx hard %lx "
+			    "(pending %lx caught %lx)\n",
+			    bus_space_read_8(&macebus_tag, mace_h,
+			      MACE_ISA_INT_MASK),
+			    bus_space_read_8(&macebus_tag, mace_h,
+			      MACE_ISA_INT_STAT),
+			    bus_space_read_8(&crimebus_tag, crime_h,
+			      CRIME_INT_MASK),
+			    bus_space_read_8(&crimebus_tag, crime_h,
+			      CRIME_INT_STAT),
+			    bus_space_read_8(&crimebus_tag, crime_h,
+			      CRIME_INT_HARD),
+			    pending, caught);
+			if (++spurious >= 10)
+				panic("too many stray interrupts");
+		}
 	}
 #endif
 
