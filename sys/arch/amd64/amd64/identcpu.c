@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.20 2009/06/01 03:50:57 gwk Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.21 2009/07/22 20:33:12 deraadt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -48,9 +48,7 @@
 /* sysctl wants this. */
 char cpu_model[48];
 int cpuspeed;
-#ifdef CRYPTO
 int amd64_has_xcrypt;
-#endif
 
 const struct {
 	u_int32_t	bit;

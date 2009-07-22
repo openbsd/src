@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.48 2009/06/09 02:56:38 krw Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.49 2009/07/22 20:33:13 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -340,7 +340,8 @@ void mp_setperf_init(void);
 #define CPU_APMWARN		9	/* APM battery warning percentage */
 #define CPU_KBDRESET		10	/* keyboard reset under pcvt */
 #define CPU_APMHALT		11	/* halt -p hack */
-#define CPU_MAXID		12	/* number of valid machdep ids */
+#define CPU_XCRYPT		12	/* supports VIA xcrypt in userland */
+#define CPU_MAXID		13	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -355,6 +356,7 @@ void mp_setperf_init(void);
 	{ "apmwarn", CTLTYPE_INT }, \
 	{ "kbdreset", CTLTYPE_INT }, \
 	{ "apmhalt", CTLTYPE_INT }, \
+	{ "xcrypt", CTLTYPE_INT }, \
 }
 
 /*

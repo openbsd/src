@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.96 2009/06/15 17:01:25 beck Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.97 2009/07/22 20:33:12 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -529,6 +529,7 @@ int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	extern int amd64_has_xcrypt;
 	dev_t consdev;
 	dev_t dev;
 
@@ -576,6 +577,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
+	case CPU_XCRYPT:
+		return (sysctl_rdint(oldp, oldlenp, newp, amd64_has_xcrypt));
 	default:
 		return (EOPNOTSUPP);
 	}
