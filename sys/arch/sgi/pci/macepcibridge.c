@@ -1,5 +1,20 @@
-/*	$OpenBSD: macepcibridge.c,v 1.26 2009/07/21 21:25:19 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.27 2009/07/22 20:28:21 miod Exp $ */
 
+/*
+ * Copyright (c) 2009 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
  *
@@ -101,12 +116,9 @@ struct cfdriver macepcibr_cd = {
 	NULL, "macepcibr", DV_DULL,
 };
 
-long pci_io_ext_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
-long pci_mem_ext_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
-
 bus_space_t mace_pcibbus_mem_tag = {
 	NULL,
-	(bus_addr_t)MACE_PCI_MEM_BASE,
+	0ULL,
 	NULL,
 	0,
 	mace_pcib_read_1, mace_pcib_write_1,
@@ -121,7 +133,7 @@ bus_space_t mace_pcibbus_mem_tag = {
 
 bus_space_t mace_pcibbus_io_tag = {
 	NULL,
-	(bus_addr_t)MACE_PCI_IO_BASE,
+	0ULL,
 	NULL,
 	0,
 	mace_pcib_read_1, mace_pcib_write_1,
@@ -138,7 +150,7 @@ bus_space_t mace_pcibbus_io_tag = {
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
-struct machine_bus_dma_tag pci_bus_dma_tag = {
+struct machine_bus_dma_tag mace_pci_bus_dma_tag = {
 	NULL,                   /* _cookie */
 	_dmamap_create,
 	_dmamap_destroy,
@@ -176,7 +188,7 @@ const struct _perr_map {
   { PERR_RSVD,		0,	"reserved ??" },
   { PERR_MEMORY_ADDR,	0,	"memory address" },
   { PERR_CONFIG_ADDR,	0,	"config address" },
-  { 0, 0 }
+  { 0, 0, NULL }
 };
 
 static int      mace_pcibrprint(void *, const char *pnp);
@@ -184,9 +196,11 @@ static int      mace_pcibrprint(void *, const char *pnp);
 int
 mace_pcibrmatch(struct device *parent, void *match, void *aux)
 {
+	static int once = 0;
+
 	switch (sys_config.system_type) {
 	case SGI_O2:
-		return 1;
+		return once++ == 0 ? 1 : 0;
 	default:
 		return 0;
 	}
@@ -200,21 +214,12 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	pcireg_t pcireg;
 
-	/* Create extents for PCI mappings */
-	mace_pcibbus_io_tag.bus_extent = extent_create("pci_io",
-	    MACE_PCI_IO_BASE, MACE_PCI_IO_BASE + MACE_PCI_IO_SIZE - 1,
-	    M_DEVBUF, (caddr_t)pci_io_ext_storage,
-	    sizeof(pci_io_ext_storage), EX_NOCOALESCE|EX_NOWAIT);
+	mace_pcibbus_io_tag.bus_base =
+	    PHYS_TO_XKPHYS(MACE_PCI_IO_BASE, CCA_NC);
+	mace_pcibbus_mem_tag.bus_base =
+	    PHYS_TO_XKPHYS(MACE_PCI_MEM_BASE, CCA_NC);
 
-	mace_pcibbus_mem_tag.bus_extent = extent_create("pci_mem",
-	    MACE_PCI_MEM_BASE, MACE_PCI_MEM_BASE + MACE_PCI_MEM_SIZE - 1,
-	    M_DEVBUF, (caddr_t)pci_mem_ext_storage,
-	    sizeof(pci_mem_ext_storage), EX_NOCOALESCE|EX_NOWAIT);
-
-	/* local -> PCI MEM mapping offset */
 	sc->sc_mem_bus_space = &mace_pcibbus_mem_tag;
-
-	/* local -> PCI IO mapping offset */
 	sc->sc_io_bus_space = &mace_pcibbus_io_tag;
 
 	/* Map in PCI control registers */
@@ -263,9 +268,22 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = sc->sc_io_bus_space;
 	pba.pba_memt = sc->sc_mem_bus_space;
-	pba.pba_dmat = malloc(sizeof(pci_bus_dma_tag), M_DEVBUF, M_NOWAIT);
-	*pba.pba_dmat = pci_bus_dma_tag;
+	pba.pba_dmat = &mace_pci_bus_dma_tag;
 	pba.pba_pc = &sc->sc_pc;
+	pba.pba_ioex = extent_create("mace_io", 0, 0xffffffff, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT | EX_FILLED);
+	if (pba.pba_ioex != NULL) {
+		/*
+		 * I/O accesses at address zero cause PCI errors, so
+		 * make sure the first few bytes are not available.
+		 */
+		extent_free(pba.pba_ioex, 0x20, (1UL << 32) - 0x20, EX_NOWAIT);
+	}
+	pba.pba_memex = extent_create("mace_mem", 0, 0xffffffff, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT | EX_FILLED);
+	if (pba.pba_memex != NULL)
+		extent_free(pba.pba_memex, MACE_PCI_MEM_OFFSET,
+		    MACE_PCI_MEM_SIZE, EX_NOWAIT);
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 	config_found(self, &pba, mace_pcibrprint);
@@ -310,7 +328,7 @@ mace_pcibr_errintr(void *v)
 		if (stat & emap->mask) {
 			printf("mace: pci err %s", emap->text);
 			if (emap->flag && stat & emap->flag)
-				printf(" at address %p", erraddr);
+				printf(" at address 0x%08x", erraddr);
 			printf("\n");
 		}
 		emap++;
@@ -606,52 +624,30 @@ extern int extent_malloc_flags;
 
 int
 mace_pcib_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
+    int flags, bus_space_handle_t *bshp)
 {
-	bus_addr_t bpa;
-	int error;
-
-	bpa = t->bus_base + (offs & 0x7fffffff);
-
-	if ((error = extent_alloc_region(t->bus_extent, bpa, size,
-	    EX_NOWAIT | extent_malloc_flags))) {
-		return error;
+#ifdef DIAGNOSTIC
+	if (t->bus_base == mace_pcibbus_mem_tag.bus_base) {
+		if (offs < MACE_PCI_MEM_OFFSET ||
+		    ((offs + size - 1) >> 32) != 0)
+			return EINVAL;
+	} else {
+		if (((offs + size - 1) >> 32) != 0)
+			return EINVAL;
 	}
+#endif
 
-	if ((error  = bus_mem_add_mapping(bpa, size, cacheable, bshp))) {
-		if (extent_free(t->bus_extent, bpa, size,
-		    EX_NOWAIT | extent_malloc_flags)) {
-			printf("bus_space_map: pa %p, size %p\n", bpa, size);
-			printf("bus_space_map: can't free region\n");
-		}
-	}
-
-	return (error);
+	if (ISSET(flags, BUS_SPACE_MAP_CACHEABLE))
+		offs +=
+		    PHYS_TO_XKPHYS(0, CCA_CACHED) - PHYS_TO_XKPHYS(0, CCA_NC);
+	*bshp = t->bus_base + offs;
+	return 0;
 }
 
 void
 mace_pcib_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t size)
 {
-	bus_addr_t sva;
-	bus_size_t off, len;
-	bus_addr_t paddr;
-
-	/* should this verify that the proper size is freed? */
-	sva = trunc_page(bsh);
-	off = bsh - sva;
-	len = size+off;
-
-	if (pmap_extract(pmap_kernel(), bsh, (void *)&paddr) == 0) {
-		printf("bus_space_unmap: no pa for va %p\n", bsh);
-		return;
-	}
-
-	if (extent_free(t->bus_extent, paddr, size,
-	    EX_NOWAIT | extent_malloc_flags)) {
-		printf("bus_space_map: pa %p, size %p\n", paddr, size);
-		printf("bus_space_map: can't free region\n");
-	}
 }
 
 int
@@ -814,10 +810,11 @@ mace_pcibr_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 {
 	if (*memend != 0) {
 		/*
-		 * Give all resources to the bridge.
+		 * Give all resources to the bridge
+		 * (except for the few the on-board ahc(4) will use).
 		 */
-		*memstart = 0x90000000;
-		*memend = 0xffffffff;
+		*memstart = 0x81000000;
+		*memend =   0xffffffff;
 	} else {
 		*memstart = 0xffffffff;
 		*memend = 0;
@@ -825,10 +822,11 @@ mace_pcibr_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
 
 	if (*ioend != 0) {
 		/*
-		 * Give all resources to the bridge.
+		 * Give all resources to the bridge
+		 * (except for the few the on-board ahc(4) will use).
 		 */
 		*iostart = 0x00010000;
-		*ioend = MACE_PCI_IO_SIZE - *iostart;
+		*ioend =   0xffffffff;
 	} else {
 		*iostart = 0xffffffff;
 		*ioend = 0;
@@ -855,46 +853,17 @@ void
 mace_pcibr_rbus_space_unmap(bus_space_tag_t t, bus_space_handle_t h,
     bus_size_t size, bus_addr_t *addrp)
 {
-	bus_addr_t sva;
-	bus_size_t off, len;
-	paddr_t paddr;
-
-	/* should this verify that the proper size is freed? */
-	sva = trunc_page(h);
-	off = h - sva;
-	len = size + off;
-
-	if (pmap_extract(pmap_kernel(), h, &paddr) == 0) {
-		printf("bus_space_unmap: no pa for va %p\n", h);
-		*addrp = 0;	/* XXX */
-		return;
-	}
-
-	if (extent_free(t->bus_extent, (u_long)paddr, size,
-	    EX_NOWAIT | extent_malloc_flags)) {
-		printf("bus_space_map: pa %p, size %p\n", paddr, size);
-		printf("bus_space_map: can't free region\n");
-	}
-
-	*addrp = paddr - t->bus_base;
-	if (t->bus_base == MACE_PCI_MEM_BASE)
-		*addrp += 0x80000000;
+	/* can't simply subtract because of possible cacheability */
+	*addrp = XKPHYS_TO_PHYS(h) - XKPHYS_TO_PHYS(t->bus_base);
 }
 
 void *
 mace_pcibr_rbus_parent_io(struct pci_attach_args *pa)
 {
 	rbus_tag_t rb;
-	bus_addr_t start, end;
 
-	/*
-	 * Give all resources to the CardBus bridge.
-	 */
-
-	start = 0x2000;	/* leave some I/O for ahc */
-	end = 0x10000;
-
-	rb = rbus_new_root_delegate(pa->pa_iot, start, end - start, 0);
+	rb = rbus_new_root_share(pa->pa_iot, pa->pa_ioex,
+	    0x0000, 0xffff, 0);
 	if (rb != NULL)
 		rb->rb_md = &mace_pcibr_rb_md_fn;
 
@@ -905,16 +874,9 @@ void *
 mace_pcibr_rbus_parent_mem(struct pci_attach_args *pa)
 {
 	rbus_tag_t rb;
-	bus_addr_t start, end;
 
-	/*
-	 * Give all resources to the CardBus bridge.
-	 */
-
-	start = 0x90000000;
-	end = 0x100000000UL;
-
-	rb = rbus_new_root_delegate(pa->pa_memt, start, end - start, 0);
+	rb = rbus_new_root_share(pa->pa_memt, pa->pa_memex,
+	    0, 0xffffffff, 0);
 	if (rb != NULL)
 		rb->rb_md = &mace_pcibr_rb_md_fn;
 

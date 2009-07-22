@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibrvar.h,v 1.5 2009/04/25 15:28:59 kettenis Exp $ */
+/*	$OpenBSD: macepcibrvar.h,v 1.6 2009/07/22 20:28:21 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.se)
@@ -29,10 +29,16 @@
 #ifndef _PCIBRVAR_H_
 #define _PCIBRVAR_H_
 
-#define	MACE_PCI_IO_BASE	0x18000000
-#define	MACE_PCI_IO_SIZE	0x02000000
-#define	MACE_PCI_MEM_BASE	0x280000000
-#define	MACE_PCI_MEM_SIZE	0x100000000
+/*
+ * Addresses of the PCI I/O and memory spaces.
+ *
+ * Note that PCI memory space addresses need to have bit 31 set to
+ * reach hardware, otherwise they reach physical memory.
+ */
+#define	MACE_PCI_IO_BASE	0x100000000UL
+#define	MACE_PCI_MEM_BASE	0x200000000UL
+#define	MACE_PCI_MEM_OFFSET	0x80000000
+#define	MACE_PCI_MEM_SIZE	0x80000000
 
 struct mace_pcibr_softc {
 	struct device	sc_dev;
