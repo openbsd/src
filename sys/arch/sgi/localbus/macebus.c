@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.40 2009/07/22 20:08:23 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.41 2009/07/22 21:28:08 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -37,15 +37,7 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/tty.h>
-#include <sys/extent.h>
-#include <net/netisr.h>
-#include <uvm/uvm_extern.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcivar.h>
-
-#include <dev/ic/comvar.h>
+#include <sys/proc.h>
 
 #include <mips64/archtype.h>
 
@@ -56,13 +48,13 @@
 #include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
 
-int	macebusmatch(struct device *, void *, void *);
-void	macebusattach(struct device *, struct device *, void *);
-int	macebusprint(void *, const char *);
-int	macebussearch(struct device *, void *, void *);
+int	 macebusmatch(struct device *, void *, void *);
+void	 macebusattach(struct device *, struct device *, void *);
+int	 macebusprint(void *, const char *);
+int	 macebussearch(struct device *, void *, void *);
 
-void	macebus_intr_makemasks(void);
-void	macebus_do_pending_int(int);
+void	 macebus_intr_makemasks(void);
+void	 macebus_do_pending_int(int);
 intrmask_t macebus_iointr(intrmask_t, struct trap_frame *);
 intrmask_t macebus_aux(intrmask_t, struct trap_frame *);
 
@@ -71,34 +63,38 @@ u_int16_t mace_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 u_int32_t mace_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 u_int64_t mace_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-void mace_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int8_t);
-void mace_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int16_t);
-void mace_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-void mace_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int64_t);
+void	 mace_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    u_int8_t);
+void	 mace_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    u_int16_t);
+void	 mace_write_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    u_int32_t);
+void	 mace_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    u_int64_t);
 
-void mace_read_raw_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, u_int8_t *, bus_size_t);
-void mace_write_raw_2(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, const u_int8_t *, bus_size_t);
-void mace_read_raw_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, u_int8_t *, bus_size_t);
-void mace_write_raw_4(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, const u_int8_t *, bus_size_t);
-void mace_read_raw_8(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, u_int8_t *, bus_size_t);
-void mace_write_raw_8(bus_space_tag_t, bus_space_handle_t,
-	    bus_addr_t, const u_int8_t *, bus_size_t);
+void	 mace_read_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    u_int8_t *, bus_size_t);
+void	 mace_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const u_int8_t *, bus_size_t);
+void	 mace_read_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    u_int8_t *, bus_size_t);
+void	 mace_write_raw_4(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const u_int8_t *, bus_size_t);
+void	 mace_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    u_int8_t *, bus_size_t);
+void	 mace_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    const u_int8_t *, bus_size_t);
 
-int mace_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-void mace_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
-int mace_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
+int	 mace_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+void	 mace_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+int	 mace_space_region(bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    bus_size_t, bus_space_handle_t *);
 
-void *mace_space_vaddr(bus_space_tag_t, bus_space_handle_t);
+void	*mace_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 
 bus_addr_t macebus_pa_to_device(paddr_t);
-paddr_t	macebus_device_to_pa(bus_addr_t);
-
-int maceticks;		/* Time tracker for special events. */
+paddr_t	 macebus_device_to_pa(bus_addr_t);
 
 struct cfattach macebus_ca = {
 	sizeof(struct device), macebusmatch, macebusattach
@@ -110,7 +106,7 @@ struct cfdriver macebus_cd = {
 
 bus_space_t macebus_tag = {
 	NULL,
-	(bus_addr_t)MACEBUS_BASE,
+	PHYS_TO_XKPHYS(MACEBUS_BASE, CCA_NC),
 	NULL,
 	0,
 	mace_read_1, mace_write_1,
@@ -126,7 +122,7 @@ bus_space_t macebus_tag = {
 
 bus_space_t crimebus_tag = {
 	NULL,
-	(bus_addr_t)CRIMEBUS_BASE,
+	PHYS_TO_XKPHYS(CRIMEBUS_BASE, CCA_NC),
 	NULL,
 	0,
 	mace_read_1, mace_write_1,
@@ -221,28 +217,16 @@ void
 macebusattach(struct device *parent, struct device *self, void *aux)
 {
 	u_int32_t creg;
-	u_int64_t mask;
-
-	/*
-	 * Create an extent for the localbus control registers.
-	 */
-	macebus_tag.bus_extent = extent_create("mace_space",
-	    macebus_tag.bus_base, macebus_tag.bus_base + 0x00400000,
-	    M_DEVBUF, NULL, 0, EX_NOCOALESCE | EX_NOWAIT);
-
-	crimebus_tag.bus_extent = extent_create("crime_space",
-	    crimebus_tag.bus_base, crimebus_tag.bus_base + 0x03000000,
-	    M_DEVBUF, NULL, 0, EX_NOCOALESCE | EX_NOWAIT);
 
 	/*
 	 * Map and setup CRIME control registers.
 	 */
 	if (bus_space_map(&crimebus_tag, 0x00000000, 0x400, 0, &crime_h)) {
-		printf(": cannot map CRIME control registers\n");
+		printf(": can't map CRIME control registers\n");
 		return;
 	}
-	hwmask_addr = (void *)(PHYS_TO_UNCACHED(CRIMEBUS_BASE) +
-	    CRIME_INT_MASK);
+	hwmask_addr = (void *)
+	    (PHYS_TO_XKPHYS(CRIMEBUS_BASE, CCA_NC) + CRIME_INT_MASK);
 
 	creg = bus_space_read_8(&crimebus_tag, crime_h, CRIME_REVISION);
 	printf(": crime rev %d.%d\n", (creg & 0xf0) >> 4, creg & 0xf);
@@ -250,24 +234,23 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_CPU_ERROR_STAT, 0);
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_MEM_ERROR_STAT, 0);
 
-	mask = 0;
-	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, mask);
+	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, 0);
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_SOFT, 0);
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_HARD, 0);
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_STAT, 0);
-
 
 	/*
 	 * Map and setup MACE ISA control registers.
 	 */
 	if (bus_space_map(&macebus_tag, MACE_ISA_OFFS, 0x400, 0, &mace_h)) {
-		printf("UH-OH! Can't map MACE ISA control registers!\n");
+		printf("%s: can't map MACE ISA control registers\n",
+		    self->dv_xname);
 		return;
 	}
 
 	/* Turn on all interrupts except for MACE compare/timer. */
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK, 
-			  0xffffffff & ~MACE_ISA_INT_TIMER);
+	    0xffffffff & ~MACE_ISA_INT_TIMER);
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT, 0);
 
 	/*
@@ -277,7 +260,7 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	set_intr(INTPRI_MACEIO, CR_INT_0, macebus_iointr);
 	register_pending_int_handler(macebus_do_pending_int);
 
-	/* DEBUG: Set up a handler called when clock interrupts go off. */
+	/* Set up a handler called when clock interrupts go off. */
 	set_intr(INTPRI_MACEAUX, CR_INT_5, macebus_aux);
 
 	config_search(macebussearch, self, aux);
@@ -296,7 +279,7 @@ mace_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 u_int16_t
 mace_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
-	panic("mace_read_2");
+	panic(__func__);
 }
 
 u_int32_t
@@ -320,7 +303,7 @@ mace_write_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v)
 void
 mace_write_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t v)
 {
-	panic("mace_write_2");
+	panic(__func__);
 }
 
 void
@@ -397,76 +380,20 @@ mace_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
 	}
 }
 
-extern int extent_malloc_flags;
-
 int
 mace_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
+    int flags, bus_space_handle_t *bshp)
 {
-	bus_addr_t bpa;
-	int error;
-
-	bpa = t->bus_base + offs;
-
-	/* Handle special mapping separately. */
-	if ((bpa >= (MACEBUS_BASE + MACE_IO_OFFS) &&
-	    (bpa + size) < (MACEBUS_BASE + MACE_IO_OFFS + MACE_IO_SIZE))
-	    || (bpa >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
-	    (bpa + size) < (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE))) {
-		*bshp = PHYS_TO_UNCACHED(bpa);
-		return 0;
-	}
-
-	if ((error = extent_alloc_region(t->bus_extent, bpa, size,
-	    EX_NOWAIT | extent_malloc_flags))) {
-		return error;
-	}
-
-	if ((error = bus_mem_add_mapping(bpa, size, cacheable, bshp))) {
-		if (extent_free(t->bus_extent, bpa, size,
-		    EX_NOWAIT | extent_malloc_flags)) {
-			printf("bus_space_map: pa %p, size %p\n", bpa, size);
-			printf("bus_space_map: can't free region\n");
-		}
-	}
-
-	return (error);
+	if (ISSET(flags, BUS_SPACE_MAP_CACHEABLE))
+		offs +=
+		    PHYS_TO_XKPHYS(0, CCA_CACHED) - PHYS_TO_XKPHYS(0, CCA_NC);
+	*bshp = t->bus_base + offs;
+	return 0;
 }
 
 void
 mace_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
-	bus_addr_t sva, paddr;
-	bus_size_t off, len;
-
-	/* Should this verify that the proper size is freed? */
-	sva = trunc_page(bsh);
-	off = bsh - sva;
-	len = size+off;
-
-	if (IS_XKPHYS(bsh)) {
-		paddr = XKPHYS_TO_PHYS(bsh);
-		if ((paddr >= (MACEBUS_BASE + MACE_IO_OFFS) &&
-		    (paddr + size) <=
-		    (MACEBUS_BASE + MACE_IO_OFFS + MACE_IO_SIZE))
-		    || (paddr >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
-		    (paddr + size) <=
-		    (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE)))
-			return;
-	}
-
-	if (pmap_extract(pmap_kernel(), bsh, (void *)&paddr) == 0) {
-		printf("bus_space_unmap: no pa for va %p\n", bsh);
-		return;
-	}
-
-	uvm_km_free(kernel_map, sva, len);
-
-	if (extent_free(t->bus_extent, paddr, size,
-	    EX_NOWAIT | extent_malloc_flags)) {
-		printf("bus_space_map: pa %p, size %p\n", paddr, size);
-		printf("bus_space_map: can't free region\n");
-	}
 }
 
 int
@@ -797,10 +724,6 @@ macebus_aux(intrmask_t hwpend, struct trap_frame *cf)
 		mask &= ~(MACE_ISA_MISC_RLED_OFF | MACE_ISA_MISC_GLED_OFF);
 	}
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_MISC_REG, mask);
-
-	if (maceticks++ > 100*5) {
-		maceticks = 0;
-	}
 
 	return 0; /* Real clock int handler registers. */
 }
