@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.5 2009/07/19 13:21:40 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.6 2009/07/22 21:34:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -184,9 +184,7 @@ cmd_split_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (data->flag_horizontal)
 		type = LAYOUT_LEFTRIGHT;
 
-	wp = window_add_pane(w, hlimit, &cause);
-	if (wp == NULL)
-		goto error;
+	wp = window_add_pane(w, hlimit);
 	if (window_pane_spawn(wp, cmd, cwd, env, &cause) != 0)
 		goto error;
 	if (layout_split_pane(w->active, type, size, wp) != 0) {
