@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.44 2009/07/21 19:54:22 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.45 2009/07/22 15:55:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -288,7 +288,7 @@ enum tty_cmd {
 	TTY_INSERTCHARACTER,
 	TTY_INSERTLINE,
 	TTY_LINEFEED,
-	TTY_RAW,
+	TTY_UTF8CHARACTER,
 	TTY_REVERSEINDEX,
 };
 
