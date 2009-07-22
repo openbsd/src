@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.17 2008/06/22 21:02:10 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.18 2009/07/22 21:15:42 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -284,8 +284,6 @@ loop:
 	 * Watch out for function tail optimizations.
 	 */
 	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
-	if (sym != DB_SYM_NULL && diff == 0)
-		sym = db_search_symbol(pc - 4, DB_STGY_ANY, &diff);
 	db_symbol_values(sym, &symname, 0);
 	if (sym != DB_SYM_NULL) {
 		subr = pc - diff;
