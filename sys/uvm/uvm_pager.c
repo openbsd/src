@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.53 2009/06/17 00:13:59 oga Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.54 2009/07/22 21:05:37 oga Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -339,6 +339,8 @@ uvm_pagermapout(vaddr_t kva, int npages)
  *      PGO_ALLPAGES:  all pages in object are valid targets
  *      !PGO_ALLPAGES: use "lo" and "hi" to limit range of cluster
  *      PGO_DOACTCLUST: include active pages in cluster.
+ *	PGO_FREE: set the PG_RELEASED bits on the cluster so they'll be freed
+ *		in async io (caller must clean on error).
  *        NOTE: the caller should clear PG_CLEANCHK bits if PGO_DOACTCLUST.
  *              PG_CLEANCHK is only a hint, but clearing will help reduce
  *		the number of calls we make to the pmap layer.
@@ -440,6 +442,14 @@ uvm_mk_pcluster(struct uvm_object *uobj, struct vm_page **pps, int *npages,
 			atomic_setbits_int(&pclust->pg_flags, PG_BUSY);
 			UVM_PAGE_OWN(pclust, "uvm_mk_pcluster");
 
+			/*
+			 * If we want to free after io is done, and we're
+			 * async, set the released flag
+			 */
+			if ((flags & (PGO_FREE|PGO_SYNCIO)) == PGO_FREE)
+				atomic_setbits_int(&pclust->pg_flags,
+				    PG_RELEASED);
+
 			/* XXX: protect wired page?   see above comment. */
 			pmap_page_protect(pclust, VM_PROT_READ);
 			if (!forward) {
@@ -481,6 +491,7 @@ uvm_mk_pcluster(struct uvm_object *uobj, struct vm_page **pps, int *npages,
  *	PGO_DOACTCLUST: include "PQ_ACTIVE" pages as valid targets
  *	PGO_SYNCIO: do SYNC I/O (no async)
  *	PGO_PDFREECLUST: pagedaemon: drop cluster on successful I/O
+ *	PGO_FREE: tell the aio daemon to free pages in the async case.
  * => start/stop: if (uobj && !PGO_ALLPAGES) limit targets to this range
  *		  if (!uobj) start is the (daddr64_t) of the starting swapblk
  * => return state:
@@ -704,8 +715,6 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
     struct vm_page **ppsp, int *npages, int flags)
 {
 	int lcv;
-	boolean_t obj_is_alive; 
-	struct uvm_object *saved_uobj;
 
 	/*
 	 * drop all pages but "pg"
@@ -747,9 +756,8 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 		}
 
 		/* if page was released, release it.  otherwise un-busy it */
-		if (ppsp[lcv]->pg_flags & PG_RELEASED) {
-
-			if (ppsp[lcv]->pg_flags & PQ_ANON) {
+		if (ppsp[lcv]->pg_flags & PG_RELEASED &&
+		    ppsp[lcv]->pg_flags & PQ_ANON) {
 				/* so that anfree will free */
 				atomic_clearbits_int(&ppsp[lcv]->pg_flags,
 				    PG_BUSY);
@@ -761,34 +769,13 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 				uvm_anfree(ppsp[lcv]->uanon);
 
 				continue;
-			}
-
-			/*
-			 * pgo_releasepg will dump the page for us
-			 */
-
-			saved_uobj = ppsp[lcv]->uobject;
-			obj_is_alive =
-			    saved_uobj->pgops->pgo_releasepg(ppsp[lcv], NULL);
-			
-			/* for normal objects, "pg" is still PG_BUSY by us,
-			 * so obj can't die */
-			KASSERT(!uobj || obj_is_alive);
-
-			/* only unlock the object if it is still alive...  */
-			if (obj_is_alive && saved_uobj != uobj)
-				simple_unlock(&saved_uobj->vmobjlock);
-
-			/*
-			 * XXXCDC: suppose uobj died in the pgo_releasepg?
-			 * how pass that
-			 * info up to caller.  we are currently ignoring it...
-			 */
-
-			continue;		/* next page */
 		} else {
+			/*
+			 * if we were planning on async io then we would
+			 * have PG_RELEASED set, clear that with the others.
+			 */
 			atomic_clearbits_int(&ppsp[lcv]->pg_flags,
-			    PG_BUSY|PG_WANTED|PG_FAKE);
+			    PG_BUSY|PG_WANTED|PG_FAKE|PG_RELEASED);
 			UVM_PAGE_OWN(ppsp[lcv], NULL);
 		}
 
@@ -811,33 +798,6 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 		}
 	}
 }
-
-#ifdef UBC
-/*
- * interrupt-context iodone handler for nested i/o bufs.
- *
- * => must be at splbio().
- */
-
-void
-uvm_aio_biodone1(struct buf *bp)
-{
-	struct buf *mbp = bp->b_private;
-
-	splassert(IPL_BIO);
-
-	KASSERT(mbp != bp);
-	if (bp->b_flags & B_ERROR) {
-		mbp->b_flags |= B_ERROR;
-		mbp->b_error = bp->b_error;
-	}
-	mbp->b_resid -= bp->b_bcount;
-	pool_put(&bufpool, bp);
-	if (mbp->b_resid == 0) {
-		biodone(mbp);
-	}
-}
-#endif
 
 /*
  * interrupt-context iodone handler for single-buf i/os

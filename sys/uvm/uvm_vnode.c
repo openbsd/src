@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.67 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.68 2009/07/22 21:05:37 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -93,7 +93,6 @@ void		 uvn_init(void);
 int		 uvn_io(struct uvm_vnode *, vm_page_t *, int, int, int);
 int		 uvn_put(struct uvm_object *, vm_page_t *, int, boolean_t);
 void		 uvn_reference(struct uvm_object *);
-boolean_t	 uvn_releasepg(struct vm_page *, struct vm_page **);
 
 /*
  * master pager structure
@@ -109,7 +108,6 @@ struct uvm_pagerops uvm_vnodeops = {
 	uvn_put,
 	uvn_cluster,
 	uvm_mk_pcluster, /* use generic version of this: see uvm_pager.c */
-	uvn_releasepg,
 };
 
 /*
@@ -415,30 +413,23 @@ uvn_detach(struct uvm_object *uobj)
 	/*
 	 * given the structure of this pager, the above flush request will
 	 * create the following state: all the pages that were in the object
-	 * have either been free'd or they are marked PG_BUSY|PG_RELEASED.
-	 * the PG_BUSY bit was set either by us or the daemon for async I/O.
-	 * in either case, if we have pages left we can't kill the object
-	 * yet because i/o is pending.  in this case we set the "relkill"
-	 * flag which will cause pgo_releasepg to kill the object once all
-	 * the I/O's are done [pgo_releasepg will be called from the aiodone
-	 * routine or from the page daemon].
+	 * have either been free'd or they are marked PG_BUSY and in the 
+	 * middle of an async io. If we still have pages we set the "relkill"
+	 * state, so that in the case the vnode gets terminated we know 
+	 * to leave it alone. Otherwise we'll kill the vnode when it's empty.
 	 */
 
-	if (uobj->uo_npages) {		/* I/O pending.  iodone will free */
-#ifdef DEBUG
-		/*
-		 * XXXCDC: very unlikely to happen until we have async i/o
-		 * so print a little info message in case it does.
-		 */
-		printf("uvn_detach: vn %p has pages left after flush - "
-		    "relkill mode\n", uobj);
-#endif
-		uvn->u_flags |= UVM_VNODE_RELKILL;
-		simple_unlock(&uobj->vmobjlock);
-		UVMHIST_LOG(maphist,"<- done! (releasepg will kill obj)", 0, 0,
-		    0, 0);
-		return;
+	uvn->u_flags |= UVM_VNODE_RELKILL;
+	/* wait on any outstanding io */
+	while (uobj->uo_npages && uvn->u_flags & UVM_VNODE_RELKILL) {
+		uvn->u_flags |= UVM_VNODE_IOSYNC;
+		UVM_UNLOCK_AND_WAIT(&uvn->u_nio, &uvn->u_obj.vmobjlock, FALSE,
+		    "uvn_term",0);
+		simple_lock(&uvn->u_obj.vmobjlock);
 	}
+
+	if ((uvn->u_flags & UVM_VNODE_RELKILL) == 0)
+		return;
 
 	/*
 	 * kill object now.   note that we can't be on the sync q because
@@ -490,8 +481,6 @@ uvn_detach(struct uvm_object *uobj)
  * => the caller must XLOCK and VOP_LOCK the vnode before calling us
  *	[protects us from getting a vnode that is already in the DYING
  *	 state...]
- * => unlike uvn_detach, this function must not return until all the
- *	uvn's pages are disposed of.
  * => in case [2] the uvn is still alive after this call, but all I/O
  *	ops will fail (due to the backing vnode now being "dead").  this
  *	will prob. kill any process using the uvn due to pgo_get failing.
@@ -535,8 +524,8 @@ uvm_vnp_terminate(struct vnode *vp)
 
 	/*
 	 * it is possible that the uvn was detached and is in the relkill
-	 * state [i.e. waiting for async i/o to finish so that releasepg can
-	 * kill object].  we take over the vnode now and cancel the relkill.
+	 * state [i.e. waiting for async i/o to finish].
+	 * we take over the vnode now and cancel the relkill.
 	 * we want to know when the i/o is done so we can recycle right
 	 * away.   note that a uvn can only be in the RELKILL state if it
 	 * has a zero reference count.
@@ -630,72 +619,6 @@ uvm_vnp_terminate(struct vnode *vp)
 }
 
 /*
- * uvn_releasepg: handled a released page in a uvn
- *
- * => "pg" is a PG_BUSY [caller owns it], PG_RELEASED page that we need
- *	to dispose of.
- * => caller must handled PG_WANTED case
- * => called with page's object locked, pageq's unlocked
- * => returns TRUE if page's object is still alive, FALSE if we
- *	killed the page's object.    if we return TRUE, then we
- *	return with the object locked.
- * => if (nextpgp != NULL) => we return pageq.tqe_next here, and return
- *				with the page queues locked [for pagedaemon]
- * => if (nextpgp == NULL) => we return with page queues unlocked [normal case]
- * => we kill the uvn if it is not referenced and we are suppose to
- *	kill it ("relkill").
- */
-
-boolean_t
-uvn_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
-{
-	struct uvm_vnode *uvn = (struct uvm_vnode *) pg->uobject;
-	struct vnode *vp = (struct vnode *)uvn;
-#ifdef DIAGNOSTIC
-	if ((pg->pg_flags & PG_RELEASED) == 0)
-		panic("uvn_releasepg: page not released!");
-#endif
-
-	/*
-	 * dispose of the page [caller handles PG_WANTED]
-	 */
-	pmap_page_protect(pg, VM_PROT_NONE);
-	uvm_lock_pageq();
-	if (nextpgp)
-		*nextpgp = TAILQ_NEXT(pg, pageq); /* next page for daemon */
-	uvm_pagefree(pg);
-	if (!nextpgp)
-		uvm_unlock_pageq();
-
-	/*
-	 * now see if we need to kill the object
-	 */
-	if (uvn->u_flags & UVM_VNODE_RELKILL) {
-		if (uvn->u_obj.uo_refs)
-			panic("uvn_releasepg: kill flag set on referenced "
-			    "object!");
-		if (uvn->u_obj.uo_npages == 0) {
-			if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
-				LIST_REMOVE(uvn, u_wlist);
-			}
-#ifdef DIAGNOSTIC
-			if (!TAILQ_EMPTY(&uvn->u_obj.memq))
-	panic("uvn_releasepg: pages in object with npages == 0");
-#endif
-			if (uvn->u_flags & UVM_VNODE_WANTED)
-				/* still holding object lock */
-				wakeup(uvn);
-
-			uvn->u_flags = 0;		/* DEAD! */
-			simple_unlock(&uvn->u_obj.vmobjlock);
-			vrele(vp);
-			return (FALSE);
-		}
-	}
-	return (TRUE);
-}
-
-/*
  * NOTE: currently we have to use VOP_READ/VOP_WRITE because they go
  * through the buffer cache and allow I/O in any size.  These VOPs use
  * synchronous i/o.  [vs. VOP_STRATEGY which can be async, but doesn't
@@ -729,8 +652,6 @@ uvn_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
  * - if (object->iosync && u_naio == 0) { wakeup &uvn->u_naio }
  * - get "page" structures (atop?).
  * - handle "wanted" pages
- * - handle "released" pages [using pgo_releasepg]
- *   >>> pgo_releasepg may kill the object
  * dont forget to look at "object" wanted flag in all cases.
  */
 
@@ -792,15 +713,13 @@ boolean_t
 uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
-	struct vm_page *pp, *ppnext, *ptmp;
+	struct vm_page *pp, *ptmp;
 	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
 	int npages, result, lcv;
-	boolean_t retval, need_iosync, by_list, needs_clean, all;
+	boolean_t retval, need_iosync, needs_clean;
 	voff_t curoff;
-	u_short pp_version;
 	UVMHIST_FUNC("uvn_flush"); UVMHIST_CALLED(maphist);
 
-	curoff = 0;	/* XXX: shut up gcc */
 	/*
 	 * get init vals and determine how we are going to traverse object
 	 */
@@ -808,24 +727,16 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	need_iosync = FALSE;
 	retval = TRUE;		/* return value */
 	if (flags & PGO_ALLPAGES) {
-		all = TRUE;
-		by_list = TRUE;		/* always go by the list */
+		start = 0;
+		stop = round_page(uvn->u_size);
 	} else {
 		start = trunc_page(start);
-		stop = round_page(stop);
-#ifdef DEBUG
-		if (stop > round_page(uvn->u_size))
-			printf("uvn_flush: strange, got an out of range "
-			    "flush (fixed)\n");
-#endif
-		all = FALSE;
-		by_list = (uobj->uo_npages <=
-		    ((stop - start) >> PAGE_SHIFT) * UVN_HASH_PENALTY);
+		stop = MIN(round_page(stop), round_page(uvn->u_size));
 	}
 
 	UVMHIST_LOG(maphist,
-	    " flush start=0x%lx, stop=0x%lx, by_list=%ld, flags=0x%lx",
-	    (u_long)start, (u_long)stop, by_list, flags);
+	    " flush start=0x%lx, stop=0x%lx, flags=0x%lx",
+	    (u_long)start, (u_long)stop, flags, 0);
 
 	/*
 	 * PG_CLEANCHK: this bit is used by the pgo_mk_pcluster function as
@@ -838,75 +749,21 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	 * [borrowed PG_CLEANCHK idea from FreeBSD VM]
 	 */
 
-	if ((flags & PGO_CLEANIT) != 0 &&
-	    uobj->pgops->pgo_mk_pcluster != NULL) {
-		if (by_list) {
-			TAILQ_FOREACH(pp, &uobj->memq, listq) {
-				if (!all &&
-				    (pp->offset < start || pp->offset >= stop))
-					continue;
+	if ((flags & PGO_CLEANIT) != 0) {
+		KASSERT(uobj->pgops->pgo_mk_pcluster != 0);
+		for (curoff = start ; curoff < stop; curoff += PAGE_SIZE) {
+			if ((pp = uvm_pagelookup(uobj, curoff)) != NULL)
 				atomic_clearbits_int(&pp->pg_flags,
 				    PG_CLEANCHK);
-			}
-
-		} else {   /* by hash */
-			for (curoff = start ; curoff < stop;
-			    curoff += PAGE_SIZE) {
-				pp = uvm_pagelookup(uobj, curoff);
-				if (pp)
-					atomic_clearbits_int(&pp->pg_flags,
-					    PG_CLEANCHK);
-			}
 		}
 	}
 
-	/*
-	 * now do it.   note: we must update ppnext in body of loop or we
-	 * will get stuck.  we need to use ppnext because we may free "pp"
-	 * before doing the next loop.
-	 */
-
-	if (by_list) {
-		pp = TAILQ_FIRST(&uobj->memq);
-	} else {
-		curoff = start;
-		pp = uvm_pagelookup(uobj, curoff);
-	}
-
-	ppnext = NULL;	/* XXX: shut up gcc */
 	ppsp = NULL;		/* XXX: shut up gcc */
 	uvm_lock_pageq();	/* page queues locked */
-
 	/* locked: both page queues and uobj */
-	for ( ; (by_list && pp != NULL) ||
-	  (!by_list && curoff < stop) ; pp = ppnext) {
-
-		if (by_list) {
-
-			/*
-			 * range check
-			 */
-
-			if (!all &&
-			    (pp->offset < start || pp->offset >= stop)) {
-				ppnext = TAILQ_NEXT(pp, listq);
-				continue;
-			}
-
-		} else {
-
-			/*
-			 * null check
-			 */
-
-			curoff += PAGE_SIZE;
-			if (pp == NULL) {
-				if (curoff < stop)
-					ppnext = uvm_pagelookup(uobj, curoff);
-				continue;
-			}
-
-		}
+	for (curoff = start; curoff < stop; curoff += PAGE_SIZE) {
+		if ((pp = uvm_pagelookup(uobj, curoff)) == NULL)
+			continue;
 
 		/*
 		 * handle case where we do not need to clean page (either
@@ -943,37 +800,32 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 
 		/*
-		 * if we don't need a clean... load ppnext and dispose of pp
+		 * if we don't need a clean... deactivate/free pages then cont.
 		 */
 		if (!needs_clean) {
-			/* load ppnext */
-			if (by_list)
-				ppnext = TAILQ_NEXT(pp, listq);
-			else {
-				if (curoff < stop)
-					ppnext = uvm_pagelookup(uobj, curoff);
-			}
-
-			/* now dispose of pp */
 			if (flags & PGO_DEACTIVATE) {
 				if ((pp->pg_flags & PQ_INACTIVE) == 0 &&
 				    pp->wire_count == 0) {
 					pmap_page_protect(pp, VM_PROT_NONE);
 					uvm_pagedeactivate(pp);
 				}
-
 			} else if (flags & PGO_FREE) {
 				if (pp->pg_flags & PG_BUSY) {
-					/* release busy pages */
 					atomic_setbits_int(&pp->pg_flags,
-					    PG_RELEASED);
+					    PG_WANTED);
+					uvm_unlock_pageq();
+					UVM_UNLOCK_AND_WAIT(pp,
+					    &uobj->vmobjlock, 0, "uvn_flsh", 0);
+					simple_lock(&uobj->vmobjlock);
+					uvm_lock_pageq();
+					curoff -= PAGE_SIZE;
+					continue;
 				} else {
 					pmap_page_protect(pp, VM_PROT_NONE);
 					/* removed page from object */
 					uvm_pagefree(pp);
 				}
 			}
-			/* ppnext is valid so we can continue... */
 			continue;
 		}
 
@@ -989,7 +841,9 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		atomic_setbits_int(&pp->pg_flags, PG_BUSY);
 		UVM_PAGE_OWN(pp, "uvn_flush");
 		pmap_page_protect(pp, VM_PROT_READ);
-		pp_version = pp->pg_version;
+		/* if we're async, free the page in aiodoned */
+		if ((flags & (PGO_FREE|PGO_SYNCIO)) == PGO_FREE)
+			atomic_setbits_int(&pp->pg_flags, PG_RELEASED);
 ReTry:
 		ppsp = pps;
 		npages = sizeof(pps) / sizeof(struct vm_page *);
@@ -1000,11 +854,11 @@ ReTry:
 		/* unlocked: page queues, uobj */
 
 		/*
-		 * at this point nothing is locked.   if we did an async I/O
-		 * it is remotely possible for the async i/o to complete and
-		 * the page "pp" be freed or what not before we get a chance
-		 * to relock the object.   in order to detect this, we have
-		 * saved the version number of the page in "pp_version".
+		 * if we did an async I/O it is remotely possible for the
+		 * async i/o to complete and the page "pp" be freed or what
+		 * not before we get a chance to relock the object. Therefore,
+		 * we only touch it when it won't be freed, RELEASED took care
+		 * of the rest.
 		 */
 
 		/* relock! */
@@ -1013,7 +867,7 @@ ReTry:
 
 		/*
 		 * VM_PAGER_AGAIN: given the structure of this pager, this
-		 * can only happen when  we are doing async I/O and can't
+		 * can only happen when we are doing async I/O and can't
 		 * map the pages into kernel memory (pager_map) due to lack
 		 * of vm space.   if this happens we drop back to sync I/O.
 		 */
@@ -1031,6 +885,10 @@ ReTry:
 	panic("uvn_flush: PGO_SYNCIO return 'try again' error (impossible)");
 #endif
 			flags |= PGO_SYNCIO;
+			if (flags & PGO_FREE)
+				atomic_clearbits_int(&pp->pg_flags,
+				    PG_RELEASED);
+
 			goto ReTry;
 		}
 
@@ -1042,66 +900,20 @@ ReTry:
 		 */
 
 		/*
-		 * for pending async i/o if we are not deactivating/freeing
-		 * we can move on to the next page.
+		 * for pending async i/o if we are not deactivating
+		 * we can move on to the next page. aiodoned deals with
+		 * the freeing case for us.
 		 */
-
-		if (result == VM_PAGER_PEND) {
-
-			if ((flags & (PGO_DEACTIVATE|PGO_FREE)) == 0) {
-				/*
-				 * no per-page ops: refresh ppnext and continue
-				 */
-				if (by_list) {
-					if (pp->pg_version == pp_version)
-						ppnext = TAILQ_NEXT(pp, listq);
-					else
-						/* reset */
-						ppnext = TAILQ_FIRST(&uobj->memq);
-				} else {
-					if (curoff < stop)
-						ppnext = uvm_pagelookup(uobj,
-						    curoff);
-				}
-				continue;
-			}
-
-			/* need to do anything here? */
-		}
+		if (result == VM_PAGER_PEND && (flags & PGO_DEACTIVATE) == 0)
+			continue;
 
 		/*
-		 * need to look at each page of the I/O operation.  we defer
-		 * processing "pp" until the last trip through this "for" loop
-		 * so that we can load "ppnext" for the main loop after we
-		 * play with the cluster pages [thus the "npages + 1" in the
-		 * loop below].
+		 * need to look at each page of the I/O operation, and do what
+		 * we gotta do.
 		 */
 
-		for (lcv = 0 ; lcv < npages + 1 ; lcv++) {
-
-			/*
-			 * handle ppnext for outside loop, and saving pp
-			 * until the end.
-			 */
-			if (lcv < npages) {
-				if (ppsp[lcv] == pp)
-					continue; /* skip pp until the end */
-				ptmp = ppsp[lcv];
-			} else {
-				ptmp = pp;
-
-				/* set up next page for outer loop */
-				if (by_list) {
-					if (pp->pg_version == pp_version)
-						ppnext = TAILQ_NEXT(pp, listq);
-					else
-						/* reset */
-						ppnext = TAILQ_FIRST(&uobj->memq);
-				} else {
-					if (curoff < stop)
-					ppnext = uvm_pagelookup(uobj, curoff);
-				}
-			}
+		for (lcv = 0 ; lcv < npages; lcv++) {
+			ptmp = ppsp[lcv];
 
 			/*
 			 * verify the page didn't get moved while obj was
@@ -1125,25 +937,10 @@ ReTry:
 				atomic_clearbits_int(&ptmp->pg_flags,
 				    PG_WANTED|PG_BUSY);
 				UVM_PAGE_OWN(ptmp, NULL);
-				if (ptmp->pg_flags & PG_RELEASED) {
-
-					/*
-					 * pgo_releasepg needs to grab the
-					 * pageq lock itself.
-					 */
-					uvm_unlock_pageq();
-					if (!uvn_releasepg(ptmp, NULL))
-						return (TRUE);
-
-					uvm_lock_pageq();	/* relock */
-					continue;		/* next page */
-
-				} else {
-					atomic_setbits_int(&ptmp->pg_flags,
-					    PG_CLEAN|PG_CLEANCHK);
-					if ((flags & PGO_FREE) == 0)
-						pmap_clear_modify(ptmp);
-				}
+				atomic_setbits_int(&ptmp->pg_flags,
+				    PG_CLEAN|PG_CLEANCHK);
+				if ((flags & PGO_FREE) == 0)
+					pmap_clear_modify(ptmp);
 			}
 
 			/*
@@ -1156,29 +953,21 @@ ReTry:
 					pmap_page_protect(ptmp, VM_PROT_NONE);
 					uvm_pagedeactivate(ptmp);
 				}
-
-			} else if (flags & PGO_FREE) {
-				if (result == VM_PAGER_PEND) {
-					if ((ptmp->pg_flags & PG_BUSY) != 0)
-						/* signal for i/o done */
-						atomic_setbits_int(
-						    &ptmp->pg_flags,
-						    PG_RELEASED);
-				} else {
-					if (result != VM_PAGER_OK) {
-						printf("uvn_flush: obj=%p, "
-						   "offset=0x%llx.  error "
-						   "during pageout.\n",
-						    pp->uobject,
-						    (long long)pp->offset);
-						printf("uvn_flush: WARNING: "
-						    "changes to page may be "
-						    "lost!\n");
-						retval = FALSE;
-					}
-					pmap_page_protect(ptmp, VM_PROT_NONE);
-					uvm_pagefree(ptmp);
+			} else if (flags & PGO_FREE &&
+			    result != VM_PAGER_PEND) {
+				if (result != VM_PAGER_OK) {
+					printf("uvn_flush: obj=%p, "
+					   "offset=0x%llx.  error "
+					   "during pageout.\n",
+					    pp->uobject,
+					    (long long)pp->offset);
+					printf("uvn_flush: WARNING: "
+					    "changes to page may be "
+					    "lost!\n");
+					retval = FALSE;
 				}
+				pmap_page_protect(ptmp, VM_PROT_NONE);
+				uvm_pagefree(ptmp);
 			}
 
 		}		/* end of "lcv" for loop */
@@ -1321,7 +1110,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 			/* to be useful must get a non-busy, non-released pg */
 			if (ptmp == NULL ||
-			    (ptmp->pg_flags & (PG_BUSY|PG_RELEASED)) != 0) {
+			    (ptmp->pg_flags & PG_BUSY) != 0) {
 				if (lcv == centeridx || (flags & PGO_ALLPAGES)
 				    != 0)
 				done = FALSE;	/* need to do a wait or I/O! */
@@ -1427,7 +1216,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			}
 
 			/* page is there, see if we need to wait on it */
-			if ((ptmp->pg_flags & (PG_BUSY|PG_RELEASED)) != 0) {
+			if ((ptmp->pg_flags & PG_BUSY) != 0) {
 				atomic_setbits_int(&ptmp->pg_flags, PG_WANTED);
 				UVM_UNLOCK_AND_WAIT(ptmp,
 				    &uobj->vmobjlock, FALSE, "uvn_get",0);
