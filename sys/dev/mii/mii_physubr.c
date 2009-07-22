@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.35 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.36 2009/07/22 23:51:43 sthen Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -391,8 +391,7 @@ mii_phy_statusmsg(struct mii_softc *sc)
 
 /*
  * Initialize generic PHY media based on BMSR, called when a PHY is
- * attached.  We expect to be set up to print a comma-separated list
- * of media names.  Does not print a newline.
+ * attached.
  */
 void
 mii_phy_add_media(struct mii_softc *sc)
