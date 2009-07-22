@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.60 2009/07/20 16:49:40 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.61 2009/07/22 13:02:08 thib Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -420,9 +420,6 @@ again:
 		} else 
 			bp->b_flags &= ~B_NEEDCOMMIT;
 
-		/*
-		 * If the lease is non-cachable or IO_SYNC do bwrite().
-		 */
 		if (ioflag & IO_SYNC) {
 			bp->b_proc = p;
 			error = VOP_BWRITE(bp);
