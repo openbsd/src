@@ -1,4 +1,4 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.17 2009/06/03 14:55:48 jj Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.18 2009/07/22 17:46:26 ratchov Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2009 $
+.Dd $Mdocdate: July 22 2009 $
 .Dt MAKEDEV 8 landisk
 .Os
 .Sh NAME
@@ -200,6 +200,9 @@ fd/* nodes, see
 .It Ar lkm
 Loadable kernel modules interface, see
 .Xr lkm 4 .
+.It Ar music*
+MIDI sequencer, see
+.Xr music 4 .
 .It Ar pci*
 PCI bus devices, see
 .Xr pci 4 .
@@ -209,6 +212,9 @@ Packet Filter, see
 .It Ar radio*
 FM tuner devices, see
 .Xr radio 4 .
+.It Ar rmidi*
+Raw MIDI devices, see
+.Xr midi 4 .
 .It Ar *random
 In-kernel random data source, see
 .Xr random 4 .
