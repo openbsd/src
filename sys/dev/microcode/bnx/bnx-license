@@ -34,7 +34,7 @@ accompanying it.
 
 The following files are under this license:
 
-bnx
+bnx-rv2p bnx-xi-rv2p bnx-xi90-rv2p bnx-b06 bnx-b09
 
 These files are needed by various models of bnx(4) devices.
 
