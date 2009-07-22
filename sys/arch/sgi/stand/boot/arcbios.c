@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.11 2009/06/19 17:39:02 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.12 2009/07/22 20:23:44 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -211,7 +211,7 @@ arcbios_init()
 #endif
 	}
 
-	printf("UNRECOGNIZED SYSTEM '%s' VENDOR '%8.8s' PRODUCT '%8.8s'\n",
+	printf("UNRECOGNIZED SYSTEM '%s' VENDOR '%s' PRODUCT '%s'\n",
 	    cf == NULL || sysid == NULL ? "(null)" : sysid,
 	    sid->vendor, sid->prodid);
 	printf("Halting system!\n");
