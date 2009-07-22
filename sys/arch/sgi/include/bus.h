@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.16 2009/07/17 18:06:49 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.17 2009/07/22 20:06:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -304,6 +304,7 @@ bus_space_copy_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 #define BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
 #define BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
 
+#define	BUS_SPACE_MAP_CACHEABLE	0x01
 #define BUS_SPACE_MAP_LINEAR	0x02
 
 #define	BUS_DMA_WAITOK		0x000
