@@ -224,6 +224,7 @@
 ./usr/include/sgi/profile.h
 ./usr/include/sgi/pte.h
 ./usr/include/sgi/ptrace.h
+./usr/include/sgi/rbus_machdep.h
 ./usr/include/sgi/reg.h
 ./usr/include/sgi/regdef.h
 ./usr/include/sgi/regnum.h
