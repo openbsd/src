@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.47 2009/07/22 18:02:23 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.48 2009/07/22 18:06:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -376,7 +376,7 @@ struct mode_key_data {
 #if defined(DEBUG) && \
     ((defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
      (defined(__GNUC__) && __GNUC__ >= 3))
-#define GRID_DEBUG(gd, fmt, ...) log_debug3("%s: (sx=%u, sy=%u, hsize=%u) " \
+#define GRID_DEBUG(gd, fmt, ...) log_debug2("%s: (sx=%u, sy=%u, hsize=%u) " \
     fmt, __func__, (gd)->sx, (gd)->sy, (gd)->hsize, ## __VA_ARGS__)
 #else
 #define GRID_DEBUG(...)
