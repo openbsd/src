@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.112 2009/07/18 13:21:32 sthen Exp $	*/
+/*	$OpenBSD: re.c,v 1.113 2009/07/23 20:15:32 kettenis Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -162,8 +162,9 @@ static inline void re_set_bufaddr(struct rl_desc *, bus_addr_t);
 
 int	re_encap(struct rl_softc *, struct mbuf *, int *);
 
-int	re_newbuf(struct rl_softc *, int, struct mbuf *);
+int	re_newbuf(struct rl_softc *);
 int	re_rx_list_init(struct rl_softc *);
+void	re_rx_list_fill(struct rl_softc *);
 int	re_tx_list_init(struct rl_softc *);
 int	re_rxeof(struct rl_softc *);
 int	re_txeof(struct rl_softc *);
@@ -1099,6 +1100,8 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_TX_QLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
+	m_clsetwms(ifp, MCLBYTES, 2, RL_RX_DESC_CNT);
+
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 			       IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 
@@ -1201,28 +1204,24 @@ fail_0:
 
 
 int
-re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
+re_newbuf(struct rl_softc *sc)
 {
-	struct mbuf	*n = NULL;
+	struct mbuf	*m;
 	bus_dmamap_t	map;
 	struct rl_desc	*d;
 	struct rl_rxsoft *rxs;
 	u_int32_t	cmdstat;
-	int		error;
+	int		error, idx;
 
-	if (m == NULL) {
-		MGETHDR(n, M_DONTWAIT, MT_DATA);
-		if (n == NULL)
-			return (ENOBUFS);
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (ENOBUFS);
 
-		MCLGET(n, M_DONTWAIT);
-		if (!(n->m_flags & M_EXT)) {
-			m_freem(n);
-			return (ENOBUFS);
-		}
-		m = n;
-	} else
-		m->m_data = m->m_ext.ext_buf;
+	MCLGETI(m, M_DONTWAIT, &sc->sc_arpcom.ac_if, MCLBYTES);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		return (ENOBUFS);
+	}
 
 	/*
 	 * Initialize mbuf length fields and fixup
@@ -1232,13 +1231,15 @@ re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
 	m->m_len = m->m_pkthdr.len = RE_RX_DESC_BUFLEN;
 	m->m_data += RE_ETHER_ALIGN;
 
+	idx = sc->rl_ldata.rl_rx_prodidx;
 	rxs = &sc->rl_ldata.rl_rxsoft[idx];
 	map = rxs->rxs_dmamap;
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
-
-	if (error)
-		goto out;
+	if (error) {
+		m_freem(m);
+		return (ENOBUFS);
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
@@ -1250,7 +1251,8 @@ re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
 	if (cmdstat & RL_RDESC_STAT_OWN) {
 		printf("%s: tried to map busy RX descriptor\n",
 		    sc->sc_dev.dv_xname);
-		goto out;
+		m_freem(m);
+		return (ENOBUFS);
 	}
 
 	rxs->rxs_mbuf = m;
@@ -1266,11 +1268,10 @@ re_newbuf(struct rl_softc *sc, int idx, struct mbuf *m)
 	d->rl_cmdstat = htole32(cmdstat);
 	RL_RXDESCSYNC(sc, idx, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
+	sc->rl_ldata.rl_rx_prodidx = RL_NEXT_RX_DESC(sc, idx);
+	sc->rl_ldata.rl_rx_cnt++;
+
 	return (0);
- out:
-	if (n != NULL)
-		m_freem(n);
-	return (ENOMEM);
 }
 
 
@@ -1299,19 +1300,25 @@ re_tx_list_init(struct rl_softc *sc)
 int
 re_rx_list_init(struct rl_softc *sc)
 {
-	int	i;
-
-	memset((char *)sc->rl_ldata.rl_rx_list, 0, RL_RX_LIST_SZ);
-
-	for (i = 0; i < RL_RX_DESC_CNT; i++) {
-		if (re_newbuf(sc, i, NULL) == ENOBUFS)
-			return (ENOBUFS);
-	}
+	bzero(sc->rl_ldata.rl_rx_list, RL_RX_LIST_SZ);
 
 	sc->rl_ldata.rl_rx_prodidx = 0;
+	sc->rl_ldata.rl_rx_considx = 0;
+	sc->rl_ldata.rl_rx_cnt = 0;
 	sc->rl_head = sc->rl_tail = NULL;
 
+	re_rx_list_fill(sc);
+
 	return (0);
+}
+
+void
+re_rx_list_fill(struct rl_softc *sc)
+{
+	while (sc->rl_ldata.rl_rx_cnt < RL_RX_DESC_CNT) {
+		if (re_newbuf(sc) == ENOBUFS)
+			break;
+	}
 }
 
 /*
@@ -1331,7 +1338,8 @@ re_rxeof(struct rl_softc *sc)
 
 	ifp = &sc->sc_arpcom.ac_if;
 
-	for (i = sc->rl_ldata.rl_rx_prodidx;; i = RL_NEXT_RX_DESC(sc, i)) {
+	for (i = sc->rl_ldata.rl_rx_considx; sc->rl_ldata.rl_rx_cnt > 0;
+	     i = RL_NEXT_RX_DESC(sc, i)) {
 		cur_rx = &sc->rl_ldata.rl_rx_list[i];
 		RL_RXDESCSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1343,6 +1351,8 @@ re_rxeof(struct rl_softc *sc)
 		total_len = rxstat & sc->rl_rxlenmask;
 		rxs = &sc->rl_ldata.rl_rxsoft[i];
 		m = rxs->rxs_mbuf;
+		rxs->rxs_mbuf = NULL;
+		sc->rl_ldata.rl_rx_cnt--;
 		rx = 1;
 
 		/* Invalidate the RX mbuf and unload its map */
@@ -1361,7 +1371,6 @@ re_rxeof(struct rl_softc *sc)
 				sc->rl_tail->m_next = m;
 				sc->rl_tail = m;
 			}
-			re_newbuf(sc, i, NULL);
 			continue;
 		}
 
@@ -1399,22 +1408,6 @@ re_rxeof(struct rl_softc *sc)
 				m_freem(sc->rl_head);
 				sc->rl_head = sc->rl_tail = NULL;
 			}
-			re_newbuf(sc, i, m);
-			continue;
-		}
-
-		/*
-		 * If allocating a replacement mbuf fails,
-		 * reload the current one.
-		 */
-
-		if (re_newbuf(sc, i, NULL)) {
-			ifp->if_ierrors++;
-			if (sc->rl_head != NULL) {
-				m_freem(sc->rl_head);
-				sc->rl_head = sc->rl_tail = NULL;
-			}
-			re_newbuf(sc, i, m);
 			continue;
 		}
 
@@ -1492,7 +1485,8 @@ re_rxeof(struct rl_softc *sc)
 		ether_input_mbuf(ifp, m);
 	}
 
-	sc->rl_ldata.rl_rx_prodidx = i;
+	sc->rl_ldata.rl_rx_considx = i;
+	re_rx_list_fill(sc);
 
 	return (rx);
 }
