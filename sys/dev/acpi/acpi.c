@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.140 2009/06/03 07:13:48 pirofti Exp $ */
+/* $OpenBSD: acpi.c,v 1.141 2009/07/23 01:38:16 cnst Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2244,7 +2244,8 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	else if (!strcmp(dev, ACPI_DEV_THINKPAD)) {
 		aaa.aaa_name = "acpithinkpad";
 		acpi_thinkpad_enabled = 1;
-	}
+	} else if (!strcmp(dev, ACPI_DEV_ASUSAIBOOSTER))
+		aaa.aaa_name = "aibs";
 
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);

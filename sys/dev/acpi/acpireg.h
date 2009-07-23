@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.17 2009/04/11 08:22:48 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.18 2009/07/23 01:38:16 cnst Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -494,5 +494,6 @@ struct acpi_facs {
 #define ACPI_DEV_FFB	"FIXEDBUTTON"	/* Fixed Feature Button */
 #define ACPI_DEV_ASUS	"ASUS010"	/* ASUS Hotkeys */
 #define ACPI_DEV_THINKPAD "IBM0068"	/* ThinkPad support */
+#define ACPI_DEV_ASUSAIBOOSTER	"ATK0110"	/* ASUSTeK AI Booster */
 
 #endif	/* !_DEV_ACPI_ACPIREG_H_ */

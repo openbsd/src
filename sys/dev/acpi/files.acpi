@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.22 2009/06/03 07:13:48 pirofti Exp $
+#	$OpenBSD: files.acpi,v 1.23 2009/07/23 01:38:16 cnst Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -91,3 +91,8 @@ file	dev/acpi/acpivout.c		acpivout
 device	acpipwrres
 attach	acpipwrres at acpi
 file	dev/acpi/acpipwrres.c		acpipwrres
+
+# ASUSTeK AI Booster ATK0110
+device	aibs
+attach	aibs at acpi
+file	dev/acpi/atk0110.c		aibs
