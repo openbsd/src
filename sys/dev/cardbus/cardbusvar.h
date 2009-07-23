@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.12 2006/10/12 16:35:51 grange Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.13 2009/07/23 15:09:41 kettenis Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -276,7 +276,6 @@ typedef struct cardbus_devfunc {
 	rbus_tag_t ct_rbus_iot;		/* CardBus i/o rbus tag */
 	rbus_tag_t ct_rbus_memt;	/* CardBus mem rbus tag */
 
-	u_int32_t ct_bar[6];		/* Base Address Regs 0 to 6 */
 	u_int32_t ct_lc;		/* Latency timer and cache line size */
 	/* u_int32_t ct_cisreg; */	/* CIS reg: is it needed??? */
 
@@ -395,9 +394,6 @@ int	cardbus_mapreg_map(struct cardbus_softc *, int, int, cardbusreg_t,
 	    bus_size_t *);
 int	cardbus_mapreg_unmap(struct cardbus_softc *, int, int,
 	    bus_space_tag_t, bus_space_handle_t, bus_size_t);
-
-int	cardbus_save_bar(cardbus_devfunc_t);
-int	cardbus_restore_bar(cardbus_devfunc_t);
 
 int	cardbus_function_enable(struct cardbus_softc *, int function);
 int	cardbus_function_disable(struct cardbus_softc *, int function);

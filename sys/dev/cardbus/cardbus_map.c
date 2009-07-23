@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus_map.c,v 1.8 2007/09/17 20:29:47 miod Exp $	*/
+/*	$OpenBSD: cardbus_map.c,v 1.9 2009/07/23 15:09:41 kettenis Exp $	*/
 /*	$NetBSD: cardbus_map.c,v 1.10 2000/03/07 00:31:46 mycroft Exp $	*/
 
 /*
@@ -349,56 +349,4 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg,
 	cardbus_free_tag(cc, cf, cardbustag);
 
 	return (st);
-}
-
-/*
- * int cardbus_save_bar(cardbus_devfunc_t);
- *
- *   This function saves the Base Address Registers at the CardBus
- *   function denoted by the argument.
- */
-int
-cardbus_save_bar(cardbus_devfunc_t ct)
-{
-	cardbustag_t tag = Cardbus_make_tag(ct);
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-
-	ct->ct_bar[0] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE0_REG);
-	ct->ct_bar[1] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE1_REG);
-	ct->ct_bar[2] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE2_REG);
-	ct->ct_bar[3] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE3_REG);
-	ct->ct_bar[4] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE4_REG);
-	ct->ct_bar[5] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE5_REG);
-
-	DPRINTF(("cardbus_save_bar: %x %x\n", ct->ct_bar[0], ct->ct_bar[1]));
-
-	Cardbus_free_tag(ct, tag);
-
-	return (0);
-}
-
-/*
- * int cardbus_restore_bar(cardbus_devfunc_t);
- *
- *   This function saves the Base Address Registers at the CardBus
- *   function denoted by the argument.
- */
-int
-cardbus_restore_bar(cardbus_devfunc_t ct)
-{
-	cardbustag_t tag = Cardbus_make_tag(ct);
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE0_REG, ct->ct_bar[0]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE1_REG, ct->ct_bar[1]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE2_REG, ct->ct_bar[2]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE3_REG, ct->ct_bar[3]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE4_REG, ct->ct_bar[4]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE5_REG, ct->ct_bar[5]);
-
-	Cardbus_free_tag(ct, tag);
-
-	return (0);
 }
