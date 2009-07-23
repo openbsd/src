@@ -1,0 +1,122 @@
+.\"	$OpenBSD: aibs.4,v 1.1 2009/07/23 01:40:32 cnst Exp $
+.\"
+.\" Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 23 2009 $
+.Dt AIBS 4
+.Os
+.Sh NAME
+.Nm aibs
+.Nd ASUSTeK AI Booster ACPI ATK0110 voltage, temperature and fan sensor
+.Sh SYNOPSIS
+.Cd "aibs* at acpi?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the voltage, temperature and fan sensors
+available through
+ATK0110
+ACPI
+device
+on ASUSTeK motherboards.
+The number of sensors of each type,
+as well as the description of each sensor,
+varies with motherboards.
+.Pp
+The driver supports an arbitrary set of sensors,
+provides description regarding what each sensor is used for,
+and reports whether each sensor is within the specifications
+as defined by the motherboard manufacturer through ACPI.
+.Pp
+The
+.Nm
+driver supports sensor states as follows.
+Temperature sensors can have a state of
+.Dv OK ,
+.Dv WARN ,
+.Dv CRIT
+or
+.Dv UNKNOWN ;
+whereas fan and voltage sensors can have a state of
+.Dv OK
+or
+.Dv WARN
+only.
+Temperature sensors that have a reading of 0
+are marked as invalid and their state is set to
+.Dv UNKNOWN ,
+whereas all other sensors are always assumed valid.
+Temperature sensors have two upper limits
+.Dv ( WARN
+and
+.Dv CRIT )
+, fan sensors have either only the lower limit, or
+one lower and one upper limit,
+and voltage sensors always have a lower and an upper limit.
+.Pp
+Sensor values are made available through the
+.Dv HW_SENSORS
+.Xr sysctl 3
+interface,
+and can be monitored with
+.Xr systat 1 
+.Ar sensors
+view,
+.Xr sensorsd 8
+and
+.Xr sysctl 8
+.Ar hw.sensors .
+For example, on Asus Stricker Extreme motherboard:
+.Bd -literal -offset indent
+$ sysctl hw.sensors.aibs0
+hw.sensors.aibs0.temp0=31.00 degC (CPU Temperature), OK
+hw.sensors.aibs0.temp1=43.00 degC (MB Temperature), OK
+hw.sensors.aibs0.fan0=2490 RPM (CPU FAN Speed), OK
+hw.sensors.aibs0.fan1=0 RPM (CHASSIS FAN Speed), WARNING
+hw.sensors.aibs0.fan2=0 RPM (OPT1 FAN Speed), WARNING
+hw.sensors.aibs0.fan3=0 RPM (OPT2 FAN Speed), WARNING
+hw.sensors.aibs0.fan4=0 RPM (OPT3 FAN Speed), WARNING
+hw.sensors.aibs0.fan5=0 RPM (OPT4 FAN Speed), WARNING
+hw.sensors.aibs0.fan6=0 RPM (OPT5 FAN Speed), WARNING
+hw.sensors.aibs0.fan7=0 RPM (PWR FAN Speed), WARNING
+hw.sensors.aibs0.volt0=1.26 VDC (Vcore Voltage), OK
+hw.sensors.aibs0.volt1=3.25 VDC ( +3.3 Voltage), OK
+hw.sensors.aibs0.volt2=4.95 VDC ( +5.0 Voltage), OK
+hw.sensors.aibs0.volt3=11.78 VDC (+12.0 Voltage), OK
+hw.sensors.aibs0.volt4=1.23 VDC (1.2VHT Voltage), OK
+hw.sensors.aibs0.volt5=1.50 VDC (SB CORE Voltage), OK
+hw.sensors.aibs0.volt6=1.25 VDC (CPU VTT Voltage), OK
+hw.sensors.aibs0.volt7=0.93 VDC (DDR2 TERM Voltage), OK
+hw.sensors.aibs0.volt8=1.23 VDC (NB CORE Voltage), OK
+hw.sensors.aibs0.volt9=1.87 VDC (MEMORY Voltage), OK
+.Ed
+.Sh SEE ALSO
+.Xr systat 1 ,
+.Xr sysctl 3 ,
+.Xr acpi 4 ,
+.Xr intro 4 ,
+.Xr sensorsd 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.7 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Constantine A. Murenin Aq cnst@openbsd.org ,
+University of Waterloo.
