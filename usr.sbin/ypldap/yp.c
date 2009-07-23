@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.2 2009/06/02 07:40:50 bernd Exp $ */
+/*	$OpenBSD: yp.c,v 1.3 2009/07/23 19:37:38 blambert Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -418,19 +418,17 @@ ypproc_first_2_svc(ypreq_nokey *arg, struct svc_req *req)
 			return (NULL);
 
 		yp_make_keyval(&res, env->sc_user_lines, env->sc_user_lines);
-		return (&res);
 	} else if (strcmp(arg->map, "group.byname") == 0) {
 		if (env->sc_group_lines == NULL)
 			return (NULL);
 
 		yp_make_keyval(&res, env->sc_group_lines, env->sc_group_lines);
-		return (&res);
 	} else {
 		log_debug("unknown map %s", arg->map);
 		res.stat = YP_NOMAP;
-		return (&res);
 	}
-	return (NULL);
+
+	return (&res);
 }
 
 ypresp_key_val *
