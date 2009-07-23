@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.16 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -680,8 +680,7 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 			splx(s);
 			timeout_del(&sc->sc_rawrepeat_ch);
 			sc->sc_nrep = j;
-			timeout_add(&sc->sc_rawrepeat_ch,
-			    (hz * REP_DELAY1) / 1000);
+			timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAY1);
 		}
 	} else
 #endif
@@ -703,7 +702,7 @@ dnkbd_rawrepeat(void *v)
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
 
-	timeout_add(&sc->sc_rawrepeat_ch, (hz * REP_DELAYN) / 1000);
+	timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAYN);
 }
 #endif
 
@@ -1053,7 +1052,7 @@ void
 dnkbd_bell(void *v, u_int period, u_int pitch, u_int volume)
 {
 	struct dnkbd_softc *sc = v;
-	int ticks, s;
+	int s;
 
 	s = spltty();
 
@@ -1063,9 +1062,6 @@ dnkbd_bell(void *v, u_int period, u_int pitch, u_int volume)
 			dnkbd_bellstop(v);
 		}
 	} else {
-		ticks = (period * hz) / 1000;
-		if (ticks <= 0)
-			ticks = 1;
 
 		if (!ISSET(sc->sc_flags, SF_BELL)) {
 			dnkbd_pollout(sc->sc_regs, DNCMD_PREFIX);
@@ -1076,7 +1072,7 @@ dnkbd_bell(void *v, u_int period, u_int pitch, u_int volume)
 
 		if (ISSET(sc->sc_flags, SF_BELL_TMO))
 			timeout_del(&sc->sc_bellstop_tmo);
-		timeout_add(&sc->sc_bellstop_tmo, ticks);
+		timeout_add_msec(&sc->sc_bellstop_tmo, period);
 		SET(sc->sc_flags, SF_BELL_TMO);
 	}
 
