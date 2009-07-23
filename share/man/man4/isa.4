@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.63 2009/01/23 20:32:22 mk Exp $
+.\"	$OpenBSD: isa.4,v 1.64 2009/07/23 21:20:05 jmc Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,17 +31,18 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 23 2009 $
+.Dd $Mdocdate: July 23 2009 $
 .Dt ISA 4
 .Os
 .Sh NAME
-.Nm isa
+.Nm isa , isadma
 .Nd introduction to ISA bus support
 .Sh SYNOPSIS
 .Cd "# amd64 and i386"
 .Cd "isa* at amdpcib?"
 .Cd "isa0 at mainbus0"
 .Cd "isa0 at pcib?"
+.Cd "isadma0 at isa?"
 .Pp
 .Cd "# i386"
 .Cd "isa0 at ichpcib?"
@@ -52,25 +53,23 @@
 .Cd "# alpha"
 .Cd "isa* at pceb?"
 .Cd "isa* at sio?"
+.Cd "isadma0 at isa?"
 .Pp
 .Cd "# hp300"
 .Cd "isa* at isabr?"
+.Sh DESCRIPTION
+The system includes a machine-independent ISA bus subsystem
+and several machine-independent ISA device drivers.
 .Pp
 Attachments are machine-dependent and depend on the bus topology and
-.Tn ISA
-bus interface of your system.
-See
-.Xr intro 4
-for your system for details.
-.Sh DESCRIPTION
-The system includes a machine-independent
-.Tn ISA
-bus subsystem and several machine-independent
-.Tn ISA
-device drivers.
+ISA bus interface of the system.
+Drivers able to use DMA attach at
+.Nm isadma ;
+otherwise they attach at
+.Nm isa .
 .Pp
-Note that interrupt mappings on the i386 may require that you configure
-your BIOS to reserve the interrupts for these devices as "Legacy ISA".
+Note that interrupt mappings on the i386 may require that the BIOS
+be configured to reserve the interrupts for these devices as "Legacy ISA".
 If such configuration is not done, the system may use those interrupts
 for
 .Xr pci 4
