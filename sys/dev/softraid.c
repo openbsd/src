@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.167 2009/07/12 21:48:03 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.168 2009/07/23 15:15:25 jordan Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2714,6 +2714,23 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			    (ch_entry->src_meta.scmi.scm_coerced_size & 
 			    ~((strip_size >> DEV_BSHIFT) - 1)) * (no_chunk - 1);
 			break;
+#ifdef not_yet
+		case 6:
+			if (no_chunk < 4)
+				goto unwind;
+			strlcpy(sd->sd_name, "RAID 6",
+			    sizeof(sd->sd_name));
+			/*
+			 * XXX add variable strip size later even though
+			 * MAXPHYS is really the clever value, users like
+			 * to tinker with that type of stuff
+			 */
+			strip_size = MAXPHYS;
+			vol_size = 
+			    (ch_entry->src_meta.scmi.scm_coerced_size & 
+			    ~((strip_size >> DEV_BSHIFT) - 1)) * (no_chunk - 2);
+			break;
+#endif /* not_yet */
 #ifdef AOE
 #ifdef not_yet
 		case 'A':
@@ -3124,6 +3141,10 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 		else
 			sd->sd_type = SR_MD_RAID5;
 		sr_raidp_discipline_init(sd);
+		break;
+	case 6:
+		sd->sd_type = SR_MD_RAID6;
+		sr_raid6_discipline_init(sd);
 		break;
 #ifdef AOE
 	/* AOE target. */

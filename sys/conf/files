@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.467 2009/06/17 01:30:30 thib Exp $
+#	$OpenBSD: files,v 1.468 2009/07/23 15:15:25 jordan Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -458,6 +458,7 @@ file	dev/softraid_raid1.c		softraid
 file	dev/softraid_raidp.c		softraid
 file	dev/softraid_crypto.c		softraid & crypto
 file	dev/softraid_aoe.c		softraid & ether & aoe
+file	dev/softraid_raid6.c		softraid
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk

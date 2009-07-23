@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.79 2009/07/12 16:31:56 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.80 2009/07/23 15:15:25 jordan Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -264,6 +264,8 @@ struct sr_workunit {
 	int			swu_flags;	/* additional hints */
 #define SR_WUF_REBUILD		(1<<0)		/* rebuild io */
 #define SR_WUF_REBUILDIOCOMP	(1<<1)		/* rbuild io complete */
+#define SR_WUF_FAIL		(1<<2)		/* RAID6: failure */
+#define SR_WUF_FAILIOCOMP	(1<<3)
 
 	int			swu_fake;	/* faked wu */
 	/* workunit io range */
@@ -305,6 +307,12 @@ struct sr_raid1 {
 #define SR_RAIDP_NOWU		16
 struct sr_raidp {
 	int32_t			srp_strip_bits;
+};
+
+/* RAID 6 */
+#define SR_RAID6_NOWU		16
+struct sr_raid6 {
+	int32_t			sr6_strip_bits;
 };
 
 /* CRYPTO */
@@ -394,6 +402,7 @@ struct sr_discipline {
 #define	SR_MD_AOE_INIT		5
 #define	SR_MD_AOE_TARG		6
 #define	SR_MD_RAID4		7
+#define	SR_MD_RAID6		8
 	char			sd_name[10];	/* human readable dis name */
 	u_int8_t		sd_scsibus;	/* scsibus discipline uses */
 	struct scsi_link	sd_link;	/* link to midlayer */
@@ -402,6 +411,7 @@ struct sr_discipline {
 	    struct sr_raid0	mdd_raid0;
 	    struct sr_raid1	mdd_raid1;
 	    struct sr_raidp	mdd_raidp;
+	    struct sr_raid6	mdd_raid6;
 	    struct sr_crypto	mdd_crypto;
 #ifdef AOE
 	    struct sr_aoe	mdd_aoe;
@@ -536,6 +546,7 @@ void			sr_raid_startwu(struct sr_workunit *);
 void			sr_raid0_discipline_init(struct sr_discipline *);
 void			sr_raid1_discipline_init(struct sr_discipline *);
 void			sr_raidp_discipline_init(struct sr_discipline *);
+void			sr_raid6_discipline_init(struct sr_discipline *);
 void			sr_crypto_discipline_init(struct sr_discipline *);
 void			sr_aoe_discipline_init(struct sr_discipline *);
 void			sr_aoe_server_discipline_init(struct sr_discipline *);
