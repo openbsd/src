@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.36 2009/07/23 16:37:44 claudio Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.37 2009/07/23 20:40:00 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -91,9 +91,7 @@ will implicitly set the
 .Ic stub Ic router
 option to ensure that no traffic tries to transit via this router.
 .Pp
-.It Xo
-.Ic rdomain Ar tableid
-.Xc
+.It Ic rdomain Ar tableid
 Specifies the routing table
 .Xr ospfd 8
 should modify.
