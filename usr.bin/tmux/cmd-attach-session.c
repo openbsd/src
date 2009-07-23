@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.4 2009/07/17 15:03:11 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.5 2009/07/23 12:33:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,6 +54,9 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 	if ((s = cmd_find_session(ctx, data->target)) == NULL)
 		return (-1);
+
+	if (ctx->cmdclient == NULL && ctx->curclient == NULL)
+		return (0);
 
 	if (ctx->cmdclient == NULL) {
 		if (data->chflags & CMD_CHFLAG('d')) {
