@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.135 2009/06/27 11:35:57 michele Exp $	*/
+/*	$OpenBSD: route.c,v 1.136 2009/07/23 14:19:52 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1248,7 +1248,10 @@ get_linkstate(int mt, int link_state)
 		}
 	}
 
-	return ("unknown");
+	if (LINK_STATE_IS_UP(link_state))
+		return ("up");
+	else
+		return ("down");
 }
 
 void
