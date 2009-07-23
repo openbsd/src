@@ -1154,6 +1154,7 @@
 ./usr/share/man/cat4/ahc.0
 ./usr/share/man/cat4/ahci.0
 ./usr/share/man/cat4/ahd.0
+./usr/share/man/cat4/aibs.0
 ./usr/share/man/cat4/aic.0
 ./usr/share/man/cat4/akbd.0
 ./usr/share/man/cat4/ale.0
