@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.18 2009/07/22 21:28:41 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.19 2009/07/23 19:24:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -115,10 +115,6 @@ struct mips_bus_space {
     (*(t)->_space_subregion)((t), (h), (o), (s), (p))
 
 #define	bus_space_vaddr(t, h)	(*(t)->_space_vaddr)((t), (h))
-
-/* Helper function in pmap.c */
-int bus_mem_add_mapping(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-
 
 /*----------------------------------------------------------------------------*/
 #define bus_space_read_multi(n,m)					      \

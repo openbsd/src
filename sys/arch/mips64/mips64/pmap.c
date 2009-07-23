@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 2009/04/25 20:35:31 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.37 2009/07/23 19:24:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1362,41 +1362,4 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		}
 	}
 	splx(s);
-}
-
-/*==================================================================*/
-/* Bus space map utility functions */
-
-int
-bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
-			bus_space_handle_t *bshp)
-{
-	bus_addr_t vaddr;
-	bus_addr_t spa, epa;
-	bus_size_t off;
-	int len;
-
-	spa = trunc_page(bpa);
-	epa = bpa + size;
-	off = bpa - spa;
-	len = size+off;
-
-	vaddr = uvm_km_valloc_wait(kernel_map, len);
-	*bshp = vaddr + off;
-#ifdef DEBUG_BUS_MEM_ADD_MAPPING
-	printf("map bus %x size %x to %x vbase %x\n", bpa, size, *bshp, spa);
-#endif
-	for (; len > 0; len -= NBPG) {
-		pt_entry_t *pte, npte;
-
-		npte = vad_to_pfn(spa) | PG_G;
-		npte |= PG_V | PG_M | PG_IOPAGE;
-		pte = kvtopte(vaddr);
-		*pte = npte;
-		tlb_update(vaddr, npte);
-
-		spa += NBPG;
-		vaddr += NBPG;
-	}
-	return 0;
 }
