@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhpib.c,v 1.15 2005/11/13 18:52:15 miod Exp $	*/
+/*	$OpenBSD: fhpib.c,v 1.16 2009/07/23 21:26:20 blambert Exp $	*/
 /*	$NetBSD: fhpib.c,v 1.18 1997/05/05 21:04:16 thorpej Exp $	*/
 
 /*
@@ -490,7 +490,7 @@ fhpibdone(hs)
 	if (hs->sc_flags & HPIBF_READ) {
 		hd->hpib_imask = IM_IDLE | IM_BYTE;
 		if (hs->sc_flags & HPIBF_TIMO)
-			timeout_add(&sc->sc_dma_to, hz >> 2);
+			timeout_add_msec(&sc->sc_dma_to, 250);
 	} else {
 		cnt = hs->sc_count;
 		if (cnt) {
