@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.171 2009/07/23 10:20:44 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.172 2009/07/23 14:53:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -587,26 +587,17 @@ kr_show_route(struct imsg *imsg)
 				case AF_INET:
 					kr = h->kroute;
 					snh.valid = kroute_validate(&kr->r);
-					snh.connected =
-					    kr->r.flags & F_CONNECTED;
-					if ((snh.gateway.v4.s_addr =
-					    kr->r.nexthop.s_addr) != 0)
-						snh.gateway.af = AF_INET;
+					snh.krvalid = 1;
+					memcpy(&snh.kr.kr4, &kr->r,
+					    sizeof(snh.kr.kr4));
 					ifindex = kr->r.ifindex;
 					break;
 				case AF_INET6:
 					kr6 = h->kroute;
 					snh.valid = kroute6_validate(&kr6->r);
-					snh.connected =
-					    kr6->r.flags & F_CONNECTED;
-					if (memcmp(&kr6->r.nexthop,
-					    &in6addr_any,
-					    sizeof(struct in6_addr)) != 0) {
-						snh.gateway.af = AF_INET6;
-						memcpy(&snh.gateway.v6,
-						    &kr6->r.nexthop,
-						    sizeof(struct in6_addr));
-					}
+					snh.krvalid = 1;
+					memcpy(&snh.kr.kr6, &kr6->r,
+					    sizeof(snh.kr.kr6));
 					ifindex = kr6->r.ifindex;
 					break;
 				}
