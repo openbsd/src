@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.4 2009/07/21 21:25:19 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.5 2009/07/23 19:24:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -180,8 +180,8 @@ ppb_function_explore(pci_chipset_tag_t pc, pcitag_t tag, struct extent *ioex,
 {
 	bus_addr_t base;
 	bus_size_t size;
-	int reg, reg_start, reg_end;
-	pcireg_t csr, bhlcr, type;
+	int reg, reg_start, reg_end, reg_rom;
+	pcireg_t csr, bhlcr, type, mask;
 
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr &
@@ -192,14 +192,17 @@ ppb_function_explore(pci_chipset_tag_t pc, pcitag_t tag, struct extent *ioex,
 	case 0:
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_END;
+		reg_rom = PCI_ROM_REG;
 		break;
 	case 1:	/* PCI-PCI bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PPB_END;
+		reg_rom = 0;	/* 0x38 */
 		break;
 	case 2:	/* PCI-Cardbus bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PCB_END;
+		reg_rom = 0;
 		break;
 	default:
 		return;
@@ -232,6 +235,20 @@ ppb_function_explore(pci_chipset_tag_t pc, pcitag_t tag, struct extent *ioex,
 
 		if (type == (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT))
 			reg += 4;
+	}
+
+	if (reg_rom != 0) {
+		pci_conf_write(pc, tag, reg_rom, ~PCI_ROM_ENABLE);
+		mask = pci_conf_read(pc, tag, reg_rom);
+		size = PCI_ROM_SIZE(mask);
+
+		if (size != 0) {
+			if (memex != NULL)
+				(void)extent_alloc(memex, size, size, 0, 0, 0,
+				    &base);
+		}
+
+		pci_conf_write(pc, tag, reg_rom, 0);
 	}
 
 	/*
