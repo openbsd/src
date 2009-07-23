@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.71 2009/06/05 22:40:24 chris Exp $ */
+/*	$OpenBSD: kroute.c,v 1.72 2009/07/23 16:36:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -483,7 +483,7 @@ kr_redist_eval(struct kroute *kr, struct rroute *rr)
 	/* prefix should be redistributed */
 	kr->flags |= F_REDISTRIBUTED;
 	/*
-	 * only on of all multipath routes can be redistributed so
+	 * only one of all multipath routes can be redistributed so
 	 * redistribute the best one.
 	 */
 	if (rr->metric > metric) {
@@ -637,8 +637,7 @@ kroute_insert(struct kroute_node *kr)
 
 	if ((krm = RB_INSERT(kroute_tree, &krt, kr)) != NULL) {
 		/*
-		 * Multipath route, add at end of list and clone the
-		 * ospfd inserted flag.
+		 * Multipath route, add at end of list.
 		 */
 		while (krm->next != NULL)
 			krm = krm->next;
