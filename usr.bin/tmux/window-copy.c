@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.6 2009/07/12 16:15:34 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.7 2009/07/23 17:03:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -194,6 +194,7 @@ window_copy_key(struct window_pane *wp, struct client *c, int key)
 		break;
 	case MODEKEYCMD_STARTSELECTION:
  		window_copy_start_selection(wp);
+		window_copy_redraw_screen(wp);
 		break;
 	case MODEKEYCMD_CLEARSELECTION:
 		screen_clear_selection(&data->screen);
