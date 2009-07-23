@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2008/10/23 23:54:02 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 2009/07/23 19:20:56 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@ struct pv_entry {
 };
 #define	__pmap_pv_alloc()	pool_get(&__pmap_pv_pool, PR_NOWAIT)
 #define	__pmap_pv_free(pv)	pool_put(&__pmap_pv_pool, (pv))
-STATIC void __pmap_pv_enter(pmap_t, struct vm_page *, vaddr_t, vm_prot_t);
+STATIC int __pmap_pv_enter(pmap_t, struct vm_page *, vaddr_t, vm_prot_t);
 STATIC void __pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t);
 STATIC void *__pmap_pv_page_alloc(struct pool *, int, int *);
 STATIC void __pmap_pv_page_free(struct pool *, void *);
@@ -331,8 +331,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			return (0);
 
 		/* Add to physical-virtual map list of this page */
-		__pmap_pv_enter(pmap, pg, va, prot);
-
+		if (__pmap_pv_enter(pmap, pg, va, prot) != 0) {
+			if (flags & PMAP_CANFAIL)
+				return (ENOMEM);
+			panic("pmap_enter: cannot allocate pv entry");
+		}
 	} else {	/* bus-space (always uncached map) */
 		if (kva) {
 			entry |= PG_V | PG_SH |
@@ -421,11 +424,11 @@ __pmap_map_change(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 }
 
 /*
- * void __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr):
+ * int __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr):
  *	Insert physical-virtual map to vm_page.
  *	Assume pre-existed mapping is already removed.
  */
-void
+int
 __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot)
 {
 	struct vm_page_md *pvh;
@@ -457,12 +460,18 @@ __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot)
 	/* Register pv map */
 	pvh = &pg->mdpage;
 	pv = __pmap_pv_alloc();
+	if (pv == NULL) {
+		splx(s);
+		return (ENOMEM);
+	}
+
 	pv->pv_pmap = pmap;
 	pv->pv_va = va;
 	pv->pv_prot = prot;
 
 	SLIST_INSERT_HEAD(&pvh->pvh_head, pv, pv_link);
 	splx(s);
+	return (0);
 }
 
 void
