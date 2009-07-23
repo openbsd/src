@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.24 2009/04/06 20:51:48 kettenis Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.25 2009/07/23 19:29:58 kettenis Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ obsd_pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		    csr & ~PCI_COMMAND_MEM_ENABLE);
 	address = pci_conf_read(pc, tag, reg);
-	pci_conf_write(pc, tag, reg, 0xffffffff);
+	pci_conf_write(pc, tag, reg, PCI_MAPREG_MEM_ADDR_MASK);
 	mask = pci_conf_read(pc, tag, reg);
 	pci_conf_write(pc, tag, reg, address);
 	if (is64bit) {
