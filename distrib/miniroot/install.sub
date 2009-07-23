@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.593 2009/07/14 23:45:16 krw Exp $
+#	$OpenBSD: install.sub,v 1.594 2009/07/23 00:30:03 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1914,8 +1914,7 @@ export EDITOR COLUMNS
 
 # umount all filesystems, just in case we are re-running install or upgrade.
 cd /
-[[ -f /etc/fstab ]] && umount -af 1>/dev/null 2>&1
-umount /mnt 1>/dev/null 2>&1
+umount -af 1>/dev/null 2>&1
 
 cat <<__EOT
 At any prompt except password prompts you can escape to a shell by
