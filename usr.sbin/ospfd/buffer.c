@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.15 2009/06/06 07:31:26 eric Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.16 2009/07/23 18:58:42 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,7 +153,7 @@ buf_write(struct msgbuf *msgbuf)
 		if (i >= IOV_MAX)
 			break;
 		iov[i].iov_base = buf->buf + buf->rpos;
-		iov[i].iov_len = buf->size - buf->rpos;
+		iov[i].iov_len = buf->wpos - buf->rpos;
 		i++;
 	}
 
@@ -173,8 +173,8 @@ buf_write(struct msgbuf *msgbuf)
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
 		next = TAILQ_NEXT(buf, entry);
-		if (buf->rpos + n >= buf->size) {
-			n -= buf->size - buf->rpos;
+		if (buf->rpos + n >= buf->wpos) {
+			n -= buf->wpos - buf->rpos;
 			buf_dequeue(msgbuf, buf);
 		} else {
 			buf->rpos += n;
