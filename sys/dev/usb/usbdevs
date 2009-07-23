@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.443 2009/06/06 16:56:56 yuo Exp $
+$OpenBSD: usbdevs,v 1.444 2009/07/23 18:22:34 maja Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1237,10 +1237,14 @@ product DLINK3 KVM221		0x020f	KVM-221
 /* DisplayLink products */
 product DISPLAYLINK LCD4300U	0x01ba	LCD-4300U
 product DISPLAYLINK LCD8000U	0x01bb	LCD-8000U
+product DISPLAYLINK VCUD60	0x0136	Rextron DVI
 product DISPLAYLINK DLDVI	0x0141	DisplayLink DVI
 product DISPLAYLINK VGA10	0x015a	CMP-USBVGA10
 product DISPLAYLINK WSDVI	0x0198	WS Tech DVI
 product DISPLAYLINK EC008	0x019b	EasyCAP008 DVI
+product DISPLAYLINK HPDOCK	0x01d4	HP USB Docking
+product DISPLAYLINK M01061	0x01e2	Lenovo DVI
+product DISPLAYLINK SWDVI	0x024c	SUNWEIT DVI
 
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
