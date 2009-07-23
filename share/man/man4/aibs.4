@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aibs.4,v 1.1 2009/07/23 01:40:32 cnst Exp $
+.\"	$OpenBSD: aibs.4,v 1.2 2009/07/23 06:42:27 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
 .\"
@@ -19,37 +19,37 @@
 .Os
 .Sh NAME
 .Nm aibs
-.Nd ASUSTeK AI Booster ACPI ATK0110 voltage, temperature and fan sensor
+.Nd "ASUSTeK AI Booster ACPI ATK0110 temperature, voltage, and fan sensor"
 .Sh SYNOPSIS
 .Cd "aibs* at acpi?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the voltage, temperature and fan sensors
-available through
+available through the
 ATK0110
 ACPI
 device
 on ASUSTeK motherboards.
 The number of sensors of each type,
 as well as the description of each sensor,
-varies with motherboards.
+varies according to the motherboard.
 .Pp
 The driver supports an arbitrary set of sensors,
-provides description regarding what each sensor is used for,
+provides a description regarding what each sensor is used for,
 and reports whether each sensor is within the specifications
 as defined by the motherboard manufacturer through ACPI.
 .Pp
 The
 .Nm
-driver supports sensor states as follows.
-Temperature sensors can have a state of
+driver supports sensor states as follows:
+temperature sensors can have a state of
 .Dv OK ,
 .Dv WARN ,
 .Dv CRIT
 or
 .Dv UNKNOWN ;
-whereas fan and voltage sensors can have a state of
+fan and voltage sensors can have a state of
 .Dv OK
 or
 .Dv WARN
@@ -61,8 +61,8 @@ whereas all other sensors are always assumed valid.
 Temperature sensors have two upper limits
 .Dv ( WARN
 and
-.Dv CRIT )
-, fan sensors have either only the lower limit, or
+.Dv CRIT ) ,
+fan sensors have either only the lower limit, or
 one lower and one upper limit,
 and voltage sensors always have a lower and an upper limit.
 .Pp
@@ -70,15 +70,15 @@ Sensor values are made available through the
 .Dv HW_SENSORS
 .Xr sysctl 3
 interface,
-and can be monitored with
-.Xr systat 1 
+and can be monitored with the
+.Xr systat 1
 .Ar sensors
 view,
-.Xr sensorsd 8
-and
+.Xr sensorsd 8 ,
+or
 .Xr sysctl 8
 .Ar hw.sensors .
-For example, on Asus Stricker Extreme motherboard:
+For example, on an Asus Stricker Extreme motherboard:
 .Bd -literal -offset indent
 $ sysctl hw.sensors.aibs0
 hw.sensors.aibs0.temp0=31.00 degC (CPU Temperature), OK
