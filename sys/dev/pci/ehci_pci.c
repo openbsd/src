@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.16 2009/06/25 01:01:44 deraadt Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.17 2009/07/23 19:42:02 deraadt Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -69,6 +69,7 @@ int ehci_sb700_match(struct pci_attach_args *pa);
 
 #define EHCI_SBx00_WORKAROUND_REG	0x50
 #define EHCI_SBx00_WORKAROUND_ENABLE	(1 << 3)
+#define EHCI_VT6202_WORKAROUND_REG	0x48
 
 int	ehci_pci_match(struct device *, void *, void *);
 void	ehci_pci_attach(struct device *, struct device *, void *);
@@ -127,18 +128,41 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
 	/* Handle quirks */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
-	    ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_EHCI ||
-	      (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB700_EHCI &&
-	       pci_find_device(NULL, ehci_sb700_match))))) {
-		pcireg_t value;
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_ATI:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_EHCI ||
+		    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB700_EHCI &&
+		     pci_find_device(NULL, ehci_sb700_match))) {
+			pcireg_t value;
 
-		/* apply the ATI SB600/SB700 workaround */
-		value = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		    EHCI_SBx00_WORKAROUND_REG);
-		pci_conf_write(sc->sc_pc, sc->sc_tag,
-		    EHCI_SBx00_WORKAROUND_REG, value |
-		    EHCI_SBx00_WORKAROUND_ENABLE);
+			/* apply the ATI SB600/SB700 workaround */
+			value = pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    EHCI_SBx00_WORKAROUND_REG);
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    EHCI_SBx00_WORKAROUND_REG, value |
+			    EHCI_SBx00_WORKAROUND_ENABLE);
+		}
+		break;
+
+	case PCI_VENDOR_VIATECH:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT6202 &&
+		    (PCI_REVISION(pa->pa_class) & 0xf0) == 0x60) {
+			pcireg_t value;
+
+			/*
+			 * The VT6202 defaults to a 1 usec EHCI sleep time
+			 * which hogs the PCI bus *badly*. Setting bit 5 of
+			 * the register makes that sleep time use the conventional
+			 * 10 usec.
+			 */
+			value = pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    EHCI_VT6202_WORKAROUND_REG);
+			if ((value & 0x20000000) == 0)
+				printf(", applying VIA VT6202 workaround");
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    EHCI_VT6202_WORKAROUND_REG, value | 0x20000000);
+		}
+		break;
 	}
 
 	/* Map and establish the interrupt. */
