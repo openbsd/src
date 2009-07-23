@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.40 2009/07/21 21:25:19 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.41 2009/07/23 19:24:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -2292,10 +2292,10 @@ xbridge_resource_explore(struct xbridge_softc *sc, pcitag_t tag,
     struct extent *ioex, struct extent *memex)
 {
 	pci_chipset_tag_t pc = &sc->sc_pc;
-	pcireg_t bhlc, type;
+	pcireg_t bhlc, type, addr, mask;
 	bus_addr_t base;
 	bus_size_t size;
-	int reg, reg_start, reg_end;
+	int reg, reg_start, reg_end, reg_rom;
 	int rc = 0;
 
 	bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
@@ -2303,14 +2303,17 @@ xbridge_resource_explore(struct xbridge_softc *sc, pcitag_t tag,
 	case 0:
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_END;
+		reg_rom = PCI_ROM_REG;
 		break;
 	case 1:	/* PCI-PCI bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PPB_END;
+		reg_rom = 0;	/* 0x38 */
 		break;
 	case 2:	/* PCI-CardBus bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PCB_END;
+		reg_rom = 0;
 		break;
 	default:
 		return rc;
@@ -2356,6 +2359,28 @@ xbridge_resource_explore(struct xbridge_softc *sc, pcitag_t tag,
 		}
 	}
 
+	if (reg_rom != 0) {
+		addr = pci_conf_read(pc, tag, reg_rom);
+		pci_conf_write(pc, tag, reg_rom, ~PCI_ROM_ENABLE);
+		mask = pci_conf_read(pc, tag, reg_rom);
+		pci_conf_write(pc, tag, reg_rom, addr);
+		size = PCI_ROM_SIZE(mask);
+
+		if (size != 0) {
+			if (memex != NULL) {
+				rc |= XR_MEM;
+				if (size > memex->ex_end - memex->ex_start)
+					rc |= XR_MEM_OFLOW | XR_MEM_OFLOW_S;
+				else if (extent_alloc(memex, size, size,
+				    0, 0, 0, &base) != 0)
+					rc |= XR_MEM_OFLOW | XR_MEM_OFLOW_S;
+				else if (base >= BRIDGE_DEVIO_SHORT)
+					rc |= XR_MEM_OFLOW_S;
+			} else
+				rc |= XR_MEM | XR_MEM_OFLOW | XR_MEM_OFLOW_S;
+		}
+	}
+
 	return rc;
 }
 
@@ -2364,24 +2389,27 @@ xbridge_resource_manage(struct xbridge_softc *sc, pcitag_t tag,
     struct extent *ioex, struct extent *memex)
 {
 	pci_chipset_tag_t pc = &sc->sc_pc;
-	pcireg_t bhlc, type;
+	pcireg_t bhlc, type, mask;
 	bus_addr_t base;
 	bus_size_t size;
-	int reg, reg_start, reg_end;
+	int reg, reg_start, reg_end, reg_rom;
 
 	bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(bhlc)) {
 	case 0:
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_END;
+		reg_rom = PCI_ROM_REG;
 		break;
 	case 1:	/* PCI-PCI bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PPB_END;
+		reg_rom = 0;	/* 0x38 */
 		break;
 	case 2:	/* PCI-CardBus bridge */
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PCB_END;
+		reg_rom = 0;
 		break;
 	default:
 		return;
@@ -2439,6 +2467,33 @@ xbridge_resource_manage(struct xbridge_softc *sc, pcitag_t tag,
 
 		if (type == (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT))
 			reg += 4;
+	}
+
+	if (reg_rom != 0) {
+		base = (bus_addr_t)pci_conf_read(pc, tag, reg_rom);
+		pci_conf_write(pc, tag, reg_rom, ~PCI_ROM_ENABLE);
+		mask = pci_conf_read(pc, tag, reg_rom);
+		size = PCI_ROM_SIZE(mask);
+
+		if (size != 0) {
+#ifdef DEBUG
+			printf("bar %02x type rom base %p size %p",
+			    reg_rom, base, size);
+#endif
+			if (memex != NULL) {
+				if (extent_alloc(memex, size, size, 0, 0, 0,
+				    &base) != 0)
+					base = 0;
+			} else
+				base = 0;
+#ifdef DEBUG
+			printf(" setup at %p\n", base);
+#endif
+		} else
+			base = 0;
+
+		/* ROM intentionally left disabled */
+		pci_conf_write(pc, tag, reg_rom, base);
 	}
 }
 
