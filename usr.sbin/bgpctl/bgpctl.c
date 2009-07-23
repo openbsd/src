@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.144 2009/07/21 11:49:36 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.145 2009/07/23 14:55:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -65,7 +65,7 @@ void		 show_interface_head(void);
 int		 ift2ifm(int);
 const char *	 get_media_descr(int);
 const char *	 get_linkstate(int, int);
-void		 print_baudrate(u_int64_t);
+const char *	 get_baudrate(u_int64_t, char *);
 int		 show_interface_msg(struct imsg *);
 void		 show_rib_summary_head(void);
 void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t);
@@ -848,35 +848,77 @@ show_fib_msg(struct imsg *imsg)
 void
 show_nexthop_head(void)
 {
-	printf("%-20s %-10s\n", "Nexthop", "State");
+	printf("Flags: * = nexthop valid\n");
+	printf("\n  %-15s %-19s%-4s %-15s %-20s\n", "Nexthop", "Route",
+	     "Prio", "Gateway", "Iface");
 }
 
 int
 show_nexthop_msg(struct imsg *imsg)
 {
 	struct ctl_show_nexthop	*p;
+	struct kroute		*k;
+	struct kroute6		*k6;
+	char			*s;
 	int			 ifms_type;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEXTHOP:
 		p = imsg->data;
-		printf("%-20s %-10s", log_addr(&p->addr),
-		    p->valid ? "valid" : "invalid");
+		printf("%s %-15s ", p->valid ? "*" : " ", log_addr(&p->addr));
+		if (!p->krvalid) {
+			printf("\n");
+			return (0);
+		}
+		switch (p->addr.af) {
+		case AF_INET:
+			k = &p->kr.kr4;
+			if (asprintf(&s, "%s/%u", inet_ntoa(k->prefix),
+			    k->prefixlen) == -1)
+				err(1, NULL);
+			printf("%-20s", s);
+			free(s);
+			printf("%3i %-15s ", k->priority,
+			    k->flags & F_CONNECTED ? "connected" :
+			    inet_ntoa(k->nexthop));
+			break;
+		case AF_INET6:
+			k6 = &p->kr.kr6;
+			if (asprintf(&s, "%s/%u", log_in6addr(&k6->prefix),
+			    k6->prefixlen) == -1)
+				err(1, NULL);
+			printf("%-20s", s);
+			free(s);
+			printf("%3i %-15s ", k6->priority,
+			    k6->flags & F_CONNECTED ? "connected" :
+			    log_in6addr(&k6->nexthop));
+			break;
+		default:
+			printf("unknown address familiy %d\n", p->addr.af);
+			return (0);
+		}
 		if (p->kif.ifname[0]) {
-			printf("%-8s", p->kif.ifname);
-			if (p->kif.flags & IFF_UP) {
-				printf("UP");
-				ifms_type = ift2ifm(p->kif.media_type);
-				if (ifms_type != 0)
-					printf(", %s, %s",
-					    get_media_descr(ifms_type),
-					    get_linkstate(ifms_type,
-					    p->kif.link_state));
+			char *s1;
+			ifms_type = ift2ifm(p->kif.media_type);
+			if (LINK_STATE_IS_UP(p->kif.link_state)) {
 				if (p->kif.baudrate) {
-					printf(", ");
-					print_baudrate(p->kif.baudrate);
-				}
-			}
+					if (asprintf(&s1, ", %s",
+					    get_baudrate(p->kif.baudrate,
+					    "bps")) == -1)
+						err(1, NULL);
+				} else if (asprintf(&s1, ", %s", get_linkstate(
+				    ifms_type, p->kif.link_state)) == -1)
+						err(1, NULL);
+			} else if (ifms_type)
+				if (asprintf(&s1, ", %s", get_linkstate(
+				    ifms_type, p->kif.link_state)) == -1)
+					err(1, NULL);
+			if (asprintf(&s, "%s (%s%s)", p->kif.ifname, 
+			    p->kif.flags & IFF_UP ? "UP" : "DOWN", s1) == -1)
+				err(1, NULL);
+			printf("%-15s", s);
+			free(s1);
+			free(s);
 		}
 		printf("\n");
 		break;
@@ -955,17 +997,25 @@ get_linkstate(int media_type, int link_state)
 	return ("unknown link state");
 }
 
-void
-print_baudrate(u_int64_t baudrate)
+const char *
+get_baudrate(u_int64_t baudrate, char *unit)
 {
+	static char bbuf[16];
+
 	if (baudrate > IF_Gbps(1))
-		printf("%llu GBit/s", baudrate / IF_Gbps(1));
+		snprintf(bbuf, sizeof(bbuf), "%llu G%s",
+		    baudrate / IF_Gbps(1), unit);
 	else if (baudrate > IF_Mbps(1))
-		printf("%llu MBit/s", baudrate / IF_Mbps(1));
+		snprintf(bbuf, sizeof(bbuf), "%llu M%s",
+		    baudrate / IF_Mbps(1), unit);
 	else if (baudrate > IF_Kbps(1))
-		printf("%llu KBit/s", baudrate / IF_Kbps(1));
+		snprintf(bbuf, sizeof(bbuf), "%llu K%s",
+		    baudrate / IF_Kbps(1), unit);
 	else
-		printf("%llu Bit/s", baudrate);
+		snprintf(bbuf, sizeof(bbuf), "%llu %s",
+		    baudrate, unit);
+
+	return (bbuf);
 }
 
 int
@@ -990,8 +1040,7 @@ show_interface_msg(struct imsg *imsg)
 			printf("link state %u", k->link_state);
 
 		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0) {
-			printf(", ");
-			print_baudrate(k->baudrate);
+			printf(", %s", get_baudrate(k->baudrate, "Bit/s"));
 		}
 		printf("\n");
 		break;
