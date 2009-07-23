@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.21 2006/03/12 01:38:34 brad Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.22 2009/07/23 15:58:37 miod Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -155,7 +155,7 @@ pcic_isa_bus_width_probe(sc, iot, ioh, base, length)
 		}
 	}
 
-	bus_space_free(iot, ioh_high, length);
+	bus_space_unmap(iot, ioh_high, length);
 
 	sc->ranges = pcic_isa_addr;
 	if (iobuswidth == 10) {
