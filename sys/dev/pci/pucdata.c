@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.63 2009/06/26 17:41:29 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.64 2009/07/23 21:38:48 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1071,6 +1071,18 @@ const struct puc_device_description puc_devices[] = {
 	/* Lava Computers Octopus-550 serial ports */
 	{   /* "Lava Computers Octopus-550 8-port serial", */
 	    {   PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS550_0,	0, 0	},
+	    {   0xffff, 0xfffc,					0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Lava Computers Octopus-550 serial ports */
+	{   /* "Lava Computers Octopus-550 8-port serial", */
+	    {   PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS550_1,	0, 0	},
 	    {   0xffff, 0xfffc,					0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
