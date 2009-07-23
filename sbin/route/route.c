@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.136 2009/07/23 14:19:52 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.137 2009/07/23 14:23:06 sthen Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1274,7 +1274,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
 		(void) printf("if# %d, ", ifm->ifm_index);
-		if (!nflag && if_indextoname(ifm->ifm_index, ifname) != NULL)
+		if (if_indextoname(ifm->ifm_index, ifname) != NULL)
 			printf("name: %s, ", ifname);
 		printf("link: %s, flags:",
 		    get_linkstate(ifm->ifm_data.ifi_type,
