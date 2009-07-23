@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.34 2009/06/02 21:43:41 miod Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.35 2009/07/23 07:37:44 jsg Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -599,7 +599,7 @@ uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
 	memcpy(buf+1, data, len);
 
 	retstat = usbd_set_report(scd->sc_parent->sc_iface, type,
-				  scd->sc_report_id, data, len + 1);
+				  scd->sc_report_id, buf, len + 1);
 
 	free(buf, M_TEMP);
 
