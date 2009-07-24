@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.17 2009/07/23 19:42:02 deraadt Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.18 2009/07/24 03:18:58 deraadt Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -157,8 +157,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 			 */
 			value = pci_conf_read(sc->sc_pc, sc->sc_tag,
 			    EHCI_VT6202_WORKAROUND_REG);
-			if ((value & 0x20000000) == 0)
-				printf(", applying VIA VT6202 workaround");
 			pci_conf_write(sc->sc_pc, sc->sc_tag,
 			    EHCI_VT6202_WORKAROUND_REG, value | 0x20000000);
 		}
