@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.8 2009/07/22 21:23:29 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.9 2009/07/24 18:46:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -676,7 +676,7 @@ cmd_find_index(struct cmd_ctx *ctx, const char *arg, struct session **sp)
 	 */
 	if ((s = cmd_current_session(ctx)) == NULL) {
 		ctx->error(ctx, "can't establish current session");
-		return (-1);
+		return (-2);
 	}
 
 	/* A NULL argument means the current session and "no window" (-1). */
