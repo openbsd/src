@@ -27,7 +27,7 @@
 
 extern void bsd_uthread_set_supply_uthread (struct gdbarch *gdbarch,
 				    void (*supply_uthread) (struct regcache *,
-							    int, CORE_ADDR));
+							    int, CORE_ADDR, int));
 
 
 /* Set the function that collects registers for an inactive thread for
@@ -35,6 +35,6 @@ extern void bsd_uthread_set_supply_uthread (struct gdbarch *gdbarch,
 
 extern void bsd_uthread_set_collect_uthread (struct gdbarch *gdbarch,
 			     void (*collect_uthread) (const struct regcache *,
-						      int, CORE_ADDR));
+						      int, CORE_ADDR, int));
 
 #endif /* bsd-uthread.h */

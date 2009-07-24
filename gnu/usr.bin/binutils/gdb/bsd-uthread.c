@@ -48,10 +48,10 @@ static struct gdbarch_data *bsd_uthread_data;
 struct bsd_uthread_ops
 {
   /* Supply registers for an inactive thread to a register cache.  */
-  void (*supply_uthread)(struct regcache *, int, CORE_ADDR);
+  void (*supply_uthread)(struct regcache *, int, CORE_ADDR, int);
 
   /* Collect registers for an inactive thread from a register cache.  */
-  void (*collect_uthread)(const struct regcache *, int, CORE_ADDR);
+  void (*collect_uthread)(const struct regcache *, int, CORE_ADDR, int);
 };
 
 static void *
@@ -69,7 +69,7 @@ bsd_uthread_init (struct obstack *obstack)
 void
 bsd_uthread_set_supply_uthread (struct gdbarch *gdbarch,
 				void (*supply_uthread) (struct regcache *,
-							int, CORE_ADDR))
+							int, CORE_ADDR, int))
 {
   struct bsd_uthread_ops *ops = gdbarch_data (gdbarch, bsd_uthread_data);
   ops->supply_uthread = supply_uthread;
@@ -81,7 +81,7 @@ bsd_uthread_set_supply_uthread (struct gdbarch *gdbarch,
 void
 bsd_uthread_set_collect_uthread (struct gdbarch *gdbarch,
 			 void (*collect_uthread) (const struct regcache *,
-						  int, CORE_ADDR))
+						  int, CORE_ADDR, int))
 {
   struct bsd_uthread_ops *ops = gdbarch_data (gdbarch, bsd_uthread_data);
   ops->collect_uthread = collect_uthread;
@@ -287,7 +287,7 @@ bsd_uthread_fetch_registers (int regnum)
     {
       bsd_uthread_check_magic (addr);
       ops->supply_uthread (current_regcache, regnum,
-			   addr + bsd_uthread_thread_ctx_offset);
+			   addr, bsd_uthread_thread_ctx_offset);
     }
 }
 
@@ -305,7 +305,7 @@ bsd_uthread_store_registers (int regnum)
     {
       bsd_uthread_check_magic (addr);
       ops->collect_uthread (current_regcache, regnum,
-			    addr + bsd_uthread_thread_ctx_offset);
+			    addr, bsd_uthread_thread_ctx_offset);
     }
   else
     {

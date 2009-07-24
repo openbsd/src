@@ -248,14 +248,19 @@ static int amd64obsd_uthread_reg_offset[] =
 
 static void
 amd64obsd_supply_uthread (struct regcache *regcache,
-			  int regnum, CORE_ADDR addr)
+			  int regnum, CORE_ADDR addr,
+			  int ctx_offset)
 {
-  CORE_ADDR sp_addr = addr + AMD64OBSD_UTHREAD_RSP_OFFSET;
+  CORE_ADDR sp_addr = addr + ctx_offset;
   CORE_ADDR sp = 0;
   char buf[8];
   int i;
 
   gdb_assert (regnum >= -1);
+
+  /* if ctx_offset is 0 use old fixed offset */
+  if (ctx_offset == 0)
+    sp_addr += AMD64OBSD_UTHREAD_RSP_OFFSET;
 
   if (regnum == -1 || regnum == AMD64_RSP_REGNUM)
     {
@@ -290,14 +295,19 @@ amd64obsd_supply_uthread (struct regcache *regcache,
 
 static void
 amd64obsd_collect_uthread (const struct regcache *regcache,
-			   int regnum, CORE_ADDR addr)
+			   int regnum, CORE_ADDR addr,
+			   int ctx_offset)
 {
-  CORE_ADDR sp_addr = addr + AMD64OBSD_UTHREAD_RSP_OFFSET;
+  CORE_ADDR sp_addr = addr + ctx_offset;
   CORE_ADDR sp = 0;
   char buf[8];
   int i;
 
   gdb_assert (regnum >= -1);
+
+  /* if ctx_offset is 0 use old fixed offset */
+  if (ctx_offset == 0)
+    sp_addr += AMD64OBSD_UTHREAD_RSP_OFFSET;
 
   if (regnum == -1 || regnum == AMD64_RSP_REGNUM)
     {

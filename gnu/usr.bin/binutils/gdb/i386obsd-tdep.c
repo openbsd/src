@@ -222,14 +222,19 @@ static int i386obsd_uthread_reg_offset[] =
 
 static void
 i386obsd_supply_uthread (struct regcache *regcache,
-			 int regnum, CORE_ADDR addr)
+			 int regnum, CORE_ADDR addr,
+			 int ctx_offset)
 {
-  CORE_ADDR sp_addr = addr + I386OBSD_UTHREAD_ESP_OFFSET;
+  CORE_ADDR sp_addr = addr + ctx_offset;
   CORE_ADDR sp = 0;
   char buf[4];
   int i;
 
   gdb_assert (regnum >= -1);
+
+  /* if ctx_offset is 0 use old fixed offset */
+  if (ctx_offset == 0)
+    sp_addr += I386OBSD_UTHREAD_ESP_OFFSET;
 
   if (regnum == -1 || regnum == I386_ESP_REGNUM)
     {
@@ -264,14 +269,19 @@ i386obsd_supply_uthread (struct regcache *regcache,
 
 static void
 i386obsd_collect_uthread (const struct regcache *regcache,
-			  int regnum, CORE_ADDR addr)
+			  int regnum, CORE_ADDR addr,
+			  int ctx_offset)
 {
-  CORE_ADDR sp_addr = addr + I386OBSD_UTHREAD_ESP_OFFSET;
+  CORE_ADDR sp_addr = addr + ctx_offset;
   CORE_ADDR sp = 0;
   char buf[4];
   int i;
 
   gdb_assert (regnum >= -1);
+
+  /* if ctx_offset is 0 use old fixed offset */
+  if (ctx_offset == 0)
+    sp_addr += I386OBSD_UTHREAD_ESP_OFFSET;
 
   if (regnum == -1 || regnum == I386_ESP_REGNUM)
     {
