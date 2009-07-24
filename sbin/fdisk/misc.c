@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.21 2009/04/07 16:06:37 weingart Exp $	*/
+/*	$OpenBSD: misc.c,v 1.22 2009/07/24 23:28:00 halex Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -96,18 +96,17 @@ ask_num(const char *str, int flags, int dflt, int low, int high,
 	size_t lbuflen;
 	int num;
 
+	if (dflt < low)
+		dflt = low;
+	else if (dflt > high)
+		dflt = high;
+
 	do {
 again:
-		if (dflt < low)
-			num = low;
-		else if (dflt > high)
-			num = high;
-		else
-			num = dflt;
 		if (flags == ASK_HEX)
-			printf("%s [%X - %X]: [%X] ", str, low, high, num);
+			printf("%s [%X - %X]: [%X] ", str, low, high, dflt);
 		else
-			printf("%s [%d - %d]: [%d] ", str, low, high, num);
+			printf("%s [%d - %d]: [%d] ", str, low, high, dflt);
 		if (help)
 			printf("(? for help) ");
 
