@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.4 2009/07/24 08:37:47 jsg Exp $	*/
+/*	$OpenBSD: parse.c,v 1.5 2009/07/24 11:41:15 jsg Exp $	*/
 /*	$NetBSD: parse.c,v 1.2 2001/12/29 20:44:22 augustss Exp $	*/
 
 /*
@@ -84,7 +84,6 @@ hid_clear_local(hid_item_t *c)
 	c->string_minimum = 0;
 	c->string_maximum = 0;
 	c->set_delimiter = 0;
-	c->report_size = 0;
 }
 
 hid_data_t
