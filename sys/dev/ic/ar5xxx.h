@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.46 2009/06/02 12:39:02 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.47 2009/07/24 16:31:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -33,7 +33,6 @@
 #define _AR5K_H
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
