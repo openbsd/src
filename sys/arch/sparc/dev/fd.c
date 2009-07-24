@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.64 2009/04/10 20:53:51 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.65 2009/07/24 08:07:39 blambert Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1307,7 +1307,7 @@ loop:
 			fdc->sc_state = MOTORWAIT;
 			if ((fdc->sc_flags & FDC_NEEDMOTORWAIT) != 0) { /* XXX */
 				/* Allow .25s for motor to stabilize. */
-				timeout_add(&fd->fd_motor_on_to, hz / 4);
+				timeout_add_msec(&fd->fd_motor_on_to, 250);
 			} else {
 				fd->sc_flags &= ~FD_MOTOR_WAIT;
 				goto loop;
@@ -1431,7 +1431,7 @@ loop:
 		fdc->sc_state = SEEKCOMPLETE;
 		if (fdc->sc_flags & FDC_NEEDHEADSETTLE) {
 			/* allow 1/50 second for heads to settle */
-			timeout_add(&fdc->fdcpseudointr_to, hz / 50);
+			timeout_add_msec(&fdc->fdcpseudointr_to, 20);
 			return (1);		/* will return later */
 		}
 		/*FALLTHROUGH*/
@@ -1461,7 +1461,7 @@ loop:
 		fdc->sc_state = IOCLEANUPWAIT;
 		fdc->sc_nstat = 0;
 		/* 1/10 second should be enough */
-		timeout_add(&fdc->fdctimeout_to, hz / 10);
+		timeout_add_msec(&fdc->fdctimeout_to, 100);
 		return (1);
 
 	case IOCLEANUPTIMEDOUT:
@@ -1569,7 +1569,7 @@ loop:
 		fdc->sc_nstat = 0;
 		fdc->sc_itask = FDC_ITASK_SENSEI;
 		fdc->sc_state = RESETCOMPLETE;
-		timeout_add(&fdc->fdctimeout_to, hz / 2);
+		timeout_add_msec(&fdc->fdctimeout_to, 500);
 		fdc_reset(fdc);
 		return (1);			/* will return later */
 
