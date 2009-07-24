@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.137 2009/06/16 00:11:29 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.138 2009/07/24 21:57:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1232,11 +1232,11 @@ pmap_kenter_pa(va, pa, prot)
 	    pmap_prot(pmap_kernel(), prot));
 	if (pa >= HPPA_IOBEGIN)
 		pte |= PTE_PROT(TLB_UNCACHABLE);
+	if (opte)
+		pmap_pte_flush(pmap_kernel(), va, opte);
 	pmap_pte_set(pde, va, pte);
 	pmap_kernel()->pm_stats.wired_count++;
 	pmap_kernel()->pm_stats.resident_count++;
-	if (opte)
-		pmap_pte_flush(pmap_kernel(), va, opte);
 
 #ifdef PMAPDEBUG
 	{
