@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.7 2009/06/03 17:39:26 ckuethe Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.8 2009/07/24 14:13:28 blambert Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -428,7 +428,7 @@ ragain:
 		IFQ_ENQUEUE(&ifp->if_snd, m, NULL, rv);
 		if ((ifp->if_flags & IFF_OACTIVE) == 0)
 			(*ifp->if_start)(ifp);
-		timeout_add(&ar->to, hz * 10);
+		timeout_add_sec(&ar->to, 10);
 		splx(s);
 
 		if (rv) {
