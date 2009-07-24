@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.21 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: hid.c,v 1.22 2009/07/24 08:37:47 jsg Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -268,7 +268,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				c->logical_maximum = dval;
 				break;
 			case 3:
-				c->physical_maximum = dval;
+				c->physical_minimum = dval;
 				break;
 			case 4:
 				c->physical_maximum = dval;
