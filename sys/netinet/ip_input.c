@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.164 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.165 2009/07/24 12:30:05 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1416,16 +1416,17 @@ int inetctlerrmap[PRC_NCMDS] = {
  * via a source route.
  */
 void
-ip_forward(m, srcrt)
-	struct mbuf *m;
-	int srcrt;
+ip_forward(struct mbuf *m, int srcrt)
 {
+	u_int8_t icmp_buf[68];
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
 	struct rtentry *rt;
 	int error, type = 0, code = 0, destmtu = 0;
 	u_int rtableid = 0;
-	struct mbuf *mcopy;
+	u_int icmp_len;
+	struct ifnet *ifp;
+	u_int8_t generated;
 	n_long dest;
 
 	dest = 0;
@@ -1472,11 +1473,11 @@ ip_forward(m, srcrt)
 	/*
 	 * Save at most 68 bytes of the packet in case
 	 * we need to generate an ICMP message to the src.
-	 * Pullup to avoid sharing mbuf cluster between m and mcopy.
 	 */
-	mcopy = m_copym(m, 0, min(ntohs(ip->ip_len), 68), M_DONTWAIT);
-	if (mcopy)
-		mcopy = m_pullup(mcopy, min(ntohs(ip->ip_len), 68));
+	icmp_len = min(sizeof(icmp_buf), ntohs(ip->ip_len));
+	m_copydata(m, 0, icmp_len, (caddr_t)icmp_buf);
+	ifp = m->m_pkthdr.rcvif;
+	generated = m->m_pkthdr.pf.flags & PF_TAG_GENERATED;
 
 	ip->ip_ttl -= IPTTLDEC;
 
@@ -1523,10 +1524,8 @@ ip_forward(m, srcrt)
 		if (type)
 			ipstat.ips_redirectsent++;
 		else
-			goto freecopy;
+			goto freert;
 	}
-	if (mcopy == NULL)
-		goto freert;
 
 	switch (error) {
 
@@ -1568,20 +1567,33 @@ ip_forward(m, srcrt)
 		 * source quench could be a big problem under DoS attacks,
 		 * or the underlying interface is rate-limited.
 		 */
-		goto freecopy;
 #else
 		type = ICMP_SOURCEQUENCH;
 		code = 0;
-		break;
 #endif
+		break;
 	}
 
-	icmp_error(mcopy, type, code, dest, destmtu);
-	goto freert;
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		goto freert;
 
- freecopy:
-	if (mcopy)
-		m_free(mcopy);
+	if (icmp_len > MHLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if (!ISSET(m->m_flags, M_EXT)) {
+                        m_free(m);
+			goto freert;
+                }
+        }
+
+	m->m_len = m->m_pkthdr.len = icmp_len;
+	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.rdomain = rtableid;
+	m->m_pkthdr.pf.flags |= generated;
+	bcopy(icmp_buf, m->m_data, icmp_len);
+
+	icmp_error(m, type, code, dest, destmtu);
+
  freert:
 #ifndef SMALL_KERNEL
 	if (ipmultipath && ipforward_rt.ro_rt &&
