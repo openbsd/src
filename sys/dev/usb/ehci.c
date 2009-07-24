@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.100 2009/06/02 23:49:33 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.101 2009/07/24 08:15:38 blambert Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -3235,7 +3235,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		timeout_del(&xfer->timeout_handle);
 		timeout_set(&xfer->timeout_handle, ehci_timeout, xfer);
-		timeout_add(&xfer->timeout_handle, mstohz(xfer->timeout));
+		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
 	ehci_add_intr_list(sc, exfer);
 	xfer->status = USBD_IN_PROGRESS;
@@ -3347,7 +3347,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		timeout_del(&xfer->timeout_handle);
 		timeout_set(&xfer->timeout_handle, ehci_timeout, xfer);
-		timeout_add(&xfer->timeout_handle, mstohz(xfer->timeout));
+		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
 	ehci_add_intr_list(sc, exfer);
 	xfer->status = USBD_IN_PROGRESS;
@@ -3522,7 +3522,7 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		timeout_del(&xfer->timeout_handle);
 		timeout_set(&xfer->timeout_handle, ehci_timeout, xfer);
-		timeout_add(&xfer->timeout_handle, mstohz(xfer->timeout));
+		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
 	ehci_add_intr_list(sc, exfer);
 	xfer->status = USBD_IN_PROGRESS;
@@ -3623,8 +3623,7 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 		if (xfer->timeout && !sc->sc_bus.use_polling) {
 			timeout_del(&xfer->timeout_handle);
 			timeout_set(&xfer->timeout_handle, ehci_timeout, xfer);
-			timeout_add(&xfer->timeout_handle,
-			    mstohz(xfer->timeout));
+			timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 		}
 		splx(s);
 

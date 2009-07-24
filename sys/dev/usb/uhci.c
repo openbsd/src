@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.70 2009/06/02 23:49:33 deraadt Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.71 2009/07/24 08:15:38 blambert Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1845,7 +1845,7 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		timeout_del(&xfer->timeout_handle);
 		timeout_set(&xfer->timeout_handle, uhci_timeout, ii);
-		timeout_add(&xfer->timeout_handle, mstohz(xfer->timeout));
+		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
 	xfer->status = USBD_IN_PROGRESS;
 	splx(s);
@@ -2270,7 +2270,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
 		timeout_del(&xfer->timeout_handle);
 		timeout_set(&xfer->timeout_handle, uhci_timeout, ii);
-		timeout_add(&xfer->timeout_handle, mstohz(xfer->timeout));
+		timeout_add_msec(&xfer->timeout_handle, xfer->timeout);
 	}
 	xfer->status = USBD_IN_PROGRESS;
 	splx(s);
