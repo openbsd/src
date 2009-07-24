@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.25 2008/08/29 11:15:32 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.26 2009/07/24 17:22:37 jsg Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -40,6 +40,8 @@
  */
 #ifndef _DEV_ATH_ATHVAR_H
 #define _DEV_ATH_ATHVAR_H
+
+#ifdef _KERNEL
 
 #include <net80211/ieee80211_radiotap.h>
 #include <dev/ic/ar5xxx.h>
@@ -118,8 +120,6 @@ struct ath_stats {
 	u_int32_t	ast_rate_raise;	/* rate control raised xmit rate */
 	u_int32_t	ast_rate_drop;	/* rate control dropped xmit rate */
 };
-
-#define	SIOCGATHSTATS	_IOWR('i', 137, struct ifreq)
 
 /*
  * Radio capture format.
@@ -556,5 +556,9 @@ int	ath_enable(struct ath_softc *);
 	((*(_ah)->ah_fill_tx_desc)((_ah), (_ds), (_l), (_first), (_last)))
 #define	ath_hal_proc_tx_desc(_ah, _ds) \
 	((*(_ah)->ah_proc_tx_desc)((_ah), (_ds)))
+
+#endif /* _KERNEL */
+
+#define	SIOCGATHSTATS	_IOWR('i', 137, struct ifreq)
 
 #endif /* _DEV_ATH_ATHVAR_H */
