@@ -4933,6 +4933,14 @@
 ./usr/share/man/cat3/menu_win.0
 ./usr/share/man/cat3/mergesort.0
 ./usr/share/man/cat3/meta.0
+./usr/share/man/cat3/mio_close.0
+./usr/share/man/cat3/mio_eof.0
+./usr/share/man/cat3/mio_nfds.0
+./usr/share/man/cat3/mio_open.0
+./usr/share/man/cat3/mio_pollfd.0
+./usr/share/man/cat3/mio_read.0
+./usr/share/man/cat3/mio_revents.0
+./usr/share/man/cat3/mio_write.0
 ./usr/share/man/cat3/mitem_current.0
 ./usr/share/man/cat3/mitem_name.0
 ./usr/share/man/cat3/mitem_new.0

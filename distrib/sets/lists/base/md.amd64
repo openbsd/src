@@ -101,7 +101,7 @@
 ./usr/lib/libkafs.so.17.0
 ./usr/lib/libkrb5.so.17.0
 ./usr/lib/libkvm.so.9.1
-./usr/lib/libm.so.5.0
+./usr/lib/libm.so.5.1
 ./usr/lib/libmenu.so.3.0
 ./usr/lib/libmilter.so.2.1
 ./usr/lib/libncurses.so.10.0
@@ -112,14 +112,14 @@
 ./usr/lib/libpanel.so.3.0
 ./usr/lib/libpcap.so.6.0
 ./usr/lib/libperl.so.11.0
-./usr/lib/libpthread.so.11.1
+./usr/lib/libpthread.so.11.2
 ./usr/lib/libreadline.so.3.0
 ./usr/lib/librpcsvc.so.1.2
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
-./usr/lib/libsndio.so.3.2
+./usr/lib/libsndio.so.3.3
 ./usr/lib/libssl.so.15.0
-./usr/lib/libstdc++.so.47.0
+./usr/lib/libstdc++.so.48.0
 ./usr/lib/libtermcap.so.10.0
 ./usr/lib/libtermlib.so.10.0
 ./usr/lib/libusbhid.so.3.0

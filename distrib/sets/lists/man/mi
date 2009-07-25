@@ -231,6 +231,7 @@
 ./usr/share/man/cat1/merge.0
 ./usr/share/man/cat1/mesg.0
 ./usr/share/man/cat1/mg.0
+./usr/share/man/cat1/midicat.0
 ./usr/share/man/cat1/midiplay.0
 ./usr/share/man/cat1/mixerctl.0
 ./usr/share/man/cat1/mkdep.0
@@ -2267,6 +2268,7 @@
 ./usr/share/man/cat7/re_format.0
 ./usr/share/man/cat7/script.0
 ./usr/share/man/cat7/securelevel.0
+./usr/share/man/cat7/sndio.0
 ./usr/share/man/cat7/symlink.0
 ./usr/share/man/cat7/term.0
 ./usr/share/man/cat8/Makefile.yp.0
