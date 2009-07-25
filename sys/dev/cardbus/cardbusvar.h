@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.13 2009/07/23 15:09:41 kettenis Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.14 2009/07/25 13:00:03 miod Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -433,11 +433,11 @@ int	cardbus_matchbyid(struct cardbus_attach_args *,
     (*(cf)->cardbus_free_tag)(cc, (tag))
 
 #define Cardbus_conf_read(ct, tag, offs)		\
-    (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cf, (tag), (offs))
+    (*(ct)->ct_cf->cardbus_conf_read)((ct)->ct_cc, (tag), (offs))
 #define cardbus_conf_read(cc, cf, tag, offs)		\
     ((cf)->cardbus_conf_read)((cc), (tag), (offs))
 #define Cardbus_conf_write(ct, tag, offs, val)		\
-    (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cf, (tag), (offs), (val))
+    (*(ct)->ct_cf->cardbus_conf_write)((ct)->ct_cc, (tag), (offs), (val))
 #define cardbus_conf_write(cc, cf, tag, offs, val)	\
     ((cf)->cardbus_conf_write)((cc), (tag), (offs), (val))
 
