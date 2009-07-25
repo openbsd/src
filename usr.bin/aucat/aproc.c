@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.32 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.33 2009/07/25 10:52:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -49,10 +49,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "conf.h"
-#include "aparams.h"
 #include "abuf.h"
+#include "aparams.h"
 #include "aproc.h"
+#include "conf.h"
 #include "file.h"
 
 struct aproc *
@@ -366,7 +366,7 @@ wpipe_new(struct file *f)
 
 /*
  * Append the given amount of silence (or less if there's not enough
- * space), and crank mixitodo accordingly
+ * space), and crank mixitodo accordingly.
  */
 void
 mix_bzero(struct abuf *obuf, unsigned zcount)
@@ -398,7 +398,7 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	    obuf->mixitodo, ibuf->mixodone);
 
 	/*
-	 * calculate the maximum we can read
+	 * Calculate the maximum we can read.
 	 */
 	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
 	icount /= ibuf->bpf;
@@ -406,14 +406,14 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 		return;
 
 	/*
-	 * zero-fill if necessary
+	 * Zero-fill if necessary.
 	 */
 	zcount = ibuf->mixodone + icount * obuf->bpf;
 	if (zcount > obuf->mixitodo)
 		mix_bzero(obuf, zcount - obuf->mixitodo);
 
 	/*
-	 * calculate the maximum we can write
+	 * Calculate the maximum we can write.
 	 */
 	odata = (short *)abuf_wgetblk(obuf, &ocount, ibuf->mixodone);
 	ocount /= obuf->bpf;
@@ -566,7 +566,7 @@ mix_eof(struct aproc *p, struct abuf *ibuf)
 	if (!aproc_inuse(p)) {
 		DPRINTF("mix_eof: %s: from input\n", p->name);
 		/*
-		 * find a blocked input
+		 * Find a blocked input.
 		 */
 		odone = obuf->len;
 		LIST_FOREACH(i, &p->ibuflist, ient) {
@@ -578,7 +578,7 @@ mix_eof(struct aproc *p, struct abuf *ibuf)
 				odone = i->mixodone;
 		}
 		/*
-		 * no blocked inputs, check if output is blocked
+		 * No blocked inputs. Check if output is blocked.
 		 */
 		if (LIST_EMPTY(&p->ibuflist) || odone == obuf->mixitodo)
 			abuf_run(obuf);
@@ -651,7 +651,7 @@ mix_new(char *name, int maxlat)
 }
 
 /*
- * Normalize input levels
+ * Normalize input levels.
  */
 void
 mix_setmaster(struct aproc *p)
@@ -720,7 +720,7 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 }
 
 /*
- * Handle buffer overruns, return 0 if the stream died
+ * Handle buffer overruns. Return 0 if the stream died.
  */
 int
 sub_xrun(struct abuf *ibuf, struct abuf *i)
@@ -841,7 +841,7 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 	if (!aproc_inuse(p)) {
 		DPRINTF("sub_hup: %s: from input\n", p->name);
 		/*
-		 * find a blocked output
+		 * Find a blocked output.
 		 */
 		idone = ibuf->len;
 		LIST_FOREACH(i, &p->obuflist, oent) {
@@ -853,7 +853,7 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 				idone = i->subidone;
 		}
 		/*
-		 * no blocked outputs, check if input is blocked
+		 * No blocked outputs. Check if input is blocked.
 		 */
 		if (LIST_EMPTY(&p->obuflist) || idone == ibuf->used)
 			abuf_run(ibuf);

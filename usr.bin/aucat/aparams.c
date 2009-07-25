@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.c,v 1.6 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: aparams.c,v 1.7 2009/07/25 10:52:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,7 +43,7 @@ int aparams_ctltovol[128] = {
 
 /*
  * Generate a string corresponding to the encoding in par,
- * return the length of the resulting string
+ * return the length of the resulting string.
  */
 int
 aparams_enctostr(struct aparams *par, char *ostr)
@@ -73,8 +73,8 @@ aparams_enctostr(struct aparams *par, char *ostr)
 
 /*
  * Parse an encoding string, examples: s8, u8, s16, s16le, s24be ...
- * set *istr to the char following the encoding. Retrun the number
- * of bytes consumed
+ * set *istr to the char following the encoding. Return the number
+ * of bytes consumed.
  */
 int
 aparams_strtoenc(struct aparams *par, char *istr)
@@ -115,7 +115,7 @@ aparams_strtoenc(struct aparams *par, char *istr)
 	le = NATIVE_LE;
 
 	/*
-	 * get (optionnal) endianness
+	 * get (optional) endianness
 	 */
 	if (p[0] == 'l' && p[1] == 'e') {
 		le = 1;
@@ -129,7 +129,7 @@ aparams_strtoenc(struct aparams *par, char *istr)
 		return 0;
 
 	/*
-	 * get (optionnal) number of bytes
+	 * get (optional) number of bytes
 	 */
 	if (*p >= '0' && *p <= '9') {
 		bps = *p - '0';
@@ -139,7 +139,7 @@ aparams_strtoenc(struct aparams *par, char *istr)
 		p++;
 
 		/*
-		 * get (optionnal) alignement
+		 * get (optional) alignement
 		 */
 		if (p[0] == 'm' && p[1] == 's' && p[2] == 'b') {
 			msb = 1;
@@ -234,7 +234,7 @@ aparams_eq(struct aparams *par1, struct aparams *par2)
 }
 
 /*
- * Retrurn true if first channel range includes second range
+ * Return true if first channel range includes second range.
  */
 int
 aparams_subset(struct aparams *subset, struct aparams *set)
@@ -243,7 +243,7 @@ aparams_subset(struct aparams *subset, struct aparams *set)
 }
 
 /*
- * grow channels range and sample rate of ``set'' in order ``subset'' to
+ * Grow channels range and sample rate of ``set'' in order ``subset'' to
  * become an actual subset of it.
  */
 void
@@ -258,7 +258,7 @@ aparams_grow(struct aparams *set, struct aparams *subset)
 }
 
 /*
- * Return true if rates are the same
+ * Return true if rates are the same.
  */
 int
 aparams_eqrate(struct aparams *p1, struct aparams *p2)

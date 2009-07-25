@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.1 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.2 2009/07/25 10:52:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,8 +19,6 @@
 
 #include "file.h"
 
-struct aparams;
-
 struct pipe {
 	struct file file;
 	int fd;			/* file descriptor */
@@ -36,4 +34,4 @@ int pipe_nfds(struct file *);
 int pipe_pollfd(struct file *, struct pollfd *, int);
 int pipe_revents(struct file *, struct pollfd *);
 
-#endif /* !defined(FILE_H) */
+#endif /* !defined(PIPE_H) */

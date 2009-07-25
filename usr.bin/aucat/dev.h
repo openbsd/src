@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.10 2009/02/06 08:26:34 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.11 2009/07/25 10:52:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,7 +19,6 @@
 
 struct aproc;
 struct aparams;
-struct file;
 struct abuf;
 
 extern unsigned dev_bufsz, dev_round, dev_rate;

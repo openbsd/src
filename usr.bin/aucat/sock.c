@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.19 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.20 2009/07/25 10:52:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,13 +24,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "aproc.h"
+
 #include "abuf.h"
-#include "sock.h"
-#include "dev.h"
+#include "aproc.h"
 #include "conf.h"
+#include "dev.h"
 #include "midi.h"
 #include "opt.h"
+#include "sock.h"
 
 int sock_attach(struct sock *, int);
 int sock_read(struct sock *);
@@ -97,9 +98,9 @@ rsock_out(struct aproc *p, struct abuf *obuf)
 	DPRINTFN(4, "rsock_out: %p\n", f);
 
 	/*
-	 * when calling sock_read(), we may receive a ``STOP'' command,
+	 * When calling sock_read(), we may receive a ``STOP'' command,
 	 * and detach ``obuf''. In this case, there's no more caller and
-	 * we'll stop processing further messages, resulting in a dead lock.
+	 * we'll stop processing further messages, resulting in a deadlock.
 	 * The solution is to iterate over sock_read() in order to
 	 * consume all messages().
 	 */
@@ -190,7 +191,7 @@ wsock_in(struct aproc *p, struct abuf *ibuf)
 
 	DPRINTFN(4, "wsock_in: %p\n", f);
 	/*
-	 * see remark in rsock_out()
+	 * See remark in rsock_out().
 	 */
 	for (;;) {
 		if (!sock_write(f))
@@ -270,8 +271,8 @@ struct aproc_ops wsock_ops = {
 };
 
 /*
- * initialise socket in the SOCK_HELLO state with default
- * parameters
+ * Initialise socket in the SOCK_HELLO state with default
+ * parameters.
  */
 struct sock *
 sock_new(struct fileops *ops, int fd)
@@ -313,7 +314,7 @@ sock_new(struct fileops *ops, int fd)
 }
 
 /*
- * free buffers
+ * Free buffers.
  */
 void
 sock_freebuf(struct sock *f)
@@ -331,7 +332,7 @@ sock_freebuf(struct sock *f)
 }
 
 /*
- * allocate buffers, so client can start filling write-end.
+ * Allocate buffers, so client can start filling write-end.
  */
 void
 sock_allocbuf(struct sock *f)
@@ -357,7 +358,7 @@ sock_allocbuf(struct sock *f)
 }
 
 /*
- * free buffers
+ * Set volume.
  */
 void
 sock_setvol(struct sock *f, int vol)
@@ -374,7 +375,7 @@ sock_setvol(struct sock *f, int vol)
 }
 
 /*
- * attach play and/or record buffers to dev_mix and/or dev_sub
+ * Attach play and/or record buffers to dev_mix and/or dev_sub.
  */
 int
 sock_attach(struct sock *f, int force)
@@ -385,8 +386,8 @@ sock_attach(struct sock *f, int force)
 	wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
 
 	/*
-	 * if in SOCK_START state, dont attach until
-	 * the buffer isn't completely filled
+	 * If in SOCK_START state, dont attach until
+	 * the buffer isn't completely filled.
 	 */
 	if (!force && rbuf && ABUF_WOK(rbuf))
 		return 0;
@@ -395,7 +396,7 @@ sock_attach(struct sock *f, int force)
 	f->pstate = SOCK_RUN;
 
 	/*
-	 * attach them to the device
+	 * Attach them to the device.
 	 */
 	dev_attach(f->pipe.file.name,
 	    (f->mode & AMSG_PLAY) ? rbuf : NULL, &f->rpar, f->xrun,
@@ -405,7 +406,7 @@ sock_attach(struct sock *f, int force)
 		dev_setvol(rbuf, f->vol);
 
 	/*
-	 * send the initial position, if needed
+	 * Send the initial position, if needed.
 	 */
 	for (;;) {
 		if (!sock_write(f))
@@ -433,8 +434,8 @@ sock_reset(struct sock *f)
 }
 
 /*
- * read a message from the file descriptor, return 1 if done, 0
- * otherwise. The message is stored in f->rmsg
+ * Read a message from the file descriptor, return 1 if done, 0
+ * otherwise. The message is stored in f->rmsg.
  */
 int
 sock_rmsg(struct sock *f)
@@ -459,7 +460,7 @@ sock_rmsg(struct sock *f)
 }
 
 /*
- * write a message to the file descriptor, return 1 if done, 0
+ * Write a message to the file descriptor, return 1 if done, 0
  * otherwise.  The "m" argument is f->rmsg or f->wmsg, and the "ptodo"
  * points to the f->rtodo or f->wtodo respectively.
  */
@@ -486,7 +487,7 @@ sock_wmsg(struct sock *f, struct amsg *m, unsigned *ptodo)
 }
 
 /*
- * read data chunk from the file descriptor, return 1 if at least one
+ * Read data chunk from the file descriptor, return 1 if at least one
  * byte was read, 0 if the file blocked.
  */
 int
@@ -522,7 +523,7 @@ sock_rdata(struct sock *f)
 }
 
 /*
- * write data chunk to the file descriptor, return 1 if at least one
+ * Write data chunk to the file descriptor, return 1 if at least one
  * byte was written, 0 if the file blocked.
  */
 int
@@ -561,7 +562,7 @@ sock_wdata(struct sock *f)
 		if (f->pstate == SOCK_MIDI)
 			return 0; 
 		/*
-		 * there's no dev_detach() routine yet,
+		 * There's no dev_detach() routine yet,
 		 * so now we abruptly destroy the buffer.
 		 * Until we implement dev_detach, complete
 		 * the packet with zeros...
@@ -785,7 +786,7 @@ sock_hello(struct sock *f)
 }
 
 /*
- * execute message in f->rmsg and change the state accordingly; return 1
+ * Execute message in f->rmsg and change the state accordingly; return 1
  * on success, and 0 on failure, in which case the socket is destroyed.
  */
 int
@@ -962,7 +963,7 @@ sock_execmsg(struct sock *f)
 }
 
 /*
- * create a new data/pos message
+ * Create a new data/pos message.
  */
 int
 sock_buildmsg(struct sock *f)
@@ -978,7 +979,7 @@ sock_buildmsg(struct sock *f)
 	}
 
 	/*
-	 * if pos changed, build a MOVE message
+	 * If pos changed, build a MOVE message.
 	 */
 	if (f->tickpending && f->delta >= 0) {
 		DPRINTFN(4, "sock_buildmsg: %p: POS: %d\n", f, f->delta);
@@ -993,7 +994,7 @@ sock_buildmsg(struct sock *f)
 	}
 
 	/*
-	 * if data available, build a DATA message
+	 * If data available, build a DATA message.
 	 */
 	p = f->pipe.file.wproc;
 	ibuf = LIST_FIRST(&p->ibuflist);
@@ -1015,7 +1016,7 @@ sock_buildmsg(struct sock *f)
 }
 
 /*
- * read from the socket file descriptor, fill input buffer and update
+ * Read from the socket file descriptor, fill input buffer and update
  * the state. Return 1 if at least one message or 1 data byte was
  * processed, 0 if something blocked.
  */
@@ -1051,7 +1052,7 @@ sock_read(struct sock *f)
 }
 
 /*
- * process messages to return
+ * Process messages to return.
  */
 int
 sock_return(struct sock *f)
@@ -1075,7 +1076,7 @@ sock_return(struct sock *f)
 		for (;;) {
 			/*
 			 * in() may trigger rsock_done and destroy the
-			 * wsock
+			 * wsock.
 			 */
 			rp = f->pipe.file.rproc;
 			if (!rp || !rp->ops->in(rp, NULL))
@@ -1089,7 +1090,7 @@ sock_return(struct sock *f)
 }
 
 /*
- * write messages and data on the socket file descriptor. Return 1 if
+ * Write messages and data on the socket file descriptor. Return 1 if
  * at least one message or one data byte was processed, 0 if something
  * blocked.
  */

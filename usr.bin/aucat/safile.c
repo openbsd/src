@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.13 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.14 2009/07/25 10:52:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -15,21 +15,21 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 #include <poll.h>
+#include <sndio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sndio.h>
 
-#include "conf.h"
-#include "file.h"
-#include "aproc.h"
 #include "aparams.h"
-#include "safile.h"
+#include "aproc.h"
+#include "conf.h"
 #include "dev.h"
+#include "file.h"
+#include "safile.h"
 
 struct safile {
 	struct file file;
@@ -80,7 +80,7 @@ safile_cb(void *addr, int delta)
 }
 
 /*
- * open the device
+ * Open the device.
  */
 struct safile *
 safile_new(struct fileops *ops, char *path,
@@ -193,7 +193,7 @@ safile_read(struct file *file, unsigned char *data, unsigned count)
 	unsigned us;
 
 	if (!(f->file.state & FILE_ROK)) {
-		DPRINTF("file_read: %s: bad state\n", f->file.name);
+		DPRINTF("safile_read: %s: bad state\n", f->file.name);
 		abort();
 	}
 	gettimeofday(&tv0, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.6 2009/04/22 10:57:33 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.7 2009/07/25 10:52:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,12 +23,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "conf.h"
 #include "aparams.h"
+#include "conf.h"
 #include "wav.h"
 
 /*
- * encoding IDs used in .wav headers
+ * Encoding IDs used in .wav headers.
  */
 #define WAV_ENC_PCM	1
 #define WAV_ENC_ALAW	6
@@ -213,7 +213,7 @@ wav_writehdr(int fd, struct aparams *par)
 		datasz = 0;
 
 	/*
-	 * check that encoding is supported by .wav file format
+	 * Check that encoding is supported by .wav file format.
 	 */
 	if (par->bits > 8 && !par->le) {
 		warnx("samples must be little endian");
@@ -224,7 +224,8 @@ wav_writehdr(int fd, struct aparams *par)
 		return 0;
 	}
 	if ((par->bits <= 8 && par->sig) || (par->bits > 8 && !par->sig)) {
-		warnx("samples with more (less) than 8 bits must be signed (unsigned)");
+		warnx("samples with more (less) than 8 bits must be signed "
+		    "(unsigned)");
 		return 0;
 	}
 	if (8 * par->bps != par->bits && !par->msb) {

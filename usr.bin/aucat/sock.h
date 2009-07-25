@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.7 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.8 2009/07/25 10:52:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,16 +17,16 @@
 #ifndef SOCK_H
 #define SOCK_H
 
-#include "pipe.h"
-#include "aparams.h"
 #include "amsg.h"
+#include "aparams.h"
+#include "pipe.h"
 
 struct opt;
 
 struct sock {
 	struct pipe pipe;
 	/*
-	 * socket and protocol specific stuff, mainly used
+	 * Socket and protocol specific stuff, mainly used
 	 * to decode/encode messages in the stream.
 	 */
 	struct amsg rmsg, wmsg;		/* messages being sent/received */

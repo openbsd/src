@@ -1,4 +1,4 @@
-/*	$OpenBSD: legacy.c,v 1.6 2009/04/22 10:57:33 ratchov Exp $	*/
+/*	$OpenBSD: legacy.c,v 1.7 2009/07/25 10:52:19 ratchov Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -30,25 +30,28 @@
 
 #include <sndio.h>
 
-#include <stdlib.h>
+#include <err.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 #include "wav.h"
 
-/* headerless data files.  played at /dev/audio's defaults.
+/*
+ * Headerless data files.  Played at /dev/audio's defaults.
  */
 #define FMT_RAW	0
 
-/* Sun/NeXT .au files.  header is skipped and /dev/audio is configured
+/*
+ * Sun/NeXT .au files.  Header is skipped and /dev/audio is configured
  * for monaural 8-bit ulaw @ 8kHz, the de facto format for .au files,
  * as well as the historical default configuration for /dev/audio.
  */
 #define FMT_AU	1
 
-/* RIFF WAV files.  header is parsed for format details which are
+/*
+ * RIFF WAV files.  Header is parsed for format details which are
  * applied to /dev/audio.
  */
 #define FMT_WAV	2
@@ -75,7 +78,8 @@ legacy_play(char *dev, char *aufile)
 	}
 
 	if (read(fd, magic, sizeof(magic)) != sizeof(magic)) {
-		/* read() error, or the file is smaller than sizeof(magic).
+		/*
+		 * read() error, or the file is smaller than sizeof(magic).
 		 * treat as a raw file, like previous versions of aucat.
 		 */
 	} else if (!strncmp(magic, ".snd", 4)) {
@@ -96,7 +100,8 @@ legacy_play(char *dev, char *aufile)
 			fmt = FMT_WAV;
 	}
 
-	/* seek to start of audio data.  wav_readhdr already took care
+	/*
+	 * Seek to start of audio data.  wav_readhdr already took care
 	 * of this for FMT_WAV.
 	 */
 	if (fmt == FMT_RAW || fmt == FMT_AU)
@@ -135,24 +140,27 @@ legacy_play(char *dev, char *aufile)
 
 	if (!sio_setpar(hdl, &par) || !sio_getpar(hdl, &par)) {
 		warnx("can't set audio parameters");
-		/* only WAV could fail in previous aucat versions (unless
+		/*
+		 * Only WAV could fail in previous aucat versions (unless
 		 * the parameters returned by AUDIO_GETINFO would fail,
-		 * which is unlikely)
+		 * which is unlikely).
 		 */
 		if (fmt == FMT_WAV)
 			return(1);
 	}
 
-	/* parameters may be silently modified.  see audio(9)'s
-	 * description of set_params.  for compatability with previous
+        /*
+	 * Parameters may be silently modified.  See audio(9)'s
+	 * description of set_params.  For compatability with previous
 	 * aucat versions, continue running if something doesn't match.
 	 */
 	if (par.bits != spar.bits ||
 	    par.sig != par.sig ||
 	    par.le != spar.le ||
 	    par.pchan != spar.pchan ||
-	    /* devices may return a very close rate, such as 44099 when
-	     * 44100 was requested.  the difference is inaudible.  allow
+	    /*
+	     * Devices may return a very close rate, such as 44099 when
+	     * 44100 was requested.  The difference is inaudible.  Allow
 	     * 2% deviation as an example of how to cope.
 	     */
 	    (par.rate > spar.rate * 1.02 || par.rate < spar.rate * 0.98)) {
@@ -178,7 +186,7 @@ legacy_play(char *dev, char *aufile)
 		warn("read");
 
 	sio_close(hdl);
-	(void) close(fd);
+	close(fd);
 
 	return(0);
 }

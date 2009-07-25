@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.12 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.13 2009/07/25 10:52:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,10 +53,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "abuf.h"
+#include "aproc.h"
 #include "conf.h"
 #include "file.h"
-#include "aproc.h"
-#include "abuf.h"
 
 #define MAXFDS 100
 
@@ -262,8 +262,8 @@ file_poll(void)
 	int timo;
 
 	/*
-	 * fill the pfds[] array with files that are blocked on reading
-	 * and/or writing, skipping those that're just waiting
+	 * Fill the pfds[] array with files that are blocked on reading
+	 * and/or writing, skipping those that are just waiting.
 	 */
 	DPRINTFN(4, "file_poll:");
 	nfds = 0;
@@ -412,7 +412,7 @@ filelist_done(void)
 }
 
 /*
- * close all listening sockets
+ * Close all listening sockets.
  *
  * XXX: remove this
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.61 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.62 2009/07/25 10:52:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -15,9 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <err.h>
 #include <errno.h>
@@ -30,16 +30,16 @@
 #include <unistd.h>
 #include <varargs.h>
 
-#include "conf.h"
+#include "abuf.h"
 #include "aparams.h"
 #include "aproc.h"
-#include "abuf.h"
-#include "wav.h"
-#include "listen.h"
+#include "conf.h"
 #include "dev.h"
+#include "listen.h"
 #include "midi.h"
-#include "opt.h"
 #include "miofile.h"
+#include "opt.h"
+#include "wav.h"
 
 #define MODE_PLAY	1
 #define MODE_REC	2
@@ -53,7 +53,7 @@ volatile int quit_flag = 0;
 /*
  * SIGINT handler, it raises the quit flag. If the flag is already set,
  * that means that the last SIGINT was not handled, because the process
- * is blocked somewhere, so exit
+ * is blocked somewhere, so exit.
  */
 void
 sigint(int s)
@@ -64,7 +64,7 @@ sigint(int s)
 }
 
 /*
- * increase debug level on SIGUSR1
+ * Increase debug level on SIGUSR1.
  */
 void
 sigusr1(int s)
@@ -74,7 +74,7 @@ sigusr1(int s)
 }
 
 /*
- * decrease debug level on SIGUSR2
+ * Decrease debug level on SIGUSR2.
  */
 void
 sigusr2(int s)
@@ -152,7 +152,7 @@ opt_xrun(void)
 		return XRUN_SYNC;
 	if (strcmp("error", optarg) == 0)
 		return XRUN_ERROR;
-	errx(1, "%s: onderrun/overrun policy", optarg);
+	errx(1, "%s: underrun/overrun policy", optarg);
 }
 
 int
@@ -521,7 +521,7 @@ aucat_main(int argc, char **argv)
 	}
 
 	/*
-	 * if there are no sockets paths provided use the default
+	 * If there are no sockets paths provided use the default.
 	 */
 	if (l_flag && SLIST_EMPTY(&sfiles)) {
 		farg_add(&sfiles, &dopar, &dipar,
@@ -558,7 +558,7 @@ aucat_main(int argc, char **argv)
 
 	/*
 	 * Open the device. Give half of the buffer to the device,
-	 * the other half is for the socket/files
+	 * the other half is for the socket/files.
 	 */
 	if (n_flag) {
 		dev_loopinit(&dipar, &dopar, bufsz);
@@ -602,7 +602,7 @@ aucat_main(int argc, char **argv)
 	}
 
 	/*
-	 * loop, start audio
+	 * Loop, start audio.
 	 */
 	for (;;) {
 		if (quit_flag) {

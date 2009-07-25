@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.7 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.8 2009/07/25 10:52:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,7 +18,7 @@
 #define CONF_H
 
 /*
- * debug trace levels:
+ * Debug trace levels:
  *
  * 0 - traces are off
  * 1 - init, free, stuff that's done only once
@@ -44,7 +44,7 @@ extern int debug_level;
 #endif
 
 /*
- * number of blocks in the device play/record buffers.  because Sun API
+ * Number of blocks in the device play/record buffers.  Because Sun API
  * cannot notify apps of the current positions, we have to use all N
  * buffers devices blocks plus one extra block, to make write() block,
  * so that poll() can return the exact postition.
@@ -52,7 +52,7 @@ extern int debug_level;
 #define DEV_NBLK 2
 
 /*
- * number of blocks in the wav-file i/o buffers
+ * Number of blocks in the wav-file i/o buffers.
  */
 #define WAV_NBLK 6
 

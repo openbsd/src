@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.17 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.18 2009/07/25 10:52:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -95,19 +95,19 @@ struct aproc_ops {
 
 	/*
 	 * Real-time record position changed (for input buffer),
-	 * by the given amount of _frames_
+	 * by the given amount of _frames_.
 	 */
 	void (*ipos)(struct aproc *, struct abuf *, int);
 
 	/*
 	 * Real-time play position changed (for output buffer),
-	 * by the given amount of _frames_
+	 * by the given amount of _frames_.
 	 */
 	void (*opos)(struct aproc *, struct abuf *, int);
 
 	/*
-	 * destroy the aproc, called just before to free the
-	 * aproc structure
+	 * Destroy the aproc, called just before to free the
+	 * aproc structure.
 	 */
 	void (*done)(struct aproc *);
 };
