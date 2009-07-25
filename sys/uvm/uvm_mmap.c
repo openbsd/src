@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.78 2009/07/22 21:05:37 oga Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.79 2009/07/25 12:55:40 miod Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -742,7 +742,7 @@ sys_munmap(struct proc *p, void *v, register_t *retval)
 	/*
 	 * doit!
 	 */
-	uvm_unmap_remove(map, addr, addr + size, &dead_entries, p);
+	uvm_unmap_remove(map, addr, addr + size, &dead_entries, p, FALSE);
 
 	vm_map_unlock(map);	/* and unlock */
 

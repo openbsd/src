@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.118 2009/06/17 00:13:59 oga Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.119 2009/07/25 12:55:40 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1429,7 +1429,7 @@ uvm_unmap_p(vm_map_t map, vaddr_t start, vaddr_t end, struct proc *p)
 	 * detach from the dead entries...
 	 */
 	vm_map_lock(map);
-	uvm_unmap_remove(map, start, end, &dead_entries, p);
+	uvm_unmap_remove(map, start, end, &dead_entries, p, FALSE);
 	vm_map_unlock(map);
 
 	if (dead_entries != NULL)
@@ -1454,7 +1454,7 @@ uvm_unmap_p(vm_map_t map, vaddr_t start, vaddr_t end, struct proc *p)
 
 void
 uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
-    struct vm_map_entry **entry_list, struct proc *p)
+    struct vm_map_entry **entry_list, struct proc *p, boolean_t remove_holes)
 {
 	struct vm_map_entry *entry, *first_entry, *next;
 	vaddr_t len;
@@ -1539,7 +1539,10 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 * we want to free these pages right away...
 		 */
 		if (UVM_ET_ISHOLE(entry)) {
-			/* nothing to do! */
+			if (!remove_holes) {
+				entry = next;
+				continue;
+			}
 		} else if (map->flags & VM_MAP_INTRSAFE) {
 			uvm_km_pgremove_intrsafe(entry->start, entry->end);
 			pmap_kremove(entry->start, len);
@@ -3354,7 +3357,7 @@ uvmspace_free(struct vmspace *vm)
 		if (vm->vm_map.nentries) {
 			uvm_unmap_remove(&vm->vm_map,
 			    vm->vm_map.min_offset, vm->vm_map.max_offset,
-			    &dead_entries, NULL);
+			    &dead_entries, NULL, TRUE);
 			if (dead_entries != NULL)
 				uvm_unmap_detach(dead_entries, 0);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.142 2009/06/16 16:42:41 ariane Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.143 2009/07/25 12:55:39 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1269,7 +1269,7 @@ pmap_free_pvpage(void)
 		/* unmap the page */
 		dead_entries = NULL;
 		uvm_unmap_remove(map, (vaddr_t)pvp, ((vaddr_t)pvp) + PAGE_SIZE,
-		    &dead_entries, NULL);
+		    &dead_entries, NULL, FALSE);
 		vm_map_unlock(map);
 
 		if (dead_entries != NULL)
