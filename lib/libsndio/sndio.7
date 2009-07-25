@@ -1,0 +1,168 @@
+.\" $OpenBSD: sndio.7,v 1.1 2009/07/25 09:55:12 ratchov Exp $
+.\"
+.\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 25 2009 $
+.Dt SNDIO 7
+.Os
+.Sh NAME
+.Nm sndio
+.Nd interface to audio and MIDI
+.Sh DESCRIPTION
+The
+.Nm sndio
+audio and MIDI system provides access to audio and MIDI hardware and
+to services provided by
+.Xr aucat 1
+and
+.Xr midicat 1 ,
+summarized below.
+.Pp
+Hardware
+.Xr audio 4
+devices correspond to peripherals.
+Only one application may use any device at a given time.
+Generally a limited number of encodings, sample rates and channel numbers are
+supported by the hardware, which may not meet the requirements of
+audio programs.
+.Pp
+To overcome hardware limitations and to allow multiple applications
+to share the hardware,
+.Xr aucat 1
+can be used.
+It exposes one or more software subdevices backed by the underlying hardware,
+while doing all necessary conversions on the fly.
+It can mix multiple streams or split the hardware into
+multiple subdevices, to allow programs to use the hardware
+concurently.
+.Pp
+Hardware MIDI ports correspond to serial connectors provided by the
+.Xr midi 4
+driver.
+They are typically used to access MIDI hardware (synthesizers, keyboards,
+control surfaces, etc.), but they do not allow applications to exchange
+information using the MIDI protocol.
+.Pp
+Software MIDI thru boxes allow one application to send MIDI data to other
+applications connected to the thru box (for instance a software sequencer
+can send events to multiple software synthesizers).
+There's no hardware involved: thru boxes are created by
+.Xr midicat 1 .
+.Sh DEVICE NAMES
+From the user's perspective every audio interface, MIDI port,
+.Xr aucat 1
+or
+.Xr midicat 1
+service has a name of the form:
+.Bd -literal -offset center
+type:unit[.option]
+.Ed
+.Pp
+This information is used by audio and MIDI applications to determine
+how to access the audio or MIDI device or service.
+.Bl -tag -width "option"
+.It Pa type
+The type of the audio or MIDI device.
+Possible values for audio devices are
+.Pa aucat
+and
+.Pa sun ,
+corresponding to
+.Xr aucat 1
+sockets and hardware
+.Xr audio 4
+devices.
+Possible values for MIDI devices are
+.Pa midithru
+and
+.Pa rmidi ,
+corresponding to
+.Xr midicat 1
+software MIDI thru boxes and hardware
+.Xr midi 4
+ports respectively.
+.It Pa unit
+For hardware audio or MIDI devices, this corresponds to
+the character device minor number.
+For audio or MIDI devices created with
+.Xr aucat 1
+or
+.Xr midicat 1
+it corresponds to the server
+.Em unit
+number, typically 0.
+.It Pa option
+Corresponds to the profile string registered using the
+.Fl s
+option of
+.Xr aucat 1 .
+Only meaningful for
+.Pa aucat
+device types.
+.El
+.Pp
+For example:
+.Pp
+.Bl -tag -width "aucat:0.rear" -offset 3n -compact
+.It Pa sun:0
+First hardware audio device.
+.It Pa aucat:0
+Default device of the first
+.Xr aucat 1
+audio server.
+.It Pa aucat:0.rear
+First
+.Xr aucat 1
+server;
+device registered with
+.Fl s Fa rear .
+.It Pa rmidi:5
+Hardware MIDI port number 5.
+.It Pa midithru:0
+First software MIDI thru box created with
+.Xr aucat 1 .
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width "AUDIODEVICEXXX" -compact
+.It Ev AUDIODEVICE
+Audio device to use if the application provides
+no device chooser.
+.It Ev MIDIDEVICE
+MIDI port to use if the application provides
+no MIDI port chooser.
+.El
+.Pp
+Environment variables are ignored by programs
+with the set-user-ID or set-group-ID bits set.
+.Sh FILES
+.Bl -tag -width "/tmp/aucat-xxx/softaudioNXXX" -compact
+.It Pa /dev/audioN
+Audio devices.
+.It Pa /dev/rmidiN
+MIDI ports.
+.It Pa /tmp/aucat-xxx/softaudioN
+Audio devices provided by
+.Xr aucat 1 .
+.It Pa /tmp/aucat-xxx/midithruN
+MIDI thru boxes provided by
+.Xr midicat 1 .
+.El
+.Sh SEE ALSO
+.Xr aucat 1 ,
+.Xr midicat 1 ,
+.Xr mio_open 3 ,
+.Xr sio_open 3 ,
+.Xr audio 4 ,
+.Xr midi 4
