@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.25 2009/04/08 23:09:50 martynas Exp $	*/
+/*	$OpenBSD: math.h,v 1.26 2009/07/25 11:38:09 martynas Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -180,9 +180,7 @@ double log1p(double);
 double log2(double);
 double logb(double);
 double scalbn(double, int);
-#if 0
 double scalbln(double, long int);
-#endif
 
 double cbrt(double);
 double hypot(double, double);
@@ -288,9 +286,7 @@ float log2f(float);
 float logbf(float);
 float modff(float, float *);
 float scalbnf(float, int);
-#if 0
 float scalblnf(float, long int);
-#endif
 
 float cbrtf(float);
 float fabsf(float);
@@ -415,9 +411,7 @@ long double logbl(long double);
 long double modfl(long double, long double *);
 #endif
 long double scalbnl(long double, int);
-#if 0
 long double scalblnl(long double, long int);
-#endif
 
 #if 0
 long double cbrtl(long double);
