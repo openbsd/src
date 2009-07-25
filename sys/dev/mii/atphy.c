@@ -1,4 +1,4 @@
-/*	$OpenBSD: atphy.c,v 1.3 2009/07/25 12:17:42 kettenis Exp $	*/
+/*	$OpenBSD: atphy.c,v 1.4 2009/07/25 12:23:40 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -186,7 +186,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			/*
 			 * XXX
 			 * Due to an unknown reason powering down PHY resulted
-			 * in unexpected results such as inaccessbility of
+			 * in unexpected results such as inaccessibility of
 			 * hardware of freshly rebooted system. Disable
 			 * powering down PHY until I got more information for
 			 * Attansic/Atheros PHY hardwares.
