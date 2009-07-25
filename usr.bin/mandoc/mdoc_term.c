@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.35 2009/07/18 22:07:09 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.36 2009/07/25 23:29:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -403,7 +403,7 @@ print_foot(struct termp *p, const struct mdoc_meta *meta)
 
 	tm = localtime(&meta->date);
 
-	if (0 == strftime(buf, p->rmargin, "%B %d, %Y", tm))
+	if (0 == strftime(buf, p->rmargin, "%B %e, %Y", tm))
 		err(1, "strftime");
 
 	(void)strlcpy(os, meta->os, p->rmargin);
