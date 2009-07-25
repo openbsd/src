@@ -1,4 +1,4 @@
-/*	$OpenBSD: legacy.c,v 1.7 2009/07/25 10:52:19 ratchov Exp $	*/
+/*	$OpenBSD: legacy.c,v 1.8 2009/07/25 10:54:29 ratchov Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -108,7 +108,7 @@ legacy_play(char *dev, char *aufile)
 		if (lseek(fd, (off_t)pos, SEEK_SET) == -1)
 			warn("lseek");
 
-	if ((hdl = sio_open(dev, SIO_PLAY, 0)) < 0) {
+	if ((hdl = sio_open(dev, SIO_PLAY, 0)) == NULL) {
 		warnx("can't get sndio handle");
 		return(1);
 	}
