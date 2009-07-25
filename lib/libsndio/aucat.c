@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.21 2009/05/16 12:10:52 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.22 2009/07/25 08:44:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -167,22 +167,34 @@ aucat_runmsg(struct aucat_hdl *hdl)
 }
 
 struct sio_hdl *
-sio_open_aucat(char *path, unsigned mode, int nbio)
+sio_open_aucat(char *str, unsigned mode, int nbio)
 {
 	extern char *__progname;
 	int s;
+	char unit[4], *sep, *opt;
 	struct aucat_hdl *hdl;
 	struct sockaddr_un ca;	
 	socklen_t len = sizeof(struct sockaddr_un);
 	uid_t uid;
 
-	if (path == NULL)
-		path = SIO_AUCAT_PATH;
+	sep = strchr(str, '.');
+	if (sep == NULL) {
+		opt = "default";
+		strlcpy(unit, str, sizeof(unit));
+	} else {
+		opt = sep + 1;
+		if (sep - str >= sizeof(unit)) {
+			DPRINTF("sio_open_aucat: %s: too long\n", str);
+			return NULL;
+		}
+		strlcpy(unit, str, opt - str);
+	}
+	DPRINTF("sio_open_aucat: trying %s -> %s.%s\n", str, unit, opt);
 	uid = geteuid();
-	if (strchr(path, '/') != NULL)
+	if (strchr(str, '/') != NULL)
 		return NULL;
 	snprintf(ca.sun_path, sizeof(ca.sun_path),
-	    "/tmp/aucat-%u/%s", uid, path);
+	    "/tmp/aucat-%u/softaudio%s", uid, unit);
 	ca.sun_family = AF_UNIX;
 
 	hdl = malloc(sizeof(struct aucat_hdl));
@@ -196,6 +208,7 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
 		if (errno == EINTR)
 			continue;
+		DPERROR("sio_open_aucat: connect");
 		goto bad_connect;
 	}
 	if (fcntl(s, F_SETFD, FD_CLOEXEC) < 0) {
@@ -222,6 +235,8 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 		hdl->wmsg.u.hello.proto |= AMSG_REC;
 	strlcpy(hdl->wmsg.u.hello.who, __progname,
 	    sizeof(hdl->wmsg.u.hello.who));
+	strlcpy(hdl->wmsg.u.hello.opt, opt,
+	    sizeof(hdl->wmsg.u.hello.opt));
 	hdl->wtodo = sizeof(struct amsg);
 	if (!aucat_wmsg(hdl))
 		goto bad_connect;

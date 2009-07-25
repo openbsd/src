@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.17 2009/05/15 13:16:58 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.18 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -342,20 +342,20 @@ sun_setvol(struct sio_hdl *sh, unsigned vol)
 }
 
 struct sio_hdl *
-sio_open_sun(char *path, unsigned mode, int nbio)
+sio_open_sun(char *str, unsigned mode, int nbio)
 {
 	int fd, flags, fullduplex;
 	struct sun_hdl *hdl;
 	struct audio_info aui;
 	struct sio_par par;
+	char path[PATH_MAX];
 
 	hdl = malloc(sizeof(struct sun_hdl));
 	if (hdl == NULL)
 		return NULL;
 	sio_create(&hdl->sio, &sun_ops, mode, nbio);
 
-	if (path == NULL)
-		path = SIO_SUN_PATH;
+	snprintf(path, sizeof(path), "/dev/audio%s", str);
 	if (mode == (SIO_PLAY | SIO_REC))
 		flags = O_RDWR;
 	else 

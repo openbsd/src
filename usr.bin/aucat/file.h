@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.6 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.7 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,6 +26,14 @@ struct aproc;
 struct abuf;
 struct pollfd;
 
+struct timo {
+	struct timo *next;
+	unsigned val;			/* time to wait before the callback */
+	unsigned set;			/* true if the timeout is set */
+	void (*cb)(void *arg);		/* routine to call on expiration */
+	void *arg;			/* argument to give to 'cb' */
+};
+
 struct fileops {
 	char *name;
 	size_t size;
@@ -47,8 +55,9 @@ struct file {
 #define FILE_EOF	0x4		/* eof on the read end */
 #define FILE_HUP	0x8		/* hang-up on the write end */
 #define FILE_ZOMB	0x10		/* closed, but struct not freed */
+#define FILE_RINUSE	0x20		/* inside rproc->ops->in() */
+#define FILE_WINUSE	0x40		/* inside wproc->ops->out() */
 	unsigned state;			/* one of above */
-	unsigned refs;			/* reference counter */
 	char *name;			/* for debug purposes */
 	struct aproc *rproc, *wproc;	/* reader and/or writer */
 	LIST_ENTRY(file) entry;
@@ -57,6 +66,10 @@ struct file {
 LIST_HEAD(filelist,file);
 
 extern struct filelist file_list;
+
+void timo_set(struct timo *, void (*)(void *), void *);
+void timo_add(struct timo *, unsigned);
+void timo_del(struct timo *);
 
 void filelist_init(void);
 void filelist_done(void);

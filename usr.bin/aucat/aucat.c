@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.60 2009/04/27 18:09:34 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.61 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,36 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * TODO:
- *
- *	(hard) use parsable encoding names instead of the lookup
- *	table. For instance, [s|u]bits[le|be][/bytes{msb|lsb}], example
- *	s8, s16le, s24le/3msb. This would give names that correspond to
- *	what use most linux-centric apps, but for which we have an
- *	algorithm to convert the name to a aparams structure.
- *
- *	(easy) uses {chmin-chmax} instead of chmin:chmax notation for
- *	channels specification to match the notation used in rmix.
- *
- *	(easy) use comma-separated parameters syntax, example:
- *	s24le/3msb,{3-6},48000 so we don't have to use three -e, -r, -c
- *	flags, but only one -p flag that specify one or more parameters.
- *
- *	(hard) if all inputs are over, the mixer terminates and closes
- *	the write end of the device. It should continue writing zeros
- *	until the recording is over (or be able to stop write end of
- *	the device)
- *
- *	(hard) implement -n flag (no device) to connect all inputs to
- *	the outputs.
- *
- *	(hard) ignore input files that are not audible (because channels
- *	they provide are not used on the output). Similarly ignore
- *	outputs that are zero filled (because channels they consume are
- *	not provided).
- */
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -67,9 +37,15 @@
 #include "wav.h"
 #include "listen.h"
 #include "dev.h"
+#include "midi.h"
+#include "opt.h"
+#include "miofile.h"
 
 #define MODE_PLAY	1
 #define MODE_REC	2
+
+#define PROG_AUCAT	"aucat"
+#define PROG_MIDICAT	"midicat"
 
 int debug_level = 0;
 volatile int quit_flag = 0;
@@ -108,16 +84,17 @@ sigusr2(int s)
 }
 
 void
-usage(void)
+set_debug_level(char *envname)
 {
-	extern char *__progname;
+	char *dbgenv;
+	const char *errstr;
 
-	fprintf(stderr,
-	    "usage: %s [-lnu] [-b nframes] [-C min:max] [-c min:max] [-e enc] "
-	    "[-f device]\n"
-	    "\t[-h fmt] [-i file] [-m mode] [-o file] [-r rate] [-s socket]\n"
-	    "\t[-v volume] [-x policy]\n",
-	    __progname);
+	dbgenv = getenv(envname);
+	if (dbgenv) {
+		debug_level = strtonum(dbgenv, 0, 4, &errstr);
+		if (errstr)
+			errx(1, "%s is %s: %s", envname, errstr, dbgenv);
+	}
 }
 
 void
@@ -321,34 +298,99 @@ newoutput(struct farg *fa)
 	dev_attach(fa->name, NULL, NULL, 0, buf, &fa->opar, fa->xrun, 0);
 }
 
-int
-main(int argc, char **argv)
+void
+setsig(void)
 {
-	int c, u_flag, l_flag, n_flag, hdr, xrun, suspend = 0;
+	struct sigaction sa;
+
+	quit_flag = 0;
+	sigfillset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sigint;
+	if (sigaction(SIGINT, &sa, NULL) < 0)
+		DPRINTF("sigaction(int) failed\n");
+	if (sigaction(SIGTERM, &sa, NULL) < 0)
+		DPRINTF("sigaction(term) failed\n");
+	if (sigaction(SIGHUP, &sa, NULL) < 0)
+		DPRINTF("sigaction(hup) failed\n");
+#ifdef DEBUG
+	sa.sa_handler = sigusr1;
+	if (sigaction(SIGUSR1, &sa, NULL) < 0)
+		DPRINTF("sigaction(usr1) failed\n");
+	sa.sa_handler = sigusr2;
+	if (sigaction(SIGUSR2, &sa, NULL) < 0)
+		DPRINTF("sigaction(usr2) failed1n");
+#endif
+}
+
+void
+unsetsig(void)
+{
+	struct sigaction sa;
+
+	sigfillset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = SIG_DFL;
+#ifdef DEBUG
+	if (sigaction(SIGUSR2, &sa, NULL) < 0)
+		DPRINTF("unsetsig(usr2): sigaction failed\n");
+	if (sigaction(SIGUSR1, &sa, NULL) < 0)
+		DPRINTF("unsetsig(usr1): sigaction failed\n");
+#endif
+	if (sigaction(SIGHUP, &sa, NULL) < 0)
+		DPRINTF("unsetsig(hup): sigaction failed\n");
+	if (sigaction(SIGTERM, &sa, NULL) < 0)
+		DPRINTF("unsetsig(term): sigaction failed\n");
+	if (sigaction(SIGINT, &sa, NULL) < 0)
+		DPRINTF("unsetsig(int): sigaction failed\n");
+}
+
+void
+getbasepath(char *base, size_t size)
+{
+	uid_t uid;
+	struct stat sb;
+
+	uid = geteuid();
+	snprintf(base, PATH_MAX, "/tmp/aucat-%u", uid);
+	if (mkdir(base, 0700) < 0) {
+		if (errno != EEXIST)
+			err(1, "mkdir(\"%s\")", base);
+	}
+	if (stat(base, &sb) < 0)
+		err(1, "stat(\"%s\")", base);
+	if (sb.st_uid != uid || (sb.st_mode & 077) != 0)
+		errx(1, "%s has wrong permissions", base);
+}
+
+void
+aucat_usage(void)
+{
+	(void)fputs("usage: " PROG_AUCAT " [-lnu] [-b nframes] "
+	    "[-C min:max] [-c min:max] [-e enc] [-f device]\n"
+	    "\t[-h fmt] [-i file] [-m mode] [-o file] [-r rate] [-s socket]\n"
+	    "\t[-U unit] [-v volume] [-x policy]\n",
+	    stderr);
+}
+
+int
+aucat_main(int argc, char **argv)
+{
+	int c, u_flag, l_flag, n_flag, hdr, xrun, suspend = 0, unit;
 	struct farg *fa;
 	struct farglist  ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
-	struct sigaction sa;
-	struct stat sb;
 	char base[PATH_MAX], path[PATH_MAX];
 	unsigned bufsz, mode;
-	char *devpath, *dbgenv;
-	const char *errstr;
+	char *devpath;
 	unsigned volctl;
-	uid_t uid;
-
-	dbgenv = getenv("AUCAT_DEBUG");
-	if (dbgenv) {
-		debug_level = strtonum(dbgenv, 0, 4, &errstr);
-		if (errstr)
-			errx(1, "AUCAT_DEBUG is %s: %s", errstr, dbgenv);
-	}
 
 	aparams_init(&ipar, 0, 1, 44100);
 	aparams_init(&opar, 0, 1, 44100);
 	u_flag = 0;
 	l_flag = 0;
 	n_flag = 0;
+	unit = -1;
 	devpath = NULL;
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
@@ -359,7 +401,7 @@ main(int argc, char **argv)
 	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
 	mode = 0;
 
-	while ((c = getopt(argc, argv, "nb:c:C:e:r:h:x:v:i:o:f:m:lus:")) != -1) {
+	while ((c = getopt(argc, argv, "nb:c:C:e:r:h:x:v:i:o:f:m:lus:U:")) != -1) {
 		switch (c) {
 		case 'n':
 			n_flag = 1;
@@ -421,8 +463,14 @@ main(int argc, char **argv)
 				exit(1);
 			}
 			break;
+		case 'U':
+			if (sscanf(optarg, "%u", &unit) != 1) {
+				fprintf(stderr, "%s: bad device number\n", optarg);
+				exit(1);
+			}
+			break;
 		default:
-			usage();
+			aucat_usage();
 			exit(1);
 		}
 	}
@@ -433,7 +481,6 @@ main(int argc, char **argv)
 		dopar = ipar;
 		dipar = opar;
 	}
-
 	if (!l_flag && SLIST_EMPTY(&ifiles) &&
 	    SLIST_EMPTY(&ofiles) && argc > 0) {
 		/*
@@ -447,12 +494,12 @@ main(int argc, char **argv)
 			}
 		exit(0);
 	} else if (argc > 0) {
-		usage();
+		aucat_usage();
 		exit(1);
 	}
 
-	if (!l_flag && !SLIST_EMPTY(&sfiles))
-		errx(1, "can't use -s without -l");
+	if (!l_flag && (!SLIST_EMPTY(&sfiles) || unit >= 0))
+		errx(1, "can't use -s or -U without -l");
 	if ((l_flag || mode != 0) &&
 	    (!SLIST_EMPTY(&ofiles) || !SLIST_EMPTY(&ifiles)))
 		errx(1, "can't use -l, -m and -s with -o or -i");
@@ -461,8 +508,10 @@ main(int argc, char **argv)
 			mode |= MODE_PLAY;
 		if (l_flag || !SLIST_EMPTY(&ofiles))
 			mode |= MODE_REC;
-		if (!mode)
-			errx(1, "nothing to play or record");
+		if (!mode) {
+			aucat_usage();
+			exit(1);
+		}
 	}
 	if (n_flag) {
 		if (devpath != NULL || l_flag)
@@ -476,7 +525,7 @@ main(int argc, char **argv)
 	 */
 	if (l_flag && SLIST_EMPTY(&sfiles)) {
 		farg_add(&sfiles, &dopar, &dipar,
-		    volctl, HDR_RAW, XRUN_IGNORE, DEFAULT_SOCKET);
+		    volctl, HDR_RAW, XRUN_IGNORE, DEFAULT_OPT);
 	}
 
 	if (!u_flag) {
@@ -500,35 +549,11 @@ main(int argc, char **argv)
 	}
 
 	if (l_flag) {
-		uid = geteuid();
-		snprintf(base, PATH_MAX, "/tmp/aucat-%u", uid);
-		if (mkdir(base, 0700) < 0) {
-			if (errno != EEXIST)
-				err(1, "mkdir(\"%s\")", base);
-		}
-		if (stat(base, &sb) < 0)
-			err(1, "stat(\"%s\")", base);
-		if (sb.st_uid != uid || (sb.st_mode & 077) != 0)
-			errx(1, "%s has wrong permissions", base);
+		getbasepath(base, sizeof(base));
+		if (unit < 0)
+			unit = 0;
 	}
-	quit_flag = 0;
-	sigfillset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = sigint;
-	if (sigaction(SIGINT, &sa, NULL) < 0)
-		DPRINTF("sigaction(int) failed\n");
-	if (sigaction(SIGTERM, &sa, NULL) < 0)
-		DPRINTF("sigaction(term) failed\n");
-	if (sigaction(SIGHUP, &sa, NULL) < 0)
-		DPRINTF("sigaction(hup) failed\n");
-#ifdef DEBUG
-	sa.sa_handler = sigusr1;
-	if (sigaction(SIGUSR1, &sa, NULL) < 0)
-		DPRINTF("sigaction(usr1) failed\n");
-	sa.sa_handler = sigusr2;
-	if (sigaction(SIGUSR2, &sa, NULL) < 0)
-		DPRINTF("sigaction(usr2) failed1n");
-#endif
+	setsig();
 	filelist_init();
 
 	/*
@@ -565,15 +590,14 @@ main(int argc, char **argv)
 	while (!SLIST_EMPTY(&sfiles)) {
 		fa = SLIST_FIRST(&sfiles);
 		SLIST_REMOVE_HEAD(&sfiles, entry);
-		if (strchr(fa->name, '/') != NULL)
-			errx(1, "socket names must not contain '/'");
-		snprintf(path, PATH_MAX, "%s/%s", base, fa->name);
-		listen_new(&listen_ops, path, &fa->opar, &fa->ipar,
-		    MIDI_TO_ADATA(fa->vol));
+		opt_new(fa->name, &fa->opar, &fa->ipar, MIDI_TO_ADATA(fa->vol));
 		free(fa);
 	}
-	if (l_flag && debug_level == 0) {
-		if (daemon(0, 0) < 0)
+	if (l_flag) {
+		snprintf(path, sizeof(path), "%s/%s%u", base,
+		    DEFAULT_SOFTAUDIO, unit);
+		listen_new(&listen_ops, path);
+		if (debug_level == 0 && daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
 
@@ -626,11 +650,223 @@ main(int argc, char **argv)
 	} else
 		dev_done();
 	filelist_done();
-
-       	sigfillset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sa.sa_handler = SIG_DFL;
-	if (sigaction(SIGINT, &sa, NULL) < 0)
-		DPRINTF("dev_done: sigaction failed\n");
+	unsetsig();
 	return 0;
+}
+
+void
+midicat_usage(void)
+{
+	(void)fputs("usage: " PROG_MIDICAT " [-l] [-f device] "
+	    "[-i file] [-o file] [-U unit]\n",
+	    stderr);
+}
+int
+midicat_main(int argc, char **argv)
+{
+	static struct aparams noparams = { 1, 0, 0, 0, 0, 0, 0, 0 };
+	int c, l_flag, unit, fd;
+	char base[PATH_MAX], path[PATH_MAX];
+	char *input, *output, *devpath;
+	struct file *dev, *stdx, *f;
+	struct aproc *p, *send, *recv;
+	struct abuf *buf;
+
+	l_flag = 0;
+	unit = -1;
+	devpath = NULL;
+	output = NULL;
+	input = NULL;
+
+	while ((c = getopt(argc, argv, "i:o:lf:U:")) != -1) {
+		switch (c) {
+		case 'i':
+			if (input != NULL)
+				errx(1, "only one -i allowed");
+			input = optarg;
+			break;
+		case 'o':
+			if (output != NULL)
+				errx(1, "only one -o allowed");
+			output = optarg;
+			break;
+		case 'f':
+			devpath = optarg;
+			break;
+		case 'l':
+			l_flag = 1;
+			break;
+		case 'U':
+			if (sscanf(optarg, "%u", &unit) != 1) {
+				fprintf(stderr, "%s: bad device number\n", optarg);
+				exit(1);
+			}
+			break;
+		default:
+			midicat_usage();
+			exit(1);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc > 0 || (!input && !output && !l_flag)) {
+		midicat_usage();
+		exit(1);
+	}
+	if (!l_flag && unit >= 0)
+		errx(1, "can't use -U without -l");
+	if (l_flag) {
+		if (input || output)
+			errx(1, "can't use -i or -o with -l");
+		getbasepath(base, sizeof(path));
+		if (unit < 0)
+			unit = 0;
+	}
+	setsig();
+	filelist_init();
+
+	if (l_flag) {
+		thrubox = thru_new("thru");
+		thrubox->refs++;
+		snprintf(path, sizeof(path), "%s/%s%u", base,
+		    DEFAULT_MIDITHRU, unit);
+		listen_new(&listen_ops, path);
+		if (debug_level == 0 && daemon(0, 0) < 0)
+			err(1, "daemon");
+	}
+	if (input || output) {
+		dev = (struct file *)miofile_new(&miofile_ops, devpath,
+		     output ? 1 : 0, input ? 1 : 0);
+		if (dev == NULL)
+			errx(1, "%s: can't open device", 
+			    devpath ? devpath : "<default>");
+	} else
+		dev = NULL;
+	if (input) {
+		send = wpipe_new(dev);
+		send->refs++;
+		if (strcmp(input, "-") == 0) {
+			fd = STDIN_FILENO;
+			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+				warn("stdin");
+		} else {
+			fd = open(input, O_RDONLY | O_NONBLOCK, 0666);
+			if (fd < 0)
+				err(1, "%s", input);
+		}
+		stdx = (struct file *)pipe_new(&pipe_ops, fd, "stdin");
+		p = rpipe_new(stdx);
+		buf = abuf_new(3125, &noparams);
+		aproc_setout(p, buf);
+		aproc_setin(send, buf);
+	} else
+		send = NULL;
+	if (output) {
+		recv = rpipe_new(dev);
+		recv->refs++;
+		if (strcmp(output, "-") == 0) {
+			fd = STDOUT_FILENO;
+			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+				warn("stdout");
+		} else {
+			fd = open(output,
+			    O_WRONLY | O_TRUNC | O_CREAT | O_NONBLOCK, 0666);
+			if (fd < 0)
+				err(1, "%s", output);
+		}
+		stdx = (struct file *)pipe_new(&pipe_ops, fd, "stdout");
+		p = wpipe_new(stdx);
+		buf = abuf_new(3125, &noparams);
+		aproc_setin(p, buf);
+		aproc_setout(recv, buf);
+	} else
+		recv = NULL;
+
+	/*
+	 * loop, start processing
+	 */
+	for (;;) {
+		if (quit_flag) {
+			break;
+		}
+		if (!file_poll())
+			break;
+	}
+	if (l_flag) {
+		filelist_unlisten();
+		if (rmdir(base) < 0)
+			warn("rmdir(\"%s\")", base);
+	}
+	if (thrubox) {
+	restart_thrubox:
+		LIST_FOREACH(f, &file_list, entry) {
+			if (f->rproc && aproc_depend(thrubox, f->rproc)) {
+				file_eof(f);
+				goto restart_thrubox;
+			}
+		}
+		while (!LIST_EMPTY(&thrubox->ibuflist)) {
+			if (!file_poll())
+				break;
+		}
+		thrubox->refs--;
+		aproc_del(thrubox);
+		thrubox = NULL;
+		while (file_poll())
+			; /* nothing */
+	}
+	if (send) {
+	restart_send:
+		LIST_FOREACH(f, &file_list, entry) {
+			if (f->rproc && aproc_depend(send, f->rproc)) {
+				file_eof(f);
+				goto restart_send;
+			}
+		}
+		while (!LIST_EMPTY(&send->ibuflist)) {
+			if (!file_poll())
+				break;
+		}
+		send->refs--;
+		aproc_del(send);
+		send = NULL;
+	}
+	if (recv) {
+		if (recv->u.io.file)
+			file_eof(recv->u.io.file);
+		while (!LIST_EMPTY(&recv->obuflist)) {
+			if (!file_poll())
+				break;
+		}
+		recv->refs--;
+		aproc_del(recv);
+		recv = NULL;
+	}
+	filelist_done();
+	unsetsig();
+	return 0;
+}
+
+
+int
+main(int argc, char **argv)
+{
+	char *prog;
+
+	prog = strrchr(argv[0], '/');
+	if (prog == NULL)
+		prog = argv[0];
+	else
+		prog++;
+	if (strcmp(prog, PROG_AUCAT) == 0) {
+		set_debug_level("AUCAT_DEBUG");
+		return aucat_main(argc, argv);
+	} else if (strcmp(prog, PROG_MIDICAT) == 0) {
+		set_debug_level("MIDICAT_DEBUG");
+		return midicat_main(argc, argv);
+	} else {
+		fprintf(stderr, "%s: can't determine program to run\n", prog);
+	}
+	return 1;
 }

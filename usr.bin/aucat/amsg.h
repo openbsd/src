@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.7 2009/05/16 12:20:31 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.8 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -88,7 +88,8 @@ struct amsg {
 #define AMSG_MIDIOUT	0x8			/* MIDI thru output */
 #define AMSG_MIXER	0x10			/* MIDI mixer */
 			uint16_t proto;		/* protocol type */
-			uint8_t reserved1[18];	/* for future use */
+			uint8_t reserved1[6];	/* for future use */
+			char opt[12];		/* profile name */
 			char who[12];		/* hint for leases */
 		} hello;
 	} u;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.16 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.17 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 
 #include "aparams.h"
+#include "file.h"
 
 struct abuf;
 struct aproc;
@@ -161,6 +162,10 @@ struct aproc {
 			int bnext;		/* to reach the next byte */
 			int snext;		/* to reach the next sample */
 		} conv;
+		struct {
+			struct abuf *owner;	/* current input stream */
+			struct timo timo;	/* timout for throtteling */
+		} thru;
 	} u;
 };
 
@@ -168,6 +173,7 @@ struct aproc *aproc_new(struct aproc_ops *, char *);
 void aproc_del(struct aproc *);
 void aproc_setin(struct aproc *, struct abuf *);
 void aproc_setout(struct aproc *, struct abuf *);
+int aproc_depend(struct aproc *, struct aproc *);
 
 struct aproc *rpipe_new(struct file *);
 int rpipe_in(struct aproc *, struct abuf *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.16 2009/02/13 20:48:49 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.17 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,6 +43,13 @@ struct abuf {
 	unsigned xrun;		/* common to mix and sub */
 	LIST_ENTRY(abuf) ient;	/* for mix inputs list */
 	LIST_ENTRY(abuf) oent;	/* for sub outputs list */
+	unsigned mstatus;	/* MIDI running status */
+	unsigned mindex;	/* current MIDI message size */
+	unsigned mused;		/* bytes used from mdata */
+	unsigned mlen;		/* MIDI message length */
+#define MDATA_NMAX 16
+	unsigned char mdata[MDATA_NMAX]; /* MIDI message data */
+	unsigned mtickets;	/* max data to transmit (throttling) */
 
 	/*
 	 * fifo parameters
@@ -74,12 +81,14 @@ struct abuf {
 #define ABUF_WOK(b) ((b)->len - (b)->used >= (b)->bpf)
 
 /*
- * the buffer is empty and has no more writer
+ * the buffer is empty and has no writer anymore
  */
 #define ABUF_EOF(b) (!ABUF_ROK(b) && (b)->wproc == NULL)
 
 /*
- * the buffer is empty and has no more writer
+ * the buffer has no reader anymore, note that it's not
+ * enough the buffer to be disconnected, because it can
+ * be not yet connected buffer (eg. socket play buffer)
  */
 #define ABUF_HUP(b) (!ABUF_WOK(b) && (b)->rproc == NULL)
 

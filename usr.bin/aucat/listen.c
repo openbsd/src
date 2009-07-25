@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.8 2009/02/04 20:35:14 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.9 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -46,8 +46,7 @@ struct fileops listen_ops = {
 };
 
 struct listen *
-listen_new(struct fileops *ops, char *path,
-    struct aparams *wpar, struct aparams *rpar, int maxweight)
+listen_new(struct fileops *ops, char *path)
 {
 	int sock, oldumask;
 	struct sockaddr_un sockname;
@@ -84,18 +83,6 @@ listen_new(struct fileops *ops, char *path,
 		exit(1);
 	}
 	f->fd = sock;
-	f->wpar = *wpar;
-	f->rpar = *rpar;
-	f->maxweight = maxweight;
-#ifdef DEBUG
-	if (debug_level > 0) {
-		fprintf(stderr, "listen_new: %s: wpar=", f->path);
-		aparams_print(&f->wpar);
-		fprintf(stderr, ", rpar=");
-		aparams_print(&f->rpar);
-		fprintf(stderr, ", vol=%u\n", f->maxweight);
-	}
-#endif
 	return f;
  bad_close:
 	close(sock);
@@ -138,8 +125,7 @@ listen_revents(struct file *file, struct pollfd *pfd)
 			close(sock);
 			return 0;
 		}
-		if (sock_new(&sock_ops, sock, "socket",
-			&f->wpar, &f->rpar, f->maxweight) == NULL) {
+		if (sock_new(&sock_ops, sock) == NULL) {
 			close(sock);
 			return 0;
 		}

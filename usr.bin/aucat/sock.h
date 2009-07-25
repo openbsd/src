@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.6 2009/05/16 12:20:31 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.7 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -21,6 +21,8 @@
 #include "aparams.h"
 #include "amsg.h"
 
+struct opt;
+
 struct sock {
 	struct pipe pipe;
 	/*
@@ -42,6 +44,7 @@ struct sock {
 #define SOCK_INIT	1		/* parameter negotiation */
 #define SOCK_START	2		/* filling play buffers */
 #define SOCK_RUN	3		/* attached to the mix / sub */
+#define SOCK_MIDI	4		/* raw byte stream (midi) */
 	unsigned pstate;		/* one of the above */
 	unsigned mode;			/* a set of AMSG_PLAY, AMSG_REC */
 	struct aparams rpar;		/* read (ie play) parameters */
@@ -52,13 +55,10 @@ struct sock {
 	unsigned round;			/* block size */
 	unsigned xrun;			/* one of AMSG_IGNORE, ... */
 	int vol;			/* requested volume */
-	int maxweight;			/* max dynamic range */
-	struct aparams templ_rpar;	/* template for rpar */
-	struct aparams templ_wpar;	/* template for wpar */
+	struct opt *opt;		/* "subdevice" definition */
 };
 
-struct sock *sock_new(struct fileops *, int fd, char *,
-    struct aparams *, struct aparams *, int);
+struct sock *sock_new(struct fileops *, int fd);
 extern struct fileops sock_ops;
 
 #endif /* !defined(SOCK_H) */

@@ -1,0 +1,184 @@
+/*	$OpenBSD: mio.c,v 1.1 2009/07/25 08:44:26 ratchov Exp $	*/
+/*
+ * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "mio_priv.h"
+
+#ifdef DEBUG
+/*
+ * debug level, -1 means uninitialized
+ */
+int mio_debug = -1;
+#endif
+
+struct mio_hdl *
+mio_open(char *str, unsigned mode, int nbio)
+{
+	static char prefix_midithru[] = "midithru";
+	static char prefix_rmidi[] = "rmidi";
+	struct mio_hdl *hdl;
+	struct stat sb;
+	char *sep, buf[4];
+	int len;
+#ifdef DEBUG
+	char *dbg;
+
+	if (mio_debug < 0) {
+		dbg = issetugid() ? NULL : getenv("MIO_DEBUG");
+		if (!dbg || sscanf(dbg, "%u", &mio_debug) != 1)
+			mio_debug = 0;
+	}
+#endif	
+	if ((mode & (MIO_OUT | MIO_IN)) == 0)
+		return NULL;
+	if (str == NULL && !issetugid())
+		str = getenv("MIDIDEVICE");
+	if (str == NULL) {
+		hdl = mio_open_thru("0", mode, nbio);
+		if (hdl != NULL)
+			return hdl;
+		return mio_open_rmidi("0", mode, nbio);
+	}
+	sep = strchr(str, ':');
+	if (sep == NULL) {
+		/*
+		 * try legacy "/dev/rmidioxxx" device name
+		 */
+		if (stat(str, &sb) < 0 || !S_ISCHR(sb.st_mode)) {
+			DPRINTF("mio_open: %s: missing ':' separator\n", str); 
+			return NULL;
+		}
+		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev));
+		return mio_open_rmidi(buf, mode, nbio);
+	}
+	if (sep == str) {
+		/*
+		 * legacy "/dev/rmidixxx" device name
+		 */
+		if (stat(str, &sb) < 0) {
+			DPERROR("mio_open: stat");
+			return NULL;
+		}
+		if (!S_ISCHR(sb.st_mode)) {
+			DPRINTF("mio_open: %s: not a char dev\n", str);
+			return NULL;
+		}
+		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev));
+		return mio_open_rmidi(buf, mode, nbio);
+	}
+
+	len = sep - str;
+	if (len == strlen(prefix_midithru) &&
+	    memcmp(str, prefix_midithru, len) == 0)
+		return mio_open_thru(sep + 1, mode, nbio);
+	if (len == strlen(prefix_rmidi) &&
+	    memcmp(str, prefix_rmidi, len) == 0)
+		return mio_open_rmidi(sep + 1, mode, nbio);
+	DPRINTF("mio_open: %s: unknown device type\n", str);
+	return NULL;
+}
+
+void
+mio_create(struct mio_hdl *hdl, struct mio_ops *ops, unsigned mode, int nbio)
+{
+	hdl->ops = ops;
+	hdl->mode = mode;
+	hdl->nbio = nbio;
+	hdl->eof = 0;
+}
+
+void
+mio_close(struct mio_hdl *hdl)
+{
+	return hdl->ops->close(hdl);
+}
+
+size_t
+mio_read(struct mio_hdl *hdl, void *buf, size_t len)
+{
+	if (hdl->eof) {
+		DPRINTF("mio_read: eof\n");
+		return 0;
+	}
+	if (!(hdl->mode & MIO_IN)) {
+		DPRINTF("mio_read: not input device\n");
+		hdl->eof = 1;
+		return 0;
+	}
+	if (len == 0) {
+		DPRINTF("mio_read: zero length read ignored\n");
+		return 0;
+	}
+	return hdl->ops->read(hdl, buf, len);
+}
+
+size_t
+mio_write(struct mio_hdl *hdl, void *buf, size_t len)
+{
+	if (hdl->eof) {
+		DPRINTF("mio_write: eof\n");
+		return 0;
+	}
+	if (!(hdl->mode & MIO_OUT)) {
+		DPRINTF("mio_write: not output device\n");
+		hdl->eof = 1;
+		return 0;
+	}
+	if (len == 0) {
+		DPRINTF("mio_write: zero length write ignored\n");
+		return 0;
+	}
+	return hdl->ops->write(hdl, buf, len);
+}
+
+int
+mio_nfds(struct mio_hdl *hdl)
+{
+	return 1;
+}
+
+int
+mio_pollfd(struct mio_hdl *hdl, struct pollfd *pfd, int events)
+{
+	if (hdl->eof)
+		return 0;
+	return hdl->ops->pollfd(hdl, pfd, events);
+}
+
+int
+mio_revents(struct mio_hdl *hdl, struct pollfd *pfd)
+{	
+	if (hdl->eof)
+		return POLLHUP;
+	return hdl->ops->revents(hdl, pfd);
+}
+
+int
+mio_eof(struct mio_hdl *hdl)
+{
+	return hdl->eof;
+}

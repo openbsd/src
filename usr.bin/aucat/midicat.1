@@ -1,0 +1,130 @@
+.\"	$OpenBSD: midicat.1,v 1.1 2009/07/25 08:44:27 ratchov Exp $
+.\"
+.\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 25 2009 $
+.Dt MIDICAT 1
+.Os
+.Sh NAME
+.Nm midicat
+.Nd MIDI server and manipulation tool
+.Sh SYNOPSIS
+.Nm midicat
+.Op Fl l
+.Op Fl f Ar device
+.Op Fl i Ar file
+.Op Fl o Ar file
+.Op Fl U Ar unit
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to manipulate MIDI data.
+It can send and receive MIDI data from MIDI ports,
+or it can create software MIDI thru boxes,
+allowing any MIDI-capable application to
+send MIDI messages to MIDI hardware
+or to another application in a uniform way.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl f Ar device
+The
+.Xr midi 4
+device or
+.Nm
+socket to use for MIDI input/output.
+.It Fl i Ar file
+Send contents of this to the device.
+If the option argument is
+.Sq -
+then standard input will be used.
+.It Fl l
+Listen for incoming connections on Unix domain sockets.
+This allows clients to use
+.Nm
+instead of the regular
+.Xr midi 4
+device as a software MIDI thru box.
+.It Fl o Ar file
+Store received data from the device into this file.
+If the option argument is
+.Sq -
+then standard output will be used.
+.It Fl U Ar unit
+Use the given unit number when creating a software MIDI thru box.
+Only one
+.Nm
+process can expose a unit number at a given time.
+The default is 0.
+.El
+.Pp
+If
+.Nm
+is sent
+.Dv SIGHUP ,
+.Dv SIGINT
+or
+.Dv SIGTERM ,
+then processing terminates.
+If sent
+.Dv SIGUSR1
+or
+.Dv SIGUSR2 ,
+it increases or decreases debug level, respectively.
+.Sh SERVER MODE
+.Nm
+can be used in server mode
+.Pq Fl l
+to create MIDI thru boxes.
+A MIDI thru box allows multiple receivers
+to receive data from a single source.
+Additionaly,
+.Nm
+software thru boxes allow multiple sources to be connected
+to them; in this case MIDI byte-streams are merged,
+preserving MIDI message integrity.
+This feature is provided to allow multiple applications
+acting as sources to keep their connection open while
+idling; it does not replace a fully featured MIDI merger.
+.Pp
+It is generally not desirable to have multiple instances of
+.Nm
+running in server mode, so it is good practice to start it thus:
+.Bd -literal -offset indent
+$ pgrep -x midicat || midicat -l
+.Ed
+.Pp
+Generally MIDI applications are real-time.
+To reduce jitter, especially on busy machines, the
+.Xr renice 8
+command can be used to give a higher priority to the
+.Nm
+process.
+Superuser privileges are required.
+For example:
+.Bd -literal -offset indent
+$ midicat -l
+$ sudo renice -n -20 -p `pgrep -x midicat`
+.Ed
+.Sh ENVIRONMENT
+.Bl -tag -width "MIDICAT_DEBUGXXX" -compact
+.It Ev MIDICAT_DEBUG
+The debug level:
+may be a value between 0 and 4.
+.El
+.Sh SEE ALSO
+.Xr aucat 1 ,
+.Xr midi 4 ,
+.Xr sndio 7

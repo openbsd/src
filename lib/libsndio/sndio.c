@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.15 2009/05/15 13:04:52 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.16 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,6 +17,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -163,11 +164,15 @@ done:
 	return p - istr;
 }
 
-
 struct sio_hdl *
 sio_open(char *str, unsigned mode, int nbio)
 {
+	static char prefix_aucat[] = "aucat";
+	static char prefix_sun[] = "sun";
 	struct sio_hdl *hdl;
+	struct stat sb;
+	char *sep, buf[NAME_MAX];
+	int len;
 #ifdef DEBUG
 	char *dbg;
 
@@ -181,12 +186,37 @@ sio_open(char *str, unsigned mode, int nbio)
 		return NULL;
 	if (str == NULL && !issetugid())
 		str = getenv("AUDIODEVICE");
-	hdl = sio_open_aucat(str, mode, nbio);
-	if (hdl != NULL)
-		return hdl;
-	hdl = sio_open_sun(str, mode, nbio);
-	if (hdl != NULL)
-		return hdl;
+	if (str == NULL) {
+		hdl = sio_open_aucat("0", mode, nbio);
+		if (hdl != NULL)
+			return hdl;
+		if (stat("/dev/audio", &sb) == 0 && S_ISCHR(sb.st_mode)) {
+			snprintf(buf, sizeof(buf), "%u",
+			    minor(sb.st_rdev) & 0xf);
+		} else
+			strlcpy(buf, "0", sizeof(buf));
+		return sio_open_sun(buf, mode, nbio);
+	}
+	sep = strchr(str, ':');
+	if (sep == NULL) {
+		/*
+		 * try legacy "/dev/audioxxx" or ``socket'' device name
+		 */
+		if (stat(str, &sb) < 0 || !S_ISCHR(sb.st_mode)) {
+			snprintf(buf, sizeof(buf), "0.%s", str);
+			return sio_open_aucat(buf, mode, nbio);
+		}
+		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev) & 0xf);
+		return sio_open_sun(buf, mode, nbio);
+	}
+	len = sep - str;
+	if (len == strlen(prefix_aucat) &&
+	    memcmp(str, prefix_aucat, len) == 0)
+		return sio_open_aucat(sep + 1, mode, nbio);
+	if (len == strlen(prefix_sun) &&
+	    memcmp(str, prefix_sun, len) == 0)
+		return sio_open_sun(sep + 1, mode, nbio);
+	DPRINTF("sio_open: %s: unknown device type\n", str);
 	return NULL;
 }
 

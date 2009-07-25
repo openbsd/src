@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.31 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.32 2009/07/25 08:44:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -157,6 +157,20 @@ aproc_inuse(struct aproc *p)
 }
 
 int
+aproc_depend(struct aproc *p, struct aproc *dep)
+{
+	struct abuf *i;
+
+	if (p == dep)
+		return 1;
+	LIST_FOREACH(i, &p->ibuflist, ient) {
+		if (i->wproc && aproc_depend(i->wproc, dep))
+			return 1;
+	}
+	return 0;
+}
+
+int
 rpipe_in(struct aproc *p, struct abuf *ibuf_dummy)
 {
 	struct abuf *obuf = LIST_FIRST(&p->obuflist);
@@ -185,7 +199,7 @@ rpipe_out(struct aproc *p, struct abuf *obuf)
 	unsigned char *data;
 	unsigned count;
 
-	if (f->refs > 0)
+	if (f->state & FILE_RINUSE)
 		return 0;
 	DPRINTFN(3, "rpipe_out: %s\n", p->name);
 
@@ -270,7 +284,7 @@ wpipe_in(struct aproc *p, struct abuf *ibuf)
 	unsigned char *data;
 	unsigned count;
 
-	if (f->refs > 0)
+	if (f->state & FILE_WINUSE)
 		return 0;
 	DPRINTFN(3, "wpipe_in: %s\n", p->name);
 
