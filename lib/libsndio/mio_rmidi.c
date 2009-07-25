@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.1 2009/07/25 08:44:26 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.2 2009/07/25 11:15:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -37,7 +37,7 @@ struct rmidi_hdl {
 
 static void rmidi_close(struct mio_hdl *);
 static size_t rmidi_read(struct mio_hdl *, void *, size_t);
-static size_t rmidi_write(struct mio_hdl *, void *, size_t);
+static size_t rmidi_write(struct mio_hdl *, const void *, size_t);
 static int rmidi_pollfd(struct mio_hdl *, struct pollfd *, int);
 static int rmidi_revents(struct mio_hdl *, struct pollfd *);
 
@@ -50,7 +50,7 @@ static struct mio_ops rmidi_ops = {
 };
 
 struct mio_hdl *
-mio_open_rmidi(char *str, unsigned mode, int nbio)
+mio_open_rmidi(const char *str, unsigned mode, int nbio)
 {
 	int fd, flags;
 	struct rmidi_hdl *hdl;
@@ -123,7 +123,7 @@ rmidi_read(struct mio_hdl *sh, void *buf, size_t len)
 }
 
 static size_t
-rmidi_write(struct mio_hdl *sh, void *buf, size_t len)
+rmidi_write(struct mio_hdl *sh, const void *buf, size_t len)
 {
 	struct rmidi_hdl *hdl = (struct rmidi_hdl *)sh;
 	ssize_t n;

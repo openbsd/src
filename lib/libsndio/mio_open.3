@@ -1,4 +1,4 @@
-.\" $OpenBSD: mio_open.3,v 1.1 2009/07/25 08:44:26 ratchov Exp $
+.\" $OpenBSD: mio_open.3,v 1.2 2009/07/25 11:15:56 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -30,13 +30,13 @@
 .Sh SYNOPSIS
 .Fd #include <sndio.h>
 .Ft "struct mio_hdl *"
-.Fn "mio_open" "char *name" "unsigned mode" "int nbio_flag"
+.Fn "mio_open" "const char *name" "unsigned mode" "int nbio_flag"
 .Ft "void"
 .Fn "mio_close" "struct mio_hdl *hdl"
 .Ft "size_t"
 .Fn "mio_read" "struct mio_hdl *hdl" "void *addr" "size_t nbytes"
 .Ft "size_t"
-.Fn "mio_write" "struct mio_hdl *hdl" "void *addr" "size_t nbytes"
+.Fn "mio_write" "struct mio_hdl *hdl" "const void *addr" "size_t nbytes"
 .Ft "int"
 .Fn "mio_nfds" "struct mio_hdl *hdl"
 .Ft "int"

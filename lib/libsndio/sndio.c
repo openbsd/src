@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.16 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.17 2009/07/25 11:15:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -165,7 +165,7 @@ done:
 }
 
 struct sio_hdl *
-sio_open(char *str, unsigned mode, int nbio)
+sio_open(const char *str, unsigned mode, int nbio)
 {
 	static char prefix_aucat[] = "aucat";
 	static char prefix_sun[] = "sun";
@@ -410,10 +410,10 @@ sio_read(struct sio_hdl *hdl, void *buf, size_t len)
 }
 
 size_t
-sio_write(struct sio_hdl *hdl, void *buf, size_t len)
+sio_write(struct sio_hdl *hdl, const void *buf, size_t len)
 {
 	unsigned n;
-	unsigned char *data = buf;
+	const unsigned char *data = buf;
 	size_t todo = len;
 #ifdef DEBUG
 	struct timeval tv0, tv1, dtv;

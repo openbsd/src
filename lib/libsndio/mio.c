@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.1 2009/07/25 08:44:26 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.2 2009/07/25 11:15:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,7 +36,7 @@ int mio_debug = -1;
 #endif
 
 struct mio_hdl *
-mio_open(char *str, unsigned mode, int nbio)
+mio_open(const char *str, unsigned mode, int nbio)
 {
 	static char prefix_midithru[] = "midithru";
 	static char prefix_rmidi[] = "rmidi";
@@ -137,7 +137,7 @@ mio_read(struct mio_hdl *hdl, void *buf, size_t len)
 }
 
 size_t
-mio_write(struct mio_hdl *hdl, void *buf, size_t len)
+mio_write(struct mio_hdl *hdl, const void *buf, size_t len)
 {
 	if (hdl->eof) {
 		DPRINTF("mio_write: eof\n");

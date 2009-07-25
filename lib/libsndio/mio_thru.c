@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_thru.c,v 1.1 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: mio_thru.c,v 1.2 2009/07/25 11:15:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -39,7 +39,7 @@ struct thru_hdl {
 
 static void thru_close(struct mio_hdl *);
 static size_t thru_read(struct mio_hdl *, void *, size_t);
-static size_t thru_write(struct mio_hdl *, void *, size_t);
+static size_t thru_write(struct mio_hdl *, const void *, size_t);
 static int thru_pollfd(struct mio_hdl *, struct pollfd *, int);
 static int thru_revents(struct mio_hdl *, struct pollfd *);
 
@@ -52,7 +52,7 @@ static struct mio_ops thru_ops = {
 };
 
 struct mio_hdl *
-mio_open_thru(char *str, unsigned mode, int nbio)
+mio_open_thru(const char *str, unsigned mode, int nbio)
 {
 	extern char *__progname;
 	struct amsg msg;
@@ -178,7 +178,7 @@ thru_read(struct mio_hdl *sh, void *buf, size_t len)
 }
 
 static size_t
-thru_write(struct mio_hdl *sh, void *buf, size_t len)
+thru_write(struct mio_hdl *sh, const void *buf, size_t len)
 {
 	struct thru_hdl *hdl = (struct thru_hdl *)sh;
 	ssize_t n;

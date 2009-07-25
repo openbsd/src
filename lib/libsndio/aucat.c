@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.22 2009/07/25 08:44:26 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.23 2009/07/25 11:15:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -50,7 +50,7 @@ static int aucat_setpar(struct sio_hdl *, struct sio_par *);
 static int aucat_getpar(struct sio_hdl *, struct sio_par *);
 static int aucat_getcap(struct sio_hdl *, struct sio_cap *);
 static size_t aucat_read(struct sio_hdl *, void *, size_t);
-static size_t aucat_write(struct sio_hdl *, void *, size_t);
+static size_t aucat_write(struct sio_hdl *, const void *, size_t);
 static int aucat_pollfd(struct sio_hdl *, struct pollfd *, int);
 static int aucat_revents(struct sio_hdl *, struct pollfd *);
 static int aucat_setvol(struct sio_hdl *, unsigned);
@@ -167,7 +167,7 @@ aucat_runmsg(struct aucat_hdl *hdl)
 }
 
 struct sio_hdl *
-sio_open_aucat(char *str, unsigned mode, int nbio)
+sio_open_aucat(const char *str, unsigned mode, int nbio)
 {
 	extern char *__progname;
 	int s;
@@ -524,7 +524,7 @@ aucat_buildmsg(struct aucat_hdl *hdl, size_t len)
 }
 
 static size_t
-aucat_write(struct sio_hdl *sh, void *buf, size_t len)
+aucat_write(struct sio_hdl *sh, const void *buf, size_t len)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 	ssize_t n;

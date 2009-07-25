@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.18 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.19 2009/07/25 11:15:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -60,7 +60,7 @@ static int sun_setpar(struct sio_hdl *, struct sio_par *);
 static int sun_getpar(struct sio_hdl *, struct sio_par *);
 static int sun_getcap(struct sio_hdl *, struct sio_cap *);
 static size_t sun_read(struct sio_hdl *, void *, size_t);
-static size_t sun_write(struct sio_hdl *, void *, size_t);
+static size_t sun_write(struct sio_hdl *, const void *, size_t);
 static int sun_pollfd(struct sio_hdl *, struct pollfd *, int);
 static int sun_revents(struct sio_hdl *, struct pollfd *);
 static int sun_setvol(struct sio_hdl *, unsigned);
@@ -342,7 +342,7 @@ sun_setvol(struct sio_hdl *sh, unsigned vol)
 }
 
 struct sio_hdl *
-sio_open_sun(char *str, unsigned mode, int nbio)
+sio_open_sun(const char *str, unsigned mode, int nbio)
 {
 	int fd, flags, fullduplex;
 	struct sun_hdl *hdl;
@@ -734,12 +734,12 @@ sun_autostart(struct sun_hdl *hdl)
 }
 
 static size_t
-sun_write(struct sio_hdl *sh, void *buf, size_t len)
+sun_write(struct sio_hdl *sh, const void *buf, size_t len)
 {
 #define ZERO_NMAX 0x1000
 	static char zero[ZERO_NMAX];
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
-	unsigned char *data = buf;
+	const unsigned char *data = buf;
 	ssize_t n, todo;
 
 	while (hdl->offset < 0) {
