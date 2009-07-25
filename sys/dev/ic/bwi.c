@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.88 2009/07/19 11:35:38 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.89 2009/07/25 18:49:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -343,8 +343,7 @@ void		 bwi_free_tx_ring32(struct bwi_softc *, int);
 void		 bwi_free_txstats64(struct bwi_softc *);
 void		 bwi_free_rx_ring64(struct bwi_softc *);
 void		 bwi_free_tx_ring64(struct bwi_softc *, int);
-uint8_t		 bwi_ofdm_plcp2rate(uint32_t *);
-uint8_t		 bwi_ds_plcp2rate(struct ieee80211_ds_plcp_hdr *);
+uint8_t		 bwi_plcp2rate(uint32_t, enum ieee80211_phymode);
 void		 bwi_ofdm_plcp_header(uint32_t *, int, uint8_t);
 void		 bwi_ds_plcp_header(struct ieee80211_ds_plcp_hdr *, int,
 		     uint8_t);
@@ -8234,7 +8233,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		struct ieee80211_rxinfo rxi;
 		struct ieee80211_node *ni;
 		struct mbuf *m;
-		void *plcp;
+		uint32_t plcp;
 		uint16_t flags2;
 		int buflen, wh_ofs, hdr_extra, rssi, type, rate;
 
@@ -8264,7 +8263,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 			goto next;
 		}
 
-		plcp = ((uint8_t *)(hdr + 1) + hdr_extra);
+		bcopy((uint8_t *)(hdr + 1) + hdr_extra, &plcp, sizeof(plcp));
 		rssi = bwi_calc_rssi(sc, hdr);
 
 		m->m_pkthdr.rcvif = ifp;
@@ -8272,9 +8271,9 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		m_adj(m, sizeof(*hdr) + wh_ofs);
 
 		if (htole16(hdr->rxh_flags1) & BWI_RXH_F1_OFDM)
-			rate = bwi_ofdm_plcp2rate(plcp);
+			rate = bwi_plcp2rate(plcp, IEEE80211_MODE_11G);
 		else
-			rate = bwi_ds_plcp2rate(plcp);
+			rate = bwi_plcp2rate(plcp, IEEE80211_MODE_11B);
 
 #if NBPFILTER > 0
 		/* RX radio tap */
@@ -8488,21 +8487,10 @@ bwi_free_tx_ring64(struct bwi_softc *sc, int ring_idx)
 }
 
 uint8_t
-bwi_ofdm_plcp2rate(uint32_t *plcp0)
+bwi_plcp2rate(uint32_t plcp0, enum ieee80211_phymode phymode)
 {
-	uint32_t plcp;
-	uint8_t plcp_rate;
-
-	plcp = letoh32(*plcp0);
-	plcp_rate = __SHIFTOUT(plcp, IEEE80211_OFDM_PLCP_RATE_MASK);
-
-	return (ieee80211_plcp2rate(plcp_rate, IEEE80211_MODE_11G));
-}
-
-uint8_t
-bwi_ds_plcp2rate(struct ieee80211_ds_plcp_hdr *hdr)
-{
-	return (ieee80211_plcp2rate(hdr->i_signal, IEEE80211_MODE_11B));
+	uint32_t plcp = letoh32(plcp0) & IEEE80211_OFDM_PLCP_RATE_MASK;
+	return (ieee80211_plcp2rate(plcp, phymode));
 }
 
 void
