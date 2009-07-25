@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.2 2009/07/25 08:44:26 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.3 2009/07/25 11:27:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -131,13 +131,13 @@ int sio_strtoenc(struct sio_par *, char *);
 int sio_enctostr(struct sio_par *, char *);
 void sio_initpar(struct sio_par *);
 
-struct sio_hdl *sio_open(char *, unsigned, int);
+struct sio_hdl *sio_open(const char *, unsigned, int);
 void sio_close(struct sio_hdl *);
 int sio_setpar(struct sio_hdl *, struct sio_par *);
 int sio_getpar(struct sio_hdl *, struct sio_par *);
 int sio_getcap(struct sio_hdl *, struct sio_cap *);
 void sio_onmove(struct sio_hdl *, void (*)(void *, int), void *);
-size_t sio_write(struct sio_hdl *, void *, size_t);
+size_t sio_write(struct sio_hdl *, const void *, size_t);
 size_t sio_read(struct sio_hdl *, void *, size_t);
 int sio_start(struct sio_hdl *);
 int sio_stop(struct sio_hdl *);
@@ -148,9 +148,9 @@ int sio_eof(struct sio_hdl *);
 int sio_setvol(struct sio_hdl *, unsigned);
 void sio_onvol(struct sio_hdl *, void (*)(void *, unsigned), void *);
 
-struct mio_hdl *mio_open(char *, unsigned, int);
+struct mio_hdl *mio_open(const char *, unsigned, int);
 void mio_close(struct mio_hdl *);
-size_t mio_write(struct mio_hdl *, void *, size_t);
+size_t mio_write(struct mio_hdl *, const void *, size_t);
 size_t mio_read(struct mio_hdl *, void *, size_t);
 int mio_nfds(struct mio_hdl *);
 int mio_pollfd(struct mio_hdl *, struct pollfd *, int);
