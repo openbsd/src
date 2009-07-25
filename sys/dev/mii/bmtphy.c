@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphy.c,v 1.16 2006/12/27 19:11:08 kettenis Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.17 2009/07/25 09:56:24 sthen Exp $	*/
 /*	$NetBSD: bmtphy.c,v 1.17 2005/01/17 13:17:45 scw Exp $	*/
 
 /*-
@@ -236,7 +236,7 @@ bmtphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= IFM_10_T;
 
 		if (aux_csr & AUX_CSR_FDX)
-			mii->mii_media_active |= IFM_FDX;
+			mii->mii_media_active |= mii_phy_flowstatus(sc) | IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
 	} else
