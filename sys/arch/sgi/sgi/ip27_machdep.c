@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.17 2009/07/11 19:56:04 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.18 2009/07/25 19:17:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -398,6 +398,8 @@ void
 ip27_halt(int howto)
 {
 	uint32_t promop;
+	uint node;
+	uint64_t nibase, action;
 
 	/*
 	 * Even if ARCBios TLB and exception vectors are restored,
@@ -416,7 +418,11 @@ ip27_halt(int howto)
 		else
 			promop = GDA_PROMOP_EIM;
 #else
-		return;	/* caller will spin */
+		if (howto & RB_POWERDOWN)
+			printf("Software powerdown not supported, "
+			    "please switch off power manually.\n");
+		for (;;) ;
+		/* NOTREACHED */
 #endif
 	} else
 		promop = GDA_PROMOP_REBOOT;
@@ -442,16 +448,29 @@ ip27_halt(int howto)
 #endif
 
 	if (ip35) {
-		IP27_LHUB_S(HUBNIBASE_IP35 + HUBNI_RESET_ENABLE,
-		    NI_RESET_ENABLE);
-		IP27_LHUB_S(HUBNIBASE_IP35 + HUBNI_RESET,
-		    NI_RESET_LOCAL_IP35 | NI_RESET_ACTION_IP35);
+		nibase = HUBNIBASE_IP35;
+		action = NI_RESET_LOCAL_IP35 | NI_RESET_ACTION_IP35;
 	} else {
-		IP27_LHUB_S(HUBNIBASE_IP27 + HUBNI_RESET_ENABLE,
-		    NI_RESET_ENABLE);
-		IP27_LHUB_S(HUBNIBASE_IP27 + HUBNI_RESET,
-		    NI_RESET_LOCAL_IP27 | NI_RESET_ACTION_IP27);
+		nibase = HUBNIBASE_IP27;
+		action = NI_RESET_LOCAL_IP27 | NI_RESET_ACTION_IP27;
 	}
+
+	/*
+	 * Reset all other nodes, if present.
+	 */
+
+	for (node = 0; node < maxnodes; node++) {
+		if (gda->nasid[node] < 0)
+			continue;
+		if (gda->nasid[node] == masternasid)
+			continue;
+		IP27_RHUB_S(gda->nasid[node],
+		    nibase + HUBNI_RESET_ENABLE, NI_RESET_ENABLE);
+		IP27_RHUB_S(gda->nasid[node],
+		    nibase + HUBNI_RESET, action);
+	}
+	IP27_LHUB_S(nibase + HUBNI_RESET_ENABLE, NI_RESET_ENABLE);
+	IP27_LHUB_S(nibase + HUBNI_RESET, action);
 }
 
 /*
