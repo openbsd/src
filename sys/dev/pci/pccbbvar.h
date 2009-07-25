@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbvar.h,v 1.13 2007/11/30 08:12:00 miod Exp $	*/
+/*	$OpenBSD: pccbbvar.h,v 1.14 2009/07/25 11:27:26 kettenis Exp $	*/
 /*	$NetBSD: pccbbvar.h,v 1.13 2000/06/08 10:28:29 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -137,18 +137,12 @@ struct pccbb_softc {
 #define	CBB_INSERTING	0x01000000
 #define	CBB_16BITCARD	0x04
 #define	CBB_32BITCARD	0x08
-#define	CBB_MEMHMAPPED	0x02000000
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
 	pcireg_t sc_id;
 	int sc_chipset;			/* chipset id */
 	int sc_ints_on;
-
-	bus_addr_t sc_mem_start;	/* CardBus/PCMCIA memory start */
-	bus_addr_t sc_mem_end;		/* CardBus/PCMCIA memory end */
-	bus_addr_t sc_io_start;		/* CardBus/PCMCIA io start */
-	bus_addr_t sc_io_end;		/* CardBus/PCMCIA io end */
 
 	pcireg_t sc_sockbase;		/* Socket base register */
 	pcireg_t sc_busnum;		/* bus number */

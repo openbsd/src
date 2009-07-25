@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.66 2009/07/21 20:59:45 miod Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.67 2009/07/25 11:27:26 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -363,10 +363,6 @@ pccbb_shutdown(void *arg)
 
 	DPRINTF(("%s: shutdown\n", sc->sc_dev.dv_xname));
 
-	/* Nothing for us to do if we didn't map any registers. */
-	if ((sc->sc_flags & CBB_MEMHMAPPED) == 0)
-		return;
-
 	/* turn off power */
 	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
@@ -407,8 +403,6 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rbus_iot = rbus_pccbb_parent_io(self, pa);
 	sc->sc_rbus_memt = rbus_pccbb_parent_mem(self, pa);
 
-	sc->sc_flags &= ~CBB_MEMHMAPPED;
-
 	/*
 	 * MAP socket registers and ExCA registers on memory-space
 	 * When no valid address is set on socket base registers (on pci
@@ -416,41 +410,13 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	 */
 	sock_base = pci_conf_read(pc, pa->pa_tag, PCI_SOCKBASE);
 
-	if (PCI_MAPREG_MEM_ADDR(sock_base) >= 0x100000 &&
-	    PCI_MAPREG_MEM_ADDR(sock_base) != 0xfffffff0) {
-		/* The address must be valid. */
-		if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL, 0))
-		    {
-			printf("%s: can't map socket base address 0x%x\n",
-			    sc->sc_dev.dv_xname, sock_base);
-			/*
-			 * I think it's funny: socket base registers must be
-			 * mapped on memory space, but ...
-			 */
-			if (pci_mapreg_map(pa, PCI_SOCKBASE,
-			    PCI_MAPREG_TYPE_IO, 0, &sc->sc_base_memt,
-			    &sc->sc_base_memh, &sockbase, NULL, 0)) {
-				printf("%s: can't map socket base address"
-				    " 0x%lx: io mode\n", sc->sc_dev.dv_xname,
-				    sockbase);
-				/* give up... allocate reg space via rbus. */
-				pci_conf_write(pc, pa->pa_tag, PCI_SOCKBASE, 0);
-			} else
-				sc->sc_flags |= CBB_MEMHMAPPED;
-		} else {
-			DPRINTF(("%s: socket base address 0x%lx\n",
-			    sc->sc_dev.dv_xname, sockbase));
-			sc->sc_flags |= CBB_MEMHMAPPED;
-		}
+	if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL, 0)) {
+		printf("can't map registers\n");
+		return;
 	}
 
-	sc->sc_mem_start = 0;	       /* XXX */
-	sc->sc_mem_end = 0xffffffff;   /* XXX */
-
 	busreg = pci_conf_read(pc, pa->pa_tag, PCI_BUSNUM);
-
-	/* pccbb_machdep.c end */
 
 #if defined CBB_DEBUG
 	{
@@ -515,7 +481,7 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 
 	/* Disable legacy register mapping. */
 	switch (sc->sc_chipset) {
-	case CB_RX5C46X:	       /* fallthrough */
+	case CB_RX5C46X:
 #if 0
 	/* The RX5C47X-series requires writes to the PCI_LEGACY register. */
 	case CB_RX5C47X:
@@ -561,28 +527,11 @@ pccbb_pci_callback(struct device *self)
 	bus_space_tag_t base_memt;
 	bus_space_handle_t base_memh;
 	u_int32_t maskreg;
-	bus_addr_t sockbase;
 	struct cbslot_attach_args cba;
 	struct pcmciabus_attach_args paa;
 	struct cardslot_attach_args caa;
 	struct cardslot_softc *csc;
 	u_int32_t sockstat;
-
-	if (!(sc->sc_flags & CBB_MEMHMAPPED)) {
-		/* The socket registers aren't mapped correctly. */
-		if (rbus_space_alloc(sc->sc_rbus_memt, 0, 0x1000, 0x0fff,
-		    (sc->sc_chipset == CB_RX5C47X
-		    || sc->sc_chipset == CB_TI113X) ? 0x10000 : 0x1000,
-		    0, &sockbase, &sc->sc_base_memh)) {
-			return;
-		}
-		sc->sc_base_memt = sc->sc_memt;
-		pci_conf_write(pc, sc->sc_tag, PCI_SOCKBASE, sockbase);
-		DPRINTF(("%s: CardBus register address 0x%lx -> 0x%x\n",
-		    sc->sc_dev.dv_xname, sockbase, pci_conf_read(pc, sc->sc_tag,
-		    PCI_SOCKBASE)));
-		sc->sc_flags |= CBB_MEMHMAPPED;
-	}
 
 	base_memt = sc->sc_base_memt;  /* socket regs memory tag */
 	base_memh = sc->sc_base_memh;  /* socket regs memory handle */
