@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.138 2009/07/24 21:57:25 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.139 2009/07/25 12:41:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -323,7 +323,8 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 			if (pdemask != (va & PDE_MASK)) {
 				pdemask = va & PDE_MASK;
 				if (!(pde = pmap_pde_get(pd, va))) {
-					va += ~PDE_MASK + 1 - PAGE_SIZE;
+					va = pdemask + (~PDE_MASK + 1);
+					va -= PAGE_SIZE;
 					continue;
 				}
 				printf("%x:%8p:\n", sp, pde);
@@ -889,7 +890,7 @@ pmap_remove(pmap, sva, eva)
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva += ~PDE_MASK + 1 - PAGE_SIZE;
+				sva = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
 				continue;
 			}
 			batch = pdemask == sva && sva + ~PDE_MASK + 1 <= eva;
@@ -951,7 +952,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva += ~PDE_MASK + 1 - PAGE_SIZE;
+				sva = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
 				continue;
 			}
 		}
@@ -1282,7 +1283,7 @@ pmap_kremove(va, size)
 		if (pdemask != (va & PDE_MASK)) {
 			pdemask = va & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, va))) {
-				va += ~PDE_MASK + 1 - PAGE_SIZE;
+				va = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
 				continue;
 			}
 		}
