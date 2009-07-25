@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.65 2009/07/18 16:19:28 miod Exp $	*/
+/*	$OpenBSD: pci.c,v 1.66 2009/07/25 12:51:41 miod Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -791,10 +791,21 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct pci_softc *pci = NULL;
 	pci_chipset_tag_t pc;
 
+	switch (cmd) {
+	case PCIOCREAD:
+		break;
+	case PCIOCWRITE:
+		if (!(flag & FWRITE))
+			return EPERM;
+		break;
+	default:
+		return ENOTTY;
+	}
+
 	io = (struct pci_io *)data;
 
-	PCIDEBUG(("pciioctl cmd %s", cmd == PCIOCREAD ? "pciocread" 
-		  : cmd == PCIOCWRITE ? "pciocwrite" : "unknown"));
+	PCIDEBUG(("pciioctl cmd %s",
+	    cmd == PCIOCREAD ?  "pciocread" : "pciocwrite"));
 	PCIDEBUG(("  bus %d dev %d func %d reg %x\n", io->pi_sel.pc_bus,
 		  io->pi_sel.pc_dev, io->pi_sel.pc_func, io->pi_reg));
 
@@ -817,9 +828,9 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	tag = pci_make_tag(pc, io->pi_sel.pc_bus, io->pi_sel.pc_dev,
 			   io->pi_sel.pc_func);
 
-	switch(cmd) {
+	switch (cmd) {
 	case PCIOCREAD:
-		switch(io->pi_width) {
+		switch (io->pi_width) {
 		case 4:
 			/* Make sure the register is properly aligned */
 			if (io->pi_reg & 0x3) 
@@ -834,10 +845,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case PCIOCWRITE:
-		if (!(flag & FWRITE))
-			return EPERM;
-
-		switch(io->pi_width) {
+		switch (io->pi_width) {
 		case 4:
 			/* Make sure the register is properly aligned */
 			if (io->pi_reg & 0x3)
@@ -849,10 +857,6 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = ENODEV;
 			break;
 		}
-		break;
-
-	default:
-		error = ENOTTY;
 		break;
 	}
 
