@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.18 2009/07/18 19:44:38 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.19 2009/07/26 00:11:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -144,6 +144,8 @@ static	int		  node_append(struct mdoc *,
 static	int		  parsetext(struct mdoc *, int, char *);
 static	int		  parsemacro(struct mdoc *, int, char *);
 static	int		  macrowarn(struct mdoc *, int, const char *);
+static	int		  pstring(struct mdoc *, int, int, 
+				const char *, size_t);
 
 
 const struct mdoc_node *
@@ -429,17 +431,17 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 
 
 static struct mdoc_node *
-node_alloc(struct mdoc *mdoc, int line, 
+node_alloc(struct mdoc *m, int line, 
 		int pos, int tok, enum mdoc_type type)
 {
 	struct mdoc_node *p;
 
 	if (NULL == (p = calloc(1, sizeof(struct mdoc_node)))) {
-		(void)mdoc_nerr(mdoc, mdoc->last, EMALLOC);
+		(void)mdoc_nerr(m, m->last, EMALLOC);
 		return(NULL);
 	}
 
-	p->sec = mdoc->lastsec;
+	p->sec = m->lastsec;
 	p->line = line;
 	p->pos = pos;
 	p->tok = tok;
@@ -451,91 +453,106 @@ node_alloc(struct mdoc *mdoc, int line,
 
 
 int
-mdoc_tail_alloc(struct mdoc *mdoc, int line, int pos, int tok)
+mdoc_tail_alloc(struct mdoc *m, int line, int pos, int tok)
 {
 	struct mdoc_node *p;
 
-	p = node_alloc(mdoc, line, pos, tok, MDOC_TAIL);
+	p = node_alloc(m, line, pos, tok, MDOC_TAIL);
 	if (NULL == p)
 		return(0);
-	return(node_append(mdoc, p));
+	return(node_append(m, p));
 }
 
 
 int
-mdoc_head_alloc(struct mdoc *mdoc, int line, int pos, int tok)
+mdoc_head_alloc(struct mdoc *m, int line, int pos, int tok)
 {
 	struct mdoc_node *p;
 
-	assert(mdoc->first);
-	assert(mdoc->last);
+	assert(m->first);
+	assert(m->last);
 
-	p = node_alloc(mdoc, line, pos, tok, MDOC_HEAD);
+	p = node_alloc(m, line, pos, tok, MDOC_HEAD);
 	if (NULL == p)
 		return(0);
-	return(node_append(mdoc, p));
+	return(node_append(m, p));
 }
 
 
 int
-mdoc_body_alloc(struct mdoc *mdoc, int line, int pos, int tok)
+mdoc_body_alloc(struct mdoc *m, int line, int pos, int tok)
 {
 	struct mdoc_node *p;
 
-	p = node_alloc(mdoc, line, pos, tok, MDOC_BODY);
+	p = node_alloc(m, line, pos, tok, MDOC_BODY);
 	if (NULL == p)
 		return(0);
-	return(node_append(mdoc, p));
+	return(node_append(m, p));
 }
 
 
 int
-mdoc_block_alloc(struct mdoc *mdoc, int line, int pos, 
+mdoc_block_alloc(struct mdoc *m, int line, int pos, 
 		int tok, struct mdoc_arg *args)
 {
 	struct mdoc_node *p;
 
-	p = node_alloc(mdoc, line, pos, tok, MDOC_BLOCK);
+	p = node_alloc(m, line, pos, tok, MDOC_BLOCK);
 	if (NULL == p)
 		return(0);
 	p->args = args;
 	if (p->args)
 		(args->refcnt)++;
-	return(node_append(mdoc, p));
+	return(node_append(m, p));
 }
 
 
 int
-mdoc_elem_alloc(struct mdoc *mdoc, int line, int pos, 
+mdoc_elem_alloc(struct mdoc *m, int line, int pos, 
 		int tok, struct mdoc_arg *args)
 {
 	struct mdoc_node *p;
 
-	p = node_alloc(mdoc, line, pos, tok, MDOC_ELEM);
+	p = node_alloc(m, line, pos, tok, MDOC_ELEM);
 	if (NULL == p)
 		return(0);
 	p->args = args;
 	if (p->args)
 		(args->refcnt)++;
-	return(node_append(mdoc, p));
+	return(node_append(m, p));
 }
 
 
-int
-mdoc_word_alloc(struct mdoc *mdoc, 
-		int line, int pos, const char *word)
+static int
+pstring(struct mdoc *m, int line, int pos, const char *p, size_t len)
 {
-	struct mdoc_node *p;
+	struct mdoc_node *n;
+	size_t		  sv;
 
-	p = node_alloc(mdoc, line, pos, -1, MDOC_TEXT);
-	if (NULL == p)
-		return(0);
-	if (NULL == (p->string = strdup(word))) {
-		(void)mdoc_nerr(mdoc, mdoc->last, EMALLOC);
-		return(0);
+	n = node_alloc(m, line, pos, -1, MDOC_TEXT);
+	if (NULL == n)
+		return(mdoc_nerr(m, m->last, EMALLOC));
+
+	n->string = malloc(len + 1);
+	if (NULL == n->string) {
+		free(n);
+		return(mdoc_nerr(m, m->last, EMALLOC));
 	}
 
-	return(node_append(mdoc, p));
+	sv = strlcpy(n->string, p, len + 1);
+
+	/* Prohibit truncation. */
+	assert(sv < len + 1);
+
+	return(node_append(m, n));
+}
+
+
+int
+mdoc_word_alloc(struct mdoc *m, int line, int pos, const char *p)
+{
+
+	return(pstring(m, line, pos, p, strlen(p)));
 }
 
 
@@ -574,19 +591,64 @@ mdoc_node_freelist(struct mdoc_node *p)
 static int
 parsetext(struct mdoc *m, int line, char *buf)
 {
+	int		 i, j;
 
 	if (SEC_NONE == m->lastnamed)
 		return(mdoc_perr(m, line, 0, ETEXTPROL));
+	
+	/*
+	 * If in literal mode, then pass the buffer directly to the
+	 * back-end, as it should be preserved as a single term.
+	 */
 
-	if (0 == buf[0] && ! (MDOC_LITERAL & m->flags))
+	if (MDOC_LITERAL & m->flags) {
+		if ( ! mdoc_word_alloc(m, line, 0, buf))
+			return(0);
+		m->next = MDOC_NEXT_SIBLING;
+		return(1);
+	}
+
+	/* Disallow blank/white-space lines in non-literal mode. */
+
+	for (i = 0; ' ' == buf[i]; i++)
+		/* Skip leading whitespace. */ ;
+	if (0 == buf[i])
 		return(mdoc_perr(m, line, 0, ENOBLANK));
 
-	if ( ! mdoc_word_alloc(m, line, 0, buf))
+	/*
+	 * Break apart a free-form line into tokens.  Spaces are
+	 * stripped out of the input.
+	 */
+
+	for (j = i; buf[i]; i++) {
+		if (' ' != buf[i])
+			continue;
+
+		/* Escaped whitespace. */
+		if (i && ' ' == buf[i] && '\\' == buf[i - 1])
+			continue;
+
+		buf[i++] = 0;
+		if ( ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
+			return(0);
+		m->next = MDOC_NEXT_SIBLING;
+
+		for ( ; ' ' == buf[i]; i++)
+			/* Skip trailing whitespace. */ ;
+
+		j = i;
+		if (0 == buf[i])
+			break;
+	}
+
+	if (j != i && ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
 		return(0);
 
 	m->next = MDOC_NEXT_SIBLING;
 	return(1);
 }
+
+
 
 
 static int
