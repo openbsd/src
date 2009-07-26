@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.37 2009/07/26 00:49:19 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.38 2009/07/26 01:59:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -130,6 +130,7 @@ static	int	  termp_ar_pre(DECL_ARGS);
 static	int	  termp_bd_pre(DECL_ARGS);
 static	int	  termp_bf_pre(DECL_ARGS);
 static	int	  termp_bq_pre(DECL_ARGS);
+static	int	  termp_br_pre(DECL_ARGS);
 static	int	  termp_brq_pre(DECL_ARGS);
 static	int	  termp_bt_pre(DECL_ARGS);
 static	int	  termp_cd_pre(DECL_ARGS);
@@ -163,6 +164,7 @@ static	int	  termp_rs_pre(DECL_ARGS);
 static	int	  termp_rv_pre(DECL_ARGS);
 static	int	  termp_sh_pre(DECL_ARGS);
 static	int	  termp_sm_pre(DECL_ARGS);
+static	int	  termp_sp_pre(DECL_ARGS);
 static	int	  termp_sq_pre(DECL_ARGS);
 static	int	  termp_ss_pre(DECL_ARGS);
 static	int	  termp_sx_pre(DECL_ARGS);
@@ -292,6 +294,8 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* En */ 
 	{ termp_xx_pre, NULL }, /* Dx */ 
 	{ NULL, NULL }, /* %Q */ 
+	{ termp_br_pre, NULL }, /* br */
+	{ termp_sp_pre, NULL }, /* sp */ 
 };
 
 static	int	  arg_hasattr(int, const struct mdoc_node *);
@@ -1821,6 +1825,37 @@ termp_in_post(DECL_ARGS)
 	 */
 	if (node->next && MDOC_In != node->next->tok)
 		term_vspace(p);
+}
+
+
+/* ARGSUSED */
+static int
+termp_sp_pre(DECL_ARGS)
+{
+	int		 i, len;
+
+	if (NULL == node->child) {
+		term_vspace(p);
+		return(0);
+	}
+
+	len = atoi(node->child->string);
+	if (0 == len)
+		term_newln(p);
+	for (i = 0; i < len; i++)
+		term_vspace(p);
+
+	return(0);
+}
+
+
+/* ARGSUSED */
+static int
+termp_br_pre(DECL_ARGS)
+{
+
+	term_newln(p);
+	return(1);
 }
 
 

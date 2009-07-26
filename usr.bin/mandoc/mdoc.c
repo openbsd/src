@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.19 2009/07/26 00:11:15 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.20 2009/07/26 01:59:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -117,7 +117,7 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	/* LINTED */
 	"Brc",		"\%C",		"Es",		"En",
 	/* LINTED */
-	"Dx",		"\%Q"
+	"Dx",		"\%Q",		"br",		"sp"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 

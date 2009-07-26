@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.30 2009/07/19 12:26:57 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.31 2009/07/26 01:59:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,6 +18,8 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +70,6 @@ static	int	 eerr_eq0(POST_ARGS);
 static	int	 eerr_eq1(POST_ARGS);
 static	int	 eerr_ge1(POST_ARGS);
 static	int	 eerr_le2(POST_ARGS);
-static	int	 ewarn_eq0(POST_ARGS);
 static	int	 ewarn_ge1(POST_ARGS);
 static	int	 herr_eq0(POST_ARGS);
 static	int	 herr_ge1(POST_ARGS);
@@ -88,6 +89,7 @@ static	int	 post_root(POST_ARGS);
 static	int	 post_sh(POST_ARGS);
 static	int	 post_sh_body(POST_ARGS);
 static	int	 post_sh_head(POST_ARGS);
+static	int	 post_sp(POST_ARGS);
 static	int	 post_st(POST_ARGS);
 static	int	 pre_an(PRE_ARGS);
 static	int	 pre_bd(PRE_ARGS);
@@ -121,9 +123,9 @@ static	v_post	 posts_nd[] = { berr_ge1, NULL };
 static	v_post	 posts_nm[] = { post_nm, NULL };
 static	v_post	 posts_notext[] = { eerr_eq0, NULL };
 static	v_post	 posts_pf[] = { eerr_eq1, NULL };
-static	v_post	 posts_pp[] = { ewarn_eq0, NULL };
 static	v_post	 posts_rv[] = { eerr_eq0, post_args, NULL };
 static	v_post	 posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
+static	v_post	 posts_sp[] = { post_sp, NULL };
 static	v_post	 posts_ss[] = { herr_ge1, NULL };
 static	v_post	 posts_st[] = { eerr_eq1, post_st, NULL };
 static	v_post	 posts_text[] = { eerr_ge1, NULL };
@@ -154,7 +156,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ pres_os, NULL },			/* Os */
 	{ pres_sh, posts_sh },			/* Sh */ 
 	{ pres_ss, posts_ss },			/* Ss */ 
-	{ NULL, posts_pp },			/* Pp */ 
+	{ NULL, posts_notext },			/* Pp */ 
 	{ pres_d1, posts_wline },		/* D1 */
 	{ pres_d1, posts_wline },		/* Dl */
 	{ pres_bd, posts_bd },			/* Bd */
@@ -255,7 +257,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Fr */
 	{ NULL, posts_notext },			/* Ud */
 	{ pres_lb, posts_lb },			/* Lb */
-	{ NULL, posts_pp },			/* Lp */ 
+	{ NULL, posts_notext },			/* Lp */ 
 	{ NULL, NULL },				/* Lk */ 
 	{ NULL, posts_text },			/* Mt */ 
 	{ NULL, posts_wline },			/* Brq */ 
@@ -266,6 +268,8 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* En */
 	{ NULL, NULL },				/* Dx */
 	{ NULL, posts_text },			/* %Q */
+	{ NULL, posts_notext },			/* br */
+	{ NULL, posts_sp },			/* sp */
 };
 
 
@@ -398,7 +402,6 @@ CHECK_CHILD_DEFN(err, lt, <)			/* err_child_lt() */
 CHECK_CHILD_DEFN(warn, lt, <)			/* warn_child_lt() */
 CHECK_BODY_DEFN(ge1, warn, warn_child_gt, 0)	/* bwarn_ge1() */
 CHECK_BODY_DEFN(ge1, err, err_child_gt, 0)	/* berr_ge1() */
-CHECK_ELEM_DEFN(eq0, warn, warn_child_eq, 0)	/* ewarn_eq0() */
 CHECK_ELEM_DEFN(ge1, warn, warn_child_gt, 0)	/* ewarn_gt1() */
 CHECK_ELEM_DEFN(eq1, err, err_child_eq, 1)	/* eerr_eq1() */
 CHECK_ELEM_DEFN(le2, err, err_child_lt, 3)	/* eerr_le2() */
@@ -1121,6 +1124,37 @@ post_root(POST_ARGS)
 
 	return(1);
 }
+
+
+static int
+post_sp(POST_ARGS)
+{
+	long		 lval;
+	char		*ep, *buf;
+
+	if (NULL == mdoc->last->child)
+		return(1);
+	else if ( ! eerr_eq1(mdoc))
+		return(0);
+
+	assert(MDOC_TEXT == mdoc->last->child->type);
+	buf = mdoc->last->child->string;
+	assert(buf);
+	
+	/* From OpenBSD's strtol(3). */
+	errno = 0;
+	lval = strtol(buf, &ep, 10);
+	if (buf[0] == '\0' || *ep != '\0')
+		return(mdoc_nerr(mdoc, mdoc->last->child, ENUMFMT));
+
+	if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+			(lval > INT_MAX || lval < 0))
+		return(mdoc_nerr(mdoc, mdoc->last->child, ENUMFMT));
+
+	return(1);
+}
+
+
 
 
 static int
