@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.15 2009/07/22 21:28:44 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.16 2009/07/26 18:48:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -597,7 +597,7 @@ xbow_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
 
 int
 xbow_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
+    int flags, bus_space_handle_t *bshp)
 {
 	bus_addr_t bpa;
 

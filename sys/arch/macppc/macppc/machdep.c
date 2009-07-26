@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.108 2009/06/15 17:01:26 beck Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.109 2009/07/26 18:48:55 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ void ppc_intr_setup(intr_establish_t *establish,
     intr_disestablish_t *disestablish);
 void *ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type,
     int level, int (*func)(void *), void *arg, char *name);
-int bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
+int bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp);
 bus_addr_t bus_space_unmap_p(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t size);
@@ -1129,20 +1129,20 @@ ppc_send_ipi(struct cpu_info *ci, int id)
 /* BUS functions */
 int
 bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
+    int flags, bus_space_handle_t *bshp)
 {
 	int error;
 
 	if  (POWERPC_BUS_TAG_BASE(t) == 0) {
 		/* if bus has base of 0 fail. */
-		return 1;
+		return EINVAL;
 	}
 	bpa |= POWERPC_BUS_TAG_BASE(t);
 	if ((error = extent_alloc_region(devio_ex, bpa, size, EX_NOWAIT |
 	    (ppc_malloc_ok ? EX_MALLOCOK : 0))))
 		return error;
 
-	if ((error  = bus_mem_add_mapping(bpa, size, cacheable, bshp))) {
+	if ((error = bus_mem_add_mapping(bpa, size, flags, bshp))) {
 		if (extent_free(devio_ex, bpa, size, EX_NOWAIT |
 			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
 		{
@@ -1196,7 +1196,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 vaddr_t ppc_kvm_stolen = VM_KERN_ADDRESS_SIZE;
 
 int
-bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
+bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 	bus_addr_t vaddr;
@@ -1237,9 +1237,9 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 		bpa, size, *bshp, spa);
 #endif
 	for (; len > 0; len -= PAGE_SIZE) {
-		pmap_kenter_cache(vaddr, spa,
-			VM_PROT_READ | VM_PROT_WRITE,
-			cacheable ? PMAP_CACHE_WT : PMAP_CACHE_CI);
+		pmap_kenter_cache(vaddr, spa, VM_PROT_READ | VM_PROT_WRITE,
+		    (flags & BUS_SPACE_MAP_CACHEABLE) ?
+		      PMAP_CACHE_WT : PMAP_CACHE_CI);
 		spa += PAGE_SIZE;
 		vaddr += PAGE_SIZE;
 	}
@@ -1248,7 +1248,7 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 
 int
 bus_space_alloc(bus_space_tag_t tag, bus_addr_t rstart, bus_addr_t rend,
-    bus_size_t size, bus_size_t alignment, bus_size_t boundary, int cacheable,
+    bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
     bus_addr_t *addrp, bus_space_handle_t *handlep)
 {
 

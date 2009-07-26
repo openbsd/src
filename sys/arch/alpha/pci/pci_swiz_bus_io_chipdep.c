@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_swiz_bus_io_chipdep.c,v 1.5 2008/07/19 17:10:03 miod Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_io_chipdep.c,v 1.6 2009/07/26 18:48:54 miod Exp $	*/
 /*	$NetBSD: pcs_bus_io_common.c,v 1.14 1996/12/02 22:19:35 cgd Exp $	*/
 
 /*
@@ -301,11 +301,11 @@ __C(CHIP,_bus_io_init)(t, v)
 }
 
 int
-__C(CHIP,_io_map)(v, ioaddr, iosize, cacheable, iohp)
+__C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp)
 	void *v;
 	bus_addr_t ioaddr;
 	bus_size_t iosize;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *iohp;
 {
 	bus_addr_t ioend = ioaddr + (iosize - 1);
@@ -432,12 +432,12 @@ __C(CHIP,_io_subregion)(v, ioh, offset, size, nioh)
 }
 
 int
-__C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, cacheable,
+__C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
     addrp, bshp)
 	void *v;
 	bus_addr_t rstart, rend, *addrp;
 	bus_size_t size, align, boundary;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 

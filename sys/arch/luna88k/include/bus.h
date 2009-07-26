@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.4 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 2009/07/26 18:48:55 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ int	bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 
 int	bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,
-	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
+	    bus_size_t boundary, int flags, bus_addr_t *addrp,
 	    bus_space_handle_t *bshp);
 
 /*

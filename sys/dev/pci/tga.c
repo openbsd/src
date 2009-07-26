@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.31 2009/03/29 21:53:52 sthen Exp $ */
+/* $OpenBSD: tga.c,v 1.32 2009/07/26 18:48:55 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -219,14 +219,12 @@ tga_getdevconfig(memt, pc, tag, dc)
 		return;
 
 	DPRINTF("tga_getdevconfig: preparing to map\n");
-#ifdef __OpenBSD__
-	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize, 1, &dc->dc_memh))
-		return;
-	dc->dc_vaddr = dc->dc_memh;
-#else
 	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize,
 	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR, &dc->dc_memh))
 		return;
+#ifdef __OpenBSD__
+	dc->dc_vaddr = dc->dc_memh;
+#else
 	dc->dc_vaddr = (vaddr_t) bus_space_vaddr(memt, dc->dc_memh);
 #endif
 	DPRINTF("tga_getdevconfig: mapped\n");

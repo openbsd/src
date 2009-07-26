@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.41 2009/07/23 19:24:03 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.42 2009/07/26 18:48:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -997,7 +997,7 @@ xbridge_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
 
 int
 xbridge_space_map_devio(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
+    int flags, bus_space_handle_t *bshp)
 {
 	struct xbridge_softc *sc = (struct xbridge_softc *)t->bus_private;
 	bus_addr_t bpa;
@@ -1040,7 +1040,7 @@ xbridge_space_map_devio(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 
 int
 xbridge_space_map_io(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
+    int flags, bus_space_handle_t *bshp)
 {
 	struct xbridge_softc *sc = (struct xbridge_softc *)t->bus_private;
 
@@ -1050,7 +1050,7 @@ xbridge_space_map_io(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	 */
 
 	if ((offs >> 24) == sc->sc_devio_skew)
-		return xbridge_space_map_devio(t, offs, size, cacheable, bshp);
+		return xbridge_space_map_devio(t, offs, size, flags, bshp);
 
 	*bshp = (t->bus_base + offs);
 	return 0;
@@ -1058,7 +1058,7 @@ xbridge_space_map_io(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 
 int
 xbridge_space_map_mem(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
+    int flags, bus_space_handle_t *bshp)
 {
 	struct xbridge_softc *sc = (struct xbridge_softc *)t->bus_private;
 
@@ -1070,7 +1070,7 @@ xbridge_space_map_mem(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 
 	if (sys_config.system_type != SGI_OCTANE &&
 	    (offs >> 24) == sc->sc_devio_skew)
-		return xbridge_space_map_devio(t, offs, size, cacheable, bshp);
+		return xbridge_space_map_devio(t, offs, size, flags, bshp);
 
 	*bshp = (t->bus_base + offs);
 	return 0;

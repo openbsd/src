@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_mem.c,v 1.4 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: bus_mem.c,v 1.5 2009/07/26 18:48:55 miod Exp $	*/
 /*	$NetBSD: bus_mem.c,v 1.8 2000/06/29 07:14:23 mrg Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
@@ -51,7 +51,7 @@ vax_mem_bus_space_map(
 	void *t,
 	bus_addr_t pa,
 	bus_size_t size,
-	int cacheable,
+	int flags,
 	bus_space_handle_t *bshp,
 	int f2)
 {

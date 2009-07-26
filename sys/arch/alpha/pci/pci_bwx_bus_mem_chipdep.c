@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.6 2003/09/02 17:25:21 miod Exp $ */
+/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.7 2009/07/26 18:48:54 miod Exp $ */
 /* $NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $ */
 
 /*
@@ -289,11 +289,11 @@ __C(CHIP,_bus_mem_init)(t, v)
 }
 
 int
-__C(CHIP,_mem_map)(v, memaddr, memsize, cacheable, memhp)
+__C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp)
 	void *v;
 	bus_addr_t memaddr;
 	bus_size_t memsize;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *memhp;
 {
 	int error;
@@ -358,12 +358,12 @@ __C(CHIP,_mem_subregion)(v, memh, offset, size, nmemh)
 }
 
 int
-__C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, cacheable,
+__C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, flags,
     addrp, bshp)
 	void *v;
 	bus_addr_t rstart, rend, *addrp;
 	bus_size_t size, align, boundary;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 	bus_addr_t memaddr;

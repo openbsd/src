@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.19 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: bus_space.9,v 1.20 2009/07/26 18:48:53 miod Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: July 26 2009 $
 .Dt BUS_SPACE 9
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@
 .Fd #include <machine/bus.h>
 .Ft int
 .Fn bus_space_map "bus_space_tag_t space" "bus_addr_t address" \
-"bus_size_t size" "int cacheable" "bus_space_handle_t *handlep"
+"bus_size_t size" "int flags" "bus_space_handle_t *handlep"
 .Ft void
 .Fn bus_space_unmap "bus_space_tag_t space" "bus_space_handle_t handle" \
 "bus_size_t size"
@@ -116,7 +116,7 @@
 .Fo bus_space_alloc
 .Fa "bus_space_tag_t space" "bus_addr_t reg_start" "bus_addr_t reg_end"
 .Fa "bus_size_t size" "bus_size_t alignment" "bus_size_t boundary"
-.Fa "int cacheable" "bus_addr_t *addrp" "bus_space_handle_t *handlep"
+.Fa "int flags" "bus_addr_t *addrp" "bus_space_handle_t *handlep"
 .Fc
 .Ft void
 .Fn bus_space_free "bus_space_tag_t space" "bus_space_handle_t handle" \
@@ -517,7 +517,7 @@ The
 function allows such subregions to be created.
 .Pp
 .Bl -ohang -compact
-.It Fn bus_space_map "space" "address" "size" "cacheable" "handlep"
+.It Fn bus_space_map "space" "address" "size" "flags" "handlep"
 .Pp
 The
 .Fn bus_space_map
@@ -537,7 +537,7 @@ pointed to by
 in an undefined state.
 .Pp
 The
-.Fa cacheable
+.Fa flags
 argument controls how the space is to be mapped.
 Supported flags include:
 .Bl -tag -width BUS_SPACE_MAP_CACHEABLE -offset indent
@@ -700,7 +700,7 @@ functions provide these capabilities.
 .It Xo
 .Fo bus_space_alloc
 .Fa "space" "reg_start" "reg_end" "size"
-.Fa "alignment" "boundary" "cacheable" "addrp" "handlep"
+.Fa "alignment" "boundary" "flags" "addrp" "handlep"
 .Fc
 .Xc
 .Pp
@@ -759,7 +759,7 @@ greater than
 .Pc .
 .Pp
 The
-.Fa cacheable
+.Fa flags
 parameter is the same as the like-named parameter to
 .Fa bus_space_map ,
 the same flag values should be used, and they have the same meanings.

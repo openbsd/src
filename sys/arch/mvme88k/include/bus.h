@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.7 2009/05/31 17:42:13 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.8 2009/07/26 18:48:55 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -57,8 +57,9 @@ typedef const struct mvme88k_bus_space_tag *bus_space_tag_t;
 #define	BUS_SPACE_BARRIER_READ	0
 #define	BUS_SPACE_BARRIER_WRITE	1
 
-#define	BUS_SPACE_MAP_CACHEABLE	0x01
-#define	BUS_SPACE_MAP_LINEAR	0x02
+#define	BUS_SPACE_MAP_CACHEABLE		0x01
+#define	BUS_SPACE_MAP_LINEAR		0x02
+#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 /* 
  * General bus_space function set

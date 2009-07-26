@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus_io.c,v 1.3 2007/05/25 16:45:59 krw Exp $ */
+/*	$OpenBSD: mainbus_io.c,v 1.4 2009/07/26 18:48:55 miod Exp $ */
 /*	$NetBSD: mainbus_io.c,v 1.14 2003/12/06 22:05:33 bjh21 Exp $	*/
 
 /*
@@ -174,12 +174,12 @@ mainbus_bs_map(t, bpa, size, flags, bshp)
 }
 
 int
-mainbus_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+mainbus_bs_alloc(t, rstart, rend, size, alignment, boundary, flags,
     bpap, bshp)
 	void *t;
 	bus_addr_t rstart, rend;
 	bus_size_t size, alignment, boundary;
-	int cacheable;
+	int flags;
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {

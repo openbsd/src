@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_bus_mem.c,v 1.13 2002/05/02 22:56:06 miod Exp $ */
+/* $OpenBSD: tc_bus_mem.c,v 1.14 2009/07/26 18:48:54 miod Exp $ */
 /* $NetBSD: tc_bus_mem.c,v 1.25 2001/09/04 05:31:28 thorpej Exp $ */
 
 /*
@@ -231,17 +231,17 @@ tc_bus_mem_init(memv)
 
 /* ARGSUSED */
 int
-tc_mem_map(v, memaddr, memsize, cacheable, memhp)
+tc_mem_map(v, memaddr, memsize, flags, memhp)
 	void *v;
 	bus_addr_t memaddr;
 	bus_size_t memsize;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *memhp;
 {
 
 	if (memaddr & 0x7)
 		panic("tc_mem_map needs 8 byte alignment");
-	if (cacheable)
+	if (flags & BUS_SPACE_MAP_CACHEABLE)
 		*memhp = ALPHA_PHYS_TO_K0SEG(memaddr);
 	else
 		*memhp = ALPHA_PHYS_TO_K0SEG(TC_DENSE_TO_SPARSE(memaddr));

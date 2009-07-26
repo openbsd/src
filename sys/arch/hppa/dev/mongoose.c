@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.17 2004/11/08 20:54:04 miod Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.18 2009/07/26 18:48:55 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -183,7 +183,7 @@ mg_intr(void *v)
 }
 
 int
-mg_eisa_iomap(void *v, bus_addr_t addr, bus_size_t size, int cacheable,
+mg_eisa_iomap(void *v, bus_addr_t addr, bus_size_t size, int flags,
 	bus_space_handle_t *bshp)
 {
 	struct mongoose_softc *sc = v;
@@ -196,11 +196,11 @@ mg_eisa_iomap(void *v, bus_addr_t addr, bus_size_t size, int cacheable,
 	}
 
 	return (sc->sc_bt->hbt_map)(NULL, sc->sc_iomap + addr, size,
-				    cacheable, bshp);
+				    flags, bshp);
 }
 
 int
-mg_eisa_memmap(void *v, bus_addr_t addr, bus_size_t size, int cacheable,
+mg_eisa_memmap(void *v, bus_addr_t addr, bus_size_t size, int flags,
 	bus_space_handle_t *bshp)
 {
 	/* TODO: eisa memory map */

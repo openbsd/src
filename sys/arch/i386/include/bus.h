@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.49 2009/06/06 05:43:13 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.50 2009/07/26 18:48:55 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -89,10 +89,10 @@ typedef	int bus_space_tag_t;
 typedef	u_long bus_space_handle_t;
 
 int	bus_space_map(bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int cacheable, bus_space_handle_t *bshp);
+	    bus_size_t size, int flags, bus_space_handle_t *bshp);
 /* like bus_space_map(), but without extent map checking/allocation */
 int	_bus_space_map(bus_space_tag_t t, bus_addr_t addr,
-	    bus_size_t size, int cacheable, bus_space_handle_t *bshp);
+	    bus_size_t size, int flags, bus_space_handle_t *bshp);
 void	bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size);
 /* like bus_space_unmap(), but without extent map deallocation */
@@ -103,7 +103,7 @@ int	bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 
 int	bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart,
 	    bus_addr_t rend, bus_size_t size, bus_size_t align,
-	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
+	    bus_size_t boundary, int flags, bus_addr_t *addrp,
 	    bus_space_handle_t *bshp);
 void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size);
