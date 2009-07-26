@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.20 2009/07/26 12:38:20 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.21 2009/07/26 15:50:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -547,11 +547,11 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 	 */ 
 	bufsz = par->appbufsz;
 	round = par->round;
-	if (bufsz != (unsigned)~0) {
-		if (round == (unsigned)~0)
+	if (bufsz != ~0U) {
+		if (round == ~0U)
 			round = (bufsz + 1) / 2;
-	} else if (round != (unsigned)~0) {
-		if (bufsz == (unsigned)~0)
+	} else if (round != ~0U) {
+		if (bufsz == ~0U)
 			bufsz = round * 2;
 	} else
 		return 1;
