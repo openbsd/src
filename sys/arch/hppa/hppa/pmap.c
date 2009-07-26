@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.139 2009/07/25 12:41:46 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.140 2009/07/26 15:47:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -893,7 +893,10 @@ pmap_remove(pmap, sva, eva)
 				sva = pdemask + (~PDE_MASK + 1) - PAGE_SIZE;
 				continue;
 			}
-			batch = pdemask == sva && sva + ~PDE_MASK + 1 <= eva;
+			if (pdemask == sva && sva + (~PDE_MASK + 1) <= eva)
+				batch = 1;
+			else
+				batch = 0;
 		}
 
 		if ((pte = pmap_pte_get(pde, sva))) {
