@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.42 2009/07/26 18:48:55 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.43 2009/07/26 19:56:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -176,6 +176,12 @@ int	xbridge_space_map_io(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 int	xbridge_space_map_mem(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
+int	xbridge_space_region_devio(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t, bus_space_handle_t *);
+int	xbridge_space_region_io(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t, bus_space_handle_t *);
+int	xbridge_space_region_mem(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t, bus_space_handle_t *);
 
 int	xbridge_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
@@ -309,6 +315,7 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(*sc->sc_mem_bus_space));
 	sc->sc_mem_bus_space->bus_private = sc;
 	sc->sc_mem_bus_space->_space_map = xbridge_space_map_devio;
+	sc->sc_mem_bus_space->_space_subregion = xbridge_space_region_devio;
 	sc->sc_mem_bus_space->_space_read_1 = xbridge_read_1;
 	sc->sc_mem_bus_space->_space_write_1 = xbridge_write_1;
 	sc->sc_mem_bus_space->_space_read_2 = xbridge_read_2;
@@ -324,6 +331,7 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(*sc->sc_io_bus_space));
 	sc->sc_io_bus_space->bus_private = sc;
 	sc->sc_io_bus_space->_space_map = xbridge_space_map_devio;
+	sc->sc_io_bus_space->_space_subregion = xbridge_space_region_devio;
 	sc->sc_io_bus_space->_space_read_1 = xbridge_read_1;
 	sc->sc_io_bus_space->_space_write_1 = xbridge_write_1;
 	sc->sc_io_bus_space->_space_read_2 = xbridge_read_2;
@@ -1052,6 +1060,12 @@ xbridge_space_map_io(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	if ((offs >> 24) == sc->sc_devio_skew)
 		return xbridge_space_map_devio(t, offs, size, flags, bshp);
 
+#ifdef DIAGNOSTIC
+	/* check that this does not overflow the mapping */
+	if (offs < sc->sc_iostart || offs + size - 1 > sc->sc_ioend)
+		return EINVAL;
+#endif
+
 	*bshp = (t->bus_base + offs);
 	return 0;
 }
@@ -1072,7 +1086,122 @@ xbridge_space_map_mem(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	    (offs >> 24) == sc->sc_devio_skew)
 		return xbridge_space_map_devio(t, offs, size, flags, bshp);
 
+#ifdef DIAGNOSTIC
+	/* check that this does not overflow the mapping */
+	if (offs < sc->sc_memstart || offs + size - 1 > sc->sc_memend)
+		return EINVAL;
+#endif
+
 	*bshp = (t->bus_base + offs);
+	return 0;
+}
+
+int
+xbridge_space_region_devio(bus_space_tag_t t , bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
+{
+	struct xbridge_softc *sc = (struct xbridge_softc *)t->bus_private;
+#ifdef DIAGNOSTIC
+	bus_addr_t bpa;
+	bus_addr_t start, end;
+	uint d;
+#endif
+
+#ifdef DIAGNOSTIC
+	/*
+	 * Note we can not use our own bus_base because it might not point
+	 * to our small window. Instead, use the one used by the xbridge
+	 * driver itself, which _always_ points to the short window.
+	 */
+	bpa = (bus_addr_t)bsh - sc->sc_iot->bus_base;
+
+	if ((bpa >> 24) != 0)
+		return EINVAL;	/* not a devio mapping */
+
+	/*
+	 * Figure out which devio `slot' we are using, and make sure
+	 * we do not overrun it.
+	 */
+	for (d = 0; d < BRIDGE_NSLOTS; d++) {
+		start = BRIDGE_DEVIO_OFFS(d);
+		end = start + BRIDGE_DEVIO_SIZE(d);
+		if (bpa >= start && bpa < end) {
+			if (bpa + offset + size > end)
+				return EINVAL;
+			else
+				break;
+		}
+	}
+	if (d == BRIDGE_NSLOTS)
+		return EINVAL;
+#endif
+
+	*nbshp = bsh + offset;
+	return 0;
+}
+
+int
+xbridge_space_region_io(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
+{
+	struct xbridge_softc *sc = (struct xbridge_softc *)t->bus_private;
+	bus_addr_t bpa;
+
+	/*
+	 * Note we can not use our own bus_base because it might not point
+	 * to our small window. Instead, use the one used by the xbridge
+	 * driver itself, which _always_ points to the short window.
+	 */
+	bpa = (bus_addr_t)bsh - sc->sc_iot->bus_base;
+
+	if ((bpa >> 24) == 0)
+		return xbridge_space_region_devio(t, bsh, offset, size, nbshp);
+
+#ifdef DIAGNOSTIC
+	/* check that this does not overflow the mapping */
+	bpa = (bus_addr_t)bsh - t->bus_base;
+	if (bpa + offset + size - 1 > sc->sc_ioend)
+		return EINVAL;
+#endif
+
+	*nbshp = bsh + offset;
+	return 0;
+}
+
+int
+xbridge_space_region_mem(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
+{
+	struct xbridge_softc *sc = (struct xbridge_softc *)t->bus_private;
+	bus_addr_t bpa;
+
+	/*
+	 * Base address is either within the devio area, or our direct
+	 * window.  Except on Octane where we never setup devio memory
+	 * mappings, because the large mapping is always available.
+	 */
+	if (sys_config.system_type != SGI_OCTANE) {
+		/*
+		 * Note we can not use our own bus_base because it might not
+		 * point to our small window. Instead, use the one used by
+		 * the xbridge driver itself, which _always_ points to the
+		 * short window.
+		 */
+		bpa = (bus_addr_t)bsh - sc->sc_iot->bus_base;
+
+		if ((bpa >> 24) == 0)
+			return xbridge_space_region_devio(t, bsh, offset, size,
+			    nbshp);
+	}
+
+#ifdef DIAGNOSTIC
+	/* check that this does not overflow the mapping */
+	bpa = (bus_addr_t)bsh - t->bus_base;
+	if (bpa + offset + size - 1 > sc->sc_memend)
+		return EINVAL;
+#endif
+
+	*nbshp = bsh + offset;
 	return 0;
 }
 
@@ -2198,6 +2327,8 @@ xbridge_mapping_setup(struct xbridge_softc *sc, int io)
 				sc->sc_io_bus_space->bus_base = base - offs;
 				sc->sc_io_bus_space->_space_map =
 				    xbridge_space_map_io;
+				sc->sc_io_bus_space->_space_subregion =
+				    xbridge_space_region_io;
 
 				sc->sc_iostart = offs;
 				sc->sc_ioend = offs + len - 1;
@@ -2239,6 +2370,8 @@ xbridge_mapping_setup(struct xbridge_softc *sc, int io)
 				sc->sc_mem_bus_space->bus_base = base - offs;
 				sc->sc_mem_bus_space->_space_map =
 				    xbridge_space_map_mem;
+				sc->sc_mem_bus_space->_space_subregion =
+				    xbridge_space_region_mem;
 
 				sc->sc_memstart = offs;
 				sc->sc_memend = offs + len - 1;
