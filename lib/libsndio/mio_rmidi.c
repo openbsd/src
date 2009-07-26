@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.3 2009/07/26 12:38:20 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.4 2009/07/26 12:40:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -152,7 +152,7 @@ rmidi_pollfd(struct mio_hdl *sh, struct pollfd *pfd, int events)
 	return 1;
 }
 
-int
+static int
 rmidi_revents(struct mio_hdl *sh, struct pollfd *pfd)
 {
 	return pfd->revents;
