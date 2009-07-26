@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2009/05/31 18:39:33 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2009/07/26 19:12:07 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -19,7 +19,6 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz \
 		${RELXDIR}/xserv${OSrev}.tgz
 
-BSDRD=	bsd.rd
 all: ${CDROM}
 
 # Note regarding sgivol -h value:
@@ -45,12 +44,6 @@ ${CDROM}:
 	mount /dev/svnd0a ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
-	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP27> \
-	    ${.OBJDIR}/cd-dir/bsd.rd.IP27
-	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP30> \
-	    ${.OBJDIR}/cd-dir/bsd.rd.IP30
-	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP32> \
-	    ${.OBJDIR}/cd-dir/bsd.rd.IP32
 	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/cd-dir/boot32
 	cp ${DESTDIR}/usr/mdec/boot64 ${.OBJDIR}/cd-dir/boot64
 	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP27
@@ -58,6 +51,14 @@ ${CDROM}:
 	ln ${.OBJDIR}/cd-dir/boot32 ${.OBJDIR}/cd-dir/boot-IP32
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+
+	ln -f ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd.IP27 \
+	    ${.OBJDIR}/cd-dir/bsd.rd.IP27
+	ln -f ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd.IP30 \
+	    ${.OBJDIR}/cd-dir/bsd.rd.IP30
+	ln -f ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd.IP32 \
+	    ${.OBJDIR}/cd-dir/bsd.rd.IP32
+
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	umount ${.OBJDIR}/cd-dir
