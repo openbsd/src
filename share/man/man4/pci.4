@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.272 2009/05/17 22:08:32 miod Exp $
+.\"	$OpenBSD: pci.4,v 1.273 2009/07/26 13:24:39 kettenis Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 17 2009 $
+.Dd $Mdocdate: July 26 2009 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -511,7 +511,7 @@ This
 .Xr ioctl 2
 allows users to write to the
 .Tn PCI
-specified in the passed-in
+device specified in the passed-in
 .Va pci_io
 structure.
 The
@@ -521,10 +521,37 @@ The limitations on data width described for
 reading registers, above, also apply to writing
 .Tn PCI
 configuration registers.
+.It PCIOCGETROM
+This
+.Xr ioctl 2
+allows users to read the contents of the
+.Tn PCI
+ROM specified in the passed-in
+.Va pci_rom
+structure.
+The
+.Va pci_rom
+structure consists of the following fields:
+.Bl -tag -width pr_romlen
+.It pr_sel
+A
+.Va pcisel
+structure which specifies the bus, slot and function the user would like to
+query.
+.It pr_romlen
+Size of the buffer to store the contents of the ROM.
+Upon return, this field will contain the size of the ROM
+.It pr_rom
+The address of the buffer to store the contents of the ROM.
+.El
+.Pp
+If the ROM is larger than the specified buffer size,
+.Dv ENOMEM
+will be returned.
 .El
 .Sh FILES
-.Bl -tag -width /dev/pci -compact
-.It Pa /dev/pci
+.Bl -tag -width /dev/pci* -compact
+.It Pa /dev/pci*
 Character device for the
 .Nm
 driver.
@@ -537,6 +564,3 @@ The machine-independent
 .Tn PCI
 subsystem appeared in
 .Ox 1.2 .
-Support for device listing and matching was re-implemented by
-Kenneth Merry, and first appeared in
-.Fx 3.0 .
