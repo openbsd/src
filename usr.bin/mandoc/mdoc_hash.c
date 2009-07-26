@@ -1,4 +1,4 @@
-/*	$Id: mdoc_hash.c,v 1.3 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: mdoc_hash.c,v 1.4 2009/07/26 01:08:13 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -22,11 +22,33 @@
 
 #include "libmdoc.h"
 
-/*
- * Routines for the perfect-hash hashtable used by the parser to look up
- * tokens by their string-ified names (`.Fl' -> MDOC_Fl).  The
- * allocation penalty for this is 27 * 26 * sizeof(ptr). 
- */
+#define	ADJUST_MAJOR(x) 					\
+	do if (37 == (x))					\
+		(x) = 0; 		/* %   -> 00 */		\
+	else if (91 > (x)) 					\
+		(x) -= 64; 		/* A-Z -> 01 - 26 */	\
+	else 							\
+		(x) -= 70;		/* a-z -> 27 - 52 */	\
+	while (/*CONSTCOND*/0)
+
+#define ADJUST_MINOR(y)						\
+	do if (49 == (y))					\
+		(y) = 0;		/* 1   -> 00 */		\
+	else if (91 > (y))					\
+		(y) -= 65;		/* A-Z -> 00 - 25 */	\
+	else 							\
+		(y) -= 97;		/* a-z -> 00 - 25 */	\
+	while (/*CONSTCOND*/0)
+
+#define INDEX(maj, min) 					\
+	((maj) * 26 * 3) + ((min) * 3)
+
+#define	SLOTCMP(slot, val)					\
+	(mdoc_macronames[(slot)][0] == (val)[0] && 		\
+	 mdoc_macronames[(slot)][1] == (val)[1] && 		\
+	 (0 == (val)[2] || 					\
+	  mdoc_macronames[(slot)][2] == (val)[2]))
+
 
 void
 mdoc_hash_free(void *htab)
@@ -36,42 +58,29 @@ mdoc_hash_free(void *htab)
 }
 
 
+
 void *
 mdoc_hash_alloc(void)
 {
 	int		  i, major, minor, ind;
 	const void	**htab;
 
-	htab = calloc(27 * 26 * 3, sizeof(struct mdoc_macro *));
+	htab = calloc(26 * 3 * 52, sizeof(struct mdoc_macro *));
 	if (NULL == htab) 
 		return(NULL);
 
 	for (i = 0; i < MDOC_MAX; i++) {
 		major = mdoc_macronames[i][0];
-		assert((major >= 65 && major <= 90) ||
-				major == 37);
+		assert(isalpha((u_char)major) || 37 == major);
 
-		if (major == 37) 
-			major = 0;
-		else
-			major -= 64;
+		ADJUST_MAJOR(major);
 
 		minor = mdoc_macronames[i][1];
-		assert((minor >= 65 && minor <= 90) ||
-				(minor == 49) ||
-				(minor >= 97 && minor <= 122));
+		assert(isalpha((u_char)minor) || 49 == minor);
 
-		if (minor == 49)
-			minor = 0;
-		else if (minor <= 90)
-			minor -= 65;
-		else 
-			minor -= 97;
+		ADJUST_MINOR(minor);
 
-		assert(major >= 0 && major < 27);
-		assert(minor >= 0 && minor < 26);
-
-		ind = (major * 27 * 3) + (minor * 3);
+		ind = INDEX(major, minor);
 
 		if (NULL == htab[ind]) {
 			htab[ind] = &mdoc_macros[i];
@@ -100,33 +109,25 @@ mdoc_hash_find(const void *arg, const char *tmp)
 	htab = /* LINTED */
 		(const void **)arg;
 
-	if (0 == tmp[0] || 0 == tmp[1])
+	if (0 == (major = tmp[0]))
 		return(MDOC_MAX);
+	if (0 == (minor = tmp[1]))
+		return(MDOC_MAX);
+
 	if (tmp[2] && tmp[3])
 		return(MDOC_MAX);
 
-	if ( ! (tmp[0] == 37 || (tmp[0] >= 65 && tmp[0] <= 90)))
+	if (37 != major && ! isalpha((u_char)major))
+		return(MDOC_MAX);
+	if (49 != minor && ! isalpha((u_char)minor))
 		return(MDOC_MAX);
 
-	if ( ! ((tmp[1] >= 65 && tmp[1] <= 90) ||
-				(tmp[1] == 49) ||
-				(tmp[1] >= 97 && tmp[1] <= 122)))
-		return(MDOC_MAX);
+	ADJUST_MAJOR(major);
+	ADJUST_MINOR(minor);
 
-	if (tmp[0] == 37)
-		major = 0;
-	else
-		major = tmp[0] - 64;
+	ind = INDEX(major, minor);
 
-	if (tmp[1] == 49)
-		minor = 0;
-	else if (tmp[1] <= 90)
-		minor = tmp[1] - 65;
-	else
-		minor = tmp[1] - 97;
-
-	ind = (major * 27 * 3) + (minor * 3);
-	if (ind < 0 || ind >= (27 * 26 * 3))
+	if (ind < 0 || ind >= 26 * 3 * 52)
 		return(MDOC_MAX);
 
 	if (htab[ind]) {
@@ -134,10 +135,7 @@ mdoc_hash_find(const void *arg, const char *tmp)
 			(void *)mdoc_macros;
 		assert(0 == (size_t)slot % sizeof(struct mdoc_macro));
 		slot /= sizeof(struct mdoc_macro);
-		if (mdoc_macronames[slot][0] == tmp[0] && 
-				mdoc_macronames[slot][1] == tmp[1] && 
-				(0 == tmp[2] ||
-				 mdoc_macronames[slot][2] == tmp[2]))
+		if (SLOTCMP(slot, tmp))
 			return(slot);
 		ind++;
 	}
@@ -147,10 +145,7 @@ mdoc_hash_find(const void *arg, const char *tmp)
 			(void *)mdoc_macros;
 		assert(0 == (size_t)slot % sizeof(struct mdoc_macro));
 		slot /= sizeof(struct mdoc_macro);
-		if (mdoc_macronames[slot][0] == tmp[0] && 
-				mdoc_macronames[slot][1] == tmp[1] && 
-				(0 == tmp[2] ||
-				 mdoc_macronames[slot][2] == tmp[2]))
+		if (SLOTCMP(slot, tmp))
 			return(slot);
 		ind++;
 	}
@@ -161,10 +156,7 @@ mdoc_hash_find(const void *arg, const char *tmp)
 		(void *)mdoc_macros;
 	assert(0 == (size_t)slot % sizeof(struct mdoc_macro));
 	slot /= sizeof(struct mdoc_macro);
-	if (mdoc_macronames[slot][0] == tmp[0] && 
-			mdoc_macronames[slot][1] == tmp[1] && 
-			(0 == tmp[2] ||
-			 mdoc_macronames[slot][2] == tmp[2]))
+	if (SLOTCMP(slot, tmp))
 		return(slot);
 
 	return(MDOC_MAX);
