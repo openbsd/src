@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.29 2009/07/22 21:29:04 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.30 2009/07/26 19:57:45 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -842,6 +842,7 @@ void
 mace_pcibr_rbus_space_unmap(bus_space_tag_t t, bus_space_handle_t h,
     bus_size_t size, bus_addr_t *addrp)
 {
+	bus_space_unmap(t, h, size);
 	/* can't simply subtract because of possible cacheability */
 	*addrp = XKPHYS_TO_PHYS(h) - XKPHYS_TO_PHYS(t->bus_base);
 }
