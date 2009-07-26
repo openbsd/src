@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.2 2009/07/21 17:57:29 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.3 2009/07/26 21:42:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,6 +36,9 @@ struct input_key_ent {
 };
 
 struct input_key_ent input_keys[] = {
+	/* Backspace key. */
+	{ KEYC_BSPACE, "\177",	   0 },
+
 	/* Function keys. */
 	{ KEYC_F1,     "\033OP",   INPUTKEY_CTRL|INPUTKEY_XTERM },
 	{ KEYC_F2,     "\033OQ",   INPUTKEY_CTRL|INPUTKEY_XTERM },

@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.2 2009/07/21 17:57:29 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.3 2009/07/26 21:42:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -20,6 +20,8 @@
 #include <sys/time.h>
 
 #include <string.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "tmux.h"
 
@@ -235,6 +237,7 @@ tty_keys_next(struct tty *tty, int *key, u_char *mouse)
 	struct timeval	 tv;
 	char		*buf;
 	size_t		 len, size;
+	cc_t		 bspace;
 
 	buf = BUFFER_OUT(tty->in);
 	len = BUFFER_USED(tty->in);
@@ -245,6 +248,15 @@ tty_keys_next(struct tty *tty, int *key, u_char *mouse)
 	/* If a normal key, return it. */
 	if (*buf != '\033') {
 		*key = buffer_read8(tty->in);
+
+		/*
+		 * Check for backspace key using termios VERASE - the terminfo
+		 * kbs entry is extremely unreliable, so cannot be safely
+		 * used. termios should have a better idea.
+		 */
+		bspace = tty->tio.c_cc[VERASE];
+		if (bspace != _POSIX_VDISABLE && *key == bspace)
+			*key = KEYC_BSPACE;
 		goto found;
 	}
 
