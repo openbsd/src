@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.13 2009/07/26 01:59:46 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.14 2009/07/26 23:48:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -662,13 +662,13 @@ blk_exp_close(MACRO_PROT_ARGS)
 	}
 
 	if ( ! (MDOC_CALLABLE & mdoc_macros[tok].flags)) {
-		if (0 == buf[*pos]) {
-			if ( ! rew_subblock(MDOC_BODY, mdoc, 
-						tok, line, ppos))
+		if (buf[*pos]) 
+			if ( ! mdoc_pwarn(mdoc, line, ppos, ENOLINE))
 				return(0);
-			return(rew_expblock(mdoc, tok, line, ppos));
-		}
-		return(mdoc_perr(mdoc, line, ppos, ENOLINE));
+
+		if ( ! rew_subblock(MDOC_BODY, mdoc, tok, line, ppos))
+			return(0);
+		return(rew_expblock(mdoc, tok, line, ppos));
 	}
 
 	if ( ! rew_subblock(MDOC_BODY, mdoc, tok, line, ppos))
