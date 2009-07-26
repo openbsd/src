@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.8 2009/04/25 16:25:12 kettenis Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.9 2009/07/26 18:56:42 miod Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -250,10 +250,14 @@ shpcic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iobus_space.bus_size =  SH4_PCIC_IO_SIZE;
 	sc->sc_iobus_space.bus_io = 1;;
 
-	io_ex = extent_create("pciio", SH4_PCIC_IO,
-	    SH4_PCIC_IO + SH4_PCIC_IO_SIZE - 1, M_DEVBUF, NULL, 0, EX_NOWAIT);
-	mem_ex = extent_create("pcimem", SH4_PCIC_MEM,
-	    SH4_PCIC_MEM + SH4_PCIC_MEM_SIZE - 1, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	io_ex = extent_create("pciio", 0, 0xffffffff, M_DEVBUF, NULL, 0,
+	    EX_NOWAIT | EX_FILLED);
+	if (io_ex != NULL)
+		extent_free(io_ex, SH4_PCIC_IO, SH4_PCIC_IO_SIZE, EX_NOWAIT);
+	mem_ex = extent_create("pcimem", 0, 0xffffffff, M_DEVBUF, NULL, 0,
+	    EX_NOWAIT | EX_FILLED);
+	if (mem_ex != NULL)
+		extent_free(mem_ex, SH4_PCIC_MEM, SH4_PCIC_MEM_SIZE, EX_NOWAIT);
 
 	sc->sc_pci_chipset = shpcic_get_bus_mem_tag();
 
