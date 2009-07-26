@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.22 2009/01/11 16:54:59 blambert Exp $	*/
+/*	$OpenBSD: mt.c,v 1.23 2009/07/26 13:43:38 blambert Exp $	*/
 /*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
 /*
@@ -555,7 +555,7 @@ mtstart(arg)
 			 * but not otherwise.
 			 */
 			if (sc->sc_flags & (MTF_DSJTIMEO | MTF_STATTIMEO)) {
-				timeout_add(&sc->sc_start_to, hz >> 5);
+				timeout_add_msec(&sc->sc_start_to, 1000 >> 5);
 				return;
 			}
 		    case 2:
@@ -641,7 +641,7 @@ mtstart(arg)
 				break;
 
 			    case -2:
-				timeout_add(&sc->sc_start_to, hz >> 5);
+				timeout_add_msec(&sc->sc_start_to, 1000 >> 5);
 				return;
 			}
 
@@ -797,7 +797,7 @@ mtintr(arg)
 		 * to the request for DSJ.  It's probably just "busy" figuring
 		 * it out and will know in a little bit...
 		 */
-		timeout_add(&sc->sc_intr_to, hz >> 5);
+		timeout_add_msec(&sc->sc_intr_to, 1000 >> 5);
 		return;
 
 	    default:
