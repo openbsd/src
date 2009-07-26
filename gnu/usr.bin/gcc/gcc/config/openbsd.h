@@ -124,9 +124,9 @@ Boston, MA 02111-1307, USA.  */
    This two-stage defines makes it easy to pick that for targets that
    have subspecs.  */
 #ifdef CPP_CPU_SPEC
-#define OBSD_CPP_SPEC "%(cpp_cpu) %{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS -D_REENTRANT}"
+#define OBSD_CPP_SPEC "%(cpp_cpu) %{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
 #else
-#define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS -D_REENTRANT}"
+#define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
 #endif
 
 #ifndef OBSD_HAS_CORRECT_SPECS
@@ -323,6 +323,10 @@ do {									 \
 /* Storage layout.  */
 
 
+/* Otherwise, since we support weak, gthr.h erroneously tries to use
+   #pragma weak.  */
+#define GTHREAD_USE_WEAK 0
+
 /* bug work around: we don't want to support #pragma weak, but the current
    code layout needs HANDLE_PRAGMA_WEAK asserted for __attribute((weak)) to
    work.  On the other hand, we don't define HANDLE_PRAGMA_WEAK directly,
