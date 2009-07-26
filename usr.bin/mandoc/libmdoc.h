@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.15 2009/07/18 19:44:38 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.16 2009/07/26 02:17:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -44,7 +44,6 @@ struct	mdoc {
 enum	merr {
 	ETAILWS = 0,
 	ECOLEMPTY,
-	EARGVPARM,
 	EQUOTPARM,
 	EQUOTTERM,
 	EMALLOC,
