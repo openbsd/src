@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.3 2009/07/26 12:38:20 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.4 2009/07/26 13:10:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -72,21 +72,6 @@ mio_open(const char *str, unsigned mode, int nbio)
 		 */
 		if (stat(str, &sb) < 0 || !S_ISCHR(sb.st_mode)) {
 			DPRINTF("mio_open: %s: missing ':' separator\n", str); 
-			return NULL;
-		}
-		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev));
-		return mio_open_rmidi(buf, mode, nbio);
-	}
-	if (sep == str) {
-		/*
-		 * legacy "/dev/rmidixxx" device name
-		 */
-		if (stat(str, &sb) < 0) {
-			DPERROR("mio_open: stat");
-			return NULL;
-		}
-		if (!S_ISCHR(sb.st_mode)) {
-			DPRINTF("mio_open: %s: not a char dev\n", str);
 			return NULL;
 		}
 		snprintf(buf, sizeof(buf), "%u", minor(sb.st_rdev));
