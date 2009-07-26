@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unbind-key.c,v 1.3 2009/07/24 14:52:47 nicm Exp $ */
+/* $OpenBSD: cmd-unbind-key.c,v 1.4 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,8 +26,6 @@
 
 int	cmd_unbind_key_parse(struct cmd *, int, char **, char **);
 int	cmd_unbind_key_exec(struct cmd *, struct cmd_ctx *);
-void	cmd_unbind_key_send(struct cmd *, struct buffer *);
-void	cmd_unbind_key_recv(struct cmd *, struct buffer *);
 void	cmd_unbind_key_free(struct cmd *);
 
 struct cmd_unbind_key_data {
@@ -41,8 +39,6 @@ const struct cmd_entry cmd_unbind_key_entry = {
 	NULL,
 	cmd_unbind_key_parse,
 	cmd_unbind_key_exec,
-	cmd_unbind_key_send,
-	cmd_unbind_key_recv,
 	cmd_unbind_key_free,
 	NULL
 };
@@ -97,23 +93,6 @@ cmd_unbind_key_exec(struct cmd *self, unused struct cmd_ctx *ctx)
 	key_bindings_remove(data->key);
 
 	return (0);
-}
-
-void
-cmd_unbind_key_send(struct cmd *self, struct buffer *b)
-{
-	struct cmd_unbind_key_data	*data = self->data;
-
-	buffer_write(b, data, sizeof *data);
-}
-
-void
-cmd_unbind_key_recv(struct cmd *self, struct buffer *b)
-{
-	struct cmd_unbind_key_data	*data;
-
-	self->data = data = xmalloc(sizeof *data);
-	buffer_read(b, data, sizeof *data);
 }
 
 void

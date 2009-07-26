@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.9 2009/07/20 14:37:51 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.10 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -45,6 +45,15 @@ server_fill_environ(struct session *s)
 	env[1] = termvar;
 
 	return (env);
+}
+
+void
+server_write_error(struct client *c, const char *msg)
+{
+	struct msg_print_data	printdata;
+
+	strlcpy(printdata.msg, msg, sizeof printdata.msg);
+	server_write_client(c, MSG_ERROR, &printdata, sizeof printdata);
 }
 
 void
@@ -220,7 +229,7 @@ wrong:
 	password_failures++;
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 		c = ARRAY_ITEM(&clients, i);
-                if (c == NULL || c->prompt_buffer == NULL)
+		if (c == NULL || c->prompt_buffer == NULL)
 			continue;
 
 		*c->prompt_buffer = '\0';

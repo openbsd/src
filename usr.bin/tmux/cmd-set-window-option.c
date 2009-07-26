@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-window-option.c,v 1.7 2009/07/20 09:15:18 nicm Exp $ */
+/* $OpenBSD: cmd-set-window-option.c,v 1.8 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,8 +36,6 @@ const struct cmd_entry cmd_set_window_option_entry = {
 	NULL,
 	cmd_option_parse,
 	cmd_set_window_option_exec,
-	cmd_option_send,
-	cmd_option_recv,
 	cmd_option_free,
 	cmd_option_print
 };

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.5 2009/07/20 07:31:10 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.6 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -40,8 +40,6 @@ const struct cmd_entry cmd_command_prompt_entry = {
 	cmd_command_prompt_init,
 	cmd_target_parse,
 	cmd_command_prompt_exec,
-	cmd_target_send,
-	cmd_target_recv,
 	cmd_target_free,
 	cmd_target_print
 };

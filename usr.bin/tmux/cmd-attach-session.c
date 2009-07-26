@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.5 2009/07/23 12:33:48 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.6 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,8 +33,6 @@ const struct cmd_entry cmd_attach_session_entry = {
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_attach_session_exec,
-	cmd_target_send,
-	cmd_target_recv,
 	cmd_target_free,
 	cmd_target_print
 };

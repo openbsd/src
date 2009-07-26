@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-session.c,v 1.3 2009/07/17 07:05:58 nicm Exp $ */
+/* $OpenBSD: cmd-choose-session.c,v 1.4 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,8 +35,6 @@ const struct cmd_entry cmd_choose_session_entry = {
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_choose_session_exec,
-	cmd_target_send,
-	cmd_target_recv,
 	cmd_target_free,
 	cmd_target_print
 };

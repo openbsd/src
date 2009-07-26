@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-move-window.c,v 1.3 2009/07/13 23:11:35 nicm Exp $ */
+/* $OpenBSD: cmd-move-window.c,v 1.4 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -35,8 +35,6 @@ const struct cmd_entry cmd_move_window_entry = {
 	cmd_srcdst_init,
 	cmd_srcdst_parse,
 	cmd_move_window_exec,
-	cmd_srcdst_send,
-	cmd_srcdst_recv,
 	cmd_srcdst_free,
 	cmd_srcdst_print
 };

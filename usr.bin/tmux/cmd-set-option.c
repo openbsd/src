@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.8 2009/07/20 14:32:09 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.9 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,8 +36,6 @@ const struct cmd_entry cmd_set_option_entry = {
 	NULL,
 	cmd_option_parse,
 	cmd_set_option_exec,
-	cmd_option_send,
-	cmd_option_recv,
 	cmd_option_free,
 	cmd_option_print
 };

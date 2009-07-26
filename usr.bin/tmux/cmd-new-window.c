@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.4 2009/07/13 23:11:35 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.5 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,8 +28,6 @@
 
 int	cmd_new_window_parse(struct cmd *, int, char **, char **);
 int	cmd_new_window_exec(struct cmd *, struct cmd_ctx *);
-void	cmd_new_window_send(struct cmd *, struct buffer *);
-void	cmd_new_window_recv(struct cmd *, struct buffer *);
 void	cmd_new_window_free(struct cmd *);
 void	cmd_new_window_init(struct cmd *, int);
 size_t	cmd_new_window_print(struct cmd *, char *, size_t);
@@ -49,8 +47,6 @@ const struct cmd_entry cmd_new_window_entry = {
 	cmd_new_window_init,
 	cmd_new_window_parse,
 	cmd_new_window_exec,
-	cmd_new_window_send,
-	cmd_new_window_recv,
 	cmd_new_window_free,
 	cmd_new_window_print
 };
@@ -171,29 +167,6 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		server_status_session(s);
 
 	return (0);
-}
-
-void
-cmd_new_window_send(struct cmd *self, struct buffer *b)
-{
-	struct cmd_new_window_data	*data = self->data;
-
-	buffer_write(b, data, sizeof *data);
-	cmd_send_string(b, data->target);
-	cmd_send_string(b, data->name);
-	cmd_send_string(b, data->cmd);
-}
-
-void
-cmd_new_window_recv(struct cmd *self, struct buffer *b)
-{
-	struct cmd_new_window_data	*data;
-
-	self->data = data = xmalloc(sizeof *data);
-	buffer_read(b, data, sizeof *data);
-	data->target = cmd_recv_string(b);
-	data->name = cmd_recv_string(b);
-	data->cmd = cmd_recv_string(b);
 }
 
 void

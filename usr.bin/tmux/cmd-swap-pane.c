@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.6 2009/07/20 07:13:31 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.7 2009/07/26 12:58:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,8 +28,6 @@
 
 int	cmd_swap_pane_parse(struct cmd *, int, char **, char **);
 int	cmd_swap_pane_exec(struct cmd *, struct cmd_ctx *);
-void	cmd_swap_pane_send(struct cmd *, struct buffer *);
-void	cmd_swap_pane_recv(struct cmd *, struct buffer *);
 void	cmd_swap_pane_free(struct cmd *);
 void	cmd_swap_pane_init(struct cmd *, int);
 size_t	cmd_swap_pane_print(struct cmd *, char *, size_t);
@@ -50,8 +48,6 @@ const struct cmd_entry cmd_swap_pane_entry = {
 	cmd_swap_pane_init,
 	cmd_swap_pane_parse,
 	cmd_swap_pane_exec,
-	cmd_swap_pane_send,
-	cmd_swap_pane_recv,
 	cmd_swap_pane_free,
 	cmd_swap_pane_print
 };
@@ -232,25 +228,6 @@ cmd_swap_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	server_redraw_window(w);
 
 	return (0);
-}
-
-void
-cmd_swap_pane_send(struct cmd *self, struct buffer *b)
-{
-	struct cmd_swap_pane_data	*data = self->data;
-
-	buffer_write(b, data, sizeof *data);
-	cmd_send_string(b, data->target);
-}
-
-void
-cmd_swap_pane_recv(struct cmd *self, struct buffer *b)
-{
-	struct cmd_swap_pane_data	*data;
-
-	self->data = data = xmalloc(sizeof *data);
-	buffer_read(b, data, sizeof *data);
-	data->target = cmd_recv_string(b);
 }
 
 void
