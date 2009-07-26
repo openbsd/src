@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.7 2009/07/26 00:28:50 schwarze Exp $ */
+/*	$Id: term.c,v 1.8 2009/07/26 00:40:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -204,7 +204,10 @@ term_isopendelim(const char *p)
  *  possible).
  *
  *  FIXME: newline breaks occur (in groff) also occur when a single
- *  space follows a NOBREAK!
+ *  space follows a NOBREAK (try `Bl -tag')
+ *
+ *  FIXME: there's a newline error where a `Bl -diag' will have a
+ *  trailing newline if the line is exactly 73 chars long.
  */
 void
 term_flushln(struct termp *p)
@@ -252,10 +255,10 @@ term_flushln(struct termp *p)
 
 		/* LINTED */
 		for (j = i, vsz = 0; j < (int)p->col; j++) {
-			if (' ' == p->buf[j])
+			if (' ' == p->buf[j]) 
 				break;
 			else if (8 == p->buf[j])
-				j += 1;
+				vsz--;
 			else
 				vsz++;
 		}
