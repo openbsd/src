@@ -1,4 +1,4 @@
-.\" $OpenBSD: mio_open.3,v 1.2 2009/07/25 11:15:56 ratchov Exp $
+.\" $OpenBSD: mio_open.3,v 1.3 2009/07/26 12:42:48 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2009 $
+.Dd $Mdocdate: July 26 2009 $
 .Dt MIO_OPEN 3
 .Os
 .Sh NAME
@@ -89,8 +89,9 @@ The stream is input-only; received data from the hardware or
 other programs must be read from the stream.
 .It MIO_IN | MIO_OUT
 The stream sends and receives data.
-This mode should be used rather using twice
-.Fn mio_open .
+This mode should be used rather than calling
+.Fn mio_open
+twice.
 .El
 .Pp
 If the
