@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.36 2009/07/25 23:29:15 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.37 2009/07/26 00:49:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -793,9 +793,6 @@ termp_it_pre(DECL_ARGS)
 	 */
 
 	switch (type) {
-	case (MDOC_Diag):
-		term_word(p, "\\ ");
-		/* FALLTHROUGH */
 	case (MDOC_Inset):
 		if (MDOC_BODY == node->type) 
 			p->flags &= ~TERMP_NOSPACE;
@@ -984,6 +981,7 @@ termp_it_post(DECL_ARGS)
 
 	switch (type) {
 	case (MDOC_Diag):
+		term_word(p, "\\ ");
 		/* FALLTHROUGH */
 	case (MDOC_Item):
 		/* FALLTHROUGH */
