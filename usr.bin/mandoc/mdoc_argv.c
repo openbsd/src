@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.11 2009/07/26 02:17:29 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.12 2009/07/26 22:48:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -34,10 +34,8 @@
 
 /* FIXME .Bf Li raises "macro-like parameter". */
 
-#define	ARGS_QUOTED	(1 << 0)
 #define	ARGS_DELIM	(1 << 1)
 #define	ARGS_TABSEP	(1 << 2)
-#define	ARGS_ARGVLIKE	(1 << 3)
 
 #define	ARGV_NONE	(1 << 0)
 #define	ARGV_SINGLE	(1 << 1)
@@ -94,54 +92,54 @@ static	int mdoc_argflags[MDOC_MAX] = {
 	0, /* Dd */
 	0, /* Dt */
 	0, /* Os */
-	ARGS_QUOTED, /* Sh */
-	ARGS_QUOTED, /* Ss */ 
+	0, /* Sh */
+	0, /* Ss */ 
 	ARGS_DELIM, /* Pp */ 
 	ARGS_DELIM, /* D1 */
-	ARGS_DELIM | ARGS_QUOTED, /* Dl */
+	ARGS_DELIM, /* Dl */
 	0, /* Bd */
 	0, /* Ed */
-	ARGS_QUOTED, /* Bl */
+	0, /* Bl */
 	0, /* El */
 	0, /* It */
 	ARGS_DELIM, /* Ad */ 
 	ARGS_DELIM, /* An */
-	ARGS_DELIM | ARGS_QUOTED, /* Ar */
-	ARGS_QUOTED, /* Cd */
+	ARGS_DELIM, /* Ar */
+	0, /* Cd */
 	ARGS_DELIM, /* Cm */
 	ARGS_DELIM, /* Dv */ 
 	ARGS_DELIM, /* Er */ 
 	ARGS_DELIM, /* Ev */ 
 	0, /* Ex */
-	ARGS_DELIM | ARGS_QUOTED, /* Fa */ 
+	ARGS_DELIM, /* Fa */ 
 	0, /* Fd */ 
 	ARGS_DELIM, /* Fl */
-	ARGS_DELIM | ARGS_QUOTED, /* Fn */ 
-	ARGS_DELIM | ARGS_QUOTED, /* Ft */ 
+	ARGS_DELIM, /* Fn */ 
+	ARGS_DELIM, /* Ft */ 
 	ARGS_DELIM, /* Ic */ 
 	0, /* In */ 
-	ARGS_DELIM | ARGS_QUOTED, /* Li */
-	ARGS_QUOTED, /* Nd */ 
+	ARGS_DELIM, /* Li */
+	0, /* Nd */ 
 	ARGS_DELIM, /* Nm */ 
 	ARGS_DELIM, /* Op */
 	0, /* Ot */
 	ARGS_DELIM, /* Pa */
 	0, /* Rv */
-	ARGS_DELIM | ARGS_ARGVLIKE, /* St */ 
+	ARGS_DELIM, /* St */ 
 	ARGS_DELIM, /* Va */
 	ARGS_DELIM, /* Vt */ 
 	ARGS_DELIM, /* Xr */
-	ARGS_QUOTED, /* %A */
-	ARGS_QUOTED, /* %B */
-	ARGS_QUOTED, /* %D */
-	ARGS_QUOTED, /* %I */
-	ARGS_QUOTED, /* %J */
-	ARGS_QUOTED, /* %N */
-	ARGS_QUOTED, /* %O */
-	ARGS_QUOTED, /* %P */
-	ARGS_QUOTED, /* %R */
-	ARGS_QUOTED, /* %T */
-	ARGS_QUOTED, /* %V */
+	0, /* %A */
+	0, /* %B */
+	0, /* %D */
+	0, /* %I */
+	0, /* %J */
+	0, /* %N */
+	0, /* %O */
+	0, /* %P */
+	0, /* %R */
+	0, /* %T */
+	0, /* %V */
 	ARGS_DELIM, /* Ac */
 	0, /* Ao */
 	ARGS_DELIM, /* Aq */
@@ -181,12 +179,12 @@ static	int mdoc_argflags[MDOC_MAX] = {
 	ARGS_DELIM, /* Sq */
 	0, /* Sm */
 	ARGS_DELIM, /* Sx */
-	ARGS_DELIM | ARGS_QUOTED, /* Sy */
+	ARGS_DELIM, /* Sy */
 	ARGS_DELIM, /* Tn */
 	ARGS_DELIM, /* Ux */
 	ARGS_DELIM, /* Xc */
 	0, /* Xo */
-	ARGS_QUOTED, /* Fo */ 
+	0, /* Fo */ 
 	0, /* Fc */ 
 	0, /* Oo */
 	ARGS_DELIM, /* Oc */
@@ -198,16 +196,16 @@ static	int mdoc_argflags[MDOC_MAX] = {
 	0, /* Ud */
 	0, /* Lb */
 	ARGS_DELIM, /* Lp */
-	ARGS_DELIM | ARGS_QUOTED, /* Lk */
-	ARGS_DELIM | ARGS_QUOTED, /* Mt */
+	ARGS_DELIM, /* Lk */
+	ARGS_DELIM, /* Mt */
 	ARGS_DELIM, /* Brq */
 	0, /* Bro */
 	ARGS_DELIM, /* Brc */
-	ARGS_QUOTED, /* %C */
+	0, /* %C */
 	0, /* Es */
 	0, /* En */
 	0, /* Dx */
-	ARGS_QUOTED, /* %Q */
+	0, /* %Q */
 	0, /* br */
 	0, /* sp */
 };
@@ -222,7 +220,6 @@ int
 mdoc_argv(struct mdoc *m, int line, int tok,
 		struct mdoc_arg **v, int *pos, char *buf)
 {
-	int		  i;
 	char		 *p, sv;
 	struct mdoc_argv tmp;
 	struct mdoc_arg	 *arg;
@@ -232,12 +229,8 @@ mdoc_argv(struct mdoc *m, int line, int tok,
 
 	assert(' ' != buf[*pos]);
 
-	if ('-' != buf[*pos] || ARGS_ARGVLIKE & mdoc_argflags[tok])
-		return(ARGV_WORD);
-
 	/* Parse through to the first unescaped space. */
 
-	i = *pos;
 	p = &buf[++(*pos)];
 
 	assert(*pos > 0);
@@ -334,6 +327,14 @@ mdoc_argv_free(struct mdoc_arg *p)
 
 
 int
+mdoc_zargs(struct mdoc *m, int line, int *pos, char *buf, char **v)
+{
+
+	return(args(m, line, pos, buf, 0, v));
+}
+
+
+int
 mdoc_args(struct mdoc *m, int line, 
 		int *pos, char *buf, int tok, char **v)
 {
@@ -342,46 +343,28 @@ mdoc_args(struct mdoc *m, int line,
 
 	fl = (0 == tok) ? 0 : mdoc_argflags[tok];
 
+	if (MDOC_It != tok)
+		return(args(m, line, pos, buf, fl, v));
+
 	/* 
-	 * Override per-macro argument flags with context-specific ones.
-	 * As of now, this is only valid for `It' depending on its list
-	 * context.
+	 * The `It' macro is a special case, as it acquires parameters from its
+	 * parent `Bl' context, specifically, we're concerned with -column.
 	 */
 
-	switch (tok) {
-	case (MDOC_It):
-		for (n = m->last; n; n = n->parent)
-			if (MDOC_BLOCK == n->type && MDOC_Bl == n->tok)
-				break;
+	for (n = m->last; n; n = n->parent)
+		if (MDOC_BLOCK == n->type && MDOC_Bl == n->tok)
+			break;
 
-		assert(n);
-		c = (int)(n->args ? n->args->argc : 0);
-		assert(c > 0);
+	assert(n);
+	c = (int)(n->args ? n->args->argc : 0);
+	assert(c > 0);
 
-		/*
-		 * Using `Bl -column' adds ARGS_TABSEP to the arguments
-		 * and invalidates ARGS_DELIM.  Using `Bl -diag' allows
-		 * for quoted arguments.
-		 */
-
-		/* LINTED */
-		for (i = 0; i < c; i++) {
-			switch (n->args->argv[i].arg) {
-			case (MDOC_Column):
-				fl |= ARGS_TABSEP;
-				fl &= ~ARGS_DELIM;
-				i = c;
-				break;
-			case (MDOC_Diag):
-				fl |= ARGS_QUOTED;
-				i = c;
-				break;
-			default:
-				break;
-			}
-		}
-		break;
-	default:
+	/* LINTED */
+	for (i = 0; i < c; i++) {
+		if (MDOC_Column != n->args->argv[i].arg) 
+			continue;
+		fl |= ARGS_TABSEP;
+		fl &= ~ARGS_DELIM;
 		break;
 	}
 
@@ -390,20 +373,17 @@ mdoc_args(struct mdoc *m, int line,
 
 
 static int
-args(struct mdoc *m, int line, int *pos,
+args(struct mdoc *m, int line, int *pos, 
 		char *buf, int fl, char **v)
 {
 	int		  i;
 	char		 *p, *pp;
 
-	assert(*pos > 0);
+	assert(*pos);
+	assert(' ' != buf[*pos]);
 
 	if (0 == buf[*pos])
 		return(ARGS_EOLN);
-
-	if ('\"' == buf[*pos] && ! (fl & ARGS_QUOTED))
-		if ( ! mdoc_pwarn(m, line, *pos, EQUOTPARM))
-			return(ARGS_ERROR);
 
 	/* 
 	 * If the first character is a delimiter and we're to look for
@@ -416,167 +396,142 @@ args(struct mdoc *m, int line, int *pos,
 			if ( ! mdoc_iscdelim(buf[i]))
 				break;
 			i++;
-			/* There must be at least one space... */
 			if (0 == buf[i] || ' ' != buf[i])
 				break;
 			i++;
 			while (buf[i] && ' ' == buf[i])
 				i++;
 		}
+
+		/* FIXME: warn about trailing whitespace. */
+
 		if (0 == buf[i]) {
 			*v = &buf[*pos];
 			return(ARGS_PUNCT);
 		}
 	}
 
-	/* First parse non-quoted strings. */
+	*v = &buf[*pos];
 
-	if ('\"' != buf[*pos] || ! (ARGS_QUOTED & fl)) {
-		*v = &buf[*pos];
+	/*
+	 * First handle TABSEP items, restricted to `Bl -column'.  This
+	 * ignores conventional token parsing and instead uses tabs or
+	 * `Ta' macros to separate phrases.  Phrases are parsed again
+	 * for arguments at a later phase.
+	 */
+
+	if (ARGS_TABSEP & fl) {
+		/* Scan ahead to tab (can't be escaped). */
+		p = strchr(*v, '\t');
+
+		/* Scan ahead to unescaped `Ta'. */
+		for (pp = *v; ; pp++) {
+			if (NULL == (pp = strstr(pp, "Ta")))
+				break;
+			if (pp > *v && ' ' != *(pp - 1))
+				continue;
+			if (' ' == *(pp + 2) || 0 == *(pp + 2))
+				break;
+		}
 
 		/* 
-		 * Thar be dragons here!  If we're tab-separated, search
-		 * ahead for either a tab or the `Ta' macro.  
-		 * If a `Ta' is detected, it must be space-buffered before and
-		 * after.  If either of these hold true, then prune out the
-		 * extra spaces and call it an argument.
+		 * Adjust new-buffer position to be beyond delimiter
+		 * mark (e.g., Ta -> end + 2).
 		 */
-
-		if (ARGS_TABSEP & fl) {
-			/* Scan ahead to unescaped tab. */
-
-			p = strchr(*v, '\t');
-
-			/* Scan ahead to unescaped `Ta'. */
-
-			for (pp = *v; ; pp++) {
-				if (NULL == (pp = strstr(pp, "Ta")))
-					break;
-				if (pp > *v && ' ' != *(pp - 1))
-					continue;
-				if (' ' == *(pp + 2) || 0 == *(pp + 2))
-					break;
-			}
-
-			/* Choose delimiter tab/Ta. */
-
-			if (p && pp)
-				p = (p < pp ? p : pp);
-			else if ( ! p && pp)
-				p = pp;
-
-			/* Strip delimiter's preceding whitespace. */
-
-			if (p && p > *v) {
-				pp = p - 1;
-				while (pp > *v && ' ' == *pp)
-					pp--;
-				if (pp == *v && ' ' == *pp) 
-					*pp = 0;
-				else if (' ' == *pp)
-					*(pp + 1) = 0;
-			}
-
-			/* ...in- and proceding whitespace. */
-
-			if (p && ('\t' != *p)) {
-				*p++ = 0;
-				*p++ = 0;
-			} else if (p)
-				*p++ = 0;
-
-			if (p) {
-				while (' ' == *p)
-					p++;
-				if (0 != *p)
-					*(p - 1) = 0;
-				*pos += (int)(p - *v);
-			} 
-
-			if (p && 0 == *p)
-				if ( ! mdoc_pwarn(m, line, *pos, ECOLEMPTY))
-					return(0);
-			if (p && 0 == *p && p > *v && ' ' == *(p - 1))
-				if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
-					return(0);
-
-			if (p)
-				return(ARGS_PHRASE);
-
-			/* Configure the eoln case, too. */
-
+		if (p && pp) {
+			*pos += pp < p ? 2 : 1;
+			p = pp < p ? pp : p;
+		} else if (p && ! pp) {
+			*pos += 1;
+		} else if (pp && ! p) {
+			p = pp;
+			*pos += 2;
+		} else
 			p = strchr(*v, 0);
-			assert(p);
 
-			if (p > *v && ' ' == *(p - 1))
-				if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
-					return(0);
-			*pos += (int)(p - *v);
+		/* Whitespace check for eoln case... */
+		if (0 == *p && ' ' == *(p - 1))
+			if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
+				return(ARGS_ERROR);
 
-			return(ARGS_PHRASE);
-		} 
-		
-		/* Do non-tabsep look-ahead here. */
-		
-		if ( ! (ARGS_TABSEP & fl))
-			while (buf[*pos]) {
-				if (' ' == buf[*pos])
-					if ('\\' != buf[*pos - 1])
-						break;
-				(*pos)++;
-			}
+		*pos += (int)(p - *v);
 
-		if (0 == buf[*pos])
-			return(ARGS_WORD);
+		/* Strip delimiter's preceding whitespace. */
+		pp = p - 1;
+		while (pp > *v && ' ' == *pp) {
+			if (pp > *v && '\\' == *(pp - 1))
+				break;
+			pp--;
+		}
+		*(pp + 1) = 0;
+
+		/* Strip delimiter's proceeding whitespace. */
+		for (pp = &buf[*pos]; ' ' == *pp; pp++, (*pos)++)
+			/* Skip ahead. */ ;
+
+		return(ARGS_PHRASE);
+	} 
+
+	/* 
+	 * Process a quoted literal.  A quote begins with a double-quote
+	 * and ends with a double-quote NOT preceded by a double-quote.
+	 * Whitespace is NOT involved in literal termination.
+	 */
+
+	if ('\"' == buf[*pos]) {
+		*v = &buf[++(*pos)];
+
+		for ( ; buf[*pos]; (*pos)++) {
+			if ('\"' != buf[*pos])
+				continue;
+			if ('\"' != buf[*pos + 1])
+				break;
+			(*pos)++;
+		}
+
+		if (0 == buf[*pos]) {
+			if ( ! mdoc_pwarn(m, line, *pos, EQUOTTERM))
+				return(ARGS_ERROR);
+			return(ARGS_QWORD);
+		}
 
 		buf[(*pos)++] = 0;
 
 		if (0 == buf[*pos])
-			return(ARGS_WORD);
+			return(ARGS_QWORD);
 
-		if ( ! (ARGS_TABSEP & fl))
-			while (buf[*pos] && ' ' == buf[*pos])
-				(*pos)++;
+		while (' ' == buf[*pos])
+			(*pos)++;
 
-		if (buf[*pos])
-			return(ARGS_WORD);
+		if (0 == buf[*pos])
+			if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
+				return(ARGS_ERROR);
 
+		return(ARGS_QWORD);
+	}
+
+	/* 
+	 * A non-quoted term progresses until either the end of line or
+	 * a non-escaped whitespace.
+	 */
+
+	for ( ; buf[*pos]; (*pos)++)
+		if (' ' == buf[*pos] && '\\' != buf[*pos - 1])
+			break;
+
+	if (0 == buf[*pos])
+		return(ARGS_WORD);
+
+	buf[(*pos)++] = 0;
+
+	while (' ' == buf[*pos])
+		(*pos)++;
+
+	if (0 == buf[*pos])
 		if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
 			return(ARGS_ERROR);
 
-		return(ARGS_WORD);
-	}
-
-	/*
-	 * If we're a quoted string (and quoted strings are allowed),
-	 * then parse ahead to the next quote.  If none's found, it's an
-	 * error.  After, parse to the next word.  
-	 */
-
-	*v = &buf[++(*pos)];
-
-	while (buf[*pos] && '\"' != buf[*pos])
-		(*pos)++;
-
-	if (0 == buf[*pos]) {
-		(void)mdoc_perr(m, line, *pos, EQUOTTERM);
-		return(ARGS_ERROR);
-	}
-
-	buf[(*pos)++] = 0;
-	if (0 == buf[*pos])
-		return(ARGS_QWORD);
-
-	while (buf[*pos] && ' ' == buf[*pos])
-		(*pos)++;
-
-	if (buf[*pos])
-		return(ARGS_QWORD);
-
-	if ( ! mdoc_pwarn(m, line, *pos, ETAILWS))
-		return(ARGS_ERROR);
-
-	return(ARGS_QWORD);
+	return(ARGS_WORD);
 }
 
 
@@ -688,7 +643,7 @@ argv_multi(struct mdoc *m, int line,
 	for (v->sz = 0; ; v->sz++) {
 		if ('-' == buf[*pos])
 			break;
-		c = args(m, line, pos, buf, ARGS_QUOTED, &p);
+		c = args(m, line, pos, buf, 0, &p);
 		if (ARGS_ERROR == c)
 			return(0);
 		else if (ARGS_EOLN == c)
@@ -720,7 +675,7 @@ argv_opt_single(struct mdoc *m, int line,
 	if ('-' == buf[*pos])
 		return(1);
 
-	c = args(m, line, pos, buf, ARGS_QUOTED, &p);
+	c = args(m, line, pos, buf, 0, &p);
 	if (ARGS_ERROR == c)
 		return(0);
 	if (ARGS_EOLN == c)
@@ -748,7 +703,7 @@ argv_single(struct mdoc *m, int line,
 
 	ppos = *pos;
 
-	c = args(m, line, pos, buf, ARGS_QUOTED, &p);
+	c = args(m, line, pos, buf, 0, &p);
 	if (ARGS_ERROR == c)
 		return(0);
 	if (ARGS_EOLN == c)

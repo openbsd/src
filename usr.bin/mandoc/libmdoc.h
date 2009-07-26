@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.16 2009/07/26 02:17:29 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.17 2009/07/26 22:48:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -43,7 +43,6 @@ struct	mdoc {
 
 enum	merr {
 	ETAILWS = 0,
-	ECOLEMPTY,
 	EQUOTPARM,
 	EQUOTTERM,
 	EMALLOC,
@@ -174,6 +173,8 @@ int		  mdoc_argv(struct mdoc *, int, int,
 void		  mdoc_argv_free(struct mdoc_arg *);
 int		  mdoc_args(struct mdoc *, int,
 			int *, char *, int, char **);
+int		  mdoc_zargs(struct mdoc *, int, 
+			int *, char *, char **);
 #define	ARGS_ERROR	(-1)
 #define	ARGS_EOLN	(0)
 #define	ARGS_WORD	(1)

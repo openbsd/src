@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.21 2009/07/26 02:17:29 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.22 2009/07/26 22:48:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -25,7 +25,6 @@
 
 const	char *const __mdoc_merrnames[MERRMAX] = {		 
 	"trailing whitespace", /* ETAILWS */
-	"empty last list column", /* ECOLEMPTY */
 	"unexpected quoted parameter", /* EQUOTPARM */
 	"unterminated quoted parameter", /* EQUOTTERM */
 	"system: malloc error", /* EMALLOC */
