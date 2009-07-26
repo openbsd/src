@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.6 2009/07/18 20:50:38 schwarze Exp $ */
+/*	$Id: term.c,v 1.7 2009/07/26 00:28:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -31,15 +31,13 @@ extern	int		  mdoc_run(struct termp *,
 
 static	struct termp	 *term_alloc(enum termenc);
 static	void		  term_free(struct termp *);
-static	void		  term_pword(struct termp *, const char *, int);
-static	void		  term_pescape(struct termp *, 
-				const char *, int *, int);
+static	void		  term_pescape(struct termp *, const char **);
 static	void		  term_nescape(struct termp *,
 				const char *, size_t);
 static	void		  term_chara(struct termp *, char);
 static	void		  term_encodea(struct termp *, char);
-static	int		  term_isopendelim(const char *, int);
-static	int		  term_isclosedelim(const char *, int);
+static	int		  term_isopendelim(const char *);
+static	int		  term_isclosedelim(const char *);
 
 
 void *
@@ -112,10 +110,10 @@ term_alloc(enum termenc enc)
 
 
 static int
-term_isclosedelim(const char *p, int len)
+term_isclosedelim(const char *p)
 {
 
-	if (1 != len)
+	if ( ! (*p && 0 == *(p + 1)))
 		return(0);
 
 	switch (*p) {
@@ -146,10 +144,10 @@ term_isclosedelim(const char *p, int len)
 
 
 static int
-term_isopendelim(const char *p, int len)
+term_isopendelim(const char *p)
 {
 
-	if (1 != len)
+	if ( ! (*p && 0 == *(p + 1)))
 		return(0);
 
 	switch (*p) {
@@ -371,50 +369,6 @@ term_vspace(struct termp *p)
 
 
 /*
- * Break apart a word into "pwords" (partial-words, usually from
- * breaking up a phrase into individual words) and, eventually, put them
- * into the output buffer.  If we're a literal word, then don't break up
- * the word and put it verbatim into the output buffer.
- */
-void
-term_word(struct termp *p, const char *word)
-{
-	int 		 i, j, len;
-
-	len = (int)strlen(word);
-
-	if (p->flags & TERMP_LITERAL) {
-		term_pword(p, word, len);
-		return;
-	}
-
-	/* LINTED */
-	for (j = i = 0; i < len; i++) {
-		if (' ' != word[i]) {
-			j++;
-			continue;
-		} 
-		
-		/* Escaped spaces don't delimit... */
-		if (i && ' ' == word[i] && '\\' == word[i - 1]) {
-			j++;
-			continue;
-		}
-
-		if (0 == j)
-			continue;
-		assert(i >= j);
-		term_pword(p, &word[i - j], j);
-		j = 0;
-	}
-	if (j > 0) {
-		assert(i >= j);
-		term_pword(p, &word[i - j], j);
-	}
-}
-
-
-/*
  * Determine the symbol indicated by an escape sequences, that is, one
  * starting with a backslash.  Once done, we pass this value into the
  * output buffer by way of the symbol table.
@@ -427,6 +381,7 @@ term_nescape(struct termp *p, const char *word, size_t len)
 	int		 i;
 
 	rhs = term_a2ascii(p->symtab, word, len, &sz);
+
 	if (rhs)
 		for (i = 0; i < (int)sz; i++) 
 			term_encodea(p, rhs[i]);
@@ -439,48 +394,61 @@ term_nescape(struct termp *p, const char *word, size_t len)
  * the escape sequence (we assert upon badly-formed escape sequences).
  */
 static void
-term_pescape(struct termp *p, const char *word, int *i, int len)
+term_pescape(struct termp *p, const char **word)
 {
 	int		 j;
+	const char	*wp;
 
-	if (++(*i) >= len)
+	wp = *word;
+
+	if (0 == *(++wp)) {
+		*word = wp;
+		return;
+	}
+
+	if ('(' == *wp) {
+		wp++;
+		if (0 == *wp || 0 == *(wp + 1)) {
+			*word = 0 == *wp ? wp : wp + 1;
+			return;
+		}
+
+		term_nescape(p, wp, 2);
+		*word = ++wp;
 		return;
 
-	if ('(' == word[*i]) {
-		(*i)++;
-		if (*i + 1 >= len)
+	} else if ('*' == *wp) {
+		if (0 == *(++wp)) {
+			*word = wp;
 			return;
+		}
 
-		term_nescape(p, &word[*i], 2);
-		(*i)++;
-		return;
-
-	} else if ('*' == word[*i]) { 
-		(*i)++;
-		if (*i >= len)
-			return;
-
-		switch (word[*i]) {
+		switch (*wp) {
 		case ('('):
-			(*i)++;
-			if (*i + 1 >= len)
+			wp++;
+			if (0 == *wp || 0 == *(wp + 1)) {
+				*word = 0 == *wp ? wp : wp + 1;
 				return;
+			}
 
-			term_nescape(p, &word[*i], 2);
-			(*i)++;
+			term_nescape(p, wp, 2);
+			*word = ++wp;
 			return;
 		case ('['):
 			break;
 		default:
-			term_nescape(p, &word[*i], 1);
+			term_nescape(p, wp, 1);
+			*word = wp;
 			return;
 		}
 	
-	} else if ('f' == word[*i]) {
-		(*i)++;
-		if (*i >= len)
+	} else if ('f' == *wp) {
+		if (0 == *(++wp)) {
+			*word = wp;
 			return;
-		switch (word[*i]) {
+		}
+
+		switch (*wp) {
 		case ('B'):
 			p->flags |= TERMP_BOLD;
 			break;
@@ -495,21 +463,27 @@ term_pescape(struct termp *p, const char *word, int *i, int len)
 		default:
 			break;
 		}
+
+		*word = wp;
 		return;
 
-	} else if ('[' != word[*i]) {
-		term_nescape(p, &word[*i], 1);
+	} else if ('[' != *wp) {
+		term_nescape(p, wp, 1);
+		*word = wp;
 		return;
 	}
 
-	(*i)++;
-	for (j = 0; word[*i] && ']' != word[*i]; (*i)++, j++)
+	wp++;
+	for (j = 0; *wp && ']' != *wp; wp++, j++)
 		/* Loop... */ ;
 
-	if (0 == word[*i])
+	if (0 == *wp) {
+		*word = wp;
 		return;
+	}
 
-	term_nescape(p, &word[*i - j], (size_t)j);
+	term_nescape(p, wp - j, (size_t)j);
+	*word = wp;
 }
 
 
@@ -518,12 +492,12 @@ term_pescape(struct termp *p, const char *word, int *i, int len)
  * phrase that cannot be broken down (such as a literal string).  This
  * handles word styling.
  */
-static void
-term_pword(struct termp *p, const char *word, int len)
+void
+term_word(struct termp *p, const char *word)
 {
-	int		 i;
+	const char	 *sv;
 
-	if (term_isclosedelim(word, len))
+	if (term_isclosedelim(word))
 		if ( ! (TERMP_IGNDELIM & p->flags))
 			p->flags |= TERMP_NOSPACE;
 
@@ -538,13 +512,13 @@ term_pword(struct termp *p, const char *word, int len)
 	 * before the word.
 	 */
 
-	for (i = 0; i < len; i++) 
-		if ('\\' == word[i]) 
-			term_pescape(p, word, &i, len);
+	for (sv = word; *word; word++)
+		if ('\\' != *word)
+			term_encodea(p, *word);
 		else
-			term_encodea(p, word[i]);
+			term_pescape(p, &word);
 
-	if (term_isopendelim(word, len))
+	if (term_isopendelim(sv))
 		p->flags |= TERMP_NOSPACE;
 }
 
@@ -575,8 +549,8 @@ term_chara(struct termp *p, char c)
 static void
 term_encodea(struct termp *p, char c)
 {
-
-	if (TERMP_STYLE & p->flags) {
+	
+	if (' ' != c && TERMP_STYLE & p->flags) {
 		if (TERMP_BOLD & p->flags) {
 			term_chara(p, c);
 			term_chara(p, 8);
