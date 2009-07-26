@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.105 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.106 2009/07/26 12:59:16 thib Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -480,7 +480,7 @@ in_pcbdetach(v)
 	so->so_pcb = 0;
 	sofree(so);
 	if (inp->inp_options)
-		(void)m_freem(inp->inp_options);
+		m_freem(inp->inp_options);
 	if (inp->inp_route.ro_rt)
 		rtfree(inp->inp_route.ro_rt);
 #ifdef INET6

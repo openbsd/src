@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.105 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.106 2009/07/26 12:59:17 thib Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2680,7 +2680,7 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 		}
 		if (m)
-			(void)m_freem(m);
+			m_freem(m);
 		break;
 
 	case PRCO_GETOPT:
