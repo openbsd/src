@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.18 2009/07/01 21:56:37 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.19 2009/07/26 19:58:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -158,13 +158,13 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	data |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_PARITY_ENABLE |
 	    PCI_COMMAND_SERR_ENABLE;
+	data &= ~PCI_COMMAND_INTERRUPT_DISABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
 
 	printf("\n");
 
 	/*
-	 * Build a suitable bus_space_handle by rebasing the xbridge
-	 * inherited one to our BAR, and restoring the original
+	 * Build a suitable bus_space_handle by restoring the original
 	 * non-swapped subword access methods.
 	 *
 	 * XXX This is horrible and will need to be rethought if
@@ -179,16 +179,12 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	bcopy(memt, sc->sc_mem_bus_space, sizeof(*sc->sc_mem_bus_space));
-	sc->sc_mem_bus_space->bus_base = memh;
 	sc->sc_mem_bus_space->_space_read_1 = xbow_read_1;
 	sc->sc_mem_bus_space->_space_read_2 = xbow_read_2;
 	sc->sc_mem_bus_space->_space_read_raw_2 = xbow_read_raw_2;
 	sc->sc_mem_bus_space->_space_write_1 = xbow_write_1;
 	sc->sc_mem_bus_space->_space_write_2 = xbow_write_2;
 	sc->sc_mem_bus_space->_space_write_raw_2 = xbow_write_raw_2;
-
-	/* XXX undo xbridge mapping games */
-	sc->sc_mem_bus_space->_space_map = xbow_space_map;
 
 	sc->sc_memt = sc->sc_mem_bus_space;
 	sc->sc_memh = memh;
@@ -407,6 +403,7 @@ ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 
 	iaa.iaa_name = name;
 	iaa.iaa_memt = sc->sc_memt;
+	iaa.iaa_memh = sc->sc_memh;
 	iaa.iaa_dmat = sc->sc_dmat;
 	iaa.iaa_base = base;
 	iaa.iaa_dev = dev;

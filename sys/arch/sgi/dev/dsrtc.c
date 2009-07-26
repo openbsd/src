@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.5 2009/05/15 23:02:23 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.6 2009/07/26 19:58:49 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -98,7 +98,9 @@ tobcd(int x, int binary)
 int
 dsrtc_match(struct device *parent, void *match, void *aux)
 {
-	return 1;
+	struct confargs *ca = (struct confargs *)aux;
+
+	return strcmp(ca->ca_name, dsrtc_cd.cd_name) == 0;
 }
 
 void
@@ -122,10 +124,10 @@ dsrtc_attach_ioc(struct device *parent, struct device *self, void *aux)
 	 * addresses in memory.
 	 */
 
-	if (bus_space_map(iaa->iaa_memt, IOC3_BYTEBUS_1, 1, 0, &ih) != 0)
-		goto fail0;
-	if (bus_space_map(iaa->iaa_memt, IOC3_BYTEBUS_2, 1, 0, &ih2) != 0)
-		goto fail1;
+	if (bus_space_subregion(iaa->iaa_memt, iaa->iaa_memh, IOC3_BYTEBUS_1,
+	    1, &ih) != 0 || bus_space_subregion(iaa->iaa_memt, iaa->iaa_memh,
+	    IOC3_BYTEBUS_2, 1, &ih2) != 0)
+		goto fail;
 
 	/*
 	 * Check the low 4 bits of control register C. If any is set,
@@ -184,10 +186,10 @@ done:
 		bus_space_unmap(iaa->iaa_memt, ih, 1);
 		bus_space_unmap(iaa->iaa_memt, ih2, 1);
 
-		if (bus_space_map(iaa->iaa_memt,
+		if (bus_space_subregion(iaa->iaa_memt, iaa->iaa_memh,
 		    IOC3_BYTEBUS_0 + MK48T35_CLKOFF,
-		    MK48T35_CLKSZ - MK48T35_CLKOFF, 0, &ih) != 0)
-			goto fail0;
+		    MK48T35_CLKSZ - MK48T35_CLKOFF, &ih) != 0)
+			goto fail;
 
 		printf(": DS1742W\n");
 
@@ -209,9 +211,7 @@ done:
 
 	return;
 
-fail1:
-	bus_space_unmap(iaa->iaa_memt, ih, 1);
-fail0:
+fail:
 	printf(": can't map registers\n");
 }
 
