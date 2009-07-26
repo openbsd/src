@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.18 2009/07/26 12:38:20 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.19 2009/07/26 13:33:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -212,10 +212,10 @@ sio_open(const char *str, unsigned mode, int nbio)
 		return sio_open_sun(buf, mode, nbio);
 	}
 	len = sep - str;
-	if (len == strlen(prefix_aucat) &&
+	if (len == (sizeof(prefix_aucat) - 1) &&
 	    memcmp(str, prefix_aucat, len) == 0)
 		return sio_open_aucat(sep + 1, mode, nbio);
-	if (len == strlen(prefix_sun) &&
+	if (len == (sizeof(prefix_sun) - 1) &&
 	    memcmp(str, prefix_sun, len) == 0)
 		return sio_open_sun(sep + 1, mode, nbio);
 	DPRINTF("sio_open: %s: unknown device type\n", str);

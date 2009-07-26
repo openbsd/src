@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.4 2009/07/26 13:10:05 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.5 2009/07/26 13:33:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -79,10 +79,10 @@ mio_open(const char *str, unsigned mode, int nbio)
 	}
 
 	len = sep - str;
-	if (len == strlen(prefix_midithru) &&
+	if (len == (sizeof(prefix_midithru) - 1) &&
 	    memcmp(str, prefix_midithru, len) == 0)
 		return mio_open_thru(sep + 1, mode, nbio);
-	if (len == strlen(prefix_rmidi) &&
+	if (len == (sizeof(prefix_rmidi) - 1) &&
 	    memcmp(str, prefix_rmidi, len) == 0)
 		return mio_open_rmidi(sep + 1, mode, nbio);
 	DPRINTF("mio_open: %s: unknown device type\n", str);
