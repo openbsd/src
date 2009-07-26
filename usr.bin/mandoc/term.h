@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.4 2009/07/18 20:50:38 schwarze Exp $ */
+/*	$Id: term.h,v 1.5 2009/07/26 23:39:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -41,13 +41,12 @@ struct	termp {
 #define	TERMP_BOLD	 (1 << 0)	/* Styles... */
 #define	TERMP_UNDER	 (1 << 1)
 #define	TERMP_NOSPACE	 (1 << 2)	/* No space before words. */
-#define	TERMP_NOLPAD	 (1 << 3)	/* See termp_newline(). */
-#define	TERMP_NOBREAK	 (1 << 4)	/* See termp_newline(). */
-#define	TERMP_LITERAL	 (1 << 5)	/* Literal words. */
+#define	TERMP_NOLPAD	 (1 << 3)	/* See term_flushln(). */
+#define	TERMP_NOBREAK	 (1 << 4)	/* See term_flushln(). */
 #define	TERMP_IGNDELIM	 (1 << 6)	/* Delims like regulars. */
 #define	TERMP_NONOSPACE	 (1 << 7)	/* No space (no autounset). */
-#define	TERMP_DANGLE	 (1 << 8)	/* See termp_newline(). */
-#define	TERMP_HANG	 (1 << 9)	/* See termp_newline(). */
+#define	TERMP_DANGLE	 (1 << 8)	/* See term_flushln(). */
+#define	TERMP_HANG	 (1 << 9)	/* See term_flushln(). */
 	char		 *buf;		/* Output buffer. */
 	enum termenc	  enc;		/* Type of encoding. */
 	void		 *symtab;	/* Encoded-symbol table. */
