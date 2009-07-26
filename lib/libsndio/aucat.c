@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.23 2009/07/25 11:15:56 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.24 2009/07/26 12:38:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,15 +14,17 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "amsg.h"
