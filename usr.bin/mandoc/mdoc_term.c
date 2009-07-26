@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.38 2009/07/26 01:59:46 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.39 2009/07/26 23:32:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -358,6 +358,13 @@ print_node(DECL_ARGS)
 	npair.ppair = pair;
 	npair.flag = 0;
 	npair.count = 0;
+
+	/*
+	 * Note on termpair.  This allows a pre function to set a termp
+	 * flag that is automatically unset after the body, but before
+	 * the post function.  Thus, if a pre uses a termpair flag, it
+	 * must be reapplied in the post for use.
+	 */
 
 	if (MDOC_TEXT != node->type) {
 		if (termacts[node->tok].pre)
