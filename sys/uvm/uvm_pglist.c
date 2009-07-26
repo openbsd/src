@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.33 2009/07/23 21:39:10 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.34 2009/07/26 21:26:10 deraadt Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -409,7 +409,7 @@ uvm_pglistfree(struct pglist *list)
 #endif
 		atomic_clearbits_int(&m->pg_flags, PQ_MASK);
 		atomic_setbits_int(&m->pg_flags, PQ_FREE);
-		TAILQ_INSERT_HEAD(&uvm.page_free[
+		TAILQ_INSERT_TAIL(&uvm.page_free[
 		    uvm_page_lookup_freelist(m)].pgfl_queues[PGFL_UNKNOWN],
 		    m, pageq);
 		uvmexp.free++;
