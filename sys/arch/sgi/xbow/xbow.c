@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.16 2009/07/26 18:48:55 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.17 2009/07/26 19:57:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -603,9 +603,11 @@ xbow_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 
 	bpa = t->bus_base + offs;
 
+#ifdef DIAGNOSTIC
 	/* check that this does not overflow the window */
 	if (((bpa + size - 1) >> 24) != (t->bus_base >> 24))
 		return (EINVAL);
+#endif
 
 	*bshp = bpa;
 	return 0;
@@ -620,6 +622,15 @@ int
 xbow_space_region(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
+#ifdef DIAGNOSTIC
+	bus_addr_t bpa;
+
+	bpa = (bus_addr_t)bsh - t->bus_base;
+	/* check that this does not overflow the window */
+	if (((bpa + offset) >> 24) != (t->bus_base >> 24))
+		return (EINVAL);
+#endif
+
 	*nbshp = bsh + offset;
 	return 0;
 }
