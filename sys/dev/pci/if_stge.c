@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.46 2009/07/21 17:27:46 sthen Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.47 2009/07/26 11:58:20 kettenis Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -1286,11 +1286,11 @@ stge_init(struct ifnet *ifp)
 
 	/*
 	 * Send a PAUSE frame when we reach 29,696 bytes in the Rx
-	 * FIFO, and send an un-PAUSE frame when the FIFO is totally
-	 * empty again.
+	 * FIFO, and send an un-PAUSE frame when we reach 3056 bytes
+	 * in the Rx FIFO.
 	 */
 	CSR_WRITE_2(sc, STGE_FlowOnTresh, 29696 / 16);
-	CSR_WRITE_2(sc, STGE_FlowOffThresh, 0);
+	CSR_WRITE_2(sc, STGE_FlowOffThresh, 3056 / 16);
 
 	/*
 	 * Set the maximum frame size.
@@ -1613,13 +1613,18 @@ void
 stge_mii_statchg(struct device *self)
 {
 	struct stge_softc *sc = (struct stge_softc *) self;
+	struct mii_data *mii = &sc->sc_mii;
 
-	if (sc->sc_mii.mii_media_active & IFM_FDX)
+	sc->sc_MACCtrl &= ~(MC_DuplexSelect | MC_RxFlowControlEnable |
+	    MC_TxFlowControlEnable);
+
+	if (((mii->mii_media_active & IFM_GMASK) & IFM_FDX) != 0)
 		sc->sc_MACCtrl |= MC_DuplexSelect;
-	else
-		sc->sc_MACCtrl &= ~MC_DuplexSelect;
 
-	/* XXX 802.1x flow-control? */
+	if (((mii->mii_media_active & IFM_GMASK) & IFM_ETH_RXPAUSE) != 0)
+		sc->sc_MACCtrl |= MC_RxFlowControlEnable;
+	if (((mii->mii_media_active & IFM_GMASK) & IFM_ETH_TXPAUSE) != 0)
+		sc->sc_MACCtrl |= MC_TxFlowControlEnable;
 
 	CSR_WRITE_4(sc, STGE_MACCtrl, sc->sc_MACCtrl);
 }
