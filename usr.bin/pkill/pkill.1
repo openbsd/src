@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkill.1,v 1.14 2009/06/07 22:16:43 jmc Exp $
+.\"	$OpenBSD: pkill.1,v 1.15 2009/07/27 14:53:54 jmc Exp $
 .\"	$NetBSD: pkill.1,v 1.8 2003/02/14 15:59:18 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 7 2009 $
+.Dd $Mdocdate: July 27 2009 $
 .Dt PKILL 1
 .Os
 .Sh NAME
@@ -157,6 +157,20 @@ to be sent instead of the default TERM.
 This option is valid only when given as the first argument to
 .Nm pkill .
 .El
+.Pp
+If any
+.Ar pattern
+operands are specified, they are used as
+regular expressions to match the command name
+or, if
+.Fl f
+is specified, the full argument list of each process.
+However, presently
+.Ox
+will only keep track of the first 16 characters of the command name
+for each process.
+Attempts to match any characters after the first 16 of a
+command name will silently fail.
 .Pp
 Note that a running
 .Nm pgrep
