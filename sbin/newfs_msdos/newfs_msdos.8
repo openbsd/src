@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs_msdos.8,v 1.22 2007/09/28 09:57:01 jmc Exp $
+.\"	$OpenBSD: newfs_msdos.8,v 1.23 2009/07/27 18:11:07 halex Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/sbin/newfs_msdos/newfs_msdos.8,v 1.6 1999/08/28 00:13:52 peter Exp $
 .\"
-.Dd $Mdocdate: September 28 2007 $
+.Dd $Mdocdate: July 27 2009 $
 .Dt NEWFS_MSDOS 8
 .Os
 .Sh NAME
@@ -70,6 +70,16 @@ using
 entry
 .Ar disktype
 to determine geometry, if required.
+.Pp
+The
+.Ar special
+file should be a raw device,
+for example
+.Pa /dev/rsd0i ;
+if a relative path like
+.Pa sd0i
+is specified,
+the corresponding raw device is used.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds

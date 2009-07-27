@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.17 2007/09/28 09:57:01 jmc Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.18 2009/07/27 18:11:07 halex Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -347,6 +347,8 @@ main(int argc, char *argv[])
 	err(1, "%s", fname);
     if (!opt_N)
 	check_mounted(fname, sb.st_mode);
+    if (S_ISBLK(sb.st_mode))
+	errx(1, "%s: block device", fname);
     if (!S_ISCHR(sb.st_mode))
 	warnx("warning: %s is not a character device", fname);
     memset(&bpb, 0, sizeof(bpb));
