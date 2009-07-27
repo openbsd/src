@@ -1,4 +1,4 @@
-/* $OpenBSD: window-scroll.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: window-scroll.c,v 1.2 2009/07/27 18:51:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -87,8 +87,6 @@ void
 window_scroll_free(struct window_pane *wp)
 {
 	struct window_scroll_mode_data	*data = wp->modedata;
-
-	mode_key_free(&data->mdata);
 
 	screen_free(&data->screen);
 	xfree(data);

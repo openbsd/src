@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.57 2009/07/27 12:11:11 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.58 2009/07/27 18:51:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1033,7 +1033,6 @@ int		 load_cfg(const char *, char **x);
 
 /* mode-key.c */
 void		 mode_key_init(struct mode_key_data *, int, int);
-void		 mode_key_free(struct mode_key_data *);
 enum mode_key_cmd mode_key_lookup(struct mode_key_data *, int);
 
 /* options.c */

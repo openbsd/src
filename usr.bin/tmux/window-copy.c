@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.8 2009/07/27 07:42:45 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.9 2009/07/27 18:51:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -124,8 +124,6 @@ void
 window_copy_free(struct window_pane *wp)
 {
 	struct window_copy_mode_data	*data = wp->modedata;
-
- 	mode_key_free(&data->mdata);
 
 	screen_free(&data->screen);
 	xfree(data);

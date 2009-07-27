@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.3 2009/07/17 07:05:58 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.4 2009/07/27 18:51:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -139,8 +139,6 @@ window_choose_free(struct window_pane *wp)
 
 	if (data->freefn != NULL && data->data != NULL)
 		data->freefn(data->data);
-
- 	mode_key_free(&data->mdata);
 
 	for (i = 0; i < ARRAY_LENGTH(&data->list); i++)
 		xfree(ARRAY_ITEM(&data->list, i).name);

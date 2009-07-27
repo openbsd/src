@@ -1,4 +1,4 @@
-/* $OpenBSD: window-more.c,v 1.3 2009/06/25 06:15:04 nicm Exp $ */
+/* $OpenBSD: window-more.c,v 1.4 2009/07/27 18:51:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -100,8 +100,6 @@ window_more_free(struct window_pane *wp)
 {
 	struct window_more_mode_data	*data = wp->modedata;
 	u_int				 i;
-
-	mode_key_free(&data->mdata);
 
 	for (i = 0; i < ARRAY_LENGTH(&data->list); i++)
 		xfree(ARRAY_ITEM(&data->list, i));

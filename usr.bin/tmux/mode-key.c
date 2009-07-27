@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.6 2009/07/27 12:11:11 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.7 2009/07/27 18:51:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,11 +31,6 @@ mode_key_init(struct mode_key_data *mdata, int type, int flags)
 	if (flags & MODEKEY_CANEDIT)
 		flags |= MODEKEY_EDITMODE;
 	mdata->flags = flags;
-}
-
-void
-mode_key_free(unused struct mode_key_data *mdata)
-{
 }
 
 enum mode_key_cmd

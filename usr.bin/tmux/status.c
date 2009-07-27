@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.18 2009/07/27 12:11:11 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.19 2009/07/27 18:51:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -621,8 +621,6 @@ status_prompt_clear(struct client *c)
 
 	if (c->prompt_freefn != NULL && c->prompt_data != NULL)
 		c->prompt_freefn(c->prompt_data);
-
-	mode_key_free(&c->prompt_mdata);
 
 	xfree(c->prompt_string);
 	c->prompt_string = NULL;
