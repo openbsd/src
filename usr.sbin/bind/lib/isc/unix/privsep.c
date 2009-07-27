@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.7 2008/08/01 00:32:56 beck Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.8 2009/07/27 17:37:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -69,7 +69,7 @@ isc_priv_init(int lstderr)
 {
 	int i, socks[2], cmd;
 
-	logmsg(LOG_NOTICE, "Starting privilege seperation");
+	logmsg(LOG_NOTICE, "Starting privilege separation");
 
 	log_stderr = lstderr;
 
