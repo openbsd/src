@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.5 2009/07/26 13:33:30 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.6 2009/07/27 06:30:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -101,7 +101,7 @@ mio_create(struct mio_hdl *hdl, struct mio_ops *ops, unsigned mode, int nbio)
 void
 mio_close(struct mio_hdl *hdl)
 {
-	return hdl->ops->close(hdl);
+	hdl->ops->close(hdl);
 }
 
 size_t
