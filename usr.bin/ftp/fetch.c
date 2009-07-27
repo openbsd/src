@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.92 2009/07/18 12:43:30 jsg Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.93 2009/07/27 23:11:26 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -153,15 +153,19 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	if (isfileurl) {
 		path = host;
 	} else {
-		path = strchr(host, '/');		/* find path */
+		path = strchr(host, '/');		/* Find path */
 		if (EMPTYSTRING(path)) {
+			if (outfile) {			/* No slash, but */
+				path=strchr(host,'\0');	/* we have outfile. */
+				goto noslash;
+			}
 			if (isftpurl)
 				goto noftpautologin;
 			warnx("Invalid URL (no `/' after host): %s", origline);
 			goto cleanup_url_get;
 		}
 		*path++ = '\0';
-		if (EMPTYSTRING(path)) {
+		if (EMPTYSTRING(path) && !outfile) {
 			if (isftpurl)
 				goto noftpautologin;
 			warnx("Invalid URL (no file after host): %s", origline);
@@ -169,17 +173,15 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 		}
 	}
 
+noslash:
 	if (outfile)
 		savefile = outfile;
-	else
-		savefile = basename(path);
-
-#ifndef SMALL
-	if (resume && (strcmp(savefile, "-") == 0)) {
-		warnx("can't append to stdout");
-		goto cleanup_url_get;
+	else {
+		if (path[strlen(path) - 1] == '/')	/* Consider no file */
+			savefile = NULL;		/* after dir invalid. */
+		else
+			savefile = basename(path);
 	}
-#endif /* !SMALL */
 
 	if (EMPTYSTRING(savefile)) {
 		if (isftpurl)
@@ -187,6 +189,13 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 		warnx("Invalid URL (no file after directory): %s", origline);
 		goto cleanup_url_get;
 	}
+
+#ifndef SMALL
+	if (resume && (strcmp(savefile, "-") == 0)) {
+		warnx("can't append to stdout");
+		goto cleanup_url_get;
+	}
+#endif /* !SMALL */
 
 	if (!isfileurl && proxyenv != NULL) {		/* use proxy */
 #ifndef SMALL
@@ -212,7 +221,8 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 			warnx("Malformed proxy URL: %s", proxyenv);
 			goto cleanup_url_get;
 		}
-		*--path = '/';			/* add / back to real path */
+		if (*--path == '\0')
+			*path = '/';		/* add / back to real path */
 		path = strchr(host, '/');	/* remove trailing / on host */
 		if (!EMPTYSTRING(path))
 			*path++ = '\0';		/* i guess this ++ is useless */
