@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.85 2009/06/02 16:23:45 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.86 2009/07/27 12:39:50 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: June 2 2009 $
+.Dd $Mdocdate: July 27 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -129,6 +129,9 @@ The options are as follows:
 Automatically allocate all the disk space in the
 .Ox
 portion of the disk in the recommended manner.
+See
+.Sx AUTOMATIC DISK ALLOCATION ,
+below.
 .It Fl B
 Install bootstrap code.
 Some architectures instead require bootstrap code installation to be
@@ -319,6 +322,9 @@ There is also
 context-sensitive help available at most prompts.
 .It Cm A
 Allocate all the disk space in the recommended manner.
+See
+.Sx AUTOMATIC DISK ALLOCATION ,
+below.
 .It Cm a Op Ar part
 Add new partition.
 This option adds a new BSD partition.
@@ -539,6 +545,59 @@ flag.
 can then be run with the
 .Fl e
 flag and any entries pasted as desired from the default label into the real one.
+.Sh AUTOMATIC DISK ALLOCATION
+The
+.Fl A
+option and the editor command
+.Cm A
+automatically create a disklabel with a set of partitions
+suitable for a majority of
+.Ox
+installations.
+Any existing
+.Ox
+disklabel on the disk is ignored, but native partitions
+that would normally be spoofed are preserved in the disklabel,
+and are not modified during the allocation process.
+.Pp
+Disk size determines the set of partitions which are created.
+Each partition is allocated space between a specified minimum
+and maximum.
+Each partition is allocated its minimum and remaining space
+is split between the partitions up to their maximum allowed space,
+which is a fixed percentage.
+Space left after all partitions have reached their maximum size
+is left unallocated.
+The sizes below are approximations,
+and may vary from architecture to architecture.
+.Pp
+.Sy Disks \*(Gt 6.5 Gigabytes
+.Bd -literal -offset indent -compact
+/		 5% of disk.  80M \(en 1G
+swap		 5% of disk.  80M \(en 2x max physical memory
+/tmp		 8% of disk. 120M \(en 4G
+/var		13% of disk.  80M \(en 2x size of crash dump
+/usr		 2% of disk. 600M \(en 2G
+/usr/X11R6	 3% of disk. 512M \(en 1G
+/usr/local	 5% of disk.   2G \(en 6G
+/usr/src	 3% of disk.   1G \(en 2G
+/usr/obj	 3% of disk.   1G \(en 2G
+/home		53% of disk.   1G \(en 300G
+.Ed
+.Pp
+.Sy Disks \*(Gt 2 Gigabytes
+.Bd -literal -offset indent -compact
+/		 5% of disk. 800M \(en 2G
+swap		10% of disk.  80M \(en 2x max physical memory
+/usr		78% of disk. 900M \(en 3G
+/home		 7% of disk. 256M \(en 2G
+.Ed
+.Pp
+.Sy Disks \*(Gt 700 Megabytes
+.Bd -literal -offset indent -compact
+/		95% of disk. 700M \(en 4G
+swap		 5% of disk.   1M \(en 2x max physical memory
+.Ed
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /etc/disklabels
