@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.13 2009/06/08 23:18:05 gwk Exp $ */
+/*	$OpenBSD: est.c,v 1.14 2009/07/27 11:28:55 dms Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -196,6 +196,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		}
 		break;
+       case 0x1a: /* Nehalem based Core i7 and Xeon */
+               bus_clock = BUS133; 
+               break;
 	case 0x1c: /* Atom */
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
