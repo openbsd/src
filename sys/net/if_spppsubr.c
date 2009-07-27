@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.76 2009/07/13 16:23:28 claudio Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.77 2009/07/27 11:40:59 blambert Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -921,7 +921,7 @@ sppp_attach(struct ifnet *ifp)
 		keepalive_ch = timeout(sppp_keepalive, 0, hz * 10);
 #elif defined(__OpenBSD__)
 		timeout_set(&keepalive_ch, sppp_keepalive, NULL);
-		timeout_add(&keepalive_ch, hz * 10);
+		timeout_add_sec(&keepalive_ch, 10);
 #endif
 	}
 
@@ -4036,7 +4036,7 @@ sppp_chap_tlu(struct sppp *sp)
 #if defined (__FreeBSD__)
 		sp->ch[IDX_CHAP] = timeout(chap.TO, (void *)sp, i * hz);
 #elif defined(__OpenBSD__)
-		timeout_add(&sp->ch[IDX_CHAP], i * hz);
+		timeout_add_sec(&sp->ch[IDX_CHAP], i);
 #endif
 	}
 
@@ -4600,7 +4600,7 @@ sppp_keepalive(void *dummy)
 	keepalive_ch = timeout(sppp_keepalive, 0, hz * 10);
 #endif
 #if defined (__OpenBSD__)
-	timeout_add(&keepalive_ch, hz * 10);
+	timeout_add_sec(&keepalive_ch, 10);
 #endif
 }
 
