@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.446 2009/07/27 13:39:03 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.447 2009/07/27 19:04:30 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1454,16 +1454,10 @@ keyword.
 This rule applies to packets with the specified TOS bits set.
 .Ar string
 may be one of
-.Ar critical ,
-.Ar inetcontrol ,
 .Ar lowdelay ,
-.Ar netcontrol ,
 .Ar throughput ,
-.Ar reliability ,
-or one of the DiffServ Code Points:
-.Ar ef ,
-.Ar af11 ... af43 ,
-.Ar cs0 ... cs7 ;
+or
+.Ar reliability ;
 .Ar number
 may be either a hex or decimal number.
 .Pp
