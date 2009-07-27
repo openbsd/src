@@ -45,6 +45,9 @@
 ./etc/firmware/run-rt3071
 ./etc/firmware/tht
 ./etc/firmware/tht-license
+./etc/firmware/tigon-license
+./etc/firmware/tigon1
+./etc/firmware/tigon2
 ./etc/firmware/tusb3410
 ./etc/firmware/tusb3410-license
 ./etc/firmware/uyap
