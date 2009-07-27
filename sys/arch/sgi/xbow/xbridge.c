@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.43 2009/07/26 19:56:45 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.44 2009/07/27 17:49:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1100,8 +1100,8 @@ int
 xbridge_space_region_devio(bus_space_tag_t t , bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
-	struct xbridge_softc *sc = (struct xbridge_softc *)t->bus_private;
 #ifdef DIAGNOSTIC
+	struct xbridge_softc *sc = (struct xbridge_softc *)t->bus_private;
 	bus_addr_t bpa;
 	bus_addr_t start, end;
 	uint d;
