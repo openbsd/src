@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.19 2009/06/05 21:55:40 jacekm Exp $	*/
+/*	$OpenBSD: store.c,v 1.20 2009/07/28 13:53:51 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -37,15 +38,16 @@
 
 #include "smtpd.h"
 
-int file_copy(FILE *, FILE *, enum action_type);
+int file_copy(FILE *, FILE *, struct path *, enum action_type);
 
 int
-file_copy(FILE *dest, FILE *src, enum action_type type)
+file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type)
 {
 	char *buf, *lbuf;
 	size_t len;
 	char *escape;
-	
+	int inheaders = 1;
+
 	lbuf = NULL;
 	while ((buf = fgetln(src, &len))) {
 		if (buf[len - 1] == '\n') {
@@ -59,6 +61,18 @@ file_copy(FILE *dest, FILE *src, enum action_type type)
 			memcpy(lbuf, buf, len);
 			lbuf[len] = '\0';
 			buf = lbuf;
+		}
+
+		/* If we are NOT dealing with a mailer daemon copy, we have
+		 * path set to the original recipient. In that case, we can
+		 * add the X-OpenSMTPD-Loop header to help loop detection.
+		 */
+		if (path != NULL && inheaders &&
+		    strchr(buf, ':') == NULL && !isspace(*buf)) {
+			if (fprintf(dest, "X-OpenSMTPD-Loop: %s@%s\n",
+				path->user, path->domain) == -1)
+				return 0;
+			inheaders = 0;
 		}
 
 		if (type == A_MBOX) {
@@ -160,7 +174,8 @@ store_write_daemon(struct batch *batchp, struct message *messagep)
 	if (fprintf(mboxfp, "Below is a copy of the original message:\n\n") == -1)
 		goto bad;
 
-	if (! file_copy(mboxfp, messagefp, messagep->recipient.rule.r_action))
+	if (! file_copy(mboxfp, messagefp, NULL,
+		messagep->recipient.rule.r_action))
 		goto bad;
 
 	fflush(mboxfp);
@@ -193,7 +208,8 @@ store_write_message(struct batch *batchp, struct message *messagep)
 	if (messagefp == NULL)
 		goto bad;
 
-	if (! file_copy(mboxfp, messagefp, messagep->recipient.rule.r_action))
+	if (! file_copy(mboxfp, messagefp, &messagep->session_rcpt,
+		messagep->recipient.rule.r_action))
 		goto bad;
 
 	fflush(mboxfp);
