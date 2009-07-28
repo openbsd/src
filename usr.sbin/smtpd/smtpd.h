@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.129 2009/06/26 11:48:00 okan Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.130 2009/07/28 22:03:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -76,6 +76,7 @@
 #define PATH_RUNQUEUELOW	"/runqueue-low"
 
 #define PATH_OFFLINE		"/offline"
+#define PATH_DAEMON		"/daemon"
 
 /* number of MX records to lookup */
 #define MAX_MX_COUNT		10
@@ -808,6 +809,12 @@ int		 enqueue_record_envelope(struct message *);
 int		 enqueue_remove_envelope(struct message *);
 int		 enqueue_commit_message(struct message *);
 int		 enqueue_open_messagefile(struct message *);
+int		 daemon_create_layout(char *, struct message *);
+void		 daemon_delete_message(char *);
+int		 daemon_record_envelope(struct message *);
+int		 daemon_remove_envelope(struct message *);
+int		 daemon_commit_message(struct message *);
+int		 daemon_record_message(struct message *);
 int		 queue_create_incoming_layout(char *);
 void		 queue_delete_incoming_message(char *);
 int		 queue_record_incoming_envelope(struct message *);

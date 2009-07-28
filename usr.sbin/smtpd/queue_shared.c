@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.18 2009/05/10 11:29:40 jacekm Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.19 2009/07/28 22:03:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -266,6 +266,77 @@ enqueue_open_messagefile(struct message *message)
 	return queue_open_layout_messagefile(PATH_ENQUEUE, message);
 }
 
+int
+daemon_create_layout(char *msgid, struct message *message)
+{
+	char	msgpath[MAXPATHLEN];
+	char	lnkpath[MAXPATHLEN];
+
+	if (! queue_create_layout_message(PATH_DAEMON, msgid))
+		return 0;
+
+	if (! bsnprintf(msgpath, sizeof(msgpath), "%s/%d/%s/message",
+		PATH_QUEUE, queue_hash(message->message_id),
+		message->message_id))
+		return 0;
+
+	if (! bsnprintf(lnkpath, sizeof(lnkpath), "%s/%s/message",
+		PATH_DAEMON, msgid))
+		return 0;
+
+	if (link(msgpath, lnkpath) == -1)
+		fatal("link");
+
+	return 1;
+}
+
+void
+daemon_delete_message(char *msgid)
+{
+	queue_delete_layout_message(PATH_DAEMON, msgid);
+}
+
+int
+daemon_record_envelope(struct message *message)
+{
+	return queue_record_layout_envelope(PATH_DAEMON, message);
+}
+
+int
+daemon_remove_envelope(struct message *message)
+{
+	return queue_remove_layout_envelope(PATH_DAEMON, message);
+}
+
+int
+daemon_commit_message(struct message *message)
+{
+	return queue_commit_layout_message(PATH_DAEMON, message);
+}
+
+int
+daemon_record_message(struct message *messagep)
+{
+	char	msgid[MAX_ID_SIZE];
+	struct message mdaemon;
+
+	if (messagep->type == T_DAEMON_MESSAGE) {
+		log_debug("mailer daemons loop detected !");
+		return 0;
+	}
+
+	mdaemon = *messagep;
+	mdaemon.type |= T_DAEMON_MESSAGE;
+
+	if (! daemon_create_layout(msgid, messagep))
+		return 0;
+
+	strlcpy(mdaemon.message_id, msgid, sizeof(mdaemon.message_id));
+	if (! daemon_record_envelope(&mdaemon))
+		return 0;
+
+	return daemon_commit_message(&mdaemon);
+}
 
 int
 queue_create_incoming_layout(char *msgid)
