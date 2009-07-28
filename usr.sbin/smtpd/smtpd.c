@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.75 2009/06/06 04:14:21 pyr Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.76 2009/07/28 13:54:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1226,7 +1226,8 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 		close(STDERR_FILENO);
 		dup2(pipefd[1], 0);
 
-		execlp(PATH_MAILLOCAL, "mail.local", "-f", sender, pw->pw_name, (void *)NULL);
+		execlp(PATH_MAILLOCAL, "mail.local", "-f", sender, pw->pw_name,
+		    (void *)NULL);
 		_exit(1);
 	}
 
