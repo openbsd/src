@@ -5362,6 +5362,9 @@
 ./usr/share/man/cat3/savetty.0
 ./usr/share/man/cat3/scalb.0
 ./usr/share/man/cat3/scalbf.0
+./usr/share/man/cat3/scalbln.0
+./usr/share/man/cat3/scalblnf.0
+./usr/share/man/cat3/scalblnl.0
 ./usr/share/man/cat3/scalbn.0
 ./usr/share/man/cat3/scalbnf.0
 ./usr/share/man/cat3/scalbnl.0
