@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.14 2009/04/09 19:06:52 stsp Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.15 2009/07/28 19:20:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -212,6 +212,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 	struct in6_addr		 ia6;
 	u_int16_t		 i, off;
 	u_int8_t		 flags;
+	enum path_type		 type;
 
 	lsa_age(v);
 	if (ntohs(v->lsa->hdr.age) == MAX_AGE)
@@ -268,9 +269,15 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 
 				adv_rtr.s_addr = htonl(w->adv_rtr);
 
+				if (prefix->prefixlen == 128 ||
+				    prefix->options & OSPF_PREFIX_LA)
+					type = DT_RTR;
+				else
+					type = DT_NET;
+
 				rt_update(&ia6, prefix->prefixlen, &w->nexthop,
 				    w->cost + ntohs(prefix->metric), 0,
-				    area->id, adv_rtr, PT_INTRA_AREA, DT_NET,
+				    area->id, adv_rtr, PT_INTRA_AREA, type,
 				    flags, 0);
 			}
 			off += sizeof(struct lsa_prefix)
