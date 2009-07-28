@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.110 2009/07/03 04:43:12 dlg Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.111 2009/07/28 23:08:38 sthen Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.107 2009/07/03 04:42:44 dlg Exp 
+ *	OpenBSD: miidevs,v 1.108 2009/07/28 23:08:27 sthen Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -225,6 +225,8 @@
 #define	MII_STR_CICADA_CS8201A	"CS8201 10/100/1000TX PHY"
 #define	MII_MODEL_CICADA_CS8201B	0x0021
 #define	MII_STR_CICADA_CS8201B	"CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8244	0x002c
+#define	MII_STR_CICADA_CS8244	"CS8244 10/100/1000TX PHY"
 
 /* Davicom PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
