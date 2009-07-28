@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.27 2009/06/06 09:02:46 eric Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.28 2009/07/28 19:05:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -844,7 +844,7 @@ show_db_msg_detail(struct imsg *imsg)
 		show_db_hdr_msg_detail(&lsa->hdr);
 		printf("Referenced LS Type: %s\n",
 		    print_ls_type(lsa->data.pref_intra.ref_type));
-		addr.s_addr = lsa->data.pref_intra.ref_lsid;
+		addr.s_addr = lsa->data.pref_intra.ref_ls_id;
 		printf("Referenced Link State ID: %s\n", inet_ntoa(addr));
 		addr.s_addr = lsa->data.pref_intra.ref_adv_rtr;
 		printf("Referenced Advertising Router: %s\n", inet_ntoa(addr));
