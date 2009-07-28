@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.65 2008/07/02 14:01:35 todd Exp $
+#	$OpenBSD: RAMDISK,v 1.66 2009/07/28 12:47:34 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -175,14 +175,19 @@ ie4	at vmes0 addr 0xff2dff02 level 5 vect 0x7c
 # HappyMeal ethernet
 hme*	at sbus?
 # Media Independent Interface (mii) drivers (required for hme)
+gentbi*	at mii?				# Generic 1000BASE-X ten-bit PHY
 nsphy*	at mii?				# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
 luphy*	at mii?				# Lucent LU6612 PHY
+ukphy*	at mii?
 
 # Quad-ethernet glue device, and sub-devices
 qec*	at sbus?
 qe*	at qec?
 be*	at qec?
+
+# Gigabit ethernet
+gem*	at sbus?
 
 # Xylogics 753 or 7053 VME SMD disk controllers and disks, found
 # on sun4 systems.
