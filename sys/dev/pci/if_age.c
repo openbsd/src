@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.5 2009/07/28 02:40:53 kevlo Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.6 2009/07/28 13:53:56 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -93,7 +93,6 @@ void	age_mediastatus(struct ifnet *, struct ifmediareq *);
 int	age_mediachange(struct ifnet *);
 
 int	age_intr(void *);
-int	age_read_vpd_word(struct age_softc *, uint32_t, uint32_t, uint32_t *);
 int	age_dma_alloc(struct age_softc *);
 void	age_dma_free(struct age_softc *);
 void	age_get_macaddr(struct age_softc *);
@@ -526,38 +525,11 @@ back:
 	return (1);
 }
 
-int
-age_read_vpd_word(struct age_softc *sc, uint32_t vpdc, uint32_t offset,
-    uint32_t *word)
-{
-	int i;
-	pcireg_t rv;
-
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_VPD_ADDRESS(vpdc),
-	    offset << PCI_VPD_ADDRESS_SHIFT);
-
-	for (i = AGE_TIMEOUT; i > 0; i--) {
-		DELAY(10);
-		rv = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-		    PCI_VPD_ADDRESS(vpdc));
-		if ((rv & PCI_VPD_OPFLAG) == PCI_VPD_OPFLAG)
-			break;
-	}
-	if (i == 0) {
-		printf("%s: VPD read timeout!\n", sc->sc_dev.dv_xname);
-		*word = 0;
-		return (ETIMEDOUT);
-	}
-
-	*word = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_VPD_DATAREG(vpdc));
-	return (0);
-}
-
 void
 age_get_macaddr(struct age_softc *sc)
 {
-	uint32_t ea[2], off, reg, word;
-	int vpd_error, match, vpdc;
+	uint32_t ea[2], reg;
+	int i, vpdc;
 
 	reg = CSR_READ_4(sc, AGE_SPI_CTRL);
 	if ((reg & SPI_VPD_ENB) != 0) {
@@ -566,94 +538,31 @@ age_get_macaddr(struct age_softc *sc)
 		CSR_WRITE_4(sc, AGE_SPI_CTRL, reg);
 	}
 
-	vpd_error = 0;
-	ea[0] = ea[1] = 0;
-	if ((vpd_error = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
-	    PCI_CAP_VPD, &vpdc, NULL))) {
+	if (pci_get_capability(sc->sc_pct, sc->sc_pcitag,
+	    PCI_CAP_VPD, &vpdc, NULL)) {
 		/*
-		 * PCI VPD capability exists, but it seems that it's
-		 * not in the standard form as stated in PCI VPD
-		 * specification such that driver could not use
-		 * pci_get_vpd_readonly(9) with keyword 'NA'.
-		 * Search VPD data starting at address 0x0100. The data
-		 * should be used as initializers to set AGE_PAR0,
-		 * AGE_PAR1 register including other PCI configuration
-		 * registers.
+		 * PCI VPD capability found, let TWSI reload EEPROM.
+		 * This will set Ethernet address of controller.
 		 */
-		word = 0;
-		match = 0;
-		reg = 0;
-		for (off = AGE_VPD_REG_CONF_START; off < AGE_VPD_REG_CONF_END;
-		    off += sizeof(uint32_t)) {
-			vpd_error = age_read_vpd_word(sc, vpdc, off, &word);
-			if (vpd_error != 0)
-				break;
-			if (match != 0) {
-				switch (reg) {
-				case AGE_PAR0:
-					ea[0] = word;
-					break;
-				case AGE_PAR1:
-					ea[1] = word;
-					break;
-				default:
-					break;
-				}
-				match = 0;
-			} else if ((word & 0xFF) == AGE_VPD_REG_CONF_SIG) {
-				match = 1;
-				reg = word >> 16;
-			} else
+		CSR_WRITE_4(sc, AGE_TWSI_CTRL, CSR_READ_4(sc, AGE_TWSI_CTRL) |
+		    TWSI_CTRL_SW_LD_START);
+		for (i = 100; i > 0; i--) {
+			DELAY(1000);
+			reg = CSR_READ_4(sc, AGE_TWSI_CTRL);
+			if ((reg & TWSI_CTRL_SW_LD_START) == 0)
 				break;
 		}
-		if (off >= AGE_VPD_REG_CONF_END)
-			vpd_error = ENOENT;
-		if (vpd_error == 0) {
-			/*
-			 * Don't blindly trust ethernet address obtained
-			 * from VPD. Check whether ethernet address is
-			 * valid one. Otherwise fall-back to reading
-			 * PAR register.
-			 */
-			ea[1] &= 0xFFFF;
-			if ((ea[0] == 0 && ea[1] == 0) ||
-			    (ea[0] == 0xFFFFFFFF && ea[1] == 0xFFFF)) {
-				if (agedebug)
-					printf("%s: invalid ethernet address "
-				    	    "returned from VPD.\n", 
-				    	    sc->sc_dev.dv_xname);
-				vpd_error = EINVAL;
-			}
-		}
-		if (vpd_error != 0 && (agedebug))
-			printf("%s: VPD access failure!\n", 
-			    sc->sc_dev.dv_xname);	
+		if (i == 0)
+			printf("%s: reloading EEPROM timeout!\n",
+			    sc->sc_dev.dv_xname);
 	} else {
 		if (agedebug)
 			printf("%s: PCI VPD capability not found!\n", 
 			    sc->sc_dev.dv_xname);
 	}
 
-	/*
-	 * It seems that L1 also provides a way to extract ethernet
-	 * address via SPI flash interface. Because SPI flash memory
-	 * device of different vendors vary in their instruction
-	 * codes for read ID instruction, it's very hard to get
-	 * instructions codes without detailed information for the
-	 * flash memory device used on ethernet controller. To simplify
-	 * code, just read AGE_PAR0/AGE_PAR1 register to get ethernet
-	 * address which is supposed to be set by hardware during
-	 * power on reset.
-	 */
-	if (vpd_error != 0) {
-		/*
-		 * VPD is mapped to SPI flash memory or BIOS set it.
-		 */
-		ea[0] = CSR_READ_4(sc, AGE_PAR0);
-		ea[1] = CSR_READ_4(sc, AGE_PAR1);
-	}
-
-	ea[1] &= 0xFFFF;
+	ea[0] = CSR_READ_4(sc, AGE_PAR0);
+	ea[1] = CSR_READ_4(sc, AGE_PAR1);
 	sc->age_eaddr[0] = (ea[1] >> 8) & 0xFF;
 	sc->age_eaddr[1] = (ea[1] >> 0) & 0xFF;
 	sc->age_eaddr[2] = (ea[0] >> 24) & 0xFF;
@@ -665,11 +574,79 @@ age_get_macaddr(struct age_softc *sc)
 void
 age_phy_reset(struct age_softc *sc)
 {
+	uint16_t reg, pn;
+	int i, linkup;
+
 	/* Reset PHY. */
 	CSR_WRITE_4(sc, AGE_GPHY_CTRL, GPHY_CTRL_RST);
-	DELAY(1000);
+	DELAY(2000);
 	CSR_WRITE_4(sc, AGE_GPHY_CTRL, GPHY_CTRL_CLR);
-	DELAY(1000);
+	DELAY(2000);
+
+#define	ATPHY_DBG_ADDR		0x1D
+#define	ATPHY_DBG_DATA		0x1E
+#define	ATPHY_CDTC		0x16
+#define	PHY_CDTC_ENB		0x0001
+#define	PHY_CDTC_POFF		8
+#define	ATPHY_CDTS		0x1C
+#define	PHY_CDTS_STAT_OK	0x0000
+#define	PHY_CDTS_STAT_SHORT	0x0100
+#define	PHY_CDTS_STAT_OPEN	0x0200
+#define	PHY_CDTS_STAT_INVAL	0x0300
+#define	PHY_CDTS_STAT_MASK	0x0300
+
+	/* Check power saving mode. Magic from Linux. */
+	age_miibus_writereg(&sc->sc_dev, sc->age_phyaddr, MII_BMCR, BMCR_RESET);
+	for (linkup = 0, pn = 0; pn < 4; pn++) {
+		age_miibus_writereg(&sc->sc_dev, sc->age_phyaddr, ATPHY_CDTC,
+		    (pn << PHY_CDTC_POFF) | PHY_CDTC_ENB);
+		for (i = 200; i > 0; i--) {
+			DELAY(1000);
+			reg = age_miibus_readreg(&sc->sc_dev, sc->age_phyaddr,
+			    ATPHY_CDTC);
+			if ((reg & PHY_CDTC_ENB) == 0)
+				break;
+		}
+		DELAY(1000);
+		reg = age_miibus_readreg(&sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_CDTS);
+		if ((reg & PHY_CDTS_STAT_MASK) != PHY_CDTS_STAT_OPEN) {
+			linkup++;
+			break;
+		}
+	}
+	age_miibus_writereg(&sc->sc_dev, sc->age_phyaddr, MII_BMCR,
+	    BMCR_RESET | BMCR_AUTOEN | BMCR_STARTNEG);
+	if (linkup == 0) {
+		age_miibus_writereg(&sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_DBG_ADDR, 0);
+		age_miibus_writereg(&sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_DBG_DATA, 0x124E);
+		age_miibus_writereg(&sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_DBG_ADDR, 1);
+		reg = age_miibus_readreg(&sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_DBG_DATA);
+		age_miibus_writereg(&sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_DBG_DATA, reg | 0x03);
+		/* XXX */
+		DELAY(1500 * 1000);
+		age_miibus_writereg(&sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_DBG_ADDR, 0);
+		age_miibus_writereg(&sc->sc_dev, sc->age_phyaddr,
+		    ATPHY_DBG_DATA, 0x024E);
+	}
+
+#undef	ATPHY_DBG_ADDR
+#undef	ATPHY_DBG_DATA
+#undef	ATPHY_CDTC
+#undef	PHY_CDTC_ENB
+#undef	PHY_CDTC_POFF
+#undef	ATPHY_CDTS
+#undef	PHY_CDTS_STAT_OK
+#undef	PHY_CDTS_STAT_SHORT
+#undef	PHY_CDTS_STAT_OPEN
+#undef	PHY_CDTS_STAT_INVAL
+#undef	PHY_CDTS_STAT_MASK
 }
 
 int
@@ -1588,14 +1565,8 @@ age_reset(struct age_softc *sc)
 	int i;
 
 	CSR_WRITE_4(sc, AGE_MASTER_CFG, MASTER_RESET);
-	for (i = AGE_RESET_TIMEOUT; i > 0; i--) {
-		DELAY(1);
-		if ((CSR_READ_4(sc, AGE_MASTER_CFG) & MASTER_RESET) == 0)
-			break;
-	}
-	if (i == 0)
-		printf("%s: master reset timeout!\n", sc->sc_dev.dv_xname);
-
+	CSR_READ_4(sc, AGE_MASTER_CFG);
+	DELAY(1000);
 	for (i = AGE_RESET_TIMEOUT; i > 0; i--) {
 		if ((reg = CSR_READ_4(sc, AGE_IDLE_STATUS)) == 0)
 			break;
