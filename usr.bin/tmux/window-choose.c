@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.5 2009/07/27 19:29:35 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.6 2009/07/28 07:03:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -127,9 +127,9 @@ window_choose_init(struct window_pane *wp)
 
 	keys = options_get_number(&wp->window->options, "mode-keys");
 	if (keys == MODEKEY_EMACS)
-		mode_key_init(&data->mdata, mode_key_emacs_choice);
+		mode_key_init(&data->mdata, &mode_key_tree_emacs_choice);
 	else
-		mode_key_init(&data->mdata, mode_key_vi_choice);
+		mode_key_init(&data->mdata, &mode_key_tree_vi_choice);
 
 	return (s);
 }

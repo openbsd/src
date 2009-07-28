@@ -1,4 +1,4 @@
-/* $OpenBSD: window-scroll.c,v 1.4 2009/07/27 20:36:13 nicm Exp $ */
+/* $OpenBSD: window-scroll.c,v 1.5 2009/07/28 07:03:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -75,9 +75,9 @@ window_scroll_init(struct window_pane *wp)
 
 	keys = options_get_number(&wp->window->options, "mode-keys");
 	if (keys == MODEKEY_EMACS)
-		mode_key_init(&data->mdata, mode_key_emacs_copy);
+		mode_key_init(&data->mdata, &mode_key_tree_emacs_copy);
 	else
-		mode_key_init(&data->mdata, mode_key_vi_copy);
+		mode_key_init(&data->mdata, &mode_key_tree_vi_copy);
 
 	screen_write_start(&ctx, NULL, s);
 	for (i = 0; i < screen_size_y(s); i++)

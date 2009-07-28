@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.14 2009/07/24 14:52:47 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.15 2009/07/28 07:03:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -160,6 +160,7 @@ server_start(char *path)
 	ARRAY_INIT(&windows);
 	ARRAY_INIT(&clients);
 	ARRAY_INIT(&sessions);
+	mode_key_init_trees();
 	key_bindings_init();
 	utf8_build();
 
@@ -379,6 +380,7 @@ server_main(int srv_fd)
 	}
 	ARRAY_FREE(&clients);
 
+	mode_key_free_trees();
 	key_bindings_free();
 
 	close(srv_fd);

@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.20 2009/07/27 19:29:35 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.21 2009/07/28 07:03:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -609,9 +609,9 @@ status_prompt_set(struct client *c, const char *msg,
 
 	keys = options_get_number(&c->session->options, "status-keys");
 	if (keys == MODEKEY_EMACS)
-		mode_key_init(&c->prompt_mdata, mode_key_emacs_edit);
+		mode_key_init(&c->prompt_mdata, &mode_key_tree_emacs_edit);
 	else
-		mode_key_init(&c->prompt_mdata, mode_key_vi_edit);
+		mode_key_init(&c->prompt_mdata, &mode_key_tree_vi_edit);
 
 	c->tty.flags |= (TTY_NOCURSOR|TTY_FREEZE);
 	c->flags |= CLIENT_STATUS;
