@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.32 2009/07/28 19:14:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.33 2009/07/28 19:16:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -358,7 +358,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				    "packet", imsg.hdr.peerid);
 
 			imsg_compose_event(iev_ospfe, IMSG_DD_END,
-			    imsg.hdr.peerid, -1, 0, NULL, 0);
+			    imsg.hdr.peerid, 0, -1, NULL, 0);
 			break;
 		case IMSG_LS_REQ:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
