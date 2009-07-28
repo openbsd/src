@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.656 2009/07/28 11:20:09 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.657 2009/07/28 11:22:33 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3070,6 +3070,10 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			pool_put(&pf_state_key_pl, sk);
 		if (nk != NULL)
 			pool_put(&pf_state_key_pl, nk);
+		while ((ri = SLIST_FIRST(&rules))) {
+			SLIST_REMOVE_HEAD(&rules, entry);
+			pool_put(&pf_rule_item_pl, ri);
+		}
 	}
 
 	/* copy back packet headers if we performed NAT operations */
@@ -3097,6 +3101,10 @@ cleanup:
 		pool_put(&pf_state_key_pl, sk);
 	if (nk != NULL)
 		pool_put(&pf_state_key_pl, nk);
+	while ((ri = SLIST_FIRST(&rules))) {
+		SLIST_REMOVE_HEAD(&rules, entry);
+		pool_put(&pf_rule_item_pl, ri);
+	}
 
 	return (PF_DROP);
 }
