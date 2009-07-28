@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.655 2009/06/26 19:39:49 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.656 2009/07/28 11:20:09 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2676,6 +2676,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	bzero(&act, sizeof(act));
 	act.rtableid = -1;
+	SLIST_INIT(&rules);
 
 	if (direction == PF_IN && pf_check_congestion(ifq)) {
 		REASON_SET(&reason, PFRES_CONGEST);
@@ -2871,7 +2872,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		pd->nat_rule = nr;
 	}
 
-	SLIST_INIT(&rules);
 	while (r != NULL) {
 		r->evaluations++;
 		if (pfi_kif_match(r->kif, kif) == r->ifnot)
@@ -2937,8 +2937,12 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			if (r->anchor == NULL) {
 				lastr = r;
 				if (r->action == PF_MATCH) {
-					ri = pool_get(&pf_rule_item_pl,
-					    PR_NOWAIT);
+					if ((ri = pool_get(&pf_rule_item_pl,
+					    PR_NOWAIT)) == NULL) {
+						REASON_SET(&reason,
+						    PFRES_MEMORY);
+						goto cleanup;
+					}
 					ri->r = r;
 					/* order is irrelevant */
 					SLIST_INSERT_HEAD(&rules, ri, entry);
@@ -3093,6 +3097,7 @@ cleanup:
 		pool_put(&pf_state_key_pl, sk);
 	if (nk != NULL)
 		pool_put(&pf_state_key_pl, nk);
+
 	return (PF_DROP);
 }
 
