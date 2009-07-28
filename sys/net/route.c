@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.109 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.110 2009/07/28 20:54:57 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -228,7 +228,7 @@ rtable_add(u_int id)	/* must be called at splsoftnet */
 
 		if ((p = malloc(newlen, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
 			return (-1);
-		if (id > 0) {
+		if (rt_tables) {
 			bcopy(rt_tables, p, sizeof(void *) * (rtbl_id_max+1));
 			free(rt_tables, M_RTABLE);
 		}
