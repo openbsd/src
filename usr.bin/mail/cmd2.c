@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.15 2004/09/15 22:21:40 deraadt Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.16 2009/07/28 16:05:04 martynas Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: cmd2.c,v 1.15 2004/09/15 22:21:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cmd2.c,v 1.16 2009/07/28 16:05:04 martynas Exp $";
 #endif
 #endif /* not lint */
 
@@ -342,33 +342,6 @@ undeletecmd(void *v)
 		dot = mp;
 		mp->m_flag &= ~MDELETED;
 	}
-	return(0);
-}
-
-/*
- * Interactively dump core on "core"
- */
-int
-core(void *v)
-{
-	pid_t pid;
-	extern int wait_status;
-
-	switch (pid = vfork()) {
-	case -1:
-		warn("vfork");
-		return(1);
-	case 0:
-		abort();
-		_exit(1);
-	}
-	fputs("Okie dokie", stdout);
-	fflush(stdout);
-	wait_child(pid);
-	if (WIFSIGNALED(wait_status) && WCOREDUMP(wait_status))
-		puts(" -- Core dumped.");
-	else
-		puts(" -- Can't dump core.");
 	return(0);
 }
 

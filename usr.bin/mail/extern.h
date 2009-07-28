@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.26 2008/07/15 19:23:26 martynas Exp $	*/
+/*	$OpenBSD: extern.h,v 1.27 2009/07/28 16:05:04 martynas Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.26 2008/07/15 19:23:26 martynas Exp $
+ *	$OpenBSD: extern.h,v 1.27 2009/07/28 16:05:04 martynas Exp $
  */
 
 struct name;
@@ -99,7 +99,6 @@ int	 cmatch(char *, char *);
 int	 collabort(void);
 void	 commands(void);
 int	 copycmd(void *);
-int	 core(void *);
 int	 count(struct name *);
 int	 deletecmd(void *);
 int	 delm(int *);
