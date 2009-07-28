@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.5 2009/07/28 02:40:53 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.6 2009/07/28 05:12:12 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -374,6 +374,7 @@ ale_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t memtype;
 	int mii_flags, error = 0;
 	uint32_t rxf_len, txf_len;
+	const char *chipname;
 
 	/*
 	 * Allocate IO memory
@@ -403,7 +404,6 @@ ale_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		goto fail;
 	}
-	printf(": %s", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_pct = pa->pa_pc;
@@ -423,15 +423,20 @@ ale_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->ale_rev >= 0xF0) {
 		/* L2E Rev. B. AR8114 */
 		sc->ale_flags |= ALE_FLAG_FASTETHER;
+		chipname = "AR8114";
 	} else {
 		if ((CSR_READ_4(sc, ALE_PHY_STATUS) & PHY_STATUS_100M) != 0) {
 			/* L1E AR8121 */
 			sc->ale_flags |= ALE_FLAG_JUMBO;
+			chipname = "AR8121";
 		} else {
 			/* L2E Rev. A. AR8113 */
 			sc->ale_flags |= ALE_FLAG_FASTETHER;
+			chipname = "AR8113";
 		}
 	}
+
+	printf(": %s, %s", chipname, intrstr);
 
 	/*
 	 * All known controllers seems to require 4 bytes alignment
