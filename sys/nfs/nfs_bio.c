@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.61 2009/07/22 13:02:08 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.62 2009/07/28 11:19:43 art Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -170,30 +170,18 @@ nfs_bioread(vp, uio, ioflag, cred)
 		    }
 		}
 
-		/*
-		 * If the block is in the cache and has the required data
-		 * in a valid region, just copy it out.
-		 * Otherwise, get the block and write back/read in,
-		 * as required.
-		 */
-		if ((bp = incore(vp, bn)) &&
-		    (bp->b_flags & (B_BUSY | B_WRITEINPROG)) ==
-		    (B_BUSY | B_WRITEINPROG))
-			got_buf = 0;
-		else {
 again:
-			bp = nfs_getcacheblk(vp, bn, biosize, p);
-			if (!bp)
-				return (EINTR);
-			got_buf = 1;
-			if ((bp->b_flags & (B_DONE | B_DELWRI)) == 0) {
-				bp->b_flags |= B_READ;
-				not_readin = 0;
-				error = nfs_doio(bp, p);
-				if (error) {
-				    brelse(bp);
-				    return (error);
-				}
+		bp = nfs_getcacheblk(vp, bn, biosize, p);
+		if (!bp)
+			return (EINTR);
+		got_buf = 1;
+		if ((bp->b_flags & (B_DONE | B_DELWRI)) == 0) {
+			bp->b_flags |= B_READ;
+			not_readin = 0;
+			error = nfs_doio(bp, p);
+			if (error) {
+			    brelse(bp);
+			    return (error);
 			}
 		}
 		n = min((unsigned)(biosize - on), uio->uio_resid);
@@ -202,12 +190,6 @@ again:
 			n = (int)offdiff;
 		if (not_readin && n > 0) {
 			if (on < bp->b_validoff || (on + n) > bp->b_validend) {
-				if (!got_buf) {
-				    bp = nfs_getcacheblk(vp, bn, biosize, p);
-				    if (!bp)
-					return (EINTR);
-				    got_buf = 1;
-				}
 				bp->b_flags |= B_INVAFTERWRITE;
 				if (bp->b_dirtyend > 0) {
 				    if ((bp->b_flags & B_DELWRI) == 0)
