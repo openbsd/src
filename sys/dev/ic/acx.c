@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.93 2009/03/31 22:06:04 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.94 2009/07/28 11:39:52 blambert Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -203,7 +203,6 @@ void	 acx_iter_func(void *, struct ieee80211_node *);
 void	 acx_amrr_timeout(void *);
 void	 acx_newassoc(struct ieee80211com *, struct ieee80211_node *, int);
 
-static int	acx_chanscan_rate = 5;	/* 5 channels per second */
 int		acx_beacon_intvl = 100;	/* 100 TU */
 
 /*
@@ -1749,8 +1748,8 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				goto back;
 			}
 
-			timeout_add(&sc->sc_chanscan_timer,
-			    hz / acx_chanscan_rate);
+			/* 200ms => 5 channels per second */
+			timeout_add_msec(&sc->sc_chanscan_timer, 200);
 		}
 		break;
 	case IEEE80211_S_AUTH:
@@ -1835,7 +1834,7 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		/* start automatic rate control timer */
 		if (ic->ic_fixed_rate == -1)
-			timeout_add(&sc->amrr_ch, hz / 2);
+			timeout_add_msec(&sc->amrr_ch, 500);
 		break;
 	default:
 		break;
@@ -2746,7 +2745,7 @@ acx_amrr_timeout(void *arg)
 	else
 		ieee80211_iterate_nodes(ic, acx_iter_func, sc);
 
-	timeout_add(&sc->amrr_ch, hz / 2);
+	timeout_add_msec(&sc->amrr_ch, 500);
 }
 
 void
