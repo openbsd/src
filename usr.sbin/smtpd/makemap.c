@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.18 2009/05/30 23:53:41 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.19 2009/07/28 20:51:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -186,7 +186,7 @@ parse_map(char *filename)
 	char	*line;
 	size_t	 len;
 	size_t	 lineno = 0;
-	char	 delim[] = { '\\', '\\', '#' };
+	char	 delim[] = { '\\', 0, 0 };
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
@@ -227,7 +227,7 @@ parse_entry(char *line, size_t len, size_t lineno)
 	keyp = line;
 	while (isspace(*keyp))
 		keyp++;
-	if (*keyp == '\0')
+	if (*keyp == '\0' || *keyp == '#')
 		return 1;
 
 	valp = keyp;
