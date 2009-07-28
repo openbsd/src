@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 2005/05/17 18:48:52 jason Exp $	*/
+/*	$OpenBSD: build.c,v 1.4 2009/07/28 07:20:28 claudio Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -37,11 +37,12 @@ output(const char *name,
     const u_int32_t *FwData, int sizedata)
 {
 	struct	tigon_firmware tfproto, *tf;
-	int len, fd, i;
+	int len, fd, i, cnt;
+	u_int32_t *b;
 	ssize_t rlen;
 
-	len = sizeof tf - sizeof(tfproto.data) + sizetext + sizerodata +
-	    sizedata;
+	len = sizeof(tfproto) - sizeof(tfproto.data) + sizetext +
+	    sizerodata + sizedata;
 	tf = (struct tigon_firmware *)malloc(len);
 	bzero(tf, len);
 
@@ -72,6 +73,11 @@ output(const char *name,
 	bcopy(FwText, &tf->data[tf->FwTextOffset], FwTextLen);
 	bcopy(FwRodata, &tf->data[tf->FwRodataOffset], FwRodataLen);
 	bcopy(FwData, &tf->data[tf->FwDataOffset], FwDataLen);
+
+	b = (u_int32_t *)tf;
+	cnt = len / sizeof(u_int32_t);
+	for (i = 0; i < cnt; i++)
+		 b[i] = htole32(b[i]);
 
 	printf("creating %s length %d [%d+%d+%d] [%d+%d+%d]\n",
 	    name, len, FwTextLen, FwRodataLen, FwDataLen,

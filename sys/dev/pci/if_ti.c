@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.94 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.95 2009/07/28 07:20:28 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -427,7 +427,8 @@ ti_loadfw(struct ti_softc *sc)
 {
 	struct tigon_firmware *tf;
 	u_char *buf = NULL;
-	size_t buflen;
+	u_int32_t *b;
+	size_t buflen, i, cnt;
 	char *name;
 	int error;
 
@@ -447,6 +448,12 @@ ti_loadfw(struct ti_softc *sc)
 	error = loadfirmware(name, &buf, &buflen);
 	if (error)
 		return;
+	/* convert firmware to host byte order */
+	b = (u_int32_t *)buf;
+	cnt = buflen / sizeof(u_int32_t);
+	for (i = 0; i < cnt; i++) 
+		b[i] = letoh32(b[i]);
+
 	tf = (struct tigon_firmware *)buf;
 	if (tf->FwReleaseMajor != TI_FIRMWARE_MAJOR ||
 	    tf->FwReleaseMinor != TI_FIRMWARE_MINOR ||
