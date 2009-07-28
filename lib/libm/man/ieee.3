@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee.3,v 1.17 2008/12/12 00:10:26 martynas Exp $
+.\"	$OpenBSD: ieee.3,v 1.18 2009/07/28 16:14:11 martynas Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: December 12 2008 $
+.Dd $Mdocdate: July 28 2009 $
 .Dt IEEE 3
 .Os
 .Sh NAME
@@ -40,6 +40,9 @@
 .Nm ilogbl ,
 .Nm nextafter ,
 .Nm nextafterf ,
+.Nm scalbln ,
+.Nm scalblnf ,
+.Nm scalblnl ,
 .Nm scalbn ,
 .Nm scalbnf ,
 .Nm scalbnl
@@ -62,6 +65,12 @@
 .Fn nextafter "double x" "double y"
 .Ft float
 .Fn nextafterf "float x" "float y"
+.Ft double
+.Fn scalbln "double x" "long n"
+.Ft float
+.Fn scalblnf "float x" "long n"
+.Ft long double
+.Fn scalblnl "long double x" "long n"
 .Ft double
 .Fn scalbn "double x" "int n"
 .Ft float
@@ -117,18 +126,30 @@ The
 function is a single precision version of
 .Fn nextafter .
 .Pp
+.Fn scalbln
+and
 .Fn scalbn
-returns
+return
 .Fa x Ns \(**(2** Ns Fa n )
 computed by exponent manipulation.
 The
+.Fn scalblnf
+and
 .Fn scalbnf
-function is a single precision version of
-.Fn scalbn .
+functions are single precision versions of
+.Fn scalbln
+and
+.Fn scalbn ,
+respectively.
 The
+.Fn scalblnl
+and
 .Fn scalbnl
-function is an extended precision version of
-.Fn scalbn .
+functions are extended precision versions of
+.Fn scalbln
+and
+.Fn scalbn ,
+respectively.
 .Sh SEE ALSO
 .Xr math 3
 .Sh STANDARDS
