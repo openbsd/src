@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.4 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.5 2009/07/28 02:40:53 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -262,7 +262,7 @@ age_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_miibus.mii_media, 0, age_mediachange,
 	    age_mediastatus);
 	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
-	   MII_OFFSET_ANY, 0);
+	   MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
@@ -1156,12 +1156,10 @@ age_mac_config(struct age_softc *sc)
 	}
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
 		reg |= MAC_CFG_FULL_DUPLEX;
-#ifdef notyet
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE) != 0)
 			reg |= MAC_CFG_TX_FC;
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_RXPAUSE) != 0)
 			reg |= MAC_CFG_RX_FC;
-#endif
 	}
 
 	CSR_WRITE_4(sc, AGE_MAC_CFG, reg);

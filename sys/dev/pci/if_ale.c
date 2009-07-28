@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.4 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.5 2009/07/28 02:40:53 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -372,7 +372,7 @@ ale_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	struct ifnet *ifp;
 	pcireg_t memtype;
-	int error = 0;
+	int mii_flags, error = 0;
 	uint32_t rxf_len, txf_len;
 
 	/*
@@ -526,8 +526,11 @@ ale_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc->sc_miibus.mii_media, 0, ale_mediachange,
 	    ale_mediastatus);
+	mii_flags = 0;
+	if ((sc->ale_flags & ALE_FLAG_JUMBO) != 0)
+		mii_flags |= MIIF_DOPAUSE;
 	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, mii_flags);
 
 	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
@@ -1153,12 +1156,10 @@ ale_mac_config(struct ale_softc *sc)
 	}
 	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
 		reg |= MAC_CFG_FULL_DUPLEX;
-#ifdef notyet
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_TXPAUSE) != 0)
 			reg |= MAC_CFG_TX_FC;
 		if ((IFM_OPTIONS(mii->mii_media_active) & IFM_ETH_RXPAUSE) != 0)
 			reg |= MAC_CFG_RX_FC;
-#endif
 	}
 	CSR_WRITE_4(sc, ALE_MAC_CFG, reg);
 }
