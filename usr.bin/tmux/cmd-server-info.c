@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-info.c,v 1.4 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-server-info.c,v 1.5 2009/07/28 06:48:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -112,9 +112,9 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 		RB_FOREACH(wl, winlinks, &s->windows) {
 			w = wl->window;
 			ctx->print(ctx, "%4u: %s [%ux%u] [flags=0x%x, "
-			    "references=%u, layout=%u]", wl->idx, w->name,
+			    "references=%u, last layout=%d]", wl->idx, w->name,
 			    w->sx, w->sy, w->flags, w->references,
-			    w->layout);
+			    w->lastlayout);
 			j = 0;
 			TAILQ_FOREACH(wp, &w->panes, entry) {
 				lines = ulines = size = usize = 0;
