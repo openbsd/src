@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.73 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.74 2009/07/28 11:45:05 blambert Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -2498,8 +2498,8 @@ rtw_led_newstate(struct rtw_softc *sc, enum ieee80211_state nstate)
 		ls->ls_default = 0;
 		break;
 	case IEEE80211_S_SCAN:
-		timeout_add(&ls->ls_slow_ch, RTW_LED_SLOW_TICKS);
-		timeout_add(&ls->ls_fast_ch, RTW_LED_FAST_TICKS);
+		timeout_add_msec(&ls->ls_slow_ch, RTW_LED_SLOW_MSEC);
+		timeout_add_msec(&ls->ls_fast_ch, RTW_LED_FAST_MSEC);
 		/*FALLTHROUGH*/
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
@@ -2587,7 +2587,7 @@ rtw_led_fastblink(void *arg)
 		rtw_led_set(ls, &sc->sc_regs, sc->sc_hwverid);
 	splx(s);
 
-	timeout_add(&ls->ls_fast_ch, RTW_LED_FAST_TICKS);
+	timeout_add_msec(&ls->ls_fast_ch, RTW_LED_FAST_MSEC);
 }
 
 void
@@ -2601,7 +2601,7 @@ rtw_led_slowblink(void *arg)
 	ls->ls_state ^= RTW_LED_S_SLOW;
 	rtw_led_set(ls, &sc->sc_regs, sc->sc_hwverid);
 	splx(s);
-	timeout_add(&ls->ls_slow_ch, RTW_LED_SLOW_TICKS);
+	timeout_add_msec(&ls->ls_slow_ch, RTW_LED_SLOW_MSEC);
 }
 
 void
