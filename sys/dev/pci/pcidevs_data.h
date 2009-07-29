@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1484 2009/07/29 17:36:11 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1485 2009/07/29 17:43:43 damien Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6288,20 +6288,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "21145",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_1,
-	    "WiFi Link 6000",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_1,
 	    "WiFi Link 1000",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_2,
 	    "WiFi Link 1000",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_2,
-	    "WiFi Link 6000",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_1,
@@ -6318,6 +6310,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_4,
 	    "WiFi Link 6050",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_1,
+	    "WiFi Link 6000",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_2,
+	    "WiFi Link 6000",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80303,
