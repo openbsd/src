@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.1,v 1.57 2009/02/10 19:27:03 jmc Exp $
+.\"	$OpenBSD: mail.1,v 1.58 2009/07/29 18:15:38 martynas Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: February 10 2009 $
+.Dd $Mdocdate: July 29 2009 $
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -713,25 +713,31 @@ The name
 is somewhat of a misnomer since the actual escape character can be set
 by the option
 .Ic escape .
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -compact
 .It Ic ~b Ns Ar name ...
 Add the given names to the list of carbon copy recipients but do not make
 the names visible in the Cc: line ("blind" carbon copy).
+.Pp
 .It Ic ~c Ns Ar name ...
 Add the given names to the list of carbon copy recipients.
+.Pp
 .It Ic ~d
 Read the file
 .Pa dead.letter
 from your home directory into the message.
+.Pp
 .It Ic ~e
 Invoke the text editor on the message collected so far.
 After the
 editing session is finished, you may continue appending text to the
 message.
+.Pp
 .It Ic ~F Ns Ar messages
 Identical to
 .Ic ~f ,
 except all message headers are included.
+.Pp
 .It Ic ~f Ns Ar messages
 Read the named messages into the message being sent.
 If no messages are specified, read in the current message.
@@ -740,14 +746,17 @@ Message headers currently being ignored (by the
 or
 .Ic retain
 command) are not included.
+.Pp
 .It Ic ~h
 Edit the message header fields by typing each one in turn and allowing
 the user to append text to the end or modify the field by using the
 current terminal erase and kill characters.
+.Pp
 .It Ic ~M Ns Ar messages
 Identical to
 .Ic ~m ,
 except all message headers are included.
+.Pp
 .It Ic ~m Ns Ar messages
 Read the named messages into the message being sent, indented by a
 tab or by the value of
@@ -759,21 +768,28 @@ Message headers currently being ignored (by the
 or
 .Ic retain
 command) are not included.
+.Pp
 .It Ic ~p
 Print out the message collected so far, prefaced by the message header
 fields.
+.Pp
 .It Ic ~q
 Abort the message being sent, copying the message to
 .Pa dead.letter
 in your home directory if
 .Ic save
 is set.
+.Pp
 .It Ic ~r Ns Ar filename
+.It Ic ~< Ns Ar filename
 Read the named file into the message.
+.Pp
 .It Ic ~s Ns Ar string
 Cause the named string to become the current subject field.
+.Pp
 .It Ic ~t Ns Ar name ...
 Add the given names to the direct recipient list.
+.Pp
 .It Ic ~v
 Invoke an alternate editor (defined by the
 .Ev VISUAL
@@ -783,8 +799,10 @@ Usually, the alternate editor will be a
 screen editor.
 After you quit the editor, you may resume appending
 text to the end of your message.
+.Pp
 .It Ic ~w Ns Ar filename
 Write the message onto the named file.
+.Pp
 .It Ic ~x
 Abort the message being sent.
 No message is copied to
@@ -792,10 +810,13 @@ No message is copied to
 even if
 .Ic save
 is set.
+.Pp
 .It Ic ~?
 Prints a brief summary of tilde escapes.
+.Pp
 .It Ic ~! Ns Ar command
 Execute the indicated shell command, then return to the message.
+.Pp
 .It Ic ~| Ns Ar command
 Pipe the message through the command as a filter.
 If the command gives
@@ -806,14 +827,20 @@ The command
 is often used as
 .Ic command
 to rejustify the message.
+.Pp
 .It Ic ~: Ns Ar mail-command
+.It Ic ~_ Ns Ar mail-command
 Execute the given mail command.
 Not all commands, however, are allowed.
+.Pp
 .It Ic ~~ Ns Ar string
 Insert the string of text in the message prefaced by a single ~.
 If
 you have changed the escape character, then you should double
 that character in order to send it.
+.Pp
+.It Ic ~.
+Simulate end of file on input.
 .El
 .Ss Mail options
 Options are controlled via
