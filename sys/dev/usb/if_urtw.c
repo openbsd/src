@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.25 2009/07/29 18:08:44 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.26 2009/07/29 18:14:57 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -3526,7 +3526,7 @@ urtw_task(void *arg)
 
 	case IEEE80211_S_SCAN:
 		urtw_set_chan(sc, ic->ic_bss->ni_chan);
-		timeout_add(&sc->scan_to, hz / 5);
+		timeout_add_msec(&sc->scan_to, 200);
 		break;
 
 	case IEEE80211_S_AUTH:
