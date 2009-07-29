@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.161 2009/07/29 18:31:11 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.162 2009/07/29 20:00:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -711,7 +711,7 @@ $syscall
 $syscall_return
 	/* t3 == VA trapframe */
 
-	/* splhigh(), just in case */
+	/* disable interrupts, just in case */
 	mtctl	r0, eiem
 
 	/*
