@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.43 2009/03/29 21:53:52 sthen Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.44 2009/07/29 17:46:31 blambert Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -715,7 +715,7 @@ rt2560_amrr_timeout(void *arg)
 #endif
 	splx(s);
 
-	timeout_add(&sc->amrr_to, hz / 2);
+	timeout_add_msec(&sc->amrr_to, 500);
 }
 
 void
@@ -758,7 +758,7 @@ rt2560_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	case IEEE80211_S_SCAN:
 		rt2560_set_chan(sc, ic->ic_bss->ni_chan);
-		timeout_add(&sc->scan_to, hz / 5);
+		timeout_add_msec(&sc->scan_to, 200);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -809,7 +809,7 @@ rt2560_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			/* start automatic rate control timer */
 			if (ic->ic_fixed_rate == -1)
-				timeout_add(&sc->amrr_to, hz / 2);
+				timeout_add_msec(&sc->amrr_to, 500);
 
 			rt2560_enable_tsf_sync(sc);
 		}

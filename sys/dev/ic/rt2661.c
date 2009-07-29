@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.48 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.49 2009/07/29 17:46:31 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -749,7 +749,7 @@ rt2661_updatestats(void *arg)
 		rt2661_rx_tune(sc);
 	splx(s);
 
-	timeout_add(&sc->amrr_to, hz / 2);
+	timeout_add_msec(&sc->amrr_to, 500);
 }
 
 void
@@ -790,7 +790,7 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	case IEEE80211_S_SCAN:
 		rt2661_set_chan(sc, ic->ic_bss->ni_chan);
-		timeout_add(&sc->scan_to, hz / 5);
+		timeout_add_msec(&sc->scan_to, 200);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -825,7 +825,7 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			sc->ncalls = 0;
 			sc->avg_rssi = -95;	/* reset EMA */
-			timeout_add(&sc->amrr_to, hz / 2);
+			timeout_add_msec(&sc->amrr_to, 500);
 			rt2661_enable_tsf_sync(sc);
 		}
 		break;
