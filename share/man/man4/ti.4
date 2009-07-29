@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.33 2009/07/28 13:27:32 deraadt Exp $
+.\"	$OpenBSD: ti.4,v 1.34 2009/07/29 12:14:17 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man4/ti.4,v 1.11 2000/08/10 19:47:32 billf Exp $
 .\"
-.Dd $Mdocdate: July 28 2009 $
+.Dd $Mdocdate: July 29 2009 $
 .Dt TI 4
 .Os
 .Sh NAME
@@ -65,28 +65,28 @@ driver has been tested with the following Tigon-based adapters:
 .Pp
 .Bl -bullet -compact -offset indent
 .It
-The Alteon AceNIC V Gigabit Ethernet adapter (1000baseSX)
+3Com 3C985-SX Gigabit Ethernet (Tigon 1)
 .It
-The Alteon AceNIC V Gigabit Ethernet adapter (1000baseT)
+3Com 3C985B-SX Gigabit Ethernet (Tigon 2)
 .It
-The 3Com 3C985-SX Gigabit Ethernet adapter (Tigon 1)
+Alteon AceNIC V Gigabit Ethernet (1000baseSX)
 .It
-The 3Com 3C985B-SX Gigabit Ethernet adapter (Tigon 2)
+Alteon AceNIC V Gigabit Ethernet (1000baseT)
 .It
-The Netgear GA620 Gigabit Ethernet adapter (1000baseSX)
+Digital EtherWORKS 1000SX PCI Gigabit Ethernet (1000baseSX)
 .It
-The Netgear GA620T Gigabit Ethernet adapter (1000baseT)
+Netgear GA620 Gigabit Ethernet (1000baseSX)
 .It
-The Digital EtherWORKS 1000SX PCI Gigabit Adapter
+Netgear GA620T Gigabit Ethernet (1000baseT)
 .El
 .Pp
 The following should also be supported but have not yet been tested:
 .Pp
 .Bl -bullet -compact -offset indent
 .It
-Silicon Graphics PCI Gigabit Ethernet adapter
+Farallon PN9000SX Gigabit Ethernet
 .It
-Farallon PN9000SX Gigabit Ethernet adapter
+Silicon Graphics PCI Gigabit Ethernet
 .El
 .Pp
 While the Tigon chipset supports 10, 100 and 1000Mbps speeds, support for
@@ -160,7 +160,6 @@ when the device is attached:
 .It Pa /etc/firmware/tigon1
 .It Pa /etc/firmware/tigon2
 .El
-.Pp
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "ti%d: couldn't map memory"
