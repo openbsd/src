@@ -1,4 +1,4 @@
-/* $OpenBSD: client-msg.c,v 1.5 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: client-msg.c,v 1.6 2009/07/29 14:17:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,7 @@ int	client_msg_fn_exited(struct hdr *, struct client_ctx *);
 int	client_msg_fn_suspend(struct hdr *, struct client_ctx *);
 
 struct client_msg {
-	enum hdrtype   type;
+	enum msgtype   type;
 	int	       (*fn)(struct hdr *, struct client_ctx *);
 };
 struct client_msg client_msg_table[] = {

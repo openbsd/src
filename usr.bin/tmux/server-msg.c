@@ -1,4 +1,4 @@
-/* $OpenBSD: server-msg.c,v 1.7 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: server-msg.c,v 1.8 2009/07/29 14:17:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -41,7 +41,7 @@ void printflike2 server_msg_fn_command_info(
     	    struct cmd_ctx *, const char *, ...);
 
 struct server_msg {
-	enum hdrtype	type;
+	enum msgtype	type;
 	void	        (*fn)(struct hdr *, struct client *);
 };
 const struct server_msg server_msg_table[] = {
