@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.11 2007/07/29 20:15:56 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.12 2009/07/29 18:31:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -33,19 +33,7 @@
 #include <machine/reg.h>
 
 struct pcb {
-	u_int64_t pcb_fpregs[HPPA_NFPREGS+1];	/* not in the trapframe */
-	vaddr_t		pcb_uva;	/* KVA for U-area */
-
-	/*
-	 * The members above are primarily accessed by there physical
-	 * address, wheras the members below are accessed exclusively
-	 * by there virtual address.  Unfortunately this structure
-	 * ends up being non-equivalently mapped, which will cause
-	 * data corruption if those members share a cache line.  Since
-	 * the maximum cache line size is 64 bytes, adding 64 bytes of
-	 * padding makes sure that will never happen.
-	 */
-	u_char		pcb_pad[64];
+	struct fpreg	*pcb_fpregs;	/* not in the trapframe */
 
 	u_int		pcb_ksp;	/* kernel sp for ctxsw */
 	u_int		pcb_onfault;	/* SW copy fault handler */

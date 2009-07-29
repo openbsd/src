@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.67 2009/06/26 18:55:20 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.68 2009/07/29 18:31:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -38,6 +38,7 @@
 #include <sys/ptrace.h>
 #include <sys/exec.h>
 #include <sys/core.h>
+#include <sys/pool.h>
 
 #include <machine/cpufunc.h>
 #include <machine/pmap.h>
@@ -45,6 +46,7 @@
 
 #include <uvm/uvm.h>
 
+extern struct pool hppa_fppl;
 
 /*
  * Dump the machine specific header information at the start of a core dump.
@@ -103,7 +105,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct pcb *pcbp;
 	struct trapframe *tf;
 	register_t sp, osp;
-	paddr_t pa;
 
 #ifdef DIAGNOSTIC
 	if (round_page(sizeof(struct user)) > NBPG)
@@ -115,38 +116,25 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		mtctl(0, CR_CCR);
 	}
 
-	/*
-	 * Stash the physical for the pcb of U for later perusal
-	 */
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)p2->p_addr, &pa))
-		panic("pmap_extract(%p) failed", p2->p_addr);
-
-	/*
-	 * XXX This shouldn't be necessary, since there shouldn't be any
-	 * allocated cache lines for this new pcb.  But for some reason
-	 * that is not the case...
-	 */
-	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
-	pdtlb(HPPA_SID_KERNEL, pa);
-	pitlb(HPPA_SID_KERNEL, pa);
-
 	pcbp = &p2->p_addr->u_pcb;
 	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pm_space;
-	pcbp->pcb_uva = (vaddr_t)p2->p_addr;
+	pcbp->pcb_fpregs = pool_get(&hppa_fppl, PR_WAITOK);
+	*pcbp->pcb_fpregs = *p1->p_addr->u_pcb.pcb_fpregs;
 	/* reset any of the pending FPU exceptions from parent */
-	pcbp->pcb_fpregs[0] = HPPA_FPU_FORK(pcbp->pcb_fpregs[0]);
-	pcbp->pcb_fpregs[1] = 0;
-	pcbp->pcb_fpregs[2] = 0;
-	pcbp->pcb_fpregs[3] = 0;
+	pcbp->pcb_fpregs->fpr_regs[0] =
+	    HPPA_FPU_FORK(pcbp->pcb_fpregs->fpr_regs[0]);
+	pcbp->pcb_fpregs->fpr_regs[1] = 0;
+	pcbp->pcb_fpregs->fpr_regs[2] = 0;
+	pcbp->pcb_fpregs->fpr_regs[3] = 0;
 
 	sp = (register_t)p2->p_addr + NBPG;
 	p2->p_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
 	bcopy(p1->p_md.md_regs, tf, sizeof(*tf));
 
-	tf->tf_cr30 = pa;
+	tf->tf_cr30 = (paddr_t)pcbp->pcb_fpregs;
 
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
 	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 =
@@ -181,11 +169,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	*HPPA_FRAME_CARG(0, sp) = (register_t)arg;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	pcbp->pcb_ksp = sp;
-
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, PAGE_SIZE);
-	pdtlb(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr);
-	ficache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, PAGE_SIZE);
-	pitlb(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr);
 }
 
 void
@@ -194,11 +177,13 @@ cpu_exit(p)
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	if (fpu_curpcb == tf->tf_cr30) {
 		fpu_exit();
 		fpu_curpcb = 0;
 	}
+	pool_put(&hppa_fppl, pcb->pcb_fpregs);
 
 	pmap_deactivate(p);
 	sched_exit(p);

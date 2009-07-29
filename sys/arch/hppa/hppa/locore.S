@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.160 2009/02/14 19:03:50 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.161 2009/07/29 18:31:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -198,7 +198,6 @@ $start_zero_tf
 	mtctl	arg3, cr30
 	stw	r0, U_PCB+PCB_ONFAULT(arg3)
 	stw	r0, U_PCB+PCB_SPACE(arg3)	/* XXX HPPA_SID_KERNEL == 0 */
-	stw	arg3, U_PCB+PCB_UVA(arg3)
 	ldil	L%(USPACE+NBPG), arg0		/* normal U plus red zone */
 	add	arg0, arg3, arg0
 	ldil	L%proc0paddr, t1
@@ -1628,10 +1627,11 @@ ENTRY(TLABEL(all),0)
 	comb,<>	t1, t2, $trap_from_kernel
 	dep	r0, 31, 6, sp
 
-	mfctl	cr30, t2
+	ldil	L%curproc, t2
+	ldw	R%curproc(t2), t2
 	depi	1, T_USER_POS, 1, r1
 	depi	1, TFF_LAST_POS, 1, r1
-	ldw	U_PCB+PCB_UVA(t2), sp
+	ldw	P_ADDR(t2), sp
 	ldo	NBPG(sp), sp
 
 $trap_from_kernel

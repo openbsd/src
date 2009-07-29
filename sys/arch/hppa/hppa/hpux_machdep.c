@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.2 2005/03/26 20:37:24 mickey Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.3 2009/07/29 18:31:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -115,11 +115,10 @@ hpux_setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	copyout(&zero, (caddr_t)(stack + HPPA_FRAME_CRP), sizeof(register_t));
 
 	/* reset any of the pending FPU exceptions */
-	pcb->pcb_fpregs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
-	pcb->pcb_fpregs[1] = 0;
-	pcb->pcb_fpregs[2] = 0;
-	pcb->pcb_fpregs[3] = 0;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
+	pcb->pcb_fpregs->fpr_regs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
+	pcb->pcb_fpregs->fpr_regs[1] = 0;
+	pcb->pcb_fpregs->fpr_regs[2] = 0;
+	pcb->pcb_fpregs->fpr_regs[3] = 0;
 	if (tf->tf_cr30 == fpu_curpcb) {
 		fpu_curpcb = 0;
 		/* force an fpu ctxsw, we won't be hugged by the cpu_switch */
