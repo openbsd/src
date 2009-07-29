@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.444 2009/07/23 18:22:34 maja Exp $
+$OpenBSD: usbdevs,v 1.445 2009/07/29 17:29:10 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1920,6 +1920,7 @@ product LIEBERT POWERSURE_PXT	0xffff	PowerSure Personal XT
 product LINKSYS4 USB1000	0x0039	USB1000
 product LINKSYS4 WUSB100	0x0070	WUSB100
 product LINKSYS4 WUSB600N	0x0071	WUSB600N
+product LINKSYS4 WUSB54GCV3	0x0077	WUSB54GC v3
 product LINKSYS MAUSB2		0x0105	Camedia MAUSB-2
 product LINKSYS USB10TX1	0x200c	USB10TX
 product LINKSYS USB10T		0x2202	USB10T Ethernet
