@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.24 2009/07/29 18:01:31 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.25 2009/07/29 18:08:44 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -89,7 +89,7 @@ static const struct urtw_type {
 	URTW_DEV_RTL8187(LOGITEC,	RTL8187),
 	URTW_DEV_RTL8187(NETGEAR,	WG111V2),
 	URTW_DEV_RTL8187(REALTEK,	RTL8187),
-	URTW_DEV_RTL8187(SITECOMEU,	WL168V1)
+	URTW_DEV_RTL8187(SITECOMEU,	WL168V1),
 	URTW_DEV_RTL8187(SPHAIRON,	RTL8187),
 	URTW_DEV_RTL8187(SURECOM,	EP9001G2A),
 	/* Realtek RTL8187B devices. */
