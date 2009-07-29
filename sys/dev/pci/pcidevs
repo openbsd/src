@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1484 2009/07/29 17:36:11 damien Exp $
+$OpenBSD: pcidevs,v 1.1485 2009/07/29 17:43:43 damien Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2140,14 +2140,14 @@ product IMS TT3D		0x9135	Twin Turbo 3D
 /* Intel products */
 product INTEL EESISA		0x0008	EES ISA
 product INTEL 21145		0x0039	21145
-product INTEL WIFI_LINK_6000_1	0x0082	WiFi Link 6000
 product INTEL WIFI_LINK_1000_1	0x0083	WiFi Link 1000
 product INTEL WIFI_LINK_1000_2	0x0084	WiFi Link 1000
-product INTEL WIFI_LINK_6000_2	0x0085	WiFi Link 6000
 product INTEL WIFI_LINK_6050_1	0x0086	WiFi Link 6050
 product INTEL WIFI_LINK_6050_2	0x0087	WiFi Link 6050
 product INTEL WIFI_LINK_6050_3	0x0088	WiFi Link 6050
 product INTEL WIFI_LINK_6050_4	0x0089	WiFi Link 6050
+product INTEL WIFI_LINK_6000_1	0x008d	WiFi Link 6000
+product INTEL WIFI_LINK_6000_2	0x008e	WiFi Link 6000
 product INTEL 80303		0x0309	80303 IOP
 product INTEL 80312		0x030d	80312 I/O Companion
 product INTEL IOXAPIC_A		0x0326	IOxAPIC
