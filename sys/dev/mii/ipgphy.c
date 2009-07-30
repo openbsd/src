@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.10 2008/06/10 21:18:41 brad Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.11 2009/07/30 10:26:23 sthen Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -111,30 +111,14 @@ ipgphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &ipgphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 
-#define ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
-	    IPGPHY_BMCR_10);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, sc->mii_inst),
-	    IPGPHY_BMCR_10 | IPGPHY_BMCR_FDX);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, sc->mii_inst),
-	    IPGPHY_BMCR_100);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, sc->mii_inst),
-	    IPGPHY_BMCR_100 | IPGPHY_BMCR_FDX);
-	/* 1000baseT half-duplex, really supported? */
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, 0, sc->mii_inst),
-	    IPGPHY_BMCR_1000);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_T, IFM_FDX, sc->mii_inst),
-	    IPGPHY_BMCR_1000 | IPGPHY_BMCR_FDX);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst), 0);
-#undef ADD
+	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	if (sc->mii_capabilities & BMSR_EXTSTAT)
+		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+ 
+	mii_phy_add_media(sc);
 
 	PHY_RESET(sc);
 }
