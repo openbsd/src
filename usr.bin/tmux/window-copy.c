@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.12 2009/07/28 07:03:32 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.13 2009/07/30 07:04:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -104,7 +104,8 @@ window_copy_init(struct window_pane *wp)
 
 	s = &data->screen;
 	screen_init(s, screen_size_x(&wp->base), screen_size_y(&wp->base), 0);
-	s->mode |= MODE_MOUSE;
+	if (options_get_number(&wp->window->options, "mode-mouse"))
+		s->mode |= MODE_MOUSE;
 
 	keys = options_get_number(&wp->window->options, "mode-keys");
 	if (keys == MODEKEY_EMACS)

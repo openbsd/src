@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-window-option.c,v 1.8 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-set-window-option.c,v 1.9 2009/07/30 07:04:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -60,6 +60,7 @@ const struct set_option_entry set_window_option_table[] = {
 	{ "mode-bg", SET_OPTION_COLOUR, 0, 0, NULL },
 	{ "mode-fg", SET_OPTION_COLOUR, 0, 0, NULL },
 	{ "mode-keys", SET_OPTION_CHOICE, 0, 0, set_option_mode_keys_list },
+	{ "mode-mouse", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "monitor-activity", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "monitor-content", SET_OPTION_STRING, 0, 0, NULL },
 	{ "remain-on-exit", SET_OPTION_FLAG, 0, 0, NULL },
