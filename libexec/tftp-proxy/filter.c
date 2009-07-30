@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.2 2007/06/23 15:51:21 jcs Exp $ */
+/*	$OpenBSD: filter.c,v 1.3 2009/07/30 20:40:27 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -71,40 +71,6 @@ add_filter(u_int32_t id, u_int8_t dir, struct sockaddr *src,
 		return (-1);
 
 	pfr.rule.direction = dir;
-	if (ioctl(dev, DIOCADDRULE, &pfr) == -1)
-		return (-1);
-
-	return (0);
-}
-
-int
-add_nat(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
-    u_int16_t d_port, struct sockaddr *nat, u_int16_t nat_range_low,
-    u_int16_t nat_range_high, u_int8_t proto)
-{
-	if (!src || !dst || !d_port || !nat || !nat_range_low || !proto ||
-	    (src->sa_family != nat->sa_family)) {
-		errno = EINVAL;
-		return (-1);
-	}
-
-	if (prepare_rule(id, PF_RULESET_NAT, src, dst, d_port, proto) == -1)
-		return (-1);
-
-	if (nat->sa_family == AF_INET) {
-		memcpy(&pfp.addr.addr.v.a.addr.v4,
-		    &satosin(nat)->sin_addr.s_addr, 4);
-		memset(&pfp.addr.addr.v.a.mask.addr8, 255, 4);
-	} else {
-		memcpy(&pfp.addr.addr.v.a.addr.v6,
-		    &satosin6(nat)->sin6_addr.s6_addr, 16);
-		memset(&pfp.addr.addr.v.a.mask.addr8, 255, 16);
-	}
-	if (ioctl(dev, DIOCADDADDR, &pfp) == -1)
-		return (-1);
-
-	pfr.rule.rpool.proxy_port[0] = nat_range_low;
-	pfr.rule.rpool.proxy_port[1] = nat_range_high;
 	if (ioctl(dev, DIOCADDRULE, &pfr) == -1)
 		return (-1);
 
