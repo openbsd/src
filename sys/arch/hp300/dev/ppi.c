@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppi.c,v 1.16 2006/04/13 20:08:12 miod Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.17 2009/07/30 20:32:44 blambert Exp $	*/
 /*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
@@ -89,8 +89,6 @@ void	ppinoop(void *);
 
 void	ppitimo(void *);
 int	ppirw(dev_t, struct uio *);
-int	ppihztoms(int);
-int	ppimstohz(int);
 
 cdev_decl(ppi);
 
@@ -186,8 +184,8 @@ ppiopen(dev, flags, fmt, p)
 		return (EBUSY);
 	sc->sc_flags |= PPIF_OPEN;
 	sc->sc_burst = PPI_BURST;
-	sc->sc_timo = ppimstohz(PPI_TIMO);
-	sc->sc_delay = ppimstohz(PPI_DELAY);
+	sc->sc_timo = PPI_TIMO;
+	sc->sc_delay = PPI_DELAY;
 	sc->sc_sec = -1;
 	return(0);
 }
@@ -296,7 +294,7 @@ ppirw(dev, uio)
 	sc->sc_flags |= PPIF_UIO;
 	if (sc->sc_timo > 0) {
 		sc->sc_flags |= PPIF_TIMO;
-		timeout_add(&sc->sc_to, sc->sc_timo);
+		timeout_add_msec(&sc->sc_to, sc->sc_timo);
 	}
 	len = cnt = 0;
 	while (uio->uio_resid > 0) {
@@ -376,7 +374,7 @@ again:
 		 */
 		if (sc->sc_delay > 0) {
 			sc->sc_flags |= PPIF_DELAY;
-			timeout_add(&sc->sc_start_to, sc->sc_delay);
+			timeout_add_msec(&sc->sc_start_to, sc->sc_delay);
 			error = tsleep(sc, (PCATCH|PZERO) + 1, "hpib", 0);
 			if (error) {
 				splx(s);
@@ -441,8 +439,8 @@ ppiioctl(dev, cmd, data, flag, p)
 		pp = &sc->sc_param;
 		upp = (struct ppiparam *)data;
 		upp->burst = pp->burst;
-		upp->timo = ppihztoms(pp->timo);
-		upp->delay = ppihztoms(pp->delay);
+		upp->timo = pp->timo;
+		upp->delay = pp->delay;
 		break;
 	case PPIIOCSPARAM:
 		pp = &sc->sc_param;
@@ -451,8 +449,8 @@ ppiioctl(dev, cmd, data, flag, p)
 		    upp->delay < PPI_DELAY_MIN || upp->delay > PPI_DELAY_MAX)
 			return(EINVAL);
 		pp->burst = upp->burst;
-		pp->timo = ppimstohz(upp->timo);
-		pp->delay = ppimstohz(upp->delay);
+		pp->timo = upp->timo;
+		pp->delay = upp->delay;
 		break;
 	case PPIIOCSSEC:
 		tmp = *(int *)data;
@@ -465,29 +463,4 @@ ppiioctl(dev, cmd, data, flag, p)
 		return (ENOTTY);
 	}
 	return (error);
-}
-
-int
-ppihztoms(h)
-	int h;
-{
-	int m = h;
-
-	if (m > 0)
-		m = m * 1000 / hz;
-	return(m);
-}
-
-int
-ppimstohz(m)
-	int m;
-{
-	int h = m;
-
-	if (h > 0) {
-		h = h * hz / 1000;
-		if (h == 0)
-			h = 1000 / hz;
-	}
-	return(h);
 }
