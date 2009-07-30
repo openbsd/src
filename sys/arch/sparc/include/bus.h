@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.8 2009/07/26 18:48:55 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.9 2009/07/30 21:39:54 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -76,8 +76,8 @@ static int bus_space_unmap(bus_space_tag_t, bus_space_handle_t,
 #define	BUS_SPACE_MAP_LINEAR		0x02
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
-#define	BUS_SPACE_BARRIER_READ	0
-#define	BUS_SPACE_BARRIER_WRITE	1
+#define	BUS_SPACE_BARRIER_READ	0x01
+#define	BUS_SPACE_BARRIER_WRITE	0x02
 
 static void bus_space_barrier(bus_space_tag_t, bus_space_handle_t,
     bus_addr_t, bus_size_t, int);

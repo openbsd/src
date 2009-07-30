@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1.1.1 2006/05/09 18:18:49 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2009/07/30 21:39:52 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -54,8 +54,8 @@ struct aviion_bus_space_tag {
 
 typedef const struct aviion_bus_space_tag *bus_space_tag_t;
 
-#define	BUS_SPACE_BARRIER_READ	0
-#define	BUS_SPACE_BARRIER_WRITE	1
+#define	BUS_SPACE_BARRIER_READ	0x01
+#define	BUS_SPACE_BARRIER_WRITE	0x02
 
 #define	BUS_SPACE_MAP_CACHEABLE	0x01
 #define	BUS_SPACE_MAP_LINEAR	0x02

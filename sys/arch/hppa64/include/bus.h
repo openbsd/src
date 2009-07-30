@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.4 2009/05/31 17:42:13 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 2009/07/30 21:39:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -166,8 +166,8 @@ typedef struct hppa64_bus_space_tag *bus_space_tag_t;
 #define	bus_space_free(t,h,c) \
 	(((t)->hbt_free)((t)->hbt_cookie,(h),(c)))
 
-#define	BUS_SPACE_BARRIER_READ	0
-#define	BUS_SPACE_BARRIER_WRITE	1
+#define	BUS_SPACE_BARRIER_READ	0x01
+#define	BUS_SPACE_BARRIER_WRITE	0x02
 
 #define	bus_space_barrier(t,h,o,l,op) \
 	((t)->hbt_barrier((t)->hbt_cookie, (h), (o), (l), (op)))
