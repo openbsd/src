@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aibs.4,v 1.2 2009/07/23 06:42:27 jmc Exp $
+.\"	$OpenBSD: aibs.4,v 1.3 2009/07/30 02:31:20 cnst Exp $
 .\"
 .\" Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 23 2009 $
+.Dd $Mdocdate: July 30 2009 $
 .Dt AIBS 4
 .Os
 .Sh NAME
@@ -102,6 +102,67 @@ hw.sensors.aibs0.volt7=0.93 VDC (DDR2 TERM Voltage), OK
 hw.sensors.aibs0.volt8=1.23 VDC (NB CORE Voltage), OK
 hw.sensors.aibs0.volt9=1.87 VDC (MEMORY Voltage), OK
 .Ed
+.Sh NOTES
+Generally, sensors provided by the
+.Nm
+driver may also be supported by a variation of other drivers,
+such as
+.Xr lm 4
+or
+.Xr it 4 .
+The precise collection of
+.Nm
+sensors is comprised of the sensors
+specifically utilised in the motherboard
+design, which may be supported through
+a combination of one or more physical hardware monitoring chips.
+.Pp
+The
+.Nm
+driver, however, provides the following advantages
+when compared to the native hardware monitoring drivers:
+.Bl -bullet
+.It
+Sensor values from
+.Nm
+are expected to be more reliable.
+For example, voltage sensors in many hardware monitoring chips
+can only sense voltage from 0 to 2 or 4 volts, and the excessive
+voltage is removed by the resistors, which may vary with the motherboard
+and with the voltage that is being sensed.
+In
+.Nm ,
+the required resistor factors are provided by
+the motherboard manufacturer through ACPI;
+in the native drivers, the resistor factors
+are encoded into the driver based on the chip manufacturer recommendations.
+In essence, sensor values from
+.Nm
+are very likely to be identical to the readings from the
+Hardware Monitor screen in the BIOS.
+.It
+Sensor descriptions from
+.Nm
+are more likely to match the markings on the motherboard.
+.It
+Sensor status is supported by
+.Nm .
+The status is reported based on the acceptable range of values
+for each individual sensor as suggested by the motherboard manufacturer.
+For example, the threshold for CPU temperature sensor is likely
+to be significantly higher than that for the chassis temperature sensor.
+.It
+Support for newer chips in
+.Nm .
+Newer chips may miss a native driver,
+but should be supported through
+.Nm
+regardless.
+.El
+.Pp
+As a result, sensor readings from the actual
+native hardware monitoring drivers
+may be ignored as appropriate.
 .Sh SEE ALSO
 .Xr systat 1 ,
 .Xr sysctl 3 ,
