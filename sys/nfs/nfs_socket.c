@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.91 2009/07/22 13:04:56 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.92 2009/07/30 14:04:28 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -994,8 +994,10 @@ tryagain:
 	mrep = rep->r_mrep;
 	md = rep->r_md;
 	dpos = rep->r_dpos;
-	if (error)
-		goto nfsmout;
+	if (error) {
+		*mrp = NULL;
+		goto nfsmout1;
+	}
 
 	/*
 	 * break down the rpc header and check if ok
@@ -1006,7 +1008,8 @@ tryagain:
 			error = EOPNOTSUPP;
 		else
 			error = EACCES;	/* Should be EAUTH. */
-		goto nfsmout;
+		*mrp = NULL;
+		goto nfsmout1;
 	}
 
 	/*
@@ -1055,6 +1058,7 @@ nfsmout:
 	*mrp = mrep;
 	*mdp = md;
 	*dposp = dpos;
+nfsmout1:
 	m_freem(rep->r_mreq);
 	pool_put(&nfsreqpl, rep);
 	return (error);
