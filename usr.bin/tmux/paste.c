@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.2 2009/07/02 16:15:43 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.3 2009/07/30 20:50:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -104,8 +104,12 @@ paste_add(struct paste_stack *ps, char *data, u_int limit)
 	if (*data == '\0')
 		return;
 
-	while (ARRAY_LENGTH(ps) >= limit)
+	while (ARRAY_LENGTH(ps) >= limit) {
+		pb = ARRAY_LAST(ps);
+		xfree(pb->data);
+		xfree(pb);
 		ARRAY_TRUNC(ps, 1);
+	}
 
 	pb = xmalloc(sizeof *pb);
 	ARRAY_INSERT(ps, 0, pb);
