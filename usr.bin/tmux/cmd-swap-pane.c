@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.8 2009/07/30 13:45:56 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.9 2009/07/30 17:29:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -72,7 +72,6 @@ cmd_swap_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	dst_w = dst_wl->window;
 
 	if (data->src == NULL) {
-		src_wl = dst_wl;
 		src_w = dst_w;
 		if (data->chflags & CMD_CHFLAG('D')) {
 			src_wp = TAILQ_NEXT(dst_wp, entry);
