@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.65 2009/07/30 13:45:56 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.66 2009/07/30 16:32:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1338,13 +1338,12 @@ size_t	cmd_option_print(struct cmd *, char *, size_t);
 /* client.c */
 int	 client_init(char *, struct client_ctx *, int, int);
 int	 client_main(struct client_ctx *);
-
-/* client-msg.c */
 int	 client_msg_dispatch(struct client_ctx *);
 
 /* client-fn.c */
 void	 client_write_server(struct client_ctx *, enum msgtype, void *, size_t);
 void	 client_fill_session(struct msg_command_data *);
+void	 client_suspend(void);
 
 /* key-bindings.c */
 extern struct key_bindings key_bindings;
