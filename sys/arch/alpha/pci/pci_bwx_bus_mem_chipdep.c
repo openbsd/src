@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.7 2009/07/26 18:48:54 miod Exp $ */
+/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.8 2009/07/30 21:39:15 miod Exp $ */
 /* $NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $ */
 
 /*
@@ -415,9 +415,9 @@ __C(CHIP,_mem_barrier)(v, h, o, l, f)
 	int f;
 {
 
-	if ((f & BUS_BARRIER_READ) != 0)
+	if ((f & BUS_SPACE_BARRIER_READ) != 0)
 		alpha_mb();
-	else if ((f & BUS_BARRIER_WRITE) != 0)
+	else if ((f & BUS_SPACE_BARRIER_WRITE) != 0)
 		alpha_wmb();
 }
 
@@ -494,7 +494,7 @@ __C(__C(CHIP,_mem_read_multi_),BYTES)(v, h, o, a, c)			\
 									\
 	while (c-- > 0) {						\
 		__C(CHIP,_mem_barrier)(v, h, o, sizeof *a,		\
-		    BUS_BARRIER_READ);					\
+		    BUS_SPACE_BARRIER_READ);				\
 		*a++ = __C(__C(CHIP,_mem_read_),BYTES)(v, h, o);	\
 	}								\
 }
@@ -599,7 +599,7 @@ __C(__C(CHIP,_mem_write_multi_),BYTES)(v, h, o, a, c)			\
 	while (c-- > 0) {						\
 		__C(__C(CHIP,_mem_write_),BYTES)(v, h, o, *a++);	\
 		__C(CHIP,_mem_barrier)(v, h, o, sizeof *a,		\
-		    BUS_BARRIER_WRITE);					\
+		    BUS_SPACE_BARRIER_WRITE);				\
 	}								\
 }
 CHIP_mem_write_multi_N(1,u_int8_t)
@@ -638,7 +638,7 @@ __C(__C(CHIP,_mem_set_multi_),BYTES)(v, h, o, val, c)			\
 	while (c-- > 0) {						\
 		__C(__C(CHIP,_mem_write_),BYTES)(v, h, o, val);		\
 		__C(CHIP,_mem_barrier)(v, h, o, sizeof val,		\
-		    BUS_BARRIER_WRITE);					\
+		    BUS_SPACE_BARRIER_WRITE);				\
 	}								\
 }
 CHIP_mem_set_multi_N(1,u_int8_t)
@@ -706,7 +706,8 @@ __C(__C(CHIP,_mem_read_raw_multi_),BYTES)(v, h, o, a, c)			\
 	int i;								\
 									\
 	while (c > 0) {							\
-		__C(CHIP,_mem_barrier)(v, h, o, BYTES, BUS_BARRIER_READ); \
+		__C(CHIP,_mem_barrier)(v, h, o, BYTES,			\
+		    BUS_SPACE_BARRIER_READ);				\
 		temp = __C(__C(CHIP,_mem_read_),BYTES)(v, h, o);	\
 		i = MIN(c, BYTES);					\
 		c -= i;							\
@@ -739,7 +740,8 @@ __C(__C(CHIP,_mem_write_raw_multi_),BYTES)(v, h, o, a, c)		\
 				temp |= *(a + i);			\
 		}							\
 		__C(__C(CHIP,_mem_write_),BYTES)(v, h, o, temp);	\
-		__C(CHIP,_mem_barrier)(v, h, o, BYTES, BUS_BARRIER_WRITE); \
+		__C(CHIP,_mem_barrier)(v, h, o, BYTES,			\
+		    BUS_SPACE_BARRIER_WRITE);				\
 		i = MIN(c, BYTES);					\
 		c -= i;							\
 		a += i;							\

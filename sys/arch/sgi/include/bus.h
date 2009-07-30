@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.20 2009/07/26 18:48:55 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.21 2009/07/30 21:39:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -297,10 +297,6 @@ bus_space_copy_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */
 #define BUS_SPACE_BARRIER_WRITE 0x02		/* force write barrier */
-
-/* Compatibility defines */
-#define BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
-#define BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
 
 #define	BUS_DMA_WAITOK		0x000
 #define	BUS_DMA_NOWAIT		0x001
