@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.21 2008/09/17 07:19:19 brad Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.22 2009/07/30 09:24:26 sthen Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -87,8 +87,14 @@ static const struct mii_phydesc ciphys[] = {
 	  MII_STR_CICADA_CS8201B },
 	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8204,
 	  MII_STR_CICADA_CS8204 },
+	{ MII_OUI_CICADA,		MII_MODEL_CICADA_VSC8211,
+	  MII_STR_CICADA_VSC8211 },
+	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8244,
+	  MII_STR_CICADA_CS8244 },
 	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CS8201B,
 	  MII_STR_xxCICADA_CS8201B },
+	{ MII_OUI_VITESSE,		MII_MODEL_VITESSE_VSC8601,
+	  MII_STR_VITESSE_VSC8601 },
 
 	{ 0,			0,
 	  NULL },
@@ -362,6 +368,10 @@ ciphy_fixup(struct mii_softc *sc)
 			PHY_CLRBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
 		}
 
+		break;
+	case MII_MODEL_CICADA_VSC8211:
+	case MII_MODEL_CICADA_CS8244:
+	case MII_MODEL_VITESSE_VSC8601:
 		break;
 	default:
 		printf("%s: unknown CICADA PHY model %x\n",
