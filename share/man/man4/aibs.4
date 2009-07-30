@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aibs.4,v 1.3 2009/07/30 02:31:20 cnst Exp $
+.\"	$OpenBSD: aibs.4,v 1.4 2009/07/30 06:30:45 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
 .\"
@@ -102,10 +102,10 @@ hw.sensors.aibs0.volt7=0.93 VDC (DDR2 TERM Voltage), OK
 hw.sensors.aibs0.volt8=1.23 VDC (NB CORE Voltage), OK
 hw.sensors.aibs0.volt9=1.87 VDC (MEMORY Voltage), OK
 .Ed
-.Sh NOTES
+.Pp
 Generally, sensors provided by the
 .Nm
-driver may also be supported by a variation of other drivers,
+driver may also be supported by a variety of other drivers,
 such as
 .Xr lm 4
 or
@@ -135,7 +135,7 @@ In
 the required resistor factors are provided by
 the motherboard manufacturer through ACPI;
 in the native drivers, the resistor factors
-are encoded into the driver based on the chip manufacturer recommendations.
+are encoded into the driver based on the chip manufacturer's recommendations.
 In essence, sensor values from
 .Nm
 are very likely to be identical to the readings from the
@@ -149,7 +149,7 @@ Sensor status is supported by
 .Nm .
 The status is reported based on the acceptable range of values
 for each individual sensor as suggested by the motherboard manufacturer.
-For example, the threshold for CPU temperature sensor is likely
+For example, the threshold for the CPU temperature sensor is likely
 to be significantly higher than that for the chassis temperature sensor.
 .It
 Support for newer chips in
