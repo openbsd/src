@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.14 2009/03/29 21:53:52 sthen Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.15 2009/07/30 21:33:23 miod Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -287,7 +287,7 @@ acx_cardbus_setup(struct acx_cardbus_softc *csc)
 
 	if (csc->sc_iobar_val) {
 		cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BASE0_REG,
-		    csc->sc_bar1_val);
+		    csc->sc_iobar_val);
 		b1 = CARDBUS_BASE1_REG;
 		b2 = CARDBUS_BASE2_REG;
 		/* (*cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE); */
