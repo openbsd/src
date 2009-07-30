@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.9 2009/07/17 18:35:11 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.10 2009/07/30 20:41:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -63,6 +63,8 @@ screen_reinit(struct screen *s)
 void
 screen_free(struct screen *s)
 {
+	if (s->tabs != NULL)
+		xfree(s->tabs);
 	xfree(s->title);
 	grid_destroy(s->grid);
 }

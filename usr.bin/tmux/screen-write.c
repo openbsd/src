@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.18 2009/07/27 11:33:21 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.19 2009/07/30 20:41:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -91,6 +91,7 @@ screen_write_strlen(int utf8flag, const char *fmt, ...)
 		}
 	}
 
+	xfree(msg);
 	return (size);
 }
 

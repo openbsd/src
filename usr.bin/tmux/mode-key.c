@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.11 2009/07/28 17:05:10 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.12 2009/07/30 20:41:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -337,6 +337,7 @@ mode_key_free_trees(void)
 		while (!SPLAY_EMPTY(mtab->tree)) {
 			mbind = SPLAY_ROOT(mtab->tree);
 			SPLAY_REMOVE(mode_key_tree, mtab->tree, mbind);
+			xfree(mbind);
 		}
 	}
 }
