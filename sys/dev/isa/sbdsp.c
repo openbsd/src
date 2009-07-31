@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.27 2008/01/14 01:25:50 jakemsr Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.28 2009/07/31 20:43:31 blambert Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1018,7 +1018,7 @@ sbdsp_pause(sc)
 {
 	extern int hz;
 
-	timeout_add(&sc->sc_tmo, hz/8);
+	timeout_add_msec(&sc->sc_tmo, 125);	/* 8x per second */
 	(void)tsleep(sbdsp_to, PWAIT, "sbpause", 0);
 }
 
