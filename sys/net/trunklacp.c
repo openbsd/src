@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.9 2008/12/01 10:40:57 brad Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.10 2009/07/31 09:21:13 blambert Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -822,7 +822,7 @@ lacp_suppress_distributing(struct lacp_softc *lsc, struct lacp_aggregator *la)
 	}
 
 	/* set a timeout for the marker frames */
-	timeout_add(&lsc->lsc_transit_callout, LACP_TRANSIT_DELAY * hz / 1000);
+	timeout_add_msec(&lsc->lsc_transit_callout, LACP_TRANSIT_DELAY);
 }
 
 int
