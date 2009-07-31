@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.168 2009/07/23 15:15:25 jordan Exp $ */
+/* $OpenBSD: softraid.c,v 1.169 2009/07/31 16:05:25 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -124,6 +124,7 @@ int			sr_rebuild_init(struct sr_discipline *, dev_t);
 void			sr_rebuild(void *);
 void			sr_rebuild_thread(void *);
 void			sr_roam_chunks(struct sr_discipline *);
+int			sr_chunk_in_use(struct sr_softc *, dev_t);
 
 /* don't include these on RAMDISK */
 #ifndef SMALL_KERNEL
@@ -2149,9 +2150,36 @@ done:
 }
 
 int
+sr_chunk_in_use(struct sr_softc *sc, dev_t dev)
+{
+	struct sr_discipline	*sd;
+	struct sr_chunk		*chunk;
+	int			i, c;
+
+	/* See if chunk is already in use. */
+	for (i = 0; i < SR_MAXSCSIBUS; i++) {
+		if (!sc->sc_dis[i])
+			continue;
+		sd = sc->sc_dis[i];
+		for (c = 0; c < sd->sd_meta->ssdi.ssd_chunk_no; c++) {
+			chunk = sd->sd_vol.sv_chunks[c];
+			if (chunk->src_dev_mm == dev)
+				return chunk->src_meta.scm_status;
+		}
+	}
+
+	/* Check hotspares list. */
+	SLIST_FOREACH(chunk, &sc->sc_hotspare_list, src_link)
+		if (chunk->src_dev_mm == dev)
+			return chunk->src_meta.scm_status;
+
+	return BIOC_SDINVALID;
+}
+
+int
 sr_hotspare(struct sr_softc *sc, dev_t dev)
 {
-	struct sr_discipline	*sw, *sd = NULL;
+	struct sr_discipline	*sd = NULL;
 	struct sr_metadata	*sm = NULL;
 	struct sr_meta_chunk    *hm;
 	struct sr_chunk_head	*cl;
@@ -2162,7 +2190,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	daddr64_t		size;
 	char			devname[32];
 	int			rv = EINVAL;
-	int			i, c, part, open = 0;
+	int			c, part, open = 0;
 
 	/*
 	 * Add device to global hotspares list.
@@ -2171,27 +2199,15 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	sr_meta_getdevname(sc, dev, devname, sizeof(devname));
 
 	/* Make sure chunk is not already in use. */
-	for (i = 0; i < SR_MAXSCSIBUS; i++) {
-		if (!sc->sc_dis[i])
-			continue;
-		sw = sc->sc_dis[i];
-		for (c = 0; c < sw->sd_meta->ssdi.ssd_chunk_no; c++)
-			if (sw->sd_vol.sv_chunks[c]->src_dev_mm == dev &&
-			    sw->sd_vol.sv_chunks[c]->src_meta.scm_status !=
-			        BIOC_SDOFFLINE) {
-				printf("%s: %s chunk already in use\n",
-				    DEVNAME(sc), devname);
-				goto done;
-			}
-	}
-
-	/* Check hotspares list. */
-	SLIST_FOREACH(hotspare, &sc->sc_hotspare_list, src_link) {
-		if (hotspare->src_dev_mm == dev) {
-			printf("%s: %s chunk is already a hotspare\n",
+	c = sr_chunk_in_use(sc, dev);
+	if (c != BIOC_SDINVALID && c != BIOC_SDOFFLINE) {
+		if (c == BIOC_SDHOTSPARE)
+			printf("%s: %s is already a hotspare\n",
 			    DEVNAME(sc), devname);
-			goto done;
-		}
+		else
+			printf("%s: %s is already in use\n",
+			    DEVNAME(sc), devname);
+		goto done;
 	}
 
 	/* XXX - See if there is an existing degraded volume... */
@@ -2434,8 +2450,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev)
 {
 	struct sr_softc		*sc = sd->sd_sc;
 	int			rv = EINVAL, part;
-	int			i, c, found, vol, open = 0;
-	struct sr_discipline	*sw = NULL;
+	int			c, found, open = 0;
 	char			devname[32];
 	struct bdevsw		*bdsw;
 	daddr64_t		size, csize;
@@ -2521,18 +2536,10 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev)
 		    DEVNAME(sc), (size - csize) << DEV_BSHIFT);
 
 	/* make sure we are not stomping on some other partition */
-	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
-		if (!sc->sc_dis[i])
-			continue;
-		sw = sc->sc_dis[i];
-		for (c = 0; c < sw->sd_meta->ssdi.ssd_chunk_no; c++)
-			if (sw->sd_vol.sv_chunks[c]->src_dev_mm == dev &&
-			    sd->sd_vol.sv_chunks[c]->src_meta.scm_status !=
-			        BIOC_SDOFFLINE) {
-				printf("%s: %s chunk already in use\n",
-				    DEVNAME(sc), devname);
-				goto done;
-			}
+	c = sr_chunk_in_use(sc, dev);
+	if (c != BIOC_SDINVALID && c != BIOC_SDOFFLINE) {
+		printf("%s: %s is already in use\n", DEVNAME(sc), devname);
+		goto done;
 	}
 
 	/* Reset rebuild counter since we rebuilding onto a new chunk. */
