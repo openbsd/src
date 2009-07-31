@@ -1,4 +1,4 @@
-/*	$OpenBSD: sg_dma.c,v 1.2 2009/06/08 11:08:51 jsg Exp $	*/
+/*	$OpenBSD: sg_dma.c,v 1.3 2009/07/31 14:30:04 oga Exp $	*/
 /*
  * Copyright (c) 2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -328,17 +328,8 @@ sg_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			}
 		}
 	}
-	if (err) {
-		sg_iomap_unload_map(is, spm);
-		sg_iomap_clear_pages(spm);
-		map->dm_mapsize = 0;
-		map->dm_nsegs = 0;
-		mtx_enter(&is->sg_mtx);
-		extent_free(is->sg_ex, dvmaddr, sgsize, EX_NOWAIT);
-		spm->spm_start = 0;
-		spm->spm_size = 0;
-		mtx_leave(&is->sg_mtx);
-	}
+	if (err)
+		sg_dmamap_unload(t, map);
 
 	return (err);
 }
@@ -577,17 +568,8 @@ sg_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	err = sg_dmamap_load_seg(t, is, map, segs, nsegs, flags,
 	    size, boundary);
 
-	if (err) {
-		sg_iomap_unload_map(is, spm);
-		sg_iomap_clear_pages(spm);
-		map->dm_mapsize = 0;
-		map->dm_nsegs = 0;
-		mtx_enter(&is->sg_mtx);
-		extent_free(is->sg_ex, dvmaddr, sgsize, EX_NOWAIT);
-		spm->spm_start = 0;
-		spm->spm_size = 0;
-		mtx_leave(&is->sg_mtx);
-	}
+	if (err)
+		sg_dmamap_unload(t, map);
 
 	return (err);
 }

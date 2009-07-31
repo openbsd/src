@@ -1,4 +1,4 @@
-/*	$OpenBSD: sg_dma.c,v 1.5 2009/06/08 11:16:11 jsg Exp $	*/
+/*	$OpenBSD: sg_dma.c,v 1.6 2009/07/31 14:30:04 oga Exp $	*/
 /*
  * Copyright (c) 2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -329,15 +329,7 @@ sg_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		}
 	}
 	if (err) {
-		sg_iomap_unload_map(is, spm);
-		sg_iomap_clear_pages(spm);
-		map->dm_mapsize = 0;
-		map->dm_nsegs = 0;
-		mtx_enter(&is->sg_mtx);
-		extent_free(is->sg_ex, dvmaddr, sgsize, EX_NOWAIT);
-		spm->spm_start = 0;
-		spm->spm_size = 0;
-		mtx_leave(&is->sg_mtx);
+		sg_dmamap_unload(t, map);
 	} else {
 		map->_dm_origbuf = buf;
 		map->_dm_buftype = BUS_BUFTYPE_LINEAR;
@@ -594,15 +586,7 @@ sg_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	    size, boundary);
 
 	if (err) {
-		sg_iomap_unload_map(is, spm);
-		sg_iomap_clear_pages(spm);
-		map->dm_mapsize = 0;
-		map->dm_nsegs = 0;
-		mtx_enter(&is->sg_mtx);
-		extent_free(is->sg_ex, dvmaddr, sgsize, EX_NOWAIT);
-		spm->spm_start = 0;
-		spm->spm_size = 0;
-		mtx_leave(&is->sg_mtx);
+		sg_dmamap_unload(t, map);
 	} else {
 		/* This will be overwritten if mbuf or uio called us */
 		map->_dm_origbuf = segs;
