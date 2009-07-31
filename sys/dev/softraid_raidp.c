@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.6 2009/06/20 13:00:44 marco Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.7 2009/07/31 15:23:02 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -242,10 +242,10 @@ sr_raidp_set_vol_state(struct sr_discipline *sd)
 
 	if (states[BIOC_SDONLINE] == nd)
 		new_state = BIOC_SVONLINE;
+	else if (states[BIOC_SDONLINE] == nd - 1)
+		new_state = BIOC_SVDEGRADED;
 	else if (states[BIOC_SDONLINE] < nd - 1)
 		new_state = BIOC_SVOFFLINE;
-	else if (states[BIOC_SDOFFLINE] == nd - 1)
-		new_state = BIOC_SVDEGRADED;
 	else if (states[BIOC_SDSCRUB] != 0)
 		new_state = BIOC_SVSCRUB;
 	else if (states[BIOC_SDREBUILD] != 0)
