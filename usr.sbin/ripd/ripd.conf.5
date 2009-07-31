@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.9 2008/12/17 15:47:30 jmc Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.10 2009/07/31 16:04:34 michele Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2008 $
+.Dd $Mdocdate: July 31 2009 $
 .Dt RIPD.CONF 5
 .Os
 .Sh NAME
@@ -122,12 +122,12 @@ will force the route to be not announced.
 .It Xo
 .Ic split-horizon
 .Sm off
-.Po Ic default Ns \&| Ns Ic poisoned Ns \&| Ns
+.Po Ic simple Ns \&| Ns Ic poisoned Ns \&| Ns
 .Ic none Pc
 .Sm on
 .Xc
 If set to
-.Ic default ,
+.Ic simple ,
 do not redistribute routes to the interface from which they were learned.
 If set to
 .Ic poisoned ,
@@ -135,7 +135,7 @@ redistribute routes to the interface from which they were learned, by
 forcing the metric to infinity.
 Both these behaviours can resolve routing loops when a router goes down.
 The default is
-.Ic none .
+.Ic poisoned .
 .Pp
 .It Xo
 .Ic triggered-updates

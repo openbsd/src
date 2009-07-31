@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2009/03/31 21:03:49 tobias Exp $ */
+/*	$OpenBSD: parse.y,v 1.25 2009/07/31 16:04:34 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -159,7 +159,7 @@ conf_main	: SPLIT_HORIZON STRING {
 			    OPT_SPLIT_POISONED);
 			if (!strcmp($2, "none"))
 				/* nothing */ ;
-			else if (!strcmp($2, "default"))
+			else if (!strcmp($2, "simple"))
 				conf->options |= OPT_SPLIT_HORIZON;
 			else if (!strcmp($2, "poisoned"))
 				conf->options |= OPT_SPLIT_POISONED;
@@ -740,6 +740,7 @@ parse_config(char *filename, int opts)
 	defs->cost = DEFAULT_COST;
 	defs->auth_type = AUTH_NONE;
 	conf->opts = opts;
+	conf->options = OPT_SPLIT_POISONED;
 	SIMPLEQ_INIT(&conf->redist_list);
 
 	if ((file = pushfile(filename, !(conf->opts & RIPD_OPT_NOACTION))) == NULL) {
