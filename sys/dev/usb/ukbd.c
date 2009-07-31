@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.45 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.46 2009/07/31 11:01:48 blambert Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -537,7 +537,7 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		 * We avoid this bug by holding off decoding for 20 ms.
 		 */
 		sc->sc_data = *ud;
-		timeout_add(&sc->sc_delay, hz / 50);
+		timeout_add_msec(&sc->sc_delay, 20);
 #ifdef DDB
 	} else if (sc->sc_console_keyboard && !sc->sc_polling) {
 		/*
