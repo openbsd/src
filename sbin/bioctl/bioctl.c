@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.80 2009/06/18 08:05:51 halex Exp $       */
+/* $OpenBSD: bioctl.c,v 1.81 2009/07/31 16:12:10 jsing Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -562,10 +562,12 @@ bio_setstate(char *arg, int status, char *devicename)
 	bs.bs_cookie = bl.bl_cookie;
 	bs.bs_status = status;
 
-	/* make sure user supplied a sd device */
-	bs.bs_volid = bio_getvolbyname(devicename);
-	if (bs.bs_volid == -1)
-		errx(1, "invalid device %s", devicename);
+	if (status != BIOC_SSHOTSPARE) {
+		/* make sure user supplied a sd device */
+		bs.bs_volid = bio_getvolbyname(devicename);
+		if (bs.bs_volid == -1)
+			errx(1, "invalid device %s", devicename);
+	}
 
 	rv = ioctl(devh, BIOCSETSTATE, &bs);
 	if (rv == -1)
