@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.3 2009/08/01 12:47:02 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -110,6 +110,7 @@ const char * const nbr_action_names[] = {
 int
 nbr_fsm(struct nbr *nbr, enum nbr_event event)
 {
+	struct timeval	now;
 	int		old_state;
 	int		new_state = 0;
 	int		i, ret = 0;
@@ -196,6 +197,11 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		    nbr_action_names[nbr_fsm_tbl[i].action],
 		    inet_ntoa(nbr->id), nbr_state_name(old_state),
 		    nbr_state_name(nbr->state));
+
+		if (nbr->state == NBR_STA_OPER) {
+			gettimeofday(&now, NULL);
+			nbr->uptime = now.tv_sec;
+		}
 	}
 
 	return (ret);
@@ -747,6 +753,7 @@ nbr_to_ctl(struct nbr *nbr)
 	memcpy(&nctl.addr, &nbr->addr, sizeof(nctl.addr));
 
 	nctl.nbr_state = nbr->state;
+	nctl.iface_state = nbr->iface->state;
 
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&nbr->inactivity_timer, &tv)) {
@@ -757,11 +764,11 @@ nbr_to_ctl(struct nbr *nbr)
 			nctl.dead_timer = res.tv_sec;
 	} else
 		nctl.dead_timer = 0;
-/*
-	if (nbr->state == NBR_STA_FULL) {
+
+	if (nbr->state == NBR_STA_OPER) {
 		nctl.uptime = now.tv_sec - nbr->uptime;
 	} else
 		nctl.uptime = 0;
-*/
+
 	return (&nctl);
 }
