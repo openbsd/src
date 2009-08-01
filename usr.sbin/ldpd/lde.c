@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.4 2009/07/08 18:59:29 michele Exp $ */
+/*	$OpenBSD: lde.c,v 1.5 2009/08/01 13:30:55 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -496,7 +496,7 @@ void
 lde_send_labelrequest(u_int32_t peerid, struct map *map)
 {
 	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD, peerid, 0,
-	     -1, map, sizeof(map));
+	     -1, map, sizeof(*map));
 	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD_END, peerid, 0,
 	     -1, NULL, 0);
 }
@@ -505,7 +505,7 @@ void
 lde_send_labelmapping(u_int32_t peerid, struct map *map)
 {
 	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD, peerid, 0,
-	     -1, map, sizeof(map));
+	     -1, map, sizeof(*map));
 	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD_END, peerid, 0,
 	     -1, NULL, 0);
 }
@@ -514,7 +514,7 @@ void
 lde_send_labelrelease(u_int32_t peerid, struct map *map)
 {
 	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD, peerid, 0,
-	    -1, map, sizeof(map));
+	    -1, map, sizeof(*map));
 	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD_END, peerid, 0,
 	    -1, NULL, 0);
 }
