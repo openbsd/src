@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.4 2009/07/26 12:40:45 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.5 2009/08/01 08:32:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -67,8 +67,9 @@ mio_open_rmidi(const char *str, unsigned mode, int nbio)
 		flags = O_RDWR;
 	else 
 		flags = (mode & MIO_OUT) ? O_WRONLY : O_RDONLY;
-
-	while ((fd = open(path, flags | O_NONBLOCK)) < 0) {
+	if (nbio)
+		flags |= O_NONBLOCK;
+	while ((fd = open(path, flags)) < 0) {
 		if (errno == EINTR)
 			continue;
 		DPERROR(path);
