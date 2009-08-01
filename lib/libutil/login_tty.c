@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tty.c,v 1.7 2005/08/02 21:46:23 espie Exp $	*/
+/*	$OpenBSD: login_tty.c,v 1.8 2009/08/01 17:11:21 millert Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,10 +40,10 @@ login_tty(int fd)
 	(void) setsid();
 	if (ioctl(fd, TIOCSCTTY, (char *)NULL) == -1)
 		return (-1);
-	(void) dup2(fd, 0);
-	(void) dup2(fd, 1);
-	(void) dup2(fd, 2);
-	if (fd > 2)
+	(void) dup2(fd, STDIN_FILENO);
+	(void) dup2(fd, STDOUT_FILENO);
+	(void) dup2(fd, STDERR_FILENO);
+	if (fd > STDERR_FILENO)
 		(void) close(fd);
 	return (0);
 }
