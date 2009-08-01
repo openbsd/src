@@ -7274,7 +7274,6 @@ elif test x$gcc_cv_as != x; then
 	fi
 	rm -f conftest.s conftest.o conftest.nm1 conftest.nm2
 
-    if false; then
  	# GNU LD versions before 2.12.1 have buggy support for STV_HIDDEN.
 	# This is irritatingly difficult to feature test for.  Look for 
 	# the date string after the version number.
@@ -7308,7 +7307,6 @@ elif test x$gcc_cv_as != x; then
 		# non-GNU linkers don't seem to support .hidden yet
 		gcc_cv_as_hidden=no
 	fi
-    fi
 fi
 if test x"$gcc_cv_as_hidden" = xyes; then
 	cat >> confdefs.h <<\EOF
