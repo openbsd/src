@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.108 2009/07/19 19:06:02 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.109 2009/08/01 15:33:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -850,11 +850,7 @@ session_read_data(struct session *s, char *line, size_t nread)
 	if (! (s->s_flags & F_8BITMIME)) {
 		for (i = 0; i < len; ++i)
 			if (line[i] & 0x80)
-				break;
-		if (i != len) {
-			s->s_msg.status |= S_MESSAGE_PERMFAILURE;
-			return;
-		}
+				line[i] = line[i] & 0x7f;
 	}
 }
 
