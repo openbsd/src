@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.55 2009/07/13 19:14:29 michele Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.56 2009/08/01 09:08:21 blambert Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ extern struct socket *ip_rsvpd;
 extern int rsvp_on;
 #endif /* RSVP_ISI */
 
-#define		EXPIRE_TIMEOUT	(hz / 4)	/* 4x / second */
+#define		EXPIRE_TIMEOUT	250		/* 4x / second */
 #define		UPCALL_EXPIRE	6		/* number of timeouts */
 struct timeout	expire_upcalls_ch;
 
@@ -238,7 +238,7 @@ struct ip multicast_encap_iphdr = {
 #define BW_METER_BUCKETS	1024
 static struct bw_meter *bw_meter_timers[BW_METER_BUCKETS];
 struct timeout bw_meter_ch;
-#define BW_METER_PERIOD (hz)		/* periodical handling of bw meters */
+#define BW_METER_PERIOD 1000	/* periodical handling of bw meters (in ms) */
 
 /*
  * Pending upcalls are stored in a vector which is flushed when
@@ -247,7 +247,7 @@ struct timeout bw_meter_ch;
 static struct bw_upcall	bw_upcalls[BW_UPCALLS_MAX];
 static u_int	bw_upcalls_n; /* # of pending upcalls */
 struct timeout	bw_upcalls_ch;
-#define BW_UPCALLS_PERIOD (hz)		/* periodical flush of bw upcalls */
+#define BW_UPCALLS_PERIOD 1000	/* periodical flush of bw upcalls (in ms) */
 
 #ifdef PIM
 struct pimstat pimstat;
@@ -567,13 +567,13 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	pim_assert = 0;
 
 	timeout_set(&expire_upcalls_ch, expire_upcalls, NULL);
-	timeout_add(&expire_upcalls_ch, EXPIRE_TIMEOUT);
+	timeout_add_msec(&expire_upcalls_ch, EXPIRE_TIMEOUT);
 
 	timeout_set(&bw_upcalls_ch, expire_bw_upcalls_send, NULL);
-	timeout_add(&bw_upcalls_ch, BW_UPCALLS_PERIOD);
+	timeout_add_msec(&bw_upcalls_ch, BW_UPCALLS_PERIOD);
 
 	timeout_set(&bw_meter_ch, expire_bw_meter_process, NULL);
-	timeout_add(&bw_meter_ch, BW_METER_PERIOD);
+	timeout_add_msec(&bw_meter_ch, BW_METER_PERIOD);
 
 	if (mrtdebug)
 		log(LOG_DEBUG, "ip_mrouter_init\n");
@@ -1597,7 +1597,7 @@ expire_upcalls(void *v)
 	}
 
 	splx(s);
-	timeout_add(&expire_upcalls_ch, EXPIRE_TIMEOUT);
+	timeout_add_msec(&expire_upcalls_ch, EXPIRE_TIMEOUT);
 }
 
 /*
@@ -2671,7 +2671,7 @@ expire_bw_upcalls_send(void *unused)
 	bw_upcalls_send();
 	splx(s);
 
-	timeout_add(&bw_upcalls_ch, BW_UPCALLS_PERIOD);
+	timeout_add_msec(&bw_upcalls_ch, BW_UPCALLS_PERIOD);
 }
 
 /*
@@ -2684,7 +2684,7 @@ expire_bw_meter_process(void *unused)
 	if (mrt_api_config & MRT_MFC_BW_UPCALL)
 		bw_meter_process();
 
-	timeout_add(&bw_meter_ch, BW_METER_PERIOD);
+	timeout_add_msec(&bw_meter_ch, BW_METER_PERIOD);
 }
 
 /*
