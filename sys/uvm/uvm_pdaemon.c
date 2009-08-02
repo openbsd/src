@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.52 2009/07/22 21:05:37 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.53 2009/08/02 16:28:40 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -239,11 +239,13 @@ uvm_pageout(void *arg)
 		    uvmexp.inactarg);
 
 		/*
-		 * scan if needed
+		 * get pages from the buffer cache, or scan if needed
 		 */
-		if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg ||
-		    uvmexp.inactive < uvmexp.inactarg) {
+		if (uvmexp.inactive < uvmexp.inactarg)
 			uvmpd_scan();
+		else if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg) {
+			if (bufbackoff() == -1)
+				uvmpd_scan();
 		}
 
 		/*

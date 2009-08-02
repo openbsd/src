@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2009/06/15 17:01:25 beck Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 2009/08/02 16:28:39 beck Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -405,12 +405,6 @@ cpu_startup(void)
 	 */
 	if (bufpages == 0)
 		bufpages = physmem * bufcachepercent / 100;
-
-	/* Restrict to at most 25% filled kvm */
-	if (bufpages >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / PAGE_SIZE / 4) 
-		bufpages = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-		    PAGE_SIZE / 4;
 
 printf("here3\n");
 	/*
