@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.26 2009/07/29 18:14:57 blambert Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.27 2009/08/02 10:38:34 miod Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -798,8 +798,8 @@ urtw_activate(struct device *self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-	case (DVACT_DEACTIVATE):
+		break;
+	case DVACT_DEACTIVATE:
 		break;
 	}
 

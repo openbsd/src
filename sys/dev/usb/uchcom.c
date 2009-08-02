@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.7 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.8 2009/08/02 10:38:34 miod Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -347,7 +347,6 @@ uchcom_activate(struct device *self, enum devact act)
 
 	switch (act) {
 	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
 		break;
 	case DVACT_DEACTIVATE:
 		uchcom_close_intr_pipe(sc);

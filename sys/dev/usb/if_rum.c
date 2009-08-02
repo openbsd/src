@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.85 2009/07/10 07:40:04 blambert Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.86 2009/08/02 10:38:34 miod Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -2286,7 +2286,7 @@ rum_activate(struct device *self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
+		break;
 
 	case DVACT_DEACTIVATE:
 		break;
