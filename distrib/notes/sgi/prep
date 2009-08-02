@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.13 2009/05/30 05:00:37 miod Exp $
+dnl	$OpenBSD: prep,v 1.14 2009/08/02 17:08:13 jasper Exp $
 Before you install your system, you should identify your system family and
 familiarize yourself with the ARCBios setup and how to run programs from
 the Command monitor prompt.
@@ -76,4 +76,7 @@ Setting the environment:
 
     Also, by default it tries to boot a kernel named ``/unix''. To
     make it boot OpenBSD, set ``OSLoadFilename'' to ``/bsd''.
+
+    To enable automatic booting of OpenBSD once the machine has passed its
+    diagnostic tests, change the value of ``AutoLoad'' to ``Yes''.
 
