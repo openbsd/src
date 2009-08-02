@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.4 2009/07/08 18:59:29 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.5 2009/08/02 16:19:17 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -111,12 +111,20 @@ rt_dump(pid_t pid)
 	static struct ctl_rt	 rtctl;
 
 	RB_FOREACH(r, rt_tree, &rt) {
+		if (!r->present)
+			continue;
+
 		rtctl.prefix.s_addr = r->prefix.s_addr;
 		rtctl.prefixlen = r->prefixlen;
 		rtctl.nexthop.s_addr = r->nexthop.s_addr;
 		rtctl.flags = r->flags;
 		rtctl.local_label = r->local_label;
 		rtctl.remote_label = r->remote_label;
+
+		if (rtctl.nexthop.s_addr == htonl(INADDR_LOOPBACK))
+			rtctl.connected = 1;
+		else
+			rtctl.connected = 0;
 
 		lde_imsg_compose_ldpe(IMSG_CTL_SHOW_LIB, 0, pid, &rtctl,
 		    sizeof(rtctl));

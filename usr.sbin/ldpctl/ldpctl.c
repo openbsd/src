@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.3 2009/08/01 12:47:02 michele Exp $
+/*	$OpenBSD: ldpctl.c,v 1.4 2009/08/02 16:19:17 michele Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -308,7 +308,7 @@ int
 show_lib_msg(struct imsg *imsg)
 {
 	struct ctl_rt	*rt;
-	char		*dstnet;
+	char		*dstnet, *remote;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_LIB:
@@ -317,10 +317,19 @@ show_lib_msg(struct imsg *imsg)
 		    rt->prefixlen) == -1)
 			err(1, NULL);
 
-		printf("%-20s %-17s %-17u %u\n", dstnet,
+		if (rt->connected) {
+			if (asprintf(&remote, "-") == -1)
+				err(1, NULL);
+		} else {
+			if (asprintf(&remote, "%u", (ntohl(rt->remote_label) >> MPLS_LABEL_OFFSET)) == -1)
+				err(1, NULL);
+		}
+
+		printf("%-20s %-17s %-17u %s\n", dstnet,
 		    inet_ntoa(rt->nexthop),
 		    (ntohl(rt->local_label) >> MPLS_LABEL_OFFSET),
-		    (ntohl(rt->remote_label) >> MPLS_LABEL_OFFSET));
+		    remote);
+		free(remote);
 		free(dstnet);
 
 		break;
