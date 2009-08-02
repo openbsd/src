@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.27 2008/05/22 19:23:04 mk Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.28 2009/08/02 17:20:08 blambert Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -684,7 +684,7 @@ pcic_poll_intr(arg)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			pcic_intr_socket(&sc->handle[i]);
 
-	timeout_add(&sc->poll_timeout, hz / 2);
+	timeout_add_msec(&sc->poll_timeout, 500);
 
 	splx(s);
 }
@@ -846,7 +846,7 @@ pcic_power(why, arg)
 		while ((pe = SIMPLEQ_FIRST(&h->events)))
 			pcic_event_process(h, pe);
 
-		timeout_add(&sc->poll_timeout, hz / 2);
+		timeout_add_msec(&sc->poll_timeout, 500);
 	}
 }
 
