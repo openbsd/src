@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.296 2009/06/26 02:46:27 kevlo Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.297 2009/08/02 09:48:53 sthen Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2732,7 +2732,7 @@ piix3_4_setup_channel(struct channel_softc *chp)
 			} else {
 				sidetim |= piix_setup_sidetim_timings(
 					drvp->DMA_mode, 1, channel);
-				idetim =PIIX_IDETIM_SET(idetim,
+				idetim = PIIX_IDETIM_SET(idetim,
 				    PIIX_IDETIM_SITRE, channel);
 			}
 		}
@@ -2746,7 +2746,7 @@ pio:		/* use PIO mode */
 		} else {
 			sidetim |= piix_setup_sidetim_timings(
 				drvp->PIO_mode, 0, channel);
-			idetim =PIIX_IDETIM_SET(idetim,
+			idetim = PIIX_IDETIM_SET(idetim,
 			    PIIX_IDETIM_SITRE, channel);
 		}
 	}
