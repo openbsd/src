@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.97 2009/06/04 06:57:27 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.98 2009/08/02 19:50:16 mpf Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -275,8 +275,11 @@ tun_lookup(int unit)
 int
 tun_switch(struct tun_softc *tp, int flags)
 {
-	struct ifnet	*ifp = &tp->tun_if;
-	int		 unit, open, r, s;
+	struct ifnet		*ifp = &tp->tun_if;
+	int			 unit, open, r, s;
+	struct ifg_list		*ifgl;
+	u_int			ifgr_len;
+	char			*ifgrpnames, *p;
 
 	if ((tp->tun_flags & TUN_LAYER2) == (flags & TUN_LAYER2))
 		return (0);
@@ -287,22 +290,49 @@ tun_switch(struct tun_softc *tp, int flags)
 	TUNDEBUG(("%s: switching to layer %d\n", ifp->if_xname,
 		    flags & TUN_LAYER2 ? 2 : 3));
 
+	/* remember joined groups */
+	ifgr_len = 0;
+	ifgrpnames = NULL;
+	TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next)
+		ifgr_len += IFNAMSIZ;
+	if (ifgr_len)
+		ifgrpnames = malloc(ifgr_len + 1, M_TEMP, M_NOWAIT|M_ZERO);
+	if (ifgrpnames) {
+		p = ifgrpnames;
+		TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next) {
+			strlcpy(p, ifgl->ifgl_group->ifg_group, IFNAMSIZ);
+			p += IFNAMSIZ;
+		}
+	}
+
 	/* remove old device and ... */
 	tun_clone_destroy(ifp);
 	/* attach new interface */
 	r = tun_create(&tun_cloner, unit, flags);
 
+	if (r == 0) {
+		if ((tp = tun_lookup(unit)) == NULL) {
+			/* this should never fail */
+			r = ENXIO;
+			goto abort;
+		}
+
+		/* rejoin groups */
+		ifp = &tp->tun_if;
+		for (p = ifgrpnames; p && *p; p += IFNAMSIZ)
+			if_addgroup(ifp, p);
+	}
 	if (open && r == 0) {
 		/* already opened before ifconfig tunX link0 */
-		if ((tp = tun_lookup(unit)) == NULL)
-			/* this should never fail */
-			return (ENXIO);
 		s = splnet();
 		tp->tun_flags |= open;
 		tun_link_state(tp);
 		splx(s);
 		TUNDEBUG(("%s: already open\n", tp->tun_if.if_xname));
 	}
+ abort:
+	if (ifgrpnames)
+		free(ifgrpnames, M_TEMP);
 	return (r);
 }
 
