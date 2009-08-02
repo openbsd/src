@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1486 2009/07/29 17:53:28 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1487 2009/08/02 09:43:54 sthen Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8800,6 +8800,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Q45 Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_PCIE,
+	    "Q45 PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_IGD_1,
 	    "Q45 Video",
 	},
@@ -8810,6 +8814,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_PT_IDER,
 	    "Q45 PT IDER",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_KT,
+	    "Q45 KT",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G45_HB,
