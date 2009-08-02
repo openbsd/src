@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.89 2009/07/25 18:49:54 krw Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.90 2009/08/02 19:33:01 blambert Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7429,7 +7429,7 @@ bwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			/* start automatic rate control timer */
 			if (ic->ic_fixed_rate == -1)
-				timeout_add(&sc->sc_amrr_ch, hz / 2);
+				timeout_add_msec(&sc->sc_amrr_ch, 500);
 		}
 	} else
 		bwi_set_bssid(sc, bwi_zero_addr);
@@ -7484,7 +7484,7 @@ bwi_amrr_timeout(void *arg)
 		ieee80211_iterate_nodes(ic, bwi_iter_func, sc);
 #endif
 
-	timeout_add(&sc->sc_amrr_ch, hz / 2);
+	timeout_add_msec(&sc->sc_amrr_ch, 500);
 }
 
 void
