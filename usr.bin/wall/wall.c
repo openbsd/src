@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.23 2009/08/03 20:22:39 bluhm Exp $	*/
+/*	$OpenBSD: wall.c,v 1.24 2009/08/03 20:30:03 bluhm Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: wall.c,v 1.23 2009/08/03 20:22:39 bluhm Exp $";
+static const char rcsid[] = "$OpenBSD: wall.c,v 1.24 2009/08/03 20:30:03 bluhm Exp $";
 #endif /* not lint */
 
 /*
@@ -104,7 +104,6 @@ main(int argc, char **argv)
 				nobanner = 1;
 			break;
 		case 'g':
-			grp = getgrnam(optarg);
 			if ((grp = getgrnam(optarg)) == NULL)
 				errx(1, "unknown group `%s'", optarg);
 			addgroup(grp, optarg);
