@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.57 2007/04/02 07:01:33 jmc Exp $	*/
+/*	$OpenBSD: login.c,v 1.58 2009/08/03 21:43:07 martynas Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: login.c,v 1.57 2007/04/02 07:01:33 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: login.c,v 1.58 2009/08/03 21:43:07 martynas Exp $";
 #endif /* not lint */
 
 /*
@@ -600,7 +600,7 @@ failed:
 	}
 	/* Note: setusercontext(3) will set PATH */
 	if (setenv("HOME", pwd->pw_dir, 1) == -1 ||
-	    setenv("SHELL", shell, 1) == -1) {
+	    setenv("SHELL", pwd->pw_shell, 1) == -1) {
 		warn("unable to setenv()");
 		quickexit(1);
 	}
