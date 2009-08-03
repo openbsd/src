@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.38 2008/12/15 17:01:54 damien Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.39 2009/08/03 09:33:10 blambert Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -812,7 +812,7 @@ uath_task(void *arg)
 			    sc->sc_dev.dv_xname);
 			break;
 		}
-		timeout_add(&sc->scan_to, hz / 4);
+		timeout_add_msec(&sc->scan_to, 250);
 		break;
 
 	case IEEE80211_S_AUTH:

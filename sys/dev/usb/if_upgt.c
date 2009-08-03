@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.45 2009/08/02 10:38:34 miod Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.46 2009/08/03 09:33:10 blambert Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1363,7 +1363,7 @@ upgt_newstate_task(void *arg)
 
 		channel = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 		upgt_set_channel(sc, channel);
-		timeout_add(&sc->scan_to, hz / 5);
+		timeout_add_msec(&sc->scan_to, 200);
 		break;
 	case IEEE80211_S_AUTH:
 		DPRINTF(1, "%s: newstate is IEEE80211_S_AUTH\n",
