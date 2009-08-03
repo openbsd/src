@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.92 2009/07/18 14:42:47 sthen Exp $	*/
+/*	$OpenBSD: gem.c,v 1.93 2009/08/03 11:09:10 sthen Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -780,8 +780,8 @@ gem_init(struct ifnet *ifp)
 	 */
 	bus_space_write_4(t, h, GEM_RX_PAUSE_THRESH,
 	    (3 * sc->sc_rxfifosize / 256) |
-	    (   (sc->sc_rxfifosize / 256) << 12));
-	bus_space_write_4(t, h, GEM_RX_BLANKING, (6<<12)|6);
+	    ((sc->sc_rxfifosize / 256) << 12));
+	bus_space_write_4(t, h, GEM_RX_BLANKING, (6 << 12) | 6);
 
 	/* step 11. Configure Media */
 	mii_mediachg(&sc->sc_mii);
@@ -821,21 +821,19 @@ gem_init_regs(struct gem_softc *sc)
 	/* These regs are not cleared on reset */
 	sc->sc_inited = 0;
 	if (!sc->sc_inited) {
-
-		/* Wooo.  Magic values. */
-		bus_space_write_4(t, h, GEM_MAC_IPG0, 0);
-		bus_space_write_4(t, h, GEM_MAC_IPG1, 8);
-		bus_space_write_4(t, h, GEM_MAC_IPG2, 4);
+		/* Load recommended values */
+		bus_space_write_4(t, h, GEM_MAC_IPG0, 0x00);
+		bus_space_write_4(t, h, GEM_MAC_IPG1, 0x08);
+		bus_space_write_4(t, h, GEM_MAC_IPG2, 0x04);
 
 		bus_space_write_4(t, h, GEM_MAC_MAC_MIN_FRAME, ETHER_MIN_LEN);
 		/* Max frame and max burst size */
 		bus_space_write_4(t, h, GEM_MAC_MAC_MAX_FRAME,
 		    (ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN) | (0x2000 << 16));
 
-		bus_space_write_4(t, h, GEM_MAC_PREAMBLE_LEN, 0x7);
-		bus_space_write_4(t, h, GEM_MAC_JAM_SIZE, 0x4);
+		bus_space_write_4(t, h, GEM_MAC_PREAMBLE_LEN, 0x07);
+		bus_space_write_4(t, h, GEM_MAC_JAM_SIZE, 0x04);
 		bus_space_write_4(t, h, GEM_MAC_ATTEMPT_LIMIT, 0x10);
-		/* Dunno.... */
 		bus_space_write_4(t, h, GEM_MAC_CONTROL_TYPE, 0x8088);
 		bus_space_write_4(t, h, GEM_MAC_RANDOM_SEED,
 		    ((sc->sc_arpcom.ac_enaddr[5]<<8)|sc->sc_arpcom.ac_enaddr[4])&0x3ff);
@@ -844,6 +842,7 @@ gem_init_regs(struct gem_softc *sc)
 		bus_space_write_4(t, h, GEM_MAC_ADDR3, 0);
 		bus_space_write_4(t, h, GEM_MAC_ADDR4, 0);
 		bus_space_write_4(t, h, GEM_MAC_ADDR5, 0);
+
 		/* MAC control addr set to 0:1:c2:0:1:80 */
 		bus_space_write_4(t, h, GEM_MAC_ADDR6, 0x0001);
 		bus_space_write_4(t, h, GEM_MAC_ADDR7, 0xc200);
