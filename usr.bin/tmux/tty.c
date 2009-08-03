@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.16 2009/07/27 11:33:21 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.17 2009/08/03 14:10:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,7 +57,7 @@ tty_init(struct tty *tty, char *path, char *term)
 }
 
 int
-tty_open(struct tty *tty, char **cause)
+tty_open(struct tty *tty, const char *overrides, char **cause)
 {
 	int		 mode;
 
@@ -79,7 +79,8 @@ tty_open(struct tty *tty, char **cause)
 	else
 		tty->log_fd = -1;
 
-	if ((tty->term = tty_term_find(tty->termname, tty->fd, cause)) == NULL)
+	tty->term = tty_term_find(tty->termname, tty->fd, overrides, cause);
+	if (tty->term == NULL)
 		goto error;
 
 	tty->in = buffer_create(BUFSIZ);

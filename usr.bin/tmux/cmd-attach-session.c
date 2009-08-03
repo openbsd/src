@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.6 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.7 2009/08/03 14:10:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,7 +43,7 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct cmd_target_data	*data = self->data;
 	struct session		*s;
 	struct client		*c;
-	char			*cause;
+	char			*overrides, *cause;
 	u_int			 i;
 
 	if (ARRAY_LENGTH(&sessions) == 0) {
@@ -80,7 +80,9 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 			return (-1);
 		}
 
-		if (tty_open(&ctx->cmdclient->tty, &cause) != 0) {
+		overrides =
+		    options_get_string(&s->options, "terminal-overrides");
+		if (tty_open(&ctx->cmdclient->tty, overrides, &cause) != 0) {
 			ctx->error(ctx, "terminal open failed: %s", cause);
 			xfree(cause);
 			return (-1);

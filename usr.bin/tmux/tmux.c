@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.24 2009/07/30 07:04:50 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.25 2009/08/03 14:10:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -367,6 +367,8 @@ main(int argc, char **argv)
 		options_set_number(&global_s_options, "status-utf8", 1);
 	else
 		options_set_number(&global_s_options, "status-utf8", 0);
+	options_set_string(&global_s_options,
+	    "terminal-overrides", "*88col*:colors=88,*256col*:colors=256");
 	options_set_number(&global_s_options, "visual-activity", 0);
 	options_set_number(&global_s_options, "visual-bell", 0);
 	options_set_number(&global_s_options, "visual-content", 0);

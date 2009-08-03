@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.4 2009/07/13 18:49:36 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.5 2009/08/03 14:10:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -215,6 +215,9 @@ cmd_string_string(const char *s, size_t *p, char endch, int esc)
                         switch (ch = cmd_string_getc(s, p)) {
 			case EOF:
 				goto error;
+			case 'e':
+				ch = '\033';
+				break;
                         case 'r':
                                 ch = '\r';
                                 break;
