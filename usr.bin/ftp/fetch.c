@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.93 2009/07/27 23:11:26 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.94 2009/08/03 21:34:54 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -161,14 +161,14 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 			}
 			if (isftpurl)
 				goto noftpautologin;
-			warnx("Invalid URL (no `/' after host): %s", origline);
+			warnx("No `/' after host (use -o): %s", origline);
 			goto cleanup_url_get;
 		}
 		*path++ = '\0';
 		if (EMPTYSTRING(path) && !outfile) {
 			if (isftpurl)
 				goto noftpautologin;
-			warnx("Invalid URL (no file after host): %s", origline);
+			warnx("No filename after host (use -o): %s", origline);
 			goto cleanup_url_get;
 		}
 	}
@@ -186,7 +186,7 @@ noslash:
 	if (EMPTYSTRING(savefile)) {
 		if (isftpurl)
 			goto noftpautologin;
-		warnx("Invalid URL (no file after directory): %s", origline);
+		warnx("No filename after directory (use -o): %s", origline);
 		goto cleanup_url_get;
 	}
 
