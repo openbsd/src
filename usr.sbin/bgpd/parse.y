@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.232 2009/07/20 14:56:20 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.233 2009/08/03 13:14:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -884,7 +884,9 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.announce_type = ANNOUNCE_SELF;
 		}
 		| ANNOUNCE STRING {
-			if (!strcmp($2, "none"))
+			if (!strcmp($2, "self"))
+				curpeer->conf.announce_type = ANNOUNCE_SELF;
+			else if (!strcmp($2, "none"))
 				curpeer->conf.announce_type = ANNOUNCE_NONE;
 			else if (!strcmp($2, "all"))
 				curpeer->conf.announce_type = ANNOUNCE_ALL;
