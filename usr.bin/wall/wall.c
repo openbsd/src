@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.22 2004/02/21 00:45:34 tom Exp $	*/
+/*	$OpenBSD: wall.c,v 1.23 2009/08/03 20:22:39 bluhm Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: wall.c,v 1.22 2004/02/21 00:45:34 tom Exp $";
+static const char rcsid[] = "$OpenBSD: wall.c,v 1.23 2009/08/03 20:22:39 bluhm Exp $";
 #endif /* not lint */
 
 /*
@@ -254,7 +254,7 @@ addgroup(struct group *grp, char *name)
 		err(1, NULL);
 	g->gid = grp->gr_gid;
 	g->name = name;
-	g->mem = (char **)malloc(i + 1);
+	g->mem = (char **)calloc(i + 1, sizeof(char *));
 	if (g->mem == NULL)
 		err(1, NULL);
 	for (i = 0; grp->gr_mem[i] != NULL; i++) {
