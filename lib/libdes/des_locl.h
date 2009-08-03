@@ -169,7 +169,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 #define RAND
 #endif
 
-#ifdef linux
+#if defined(linux) || defined(__OpenBSD__)
 #undef RAND
 #endif
 
