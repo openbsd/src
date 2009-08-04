@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.53 2009/02/26 17:21:56 oga Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.54 2009/08/04 18:26:48 jmc Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -98,7 +98,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-AaCdeHLmps] [-f devname] [-S sockname] [-t seconds]\n",
+	    "usage: %s [-AaCdHLs] [-f devname] [-S sockname] [-t seconds]\n",
 	    __progname);
 	exit(1);
 }
@@ -515,10 +515,7 @@ main(int argc, char *argv[])
 	const char *fname = apmdev;
 	int ctl_fd, sock_fd, ch, suspends, standbys, resumes;
 	int statonly = 0;
-	int enableonly = 0;
-	int pctonly = 0;
 	int powerstatus = 0, powerbak = 0, powerchange = 0;
-	int messages = 0;
 	int noacsleep = 0;
 	struct timespec ts = {TIMO, 0}, sts = {0, 0};
 	struct apm_power_info pinfo;
@@ -530,7 +527,7 @@ main(int argc, char *argv[])
 	int ncpu;
 	size_t ncpu_sz = sizeof(ncpu);
 
-	while ((ch = getopt(argc, argv, "aACdHLsepmf:t:S:")) != -1)
+	while ((ch = getopt(argc, argv, "aACdHLsf:t:S:")) != -1)
 		switch(ch) {
 		case 'a':
 			noacsleep = 1;
@@ -551,12 +548,6 @@ main(int argc, char *argv[])
 			break;
 		case 's':	/* status only */
 			statonly = 1;
-			break;
-		case 'e':
-			enableonly = 1;
-			break;
-		case 'p':
-			pctonly = 1;
 			break;
 		case 'A':
 			if (doperf != PERF_NONE)
@@ -579,9 +570,6 @@ main(int argc, char *argv[])
 				usage();
 			doperf = PERF_MANUAL;
 			setperf(PERFMAX);
-			break;
-		case 'm':
-			messages = 1;
 			break;
 		case '?':
 		default:
@@ -625,18 +613,7 @@ main(int argc, char *argv[])
 	if (statonly)
 		exit(0);
 
-	if (enableonly) {
-		set_driver_messages(ctl_fd, APM_PRINT_ON);
-		exit(0);
-	}
-
-	if (pctonly) {
-		set_driver_messages(ctl_fd, APM_PRINT_PCT);
-		exit(0);
-	}
-
-	if (!messages)
-		set_driver_messages(ctl_fd, APM_PRINT_OFF);
+	set_driver_messages(ctl_fd, APM_PRINT_OFF);
 
 	kq = kqueue();
 	if (kq <= 0)

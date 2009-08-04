@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.38 2007/12/05 19:49:34 jmc Exp $
+.\"	$OpenBSD: apmd.8,v 1.39 2009/08/04 18:26:48 jmc Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2007 $
+.Dd $Mdocdate: August 4 2009 $
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Nd Advanced Power Management daemon
 .Sh SYNOPSIS
 .Nm apmd
-.Op Fl AaCdeHLmps
+.Op Fl AaCdHLs
 .Op Fl f Ar devname
 .Op Fl S Ar sockname
 .Op Fl t Ar seconds
@@ -54,7 +54,9 @@ syncs the buffer cache to disk and initiates the requested state.
 When resuming after suspend or standby,
 .Nm
 runs the appropriate configuration program (if one exists).
-For power status change events,
+.Pp
+When the power status changes
+(battery is connected or disconnected)
 .Nm
 fetches the current status and reports it via
 .Xr syslog 3
@@ -102,11 +104,6 @@ as much as possible to reduce heat, noise, and power consumption.
 enters debug mode, logging to facility
 .Dv LOG_LOCAL1 ,
 and stays in the foreground on the controlling terminal.
-.It Fl e
-Re-enable APM driver power status messages.
-.Nm
-exits immediately after setting this option.
-Use of this flag unconditionally enables power status messages.
 .It Fl f Ar devname
 Specify an alternate device file name,
 .Ar devname .
@@ -122,29 +119,6 @@ Start
 in manual performance adjustment mode, initialising
 .Va hw.setperf
 to 0.
-.It Fl m
-Do not disable power status messages issued by the APM driver.
-In normal operation these status messages are disabled as they are
-the same as the information collected by this daemon and reported via
-.Xr syslog 3 .
-.It Fl p
-Re-enable APM driver power status messages.
-.Nm
-exits immediately after setting this option.
-Use of this flag causes power status messages to be displayed only when the
-battery life expectancy changes.
-This minimizes message output
-for those devices that are constantly updating the estimated time
-remaining based upon current processor load.
-However, in no case
-will power status messages be displayed until the battery life
-goes below the percentage in the
-.Xr sysctl 8
-state variable
-.Va machdep.apmwarn .
-Setting
-.Va machdep.apmwarn
-to zero disables all warnings.
 .It Fl S Ar sockname
 Specify an alternate socket name,
 .Ar sockname .
@@ -179,12 +153,12 @@ in the requested state after running the configuration script and
 flushing the buffer cache.
 .Pp
 Actions can be configured for the following five transitions:
-.Cm suspend ,
-.Cm standby ,
-.Cm resume ,
-.Cm powerup
+suspend,
+standby,
+resume,
+powerup,
 and
-.Cm powerdown .
+powerdown.
 The suspend and standby actions are run prior to
 .Nm
 performing any other actions (such as disk syncs) and entering the new
@@ -205,32 +179,26 @@ Default device used to control the APM kernel driver.
 .It /etc/apm/powerup
 .It /etc/apm/powerdown
 These files contain the host's customized actions.
-Each file must be an executable binary or shell script suitable
-for execution by the
-.Xr execve 2
-function.
-If you wish to have the same program or script control all transitions,
-it may determine which transition is in progress by examining its
-.Va argv[0] ,
+Each file must be an executable binary or shell script.
+A single program or script can be used to control all transitions
+by examining its argument list,
 which is set to one of
-.Ar suspend ,
-.Ar standby ,
-.Ar resume ,
-.Ar powerup ,
+suspend,
+standby,
+resume,
+powerup,
 or
-.Ar powerdown .
+powerdown.
 .Pp
 .It /var/run/apmdev
 Default UNIX-domain socket used for communication with
 .Xr apm 8 .
 .El
 .Sh SEE ALSO
-.Xr execve 2 ,
 .Xr syslog 3 ,
 .Xr apm 4 ,
 .Xr apm 8 ,
-.Xr sysctl 8 ,
-.Xr syslogd 8
+.Xr sysctl 8
 .Pp
 Advanced Power Management (APM) BIOS Interface Specification
 (revision 1.2),
