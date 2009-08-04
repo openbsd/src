@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-window-option.c,v 1.9 2009/07/30 07:04:50 nicm Exp $ */
+/* $OpenBSD: cmd-set-window-option.c,v 1.10 2009/08/04 18:45:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,8 +31,8 @@ int	cmd_set_window_option_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_set_window_option_entry = {
 	"set-window-option", "setw",
-	CMD_OPTION_WINDOW_USAGE,
-	0, CMD_CHFLAG('g')|CMD_CHFLAG('u'),
+	"[-agu] " CMD_OPTION_WINDOW_USAGE,
+	0, CMD_CHFLAG('a')|CMD_CHFLAG('g')|CMD_CHFLAG('u'),
 	NULL,
 	cmd_option_parse,
 	cmd_set_window_option_exec,
@@ -134,7 +134,8 @@ cmd_set_window_option_exec(struct cmd *self, struct cmd_ctx *ctx)
 	} else {
 		switch (entry->type) {
 		case SET_OPTION_STRING:
-			set_option_string(ctx, oo, entry, data->value);
+			set_option_string(ctx, oo, entry,
+			    data->value, data->chflags & CMD_CHFLAG('a'));
 			break;
 		case SET_OPTION_NUMBER:
 			set_option_number(ctx, oo, entry, data->value);
