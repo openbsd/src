@@ -55,6 +55,7 @@
 #define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge */
 #define	PCI_VENDOR_TTTECH	0x0357		/* TTTech */
 #define	PCI_VENDOR_DYNALINK	0x0675		/* Dynalink */
+#define	PCI_VENDOR_RHINO	0x0b0b		/* Rhino Equipment */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
 #define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic */
 #define	PCI_VENDOR_ATI	0x1002		/* ATI */
@@ -4242,6 +4243,11 @@
 /* Rendition products */
 #define	PCI_PRODUCT_RENDITION_V1000	0x0001		/* Verite 1000 */
 #define	PCI_PRODUCT_RENDITION_V2x00	0x2000		/* Verite V2x00 */
+
+/* Rhino Equipment products */
+#define	PCI_PRODUCT_RHINO_R1T1	0x0105		/* T1/E1/J1 */
+#define	PCI_PRODUCT_RHINO_R2T1	0x0605		/* Dual T1/E1/J1 */
+#define	PCI_PRODUCT_RHINO_R4T1	0x0305		/* Quad T1/E1/J1 */
 
 /* Philips products */
 #define	PCI_PRODUCT_PHILIPS_OHCI	0x1561		/* ISP156x USB */

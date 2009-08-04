@@ -14060,6 +14060,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Verite V2x00",
 	},
 	{
+	    PCI_VENDOR_RHINO, PCI_PRODUCT_RHINO_R1T1,
+	    "T1/E1/J1",
+	},
+	{
+	    PCI_VENDOR_RHINO, PCI_PRODUCT_RHINO_R2T1,
+	    "Dual T1/E1/J1",
+	},
+	{
+	    PCI_VENDOR_RHINO, PCI_PRODUCT_RHINO_R4T1,
+	    "Quad T1/E1/J1",
+	},
+	{
 	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_OHCI,
 	    "ISP156x USB",
 	},
@@ -17750,6 +17762,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_DYNALINK,
 	    "Dynalink",
+	},
+	{
+	    PCI_VENDOR_RHINO,
+	    "Rhino Equipment",
 	},
 	{
 	    PCI_VENDOR_COMPAQ,
