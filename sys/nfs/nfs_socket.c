@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.92 2009/07/30 14:04:28 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.93 2009/08/04 17:12:39 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -739,9 +739,10 @@ nfs_reply(myrep)
 {
 	struct nfsreq *rep;
 	struct nfsmount *nmp = myrep->r_nmp;
-	struct mbuf *mrep, *nam, *md;
+	struct nfsm_info	info;
+	struct mbuf *nam;
 	u_int32_t rxid, *tl, t1;
-	caddr_t dpos, cp2;
+	caddr_t cp2;
 	int s, error;
 
 	/*
@@ -761,7 +762,7 @@ nfs_reply(myrep)
 		/*
 		 * Get the next Rpc reply off the socket
 		 */
-		error = nfs_receive(myrep, &nam, &mrep);
+		error = nfs_receive(myrep, &nam, &info.nmi_mrep);
 		nfs_rcvunlock(&nmp->nm_flag);
 		if (error) {
 
@@ -781,13 +782,13 @@ nfs_reply(myrep)
 		/*
 		 * Get the xid and check that it is an rpc reply
 		 */
-		md = mrep;
-		dpos = mtod(md, caddr_t);
+		info.nmi_md = info.nmi_mrep;
+		info.nmi_dpos = mtod(info.nmi_md, caddr_t);
 		nfsm_dissect(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 		rxid = *tl++;
 		if (*tl != rpc_reply) {
 			nfsstats.rpcinvalid++;
-			m_freem(mrep);
+			m_freem(info.nmi_mrep);
 nfsmout:
 			continue;
 		}
@@ -800,9 +801,9 @@ nfsmout:
 		TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 			if (rep->r_mrep == NULL && rxid == rep->r_xid) {
 				/* Found it.. */
-				rep->r_mrep = mrep;
-				rep->r_md = md;
-				rep->r_dpos = dpos;
+				rep->r_mrep = info.nmi_mrep;
+				rep->r_md = info.nmi_md;
+				rep->r_dpos = info.nmi_dpos;
 
 				/*
 				 * Update congestion window.
@@ -833,7 +834,7 @@ nfsmout:
 		 */
 		if (rep == 0) {
 			nfsstats.rpcunexpected++;
-			m_freem(mrep);
+			m_freem(info.nmi_mrep);
 		} else if (rep == myrep) {
 			if (rep->r_mrep == NULL)
 				panic("nfsreply nil");
@@ -853,28 +854,27 @@ nfsmout:
  * nb: always frees up mreq mbuf list
  */
 int
-nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
-	struct vnode *vp;
-	struct mbuf *mrest;
-	int procnum;
-	struct proc *procp;
-	struct ucred *cred;
-	struct mbuf **mrp;
-	struct mbuf **mdp;
-	caddr_t *dposp;
+nfs_request(struct vnode *vp, int procnum, struct nfsm_info *infop)
 {
 	struct mbuf *m;
+	u_int32_t *tl;
+	struct nfsmount *nmp;
+	struct timeval tv;
+	caddr_t cp2;
+	int t1, i, s, error = 0;
+	int trylater_delay;
 	struct nfsreq *rep;
 	int  mrest_len;
+	struct nfsm_info	info;
 
 	rep = pool_get(&nfsreqpl, PR_WAITOK);
 	rep->r_nmp = VFSTONFS(vp->v_mount);
 	rep->r_vp = vp;
-	rep->r_procp = procp;
+	rep->r_procp = infop->nmi_procp;
 	rep->r_procnum = procnum;
 
 	mrest_len = 0;
-	m = mrest;
+	m = infop->nmi_mreq;
 	while (m) {
 		mrest_len += m->m_len;
 		m = m->m_next;
@@ -882,31 +882,15 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 
 	/* empty mbuf for AUTH_UNIX header */
 	rep->r_mreq = m_gethdr(M_WAIT, MT_DATA);
-	rep->r_mreq->m_next = mrest;
+	rep->r_mreq->m_next = infop->nmi_mreq;
 	rep->r_mreq->m_pkthdr.len = mrest_len;
-
-	return (nfs_request1(rep, cred, mrp, mdp, dposp));
-}
-
-int
-nfs_request1(struct nfsreq *rep, struct ucred *cred, struct mbuf **mrp,
-    struct mbuf **mdp, caddr_t *dposp)
-{
-	struct mbuf *m, *mrep;
-	u_int32_t *tl;
-	struct nfsmount *nmp;
-	struct mbuf *md;
-	struct timeval tv;
-	caddr_t dpos, cp2;
-	int t1, i, s, error = 0;
-	int trylater_delay;
 
 	trylater_delay = NFS_MINTIMEO;
 
 	nmp = rep->r_nmp;
 
 	/* Get the RPC header with authorization. */
-	nfsm_rpchead(rep, cred, RPCAUTH_UNIX);
+	nfsm_rpchead(rep, infop->nmi_cred, RPCAUTH_UNIX);
 	m = rep->r_mreq;
 
 	/*
@@ -991,11 +975,11 @@ tryagain:
 	 */
 	if (!error && (rep->r_flags & R_TPRINTFMSG))
 		nfs_msg(rep, "is alive again");
-	mrep = rep->r_mrep;
-	md = rep->r_md;
-	dpos = rep->r_dpos;
+	info.nmi_mrep = rep->r_mrep;
+	info.nmi_md = rep->r_md;
+	info.nmi_dpos = rep->r_dpos;
 	if (error) {
-		*mrp = NULL;
+		infop->nmi_mrep = NULL;
 		goto nfsmout1;
 	}
 
@@ -1008,7 +992,7 @@ tryagain:
 			error = EOPNOTSUPP;
 		else
 			error = EACCES;	/* Should be EAUTH. */
-		*mrp = NULL;
+		infop->nmi_mrep = NULL;
 		goto nfsmout1;
 	}
 
@@ -1030,7 +1014,7 @@ tryagain:
 			error = fxdr_unsigned(int, *tl);
 			if ((nmp->nm_flag & NFSMNT_NFSV3) &&
 			    error == NFSERR_TRYLATER) {
-				m_freem(mrep);
+				m_freem(info.nmi_mrep);
 				error = 0;
 				tv.tv_sec = time_second + trylater_delay;
 				tv.tv_usec = 0;
@@ -1055,9 +1039,9 @@ tryagain:
 	error = EPROTONOSUPPORT;
 
 nfsmout:
-	*mrp = mrep;
-	*mdp = md;
-	*dposp = dpos;
+	infop->nmi_mrep = info.nmi_mrep;
+	infop->nmi_md = info.nmi_md;
+	infop->nmi_dpos = info.nmi_dpos;
 nfsmout1:
 	m_freem(rep->r_mreq);
 	pool_put(&nfsreqpl, rep);
@@ -1499,19 +1483,19 @@ nfs_getreq(nd, nfsd, has_header)
 	int len, i;
 	u_int32_t *tl;
 	int32_t t1;
-	caddr_t dpos, cp2;
+	caddr_t cp2;
 	u_int32_t nfsvers, auth_type;
 	int error = 0;
-	struct mbuf *mrep, *md;
+	struct nfsm_info	info;
 
-	mrep = nd->nd_mrep;
-	md = nd->nd_md;
-	dpos = nd->nd_dpos;
+	info.nmi_mrep = nd->nd_mrep;
+	info.nmi_md = nd->nd_md;
+	info.nmi_dpos = nd->nd_dpos;
 	if (has_header) {
 		nfsm_dissect(tl, u_int32_t *, 10 * NFSX_UNSIGNED);
 		nd->nd_retxid = fxdr_unsigned(u_int32_t, *tl++);
 		if (*tl++ != rpc_call) {
-			m_freem(mrep);
+			m_freem(info.nmi_mrep);
 			return (EBADRPC);
 		}
 	} else
@@ -1552,7 +1536,7 @@ nfs_getreq(nd, nfsd, has_header)
 	auth_type = *tl++;
 	len = fxdr_unsigned(int, *tl++);
 	if (len < 0 || len > RPCAUTH_MAXSIZ) {
-		m_freem(mrep);
+		m_freem(info.nmi_mrep);
 		return (EBADRPC);
 	}
 
@@ -1560,7 +1544,7 @@ nfs_getreq(nd, nfsd, has_header)
 	if (auth_type == rpc_auth_unix) {
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > NFS_MAXNAMLEN) {
-			m_freem(mrep);
+			m_freem(info.nmi_mrep);
 			return (EBADRPC);
 		}
 		nfsm_adv(nfsm_rndup(len));
@@ -1571,7 +1555,7 @@ nfs_getreq(nd, nfsd, has_header)
 		nd->nd_cr.cr_gid = fxdr_unsigned(gid_t, *tl++);
 		len = fxdr_unsigned(int, *tl);
 		if (len < 0 || len > RPCAUTH_UNIXGIDS) {
-			m_freem(mrep);
+			m_freem(info.nmi_mrep);
 			return (EBADRPC);
 		}
 		nfsm_dissect(tl, u_int32_t *, (len + 2) * NFSX_UNSIGNED);
@@ -1585,7 +1569,7 @@ nfs_getreq(nd, nfsd, has_header)
 		    nfsrvw_sort(nd->nd_cr.cr_groups, nd->nd_cr.cr_ngroups);
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
-			m_freem(mrep);
+			m_freem(info.nmi_mrep);
 			return (EBADRPC);
 		}
 		if (len > 0)
@@ -1596,8 +1580,8 @@ nfs_getreq(nd, nfsd, has_header)
 		return (0);
 	}
 
-	nd->nd_md = md;
-	nd->nd_dpos = dpos;
+	nd->nd_md = info.nmi_md;
+	nd->nd_dpos = info.nmi_dpos;
 	return (0);
 nfsmout:
 	return (error);

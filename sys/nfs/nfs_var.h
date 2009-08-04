@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.51 2009/06/04 01:02:42 blambert Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.52 2009/08/04 17:12:39 thib Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -42,6 +42,7 @@ struct nfsnode;
 struct sillyrename;
 struct componentname;
 struct nfs_diskless;
+struct nfsm_info;
 
 /* nfs_bio.c */
 int nfs_bioread(struct vnode *, struct uio *, int, struct ucred *);
@@ -184,11 +185,7 @@ int nfs_send(struct socket *, struct mbuf *, struct mbuf *,
 		  struct nfsreq *);
 int nfs_receive(struct nfsreq *, struct mbuf **, struct mbuf **);
 int nfs_reply(struct nfsreq *);
-int nfs_request(struct vnode *, struct mbuf *, int, struct proc *,
-		     struct ucred *, struct mbuf **, struct mbuf **,
-		     caddr_t *);
-int nfs_request1(struct nfsreq *, struct ucred *, struct mbuf **,
-		    struct mbuf **, caddr_t *);
+int nfs_request(struct vnode *, int, struct nfsm_info *);
 int nfs_rephead(int, struct nfsrv_descript *, struct nfssvc_sock *, int,
 		struct mbuf **, struct mbuf **);
 void nfs_timer(void *);

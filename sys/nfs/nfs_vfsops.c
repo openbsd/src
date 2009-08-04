@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.85 2009/07/20 16:49:40 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.86 2009/08/04 17:12:39 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -105,15 +105,17 @@ nfs_statfs(mp, sbp, p)
 {
 	struct vnode *vp;
 	struct nfs_statfs *sfp = NULL;
+	struct nfsm_info	info;
 	u_int32_t *tl;
 	int32_t t1;
-	caddr_t dpos, cp2;
+	caddr_t cp2;
 	struct nfsmount *nmp = VFSTONFS(mp);
-	int error = 0, v3 = (nmp->nm_flag & NFSMNT_NFSV3), retattr;
-	struct mbuf *mreq, *mrep = NULL, *md, *mb;
+	int error = 0, retattr;
 	struct ucred *cred;
 	struct nfsnode *np;
 	u_quad_t tquad;
+
+	info.nmi_v3 = (nmp->nm_flag & NFSMNT_NFSV3);
 
 	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
 	if (error)
@@ -121,24 +123,25 @@ nfs_statfs(mp, sbp, p)
 	vp = NFSTOV(np);
 	cred = crget();
 	cred->cr_ngroups = 0;
-	if (v3 && (nmp->nm_flag & NFSMNT_GOTFSINFO) == 0)
+	if (info.nmi_v3 && (nmp->nm_flag & NFSMNT_GOTFSINFO) == 0)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
-	mb = mreq = nfsm_reqhead(NFSX_FH(v3));
-	nfsm_fhtom(&mb, vp, v3);
+	info.nmi_mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(info.nmi_v3));
+	nfsm_fhtom(&info.nmi_mb, vp, info.nmi_v3);
 
-	error = nfs_request(vp, mreq, NFSPROC_FSSTAT, p, cred, &mrep,
-	    &md, &dpos);
-	if (v3)
+	info.nmi_procp = p;
+	info.nmi_cred = cred;
+	error = nfs_request(vp, NFSPROC_FSSTAT, &info);
+	if (info.nmi_v3)
 		nfsm_postop_attr(vp, retattr);
 	if (error) {
-		m_freem(mrep);
+		m_freem(info.nmi_mrep);
 		goto nfsmout;
 	}
 
-	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
+	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(info.nmi_v3));
 	sbp->f_iosize = min(nmp->nm_rsize, nmp->nm_wsize);
-	if (v3) {
+	if (info.nmi_v3) {
 		sbp->f_bsize = NFS_FABLKSIZE;
 		tquad = fxdr_hyper(&sfp->sf_tbytes);
 		sbp->f_blocks = tquad / (u_quad_t)NFS_FABLKSIZE;
@@ -162,7 +165,7 @@ nfs_statfs(mp, sbp, p)
 		sbp->f_ffree = 0;
 	}
 	copy_statfs_info(sbp, mp);
-	m_freem(mrep);
+	m_freem(info.nmi_mrep);
 nfsmout: 
 	vrele(vp);
 	crfree(cred);
@@ -180,22 +183,23 @@ nfs_fsinfo(nmp, vp, cred, p)
 	struct proc *p;
 {
 	struct nfsv3_fsinfo *fsp;
+	struct nfsm_info	info;
 	int32_t t1;
 	u_int32_t *tl, pref, max;
-	caddr_t dpos, cp2;
+	caddr_t cp2;
 	int error = 0, retattr;
-	struct mbuf *mreq, *mrep, *md, *mb;
 
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
-	mb = mreq = nfsm_reqhead(NFSX_FH(1));
-	nfsm_fhtom(&mb, vp, 1);
+	info.nmi_mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(1));
+	nfsm_fhtom(&info.nmi_mb, vp, 1);
 
-	error = nfs_request(vp, mreq, NFSPROC_FSINFO, p, cred, &mrep,
-	    &md, &dpos);
+	info.nmi_procp = p;
+	info.nmi_cred = cred;
+	error = nfs_request(vp, NFSPROC_FSINFO, &info);
 
 	nfsm_postop_attr(vp, retattr);
 	if (error) {
-		m_freem(mrep);
+		m_freem(info.nmi_mrep);
 		goto nfsmout;
 	}
 
@@ -231,7 +235,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 	}
 	nmp->nm_flag |= NFSMNT_GOTFSINFO;
 
-	m_freem(mrep);
+	m_freem(info.nmi_mrep);
 nfsmout: 
 	return (error);
 }

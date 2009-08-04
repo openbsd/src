@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.98 2009/07/20 16:49:40 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.99 2009/08/04 17:12:39 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -671,13 +671,6 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 				len = mp->m_len;
 			}
 			xfer = (left > len) ? len : left;
-#ifdef notdef
-			/* Not Yet.. */
-			if (uiop->uio_iov->iov_op != NULL)
-				(*(uiop->uio_iov->iov_op))
-				(mbufcp, uiocp, xfer);
-			else
-#endif
 			if (uiop->uio_segflg == UIO_SYSSPACE)
 				bcopy(mbufcp, uiocp, xfer);
 			else
@@ -1965,13 +1958,13 @@ int
 nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
     caddr_t *dposp)
 {
-	struct mbuf *md;
+	struct nfsm_info	info;
 	uint32_t *tl, t1;
-	caddr_t dpos, cp2;
+	caddr_t cp2;
 	int error = 0;
 
-	md = *mp;
-	dpos = *dposp;
+	info.nmi_md = *mp;
+	info.nmi_dpos = *dposp;
 
 	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 	if (*tl == nfs_true) {
@@ -2021,8 +2014,8 @@ nfsm_srvsattr(struct mbuf **mp, struct vattr *va, struct mbuf *mrep,
 		break;
 	};
 
-	*dposp = dpos;
-	*mp = md;
+	*dposp = info.nmi_dpos;
+	*mp = info.nmi_md;
 nfsmout:
 	return (error);
 }
