@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.1 2009/07/23 15:15:26 jordan Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.2 2009/08/04 20:17:14 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -268,12 +268,12 @@ sr_raid6_set_vol_state(struct sr_discipline *sd)
 		new_state = BIOC_SVONLINE;
 	else if (states[BIOC_SDONLINE] < nd - 2)
 		new_state = BIOC_SVOFFLINE;
-	else if (states[BIOC_SDOFFLINE] == nd - 2)
-		new_state = BIOC_SVDEGRADED;
 	else if (states[BIOC_SDSCRUB] != 0)
 		new_state = BIOC_SVSCRUB;
 	else if (states[BIOC_SDREBUILD] != 0)
 		new_state = BIOC_SVREBUILD;
+	else if (states[BIOC_SDONLINE] < nd)
+		new_state = BIOC_SVDEGRADED;
 	else {
 		printf("old_state = %d, ", old_state);
 		for (i = 0; i < nd; i++)
