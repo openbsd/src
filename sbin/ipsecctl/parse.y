@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.145 2009/03/31 21:03:48 tobias Exp $	*/
+/*	$OpenBSD: parse.y,v 1.146 2009/08/04 15:05:50 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1495,9 +1495,19 @@ parsekeyfile(char *filename)
 int
 get_id_type(char *string)
 {
-	if (string && strchr(string, '@'))
+	struct in6_addr ia;
+
+	if (string == NULL)
+		return (ID_UNKNOWN);
+
+	if (inet_pton(AF_INET, string, &ia) == 1)
+		return (ID_IPV4);
+	else if (inet_pton(AF_INET6, string, &ia) == 1)
+		return (ID_IPV6);
+	else if (strchr(string, '@'))
 		return (ID_UFQDN);
-	return (ID_FQDN);
+	else
+		return (ID_FQDN);
 }
 
 struct ipsec_addr_wrap *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.58 2009/01/20 14:36:19 mpf Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.59 2009/08/04 15:05:50 jsing Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -50,7 +50,7 @@ enum {
 	MODE_UNKNOWN, IPSEC_TRANSPORT, IPSEC_TUNNEL
 };
 enum {
-	ID_UNKNOWN, ID_PREFIX, ID_FQDN, ID_UFQDN
+	ID_UNKNOWN, ID_PREFIX, ID_IPV4, ID_IPV6, ID_FQDN, ID_UFQDN
 };
 enum {
 	TYPE_UNKNOWN, TYPE_USE, TYPE_ACQUIRE, TYPE_REQUIRE, TYPE_DENY,

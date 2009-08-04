@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.65 2009/01/20 14:36:19 mpf Exp $	*/
+/*	$OpenBSD: ike.c,v 1.66 2009/08/04 15:05:50 jsing Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -57,7 +57,9 @@ int		ike_ipsec_establish(int, struct ipsec_rule *);
 #define CONF_DFLT_DYNAMIC_DPD_CHECK_INTERVAL	5
 #define CONF_DFLT_DYNAMIC_CHECK_INTERVAL	30
 
-char *ike_id_types[] = { "", "", "FQDN", "USER_FQDN" };
+char *ike_id_types[] = {
+	"", "", "IPV4_ADDR", "IPV6_ADDR", "FQDN", "USER_FQDN"
+};
 
 static void
 ike_section_general(struct ipsec_rule *r, FILE *fd)
@@ -115,16 +117,26 @@ ike_section_ids(struct ipsec_rule *r, FILE *fd)
 		    r->auth->srcid);
 		fprintf(fd, SET "[id-%s]:ID-type=%s force\n", r->auth->srcid,
 		    ike_id_types[r->auth->srcid_type]);
-		fprintf(fd, SET "[id-%s]:Name=%s force\n", r->auth->srcid,
-		    r->auth->srcid);
+		if (r->auth->srcid_type == ID_IPV4 ||
+		    r->auth->srcid_type == ID_IPV6)
+			fprintf(fd, SET "[id-%s]:Address=%s force\n",
+			    r->auth->srcid, r->auth->srcid);
+		else
+			fprintf(fd, SET "[id-%s]:Name=%s force\n",
+			    r->auth->srcid, r->auth->srcid);
 	}
 	if (r->auth->dstid) {
 		fprintf(fd, SET "[%s]:Remote-ID=id-%s force\n", r->p1name,
 		    r->auth->dstid);
 		fprintf(fd, SET "[id-%s]:ID-type=%s force\n", r->auth->dstid,
 		    ike_id_types[r->auth->dstid_type]);
-		fprintf(fd, SET "[id-%s]:Name=%s force\n", r->auth->dstid,
-		    r->auth->dstid);
+		if (r->auth->dstid_type == ID_IPV4 ||
+		    r->auth->dstid_type == ID_IPV6)
+			fprintf(fd, SET "[id-%s]:Address=%s force\n",
+			    r->auth->dstid, r->auth->dstid);
+		else
+			fprintf(fd, SET "[id-%s]:Name=%s force\n",
+			    r->auth->dstid, r->auth->dstid);
 	}
 }
 
