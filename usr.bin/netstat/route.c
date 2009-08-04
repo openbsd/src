@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.86 2009/05/31 18:03:42 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.87 2009/08/04 03:45:47 tedu Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ p_krtentry(struct rtentry *rt)
 	p_addr(sa, mask, rt->rt_flags);
 	p_gwaddr(kgetsa(rt->rt_gateway), sa->sa_family);
 	p_flags(rt->rt_flags, "%-6.6s ");
-	printf("%5u %8ld ", rt->rt_refcnt, rt->rt_use);
+	printf("%5u %8lld ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
 		printf("%5u ", rt->rt_rmx.rmx_mtu);
 	else

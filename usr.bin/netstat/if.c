@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.60 2009/02/07 15:06:04 chl Exp $	*/
+/*	$OpenBSD: if.c,v 1.61 2009/08/04 03:45:47 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ intpr(int interval)
 					continue;
 			}
 
-			printf("%-7s %-5ld ", name, ifd->ifi_mtu);
+			printf("%-7s %-5d ", name, ifd->ifi_mtu);
 			print_addr(rti_info[RTAX_IFP], rti_info, ifd);
 			break;
 		case RTM_NEWADDR:
@@ -168,7 +168,7 @@ intpr(int interval)
 			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
 
-			printf("%-7s %-5ld ", name, ifd->ifi_mtu);
+			printf("%-7s %-5d ", name, ifd->ifi_mtu);
 			print_addr(rti_info[RTAX_IFA], rti_info, ifd);
 			break;
 		}
@@ -352,7 +352,6 @@ volatile sig_atomic_t signalled;	/* set if alarm goes off "early" */
 static void
 sidewaysintpr(unsigned int interval)
 {
-	struct ifnet ifnet;
 	sigset_t emptyset;
 	int line;
 
@@ -428,7 +427,7 @@ loop:
 	if (dflag)
 		printf(" %5llu",
 		    /* XXX ifnet.if_snd.ifq_drops - ip->ift_dr); */
-		    0);
+		    0LL);
 
 	ip_old = ip_cur;
 
