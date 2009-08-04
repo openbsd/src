@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1487 2009/08/02 09:43:54 sthen Exp $
+$OpenBSD: pcidevs,v 1.1488 2009/08/04 19:18:08 dhill Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,7 @@ vendor	MARTINMARIETTA	0x003d	Martin-Marietta
 vendor	HAUPPAUGE	0x0070	Hauppauge
 vendor	TTTECH		0x0357	TTTech
 vendor	DYNALINK	0x0675	Dynalink
+vendor	RHINO		0x0b0b	Rhino Equipment
 vendor	COMPAQ		0x0e11	Compaq
 vendor	SYMBIOS		0x1000	Symbios Logic
 vendor	ATI		0x1002	ATI
@@ -4237,6 +4238,11 @@ product RCC HT_1100		0x0408	HT-1100
 /* Rendition products */
 product RENDITION V1000		0x0001	Verite 1000
 product RENDITION V2x00		0x2000	Verite V2x00
+
+/* Rhino Equipment products */
+product RHINO R1T1		0x0105	T1/E1/J1 
+product RHINO R2T1		0x0605	Dual T1/E1/J1
+product RHINO R4T1		0x0305	Quad T1/E1/J1
 
 /* Philips products */
 product PHILIPS OHCI		0x1561	ISP156x USB
