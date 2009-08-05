@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.134 2009/08/05 12:55:43 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.135 2009/08/05 13:37:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -93,6 +93,7 @@ objid_t			 last_proto_id = 0;
 static struct rdr	*rdr = NULL;
 static struct table	*table = NULL;
 static struct relay	*rlay = NULL;
+struct relaylist	 relays;
 static struct protocol	*proto = NULL;
 static struct protonode	 node;
 static u_int16_t	 label = 0;
@@ -107,6 +108,7 @@ int		 host(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
 
 struct table	*table_inherit(struct table *);
+struct relay	*relay_inherit(struct relay *, struct relay *);
 int		 getservice(char *);
 
 typedef struct {
@@ -1158,6 +1160,8 @@ relay		: RELAY STRING	{
 				free($2);
 				YYERROR;
 			}
+			TAILQ_INIT(&relays);
+
 			if ((r = calloc(1, sizeof (*r))) == NULL)
 				fatal("out of memory");
 
@@ -1182,6 +1186,8 @@ relay		: RELAY STRING	{
 			}
 			rlay = r;
 		} '{' optnl relayopts_l '}'	{
+			struct relay	*r;
+
 			if (rlay->rl_conf.ss.ss_family == AF_UNSPEC) {
 				yyerror("relay %s has no listener",
 				    rlay->rl_conf.name);
@@ -1207,6 +1213,13 @@ relay		: RELAY STRING	{
 			SPLAY_INIT(&rlay->rl_sessions);
 			TAILQ_INSERT_TAIL(conf->sc_relays, rlay, rl_entry);
 			tableport = 0;
+
+			while ((r = TAILQ_FIRST(&relays)) != NULL) {
+				TAILQ_REMOVE(&relays, r, rl_entry);
+				if (relay_inherit(rlay, r) == NULL) {
+					YYERROR;
+				}
+			}
 			rlay = NULL;
 		}
 		;
@@ -1218,13 +1231,14 @@ relayopts_l	: relayopts_l relayoptsl nl
 relayoptsl	: LISTEN ON STRING port optssl {
 			struct addresslist	 al;
 			struct address		*h;
+			struct relay		*r;
 
 			if (rlay->rl_conf.ss.ss_family != AF_UNSPEC) {
-				yyerror("relay %s listener already specified",
-				    rlay->rl_conf.name);
-				free($3);
-				YYERROR;
-			}
+				if ((r = calloc(1, sizeof (*r))) == NULL)
+					fatal("out of memory");
+				TAILQ_INSERT_TAIL(&relays, r, rl_entry);
+			} else
+				r = rlay;
 			if ($4.op != PF_OP_EQ) {
 				yyerror("invalid port");
 				free($3);
@@ -1239,10 +1253,10 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			}
 			free($3);
 			h = TAILQ_FIRST(&al);
-			bcopy(&h->ss, &rlay->rl_conf.ss, sizeof(rlay->rl_conf.ss));
-			rlay->rl_conf.port = h->port.val[0];
+			bcopy(&h->ss, &r->rl_conf.ss, sizeof(r->rl_conf.ss));
+			r->rl_conf.port = h->port.val[0];
 			if ($5) {
-				rlay->rl_conf.flags |= F_SSL;
+				r->rl_conf.flags |= F_SSL;
 				conf->sc_flags |= F_SSL;
 			}
 			tableport = h->port.val[0];
@@ -1985,6 +1999,12 @@ parse_config(const char *filename, int opts)
 	if (TAILQ_EMPTY(conf->sc_relays))
 		conf->sc_prefork_relay = 0;
 
+	/* Cleanup relay list to inherit */
+	while ((rlay = TAILQ_FIRST(&relays)) != NULL) {
+		TAILQ_REMOVE(&relays, rlay, rl_entry);
+		free(rlay);
+	}
+
 	if (timercmp(&conf->sc_timeout, &conf->sc_interval, >=)) {
 		log_warnx("global timeout exceeds interval");
 		errors++;
@@ -2342,6 +2362,53 @@ table_inherit(struct table *tb)
 	TAILQ_INSERT_TAIL(conf->sc_tables, tb, entry);
 
 	return (tb);
+}
+
+struct relay *
+relay_inherit(struct relay *ra, struct relay *rb)
+{
+	struct relay_config	 rc;
+
+	bcopy(&rb->rl_conf, &rc, sizeof(rc));
+	bcopy(ra, rb, sizeof(*rb));
+
+	bcopy(&rc.ss, &rb->rl_conf.ss, sizeof(rb->rl_conf.ss));
+	rb->rl_conf.port = rc.port;
+	rb->rl_conf.flags =
+	    (ra->rl_conf.flags & ~F_SSL) | (rc.flags & F_SSL);
+
+	rb->rl_conf.id = ++last_relay_id;
+	if (last_relay_id == INT_MAX) {
+		yyerror("too many relays defined");
+		goto err;
+	}
+
+	if (snprintf(rb->rl_conf.name, sizeof(rb->rl_conf.name), "%s%u:%u",
+	    ra->rl_conf.name, rb->rl_conf.id, ntohs(rc.port)) >=
+	    (int)sizeof(rb->rl_conf.name)) {
+		yyerror("invalid relay name");
+		goto err;
+	}
+
+	if (relay_findbyname(conf, rb->rl_conf.name) != NULL) {
+		yyerror("relay %s defined twice", rb->rl_conf.name);
+		goto err;
+	}
+	if (relay_load_certfiles(rb) == -1) {
+		yyerror("cannot load certificates for relay %s",
+		    rb->rl_conf.name);
+		goto err;
+	}
+
+	conf->sc_relaycount++;
+	SPLAY_INIT(&rlay->rl_sessions);
+	TAILQ_INSERT_TAIL(conf->sc_relays, rb, rl_entry);
+
+	return (rb);
+
+ err:
+	free(rb);
+	return (NULL);
 }
 
 int
