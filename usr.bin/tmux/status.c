@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.22 2009/07/30 20:41:48 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.23 2009/08/05 16:26:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -64,8 +64,8 @@ status_redraw(struct client *c)
 	if (gettimeofday(&c->status_timer, NULL) != 0)
 		fatal("gettimeofday");
 	memcpy(&stdgc, &grid_default_cell, sizeof gc);
-	stdgc.bg = options_get_number(&s->options, "status-fg");
-	stdgc.fg = options_get_number(&s->options, "status-bg");
+	stdgc.fg = options_get_number(&s->options, "status-fg");
+	stdgc.bg = options_get_number(&s->options, "status-bg");
 	stdgc.attr |= options_get_number(&s->options, "status-attr");
 
 	yy = c->tty.sy - 1;
@@ -563,8 +563,8 @@ status_message_redraw(struct client *c)
 		len = c->tty.sx;
 
 	memcpy(&gc, &grid_default_cell, sizeof gc);
-	gc.bg = options_get_number(&s->options, "message-fg");
-	gc.fg = options_get_number(&s->options, "message-bg");
+	gc.fg = options_get_number(&s->options, "message-fg");
+	gc.bg = options_get_number(&s->options, "message-bg");
 	gc.attr |= options_get_number(&s->options, "message-attr");
 
 	screen_write_start(&ctx, NULL, &c->status);
@@ -662,8 +662,8 @@ status_prompt_redraw(struct client *c)
 		len = c->tty.sx;
 
 	memcpy(&gc, &grid_default_cell, sizeof gc);
-	gc.bg = options_get_number(&s->options, "message-fg");
-	gc.fg = options_get_number(&s->options, "message-bg");
+	gc.fg = options_get_number(&s->options, "message-fg");
+	gc.bg = options_get_number(&s->options, "message-bg");
 	gc.attr |= options_get_number(&s->options, "message-attr");
 
 	screen_write_start(&ctx, NULL, &c->status);

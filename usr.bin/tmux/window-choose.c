@@ -1,4 +1,4 @@
-/* $OpenBSD: window-choose.c,v 1.7 2009/07/30 07:04:50 nicm Exp $ */
+/* $OpenBSD: window-choose.c,v 1.8 2009/08/05 16:26:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -305,8 +305,8 @@ window_choose_write_line(
 	utf8flag = options_get_number(&wp->window->options, "utf8");
 	memcpy(&gc, &grid_default_cell, sizeof gc);
 	if (data->selected == data->top + py) {
-		gc.fg = options_get_number(&wp->window->options, "mode-bg");
-		gc.bg = options_get_number(&wp->window->options, "mode-fg");
+		gc.fg = options_get_number(&wp->window->options, "mode-fg");
+		gc.bg = options_get_number(&wp->window->options, "mode-bg");
 		gc.attr |= options_get_number(&wp->window->options, "mode-attr");
 	}
 
