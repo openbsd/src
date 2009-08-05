@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.89 2009/06/05 23:39:51 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.90 2009/08/05 13:46:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -919,6 +919,18 @@ relay_findbyname(struct relayd *env, const char *name)
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
 		if (strcmp(rlay->rl_conf.name, name) == 0)
+			return (rlay);
+	return (NULL);
+}
+
+struct relay *
+relay_findbyaddr(struct relayd *env, struct relay_config *rc)
+{
+	struct relay	*rlay;
+
+	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
+		if (bcmp(&rlay->rl_conf.ss, &rc->ss, sizeof(rc->ss)) == 0 &&
+		    rlay->rl_conf.port == rc->port)
 			return (rlay);
 	return (NULL);
 }

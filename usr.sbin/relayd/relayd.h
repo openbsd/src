@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.126 2009/06/06 18:31:42 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.127 2009/08/05 13:46:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -823,6 +823,7 @@ void		 event_again(struct event *, int, short,
 struct relay	*relay_find(struct relayd *, objid_t);
 struct session	*session_find(struct relayd *, objid_t);
 struct relay	*relay_findbyname(struct relayd *, const char *);
+struct relay	*relay_findbyaddr(struct relayd *, struct relay_config *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
 void		 purge_config(struct relayd *, u_int8_t);

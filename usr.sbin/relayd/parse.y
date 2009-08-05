@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.135 2009/08/05 13:37:06 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.136 2009/08/05 13:46:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2390,7 +2390,8 @@ relay_inherit(struct relay *ra, struct relay *rb)
 		goto err;
 	}
 
-	if (relay_findbyname(conf, rb->rl_conf.name) != NULL) {
+	if (relay_findbyname(conf, rb->rl_conf.name) != NULL ||
+	    relay_findbyaddr(conf, &rb->rl_conf) != NULL) {
 		yyerror("relay %s defined twice", rb->rl_conf.name);
 		goto err;
 	}
