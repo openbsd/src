@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.25 2009/06/27 11:35:57 michele Exp $	*/
+/*	$OpenBSD: show.c,v 1.26 2009/08/05 03:26:59 deraadt Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -971,6 +971,7 @@ index_pfk(struct sadb_msg *msg, void **headers)
 			break;
 		case SADB_X_EXT_FLOW_TYPE:
 			headers[SADB_X_EXT_FLOW_TYPE] = (void *)ext;
+			break;
 		default:
 			/* Ignore. */
 			break;
