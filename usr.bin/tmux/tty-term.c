@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.6 2009/08/03 15:30:16 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.7 2009/08/05 19:05:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -245,6 +245,7 @@ tty_term_find(char *name, int fd, const char *overrides, char **cause)
 	term->name = xstrdup(name);
 	term->references = 1;
 	term->flags = 0;
+	memset(&term->codes, 0, sizeof term->codes);
 	SLIST_INSERT_HEAD(&tty_terms, term, entry);
 
 	/* Set up curses terminal. */
@@ -267,7 +268,6 @@ tty_term_find(char *name, int fd, const char *overrides, char **cause)
 	}
 
 	/* Fill in codes. */
-	memset(&term->codes, 0, sizeof term->codes);
 	for (i = 0; i < NTTYCODE; i++) {
 		ent = &tty_term_codes[i];
 
