@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.6 2009/07/28 05:12:12 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.7 2009/08/05 03:19:48 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -146,6 +146,11 @@ ale_miibus_readreg(struct device *dev, int phy, int reg)
 	if (phy != sc->ale_phyaddr)
 		return (0);
 
+	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
+		if (reg == MII_100T2CR || reg == MII_100T2SR ||
+		    reg == MII_EXTSR)
+			return (0);
+	}
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_READ |
 	    MDIO_SUP_PREAMBLE | MDIO_CLK_25_4 | MDIO_REG_ADDR(reg));
 	for (i = ALE_PHY_TIMEOUT; i > 0; i--) {
@@ -173,6 +178,12 @@ ale_miibus_writereg(struct device *dev, int phy, int reg, int val)
 
 	if (phy != sc->ale_phyaddr)
 		return;
+
+	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
+		if (reg == MII_100T2CR || reg == MII_100T2SR ||
+		    reg == MII_EXTSR)
+			return;
+	}
 
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
 	    (val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT |
