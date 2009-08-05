@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.133 2009/04/24 14:20:24 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.134 2009/08/05 12:55:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -509,7 +509,6 @@ forwardmode	: FORWARD		{ $$ = FWD_NORMAL; }
 		;
 
 table		: '<' STRING '>'	{
-			conf->sc_flags |= F_NEEDPF;
 			if (strlen($2) >= TABLE_NAME_SIZE) {
 				yyerror("invalid table name");
 				free($2);
