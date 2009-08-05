@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.15 2008/09/19 10:44:11 markus Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.16 2009/08/05 07:44:07 blambert Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -290,7 +290,6 @@ glxsb_rnd(void *v)
 {
 	struct glxsb_softc *sc = v;
 	uint32_t status, value;
-	extern int hz;
 
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SB_RANDOM_NUM_STATUS);
 	if (status & SB_RNS_TRNG_VALID) {
@@ -298,7 +297,7 @@ glxsb_rnd(void *v)
 		add_true_randomness(value);
 	}
 
-	timeout_add(&sc->sc_to, (hz > 100) ? (hz / 100) : 1);
+	timeout_add_msec(&sc->sc_to, 10);
 }
 
 #ifdef CRYPTO
