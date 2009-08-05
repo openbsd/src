@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.76 2009/06/02 12:32:08 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.77 2009/08/05 13:45:29 blambert Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -734,7 +734,7 @@ loop:
 			fd_set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
 			/* Allow .25s for motor to stabilize. */
-			timeout_add(&fd->fd_motor_on_to, hz / 4);
+			timeout_add_msec(&fd->fd_motor_on_to, 250);
 			return 1;
 		}
 		/* Make sure the right drive is selected. */
@@ -834,7 +834,7 @@ loop:
 		timeout_del(&fd->fdtimeout_to);
 		fdc->sc_state = SEEKCOMPLETE;
 		/* allow 1/50 second for heads to settle */
-		timeout_add(&fdc->fdcpseudointr_to, hz / 50);
+		timeout_add_msec(&fdc->fdcpseudointr_to, 20);
 		return 1;
 
 	case SEEKCOMPLETE:
@@ -902,7 +902,7 @@ loop:
 		delay(100);
 		fd_set_motor(fdc, 0);
 		fdc->sc_state = RESETCOMPLETE;
-		timeout_add(&fd->fdtimeout_to, hz / 2);
+		timeout_add_msec(&fd->fdtimeout_to, 500);
 		return 1;			/* will return later */
 
 	case RESETCOMPLETE:
