@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwi.4,v 1.22 2009/02/16 08:15:22 jmc Exp $
+.\" $OpenBSD: bwi.4,v 1.23 2009/08/05 14:20:00 mglocker Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2009 $
+.Dd $Mdocdate: August 5 2009 $
 .Os
 .Dt BWI 4
 .Sh NAME
@@ -187,3 +187,7 @@ by
 .An Jonathan Gray
 and
 .An Marcus Glocker .
+.Sh CAVEATS
+Some chips are incorrectly calibrated due to the lack of documentation,
+this can slow the amount of traffic to the point of being unuseable.
+Furthermore this driver only supports firmware version 3.
