@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.329 2009/08/04 15:16:45 sthen Exp $
+#	$OpenBSD: rc,v 1.330 2009/08/05 02:06:21 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -168,7 +168,7 @@ if [ X"$1" = X"shutdown" ]; then
 		# bring carp interfaces down gracefully
 		ifconfig | while read if junk; do
 			case $if in
-				carp*:) ifconfig ${if%:} down ;;
+			carp*:) ifconfig ${if%:} down ;;
 			esac
 		done
 
