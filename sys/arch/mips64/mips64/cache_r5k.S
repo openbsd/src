@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.23 2009/05/22 20:37:53 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.24 2009/08/06 21:06:30 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -34,7 +34,7 @@
  *  configurations will need another set of cache functions.
  *
  *  Processors supported:
- *  R4600/R4700
+ *  R4600/R4700 (if option CPUR4600)
  *  R5000
  *  RM52xx
  *  RM7xxx
@@ -318,7 +318,6 @@ Conf7K:					# RM7000, check for L2 and L3 cache
 	bne	t0, t1, 1b
 	nop
 
-
 Conf7KL2:
 	and	t1, v0, CF_7_SC			# check for L2 cache
 	bnez	t1, ConfResult
@@ -387,8 +386,8 @@ ConfResult:
 	srl	ta1, t2				# calculate set size.
 	sw	ta1, CpuPrimaryDataSetSize
 
-	and	v0, 0xfffffff8
-	or	v0, 0x00000003			# set cachable writeback kseg0
+	and	v0, ~7
+	or	v0, CCA_CACHED			# set cachable writeback kseg0
 	mtc0	v0, COP_0_CONFIG		# establish any new config
 	NOP10
 	j	ra
@@ -513,51 +512,6 @@ END(Mips5k_SyncCache)
 
 /*----------------------------------------------------------------------------
  *
- * Mips5k_InvalidateICachePage --
- *
- *	void Mips5k_InvalidateICachePage(addr)
- *		vaddr_t addr;
- *
- *	Invalidate the L1 instruction cache page given by addr.
- *
- * Results:
- *	Void.
- *
- * Side effects:
- *	The contents of the L1 Instruction cache is flushed.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(Mips5k_InvalidateICachePage, 0)
-#ifdef CPUR4600
-	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
-	li	v0, SR_DIAG_DE
-	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
-#endif
-	lw	v0, CpuNWayCache		# Cache properties
-	lw	t0, CpuPrimaryInstSetSize	# Set size
-	and	a0, ~PAGE_MASK			# Page align start address
-	PTR_ADDU a1, a0, PAGE_SIZE-128		# End address.
-	addiu	v0, -2				# <0 1way, 0 = two, >0 four
-1:
-	cache	HitInvalidate_I, 0(a0)
-	cache	HitInvalidate_I, 32(a0)
-	cache	HitInvalidate_I, 64(a0)
-	cache	HitInvalidate_I, 96(a0)
-
-	bne	a0, a1, 1b
-	PTR_ADDU a0, 128
-
-#ifdef CPUR4600
-	mtc0	v1, COP_0_STATUS_REG	# Restore the status register.
-	NOP10
-#endif
-	j	ra
-	move	v0, zero
-END(Mips5k_InvalidateICachePage)
-
-/*----------------------------------------------------------------------------
- *
  * Mips5k_InvalidateICache --
  *
  *	void Mips5k_SyncICache(addr, len)
@@ -595,7 +549,7 @@ LEAF(Mips5k_InvalidateICache, 0)
 	addiu	v0, -2				# <0 1way, 0 = two, >0 four
 1:
 	bltz	v0, 3f
-	addu	a1, -1
+	PTR_ADDU a1, -1
 
 2:
 	PTR_ADDU t1, t0, a0			# Nway cache, flush set B.
@@ -705,9 +659,6 @@ END(Mips5k_SyncDCachePage)
  *	The address can be any valid virtual address as long
  *	as no TLB invalid traps occur. Only lines with matching
  *	addr are flushed.
- *
- *	Note: Use the CpuNWayCache flag to select 16 or 32 byte linesize.
- *	      All Nway cpu's now available have a fixed 32byte linesize.
  *
  * Results:
  *	None.
@@ -954,7 +905,7 @@ NON_LEAF(Mips5k_IOSyncDCache, FRAMESZ(CF_SZ+2*REGSZ), ra)
 	and	t0, CTYPE_HAS_IL2		# Have internal L2?
 	bnez	t0, SyncSC			# Yes
 	nop
-	jal	 Mips5k_HitSyncDCache		# No flush L1.
+	jal	Mips5k_HitSyncDCache		# No flush L1.
 	nop
 	b	SyncDone
 	PTR_L	ra, CF_RA_OFFS+2*REGSZ(sp)

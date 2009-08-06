@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.S,v 1.8 2009/05/22 20:37:53 miod Exp $ */
+/*	$OpenBSD: cache_r10k.S,v 1.9 2009/08/06 21:06:30 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB (www.opsycon.se)
@@ -30,7 +30,8 @@
  *  Processors supported:
  *  R10000
  *  R12000
- *  R14000	(needs to be tested)
+ *  R14000
+ *  R16000
  */
 
 #include <sys/errno.h>
@@ -179,8 +180,8 @@ ConfResult:
 	sw	ta1, CpuPrimaryDataSetSize
 
 #if 0
-	and	v0, 0xfffffff8
-	or	v0, 0x00000003			# set cachable writeback kseg0
+	and	v0, ~7
+	or	v0, CCA_CACHED			# set cachable writeback kseg0
 	mtc0	v0, COP_0_CONFIG		# establish any new config
 #endif
 	j	ra
@@ -261,39 +262,6 @@ LEAF(Mips10k_SyncCache, 0)
 	j	ra
 	nop
 END(Mips10k_SyncCache)
-
-/*----------------------------------------------------------------------------
- *
- * Mips10k_InvalidateICachePage --
- *
- *	void Mips10k_InvalidateICachePage(addr)
- *		vaddr_t addr;
- *
- *	Invalidate the L1 instruction cache page given by addr.
- *
- * Results:
- *	Void.
- *
- * Side effects:
- *	The contents of the L1 Instruction cache is flushed.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(Mips10k_InvalidateICachePage, 0)
-	lw	v0, CpuNWayCache		# Cache properties
-	and	a0, ~PAGE_MASK			# Page align start address
-	PTR_ADDU a1, a0, PAGE_SIZE-128		# End address.
-	addiu	v0, -2				# <0 1way, 0 = two, >0 four
-1:
-	cache	HitInvalidate_I, 0(a0)
-	cache	HitInvalidate_I, 64(a0)
-
-	bne	a0, a1, 1b
-	PTR_ADDU a0, 128
-
-	j	ra
-	move	v0, zero
-END(Mips10k_InvalidateICachePage)
 
 /*----------------------------------------------------------------------------
  *

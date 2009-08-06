@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.77 2009/08/06 21:05:50 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.78 2009/08/06 21:06:32 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -27,25 +27,19 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/msgbuf.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
-#include <sys/extent.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -458,7 +452,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		Mips10k_ConfigCache();
 		sys_config._SyncCache = Mips10k_SyncCache;
 		sys_config._InvalidateICache = Mips10k_InvalidateICache;
-		sys_config._InvalidateICachePage = Mips10k_InvalidateICachePage;
 		sys_config._SyncDCachePage = Mips10k_SyncDCachePage;
 		sys_config._HitSyncDCache = Mips10k_HitSyncDCache;
 		sys_config._IOSyncDCache = Mips10k_IOSyncDCache;
@@ -469,7 +462,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		Mips5k_ConfigCache();
 		sys_config._SyncCache = Mips5k_SyncCache;
 		sys_config._InvalidateICache = Mips5k_InvalidateICache;
-		sys_config._InvalidateICachePage = Mips5k_InvalidateICachePage;
 		sys_config._SyncDCachePage = Mips5k_SyncDCachePage;
 		sys_config._HitSyncDCache = Mips5k_HitSyncDCache;
 		sys_config._IOSyncDCache = Mips5k_IOSyncDCache;

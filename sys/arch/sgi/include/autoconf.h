@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.18 2009/06/13 21:48:03 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.19 2009/08/06 21:06:32 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,7 +59,6 @@ struct sys_rec {
 	/* Published cache operations. */
 	void    (*_SyncCache)(void);
 	void    (*_InvalidateICache)(vaddr_t, int);
-	void    (*_InvalidateICachePage)(vaddr_t);
 	void    (*_SyncDCachePage)(vaddr_t);
 	void    (*_HitSyncDCache)(vaddr_t, int);
 	void    (*_IOSyncDCache)(vaddr_t, int, int);
