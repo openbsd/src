@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.3 2009/07/13 19:04:26 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.4 2009/08/06 09:07:49 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -918,6 +918,7 @@ send_rtlabelmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 	if (kr_state.fib_sync == 0)
 		return (0);
 
+	/* Implicit NULL label should be added/remove just one time */
 	hr_label = ntohl(kroute->local_label) >> MPLS_LABEL_OFFSET;
 	if (hr_label == MPLS_LABEL_IMPLNULL) {
 		if (action == RTM_ADD && flag_implicit_null)
@@ -930,18 +931,18 @@ send_rtlabelmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 	if (family == AF_INET && kroute->remote_label == 0)
 		return (0);
 
-	if (family == AF_INET && action == RTM_ADD)
-		action = RTM_CHANGE;
-
 	/* initialize header */
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
-	hdr.rtm_type = action;
+
+	/* ldpd must not add/delete AF_INET routes, instead it should just
+	   modify existing ones adding/remove relevant MPLS infos */
+	if (family == AF_INET)
+		hdr.rtm_type = RTM_CHANGE;
+	else
+		hdr.rtm_type = action;
+
 	hdr.rtm_flags = RTF_UP;
-/*	if (action == RTM_CHANGE)
-		hdr.rtm_fmask = RTF_PROTO3|RTF_PROTO2|RTF_PROTO1|
-		    RTF_REJECT|RTF_BLACKHOLE;
-*/
 	hdr.rtm_priority = 0;
 	hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
 	hdr.rtm_msglen = sizeof(hdr);
@@ -999,7 +1000,8 @@ send_rtlabelmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 		iov[iovcnt++].iov_len = sizeof(mask);
 	}
 
-	if (kroute->remote_label != 0) {
+	/* If action is RTM_DELETE we have to get rid of MPLS infos */
+	if (kroute->remote_label != 0 && action != RTM_DELETE) {
 		bzero(&label_out, sizeof(label_out));
 		label_out.smpls_len = sizeof(label_out);
 		label_out.smpls_family = AF_MPLS;
@@ -1016,6 +1018,7 @@ send_rtlabelmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 		else
 			hdr.rtm_mpls = MPLS_OP_PUSH;
 	}
+
 
 retry:
 	if (writev(fd, iov, iovcnt) == -1) {
@@ -1135,7 +1138,6 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 		iov[iovcnt].iov_base = &sa_rl;
 		iov[iovcnt++].iov_len = sizeof(sa_rl);
 	}
-
 
 retry:
 	if (writev(fd, iov, iovcnt) == -1) {
