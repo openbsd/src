@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.34 2009/08/06 21:11:38 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.35 2009/08/06 21:54:27 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -383,7 +383,12 @@ extern struct cpu_info cpu_info_primary;
 #define	cpu_number()	0
 
 #include <machine/frame.h>
+
+#endif	/* _LOCORE */
+
 #include <machine/intr.h>
+
+#ifndef _LOCORE
 
 /*
  * Arguments to hardclock encapsulate the previous machine state in
