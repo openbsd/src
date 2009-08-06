@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.21 2009/08/06 13:40:45 gilles Exp $	*/
+/*	$OpenBSD: store.c,v 1.22 2009/08/06 14:27:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -38,39 +38,8 @@
 
 #include "smtpd.h"
 
-int file_copy(FILE *, FILE *, struct path *, enum action_type);
-
 int
-file_copy_session(struct smtpd *env, FILE *dest, FILE *src)
-{
-	char *buf, *lbuf;
-	size_t len;
-
-	lbuf = NULL;
-	while ((buf = fgetln(src, &len))) {
-		if (buf[len - 1] == '\n') {
-			buf[len - 1] = '\0';
-			len--;
-		}
-		else {
-			/* EOF without EOL, copy and add the NUL */
-			if ((lbuf = malloc(len + 1)) == NULL)
-				err(1, NULL);
-			memcpy(lbuf, buf, len);
-			lbuf[len] = '\0';
-			buf = lbuf;
-		}
-
-		if (fprintf(dest, "%s\r\n", buf) != (int)len + 2)
-			return 0;
-	}
-	free(lbuf);
-
-	return 1;
-}
-
-int
-file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type)
+file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type, int session)
 {
 	char *buf, *lbuf;
 	size_t len;
@@ -96,7 +65,7 @@ file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type)
 		 * path set to the original recipient. In that case, we can
 		 * add the X-OpenSMTPD-Loop header to help loop detection.
 		 */
-		if (path != NULL && inheaders &&
+		if (!session && path != NULL && inheaders &&
 		    strchr(buf, ':') == NULL && !isspace(*buf)) {
 			if (fprintf(dest, "X-OpenSMTPD-Loop: %s@%s\n",
 				path->user, path->domain) == -1)
@@ -104,7 +73,7 @@ file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type)
 			inheaders = 0;
 		}
 
-		if (type == A_MBOX) {
+		if (!session && type == A_MBOX) {
 			escape = buf;
 			while (*escape == '>')
 				++escape;
@@ -114,12 +83,13 @@ file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type)
 			}
 		}
 
-		if (fprintf(dest, "%s\n", buf) != (int)len + 1)
+		if (fprintf(dest, "%s%s", buf, session ? "\r\n" : "\n") !=
+			(int)len + (session ? 2 : 1))
 			return 0;
 	}
 	free(lbuf);
 
-	if (type == A_MBOX) {
+	if (!session && type == A_MBOX) {
 		if (fprintf(dest, "\n") != 1)
 			return 0;
 	}
@@ -142,7 +112,7 @@ store_write_message(struct batch *batchp, struct message *messagep)
 		goto bad;
 
 	if (! file_copy(mboxfp, messagefp, &messagep->session_rcpt,
-		messagep->recipient.rule.r_action))
+		messagep->recipient.rule.r_action, 0))
 		goto bad;
 
 	fflush(mboxfp);

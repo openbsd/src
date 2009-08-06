@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.132 2009/08/06 14:12:48 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.133 2009/08/06 14:27:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -873,8 +873,7 @@ void		 session_bufferevent_new(struct session *);
 SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
 
 /* store.c */
-int
-file_copy_session(struct smtpd *, FILE *, FILE *);
+int file_copy(FILE *, FILE *, struct path *, enum action_type, int);
 int store_write_header(struct batch *, struct message *, FILE *, int);
 int store_write_message(struct batch *, struct message *);
 int store_write_daemon(struct batch *, struct message *);

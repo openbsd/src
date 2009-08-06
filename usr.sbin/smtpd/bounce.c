@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.3 2009/08/06 14:16:37 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.4 2009/08/06 14:27:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -151,7 +151,7 @@ bounce_session_switch(struct smtpd *env, FILE *fp, enum session_state *state, ch
 		fprintf(fp, "\r\n");
 		fprintf(fp, "Below is a copy of the original message:\r\n\r\n");
 
-		if (! file_copy_session(env, fp, srcfp)) {
+		if (! file_copy(fp, srcfp, NULL, 0, 1)) {
 			return 0;
 		}
 
