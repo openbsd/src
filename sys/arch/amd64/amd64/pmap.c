@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.49 2009/06/16 16:42:40 ariane Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.50 2009/08/06 15:28:14 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -567,7 +567,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	kpm = pmap_kernel();
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		kpm->pm_obj[i].pgops = NULL;
-		TAILQ_INIT(&kpm->pm_obj[i].memq);
+		RB_INIT(&kpm->pm_obj[i].memt);
 		kpm->pm_obj[i].uo_npages = 0;
 		kpm->pm_obj[i].uo_refs = 1;
 		kpm->pm_ptphint[i] = NULL;
@@ -832,10 +832,10 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level,
 	obj = &pmap->pm_obj[lidx];
 	pmap->pm_stats.resident_count--;
 	if (pmap->pm_ptphint[lidx] == ptp)
-		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
+		pmap->pm_ptphint[lidx] = RB_ROOT(&obj->memt);
 	ptp->wire_count = 0;
 	uvm_pagerealloc(ptp, NULL, 0);
-	TAILQ_INSERT_TAIL(pagelist, ptp, listq);
+	TAILQ_INSERT_TAIL(pagelist, ptp, pageq);
 }
 
 void
@@ -1019,7 +1019,7 @@ pmap_create(void)
 	/* init uvm_object */
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		pmap->pm_obj[i].pgops = NULL;	/* not a mappable object */
-		TAILQ_INIT(&pmap->pm_obj[i].memq);
+		RB_INIT(&pmap->pm_obj[i].memt);
 		pmap->pm_obj[i].uo_npages = 0;
 		pmap->pm_obj[i].uo_refs = 1;
 		pmap->pm_ptphint[i] = NULL;
@@ -1091,7 +1091,7 @@ pmap_destroy(struct pmap *pmap)
 	 */
 
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		while ((pg = TAILQ_FIRST(&pmap->pm_obj[i].memq)) != NULL) {
+		while ((pg = RB_ROOT(&pmap->pm_obj[i].memt)) != NULL) {
 			KASSERT((pg->pg_flags & PG_BUSY) == 0);
 
 			pg->wire_count = 0;
@@ -1537,7 +1537,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		PMAP_MAP_TO_HEAD_UNLOCK();
 
 		while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
-			TAILQ_REMOVE(&empty_ptps, ptp, listq);
+			TAILQ_REMOVE(&empty_ptps, ptp, pageq);
 			uvm_pagefree(ptp);
                 }
 
@@ -1609,7 +1609,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 	PMAP_MAP_TO_HEAD_UNLOCK();
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
-		TAILQ_REMOVE(&empty_ptps, ptp, listq);
+		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
 		uvm_pagefree(ptp);
 	}
 }
@@ -1682,7 +1682,7 @@ pmap_page_remove(struct vm_page *pg)
 	pmap_tlb_shootwait();
 
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
-		TAILQ_REMOVE(&empty_ptps, ptp, listq);
+		TAILQ_REMOVE(&empty_ptps, ptp, pageq);
 		uvm_pagefree(ptp);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.39 2009/06/17 00:13:59 oga Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.40 2009/08/06 15:28:14 oga Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -83,16 +83,8 @@
  *
  *	A small structure is kept for each resident
  *	page, indexed by page number.  Each structure
- *	is an element of several lists:
- *
- *		A hash table bucket used to quickly
- *		perform object/offset lookups
- *
- *		A list of all pages for a given object,
- *		so they can be quickly deactivated at
- *		time of deallocation.
- *
- *		An ordered list of pages due for pageout.
+ *	contains a list used for manipulating pages, and
+ *	a tree structure for in object/offset lookups
  *
  *	In addition, the structure contains the object
  *	and offset to which this page belongs (for pageout),
@@ -109,8 +101,7 @@
 struct vm_page {
 	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
 						 * queue or free list (P) */
-	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
-	TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
+	RB_ENTRY(vm_page)	objt;		/* object tree (O)*/
 
 	struct vm_anon		*uanon;		/* anon (O,P) */
 	struct uvm_object	*uobject;	/* object (O,P) */
@@ -242,7 +233,6 @@ void		uvm_page_own(struct vm_page *, char *);
 #if !defined(PMAP_STEAL_MEMORY)
 boolean_t	uvm_page_physget(paddr_t *);
 #endif
-void		uvm_page_rehash(void);
 void		uvm_pageidlezero(void);
 
 void		uvm_pageactivate(struct vm_page *);
@@ -308,9 +298,6 @@ int		vm_physseg_find(paddr_t, int *);
 #define uvm_unlock_pageq()	simple_unlock(&uvm.pageqlock)
 #define uvm_lock_fpageq()	mtx_enter(&uvm.fpageqlock);
 #define uvm_unlock_fpageq()	mtx_leave(&uvm.fpageqlock);
-
-#define uvm_pagehash(obj,off) \
-	(((unsigned long)obj+(unsigned long)atop(off)) & uvm.page_hashmask)
 
 #define	UVM_PAGEZERO_TARGET	(uvmexp.free)
 

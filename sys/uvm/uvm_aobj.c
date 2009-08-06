@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.46 2009/07/22 21:05:37 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.47 2009/08/06 15:28:14 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ struct pool uao_swhash_elt_pool;
  */
 
 struct uvm_aobj {
-	struct uvm_object u_obj; /* has: lock, pgops, memq, #pages, #refs */
+	struct uvm_object u_obj; /* has: lock, pgops, memt, #pages, #refs */
 	int u_pages;		 /* number of pages in entire object */
 	int u_flags;		 /* the flags (see uvm_aobj.h) */
 	int *u_swslots;		 /* array of offset->swapslot mappings */
@@ -523,7 +523,7 @@ uao_create(vsize_t size, int flags)
  	 */
 	simple_lock_init(&aobj->u_obj.vmobjlock);
 	aobj->u_obj.pgops = &aobj_pager;
-	TAILQ_INIT(&aobj->u_obj.memq);
+	RB_INIT(&aobj->u_obj.memt);
 	aobj->u_obj.uo_npages = 0;
 
 	/*
@@ -667,7 +667,7 @@ uao_detach_locked(struct uvm_object *uobj)
 	 * Release swap resources then free the page.
  	 */
 	uvm_lock_pageq();
-	while((pg = TAILQ_FIRST(&uobj->memq)) != NULL) {
+	while((pg = RB_ROOT(&uobj->memt)) != NULL) {
 		if (pg->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 			uvm_unlock_pageq();
@@ -702,11 +702,6 @@ uao_detach_locked(struct uvm_object *uobj)
  *	or block.
  * => if PGO_ALLPAGE is set, then all pages in the object are valid targets
  *	for flushing.
- * => NOTE: we rely on the fact that the object's memq is a TAILQ and
- *	that new pages are inserted on the tail end of the list.  thus,
- *	we can make a complete pass through the object in one go by starting
- *	at the head and working towards the tail (new pages are put in
- *	front of us).
  * => NOTE: we are allowed to lock the page queues, so the caller
  *	must not be holding the lock on them [e.g. pagedaemon had
  *	better not call us with the queues locked]

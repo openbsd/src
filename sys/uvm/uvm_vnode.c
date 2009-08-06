@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.68 2009/07/22 21:05:37 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.69 2009/08/06 15:28:14 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	 * now set up the uvn.
 	 */
 	uvn->u_obj.pgops = &uvm_vnodeops;
-	TAILQ_INIT(&uvn->u_obj.memq);
+	RB_INIT(&uvn->u_obj.memt);
 	uvn->u_obj.uo_npages = 0;
 	uvn->u_obj.uo_refs = 1;			/* just us... */
 	oldflags = uvn->u_flags;
@@ -438,11 +438,7 @@ uvn_detach(struct uvm_object *uobj)
 	if (uvn->u_flags & UVM_VNODE_WRITEABLE) {
 		LIST_REMOVE(uvn, u_wlist);
 	}
-#ifdef DIAGNOSTIC
-	if (!TAILQ_EMPTY(&uobj->memq))
-		panic("uvn_deref: vnode VM object still has pages afer "
-		    "syncio/free flush");
-#endif
+	KASSERT(RB_EMPTY(&uobj->memt));
 	oldflags = uvn->u_flags;
 	uvn->u_flags = 0;
 	simple_unlock(&uobj->vmobjlock);
@@ -559,7 +555,7 @@ uvm_vnp_terminate(struct vnode *vp)
 	while (uvn->u_obj.uo_npages) {
 #ifdef DEBUG
 		struct vm_page *pp;
-		TAILQ_FOREACH(pp, &uvn->u_obj.memq, listq) {
+		RB_FOREACH(pp, uvm_objtree, &uvn->u_obj.memt) {
 			if ((pp->pg_flags & PG_BUSY) == 0)
 				panic("uvm_vnp_terminate: detected unbusy pg");
 		}
@@ -669,11 +665,6 @@ uvm_vnp_terminate(struct vnode *vp)
  *	or block.
  * => if PGO_ALLPAGE is set, then all pages in the object are valid targets
  *	for flushing.
- * => NOTE: we rely on the fact that the object's memq is a TAILQ and
- *	that new pages are inserted on the tail end of the list.   thus,
- *	we can make a complete pass through the object in one go by starting
- *	at the head and working towards the tail (new pages are put in
- *	front of us).
  * => NOTE: we are allowed to lock the page queues, so the caller
  *	must not be holding the lock on them [e.g. pagedaemon had
  *	better not call us with the queues locked]
@@ -692,19 +683,6 @@ uvm_vnp_terminate(struct vnode *vp)
  *	object we need to wait for the other PG_BUSY pages to clear
  *	off (i.e. we need to do an iosync).   also note that once a
  *	page is PG_BUSY it must stay in its object until it is un-busyed.
- *
- * note on page traversal:
- *	we can traverse the pages in an object either by going down the
- *	linked list in "uobj->memq", or we can go over the address range
- *	by page doing hash table lookups for each address.    depending
- *	on how many pages are in the object it may be cheaper to do one
- *	or the other.   we set "by_list" to true if we are using memq.
- *	if the cost of a hash lookup was equal to the cost of the list
- *	traversal we could compare the number of pages in the start->stop
- *	range to the total number of pages in the object.   however, it
- *	seems that a hash table lookup is more expensive than the linked
- *	list traversal, so we multiply the number of pages in the
- *	start->stop range by a penalty which we define below.
  */
 
 #define UVN_HASH_PENALTY 4	/* XXX: a guess */
