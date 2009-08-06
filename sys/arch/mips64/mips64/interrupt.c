@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.40 2009/06/10 18:05:31 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.41 2009/08/06 21:05:49 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -165,10 +165,12 @@ interrupt(struct trap_frame *trapframe)
 		soft_count.ec_count++;
 	}
 
+#ifdef RM7K_PERFCNTR
 	if (cause & CR_INT_PERF) {
 		rm7k_perfintr(trapframe);
 		cause &= ~CR_INT_PERF;
 	}
+#endif
 
 	for (i = 0; i <= last_low_int; i++) {
 		intrmask_t active;
