@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.94 2009/08/03 21:34:54 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.95 2009/08/06 23:33:35 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -103,6 +103,71 @@ jmp_buf	httpabort;
 static int	redirect_loop;
 
 /*
+ * Determine whether the character needs encoding, per RFC1738:
+ * 	- No corresponding graphic US-ASCII.
+ * 	- Unsafe characters.
+ */
+static int
+unsafe_char(const char *c)
+{
+	const char *unsafe_chars = " <>\"#{}|\\^~[]`";
+
+	/*
+	 * No corresponding graphic US-ASCII.
+	 * Control characters and octets not used in US-ASCII.
+	 */
+	return (iscntrl(*c) || !isascii(*c) ||
+
+	    /*
+	     * Unsafe characters.
+	     * '%' is also unsafe, if is not followed by two
+	     * hexadecimal digits.
+	     */
+	    strchr(unsafe_chars, *c) != NULL ||
+	    (*c == '%' && (!isxdigit(*++c) || !isxdigit(*++c))));
+}
+
+/*
+ * Encode given URL, per RFC1738.
+ * Allocate and return string to the caller.
+ */
+static char *
+url_encode(const char *path)
+{
+	size_t i, length, new_length;
+	char *epath, *epathp;
+
+	length = new_length = strlen(path);
+
+	/*
+	 * First pass:
+	 * Count unsafe characters, and determine length of the
+	 * final URL.
+	 */
+	for (i = 0; i < length; i++)
+		if (unsafe_char(path + i))
+			new_length += 2;
+
+	epath = epathp = malloc(new_length + 1);	/* One more for '\0'. */
+	if (epath == NULL)
+		return NULL;
+
+	/*
+	 * Second pass:
+	 * Encode, and copy final URL.
+	 */
+	for (i = 0; i < length; i++)
+		if (unsafe_char(path + i)) {
+			snprintf(epathp, 4, "%%" "%02x", path[i]);
+			epathp += 3;
+		} else
+			*(epathp++) = path[i];
+
+	*epathp = '\0';
+	return (epath);
+}
+
+/*
  * Retrieve URL, via the proxy in $proxyvar if necessary.
  * Modifies the string argument given.
  * Returns -1 on failure, 0 on success
@@ -112,6 +177,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 {
 	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *portnum, *path, ststr[4];
 	char *hosttail, *cause = "unknown", *newline, *host, *port, *buf = NULL;
+	char *epath;
 	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
 	struct addrinfo hints, *res0, *res;
 	const char * volatile savefile;
@@ -479,12 +545,17 @@ again:
 
 	if (verbose)
 		fprintf(ttyout, "Requesting %s", origline);
+
 	/*
 	 * Construct and send the request. Proxy requests don't want leading /.
 	 */
 #ifndef SMALL
 	cookie_get(host, path, ishttpsurl, &buf);
 #endif /* !SMALL */
+
+	epath = url_encode(path);
+	if (epath == NULL)
+		return (-1);
 	if (proxyurl) {
 		if (verbose)
 			fprintf(ttyout, " (via %s)\n", proxyurl);
@@ -495,10 +566,10 @@ again:
 		if (cookie)
 			ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n"
 			    "Proxy-Authorization: Basic %s%s\r\n%s\r\n\r\n",
-			    path, cookie, buf ? buf : "", HTTP_USER_AGENT);
+			    epath, cookie, buf ? buf : "", HTTP_USER_AGENT);
 		else
 			ftp_printf(fin, ssl, "GET %s HTTP/1.0\r\n%s%s\r\n\r\n",
-			    path, buf ? buf : "", HTTP_USER_AGENT);
+			    epath, buf ? buf : "", HTTP_USER_AGENT);
 
 	} else {
 #ifndef SMALL
@@ -511,7 +582,7 @@ again:
 				restart_point = 0;
 		}
 #endif /* !SMALL */
-		ftp_printf(fin, ssl, "GET /%s %s\r\nHost: ", path,
+		ftp_printf(fin, ssl, "GET /%s %s\r\nHost: ", epath,
 #ifndef SMALL
 			restart_point ? "HTTP/1.1" :
 #endif /* !SMALL */
@@ -553,7 +624,7 @@ again:
 		if (verbose)
 			fprintf(ttyout, "\n");
 	}
-
+	free(epath);
 
 #ifndef SMALL
 	free(buf);
