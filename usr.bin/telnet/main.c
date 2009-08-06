@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2009/06/05 00:20:46 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2009/08/06 22:51:52 sobrado Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ usage()
 # else
 	    "usage: %s [-468acdEFfKLrx] [-b hostalias] [-e escapechar] "
 	    "[-k realm]\n"
-	    "\t[-l user] [-n tracefile] [-V rdoamin] [-X authtype] "
+	    "\t[-l user] [-n tracefile] [-V rdomain] [-X authtype] "
 	    "[host [port]]\n",
 #endif
 	    __progname);
