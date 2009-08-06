@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.57 2009/08/06 14:32:34 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.58 2009/08/06 16:29:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1102,11 +1102,11 @@ runner_check_loop(struct message *messagep)
 			}
 		}
 
-		else if (strncasecmp("X-OpenSMTPD-Loop: ", buf, 18) == 0) {
+		else if (strncasecmp("Delivered-To: ", buf, 14) == 0) {
 			struct path rcpt;
 
 			bzero(&chkpath, sizeof (struct path));
-			if (! recipient_to_path(&chkpath, buf + 18))
+			if (! recipient_to_path(&chkpath, buf + 14))
 				continue;
 
 			rcpt = messagep->recipient;

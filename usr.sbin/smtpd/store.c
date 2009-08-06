@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.23 2009/08/06 16:26:39 gilles Exp $	*/
+/*	$OpenBSD: store.c,v 1.24 2009/08/06 16:29:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -63,11 +63,11 @@ file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type, int s
 
 		/* If we are NOT dealing with a mailer daemon copy, we have
 		 * path set to the original recipient. In that case, we can
-		 * add the X-OpenSMTPD-Loop header to help loop detection.
+		 * add the Delivered-To header to help loop detection.
 		 */
 		if (!session && path != NULL && inheaders &&
 		    strchr(buf, ':') == NULL && !isspace(*buf)) {
-			if (fprintf(dest, "X-OpenSMTPD-Loop: %s@%s\n",
+			if (fprintf(dest, "Delivered-To: %s@%s\n",
 				path->user, path->domain) == -1)
 				return 0;
 			inheaders = 0;

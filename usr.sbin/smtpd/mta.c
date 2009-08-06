@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.63 2009/08/06 14:12:48 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.64 2009/08/06 16:29:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -929,7 +929,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			SSL_get_cipher_bits(sessionp->s_ssl, NULL));
 		}
 
-		session_respond(sessionp, "X-OpenSMTPD-Loop: %s@%s",
+		session_respond(sessionp, "Delivered-To: %s@%s",
 		    messagep->sender.user,
 		    messagep->sender.domain);
 
