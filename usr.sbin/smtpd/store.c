@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.22 2009/08/06 14:27:41 gilles Exp $	*/
+/*	$OpenBSD: store.c,v 1.23 2009/08/06 16:26:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -82,6 +82,14 @@ file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type, int s
 					return 0;
 			}
 		}
+
+		/* "If first character of the line is a period, one
+		 *  additional period is inserted at the beginning."
+		 * [4.5.2]
+		 */
+		if (session && *buf == '.')
+			if (fprintf(dest, ".") != 1)
+				return 0;
 
 		if (fprintf(dest, "%s%s", buf, session ? "\r\n" : "\n") !=
 			(int)len + (session ? 2 : 1))
