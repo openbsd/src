@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.56 2009/08/06 14:12:48 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.57 2009/08/06 14:32:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -801,6 +801,9 @@ runner_message_schedule(struct message *messagep, time_t tm)
 
 	/* Batch has been in the queue for too long and expired */
 	if (tm - messagep->creation >= SMTPD_QUEUE_EXPIRY) {
+		message_set_errormsg(messagep, "message expired after sitting in queue for %d days",
+			SMTPD_QUEUE_EXPIRY / 60 / 60 / 24);
+		bounce_record_message(messagep);
 		queue_remove_envelope(messagep);
 		return 0;
 	}
