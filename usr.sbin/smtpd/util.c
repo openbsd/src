@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.22 2009/06/01 18:24:01 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.23 2009/08/06 14:12:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -25,12 +25,14 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
+#include <err.h>
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
 #include <libgen.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -364,4 +366,29 @@ lowercase(char *buf, char *s, size_t len)
 		*buf = tolower(*buf);
 		buf++;
 	}
+}
+
+void
+message_set_errormsg(struct message *messagep, char *fmt, ...)
+{
+	int ret;
+	va_list ap;
+
+	va_start(ap, fmt);
+
+	ret = vsnprintf(messagep->session_errorline, MAX_LINE_SIZE, fmt, ap);
+	if (ret >= MAX_LINE_SIZE)
+		strlcpy(messagep->session_errorline + (MAX_LINE_SIZE - 4), "...", 4);
+
+	/* this should not happen */
+	if (ret == -1)
+		err(1, "vsnprintf");
+
+	va_end(ap);
+}
+
+char *
+message_get_errormsg(struct message *messagep)
+{
+	return messagep->session_errorline;
 }

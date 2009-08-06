@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.62 2009/08/06 13:40:45 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.63 2009/08/06 14:12:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -819,8 +819,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	case 550:
 		if (sessionp->s_state == S_RCPT) {
 			batchp->messagep->status = (S_MESSAGE_REJECTED|S_MESSAGE_PERMFAILURE);
-			strlcpy(batchp->messagep->session_errorline, line,
-			    sizeof(batchp->messagep->session_errorline));
+			message_set_errormsg(batchp->messagep, "%s", line);
 			break;
 		}
 	case 354:
@@ -1021,11 +1020,13 @@ mta_batch_update_queue(struct batch *batchp)
 
 		if (batchp->status == S_BATCH_PERMFAILURE) {
 			messagep->status |= S_MESSAGE_PERMFAILURE;
+			message_set_errormsg(messagep, "%s", batchp->errorline);
 		}
 		
 		if (batchp->status == S_BATCH_TEMPFAILURE) {
 			if (messagep->status != S_MESSAGE_PERMFAILURE)
 				messagep->status |= S_MESSAGE_TEMPFAILURE;
+			message_set_errormsg(messagep, "%s", batchp->errorline);
 		}
 
 		if ((messagep->status & S_MESSAGE_TEMPFAILURE) == 0 &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.131 2009/08/06 13:40:45 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.132 2009/08/06 14:12:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -938,3 +938,5 @@ int		 valid_message_uid(char *);
 char		*time_to_text(time_t);
 int		 secure_file(int, char *, struct passwd *);
 void		 lowercase(char *, char *, size_t);
+void		 message_set_errormsg(struct message *, char *, ...);
+char		*message_get_errormsg(struct message *);

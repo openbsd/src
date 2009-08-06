@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.55 2009/08/06 13:40:45 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.56 2009/08/06 14:12:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -650,6 +650,7 @@ runner_process_queue(struct smtpd *env)
 			continue;
 
 		if (runner_check_loop(&message)) {
+			message_set_errormsg(&message, "loop has been detected");
 			bounce_record_message(&message);
 			queue_remove_envelope(&message);
 			continue;
