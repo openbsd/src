@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.2 2009/08/06 14:12:48 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.3 2009/08/06 14:16:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -140,7 +140,7 @@ bounce_session_switch(struct smtpd *env, FILE *fp, enum session_state *state, ch
 		fprintf(fp, "\r\n");
 
 		fprintf(fp, "Hi !\r\n");
-		fprintf(fp, "This is the MAILER-DAEMON, please DO NOT REPLY t this e-mail.\r\n");
+		fprintf(fp, "This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail.\r\n");
 		fprintf(fp, "An error has occurred while attempting to deliver a message.\r\n");
 		fprintf(fp, "\r\n");
 		fprintf(fp, "Recipient: %s@%s\r\n", messagep->recipient.user,
