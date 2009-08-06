@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.2 2009/08/04 20:17:14 jordan Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.3 2009/08/06 22:39:40 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -62,6 +62,7 @@ int	sr_raid6_addio(struct sr_workunit *wu, int, daddr64_t, daddr64_t,
 	    void *, int, int, void *, void *, int);
 void 	sr_dump(void *, int);
 void	sr_raid6_scrub(struct sr_discipline *);
+int	sr_failio(struct sr_workunit *);
 
 void	*sr_get_block(struct sr_discipline *, int);
 void	sr_put_block(struct sr_discipline *, void *);
@@ -433,78 +434,42 @@ sr_raid6_rw(struct sr_workunit *wu)
 		wu->swu_blk_end = ((chunk_offs + (no_chunk << strip_bits)) >> DEV_BSHIFT) - 1;
 
 		fail = 0;
+		fchunk = -1;
 
-		/* Get P-fail flag */
-		scp = sd->sd_vol.sv_chunks[pchunk];
-		switch (scp->src_meta.scm_status) {
-		case BIOC_SDOFFLINE:
-		case BIOC_SDREBUILD:
-		case BIOC_SDHOTSPARE:
-			fail |= SR_FAILP;
-			break;
+		/* Get disk-fail flags */
+		for (i=0; i< no_chunk+2; i++) {
+			scp = sd->sd_vol.sv_chunks[i];
+			switch (scp->src_meta.scm_status) {
+			case BIOC_SDOFFLINE:
+			case BIOC_SDREBUILD:
+			case BIOC_SDHOTSPARE:
+				if (i == qchunk)
+					fail |= SR_FAILQ;
+				else if (i == pchunk)
+					fail |= SR_FAILP;
+				else if (i == chunk)
+					fail |= SR_FAILX;
+				else {
+					/* dual data-disk failure */
+					fail |= SR_FAILY;
+					fchunk = i;
+				}
+				break;
+			}
 		}
-
-		/* Get Q-fail flag */
-		scp = sd->sd_vol.sv_chunks[qchunk];
-		switch (scp->src_meta.scm_status) {
-		case BIOC_SDOFFLINE:
-		case BIOC_SDREBUILD:
-		case BIOC_SDHOTSPARE:
-			fail |= SR_FAILQ;
-			break;
-		}
-
-		/* Get disk-fail flag */	
-		scp = sd->sd_vol.sv_chunks[chunk];
-		switch (scp->src_meta.scm_status) {
-		case BIOC_SDOFFLINE:
-		case BIOC_SDREBUILD:
-		case BIOC_SDHOTSPARE:
-			fail |= SR_FAILX;
-
-			/* Check for dual-drive failure */
-			if (!(fail & (SR_FAILP|SR_FAILQ)) && 
-			    (sd->sd_vol_status == BIOC_SVDEGRADED))
-			    fail |= SR_FAILY;
-			break;
-		}
-
 		if (xs->flags & SCSI_DATA_IN) {	
-			switch (fail) {
-			case SR_NOFAIL:
+			if (!(fail & SR_FAILX)) {
 				/* drive is good. issue single read request */
 				if (sr_raid6_addio(wu, chunk, lba, length,
 				    data, xs->flags, 0, NULL, NULL, 0))
 					goto bad;
-				break;
-			case SR_FAILX:
-			case SR_FAILX+SR_FAILQ:
-				/* Dx, (Q) failed: Dx = Dz ^ P (same as RAID5) */
-				printf("Disk %llx offline, "
-				    "regenerating Dx+Q\n", chunk);
-
-				/* Calculate: Dx = P^Dz
- 				 *   P:  sr_raid6_xorp(data, ---, length); 
- 				 *   Dz: sr_raid6_xorp(data, ---, length); 
-				 */
-				memset(data, 0, length);
-				for (i = 0; i < no_chunk+2; i++) {
-					if (i != chunk && i != qchunk) {
-						/* Read Dz */
-						if (sr_raid6_addio(wu, i, lba, length,
-					    	    NULL, SCSI_DATA_IN, SR_CCBF_FREEBUF, 
-					    	    data, NULL, 0))
-	 				    	    goto bad;
-					}
-				}
-				break;
-			case SR_FAILX+SR_FAILP:
+			} else if (fail & SR_FAILP) {
 				/* Dx, P failed */
 				printf("Disk %llx offline, "
 				    "regenerating Dx+P\n", chunk);
 
-				pbuf = sr_get_block(sd, length);
-				if (pbuf == NULL)
+				qbuf = sr_get_block(sd, length);
+				if (qbuf == NULL)
 					goto bad;
 
 				/* Calculate: Dx*gx = Q^(Dz*gz)
@@ -515,44 +480,33 @@ sr_raid6_rw(struct sr_workunit *wu)
 				for (i = 0; i < no_chunk+2; i++) {
 					if  (i == qchunk) {
 						/* Read Q */
-						if (sr_raid6_addio(wu, i, lba, length,
-						    NULL, SCSI_DATA_IN, SR_CCBF_FREEBUF,
-						    pbuf, NULL, 0))
-						    goto bad;
+						if (sr_raid6_addio(wu, i, lba, 
+						    length, NULL, SCSI_DATA_IN, 
+						    SR_CCBF_FREEBUF, qbuf, 
+						    NULL, 0))
+						    	goto bad;
 					} else if (i != chunk && i != pchunk) {
 						/* Read Dz * gz */
-						if (sr_raid6_addio(wu, i, lba, length,
-						   NULL, SCSI_DATA_IN, SR_CCBF_FREEBUF,
-						   NULL, pbuf, gf_pow[i]))
-						   goto bad;
+						if (sr_raid6_addio(wu, i, lba, 
+						   length, NULL, SCSI_DATA_IN,
+						   SR_CCBF_FREEBUF, NULL,
+						   qbuf, gf_pow[i]))
+						   	goto bad;
 					}
 				}
 
-				/* XXX: bag of fail */
-				wu->swu_flags |= SR_WUF_FAIL;
-				sr_raid_startwu(wu);
-				while ((wu->swu_flags & SR_WUF_FAILIOCOMP) == 0) {
-					tsleep(wu, PRIBIO, "sr_getdata", 0);
-				}
+				/* run fake wu when read i/o is complete */
+				if (wu_w == NULL && 
+				    (wu_w = sr_wu_get(sd, 0)) == NULL)
+					goto bad;
 
-				/* On completion, pbuf = Dx*gx */
-				sr_raid6_xorq(data, pbuf, length, gf_inv(gf_pow[chunk]));
-				sr_put_block(sd, pbuf);
-
-				sr_wu_put(wu);
-				scsi_done(xs);
-				return(0);
-
-				break;
-			case SR_FAILX+SR_FAILY:
+				wu_w->swu_flags |= SR_WUF_FAIL;
+				if (sr_raid6_addio(wu_w, 0, 0, length, qbuf, 0,
+				    SR_CCBF_FREEBUF, NULL, data,
+				    gf_inv(gf_pow[chunk])))
+					goto bad;
+			} else if (fail & SR_FAILY) {
 				/* Dx, Dy failed */
-
-				/* cheat.. get other failed drive */
-				for (fchunk=0; fchunk<no_chunk+2; fchunk++) {
-					if (fchunk != chunk && fchunk != qchunk && fchunk != pchunk)
-						break;
-				}
-
 				printf("Disk %llx & %llx offline, "
 				    "regenerating Dx+Dy\n", chunk, fchunk);
 				qbuf = sr_get_block(sd, length);
@@ -572,55 +526,71 @@ sr_raid6_rw(struct sr_workunit *wu)
 				for (i = 0; i < no_chunk+2; i++) {
 					if (i == qchunk) {
 						/* read Q */
-						if (sr_raid6_addio(wu, i, lba, length,
-						    NULL, SCSI_DATA_IN, SR_CCBF_FREEBUF,
-						    qbuf, NULL, 0))
-						    goto bad;
+						if (sr_raid6_addio(wu, i, lba, 
+						    length,  NULL, SCSI_DATA_IN,
+						    SR_CCBF_FREEBUF, qbuf, 
+						    NULL, 0))
+						    	goto bad;
 					} else if (i == pchunk) {
 						/* read P */
-						if (sr_raid6_addio(wu, i, lba, length,
-						    NULL, SCSI_DATA_IN, SR_CCBF_FREEBUF,
-						    pbuf, NULL, 0))
-						    goto bad;
+						if (sr_raid6_addio(wu, i, lba,
+						    length,  NULL, SCSI_DATA_IN,
+						    SR_CCBF_FREEBUF, pbuf, 
+						    NULL, 0))
+						    	goto bad;
 					} else if (i != chunk) {
 						/* read Dz * gz */
-						if (sr_raid6_addio(wu, i, lba, length,
-						    NULL, SCSI_DATA_IN, SR_CCBF_FREEBUF,
-						    pbuf, qbuf, gf_pow[i]))
-						    goto bad;
+						if (sr_raid6_addio(wu, i, lba,
+						    length, NULL, SCSI_DATA_IN,
+						    SR_CCBF_FREEBUF, pbuf,
+						    qbuf, gf_pow[i]))
+						    	goto bad;
 					}
 				}
 
+				/* run fake wu when read i/o is complete */
+				if (wu_w == NULL && 
+				    (wu_w = sr_wu_get(sd, 0)) == NULL)
+					goto bad;
 
-				/* XXX: bag of fail */
-				wu->swu_flags |= SR_WUF_FAIL;
-				sr_raid_startwu(wu);
-				while ((wu->swu_flags & SR_WUF_FAILIOCOMP) == 0) {
-					tsleep(wu, PRIBIO, "sr_getdata", 0);
+				wu_w->swu_flags |= SR_WUF_FAIL;
+				if (sr_raid6_addio(wu_w, 0, 0, length, pbuf, 0,
+				    SR_CCBF_FREEBUF, NULL, data,
+				    gf_inv(gf_pow[255+chunk-fchunk] ^ 1)))
+					goto bad;
+				if (sr_raid6_addio(wu_w, 0, 0, length, qbuf, 0,
+				    SR_CCBF_FREEBUF, NULL, data,
+				    gf_inv(gf_pow[chunk] ^ gf_pow[fchunk])))
+					goto bad;
+			} else {
+				/* Two cases: single disk (Dx) or (Dx+Q)
+				 *   Dx = Dz ^ P (same as RAID5) 
+				 */
+				printf("Disk %llx offline, "
+				    "regenerating Dx%s\n", chunk, 
+				    fail & SR_FAILQ ? "+Q" : " single");
+
+				/* Calculate: Dx = P^Dz
+ 				 *   P:  sr_raid6_xorp(data, ---, length); 
+ 				 *   Dz: sr_raid6_xorp(data, ---, length); 
+				 */
+				memset(data, 0, length);
+				for (i = 0; i < no_chunk+2; i++) {
+					if (i != chunk && i != qchunk) {
+						/* Read Dz */
+						if (sr_raid6_addio(wu, i, lba, 
+						    length, NULL, SCSI_DATA_IN,
+						    SR_CCBF_FREEBUF, data, 
+						    NULL, 0))
+	 				    	    	goto bad;
+					}
 				}
 
-				/* On completion, pbuf = Dx ^ Dy; qbuf = Dx*gx ^ Dy*gy */
-				sr_raid6_xorq(data, qbuf, length, 
-				    gf_inv(gf_pow[chunk] ^ gf_pow[fchunk]));
-				sr_raid6_xorq(data, pbuf, length,
-				    gf_inv(gf_pow[255+chunk-fchunk] ^ 1));	// Dx
-
-				sr_put_block(sd, pbuf);
-				sr_put_block(sd, qbuf);
-
-				sr_wu_put(wu);
-				scsi_done(xs);
-				return(0);
-
-				break;
-			default:
-				printf("%s: is offline, can't read\n",
-				    DEVNAME(sd->sd_sc));
-				goto bad;
+				/* data will contain correct value on completion */
 			}
 		} else {
 			/* XXX handle writes to failed/offline disk? */
-			if (scp->src_meta.scm_status == BIOC_SDOFFLINE)
+			if (fail & (SR_FAILX|SR_FAILQ|SR_FAILP))
 				goto bad;
 
 			/*
@@ -721,6 +691,23 @@ bad:
 	/* wu is unwound by sr_wu_put */
 	if (wu_w)
 		sr_wu_put(wu_w);
+	return (1);
+}
+
+/* Handle failure I/O completion */
+int
+sr_failio(struct sr_workunit *wu)
+{
+	struct sr_discipline	*sd = wu->swu_dis;
+	struct sr_ccb		*ccb;
+
+	if (!(wu->swu_flags & SR_WUF_FAIL))
+		return (0);
+
+	/* Wu is a 'fake'.. don't do real I/O just intr */
+	TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);	
+	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link)
+		sr_raid6_intr(&ccb->ccb_buf);
 	return (1);
 }
 
@@ -832,7 +819,8 @@ sr_raid6_intr(struct buf *bp)
 					    SR_WU_INPROGRESS;
 					TAILQ_REMOVE(&sd->sd_wu_defq,
 					    wu->swu_collider, swu_link);
-					sr_raid_startwu(wu->swu_collider);
+					if (sr_failio(wu->swu_collider) == 0)
+						sr_raid_startwu(wu->swu_collider);
 				}
 				break;
 			}
@@ -842,11 +830,7 @@ sr_raid6_intr(struct buf *bp)
 			printf("%s: wu: %p not on pending queue\n",
 			    DEVNAME(sc), wu);
 
-		if (wu->swu_flags & SR_WUF_FAIL) {
-			wu->swu_flags |= SR_WUF_FAILIOCOMP;
-			wakeup(wu);
-		}
-		else if (wu->swu_flags & SR_WUF_REBUILD) {
+		if (wu->swu_flags & SR_WUF_REBUILD) {
 			if (wu->swu_xs->flags & SCSI_DATA_OUT) {
 				wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
 				wakeup(wu);
@@ -987,10 +971,8 @@ sr_raid6_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
 void
 sr_raid6_xorp(void *p, void *d, int len)
 {
-	uint32_t	*pbuf = p, *data = d;
+	uint8_t *pbuf = p, *data = d;
 
-	/* Faster, X bytes at a time */
-	len >>= 4;
 	while (len--)
 		pbuf[len] ^= data[len];
 }
