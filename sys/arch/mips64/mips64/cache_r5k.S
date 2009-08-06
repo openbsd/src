@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.24 2009/08/06 21:06:30 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.25 2009/08/06 21:09:18 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -180,7 +180,7 @@ LEAF(Mips5k_ConfigCache, 0)
 	mfc0	v0, COP_0_CONFIG		# Get configuration register
 
 	srl	t1, v0, 9			# Get I cache size.
-	and	t1, 3
+	and	t1, 7
 	li	t2, 4096
 	sllv	ta0, t2, t1			# ta0 = Initial I set size.
 
@@ -190,7 +190,7 @@ LEAF(Mips5k_ConfigCache, 0)
 	sw	t2, CpuPrimaryInstCacheLSize
 
 	srl	t1, v0, 6			# Get D cache size.
-	and	t1, 3
+	and	t1, 7
 	li	t2, 4096			# Fixed page size.
 	sllv	ta1, t2, t1
 
