@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.133 2009/08/06 14:27:41 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.134 2009/08/06 16:46:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -387,7 +387,7 @@ TAILQ_HEAD(aliaseslist, alias);
 enum message_type {
 	T_MDA_MESSAGE		= 0x1,
 	T_MTA_MESSAGE		= 0x2,
-	T_DAEMON_MESSAGE	= 0x4
+	T_BOUNCE_MESSAGE	= 0x4
 };
 
 enum message_status {
@@ -407,7 +407,8 @@ enum message_flags {
 	F_MESSAGE_PROCESSING	= 0x4,
 	F_MESSAGE_AUTHENTICATED	= 0x8,
 	F_MESSAGE_ENQUEUED	= 0x10,
-	F_MESSAGE_FORCESCHEDULE	= 0x20
+	F_MESSAGE_FORCESCHEDULE	= 0x20,
+	F_MESSAGE_BOUNCE	= 0x40
 };
 
 struct message {
@@ -451,7 +452,7 @@ enum batch_status {
 enum batch_type {
 	T_MDA_BATCH		= 0x1,
 	T_MTA_BATCH		= 0x2,
-	T_DAEMON_BATCH		= 0x4
+	T_BOUNCE_BATCH		= 0x4
 };
 
 enum child_type {

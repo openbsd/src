@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.59 2009/08/06 13:40:45 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.60 2009/08/06 16:46:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -643,7 +643,7 @@ smtp_dispatch_runner(int sig, short event, void *p)
 			s->s_fd = fd[0];
 			s->s_env = env;
 			s->s_l = &l;
-			s->s_msg.flags |= F_MESSAGE_ENQUEUED;
+			s->s_msg.flags |= F_MESSAGE_ENQUEUED|F_MESSAGE_BOUNCE;
 
 			bzero(&hints, sizeof(hints));
 			hints.ai_family = PF_UNSPEC;

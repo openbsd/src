@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.58 2009/08/06 16:29:35 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.59 2009/08/06 16:46:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -749,11 +749,11 @@ runner_batch_dispatch(struct smtpd *env, struct batch *batchp, time_t curtime)
 	u_int8_t proctype;
 	struct message *messagep;
 
-	if ((batchp->type & (T_DAEMON_BATCH|T_MDA_BATCH|T_MTA_BATCH)) == 0)
+	if ((batchp->type & (T_BOUNCE_BATCH|T_MDA_BATCH|T_MTA_BATCH)) == 0)
 		fatal("runner_batch_dispatch: unknown batch type");
 
 	log_debug("in batch dispatch");
-	if (batchp->type == T_DAEMON_BATCH) {
+	if (batchp->type == T_BOUNCE_BATCH) {
 		while ((messagep = TAILQ_FIRST(&batchp->messages))) {
 			log_debug("starting");
 			bounce_process(env, messagep);
@@ -790,7 +790,7 @@ runner_message_schedule(struct message *messagep, time_t tm)
 {
 	time_t delay;
 
-	if (messagep->type == T_DAEMON_MESSAGE)
+	if (messagep->type == T_BOUNCE_MESSAGE)
 		return 1;
 
 	if (messagep->flags & (F_MESSAGE_SCHEDULED|F_MESSAGE_PROCESSING))
@@ -979,8 +979,8 @@ batch_record(struct smtpd *env, struct message *messagep)
 		TAILQ_INIT(&batchp->messages);
 		SPLAY_INSERT(batchtree, &env->batch_queue, batchp);
 
-		if (messagep->type & T_DAEMON_MESSAGE) {
-			batchp->type = T_DAEMON_BATCH;
+		if (messagep->type & T_BOUNCE_MESSAGE) {
+			batchp->type = T_BOUNCE_BATCH;
 			path = &messagep->sender;
 		}
 		else {
@@ -991,7 +991,7 @@ batch_record(struct smtpd *env, struct message *messagep)
 		(void)strlcpy(batchp->hostname, path->domain,
 		    sizeof(batchp->hostname));
 
-		if (batchp->type != T_DAEMON_BATCH) {
+		if (batchp->type != T_BOUNCE_BATCH) {
 			if (IS_MAILBOX(path->rule.r_action) ||
 			    IS_EXT(path->rule.r_action)) {
 				batchp->type = T_MDA_BATCH;
@@ -1016,7 +1016,7 @@ batch_lookup(struct smtpd *env, struct message *message)
 	/* We only support delivery of one message at a time, in MDA
 	 * and bounces messages.
 	 */
-	if (message->type & (T_DAEMON_MESSAGE|T_MDA_MESSAGE))
+	if (message->type & (T_BOUNCE_MESSAGE|T_MDA_MESSAGE))
 		return NULL;
 
 	/* If message->batch_id != 0, we can retrieve batch by id */
@@ -1096,7 +1096,6 @@ runner_check_loop(struct message *messagep)
 		if (strncasecmp("Received: ", buf, 10) == 0) {
 			rcvcount++;
 			if (rcvcount == MAX_HOPS_COUNT) {
-				log_debug("LOOP DETECTED THROUGH RECEIVED LINES COUNT");
 				ret = 1;
 				break;
 			}
@@ -1110,13 +1109,11 @@ runner_check_loop(struct message *messagep)
 				continue;
 
 			rcpt = messagep->recipient;
-			if (messagep->type == T_DAEMON_MESSAGE)
+			if (messagep->type == T_BOUNCE_MESSAGE)
 				rcpt = messagep->sender;
 
 			if (strcasecmp(chkpath.user, rcpt.user) == 0 &&
 			    strcasecmp(chkpath.domain, rcpt.domain) == 0) {
-				log_debug("LOOP DETECTED THROUGH X-OPENSMTPD-LOOP HEADER: %s@%s",
-				    chkpath.user, chkpath.domain);
 				ret = 1;
 				break;
 			}

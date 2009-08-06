@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.20 2009/08/06 13:40:45 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.21 2009/08/06 16:46:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -320,13 +320,13 @@ bounce_record_message(struct message *messagep)
 	char	msgid[MAX_ID_SIZE];
 	struct message mbounce;
 
-	if (messagep->type == T_DAEMON_MESSAGE) {
+	if (messagep->type == T_BOUNCE_MESSAGE) {
 		log_debug("mailer daemons loop detected !");
 		return 0;
 	}
 
 	mbounce = *messagep;
-	mbounce.type = T_DAEMON_MESSAGE;
+	mbounce.type = T_BOUNCE_MESSAGE;
 
 	if (! bounce_create_layout(msgid, messagep))
 		return 0;
@@ -445,12 +445,12 @@ queue_message_update(struct message *messagep)
 	messagep->retry++;
 
 	if (messagep->status & S_MESSAGE_PERMFAILURE) {
-		if (messagep->type & T_DAEMON_MESSAGE ||
+		if (messagep->type == T_BOUNCE_MESSAGE ||
 		    (messagep->sender.user[0] == '\0' && messagep->sender.domain[0] == '\0'))
 			queue_remove_envelope(messagep);
 		else {
 			messagep->id = queue_generate_id();
-			messagep->type |= T_DAEMON_MESSAGE;
+			messagep->type = T_BOUNCE_MESSAGE;
 			messagep->status &= ~S_MESSAGE_PERMFAILURE;
 			messagep->lasttry = 0;
 			messagep->retry = 0;
@@ -772,6 +772,8 @@ display_envelope(struct message *envelope, int flags)
 		errx(1, "%s: unexpected status 0x%04x", envelope->message_uid,
 		    envelope->status);
 
+	getflag(&envelope->flags, F_MESSAGE_BOUNCE, "BOUNCE",
+	    status, sizeof(status));
 	getflag(&envelope->flags, F_MESSAGE_AUTHENTICATED, "AUTH",
 	    status, sizeof(status));
 	getflag(&envelope->flags, F_MESSAGE_PROCESSING, "PROCESSING",
@@ -797,11 +799,8 @@ display_envelope(struct message *envelope, int flags)
 	case T_MTA_MESSAGE:
 		printf("MTA");
 		break;
-	case T_MDA_MESSAGE|T_DAEMON_MESSAGE:
-		printf("MDA-DAEMON");
-		break;
-	case T_MTA_MESSAGE|T_DAEMON_MESSAGE:
-		printf("MTA-DAEMON");
+	case T_BOUNCE_MESSAGE:
+		printf("BOUNCE");
 		break;
 	default:
 		printf("UNKNOWN");

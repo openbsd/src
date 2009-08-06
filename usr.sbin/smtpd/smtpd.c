@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.79 2009/08/06 13:40:45 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.80 2009/08/06 16:46:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -440,7 +440,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 			IMSG_SIZE_CHECK(batchp);
 
 			path = &batchp->message.recipient;
-			if (batchp->type & T_DAEMON_BATCH) {
+			if (batchp->type & T_BOUNCE_BATCH) {
 				path = &batchp->message.sender;
 			}
 			
@@ -502,7 +502,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 			IMSG_SIZE_CHECK(batchp);
 
 			path = &batchp->message.recipient;
-			if (batchp->type & T_DAEMON_BATCH) {
+			if (batchp->type & T_BOUNCE_BATCH) {
 				path = &batchp->message.sender;
 			}
 
