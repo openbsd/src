@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mips64,v 1.11 2009/06/13 21:48:01 miod Exp $
+#	$OpenBSD: files.mips64,v 1.12 2009/08/06 21:11:37 miod Exp $
 
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c
@@ -13,6 +13,7 @@ file	arch/mips64/mips64/sys_machdep.c
 file	arch/mips64/mips64/trap.c
 file	arch/mips64/mips64/vm_machdep.c
 
+file	arch/mips64/mips64/cache_loongson2.S	cpu_loongson2
 file	arch/mips64/mips64/cache_r5k.S
 file	arch/mips64/mips64/cache_r10k.S
 file	arch/mips64/mips64/context.S

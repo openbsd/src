@@ -1,4 +1,4 @@
-/*	$OpenBSD: archtype.h,v 1.6 2009/04/19 12:52:31 miod Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.7 2009/08/06 21:11:38 miod Exp $	*/
 /*
  * Copyright (c) 1997-2004 Opsycon AB, Sweden (www.opsycon.se)
  *
@@ -30,16 +30,16 @@
 /*
  * Define architectural identities for the different Mips machines.
  */
-#define	ARC_CLASS		0x0000	/* Arch class ARC */
+#define	ARC_CLASS		0x0000	/* ARC class */
 #define	ACER_PICA_61		0x0001	/* Acer Labs Pica 61 */
 #define	MAGNUM			0x0002	/* Mips MAGNUM R4000 */
-#define	DESKSTATION_RPC44	0x0003	/* Deskstation xxx */
-#define	DESKSTATION_TYNE	0x0004	/* Deskstation xxx */
+#define	DESKSTATION_RPC44	0x0003	/* Deskstation rPC44 */
+#define	DESKSTATION_TYNE	0x0004	/* Deskstation Tyne */
 #define	NKK_AQUARIUS		0x0005	/* NKK R4{67}00 PC */
 #define NEC_R94			0x0006	/* NEC Magnum class */
 #define	SNI_RM200		0x0007	/* Siemens Nixdorf RM200 */
 
-#define	SGI_CLASS		0x0010	/* Silicon Graphics Class */
+#define	SGI_CLASS		0x0010	/* Silicon Graphics class */
 #define	SGI_CRIMSON		0x0011	/* Crimson */
 #define	SGI_ONYX		0x0012	/* Onyx (!S model Challenge) */
 #define	SGI_INDIGO		0x0013	/* Indigo */
@@ -52,18 +52,18 @@
 #define	SGI_O2000		0x001a	/* IP27 Origin2000/Lego */
 #define	SGI_OCTANE		0x001b	/* IP30 Octane/Speedracer */
 #define	SGI_O300		0x001c	/* IP35 Origin300, Onyx3, Fuel */
-#define	SGI_O3000		0x001d	/* IP35 Origin3000, Tezro */
+#define	SGI_O3000		0x001d	/* IP35 Origin350, Tezro */
 
-#define	ALGOR_CLASS		0x0020	/* Algorithmics Class */
+#define	ALGOR_CLASS		0x0020	/* Algorithmics class */
 #define	ALGOR_P4032		0x0021	/* ALGORITHMICS P-4032 */
 #define	ALGOR_P5064		0x0022	/* ALGORITHMICS P-5064 */
 
-#define	GALILEO_CLASS		0x0030	/* Galileo PCI based Class */
+#define	GALILEO_CLASS		0x0030	/* Galileo PCI based class */
 #define	GALILEO_G9		0x0031	/* Galileo GT-64011 Eval board */
 #define GALILEO_EV64240		0x0032	/* Galileo EV64240 Eval board */
 #define GALILEO_EV64340		0x0033	/* Galileo EV64340 Eval board */
 
-#define	MOMENTUM_CLASS		0x0040	/* Momentum Inc Class */
+#define	MOMENTUM_CLASS		0x0040	/* Momentum Inc class */
 #define	MOMENTUM_CP7000		0x0041	/* Momentum Ocelot */
 #define	MOMENTUM_CP7000G	0x0042	/* Momentum Ocelot-G */
 #define	MOMENTUM_JAGUAR		0x0043	/* Momentum Jaguar ATX */
@@ -79,8 +79,11 @@
 #define	WG8200			0x0059	/* Willowglen CPU-8200 */
 #define	WG8232			0x005a	/* Willowglen CPU-8232 */
 
-#define	MISC_CLASS		0x00F0	/* Misc machines... */
-#define	LAGUNA			0x00F1	/* Heurikon Laguna VME board */
+#define	LOONGSON_CLASS		0x0060	/* Loongson + PMON2000 class */
+#define	LOONGSON_YEELONG	0x0061	/* Lemote Yeelong */
+
+#define	MISC_CLASS		0x00f0	/* Misc machines... */
+#define	LAGUNA			0x00f1	/* Heurikon Laguna VME board */
 
 #define	ARCHCLASS(n)	((n) & 0xf0)
 

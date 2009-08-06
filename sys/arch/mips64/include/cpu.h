@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.33 2009/06/10 18:05:30 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.34 2009/08/06 21:11:38 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -240,6 +240,7 @@ extern vaddr_t uncached_base;
 #define	COP_0_WATCH_HI		$19
 #define	COP_0_TLB_XCONTEXT	$20
 #define	COP_0_TLB_FR_MASK	$21	/* R10000 onwards */
+#define	COP_0_DIAG		$22	/* Loongson 2F */
 #define	COP_0_ECC		$26
 #define	COP_0_CACHE_ERR		$27
 #define	COP_0_TAG_LO		$28
@@ -467,7 +468,9 @@ extern int int_nest_cntr;
 #define	MIPS_RM7000	0x27	/* PMCS RM7000 CPU		ISA IV  */
 #define	MIPS_RM52X0	0x28	/* PMCS RM52X0 CPU		ISA IV  */
 #define	MIPS_RM9000	0x34	/* PMCS RM9000 CPU		ISA IV  */
+#define	MIPS_LOONGSON	0x42	/* STC LoongSon CPU		ISA III */
 #define	MIPS_VR5400	0x54	/* NEC Vr5400 CPU		ISA IV+ */
+#define	MIPS_LOONGSON2	0x63	/* STC LoongSon2 CPU		ISA III */
 
 /*
  * MIPS FPU types. Only soft, rest is the same as cpu type.
@@ -509,8 +512,6 @@ void	cp0_set_compare(u_int);
 #define	Mips_SyncCache()	(*(sys_config._SyncCache))()
 #define	Mips_InvalidateICache(a, l)	\
 				(*(sys_config._InvalidateICache))((a), (l))
-#define	Mips_InvalidateICachePage(a)	\
-				(*(sys_config._InvalidateICachePage))((a))
 #define	Mips_SyncDCachePage(a)		\
 				(*(sys_config._SyncDCachePage))((a))
 #define	Mips_HitSyncDCache(a, l)	\
@@ -520,10 +521,17 @@ void	cp0_set_compare(u_int);
 #define	Mips_HitInvalidateDCache(a, l)	\
 				(*(sys_config._HitInvalidateDCache))((a), (l))
 
+int	Loongson2_ConfigCache(void);
+void	Loongson2_SyncCache(void);
+void	Loongson2_InvalidateICache(vaddr_t, int);
+void	Loongson2_SyncDCachePage(vaddr_t);
+void	Loongson2_HitSyncDCache(vaddr_t, int);
+void	Loongson2_IOSyncDCache(vaddr_t, int, int);
+void	Loongson2_HitInvalidateDCache(vaddr_t, int);
+
 int	Mips5k_ConfigCache(void);
 void	Mips5k_SyncCache(void);
 void	Mips5k_InvalidateICache(vaddr_t, int);
-void	Mips5k_InvalidateICachePage(vaddr_t);
 void	Mips5k_SyncDCachePage(vaddr_t);
 void	Mips5k_HitSyncDCache(vaddr_t, int);
 void	Mips5k_IOSyncDCache(vaddr_t, int, int);
@@ -532,7 +540,6 @@ void	Mips5k_HitInvalidateDCache(vaddr_t, int);
 int	Mips10k_ConfigCache(void);
 void	Mips10k_SyncCache(void);
 void	Mips10k_InvalidateICache(vaddr_t, int);
-void	Mips10k_InvalidateICachePage(vaddr_t);
 void	Mips10k_SyncDCachePage(vaddr_t);
 void	Mips10k_HitSyncDCache(vaddr_t, int);
 void	Mips10k_IOSyncDCache(vaddr_t, int, int);
