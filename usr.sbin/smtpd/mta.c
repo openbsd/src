@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.64 2009/08/06 16:29:35 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.65 2009/08/06 19:05:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -930,8 +930,8 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		}
 
 		session_respond(sessionp, "Delivered-To: %s@%s",
-		    messagep->sender.user,
-		    messagep->sender.domain);
+		    batchp->message.sender.user,
+		    batchp->message.sender.domain);
 
 		break;
 	}
