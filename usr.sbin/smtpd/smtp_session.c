@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.109 2009/08/01 15:33:28 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.110 2009/08/06 17:09:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -687,10 +687,11 @@ session_pickup(struct session *s, struct submit_status *ss)
 	case S_DONE:
 		session_respond(s, "250 %s Message accepted for delivery",
 		    s->s_msg.message_id);
-		log_info("%s: from=<%s@%s>, size=%ld, nrcpts=%zd, proto=%s, "
+		log_info("%s: from=<%s%s%s>, size=%ld, nrcpts=%zd, proto=%s, "
 		    "relay=%s [%s]",
 		    s->s_msg.message_id,
 		    s->s_msg.sender.user,
+		    s->s_msg.sender.user[0] == '\0' ? "" : "@",
 		    s->s_msg.sender.domain,
 		    s->s_datalen,
 		    s->rcptcount,
