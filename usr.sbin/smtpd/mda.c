@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.23 2009/06/07 05:56:25 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.24 2009/08/06 13:40:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -129,7 +129,6 @@ mda_dispatch_parent(int sig, short event, void *p)
 			struct session	*s;
 			struct message	*messagep;
 			enum message_status status;
-			int (*store)(struct batch *, struct message *) = store_write_message;
 
 			IMSG_SIZE_CHECK(batchp);
 
@@ -154,12 +153,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 				break;
 			}
 
-			/* If batch is a daemon message, override the default store function */
-			if (batchp->type & T_DAEMON_BATCH) {
-				store = store_write_daemon;
-			}
-
-			if (store_message(batchp, messagep, store)) {
+			if (store_message(batchp, messagep)) {
 				if (batchp->message.recipient.rule.r_action == A_MAILDIR)
 					imsg_compose_event(env->sc_ievs[PROC_PARENT],
 					    IMSG_PARENT_MAILBOX_RENAME, 0, 0, -1, batchp,

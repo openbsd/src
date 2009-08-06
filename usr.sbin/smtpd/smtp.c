@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.58 2009/06/07 05:56:25 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.59 2009/08/06 13:40:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,6 +44,7 @@ void		smtp_dispatch_mfa(int, short, void *);
 void		smtp_dispatch_lka(int, short, void *);
 void		smtp_dispatch_queue(int, short, void *);
 void		smtp_dispatch_control(int, short, void *);
+void		smtp_dispatch_runner(int, short, void *);
 void		smtp_setup_events(struct smtpd *);
 void		smtp_disable_events(struct smtpd *);
 void		smtp_pause(struct smtpd *);
@@ -579,6 +580,107 @@ smtp_dispatch_control(int sig, short event, void *p)
 }
 
 void
+smtp_dispatch_runner(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgev		*iev;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	iev = env->sc_ievs[PROC_RUNNER];
+	ibuf = &iev->ibuf;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&iev->ev);
+			event_loopexit(NULL);
+			return;
+		}
+	}
+
+	if (event & EV_WRITE) {
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatalx("smtp_dispatch_runner: imsg_get error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_SMTP_ENQUEUE: {
+			static struct listener	 l;
+			struct addrinfo		 hints, *res;
+			struct session		*s;
+			int			 fd[2];
+
+			bzero(&l, sizeof(l));
+			l.env = env;
+
+			if (env->stats->smtp.sessions_active >=
+			    env->sc_maxconn) {
+				log_warnx("denying internal connection, too many"
+				    " sessions active");
+				imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0, -1,
+				    imsg.data, sizeof(struct message));
+				break;
+			}
+
+			if (socketpair(
+			    AF_UNIX, SOCK_STREAM, PF_UNSPEC, fd) == -1)
+				fatal("socketpair");
+
+			if ((s = calloc(1, sizeof(*s))) == NULL)
+				fatal(NULL);
+
+			s->s_id = queue_generate_id();
+			s->s_fd = fd[0];
+			s->s_env = env;
+			s->s_l = &l;
+			s->s_msg.flags |= F_MESSAGE_ENQUEUED;
+
+			bzero(&hints, sizeof(hints));
+			hints.ai_family = PF_UNSPEC;
+			hints.ai_flags = AI_NUMERICHOST;
+
+			if (getaddrinfo("::1", NULL, &hints, &res) != 0)
+				fatal("getaddrinfo");
+
+			memcpy(&s->s_ss, res->ai_addr, res->ai_addrlen);
+
+			env->stats->smtp.sessions++;
+			env->stats->smtp.sessions_active++;
+
+			strlcpy(s->s_hostname, "localhost",
+			    sizeof(s->s_hostname));
+			strlcpy(s->s_msg.session_hostname, s->s_hostname,
+			    sizeof(s->s_msg.session_hostname));
+
+			SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
+
+			session_init(s->s_l, s);
+
+			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0, fd[1],
+			    imsg.data, sizeof(struct message));
+			break;
+		}
+		default:
+			log_warnx("smtp_dispatch_runner: got imsg %d",
+			    imsg.hdr.type);
+			fatalx("smtp_dispatch_runner: unexpected imsg");
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(iev);
+}
+
+void
 smtp_shutdown(void)
 {
 	log_info("smtp server exiting");
@@ -599,7 +701,8 @@ smtp(struct smtpd *env)
 		{ PROC_MFA,	smtp_dispatch_mfa },
 		{ PROC_QUEUE,	smtp_dispatch_queue },
 		{ PROC_LKA,	smtp_dispatch_lka },
-		{ PROC_CONTROL,	smtp_dispatch_control }
+		{ PROC_CONTROL,	smtp_dispatch_control },
+		{ PROC_RUNNER,	smtp_dispatch_runner }
 	};
 
 	switch (pid = fork()) {

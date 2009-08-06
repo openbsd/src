@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.61 2009/06/20 07:46:13 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.62 2009/08/06 13:40:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -701,7 +701,6 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	struct smtpd *env = batchp->env;
 	struct message *messagep = NULL;
 	char *line;
-	int i;
 	int code;
 #define F_ISINFO	0x1
 #define F_ISPROTOERROR	0x2
@@ -862,15 +861,9 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		char *user;
 		char *domain;
 
-		if (batchp->type & T_DAEMON_BATCH) {
-			user = "MAILER-DAEMON";
-			domain = env->sc_hostname;
-		}
-		else {
-			messagep = TAILQ_FIRST(&batchp->messages);
-			user = messagep->sender.user;
-			domain = messagep->sender.domain;
-		}
+		messagep = TAILQ_FIRST(&batchp->messages);
+		user = messagep->sender.user;
+		domain = messagep->sender.domain;
 
 		if (user[0] == '\0' && domain[0] == '\0')
 			session_respond(sessionp, "MAIL FROM:<>");
@@ -894,44 +887,31 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			messagep = TAILQ_FIRST(&batchp->messages);
 		else {
 			/* We already had a RCPT, mark is as accepted and
-			 * fetch next one from queue if we aren't dealing
-			 * with a daemon batch.
+			 * fetch next one from queue.
 			 */
-			if (batchp->type & T_DAEMON_BATCH)
-				messagep = NULL;
-			else {
-				messagep = batchp->messagep;
-				if ((messagep->status & S_MESSAGE_REJECTED) == 0)
-					messagep->status = S_MESSAGE_ACCEPTED;
-				messagep = TAILQ_NEXT(batchp->messagep, entry);
-			}
+			messagep = batchp->messagep;
+			if ((messagep->status & S_MESSAGE_REJECTED) == 0)
+				messagep->status = S_MESSAGE_ACCEPTED;
+			messagep = TAILQ_NEXT(batchp->messagep, entry);
 		}
 		batchp->messagep = messagep;
 
 		if (messagep) {
-			if (batchp->type & T_DAEMON_BATCH) {
-				user = messagep->sender.user;
-				domain = messagep->sender.domain;
-			}
-			else {
-				user = messagep->recipient.user;
-				domain = messagep->recipient.domain;
-			}
+			user = messagep->recipient.user;
+			domain = messagep->recipient.domain;
 			session_respond(sessionp, "RCPT TO:<%s@%s>", user, domain);
 		}
 		else {
 			/* Do we have at least one accepted recipient ? */
-			if ((batchp->type & T_DAEMON_BATCH) == 0) {
-				TAILQ_FOREACH(messagep, &batchp->messages, entry) {
-					if (messagep->status & S_MESSAGE_ACCEPTED)
-						break;
-				}
-				if (messagep == NULL) {
-					batchp->status = S_BATCH_PERMFAILURE;
-					mta_batch_update_queue(batchp);
-					session_destroy(sessionp);
-					return 0;
-				}
+			TAILQ_FOREACH(messagep, &batchp->messages, entry) {
+				if (messagep->status & S_MESSAGE_ACCEPTED)
+					break;
+			}
+			if (messagep == NULL) {
+				batchp->status = S_BATCH_PERMFAILURE;
+				mta_batch_update_queue(batchp);
+				session_destroy(sessionp);
+				return 0;
 			}
 
 			imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
@@ -950,75 +930,9 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			SSL_get_cipher_bits(sessionp->s_ssl, NULL));
 		}
 
-		TAILQ_FOREACH(messagep, &batchp->messages, entry) {
-			session_respond(sessionp, "X-OpenSMTPD-Loop: %s@%s",
-			    messagep->session_rcpt.user,
-			    messagep->session_rcpt.domain);
-		}
-
-		if (batchp->type & T_DAEMON_BATCH) {
-			session_respond(sessionp, "Hi !");
-			session_respond(sessionp, "%s", "");
-			session_respond(sessionp, "This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail it is");
-			session_respond(sessionp, "just a notification to let you know that an error has occured.");
-			session_respond(sessionp, "%s", "");
-
-			if (batchp->status == S_BATCH_PERMFAILURE) {
-				session_respond(sessionp, "You ran into a PERMANENT FAILURE, which means that the e-mail can't");
-				session_respond(sessionp, "be delivered to the remote host no matter how much I'll try.");
-				session_respond(sessionp, "%s", "");
-				session_respond(sessionp, "Diagnostic:");
-				session_respond(sessionp, "%s", batchp->errorline);
-				session_respond(sessionp, "%s", "");
-			}
-
-			if (batchp->status == S_BATCH_TEMPFAILURE) {
-				session_respond(sessionp, "You ran into a TEMPORARY FAILURE, which means that the e-mail can't");
-				session_respond(sessionp, "be delivered right now, but could be deliberable at a later time. I");
-				session_respond(sessionp, "will attempt until it succeeds for the next four days, then let you");
-				session_respond(sessionp, "know if it didn't work out.");
-				session_respond(sessionp, "%s", "");
-				session_respond(sessionp, "Diagnostic:");
-				session_respond(sessionp, "%s", batchp->errorline);
-				session_respond(sessionp, "%s", "");
-			}
-
-			i = 0;
-			TAILQ_FOREACH(messagep, &batchp->messages, entry) {
-				if (messagep->status & S_MESSAGE_TEMPFAILURE) {
-					if (i == 0) {
-						session_respond(sessionp, "The following recipients caused a temporary failure:");
-						++i;
-					}
-
-					session_respond(sessionp,
-					    "\t<%s@%s>:", messagep->recipient.user, messagep->recipient.domain);
-					session_respond(sessionp,
-					    "%s", messagep->session_errorline);
-					session_respond(sessionp, "%s", "");
-				}
-			}
-
-			i = 0;
-			TAILQ_FOREACH(messagep, &batchp->messages, entry) {
-				if (messagep->status & S_MESSAGE_PERMFAILURE) {
-					if (i == 0) {
-						session_respond(sessionp,
-						    "The following recipients caused a permanent failure:");
-						++i;
-					}
-
-					session_respond(sessionp,
-					    "\t<%s@%s>:", messagep->recipient.user, messagep->recipient.domain);
-					session_respond(sessionp,
-					    "%s", messagep->session_errorline);
-					session_respond(sessionp, "%s", "");
-				}
-			}
-
-			session_respond(sessionp, "Below is a copy of the original message:");
-			session_respond(sessionp, "%s", "");
-		}
+		session_respond(sessionp, "X-OpenSMTPD-Loop: %s@%s",
+		    messagep->sender.user,
+		    messagep->sender.domain);
 
 		break;
 	}

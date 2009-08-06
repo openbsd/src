@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.19 2009/07/28 22:03:55 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.20 2009/08/06 13:40:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -267,12 +267,12 @@ enqueue_open_messagefile(struct message *message)
 }
 
 int
-daemon_create_layout(char *msgid, struct message *message)
+bounce_create_layout(char *msgid, struct message *message)
 {
 	char	msgpath[MAXPATHLEN];
 	char	lnkpath[MAXPATHLEN];
 
-	if (! queue_create_layout_message(PATH_DAEMON, msgid))
+	if (! queue_create_layout_message(PATH_BOUNCE, msgid))
 		return 0;
 
 	if (! bsnprintf(msgpath, sizeof(msgpath), "%s/%d/%s/message",
@@ -281,7 +281,7 @@ daemon_create_layout(char *msgid, struct message *message)
 		return 0;
 
 	if (! bsnprintf(lnkpath, sizeof(lnkpath), "%s/%s/message",
-		PATH_DAEMON, msgid))
+		PATH_BOUNCE, msgid))
 		return 0;
 
 	if (link(msgpath, lnkpath) == -1)
@@ -291,51 +291,51 @@ daemon_create_layout(char *msgid, struct message *message)
 }
 
 void
-daemon_delete_message(char *msgid)
+bounce_delete_message(char *msgid)
 {
-	queue_delete_layout_message(PATH_DAEMON, msgid);
+	queue_delete_layout_message(PATH_BOUNCE, msgid);
 }
 
 int
-daemon_record_envelope(struct message *message)
+bounce_record_envelope(struct message *message)
 {
-	return queue_record_layout_envelope(PATH_DAEMON, message);
+	return queue_record_layout_envelope(PATH_BOUNCE, message);
 }
 
 int
-daemon_remove_envelope(struct message *message)
+bounce_remove_envelope(struct message *message)
 {
-	return queue_remove_layout_envelope(PATH_DAEMON, message);
+	return queue_remove_layout_envelope(PATH_BOUNCE, message);
 }
 
 int
-daemon_commit_message(struct message *message)
+bounce_commit_message(struct message *message)
 {
-	return queue_commit_layout_message(PATH_DAEMON, message);
+	return queue_commit_layout_message(PATH_BOUNCE, message);
 }
 
 int
-daemon_record_message(struct message *messagep)
+bounce_record_message(struct message *messagep)
 {
 	char	msgid[MAX_ID_SIZE];
-	struct message mdaemon;
+	struct message mbounce;
 
 	if (messagep->type == T_DAEMON_MESSAGE) {
 		log_debug("mailer daemons loop detected !");
 		return 0;
 	}
 
-	mdaemon = *messagep;
-	mdaemon.type |= T_DAEMON_MESSAGE;
+	mbounce = *messagep;
+	mbounce.type = T_DAEMON_MESSAGE;
 
-	if (! daemon_create_layout(msgid, messagep))
+	if (! bounce_create_layout(msgid, messagep))
 		return 0;
 
-	strlcpy(mdaemon.message_id, msgid, sizeof(mdaemon.message_id));
-	if (! daemon_record_envelope(&mdaemon))
+	strlcpy(mbounce.message_id, msgid, sizeof(mbounce.message_id));
+	if (! bounce_record_envelope(&mbounce))
 		return 0;
 
-	return daemon_commit_message(&mdaemon);
+	return bounce_commit_message(&mbounce);
 }
 
 int
