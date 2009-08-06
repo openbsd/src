@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.56 2009/06/06 01:10:29 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.57 2009/08/06 08:53:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -39,6 +39,13 @@ rde_filter(u_int16_t ribid, struct rde_aspath **new, struct filter_head *rules,
 
 	if (new != NULL)
 		*new = NULL;
+
+	if (asp->flags & F_ATTR_PARSE_ERR)
+		/*
+	 	 * don't try to filter bad updates but let them through
+		 * so they act as implicit withdraws
+		 */
+		return (action);
 
 	TAILQ_FOREACH(f, rules, entry) {
 		if (dir != f->dir)

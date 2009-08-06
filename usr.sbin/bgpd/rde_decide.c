@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.58 2009/06/29 14:10:13 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.59 2009/08/06 08:53:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -117,6 +117,12 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 
 	asp1 = p1->aspath;
 	asp2 = p2->aspath;
+
+	/* pathes with errors are not eligible */
+	if (asp1->flags & F_ATTR_PARSE_ERR)
+		return (-1);
+	if (asp2->flags & F_ATTR_PARSE_ERR)
+		return (1);
 
 	/* only loop free pathes are eligible */
 	if (asp1->flags & F_ATTR_LOOP)
@@ -245,7 +251,7 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 	}
 
 	xp = LIST_FIRST(&re->prefix_h);
-	if (xp == NULL || xp->aspath->flags & F_ATTR_LOOP ||
+	if (xp == NULL || xp->aspath->flags & (F_ATTR_LOOP|F_ATTR_PARSE_ERR) ||
 	    (xp->aspath->nexthop != NULL &&
 	    xp->aspath->nexthop->state != NEXTHOP_REACH))
 		/* xp is ineligible */

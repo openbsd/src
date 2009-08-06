@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.120 2009/06/06 01:10:29 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.121 2009/08/06 08:53:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -163,6 +163,7 @@ LIST_HEAD(prefix_head, prefix);
 #define	F_NEXTHOP_REJECT	0x02000
 #define	F_NEXTHOP_BLACKHOLE	0x04000
 #define	F_NEXTHOP_NOMODIFY	0x08000
+#define	F_ATTR_PARSE_ERR	0x10000
 #define	F_ATTR_LINKED		0x20000
 
 

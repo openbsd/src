@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.264 2009/06/29 12:22:16 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.265 2009/08/06 08:53:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -810,14 +810,7 @@ rde_update_dispatch(struct imsg *imsg)
 			goto done;
 		}
 
-		/*
-		 * if either ATTR_AS4_AGGREGATOR or ATTR_AS4_PATH is present
-		 * try to fixup the attributes.
-		 * XXX do not fixup if F_ATTR_LOOP is set.
-		 */
-		if (asp->flags & F_ATTR_AS4BYTE_NEW &&
-		    !(asp->flags & F_ATTR_LOOP))
-			rde_as4byte_fixup(peer, asp);
+		rde_as4byte_fixup(peer, asp);
 
 		/* enforce remote AS if requested */
 		if (asp->flags & F_ATTR_ASPATH &&
@@ -1085,7 +1078,8 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
     struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
 	struct rde_aspath	*fasp;
-	int			 r = 0;
+	enum filter_actions	 action;
+	int			 r = 0, f = 0;
 	u_int16_t		 i;
 
 	peer->prefix_rcvd_update++;
@@ -1095,18 +1089,24 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 
 	for (i = 1; i < rib_size; i++) {
 		/* input filter */
-		if (rde_filter(i, &fasp, rules_l, peer, asp, prefix, prefixlen,
-		    peer, DIR_IN) == ACTION_DENY)
-			goto done;
+		action = rde_filter(i, &fasp, rules_l, peer, asp, prefix,
+		    prefixlen, peer, DIR_IN);
 
 		if (fasp == NULL)
 			fasp = asp;
 
-		rde_update_log("update", i, peer, &fasp->nexthop->exit_nexthop,
-		    prefix, prefixlen);
-		r += path_update(&ribs[i], peer, fasp, prefix, prefixlen);
+		if (action == ACTION_ALLOW) {
+			rde_update_log("update", i, peer,
+			    &fasp->nexthop->exit_nexthop, prefix, prefixlen);
+			r += path_update(&ribs[i], peer, fasp, prefix,
+			    prefixlen);
+		} else if (prefix_remove(&ribs[i], peer, prefix, prefixlen,
+		    0)) {
+			rde_update_log("filtered withdraw", i, peer,
+			    NULL, prefix, prefixlen);
+			f++;
+		}
 
-done:
 		/* free modified aspath */
 		if (fasp != asp)
 			path_put(fasp);
@@ -1114,6 +1114,8 @@ done:
 
 	if (r)
 		peer->prefix_cnt++;
+	else if (f)
+		peer->prefix_cnt--;
 }
 
 void
@@ -1305,9 +1307,19 @@ bad_flags:
 		goto optattr;
 	case ATTR_AGGREGATOR:
 		if ((!rde_as4byte(peer) && attr_len != 6) ||
-		    (rde_as4byte(peer) && attr_len != 8))
-			goto bad_len;
-		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, 0))
+		    (rde_as4byte(peer) && attr_len != 8)) {
+			/*
+			 * ignore attribute in case of error as per
+			 * draft-ietf-idr-optional-transitive-00.txt
+			 * but only if partial bit is set
+			 */
+			if ((flags & ATTR_PARTIAL) == 0)
+				goto bad_len;
+			plen += attr_len;
+			break;
+		}
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
+		    ATTR_PARTIAL))
 			goto bad_flags;
 		if (!rde_as4byte(peer)) {
 			/* need to inflate aggregator AS to 4-byte */
@@ -1323,8 +1335,17 @@ bad_flags:
 		/* 4-byte ready server take the default route */
 		goto optattr;
 	case ATTR_COMMUNITIES:
-		if ((attr_len & 0x3) != 0)
-			goto bad_len;
+		if ((attr_len & 0x3) != 0) {
+			/*
+			 * mark update as bad and withdraw all routes as per
+			 * draft-ietf-idr-optional-transitive-00.txt
+			 * but only if partial bit is set
+			 */
+			if ((flags & ATTR_PARTIAL) == 0)
+				goto bad_len;
+			else
+				a->flags |= F_ATTR_PARSE_ERR;
+		}
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
@@ -1370,8 +1391,14 @@ bad_flags:
 		plen += attr_len;
 		break;
 	case ATTR_AS4_AGGREGATOR:
-		if (attr_len != 8)
-			goto bad_len;
+		if (attr_len != 8) {
+			/* see ATTR_AGGREGATOR ... */
+			if ((flags & ATTR_PARTIAL) == 0)
+				goto bad_len;
+			/* we should add a warning here */
+			plen += attr_len;
+			break;
+		}
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
@@ -1385,13 +1412,21 @@ bad_flags:
 			/*
 			 * XXX RFC does not specify how to handle errors.
 			 * XXX Instead of dropping the session because of a
-			 * XXX bad path just mark the full update as not
-			 * XXX loop-free the update is no longer eligible and
-			 * XXX will not be considered for routing or
-			 * XXX redistribution. Something better is needed.
+			 * XXX bad path just mark the full update as having
+			 * XXX a parse error which makes the update no longer
+			 * XXX eligible and will not be considered for routing
+			 * XXX or redistribution.
+			 * XXX We follow draft-ietf-idr-optional-transitive
+			 * XXX by looking at the partial bit.
 			 */
-			a->flags |= F_ATTR_LOOP;
-			goto optattr;
+			if (flags & ATTR_PARTIAL) {
+				a->flags |= F_ATTR_PARSE_ERR;
+				goto optattr;
+			} else {
+				rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
+				    NULL, 0);
+				return (-1);
+			}
 		}
 		a->flags |= F_ATTR_AS4BYTE_NEW;
 		goto optattr;
@@ -1616,6 +1651,14 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 	struct attr	*nasp, *naggr, *oaggr;
 	u_int32_t	 as;
 
+	/*
+	 * if either ATTR_AS4_AGGREGATOR or ATTR_AS4_PATH is present
+	 * try to fixup the attributes.
+	 * Do not fixup if F_ATTR_PARSE_ERR is set.
+	 */
+	if (!(a->flags & F_ATTR_AS4BYTE_NEW) || a->flags & F_ATTR_PARSE_ERR)
+		return;
+
 	/* first get the attributes */
 	nasp = attr_optget(a, ATTR_AS4_PATH);
 	naggr = attr_optget(a, ATTR_AS4_AGGREGATOR);
@@ -1668,6 +1711,10 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 	u_int8_t	*p;
 	u_int16_t	 len;
 	u_int32_t	 id;
+
+	/* do not consider updates with parse errors */
+	if (asp->flags & F_ATTR_PARSE_ERR)
+		return;
 
 	/* check for originator id if eq router_id drop */
 	if ((a = attr_optget(asp, ATTR_ORIGINATOR_ID)) != NULL) {

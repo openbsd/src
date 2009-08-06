@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.28 2009/01/13 23:01:36 sthen Exp $
+.\" $OpenBSD: bgpd.8,v 1.29 2009/08/06 08:53:11 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2009 $
+.Dd $Mdocdate: August 6 2009 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -198,6 +198,11 @@ control socket
 .%R RFC 4893
 .%T "BGP Support for Four-octet AS Number Space"
 .%D May 2007
+.Re
+.Rs
+.%R draft-ietf-idr-optional-transitive-00
+.%T "Error Handling for Optional Transitive BGP Attributes"
+.%D April 2009
 .Re
 .Sh HISTORY
 The
