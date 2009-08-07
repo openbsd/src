@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.33 2009/08/07 03:30:56 djm Exp $
+.\"	$OpenBSD: sed.1,v 1.34 2009/08/07 06:37:50 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nd stream editor
 .Sh SYNOPSIS
 .Nm sed
-.Op Fl Eanru
+.Op Fl aEnru
 .Ar command
 .Op Ar
 .Nm sed
@@ -69,11 +69,6 @@ regardless of their origin.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl E
-Interpret regular expressions using the POSIX extended regular expression
-syntax (documented in
-.Xr re_format 7 ).
-The default behaviour is to use the POSIX basic regular expression syntax.
 .It Fl a
 The files listed as parameters for the
 .Ql w
@@ -86,6 +81,9 @@ option causes
 to delay opening each file until a command containing the related
 .Ql w
 function is applied to a line of input.
+.It Fl E
+Interpret regular expressions using POSIX extended regular expression syntax.
+The default behaviour is to use POSIX basic regular expression syntax.
 .It Fl e Ar command
 Append the editing commands specified by the
 .Ar command
@@ -97,9 +95,9 @@ Append the editing commands found in the file
 to the list of commands.
 The editing commands should each be listed on a separate line.
 .It Fl r
-is an alias for
-.Fl E
-(enable POSIX extended regular exressions) for compatibility with GNU sed.
+An alias for
+.Fl E ,
+for compatibility with GNU sed.
 .It Fl n
 By default, each line of input is echoed to the standard output after
 all of the commands have been applied to it.
@@ -168,10 +166,15 @@ of the exclamation character
 .Pq Ql \&!
 function.
 .Sh SED REGULAR EXPRESSIONS
-The
+By default,
 .Nm
 regular expressions are basic regular expressions
 .Pq BREs .
+Extended regular expressions are supported using the
+.Fl E
+and
+.Fl r
+options.
 See
 .Xr re_format 7
 for more information on regular expressions.
