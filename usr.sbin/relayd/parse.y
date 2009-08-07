@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.139 2009/08/07 09:44:38 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.140 2009/08/07 11:10:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -143,7 +143,7 @@ typedef struct {
 %token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY
 %token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET
 %token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO
-%token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH
+%token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table
@@ -1449,6 +1449,17 @@ hostflags	: RETRY NUMBER		{
 			}
 			hst->conf.parentid = $2;
 		}
+		| IP TTL NUMBER		{
+			if (hst->conf.ttl) {
+				yyerror("ttl value already set");
+				YYERROR;
+			}
+			if ($3 < 0) {
+				yyerror("invalid ttl value: %d\n", $3);
+				YYERROR;
+			}
+			hst->conf.ttl = $3;
+		}
 		;
 
 address		: STRING	{
@@ -1615,6 +1626,7 @@ lookup(char *s)
 		{ "to",			TO },
 		{ "transparent",	TRANSPARENT },
 		{ "trap",		TRAP },
+		{ "ttl",		TTL },
 		{ "updates",		UPDATES },
 		{ "url",		URL },
 		{ "virtual",		VIRTUAL },

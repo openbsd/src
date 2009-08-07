@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.107 2009/06/02 20:22:30 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.108 2009/08/07 11:10:23 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2009 $
+.Dd $Mdocdate: August 7 2009 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -179,13 +179,8 @@ Each table must contain at least one host;
 multiple hosts are separated by newline, comma, or whitespace.
 Host entries may be defined with the following attributes:
 .Bl -tag -width retry
-.It Ic retry Ar number
-The optional retry option adds a tolerance for failed host checks;
-the check will be retried for
-.Ar number
-more times before setting the host state to down.
-If this table is used by a relay, it will also specify the number of
-retries for outgoing connection attempts.
+.It Ic ip ttl Ar number
+Change the default time-to-live value in the IP headers for host checks.
 .It Ic parent Ar number
 The optional parent option inherits the state from a parent
 host with the specified identifier.
@@ -197,6 +192,13 @@ starting with 1; it can be shown with the
 .Xr relayctl 8
 .Ic show summary
 commands.
+.It Ic retry Ar number
+The optional retry option adds a tolerance for failed host checks;
+the check will be retried for
+.Ar number
+more times before setting the host state to down.
+If this table is used by a relay, it will also specify the number of
+retries for outgoing connection attempts.
 .El
 .Pp
 For example:
@@ -1013,7 +1015,7 @@ with a TTL lower than the specified value.
 This can be used to implement the
 .Ar Generalized TTL Security Mechanism (GTSM)
 according to RFC 3682.
-.It Ic ip ttl
+.It Ic ip ttl Ar number
 Change the default time-to-live value in the IP headers.
 .It Xo
 .Op Ic no

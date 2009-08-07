@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.26 2008/12/05 16:37:55 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.27 2009/08/07 11:10:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -168,7 +168,7 @@ send_icmp(int s, short event, void *arg)
 	ssize_t			 r;
 	u_char			 packet[ICMP_BUF_SIZE];
 	socklen_t		 slen;
-	int			 i = 0;
+	int			 i = 0, ttl;
 
 	if (event == EV_TIMEOUT) {
 		icmp_checks_timeout(cie, HCE_ICMP_WRITE_TIMEOUT);
@@ -219,6 +219,16 @@ send_icmp(int s, short event, void *arg)
 				    sizeof(host->conf.id));
 				icp6->icmp6_cksum = in_cksum((u_short *)icp6,
 				    sizeof(packet));
+			}
+
+			if ((ttl = host->conf.ttl) > 0)
+				setsockopt(s, IPPROTO_IP, IP_TTL,
+				    &host->conf.ttl, sizeof(int));
+			else {
+				/* Revert to default TTL */
+				ttl = IPDEFTTL;
+				(void)setsockopt(s, IPPROTO_IP, IP_TTL,
+				    &ttl, sizeof(int));
 			}
 
 			r = sendto(s, packet, sizeof(packet), 0, to, slen);
