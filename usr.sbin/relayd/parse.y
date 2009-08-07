@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.138 2009/08/07 08:45:58 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.139 2009/08/07 09:44:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1410,6 +1410,7 @@ host		: address	{
 				free(hst);
 				YYERROR;
 			}
+			bcopy(&$1.ss, &hst->conf.ss, sizeof($1.ss));
 			hst->conf.id = 0; /* will be set later */
 			SLIST_INIT(&hst->children);
 		} opthostflags {
