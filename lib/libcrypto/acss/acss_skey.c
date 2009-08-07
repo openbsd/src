@@ -1,4 +1,4 @@
-/*	$OpenBSD: acss_skey.c,v 1.2 2004/01/23 19:23:33 hshoexer Exp $	*/
+/*	$OpenBSD: acss_skey.c,v 1.3 2009/08/07 00:05:04 martynas Exp $	*/
 /*
  * Copyright (c) 2004 The OpenBSD project
  *
@@ -16,6 +16,7 @@
  */
 
 #include <openssl/acss.h>
+#include <string.h>
 
 static unsigned char reverse[] = {
 	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0, 
