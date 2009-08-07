@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.6 2008/06/04 17:23:24 kettenis Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.7 2009/08/07 00:04:15 martynas Exp $	*/
 /*-
  * Copyright (c) 1998 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acpi.c,v 1.6 2008/06/04 17:23:24 kettenis Exp $
+ *	$Id: acpi.c,v 1.7 2009/08/07 00:04:15 martynas Exp $
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi.c,v 1.3 2000/11/08 02:37:00 iwasaki Exp $
  */
 #include <sys/types.h>
@@ -42,6 +42,7 @@
 
 #include "aml/aml_env.h"
 #include "aml/aml_common.h"
+#include "aml/aml_parse.h"
 
 #define BEGIN_COMMENT	"/*\n"
 #define END_COMMENT	" */\n"
