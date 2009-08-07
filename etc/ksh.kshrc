@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.13 2008/08/24 15:22:08 jmc Exp $
+#	$OpenBSD: ksh.kshrc,v 1.14 2009/08/07 09:05:24 martynas Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -98,7 +98,7 @@ case "$-" in
 		alias stripe='label "$USER@$HOST ($tty) - $PWD"'
 		alias istripe='ilabel "$USER@$HOST ($tty)"'
 
-		wftp () { ilabel "ftp $*"; "ftp" $*; eval istripe; }
+		wftp () { ilabel "ftp $*"; "ftp" "$@"; eval istripe; }
 		wcd () { \cd "$@" && eval stripe; }
 		wssh ()
 		{
