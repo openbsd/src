@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.4 2009/07/28 07:20:28 claudio Exp $	*/
+/*	$OpenBSD: build.c,v 1.5 2009/08/07 00:10:17 martynas Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -17,8 +17,12 @@
  */
 #include <sys/types.h>
 #include <dev/pci/if_tivar.h>
+#include <err.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "ti_fw.h"
 #include "ti_fw2.h"
