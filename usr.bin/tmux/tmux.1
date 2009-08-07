@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.60 2009/08/07 12:24:16 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.61 2009/08/07 15:39:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -120,6 +120,10 @@ if present, then looks for a user configuration file at
 The configuration file is a set of
 .Nm
 commands which are executed in sequence when the server is first started.
+.Pp
+If a command in the configuration file fails,
+.Nm
+will report an error and exit without executing further commands.
 .It Fl L Ar socket-name
 .Nm
 stores the server socket in a directory under

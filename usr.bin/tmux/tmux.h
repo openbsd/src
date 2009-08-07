@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.69 2009/08/07 00:12:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.70 2009/08/07 15:39:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -900,6 +900,7 @@ struct client {
 #define CLIENT_STATUS 0x10
 #define CLIENT_REPEAT 0x20	/* allow command to repeat within repeat time */
 #define CLIENT_SUSPENDED 0x40
+#define CLIENT_BAD 0x80
 	int		 flags;
 
 	char		*message_string;

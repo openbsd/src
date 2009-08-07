@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.11 2009/07/29 14:17:26 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.12 2009/08/07 15:39:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -62,6 +62,8 @@ server_write_client(
 {
 	struct hdr	 hdr;
 
+	if (c->flags & CLIENT_BAD)
+		return;
 	log_debug("writing %d to client %d", type, c->fd);
 
 	hdr.type = type;
