@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.27 2009/08/07 11:10:23 reyk Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.28 2009/08/07 11:32:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,9 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <netinet/in_systm.h>
@@ -168,7 +170,8 @@ send_icmp(int s, short event, void *arg)
 	ssize_t			 r;
 	u_char			 packet[ICMP_BUF_SIZE];
 	socklen_t		 slen;
-	int			 i = 0, ttl;
+	int			 i = 0, ttl, mib[4];
+	size_t			 len;
 
 	if (event == EV_TIMEOUT) {
 		icmp_checks_timeout(cie, HCE_ICMP_WRITE_TIMEOUT);
@@ -222,13 +225,18 @@ send_icmp(int s, short event, void *arg)
 			}
 
 			if ((ttl = host->conf.ttl) > 0)
-				setsockopt(s, IPPROTO_IP, IP_TTL,
+				(void)setsockopt(s, IPPROTO_IP, IP_TTL,
 				    &host->conf.ttl, sizeof(int));
 			else {
 				/* Revert to default TTL */
-				ttl = IPDEFTTL;
-				(void)setsockopt(s, IPPROTO_IP, IP_TTL,
-				    &ttl, sizeof(int));
+				mib[0] = CTL_NET;
+				mib[1] = cie->af;
+				mib[2] = IPPROTO_IP;
+				mib[3] = IPCTL_DEFTTL;
+				len = sizeof(ttl);
+				if (sysctl(mib, 4, &ttl, &len, NULL, 0) == 0)
+					(void)setsockopt(s, IPPROTO_IP, IP_TTL,
+					    &ttl, sizeof(int));
 			}
 
 			r = sendto(s, packet, sizeof(packet), 0, to, slen);
