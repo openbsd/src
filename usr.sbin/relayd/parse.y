@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.137 2009/08/07 08:19:37 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.138 2009/08/07 08:45:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -93,6 +93,7 @@ objid_t			 last_proto_id = 0;
 static struct rdr	*rdr = NULL;
 static struct table	*table = NULL;
 static struct relay	*rlay = NULL;
+static struct host	*hst = NULL;
 struct relaylist	 relays;
 static struct protocol	*proto = NULL;
 static struct protonode	 node;
@@ -146,7 +147,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table
-%type	<v.number>	http_type loglevel mark parent
+%type	<v.number>	http_type loglevel mark
 %type	<v.number>	direction dstmode flag forwardmode retry
 %type	<v.number>	optssl optsslclient sslcache
 %type	<v.number>	redirect_proto relay_proto
@@ -1399,20 +1400,53 @@ interface	: /*empty*/		{ $$ = NULL; }
 		| INTERFACE STRING	{ $$ = $2; }
 		;
 
-host		: address retry parent {
-			if (($$ = calloc(1, sizeof(*($$)))) == NULL)
+host		: address	{
+			if ((hst = calloc(1, sizeof(*(hst)))) == NULL)
 				fatal("out of memory");
 
-			if (strlcpy($$->conf.name, $1.name,
-			    sizeof($$->conf.name)) >= sizeof($$->conf.name)) {
+			if (strlcpy(hst->conf.name, $1.name,
+			    sizeof(hst->conf.name)) >= sizeof(hst->conf.name)) {
 				yyerror("host name truncated");
-				free($$);
+				free(hst);
 				YYERROR;
 			}
-			$$->conf.id = 0; /* will be set later */
-			$$->conf.retry = $2;
-			$$->conf.parentid = $3;
-			SLIST_INIT(&$$->children);
+			hst->conf.id = 0; /* will be set later */
+			SLIST_INIT(&hst->children);
+		} opthostflags {
+			$$ = hst;
+			hst = NULL;
+		}
+		;
+
+opthostflags	: /* empty */
+		| hostflags_l
+		;
+
+hostflags_l	: hostflags hostflags_l
+		| hostflags
+		;
+
+hostflags	: RETRY NUMBER		{
+			if (hst->conf.retry) {
+				yyerror("retry value already set");
+				YYERROR;
+			}
+			if ($2 < 0) {
+				yyerror("invalid retry value: %d\n", $2);
+				YYERROR;
+			}
+			hst->conf.retry = $2;
+		}
+		| PARENT NUMBER		{
+			if (hst->conf.parentid) {
+				yyerror("parent value already set");
+				YYERROR;
+			}
+			if ($2 < 0) {
+				yyerror("invalid parent value: %d\n", $2);
+				YYERROR;
+			}
+			hst->conf.parentid = $2;
 		}
 		;
 
@@ -1440,19 +1474,10 @@ address		: STRING	{
 		}
 		;
 
-retry		: /* nothing */		{ $$ = 0; }
+retry		: /* empty */		{ $$ = 0; }
 		| RETRY NUMBER		{
 			if (($$ = $2) < 0) {
 				yyerror("invalid retry value: %d\n", $2);
-				YYERROR;
-			}
-		}
-		;
-
-parent		: /* nothing */		{ $$ = 0; }
-		| PARENT NUMBER		{
-			if (($$ = $2) < 0) {
-				yyerror("invalid parent value: %d\n", $2);
 				YYERROR;
 			}
 		}
