@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.128 2009/08/07 11:10:23 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.129 2009/08/07 11:21:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -384,7 +384,7 @@ struct rdr {
 TAILQ_HEAD(rdrlist, rdr);
 
 struct relay;
-struct session {
+struct rsession {
 	objid_t				 se_id;
 	objid_t				 se_relayid;
 	struct ctl_relay_event		 se_in;
@@ -403,9 +403,9 @@ struct session {
 	struct ctl_natlook		*se_cnl;
 	int				 se_bnds;
 
-	SPLAY_ENTRY(session)		 se_nodes;
+	SPLAY_ENTRY(rsession)		 se_nodes;
 };
-SPLAY_HEAD(session_tree, session);
+SPLAY_HEAD(session_tree, rsession);
 
 enum nodeaction {
 	NODE_ACTION_NONE	= 0,
@@ -507,11 +507,11 @@ struct protocol {
 	int			 response_nodes;
 	struct proto_tree	 response_tree;
 
-	int			(*cmp)(struct session *, struct session *);
-	void			*(*validate)(struct session *, struct relay *,
+	int			(*cmp)(struct rsession *, struct rsession *);
+	void			*(*validate)(struct rsession *, struct relay *,
 				    struct sockaddr_storage *,
 				    u_int8_t *, size_t);
-	int			(*request)(struct session *);
+	int			(*request)(struct rsession *);
 
 	TAILQ_ENTRY(protocol)	 entry;
 };
@@ -765,19 +765,19 @@ void	 hce_notify_done(struct host *, enum host_error);
 pid_t	 relay(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
 	    int [2], int [RELAY_MAXPROC][2]);
 void	 relay_notify_done(struct host *, const char *);
-int	 relay_session_cmp(struct session *, struct session *);
+int	 relay_session_cmp(struct rsession *, struct rsession *);
 int	 relay_load_certfiles(struct relay *);
-void	 relay_close(struct session *, const char *);
+void	 relay_close(struct rsession *, const char *);
 void	 relay_natlook(int, short, void *);
-void	 relay_session(struct session *);
-int	 relay_from_table(struct session *);
+void	 relay_session(struct rsession *);
+int	 relay_from_table(struct rsession *);
 int	 relay_socket_af(struct sockaddr_storage *, in_port_t);
 int	 relay_cmp_af(struct sockaddr_storage *,
 		 struct sockaddr_storage *);
 
 
 RB_PROTOTYPE(proto_tree, protonode, se_nodes, relay_proto_cmp);
-SPLAY_PROTOTYPE(session_tree, session, se_nodes, relay_session_cmp);
+SPLAY_PROTOTYPE(session_tree, rsession, se_nodes, relay_session_cmp);
 
 /* relay_udp.c */
 void	 relay_udp_privinit(struct relayd *, struct relay *);
@@ -822,7 +822,7 @@ void		 event_again(struct event *, int, short,
 		    void (*)(int, short, void *),
 		    struct timeval *, struct timeval *, void *);
 struct relay	*relay_find(struct relayd *, objid_t);
-struct session	*session_find(struct relayd *, objid_t);
+struct rsession	*session_find(struct relayd *, objid_t);
 struct relay	*relay_findbyname(struct relayd *, const char *);
 struct relay	*relay_findbyaddr(struct relayd *, struct relay_config *);
 int		 expand_string(char *, size_t, const char *, const char *);

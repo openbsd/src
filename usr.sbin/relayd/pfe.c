@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.60 2009/06/05 23:39:51 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.61 2009/08/07 11:21:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -617,7 +617,7 @@ show_sessions(struct ctl_conn *c)
 				case IMSG_CTL_SESSION:
 					imsg_compose_event(&c->iev,
 					    IMSG_CTL_SESSION, proc, 0, -1,
-					    imsg.data, sizeof(struct session));
+					    imsg.data, sizeof(struct rsession));
 					break;
 				case IMSG_CTL_END:
 					done = 1;

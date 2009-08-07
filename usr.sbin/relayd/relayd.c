@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.90 2009/08/05 13:46:13 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.91 2009/08/07 11:21:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -471,7 +471,7 @@ purge_config(struct relayd *env, u_int8_t what)
 	struct address		*virt;
 	struct protocol		*proto;
 	struct relay		*rlay;
-	struct session		*sess;
+	struct rsession		*sess;
 
 	if (what & PURGE_TABLES && env->sc_tables != NULL) {
 		while ((table = TAILQ_FIRST(env->sc_tables)) != NULL)
@@ -836,11 +836,11 @@ relay_find(struct relayd *env, objid_t id)
 	return (NULL);
 }
 
-struct session *
+struct rsession *
 session_find(struct relayd *env, objid_t id)
 {
 	struct relay		*rlay;
-	struct session		*con;
+	struct rsession		*con;
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
 		SPLAY_FOREACH(con, session_tree, &rlay->rl_sessions)
