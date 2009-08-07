@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.80 2009/08/06 16:46:57 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.81 2009/08/07 19:02:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -29,7 +29,6 @@
 #include <sys/resource.h>
 #include <sys/mman.h>
 
-#include <bsd_auth.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -574,8 +573,7 @@ parent_dispatch_smtp(int fd, short event, void *p)
 
 			IMSG_SIZE_CHECK(req);
 
-			req->success = auth_userokay(req->user, NULL,
-			    "auth-smtp", req->pass);
+			req->success = authenticate_user(req->user, req->pass);
 
 			imsg_compose_event(iev, IMSG_PARENT_AUTHENTICATE, 0, 0,
 			    -1, req, sizeof(*req));

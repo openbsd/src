@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.134 2009/08/06 16:46:57 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.135 2009/08/07 19:02:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -740,6 +740,9 @@ int aliases_get(struct smtpd *, struct aliaseslist *, char *);
 int aliases_virtual_exist(struct smtpd *, struct path *);
 int aliases_virtual_get(struct smtpd *, struct aliaseslist *, struct path *);
 int alias_parse(struct alias *, char *);
+
+/* authenticate.c */
+int authenticate_user(char *, char *);
 
 /* bounce.c */
 void bounce_process(struct smtpd *, struct message *);
