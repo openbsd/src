@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.65 2009/08/06 19:05:30 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.66 2009/08/07 21:47:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -26,7 +26,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <ssl/ssl.h>
+#include <openssl/ssl.h>
 
 #include <errno.h>
 #include <event.h>
