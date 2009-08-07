@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.60 2009/06/07 05:56:25 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.61 2009/08/07 20:21:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -33,13 +33,12 @@
 #include <netdb.h>
 #include <pwd.h>
 #include <regex.h>
+#include <resolv.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <keynote.h>
 
 #include "smtpd.h"
 
@@ -1161,7 +1160,7 @@ lka_encode_credentials(char *dst, size_t size, char *user)
 	if ((buflen = asprintf(&buf, "%c%s%c%s", '\0', user, '\0', pass)) == -1)
 		fatal(NULL);
 
-	if (kn_encode_base64(buf, buflen, dst, size) == -1) {
+	if (__b64_ntop(buf, buflen, dst, size) == -1) {
 		free(buf);
 		return 0;
 	}

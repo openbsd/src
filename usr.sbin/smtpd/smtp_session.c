@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.110 2009/08/06 17:09:13 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.111 2009/08/07 20:21:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,12 +34,11 @@
 #include <event.h>
 #include <pwd.h>
 #include <regex.h>
+#include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <keynote.h>
 
 #include "smtpd.h"
 
@@ -195,7 +194,7 @@ session_rfc4954_auth_plain(struct session *s, char *arg)
 
 	case S_AUTH_INIT:
 		/* String is not NUL terminated, leave room. */
-		if ((len = kn_decode_base64(arg, buf, sizeof(buf) - 1)) == -1)
+		if ((len = __b64_pton(arg, buf, sizeof(buf) - 1)) == -1)
 			goto abort;
 		/* buf is a byte string, NUL terminate. */
 		buf[len] = '\0';
@@ -248,7 +247,7 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 	case S_AUTH_USERNAME:
 		bzero(a->user, sizeof(a->user));
-		if (kn_decode_base64(arg, a->user, sizeof(a->user) - 1) == -1)
+		if (__b64_pton(arg, a->user, sizeof(a->user) - 1) == -1)
 			goto abort;
 
 		s->s_state = S_AUTH_PASSWORD;
@@ -257,7 +256,7 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 	case S_AUTH_PASSWORD:
 		bzero(a->pass, sizeof(a->pass));
-		if (kn_decode_base64(arg, a->pass, sizeof(a->pass) - 1) == -1)
+		if (__b64_pton(arg, a->pass, sizeof(a->pass) - 1) == -1)
 			goto abort;
 
 		s->s_state = S_AUTH_FINALIZE;
