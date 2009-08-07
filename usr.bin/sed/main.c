@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2008/10/16 16:34:32 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2009/08/07 03:30:56 djm Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@ static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 /* from: static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94"; */
-static const char rcsid[] = "$OpenBSD: main.c,v 1.15 2008/10/16 16:34:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.16 2009/08/07 03:30:56 djm Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -86,7 +86,7 @@ struct s_flist {
  */
 static struct s_flist *files, **fl_nextp = &files;
 
-int aflag, eflag, nflag;
+int Eflag, aflag, eflag, nflag;
 
 /*
  * Current file and line number; line numbers restart across compilation
@@ -105,8 +105,12 @@ main(int argc, char *argv[])
 	int c, fflag;
 
 	fflag = 0;
-	while ((c = getopt(argc, argv, "ae:f:nu")) != -1)
+	while ((c = getopt(argc, argv, "Eae:f:nru")) != -1)
 		switch (c) {
+		case 'E':
+		case 'r':
+			Eflag = 1;
+			break;
 		case 'a':
 			aflag = 1;
 			break;
@@ -127,8 +131,8 @@ main(int argc, char *argv[])
 		default:
 		case '?':
 			(void)fprintf(stderr,
-			    "usage: sed [-anu] command [file ...]\n"
-			    "       sed [-anu] [-e command] [-f command_file] [file ...]\n");
+			    "usage: sed [-aEnru] command [file ...]\n"
+			    "       sed [-aEnru] [-e command] [-f command_file] [file ...]\n");
 			exit(1);
 		}
 	argc -= optind;

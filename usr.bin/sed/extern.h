@@ -1,4 +1,4 @@
-/* *	$OpenBSD: extern.h,v 1.5 2008/10/08 17:26:47 millert Exp $*/
+/* *	$OpenBSD: extern.h,v 1.6 2009/08/07 03:30:56 djm Exp $*/
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ extern size_t maxnsub;
 extern u_long linenum;
 extern int appendnum;
 extern int lastline;
-extern int aflag, eflag, nflag;
+extern int Eflag, aflag, eflag, nflag;
 extern char *fname;
 
 void	 cfclose(struct s_command *, struct s_command *);
