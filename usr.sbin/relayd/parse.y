@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.136 2009/08/05 13:46:13 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.137 2009/08/07 08:19:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -113,16 +113,20 @@ int		 getservice(char *);
 
 typedef struct {
 	union {
-		int64_t		 number;
-		char		*string;
-		struct host	*host;
-		struct timeval	 tv;
-		struct table	*table;
-		struct portrange port;
+		int64_t			 number;
+		char			*string;
+		struct host		*host;
+		struct timeval		 tv;
+		struct table		*table;
+		struct portrange	 port;
 		struct {
-			enum digest_type	 type;
-			char			*digest;
-		}		 digest;
+			struct sockaddr_storage	 ss;
+			char			 name[MAXHOSTNAMELEN];
+		}			 addr;
+		struct {
+			enum digest_type type;
+			char		*digest;
+		}			 digest;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -148,6 +152,7 @@ typedef struct {
 %type	<v.number>	redirect_proto relay_proto
 %type	<v.port>	port
 %type	<v.host>	host
+%type	<v.addr>	address
 %type	<v.tv>		timeout
 %type	<v.digest>	digest
 %type	<v.table>	tablespec
@@ -1394,36 +1399,44 @@ interface	: /*empty*/		{ $$ = NULL; }
 		| INTERFACE STRING	{ $$ = $2; }
 		;
 
-host		: STRING retry parent	{
-			struct address *a;
-			struct addresslist al;
-
+host		: address retry parent {
 			if (($$ = calloc(1, sizeof(*($$)))) == NULL)
 				fatal("out of memory");
 
-			TAILQ_INIT(&al);
-			if (host($1, &al, 1, NULL, NULL, -1) <= 0) {
-				yyerror("invalid host %s", $2);
-				free($1);
-				free($$);
-				YYERROR;
-			}
-			a = TAILQ_FIRST(&al);
-			memcpy(&$$->conf.ss, &a->ss, sizeof($$->conf.ss));
-			free(a);
-
-			if (strlcpy($$->conf.name, $1, sizeof($$->conf.name)) >=
-			    sizeof($$->conf.name)) {
+			if (strlcpy($$->conf.name, $1.name,
+			    sizeof($$->conf.name)) >= sizeof($$->conf.name)) {
 				yyerror("host name truncated");
-				free($1);
 				free($$);
 				YYERROR;
 			}
-			free($1);
 			$$->conf.id = 0; /* will be set later */
 			$$->conf.retry = $2;
 			$$->conf.parentid = $3;
 			SLIST_INIT(&$$->children);
+		}
+		;
+
+address		: STRING	{
+			struct address *a;
+			struct addresslist al;
+
+			if (strlcpy($$.name, $1,
+			    sizeof($$.name)) >= sizeof($$.name)) {
+				yyerror("host name truncated");
+				free($1);
+				YYERROR;
+			}
+
+			TAILQ_INIT(&al);
+			if (host($1, &al, 1, NULL, NULL, -1) <= 0) {
+				yyerror("invalid host %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+			a = TAILQ_FIRST(&al);
+			memcpy(&$$.ss, &a->ss, sizeof($$.ss));
+			free(a);
 		}
 		;
 
