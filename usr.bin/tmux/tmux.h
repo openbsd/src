@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.68 2009/08/04 18:45:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.69 2009/08/07 00:12:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -602,7 +602,6 @@ struct input_ctx {
 
 	struct grid_cell cell;
 
-
 	struct grid_cell saved_cell;
 	u_int		 saved_cx;
 	u_int		 saved_cy;
@@ -674,6 +673,7 @@ struct window_pane {
  	u_int		 saved_cx;
  	u_int		 saved_cy;
 	struct grid	*saved_grid;
+	struct grid_cell saved_cell;
 
 	const struct window_mode *mode;
 	void		*modedata;
