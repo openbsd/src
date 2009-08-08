@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfe.4,v 1.18 2009/06/18 08:21:20 jsg Exp $
+.\"	$OpenBSD: nfe.4,v 1.19 2009/08/08 17:33:26 naddy Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 18 2009 $
+.Dd $Mdocdate: August 8 2009 $
 .Dt NFE 4
 .Os
 .Sh NAME
@@ -22,6 +22,8 @@
 .Nd NVIDIA nForce MCP 10/100/Gigabit Ethernet device
 .Sh SYNOPSIS
 .Cd "nfe* at pci?"
+.Cd "atphy* at mii?"
+.Cd "brgphy* at mii?"
 .Cd "ciphy* at mii?"
 .Cd "eephy* at mii?"
 .Cd "icsphy* at mii?"
@@ -60,6 +62,8 @@ Set 1000Mbps (Gigabit Ethernet) operation (recent models only).
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr atphy 4 ,
+.Xr brgphy 4 ,
 .Xr ciphy 4 ,
 .Xr eephy 4 ,
 .Xr icsphy 4 ,
