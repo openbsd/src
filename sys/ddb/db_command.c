@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.54 2009/07/15 19:05:14 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.55 2009/08/08 15:04:43 beck Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -439,6 +439,15 @@ db_uvmexp_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	uvmexp_print(db_printf);
 }
 
+void	bcstats_print(int (*)(const char *, ...));
+
+/*ARGSUSED*/
+void
+db_bcstats_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	bcstats_print(db_printf);
+}
+
 /*
  * 'show' commands
  */
@@ -456,6 +465,7 @@ struct db_command db_show_all_cmds[] = {
 
 struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
+	{ "bcstats",	db_bcstats_print_cmd,	0,	NULL },
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
 	{ "buf",	db_buf_print_cmd,	0,	NULL },
 	{ "extents",	db_extent_print_cmd,	0,	NULL },

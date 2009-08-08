@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.h,v 1.24 2009/06/17 01:30:30 thib Exp $	*/
+/*	$OpenBSD: db_command.h,v 1.25 2009/08/08 15:04:43 beck Exp $	*/
 /*	$NetBSD: db_command.h,v 1.8 1996/02/05 01:56:55 christos Exp $	*/
 
 /* 
@@ -65,6 +65,7 @@ void db_boot_poweroff_cmd(db_expr_t, int, db_expr_t, char *);
 void db_stack_trace_cmd(db_expr_t, int, db_expr_t, char *);
 void db_dmesg_cmd(db_expr_t, int, db_expr_t, char *);
 void db_show_panic_cmd(db_expr_t, int, db_expr_t, char *);
+void db_bcstats_print_cmd(db_expr_t, int, db_expr_t, char *);
 
 extern	db_addr_t db_dot, db_last_addr, db_prev, db_next;
 
