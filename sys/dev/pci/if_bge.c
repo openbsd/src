@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.278 2009/08/06 10:42:54 sthen Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.279 2009/08/08 15:58:14 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -36,7 +36,7 @@
  */
 
 /*
- * Broadcom BCM570x family gigabit ethernet driver for FreeBSD.
+ * Broadcom BCM57xx/BCM590x family ethernet driver for OpenBSD.
  *
  * Written by Bill Paul <wpaul@windriver.com>
  * Senior Engineer, Wind River Systems

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.95 2009/07/28 07:20:28 claudio Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.96 2009/08/08 15:58:14 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -35,9 +35,7 @@
  */
 
 /*
- * Alteon Networks Tigon PCI gigabit ethernet driver for FreeBSD.
- * Manuals, sample driver and firmware source kits are available
- * from http://www.alteon.com/support/openkits.
+ * Alteon Networks Tigon PCI gigabit ethernet driver for OpenBSD.
  *
  * Written by Bill Paul <wpaul@ctr.columbia.edu>
  * Electrical Engineering Department
@@ -62,13 +60,6 @@
  * (although they really should have done it a long time ago). With
  * any luck, the other vendors will finally wise up and follow Alteon's
  * stellar example.
- *
- * The firmware for the Tigon 1 and 2 NICs is compiled directly into
- * this driver by #including it as a C header file. This bloats the
- * driver somewhat, but it's the easiest method considering that the
- * driver code and firmware code need to be kept in sync. The source
- * for the firmware is not provided with the FreeBSD distribution since
- * compiling it requires a GNU toolchain targeted for mips-sgi-irix5.3.
  *
  * The following people deserve special thanks:
  * - Terry Murphy of 3Com, for providing a 3c985 Tigon 1 board
