@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.21 2009/08/06 16:46:57 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.22 2009/08/08 23:02:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -445,18 +445,10 @@ queue_message_update(struct message *messagep)
 	messagep->retry++;
 
 	if (messagep->status & S_MESSAGE_PERMFAILURE) {
-		if (messagep->type == T_BOUNCE_MESSAGE ||
-		    (messagep->sender.user[0] == '\0' && messagep->sender.domain[0] == '\0'))
-			queue_remove_envelope(messagep);
-		else {
-			messagep->id = queue_generate_id();
-			messagep->type = T_BOUNCE_MESSAGE;
-			messagep->status &= ~S_MESSAGE_PERMFAILURE;
-			messagep->lasttry = 0;
-			messagep->retry = 0;
-			messagep->creation = time(NULL);
-			queue_update_envelope(messagep);
-		}
+		if (messagep->type != T_BOUNCE_MESSAGE &&
+		    messagep->sender.user[0] != '\0')
+			bounce_record_message(messagep);
+		queue_remove_envelope(messagep);
 		return;
 	}
 

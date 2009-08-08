@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.66 2009/08/07 21:47:07 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.67 2009/08/08 23:02:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -819,6 +819,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	case 550:
 		if (sessionp->s_state == S_RCPT) {
 			batchp->messagep->status = (S_MESSAGE_REJECTED|S_MESSAGE_PERMFAILURE);
+			log_debug("DOES NOT EXIST !!!: %s", line);
 			message_set_errormsg(batchp->messagep, "%s", line);
 			break;
 		}
@@ -1019,8 +1020,10 @@ mta_batch_update_queue(struct batch *batchp)
 	while ((messagep = TAILQ_FIRST(&batchp->messages)) != NULL) {
 
 		if (batchp->status == S_BATCH_PERMFAILURE) {
-			messagep->status |= S_MESSAGE_PERMFAILURE;
-			message_set_errormsg(messagep, "%s", batchp->errorline);
+			if ((messagep->status & S_MESSAGE_PERMFAILURE) == 0) {
+				messagep->status |= S_MESSAGE_PERMFAILURE;
+				message_set_errormsg(messagep, "%s", batchp->errorline);
+			}
 		}
 		
 		if (batchp->status == S_BATCH_TEMPFAILURE) {
