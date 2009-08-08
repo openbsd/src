@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.38 2009/07/01 20:55:57 kettenis Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.39 2009/08/08 09:51:53 dlg Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -113,6 +113,8 @@ isp_attach(struct ispsoftc *isp)
 	if (IS_FC(isp)) {
 		lptr->adapter_buswidth = MAX_FC_TARG;
 		lptr->adapter_target = MAX_FC_TARG; /* i.e. ignore. */
+		lptr->node_wwn = ISP_NODEWWN(isp);
+		lptr->port_wwn = ISP_PORTWWN(isp);
 	} else {
 		sdparam *sdp = isp->isp_param;
 		lptr->adapter_buswidth = MAX_TARGETS;
