@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chat.8,v 1.16 2009/08/08 14:09:34 sobrado Exp $
+.\"	$OpenBSD: chat.8,v 1.17 2009/08/08 18:36:34 jmc Exp $
 .\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp $
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
@@ -12,11 +12,12 @@
 .Nm chat
 .Op Fl eSsVv
 .Bk -words
+.Op Fl f Ar chat_file
 .Op Fl r Ar report_file
 .Op Fl T Ar phone_number
 .Op Fl t Ar timeout
 .Op Fl U Ar phone_number_2
-.Fl f Ar chat_file | script
+.Ar script
 .Ek
 .Sh DESCRIPTION
 The
@@ -39,7 +40,9 @@ When echoing is enabled, all output from the modem is echoed to
 .It Fl f Ar chat_file
 Read the chat script from the
 .Ar chat_file .
-The use of this option is mutually exclusive with the chat script parameters.
+The use of this option is mutually exclusive with the chat
+.Ar script
+parameter.
 The user must have read access to the file.
 Multiple lines are permitted in the file.
 Space or horizontal tab characters should be used to separate the strings.
