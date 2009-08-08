@@ -1,3 +1,4 @@
+/*	$OpenBSD: lex.l,v 1.2 2009/08/08 19:37:14 sobrado Exp $	*/
 /*	$NetBSD: lex.l,v 1.13 2003/10/27 00:12:43 lukem Exp $	*/
 
 %{

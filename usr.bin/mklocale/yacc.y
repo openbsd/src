@@ -1,3 +1,4 @@
+/*	$OpenBSD: yacc.y,v 1.3 2009/08/08 19:37:14 sobrado Exp $	*/
 /*	$NetBSD: yacc.y,v 1.24 2004/01/05 23:23:36 jmmv Exp $	*/
 
 %{
@@ -257,7 +258,9 @@ main(int ac, char *av[])
 	    break;
 	default:
 	usage:
-	    fprintf(stderr, "usage: mklocale [-d] [-o output] [source]\n");
+	    fprintf(stderr,
+		"usage: mklocale [-d] [src-file] language/LC_CTYPE\n"
+		"       mklocale [-d] -o language/LC_CTYPE src-file\n");
 	    exit(1);
 	}
     }

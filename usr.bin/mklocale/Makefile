@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 2009/08/08 19:37:14 sobrado Exp $
 #	$NetBSD: Makefile,v 1.11 2003/08/01 17:04:04 lukem Exp $
-#	$OpenBSD: Makefile,v 1.1 2005/08/07 10:06:25 espie Exp $
 
 .include <bsd.own.mk>
 

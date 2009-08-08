@@ -1,3 +1,4 @@
+/*	$OpenBSD: ldef.h,v 1.2 2009/08/08 19:37:14 sobrado Exp $	*/
 /*	$NetBSD: ldef.h,v 1.4 2003/08/07 11:15:14 agc Exp $	*/
 
 /*-
