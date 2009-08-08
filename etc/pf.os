@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.21 2006/07/28 21:51:12 david Exp $
+# $OpenBSD: pf.os,v 1.22 2009/08/08 09:24:51 deraadt Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -361,7 +361,7 @@ S34:64:1:52:M*,N,W0,N,N,S:		Solaris:10:beta:Solaris 10 (beta)
 # ----------------- Windows -----------------
 
 # Windows TCP/IP stack is a mess. For most recent XP, 2000 and
-# even 98, the pathlevel, not the actual OS version, is more
+# even 98, the patchlevel, not the actual OS version, is more
 # relevant to the signature. They share the same code, so it would
 # seem. Luckily for us, almost all Windows 9x boxes have an
 # awkward MSS of 536, which I use to tell one from another
