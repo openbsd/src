@@ -1,4 +1,4 @@
-/* $OpenBSD: server-msg.c,v 1.9 2009/07/30 16:40:12 nicm Exp $ */
+/* $OpenBSD: server-msg.c,v 1.10 2009/08/08 21:52:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -42,6 +42,7 @@ server_msg_dispatch(struct client *c)
 	struct msg_identify_data identifydata;
 	struct msg_resize_data	 resizedata;
 	struct msg_unlock_data	 unlockdata;
+	struct msg_environ_data	 environdata;
 
 	for (;;) {
 		if (BUFFER_USED(c->in) < sizeof hdr)
@@ -99,6 +100,15 @@ server_msg_dispatch(struct client *c)
 			c->flags &= ~CLIENT_SUSPENDED;
 			tty_start_tty(&c->tty);
 			server_redraw_client(c);
+			break;
+		case MSG_ENVIRON:
+			if (hdr.size != sizeof environdata)
+				fatalx("bad MSG_ENVIRON size");
+			buffer_read(c->in, &environdata, sizeof environdata);
+
+			environdata.var[(sizeof environdata.var) - 1] = '\0';
+			if (strchr(environdata.var, '=') != NULL)
+				environ_put(&c->environ, environdata.var);
 			break;
 		default:
 			fatalx("unexpected message");

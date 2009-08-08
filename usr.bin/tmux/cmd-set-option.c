@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.12 2009/08/08 20:36:42 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.13 2009/08/08 21:52:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -85,6 +85,7 @@ const struct set_option_entry set_option_table[] = {
 	{ "status-right-length", SET_OPTION_NUMBER, 0, SHRT_MAX, NULL },
 	{ "status-utf8", SET_OPTION_FLAG, 0, 0, NULL },	
 	{ "terminal-overrides", SET_OPTION_STRING, 0, 0, NULL },
+	{ "update-environment", SET_OPTION_STRING, 0, 0, NULL },
 	{ "visual-activity", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "visual-bell", SET_OPTION_FLAG, 0, 0, NULL },	
 	{ "visual-content", SET_OPTION_FLAG, 0, 0, NULL },
