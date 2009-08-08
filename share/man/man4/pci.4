@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.273 2009/07/26 13:24:39 kettenis Exp $
+.\"	$OpenBSD: pci.4,v 1.274 2009/08/08 09:31:13 kevlo Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 26 2009 $
+.Dd $Mdocdate: August 8 2009 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -163,6 +163,8 @@ LSI Logic & Dell MegaRAID SAS RAID controller
 .Bl -tag -width 10n -offset ind -compact
 .It Xr age 4
 Attansic L1 10/100/Gigabit Ethernet device
+.It Xr alc 4
+Atheros AR8131/AR8132 10/100/Gigabit Ethernet device
 .It Xr ale 4
 Atheros AR8121/AR8113/AR8114 10/100/Gigabit Ethernet device
 .It Xr art 4
