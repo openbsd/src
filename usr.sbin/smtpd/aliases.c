@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.18 2009/05/13 21:20:55 jacekm Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.19 2009/08/08 00:02:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -362,7 +362,7 @@ alias_is_username(struct alias *alias, char *line, size_t len)
 		return 0;
 
 	while (*line) {
-		if (!isalnum(*line) &&
+		if (!isalnum((int)*line) &&
 		    *line != '_' && *line != '.' && *line != '-')
 			return 0;
 		++line;
@@ -395,7 +395,7 @@ alias_is_address(struct alias *alias, char *line, size_t len)
 
 	while (*line) {
 		char allowedset[] = "!#$%*/?|^{}`~&'+-=_.";
-		if (!isalnum(*line) &&
+		if (!isalnum((int)*line) &&
 		    strchr(allowedset, *line) == NULL)
 			return 0;
 		++line;
@@ -403,7 +403,7 @@ alias_is_address(struct alias *alias, char *line, size_t len)
 
 	while (*domain) {
 		char allowedset[] = "-.";
-		if (!isalnum(*domain) &&
+		if (!isalnum((int)*domain) &&
 		    strchr(allowedset, *domain) == NULL)
 			return 0;
 		++domain;

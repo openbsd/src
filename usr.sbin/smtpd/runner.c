@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.59 2009/08/06 16:46:57 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.60 2009/08/08 00:02:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1090,7 +1090,7 @@ runner_check_loop(struct message *messagep)
 			buf = lbuf;
 		}
 
-		if (strchr(buf, ':') == NULL && !isspace(*buf))
+		if (strchr(buf, ':') == NULL && !isspace((int)*buf))
 			break;
 
 		if (strncasecmp("Received: ", buf, 10) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.112 2009/08/07 21:59:01 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.113 2009/08/08 00:02:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -194,7 +194,7 @@ session_rfc4954_auth_plain(struct session *s, char *arg)
 
 	case S_AUTH_INIT:
 		/* String is not NUL terminated, leave room. */
-		if ((len = __b64_pton(arg, buf, sizeof(buf) - 1)) == -1)
+		if ((len = __b64_pton(arg, (unsigned char *)buf, sizeof(buf) - 1)) == -1)
 			goto abort;
 		/* buf is a byte string, NUL terminate. */
 		buf[len] = '\0';
@@ -247,7 +247,7 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 	case S_AUTH_USERNAME:
 		bzero(a->user, sizeof(a->user));
-		if (__b64_pton(arg, a->user, sizeof(a->user) - 1) == -1)
+		if (__b64_pton(arg, (unsigned char *)a->user, sizeof(a->user) - 1) == -1)
 			goto abort;
 
 		s->s_state = S_AUTH_PASSWORD;
@@ -256,7 +256,7 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 	case S_AUTH_PASSWORD:
 		bzero(a->pass, sizeof(a->pass));
-		if (__b64_pton(arg, a->pass, sizeof(a->pass) - 1) == -1)
+		if (__b64_pton(arg, (unsigned char *)a->pass, sizeof(a->pass) - 1) == -1)
 			goto abort;
 
 		s->s_state = S_AUTH_FINALIZE;

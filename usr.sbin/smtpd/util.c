@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2009/08/06 14:12:48 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.24 2009/08/08 00:02:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -86,12 +86,12 @@ hostname_match(char *hostname, char *pattern)
 			while (*pattern == '*')
 				pattern++;
 			while (*hostname != '\0' &&
-			    tolower(*hostname) != tolower(*pattern))
+			    tolower((int)*hostname) != tolower((int)*pattern))
 				hostname++;
 			continue;
 		}
 
-		if (tolower(*pattern) != tolower(*hostname))
+		if (tolower((int)*pattern) != tolower((int)*hostname))
 			return 0;
 		pattern++;
 		hostname++;
@@ -137,7 +137,7 @@ recipient_to_path(struct path *path, char *recipient)
 int
 valid_localpart(char *s)
 {
-#define IS_ATEXT(c)     (isalnum(c) || strchr("!#$%&'*+-/=?^_`{|}~", (c)))
+#define IS_ATEXT(c)     (isalnum((int)(c)) || strchr("!#$%&'*+-/=?^_`{|}~", (c)))
 nextatom:
         if (! IS_ATEXT(*s) || *s == '\0')
                 return 0;
@@ -159,12 +159,12 @@ int
 valid_domainpart(char *s)
 {
 nextsub:
-        if (!isalnum(*s))
+        if (!isalnum((int)*s))
                 return 0;
         while (*(++s) != '\0') {
                 if (*s == '.')
                         break;
-                if (isalnum(*s) || *s == '-')
+                if (isalnum((int)*s) || *s == '-')
                         continue;
                 return 0;
         }
@@ -363,7 +363,7 @@ lowercase(char *buf, char *s, size_t len)
 		fatalx("lowercase: truncation");
 
 	while (*buf != '\0') {
-		*buf = tolower(*buf);
+		*buf = tolower((int)*buf);
 		buf++;
 	}
 }

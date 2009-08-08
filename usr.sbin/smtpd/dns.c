@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.14 2009/06/06 04:14:21 pyr Exp $	*/
+/*	$OpenBSD: dns.c,v 1.15 2009/08/08 00:02:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -355,7 +355,7 @@ int
 get_mxlist(char *host, char *self, struct dns **res)
 {
 	struct mx	 tab[MAX_MX_COUNT];
-	char		 buf[PACKETSZ], *p, *endp;
+	unsigned char	 buf[PACKETSZ], *p, *endp;
 	int		 ntab, i, ret, type, n, maxprio, cname_ok = 3;
 	int		 qdcount, ancount;
 

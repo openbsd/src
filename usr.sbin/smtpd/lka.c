@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.61 2009/08/07 20:21:48 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.62 2009/08/08 00:02:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1160,7 +1160,7 @@ lka_encode_credentials(char *dst, size_t size, char *user)
 	if ((buflen = asprintf(&buf, "%c%s%c%s", '\0', user, '\0', pass)) == -1)
 		fatal(NULL);
 
-	if (__b64_ntop(buf, buflen, dst, size) == -1) {
+	if (__b64_ntop((unsigned char *)buf, buflen, dst, size) == -1) {
 		free(buf);
 		return 0;
 	}

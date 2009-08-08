@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.19 2009/07/28 20:51:50 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.20 2009/08/08 00:02:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -225,7 +225,7 @@ parse_entry(char *line, size_t len, size_t lineno)
 	char	*valp;
 
 	keyp = line;
-	while (isspace(*keyp))
+	while (isspace((int)*keyp))
 		keyp++;
 	if (*keyp == '\0' || *keyp == '#')
 		return 1;
@@ -294,14 +294,14 @@ make_aliases(DBT *val, char *text)
 
 	while ((subrcpt = strsep(&text, ",")) != NULL) {
 		/* subrcpt: strip initial whitespace. */
-		while (isspace(*subrcpt))
+		while (isspace((int)*subrcpt))
 			++subrcpt;
 		if (*subrcpt == '\0')
 			goto error;
 
 		/* subrcpt: strip trailing whitespace. */
 		endp = subrcpt + strlen(subrcpt) - 1;
-		while (subrcpt < endp && isspace(*endp))
+		while (subrcpt < endp && isspace((int)*endp))
 			*endp-- = '\0';
 
 		if (! alias_parse(&a, subrcpt))

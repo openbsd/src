@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.13 2009/03/03 23:23:52 gilles Exp $	*/
+/*	$OpenBSD: forward.c,v 1.14 2009/08/08 00:02:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -70,7 +70,7 @@ forwards_get(int fd, struct aliaseslist *aliases)
 		cp = buf;
 		do {
 			/* skip whitespace */
-			while (isspace(*cp))
+			while (isspace((int)*cp))
 				cp++;
 
 			/* parse line */
