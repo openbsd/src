@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2009/08/08 00:02:22 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.25 2009/08/08 00:18:38 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -239,7 +239,7 @@ valid_message_uid(char *muid)
 		return 0;
 
 	for (cnt = 0; *muid != '\0'; ++cnt, ++muid)
-		if (! isdigit(*muid))
+		if (! isdigit((int)*muid))
 			return 0;
 
 	return (cnt != 0);
