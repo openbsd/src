@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.110 2009/03/06 01:28:44 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.111 2009/08/08 09:35:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -103,6 +103,8 @@ void			mpi_run_ppr(struct mpi_softc *);
 int			mpi_ppr(struct mpi_softc *, struct scsi_link *,
 			    struct mpi_cfg_raid_physdisk *, int, int, int);
 int			mpi_inq(struct mpi_softc *, u_int16_t, int);
+
+void			mpi_fc_info(struct mpi_softc *);
 
 void			mpi_timeout_xs(void *);
 int			mpi_load_xs(struct mpi_ccb *);
@@ -253,10 +255,15 @@ mpi_attach(struct mpi_softc *sc)
 		goto free_replies;
 	}
 
-	if (sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_SCSI) {
+	switch (sc->sc_porttype) {
+	case MPI_PORTFACTS_PORTTYPE_SCSI:
 		if (mpi_cfg_spi_port(sc) != 0)
 			goto free_replies;
 		mpi_squash_ppr(sc);
+		break;
+	case MPI_PORTFACTS_PORTTYPE_FC:
+		mpi_fc_info(sc);
+		break;
 	}
 
 	rw_init(&sc->sc_lock, "mpi_lock");
@@ -762,6 +769,30 @@ mpi_inq(struct mpi_softc *sc, u_int16_t target, int physdisk)
 	mpi_put_ccb(sc, ccb);
 
 	return (0);
+}
+
+void
+mpi_fc_info(struct mpi_softc *sc)
+{
+	struct mpi_cfg_hdr		hdr;
+	struct mpi_cfg_fc_port_pg0	pg;
+
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_PORT, 0, 0,
+	    &hdr) != 0) {
+		DNPRINTF(MPI_D_MISC, "%s: mpi_fc_print unable to fetch "
+		    "FC port header 0\n", DEVNAME(sc));
+		return;
+	}
+
+	if (mpi_cfg_page(sc, 0, &hdr, 1, &pg, sizeof(pg)) != 0) {
+		DNPRINTF(MPI_D_MISC, "%s: mpi_fc_print unable to fetch "
+		    "FC port page 0\n",
+		    DEVNAME(sc));
+		return;
+	}
+
+	sc->sc_link.port_wwn = letoh64(pg.wwpn);
+	sc->sc_link.node_wwn = letoh64(pg.wwnn);
 }
 
 void
