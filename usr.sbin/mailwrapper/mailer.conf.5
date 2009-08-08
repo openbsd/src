@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mailer.conf.5,v 1.11 2009/08/06 14:05:12 jmc Exp $
+.\"	$OpenBSD: mailer.conf.5,v 1.12 2009/08/08 19:19:41 ian Exp $
 .\"	$NetBSD: mailer.conf.5,v 1.1 1999/03/25 16:40:17 is Exp $
 .\"
 .\" Copyright (c) 1998
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 6 2009 $
+.Dd $Mdocdate: August 8 2009 $
 .Dt MAILER.CONF 5
 .Os
 .Sh NAME
@@ -84,6 +84,7 @@ MTA suite in place of
 # Emulate sendmail using smtpd
 sendmail	/usr/sbin/smtpctl
 send-mail	/usr/sbin/smtpctl
+mailq		/usr/sbin/smtpctl
 makemap 	/usr/libexec/smtpd/makemap
 newaliases	/usr/libexec/smtpd/makemap
 .Ed
