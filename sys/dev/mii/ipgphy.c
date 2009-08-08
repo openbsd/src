@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.11 2009/07/30 10:26:23 sthen Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.12 2009/08/08 17:12:40 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 /*
- * Driver for the IC Plus IP1000A 10/100/1000 PHY.
+ * Driver for the IC Plus IP1000A/IP1001 10/100/1000 PHY.
  */
 
 #include <sys/param.h>
@@ -80,6 +80,8 @@ const struct mii_phy_funcs ipgphy_funcs = {
 static const struct mii_phydesc ipgphys[] = {
 	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP1000A,
 	  MII_STR_ICPLUS_IP1000A },
+	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP1001,
+	  MII_STR_ICPLUS_IP1001 },
 
 	{ 0,
 	  NULL },
@@ -110,6 +112,7 @@ ipgphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &ipgphy_funcs;
+	sc->mii_model = MII_MODEL(ma->mii_id2);
 	sc->mii_pdata = mii;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
@@ -245,7 +248,7 @@ done:
 		 * Only retry autonegotiation every mii_anegticks seconds.
 		 */
 		if (sc->mii_ticks <= sc->mii_anegticks)
-			return (0);
+			break;
 
 		sc->mii_ticks = 0;
 		ipgphy_mii_phy_auto(sc);
@@ -264,6 +267,7 @@ void
 ipgphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t bmsr, bmcr, stat;
 
 	mii->mii_media_status = IFM_AVALID;
@@ -271,63 +275,99 @@ ipgphy_status(struct mii_softc *sc)
 
 	bmsr = PHY_READ(sc, IPGPHY_MII_BMSR) |
 	    PHY_READ(sc, IPGPHY_MII_BMSR);
-	if ((bmsr & IPGPHY_BMSR_LINK) != 0)
+	if (bmsr & IPGPHY_BMSR_LINK) 
 		mii->mii_media_status |= IFM_ACTIVE;
 
 	bmcr = PHY_READ(sc, IPGPHY_MII_BMCR);
-	if ((bmcr & IPGPHY_BMCR_LOOP) != 0)
+	if (bmcr & IPGPHY_BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if ((bmcr & IPGPHY_BMCR_AUTOEN) != 0) {
+	if (bmcr & IPGPHY_BMCR_AUTOEN) {
 		if ((bmsr & IPGPHY_BMSR_ANEGCOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
-	}
 
-	stat = PHY_READ(sc, STGE_PhyCtrl);
-	switch (PC_LinkSpeed(stat)) {
-	case PC_LinkSpeed_Down:
-		mii->mii_media_active |= IFM_NONE;
-		return;
-	case PC_LinkSpeed_10:
-		mii->mii_media_active |= IFM_10_T;
-		break;
-	case PC_LinkSpeed_100:
-		mii->mii_media_active |= IFM_100_TX;
-		break;
-	case PC_LinkSpeed_1000:
-		mii->mii_media_active |= IFM_1000_T;
-		break;
-	}
+		if (sc->mii_model == MII_MODEL_ICPLUS_IP1001) {
+			stat = PHY_READ(sc, IPGPHY_LSR);
+			switch (stat & IPGPHY_LSR_SPEED_MASK) {
+			case IPGPHY_LSR_SPEED_10:
+				mii->mii_media_active |= IFM_10_T;
+				break;
+			case IPGPHY_LSR_SPEED_100:
+				mii->mii_media_active |= IFM_100_TX;
+				break;
+			case IPGPHY_LSR_SPEED_1000:
+				mii->mii_media_active |= IFM_1000_T;
+				break;
+			default:
+				mii->mii_media_active |= IFM_NONE;
+				return;
+			}
 
-	if ((stat & PC_PhyDuplexStatus) != 0)
-		mii->mii_media_active |= mii_phy_flowstatus(sc) | IFM_FDX;
-	else
-		mii->mii_media_active |= IFM_HDX;
+			if (stat & IPGPHY_LSR_FULL_DUPLEX)
+				mii->mii_media_active |= IFM_FDX;
+			else
+				mii->mii_media_active |= IFM_HDX;
+		} else {
+			stat = PHY_READ(sc, STGE_PhyCtrl);
+			switch (PC_LinkSpeed(stat)) {
+			case PC_LinkSpeed_Down:
+				mii->mii_media_active |= IFM_NONE;
+				return;
+			case PC_LinkSpeed_10:
+				mii->mii_media_active |= IFM_10_T;
+				break;
+			case PC_LinkSpeed_100:
+				mii->mii_media_active |= IFM_100_TX;
+				break;
+			case PC_LinkSpeed_1000:
+				mii->mii_media_active |= IFM_1000_T;
+				break;
+			default:
+				mii->mii_media_active |= IFM_NONE;
+				return;
+			}
 
-	stat = PHY_READ(sc, IPGPHY_MII_1000SR);
-	if ((IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) &&
-	    stat & IPGPHY_1000SR_MASTER)
-		mii->mii_media_active |= IFM_ETH_MASTER;
+			if (stat & PC_PhyDuplexStatus)
+				mii->mii_media_active |= IFM_FDX;
+			else
+				mii->mii_media_active |= IFM_HDX;
+		}
+
+		if (mii->mii_media_active & IFM_FDX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
+
+		if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
+			if (PHY_READ(sc, IPGPHY_MII_1000SR) &
+			    IPGPHY_1000SR_MASTER)
+				mii->mii_media_active |= IFM_ETH_MASTER;
+		}
+	} else
+		mii->mii_media_active = ife->ifm_media;
 }
 
 int
 ipgphy_mii_phy_auto(struct mii_softc *sc)
 {
-	uint32_t reg;
+	uint32_t reg = 0;
 
-	reg = IPGPHY_ANAR_10T | IPGPHY_ANAR_10T_FDX |
+	if (sc->mii_model == MII_MODEL_ICPLUS_IP1001)
+		reg = PHY_READ(sc, IPGPHY_MII_ANAR);
+
+	reg |= IPGPHY_ANAR_10T | IPGPHY_ANAR_10T_FDX |
 	      IPGPHY_ANAR_100TX | IPGPHY_ANAR_100TX_FDX;
 
 	if (sc->mii_flags & MIIF_DOPAUSE)
 		reg |= IPGPHY_ANAR_PAUSE | IPGPHY_ANAR_APAUSE;
 
-	PHY_WRITE(sc, IPGPHY_MII_ANAR, reg);
+	PHY_WRITE(sc, IPGPHY_MII_ANAR, reg | IPGPHY_ANAR_CSMA);
+
 	reg = IPGPHY_1000CR_1000T | IPGPHY_1000CR_1000T_FDX;
 	reg |= IPGPHY_1000CR_MASTER;
 	PHY_WRITE(sc, IPGPHY_MII_1000CR, reg);
+
 	PHY_WRITE(sc, IPGPHY_MII_BMCR, (IPGPHY_BMCR_FDX |
 	    IPGPHY_BMCR_AUTOEN | IPGPHY_BMCR_STARTNEG));
 
@@ -351,8 +391,8 @@ ipgphy_load_dspcode(struct mii_softc *sc)
 void
 ipgphy_reset(struct mii_softc *sc)
 {
+	struct ifnet *ifp = sc->mii_pdata->mii_ifp;
 	struct stge_softc *stge_sc;
-	struct ifnet *ifp;
 	uint32_t reg;
 
 	mii_phy_reset(sc);
@@ -362,9 +402,8 @@ ipgphy_reset(struct mii_softc *sc)
 	reg &= ~(IPGPHY_BMCR_AUTOEN | IPGPHY_BMCR_FDX);
 	PHY_WRITE(sc, MII_BMCR, reg);
 
-	ifp = sc->mii_pdata->mii_ifp;
-
-	if (strcmp(ifp->if_xname, "stge") == 0) {
+	if (sc->mii_model == MII_MODEL_ICPLUS_IP1000A &&
+	    strcmp(ifp->if_xname, "stge") == 0) {
 		stge_sc = ifp->if_softc;
 		if (stge_sc->sc_rev >= 0x40 && stge_sc->sc_rev <= 0x4e)
 			ipgphy_load_dspcode(sc);
