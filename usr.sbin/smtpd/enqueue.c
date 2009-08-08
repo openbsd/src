@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.18 2009/06/07 05:56:25 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.19 2009/08/08 00:23:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -726,7 +726,7 @@ enqueue_offline(int argc, char *argv[])
 	FILE	*fp;
 	int	 i, fd, ch;
 
-	if (! bsnprintf(path, sizeof(path), "%s%s/%d,XXXXXXXXXX", PATH_SPOOL,
+	if (! bsnprintf(path, sizeof(path), "%s%s/%d.XXXXXXXXXX", PATH_SPOOL,
 		PATH_OFFLINE, time(NULL)))
 		err(1, "snprintf");
 
