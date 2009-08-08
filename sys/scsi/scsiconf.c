@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.138 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.139 2009/08/08 09:33:50 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -165,6 +165,11 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	printf(": %d targets", sb->sc_buswidth);
 	if (sb->adapter_link->adapter_target < sb->sc_buswidth)
 		printf(", initiator %d", sb->adapter_link->adapter_target);
+	if (sb->adapter_link->port_wwn != 0x0 &&
+	    sb->adapter_link->node_wwn != 0x0) {
+		printf(", WWPN %016llx, WWNN %016llx",
+		    sb->adapter_link->port_wwn, sb->adapter_link->node_wwn);
+	}
 	printf("\n");
 
 	/* Initialize shared data. */
