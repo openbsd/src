@@ -2762,7 +2762,7 @@ else
 		test -z "$ORIGINAL_CFLAGS" && CFLAGS=`echo ${CFLAGS} | sed -e 's%-g %%' -e 's%-g$%%'`
 		;;
 	*)
-		test -z "$ORIGINAL_CFLAGS" && CFLAGS=`echo ${CFLAGS} | sed -e 's%-g %%' -e 's%-g$%%'`
+		#test -z "$ORIGINAL_CFLAGS" && CFLAGS=`echo ${CFLAGS} | sed -e 's%-g %%' -e 's%-g$%%'`
 		;;
 	esac
 fi
