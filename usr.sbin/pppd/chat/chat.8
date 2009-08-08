@@ -1,8 +1,8 @@
-.\"	$OpenBSD: chat.8,v 1.15 2007/05/31 19:20:28 jmc Exp $
+.\"	$OpenBSD: chat.8,v 1.16 2009/08/08 14:09:34 sobrado Exp $
 .\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp $
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 8 2009 $
 .Dt CHAT 8
 .Os
 .Sh NAME
@@ -10,8 +10,14 @@
 .Nd automated conversational script with a modem
 .Sh SYNOPSIS
 .Nm chat
-.Op Cm options
-.Op Ar script
+.Op Fl eSsVv
+.Bk -words
+.Op Fl r Ar report_file
+.Op Fl T Ar phone_number
+.Op Fl t Ar timeout
+.Op Fl U Ar phone_number_2
+.Fl f Ar chat_file | script
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -22,6 +28,14 @@ Point-to-Point Protocol Daemon
 and the remote's pppd process.
 .Sh OPTIONS
 .Bl -tag -width Ds
+.It Fl e
+Start with the echo option turned on.
+Echoing may also be turned on or off at specific points in the chat script
+by using the
+.Ic ECHO
+keyword.
+When echoing is enabled, all output from the modem is echoed to
+.Ar stderr .
 .It Fl f Ar chat_file
 Read the chat script from the
 .Ar chat_file .
@@ -29,15 +43,6 @@ The use of this option is mutually exclusive with the chat script parameters.
 The user must have read access to the file.
 Multiple lines are permitted in the file.
 Space or horizontal tab characters should be used to separate the strings.
-.It Fl t Ar timeout
-Set the timeout for the expected string to be received.
-If the string is not received within the time limit then the reply string
-is not sent.
-An alternate reply may be sent or the script will fail if there
-is no alternate reply string.
-A failed script will cause the
-.Nm
-program to terminate with a non-zero error code.
 .It Fl r Ar report_file
 Set the file for output of the report strings.
 If you use the keyword
@@ -48,27 +53,40 @@ If this option is not used and you still use
 keywords, the
 .Ar stderr
 file is used for the report strings.
-.It Fl e
-Start with the echo option turned on.
-Echoing may also be turned on or off at specific points in the chat script
-by using the
-.Ic ECHO
-keyword.
-When echoing is enabled, all output from the modem is echoed to
-.Ar stderr .
-.It Fl v
-Request that the chat script be executed in a verbose mode.
-The
-.Nm
-program will then log the execution state of the chat script as well as all
-text received from the modem and the output strings sent to the modem.
-The default is to log via
-.Xr syslog 3 ;
-the logging method may be altered with the
+.It Fl S
+Do not use
+.Xr syslog 3 .
+By default, error messages are logged via
+.Xr syslog 3 .
+The use of
 .Fl S
-and
-.Fl s
-flags.
+will prevent both log messages from
+.Fl v
+and error messages from being logged via
+.Xr syslog 3 .
+.It Fl s
+Use
+.Ar stderr .
+All log messages from
+.Fl v
+and all error messages will be sent to
+.Ar stderr .
+.It Fl T Ar phone_number
+Pass in an arbitrary string, usually a phone number, that will be
+substituted for the \eT substitution metacharacter in a send string.
+.It Fl t Ar timeout
+Set the timeout for the expected string to be received.
+If the string is not received within the time limit then the reply string
+is not sent.
+An alternate reply may be sent or the script will fail if there
+is no alternate reply string.
+A failed script will cause the
+.Nm
+program to terminate with a non-zero error code.
+.It Fl U Ar phone_number_2
+Pass in a second string, usually a phone number, that will be
+substituted for the \eU substitution metacharacter in a send string.
+This is useful when dialing an ISDN terminal adapter that requires two numbers.
 .It Fl V
 Request that the chat script be executed in a
 .Ar stderr
@@ -84,31 +102,19 @@ This device is usually the local console at the station running the
 or
 .Xr pppd 8
 program.
-.It Fl s
-Use
-.Ar stderr .
-All log messages from
-.Fl v
-and all error messages will be sent to
-.Ar stderr .
-.It Fl S
-Do not use
-.Xr syslog 3 .
-By default, error messages are logged via
-.Xr syslog 3 .
-The use of
+.It Fl v
+Request that the chat script be executed in a verbose mode.
+The
+.Nm
+program will then log the execution state of the chat script as well as all
+text received from the modem and the output strings sent to the modem.
+The default is to log via
+.Xr syslog 3 ;
+the logging method may be altered with the
 .Fl S
-will prevent both log messages from
-.Fl v
-and error messages from being logged via
-.Xr syslog 3 .
-.It Fl T Ar phone_number
-Pass in an arbitrary string, usually a phone number, that will be
-substituted for the \eT substitution metacharacter in a send string.
-.It Fl U Ar phone_number_2
-Pass in a second string, usually a phone number, that will be
-substituted for the \eU substitution metacharacter in a send string.
-This is useful when dialing an ISDN terminal adapter that requires two numbers.
+and
+.Fl s
+flags.
 .It Ar script
 If the script is not specified in a file with the
 .Fl f
