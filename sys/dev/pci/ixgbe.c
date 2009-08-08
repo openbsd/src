@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.3 2008/06/08 21:15:34 reyk Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.4 2009/08/08 09:30:01 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -1759,7 +1759,7 @@ int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
 
 	while (timeout) {
 		if (ixgbe_get_eeprom_semaphore(hw))
-			return -IXGBE_ERR_SWFW_SYNC;
+			return IXGBE_ERR_SWFW_SYNC;
 
 		gssr = IXGBE_READ_REG(hw, IXGBE_GSSR);
 		if (!(gssr & (fwmask | swmask)))
@@ -1776,7 +1776,7 @@ int32_t ixgbe_acquire_swfw_sync(struct ixgbe_hw *hw, uint16_t mask)
 
 	if (!timeout) {
 		DEBUGOUT("Driver can't access resource, GSSR timeout.\n");
-		return -IXGBE_ERR_SWFW_SYNC;
+		return IXGBE_ERR_SWFW_SYNC;
 	}
 
 	gssr |= swmask;
