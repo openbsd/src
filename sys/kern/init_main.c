@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.160 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.161 2009/08/09 12:47:23 dlg Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -99,6 +99,7 @@
 extern void nfs_init(void);
 #endif
 
+#include "mpath.h"
 #include "vscsi.h"
 #include "softraid.h"
 
@@ -444,6 +445,9 @@ main(void *framep)
 
 	dostartuphooks();
 
+#if NMPATH > 0
+	config_rootfound("mpath", NULL);
+#endif
 #if NVSCSI > 0
 	config_rootfound("vscsi", NULL);
 #endif

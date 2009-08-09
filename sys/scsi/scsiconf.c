@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.139 2009/08/08 09:33:50 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.140 2009/08/09 12:47:23 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
  */
 
 #include "bio.h"
+#include "mpath.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -436,7 +437,13 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 	/* detaching a device from scsibus is a three step process... */
 
 	/* 1. detach the device */
-	rv = config_detach(link->device_softc, flags);
+#if NMPATH > 0
+	if (link->device_softc == NULL)
+		rv = mpath_path_detach(link, flags);
+	else
+#endif /* NMPATH */
+		rv = config_detach(link->device_softc, flags);
+
 	if (rv != 0)
 		return (rv);
 
@@ -811,6 +818,14 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 		rslt = EINVAL;
 		goto bad;
 	}
+
+#if NMPATH > 0
+	/* should multipathing steal the link? */
+	if (mpath_path_attach(sc_link) == 0) {
+		scsi->sc_link[target][lun] = sc_link;
+		return (0);
+	}
+#endif /* NMPATH */
 
 	finger = (const struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(
 	    inqbuf, scsi_quirk_patterns,

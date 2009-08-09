@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.98 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.99 2009/08/09 12:47:23 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -556,6 +556,12 @@ int	scsi_detach_lun(struct scsibus_softc *, int, int, int);
 
 extern const u_int8_t version_to_spc[];
 #define SCSISPC(x)(version_to_spc[(x) & SID_ANSII])
+
+/*
+ * Entrypoints for multipathing
+ */
+int	mpath_path_attach(struct scsi_link *);
+int	mpath_path_detach(struct scsi_link *, int);
 
 #endif /* _KERNEL */
 #endif /* SCSI_SCSICONF_H */
