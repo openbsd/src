@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.123 2009/08/02 16:28:39 beck Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.124 2009/08/09 10:40:17 blambert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -66,9 +66,6 @@
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
 
 #include <machine/db_machdep.h>
 #ifdef DDB
@@ -370,13 +367,6 @@ allocsys(v)
 	    (name) = (type *)v; v = (caddr_t)((name)+(num))
 #define	valloclim(name, type, num, lim) \
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
 
 	return (v);
 }

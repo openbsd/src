@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.14 2007/10/16 12:35:37 blambert Exp $	*/
+/*	$OpenBSD: msg.h,v 1.15 2009/08/09 10:40:17 blambert Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -24,6 +24,7 @@
 #define _SYS_MSG_H_
 
 #include <sys/ipc.h>
+#include <sys/queue.h>
 
 /*
  * The MSG_NOERROR identifier value, the msqid_ds struct and the msg struct
@@ -86,16 +87,37 @@ struct msqid_ds35 {
 	long		  msg_pad3;
 	long		  msg_pad4[4];
 };
-#endif
 
 struct msg {
-	struct msg	*msg_next;	/* next msg in the chain */
-	long		msg_type;	/* type of this message */
-    					/* >0 -> type of this message */
-	    				/* 0 -> free header */
-	unsigned short	msg_ts;		/* size of this message */
-	short		msg_spot;	/* location of start of msg in buffer */
+	long		 msg_type;
+	size_t		 msg_len;
+	struct mbuf	*msg_data;
+
+	TAILQ_ENTRY(msg)	msg_next;
 };
+
+struct que {
+	struct msqid_ds	msqid_ds;
+	int		que_id;
+	int		que_flags;
+	int		que_references;
+
+	TAILQ_ENTRY(que)	que_next;
+	TAILQ_HEAD(, msg) que_msgs;
+};
+
+/* for que_flags */
+#define	MSGQ_READERS	0x01
+#define	MSGQ_WRITERS	0x02
+#define	MSGQ_DYING	0x04
+
+#define	QREF(q)	(q)->que_references++
+
+#define QRELE(q) do {							\
+	if (--(q)->que_references == 0 && (q)->que_flags & MSGQ_DYING)	\
+		wakeup_one(&(q)->que_references);			\
+} while (0)
+#endif
 
 /*
  * Structure describing a message.  The SVID doesn't suggest any
@@ -135,6 +157,8 @@ struct msginfo {
 #ifdef SYSVMSG
 extern struct msginfo	msginfo;
 #endif
+
+int sysctl_sysvmsg(int *, u_int, void *, size_t *);
 
 struct msg_sysctl_info {
 	struct msginfo msginfo;

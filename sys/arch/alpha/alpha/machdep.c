@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.117 2009/02/04 17:19:16 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.118 2009/08/09 10:40:17 blambert Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -86,9 +86,6 @@
 #include <machine/kcore.h>
 #ifndef NO_IEEE
 #include <machine/fpu.h>
-#endif
-#ifdef SYSVMSG
-#include <sys/msg.h>
 #endif
 #include <sys/timetc.h>
 
@@ -816,15 +813,6 @@ allocsys(v)
 	 */
 #define valloc(name, type, num) \
 	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
-
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
-#undef valloc
 
 	return v;
 }

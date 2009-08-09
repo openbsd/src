@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.178 2009/08/02 16:28:39 beck Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.179 2009/08/09 10:40:17 blambert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1969,9 +1969,6 @@ sysctl_diskinit(int update, struct proc *p)
 int
 sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 {
-#ifdef SYSVMSG
-	struct msg_sysctl_info *msgsi;
-#endif
 #ifdef SYSVSEM
 	struct sem_sysctl_info *semsi;
 #endif
@@ -1990,10 +1987,7 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 	switch (*name) {
 	case KERN_SYSVIPC_MSG_INFO:
 #ifdef SYSVMSG
-		infosize = sizeof(msgsi->msginfo);
-		nds = msginfo.msgmni;
-		dssize = sizeof(msgsi->msgids[0]);
-		break;
+		return (sysctl_sysvmsg(name, namelen, where, sizep));
 #else
 		return (EOPNOTSUPP);
 #endif
@@ -2034,12 +2028,6 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 	buf = malloc(min(tsize, buflen), M_TEMP, M_WAITOK|M_ZERO);
 
 	switch (*name) {
-#ifdef SYSVMSG
-	case KERN_SYSVIPC_MSG_INFO:
-		msgsi = (struct msg_sysctl_info *)buf;
-		msgsi->msginfo = msginfo;
-		break;
-#endif
 #ifdef SYSVSEM
 	case KERN_SYSVIPC_SEM_INFO:
 		semsi = (struct sem_sysctl_info *)buf;
@@ -2064,11 +2052,6 @@ sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 				break;
 			}
 			switch (*name) {
-#ifdef SYSVMSG
-			case KERN_SYSVIPC_MSG_INFO:
-				bcopy(&msqids[i], &msgsi->msgids[i], dssize);
-				break;
-#endif
 #ifdef SYSVSEM
 			case KERN_SYSVIPC_SEM_INFO:
 				if (sema[i] != NULL)

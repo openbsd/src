@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.175 2009/08/02 16:28:39 beck Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.176 2009/08/09 10:40:17 blambert Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -48,9 +48,6 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/extent.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -394,13 +391,6 @@ hppa_init(start)
 
 	v1 = v = round_page(start);
 #define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
-
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
 #undef valloc
 	v = round_page(v);
 	bzero ((void *)v1, (v - v1));

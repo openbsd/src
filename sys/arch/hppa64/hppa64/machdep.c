@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.16 2009/08/02 16:28:39 beck Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.17 2009/08/09 10:40:17 blambert Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -39,9 +39,6 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/extent.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -266,22 +263,6 @@ TODO hpmc/toc/pfr
 	    EX_NOWAIT))
 		panic("cannot reserve main memory");
 
-#ifdef SYSVMSG
-{
-	vaddr_t v;
-
-	v = round_page(start);
-#define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#undef valloc
-	v = round_page(v);
-	bzero ((void *)start, (v - start));
-	start = v;
-}
-#endif
 	/* sets resvphysmem */
 	pmap_bootstrap(start);
 

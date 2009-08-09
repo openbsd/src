@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 2009/04/20 00:42:06 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.119 2009/08/09 10:40:18 blambert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -96,10 +96,6 @@
 #include <sys/sysctl.h>
 #include <sys/exec_elf.h>
 #include <dev/rndvar.h>
-
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
@@ -289,12 +285,6 @@ allocsys(caddr_t v)
 {
 #define valloc(name, type, num) \
 	    v = (caddr_t)(((name) = (type *)v) + (num))
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
 
 	return (v);
 }

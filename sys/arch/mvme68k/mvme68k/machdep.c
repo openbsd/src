@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.117 2009/08/02 16:28:39 beck Exp $ */
+/*	$OpenBSD: machdep.c,v 1.118 2009/08/09 10:40:17 blambert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -85,9 +85,6 @@
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
 #include <sys/evcount.h>
 
 #include <machine/atomic.h>
@@ -318,12 +315,6 @@ allocsys(caddr_t v)
 
 #define	valloc(name, type, num) \
 	    (name) = (type *)v; v = (caddr_t)((name) + (num))
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
 
 	return (v);
 }

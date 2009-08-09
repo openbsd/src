@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.29 2008/03/20 22:25:29 deraadt Exp $	*/
+/*	$OpenBSD: param.c,v 1.30 2009/08/09 10:40:17 blambert Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -138,21 +138,6 @@ struct	seminfo seminfo = {
 	SEMUSZ,		/* size in bytes of undo structure */
 	SEMVMX,		/* semaphore maximum value */
 	SEMAEM		/* adjust on exit max value */
-};
-#endif
-
-/*
- * Values in support of System V compatible messages.
- */
-#ifdef SYSVMSG
-struct	msginfo msginfo = {
-	MSGMAX,		/* max chars in a message */
-	MSGMNI,		/* # of message queue identifiers */
-	MSGMNB,		/* max chars in a queue */
-	MSGTQL,		/* max messages in system */
-	MSGSSZ,		/* size of a message segment */
-			/* (must be small power of 2 greater than 4) */
-	MSGSEG		/* number of message segments */
 };
 #endif
 

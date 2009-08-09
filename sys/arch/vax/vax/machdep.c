@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.103 2009/08/02 16:28:39 beck Exp $ */
+/* $OpenBSD: machdep.c,v 1.104 2009/08/09 10:40:18 blambert Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -76,10 +76,6 @@
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_swap.h>
-
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
 
 #include <net/netisr.h>
 #include <net/if.h>
@@ -910,13 +906,6 @@ caddr_t
 allocsys(v)
     register caddr_t v;
 {
-
-#ifdef SYSVMSG
-    VALLOC(msgpool, char, msginfo.msgmax);
-    VALLOC(msgmaps, struct msgmap, msginfo.msgseg);
-    VALLOC(msghdrs, struct msg, msginfo.msgtql);
-    VALLOC(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
 
     return (v);
 }

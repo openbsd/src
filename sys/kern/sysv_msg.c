@@ -1,6 +1,20 @@
-/*	$OpenBSD: sysv_msg.c,v 1.21 2009/06/02 12:11:16 guenther Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.22 2009/08/09 10:40:17 blambert Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
-
+/*
+ * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Implementation of SVID messages
  *
@@ -21,108 +35,61 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/msg.h>
+#include <sys/types.h>
 #include <sys/malloc.h>
-
+#include <sys/mbuf.h>
 #include <sys/mount.h>
+#include <sys/msg.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/queue.h>
 #include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
 
-#ifdef MSG_DEBUG
-#define	DPRINTF(x)	printf x
-#else
-#define	DPRINTF(x)
-#endif
+struct que *que_create(key_t, struct ucred *, int);
+struct que *que_lookup(int);
+struct que *que_key_lookup(key_t);
+void que_wakewriters(void);
+void que_free(struct que *);
+struct msg *msg_create(struct que *);
+void msg_free(struct msg *);
+void msg_enqueue(struct que *, struct msg *, struct proc *);
+void msg_dequeue(struct que *, struct msg *, struct proc *);
+struct msg *msg_lookup(struct que *, int);
+int msg_copyin(struct msg *, const char *, size_t, struct proc *);
+int msg_copyout(struct msg *, char *, size_t *, struct proc *);
 
-int nfree_msgmaps;		/* # of free map entries */
-short free_msgmaps;		/* head of linked list of free map entries */
-struct msg *free_msghdrs;	/* list of free msg headers */
-char *msgpool;			/* MSGMAX byte long msg buffer pool */
-struct msgmap *msgmaps;		/* MSGSEG msgmap structures */
-struct msg *msghdrs;		/* MSGTQL msg headers */
-struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
+struct	pool sysvmsgpl;
+struct	msginfo msginfo;
 
-void msg_freehdr(struct msg *);
+TAILQ_HEAD(, que) msg_queues;
+
+int num_ques;
+int num_msgs;
+int sequence;
+int maxmsgs;
 
 void
 msginit(void)
 {
-	int i;
+	msginfo.msgmax = MSGMAX;
+	msginfo.msgmni = MSGMNI;
+	msginfo.msgmnb = MSGMNB;
+	msginfo.msgtql = MSGTQL;
+	msginfo.msgssz = MSGSSZ;
+	msginfo.msgseg = MSGSEG;
 
-	/*
-	 * msginfo.msgssz should be a power of two for efficiency reasons.
-	 * It is also pretty silly if msginfo.msgssz is less than 8
-	 * or greater than about 256 so ...
-	 */
+	pool_init(&sysvmsgpl, sizeof(struct msg), 0, 0, 0, "sysvmsgpl",
+	    &pool_allocator_nointr);
 
-	i = 8;
-	while (i < 1024 && i != msginfo.msgssz)
-		i <<= 1;
+	TAILQ_INIT(&msg_queues);
 
-    	if (i != msginfo.msgssz)
-		panic("msginfo.msgssz %d not a small power of 2", msginfo.msgssz);
-	if (msginfo.msgseg > 32767)
-		panic("msginfo.msgseg %d > 32767", msginfo.msgseg);
-
-	if (msgmaps == NULL)
-		panic("msgmaps is NULL");
-
-	for (i = 0; i < msginfo.msgseg; i++) {
-		if (i > 0)
-			msgmaps[i-1].next = i;
-		msgmaps[i].next = -1;	/* implies entry is available */
-	}
-	free_msgmaps = 0;
-	nfree_msgmaps = msginfo.msgseg;
-
-	if (msghdrs == NULL)
-		panic("msghdrs is NULL");
-
-	for (i = 0; i < msginfo.msgtql; i++) {
-		msghdrs[i].msg_type = 0;
-		if (i > 0)
-			msghdrs[i-1].msg_next = &msghdrs[i];
-		msghdrs[i].msg_next = NULL;
-    	}
-	free_msghdrs = &msghdrs[0];
-
-	if (msqids == NULL)
-		panic("msqids is NULL");
-
-	for (i = 0; i < msginfo.msgmni; i++) {
-		msqids[i].msg_qbytes = 0;	/* implies entry is available */
-		msqids[i].msg_perm.seq = 0;	/* reset to a known value */
-	}
-}
-
-void
-msg_freehdr(struct msg *msghdr)
-{
-	while (msghdr->msg_ts > 0) {
-		short next;
-
-#ifdef DIAGNOSTIC
-		if (msghdr->msg_spot < 0 || msghdr->msg_spot >= msginfo.msgseg)
-			panic("msghdr->msg_spot out of range");
-#endif
-		next = msgmaps[msghdr->msg_spot].next;
-		msgmaps[msghdr->msg_spot].next = free_msgmaps;
-		free_msgmaps = msghdr->msg_spot;
-		nfree_msgmaps++;
-		msghdr->msg_spot = next;
-		if (msghdr->msg_ts >= msginfo.msgssz)
-			msghdr->msg_ts -= msginfo.msgssz;
-		else
-			msghdr->msg_ts = 0;
-	}
-#ifdef DIAGNOSTIC
-	if (msghdr->msg_spot != -1)
-		panic("msghdr->msg_spot != -1");
-#endif
-	msghdr->msg_next = free_msghdrs;
-	free_msghdrs = msghdr;
+	num_ques = 0;
+	num_msgs = 0;
+	sequence = 1;
+	maxmsgs = 0;
 }
 
 int
@@ -143,97 +110,81 @@ msgctl1(struct proc *p, int msqid, int cmd, caddr_t buf,
     int (*ds_copyin)(const void *, void *, size_t),
     int (*ds_copyout)(const void *, void *, size_t))
 {
+	struct msqid_ds tmp;
 	struct ucred *cred = p->p_ucred;
-	struct msqid_ds msqbuf, *msqptr;
-	struct msg *msghdr;
-	int ix, error = 0;
+	struct que *que;
+	int error = 0;
 
-	DPRINTF(("call to msgctl(%d, %d, %p)\n", msqid, cmd, buf));
-
-	ix = IPCID_TO_IX(msqid);
-
-	if (ix < 0 || ix >= msginfo.msgmni) {
-		DPRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", ix,
-		    msginfo.msgmni));
+	if ((que = que_lookup(msqid)) == NULL)
 		return (EINVAL);
-	}
 
-	msqptr = &msqids[ix];
-
-	if (msqptr->msg_qbytes == 0) {
-		DPRINTF(("no such msqid\n"));
-		return (EINVAL);
-	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(msqid)) {
-		DPRINTF(("wrong sequence number\n"));
-		return (EINVAL);
-	}
+	QREF(que);
 
 	switch (cmd) {
-	case IPC_RMID:
-		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)) != 0)
-			return (error);
-		/* Free the message headers */
-		msghdr = msqptr->msg_first;
-		while (msghdr != NULL) {
-			struct msg *msghdr_tmp;
 
-			/* Free the segments of each message */
-			msqptr->msg_cbytes -= msghdr->msg_ts;
-			msqptr->msg_qnum--;
-			msghdr_tmp = msghdr;
-			msghdr = msghdr->msg_next;
-			msg_freehdr(msghdr_tmp);
+	case IPC_RMID:
+		if ((error = ipcperm(cred, &que->msqid_ds.msg_perm, IPC_M)))
+			goto out;
+
+		TAILQ_REMOVE(&msg_queues, que, que_next);
+		que->que_flags |= MSGQ_DYING;
+
+		/* lose interest in the queue and wait for others to too */
+		if (--que->que_references > 0) {
+			wakeup(que);
+			tsleep(&que->que_references, PZERO, "msgqrm", 0);
 		}
 
-#ifdef DIAGNOSTIC
-		if (msqptr->msg_cbytes != 0)
-			panic("sys_msgctl: msg_cbytes is screwed up");
-		if (msqptr->msg_qnum != 0)
-			panic("sys_msgctl: msg_qnum is screwed up");
-#endif
-		msqptr->msg_qbytes = 0;	/* Mark it as free */
-		wakeup(msqptr);
-		break;
+		que_free(que);
+
+		return (0);
 
 	case IPC_SET:
-		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
-			return (error);
-		if ((error = ds_copyin(buf, &msqbuf, sizeof(msqbuf))) != 0)
-			return (error);
-		if (msqbuf.msg_qbytes > msqptr->msg_qbytes &&
-		    cred->cr_uid != 0)
-			return (EPERM);
-		if (msqbuf.msg_qbytes > msginfo.msgmnb) {
-			DPRINTF(("can't increase msg_qbytes beyond %d "
-			    "(truncating)\n", msginfo.msgmnb));
-			/* silently restrict qbytes to system limit */
-			msqbuf.msg_qbytes = msginfo.msgmnb;
+		if ((error = ipcperm(cred, &que->msqid_ds.msg_perm, IPC_M)))
+			goto out;
+		if ((error = ds_copyin(buf, &tmp, sizeof(struct msqid_ds))))
+			goto out;
+
+		/* only superuser can bump max bytes in queue */
+		if (tmp.msg_qbytes > que->msqid_ds.msg_qbytes &&
+		    cred->cr_uid != 0) {
+			error = EPERM;
+			goto out;
 		}
-		if (msqbuf.msg_qbytes == 0) {
-			DPRINTF(("can't reduce msg_qbytes to 0\n"));
-			return (EINVAL);	/* non-standard errno! */
+
+		/* restrict max bytes in queue to system limit */
+		if (tmp.msg_qbytes > msginfo.msgmnb)
+			tmp.msg_qbytes = msginfo.msgmnb;
+
+		/* can't reduce msg_bytes to 0 */
+		if (tmp.msg_qbytes == 0) {
+			error = EINVAL;		/* non-standard errno! */
+			goto out;
 		}
-		msqptr->msg_perm.uid = msqbuf.msg_perm.uid;
-		msqptr->msg_perm.gid = msqbuf.msg_perm.gid;
-		msqptr->msg_perm.mode = (msqptr->msg_perm.mode & ~0777) |
-		    (msqbuf.msg_perm.mode & 0777);
-		msqptr->msg_qbytes = msqbuf.msg_qbytes;
-		msqptr->msg_ctime = time_second;
+
+		que->msqid_ds.msg_perm.uid = tmp.msg_perm.uid;
+		que->msqid_ds.msg_perm.gid = tmp.msg_perm.gid;
+		que->msqid_ds.msg_perm.mode =
+		    (que->msqid_ds.msg_perm.mode & ~0777) |
+		    (tmp.msg_perm.mode & 0777);
+		que->msqid_ds.msg_qbytes = tmp.msg_qbytes;
+		que->msqid_ds.msg_ctime = time_second;
 		break;
 
 	case IPC_STAT:
-		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
-			DPRINTF(("requester doesn't have read access\n"));
-			return (error);
-		}
-		error = ds_copyout(msqptr, buf, sizeof(struct msqid_ds));
+		if ((error = ipcperm(cred, &que->msqid_ds.msg_perm, IPC_R)))
+			goto out;
+		error = ds_copyout(&que->msqid_ds, buf,
+		    sizeof(struct msqid_ds));
 		break;
 
 	default:
-		DPRINTF(("invalid command %d\n", cmd));
-		return (EINVAL);
+		error = EINVAL;
+		break;
 	}
+out:
+	QRELE(que);
+
 	return (error);
 }
 
@@ -244,83 +195,46 @@ sys_msgget(struct proc *p, void *v, register_t *retval)
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	int msqid, eval;
-	int key = SCARG(uap, key);
-	int msgflg = SCARG(uap, msgflg);
 	struct ucred *cred = p->p_ucred;
-	struct msqid_ds *msqptr = NULL;
+	struct que *que;
+	key_t key = SCARG(uap, key);
+	int msgflg = SCARG(uap, msgflg);
+	int error = 0;
 
-	DPRINTF(("msgget(0x%x, 0%o)\n", key, msgflg));
-
+again:
 	if (key != IPC_PRIVATE) {
-		for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
-			msqptr = &msqids[msqid];
-			if (msqptr->msg_qbytes != 0 &&
-			    msqptr->msg_perm.key == key)
-				break;
-		}
-		if (msqid < msginfo.msgmni) {
-			DPRINTF(("found public key\n"));
-			if ((msgflg & IPC_CREAT) && (msgflg & IPC_EXCL)) {
-				DPRINTF(("not exclusive\n"));
+		que = que_key_lookup(key);
+		if (que) {
+			if ((msgflg & IPC_CREAT) && (msgflg & IPC_EXCL))
 				return (EEXIST);
-			}
-			if ((eval = ipcperm(cred, &msqptr->msg_perm, msgflg & 0700 ))) {
-				DPRINTF(("requester doesn't have 0%o access\n",
-				    msgflg & 0700));
-				return (eval);
-			}
+			if ((error = ipcperm(cred, &que->msqid_ds.msg_perm,
+			    msgflg & 0700)))
+				return (error);
 			goto found;
 		}
 	}
 
-	DPRINTF(("need to allocate the msqid_ds\n"));
-	if (key == IPC_PRIVATE || (msgflg & IPC_CREAT)) {
-		for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
-			/*
-			 * Look for an unallocated and unlocked msqid_ds.
-			 * msqid_ds's can be locked by msgsnd or msgrcv while
-			 * they are copying the message in/out.  We can't
-			 * re-use the entry until they release it.
-			 */
-			msqptr = &msqids[msqid];
-			if (msqptr->msg_qbytes == 0 &&
-			    (msqptr->msg_perm.mode & MSG_LOCKED) == 0)
-				break;
-		}
-		if (msqid == msginfo.msgmni) {
-			DPRINTF(("no more msqid_ds's available\n"));
-			return (ENOSPC);	
-		}
-		DPRINTF(("msqid %d is available\n", msqid));
-		msqptr->msg_perm.key = key;
-		msqptr->msg_perm.cuid = cred->cr_uid;
-		msqptr->msg_perm.uid = cred->cr_uid;
-		msqptr->msg_perm.cgid = cred->cr_gid;
-		msqptr->msg_perm.gid = cred->cr_gid;
-		msqptr->msg_perm.mode = (msgflg & 0777);
-		/* Make sure that the returned msqid is unique */
-		msqptr->msg_perm.seq = (msqptr->msg_perm.seq + 1) & 0x7fff;
-		msqptr->msg_first = NULL;
-		msqptr->msg_last = NULL;
-		msqptr->msg_cbytes = 0;
-		msqptr->msg_qnum = 0;
-		msqptr->msg_qbytes = msginfo.msgmnb;
-		msqptr->msg_lspid = 0;
-		msqptr->msg_lrpid = 0;
-		msqptr->msg_stime = 0;
-		msqptr->msg_rtime = 0;
-		msqptr->msg_ctime = time_second;
-	} else {
-		DPRINTF(("didn't find it and wasn't asked to create it\n"));
+	/* don't create a new message queue if the caller doesn't want to */
+	if (key != IPC_PRIVATE && !(msgflg & IPC_CREAT))
 		return (ENOENT);
-	}
+
+	/* enforce limits on the maximum number of message queues */
+	if (num_ques >= msginfo.msgmni)
+		return (ENOSPC);
+
+	/*
+	 * if que_create returns NULL, it means that a que with an identical
+	 * key was created while this process was sleeping, so start over
+	 */
+	if ((que = que_create(key, cred, msgflg & 0777)) == NULL)
+		goto again;
 
 found:
-	/* Construct the unique msqid */
-	*retval = IXSEQ_TO_IPCID(msqid, msqptr->msg_perm);
-	return (0);
+	*retval = que->que_id;
+	return (error);
 }
+
+#define	MSGQ_SPACE(q)	((q)->msqid_ds.msg_qbytes - (q)->msqid_ds.msg_cbytes)
 
 int
 sys_msgsnd(struct proc *p, void *v, register_t *retval)
@@ -331,279 +245,72 @@ sys_msgsnd(struct proc *p, void *v, register_t *retval)
 		syscallarg(size_t) msgsz;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	int msqid = SCARG(uap, msqid);
-	const char *user_msgp = SCARG(uap, msgp);
-	size_t msgsz = SCARG(uap, msgsz);
-	int msgflg = SCARG(uap, msgflg);
-	int segs_needed, eval;
 	struct ucred *cred = p->p_ucred;
-	struct msqid_ds *msqptr;
-	struct msg *msghdr;
-	short next;
+	struct que *que;
+	struct msg *msg;
+	size_t msgsz = SCARG(uap, msgsz);
+	int error;
 
-	DPRINTF(("call to msgsnd(%d, %p, %d, %d)\n", msqid, user_msgp, msgsz,
-	    msgflg));
+	if (SCARG(uap, msgp) == NULL)
+		panic("NULL userbuffer");
 
-	msqid = IPCID_TO_IX(msqid);
-
-	if (msqid < 0 || msqid >= msginfo.msgmni) {
-		DPRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
-		    msginfo.msgmni));
+	if ((que = que_lookup(SCARG(uap, msqid))) == NULL)
 		return (EINVAL);
-	}
 
-	msqptr = &msqids[msqid];
-	if (msqptr->msg_qbytes == 0) {
-		DPRINTF(("no such message queue id\n"));
+	if (msgsz > que->msqid_ds.msg_qbytes || msgsz > msginfo.msgmax)
 		return (EINVAL);
-	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
-		DPRINTF(("wrong sequence number\n"));
-		return (EINVAL);
-	}
 
-	if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_W))) {
-		DPRINTF(("requester doesn't have write access\n"));
-		return (eval);
-	}
+	if ((error = ipcperm(cred, &que->msqid_ds.msg_perm, IPC_W)))
+		return (error);
 
-	segs_needed = (msgsz + msginfo.msgssz - 1) / msginfo.msgssz;
-	DPRINTF(("msgsz=%d, msgssz=%d, segs_needed=%d\n", msgsz,
-	    msginfo.msgssz, segs_needed));
-	for (;;) {
-		int need_more_resources = 0;
+	QREF(que);
 
-		/*
-		 * check msgsz [cannot be negative since it is unsigned]
-		 * (inside this loop in case msg_qbytes changes while we sleep)
-		 */
+	while (MSGQ_SPACE(que) < msgsz || num_msgs >= msginfo.msgtql) {
 
-		if (msgsz > msqptr->msg_qbytes) {
-			DPRINTF(("msgsz > msqptr->msg_qbytes\n"));
-			return (EINVAL);
+		if (SCARG(uap, msgflg) & IPC_NOWAIT) {
+			error = EAGAIN;
+			goto out;
 		}
 
-		if (msqptr->msg_perm.mode & MSG_LOCKED) {
-			DPRINTF(("msqid is locked\n"));
-			need_more_resources = 1;
-		}
-		if (msgsz + msqptr->msg_cbytes > msqptr->msg_qbytes) {
-			DPRINTF(("msgsz + msg_cbytes > msg_qbytes\n"));
-			need_more_resources = 1;
-		}
-		if (segs_needed > nfree_msgmaps) {
-			DPRINTF(("segs_needed > nfree_msgmaps\n"));
-			need_more_resources = 1;
-		}
-		if (free_msghdrs == NULL) {
-			DPRINTF(("no more msghdrs\n"));
-			need_more_resources = 1;
-		}
+		/* notify world that process may wedge here */
+		if (num_msgs >= msginfo.msgtql)
+			maxmsgs = 1;
 
-		if (need_more_resources) {
-			int we_own_it;
+		que->que_flags |= MSGQ_WRITERS;
+		if ((error = tsleep(que, PZERO|PCATCH, "msgwait", 0)))
+			goto out;
 
-			if ((msgflg & IPC_NOWAIT) != 0) {
-				DPRINTF(("need more resources but caller "
-				    "doesn't want to wait\n"));
-				return (EAGAIN);
-			}
-
-			if ((msqptr->msg_perm.mode & MSG_LOCKED) != 0) {
-				DPRINTF(("we don't own the msqid_ds\n"));
-				we_own_it = 0;
-			} else {
-				/* Force later arrivals to wait for our
-				   request */
-				DPRINTF(("we own the msqid_ds\n"));
-				msqptr->msg_perm.mode |= MSG_LOCKED;
-				we_own_it = 1;
-			}
-			DPRINTF(("goodnight\n"));
-			eval = tsleep(msqptr, (PZERO - 4) | PCATCH,
-			    "msgwait", 0);
-			DPRINTF(("good morning, eval=%d\n", eval));
-			if (we_own_it)
-				msqptr->msg_perm.mode &= ~MSG_LOCKED;
-			if (eval != 0) {
-				DPRINTF(("msgsnd: interrupted system call\n"));
-				return (EINTR);
-			}
-
-			/*
-			 * Make sure that the msq queue still exists
-			 */
-
-			if (msqptr->msg_qbytes == 0) {
-				DPRINTF(("msqid deleted\n"));
-				return (EIDRM);
-			}
-
-		} else {
-			DPRINTF(("got all the resources that we need\n"));
-			break;
+		if (que->que_flags & MSGQ_DYING) {
+			error = EIDRM;
+			goto out;
 		}
 	}
 
-	/*
-	 * We have the resources that we need.
-	 * Make sure!
-	 */
-
-#ifdef DIAGNOSTIC
-	if (msqptr->msg_perm.mode & MSG_LOCKED)
-		panic("msg_perm.mode & MSG_LOCKED");
-	if (segs_needed > nfree_msgmaps)
-		panic("segs_needed > nfree_msgmaps");
-	if (msgsz + msqptr->msg_cbytes > msqptr->msg_qbytes)
-		panic("msgsz + msg_cbytes > msg_qbytes");
-	if (free_msghdrs == NULL)
-		panic("no more msghdrs");
-#endif
-
-	/*
-	 * Re-lock the msqid_ds in case we page-fault when copying in the
-	 * message
-	 */
-
-#ifdef DIAGNOSTIC
-	if ((msqptr->msg_perm.mode & MSG_LOCKED) != 0)
-		panic("msqid_ds is already locked");
-#endif
-	msqptr->msg_perm.mode |= MSG_LOCKED;
-
-	/*
-	 * Allocate a message header
-	 */
-
-	msghdr = free_msghdrs;
-	free_msghdrs = msghdr->msg_next;
-	msghdr->msg_spot = -1;
-	msghdr->msg_ts = msgsz;
-
-	/*
-	 * Allocate space for the message
-	 */
-
-	while (segs_needed > 0) {
-#ifdef DIAGNOSTIC
-		if (nfree_msgmaps <= 0)
-			panic("not enough msgmaps");
-		if (free_msgmaps == -1)
-			panic("nil free_msgmaps");
-#endif
-		next = free_msgmaps;
-#ifdef DIAGNOSTIC
-		if (next <= -1)
-			panic("next too low #1");
-		if (next >= msginfo.msgseg)
-			panic("next out of range #1");
-#endif
-		DPRINTF(("allocating segment %d to message\n", next));
-		free_msgmaps = msgmaps[next].next;
-		nfree_msgmaps--;
-		msgmaps[next].next = msghdr->msg_spot;
-		msghdr->msg_spot = next;
-		segs_needed--;
+	/* if msg_create returns NULL, the queue is being removed */
+	if ((msg = msg_create(que)) == NULL) {
+		error = EIDRM;
+		goto out;
 	}
 
-	/*
-	 * Copy in the message type
-	 */
+	/* msg_copyin frees msg on error */
+	if ((error = msg_copyin(msg, (const char *)SCARG(uap, msgp), msgsz, p)))
+		goto out;
 
-	if ((eval = copyin(user_msgp, &msghdr->msg_type,
-	    sizeof(msghdr->msg_type))) != 0) {
-		DPRINTF(("error %d copying the message type\n", eval));
-		msg_freehdr(msghdr);
-		msqptr->msg_perm.mode &= ~MSG_LOCKED;
-		wakeup(msqptr);
-		return (eval);
-	}
-	user_msgp += sizeof(msghdr->msg_type);
+	msg_enqueue(que, msg, p);
 
-	/*
-	 * Validate the message type
-	 */
-
-	if (msghdr->msg_type < 1) {
-		msg_freehdr(msghdr);
-		msqptr->msg_perm.mode &= ~MSG_LOCKED;
-		wakeup(msqptr);
-		DPRINTF(("mtype (%d) < 1\n", msghdr->msg_type));
-		return (EINVAL);
+	if (que->que_flags & MSGQ_READERS) {
+		que->que_flags &= ~MSGQ_READERS;
+		wakeup(que);
 	}
 
-	/*
-	 * Copy in the message body
-	 */
-
-	next = msghdr->msg_spot;
-	while (msgsz > 0) {
-		size_t tlen;
-		if (msgsz > msginfo.msgssz)
-			tlen = msginfo.msgssz;
-		else
-			tlen = msgsz;
-#ifdef DIAGNOSTIC
-		if (next <= -1)
-			panic("next too low #2");
-		if (next >= msginfo.msgseg)
-			panic("next out of range #2");
-#endif
-		if ((eval = copyin(user_msgp, &msgpool[next * msginfo.msgssz],
-		    tlen)) != 0) {
-			DPRINTF(("error %d copying in message segment\n",
-			    eval));
-			msg_freehdr(msghdr);
-			msqptr->msg_perm.mode &= ~MSG_LOCKED;
-			wakeup(msqptr);
-			return (eval);
-		}
-		msgsz -= tlen;
-		user_msgp += tlen;
-		next = msgmaps[next].next;
+	if (que->que_flags & MSGQ_DYING) {
+		error = EIDRM;
+		wakeup(que);
 	}
-#ifdef DIAGNOSTIC
-	if (next != -1)
-		panic("didn't use all the msg segments");
-#endif
-	/*
-	 * We've got the message.  Unlock the msqid_ds.
-	 */
+out:
+	QRELE(que);
 
-	msqptr->msg_perm.mode &= ~MSG_LOCKED;
-
-	/*
-	 * Make sure that the msqid_ds is still allocated.
-	 */
-
-	if (msqptr->msg_qbytes == 0) {
-		msg_freehdr(msghdr);
-		wakeup(msqptr);
-		return (EIDRM);
-	}
-
-	/*
-	 * Put the message into the queue
-	 */
-
-	if (msqptr->msg_first == NULL) {
-		msqptr->msg_first = msghdr;
-		msqptr->msg_last = msghdr;
-	} else {
-		msqptr->msg_last->msg_next = msghdr;
-		msqptr->msg_last = msghdr;
-	}
-	msqptr->msg_last->msg_next = NULL;
-
-	msqptr->msg_cbytes += msghdr->msg_ts;
-	msqptr->msg_qnum++;
-	msqptr->msg_lspid = p->p_p->ps_mainproc->p_pid;
-	msqptr->msg_stime = time_second;
-
-	wakeup(msqptr);
-	*retval = 0;
-	return (0);
+	return (error);
 }
 
 int
@@ -616,248 +323,390 @@ sys_msgrcv(struct proc *p, void *v, register_t *retval)
 		syscallarg(long) msgtyp;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	int msqid = SCARG(uap, msqid);
-	char *user_msgp = SCARG(uap, msgp);
+	struct ucred *cred = p->p_ucred;
+	char *msgp = SCARG(uap, msgp);
+	struct que *que;
+	struct msg *msg;
 	size_t msgsz = SCARG(uap, msgsz);
 	long msgtyp = SCARG(uap, msgtyp);
-	int msgflg = SCARG(uap, msgflg);
-	size_t len;
-	struct ucred *cred = p->p_ucred;
-	struct msqid_ds *msqptr;
-	struct msg *msghdr;
-	int eval;
-	short next;
+	int error;
 
-	DPRINTF(("call to msgrcv(%d, %p, %d, %ld, %d)\n", msqid, user_msgp,
-	    msgsz, msgtyp, msgflg));
-
-	msqid = IPCID_TO_IX(msqid);
-
-	if (msqid < 0 || msqid >= msginfo.msgmni) {
-		DPRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
-		    msginfo.msgmni));
+	if ((que = que_lookup(SCARG(uap, msqid))) == NULL)
 		return (EINVAL);
-	}
 
-	msqptr = &msqids[msqid];
-	if (msqptr->msg_qbytes == 0) {
-		DPRINTF(("no such message queue id\n"));
-		return (EINVAL);
-	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
-		DPRINTF(("wrong sequence number\n"));
-		return (EINVAL);
-	}
+	if ((error = ipcperm(cred, &que->msqid_ds.msg_perm, IPC_R)))
+		return (error);
 
-	if ((eval = ipcperm(cred, &msqptr->msg_perm, IPC_R))) {
-		DPRINTF(("requester doesn't have read access\n"));
-		return (eval);
-	}
+	QREF(que);
 
-#if 0
-	/* cannot happen, msgsz is unsigned */
-	if (msgsz < 0) {
-		DPRINTF(("msgsz < 0\n"));
-		return (EINVAL);
-	}
-#endif
+	/* msg_lookup handles matching; sleeping gets handled here */
+	while ((msg = msg_lookup(que, msgtyp)) == NULL) {
 
-	msghdr = NULL;
-	while (msghdr == NULL) {
-		if (msgtyp == 0) {
-			msghdr = msqptr->msg_first;
-			if (msghdr != NULL) {
-				if (msgsz < msghdr->msg_ts &&
-				    (msgflg & MSG_NOERROR) == 0) {
-					DPRINTF(("first message on the queue "
-					    "is too big (want %d, got %d)\n",
-					    msgsz, msghdr->msg_ts));
-					return (E2BIG);
-				}
-				if (msqptr->msg_first == msqptr->msg_last) {
-					msqptr->msg_first = NULL;
-					msqptr->msg_last = NULL;
-				} else {
-					msqptr->msg_first = msghdr->msg_next;
-#ifdef DIAGNOSTIC
-					if (msqptr->msg_first == NULL)
-						panic("msg_first/last screwed up #1");
-#endif
-				}
-			}
-		} else {
-			struct msg *previous;
-			struct msg **prev;
-
-			for (previous = NULL, prev = &msqptr->msg_first;
-			    (msghdr = *prev) != NULL;
-			    previous = msghdr, prev = &msghdr->msg_next) {
-				/*
-				 * Is this message's type an exact match or is
-				 * this message's type less than or equal to
-				 * the absolute value of a negative msgtyp?
-				 * Note that the second half of this test can
-				 * NEVER be true if msgtyp is positive since
-				 * msg_type is always positive!
-				 */
-
-				if (msgtyp == msghdr->msg_type ||
-				    msghdr->msg_type <= -msgtyp) {
-					DPRINTF(("found message type %d, "
-					    "requested %d\n", msghdr->msg_type,
-					    msgtyp));
-					if (msgsz < msghdr->msg_ts &&
-					    (msgflg & MSG_NOERROR) == 0) {
-						DPRINTF(("requested message on "
-						    "the queue is too big "
-						    "(want %d, got %d)\n",
-						    msgsz, msghdr->msg_ts));
-						return (E2BIG);
-					}
-					*prev = msghdr->msg_next;
-					if (msghdr == msqptr->msg_last) {
-						if (previous == NULL) {
-#ifdef DIAGNOSTIC
-							if (prev !=
-							    &msqptr->msg_first)
-								panic("msg_first/last screwed up #2");
-#endif
-							msqptr->msg_first =
-							    NULL;
-							msqptr->msg_last =
-							    NULL;
-						} else {
-#ifdef DIAGNOSTIC
-							if (prev ==
-							    &msqptr->msg_first)
-								panic("msg_first/last screwed up #3");
-#endif
-							msqptr->msg_last =
-							    previous;
-						}
-					}
-					break;
-				}
-			}
+		if (SCARG(uap, msgflg) & IPC_NOWAIT) {
+			error = ENOMSG;
+			goto out;
 		}
 
-		/*
-		 * We've either extracted the msghdr for the appropriate
-		 * message or there isn't one.
-		 * If there is one then bail out of this loop.
-		 */
+		que->que_flags |= MSGQ_READERS;
+		if ((error = tsleep(que, PZERO|PCATCH, "msgwait", 0)))
+			goto out;
 
-		if (msghdr != NULL)
+		/* make sure the queue still alive */
+		if (que->que_flags & MSGQ_DYING) {
+			error = EIDRM;
+			goto out;
+		}
+	}
+
+	/* if msg_copyout fails, keep the message around so it isn't lost */
+	if ((error = msg_copyout(msg, msgp, &msgsz, p)))
+		goto out;
+
+	msg_dequeue(que, msg, p);
+	msg_free(msg);
+
+	if (que->que_flags & MSGQ_WRITERS) {
+		que->que_flags &= ~MSGQ_WRITERS;
+		wakeup(que);
+	}
+
+	/* ensure processes waiting on the global limit don't wedge */
+	if (maxmsgs) {
+		maxmsgs = 0;
+		que_wakewriters();
+	}
+
+	*retval = msgsz;
+out:
+	QRELE(que);
+
+	return (error);
+}
+
+/*
+ * que management functions
+ */
+
+struct que *
+que_create(key_t key, struct ucred *cred, int mode)
+{
+	struct que *que;
+
+	que = malloc(sizeof(*que), M_TEMP, M_WAIT|M_ZERO);
+
+	/* if malloc slept, a queue with the same key may have been created */
+	if (que_key_lookup(key)) {
+		free(que, M_TEMP);
+		return (NULL);
+	}
+
+	que->msqid_ds.msg_perm.key = key;
+	que->msqid_ds.msg_perm.cuid = cred->cr_uid;
+	que->msqid_ds.msg_perm.uid = cred->cr_uid;
+	que->msqid_ds.msg_perm.cgid = cred->cr_gid;
+	que->msqid_ds.msg_perm.gid = cred->cr_gid;
+	que->msqid_ds.msg_perm.mode = mode & 0777;
+	que->msqid_ds.msg_perm.seq = ++sequence & 0x7fff;
+	que->msqid_ds.msg_qbytes = msginfo.msgmnb;
+	que->msqid_ds.msg_ctime = time_second;
+
+	TAILQ_INIT(&que->que_msgs);
+
+	TAILQ_INSERT_TAIL(&msg_queues, que, que_next);
+	num_ques++;
+
+	return (que);
+}
+
+struct que *
+que_lookup(int id)
+{
+	struct que *que;
+
+	TAILQ_FOREACH(que, &msg_queues, que_next)
+		if (que->que_id == id)
 			break;
 
-		/*
-		 * Hmph!  No message found.  Does the user want to wait?
-		 */
+	/* don't return queues marked for removal */
+	if (que && que->que_flags & MSGQ_DYING)
+		return (NULL);
 
-		if ((msgflg & IPC_NOWAIT) != 0) {
-			DPRINTF(("no appropriate message found (msgtyp=%d)\n",
-			    msgtyp));
-			return (ENOMSG);
-		}
+	return (que);
+}
 
-		/*
-		 * Wait for something to happen
-		 */
+struct que *
+que_key_lookup(key_t key)
+{
+	struct que *que;
 
-		DPRINTF(("msgrcv: goodnight\n"));
-		eval = tsleep(msqptr, (PZERO - 4) | PCATCH, "msgwait",
-		    0);
-		DPRINTF(("msgrcv: good morning (eval=%d)\n", eval));
+	if (key == IPC_PRIVATE)
+		return (NULL);
 
-		if (eval != 0) {
-			DPRINTF(("msgsnd: interrupted system call\n"));
-			return (EINTR);
-		}
+	TAILQ_FOREACH(que, &msg_queues, que_next)
+		if (que->msqid_ds.msg_perm.key == key)
+			break;
 
-		/*
-		 * Make sure that the msq queue still exists
-		 */
+	/* don't return queues marked for removal */
+	if (que && que->que_flags & MSGQ_DYING)
+		return (NULL);
 
-		if (msqptr->msg_qbytes == 0 ||
-		    msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
-			DPRINTF(("msqid deleted\n"));
-			return (EIDRM);
+	return (que);
+}
+
+void
+que_wakewriters(void)
+{
+	struct que *que;
+
+	TAILQ_FOREACH(que, &msg_queues, que_next) {
+		if (que->que_flags & MSGQ_WRITERS) {
+			que->que_flags &= ~MSGQ_WRITERS;
+			wakeup(que);
 		}
 	}
+}
 
-	/*
-	 * Return the message to the user.
-	 *
-	 * First, do the bookkeeping (before we risk being interrupted).
-	 */
-
-	msqptr->msg_cbytes -= msghdr->msg_ts;
-	msqptr->msg_qnum--;
-	msqptr->msg_lrpid = p->p_p->ps_mainproc->p_pid;
-	msqptr->msg_rtime = time_second;
-
-	/*
-	 * Make msgsz the actual amount that we'll be returning.
-	 * Note that this effectively truncates the message if it is too long
-	 * (since msgsz is never increased).
-	 */
-
-	DPRINTF(("found a message, msgsz=%d, msg_ts=%d\n", msgsz,
-	    msghdr->msg_ts));
-	if (msgsz > msghdr->msg_ts)
-		msgsz = msghdr->msg_ts;
-
-	/*
-	 * Return the type to the user.
-	 */
-
-	eval = copyout(&msghdr->msg_type, user_msgp,
-	    sizeof(msghdr->msg_type));
-	if (eval != 0) {
-		DPRINTF(("error (%d) copying out message type\n", eval));
-		msg_freehdr(msghdr);
-		wakeup(msqptr);
-		return (eval);
-	}
-	user_msgp += sizeof(msghdr->msg_type);
-
-	/*
-	 * Return the segments to the user
-	 */
-
-	next = msghdr->msg_spot;
-	for (len = 0; len < msgsz; len += msginfo.msgssz) {
-		size_t tlen;
-
-		if (msgsz - len > msginfo.msgssz)
-			tlen = msginfo.msgssz;
-		else
-			tlen = msgsz - len;
+void
+que_free(struct que *que)
+{
+	struct msg *msg;
 #ifdef DIAGNOSTIC
-		if (next <= -1)
-			panic("next too low #3");
-		if (next >= msginfo.msgseg)
-			panic("next out of range #3");
+	if (que->que_references > 0)
+		panic("freeing message queue with active references");
 #endif
-		eval = copyout(&msgpool[next * msginfo.msgssz],
-		    user_msgp, tlen);
-		if (eval != 0) {
-			DPRINTF(("error (%d) copying out message segment\n",
-			    eval));
-			msg_freehdr(msghdr);
-			wakeup(msqptr);
-			return (eval);
-		}
-		user_msgp += tlen;
-		next = msgmaps[next].next;
+
+	while ((msg = TAILQ_FIRST(&que->que_msgs))) {
+		TAILQ_REMOVE(&que->que_msgs, msg, msg_next);
+		msg_free(msg);
+	}
+	free(que, M_TEMP);
+	num_ques--;
+}
+
+/*
+ * msg management functions
+ */
+
+struct msg *
+msg_create(struct que *que)
+{
+	struct msg *msg;
+
+	msg = pool_get(&sysvmsgpl, PR_WAITOK|PR_ZERO);
+
+	/* if the queue has died during allocation, return NULL */
+	if (que->que_flags & MSGQ_DYING) {
+		pool_put(&sysvmsgpl, msg);
+		wakeup(que);
+		return(NULL);
 	}
 
-	/*
-	 * Done, return the actual number of bytes copied out.
-	 */
+	num_msgs++;
 
-	msg_freehdr(msghdr);
-	wakeup(msqptr);
-	*retval = msgsz;
+	return (msg);
+}
+
+struct msg *
+msg_lookup(struct que *que, int msgtyp)
+{
+	struct msg *msg;
+
+	/*
+	 * Three different matches are performed based on the value of msgtyp:
+	 * 1) msgtyp > 0 => match exactly
+	 * 2> msgtyp = 0 => match any
+	 * 3) msgtyp < 0 => match any up to absolute value of msgtyp
+	 */
+	TAILQ_FOREACH(msg, &que->que_msgs, msg_next)
+		if (msgtyp == 0 || msgtyp == msg->msg_type ||
+		    (msgtyp < 0 && -msgtyp <= msg->msg_type))
+			break;
+
+	return (msg);
+}
+
+void
+msg_free(struct msg *msg)
+{
+	m_freem(msg->msg_data);
+	pool_put(&sysvmsgpl, msg);
+	num_msgs--;
+}
+
+void
+msg_enqueue(struct que *que, struct msg *msg, struct proc *p)
+{
+	que->msqid_ds.msg_cbytes += msg->msg_len;
+	que->msqid_ds.msg_qnum++;
+	que->msqid_ds.msg_lspid = p->p_p->ps_mainproc->p_pid;
+	que->msqid_ds.msg_stime = time_second;
+
+	TAILQ_INSERT_TAIL(&que->que_msgs, msg, msg_next);
+}
+
+void
+msg_dequeue(struct que *que, struct msg *msg, struct proc *p)
+{
+	que->msqid_ds.msg_cbytes -= msg->msg_len;
+	que->msqid_ds.msg_qnum--;
+	que->msqid_ds.msg_lrpid = p->p_p->ps_mainproc->p_pid;
+	que->msqid_ds.msg_rtime = time_second;
+
+	TAILQ_REMOVE(&que->que_msgs, msg, msg_next);
+}
+
+/*
+ * The actual I/O routines. A note concerning the layout of SysV msg buffers:
+ *
+ * The data to be copied is laid out as a single userspace buffer, with a
+ * long preceding an opaque buffer of len bytes. The long value ends
+ * up being the message type, which needs to be copied seperately from
+ * the buffer data, which is stored in in mbufs.
+ */
+
+int
+msg_copyin(struct msg *msg, const char *ubuf, size_t len, struct proc *p)
+{
+	struct mbuf **mm, *m;
+	size_t xfer;
+	int error;
+
+	if (msg == NULL)
+		panic ("msg NULL");
+
+	if ((error = copyin(ubuf, &msg->msg_type, sizeof(long)))) {
+		msg_free(msg);
+		return (error);
+	}
+
+	if (msg->msg_type < 0) {
+		msg_free(msg);
+		return (EINVAL);
+	}
+
+	ubuf += sizeof(long);
+
+	msg->msg_len = 0;
+	mm = &msg->msg_data;
+
+	while (msg->msg_len < len) {
+		m = m_get(M_WAIT, MT_DATA);
+		if (len >= MINCLSIZE) {
+			MCLGET(m, M_WAIT);
+			xfer = min(len, MCLBYTES);
+		} else {
+			xfer = min(len, MLEN);
+		}
+		m->m_len = xfer;
+		msg->msg_len += xfer;
+		*mm = m;
+		mm = &m->m_next;
+	}
+
+	for (m = msg->msg_data; m; m = m->m_next) {
+		if ((error = copyin(ubuf, mtod(m, void *), m->m_len))) {
+			msg_free(msg);
+			return (error);
+		}
+		ubuf += m->m_len;
+	}
+
 	return (0);
+}
+
+int
+msg_copyout(struct msg *msg, char *ubuf, size_t *len, struct proc *p)
+{
+	struct mbuf *m;
+	size_t xfer;
+	int error;
+
+#ifdef DIAGNOSTIC
+	if (msg->msg_len > MSGMAX)
+		panic("SysV message longer than MSGMAX");
+#endif
+
+	/* silently truncate messages too large for user buffer */
+	xfer = min(*len, msg->msg_len);
+
+	if ((error = copyout(&msg->msg_type, ubuf, sizeof(long))))
+		return (error);
+
+	ubuf += sizeof(long);
+	*len = xfer;
+
+	for (m = msg->msg_data; m; m = m->m_next) {
+		if ((error = copyout(mtod(m, void *), ubuf, m->m_len)))
+			return (error);
+		ubuf += m->m_len;
+	}
+
+	return (0);
+}
+
+int
+sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
+{
+	struct msg_sysctl_info *info;
+	struct que *que;
+	size_t infolen;
+	int error, i = 0;
+
+	switch (*name) {
+	case KERN_SYSVIPC_MSG_INFO:
+
+		if (namelen != 1)
+			return (ENOTDIR);
+
+		/*
+		 * The userland ipcs(1) utility expects to be able
+		 * to iterate over at least msginfo.msgmni queues,
+		 * even if those queues don't exist. This is an
+		 * artifact of the previous implementation of
+		 * message queues; for now, emulate this behavior
+		 * until a more thorough fix can be made.
+		 */
+		infolen = sizeof(msginfo) +
+		    msginfo.msgmni * sizeof(struct msqid_ds);
+		if (where == NULL) {
+			*sizep = infolen;
+			return (0);
+		}
+
+		/*
+		 * More special-casing due to previous implementation:
+		 * if the caller just wants the msginfo struct, then
+		 * sizep will point to the value sizeof(struct msginfo).
+		 * In that case, only copy out the msginfo struct to
+		 * the caller.
+		 */
+		if (*sizep == sizeof(struct msginfo))
+			return (copyout(&msginfo, where, sizeof(msginfo)));
+
+		info = malloc(infolen, M_TEMP, M_WAIT|M_ZERO);
+
+		/* if the malloc slept, this may have changed */
+		infolen = sizeof(msginfo) +
+		    msginfo.msgmni * sizeof(struct msqid_ds);
+
+		if (*sizep < infolen) {
+			free(info, M_TEMP);
+			return (ENOMEM);
+		}
+
+		bcopy(&msginfo, &info->msginfo, sizeof(struct msginfo));
+
+		TAILQ_FOREACH(que, &msg_queues, que_next)
+			bcopy(&que->msqid_ds, &info->msgids[i++],
+			    sizeof(struct msqid_ds));
+
+		error = copyout(info, where, infolen);
+
+		free(info, M_TEMP);
+
+		return (error);
+
+	default:
+		return (EINVAL);
+	}
 }

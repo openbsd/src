@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 2009/08/02 16:28:39 beck Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.60 2009/08/09 10:40:17 blambert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -44,9 +44,6 @@
 #include <sys/signalvar.h>
 #include <sys/reboot.h>
 #include <sys/syscallargs.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
 #include <sys/syslog.h>
 #include <sys/extent.h>
 #include <sys/systm.h>
@@ -455,13 +452,6 @@ allocsys(v)
 {
 #define	valloc(name, type, num) \
 	v = (caddr_t)(((name) = (type *)v) + (num))
-
-#ifdef	SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
 
 	return v;
 }
