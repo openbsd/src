@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.44 2009/08/09 19:15:14 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.45 2009/08/09 19:28:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -305,7 +305,7 @@ static	int	  arg_getattr(int, const struct mdoc_node *);
 static	size_t	  arg_offset(const struct mdoc_argv *);
 static	size_t	  arg_width(const struct mdoc_argv *, int);
 static	int	  arg_listtype(const struct mdoc_node *);
-static	int	  fmt_block_vspace(struct termp *,
+static	void	  fmt_block_vspace(struct termp *,
 			const struct mdoc_node *,
 			const struct mdoc_node *);
 static	void  	  print_node(DECL_ARGS);
@@ -656,7 +656,7 @@ arg_getattrs(const int *keys, int *vals,
 
 
 /* ARGSUSED */
-static int
+static void
 fmt_block_vspace(struct termp *p, 
 		const struct mdoc_node *bl, 
 		const struct mdoc_node *node)
@@ -665,26 +665,47 @@ fmt_block_vspace(struct termp *p,
 
 	term_newln(p);
 
-	if (arg_hasattr(MDOC_Compact, bl))
-		return(1);
-	/* XXX - not documented! */
-	else if (arg_hasattr(MDOC_Column, bl))
-		return(1);
+	if (MDOC_Bl == bl->tok && arg_hasattr(MDOC_Compact, bl))
+		return;
+
+	/*
+	 * Search through our prior nodes.  If we follow a `Ss' or `Sh',
+	 * then don't vspace.
+	 */
 
 	for (n = node; n; n = n->parent) {
 		if (MDOC_BLOCK != n->type)
 			continue;
 		if (MDOC_Ss == n->tok)
-			break;
+			return;
 		if (MDOC_Sh == n->tok)
-			break;
+			return;
 		if (NULL == n->prev)
 			continue;
-		term_vspace(p);
 		break;
 	}
 
-	return(1);
+	/* 
+	 * XXX - not documented: a `-column' does not ever assert vspace
+	 * within the list.
+	 */
+
+	if (MDOC_Bl == bl->tok && arg_hasattr(MDOC_Column, bl))
+		if (node->prev && MDOC_It == node->prev->tok)
+			return;
+
+	/*
+	 * XXX - not documented: a `-diag' without a body does not
+	 * assert a vspace prior to the next element. 
+	 */
+	if (MDOC_Bl == bl->tok && arg_hasattr(MDOC_Diag, bl)) 
+		if (node->prev && MDOC_It == node->prev->tok) {
+			assert(node->prev->body);
+			if (NULL == node->prev->body->child)
+				return;
+		}
+
+	term_vspace(p);
 }
 
 
@@ -724,8 +745,10 @@ termp_it_pre(DECL_ARGS)
 	int		        i, type, keys[3], vals[3];
 	size_t		        width, offset;
 
-	if (MDOC_BLOCK == node->type)
-		return(fmt_block_vspace(p, node->parent->parent, node));
+	if (MDOC_BLOCK == node->type) {
+		fmt_block_vspace(p, node->parent->parent, node);
+		return(1);
+	}
 
 	bl = node->parent->parent->parent;
 
@@ -1528,9 +1551,10 @@ termp_bd_pre(DECL_ARGS)
 	 * line.  Blank lines are allowed.
 	 */
 
-	if (MDOC_BLOCK == node->type)
-		return(fmt_block_vspace(p, node, node));
-	else if (MDOC_BODY != node->type)
+	if (MDOC_BLOCK == node->type) {
+		fmt_block_vspace(p, node, node);
+		return(1);
+	} else if (MDOC_BODY != node->type)
 		return(1);
 
 	/* FIXME: display type should be mandated by parser. */
@@ -1706,6 +1730,16 @@ termp_sq_post(DECL_ARGS)
 
 /* ARGSUSED */
 static int
+termp_pa_pre(DECL_ARGS)
+{
+
+	pair->flag |= ttypes[TTYPE_FILE];
+	return(1);
+}
+
+
+/* ARGSUSED */
+static int
 termp_pf_pre(DECL_ARGS)
 {
 
@@ -1754,16 +1788,6 @@ termp_ss_post(DECL_ARGS)
 
 	if (MDOC_HEAD == node->type)
 		term_newln(p);
-}
-
-
-/* ARGSUSED */
-static int
-termp_pa_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_FILE];
-	return(1);
 }
 
 
