@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.95 2009/06/17 01:30:30 thib Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.96 2009/08/09 14:06:52 marco Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/dkio.h>
 #include <sys/dkstat.h>		/* XXX */
 #include <sys/proc.h>
+#include <sys/vnode.h>
 #include <uvm/uvm_extern.h>
 
 #include <sys/socket.h>
@@ -910,6 +911,7 @@ dk_mountroot(void)
 	int part = DISKPART(rootdev);
 	int (*mountrootfn)(void);
 	struct disklabel dl;
+	struct vnode *vn;
 	int error;
 
 	rrootdev = blktochr(rootdev);
@@ -922,18 +924,21 @@ dk_mountroot(void)
 	/*
 	 * open device, ioctl for the disklabel, and close it.
 	 */
-	error = (cdevsw[major(rrootdev)].d_open)(rawdev, FREAD,
-	    S_IFCHR, curproc);
+	if (cdevvp(rawdev, &vn))
+		panic("cannot obtain vnode for 0x%x/0x%x", rootdev, rrootdev);
+	error = VOP_OPEN(vn, FREAD, NOCRED, curproc);
 	if (error)
 		panic("cannot open disk, 0x%x/0x%x, error %d",
 		    rootdev, rrootdev, error);
-	error = (cdevsw[major(rrootdev)].d_ioctl)(rawdev, DIOCGDINFO,
-	    (caddr_t)&dl, FREAD, curproc);
+	error = VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&dl, FREAD, NOCRED, 0);
 	if (error)
 		panic("cannot read disk label, 0x%x/0x%x, error %d",
 		    rootdev, rrootdev, error);
-	(void) (cdevsw[major(rrootdev)].d_close)(rawdev, FREAD,
-	    S_IFCHR, curproc);
+	error = VOP_CLOSE(vn, FREAD, NOCRED, 0);
+	if (error)
+		panic("cannot close disk , 0x%x/0x%x, error %d",
+		    rootdev, rrootdev, error);
+	vput(vn);
 
 	if (DL_GETPSIZE(&dl.d_partitions[part]) == 0)
 		panic("root filesystem has size 0");
