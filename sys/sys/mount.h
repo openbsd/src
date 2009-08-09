@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.97 2009/08/08 15:04:43 beck Exp $	*/
+/*	$OpenBSD: mount.h,v 1.98 2009/08/09 14:37:46 art Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -502,6 +502,7 @@ struct bcachestats {
 	int64_t numwrites;		/* total writes started */
 	int64_t numreads;		/* total reads started */
 	int64_t cachehits;		/* total reads found in cache */
+	int64_t busymapped;		/* number of busy and mapped buffers */
 };
 #ifdef _KERNEL
 extern struct bcachestats bcstats;

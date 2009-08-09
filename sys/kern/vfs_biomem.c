@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.10 2009/08/06 15:28:14 oga Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.11 2009/08/09 14:37:46 art Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -149,6 +149,8 @@ buf_map(struct buf *bp)
 		TAILQ_REMOVE(&buf_valist, bp, b_valist);
 	}
 
+	bcstats.busymapped++;
+
 	CLR(bp->b_flags, B_NOTMAPPED);
 }
 
@@ -162,6 +164,7 @@ buf_release(struct buf *bp)
 
 	s = splbio();
 	if (bp->b_data) {
+		bcstats.busymapped--;
 		TAILQ_INSERT_TAIL(&buf_valist, bp, b_valist);
 		if (buf_needva) {
 			buf_needva--;
@@ -195,6 +198,7 @@ buf_dealloc_mem(struct buf *bp)
 	bp->b_data = NULL;
 
 	if (data) {
+		bcstats.busymapped--;
 		pmap_kremove((vaddr_t)data, bp->b_bufsize);
 		pmap_update(pmap_kernel());
 	}
