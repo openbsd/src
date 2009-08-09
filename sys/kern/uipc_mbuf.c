@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.126 2009/08/09 12:50:09 henning Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.127 2009/08/09 16:19:08 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -924,6 +924,7 @@ m_pullup(struct mbuf *n, int len)
 	struct mbuf *m;
 	int count;
 	int space;
+	int s;
 
 	/*
 	 * If first mbuf has no cluster, and has room for len bytes
@@ -948,6 +949,7 @@ m_pullup(struct mbuf *n, int len)
 			M_MOVE_PKTHDR(m, n);
 	}
 	space = &m->m_dat[MLEN] - (m->m_data + m->m_len);
+	s = splnet();
 	do {
 		count = min(min(max(len, max_protohdr), space), n->m_len);
 		bcopy(mtod(n, caddr_t), mtod(m, caddr_t) + m->m_len,
@@ -959,12 +961,14 @@ m_pullup(struct mbuf *n, int len)
 		if (n->m_len)
 			n->m_data += count;
 		else
-			n = m_free(n);
+			n = m_free_unlocked(n);
 	} while (len > 0 && n);
 	if (len > 0) {
-		(void)m_free(m);
+		(void)m_free_unlocked(m);
+		splx(s);
 		goto bad;
 	}
+	splx(s);
 	m->m_next = n;
 	return (m);
 bad:
