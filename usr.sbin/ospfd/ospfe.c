@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.69 2009/06/06 07:31:26 eric Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.70 2009/08/09 23:04:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -104,7 +104,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 		fatal("if_set_ip_hdrincl");
 	if (if_set_recvif(xconf->ospf_socket, 1) == -1)
 		fatal("if_set_recvif");
-	if_set_recvbuf(xconf->ospf_socket);
+	if_set_sockbuf(xconf->ospf_socket);
 
 	oeconf = xconf;
 	if (oeconf->flags & OSPFD_FLAG_NO_FIB_UPDATE)

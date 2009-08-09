@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.40 2009/06/06 07:31:26 eric Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.41 2009/08/09 23:04:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -151,7 +151,7 @@ int	 if_join_group(struct iface *, struct in_addr *);
 int	 if_leave_group(struct iface *, struct in_addr *);
 int	 if_set_mcast(struct iface *);
 int	 if_set_recvif(int, int);
-void	 if_set_recvbuf(int);
+void	 if_set_sockbuf(int);
 int	 if_set_mcast_loop(int);
 int	 if_set_ip_hdrincl(int);
 

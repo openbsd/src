@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.63 2009/06/05 04:12:52 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.64 2009/08/09 23:04:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -678,7 +678,7 @@ if_set_recvif(int fd, int enable)
 }
 
 void
-if_set_recvbuf(int fd)
+if_set_sockbuf(int fd)
 {
 	int	bsize;
 
@@ -686,6 +686,17 @@ if_set_recvbuf(int fd)
 	while (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bsize,
 	    sizeof(bsize)) == -1)
 		bsize /= 2;
+
+	if (bsize != 65535)
+		log_warnx("if_set_sockbuf: recvbuf size only %d", bsize);
+
+	bsize = 65535;
+	while (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &bsize,
+	    sizeof(bsize)) == -1)
+		bsize /= 2;
+
+	if (bsize != 65535)
+		log_warnx("if_set_sockbuf: sendbuf size only %d", bsize);
 }
 
 /*
