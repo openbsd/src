@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.1 2009/08/09 12:47:23 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.2 2009/08/09 16:20:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -200,6 +200,8 @@ mpath_path_attach(struct scsi_link *link)
 
 		if (DEVID_CMP(&n->node_id, &link->id))
 			break;
+
+		n = NULL;
 	}
 
 	if (n == NULL) {
@@ -236,5 +238,30 @@ mpath_path_attach(struct scsi_link *link)
 int
 mpath_path_detach(struct scsi_link *link, int flags)
 {
-	return (0);
+	struct mpath_node *n;
+	struct mpath_path *p;
+	int target;
+
+	for (target = 0; target < MPATH_BUSWIDTH; target++) {
+		if ((n = mpath_nodes[target]) == NULL)
+			continue;
+
+		if (DEVID_CMP(&n->node_id, &link->id))
+			break;
+
+		n = NULL;
+	}
+
+	if (n == NULL)
+		panic("mpath: detaching a path from a nonexistant bus");
+
+	TAILQ_FOREACH(p, &n->node_paths, path_entry) {
+		if (p->path_link == link) {
+			TAILQ_REMOVE(&n->node_paths, p, path_entry);
+			free(p, M_DEVBUF);
+			return (0);
+		}
+	}
+
+	panic("mpath: unable to locate path for detach");
 }
