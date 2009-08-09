@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.128 2009/08/09 12:51:08 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.129 2009/08/09 13:53:03 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -287,7 +287,6 @@ struct mbuf {
 #define M_MOVE_HDR(to, from) do {					\
 	(to)->m_pkthdr = (from)->m_pkthdr;				\
 	(from)->m_flags &= ~M_PKTHDR;					\
-	SLIST_INIT(&(from)->m_pkthdr.tags);				\
 } while (/* CONSTCOND */ 0)
 
 /*
