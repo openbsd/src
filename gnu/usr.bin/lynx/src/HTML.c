@@ -4286,26 +4286,7 @@ static int HTML_start_element(HTStructured * me, int element_number,
 	    int chars;
 
 	    /* init */
-	    I.align = NULL;
-	    I.accept = NULL;
-	    I.checked = NO;
-	    I.iclass = NULL;
-	    I.disabled = NO;
-	    I.error = NULL;
-	    I.height = NULL;
-	    I.id = NULL;
-	    I.lang = NULL;
-	    I.max = NULL;
-	    I.maxlength = NULL;
-	    I.md = NULL;
-	    I.min = NULL;
-	    I.name = NULL;
-	    I.size = 0;
-	    I.src = NULL;
-	    I.type = NULL;
-	    I.value = NULL;
-	    I.width = NULL;
-	    I.accept_cs = NULL;
+	    memset(&I, 0, sizeof(I));
 	    I.name_cs = ATTR_CS_IN;
 	    I.value_cs = ATTR_CS_IN;
 
@@ -4475,26 +4456,7 @@ static int HTML_start_element(HTStructured * me, int element_number,
 	    HTkcode specified_kcode = NOKANJI;
 
 	    /* init */
-	    I.align = NULL;
-	    I.accept = NULL;
-	    I.checked = NO;
-	    I.iclass = NULL;
-	    I.disabled = NO;
-	    I.error = NULL;
-	    I.height = NULL;
-	    I.id = NULL;
-	    I.lang = NULL;
-	    I.max = NULL;
-	    I.maxlength = NULL;
-	    I.md = NULL;
-	    I.min = NULL;
-	    I.name = NULL;
-	    I.size = 0;
-	    I.src = NULL;
-	    I.type = NULL;
-	    I.value = NULL;
-	    I.width = NULL;
-	    I.accept_cs = NULL;
+	    memset(&I, 0, sizeof(I));
 	    I.name_cs = ATTR_CS_IN;
 	    I.value_cs = ATTR_CS_IN;
 
@@ -5150,9 +5112,8 @@ static int HTML_start_element(HTStructured * me, int element_number,
 		/*
 		 * Inititialize.
 		 */
-		I.accept_cs = NULL;
+		memset(&I, 0, sizeof(I));
 		I.name_cs = -1;
-		I.maxlength = NULL;
 		I.value_cs = current_char_set;
 
 		I.type = "OPTION";
@@ -6779,25 +6740,7 @@ static int HTML_end_element(HTStructured * me, int element_number,
 	    /*
 	     * Initialize.
 	     */
-	    I.align = NULL;
-	    I.accept = NULL;
-	    I.checked = NO;
-	    I.iclass = NULL;
-	    I.disabled = NO;
-	    I.error = NULL;
-	    I.height = NULL;
-	    I.id = NULL;
-	    I.lang = NULL;
-	    I.max = NULL;
-	    I.maxlength = NULL;
-	    I.md = NULL;
-	    I.min = NULL;
-	    I.name = NULL;
-	    I.size = 0;
-	    I.src = NULL;
-	    I.type = NULL;
-	    I.value = NULL;
-	    I.width = NULL;
+	    memset(&I, 0, sizeof(I));
 	    I.value_cs = current_char_set;
 
 	    UPDATE_STYLE;
