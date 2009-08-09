@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.21 2009/08/02 10:38:34 miod Exp $ */
+/*	$OpenBSD: udl.c,v 1.22 2009/08/09 20:10:08 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -872,7 +872,10 @@ udl_cmd_free_buf(struct udl_softc *sc)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
-	free(cb->buf, M_DEVBUF);
+	if (cb->buf != NULL) {
+		free(cb->buf, M_DEVBUF);
+		cb->buf = NULL;
+	}
 	cb->off = 0;
 }
 
