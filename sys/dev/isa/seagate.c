@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.27 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.28 2009/08/09 12:59:37 jsg Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -1275,9 +1275,9 @@ sea_information_transfer(struct sea_softc *sea)
 					if ((tmp & PH_MASK) != phase)
 						break;
 					if (!(phase & STAT_IO)) {
+#ifdef SEA_ASSEMBLER
 						int block = BLOCK_SIZE;
 						void *a = sea->maddr_dr;
-#ifdef SEA_ASSEMBLER
 						asm("shr $2, %%ecx\n\t\
 						    cld\n\t\
 						    rep\n\t\
@@ -1289,15 +1289,16 @@ sea_information_transfer(struct sea_softc *sea)
 						    "2" (a),
 						    "1" (block) );
 #else
+						int count;
 						for (count = 0;
 						    count < BLOCK_SIZE;
 						    count++)
 							DATA = *(scb->data++);
 #endif
 					} else {
+#ifdef SEA_ASSEMBLER
 						int block = BLOCK_SIZE;
 						void *a = sea->maddr_dr;
-#ifdef SEA_ASSEMBLER
 						asm("shr $2, %%ecx\n\t\
 						    cld\n\t\
 						    rep\n\t\
@@ -1308,6 +1309,7 @@ sea_information_transfer(struct sea_softc *sea)
 							"2" (a) ,
 						    "1" (block) );
 #else
+						int count;
 					        for (count = 0;
 						    count < BLOCK_SIZE;
 						    count++)
