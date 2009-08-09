@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.42 2009/08/09 18:43:28 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.43 2009/08/09 19:01:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -926,6 +926,13 @@ termp_it_pre(DECL_ARGS)
 	case (MDOC_Column):
 		assert(width);
 		p->rmargin = p->offset + width;
+		/* 
+		 * XXX - this behaviour is not documented: the
+		 * right-most column is filled to the right margin.
+		 */
+		if (MDOC_HEAD == node->type &&
+				MDOC_BODY == node->next->type)
+			p->rmargin = p->maxrmargin;
 		break;
 	default:
 		break;
