@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.78 2009/08/04 17:12:39 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.79 2009/08/09 13:34:41 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -158,7 +158,6 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 	tl = nfsm_build(&info.nmi_mb, NFSX_UNSIGNED);
 	*tl = txdr_unsigned(nfsmode);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -209,7 +208,6 @@ nfsrv_getattr(nfsd, slp, procp, mrq)
 	fp = nfsm_build(&info.nmi_mb, NFSX_FATTR(nfsd->nd_flag & ND_NFSV3));
 	nfsm_srvfattr(nfsd, &va, fp);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -350,7 +348,6 @@ out:
 		nfsm_srvfattr(nfsd, &va, fp);
 	}
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -429,7 +426,6 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 		nfsm_srvfattr(nfsd, &va, fp);
 	}
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -536,7 +532,6 @@ out:
 	info.nmi_mb->m_next = mp3;
 
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -703,7 +698,6 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	}
 	*tl = txdr_unsigned(cnt);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 
 vbad:
@@ -711,7 +705,6 @@ vbad:
 bad:
 	nfsm_reply(0);
 	nfsm_srvpostop_attr(nfsd, getret, &va, &info.nmi_mb);
-	*mrq = info.nmi_mreq;
 	return (0);
 }
 
@@ -880,7 +873,6 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		nfsm_srvfattr(nfsd, &va, fp);
 	}
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 
 vbad:
@@ -888,7 +880,6 @@ vbad:
 bad:
 	nfsm_reply(0);
 	nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &info.nmi_mb);
-	*mrq = info.nmi_mreq;
 	return (0);
 }
 
@@ -1202,7 +1193,6 @@ loop1:
 		}
 	}
 	splx(s);
-	*mrq = info.nmi_mreq;
 	return (0);
 }
 
@@ -1495,10 +1485,8 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		fp = nfsm_build(&info.nmi_mb, NFSX_V2FATTR);
 		nfsm_srvfattr(nfsd, &va, fp);
 	}
-	*mrq = info.nmi_mreq;
 	return (0);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	if (dirp)
 		vrele(dirp);
 	if (nd.ni_cnd.cn_nameiop) {
@@ -1650,10 +1638,8 @@ out:
 		nfsm_srvpostop_attr(nfsd, 0, &va, &info.nmi_mb);
 	}
 	nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft, &info.nmi_mb);
-	*mrq = info.nmi_mreq;
 	return (0);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	if (dirp)
 		vrele(dirp);
 	if (nd.ni_cnd.cn_nameiop) {
@@ -1753,7 +1739,6 @@ out:
 		goto nfsmout;
 	}
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -1923,11 +1908,9 @@ out1:
 		nfsm_srvwcc(nfsd, tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft,
 		    &info.nmi_mb);
 	}
-	*mrq = info.nmi_mreq;
 	return (0);
 
 nfsmout:
-	*mrq = info.nmi_mreq;
 	if (fdirp)
 		vrele(fdirp);
 	if (tdirp)
@@ -2046,7 +2029,6 @@ out1:
 		error = 0;
 	}
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -2179,10 +2161,8 @@ out:
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info.nmi_mb);
 	}
-	*mrq = info.nmi_mreq;
 	return (0);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	if (nd.ni_cnd.cn_nameiop) {
 		vrele(nd.ni_startdir);
 		pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
@@ -2309,10 +2289,8 @@ out:
 		fp = nfsm_build(&info.nmi_mb, NFSX_V2FATTR);
 		nfsm_srvfattr(nfsd, &va, fp);
 	}
-	*mrq = info.nmi_mreq;
 	return (0);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	if (dirp)
 		vrele(dirp);
 	VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -2419,7 +2397,6 @@ out:
 		error = 0;
 	}
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -2679,7 +2656,6 @@ again:
 	free(rbuf, M_TEMP);
 	free(cookies, M_TEMP);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -2946,7 +2922,6 @@ invalid:
 	free(cookies, M_TEMP);
 	free(rbuf, M_TEMP);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -3011,7 +2986,6 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	} else
 		error = 0;
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -3092,7 +3066,6 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 		sfp->sf_bavail = txdr_unsigned(sf->f_bavail);
 	}
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -3164,7 +3137,6 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 		NFSV3FSINFO_SYMLINK | NFSV3FSINFO_HOMOGENEOUS |
 		NFSV3FSINFO_CANSETTIME);
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -3237,7 +3209,6 @@ nfsrv_pathconf(nfsd, slp, procp, mrq)
 	pc->pc_caseinsensitive = nfs_false;
 	pc->pc_casepreserving = nfs_true;
 nfsmout:
-	*mrq = info.nmi_mreq;
 	return(error);
 }
 
@@ -3262,7 +3233,6 @@ nfsrv_null(nfsd, slp, procp, mrq)
 	info.nmi_v3 = (nfsd->nd_flag & ND_NFSV3);
 
 	nfsm_reply(0);
-	*mrq = info.nmi_mreq;
 	return (0);
 }
 
@@ -3291,7 +3261,6 @@ nfsrv_noop(nfsd, slp, procp, mrq)
 	else
 		error = EPROCUNAVAIL;
 	nfsm_reply(0);
-	*mrq = info.nmi_mreq;
 	return (0);
 }
 

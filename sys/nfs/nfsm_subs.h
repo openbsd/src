@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.41 2009/08/04 17:12:39 thib Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.42 2009/08/09 13:34:41 thib Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ struct nfsm_info {
 		m_freem(info.nmi_mrep);					\
 		info.nmi_mrep = NULL;					\
 	}								\
+	*mrq = info.nmi_mreq;						\
 	if (error && (!(nfsd->nd_flag & ND_NFSV3) || error == EBADRPC))	\
 		return(0);						\
 }
