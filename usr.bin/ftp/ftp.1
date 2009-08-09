@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.77 2009/06/06 12:07:33 martynas Exp $
+.\" 	$OpenBSD: ftp.1,v 1.78 2009/08/09 18:36:11 sobrado Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: June 6 2009 $
+.Dd $Mdocdate: August 9 2009 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -75,6 +75,12 @@
 .Op Fl C
 .Op Fl o Ar output
 .Sm off
+.No file: Ar 
+.Sm on
+.Nm ftp
+.Op Fl C
+.Op Fl o Ar output
+.Sm off
 .Ar host : No / Ar file Oo /
 .Oc
 .Ar ...
@@ -87,7 +93,7 @@ standard File Transfer Protocol (FTP).
 The program allows a user to transfer files to and from a
 remote network site.
 .Pp
-The latter four usage formats will fetch a file using either the
+The latter five usage formats will fetch a file using either the
 FTP, HTTP, or HTTPS protocols into the current directory.
 This is ideal for scripts.
 Refer to
@@ -1270,6 +1276,9 @@ If
 .Ev http_proxy
 is defined, this HTTPS proxy server will be used to fetch the
 file using the CONNECT method.
+.It file:file
+.Ar file
+is retrieved from a mounted file system.
 .El
 .Pp
 If a classic format or an FTP URL format has a trailing

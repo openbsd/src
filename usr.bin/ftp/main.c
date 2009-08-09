@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.79 2009/06/06 12:07:33 martynas Exp $	*/
+/*	$OpenBSD: main.c,v 1.80 2009/08/09 18:36:11 sobrado Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -764,11 +764,18 @@ usage(void)
 #ifndef SMALL
 	    "[-C] "
 #endif /* !SMALL */
+	    "[-o output] "
+	    "file:file ...\n"
+	    "       %s "
+#ifndef SMALL
+	    "[-C] "
+#endif /* !SMALL */
 	    "[-o output] host:/file[/] ...\n",
 #ifndef SMALL
-	    __progname, __progname, __progname, __progname, __progname);
+	    __progname, __progname, __progname, __progname, __progname,
+	    __progname);
 #else /* !SMALL */
-	    __progname, __progname, __progname);
+	    __progname, __progname, __progname, __progname);
 #endif /* !SMALL */
 	exit(1);
 }
