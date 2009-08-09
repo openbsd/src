@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.91 2008/10/22 23:04:45 mpf Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.92 2009/08/09 12:47:50 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -520,7 +520,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 	 * with a PACKET_TAG_IPSEC_IN_CRYPTO_DONE as opposed to
 	 * PACKET_TAG_IPSEC_IN_DONE type; in that case, just change the type.
 	 */
-	if (mt == NULL && tdbp->tdb_sproto != IPPROTO_IPCOMP) {
+	if (tdbp->tdb_sproto != IPPROTO_IPCOMP) {
 		mtag = m_tag_get(PACKET_TAG_IPSEC_IN_DONE,
 		    sizeof(struct tdb_ident), M_NOWAIT);
 		if (mtag == NULL) {
@@ -539,9 +539,6 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		tdbi->spi = tdbp->tdb_spi;
 
 		m_tag_prepend(m, mtag);
-	} else {
-		if (mt != NULL)
-			mt->m_tag_id = PACKET_TAG_IPSEC_IN_DONE;
 	}
 
 	if (sproto == IPPROTO_ESP) {
