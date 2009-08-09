@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.22 2009/08/09 14:07:37 jsing Exp $
+#	$OpenBSD: Makefile.sgi,v 1.23 2009/08/09 21:33:39 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -107,8 +107,8 @@ newvers:
 	${CC} $(CFLAGS) -c vers.c
 
 clean::
-	rm -f eddep bsd bsd.gdb bsd.ecoff tags *.o locore.i [a-z]*.s \
-	    Errs errs linterrs makelinks
+	rm -f eddep bsd bsd.gdb tags *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \

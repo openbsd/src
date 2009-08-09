@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.solbourne,v 1.9 2009/01/11 21:02:03 pirofti Exp $
+#	$OpenBSD: Makefile.solbourne,v 1.10 2009/08/09 21:33:39 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -129,7 +129,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd *bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \

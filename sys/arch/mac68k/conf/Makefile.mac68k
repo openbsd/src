@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.41 2009/01/11 21:02:03 pirofti Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.42 2009/08/09 21:33:38 miod Exp $
 #	$NetBSD: Makefile.mac68k,v 1.53 1997/04/15 06:11:38 scottr Exp $
 
 # Makefile for OpenBSD
@@ -132,8 +132,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h genassym.o \
-	    genassym
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
