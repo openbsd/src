@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.39 2009/06/11 19:42:59 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.40 2009/08/09 14:12:25 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -597,7 +597,9 @@ sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
 	ccb->ccb_wu = wu;
 	ccb->ccb_target = 0;
 	ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[0]->src_dev_mm;
-	ccb->ccb_buf.b_vp = NULL;
+	ccb->ccb_buf.b_vp = sd->sd_vol.sv_chunks[0]->src_vn;
+	if ((ccb->ccb_buf.b_flags & B_READ) == 0)
+		ccb->ccb_buf.b_vp->v_numoutput++;
 
 	LIST_INIT(&ccb->ccb_buf.b_dep);
 

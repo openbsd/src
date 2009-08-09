@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.80 2009/07/23 15:15:25 jordan Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.81 2009/08/09 14:12:25 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -20,6 +20,7 @@
 #define SOFTRAIDVAR_H
 
 #include <crypto/md5.h>
+#include <sys/vnode.h>
 
 #define SR_UUID_MAX		16
 struct sr_uuid {
@@ -341,6 +342,7 @@ struct sr_aoe {
 struct sr_metadata_list {
 	u_int8_t		sml_metadata[SR_META_SIZE * 512];
 	dev_t			sml_mm;
+	struct vnode		*sml_vn;
 	u_int32_t		sml_chunk_id;
 	int			sml_used;
 
@@ -369,6 +371,7 @@ struct sr_chunk {
 
 	/* runtime data */
 	dev_t			src_dev_mm;	/* major/minor */
+	struct vnode		*src_vn;	/* vnode */
 
 	/* helper members before metadata makes it onto the chunk  */
 	int			src_meta_ondisk;/* set when meta is on disk */

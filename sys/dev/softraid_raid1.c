@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.18 2009/07/12 16:34:58 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.19 2009/08/09 14:12:25 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -339,6 +339,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_ccb		*ccb;
+	struct buf		*b;
 	struct sr_chunk		*scp;
 	int			ios, x, i, s, rt;
 	daddr64_t		blk;
@@ -365,23 +366,24 @@ sr_raid1_rw(struct sr_workunit *wu)
 			    sd->sd_meta->ssd_devname);
 			goto bad;
 		}
+		b = &ccb->ccb_buf;
 
 		if (xs->flags & SCSI_POLL) {
-			ccb->ccb_buf.b_flags = 0;
-			ccb->ccb_buf.b_iodone = NULL;
+			b->b_flags = 0;
+			b->b_iodone = NULL;
 		} else {
-			ccb->ccb_buf.b_flags = B_CALL;
-			ccb->ccb_buf.b_iodone = sr_raid1_intr;
+			b->b_flags = B_CALL;
+			b->b_iodone = sr_raid1_intr;
 		}
 
-		ccb->ccb_buf.b_flags |= B_PHYS;
-		ccb->ccb_buf.b_blkno = blk;
-		ccb->ccb_buf.b_bcount = xs->datalen;
-		ccb->ccb_buf.b_bufsize = xs->datalen;
-		ccb->ccb_buf.b_resid = xs->datalen;
-		ccb->ccb_buf.b_data = xs->data;
-		ccb->ccb_buf.b_error = 0;
-		ccb->ccb_buf.b_proc = curproc;
+		b->b_flags |= B_PHYS;
+		b->b_blkno = blk;
+		b->b_bcount = xs->datalen;
+		b->b_bufsize = xs->datalen;
+		b->b_resid = xs->datalen;
+		b->b_data = xs->data;
+		b->b_error = 0;
+		b->b_proc = curproc;
 		ccb->ccb_wu = wu;
 
 		if (xs->flags & SCSI_DATA_IN) {
@@ -394,7 +396,7 @@ ragain:
 			switch (scp->src_meta.scm_status) {
 			case BIOC_SDONLINE:
 			case BIOC_SDSCRUB:
-				ccb->ccb_buf.b_flags |= B_READ;
+				b->b_flags |= B_READ;
 				break;
 
 			case BIOC_SDOFFLINE:
@@ -419,7 +421,7 @@ ragain:
 			case BIOC_SDONLINE:
 			case BIOC_SDSCRUB:
 			case BIOC_SDREBUILD:
-				ccb->ccb_buf.b_flags |= B_WRITE;
+				b->b_flags |= B_WRITE;
 				break;
 
 			case BIOC_SDHOTSPARE: /* should never happen */
@@ -434,18 +436,20 @@ ragain:
 
 		}
 		ccb->ccb_target = x;
-		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[x]->src_dev_mm;
-		ccb->ccb_buf.b_vp = NULL;
+		b->b_dev = sd->sd_vol.sv_chunks[x]->src_dev_mm;
+		b->b_vp = sd->sd_vol.sv_chunks[x]->src_vn;
+		if ((b->b_flags & B_READ) == 0)
+			b->b_vp->v_numoutput++;
 
-		LIST_INIT(&ccb->ccb_buf.b_dep);
+		LIST_INIT(&b->b_dep);
 
 		TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
 
 		DNPRINTF(SR_D_DIS, "%s: %s: sr_raid1: b_bcount: %d "
 		    "b_blkno: %x b_flags 0x%0x b_data %p\n",
 		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
-		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
+		    b->b_bcount, b->b_blkno,
+		    b->b_flags, b->b_data);
 	}
 
 	s = splbio();
@@ -483,21 +487,22 @@ sr_raid1_intr(struct buf *bp)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_softc		*sc = sd->sd_sc;
+	struct buf		*b;
 	int			s, pend;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
 	    DEVNAME(sc), bp, xs);
 
+	b = &ccb->ccb_buf;
 	DNPRINTF(SR_D_INTR, "%s: sr_intr: b_bcount: %d b_resid: %d"
 	    " b_flags: 0x%0x block: %lld target: %d\n", DEVNAME(sc),
-	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
-	    ccb->ccb_buf.b_blkno, ccb->ccb_target);
+	    b->b_bcount, b->b_resid, b->b_flags, b->b_blkno, ccb->ccb_target);
 
 	s = splbio();
 
-	if (ccb->ccb_buf.b_flags & B_ERROR) {
+	if (b->b_flags & B_ERROR) {
 		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target: %d\n",
-		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
+		    DEVNAME(sc), b->b_blkno, ccb->ccb_target);
 		wu->swu_ios_failed++;
 		ccb->ccb_state = SR_CCB_FAILED;
 		if (ccb->ccb_target != -1)
@@ -520,7 +525,7 @@ sr_raid1_intr(struct buf *bp)
 		if (wu->swu_ios_failed == wu->swu_ios_complete) {
 			if (xs->flags & SCSI_DATA_IN) {
 				printf("%s: retrying read on block %lld\n",
-				    DEVNAME(sc), ccb->ccb_buf.b_blkno);
+				    DEVNAME(sc), b->b_blkno);
 				sr_ccb_put(ccb);
 				TAILQ_INIT(&wu->swu_ccb);
 				wu->swu_state = SR_WU_RESTART;
@@ -530,8 +535,7 @@ sr_raid1_intr(struct buf *bp)
 					goto retry;
 			} else {
 				printf("%s: permanently fail write on block "
-				    "%lld\n", DEVNAME(sc),
-				    ccb->ccb_buf.b_blkno);
+				    "%lld\n", DEVNAME(sc), b->b_blkno);
 				xs->error = XS_DRIVER_STUFFUP;
 				goto bad;
 			}
