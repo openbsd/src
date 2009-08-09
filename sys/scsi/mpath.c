@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.2 2009/08/09 16:20:19 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.3 2009/08/09 16:55:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -75,6 +75,7 @@ struct cfdriver mpath_cd = {
 };
 
 int		mpath_cmd(struct scsi_xfer *);
+void		mpath_minphys(struct buf *, struct scsi_link *);
 int		mpath_probe(struct scsi_link *);
 
 struct scsi_adapter mpath_switch = {
@@ -177,6 +178,19 @@ mpath_cmd(struct scsi_xfer *xs)
 	splx(s);
 
 	return (COMPLETE);
+}
+
+void
+mpath_minphys(struct buf *bp, struct scsi_link *link)
+{
+	struct mpath_node *n = mpath_nodes[link->target];
+	struct mpath_path *p;
+
+	if (n == NULL)
+		return;
+
+	TAILQ_FOREACH(p, &n->node_paths, path_entry)
+		p->path_link->adapter->scsi_minphys(bp, p->path_link);
 }
 
 int
