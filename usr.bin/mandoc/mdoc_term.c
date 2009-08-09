@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.48 2009/08/09 21:38:25 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.49 2009/08/09 21:59:41 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -97,6 +97,7 @@ struct	termact {
 
 static	void	  termp____post(DECL_ARGS);
 static	void	  termp__t_post(DECL_ARGS);
+static	void	  termp_an_post(DECL_ARGS);
 static	void	  termp_aq_post(DECL_ARGS);
 static	void	  termp_bd_post(DECL_ARGS);
 static	void	  termp_bl_post(DECL_ARGS);
@@ -123,6 +124,7 @@ static	void	  termp_vt_post(DECL_ARGS);
 
 static	int	  termp__j_pre(DECL_ARGS);
 static	int	  termp__t_pre(DECL_ARGS);
+static	int	  termp_an_pre(DECL_ARGS);
 static	int	  termp_ap_pre(DECL_ARGS);
 static	int	  termp_aq_pre(DECL_ARGS);
 static	int	  termp_ar_pre(DECL_ARGS);
@@ -190,7 +192,7 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* El */
 	{ termp_it_pre, termp_it_post }, /* It */
 	{ NULL, NULL }, /* Ad */ 
-	{ NULL, NULL }, /* An */
+	{ termp_an_pre, termp_an_post }, /* An */
 	{ termp_ar_pre, NULL }, /* Ar */
 	{ termp_cd_pre, NULL }, /* Cd */
 	{ termp_cm_pre, NULL }, /* Cm */
@@ -1121,6 +1123,65 @@ termp_fl_pre(DECL_ARGS)
 	term_word(p, "\\-");
 	p->flags |= TERMP_NOSPACE;
 	return(1);
+}
+
+
+/* ARGSUSED */
+static int
+termp_an_pre(DECL_ARGS)
+{
+
+	if (NULL == node->child)
+		return(1);
+
+	/*
+	 * XXX: this is poorly documented.  If not in the AUTHORS
+	 * section, `An -split' will cause newlines to occur before the
+	 * author name.  If in the AUTHORS section, by default, the
+	 * first `An' invocation is nosplit, then all subsequent ones,
+	 * regardless of whether interspersed with other macros/text,
+	 * are split.  -split, in this case, will override the condition
+	 * of the implied first -nosplit.
+	 */
+	
+	if (node->sec == SEC_AUTHORS) {
+		if ( ! (TERMP_ANPREC & p->flags)) {
+			if (TERMP_SPLIT & p->flags)
+				term_newln(p);
+			return(1);
+		}
+		if (TERMP_NOSPLIT & p->flags)
+			return(1);
+		term_newln(p);
+		return(1);
+	}
+
+	if (TERMP_SPLIT & p->flags)
+		term_newln(p);
+
+	return(1);
+}
+
+
+/* ARGSUSED */
+static void
+termp_an_post(DECL_ARGS)
+{
+
+	if (node->child) {
+		if (SEC_AUTHORS == node->sec)
+			p->flags |= TERMP_ANPREC;
+		return;
+	}
+
+	if (arg_getattr(MDOC_Split, node) > -1) {
+		p->flags &= ~TERMP_NOSPLIT;
+		p->flags |= TERMP_SPLIT;
+	} else {
+		p->flags &= ~TERMP_SPLIT;
+		p->flags |= TERMP_NOSPLIT;
+	}
+
 }
 
 
