@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.21 2009/03/15 17:56:47 miod Exp $
+#	$OpenBSD: Makefile.sgi,v 1.22 2009/08/09 14:07:37 jsing Exp $
 
 # Makefile for OpenBSD
 #
@@ -57,8 +57,7 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp \
-		-mno-abicalls ${ABI} -D_LOCORE
+AFLAGS=		-x assembler-with-cpp -mno-abicalls ${ABI} -D_LOCORE
 STRIPFLAGS=	-g -X -x
 
 NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
