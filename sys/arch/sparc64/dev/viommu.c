@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.7 2009/05/04 16:48:37 oga Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.8 2009/08/09 13:35:43 oga Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -373,8 +373,10 @@ viommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 #endif
 	}		
 #endif	
-	if (err != 0)
+	if (err != 0) {
+		iommu_iomap_clear_pages(ims);
 		return (err);
+	}
 
 	/* Set the active DVMA map */
 	map->_dm_dvmastart = dvmaddr;
@@ -547,8 +549,10 @@ viommu_dvmamap_load_raw(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	    EX_NOWAIT | EX_BOUNDZERO, (u_long *)&dvmaddr);
 	mtx_leave(&is->is_mtx);
 
-	if (err != 0)
+	if (err != 0) {
+		iommu_iomap_clear_pages(ims);
 		return (err);
+	}
 
 #ifdef DEBUG
 	if (dvmaddr == (bus_addr_t)-1)	{ 

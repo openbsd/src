@@ -1,4 +1,4 @@
-/*	$OpenBSD: sg_dma.c,v 1.6 2009/07/31 14:30:04 oga Exp $	*/
+/*	$OpenBSD: sg_dma.c,v 1.7 2009/08/09 13:35:43 oga Exp $	*/
 /*
  * Copyright (c) 2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -277,8 +277,10 @@ sg_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	    sgsize, align, 0, (sgsize > boundary) ? 0 : boundary, 
 	    EX_NOWAIT | EX_BOUNDZERO, (u_long *)&dvmaddr);
 	mtx_leave(&is->sg_mtx);
-	if (err != 0)
+	if (err != 0) {
+		sg_iomap_clear_pages(spm);
 		return (err);
+	}
 
 	/* Set the active DVMA map */
 	spm->spm_start = dvmaddr;
@@ -571,8 +573,10 @@ sg_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	    EX_NOWAIT | EX_BOUNDZERO, (u_long *)&dvmaddr);
 	mtx_leave(&is->sg_mtx);
 
-	if (err != 0)
+	if (err != 0) {
+		sg_iomap_clear_pages(spm);
 		return (err);
+	}
 
 	/* Set the active DVMA map */
 	spm->spm_start = dvmaddr;
