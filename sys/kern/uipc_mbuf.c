@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.127 2009/08/09 16:19:08 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.128 2009/08/09 21:08:30 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -608,8 +608,6 @@ m_prepend(struct mbuf *m, int len, int how)
  * continuing for "len" bytes.  If len is M_COPYALL, copy to end of mbuf.
  * The wait parameter is a choice of M_WAIT/M_DONTWAIT from caller.
  */
-int MCFail;
-
 struct mbuf *
 m_copym(struct mbuf *m, int off, int len, int wait)
 {
@@ -698,12 +696,9 @@ m_copym0(struct mbuf *m, int off, int len, int wait, int deep)
 		}
 		np = &n->m_next;
 	}
-	if (top == NULL)
-		MCFail++;
 	return (top);
 nospace:
 	m_freem(top);
-	MCFail++;
 	return (NULL);
 }
 
@@ -916,8 +911,6 @@ m_adj(struct mbuf *mp, int req_len)
  * If there is room, it will add up to max_protohdr-len extra bytes to the
  * contiguous region in an attempt to avoid being called next time.
  */
-int MPFail;
-
 struct mbuf *
 m_pullup(struct mbuf *n, int len)
 {
@@ -973,7 +966,6 @@ m_pullup(struct mbuf *n, int len)
 	return (m);
 bad:
 	m_freem(n);
-	MPFail++;
 	return (NULL);
 }
 
@@ -1044,7 +1036,6 @@ m_pullup2(struct mbuf *n, int len)
 	return (m);
 bad:
 	m_freem(n);
-	MPFail++;
 	return (NULL);
 }
 
