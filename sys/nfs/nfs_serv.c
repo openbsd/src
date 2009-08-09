@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.80 2009/08/09 15:13:48 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.81 2009/08/09 17:35:31 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -441,20 +441,18 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
-	struct iovec iv[(NFS_MAXPATHLEN+MLEN-1)/MLEN];
-	struct iovec *ivp = iv;
-	struct mbuf *mp;
+	struct iovec iov;
+	struct mbuf *mp = NULL;
 	struct nfsm_info	info;
 	u_int32_t *tl;
 	int32_t t1;
-	int error = 0, rdonly, i, tlen, len, getret;
+	int error = 0, rdonly, tlen, len, getret;
 	char *cp2;
-	struct mbuf *mp2 = NULL, *mp3 = NULL;
 	struct vnode *vp;
 	struct vattr attr;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	struct uio io, *uiop = &io;
+	struct uio uio;
 
 	info.nmi_mreq = NULL;
 	info.nmi_mrep = nfsd->nd_mrep;
@@ -471,35 +469,21 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 		error = 0;
 		goto nfsmout;
 	}
-	len = 0;
-	i = 0;
-	while (len < NFS_MAXPATHLEN) {
-		MGET(mp, M_WAIT, MT_DATA);
-		MCLGET(mp, M_WAIT);
-		mp->m_len = NFSMSIZ(mp);
-		if (len == 0)
-			mp3 = mp2 = mp;
-		else {
-			mp2->m_next = mp;
-			mp2 = mp;
-		}
-		if ((len+mp->m_len) > NFS_MAXPATHLEN) {
-			mp->m_len = NFS_MAXPATHLEN-len;
-			len = NFS_MAXPATHLEN;
-		} else
-			len += mp->m_len;
-		ivp->iov_base = mtod(mp, caddr_t);
-		ivp->iov_len = mp->m_len;
-		i++;
-		ivp++;
-	}
-	uiop->uio_iov = iv;
-	uiop->uio_iovcnt = i;
-	uiop->uio_offset = 0;
-	uiop->uio_resid = len;
-	uiop->uio_rw = UIO_READ;
-	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_procp = NULL;
+
+	MGET(mp, M_WAIT, MT_DATA);
+	MCLGET(mp, M_WAIT);		/* MLEN < NFS_MAXPATHLEN < MCLBYTES */
+	mp->m_len = NFS_MAXPATHLEN;
+	len = NFS_MAXPATHLEN;
+	iov.iov_base = mtod(mp, caddr_t);
+	iov.iov_len = mp->m_len;
+
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = 0;
+	uio.uio_resid = NFS_MAXPATHLEN;
+	uio.uio_rw = UIO_READ;
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_procp = NULL;
 	if (vp->v_type != VLNK) {
 		if (info.nmi_v3)
 			error = EINVAL;
@@ -507,12 +491,12 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 			error = ENXIO;
 		goto out;
 	}
-	error = VOP_READLINK(vp, uiop, cred);
+	error = VOP_READLINK(vp, &uio, cred);
 out:
 	getret = VOP_GETATTR(vp, &attr, cred, procp);
 	vput(vp);
 	if (error)
-		m_freem(mp3);
+		m_freem(mp);
 	nfsm_reply(NFSX_POSTOPATTR(info.nmi_v3) + NFSX_UNSIGNED);
 	if (info.nmi_v3) {
 		nfsm_srvpostop_attr(nfsd, getret, &attr, &info.nmi_mb);
@@ -521,17 +505,17 @@ out:
 			goto nfsmout;
 		}
 	}
-	if (uiop->uio_resid > 0) {
-		len -= uiop->uio_resid;
+	if (uio.uio_resid > 0) {
+		len -= uio.uio_resid;
 		tlen = nfsm_rndup(len);
-		nfsm_adj(mp3, NFS_MAXPATHLEN-tlen, tlen-len);
+		nfsm_adj(mp, NFS_MAXPATHLEN-tlen, tlen-len);
 	}
 	tl = nfsm_build(&info.nmi_mb, NFSX_UNSIGNED);
 	*tl = txdr_unsigned(len);
-	info.nmi_mb->m_next = mp3;
+	info.nmi_mb->m_next = mp;
 
 nfsmout:
-	return(error);
+	return (error);
 }
 
 /*
