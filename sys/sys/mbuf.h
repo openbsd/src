@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.125 2009/08/09 11:53:54 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.126 2009/08/09 12:42:09 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -407,6 +407,7 @@ void	mbinit(void);
 struct	mbuf *m_copym2(struct mbuf *, int, int, int);
 struct	mbuf *m_copym(struct mbuf *, int, int, int);
 struct	mbuf *m_free(struct mbuf *);
+struct	mbuf *m_free_unlocked(struct mbuf *);
 struct	mbuf *m_get(int, int);
 struct	mbuf *m_getclr(int, int);
 struct	mbuf *m_gethdr(int, int);

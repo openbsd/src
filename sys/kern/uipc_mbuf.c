@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.124 2009/08/09 12:24:40 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.125 2009/08/09 12:42:11 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -438,12 +438,10 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 }
 
 struct mbuf *
-m_free(struct mbuf *m)
+m_free_unlocked(struct mbuf *m)
 {
 	struct mbuf *n;
-	int s;
 
-	s = splnet();
 	mbstat.m_mtypes[m->m_type]--;
 	if (m->m_flags & M_PKTHDR)
 		m_tag_delete_chain(m);
@@ -451,6 +449,18 @@ m_free(struct mbuf *m)
 		m_extfree(m);
 	n = m->m_next;
 	pool_put(&mbpool, m);
+
+	return (n);
+}
+
+struct mbuf *
+m_free(struct mbuf *m)
+{
+	struct mbuf *n;
+	int s;
+
+	s = splnet();
+	n = m_free_unlocked(m);
 	splx(s);
 
 	return (n);
@@ -481,12 +491,15 @@ void
 m_freem(struct mbuf *m)
 {
 	struct mbuf *n;
+	int s;
 
 	if (m == NULL)
 		return;
+	s = splnet();
 	do {
-		MFREE(m, n);
+		n = m_free_unlocked(m);
 	} while ((m = n) != NULL);
+	splx(s);
 }
 
 /*
