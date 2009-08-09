@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.47 2009/08/09 20:37:32 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.48 2009/08/09 21:38:25 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -666,6 +666,7 @@ fmt_block_vspace(struct termp *p,
 
 	if (MDOC_Bl == bl->tok && arg_hasattr(MDOC_Compact, bl))
 		return;
+	assert(node);
 
 	/*
 	 * Search through our prior nodes.  If we follow a `Ss' or `Sh',
@@ -850,7 +851,8 @@ termp_it_pre(DECL_ARGS)
 
 	switch (type) {
 	case (MDOC_Diag):
-		term_word(p, "\\ \\ ");
+		if (MDOC_BODY == node->type)
+			term_word(p, "\\ \\ ");
 		break;
 	case (MDOC_Inset):
 		if (MDOC_BODY == node->type) 
@@ -1595,12 +1597,9 @@ termp_bd_pre(DECL_ARGS)
 	} else if (MDOC_BODY != node->type)
 		return(1);
 
-	/* FIXME: display type should be mandated by parser. */
+	assert(node->parent->args);
 
-	if (NULL == node->parent->args)
-		errx(1, "missing display type");
-
-	for (type = -1, i = 0; 
+	for (type = -1, i = 0; -1 == type && 
 			i < (int)node->parent->args->argc; i++) {
 		switch (node->parent->args->argv[i].arg) {
 		case (MDOC_Ragged):
@@ -1611,22 +1610,17 @@ termp_bd_pre(DECL_ARGS)
 			/* FALLTHROUGH */
 		case (MDOC_Literal):
 			type = node->parent->args->argv[i].arg;
-			i = (int)node->parent->args->argc;
 			break;
 		default:
 			break;
 		}
 	}
-
-	if (NULL == node->parent->args)
-		errx(1, "missing display type");
+	
+	assert(type > -1);
 
 	i = arg_getattr(MDOC_Offset, node->parent);
-	if (-1 != i) {
-		if (1 != node->parent->args->argv[i].sz)
-			errx(1, "expected single value");
+	if (-1 != i)
 		p->offset += arg_offset(&node->parent->args->argv[i]);
-	}
 
 	switch (type) {
 	case (MDOC_Literal):
@@ -1637,21 +1631,11 @@ termp_bd_pre(DECL_ARGS)
 		return(1);
 	}
 
-	/*
-	 * Tricky.  Iterate through all children.  If we're on a
-	 * different parse line, append a newline and then the contents.
-	 * Ew.
-	 */
-
-	ln = node->child ? node->child->line : 0;
-
 	for (node = node->child; node; node = node->next) {
-		if (ln < node->line) {
-			term_flushln(p);
-			p->flags |= TERMP_NOSPACE;
-		}
-		ln = node->line;
+		p->flags |= TERMP_NOSPACE;
 		print_node(p, pair, meta, node);
+		if (node->next)
+			term_flushln(p);
 	}
 
 	return(0);
@@ -1665,6 +1649,7 @@ termp_bd_post(DECL_ARGS)
 
 	if (MDOC_BODY != node->type) 
 		return;
+	p->flags |= TERMP_NOSPACE;
 	term_flushln(p);
 }
 
