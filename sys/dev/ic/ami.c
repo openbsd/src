@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.195 2009/06/11 15:48:10 chl Exp $	*/
+/*	$OpenBSD: ami.c,v 1.196 2009/08/09 21:50:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1358,11 +1358,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	ccb = ami_get_ccb(sc);
 	splx(s);
 	if (ccb == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
-		scsi_done(xs);
-		splx(s);
-		return (COMPLETE);
+		return (NO_CCB);
 	}
 
 	memset(ccb->ccb_pt, 0, sizeof(struct ami_passthrough));
@@ -1493,11 +1489,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		ccb = ami_get_ccb(sc);
 		splx(s);
 		if (ccb == NULL) {
-			xs->error = XS_DRIVER_STUFFUP;
-			s = splbio();
-			scsi_done(xs);
-			splx(s);
-			return (COMPLETE);
+			return (NO_CCB);
 		}
 
 		ccb->ccb_xs = xs;
@@ -1603,11 +1595,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	ccb = ami_get_ccb(sc);
 	splx(s);
 	if (ccb == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
-		scsi_done(xs);
-		splx(s);
-		return (COMPLETE);
+		return (NO_CCB);
 	}
 
 	ccb->ccb_xs = xs;
