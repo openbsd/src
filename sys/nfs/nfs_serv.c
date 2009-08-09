@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.79 2009/08/09 13:34:41 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.80 2009/08/09 15:13:48 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -464,6 +464,13 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
+	if (error) {
+		nfsm_reply(2 * NFSX_UNSIGNED);
+		nfsm_srvpostop_attr(nfsd, 1, NULL, &info.nmi_mb);
+		error = 0;
+		goto nfsmout;
+	}
 	len = 0;
 	i = 0;
 	while (len < NFS_MAXPATHLEN) {
@@ -493,14 +500,6 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	uiop->uio_rw = UIO_READ;
 	uiop->uio_segflg = UIO_SYSSPACE;
 	uiop->uio_procp = NULL;
-	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
-	if (error) {
-		m_freem(mp3);
-		nfsm_reply(2 * NFSX_UNSIGNED);
-		nfsm_srvpostop_attr(nfsd, 1, NULL, &info.nmi_mb);
-		error = 0;
-		goto nfsmout;
-	}
 	if (vp->v_type != VLNK) {
 		if (info.nmi_v3)
 			error = EINVAL;
