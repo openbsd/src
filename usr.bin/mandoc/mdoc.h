@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.11 2009/07/26 01:59:46 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.12 2009/08/09 22:05:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -258,7 +258,6 @@ struct	mdoc_node {
 	enum mdoc_type	  type;
 	enum mdoc_sec	  sec;
 
-	/* FIXME: union/struct this with #defines. */
 	struct mdoc_arg	 *args; 	/* BLOCK/ELEM */
 	struct mdoc_node *head;		/* BLOCK */
 	struct mdoc_node *body;		/* BLOCK */
@@ -272,7 +271,7 @@ struct	mdoc_node {
 #define	MDOC_IGN_CHARS	 (1 << 3) /* Ignore disallowed chars. */
 
 /* Call-backs for parse messages. */
-/* FIXME: unify somehow with man_cb. */
+
 struct	mdoc_cb {
 	int	(*mdoc_err)(void *, int, int, const char *);
 	int	(*mdoc_warn)(void *, int, int, const char *);
