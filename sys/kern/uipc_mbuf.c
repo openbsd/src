@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.123 2009/08/09 11:40:58 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.124 2009/08/09 12:24:40 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -449,7 +449,6 @@ m_free(struct mbuf *m)
 		m_tag_delete_chain(m);
 	if (m->m_flags & M_EXT)
 		m_extfree(m);
-	m->m_flags = 0;
 	n = m->m_next;
 	pool_put(&mbpool, m);
 	splx(s);
