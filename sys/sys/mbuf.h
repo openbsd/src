@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.124 2009/08/09 11:40:58 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.125 2009/08/09 11:53:54 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ struct mbuf {
 	MCLINITREFERENCE(m);						\
 } while (/* CONSTCOND */ 0)
 
-#define MCLGET(m, how) m_clget((m), (how), NULL, MCLBYTES)
+#define MCLGET(m, how) (void) m_clget((m), (how), NULL, MCLBYTES)
 #define MCLGETI(m, how, ifp, l) m_clget((m), (how), (ifp), (l))
 
 /*
