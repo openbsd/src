@@ -191,7 +191,7 @@ read_section_stabs_debugging_info (bfd *abfd, asymbol **syms, long symcount,
 
 		  s = (char *) strings + stroff + strx;
 
-		  while (s[strlen (s) - 1] == '\\'
+		  while (*s != '\0' && s[strlen (s) - 1] == '\\'
 			 && stab + 12 < stabs + stabsize)
 		    {
 		      char *p;
