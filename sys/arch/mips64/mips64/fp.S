@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp.S,v 1.7 2004/11/02 18:54:45 pefo Exp $	*/
+/*	$OpenBSD: fp.S,v 1.8 2009/08/09 13:41:30 jsing Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fp.s	8.1 (Berkeley) 6/10/93
- *      $Id: fp.S,v 1.7 2004/11/02 18:54:45 pefo Exp $
+ *      $Id: fp.S,v 1.8 2009/08/09 13:41:30 jsing Exp $
  */
 
 /*
@@ -1878,10 +1878,10 @@ END(MipsEmulateFP)
  */
 #define GET_FS_INT(n) \
 	.rdata;				\
-	.dword	get_fs_int_/**/n;	\
+	.dword	get_fs_int_ ## n;	\
 	.text;				\
-get_fs_int_/**/n:			\
-	mfc1	t2, $/**/n;		\
+get_fs_int_ ## n:			\
+	mfc1	t2, $ ## n;		\
 	b	get_fs_int_done
 
 LEAF(get_fs_int, 0)
@@ -1951,10 +1951,10 @@ END(get_fs_int)
  */
 #define GET_FS_LONG(n) \
 	.rdata;				\
-	.dword	get_fs_long_/**/n;	\
+	.dword	get_fs_long_ ## n;	\
 	.text;				\
-get_fs_long_/**/n:			\
-	dmfc1	t2, $/**/n;		\
+get_fs_long_ ## n:			\
+	dmfc1	t2, $ ## n;		\
 	b	get_fs_long_done
 
 LEAF(get_fs_long, 0)
@@ -2027,10 +2027,10 @@ END(get_fs_long)
  */
 #define GET_FT_S(n) \
 	.rdata;				\
-	.dword	get_ft_s_/**/n;		\
+	.dword	get_ft_s_ ## n;		\
 	.text;				\
-get_ft_s_/**/n:				\
-	mfc1	ta0, $/**/n;		\
+get_ft_s_ ## n:				\
+	mfc1	ta0, $ ## n;		\
 	b	get_ft_s_done
 
 LEAF(get_ft_fs_s, 0)
@@ -2103,10 +2103,10 @@ get_ft_s_done:
  */
 #define GET_FS_S(n) \
 	.rdata;				\
-	.dword	get_fs_s_/**/n;		\
+	.dword	get_fs_s_ ## n;		\
 	.text;				\
-get_fs_s_/**/n:				\
-	mfc1	t0, $/**/n;		\
+get_fs_s_ ## n:				\
+	mfc1	t0, $ ## n;		\
 	b	get_fs_s_done
 
 ALEAF(get_fs_s)
@@ -2183,10 +2183,10 @@ END(get_ft_fs_s)
  */
 #define GET_FT_FS_D(n) \
 	.rdata;				\
-	.dword	get_ft_fs_d_/**/n;	\
+	.dword	get_ft_fs_d_ ## n;	\
 	.text;				\
-get_ft_fs_d_/**/n:			\
-	dmfc1	ta2, $/**/n;		\
+get_ft_fs_d_ ## n:			\
+	dmfc1	ta2, $ ## n;		\
 	b	get_ft_d_done
 
 LEAF(get_ft_fs_d, 0)
@@ -2260,10 +2260,10 @@ get_ft_d_done:
  */
 #define GET_FS_D(n) \
 	.rdata;				\
-	.dword	get_fs_d_/**/n;		\
+	.dword	get_fs_d_ ## n;		\
 	.text;				\
-get_fs_d_/**/n:				\
-	dmfc1	t2, $/**/n;		\
+get_fs_d_ ## n:				\
+	dmfc1	t2, $ ## n;		\
 	b	get_fs_d_done
 
 ALEAF(get_fs_d)
@@ -2341,10 +2341,10 @@ END(get_ft_fs_d)
  */
 #define CMP_FS_S(n) \
 	.rdata;				\
-	.dword	cmp_fs_s_/**/n;		\
+	.dword	cmp_fs_s_ ## n;		\
 	.text;				\
-cmp_fs_s_/**/n:				\
-	mfc1	t0, $/**/n;		\
+cmp_fs_s_ ## n:				\
+	mfc1	t0, $ ## n;		\
 	b	cmp_fs_s_done
 
 LEAF(get_cmp_s, 0)
@@ -2398,10 +2398,10 @@ cmp_fs_s_done:
 
 #define CMP_FT_S(n) \
 	.rdata;				\
-	.dword	cmp_ft_s_/**/n;		\
+	.dword	cmp_ft_s_ ## n;		\
 	.text;				\
-cmp_ft_s_/**/n:				\
-	mfc1	ta0, $/**/n;		\
+cmp_ft_s_ ## n:				\
+	mfc1	ta0, $ ## n;		\
 	b	cmp_ft_s_done
 
 	srl	a3, a0, 16 - 3			# get FT field
@@ -2472,10 +2472,10 @@ END(get_cmp_s)
  */
 #define CMP_FS_D(n) \
 	.rdata;				\
-	.dword	cmp_fs_d_/**/n;		\
+	.dword	cmp_fs_d_ ## n;		\
 	.text;				\
-cmp_fs_d_/**/n:				\
-	dmfc1	t2, $/**/n;		\
+cmp_fs_d_ ## n:				\
+	dmfc1	t2, $ ## n;		\
 	b	cmp_fs_d_done
 
 LEAF(get_cmp_d, 0)
@@ -2530,10 +2530,10 @@ cmp_fs_d_done:
 
 #define CMP_FT_D(n) \
 	.rdata;				\
-	.dword	cmp_ft_d_/**/n;		\
+	.dword	cmp_ft_d_ ## n;		\
 	.text;				\
-cmp_ft_d_/**/n:				\
-	dmfc1	ta2, $/**/n;		\
+cmp_ft_d_ ## n:				\
+	dmfc1	ta2, $ ## n;		\
 	b	cmp_ft_d_done
 
 	srl	a3, a0, 16 - 3			# get FT field
@@ -2612,10 +2612,10 @@ END(get_cmp_d)
  */
 #define SET_FD_S(n) \
 	.rdata;				\
-	.dword	set_fd_s_/**/n;		\
+	.dword	set_fd_s_ ## n;		\
 	.text;				\
-set_fd_s_/**/n:				\
-	mtc1	t2, $/**/n;		\
+set_fd_s_ ## n:				\
+	mtc1	t2, $ ## n;		\
 	j	ra
 
 LEAF(set_fd_s, 0)
@@ -2684,10 +2684,10 @@ END(set_fd_s)
  */
 #define SET_FD_D(n) \
 	.rdata;				\
-	.dword	set_fd_d_/**/n;		\
+	.dword	set_fd_d_ ## n;		\
 	.text;				\
-set_fd_d_/**/n:				\
-	dmtc1	t0, $/**/n;		\
+set_fd_d_ ## n:				\
+	dmtc1	t0, $ ## n;		\
 	j	ra
 
 LEAF(set_fd_d, 0)
