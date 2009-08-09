@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 2008/04/20 17:17:32 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.16 2009/08/09 20:29:09 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -15,8 +15,6 @@ maxusers	80			# estimated number of users
 
 option		DEBUG
 option		USER_PCICONF	# user-space PCI configuration
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight saving time used by RTC
 
 #option	COMPAT_HPUX
 #option	COMPAT_LINUX
