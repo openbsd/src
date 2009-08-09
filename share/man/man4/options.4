@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.192 2009/06/04 13:30:07 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.193 2009/08/09 23:04:47 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: June 4 2009 $
+.Dd $Mdocdate: August 9 2009 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -216,11 +216,14 @@ Compiles in a kernel debugger for diagnosing kernel problems.
 See
 .Xr ddb 4
 for details.
-.Em Note:
-not available on all architectures.
 .It Cd option DDB_SAFE_CONSOLE
 Allows a break into the kernel debugger during boot.
 Useful when debugging problems that can cause init(8) to fail.
+.It Cd option DDB_STRUCT
+Compiles in symbolic information about the various data structures used by the
+kernel, for use within the kernel debugger.
+This option is currently not supported on alpha, m68k, m88k and vax based
+platforms.
 .It Cd option DEBUG
 Turns on miscellaneous kernel debugging.
 Since options are turned into preprocessor defines (see above),

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.58 2009/02/22 15:10:41 jsing Exp $
+.\"	$OpenBSD: ddb.4,v 1.59 2009/08/09 23:04:47 miod Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: February 22 2009 $
+.Dd $Mdocdate: August 9 2009 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -96,6 +96,7 @@ the current location is called
 The
 .Ic examine ,
 .Ic search ,
+.Ic show struct,
 and
 .Ic write
 commands update
@@ -679,6 +680,17 @@ If the
 modifier is specified the complete object is printed.
 .\" --------------------
 .It Xo
+.Ic show offset
+.Ar offset
+.Xc
+Prints a list of the known kernel structure fields which occur at the given
+.Ar offset
+from the beginning of the struct, as well as their size.
+The
+.Cm option DDB_STRUCT
+is required for this command to be available.
+.\" --------------------
+.It Xo
 .Ic show page
 .Op Cm /f
 .Ar addr
@@ -732,6 +744,21 @@ Note: The
 .Cm /u
 modifier is not supported on every machine, in which case
 incorrect information may be displayed.
+.\" --------------------
+.It Xo
+.Ic show struct
+.Ar name
+.Op addr
+.Xc
+Prints the content of the memory at
+.Ar addr
+as a struct
+.Ar name .
+Nested structures and bit fields are not printed.
+Character arrays are printed as bytes.
+The
+.Cm option DDB_STRUCT
+is required for this command to be available.
 .\" --------------------
 .It Ic show uvmexp
 Displays a selection of uvm counters and statistics.

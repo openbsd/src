@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.55 2009/08/08 15:04:43 beck Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.56 2009/08/09 23:04:49 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -472,17 +472,23 @@ struct db_command db_show_cmds[] = {
 	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "mount",	db_mount_print_cmd,	0,	NULL },
+#ifdef NFSCLIENT
+	{ "nfsreq",	db_nfsreq_print_cmd,	0,	NULL },
+#endif
 	{ "object",	db_object_print_cmd,	0,	NULL },
+#ifdef DDB_STRUCT_INFORMATION
+	{ "offset",	db_struct_offset_cmd,	CS_OWN,	NULL },
+#endif
 	{ "page",	db_page_print_cmd,	0,	NULL },
 	{ "panic",	db_show_panic_cmd,	0,	NULL },
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
 	{ "proc",	db_proc_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
+#ifdef DDB_STRUCT_INFORMATION
+	{ "struct",	db_struct_layout_cmd,	CS_OWN,	NULL },
+#endif
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
-#ifdef NFSCLIENT
-	{ "nfsreq",	db_nfsreq_print_cmd,	0,	NULL },
-#endif
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };

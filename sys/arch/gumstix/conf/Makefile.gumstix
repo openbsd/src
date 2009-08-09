@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.gumstix,v 1.2 2009/01/11 21:02:03 pirofti Exp $
+#	$OpenBSD: Makefile.gumstix,v 1.3 2009/08/09 23:04:49 miod Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -56,6 +56,12 @@ AFLAGS=		-x assembler-with-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-T ldscript
 LINKFLAGS+=	--warn-common
 STRIPFLAGS=	-g -X -x
+
+.if ${IDENT:M-DDDB_STRUCT}
+DB_STRUCTINFO=	db_structinfo.h
+.else
+DB_STRUCTINFO=
+.endif
 
 HOSTCC= ${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -141,7 +147,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks assym.h
+	    [Ee]rrs linterrs makelinks assym.h ${DB_STRUCTINFO}
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
@@ -162,7 +168,7 @@ links:
 SRCS=	${ARM}/arm/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c ${APMINC}
+.depend: ${SRCS} assym.h param.c ${APMINC} ${DB_STRUCTINFO}
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM}/arm/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
@@ -174,6 +180,11 @@ depend:: .depend
 	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
 	    < assym.dep >> .depend
 	@rm -f assym.dep
+
+db_structinfo.h: $S/ddb/db_structinfo.c $S/ddb/parse_structinfo.awk
+	${CC} ${CFLAGS} ${CPPFLAGS} -gstabs -c $S/ddb/db_structinfo.c
+	objdump -g db_structinfo.o | awk -f $S/ddb/parse_structinfo.awk > $@
+	rm -f db_structinfo.o
 
 
 # depend on root or device configuration
