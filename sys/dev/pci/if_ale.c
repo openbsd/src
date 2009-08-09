@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.7 2009/08/05 03:19:48 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.8 2009/08/09 03:03:19 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -2030,15 +2030,15 @@ ale_rxfilter(struct ale_softc *sc)
 
 	rxcfg = CSR_READ_4(sc, ALE_MAC_CFG);
 	rxcfg &= ~(MAC_CFG_ALLMULTI | MAC_CFG_BCAST | MAC_CFG_PROMISC);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * Always accept broadcast frames.
 	 */
 	rxcfg |= MAC_CFG_BCAST;
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC || 
-	    ac->ac_multirangecnt > 0) {
-allmulti:
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			rxcfg |= MAC_CFG_PROMISC;
 		else
@@ -2050,14 +2050,10 @@ allmulti:
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN)) {
-			    	ifp->if_flags |= IFF_ALLMULTI;
-				goto allmulti;
-			}
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 
 			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
