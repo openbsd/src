@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.45 2009/08/09 19:28:21 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.46 2009/08/09 20:11:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -777,11 +777,27 @@ termp_it_pre(DECL_ARGS)
 	case (MDOC_Column):
 		if (MDOC_BODY == node->type)
 			break;
-		for (i = 0, n = node->prev; n; n = n->prev, i++)
+		/* 
+		 * Work around groff's column handling.  The offset is
+		 * equal to the sum of all widths leading to the current
+		 * column (plus the -offset value).  If this column
+		 * exceeds the stated number of columns, the width is
+		 * set as 0, else it's the stated column width (later
+		 * the 0 will be adjusted to default 10 or, if in the
+		 * last column case, set to stretch to the margin).
+		 */
+		for (i = 0, n = node->prev; n && n && 
+				i < (int)bl->args[vals[2]].argv->sz; 
+				n = n->prev, i++)
 			offset += arg_width 
 				(&bl->args->argv[vals[2]], i);
-		assert(i < (int)bl->args->argv[vals[2]].sz);
-		width = arg_width(&bl->args->argv[vals[2]], i);
+
+		/* Whether exceeds maximum column. */
+		if (i < (int)bl->args[vals[2]].argv->sz)
+			width = arg_width(&bl->args->argv[vals[2]], i);
+		else
+			width = 0;
+
 		if (vals[1] >= 0) 
 			offset += arg_offset(&bl->args->argv[vals[1]]);
 		break;

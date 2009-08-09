@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.32 2009/08/09 17:38:24 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.33 2009/08/09 20:11:30 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1025,7 +1025,7 @@ post_it(POST_ARGS)
 		for (i = 0; c && MDOC_HEAD == c->type; c = c->next)
 			i++;
 
-		if (i < cols) {
+		if (i < cols || i == (cols + 1)) {
 			if ( ! mdoc_vwarn(mdoc, mdoc->last->line, 
 					mdoc->last->pos, "column "
 					"mismatch: have %d, want %d", 
