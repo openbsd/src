@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.129 2009/08/09 13:53:03 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.130 2009/08/09 18:45:30 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -290,22 +290,15 @@ struct mbuf {
 } while (/* CONSTCOND */ 0)
 
 /*
- * Duplicate just m_pkthdr from from to to.
- */
-#define M_DUP_HDR(to, from) do {					\
-	(to)->m_pkthdr = (from)->m_pkthdr;				\
-	SLIST_INIT(&(to)->m_pkthdr.tags);				\
-	m_tag_copy_chain((to), (from));					\
-} while (/* CONSTCOND */ 0)
-
-/*
  * Duplicate mbuf pkthdr from from to to.
  * from must have M_PKTHDR set, and to must be empty.
  */
 #define M_DUP_PKTHDR(to, from) do {					\
 	(to)->m_flags = ((to)->m_flags & (M_EXT | M_CLUSTER));		\
 	(to)->m_flags |= (from)->m_flags & M_COPYFLAGS;			\
-	M_DUP_HDR((to), (from));					\
+	(to)->m_pkthdr = (from)->m_pkthdr;				\
+	SLIST_INIT(&(to)->m_pkthdr.tags);				\
+	m_tag_copy_chain((to), (from));					\
 	if (((to)->m_flags & M_EXT) == 0)				\
 		(to)->m_data = (to)->m_pktdat;				\
 } while (/* CONSTCOND */ 0)
