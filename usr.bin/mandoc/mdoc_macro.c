@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.16 2009/08/09 17:02:46 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.17 2009/08/09 17:13:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1385,78 +1385,44 @@ obsolete(MACRO_PROT_ARGS)
 }
 
 
+/*
+ * Phrases occur within `Bl -column' entries, separated by `Ta' or tabs.
+ * They're unusual because they're basically free-form text until a
+ * macro is encountered.
+ */
 static int
 phrase(struct mdoc *mdoc, int line, int ppos, char *buf)
 {
-	int		 i, la, c, quoted;
+	int		  c, w, la, pos;
+	char		 *p;
 
-	/*
-	 * Parse over words in a phrase.  We have to handle this
-	 * specially because we assume no calling context -- in normal
-	 * circumstances, we switch argument parsing based on whether
-	 * the parent macro accepts quotes, tabs, etc.  Here, anything
-	 * goes.
-	 */
+	for (pos = ppos; ; ) {
+		la = pos;
 
-	for (i = ppos; buf[i]; ) {
-		assert(' ' != buf[i]);
-		la = i;
-		quoted = 0;
+		/* Note: no calling context! */
+		w = mdoc_zargs(mdoc, line, &pos, buf, &p);
 
-		/* 
-		 * Read to next token.  If quoted (check not escaped),
-		 * scan ahead to next unescaped quote.  If not quoted or
-		 * escape-quoted, then scan ahead to next space.
-		 */
+		if (ARGS_ERROR == w)
+			return(0);
+		if (ARGS_EOLN == w)
+			break;
 
-		if ((i && '\"' == buf[i] && '\\' != buf[i - 1]) || 
-				(0 == i && '\"' == buf[i])) {
-			for (la = ++i; buf[i]; i++) 
-				if ('\"' != buf[i])
-					continue;
-				else if ('\\' != buf[i - 1])
-					break;
-			if (0 == buf[i]) 
-				return(mdoc_perr(mdoc, line, la, EQUOTPHR));
-			quoted = 1;
-		} else
-			for ( ; buf[i]; i++)
-				if (i && ' ' == buf[i]) {
-					if ('\\' != buf[i - 1])
-						break;
-				} else if (' ' == buf[i])
-					break;
+		c = ARGS_QWORD == w ? MDOC_MAX :
+			mdoc_hash_find(mdoc->htab, p);
 
-		/* If not end-of-line, terminate argument. */
-
-		if (buf[i])
-			buf[i++] = 0;
-
-		/* Read to next argument. */
-
-		for ( ; buf[i] && ' ' == buf[i]; i++)
-			/* Spin. */ ;
-
-		/* 
-		 * If we're a non-quoted string, try to look up the
-		 * value as a macro and execute it, if found.
-		 */
-
-		c = quoted ? MDOC_MAX :
-			mdoc_hash_find(mdoc->htab, &buf[la]);
-
-		if (MDOC_MAX != c) {
-			if ( ! mdoc_macro(mdoc, c, line, la, &i, buf))
+		if (MDOC_MAX != c && -1 != c) {
+			if ( ! mdoc_macro(mdoc, c, line, la, &pos, buf))
 				return(0);
-			return(append_delims(mdoc, line, &i, buf));
-		}
+			return(append_delims(mdoc, line, &pos, buf));
+		} else if (-1 == c)
+			return(0);
 
-		/* A regular word or quoted string. */
-
-		if ( ! mdoc_word_alloc(mdoc, line, la, &buf[la]))
+		if ( ! mdoc_word_alloc(mdoc, line, la, p))
 			return(0);
 		mdoc->next = MDOC_NEXT_SIBLING;
 	}
 
 	return(1);
 }
+
+
