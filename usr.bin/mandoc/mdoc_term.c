@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.41 2009/08/09 17:38:24 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.42 2009/08/09 18:43:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -808,17 +808,21 @@ termp_it_pre(DECL_ARGS)
 	 * while diagonal bodies need two.
 	 */
 
+	p->flags |= TERMP_NOSPACE;
+
 	switch (type) {
+	case (MDOC_Diag):
+		term_word(p, "\\ \\ ");
+		break;
 	case (MDOC_Inset):
 		if (MDOC_BODY == node->type) 
-			p->flags &= ~TERMP_NOSPACE;
-		else
-			p->flags |= TERMP_NOSPACE;
+			term_word(p, "\\ ");
 		break;
 	default:
-		p->flags |= TERMP_NOSPACE;
 		break;
 	}
+
+	p->flags |= TERMP_NOSPACE;
 
 	/*
 	 * Style flags.  Diagnostic heads need TTYPE_DIAG.
@@ -865,7 +869,7 @@ termp_it_pre(DECL_ARGS)
 		break;
 	case (MDOC_Tag):
 		if (MDOC_HEAD == node->type)
-			p->flags |= TERMP_NOBREAK;
+			p->flags |= TERMP_NOBREAK | TERMP_TWOSPACE;
 		else
 			p->flags |= TERMP_NOLPAD;
 

@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.8 2009/07/26 00:40:28 schwarze Exp $ */
+/*	$Id: term.c,v 1.9 2009/08/09 18:43:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -184,6 +184,9 @@ term_isopendelim(const char *p)
  *    columns.  In short: don't print a newline and instead pad to the
  *    right margin.  Used in conjunction with TERMP_NOLPAD.
  *
+ *  - TERMP_TWOSPACE: when padding, make sure there are at least two
+ *    space characters of padding.  Otherwise, rather break the line.
+ *
  *  - TERMP_DANGLE: don't newline when TERMP_NOBREAK is specified and
  *    the line is overrun, and don't pad-right if it's underrun.
  *
@@ -214,7 +217,7 @@ term_flushln(struct termp *p)
 {
 	int		 i, j;
 	size_t		 vbl, vsz, vis, maxvis, mmax, bp;
-	static int	 sv = -1;
+	static int	 overstep = 0;
 
 	/*
 	 * First, establish the maximum columns of "visible" content.
@@ -224,15 +227,16 @@ term_flushln(struct termp *p)
 	 */
 
 	assert(p->offset < p->rmargin);
-	maxvis = p->rmargin - p->offset;
-	mmax = p->maxrmargin - p->offset;
+	assert((int)(p->rmargin - p->offset) - overstep > 0);
+
+	maxvis = /* LINTED */
+		p->rmargin - p->offset - overstep;
+	mmax = /* LINTED */
+		p->maxrmargin - p->offset - overstep;
+
 	bp = TERMP_NOBREAK & p->flags ? mmax : maxvis;
 	vis = 0;
-
-	if (sv >= 0) {
-		vis = (size_t)sv;
-		sv = -1;
-	}
+	overstep = 0;
 
 	/*
 	 * If in the standard case (left-justified), then begin with our
@@ -302,38 +306,48 @@ term_flushln(struct termp *p)
 		}
 		vis += vsz;
 	}
+	p->col = 0;
 
-	/*
-	 * If we've overstepped our maximum visible no-break space, then
-	 * cause a newline and offset at the right margin.
-	 */
-
-	if ((TERMP_NOBREAK & p->flags) && vis >= maxvis) {
-		if ( ! (TERMP_DANGLE & p->flags) &&
-				! (TERMP_HANG & p->flags)) {
-			putchar('\n');
-			for (i = 0; i < (int)p->rmargin; i++)
-				putchar(' ');
-		}
-		if (TERMP_HANG & p->flags)
-			sv = (int)(vis - maxvis);
-		p->col = 0;
+	if ( ! (TERMP_NOBREAK & p->flags)) {
+		putchar('\n');
 		return;
 	}
 
-	/*
-	 * If we're not to right-marginalise it (newline), then instead
-	 * pad to the right margin and stay off.
-	 */
+	if (TERMP_HANG & p->flags) {
+		/* We need one blank after the tag. */
+		overstep = /* LINTED */
+			vis - maxvis + 1;
 
-	if (p->flags & TERMP_NOBREAK) {
-		if ( ! (TERMP_DANGLE & p->flags))
-			for ( ; vis < maxvis; vis++)
-				putchar(' ');
-	} else
+		/*
+		 * Behave exactly the same way as groff:
+		 * If we have overstepped the margin, temporarily move
+		 * it to the right and flag the rest of the line to be
+		 * shorter.
+		 * If we landed right at the margin, be happy.
+		 * If we are one step before the margin, temporarily
+		 * move it one step LEFT and flag the rest of the line
+		 * to be longer.
+		 */
+		if (overstep >= -1) {
+			assert((int)maxvis + overstep >= 0);
+			/* LINTED */
+			maxvis += overstep;
+		} else
+			overstep = 0;
+
+	} else if (TERMP_DANGLE & p->flags)
+		return;
+
+	/* Right-pad. */
+	if (maxvis > vis + /* LINTED */
+			((TERMP_TWOSPACE & p->flags) ? 1 : 0))  
+		for ( ; vis < maxvis; vis++)
+			putchar(' ');
+	else {	/* ...or newline break. */
 		putchar('\n');
-
-	p->col = 0;
+		for (i = 0; i < (int)p->rmargin; i++)
+			putchar(' ');
+	}
 }
 
 
