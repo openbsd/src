@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.3 2009/07/30 17:46:12 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.4 2009/08/09 08:34:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -112,6 +112,8 @@ load_cfg(const char *path, char **cause)
 	return (0);
 
 error:
+	if (line != NULL)
+		xfree(line);
 	fclose(f);
 
 	xasprintf(&ptr, "%s: %s at line %u", path, *cause, n);
