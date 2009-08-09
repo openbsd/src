@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.3,v 1.3 2009/07/08 00:20:13 schwarze Exp $
+.\"	$Id: mdoc.3,v 1.4 2009/08/09 17:20:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -13,8 +13,8 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.\" 
-.Dd $Mdocdate: July 8 2009 $
+.\"
+.Dd $Mdocdate: August 9 2009 $
 .Dt MDOC 3
 .Os
 .\" SECTION
@@ -50,7 +50,7 @@
 .Sh DESCRIPTION
 The
 .Nm mdoc
-library parses lines of 
+library parses lines of
 .Xr mdoc 7
 input (and
 .Em only
@@ -59,12 +59,12 @@ mdoc) into an abstract syntax tree (AST).
 .Pp
 In general, applications initiate a parsing sequence with
 .Fn mdoc_alloc ,
-parse each line in a document with 
+parse each line in a document with
 .Fn mdoc_parseln ,
 close the parsing session with
 .Fn mdoc_endparse ,
 operate over the syntax tree returned by
-.Fn mdoc_node 
+.Fn mdoc_node
 and
 .Fn mdoc_meta ,
 then free all allocated memory with
@@ -77,13 +77,13 @@ sequence.  See the
 section for a full example.
 .\" PARAGRAPH
 .Pp
-This section further defines the 
+This section further defines the
 .Sx Types ,
-.Sx Functions 
+.Sx Functions
 and
 .Sx Variables
 available to programmers.  Following that, the
-.Sx Abstract Syntax Tree 
+.Sx Abstract Syntax Tree
 section documents the output tree.
 .\" SUBSECTION
 .Ss Types
@@ -106,7 +106,7 @@ A set of message callbacks defined in
 .It Vt struct mdoc_node
 A parsed node.  Defined in
 .Pa mdoc.h .
-See 
+See
 .Sx Abstract Syntax Tree
 for details.
 .El
@@ -119,8 +119,8 @@ Function descriptions follow:
 Allocates a parsing structure.  The
 .Fa data
 pointer is passed to callbacks in
-.Fa cb , 
-which are documented further in the header file.  
+.Fa cb ,
+which are documented further in the header file.
 The
 .Fa pflags
 arguments are defined in
@@ -129,7 +129,7 @@ Returns NULL on failure.  If non-NULL, the pointer must be freed with
 .Fn mdoc_free .
 .\" LIST-ITEM
 .It Fn mdoc_reset
-Reset the parser for another parse routine.  After its use, 
+Reset the parser for another parse routine.  After its use,
 .Fn mdoc_parseln
 behaves as if invoked for the first time.  If it returns 0, memory could
 not be allocated.
@@ -140,26 +140,26 @@ invocation.
 .\" LIST-ITEM
 .It Fn mdoc_parseln
 Parse a nil-terminated line of input.  This line should not contain the
-trailing newline.  Returns 0 on failure, 1 on success.  The input buffer 
+trailing newline.  Returns 0 on failure, 1 on success.  The input buffer
 .Fa buf
 is modified by this function.
 .\" LIST-ITEM
 .It Fn mdoc_endparse
-Signals that the parse is complete.  Note that if 
+Signals that the parse is complete.  Note that if
 .Fn mdoc_endparse
 is called subsequent to
 .Fn mdoc_node ,
 the resulting tree is incomplete.  Returns 0 on failure, 1 on success.
 .\" LIST-ITEM
 .It Fn mdoc_node
-Returns the first node of the parse.  Note that if 
+Returns the first node of the parse.  Note that if
 .Fn mdoc_parseln
 or
 .Fn mdoc_endparse
 return 0, the tree will be incomplete.
 .It Fn mdoc_meta
 Returns the document's parsed meta-data.  If this information has not
-yet been supplied or 
+yet been supplied or
 .Fn mdoc_parseln
 or
 .Fn mdoc_endparse
@@ -178,7 +178,7 @@ An array of string-ified token argument names.
 .El
 .\" SUBSECTION
 .Ss Abstract Syntax Tree
-The 
+The
 .Nm
 functions produce an abstract syntax tree (AST) describing input in a
 regular form.  It may be reviewed at any time with
@@ -186,24 +186,24 @@ regular form.  It may be reviewed at any time with
 however, if called before
 .Fn mdoc_endparse ,
 or after
-.Fn mdoc_endparse 
+.Fn mdoc_endparse
 or
 .Fn mdoc_parseln
-fail, it may be incomplete.  
+fail, it may be incomplete.
 .\" PARAGRAPH
 .Pp
 This AST is governed by the ontological
 rules dictated in
 .Xr mdoc 7
-and derives its terminology accordingly.  
+and derives its terminology accordingly.
 .Qq In-line
 elements described in
 .Xr mdoc 7
-are described simply as 
+are described simply as
 .Qq elements .
 .\" PARAGRAPH
 .Pp
-The AST is composed of 
+The AST is composed of
 .Vt struct mdoc_node
 nodes with block, head, body, element, root and text types as declared
 by the
@@ -216,9 +216,9 @@ and
 fields), its position in the tree (the
 .Va parent ,
 .Va child ,
-.Va next 
+.Va next
 and
-.Va prev 
+.Va prev
 fields) and some type-specific data.
 .\" PARAGRAPH
 .Pp
@@ -251,16 +251,16 @@ where capitalised non-terminals represent nodes.
 Of note are the TEXT nodes following the HEAD, BODY and TAIL nodes of
 the BLOCK production.  These refer to punctuation marks.  Furthermore,
 although a TEXT node will generally have a non-zero-length string, in
-the specific case of 
+the specific case of
 .Sq \&.Bd \-literal ,
 an empty line will produce a zero-length string.
 .\" SECTION
 .Sh EXAMPLES
 The following example reads lines from stdin and parses them, operating
-on the finished parse tree with 
+on the finished parse tree with
 .Fn parsed .
 Note that, if the last line of the file isn't newline-terminated, this
-will truncate the file's last character (see 
+will truncate the file's last character (see
 .Xr fgetln 3 ) .
 Further, this example does not error-check nor free memory upon failure.
 .Bd -literal -offset "XXXX"
@@ -296,23 +296,23 @@ mdoc_free(mdoc);
 .Sh AUTHORS
 The
 .Nm
-utility was written by 
+utility was written by
 .An Kristaps Dzonsons Aq kristaps@kth.se .
 .\" SECTION
 .Sh CAVEATS
 .Bl -dash -compact
 .\" LIST-ITEM
 .It
-The 
+The
 .Sq \&.Xc
 and
 .Sq \&.Xo
 macros aren't handled when used to span lines for the
 .Sq \&.It
-macro. 
+macro.
 .\" LIST-ITEM
 .It
-The 
+The
 .Sq \&.Bsx
 macro family doesn't yet understand version arguments.
 .\" LIST-ITEM
@@ -321,9 +321,9 @@ If not given a value, the \-offset argument to
 .Sq \&.Bd
 and
 .Sq \&.Bl
-should be the width of 
+should be the width of
 .Qq <string> ;
-instead, a value of 
+instead, a value of
 .Li 10n
 is provided.
 .\" LIST-ITEM
@@ -333,12 +333,4 @@ Columns widths in
 should default to width
 .Qq <stringx>
 if not included.
-.\" LIST-ITEM
-.It
-List-width suffix
-.Qq m
-isn't handled.
-.\" LIST-ITEM
-.It
-Contents of the SYNOPSIS section aren't checked.
 .El

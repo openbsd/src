@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.9 2009/07/18 20:50:37 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.10 2009/08/09 17:20:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2009 $
+.Dd $Mdocdate: August 9 2009 $
 .Dt MANDOC 1
 .Os
 .\" SECTION
@@ -34,13 +34,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility formats 
+utility formats
 .Ux
 manual pages for display.  The arguments are as follows:
 .Bl -tag -width Ds
 .\" ITEM
 .It Fl f Ns Ar option...
-Override default compiler behaviour.  See 
+Override default compiler behaviour.  See
 .Sx Compiler Options
 for details.
 .\" ITEM
@@ -63,9 +63,9 @@ Print version and exit.
 Configure warning messages.  Use
 .Fl W Ns Ar all
 to print warnings,
-.Fl W Ns Ar error 
+.Fl W Ns Ar error
 for warnings to be considered errors and cause utility
-termination.  Multiple 
+termination.  Multiple
 .Fl W
 arguments may be comma-separated, such as
 .Fl W Ns Ar error,all .
@@ -79,9 +79,9 @@ will halt with the first failed parse.
 .El
 .\" PARAGRAPH
 .Pp
-By default, 
-.Nm 
-reads 
+By default,
+.Nm
+reads
 .Xr mdoc 7
 or
 .Xr man 7
@@ -101,24 +101,24 @@ it's processed by
 .Nm
 according to the following rules:  opening punctuation
 .Po
-.Sq \&( , 
-.Sq \&[ , 
+.Sq \&( ,
+.Sq \&[ ,
 and
 .Sq \&{
-.Pc 
+.Pc
 is not followed by a space; closing punctuation
 .Po
-.Sq \&. , 
-.Sq \&, , 
-.Sq \&; , 
-.Sq \&: , 
-.Sq \&? , 
-.Sq \&! , 
-.Sq \&) , 
-.Sq \&] 
+.Sq \&. ,
+.Sq \&, ,
+.Sq \&; ,
+.Sq \&: ,
+.Sq \&? ,
+.Sq \&! ,
+.Sq \&) ,
+.Sq \&]
 and
 .Sq \&}
-.Pc 
+.Pc
 is not preceded by whitespace.
 .Pp
 If the input is
@@ -128,10 +128,10 @@ these rules are also applied to macro arguments when appropriate.
 White-space, in non-literal (normal) mode, is stripped from input and
 replaced on output by a single space.  Thus, if you wish to preserve
 multiple spaces, they must be space-escaped
-.Sq \e\ 
-or used in a literal display mode, e.g., 
-.Sq \&.Bd \-literal 
-in 
+.Sq \e\
+or used in a literal display mode, e.g.,
+.Sq \&.Bd \-literal
+in
 .Xr mdoc 7 .
 .\" SUB-SECTION
 .Ss Input Formats
@@ -149,26 +149,26 @@ respectively.  The
 .Xr mdoc 7
 format is
 .Em strongly
-recommended; 
+recommended;
 .Xr man 7
 should only be used for legacy manuals.
 .Pp
 A third option,
 .Fl m Ns Ar andoc ,
 which is also the default, determines encoding on-the-fly: if the first
-non-comment macro is 
+non-comment macro is
 .Sq \&.Dd
 or
 .Sq \&.Dt ,
-the 
+the
 .Xr mdoc 7
 parser is used; otherwise, the
 .Xr man 7
 parser is used.
 .Pp
 If multiple
-files are specified with 
-.Fl m Ns Ar andoc , 
+files are specified with
+.Fl m Ns Ar andoc ,
 each has its file-type determined this way.  If multiple files are
 specified and
 .Fl m Ns Ar doc
@@ -222,11 +222,11 @@ Do not ignore unknown macros at the start of input lines.
 .It Fl f Ns Ar no-ign-chars
 Do not ignore disallowed characters.
 .It Fl f Ns Ar strict
-Implies 
+Implies
 .Fl f Ns Ar no-ign-escape ,
-.Fl f Ns Ar no-ign-macro 
+.Fl f Ns Ar no-ign-macro
 and
-.Fl f Ns Ar no-ign-chars . 
+.Fl f Ns Ar no-ign-chars .
 .El
 .\" PARAGRAPH
 .Pp
@@ -247,19 +247,19 @@ To page manuals to the terminal:
 .D1 % mandoc mandoc.1 mdoc.3 mdoc.7 | less
 .\" SECTION
 .Sh COMPATIBILITY
-This section summarises 
+This section summarises
 .Nm
-compatibility with 
+compatibility with
 .Xr groff 1 .
 .Pp
 .Bl -bullet -compact
-.It 
+.It
 A list or display following
 .Sq \&.Ss
 does not assert a prior vertical break, just as it doesn't with
 .Sq \&.Sh .
 .It
-The \-literal and \-unfilled 
+The \-literal and \-unfilled
 .Sq \&.Bd
 displays types are synonyms, as are \-filled and \-ragged.
 .It
@@ -278,5 +278,5 @@ so double spaces following sentence closure are reduced to a single space
 .Sh AUTHORS
 The
 .Nm
-utility was written by 
+utility was written by
 .An Kristaps Dzonsons Aq kristaps@kth.se .

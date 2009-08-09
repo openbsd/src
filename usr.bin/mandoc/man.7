@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.6 2009/07/18 21:03:18 schwarze Exp $
+.\"	$Id: man.7,v 1.7 2009/08/09 17:20:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2009 $
+.Dd $Mdocdate: August 9 2009 $
 .Dt MAN 7
 .Os
 .\" SECTION
@@ -25,15 +25,15 @@
 .Sh DESCRIPTION
 The
 .Nm man
-language was historically used to format 
+language was historically used to format
 .Ux
 manuals.  This reference document describes its syntax, structure, and
 usage.
 .Pp
-.Bf Em
-Do not use 
+.Bf -emphasis
+Do not use
 .Nm
-to write your manuals.  
+to write your manuals.
 .Ef
 Use the
 .Xr mdoc 7
@@ -43,7 +43,7 @@ language, instead.
 An
 .Nm
 document follows simple rules:  lines beginning with the control
-character 
+character
 .Sq \&.
 are parsed for macros.  Other lines are interpreted within the scope of
 prior macros:
@@ -57,7 +57,7 @@ Other lines are interpreted within the current state.
 documents may contain only graphable 7-bit ASCII characters, the
 space character, and the tabs character.  All manuals must have
 .Ux
-line termination.  
+line termination.
 .Pp
 Blank lines are acceptable; where found, the output will assert a
 vertical space.
@@ -71,8 +71,8 @@ subsequent word isn't off-set by whitespace.
 .\" SUB-SECTION
 .Ss Comments
 Anything following a
-.Sq \e" 
-delimiter is considered a comment (unless the 
+.Sq \e"
+delimiter is considered a comment (unless the
 .Sq \e
 itself has been escaped) and is ignored to the end of line.
 Furthermore, a macro line with only a control character
@@ -82,7 +82,7 @@ optionally followed by whitespace, is ignored.
 .Ss Special Characters
 Special character sequences begin with the escape character
 .Sq \e
-followed by either an open-parenthesis 
+followed by either an open-parenthesis
 .Sq \&(
 for two-character sequences; an open-bracket
 .Sq \&[
@@ -114,7 +114,7 @@ macro describing the document's section and title.  It may occur
 anywhere in the document, although conventionally, it appears as the
 first macro.
 .Pp
-Beyond the 
+Beyond the
 .Sq \&.TH ,
 at least one macro or text node must appear in the document.
 .\" SECTION
@@ -129,11 +129,11 @@ and
 .Sq \&.\ \ \ \&PP
 are equivalent.
 .Pp
-All 
+All
 .Nm
 macros follow the same structural rules:
 .Bd -literal -offset indent
-\&.YO \(lBbody...\(rB 
+\&.YO \(lBbody...\(rB
 .Ed
 .Pp
 The
@@ -141,7 +141,7 @@ The
 consists of zero or more arguments to the macro.
 .Pp
 .Nm
-has a primitive notion of multi-line scope for the following macros: 
+has a primitive notion of multi-line scope for the following macros:
 .Sq \&.TM ,
 .Sq \&.SM ,
 .Sq \&.SB ,
@@ -152,23 +152,23 @@ has a primitive notion of multi-line scope for the following macros:
 .Sq \&.R ,
 .Sq \&.B ,
 .Sq \&.I ,
-.Sq \&.IR 
+.Sq \&.IR
 and
 .Sq \&.RI .
 When these macros are invoked without arguments, the subsequent line is
 considered a continuation of the macro.  Thus:
-.Bd -literal -offset indent 
-\&.RI 
+.Bd -literal -offset indent
+\&.RI
 foo
 .Ed
 .Pp
-is equivalent to 
+is equivalent to
 .Sq \&.RI foo .
 If two consecutive lines exhibit the latter behaviour,
 an error is raised.  Thus, the following is not acceptable:
-.Bd -literal -offset indent 
-\&.RI 
-\&.I 
+.Bd -literal -offset indent
+\&.RI
+\&.I
 Hello, world.
 .Ed
 .Pp
@@ -178,7 +178,7 @@ macro is similar, but does not need an empty argument line to trigger
 the behaviour.
 .\" SECTION
 .Sh MACROS
-This section contains a complete list of all 
+This section contains a complete list of all
 .Nm
 macros and corresponding number of arguments.
 .Pp
@@ -232,7 +232,7 @@ for groff compatibility notes.
 .Sh AUTHORS
 The
 .Nm
-utility was written by 
+utility was written by
 .An Kristaps Dzonsons Aq kristaps@kth.se .
 .\" SECTION
 .Sh CAVEATS
