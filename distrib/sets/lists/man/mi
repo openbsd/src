@@ -1158,6 +1158,7 @@
 ./usr/share/man/cat4/aibs.0
 ./usr/share/man/cat4/aic.0
 ./usr/share/man/cat4/akbd.0
+./usr/share/man/cat4/alc.0
 ./usr/share/man/cat4/ale.0
 ./usr/share/man/cat4/alipm.0
 ./usr/share/man/cat4/alpha
@@ -1570,6 +1571,7 @@
 ./usr/share/man/cat4/mixer.0
 ./usr/share/man/cat4/mos.0
 ./usr/share/man/cat4/moscom.0
+./usr/share/man/cat4/mpath.0
 ./usr/share/man/cat4/mpe.0
 ./usr/share/man/cat4/mpi.0
 ./usr/share/man/cat4/mpu.0
