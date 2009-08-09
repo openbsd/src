@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.11 2009/08/09 14:37:46 art Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.12 2009/08/09 17:45:02 art Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -198,7 +198,8 @@ buf_dealloc_mem(struct buf *bp)
 	bp->b_data = NULL;
 
 	if (data) {
-		bcstats.busymapped--;
+		if (bp->b_flags & B_BUSY)
+			bcstats.busymapped--;
 		pmap_kremove((vaddr_t)data, bp->b_bufsize);
 		pmap_update(pmap_kernel());
 	}
