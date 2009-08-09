@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.130 2009/08/09 18:45:30 henning Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.131 2009/08/09 21:26:45 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -447,7 +447,6 @@ struct m_tag *m_tag_first(struct mbuf *);
 struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 /* Packet tag types */
-#define PACKET_TAG_NONE			0x0000  /* Nadda */
 #define PACKET_TAG_IPSEC_IN_DONE	0x0001  /* IPsec applied, in */
 #define PACKET_TAG_IPSEC_OUT_DONE	0x0002  /* IPsec applied, out */
 #define PACKET_TAG_IPSEC_IN_CRYPTO_DONE	0x0004  /* NIC IPsec crypto done */
