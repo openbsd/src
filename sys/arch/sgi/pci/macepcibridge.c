@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.30 2009/07/26 19:57:45 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.31 2009/08/09 08:16:53 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -767,11 +767,13 @@ mace_pcibr_device_fixup(struct mace_pcibr_softc *sc, int dev, int nfuncs)
 		}
 
 		/*
-		 * The firmware fails to initialize I/O BARs.  Worse, it
-		 * fills them with crap.  So here we disable I/O space and
-		 * reset the I/O BARs to 0.  Device drivers will allocate
-		 * resources themselves and enable I/O space on an as-needed
-		 * basis.
+		 * The firmware will only initialize memory BARs, and only
+		 * the lower half of them if they are 64 bit.
+		 * So here we disable I/O space and reset the I/O BARs to 0,
+		 * and make sure the upper part of 64 bit memory BARs is
+		 * correct.
+		 * Device drivers will allocate resources themselves and
+		 * enable I/O space on an as-needed basis.
 		 */
 		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
@@ -784,7 +786,7 @@ mace_pcibr_device_fixup(struct mace_pcibr_softc *sc, int dev, int nfuncs)
 			switch (type) {
 			case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 				reg += 4;
-				break;
+				/* FALLTHROUGH */
 			case PCI_MAPREG_TYPE_IO:
 				pci_conf_write(pc, tag, reg, 0);
 				break;
