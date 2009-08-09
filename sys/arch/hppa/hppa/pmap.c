@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.142 2009/08/06 15:28:14 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.143 2009/08/09 19:10:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -353,7 +353,6 @@ pmap_dump_pv(paddr_t pa)
 }
 #endif
 
-#ifdef PMAPDEBUG
 int
 pmap_check_alias(struct pv_entry *pve, vaddr_t va, pt_entry_t pte)
 {
@@ -373,7 +372,6 @@ pmap_check_alias(struct pv_entry *pve, vaddr_t va, pt_entry_t pte)
 
 	return (ret);
 }
-#endif
 
 static __inline struct pv_entry *
 pmap_pv_alloc(void)
@@ -417,10 +415,11 @@ pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, struct pmap *pm,
 	pve->pv_ptp	= pdep;
 	pve->pv_next = pg->mdpage.pvh_list;
 	pg->mdpage.pvh_list = pve;
-#ifdef PMAPDEBUG
 	if (pmap_check_alias(pve, va, 0))
-		Debugger();
+#ifdef PMAPDEBUG
+		Debugger()
 #endif
+		;
 }
 
 static __inline struct pv_entry *
