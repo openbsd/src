@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.113 2009/07/23 20:15:32 kettenis Exp $	*/
+/*	$OpenBSD: re.c,v 1.114 2009/08/09 11:40:58 deraadt Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1213,15 +1213,9 @@ re_newbuf(struct rl_softc *sc)
 	u_int32_t	cmdstat;
 	int		error, idx;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
+	m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_arpcom.ac_if, MCLBYTES);
+	if (!m)
 		return (ENOBUFS);
-
-	MCLGETI(m, M_DONTWAIT, &sc->sc_arpcom.ac_if, MCLBYTES);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		return (ENOBUFS);
-	}
 
 	/*
 	 * Initialize mbuf length fields and fixup

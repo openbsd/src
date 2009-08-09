@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.82 2009/08/06 19:53:13 sthen Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.83 2009/08/09 11:40:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3591,16 +3591,9 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 	    *prod_bseq);
 
 	/* This is a new mbuf allocation. */
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
+	m = MCLGETI(NULL, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
+	if (!m)
 		return (ENOBUFS);
-
-	/* Attach a cluster to the mbuf. */
-	MCLGETI(m, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
-	if (!(m->m_flags & M_EXT)) {
-		m_freem(m);
-		return (ENOBUFS);
-	}
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 	/* the chip aligns the ip header for us, no need to m_adj */
 

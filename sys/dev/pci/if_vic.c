@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.71 2009/06/02 12:32:06 deraadt Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.72 2009/08/09 11:40:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1340,15 +1340,9 @@ vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map, u_int pktlen)
 {
 	struct mbuf *m = NULL;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
+	m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_ac.ac_if, pktlen);
+	if (!m)
 		return (NULL);
-
-	MCLGETI(m, M_DONTWAIT, &sc->sc_ac.ac_if, pktlen);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		return (NULL);
-	}
 	m->m_data += ETHER_ALIGN;
 	m->m_len = m->m_pkthdr.len = pktlen - ETHER_ALIGN;
 

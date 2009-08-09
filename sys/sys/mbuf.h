@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.123 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.124 2009/08/09 11:40:58 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -421,7 +421,7 @@ struct  mbuf *m_inject(struct mbuf *, int, int, int);
 struct  mbuf *m_getptr(struct mbuf *, int, int *);
 int	m_leadingspace(struct mbuf *);
 int	m_trailingspace(struct mbuf *);
-void	m_clget(struct mbuf *, int, struct ifnet *, u_int);
+struct mbuf *m_clget(struct mbuf *, int, struct ifnet *, u_int);
 void	m_clsetwms(struct ifnet *, u_int, u_int, u_int);
 int	m_cldrop(struct ifnet *, int);
 void	m_clcount(struct ifnet *, int);

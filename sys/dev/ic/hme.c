@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.58 2009/06/22 14:31:04 sthen Exp $	*/
+/*	$OpenBSD: hme.c,v 1.59 2009/08/09 11:40:58 deraadt Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -1415,16 +1415,10 @@ hme_newbuf(sc, d)
 	 * until we're sure everything is a success.
 	 */
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
+	m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_arpcom.ac_if, MCLBYTES);
+	if (!m)
 		return (ENOBUFS);
 	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
-
-	MCLGETI(m, M_DONTWAIT, &sc->sc_arpcom.ac_if, MCLBYTES);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		return (ENOBUFS);
-	}
 
 	if (bus_dmamap_load(sc->sc_dmatag, sc->sc_rxmap_spare,
 	    mtod(m, caddr_t), MCLBYTES - HME_RX_OFFSET, NULL,

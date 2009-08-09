@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.97 2009/06/18 18:53:02 claudio Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.98 2009/08/09 11:40:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1568,15 +1568,9 @@ vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r)
 	if (r == NULL)
 		return (EINVAL);
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
+	m = MCLGETI(NULL, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
+	if (!m)
 		return (ENOBUFS);
-
-	MCLGETI(m, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
-	if (!(m->m_flags & M_EXT)) {
-		m_free(m);
-		return (ENOBUFS);
-	}
 
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 	m_adj(m, sizeof(u_int64_t));

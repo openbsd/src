@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.60 2009/07/10 07:44:04 blambert Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.61 2009/08/09 11:40:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1010,15 +1010,8 @@ iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
 			goto fail;
 		}
 
-		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
-		if (data->m == NULL) {
-			printf("%s: could not allocate RX mbuf\n",
-			    sc->sc_dev.dv_xname);
-			error = ENOMEM;
-			goto fail;
-		}
-		MCLGETI(data->m, M_DONTWAIT, NULL, IWN_RBUF_SIZE);
-		if (!(data->m->m_flags & M_EXT)) {
+		data->m = MCLGETI(NULL, M_DONTWAIT, NULL, IWN_RBUF_SIZE);
+		if (!data->m) {
 			printf("%s: could not allocate RX mbuf cluster\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOBUFS;
@@ -1704,15 +1697,8 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		return;
 	}
 
-	MGETHDR(m1, M_DONTWAIT, MT_DATA);
-	if (m1 == NULL) {
-		ic->ic_stats.is_rx_nombuf++;
-		ifp->if_ierrors++;
-		return;
-	}
-	MCLGETI(m1, M_DONTWAIT, NULL, IWN_RBUF_SIZE);
-	if (!(m1->m_flags & M_EXT)) {
-		m_freem(m1);
+	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, IWN_RBUF_SIZE);
+	if (!m1) {
 		ic->ic_stats.is_rx_nombuf++;
 		ifp->if_ierrors++;
 		return;

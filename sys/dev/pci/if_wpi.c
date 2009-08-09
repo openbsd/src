@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.89 2009/07/11 13:28:36 blambert Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.90 2009/08/09 11:40:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -641,15 +641,8 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 			goto fail;
 		}
 
-		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
-		if (data->m == NULL) {
-			printf("%s: could not allocate RX mbuf\n",
-			    sc->sc_dev.dv_xname);
-			error = ENOBUFS;
-			goto fail;
-		}
-		MCLGETI(data->m, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
-		if (!(data->m->m_flags & M_EXT)) {
+		data->m = MCLGETI(NULL, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
+		if (!data->m) {
 			printf("%s: could not allocate RX mbuf cluster\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOBUFS;
@@ -1192,15 +1185,8 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		return;
 	}
 
-	MGETHDR(m1, M_DONTWAIT, MT_DATA);
-	if (m1 == NULL) {
-		ic->ic_stats.is_rx_nombuf++;
-		ifp->if_ierrors++;
-		return;
-	}
-	MCLGETI(m1, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
-	if (!(m1->m_flags & M_EXT)) {
-		m_freem(m1);
+	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
+	if (!m1) {
 		ic->ic_stats.is_rx_nombuf++;
 		ifp->if_ierrors++;
 		return;

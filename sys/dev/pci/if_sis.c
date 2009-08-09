@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.94 2009/07/22 21:32:50 miod Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.95 2009/08/09 11:40:56 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1232,15 +1232,9 @@ sis_newbuf(struct sis_softc *sc, struct sis_desc *c)
 	if (c == NULL)
 		return (EINVAL);
 
-	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL)
+	m_new = MCLGETI(NULL, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
+	if (!m_new)
 		return (ENOBUFS);
-
-	MCLGETI(m_new, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
-	if (!(m_new->m_flags & M_EXT)) {
-		m_free(m_new);
-		return (ENOBUFS);
-	}
 
 	m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 

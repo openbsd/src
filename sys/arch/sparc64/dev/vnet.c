@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.16 2009/05/12 21:33:38 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.17 2009/08/09 11:40:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -681,14 +681,10 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			if (desc.hdr.dstate != VIO_DESC_READY)
 				break;
 
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if(m == NULL)
+			m = MCLGETI(NULL, M_DONTWAIT, &sc->sc_ac.ac_if,
+			    MCLBYTES);
+			if (!m)
 				break;
-			MCLGETI(m, M_DONTWAIT, &sc->sc_ac.ac_if, MCLBYTES);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_freem(m);
-				break;
-			}
 			ifp->if_ipackets++;
 			m->m_pkthdr.rcvif = ifp;
 			m->m_len = m->m_pkthdr.len = desc.nbytes;

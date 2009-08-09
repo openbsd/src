@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.24 2009/07/10 12:00:52 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.25 2009/08/09 11:40:56 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -2217,14 +2217,8 @@ ixgbe_get_buf(struct rx_ring *rxr, int i)
 		return (ENOBUFS);
 	}
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		sc->mbuf_alloc_failed++;
-		return (ENOBUFS);
-	}
-	MCLGETI(m, M_DONTWAIT, &sc->arpcom.ac_if, size);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
+	m = MCLGETI(NULL, M_DONTWAIT, &sc->arpcom.ac_if, size);
+	if (!m) {
 		sc->mbuf_cluster_failed++;
 		return (ENOBUFS);
 	}

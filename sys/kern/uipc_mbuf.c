@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.122 2009/06/22 10:51:06 thib Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.123 2009/08/09 11:40:58 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -386,9 +386,10 @@ m_cluncount(struct mbuf *m, int all)
 	} while (all && (m = m->m_next));
 }
 
-void
+struct mbuf *
 m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 {
+	struct mbuf *m0 = NULL;
 	int pi;
 	int s;
 
@@ -399,11 +400,25 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 #endif
 
 	if (ifp != NULL && m_cldrop(ifp, pi))
-		return;
+		return (NULL);
 
 	s = splnet();
+	if (m == NULL) {
+		MGETHDR(m0, M_DONTWAIT, MT_DATA);
+		if (m0 == NULL) {
+			splx(s);
+			return (NULL);
+		}
+		m = m0;
+	}			
 	m->m_ext.ext_buf = pool_get(&mclpools[pi],
 	    how == M_WAIT ? PR_WAITOK : 0);
+	if (!m->m_ext.ext_buf) {
+		if (m0)
+			m_freem(m0);
+		splx(s);
+		return (NULL);
+	}
 	splx(s);
 	if (m->m_ext.ext_buf != NULL) {
 		m->m_data = m->m_ext.ext_buf;
@@ -419,6 +434,7 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 
 		MCLINITREFERENCE(m);
 	}
+	return (m);
 }
 
 struct mbuf *

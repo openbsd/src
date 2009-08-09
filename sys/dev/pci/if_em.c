@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.215 2009/07/27 16:37:52 claudio Exp $ */
+/* $OpenBSD: if_em.c,v 1.216 2009/08/09 11:40:56 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2307,14 +2307,8 @@ em_get_buf(struct em_softc *sc, int i)
 		return (ENOBUFS);
 	}
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		sc->mbuf_alloc_failed++;
-		return (ENOBUFS);
-	}
-	MCLGETI(m, M_DONTWAIT, &sc->interface_data.ac_if, MCLBYTES);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
+	m = MCLGETI(NULL, M_DONTWAIT, &sc->interface_data.ac_if, MCLBYTES);
+	if (!m) {
 		sc->mbuf_cluster_failed++;
 		return (ENOBUFS);
 	}
