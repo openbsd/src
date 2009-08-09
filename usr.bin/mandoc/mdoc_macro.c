@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.14 2009/07/26 23:48:01 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.15 2009/08/09 16:36:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -71,7 +71,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ad */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* An */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ar */
-	{ in_line_eoln, MDOC_CALLABLE }, /* Cd */
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Cd */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Cm */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Dv */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Er */ 
