@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.31 2009/07/26 01:59:46 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.32 2009/08/09 17:38:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1024,11 +1024,20 @@ post_it(POST_ARGS)
 		c = mdoc->last->child;
 		for (i = 0; c && MDOC_HEAD == c->type; c = c->next)
 			i++;
-		if (i == cols)
+
+		if (i < cols) {
+			if ( ! mdoc_vwarn(mdoc, mdoc->last->line, 
+					mdoc->last->pos, "column "
+					"mismatch: have %d, want %d", 
+					i, cols))
+				return(0);
 			break;
-		return(mdoc_verr(mdoc, mdoc->last->line, mdoc->last->pos,
-				"column mismatch (have %d, want %d)", 
-				i, cols));
+		} else if (i == cols)
+			break;
+
+		return(mdoc_verr(mdoc, mdoc->last->line, 
+				mdoc->last->pos, "column mismatch: "
+				"have %d, want %d", i, cols));
 	default:
 		break;
 	}

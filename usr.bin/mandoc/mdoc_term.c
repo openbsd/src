@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.40 2009/07/26 23:39:54 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.41 2009/08/09 17:38:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -667,6 +667,9 @@ fmt_block_vspace(struct termp *p,
 
 	if (arg_hasattr(MDOC_Compact, bl))
 		return(1);
+	/* XXX - not documented! */
+	else if (arg_hasattr(MDOC_Column, bl))
+		return(1);
 
 	for (n = node; n; n = n->parent) {
 		if (MDOC_BLOCK != n->type)
@@ -790,6 +793,8 @@ termp_it_pre(DECL_ARGS)
 		if (0 == width)
 			width = 8;
 		break;
+	case (MDOC_Column):
+		/* FALLTHROUGH */
 	case (MDOC_Tag):
 		if (0 == width)
 			width = 10;
@@ -908,12 +913,14 @@ termp_it_pre(DECL_ARGS)
 	case (MDOC_Hang):
 		/* FALLTHROUGH */
 	case (MDOC_Tag):
+		assert(width);
 		if (MDOC_HEAD == node->type)
 			p->rmargin = p->offset + width;
 		else 
 			p->offset += width;
 		break;
 	case (MDOC_Column):
+		assert(width);
 		p->rmargin = p->offset + width;
 		break;
 	default:
@@ -1813,8 +1820,9 @@ static void
 termp_in_post(DECL_ARGS)
 {
 
-	p->flags |= TERMP_NOSPACE;
+	p->flags |= TERMP_NOSPACE | ttypes[TTYPE_INCLUDE];
 	term_word(p, ">");
+	p->flags &= ~ttypes[TTYPE_INCLUDE];
 
 	if (SEC_SYNOPSIS != node->sec)
 		return;
