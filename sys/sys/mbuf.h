@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.126 2009/08/09 12:42:09 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.127 2009/08/09 12:50:09 henning Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -96,6 +96,7 @@ struct	pkthdr {
 	struct ifnet		*rcvif;		/* rcv interface */
 	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 	int			 len;		/* total packet length */
+	u_int32_t		 tagsset;	/* mtags attached */
 	u_int16_t		 csum_flags;	/* checksum flags */
 	u_int16_t		 ether_vtag;	/* Ethernet 802.1p+Q vlan tag */
 	u_int			 rdomain;	/* routing domain id */
@@ -453,19 +454,17 @@ struct m_tag *m_tag_first(struct mbuf *);
 struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 /* Packet tag types */
-#define PACKET_TAG_NONE				0  /* Nadda */
-#define PACKET_TAG_IPSEC_IN_DONE		1  /* IPsec applied, in */
-#define PACKET_TAG_IPSEC_OUT_DONE		2  /* IPsec applied, out */
-#define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		3  /* NIC IPsec crypto done */
-#define PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED	4  /* NIC IPsec crypto req'ed */
-#define PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO	5  /* NIC notifies IPsec */
-#define PACKET_TAG_IPSEC_PENDING_TDB		6  /* Reminder to do IPsec */
-#define PACKET_TAG_BRIDGE			7  /* Bridge processing done */
-#define PACKET_TAG_GIF				8  /* GIF processing done */
-#define PACKET_TAG_GRE				9  /* GRE processing done */
-#define PACKET_TAG_IN_PACKET_CHECKSUM		10 /* NIC checksumming done */
-#define PACKET_TAG_DLT				17 /* data link layer type */
-#define PACKET_TAG_PF_DIVERT			18 /* pf(4) diverted packet */
+#define PACKET_TAG_NONE			0x0000  /* Nadda */
+#define PACKET_TAG_IPSEC_IN_DONE	0x0001  /* IPsec applied, in */
+#define PACKET_TAG_IPSEC_OUT_DONE	0x0002  /* IPsec applied, out */
+#define PACKET_TAG_IPSEC_IN_CRYPTO_DONE	0x0004  /* NIC IPsec crypto done */
+#define PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED 0x0008  /* NIC IPsec crypto req'ed */
+#define PACKET_TAG_IPSEC_PENDING_TDB	0x0010  /* Reminder to do IPsec */
+#define PACKET_TAG_BRIDGE		0x0020  /* Bridge processing done */
+#define PACKET_TAG_GIF			0x0040  /* GIF processing done */
+#define PACKET_TAG_GRE			0x0080  /* GRE processing done */
+#define PACKET_TAG_DLT			0x0100 /* data link layer type */
+#define PACKET_TAG_PF_DIVERT		0x0200 /* pf(4) diverted packet */
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */

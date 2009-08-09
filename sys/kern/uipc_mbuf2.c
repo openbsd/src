@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.29 2008/11/30 18:22:15 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.30 2009/08/09 12:50:09 henning Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -276,14 +276,23 @@ void
 m_tag_prepend(struct mbuf *m, struct m_tag *t)
 {
 	SLIST_INSERT_HEAD(&m->m_pkthdr.tags, t, m_tag_link);
+	m->m_pkthdr.tagsset |= t->m_tag_id;
 }
 
 /* Unlink and free a packet tag. */
 void
 m_tag_delete(struct mbuf *m, struct m_tag *t)
 {
+	u_int32_t	 tagsset = 0;
+	struct m_tag	*p;
+
 	SLIST_REMOVE(&m->m_pkthdr.tags, t, m_tag, m_tag_link);
 	free(t, M_PACKET_TAGS);
+
+	SLIST_FOREACH(p, &m->m_pkthdr.tags, m_tag_link)
+		tagsset |= p->m_tag_id;
+	m->m_pkthdr.tagsset = tagsset;
+
 }
 
 /* Unlink and free a packet tag chain. */
@@ -296,6 +305,7 @@ m_tag_delete_chain(struct mbuf *m)
 		SLIST_REMOVE_HEAD(&m->m_pkthdr.tags, m_tag_link);
 		free(p, M_PACKET_TAGS);
 	}
+	m->m_pkthdr.tagsset = 0;
 }
 
 /* Find a tag, starting from a given position. */
@@ -303,6 +313,9 @@ struct m_tag *
 m_tag_find(struct mbuf *m, int type, struct m_tag *t)
 {
 	struct m_tag *p;
+
+	if (!(m->m_pkthdr.tagsset & type))
+		return (NULL);
 
 	if (t == NULL)
 		p = SLIST_FIRST(&m->m_pkthdr.tags);
@@ -352,6 +365,7 @@ m_tag_copy_chain(struct mbuf *to, struct mbuf *from)
 		else
 			SLIST_INSERT_AFTER(tprev, t, m_tag_link);
 		tprev = t;
+		to->m_pkthdr.tagsset |= t->m_tag_id;
 	}
 	return (1);
 }
