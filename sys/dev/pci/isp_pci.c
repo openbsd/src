@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.51 2009/06/29 18:53:38 deraadt Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.52 2009/08/09 09:55:03 kettenis Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -462,6 +462,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t confopts = 0;
 #ifdef __sparc64__
 	int node, iid;
+	u_int64_t wwn;
 #endif
 
 	DEFAULT_IID(isp) = 7;
@@ -480,6 +481,16 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		node = OF_parent(node);
+	}
+
+	node = PCITAG_NODE(pa->pa_tag);
+	if (OF_getprop(node, "node-wwn", &wwn, sizeof(wwn)) == sizeof(wwn)) {
+		DEFAULT_NODEWWN(isp) = wwn;
+		confopts |= ISP_CFG_OWNWWNN;
+	}
+	if (OF_getprop(node, "port-wwn", &wwn, sizeof(wwn)) == sizeof(wwn)) {
+		DEFAULT_PORTWWN(isp) = wwn;
+		confopts |= ISP_CFG_OWNWWPN;
 	}
 #endif
 #ifdef __sgi__
@@ -802,8 +813,10 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", intrstr);
 
 	if (IS_FC(isp)) {
-		DEFAULT_NODEWWN(isp) = 0x400000007F000003ULL;
-		DEFAULT_PORTWWN(isp) = 0x400000007F000003ULL;
+		if (DEFAULT_NODEWWN(isp) == 0)
+			DEFAULT_NODEWWN(isp) = 0x400000007F000003ULL;
+		if (DEFAULT_PORTWWN(isp) == 0)
+			DEFAULT_PORTWWN(isp) = 0x400000007F000003ULL;
 	}
 
 	isp->isp_confopts = confopts | self->dv_cfdata->cf_flags;
