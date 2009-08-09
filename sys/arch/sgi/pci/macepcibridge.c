@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.31 2009/08/09 08:16:53 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.32 2009/08/09 12:36:33 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -247,7 +247,7 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/*
-	 * The O2 firmware sucks.  It makes a mess off I/O BARs and
+	 * The O2 firmware sucks.  It makes a mess of I/O BARs and
 	 * an even bigger mess for PCI-PCI bridges.
 	 */
 	mace_pcibr_configure(sc);
