@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.86 2009/07/30 18:19:26 deraadt Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.87 2009/08/09 13:41:03 thib Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@ struct pool_item_header {
 	LIST_ENTRY(pool_item_header)
 				ph_pagelist;	/* pool page list */
 	TAILQ_HEAD(,pool_item)	ph_itemlist;	/* chunk list for this page */
-	SPLAY_ENTRY(pool_item_header)
+	RB_ENTRY(pool_item_header)
 				ph_node;	/* Off-page page headers */
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
@@ -150,8 +150,8 @@ phtree_compare(struct pool_item_header *a, struct pool_item_header *b)
 		return (0);
 }
 
-SPLAY_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
-SPLAY_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
+RB_PROTOTYPE(phtree, pool_item_header, ph_node, phtree_compare);
+RB_GENERATE(phtree, pool_item_header, ph_node, phtree_compare);
 
 /*
  * Return the pool page header based on page address.
@@ -182,7 +182,7 @@ pr_find_pagehead(struct pool *pp, void *v)
 	 */
 	tmp.ph_page = v;
 	tmp.ph_pagesize = 0;
-	ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
+	ph = RB_FIND(phtree, &pp->pr_phtree, &tmp);
 
 	if (ph) {
 		KASSERT(ph->ph_page <= (caddr_t)v);
@@ -219,7 +219,7 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	 */
 	LIST_REMOVE(ph, ph_pagelist);
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
-		SPLAY_REMOVE(phtree, &pp->pr_phtree, ph);
+		RB_REMOVE(phtree, &pp->pr_phtree, ph);
 	if (pq) {
 		LIST_INSERT_HEAD(pq, ph, ph_pagelist);
 	} else {
@@ -355,7 +355,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		/* The page header will be taken from our page header pool */
 		pp->pr_phoffset = 0;
 		off = palloc->pa_pagesz;
-		SPLAY_INIT(&pp->pr_phtree);
+		RB_INIT(&pp->pr_phtree);
 	}
 
 	/*
@@ -846,7 +846,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	ph->ph_pagesize = pp->pr_alloc->pa_pagesz;
 	ph->ph_nmissing = 0;
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
-		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
+		RB_INSERT(phtree, &pp->pr_phtree, ph);
 
 	pp->pr_nidle++;
 
