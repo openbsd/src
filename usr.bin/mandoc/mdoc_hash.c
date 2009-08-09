@@ -1,4 +1,4 @@
-/*	$Id: mdoc_hash.c,v 1.4 2009/07/26 01:08:13 schwarze Exp $ */
+/*	$Id: mdoc_hash.c,v 1.5 2009/08/09 18:01:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
