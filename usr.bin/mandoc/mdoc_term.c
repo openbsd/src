@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.43 2009/08/09 19:01:24 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.44 2009/08/09 19:15:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1009,10 +1009,9 @@ termp_it_post(DECL_ARGS)
 	assert(-1 != type);
 
 	switch (type) {
-	case (MDOC_Diag):
-		term_word(p, "\\ ");
-		/* FALLTHROUGH */
 	case (MDOC_Item):
+		/* FALLTHROUGH */
+	case (MDOC_Diag):
 		/* FALLTHROUGH */
 	case (MDOC_Inset):
 		if (MDOC_BODY == node->type)
