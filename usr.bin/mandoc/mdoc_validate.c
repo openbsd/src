@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.33 2009/08/09 20:11:30 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.34 2009/08/09 21:49:45 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -908,7 +908,7 @@ post_an(POST_ARGS)
 	if (mdoc->last->args) {
 		if (NULL == mdoc->last->child)
 			return(1);
-		return(mdoc_nerr(mdoc, mdoc->last, ELINE));
+		return(mdoc_nerr(mdoc, mdoc->last, ENOLINE));
 	}
 
 	if (mdoc->last->child)
@@ -1215,6 +1215,7 @@ post_sh_body(POST_ARGS)
 			return(0);
 	}
 
+	assert(n);
 	if (MDOC_BLOCK == n->type && MDOC_Nd == n->tok)
 		return(1);
 	return(mdoc_nwarn(mdoc, mdoc->last, ENAMESECINC));
