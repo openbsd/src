@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.46 2009/08/09 20:11:30 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.47 2009/08/09 20:37:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,7 +27,6 @@
 #include "mdoc.h"
 
 /* FIXME: macro arguments can be escaped. */
-/* FIXME: support more offset/width tokens. */
 
 #define	TTYPE_PROG	  0
 #define	TTYPE_CMD_FLAG	  1
@@ -66,7 +65,7 @@ const	int ttypes[TTYPE_NMAX] = {
 	TERMP_UNDER, 		/* TTYPE_FUNC_ARG */
 	TERMP_UNDER, 		/* TTYPE_LINK */
 	TERMP_BOLD,	 	/* TTYPE_SSECTION */
-	TERMP_UNDER, 		/* TTYPE_FILE */
+	TERMP_UNDER,		/* TTYPE_FILE */
 	TERMP_UNDER, 		/* TTYPE_EMPH */
 	TERMP_BOLD,	 	/* TTYPE_CONFIG */
 	TERMP_BOLD,	 	/* TTYPE_CMD */
@@ -903,7 +902,21 @@ termp_it_pre(DECL_ARGS)
 		else
 			p->flags |= TERMP_NOLPAD;
 
-		if (MDOC_HEAD == node->type)
+		if (MDOC_HEAD != node->type)
+			break;
+
+		/*
+		 * This is ugly.  If `-hang' is specified and the body
+		 * is a `Bl' or `Bd', then we want basically to nullify
+		 * the "overstep" effect in term_flushln() and treat
+		 * this as a `-ohang' list instead.
+		 */
+		if (node->next->child && 
+				(MDOC_Bl == node->next->child->tok ||
+				 MDOC_Bd == node->next->child->tok)) {
+			p->flags &= ~TERMP_NOBREAK;
+			p->flags &= ~TERMP_NOLPAD;
+		} else
 			p->flags |= TERMP_HANG;
 		break;
 	case (MDOC_Tag):
@@ -945,6 +958,17 @@ termp_it_pre(DECL_ARGS)
 	p->offset += offset;
 
 	switch (type) {
+	case (MDOC_Hang):
+		/*
+		 * Same stipulation as above, regarding `-hang'.  We
+		 * don't want to recalculate rmargin and offsets when
+		 * using `Bd' or `Bl' within `-hang' overstep lists.
+		 */
+		if (MDOC_HEAD == node->type && node->next->child &&
+				(MDOC_Bl == node->next->child->tok || 
+				 MDOC_Bd == node->next->child->tok))
+			break;
+		/* FALLTHROUGH */
 	case (MDOC_Bullet):
 		/* FALLTHROUGH */
 	case (MDOC_Dash):
@@ -952,8 +976,6 @@ termp_it_pre(DECL_ARGS)
 	case (MDOC_Enum):
 		/* FALLTHROUGH */
 	case (MDOC_Hyphen):
-		/* FALLTHROUGH */
-	case (MDOC_Hang):
 		/* FALLTHROUGH */
 	case (MDOC_Tag):
 		assert(width);
