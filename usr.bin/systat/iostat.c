@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.36 2009/06/06 17:52:39 jasper Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.37 2009/08/09 14:38:36 art Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -262,5 +262,9 @@ showbcache(void)
 
 	print_fld_str(FLD_IO_SSTR, "cachehits");
 	print_fld_ssize(FLD_IO_SVAL, bccur.cachehits - bclast.cachehits);
+	end_line();
+
+	print_fld_str(FLD_IO_SSTR, "busymapped");
+	print_fld_ssize(FLD_IO_SVAL, bccur.busymapped);
 	end_line();
 }
