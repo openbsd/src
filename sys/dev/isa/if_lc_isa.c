@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lc_isa.c,v 1.7 2005/11/21 18:16:40 millert Exp $ */
+/*	$OpenBSD: if_lc_isa.c,v 1.8 2009/08/10 22:08:04 deraadt Exp $ */
 /*	$NetBSD: if_lc_isa.c,v 1.10 2001/06/13 10:46:03 wiz Exp $ */
 
 /*-
@@ -152,12 +152,6 @@ lemac_isa_find(sc, ia, attach)
 		    ia->ia_irq, irq);
 
 	if (attach) {
-		sc->sc_ats = shutdownhook_establish(lemac_shutdown, sc);
-		if (sc->sc_ats == NULL)
-			printf(
-			    "\n%s: warning: can't establish shutdown hook\n",
-			    sc->sc_dv.dv_xname);
-
 		lemac_ifattach(sc);
 
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, irq, IST_EDGE,
