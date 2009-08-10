@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.30 2009/07/29 17:31:33 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.31 2009/08/10 17:27:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1909,7 +1909,7 @@ run_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		dmalen = letoh32(*(uint32_t *)buf) & 0xffff;
 
 		if (__predict_false(dmalen == 0 || (dmalen & 3) != 0)) {
-			DPRINTF(("bad DMA length %u (%x)\n", dmalen));
+			DPRINTF(("bad DMA length %u\n", dmalen));
 			break;
 		}
 		if (__predict_false(dmalen + 8 > xferlen)) {
