@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661reg.h,v 1.9 2006/08/09 07:46:37 damien Exp $	*/
+/*	$OpenBSD: rt2661reg.h,v 1.10 2009/08/10 18:13:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -40,6 +40,9 @@
 #define RT2661_H2M_MAILBOX_CSR		0x2100
 #define RT2661_M2H_CMD_DONE_CSR		0x2104
 #define RT2661_HW_BEACON_BASE0		0x2c00
+#define RT2661_HW_BEACON_BASE1		0x2d00
+#define RT2661_HW_BEACON_BASE2		0x2e00
+#define RT2661_HW_BEACON_BASE3		0x2f00
 #define RT2661_MAC_CSR0			0x3000
 #define RT2661_MAC_CSR1			0x3004
 #define RT2661_MAC_CSR2			0x3008
@@ -372,7 +375,11 @@ struct rt2661_rx_desc {
 	{ RT2661_CWMIN_CSR,        0x00002344 },	\
 	{ RT2661_CWMAX_CSR,        0x000034aa },	\
 	{ RT2661_TEST_MODE_CSR,    0x00000200 },	\
-	{ RT2661_M2H_CMD_DONE_CSR, 0xffffffff }
+	{ RT2661_M2H_CMD_DONE_CSR, 0xffffffff },	\
+	{ RT2661_HW_BEACON_BASE0,  0x00000000 },	\
+	{ RT2661_HW_BEACON_BASE1,  0x00000000 },	\
+	{ RT2661_HW_BEACON_BASE2,  0x00000000 },	\
+	{ RT2661_HW_BEACON_BASE3,  0x00000000 }
 
 /*
  * Default values for BBP registers; values taken from the reference driver.
