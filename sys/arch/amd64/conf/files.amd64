@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.52 2009/06/06 05:26:28 oga Exp $
+#	$OpenBSD: files.amd64,v 1.53 2009/08/10 14:40:27 jsg Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -211,6 +211,11 @@ include "dev/bluetooth/files.bluetooth"
 # I2C
 #
 include "dev/i2c/files.i2c"
+
+#
+# Machine-independent GPIO drivers
+#
+include "dev/gpio/files.gpio"
 
 #
 # ACPI
