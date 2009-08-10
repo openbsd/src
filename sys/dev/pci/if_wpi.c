@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.90 2009/08/09 11:40:56 deraadt Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.91 2009/08/10 17:21:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -642,8 +642,8 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 		}
 
 		data->m = MCLGETI(NULL, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
-		if (!data->m) {
-			printf("%s: could not allocate RX mbuf cluster\n",
+		if (data->m == NULL) {
+			printf("%s: could not allocate RX mbuf\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOBUFS;
 			goto fail;
@@ -1186,7 +1186,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	}
 
 	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
-	if (!m1) {
+	if (m1 == NULL) {
 		ic->ic_stats.is_rx_nombuf++;
 		ifp->if_ierrors++;
 		return;
