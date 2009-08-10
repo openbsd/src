@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.141 2009/08/10 10:51:17 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.142 2009/08/10 11:02:38 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -824,6 +824,10 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 #if NMPATH > 0
 	/* should multipathing steal the link? */
 	if (mpath_path_attach(sc_link) == 0) {
+		printf("%s: path to", scsi->sc_dev.dv_xname);
+		scsibus_printlink(sc_link);
+		printf("\n");
+
 		scsi->sc_link[target][lun] = sc_link;
 		return (0);
 	}
