@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.72 2009/08/09 11:40:56 deraadt Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.73 2009/08/10 17:25:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -314,7 +314,6 @@ struct cfattach vic_ca = {
 };
 
 int		vic_intr(void *);
-void		vic_shutdown(void *);
 
 int		vic_query(struct vic_softc *);
 int		vic_alloc_data(struct vic_softc *);
@@ -794,14 +793,6 @@ vic_link_state(struct vic_softc *sc)
 		ifp->if_link_state = link_state;
 		if_link_state_change(ifp);
 	}
-}
-
-void
-vic_shutdown(void *self)
-{
-	struct vic_softc *sc = (struct vic_softc *)self;
-
-	vic_stop(&sc->sc_ac.ac_if);
 }
 
 int

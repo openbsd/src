@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.50 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.51 2009/08/10 17:25:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -142,7 +142,6 @@ int lge_ioctl(struct ifnet *, u_long, caddr_t);
 void lge_init(void *);
 void lge_stop(struct lge_softc *);
 void lge_watchdog(struct ifnet *);
-void lge_shutdown(void *);
 int lge_ifmedia_upd(struct ifnet *);
 void lge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
@@ -1497,17 +1496,4 @@ lge_stop(struct lge_softc *sc)
 
 	bzero((char *)&sc->lge_ldata->lge_tx_list,
 		sizeof(sc->lge_ldata->lge_tx_list));
-}
-
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-void
-lge_shutdown(void *xsc)
-{
-	struct lge_softc	*sc = (struct lge_softc *)xsc;
-
-	lge_reset(sc);
-	lge_stop(sc);
 }
