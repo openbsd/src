@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.20 2009/06/03 00:12:34 thib Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.21 2009/08/10 10:59:12 thib Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -45,6 +45,8 @@
  * Holds NFS specific information for mount.
  */
 struct	nfsmount {
+	RB_HEAD(nfs_nodetree, nfsnode)
+		nm_ntree;		/* filehandle/node tree */
 	int	nm_flag;		/* Flags for soft/hard... */
 	struct	mount *nm_mountp;	/* Vfs structure for this filesystem */
 	int	nm_numgrps;		/* Max. size of groupslist */

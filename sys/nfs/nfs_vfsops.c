@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.86 2009/08/04 17:12:39 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.87 2009/08/10 10:59:12 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -697,6 +697,8 @@ mountnfs(argp, mp, nam, pth, hst)
 	bcopy(argp, &mp->mnt_stat.mount_info.nfs_args, sizeof(*argp));
 	nmp->nm_nam = nam;
 	nfs_decode_args(nmp, argp, &mp->mnt_stat.mount_info.nfs_args);
+
+	RB_INIT(&nmp->nm_ntree);
 
 	/* Set up the sockets and per-host congestion */
 	nmp->nm_sotype = argp->sotype;

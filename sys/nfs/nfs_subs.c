@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.100 2009/08/10 09:38:44 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.101 2009/08/10 10:59:12 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -931,11 +931,14 @@ nfs_init()
 
 #ifdef NFSCLIENT
 int
-nfs_vfs_init(vfsp)
-	struct vfsconf *vfsp;
+nfs_vfs_init(struct vfsconf *vfsp)
 {
+	extern struct pool nfs_node_pool;
+
 	TAILQ_INIT(&nfs_bufq);
-	nfs_nhinit();			/* Init the nfsnode table */
+
+	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0,
+	    "nfsnodepl", NULL);
 
 	return (0);
 }

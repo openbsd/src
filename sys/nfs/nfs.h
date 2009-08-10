@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.46 2009/08/10 09:38:44 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.47 2009/08/10 10:59:11 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -262,9 +262,6 @@ enum nfs_rto_timers {
 #define NFS_MAX_TIMER	(NFS_WRITE_TIMER)
 
 #define NFS_INITRTT	(NFS_HZ << 3)
-
-#define	NFSNOHASH(fhsum) \
-	(&nfsnodehashtbl[(fhsum) & nfsnodehash])
 
 /*
  * Network address hash list element

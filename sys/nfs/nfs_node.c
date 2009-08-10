@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.45 2009/07/20 16:49:40 thib Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.46 2009/08/10 10:59:12 thib Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/hash.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
 
@@ -56,27 +55,22 @@
 #include <nfs/nfsmount.h>
 #include <nfs/nfs_var.h>
 
-LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
-u_long nfsnodehash;
-struct rwlock nfs_hashlock = RWLOCK_INITIALIZER("nfshshlk");
-
 struct pool nfs_node_pool;
-
 extern int prtactive;
 
-#define	nfs_hash(x,y)	hash32_buf((x), (y), HASHINIT)
+struct rwlock nfs_hashlock = RWLOCK_INITIALIZER("nfshshlk");
 
-/*
- * Initialize hash links for nfsnodes
- * and build nfsnode free list.
- */
-void
-nfs_nhinit()
+/* filehandle to node lookup. */
+static __inline int
+nfsnode_cmp(const struct nfsnode *a, const struct nfsnode *b)
 {
-	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, M_WAITOK, &nfsnodehash);
-	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
-	    &pool_allocator_nointr);
+	if (a->n_fhsize != b->n_fhsize)
+		return (a->n_fhsize - b->n_fhsize);
+	return (memcmp(a->n_fhp, b->n_fhp, a->n_fhsize));
 }
+
+RB_PROTOTYPE(nfs_nodetree, nfsnode, n_entry, nfsnode_cmp);
+RB_GENERATE(nfs_nodetree, nfsnode, n_entry, nfsnode_cmp);
 
 /*
  * Look up a vnode/nfsnode by file handle.
@@ -85,41 +79,40 @@ nfs_nhinit()
  * nfsnode structure is returned.
  */
 int
-nfs_nget(mntp, fhp, fhsize, npp)
-	struct mount *mntp;
-	nfsfh_t *fhp;
-	int fhsize;
-	struct nfsnode **npp;
+nfs_nget(struct mount *mnt, nfsfh_t *fh, int fhsize, struct nfsnode **npp)
 {
-	struct nfsmount *nmp;
-	struct proc *p = curproc;	/* XXX */
-	struct nfsnode *np;
-	struct nfsnodehashhead *nhpp;
-	struct vnode *vp;
-	extern int (**nfsv2_vnodeop_p)(void *);
-	struct vnode *nvp;
-	int error;
+	extern int (**nfsv2_vnodeop_p)(void *);		/* XXX */
+	struct nfsmount		*nmp;
+	struct nfsnode		*np, find;
+	struct vnode		*vp, *nvp;
+	struct proc		*p = curproc;		/* XXX */
+	int			 error;
 
-	nhpp = NFSNOHASH(nfs_hash(fhp, fhsize));
+	nmp = VFSTONFS(mnt);
+
 loop:
-	LIST_FOREACH(np, nhpp, n_hash) {
-		if (mntp != NFSTOV(np)->v_mount || np->n_fhsize != fhsize ||
-		    bcmp((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize))
-			continue;
+	/* XXXTHIB: locking. */
+	find.n_fhp = fh;
+	find.n_fhsize = fhsize;
+	np = RB_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
+	if (np != NULL) {
 		vp = NFSTOV(np);
 		if (vget(vp, LK_EXCLUSIVE, p))
 			goto loop;
 		*npp = np;
-		return(0);
+		return (0);
 	}
+
 	if (rw_enter(&nfs_hashlock, RW_WRITE|RW_SLEEPFAIL))
 		goto loop;
-	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &nvp);
+
+	error = getnewvnode(VT_NFS, mnt, nfsv2_vnodeop_p, &nvp);
 	if (error) {
-		*npp = 0;
+		*npp = NULL;
 		rw_exit(&nfs_hashlock);
 		return (error);
 	}
+
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK | PR_ZERO);
 	vp->v_data = np;
@@ -131,21 +124,20 @@ loop:
 	 * Are we getting the root? If so, make sure the vnode flags
 	 * are correct 
 	 */
-	nmp = VFSTONFS(mntp);
-	if ((fhsize == nmp->nm_fhsize) &&
-	    !bcmp(fhp, nmp->nm_fh, fhsize)) {
+	if ((fhsize == nmp->nm_fhsize) && !bcmp(fh, nmp->nm_fh, fhsize)) {
 		if (vp->v_type == VNON)
 			vp->v_type = VDIR;
 		vp->v_flag |= VROOT;
 	}
-	
-	LIST_INSERT_HEAD(nhpp, np, n_hash);
+
 	np->n_fhp = &np->n_fh;
-	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
+	bcopy(fh, np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
+	RB_INSERT(nfs_nodetree, &nmp->nm_ntree, np);
 	np->n_accstamp = -1;
 	rw_exit(&nfs_hashlock);
 	*npp = np;
+
 	return (0);
 }
 
@@ -190,27 +182,28 @@ nfs_inactive(v)
  * Reclaim an nfsnode so that it can be used for other purposes.
  */
 int
-nfs_reclaim(v)
-	void *v;
+nfs_reclaim(void *v)
 {
-	struct vop_reclaim_args *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct nfsnode *np = VTONFS(vp);
+	struct vop_reclaim_args	*ap = v;
+	struct vnode		*vp = ap->a_vp;
+	struct nfsmount		*nmp = VFSTONFS(vp->v_mount);
+	struct nfsnode		*np = VTONFS(vp);
 
 #ifdef DIAGNOSTIC
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
 #endif
 
-	if (np->n_hash.le_prev != NULL)
-		LIST_REMOVE(np, n_hash);
+	RB_REMOVE(nfs_nodetree, &nmp->nm_ntree, np);
 
 	if (np->n_rcred)
 		crfree(np->n_rcred);
 	if (np->n_wcred)
 		crfree(np->n_wcred);
+
 	cache_purge(vp);
 	pool_put(&nfs_node_pool, vp->v_data);
 	vp->v_data = NULL;
+
 	return (0);
 }
