@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.17 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.18 2009/08/10 19:41:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -92,7 +92,6 @@
 int	et_match(struct device *, void *, void *);
 void	et_attach(struct device *, struct device *, void *);
 int	et_detach(struct device *, int);
-int	et_shutdown(struct device *);
 
 int	et_miibus_readreg(struct device *, int, int);
 void	et_miibus_writereg(struct device *, int, int, int);
@@ -314,19 +313,6 @@ et_detach(struct device *self, int flags)
 	}
 
 	bus_space_unmap(sc->sc_mem_bt, sc->sc_mem_bh, sc->sc_mem_size);
-
-	return 0;
-}
-
-int
-et_shutdown(struct device *self)
-{
-	struct et_softc *sc = (struct et_softc *)self;
-	int s;
-
-	s = splnet();
-	et_stop(sc);
-	splx(s);
 
 	return 0;
 }

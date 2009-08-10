@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.48 2009/07/28 08:24:06 sthen Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.49 2009/08/10 19:41:05 deraadt Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -90,8 +90,6 @@ void	stge_watchdog(struct ifnet *);
 int	stge_ioctl(struct ifnet *, u_long, caddr_t);
 int	stge_init(struct ifnet *);
 void	stge_stop(struct ifnet *, int);
-
-void	stge_shutdown(void *);
 
 void	stge_reset(struct stge_softc *);
 void	stge_rxdrain(struct stge_softc *);
@@ -424,14 +422,6 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(stge_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -461,19 +451,6 @@ stge_attach(struct device *parent, struct device *self, void *aux)
  fail_0:
 	bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
 	return;
-}
-
-/*
- * stge_shutdown:
- *
- *	Make sure the interface is stopped at reboot time.
- */
-void
-stge_shutdown(void *arg)
-{
-	struct stge_softc *sc = arg;
-
-	stge_stop(&sc->sc_arpcom.ac_if, 1);
 }
 
 static void

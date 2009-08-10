@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.43 2008/11/28 02:44:18 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.44 2009/08/10 19:41:05 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -82,7 +82,6 @@
 int	ste_probe(struct device *, void *, void *);
 void	ste_attach(struct device *, struct device *, void *);
 int	ste_intr(void *);
-void	ste_shutdown(void *);
 void	ste_init(void *);
 void	ste_rxeoc(struct ste_softc *);
 void	ste_rxeof(struct ste_softc *);
@@ -985,8 +984,6 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	shutdownhook_establish(ste_shutdown, sc);
 	return;
 
 fail_2:
@@ -1504,12 +1501,4 @@ ste_watchdog(struct ifnet *ifp)
 		ste_start(ifp);
 
 	return;
-}
-
-void
-ste_shutdown(void *v)
-{
-	struct ste_softc	*sc = (struct ste_softc *)v;
-
-	ste_stop(sc);
 }

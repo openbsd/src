@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.95 2009/08/09 11:40:56 deraadt Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.96 2009/08/10 19:41:05 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -114,7 +114,6 @@ struct cfdriver sis_cd = {
 };
 
 int sis_intr(void *);
-void sis_shutdown(void *);
 void sis_fill_rx_ring(struct sis_softc *);
 int sis_newbuf(struct sis_softc *, struct sis_desc *);
 int sis_encap(struct sis_softc *, struct mbuf *, u_int32_t *);
@@ -1144,8 +1143,6 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	shutdownhook_establish(sis_shutdown, sc);
 	return;
 
 fail_2:
@@ -1989,16 +1986,4 @@ sis_stop(struct sis_softc *sc)
 		bzero((char *)&sc->sis_ldata->sis_tx_list[i],
 		    sizeof(struct sis_desc) - sizeof(bus_dmamap_t));
 	}
-}
-
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-void
-sis_shutdown(void *v)
-{
-	struct sis_softc	*sc = (struct sis_softc *)v;
-
-	sis_stop(sc);
 }

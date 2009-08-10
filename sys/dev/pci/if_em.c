@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.216 2009/08/09 11:40:56 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.217 2009/08/10 19:41:05 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -152,7 +152,6 @@ const struct pci_matchid em_devices[] = {
  *********************************************************************/
 int  em_probe(struct device *, void *, void *);
 void em_attach(struct device *, struct device *, void *);
-void em_shutdown(void *);
 int  em_intr(void *);
 void em_power(int, void *);
 void em_start(struct ifnet *);
@@ -438,7 +437,6 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		sc->pcix_82544 = FALSE;
 	INIT_DEBUGOUT("em_attach: end");
 	sc->sc_powerhook = powerhook_establish(em_power, sc);
-	sc->sc_shutdownhook = shutdownhook_establish(em_shutdown, sc);
 	return;
 
 err_mac_addr:
@@ -462,20 +460,6 @@ em_power(int why, void *arg)
 		if (ifp->if_flags & IFF_UP)
 			em_init(sc);
 	}
-}
-
-/*********************************************************************
- *
- *  Shutdown entry point
- *
- **********************************************************************/ 
-
-void
-em_shutdown(void *arg)
-{
-	struct em_softc *sc = arg;
-
-	em_stop(sc);
 }
 
 /*********************************************************************

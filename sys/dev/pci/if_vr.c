@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.98 2009/08/09 11:40:56 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.99 2009/08/10 19:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -122,7 +122,6 @@ int vr_ioctl(struct ifnet *, u_long, caddr_t);
 void vr_init(void *);
 void vr_stop(struct vr_softc *);
 void vr_watchdog(struct ifnet *);
-void vr_shutdown(void *);
 int vr_ifmedia_upd(struct ifnet *);
 void vr_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
@@ -668,8 +667,6 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	m_clsetwms(ifp, MCLBYTES, 2, VR_RX_LIST_CNT - 1);
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	shutdownhook_establish(vr_shutdown, sc);
 	return;
 
 fail_5:
@@ -1545,18 +1542,6 @@ vr_stop(struct vr_softc *sc)
 
 	bzero((char *)&sc->vr_ldata->vr_tx_list,
 		sizeof(sc->vr_ldata->vr_tx_list));
-}
-
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-void
-vr_shutdown(void *arg)
-{
-	struct vr_softc		*sc = (struct vr_softc *)arg;
-
-	vr_stop(sc);
 }
 
 int

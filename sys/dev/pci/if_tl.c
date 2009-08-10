@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.47 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.48 2009/08/10 19:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -264,7 +264,6 @@ int tl_ioctl(struct ifnet *, u_long, caddr_t);
 void tl_init(void *);
 void tl_stop(struct tl_softc *);
 void tl_watchdog(struct ifnet *);
-void tl_shutdown(void *);
 int tl_ifmedia_upd(struct ifnet *);
 void tl_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
@@ -2176,8 +2175,6 @@ tl_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	shutdownhook_establish(tl_shutdown, sc);
 }
 
 void
@@ -2189,15 +2186,6 @@ tl_wait_up(xsc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-}
-
-void
-tl_shutdown(xsc)
-	void *xsc;
-{
-	struct tl_softc *sc = xsc;
-
-	tl_stop(sc);
 }
 
 struct cfattach tl_ca = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.25 2009/08/09 11:40:56 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.26 2009/08/10 19:41:05 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -65,7 +65,6 @@ int	ixgbe_probe(struct device *, void *, void *);
 void	ixgbe_attach(struct device *, struct device *, void *);
 int	ixgbe_detach(struct device *, int);
 void	ixgbe_power(int, void *);
-void	ixgbe_shutdown(void *);
 void	ixgbe_start(struct ifnet *);
 void	ixgbe_start_locked(struct tx_ring *, struct ifnet *);
 int	ixgbe_ioctl(struct ifnet *, u_long, caddr_t);
@@ -239,7 +238,6 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_CTRL_EXT, ctrl_ext);
 
 	sc->powerhook = powerhook_establish(ixgbe_power, sc);
-	sc->shutdownhook = shutdownhook_establish(ixgbe_shutdown, sc);
 
 	printf(", address %s\n", ether_sprintf(sc->hw.mac.addr));
 
@@ -302,20 +300,6 @@ ixgbe_power(int why, void *arg)
 		if (ifp->if_flags & IFF_UP)
 			ixgbe_init(sc);
 	}
-}
-
-/*********************************************************************
- *
- *  Shutdown entry point
- *
- **********************************************************************/
-
-void
-ixgbe_shutdown(void *arg)
-{
-	struct ix_softc *sc = (struct ix_softc *)arg;
-
-	ixgbe_stop(sc);
 }
 
 /*********************************************************************
