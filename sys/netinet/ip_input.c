@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.169 2009/08/10 15:26:33 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.170 2009/08/10 15:29:34 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1562,7 +1562,6 @@ ip_forward(m, srcrt)
 		break;
 
 	case ENOBUFS:
-#if 1
 		/*
 		 * a router should not generate ICMP_SOURCEQUENCH as
 		 * required in RFC1812 Requirements for IP Version 4 Routers.
@@ -1570,11 +1569,6 @@ ip_forward(m, srcrt)
 		 * or the underlying interface is rate-limited.
 		 */
 		goto freecopy;
-#else
-		type = ICMP_SOURCEQUENCH;
-		code = 0;
-		break;
-#endif
 	}
 
 	mcopy = m_copym(&mfake, 0, len, M_DONTWAIT);
