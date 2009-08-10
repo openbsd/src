@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.14 2008/10/12 00:54:49 brad Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.15 2009/08/10 21:29:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -75,7 +75,6 @@ void	re_cardbus_attach(struct device *, struct device *, void *);
 int	re_cardbus_detach(struct device *, int);
 void	re_cardbus_setup(struct rl_softc *);
 
-void	re_cardbus_shutdown(void *);
 void	re_cardbus_powerhook(int, void *);
 
 /*
@@ -159,13 +158,10 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 	snprintf(intrstr, sizeof(intrstr), "irq %d", ca->ca_intrline);
 
-	sc->sc_sdhook = shutdownhook_establish(re_cardbus_shutdown, sc);
 	sc->sc_pwrhook = powerhook_establish(re_cardbus_powerhook, sc);
 
 	/* Call bus-independent (common) attach routine */
 	if (re_attach(sc, intrstr)) {
-		if (sc->sc_sdhook != NULL)
-			shutdownhook_disestablish(sc->sc_sdhook);
 		if (sc->sc_pwrhook != NULL)
 			powerhook_disestablish(sc->sc_pwrhook);
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
@@ -262,8 +258,6 @@ re_cardbus_detach(struct device *self, int flags)
 	if_detach(ifp);
 
 	/* No more hooks */
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 	if (sc->sc_pwrhook != NULL)
 		powerhook_disestablish(sc->sc_pwrhook);
 
@@ -276,15 +270,6 @@ re_cardbus_detach(struct device *self, int flags)
 	    csc->sc_mapsize);
 
 	return (0);
-}
-
-void
-re_cardbus_shutdown(void *arg)
-{
-	struct rl_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	re_stop(ifp, 1);
 }
 
 void
