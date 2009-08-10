@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.197 2009/07/09 06:40:20 blambert Exp $	*/
+/*	$OpenBSD: if.c,v 1.198 2009/08/10 11:22:10 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1055,6 +1055,32 @@ link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
 			ifa->ifa_rtrequest(cmd, rt, info);
 	}
+}
+
+/*
+ * Bring down all interfaces
+ */
+void
+if_downall(void)
+{
+	struct ifreq ifrq;	/* XXX only partly built */
+	struct ifnet *ifp;
+	int s;
+
+	s = splnet();
+	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list)) {
+		if ((ifp->if_flags & IFF_UP) == 0)
+			continue;
+		if_down(ifp);
+		ifp->if_flags &= ~IFF_UP;
+
+		if (ifp->if_ioctl) {
+			ifrq.ifr_flags = ifp->if_flags;
+			(void) (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
+			    (caddr_t)&ifrq);
+		}
+	}
+	splx(s);
 }
 
 /*
