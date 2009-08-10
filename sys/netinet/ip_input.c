@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.167 2009/08/10 11:48:02 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.168 2009/08/10 13:20:08 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1477,8 +1477,8 @@ ip_forward(m, srcrt)
 	mfake.m_type = m->m_type;
 	M_DUP_PKTHDR(&mfake, m);
 	mfake.m_data = mfake.m_pktdat;
-	len = min(ntohs(ip->ip_len), 68);
-	bcopy(ip, mfake.m_pktdat, len);
+	len = min(min(ntohs(ip->ip_len), 68), MHLEN);
+	m_copydata(m, 0, len, mfake.m_pktdat);
 	mfake.m_pkthdr.len = mfake.m_len = len;
 
 	ip->ip_ttl -= IPTTLDEC;
