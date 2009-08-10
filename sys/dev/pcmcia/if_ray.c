@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.37 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.38 2009/08/10 22:11:56 deraadt Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -172,7 +172,6 @@ struct ray_softc {
 	struct pcmcia_mem_handle	sc_mem;
 	int				sc_window;
 	void				*sc_ih;
-	void				*sc_sdhook;
 	void				*sc_pwrhook;
 	int				sc_flags;
 #define	RAY_FLAGS_RESUMEINIT	0x01
@@ -332,7 +331,6 @@ void ray_reset(struct ray_softc *);
 void ray_reset_resetloop(void *);
 int ray_send_auth(struct ray_softc *, u_int8_t *, u_int8_t);
 void ray_set_pending(struct ray_softc *, u_int);
-void ray_shutdown(void *);
 int ray_simple_cmd(struct ray_softc *, u_int, u_int);
 void ray_start_assoc(struct ray_softc *);
 void ray_start_join_net(struct ray_softc *);
@@ -635,7 +633,6 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	/* disable the card */
 	pcmcia_function_disable(sc->sc_pf);
 
-	sc->sc_sdhook = shutdownhook_establish(ray_shutdown, sc);
 	sc->sc_pwrhook = powerhook_establish(ray_power, sc);
 
 	/* The attach is successful. */
@@ -713,8 +710,6 @@ ray_detach(struct device *self, int flags)
 	if_detach(ifp);
 	if (sc->sc_pwrhook != NULL)
 		powerhook_disestablish(sc->sc_pwrhook);
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 
 	return (0);
 }
@@ -926,15 +921,6 @@ ray_power(int why, void *arg)
 		break;
 	}
 #endif
-}
-
-void
-ray_shutdown(void *arg)
-{
-	struct ray_softc *sc;
-
-	sc = arg;
-	ray_disable(sc);
 }
 
 int
