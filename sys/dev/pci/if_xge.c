@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.49 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.50 2009/08/10 17:29:19 deraadt Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -179,7 +179,6 @@ struct xge_softc {
 	struct ifmedia		xena_media;
 
 	void			*sc_ih;
-	void			*sc_shutdownhook;
 
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_st;
@@ -223,7 +222,6 @@ int xge_alloc_txmem(struct xge_softc *);
 int xge_alloc_rxmem(struct xge_softc *);
 void xge_start(struct ifnet *);
 void xge_stop(struct ifnet *, int);
-void xge_shutdown(void *);
 int xge_add_rxbuf(struct xge_softc *, int);
 void xge_setmulti(struct xge_softc *);
 void xge_setpromisc(struct xge_softc *);
@@ -655,8 +653,6 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	sc->sc_shutdownhook = shutdownhook_establish(xge_shutdown, sc);
-
 	/*
 	 * Setup interrupt vector before initializing.
 	 */
@@ -809,15 +805,6 @@ xge_stop(struct ifnet *ifp, int disable)
 
 	while ((PIF_RCSR(ADAPTER_STATUS) & QUIESCENT) != QUIESCENT)
 		;
-}
-
-void
-xge_shutdown(void *pv)
-{
-	struct xge_softc *sc = (struct xge_softc *)pv;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	xge_stop(ifp, 1);
 }
 
 int
