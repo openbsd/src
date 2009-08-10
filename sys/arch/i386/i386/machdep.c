@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.456 2009/08/09 10:40:17 blambert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.457 2009/08/10 16:40:50 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3689,15 +3689,11 @@ i386_intlock(int ipl)
 {
 	if (ipl < IPL_SCHED)
 		__mp_lock(&kernel_lock);
-
-	curcpu()->ci_idepth++;
 }
 
 void
 i386_intunlock(int ipl)
 {
-	curcpu()->ci_idepth--;
-
 	if (ipl < IPL_SCHED)
 		__mp_unlock(&kernel_lock);
 }
@@ -3706,13 +3702,11 @@ void
 i386_softintlock(void)
 {
 	__mp_lock(&kernel_lock);
-	curcpu()->ci_idepth++;
 }
 
 void
 i386_softintunlock(void)
 {
-	curcpu()->ci_idepth--;
 	__mp_unlock(&kernel_lock);
 }
 #endif

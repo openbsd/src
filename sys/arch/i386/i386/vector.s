@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.13 2009/07/10 13:51:47 jsg Exp $	*/
+/*	$OpenBSD: vector.s,v 1.14 2009/08/10 16:40:50 oga Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ _C_LABEL(Xintr_##name##num):						;\
 	testl	%ebx,%ebx						;\
 	jz	_C_LABEL(Xstray_##name##num)	/* no handlers; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
+	incl	CPUVAR(IDEPTH)						;\
 	LOCK_KERNEL(IF_PPL(%esp))					;\
 7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
@@ -140,6 +141,7 @@ _C_LABEL(Xintr_##name##num):						;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
 	UNLOCK_KERNEL(IF_PPL(%esp))					;\
+	decl	CPUVAR(IDEPTH)						;\
 	STRAY_TEST(name,num)		/* see if it's a stray */	;\
 6:	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
