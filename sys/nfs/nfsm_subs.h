@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.42 2009/08/09 13:34:41 thib Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.43 2009/08/10 09:18:31 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -38,10 +38,6 @@
 
 #ifndef _NFS_NFSM_SUBS_H_
 #define _NFS_NFSM_SUBS_H_
-
-
-#define	NFSMSIZ(m)	(((m)->m_flags & M_EXT) ? (m)->m_ext.ext_size : \
-			    (((m)->m_flags & M_PKTHDR) ? MHLEN : MLEN))
 
 struct nfsm_info {
 	struct mbuf	 *nmi_mreq;
