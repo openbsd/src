@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.56 2008/08/27 09:05:03 damien Exp $	*/
+/*	$OpenBSD: an.c,v 1.57 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -345,8 +345,6 @@ an_attach(struct an_softc *sc)
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64);
 #endif
-
-	sc->sc_sdhook = shutdownhook_establish(an_shutdown, sc);
 
 	sc->sc_attached = 1;
 
@@ -1296,15 +1294,6 @@ an_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
-void
-an_shutdown(void *self)
-{
-	struct an_softc *sc = (struct an_softc *)self;
-
-	if (sc->sc_attached)
-		an_stop(&sc->sc_ic.ic_if, 1);
-}
-
 /* TBD factor with ieee80211_media_change */
 int
 an_media_change(struct ifnet *ifp)
@@ -1690,8 +1679,6 @@ an_detach(struct an_softc *sc)
 	ifmedia_delete_instance(&sc->sc_ic.ic_media, IFM_INST_ANY);
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 	splx(s);
 	return 0;
 }

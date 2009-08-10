@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.13 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.14 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -80,8 +80,6 @@ void	epic_watchdog(struct ifnet *);
 int	epic_ioctl(struct ifnet *, u_long, caddr_t);
 int	epic_init(struct ifnet *);
 void	epic_stop(struct ifnet *, int);
-
-void	epic_shutdown(void *);
 
 void	epic_reset(struct epic_softc *);
 void	epic_rxdrain(struct epic_softc *);
@@ -296,14 +294,6 @@ epic_attach(struct epic_softc *sc, const char *intrstr)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(epic_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -334,17 +324,6 @@ epic_attach(struct epic_softc *sc, const char *intrstr)
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
 	return;
-}
-
-/*
- * Shutdown hook.  Make sure the interface is stopped at reboot.
- */
-void
-epic_shutdown(void *arg)
-{
-	struct epic_softc *sc = arg;
-
-	epic_stop(&sc->sc_arpcom.ac_if, 1);
 }
 
 /*

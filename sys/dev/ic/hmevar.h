@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.13 2009/06/11 22:37:58 sthen Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.14 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -79,7 +79,6 @@ struct hme_softc {
 	struct hme_ring		sc_rb;
 
 	int			sc_debug;
-	void			*sc_sh;		/* shutdownhook cookie */
 
 	/* Special hardware hooks */
 	void	(*sc_hwreset)(struct hme_softc *);

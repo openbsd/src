@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.66 2009/07/23 20:15:32 kettenis Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.67 2009/08/10 20:29:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -807,7 +807,6 @@ struct rl_softc {
 	int			rl_eecmd_read;
 	int			rl_eewidth;
 	int			rl_bus_speed;
-	void			*sc_sdhook;	/* shutdownhook */
 	void			*sc_pwrhook;
 	int			rl_txthresh;
 	struct rl_chain_data	rl_cdata;

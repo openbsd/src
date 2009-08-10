@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.28 2006/06/27 09:48:02 reyk Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.29 2009/08/10 20:29:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -112,7 +112,6 @@ struct wi_softc	{
 		u_int16_t		wi_confbits;
 		u_int16_t		wi_confbits_param0;
 	} wi_debug;
-	void				*sc_sdhook;
 	struct wi_usb_softc		*wi_usb_cdata;
 
 	struct wi_funcs			*sc_funcs;

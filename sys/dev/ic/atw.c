@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.66 2009/06/03 20:00:36 deraadt Exp $	*/
+/*	$OpenBSD: atw.c,v 1.67 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -841,14 +841,6 @@ atw_attach(struct atw_softc *sc)
 	bpfattach(&sc->sc_radiobpf, ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64);
 #endif
-
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(atw_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
 
 	/*
 	 * Add a suspend hook to make sure we come back up after a
@@ -2757,8 +2749,6 @@ atw_detach(struct atw_softc *sc)
 	    sizeof(struct atw_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
 
@@ -2766,15 +2756,6 @@ atw_detach(struct atw_softc *sc)
 		free(sc->sc_srom, M_DEVBUF);
 
 	return (0);
-}
-
-/* atw_shutdown: make sure the interface is stopped at reboot time. */
-void
-atw_shutdown(void *arg)
-{
-	struct atw_softc *sc = arg;
-
-	atw_stop(&sc->sc_ic.ic_if, 1);
 }
 
 int

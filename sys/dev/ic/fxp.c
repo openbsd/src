@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.96 2009/06/06 02:49:39 naddy Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.97 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -284,7 +284,6 @@ fxp_write_eeprom(struct fxp_softc *sc, u_short *data, int offset, int words)
  * Operating system-specific autoconfiguration glue
  *************************************************************/
 
-void	fxp_shutdown(void *);
 void	fxp_power(int, void *);
 
 struct cfdriver fxp_cd = {
@@ -292,21 +291,10 @@ struct cfdriver fxp_cd = {
 };
 
 /*
- * Device shutdown routine. Called at system shutdown after sync. The
- * main purpose of this routine is to shut off receiver DMA so that
- * kernel memory doesn't get clobbered during warmboot.
- */
-void
-fxp_shutdown(void *sc)
-{
-	fxp_stop((struct fxp_softc *) sc, 0);
-}
-
-/*
  * Power handler routine. Called when the system is transitioning
- * into/out of power save modes.  As with fxp_shutdown, the main
- * purpose of this routine is to shut off receiver DMA so it doesn't
- * clobber kernel memory at the wrong time.
+ * into/out of power save modes.  The main purpose of this routine
+ * is to shut off receiver DMA so it doesn't clobber kernel memory
+ * at the wrong time.
  */
 void
 fxp_power(int why, void *arg)
@@ -510,14 +498,9 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	ether_ifattach(ifp);
 
 	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
+	 * Add power hook, so that DMA is disabled prior to reboot. Not
 	 * doing so could allow DMA to corrupt kernel memory during the
 	 * reboot before the driver initializes.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(fxp_shutdown, sc);
-
-	/*
-	 * Add suspend hook, for similiar reasons..
 	 */
 	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
 
@@ -1070,8 +1053,6 @@ fxp_detach(struct fxp_softc *sc)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
 
@@ -1090,7 +1071,7 @@ fxp_stop(struct fxp_softc *sc, int drain)
 
 	/*
 	 * Turn down interface (done early to avoid bad interactions
-	 * between panics, shutdown hooks, and the watchdog timer)
+	 * between panics, and the watchdog timer)
 	 */
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

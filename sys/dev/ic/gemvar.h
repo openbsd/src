@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.21 2009/03/22 21:46:31 kettenis Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.22 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -155,7 +155,6 @@ struct gem_softc {
 #define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */
 
 
-	void *sc_sdhook;		/* shutdown hook */
 	void *sc_powerhook;		/* power management hook */
 
 	struct gem_stats sc_stats;	/* debugging stats */

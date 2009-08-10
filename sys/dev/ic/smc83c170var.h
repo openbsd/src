@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170var.h,v 1.2 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: smc83c170var.h,v 1.3 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: smc83c170var.h,v 1.9 2005/02/04 02:10:37 perry Exp $	*/
 
 /*-
@@ -99,7 +99,6 @@ struct epic_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct arpcom sc_arpcom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 
 	int sc_hwflags;			/* info about board */
 #define EPIC_HAS_BNC		0x01	/* BNC on serial interface */

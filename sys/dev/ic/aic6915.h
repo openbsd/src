@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.h,v 1.3 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: aic6915.h,v 1.4 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: aic6915reg.h,v 1.4 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
@@ -763,7 +763,6 @@ struct sf_softc {
 	bus_space_handle_t sc_sh_func;	/* sub-handle for func regs */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct arpcom sc_arpcom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 	int sc_iomapped;		/* are we I/O mapped? */
 	int sc_flags;			/* misc. flags */
 

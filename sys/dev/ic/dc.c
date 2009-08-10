@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.111 2009/06/26 19:11:17 deraadt Exp $	*/
+/*	$OpenBSD: dc.c,v 1.112 2009/08/10 20:29:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -130,7 +130,6 @@
 #include <dev/ic/dcreg.h>
 
 int dc_intr(void *);
-void dc_shutdown(void *);
 void dc_power(int, void *);
 struct dc_type *dc_devtype(void *);
 int dc_newbuf(struct dc_softc *, int, struct mbuf *);
@@ -1818,7 +1817,6 @@ hasmac:
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	sc->sc_dhook = shutdownhook_establish(dc_shutdown, sc);
 	sc->sc_pwrhook = powerhook_establish(dc_power, sc);
 
 fail:
@@ -3124,18 +3122,6 @@ dc_stop(struct dc_softc *sc)
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-void
-dc_shutdown(void *v)
-{
-	struct dc_softc *sc = (struct dc_softc *)v;
-
-	dc_stop(sc);
-}
-
 void
 dc_power(int why, void *arg)
 {
@@ -3170,8 +3156,6 @@ dc_detach(struct dc_softc *sc)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	if (sc->sc_dhook != NULL)
-		shutdownhook_disestablish(sc->sc_dhook);
 	if (sc->sc_pwrhook != NULL)
 		powerhook_disestablish(sc->sc_pwrhook);
 

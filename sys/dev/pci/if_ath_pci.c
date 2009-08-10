@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.19 2009/03/29 21:53:52 sthen Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.20 2009/08/10 20:29:52 deraadt Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -83,7 +83,6 @@ struct ath_pci_softc {
 	pcitag_t		sc_pcitag;
 
 	void			*sc_ih;		/* Interrupt handler. */
-	void			*sc_sdhook;	/* Shutdown hook. */
 };
 
 /* Base Address Register */
@@ -91,7 +90,6 @@ struct ath_pci_softc {
 
 int	 ath_pci_match(struct device *, void *, void *);
 void	 ath_pci_attach(struct device *, struct device *, void *);
-void	 ath_pci_shutdown(void *);
 int	 ath_pci_detach(struct device *, int);
 
 struct cfattach ath_pci_ca = {
@@ -177,17 +175,9 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	psc->sc_sdhook = shutdownhook_establish(ath_pci_shutdown, psc);
-	if (psc->sc_sdhook == NULL) {
-		printf(": can't establish shutdown hook\n");
-		goto deintr;
-	}
-
 	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
 		return;
 
-	shutdownhook_disestablish(psc->sc_sdhook);
-deintr:
 	pci_intr_disestablish(pc, psc->sc_ih);
 unmap:
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_ss);
@@ -208,23 +198,10 @@ ath_pci_detach(struct device *self, int flags)
 		psc->sc_ih = NULL;
 	}
 
-	if (psc->sc_sdhook != NULL) {
-		shutdownhook_disestablish(psc->sc_sdhook);
-		psc->sc_sdhook = NULL;
-	}
-
 	if (sc->sc_ss != 0) {
 		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_ss);
 		sc->sc_ss = 0;
 	}
 
 	return (0);
-}
-
-void
-ath_pci_shutdown(void *self)
-{
-	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
-
-	ath_shutdown(&psc->sc_sc);
 }

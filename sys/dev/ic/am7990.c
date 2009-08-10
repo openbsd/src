@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.43 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.44 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -77,8 +77,6 @@ integrate void am7990_tint(struct am7990_softc *);
 integrate int am7990_put(struct am7990_softc *, int, struct mbuf *);
 integrate struct mbuf *am7990_get(struct am7990_softc *, int, int);
 integrate void am7990_read(struct am7990_softc *, int, int); 
-
-hide void am7990_shutdown(void *);
 
 #define	ifp	(&sc->sc_arpcom.ac_if)
 
@@ -187,10 +185,6 @@ am7990_config(sc)
 	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 	printf("%s: %d receive buffers, %d transmit buffers\n",
 	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
-
-	sc->sc_sh = shutdownhook_establish(am7990_shutdown, sc);
-	if (sc->sc_sh == NULL)
-		panic("am7990_config: can't establish shutdownhook");
 
 	mem = 0;
 	sc->sc_initaddr = mem;
@@ -912,14 +906,6 @@ am7990_ioctl(ifp, cmd, data)
 
 	splx(s);
 	return (error);
-}
-
-hide void
-am7990_shutdown(arg)
-	void *arg;
-{
-
-	am7990_stop((struct am7990_softc *)arg);
 }
 
 #ifdef LEDEBUG

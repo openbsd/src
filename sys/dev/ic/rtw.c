@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.74 2009/07/28 11:45:05 blambert Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.75 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3624,27 +3624,10 @@ rtw_power(int why, void *arg)
 	splx(s);
 }
 
-/* rtw_shutdown: make sure the interface is stopped at reboot time. */
-void
-rtw_shutdown(void *arg)
-{
-	struct rtw_softc *sc = arg;
-
-	rtw_stop(&sc->sc_ic.ic_if, 1);
-}
-
 void
 rtw_establish_hooks(struct rtw_hooks *hooks, const char *dvname,
     void *arg)
 {
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	hooks->rh_shutdown = shutdownhook_establish(rtw_shutdown, arg);
-	if (hooks->rh_shutdown == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    dvname);
-
 	/*
 	 * Add a suspend hook to make sure we come back up after a
 	 * resume.
@@ -3659,9 +3642,6 @@ void
 rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
     void *arg)
 {
-	if (hooks->rh_shutdown != NULL)
-		shutdownhook_disestablish(hooks->rh_shutdown);
-
 	if (hooks->rh_power != NULL)
 		powerhook_disestablish(hooks->rh_power);
 }

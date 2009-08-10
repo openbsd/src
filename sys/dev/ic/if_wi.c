@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.144 2009/06/03 20:35:37 beck Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.145 2009/08/10 20:29:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.144 2009/06/03 20:35:37 beck Exp $";
+	"$OpenBSD: if_wi.c,v 1.145 2009/08/10 20:29:54 deraadt Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -138,7 +138,6 @@ STATIC int wi_ioctl(struct ifnet *, u_long, caddr_t);
 STATIC void wi_init_io(struct wi_softc *);
 STATIC void wi_start(struct ifnet *);
 STATIC void wi_watchdog(struct ifnet *);
-STATIC void wi_shutdown(void *);
 STATIC void wi_rxeof(struct wi_softc *);
 STATIC void wi_txeof(struct wi_softc *, int);
 STATIC void wi_update_stats(struct wi_softc *);
@@ -445,8 +444,6 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 #if NBPFILTER > 0
 	BPFATTACH(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-
-	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
 
 	if_addgroup(ifp, "wlan");
 	ifp->if_priority = IF_WIRELESS_DEFAULT_PRIORITY;
@@ -2605,20 +2602,7 @@ wi_detach(struct wi_softc *sc)
 	
 	if (sc->wi_flags & WI_FLAGS_ATTACHED) {
 		sc->wi_flags &= ~WI_FLAGS_ATTACHED;
-		if (sc->sc_sdhook != NULL)
-			shutdownhook_disestablish(sc->sc_sdhook);
 	}
-}
-
-STATIC void
-wi_shutdown(void *arg)
-{
-	struct wi_softc		*sc;
-
-	sc = arg;
-	wi_stop(sc);
-
-	return;
 }
 
 STATIC void

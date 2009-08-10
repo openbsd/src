@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.29 2009/06/02 16:50:20 jsg Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.30 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -127,7 +127,6 @@ struct fxp_softc {
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
 	int eeprom_size;		/* size of serial EEPROM */
 	int rx_bufs;			/* how many rx buffers allocated? */
-	void *sc_sdhook;		/* shutdownhook */
 	void *sc_powerhook;		/* powerhook */
 	struct fxp_txsw txs[FXP_NTXCB];
 	struct fxp_txsw *sc_cbt_cons, *sc_cbt_prod, *sc_cbt_prev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.8 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.9 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -80,8 +80,6 @@ void	sf_watchdog(struct ifnet *);
 int	sf_ioctl(struct ifnet *, u_long, caddr_t);
 int	sf_init(struct ifnet *);
 void	sf_stop(struct ifnet *, int);
-
-void	sf_shutdown(void *);
 
 void	sf_txintr(struct sf_softc *);
 void	sf_rxintr(struct sf_softc *);
@@ -306,14 +304,6 @@ sf_attach(struct sf_softc *sc)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(sf_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -342,19 +332,6 @@ sf_attach(struct sf_softc *sc)
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
 	return;
-}
-
-/*
- * sf_shutdown:
- *
- *	Shutdown hook -- make sure the interface is stopped at reboot.
- */
-void
-sf_shutdown(void *arg)
-{
-	struct sf_softc *sc = arg;
-
-	sf_stop(&sc->sc_arpcom.ac_if, 1);
 }
 
 /*

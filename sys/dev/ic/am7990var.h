@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990var.h,v 1.9 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: am7990var.h,v 1.10 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: am7990var.h,v 1.8 1996/07/05 23:57:01 abrown Exp $	*/
 
 /*
@@ -84,8 +84,6 @@ struct am7990_softc {
 
 	int	sc_hasifmedia;
 	struct	ifmedia sc_ifmedia;
-
-	void	*sc_sh;		/* shutdownhook cookie */
 
 	u_int16_t sc_conf3;	/* CSR3 value */
 

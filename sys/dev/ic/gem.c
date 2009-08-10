@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.94 2009/08/09 11:40:58 deraadt Exp $	*/
+/*	$OpenBSD: gem.c,v 1.95 2009/08/10 20:29:54 deraadt Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -84,7 +84,6 @@ void		gem_stop(struct ifnet *);
 int		gem_ioctl(struct ifnet *, u_long, caddr_t);
 void		gem_tick(void *);
 void		gem_watchdog(struct ifnet *);
-void		gem_shutdown(void *);
 int		gem_init(struct ifnet *);
 void		gem_init_regs(struct gem_softc *);
 int		gem_ringsize(int);
@@ -345,10 +344,6 @@ gem_config(struct gem_softc *sc)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	sc->sc_sh = shutdownhook_establish(gem_shutdown, sc);
-	if (sc->sc_sh == NULL)
-		panic("gem_config: can't establish shutdownhook");
 
 	timeout_set(&sc->sc_tick_ch, gem_tick, sc);
 	timeout_set(&sc->sc_rx_watchdog, gem_rx_watchdog, sc);
@@ -1495,16 +1490,6 @@ gem_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	splx(s);
 	return (error);
-}
-
-
-void
-gem_shutdown(void *arg)
-{
-	struct gem_softc *sc = (struct gem_softc *)arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	gem_stop(ifp);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.66 2009/07/21 07:30:18 sthen Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.67 2009/08/10 20:29:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -130,7 +130,6 @@
  */
 
 void rl_tick(void *);
-void rl_shutdown(void *);
 void rl_powerhook(int, void *);
 
 int rl_encap(struct rl_softc *, struct mbuf * );
@@ -1279,19 +1278,9 @@ rl_attach(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	sc->sc_sdhook = shutdownhook_establish(rl_shutdown, sc);
 	sc->sc_pwrhook = powerhook_establish(rl_powerhook, sc);
 
 	return (0);
-}
-
-void
-rl_shutdown(arg)
-	void			*arg;
-{
-	struct rl_softc		*sc = (struct rl_softc *)arg;
-
-	rl_stop(sc);
 }
 
 void
@@ -1436,8 +1425,6 @@ rl_detach(struct rl_softc *sc)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 	if (sc->sc_pwrhook != NULL)
 		powerhook_disestablish(sc->sc_pwrhook);
 

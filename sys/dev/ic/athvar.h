@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.26 2009/07/24 17:22:37 jsg Exp $  */
+/*      $OpenBSD: athvar.h,v 1.27 2009/08/10 20:29:54 deraadt Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -307,7 +307,6 @@ struct ath_softc {
 	HAL_MIB_STATS		sc_mib_stats;	/* MIB counter statistics */
 
 #ifndef __FreeBSD__
-	void			*sc_sdhook;	/* shutdown hook */
 	void			*sc_powerhook;	/* power management hook */
 	u_int			sc_flags;	/* misc flags */
 #endif
@@ -414,7 +413,6 @@ void	ath_suspend(struct ath_softc *, int);
 int	ath_activate(struct device *, enum devact);
 void	ath_power(int, void *);
 #endif
-void	ath_shutdown(void *);
 int	ath_intr(void *);
 int	ath_enable(struct ath_softc *);
 

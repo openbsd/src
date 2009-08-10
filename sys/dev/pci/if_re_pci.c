@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.24 2009/01/22 19:26:07 kettenis Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.25 2009/08/10 20:29:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -225,8 +225,6 @@ re_pci_detach(struct device *self, int flags)
 	if_detach(ifp);
 
 	/* No more hooks */
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 	if (sc->sc_pwrhook != NULL)
 		powerhook_disestablish(sc->sc_pwrhook);
 
