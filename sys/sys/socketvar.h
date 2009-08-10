@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.45 2009/02/22 07:47:22 otto Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.46 2009/08/10 16:49:38 thib Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -226,9 +226,6 @@ struct socket {
 #ifdef _KERNEL
 extern u_long sb_max;
 struct	socket *sonewconn(struct socket *head, int connstatus);
-
-/* strings for sleep message: */
-extern	const char netio[], netcon[], netcls[];
 
 extern struct pool	socket_pool;
 

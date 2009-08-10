@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.77 2009/06/05 00:05:21 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.78 2009/08/10 16:49:38 thib Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ soclose(struct socket *so)
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
 				error = tsleep(&so->so_timeo,
-				    PSOCK | PCATCH, netcls,
+				    PSOCK | PCATCH, "netcls",
 				    so->so_linger * hz);
 				if (error)
 					break;
