@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.20 2009/06/11 14:49:49 jsing Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.21 2009/08/10 23:57:40 jsing Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -271,7 +271,6 @@ struct mec_softc {
 	bus_space_tag_t sc_st;		/* bus_space tag. */
 	bus_space_handle_t sc_sh;	/* bus_space handle. */
 	bus_dma_tag_t sc_dmat;		/* bus_dma tag. */
-	void *sc_sdhook;		/* Shutdown hook. */
 
 	struct mii_data sc_mii;		/* MII/media information. */
 	int sc_phyaddr;			/* MII address. */
@@ -345,7 +344,6 @@ int	mec_intr(void *arg);
 void	mec_stop(struct ifnet *);
 void	mec_rxintr(struct mec_softc *, uint32_t);
 void	mec_txintr(struct mec_softc *, uint32_t);
-void	mec_shutdown(void *);
 
 int
 mec_match(struct device *parent, void *match, void *aux)
@@ -480,9 +478,6 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	/* Establish interrupt handler. */
 	macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_NET,
 	    mec_intr, sc, sc->sc_dev.dv_xname);
-
-	/* Set hook to stop interface on shutdown. */
-	sc->sc_sdhook = shutdownhook_establish(mec_shutdown, sc);
 
 	return;
 
@@ -1415,12 +1410,4 @@ mec_txintr(struct mec_softc *sc, uint32_t stat)
 	else if (!(stat & MEC_INT_TX_EMPTY))
 		bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_TX_ALIAS,
 		    MEC_TX_ALIAS_INT_ENABLE);
-}
-
-void
-mec_shutdown(void *arg)
-{
-	struct mec_softc *sc = arg;
-
-	mec_stop(&sc->sc_ac.ac_if);
 }
