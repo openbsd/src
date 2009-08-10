@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.10 2009/05/23 18:03:41 jsg Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.11 2009/08/10 17:23:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -67,8 +67,6 @@
 #ifdef USB_DEBUG
 #define OTUS_DEBUG
 #endif
-
-#define OTUS_DEBUG
 
 #ifdef OTUS_DEBUG
 #define DPRINTF(x)	do { if (otus_debug) printf x; } while (0)
