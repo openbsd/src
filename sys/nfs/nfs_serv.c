@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.82 2009/08/10 09:38:44 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.83 2009/08/10 09:44:44 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -464,6 +464,13 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 		error = 0;
 		goto nfsmout;
 	}
+	if (vp->v_type != VLNK) {
+		if (info.nmi_v3)
+			error = EINVAL;
+		else
+			error = ENXIO;
+		goto out;
+	}
 
 	MGET(mp, M_WAIT, MT_DATA);
 	MCLGET(mp, M_WAIT);		/* MLEN < NFS_MAXPATHLEN < MCLBYTES */
@@ -479,18 +486,12 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	uio.uio_rw = UIO_READ;
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_procp = NULL;
-	if (vp->v_type != VLNK) {
-		if (info.nmi_v3)
-			error = EINVAL;
-		else
-			error = ENXIO;
-		goto out;
-	}
+
 	error = VOP_READLINK(vp, &uio, cred);
 out:
 	getret = VOP_GETATTR(vp, &attr, cred, procp);
 	vput(vp);
-	if (error)
+	if (error && mp)
 		m_freem(mp);
 	nfsm_reply(NFSX_POSTOPATTR(info.nmi_v3) + NFSX_UNSIGNED);
 	if (info.nmi_v3) {
