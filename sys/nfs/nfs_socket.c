@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.93 2009/08/04 17:12:39 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.94 2009/08/10 09:38:44 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1151,10 +1151,6 @@ nfs_timer(arg)
 	struct nfsmount *nmp;
 	int timeo;
 	int s, error;
-#ifdef NFSSERVER
-	struct nfssvc_sock *slp;
-	struct timeval tv;
-#endif
 
 	s = splsoftnet();
 	TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
@@ -1240,19 +1236,6 @@ nfs_timer(arg)
 			}
 		}
 	}
-
-#ifdef NFSSERVER
-	/*
-	 * Scan the write gathering queues for writes that need to be
-	 * completed now.
-	 */
-	getmicrotime(&tv);
-	TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
-		if (LIST_FIRST(&slp->ns_tq) &&
-		    timercmp(&LIST_FIRST(&slp->ns_tq)->nd_time, &tv, <=))
-			nfsrv_wakenfsd(slp);
-	}
-#endif /* NFSSERVER */
 	splx(s);
 	timeout_add(to, nfs_ticks);
 }
@@ -1565,8 +1548,6 @@ nfs_getreq(nd, nfsd, has_header)
 		    else
 			tl++;
 		nd->nd_cr.cr_ngroups = (len > NGROUPS) ? NGROUPS : len;
-		if (nd->nd_cr.cr_ngroups > 1)
-		    nfsrvw_sort(nd->nd_cr.cr_groups, nd->nd_cr.cr_ngroups);
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
 			m_freem(info.nmi_mrep);

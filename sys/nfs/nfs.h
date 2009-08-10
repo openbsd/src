@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.45 2009/07/14 16:40:29 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.46 2009/08/10 09:38:44 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -56,8 +56,6 @@
 #define	NFS_DEFRAHEAD	1		/* Def. read ahead # blocks */
 #define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */
 #define	NFS_MAXASYNCDAEMON 	20	/* Max. number async_daemons runable */
-#define NFS_MAXGATHERDELAY	100	/* Max. write gather delay (msec) */
-#define NFS_GATHERDELAY		10	/* Default write gather delay (msec) */
 
 /*
  * Ideally, NFS_DIRBLKSIZ should be bigger, but I've seen servers with
@@ -265,15 +263,6 @@ enum nfs_rto_timers {
 
 #define NFS_INITRTT	(NFS_HZ << 3)
 
-/*
- * A list of nfssvc_sock structures is maintained with all the sockets
- * that require service by the nfsd.
- */
-#ifndef NFS_WDELAYHASHSIZ
-#define	NFS_WDELAYHASHSIZ 16	/* and with this */
-#endif
-#define	NWDELAYHASH(sock, f) \
-	(&(sock)->ns_wdelayhashtbl[(*((u_int32_t *)(f))) % NFS_WDELAYHASHSIZ])
 #define	NFSNOHASH(fhsum) \
 	(&nfsnodehashtbl[(fhsum) & nfsnodehash])
 
@@ -300,9 +289,6 @@ struct nfssvc_sock {
 	int		ns_cc;		/* actual chars queued */
 	int		ns_reclen;	/* length of first queued record */
 	u_int32_t	ns_sref;	/* # of refs to this struct */
-	LIST_HEAD(, nfsrv_descript) ns_tq; /* Write gather lists */
-	LIST_HEAD(nfsrvw_delayhash, nfsrv_descript)
-			ns_wdelayhashtbl[NFS_WDELAYHASHSIZ];
 };
 
 /* Bits for "ns_flag" */
@@ -338,53 +324,27 @@ struct nfsd {
 
 /*
  * This structure is used by the server for describing each request.
- * Some fields are used only when write request gathering is performed.
  */
 struct nfsrv_descript {
-	struct timeval		nd_time;	/* Write deadline */
-	off_t			nd_off;		/* Start byte offset */
-	off_t			nd_eoff;	/* and end byte offset */
-	LIST_ENTRY(nfsrv_descript) nd_hash;	/* Hash list */
-	LIST_ENTRY(nfsrv_descript) nd_tq;	/* and timer list */
-	LIST_HEAD(,nfsrv_descript) nd_coalesce;	/* coalesced writes */
 	struct mbuf		*nd_mrep;	/* Request mbuf list */
 	struct mbuf		*nd_md;		/* Current dissect mbuf */
-	struct mbuf		*nd_mreq;	/* Reply mbuf list */
 	struct mbuf		*nd_nam;	/* and socket addr */
 	struct mbuf		*nd_nam2;	/* return socket addr */
 	caddr_t			nd_dpos;	/* Current dissect pos */
 	unsigned int		nd_procnum;	/* RPC # */
-	int			nd_stable;	/* storage type */
 	int			nd_flag;	/* nd_flag */
-	int			nd_len;		/* Length of this write */
 	int			nd_repstat;	/* Reply status */
 	u_int32_t		nd_retxid;	/* Reply xid */
-	fhandle_t		nd_fh;		/* File handle */
 	struct ucred		nd_cr;		/* Credentials */
 };
 
 /* Bits for "nd_flag" */
 #define ND_NFSV3	0x08
-#define ND_KERBNICK	0x20
-#define ND_KERBFULL	0x40
-#define ND_KERBAUTH	(ND_KERBNICK | ND_KERBFULL)
 
 extern struct pool nfsreqpl;
 extern TAILQ_HEAD(nfsdhead, nfsd) nfsd_head;
 extern int nfsd_head_flag;
 #define	NFSD_CHECKSLP	0x01
-
-/*
- * These macros compare nfsrv_descript structures.
- */
-#define NFSW_CONTIG(o, n) \
-		((o)->nd_eoff >= (n)->nd_off && \
-		 !bcmp((caddr_t)&(o)->nd_fh, (caddr_t)&(n)->nd_fh, NFSX_V3FH))
-
-#define NFSW_SAMECRED(o, n) \
-	(((o)->nd_flag & ND_KERBAUTH) == ((n)->nd_flag & ND_KERBAUTH) && \
- 	 !bcmp((caddr_t)&(o)->nd_cr, (caddr_t)&(n)->nd_cr, \
-		sizeof (struct ucred)))
 
 #endif	/* _KERNEL */
 #endif /* _NFS_NFS_H */
