@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.34 2009/05/11 19:20:27 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.35 2009/08/10 17:47:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -316,14 +316,6 @@ rt2860_attach(void *xsc, int id)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2860_TX_RADIOTAP_PRESENT);
 #endif
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(rt2860_shutdown, sc);
-	if (sc->sc_sdhook == NULL) {
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-	}
 
 	sc->sc_powerhook = powerhook_establish(rt2860_power, sc);
 	if (sc->sc_powerhook == NULL) {
@@ -351,9 +343,6 @@ rt2860_detach(void *xsc)
 
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
-
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 
 	for (qid = 0; qid < 6; qid++)
 		rt2860_free_tx_ring(sc, &sc->txq[qid]);
@@ -3169,13 +3158,4 @@ rt2860_power(int why, void *arg)
 		break;
 	}
 	splx(s);
-}
-
-void
-rt2860_shutdown(void *arg)
-{
-	struct rt2860_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-
-	rt2860_stop(ifp, 1);
 }

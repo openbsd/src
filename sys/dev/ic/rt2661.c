@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.49 2009/07/29 17:46:31 blambert Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.50 2009/08/10 17:47:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -330,15 +330,6 @@ rt2661_attach(void *xsc, int id)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2661_TX_RADIOTAP_PRESENT);
 #endif
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(rt2661_shutdown, sc);
-	if (sc->sc_sdhook == NULL) {
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-	}
-
 	sc->sc_powerhook = powerhook_establish(rt2661_power, sc);
 	if (sc->sc_powerhook == NULL) {
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -368,9 +359,6 @@ rt2661_detach(void *xsc)
 
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
-
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 
 	for (ac = 0; ac < 4; ac++)
 		rt2661_free_tx_ring(sc, &sc->txq[ac]);
@@ -2943,13 +2931,4 @@ rt2661_power(int why, void *arg)
 		break;
 	}
 	splx(s);
-}
-
-void
-rt2661_shutdown(void *arg)
-{
-	struct rt2661_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ic.ic_if;
-
-	rt2661_stop(ifp, 1);
 }

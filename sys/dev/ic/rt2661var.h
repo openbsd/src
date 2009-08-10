@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.9 2006/10/22 12:14:44 damien Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.10 2009/08/10 17:47:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -173,11 +173,9 @@ struct rt2661_softc {
 #define sc_txtap			sc_txtapu.th
 	int				sc_txtap_len;
 #endif
-	void				*sc_sdhook;
 	void				*sc_powerhook;
 };
 
 int	rt2661_attach(void *, int);
 int	rt2661_detach(void *);
 int	rt2661_intr(void *);
-void	rt2661_shutdown(void *);

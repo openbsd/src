@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.44 2009/07/29 17:46:31 blambert Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.45 2009/08/10 17:47:23 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -297,14 +297,6 @@ rt2560_attach(void *xsc, int id)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2560_TX_RADIOTAP_PRESENT);
 #endif
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(rt2560_shutdown, sc);
-	if (sc->sc_sdhook == NULL) {
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-	}
 	sc->sc_powerhook = powerhook_establish(rt2560_power, sc);
 	if (sc->sc_powerhook == NULL) {
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -333,8 +325,6 @@ rt2560_detach(void *xsc)
 	
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 
 	rt2560_free_tx_ring(sc, &sc->txq);
 	rt2560_free_tx_ring(sc, &sc->atimq);
@@ -2751,14 +2741,6 @@ rt2560_power(int why, void *arg)
 		break;
 	}
 	splx(s);
-}
-
-void
-rt2560_shutdown(void *arg)
-{
-	struct rt2560_softc *sc = arg;
-
-	rt2560_stop(&sc->sc_ic.ic_if, 1);
 }
 
 struct cfdriver ral_cd = {
