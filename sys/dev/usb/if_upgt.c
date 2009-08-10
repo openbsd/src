@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.46 2009/08/03 09:33:10 blambert Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.47 2009/08/10 20:02:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -88,7 +88,6 @@ int upgt_debug = 2;
 int		upgt_match(struct device *, void *, void *);
 void		upgt_attach(struct device *, struct device *, void *);
 void		upgt_attach_hook(void *);
-void		upgt_shutdown_hook(void *);
 int		upgt_detach(struct device *, int);
 int		upgt_activate(struct device *, enum devact);
 
@@ -456,27 +455,12 @@ upgt_attach_hook(void *arg)
 	printf("%s: address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr));
 
-	/* setup shutdown hook */
-	sc->sc_sdhook = shutdownhook_establish(upgt_shutdown_hook, sc);
-
 	/* device attached */
 	sc->sc_flags |= UPGT_DEVICE_ATTACHED;
 
 	return;
 fail:
 	printf("%s: %s failed!\n", sc->sc_dev.dv_xname, __func__);
-}
-
-void
-upgt_shutdown_hook(void *arg)
-{
-	struct upgt_softc *sc = (struct upgt_softc *)arg;
-
-	DPRINTF(1, "%s: %s\n", sc->sc_dev.dv_xname, __func__);
-
-	/* reset device */
-	upgt_set_led(sc, UPGT_LED_OFF);
-	(void)upgt_device_init(sc);
 }
 
 int
@@ -519,9 +503,6 @@ upgt_detach(struct device *self, int flags)
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
 	}
-
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 
 	splx(s);
 
@@ -1293,6 +1274,8 @@ upgt_stop(struct upgt_softc *sc)
 	/* device down */
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	upgt_set_led(sc, UPGT_LED_OFF);
 
 	/* change device back to initial state */
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);

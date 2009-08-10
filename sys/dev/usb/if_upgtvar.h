@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgtvar.h,v 1.14 2008/02/02 13:48:44 mglocker Exp $ */
+/*	$OpenBSD: if_upgtvar.h,v 1.15 2009/08/10 20:02:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -420,7 +420,6 @@ struct upgt_softc {
 	int			 sc_led_blink;
 	unsigned		 sc_cur_chan;
 	uint8_t			 sc_cur_rateset[8];
-	void			*sc_sdhook;
 
 	int			 sc_flags;
 	uint8_t			*sc_fw;
