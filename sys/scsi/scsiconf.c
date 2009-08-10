@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.140 2009/08/09 12:47:23 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.141 2009/08/10 10:51:17 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ int scsidebug_level = SCSIDEBUG_LEVEL;
 int scsi_autoconf = SCSI_AUTOCONF;
 
 int scsibusprint(void *, const char *);
+void scsibus_printlink(struct scsi_link *);
 
 const u_int8_t version_to_spc [] = {
 	0, /* 0x00: The device does not claim conformance to any standard. */
@@ -590,34 +591,16 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 };
 
 
-/*
- * Print out autoconfiguration information for a subdevice.
- *
- * This is a slight abuse of 'standard' autoconfiguration semantics,
- * because 'print' functions don't normally print the colon and
- * device information.  However, in this case that's better than
- * either printing redundant information before the attach message,
- * or having the device driver call a special function to print out
- * the standard device information.
- */
-int
-scsibusprint(void *aux, const char *pnp)
+void
+scsibus_printlink(struct scsi_link *link)
 {
-	struct scsi_attach_args		*sa = aux;
+	char				vendor[33], product[65], revision[17];
 	struct scsi_inquiry_data	*inqbuf;
 	u_int8_t			type;
 	int				removable;
-	char				*dtype, *qtype;
-	char				vendor[33], product[65], revision[17];
-	int				target, lun;
+	char				*dtype = NULL, *qtype = NULL;
 
-	if (pnp != NULL)
-		printf("%s", pnp);
-
-	inqbuf = sa->sa_inqbuf;
-
-	target = sa->sa_sc_link->target;
-	lun = sa->sa_sc_link->lun;
+	inqbuf = &link->inqdata;
 
 	type = inqbuf->device & SID_TYPE;
 	removable = inqbuf->dev_qual2 & SID_REMOVABLE ? 1 : 0;
@@ -625,7 +608,6 @@ scsibusprint(void *aux, const char *pnp)
 	/*
 	 * Figure out basic device type and qualifier.
 	 */
-	dtype = 0;
 	switch (inqbuf->device & SID_QUAL) {
 	case SID_QUAL_LU_OK:
 		qtype = "";
@@ -637,7 +619,6 @@ scsibusprint(void *aux, const char *pnp)
 
 	case SID_QUAL_RSVD:
 		panic("scsibusprint: qualifier == SID_QUAL_RSVD");
-
 	case SID_QUAL_BAD_LU:
 		panic("scsibusprint: qualifier == SID_QUAL_BAD_LU");
 
@@ -646,7 +627,7 @@ scsibusprint(void *aux, const char *pnp)
 		dtype = "vendor-unique";
 		break;
 	}
-	if (dtype == 0) {
+	if (dtype == NULL) {
 		switch (type) {
 		case T_DIRECT:
 			dtype = "direct";
@@ -696,14 +677,35 @@ scsibusprint(void *aux, const char *pnp)
 	scsi_strvis(product, inqbuf->product, 16);
 	scsi_strvis(revision, inqbuf->revision, 4);
 
-	printf(" targ %d lun %d: <%s, %s, %s> ", target, lun, vendor, product,
-	    revision);
-	if (sa->sa_sc_link->flags & SDEV_ATAPI)
+	printf(" targ %d lun %d: <%s, %s, %s> ", link->target, link->lun,
+	    vendor, product, revision);
+	if (link->flags & SDEV_ATAPI)
 		printf("ATAPI");
 	else
 		printf("SCSI%d", SCSISPC(inqbuf->version));
 	printf(" %d/%s %s%s", type, dtype, removable ? "removable" : "fixed",
 	    qtype);
+}
+
+/*
+ * Print out autoconfiguration information for a subdevice.
+ *
+ * This is a slight abuse of 'standard' autoconfiguration semantics,
+ * because 'print' functions don't normally print the colon and
+ * device information.  However, in this case that's better than
+ * either printing redundant information before the attach message,
+ * or having the device driver call a special function to print out
+ * the standard device information.
+ */
+int
+scsibusprint(void *aux, const char *pnp)
+{
+	struct scsi_attach_args		*sa = aux;
+
+	if (pnp != NULL)
+		printf("%s", pnp);
+
+	scsibus_printlink(sa->sa_sc_link);
 
 	return (UNCONF);
 }
