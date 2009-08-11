@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.12 2009/05/17 04:58:20 deraadt Exp $ 
+# $OpenBSD: RAMDISK,v 1.13 2009/08/11 12:25:07 krw Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -68,6 +68,7 @@ scsibus*	at siop?
 em*		at pci?
 re*		at pci?
 ral*		at pci?
+bwi*		at pci?
 # IDE controllers
 pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000

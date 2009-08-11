@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.27 2009/05/16 05:47:44 deraadt Exp $ 
+# $OpenBSD: GENERIC,v 1.28 2009/08/11 12:25:07 krw Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -66,6 +66,7 @@ scsibus*	at siop?
 em*		at pci?
 re*		at pci?
 ral*		at pci?
+bwi*		at pci?
 # IDE controllers
 pciide* 	at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
