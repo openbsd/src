@@ -2297,6 +2297,7 @@
 ./usr/share/man/cat8/amd64/boot.0
 ./usr/share/man/cat8/amd64/boot_amd64.0
 ./usr/share/man/cat8/amd64/cdboot.0
+./usr/share/man/cat8/amd64/gpioctl.0
 ./usr/share/man/cat8/amd64/installboot.0
 ./usr/share/man/cat8/amd64/kbd.0
 ./usr/share/man/cat8/amd64/memconfig.0
