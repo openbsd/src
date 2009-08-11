@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.18 2009/08/11 17:18:35 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.19 2009/08/11 19:32:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -902,7 +902,7 @@ server_lost_client(struct client *c)
 			ARRAY_SET(&clients, i, NULL);
 	}
 
-	tty_free(&c->tty, c->flags & CLIENT_SUSPENDED);
+	tty_free(&c->tty);
 
 	screen_free(&c->status);
 

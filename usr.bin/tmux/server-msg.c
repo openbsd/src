@@ -1,4 +1,4 @@
-/* $OpenBSD: server-msg.c,v 1.11 2009/08/11 17:18:35 nicm Exp $ */
+/* $OpenBSD: server-msg.c,v 1.12 2009/08/11 19:32:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -90,7 +90,7 @@ server_msg_dispatch(struct client *c)
 				fatalx("bad MSG_EXITING size");
 
 			c->session = NULL;
-			tty_close(&c->tty, c->flags & CLIENT_SUSPENDED);
+			tty_close(&c->tty);
 			server_write_client(c, MSG_EXITED, NULL, 0);
 			break;
 		case MSG_UNLOCK:
