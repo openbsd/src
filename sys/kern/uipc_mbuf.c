@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.128 2009/08/09 21:08:30 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.129 2009/08/11 10:48:39 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -421,7 +421,6 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 		splx(s);
 		return (NULL);
 	}
-	splx(s);
 	if (m->m_ext.ext_buf != NULL) {
 		m->m_data = m->m_ext.ext_buf;
 		m->m_flags |= M_EXT|M_CLUSTER;
@@ -436,6 +435,7 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 
 		MCLINITREFERENCE(m);
 	}
+	splx(s);
 	return (m);
 }
 
