@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.60 2009/08/08 00:02:22 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.61 2009/08/11 14:45:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -82,6 +82,8 @@ struct batch	*batch_lookup(struct smtpd *, struct message *);
 
 int		runner_force_envelope_schedule(char *);
 int		runner_force_message_schedule(char *);
+
+void		reset_flags(struct message *);
 
 void
 runner_sig_handler(int sig, short event, void *p)
@@ -443,11 +445,7 @@ runner_dispatch_smtp(int sig, short event, void *p)
 		case IMSG_SMTP_ENQUEUE: {
 			struct message *messagep = imsg.data;
 			if (imsg.fd == -1) {
-				messagep->flags &= ~F_MESSAGE_SCHEDULED;
-				messagep->flags &= ~F_MESSAGE_PROCESSING;
-
-				while (! queue_update_envelope(messagep))
-					sleep(1);
+				reset_flags(messagep);
 				break;
 			}
 
@@ -594,12 +592,7 @@ runner_reset_flags(void)
 	while (qwalk(q, path)) {
 		while (! queue_load_envelope(&message, basename(path)))
 			sleep(1);
-
-		message.flags &= ~F_MESSAGE_SCHEDULED;
-		message.flags &= ~F_MESSAGE_PROCESSING;
-
-		while (! queue_update_envelope(&message))
-			sleep(1);
+		reset_flags(&message);
 	}
 
 	qwalk_close(q);
@@ -1123,6 +1116,16 @@ runner_check_loop(struct message *messagep)
 
 	fclose(fp);
 	return ret;
+}
+
+void
+reset_flags(struct message *m)
+{
+	m->flags &= ~F_MESSAGE_SCHEDULED;
+	m->flags &= ~F_MESSAGE_PROCESSING;
+
+	while (! queue_update_envelope(m))
+		sleep(1);
 }
 
 SPLAY_GENERATE(batchtree, batch, b_nodes, batch_cmp);
