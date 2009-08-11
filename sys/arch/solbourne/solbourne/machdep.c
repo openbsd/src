@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 2009/08/11 18:46:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 2009/08/11 19:17:17 miod Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -164,13 +164,6 @@ cpu_startup()
 	/*identifycpu();*/
 	printf("real mem = %d (%dMB)\n", ptoa(physmem),
 	    ptoa(physmem) / 1024 / 1024);
-
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate bufcachepercent% of memory for buffer space.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem * bufcachepercent / 100;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

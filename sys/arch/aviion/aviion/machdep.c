@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2009/08/11 18:46:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 2009/08/11 19:17:16 miod Exp $	*/
 /*
  * Copyright (c) 2007 Miodrag Vallat.
  *
@@ -269,13 +269,6 @@ cpu_startup()
 	 * Grab machine dependent memory spaces
 	 */
 	platform->startup();
-
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate bufcachepercent% of memory for buffer space.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem * bufcachepercent / 100;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

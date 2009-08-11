@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2009/08/11 18:46:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.68 2009/08/11 19:17:16 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -446,13 +446,6 @@ cpu_startup()
 	        UVM_ADV_NORMAL, 0));
 	if (obiova != OBIO_START)
 		panic("obiova %lx: OBIO not free", obiova);
-
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate bufcachepercent% of memory for buffer space.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem * bufcachepercent / 100;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

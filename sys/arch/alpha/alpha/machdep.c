@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.119 2009/08/11 18:46:30 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.120 2009/08/11 19:17:14 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -823,13 +823,6 @@ cpu_startup()
 		    ptoa((psize_t)unknownmem),
 		    ptoa((psize_t)unknownmem) / 1024 / 1024);
 	}
-
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate bufcachepercent% of memory for buffer space.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem * bufcachepercent / 100;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

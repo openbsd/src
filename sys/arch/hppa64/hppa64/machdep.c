@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2009/08/11 18:46:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2009/08/11 19:17:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -379,13 +379,6 @@ cpu_startup(void)
 	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)phsymem) / 1024 / 1024);
 	printf("rsvd mem = %u (%uKB)\n", ptoa(resvmem), ptoa(resvmem) / 1024);
-
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate bufcachepercent% of memory for buffer space.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem * bufcachepercent / 100;
 
 printf("here3\n");
 	/*
