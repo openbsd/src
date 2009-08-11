@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.76 2009/08/11 19:32:25 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.77 2009/08/11 20:29:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -869,6 +869,7 @@ struct tty {
 #define TTY_ESCAPE 0x4
 #define TTY_UTF8 0x8
 #define TTY_STARTED 0x10
+#define TTY_OPENED 0x20
 	int    		 flags;
 
 	int		 term_flags;
