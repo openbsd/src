@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.64 2009/07/23 21:38:48 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.65 2009/08/11 20:03:56 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1347,7 +1347,7 @@ const struct puc_device_description puc_devices[] = {
 
 	{   /* SUNIX 405X 4S */
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4050 },
-	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {	0xffff,	0xffff,	0xffff,	0xe0f0 },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
@@ -1358,16 +1358,16 @@ const struct puc_device_description puc_devices[] = {
 
 	{   /* SUNIX 406X 8S */
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4060 },
-	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {	0xffff,	0xffff,	0xffff,	0xe0f0 },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ * 8 },
 	    },
 	},
 
