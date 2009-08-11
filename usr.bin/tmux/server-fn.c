@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.13 2009/08/08 21:52:43 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.14 2009/08/11 17:18:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -55,18 +55,12 @@ void
 server_write_client(
     struct client *c, enum msgtype type, const void *buf, size_t len)
 {
-	struct hdr	 hdr;
+	struct imsgbuf	*ibuf = &c->ibuf;
 
 	if (c->flags & CLIENT_BAD)
 		return;
-	log_debug("writing %d to client %d", type, c->fd);
-
-	hdr.type = type;
-	hdr.size = len;
-
-	buffer_write(c->out, &hdr, sizeof hdr);
-	if (buf != NULL && len > 0)
-		buffer_write(c->out, buf, len);
+	log_debug("writing %d to client %d", type, c->ibuf.fd);
+	imsg_compose(ibuf, type, PROTOCOL_VERSION, -1, -1, (void *) buf, len);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-info.c,v 1.6 2009/08/08 13:29:27 nicm Exp $ */
+/* $OpenBSD: cmd-server-info.c,v 1.7 2009/08/11 17:18:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -90,7 +90,7 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 			continue;
 
 		ctx->print(ctx, "%2d: %s (%d, %d): %s [%ux%u %s] "
-		    "[flags=0x%x/0x%x]", i, c->tty.path, c->fd, c->tty.fd,
+		    "[flags=0x%x/0x%x]", i, c->tty.path, c->ibuf.fd, c->tty.fd,
 		    c->session->name, c->tty.sx, c->tty.sy, c->tty.termname,
 		    c->flags, c->tty.flags);
 	}
