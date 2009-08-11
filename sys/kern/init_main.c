@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.161 2009/08/09 12:47:23 dlg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.162 2009/08/11 18:43:33 blambert Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -541,8 +541,11 @@ main(void *framep)
 	start_init_exec = 1;
 	wakeup((void *)&start_init_exec);
 
-	/* The scheduler is an infinite loop. */
-	uvm_scheduler();
+        /*
+         * proc0: nothing to do, back to sleep
+         */
+        while (1)
+                tsleep(&proc0, PVM, "scheduler", 0);
 	/* NOTREACHED */
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.49 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.50 2009/08/11 18:43:33 blambert Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -304,22 +304,6 @@ int	swapdebug = 0;
 #define SDB_SWAPIN	2
 #define SDB_SWAPOUT	4
 #endif
-
-/*
- * uvm_scheduler: process zero main loop
- *
- * - if not enough memory, wake the pagedaemon and let it clear space.
- */
-
-void
-uvm_scheduler(void)
-{
-	/*
-	 * Nothing to do, back to sleep
-	 */
-	while (1)
-		tsleep(&proc0, PVM, "scheduler", 0);
-}
 
 /*
  * swappable: is process "p" swappable?
