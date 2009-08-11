@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.19 2007/05/20 23:38:52 thib Exp $	*/
+/*	$OpenBSD: smu.c,v 1.20 2009/08/11 18:44:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -46,7 +46,7 @@ struct smu_fan {
 	struct ksensor	sensor;
 };
 
-#define SMU_MAXSENSORS	3
+#define SMU_MAXSENSORS	4
 
 struct smu_sensor {
 	u_int8_t	reg;
@@ -313,6 +313,11 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 		if (OF_getprop(node, "reg", &val, sizeof val) <= 0 ||
 		    OF_getprop(node, "device_type", type, sizeof type) <= 0)
 			continue;
+
+		if (sc->sc_num_sensors >= SMU_MAXSENSORS) {
+			printf(": too many sensors\n");
+			return;
+		}
 
 		sensor = &sc->sc_sensors[sc->sc_num_sensors++];
 		sensor->sensor.flags = SENSOR_FINVALID;
