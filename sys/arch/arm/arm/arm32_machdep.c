@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.30 2009/08/09 21:03:49 blambert Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.31 2009/08/11 18:46:32 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -74,7 +74,6 @@ struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern int physmem;
-caddr_t allocsys(caddr_t);
 
 #ifndef BUFCACHEPERCENT
 #define BUFCACHEPERCENT 5
@@ -245,8 +244,6 @@ cpu_startup()
 	u_int loop;
 	paddr_t minaddr;
 	paddr_t maxaddr;
-	caddr_t sysbase;
-	caddr_t size;
 
 	proc0paddr = (struct user *)kernelstack.pv_va;
 	proc0.p_addr = proc0paddr;
@@ -287,19 +284,6 @@ cpu_startup()
 
 	printf("real mem  = %u (%uMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
-
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	size = allocsys(NULL);
-	sysbase = (caddr_t)uvm_km_zalloc(kernel_map, round_page((vaddr_t)size));
-	if (sysbase == 0)
-		panic(
-		    "cpu_startup: no room for system tables; %d bytes required",
-		    (u_int)size);
-	if ((caddr_t)((allocsys(sysbase) - sysbase)) != size)
-		panic("cpu_startup: system table size inconsistency");
 
 	/*
 	 * Determine how many buffers to allocate.
@@ -434,23 +418,4 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
-}
-
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
- *
- * We call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and then call
- * allocsys() again with the correct base virtual address.
- */
-caddr_t
-allocsys(caddr_t v)
-{
-
-#define	valloc(name, type, num) \
-	    v = (caddr_t)(((name) = (type *)v) + (num))
-
-	return v;
 }

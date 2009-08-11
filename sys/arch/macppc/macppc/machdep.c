@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.111 2009/08/09 10:40:17 blambert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.112 2009/08/11 18:46:32 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ int allowaperture = 0;
 
 void ofw_dbg(char *str);
 
-caddr_t allocsys(caddr_t);
 void dumpsys(void);
 void systype(char *name);
 int lcsplx(int ipl);	/* called from LCore */
@@ -477,27 +476,14 @@ install_extint(void (*handler)(void))
 void
 cpu_startup()
 {
-	int sz;
-	caddr_t v;
 	vaddr_t minaddr, maxaddr;
 
-	v = (caddr_t)proc0paddr + USPACE;
 	proc0.p_addr = proc0paddr;
 
 	printf("%s", version);
 
 	printf("real mem = %u (%uMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
-
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (int)allocsys((caddr_t)0);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v) - v != sz)
-		panic("startup: table size inconsistency");
 
 	/*
 	 * Determine how many buffers to allocate.
@@ -530,18 +516,6 @@ cpu_startup()
 	bufinit();
 
 	devio_malloc_safe = 1;
-}
-
-/*
- * Allocate space for system data structures.
- */
-caddr_t
-allocsys(caddr_t v)
-{
-#define	valloc(name, type, num) \
-	v = (caddr_t)(((name) = (type *)v) + (num))
-
-	return v;
 }
 
 /*

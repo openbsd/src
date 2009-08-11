@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 2009/08/09 10:40:17 blambert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 2009/08/11 18:46:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -264,7 +264,7 @@ TODO hpmc/toc/pfr
 		panic("cannot reserve main memory");
 
 	/* sets resvphysmem */
-	pmap_bootstrap(start);
+	pmap_bootstrap(round_page(start));
 
 	/* space has been reserved in pmap_bootstrap() */
 	msgbufp = (struct msgbuf *)((vaddr_t)ptoa(physmem) -

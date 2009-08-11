@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.458 2009/08/11 17:15:54 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.459 2009/08/11 18:46:32 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -263,8 +263,6 @@ struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
 
-caddr_t	allocsys(caddr_t);
-void	setup_buffers(void);
 void	dumpsys(void);
 int	cpu_dump(void);
 void	init386(paddr_t);
@@ -370,8 +368,6 @@ void
 cpu_startup()
 {
 	unsigned i;
-	caddr_t v;
-	int sz;
 	vaddr_t minaddr, maxaddr, va;
 	paddr_t pa;
 
@@ -407,20 +403,11 @@ cpu_startup()
 	    (unsigned long long)ptoa((psize_t)physmem)/1024U/1024U);
 
 	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
+	 * Determine how many buffers to allocate.  We use bufcachepercent%
+	 * of the memory below 4GB.
 	 */
-	sz = (int)allocsys((caddr_t)0);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v) - v != sz)
-		panic("startup: table size inconsistency");
-
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	setup_buffers();
+	if (bufpages == 0)
+		bufpages = atop(avail_end) * bufcachepercent / 100;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -506,38 +493,6 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 	ci->ci_idle_tss_sel = tss_alloc(pcb);
 }
 #endif	/* MULTIPROCESSOR */
-
-
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
- *
- * We call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and then call
- * allocsys() again with the correct base virtual address.
- */
-caddr_t
-allocsys(caddr_t v)
-{
-
-#define	valloc(name, type, num) \
-	    v = (caddr_t)(((name) = (type *)v) + (num))
-
-	return v;
-}
-
-void
-setup_buffers()
-{
-	/*
-	 * Determine how many buffers to allocate.  We use bufcachepercent%
-	 * of the memory below 4GB.
-	 */
-	if (bufpages == 0)
-		bufpages = atop(avail_end) * bufcachepercent / 100;
-
-}
 
 /*
  * Info for CTL_HW

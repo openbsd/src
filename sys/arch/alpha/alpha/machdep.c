@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.118 2009/08/09 10:40:17 blambert Exp $ */
+/* $OpenBSD: machdep.c,v 1.119 2009/08/11 18:46:30 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -117,7 +117,6 @@ int	cpu_dump(void);
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
-caddr_t allocsys(caddr_t);
 void	identifycpu(void);
 void	regdump(struct trapframe *framep);
 void	printregs(struct reg *);
@@ -211,9 +210,7 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	struct vm_physseg *vps;
 	vaddr_t kernstart, kernend;
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
-	vsize_t size;
 	char *p;
-	caddr_t v;
 	const char *bootinfo_msg;
 	const struct cpuinit *c;
 	extern caddr_t esym;
@@ -643,22 +640,6 @@ nobootinfo:
 	    (struct user *)pmap_steal_memory(UPAGES * PAGE_SIZE, NULL, NULL);
 
 	/*
-	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.
-	 */
-	size = (vsize_t)allocsys(NULL);
-	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
-	if ((allocsys(v) - v) != size)
-		panic("alpha_init: table size inconsistency");
-
-	/*
-	 * Clear allocated memory.
-	 */
-	bzero(v, size);
-
-	/*
 	 * Initialize the virtual memory system, and set the
 	 * page table base register in proc 0's PCB.
 	 */
@@ -796,25 +777,6 @@ nobootinfo:
 			hwrpb->rpb_intr_freq, hz);
 #endif
 	}
-}
-
-caddr_t
-allocsys(v)
-	caddr_t v;
-{
-	/*
-	 * Allocate space for system data structures.
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 *
-	 * These data structures are allocated here instead of cpu_startup()
-	 * because physical memory is directly addressable. We don't have
-	 * to map these into virtual address space.
-	 */
-#define valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
-
-	return v;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 2009/08/09 10:40:17 blambert Exp $ */
+/*	$OpenBSD: machdep.c,v 1.80 2009/08/11 18:46:32 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -122,7 +122,6 @@ caddr_t	mips_init(int, void *, caddr_t);
 void	initcpu(void);
 void	dumpsys(void);
 void	dumpconf(void);
-caddr_t	allocsys(caddr_t);
 
 static void dobootopts(int, void *);
 static int atoi(const char *, int, const char **);
@@ -142,7 +141,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 {
 	char *cp;
 	int i;
-	caddr_t sd;
 	u_int cputype;
 	vaddr_t tlb_handler, xtlb_handler;
 	extern char start[], edata[], end[];
@@ -498,13 +496,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	tlb_set_pid(1);
 
 	/*
-	 * Allocate system data structures.
-	 */
-	i = (vsize_t)allocsys(NULL);
-	sd = (caddr_t)pmap_steal_memory(i, NULL, NULL);
-	allocsys(sd);
-
-	/*
 	 * Bootstrap VM system.
 	 */
 	pmap_bootstrap();
@@ -564,22 +555,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 * Return new stack pointer.
 	 */
 	return ((caddr_t)proc0paddr + USPACE - 64);
-}
-
-/*
- * Allocate space for system data structures. Doesn't need to be mapped.
- */
-caddr_t
-allocsys(caddr_t v)
-{
-	caddr_t start;
-
-	start = v;
-
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-
-	return(v);
 }
 
 /*

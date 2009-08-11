@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.99 2009/08/09 10:40:17 blambert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.100 2009/08/11 18:46:31 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -251,8 +251,6 @@ u_int32_t	bios_cksumlen;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
-vaddr_t	allocsys(vaddr_t);
-void	setup_buffers(void);
 int	cpu_dump(void);
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
@@ -298,8 +296,6 @@ int allowaperture = 0;
 void
 cpu_startup(void)
 {
-	vaddr_t v;
-	vsize_t sz;
 	vaddr_t minaddr, maxaddr;
 
 	msgbuf_vaddr = PMAP_DIRECT_MAP(msgbuf_paddr);
@@ -311,16 +307,11 @@ cpu_startup(void)
 	    ptoa((psize_t)physmem)/1024/1024);
 
 	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
+	 * Determine how many buffers to allocate.
+	 * We allocate bufcachepercent% of memory for buffer space.
 	 */
-	sz = allocsys(0);
-	if ((v = uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v) - v != sz)
-		panic("startup: table size inconsistency");
-
-	setup_buffers();
+	if (bufpages == 0)
+		bufpages = physmem * bufcachepercent / 100;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -358,36 +349,6 @@ cpu_startup(void)
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
-}
-
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
- *
- * We call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and then call
- * allocsys() again with the correct base virtual address.
- */
-vaddr_t
-allocsys(vaddr_t v)
-{
-
-#define	valloc(name, type, num) \
-	    v = (vaddr_t)(((name) = (type *)v) + (num))
-
-	return v;
-}
-
-void
-setup_buffers()
-{
-	/*
-	 * Determine how many buffers to allocate.
-	 * We allocate bufcachepercent% of memory for buffer space.
-	 */
-	if (bufpages == 0)
-		bufpages = physmem * bufcachepercent / 100;
 }
 
 /*

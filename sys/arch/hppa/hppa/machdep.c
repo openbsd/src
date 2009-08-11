@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.176 2009/08/09 10:40:17 blambert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.177 2009/08/11 18:46:32 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -286,7 +286,6 @@ hppa_init(start)
 {
 	extern u_long cpu_hzticks;
 	extern int kernel_text;
-	vaddr_t v, v1;
 	int error;
 
 	pdc_init();	/* init PDC iface, so we can call em easy */
@@ -385,18 +384,8 @@ hppa_init(start)
 	    EX_NOWAIT))
 		panic("cannot reserve main memory");
 
-	/*
-	 * Now allocate kernel dynamic variables
-	 */
-
-	v1 = v = round_page(start);
-#define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
-#undef valloc
-	v = round_page(v);
-	bzero ((void *)v1, (v - v1));
-
 	/* sets resvphysmem */
-	pmap_bootstrap(v);
+	pmap_bootstrap(round_page(start));
 
 	/* space has been reserved in pmap_bootstrap() */
 	initmsgbuf((caddr_t)(ptoa(physmem) - round_page(MSGBUFSIZE)),

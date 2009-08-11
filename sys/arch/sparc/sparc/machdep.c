@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.121 2009/08/09 10:40:18 blambert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.122 2009/08/11 18:46:32 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -137,7 +137,6 @@ int   safepri = 0;
 vaddr_t dvma_base, dvma_end;
 struct extent *dvmamap_extent;
 
-caddr_t allocsys(caddr_t);
 void	dumpsys(void);
 void	stackdump(void);
 
@@ -147,8 +146,6 @@ void	stackdump(void);
 void
 cpu_startup()
 {
-	caddr_t v;
-	int sz;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -181,18 +178,6 @@ cpu_startup()
 	/*identifycpu();*/
 	printf("real mem = %u (%uMB)\n", ptoa(physmem),
 	    ptoa(physmem)/1024/1024);
-
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (int)allocsys((caddr_t)0);
-
-	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-
-	if (allocsys(v) - v != sz)
-		panic("startup: table size inconsistency");
 
 	/*
 	 * Determine how many buffers to allocate.
@@ -261,26 +246,6 @@ cpu_startup()
 
 	/* Early interrupt handlers initialization */
 	intr_init();
-}
-
-/*
- * Allocate space for system data structures.  We are given
- * a starting virtual address and we return a final virtual
- * address; along the way we set each data structure pointer.
- *
- * You call allocsys() with 0 to find out how much space we want,
- * allocate that much and fill it with zeroes, and then call
- * allocsys() again with the correct base virtual address.
- */
-caddr_t
-allocsys(v)
-	caddr_t v;
-{
-
-#define	valloc(name, type, num) \
-	    v = (caddr_t)(((name) = (type *)v) + (num))
-
-	return (v);
 }
 
 /*

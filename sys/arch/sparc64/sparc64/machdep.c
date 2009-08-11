@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.119 2009/08/09 10:40:18 blambert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.120 2009/08/11 18:46:32 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -207,7 +207,6 @@ extern int64_t cecclast;
 int   safepri = 0;
 
 void blink_led_timeout(void *);
-caddr_t	allocsys(caddr_t);
 void	dumpsys(void);
 void	stackdump(void);
 
@@ -217,8 +216,6 @@ void	stackdump(void);
 void
 cpu_startup()
 {
-	caddr_t v;
-	long sz;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -239,15 +236,6 @@ cpu_startup()
 	/*identifycpu();*/
 	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
 	    ptoa((psize_t)physmem)/1024/1024);
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (long)allocsys(NULL);
-	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for %lx bytes of tables", sz);
-	if (allocsys(v) - v != sz)
-		panic("startup: table size inconsistency");
 
 	/*
 	 * Determine how many buffers to allocate.
@@ -278,15 +266,6 @@ cpu_startup()
 #if 0
 	pmap_redzone();
 #endif
-}
-
-caddr_t
-allocsys(caddr_t v)
-{
-#define valloc(name, type, num) \
-	    v = (caddr_t)(((name) = (type *)v) + (num))
-
-	return (v);
 }
 
 /*
