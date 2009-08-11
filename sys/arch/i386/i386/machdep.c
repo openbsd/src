@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.457 2009/08/10 16:40:50 oga Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.458 2009/08/11 17:15:54 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3527,7 +3527,6 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 {
 	u_long pa, endpa;
 	vaddr_t va;
-	pt_entry_t *pte;
 	bus_size_t map_size;
 
 	pa = trunc_page(bpa);
@@ -3547,18 +3546,9 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
 	for (; map_size > 0;
-	    pa += PAGE_SIZE, va += PAGE_SIZE, map_size -= PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-
-		pte = kvtopte(va);
-		if (flags & BUS_SPACE_MAP_CACHEABLE)
-			*pte &= ~PG_N;
-		else
-			*pte |= PG_N;
-		pmap_tlb_shootpage(pmap_kernel(), va);
-	}
-
-	pmap_tlb_shootwait();
+	    pa += PAGE_SIZE, va += PAGE_SIZE, map_size -= PAGE_SIZE)
+		pmap_kenter_pa(va, pa | ((flags & BUS_SPACE_MAP_CACHEABLE) ?
+		    0 : PMAP_NOCACHE), VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	return 0;

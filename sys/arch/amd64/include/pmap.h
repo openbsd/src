@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.27 2009/06/09 02:56:38 krw Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.28 2009/08/11 17:15:54 oga Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -329,9 +329,10 @@ struct pmap {
 };
 
 /*
- * MD flags that we use for pmap_enter:
+ * MD flags that we use for pmap_enter (in the pa):
  */
-#define	PMAP_NOCACHE	PMAP_MD0 /* set the non-cacheable bit. */
+#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
+#define	PMAP_NOCACHE	0x1 /* set the non-cacheable bit. */
 
 /*
  * We keep mod/ref flags in struct vm_page->pg_flags.

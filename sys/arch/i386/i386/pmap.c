@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.144 2009/08/06 15:28:14 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.145 2009/08/11 17:15:54 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -686,8 +686,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pt_entry_t *pte, opte, npte;
 
 	pte = vtopte(va);
-	npte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) | PG_V |
-	    PG_U | PG_M;
+	npte = (pa & PMAP_PA_MASK) | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
+	    PG_V | PG_U | PG_M | ((pa & PMAP_NOCACHE) ? PG_N : 0);
 
 	/* special 1:1 mappings in the first 4MB must not be global */
 	if (va >= (vaddr_t)NBPD)
@@ -695,6 +695,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	opte = i386_atomic_testset_ul(pte, npte);
 	if (pmap_valid_entry(opte)) {
+		if (pa & PMAP_NOCACHE && (opte & PG_N) == 0)
+			wbinvd();
 		/* NB. - this should not happen. */
 		pmap_tlb_shootpage(pmap_kernel(), va);
 		pmap_tlb_shootwait();
@@ -2371,8 +2373,11 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa,
 	struct vm_page *ptp;
 	struct pv_entry *pve = NULL, *freepve;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
 	struct vm_page *pg = NULL;
 	int error, wired_count, resident_count, ptp_count;
+
+	pa &= PMAP_PA_MASK;	/* nuke flags from pa */
 
 #ifdef DIAGNOSTIC
 	/* sanity check: totally out of range? */
@@ -2525,7 +2530,7 @@ enter_now:
 	pmap_exec_account(pmap, va, opte, npte);
 	if (wired)
 		npte |= PG_W;
-	if (flags & PMAP_NOCACHE)
+	if (nocache)
 		npte |= PG_N;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
@@ -2548,7 +2553,9 @@ enter_now:
 	pmap->pm_stats.resident_count += resident_count;
 	pmap->pm_stats.wired_count += wired_count;
 
-	if (opte & PG_V) {
+	if (pmap_valid_entry(opte)) {
+		if (nocache && (opte & PG_N) == 0)
+			wbinvd(); /* XXX clflush before we enter? */
 		pmap_tlb_shootpage(pmap, va);
 		pmap_tlb_shootwait();
 	}

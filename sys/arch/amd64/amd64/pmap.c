@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.50 2009/08/06 15:28:14 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.51 2009/08/11 17:15:54 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -447,7 +447,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	pte = kvtopte(va);
 
-	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) | PG_V;
+	npte = (pa & PMAP_PA_MASK) | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
+	    ((pa & PMAP_NOCACHE) ? PG_N : 0) | PG_V;
 
 	/* special 1:1 mappings in the first 2MB must not be global */
 	if (va >= (vaddr_t)NBPD_L2)
@@ -462,6 +463,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		panic("pmap_kenter_pa: PG_PS");
 #endif
 	if (pmap_valid_entry(opte)) {
+		if (pa & PMAP_NOCACHE && (opte & PG_N) == 0)
+			wbinvd();
 		/* This shouldn't happen */
 		pmap_tlb_shootpage(pmap_kernel(), va);
 		pmap_tlb_shootwait();
@@ -1963,7 +1966,10 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct pv_entry *pve = NULL;
 	int ptpdelta, wireddelta, resdelta;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	boolean_t nocache = (pa & PMAP_NOCACHE) != 0;
 	int error;
+
+	pa &= PMAP_PA_MASK;
 
 #ifdef DIAGNOSTIC
 	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
@@ -2127,7 +2133,7 @@ enter_now:
 		npte |= PG_PVLIST;
 	if (wired)
 		npte |= PG_W;
-	if (flags & PMAP_NOCACHE)
+	if (nocache)
 		npte |= PG_N;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
@@ -2143,6 +2149,8 @@ enter_now:
 	 * flush the TLB.  (is this overkill?)
 	 */
 	if (opte & PG_V) {
+		if (nocache && (opte & PG_N) == 0)
+			wbinvd();
 		pmap_tlb_shootpage(pmap, va);
 		pmap_tlb_shootwait();
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.52 2009/06/03 00:49:12 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.53 2009/08/11 17:15:54 oga Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -294,7 +294,10 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 /*
  * MD flags to pmap_enter:
  */
-#define	PMAP_NOCACHE	PMAP_MD0
+
+/* to get just the pa from params to pmap_enter */
+#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK)
+#define	PMAP_NOCACHE	0x1		/* map uncached */
 
 /*
  * We keep mod/ref flags in struct vm_page->pg_flags.
