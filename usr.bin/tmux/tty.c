@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.22 2009/08/11 21:28:11 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.23 2009/08/11 22:34:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -49,6 +49,7 @@ tty_init(struct tty *tty, int fd, char *path, char *term)
 {
 	tty->path = xstrdup(path);
 	tty->fd = fd;
+	tty->log_fd = -1;
 
 	if (term == NULL || *term == '\0')
 		tty->termname = xstrdup("unknown");

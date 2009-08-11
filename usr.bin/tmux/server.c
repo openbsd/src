@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.19 2009/08/11 19:32:25 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.20 2009/08/11 22:34:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -110,6 +110,7 @@ server_create_client(int fd)
 		}
 	}
 	ARRAY_ADD(&clients, c);
+	log_debug("new client %d", fd);
 }
 
 /* Find client index. */
@@ -257,6 +258,7 @@ server_main(int srv_fd)
 	time_t		 now, last;
 
 	siginit();
+	log_debug("server socket is %d", srv_fd);
 
 	last = time(NULL);
 
@@ -901,6 +903,7 @@ server_lost_client(struct client *c)
 		if (ARRAY_ITEM(&clients, i) == c)
 			ARRAY_SET(&clients, i, NULL);
 	}
+	log_debug("lost client %d", c->ibuf.fd);
 
 	tty_free(&c->tty);
 
