@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.12 2009/08/11 17:18:35 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.13 2009/08/11 21:28:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -119,7 +119,8 @@ server_started:
 		if (strlcpy(data.tty, name, sizeof data.tty) >= sizeof data.tty)
 			fatalx("ttyname failed");
 
-		client_write_server(cctx, MSG_IDENTIFY, &data, sizeof data);
+		imsg_compose(&cctx->ibuf, MSG_IDENTIFY,
+		    PROTOCOL_VERSION, -1, STDIN_FILENO, &data, sizeof data);
 	}
 
 	return (0);
