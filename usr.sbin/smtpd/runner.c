@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.61 2009/08/11 14:45:19 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.62 2009/08/11 14:46:58 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -451,6 +451,8 @@ runner_dispatch_smtp(int sig, short event, void *p)
 
 			if (bounce_session(env, imsg.fd, messagep))
 				queue_remove_envelope(messagep);
+			else
+				reset_flags(messagep);
 
 			break;
 		}
