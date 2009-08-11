@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.96 2009/08/08 15:58:14 naddy Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.97 2009/08/11 23:58:35 martynas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1294,7 +1294,7 @@ ti_chipinit(struct ti_softc *sc)
 	default:
 		printf("\n");
 		printf("%s: unsupported chip revision: %x\n",
-		    chip_rev, sc->sc_dv.dv_xname);
+		    sc->sc_dv.dv_xname, chip_rev);
 		return (ENODEV);
 	}
 
