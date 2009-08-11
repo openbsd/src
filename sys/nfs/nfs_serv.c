@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.83 2009/08/10 09:44:44 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.84 2009/08/11 11:07:36 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1161,8 +1161,10 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		nfsm_reply(NFSX_WCCDATA(1));
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info.nmi_mb);
-		if (dirp)
+		if (dirp) {
 			vrele(dirp);
+			dirp = NULL;
+		}
 		error = 0;
 		goto nfsmout;
 	}
@@ -1419,8 +1421,6 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 		    &info.nmi_mb);
 		nfsm_srvwcc(nfsd, tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft,
 		    &info.nmi_mb);
-		if (fdirp)
-			vrele(fdirp);
 		error = 0;
 		goto nfsmout;
 	}
@@ -1533,11 +1533,19 @@ nfsmout:
 		pool_put(&namei_pool, tond.ni_cnd.cn_pnbuf);
 	}
 	if (fromnd.ni_cnd.cn_nameiop) {
-		vrele(fromnd.ni_startdir);
-		pool_put(&namei_pool, fromnd.ni_cnd.cn_pnbuf);
+		if (fromnd.ni_startdir)
+			vrele(fromnd.ni_startdir);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
-		vrele(fromnd.ni_dvp);
-		vrele(fvp);
+
+		/*
+		 * XXX: Workaround the fact that fromnd.ni_dvp can point
+		 * to the same vnode as fdirp. The real fix is to not have
+		 * multiple pointers to the same object.
+		 */
+		if (fromnd.ni_dvp != NULL && fromnd.ni_dvp != fdirp)
+			vrele(fromnd.ni_dvp);
+		if (fvp)
+			vrele(fvp);
 	}
 	return (error);
 }
