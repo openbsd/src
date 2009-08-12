@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.132 2009/08/12 20:02:42 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.133 2009/08/12 21:44:49 henning Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -223,19 +223,7 @@ m_gethdr(int nowait, int type)
 		m->m_nextpkt = (struct mbuf *)NULL;
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
-		m->m_pkthdr.rcvif = NULL;
-		m->m_pkthdr.rdomain = 0;
-		SLIST_INIT(&m->m_pkthdr.tags);
-		m->m_pkthdr.tagsset = 0;
-		m->m_pkthdr.csum_flags = 0;
-		m->m_pkthdr.ether_vtag = 0;
-		m->m_pkthdr.pf.hdr = NULL;
-		m->m_pkthdr.pf.statekey = NULL;
-		m->m_pkthdr.pf.rtableid = 0;
-		m->m_pkthdr.pf.qid = 0;
-		m->m_pkthdr.pf.tag = 0;
-		m->m_pkthdr.pf.flags = 0;
-		m->m_pkthdr.pf.routed = 0;
+		bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
 	}
 	return (m);
 }
@@ -248,19 +236,7 @@ m_inithdr(struct mbuf *m)
 	m->m_nextpkt = (struct mbuf *)NULL;
 	m->m_data = m->m_pktdat;
 	m->m_flags = M_PKTHDR;
-	m->m_pkthdr.rcvif = NULL;
-	m->m_pkthdr.rdomain = 0;
-	SLIST_INIT(&m->m_pkthdr.tags);
-	m->m_pkthdr.tagsset = 0;
-	m->m_pkthdr.csum_flags = 0;
-	m->m_pkthdr.ether_vtag = 0;
-	m->m_pkthdr.pf.hdr = NULL;
-	m->m_pkthdr.pf.statekey = NULL;
-	m->m_pkthdr.pf.rtableid = 0;
-	m->m_pkthdr.pf.qid = 0;
-	m->m_pkthdr.pf.tag = 0;
-	m->m_pkthdr.pf.flags = 0;
-	m->m_pkthdr.pf.routed = 0;
+	bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
 
 	return (m);
 }
