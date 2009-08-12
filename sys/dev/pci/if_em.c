@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.218 2009/08/12 14:39:05 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.219 2009/08/12 20:02:42 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2649,12 +2649,10 @@ em_rxeof(struct em_softc *sc, int count)
 			    sc->last_rx_desc_filled);
 		}
 
+		m_cluncount(m, 1);
 		sc->rx_ndescs--;
-		if (m_cluncount(m) == 0)
-			accept_frame = 1;
-		else
-			accept_frame = 0;
 
+		accept_frame = 1;
 		prev_len_adj = 0;
 		desc_len = letoh16(desc->length);
 
