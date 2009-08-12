@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.133 2009/06/05 00:05:21 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.134 2009/08/12 14:39:05 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -542,7 +542,14 @@ ether_input(ifp0, eh, m)
 	struct ether_header *eh_tmp;
 #endif
 
-	m_cluncount(m, 1);
+	/*
+	 * the cluster is no longer on the ring, so don't count it against the
+	 * ring. if the system wants the packet back we should give it back.
+	 */
+	if (m_cluncount(m) != 0) {
+		m_freem(m);
+		return;
+	}
 
 	/* mark incomming routing domain */
 	m->m_pkthdr.rdomain = ifp->if_rdomain;
