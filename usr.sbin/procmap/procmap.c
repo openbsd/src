@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.32 2009/06/04 22:38:53 miod Exp $ */
+/*	$OpenBSD: procmap.c,v 1.33 2009/08/12 16:42:24 beck Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -178,9 +178,11 @@ size_t dump_vm_map_entry(kvm_t *, struct kbit *, struct kbit *, int,
     struct sum *);
 char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 	    struct kbit *, struct kbit *);
+#if 0
 int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
 void load_name_cache(kvm_t *);
 void cache_enter(struct namecache *);
+#endif
 static void __dead usage(void);
 static pid_t strtopid(const char *);
 void print_sum(struct sum *, struct sum *);
@@ -783,6 +785,7 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	if (UVM_ET_ISOBJ(vme)) {
 		if (A(vfs)) {
 			l = strlen(D(vfs, mount)->mnt_stat.f_mntonname);
+#if 0
 			switch (search_cache(kd, vp, &name, buf, sizeof(buf))) {
 			case 0: /* found something */
 				if (name - (1 + 11 + l) < buf)
@@ -791,11 +794,13 @@ findname(kvm_t *kd, struct kbit *vmspace,
 				*name = '/';
 				/*FALLTHROUGH*/
 			case 2: /* found nothing */
+#endif
 				name -= 11;
 				memcpy(name, " -unknown- ", (size_t)11);
 				name -= l;
 				memcpy(name,
 				    D(vfs, mount)->mnt_stat.f_mntonname, l);
+#if 0
 				break;
 			case 1: /* all is well */
 				if (name - (1 + l) < buf)
@@ -809,6 +814,7 @@ findname(kvm_t *kd, struct kbit *vmspace,
 				}
 				break;
 			}
+#endif
 		} else if (UVM_OBJ_IS_DEVICE(D(uvm_obj, uvm_object))) {
 			struct kbit kdev;
 			dev_t dev;
@@ -850,6 +856,7 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	return (name);
 }
 
+#if 0
 int
 search_cache(kvm_t *kd, struct kbit *vp, char **name, char *buf, size_t blen)
 {
@@ -958,6 +965,7 @@ cache_enter(struct namecache *ncp)
 
 	LIST_INSERT_HEAD(&lcache, ce, ce_next);
 }
+#endif
 
 static void __dead
 usage(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.30 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.31 2009/08/12 16:42:24 beck Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -68,25 +68,67 @@
 /*
  * Structures associated with name caching.
  */
-LIST_HEAD(nchashhead, namecache) *nchashtbl;
 u_long	nchash;				/* size of hash table - 1 */
-long	numcache;			/* number of cache entries allocated */
-TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
+long	numcache;			/* total number of cache entries allocated */
+long	numneg;				/* number of negative cache entries */
+
+TAILQ_HEAD(, namecache) nclruhead;		/* Regular Entry LRU chain */
+TAILQ_HEAD(, namecache) nclruneghead;		/* Negative Entry LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
-
-LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl;
-u_long  ncvhash;                        /* size of hash table - 1 */
-
-#define NCHASH(dvp, cnp) \
-	hash32_buf(&(dvp)->v_id, sizeof((dvp)->v_id), (cnp)->cn_hash) & nchash
-
-#define NCVHASH(vp) (vp)->v_id & ncvhash
 
 int doingcache = 1;			/* 1 => enable the cache */
 
 struct pool nch_pool;
 
+void cache_zap(struct namecache *);
 u_long nextvnodeid;
+
+static int
+namecache_compare(struct namecache *n1, struct namecache *n2)
+{
+	if (n1->nc_nlen == n2->nc_nlen)
+		return (memcmp(n1->nc_name, n2->nc_name, n1->nc_nlen));
+	else
+		return (n1->nc_nlen - n2->nc_nlen);
+}
+
+RB_GENERATE(namecache_rb_cache, namecache, n_rbcache, namecache_compare);
+
+/*
+ * blow away a namecache entry
+ */
+void
+cache_zap(struct namecache *ncp)
+{
+	struct vnode *dvp = NULL;
+
+	if (ncp->nc_vp != NULL) {
+		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
+		numcache--;
+	} else {
+		TAILQ_REMOVE(&nclruneghead, ncp, nc_neg);
+		numneg--;
+	}
+	if (ncp->nc_dvp) {
+		RB_REMOVE(namecache_rb_cache, &ncp->nc_dvp->v_nc_tree, ncp);
+		if (RB_EMPTY(&ncp->nc_dvp->v_nc_tree))
+			dvp = ncp->nc_dvp;
+	}
+	if (ncp->nc_vp && (ncp->nc_vpid == ncp->nc_vp->v_id)) {
+		if (ncp->nc_vp != ncp->nc_dvp &&
+		    ncp->nc_vp->v_type == VDIR &&
+		    (ncp->nc_nlen > 2 ||
+			(ncp->nc_nlen > 1 &&
+			    ncp->nc_name[1] != '.') ||
+			(ncp->nc_nlen > 0 &&
+			    ncp->nc_name[0] != '.'))) {
+			TAILQ_REMOVE(&ncp->nc_vp->v_cache_dst, ncp, nc_me);
+		}
+	}
+	pool_put(&nch_pool, ncp);
+	if (dvp)
+		vdrop(dvp);
+}
 
 /*
  * Look for a name in the cache. We don't do this if the segment name is
@@ -104,10 +146,11 @@ u_long nextvnodeid;
  * is returned.
  */
 int
-cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
+cache_lookup(struct vnode *dvp, struct vnode **vpp,
+    struct componentname *cnp)
 {
 	struct namecache *ncp;
-	struct nchashhead *ncpp;
+	struct namecache n;
 	struct vnode *vp;
 	struct proc *p = curproc;
 	u_long vpid;
@@ -125,14 +168,11 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		return (-1);
 	}
 
-	ncpp = &nchashtbl[NCHASH(dvp, cnp)];
-	LIST_FOREACH(ncp, ncpp, nc_hash) {
-		if (ncp->nc_dvp == dvp &&
-		    ncp->nc_dvpid == dvp->v_id &&
-		    ncp->nc_nlen == cnp->cn_namelen &&
-		    !memcmp(ncp->nc_name, cnp->cn_nameptr, (u_int)ncp->nc_nlen))
-			break;
-	}
+	/* lookup in directory vnode's redblack tree */
+	n.nc_nlen = cnp->cn_namelen;
+	memcpy(n.nc_name, cnp->cn_nameptr, n.nc_nlen);
+	ncp = RB_FIND(namecache_rb_cache, &dvp->v_nc_tree, &n);
+
 	if (ncp == NULL) {
 		nchstats.ncs_miss++;
 		return (-1);
@@ -145,12 +185,12 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		    (cnp->cn_flags & ISLASTCN) == 0) {
 			nchstats.ncs_neghits++;
 			/*
-			 * Move this slot to end of LRU chain,
-			 * if not already there.
+			 * Move this slot to end of the negative LRU chain,
 			 */
-			if (TAILQ_NEXT(ncp, nc_lru) != NULL) {
-				TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-				TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+			if (TAILQ_NEXT(ncp, nc_neg) != NULL) {
+				TAILQ_REMOVE(&nclruneghead, ncp, nc_neg);
+				TAILQ_INSERT_TAIL(&nclruneghead, ncp,
+				    nc_neg);
 			}
 			return (ENOENT);
 		} else {
@@ -220,7 +260,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 
 	nchstats.ncs_goodhits++;
 	/*
-	 * Move this slot to end of LRU chain, if not already there.
+	 * Move this slot to end of the regular LRU chain.
 	 */
 	if (TAILQ_NEXT(ncp, nc_lru) != NULL) {
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
@@ -235,16 +275,7 @@ remove:
 	 * the cache entry is invalid, or otherwise don't
 	 * want cache entry to exist.
 	 */
-	TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-	LIST_REMOVE(ncp, nc_hash);
-	ncp->nc_hash.le_prev = NULL;
-
-	if (ncp->nc_vhash.le_prev != NULL) {
-		LIST_REMOVE(ncp, nc_vhash);
-		ncp->nc_vhash.le_prev = NULL;
-	}
-
-	TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
+	cache_zap(ncp);
 	return (-1);
 }
 
@@ -267,62 +298,51 @@ int
 cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 {
 	struct namecache *ncp;
-	struct vnode *dvp;
-	struct ncvhashhead *nvcpp;
+	struct vnode *dvp = NULL;
 	char *bp;
 
 	if (!doingcache)
 		goto out;
-
-	nvcpp = &ncvhashtbl[NCVHASH(vp)];
-
-	LIST_FOREACH(ncp, nvcpp, nc_vhash) {
-		if (ncp->nc_vp == vp &&
-		    ncp->nc_vpid == vp->v_id &&
-		    (dvp = ncp->nc_dvp) != NULL &&
-		    /* avoid pesky '.' entries.. */
-		    dvp != vp && ncp->nc_dvpid == dvp->v_id) {
-
-#ifdef DIAGNOSTIC
-			if (ncp->nc_nlen == 1 &&
-			    ncp->nc_name[0] == '.')
-				panic("cache_revlookup: found entry for .");
-
-			if (ncp->nc_nlen == 2 &&
-			    ncp->nc_name[0] == '.' &&
-			    ncp->nc_name[1] == '.')
-				panic("cache_revlookup: found entry for ..");
-#endif
-			nchstats.ncs_revhits++;
-
-			if (bufp != NULL) {
-				bp = *bpp;
-				bp -= ncp->nc_nlen;
-				if (bp <= bufp) {
-					*dvpp = NULL;
-					return (ERANGE);
-				}
-				memcpy(bp, ncp->nc_name, ncp->nc_nlen);
-				*bpp = bp;
-			}
-
-			*dvpp = dvp;
-
-			/*
-			 * XXX: Should we vget() here to have more
-			 * consistent semantics with cache_lookup()?
-			 *
-			 * For MP safety it might be necessary to do
-			 * this here, while also protecting hash
-			 * tables themselves to provide some sort of
-			 * sane inter locking.
-			 */
-			return (0);
-		}
+	TAILQ_FOREACH(ncp, &vp->v_cache_dst, nc_me) {
+		dvp = ncp->nc_dvp;
+		if (dvp && dvp != vp && ncp->nc_dvpid == dvp->v_id)
+			goto found;
 	}
-	nchstats.ncs_revmiss++;
+	goto miss;
+found:
+#ifdef DIAGNOSTIC
+	if (ncp->nc_nlen == 1 &&
+	    ncp->nc_name[0] == '.')
+		panic("cache_revlookup: found entry for .");
+	if (ncp->nc_nlen == 2 &&
+	    ncp->nc_name[0] == '.' &&
+	    ncp->nc_name[1] == '.')
+		panic("cache_revlookup: found entry for ..");
+#endif
+	nchstats.ncs_revhits++;
 
- out:
+	if (bufp != NULL) {
+		bp = *bpp;
+		bp -= ncp->nc_nlen;
+		if (bp <= bufp) {
+			*dvpp = NULL;
+			return (ERANGE);
+		}
+		memcpy(bp, ncp->nc_name, ncp->nc_nlen);
+		*bpp = bp;
+	}
+
+	*dvpp = dvp;
+
+	/*
+	 * XXX: Should we vget() here to have more
+	 * consistent semantics with cache_lookup()?
+	 */
+	return (0);
+
+miss:
+	nchstats.ncs_revmiss++;
+out:
 	*dvpp = NULL;
 	return (-1);
 }
@@ -333,60 +353,74 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 void
 cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 {
-	struct namecache *ncp;
-	struct nchashhead *ncpp;
-	struct ncvhashhead *nvcpp;
+	struct namecache *ncp, *lncp;
 
 	if (!doingcache || cnp->cn_namelen > NCHNAMLEN)
 		return;
 
 	/*
-	 * Free the cache slot at head of lru chain.
+	 * allocate, or recycle (free and allocate) an ncp.
 	 */
-	if (numcache < desiredvnodes) {
-		ncp = pool_get(&nch_pool, PR_WAITOK|PR_ZERO);
-		numcache++;
-	} else if ((ncp = TAILQ_FIRST(&nclruhead)) != NULL) {
-		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		if (ncp->nc_hash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_hash);
-			ncp->nc_hash.le_prev = NULL;
-		}
-		if (ncp->nc_vhash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_vhash);
-			ncp->nc_vhash.le_prev = NULL;
-		}
-	} else
-		return;
+	if (numcache >= desiredvnodes) {
+		if ((ncp = TAILQ_FIRST(&nclruhead)) != NULL)
+			cache_zap(ncp);
+		else if ((ncp = TAILQ_FIRST(&nclruneghead)) != NULL)
+			cache_zap(ncp);
+		else
+			panic("wtf? leak?");
+	}
+	ncp = pool_get(&nch_pool, PR_WAITOK|PR_ZERO);
+
 	/* grab the vnode we just found */
 	ncp->nc_vp = vp;
 	if (vp)
 		ncp->nc_vpid = vp->v_id;
+
 	/* fill in cache info */
 	ncp->nc_dvp = dvp;
 	ncp->nc_dvpid = dvp->v_id;
 	ncp->nc_nlen = cnp->cn_namelen;
 	bcopy(cnp->cn_nameptr, ncp->nc_name, (unsigned)ncp->nc_nlen);
-	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
-	ncpp = &nchashtbl[NCHASH(dvp, cnp)];
-	LIST_INSERT_HEAD(ncpp, ncp, nc_hash);
-
-	/*
-	 * Create reverse-cache entries (used in getcwd) for
-	 * directories.
-	 */
-
-	ncp->nc_vhash.le_prev = NULL;
-	ncp->nc_vhash.le_next = NULL;
-
-	if (vp && vp != dvp && vp->v_type == VDIR &&
-	    (ncp->nc_nlen > 2 ||
-		(ncp->nc_nlen > 1 && ncp->nc_name[1] != '.') ||
-		(ncp->nc_nlen > 0 && ncp->nc_name[0] != '.'))) {
-		nvcpp = &ncvhashtbl[NCVHASH(vp)];
-		LIST_INSERT_HEAD(nvcpp, ncp, nc_vhash);
+	if (RB_EMPTY(&dvp->v_nc_tree)) {
+		vhold(dvp);
 	}
+	if ((lncp = RB_INSERT(namecache_rb_cache, &dvp->v_nc_tree, ncp))
+	    != NULL) {
+		/* someone has raced us and added a different entry
+		 * for the same vnode (different ncp) - we don't need
+		 * this entry, so free it and we are done.
+		 */
+	  	pool_put(&nch_pool, ncp);
+		/* we know now dvp->v_nc_tree is not empty, no need
+		 * to vdrop here
+		 */
+		goto done;
+	}
+	if (vp) {
+		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+		numcache++;
+		/* don't put . or .. in the reverse map */
+		if (vp != dvp && vp->v_type == VDIR &&
+		    (ncp->nc_nlen > 2 ||
+			(ncp->nc_nlen > 1 &&
+			    ncp->nc_name[1] != '.') ||
+			(ncp->nc_nlen > 0 &&
+			    ncp->nc_name[0] != '.')))
+			TAILQ_INSERT_TAIL(&vp->v_cache_dst, ncp,
+			    nc_me);
+	} else {
+		TAILQ_INSERT_TAIL(&nclruneghead, ncp, nc_neg);
+		numneg++;
+	}
+	if (numneg  > desiredvnodes) {
+		if ((ncp = TAILQ_FIRST(&nclruneghead))
+		    != NULL)
+			cache_zap(ncp);
+	}
+done:
+	return;
 }
+
 
 /*
  * Name cache initialization, from vfs_init() when we are booting
@@ -394,10 +428,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 void
 nchinit()
 {
-
 	TAILQ_INIT(&nclruhead);
-	nchashtbl = hashinit(desiredvnodes, M_CACHE, M_WAITOK, &nchash);
-	ncvhashtbl = hashinit(desiredvnodes/8, M_CACHE, M_WAITOK, &ncvhash);
+	TAILQ_INIT(&nclruneghead);
 	pool_init(&nch_pool, sizeof(struct namecache), 0, 0, 0, "nchpl",
 	    &pool_allocator_nointr);
 }
@@ -410,18 +442,16 @@ void
 cache_purge(struct vnode *vp)
 {
 	struct namecache *ncp;
-	struct nchashhead *ncpp;
 
+	while ((ncp = TAILQ_FIRST(&vp->v_cache_dst)))
+		cache_zap(ncp);
+	while ((ncp = RB_ROOT(&vp->v_nc_tree)))
+		cache_zap(ncp);
+
+	/* XXX this blows goats */
 	vp->v_id = ++nextvnodeid;
-	if (nextvnodeid != 0)
-		return;
-	for (ncpp = &nchashtbl[nchash]; ncpp >= nchashtbl; ncpp--) {
-		LIST_FOREACH(ncp, ncpp, nc_hash) {
-			ncp->nc_vpid = 0;
-			ncp->nc_dvpid = 0;
-		}
-	}
-	vp->v_id = ++nextvnodeid;
+	if (vp->v_id == 0)
+		vp->v_id = ++nextvnodeid;
 }
 
 /*
@@ -437,6 +467,7 @@ cache_purgevfs(struct mount *mp)
 {
 	struct namecache *ncp, *nxtcp;
 
+	/* whack the regular entries */
 	for (ncp = TAILQ_FIRST(&nclruhead); ncp != TAILQ_END(&nclruhead);
 	    ncp = nxtcp) {
 		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
@@ -444,19 +475,20 @@ cache_purgevfs(struct mount *mp)
 			continue;
 		}
 		/* free the resources we had */
-		ncp->nc_vp = NULL;
-		ncp->nc_dvp = NULL;
-		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-		if (ncp->nc_hash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_hash);
-			ncp->nc_hash.le_prev = NULL;
-		}
-		if (ncp->nc_vhash.le_prev != NULL) {
-			LIST_REMOVE(ncp, nc_vhash);
-			ncp->nc_vhash.le_prev = NULL;
-		}
+		cache_zap(ncp);
 		/* cause rescan of list, it may have altered */
 		nxtcp = TAILQ_FIRST(&nclruhead);
-		TAILQ_INSERT_HEAD(&nclruhead, ncp, nc_lru);
+	}
+	/* whack the negative entries */
+	for (ncp = TAILQ_FIRST(&nclruneghead); ncp != TAILQ_END(&nclruneghead);
+	    ncp = nxtcp) {
+		if (ncp->nc_dvp == NULL || ncp->nc_dvp->v_mount != mp) {
+			nxtcp = TAILQ_NEXT(ncp, nc_neg);
+			continue;
+		}
+		/* free the resources we had */
+		cache_zap(ncp);
+		/* cause rescan of list, it may have altered */
+		nxtcp = TAILQ_FIRST(&nclruneghead);
 	}
 }

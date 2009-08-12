@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.102 2009/08/02 16:28:40 beck Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.103 2009/08/12 16:42:24 beck Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#include <sys/namei.h>
 #include <sys/selinfo.h>
 #include <sys/tree.h>
 
@@ -82,6 +83,7 @@ enum vtagtype	{
 LIST_HEAD(buflists, buf);
 
 RB_HEAD(buf_rb_bufs, buf);
+RB_HEAD(namecache_rb_cache, namecache);
 
 struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
@@ -109,6 +111,10 @@ struct vnode {
 		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
+
+	/* VFS namecache */
+	struct namecache_rb_cache v_nc_tree;
+	TAILQ_HEAD(, namecache) v_cache_dst;	 /* cache entries to us */
 
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void	*v_data;			/* private data for fs */
@@ -247,8 +253,9 @@ extern	int desiredvnodes;		/* XXX number of vnodes desired */
 extern	int maxvnodes;			/* XXX number of vnodes to allocate */
 extern	time_t syncdelay;		/* time to delay syncing vnodes */
 extern	int rushjob;			/* # of slots syncer should run ASAP */
+extern void    vhold(struct vnode *);
+extern void    vdrop(struct vnode *);
 #endif /* _KERNEL */
-
 
 /*
  * Mods for exensibility.

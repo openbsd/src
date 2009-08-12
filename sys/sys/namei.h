@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.22 2008/08/29 08:57:28 otto Exp $	*/
+/*	$OpenBSD: namei.h,v 1.23 2009/08/12 16:42:24 beck Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -36,6 +36,12 @@
 #define	_SYS_NAMEI_H_
 
 #include <sys/queue.h>
+#include <sys/tree.h>
+#include <sys/uio.h>
+
+struct namecache;
+struct namecache_rb_cache;
+RB_PROTOTYPE(namecache_rb_cache, namecache, n_rbcache, namecache_compare);
 
 /*
  * Encapsulation of namei parameters.
@@ -156,9 +162,10 @@ struct nameidata {
 #define	NCHNAMLEN	31	/* maximum name segment length we bother with */
 
 struct	namecache {
-	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
-	LIST_ENTRY(namecache) nc_vhash;	/* (reverse) directory hash chain */
-	TAILQ_ENTRY(namecache) nc_lru;	/* LRU chain */
+	TAILQ_ENTRY(namecache) nc_lru;	/* Regular Entry LRU chain */
+	TAILQ_ENTRY(namecache) nc_neg;	/* Negative Entry LRU chain */
+	RB_ENTRY(namecache) n_rbcache;  /* Namecache rb tree from vnode */
+	TAILQ_ENTRY(namecache) nc_me;	/* ncp's referring to me */
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
 	u_long	nc_dvpid;		/* capability number of nc_dvp */
 	struct	vnode *nc_vp;		/* vnode the name refers to */
