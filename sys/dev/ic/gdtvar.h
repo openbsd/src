@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.16 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.17 2009/08/12 17:51:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -251,8 +251,8 @@ struct gdt_ccb {
 #define GDT_GCF_WATCHDOG 	0x4
 };
 
-static __inline__ int gdt_ccb_set_cmd(struct gdt_ccb *, int);
-static __inline__ int
+static inline int gdt_ccb_set_cmd(struct gdt_ccb *, int);
+static inline int
 gdt_ccb_set_cmd(ccb, flag)
 	struct gdt_ccb *ccb;
 	int flag;
@@ -402,15 +402,14 @@ void	gdtminphys(struct buf *, struct scsi_link *);
 int	gdt_attach(struct gdt_softc *);
 int	gdt_intr(void *);
 
-#ifdef __GNUC__
 /* These all require correctly aligned buffers */
-static __inline__ void gdt_enc16(u_int8_t *, u_int16_t);
-static __inline__ void gdt_enc32(u_int8_t *, u_int32_t);
-static __inline__ u_int8_t gdt_dec8(u_int8_t *);
-static __inline__ u_int16_t gdt_dec16(u_int8_t *);
-static __inline__ u_int32_t gdt_dec32(u_int8_t *);
+static inline void gdt_enc16(u_int8_t *, u_int16_t);
+static inline void gdt_enc32(u_int8_t *, u_int32_t);
+static inline u_int8_t gdt_dec8(u_int8_t *);
+static inline u_int16_t gdt_dec16(u_int8_t *);
+static inline u_int32_t gdt_dec32(u_int8_t *);
 
-static __inline__ void
+static inline void
 gdt_enc16(addr, value)
 	u_int8_t *addr;
 	u_int16_t value;
@@ -418,7 +417,7 @@ gdt_enc16(addr, value)
 	*(u_int16_t *)addr = htole16(value);
 }
 
-static __inline__ void
+static inline void
 gdt_enc32(addr, value)
 	u_int8_t *addr;
 	u_int32_t value;
@@ -426,27 +425,26 @@ gdt_enc32(addr, value)
 	*(u_int32_t *)addr = htole32(value);
 }
 
-static __inline__ u_int8_t
+static inline u_int8_t
 gdt_dec8(addr)
 	u_int8_t *addr;
 {
 	return *(u_int8_t *)addr;
 }
 
-static __inline__ u_int16_t
+static inline u_int16_t
 gdt_dec16(addr)
 	u_int8_t *addr;
 {
 	return letoh16(*(u_int16_t *)addr);
 }
 
-static __inline__ u_int32_t
+static inline u_int32_t
 gdt_dec32(addr)
 	u_int8_t *addr;
 {
 	return letoh32(*(u_int32_t *)addr);
 }
-#endif
 
 extern u_int8_t gdt_polling;
 
