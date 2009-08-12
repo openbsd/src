@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.141 2009/06/26 01:24:05 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.142 2009/08/12 09:59:35 martynas Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2801,7 +2801,7 @@ azalia_widget_label_widgets(codec_t *codec)
 			if (codec->w[j].enable == 0) {
 				codec->w[i].enable = 0;
 				snprintf(codec->w[i].name,
-				    sizeof(codec->w[i].name), "%s",
+				    sizeof(codec->w[i].name),
 				    "u-wid%2.2x", i);
 				continue;
 			}
