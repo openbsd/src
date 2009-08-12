@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.71 2008/11/13 04:26:59 deraadt Exp $
+#	$OpenBSD: services,v 1.72 2009/08/12 20:26:05 deraadt Exp $
 #
 # Network services, Internet style
 #
@@ -235,6 +235,7 @@ eppc		3031/tcp			# Remote AppleEvents/PPC Toolbox
 eppc		3031/udp			# Remote AppleEvents/PPC Toolbox
 mysql		3306/tcp			# MySQL
 iapp		3517/tcp	802-11-iapp	# IEEE 802.11f IAPP
+iscsi		3260/tcp			# ISCSI
 iapp		3517/udp	802-11-iapp	# IEEE 802.11f IAPP
 daap		3689/tcp			# Digital Audio Access Protocol
 daap		3689/udp			# Digital Audio Access Protocol
