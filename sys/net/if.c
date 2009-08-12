@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.198 2009/08/10 11:22:10 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.199 2009/08/12 15:58:20 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -471,7 +471,8 @@ if_attach_common(struct ifnet *ifp)
 void
 if_start(struct ifnet *ifp)
 {
-	if (IF_QFULL(&ifp->if_snd) && !ISSET(ifp->if_flags, IFF_OACTIVE)) {
+	if (ifp->if_snd.ifq_len >= min(8, ifp->if_snd.ifq_maxlen) &&
+	    !ISSET(ifp->if_flags, IFF_OACTIVE)) {
 		if (ISSET(ifp->if_xflags, IFXF_TXREADY)) {
 			TAILQ_REMOVE(&iftxlist, ifp, if_txlist);
 			CLR(ifp->if_xflags, IFXF_TXREADY);
