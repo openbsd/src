@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.13 2009/03/29 21:53:52 sthen Exp $ */
+/* $OpenBSD: ega.c,v 1.14 2009/08/12 15:58:31 miod Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -622,8 +622,10 @@ ega_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 		 * for the first one too.
 		 * XXX We could be more clever and use video RAM.
 		 */
-		LIST_FIRST(&vc->screens)->pcs.mem =
-		  malloc(type->ncols * type->nrows * 2, M_DEVBUF, M_WAITOK);
+		scr = LIST_FIRST(&vs->screens);
+		scr->pcs.mem =
+		  malloc(scr->pcs.type->ncols * scr->pcs.type->nrows * 2,
+		    M_DEVBUF, M_WAITOK);
 	}
 
 	scr = malloc(sizeof(struct egascreen), M_DEVBUF, M_WAITOK);
