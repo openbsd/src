@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.19 2009/08/11 21:28:11 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.20 2009/08/12 09:14:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -62,6 +62,7 @@ const char *
 window_default_command(void)
 {
 	const char	*shell, *ptr;
+	char		*progname;
 	struct passwd	*pw;
 
 	shell = getenv("SHELL");
@@ -81,7 +82,10 @@ found:
 		ptr++;
 	else
 		ptr = shell;
-	if (strcmp(ptr, __progname) == 0)
+	progname = __progname;
+	if (*progname == '-')
+		progname++;
+	if (strcmp(ptr, progname) == 0)
 		return (_PATH_BSHELL);
 	return (shell);
 }
