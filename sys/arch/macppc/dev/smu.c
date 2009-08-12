@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.20 2009/08/11 18:44:05 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.21 2009/08/12 12:30:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -83,6 +83,9 @@ struct smu_softc {
 	int16_t		sc_cpu_volt_offset;
 	u_int16_t	sc_cpu_curr_scale;
 	int16_t		sc_cpu_curr_offset;
+
+	u_int16_t	sc_slots_pow_scale;
+	int16_t		sc_slots_pow_offset;
 
 	struct i2c_controller sc_i2c_tag;
 };
@@ -329,6 +332,8 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 			sensor->sensor.type = SENSOR_TEMP;
 		} else if (strcmp(type, "voltage-sensor") == 0) {
 			sensor->sensor.type = SENSOR_VOLTS_DC;
+		} else if (strcmp(type, "power-sensor") == 0) {
+			sensor->sensor.type = SENSOR_WATTS;
 		} else {
 			sensor->sensor.type = SENSOR_INTEGER;
 		}
@@ -356,6 +361,11 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cpu_volt_offset = (data[6] << 8) + data[7];
 	sc->sc_cpu_curr_scale = (data[8] << 8) + data[9];
 	sc->sc_cpu_curr_offset = (data[10] << 8) + data[11];
+
+	/* Slots power calibration */
+	smu_get_datablock(sc, 0x78, data, sizeof data);
+	sc->sc_slots_pow_scale = (data[4] << 8) + data[5];
+	sc->sc_slots_pow_offset = (data[6] << 8) + data[7];
 
 	sensor_task_register(sc, smu_refresh_sensors, 5);
 	printf("\n");
@@ -603,6 +613,16 @@ smu_sensor_refresh(struct smu_softc *sc, struct smu_sensor *sensor)
 		value <<= 4;
 
 		/* Convert from 16.16 fixed point A into muA. */
+		value *= 15625;
+		value /= 1024;
+		break;
+
+	case SENSOR_WATTS:
+		value *= sc->sc_slots_pow_scale;
+		value += sc->sc_slots_pow_offset;
+		value <<= 4;
+
+		/* Convert from 16.16 fixed point W into muW. */
 		value *= 15625;
 		value /= 1024;
 		break;
