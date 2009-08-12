@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.196 2009/08/09 21:50:20 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.197 2009/08/12 14:15:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1346,6 +1346,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1381,6 +1382,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	if (ami_load_ptmem(sc, ccb, xs->data, xs->datalen,
 	    xs->flags & SCSI_DATA_IN, xs->flags & SCSI_NOSLEEP) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		ami_put_ccb(ccb);
 		scsi_done(xs);
@@ -1514,6 +1516,11 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	case PREVENT_ALLOW:
 		AMI_DPRINTF(AMI_D_CMD, ("opc %d tgt %d ", xs->cmd->opcode,
 		    target));
+		xs->error = XS_NOERROR;
+		xs->flags |= ITSDONE;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 
 	case REQUEST_SENSE:
@@ -1525,6 +1532,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		*(u_int32_t*)sd.info = htole32(0);
 		sd.extra_len = 0;
 		ami_copy_internal_data(xs, &sd, sizeof(sd));
+
+		xs->error = XS_NOERROR;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1543,6 +1553,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		    "Host drive  #%02d", target);
 		strlcpy(inq.revision, "   ", sizeof(inq.revision));
 		ami_copy_internal_data(xs, &inq, sizeof(inq));
+
+		xs->error = XS_NOERROR;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1554,6 +1567,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		_lto4b(sc->sc_hdr[target].hd_size - 1, rcd.addr);
 		_lto4b(AMI_SECTOR_SIZE, rcd.length);
 		ami_copy_internal_data(xs, &rcd, sizeof(rcd));
+
+		xs->error = XS_NOERROR;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1562,7 +1578,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	default:
 		AMI_DPRINTF(AMI_D_CMD, ("unsupported scsi command %#x tgt %d ",
 		    xs->cmd->opcode, target));
+
 		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1585,6 +1603,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		printf("%s: out of bounds %u-%u >= %u\n", DEVNAME(sc),
 		    blockno, blockcnt, sc->sc_hdr[target].hd_size);
 		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -1617,6 +1636,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 			printf("error %d loading dma map\n", error);
 
 		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		ami_put_ccb(ccb);
 		scsi_done(xs);
