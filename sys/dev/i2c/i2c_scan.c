@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.133 2009/07/10 19:58:41 cnst Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.134 2009/08/12 14:51:20 cnst Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -883,6 +883,14 @@ iic_probe_sensor(struct device *self, u_int8_t addr)
 	    (iicprobew(0x07) & 0xffe0) == 0x0800 &&
 	    iicprobew(0x00) == 0x001f) {
 		name = "cat34ts02";		/* or cat6095 */
+	} else if ((addr & 0x7e) == 0x1c && iicprobe(0x0f) == 0x3b &&
+	    (iicprobe(0x21) & 0x60) == 0x00 &&
+	    iicprobe(0x0f) == iicprobe(0x8f) &&	/* registers address is 7 bits */
+	    iicprobe(0x20) == iicprobe(0xa0) &&
+	    iicprobe(0x21) == iicprobe(0xa1) &&
+	    iicprobe(0x22) == iicprobe(0xa2) &&
+	    iicprobe(0x07) == 0x00) {		/* 0x00 to 0x0e are reserved */
+		name = "lis331dl";
 	} else if (name == NULL &&
 	    (addr & 0x78) == 0x48) {		/* addr 0b1001xxx */
 		name = lm75probe();
