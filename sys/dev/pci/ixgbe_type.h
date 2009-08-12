@@ -1529,6 +1529,9 @@ struct ixgbe_hw {
 #define ixgbe_hw(hw, func, ...)						\
 	((hw)->mac.ops.func != NULL) ?					\
 	(hw)->mac.ops.func(hw, ##__VA_ARGS__) : IXGBE_NOT_IMPLEMENTED
+#define ixgbe_hw0(hw, func, ...)					\
+	((hw)->mac.ops.func != NULL) ?					\
+	(hw)->mac.ops.func(hw) : IXGBE_NOT_IMPLEMENTED
 #define ixgbe_ee(hw, func, ...)						\
 	((hw)->eeprom.ops.func != NULL) ?				\
 	(hw)->eeprom.ops.func(hw, ##__VA_ARGS__) : IXGBE_NOT_IMPLEMENTED

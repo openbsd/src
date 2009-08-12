@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.27 2009/08/12 14:39:05 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.28 2009/08/12 16:56:59 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -1125,9 +1125,9 @@ ixgbe_stop(void *arg)
 	INIT_DEBUGOUT("ixgbe_stop: begin\n");
 	ixgbe_disable_intr(sc);
 
-	ixgbe_hw(&sc->hw, reset_hw);
+	ixgbe_hw0(&sc->hw, reset_hw);
 	sc->hw.adapter_stopped = FALSE;
-	ixgbe_hw(&sc->hw, stop_adapter);
+	ixgbe_hw0(&sc->hw, stop_adapter);
 	timeout_del(&sc->timer);
 
 	/* reprogram the RAR[0] in case user changed it. */
@@ -1307,7 +1307,7 @@ ixgbe_hardware_init(struct ix_softc *sc)
 	csum = 0;
 	/* Issue a global reset */
 	sc->hw.adapter_stopped = FALSE;
-	ixgbe_hw(&sc->hw, stop_adapter);
+	ixgbe_hw0(&sc->hw, stop_adapter);
 
 	/* Make sure we have a good EEPROM before we read from it */
 	if (ixgbe_ee(&sc->hw, validate_checksum, &csum) < 0) {
@@ -1322,7 +1322,7 @@ ixgbe_hardware_init(struct ix_softc *sc)
 	sc->hw.fc.high_water = IXGBE_FC_HI;
 	sc->hw.fc.send_xon = TRUE;
 
-	if (ixgbe_hw(&sc->hw, init_hw) != 0) {
+	if (ixgbe_hw0(&sc->hw, init_hw) != 0) {
 		printf("%s: Hardware Initialization Failed", ifp->if_xname);
 		return (EIO);
 	}
