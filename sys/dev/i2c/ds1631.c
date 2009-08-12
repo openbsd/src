@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.10 2008/04/17 19:01:48 deraadt Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.11 2009/08/12 17:13:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -143,9 +143,12 @@ maxds_refresh(void *arg)
 
 	cmd = DS1631_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0) {
 		sc->sc_sensor[MAXDS_TEMP].value = 273150000 +
 		    (int)(betoh16(data)) / 8 * 31250;
+		sc->sc_sensor[MAXDS_TEMP].flags &= ~SENSOR_FINVALID;
+	} else
+		sc->sc_sensor[MAXDS_TEMP].flags |= SENSOR_FINVALID;
 
 	iic_release_bus(sc->sc_tag, 0);
 }
