@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.33 2009/08/12 16:42:24 beck Exp $ */
+/*	$OpenBSD: procmap.c,v 1.34 2009/08/12 20:13:12 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -87,9 +87,8 @@ struct cache_entry {
 };
 
 LIST_HEAD(cache_head, cache_entry) lcache;
-LIST_HEAD(nchashhead, namecache) *nchashtbl = NULL;
 void *uvm_vnodeops, *uvm_deviceops, *aobj_pager;
-u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
+u_long nchash_addr, kernel_map_addr;
 int debug, verbose;
 int print_all, print_map, print_maps, print_solaris, print_ddb, print_amap;
 int rwx = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
@@ -165,10 +164,8 @@ struct nlist nl[] = {
 #define NL_AOBJ_PAGER		3
 	{ "_kernel_map" },
 #define NL_KERNEL_MAP		4
-	{ "_nchashtbl" },
-#define NL_NCHASHTBL		5
 	{ "_nchash" },
-#define NL_NCHASH		6
+#define NL_NCHASH		5
 	{ NULL }
 };
 
@@ -178,8 +175,8 @@ size_t dump_vm_map_entry(kvm_t *, struct kbit *, struct kbit *, int,
     struct sum *);
 char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,
 	    struct kbit *, struct kbit *);
-#if 0
 int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
+#if 0
 void load_name_cache(kvm_t *);
 void cache_enter(struct namecache *);
 #endif
@@ -530,8 +527,6 @@ load_symbols(kvm_t *kd)
 
 	_KDEREF(kd, nl[NL_MAXSSIZ].n_value, &maxssiz,
 	    sizeof(maxssiz));
-	_KDEREF(kd, nl[NL_NCHASHTBL].n_value, &nchashtbl_addr,
-	    sizeof(nchashtbl_addr));
 	_KDEREF(kd, nl[NL_KERNEL_MAP].n_value, &kernel_map_addr,
 	    sizeof(kernel_map_addr));
 }
@@ -785,7 +780,6 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	if (UVM_ET_ISOBJ(vme)) {
 		if (A(vfs)) {
 			l = strlen(D(vfs, mount)->mnt_stat.f_mntonname);
-#if 0
 			switch (search_cache(kd, vp, &name, buf, sizeof(buf))) {
 			case 0: /* found something */
 				if (name - (1 + 11 + l) < buf)
@@ -794,13 +788,11 @@ findname(kvm_t *kd, struct kbit *vmspace,
 				*name = '/';
 				/*FALLTHROUGH*/
 			case 2: /* found nothing */
-#endif
 				name -= 11;
 				memcpy(name, " -unknown- ", (size_t)11);
 				name -= l;
 				memcpy(name,
 				    D(vfs, mount)->mnt_stat.f_mntonname, l);
-#if 0
 				break;
 			case 1: /* all is well */
 				if (name - (1 + l) < buf)
@@ -814,7 +806,6 @@ findname(kvm_t *kd, struct kbit *vmspace,
 				}
 				break;
 			}
-#endif
 		} else if (UVM_OBJ_IS_DEVICE(D(uvm_obj, uvm_object))) {
 			struct kbit kdev;
 			dev_t dev;
@@ -856,7 +847,6 @@ findname(kvm_t *kd, struct kbit *vmspace,
 	return (name);
 }
 
-#if 0
 int
 search_cache(kvm_t *kd, struct kbit *vp, char **name, char *buf, size_t blen)
 {
@@ -865,8 +855,10 @@ search_cache(kvm_t *kd, struct kbit *vp, char **name, char *buf, size_t blen)
 	char *o, *e;
 	u_long cid;
 
+#if 0
 	if (nchashtbl == NULL)
 		load_name_cache(kd);
+#endif
 
 	P(&svp) = P(vp);
 	S(&svp) = sizeof(struct vnode);
@@ -900,6 +892,7 @@ search_cache(kvm_t *kd, struct kbit *vp, char **name, char *buf, size_t blen)
 	return (D(&svp, vnode)->v_flag & VROOT);
 }
 
+#if 0
 void
 load_name_cache(kvm_t *kd)
 {
