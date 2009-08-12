@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.14 2004/10/21 20:57:08 millert Exp $
+ *	$Id: amd.c,v 1.15 2009/08/12 13:21:17 deraadt Exp $
  */
 
 #ifndef lint
@@ -63,7 +63,7 @@ char pid_fsname[16 + MAXHOSTNAMELEN];	/* "kiska.southseas.nz:(pid%d)" */
 char *host_helper;
 #endif /* HOST_EXEC */
 #endif /* HAS_HOST */
-char *auto_dir = "/a";
+char *auto_dir = "/tmp_mnt";
 char *hostdomain = "unknown.domain";
 char hostname[MAXHOSTNAMELEN] = "localhost"; /* Hostname */
 char hostd[2*MAXHOSTNAMELEN];		/* Host+domain */

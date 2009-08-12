@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)get_args.c	8.1 (Berkeley) 6/6/93
- *	$Id: get_args.c,v 1.10 2007/02/18 20:26:38 jmc Exp $
+ *	$Id: get_args.c,v 1.11 2009/08/12 13:21:17 deraadt Exp $
  */
 
 /*
@@ -103,7 +103,7 @@ get_args(int c, char *v[])
 {
 	int opt_ch;
 	int usage = 0;
-	char *logfile = 0;
+	char *logfile = "syslog";
 	char *sub_domain = 0;
 
 	while ((opt_ch = getopt(c, v, "mnprva:c:d:h:k:l:t:w:x:y:C:D:")) != -1)

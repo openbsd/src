@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.331 2009/08/07 22:27:47 sthen Exp $
+#	$OpenBSD: rc,v 1.332 2009/08/12 13:21:15 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -440,8 +440,7 @@ fi
 
 if [ X"${amd}" = X"YES" -a -e ${amd_master} ]; then
 	echo -n ' amd'
-	(cd /etc/amd; amd -l syslog -x error,noinfo,nostats -p \
-	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid )
+	(cd /etc/amd; amd `cat ${amd_master}`)
 fi
 
 # run rdate before timed/ntpd
