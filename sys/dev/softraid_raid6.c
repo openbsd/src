@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.4 2009/08/09 14:12:25 marco Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.5 2009/08/12 22:01:15 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -44,7 +44,8 @@
 #include <dev/softraidvar.h>
 #include <dev/rndvar.h>
 
-uint8_t	gf_pow[512], gf_log[256];
+uint8_t	gf_pow[768];
+int	gf_log[256];
 
 /* RAID 6 functions. */
 int	sr_raid6_alloc_resources(struct sr_discipline *);
@@ -68,7 +69,6 @@ void	*sr_get_block(struct sr_discipline *, int);
 void	sr_put_block(struct sr_discipline *, void *);
 
 void	gf_init(void);
-uint8_t	gf_mul(uint8_t, uint8_t);
 uint8_t gf_inv(uint8_t);
 
 #define SR_NOFAIL		0x00
@@ -983,10 +983,12 @@ void
 sr_raid6_xorq(void *q, void *d, int len, int gn)
 {
 	uint8_t		*qbuf = q, *data = d;
+	uint8_t		*gn_pow = gf_pow + gf_log[gn];
 
 	/* Have to do this a byte at a time */
+	/* Faster multiply.. gn is always constant */
 	while (len--)
-		qbuf[len] ^= gf_mul(data[len], gn);
+		qbuf[len] ^= gn_pow[gf_log[data[len]]];
 }
 
 /* Create GF256 log/pow tables: polynomial = 0x11D */
@@ -1002,16 +1004,7 @@ gf_init(void)
 		gf_pow[i] = gf_pow[i+255] = p;
 		p = ((p << 1) ^ ((p & 0x80) ? 0x1D : 0x00));
 	}
-}
-
-/* GF256 multiplication using exponent/logarithm table */
-uint8_t
-gf_mul(uint8_t a, uint8_t b)
-{
-	/* g^a * g^b = g^(a+b) */
-	if (!a || !b)
-		return (0);
-	return gf_pow[gf_log[a] + gf_log[b]];
+	gf_log[0] = 512;
 }
 
 uint8_t
