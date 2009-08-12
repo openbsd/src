@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.21 2009/08/12 12:30:51 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.22 2009/08/12 14:11:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -377,8 +377,16 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = smu_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = smu_i2c_exec;
 
+	/*
+	 * Early versions of the SMU have the i2c bus node directly
+	 * below the "smu" node, while later models have an
+	 * intermediate "smu-i2c-control" node.
+	 */
 	node = OF_getnodebyname(ca->ca_node, "smu-i2c-control");
-	node = OF_child(node);
+	if (node)
+		node = OF_child(node);
+	else
+		node = OF_getnodebyname(ca->ca_node, "i2c");
 
 	bzero(&iba, sizeof iba);
 	iba.iba_name = "iic";
