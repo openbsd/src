@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.113 2009/08/08 00:02:22 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.114 2009/08/12 13:32:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -287,23 +287,31 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	body = strrchr(args, ' ');
-	if (body != NULL) {
+	for (body = strrchr(args, ' '); body != NULL;
+		body = strrchr(args, ' ')) {
 		*body++ = '\0';
 
-		if (strcasecmp("body=7bit", body) == 0) {
-			s->s_flags &= ~F_8BITMIME;
+		if (strncasecmp(body, "AUTH=", 5) == 0) {
+			log_debug("AUTH in MAIL FROM command, skipping");
+			continue;		
 		}
 
-		else if (strcasecmp("body=8bitmime", body) != 0) {
-			session_respond(s, "503 Invalid BODY");
-			return 1;
-		}
+		if (strncasecmp(body, "BODY=", 5) == 0) {
+			log_debug("BODY in MAIL FROM command");
 
-		return session_rfc5321_mail_handler(s, args);
+			if (strncasecmp("body=7bit", body, 9) == 0) {
+				s->s_flags &= ~F_8BITMIME;
+				continue;
+			}
+
+			else if (strncasecmp("body=8bitmime", body, 13) != 0) {
+				session_respond(s, "503 Invalid BODY");
+				return 1;
+			}
+		}
 	}
-
-	return 0;
+	
+	return session_rfc5321_mail_handler(s, args);
 }
 
 int
