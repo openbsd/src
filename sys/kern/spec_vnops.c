@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.55 2009/06/25 15:49:26 thib Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.56 2009/08/13 15:00:14 jasper Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -58,41 +58,41 @@ struct vnode *speclisth[SPECHSZ];
 int (**spec_vnodeop_p)(void *);
 struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_default_desc, eopnotsupp },
-	{ &vop_lookup_desc, vop_generic_lookup },	/* lookup */
-	{ &vop_create_desc, spec_badop },		/* create */
-	{ &vop_mknod_desc, spec_badop },		/* mknod */
-	{ &vop_open_desc, spec_open },			/* open */
-	{ &vop_close_desc, spec_close },		/* close */
-	{ &vop_access_desc, spec_access },		/* access */
-	{ &vop_getattr_desc, spec_getattr },		/* getattr */
-	{ &vop_setattr_desc, spec_setattr },		/* setattr */
-	{ &vop_read_desc, spec_read },			/* read */
-	{ &vop_write_desc, spec_write },		/* write */
-	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
-	{ &vop_poll_desc, spec_poll },			/* poll */
-	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, vop_generic_revoke },	/* revoke */
-	{ &vop_fsync_desc, spec_fsync },		/* fsync */
-	{ &vop_remove_desc, spec_badop },		/* remove */
-	{ &vop_link_desc, spec_badop },			/* link */
-	{ &vop_rename_desc, spec_badop },		/* rename */
-	{ &vop_mkdir_desc, spec_badop },		/* mkdir */
-	{ &vop_rmdir_desc, spec_badop },		/* rmdir */
-	{ &vop_symlink_desc, spec_badop },		/* symlink */
-	{ &vop_readdir_desc, spec_badop },		/* readdir */
-	{ &vop_readlink_desc, spec_badop },		/* readlink */
-	{ &vop_abortop_desc, spec_badop },		/* abortop */
-	{ &vop_inactive_desc, spec_inactive },		/* inactive */
-	{ &vop_reclaim_desc, nullop },			/* reclaim */
-	{ &vop_lock_desc, vop_generic_lock },		/* lock */
-	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
-	{ &vop_bmap_desc, vop_generic_bmap },		/* bmap */
-	{ &vop_strategy_desc, spec_strategy },		/* strategy */
-	{ &vop_print_desc, spec_print },		/* print */
-	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
-	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, spec_advlock },		/* advlock */
-	{ &vop_bwrite_desc, vop_generic_bwrite },	/* bwrite */
+	{ &vop_lookup_desc, vop_generic_lookup },
+	{ &vop_create_desc, spec_badop },
+	{ &vop_mknod_desc, spec_badop },
+	{ &vop_open_desc, spec_open },
+	{ &vop_close_desc, spec_close },
+	{ &vop_access_desc, spec_access },
+	{ &vop_getattr_desc, spec_getattr },
+	{ &vop_setattr_desc, spec_setattr },
+	{ &vop_read_desc, spec_read },
+	{ &vop_write_desc, spec_write },
+	{ &vop_ioctl_desc, spec_ioctl },
+	{ &vop_poll_desc, spec_poll },
+	{ &vop_kqfilter_desc, spec_kqfilter },
+	{ &vop_revoke_desc, vop_generic_revoke },
+	{ &vop_fsync_desc, spec_fsync },
+	{ &vop_remove_desc, spec_badop },
+	{ &vop_link_desc, spec_badop },
+	{ &vop_rename_desc, spec_badop },
+	{ &vop_mkdir_desc, spec_badop },
+	{ &vop_rmdir_desc, spec_badop },
+	{ &vop_symlink_desc, spec_badop },
+	{ &vop_readdir_desc, spec_badop },
+	{ &vop_readlink_desc, spec_badop },
+	{ &vop_abortop_desc, spec_badop },
+	{ &vop_inactive_desc, spec_inactive },
+	{ &vop_reclaim_desc, nullop },
+	{ &vop_lock_desc, vop_generic_lock },
+	{ &vop_unlock_desc, vop_generic_unlock },
+	{ &vop_bmap_desc, vop_generic_bmap },
+	{ &vop_strategy_desc, spec_strategy },
+	{ &vop_print_desc, spec_print },
+	{ &vop_islocked_desc, vop_generic_islocked },
+	{ &vop_pathconf_desc, spec_pathconf },
+	{ &vop_advlock_desc, spec_advlock },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ NULL, NULL }
 };
 struct vnodeopv_desc spec_vnodeop_opv_desc =

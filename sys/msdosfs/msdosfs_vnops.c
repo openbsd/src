@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.69 2009/08/13 12:20:52 jasper Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.70 2009/08/13 15:00:14 jasper Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1846,39 +1846,39 @@ fileidhash(uint64_t fileid)
 int (**msdosfs_vnodeop_p)(void *);
 struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_default_desc, eopnotsupp },
-	{ &vop_lookup_desc, msdosfs_lookup },		/* lookup */
-	{ &vop_create_desc, msdosfs_create },		/* create */
-	{ &vop_mknod_desc, msdosfs_mknod },		/* mknod */
-	{ &vop_open_desc, msdosfs_open },		/* open */
-	{ &vop_close_desc, msdosfs_close },		/* close */
-	{ &vop_access_desc, msdosfs_access },		/* access */
-	{ &vop_getattr_desc, msdosfs_getattr },		/* getattr */
-	{ &vop_setattr_desc, msdosfs_setattr },		/* setattr */
-	{ &vop_read_desc, msdosfs_read },		/* read */
-	{ &vop_write_desc, msdosfs_write },		/* write */
-	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
-	{ &vop_poll_desc, msdosfs_poll },		/* poll */
-	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */
-	{ &vop_remove_desc, msdosfs_remove },		/* remove */
-	{ &vop_link_desc, msdosfs_link },		/* link */
-	{ &vop_rename_desc, msdosfs_rename },		/* rename */
-	{ &vop_mkdir_desc, msdosfs_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, msdosfs_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, msdosfs_symlink },		/* symlink */
-	{ &vop_readdir_desc, msdosfs_readdir },		/* readdir */
-	{ &vop_readlink_desc, msdosfs_readlink },	/* readlink */
-	{ &vop_abortop_desc, vop_generic_abortop },	/* abortop */
-	{ &vop_inactive_desc, msdosfs_inactive },	/* inactive */
-	{ &vop_reclaim_desc, msdosfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, msdosfs_lock },		/* lock */
-	{ &vop_unlock_desc, msdosfs_unlock },		/* unlock */
-	{ &vop_bmap_desc, msdosfs_bmap },		/* bmap */
-	{ &vop_strategy_desc, msdosfs_strategy },	/* strategy */
-	{ &vop_print_desc, msdosfs_print },		/* print */
-	{ &vop_islocked_desc, msdosfs_islocked },	/* islocked */
-	{ &vop_pathconf_desc, msdosfs_pathconf },	/* pathconf */
-	{ &vop_advlock_desc, msdosfs_advlock },		/* advlock */
-	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
+	{ &vop_lookup_desc, msdosfs_lookup },
+	{ &vop_create_desc, msdosfs_create },
+	{ &vop_mknod_desc, msdosfs_mknod },
+	{ &vop_open_desc, msdosfs_open },
+	{ &vop_close_desc, msdosfs_close },
+	{ &vop_access_desc, msdosfs_access },
+	{ &vop_getattr_desc, msdosfs_getattr },
+	{ &vop_setattr_desc, msdosfs_setattr },
+	{ &vop_read_desc, msdosfs_read },
+	{ &vop_write_desc, msdosfs_write },
+	{ &vop_ioctl_desc, msdosfs_ioctl },
+	{ &vop_poll_desc, msdosfs_poll },
+	{ &vop_fsync_desc, msdosfs_fsync },
+	{ &vop_remove_desc, msdosfs_remove },
+	{ &vop_link_desc, msdosfs_link },
+	{ &vop_rename_desc, msdosfs_rename },
+	{ &vop_mkdir_desc, msdosfs_mkdir },
+	{ &vop_rmdir_desc, msdosfs_rmdir },
+	{ &vop_symlink_desc, msdosfs_symlink },
+	{ &vop_readdir_desc, msdosfs_readdir },
+	{ &vop_readlink_desc, msdosfs_readlink },
+	{ &vop_abortop_desc, vop_generic_abortop },
+	{ &vop_inactive_desc, msdosfs_inactive },
+	{ &vop_reclaim_desc, msdosfs_reclaim },
+	{ &vop_lock_desc, msdosfs_lock },
+	{ &vop_unlock_desc, msdosfs_unlock },
+	{ &vop_bmap_desc, msdosfs_bmap },
+	{ &vop_strategy_desc, msdosfs_strategy },
+	{ &vop_print_desc, msdosfs_print },
+	{ &vop_islocked_desc, msdosfs_islocked },
+	{ &vop_pathconf_desc, msdosfs_pathconf },
+	{ &vop_advlock_desc, msdosfs_advlock },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc *)NULL, (int (*)(void *))NULL }
 };
 struct vnodeopv_desc msdosfs_vnodeop_opv_desc =

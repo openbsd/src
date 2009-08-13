@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.44 2008/05/08 17:45:45 thib Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.45 2009/08/13 15:00:14 jasper Exp $  */
 
 /*
  *  Portions of this code are:
@@ -269,14 +269,14 @@ int   sync_print(void *);
 int (**sync_vnodeop_p)(void *);
 struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
       { &vop_default_desc, eopnotsupp },
-      { &vop_close_desc, sync_close },                /* close */
-      { &vop_fsync_desc, sync_fsync },                /* fsync */
-      { &vop_inactive_desc, sync_inactive },          /* inactive */
-      { &vop_reclaim_desc, sync_reclaim },            /* reclaim */
-      { &vop_lock_desc, sync_lock },                  /* lock */
-      { &vop_unlock_desc, sync_unlock },              /* unlock */
-      { &vop_print_desc, sync_print },                /* print */
-      { &vop_islocked_desc, sync_islocked },          /* islocked */
+      { &vop_close_desc, sync_close },
+      { &vop_fsync_desc, sync_fsync },
+      { &vop_inactive_desc, sync_inactive },
+      { &vop_reclaim_desc, sync_reclaim },
+      { &vop_lock_desc, sync_lock },
+      { &vop_unlock_desc, sync_unlock },
+      { &vop_print_desc, sync_print },
+      { &vop_islocked_desc, sync_islocked },
       { (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc sync_vnodeop_opv_desc = {

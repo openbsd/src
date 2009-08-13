@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.36 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.37 2009/08/13 15:00:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -60,23 +60,23 @@ int udf_bmap_internal(struct unode *, off_t, daddr64_t *, uint32_t *);
 int (**udf_vnodeop_p)(void *);
 struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_default_desc, eopnotsupp },
-	{ &vop_access_desc, udf_access },		/* access */
-	{ &vop_bmap_desc, udf_bmap },			/* bmap */
-	{ &vop_lookup_desc, udf_lookup },		/* lookup */
-	{ &vop_getattr_desc, udf_getattr },		/* getattr */
-	{ &vop_open_desc, udf_open },			/* open */
-	{ &vop_close_desc, udf_close },			/* close */
-	{ &vop_ioctl_desc, udf_ioctl },			/* ioctl */
-	{ &vop_read_desc, udf_read },			/* read */
-	{ &vop_readdir_desc, udf_readdir },		/* readdir */
-	{ &vop_readlink_desc, udf_readlink },		/* readlink */
-	{ &vop_inactive_desc, udf_inactive },		/* inactive */
-	{ &vop_reclaim_desc, udf_reclaim },		/* reclaim */
-	{ &vop_strategy_desc, udf_strategy },		/* strategy */
-	{ &vop_lock_desc, udf_lock },			/* lock */
-	{ &vop_unlock_desc, udf_unlock },		/* unlock */
-	{ &vop_islocked_desc, udf_islocked },		/* islocked */
-	{ &vop_print_desc, udf_print },			/* print */
+	{ &vop_access_desc, udf_access },
+	{ &vop_bmap_desc, udf_bmap },
+	{ &vop_lookup_desc, udf_lookup },
+	{ &vop_getattr_desc, udf_getattr },
+	{ &vop_open_desc, udf_open },
+	{ &vop_close_desc, udf_close },
+	{ &vop_ioctl_desc, udf_ioctl },
+	{ &vop_read_desc, udf_read },
+	{ &vop_readdir_desc, udf_readdir },
+	{ &vop_readlink_desc, udf_readlink },
+	{ &vop_inactive_desc, udf_inactive },
+	{ &vop_reclaim_desc, udf_reclaim },
+	{ &vop_strategy_desc, udf_strategy },
+	{ &vop_lock_desc, udf_lock },
+	{ &vop_unlock_desc, udf_unlock },
+	{ &vop_islocked_desc, udf_islocked },
+	{ &vop_print_desc, udf_print },
 	{ NULL, NULL }
 };
 struct vnodeopv_desc udf_vnodeop_opv_desc =

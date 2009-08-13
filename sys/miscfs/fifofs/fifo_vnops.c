@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.30 2009/02/22 07:47:22 otto Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.31 2009/08/13 15:00:14 jasper Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -64,41 +64,41 @@ struct fifoinfo {
 int (**fifo_vnodeop_p)(void *);
 struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_default_desc, eopnotsupp },
-	{ &vop_lookup_desc, vop_generic_lookup },	/* lookup */
-	{ &vop_create_desc, fifo_badop },		/* create */
-	{ &vop_mknod_desc, fifo_badop },		/* mknod */
-	{ &vop_open_desc, fifo_open },			/* open */
-	{ &vop_close_desc, fifo_close },		/* close */
-	{ &vop_access_desc, fifo_ebadf },		/* access */
-	{ &vop_getattr_desc, fifo_ebadf },		/* getattr */
-	{ &vop_setattr_desc, fifo_ebadf },		/* setattr */
-	{ &vop_read_desc, fifo_read },			/* read */
-	{ &vop_write_desc, fifo_write },		/* write */
-	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
-	{ &vop_poll_desc, fifo_poll },			/* poll */
-	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, vop_generic_revoke },	/* revoke */
-	{ &vop_fsync_desc, nullop },			/* fsync */
-	{ &vop_remove_desc, fifo_badop },		/* remove */
-	{ &vop_link_desc, fifo_badop },			/* link */
-	{ &vop_rename_desc, fifo_badop },		/* rename */
-	{ &vop_mkdir_desc, fifo_badop },		/* mkdir */
-	{ &vop_rmdir_desc, fifo_badop },		/* rmdir */
-	{ &vop_symlink_desc, fifo_badop },		/* symlink */
-	{ &vop_readdir_desc, fifo_badop },		/* readdir */
-	{ &vop_readlink_desc, fifo_badop },		/* readlink */
-	{ &vop_abortop_desc, fifo_badop },		/* abortop */
-	{ &vop_inactive_desc, fifo_inactive },		/* inactive */
-	{ &vop_reclaim_desc, fifo_reclaim },		/* reclaim */
-	{ &vop_lock_desc, vop_generic_lock },		/* lock */
-	{ &vop_unlock_desc, vop_generic_unlock },	/* unlock */
-	{ &vop_bmap_desc, vop_generic_bmap },		/* bmap */
-	{ &vop_strategy_desc, fifo_badop },		/* strategy */
-	{ &vop_print_desc, fifo_print },		/* print */
-	{ &vop_islocked_desc, vop_generic_islocked },	/* islocked */
-	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_bwrite_desc, nullop },			/* bwrite */
+	{ &vop_lookup_desc, vop_generic_lookup },
+	{ &vop_create_desc, fifo_badop },
+	{ &vop_mknod_desc, fifo_badop },
+	{ &vop_open_desc, fifo_open },
+	{ &vop_close_desc, fifo_close },
+	{ &vop_access_desc, fifo_ebadf },
+	{ &vop_getattr_desc, fifo_ebadf },
+	{ &vop_setattr_desc, fifo_ebadf },
+	{ &vop_read_desc, fifo_read },
+	{ &vop_write_desc, fifo_write },
+	{ &vop_ioctl_desc, fifo_ioctl },
+	{ &vop_poll_desc, fifo_poll },
+	{ &vop_kqfilter_desc, fifo_kqfilter },
+	{ &vop_revoke_desc, vop_generic_revoke },
+	{ &vop_fsync_desc, nullop },
+	{ &vop_remove_desc, fifo_badop },
+	{ &vop_link_desc, fifo_badop },
+	{ &vop_rename_desc, fifo_badop },
+	{ &vop_mkdir_desc, fifo_badop },
+	{ &vop_rmdir_desc, fifo_badop },
+	{ &vop_symlink_desc, fifo_badop },
+	{ &vop_readdir_desc, fifo_badop },
+	{ &vop_readlink_desc, fifo_badop },
+	{ &vop_abortop_desc, fifo_badop },
+	{ &vop_inactive_desc, fifo_inactive },
+	{ &vop_reclaim_desc, fifo_reclaim },
+	{ &vop_lock_desc, vop_generic_lock },
+	{ &vop_unlock_desc, vop_generic_unlock },
+	{ &vop_bmap_desc, vop_generic_bmap },
+	{ &vop_strategy_desc, fifo_badop },
+	{ &vop_print_desc, fifo_print },
+	{ &vop_islocked_desc, vop_generic_islocked },
+	{ &vop_pathconf_desc, fifo_pathconf },
+	{ &vop_advlock_desc, fifo_advlock },
+	{ &vop_bwrite_desc, nullop },
 	{ NULL, NULL }
 };
 
