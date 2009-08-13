@@ -1,4 +1,4 @@
-#	$OpenBSD: sftp.sh,v 1.2 2002/03/27 22:39:52 markus Exp $
+#	$OpenBSD: sftp.sh,v 1.3 2009/08/13 01:11:55 djm Exp $
 #	Placed in the Public Domain.
 
 tid="basic sftp put/get"
@@ -13,7 +13,7 @@ for B in ${BUFFERSIZE}; do
 	for R in ${REQUESTS}; do
                 verbose "test $tid: buffer_size $B num_requests $R"
 		rm -f ${COPY}.1 ${COPY}.2
-		${SFTP} -P ${SFTPSERVER} -B $B -R $R -b /dev/stdin \
+		${SFTP} -D ${SFTPSERVER} -B $B -R $R -b /dev/stdin \
 		> /dev/null 2>&1 << EOF
 		version
 		get $DATA ${COPY}.1
