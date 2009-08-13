@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.14 2009/08/13 21:22:29 blambert Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.15 2009/08/13 23:12:15 blambert Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -196,13 +196,6 @@ retry:
 		int do_sleep;
 
 		rw_enter_diag(rwl, flags);
-
-		if (((struct proc *)RW_PROC(rwl))->p_stat == SONPROC) {
-printf("%p\n", (struct proc *)RW_PROC(rwl));
-			while(((struct proc *)RW_PROC(rwl))->p_stat == SONPROC)
-				SPINLOCK_SPIN_HOOK;
-			goto retry;
-		}
 
 		if (flags & RW_NOSLEEP)
 			return (EBUSY);
