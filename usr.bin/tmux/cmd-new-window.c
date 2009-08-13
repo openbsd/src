@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.5 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.6 2009/08/13 20:11:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -154,6 +154,8 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	else
 		cwd = ctx->cmdclient->cwd;
 
+	if (idx == -1)
+		idx = -1 - options_get_number(&s->options, "base-index");
 	wl = session_new(s, data->name, cmd, cwd, idx, &cause);
 	if (wl == NULL) {
 		ctx->error(ctx, "create window failed: %s", cause);

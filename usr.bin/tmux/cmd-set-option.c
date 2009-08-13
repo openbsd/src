@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.14 2009/08/11 12:53:37 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.15 2009/08/13 20:11:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -50,6 +50,7 @@ const char *set_option_bell_action_list[] = {
 	"none", "any", "current", NULL
 };
 const struct set_option_entry set_option_table[] = {
+	{ "base-index", SET_OPTION_NUMBER, 0, INT_MAX, NULL },
 	{ "bell-action", SET_OPTION_CHOICE, 0, 0, set_option_bell_action_list },
 	{ "buffer-limit", SET_OPTION_NUMBER, 1, INT_MAX, NULL },
 	{ "default-command", SET_OPTION_STRING, 0, 0, NULL },

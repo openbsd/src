@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-move-window.c,v 1.4 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-move-window.c,v 1.5 2009/08/13 20:11:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -79,6 +79,8 @@ cmd_move_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		}
 	}
 
+	if (idx == -1)
+		idx = -1 - options_get_number(&dst->options, "base-index");
 	wl_dst = session_attach(dst, wl_src->window, idx, &cause);
 	if (wl_dst == NULL) {
 		ctx->error(ctx, "attach window failed: %s", cause);
