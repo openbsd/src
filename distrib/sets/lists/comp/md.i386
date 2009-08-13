@@ -199,6 +199,7 @@
 ./usr/include/i386/param.h
 ./usr/include/i386/pcb.h
 ./usr/include/i386/pctr.h
+./usr/include/i386/pic.h
 ./usr/include/i386/pio.h
 ./usr/include/i386/pmap.h
 ./usr/include/i386/proc.h

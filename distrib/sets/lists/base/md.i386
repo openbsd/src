@@ -1768,6 +1768,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/param.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pcb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pctr.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/pic.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pmap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/proc.ph
