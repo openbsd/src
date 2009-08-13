@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.18 2009/08/09 23:04:49 miod Exp $
+#	$OpenBSD: Makefile.amd64,v 1.19 2009/08/13 13:35:54 weingart Exp $
 
 # Makefile for OpenBSD
 #
@@ -49,7 +49,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -D_LOCORE
-LINKFLAGS=	-Ttext 0xffffffff801001e0 -e start -X
+LINKFLAGS=	-T ${AMD64}/conf/kern.ldscript -X
 STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB_STRUCT}
@@ -99,7 +99,6 @@ SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
-LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo mv $@ $@.gdb; rm -f $@.gdb; mv $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
