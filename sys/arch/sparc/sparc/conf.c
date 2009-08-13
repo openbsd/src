@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.49 2009/06/03 14:45:53 jj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.50 2009/08/13 15:04:20 dlg Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -128,6 +128,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "pf.h"
 #include "systrace.h"
 #include "tctrl.h"
+#include "vscsi.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -266,6 +267,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),     /* 123: RAIDframe disk driver */
 	cdev_bio_init(NBIO,bio),	/* 124: ioctl tunnel */
 	cdev_ptm_init(NPTY,ptm),	/* 125: pseudo-tty ptm device */
+	cdev_vscsi_init(NVSCSI,vscsi),	/* 128: vscsi */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

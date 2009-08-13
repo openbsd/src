@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2009/06/03 14:45:51 jj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2009/08/13 15:04:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -110,6 +110,8 @@ cdev_decl(com);
 
 #include "systrace.h"
 
+#include "vscsi.h"
+
 #ifdef USER_PCICONF
 #include "pci.h"
 cdev_decl(pci);
@@ -166,12 +168,14 @@ struct cdevsw   cdevsw[] =
 	cdev_bio_init(NBIO,bio),	/* 37: ioctl tunnel */
 	cdev_ptm_init(NPTY,ptm),	/* 38: pseudo-tty ptm device */
 	cdev_disk_init(NWD,wd),		/* 39: ST506 disk */
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
-	cdev_lkm_dummy(),
+	cdev_lkm_dummy(),		/* 40 */
+	cdev_lkm_dummy(),		/* 41 */
+	cdev_lkm_dummy(),		/* 42 */
+	cdev_lkm_dummy(),		/* 43 */
+	cdev_lkm_dummy(),		/* 44 */
+	cdev_lkm_dummy(),		/* 45 */
+	cdev_vscsi_init(NVSCSI,vscsi),	/* 46: vscsi */
+	
 };
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

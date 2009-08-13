@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.46 2009/06/03 14:45:51 jj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.47 2009/08/13 15:04:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -109,6 +109,7 @@ cdev_decl(com);
 
 #include "systrace.h"
 #include "hotplug.h"
+#include "vscsi.h"
 
 #ifdef USER_PCICONF
 #include "pci.h"
@@ -188,6 +189,7 @@ struct cdevsw   cdevsw[] =
 	cdev_lkm_dummy(),		/* 51: */
 	cdev_lkm_dummy(),		/* 52: */
 	cdev_lkm_dummy(),		/* 53: */
+	cdev_vscsi_init(NVSCSI,vscsi),	/* 54: */
 };
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

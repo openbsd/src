@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2009/06/03 14:45:52 jj Exp $ */
+/*	$OpenBSD: conf.c,v 1.26 2009/08/13 15:04:20 dlg Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -113,6 +113,8 @@ cdev_decl(nnpfs_dev);
 
 #include "systrace.h"
 
+#include "vscsi.h"
+
 struct cdevsw cdevsw[] = {
         cdev_cn_init(1,cn),             /* 0: virtual console */
         cdev_ctty_init(1,ctty),         /* 1: controlling terminal */
@@ -178,6 +180,7 @@ struct cdevsw cdevsw[] = {
 	cdev_bio_init(NBIO,bio),	/* 53: ioctl tunnel */
 	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
 	cdev_ptm_init(NPTY,ptm),	/* 55: pseudo-tty ptm device */
+	cdev_vscsi_init(NVSCSI,vscsi),	/* 56: vscsi */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
