@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.78 2009/02/16 21:19:07 miod Exp $ */
+/*	$OpenBSD: arc.c,v 1.79 2009/08/13 11:10:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -726,6 +726,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
 		xs->sense.add_sense_code = 0x20;
 		xs->error = XS_SENSE;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -737,6 +738,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 	splx(s);
 	if (ccb == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		scsi_done(xs);
 		splx(s);
@@ -747,6 +749,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 
 	if (arc_load_xs(ccb) != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
 		s = splbio();
 		arc_put_ccb(sc, ccb);
 		scsi_done(xs);
@@ -787,6 +790,7 @@ arc_scsi_cmd(struct scsi_xfer *xs)
 		rv = COMPLETE;
 		if (arc_complete(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
+			xs->flags |= ITSDONE;
 			scsi_done(xs);
 		}
 	}
