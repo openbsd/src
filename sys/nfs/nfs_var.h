@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.55 2009/08/13 15:03:19 blambert Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.56 2009/08/13 15:18:16 blambert Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ void nfs_del_tobecommitted_range(struct vnode *, struct buf *);
 void nfs_merge_commit_ranges(struct vnode *);
 int nfsrv_errmap(struct nfsrv_descript *, int);
 int nfsm_srvsattr(struct mbuf **, struct vattr *, struct mbuf *, caddr_t *);
-void nfsm_fhtom(struct mbuf **, struct vnode *, int);
+void nfsm_fhtom(struct nfsm_info *, struct vnode *, int);
 void nfsm_srvfhtom(struct mbuf **, fhandle_t *, int);
 
 /* nfs_syscalls.c */

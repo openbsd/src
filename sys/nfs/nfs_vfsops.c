@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.87 2009/08/10 10:59:12 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.88 2009/08/13 15:18:16 blambert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ nfs_statfs(mp, sbp, p)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
 	info.nmi_mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(info.nmi_v3));
-	nfsm_fhtom(&info.nmi_mb, vp, info.nmi_v3);
+	nfsm_fhtom(&info, vp, info.nmi_v3);
 
 	info.nmi_procp = p;
 	info.nmi_cred = cred;
@@ -191,7 +191,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
 	info.nmi_mb = info.nmi_mreq = nfsm_reqhead(NFSX_FH(1));
-	nfsm_fhtom(&info.nmi_mb, vp, 1);
+	nfsm_fhtom(&info, vp, 1);
 
 	info.nmi_procp = p;
 	info.nmi_cred = cred;
