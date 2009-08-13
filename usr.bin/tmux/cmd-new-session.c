@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.11 2009/08/13 19:03:59 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.12 2009/08/13 19:16:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -239,8 +239,6 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (ctx->cmdclient != NULL) {
 		if (!detached)
 			server_write_client(ctx->cmdclient, MSG_READY, NULL, 0);
-		else 
-			server_write_client(ctx->cmdclient, MSG_EXIT, NULL, 0);
 	}
 	
 	/* Set the client to the new session. */
@@ -255,7 +253,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 	recalculate_sizes();
 
-	return (1);	/* 1 means don't tell command client to exit */
+	return (!detached);	/* 1 means don't tell command client to exit */
 }
 
 void
