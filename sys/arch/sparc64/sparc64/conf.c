@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.52 2009/08/13 15:04:20 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.53 2009/08/13 19:44:41 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -290,7 +290,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NVCONS,vcons),	/* 125: virtual console */
 	cdev_tty_init(NSBBC,sbbc),	/* 126: SBBC console */
 	cdev_tty_init(NVCCTTY,vcctty),	/* 127: virtual console concentrator */
-	cdev_tty_init(NVSCSI,vscsi),	/* 128: vscsi */
+	cdev_vscsi_init(NVSCSI,vscsi),	/* 128: vscsi */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
