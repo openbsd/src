@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.49 2009/08/10 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.50 2009/08/13 14:24:47 jasper Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -122,7 +122,7 @@ struct cfattach stge_ca = {
 };
 
 struct cfdriver stge_cd = {
-	0, "stge", DV_IFNET
+	NULL, "stge", DV_IFNET
 };
 
 uint32_t stge_mii_bitbang_read(struct device *);

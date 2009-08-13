@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.83 2009/08/09 11:40:56 deraadt Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.84 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -403,7 +403,7 @@ struct cfattach bnx_ca = {
 };
 
 struct cfdriver bnx_cd = {
-	0, "bnx", DV_IFNET
+	NULL, "bnx", DV_IFNET
 };
 
 /****************************************************************************/

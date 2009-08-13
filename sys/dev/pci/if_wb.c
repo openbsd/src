@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.44 2009/08/10 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.45 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1691,5 +1691,5 @@ struct cfattach wb_ca = {
 };
 
 struct cfdriver wb_cd = {
-	0, "wb", DV_IFNET
+	NULL, "wb", DV_IFNET
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.48 2009/08/10 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.49 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -2193,5 +2193,5 @@ struct cfattach tl_ca = {
 };
 
 struct cfdriver tl_cd = {
-	0, "tl", DV_IFNET
+	NULL, "tl", DV_IFNET
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.102 2009/06/19 14:13:41 naddy Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.103 2009/08/13 14:24:47 jasper Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ struct cfattach de_ca = {
 };
 
 struct cfdriver de_cd = {
-	0, "de", DV_IFNET
+	NULL, "de", DV_IFNET
 };
 
 void tulip_timeout_callback(void *arg);

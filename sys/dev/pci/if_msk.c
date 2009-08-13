@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.76 2009/08/09 11:40:56 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.77 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2104,7 +2104,7 @@ struct cfattach mskc_ca = {
 };
 
 struct cfdriver mskc_cd = {
-	0, "mskc", DV_DULL
+	NULL, "mskc", DV_DULL
 };
 
 struct cfattach msk_ca = {
@@ -2112,7 +2112,7 @@ struct cfattach msk_ca = {
 };
 
 struct cfdriver msk_cd = {
-	0, "msk", DV_IFNET
+	NULL, "msk", DV_IFNET
 };
 
 #ifdef MSK_DEBUG

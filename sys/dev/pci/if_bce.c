@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.27 2008/11/28 02:44:17 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.28 2009/08/13 14:24:47 jasper Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -205,7 +205,7 @@ struct cfattach bce_ca = {
 	sizeof(struct bce_softc), bce_probe, bce_attach
 };
 struct cfdriver bce_cd = {
-	0, "bce", DV_IFNET
+	NULL, "bce", DV_IFNET
 };
 
 const struct pci_matchid bce_devices[] = {

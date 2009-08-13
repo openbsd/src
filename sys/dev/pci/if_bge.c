@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.280 2009/08/09 11:40:56 deraadt Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.281 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -133,7 +133,7 @@ struct cfattach bge_ca = {
 };
 
 struct cfdriver bge_cd = {
-	0, "bge", DV_IFNET
+	NULL, "bge", DV_IFNET
 };
 
 void bge_txeof(struct bge_softc *);

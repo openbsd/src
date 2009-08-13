@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.99 2009/08/10 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.100 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -108,7 +108,7 @@ struct cfattach vr_ca = {
 	sizeof(struct vr_softc), vr_probe, vr_attach
 };
 struct cfdriver vr_cd = {
-	0, "vr", DV_IFNET
+	NULL, "vr", DV_IFNET
 };
 
 int vr_encap(struct vr_softc *, struct vr_chain *, struct mbuf *);

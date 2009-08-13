@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.97 2009/08/11 23:58:35 martynas Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.98 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -122,7 +122,7 @@ struct cfattach ti_ca = {
 };
 
 struct cfdriver ti_cd = {
-	0, "ti", DV_IFNET
+	NULL, "ti", DV_IFNET
 };
 
 void ti_txeof_tigon1(struct ti_softc *);

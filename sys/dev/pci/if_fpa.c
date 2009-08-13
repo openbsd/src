@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.25 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.26 2009/08/13 14:24:47 jasper Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
@@ -183,5 +183,5 @@ struct cfattach fpa_ca = {
 };
 
 struct cfdriver fpa_cd = {
-	0, "fpa", DV_IFNET
+	NULL, "fpa", DV_IFNET
 };

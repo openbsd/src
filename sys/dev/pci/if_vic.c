@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.73 2009/08/10 17:25:07 deraadt Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.74 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -303,7 +303,7 @@ struct vic_softc {
 };
 
 struct cfdriver vic_cd = {
-	0, "vic", DV_IFNET
+	NULL, "vic", DV_IFNET
 };
 
 int		vic_match(struct device *, void *, void *);

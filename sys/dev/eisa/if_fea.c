@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fea.c,v 1.18 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_fea.c,v 1.19 2009/08/13 14:24:46 jasper Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
@@ -241,5 +241,5 @@ struct cfattach fea_ca = {
 };
 
 struct cfdriver fea_cd = {
-	0, "fea", DV_IFNET
+	NULL, "fea", DV_IFNET
 };

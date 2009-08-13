@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.43 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.44 2009/08/13 14:24:47 jasper Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -168,7 +168,7 @@ struct cfattach vge_ca = {
 };
 
 struct cfdriver vge_cd = {
-	0, "vge", DV_IFNET
+	NULL, "vge", DV_IFNET
 };
 
 #define VGE_PCI_LOIO             0x10

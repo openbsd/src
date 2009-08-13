@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.51 2009/08/10 17:25:07 deraadt Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.52 2009/08/13 14:24:47 jasper Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -123,7 +123,7 @@ struct cfattach lge_ca = {
 };
 
 struct cfdriver lge_cd = {
-	0, "lge", DV_IFNET
+	NULL, "lge", DV_IFNET
 };
 
 int lge_alloc_jumbo_mem(struct lge_softc *);

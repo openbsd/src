@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.44 2009/08/10 19:41:05 deraadt Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.45 2009/08/13 14:24:47 jasper Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -146,7 +146,7 @@ struct cfattach ste_ca = {
 };
 
 struct cfdriver ste_cd = {
-	0, "ste", DV_IFNET
+	NULL, "ste", DV_IFNET
 };
 
 /*

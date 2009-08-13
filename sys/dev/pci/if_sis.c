@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.96 2009/08/10 19:41:05 deraadt Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.97 2009/08/13 14:24:47 jasper Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -110,7 +110,7 @@ struct cfattach sis_ca = {
 };
 
 struct cfdriver sis_cd = {
-	0, "sis", DV_IFNET
+	NULL, "sis", DV_IFNET
 };
 
 int sis_intr(void *);

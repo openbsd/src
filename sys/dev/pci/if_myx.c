@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.10 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.11 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -180,7 +180,7 @@ void	 myx_free_rings(struct myx_softc *);
 struct mbuf *myx_getbuf(struct myx_softc *, bus_dmamap_t, int);
 
 struct cfdriver myx_cd = {
-	0, "myx", DV_IFNET
+	NULL, "myx", DV_IFNET
 };
 struct cfattach myx_ca = {
 	sizeof(struct myx_softc), myx_match, myx_attach

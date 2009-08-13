@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.152 2009/07/08 20:18:05 sthen Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.153 2009/08/13 14:24:47 jasper Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2782,7 +2782,7 @@ struct cfattach sk_ca = {
 };
 
 struct cfdriver sk_cd = {
-	0, "sk", DV_IFNET
+	NULL, "sk", DV_IFNET
 };
 
 #ifdef SK_DEBUG

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.219 2009/08/12 20:02:42 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.220 2009/08/13 14:24:47 jasper Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -223,7 +223,7 @@ struct cfattach em_ca = {
 };
 
 struct cfdriver em_cd = {
-	0, "em", DV_IFNET
+	NULL, "em", DV_IFNET
 };
 
 static int em_smart_pwr_down = FALSE;
