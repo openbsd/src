@@ -54,6 +54,8 @@
 sig_atomic_t done = 0;
 sig_atomic_t print_stats = 0;
 
+u_int rdomain;
+
 struct statctx {
 	struct timeval t_start, t_last, t_cur;
 	unsigned long long bytes;
@@ -113,10 +115,10 @@ usage(void)
 	fprintf(stderr,
 	    "usage: tcpbench -l\n"
 	    "       tcpbench [-v] [-B buf] [-k kvars] [-n connections]"
-	    " [-p port] [-r rate]\n"
+	    " [-p port] [-r rate] [-V rdomain]\n"
 	    "                [-S space] hostname\n"
 	    "       tcpbench -s [-v] [-B buf] [-k kvars] [-p port] [-r rate]"
-	    " [-S space]\n");
+	    " [-S space] [-V rdomain]\n");
 	exit(1);
 }
 
@@ -500,6 +502,11 @@ serverloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop,
 				warn("socket");
 			continue;
 		}
+		if (rdomain && ai->ai_family == AF_INET) {
+			if (setsockopt(sock, IPPROTO_IP, SO_RDOMAIN,
+			    &rdomain, sizeof(rdomain)) == -1)
+				err(1, "setsockopt SO_RDOMAIN");
+		}
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 		    &on, sizeof(on)) == -1)
 			warn("reuse port");
@@ -646,6 +653,11 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port,
 					warn("socket");
 				continue;
 			}
+			if (rdomain && ai->ai_family == AF_INET) {
+				if (setsockopt(sock, IPPROTO_IP, SO_RDOMAIN,
+				    &rdomain, sizeof(rdomain)) == -1)
+					err(1, "setsockopt SO_RDOMAIN");
+			}
 			if (Sflag) {
 				if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
 				    &Sflag, sizeof(Sflag)) == -1)
@@ -757,7 +769,7 @@ main(int argc, char **argv)
 
 	struct nlist nl[] = { { "_tcbtable" }, { "" } };
 
-	while ((ch = getopt(argc, argv, "B:hlk:n:p:r:sS:v")) != -1) {
+	while ((ch = getopt(argc, argv, "B:hlk:n:p:r:sS:vV:")) != -1) {
 		switch (ch) {
 		case 'l':
 			list_kvars();
@@ -797,6 +809,13 @@ main(int argc, char **argv)
 			break;
 		case 'v':
 			vflag++;
+			break;
+		case 'V':
+			rdomain = (unsigned int)strtonum(optarg, 0,
+			    RT_TABLEID_MAX, &errstr);
+			if (errstr)
+				errx(1, "rdomain value is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'n':
 			nconn = strtonum(optarg, 0, 65535, &errstr);
