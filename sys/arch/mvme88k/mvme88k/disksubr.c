@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.60 2009/06/04 21:57:56 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.61 2009/08/13 15:23:10 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -33,8 +33,8 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-void bsdtocpulabel(struct disklabel *, struct mvmedisklabel *);
-void cputobsdlabel(struct disklabel *, struct mvmedisklabel *);
+void	bsdtocpulabel(struct disklabel *, struct mvmedisklabel *);
+int	cputobsdlabel(struct disklabel *, struct mvmedisklabel *);
 
 /*
  * Attempt to read a disk label from a device
@@ -45,16 +45,14 @@ void cputobsdlabel(struct disklabel *, struct mvmedisklabel *);
  * Returns NULL on success and an error string on failure.
  */
 
-char *
+int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
-	struct mvmedisklabel *mlp;
 	int error;
-	char *msg;
 
-	if ((msg = initdisklabel(lp)))
+	if ((error = initdisklabel(lp)))
 		goto done;
 
 	/* get a buffer and initialize it */
@@ -69,34 +67,24 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
-	error = biowait(bp);
-	if (error) {
-		msg = "disk label read error";
+	if (biowait(bp)) {
+		error = bp->b_error;
 		goto done;
 	}
 
-	mlp = (struct mvmedisklabel *)bp->b_data;
-	if (mlp->magic1 != DISKMAGIC || mlp->magic2 != DISKMAGIC) {
-		msg = "no disk label";
+	error = cputobsdlabel(lp, (struct mvmedisklabel *)bp->b_data);
+	if (error == 0)
 		goto done;
-	}
-
-	cputobsdlabel(lp, mlp);
-	if (dkcksum(lp) == 0)
-		goto done;
-	msg = "disk label corrupted";
 
 #if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = iso_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 #if defined(UDF)
-	if (udf_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = udf_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 
 done:
@@ -104,7 +92,7 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	return (msg);
+	return (error);
 }
 
 /*
@@ -195,10 +183,13 @@ bsdtocpulabel(struct disklabel *lp, struct mvmedisklabel *clp)
 		*mot++ = *id++;
 }
 
-void
+int
 cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp)
 {
 	int i;
+
+	if (clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC)
+		return (EINVAL);	/* no disk label */
 
 	lp->d_magic = clp->magic1;
 	lp->d_type = clp->type;
@@ -247,4 +238,5 @@ cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp)
 	lp->d_version = 1;
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.44 2009/01/04 16:51:05 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.45 2009/08/13 15:23:12 deraadt Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ xdgetdisklabel(xd, b)
 {
 	struct disklabel *lp = xd->sc_dk.dk_label;
 	struct sun_disklabel *sl = b;
-	char *err;
+	int error;
 
 	bzero(lp, sizeof(struct disklabel));
 	/* Required parameters for readdisklabel() */
@@ -311,12 +311,10 @@ xdgetdisklabel(xd, b)
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xd_labeldata = b;
 
-	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
+	error = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
 	    xddummystrat, lp, 0);
-	if (err) {
-		/*printf("%s: %s\n", xd->sc_dev.dv_xname, err);*/
-		return (XD_ERR_FAIL);
-	}
+	if (error)
+		return (error);
 
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sl = b;
@@ -336,7 +334,7 @@ xdgetdisklabel(xd, b)
 	xd->nhead = lp->d_ntracks;
 	xd->nsect = lp->d_nsectors;
 	xd->sectpercyl = lp->d_secpercyl;
-	return (XD_ERR_AOK);
+	return (0);
 }
 
 /*

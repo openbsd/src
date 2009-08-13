@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.57 2008/06/12 06:58:36 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.58 2009/08/13 15:23:11 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -55,35 +55,33 @@
  *
  * Returns null on success and an error string on failure.
  */
-char *
+int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
-	char *msg;
+	int error;
 
-	if ((msg = initdisklabel(lp)))
+	if ((error = initdisklabel(lp)))
 		goto done;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
-	if (msg == NULL)
+	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
+	if (error == 0)
 		goto done;
 
 #if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = iso_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 #if defined(UDF)
-	if (udf_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = udf_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 
 done:
@@ -91,7 +89,7 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	return (msg);
+	return (error);
 }
 
 /*

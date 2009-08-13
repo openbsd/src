@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.58 2009/06/24 20:52:41 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.59 2009/08/13 15:23:10 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ int	whichType(struct partmapentry *);
 int	fixPartTable(struct partmapentry *, long, char *);
 void	setPart(struct partmapentry *, struct disklabel *, int, int);
 int	getNamedType(struct partmapentry *, int8_t *, int, int, int);
-char *read_mac_label(char *, struct disklabel *, int);
+int	read_mac_label(char *, struct disklabel *, int);
 
 /*
  * Find an entry in the disk label that is unused and return it
@@ -244,7 +244,7 @@ getNamedType(struct partmapentry *part, int8_t *parttypes, int num_parts,
  *	NetBSD to live on cluster 0--regardless of the actual order on the
  *	disk.  This whole algorithm should probably be changed in the future.
  */
-char *
+int
 read_mac_label(char *dlbuf, struct disklabel *lp, int spoofonly)
 {
 	int i, num_parts;
@@ -256,7 +256,7 @@ read_mac_label(char *dlbuf, struct disklabel *lp, int spoofonly)
 	pmap = (struct partmapentry *)malloc(NUM_PARTS_PROBED *
 	    sizeof(struct partmapentry), M_DEVBUF, M_NOWAIT);
 	if (pmap == NULL)
-		return ("out of memory");
+		return (ENOMEM);
 
 	bsdend = 0;
 	bsdstart = DL_GETDSIZE(lp);
@@ -376,7 +376,7 @@ read_mac_label(char *dlbuf, struct disklabel *lp, int spoofonly)
 			}
 		}
 
-		return (NULL);
+		return (0);
 	}
 
 	lp->d_npartitions = MAXPARTITIONS;
@@ -393,16 +393,16 @@ read_mac_label(char *dlbuf, struct disklabel *lp, int spoofonly)
  * filled in before calling us.  Returns null on success and an error
  * string on failure.
  */
-char *
+int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
 	u_int16_t *sbSigp;
 	int size;
-	char *msg;
+	int error;
 
-	if ((msg = initdisklabel(lp)))
+	if ((error = initdisklabel(lp)))
 		goto done;
 
 	size = roundup((NUM_PARTS_PROBED + 1) << DEV_BSHIFT, lp->d_secsize);
@@ -414,14 +414,14 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if (biowait(bp)) {
-		msg = "disk label I/O error";
+		error = bp->b_error;
 		goto done;
 	}
 
 	sbSigp = (u_int16_t *)bp->b_data;
 	if (*sbSigp == 0x4552) {
-		msg = read_mac_label(bp->b_data, lp, spoofonly);
-		if (msg == NULL)
+		error = read_mac_label(bp->b_data, lp, spoofonly);
+		if (error == 0)
 			goto done;
 	}
 
@@ -434,30 +434,29 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if (biowait(bp)) {
-		msg = "disk label I/O error";
+		error = bp->b_error;
 		goto done;
 	}
 
-	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0, DL_GETDSIZE(lp));
-	if (msg == NULL)
+	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0,
+	    DL_GETDSIZE(lp));
+	if (error == 0)
 		goto done;
 
 doslabel:
-	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
-	if (msg == NULL)
+	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
+	if (error == 0)
 		goto done;
 
 #if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = iso_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 #if defined(UDF)
-	if (udf_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = udf_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 
 done:
@@ -465,7 +464,7 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	return (msg);
+	return (error);
 }
 
 /*

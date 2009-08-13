@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.156 2009/06/17 01:30:30 thib Exp $	*/
+/*	$OpenBSD: sd.c,v 1.157 2009/08/13 15:23:11 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ int	sdactivate(struct device *, enum devact);
 int	sddetach(struct device *, int);
 
 void	sdminphys(struct buf *);
-void	sdgetdisklabel(dev_t, struct sd_softc *, struct disklabel *, int);
+int	sdgetdisklabel(dev_t, struct sd_softc *, struct disklabel *, int);
 void	sdstart(void *);
 void	sdrestart(void *);
 void	sddone(struct scsi_xfer *);
@@ -398,7 +398,10 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded\n"));
 
 		/* Load the partition info if not already loaded. */
-		sdgetdisklabel(dev, sd, sd->sc_dk.dk_label, 0);
+		if (sdgetdisklabel(dev, sd, sd->sc_dk.dk_label, 0) == EIO) {
+			error = EIO;
+			goto bad;
+		}
 		SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded\n"));
 	}
 
@@ -992,12 +995,12 @@ sd_ioctl_inquiry(struct sd_softc *sd, struct dk_inquiry *di)
 /*
  * Load the label information on the named device
  */
-void
+int
 sdgetdisklabel(dev_t dev, struct sd_softc *sd, struct disklabel *lp,
     int spoofonly)
 {
 	size_t len;
-	char *errstring, packname[sizeof(lp->d_packname) + 1];
+	char packname[sizeof(lp->d_packname) + 1];
 	char product[17], vendor[9];
 
 	bzero(lp, sizeof(struct disklabel));
@@ -1057,10 +1060,7 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sd, struct disklabel *lp,
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), sdstrategy, lp, spoofonly);
-	if (errstring) {
-		/*printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);*/
-	}
+	return readdisklabel(DISKLABELDEV(dev), sdstrategy, lp, spoofonly);
 }
 
 

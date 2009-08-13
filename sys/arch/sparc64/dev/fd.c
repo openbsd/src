@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.27 2009/07/24 08:07:39 blambert Exp $	*/
+/*	$OpenBSD: fd.c,v 1.28 2009/08/13 15:23:12 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -283,7 +283,7 @@ struct cfdriver fd_cd = {
 	NULL, "fd", DV_DISK
 };
 
-void fdgetdisklabel(dev_t, struct fd_softc *, struct disklabel *, int);
+int fdgetdisklabel(dev_t, struct fd_softc *, struct disklabel *, int);
 int fd_get_parms(struct fd_softc *);
 void fdstrategy(struct buf *);
 void fdstart(struct fd_softc *);
@@ -2007,12 +2007,10 @@ fdformat(dev, finfo, p)
 	return (rv);
 }
 
-void
+int
 fdgetdisklabel(dev_t dev, struct fd_softc *fd, struct disklabel *lp,
     int spoofonly)
 {
-	char *errstring;
-
 	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_type = DTYPE_FLOPPY;
@@ -2037,10 +2035,7 @@ fdgetdisklabel(dev_t dev, struct fd_softc *fd, struct disklabel *lp,
 	 * Call the generic disklabel extraction routine.  If there's
 	 * not a label there, fake it.
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, spoofonly);
-	if (errstring) {
-		/*printf("%s: %s\n", fd->sc_dv.dv_xname, errstring);*/
-	}
+	return readdisklabel(DISKLABELDEV(dev), fdstrategy, lp, spoofonly);
 }
 
 void

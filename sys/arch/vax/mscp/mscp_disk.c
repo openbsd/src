@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.25 2009/06/04 21:38:10 miod Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.26 2009/08/13 15:23:13 deraadt Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -153,7 +153,6 @@ ra_putonline(ra)
 	struct ra_softc *ra;
 {
 	struct	disklabel *dl;
-	char *msg;
 
 	if (rx_putonline(ra) != MSCP_DONE)
 		return MSCP_FAILED;
@@ -162,9 +161,9 @@ ra_putonline(ra)
 
 	ra->ra_state = DK_RDLABEL;
 	printf("%s", ra->ra_dev.dv_xname);
-	if ((msg = readdisklabel(MAKEDISKDEV(RAMAJOR, ra->ra_dev.dv_unit,
-	    RAW_PART), rastrategy, dl, 0)) != NULL) {
-		/*printf(": %s", msg);*/
+	if ((readdisklabel(MAKEDISKDEV(RAMAJOR, ra->ra_dev.dv_unit,
+	    RAW_PART), rastrategy, dl, 0)) != 0) {
+		/* EIO and others */
 	} else {
 		ra->ra_havelabel = 1;
 		ra->ra_state = DK_OPEN;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.56 2009/06/04 21:13:02 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.57 2009/08/13 15:23:11 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 
 #include "cd.h"
 
-static	char *disklabel_sun_to_bsd(struct sun_disklabel *, struct disklabel *);
+static	int disklabel_sun_to_bsd(struct sun_disklabel *, struct disklabel *);
 static	int disklabel_bsd_to_sun(struct disklabel *, struct sun_disklabel *);
 static __inline u_int sun_extended_sum(struct sun_disklabel *, void *);
 
@@ -59,15 +59,15 @@ extern void cdstrategy(struct buf *);
  *
  * Returns null on success and an error string on failure.
  */
-char *
+int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, int spoofonly)
 {
 	struct sun_disklabel *slp;
 	struct buf *bp = NULL;
-	char *msg;
+	int error;
 
-	if ((msg = initdisklabel(lp)))
+	if ((error = initdisklabel(lp)))
 		goto done;
 	lp->d_flags |= D_VENDOR;
 
@@ -102,37 +102,35 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if (biowait(bp)) {
-		msg = "disk label read error";
+		error = bp->b_error;
 		goto done;
 	}
 
 	slp = (struct sun_disklabel *)bp->b_data;
 	if (slp->sl_magic == SUN_DKMAGIC) {
-		msg = disklabel_sun_to_bsd(slp, lp);
+		error = disklabel_sun_to_bsd(slp, lp);
 		goto done;
 	}
 
-	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0, DL_GETDSIZE(lp));
-	if (msg == NULL)
+	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0, DL_GETDSIZE(lp));
+	if (error == 0)
 		goto done;
 
 doslabel:
-	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
-	if (msg == NULL)
+	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
+	if (error == 0)
 		goto done;
 
 	/* A CD9660/UDF label may be on a non-CD drive, so recheck */
 #if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = iso_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 #if defined(UDF)
-	if (udf_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = udf_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 
 done:
@@ -140,7 +138,7 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	return (msg);
+	return (error);
 }
 
 /*
@@ -227,7 +225,7 @@ sun_extended_sum(struct sun_disklabel *sl, void *end)
  *
  * The BSD label is cleared out before this is called.
  */
-static char *
+static int
 disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 {
 	struct sun_preamble *preamble = (struct sun_preamble *)sl;
@@ -243,7 +241,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 	while (sp1 < sp2)
 		cksum ^= *sp1++;
 	if (cksum != 0)
-		return ("SunOS disk label, bad checksum");
+		return (EINVAL);	/* SunOS disk label, bad checksum */
 
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;

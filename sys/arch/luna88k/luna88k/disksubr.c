@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.41 2009/06/04 21:13:01 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.42 2009/08/13 15:23:10 deraadt Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -103,15 +103,15 @@ int disklabel_bsd_to_om(struct disklabel *, struct sun_disklabel *);
  *
  * Returns null on success and an error string on failure.
  */
-char *
+int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, int spoofonly)
 {
 	struct sun_disklabel *slp;
 	struct buf *bp = NULL;
-	char *msg;
+	int error;
 
-	if ((msg = initdisklabel(lp)))
+	if ((error = initdisklabel(lp)))
 		goto done;
 	lp->d_flags |= D_VENDOR;
 
@@ -128,31 +128,28 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if (biowait(bp)) {
-		msg = "disk label read error";
+		error = bp->b_error;
 		goto done;
 	}
 
-	slp = (struct sun_disklabel *)bp->b_data;
-	if (slp->sl_magic == SUN_DKMAGIC) {
-		msg = disklabel_om_to_bsd(slp, lp);
+	error = disklabel_om_to_bsd((struct sun_disklabel *)bp->b_data, lp);
+	if (error == 0)
 		goto done;
-	}
 
-	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0, DL_GETDSIZE(lp));
-	if (msg == NULL)
+	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0,
+	    DL_GETDSIZE(lp));
+	if (error == 0)
 		goto done;
 
 #if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = iso_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 #if defined(UDF)
-	if (udf_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = udf_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 
 done:
@@ -160,7 +157,7 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	return (msg);
+	return (error);
 }
 
 /*
@@ -230,7 +227,7 @@ sun_fstypes[8] = {
  *
  * The BSD label is cleared out before this is called.
  */
-char *
+int
 disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 {
 	struct partition *npp;
@@ -238,13 +235,16 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 	int i, secpercyl;
 	u_short cksum = 0, *sp1, *sp2;
 
+	if (sl->sl_magic != SUN_DKMAGIC)
+		return (EINVAL);
+
 	/* Verify the XOR check. */
 	sp1 = (u_short *)sl;
 	sp2 = (u_short *)(sl + 1);
 	while (sp1 < sp2)
 		cksum ^= *sp1++;
 	if (cksum != 0)
-		return ("UniOS disk label, bad checksum");
+		return (EINVAL);	/* UniOS disk label, bad checksum */
 
 	memset((caddr_t)lp, 0, sizeof(struct disklabel));
 	/* Format conversion. */

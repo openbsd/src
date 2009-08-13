@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.59 2009/06/17 07:00:45 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.60 2009/08/13 15:23:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -38,8 +38,8 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-char   *readliflabel(struct buf *, void (*)(struct buf *),
-    struct disklabel *, int *, int);
+int	readliflabel(struct buf *, void (*)(struct buf *),
+	    struct disklabel *, int *, int);
 
 /*
  * Attempt to read a disk label from a device
@@ -51,39 +51,37 @@ char   *readliflabel(struct buf *, void (*)(struct buf *),
  *
  * Returns null on success and an error string on failure.
  */
-char *
+int
 readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, int spoofonly)
 {
 	struct buf *bp = NULL;
-	char *msg;
+	int error;
 
-	if ((msg = initdisklabel(lp)))
+	if ((error = initdisklabel(lp)))
 		goto done;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	msg = readliflabel(bp, strat, lp, NULL, spoofonly);
-	if (msg == NULL)
+	error = readliflabel(bp, strat, lp, NULL, spoofonly);
+	if (error == 0)
 		goto done;
 
-	msg = readdoslabel(bp, strat, lp, NULL, spoofonly);
-	if (msg == NULL)
+	error = readdoslabel(bp, strat, lp, NULL, spoofonly);
+	if (error == 0)
 		goto done;
 
 #if defined(CD9660)
-	if (iso_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = iso_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 #if defined(UDF)
-	if (udf_disklabelspoof(dev, strat, lp) == 0) {
-		msg = NULL;
+	error = udf_disklabelspoof(dev, strat, lp);
+	if (error == 0)
 		goto done;
-	}
 #endif
 
 done:
@@ -91,17 +89,17 @@ done:
 		bp->b_flags |= B_INVAL;
 		brelse(bp);
 	}
-	return (msg);
+	return (error);
 }
 
-char *
+int
 readliflabel(struct buf *bp, void (*strat)(struct buf *),
     struct disklabel *lp, int *partoffp, int spoofonly)
 {
 	struct buf *dbp = NULL;
 	struct lifdir *p;
 	struct lifvol *lvp;
-	char *msg = NULL;
+	int error = 0;
 	int fsoff = 0, openbsdstart = MAXLIFSPACE, i;
 
 	/* read LIF volume header */
@@ -110,11 +108,13 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if (biowait(bp))
-		return "LIF volume header I/O error";
+		return (bp->b_error);
 
 	lvp = (struct lifvol *)bp->b_data;
-	if (lvp->vol_id != LIF_VOL_ID)
-		return "no LIF volume header";
+	if (lvp->vol_id != LIF_VOL_ID) {
+		error = EINVAL;		/* no LIF volume header */
+		goto done;
+	}
 
 	dbp = geteblk(LIF_DIRSIZE);
 	dbp->b_dev = bp->b_dev;
@@ -124,9 +124,8 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	dbp->b_bcount = lp->d_secsize;
 	dbp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(dbp);
-
 	if (biowait(dbp)) {
-		msg = "LIF directory I/O error";
+		error = dbp->b_error;
 		goto done;
 	}
 
@@ -159,14 +158,14 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 		(*strat)(dbp);
 
 		if (biowait(dbp)) {
-			msg = "HPUX label I/O error";
+			error = dbp->b_error;
 			goto done;
 		}
 
 		hl = (struct hpux_label *)dbp->b_data;
 		if (hl->hl_magic1 != hl->hl_magic2 ||
 		    hl->hl_magic != HPUX_MAGIC || hl->hl_version != 1) {
-			msg = "HPUX label magic mismatch";
+			error = EINVAL;	 /* HPUX label magic mismatch */
 			goto done;
 		}
 
@@ -228,11 +227,11 @@ finished:
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
 	if (biowait(bp)) {
-		msg = "disk label I/O error";
+		error = bp->b_error;
 		goto done;
 	}
 
-	return checkdisklabel(bp->b_data + LABELOFFSET, lp, openbsdstart,
+	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, openbsdstart,
 	    DL_GETDSIZE(lp));	/* XXX */
 
 done:
@@ -240,7 +239,7 @@ done:
 		dbp->b_flags |= B_INVAL;
 		brelse(dbp);
 	}
-	return (msg);
+	return (error);
 }
 
 /*

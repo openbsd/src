@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.148 2009/06/17 01:30:30 thib Exp $	*/
+/*	$OpenBSD: cd.c,v 1.149 2009/08/13 15:23:11 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ int	cddetach(struct device *, int);
 void	cdstart(void *);
 void	cdrestart(void *);
 void	cdminphys(struct buf *);
-void	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
+int	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
 void	cddone(struct scsi_xfer *);
 void	cd_kill_buffers(struct cd_softc *);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
@@ -1118,12 +1118,11 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
  * EVENTUALLY take information about different
  * data tracks from the TOC and put it in the disklabel
  */
-void
+int
 cdgetdisklabel(dev_t dev, struct cd_softc *cd, struct disklabel *lp,
     int spoofonly)
 {
 	struct cd_toc *toc;
-	char *errstring;
 	int tocidx, n, audioonly = 1;
 
 	bzero(lp, sizeof(struct disklabel));
@@ -1173,12 +1172,9 @@ cdgetdisklabel(dev_t dev, struct cd_softc *cd, struct disklabel *lp,
 done:
 	free(toc, M_TEMP);
 
-	if (!audioonly) {
-		errstring = readdisklabel(DISKLABELDEV(dev), cdstrategy, lp,
-		    spoofonly);
-		/*if (errstring)
-			printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
-	}
+	if (audioonly)
+		return (0);
+	return readdisklabel(DISKLABELDEV(dev), cdstrategy, lp, spoofonly);
 }
 
 int

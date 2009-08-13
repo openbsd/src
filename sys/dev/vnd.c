@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.93 2009/06/17 01:30:30 thib Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.94 2009/08/13 15:23:11 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ void	vndstart(struct vnd_softc *);
 int	vndsetcred(struct vnd_softc *, struct ucred *);
 void	vndiodone(struct buf *);
 void	vndshutdown(void);
-void	vndgetdisklabel(dev_t, struct vnd_softc *, struct disklabel *, int);
+int	vndgetdisklabel(dev_t, struct vnd_softc *, struct disklabel *, int);
 void	vndencrypt(struct vnd_softc *, caddr_t, size_t, daddr64_t, int);
 size_t	vndbdevsize(struct vnode *, struct proc *);
 
@@ -300,12 +300,10 @@ bad:
 /*
  * Load the label information on the named device
  */
-void
+int
 vndgetdisklabel(dev_t dev, struct vnd_softc *sc, struct disklabel *lp,
     int spoofonly)
 {
-	char *errstring = NULL;
-
 	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_secsize = sc->sc_secsize;
@@ -328,12 +326,7 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc, struct disklabel *lp,
 	lp->d_checksum = dkcksum(lp);
 
 	/* Call the generic disklabel extraction routine */
-	errstring = readdisklabel(VNDLABELDEV(dev), vndstrategy, lp, spoofonly);
-	if (errstring) {
-		DNPRINTF(VDB_IO, "%s: %s\n", sc->sc_dev.dv_xname,
-		    errstring);
-		return;
-	}
+	return readdisklabel(VNDLABELDEV(dev), vndstrategy, lp, spoofonly);
 }
 
 int

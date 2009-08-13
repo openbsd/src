@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.75 2009/06/17 01:30:30 thib Exp $ */
+/*	$OpenBSD: wd.c,v 1.76 2009/08/13 15:23:12 deraadt Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -169,7 +169,7 @@ struct cfdriver wd_cd = {
 };
 
 void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
-void  wdgetdisklabel(dev_t dev, struct wd_softc *, struct disklabel *, int);
+int   wdgetdisklabel(dev_t dev, struct wd_softc *, struct disklabel *, int);
 void  wdstrategy(struct buf *);
 void  wdstart(void *);
 void  __wdstart(struct wd_softc*, struct buf *);
@@ -703,7 +703,11 @@ wdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			wd_get_params(wd, AT_WAIT, &wd->sc_params);
 
 			/* Load the partition info if not already loaded. */
-			wdgetdisklabel(dev, wd, wd->sc_dk.dk_label, 0);
+			if (wdgetdisklabel(dev, wd,
+			    wd->sc_dk.dk_label, 0) == EIO) {
+				error = EIO;
+				goto bad;
+			}
 		}
 	}
 
@@ -816,11 +820,11 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 /*
  * Fabricate a default disk label, and try to read the correct one.
  */
-void
+int
 wdgetdisklabel(dev_t dev, struct wd_softc *wd, struct disklabel *lp,
     int spoofonly)
 {
-	char *errstring;
+	int error;
 
 	WDCDEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
 
@@ -828,13 +832,11 @@ wdgetdisklabel(dev_t dev, struct wd_softc *wd, struct disklabel *lp,
 
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
-	errstring = readdisklabel(DISKLABELDEV(dev), wdstrategy, lp,
+	error = readdisklabel(DISKLABELDEV(dev), wdstrategy, lp,
 	    spoofonly);
 	if (wd->drvp->state > RECAL)
 		wd->drvp->drive_flags |= DRIVE_RESET;
-	if (errstring) {
-		/*printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);*/
-	}
+	return (error);
 }
 
 int

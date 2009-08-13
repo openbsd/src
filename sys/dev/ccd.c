@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.86 2009/06/04 05:57:27 krw Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.87 2009/08/13 15:23:11 deraadt Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -175,7 +175,7 @@ int	ccdinit(struct ccddevice *, char **, struct proc *);
 int	ccdlookup(char *, struct proc *p, struct vnode **);
 long	ccdbuffer(struct ccd_softc *, struct buf *, daddr64_t, caddr_t,
     long, struct ccdbuf **);
-void	ccdgetdisklabel(dev_t, struct ccd_softc *, struct disklabel *, int);
+int	ccdgetdisklabel(dev_t, struct ccd_softc *, struct disklabel *, int);
 INLINE struct ccdbuf *getccdbuf(void);
 INLINE void putccdbuf(struct ccdbuf *);
 
@@ -1353,12 +1353,11 @@ ccdlookup(char *path, struct proc *p, struct vnode **vpp)
  * Read the disklabel from the ccd.  If one is not present, fake one
  * up.
  */
-void
+int
 ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
     int spoofonly)
 {
 	struct ccdgeom *ccg = &cs->sc_geom;
-	char *errstring;
 
 	bzero(lp, sizeof(*lp));
 
@@ -1384,11 +1383,8 @@ ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), ccdstrategy,
+	return readdisklabel(DISKLABELDEV(dev), ccdstrategy,
 	    cs->sc_dkdev.dk_label, spoofonly);
-	/* It's actually extremely common to have unlabeled ccds. */
-	if (errstring != NULL)
-		CCD_DPRINTF(CCDB_LABEL, ("%s: %s\n", cs->sc_xname, errstring));
 }
 
 #ifdef CCDDEBUG

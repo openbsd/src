@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.41 2009/01/04 16:51:05 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.42 2009/08/13 15:23:12 deraadt Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ xygetdisklabel(xy, b)
 {
 	struct disklabel *lp = xy->sc_dk.dk_label;
 	struct sun_disklabel *sl = b;
-	char *err;
+	int error;
 
 	bzero(lp, sizeof(struct disklabel));
 	/* Required parameters for readdisklabel() */
@@ -251,12 +251,10 @@ xygetdisklabel(xy, b)
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xy_labeldata = b;
 
-	err = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
+	error = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
 	    xydummystrat, lp, 0);
-	if (err) {
-		/*printf("%s: %s\n", xy->sc_dev.dv_xname, err);*/
-		return (XY_ERR_FAIL);
-	}
+	if (error)
+		return (error);
 
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sl = b;
@@ -276,7 +274,7 @@ xygetdisklabel(xy, b)
 	xy->nhead = lp->d_ntracks;
 	xy->nsect = lp->d_nsectors;
 	xy->sectpercyl = lp->d_secpercyl;
-	return (XY_ERR_AOK);
+	return (error);
 }
 
 /*
@@ -596,7 +594,7 @@ xyattach(parent, self, aux)
 	/* Attach the disk: must be before getdisklabel to malloc label */
 	disk_attach(&xy->sc_dk);
 
-	if (xygetdisklabel(xy, xa->buf) != XY_ERR_AOK)
+	if (xygetdisklabel(xy, xa->buf) != 0)
 		goto done;
 
 	/* inform the user of what is up */
