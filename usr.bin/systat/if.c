@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.15 2009/06/26 06:39:47 jasper Exp $ */
+/*	$OpenBSD: if.c,v 1.16 2009/08/13 23:45:35 deraadt Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -33,18 +33,6 @@
 
 static  enum state { BOOT, TIME, RUN } state = TIME;
 
-struct ifcount {
-	u_int64_t	ifc_ib;			/* input bytes */
-	u_int64_t	ifc_ip;			/* input packets */
-	u_int64_t	ifc_ie;			/* input errors */
-	u_int64_t	ifc_ob;			/* output bytes */
-	u_int64_t	ifc_op;			/* output packets */
-	u_int64_t	ifc_oe;			/* output errors */
-	u_int64_t	ifc_co;			/* collisions */
-	int		ifc_flags;		/* up / down */
-	int		ifc_state;		/* link state */
-} sum;
-
 struct ifstat {
 	char		ifs_name[IFNAMSIZ];	/* interface name */
 	char		ifs_description[IFDESCRSIZE];
@@ -61,7 +49,7 @@ int read_if(void);
 int select_if(void);
 int if_keyboard_callback(int);
 
-static void fetchifstat(void);
+void fetchifstat(void);
 static void showifstat(struct ifstat *);
 static void showtotal(void);
 
@@ -190,7 +178,7 @@ print_if(void)
 }
 
 
-static void
+void
 fetchifstat(void)
 {
 	struct ifstat *newstats, *ifs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.13 2009/06/19 07:48:45 jasper Exp $	*/
+/*	$OpenBSD: systat.h,v 1.14 2009/08/13 23:45:35 deraadt Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -91,3 +91,15 @@ void error(const char *fmt, ...);
 void nlisterr(struct nlist []);
 
 #endif
+
+struct ifcount {
+	u_int64_t	ifc_ib;			/* input bytes */
+	u_int64_t	ifc_ip;			/* input packets */
+	u_int64_t	ifc_ie;			/* input errors */
+	u_int64_t	ifc_ob;			/* output bytes */
+	u_int64_t	ifc_op;			/* output packets */
+	u_int64_t	ifc_oe;			/* output errors */
+	u_int64_t	ifc_co;			/* collisions */
+	int		ifc_flags;		/* up / down */
+	int		ifc_state;		/* link state */
+} sum;
