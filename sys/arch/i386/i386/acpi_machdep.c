@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.22 2009/06/07 16:58:28 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.23 2009/08/13 15:33:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -30,7 +30,6 @@
 
 #include <machine/cpufunc.h>
 #include <machine/npx.h>
-#include <machine/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/acpi/acpireg.h>
@@ -51,7 +50,6 @@
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif
-
 
 #if NAPM > 0
 int haveacpibutusingapm;	
@@ -129,7 +127,8 @@ acpi_scan(struct acpi_mem_map *handle, paddr_t pa, size_t len)
 }
 
 int
-acpi_probe(struct device *parent, struct cfdata *match, struct bios_attach_args *ba)
+acpi_probe(struct device *parent, struct cfdata *match,
+    struct bios_attach_args *ba)
 {
 	struct acpi_mem_map handle;
 	u_int8_t *ptr;
@@ -173,10 +172,12 @@ havebase:
 		return (0);
 	}
 #endif
+
 	return (1);
 }
 
 #ifndef SMALL_KERNEL
+
 void
 acpi_attach_machdep(struct acpi_softc *sc)
 {
@@ -190,20 +191,24 @@ acpi_attach_machdep(struct acpi_softc *sc)
 	acpiapm_kqfilter = acpikqfilter;
 	cpuresetfn = acpi_reset;
 
-#ifdef ACPI_SLEEP_ENABLED  
+#ifdef ACPI_SLEEP_ENABLED
 	/*
 	 * Sanity check before setting up trampoline.
 	 * Ensure the trampoline size is < PAGE_SIZE
 	 */
 	KASSERT(acpi_resume_end - acpi_real_mode_resume < PAGE_SIZE);
-	bcopy(acpi_real_mode_resume, (caddr_t)ACPI_TRAMPOLINE, acpi_resume_end - acpi_real_mode_resume);
+
+	bcopy(acpi_real_mode_resume, (caddr_t)ACPI_TRAMPOLINE,
+	    acpi_resume_end - acpi_real_mode_resume);
 #endif /* ACPI_SLEEP_ENABLED */
 }
 
 void
 acpi_cpu_flush(struct acpi_softc *sc, int state)
 {
-	/* flush write back caches since we'll lose them  */
+	/*
+	 * Flush write back caches since we'll lose them.
+	 */
 	if (state > ACPI_STATE_S1)
 		wbinvd();
 }
@@ -212,7 +217,6 @@ int
 acpi_sleep_machdep(struct acpi_softc *sc, int state)
 {
 #ifdef ACPI_SLEEP_ENABLED
-
 	if (sc->sc_facs == NULL) {
 		printf("%s: acpi_sleep_machdep: no FACS\n", DEVNAME(sc));
 		return (ENXIO);
@@ -274,8 +278,9 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 #endif
 	initrtclock();
 	inittodr(time_second);
-
 #endif /* ACPI_SLEEP_ENABLED */
+
 	return (0);
 }
+
 #endif /* ! SMALL_KERNEL */
