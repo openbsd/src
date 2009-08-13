@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-prompt.c,v 1.5 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-select-prompt.c,v 1.6 2009/08/13 23:44:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -66,7 +66,7 @@ cmd_select_prompt_callback(void *data, const char *s)
 	char		 msg[128];
 	u_int		 idx;
 
-	if (s == NULL)
+	if (s == NULL || *s == '\0')
 		return (0);
 
 	idx = strtonum(s, 0, UINT_MAX, &errstr);

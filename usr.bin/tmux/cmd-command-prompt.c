@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.6 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.7 2009/08/13 23:44:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -112,7 +112,7 @@ cmd_command_prompt_callback(void *data, const char *s)
 	char				*cause, *ptr, *buf, ch;
 	size_t				 len, slen;
 
-	if (s == NULL)
+	if (s == NULL || *s == '\0')
 		return (0);
 	slen = strlen(s);
 
