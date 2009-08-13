@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_compr.c,v 1.3 2008/05/13 02:24:08 brad Exp $	*/
+/*	$OpenBSD: ntfs_compr.c,v 1.4 2009/08/13 16:00:53 jasper Exp $	*/
 /*	$NetBSD: ntfs_compr.c,v 1.1 2002/12/23 17:38:31 jdolecek Exp $	*/
 
 /*-
@@ -39,19 +39,11 @@
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
-#ifdef __FreeBSD__
-#include <machine/clock.h>
-#endif
 
 #include <miscfs/specfs/specdev.h>
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include <fs/ntfs/ntfs.h>
-#include <fs/ntfs/ntfs_compr.h>
-#else
 #include <ntfs/ntfs.h>
 #include <ntfs/ntfs_compr.h>
-#endif
 
 #define GET_UINT16(addr)	(*((u_int16_t *)(addr)))
 

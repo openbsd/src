@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.6 2008/09/01 17:30:56 deraadt Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.7 2009/08/13 16:00:53 jasper Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -282,44 +282,12 @@ struct ntfsmount {
 #define ntfs_btocnoff(off)	(off_t)((off) % ((ntmp)->ntm_spc * (ntmp)->ntm_bps))
 #define ntfs_bntob(bn)	(int32_t)((bn) * (ntmp)->ntm_bps)
 
-#if __FreeBSD_version >= 300000 || defined(__NetBSD__)
-MALLOC_DECLARE(M_NTFSMNT);
-MALLOC_DECLARE(M_NTFSNTNODE);
-MALLOC_DECLARE(M_NTFSFNODE);
-MALLOC_DECLARE(M_NTFSDIR);
-MALLOC_DECLARE(M_NTFSNTHASH);
-MALLOC_DECLARE(M_NTFSNTVATTR);
-MALLOC_DECLARE(M_NTFSRDATA);
-MALLOC_DECLARE(M_NTFSDECOMP);
-MALLOC_DECLARE(M_NTFSRUN);
-#endif
-
-#ifdef __NetBSD__
-typedef int (vop_t)(void *);
-#define HASHINIT(a, b, c, d)	hashinit((a), HASH_LIST, (b), (c), (d))
-#define bqrelse(bp)		brelse(bp)
-#define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b))
-#define VGET(a, b, c)		vget((a), (b))
-#define VN_LOCK(a, b, c)	vn_lock((a), (b))
-
-#elif defined(__OpenBSD__)
 typedef int (vop_t)(void *);
 #define HASHINIT(a, b, c, d)	hashinit((a), (b), (c), (d))
 #define bqrelse(bp)		brelse(bp)
 #define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b), (c))
 #define VGET(a, b, c)		vget((a), (b), (c))
 #define VN_LOCK(a, b, c)	vn_lock((a), (b), (c))
-
-#else /* !NetBSD && !OpenBSD */
-#define HASHINIT(a, b, c, d)	hashinit((a), (b), (d))
-#define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b), (c))
-#define VGET(a, b, c)		vget((a), (b), (c))
-#define VN_LOCK(a, b, c)	vn_lock((a), (b), (c))
-
-/* PDIRUNLOCK is used by NetBSD to mark if vfs_lookup() unlocked parent dir;
- * on FreeBSD, it's not defined and nothing similar exists */
-#define PDIRUNLOCK		0
-#endif /* NetBSD */
 
 #if defined(NTFS_DEBUG)
 extern int ntfs_debug;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_conv.c,v 1.6 2009/03/25 20:39:47 oga Exp $	*/
+/*	$OpenBSD: ntfs_conv.c,v 1.7 2009/08/13 16:00:53 jasper Exp $	*/
 /*	$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*-
@@ -43,22 +43,10 @@
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-#endif
 
 #include <miscfs/specfs/specdev.h>
 
 /* #define NTFS_DEBUG 1 */
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include <fs/ntfs/ntfs.h>
-#include <fs/ntfs/ntfsmount.h>
-#include <fs/ntfs/ntfs_inode.h>
-#include <fs/ntfs/ntfs_vfsops.h>
-#include <fs/ntfs/ntfs_subr.h>
-#include <fs/ntfs/ntfs_compr.h>
-#include <fs/ntfs/ntfs_ihash.h>
-#else
 #include <ntfs/ntfs.h>
 #include <ntfs/ntfsmount.h>
 #include <ntfs/ntfs_inode.h>
@@ -66,7 +54,6 @@
 #include <ntfs/ntfs_subr.h>
 #include <ntfs/ntfs_compr.h>
 #include <ntfs/ntfs_ihash.h>
-#endif
 
 /* UTF-8 encoding stuff */
 

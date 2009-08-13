@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_inode.h,v 1.4 2009/03/25 20:39:47 oga Exp $	*/
+/*	$OpenBSD: ntfs_inode.h,v 1.5 2009/08/13 16:00:53 jasper Exp $	*/
 /*	$NetBSD: ntfs_inode.h,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
 
 /*-
@@ -28,34 +28,6 @@
  *
  *	Id: ntfs_inode.h,v 1.4 1999/05/12 09:43:00 semenu Exp
  */
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include <miscfs/genfs/genfs_node.h>
-#endif
-
-/* These flags are kept in i_flag. */
-#if defined(__FreeBSD__)
-#define	IN_ACCESS	0x0001	/* Access time update request. */
-#define	IN_CHANGE	0x0002	/* Inode change time update request. */
-#define	IN_UPDATE	0x0004	/* Modification time update request. */
-#define	IN_MODIFIED	0x0008	/* Inode has been modified. */
-#define	IN_RENAME	0x0010	/* Inode is being renamed. */
-#define	IN_SHLOCK	0x0020	/* File has shared lock. */
-#define	IN_EXLOCK	0x0040	/* File has exclusive lock. */
-#define	IN_LAZYMOD	0x0080	/* Modified, but don't write yet. */
-#else /* defined(__NetBSD__) */
-#define	IN_ACCESS	0x0001	/* Access time update request. */
-#define	IN_CHANGE	0x0002	/* Inode change time update request. */
-#define	IN_EXLOCK	0x0004	/* File has exclusive lock. */
-#define	IN_LOCKED	0x0008	/* Inode lock. */
-#define	IN_LWAIT	0x0010	/* Process waiting on file lock. */
-#define	IN_MODIFIED	0x0020	/* Inode has been modified. */
-#define	IN_RENAME	0x0040	/* Inode is being renamed. */
-#define	IN_SHLOCK	0x0080	/* File has shared lock. */
-#define	IN_UPDATE	0x0100	/* Modification time update request. */
-#define	IN_WANTED	0x0200	/* Inode is wanted by a process. */
-#define	IN_RECURSE	0x0400	/* Recursion expected */
-#endif
 
 #define	IN_HASHED	0x0800	/* Inode is on hash list */
 #define	IN_LOADED	0x8000	/* ntvattrs loaded */
@@ -88,13 +60,6 @@ struct ntnode {
 #define	FN_VALID	0x0002
 #define	FN_AATTRNAME	0x0004	/* space allocated for f_attrname */
 struct fnode {
-#ifdef __FreeBSD__
-	struct lock	f_lock;	/* fnode lock >Keep this first< */
-#endif
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-	struct genfs_node f_gnode;
-#endif
-
 	LIST_ENTRY(fnode) f_fnlist;
 	struct vnode   *f_vp;		/* Associatied vnode */
 	struct ntnode  *f_ip;		/* Associated ntnode */

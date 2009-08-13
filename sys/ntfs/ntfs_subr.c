@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.17 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.18 2009/08/13 16:00:53 jasper Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -40,22 +40,10 @@
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-#endif
 
 #include <miscfs/specfs/specdev.h>
 
 /* #define NTFS_DEBUG 1 */
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include <fs/ntfs/ntfs.h>
-#include <fs/ntfs/ntfsmount.h>
-#include <fs/ntfs/ntfs_inode.h>
-#include <fs/ntfs/ntfs_vfsops.h>
-#include <fs/ntfs/ntfs_subr.h>
-#include <fs/ntfs/ntfs_compr.h>
-#include <fs/ntfs/ntfs_ihash.h>
-#else
 #include <ntfs/ntfs.h>
 #include <ntfs/ntfsmount.h>
 #include <ntfs/ntfs_inode.h>
@@ -63,7 +51,6 @@
 #include <ntfs/ntfs_subr.h>
 #include <ntfs/ntfs_compr.h>
 #include <ntfs/ntfs_ihash.h>
-#endif
 
 #if defined(NTFS_DEBUG)
 int ntfs_debug = NTFS_DEBUG;
@@ -379,9 +366,7 @@ out:
 int
 ntfs_ntget(
 	struct ntnode *ip,
-#ifdef __OpenBSD__
 	struct proc *p
-#endif
 	)
 {
 	dprintf(("ntfs_ntget: get ntnode %d: %p, usecount: %d\n",
@@ -405,12 +390,8 @@ int
 ntfs_ntlookup(
 	   struct ntfsmount * ntmp,
 	   ino_t ino,
-#ifndef __OpenBSD__
-	   struct ntnode ** ipp)
-#else
 	   struct ntnode ** ipp,
 	   struct proc * p)
-#endif
 {
 	struct ntnode  *ip;
 
@@ -418,11 +399,7 @@ ntfs_ntlookup(
 
 	do {
 		if ((ip = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
-#ifndef __OpenBSD__
-			ntfs_ntget(ip);
-#else
 			ntfs_ntget(ip, p);
-#endif
 			dprintf(("ntfs_ntlookup: ntnode %d: %p, usecount: %d\n",
 				ino, ip, ip->i_usecount));
 			*ipp = ip;
@@ -444,11 +421,7 @@ ntfs_ntlookup(
 
 	/* init lock and lock the newborn ntnode */
 	rw_init(&ip->i_lock, "ntnode");
-#ifndef __OpenBSD__
-	ntfs_ntget(ip);
-#else
 	ntfs_ntget(ip, p);
-#endif
 
 	ntfs_nthashins(ip);
 
@@ -471,9 +444,7 @@ ntfs_ntlookup(
 void
 ntfs_ntput(
 	struct ntnode *ip,
-#ifdef __OpenBSD__
 	struct proc *p
-#endif
 	)
 {
 	struct ntvattr *vap;
@@ -889,12 +860,8 @@ ntfs_ntlookupfile(
 	      struct ntfsmount * ntmp,
 	      struct vnode * vp,
 	      struct componentname * cnp,
-#ifndef __OpenBSD__
-	      struct vnode ** vpp)
-#else
 	      struct vnode ** vpp,
 	      struct proc *p)
-#endif
 {
 	struct fnode   *fp = VTOF(vp);
 	struct ntnode  *ip = FTONT(fp);
@@ -915,11 +882,8 @@ ntfs_ntlookupfile(
 	int fullscan = 0;
 	struct ntfs_lookup_ctx *lookup_ctx = NULL, *tctx;
 
-#ifndef __OpenBSD__
-	error = ntfs_ntget(ip);
-#else
 	error = ntfs_ntget(ip, p);
-#endif
+
 	if (error)
 		return (error);
 
@@ -1151,11 +1115,7 @@ fail:
 		}
 	}
 	ntfs_ntvattrrele(vap);
-#ifndef __OpenBSD__
-	ntfs_ntput(ip);
-#else
 	ntfs_ntput(ip, p);
-#endif
 	free(rdbuf, M_TEMP);
 	return (error);
 }
@@ -1199,12 +1159,8 @@ ntfs_ntreaddir(
 	       struct ntfsmount * ntmp,
 	       struct fnode * fp,
 	       u_int32_t num,
-#ifndef __OpenBSD__
-	       struct attr_indexentry ** riepp)
-#else
 	       struct attr_indexentry ** riepp,
 	       struct proc *p)
-#endif
 {
 	struct ntnode  *ip = FTONT(fp);
 	struct ntvattr *vap = NULL;	/* IndexRoot attribute */
@@ -1222,11 +1178,7 @@ ntfs_ntreaddir(
 	u_int32_t       aoff, cnum;
 
 	dprintf(("ntfs_ntreaddir: read ino: %d, num: %d\n", ip->i_number, num));
-#ifndef __OpenBSD__
-	error = ntfs_ntget(ip);
-#else
 	error = ntfs_ntget(ip, p);
-#endif
 	if (error)
 		return (error);
 
@@ -1359,11 +1311,8 @@ fail:
 		ntfs_ntvattrrele(iavap);
 	if (bmp)
 		free(bmp, M_TEMP);
-#ifndef __OpenBSD__
-	ntfs_ntput(ip);
-#else
 	ntfs_ntput(ip, p);
-#endif
+
 	return (error);
 }
 
@@ -1384,38 +1333,6 @@ ntfs_nttimetounix(
 		89LL * 1LL * 24LL * 60LL * 60LL;
 	return (t);
 }
-
-#ifndef __OpenBSD__
-/*
- * Get file times from NTFS_A_NAME attribute.
- */
-int
-ntfs_times(
-	   struct ntfsmount * ntmp,
-	   struct ntnode * ip,
-	   ntfs_times_t * tm)
-{
-	struct ntvattr *vap;
-	int             error;
-
-	dprintf(("ntfs_times: ino: %d...\n", ip->i_number));
-
-	error = ntfs_ntget(ip);
-	if (error)
-		return (error);
-
-	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_NAME, NULL, 0, &vap);
-	if (error) {
-		ntfs_ntput(ip);
-		return (error);
-	}
-	*tm = vap->va_a_name->n_times;
-	ntfs_ntvattrrele(vap);
-	ntfs_ntput(ip);
-
-	return (0);
-}
-#endif
 
 /*
  * Get file sizes from corresponding attribute. 
@@ -2062,16 +1979,10 @@ ntfs_toupper_init()
  * otherwise read the data from the filesystem we are currently mounting
  */
 int
-#ifndef __OpenBSD__
-ntfs_toupper_use(mp, ntmp)
-	struct mount *mp;
-	struct ntfsmount *ntmp;
-#else
 ntfs_toupper_use(mp, ntmp, p)
 	struct mount *mp;
 	struct ntfsmount *ntmp;
 	struct proc *p;
-#endif
 {
 	int error = 0;
 	struct vnode *vp;
@@ -2110,12 +2021,8 @@ ntfs_toupper_use(mp, ntmp, p)
  * tied by toupper table
  */
 void
-#ifndef __OpenBSD__
-ntfs_toupper_unuse()
-#else
 ntfs_toupper_unuse(p)
 	struct proc *p;
-#endif
 {
 	/* get exclusive access */
 	rw_enter_write(&ntfs_toupper_lock);

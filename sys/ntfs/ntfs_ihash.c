@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.c,v 1.5 2009/03/25 20:39:47 oga Exp $	*/
+/*	$OpenBSD: ntfs_ihash.c,v 1.6 2009/08/13 16:00:53 jasper Exp $	*/
 /*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
@@ -43,15 +43,9 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include <fs/ntfs/ntfs.h>
-#include <fs/ntfs/ntfs_inode.h>
-#include <fs/ntfs/ntfs_ihash.h>
-#else
 #include <ntfs/ntfs.h>
 #include <ntfs/ntfs_inode.h>
 #include <ntfs/ntfs_ihash.h>
-#endif
 
 #ifdef MALLOC_DEFINE
 MALLOC_DEFINE(M_NTFSNTHASH, "NTFS nthash", "NTFS ntnode hash tables");
@@ -78,48 +72,6 @@ ntfs_nthashinit()
 	    &ntfs_nthash);
 	simple_lock_init(&ntfs_nthash_slock);
 }
-
-#ifdef __NetBSD__
-/*
- * Reinitialize inode hash table.
- */
-
-void
-ntfs_nthashreinit()
-{
-	struct ntnode *ip;
-	struct nthashhead *oldhash, *hash;
-	u_long oldmask, mask, val;
-	int i;
-
-	hash = HASHINIT(desiredvnodes, M_NTFSNTHASH, M_WAITOK, &mask);
-
-	simple_lock(&ntfs_nthash_slock);
-	oldhash = ntfs_nthashtbl;
-	oldmask = ntfs_nthash;
-	ntfs_nthashtbl = hash;
-	ntfs_nthash = mask;
-	for (i = 0; i <= oldmask; i++) {
-		while ((ip = LIST_FIRST(&oldhash[i])) != NULL) {
-			LIST_REMOVE(ip, i_hash);
-			val = NTNOHASH(ip->i_dev, ip->i_number);
-			LIST_INSERT_HEAD(&hash[val], ip, i_hash);
-		}
-	}
-	simple_unlock(&ntfs_nthash_slock);
-	hashdone(oldhash, M_NTFSNTHASH);
-}
-
-/*
- * Free the inode hash table. Called from ntfs_done(), only needed
- * on NetBSD.
- */
-void
-ntfs_nthashdone()
-{
-	hashdone(ntfs_nthashtbl, M_NTFSNTHASH);
-}
-#endif
 
 /*
  * Use the device/inum pair to find the incore inode, and return a pointer
