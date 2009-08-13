@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.142 2009/08/12 09:59:35 martynas Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.143 2009/08/13 23:59:15 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -184,8 +184,11 @@ int	azalia_intr(void *);
 void	azalia_print_codec(codec_t *);
 int	azalia_attach(azalia_t *);
 void	azalia_attach_intr(struct device *);
+void	azalia_shutdown(void *);
+int	azalia_halt_corb(azalia_t *);
 int	azalia_init_corb(azalia_t *);
 int	azalia_delete_corb(azalia_t *);
+int	azalia_halt_rirb(azalia_t *);
 int	azalia_init_rirb(azalia_t *);
 int	azalia_delete_rirb(azalia_t *);
 int	azalia_set_command(azalia_t *, nid_t, int, uint32_t,
@@ -452,6 +455,8 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
+	shutdownhook_establish(azalia_shutdown, sc);
+
 	azalia_attach_intr(self);
 }
 
@@ -549,6 +554,21 @@ azalia_intr(void *v)
 	}
 
 	return (1);
+}
+
+void
+azalia_shutdown(void *v)
+{
+	azalia_t *az = (azalia_t *)v;
+	uint32_t gctl;
+
+	/* disable unsolicited response */
+	gctl = AZ_READ_4(az, GCTL);
+	AZ_WRITE_4(az, GCTL, gctl & ~(HDA_GCTL_UNSOL));
+
+	/* halt CORB/RIRB */
+	azalia_halt_corb(az);
+	azalia_halt_rirb(az);
 }
 
 /* ================================================================
@@ -742,15 +762,12 @@ err_exit:
 	return;
 }
 
-
 int
-azalia_init_corb(azalia_t *az)
+azalia_halt_corb(azalia_t *az)
 {
-	int entries, err, i;
-	uint16_t corbrp, corbwp;
-	uint8_t corbsize, cap, corbctl;
+	uint8_t corbctl;
+	int i;
 
-	/* stop the CORB */
 	corbctl = AZ_READ_1(az, CORBCTL);
 	if (corbctl & HDA_CORBCTL_CORBRUN) { /* running? */
 		AZ_WRITE_1(az, CORBCTL, corbctl & ~HDA_CORBCTL_CORBRUN);
@@ -765,6 +782,19 @@ azalia_init_corb(azalia_t *az)
 			return EBUSY;
 		}
 	}
+	return(0);
+}
+
+int
+azalia_init_corb(azalia_t *az)
+{
+	int entries, err, i;
+	uint16_t corbrp, corbwp;
+	uint8_t corbsize, cap, corbctl;
+
+	err = azalia_halt_corb(az);
+	if (err)
+		return(err);
 
 	/* determine CORB size */
 	corbsize = AZ_READ_1(az, CORBSIZE);
@@ -846,13 +876,11 @@ azalia_delete_corb(azalia_t *az)
 }
 
 int
-azalia_init_rirb(azalia_t *az)
+azalia_halt_rirb(azalia_t *az)
 {
-	int entries, err, i;
-	uint16_t rirbwp;
-	uint8_t rirbsize, cap, rirbctl;
+	int i;
+	uint8_t rirbctl;
 
-	/* stop the RIRB */
 	rirbctl = AZ_READ_1(az, RIRBCTL);
 	if (rirbctl & HDA_RIRBCTL_RIRBDMAEN) { /* running? */
 		AZ_WRITE_1(az, RIRBCTL, rirbctl & ~HDA_RIRBCTL_RIRBDMAEN);
@@ -864,9 +892,22 @@ azalia_init_rirb(azalia_t *az)
 		}
 		if (i <= 0) {
 			printf("%s: RIRB is running\n", XNAME(az));
-			return EBUSY;
+			return(EBUSY);
 		}
 	}
+	return(0);
+}
+
+int
+azalia_init_rirb(azalia_t *az)
+{
+	int entries, err;
+	uint16_t rirbwp;
+	uint8_t rirbsize, cap, rirbctl;
+
+	err = azalia_halt_rirb(az);
+	if (err)
+		return(err);
 
 	/* determine RIRB size */
 	rirbsize = AZ_READ_1(az, RIRBSIZE);
