@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.57 2009/08/13 13:49:20 thib Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.58 2009/08/13 15:42:03 thib Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -469,7 +469,7 @@ struct db_command db_show_all_cmds[] = {
 	{ "callout",	db_show_callout,	0, NULL },
 	{ "pools",	db_show_all_pools,	0, NULL },
 	{ "mounts",	db_show_all_mounts,	0, NULL },
-	{ "vnodes,",	db_show_all_vnodes,	0, NULL },
+	{ "vnodes",	db_show_all_vnodes,	0, NULL },
 #ifdef NFSCLIENT
 	{ "nfsreq",	db_show_all_nfsreqs,	0, NULL },
 #endif
