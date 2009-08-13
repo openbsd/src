@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.61 2009/07/16 07:18:47 sthen Exp $	*/
+/*	$OpenBSD: hme.c,v 1.62 2009/08/13 17:01:31 phessler Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -126,7 +126,7 @@ int	hme_mii_read(struct device *, int, int);
 void	hme_mii_write(struct device *, int, int, int);
 void	hme_mii_statchg(struct device *);
 
-void	hme_mcreset(struct hme_softc *);
+void	hme_iff(struct hme_softc *);
 
 struct cfattach hme_ca = {
 	sizeof (struct hme_softc), hmematch, hmeattach
@@ -445,7 +445,7 @@ hmeioctl(ifp, cmd, data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			hme_mcreset(sc);
+			hme_iff(sc);
 		error = 0;
 	}
 
@@ -575,7 +575,7 @@ hmeinit(sc)
 		printf("%s: setting rxreg->cfg failed.\n", sc->sc_dev.dv_xname);
 
 	cr->rx_cfg = 0;
-	hme_mcreset(sc);
+	hme_iff(sc);
 	DELAY(10);
 
 	cr->tx_cfg |= CR_TXCFG_DGIVEUP;
@@ -959,89 +959,52 @@ hme_read(sc, idx, len, flags)
 	ether_input_mbuf(ifp, m);
 }
 
-/*
- * Program the multicast receive filter.
- */
 void
-hme_mcreset(sc)
+hme_iff(sc)
 	struct hme_softc *sc;
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct hme_cr *cr = sc->sc_cr;
-	u_int32_t crc;
-	u_int16_t hash[4];
-	u_int8_t octet;
-	int i, j;
 	struct ether_multi *enm;
 	struct ether_multistep step;
+	u_int32_t rxcfg, crc;
+	u_int32_t hash[4];
+
+	rxcfg = cr->rx_cfg;
+	rxcfg &= ~(CR_RXCFG_HENABLE | CR_RXCFG_PMISC);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	/* Clear hash table */
+	hash[0] = hash[1] = hash[2] = hash[3] = 0;
 
 	if (ifp->if_flags & IFF_PROMISC) {
-		cr->rx_cfg |= CR_RXCFG_PMISC;
-		return;
-	}
-	else
-		cr->rx_cfg &= ~CR_RXCFG_PMISC;
+		ifp->if_flags |= IFF_ALLMULTI;
+		rxcfg |= CR_RXCFG_PMISC;
+	} else if (ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		rxcfg |= CR_RXCFG_HENABLE;
+		hash[0] = hash[1] = hash[2] = hash[3] = 0xffff;
+	} else {
+		rxcfg |= CR_RXCFG_HENABLE;
 
-	if (ifp->if_flags & IFF_ALLMULTI) {
-		cr->htable3 = 0xffff;
-		cr->htable2 = 0xffff;
-		cr->htable1 = 0xffff;
-		cr->htable0 = 0xffff;
-		cr->rx_cfg |= CR_RXCFG_HENABLE;
-		return;
-	}
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			crc = ether_crc32_le(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26; 
 
-	hash[3] = hash[2] = hash[1] = hash[0] = 0;
+			/* Set the corresponding bit in the filter. */
+			hash[crc >> 4] |= 1 << (crc & 0xf);
 
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/*
-			 * We must listen to a range of multicast
-			 * addresses.  For now, just accept all
-			 * multicasts, rather than trying to set only
-			 * those filter bits needed to match the range.
-			 * (At this time, the only use of address
-			 * ranges is for IP multicast routing, for
-			 * which the range is big enough to require
-			 * all bits set.)
-			 */
-			cr->htable3 = 0xffff;
-			cr->htable2 = 0xffff;
-			cr->htable1 = 0xffff;
-			cr->htable0 = 0xffff;
-			cr->rx_cfg |= CR_RXCFG_HENABLE;
-			ifp->if_flags |= IFF_ALLMULTI;
-			return;
+			ETHER_NEXT_MULTI(step, enm);
 		}
-
-		crc = 0xffffffff;
-
-		for (i = 0; i < ETHER_ADDR_LEN; i++) {
-			octet = enm->enm_addrlo[i];
-
-			for (j = 0; j < 8; j++) {
-				if ((crc & 1) ^ (octet & 1)) {
-					crc >>= 1;
-					crc ^= ETHER_CRC_POLY_LE;
-				}
-				else
-					crc >>= 1;
-				octet >>= 1;
-			}
-		}
-
-		crc >>=26;
-		hash[crc >> 4] |= 1 << (crc & 0xf);
-		ETHER_NEXT_MULTI(step, enm);
 	}
-	cr->htable3 = hash[3];
-	cr->htable2 = hash[2];
-	cr->htable1 = hash[1];
+
+	/* Now load the hash table into the chip */
 	cr->htable0 = hash[0];
-	cr->rx_cfg |= CR_RXCFG_HENABLE;
-	ifp->if_flags &= ~IFF_ALLMULTI;
+	cr->htable1 = hash[1];
+	cr->htable2 = hash[2];
+	cr->htable3 = hash[3];
+	cr->rx_cfg = rxcfg;
 }
 
 /*
