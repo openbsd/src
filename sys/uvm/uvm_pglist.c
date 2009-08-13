@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.34 2009/07/26 21:26:10 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.35 2009/08/13 15:29:59 deraadt Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -409,9 +409,15 @@ uvm_pglistfree(struct pglist *list)
 #endif
 		atomic_clearbits_int(&m->pg_flags, PQ_MASK);
 		atomic_setbits_int(&m->pg_flags, PQ_FREE);
+#ifdef PAGEFASTRECYCLE
+		TAILQ_INSERT_HEAD(&uvm.page_free[
+		    uvm_page_lookup_freelist(m)].pgfl_queues[PGFL_UNKNOWN],
+		    m, pageq);
+#else
 		TAILQ_INSERT_TAIL(&uvm.page_free[
 		    uvm_page_lookup_freelist(m)].pgfl_queues[PGFL_UNKNOWN],
 		    m, pageq);
+#endif
 		uvmexp.free++;
 		if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
 			uvm.page_idle_zero = vm_page_zero_enable;
