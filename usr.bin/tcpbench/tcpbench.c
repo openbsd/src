@@ -506,7 +506,8 @@ serverloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop,
 			if (setsockopt(sock, IPPROTO_IP, SO_RDOMAIN,
 			    &rdomain, sizeof(rdomain)) == -1)
 				err(1, "setsockopt SO_RDOMAIN");
-		}
+		} else if (rdomain)
+			warnx("rdomain only supported on AF_INET");
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 		    &on, sizeof(on)) == -1)
 			warn("reuse port");
@@ -657,7 +658,8 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port,
 				if (setsockopt(sock, IPPROTO_IP, SO_RDOMAIN,
 				    &rdomain, sizeof(rdomain)) == -1)
 					err(1, "setsockopt SO_RDOMAIN");
-			}
+			} else if (rdomain)
+				warnx("rdomain only supported on AF_INET");
 			if (Sflag) {
 				if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
 				    &Sflag, sizeof(Sflag)) == -1)
