@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.29 2009/06/03 14:45:40 jj Exp 
-#	OpenBSD: MAKEDEV.common,v 1.43 2009/06/03 14:45:39 jj Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.30 2009/08/13 15:12:36 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.45 2009/08/13 15:12:36 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -64,6 +64,7 @@
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
 #	nnpfs*	NNPFS filesystem node
+#	vscsi*	Virtual SCSI controller
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -229,6 +230,10 @@ asc*)
 	M asc$U c 36 $U
 	;;
 
+vscsi*)
+	M vscsi$U c 53 $U 600
+	;;
+
 nnpfs*)
 	M nnpfs$U c 51 $U 600
 	;;
@@ -390,10 +395,10 @@ ramdisk)
 
 all)
 	R ccd0 ccd1 ccd2 ccd3 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 nnpfs0 ss0
-	R ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 bio ptm
-	R local wscons asc0 uk0 random lkm tty00 tty01 pf systrace std
-	R st0 st1 fd
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 vscsi0
+	R nnpfs0 ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
+	R bio ptm local wscons asc0 uk0 random lkm tty00 tty01 pf
+	R systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

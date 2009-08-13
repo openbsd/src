@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.24 2009/06/03 14:45:40 jj Exp 
-#	OpenBSD: MAKEDEV.common,v 1.43 2009/06/03 14:45:39 jj Exp 
+#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.25 2009/08/13 15:12:36 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.45 2009/08/13 15:12:36 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -67,6 +67,7 @@
 #	vmel0	VMEbus D32 space
 #	vmes0	VMEbus D16 space
 #	nnpfs*	NNPFS filesystem node
+#	vscsi*	Virtual SCSI controller
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -206,6 +207,10 @@ std)
 	M klog		c 6 0 600
 	;;
 
+
+vscsi*)
+	M vscsi$U c 53 $U 600
+	;;
 
 nnpfs*)
 	M nnpfs$U c 51 $U 600
@@ -422,8 +427,9 @@ all)
 	R cuaa cuab cuac cuad ttya ttyb ttyc ttyd ccd0 ccd1 ccd2 ccd3
 	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0
 	R tun1 tun2 tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	R bpf8 bpf9 pty0 nnpfs0 ss0 ss1 ch0 vmel0 vmes0 flash0 nvram0
-	R sram0 ptm local uk0 random lkm pf systrace std st0 st1 fd
+	R bpf8 bpf9 pty0 vscsi0 nnpfs0 ss0 ss1 ch0 vmel0 vmes0 flash0
+	R nvram0 sram0 ptm local uk0 random lkm pf systrace std st0
+	R st1 fd
 	;;
 
 sd*|ccd*)

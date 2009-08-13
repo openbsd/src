@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.socppc/MAKEDEV.md,v 1.7 2009/06/03 14:45:40 jj Exp 
-#	OpenBSD: MAKEDEV.common,v 1.43 2009/06/03 14:45:39 jj Exp 
+#	OpenBSD: etc.socppc/MAKEDEV.md,v 1.8 2009/08/13 15:12:36 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.45 2009/08/13 15:12:36 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -84,6 +84,7 @@
 #	uk*	Unknown SCSI devices
 #	video*	Video V4L2 devices
 #	nnpfs*	NNPFS filesystem node
+#	vscsi*	Virtual SCSI controller
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -223,6 +224,10 @@ std)
 	M klog		c 6 0 600
 	;;
 
+
+vscsi*)
+	M vscsi$U c 78 $U 600
+	;;
 
 nnpfs*)
 	M nnpfs$U c 51 $U 600
@@ -482,11 +487,11 @@ all)
 	R bthub0 bthub1 bthub2 bio gpio0 gpio1 gpio2 ccd0 ccd1 ccd2
 	R ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8
 	R sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
-	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 nnpfs0 ss0 ss1 ch0 hotplug ptm
-	R local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall radio0
-	R video0 audio0 audio1 audio2 uk0 random lkm tty00 tty01 tty02
-	R tty03 apm crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1
-	R raid2 raid3 std st0 st1 fd
+	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 vscsi0 nnpfs0 ss0 ss1 ch0
+	R hotplug ptm local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall
+	R radio0 video0 audio0 audio1 audio2 uk0 random lkm tty00
+	R tty01 tty02 tty03 apm crypto pf systrace wd0 wd1 wd2 wd3
+	R raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)
