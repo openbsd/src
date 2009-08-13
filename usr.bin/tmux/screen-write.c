@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.20 2009/08/08 15:57:49 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.21 2009/08/13 16:24:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -184,24 +184,24 @@ screen_write_copy(struct screen_write_ctx *ctx,
 {
 	struct screen		*s = ctx->s;
 	struct grid		*gd = src->grid;
+	struct grid_line	*gl;
 	const struct grid_cell	*gc;
-	struct grid_utf8	*gu;
 	u_char			*udata;
 	u_int		 	 xx, yy, cx, cy;
 
 	cx = s->cx;
 	cy = s->cy;
 	for (yy = py; yy < py + ny; yy++) {
+		gl = &gd->linedata[yy];
 		for (xx = px; xx < px + nx; xx++) {
-			if (xx >= gd->sx || yy >= gd->hsize + gd->sy)
-				gc = &grid_default_cell;
-			else
-				gc = grid_peek_cell(gd, xx, yy);
+ 			udata = NULL;
 
-			udata = NULL;
-			if (gc->flags & GRID_FLAG_UTF8) {
-				gu = grid_get_utf8(gd, xx, yy);
-				udata = gu->data;
+			if (xx >= gl->cellsize || yy >= gd->hsize + gd->sy)
+				gc = &grid_default_cell;
+			else {
+				gc = &gl->celldata[xx];
+				if (gc->flags & GRID_FLAG_UTF8)
+					udata = gl->utf8data[xx].data;
 			}
 
 			screen_write_cell(ctx, gc, udata);
