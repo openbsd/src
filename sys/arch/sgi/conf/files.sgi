@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.30 2009/07/21 21:25:17 miod Exp $
+#	$OpenBSD: files.sgi,v 1.31 2009/08/13 15:13:11 jasper Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -121,11 +121,6 @@ file	arch/sgi/dev/gbe.c			gbe	needs-flag
 # 16[45]50-based "com" ports on localbus
 attach	com at macebus with com_macebus
 file	arch/sgi/localbus/com_lbus.c		com_macebus
-
-# IOC Ethernet
-device	ef: ether, ifnet, ifmedia, mii
-attach	ef at ioc
-file	arch/sgi/dev/if_ef.c			ef
 
 # MACE MAC-110 ethernet
 device	mec: ether, ifnet, ifmedia, mii
