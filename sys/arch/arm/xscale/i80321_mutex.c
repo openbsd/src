@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321_mutex.c,v 1.2 2009/08/13 13:24:55 weingart Exp $	*/
+/*	$OpenBSD: i80321_mutex.c,v 1.3 2009/08/13 19:39:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -57,7 +57,7 @@ mtx_enter(struct mutex *mtx)
 	mtx->mtx_lock = 1;
 }
 
-void
+int
 mtx_enter_try(struct mutex *mtx)
 {
 	if (mtx->mtx_wantipl != IPL_NONE)
