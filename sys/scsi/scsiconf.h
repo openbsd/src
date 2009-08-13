@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.99 2009/08/09 12:47:23 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.100 2009/08/13 19:49:31 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -553,6 +553,9 @@ int	scsi_probe_lun(struct scsibus_softc *, int, int);
 int	scsi_detach_bus(struct scsibus_softc *, int);
 int	scsi_detach_target(struct scsibus_softc *, int, int);
 int	scsi_detach_lun(struct scsibus_softc *, int, int, int);
+
+int	scsi_req_probe(struct scsibus_softc *, int, int);
+int	scsi_req_detach(struct scsibus_softc *, int, int, int);
 
 extern const u_int8_t version_to_spc[];
 #define SCSISPC(x)(version_to_spc[(x) & SID_ANSII])

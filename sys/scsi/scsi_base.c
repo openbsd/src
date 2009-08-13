@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.132 2009/06/02 06:33:04 yuo Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.133 2009/08/13 19:49:31 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -66,6 +66,16 @@ char   *scsi_decode_sense(struct scsi_sense_data *, int);
 
 int			scsi_running = 0;
 struct pool		scsi_xfer_pool;
+struct pool		scsi_plug_pool;
+
+struct scsi_plug {
+	int		target;
+	int		lun;
+	int		how;
+};
+
+void	scsi_plug_probe(void *, void *);
+void	scsi_plug_detach(void *, void *);
 
 /*
  * Called when a scsibus is attached to initialize global data.
@@ -84,6 +94,79 @@ scsi_init()
 	/* Initialize the scsi_xfer pool. */
 	pool_init(&scsi_xfer_pool, sizeof(struct scsi_xfer), 0,
 	    0, 0, "scxspl", NULL);
+	/* Initialize the scsi_plug pool */
+	pool_init(&scsi_plug_pool, sizeof(struct scsi_plug), 0,
+	    0, 0, "scsiplug", NULL);
+	pool_setipl(&scsi_plug_pool, IPL_BIO);
+}
+
+int
+scsi_req_probe(struct scsibus_softc *sc, int target, int lun)
+{
+	struct scsi_plug *p;
+	int rv;
+
+	p = pool_get(&scsi_plug_pool, PR_NOWAIT);
+	if (p == NULL)
+		return (ENOMEM);
+
+	p->target = target;
+	p->lun = lun;
+
+	rv = workq_add_task(NULL, 0, scsi_plug_probe, sc, p);
+	if (rv != 0)
+		pool_put(&scsi_plug_pool, p);
+
+	return (rv);
+}
+
+int
+scsi_req_detach(struct scsibus_softc *sc, int target, int lun, int how)
+{
+	struct scsi_plug *p;
+	int rv;
+
+	p = pool_get(&scsi_plug_pool, PR_NOWAIT);
+	if (p == NULL)
+		return (ENOMEM);
+
+	p->target = target;
+	p->lun = lun;
+	p->how = how;
+
+	rv = workq_add_task(NULL, 0, scsi_plug_detach, sc, p);
+	if (rv != 0)
+		pool_put(&scsi_plug_pool, p);
+
+	return (rv);
+}
+
+void
+scsi_plug_probe(void *xsc, void *xp)
+{
+	struct scsibus_softc *sc = xsc;
+	struct scsi_plug *p = xp;
+
+	if (p->lun == -1)
+		scsi_probe_target(sc, p->target);
+	else
+		scsi_probe_lun(sc, p->target, p->lun);
+
+	pool_put(&scsi_plug_pool, p);
+}
+
+void
+scsi_plug_detach(void *xsc, void *xp)
+{
+	struct scsibus_softc *sc = xsc;
+	struct scsi_plug *p = xp;
+
+	if (p->lun == -1)
+		scsi_detach_target(sc, p->target, p->how);
+	else
+		scsi_detach_lun(sc, p->target, p->lun, p->how);
+
+	pool_put(&scsi_plug_pool, p);
 }
 
 void
