@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.13 2004/05/14 04:05:05 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.14 2009/08/13 22:34:29 jasper Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
@@ -94,11 +94,7 @@ u_short lastdtime;
  * file timestamps. The passed in unix time is assumed to be in GMT.
  */
 void
-unix2dostime(tsp, ddp, dtp, dhp)
-	struct timespec *tsp;
-	u_int16_t *ddp;
-	u_int16_t *dtp;
-	u_int8_t *dhp;
+unix2dostime(struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp)
 {
 	uint32_t t;
 	uint32_t days;
@@ -176,11 +172,7 @@ uint32_t lastseconds;
  * not be too efficient.
  */
 void
-dos2unixtime(dd, dt, dh, tsp)
-	u_int dd;
-	u_int dt;
-	u_int dh;
-	struct timespec *tsp;
+dos2unixtime(u_int dd, u_int dt, u_int dh, struct timespec *tsp)
 {
 	uint32_t seconds;
 	uint32_t m, month;
@@ -352,10 +344,7 @@ u2l[256] = {
  * null.
  */
 int
-dos2unixfn(dn, un, lower)
-	u_char dn[11];
-	u_char *un;
-	int lower;
+dos2unixfn(u_char dn[11], u_char *un, int lower)
 {
 	int i;
 	int thislong = 1;
@@ -414,11 +403,7 @@ dos2unixfn(dn, un, lower)
  *	3 if conversion was successful and generation number was inserted
  */
 int
-unix2dosfn(un, dn, unlen, gen)
-	u_char *un;
-	u_char dn[12];
-	int unlen;
-	u_int gen;
+unix2dosfn(u_char *un, u_char dn[12], int unlen, u_int gen)
 {
 	int i, j, l;
 	int conv = 1;
@@ -563,12 +548,7 @@ unix2dosfn(un, dn, unlen, gen)
  *	 i.e. doesn't consist solely of blanks and dots
  */
 int
-unix2winfn(un, unlen, wep, cnt, chksum)
-	u_char *un;
-	int unlen;
-	struct winentry *wep;
-	int cnt;
-	int chksum;
+unix2winfn(u_char *un, int unlen, struct winentry *wep, int cnt, int chksum)
 {
 	u_int8_t *cp;
 	int i;
@@ -628,11 +608,7 @@ done:
  * Returns the checksum or -1 if no match
  */
 int
-winChkName(un, unlen, wep, chksum)
-	u_char *un;
-	int unlen;
-	struct winentry *wep;
-	int chksum;
+winChkName(u_char *un, int unlen, struct winentry *wep, int chksum)
 {
 	u_int8_t *cp;
 	int i;
@@ -696,10 +672,7 @@ winChkName(un, unlen, wep, chksum)
  * Returns the checksum or -1 if impossible
  */
 int
-win2unixfn(wep, dp, chksum)
-	struct winentry *wep;
-	struct dirent *dp;
-	int chksum;
+win2unixfn(struct winentry *wep, struct dirent *dp, int chksum)
 {
 	u_int8_t *cp;
 	u_int8_t *np, *ep = dp->d_name + WIN_MAXLEN;
@@ -802,8 +775,7 @@ win2unixfn(wep, dp, chksum)
  * Compute the checksum of a DOS filename for Win95 use
  */
 u_int8_t
-winChksum(name)
-	u_int8_t *name;
+winChksum(u_int8_t *name)
 {
 	int i;
 	u_int8_t s;
@@ -817,9 +789,7 @@ winChksum(name)
  * Determine the number of slots necessary for Win95 names
  */
 int
-winSlotCnt(un, unlen)
-	u_char *un;
-	int unlen;
+winSlotCnt(u_char *un, int unlen)
 {
 	for (un += unlen; unlen > 0; unlen--)
 		if (*--un != ' ' && *un != '.')

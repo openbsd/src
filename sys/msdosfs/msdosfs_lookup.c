@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.21 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.22 2009/08/13 22:34:29 jasper Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -78,8 +78,7 @@
  * memory denode's will be in synch.
  */
 int
-msdosfs_lookup(v)
-	void *v;
+msdosfs_lookup(void *v)
 {
 	struct vop_lookup_args *ap = v;
 	struct vnode *vdp = ap->a_dvp;
@@ -593,11 +592,8 @@ foundroot:;
  * cnp  - componentname needed for Win95 long filenames
  */
 int
-createde(dep, ddep, depp, cnp)
-	struct denode *dep;
-	struct denode *ddep;
-	struct denode **depp;
-	struct componentname *cnp;
+createde(struct denode *dep, struct denode *ddep, struct denode **depp,
+    struct componentname *cnp)
 {
 	int error;
 	uint32_t dirclust, diroffset;
@@ -720,8 +716,7 @@ createde(dep, ddep, depp, cnp)
  * return 0 if not empty or error.
  */
 int
-dosdirempty(dep)
-	struct denode *dep;
+dosdirempty(struct denode *dep)
 {
 	int blsize;
 	int error;
@@ -797,9 +792,7 @@ dosdirempty(dep)
  * The target inode is always unlocked on return.
  */
 int
-doscheckpath(source, target)
-	struct denode *source;
-	struct denode *target;
+doscheckpath(struct denode *source, struct denode *target)
 {
 	uint32_t scn;
 	struct msdosfsmount *pmp;
@@ -886,11 +879,8 @@ out:;
  * directory entry within the block.
  */
 int
-readep(pmp, dirclust, diroffset, bpp, epp)
-	struct msdosfsmount *pmp;
-	uint32_t dirclust, diroffset;
-	struct buf **bpp;
-	struct direntry **epp;
+readep(struct msdosfsmount *pmp, uint32_t dirclust, uint32_t diroffset,
+    struct buf **bpp, struct direntry **epp)
 {
 	int error;
 	daddr64_t bn;
@@ -919,10 +909,7 @@ readep(pmp, dirclust, diroffset, bpp, epp)
  * entry within the block.
  */
 int
-readde(dep, bpp, epp)
-	struct denode *dep;
-	struct buf **bpp;
-	struct direntry **epp;
+readde(struct denode *dep, struct buf **bpp, struct direntry **epp)
 {
 
 	return (readep(dep->de_pmp, dep->de_dirclust, dep->de_diroffset,
@@ -936,11 +923,12 @@ readde(dep, bpp, epp)
  * and will truncate the file to 0 length.  When the vnode containing the
  * denode is needed for some other purpose by VFS it will call
  * msdosfs_reclaim() which will remove the denode from the denode cache.
+ *
+ * pdep - directory where the entry is removed
+ * dep - file to be removed
  */
 int
-removede(pdep, dep)
-	struct denode *pdep;	/* directory where the entry is removed */
-	struct denode *dep;	/* file to be removed */
+removede(struct denode *pdep, struct denode *dep)
 {
 	int error;
 	struct direntry *ep;
@@ -1005,10 +993,7 @@ removede(pdep, dep)
  * Create a unique DOS name in dvp
  */
 int
-uniqdosname(dep, cnp, cp)
-	struct denode *dep;
-	struct componentname *cnp;
-	u_char *cp;
+uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;
@@ -1071,8 +1056,7 @@ uniqdosname(dep, cnp, cp)
  * Find any Win'95 long filename entry in directory dep
  */
 int
-findwin95(dep)
-	struct denode *dep;
+findwin95(struct denode *dep)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct direntry *dentp;

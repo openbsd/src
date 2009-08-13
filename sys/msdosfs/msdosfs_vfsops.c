@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.51 2009/01/05 01:14:40 krw Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.52 2009/08/13 22:34:29 jasper Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -93,12 +93,8 @@ int msdosfs_sync_vnode(struct vnode *, void *);
  * special file to treat as a filesystem. 
  */
 int
-msdosfs_mount(mp, path, data, ndp, p)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct proc *p;
+msdosfs_mount(struct mount *mp, const char *path, void *data,
+    struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;	  /* vnode for blk device to mount */
 	struct msdosfs_args args; /* will hold data from mount request */
@@ -248,11 +244,8 @@ msdosfs_mount(mp, path, data, ndp, p)
 }
 
 int
-msdosfs_mountfs(devvp, mp, p, argp)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct proc *p;
-	struct msdosfs_args *argp;
+msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
+    struct msdosfs_args *argp)
 {
 	struct msdosfsmount *pmp;
 	struct buf *bp;
@@ -566,10 +559,7 @@ error_exit:
 }
 
 int
-msdosfs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+msdosfs_start(struct mount *mp, int flags, struct proc *p)
 {
 
 	return (0);
@@ -579,10 +569,7 @@ msdosfs_start(mp, flags, p)
  * Unmount the filesystem described by mp.
  */
 int
-msdosfs_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+msdosfs_unmount(struct mount *mp, int mntflags,struct proc *p)
 {
 	struct msdosfsmount *pmp;
 	int error, flags;
@@ -612,9 +599,7 @@ msdosfs_unmount(mp, mntflags, p)
 }
 
 int
-msdosfs_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+msdosfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct denode *ndep;
@@ -633,10 +618,7 @@ msdosfs_root(mp, vpp)
 }
 
 int
-msdosfs_statfs(mp, sbp, p)
-	struct mount *mp;
-	struct statfs *sbp;
-	struct proc *p;
+msdosfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
 	struct msdosfsmount *pmp;
 
@@ -694,11 +676,7 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 
 
 int
-msdosfs_sync(mp, waitfor, cred, p)
-	struct mount *mp;
-	int waitfor;
-	struct ucred *cred;
-	struct proc *p;
+msdosfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct msdosfs_sync_arg msa;
@@ -739,10 +717,7 @@ msdosfs_sync(mp, waitfor, cred, p)
 }
 
 int
-msdosfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct defid *defhp = (struct defid *) fhp;
@@ -759,9 +734,7 @@ msdosfs_fhtovp(mp, fhp, vpp)
 }
 
 int
-msdosfs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
+msdosfs_vptofh(struct vnode *vp, struct fid *fhp)
 {
 	struct denode *dep;
 	struct defid *defhp;
@@ -776,11 +749,8 @@ msdosfs_vptofh(vp, fhp)
 }
 
 int
-msdosfs_check_export(mp, nam, exflagsp, credanonp)
-	register struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
+msdosfs_check_export(struct mount *mp, struct mbuf *nam, int *exflagsp,
+    struct ucred **credanonp)
 {
 	register struct netcred *np;
 	register struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
