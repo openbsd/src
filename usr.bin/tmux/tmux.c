@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.33 2009/08/13 20:11:58 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.34 2009/08/13 21:56:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -399,7 +399,7 @@ main(int argc, char **argv)
 	options_set_number(&global_w_options, "mode-bg", 3);
 	options_set_number(&global_w_options, "mode-fg", 0);
 	options_set_number(&global_w_options, "mode-keys", MODEKEY_EMACS);
-	options_set_number(&global_w_options, "mode-mouse", 1);
+	options_set_number(&global_w_options, "mode-mouse", 0);
 	options_set_number(&global_w_options, "monitor-activity", 0);
 	options_set_string(&global_w_options, "monitor-content", "%s", "");
 	if (flags & IDENTIFY_UTF8)
