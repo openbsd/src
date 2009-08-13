@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.32 2009/08/09 13:41:03 thib Exp $	*/
+/*	$OpenBSD: pool.h,v 1.33 2009/08/13 13:49:20 thib Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -160,7 +160,8 @@ int		pool_prime(struct pool *, int);
 void		pool_printit(struct pool *, const char *,
 		    int (*)(const char *, ...));
 int		pool_chk(struct pool *, const char *);
-void		pool_walk(struct pool *, void (*)(void *));
+void		pool_walk(struct pool *, int, int (*)(const char *, ...),
+		    void (*)(void *, int, int (*)(const char *, ...)));
 #endif
 #endif /* _KERNEL */
 

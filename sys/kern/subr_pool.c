@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.87 2009/08/09 13:41:03 thib Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.88 2009/08/13 13:49:20 thib Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1293,7 +1293,8 @@ pool_chk(struct pool *pp, const char *label)
 }
 
 void
-pool_walk(struct pool *pp, void (*func)(void *))
+pool_walk(struct pool *pp, int full, int (*pr)(const char *, ...),
+    void (*func)(void *, int, int (*)(const char *, ...)))
 {
 	struct pool_item_header *ph;
 	struct pool_item *pi;
@@ -1305,7 +1306,7 @@ pool_walk(struct pool *pp, void (*func)(void *))
 		n = ph->ph_nmissing;
 
 		while (n--) {
-			func(cp);
+			func(cp, full, pr);
 			cp += pp->pr_size;
 		}
 	}
@@ -1320,7 +1321,7 @@ pool_walk(struct pool *pp, void (*func)(void *))
 					break;
 			}
 			if (cp != (caddr_t)pi) {
-				func(cp);
+				func(cp, full, pr);
 				n--;
 			}
 

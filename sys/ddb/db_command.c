@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.56 2009/08/09 23:04:49 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.57 2009/08/13 13:49:20 thib Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -347,6 +347,18 @@ db_show_all_mounts(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		vfs_mount_print(mp, full, db_printf);
 }
 
+extern struct pool vnode_pool;
+void
+db_show_all_vnodes(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	pool_walk(&vnode_pool, full, db_printf, vfs_vnode_print);
+}
+
 /*ARGSUSED*/
 void
 db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
@@ -380,7 +392,7 @@ db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (modif[0] == 'f')
 		full = TRUE;
 
-	vfs_vnode_print((struct vnode *) addr, full, db_printf);
+	vfs_vnode_print((void *)addr, full, db_printf);
 }
 
 #ifdef NFSCLIENT
@@ -457,6 +469,7 @@ struct db_command db_show_all_cmds[] = {
 	{ "callout",	db_show_callout,	0, NULL },
 	{ "pools",	db_show_all_pools,	0, NULL },
 	{ "mounts",	db_show_all_mounts,	0, NULL },
+	{ "vnodes,",	db_show_all_vnodes,	0, NULL },
 #ifdef NFSCLIENT
 	{ "nfsreq",	db_show_all_nfsreqs,	0, NULL },
 #endif
