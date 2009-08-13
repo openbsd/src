@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.5 2009/04/27 21:48:56 kettenis Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.6 2009/08/13 13:24:55 weingart Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -74,6 +74,33 @@ ENTRY(mtx_enter)
 	stw	%g4, [%o0 + MTX_OLDIPL]
 	retl
 	 membar	#LoadLoad | #LoadStore
+
+ENTRY(mtx_enter_try)
+	rdpr	%pil, %g4
+	GET_CURCPU(%g1)
+1:
+	ld	[%o0 + MTX_WANTIPL], %g5
+	bge	2f
+	 nop
+	wrpr	%g5, %pil
+2:
+	mov	%g1, %g5
+/*
+ * The assembler doesn't like the next line, even if MTX_OWNER is 0.
+ */
+!	casx	[%o0 + MTX_OWNER], %g0, %g5
+	casx	[%o0], %g0, %g5
+	tst	%g5
+	be	3f
+	 nop
+	wrpr	%g4, %pil
+	retl
+	 mov	0, %o0
+3:
+	stw	%g4, [%o0 + MTX_OLDIPL]
+	membar	#LoadLoad | #LoadStore
+	retl
+	 mov	1, %o0
 
 ENTRY(mtx_leave)
 	ld	[%o0 + MTX_OLDIPL], %g1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2xx0_mutex.c,v 1.1 2008/11/26 14:39:14 drahn Exp $	*/
+/*	$OpenBSD: s3c2xx0_mutex.c,v 1.2 2009/08/13 13:24:55 weingart Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -55,6 +55,18 @@ mtx_enter(struct mutex *mtx)
 
 	MUTEX_ASSERT_UNLOCKED(mtx);
 	mtx->mtx_lock = 1;
+}
+
+void
+mtx_enter_try(struct mutex *mtx)
+{
+	if (mtx->mtx_wantipl != IPL_NONE)
+		mtx->mtx_oldipl = _splraise(mtx->mtx_wantipl);
+
+	MUTEX_ASSERT_UNLOCKED(mtx);
+	mtx->mtx_lock = 1;
+
+	return 1;
 }
 
 void
