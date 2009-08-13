@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.97 2009/08/10 20:29:54 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.98 2009/08/13 21:14:40 sthen Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1699,11 +1699,12 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 fxp_mc_setup(struct fxp_softc *sc, int doit)
 {
-	struct fxp_cb_mcs *mcsp = &sc->sc_ctrl->u.mcs;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct arpcom *ac = &sc->sc_arpcom;
+	struct fxp_cb_mcs *mcsp = &sc->sc_ctrl->u.mcs;
 	struct ether_multistep step;
 	struct ether_multi *enm;
-	int i, nmcasts;
+	int i, nmcasts = 0;
 
 	/*
 	 * Initialize multicast setup descriptor.
@@ -1712,31 +1713,22 @@ fxp_mc_setup(struct fxp_softc *sc, int doit)
 	mcsp->cb_command = htole16(FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL);
 	mcsp->link_addr = htole32(-1);
 
-	nmcasts = 0;
-	if (!(ifp->if_flags & IFF_ALLMULTI)) {
+	if (ac->ac_multirangecnt > 0 || ac->ac_multicnt >= MAXMCADDR)
+		ifp->if_flags |= IFF_ALLMULTI;
+	else {
 		ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
 		while (enm != NULL) {
-			if (nmcasts >= MAXMCADDR) {
-				ifp->if_flags |= IFF_ALLMULTI;
-				nmcasts = 0;
-				break;
-			}
-
-			/* Punt on ranges. */
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    sizeof(enm->enm_addrlo)) != 0) {
-				ifp->if_flags |= IFF_ALLMULTI;
-				nmcasts = 0;
-				break;
-			}
 			bcopy(enm->enm_addrlo,
 			    (void *)&mcsp->mc_addr[nmcasts][0], ETHER_ADDR_LEN);
 			nmcasts++;
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
+
 	if (doit == 0)
 		return;
+
 	mcsp->mc_cnt = htole16(nmcasts * ETHER_ADDR_LEN);
 
 	/*
