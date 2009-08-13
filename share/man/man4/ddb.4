@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.60 2009/08/10 04:53:58 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.61 2009/08/13 17:50:02 thib Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: August 10 2009 $
+.Dd $Mdocdate: August 13 2009 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -848,6 +848,17 @@ For each filesystem, list all its struct vnode addresses.
 These addresses can be used in the
 .Ic show vnode
 command.
+.El
+.\" --------------------
+.It Ic show all vnodes Op Cm /f
+Display information about all vnodes in the system. 
+.Pp
+.Bl -tag -width foo -compact
+.It Cm /f
+For each vnode, print a more detailed output.
+See the
+.Ic show vnode
+command for more information.
 .El
 .\" --------------------
 .It Ic show all nfsreq
