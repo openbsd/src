@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.47 2009/08/13 15:04:20 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.48 2009/08/13 15:10:26 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -189,7 +189,7 @@ struct cdevsw   cdevsw[] =
 	cdev_lkm_dummy(),		/* 51: */
 	cdev_lkm_dummy(),		/* 52: */
 	cdev_lkm_dummy(),		/* 53: */
-	cdev_vscsi_init(NVSCSI,vscsi),	/* 54: */
+	cdev_vscsi_init(NVSCSI,vscsi),	/* 54: vscsi */
 };
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
