@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2007/11/24 15:43:08 espie Exp $
+#	$OpenBSD: Makefile,v 1.58 2009/08/13 19:54:58 jmc Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -174,11 +174,11 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	flushinp.3 curs_window.3 newwin.3 curs_window.3 delwin.3 curs_window.3 \
 	mvwin.3 curs_window.3 subwin.3 curs_window.3 derwin.3 curs_window.3 \
 	mvderwin.3 curs_window.3 dupwin.3 curs_window.3 wsyncup.3 \
-	curs_window.3 syncok.3 curs_window.3 wcursyncup.3 curs_window.3 \
-	wsyncdown.3 default_colors.3 use_default_colors.3
+	curs_window.3 syncok.3 curs_window.3 wcursyncup.3 \
+	curs_window.3 wsyncdown.3
 MLINKS+=curs_extend.3 curses_version.3 curs_extend.3 use_extended_names.3 \
-	default_colors.3 assume_default_colors.3 default_colors.3 \
-	use_default_colors.3
+	default_colors.3 assume_default_colors.3 \
+	default_colors.3 use_default_colors.3
 MLINKS+= terminfo.3 setupterm.3 terminfo.3 setterm.3 terminfo.3 set_curterm.3 \
 	terminfo.3 del_curterm.3 terminfo.3 restartterm.3 terminfo.3 tparm.3 \
 	terminfo.3 tparam.3 terminfo.3 tputs.3 terminfo.3 putp.3 \

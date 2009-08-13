@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.15 2006/04/29 12:35:56 biorn Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.16 2009/08/13 19:54:58 jmc Exp $
 
 DIR_KRB5INC=	${.CURDIR}/../../kerberosV/include
 DIR_KRB5LIB=	${KRB5SRC}/lib/krb5
@@ -94,7 +94,7 @@ MLINKS+=krb5_config.3 krb5_config_vget_list.3
 MLINKS+=krb5_config.3 krb5_config_vget_next.3
 MLINKS+=krb5_config.3 krb5_config_vget_string.3
 MLINKS+=krb5_config.3 krb5_config_vget_string_default.3
-MLINKS+=krb5_config.3 krb5_config_vget_stringsq.3
+MLINKS+=krb5_config.3 krb5_config_vget_strings.3
 MLINKS+=krb5_config.3 krb5_config_vget_time.3
 MLINKS+=krb5_config.3 krb5_config_vget_time_default.3
 
@@ -151,6 +151,8 @@ MLINKS+=krb5_create_checksum.3 krb5_checksum_disable.3
 MLINKS+=krb5_create_checksum.3 krb5_checksum_is_collision_proof.3
 MLINKS+=krb5_create_checksum.3 krb5_checksum_is_keyed.3
 MLINKS+=krb5_create_checksum.3 krb5_checksumsize.3
+MLINKS+=krb5_create_checksum.3 krb5_cksumtype_valid.3
+MLINKS+=krb5_create_checksum.3 krb5_copy_checksum.3
 MLINKS+=krb5_create_checksum.3 krb5_crypto_get_checksum_type.3
 MLINKS+=krb5_create_checksum.3 krb5_free_checksum.3
 MLINKS+=krb5_create_checksum.3 krb5_free_checksum_contents.3
@@ -329,7 +331,7 @@ MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_pa_password.3
 MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_paq_request.3
 MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_preauth_list.3
 MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_proxiable.3
-MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_rewew_life.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_renew_life.3
 MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_salt.3
 MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_tkt_life.3
 MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_password.3

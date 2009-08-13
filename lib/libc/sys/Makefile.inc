@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.86 2009/06/03 14:45:47 jj Exp $
+#	$OpenBSD: Makefile.inc,v 1.87 2009/08/13 19:54:58 jmc Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -260,7 +260,7 @@ MLINKS+=getrlimit.2 setrlimit.2
 MLINKS+=getsockopt.2 setsockopt.2
 MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
-MLINKS+=kqueue.2 kevent.2
+MLINKS+=kqueue.2 kevent.2 kqueue.2 EV_SET.2
 MLINKS+=intro.2 errno.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mlockall.2 munlockall.2

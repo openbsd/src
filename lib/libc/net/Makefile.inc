@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.44 2007/06/05 18:04:46 henning Exp $
+#	$OpenBSD: Makefile.inc,v 1.45 2009/08/13 19:54:58 jmc Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -60,8 +60,8 @@ MLINKS+=getprotoent.3 endprotoent.3 getprotoent.3 getprotobyname.3 \
 MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 	getservent.3 getservbyport.3 getservent.3 setservent.3 \
 	getservent.3 getservent_r.3 getservent.3 getservbyname_r.3 \
-	getservent.3 getservbyport_r.3 setservent.3 setservent_r.3 \
-	setservent.3 endservent_r.3
+	getservent.3 getservbyport_r.3 getservent.3 setservent_r.3 \
+	getservent.3 endservent_r.3
 MLINKS+= if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
 	if_indextoname.3 if_freenameindex.3
 MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
