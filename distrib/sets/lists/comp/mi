@@ -1885,6 +1885,7 @@
 ./usr/share/man/cat1/unprotoize.0
 ./usr/share/man/cat1/xstr.0
 ./usr/share/man/cat1/yacc.0
+./usr/share/man/cat2/EV_SET.0
 ./usr/share/man/cat2/S_ISBLK.0
 ./usr/share/man/cat2/S_ISCHR.0
 ./usr/share/man/cat2/S_ISDIR.0
@@ -4430,6 +4431,7 @@
 ./usr/share/man/cat3/krb5_checksum_is_collision_proof.0
 ./usr/share/man/cat3/krb5_checksum_is_keyed.0
 ./usr/share/man/cat3/krb5_checksumsize.0
+./usr/share/man/cat3/krb5_cksumtype_valid.0
 ./usr/share/man/cat3/krb5_clear_error_string.0
 ./usr/share/man/cat3/krb5_closelog.0
 ./usr/share/man/cat3/krb5_compare_creds.0
@@ -4459,12 +4461,13 @@
 ./usr/share/man/cat3/krb5_config_vget_next.0
 ./usr/share/man/cat3/krb5_config_vget_string.0
 ./usr/share/man/cat3/krb5_config_vget_string_default.0
-./usr/share/man/cat3/krb5_config_vget_stringsq.0
+./usr/share/man/cat3/krb5_config_vget_strings.0
 ./usr/share/man/cat3/krb5_config_vget_time.0
 ./usr/share/man/cat3/krb5_config_vget_time_default.0
 ./usr/share/man/cat3/krb5_context.0
 ./usr/share/man/cat3/krb5_copy_address.0
 ./usr/share/man/cat3/krb5_copy_addresses.0
+./usr/share/man/cat3/krb5_copy_checksum.0
 ./usr/share/man/cat3/krb5_copy_creds.0
 ./usr/share/man/cat3/krb5_copy_creds_contents.0
 ./usr/share/man/cat3/krb5_copy_data.0
@@ -4574,7 +4577,7 @@
 ./usr/share/man/cat3/krb5_get_init_creds_opt_set_paq_request.0
 ./usr/share/man/cat3/krb5_get_init_creds_opt_set_preauth_list.0
 ./usr/share/man/cat3/krb5_get_init_creds_opt_set_proxiable.0
-./usr/share/man/cat3/krb5_get_init_creds_opt_set_rewew_life.0
+./usr/share/man/cat3/krb5_get_init_creds_opt_set_renew_life.0
 ./usr/share/man/cat3/krb5_get_init_creds_opt_set_salt.0
 ./usr/share/man/cat3/krb5_get_init_creds_opt_set_tkt_life.0
 ./usr/share/man/cat3/krb5_get_init_creds_password.0
@@ -5104,6 +5107,7 @@
 ./usr/share/man/cat3/pcap_dump.0
 ./usr/share/man/cat3/pcap_dump_close.0
 ./usr/share/man/cat3/pcap_dump_file.0
+./usr/share/man/cat3/pcap_dump_flush.0
 ./usr/share/man/cat3/pcap_dump_fopen.0
 ./usr/share/man/cat3/pcap_dump_ftell.0
 ./usr/share/man/cat3/pcap_dump_open.0
