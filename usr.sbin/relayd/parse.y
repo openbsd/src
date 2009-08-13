@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.140 2009/08/07 11:10:23 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.141 2009/08/13 13:51:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -89,6 +89,8 @@ objid_t			 last_table_id = 0;
 objid_t			 last_host_id = 0;
 objid_t			 last_relay_id = 0;
 objid_t			 last_proto_id = 0;
+objid_t			 last_rt_id = 0;
+objid_t			 last_nr_id = 0;
 
 static struct rdr	*rdr = NULL;
 static struct table	*table = NULL;
@@ -97,6 +99,7 @@ static struct host	*hst = NULL;
 struct relaylist	 relays;
 static struct protocol	*proto = NULL;
 static struct protonode	 node;
+static struct router	*router = NULL;
 static u_int16_t	 label = 0;
 static in_port_t	 tableport = 0;
 static int		 nodedirection;
@@ -142,8 +145,8 @@ typedef struct {
 %token	NODELAY NOTHING ON PARENT PATH PORT PREFORK PROTO
 %token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY
 %token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET
-%token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO
-%token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL
+%token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO ROUTER RTLABEL
+%token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table
@@ -169,6 +172,7 @@ grammar		: /* empty */
 		| grammar tabledef '\n'
 		| grammar relay '\n'
 		| grammar proto '\n'
+		| grammar router '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -1374,6 +1378,135 @@ dstmode		: /* empty */		{ $$ = RELAY_DSTMODE_DEFAULT; }
 		| HASH			{ $$ = RELAY_DSTMODE_HASH; }
 		;
 
+router		: ROUTER STRING		{
+			struct router *rt = NULL;
+
+			conf->sc_flags |= F_NEEDRT;
+			TAILQ_FOREACH(rt, conf->sc_rts, rt_entry)
+				if (!strcmp(rt->rt_conf.name, $2))
+					break;
+			if (rt != NULL) {
+				yyerror("router %s defined twice", $2);
+				free($2);
+				YYERROR;
+			}
+
+			if ((rt = calloc(1, sizeof (*rt))) == NULL)
+				fatal("out of memory");
+
+			if (strlcpy(rt->rt_conf.name, $2,
+			    sizeof(rt->rt_conf.name)) >=
+			    sizeof(rt->rt_conf.name)) {
+				yyerror("router name truncated");
+				free(rt);
+				YYERROR;
+			}
+			free($2);
+			rt->rt_conf.id = ++last_rt_id;
+			if (last_rt_id == INT_MAX) {
+				yyerror("too many routers defined");
+				free(rt);
+				YYERROR;
+			}
+			TAILQ_INIT(&rt->rt_netroutes);
+			router = rt;
+
+			tableport = -1;
+		} '{' optnl routeopts_l '}'	{
+			if (!router->rt_conf.nroutes) {
+				yyerror("router %s without routes",
+				    router->rt_conf.name);
+				free(router);
+				router = NULL;
+				YYERROR;
+			}
+
+			conf->sc_routercount++;
+			TAILQ_INSERT_TAIL(conf->sc_rts, router, rt_entry);
+			router = NULL;
+
+			tableport = 0;
+		}
+		;
+
+routeopts_l	: routeopts_l routeoptsl nl
+		| routeoptsl optnl
+		;
+
+routeoptsl	: ROUTE address '/' NUMBER {
+			struct netroute	*nr;
+
+			if (router->rt_af == AF_UNSPEC)
+				router->rt_af = $2.ss.ss_family;
+			else if (router->rt_af != $2.ss.ss_family) {
+				yyerror("router %s address family mismatch",
+				    router->rt_conf.name);
+				YYERROR;
+			}
+
+			if ((router->rt_af == AF_INET && ($4 > 32 || $4 < 0)) ||
+			    (router->rt_af == AF_INET6 && ($4 > 128 || $4 < 0))) {
+				yyerror("invalid prefixlen %d", $4);
+				YYERROR;
+			}
+
+			if ((nr = calloc(1, sizeof(*nr))) == NULL)
+				fatal("out of memory");
+
+			nr->nr_conf.id = ++last_nr_id;
+			if (last_nr_id == INT_MAX) {
+				yyerror("too many routes defined");
+				free(nr);
+				YYERROR;
+			}
+			nr->nr_conf.prefixlen = $4;
+			nr->nr_conf.routerid = router->rt_conf.id;
+			nr->nr_router = router;
+			bcopy(&$2.ss, &nr->nr_conf.ss, sizeof($2.ss));
+
+			router->rt_conf.nroutes++;
+			conf->sc_routecount++;
+			TAILQ_INSERT_TAIL(&router->rt_netroutes, nr, nr_entry);
+			TAILQ_INSERT_TAIL(conf->sc_routes, nr, nr_route);
+		}
+		| FORWARD TO tablespec {
+			if (router->rt_gwtable) {
+				yyerror("router %s table already specified",
+				    router->rt_conf.name);
+				purge_table(conf->sc_tables, $3);
+				YYERROR;
+			}
+			router->rt_gwtable = $3;
+			router->rt_gwtable->conf.flags |= F_USED;
+			router->rt_conf.gwtable = $3->conf.id;
+			router->rt_conf.gwport = $3->conf.port;
+		}
+		| RTABLE NUMBER {
+			if (router->rt_conf.rtable) {
+				yyerror("router %s rtable already specified",
+				    router->rt_conf.name);
+				YYERROR;
+			}
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
+				yyerror("invalid rtable id %d", $2);
+				YYERROR;
+			}
+			router->rt_conf.rtable = $2;
+		}
+		| RTLABEL STRING {
+			if (strlcpy(router->rt_conf.label, $2,
+			    sizeof(router->rt_conf.label)) >=
+			    sizeof(router->rt_conf.label)) {
+				yyerror("route label truncated");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| DISABLE		{ rlay->rl_conf.flags |= F_DISABLE; }
+		| include
+		;
+
 dstaf		: /* empty */		{
 			rlay->rl_conf.dstaf.ss_family = AF_UNSPEC;
 		}
@@ -1611,6 +1744,9 @@ lookup(char *s)
 		{ "return",		RETURN },
 		{ "roundrobin",		ROUNDROBIN },
 		{ "route",		ROUTE },
+		{ "router",		ROUTER },
+		{ "rtable",		RTABLE },
+		{ "rtlabel",		RTLABEL },
 		{ "sack",		SACK },
 		{ "script",		SCRIPT },
 		{ "send",		SEND },
@@ -1856,7 +1992,7 @@ nodigits:
 	(isalnum(x) || (ispunct(x) && x != '(' && x != ')' && \
 	x != '{' && x != '}' && x != '<' && x != '>' && \
 	x != '!' && x != '=' && x != '#' && \
-	x != ','))
+	x != ',' && x != '/'))
 
 	if (isalnum(c) || c == ':' || c == '_') {
 		do {
@@ -1960,6 +2096,8 @@ parse_config(const char *filename, int opts)
 	    (conf->sc_tables = calloc(1, sizeof(*conf->sc_tables))) == NULL ||
 	    (conf->sc_relays = calloc(1, sizeof(*conf->sc_relays))) == NULL ||
 	    (conf->sc_protos = calloc(1, sizeof(*conf->sc_protos))) == NULL ||
+	    (conf->sc_routes = calloc(1, sizeof(*conf->sc_routes))) == NULL ||
+	    (conf->sc_rts = calloc(1, sizeof(*conf->sc_rts))) == NULL ||
 	    (conf->sc_rdrs = calloc(1, sizeof(*conf->sc_rdrs))) == NULL) {
 		if (conf != NULL) {
 			if (conf->sc_tables != NULL)
@@ -1970,6 +2108,8 @@ parse_config(const char *filename, int opts)
 				free(conf->sc_protos);
 			if (conf->sc_rdrs != NULL)
 				free(conf->sc_rdrs);
+			if (conf->sc_rts != NULL)
+				free(conf->sc_rts);
 			free(conf);
 		}
 		log_warn("cannot allocate memory");
@@ -1978,17 +2118,20 @@ parse_config(const char *filename, int opts)
 
 	errors = 0;
 	last_host_id = last_table_id = last_rdr_id = last_proto_id =
-	    last_relay_id = 0;
+	    last_relay_id = last_rt_id = last_nr_id = 0;
 
 	rdr = NULL;
 	table = NULL;
 	rlay = NULL;
 	proto = NULL;
+	router = NULL;
 
 	TAILQ_INIT(conf->sc_rdrs);
 	TAILQ_INIT(conf->sc_tables);
 	TAILQ_INIT(conf->sc_protos);
 	TAILQ_INIT(conf->sc_relays);
+	TAILQ_INIT(conf->sc_rts);
+	TAILQ_INIT(conf->sc_routes);
 
 	memset(&conf->sc_empty_table, 0, sizeof(conf->sc_empty_table));
 	conf->sc_empty_table.conf.id = EMPTY_TABLE;
@@ -2042,8 +2185,10 @@ parse_config(const char *filename, int opts)
 		}
 	}
 
-	if (TAILQ_EMPTY(conf->sc_rdrs) && TAILQ_EMPTY(conf->sc_relays)) {
-		log_warnx("no redirections, nothing to do");
+	if (TAILQ_EMPTY(conf->sc_rdrs) &&
+	    TAILQ_EMPTY(conf->sc_relays) &&
+	    TAILQ_EMPTY(conf->sc_rts)) {
+		log_warnx("no actions, nothing to do");
 		errors++;
 	}
 

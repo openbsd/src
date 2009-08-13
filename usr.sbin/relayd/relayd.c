@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.91 2009/08/07 11:21:53 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.92 2009/08/13 13:51:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -270,7 +270,9 @@ main(int argc, char *argv[])
 	imsg_init(&iev_pfe->ibuf, pipe_parent2pfe[0]);
 	imsg_init(&iev_hce->ibuf, pipe_parent2hce[0]);
 	iev_pfe->handler = main_dispatch_pfe;
+	iev_pfe->data = env;
 	iev_hce->handler = main_dispatch_hce;
+	iev_hce->data = env;
 
 	for (c = 0; c < env->sc_prefork_relay; c++) {
 		iev = &iev_relay[c];
@@ -294,6 +296,8 @@ main(int argc, char *argv[])
 
 	if (env->sc_flags & F_DEMOTE)
 		carp_demote_reset(env->sc_demote_group, 0);
+
+	init_routes(env);
 
 	event_dispatch();
 
@@ -611,9 +615,12 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 	struct imsg		 imsg;
 	ssize_t			 n;
 	struct ctl_demote	 demote;
+	struct ctl_netroute	 crt;
+	struct relayd		*env;
 
 	iev = ptr;
 	ibuf = &iev->ibuf;
+	env = (struct relayd *)iev->data;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -645,6 +652,14 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 				    "invalid size of demote request");
 			memcpy(&demote, imsg.data, sizeof(demote));
 			carp_demote_set(demote.group, demote.level);
+			break;
+		case IMSG_RTMSG:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(crt))
+				fatalx("main_dispatch_pfe: "
+				    "invalid size of rtmsg request");
+			memcpy(&crt, imsg.data, sizeof(crt));
+			pfe_route(env, &crt);
 			break;
 		case IMSG_CTL_RELOAD:
 			/*
@@ -846,6 +861,17 @@ session_find(struct relayd *env, objid_t id)
 		SPLAY_FOREACH(con, session_tree, &rlay->rl_sessions)
 			if (con->se_id == id)
 				return (con);
+	return (NULL);
+}
+
+struct netroute *
+route_find(struct relayd *env, objid_t id)
+{
+	struct netroute	*nr;
+
+	TAILQ_FOREACH(nr, env->sc_routes, nr_route)
+		if (nr->nr_conf.id == id)
+			return (nr);
 	return (NULL);
 }
 

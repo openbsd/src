@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.61 2009/08/07 11:21:53 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.62 2009/08/13 13:51:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -860,6 +860,7 @@ pfe_sync(void)
 	struct ctl_id		 id;
 	struct imsg		 imsg;
 	struct ctl_demote	 demote;
+	struct router		*rt;
 
 	bzero(&id, sizeof(id));
 	bzero(&imsg, sizeof(imsg));
@@ -912,6 +913,14 @@ pfe_sync(void)
 			sync_ruleset(env, rdr, 1);
 			control_imsg_forward(&imsg);
 		}
+	}
+
+	TAILQ_FOREACH(rt, env->sc_rts, rt_entry) {
+		rt->rt_conf.flags &= ~(F_BACKUP);
+		rt->rt_conf.flags &= ~(F_DOWN);
+
+		if ((rt->rt_gwtable->conf.flags & F_CHANGED))
+			sync_routes(env, rt);
 	}
 
 	TAILQ_FOREACH(table, env->sc_tables, entry) {

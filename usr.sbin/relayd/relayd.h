@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.129 2009/08/07 11:21:53 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.130 2009/08/13 13:51:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -34,6 +34,7 @@
 #define EMPTY_ID		UINT_MAX
 #define TABLE_NAME_SIZE		64
 #define	TAG_NAME_SIZE		64
+#define	RT_LABEL_SIZE		32
 #define SRV_NAME_SIZE		64
 #define MAX_NAME_SIZE		64
 #define SRV_MAX_VIRTS		16
@@ -95,6 +96,12 @@ struct ctl_script {
 struct ctl_demote {
 	char		 group[IFNAMSIZ];
 	int		 level;
+};
+
+struct ctl_netroute {
+	objid_t		 id;
+	objid_t		 hostid;
+	int		 up;
 };
 
 struct ctl_icmp_event {
@@ -238,6 +245,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_NEEDPF		0x00080000
 #define F_PORT			0x00100000
 #define F_SSLCLIENT		0x00200000
+#define F_NEEDRT		0x00400000
 
 enum forwardmode {
 	FWD_NORMAL		= 0,
@@ -575,6 +583,46 @@ enum dstmode {
 };
 #define RELAY_DSTMODE_DEFAULT		RELAY_DSTMODE_ROUNDROBIN
 
+struct router;
+struct netroute_config {
+	objid_t			 id;
+	struct sockaddr_storage	 ss;
+	int			 prefixlen;
+	objid_t			 routerid;
+};
+
+struct netroute {
+	TAILQ_ENTRY(netroute)	 nr_entry;
+	TAILQ_ENTRY(netroute)	 nr_route;
+
+	struct netroute_config	 nr_conf;
+
+	struct router		*nr_router;
+};
+TAILQ_HEAD(netroutelist, netroute);
+
+struct router_config {
+	objid_t			 id;
+	u_int32_t		 flags;
+	char			 name[MAXHOSTNAMELEN];
+	char			 label[RT_LABEL_SIZE];
+	int			 nroutes;
+	objid_t			 gwtable;
+	in_port_t		 gwport;
+	int			 rtable;
+};
+
+struct router {
+	TAILQ_ENTRY(router)	 rt_entry;
+	struct router_config	 rt_conf;
+
+	struct table		*rt_gwtable;
+	struct netroutelist	 rt_netroutes;
+
+	int			 rt_af;
+};
+TAILQ_HEAD(routerlist, router);
+
 enum {
 	PROC_MAIN,
 	PROC_PFE,
@@ -587,10 +635,14 @@ struct relayd {
 	u_int32_t		 sc_flags;
 	const char		*sc_confpath;
 	struct pfdata		*sc_pf;
+	int			 sc_rtsock;
+	int			 sc_rtseq;
 	int			 sc_tablecount;
 	int			 sc_rdrcount;
 	int			 sc_protocount;
 	int			 sc_relaycount;
+	int			 sc_routercount;
+	int			 sc_routecount;
 	struct timeval		 sc_interval;
 	struct timeval		 sc_timeout;
 	struct table		 sc_empty_table;
@@ -600,6 +652,8 @@ struct relayd {
 	struct rdrlist		*sc_rdrs;
 	struct protolist	*sc_protos;
 	struct relaylist	*sc_relays;
+	struct routerlist	*sc_rts;
+	struct netroutelist	*sc_routes;
 	u_int16_t		 sc_prefork_relay;
 	char			 sc_demote_group[IFNAMSIZ];
 	u_int16_t		 sc_id;
@@ -705,7 +759,8 @@ enum imsg_type {
 	IMSG_RECONF_END,
 	IMSG_SCRIPT,
 	IMSG_SNMPSOCK,
-	IMSG_BINDANY
+	IMSG_BINDANY,
+	IMSG_RTMSG		/* from pfe to parent */
 };
 
 /* control.c */
@@ -755,6 +810,11 @@ void	 flush_rulesets(struct relayd *);
 int	 natlook(struct relayd *, struct ctl_natlook *);
 u_int64_t
 	 check_table(struct relayd *, struct rdr *, struct table *);
+
+/* pfe_route.c */
+void	 init_routes(struct relayd *);
+void	 sync_routes(struct relayd *, struct router *);
+int	 pfe_route(struct relayd *, struct ctl_netroute *);
 
 /* hce.c */
 pid_t	 hce(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
@@ -814,6 +874,7 @@ int	 ssl_ctx_load_verify_memory(SSL_CTX *, char *, off_t);
 struct host	*host_find(struct relayd *, objid_t);
 struct table	*table_find(struct relayd *, objid_t);
 struct rdr	*rdr_find(struct relayd *, objid_t);
+struct netroute	*route_find(struct relayd *, objid_t);
 struct host	*host_findbyname(struct relayd *, const char *);
 struct table	*table_findbyname(struct relayd *, const char *);
 struct table	*table_findbyconf(struct relayd *, struct table *);
