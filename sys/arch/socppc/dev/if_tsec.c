@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.23 2009/08/09 11:40:58 deraadt Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.24 2009/08/13 10:03:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -280,7 +280,7 @@ struct cfattach tsec_ca = {
 };
 
 struct cfdriver tsec_cd = {
-	NULL, "tsec", DV_DULL
+	NULL, "tsec", DV_IFNET
 };
 
 uint32_t tsec_read(struct tsec_softc *, bus_addr_t);
