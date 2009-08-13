@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsi.h,v 1.3 2009/08/13 20:28:29 claudio Exp $ */
+/*	$OpenBSD: iscsi.h,v 1.4 2009/08/13 21:22:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -331,8 +331,9 @@ struct iscsi_pdu_login_request {
 	u_int8_t	ahslen;
 	u_int8_t	datalen[3];
 
-	u_int8_t	isid[6];
-	u_int8_t	tsih[2];
+	u_int32_t	isid_base;
+	u_int16_t	isid_qual;
+	u_int16_t	tsih;
 
 	u_int32_t	itt;
 
@@ -363,8 +364,9 @@ struct iscsi_pdu_login_response {
 	u_int8_t	ahslen;
 	u_int8_t	datalen[3];
 
-	u_int8_t	isid[6];
-	u_int8_t	tsih[2];
+	u_int32_t	isid_base;
+	u_int16_t	isid_qual;
+	u_int16_t	tsih;
 
 	u_int32_t	itt;
 
