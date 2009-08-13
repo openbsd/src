@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.19 2009/08/13 22:11:43 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.20 2009/08/13 22:32:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -196,6 +196,24 @@ window_copy_key(struct window_pane *wp, struct client *c, int key)
 		n = 1;
 		if (screen_size_y(s) > 2)
 			n = screen_size_y(s) - 2;
+		if (data->oy < n)
+			data->oy = 0;
+		else
+			data->oy -= n;
+		window_copy_update_selection(wp);
+		window_copy_redraw_screen(wp);
+		break;
+	case MODEKEYCOPY_HALFPAGEUP:
+		n = screen_size_y(s) / 2;
+		if (data->oy + n > screen_hsize(&wp->base))
+			data->oy = screen_hsize(&wp->base);
+		else
+			data->oy += n;
+		window_copy_update_selection(wp);
+		window_copy_redraw_screen(wp);
+		break;
+	case MODEKEYCOPY_HALFPAGEDOWN:
+		n = screen_size_y(s) / 2;
 		if (data->oy < n)
 			data->oy = 0;
 		else

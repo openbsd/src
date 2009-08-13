@@ -1,4 +1,4 @@
-/* $OpenBSD: window-scroll.c,v 1.7 2009/08/13 22:11:43 nicm Exp $ */
+/* $OpenBSD: window-scroll.c,v 1.8 2009/08/13 22:32:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -159,6 +159,22 @@ window_scroll_key(struct window_pane *wp, unused struct client *c, int key)
 		n = 1;
 		if (screen_size_y(s) > 2)
 			n = screen_size_y(s) - 2;
+		if (data->oy < n)
+			data->oy = 0;
+		else
+			data->oy -= n;
+		window_scroll_redraw_screen(wp);
+		break;
+	case MODEKEYCOPY_HALFPAGEUP:
+		n = screen_size_y(s) / 2;
+		if (data->oy + n > screen_hsize(&wp->base))
+			data->oy = screen_hsize(&wp->base);
+		else
+			data->oy += n;
+		window_scroll_redraw_screen(wp);
+		break;
+	case MODEKEYCOPY_HALFPAGEDOWN:
+		n = screen_size_y(s) / 2;
 		if (data->oy < n)
 			data->oy = 0;
 		else
