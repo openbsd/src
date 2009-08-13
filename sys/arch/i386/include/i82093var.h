@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093var.h,v 1.7 2008/10/05 16:57:36 kettenis Exp $	*/
+/*	$OpenBSD: i82093var.h,v 1.8 2009/08/13 13:24:48 kettenis Exp $	*/
 /* $NetBSD: i82093var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -49,7 +49,7 @@ struct ioapic_pin
 };
 
 struct ioapic_softc {
-	struct 			device sc_dev;	/* generic device glue */
+	struct pic		sc_pic;
 	struct ioapic_softc	*sc_next;
 	int			sc_apicid;
 	int			sc_apic_vers;

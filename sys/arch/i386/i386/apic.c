@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.5 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: apic.c,v 1.6 2009/08/13 13:24:48 kettenis Exp $	*/
 /* $NetBSD: apic.c,v 1.1.2.2 2000/02/21 18:51:00 sommerfeld Exp $ */
 
 /*-
@@ -50,4 +50,3 @@ apic_format_redir(char *where1, char *where2, int idx, u_int32_t redirhi,
 
 	printf("\n");
 }
-

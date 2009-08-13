@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.38 2009/04/19 17:50:18 oga Exp $	*/
+/*	$OpenBSD: intr.h,v 1.39 2009/08/13 13:24:48 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -128,6 +128,8 @@ void splassert_check(int, const char *);
 
 #define	setsoftnet()	softintr(SIR_NET)
 #define	setsofttty()	softintr(SIR_TTY)
+
+#include <machine/pic.h>
 
 struct cpu_info;
 
