@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.2 2009/02/16 21:19:06 miod Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.3 2009/08/13 19:51:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -261,6 +261,7 @@ int
 vscsiioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
 	struct vscsi_softc		*sc = DEV2SC(dev);
+	struct vscsi_ioc_devevent	*de = (struct vscsi_ioc_devevent *)addr;
 	int				read = 0;
 	int				err = 0;
 
@@ -277,6 +278,15 @@ vscsiioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case VSCSI_T2I:
 		err = vscsi_t2i(sc, (struct vscsi_ioc_t2i *)addr);
+		break;
+
+	case VSCSI_REQPROBE:
+		err = scsi_req_probe(sc->sc_scsibus, de->target, de->lun);
+		break;
+
+	case VSCSI_REQDETACH:
+		err = scsi_req_detach(sc->sc_scsibus, de->target, de->lun,
+		    DETACH_FORCE);
 		break;
 
 	default:

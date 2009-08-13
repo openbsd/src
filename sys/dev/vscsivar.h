@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsivar.h,v 1.1 2008/12/03 23:39:32 dlg Exp $ */
+/*	$OpenBSD: vscsivar.h,v 1.2 2009/08/13 19:51:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -59,5 +59,13 @@ struct vscsi_ioc_t2i {
 };
 
 #define VSCSI_T2I _IOW('I', 3, struct vscsi_ioc_t2i)
+
+struct vscsi_ioc_devevent {
+	u_int			target;
+	u_int			lun;
+};
+
+#define VSCSI_REQPROBE _IOW('I', 4, struct vscsi_ioc_devevent)
+#define VSCSI_REQDETACH _IOW('I', 5, struct vscsi_ioc_devevent)
 
 #endif /* _SYS_DEV_VSCSIVAR_H */
