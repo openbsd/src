@@ -169,6 +169,7 @@
 ./usr/include/mips64/kcore.h
 ./usr/include/mips64/limits.h
 ./usr/include/mips64/lock.h
+./usr/include/mips64/loongson2.h
 ./usr/include/mips64/memconf.h
 ./usr/include/mips64/mips_opcode.h
 ./usr/include/mips64/param.h
@@ -196,6 +197,7 @@
 ./usr/include/sgi/autoconf.h
 ./usr/include/sgi/bus.h
 ./usr/include/sgi/cdefs.h
+./usr/include/sgi/conf.h
 ./usr/include/sgi/cpu.h
 ./usr/include/sgi/cpustate.h
 ./usr/include/sgi/db_machdep.h
