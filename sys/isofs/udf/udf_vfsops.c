@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.29 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.30 2009/08/14 22:23:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -79,6 +79,7 @@ struct pool udf_ds_pool;
 int udf_find_partmaps(struct umount *, struct logvol_desc *);
 int udf_get_vpartmap(struct umount *, struct part_map_virt *);
 int udf_get_spartmap(struct umount *, struct part_map_spare *);
+int udf_get_mpartmap(struct umount *, struct part_map_meta *);
 int udf_mountfs(struct vnode *, struct mount *, uint32_t, struct proc *);
 
 const struct vfsops udf_vfsops = {
@@ -220,7 +221,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 	struct part_desc *pd;
 	struct logvol_desc *lvd;
 	struct fileset_desc *fsd;
-	struct file_entry *root_fentry;
+	struct extfile_entry *xfentry;
+	struct file_entry *fentry;
 	uint32_t sector, size, mvds_start, mvds_end;
 	uint32_t fsd_offset = 0;
 	uint16_t part_num = 0, fsd_part = 0;
@@ -305,8 +307,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 		if (!udf_checktag(&pd->tag, TAGID_PARTITION)) {
 			part_found = 1;
 			part_num = letoh16(pd->part_num);
-			ump->um_len = letoh32(pd->part_len);
-			ump->um_start = letoh32(pd->start_loc);
+			ump->um_len = ump->um_reallen = letoh32(pd->part_len);
+			ump->um_start = ump->um_realstart = letoh32(pd->start_loc);
 		}
 
 		brelse(bp); 
@@ -320,7 +322,34 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 		goto bail;
 	}
 
-	if (fsd_part != part_num) {
+	if (ISSET(ump->um_flags, UDF_MNT_USES_META)) {
+		/* Read Metadata File 'File Entry' to find Metadata file. */
+		struct long_ad *la;
+		sector = ump->um_start + ump->um_meta_start; /* Set in udf_get_mpartmap() */
+		if ((error = RDSECTOR(devvp, sector, ump->um_bsize, &bp)) != 0) {
+			printf("Cannot read sector %d for Metadata File Entry\n", sector);
+			error = EINVAL;
+			goto bail;
+		}
+		xfentry = (struct extfile_entry *)bp->b_data;
+		fentry = (struct file_entry *)bp->b_data;
+		if (udf_checktag(&xfentry->tag, TAGID_EXTFENTRY) == 0)
+			la = (struct long_ad *)&xfentry->data[letoh32(xfentry->l_ea)];
+		else if (udf_checktag(&fentry->tag, TAGID_FENTRY) == 0)
+			la = (struct long_ad *)&fentry->data[letoh32(fentry->l_ea)];
+		else {
+			printf("Invalid Metadata File FE @ sector %d! (tag.id %d)\n",
+			    sector, fentry->tag.id);
+			error = EINVAL;
+			goto bail;
+		}
+		ump->um_meta_start = letoh32(la->loc.lb_num);
+		ump->um_meta_len = letoh32(la->len);
+		if (bp != NULL) {
+			brelse(bp);
+			bp = NULL;
+		}
+	} else if (fsd_part != part_num) {
 		printf("FSD does not lie within the partition!\n");
 		error = EINVAL;
 		goto bail;
@@ -342,7 +371,11 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 	 * Thanks to Chuck McCrobie <mccrobie@cablespeed.com> for pointing
 	 * me in the right direction here.
 	 */
-	sector = fsd_offset;
+
+	if (ISSET(ump->um_flags, UDF_MNT_USES_META))
+		sector = ump->um_meta_start; 
+	else
+		sector = fsd_offset;
 	udf_vat_map(ump, &sector);
 	if ((error = RDSECTOR(devvp, sector, ump->um_bsize, &bp)) != 0) {
 		printf("Cannot read sector %d of FSD\n", sector);
@@ -353,6 +386,10 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 		fsd_found = 1;
 		bcopy(&fsd->rootdir_icb, &ump->um_root_icb,
 		    sizeof(struct long_ad));
+		if (ISSET(ump->um_flags, UDF_MNT_USES_META)) {
+			ump->um_root_icb.loc.lb_num += ump->um_meta_start; 
+			ump->um_root_icb.loc.part_num = part_num;
+		}
 	}
 
 	brelse(bp);
@@ -375,10 +412,15 @@ udf_mountfs(struct vnode *devvp, struct mount *mp, uint32_t lb, struct proc *p)
 		goto bail;
 	}
 
-	root_fentry = (struct file_entry *)bp->b_data;
-	if ((error = udf_checktag(&root_fentry->tag, TAGID_FENTRY))) {
-		printf("Invalid root file entry!\n");
-		goto bail;
+	xfentry = (struct extfile_entry *)bp->b_data;
+	fentry = (struct file_entry *)bp->b_data;
+	error = udf_checktag(&xfentry->tag, TAGID_EXTFENTRY);
+	if (error) {
+	    	error = udf_checktag(&fentry->tag, TAGID_FENTRY);
+		if (error) {
+			printf("Invalid root file entry!\n");
+			goto bail;
+		}
 	}
 
 	brelse(bp);
@@ -507,8 +549,9 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct vnode *devvp;
 	struct umount *ump;
 	struct proc *p;
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	struct unode *up;
+	struct extfile_entry *xfe;
 	struct file_entry *fe;
 	int error, sector, size;
 
@@ -543,24 +586,36 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		return (error);
 	}
 
+	xfe = (struct extfile_entry *)bp->b_data;
 	fe = (struct file_entry *)bp->b_data;
-	if (udf_checktag(&fe->tag, TAGID_FENTRY)) {
-		printf("Invalid file entry!\n");
-		pool_put(&unode_pool, up);
-		brelse(bp);
-		return (ENOMEM);
+	error = udf_checktag(&xfe->tag, TAGID_EXTFENTRY);
+	if (error == 0) {
+		size = letoh32(xfe->l_ea) + letoh32(xfe->l_ad);
+	} else {
+		error = udf_checktag(&fe->tag, TAGID_FENTRY);
+		if (error) {
+			printf("Invalid file entry!\n");
+			pool_put(&unode_pool, up);
+			if (bp != NULL)
+				brelse(bp);
+			return (ENOMEM);
+		} else
+			size = letoh32(fe->l_ea) + letoh32(fe->l_ad);
 	}
 
-	size = UDF_FENTRY_SIZE + letoh32(fe->l_ea) + letoh32(fe->l_ad);
-
-	up->u_fentry = malloc(size, M_UDFFENTRY, M_NOWAIT);
+	/* Allocate max size of FE/XFE. */
+	up->u_fentry = malloc(size + UDF_EXTFENTRY_SIZE, M_UDFFENTRY, M_NOWAIT | M_ZERO);
 	if (up->u_fentry == NULL) {
 		pool_put(&unode_pool, up);
-		brelse(bp);
+		if (bp != NULL)
+			brelse(bp);
 		return (ENOMEM); /* Cannot allocate file entry block */
 	}
 
-	bcopy(bp->b_data, up->u_fentry, size);
+	if (udf_checktag(&xfe->tag, TAGID_EXTFENTRY) == 0)
+		bcopy(bp->b_data, up->u_fentry, size + UDF_EXTFENTRY_SIZE);
+	else
+		bcopy(bp->b_data, up->u_fentry, size + UDF_FENTRY_SIZE);
 	
 	brelse(bp);
 	bp = NULL;
@@ -588,13 +643,11 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	switch (up->u_fentry->icbtag.file_type) {
 	default:
-		vp->v_type = VBAD;
+		printf("Unrecognized file type (%d)\n", vp->v_type);
+		vp->v_type = VREG;
 		break;
 	case UDF_ICB_FILETYPE_DIRECTORY:
 		vp->v_type = VDIR;
-		break;
-	case UDF_ICB_FILETYPE_RANDOMACCESS:
-		vp->v_type = VREG;
 		break;
 	case UDF_ICB_FILETYPE_BLOCKDEVICE:
 		vp->v_type = VBLK;
@@ -611,9 +664,30 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	case UDF_ICB_FILETYPE_SYMLINK:
 		vp->v_type = VLNK;
 		break;
+	case UDF_ICB_FILETYPE_RANDOMACCESS:
+	case UDF_ICB_FILETYPE_REALTIME:
 	case UDF_ICB_FILETYPE_UNKNOWN:
 		vp->v_type = VREG;
 		break;
+	}
+
+	/* check if this is a vnode alias */
+	if ((nvp = checkalias(vp, up->u_dev, ump->um_mountp)) != NULL) {
+		printf("found a vnode alias\n");
+		/*
+		 * Discard unneeded vnode, but save its udf_node.
+		 * Note that the lock is carried over in the udf_node
+		 */
+		nvp->v_data = vp->v_data;
+		vp->v_data = NULL;
+		vp->v_op = spec_vnodeop_p;
+		vrele(vp);
+		vgone(vp);
+		/*
+		 * Reinitialize aliased inode.
+		 */
+		vp = nvp;
+		ump->um_devvp = vp;
 	}
 
 	*vpp = vp;
@@ -711,6 +785,7 @@ udf_get_spartmap(struct umount *ump, struct part_map_spare *pms)
 
 	bcopy(bp->b_data, ump->um_stbl, letoh32(pms->st_size));
 	brelse(bp);
+	bp = NULL;
 
 	if (udf_checktag(&ump->um_stbl->tag, 0)) {
 		free(ump->um_stbl, M_UDFMOUNT);
@@ -730,6 +805,14 @@ udf_get_spartmap(struct umount *ump, struct part_map_spare *pms)
 	return (0);
 }
 
+/* Handle a metadata partition map */
+int
+udf_get_mpartmap(struct umount *ump, struct part_map_meta *pmm)
+{
+	ump->um_flags |= UDF_MNT_USES_META;
+	ump->um_meta_start = pmm->meta_file_lbn;
+	return (0);
+}
 
 /* Scan the partition maps */
 int
@@ -769,6 +852,10 @@ udf_find_partmaps(struct umount *ump, struct logvol_desc *lvd)
 		    UDF_REGID_ID_SIZE))
 			error = udf_get_spartmap(ump,
 			    (struct part_map_spare *) pmap);
+		else if (!bcmp(&regid_id[0], "*UDF Metadata Partition",
+		    UDF_REGID_ID_SIZE))
+			error = udf_get_mpartmap(ump,
+			    (struct part_map_meta *) pmap);
 		else
 			return (EINVAL); /* Unsupported partition map */
 

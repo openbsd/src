@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.12 2007/12/09 20:54:01 jmc Exp $	*/
+/*	$OpenBSD: udf.h,v 1.13 2009/08/14 22:23:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -46,7 +46,7 @@ struct unode {
 		long u_diroff;
 		long u_vatlen;
 	} un_u;
-	struct file_entry *u_fentry;
+	struct extfile_entry *u_fentry;
 };
 
 #define	u_diroff	un_u.u_diroff
@@ -61,7 +61,11 @@ struct umount {
 	int um_bshift;
 	int um_bmask;
 	uint32_t um_start;
+	uint32_t um_realstart;
 	uint32_t um_len;
+	uint32_t um_reallen;
+	uint32_t um_meta_start;
+	uint32_t um_meta_len;
 	struct unode *um_vat;
 	struct long_ad um_root_icb;
 	LIST_HEAD(udf_hash_lh, unode) *um_hashtbl;
@@ -74,6 +78,7 @@ struct umount {
 
 #define	UDF_MNT_FIND_VAT	0x01	/* Indicates a VAT must be found */
 #define	UDF_MNT_USES_VAT	0x02	/* Indicates a VAT must be used */
+#define	UDF_MNT_USES_META	0x04	/* Indicates we are using a Metadata partition*/
 
 struct udf_dirstream {
 	struct unode	*node;
