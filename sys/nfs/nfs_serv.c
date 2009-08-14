@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.85 2009/08/13 15:03:19 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.86 2009/08/14 11:06:35 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -441,7 +441,7 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	struct nfsm_info	info;
 	u_int32_t *tl;
 	int32_t t1;
-	int error = 0, rdonly, tlen, len, getret;
+	int error = 0, rdonly, tlen, len = 0, getret;
 	char *cp2;
 	struct vnode *vp;
 	struct vattr attr;
