@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.37 2007/06/01 23:47:57 deraadt Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.38 2009/08/14 20:55:05 jasper Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ ufs_inactive(void *v)
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
-		vprint("ffs_inactive: pushing active", vp);
+		vprint("ufs_inactive: pushing active", vp);
 #endif
 
 	/*
