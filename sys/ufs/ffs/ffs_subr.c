@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.23 2009/08/14 12:50:33 jasper Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.24 2009/08/14 13:05:08 jasper Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -81,10 +81,10 @@ ffs_bufatoff(struct inode *ip, off_t offset, char **res, struct buf **bpp)
 #else
 /* Prototypes for userland */
 void	ffs_fragacct(struct fs *, int, int32_t[], int);
-int	ffs_isfreeblock(struct fs *, unsigned char *, daddr64_t);
-int	ffs_isblock(struct fs *, unsigned char *, daddr64_t);
+int	ffs_isfreeblock(struct fs *, u_char *, daddr64_t);
+int	ffs_isblock(struct fs *, u_char *, daddr64_t);
 void	ffs_clrblock(struct fs *, u_char *, daddr64_t);
-void	ffs_setblock(struct fs *, unsigned char *, daddr64_t);
+void	ffs_setblock(struct fs *, u_char *, daddr64_t);
 __dead void panic(const char *, ...);
 #endif
 
@@ -156,9 +156,9 @@ ffs_checkoverlap(struct buf *bp, struct inode *ip)
  * check if a block is available
  */
 int
-ffs_isblock(struct fs *fs, unsigned char *cp, daddr64_t h)
+ffs_isblock(struct fs *fs, u_char *cp, daddr64_t h)
 {
-	unsigned char mask;
+	u_char mask;
 
 	switch (fs->fs_frag) {
 	default:
@@ -204,7 +204,7 @@ ffs_clrblock(struct fs *fs, u_char *cp, daddr64_t h)
  * put a block into the map
  */
 void
-ffs_setblock(struct fs *fs, unsigned char *cp, daddr64_t h)
+ffs_setblock(struct fs *fs, u_char *cp, daddr64_t h)
 {
 
 	switch (fs->fs_frag) {
@@ -228,7 +228,7 @@ ffs_setblock(struct fs *fs, unsigned char *cp, daddr64_t h)
  * check if a block is free
  */
 int
-ffs_isfreeblock(struct fs *fs, unsigned char *cp, daddr64_t h)
+ffs_isfreeblock(struct fs *fs, u_char *cp, daddr64_t h)
 {
 
 	switch (fs->fs_frag) {

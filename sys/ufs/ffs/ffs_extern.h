@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.33 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.34 2009/08/14 13:05:08 jasper Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -122,15 +122,15 @@ int ffs_update(struct inode *, struct timespec *, struct timespec *, int);
 int ffs_truncate(struct inode *, off_t, int, struct ucred *);
 
 /* ffs_subr.c */
-int ffs_bufatoff(struct inode *, off_t, char **, struct buf **);
+int  ffs_bufatoff(struct inode *, off_t, char **, struct buf **);
 void ffs_fragacct(struct fs *, int, int32_t[], int);
 #ifdef DIAGNOSTIC
 void	ffs_checkoverlap(struct buf *, struct inode *);
 #endif
-int   ffs_isfreeblock(struct fs *, unsigned char *, daddr64_t);
-int ffs_isblock(struct fs *, unsigned char *, daddr64_t);
+int  ffs_isfreeblock(struct fs *, u_char *, daddr64_t);
+int  ffs_isblock(struct fs *, u_char *, daddr64_t);
 void ffs_clrblock(struct fs *, u_char *, daddr64_t);
-void ffs_setblock(struct fs *, unsigned char *, daddr64_t);
+void ffs_setblock(struct fs *, u_char *, daddr64_t);
 
 /* ffs_vfsops.c */
 int ffs_mountroot(void);
