@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.58 2009/08/13 15:42:03 thib Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.59 2009/08/14 21:16:13 thib Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -398,14 +398,28 @@ db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 #ifdef NFSCLIENT
 /*ARGSUSED*/
 void     
-db_nfsreq_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+db_nfsreq_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif)
 {
 	boolean_t full = FALSE;
 
 	if (modif[0] == 'f')
 		full = TRUE;
 
-	db_nfsreq_print((struct nfsreq *) addr, full, db_printf);
+	nfs_request_print((void *)addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+void     
+db_nfsnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	nfs_node_print((void *)addr, full, db_printf);
 }
 #endif
 
@@ -471,7 +485,8 @@ struct db_command db_show_all_cmds[] = {
 	{ "mounts",	db_show_all_mounts,	0, NULL },
 	{ "vnodes",	db_show_all_vnodes,	0, NULL },
 #ifdef NFSCLIENT
-	{ "nfsreq",	db_show_all_nfsreqs,	0, NULL },
+	{ "nfsreqs",	db_show_all_nfsreqs,	0, NULL },
+	{ "nfsnodes",	db_show_all_nfsnodes,	0, NULL },
 #endif
 	{ NULL, 	NULL, 			0, NULL }
 };
@@ -487,6 +502,7 @@ struct db_command db_show_cmds[] = {
 	{ "mount",	db_mount_print_cmd,	0,	NULL },
 #ifdef NFSCLIENT
 	{ "nfsreq",	db_nfsreq_print_cmd,	0,	NULL },
+	{ "nfsnode",	db_nfsnode_print_cmd,	0,	NULL },
 #endif
 	{ "object",	db_object_print_cmd,	0,	NULL },
 #ifdef DDB_STRUCT_INFORMATION

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.47 2009/08/10 10:59:11 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.48 2009/08/14 21:16:13 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -339,6 +339,7 @@ struct nfsrv_descript {
 #define ND_NFSV3	0x08
 
 extern struct pool nfsreqpl;
+extern struct pool nfs_node_pool;
 extern TAILQ_HEAD(nfsdhead, nfsd) nfsd_head;
 extern int nfsd_head_flag;
 #define	NFSD_CHECKSLP	0x01

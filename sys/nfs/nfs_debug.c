@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_debug.c,v 1.2 2009/01/18 13:57:17 thib Exp $ */
+/*	$OpenBSD: nfs_debug.c,v 1.3 2009/08/14 21:16:13 thib Exp $ */
 /*
  * Copyright (c) 2009 Thordur I. Bjornsson. <thib@openbsd.org>
  *
@@ -19,36 +19,36 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
-#include <sys/queue.h>
+#include <sys/pool.h>
+#include <sys/vnode.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
+#include <nfs/nfsnode.h>
+#include <nfs/nfsmount.h>
+#include <nfs/nfs_var.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-extern struct nfsreqhead nfs_reqq;
-
 void
 db_show_all_nfsreqs(db_expr_t expr, int haddr, db_expr_t count, char *modif)
 {
-	struct nfsreq	*rep;
+	boolean_t full = FALSE;
 
-	if (TAILQ_EMPTY(&nfs_reqq)) {
-		db_printf("no outstanding requests\n");
-		return;
-	}
+	if (modif[0] == 'f')
+		full = TRUE;
 
-	TAILQ_FOREACH(rep, &nfs_reqq, r_chain)
-		db_printf("%p\n", rep);
-
+	pool_walk(&nfsreqpl, full, db_printf, nfs_request_print);
 }
 
 void
-db_nfsreq_print(struct nfsreq *rep, int full, int (*pr)(const char *, ...))
+nfs_request_print(void *v, int full, int (*pr)(const char *, ...))
 {
+	struct nfsreq	*rep = v;
+
 	(*pr)("xid 0x%x flags 0x%x rexmit %i procnum %i proc %p\n",
 	    rep->r_xid, rep->r_flags, rep->r_rexmit, rep->r_procnum,
 	    rep->r_procp);
@@ -58,5 +58,34 @@ db_nfsreq_print(struct nfsreq *rep, int full, int (*pr)(const char *, ...))
 		    " rtt %i\n",
 		    rep->r_mreq, rep->r_mrep, rep->r_md, rep->r_nmp,
 		    rep->r_vp, rep->r_timer, rep->r_rtt);
+	}
+}
+
+void
+db_show_all_nfsnodes(db_expr_t expr, int haddr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	pool_walk(&nfs_node_pool, full, db_printf, nfs_node_print);
+}
+
+
+
+void
+nfs_node_print(void *v, int full, int (*pr)(const char *, ...))
+{
+	struct nfsnode	*np = v;
+
+	(*pr)("size %llu flag %i vnode %p accstamp %i\n",
+	    np->n_size, np->n_flag, np->n_vnode, np->n_accstamp);
+
+	if (full) {
+		(*pr)("pushedlo %llu pushedhi %llu pushlo %llu pushhi %llu\n",
+		    np->n_pushedlo, np->n_pushedhi, np->n_pushlo,
+		    np->n_pushhi);
+		(*pr)("commitflags %i\n", np->n_commitflags);
 	}
 }
