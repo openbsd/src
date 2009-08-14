@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.70 2009/08/13 23:45:35 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.71 2009/08/14 14:41:55 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.70 2009/08/13 23:45:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.71 2009/08/14 14:41:55 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -251,10 +251,8 @@ labelkre(void)
 	mvprintw(INTSROW, INTSCOL + 3, " Interrupts");
 	mvprintw(INTSROW + 1, INTSCOL + 9, "total");
 
-	if (LINES - 1 > VMSTATROW + 17)
-		mvprintw(VMSTATROW + 17, INTSCOL + 9, "IPKTS");
-	if (LINES - 1 > VMSTATROW + 18)
-		mvprintw(VMSTATROW + 18, INTSCOL + 9, "OPKTS");
+	mvprintw(LINES - 3, INTSCOL + 9, "IPKTS");
+	mvprintw(LINES - 2, INTSCOL + 9, "OPKTS");
 
 	mvprintw(VMSTATROW + 0, VMSTATCOL + 10, "forks");
 	mvprintw(VMSTATROW + 1, VMSTATCOL + 10, "fkppw");
@@ -376,10 +374,8 @@ showkre(void)
 	s.nchcount = nchtotal.ncs_goodhits + nchtotal.ncs_badhits +
 	    nchtotal.ncs_miss + nchtotal.ncs_long;
 
-	if (LINES - 1 > VMSTATROW + 17)
-		putint(sum.ifc_ip, VMSTATROW + 17, INTSCOL, 8);
-	if (LINES - 1 > VMSTATROW + 18)
-		putint(sum.ifc_op, VMSTATROW + 18, INTSCOL, 8);
+	putint(sum.ifc_ip, LINES - 3, INTSCOL, 8);
+	putint(sum.ifc_op, LINES - 2, INTSCOL, 8);
 
 	psiz = 0;
 	f2 = 0.0;
