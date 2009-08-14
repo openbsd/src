@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.82 2009/07/21 17:27:49 sobrado Exp $
+.\"	$OpenBSD: systat.1,v 1.83 2009/08/14 17:05:36 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: July 21 2009 $
+.Dd $Mdocdate: August 14 2009 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -472,7 +472,7 @@ and Faults
 .Pq Dq Flt
 which have occurred during the last refresh interval.
 .Pp
-Below the CPU Usage graph are statistics on name translations.
+Below the CPU usage graph are statistics on name translations.
 It lists the number of names translated in the previous interval,
 the number and percentage of the translations that were
 handled by the system wide name translation cache, and
@@ -505,6 +505,9 @@ over the time interval.
 The rest of the column breaks down the total on a device
 by device basis.
 Only devices that have interrupted at least once since boot time are shown.
+.Pp
+Below the Interrupts display is a summary of
+total number of input packets and output packets for all interfaces.
 .Pp
 Below the SWAPPING display and slightly to the left of the Interrupts
 display is a list of virtual memory statistics.
