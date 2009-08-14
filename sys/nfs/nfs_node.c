@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.47 2009/08/11 17:06:11 thib Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.48 2009/08/14 17:52:18 thib Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ nfs_nget(struct mount *mnt, nfsfh_t *fh, int fhsize, struct nfsnode **npp)
 {
 	extern int (**nfsv2_vnodeop_p)(void *);		/* XXX */
 	struct nfsmount		*nmp;
-	struct nfsnode		*np, find;
+	struct nfsnode		*np, find, *np2;
 	struct vnode		*vp, *nvp;
 	struct proc		*p = curproc;		/* XXX */
 	int			 error;
@@ -91,26 +91,41 @@ nfs_nget(struct mount *mnt, nfsfh_t *fh, int fhsize, struct nfsnode **npp)
 	nmp = VFSTONFS(mnt);
 
 loop:
-	/* XXXTHIB: locking. */
+	rw_enter_write(&nfs_hashlock);
 	find.n_fhp = fh;
 	find.n_fhsize = fhsize;
 	np = RB_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
+		rw_exit_write(&nfs_hashlock);
 		vp = NFSTOV(np);
-		if (vget(vp, LK_EXCLUSIVE, p))
+		error = vget(vp, LK_EXCLUSIVE, p);
+		if (error)
 			goto loop;
 		*npp = np;
 		return (0);
 	}
 
-	if (rw_enter(&nfs_hashlock, RW_WRITE|RW_SLEEPFAIL))
-		goto loop;
-
+	/*
+	 * getnewvnode() could recycle a vnode, potentially formerly
+	 * owned by NFS. This will cause a VOP_RECLAIM() to happen,
+	 * which will cause recursive locking, so we unlock before
+	 * calling getnewvnode() lock again afterwards, but must check
+	 * to see if this nfsnode has been added while we did not hold
+	 * the lock.
+	 */
+	rw_exit_write(&nfs_hashlock);
 	error = getnewvnode(VT_NFS, mnt, nfsv2_vnodeop_p, &nvp);
+	rw_enter_write(&nfs_hashlock);
 	if (error) {
 		*npp = NULL;
-		rw_exit(&nfs_hashlock);
+		rw_exit_write(&nfs_hashlock);
 		return (error);
+	}
+
+	np = RB_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
+	if (np != NULL) {
+		rw_exit_write(&nfs_hashlock);
+		goto loop;
 	}
 
 	vp = nvp;
@@ -133,7 +148,8 @@ loop:
 	np->n_fhp = &np->n_fh;
 	bcopy(fh, np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
-	RB_INSERT(nfs_nodetree, &nmp->nm_ntree, np);
+	np2 = RB_INSERT(nfs_nodetree, &nmp->nm_ntree, np);
+	KASSERT(np2 == NULL);
 	np->n_accstamp = -1;
 	rw_exit(&nfs_hashlock);
 	*npp = np;
@@ -190,7 +206,9 @@ nfs_reclaim(void *v)
 		vprint("nfs_reclaim: pushing active", vp);
 #endif
 
+	rw_enter_write(&nfs_hashlock);
 	RB_REMOVE(nfs_nodetree, &nmp->nm_ntree, np);
+	rw_exit_write(&nfs_hashlock);
 
 	if (np->n_rcred)
 		crfree(np->n_rcred);
