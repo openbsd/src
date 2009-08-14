@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.71 2009/08/13 22:34:29 jasper Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.72 2009/08/14 11:35:03 jasper Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -835,13 +835,13 @@ msdosfs_rename(void *v)
 {
 	struct vop_rename_args *ap = v;
 	struct vnode *tvp = ap->a_tvp;
-	register struct vnode *tdvp = ap->a_tdvp;
+	struct vnode *tdvp = ap->a_tdvp;
 	struct vnode *fvp = ap->a_fvp;
-	register struct vnode *fdvp = ap->a_fdvp;
-	register struct componentname *tcnp = ap->a_tcnp;
-	register struct componentname *fcnp = ap->a_fcnp;
+	struct vnode *fdvp = ap->a_fdvp;
+	struct componentname *tcnp = ap->a_tcnp;
+	struct componentname *fcnp = ap->a_fcnp;
 	struct proc *p = curproc; /* XXX */
-	register struct denode *ip, *xp, *dp, *zp;
+	struct denode *ip, *xp, *dp, *zp;
 	u_char toname[11], oldname[11];
 	uint32_t from_diroffset, to_diroffset;
 	u_char to_count;
@@ -1279,10 +1279,10 @@ int
 msdosfs_rmdir(void *v)
 {
 	struct vop_rmdir_args *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct vnode *dvp = ap->a_dvp;
-	register struct componentname *cnp = ap->a_cnp;
-	register struct denode *ip, *dp;
+	struct vnode *vp = ap->a_vp;
+	struct vnode *dvp = ap->a_dvp;
+	struct componentname *cnp = ap->a_cnp;
+	struct denode *ip, *dp;
 	int error;
 
 	ip = VTODE(vp);
@@ -1757,7 +1757,7 @@ int
 msdosfs_advlock(void *v)
 {
 	struct vop_advlock_args *ap = v;
-	register struct denode *dep = VTODE(ap->a_vp);
+	struct denode *dep = VTODE(ap->a_vp);
 
 	return (lf_advlock(&dep->de_lockf, dep->de_FileSize, ap->a_id, ap->a_op,
 	    ap->a_fl, ap->a_flags));

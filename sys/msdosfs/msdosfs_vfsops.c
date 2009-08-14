@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.52 2009/08/13 22:34:29 jasper Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.53 2009/08/14 11:35:03 jasper Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -752,8 +752,8 @@ int
 msdosfs_check_export(struct mount *mp, struct mbuf *nam, int *exflagsp,
     struct ucred **credanonp)
 {
-	register struct netcred *np;
-	register struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
+	struct netcred *np;
+	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 
 	/*
 	 * Get the export permission structure for this <mp, client> tuple.
