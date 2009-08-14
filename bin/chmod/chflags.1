@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.10 2007/05/31 19:19:13 jmc Exp $
+.\"	$OpenBSD: chflags.1,v 1.11 2009/08/14 19:07:11 sobrado Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chflags.1	8.4 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 14 2009 $
 .Dt CHFLAGS 1
 .Os
 .Sh NAME
@@ -90,8 +90,8 @@ Flags are a comma separated list of keywords.
 The following keywords are currently defined:
 .Bd -literal -offset indent
 arch	set the archived flag
-opaque	set the opaque flag (owner or superuser only)
 nodump	set the nodump flag (owner or superuser only)
+opaque	set the opaque flag (owner or superuser only)
 sappnd	set the system append-only flag (superuser only)
 schg	set the system immutable flag (superuser only)
 uappnd	set the user append-only flag (owner or superuser only)
