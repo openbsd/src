@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsi.h,v 1.4 2009/08/13 21:22:38 claudio Exp $ */
+/*	$OpenBSD: iscsi.h,v 1.5 2009/08/14 10:40:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -35,7 +35,9 @@ struct iscsi_pdu {
 
 	u_int32_t	cmdsn;
 
-	u_int8_t	_reserved3[20];
+	u_int32_t	expstatsn;
+
+	u_int8_t	_reserved3[16];
 } __packed;
 
 /*
@@ -321,6 +323,9 @@ struct iscsi_pdu_text_response {
 
 	u_int8_t	_reserved2[12];
 } __packed;
+
+#define ISCSI_TEXT_F_F	0x80
+#define ISCSI_TEXT_F_C	0x40
 
 struct iscsi_pdu_login_request {
 	u_int8_t	opcode;
