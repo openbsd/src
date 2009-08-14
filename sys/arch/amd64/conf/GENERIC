@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.271 2009/08/08 09:31:13 kevlo Exp $
+#	$OpenBSD: GENERIC,v 1.272 2009/08/14 20:39:02 cnst Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -121,6 +121,7 @@ admtmp*	at iic?			# Analog Devices ADM1030
 admtt*	at iic?			# Analog Devices ADM1031
 adt*	at iic?			# Analog Devices ADT7460
 andl*	at iic?			# Andigilog aSC7611
+lisa*	at iic?			# STMicroelectronics LIS331DL motion sensor
 lm*	at iic?			# National Semiconductor LM78/79
 lmenv*	at iic?			# National Semiconductor LM87
 lmtemp*	at iic?			# National Semiconductor LM75/LM77
