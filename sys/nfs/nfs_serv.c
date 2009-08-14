@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.86 2009/08/14 11:06:35 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.87 2009/08/14 13:53:16 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -921,8 +921,6 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		nfsm_reply(NFSX_WCCDATA(info.nmi_v3));
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info);
-		if (dirp)
-			vrele(dirp);
 		error = 0;
 		goto nfsmout;
 	}
@@ -1161,10 +1159,6 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		nfsm_reply(NFSX_WCCDATA(1));
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info);
-		if (dirp) {
-			vrele(dirp);
-			dirp = NULL;
-		}
 		error = 0;
 		goto nfsmout;
 	}
@@ -1854,8 +1848,6 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 		nfsm_reply(NFSX_WCCDATA(info.nmi_v3));
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info);
-		if (dirp)
-			vrele(dirp);
 		error = 0;
 		goto nfsmout;
 	}
