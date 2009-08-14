@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.62 2009/08/13 20:13:04 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.63 2009/08/14 21:27:03 thib Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: August 13 2009 $
+.Dd $Mdocdate: August 14 2009 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -795,6 +795,20 @@ If the
 modifier is specified prints out additional
 information as well.
 .\" --------------------
+.It Xo
+.Ic show nfsnode 
+.Op Cm /f
+.Ar addr
+.Xc
+Prints the
+.Li struct nfsnode 
+at
+.Ar addr.
+If the
+.Cm /f
+modifier is specified prints out additional
+information as well.
+.\" --------------------
 .It Ic show watches
 Displays all watchpoints set with the
 .Ic watch
@@ -861,10 +875,28 @@ See the
 command for more information.
 .El
 .\" --------------------
-.It Ic show all nfsreq
-Display a list of pointers to all outstanding nfs requests.
+.It Ic show all nfsreqs Op Cm /f
+Display information for all outstanding nfs requests.
 .Pp
+.Bl -tag -width foo -compact
+.It Cm /f
+For each nfs requests, print a more detailed output.
+See the
+.Ic show nfsreq 
+command for more information.
 .El
+.\" --------------------
+.It Ic show all nfsnodes Op Cm /f
+Display information about all nfsnodes in the system.
+.Pp
+.Bl -tag -width foo -compact
+.It Cm /f
+For each nfsnode, print a more detailed output.
+See the
+.Ic show nfsnode 
+command for more information.
+.El
+.\" --------------------
 .It Ic callout
 A synonym for the
 .Ic show all callout
