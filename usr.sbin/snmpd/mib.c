@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.30 2008/12/23 08:06:10 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.31 2009/08/14 19:44:14 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1366,6 +1366,7 @@ mib_sensorvalue(struct sensor *s)
 		break;
 	case SENSOR_VOLTS_DC:
 	case SENSOR_VOLTS_AC:
+	case SENSOR_WATTS:
 	case SENSOR_AMPS:
 	case SENSOR_WATTHOUR:
 	case SENSOR_AMPHOUR:
