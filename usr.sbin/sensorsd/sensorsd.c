@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.46 2008/06/14 00:16:10 cnst Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.47 2009/08/14 15:29:19 cnst Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -624,6 +624,9 @@ print_sensor(enum sensor_type type, int64_t value)
 	case SENSOR_VOLTS_DC:
 		snprintf(fbuf, RFBUFSIZ, "%.2f V DC", value / 1000000.0);
 		break;
+	case SENSOR_WATTS:
+		snprintf(fbuf, RFBUFSIZ, "%.2f W", value / 1000000.0);
+		break;
 	case SENSOR_AMPS:
 		snprintf(fbuf, RFBUFSIZ, "%.2f A", value / 1000000.0);
 		break;
@@ -756,6 +759,7 @@ get_val(char *buf, int upper, enum sensor_type type)
 	case SENSOR_DRIVE:
 		rval = val;
 		break;
+	case SENSOR_WATTS:
 	case SENSOR_AMPS:
 	case SENSOR_WATTHOUR:
 	case SENSOR_AMPHOUR:

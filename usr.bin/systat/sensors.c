@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.17 2009/06/25 20:45:43 deraadt Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.18 2009/08/14 15:29:19 cnst Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -226,6 +226,9 @@ showsensor(struct sensinfo *s)
 	case SENSOR_VOLTS_DC:
 		tbprintf("%10.2f V DC",
 		    s->sn_value / 1000000.0);
+		break;
+	case SENSOR_WATTS:
+		tbprintf("%10.2f W", s->sn_value / 1000000.0);
 		break;
 	case SENSOR_AMPS:
 		tbprintf("%10.2f A", s->sn_value / 1000000.0);
