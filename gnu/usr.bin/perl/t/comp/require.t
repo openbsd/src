@@ -15,7 +15,7 @@ krunch.pm krunch.pmc whap.pm whap.pmc);
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 49;
+my $total_tests = 50;
 if ($Is_EBCDIC || $Is_UTF8) { $total_tests -= 3; }
 print "1..$total_tests\n";
 
@@ -256,6 +256,20 @@ EOT
     } else {
 	print "not ok $pmc_dies\n";
     }
+}
+
+#  [perl #49472] Attributes + Unkown Error
+
+{
+    do_require
+	'use strict;sub MODIFY_CODE_ATTRIBUTE{} sub f:Blah {$nosuchvar}';
+    my $err = $@;
+    $err .= "\n" unless $err =~ /\n$/;
+    unless ($err =~ /Global symbol "\$nosuchvar" requires /) {
+	$err =~ s/^/# /mg;
+	print "${err}not ";
+    }
+    print "ok ", ++$i, " [perl #49472]\n";
 }
 
 ##########################################
