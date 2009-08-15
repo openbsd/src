@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.8 2007/09/07 15:00:19 art Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.9 2009/08/15 00:34:44 jsg Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -62,7 +62,7 @@
 
 void k6_mrinit(struct mem_range_softc *sc);
 int k6_mrset(struct mem_range_softc *, struct mem_range_desc *, int *);
-__inline int k6_mrmake(struct mem_range_desc *, u_int32_t *);
+static __inline int k6_mrmake(struct mem_range_desc *, u_int32_t *);
 
 struct mem_range_ops k6_mrops = {
 	k6_mrinit,
@@ -70,7 +70,7 @@ struct mem_range_ops k6_mrops = {
 	NULL
 };
 
-__inline int
+static __inline int
 k6_mrmake(struct mem_range_desc *desc, u_int32_t *mtrr)
 {
 	u_int32_t len = 0, wc, uc;
