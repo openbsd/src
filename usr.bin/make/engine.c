@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.25 2009/05/12 09:46:39 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.26 2009/08/16 09:47:06 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -169,10 +169,11 @@ rewrite_time(const char *name)
 void
 Job_Touch(GNode *gn)
 {
-	if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
+	if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL|OP_PHONY)) {
 		/*
 		 * .JOIN, .USE, and .OPTIONAL targets are "virtual" targets
 		 * and, as such, shouldn't really be created.
+		 * Likewise, .PHONY targets are not really files
 		 */
 		return;
 	}
