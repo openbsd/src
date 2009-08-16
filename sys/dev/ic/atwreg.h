@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwreg.h,v 1.5 2008/06/27 06:03:08 ray Exp $	*/
+/*	$OpenBSD: atwreg.h,v 1.6 2009/08/16 17:24:04 jsg Exp $	*/
 /*	$NetBSD: atwreg.h,v 1.10 2004/07/23 05:01:29 dyoung Exp $	*/
 
 /*
@@ -182,10 +182,10 @@
 #define ATW_PAR_MRME		BIT(21)		/* memory read multiple
 						 * enable
 						 */
-#define ATW_PAR_RAP_MASK	BITS(17, 18)	/* receive auto-polling in
+#define ATW_PAR_RAP_MASK	0x60000	/* receive auto-polling in
 						 * receive suspended state
 						 */
-#define ATW_PAR_CAL_MASK	BITS(14, 15)	/* cache alignment */
+#define ATW_PAR_CAL_MASK	0xc000	/* cache alignment */
 #define		ATW_PAR_CAL_PBL		0x0
 						/* min(8 DW, PBL) */
 #define		ATW_PAR_CAL_8DW		LSHIFT(0x1, ATW_PAR_CAL_MASK)
@@ -193,7 +193,7 @@
 #define		ATW_PAR_CAL_16DW	LSHIFT(0x2, ATW_PAR_CAL_MASK)
 						/* min(32 DW, PBL) */
 #define		ATW_PAR_CAL_32DW	LSHIFT(0x3, ATW_PAR_CAL_MASK)
-#define ATW_PAR_PBL_MASK	BITS(8, 13)	/* programmable burst length */
+#define ATW_PAR_PBL_MASK	0x3f00	/* programmable burst length */
 #define		ATW_PAR_PBL_UNLIMITED	0x0
 #define		ATW_PAR_PBL_1DW		LSHIFT(0x1, ATW_PAR_PBL_MASK)
 #define		ATW_PAR_PBL_2DW		LSHIFT(0x2, ATW_PAR_PBL_MASK)
@@ -202,12 +202,12 @@
 #define		ATW_PAR_PBL_16DW	LSHIFT(0x16, ATW_PAR_PBL_MASK)
 #define		ATW_PAR_PBL_32DW	LSHIFT(0x32, ATW_PAR_PBL_MASK)
 #define ATW_PAR_BLE		BIT(7)		/* big/little endian selection */
-#define ATW_PAR_DSL_MASK	BITS(2, 6)	/* descriptor skip length */
+#define ATW_PAR_DSL_MASK	0x7c	/* descriptor skip length */
 #define ATW_PAR_BAR		BIT(1)		/* bus arbitration */
 #define ATW_PAR_SWR		BIT(0)		/* software reset */
 
 #define ATW_FRCTL_PWRMGMT	BIT(31)		/* power management */
-#define ATW_FRCTL_VER_MASK	BITS(29, 30)	/* protocol version */
+#define ATW_FRCTL_VER_MASK	0x60000000	/* protocol version */
 #define ATW_FRCTL_ORDER		BIT(28)		/* order bit */
 #define ATW_FRCTL_MAXPSP	BIT(27)		/* maximum power saving */
 #define ATW_C_FRCTL_PRSP	BIT(26)		/* 1: driver sends probe
@@ -236,7 +236,7 @@
 #define ATW_FRCTL_DOZEFRM	BIT(18)		/* select pre-sleep frame */
 #define ATW_FRCTL_PSAWAKE	BIT(17)		/* MAC is awake (?) */
 #define ATW_FRCTL_PSMODE	BIT(16)		/* MAC is power-saving (?) */
-#define ATW_FRCTL_AID_MASK	BITS(0, 15)	/* STA Association ID */
+#define ATW_FRCTL_AID_MASK	0xffff	/* STA Association ID */
 
 #define ATW_INTR_PCF		BIT(31)		/* started/ended CFP */
 #define ATW_INTR_BCNTC		BIT(30)		/* transmitted IBSS beacon */
@@ -310,7 +310,7 @@
 #define ATW_NAR_SF		BIT(21)		/* store and forward: ignore
 						 * TX threshold
 						 */
-#define ATW_NAR_TR_MASK		BITS(14, 15)	/* TX threshold */
+#define ATW_NAR_TR_MASK		0xc000	/* TX threshold */
 #define		ATW_NAR_TR_L64		LSHIFT(0x0, ATW_NAR_TR_MASK)
 #define		ATW_NAR_TR_L160		LSHIFT(0x2, ATW_NAR_TR_MASK)
 #define		ATW_NAR_TR_L192		LSHIFT(0x3, ATW_NAR_TR_MASK)
@@ -318,7 +318,7 @@
 #define		ATW_NAR_TR_H288		LSHIFT(0x2, ATW_NAR_TR_MASK)
 #define		ATW_NAR_TR_H544		LSHIFT(0x3, ATW_NAR_TR_MASK)
 #define ATW_NAR_ST		BIT(13)		/* start/stop transmit */
-#define ATW_NAR_OM_MASK		BITS(10, 11)	/* operating mode */
+#define ATW_NAR_OM_MASK		0xc00	/* operating mode */
 #define		ATW_NAR_OM_NORMAL	0x0
 #define		ATW_NAR_OM_LOOPBACK	LSHIFT(0x1, ATW_NAR_OM_MASK)
 #define ATW_NAR_MM		BIT(7)		/* RX any multicast */
@@ -370,21 +370,21 @@
 #endif
 
 #define ATW_LPC_LPCO		BIT(16)		/* lost packet counter overflow */
-#define ATW_LPC_LPC_MASK	BITS(0, 15)	/* lost packet counter */
+#define ATW_LPC_LPC_MASK	0xffff	/* lost packet counter */
 
 #define	ATW_TEST1_CONTROL	BIT(31)		/* "0: read from dxfer_control,
 						 * 1: read from dxfer_state"
 						 */
-#define	ATW_TEST1_DBGREAD_MASK	BITS(30,28)	/* "control of read data,
+#define	ATW_TEST1_DBGREAD_MASK	0x70000000	/* "control of read data,
 						 * debug only"
 						 */
-#define	ATW_TEST1_TXWP_MASK	BITS(27,25)	/* select ATW_WTDP content? */
+#define	ATW_TEST1_TXWP_MASK	0xe000000	/* select ATW_WTDP content? */
 #define	ATW_TEST1_TXWP_TDBD	LSHIFT(0x0, ATW_TEST1_TXWP_MASK)
 #define	ATW_TEST1_TXWP_TDBH	LSHIFT(0x1, ATW_TEST1_TXWP_MASK)
 #define	ATW_TEST1_TXWP_TDBB	LSHIFT(0x2, ATW_TEST1_TXWP_MASK)
 #define	ATW_TEST1_TXWP_TDBP	LSHIFT(0x3, ATW_TEST1_TXWP_MASK)
-#define	ATW_TEST1_RSVD0_MASK	BITS(24,6)	/* reserved */
-#define	ATW_TEST1_TESTMODE_MASK	BITS(5,4)
+#define	ATW_TEST1_RSVD0_MASK	0x1ffffc0	/* reserved */
+#define	ATW_TEST1_TESTMODE_MASK	0x30
 /* normal operation */
 #define	ATW_TEST1_TESTMODE_NORMAL	LSHIFT(0x0, ATW_TEST1_TESTMODE_MASK)
 /* MAC-only mode */
@@ -394,7 +394,7 @@
 /* monitor mode */
 #define	ATW_TEST1_TESTMODE_MONITOR	LSHIFT(0x3, ATW_TEST1_TESTMODE_MASK)
 
-#define	ATW_TEST1_DUMP_MASK	BITS(3,0)		/* select dump signal
+#define	ATW_TEST1_DUMP_MASK	0xf		/* select dump signal
 							 * from dxfer (huh?)
 							 */
 
@@ -404,8 +404,8 @@
 #define ATW_SPR_SCLK		BIT(1)		/* SEEPROM clock */
 #define ATW_SPR_SCS		BIT(0)		/* SEEPROM chip select */
 
-#define ATW_TEST0_BE_MASK	BITS(31, 29)	/* Bus error state */
-#define ATW_TEST0_TS_MASK	BITS(28, 26)	/* Transmit process state */
+#define ATW_TEST0_BE_MASK	0xe0000000	/* Bus error state */
+#define ATW_TEST0_TS_MASK	0x1c000000	/* Transmit process state */
 
 /* Stopped */
 #define ATW_TEST0_TS_STOPPED		LSHIFT(0, ATW_TEST0_TS_MASK)
@@ -432,7 +432,7 @@
 /* FIFO full */
 #define ATW_C_TEST0_TS_FIFOFULL		LSHIFT(7, ATW_TEST0_TS_MASK)
 
-#define ATW_TEST0_RS_MASK	BITS(25, 23)	/* Receive process state */
+#define ATW_TEST0_RS_MASK	0x3800000	/* Receive process state */
 
 /* Stopped */
 #define	ATW_TEST0_RS_STOPPED		LSHIFT(0, ATW_TEST0_RS_MASK)
@@ -467,7 +467,7 @@
 #define ATW_WCSR_WP3E		BIT(27)		/* match wake-up pattern 3 */
 #define ATW_WCSR_WP4E		BIT(26)		/* match wake-up pattern 4 */
 #define ATW_WCSR_WP5E		BIT(25)		/* match wake-up pattern 5 */
-#define ATW_WCSR_BLN_MASK	BITS(21, 23)	/* lose link after BLN lost
+#define ATW_WCSR_BLN_MASK	0xe00000	/* lose link after BLN lost
 						 * beacons
 						 */
 #define ATW_WCSR_TSFTWE		BIT(20)		/* wake up on TSFT out of
@@ -489,30 +489,30 @@
 #define ATW_WCSR_LSO		BIT(0)		/* */
 
 #define ATW_GPTMR_COM_MASK	BIT(16)		/* continuous operation mode */
-#define ATW_GPTMR_GTV_MASK	BITS(0, 15)	/* set countdown in 204us ticks */
+#define ATW_GPTMR_GTV_MASK	0xffff	/* set countdown in 204us ticks */
 
-#define ATW_GPIO_EC1_MASK	BITS(25, 24)	/* GPIO1 event configuration */
-#define ATW_GPIO_LAT_MASK	BITS(21, 20)	/* input latch */
-#define ATW_GPIO_INTEN_MASK	BITS(19, 18)	/* interrupt enable */
-#define ATW_GPIO_EN_MASK	BITS(17, 12)	/* output enable */
-#define ATW_GPIO_O_MASK		BITS(11, 6)	/* output value */
-#define ATW_GPIO_I_MASK		BITS(5, 0)	/* pin static input */
+#define ATW_GPIO_EC1_MASK	0x3000000	/* GPIO1 event configuration */
+#define ATW_GPIO_LAT_MASK	0x300000	/* input latch */
+#define ATW_GPIO_INTEN_MASK	0xc0000	/* interrupt enable */
+#define ATW_GPIO_EN_MASK	0x3f000	/* output enable */
+#define ATW_GPIO_O_MASK		0xfc0	/* output value */
+#define ATW_GPIO_I_MASK		0x3f	/* pin static input */
 
 #define ATW_BBPCTL_TWI			BIT(31)	/* Intersil 3-wire interface */
-#define ATW_BBPCTL_RF3KADDR_MASK	BITS(30, 24)	/* Address for RF3000 */
+#define ATW_BBPCTL_RF3KADDR_MASK	0x7f000000	/* Address for RF3000 */
 #define ATW_BBPCTL_RF3KADDR_ADDR LSHIFT(0x20, ATW_BBPCTL_RF3KADDR_MASK)
 #define ATW_BBPCTL_NEGEDGE_DO		BIT(23)	/* data-out on negative edge */
 #define ATW_BBPCTL_NEGEDGE_DI		BIT(22)	/* data-in on negative edge */
 #define ATW_BBPCTL_CCA_ACTLO		BIT(21)	/* CCA low when busy */
-#define ATW_BBPCTL_TYPE_MASK		BITS(20, 18)	/* BBP type */
+#define ATW_BBPCTL_TYPE_MASK		0x1c0000	/* BBP type */
 #define ATW_BBPCTL_WR			BIT(17)	/* start write; reset on
 						 * completion
 						 */
 #define ATW_BBPCTL_RD		BIT(16)		/* start read; reset on
 						 * completion
 						 */
-#define ATW_BBPCTL_ADDR_MASK	BITS(15, 8)	/* BBP address */
-#define ATW_BBPCTL_DATA_MASK	BITS(7, 0)	/* BBP data */
+#define ATW_BBPCTL_ADDR_MASK	0xff00	/* BBP address */
+#define ATW_BBPCTL_DATA_MASK	0xff	/* BBP data */
 
 #define ATW_SYNCTL_WR		BIT(31)		/* start write; reset on
 						 * completion
@@ -534,24 +534,24 @@
 						 * negative edge, 1: positive
 						 * edge.
 						 */
-#define ATW_SYNCTL_RFTYPE_MASK	BITS(24, 22)	/* RF type */
-#define ATW_SYNCTL_DATA_MASK	BITS(21, 0)	/* synthesizer setting */
+#define ATW_SYNCTL_RFTYPE_MASK	0x1c00000	/* RF type */
+#define ATW_SYNCTL_DATA_MASK	0x3fffff	/* synthesizer setting */
 
-#define ATW_PLCPHD_SIGNAL_MASK	BITS(31, 24)	/* signal field in PLCP header,
+#define ATW_PLCPHD_SIGNAL_MASK	0xff000000	/* signal field in PLCP header,
 						 * only for beacon, ATIM, and
 						 * RTS.
 						 */
-#define ATW_PLCPHD_SERVICE_MASK	BITS(23, 16)	/* service field in PLCP
+#define ATW_PLCPHD_SERVICE_MASK	0xff0000	/* service field in PLCP
 						 * header; with RFMD BBP,
 						 * sets Tx power for beacon,
 						 * RTS, ATIM.
 						 */
 #define ATW_PLCPHD_PMBL		BIT(15)		/* 0: long preamble, 1: short */
 
-#define	ATW_MMIWADDR_LENLO_MASK		BITS(31,24)	/* tx: written 4th */
-#define	ATW_MMIWADDR_LENHI_MASK		BITS(23,16)	/* tx: written 3rd */
-#define	ATW_MMIWADDR_GAIN_MASK		BITS(15,8)	/* tx: written 2nd */
-#define	ATW_MMIWADDR_RATE_MASK		BITS(7,0)	/* tx: written 1st */
+#define	ATW_MMIWADDR_LENLO_MASK		0xff000000	/* tx: written 4th */
+#define	ATW_MMIWADDR_LENHI_MASK		0xff0000	/* tx: written 3rd */
+#define	ATW_MMIWADDR_GAIN_MASK		0xff00	/* tx: written 2nd */
+#define	ATW_MMIWADDR_RATE_MASK		0xff	/* tx: written 1st */
 
 /* was magic 0x100E0C0A */
 #define ATW_MMIWADDR_INTERSIL			  \
@@ -570,10 +570,10 @@
 	(LSHIFT(RF3000_TWI_AI|RF3000_GAINCTL, ATW_MMIWADDR_GAIN_MASK) | \
 	 LSHIFT(RF3000_CTL, ATW_MMIWADDR_RATE_MASK))
 
-#define	ATW_MMIRADDR1_RSVD_MASK		BITS(31, 24)
-#define	ATW_MMIRADDR1_PWRLVL_MASK	BITS(23, 16)
-#define	ATW_MMIRADDR1_RSSI_MASK		BITS(15, 8)
-#define	ATW_MMIRADDR1_RXSTAT_MASK	BITS(7, 0)
+#define	ATW_MMIRADDR1_RSVD_MASK		0xff000000
+#define	ATW_MMIRADDR1_PWRLVL_MASK	0xff0000
+#define	ATW_MMIRADDR1_RSSI_MASK		0xff00
+#define	ATW_MMIRADDR1_RXSTAT_MASK	0xff
 
 /* was magic 0x00007c7e
  *
@@ -598,57 +598,57 @@
 	(LSHIFT(0x7e, ATW_MMIRADDR2_ID_MASK) | \
 	 LSHIFT(0x10, ATW_MMIRADDR2_RXPECNT_MASK))
 
-#define	ATW_MMIRADDR2_ID_MASK	BITS(31, 24)	/* 1st element ID in WEP table
+#define	ATW_MMIRADDR2_ID_MASK	0xff000000	/* 1st element ID in WEP table
 						 * for Probe Response (huh?)
 						 */
 /* RXPE is re-asserted after RXPECNT * 22MHz. */
-#define	ATW_MMIRADDR2_RXPECNT_MASK	BITS(23, 16)
+#define	ATW_MMIRADDR2_RXPECNT_MASK	0xff0000
 #define	ATW_MMIRADDR2_PROREXT		BIT(15)		/* Probe Response
 							 * 11Mb/s length
 							 * extension.
 							 */
-#define	ATW_MMIRADDR2_PRORLEN_MASK	BITS(14, 0)	/* Probe Response
+#define	ATW_MMIRADDR2_PRORLEN_MASK	0x7fff	/* Probe Response
 							 * microsecond length
 							 */
 
 #define ATW_TXBR_ALCUPDATE_MASK	BIT(31)		/* auto-update BBP with ALCSET */
-#define ATW_TXBR_TBCNT_MASK	BITS(16, 20)	/* transmit burst count */
-#define ATW_TXBR_ALCSET_MASK	BITS(8, 15)	/* TX power level set point */
-#define ATW_TXBR_ALCREF_MASK	BITS(0, 7)	/* TX power level reference point */
+#define ATW_TXBR_TBCNT_MASK	0x1f0000	/* transmit burst count */
+#define ATW_TXBR_ALCSET_MASK	0xff00	/* TX power level set point */
+#define ATW_TXBR_ALCREF_MASK	0xff	/* TX power level reference point */
 
 #define ATW_ALCSTAT_MCOV_MASK	BIT(27)		/* MPDU count overflow */
 #define ATW_ALCSTAT_ESOV_MASK	BIT(26)		/* error sum overflow */
-#define ATW_ALCSTAT_MCNT_MASK	BITS(16, 25)	/* MPDU count, unsigned integer */
-#define ATW_ALCSTAT_ERSUM_MASK	BITS(0, 15)	/* power error sum,
+#define ATW_ALCSTAT_MCNT_MASK	0x3ff0000	/* MPDU count, unsigned integer */
+#define ATW_ALCSTAT_ERSUM_MASK	0xffff	/* power error sum,
 						 * 2's complement signed integer
 						 */
 
-#define ATW_TOFS2_PWR1UP_MASK	BITS(31, 28)	/* delay of Tx/Rx from PE1,
+#define ATW_TOFS2_PWR1UP_MASK	0xf0000000	/* delay of Tx/Rx from PE1,
 						 * Radio, PHYRST change after
 						 * power-up, in 2ms units
 						 */
-#define ATW_TOFS2_PWR0PAPE_MASK	BITS(27, 24)	/* delay of PAPE going low
+#define ATW_TOFS2_PWR0PAPE_MASK	0xf000000	/* delay of PAPE going low
 						 * after internal data
 						 * transmit end, in us
 						 */
-#define ATW_TOFS2_PWR1PAPE_MASK	BITS(23, 20)	/* delay of PAPE going high
+#define ATW_TOFS2_PWR1PAPE_MASK	0xf00000	/* delay of PAPE going high
 						 * after TXPE asserted, in us
 						 */
-#define ATW_TOFS2_PWR0TRSW_MASK	BITS(19, 16)	/* delay of TRSW going low
+#define ATW_TOFS2_PWR0TRSW_MASK	0xf0000	/* delay of TRSW going low
 						 * after internal data transmit
 						 * end, in us
 						 */
-#define ATW_TOFS2_PWR1TRSW_MASK	BITS(15, 12)	/* delay of TRSW going high
+#define ATW_TOFS2_PWR1TRSW_MASK	0xf000	/* delay of TRSW going high
 						 * after TXPE asserted, in us
 						 */
-#define ATW_TOFS2_PWR0PE2_MASK	BITS(11, 8)	/* delay of PE2 going low
+#define ATW_TOFS2_PWR0PE2_MASK	0xf00	/* delay of PE2 going low
 						 * after internal data transmit
 						 * end, in us
 						 */
-#define ATW_TOFS2_PWR1PE2_MASK	BITS(7, 4)	/* delay of PE2 going high
+#define ATW_TOFS2_PWR1PE2_MASK	0xf0	/* delay of PE2 going high
 						 * after TXPE asserted, in us
 						 */
-#define ATW_TOFS2_PWR0TXPE_MASK	BITS(3, 0)	/* delay of TXPE going low
+#define ATW_TOFS2_PWR0TXPE_MASK	0xf	/* delay of TXPE going low
 						 * after internal data transmit
 						 * end, in us
 						 */
@@ -660,7 +660,7 @@
 						 * PM = 1.
 						 */
 #define ATW_CMDR_RTE		BIT(4)		/* enable Rx FIFO threshold */
-#define ATW_CMDR_DRT_MASK	BITS(3, 2)	/* drain Rx FIFO threshold */
+#define ATW_CMDR_DRT_MASK	0xc	/* drain Rx FIFO threshold */
 /* 32 bytes */
 #define ATW_CMDR_DRT_8DW	LSHIFT(0x0, ATW_CMDR_DRT_MASK)
 /* 64 bytes */
@@ -676,69 +676,69 @@
 /* TBD PMCSR */
 
 
-#define ATW_PAR0_PAB0_MASK	BITS(0, 7)	/* MAC address byte 0 */
-#define ATW_PAR0_PAB1_MASK	BITS(8, 15)	/* MAC address byte 1 */
-#define ATW_PAR0_PAB2_MASK	BITS(16, 23)	/* MAC address byte 2 */
-#define ATW_PAR0_PAB3_MASK	BITS(24, 31)	/* MAC address byte 3 */
+#define ATW_PAR0_PAB0_MASK	0xff	/* MAC address byte 0 */
+#define ATW_PAR0_PAB1_MASK	0xff00	/* MAC address byte 1 */
+#define ATW_PAR0_PAB2_MASK	0xff0000	/* MAC address byte 2 */
+#define ATW_PAR0_PAB3_MASK	0xff000000	/* MAC address byte 3 */
 
-#define	ATW_C_PAR1_CTD		BITS(16,31)	/* Continuous Tx pattern */ 
-#define ATW_PAR1_PAB5_MASK	BITS(8, 15)	/* MAC address byte 5 */
-#define ATW_PAR1_PAB4_MASK	BITS(0, 7)	/* MAC address byte 4 */
+#define	ATW_C_PAR1_CTD		0xffff0000	/* Continuous Tx pattern */ 
+#define ATW_PAR1_PAB5_MASK	0xff00	/* MAC address byte 5 */
+#define ATW_PAR1_PAB4_MASK	0xff	/* MAC address byte 4 */
 
-#define ATW_MAR0_MAB3_MASK	BITS(31, 24)	/* multicast table bits 31:24 */
-#define ATW_MAR0_MAB2_MASK	BITS(23, 16)	/* multicast table bits 23:16 */
-#define ATW_MAR0_MAB1_MASK	BITS(15, 8)	/* multicast table bits 15:8 */
-#define ATW_MAR0_MAB0_MASK	BITS(7, 0)	/* multicast table bits 7:0 */
+#define ATW_MAR0_MAB3_MASK	0xff000000	/* multicast table bits 31:24 */
+#define ATW_MAR0_MAB2_MASK	0xff0000	/* multicast table bits 23:16 */
+#define ATW_MAR0_MAB1_MASK	0xff00	/* multicast table bits 15:8 */
+#define ATW_MAR0_MAB0_MASK	0xff	/* multicast table bits 7:0 */
 
-#define ATW_MAR1_MAB7_MASK	BITS(31, 24)	/* multicast table bits 63:56 */
-#define ATW_MAR1_MAB6_MASK	BITS(23, 16)	/* multicast table bits 55:48 */
-#define ATW_MAR1_MAB5_MASK	BITS(15, 8)	/* multicast table bits 47:40 */
-#define ATW_MAR1_MAB4_MASK	BITS(7, 0)	/* multicast table bits 39:32 */
+#define ATW_MAR1_MAB7_MASK	0xff000000	/* multicast table bits 63:56 */
+#define ATW_MAR1_MAB6_MASK	0xff0000	/* multicast table bits 55:48 */
+#define ATW_MAR1_MAB5_MASK	0xff00	/* multicast table bits 47:40 */
+#define ATW_MAR1_MAB4_MASK	0xff	/* multicast table bits 39:32 */
 
 /* ATIM destination address */
-#define ATW_ATIMDA0_ATIMB3_MASK	BITS(31,24)
-#define ATW_ATIMDA0_ATIMB2_MASK	BITS(23,16)
-#define ATW_ATIMDA0_ATIMB1_MASK	BITS(15,8)
-#define ATW_ATIMDA0_ATIMB0_MASK	BITS(7,0)
+#define ATW_ATIMDA0_ATIMB3_MASK	0xff000000
+#define ATW_ATIMDA0_ATIMB2_MASK	0xff0000
+#define ATW_ATIMDA0_ATIMB1_MASK	0xff00
+#define ATW_ATIMDA0_ATIMB0_MASK	0xff
 
 /* ATIM destination address, BSSID */
-#define ATW_ABDA1_BSSIDB5_MASK	BITS(31,24)
-#define ATW_ABDA1_BSSIDB4_MASK	BITS(23,16)
-#define ATW_ABDA1_ATIMB5_MASK	BITS(15,8)
-#define ATW_ABDA1_ATIMB4_MASK	BITS(7,0)
+#define ATW_ABDA1_BSSIDB5_MASK	0xff000000
+#define ATW_ABDA1_BSSIDB4_MASK	0xff0000
+#define ATW_ABDA1_ATIMB5_MASK	0xff00
+#define ATW_ABDA1_ATIMB4_MASK	0xff
 
 /* BSSID */
-#define ATW_BSSID0_BSSIDB3_MASK	BITS(31,24)
-#define ATW_BSSID0_BSSIDB2_MASK	BITS(23,16)
-#define ATW_BSSID0_BSSIDB1_MASK	BITS(15,8)
-#define ATW_BSSID0_BSSIDB0_MASK	BITS(7,0)
+#define ATW_BSSID0_BSSIDB3_MASK	0xff000000
+#define ATW_BSSID0_BSSIDB2_MASK	0xff0000
+#define ATW_BSSID0_BSSIDB1_MASK	0xff00
+#define ATW_BSSID0_BSSIDB0_MASK	0xff
 
-#define ATW_TXLMT_MTMLT_MASK	BITS(31,16)	/* max TX MSDU lifetime in TU */
-#define ATW_TXLMT_SRTYLIM_MASK	BITS(7,0)	/* short retry limit */
+#define ATW_TXLMT_MTMLT_MASK	0xffff0000	/* max TX MSDU lifetime in TU */
+#define ATW_TXLMT_SRTYLIM_MASK	0xff	/* short retry limit */
 
-#define ATW_MIBCNT_FFCNT_MASK	BITS(31,24)	/* FCS failure count */
-#define ATW_MIBCNT_AFCNT_MASK	BITS(23,16)	/* ACK failure count */
-#define ATW_MIBCNT_RSCNT_MASK	BITS(15,8)	/* RTS success count */
-#define ATW_MIBCNT_RFCNT_MASK	BITS(7,0)	/* RTS failure count */
+#define ATW_MIBCNT_FFCNT_MASK	0xff000000	/* FCS failure count */
+#define ATW_MIBCNT_AFCNT_MASK	0xff0000	/* ACK failure count */
+#define ATW_MIBCNT_RSCNT_MASK	0xff00	/* RTS success count */
+#define ATW_MIBCNT_RFCNT_MASK	0xff	/* RTS failure count */
 
-#define ATW_BCNT_PLCPH_MASK	BITS(23,16)	/* 11M PLCP length (us) */
-#define ATW_BCNT_PLCPL_MASK	BITS(15,8)	/* 5.5M PLCP length (us) */
-#define ATW_BCNT_BCNT_MASK	BITS(7,0)	/* byte count of beacon frame */
+#define ATW_BCNT_PLCPH_MASK	0xff0000	/* 11M PLCP length (us) */
+#define ATW_BCNT_PLCPL_MASK	0xff00	/* 5.5M PLCP length (us) */
+#define ATW_BCNT_BCNT_MASK	0xff	/* byte count of beacon frame */
 
 /* For ADM8211C/CR */
 /* ATW_C_TSC_TIMTABSEL = 1 */
 #define ATW_C_BCNT_EXTEN1	BIT(31)		/* 11M beacon len. extension */
-#define ATW_C_BCNT_BEANLEN1	BITS(30,16)	/* beacon length in us */
+#define ATW_C_BCNT_BEANLEN1	0x7fff0000	/* beacon length in us */
 /* ATW_C_TSC_TIMTABSEL = 0 */
 #define ATW_C_BCNT_EXTEN0	BIT(15)		/* 11M beacon len. extension */
 #define ATW_C_BCNT_BEANLEN0	BIT(14,0)	/* beacon length in us */
 
-#define ATW_C_TSC_TIMOFS	BITS(31,24)	/* I think this is the
+#define ATW_C_TSC_TIMOFS	0xff000000	/* I think this is the
 						 * SRAM offset for the TIM
 						 */
-#define ATW_C_TSC_TIMLEN	BITS(21,12)	/* length of TIM */
+#define ATW_C_TSC_TIMLEN	0x3ff000	/* length of TIM */
 #define ATW_C_TSC_TIMTABSEL	BIT(4)		/* select TIM table 0 or 1 */
-#define ATW_TSC_TSC_MASK	BITS(3,0)	/* TSFT countdown value, 0
+#define ATW_TSC_TSC_MASK	0xf	/* TSFT countdown value, 0
 						 * disables
 						 */
 
@@ -786,71 +786,71 @@
 /* 1: force TXPE = RXPE = 1 if ATW_CMDR[27] = 0. */
 #define ATW_C_SYNRF_RF2958PD	ATW_SYNRF_PHYRST
 
-#define ATW_BPLI_BP_MASK	BITS(31,16)	/* beacon interval in TU */
-#define ATW_BPLI_LI_MASK	BITS(15,0)	/* STA listen interval in
+#define ATW_BPLI_BP_MASK	0xffff0000	/* beacon interval in TU */
+#define ATW_BPLI_LI_MASK	0xffff	/* STA listen interval in
 						 * beacon intervals
 						 */
 
-#define ATW_C_CAP0_TIMLEN1	BITS(31,24)	/* TIM table 1 len in bytes
+#define ATW_C_CAP0_TIMLEN1	0xff000000	/* TIM table 1 len in bytes
 						 * including TIM ID (XXX huh?)
 						 */
-#define ATW_C_CAP0_TIMLEN0	BITS(23,16)	/* TIM table 0 len in bytes,
+#define ATW_C_CAP0_TIMLEN0	0xff0000	/* TIM table 0 len in bytes,
 						 * including TIM ID (XXX huh?)
 						 */
-#define	ATW_C_CAP0_CWMAX	BITS(11,8)	/* 1 <= CWMAX <= 5 fixes CW?
+#define	ATW_C_CAP0_CWMAX	0xf00	/* 1 <= CWMAX <= 5 fixes CW?
 						 * 5 < CWMAX <= 9 sets max?
 						 * 10?
 						 * default 0
 						 */
 #define ATW_CAP0_RCVDTIM	BIT(4)		/* receive every DTIM */
-#define ATW_CAP0_CHN_MASK	BITS(3,0)	/* current DSSS channel */
+#define ATW_CAP0_CHN_MASK	0xf	/* current DSSS channel */
 
-#define ATW_CAP1_CAPI_MASK	BITS(31,16)	/* capability information */
-#define ATW_CAP1_ATIMW_MASK	BITS(15,0)	/* ATIM window in TU */
+#define ATW_CAP1_CAPI_MASK	0xffff0000	/* capability information */
+#define ATW_CAP1_ATIMW_MASK	0xffff	/* ATIM window in TU */
 
 #define ATW_RMD_ATIMST		BIT(31)		/* ATIM frame TX status */
 #define ATW_RMD_CFP		BIT(30)		/* CFP indicator */
-#define ATW_RMD_PCNT		BITS(27,16)	/* idle time between
+#define ATW_RMD_PCNT		0xfff0000	/* idle time between
 						 * awake/ps mode, in seconds
 						 */
-#define ATW_RMD_RMRD_MASK	BITS(15,0)	/* max RX reception duration
+#define ATW_RMD_RMRD_MASK	0xffff	/* max RX reception duration
 						 * in us
 						 */
 
-#define ATW_CFPP_CFPP		BITS(31,24)	/* CFP unit DTIM */
-#define ATW_CFPP_CFPMD		BITS(23,8)	/* CFP max duration in TU */
-#define ATW_CFPP_DTIMP		BITS(7,0)	/* DTIM period in beacon
+#define ATW_CFPP_CFPP		0xff000000	/* CFP unit DTIM */
+#define ATW_CFPP_CFPMD		0xffff00	/* CFP max duration in TU */
+#define ATW_CFPP_DTIMP		0xff	/* DTIM period in beacon
 						 * intervals
 						 */
-#define ATW_TOFS0_USCNT_MASK	BITS(29,24)	/* number of system clocks
+#define ATW_TOFS0_USCNT_MASK	0x3f000000	/* number of system clocks
 						 * in 1 microsecond.
 						 * Depends PCI bus speed?
 						 */
-#define ATW_C_TOFS0_TUCNT_MASK	BITS(14,10)	/* PIFS (microseconds) */
-#define ATW_TOFS0_TUCNT_MASK	BITS(9,0)	/* TU counter in microseconds */
+#define ATW_C_TOFS0_TUCNT_MASK	0x7c00	/* PIFS (microseconds) */
+#define ATW_TOFS0_TUCNT_MASK	0x3ff	/* TU counter in microseconds */
 
 /* TBD TOFS1 */
-#define ATW_TOFS1_TSFTOFSR_MASK	BITS(31,24)	/* RX TSFT offset in
+#define ATW_TOFS1_TSFTOFSR_MASK	0xff000000	/* RX TSFT offset in
 						 * microseconds: RF+BBP
 						 * latency
 						 */
-#define ATW_TOFS1_TBTTPRE_MASK	BITS(23,8)	/* prediction time, (next
+#define ATW_TOFS1_TBTTPRE_MASK	0xffff00	/* prediction time, (next
 						 * Nth TBTT - TBTTOFS) in
 						 * microseconds (huh?). To
 						 * match TSFT[25:10] (huh?).
 						 */
-#define	ATW_TBTTPRE_MASK	BITS(25, 10)
-#define ATW_TOFS1_TBTTOFS_MASK	BITS(7,0)	/* wake-up time offset before
+#define	ATW_TBTTPRE_MASK	0x3fffc00
+#define ATW_TOFS1_TBTTOFS_MASK	0xff	/* wake-up time offset before
 						 * TBTT in TU
 						 */
-#define ATW_IFST_SLOT_MASK	BITS(27,23)	/* SLOT time in us */
-#define ATW_IFST_SIFS_MASK	BITS(22,15)	/* SIFS time in us */
-#define ATW_IFST_DIFS_MASK	BITS(14,9)	/* DIFS time in us */
-#define ATW_IFST_EIFS_MASK	BITS(8,0)	/* EIFS time in us */
+#define ATW_IFST_SLOT_MASK	0xf800000	/* SLOT time in us */
+#define ATW_IFST_SIFS_MASK	0x7f8000	/* SIFS time in us */
+#define ATW_IFST_DIFS_MASK	0x7e00	/* DIFS time in us */
+#define ATW_IFST_EIFS_MASK	0x1ff	/* EIFS time in us */
 
-#define ATW_RSPT_MART_MASK	BITS(31,16)	/* max response time in us */
-#define ATW_RSPT_MIRT_MASK	BITS(15,8)	/* min response time in us */
-#define ATW_RSPT_TSFTOFST_MASK	BITS(7,0)	/* TX TSFT offset in us */
+#define ATW_RSPT_MART_MASK	0xffff0000	/* max response time in us */
+#define ATW_RSPT_MIRT_MASK	0xff00	/* min response time in us */
+#define ATW_RSPT_TSFTOFST_MASK	0xff	/* TX TSFT offset in us */
 
 #define ATW_WEPCTL_WEPENABLE	BIT(31)		/* enable WEP engine */
 #define ATW_WEPCTL_AUTOSWITCH	BIT(30)		/* auto-switch enable (huh?) */
@@ -867,7 +867,7 @@
 						 * selects a different WEP
 						 * table.
 						 */
-#define ATW_WEPCTL_TBLADD_MASK	BITS(8,0)	/* add to table */
+#define ATW_WEPCTL_TBLADD_MASK	0x1ff	/* add to table */
 
 /* set these bits in the second byte of a SRAM shared key record to affect
  * the use and interpretation of the key in the record.
@@ -875,12 +875,12 @@
 #define ATW_WEP_ENABLED	BIT(7)
 #define ATW_WEP_104BIT	BIT(6)
 
-#define ATW_WESK_DATA_MASK	BITS(15,0)	/* data */
-#define ATW_WEPCNT_WIEC_MASK	BITS(15,0)	/* WEP ICV error count */
+#define ATW_WESK_DATA_MASK	0xffff	/* data */
+#define ATW_WEPCNT_WIEC_MASK	0xffff	/* WEP ICV error count */
 
 #define ATW_MACTEST_FORCE_IV		BIT(23)
 #define ATW_MACTEST_FORCE_KEYID		BIT(22)
-#define ATW_MACTEST_KEYID_MASK		BITS(21,20)
+#define ATW_MACTEST_KEYID_MASK		0x300000
 #define ATW_MACTEST_MMI_USETXCLK	BIT(11)
 
 /* Function Event/Status registers */
@@ -900,22 +900,22 @@
 /* Serial EEPROM offsets */
 #define ATW_SR_CLASS_CODE	(0x00/2)
 #define ATW_SR_FORMAT_VERSION	(0x02/2)
-#define		ATW_SR_MAJOR_MASK	BITS(7, 0)
-#define		ATW_SR_MINOR_MASK	BITS(15,8)
+#define		ATW_SR_MAJOR_MASK	0xff
+#define		ATW_SR_MINOR_MASK	0xff00
 #define ATW_SR_MAC00		(0x08/2)	/* CSR21 */
 #define ATW_SR_MAC01		(0x0A/2)	/* CSR21/22 */
 #define ATW_SR_MAC10		(0x0C/2)	/* CSR22 */
 #define ATW_SR_CSR20		(0x16/2)
-#define		ATW_SR_ANT_MASK		BITS(12, 10)
-#define		ATW_SR_PWRSCALE_MASK	BITS(9, 8)
-#define		ATW_SR_CLKSAVE_MASK	BITS(7, 6)
-#define		ATW_SR_RFTYPE_MASK	BITS(5, 3)
-#define		ATW_SR_BBPTYPE_MASK	BITS(2, 0)
+#define		ATW_SR_ANT_MASK		0x1c00
+#define		ATW_SR_PWRSCALE_MASK	0x300
+#define		ATW_SR_CLKSAVE_MASK	0xc0
+#define		ATW_SR_RFTYPE_MASK	0x38
+#define		ATW_SR_BBPTYPE_MASK	0x7
 #define ATW_SR_CR28_CR03	(0x18/2)
-#define		ATW_SR_CR28_MASK	BITS(15,8)
-#define		ATW_SR_CR03_MASK	BITS(7, 0)
+#define		ATW_SR_CR28_MASK	0xff00
+#define		ATW_SR_CR03_MASK	0xff
 #define ATW_SR_CTRY_CR29	(0x1A/2)
-#define		ATW_SR_CTRY_MASK	BITS(15,8)	/* country code */
+#define		ATW_SR_CTRY_MASK	0xff00	/* country code */
 #define			COUNTRY_FCC	0
 #define			COUNTRY_IC	1
 #define			COUNTRY_ETSI	2
@@ -923,7 +923,7 @@
 #define			COUNTRY_FRANCE	4
 #define			COUNTRY_MMK	5
 #define			COUNTRY_MMK2	6
-#define		ATW_SR_CR29_MASK	BITS(7, 0)
+#define		ATW_SR_CR29_MASK	0xff
 #define ATW_SR_PCI_DEVICE	(0x20/2)	/* CR0 */
 #define ATW_SR_PCI_VENDOR	(0x22/2)	/* CR0 */
 #define ATW_SR_SUB_DEVICE	(0x24/2)	/* CR11 */
@@ -955,8 +955,8 @@ struct atw_txdesc {
 
 #define ATW_TXCTL_OWN		BIT(31)		/* 1: ready to transmit */
 #define ATW_TXCTL_DONE		BIT(30)		/* 0: not processed */
-#define ATW_TXCTL_TXDR_MASK	BITS(27,20)	/* TX data rate (?) */
-#define ATW_TXCTL_TL_MASK	BITS(19,0)	/* retry limit, 0 - 255 */
+#define ATW_TXCTL_TXDR_MASK	0xff00000	/* TX data rate (?) */
+#define ATW_TXCTL_TL_MASK	0xfffff	/* retry limit, 0 - 255 */
 
 #define ATW_TXSTAT_OWN		ATW_TXCTL_OWN	/* 0: not for transmission */
 #define ATW_TXSTAT_DONE		ATW_TXCTL_DONE	/* 1: been processed */
@@ -968,15 +968,15 @@ struct atw_txdesc {
 #define ATW_TXSTAT_SOFBR	BIT(24)		/* packet size != buffer size
 						 * (?)
 						 */
-#define ATW_TXSTAT_ARC_MASK	BITS(11,0)	/* accumulated retry count */
+#define ATW_TXSTAT_ARC_MASK	0xfff	/* accumulated retry count */
 
 #define ATW_TXFLAG_IC		BIT(31)		/* interrupt on completion */
 #define ATW_TXFLAG_LS		BIT(30)		/* packet's last descriptor */
 #define ATW_TXFLAG_FS		BIT(29)		/* packet's first descriptor */
 #define ATW_TXFLAG_TER		BIT(25)		/* end of ring */
 #define ATW_TXFLAG_TCH		BIT(24)		/* at_buf2 is 2nd chain */
-#define ATW_TXFLAG_TBS2_MASK	BITS(23,12)	/* at_buf2 byte count */
-#define ATW_TXFLAG_TBS1_MASK	BITS(11,0)	/* at_buf1 byte count */
+#define ATW_TXFLAG_TBS2_MASK	0xfff000	/* at_buf2 byte count */
+#define ATW_TXFLAG_TBS1_MASK	0xfff	/* at_buf1 byte count */
 
 /* Rx descriptor */ 
 struct atw_rxdesc {
@@ -990,8 +990,8 @@ struct atw_rxdesc {
 
 #define ATW_RXCTL_RER		BIT(25)		/* end of ring */
 #define ATW_RXCTL_RCH		BIT(24)		/* ar_buf2 is 2nd chain */
-#define ATW_RXCTL_RBS2_MASK	BITS(23,12)	/* ar_buf2 byte count */
-#define ATW_RXCTL_RBS1_MASK	BITS(11,0)	/* ar_buf1 byte count */
+#define ATW_RXCTL_RBS2_MASK	0xfff000	/* ar_buf2 byte count */
+#define ATW_RXCTL_RBS1_MASK	0xfff	/* ar_buf1 byte count */
 
 #define ATW_RXSTAT_OWN		BIT(31)		/* 1: NIC may fill descriptor */
 #define ATW_RXSTAT_ES		BIT(30)		/* error summary, 0 on 
@@ -1015,8 +1015,8 @@ struct atw_rxdesc {
 #define ATW_RXSTAT_ICVE		BIT(19)		/* WEP ICV error */
 #define ATW_RXSTAT_DA1		BIT(17)		/* DA bit 1, admin'd address */
 #define ATW_RXSTAT_DA0		BIT(16)		/* DA bit 0, group address */
-#define ATW_RXSTAT_RXDR_MASK	BITS(15,12)	/* RX data rate */
-#define ATW_RXSTAT_FL_MASK	BITS(11,0)	/* RX frame length, last
+#define ATW_RXSTAT_RXDR_MASK	0xf000	/* RX data rate */
+#define ATW_RXSTAT_FL_MASK	0xfff	/* RX frame length, last
 						 * descriptor only
 						 */
 

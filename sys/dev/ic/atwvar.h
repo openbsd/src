@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.18 2009/08/10 20:29:54 deraadt Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.19 2009/08/16 17:24:04 jsg Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -338,8 +338,8 @@ struct atw_frame {
 #define ATW_HDRCTL_UNKNOWN1		BIT(15) /* MAC adds FCS? */
 #define ATW_HDRCTL_UNKNOWN2		BIT(8)
 
-#define ATW_FRAGTHR_FRAGTHR_MASK	BITS(0, 11)
-#define ATW_FRAGNUM_FRAGNUM_MASK	BITS(4, 7)
+#define ATW_FRAGTHR_FRAGTHR_MASK	0x0fff
+#define ATW_FRAGNUM_FRAGNUM_MASK	0x00f0
 
 /* Values for sc_flags. */
 #define	ATWF_MRL		0x00000010	/* memory read line okay */

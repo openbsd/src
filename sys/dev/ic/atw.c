@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.67 2009/08/10 20:29:54 deraadt Exp $	*/
+/*	$OpenBSD: atw.c,v 1.68 2009/08/16 17:24:04 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -2026,7 +2026,7 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 
 /* XXX is the endianness correct? test. */
 #define	atw_calchash(addr) \
-	(ether_crc32_le((addr), IEEE80211_ADDR_LEN) & BITS(5, 0))
+	(ether_crc32_le((addr), IEEE80211_ADDR_LEN) & 0x3f)
 
 /*
  * atw_filter_setup:
