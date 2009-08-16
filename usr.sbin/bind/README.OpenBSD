@@ -1,4 +1,4 @@
-$OpenBSD: README.OpenBSD,v 1.9 2008/02/29 12:21:10 deraadt Exp $
+$OpenBSD: README.OpenBSD,v 1.10 2009/08/16 13:17:24 stsp Exp $
 
 additional features
 
@@ -7,6 +7,7 @@ additional features
 - add 64K entry shuffle (somewhat like Fisher-Yates) implementation to libisc
 - use shuffle instead of LFSR for ID generation
 - strlcpy/strlcat/snprintf fixes
+- parse "nameserver [host]:port" syntax in /etc/resolv.conf
 
 default parameter changes
 

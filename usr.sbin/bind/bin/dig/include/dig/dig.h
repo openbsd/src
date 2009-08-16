@@ -201,6 +201,7 @@ struct dig_query {
 	isc_uint32_t msg_count;
 	isc_uint32_t rr_count;
 	char *servname;
+	in_port_t servport;
 	char *userarg;
 	isc_bufferlist_t sendlist,
 		recvlist,
@@ -221,6 +222,7 @@ struct dig_query {
 
 struct dig_server {
 	char servername[MXNAME];
+	in_port_t serverport;
 	char userarg[MXNAME];
 	ISC_LINK(dig_server_t) link;
 };
@@ -334,7 +336,7 @@ dig_lookup_t *
 clone_lookup(dig_lookup_t *lookold, isc_boolean_t servers);
 
 dig_server_t *
-make_server(const char *servname, const char *userarg);
+make_server(const char *servname, in_port_t servport, const char *userarg);
 
 void
 flush_server_list(void);

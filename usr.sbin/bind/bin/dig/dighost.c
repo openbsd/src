@@ -27,6 +27,7 @@
  * functions in most applications.
  */
 
+#include <arpa/nameser.h>
 #include <config.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -530,7 +531,7 @@ check_result(isc_result_t result, const char *msg) {
  * of finding the answer the user is looking for
  */
 dig_server_t *
-make_server(const char *servname, const char *userarg) {
+make_server(const char *servname, in_port_t servport, const char *userarg) {
 	dig_server_t *srv;
 
 	REQUIRE(servname != NULL);
@@ -541,6 +542,7 @@ make_server(const char *servname, const char *userarg) {
 		fatal("memory allocation failure in %s:%d",
 		      __FILE__, __LINE__);
 	strlcpy(srv->servername, servname, MXNAME);
+	srv->serverport = servport;
 	strlcpy(srv->userarg, userarg, MXNAME);
 	ISC_LINK_INIT(srv, link);
 	return (srv);
@@ -581,7 +583,7 @@ copy_server_list(lwres_conf_t *confdata, dig_serverlist_t *dest) {
 
 		lwres_net_ntop(af, confdata->nameservers[i].address,
 				   tmp, sizeof(tmp));
-		newsrv = make_server(tmp, tmp);
+		newsrv = make_server(tmp, confdata->nameserverports[i], tmp);
 		ISC_LINK_INIT(newsrv, link);
 		ISC_LIST_ENQUEUE(*dest, newsrv, link);
 	}
@@ -624,7 +626,7 @@ set_nameserver(char *opt) {
 	for (i = 0; i < count; i++) {
 		isc_netaddr_fromsockaddr(&netaddr, &sockaddrs[i]);
 		isc_netaddr_format(&netaddr, tmp, sizeof(tmp));
-		srv = make_server(tmp, opt);
+		srv = make_server(tmp, 0, opt);
 		if (srv == NULL)
 			fatal("memory allocation failure");
 		ISC_LIST_APPEND(server_list, srv, link);
@@ -670,7 +672,8 @@ clone_server_list(dig_serverlist_t src, dig_serverlist_t *dest) {
 	debug("clone_server_list()");
 	srv = ISC_LIST_HEAD(src);
 	while (srv != NULL) {
-		newsrv = make_server(srv->servername, srv->userarg);
+		newsrv = make_server(srv->servername, srv->serverport,
+			    srv->userarg);
 		ISC_LINK_INIT(newsrv, link);
 		ISC_LIST_ENQUEUE(*dest, newsrv, link);
 		srv = ISC_LIST_NEXT(srv, link);
@@ -1569,7 +1572,7 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 				domain = dns_fixedname_name(&lookup->fdomain);
 				dns_name_copy(name, domain, NULL);
 			}
-			srv = make_server(namestr, namestr);
+			srv = make_server(namestr, 0, namestr);
 			debug("adding server %s", srv->servername);
 			ISC_LIST_APPEND(lookup->my_server_list, srv, link);
 			dns_rdata_reset(&rdata);
@@ -2033,6 +2036,7 @@ setup_lookup(dig_lookup_t *lookup) {
 		query->first_rr_serial = 0;
 		query->second_rr_serial = 0;
 		query->servname = serv->servername;
+		query->servport = serv->serverport;
 		query->userarg = serv->userarg;
 		query->rr_count = 0;
 		query->msg_count = 0;
@@ -2180,13 +2184,15 @@ send_tcp_connect(dig_query_t *query) {
 	isc_result_t result;
 	dig_query_t *next;
 	dig_lookup_t *l;
+	in_port_t servport;
 
 	debug("send_tcp_connect(%p)", query);
 
 	l = query->lookup;
 	query->waiting_connect = ISC_TRUE;
 	query->lookup->current_query = query;
-	get_address(query->servname, port, &query->sockaddr);
+	servport = query->servport > 0 ? query->servport : NAMESERVER_PORT;
+	get_address(query->servname, servport, &query->sockaddr);
 	
 	if (specified_source &&
 	    (isc_sockaddr_pf(&query->sockaddr) !=
@@ -2249,6 +2255,7 @@ static void
 send_udp(dig_query_t *query) {
 	dig_lookup_t *l = NULL;
 	isc_result_t result;
+	in_port_t servport;
 
 	debug("send_udp(%p)", query);
 
@@ -2259,7 +2266,9 @@ send_udp(dig_query_t *query) {
 	if (!query->recv_made) {
 		/* XXX Check the sense of this, need assertion? */
 		query->waiting_connect = ISC_FALSE;
-		get_address(query->servname, port, &query->sockaddr);
+		servport = query->servport > 0 ?
+		    query->servport : NAMESERVER_PORT;
+		get_address(query->servname, servport, &query->sockaddr);
 
 		result = isc_socket_create(socketmgr,
 					   isc_sockaddr_pf(&query->sockaddr),
@@ -4033,7 +4042,7 @@ prepare_lookup(dns_name_t *name)
 				dns_rdata_reset(&aaaa);
 
 
-				srv = make_server(namestr, namestr);
+				srv = make_server(namestr, 0, namestr);
 	     
 				ISC_LIST_APPEND(lookup->my_server_list,
 						srv, link);
@@ -4063,7 +4072,7 @@ prepare_lookup(dns_name_t *name)
 				printf("ns name: %s\n", namestr);
       
 
-				srv = make_server(namestr, namestr);
+				srv = make_server(namestr, 0, namestr);
 	     
 				ISC_LIST_APPEND(lookup->my_server_list,
 						srv, link);
@@ -4075,7 +4084,7 @@ prepare_lookup(dns_name_t *name)
 		printf("ns name: ");
 		dns_name_print(&ns.name, stdout);
 		printf("\n");
-		srv = make_server(namestr, namestr);
+		srv = make_server(namestr, 0, namestr);
 	     
 		ISC_LIST_APPEND(lookup->my_server_list, srv, link);
 

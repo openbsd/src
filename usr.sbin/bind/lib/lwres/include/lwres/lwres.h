@@ -223,6 +223,7 @@ typedef struct {
 typedef struct {
 	lwres_context_t *lwctx;
 	lwres_addr_t    nameservers[LWRES_CONFMAXNAMESERVERS];
+	lwres_uint16_t  nameserverports[LWRES_CONFMAXNAMESERVERS];
 	lwres_uint8_t	nsnext;		/*%< index for next free slot */
 
 	lwres_addr_t	lwservers[LWRES_CONFMAXLWSERVERS];

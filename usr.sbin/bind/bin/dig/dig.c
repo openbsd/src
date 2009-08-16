@@ -1421,7 +1421,7 @@ getaddresses(dig_lookup_t *lookup, const char *host) {
 	for (i = 0; i < count; i++) {
 		isc_netaddr_fromsockaddr(&netaddr, &sockaddrs[i]);
 		isc_netaddr_format(&netaddr, tmp, sizeof(tmp));
-		srv = make_server(tmp, host);
+		srv = make_server(tmp, 0, host);
 		ISC_LIST_APPEND(lookup->my_server_list, srv, link);
 	}
 	addresscount = count;
