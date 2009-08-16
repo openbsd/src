@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.14 2008/11/04 07:22:35 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.15 2009/08/16 09:51:12 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -71,22 +71,22 @@ struct Suff_;
 #define UNKNOWN		0
 #define BEINGMADE	1
 #define MADE		2
-#define	UPTODATE	3
+#define UPTODATE	3
 #define ERROR		4
 #define ABORTED		5
 #define CYCLE		6
 #define ENDCYCLE	7
 #define NOSUCHNODE	8
 
-#define SPECIAL_NONE	0
-#define	SPECIAL_PATH		21
-#define SPECIAL_MASK		63
-#define SPECIAL_TARGET		64
-#define SPECIAL_SOURCE		128
+#define SPECIAL_NONE	0U
+#define SPECIAL_PATH		21U
+#define SPECIAL_MASK		63U
+#define SPECIAL_TARGET		64U
+#define SPECIAL_SOURCE		128U
 #define SPECIAL_TARGETSOURCE	(SPECIAL_TARGET|SPECIAL_SOURCE)
 
 struct GNode_ {
-    int special_op;	/* special op to apply */
+    unsigned int special_op;	/* special op to apply */
     unsigned char special;/* type of special node */
     char must_make;	/* true if this target needs to be remade */
     char childMade;	/* true if one of this target's children was
@@ -111,7 +111,7 @@ struct GNode_ {
 			 */
     char build_lock;	/* for parallel build in siblings */
     char *path;		/* The full pathname of the file */
-    unsigned int type;		/* Its type (see the OP flags, below) */
+    unsigned int type;	/* Its type (see the OP flags, below) */
     int order;		/* Its wait weight */
 
     int unmade;		/* The number of unmade children */

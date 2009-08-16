@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.96 2009/05/10 11:52:09 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.97 2009/08/16 09:51:12 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ static GNode	    *mainNode;	/* The main target to create. This is the
  * This variable is set in ParseDoDependency
  */
 
-static int specType;
+static unsigned int specType;
 static int waiting;
 
 /*
@@ -131,7 +131,7 @@ static int waiting;
 static GNode	*predecessor;
 
 static void ParseLinkSrc(GNode *, GNode *);
-static int ParseDoOp(GNode **, int);
+static int ParseDoOp(GNode **, unsigned int);
 static int ParseAddDep(GNode *, GNode *);
 static void ParseDoSrc(struct growableArray *, struct growableArray *, int,
     const char *, const char *);
@@ -140,7 +140,7 @@ static void ParseClearPath(void *);
 
 static void add_target_node(const char *, const char *);
 static void add_target_nodes(const char *, const char *);
-static void apply_op(struct growableArray *, int, GNode *);
+static void apply_op(struct growableArray *, unsigned int, GNode *);
 static void ParseDoDependency(const char *);
 static void ParseAddCmd(void *, void *);
 static void ParseHasCommands(void *);
@@ -157,9 +157,9 @@ static void lookup_sysv_style_include(const char *, const char *, bool);
 static void lookup_sysv_include(const char *, const char *);
 static void lookup_conditional_include(const char *, const char *);
 static bool parse_as_special_line(Buffer, Buffer, const char *);
-static int parse_operator(const char **);
+static unsigned int parse_operator(const char **);
 
-static const char *parse_do_targets(Lst, int *, const char *);
+static const char *parse_do_targets(Lst, unsigned int *, const char *);
 static void parse_target_line(struct growableArray *, const char *,
     const char *);
 
@@ -167,34 +167,34 @@ static void finish_commands(struct growableArray *);
 static void parse_commands(struct growableArray *, const char *);
 static void create_special_nodes(void);
 static bool found_delimiter(const char *);
-static int handle_special_targets(Lst);
+static unsigned int handle_special_targets(Lst);
 static void dump_targets(void);
 
-#define	SPECIAL_EXEC		4
-#define SPECIAL_IGNORE		5
-#define SPECIAL_INCLUDES	6
-#define	SPECIAL_INVISIBLE	8
-#define SPECIAL_JOIN		9
-#define SPECIAL_LIBS		10
-#define SPECIAL_MADE		11
-#define SPECIAL_MAIN		12
-#define SPECIAL_MAKE		13
-#define SPECIAL_MFLAGS		14
-#define	SPECIAL_NOTMAIN		15
-#define	SPECIAL_NOTPARALLEL	16
-#define	SPECIAL_NULL		17
-#define	SPECIAL_OPTIONAL	18
-#define SPECIAL_ORDER		19
-#define SPECIAL_PARALLEL	20
-#define SPECIAL_PHONY		22
-#define SPECIAL_PRECIOUS	23
-#define SPECIAL_SILENT		25
-#define SPECIAL_SINGLESHELL	26
-#define SPECIAL_SUFFIXES	27
-#define	SPECIAL_USE		28
-#define SPECIAL_WAIT		29
-#define SPECIAL_NOPATH		30
-#define SPECIAL_ERROR		31
+#define	SPECIAL_EXEC		4U
+#define SPECIAL_IGNORE		5U
+#define SPECIAL_INCLUDES	6U
+#define	SPECIAL_INVISIBLE	8U
+#define SPECIAL_JOIN		9U
+#define SPECIAL_LIBS		10U
+#define SPECIAL_MADE		11U
+#define SPECIAL_MAIN		12U
+#define SPECIAL_MAKE		13U
+#define SPECIAL_MFLAGS		14U
+#define	SPECIAL_NOTMAIN		15U
+#define	SPECIAL_NOTPARALLEL	16U
+#define	SPECIAL_NULL		17U
+#define	SPECIAL_OPTIONAL	18U
+#define SPECIAL_ORDER		19U
+#define SPECIAL_PARALLEL	20U
+#define SPECIAL_PHONY		22U
+#define SPECIAL_PRECIOUS	23U
+#define SPECIAL_SILENT		25U
+#define SPECIAL_SINGLESHELL	26U
+#define SPECIAL_SUFFIXES	27U
+#define	SPECIAL_USE		28U
+#define SPECIAL_WAIT		29U
+#define SPECIAL_NOPATH		30U
+#define SPECIAL_ERROR		31U
 
 
 #define P(k) k, sizeof(k), K_##k
@@ -203,8 +203,8 @@ static struct {
 	const char *keyword;
 	size_t sz;
 	uint32_t hv;
-	int type;
-	int special_op;
+	unsigned int type;
+	unsigned int special_op;
 } specials[] = {
     { P(NODE_EXEC),	SPECIAL_EXEC | SPECIAL_TARGETSOURCE,	OP_EXEC, },
     { P(NODE_IGNORE),	SPECIAL_IGNORE | SPECIAL_TARGETSOURCE, 	OP_IGNORE, },
@@ -290,7 +290,7 @@ ParseLinkSrc(GNode *pgn, GNode *cgn)
  *---------------------------------------------------------------------
  */
 static int
-ParseDoOp(GNode **gnp, int op)
+ParseDoOp(GNode **gnp, unsigned int op)
 {
 	GNode *gn = *gnp;
 	/*
@@ -369,7 +369,7 @@ ParseAddDep(GNode *p, GNode *s)
 }
 
 static void
-apply_op(struct growableArray *targets, int op, GNode *gn)
+apply_op(struct growableArray *targets, unsigned int op, GNode *gn)
 {
 	if (op)
 		gn->type |= op;
@@ -590,7 +590,7 @@ found_delimiter(const char *s)
 }
 
 static const char *
-parse_do_targets(Lst paths, int *op, const char *line)
+parse_do_targets(Lst paths, unsigned int *op, const char *line)
 {
 	const char *cp;
 
@@ -675,7 +675,7 @@ dump_targets()
 	fprintf(stderr, "\n");
 }
 
-static int
+static unsigned int
 handle_special_targets(Lst paths)
 {
 	size_t i;
@@ -747,11 +747,11 @@ handle_special_targets(Lst paths)
 	}
 }
 
-static int
+static unsigned int
 parse_operator(const char **pos)
 {
 	const char *cp = *pos;
-	int op = OP_ERROR;
+	unsigned int op = OP_ERROR;
 
 	if (*cp == '!') {
 		op = OP_FORCE;
@@ -811,10 +811,10 @@ static void
 ParseDoDependency(const char *line)	/* the line to parse */
 {
 	const char *cp; 	/* our current position */
-	int op; 		/* the operator on the line */
+	unsigned int op; 	/* the operator on the line */
 	LIST paths;		/* List of search paths to alter when parsing
 			 	* a list of .PATH targets */
-	int tOp;		/* operator from special target */
+	unsigned int tOp;		/* operator from special target */
 
 
 	waiting = 0;
