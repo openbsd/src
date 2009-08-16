@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.65 2009/06/25 14:33:50 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.66 2009/08/16 09:41:08 sobrado Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: June 25 2009 $
+.Dd $Mdocdate: August 16 2009 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1884,11 +1884,11 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl prverify Ar file
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Op Fl sign Ar file
 .Op Fl signature Ar file
 .Op Fl verify Ar file
-.Op Ar file ...
+.Op Ar
 .Ek
 .Pp
 .Nm openssl
@@ -1898,7 +1898,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Xc
 .Op Fl c
 .Op Fl d
-.Op Ar file ...
+.Op Ar
 .Pp
 The digest functions output the message digest of a supplied
 .Ar file
@@ -1951,7 +1951,7 @@ The output is either
 .Qq Verification OK
 or
 .Qq Verification Failure .
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files containing random data used to seed the random number
 generator, or an EGD socket (see
 .Xr RAND_egd 3 ) .
@@ -1969,7 +1969,7 @@ The output is either
 .Qq Verification OK
 or
 .Qq Verification Failure .
-.It Ar file ...
+.It Ar
 File or files to digest.
 If no files are specified then standard input is used.
 .El
@@ -2014,7 +2014,7 @@ below.
 .Op Fl inform Ar DER | PEM
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Op Ar numbits
 .Ek
 .Pp
@@ -2096,7 +2096,7 @@ be the same as the input filename.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files containing random data used to seed the random number generator,
 or an EGD socket (see
 .Xr RAND_egd 3 ) .
@@ -2322,7 +2322,7 @@ To just output the public part of a private key:
 .Op Fl inform Ar DER | PEM
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Op Ar numbits
 .Ek
 .Pp
@@ -2387,7 +2387,7 @@ be the same as the input filename.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files containing random data used to seed the random number
 generator, or an EGD socket (see
 .Xr RAND_egd 3 ) .
@@ -2788,7 +2788,7 @@ above.
 .Oc
 .Op Fl engine Ar id
 .Op Fl out Ar file
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Op Ar paramfile
 .Ek
 .Pp
@@ -2827,7 +2827,7 @@ The parameters in this file determine the size of the private key.
 DSA parameters can be generated and examined using the
 .Nm openssl dsaparam
 command.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files containing random data used to seed the random number
 generator, or an EGD socket (see
 .Xr RAND_egd 3 ) .
@@ -2851,7 +2851,7 @@ much quicker than RSA key generation, for example.
 .Op Fl 3 | f4
 .Op Fl out Ar file
 .Op Fl passout Ar arg
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Op Ar numbits
 .Ek
 .Pp
@@ -2898,7 +2898,7 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files
 containing random data used to seed the random number
 generator, or an EGD socket (see
@@ -3923,7 +3923,7 @@ compatibility, several of the utilities use the old format at present.
 .Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Ek
 .Pp
 The
@@ -4125,7 +4125,7 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files
 containing random data used to seed the random number generator,
 or an EGD socket (see
@@ -4257,7 +4257,7 @@ $ openssl -in keycerts.pem -export -name "My PKCS#12 file" \e
 .Op Fl hex
 .Op Fl engine Ar id
 .Op Fl out Ar file
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Ar num
 .Pp
 The
@@ -4302,7 +4302,7 @@ Specify hexadecimal output.
 Write to
 .Ar file
 instead of standard output.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 Use specified file or files, or EGD socket (see
 .Xr RAND_egd 3 )
 for seeding the random number generator.
@@ -4354,7 +4354,7 @@ Multiple files can be specified separated by a
 .Op Fl outform Ar DER | PEM
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Op Fl reqexts Ar section
 .Op Fl reqopt Ar option
 .Op Fl set_serial Ar n
@@ -4528,7 +4528,7 @@ see the
 section above.
 .It Fl pubkey
 Outputs the public key.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files containing random data used to seed the random number generator,
 or an EGD socket (see
 .Xr RAND_egd 3 ) .
@@ -5445,7 +5445,7 @@ which it can be seen agrees with the recovered value above.
 .Oc
 .Op Fl engine Ar id
 .Op Fl key Ar keyfile
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Op Fl starttls Ar protocol
 .Op Fl verify Ar depth
 .Ek
@@ -5568,7 +5568,7 @@ Inhibit printing of session and certificate information.
 This implicitly turns on
 .Fl ign_eof
 as well.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files containing random data used to seed the random number generator,
 or an EGD socket (see
 .Xr RAND_egd 3 ) .
@@ -5732,7 +5732,7 @@ We should really report information whenever a session is renegotiated.
 .Op Fl engine Ar id
 .Op Fl id_prefix Ar arg
 .Op Fl key Ar keyfile
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Op Fl Verify Ar depth
 .Op Fl verify Ar depth
 .Ek
@@ -5884,7 +5884,7 @@ This restricts the cipher suites available to the anonymous ones
 .Pq currently just anonymous DH .
 .It Fl quiet
 Inhibit printing of session and certificate information.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files containing random data used to seed the random number generator,
 or an EGD socket (see
 .Xr RAND_egd 3 ) .
@@ -6348,7 +6348,7 @@ The cipher and start time should be printed out in human readable form.
 .Op Fl out Ar file
 .Op Fl outform Ar DER | PEM | SMIME
 .Op Fl passin Ar arg
-.Op Fl rand Ar file ...
+.Op Fl rand Ar
 .Op Fl recip Ar file
 .Op Fl signer Ar file
 .Op Fl subject Ar s
@@ -6581,7 +6581,7 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl rand Ar file ...
+.It Fl rand Ar
 A file or files
 containing random data used to seed the random number generator,
 or an EGD socket (see
