@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.47 2009/06/28 21:08:06 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.48 2009/08/16 20:15:10 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -164,9 +164,12 @@ do_populate() {
 			for _d in ${_D}; do
 				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2> /dev/null)
 				if [ -n "`grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i}`" -a -z "`grep "${CURSUM}" ${WRKDIR}/${i}`" ]; then
-					set -A AUTO_UPG -- ${_d}
+					_array="${_array} ${_d}"
 				fi
 			done
+			if [ -n "${_array}" ]; then
+				set -A AUTO_UPG -- ${_array}
+			fi
 
 			# check for obsolete files
 			awk '{ print $3 }' ${DESTDIR}/${DBDIR}/${i} > ${WRKDIR}/new
