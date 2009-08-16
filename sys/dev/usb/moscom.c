@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.12 2009/08/16 12:57:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -145,7 +145,6 @@ struct moscom_softc {
 	u_char			 sc_dying;
 };
 
-void	moscom_get_status(void *, int, u_char *, u_char *);
 void	moscom_set(void *, int, int, int);
 int	moscom_param(void *, int, struct termios *);
 int	moscom_open(void *, int);
@@ -420,17 +419,6 @@ moscom_param(void *vsc, int portno, struct termios *t)
 #endif
 
 	return (0);
-}
-
-void
-moscom_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
-{
-	struct moscom_softc *sc = vsc;
-	
-	if (msr != NULL)
-		*msr = sc->sc_msr;
-	if (lsr != NULL)
-		*lsr = sc->sc_lsr;
 }
 
 int
