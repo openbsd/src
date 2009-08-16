@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.14 2009/05/18 20:27:19 drahn Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.15 2009/08/16 07:26:36 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -222,7 +222,6 @@ reswitch:
 			put(ch, fd);
 		}
 	}
-	va_end(ap);
 	_dl_flushbuf();
 }
 
