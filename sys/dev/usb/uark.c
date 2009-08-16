@@ -1,4 +1,4 @@
-/*	$OpenBSD: uark.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
+/*	$OpenBSD: uark.c,v 1.12 2009/08/16 12:55:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -74,7 +74,6 @@ struct uark_softc {
 void	uark_get_status(void *, int portno, u_char *lsr, u_char *msr);
 void	uark_set(void *, int, int, int);
 int	uark_param(void *, int, struct termios *);
-int	uark_open(void *sc, int);
 void	uark_break(void *, int, int);
 int	uark_cmd(struct uark_softc *, uint16_t, uint16_t);
 
