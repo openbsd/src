@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.117 2009/05/10 11:07:37 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.118 2009/08/16 09:50:13 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -413,9 +413,6 @@ handle_signal(int signo)
 	else if (signo == SIGHUP || signo == SIGTERM || signo == SIGQUIT)
 		JobInterrupt(false, signo);
 
-	/*
-	 * Leave gracefully if SIGQUIT, rather than core dumping.
-	 */
 	if (signo == SIGQUIT)
 		Finish(0);
 }
@@ -1054,8 +1051,7 @@ handle_all_jobs_output(void)
 
 	nfds = select(largest_fd+1, actual_mask, NULL, NULL, &timeout);
 	handle_all_signals();
-	for (ln = Lst_First(&runningJobs); nfds && ln != NULL;
-	    ln = ln2) {
+	for (ln = Lst_First(&runningJobs); nfds && ln != NULL; ln = ln2) {
 	    	ln2 = Lst_Adv(ln);
 		job = (Job *)Lst_Datum(ln);
 		job->flags &= ~JOB_DIDOUTPUT;
