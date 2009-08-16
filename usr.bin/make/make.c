@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.59 2009/05/10 11:07:37 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.60 2009/08/16 09:53:43 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ Make_Update(GNode *cgn)	/* the child node */
 		 * on this one.
 		 */
 		if (noExecute || is_out_of_date(Dir_MTime(cgn)))
-			cgn->mtime = now;
+			ts_set_from_now(cgn->mtime);
 		if (DEBUG(MAKE))
 			printf("update time: %s\n", time_to_string(cgn->mtime));
 	}

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.56 2008/11/04 07:22:35 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.57 2009/08/16 09:53:43 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -753,6 +753,9 @@ Dir_MTime(GNode *gn)
 	struct file_stamp *entry;
 	unsigned int slot;
 	TIMESTAMP	  mtime;
+
+	if (gn->type & OP_PHONY)
+		return gn->mtime;
 
 	if (gn->type & OP_ARCHV)
 		return Arch_MTime(gn);
