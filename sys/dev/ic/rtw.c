@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.75 2009/08/10 20:29:54 deraadt Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.76 2009/08/16 18:05:51 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -4621,12 +4621,12 @@ rtw_grf5101_pwrstate(struct rtw_softc *sc, enum rtw_pwrstate power)
 {
 	switch (power) {
 	case RTW_OFF:
+		/* FALLTHROUGH */
 	case RTW_SLEEP:
 		rtw_rf_macwrite(sc, 0x07, 0x0000);
 		rtw_rf_macwrite(sc, 0x1f, 0x0045);
 		rtw_rf_macwrite(sc, 0x1f, 0x0005);
 		rtw_rf_macwrite(sc, 0x00, 0x08e4);
-	default:
 		break;
 	case RTW_ON:
 		rtw_rf_macwrite(sc, 0x1f, 0x0001);
