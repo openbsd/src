@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwreg.h,v 1.6 2009/08/16 17:24:04 jsg Exp $	*/
+/*	$OpenBSD: atwreg.h,v 1.7 2009/08/16 18:03:48 jsg Exp $	*/
 /*	$NetBSD: atwreg.h,v 1.10 2004/07/23 05:01:29 dyoung Exp $	*/
 
 /*
@@ -45,11 +45,6 @@
 
 #ifndef _BIT_TWIDDLE
 #define _BIT_TWIDDLE
-/* nth bit, BIT(0) == 0x1. */
-#define BIT(n) (((n) == 32) ? 0 : ((u_int32_t) 1 << (n)))
-
-/* bits m through n, m < n. */
-#define BITS(m, n) ((BIT(MAX((m), (n)) + 1) - 1) ^ (BIT(MIN((m), (n))) - 1))
 
 /* find least significant bit that is set */
 #define LOWEST_SET_BIT(x) ((((x) - 1) & (x)) ^ (x))
@@ -175,11 +170,11 @@
 #define ATW_FFER	0x10C	/* Function force event */
 
 
-#define ATW_PAR_MWIE		BIT(24)		/* memory write and invalidate
+#define ATW_PAR_MWIE		(1<<24)		/* memory write and invalidate
 						 * enable
 						 */
-#define ATW_PAR_MRLE		BIT(23)		/* memory read line enable */
-#define ATW_PAR_MRME		BIT(21)		/* memory read multiple
+#define ATW_PAR_MRLE		(1<<23)		/* memory read line enable */
+#define ATW_PAR_MRME		(1<<21)		/* memory read multiple
 						 * enable
 						 */
 #define ATW_PAR_RAP_MASK	0x60000	/* receive auto-polling in
@@ -201,113 +196,113 @@
 #define		ATW_PAR_PBL_8DW		LSHIFT(0x8, ATW_PAR_PBL_MASK)
 #define		ATW_PAR_PBL_16DW	LSHIFT(0x16, ATW_PAR_PBL_MASK)
 #define		ATW_PAR_PBL_32DW	LSHIFT(0x32, ATW_PAR_PBL_MASK)
-#define ATW_PAR_BLE		BIT(7)		/* big/little endian selection */
+#define ATW_PAR_BLE		(1<<7)		/* big/little endian selection */
 #define ATW_PAR_DSL_MASK	0x7c	/* descriptor skip length */
-#define ATW_PAR_BAR		BIT(1)		/* bus arbitration */
-#define ATW_PAR_SWR		BIT(0)		/* software reset */
+#define ATW_PAR_BAR		(1<<1)		/* bus arbitration */
+#define ATW_PAR_SWR		(1<<0)		/* software reset */
 
-#define ATW_FRCTL_PWRMGMT	BIT(31)		/* power management */
+#define ATW_FRCTL_PWRMGMT	(1<<31)		/* power management */
 #define ATW_FRCTL_VER_MASK	0x60000000	/* protocol version */
-#define ATW_FRCTL_ORDER		BIT(28)		/* order bit */
-#define ATW_FRCTL_MAXPSP	BIT(27)		/* maximum power saving */
-#define ATW_C_FRCTL_PRSP	BIT(26)		/* 1: driver sends probe
+#define ATW_FRCTL_ORDER		(1<<28)		/* order bit */
+#define ATW_FRCTL_MAXPSP	(1<<27)		/* maximum power saving */
+#define ATW_C_FRCTL_PRSP	(1<<26)		/* 1: driver sends probe
 						 *    response
 						 * 0: ASIC sends prresp
 						 */
-#define ATW_C_FRCTL_DRVBCON	BIT(25)		/* 1: driver sends beacons
+#define ATW_C_FRCTL_DRVBCON	(1<<25)		/* 1: driver sends beacons
 						 * 0: ASIC sends beacons
 						 */
-#define ATW_C_FRCTL_DRVLINKCTRL	BIT(24)		/* 1: driver controls link LED
+#define ATW_C_FRCTL_DRVLINKCTRL	(1<<24)		/* 1: driver controls link LED
 						 * 0: ASIC controls link LED
 						 */
-#define ATW_C_FRCTL_DRVLINKON	BIT(23)		/* 1: turn on link LED
+#define ATW_C_FRCTL_DRVLINKON	(1<<23)		/* 1: turn on link LED
 						 * 0: turn off link LED
 						 */
-#define ATW_C_FRCTL_CTX_DATA	BIT(22)		/* 0: set by CSR28
+#define ATW_C_FRCTL_CTX_DATA	(1<<22)		/* 0: set by CSR28
 						 * 1: random
 						 */
-#define ATW_C_FRCTL_RSVFRM	BIT(21)		/* 1: receive "reserved" 
+#define ATW_C_FRCTL_RSVFRM	(1<<21)		/* 1: receive "reserved" 
 						 * frames, 0: ignore
 						 * reserved frames
 						 */
-#define ATW_C_FRCTL_CFEND	BIT(19)		/* write to send CF_END,
+#define ATW_C_FRCTL_CFEND	(1<<19)		/* write to send CF_END,
 						 * ADM8211C/CR clears
 						 */
-#define ATW_FRCTL_DOZEFRM	BIT(18)		/* select pre-sleep frame */
-#define ATW_FRCTL_PSAWAKE	BIT(17)		/* MAC is awake (?) */
-#define ATW_FRCTL_PSMODE	BIT(16)		/* MAC is power-saving (?) */
+#define ATW_FRCTL_DOZEFRM	(1<<18)		/* select pre-sleep frame */
+#define ATW_FRCTL_PSAWAKE	(1<<17)		/* MAC is awake (?) */
+#define ATW_FRCTL_PSMODE	(1<<16)		/* MAC is power-saving (?) */
 #define ATW_FRCTL_AID_MASK	0xffff	/* STA Association ID */
 
-#define ATW_INTR_PCF		BIT(31)		/* started/ended CFP */
-#define ATW_INTR_BCNTC		BIT(30)		/* transmitted IBSS beacon */
-#define ATW_INTR_GPINT		BIT(29)		/* GPIO interrupt */
-#define ATW_INTR_LINKOFF	BIT(28)		/* lost ATW_WCSR_BLN beacons */
-#define ATW_INTR_ATIMTC		BIT(27)		/* transmitted ATIM */
-#define ATW_INTR_TSFTF		BIT(26)		/* TSFT out of range */
-#define ATW_INTR_TSCZ		BIT(25)		/* TSC countdown expired */
-#define ATW_INTR_LINKON		BIT(24)		/* matched SSID, BSSID */
-#define ATW_INTR_SQL		BIT(23)		/* Marvel signal quality */
-#define ATW_INTR_WEPTD		BIT(22)		/* switched WEP table */
-#define ATW_INTR_ATIME		BIT(21)		/* ended ATIM window */
-#define ATW_INTR_TBTT		BIT(20)		/* (TBTT) Target Beacon TX Time
+#define ATW_INTR_PCF		(1<<31)		/* started/ended CFP */
+#define ATW_INTR_BCNTC		(1<<30)		/* transmitted IBSS beacon */
+#define ATW_INTR_GPINT		(1<<29)		/* GPIO interrupt */
+#define ATW_INTR_LINKOFF	(1<<28)		/* lost ATW_WCSR_BLN beacons */
+#define ATW_INTR_ATIMTC		(1<<27)		/* transmitted ATIM */
+#define ATW_INTR_TSFTF		(1<<26)		/* TSFT out of range */
+#define ATW_INTR_TSCZ		(1<<25)		/* TSC countdown expired */
+#define ATW_INTR_LINKON		(1<<24)		/* matched SSID, BSSID */
+#define ATW_INTR_SQL		(1<<23)		/* Marvel signal quality */
+#define ATW_INTR_WEPTD		(1<<22)		/* switched WEP table */
+#define ATW_INTR_ATIME		(1<<21)		/* ended ATIM window */
+#define ATW_INTR_TBTT		(1<<20)		/* (TBTT) Target Beacon TX Time
 						 * passed
 						 */
-#define ATW_INTR_NISS		BIT(16)		/* normal interrupt status
+#define ATW_INTR_NISS		(1<<16)		/* normal interrupt status
 						 * summary: any of 31, 30, 27,
 						 * 24, 14, 12, 6, 2, 0.
 						 */
-#define ATW_INTR_AISS		BIT(15)		/* abnormal interrupt status
+#define ATW_INTR_AISS		(1<<15)		/* abnormal interrupt status
 						 * summary: any of 29, 28, 26,
 						 * 25, 23, 22, 13, 11, 8, 7, 5,
 						 * 4, 3, 1.
 						 */
-#define ATW_INTR_TEIS		BIT(14)		/* transmit early interrupt
+#define ATW_INTR_TEIS		(1<<14)		/* transmit early interrupt
 						 * status: moved TX packet to
 						 * FIFO
 						 */
-#define ATW_INTR_FBE		BIT(13)		/* fatal bus error */
-#define ATW_INTR_REIS		BIT(12)		/* receive early interrupt
+#define ATW_INTR_FBE		(1<<13)		/* fatal bus error */
+#define ATW_INTR_REIS		(1<<12)		/* receive early interrupt
 						 * status: RX packet filled
 						 * its first descriptor
 						 */
-#define ATW_INTR_GPTT		BIT(11)		/* general purpose timer expired */
-#define ATW_INTR_RPS		BIT(8)		/* stopped receive process */
-#define ATW_INTR_RDU		BIT(7)		/* receive descriptor
+#define ATW_INTR_GPTT		(1<<11)		/* general purpose timer expired */
+#define ATW_INTR_RPS		(1<<8)		/* stopped receive process */
+#define ATW_INTR_RDU		(1<<7)		/* receive descriptor
 						 * unavailable
 						 */
-#define ATW_INTR_RCI		BIT(6)		/* completed packet reception */
-#define ATW_INTR_TUF		BIT(5)		/* transmit underflow */
-#define ATW_INTR_TRT		BIT(4)		/* transmit retry count
+#define ATW_INTR_RCI		(1<<6)		/* completed packet reception */
+#define ATW_INTR_TUF		(1<<5)		/* transmit underflow */
+#define ATW_INTR_TRT		(1<<4)		/* transmit retry count
 						 * expired
 						 */
-#define ATW_INTR_TLT		BIT(3)		/* transmit lifetime exceeded */
-#define ATW_INTR_TDU		BIT(2)		/* transmit descriptor
+#define ATW_INTR_TLT		(1<<3)		/* transmit lifetime exceeded */
+#define ATW_INTR_TDU		(1<<2)		/* transmit descriptor
 						 * unavailable
 						 */
-#define ATW_INTR_TPS		BIT(1)		/* stopped transmit process */
-#define ATW_INTR_TCI		BIT(0)		/* completed transmit */
-#define ATW_NAR_TXCF		BIT(31)		/* stop process on TX failure */
-#define ATW_NAR_HF		BIT(30)		/* flush TX FIFO to host (?) */
-#define ATW_NAR_UTR		BIT(29)		/* select retry count source */
-#define ATW_NAR_PCF		BIT(28)		/* use one/both transmit
+#define ATW_INTR_TPS		(1<<1)		/* stopped transmit process */
+#define ATW_INTR_TCI		(1<<0)		/* completed transmit */
+#define ATW_NAR_TXCF		(1<<31)		/* stop process on TX failure */
+#define ATW_NAR_HF		(1<<30)		/* flush TX FIFO to host (?) */
+#define ATW_NAR_UTR		(1<<29)		/* select retry count source */
+#define ATW_NAR_PCF		(1<<28)		/* use one/both transmit
 						 * descriptor base addresses
 						 */
-#define ATW_NAR_CFP		BIT(27)		/* indicate more TX data to
+#define ATW_NAR_CFP		(1<<27)		/* indicate more TX data to
 						 * point coordinator
 						 */
-#define ATW_C_NAR_APSTA		BIT(26)		/* 0: STA mode
+#define ATW_C_NAR_APSTA		(1<<26)		/* 0: STA mode
 						 * 1: AP mode
 						 */
-#define ATW_C_NAR_TDBBE		BIT(25)		/* 0: disable TDBB
+#define ATW_C_NAR_TDBBE		(1<<25)		/* 0: disable TDBB
 						 * 1: enable TDBB
 						 */
-#define ATW_C_NAR_TDBHE		BIT(24)		/* 0: disable TDBH
+#define ATW_C_NAR_TDBHE		(1<<24)		/* 0: disable TDBH
 						 * 1: enable TDBH
 						 */
-#define ATW_C_NAR_TDBHT		BIT(23)		/* write 1 to make ASIC
+#define ATW_C_NAR_TDBHT		(1<<23)		/* write 1 to make ASIC
 						 * poll TDBH once; ASIC clears
 						 */
-#define ATW_NAR_SF		BIT(21)		/* store and forward: ignore
+#define ATW_NAR_SF		(1<<21)		/* store and forward: ignore
 						 * TX threshold
 						 */
 #define ATW_NAR_TR_MASK		0xc000	/* TX threshold */
@@ -317,62 +312,62 @@
 #define		ATW_NAR_TR_H96		LSHIFT(0x0, ATW_NAR_TR_MASK)
 #define		ATW_NAR_TR_H288		LSHIFT(0x2, ATW_NAR_TR_MASK)
 #define		ATW_NAR_TR_H544		LSHIFT(0x3, ATW_NAR_TR_MASK)
-#define ATW_NAR_ST		BIT(13)		/* start/stop transmit */
+#define ATW_NAR_ST		(1<<13)		/* start/stop transmit */
 #define ATW_NAR_OM_MASK		0xc00	/* operating mode */
 #define		ATW_NAR_OM_NORMAL	0x0
 #define		ATW_NAR_OM_LOOPBACK	LSHIFT(0x1, ATW_NAR_OM_MASK)
-#define ATW_NAR_MM		BIT(7)		/* RX any multicast */
-#define ATW_NAR_PR		BIT(6)		/* promiscuous mode */
-#define ATW_NAR_EA		BIT(5)		/* match ad hoc packets (?) */
-#define ATW_NAR_DISPCF		BIT(4)		/* 1: PCF *not* supported
+#define ATW_NAR_MM		(1<<7)		/* RX any multicast */
+#define ATW_NAR_PR		(1<<6)		/* promiscuous mode */
+#define ATW_NAR_EA		(1<<5)		/* match ad hoc packets (?) */
+#define ATW_NAR_DISPCF		(1<<4)		/* 1: PCF *not* supported
 						 * 0: PCF supported
 						 */
-#define ATW_NAR_PB		BIT(3)		/* pass bad packets */
-#define ATW_NAR_STPDMA		BIT(2)		/* stop DMA, abort packet */
-#define ATW_NAR_SR		BIT(1)		/* start/stop receive */
-#define ATW_NAR_CTX		BIT(0)		/* continuous TX mode */
+#define ATW_NAR_PB		(1<<3)		/* pass bad packets */
+#define ATW_NAR_STPDMA		(1<<2)		/* stop DMA, abort packet */
+#define ATW_NAR_SR		(1<<1)		/* start/stop receive */
+#define ATW_NAR_CTX		(1<<0)		/* continuous TX mode */
 
 /* IER bits are identical to STSR bits. Use ATW_INTR_*. */
 #if 0
-#define ATW_IER_NIE		BIT(16)		/* normal interrupt enable */
-#define ATW_IER_AIE		BIT(15)		/* abnormal interrupt enable */
+#define ATW_IER_NIE		(1<<16)		/* normal interrupt enable */
+#define ATW_IER_AIE		(1<<15)		/* abnormal interrupt enable */
 /* normal interrupts: combine with ATW_IER_NIE */
-#define ATW_IER_PCFIE		BIT(31)		/* STA entered CFP */
-#define ATW_IER_BCNTCIE		BIT(30)		/* STA TX'd beacon */
-#define ATW_IER_ATIMTCIE	BIT(27)		/* transmitted ATIM */
-#define ATW_IER_LINKONIE	BIT(24)		/* matched beacon */
-#define ATW_IER_ATIMIE		BIT(21)		/* ended ATIM window */
-#define ATW_IER_TBTTIE		BIT(20)		/* TBTT */
-#define ATW_IER_TEIE		BIT(14)		/* moved TX packet to FIFO */
-#define ATW_IER_REIE		BIT(12)		/* RX packet filled its first
+#define ATW_IER_PCFIE		(1<<31)		/* STA entered CFP */
+#define ATW_IER_BCNTCIE		(1<<30)		/* STA TX'd beacon */
+#define ATW_IER_ATIMTCIE	(1<<27)		/* transmitted ATIM */
+#define ATW_IER_LINKONIE	(1<<24)		/* matched beacon */
+#define ATW_IER_ATIMIE		(1<<21)		/* ended ATIM window */
+#define ATW_IER_TBTTIE		(1<<20)		/* TBTT */
+#define ATW_IER_TEIE		(1<<14)		/* moved TX packet to FIFO */
+#define ATW_IER_REIE		(1<<12)		/* RX packet filled its first
 						 * descriptor
 						 */
-#define ATW_IER_RCIE		BIT(6)		/* completed RX */ 
-#define ATW_IER_TDUIE		BIT(2)		/* transmit descriptor
+#define ATW_IER_RCIE		(1<<6)		/* completed RX */ 
+#define ATW_IER_TDUIE		(1<<2)		/* transmit descriptor
 						 * unavailable
 						 */
-#define ATW_IER_TCIE		BIT(0)		/* completed TX */
+#define ATW_IER_TCIE		(1<<0)		/* completed TX */
 /* abnormal interrupts: combine with ATW_IER_AIE */
-#define ATW_IER_GPIE		BIT(29)		/* GPIO interrupt */
-#define ATW_IER_LINKOFFIE	BIT(28)		/* lost beacon */
-#define ATW_IER_TSFTFIE		BIT(26)		/* TSFT out of range */
-#define ATW_IER_TSCIE		BIT(25)		/* TSC countdown expired */
-#define ATW_IER_SQLIE		BIT(23)		/* signal quality */
-#define ATW_IER_WEPIE		BIT(22)		/* finished WEP table switch */
-#define ATW_IER_FBEIE		BIT(13)		/* fatal bus error */
-#define ATW_IER_GPTIE		BIT(11)		/* general purpose timer expired */
-#define ATW_IER_RPSIE		BIT(8)		/* stopped receive process */
-#define ATW_IER_RUIE		BIT(7)		/* receive descriptor unavailable */
-#define ATW_IER_TUIE		BIT(5)		/* transmit underflow */
-#define ATW_IER_TRTIE		BIT(4)		/* exceeded transmit retry count */
-#define ATW_IER_TLTTIE		BIT(3)		/* transmit lifetime exceeded */
-#define ATW_IER_TPSIE		BIT(1)		/* stopped transmit process */
+#define ATW_IER_GPIE		(1<<29)		/* GPIO interrupt */
+#define ATW_IER_LINKOFFIE	(1<<28)		/* lost beacon */
+#define ATW_IER_TSFTFIE		(1<<26)		/* TSFT out of range */
+#define ATW_IER_TSCIE		(1<<25)		/* TSC countdown expired */
+#define ATW_IER_SQLIE		(1<<23)		/* signal quality */
+#define ATW_IER_WEPIE		(1<<22)		/* finished WEP table switch */
+#define ATW_IER_FBEIE		(1<<13)		/* fatal bus error */
+#define ATW_IER_GPTIE		(1<<11)		/* general purpose timer expired */
+#define ATW_IER_RPSIE		(1<<8)		/* stopped receive process */
+#define ATW_IER_RUIE		(1<<7)		/* receive descriptor unavailable */
+#define ATW_IER_TUIE		(1<<5)		/* transmit underflow */
+#define ATW_IER_TRTIE		(1<<4)		/* exceeded transmit retry count */
+#define ATW_IER_TLTTIE		(1<<3)		/* transmit lifetime exceeded */
+#define ATW_IER_TPSIE		(1<<1)		/* stopped transmit process */
 #endif
 
-#define ATW_LPC_LPCO		BIT(16)		/* lost packet counter overflow */
+#define ATW_LPC_LPCO		(1<<16)		/* lost packet counter overflow */
 #define ATW_LPC_LPC_MASK	0xffff	/* lost packet counter */
 
-#define	ATW_TEST1_CONTROL	BIT(31)		/* "0: read from dxfer_control,
+#define	ATW_TEST1_CONTROL	(1<<31)		/* "0: read from dxfer_control,
 						 * 1: read from dxfer_state"
 						 */
 #define	ATW_TEST1_DBGREAD_MASK	0x70000000	/* "control of read data,
@@ -398,11 +393,11 @@
 							 * from dxfer (huh?)
 							 */
 
-#define ATW_SPR_SRS		BIT(11)		/* activate SEEPROM access */
-#define ATW_SPR_SDO		BIT(3)		/* data out of SEEPROM */
-#define ATW_SPR_SDI		BIT(2)		/* data into SEEPROM */
-#define ATW_SPR_SCLK		BIT(1)		/* SEEPROM clock */
-#define ATW_SPR_SCS		BIT(0)		/* SEEPROM chip select */
+#define ATW_SPR_SRS		(1<<11)		/* activate SEEPROM access */
+#define ATW_SPR_SDO		(1<<3)		/* data out of SEEPROM */
+#define ATW_SPR_SDI		(1<<2)		/* data into SEEPROM */
+#define ATW_SPR_SCLK		(1<<1)		/* SEEPROM clock */
+#define ATW_SPR_SCS		(1<<0)		/* SEEPROM chip select */
 
 #define ATW_TEST0_BE_MASK	0xe0000000	/* Bus error state */
 #define ATW_TEST0_TS_MASK	0x1c000000	/* Transmit process state */
@@ -451,44 +446,44 @@
 /* Running - queue current frame from FIFO into buffer */
 #define	ATW_TEST0_RS_QUEUE		LSHIFT(7, ATW_TEST0_RS_MASK)
 
-#define ATW_TEST0_EPNE		BIT(18)		/* SEEPROM not detected */
-#define ATW_TEST0_EPSNM		BIT(17)		/* SEEPROM bad signature */
-#define ATW_TEST0_EPTYP_MASK	BIT(16)		/* SEEPROM type
+#define ATW_TEST0_EPNE		(1<<18)		/* SEEPROM not detected */
+#define ATW_TEST0_EPSNM		(1<<17)		/* SEEPROM bad signature */
+#define ATW_TEST0_EPTYP_MASK	(1<<16)		/* SEEPROM type
 						 * 1: 93c66,
 						 * 0: 93c46
 						 */
 #define	ATW_TEST0_EPTYP_93c66		ATW_TEST0_EPTYP_MASK
 #define	ATW_TEST0_EPTYP_93c46		0
-#define ATW_TEST0_EPRLD		BIT(15)		/* recall SEEPROM (write 1) */
+#define ATW_TEST0_EPRLD		(1<<15)		/* recall SEEPROM (write 1) */
 
-#define ATW_WCSR_CRCT		BIT(30)		/* CRC-16 type */
-#define ATW_WCSR_WP1E		BIT(29)		/* match wake-up pattern 1 */
-#define ATW_WCSR_WP2E		BIT(28)		/* match wake-up pattern 2 */
-#define ATW_WCSR_WP3E		BIT(27)		/* match wake-up pattern 3 */
-#define ATW_WCSR_WP4E		BIT(26)		/* match wake-up pattern 4 */
-#define ATW_WCSR_WP5E		BIT(25)		/* match wake-up pattern 5 */
+#define ATW_WCSR_CRCT		(1<<30)		/* CRC-16 type */
+#define ATW_WCSR_WP1E		(1<<29)		/* match wake-up pattern 1 */
+#define ATW_WCSR_WP2E		(1<<28)		/* match wake-up pattern 2 */
+#define ATW_WCSR_WP3E		(1<<27)		/* match wake-up pattern 3 */
+#define ATW_WCSR_WP4E		(1<<26)		/* match wake-up pattern 4 */
+#define ATW_WCSR_WP5E		(1<<25)		/* match wake-up pattern 5 */
 #define ATW_WCSR_BLN_MASK	0xe00000	/* lose link after BLN lost
 						 * beacons
 						 */
-#define ATW_WCSR_TSFTWE		BIT(20)		/* wake up on TSFT out of
+#define ATW_WCSR_TSFTWE		(1<<20)		/* wake up on TSFT out of
 						 * range
 						 */
-#define ATW_WCSR_TIMWE		BIT(19)		/* wake up on TIM */
-#define ATW_WCSR_ATIMWE		BIT(18)		/* wake up on ATIM */
-#define ATW_WCSR_KEYWE		BIT(17)		/* wake up on key update */
-#define ATW_WCSR_WFRE		BIT(10)		/* wake up on wake-up frame */
-#define ATW_WCSR_MPRE		BIT(9)		/* wake up on magic packet */
-#define ATW_WCSR_LSOE		BIT(8)		/* wake up on link loss */
+#define ATW_WCSR_TIMWE		(1<<19)		/* wake up on TIM */
+#define ATW_WCSR_ATIMWE		(1<<18)		/* wake up on ATIM */
+#define ATW_WCSR_KEYWE		(1<<17)		/* wake up on key update */
+#define ATW_WCSR_WFRE		(1<<10)		/* wake up on wake-up frame */
+#define ATW_WCSR_MPRE		(1<<9)		/* wake up on magic packet */
+#define ATW_WCSR_LSOE		(1<<8)		/* wake up on link loss */
 /* wake-up reasons correspond to enable bits */
-#define ATW_WCSR_KEYUP		BIT(6)		/* */
-#define ATW_WCSR_TSFTW		BIT(5)		/* */
-#define ATW_WCSR_TIMW		BIT(4)		/* */
-#define ATW_WCSR_ATIMW		BIT(3)		/* */
-#define ATW_WCSR_WFR		BIT(2)		/* */
-#define ATW_WCSR_MPR		BIT(1)		/* */
-#define ATW_WCSR_LSO		BIT(0)		/* */
+#define ATW_WCSR_KEYUP		(1<<6)		/* */
+#define ATW_WCSR_TSFTW		(1<<5)		/* */
+#define ATW_WCSR_TIMW		(1<<4)		/* */
+#define ATW_WCSR_ATIMW		(1<<3)		/* */
+#define ATW_WCSR_WFR		(1<<2)		/* */
+#define ATW_WCSR_MPR		(1<<1)		/* */
+#define ATW_WCSR_LSO		(1<<0)		/* */
 
-#define ATW_GPTMR_COM_MASK	BIT(16)		/* continuous operation mode */
+#define ATW_GPTMR_COM_MASK	(1<<16)		/* continuous operation mode */
 #define ATW_GPTMR_GTV_MASK	0xffff	/* set countdown in 204us ticks */
 
 #define ATW_GPIO_EC1_MASK	0x3000000	/* GPIO1 event configuration */
@@ -498,38 +493,38 @@
 #define ATW_GPIO_O_MASK		0xfc0	/* output value */
 #define ATW_GPIO_I_MASK		0x3f	/* pin static input */
 
-#define ATW_BBPCTL_TWI			BIT(31)	/* Intersil 3-wire interface */
+#define ATW_BBPCTL_TWI			(1<<31)	/* Intersil 3-wire interface */
 #define ATW_BBPCTL_RF3KADDR_MASK	0x7f000000	/* Address for RF3000 */
 #define ATW_BBPCTL_RF3KADDR_ADDR LSHIFT(0x20, ATW_BBPCTL_RF3KADDR_MASK)
-#define ATW_BBPCTL_NEGEDGE_DO		BIT(23)	/* data-out on negative edge */
-#define ATW_BBPCTL_NEGEDGE_DI		BIT(22)	/* data-in on negative edge */
-#define ATW_BBPCTL_CCA_ACTLO		BIT(21)	/* CCA low when busy */
+#define ATW_BBPCTL_NEGEDGE_DO		(1<<23)	/* data-out on negative edge */
+#define ATW_BBPCTL_NEGEDGE_DI		(1<<22)	/* data-in on negative edge */
+#define ATW_BBPCTL_CCA_ACTLO		(1<<21)	/* CCA low when busy */
 #define ATW_BBPCTL_TYPE_MASK		0x1c0000	/* BBP type */
-#define ATW_BBPCTL_WR			BIT(17)	/* start write; reset on
+#define ATW_BBPCTL_WR			(1<<17)	/* start write; reset on
 						 * completion
 						 */
-#define ATW_BBPCTL_RD		BIT(16)		/* start read; reset on
+#define ATW_BBPCTL_RD		(1<<16)		/* start read; reset on
 						 * completion
 						 */
 #define ATW_BBPCTL_ADDR_MASK	0xff00	/* BBP address */
 #define ATW_BBPCTL_DATA_MASK	0xff	/* BBP data */
 
-#define ATW_SYNCTL_WR		BIT(31)		/* start write; reset on
+#define ATW_SYNCTL_WR		(1<<31)		/* start write; reset on
 						 * completion
 						 */
-#define ATW_SYNCTL_RD		BIT(30)		/* start read; reset on
+#define ATW_SYNCTL_RD		(1<<30)		/* start read; reset on
 						 * completion
 						 */
-#define ATW_SYNCTL_CS0		BIT(29)		/* chip select */
-#define ATW_SYNCTL_CS1		BIT(28)
-#define ATW_SYNCTL_CAL		BIT(27)		/* generate RF CAL pulse after
+#define ATW_SYNCTL_CS0		(1<<29)		/* chip select */
+#define ATW_SYNCTL_CS1		(1<<28)
+#define ATW_SYNCTL_CAL		(1<<27)		/* generate RF CAL pulse after
 						 * Rx
 						 */
-#define ATW_SYNCTL_SELCAL	BIT(26)		/* RF CAL source, 0: CAL bit,
+#define ATW_SYNCTL_SELCAL	(1<<26)		/* RF CAL source, 0: CAL bit,
 						 * 1: MAC; needed by Intersil
 						 * BBP
 						 */
-#define	ATW_C_SYNCTL_MMICE	BIT(25)		/* ADM8211C/CR define this
+#define	ATW_C_SYNCTL_MMICE	(1<<25)		/* ADM8211C/CR define this
 						 * bit. 0: latch data on
 						 * negative edge, 1: positive
 						 * edge.
@@ -546,7 +541,7 @@
 						 * sets Tx power for beacon,
 						 * RTS, ATIM.
 						 */
-#define ATW_PLCPHD_PMBL		BIT(15)		/* 0: long preamble, 1: short */
+#define ATW_PLCPHD_PMBL		(1<<15)		/* 0: long preamble, 1: short */
 
 #define	ATW_MMIWADDR_LENLO_MASK		0xff000000	/* tx: written 4th */
 #define	ATW_MMIWADDR_LENHI_MASK		0xff0000	/* tx: written 3rd */
@@ -603,7 +598,7 @@
 						 */
 /* RXPE is re-asserted after RXPECNT * 22MHz. */
 #define	ATW_MMIRADDR2_RXPECNT_MASK	0xff0000
-#define	ATW_MMIRADDR2_PROREXT		BIT(15)		/* Probe Response
+#define	ATW_MMIRADDR2_PROREXT		(1<<15)		/* Probe Response
 							 * 11Mb/s length
 							 * extension.
 							 */
@@ -611,13 +606,13 @@
 							 * microsecond length
 							 */
 
-#define ATW_TXBR_ALCUPDATE_MASK	BIT(31)		/* auto-update BBP with ALCSET */
+#define ATW_TXBR_ALCUPDATE_MASK	(1<<31)		/* auto-update BBP with ALCSET */
 #define ATW_TXBR_TBCNT_MASK	0x1f0000	/* transmit burst count */
 #define ATW_TXBR_ALCSET_MASK	0xff00	/* TX power level set point */
 #define ATW_TXBR_ALCREF_MASK	0xff	/* TX power level reference point */
 
-#define ATW_ALCSTAT_MCOV_MASK	BIT(27)		/* MPDU count overflow */
-#define ATW_ALCSTAT_ESOV_MASK	BIT(26)		/* error sum overflow */
+#define ATW_ALCSTAT_MCOV_MASK	(1<<27)		/* MPDU count overflow */
+#define ATW_ALCSTAT_ESOV_MASK	(1<<26)		/* error sum overflow */
 #define ATW_ALCSTAT_MCNT_MASK	0x3ff0000	/* MPDU count, unsigned integer */
 #define ATW_ALCSTAT_ERSUM_MASK	0xffff	/* power error sum,
 						 * 2's complement signed integer
@@ -653,13 +648,13 @@
 						 * end, in us
 						 */
 
-#define ATW_CMDR_PM		BIT(19)		/* enables power mgmt
+#define ATW_CMDR_PM		(1<<19)		/* enables power mgmt
 						 * capabilities.
 						 */
-#define ATW_CMDR_APM		BIT(18)		/* APM mode, effective when
+#define ATW_CMDR_APM		(1<<18)		/* APM mode, effective when
 						 * PM = 1.
 						 */
-#define ATW_CMDR_RTE		BIT(4)		/* enable Rx FIFO threshold */
+#define ATW_CMDR_RTE		(1<<4)		/* enable Rx FIFO threshold */
 #define ATW_CMDR_DRT_MASK	0xc	/* drain Rx FIFO threshold */
 /* 32 bytes */
 #define ATW_CMDR_DRT_8DW	LSHIFT(0x0, ATW_CMDR_DRT_MASK)
@@ -669,7 +664,7 @@
 #define ATW_CMDR_DRT_SF		LSHIFT(0x2, ATW_CMDR_DRT_MASK)
 /* Reserved */
 #define ATW_CMDR_DRT_RSVD	LSHIFT(0x3, ATW_CMDR_DRT_MASK)
-#define ATW_CMDR_SINT_MASK	BIT(1)		/* software interrupt---huh? */
+#define ATW_CMDR_SINT_MASK	(1<<1)		/* software interrupt---huh? */
 
 /* TBD PCIC */
 
@@ -727,60 +722,60 @@
 
 /* For ADM8211C/CR */
 /* ATW_C_TSC_TIMTABSEL = 1 */
-#define ATW_C_BCNT_EXTEN1	BIT(31)		/* 11M beacon len. extension */
+#define ATW_C_BCNT_EXTEN1	(1<<31)		/* 11M beacon len. extension */
 #define ATW_C_BCNT_BEANLEN1	0x7fff0000	/* beacon length in us */
 /* ATW_C_TSC_TIMTABSEL = 0 */
-#define ATW_C_BCNT_EXTEN0	BIT(15)		/* 11M beacon len. extension */
+#define ATW_C_BCNT_EXTEN0	(1<<15)		/* 11M beacon len. extension */
 #define ATW_C_BCNT_BEANLEN0	BIT(14,0)	/* beacon length in us */
 
 #define ATW_C_TSC_TIMOFS	0xff000000	/* I think this is the
 						 * SRAM offset for the TIM
 						 */
 #define ATW_C_TSC_TIMLEN	0x3ff000	/* length of TIM */
-#define ATW_C_TSC_TIMTABSEL	BIT(4)		/* select TIM table 0 or 1 */
+#define ATW_C_TSC_TIMTABSEL	(1<<4)		/* select TIM table 0 or 1 */
 #define ATW_TSC_TSC_MASK	0xf	/* TSFT countdown value, 0
 						 * disables
 						 */
 
-#define ATW_SYNRF_SELSYN	BIT(31)	/* 0: MAC controls SYN IF pins,
+#define ATW_SYNRF_SELSYN	(1<<31)	/* 0: MAC controls SYN IF pins,
 					 * 1: ATW_SYNRF controls SYN IF pins.
 					 */
-#define ATW_SYNRF_SELRF		BIT(30)	/* 0: MAC controls RF IF pins,
+#define ATW_SYNRF_SELRF		(1<<30)	/* 0: MAC controls RF IF pins,
 					 * 1: ATW_SYNRF controls RF IF pins.
 					 */
-#define ATW_SYNRF_LERF		BIT(29)	/* if SELSYN = 1, direct control of
+#define ATW_SYNRF_LERF		(1<<29)	/* if SELSYN = 1, direct control of
 					 * LERF# pin
 					 */
-#define ATW_SYNRF_LEIF		BIT(28)	/* if SELSYN = 1, direct control of
+#define ATW_SYNRF_LEIF		(1<<28)	/* if SELSYN = 1, direct control of
 					 * LEIF# pin
 					 */
-#define ATW_SYNRF_SYNCLK	BIT(27)	/* if SELSYN = 1, direct control of
+#define ATW_SYNRF_SYNCLK	(1<<27)	/* if SELSYN = 1, direct control of
 					 * SYNCLK pin
 					 */
-#define ATW_SYNRF_SYNDATA	BIT(26)	/* if SELSYN = 1, direct control of
+#define ATW_SYNRF_SYNDATA	(1<<26)	/* if SELSYN = 1, direct control of
 					 * SYNDATA pin
 					 */
-#define ATW_SYNRF_PE1		BIT(25)	/* if SELRF = 1, direct control of
+#define ATW_SYNRF_PE1		(1<<25)	/* if SELRF = 1, direct control of
 					 * PE1 pin
 					 */
-#define ATW_SYNRF_PE2		BIT(24)	/* if SELRF = 1, direct control of
+#define ATW_SYNRF_PE2		(1<<24)	/* if SELRF = 1, direct control of
 					 * PE2 pin
 					 */
-#define ATW_SYNRF_PAPE		BIT(23)	/* if SELRF = 1, direct control of
+#define ATW_SYNRF_PAPE		(1<<23)	/* if SELRF = 1, direct control of
 					 * PAPE pin
 					 */
-#define ATW_C_SYNRF_TRSW	BIT(22)	/* if SELRF = 1, direct control of
+#define ATW_C_SYNRF_TRSW	(1<<22)	/* if SELRF = 1, direct control of
 					 * TRSW pin
 					 */
-#define ATW_C_SYNRF_TRSWN	BIT(21)	/* if SELRF = 1, direct control of
+#define ATW_C_SYNRF_TRSWN	(1<<21)	/* if SELRF = 1, direct control of
 					 * TRSWn pin
 					 */
-#define ATW_SYNRF_INTERSIL_EN	BIT(20)	/* if SELRF = 1, enables
+#define ATW_SYNRF_INTERSIL_EN	(1<<20)	/* if SELRF = 1, enables
 					 * some signal used by the
 					 * Intersil RF front-end?
 					 * Undocumented.
 					 */
-#define ATW_SYNRF_PHYRST	BIT(18)	/* if SELRF = 1, direct control of
+#define ATW_SYNRF_PHYRST	(1<<18)	/* if SELRF = 1, direct control of
 					 * PHYRST# pin
 					 */
 /* 1: force TXPE = RXPE = 1 if ATW_CMDR[27] = 0. */
@@ -802,14 +797,14 @@
 						 * 10?
 						 * default 0
 						 */
-#define ATW_CAP0_RCVDTIM	BIT(4)		/* receive every DTIM */
+#define ATW_CAP0_RCVDTIM	(1<<4)		/* receive every DTIM */
 #define ATW_CAP0_CHN_MASK	0xf	/* current DSSS channel */
 
 #define ATW_CAP1_CAPI_MASK	0xffff0000	/* capability information */
 #define ATW_CAP1_ATIMW_MASK	0xffff	/* ATIM window in TU */
 
-#define ATW_RMD_ATIMST		BIT(31)		/* ATIM frame TX status */
-#define ATW_RMD_CFP		BIT(30)		/* CFP indicator */
+#define ATW_RMD_ATIMST		(1<<31)		/* ATIM frame TX status */
+#define ATW_RMD_CFP		(1<<30)		/* CFP indicator */
 #define ATW_RMD_PCNT		0xfff0000	/* idle time between
 						 * awake/ps mode, in seconds
 						 */
@@ -852,17 +847,17 @@
 #define ATW_RSPT_MIRT_MASK	0xff00	/* min response time in us */
 #define ATW_RSPT_TSFTOFST_MASK	0xff	/* TX TSFT offset in us */
 
-#define ATW_WEPCTL_WEPENABLE	BIT(31)		/* enable WEP engine */
-#define ATW_WEPCTL_AUTOSWITCH	BIT(30)		/* auto-switch enable (huh?) */
-#define ATW_WEPCTL_CURTBL	BIT(29)		/* current table in use */
-#define ATW_WEPCTL_WR		BIT(28)		/* */
-#define ATW_WEPCTL_RD		BIT(27)		/* */
-#define ATW_WEPCTL_WEPRXBYP	BIT(25)		/* bypass WEP on RX */
-#define ATW_WEPCTL_SHKEY	BIT(24)		/* 1: pass to host if tbl
+#define ATW_WEPCTL_WEPENABLE	(1<<31)		/* enable WEP engine */
+#define ATW_WEPCTL_AUTOSWITCH	(1<<30)		/* auto-switch enable (huh?) */
+#define ATW_WEPCTL_CURTBL	(1<<29)		/* current table in use */
+#define ATW_WEPCTL_WR		(1<<28)		/* */
+#define ATW_WEPCTL_RD		(1<<27)		/* */
+#define ATW_WEPCTL_WEPRXBYP	(1<<25)		/* bypass WEP on RX */
+#define ATW_WEPCTL_SHKEY	(1<<24)		/* 1: pass to host if tbl
 						 * lookup fails, 0: use
 						 * shared-key
 						 */
-#define ATW_WEPCTL_UNKNOWN0	BIT(23)		/* has something to do with
+#define ATW_WEPCTL_UNKNOWN0	(1<<23)		/* has something to do with
 						 * revision 0x20. Possibly
 						 * selects a different WEP
 						 * table.
@@ -872,30 +867,30 @@
 /* set these bits in the second byte of a SRAM shared key record to affect
  * the use and interpretation of the key in the record.
  */
-#define ATW_WEP_ENABLED	BIT(7)
-#define ATW_WEP_104BIT	BIT(6)
+#define ATW_WEP_ENABLED	(1<<7)
+#define ATW_WEP_104BIT	(1<<6)
 
 #define ATW_WESK_DATA_MASK	0xffff	/* data */
 #define ATW_WEPCNT_WIEC_MASK	0xffff	/* WEP ICV error count */
 
-#define ATW_MACTEST_FORCE_IV		BIT(23)
-#define ATW_MACTEST_FORCE_KEYID		BIT(22)
+#define ATW_MACTEST_FORCE_IV		(1<<23)
+#define ATW_MACTEST_FORCE_KEYID		(1<<22)
 #define ATW_MACTEST_KEYID_MASK		0x300000
-#define ATW_MACTEST_MMI_USETXCLK	BIT(11)
+#define ATW_MACTEST_MMI_USETXCLK	(1<<11)
 
 /* Function Event/Status registers */
 
-#define ATW_FER_INTR		BIT(15)	/* interrupt: set regardless of mask */ 
-#define ATW_FER_GWAKE		BIT(4)	/* general wake-up: set regardless of mask */ 
+#define ATW_FER_INTR		(1<<15)	/* interrupt: set regardless of mask */ 
+#define ATW_FER_GWAKE		(1<<4)	/* general wake-up: set regardless of mask */ 
 
-#define ATW_FEMR_INTR_EN	BIT(15)	/* enable INTA# */
-#define ATW_FEMR_WAKEUP_EN	BIT(14)	/* enable wake-up */
-#define ATW_FEMR_GWAKE_EN	BIT(4)	/* enable general wake-up */
+#define ATW_FEMR_INTR_EN	(1<<15)	/* enable INTA# */
+#define ATW_FEMR_WAKEUP_EN	(1<<14)	/* enable wake-up */
+#define ATW_FEMR_GWAKE_EN	(1<<4)	/* enable general wake-up */
 
-#define ATW_FPSR_INTR_STATUS	BIT(15)	/* interrupt status */
-#define ATW_FPSR_WAKEUP_STATUS	BIT(4)	/* CSTSCHG state */
-#define ATW_FFER_INTA_FORCE	BIT(15)	/* activate INTA (if not masked) */
-#define ATW_FFER_GWAKE_FORCE	BIT(4)	/* activate CSTSCHG (if not masked) */
+#define ATW_FPSR_INTR_STATUS	(1<<15)	/* interrupt status */
+#define ATW_FPSR_WAKEUP_STATUS	(1<<4)	/* CSTSCHG state */
+#define ATW_FFER_INTA_FORCE	(1<<15)	/* activate INTA (if not masked) */
+#define ATW_FFER_GWAKE_FORCE	(1<<4)	/* activate CSTSCHG (if not masked) */
 
 /* Serial EEPROM offsets */
 #define ATW_SR_CLASS_CODE	(0x00/2)
@@ -953,28 +948,28 @@ struct atw_txdesc {
 	u_int32_t	at_buf2;
 };
 
-#define ATW_TXCTL_OWN		BIT(31)		/* 1: ready to transmit */
-#define ATW_TXCTL_DONE		BIT(30)		/* 0: not processed */
+#define ATW_TXCTL_OWN		(1<<31)		/* 1: ready to transmit */
+#define ATW_TXCTL_DONE		(1<<30)		/* 0: not processed */
 #define ATW_TXCTL_TXDR_MASK	0xff00000	/* TX data rate (?) */
 #define ATW_TXCTL_TL_MASK	0xfffff	/* retry limit, 0 - 255 */
 
 #define ATW_TXSTAT_OWN		ATW_TXCTL_OWN	/* 0: not for transmission */
 #define ATW_TXSTAT_DONE		ATW_TXCTL_DONE	/* 1: been processed */
-#define ATW_TXSTAT_ES		BIT(29)		/* 0: TX successful */
-#define ATW_TXSTAT_TLT		BIT(28)		/* TX lifetime expired */
-#define ATW_TXSTAT_TRT		BIT(27)		/* TX retry limit expired */
-#define ATW_TXSTAT_TUF		BIT(26)		/* TX under-run error */
-#define ATW_TXSTAT_TRO		BIT(25)		/* TX over-run error */
-#define ATW_TXSTAT_SOFBR	BIT(24)		/* packet size != buffer size
+#define ATW_TXSTAT_ES		(1<<29)		/* 0: TX successful */
+#define ATW_TXSTAT_TLT		(1<<28)		/* TX lifetime expired */
+#define ATW_TXSTAT_TRT		(1<<27)		/* TX retry limit expired */
+#define ATW_TXSTAT_TUF		(1<<26)		/* TX under-run error */
+#define ATW_TXSTAT_TRO		(1<<25)		/* TX over-run error */
+#define ATW_TXSTAT_SOFBR	(1<<24)		/* packet size != buffer size
 						 * (?)
 						 */
 #define ATW_TXSTAT_ARC_MASK	0xfff	/* accumulated retry count */
 
-#define ATW_TXFLAG_IC		BIT(31)		/* interrupt on completion */
-#define ATW_TXFLAG_LS		BIT(30)		/* packet's last descriptor */
-#define ATW_TXFLAG_FS		BIT(29)		/* packet's first descriptor */
-#define ATW_TXFLAG_TER		BIT(25)		/* end of ring */
-#define ATW_TXFLAG_TCH		BIT(24)		/* at_buf2 is 2nd chain */
+#define ATW_TXFLAG_IC		(1<<31)		/* interrupt on completion */
+#define ATW_TXFLAG_LS		(1<<30)		/* packet's last descriptor */
+#define ATW_TXFLAG_FS		(1<<29)		/* packet's first descriptor */
+#define ATW_TXFLAG_TER		(1<<25)		/* end of ring */
+#define ATW_TXFLAG_TCH		(1<<24)		/* at_buf2 is 2nd chain */
 #define ATW_TXFLAG_TBS2_MASK	0xfff000	/* at_buf2 byte count */
 #define ATW_TXFLAG_TBS1_MASK	0xfff	/* at_buf1 byte count */
 
@@ -988,33 +983,33 @@ struct atw_rxdesc {
 
 #define	ar_rssi	ar_ctl
 
-#define ATW_RXCTL_RER		BIT(25)		/* end of ring */
-#define ATW_RXCTL_RCH		BIT(24)		/* ar_buf2 is 2nd chain */
+#define ATW_RXCTL_RER		(1<<25)		/* end of ring */
+#define ATW_RXCTL_RCH		(1<<24)		/* ar_buf2 is 2nd chain */
 #define ATW_RXCTL_RBS2_MASK	0xfff000	/* ar_buf2 byte count */
 #define ATW_RXCTL_RBS1_MASK	0xfff	/* ar_buf1 byte count */
 
-#define ATW_RXSTAT_OWN		BIT(31)		/* 1: NIC may fill descriptor */
-#define ATW_RXSTAT_ES		BIT(30)		/* error summary, 0 on 
+#define ATW_RXSTAT_OWN		(1<<31)		/* 1: NIC may fill descriptor */
+#define ATW_RXSTAT_ES		(1<<30)		/* error summary, 0 on 
 						 * success
 						 */
-#define ATW_RXSTAT_SQL		BIT(29)		/* has signal quality (?) */
-#define ATW_RXSTAT_DE		BIT(28)		/* descriptor error---packet is
+#define ATW_RXSTAT_SQL		(1<<29)		/* has signal quality (?) */
+#define ATW_RXSTAT_DE		(1<<28)		/* descriptor error---packet is
 						 * truncated. last descriptor
 						 * only
 						 */
-#define ATW_RXSTAT_FS		BIT(27)		/* packet's first descriptor */
-#define ATW_RXSTAT_LS		BIT(26)		/* packet's last descriptor */
-#define ATW_RXSTAT_PCF		BIT(25)		/* received during CFP */
-#define ATW_RXSTAT_SFDE		BIT(24)		/* PLCP SFD error */
-#define ATW_RXSTAT_SIGE		BIT(23)		/* PLCP signal error */
-#define ATW_RXSTAT_CRC16E	BIT(22)		/* PLCP CRC16 error */
-#define ATW_RXSTAT_RXTOE	BIT(21)		/* RX time-out, last descriptor
+#define ATW_RXSTAT_FS		(1<<27)		/* packet's first descriptor */
+#define ATW_RXSTAT_LS		(1<<26)		/* packet's last descriptor */
+#define ATW_RXSTAT_PCF		(1<<25)		/* received during CFP */
+#define ATW_RXSTAT_SFDE		(1<<24)		/* PLCP SFD error */
+#define ATW_RXSTAT_SIGE		(1<<23)		/* PLCP signal error */
+#define ATW_RXSTAT_CRC16E	(1<<22)		/* PLCP CRC16 error */
+#define ATW_RXSTAT_RXTOE	(1<<21)		/* RX time-out, last descriptor
 						 * only.
 						 */
-#define ATW_RXSTAT_CRC32E	BIT(20)		/* CRC32 error */
-#define ATW_RXSTAT_ICVE		BIT(19)		/* WEP ICV error */
-#define ATW_RXSTAT_DA1		BIT(17)		/* DA bit 1, admin'd address */
-#define ATW_RXSTAT_DA0		BIT(16)		/* DA bit 0, group address */
+#define ATW_RXSTAT_CRC32E	(1<<20)		/* CRC32 error */
+#define ATW_RXSTAT_ICVE		(1<<19)		/* WEP ICV error */
+#define ATW_RXSTAT_DA1		(1<<17)		/* DA bit 1, admin'd address */
+#define ATW_RXSTAT_DA0		(1<<16)		/* DA bit 0, group address */
 #define ATW_RXSTAT_RXDR_MASK	0xf000	/* RX data rate */
 #define ATW_RXSTAT_FL_MASK	0xfff	/* RX frame length, last
 						 * descriptor only

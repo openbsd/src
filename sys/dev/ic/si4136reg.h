@@ -1,4 +1,4 @@
-/*	$OpenBSD: si4136reg.h,v 1.2 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: si4136reg.h,v 1.3 2009/08/16 18:03:48 jsg Exp $	*/
 /* $NetBSD$ */
 
 /*
@@ -38,14 +38,14 @@
 /*
  * Serial bus format for Silicon Laboratories Si4126/Si4136 RF synthesizer.
  */
-#define SI4126_TWI_DATA_MASK	BITS(21, 4)
-#define SI4126_TWI_ADDR_MASK	BITS(3, 0)
+#define SI4126_TWI_DATA_MASK	0x3ffff0
+#define SI4126_TWI_ADDR_MASK	0xf
 
 /*
  * Registers for Silicon Laboratories Si4126/Si4136 RF synthesizer.
  */
 #define SI4126_MAIN	0	/* main configuration */
-#define	SI4126_MAIN_AUXSEL_MASK	BITS(13, 12)	/* aux. output pin function */
+#define	SI4126_MAIN_AUXSEL_MASK	0x3000	/* aux. output pin function */
 /* reserved */
 #define	SI4126_MAIN_AUXSEL_RSVD		LSHIFT(0x0, SI4126_MAIN_AUXSEL_MASK)
 /* force low */
@@ -53,13 +53,13 @@
 /* Lock Detect (LDETB) */
 #define	SI4126_MAIN_AUXSEL_LDETB	LSHIFT(0x3, SI4126_MAIN_AUXSEL_MASK)
 
-#define	SI4126_MAIN_IFDIV_MASK	BITS(11, 10)	/* IFOUT = IFVCO
+#define	SI4126_MAIN_IFDIV_MASK	0xc00	/* IFOUT = IFVCO
 						 * frequency / 2**IFDIV.
 						 */
 
-#define	SI4126_MAIN_XINDIV2	BIT(6)	/* 1: divide crystal input (XIN) by 2 */
-#define	SI4126_MAIN_LPWR	BIT(5)	/* 1: low-power mode */
-#define	SI4126_MAIN_AUTOPDB	BIT(3)	/* 1: equivalent to
+#define	SI4126_MAIN_XINDIV2	(1<<6)	/* 1: divide crystal input (XIN) by 2 */
+#define	SI4126_MAIN_LPWR	(1<<5)	/* 1: low-power mode */
+#define	SI4126_MAIN_AUTOPDB	(1<<3)	/* 1: equivalent to
 					 *    reg[SI4126_POWER] <-
 					 *    SI4126_POWER_PDIB |
 					 *    SI4126_POWER_PDRB.
@@ -69,13 +69,13 @@
 					 */
 
 #define	SI4126_GAIN	1		/* phase detector gain */
-#define	SI4126_GAIN_KPI_MASK	BITS(5, 4)	/* IF phase detector gain */
-#define	SI4126_GAIN_KP2_MASK	BITS(3, 2)	/* RF2 phase detector gain */
-#define	SI4126_GAIN_KP1_MASK	BITS(1, 0)	/* RF1 phase detector gain */
+#define	SI4126_GAIN_KPI_MASK	0x30	/* IF phase detector gain */
+#define	SI4126_GAIN_KP2_MASK	0xc	/* RF2 phase detector gain */
+#define	SI4126_GAIN_KP1_MASK	0x3	/* RF1 phase detector gain */
 
 #define	SI4126_POWER	2		/* powerdown */
-#define	SI4126_POWER_PDIB	BIT(1)	/* 1: IF synthesizer on */
-#define	SI4126_POWER_PDRB	BIT(0)	/* 1: RF synthesizer on */
+#define	SI4126_POWER_PDIB	(1<<1)	/* 1: IF synthesizer on */
+#define	SI4126_POWER_PDRB	(1<<0)	/* 1: RF synthesizer on */
 
 #define	SI4126_RF1N	3		/* RF1 N divider */
 #define	SI4126_RF2N	4		/* RF2 N divider */

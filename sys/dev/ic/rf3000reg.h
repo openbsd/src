@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf3000reg.h,v 1.2 2004/07/25 00:15:47 millert Exp $	*/
+/*	$OpenBSD: rf3000reg.h,v 1.3 2009/08/16 18:03:48 jsg Exp $	*/
 /*      $NetBSD: rf3000reg.h,v 1.3 2004/07/21 04:25:22 dyoung Exp $        */
 
 /*
@@ -47,7 +47,7 @@
  * Registers for RFMD RF3000.
  */
 #define RF3000_CTL		0x01		/* modem control */
-#define		RF3000_CTL_MODE_MASK		BITS(7, 4)
+#define		RF3000_CTL_MODE_MASK		0xf0
 #define		RF3000_CTL_MODE_1MBPS		0
 #define		RF3000_CTL_MODE_RSVD0		1
 #define		RF3000_CTL_MODE_2MBPS		2
@@ -61,57 +61,57 @@
 #define		RF3000_CTL_MODE_RSVD1		10
 #define		RF3000_CTL_MODE_RSVD2		11
 #define RF3000_RXSTAT		RF3000_CTL	/* RX status */
-#define		RF3000_RXSTAT_SHORTPRE		BIT(3)	/* 1: short preamble */
-#define		RF3000_RXSTAT_ACQ		BIT(2)	/* 1: acquired */
-#define		RF3000_RXSTAT_SFD		BIT(1)	/* 1: SFD detected */
-#define		RF3000_RXSTAT_CRC		BIT(0)	/* 1: CRC invalid */
+#define		RF3000_RXSTAT_SHORTPRE		(1<<3)	/* 1: short preamble */
+#define		RF3000_RXSTAT_ACQ		(1<<2)	/* 1: acquired */
+#define		RF3000_RXSTAT_SFD		(1<<1)	/* 1: SFD detected */
+#define		RF3000_RXSTAT_CRC		(1<<0)	/* 1: CRC invalid */
 #define RF3000_CCACTL		0x02		/* CCA control */
 /* CCA mode */
-#define		RF3000_CCACTL_MODE_MASK		BITS(7, 6)
+#define		RF3000_CCACTL_MODE_MASK		0xc0
 #define		RF3000_CCACTL_MODE_RSSIT	0	/* RSSI threshold */
 #define		RF3000_CCACTL_MODE_ACQ		1	/* acquisition */
 #define		RF3000_CCACTL_MODE_BOTH		2	/* threshold or acq. */
 /* RSSI threshold for CCA */
-#define		RF3000_CCACTL_RSSIT_MASK	BITS(5, 0)
+#define		RF3000_CCACTL_RSSIT_MASK	0x3f
 #define RF3000_DIVCTL		0x03		/* diversity control */
-#define		RF3000_DIVCTL_ENABLE		BIT(7)	/* enable diversity */
-#define		RF3000_DIVCTL_ANTSEL		BIT(6)	/* if ENABLE = 0, set
+#define		RF3000_DIVCTL_ENABLE		(1<<7)	/* enable diversity */
+#define		RF3000_DIVCTL_ANTSEL		(1<<6)	/* if ENABLE = 0, set
 							 * ANT SEL
 							 */
 #define RF3000_RSSI		RF3000_DIVCTL	/* RSSI value */
-#define		RF3000_RSSI_MASK		BITS(5, 0)
+#define		RF3000_RSSI_MASK		0x3f
 #define RF3000_GAINCTL		0x11		/* TX variable gain control */
-#define		RF3000_GAINCTL_TXVGC_MASK	BITS(7, 2)
-#define		RF3000_GAINCTL_SCRAMBLER	BIT(1)
+#define		RF3000_GAINCTL_TXVGC_MASK	0xfc
+#define		RF3000_GAINCTL_SCRAMBLER	(1<<1)
 #define	RF3000_LOGAINCAL	0x14		/* low gain calibration */
-#define		RF3000_LOGAINCAL_CAL_MASK	BITS(5, 0)
+#define		RF3000_LOGAINCAL_CAL_MASK	0x3f
 #define	RF3000_HIGAINCAL	0x15		/* high gain calibration */
-#define		RF3000_HIGAINCAL_CAL_MASK	BITS(5, 0)
-#define		RF3000_HIGAINCAL_DSSSPAD	BIT(6)	/* 6dB gain pad for DSSS
+#define		RF3000_HIGAINCAL_CAL_MASK	0x3f
+#define		RF3000_HIGAINCAL_DSSSPAD	(1<<6)	/* 6dB gain pad for DSSS
 							 * modes (meaning?)
 							 */
 #define RF3000_OPTIONS1		0x1C		/* Options Register 1 */
 /* Saturation threshold is 4 + offset, where -3 <= offset <= 3.
  * SAT_THRESH is the absolute value, SAT_THRESH_SIGN is the sign.
  */
-#define		RF3000_OPTIONS1_SAT_THRESH_SIGN	BIT(7)
-#define		RF3000_OPTIONS1_SAT_THRESH	BITS(6,5)
-#define		RF3000_OPTIONS1_ALTAGC		BIT(4)	/* 1: retrigger AGC
+#define		RF3000_OPTIONS1_SAT_THRESH_SIGN	(1<<7)
+#define		RF3000_OPTIONS1_SAT_THRESH	0x60
+#define		RF3000_OPTIONS1_ALTAGC		(1<<4)	/* 1: retrigger AGC
  							 * algorithm on ADC
  							 * saturation
 							 */
-#define		RF3000_OPTIONS1_ALTBUS		BIT(3)	/* 1: enable alternate
+#define		RF3000_OPTIONS1_ALTBUS		(1<<3)	/* 1: enable alternate
 							 * Tx/Rx data bus
 							 * interface.
 							 */
-#define		RF3000_OPTIONS1_RESERVED0_MASK	BITS(2,0)/* 0 */
+#define		RF3000_OPTIONS1_RESERVED0_MASK	0x7/* 0 */
 
 #define RF3000_OPTIONS2		0x1D		/* Options Register 2 */
 /* 1: delay next AGC 2us instead of 1us after a 1->0 LNAGS-pin transition. */
-#define		RF3000_OPTIONS2_LNAGS_DELAY	BIT(7)
-#define		RF3000_OPTIONS2_RESERVED0_MASK	BITS(6,3)	/* 0 */
+#define		RF3000_OPTIONS2_LNAGS_DELAY	(1<<7)
+#define		RF3000_OPTIONS2_RESERVED0_MASK	0x78	/* 0 */
 /* Threshold for AGC re-trigger. 0: high count, 1: low count. */
-#define		RF3000_OPTIONS2_RTG_THRESH	BIT(2)
-#define		RF3000_OPTIONS2_RESERVED1_MASK	BITS(1,0)	/* 0 */
+#define		RF3000_OPTIONS2_RTG_THRESH	(1<<2)
+#define		RF3000_OPTIONS2_RESERVED1_MASK	0x3	/* 0 */
 
 #endif /* _DEV_IC_RF3000REG_H_ */

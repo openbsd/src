@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.19 2009/08/16 17:24:04 jsg Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.20 2009/08/16 18:03:48 jsg Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -332,11 +332,11 @@ struct atw_frame {
 #define atw_keyid	u.s1.keyid
 #define atw_ihdr	u.s2.ihdr
 
-#define ATW_HDRCTL_SHORT_PREAMBLE	BIT(0)	/* use short preamble */
-#define ATW_HDRCTL_RTSCTS		BIT(4)	/* send RTS */
-#define ATW_HDRCTL_WEP			BIT(5)
-#define ATW_HDRCTL_UNKNOWN1		BIT(15) /* MAC adds FCS? */
-#define ATW_HDRCTL_UNKNOWN2		BIT(8)
+#define ATW_HDRCTL_SHORT_PREAMBLE	(1<<0)	/* use short preamble */
+#define ATW_HDRCTL_RTSCTS		(1<<4)	/* send RTS */
+#define ATW_HDRCTL_WEP			(1<<5)
+#define ATW_HDRCTL_UNKNOWN1		(1<<15) /* MAC adds FCS? */
+#define ATW_HDRCTL_UNKNOWN2		(1<<8)
 
 #define ATW_FRAGTHR_FRAGTHR_MASK	0x0fff
 #define ATW_FRAGNUM_FRAGNUM_MASK	0x00f0

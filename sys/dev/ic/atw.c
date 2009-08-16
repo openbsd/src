@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.68 2009/08/16 17:24:04 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.69 2009/08/16 18:03:48 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -1960,7 +1960,7 @@ atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
 	ATW_WRITE(sc, ATW_SYNRF, reg | ATW_SYNRF_LEIF);
 	ATW_WRITE(sc, ATW_SYNRF, reg);
 
-	for (mask = BIT(nbits - 1); mask != 0; mask >>= 1) {
+	for (mask = (1 << (nbits - 1)); mask != 0; mask >>= 1) {
 		if ((bits & mask) != 0)
 			reg |= ATW_SYNRF_SYNDATA;
 		else
