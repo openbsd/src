@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.127 2009/06/17 04:24:02 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.128 2009/08/16 13:01:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -226,7 +226,6 @@ int	pfsyncioctl(struct ifnet *, u_long, caddr_t);
 void	pfsyncstart(struct ifnet *);
 
 struct mbuf *pfsync_if_dequeue(struct ifnet *);
-struct mbuf *pfsync_get_mbuf(struct pfsync_softc *);
 
 void	pfsync_deferred(struct pf_state *, int);
 void	pfsync_undefer(struct pfsync_deferral *, int);
@@ -238,11 +237,8 @@ void	pfsync_update_state_req(struct pf_state *);
 void	pfsync_drop(struct pfsync_softc *);
 void	pfsync_sendout(void);
 void	pfsync_send_plus(void *, size_t);
-int	pfsync_tdb_sendout(struct pfsync_softc *);
-int	pfsync_sendout_mbuf(struct pfsync_softc *, struct mbuf *);
 void	pfsync_timeout(void *);
 void	pfsync_tdb_timeout(void *);
-void	pfsync_send_bus(struct pfsync_softc *, u_int8_t);
 
 void	pfsync_bulk_start(void);
 void	pfsync_bulk_status(u_int8_t);
