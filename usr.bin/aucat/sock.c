@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.21 2009/08/17 15:07:49 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.22 2009/08/17 16:17:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -718,12 +718,12 @@ sock_midiattach(struct sock *f, unsigned mode)
 	struct abuf *rbuf = NULL, *wbuf = NULL;
 	
 	if (mode & AMSG_MIDIOUT) {
-		rbuf = abuf_new(3125, &aparams_none);
+		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setout(f->pipe.file.rproc, rbuf);
 		aproc_setin(thrubox, rbuf);
 	}
 	if (mode & AMSG_MIDIIN) {
-		wbuf = abuf_new(3125, &aparams_none);
+		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setin(f->pipe.file.wproc, wbuf);
 		aproc_setout(thrubox, wbuf);
 		if (mode & AMSG_MIDIOUT) {

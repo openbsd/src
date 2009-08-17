@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.63 2009/08/17 15:07:49 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.64 2009/08/17 16:17:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -315,13 +315,13 @@ newmidi(struct farg *fa, int in, int out)
 	}
 	if (in) {
 		rproc = rpipe_new(dev);
-		rbuf = abuf_new(3125, &aparams_none);
+		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setout(rproc, rbuf);
 		aproc_setin(thrubox, rbuf);
 	}
 	if (out) {
 		wproc = wpipe_new(dev);
-		wbuf = abuf_new(3125, &aparams_none);
+		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setin(wproc, wbuf);
 		aproc_setout(thrubox, wbuf);
 		if (in) {
@@ -698,9 +698,8 @@ int
 midicat_main(int argc, char **argv)
 {
 	int c, l_flag, unit, fd;
-	struct farglist dfiles;
+	struct farglist dfiles, ifiles, ofiles;
 	char base[PATH_MAX], path[PATH_MAX];
-	char *input, *output;
 	struct farg *fa;
 	struct file *stdx, *f;
 	struct aproc *p;
@@ -708,25 +707,23 @@ midicat_main(int argc, char **argv)
 
 	l_flag = 0;
 	unit = -1;
-	output = NULL;
-	input = NULL;
 	SLIST_INIT(&dfiles);
+	SLIST_INIT(&ifiles);
+	SLIST_INIT(&ofiles);
 
 	while ((c = getopt(argc, argv, "i:o:lf:U:")) != -1) {
 		switch (c) {
 		case 'i':
-			if (input != NULL)
-				errx(1, "only one -i allowed");
-			input = optarg;
+			farg_add(&ifiles, &aparams_none, &aparams_none,
+			    0, HDR_RAW, 0, optarg);
 			break;
 		case 'o':
-			if (output != NULL)
-				errx(1, "only one -o allowed");
-			output = optarg;
+			farg_add(&ofiles, &aparams_none, &aparams_none,
+			    0, HDR_RAW, 0, optarg);
 			break;
 		case 'f':
 			farg_add(&dfiles, &aparams_none, &aparams_none,
-			    HDR_RAW, 0, 0, optarg);
+			    0, HDR_RAW, 0, optarg);
 			break;
 		case 'l':
 			l_flag = 1;
@@ -745,14 +742,15 @@ midicat_main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0 || (!input && !output && !l_flag)) {
+	if (argc > 0 || (SLIST_EMPTY(&ifiles) && SLIST_EMPTY(&ofiles) &&
+	    !l_flag)) {
 		midicat_usage();
 		exit(1);
 	}
 	if (!l_flag && unit >= 0)
 		errx(1, "can't use -U without -l");
 	if (l_flag) {
-		if (input || output)
+		if (!SLIST_EMPTY(&ifiles) || !SLIST_EMPTY(&ofiles))
 			errx(1, "can't use -i or -o with -l");
 		getbasepath(base, sizeof(path));
 		if (unit < 0)
@@ -764,18 +762,19 @@ midicat_main(int argc, char **argv)
 	thrubox = thru_new("thru");
 	thrubox->refs++;
 
-	if ((input || output) && SLIST_EMPTY(&dfiles)) {
+	if ((!SLIST_EMPTY(&ifiles) || !SLIST_EMPTY(&ofiles)) && 
+	    SLIST_EMPTY(&dfiles)) {
 		farg_add(&dfiles, &aparams_none, &aparams_none,
 		    0, HDR_RAW, 0, NULL);
 	}
-
 	while (!SLIST_EMPTY(&dfiles)) {
 		fa = SLIST_FIRST(&dfiles);
 		SLIST_REMOVE_HEAD(&dfiles, entry);
-		newmidi(fa, output || l_flag, input || l_flag);
+		newmidi(fa,
+		    !SLIST_EMPTY(&ofiles) || l_flag,
+		    !SLIST_EMPTY(&ifiles) || l_flag);
 		free(fa);
 	}
-	
 	if (l_flag) {
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_MIDITHRU, unit);
@@ -783,38 +782,44 @@ midicat_main(int argc, char **argv)
 		if (debug_level == 0 && daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
-	if (input) {
-		if (strcmp(input, "-") == 0) {
+	while (!SLIST_EMPTY(&ifiles)) {
+		fa = SLIST_FIRST(&ifiles);
+		SLIST_REMOVE_HEAD(&ifiles, entry);
+		if (strcmp(fa->name, "-") == 0) {
 			fd = STDIN_FILENO;
 			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
 				warn("stdin");
 		} else {
-			fd = open(input, O_RDONLY | O_NONBLOCK, 0666);
+			fd = open(fa->name, O_RDONLY | O_NONBLOCK, 0666);
 			if (fd < 0)
-				err(1, "%s", input);
+				err(1, "%s", fa->name);
 		}
-		stdx = (struct file *)pipe_new(&pipe_ops, fd, "stdin");
+		stdx = (struct file *)pipe_new(&pipe_ops, fd, fa->name);
 		p = rpipe_new(stdx);
-		buf = abuf_new(3125, &aparams_none);
+		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setout(p, buf);
 		aproc_setin(thrubox, buf);
+		free(fa);
 	}
-	if (output) {
-		if (strcmp(output, "-") == 0) {
+	while (!SLIST_EMPTY(&ofiles)) {
+		fa = SLIST_FIRST(&ifiles);
+		SLIST_REMOVE_HEAD(&ifiles, entry);
+		if (strcmp(fa->name, "-") == 0) {
 			fd = STDOUT_FILENO;
 			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
 				warn("stdout");
 		} else {
-			fd = open(output,
+			fd = open(fa->name,
 			    O_WRONLY | O_TRUNC | O_CREAT | O_NONBLOCK, 0666);
 			if (fd < 0)
-				err(1, "%s", output);
+				err(1, "%s", fa->name);
 		}
-		stdx = (struct file *)pipe_new(&pipe_ops, fd, "stdout");
+		stdx = (struct file *)pipe_new(&pipe_ops, fd, fa->name);
 		p = wpipe_new(stdx);
-		buf = abuf_new(3125, &aparams_none);
+		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setin(p, buf);
 		aproc_setout(thrubox, buf);
+		free(fa);
 	}
 
 	/*

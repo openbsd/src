@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.8 2009/07/25 10:52:18 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.9 2009/08/17 16:17:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,7 +29,6 @@
 #ifdef DEBUG
 
 /* defined in main.c */
-void debug_printf(int, char *, char *, ...);
 extern int debug_level;
 
 #define DPRINTF(...) DPRINTFN(1, __VA_ARGS__)
@@ -56,8 +55,16 @@ extern int debug_level;
  */
 #define WAV_NBLK 6
 
+/*
+ * socket and option names
+ */
 #define DEFAULT_MIDITHRU	"midithru"
 #define DEFAULT_SOFTAUDIO	"softaudio"
 #define DEFAULT_OPT		"default"
+
+/*
+ * MIDI buffer size
+ */
+#define MIDI_BUFSZ		3125	/* 1 second */
 
 #endif /* !defined(CONF_H) */
