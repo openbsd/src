@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.c,v 1.7 2009/07/25 10:52:18 ratchov Exp $	*/
+/*	$OpenBSD: aparams.c,v 1.8 2009/08/17 15:07:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -40,6 +40,11 @@ int aparams_ctltovol[128] = {
 	19112,	19863,	20643,	21453,	22295,	23170,	24080,	25025,
 	26008,	27029,	28090,	29193,	30339,	31530,	32768
 };
+
+/*
+ * Fake parameters for byte-streams
+ */
+struct aparams aparams_none = { 1, 0, 0, 0, 0, 0, 0, 0 };
 
 /*
  * Generate a string corresponding to the encoding in par,

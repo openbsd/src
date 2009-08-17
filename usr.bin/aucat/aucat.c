@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.62 2009/07/25 10:52:18 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.63 2009/08/17 15:07:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -298,6 +298,39 @@ newoutput(struct farg *fa)
 	dev_attach(fa->name, NULL, NULL, 0, buf, &fa->opar, fa->xrun, 0);
 }
 
+/*
+ * Open a MIDI device and connect it to the thru box
+ */
+void
+newmidi(struct farg *fa, int in, int out)
+{
+	struct file *dev;
+	struct abuf *rbuf = NULL, *wbuf = NULL;
+	struct aproc *rproc, *wproc;
+
+	dev = (struct file *)miofile_new(&miofile_ops, fa->name, in, out);
+	if (dev == NULL) {
+		errx(1, "%s: can't open device", 
+		    fa->name ? fa->name : "<default>");
+	}
+	if (in) {
+		rproc = rpipe_new(dev);
+		rbuf = abuf_new(3125, &aparams_none);
+		aproc_setout(rproc, rbuf);
+		aproc_setin(thrubox, rbuf);
+	}
+	if (out) {
+		wproc = wpipe_new(dev);
+		wbuf = abuf_new(3125, &aparams_none);
+		aproc_setin(wproc, wbuf);
+		aproc_setout(thrubox, wbuf);
+		if (in) {
+			rbuf->duplex = wbuf;
+			wbuf->duplex = rbuf;
+		}
+	}
+}
+
 void
 setsig(void)
 {
@@ -378,7 +411,7 @@ aucat_main(int argc, char **argv)
 {
 	int c, u_flag, l_flag, n_flag, hdr, xrun, suspend = 0, unit;
 	struct farg *fa;
-	struct farglist  ifiles, ofiles, sfiles;
+	struct farglist ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
 	char base[PATH_MAX], path[PATH_MAX];
 	unsigned bufsz, mode;
@@ -664,19 +697,20 @@ midicat_usage(void)
 int
 midicat_main(int argc, char **argv)
 {
-	static struct aparams noparams = { 1, 0, 0, 0, 0, 0, 0, 0 };
 	int c, l_flag, unit, fd;
+	struct farglist dfiles;
 	char base[PATH_MAX], path[PATH_MAX];
-	char *input, *output, *devpath;
-	struct file *dev, *stdx, *f;
-	struct aproc *p, *send, *recv;
+	char *input, *output;
+	struct farg *fa;
+	struct file *stdx, *f;
+	struct aproc *p;
 	struct abuf *buf;
 
 	l_flag = 0;
 	unit = -1;
-	devpath = NULL;
 	output = NULL;
 	input = NULL;
+	SLIST_INIT(&dfiles);
 
 	while ((c = getopt(argc, argv, "i:o:lf:U:")) != -1) {
 		switch (c) {
@@ -691,7 +725,8 @@ midicat_main(int argc, char **argv)
 			output = optarg;
 			break;
 		case 'f':
-			devpath = optarg;
+			farg_add(&dfiles, &aparams_none, &aparams_none,
+			    HDR_RAW, 0, 0, optarg);
 			break;
 		case 'l':
 			l_flag = 1;
@@ -726,26 +761,29 @@ midicat_main(int argc, char **argv)
 	setsig();
 	filelist_init();
 
+	thrubox = thru_new("thru");
+	thrubox->refs++;
+
+	if ((input || output) && SLIST_EMPTY(&dfiles)) {
+		farg_add(&dfiles, &aparams_none, &aparams_none,
+		    0, HDR_RAW, 0, NULL);
+	}
+
+	while (!SLIST_EMPTY(&dfiles)) {
+		fa = SLIST_FIRST(&dfiles);
+		SLIST_REMOVE_HEAD(&dfiles, entry);
+		newmidi(fa, output || l_flag, input || l_flag);
+		free(fa);
+	}
+	
 	if (l_flag) {
-		thrubox = thru_new("thru");
-		thrubox->refs++;
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_MIDITHRU, unit);
 		listen_new(&listen_ops, path);
 		if (debug_level == 0 && daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
-	if (input || output) {
-		dev = (struct file *)miofile_new(&miofile_ops, devpath,
-		     output ? 1 : 0, input ? 1 : 0);
-		if (dev == NULL)
-			errx(1, "%s: can't open device", 
-			    devpath ? devpath : "<default>");
-	} else
-		dev = NULL;
 	if (input) {
-		send = wpipe_new(dev);
-		send->refs++;
 		if (strcmp(input, "-") == 0) {
 			fd = STDIN_FILENO;
 			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
@@ -757,14 +795,11 @@ midicat_main(int argc, char **argv)
 		}
 		stdx = (struct file *)pipe_new(&pipe_ops, fd, "stdin");
 		p = rpipe_new(stdx);
-		buf = abuf_new(3125, &noparams);
+		buf = abuf_new(3125, &aparams_none);
 		aproc_setout(p, buf);
-		aproc_setin(send, buf);
-	} else
-		send = NULL;
+		aproc_setin(thrubox, buf);
+	}
 	if (output) {
-		recv = rpipe_new(dev);
-		recv->refs++;
 		if (strcmp(output, "-") == 0) {
 			fd = STDOUT_FILENO;
 			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
@@ -777,11 +812,10 @@ midicat_main(int argc, char **argv)
 		}
 		stdx = (struct file *)pipe_new(&pipe_ops, fd, "stdout");
 		p = wpipe_new(stdx);
-		buf = abuf_new(3125, &noparams);
+		buf = abuf_new(3125, &aparams_none);
 		aproc_setin(p, buf);
-		aproc_setout(recv, buf);
-	} else
-		recv = NULL;
+		aproc_setout(thrubox, buf);
+	}
 
 	/*
 	 * loop, start processing
@@ -790,6 +824,8 @@ midicat_main(int argc, char **argv)
 		if (quit_flag) {
 			break;
 		}
+		if (!l_flag && LIST_EMPTY(&thrubox->ibuflist))
+			break;
 		if (!file_poll())
 			break;
 	}
@@ -815,33 +851,6 @@ midicat_main(int argc, char **argv)
 		thrubox = NULL;
 		while (file_poll())
 			; /* nothing */
-	}
-	if (send) {
-	restart_send:
-		LIST_FOREACH(f, &file_list, entry) {
-			if (f->rproc && aproc_depend(send, f->rproc)) {
-				file_eof(f);
-				goto restart_send;
-			}
-		}
-		while (!LIST_EMPTY(&send->ibuflist)) {
-			if (!file_poll())
-				break;
-		}
-		send->refs--;
-		aproc_del(send);
-		send = NULL;
-	}
-	if (recv) {
-		if (recv->u.io.file)
-			file_eof(recv->u.io.file);
-		while (!LIST_EMPTY(&recv->obuflist)) {
-			if (!file_poll())
-				break;
-		}
-		recv->refs--;
-		aproc_del(recv);
-		recv = NULL;
 	}
 	filelist_done();
 	unsetsig();
