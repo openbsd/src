@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.10 2009/08/13 15:23:11 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.11 2009/08/17 23:27:57 dms Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-char   *readdpmelabel(struct buf *, void (*)(struct buf *),
+int	readdpmelabel(struct buf *, void (*)(struct buf *),
 	    struct disklabel *, int *, int);
 
 /*
@@ -104,7 +104,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
     struct disklabel *lp, int *partoffp, int spoofonly)
 {
 	int i, part_cnt, n, hfspartoff = -1;
-	u_int64_t hfspartend;
+	u_int64_t hfspartend = DL_GETDSIZE(lp);
 	struct part_map_entry *part;
 
 	/* First check for a DPME (HFS) disklabel */
@@ -119,7 +119,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	part = (struct part_map_entry *)bp->b_data;
 	/* if first partition is not valid, assume not HFS/DPME partitioned */
 	if (part->pmSig != PART_ENTRY_MAGIC)
-		return ("not a DPME partition");
+		return (EINVAL);	/* not a DPME partition */
 	part_cnt = part->pmMapBlkCnt;
 	n = 8;
 	for (i = 0; i < part_cnt; i++) {
