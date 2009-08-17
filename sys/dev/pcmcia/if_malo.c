@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.66 2009/08/17 13:07:37 martynas Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -544,7 +544,7 @@ int
 cmalo_fw_load_main(struct malo_softc *sc)
 {
 	uint16_t val16, bsize, *uc;
-	int offset, i, retry;
+	int offset, i, retry = 0;
 
 	/* verify if the helper firmware has been loaded correctly */
 	for (i = 0; i < 10; i++) {
