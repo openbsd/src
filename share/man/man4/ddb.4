@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.64 2009/08/15 07:04:52 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.65 2009/08/17 13:12:11 jasper Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: August 15 2009 $
+.Dd $Mdocdate: August 17 2009 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -836,6 +836,17 @@ command.
 .It Cm /w
 Shows each process' PID, command, system call emulation,
 wait channel address, and wait channel message.
+.El
+.\" --------------------
+.It Ic show all bufs Op Cm /f
+Display information about all buffers in the system.
+.Pp
+.Bl -tag -width foo -compact
+.It Cm /f
+For each buffer, print a more detailed output.
+See the
+.Ic show buf
+command for more information.
 .El
 .\" --------------------
 .It Ic show all callout
