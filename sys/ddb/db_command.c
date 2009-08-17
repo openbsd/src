@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.59 2009/08/14 21:16:13 thib Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.60 2009/08/17 13:11:58 jasper Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -291,7 +291,7 @@ db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (modif[0] == 'f')
 		full = TRUE;
 				   
-	vfs_buf_print((struct buf *) addr, full, db_printf);
+	vfs_buf_print((void *) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -357,6 +357,18 @@ db_show_all_vnodes(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		full = TRUE;
 
 	pool_walk(&vnode_pool, full, db_printf, vfs_vnode_print);
+}
+
+extern struct pool bufpool;
+void
+db_show_all_bufs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	pool_walk(&bufpool, full, db_printf, vfs_buf_print);
 }
 
 /*ARGSUSED*/
@@ -484,6 +496,7 @@ struct db_command db_show_all_cmds[] = {
 	{ "pools",	db_show_all_pools,	0, NULL },
 	{ "mounts",	db_show_all_mounts,	0, NULL },
 	{ "vnodes",	db_show_all_vnodes,	0, NULL },
+	{ "bufs",	db_show_all_bufs,	0, NULL },
 #ifdef NFSCLIENT
 	{ "nfsreqs",	db_show_all_nfsreqs,	0, NULL },
 	{ "nfsnodes",	db_show_all_nfsnodes,	0, NULL },
