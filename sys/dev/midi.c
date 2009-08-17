@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.17 2009/07/18 10:58:41 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.18 2009/08/17 10:27:42 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -70,7 +70,6 @@ void	midi_attach(struct midi_softc *, struct device *);
 
 #if NSEQUENCER > 0
 int		   midi_unit_count(void);
-struct midi_hw_if *midi_get_hwif(int);
 void		   midi_toevent(struct midi_softc *, int);
 int		   midi_writebytes(int, u_char *, int);
 void		   midiseq_in(struct midi_dev *, u_char *, int);
