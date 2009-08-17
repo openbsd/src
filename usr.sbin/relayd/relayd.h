@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.130 2009/08/13 13:51:21 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.131 2009/08/17 11:36:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -717,6 +717,8 @@ enum imsg_type {
 	IMSG_CTL_HOST,
 	IMSG_CTL_RELAY,
 	IMSG_CTL_SESSION,
+	IMSG_CTL_ROUTER,
+	IMSG_CTL_NETROUTE,
 	IMSG_CTL_TABLE_CHANGED,
 	IMSG_CTL_PULL_RULESET,
 	IMSG_CTL_PUSH_RULESET,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.20 2007/12/20 20:15:43 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.21 2009/08/17 11:36:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -82,6 +82,7 @@ static const struct token t_show[] = {
 	{KEYWORD,	"hosts",	SHOW_HOSTS,	NULL},
 	{KEYWORD,	"redirects",	SHOW_RDRS,	NULL},
 	{KEYWORD,	"relays",	SHOW_RELAYS,	NULL},
+	{KEYWORD,	"routers",	SHOW_ROUTERS,	NULL},
 	{KEYWORD,	"sessions",	SHOW_SESSIONS,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.62 2009/08/13 13:51:21 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.63 2009/08/17 11:36:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -530,6 +530,8 @@ show(struct ctl_conn *c)
 	struct rdr	*rdr;
 	struct host	*host;
 	struct relay	*rlay;
+	struct router	*rt;
+	struct netroute	*nr;
 
 	if (env->sc_rdrs == NULL)
 		goto relays;
@@ -560,7 +562,7 @@ show(struct ctl_conn *c)
 	}
 relays:
 	if (env->sc_relays == NULL)
-		goto end;
+		goto routers;
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		rlay->rl_stats[env->sc_prefork_relay].id = EMPTY_ID;
 		imsg_compose_event(&c->iev, IMSG_CTL_RELAY, 0, 0, -1,
@@ -577,6 +579,27 @@ relays:
 				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
 				    0, 0, -1, host, sizeof(*host));
 	}
+
+routers:
+	if (env->sc_rts == NULL)
+		goto end;
+	TAILQ_FOREACH(rt, env->sc_rts, rt_entry) {
+		imsg_compose_event(&c->iev, IMSG_CTL_ROUTER, 0, 0, -1,
+		    rt, sizeof(*rt));
+		if (rt->rt_conf.flags & F_DISABLE)
+			continue;
+
+		TAILQ_FOREACH(nr, &rt->rt_netroutes, nr_entry)
+			imsg_compose_event(&c->iev, IMSG_CTL_NETROUTE,
+			    0, 0, -1, nr, sizeof(*nr));
+		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
+		    rt->rt_gwtable, sizeof(*rt->rt_gwtable));
+		if (!(rt->rt_gwtable->conf.flags & F_DISABLE))
+			TAILQ_FOREACH(host, &rt->rt_gwtable->hosts, entry)
+				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
+				    0, 0, -1, host, sizeof(*host));
+	}
+
 end:
 	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }

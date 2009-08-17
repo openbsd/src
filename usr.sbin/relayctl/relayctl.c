@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.38 2009/08/07 11:21:53 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.39 2009/08/17 11:36:01 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -139,6 +139,7 @@ main(int argc, char *argv[])
 	case SHOW_HOSTS:
 	case SHOW_RDRS:
 	case SHOW_RELAYS:
+	case SHOW_ROUTERS:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, -1, NULL, 0);
 		printf("%-4s\t%-8s\t%-24s\t%-7s\tStatus\n",
 		    "Id", "Type", "Name", "Avlblty");
@@ -204,6 +205,7 @@ main(int argc, char *argv[])
 			case SHOW_HOSTS:
 			case SHOW_RDRS:
 			case SHOW_RELAYS:
+			case SHOW_ROUTERS:
 				done = show_summary_msg(&imsg, res->action);
 				break;
 			case SHOW_SESSIONS:
@@ -306,12 +308,14 @@ show_summary_msg(struct imsg *imsg, int type)
 	struct table		*table;
 	struct host		*host;
 	struct relay		*rlay;
+	struct router		*rt;
+	struct netroute		*nr;
 	struct ctl_stats	 stats[RELAY_MAXPROC];
 	char			 name[MAXHOSTNAMELEN];
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RDR:
-		if (type == SHOW_HOSTS || type == SHOW_RELAYS)
+		if (!(type == SHOW_SUM || type == SHOW_RDRS))
 			break;
 		rdr = imsg->data;
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
@@ -319,7 +323,7 @@ show_summary_msg(struct imsg *imsg, int type)
 		    print_rdr_status(rdr->conf.flags));
 		break;
 	case IMSG_CTL_TABLE:
-		if (type == SHOW_RELAYS || type == SHOW_RDRS)
+		if (!(type == SHOW_SUM || type == SHOW_HOSTS))
 			break;
 		table = imsg->data;
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
@@ -327,7 +331,7 @@ show_summary_msg(struct imsg *imsg, int type)
 		    print_table_status(table->up, table->conf.flags));
 		break;
 	case IMSG_CTL_HOST:
-		if (type == SHOW_RELAYS || type == SHOW_RDRS)
+		if (!(type == SHOW_SUM || type == SHOW_HOSTS))
 			break;
 		host = imsg->data;
 		if (host->conf.parentid)
@@ -350,7 +354,7 @@ show_summary_msg(struct imsg *imsg, int type)
 		}
 		break;
 	case IMSG_CTL_RELAY:
-		if (type == SHOW_HOSTS || type == SHOW_RDRS)
+		if (!(type == SHOW_SUM || type == SHOW_RELAYS))
 			break;
 		rlay = imsg->data;
 		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
@@ -369,6 +373,28 @@ show_summary_msg(struct imsg *imsg, int type)
 			break;
 		bcopy(imsg->data, &stats, sizeof(stats));
 		print_statistics(stats);
+		break;
+	case IMSG_CTL_ROUTER:
+		if (!(type == SHOW_SUM || type == SHOW_ROUTERS))
+			break;
+		rt = imsg->data;
+		printf("%-4u\t%-8s\t%-24s\t%-7s\t%s\n",
+		    rt->rt_conf.id, "router", rt->rt_conf.name, "",
+		    print_relay_status(rt->rt_conf.flags));
+		if (type != SHOW_ROUTERS)
+			break;
+		if (rt->rt_conf.rtable)
+			printf("\t%8s\trtable: %d\n", "", rt->rt_conf.rtable);
+		if (strlen(rt->rt_conf.label))
+			printf("\t%8s\trtlabel: %s\n", "", rt->rt_conf.label);
+		break;
+	case IMSG_CTL_NETROUTE:
+		if (type != SHOW_ROUTERS)
+			break;
+		nr = imsg->data;
+		(void)print_host(&nr->nr_conf.ss, name, sizeof(name));
+		printf("\t%8s\troute: %s/%d\n",
+		    "", name, nr->nr_conf.prefixlen);
 		break;
 	case IMSG_CTL_END:
 		return (1);

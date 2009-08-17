@@ -1,4 +1,4 @@
-.\" $OpenBSD: relayctl.8,v 1.23 2008/12/31 15:22:27 sobrado Exp $
+.\" $OpenBSD: relayctl.8,v 1.24 2009/08/17 11:36:01 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 31 2008 $
+.Dd $Mdocdate: August 17 2009 $
 .Dt RELAYCTL 8
 .Os
 .Sh NAME
@@ -76,10 +76,13 @@ not the total number of redirected connections.
 Show detailed status of relays including the current and average
 access statistics.
 The statistics will be updated every minute.
+.It Cm show routers
+Show detailed status of routers including the configured network
+routes.
 .It Cm show sessions
 Dump the complete list of running relay sessions.
 .It Cm show summary
-Display a list of all relays, redirections, tables, and hosts.
+Display a list of all relays, redirections, routers, tables, and hosts.
 .It Cm table disable Op Ar name | id
 Disable a table.
 Consider all hosts disabled.
