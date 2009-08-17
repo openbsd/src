@@ -114,7 +114,7 @@ idgen32_rekey(struct idgen32_ctx *ctx)
 void
 idgen32_init(struct idgen32_ctx *ctx)
 {
-	bzero(ctx, sizeof(ctx));
+	bzero(ctx, sizeof(*ctx));
 	ctx->id_hibit = arc4random() & 0x80000000;
 	idgen32_rekey(ctx);
 }
