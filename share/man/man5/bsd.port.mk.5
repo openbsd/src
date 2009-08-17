@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.233 2009/08/12 22:40:54 simon Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.234 2009/08/17 21:39:41 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2009 $
+.Dd $Mdocdate: August 17 2009 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1926,6 +1926,8 @@ The real working directory ${WRKDIR} is created there.
 Can be set on a per-${PKGPATH} basis.
 For instance, setting WRKOBJDIR_www/mozilla=/tmp/obj
 will affect only the mozilla port.
+If explicitly unset (WRKOBJDIR=), the working directory is
+created within the port directory.
 .It Ev X11BASE
 Where X11 has been installed (default: /usr/X11R6).
 .It Ev XMKMF
