@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2007/10/18 18:20:20 deraadt Exp $
+# $OpenBSD: Makefile,v 1.17 2009/08/17 09:40:37 jsg Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -43,9 +43,9 @@ kadmin-commands.c kadmin-commands.h:	kadmin-commands.in $(SLC)
 	./$(SLC) $(KRB5SRC)/kadmin/kadmin-commands.in
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5 -I.
 
-DPADD+= ${LIBREADLINE} ${LIBCURSES} ${LIBKADM5SRV} ${LIBKADM5CLNT} \
+DPADD+= ${LIBEDIT} ${LIBCURSES} ${LIBKADM5SRV} ${LIBKADM5CLNT} \
 	${LIBKRB5} ${LIBCRYPTO} ${LIBDES}
-LDADD+=	-lreadline -lcurses -lkadm5srv -lkadm5clnt \
+LDADD+=	-ledit -lcurses -lkadm5srv -lkadm5clnt \
 	-lkrb5 -lcrypto -ldes
 
 CLEANFILES+=	kadmin-commands.c slc lc-lex.o kadmin-commands.h \

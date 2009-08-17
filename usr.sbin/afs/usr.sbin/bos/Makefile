@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2003/08/05 11:11:42 hin Exp $
+# $OpenBSD: Makefile,v 1.4 2009/08/17 09:40:37 jsg Exp $
 
 AFSTOPDIR	= ../..
 .include <../../Makefile.inc>
@@ -8,7 +8,7 @@ AFSTOPDIR	= ../..
 PROG	= bos
 BINDIR	= /usr/sbin
 MAN	= bos.8
-LDADD	+= ${LIBARLA} -lkrb5 -lcrypto -lasn1 -lreadline -ldes -lcurses
+LDADD	+= ${LIBARLA} -lkrb5 -lcrypto -lasn1 -ledit -ldes -lcurses
 DPADD	+= ${LIBARLA}
 
 CFLAGS	+= -I${AFSSRC}/appl/lib
