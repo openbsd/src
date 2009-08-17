@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.10 2009/05/21 23:45:48 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.11 2009/08/17 14:23:09 jsing Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -60,9 +60,7 @@ extern char bootdev[];
  */
 
 static char *
-filename(str, ppart)
-	char *str;
-	char *ppart;
+filename(char *str, char *ppart)
 {
 	char *cp, *lp;
 	char savec;
@@ -116,13 +114,8 @@ filename(str, ppart)
 }
 
 static int
-strategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+    size_t *rsize)
 {
 	struct of_dev *dev = devdata;
 	u_quad_t pos;
@@ -162,8 +155,7 @@ strategy(devdata, rw, blk, size, buf, rsize)
 }
 
 static int
-devclose(of)
-	struct open_file *of;
+devclose(struct open_file *of)
 {
 	struct of_dev *op = of->f_devdata;
 
@@ -211,8 +203,7 @@ static struct of_dev ofdev = {
 char opened_name[256];
 
 static u_long
-get_long(p)
-	const void *p;
+get_long(const void *p)
 {
 	const unsigned char *cp = p;
 	
@@ -245,9 +236,7 @@ sun_fstypes[8] = {
  * The BSD label is cleared out before this is called.
  */
 static char *
-disklabel_sun_to_bsd(cp, lp)
-	char *cp;
-	struct disklabel *lp;
+disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 {
 	struct sun_disklabel *sl;
 	struct partition *npp;
@@ -326,12 +315,8 @@ disklabel_sun_to_bsd(cp, lp)
  * Find a valid disklabel.
  */
 static char *
-search_label(devp, off, buf, lp, off0)
-	struct of_dev *devp;
-	u_long off;
-	char *buf;
-	struct disklabel *lp;
-	u_long off0;
+search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
+    u_long off0)
 {
 	size_t read;
 	struct mbr_partition *p;
@@ -377,10 +362,7 @@ search_label(devp, off, buf, lp, off0)
 }
 
 int
-devopen(of, name, file)
-	struct open_file *of;
-	const char *name;
-	char **file;
+devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
 	char partition;
