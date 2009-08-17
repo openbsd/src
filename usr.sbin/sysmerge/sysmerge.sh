@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.48 2009/08/16 20:15:10 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.49 2009/08/17 12:02:47 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -40,7 +40,9 @@ clean_src() {
 restore_bak() {
 	for i in ${DESTDIR}/${DBDIR}/.*.bak; do
 		_i=`basename ${i} .bak`
-		mv ${i} ${DESTDIR}/${DBDIR}/${_i#.}
+		if [ -f "${i}" ]; then
+			mv ${i} ${DESTDIR}/${DBDIR}/${_i#.}
+		fi
 	done
 }
 
