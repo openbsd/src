@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.170 2009/08/09 14:12:25 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.171 2009/08/17 13:04:05 martynas Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3123,11 +3123,13 @@ sr_chunks_unwind(struct sr_softc *sc, struct sr_chunk_head *cl)
 void
 sr_discipline_free(struct sr_discipline *sd)
 {
-	struct sr_softc		*sc = sd->sd_sc;
+	struct sr_softc		*sc;
 	int			i;
 
 	if (!sd)
 		return;
+
+	sc = sd->sd_sc;
 
 	DNPRINTF(SR_D_DIS, "%s: sr_discipline_free %s\n",
 	    DEVNAME(sc),
