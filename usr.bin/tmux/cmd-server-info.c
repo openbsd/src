@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-info.c,v 1.7 2009/08/11 17:18:35 nicm Exp $ */
+/* $OpenBSD: cmd-server-info.c,v 1.8 2009/08/18 14:48:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -81,7 +81,7 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 	ctx->print(ctx, "protocol version is %d", PROTOCOL_VERSION);
 	ctx->print(ctx, "%u clients, %u sessions",
 	    ARRAY_LENGTH(&clients), ARRAY_LENGTH(&sessions));
-	ctx->print(ctx, "");
+	ctx->print(ctx, "%s", "");
 
 	ctx->print(ctx, "Clients:");
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
@@ -94,7 +94,7 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 		    c->session->name, c->tty.sx, c->tty.sy, c->tty.termname,
 		    c->flags, c->tty.flags);
 	}
-	ctx->print(ctx, "");
+	ctx->print(ctx, "%s", "");
 
  	ctx->print(ctx, "Sessions: [%zu/%zu]",
 	    sizeof (struct grid_cell), sizeof (struct grid_utf8));
@@ -142,7 +142,7 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 			}
 		}
 	}
-	ctx->print(ctx, "");
+	ctx->print(ctx, "%s", "");
 
   	ctx->print(ctx, "Terminals:");
 	SLIST_FOREACH(term, &tty_terms, entry) {
@@ -174,7 +174,7 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 			}
 		}
 	}
-	ctx->print(ctx, "");
+	ctx->print(ctx, "%s", "");
 
 	return (0);
 }
