@@ -1,4 +1,4 @@
-/* $OpenBSD: window-more.c,v 1.7 2009/08/05 16:26:38 nicm Exp $ */
+/* $OpenBSD: window-more.c,v 1.8 2009/08/18 11:53:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -188,7 +188,7 @@ window_more_write_line(
 	if (data->top + py  < ARRAY_LENGTH(&data->list)) {
 		msg = ARRAY_ITEM(&data->list, data->top + py);
 		screen_write_nputs(
-		    ctx, screen_size_x(s) - 1 - size, &gc, utf8flag, "%s", msg);
+		    ctx, screen_size_x(s) - size, &gc, utf8flag, "%s", msg);
 	}
 	while (s->cx < screen_size_x(s) - size)
 		screen_write_putc(ctx, &gc, ' ');
