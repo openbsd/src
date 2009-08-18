@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.20 2009/05/22 18:17:46 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.21 2009/08/18 19:34:47 miod Exp $
 .\"     $NetBSD: intro.4,v 1.8 2004/02/10 16:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 22 2009 $
+.Dd $Mdocdate: August 18 2009 $
 .Dt INTRO 4 sgi
 .Os
 .Sh NAME
@@ -93,10 +93,10 @@ The following systems are supported:
 .It Li IP32 Ta "O2, O2+ (Moosehead)"
 .It Li IP35 Ta Fuel
 .It Li IP35 Ta Origin 300, Onyx 300
-.\" .It Li IP35 Ta Origin 350, Onyx 350
+.It Li IP35 Ta Origin 350, Onyx 350
 .It Li IP35 Ta Origin 3000, Onyx 3000
-.\" .It Li IP35 Ta Onyx 4
-.\" .It Li IP35 Ta Tezro
+.It Li IP35 Ta Onyx 4
+.It Li IP35 Ta Tezro
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the
@@ -111,6 +111,10 @@ Adaptec VL/EISA/PCI SCSI interface
 serial communications interface
 .It Xr gbe 4
 SGI Graphics Back End (GBE) frame buffer
+.It Xr ioc 4
+IOC3 generic workstation I/O device
+.It Xr iof 4
+IOC4 generic workstation I/O device
 .It Xr macebus 4
 Multimedia, Audio and Communications Engine I/O ASIC
 .It Xr mainbus 4

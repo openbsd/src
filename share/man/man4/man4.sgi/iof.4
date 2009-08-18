@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xbridge.4,v 1.2 2009/08/18 19:34:47 miod Exp $
+.\"	$OpenBSD: iof.4,v 1.1 2009/08/18 19:34:47 miod Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -15,35 +15,52 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: August 18 2009 $
-.Dt XBRIDGE 4 sgi
+.Dt IOF 4 sgi
 .Os
 .Sh NAME
-.Nm xbridge
-.Nd XIO-PCI bridge
+.Nm iof
+.Nd IOC4 generic workstation I/O device
 .Sh SYNOPSIS
-.Cd "xbridge* at xbow?"
-.Cd "pci* at xbridge?"
+.Cd "iof* at pci?"
+.Cd "com0 at iof? base 0x380"
+.Cd "com* at iof?"
+\." .Cd "dsrtc0 at iof?"
+.\" .Cd "iockbc* at iof?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the XIO-PCI and XIO-PCI-X bridges commonly found
-on Octane and Origin family systems.
+driver provides support for the SGI IOC4-based basic I/O on Origin 350
+and Tezro systems.
 .Pp
-All these systems feature at least one
-.Nm
-device to which the on-board devices are connected.
-.Pp
-.Nm
-devices support up to 8 different PCI devices, or 4 PCI-X devices.
+The IOC4 chip provides:
+.Bl -bullet -compact -offset indent
+.It
+Four
+.Xr com 4
+serial ports.
+.It
+A
+.Xr dsrtc 4
+time-of-day chip.
+.It
+A PS/2 keyboard and mouse interface.
+.It
+A
+.Xr pciide 4
+ATAPI interface.
 .Sh SEE ALSO
+.Xr com 4 ,
+.\" .Xr dsrtc 4 ,
 .Xr intro 4 ,
-.Xr pci 4 ,
-.Xr xbow 4
+.\" .Xr iockbc 4 ,
+.Xr pci 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 4.4 .
+.Ox 4.6 .
+.Sh BUGS
+Only serial ports are supported at the moment.
 .\" .Sh AUTHORS
 .\" The
 .\" .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ioc.4,v 1.2 2009/05/18 06:55:33 jmc Exp $
+.\"	$OpenBSD: ioc.4,v 1.3 2009/08/18 19:34:47 miod Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2009 $
+.Dd $Mdocdate: August 18 2009 $
 .Dt IOC 4 sgi
 .Os
 .Sh NAME
 .Nm ioc
-.Nd generic workstation I/O device
+.Nd IOC3 generic workstation I/O device
 .Sh SYNOPSIS
 .Cd "ioc* at pci?"
-.Cd "com0 at ioc? base 0x00020178"
-.Cd "com1 at ioc? base 0x00020170"
+.Cd "com0 at ioc? base 0x20178"
+.Cd "com1 at ioc? base 0x20170"
 .Cd "dsrtc0 at ioc?"
 .Cd "onewire* at ioc?"
-.\" .Cd "ef* at ioc? base 0x000000f0"
+.\" .Cd "iec* at ioc? base 0xf0"
 .\" .Cd "iockbc* at ioc?"
 .Sh DESCRIPTION
 The
@@ -62,7 +62,7 @@ interfaces.
 .Sh SEE ALSO
 .Xr com 4 ,
 .Xr dsrtc 4 ,
-.\" .Xr ef 4 ,
+.\" .Xr iec 4 ,
 .Xr intro 4 ,
 .\" .Xr iockbc 4 ,
 .Xr onewire 4 ,
