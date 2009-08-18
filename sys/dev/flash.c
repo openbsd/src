@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.12 2009/06/17 01:30:30 thib Exp $	*/
+/*	$OpenBSD: flash.c,v 1.13 2009/08/18 19:05:16 kili Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -67,7 +67,7 @@ void	flashdone(void *);
 int	flashsafestrategy(struct flash_softc *, struct buf *);
 void	flashgetdefaultlabel(dev_t, struct flash_softc *,
     struct disklabel *);
-void	flashgetdisklabel(dev_t, struct flash_softc *, struct disklabel *, int);
+int	flashgetdisklabel(dev_t, struct flash_softc *, struct disklabel *, int);
 
 /*
  * Driver attachment glue
@@ -699,7 +699,12 @@ flashopen(dev_t dev, int oflags, int devtype, struct proc *p)
 			sc->sc_flags |= FDK_LOADED;
 			if (flashsafe(dev))
 				sc->sc_flags |= FDK_SAFE;
-			flashgetdisklabel(dev, sc, sc->sc_dk.dk_label, 0);
+			if ((error = flashgetdisklabel(dev, sc, 
+			    sc->sc_dk.dk_label, 0)) != 0) {
+				flashunlock(sc);
+				device_unref(&sc->sc_dev);
+				return error;
+			}
 		}
 	} else if (((sc->sc_flags & FDK_SAFE) == 0) !=
 	    (flashsafe(dev) == 0)) {
@@ -1000,11 +1005,10 @@ flashgetdefaultlabel(dev_t dev, struct flash_softc *sc,
 	lp->d_checksum = dkcksum(lp);
 }
 
-void
+int
 flashgetdisklabel(dev_t dev, struct flash_softc *sc,
     struct disklabel *lp, int spoofonly)
 {
-	char *errstring;
 	dev_t labeldev;
 
 	flashgetdefaultlabel(dev, sc, lp);
@@ -1014,10 +1018,7 @@ flashgetdisklabel(dev_t dev, struct flash_softc *sc,
 
 	/* Call the generic disklabel extraction routine. */
 	labeldev = flashlabeldev(dev);
-	errstring = readdisklabel(labeldev, flashstrategy, lp, spoofonly);
-	if (errstring != NULL) {
-		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
-	}
+	return readdisklabel(labeldev, flashstrategy, lp, spoofonly);
 }
 
 /*
