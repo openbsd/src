@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.85 2009/08/18 14:48:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.86 2009/08/18 21:41:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -617,6 +617,7 @@ struct input_ctx {
 	u_char		*buf;
 	size_t		 len;
 	size_t		 off;
+	size_t		 was;
 
 	struct grid_cell cell;
 
