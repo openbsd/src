@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.25 2009/08/08 00:02:22 gilles Exp $	*/
+/*	$OpenBSD: store.c,v 1.26 2009/08/18 18:38:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -66,7 +66,9 @@ file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type, int s
 		 * add the Delivered-To header to help loop detection.
 		 */
 		if (!session && path != NULL && inheaders &&
-		    strchr(buf, ':') == NULL && !isspace((int)*buf)) {
+			(*buf == '\0' ||
+				(!isspace((int)*buf) &&
+				 strchr(buf, ':') == NULL))) {
 			if (fprintf(dest, "Delivered-To: %s@%s\n",
 				path->user, path->domain) == -1)
 				return 0;
