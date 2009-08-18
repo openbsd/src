@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.49 2009/08/17 12:02:47 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.50 2009/08/18 08:27:32 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -53,7 +53,7 @@ error_rm_wrkdir() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-ab] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
+	echo "usage: ${0##*/} [-bd] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
 }
 
 trap "restore_bak; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
@@ -85,7 +85,7 @@ do_pre() {
 	TEMPROOT="${WRKDIR}/temproot"
 	BKPDIR="${WRKDIR}/backups"
 
-	if [ -z "${BATCHMODE}" -a -z "${AUTOMODE}" ]; then
+	if [ -z "${BATCHMODE}" -a -n "${DIFFMODE}" ]; then
 		echo "\n===> Running ${0##*/} with the following settings:\n"
 		if [ "${TGZURL}" ]; then
 			echo " etc source:          ${TGZURL}"
@@ -152,7 +152,7 @@ do_populate() {
 		if [ -f ${DESTDIR}/${DBDIR}/${i} ]; then
 			# delete file in temproot if it has not changed since last release
 			# and is present in current installation
-			if [ "${AUTOMODE}" ]; then
+			if [ -z "${DIFFMODE}" ]; then
 				_R=$(cd ${TEMPROOT} && cksum -c ${DESTDIR}/${DBDIR}/${i} 2> /dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
@@ -382,7 +382,7 @@ diff_loop() {
 			echo "\n========================================================================\n"
 		fi
 		if [ -f "${DESTDIR}${COMPFILE#.}" -a -f "${COMPFILE}" -a -z "${IS_LINK}" ]; then
-			if [ "${AUTOMODE}" ]; then
+			if [ -z "${DIFFMODE}" ]; then
 				# automatically install files if current != new and current = old
 				for i in "${AUTO_UPG[@]}"; do
 					if [ "${i}" = "${COMPFILE}" ]; then
@@ -411,7 +411,7 @@ diff_loop() {
 		else
 			echo "===> ${COMPFILE#.} was not found on the target system"
 			if [ "${IS_LINK}" ]; then
-				if [ -z "${AUTOMODE}" ]; then
+				if [ -n "${DIFFMODE}" ]; then
 					echo ""
 					NO_INSTALLED=1
 				else
@@ -424,7 +424,7 @@ diff_loop() {
 					return
 				fi
 			fi
-			if [ -z "${AUTOMODE}" ]; then
+			if [ -n "${DIFFMODE}" ]; then
 				echo ""
 				NO_INSTALLED=1
 			else
@@ -537,7 +537,7 @@ do_compare() {
 		# it will be deleted from temproot and ignored from comparison.
 		# several files are generated from scripts so CVS ID is not a
 		# reliable way of detecting changes; leave for a full diff.
-		if [ "${AUTOMODE}" -a "${COMPFILE}" != "./etc/fbtab" \
+		if [ -z "${DIFFMODE}" -a "${COMPFILE}" != "./etc/fbtab" \
 		    -a "${COMPFILE}" != "./etc/login.conf" \
 		    -a "${COMPFILE}" != "./etc/sysctl.conf" \
 		    -a "${COMPFILE}" != "./etc/ttys" -a -z "${IS_LINK}" ]; then
@@ -611,13 +611,13 @@ do_post() {
 }
 
 
-while getopts abs:x: arg; do
+while getopts bds:x: arg; do
 	case ${arg} in
-	a)
-		AUTOMODE=1
-		;;
 	b)
 		BATCHMODE=1
+		;;
+	d)
+		DIFFMODE=1
 		;;
 	s)
 		if [ -f "${OPTARG}/etc/Makefile" ]; then
