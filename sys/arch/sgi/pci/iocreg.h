@@ -1,4 +1,4 @@
-/*	$OpenBSD: iocreg.h,v 1.2 2009/04/12 17:56:58 miod Exp $	*/
+/*	$OpenBSD: iocreg.h,v 1.3 2009/08/18 19:32:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -17,15 +17,15 @@
  */
 
 /*
- * Register definitions for SGI IOC ASIC.
+ * Register definitions for SGI IOC3 ASIC.
  */
 
 #define IOC_NDEVS		6
 
 #define IOCDEV_SERIAL_A		0
 #define IOCDEV_SERIAL_B		1
-#define IOCDEV_PARPORT		2
-#define IOCDEV_KEYBOARD		3
+#define IOCDEV_LPT		2
+#define IOCDEV_KBC		3
 #define IOCDEV_RTC		4
 #define IOCDEV_EF		5
 
@@ -35,8 +35,20 @@
 #define IOC3_SIO_CR		0x00000028
 #define	IOC3_MCR		0x00000030
 
+/* bits in the SIO interrupt register */
+#define	IOC3_IRQ_UARTA		0x00000040	/* UART A passthrough */
+#define	IOC3_IRQ_UARTB		0x00008000	/* UART B passthrough */
+#define	IOC3_IRQ_LPT		0x00040000	/* parallel port passthrough */
+#define	IOC3_IRQ_KBC		0x00400000	/* keyboard controller */
+
+#define	IOC3_LPT_BASE		0x00000080
+#define	IOC3_LPT_SIZE		0x0000001c
+
+#define	IOC3_KBC_BASE		0x0000009c
+#define	IOC3_KBC_SIZE		0x00000014
+
 #define	IOC3_EF_BASE		0x000000f0
-#define	IOC3_EF_SIZE		0x60
+#define	IOC3_EF_SIZE		0x00000060
 
 #define	IOC3_RTC_BASE		0x00020168
 

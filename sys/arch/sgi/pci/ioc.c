@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.20 2009/08/18 19:29:09 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.21 2009/08/18 19:32:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -18,7 +18,7 @@
  */
 
 /*
- * IOC device driver.
+ * IOC3 device driver.
  */
 
 #include <sys/param.h>
@@ -30,7 +30,6 @@
 #include <mips64/archtype.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/cpu.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -125,8 +124,8 @@ ioc_print(void *aux, const char *iocname)
 	if (iocname != NULL)
 		printf("%s at %s", iaa->iaa_name, iocname);
 
-	if ((int)iaa->iaa_base > 0)
-		printf(" base 0x%08x", iaa->iaa_base);
+	if ((int)iaa->iaa_base > 0)	/* no base for onewire */
+		printf(" base 0x%x", iaa->iaa_base);
 
 	return (UNCONF);
 }
@@ -177,7 +176,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mem_bus_space == NULL) {
 		printf("%s: can't allocate bus_space\n", self->dv_xname);
-		goto unregister2;
+		goto unmap;
 	}
 
 	bcopy(memt, sc->sc_mem_bus_space, sizeof(*sc->sc_mem_bus_space));
@@ -358,10 +357,6 @@ establish:
 	printf("%s%s\n", dual_irq ? ", ethernet " : "",
 	    pci_intr_string(sc->sc_pc, ih1));
 
-	/* Initialise interrupt handling structures. */
-	for (dev = 0; dev < IOC_NDEVS; dev++)
-		sc->sc_intr[dev] = NULL;
-
 	/*
 	 * Acknowledge all pending interrupts, and disable them.
 	 */
@@ -380,7 +375,7 @@ establish:
 		ioc_attach_child(self, "com", IOC3_UARTB_BASE, IOCDEV_SERIAL_B);
 	}
 	if (has_ps2)
-		ioc_attach_child(self, "iockbc", 0, IOCDEV_KEYBOARD);
+		ioc_attach_child(self, "iockbc", IOC3_KBC_BASE, IOCDEV_KBC);
 	if (has_ethernet) {
 		child = ioc_attach_child(self, "iec", IOC3_EF_BASE, IOCDEV_EF);
 		if (dual_irq != 0 && child == NULL) {
@@ -395,12 +390,10 @@ establish:
 		}
 	}
 	/* XXX what about the parallel port? */
-	ioc_attach_child(self, "dsrtc", 0, IOCDEV_RTC);
+	ioc_attach_child(self, "dsrtc", 0 /* IOC3_RTC_BASE */, IOCDEV_RTC);
 
 	return;
 
-unregister2:
-	pci_intr_disestablish(sc->sc_pc, sc->sc_ih1);
 unregister:
 	if (dual_irq)
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih2);
@@ -619,13 +612,13 @@ iocow_pulse(struct ioc_softc *sc, int pulse, int data)
  * let com(4) tinker with the appropriate registers, instead of adding
  * an unnecessary layer there.
  */
-const uint32_t ioc_intrbits[IOC_NDEVS] = {
-	0x00000040,	/* serial A */
-	0x00008000,	/* serial B */
-	0x00040000,	/* parallel port */
-	0x00400000,	/* PS/2 port */
-	0x08000000,	/* rtc */
-	0x00000000	/* Ethernet (handled differently) */
+static const uint32_t ioc_intrbits[IOC_NDEVS] = {
+	IOC3_IRQ_UARTA,
+	IOC3_IRQ_UARTB,
+	IOC3_IRQ_LPT,
+	IOC3_IRQ_KBC,
+	0,	/* RTC */
+	0	/* Ethernet, handled differently */
 };
 
 void *
@@ -661,7 +654,7 @@ int
 ioc_intr_superio(void *v)
 {
 	struct ioc_softc *sc = (struct ioc_softc *)v;
-	uint32_t pending;
+	uint32_t pending, mask;
 	int dev;
 
 	pending = bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR) &
@@ -674,14 +667,15 @@ ioc_intr_superio(void *v)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IEC, pending);
 
 	for (dev = 0; dev < IOC_NDEVS - 1 /* skip Ethernet */; dev++) {
-		if (pending & ioc_intrbits[dev]) {
+		mask = pending & ioc_intrbits[dev];
+		if (mask != 0) {
 			(void)ioc_intr_dispatch(sc, dev);
 
 			/* Ack, then reenable, pending interrupts */
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
-			    IOC3_SIO_IR, pending & ioc_intrbits[dev]);
+			    IOC3_SIO_IR, mask);
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
-			    IOC3_SIO_IES, pending & ioc_intrbits[dev]);
+			    IOC3_SIO_IES, mask);
 		}
 	}
 
