@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.19 2009/07/26 19:58:51 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.20 2009/08/18 19:29:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -49,7 +49,8 @@
 
 int	ioc_match(struct device *, void *, void *);
 void	ioc_attach(struct device *, struct device *, void *);
-void	ioc_attach_child(struct device *, const char *, bus_addr_t, int);
+struct device *
+	ioc_attach_child(struct device *, const char *, bus_addr_t, int);
 int	ioc_search_onewire(struct device *, void *, void *);
 int	ioc_search_mundane(struct device *, void *, void *);
 int	ioc_print(void *, const char *);
@@ -142,6 +143,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t data;
 	int dev;
 	int dual_irq, shared_handler, has_ethernet, has_ps2, has_serial;
+	struct device *child;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
 	    &memt, &memh, NULL, &memsize, 0)) {
@@ -379,8 +381,19 @@ establish:
 	}
 	if (has_ps2)
 		ioc_attach_child(self, "iockbc", 0, IOCDEV_KEYBOARD);
-	if (has_ethernet)
-		ioc_attach_child(self, "iec", IOC3_EF_BASE, IOCDEV_EF);
+	if (has_ethernet) {
+		child = ioc_attach_child(self, "iec", IOC3_EF_BASE, IOCDEV_EF);
+		if (dual_irq != 0 && child == NULL) {
+			/*
+			 * If we did not attach an ethernet driver and
+			 * this is the dual interrupt design, unhook the
+			 * network interrupt, because ARCS might have left
+			 * interrupt conditions pending, which will not be
+			 * acknowledged at the IOC3 driver level.
+			 */
+			pci_intr_disestablish(sc->sc_pc, sc->sc_ih1);
+		}
+	}
 	/* XXX what about the parallel port? */
 	ioc_attach_child(self, "dsrtc", 0, IOCDEV_RTC);
 
@@ -395,7 +408,7 @@ unmap:
 	bus_space_unmap(memt, memh, memsize);
 }
 
-void
+struct device *
 ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 {
 	struct ioc_softc *sc = (struct ioc_softc *)ioc;
@@ -421,7 +434,7 @@ ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 		bzero(iaa.iaa_enaddr, 6);
 	}
 
-	config_found_sm(ioc, &iaa, ioc_print, ioc_search_mundane);
+	return config_found_sm(ioc, &iaa, ioc_print, ioc_search_mundane);
 }
 
 int
