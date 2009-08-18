@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridgereg.h,v 1.7 2009/07/06 22:46:43 miod Exp $	*/
+/*	$OpenBSD: xbridgereg.h,v 1.8 2009/08/18 19:31:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -17,11 +17,21 @@
  */
 
 /*
- * IP27/IP30 Bridge Registers
+ * IP27/IP30/IP35 Bridge and XBridge Registers
+ * IP35 PIC Registers
  */
 
 #define	BRIDGE_REGISTERS_SIZE		0x00030000
+#define	BRIDGE_BUS_OFFSET		0x00800000
+
+#define	BRIDGE_NBUSES			1
+#define	PIC_NBUSES			2
+#define	MAX_BUSES			PIC_NBUSES
+
 #define	BRIDGE_NSLOTS			8
+#define	PIC_NSLOTS			4
+#define	MAX_SLOTS			BRIDGE_NSLOTS
+
 #define	BRIDGE_NINTRS			8
 
 #define	BRIDGE_WIDGET_CONTROL_IO_SWAP		0x00800000
@@ -37,38 +47,39 @@
  * bits of the register.
  */
 
-#define	BRIDGE_DIR_MAP			0x00000084
+#define	BRIDGE_DIR_MAP			0x00000080
 
 #define	BRIDGE_DIRMAP_WIDGET_SHIFT	20
 #define	BRIDGE_DIRMAP_ADD_512MB		0x00020000	/* add 512MB */
 #define	BRIDGE_DIRMAP_BASE_MASK		0x00001fff
 #define	BRIDGE_DIRMAP_BASE_SHIFT	31
 
-#define	BRIDGE_PCI_MEM_SPACE_BASE	0x0000000040000000ULL
+#define	BRIDGE_PCI0_MEM_SPACE_BASE	0x0000000040000000ULL
 #define	BRIDGE_PCI_MEM_SPACE_LENGTH	0x0000000040000000ULL
+#define	BRIDGE_PCI1_MEM_SPACE_BASE	0x00000000c0000000ULL
 #define	BRIDGE_PCI_IO_SPACE_BASE	0x0000000100000000ULL
 #define	BRIDGE_PCI_IO_SPACE_LENGTH	0x0000000100000000ULL
 
-#define	BRIDGE_NIC			0x000000b4
-#define	BRIDGE_BUS_TIMEOUT		0x000000c4
-#define	BRIDGE_PCI_CFG			0x000000cc
-#define	BRIDGE_PCI_ERR_UPPER		0x000000d4
-#define	BRIDGE_PCI_ERR_LOWER		0x000000dc
+#define	BRIDGE_NIC			0x000000b0
+#define	BRIDGE_BUS_TIMEOUT		0x000000c0
+#define	BRIDGE_PCI_CFG			0x000000c8
+#define	BRIDGE_PCI_ERR_UPPER		0x000000d0
+#define	BRIDGE_PCI_ERR_LOWER		0x000000d8
 
 /*
  * Interrupt handling
  */
 
-#define	BRIDGE_ISR			0x00000104
-#define	BRIDGE_IER			0x0000010c
-#define	BRIDGE_ICR			0x00000114
-#define	BRIDGE_INT_MODE			0x0000011c
-#define	BRIDGE_INT_DEV			0x00000124
-#define	BRIDGE_INT_HOST_ERR		0x0000012c
-#define	BRIDGE_INT_ADDR(d)		(0x00000134 + 8 * (d))
+#define	BRIDGE_ISR			0x00000100
+#define	BRIDGE_IER			0x00000108
+#define	BRIDGE_ICR			0x00000110
+#define	BRIDGE_INT_MODE			0x00000118
+#define	BRIDGE_INT_DEV			0x00000120
+#define	BRIDGE_INT_HOST_ERR		0x00000128
+#define	BRIDGE_INT_ADDR(d)		(0x00000130 + 8 * (d))
 /* the following two are XBridge-only */
-#define	BRIDGE_INT_FORCE_ALWAYS(d)	(0x00000184 + 8 * (d))
-#define	BRIDGE_INT_FORCE_PIN(d)		(0x000001c4 + 8 * (d))
+#define	BRIDGE_INT_FORCE_ALWAYS(d)	(0x00000180 + 8 * (d))
+#define	BRIDGE_INT_FORCE_PIN(d)		(0x000001c0 + 8 * (d))
 
 /*
  * PCI Resource Mapping control
@@ -86,7 +97,7 @@
  * the selected address will match BAR0.
  */
 
-#define	BRIDGE_DEVICE(d)		(0x00000204 + 8 * (d))
+#define	BRIDGE_DEVICE(d)		(0x00000200 + 8 * (d))
 /* flags applying to the device itself */
 /* byteswap DMA done through ATE */
 #define	BRIDGE_DEVICE_SWAP_PMU			0x00100000
@@ -114,9 +125,11 @@
 	 BRIDGE_DEVIO_SHORT * ((d) < 2 ? 0 : (d) - 2))
 #define	BRIDGE_DEVIO_SIZE(d) \
 	((d) < 2 ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT)
+#define	PIC_DEVIO_OFFS(bus,d) \
+	(BRIDGE_DEVIO_OFFS(d) + ((bus) != 0 ? BRIDGE_BUS_OFFSET : 0))
 
 
-#define	BRIDGE_DEVICE_WBFLUSH(d)	(0x00000244 + 8 * (d))
+#define	BRIDGE_DEVICE_WBFLUSH(d)	(0x00000240 + 8 * (d))
 
 /*
  * Read Response Buffer configuration registers
@@ -131,8 +144,8 @@
  * PCI slots.
  */
 
-#define	BRIDGE_RRB_EVEN			0x00000284
-#define	BRIDGE_RRB_ODD			0x0000028c
+#define	BRIDGE_RRB_EVEN			0x00000280
+#define	BRIDGE_RRB_ODD			0x00000288
 
 #define	RRB_VALID			0x8
 #define	RRB_VCHAN			0x4

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.8 2009/07/06 22:46:43 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.9 2009/08/18 19:31:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -114,7 +114,7 @@ ip30_setup()
 	 */
 	xbow_build_bus_space(&sys_config.console_io, 0, 15);
 	sys_config.console_io.bus_base = ip30_widget_long(0, 15) +
-	    BRIDGE_PCI_MEM_SPACE_BASE;
+	    BRIDGE_PCI0_MEM_SPACE_BASE;
 
 	comconsaddr = 0x500000 + IOC3_UARTA_BASE;
 	comconsfreq = 22000000 / 3;
@@ -168,14 +168,14 @@ ip30_widget_id(int16_t nasid, u_int widget, uint32_t *wid)
 			return EINVAL;
 
 		linkpa = ip30_widget_short(nasid, 0) + XBOW_WIDGET_LINK(widget);
-		if (!ISSET(*(uint32_t *)(linkpa + WIDGET_LINK_STATUS),
+		if (!ISSET(*(uint32_t *)(linkpa + (WIDGET_LINK_STATUS | 4)),
 		    WIDGET_STATUS_ALIVE))
 			return ENXIO;	/* not connected */
 	}
 
 	wpa = ip30_widget_short(nasid, widget);
 	if (wid != NULL)
-		*wid = *(uint32_t *)(wpa + WIDGET_ID);
+		*wid = *(uint32_t *)(wpa + (WIDGET_ID | 4));
 
 	return 0;
 }

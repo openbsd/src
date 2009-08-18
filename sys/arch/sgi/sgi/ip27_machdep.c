@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.18 2009/07/25 19:17:25 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.19 2009/08/18 19:31:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -381,7 +381,7 @@ ip27_widget_id(int16_t nasid, u_int widget, uint32_t *wid)
 	}
 
 	wpa = ip27_widget_short(nasid, widget);
-	if (guarded_read_4(wpa + WIDGET_ID, &id) != 0)
+	if (guarded_read_4(wpa + (WIDGET_ID | 4), &id) != 0)
 		return ENXIO;
 
 	if (wid != NULL)

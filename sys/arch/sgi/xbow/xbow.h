@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.h,v 1.6 2009/07/06 22:46:43 miod Exp $	*/
+/*	$OpenBSD: xbow.h,v 1.7 2009/08/18 19:31:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -55,50 +55,54 @@ extern	void	(*xbow_intr_widget_intr_disestablish)(int);
 
 /*
  * Common Widget Registers.  Every widget provides them.
+ *
+ * Registers are 32 or 64 bit wide (depending on the particular widget
+ * or register) on 64 bit boundaries.
+ * The widget_{read,write}_[48] functions below hide the addressing
+ * games required to perform 32 bit accesses.
  */
 
-/* all registers are 32 bits within big-endian 64 bit blocks */
-#define	WIDGET_ID			0x0004
+#define	WIDGET_ID			0x0000
 #define	WIDGET_ID_REV_MASK			0xf0000000
 #define	WIDGET_ID_REV_SHIFT			28
 #define	WIDGET_ID_PRODUCT_MASK			0x0ffff000
 #define	WIDGET_ID_PRODUCT_SHIFT			12
 #define	WIDGET_ID_VENDOR_MASK			0x00000ffe
 #define	WIDGET_ID_VENDOR_SHIFT			1
-#define	WIDGET_STATUS			0x000c
-#define	WIDGET_ERR_ADDR_UPPER		0x0014
-#define	WIDGET_ERR_ADDR_LOWER		0x001c
-#define	WIDGET_CONTROL			0x0024
-#define	WIDGET_REQ_TIMEOUT		0x002c
-#define	WIDGET_INTDEST_ADDR_UPPER	0x0034
-#define	WIDGET_INTDEST_ADDR_LOWER	0x003c
-#define	WIDGET_ERR_CMD_WORD		0x0044
-#define	WIDGET_LLP_CFG			0x004c
-#define	WIDGET_TFLUSH			0x0054
+#define	WIDGET_STATUS			0x0008
+#define	WIDGET_ERR_ADDR_UPPER		0x0010
+#define	WIDGET_ERR_ADDR_LOWER		0x0018
+#define	WIDGET_CONTROL			0x0020
+#define	WIDGET_REQ_TIMEOUT		0x0028
+#define	WIDGET_INTDEST_ADDR_UPPER	0x0030
+#define	WIDGET_INTDEST_ADDR_LOWER	0x0038
+#define	WIDGET_ERR_CMD_WORD		0x0040
+#define	WIDGET_LLP_CFG			0x0048
+#define	WIDGET_TFLUSH			0x0050
 
 /*
  * Crossbow Specific Registers.
  */
 
-#define	XBOW_WID_ARB_RELOAD		0x005c
-#define	XBOW_PERFCNTR_A			0x0064
-#define	XBOW_PERFCNTR_B			0x006c
-#define	XBOW_NIC			0x0074
+#define	XBOW_WID_ARB_RELOAD		0x0058
+#define	XBOW_PERFCNTR_A			0x0060
+#define	XBOW_PERFCNTR_B			0x0068
+#define	XBOW_NIC			0x0070
 #define	XBOW_WIDGET_LINK(w)		(0x0100 + ((w) & 7) * 0x0040)
 
 /*
  * Per-widget ``Link'' Register Set.
  */
-#define	WIDGET_LINK_IBF			0x0004
-#define	WIDGET_LINK_CONTROL		0x000c
+#define	WIDGET_LINK_IBF			0x0000
+#define	WIDGET_LINK_CONTROL		0x0008
 #define	WIDGET_CONTROL_ALIVE			0x80000000
-#define	WIDGET_LINK_STATUS		0x0014
+#define	WIDGET_LINK_STATUS		0x0010
 #define	WIDGET_STATUS_ALIVE			0x80000000
-#define	WIDGET_LINK_ARB_UPPER		0x001c
-#define	WIDGET_LINK_ARB_LOWER		0x0024
-#define	WIDGET_LINK_STATUS_CLEAR	0x002c
-#define	WIDGET_LINK_RESET		0x0034
-#define	WIDGET_LINK_AUX_STATUS		0x003c
+#define	WIDGET_LINK_ARB_UPPER		0x0018
+#define	WIDGET_LINK_ARB_LOWER		0x0020
+#define	WIDGET_LINK_STATUS_CLEAR	0x0028
+#define	WIDGET_LINK_RESET		0x0030
+#define	WIDGET_LINK_AUX_STATUS		0x0038
 
 /*
  * Valid widget values
@@ -138,5 +142,32 @@ void	xbow_write_2(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    uint16_t);
 void	xbow_write_raw_2(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    const uint8_t *, bus_size_t);
+
+/*
+ * Widget register access routines hiding addressing games depending upon
+ * the access width.
+ */
+static __inline__ uint32_t
+widget_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t a)
+{
+	return bus_space_read_4(t, h, a | 4);
+}
+static __inline__ uint64_t
+widget_read_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t a)
+{
+	return bus_space_read_8(t, h, a);
+}
+static __inline__ void
+widget_write_4(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t a,
+    uint32_t v)
+{
+	bus_space_write_4(t, h, a | 4, v);
+}
+static __inline__ void
+widget_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t a,
+    uint64_t v)
+{
+	bus_space_write_8(t, h, a, v);
+}
 
 #endif	/* _XBOW_H_ */
