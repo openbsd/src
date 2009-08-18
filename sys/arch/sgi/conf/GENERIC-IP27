@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.13 2009/07/15 18:15:21 miod Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.14 2009/08/18 19:34:14 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -58,6 +58,11 @@ onewire*	at ioc?
 option ONEWIREVERBOSE
 owmac*		at onewire?
 owserial*	at onewire?
+
+# IOC4
+iof*		at pci?
+com0		at iof? base 0x380
+com*		at iof?
 
 #### SCSI
 ahc*		at pci?
