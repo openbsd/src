@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.6 2008/07/28 19:08:46 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.7 2009/08/18 20:35:41 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -81,6 +81,14 @@ _ENTRY(_ASM_LABEL(start))
 	.globl	start
 	.type start,@function
 start:
+	/* make sure address translation is disabled */
+	mfmsr	%r3
+	li	%r8,PSL_DR|PSL_IR
+	andc	%r3,%r3,%r8
+	sync
+	mtmsr	%r3
+	isync
+
 	lis	%r3, fwargsave@ha
 	stw	%r29, fwargsave@l(%r3)
 
