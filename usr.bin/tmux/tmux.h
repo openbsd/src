@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.83 2009/08/18 07:08:26 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.84 2009/08/18 07:23:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -369,6 +369,7 @@ enum mode_key_cmd {
 	MODEKEYEDIT_CURSORLEFT,
 	MODEKEYEDIT_CURSORRIGHT,
 	MODEKEYEDIT_DELETE,
+	MODEKEYEDIT_DELETELINE,
 	MODEKEYEDIT_DELETETOENDOFLINE,
 	MODEKEYEDIT_ENDOFLINE,
 	MODEKEYEDIT_ENTER,

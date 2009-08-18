@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.25 2009/08/13 23:44:18 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.26 2009/08/18 07:23:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -853,6 +853,11 @@ status_prompt_key(struct client *c, int key)
 			    size + 1 - c->prompt_index);
 			c->flags |= CLIENT_STATUS;
 		}
+		break;
+	case MODEKEYEDIT_DELETELINE:
+		*c->prompt_buffer = '\0';
+		c->prompt_index = 0;
+		c->flags |= CLIENT_STATUS;
 		break;
 	case MODEKEYEDIT_DELETETOENDOFLINE:
 		if (c->prompt_index < size) {
