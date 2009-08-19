@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.13 2009/08/13 20:11:58 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.14 2009/08/19 14:32:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -212,8 +212,8 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	tio.c_oflag = TTYDEF_OFLAG;
 	tio.c_lflag = TTYDEF_LFLAG;
 	tio.c_cflag = TTYDEF_CFLAG;
-	tio.c_ispeed = TTYDEF_SPEED;
-	tio.c_ospeed = TTYDEF_SPEED;
+	cfsetispeed(&tio, TTYDEF_SPEED);
+	cfsetospeed(&tio, TTYDEF_SPEED);
 
 	/* Create the new session. */
 	idx = -1 - options_get_number(&global_s_options, "base-index");
