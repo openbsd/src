@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.22 2009/08/17 16:17:46 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.23 2009/08/19 05:54:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -720,17 +720,12 @@ sock_midiattach(struct sock *f, unsigned mode)
 	if (mode & AMSG_MIDIOUT) {
 		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setout(f->pipe.file.rproc, rbuf);
-		aproc_setin(thrubox, rbuf);
 	}
 	if (mode & AMSG_MIDIIN) {
 		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setin(f->pipe.file.wproc, wbuf);
-		aproc_setout(thrubox, wbuf);
-		if (mode & AMSG_MIDIOUT) {
-			rbuf->duplex = wbuf;
-			wbuf->duplex = rbuf;
-		}
 	}
+	dev_midiattach(rbuf, wbuf);
 }
 
 int
@@ -740,7 +735,7 @@ sock_hello(struct sock *f)
 
 	DPRINTF("sock_hello: from <%s>, mode = %x\n", p->who, p->proto);
 
-	if (thrubox && (p->proto & (AMSG_MIDIIN | AMSG_MIDIOUT))) {
+	if (dev_midi && (p->proto & (AMSG_MIDIIN | AMSG_MIDIOUT))) {
 		if (p->proto & ~(AMSG_MIDIIN | AMSG_MIDIOUT)) {
 			DPRINTF("sock_hello: %x: bad proto\n", p->proto);
 			return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.64 2009/08/17 16:17:46 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.65 2009/08/19 05:54:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -317,18 +317,13 @@ newmidi(struct farg *fa, int in, int out)
 		rproc = rpipe_new(dev);
 		rbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setout(rproc, rbuf);
-		aproc_setin(thrubox, rbuf);
 	}
 	if (out) {
 		wproc = wpipe_new(dev);
 		wbuf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setin(wproc, wbuf);
-		aproc_setout(thrubox, wbuf);
-		if (in) {
-			rbuf->duplex = wbuf;
-			wbuf->duplex = rbuf;
-		}
 	}
+	dev_midiattach(rbuf, wbuf);
 }
 
 void
@@ -701,7 +696,7 @@ midicat_main(int argc, char **argv)
 	struct farglist dfiles, ifiles, ofiles;
 	char base[PATH_MAX], path[PATH_MAX];
 	struct farg *fa;
-	struct file *stdx, *f;
+	struct file *stdx;
 	struct aproc *p;
 	struct abuf *buf;
 
@@ -759,9 +754,7 @@ midicat_main(int argc, char **argv)
 	setsig();
 	filelist_init();
 
-	thrubox = thru_new("thru");
-	thrubox->refs++;
-
+	dev_thruinit();
 	if ((!SLIST_EMPTY(&ifiles) || !SLIST_EMPTY(&ofiles)) && 
 	    SLIST_EMPTY(&dfiles)) {
 		farg_add(&dfiles, &aparams_none, &aparams_none,
@@ -798,7 +791,7 @@ midicat_main(int argc, char **argv)
 		p = rpipe_new(stdx);
 		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setout(p, buf);
-		aproc_setin(thrubox, buf);
+		dev_midiattach(buf, NULL);
 		free(fa);
 	}
 	while (!SLIST_EMPTY(&ofiles)) {
@@ -818,7 +811,7 @@ midicat_main(int argc, char **argv)
 		p = wpipe_new(stdx);
 		buf = abuf_new(MIDI_BUFSZ, &aparams_none);
 		aproc_setin(p, buf);
-		aproc_setout(thrubox, buf);
+		dev_midiattach(NULL, buf);
 		free(fa);
 	}
 
@@ -829,7 +822,7 @@ midicat_main(int argc, char **argv)
 		if (quit_flag) {
 			break;
 		}
-		if (!l_flag && LIST_EMPTY(&thrubox->ibuflist))
+		if (!l_flag && LIST_EMPTY(&dev_midi->ibuflist))
 			break;
 		if (!file_poll())
 			break;
@@ -839,24 +832,7 @@ midicat_main(int argc, char **argv)
 		if (rmdir(base) < 0)
 			warn("rmdir(\"%s\")", base);
 	}
-	if (thrubox) {
-	restart_thrubox:
-		LIST_FOREACH(f, &file_list, entry) {
-			if (f->rproc && aproc_depend(thrubox, f->rproc)) {
-				file_eof(f);
-				goto restart_thrubox;
-			}
-		}
-		while (!LIST_EMPTY(&thrubox->ibuflist)) {
-			if (!file_poll())
-				break;
-		}
-		thrubox->refs--;
-		aproc_del(thrubox);
-		thrubox = NULL;
-		while (file_poll())
-			; /* nothing */
-	}
+	dev_thrudone();
 	filelist_done();
 	unsetsig();
 	return 0;

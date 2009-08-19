@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.27 2009/07/25 10:52:18 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.28 2009/08/19 05:54:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -25,10 +25,65 @@
 #include "dev.h"
 #include "pipe.h"
 #include "safile.h"
+#include "midi.h"
 
 unsigned dev_bufsz, dev_round, dev_rate;
 struct aparams dev_ipar, dev_opar;
 struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play;
+struct aproc *dev_midi;
+
+/*
+ * Create a MIDI thru box as the MIDI end of the device
+ */
+void
+dev_thruinit(void)
+{
+	dev_midi = thru_new("thru");
+	dev_midi->refs++;
+}
+
+/*
+ * Terminate the MIDI thru box
+ */
+void
+dev_thrudone(void)
+{
+	struct file *f;
+
+ restart:
+	LIST_FOREACH(f, &file_list, entry) {
+		if (f->rproc && aproc_depend(dev_midi, f->rproc)) {
+			file_eof(f);
+			goto restart;
+		}
+	}
+	while (!LIST_EMPTY(&dev_midi->ibuflist)) {
+		if (!file_poll())
+			break;
+	}
+	dev_midi->refs--;
+	aproc_del(dev_midi);
+	dev_midi = NULL;
+	while (file_poll())
+		; /* nothing */
+}
+
+/*
+ * Attach a bi-directional MIDI stream to the MIDI device
+ */
+void
+dev_midiattach(struct abuf *ibuf, struct abuf *obuf)
+{
+	if (ibuf)
+		aproc_setin(dev_midi, ibuf);
+	if (obuf) {
+		aproc_setout(dev_midi, obuf);
+		if (ibuf) {
+			ibuf->duplex = obuf;
+			obuf->duplex = ibuf;
+		}
+	}
+}
 
 /*
  * Same as dev_init(), but create a fake device that records what is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.1 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.2 2009/08/19 05:54:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -40,8 +40,6 @@
  */ 
 #define MIDITHRU_XFER 340
 #define MIDITHRU_TIMO 100000
-
-struct aproc *thrubox = NULL;
 
 unsigned voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
 unsigned common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
