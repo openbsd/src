@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.25 2006/06/26 23:26:12 drahn Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.26 2009/08/19 19:38:17 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -289,7 +289,7 @@ enter(char *dir, char *file, char *name, int dewey[], int ndewey)
 	shp = (struct shlib_list *)xmalloc(sizeof *shp);
 	shp->name = xstrdup(name);
 	shp->path = concat(dir, "/", file);
-	bcopy(dewey, shp->dewey, MAXDEWEY);
+	bcopy(dewey, shp->dewey, sizeof(shp->dewey));
 	shp->ndewey = ndewey;
 	shp->next = NULL;
 
