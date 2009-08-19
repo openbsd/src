@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.15 2007/10/10 15:53:53 art Exp $ */
+/*	$OpenBSD: macros.h,v 1.16 2009/08/19 19:47:51 miod Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -52,91 +52,6 @@ ffs(int reg)
 	return	val;
 }
 
-static __inline__ void *
-memcpy(void *toe, const void *from, size_t len)
-{
-	__asm__ __volatile ("movc3 %0,(%1),(%2)"
-			:
-			: "r" (len),"r" (from),"r"(toe)
-			:"r0","r1","r2","r3","r4","r5","memory","cc");
-	return toe;
-}
-static __inline__ void *
-memmove(void *toe, const void *from, size_t len)
-{
-	__asm__ __volatile ("movc3 %0,(%1),(%2)"
-			:
-			: "r" (len),"r" (from),"r"(toe)
-			:"r0","r1","r2","r3","r4","r5","memory","cc");
-	return toe;
-}
-
-#ifdef notnow
-static __inline__ void
-bcopy(const void *from, void *toe, size_t len)
-{
-	__asm__ __volatile ("movc3 %0,(%1),(%2)"
-			:
-			: "r" (len),"r" (from),"r"(toe)
-			:"r0","r1","r2","r3","r4","r5","memory","cc");
-}
-#endif
-
-void	blkfill(void *, int, size_t);
-
-static __inline__ void *
-memset(void *block, int c, size_t len)
-{
-	if (len > 65535)
-		blkfill(block, c, len);
-	else {
-		__asm__ __volatile ("movc5 $0,(%0),%2,%1,(%0)"
-			:
-			: "r" (block), "r" (len), "r"(c)
-			:"r0","r1","r2","r3","r4","r5","memory","cc");
-	}
-	return block;
-}
-
-static __inline__ void
-bzero(void *block, size_t len)
-{
-	if (len > 65535)
-		blkfill(block, 0, len);
-	else {
-		__asm__ __volatile ("movc5 $0,(%0),$0,%1,(%0)"
-			:
-			: "r" (block), "r" (len)
-			:"r0","r1","r2","r3","r4","r5","memory","cc");
-	}
-}
-
-/* XXX - the return syntax of memcmp is wrong */
-static __inline__ int
-memcmp(const void *b1, const void *b2, size_t len)
-{
-	register int ret;
-
-	__asm__ __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
-			: "=r" (ret)
-			: "r" (b1), "r" (b2), "r" (len)
-			: "r0","r1","r2","r3" );
-	return ret;
-}
-
-static __inline__ int
-bcmp(const void *b1, const void *b2, size_t len)
-{
-	register int ret;
-
-	__asm__ __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
-			: "=r" (ret)
-			: "r" (b1), "r" (b2), "r" (len)
-			: "r0","r1","r2","r3" );
-	return ret;
-}
-
-/* Begin nya */
 static __inline__ size_t
 strlen(const char *cp)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.29 2009/06/20 21:02:15 miod Exp $     */
+/*	$OpenBSD: subr.s,v 1.30 2009/08/19 19:47:53 miod Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -170,50 +170,6 @@ ENTRY(badaddr,R2|R3)			# Called with addr,b/w/l
 5:		mtpr	(sp)+,$0x12
 		movl	r3,r0
 		ret
-
-# Have bcopy and bzero here to be sure that system files that not gets
-# macros.h included will not complain.
-ENTRY(bcopy,R2|R3|R4|R5|R6)
-	movl	4(ap), r0
-	movl	8(ap), r1
-	movzwl	12(ap), r2
-	movzwl	14(ap), r6
-
-	movc3	r2, (r0), (r1)
-	
-	tstl	r6
-	bleq	1f
-0:	movb	(r1)+, (r3)+
-	movc3	$0xffff, (r1), (r3)
-	sobgtr	r6, 0b
-	
-1:	ret	
-
-ENTRY(bzero,R2|R3|R4|R5|R6)
-	movl	4(ap), r0
-	movzwl	8(ap), r1
-	movzwl	10(ap), r6
-	
-	movc5	$0, (r0), $0, r1, (r0)
-	
-	tstl	r6
-	bleq	1f
-0:	clrb	(r3)+
-	movc5	$0, (r3), $0, $0xffff, (r3)
-	sobgtr	r6, 0b
-	
-1:	ret
-
-# cmpc3 is sometimes emulated; we cannot use it
-ENTRY(bcmp, R2);
-    movl    4(ap), r2
-    movl    8(ap), r1
-    movl    12(ap), r0
-2:  cmpb    (r2)+, (r1)+
-    bneq    1f
-    decl    r0
-    bneq    2b
-1:  ret
 
 #ifdef DDB
 /*
@@ -423,19 +379,3 @@ ENTRY(copystr,0)
 _memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
 pcbtrap:	.long 0x800001fc; .globl pcbtrap	# Safe place
 _bootdev:	.long 0; .globl _bootdev
-
-/*
- * Fill more than 64k of memory (used by bzero and memset).
- */
-ENTRY(blkfill,R2|R3|R4|R5|R6|R7)
-	movl	4(ap), r3
-	movl	8(ap), r7
-	movl	12(ap), r6
-	jbr	2f
-1:	subl2	r0, r6
-	movc5	$0,(r3),r7,r0,(r3)
-2:	movzwl	$65535,r0
-	cmpl	r6, r0
-	jgtr	1b
-	movc5	$0,(r3),r7,r6,(r3)
-	ret

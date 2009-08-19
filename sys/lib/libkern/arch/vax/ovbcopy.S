@@ -1,1 +1,1 @@
-/* No code here since kernel impliments this itself */
+/* No code here since <machine/param.h> defines ovbcopy() as bcopy() */
