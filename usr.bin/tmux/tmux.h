@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.86 2009/08/18 21:41:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.87 2009/08/19 10:39:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1440,6 +1440,7 @@ void	 status_prompt_set(struct client *, const char *,
 void	 status_prompt_clear(struct client *);
 int	 status_prompt_redraw(struct client *);
 void	 status_prompt_key(struct client *, int);
+void	 status_prompt_update(struct client *, const char *);
 
 /* resize.c */
 void	 recalculate_sizes(void);

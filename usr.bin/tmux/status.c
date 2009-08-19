@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.26 2009/08/18 07:23:43 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.27 2009/08/19 10:39:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -666,6 +666,20 @@ status_prompt_clear(struct client *c)
 	c->flags |= CLIENT_REDRAW; /* screen was frozen and may have changed */
 
 	screen_reinit(&c->status);
+}
+
+void
+status_prompt_update(struct client *c, const char *msg)
+{
+	xfree(c->prompt_string);
+	c->prompt_string = xstrdup(msg);
+
+	*c->prompt_buffer = '\0';
+	c->prompt_index = 0;
+
+	c->prompt_hindex = 0;
+
+	c->flags |= CLIENT_STATUS;
 }
 
 /* Draw client prompt on status line of present else on last line. */
