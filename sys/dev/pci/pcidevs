@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1488 2009/08/04 19:18:08 dhill Exp $
+$OpenBSD: pcidevs,v 1.1489 2009/08/19 20:10:47 matthieu Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4856,6 +4856,7 @@ product TRIDENT 3DIMAGE_9750	0x9750	3DImage 9750
 product TRIDENT 3DIMAGE_9850	0x9850	3DImage 9850
 product TRIDENT BLADE_3D	0x9880	Blade 3D
 product TRIDENT BLADE_XP	0x9910	CyberBlade XP
+product TRIDENT BLADE_XP2	0x9960	CyberBlade XP2
 
 /* Triones/HighPoint Technologies products */
 product TRIONES	HPT343		0x0003	HPT343/345 IDE
