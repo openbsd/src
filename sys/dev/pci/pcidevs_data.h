@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1487 2009/08/02 09:43:54 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1489 2009/08/19 20:10:47 matthieu Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -16098,6 +16098,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_BLADE_XP,
 	    "CyberBlade XP",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_BLADE_XP2,
+	    "CyberBlade XP2",
 	},
 	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT343,

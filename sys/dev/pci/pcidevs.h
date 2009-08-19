@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1487 2009/08/02 09:43:54 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1489 2009/08/19 20:10:47 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4861,6 +4861,7 @@
 #define	PCI_PRODUCT_TRIDENT_3DIMAGE_9850	0x9850		/* 3DImage 9850 */
 #define	PCI_PRODUCT_TRIDENT_BLADE_3D	0x9880		/* Blade 3D */
 #define	PCI_PRODUCT_TRIDENT_BLADE_XP	0x9910		/* CyberBlade XP */
+#define	PCI_PRODUCT_TRIDENT_BLADE_XP2	0x9960		/* CyberBlade XP2 */
 
 /* Triones/HighPoint Technologies products */
 #define	PCI_PRODUCT_TRIONES_HPT343	0x0003		/* HPT343/345 IDE */
