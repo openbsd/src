@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.65 2009/08/19 05:54:15 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.66 2009/08/19 18:29:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -795,8 +795,8 @@ midicat_main(int argc, char **argv)
 		free(fa);
 	}
 	while (!SLIST_EMPTY(&ofiles)) {
-		fa = SLIST_FIRST(&ifiles);
-		SLIST_REMOVE_HEAD(&ifiles, entry);
+		fa = SLIST_FIRST(&ofiles);
+		SLIST_REMOVE_HEAD(&ofiles, entry);
 		if (strcmp(fa->name, "-") == 0) {
 			fd = STDOUT_FILENO;
 			if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
