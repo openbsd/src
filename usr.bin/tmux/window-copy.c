@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.23 2009/08/18 09:51:51 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.24 2009/08/19 14:46:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -504,6 +504,8 @@ window_copy_search_rl(struct grid *gd,
 	u_int	ax, bx, px;
 
 	for (ax = last + 1; ax > first; ax--) {
+		if (gd->sx - (ax - 1) < sgd->sx)
+			continue;
 		for (bx = 0; bx < sgd->sx; bx++) {
 			px = ax - 1 + bx;
 			if (!window_copy_search_compare(gd, px, py, sgd, bx))
