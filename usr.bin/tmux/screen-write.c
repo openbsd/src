@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.21 2009/08/13 16:24:33 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.22 2009/08/20 19:14:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -858,7 +858,8 @@ screen_write_overwrite(struct screen_write_ctx *ctx)
 	u_int			 xx;
 
 	gc = grid_view_peek_cell(gd, s->cx, s->cy);
-	gu = grid_view_peek_utf8(gd, s->cx, s->cy);
+	if (gc->flags & GRID_FLAG_UTF8)
+		gu = grid_view_peek_utf8(gd, s->cx, s->cy);
 
 	if (gc->flags & GRID_FLAG_PADDING) {
 		/*
@@ -885,16 +886,19 @@ screen_write_overwrite(struct screen_write_ctx *ctx)
 				break;
 			grid_view_set_cell(gd, xx, s->cy, &grid_default_cell);
 		}
-	} else if (gc->flags & GRID_FLAG_UTF8 && gu->width > 1) {
-		/*
-		 * An UTF-8 wide cell; overwrite following padding cells only.
-		 */
-		xx = s->cx;
-		while (++xx < screen_size_x(s)) {
-			gc = grid_view_peek_cell(gd, xx, s->cy);
-			if (!(gc->flags & GRID_FLAG_PADDING))
-				break;
-			grid_view_set_cell(gd, xx, s->cy, &grid_default_cell);
+	} else if (gc->flags & GRID_FLAG_UTF8) {
+		gu = grid_view_peek_utf8(gd, s->cx, s->cy);
+		if (gu->width > 1) {
+			/*
+			 * An UTF-8 wide cell; overwrite following padding cells only.
+			 */
+			xx = s->cx;
+			while (++xx < screen_size_x(s)) {
+				gc = grid_view_peek_cell(gd, xx, s->cy);
+				if (!(gc->flags & GRID_FLAG_PADDING))
+					break;
+				grid_view_set_cell(gd, xx, s->cy, &grid_default_cell);
+			}
 		}
 	}
 }

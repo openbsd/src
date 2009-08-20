@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.11 2009/08/10 17:59:59 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.12 2009/08/20 19:14:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -198,6 +198,10 @@ grid_expand_line(struct grid *gd, u_int py, u_int sx)
 	if (sx <= gl->cellsize)
 		return;
 
+	if (gl->cellsize > gd->sx / 2)
+		sx = gd->sx;
+	else
+		sx = 1 + gl->cellsize * 2;
 	gl->celldata = xrealloc(gl->celldata, sx, sizeof *gl->celldata);
 	for (xx = gl->cellsize; xx < sx; xx++)
 		grid_put_cell(gd, xx, py, &grid_default_cell);
