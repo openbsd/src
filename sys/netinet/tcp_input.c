@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.227 2009/08/10 10:13:43 claudio Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.228 2009/08/20 13:25:42 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -878,11 +878,10 @@ after_listen:
 #endif
 
 #if NPF > 0
-		if (m->m_pkthdr.pf.statekey) {
-			((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp =
-			    inp;
-			inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
-		}
+	if (m->m_pkthdr.pf.statekey) {
+		((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp = inp;
+		inp->inp_pf_sk = m->m_pkthdr.pf.statekey;
+	}
 #endif
 
 #ifdef IPSEC
