@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.34 2009/08/10 10:59:12 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.35 2009/08/20 15:04:24 thib Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -137,10 +137,20 @@ struct nfsnode {
 #define VTONFS(vp)	((struct nfsnode *)(vp)->v_data)
 #define NFSTOV(np)	((np)->n_vnode)
 
-/*
- * Queue head for nfsiod's
- */
-extern TAILQ_HEAD(nfs_bufqhead, buf) nfs_bufq;
-extern uint32_t nfs_bufqlen, nfs_bufqmax;
+/* nfs aiod datas. */
+struct nfs_aiod {
+	LIST_ENTRY(nfs_aiod)	 nad_all;
+	LIST_ENTRY(nfs_aiod)	 nad_idle;
+	struct nfsmount		*nad_mnt;
+	int			 nad_exiting;
+};
+
+LIST_HEAD(nfs_aiodhead, nfs_aiod);
+
+extern struct mutex				nfs_aiodl_mtx;
+extern struct nfs_aiodhead			nfs_aiods_all;
+extern struct nfs_aiodhead			nfs_aiods_idle;
+extern int					nfs_numaiods;
+extern int					nfs_aiodbufqmax;
 
 #endif		/* _NFS_NFSNODE_H_ */

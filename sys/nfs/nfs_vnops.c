@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.122 2009/08/13 15:18:16 blambert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.123 2009/08/20 15:04:24 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -184,8 +184,6 @@ extern u_int32_t nfs_true, nfs_false;
 extern u_int32_t nfs_xdrneg1;
 extern struct nfsstats nfsstats;
 extern nfstype nfsv3_type[9];
-int nfs_numasync = 0;
-
 
 void
 nfs_cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)

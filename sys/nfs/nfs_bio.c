@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.62 2009/07/28 11:19:43 art Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.63 2009/08/20 15:04:24 thib Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -57,10 +57,7 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfs_var.h>
 
-extern int nfs_numasync;
 extern struct nfsstats nfsstats;
-struct nfs_bufqhead nfs_bufq;
-uint32_t nfs_bufqmax, nfs_bufqlen;
 
 /*
  * Vnode op for read using bio
@@ -150,7 +147,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 		/*
 		 * Start the read ahead(s), as required.
 		 */
-		if (nfs_numasync > 0 && nmp->nm_readahead > 0) {
+		if (nfs_numaiods > 0 && nmp->nm_readahead > 0) {
 		    for (nra = 0; nra < nmp->nm_readahead &&
 			(lbn + 1 + nra) * biosize < np->n_size; nra++) {
 			rabn = (lbn + 1 + nra) * (biosize / DEV_BSIZE);
@@ -506,25 +503,71 @@ nfs_vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
  * are all hung on a dead server.
  */
 int
-nfs_asyncio(bp)
-	struct buf *bp;
+nfs_asyncio(struct buf *bp)
 {
-	if (nfs_numasync == 0)
-		goto out;
+	struct nfs_aiod	*aiod;
+	struct nfsmount	*nmp;
+	int		 gotone, error;
 
-	if (nfs_bufqlen > nfs_bufqmax)
-		goto out; /* too many bufs in use, force sync */
+	aiod = NULL;
+	nmp = VFSTONFS(bp->b_vp->v_mount);
+	gotone = error = 0;
 
-	if ((bp->b_flags & B_READ) == 0) {
-		bp->b_flags |= B_WRITEINPROG;
+	mtx_enter(&nfs_aiodl_mtx);
+	aiod = LIST_FIRST(&nfs_aiods_idle);
+	if (aiod) {
+		/*
+		 * Found an avilable aiod, wake it up and send
+		 * it to work on this mount.
+		 */
+		LIST_REMOVE(aiod, nad_idle);
+		mtx_leave(&nfs_aiodl_mtx);
+		gotone = 1;
+		KASSERT(aiod->nad_mnt == NULL);
+		aiod->nad_mnt = nmp;
+		nmp->nm_naiods++;
+		wakeup(aiod);
+	} else {
+		mtx_leave(&nfs_aiodl_mtx);
 	}
 
-	TAILQ_INSERT_TAIL(&nfs_bufq, bp, b_freelist);
-	nfs_bufqlen++;
+	/*
+	 * If no aiod's are available, check if theres already an
+	 * aiod assoicated with this mount, if so it will process
+	 * this buf.
+	 */
+	if (!gotone && nmp->nm_naiods > 0)
+		gotone = 1;
 
-	wakeup_one(&nfs_bufq);
+	/*
+	 * If we still don't have an aiod to process this buffer,
+	 * force it sync.
+	 */
+	if (!gotone)
+		goto out;
+
+
+	/*
+	 * Make sure we don't queue up to much.
+	 * TODO: Look into implementing migration for aiods.
+	 */
+	if (nmp->nm_bufqlen >= nfs_aiodbufqmax) {
+		if (aiod != NULL) {
+			mtx_enter(&nfs_aiodl_mtx);
+			LIST_INSERT_HEAD(&nfs_aiods_idle, aiod, nad_idle);
+			mtx_leave(&nfs_aiodl_mtx);
+		}
+		goto out;
+	}
+
+	/* Finally, queue the buffer and return. */
+
+	if ((bp->b_flags & B_READ) == 0)
+		bp->b_flags |= B_WRITEINPROG;
+
+	TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
+	nmp->nm_bufqlen++;
 	return (0);
-
 out:
 	nfsstats.forcedsync++;
 	return (EIO);

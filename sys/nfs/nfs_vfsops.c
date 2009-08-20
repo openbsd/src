@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.88 2009/08/13 15:18:16 blambert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.89 2009/08/20 15:04:24 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -611,9 +611,10 @@ nfs_mount(mp, path, data, ndp, p)
 	if ((args.flags & (NFSMNT_NFSV3|NFSMNT_RDIRPLUS)) == NFSMNT_RDIRPLUS)
 		return (EINVAL);
 
-	if (nfs_niothreads < 0) {
-		nfs_niothreads = 4;
-		nfs_getset_niothreads(1);
+	if (nfs_numaiods == -1) {
+		error = nfs_set_naiod(NFS_DEFASYNCDAEMON);
+		if (error)
+			return (error);
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE) {
@@ -671,9 +672,9 @@ mountnfs(argp, mp, nam, pth, hst)
 		m_freem(nam);
 		return (0);
 	} else {
-		nmp = malloc(sizeof(struct nfsmount), M_NFSMNT,
-		    M_WAITOK|M_ZERO);
-		mp->mnt_data = (qaddr_t)nmp;
+		nmp = malloc(sizeof(*nmp), M_NFSMNT, M_WAITOK|M_ZERO);
+		mp->mnt_data = nmp;
+		TAILQ_INIT(&nmp->nm_bufq);
 	}
 
 	vfs_getnewfsid(mp);
@@ -836,7 +837,7 @@ int
 nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	   size_t newlen, struct proc *p)
 {
-	int rv;
+	int rv, naiods;
 
 	/*
 	 * All names at this level are terminal.
@@ -868,11 +869,13 @@ nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return 0;
 
 	case NFS_NIOTHREADS:
-		nfs_getset_niothreads(0);
-
-		rv = sysctl_int(oldp, oldlenp, newp, newlen, &nfs_niothreads);
-		if (newp)
-			nfs_getset_niothreads(1);
+		naiods = nfs_numaiods;
+		rv = sysctl_int(oldp, oldlenp, newp, newlen, &naiods);
+		if (newp && rv == 0) {
+			if (naiods < 0)
+				return (EINVAL);
+			rv = nfs_set_naiod(naiods);
+		}
 
 		return rv;
 

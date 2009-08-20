@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.85 2009/08/10 09:38:44 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.86 2009/08/20 15:04:24 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -73,7 +73,6 @@
 #include <nfs/nfs_var.h>
 
 /* Global defs. */
-extern int nfs_numasync;
 extern struct nfsstats nfsstats;
 struct nfssvc_sock *nfs_udpsock;
 int nfsd_waiting = 0;
@@ -117,11 +116,6 @@ struct nfsdhead nfsd_head;
 
 int nfssvc_sockhead_flag;
 int nfsd_head_flag;
-
-#ifdef NFSCLIENT
-struct proc *nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
-int nfs_niothreads = -1;
-#endif
 
 /*
  * NFS server pseudo system call for the nfsd's
@@ -556,135 +550,7 @@ nfsrv_init(terminating)
 	pool_init(&nfsrv_descript_pl, sizeof(struct nfsrv_descript), 0, 0, 0,
 	    "ndscpl", &pool_allocator_nointr);
 }
-#endif /* NFSSERVER */
 
-#ifdef NFSCLIENT
-/*
- * Asynchronous I/O threads for client nfs.
- * They do read-ahead and write-behind operations on the block I/O cache.
- * Never returns unless it fails or gets killed.
- */
-void
-nfssvc_iod(void *arg)
-{
-	struct proc *p = (struct proc *)arg;
-	struct buf *bp, *nbp;
-	int i, myiod;
-	struct vnode *vp;
-	int error = 0, s, bufcount;
-
-	bufcount = 256;	/* XXX: Big enough? sysctl, constant ? */
-
-	/* Assign my position or return error if too many already running. */
-	myiod = -1;
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
-		if (nfs_asyncdaemon[i] == NULL) {
-			myiod = i;
-			break;
-		}
-	}
-	if (myiod == -1)
-		kthread_exit(EBUSY);
-
-	nfs_asyncdaemon[myiod] = p;
-	nfs_numasync++;
-
-	/* Upper limit on how many bufs we'll queue up for this iod. */
-	if (nfs_bufqmax > bcstats.numbufs / 4) {
-		nfs_bufqmax = bcstats.numbufs / 4; /* limit to 1/4 of bufs */
-		bufcount = 0;
-	}
-
-	nfs_bufqmax += bufcount;
-
-	/* Just loop around doin our stuff until SIGKILL. */
-	for (;;) {
-	    while (TAILQ_FIRST(&nfs_bufq) == NULL && error == 0) {
-		    error = tsleep(&nfs_bufq,
-			PWAIT | PCATCH, "nfsidl", 0);
-	    }
-	    while ((bp = TAILQ_FIRST(&nfs_bufq)) != NULL) {
-		/* Take one off the front of the list */
-		TAILQ_REMOVE(&nfs_bufq, bp, b_freelist);
-		nfs_bufqlen--;
-		if (bp->b_flags & B_READ)
-		    (void) nfs_doio(bp, NULL);
-		else do {
-		    /*
-		     * Look for a delayed write for the same vnode, so I can do 
-		     * it now. We must grab it before calling nfs_doio() to
-		     * avoid any risk of the vnode getting vclean()'d while
-		     * we are doing the write rpc.
-		     */
-		    vp = bp->b_vp;
-		    s = splbio();
-		    LIST_FOREACH(nbp, &vp->v_dirtyblkhd, b_vnbufs) {
-			if ((nbp->b_flags &
-			    (B_BUSY|B_DELWRI|B_NEEDCOMMIT|B_NOCACHE))!=B_DELWRI)
-			    continue;
-			nbp->b_flags |= B_ASYNC;
-			bremfree(nbp);
-			buf_acquire(nbp);
-			break;
-		    }
-		    /*
-		     * For the delayed write, do the first part of nfs_bwrite()
-		     * up to, but not including nfs_strategy().
-		     */
-		    if (nbp) {
-			nbp->b_flags &= ~(B_READ|B_DONE|B_ERROR);
-			buf_undirty(nbp);
-			nbp->b_vp->v_numoutput++;
-		    }
-		    splx(s);
-
-		    (void) nfs_doio(bp, NULL);
-		} while ((bp = nbp) != NULL);
-	    }
-	    if (error) {
-		nfs_asyncdaemon[myiod] = NULL;
-		nfs_numasync--;
-		nfs_bufqmax -= bufcount;
-		kthread_exit(error);
-	    }
-	}
-}
-
-void
-nfs_getset_niothreads(set)
-	int set;
-{
-	struct proc *p;
-	int i, have, start;
-	
-	for (have = 0, i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		if (nfs_asyncdaemon[i] != NULL)
-			have++;
-
-	if (set) {
-		/* clamp to sane range */
-		nfs_niothreads = max(0, min(nfs_niothreads, NFS_MAXASYNCDAEMON));
-
-		start = nfs_niothreads - have;
-
-		while (start > 0) {
-			kthread_create(nfssvc_iod, p, &p, "nfsio");
-			start--;
-		}
-
-		for (i = 0; (start < 0) && (i < NFS_MAXASYNCDAEMON); i++)
-			if (nfs_asyncdaemon[i] != NULL) {
-				psignal(nfs_asyncdaemon[i], SIGKILL);
-				start++;
-			}
-	} else {
-		if (nfs_niothreads >= 0)
-			nfs_niothreads = have;
-	}
-}
-#endif /* NFSCLIENT */
-
-#ifdef NFSSERVER
 /*
  * Find an nfssrv_sock for nfsd, sleeping if needed.
  */
