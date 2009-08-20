@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_cardbus.c,v 1.7 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: uhci_cardbus.c,v 1.8 2009/08/20 18:47:03 martynas Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ uhci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, PCI_CBIO, CARDBUS_MAPREG_TYPE_IO, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf(": can't map io space\n", devname);
+		printf(": can't map io space\n");
 		return;
 	}
 
@@ -123,7 +123,7 @@ uhci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_USB, uhci_intr, sc, devname);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt\n", devname);
+		printf(": couldn't establish interrupt\n");
 		return;
 	}
 	printf(": irq %d\n", ca->ca_intrline);

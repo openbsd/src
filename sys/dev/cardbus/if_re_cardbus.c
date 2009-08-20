@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.15 2009/08/10 21:29:37 deraadt Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.16 2009/08/20 18:47:03 martynas Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -151,7 +151,7 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
 	    IPL_NET, re_intr, sc, sc->sc_dev.dv_xname);
 	if (csc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt at %s",
+		printf(": couldn't establish interrupt at %d",
 		    ca->ca_intrline);
 		Cardbus_function_disable(csc->ct);
 		return;
