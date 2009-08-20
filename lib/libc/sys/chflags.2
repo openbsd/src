@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.21 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: chflags.2,v 1.22 2009/08/20 18:32:58 martynas Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)chflags.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 20 2009 $
 .Dt CHFLAGS 2
 .Os
 .Sh NAME
@@ -63,8 +63,8 @@ Do not dump the file.
 The file may not be changed.
 .It Dv UF_APPEND
 The file may only be appended to.
-.\".It ARCHIVED
-.\"File is archived.
+.It Dv SF_ARCHIVED
+The file may be archived.
 .It Dv SF_IMMUTABLE
 The file may not be changed.
 .It Dv SF_APPEND
@@ -78,6 +78,7 @@ and
 flags may be set or unset by either the owner of a file or the superuser.
 .Pp
 The
+.Dv SF_ARCHIVED ,
 .Dv SF_IMMUTABLE
 and
 .Dv SF_APPEND
