@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.14 2009/08/19 17:00:31 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.15 2009/08/20 10:48:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -956,7 +956,6 @@ input_handle_sequence_cbt(struct input_ctx *ictx)
 void
 input_handle_sequence_da(struct input_ctx *ictx)
 {
-	struct screen  *s = ictx->ctx.s;
 	uint16_t	n;
 
 	if (ictx->private != '\0')
