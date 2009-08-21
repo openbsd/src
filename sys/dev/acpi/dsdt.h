@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.44 2009/06/01 22:36:12 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.45 2009/08/21 22:05:01 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -18,18 +18,11 @@
 #ifndef __DEV_ACPI_DSDT_H__
 #define __DEV_ACPI_DSDT_H__
 
-struct aml_vallist {
-	struct aml_value *obj;
-	int nobj;
-	struct aml_vallist *next;
-};
-
 struct aml_scope {
 	struct acpi_softc	*sc;
 	uint8_t			*pos;
 	uint8_t			*end;
 	struct aml_node		*node;
-	struct aml_vallist	*tmpvals;
 	struct aml_scope	*parent;
 	struct aml_value	*locals;
 	struct aml_value	*args;
