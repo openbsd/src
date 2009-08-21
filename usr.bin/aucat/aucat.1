@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.55 2009/08/21 16:48:03 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.56 2009/08/21 21:25:31 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -358,11 +358,11 @@ exposes a MIDI device with the same name as the default audio
 device.
 It allows MIDI hardware or software to be used to control
 the volume of played streams.
-To each stream is assigned a MIDI channel, and the volume
+A MIDI channel is assigned to each stream, and the volume
 is changed using the standard volume controller (number 7).
 Similarly, when the audio application changes its volume,
 the same MIDI controller message is sent out; it can be used
-for instance for monitoring or as feed-back for motorized
+for instance for monitoring or as feedback for motorized
 faders.
 .Sh LEGACY MODE
 If neither
