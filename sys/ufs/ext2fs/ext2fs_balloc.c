@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.15 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ext2fs_balloc.c,v 1.16 2009/08/21 17:48:38 jasper Exp $	*/
 /*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
 
 /*
@@ -265,7 +265,6 @@ fail:
 			    (int)fs->e2fs_bsize, NOCRED, &bp);
 			if (r) {
 				panic("Could not unwind indirect block, error %d", r);
-				brelse(bp);
 			} else {
 				bap = (int32_t *)bp->b_data;
 				bap[indirs[unwindidx].in_off] = 0;
