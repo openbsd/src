@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.283 2009/07/09 23:52:25 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.284 2009/08/21 05:27:57 ratchov Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -128,7 +128,7 @@ int		 labels = 0;
 					for (i=0; i < d; i++)		\
 						printf("  ");		\
 				}					\
-			} while (0);					\
+			} while (0)					\
 
 
 static const struct {
