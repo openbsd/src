@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.294 2009/07/24 13:09:29 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.295 2009/08/21 15:43:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1853,12 +1853,6 @@ parse_open(struct peer *peer)
 	p += sizeof(short_as);
 	as = peer->short_as = ntohs(short_as);
 
-	/* if remote-as is zero and it's a cloned neighbor, accept any */
-	if (peer->conf.cloned && !peer->conf.remote_as && as != AS_TRANS) {
-		peer->conf.remote_as = as;
-		peer->conf.ebgp = (peer->conf.remote_as != conf->as);
-	}
-
 	memcpy(&oholdtime, p, sizeof(oholdtime));
 	p += sizeof(oholdtime);
 
@@ -1964,6 +1958,15 @@ parse_open(struct peer *peer)
 			peer->IdleHoldTime /= 2;
 			return (-1);
 		}
+	}
+
+	/* if remote-as is zero and it's a cloned neighbor, accept any */
+	if (peer->conf.cloned && !peer->conf.remote_as && as != AS_TRANS) {
+		peer->conf.remote_as = as;
+		peer->conf.ebgp = (peer->conf.remote_as != conf->as);
+		if (!peer->conf.ebgp)
+			/* force enforce_as off for iBGP sessions */
+			peer->conf.enforce_as = ENFORCE_AS_OFF;
 	}
 
 	if (peer->conf.remote_as != as) {
