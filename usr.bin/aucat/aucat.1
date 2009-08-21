@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.54 2009/07/25 08:44:27 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.55 2009/08/21 16:48:03 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2009 $
+.Dd $Mdocdate: August 21 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -350,6 +350,20 @@ For example:
 $ aucat -b 3500 -l
 $ sudo renice -n -20 -p `pgrep -x aucat`
 .Ed
+.Sh MIDI CONTROL
+While running in server mode
+.Pq Fl l
+.Nm
+exposes a MIDI device with the same name as the default audio
+device.
+It allows MIDI hardware or software to be used to control
+the volume of played streams.
+To each stream is assigned a MIDI channel, and the volume
+is changed using the standard volume controller (number 7).
+Similarly, when the audio application changes its volume,
+the same MIDI controller message is sent out; it can be used
+for instance for monitoring or as feed-back for motorized
+faders.
 .Sh LEGACY MODE
 If neither
 .Fl i

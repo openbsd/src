@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.1 2009/07/25 09:55:12 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.2 2009/08/21 16:48:03 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2009 $
+.Dd $Mdocdate: August 21 2009 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -60,6 +60,11 @@ applications connected to the thru box (for instance a software sequencer
 can send events to multiple software synthesizers).
 There's no hardware involved: thru boxes are created by
 .Xr midicat 1 .
+.Pp
+Additionally,
+.Xr aucat 1
+exposes a MIDI device used to control and monitor audio streams
+in real time using MIDI.
 .Sh DEVICE NAMES
 From the user's perspective every audio interface, MIDI port,
 .Xr aucat 1
@@ -85,14 +90,17 @@ sockets and hardware
 .Xr audio 4
 devices.
 Possible values for MIDI devices are
-.Pa midithru
-and
+.Pa midithru ,
 .Pa rmidi ,
+and
+.Pa aucat
 corresponding to
 .Xr midicat 1
-software MIDI thru boxes and hardware
+software MIDI thru boxes, hardware
 .Xr midi 4
-ports respectively.
+ports and
+.Xr aucat 1
+control through MIDI respectively.
 .It Pa unit
 For hardware audio or MIDI devices, this corresponds to
 the character device minor number.
@@ -119,7 +127,7 @@ For example:
 .It Pa sun:0
 First hardware audio device.
 .It Pa aucat:0
-Default device of the first
+Default audio device of the first
 .Xr aucat 1
 audio server.
 .It Pa aucat:0.rear
@@ -132,7 +140,11 @@ device registered with
 Hardware MIDI port number 5.
 .It Pa midithru:0
 First software MIDI thru box created with
-.Xr aucat 1 .
+.Xr midicat 1 .
+.It Pa aucat:0
+MIDI port controlling the first
+.Xr aucat 1
+audio server.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width "AUDIODEVICEXXX" -compact

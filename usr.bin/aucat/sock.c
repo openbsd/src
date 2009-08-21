@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.23 2009/08/19 05:54:15 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.24 2009/08/21 16:48:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -63,6 +63,8 @@ rsock_done(struct aproc *p)
 	sock_reset(f);
 	f->pipe.file.rproc = NULL;
 	if (f->pipe.file.wproc) {
+		if (dev_midi && f->slot >= 0)
+			ctl_slotdel(dev_midi, f->slot);
 		aproc_del(f->pipe.file.wproc);
 		file_del(&f->pipe.file);
 	}
@@ -175,6 +177,8 @@ wsock_done(struct aproc *p)
 	sock_reset(f);
 	f->pipe.file.wproc = NULL;
 	if (f->pipe.file.rproc) {
+		if (dev_midi && f->slot >= 0)
+			ctl_slotdel(dev_midi, f->slot);
 		aproc_del(f->pipe.file.rproc);
 		file_del(&f->pipe.file);
 	}
@@ -298,6 +302,7 @@ sock_new(struct fileops *ops, int fd)
 	f->delta = 0;
 	f->tickpending = 0;
 	f->vol = ADATA_UNIT;
+	f->slot = -1;
 
 	wproc = aproc_new(&wsock_ops, f->pipe.file.name);
 	wproc->u.io.file = &f->pipe.file;
@@ -772,6 +777,15 @@ sock_hello(struct sock *f)
 		}
 		f->mode |= AMSG_REC;
 	}
+	if (dev_midi) {
+		f->slot = ctl_slotnew(dev_midi, p->who, f->pipe.file.rproc);
+		if (f->slot < 0) {
+			DPRINTF("sock_hello: out of mixer slots\n");
+			return 0;
+		}
+		if (f->mode & AMSG_PLAY)
+			ctl_slotvol(dev_midi, f->slot, MIDI_MAXCTL);
+	}
 	f->pstate = SOCK_INIT;
 	return 1;
 }
@@ -913,6 +927,8 @@ sock_execmsg(struct sock *f)
 		}
 		DPRINTF("sock_execmsg: SETVOL %u\n", m->u.vol.ctl);
 		sock_setvol(f, MIDI_TO_ADATA(m->u.vol.ctl));
+		if (dev_midi && f->slot >= 0)
+			ctl_slotvol(dev_midi, f->slot, m->u.vol.ctl);
 		f->rtodo = sizeof(struct amsg);
 		f->rstate = SOCK_RMSG;
 		break;

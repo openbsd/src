@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.8 2009/07/25 10:52:19 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.9 2009/08/21 16:48:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -55,6 +55,7 @@ struct sock {
 	unsigned round;			/* block size */
 	unsigned xrun;			/* one of AMSG_IGNORE, ... */
 	int vol;			/* requested volume */
+	int slot;			/* mixer ctl slot number */
 	struct opt *opt;		/* "subdevice" definition */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_thru.c,v 1.4 2009/07/26 12:40:45 ratchov Exp $	*/
+/*	$OpenBSD: mio_thru.c,v 1.5 2009/08/21 16:48:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,7 +52,7 @@ static struct mio_ops thru_ops = {
 };
 
 struct mio_hdl *
-mio_open_thru(const char *str, unsigned mode, int nbio)
+thru_open(const char *str, char *sock, unsigned mode, int nbio)
 {
 	extern char *__progname;
 	struct amsg msg;
@@ -67,7 +67,7 @@ mio_open_thru(const char *str, unsigned mode, int nbio)
 	if (strchr(str, '/') != NULL)
 		return NULL;
 	snprintf(ca.sun_path, sizeof(ca.sun_path),
-	    "/tmp/aucat-%u/midithru%s", uid, str);
+	    "/tmp/aucat-%u/%s%s", uid, sock, str);
 	ca.sun_family = AF_UNIX;
 
 	hdl = malloc(sizeof(struct thru_hdl));
@@ -81,7 +81,7 @@ mio_open_thru(const char *str, unsigned mode, int nbio)
 	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
 		if (errno == EINTR)
 			continue;
-		DPERROR("mio_open_thru: connect");
+		DPERROR("thru_open: connect");
 		goto bad_connect;
 	}
 	if (fcntl(s, F_SETFD, FD_CLOEXEC) < 0) {
@@ -100,14 +100,15 @@ mio_open_thru(const char *str, unsigned mode, int nbio)
 		msg.u.hello.proto |= AMSG_MIDIIN;
 	if (mode & MIO_OUT)
 		msg.u.hello.proto |= AMSG_MIDIOUT;
+	strlcpy(msg.u.hello.opt, "default", sizeof(msg.u.hello.opt));
 	strlcpy(msg.u.hello.who, __progname, sizeof(msg.u.hello.who));
 	n = write(s, &msg, sizeof(struct amsg));
 	if (n < 0) {
-		DPERROR("mio_open_thru");
+		DPERROR("thru_open");
 		goto bad_connect;
 	}
 	if (n != sizeof(struct amsg)) {
-		DPRINTF("mio_open_thru: short write\n");
+		DPRINTF("thru_open: short write\n");
 		goto bad_connect;
 	}
 	todo = sizeof(struct amsg);
@@ -115,22 +116,22 @@ mio_open_thru(const char *str, unsigned mode, int nbio)
 	while (todo > 0) {
 		n = read(s, data, todo);
 		if (n < 0) {
-			DPERROR("mio_open_thru");
+			DPERROR("thru_open");
 			goto bad_connect;
 		}
 		if (n == 0) {
-			DPRINTF("mio_open_thru: eof\n");
+			DPRINTF("thru_open: eof\n");
 			goto bad_connect;
 		}
 		todo -= n;
 		data += n;
 	}
 	if (msg.cmd != AMSG_ACK) {
-		DPRINTF("mio_open_thru: proto error\n");
+		DPRINTF("thru_open: proto error\n");
 		goto bad_connect;
 	}
 	if (nbio && fcntl(hdl->fd, F_SETFL, O_NONBLOCK) < 0) {
-		DPERROR("mio_open_thru: fcntl(NONBLOCK)");
+		DPERROR("thru_open: fcntl(NONBLOCK)");
 		goto bad_connect;
 	}
 	return (struct mio_hdl *)hdl;
@@ -140,6 +141,18 @@ mio_open_thru(const char *str, unsigned mode, int nbio)
  bad_free:
 	free(hdl);
 	return NULL;
+}
+
+struct mio_hdl *
+mio_open_thru(const char *str, unsigned mode, int nbio)
+{
+	return thru_open(str, "midithru", mode, nbio);
+}
+
+struct mio_hdl *
+mio_open_aucat(const char *str, unsigned mode, int nbio)
+{
+	return thru_open(str, "softaudio", mode, nbio);
 }
 
 static void

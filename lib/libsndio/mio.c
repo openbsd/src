@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.6 2009/07/27 06:30:34 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.7 2009/08/21 16:48:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,6 +42,7 @@ mio_open(const char *str, unsigned mode, int nbio)
 {
 	static char prefix_midithru[] = "midithru";
 	static char prefix_rmidi[] = "rmidi";
+	static char prefix_aucat[] = "aucat";
 	struct mio_hdl *hdl;
 	struct stat sb;
 	char *sep, buf[4];
@@ -82,6 +83,9 @@ mio_open(const char *str, unsigned mode, int nbio)
 	if (len == (sizeof(prefix_midithru) - 1) &&
 	    memcmp(str, prefix_midithru, len) == 0)
 		return mio_open_thru(sep + 1, mode, nbio);
+	if (len == (sizeof(prefix_aucat) - 1) &&
+	    memcmp(str, prefix_aucat, len) == 0)
+		return mio_open_aucat(sep + 1, mode, nbio);
 	if (len == (sizeof(prefix_rmidi) - 1) &&
 	    memcmp(str, prefix_rmidi, len) == 0)
 		return mio_open_rmidi(sep + 1, mode, nbio);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.18 2009/07/25 10:52:18 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.19 2009/08/21 16:48:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -166,6 +166,15 @@ struct aproc {
 			struct abuf *owner;	/* current input stream */
 			struct timo timo;	/* timout for throtteling */
 		} thru;
+		struct {
+#define CTL_NSLOT	8
+#define CTL_NAMEMAX	8
+			struct ctl_slot {
+				struct aproc *owner;
+				unsigned unit;
+				char name[CTL_NAMEMAX];
+			} slot[CTL_NSLOT];
+		} ctl;
 	} u;
 };
 

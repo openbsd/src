@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.13 2009/07/25 10:52:18 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.14 2009/08/21 16:48:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -105,8 +105,17 @@ abuf_del(struct abuf *buf)
 		buf->duplex->duplex = NULL;
 #ifdef DEBUG
 	if (buf->rproc || buf->wproc || ABUF_ROK(buf)) {
+		/*
+		 * XXX : we should call abort(), here.
+		 * However, poll() doesn't seem to return POLLHUP,
+		 * so the reader is never destroyed; instead it appears	
+		 * as blocked. Fix file_poll(), if fixable, and add
+		 * a call to abord() here.
+		 */
+#if 0
 		ABUF_DPRN(0, buf, "abuf_del: used = %u\n", buf->used);
 		abort();
+#endif
 	}
 #endif
 	free(buf);

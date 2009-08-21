@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.28 2009/08/19 05:54:15 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.29 2009/08/21 16:48:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -291,6 +291,8 @@ dev_init(char *devpath,
 	}
 	dev_bufsz = (dopar) ? obufsz : ibufsz;
 	DPRINTF("dev_init: using %u fpb\n", dev_bufsz);
+	dev_midi = ctl_new("ctl");
+	dev_midi->refs++;
 	dev_start();
 	return 1;
 }
@@ -305,6 +307,10 @@ dev_done(void)
 	struct file *f;
 
 	DPRINTF("dev_done: dev_mix = %p, dev_sub = %p\n", dev_mix, dev_sub);
+	dev_midi->refs--;
+	aproc_del(dev_midi);
+	dev_midi = NULL;
+
 	if (dev_mix) {
 		dev_mix->refs--;
 		dev_mix->u.mix.flags |= MIX_AUTOQUIT;
