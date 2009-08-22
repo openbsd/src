@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.12 2009/08/22 15:44:02 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.13 2009/08/22 16:41:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -111,26 +111,46 @@ for two-character sequences; an open-bracket
 for n-character sequences (terminated at a close-bracket
 .Sq \&] ) ;
 or a single one-character sequence.  See
-.Xr mandoc_char 1
+.Xr mandoc_char 7
 for a complete list.  Examples include
 .Sq \e(em
 .Pq em-dash
 and
 .Sq \ee
 .Pq back-slash .
-.\" PARAGRAPH------------
-.Pp
-An alternative escape sequence is
-the slash-asterisk,
-.Sq \e* ,
-but this method is discouraged for compatibility reasons.
-.\" PARAGRAPH------------
-.Pp
-Terms may
-also be text-decorated using the
+.\" SUB-SECTION----------------------
+.Ss Text Decoration
+Terms may be text-decorated using the
 .Sq \ef
 escape followed by an indicator: B (bold), I, (italic), or P and R
-(Roman, or reset).  This form is not recommended.
+(Roman, or reset).  This form is not recommended for 
+.Nm ,
+which encourages semantic, not presentation, annotation.
+.\" SUB-SECTION----------------------
+.Ss Predefined Strings
+Historically, 
+.Xr groff 1
+also defined a set of package-specific 
+.Dq predefined strings ,
+which, like 
+.Sx Special Characters ,
+demark special output characters and strings by way of input codes.
+Predefined strings are escaped with the slash-asterisk,
+.Sq \e* :
+single-character
+.Sq \e*X ,
+two-character
+.Sq \e*(XX ,
+and N-character
+.Sq \e*[N] .
+See
+.Xr mandoc_char 7
+for a complete list.  Examples include
+.Sq \e*(Am
+.Pq ampersand
+and
+.Sq \e*(Ba
+.Pq vertical bar .
 .\" SUB-SECTION----------------------
 .Ss Whitespace
 In non-literal free-form lines, consecutive blocks of whitespace are
@@ -484,15 +504,6 @@ The
 macro does not accept negative numbers.
 .\" LIST-ITEM
 .It
-Some character sequences in groff are not handled depending on escape
-style, e.g.,
-.Sq \e(ba
-and
-.Sq \e*(Ba
-may not be interchanged.  This is no longer the case: all character
-sequences resolve to the same symbol, regardless the escape style.
-.\" LIST-ITEM
-.It
 Blocks of whitespace are stripped from both macro and free-form text
 lines (except when in literal mode), while groff would retain whitespace
 in free-form text lines.
@@ -531,12 +542,6 @@ Some manuals use
 .Sq \&Li
 incorrectly by following it with a reserved character and expecting the
 delimiter to render.  This is not supported.
-.\" LIST-ITEM
-.It
-If an special-character control character is escaped
-.Sq \e\e ,
-it will obviously not render the subsequent sequence.  Even newer
-versions of groff seem to dither on this.
 .\" LIST-ITEM
 .It
 In groff, the
@@ -623,7 +628,7 @@ There's no way to refer to references in
 blocks.
 .\" LIST-ITEM
 .It
-The \-split and \-nosplit arguments to
+The \-split and \-nosplit dictates via
 .Sq \&An
-are inane.
+are re-set when entering and leaving the AUTHORS section.
 .El

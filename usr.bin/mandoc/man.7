@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.7 2009/08/09 17:20:17 schwarze Exp $
+.\"	$Id: man.7,v 1.8 2009/08/22 16:41:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 9 2009 $
+.Dd $Mdocdate: August 22 2009 $
 .Dt MAN 7
 .Os
 .\" SECTION
@@ -70,17 +70,16 @@ documents; if encountered at the end of a word, it ensures that the
 subsequent word isn't off-set by whitespace.
 .\" SUB-SECTION
 .Ss Comments
-Anything following a
-.Sq \e"
-delimiter is considered a comment (unless the
-.Sq \e
-itself has been escaped) and is ignored to the end of line.
-Furthermore, a macro line with only a control character
-.Sq \. ,
-optionally followed by whitespace, is ignored.
+Text following a
+.Sq \e" ,
+whether in a macro or free-form text line, is ignored to the end of
+line.  A macro line with only a control character and comment escape,
+.Sq \&.\e" ,
+is also ignored.
 .\" SUB-SECTION
 .Ss Special Characters
-Special character sequences begin with the escape character
+Special characters may occur in both macro and free-form lines.
+Sequences begin with the escape character
 .Sq \e
 followed by either an open-parenthesis
 .Sq \&(
@@ -88,17 +87,21 @@ for two-character sequences; an open-bracket
 .Sq \&[
 for n-character sequences (terminated at a close-bracket
 .Sq \&] ) ;
-or a single one-character sequence.
-.Pp
-Characters may alternatively be escaped by a slash-asterisk,
-.Sq \e* ,
-with the same combinations as described above.
-.Pp
-Terms may also be text-decorated using the
+or a single one-character sequence.  See
+.Xr mandoc_char 7
+for a complete list.  Examples include
+.Sq \e(em
+.Pq em-dash
+and
+.Sq \ee
+.Pq back-slash .
+.\" SUB-SECTION----------------------
+.Ss Text Decoration
+Terms may be text-decorated using the
 .Sq \ef
-escape followed by a text-decoration letter: B (bold), I, (italic), or P
-and R (Roman, or reset).
-.\" SUB-SECTION
+escape followed by an indicator: B (bold), I, (italic), or P and R
+(Roman, or reset).
+.\" SUB-SECTION----------------------
 .Ss Whitespace
 Unless specifically escaped, consecutive blocks of whitespace are pruned
 from input.  These are later re-added, if applicable, by a front-end
