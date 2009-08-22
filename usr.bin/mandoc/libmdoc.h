@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.18 2009/08/22 19:43:33 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.19 2009/08/22 21:55:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -96,7 +96,7 @@ enum	merr {
 	MERRMAX
 };
 
-#define	MACRO_PROT_ARGS	struct mdoc *mdoc, int tok, int line, \
+#define	MACRO_PROT_ARGS	struct mdoc *m, int tok, int line, \
 			int ppos, int *pos, char *buf
 
 struct	mdoc_macro {

@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.24 2009/08/22 19:43:33 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.25 2009/08/22 21:55:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -455,7 +455,10 @@ mdoc_tail_alloc(struct mdoc *m, int line, int pos, int tok)
 	p = node_alloc(m, line, pos, tok, MDOC_TAIL);
 	if (NULL == p)
 		return(0);
-	return(node_append(m, p));
+	if ( ! node_append(m, p))
+		return(0);
+	m->next = MDOC_NEXT_CHILD;
+	return(1);
 }
 
 
@@ -470,7 +473,10 @@ mdoc_head_alloc(struct mdoc *m, int line, int pos, int tok)
 	p = node_alloc(m, line, pos, tok, MDOC_HEAD);
 	if (NULL == p)
 		return(0);
-	return(node_append(m, p));
+	if ( ! node_append(m, p))
+		return(0);
+	m->next = MDOC_NEXT_CHILD;
+	return(1);
 }
 
 
@@ -482,7 +488,10 @@ mdoc_body_alloc(struct mdoc *m, int line, int pos, int tok)
 	p = node_alloc(m, line, pos, tok, MDOC_BODY);
 	if (NULL == p)
 		return(0);
-	return(node_append(m, p));
+	if ( ! node_append(m, p))
+		return(0);
+	m->next = MDOC_NEXT_CHILD;
+	return(1);
 }
 
 
@@ -498,7 +507,10 @@ mdoc_block_alloc(struct mdoc *m, int line, int pos,
 	p->args = args;
 	if (p->args)
 		(args->refcnt)++;
-	return(node_append(m, p));
+	if ( ! node_append(m, p))
+		return(0);
+	m->next = MDOC_NEXT_CHILD;
+	return(1);
 }
 
 
@@ -514,7 +526,10 @@ mdoc_elem_alloc(struct mdoc *m, int line, int pos,
 	p->args = args;
 	if (p->args)
 		(args->refcnt)++;
-	return(node_append(m, p));
+	if ( ! node_append(m, p))
+		return(0);
+	m->next = MDOC_NEXT_CHILD;
+	return(1);
 }
 
 
@@ -539,7 +554,10 @@ pstring(struct mdoc *m, int line, int pos, const char *p, size_t len)
 	/* Prohibit truncation. */
 	assert(sv < len + 1);
 
-	return(node_append(m, n));
+	if ( ! node_append(m, n))
+		return(0);
+	m->next = MDOC_NEXT_SIBLING;
+	return(1);
 }
 
 
@@ -596,12 +614,8 @@ parsetext(struct mdoc *m, int line, char *buf)
 	 * back-end, as it should be preserved as a single term.
 	 */
 
-	if (MDOC_LITERAL & m->flags) {
-		if ( ! mdoc_word_alloc(m, line, 0, buf))
-			return(0);
-		m->next = MDOC_NEXT_SIBLING;
-		return(1);
-	}
+	if (MDOC_LITERAL & m->flags)
+		return(mdoc_word_alloc(m, line, 0, buf));
 
 	/* Disallow blank/white-space lines in non-literal mode. */
 
@@ -626,7 +640,6 @@ parsetext(struct mdoc *m, int line, char *buf)
 		buf[i++] = 0;
 		if ( ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
 			return(0);
-		m->next = MDOC_NEXT_SIBLING;
 
 		for ( ; ' ' == buf[i]; i++)
 			/* Skip trailing whitespace. */ ;
@@ -665,7 +678,7 @@ macrowarn(struct mdoc *m, int ln, const char *buf)
 int
 parsemacro(struct mdoc *m, int ln, char *buf)
 {
-	int		  i, j, c, ppos;
+	int		  i, j, c;
 	char		  mac[5];
 
 	/* Empty lines are ignored. */
@@ -684,8 +697,6 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 		if (0 == buf[i])
 			return(1);
 	}
-
-	ppos = i;
 
 	/* Copy the first word into a nil-terminated buffer. */
 
@@ -719,7 +730,7 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 	 * Begin recursive parse sequence.  Since we're at the start of
 	 * the line, we don't need to do callable/parseable checks.
 	 */
-	if ( ! mdoc_macro(m, c, ln, ppos, &i, buf)) 
+	if ( ! mdoc_macro(m, c, ln, 1, &i, buf)) 
 		goto err;
 
 	return(1);
