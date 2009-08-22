@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.13 2009/07/12 22:44:45 schwarze Exp $ */
+/*	$Id: main.c,v 1.14 2009/08/22 14:56:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -59,6 +59,7 @@ struct	curparse {
 #define	NO_IGN_ESCAPE	 (1 << 1) 	/* Don't ignore bad escapes. */
 #define	NO_IGN_MACRO	 (1 << 2) 	/* Don't ignore bad macros. */
 #define	NO_IGN_CHARS	 (1 << 3)	/* Don't ignore bad chars. */
+#define	IGN_ERRORS	 (1 << 4)	/* Ignore failed parse. */
 	enum intt	  inttype;	/* Input parsers... */
 	struct man	 *man;
 	struct man	 *lastman;
@@ -148,13 +149,21 @@ main(int argc, char *argv[])
 	if (NULL == *argv) {
 		curp.file = "<stdin>";
 		curp.fd = STDIN_FILENO;
-		if ( ! fdesc(&blk, &ln, &curp))
-			rc = 0;
+
+		c = fdesc(&blk, &ln, &curp);
+		if ( ! (IGN_ERRORS & curp.fflags)) 
+			rc = 1 == c ? 1 : 0;
+		else
+			rc = -1 == c ? 0 : 1;
 	}
 
 	while (rc && *argv) {
-		if ( ! ffile(&blk, &ln, *argv, &curp))
-			rc = 0;
+		c = ffile(&blk, &ln, *argv, &curp);
+		if ( ! (IGN_ERRORS & curp.fflags)) 
+			rc = 1 == c ? 1 : 0;
+		else
+			rc = -1 == c ? 0 : 1;
+
 		argv++;
 		if (*argv && rc) {
 			if (curp.lastman)
@@ -270,7 +279,7 @@ ffile(struct buf *blk, struct buf *ln,
 	curp->file = file;
 	if (-1 == (curp->fd = open(curp->file, O_RDONLY, 0))) {
 		warn("%s", curp->file);
-		return(0);
+		return(-1);
 	}
 
 	c = fdesc(blk, ln, curp);
@@ -311,7 +320,7 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 		blk->buf = realloc(blk->buf, sz);
 		if (NULL == blk->buf) {
 			warn("realloc");
-			return(0);
+			return(-1);
 		}
 		blk->sz = sz;
 	}
@@ -321,7 +330,7 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 	for (lnn = pos = comment = 0; ; ) {
 		if (-1 == (ssz = read(curp->fd, blk->buf, sz))) {
 			warn("%s", curp->file);
-			return(0);
+			return(-1);
 		} else if (0 == ssz) 
 			break;
 
@@ -333,7 +342,7 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 				ln->buf = realloc(ln->buf, ln->sz);
 				if (NULL == ln->buf) {
 					warn("realloc");
-					return(0);
+					return(-1);
 				}
 			}
 
@@ -380,7 +389,7 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 
 			if ( ! (man || mdoc) && ! pset(ln->buf, 
 						pos, curp, &man, &mdoc))
-				return(0);
+				return(-1);
 
 			pos = comment = 0;
 
@@ -428,10 +437,10 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 
 	if (man && curp->outman)
 		if ( ! (*curp->outman)(curp->outdata, man))
-			return(0);
+			return(-1);
 	if (mdoc && curp->outmdoc)
 		if ( ! (*curp->outmdoc)(curp->outdata, mdoc))
-			return(0);
+			return(-1);
 
 	return(1);
 }
@@ -538,14 +547,15 @@ static int
 foptions(int *fflags, char *arg)
 {
 	char		*v, *o;
-	char		*toks[6];
+	char		*toks[7];
 
 	toks[0] = "ign-scope";
 	toks[1] = "no-ign-escape";
 	toks[2] = "no-ign-macro";
 	toks[3] = "no-ign-chars";
-	toks[4] = "strict";
-	toks[5] = NULL;
+	toks[4] = "ign-errors";
+	toks[5] = "strict";
+	toks[6] = NULL;
 
 	while (*arg) {
 		o = arg;
@@ -563,6 +573,9 @@ foptions(int *fflags, char *arg)
 			*fflags |= NO_IGN_CHARS;
 			break;
 		case (4):
+			*fflags |= IGN_ERRORS;
+			break;
+		case (5):
 			*fflags |= NO_IGN_ESCAPE | 
 			 	   NO_IGN_MACRO | NO_IGN_CHARS;
 			break;
