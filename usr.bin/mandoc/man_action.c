@@ -1,4 +1,4 @@
-/*	$Id: man_action.c,v 1.5 2009/08/22 15:15:37 schwarze Exp $ */
+/*	$Id: man_action.c,v 1.6 2009/08/22 20:14:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -56,6 +56,9 @@ const	struct actions man_actions[MAN_MAX] = {
 	{ NULL }, /* na */
 	{ NULL }, /* i */
 	{ NULL }, /* sp */
+	{ NULL }, /* nf */
+	{ NULL }, /* fi */
+	{ NULL }, /* r*/
 };
 
 
@@ -147,12 +150,10 @@ post_TH(struct man *m)
 	 */
 
 	if (m->last->parent->child == m->last) {
-		assert(MAN_ROOT == m->last->parent->type);
 		m->last->parent->child = NULL;
 		n = m->last;
 		m->last = m->last->parent;
 		m->next = MAN_NEXT_CHILD;
-		assert(m->last == m->first);
 	} else {
 		assert(m->last->prev);
 		m->last->prev->next = NULL;

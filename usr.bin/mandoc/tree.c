@@ -1,4 +1,4 @@
-/*	$Id: tree.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: tree.c,v 1.3 2009/08/22 20:14:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -163,6 +163,15 @@ print_man(const struct man_node *n, int indent)
 	case (MAN_TEXT):
 		t = "text";
 		break;
+	case (MAN_BLOCK):
+		t = "block";
+		break;
+	case (MAN_HEAD):
+		t = "block-head";
+		break;
+	case (MAN_BODY):
+		t = "block-body";
+		break;
 	default:
 		abort();
 		/* NOTREACHED */
@@ -173,6 +182,12 @@ print_man(const struct man_node *n, int indent)
 		p = n->string;
 		break;
 	case (MAN_ELEM):
+		/* FALLTHROUGH */
+	case (MAN_BLOCK):
+		/* FALLTHROUGH */
+	case (MAN_HEAD):
+		/* FALLTHROUGH */
+	case (MAN_BODY):
 		p = man_macronames[n->tok];
 		break;
 	case (MAN_ROOT):

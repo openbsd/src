@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.5 2009/08/22 15:15:37 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.6 2009/08/22 20:14:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -21,108 +21,281 @@
 
 #include "libman.h"
 
-#define	FL_NLINE	(1 << 0)
-#define	FL_TLINE	(1 << 1)
+#define	REW_REWIND	(0)		/* See rew_scope(). */
+#define	REW_NOHALT	(1)		/* See rew_scope(). */
+#define	REW_HALT	(2)		/* See rew_scope(). */
 
-static	int		 man_args(struct man *, int, 
-				int *, char *, char **);
+static	int		 in_line_eoln(MACRO_PROT_ARGS);
+static	int		 blk_imp(MACRO_PROT_ARGS);
 
-static	int man_flags[MAN_MAX] = {
-	0, /* br */
-	0, /* TH */
-	0, /* SH */
-	0, /* SS */
-	FL_TLINE, /* TP */
-	0, /* LP */
-	0, /* PP */
-	0, /* P */
-	0, /* IP */
-	0, /* HP */
-	FL_NLINE, /* SM */
-	FL_NLINE, /* SB */
-	FL_NLINE, /* BI */
-	FL_NLINE, /* IB */
-	FL_NLINE, /* BR */
-	FL_NLINE, /* RB */
-	FL_NLINE, /* R */
-	FL_NLINE, /* B */
-	FL_NLINE, /* I */
-	FL_NLINE, /* IR */
-	FL_NLINE, /* RI */
-	0, /* na */
-	FL_NLINE, /* i */
-	0, /* sp */
+static	int		 rew_scope(enum man_type, struct man *, int);
+static	int 		 rew_dohalt(int, enum man_type, 
+				const struct man_node *);
+
+const	struct man_macro __man_macros[MAN_MAX] = {
+	{ in_line_eoln, 0 }, /* br */
+	{ in_line_eoln, 0 }, /* TH */
+	{ blk_imp, 0 }, /* SH */
+	{ blk_imp, 0 }, /* SS */
+	{ blk_imp, MAN_SCOPED }, /* TP */
+	{ blk_imp, 0 }, /* LP */
+	{ blk_imp, 0 }, /* PP */
+	{ blk_imp, 0 }, /* P */
+	{ blk_imp, 0 }, /* IP */
+	{ blk_imp, 0 }, /* HP */
+	{ in_line_eoln, MAN_SCOPED }, /* SM */
+	{ in_line_eoln, MAN_SCOPED }, /* SB */
+	{ in_line_eoln, 0 }, /* BI */
+	{ in_line_eoln, 0 }, /* IB */
+	{ in_line_eoln, 0 }, /* BR */
+	{ in_line_eoln, 0 }, /* RB */
+	{ in_line_eoln, MAN_SCOPED }, /* R */
+	{ in_line_eoln, MAN_SCOPED }, /* B */
+	{ in_line_eoln, MAN_SCOPED }, /* I */
+	{ in_line_eoln, 0 }, /* IR */
+	{ in_line_eoln, 0 }, /* RI */
+	{ in_line_eoln, 0 }, /* na */
+	{ in_line_eoln, 0 }, /* i */
+	{ in_line_eoln, 0 }, /* sp */
+	{ in_line_eoln, 0 }, /* nf */
+	{ in_line_eoln, 0 }, /* fi */
+	{ in_line_eoln, 0 }, /* r */
 };
 
+const	struct man_macro * const man_macros = __man_macros;
+
+
 int
-man_macro(struct man *man, int tok, int line, 
-		int ppos, int *pos, char *buf)
+man_unscope(struct man *m, const struct man_node *n)
+{
+
+	assert(n);
+	m->next = MAN_NEXT_SIBLING;
+
+	/* LINTED */
+	while (m->last != n) {
+		if ( ! man_valid_post(m))
+			return(0);
+		if ( ! man_action_post(m))
+			return(0);
+		m->last = m->last->parent;
+		assert(m->last);
+	}
+
+	if ( ! man_valid_post(m))
+		return(0);
+	return(man_action_post(m));
+}
+
+
+/*
+ * There are three scope levels: scoped to the root (all), scoped to the
+ * section (all less sections), and scoped to subsections (all less
+ * sections and subsections).
+ */
+static int 
+rew_dohalt(int tok, enum man_type type, const struct man_node *n)
+{
+
+	if (MAN_ROOT == n->type)
+		return(REW_HALT);
+	assert(n->parent);
+	if (MAN_ROOT == n->parent->type)
+		return(REW_REWIND);
+	if (MAN_VALID & n->flags)
+		return(REW_NOHALT);
+
+	switch (tok) {
+	case (MAN_SH):
+		/* Rewind to ourselves. */
+		if (type == n->type && tok == n->tok)
+			return(REW_REWIND);
+		break;
+	case (MAN_SS):
+		/* Rewind to ourselves. */
+		if (type == n->type && tok == n->tok)
+			return(REW_REWIND);
+		/* Rewind to a section, if a block. */
+		if (MAN_BLOCK == type && MAN_SH == n->parent->tok && 
+				MAN_BODY == n->parent->type)
+			return(REW_REWIND);
+		/* Don't go beyond a section. */
+		if (MAN_SH == n->tok)
+			return(REW_HALT);
+		break;
+	default:
+		/* Rewind to ourselves. */
+		if (type == n->type && tok == n->tok)
+			return(REW_REWIND);
+		/* Rewind to a subsection, if a block. */
+		if (MAN_BLOCK == type && MAN_SS == n->parent->tok && 
+				MAN_BODY == n->parent->type)
+			return(REW_REWIND);
+		/* Don't go beyond a subsection. */
+		if (MAN_SS == n->tok)
+			return(REW_HALT);
+		/* Rewind to a section, if a block. */
+		if (MAN_BLOCK == type && MAN_SH == n->parent->tok && 
+				MAN_BODY == n->parent->type)
+			return(REW_REWIND);
+		/* Don't go beyond a section. */
+		if (MAN_SH == n->tok)
+			return(REW_HALT);
+		break;
+	}
+
+	return(REW_NOHALT);
+}
+
+
+/*
+ * Rewinding entails ascending the parse tree until a coherent point,
+ * for example, the `SH' macro will close out any intervening `SS'
+ * scopes.  When a scope is closed, it must be validated and actioned.
+ */
+static int
+rew_scope(enum man_type type, struct man *m, int tok)
+{
+	struct man_node	*n;
+	int		 c;
+
+	/* LINTED */
+	for (n = m->last; n; n = n->parent) {
+		/* 
+		 * Whether we should stop immediately (REW_HALT), stop
+		 * and rewind until this point (REW_REWIND), or keep
+		 * rewinding (REW_NOHALT).
+		 */
+		c = rew_dohalt(tok, type, n);
+		if (REW_HALT == c)
+			return(1);
+		if (REW_REWIND == c)
+			break;
+	}
+
+	/* Rewind until the current point. */
+
+	assert(n);
+	return(man_unscope(m, n));
+}
+
+
+/*
+ * Parse an implicit-block macro.  These contain a MAN_HEAD and a
+ * MAN_BODY contained within a MAN_BLOCK.  Rules for closing out other
+ * scopes, such as `SH' closing out an `SS', are defined in the rew
+ * routines.
+ */
+int
+blk_imp(MACRO_PROT_ARGS)
 {
 	int		 w, la;
 	char		*p;
-	struct man_node	*n;
 
-	if ( ! man_elem_alloc(man, line, ppos, tok))
+	/* Close out prior scopes. */
+
+	if ( ! rew_scope(MAN_BODY, m, tok))
 		return(0);
-	n = man->last;
-	man->next = MAN_NEXT_CHILD;
+	if ( ! rew_scope(MAN_BLOCK, m, tok))
+		return(0);
+
+	/* Allocate new block & head scope. */
+
+	if ( ! man_block_alloc(m, line, ppos, tok))
+		return(0);
+	if ( ! man_head_alloc(m, line, ppos, tok))
+		return(0);
+
+	/* Add line arguments. */
 
 	for (;;) {
 		la = *pos;
-		w = man_args(man, line, pos, buf, &p);
+		w = man_args(m, line, pos, buf, &p);
 
 		if (-1 == w)
 			return(0);
 		if (0 == w)
 			break;
 
-		if ( ! man_word_alloc(man, line, la, p))
+		if ( ! man_word_alloc(m, line, la, p))
 			return(0);
-		man->next = MAN_NEXT_SIBLING;
+		m->next = MAN_NEXT_SIBLING;
 	}
 
-	if (n == man->last && (FL_NLINE & man_flags[tok])) {
-		if (MAN_NLINE & man->flags) 
-			return(man_perr(man, line, ppos, WLNSCOPE));
-		man->flags |= MAN_NLINE;
+	/* Close out head and open body (unless MAN_SCOPE). */
+
+	if (MAN_SCOPED & man_macros[tok].flags) {
+		m->flags |= MAN_BLINE;
 		return(1);
+	} else if ( ! rew_scope(MAN_HEAD, m, tok))
+		return(0);
+
+	return(man_body_alloc(m, line, ppos, tok));
+}
+
+
+int
+in_line_eoln(MACRO_PROT_ARGS)
+{
+	int		 w, la;
+	char		*p;
+	struct man_node	*n;
+
+	if ( ! man_elem_alloc(m, line, ppos, tok))
+		return(0);
+
+	n = m->last;
+	m->next = MAN_NEXT_CHILD;
+
+	for (;;) {
+		la = *pos;
+		w = man_args(m, line, pos, buf, &p);
+
+		if (-1 == w)
+			return(0);
+		if (0 == w)
+			break;
+
+		if ( ! man_word_alloc(m, line, la, p))
+			return(0);
+		m->next = MAN_NEXT_SIBLING;
 	}
 
-	if (FL_TLINE & man_flags[tok]) {
-		if (MAN_NLINE & man->flags) 
-			return(man_perr(man, line, ppos, WLNSCOPE));
-		man->flags |= MAN_NLINE;
+	if (n == m->last && (MAN_SCOPED & man_macros[tok].flags)) {
+		m->flags |= MAN_ELINE;
 		return(1);
-	}
+	} 
 
 	/*
 	 * Note that when TH is pruned, we'll be back at the root, so
 	 * make sure that we don't clobber as its sibling.
 	 */
 
-	for ( ; man->last; man->last = man->last->parent) {
-		if (man->last == n)
+	/* FIXME: clean this to use man_unscope(). */
+
+	for ( ; m->last; m->last = m->last->parent) {
+		if (m->last == n)
 			break;
-		if (man->last->type == MAN_ROOT)
+		if (m->last->type == MAN_ROOT)
 			break;
-		if ( ! man_valid_post(man))
+		if ( ! man_valid_post(m))
 			return(0);
-		if ( ! man_action_post(man))
+		if ( ! man_action_post(m))
 			return(0);
 	}
 
-	assert(man->last);
+	assert(m->last);
 
 	/*
 	 * Same here regarding whether we're back at the root. 
 	 */
 
-	if (man->last->type != MAN_ROOT && ! man_valid_post(man))
+	if (m->last->type != MAN_ROOT && ! man_valid_post(m))
 		return(0);
-	if (man->last->type != MAN_ROOT && ! man_action_post(man))
+	if (m->last->type != MAN_ROOT && ! man_action_post(m))
 		return(0);
-	if (man->last->type != MAN_ROOT)
-		man->next = MAN_NEXT_SIBLING;
+	if (m->last->type != MAN_ROOT)
+		m->next = MAN_NEXT_SIBLING;
 
 	return(1);
 }
@@ -132,93 +305,6 @@ int
 man_macroend(struct man *m)
 {
 
-	for ( ; m->last && m->last != m->first; 
-			m->last = m->last->parent) {
-		if ( ! man_valid_post(m))
-			return(0);
-		if ( ! man_action_post(m))
-			return(0);
-	}
-	assert(m->last == m->first);
-
-	if ( ! man_valid_post(m))
-		return(0);
-	if ( ! man_action_post(m))
-		return(0);
-
-	return(1);
+	return(man_unscope(m, m->first));
 }
 
-
-/* ARGSUSED */
-static int
-man_args(struct man *m, int line, 
-		int *pos, char *buf, char **v)
-{
-
-	if (0 == buf[*pos])
-		return(0);
-
-	/* First parse non-quoted strings. */
-
-	if ('\"' != buf[*pos]) {
-		*v = &buf[*pos];
-
-		while (buf[*pos]) {
-			if (' ' == buf[*pos])
-				if ('\\' != buf[*pos - 1])
-					break;
-			(*pos)++;
-		}
-
-		if (0 == buf[*pos])
-			return(1);
-
-		buf[(*pos)++] = 0;
-
-		if (0 == buf[*pos])
-			return(1);
-
-		while (buf[*pos] && ' ' == buf[*pos])
-			(*pos)++;
-
-		if (buf[*pos])
-			return(1);
-
-		if ( ! man_pwarn(m, line, *pos, WTSPACE))
-			return(-1);
-
-		return(1);
-	}
-
-	/*
-	 * If we're a quoted string (and quoted strings are allowed),
-	 * then parse ahead to the next quote.  If none's found, it's an
-	 * error.  After, parse to the next word.  
-	 */
-
-	*v = &buf[++(*pos)];
-
-	while (buf[*pos] && '\"' != buf[*pos])
-		(*pos)++;
-
-	if (0 == buf[*pos]) {
-		if ( ! man_pwarn(m, line, *pos, WTQUOTE))
-			return(-1);
-		return(1);
-	}
-
-	buf[(*pos)++] = 0;
-	if (0 == buf[*pos])
-		return(1);
-
-	while (buf[*pos] && ' ' == buf[*pos])
-		(*pos)++;
-
-	if (buf[*pos])
-		return(1);
-
-	if ( ! man_pwarn(m, line, *pos, WTSPACE))
-		return(-1);
-	return(1);
-}

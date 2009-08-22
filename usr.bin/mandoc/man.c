@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.8 2009/08/22 15:15:37 schwarze Exp $ */
+/*	$Id: man.c,v 1.9 2009/08/22 20:14:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -35,6 +35,12 @@ const	char *const __man_merrnames[WERRMAX] = {
 	"document has no title/section", /* WNOTITLE */
 	"invalid escape sequence", /* WESCAPE */
 	"invalid number format", /* WNUMFMT */
+	"expected block head arguments", /* WHEADARGS */
+	"expected block body arguments", /* WBODYARGS */
+	"expected empty block head", /* WNHEADARGS */
+	"unknown macro", /* WMACRO */
+	"ill-formed macro", /* WMACROFORM */
+	"scope open on exit" /* WEXITSCOPE */
 };
 
 const	char *const __man_macronames[MAN_MAX] = {		 
@@ -43,7 +49,8 @@ const	char *const __man_macronames[MAN_MAX] = {
 	"IP",		"HP",		"SM",		"SB",
 	"BI",		"IB",		"BR",		"RB",
 	"R",		"B",		"I",		"IR",
-	"RI",		"na",		"i",		"sp"
+	"RI",		"na",		"i",		"sp",
+	"nf",		"fi",		"r"
 	};
 
 const	char * const *man_macronames = __man_macronames;
@@ -199,6 +206,22 @@ man_node_append(struct man *man, struct man_node *p)
 	
 	p->parent->nchild++;
 
+	if ( ! man_valid_pre(man, p))
+		return(0);
+
+	switch (p->type) {
+	case (MAN_HEAD):
+		assert(MAN_BLOCK == p->parent->type);
+		p->parent->head = p;
+		break;
+	case (MAN_BODY):
+		assert(MAN_BLOCK == p->parent->type);
+		p->parent->body = p;
+		break;
+	default:
+		break;
+	}
+
 	man->last = p;
 
 	switch (p->type) {
@@ -242,6 +265,51 @@ man_elem_alloc(struct man *man, int line, int pos, int tok)
 	if (NULL == p)
 		return(0);
 	return(man_node_append(man, p));
+}
+
+
+int
+man_head_alloc(struct man *m, int line, int pos, int tok)
+{
+	struct man_node *p;
+
+	p = man_node_alloc(line, pos, MAN_HEAD, tok);
+	if (NULL == p)
+		return(0);
+	if ( ! man_node_append(m, p))
+		return(0);
+	m->next = MAN_NEXT_CHILD;
+	return(1);
+}
+
+
+int
+man_body_alloc(struct man *m, int line, int pos, int tok)
+{
+	struct man_node *p;
+
+	p = man_node_alloc(line, pos, MAN_BODY, tok);
+	if (NULL == p)
+		return(0);
+	if ( ! man_node_append(m, p))
+		return(0);
+	m->next = MAN_NEXT_CHILD;
+	return(1);
+}
+
+
+int
+man_block_alloc(struct man *m, int line, int pos, int tok)
+{
+	struct man_node *p;
+
+	p = man_node_alloc(line, pos, MAN_BLOCK, tok);
+	if (NULL == p)
+		return(0);
+	if ( ! man_node_append(m, p))
+		return(0);
+	m->next = MAN_NEXT_CHILD;
+	return(1);
 }
 
 
@@ -290,29 +358,33 @@ static int
 man_ptext(struct man *m, int line, char *buf)
 {
 
+	/* First allocate word. */
+
 	if ( ! man_word_alloc(m, line, 0, buf))
 		return(0);
 	m->next = MAN_NEXT_SIBLING;
 
 	/*
-	 * If this is one of the zany NLINE macros that consumes the
-	 * next line of input as being influenced, then close out the
-	 * existing macro "scope" and continue processing.
+	 * Co-ordinate what happens with having a next-line scope open:
+	 * first close out the element scope (if applicable), then close
+	 * out the block scope (also if applicable).
 	 */
 
-	if ( ! (MAN_NLINE & m->flags))
+	/* XXX - this should be in man_action.c. */
+
+	if (MAN_ELINE & m->flags) {
+		m->flags &= ~MAN_ELINE;
+		if ( ! man_unscope(m, m->last->parent))
+			return(0);
+	}
+
+	if ( ! (MAN_BLINE & m->flags))
 		return(1);
+	m->flags &= ~MAN_BLINE;
 
-	m->flags &= ~MAN_NLINE;
-	m->last = m->last->parent;
-
-	assert(MAN_ROOT != m->last->type);
-	if ( ! man_valid_post(m))
+	if ( ! man_unscope(m, m->last->parent))
 		return(0);
-	if ( ! man_action_post(m))
-		return(0);
-
-	return(1);
+	return(man_body_alloc(m, line, 0, m->last->tok));
 }
 
 
@@ -321,12 +393,10 @@ man_pmacro(struct man *m, int ln, char *buf)
 {
 	int		  i, j, c, ppos, fl;
 	char		  mac[5];
-	struct man_node	 *n;
 
 	/* Comments and empties are quickly ignored. */
 
-	n = m->last;
-	fl = MAN_NLINE & m->flags;
+	fl = m->flags;
 
 	if (0 == buf[1])
 		goto out;
@@ -356,24 +426,20 @@ man_pmacro(struct man *m, int ln, char *buf)
 
 	if (j == 4 || j < 1) {
 		if ( ! (MAN_IGN_MACRO & m->pflags)) {
-			(void)man_verr(m, ln, ppos, 
-				"ill-formed macro: %s", mac);
+			(void)man_perr(m, ln, ppos, WMACROFORM);
 			goto err;
 		} 
-		if ( ! man_vwarn(m, ln, ppos, 
-				"ill-formed macro: %s", mac))
+		if ( ! man_pwarn(m, ln, ppos, WMACROFORM))
 			goto err;
 		return(1);
 	}
 	
 	if (MAN_MAX == (c = man_hash_find(m->htab, mac))) {
 		if ( ! (MAN_IGN_MACRO & m->pflags)) {
-			(void)man_verr(m, ln, ppos, 
-				"unknown macro: %s", mac);
+			(void)man_perr(m, ln, ppos, WMACRO);
 			goto err;
 		} 
-		if ( ! man_vwarn(m, ln, ppos, 
-				"unknown macro: %s", mac))
+		if ( ! man_pwarn(m, ln, ppos, WMACRO))
 			goto err;
 		return(1);
 	}
@@ -385,32 +451,33 @@ man_pmacro(struct man *m, int ln, char *buf)
 
 	/* Begin recursive parse sequence. */
 
-	if ( ! man_macro(m, c, ln, ppos, &i, buf))
+	assert(man_macros[c].fp);
+
+	if ( ! (*man_macros[c].fp)(m, c, ln, ppos, &i, buf))
 		goto err;
 
 out:
-	if (fl) {
-		/*
-		 * A NLINE macro has been immediately followed with
-		 * another.  Close out the preceding macro's scope, and
-		 * continue.
-		 */
-		assert(MAN_ROOT != m->last->type);
-		assert(m->last->parent);
-		assert(MAN_ROOT != m->last->parent->type);
+	if ( ! (MAN_BLINE & fl))
+		return(1);
 
-		if (n != m->last)
-			m->last = m->last->parent;
+	/* 
+	 * If we've opened a new next-line element scope, then return
+	 * now, as the next line will close out the block scope.
+	 */
 
-		if ( ! man_valid_post(m))
-			return(0);
-		if ( ! man_action_post(m))
-			return(0);
-		m->next = MAN_NEXT_SIBLING;
-		m->flags &= ~MAN_NLINE;
-	} 
+	if (MAN_ELINE & m->flags)
+		return(1);
 
-	return(1);
+	/* Close out the block scope opened in the prior line.  */
+
+	/* XXX - this should be in man_action.c. */
+
+	assert(MAN_BLINE & m->flags);
+	m->flags &= ~MAN_BLINE;
+
+	if ( ! man_unscope(m, m->last->parent))
+		return(0);
+	return(man_body_alloc(m, ln, 0, m->last->tok));
 
 err:	/* Error out. */
 
