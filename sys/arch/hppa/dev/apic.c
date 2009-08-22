@@ -1,4 +1,4 @@
-/*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
+/*	$OpenBSD: apic.c,v 1.8 2009/08/22 02:54:50 mk Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -149,7 +149,7 @@ apic_intr_string(void *v, pci_intr_handle_t ih)
 
 void *
 apic_intr_establish(void *v, pci_intr_handle_t ih,
-    int pri, int (*handler)(void *), void *arg, char *name)
+    int pri, int (*handler)(void *), void *arg, const char *name)
 {
 	struct elroy_softc *sc = v;
 	volatile struct elroy_regs *r = sc->sc_regs;

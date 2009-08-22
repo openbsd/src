@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000.c,v 1.8 2008/07/22 18:45:50 miod Exp $ */
+/* $OpenBSD: pci_1000.c,v 1.9 2009/08/22 02:54:50 mk Exp $ */
 /* $NetBSD: pci_1000.c,v 1.12 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -88,7 +88,7 @@ int	dec_1000_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_1000_intr_string(void *, pci_intr_handle_t);
 int	dec_1000_intr_line(void *, pci_intr_handle_t);
 void	*dec_1000_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *);
+	    int, int (*func)(void *), void *, const char *);
 void	dec_1000_intr_disestablish(void *, void *);
 
 #define	PCI_NIRQ	16
@@ -206,7 +206,7 @@ dec_1000_intr_establish(ccv, ih, level, func, arg, name)
         int level;
         int (*func)(void *);
 	void *arg;
-	char *name;
+	const char *name;
 {           
 	void *cookie;
 

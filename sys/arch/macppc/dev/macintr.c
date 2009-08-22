@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.37 2009/06/09 01:12:38 deraadt Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.38 2009/08/22 02:54:50 mk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -221,7 +221,7 @@ fakeintr(void *arg)
  */
 void *
 macintr_establish(void * lcv, int irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg, char *name)
+    int (*ih_fun)(void *), void *ih_arg, const char *name)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand;

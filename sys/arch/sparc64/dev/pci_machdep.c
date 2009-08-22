@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.38 2009/07/20 23:40:43 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.39 2009/08/22 02:54:51 mk Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -419,7 +419,7 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 	int level;
 	int (*func)(void *);
 	void *arg;
-	char *what;
+	const char *what;
 {
 	void *cookie;
 

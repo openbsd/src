@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.42 2009/07/22 21:28:42 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.43 2009/08/22 02:54:51 mk Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -448,7 +448,7 @@ static int fakeintr(void *a) {return 0;}
  */
 void *
 macebus_intr_establish(void *icp, u_long irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg, char *ih_what)
+    int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {NULL, fakeintr};

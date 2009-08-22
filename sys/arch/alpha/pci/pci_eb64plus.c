@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.11 2008/07/22 18:45:51 miod Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.12 2009/08/22 02:54:50 mk Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -87,7 +87,7 @@
 int	dec_eb64plus_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_eb64plus_intr_string(void *, pci_intr_handle_t);
 void	*dec_eb64plus_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *);
+	    int, int (*func)(void *), void *, const char *);
 void	dec_eb64plus_intr_disestablish(void *, void *);
 
 #define	EB64PLUS_MAX_IRQ	32
@@ -196,7 +196,7 @@ dec_eb64plus_intr_establish(acv, ih, level, func, arg, name)
         int level;
         int (*func)(void *);
 	void *arg;
-	char *name;
+	const char *name;
 {
 	void *cookie;
 

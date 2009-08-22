@@ -1,4 +1,4 @@
-/* $OpenBSD: i80321_intr.c,v 1.12 2009/04/08 21:19:31 kettenis Exp $ */
+/* $OpenBSD: i80321_intr.c,v 1.13 2009/08/22 02:54:50 mk Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -301,7 +301,7 @@ i80321intc_init(void)
 
 void *
 i80321_intr_establish(int irq, int ipl, int (*func)(void *), void *arg,
-    char *name)
+    const char *name)
 {
 	struct intrq *iq;
 	struct intrhand *ih;

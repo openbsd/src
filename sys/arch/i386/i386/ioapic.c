@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.21 2009/08/13 13:24:48 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.22 2009/08/22 02:54:50 mk Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -647,7 +647,7 @@ ioapic_hwunmask(struct pic *pic, int pin)
 
 void *
 apic_intr_establish(int irq, int type, int level, int (*ih_fun)(void *),
-    void *ih_arg, char *ih_what)
+    void *ih_arg, const char *ih_what)
 {
 	unsigned int ioapic = APIC_IRQ_APIC(irq);
 	unsigned int intr = APIC_IRQ_PIN(irq);

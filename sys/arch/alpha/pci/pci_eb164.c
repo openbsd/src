@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.22 2008/07/22 18:45:51 miod Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.23 2009/08/22 02:54:50 mk Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -91,7 +91,7 @@ int	dec_eb164_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_eb164_intr_string(void *, pci_intr_handle_t);
 int	dec_eb164_intr_line(void *, pci_intr_handle_t);
 void	*dec_eb164_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *);
+	    int, int (*func)(void *), void *, const char *);
 void	dec_eb164_intr_disestablish(void *, void *);
 
 void	*dec_eb164_pciide_compat_intr_establish(void *, struct device *,
@@ -259,7 +259,7 @@ dec_eb164_intr_establish(ccv, ih, level, func, arg, name)
         pci_intr_handle_t ih;
         int level;
         int (*func)(void *);
-	char *name;
+	const char *name;
 {
 #if 0
 	struct cia_config *ccp = ccv;

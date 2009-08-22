@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.19 2008/07/22 18:45:51 miod Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.20 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: pci_axppci_33.c,v 1.10 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ int     dec_axppci_33_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_axppci_33_intr_string(void *, pci_intr_handle_t);
 int	dec_axppci_33_intr_line(void *, pci_intr_handle_t);
 void    *dec_axppci_33_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *);
+	    int, int (*func)(void *), void *, const char *);
 void    dec_axppci_33_intr_disestablish(void *, void *);
 
 #define	LCA_SIO_DEVICE	7	/* XXX */
@@ -232,7 +232,7 @@ dec_axppci_33_intr_establish(lcv, ih, level, func, arg, name)
 	pci_intr_handle_t ih;
 	int level;
 	int (*func)(void *);
-	char *name;
+	const char *name;
 {
 	return sio_intr_establish(NULL /*XXX*/, ih, IST_LEVEL, level, func,
 	    arg, name);

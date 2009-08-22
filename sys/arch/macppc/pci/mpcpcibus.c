@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.39 2009/05/03 21:30:09 kettenis Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.40 2009/08/22 02:54:50 mk Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -68,7 +68,7 @@ int      mpc_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 const char *mpc_intr_string(void *, pci_intr_handle_t);
 int	mpc_intr_line(void *, pci_intr_handle_t);
 void     *mpc_intr_establish(void *, pci_intr_handle_t,
-            int, int (*func)(void *), void *, char *);
+            int, int (*func)(void *), void *, const char *);
 void     mpc_intr_disestablish(void *, void *);
 int      mpc_ether_hw_addr(struct ppc_pci_chipset *, u_int8_t *);
 u_int32_t mpc_gen_config_reg(void *cpv, pcitag_t tag, int offset);
@@ -907,7 +907,7 @@ mpc_intr_line(void *lcv, pci_intr_handle_t ih)
 
 void *
 mpc_intr_establish(void *lcv, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    int (*func)(void *), void *arg, const char *name)
 {
 	return (*intr_establish_func)(lcv, ih, IST_LEVEL, level, func, arg,
 		name);

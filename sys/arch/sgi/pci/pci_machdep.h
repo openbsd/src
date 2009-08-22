@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.7 2009/07/21 21:25:19 miod Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.8 2009/08/22 02:54:51 mk Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -50,7 +50,7 @@ struct mips_pci_chipset {
     int		(*pc_intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
     const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
     void	*(*pc_intr_establish)(void *, pci_intr_handle_t,
-		    int, int (*)(void *), void *, char *);
+		    int, int (*)(void *), void *, const char *);
     void	(*pc_intr_disestablish)(void *, void *);
     int		(*pc_intr_line)(void *, pci_intr_handle_t);
 

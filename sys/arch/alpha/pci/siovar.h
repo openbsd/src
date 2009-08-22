@@ -1,4 +1,4 @@
-/*	$OpenBSD: siovar.h,v 1.12 2004/06/28 02:28:43 aaron Exp $	*/
+/*	$OpenBSD: siovar.h,v 1.13 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: siovar.h,v 1.5 1996/10/23 04:12:34 cgd Exp $	*/
 
 /*
@@ -36,7 +36,7 @@ void	sio_iointr(void *framep, unsigned long vec);
 const char *sio_intr_string(void *, int);
 int	sio_intr_line(void *, int);
 void	*sio_intr_establish(void *, int, int, int, int (*)(void *),
-	    void *, char *);
+	    void *, const char *);
 void	sio_intr_disestablish(void *, void *);
 
 struct evcount sio_intr_count;

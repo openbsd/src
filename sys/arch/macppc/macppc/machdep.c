@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.113 2009/08/11 19:17:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.114 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ int power4e_get_eth_addr(void);
 void ppc_intr_setup(intr_establish_t *establish,
     intr_disestablish_t *disestablish);
 void *ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type,
-    int level, int (*func)(void *), void *arg, char *name);
+    int level, int (*func)(void *), void *arg, const char *name);
 int bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp);
 bus_addr_t bus_space_unmap_p(bus_space_tag_t t, bus_space_handle_t bsh,
@@ -1034,7 +1034,7 @@ struct intrhand ppc_configed_intr[MAX_PRECONF_INTR];
 
 void *
 ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type, int level,
-    int (*func)(void *), void *arg, char *name)
+    int (*func)(void *), void *arg, const char *name)
 {
 	if (ppc_configed_intr_cnt < MAX_PRECONF_INTR) {
 		ppc_configed_intr[ppc_configed_intr_cnt].ih_fun = func;

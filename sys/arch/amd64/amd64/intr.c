@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.22 2008/12/06 19:59:38 tedu Exp $	*/
+/*	$OpenBSD: intr.c,v 1.23 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ found:
 
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
-    int (*handler)(void *), void *arg, char *what)
+    int (*handler)(void *), void *arg, const char *what)
 {
 	struct intrhand **p, *q, *ih;
 	struct cpu_info *ci;

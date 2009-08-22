@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.30 2009/07/20 23:40:43 miod Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.31 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -326,7 +326,7 @@ void	acpiprt_route_interrupt(int bus, int dev, int pin);
 
 void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *what)
+    int (*func)(void *), void *arg, const char *what)
 {
 	int pin, irq;
 	int bus, dev;

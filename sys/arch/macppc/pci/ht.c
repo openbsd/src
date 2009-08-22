@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.12 2009/03/29 22:58:31 kettenis Exp $	*/
+/*	$OpenBSD: ht.c,v 1.13 2009/08/22 02:54:50 mk Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -45,7 +45,7 @@ int	 ht_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 const char *ht_intr_string(void *, pci_intr_handle_t);
 int	 ht_intr_line(void *, pci_intr_handle_t);
 void	*ht_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
-	     void *, char *);
+	     void *, const char *);
 void	 ht_intr_disestablish(void *, void *);
 
 int	 ht_ether_hw_addr(struct ppc_pci_chipset *, u_int8_t *);
@@ -353,7 +353,7 @@ ht_intr_line(void *cpv, pci_intr_handle_t ih)
 
 void *
 ht_intr_establish(void *cpv, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    int (*func)(void *), void *arg, const char *name)
 {
 	return (*intr_establish_func)(cpv, ih, IST_LEVEL, level, func, arg,
 		name);

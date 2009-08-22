@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.32 2009/08/09 12:36:33 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.33 2009/08/22 02:54:51 mk Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -86,7 +86,7 @@ void	 mace_pcibr_conf_write(void *, pcitag_t, int, pcireg_t);
 int	 mace_pcibr_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *mace_pcibr_intr_string(void *, pci_intr_handle_t);
 void	*mace_pcibr_intr_establish(void *, pci_intr_handle_t, int,
-	    int (*)(void *), void *, char *);
+	    int (*)(void *), void *, const char *);
 void	 mace_pcibr_intr_disestablish(void *, void *);
 int	 mace_pcibr_intr_line(void *, pci_intr_handle_t);
 int	 mace_pcibr_ppb_setup(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
@@ -465,7 +465,7 @@ mace_pcibr_intr_string(void *lcv, pci_intr_handle_t ih)
 
 void *
 mace_pcibr_intr_establish(void *lcv, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    int (*func)(void *), void *arg, const char *name)
 {
 	return
 	    macebus_intr_establish(NULL, ih, IST_LEVEL, level, func, arg, name);

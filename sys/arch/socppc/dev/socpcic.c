@@ -1,4 +1,4 @@
-/*	$OpenBSD: socpcic.c,v 1.3 2009/03/30 20:09:50 kettenis Exp $	*/
+/*	$OpenBSD: socpcic.c,v 1.4 2009/08/22 02:54:51 mk Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -58,7 +58,7 @@ int	 socpcic_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 const char *socpcic_intr_string(void *, pci_intr_handle_t);
 int	 socpcic_intr_line(void *, pci_intr_handle_t);
 void	*socpcic_intr_establish(void *, pci_intr_handle_t, int,
-	     int (*)(void *), void *, char *);
+	     int (*)(void *), void *, const char *);
 void	 socpcic_intr_disestablish(void *, void *);
 int	 socpcic_ether_hw_addr(struct ppc_pci_chipset *, u_int8_t *);
 
@@ -218,7 +218,7 @@ socpcic_intr_line(void *cpv, pci_intr_handle_t ih)
 
 void *
 socpcic_intr_establish(void *cpv, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    int (*func)(void *), void *arg, const char *name)
 {
 	return (intr_establish(ih, IST_LEVEL, level, func, arg, name));
 }

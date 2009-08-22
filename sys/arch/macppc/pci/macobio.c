@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.17 2006/06/19 22:42:35 miod Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.18 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ int macobio_print(void *, const char *);
 void macobio_modem_power(int enable);
 
 void *undef_mac_establish(void * lcv, int irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg, char *name);
+    int (*ih_fun)(void *), void *ih_arg, const char *name);
 void mac_intr_disestab(void *lcp, void *arg);
 
 struct macobio_softc {
@@ -229,7 +229,7 @@ macobio_print(void *aux, const char *macobio)
 
 void *
 undef_mac_establish(void * lcv, int irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg, char *name)
+    int (*ih_fun)(void *), void *ih_arg, const char *name)
 {
 	printf("mac_intr_establish called, not yet inited\n");
 	return 0;
@@ -246,7 +246,7 @@ intr_disestablish_t *mac_intr_disestablish_func = mac_intr_disestab;
 
 void *
 mac_intr_establish(void * lcv, int irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg, char *name)
+    int (*ih_fun)(void *), void *ih_arg, const char *name)
 {
 	return (*mac_intr_establish_func)(lcv, irq, type, level, ih_fun,
 	    ih_arg, name);

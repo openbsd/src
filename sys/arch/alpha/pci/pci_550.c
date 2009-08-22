@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.19 2008/07/22 18:45:51 miod Exp $ */
+/* $OpenBSD: pci_550.c,v 1.20 2009/08/22 02:54:50 mk Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -91,7 +91,7 @@ int	dec_550_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_550_intr_string(void *, pci_intr_handle_t);
 int	dec_550_intr_line(void *, pci_intr_handle_t);
 void	*dec_550_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *);
+	    int, int (*func)(void *), void *, const char *);
 void	dec_550_intr_disestablish(void *, void *);
 
 void	*dec_550_pciide_compat_intr_establish(void *, struct device *,
@@ -288,7 +288,7 @@ dec_550_intr_establish(ccv, ih, level, func, arg, name)
 	pci_intr_handle_t ih;
 	int level;
 	int (*func)(void *);
-	char *name;
+	const char *name;
 {
 #if 0
 	struct cia_config *ccp = ccv;

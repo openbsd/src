@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.18 2009/04/08 21:19:31 kettenis Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.19 2009/08/22 02:54:50 mk Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -531,7 +531,7 @@ _setsoftintr(int si)
 
 void *
 pxa2x0_intr_establish(int irqno, int level,
-    int (*func)(void *), void *arg, char *name)
+    int (*func)(void *), void *arg, const char *name)
 {
 	int psw;
 #ifdef MULTIPLE_HANDLERS_ON_ONE_IRQ

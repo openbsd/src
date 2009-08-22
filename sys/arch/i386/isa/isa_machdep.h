@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.24 2008/12/11 17:07:14 oga Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.25 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.7 1997/06/06 23:28:42 thorpej Exp $	*/
 
 /*-
@@ -104,7 +104,8 @@ void	isa_attach_hook(struct device *, struct device *,
 int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
 int	isa_intr_check(isa_chipset_tag_t, int, int);
 void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
-	    int level, int (*ih_fun)(void *), void *ih_arg, char *ih_what);
+	    int level, int (*ih_fun)(void *), void *ih_arg,
+	    const char *ih_what);
 void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 
 /*

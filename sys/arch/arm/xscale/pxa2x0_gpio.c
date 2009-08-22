@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.20 2008/05/19 18:42:12 miod Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.21 2009/08/22 02:54:50 mk Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ pxa2x0_gpio_bootstrap(vaddr_t gpio_regs)
 
 void *
 pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
-    void *arg, char *name)
+    void *arg, const char *name)
 {
 	struct pxagpio_softc *sc = pxagpio_softc;
 	struct gpio_irq_handler *gh;

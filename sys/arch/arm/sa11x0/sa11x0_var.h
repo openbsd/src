@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa11x0_var.h,v 1.4 2008/06/26 05:42:09 ray Exp $ */
+/*	$OpenBSD: sa11x0_var.h,v 1.5 2009/08/22 02:54:50 mk Exp $ */
 /*      $NetBSD: sa11x0_var.h,v 1.4 2003/04/14 14:18:41 rjs Exp $        */
 
 /*-
@@ -64,7 +64,7 @@ struct sa11x0_attach_args {
 };
 
 void *sa11x0_intr_establish(sa11x0_chipset_tag_t, int, int, int, 
-			    int (*)(void *), void *, char *);
+			    int (*)(void *), void *, const char *);
 void sa11x0_intr_disestablish(sa11x0_chipset_tag_t, void *);
 
 #endif /* _SA11X0_VAR_H */

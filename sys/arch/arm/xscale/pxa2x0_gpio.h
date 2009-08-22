@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.h,v 1.5 2005/04/08 21:50:37 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.h,v 1.6 2009/08/22 02:54:50 mk Exp $ */
 /*	$wasabi$	*/
 
 /*
@@ -62,7 +62,7 @@ void pxa2x0_gpio_clear_intr(u_int gpio);
  * Establish/Disestablish interrupt handlers for GPIO pins
  */
 void *pxa2x0_gpio_intr_establish(u_int, int, int, int (*)(void *), void *,
-    char *);
+    const char *);
 void pxa2x0_gpio_intr_disestablish(void *);
 const char *pxa2x0_gpio_intr_string(void *);
 void pxa2x0_gpio_intr_mask(void *);

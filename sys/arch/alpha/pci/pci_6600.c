@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.17 2008/07/22 18:45:51 miod Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.18 2009/08/22 02:54:50 mk Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -78,7 +78,7 @@ static struct tsp_config *sioprimary;
 
 void dec_6600_intr_disestablish(void *, void *);
 void *dec_6600_intr_establish(void *, pci_intr_handle_t, int,
-    int (*func)(void *), void *, char *);
+    int (*func)(void *), void *, const char *);
 const char *dec_6600_intr_string(void *, pci_intr_handle_t);
 int dec_6600_intr_line(void *, pci_intr_handle_t);
 int dec_6600_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
@@ -219,7 +219,7 @@ dec_6600_intr_establish(acv, ih, level, func, arg, name)
         pci_intr_handle_t ih;
         int level;
         int (*func)(void *);
-	char *name;
+	const char *name;
 {
 	void *cookie;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2009/08/11 19:17:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -706,7 +706,7 @@ int ppc_configed_intr_cnt = 0;
 struct intrhand ppc_configed_intr[MAX_PRECONF_INTR];
 
 void *ppc_intr_establish(void *, pci_intr_handle_t, int, int, int (*)(void *),
-    void *, char *);
+    void *, const char *);
 void ppc_intr_setup(intr_establish_t *, intr_disestablish_t *);
 void ppc_intr_enable(int);
 int ppc_intr_disable(void);
@@ -719,7 +719,7 @@ ppc_intr_establish(lcv, ih, type, level, func, arg, name)
 	int level;
 	int (*func)(void *);
 	void *arg;
-	char *name;
+	const char *name;
 {
 	if (ppc_configed_intr_cnt < MAX_PRECONF_INTR) {
 		ppc_configed_intr[ppc_configed_intr_cnt].ih_fun = func;

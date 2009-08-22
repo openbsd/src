@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.41 2009/06/09 01:12:38 deraadt Exp $ */
+/*	$OpenBSD: intr.h,v 1.42 2009/08/22 02:54:50 mk Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -118,7 +118,7 @@ struct intrhand {
 	struct evcount	ih_count;
 	int		ih_level;
 	int		ih_irq;
-	char		*ih_what;
+	const char	*ih_what;
 };
 extern int ppc_configed_intr_cnt;
 #define MAX_PRECONF_INTR 16

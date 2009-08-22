@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.17 2009/04/19 17:50:18 oga Exp $	*/
+/*	$OpenBSD: intr.h,v 1.18 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -209,7 +209,7 @@ int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *);
 int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
 	    int *);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *),
-	    void *, char *);
+	    void *, const char *);
 void intr_disestablish(struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int bus, int pin, int *handle);

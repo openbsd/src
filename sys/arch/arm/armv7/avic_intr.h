@@ -1,4 +1,4 @@
-/*	$OpenBSD: avic_intr.h,v 1.1 2009/05/08 02:57:32 drahn Exp $ */
+/*	$OpenBSD: avic_intr.h,v 1.2 2009/08/22 02:54:50 mk Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */
@@ -102,7 +102,7 @@ void armv7avic_intr_bootstrap(vaddr_t);
 
 void armv7avic_irq_handler(void *);
 void *armv7avic_intr_establish(int irqno, int level, int (*func)(void *),
-    void *cookie, char *name);
+    void *cookie, const char *name);
 void armv7avic_intr_disestablish(void *cookie);
 const char *armv7avic_intr_string(void *cookie);
 

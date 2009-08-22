@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroyvar.h,v 1.2 2008/04/20 18:41:45 kettenis Exp $	*/
+/*	$OpenBSD: elroyvar.h,v 1.3 2009/08/22 02:54:50 mk Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -50,7 +50,7 @@ int apic_intr(void *v);
 int apic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp);
 const char *apic_intr_string(void *v, pci_intr_handle_t ih);
 void *apic_intr_establish(void *v, pci_intr_handle_t ih, int pri,
-    int (*handler)(void *), void *arg, char *name);
+    int (*handler)(void *), void *arg, const char *name);
 void apic_intr_disestablish(void *v, void *cookie);
 
 void elroy_write32(volatile u_int32_t *p, u_int32_t v);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.45 2009/08/18 19:31:59 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.46 2009/08/22 02:54:51 mk Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -175,7 +175,7 @@ void	xbridge_conf_write(void *, pcitag_t, int, pcireg_t);
 int	xbridge_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *xbridge_intr_string(void *, pci_intr_handle_t);
 void	*xbridge_intr_establish(void *, pci_intr_handle_t, int,
-	    int (*func)(void *), void *, char *);
+	    int (*func)(void *), void *, const char *);
 void	xbridge_intr_disestablish(void *, void *);
 int	xbridge_intr_line(void *, pci_intr_handle_t);
 int	xbridge_ppb_setup(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
@@ -815,7 +815,7 @@ xbridge_intr_string(void *cookie, pci_intr_handle_t ih)
 
 void *
 xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    int (*func)(void *), void *arg, const char *name)
 {
 	struct xbridge_bus *xb = (struct xbridge_bus *)cookie;
 	struct xbridge_intr *xi;

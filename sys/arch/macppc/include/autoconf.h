@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.8 2008/09/16 04:20:42 drahn Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.9 2009/08/22 02:54:50 mk Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -100,7 +100,7 @@ extern time_write_t *time_write;
 
 typedef int mac_intr_handle_t;
 typedef void     *(intr_establish_t)(void *, mac_intr_handle_t,
-    int, int, int (*func)(void *), void *, char *);
+    int, int, int (*func)(void *), void *, const char *);
 typedef void     (intr_disestablish_t)(void *, void *);
 struct cpu_info;
 typedef void     (intr_send_ipi_t)(struct cpu_info *, int);

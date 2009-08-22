@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_up1000.c,v 1.14 2008/07/22 18:45:51 miod Exp $	*/
+/*	$OpenBSD: pci_up1000.c,v 1.15 2009/08/22 02:54:50 mk Exp $	*/
 /* $NetBSD: pci_up1000.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
@@ -62,7 +62,7 @@ int     api_up1000_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *api_up1000_intr_string(void *, pci_intr_handle_t);
 int	api_up1000_intr_line(void *, pci_intr_handle_t);
 void    *api_up1000_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *);
+	    int, int (*func)(void *), void *, const char *);
 void    api_up1000_intr_disestablish(void *, void *);
 
 void	*api_up1000_pciide_compat_intr_establish(void *, struct device *,
@@ -161,7 +161,7 @@ api_up1000_intr_line(void *icv, pci_intr_handle_t ih)
 
 void *
 api_up1000_intr_establish(void *icv, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    int (*func)(void *), void *arg, const char *name)
 {
 #if 0
 	struct irongate_config *icp = icv;

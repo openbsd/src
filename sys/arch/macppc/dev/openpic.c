@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.54 2009/06/09 01:12:38 deraadt Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.55 2009/08/22 02:54:50 mk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -147,7 +147,7 @@ extern void_f *pending_int_f;
 
 vaddr_t openpic_base;
 void * openpic_intr_establish( void * lcv, int irq, int type, int level,
-	int (*ih_fun)(void *), void *ih_arg, char *name);
+	int (*ih_fun)(void *), void *ih_arg, const char *name);
 void openpic_intr_disestablish( void *lcp, void *arg);
 #ifdef MULTIPROCESSOR
 intr_send_ipi_t openpic_send_ipi;
@@ -227,7 +227,7 @@ fakeintr(void *arg)
  */
 void *
 openpic_intr_establish(void *lcv, int irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg, char *name)
+    int (*ih_fun)(void *), void *ih_arg, const char *name)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.23 2008/07/22 18:45:51 miod Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.24 2009/08/22 02:54:50 mk Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ int	dec_kn20aa_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dec_kn20aa_intr_string(void *, pci_intr_handle_t);
 int	dec_kn20aa_intr_line(void *, pci_intr_handle_t);
 void	*dec_kn20aa_intr_establish(void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *);
+	    int, int (*func)(void *), void *, const char *);
 void	dec_kn20aa_intr_disestablish(void *, void *);
 
 #define	KN20AA_PCEB_IRQ	31
@@ -195,7 +195,7 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg, name)
         pci_intr_handle_t ih;
         int level;
         int (*func)(void *);
-	char *name;
+	const char *name;
 {           
 	void *cookie;
 
