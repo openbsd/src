@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.14 2009/08/22 14:56:03 schwarze Exp $ */
+/*	$Id: main.c,v 1.15 2009/08/22 17:21:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -405,7 +405,8 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 	/* NOTE a parser may not have been assigned, yet. */
 
 	if ( ! (man || mdoc)) {
-		warnx("%s: not a manual", curp->file);
+		(void)fprintf(stderr, "%s: not a manual\n", 
+				curp->file);
 		return(0);
 	}
 
@@ -626,8 +627,8 @@ merr(void *arg, int line, int col, const char *msg)
 
 	curp = (struct curparse *)arg;
 
-	warnx("%s:%d: error: %s (column %d)", 
-			curp->file, line, msg, col);
+	(void)fprintf(stderr, "%s:%d:%d: error: %s\n", 
+			curp->file, line, col + 1, msg);
 
 	return(0);
 }
@@ -643,13 +644,12 @@ mwarn(void *arg, int line, int col, const char *msg)
 	if ( ! (curp->wflags & WARN_WALL))
 		return(1);
 
-	warnx("%s:%d: warning: %s (column %d)", 
-			curp->file, line, msg, col);
+	(void)fprintf(stderr, "%s:%d:%d: warning: %s\n", 
+			curp->file, line, col + 1, msg);
 
 	if ( ! (curp->wflags & WARN_WERR))
 		return(1);
 	
-	warnx("considering warnings as errors");
 	return(0);
 }
 
