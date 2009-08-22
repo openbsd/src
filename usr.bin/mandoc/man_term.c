@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.11 2009/08/22 20:14:37 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.12 2009/08/22 20:19:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -101,11 +101,6 @@ static const struct termact termacts[MAN_MAX] = {
 	{ pre_fi, NULL }, /* fi */
 	{ pre_r, NULL }, /* r */
 };
-
-#ifdef __linux__
-extern	size_t		  strlcpy(char *, const char *, size_t);
-extern	size_t		  strlcat(char *, const char *, size_t);
-#endif
 
 static	void		  print_head(struct termp *, 
 				const struct man_meta *);
