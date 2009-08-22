@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.7 2009/08/22 20:14:37 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.8 2009/08/22 23:17:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -36,12 +36,12 @@ struct	man_valid {
 };
 
 static	int	  check_bline(CHKARGS);
-static	int	  check_eline(CHKARGS);
 static	int	  check_eq0(CHKARGS);
 static	int	  check_eq1(CHKARGS);
 static	int	  check_ge2(CHKARGS);
 static	int	  check_le5(CHKARGS);
 static	int	  check_par(CHKARGS);
+static	int	  check_part(CHKARGS);
 static	int	  check_root(CHKARGS);
 static	int	  check_sec(CHKARGS);
 static	int	  check_sp(CHKARGS);
@@ -50,9 +50,9 @@ static	int	  check_text(CHKARGS);
 static	v_check	  posts_eq0[] = { check_eq0, NULL };
 static	v_check	  posts_ge2_le5[] = { check_ge2, check_le5, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
+static	v_check	  posts_part[] = { check_part, NULL };
 static	v_check	  posts_sec[] = { check_sec, NULL };
 static	v_check	  posts_sp[] = { check_sp, NULL };
-static	v_check	  pres_eline[] = { check_eline, NULL };
 static	v_check	  pres_bline[] = { check_bline, NULL };
 
 static	const struct man_valid man_valids[MAN_MAX] = {
@@ -66,15 +66,15 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ pres_bline, posts_par }, /* P */
 	{ pres_bline, posts_par }, /* IP */
 	{ pres_bline, posts_par }, /* HP */
-	{ pres_eline, NULL }, /* SM */
-	{ pres_eline, NULL }, /* SB */
+	{ NULL, NULL }, /* SM */
+	{ NULL, NULL }, /* SB */
 	{ NULL, NULL }, /* BI */
 	{ NULL, NULL }, /* IB */
 	{ NULL, NULL }, /* BR */
 	{ NULL, NULL }, /* RB */
-	{ pres_eline, NULL }, /* R */
-	{ pres_eline, NULL }, /* B */
-	{ pres_eline, NULL }, /* I */
+	{ NULL, NULL }, /* R */
+	{ NULL, NULL }, /* B */
+	{ NULL, NULL }, /* I */
 	{ NULL, NULL }, /* IR */
 	{ NULL, NULL }, /* RI */
 	{ pres_bline, posts_eq0 }, /* na */
@@ -83,6 +83,9 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ pres_bline, posts_eq0 }, /* nf */
 	{ pres_bline, posts_eq0 }, /* fi */
 	{ NULL, NULL }, /* r */
+	{ NULL, NULL }, /* RE */
+	{ NULL, posts_part }, /* RS */
+	{ NULL, NULL }, /* DT */
 };
 
 
@@ -137,12 +140,13 @@ static int
 check_root(CHKARGS) 
 {
 
-	/* XXX - make this into a warning? */
 	if (MAN_BLINE & m->flags)
-		return(man_nerr(m, n, WEXITSCOPE));
-	/* XXX - make this into a warning? */
+		return(man_nwarn(m, n, WEXITSCOPE));
 	if (MAN_ELINE & m->flags)
-		return(man_nerr(m, n, WEXITSCOPE));
+		return(man_nwarn(m, n, WEXITSCOPE));
+
+	m->flags &= ~MAN_BLINE;
+	m->flags &= ~MAN_ELINE;
 
 	if (NULL == m->first->child)
 		return(man_nerr(m, n, WNODATA));
@@ -248,6 +252,16 @@ check_sec(CHKARGS)
 
 
 static int
+check_part(CHKARGS)
+{
+
+	if (MAN_BODY == n->type && 0 == n->nchild)
+		return(man_nwarn(m, n, WBODYARGS));
+	return(1);
+}
+
+
+static int
 check_par(CHKARGS)
 {
 
@@ -286,22 +300,11 @@ check_par(CHKARGS)
 
 
 static int
-check_eline(CHKARGS)
-{
-
-	if (MAN_ELINE & m->flags)
-		return(man_nerr(m, n, WLNSCOPE));
-	return(1);
-}
-
-
-static int
 check_bline(CHKARGS)
 {
 
+	assert( ! (MAN_ELINE & m->flags));
 	if (MAN_BLINE & m->flags)
-		return(man_nerr(m, n, WLNSCOPE));
-	if (MAN_ELINE & m->flags)
 		return(man_nerr(m, n, WLNSCOPE));
 	return(1);
 }

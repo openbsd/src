@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.13 2009/08/22 16:03:14 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.14 2009/08/22 23:17:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -17,11 +17,13 @@
 .Dd $Mdocdate: August 22 2009 $
 .Dt MANDOC 1
 .Os
-.\" SECTION
+.
+.
 .Sh NAME
 .Nm mandoc
 .Nd format and display UNIX manuals
-.\" SECTION
+.
+.
 .Sh SYNOPSIS
 .Nm mandoc
 .Op Fl V
@@ -30,35 +32,36 @@
 .Op Fl W Ns Ar err...
 .Op Fl T Ns Ar output
 .Op Ar infile...
-.\" SECTION
+.
+.
 .Sh DESCRIPTION
 The
 .Nm
 utility formats
 .Ux
 manual pages for display.  The arguments are as follows:
+.
 .Bl -tag -width Ds
-.\" ITEM
 .It Fl f Ns Ar option...
 Override default compiler behaviour.  See
 .Sx Compiler Options
 for details.
-.\" ITEM
+.
 .It Fl m Ns Ar format
 Input format.  See
 .Sx Input Formats
 for available formats.  Defaults to
 .Fl m Ns Ar andoc .
-.\" ITEM
+.
 .It Fl T Ns Ar output
 Output format.  See
 .Sx Output Formats
 for available formats.  Defaults to
 .Fl T Ns Ar ascii .
-.\" ITEM
+.
 .It Fl V
 Print version and exit.
-.\" ITEM
+.
 .It Fl W Ns Ar err...
 Configure warning messages.  Use
 .Fl W Ns Ar all
@@ -69,7 +72,7 @@ termination.  Multiple
 .Fl W
 arguments may be comma-separated, such as
 .Fl W Ns Ar error,all .
-.\" ITEM
+.
 .It Ar infile...
 Read input from zero or more
 .Ar infile .
@@ -77,7 +80,7 @@ If unspecified, reads from stdin.  If multiple files are specified,
 .Nm
 will halt with the first failed parse.
 .El
-.\" PARAGRAPH
+.
 .Pp
 By default,
 .Nm
@@ -90,10 +93,11 @@ text from stdin, implying
 and prints 78-column backspace-encoded output to stdout as if
 .Fl T Ns Ar ascii
 were provided.
-.\" PARAGRAPH
+.
 .Pp
 .Ex -std mandoc
-.\" SUB-SECTION
+.
+.
 .Ss Punctuation and Spacing
 If punctuation is set apart from words, such as in the phrase
 .Dq to be \&, or not to be ,
@@ -120,20 +124,21 @@ and
 .Sq \&}
 .Pc
 is not preceded by whitespace.
+.
 .Pp
 If the input is
 .Xr mdoc 7 ,
 these rules are also applied to macro arguments when appropriate.
+.
 .Pp
 White-space, in non-literal (normal) mode, is stripped from input and
-replaced on output by a single space.  Thus, if you wish to preserve
-multiple spaces, they must be space-escaped
-.Sq \e\
-or used in a literal display mode, e.g.,
+replaced on output by a single space.  Thus, if you wish to preserve multiple
+spaces, they must be space-escaped or used in a literal display mode, e.g.,
 .Sq \&Bd \-literal
 in
 .Xr mdoc 7 .
-.\" SUB-SECTION
+.
+.
 .Ss Input Formats
 The
 .Nm
@@ -152,6 +157,7 @@ format is
 recommended;
 .Xr man 7
 should only be used for legacy manuals.
+.
 .Pp
 A third option,
 .Fl m Ns Ar andoc ,
@@ -165,6 +171,7 @@ the
 parser is used; otherwise, the
 .Xr man 7
 parser is used.
+.
 .Pp
 If multiple
 files are specified with
@@ -175,64 +182,65 @@ specified and
 or
 .Fl m Ns Ar an
 is specified, then this format is used exclusively.
-.\" .Pp
-.\" The following escape sequences are recognised, although the per-format
-.\" compiler may not allow certain sequences.
-.\" .Bl -tag -width Ds -offset XXXX
-.\" .It \efX
-.\" sets the font mode to X (B, I, R or P, where P resets the font)
-.\" .It \eX, \e(XX, \e[XN]
-.\" queries the special-character table for a corresponding symbol
-.\" .It \e*X, \e*(XX, \e*[XN]
-.\" deprecated special-character format
-.\" .El
-.\" SUB-SECTION
+.
+.
 .Ss Output Formats
 The
 .Nm
 utility accepts the following
 .Fl T
 arguments:
+.
 .Bl -tag -width Ds
 .It Fl T Ns Ar ascii
 Produce 7-bit ASCII output, backspace-encoded for bold and underline
 styles.  This is the default.
+.
 .It Fl T Ns Ar tree
 Produce an indented parse tree.
+.
 .It Fl T Ns Ar lint
 Parse only: produce no output.
 .El
+.
 .Pp
 If multiple input files are specified, these will be processed by the
 corresponding filter in-order.
-.\" SUB-SECTION
+.
+.
 .Ss Compiler Options
 Default compiler behaviour may be overriden with the
 .Fl f
 flag.
+.
 .Bl -tag -width Ds
 .It Fl f Ns Ar ign-scope
 When rewinding the scope of a block macro, forces the compiler to ignore
 scope violations.  This can seriously mangle the resulting tree.
 .Pq mdoc only
+.
 .It Fl f Ns Ar no-ign-escape
 Don't ignore invalid escape sequences.
+.
 .It Fl f Ns Ar no-ign-macro
 Do not ignore unknown macros at the start of input lines.
+.
 .It Fl f Ns Ar no-ign-chars
 Do not ignore disallowed characters.
+.
 .It Fl f Ns Ar strict
 Implies
 .Fl f Ns Ar no-ign-escape ,
 .Fl f Ns Ar no-ign-macro
 and
 .Fl f Ns Ar no-ign-chars .
+.
 .It Fl f Ns Ar ign-errors
 Don't halt when encountering parse errors.  Useful with
 .Fl T Ns Ar lint
 over a large set of manuals passed on the command line.
 .El
-.\" PARAGRAPH
+.
 .Pp
 As with the
 .Fl W
@@ -242,49 +250,90 @@ options may be grouped and delimited with a comma.  Using
 .Fl f Ns Ar ign-scope,no-ign-escape ,
 for example, will try to ignore scope and not ignore character-escape
 errors.
-.\" SECTION
+.
+.
 .Sh EXAMPLES
 To page manuals to the terminal:
-.\" PARAGRAPH
+.
 .Pp
 .D1 % mandoc \-Wall,error \-fstrict mandoc.1 2>&1 | less
 .D1 % mandoc mandoc.1 mdoc.3 mdoc.7 | less
-.\" PARAGRAPH
+.
 .Pp
 To check over a large set of manuals:
-.\" PARAGRAPH
+.
 .Pp
 .Dl % mandoc \-Tlint \-fign-errors `find /usr/src -name \e*\e.[1-9]`
-.\" SECTION
+.
+.
 .Sh COMPATIBILITY
 This section summarises
 .Nm
 compatibility with
 .Xr groff 1 .
-.Pp
+Each input and output format is separately noted.
+.
+.
+.Ss ASCII output
 .Bl -bullet -compact
-.\" LIST-ITEM
 .It
 The 
 .Sq \e~
-special character doesn't produce expected behaviour.
-.\" LIST-ITEM
+special character doesn't produce expected behaviour in 
+.Fl T Ns Ar ascii .
+.
+.It
+The 
+.Sq \&Bd \-literal
+and 
+.Sq \&Bd \-unfilled
+macros of
+.Xr mdoc 7
+in
+.Fl T Ns Ar ascii
+are synonyms, as are \-filled and \-ragged.
+.
+.It
+In 
+.Xr groff 1 ,
+the
+.Sq \&Pa
+.Xr mdoc 7
+macro does not underline when scoped under an
+.Sq \&It
+in the FILES section.  This behaves correctly in
+.Nm .
+.
 .It
 A list or display following
 .Sq \&Ss
+.Xr mdoc 7
+macro in
+.Fl T Ns Ar ascii
 does not assert a prior vertical break, just as it doesn't with
 .Sq \&Sh .
+.
 .It
-The \-literal and \-unfilled
-.Sq \&Bd
-displays types are synonyms, as are \-filled and \-ragged.
-.\" LIST-ITEM
+The
+.Sq \&na
+and
+.Sq \&Dt
+.Xr man 7
+macros in
+.Fl T Ns Ar ascii
+have no effect.
+.
 .It
 Words aren't hyphenated.
-.\" LIST-ITEM
+.
 .It
 In normal mode (not a literal block), blocks of spaces aren't preserved,
-so double spaces following sentence closure are reduced to a single space.
+so double spaces following sentence closure are reduced to a single space;
+.Xr groff 1
+retains spaces.
+.
+.It
+Sentences are unilaterally monospaced.
 .El
 .\" SECTION
 .Sh SEE ALSO

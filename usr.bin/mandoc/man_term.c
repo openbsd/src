@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.12 2009/08/22 20:19:24 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.13 2009/08/22 23:17:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -30,7 +32,21 @@
 struct	mtermp {
 	int		  fl;
 #define	MANT_LITERAL	 (1 << 0)
-	int		  lmargin;
+	/* 
+	 * Default amount to indent the left margin after leading text
+	 * has been printed (e.g., `HP' left-indent, `TP' and `IP' body
+	 * indent).  This needs to be saved because `HP' and so on, if
+	 * not having a specified value, must default.
+	 *
+	 * Note that this is the indentation AFTER the left offset, so
+	 * the total offset is usually offset + lmargin.
+	 */
+	size_t		  lmargin;
+	/*
+	 * The default offset, i.e., the amount between any text and the
+	 * page boundary.
+	 */
+	size_t		  offset;
 };
 
 #define	DECL_ARGS 	  struct termp *p, \
@@ -54,6 +70,7 @@ static	int		  pre_IR(DECL_ARGS);
 static	int		  pre_PP(DECL_ARGS);
 static	int		  pre_RB(DECL_ARGS);
 static	int		  pre_RI(DECL_ARGS);
+static	int		  pre_RS(DECL_ARGS);
 static	int		  pre_SH(DECL_ARGS);
 static	int		  pre_SS(DECL_ARGS);
 static	int		  pre_TP(DECL_ARGS);
@@ -67,6 +84,7 @@ static	void		  post_B(DECL_ARGS);
 static	void		  post_I(DECL_ARGS);
 static	void		  post_IP(DECL_ARGS);
 static	void		  post_HP(DECL_ARGS);
+static	void		  post_RS(DECL_ARGS);
 static	void		  post_SH(DECL_ARGS);
 static	void		  post_SS(DECL_ARGS);
 static	void		  post_TP(DECL_ARGS);
@@ -94,12 +112,15 @@ static const struct termact termacts[MAN_MAX] = {
 	{ pre_I, post_I }, /* I */
 	{ pre_IR, NULL }, /* IR */
 	{ pre_RI, NULL }, /* RI */
-	{ NULL, NULL }, /* na */ /* TODO: document that has no effect */
+	{ NULL, NULL }, /* na */
 	{ pre_I, post_i }, /* i */
 	{ pre_sp, NULL }, /* sp */
 	{ pre_nf, NULL }, /* nf */
 	{ pre_fi, NULL }, /* fi */
 	{ pre_r, NULL }, /* r */
+	{ NULL, NULL }, /* RE */
+	{ pre_RS, post_RS }, /* RS */
+	{ NULL, NULL }, /* DT */
 };
 
 static	void		  print_head(struct termp *, 
@@ -125,6 +146,7 @@ man_run(struct termp *p, const struct man *m)
 
 	mt.fl = 0;
 	mt.lmargin = INDENT;
+	mt.offset = INDENT;
 
 	if (man_node(m)->child)
 		print_body(p, &mt, man_node(m)->child, man_meta(m));
@@ -426,7 +448,7 @@ pre_HP(DECL_ARGS)
 		return(0);
 	}
 
-	len = (size_t)mt->lmargin;
+	len = mt->lmargin;
 	ival = -1;
 
 	/* Calculate offset. */
@@ -438,11 +460,11 @@ pre_HP(DECL_ARGS)
 	if (0 == len)
 		len = 1;
 
-	p->offset = INDENT;
-	p->rmargin = INDENT + len;
+	p->offset = mt->offset;
+	p->rmargin = mt->offset + len;
 
 	if (ival >= 0)
-		mt->lmargin = ival;
+		mt->lmargin = (size_t)ival;
 
 	return(1);
 }
@@ -461,7 +483,7 @@ post_HP(DECL_ARGS)
 		term_flushln(p);
 		p->flags &= ~TERMP_NOBREAK;
 		p->flags &= ~TERMP_TWOSPACE;
-		p->offset = INDENT;
+		p->offset = mt->offset;
 		p->rmargin = p->maxrmargin;
 		break;
 	default:
@@ -481,7 +503,7 @@ pre_PP(DECL_ARGS)
 		fmt_block_vspace(p, n);
 		break;
 	default:
-		p->offset = INDENT;
+		p->offset = mt->offset;
 		break;
 	}
 
@@ -513,7 +535,7 @@ pre_IP(DECL_ARGS)
 		return(1);
 	}
 
-	len = (size_t)mt->lmargin;
+	len = mt->lmargin;
 	ival = -1;
 
 	/* Calculate offset. */
@@ -532,20 +554,20 @@ pre_IP(DECL_ARGS)
 		if (0 == len)
 			len = 1;
 
-		p->offset = INDENT;
-		p->rmargin = INDENT + len;
+		p->offset = mt->offset;
+		p->rmargin = mt->offset + len;
 		if (ival < 0)
 			break;
 
 		/* Set the saved left-margin. */
-		mt->lmargin = ival;
+		mt->lmargin = (size_t)ival;
 
 		/* Don't print the length value. */
 		for (nn = n->child; nn->next; nn = nn->next)
 			print_node(p, mt, nn, m);
 		return(0);
 	case (MAN_BODY):
-		p->offset = INDENT + len;
+		p->offset = mt->offset + len;
 		p->rmargin = p->maxrmargin;
 		break;
 	default:
@@ -618,8 +640,8 @@ pre_TP(DECL_ARGS)
 		if (0 == len)
 			len = 1;
 
-		p->offset = INDENT;
-		p->rmargin = INDENT + len;
+		p->offset = mt->offset;
+		p->rmargin = mt->offset + len;
 
 		/* Don't print same-line elements. */
 		for (nn = n->child; nn; nn = nn->next) 
@@ -627,11 +649,11 @@ pre_TP(DECL_ARGS)
 				print_node(p, mt, nn, m);
 
 		if (ival >= 0)
-			mt->lmargin = ival;
+			mt->lmargin = (size_t)ival;
 
 		return(0);
 	case (MAN_BODY):
-		p->offset = INDENT + len;
+		p->offset = mt->offset + len;
 		p->rmargin = p->maxrmargin;
 		break;
 	default:
@@ -672,6 +694,7 @@ pre_SS(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_BLOCK):
 		mt->lmargin = INDENT;
+		mt->offset = INDENT;
 		/* If following a prior empty `SS', no vspace. */
 		if (n->prev && MAN_SS == n->prev->tok)
 			if (NULL == n->prev->body->child)
@@ -685,7 +708,7 @@ pre_SS(DECL_ARGS)
 		p->offset = HALFINDENT;
 		break;
 	case (MAN_BODY):
-		p->offset = INDENT;
+		p->offset = mt->offset;
 		break;
 	default:
 		break;
@@ -722,6 +745,7 @@ pre_SH(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_BLOCK):
 		mt->lmargin = INDENT;
+		mt->offset = INDENT;
 		/* If following a prior empty `SH', no vspace. */
 		if (n->prev && MAN_SH == n->prev->tok)
 			if (NULL == n->prev->body->child)
@@ -733,7 +757,7 @@ pre_SH(DECL_ARGS)
 		p->offset = 0;
 		break;
 	case (MAN_BODY):
-		p->offset = INDENT;
+		p->offset = mt->offset;
 		break;
 	default:
 		break;
@@ -757,6 +781,56 @@ post_SH(DECL_ARGS)
 		term_newln(p);
 		break;
 	default:
+		break;
+	}
+}
+
+
+/* ARGSUSED */
+static int
+pre_RS(DECL_ARGS)
+{
+	const struct man_node	*nn;
+	int			 ival;
+
+	switch (n->type) {
+	case (MAN_BLOCK):
+		term_newln(p);
+		return(1);
+	case (MAN_HEAD):
+		return(0);
+	default:
+		break;
+	}
+
+	if (NULL == (nn = n->parent->head->child)) {
+		mt->offset = mt->lmargin + INDENT;
+		p->offset = mt->offset;
+		return(1);
+	}
+
+	if ((ival = arg_width(nn)) < 0)
+		return(1);
+
+	mt->offset = INDENT + (size_t)ival;
+	p->offset = mt->offset;
+
+	return(1);
+}
+
+
+/* ARGSUSED */
+static void
+post_RS(DECL_ARGS)
+{
+
+	switch (n->type) {
+	case (MAN_BLOCK):
+		mt->offset = mt->lmargin = INDENT;
+		break;
+	default:
+		term_newln(p);
+		p->offset = INDENT;
 		break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.6 2009/08/22 20:14:37 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.7 2009/08/22 23:17:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,17 +27,20 @@
 
 static	int		 in_line_eoln(MACRO_PROT_ARGS);
 static	int		 blk_imp(MACRO_PROT_ARGS);
+static	int		 blk_close(MACRO_PROT_ARGS);
 
 static	int		 rew_scope(enum man_type, struct man *, int);
 static	int 		 rew_dohalt(int, enum man_type, 
+				const struct man_node *);
+static	int		 rew_block(int, enum man_type, 
 				const struct man_node *);
 
 const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* br */
 	{ in_line_eoln, 0 }, /* TH */
-	{ blk_imp, 0 }, /* SH */
-	{ blk_imp, 0 }, /* SS */
-	{ blk_imp, MAN_SCOPED }, /* TP */
+	{ blk_imp, MAN_SCOPED }, /* SH */
+	{ blk_imp, MAN_SCOPED }, /* SS */
+	{ blk_imp, MAN_SCOPED | MAN_FSCOPED }, /* TP */
 	{ blk_imp, 0 }, /* LP */
 	{ blk_imp, 0 }, /* PP */
 	{ blk_imp, 0 }, /* P */
@@ -60,6 +63,9 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* nf */
 	{ in_line_eoln, 0 }, /* fi */
 	{ in_line_eoln, 0 }, /* r */
+	{ blk_close, 0 }, /* RE */
+	{ blk_imp, MAN_EXPLICIT }, /* RS */
+	{ in_line_eoln, 0 }, /* DT */
 };
 
 const	struct man_macro * const man_macros = __man_macros;
@@ -88,6 +94,17 @@ man_unscope(struct man *m, const struct man_node *n)
 }
 
 
+static int
+rew_block(int ntok, enum man_type type, const struct man_node *n)
+{
+
+	if (MAN_BLOCK == type && ntok == n->parent->tok && 
+			MAN_BODY == n->parent->type)
+		return(REW_REWIND);
+	return(ntok == n->tok ? REW_HALT : REW_NOHALT);
+}
+
+
 /*
  * There are three scope levels: scoped to the root (all), scoped to the
  * section (all less sections), and scoped to subsections (all less
@@ -96,6 +113,7 @@ man_unscope(struct man *m, const struct man_node *n)
 static int 
 rew_dohalt(int tok, enum man_type type, const struct man_node *n)
 {
+	int		 c;
 
 	if (MAN_ROOT == n->type)
 		return(REW_HALT);
@@ -105,42 +123,36 @@ rew_dohalt(int tok, enum man_type type, const struct man_node *n)
 	if (MAN_VALID & n->flags)
 		return(REW_NOHALT);
 
+	/* Rewind to ourselves, first. */
+	if (type == n->type && tok == n->tok)
+		return(REW_REWIND);
+
 	switch (tok) {
 	case (MAN_SH):
-		/* Rewind to ourselves. */
-		if (type == n->type && tok == n->tok)
-			return(REW_REWIND);
 		break;
 	case (MAN_SS):
-		/* Rewind to ourselves. */
-		if (type == n->type && tok == n->tok)
-			return(REW_REWIND);
 		/* Rewind to a section, if a block. */
-		if (MAN_BLOCK == type && MAN_SH == n->parent->tok && 
-				MAN_BODY == n->parent->type)
-			return(REW_REWIND);
-		/* Don't go beyond a section. */
-		if (MAN_SH == n->tok)
-			return(REW_HALT);
+		if (REW_NOHALT != (c = rew_block(MAN_SH, type, n)))
+			return(c);
+		break;
+	case (MAN_RS):
+		/* Rewind to a subsection, if a block. */
+		if (REW_NOHALT != (c = rew_block(MAN_SS, type, n)))
+			return(c);
+		/* Rewind to a section, if a block. */
+		if (REW_NOHALT != (c = rew_block(MAN_SH, type, n)))
+			return(c);
 		break;
 	default:
-		/* Rewind to ourselves. */
-		if (type == n->type && tok == n->tok)
-			return(REW_REWIND);
+		/* Rewind to an offsetter, if a block. */
+		if (REW_NOHALT != (c = rew_block(MAN_RS, type, n)))
+			return(c);
 		/* Rewind to a subsection, if a block. */
-		if (MAN_BLOCK == type && MAN_SS == n->parent->tok && 
-				MAN_BODY == n->parent->type)
-			return(REW_REWIND);
-		/* Don't go beyond a subsection. */
-		if (MAN_SS == n->tok)
-			return(REW_HALT);
+		if (REW_NOHALT != (c = rew_block(MAN_SS, type, n)))
+			return(c);
 		/* Rewind to a section, if a block. */
-		if (MAN_BLOCK == type && MAN_SH == n->parent->tok && 
-				MAN_BODY == n->parent->type)
-			return(REW_REWIND);
-		/* Don't go beyond a section. */
-		if (MAN_SH == n->tok)
-			return(REW_HALT);
+		if (REW_NOHALT != (c = rew_block(MAN_SH, type, n)))
+			return(c);
 		break;
 	}
 
@@ -180,6 +192,39 @@ rew_scope(enum man_type type, struct man *m, int tok)
 }
 
 
+/* ARGSUSED */
+int
+blk_close(MACRO_PROT_ARGS)
+{
+	int 		 	 ntok;
+	const struct man_node	*nn;
+
+	switch (tok) {
+	case (MAN_RE):
+		ntok = MAN_RS;
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+
+	for (nn = m->last->parent; nn; nn = nn->parent)
+		if (ntok == nn->tok)
+			break;
+
+	if (NULL == nn)
+		if ( ! man_pwarn(m, line, ppos, WNOSCOPE))
+			return(0);
+
+	if ( ! rew_scope(MAN_BODY, m, ntok))
+		return(0);
+	if ( ! rew_scope(MAN_BLOCK, m, ntok))
+		return(0);
+	m->next = MAN_NEXT_SIBLING;
+	return(1);
+}
+
+
 /*
  * Parse an implicit-block macro.  These contain a MAN_HEAD and a
  * MAN_BODY contained within a MAN_BLOCK.  Rules for closing out other
@@ -191,6 +236,7 @@ blk_imp(MACRO_PROT_ARGS)
 {
 	int		 w, la;
 	char		*p;
+	struct man_node	*n;
 
 	/* Close out prior scopes. */
 
@@ -206,6 +252,8 @@ blk_imp(MACRO_PROT_ARGS)
 	if ( ! man_head_alloc(m, line, ppos, tok))
 		return(0);
 
+	n = m->last;
+
 	/* Add line arguments. */
 
 	for (;;) {
@@ -219,15 +267,22 @@ blk_imp(MACRO_PROT_ARGS)
 
 		if ( ! man_word_alloc(m, line, la, p))
 			return(0);
-		m->next = MAN_NEXT_SIBLING;
 	}
 
 	/* Close out head and open body (unless MAN_SCOPE). */
 
 	if (MAN_SCOPED & man_macros[tok].flags) {
-		m->flags |= MAN_BLINE;
-		return(1);
-	} else if ( ! rew_scope(MAN_HEAD, m, tok))
+		/* If we're forcing scope (`TP'), keep it open. */
+		if (MAN_FSCOPED & man_macros[tok].flags) {
+			m->flags |= MAN_BLINE;
+			return(1);
+		} else if (n == m->last) {
+			m->flags |= MAN_BLINE;
+			return(1);
+		}
+	}
+
+	if ( ! rew_scope(MAN_HEAD, m, tok))
 		return(0);
 
 	return(man_body_alloc(m, line, ppos, tok));
@@ -245,7 +300,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 		return(0);
 
 	n = m->last;
-	m->next = MAN_NEXT_CHILD;
 
 	for (;;) {
 		la = *pos;
@@ -258,10 +312,9 @@ in_line_eoln(MACRO_PROT_ARGS)
 
 		if ( ! man_word_alloc(m, line, la, p))
 			return(0);
-		m->next = MAN_NEXT_SIBLING;
 	}
 
-	if (n == m->last && (MAN_SCOPED & man_macros[tok].flags)) {
+	if (n == m->last && MAN_SCOPED & man_macros[tok].flags) {
 		m->flags |= MAN_ELINE;
 		return(1);
 	} 
@@ -270,8 +323,6 @@ in_line_eoln(MACRO_PROT_ARGS)
 	 * Note that when TH is pruned, we'll be back at the root, so
 	 * make sure that we don't clobber as its sibling.
 	 */
-
-	/* FIXME: clean this to use man_unscope(). */
 
 	for ( ; m->last; m->last = m->last->parent) {
 		if (m->last == n)
@@ -304,6 +355,19 @@ in_line_eoln(MACRO_PROT_ARGS)
 int
 man_macroend(struct man *m)
 {
+	struct man_node	*n;
+
+	n = MAN_VALID & m->last->flags ?
+		m->last->parent : m->last;
+
+	for ( ; n; n = n->parent) {
+		if (MAN_BLOCK != n->type)
+			continue;
+		if ( ! (MAN_EXPLICIT & man_macros[n->tok].flags))
+			continue;
+		if ( ! man_nwarn(m, n, WEXITSCOPE))
+			return(0);
+	}
 
 	return(man_unscope(m, m->first));
 }
