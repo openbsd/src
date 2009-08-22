@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.10 2009/08/09 21:28:57 schwarze Exp $ */
+/*	$Id: term.c,v 1.11 2009/08/22 17:04:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -31,13 +31,16 @@ extern	int		  mdoc_run(struct termp *,
 
 static	struct termp	 *term_alloc(enum termenc);
 static	void		  term_free(struct termp *);
-static	void		  term_pescape(struct termp *, const char **);
-static	void		  term_nescape(struct termp *,
+
+static	void		  do_escaped(struct termp *, const char **);
+static	void		  do_special(struct termp *,
 				const char *, size_t);
-static	void		  term_chara(struct termp *, char);
-static	void		  term_encodea(struct termp *, char);
-static	int		  term_isopendelim(const char *);
-static	int		  term_isclosedelim(const char *);
+static	void		  do_reserved(struct termp *,
+				const char *, size_t);
+static	void		  buffer(struct termp *, char);
+static	void		  encode(struct termp *, char);
+static	int		  isopendelim(const char *);
+static	int		  isclosedelim(const char *);
 
 
 void *
@@ -110,7 +113,7 @@ term_alloc(enum termenc enc)
 
 
 static int
-term_isclosedelim(const char *p)
+isclosedelim(const char *p)
 {
 
 	if ( ! (*p && 0 == *(p + 1)))
@@ -144,7 +147,7 @@ term_isclosedelim(const char *p)
 
 
 static int
-term_isopendelim(const char *p)
+isopendelim(const char *p)
 {
 
 	if ( ! (*p && 0 == *(p + 1)))
@@ -205,12 +208,6 @@ term_isopendelim(const char *p)
  *  Otherwise, the line will break at the right margin.  Extremely long
  *  lines will cause the system to emit a warning (TODO: hyphenate, if
  *  possible).
- *
- *  FIXME: newline breaks occur (in groff) also occur when a single
- *  space follows a NOBREAK (try `Bl -tag')
- *
- *  FIXME: there's a newline error where a `Bl -diag' will have a
- *  trailing newline if the line is exactly 73 chars long.
  */
 void
 term_flushln(struct termp *p)
@@ -385,13 +382,8 @@ term_vspace(struct termp *p)
 }
 
 
-/*
- * Determine the symbol indicated by an escape sequences, that is, one
- * starting with a backslash.  Once done, we pass this value into the
- * output buffer by way of the symbol table.
- */
 static void
-term_nescape(struct termp *p, const char *word, size_t len)
+do_special(struct termp *p, const char *word, size_t len)
 {
 	const char	*rhs;
 	size_t		 sz;
@@ -399,9 +391,40 @@ term_nescape(struct termp *p, const char *word, size_t len)
 
 	rhs = term_a2ascii(p->symtab, word, len, &sz);
 
-	if (rhs)
-		for (i = 0; i < (int)sz; i++) 
-			term_encodea(p, rhs[i]);
+	if (NULL == rhs) {
+#if 0
+		fputs("Unknown special character: ", stderr);
+		for (i = 0; i < (int)len; i++)
+			fputc(word[i], stderr);
+		fputc('\n', stderr);
+#endif
+		return;
+	}
+	for (i = 0; i < (int)sz; i++) 
+		encode(p, rhs[i]);
+}
+
+
+static void
+do_reserved(struct termp *p, const char *word, size_t len)
+{
+	const char	*rhs;
+	size_t		 sz;
+	int		 i;
+
+	rhs = term_a2res(p->symtab, word, len, &sz);
+
+	if (NULL == rhs) {
+#if 0
+		fputs("Unknown reserved word: ", stderr);
+		for (i = 0; i < (int)len; i++)
+			fputc(word[i], stderr);
+		fputc('\n', stderr);
+#endif
+		return;
+	}
+	for (i = 0; i < (int)sz; i++) 
+		encode(p, rhs[i]);
 }
 
 
@@ -411,12 +434,13 @@ term_nescape(struct termp *p, const char *word, size_t len)
  * the escape sequence (we assert upon badly-formed escape sequences).
  */
 static void
-term_pescape(struct termp *p, const char **word)
+do_escaped(struct termp *p, const char **word)
 {
-	int		 j;
+	int		 j, type;
 	const char	*wp;
 
 	wp = *word;
+	type = 1;
 
 	if (0 == *(++wp)) {
 		*word = wp;
@@ -430,7 +454,7 @@ term_pescape(struct termp *p, const char **word)
 			return;
 		}
 
-		term_nescape(p, wp, 2);
+		do_special(p, wp, 2);
 		*word = ++wp;
 		return;
 
@@ -448,13 +472,14 @@ term_pescape(struct termp *p, const char **word)
 				return;
 			}
 
-			term_nescape(p, wp, 2);
+			do_reserved(p, wp, 2);
 			*word = ++wp;
 			return;
 		case ('['):
+			type = 0;
 			break;
 		default:
-			term_nescape(p, wp, 1);
+			do_reserved(p, wp, 1);
 			*word = wp;
 			return;
 		}
@@ -485,7 +510,7 @@ term_pescape(struct termp *p, const char **word)
 		return;
 
 	} else if ('[' != *wp) {
-		term_nescape(p, wp, 1);
+		do_special(p, wp, 1);
 		*word = wp;
 		return;
 	}
@@ -499,7 +524,10 @@ term_pescape(struct termp *p, const char **word)
 		return;
 	}
 
-	term_nescape(p, wp - j, (size_t)j);
+	if (type)
+		do_special(p, wp - j, (size_t)j);
+	else
+		do_reserved(p, wp - j, (size_t)j);
 	*word = wp;
 }
 
@@ -514,28 +542,23 @@ term_word(struct termp *p, const char *word)
 {
 	const char	 *sv;
 
-	if (term_isclosedelim(word))
+	if (isclosedelim(word))
 		if ( ! (TERMP_IGNDELIM & p->flags))
 			p->flags |= TERMP_NOSPACE;
 
 	if ( ! (TERMP_NOSPACE & p->flags))
-		term_chara(p, ' ');
+		buffer(p, ' ');
 
 	if ( ! (p->flags & TERMP_NONOSPACE))
 		p->flags &= ~TERMP_NOSPACE;
 
-	/* 
-	 * If ANSI (word-length styling), then apply our style now,
-	 * before the word.
-	 */
-
 	for (sv = word; *word; word++)
 		if ('\\' != *word)
-			term_encodea(p, *word);
+			encode(p, *word);
 		else
-			term_pescape(p, &word);
+			do_escaped(p, &word);
 
-	if (term_isopendelim(sv))
+	if (isopendelim(sv))
 		p->flags |= TERMP_NOSPACE;
 }
 
@@ -546,7 +569,7 @@ term_word(struct termp *p, const char *word)
  * size.
  */
 static void
-term_chara(struct termp *p, char c)
+buffer(struct termp *p, char c)
 {
 	size_t		 s;
 
@@ -564,18 +587,18 @@ term_chara(struct termp *p, char c)
 
 
 static void
-term_encodea(struct termp *p, char c)
+encode(struct termp *p, char c)
 {
 	
 	if (' ' != c && TERMP_STYLE & p->flags) {
 		if (TERMP_BOLD & p->flags) {
-			term_chara(p, c);
-			term_chara(p, 8);
+			buffer(p, c);
+			buffer(p, 8);
 		}
 		if (TERMP_UNDER & p->flags) {
-			term_chara(p, '_');
-			term_chara(p, 8);
+			buffer(p, '_');
+			buffer(p, 8);
 		}
 	}
-	term_chara(p, c);
+	buffer(p, c);
 }

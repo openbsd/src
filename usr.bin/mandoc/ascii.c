@@ -1,4 +1,4 @@
-/*	$Id: ascii.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: ascii.c,v 1.3 2009/08/22 17:04:48 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,9 +27,12 @@
 struct	line {
 	const char	 *code;
 	const char	 *out;
-	/* 32- and 64-bit alignment safe. */
 	size_t		  codesz;
 	size_t		  outsz;
+	int		  type;
+#define	ASCII_CHAR	 (1 << 0)
+#define	ASCII_STRING	 (1 << 1)
+#define ASCII_BOTH	 (0x03)
 };
 
 struct	linep {
@@ -37,8 +40,12 @@ struct	linep {
 	struct linep	 *next;
 };
 
-#define LINE(w, x, y, z) \
-	{ (w), (y), (x), (z) },
+#define CHAR(w, x, y, z) \
+	{ (w), (y), (x), (z), ASCII_CHAR },
+#define STRING(w, x, y, z) \
+	{ (w), (y), (x), (z), ASCII_STRING },
+#define BOTH(w, x, y, z) \
+	{ (w), (y), (x), (z), ASCII_BOTH },
 static	const struct line lines[] = {
 #include "ascii.in"
 };
@@ -50,7 +57,9 @@ struct	asciitab {
 
 
 static	inline int	  match(const struct line *,
-				const char *, size_t);
+				const char *, size_t, int);
+static	const char *	  lookup(struct asciitab *, const char *, 
+				size_t, size_t *, int);
 
 
 void
@@ -125,13 +134,28 @@ term_ascii2htab(void)
 const char *
 term_a2ascii(void *arg, const char *p, size_t sz, size_t *rsz)
 {
-	struct asciitab	 *tab;
+
+	return(lookup((struct asciitab *)arg, p, 
+				sz, rsz, ASCII_CHAR));
+}
+
+
+const char *
+term_a2res(void *arg, const char *p, size_t sz, size_t *rsz)
+{
+
+	return(lookup((struct asciitab *)arg, p, 
+				sz, rsz, ASCII_STRING));
+}
+
+
+static const char *
+lookup(struct asciitab *tab, const char *p, 
+		size_t sz, size_t *rsz, int type)
+{
 	struct linep	 *pp, *prev;
 	void		**htab;
 	int		  hash;
-
-	tab = (struct asciitab *)arg;
-	htab = tab->htab;
 
 	assert(p);
 	assert(sz > 0);
@@ -147,19 +171,20 @@ term_a2ascii(void *arg, const char *p, size_t sz, size_t *rsz)
 	 */
 
 	hash = (int)p[0] - ASCII_PRINT_LO;
+	htab = tab->htab;
 
 	if (NULL == (pp = ((struct linep **)htab)[hash]))
 		return(NULL);
 
 	if (NULL == pp->next) {
-		if ( ! match(pp->line, p, sz)) 
+		if ( ! match(pp->line, p, sz, type)) 
 			return(NULL);
 		*rsz = pp->line->outsz;
 		return(pp->line->out);
 	}
 
 	for (prev = NULL; pp; pp = pp->next) {
-		if ( ! match(pp->line, p, sz)) {
+		if ( ! match(pp->line, p, sz, type)) {
 			prev = pp;
 			continue;
 		}
@@ -181,9 +206,11 @@ term_a2ascii(void *arg, const char *p, size_t sz, size_t *rsz)
 
 
 static inline int
-match(const struct line *line, const char *p, size_t sz)
+match(const struct line *line, const char *p, size_t sz, int type)
 {
 
+	if ( ! (line->type & type))
+		return(0);
 	if (line->codesz != sz)
 		return(0);
 	return(0 == strncmp(line->code, p, sz));
