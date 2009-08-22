@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.51 2009/08/22 18:10:02 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.52 2009/08/22 18:40:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1395,10 +1395,18 @@ termp_fd_post(DECL_ARGS)
 static int
 termp_sh_pre(DECL_ARGS)
 {
-
+	/* 
+	 * XXX: undocumented: using two `Sh' macros in sequence has no
+	 * vspace between calls, only a newline.
+	 */
 	switch (node->type) {
-	case (MDOC_HEAD):
+	case (MDOC_BLOCK):
+		if (node->prev && MDOC_Sh == node->prev->tok)
+			if (NULL == node->prev->body->child)
+				break;
 		term_vspace(p);
+		break;
+	case (MDOC_HEAD):
 		pair->flag |= ttypes[TTYPE_SECTION];
 		break;
 	case (MDOC_BODY):
