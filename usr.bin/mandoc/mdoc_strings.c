@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.8 2009/07/08 00:04:10 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.9 2009/08/22 22:11:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -30,7 +30,7 @@ struct mdoc_secname {
 	enum mdoc_sec	 sec;	/* Corresponding section. */
 };
 
-#define	SECNAME_MAX	(18)
+#define	SECNAME_MAX	(20)
 
 static	const struct mdoc_secname secnames[SECNAME_MAX] = {
 	{ "NAME", SEC_NAME },
@@ -38,6 +38,7 @@ static	const struct mdoc_secname secnames[SECNAME_MAX] = {
 	{ "SYNOPSIS", SEC_SYNOPSIS },
 	{ "DESCRIPTION", SEC_DESCRIPTION },
 	{ "IMPLEMENTATION NOTES", SEC_IMPLEMENTATION },
+	{ "EXIT STATUS", SEC_EXIT_STATUS },
 	{ "RETURN VALUES", SEC_RETURN_VALUES },
 	{ "ENVIRONMENT", SEC_ENVIRONMENT },
 	{ "FILES", SEC_FILES },
@@ -51,6 +52,7 @@ static	const struct mdoc_secname secnames[SECNAME_MAX] = {
 	{ "AUTHORS", SEC_AUTHORS },
 	{ "CAVEATS", SEC_CAVEATS },
 	{ "BUGS", SEC_BUGS },
+	{ "SECURITY CONSIDERATIONS", SEC_SECURITY }
 };
 
 
