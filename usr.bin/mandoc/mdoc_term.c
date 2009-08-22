@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.49 2009/08/09 21:59:41 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.50 2009/08/22 15:36:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1639,7 +1639,7 @@ termp_va_pre(DECL_ARGS)
 static int
 termp_bd_pre(DECL_ARGS)
 {
-	int	         i, type, ln;
+	int	         i, type;
 
 	/*
 	 * This is fairly tricky due primarily to crappy documentation.

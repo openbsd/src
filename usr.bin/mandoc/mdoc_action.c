@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.18 2009/08/22 15:29:23 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.19 2009/08/22 15:36:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -483,7 +483,6 @@ post_dt(POST_ARGS)
 		free(m->meta.vol);
 		if (NULL == (m->meta.vol = strdup(cp)))
 			return(mdoc_nerr(m, m->last, EMALLOC));
-		n = n->next;
 	} else {
 		cp = mdoc_a2arch(n->string);
 		if (NULL == cp) {
@@ -831,6 +830,7 @@ pre_dl(PRE_ARGS)
 
 	if (MDOC_BODY == n->type)
 		m->flags |= MDOC_LITERAL;
+
 	return(1);
 }
 
@@ -843,7 +843,12 @@ pre_bd(PRE_ARGS)
 	if (MDOC_BODY != n->type)
 		return(1);
 
-	/* Enter literal context if `Bd -literal' or * -unfilled'. */
+	/* Enter literal context if `Bd -literal' or `-unfilled'. */
+
+	/* 
+	 * TODO: `-offset' without an argument should be the width of
+	 * the literal "<string>".
+	 */
 
 	for (n = n->parent, i = 0; i < (int)n->args->argc; i++)
 		if (MDOC_Literal == n->args->argv[i].arg)

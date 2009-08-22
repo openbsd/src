@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.19 2009/08/09 21:59:41 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.20 2009/08/22 15:36:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -681,7 +681,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 		mdoc->next = MDOC_NEXT_CHILD;
 	}
 
-	for (lastarg = ppos, flushed = j = 0; ; j++) {
+	for (flushed = j = 0; ; j++) {
 		lastarg = *pos;
 
 		if (j == maxargs && ! flushed) {
@@ -760,7 +760,7 @@ in_line(MACRO_PROT_ARGS)
 		break;
 	}
 
-	for (la = ppos, arg = NULL;; ) {
+	for (arg = NULL;; ) {
 		la = *pos;
 		c = mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 
@@ -1046,7 +1046,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 
 	/* XXX - no known argument macros. */
 
-	for (lastarg = ppos;; ) {
+	for (;;) {
 		lastarg = *pos;
 		c = mdoc_args(mdoc, line, pos, buf, tok, &p);
 		assert(ARGS_PHRASE != c);
@@ -1107,7 +1107,6 @@ blk_part_exp(MACRO_PROT_ARGS)
 	int		  lastarg, flushed, j, c, maxargs;
 	char		 *p;
 
-	lastarg = ppos;
 	flushed = 0;
 
 	/*
@@ -1243,7 +1242,7 @@ in_line_argn(MACRO_PROT_ARGS)
 		break;
 	}
 
-	for (lastarg = ppos, arg = NULL;; ) {
+	for (arg = NULL;; ) {
 		lastarg = *pos;
 		c = mdoc_argv(mdoc, line, tok, &arg, pos, buf);
 
