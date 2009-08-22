@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.13 2009/08/22 22:39:55 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.14 2009/08/22 22:50:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -74,7 +74,7 @@ static	int mdoc_argvflags[MDOC_ARG_MAX] = {
 	ARGV_MULTI,	/* MDOC_Column */
 	ARGV_SINGLE,	/* MDOC_Width */
 	ARGV_NONE,	/* MDOC_Compact */
-	ARGV_OPT_SINGLE, /* MDOC_Std */
+	ARGV_NONE,	/* MDOC_Std */
 	ARGV_NONE,	/* MDOC_Filled */
 	ARGV_NONE,	/* MDOC_Words */
 	ARGV_NONE,	/* MDOC_Emphasis */

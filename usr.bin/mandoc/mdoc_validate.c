@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.34 2009/08/09 21:49:45 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.35 2009/08/22 22:50:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -77,7 +77,6 @@ static	int	 hwarn_eq1(POST_ARGS);
 static	int	 hwarn_le1(POST_ARGS);
 
 static	int	 post_an(POST_ARGS);
-static	int	 post_args(POST_ARGS);
 static	int	 post_at(POST_ARGS);
 static	int	 post_bf(POST_ARGS);
 static	int	 post_bl(POST_ARGS);
@@ -114,7 +113,6 @@ static	v_post	 posts_bd[] = { herr_eq0, bwarn_ge1, NULL };
 static	v_post	 posts_bf[] = { hwarn_le1, post_bf, NULL };
 static	v_post	 posts_bl[] = { bwarn_ge1, post_bl, NULL };
 static	v_post	 posts_bool[] = { eerr_eq1, ebool, NULL };
-static	v_post	 posts_ex[] = { eerr_eq0, post_args, NULL };
 static	v_post	 posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
 static	v_post	 posts_in[] = { eerr_eq1, NULL };
 static	v_post	 posts_it[] = { post_it, NULL };
@@ -123,7 +121,6 @@ static	v_post	 posts_nd[] = { berr_ge1, NULL };
 static	v_post	 posts_nm[] = { post_nm, NULL };
 static	v_post	 posts_notext[] = { eerr_eq0, NULL };
 static	v_post	 posts_pf[] = { eerr_eq1, NULL };
-static	v_post	 posts_rv[] = { eerr_eq0, post_args, NULL };
 static	v_post	 posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
 static	v_post	 posts_sp[] = { post_sp, NULL };
 static	v_post	 posts_ss[] = { herr_ge1, NULL };
@@ -172,7 +169,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Dv */ 
 	{ pres_er, posts_text },		/* Er */ 
 	{ NULL, NULL },				/* Ev */ 
-	{ pres_ex, posts_ex },			/* Ex */ 
+	{ pres_ex, NULL },			/* Ex */ 
 	{ NULL, NULL },				/* Fa */ 
 	{ pres_fd, posts_wtext },		/* Fd */
 	{ NULL, NULL },				/* Fl */
@@ -186,7 +183,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_wline },			/* Op */
 	{ NULL, NULL },				/* Ot */
 	{ NULL, NULL },				/* Pa */
-	{ pres_rv, posts_rv },			/* Rv */
+	{ pres_rv, NULL },			/* Rv */
 	{ NULL, posts_st },			/* St */ 
 	{ NULL, NULL },				/* Va */
 	{ NULL, posts_text },			/* Vt */ 
@@ -912,16 +909,6 @@ post_an(POST_ARGS)
 	}
 
 	if (mdoc->last->child)
-		return(1);
-	return(mdoc_nerr(mdoc, mdoc->last, ELINE));
-}
-
-
-static int
-post_args(POST_ARGS)
-{
-
-	if (mdoc->last->args)
 		return(1);
 	return(mdoc_nerr(mdoc, mdoc->last, ELINE));
 }
