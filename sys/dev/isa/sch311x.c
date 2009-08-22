@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.11 2009/05/07 18:31:20 mk Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.12 2009/08/22 03:51:07 mk Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -160,7 +160,6 @@ struct schsio_softc {
 
 int	schsio_probe(struct device *, void *, void *);
 void	schsio_attach(struct device *, struct device *, void *);
-int	schsio_print(void *, const char *);
 
 static __inline void schsio_config_enable(bus_space_tag_t iot,
     bus_space_handle_t ioh);
