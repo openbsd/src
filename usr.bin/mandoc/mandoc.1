@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.12 2009/08/22 14:56:03 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.13 2009/08/22 16:03:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -263,6 +263,12 @@ compatibility with
 .Xr groff 1 .
 .Pp
 .Bl -bullet -compact
+.\" LIST-ITEM
+.It
+The 
+.Sq \e~
+special character doesn't produce expected behaviour.
+.\" LIST-ITEM
 .It
 A list or display following
 .Sq \&Ss
@@ -272,12 +278,13 @@ does not assert a prior vertical break, just as it doesn't with
 The \-literal and \-unfilled
 .Sq \&Bd
 displays types are synonyms, as are \-filled and \-ragged.
+.\" LIST-ITEM
 .It
 Words aren't hyphenated.
+.\" LIST-ITEM
 .It
 In normal mode (not a literal block), blocks of spaces aren't preserved,
-so double spaces following sentence closure are reduced to a single space
-.Pq Dq French spacing .
+so double spaces following sentence closure are reduced to a single space.
 .El
 .\" SECTION
 .Sh SEE ALSO
