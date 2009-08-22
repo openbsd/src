@@ -1,4 +1,4 @@
-.\"	$Id: mandoc_char.7,v 1.4 2009/07/13 00:18:12 schwarze Exp $
+.\"	$Id: mandoc_char.7,v 1.5 2009/08/22 16:49:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" 
-.Dd $Mdocdate: July 13 2009 $
+.Dd $Mdocdate: August 22 2009 $
 .Dt MANDOC_CHAR 7
 .Os
 .\" SECTION
@@ -23,7 +23,7 @@
 .Nd mandoc special characters
 .\" SECTION
 .Sh DESCRIPTION
-This documents the special characters accepted by 
+This documents the special characters and predefined strings accepted by 
 .Xr mandoc 1
 to format
 .Xr mdoc 7
@@ -34,16 +34,68 @@ documents.  Specific output devices of
 dictated by the
 .Fl T Ns Ar output
 argument, will properly render these sequences.
+.\" PARAGRAPH
 .Pp
 Both
 .Xr mdoc 7
 and
 .Xr man 7
-encode special characters with slightly different semantics; consult the
-respective manuals for these escapes.
+encode special characters with 
+.Sq \eX
+.Pq for a one-character escape ,
+.Sq \e(XX
+.Pq two-character ,
+and
+.Sq \e[N]
+.Pq N-character .
+One may generalise
+.Sq \e(XX
+as
+.Sq \e[XX]
+and
+.Sq \eX
+as
+.Sq \e[X] .
+Predefined strings are functionally similar to special characters, using 
+.Sq \e*X
+.Pq for a one-character escape ,
+.Sq \e*(XX
+.Pq two-character ,
+and
+.Sq \e*[N]
+.Pq N-character .
+One may generalise
+.Sq \e*(XX
+as
+.Sq \e*[XX]
+and
+.Sq \e*X
+as
+.Sq \e*[X] .
+.\" SECTION
+.Sh Special Characters
+These are the preferred input symbols for producing special characters.
+.\" PARAGRAPH
+.Pp
+Typographic:
+.Bl -tag -width Ds -offset indent -compact
+.It \e~
+.Pq non-breaking space
+.It \e
+.Pq space
+.It \e^
+.Pq zero-width space
+.It \e%
+.Pq zero-width space
+.It \e&
+.Pq zero-width space
+.It \e|
+.Pq zero-width space
+.El
+.\" PARAGRAPH
 .Pp
 Grammatic:
-.Bl -tag -width 12n -offset "XXXX" -compact
+.Bl -tag -width Ds -offset indent -compact
 .It \e(em
 .Pq em-dash
 .It \e(en
@@ -52,12 +104,12 @@ Grammatic:
 .Pq hyphen
 .It \e\e
 .Pq back-slash
+.It \\e
+.Pq back-slash
 .It \e'
 .Pq apostrophe
 .It \e`
 .Pq back-tick
-.It \e
-.Pq space
 .It \e.
 .Pq period
 .It \e(r!
@@ -68,7 +120,7 @@ Grammatic:
 .\" PARAGRAPH
 .Pp
 Enclosures:
-.Bl -tag -width 12n -offset "XXXX" -compact
+.Bl -tag -width Ds -offset indent -compact
 .It \e(lh
 .Pq left hand
 .It \e(rh
@@ -93,16 +145,10 @@ Enclosures:
 .Pq right bracket
 .It \e(lB
 .Pq left bracket
-.It \eq
-.Pq double-quote
 .It \e(lq
 .Pq left double-quote
-.It \e(Lq
-.Pq left double-quote, deprecated
 .It \e(rq
 .Pq right double-quote
-.It \e(Rq
-.Pq right double-quote, deprecated
 .It \e(oq
 .Pq left single-quote
 .It \e(aq
@@ -115,7 +161,7 @@ Enclosures:
 .\" PARAGRAPH
 .Pp
 Indicatives:
-.Bl -tag -width 12n -offset "XXXX" -compact
+.Bl -tag -width Ds -offset indent -compact
 .It \e(<-
 .Pq left arrow
 .It \e(->
@@ -140,7 +186,7 @@ Indicatives:
 .\" PARAGRAPH
 .Pp
 Mathematical:
-.Bl -tag -width 12n -offset "XXXX" -compact
+.Bl -tag -width Ds -offset indent -compact
 .It \e(es
 .Pq empty set
 .It \e(ca
@@ -197,53 +243,37 @@ Mathematical:
 .Pq approximately equals
 .It \e(=~
 .Pq congruent
-.It \e(Gt
-.Pq greater-than, deprecated
-.It \e(Lt
-.Pq less-than, deprecated
 .It \e(<=
 .Pq less-than-equal
-.It \e(Le
-.Pq less-than-equal, deprecated
 .It \e(>=
-.Pq greater-than-equal
-.It \e(Ge
 .Pq greater-than-equal
 .It \e(==
 .Pq equal
 .It \e(!=
 .Pq not equal
-.It \e(Ne
-.Pq not equal, deprecated
 .It \e(if
 .Pq infinity
-.It \e(If
-.Pq infinity, deprecated
 .It \e(na
-.Pq NaN , an extension
-.It \e(Na
-.Pq NaN, deprecated
+.Pq NaN, an extension
 .It \e(+-
 .Pq plus-minus
-.It \e(Pm
-.Pq plus-minus, deprecated
 .It \e(**
 .Pq asterisk
 .El
 .\" PARAGRAPH
 .Pp
 Ligatures:
-.Bl -tag -width 12n -offset "XXXX" -compact
+.Bl -tag -width Ds -offset indent -compact
 .It \e(ss
 .Pq German eszett
 .It \e(AE
-.Pq upper-case AE
+.Pq AE
 .It \e(ae
-.Pq lower-case AE
+.Pq ae
 .It \e(OE
-.Pq upper-case OE
+.Pq OE
 .It \e(oe
-.Pq lower-case OE
+.Pq oe
 .It \e(ff
 .Pq ff ligature
 .It \e(fi
@@ -257,8 +287,8 @@ Ligatures:
 .El
 .\" PARAGRAPH
 .Pp
-Diacritics and letters:
-.Bl -tag -width 12n -offset "XXXX" -compact
+Diacritics and accented letters:
+.Bl -tag -width Ds -offset indent -compact
 .It \e(ga
 .Pq grave accent
 .It \e(aa
@@ -286,128 +316,128 @@ Diacritics and letters:
 .It \e(a-
 .Pq macron accent
 .It \e(-D
-.Pq upper-case eth
+.Pq Eth
 .It \e(Sd
-.Pq lower-case eth
+.Pq eth
 .It \e(TP
-.Pq upper-case thorn
+.Pq Thorn
 .It \e(Tp
-.Pq lower-case thorn
+.Pq thorn
 .It \e('A
-.Pq upper-case acute A
+.Pq acute A
 .It \e('E
-.Pq upper-case acute E
+.Pq acute E
 .It \e('I
-.Pq upper-case acute I
+.Pq acute I
 .It \e('O
-.Pq upper-case acute O
+.Pq acute O
 .It \e('U
-.Pq upper-case acute U
+.Pq acute U
 .It \e('a
-.Pq lower-case acute a
+.Pq acute a
 .It \e('e
-.Pq lower-case acute e
+.Pq acute e
 .It \e('i
-.Pq lower-case acute i
+.Pq acute i
 .It \e('o
-.Pq lower-case acute o
+.Pq acute o
 .It \e('u
-.Pq lower-case acute u
+.Pq acute u
 .It \e(`A
-.Pq upper-case grave A
+.Pq grave A
 .It \e(`E
-.Pq upper-case grave E
+.Pq grave E
 .It \e(`I
-.Pq upper-case grave I
+.Pq grave I
 .It \e(`O
-.Pq upper-case grave O
+.Pq grave O
 .It \e(`U
-.Pq upper-case grave U
+.Pq grave U
 .It \e(`a
-.Pq lower-case grave a
+.Pq grave a
 .It \e(`e
-.Pq lower-case grave e
+.Pq grave e
 .It \e(`i
-.Pq lower-case grave i
+.Pq grave i
 .It \e(`o
-.Pq lower-case grave o
+.Pq grave o
 .It \e(`u
-.Pq lower-case grave u
+.Pq grave u
 .It \e(~A
-.Pq upper-case tilde A
+.Pq tilde A
 .It \e(~N
-.Pq upper-case tilde N
+.Pq tilde N
 .It \e(~O
-.Pq upper-case tilde O
+.Pq tilde O
 .It \e(~a
-.Pq lower-case tilde a
+.Pq tilde a
 .It \e(~n
-.Pq lower-case tilde n
+.Pq tilde n
 .It \e(~o
-.Pq lower-case tilde o
+.Pq tilde o
 .It \e(:A
-.Pq upper-case dieresis A
+.Pq dieresis A
 .It \e(:E
-.Pq upper-case dieresis E
+.Pq dieresis E
 .It \e(:I
-.Pq upper-case dieresis I
+.Pq dieresis I
 .It \e(:O
-.Pq upper-case dieresis O
+.Pq dieresis O
 .It \e(:U
-.Pq upper-case dieresis U
+.Pq dieresis U
 .It \e(:a
-.Pq lower-case dieresis a
+.Pq dieresis a
 .It \e(:e
-.Pq lower-case dieresis e
+.Pq dieresis e
 .It \e(:i
-.Pq lower-case dieresis i
+.Pq dieresis i
 .It \e(:o
-.Pq lower-case dieresis o
+.Pq dieresis o
 .It \e(:u
-.Pq lower-case dieresis u
+.Pq dieresis u
 .It \e(:y
-.Pq lower-case dieresis y
+.Pq dieresis y
 .It \e(^A
-.Pq upper-case circumflex A
+.Pq circumflex A
 .It \e(^E
-.Pq upper-case circumflex E
+.Pq circumflex E
 .It \e(^I
-.Pq upper-case circumflex I
+.Pq circumflex I
 .It \e(^O
-.Pq upper-case circumflex O
+.Pq circumflex O
 .It \e(^U
-.Pq upper-case circumflex U
+.Pq circumflex U
 .It \e(^a
-.Pq lower-case circumflex a
+.Pq circumflex a
 .It \e(^e
-.Pq lower-case circumflex e
+.Pq circumflex e
 .It \e(^i
-.Pq lower-case circumflex i
+.Pq circumflex i
 .It \e(^o
-.Pq lower-case circumflex o
+.Pq circumflex o
 .It \e(^u
-.Pq lower-case circumflex u
+.Pq circumflex u
 .It \e(,C
-.Pq upper-case cedilla C
+.Pq cedilla C
 .It \e(,c
-.Pq lower-case cedilla c
+.Pq cedilla c
 .It \e(/L
-.Pq upper-case stroke L
+.Pq stroke L
 .It \e(/l
-.Pq lower-case stroke l
+.Pq stroke l
 .It \e(/O
-.Pq upper-case stroke O
+.Pq stroke O
 .It \e(/o
-.Pq lower-case stroke o
+.Pq stroke o
 .It \e(oA
-.Pq upper-case ring A
+.Pq ring A
 .It \e(oa
-.Pq lower-case ring a
+.Pq ring a
 .El
 .\" PARAGRAPH
 .Pp
 Monetary:
-.Bl -tag -width 12n -offset "XXXX" -compact
+.Bl -tag -width Ds -offset indent -compact
 .It \e(Cs
 .Pq Scandinavian
 .It \e(Do
@@ -420,11 +450,124 @@ Monetary:
 .Pq florin
 .It \e(ct
 .Pq cent
+.It \e(Eu
+.Pq Euro character glyph
+.It \e(eu
+.Pq Euro symbol
+.El
+.\" PARAGRAPH
+.Pp
+Greek letters:
+.Bl -tag -width Ds -offset indent -compact
+.It \e(*A
+.Pq Alpha
+.It \e(*B
+.Pq Beta
+.It \e(*C
+.Pq Xi
+.It \e(*D
+.Pq Delta
+.It \e(*E
+.Pq Epsilon
+.It \e(*F
+.Pq Phi
+.It \e(*G
+.Pq Gamma
+.It \e(*H
+.Pq Theta
+.It \e(*I
+.Pq Iota
+.It \e(*K
+.Pq Kappa
+.It \e(*L
+.Pq Lambda
+.It \e(*M
+.Pq Mu
+.It \e(*N
+.Pq Nu
+.It \e(*O
+.Pq Omicron
+.It \e(*P
+.Pq Pi
+.It \e(*Q
+.Pq Psi
+.It \e(*R
+.Pq Rho
+.It \e(*S
+.Pq Sigma
+.It \e(*T
+.Pq Tau
+.It \e(*U
+.Pq Upsilon
+.It \e(*W
+.Pq Omega
+.It \e(*X
+.Pq Chi
+.It \e(*Y
+.Pq Eta
+.It \e(*Z
+.Pq Zeta
+.It \e(*a
+.Pq alpha
+.It \e(*b
+.Pq beta
+.It \e(*c
+.Pq xi
+.It \e(*d
+.Pq delta
+.It \e(*e
+.Pq epsilon
+.It \e(*f
+.Pq phi
+.It \e(+f
+.Pq phi variant
+.It \e(*g
+.Pq gamma
+.It \e(*h
+.Pq theta
+.It \e(+h
+.Pq theta variant
+.It \e(*i
+.Pq iota
+.It \e(*k
+.Pq kappa
+.It \e(*l
+.Pq lambda
+.It \e(*m
+.Pq mu
+.It \e(*n
+.Pq nu
+.It \e(*o
+.Pq omicron
+.It \e(*p
+.Pq pi
+.It \e(+p
+.Pq pi variant
+.It \e(*q
+.Pq psi
+.It \e(*r
+.Pq rho
+.It \e(*s
+.Pq sigma
+.It \e(*t
+.Pq tau
+.It \e(*u
+.Pq upsilon
+.It \e(*w
+.Pq omega
+.It \e(*x
+.Pq chi
+.It \e(*y
+.Pq eta
+.It \e(*z
+.Pq zeta
+.It \e(ts
+.Pq sigma terminal
 .El
 .\" PARAGRAPH
 .Pp
 Special symbols:
-.Bl -tag -width 12n -offset "XXXX" -compact
+.Bl -tag -width Ds -offset indent -compact
 .It \e0
 .Pq white-space
 .It \e(de
@@ -443,21 +586,69 @@ Special symbols:
 .Pq bar
 .It \e(bb
 .Pq broken bar
-.It \e(Ba
-.Pq bar, deprecated
 .It \e(co
 .Pq copyright
 .It \e(rg
 .Pq registered
 .It \e(tm
 .Pq trademarked
-.It \e&
-.Pq non-breaking space
 .It \ee
 .Pq escape
-.It \e(Am
-.Pq ampersand, deprecated
 .El 
+.\" SECTION
+.Sh PREDEFINED STRINGS
+These are not recommended for use, as they differ across
+implementations:
+.Pp
+Mathematical:
+.Bl -tag -width Ds -offset indent -compact
+.It \e*(Ne
+.Pq not equal
+.It \e*(Ge
+.Pq greater-than-equal
+.It \e*(Le
+.Pq less-than-equal
+.It \e*(Gt
+.Pq greater-than
+.It \e*(Lt
+.Pq greater-than
+.It \e*(Pm
+.Pq plus-minus
+.It \e*(If
+.Pq infinity
+.It \e*(Pi
+.Pq pi
+.It \e*(Na
+.Pq NaN
+.El
+.\" PARAGRAPH
+.Pp
+Special symbols:
+.Bl -tag -width Ds -offset indent -compact
+.It \e*(Ba
+.Pq vertical bar
+.It \e*(Am
+.Pq ampersand
+.It \e*R
+.Pq restricted mark
+.It \e*(Tm
+.Pq trade mark
+.El
+.\" PARAGRAPH
+.Pp
+Enclosures:
+.Bl -tag -width Ds -offset indent -compact
+.It \e*q
+.Pq double-quote
+.It \e*(Rq
+.Pq right-double-quote
+.It \e*(Lq
+.Pq left-double-quote
+.It \e*(lp
+.Pq right-parenthesis
+.It \e*(rp
+.Pq left-parenthesis
+.El
 .\" SECTION
 .Sh COMPATIBILITY
 This section documents compatibility of
@@ -465,7 +656,7 @@ This section documents compatibility of
 with older or existing versions of
 .Xr groff 1 :
 .Pp
-.Bl -tag -width 12n -offset "XXXX" -compact
+.Bl -tag -width Ds -offset indent -compact
 .It \e(ss
 Renders differently in
 .Fl T Ns Ar ascii
