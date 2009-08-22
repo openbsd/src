@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.5 2009/07/08 00:04:10 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.6 2009/08/22 15:15:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,6 +18,8 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
@@ -33,19 +35,22 @@ struct	man_valid {
 };
 
 static	int	  check_eq0(POSTARGS);
+static	int	  check_eq1(POSTARGS);
 static	int	  check_ge1(POSTARGS);
 static	int	  check_ge2(POSTARGS);
 static	int	  check_le1(POSTARGS);
 static	int	  check_le2(POSTARGS);
 static	int	  check_le5(POSTARGS);
-static	int	  check_text(POSTARGS);
 static	int	  check_root(POSTARGS);
+static	int	  check_sp(POSTARGS);
+static	int	  check_text(POSTARGS);
 
+static	v_post	  posts_eq0[] = { check_eq0, NULL };
+static	v_post	  posts_ge1[] = { check_ge1, NULL };
+static	v_post	  posts_ge2_le5[] = { check_ge2, check_le5, NULL };
 static	v_post	  posts_le1[] = { check_le1, NULL };
 static	v_post	  posts_le2[] = { check_le2, NULL };
-static	v_post	  posts_ge1[] = { check_ge1, NULL };
-static	v_post	  posts_eq0[] = { check_eq0, NULL };
-static	v_post	  posts_ge2_le5[] = { check_ge2, check_le5, NULL };
+static	v_post	  posts_sp[] = { check_sp, NULL };
 
 static	const struct man_valid man_valids[MAN_MAX] = {
 	{ posts_eq0 }, /* br */
@@ -71,6 +76,7 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL }, /* RI */
 	{ posts_eq0 }, /* na */
 	{ NULL }, /* i */
+	{ posts_sp }, /* sp */
 };
 
 
@@ -162,9 +168,38 @@ check_##name(POSTARGS) \
 }
 
 INEQ_DEFINE(0, ==, eq0)
+INEQ_DEFINE(1, ==, eq1)
 INEQ_DEFINE(1, >=, ge1)
 INEQ_DEFINE(2, >=, ge2)
 INEQ_DEFINE(1, <=, le1)
 INEQ_DEFINE(2, <=, le2)
 INEQ_DEFINE(5, <=, le5)
 
+
+static int
+check_sp(POSTARGS)
+{
+	long		 lval;
+	char		*ep, *buf;
+
+	if (NULL == m->last->child)
+		return(1);
+	else if ( ! check_eq1(m, n))
+		return(0);
+
+	assert(MAN_TEXT == m->last->child->type);
+	buf = m->last->child->string;
+	assert(buf);
+	
+	/* From OpenBSD's strtol(3). */
+	errno = 0;
+	lval = strtol(buf, &ep, 10);
+	if (buf[0] == '\0' || *ep != '\0')
+		return(man_nerr(m, m->last->child, WNUMFMT));
+
+	if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
+			(lval > INT_MAX || lval < 0))
+		return(man_nerr(m, m->last->child, WNUMFMT));
+
+	return(1);
+}

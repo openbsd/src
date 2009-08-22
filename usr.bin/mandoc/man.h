@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.5 2009/07/07 00:54:46 schwarze Exp $ */
+/*	$Id: man.h,v 1.6 2009/08/22 15:15:37 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -42,7 +42,8 @@
 #define	MAN_RI		 20
 #define	MAN_na		 21
 #define	MAN_i		 22
-#define	MAN_MAX	 	 23
+#define	MAN_sp		 23
+#define	MAN_MAX	 	 24
 
 enum	man_type {
 	MAN_TEXT,

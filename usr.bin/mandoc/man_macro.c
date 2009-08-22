@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.4 2009/06/23 22:05:42 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.5 2009/08/22 15:15:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -51,6 +51,7 @@ static	int man_flags[MAN_MAX] = {
 	FL_NLINE, /* RI */
 	0, /* na */
 	FL_NLINE, /* i */
+	0, /* sp */
 };
 
 int
