@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.87 2009/08/19 10:39:50 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.88 2009/08/23 16:45:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -987,8 +987,6 @@ struct cmd_ctx {
 	 */
 	struct client  *curclient;
 	struct client  *cmdclient;
-
-	struct session *cursession;
 
 	struct msg_command_data	*msgdata;
 

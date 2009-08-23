@@ -1,4 +1,4 @@
-/* $OpenBSD: server-msg.c,v 1.14 2009/08/13 12:15:45 nicm Exp $ */
+/* $OpenBSD: server-msg.c,v 1.15 2009/08/23 16:45:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -188,7 +188,6 @@ server_msg_command(struct client *c, struct msg_command_data *data)
 
 	ctx.msgdata = data;
 	ctx.curclient = NULL;
-	ctx.cursession = NULL;
 
 	ctx.cmdclient = c;
 

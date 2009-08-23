@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.13 2009/08/08 21:52:43 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.14 2009/08/23 16:45:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -299,8 +299,8 @@ cmd_current_session(struct cmd_ctx *ctx)
 	u_int			 i;
 	int			 found;
 
-	if (ctx->cursession != NULL)
-		return (ctx->cursession);
+	if (ctx->curclient != NULL && ctx->curclient->session != NULL)
+		return (ctx->curclient->session);
 
 	/*
 	 * If the name of the calling client's pty is know, build a list of the

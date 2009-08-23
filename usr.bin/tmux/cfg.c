@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.4 2009/08/09 08:34:17 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.5 2009/08/23 16:45:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -88,7 +88,6 @@ load_cfg(const char *path, char **cause)
 		cfg_cause = NULL;
 
 		ctx.msgdata = NULL;
-		ctx.cursession = NULL;
 		ctx.curclient = NULL;
 
 		ctx.error = cfg_error;
