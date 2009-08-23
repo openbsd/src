@@ -1,9 +1,9 @@
-#	$OpenBSD: airport,v 1.17 2009/01/21 22:25:51 jmc Exp $
+#	$OpenBSD: airport,v 1.18 2009/08/23 19:54:06 jasper Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
 # http://www.uni-karlsruhe.de/~un9v/atm/ase.html, more are
-# available at http://www.airportcitycodes.com/aaa/
+# available at http://www.mapping.com/airportcodes.html
 #
 # Airport Code : Airport
 AAE:Les Salines, Annaba, Algeria
