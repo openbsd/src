@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.34 2009/08/13 21:56:14 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.35 2009/08/23 18:21:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -381,7 +381,8 @@ main(int argc, char **argv)
 		options_set_number(&global_s_options, "status-utf8", 0);
 	options_set_string(&global_s_options,
 	    "terminal-overrides", "*88col*:colors=88,*256col*:colors=256");
-	options_set_string(&global_s_options, "update-environment", "DISPLAY");
+	options_set_string(&global_s_options, "update-environment", "DISPLAY "
+	    "WINDOWID SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION");
 	options_set_number(&global_s_options, "visual-activity", 0);
 	options_set_number(&global_s_options, "visual-bell", 0);
 	options_set_number(&global_s_options, "visual-content", 0);
