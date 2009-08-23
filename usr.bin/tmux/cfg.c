@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.5 2009/08/23 16:45:00 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.6 2009/08/23 17:29:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -51,7 +51,7 @@ cfg_error(unused struct cmd_ctx *ctx, const char *fmt, ...)
 }
 
 int
-load_cfg(const char *path, char **cause)
+load_cfg(const char *path, struct cmd_ctx *ctxin, char **cause)
 {
 	FILE   	        *f;
 	u_int		 n;
@@ -87,14 +87,19 @@ load_cfg(const char *path, char **cause)
 			continue;
 		cfg_cause = NULL;
 
-		ctx.msgdata = NULL;
-		ctx.curclient = NULL;
+		if (ctxin == NULL) {
+			ctx.msgdata = NULL;
+			ctx.curclient = NULL;
+			ctx.cmdclient = NULL;
+		} else {
+			ctx.msgdata = ctxin->msgdata;
+			ctx.curclient = ctxin->curclient;
+			ctx.cmdclient = ctxin->cmdclient;
+		}
 
 		ctx.error = cfg_error;
 		ctx.print = cfg_print;
 		ctx.info = cfg_print;
-
-		ctx.cmdclient = NULL;
 
 		cfg_cause = NULL;
 		cmd_list_exec(cmdlist, &ctx);

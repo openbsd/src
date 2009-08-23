@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.23 2009/08/18 21:37:04 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.24 2009/08/23 17:29:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -188,9 +188,9 @@ server_start(char *path)
 			    &cause, "%s: %s", strerror(errno), SYSTEM_CFG);
 			goto error;
 		}
-	} else if (load_cfg(SYSTEM_CFG, &cause) != 0)
+	} else if (load_cfg(SYSTEM_CFG, NULL, &cause) != 0)
 		goto error;
-	if (cfg_file != NULL && load_cfg(cfg_file, &cause) != 0)
+	if (cfg_file != NULL && load_cfg(cfg_file, NULL, &cause) != 0)
 		goto error;
 
 	exit(server_main(srv_fd));

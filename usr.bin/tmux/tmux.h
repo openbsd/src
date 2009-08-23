@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.88 2009/08/23 16:45:00 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.89 2009/08/23 17:29:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1109,7 +1109,7 @@ void		 sigreset(void);
 void		 sighandler(int);
 
 /* cfg.c */
-int		 load_cfg(const char *, char **x);
+int		 load_cfg(const char *, struct cmd_ctx *, char **);
 
 /* mode-key.c */
 extern const struct mode_key_table mode_key_tables[];
