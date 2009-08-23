@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.3 2009/08/21 16:48:03 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.4 2009/08/23 13:40:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -325,35 +325,73 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
 }
 
 int
-ctl_slotnew(struct aproc *p, char *name, struct aproc *owner)
+ctl_slotnew(struct aproc *p, char *reqname, struct aproc *owner)
 {
 	char *s;
-	int index, i;
 	struct ctl_slot *slot;
+	char name[CTL_NAMEMAX];
+	unsigned i, unit, umap = 0;
 
-	DPRINTF("ctl_newslot: called by %s \"%s\"\n", owner->name, name);
-	for (index = 0, slot = p->u.ctl.slot; ; index++, slot++) {
-		if (index == CTL_NSLOT)
+	/*
+	 * create a ``valid'' control name (lowcase, remove [^a-z], trucate)
+	 */
+	for (i = 0, s = reqname; ; s++) {
+		if (i == CTL_NAMEMAX - 1 || *s == '\0') {
+			name[i] = '\0';
+			break;
+		} else if (*s >= 'A' && *s <= 'Z') {
+			name[i++] = *s + 'a' - 'A';
+		} else if (*s >= 'a' && *s <= 'z')
+			name[i++] = *s;
+	}
+	if (i == 0)
+		strlcpy(name, "noname", CTL_NAMEMAX);
+
+	/*
+	 * find the instance number of the control name
+	 */
+	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
+		if (slot->owner == NULL)
+			continue;
+		if (strcmp(slot->name, name) == 0)
+			umap |= (1 << i);
+	} 
+	for (unit = 0; unit < CTL_NSLOT; unit++) {
+		if (unit == CTL_NSLOT)
+			return -1;
+		if ((umap & (1 << i)) == 0)
+			break;
+	}
+
+	DPRINTF("ctl_newslot: using %s%u as control name\n", name, unit);
+
+	/*
+	 * find a free controller slot with the same name/unit
+	 */
+	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
+		if (slot->owner == NULL &&
+		    strcmp(slot->name, name) == 0 &&
+		    slot->unit == unit) {
+			slot->owner = owner;
+			DPRINTFN(1, "ctl_newslot: reusing %u\n", i);
+			return i;
+		}
+	}
+
+	/*
+	 * couldn't find a matching slot, pick the first free one
+	 */
+	for (i = 0, slot = p->u.ctl.slot; ; i++, slot++) {
+		if (i == CTL_NSLOT)
 			return -1;
 		if (slot->owner == NULL)
 			break;
 	}
-	for (i = 0, s = name; ; s++) {
-		if (i == CTL_NAMEMAX - 1 || *s == '\0') {
-			break;
-		} else if (*s >= 'A' && *s <= 'Z') {
-			slot->name[i++] = *s + 'a' - 'A';
-		} else if (*s >= 'a' || *s <= 'z')
-			slot->name[i++] = *s;
-	}
-	if (i == 0)
-		strlcpy(slot->name, "noname", CTL_NAMEMAX);
-	else
-		slot->name[i] = '\0';
+	DPRINTFN(1, "ctl_newslot: overwritten %u\n", i);
+	strlcpy(slot->name, name, CTL_NAMEMAX);
+	slot->unit = unit;
 	slot->owner = owner;
-	slot->unit = index;
-	DPRINTFN(1, "ctl_newslot: %s%u\n", slot->name, slot->unit);
-	return index;
+	return i;
 }
 
 void
