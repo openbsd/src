@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.27 2009/08/18 08:27:32 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.28 2009/08/23 20:06:32 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2009 $
+.Dd $Mdocdate: August 23 2009 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -191,6 +191,16 @@ the default is
 Command used to fetch remote files.
 Defaults to
 .Xr ftp 1 .
+.It Ev FTP_KEEPALIVE
+Have
+.Xr ftp 1
+send a byte after every
+.Ev FTP_KEEPALIVE
+seconds,
+so that incorrectly configured network equipment won't aggressively drop it.
+See
+.Dq ftp -k
+for more information.
 .It Ev MERGE_CMD
 Command used to merge diffs.
 This will be called with three arguments: the first argument is the
@@ -198,6 +208,8 @@ output file to create, the second argument is the currently installed
 file and the third argument is the reference file.
 If unset, this defaults to
 .Dq sdiff -as -w ${SWIDTH} -o .
+.It Ev PAGER
+Specifies the pagination program to use.
 .It Ev REPORT
 Log summary which may contain information for further, manual,
 updating.
