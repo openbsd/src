@@ -1,4 +1,4 @@
-/*	$OpenBSD: armish_intr.h,v 1.5 2009/03/15 19:40:40 miod Exp $ */
+/*	$OpenBSD: armish_intr.h,v 1.6 2009/08/23 07:53:57 krw Exp $ */
 /*	$NetBSD: i80321_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /*
@@ -91,7 +91,7 @@ void i80321_intr_bootstrap(vaddr_t);
 
 void i80321_irq_handler(void *);
 void *i80321_intr_establish(int irqno, int level, int (*func)(void *),
-    void *cookie, char *name);
+    void *cookie, const char *name);
 void i80321_intr_disestablish(void *cookie);
 const char *i80321_intr_string(void *cookie);
 
