@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.31 2009/08/12 16:42:24 beck Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.32 2009/08/24 15:51:40 thib Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
 /*
  * Structures associated with name caching.
  */
-u_long	nchash;				/* size of hash table - 1 */
 long	numcache;			/* total number of cache entries allocated */
 long	numneg;				/* number of negative cache entries */
 
