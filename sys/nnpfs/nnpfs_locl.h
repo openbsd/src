@@ -372,7 +372,7 @@ struct nnpfs_setgroups_args{
 #define nnpfs_vfs_object_create(vp,proc,ucred) vfs_object_create(vp,proc,ucred)
 #endif
 
-#if  defined(UVM) || (defined(__NetBSD__) && __NetBSD_Version__ >= 105280000)
+#if  defined(UVM) || (defined(__NetBSD__) && __NetBSD_Version__ >= 105280000) || defined(__OpenBSD__)
 #define nnpfs_set_vp_size(vp, sz) uvm_vnp_setsize(vp, sz)
 #elif HAVE_KERNEL_VNODE_PAGER_SETSIZE
 #define nnpfs_set_vp_size(vp, sz) vnode_pager_setsize(vp, sz)
