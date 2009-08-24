@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.21 2009/06/13 21:48:03 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.22 2009/08/24 22:43:10 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -260,6 +260,7 @@ device_register(struct device *dev, void *aux)
 {
 	static struct device *lastparent = NULL;
 	static struct device *pciparent = NULL;
+	static int component_pos = 0;
 
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
@@ -267,6 +268,9 @@ device_register(struct device *dev, void *aux)
 
 	const char *component;
 	int unit;
+
+	if (parent == NULL)
+		return;		/* one of the @root devices */
 
 	if (bootdv != NULL)
 		return;
@@ -347,9 +351,27 @@ device_register(struct device *dev, void *aux)
 		}
 #endif
 
-		if (strcmp(cd->cd_name, "scsibus") == 0 &&
-		    parent == lastparent)
-			goto found_advance;
+		if (strcmp(cd->cd_name, "scsibus") == 0) {
+			if (parent == lastparent)
+				goto found_advance;
+
+#if defined(TGT_O2)
+			/*
+			 * On O2, the pci(0) component may be omitted from
+			 * the bootpath, in which case we fake the missing
+			 * pci(0) component.
+			 */
+			if (sys_config.system_type == SGI_O2 &&
+			    component_pos == 0) {
+				if (parent->dv_parent != NULL &&
+				    strcmp(parent->dv_parent->dv_cfdata->cf_driver->cd_name,
+				      "pci") == 0) {
+					pciparent = parent->dv_parent;
+					goto found_advance;
+				}
+			}
+#endif
+		}
 
 		if (parent == lastparent) {
 			if (parent == pciparent) {
@@ -392,6 +414,7 @@ device_register(struct device *dev, void *aux)
 
 found_advance:
 	bootpath_next();
+	component_pos++;
 found:
 	lastparent = dev;
 }
