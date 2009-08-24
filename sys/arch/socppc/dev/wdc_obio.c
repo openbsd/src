@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.1 2009/08/24 17:48:14 kettenis Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.2 2009/08/24 17:55:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -43,7 +43,7 @@ int	wdc_obio_match(struct device *, void *, void *);
 void	wdc_obio_attach(struct device *, struct device *, void *);
 
 struct cfattach wdc_obio_ca = {
-	sizeof(struct wdc_softc), wdc_obio_match, wdc_obio_attach
+	sizeof(struct wdc_obio_softc), wdc_obio_match, wdc_obio_attach
 };
 
 /*
