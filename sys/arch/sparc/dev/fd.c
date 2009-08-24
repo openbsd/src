@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.66 2009/08/13 15:23:12 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.67 2009/08/24 08:52:13 jasper Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -716,7 +716,7 @@ fdstrategy(bp)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-	    printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld\n",
+	    printf("fdstrategy: b_blkno %d b_bcount %ld blkno %lld cylin %ld\n",
 		    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder);
 #endif
 
@@ -1371,7 +1371,7 @@ loop:
 		{int block;
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+			 printf("fdcintr: block %d != blkno %lld\n", block, fd->sc_blkno);
 #if defined(FD_DEBUG) && defined(DDB)
 			 Debugger();
 #endif
@@ -1498,7 +1498,7 @@ loop:
 				fdcstatus(fdc,
 					bp->b_flags & B_READ
 					? "read failed" : "write failed");
-				printf("blkno %d nblks %d nstat %d tc %d\n",
+				printf("blkno %lld nblks %d nstat %d tc %d\n",
 				       fd->sc_blkno, fd->sc_nblks,
 				       fdc->sc_nstat, fdc->sc_tc);
 			}

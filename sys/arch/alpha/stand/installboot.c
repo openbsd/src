@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.14 2007/06/06 17:15:11 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.15 2009/08/24 08:52:13 jasper Exp $	*/
 /*	$NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 		partoffset = 0;
 	}
 	if (verbose)
-		(void)printf("%s partition offset = 0x%lx\n", boot, partoffset);
+		(void)printf("%s partition offset = 0x%llx\n", boot, partoffset);
 
 	/* Sync filesystems (make sure boot's block numbers are stable) */
 	sync();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.94 2009/08/13 15:23:11 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.95 2009/08/24 08:51:18 jasper Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -547,7 +547,7 @@ vndstrategy(struct buf *bp)
 		if (resid < sz)
 			sz = resid;
 
-		DNPRINTF(VDB_IO, "vndstrategy: vp %p/%p bn %x/%x sz %x\n",
+		DNPRINTF(VDB_IO, "vndstrategy: vp %p/%p bn %x/%lld sz %x\n",
 		    vnd->sc_vp, vp, bn, nbn, sz);
 
 		s = splbio();
@@ -631,7 +631,7 @@ vndstart(struct vnd_softc *vnd)
 	vnd->sc_tab.b_actf = bp->b_actf;
 
 	DNPRINTF(VDB_IO,
-	    "vndstart(%d): bp %p vp %p blkno %x addr %p cnt %lx\n",
+	    "vndstart(%d): bp %p vp %p blkno %lld addr %p cnt %lx\n",
 	    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
 	    bp->b_bcount);
 
@@ -653,7 +653,7 @@ vndiodone(struct buf *bp)
 	splassert(IPL_BIO);
 
 	DNPRINTF(VDB_IO,
-	    "vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %lx\n",
+	    "vndiodone(%d): vbp %p vp %p blkno %lld addr %p cnt %lx\n",
 	    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
 	    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
 

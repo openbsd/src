@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.51 2008/11/27 22:59:52 miod Exp $ */
+/*	$OpenBSD: mcd.c,v 1.52 2009/08/24 08:51:18 jasper Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -483,11 +483,11 @@ mcdstrategy(bp)
 	int s;
 	
 	/* Test validity. */
-	MCD_TRACE("strategy: buf=0x%lx blkno=%ld bcount=%ld\n", bp,
+	MCD_TRACE("strategy: buf=0x%lx blkno=%lld bcount=%ld\n", bp,
 	    bp->b_blkno, bp->b_bcount, 0);
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % sc->blksize) != 0) {
-		printf("%s: strategy: blkno = %d bcount = %ld\n",
+		printf("%s: strategy: blkno = %lld bcount = %ld\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
 		goto bad;
@@ -1182,7 +1182,7 @@ mcdintr(arg)
 		sc->lastmode = mbx->mode;
 
 	firstblock:
-		MCD_TRACE("doread: read blkno=%d for bp=0x%x\n", mbx->blkno,
+		MCD_TRACE("doread: read blkno=%lld for bp=0x%x\n", mbx->blkno,
 		    bp, 0, 0);
 
 		/* Build parameter block. */
@@ -1730,7 +1730,7 @@ mcd_playblocks(sc, p)
 	int error;
 
 	if (sc->debug)
-		printf("%s: playblocks: blkno %d length %d\n",
+		printf("%s: playblocks: blkno %lld length %d\n",
 		    sc->sc_dev.dv_xname, p->blk, p->len);
 
 	if (p->blk > sc->disksize || p->len > sc->disksize ||

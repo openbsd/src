@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.87 2009/08/13 15:23:11 deraadt Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.88 2009/08/24 08:51:18 jasper Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -809,7 +809,7 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr64_t bn, caddr_t addr,
 		}
 		cbn *= cs->sc_ileave;
 		ci = &cs->sc_cinfo[ccdisk];
-		CCD_DPRINTF(CCDB_IO, ("ccdisk %d cbn %d ci %p ci2 %p\n",
+		CCD_DPRINTF(CCDB_IO, ("ccdisk %d cbn %lld ci %p ci2 %p\n",
 		    ccdisk, cbn, ci, ci2));
 	}
 
@@ -863,7 +863,7 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr64_t bn, caddr_t addr,
 		cbp->cb_dep = cbp2;
 	}
 
-	CCD_DPRINTF(CCDB_IO, (" dev %x(u%d): cbp %p bn %d addr %p bcnt %ld\n",
+	CCD_DPRINTF(CCDB_IO, (" dev %x(u%d): cbp %p bn %lld addr %p bcnt %ld\n",
 	    ci->ci_dev, ci-cs->sc_cinfo, cbp, bp->b_blkno,
 	    bp->b_data, bp->b_bcount));
 
@@ -909,7 +909,7 @@ ccdiodone(struct buf *vbp)
 	    "ccdiodone: mirror component\n" : 
 	    "ccdiodone: bp %p bcount %ld resid %ld\n",
 	    bp, bp->b_bcount, bp->b_resid));
-	CCD_DPRINTF(CCDB_IO, (" dev %x(u%d), cbp %p bn %d addr %p bcnt %ld\n",
+	CCD_DPRINTF(CCDB_IO, (" dev %x(u%d), cbp %p bn %lld addr %p bcnt %ld\n",
 	    vbp->b_dev, cbp->cb_comp, cbp, vbp->b_blkno,
 	    vbp->b_data, vbp->b_bcount));
 
