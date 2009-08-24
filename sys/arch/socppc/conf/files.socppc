@@ -1,4 +1,4 @@
-#	$OpenBSD: files.socppc,v 1.5 2009/08/24 14:53:41 kettenis Exp $
+#	$OpenBSD: files.socppc,v 1.6 2009/08/24 17:48:14 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -45,6 +45,10 @@ file	arch/socppc/dev/sociic.c
 # On-board DUART
 attach	com at obio with com_obio
 file	arch/socppc/dev/com_obio.c
+
+# On-board CF
+attach	wdc at obio with wdc_obio
+file	arch/socppc/dev/wdc_obio.c
 
 #
 # Media Independent Interface (mii)
