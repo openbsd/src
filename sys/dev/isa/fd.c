@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.79 2009/08/23 15:02:21 jasper Exp $	*/
+/*	$OpenBSD: fd.c,v 1.80 2009/08/24 08:31:50 jasper Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -776,7 +776,7 @@ loop:
 		{int block;
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 panic("fdintr: block %d != blkno %llu\n", block, fd->sc_blkno);
+			 panic("fdintr: block %d != blkno %llu", block, fd->sc_blkno);
 		 }}
 #endif
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
