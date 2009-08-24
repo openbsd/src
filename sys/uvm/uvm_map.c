@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.121 2009/08/13 20:40:13 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.122 2009/08/24 22:45:29 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -742,7 +742,7 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 		 * Try to fully exhaust kva prior to wrap-around.
 		 * (This may eat your ram!)
 		 */
-		if (VM_MAX_KERNEL_ADDRESS < (kva_guardstart + size)) {
+		if (VM_MAX_KERNEL_ADDRESS - kva_guardstart < size) {
 			static int wrap_counter = 0;
 			printf("uvm_map: kva guard page wrap-around %d\n",
 			    ++wrap_counter);
