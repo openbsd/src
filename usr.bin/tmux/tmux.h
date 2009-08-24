@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.89 2009/08/23 17:29:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.90 2009/08/24 08:03:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -990,9 +990,16 @@ struct cmd_ctx {
 
 	struct msg_command_data	*msgdata;
 
+	/* gcc2 doesn't understand attributes on function pointers... */
+#if defined(__GNUC__) && __GNUC__ >= 3
 	void printflike2 (*print)(struct cmd_ctx *, const char *, ...);
 	void printflike2 (*info)(struct cmd_ctx *, const char *, ...);
 	void printflike2 (*error)(struct cmd_ctx *, const char *, ...);
+#else
+	void (*print)(struct cmd_ctx *, const char *, ...);
+	void (*info)(struct cmd_ctx *, const char *, ...);
+	void (*error)(struct cmd_ctx *, const char *, ...);
+#endif
 };
 
 struct cmd {
