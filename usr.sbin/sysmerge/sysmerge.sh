@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.50 2009/08/18 08:27:32 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.51 2009/08/24 19:14:13 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -20,13 +20,15 @@
 
 umask 0022
 
-WRKDIR=`mktemp -d -p /var/tmp sysmerge.XXXXX` || exit 1
+unset AUTO_INSTALLED_FILES BATCHMODE DIFFMODE NEED_NEWALIASES
+unset OBSOLETE_FILES SRCDIR TGZ TGZURL XTGZ XTGZURL
+
+WRKDIR=`mktemp -d -p ${TMPDIR:=/var/tmp} sysmerge.XXXXX` || exit 1
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
 REPORT="${REPORT:=${WRKDIR}/sysmerge.log}"
 DBDIR="${DBDIR:=/var/db/sysmerge}"
 
-EDITOR="${EDITOR:=/usr/bin/vi}"
 PAGER="${PAGER:=/usr/bin/more}"
 
 # clean leftovers created by make in src
@@ -125,8 +127,9 @@ do_populate() {
 	echo "===> Creating and populating temporary root under"
 	echo "     ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
+	local SRCSUM ETCSUM XETCSUM
 	if [ "${SRCDIR}" ]; then
-		local SRCSUM=srcsum
+		SRCSUM=srcsum
 		cd ${SRCDIR}/etc
 		make DESTDIR=${TEMPROOT} distribution-etc-root-var > /dev/null 2>&1
 		(cd ${TEMPROOT} && find . -type f | xargs cksum >> ${WRKDIR}/${SRCSUM})
@@ -137,12 +140,12 @@ do_populate() {
 			tar -xzphf ${i} -C ${TEMPROOT};
 		done
 		if [ "${TGZ}" ]; then
-			local ETCSUM=etcsum
+			ETCSUM=etcsum
 			_E=$(cd `dirname ${TGZ}` && pwd)/`basename ${TGZ}`
 			(cd ${TEMPROOT} && tar -tzf ${_E} | xargs cksum >> ${WRKDIR}/${ETCSUM})
 		fi
 		if [ "${XTGZ}" ]; then
-			local XETCSUM=xetcsum
+			XETCSUM=xetcsum
 			_X=$(cd `dirname ${XTGZ}` && pwd)/`basename ${XTGZ}`
 			(cd ${TEMPROOT} && tar -tzf ${_X} | xargs cksum >> ${WRKDIR}/${XETCSUM})
 		fi
@@ -166,7 +169,7 @@ do_populate() {
 			for _d in ${_D}; do
 				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2> /dev/null)
 				if [ -n "`grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i}`" -a -z "`grep "${CURSUM}" ${WRKDIR}/${i}`" ]; then
-					_array="${_array} ${_d}"
+					local _array="${_array} ${_d}"
 				fi
 			done
 			if [ -n "${_array}" ]; then
@@ -307,7 +310,7 @@ merge_loop() {
 			[eE])
 				echo "editing merged file...\n"
 				if [ -z "${VISUAL}" ]; then
-					EDIT="${EDITOR}"
+					EDIT="${EDITOR:=/usr/bin/vi}"
 				else
 					EDIT="${VISUAL}"
 				fi
