@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 2009/08/18 20:35:41 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 2009/08/25 21:01:35 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -62,6 +62,10 @@ _C_LABEL(proc0paddr):	.long	0	/* proc0 p_addr */
 	.type	_C_LABEL(fwargsave),@object
 _C_LABEL(fwargsave):	.long	0
 
+	.globl	_C_LABEL(fwfdtsave)
+	.type	_C_LABEL(fwfdtsave),@object
+_C_LABEL(fwfdtsave):	.long	0
+
        .globl  _C_LABEL(hid0_idle),
        .type   _C_LABEL(hid0_idle),@object
 _C_LABEL(hid0_idle):   .long   0       /* hid0 bits to set on idle, DOZE/NAP *
@@ -82,15 +86,18 @@ _ENTRY(_ASM_LABEL(start))
 	.type start,@function
 start:
 	/* make sure address translation is disabled */
-	mfmsr	%r3
+	mfmsr	%r9
 	li	%r8,PSL_DR|PSL_IR
-	andc	%r3,%r3,%r8
+	andc	%r9,%r9,%r8
 	sync
-	mtmsr	%r3
+	mtmsr	%r9
 	isync
 
-	lis	%r3, fwargsave@ha
-	stw	%r29, fwargsave@l(%r3)
+	lis	%r8, fwargsave@ha
+	stw	%r29, fwargsave@l(%r8)
+
+	lis	%r8, fwfdtsave@ha
+	stw	%r3, fwfdtsave@l(%r8)
 
 /* compute end of kernel memory */
 	lis	%r8,_end@ha
