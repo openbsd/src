@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.471 2009/08/20 15:04:24 thib Exp $
+#	$OpenBSD: files,v 1.472 2009/08/25 16:16:34 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -482,7 +482,6 @@ pseudo-device sl: ifnet
 pseudo-device ppp: ifnet
 pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
-pseudo-device strip: ifnet
 pseudo-device enc: ifnet
 pseudo-device bridge: ifnet, ether
 pseudo-device vlan: ifnet, ether
@@ -780,7 +779,6 @@ file net/if_spppsubr.c			sppp
 file net/if_loop.c			loop
 file net/if_media.c			ifmedia
 file net/if_sl.c			sl			needs-count
-file net/if_strip.c			strip			needs-count
 file net/if_ppp.c			ppp			needs-count
 file net/ppp_tty.c			ppp
 file net/bsd-comp.c			ppp_bsdcomp
@@ -796,7 +794,7 @@ file net/raw_cb.c
 file net/raw_usrreq.c
 file net/route.c
 file net/rtsock.c
-file net/slcompress.c			sl | ppp | strip
+file net/slcompress.c			sl | ppp
 file net/if_enc.c			enc			needs-count
 file net/if_gre.c			gre			needs-count
 file net/if_trunk.c			trunk			needs-count

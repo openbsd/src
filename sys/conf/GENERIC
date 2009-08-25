@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.147 2009/08/13 15:04:20 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.148 2009/08/25 16:16:34 jsg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -79,7 +79,6 @@ pseudo-device	pfsync		# pf sync if
 pseudo-device	pflow		# pflow export if
 pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	enc	1	# option IPSEC needs the encapsulation interface
-#pseudo-device	strip	1	# Starmode Radio IP interface
 
 pseudo-device	pty	16	# initial number of pseudo-terminals
 pseudo-device	nmea	1	# NMEA 0183 line discipline

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.13 2009/05/06 18:21:23 stevesk Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.14 2009/08/25 16:16:34 jsg Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -74,16 +74,6 @@ int	pppread(struct tty *tp, struct uio *uio, int flag);
 int	pppwrite(struct tty *tp, struct uio *uio, int flag);
 #endif
 
-#include "strip.h"
-#if NSTRIP > 0
-int	stripopen(dev_t dev, struct tty *tp);
-int	stripclose(struct tty *tp, int flags);
-int	striptioctl(struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p);
-int	stripinput(int c, struct tty *tp);
-int	stripstart(struct tty *tp);
-#endif
-
 #include "nmea.h"
 #if NNMEA > 0
 int	nmeaopen(dev_t, struct tty *);
@@ -141,13 +131,9 @@ struct	linesw linesw[] =
 	  ttyerrinput, ttyerrstart, nullmodem },
 #endif
 
-#if NSTRIP > 0
-	{ stripopen, stripclose, ttyerrio, ttyerrio, striptioctl,
-	  stripinput, stripstart, nullmodem },		/* 6- STRIPDISC */
-#else
+	/* 6- STRIPDISC (defunct) */
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },
-#endif
 
 #if NNMEA > 0
 	{ nmeaopen, nmeaclose, ttread, ttwrite, nullioctl,
