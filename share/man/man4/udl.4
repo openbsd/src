@@ -1,4 +1,4 @@
-.\" $OpenBSD: udl.4,v 1.10 2009/07/23 18:29:50 maja Exp $
+.\" $OpenBSD: udl.4,v 1.11 2009/08/25 19:48:28 mglocker Exp $
 .\"
 .\" Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 23 2009 $
+.Dd $Mdocdate: August 25 2009 $
 .Dt UDL 4
 .Os
 .Sh NAME
@@ -43,6 +43,17 @@ The following devices should work:
 .It Sunweit USB to DVI
 .It Unitek Y-2240 USB to DVI
 .El
+.Sh FILES
+The device can process compressed data (Huffman pixel difference method)
+to reduce the USB payload.  To generate the compressed data, the driver
+needs to load a Huffman table which is stored in the following binary file:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/udl_huffman
+.El
+.Pp
+If the Huffman table can't be loaded, the driver will fall back to
+uncompressed mode.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr usb 4 ,
