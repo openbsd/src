@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.272 2009/08/14 20:39:02 cnst Exp $
+#	$OpenBSD: GENERIC,v 1.273 2009/08/25 16:15:07 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -356,8 +356,8 @@ scsibus* at mfi?
 #scsibus* at cac?
 ciss*	at pci?				# Compaq Smart ARRAY [56]* RAID controllers
 scsibus* at ciss?
-#iha*	at pci?				# Initio Ultra/UltraWide SCSI controllers
-#scsibus* at iha?
+iha*	at pci?				# Initio Ultra/UltraWide SCSI controllers
+scsibus* at iha?
 ips*	at pci?				# IBM ServeRAID controllers
 scsibus* at ips?
 isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
