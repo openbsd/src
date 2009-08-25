@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.19 2009/08/13 21:46:23 pirofti Exp $ */
+/* $OpenBSD: pckbd.c,v 1.20 2009/08/25 19:16:36 miod Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -330,6 +330,15 @@ pckbdprobe(parent, match, aux)
 		 * Let the probe succeed if the keyboard is used
 		 * as console input - it can be connected later.
 		 */
+#if defined(__i386__) || defined(__amd64__)
+		/*
+		 * However, on legacy-free PCs, there might really
+		 * be no PS/2 connector at all; in that case, do not
+		 * even try to attach; ukbd will take over as console.
+		 */
+		if (res == ENXIO)
+			return 0;
+#endif
 		return (pckbd_is_console(pa->pa_tag, pa->pa_slot) ? 1 : 0);
 	}
 	if (resp[0] != KBR_RSTDONE) {
@@ -401,7 +410,6 @@ pckbdattach(parent, self, aux)
 
 	/*
 	 * Attach the wskbd, saving a handle to it.
-	 * XXX XXX XXX
 	 */
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }

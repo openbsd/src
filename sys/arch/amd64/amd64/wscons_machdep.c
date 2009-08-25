@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.7 2008/07/16 20:03:22 miod Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.8 2009/08/25 19:16:34 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -68,12 +68,16 @@
 #endif
 #include "pckbd.h"
 #include "ukbd.h"
-#if (NPCKBD > 0) || (NUKBD > 0)
-#include <dev/wscons/wskbdvar.h>
-#endif
 #if (NUKBD > 0)
 #include <dev/usb/ukbdvar.h>
 #endif
+#include "wskbd.h"
+#if NWSKBD > 0
+#include <dev/wscons/wskbdvar.h>
+#endif
+
+void	wscn_video_init(void);
+void	wscn_input_init(int);
 
 cons_decl(ws);
 
@@ -100,39 +104,14 @@ wscnprobe(struct consdev *cp)
 void
 wscninit(struct consdev *cp)
 {
-	static int initted;
+	static int initted = 0;
 
 	if (initted)
 		return;
-
 	initted = 1;
 
-#if (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
-#if (NVGA > 0)
-	if (!vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM, -1, 1))
-		goto dokbd;
-#endif
-#if (NEGA > 0)
-	if (!ega_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM))
-		goto dokbd;
-#endif
-#if (NPCDISPLAY > 0)
-	if (!pcdisplay_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM))
-		goto dokbd;
-#endif
-	if (0) goto dokbd;	/* XXX stupid gcc */
-dokbd:
-#if (NPCKBC > 0)
-	if (!pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP, PCKBC_KBD_SLOT,
-	    0))
-		return;
-#endif
-#if (NUKBD > 0)
-	if (!ukbd_cnattach())
-		return;
-#endif
-#endif  /* VGA | EGA | PCDISPLAY */
-	return;
+	wscn_video_init();
+	wscn_input_init(0);
 }
 
 void
@@ -151,4 +130,68 @@ void
 wscnpollc(dev_t dev, int on)
 {
 	wskbd_cnpollc(dev, on);
+}
+
+/*
+ * Configure the display part of the console.
+ */
+void
+wscn_video_init()
+{
+#if (NVGA > 0)
+	if (vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM, -1, 1) == 0)
+		return;
+#endif
+#if (NEGA > 0)
+	if (ega_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM) == 0)
+		return;
+#endif
+#if (NPCDISPLAY > 0)
+	if (pcdisplay_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM) == 0)
+		return;
+#endif
+}
+
+/*
+ * Configure the keyboard part of the console.
+ * This is tricky, because of the games USB controllers play.
+ *
+ * On a truly legacy-free design, no PS/2 keyboard controller will be
+ * found, so we'll settle for the first USB keyboard as the console
+ * input device.
+ *
+ * Otherwise, the PS/2 controller will claim console, even if no PS/2
+ * keyboard is plugged into it.  This is intentional, so that a PS/2
+ * keyboard can be plugged late (even though this is theoretically not
+ * allowed, most PS/2 controllers survive this).
+ *
+ * However, if there isn't any PS/2 keyboard connector, but an USB
+ * controller in Legacy mode, the kernel will detect a PS/2 keyboard
+ * connected (while there really isn't any), until the USB controller
+ * driver attaches. At that point the ghost of the legacy keyboard
+ * flees away.
+ *
+ * The pckbc(4) driver will, however, detect that the keyboard is gone
+ * missing, and will invoke this function again, allowing a new console
+ * input device choice.
+ */
+
+void
+wscn_input_init(int pass)
+{
+	if (pass != 0) {
+#if NWSKBD > 0
+		wskbd_cndetach();
+#endif
+	}
+
+#if (NPCKBC > 0)
+	if (pass == 0 && pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
+	    PCKBC_KBD_SLOT, 0) == 0)
+			return;
+#endif
+#if (NUKBD > 0)
+	if (ukbd_cnattach() == 0)
+		return;
+#endif
 }
