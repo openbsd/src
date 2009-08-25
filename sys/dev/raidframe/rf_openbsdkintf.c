@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.51 2009/05/21 23:45:48 krw Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.52 2009/08/25 18:46:19 deraadt Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -263,7 +263,7 @@ struct raid_softc **raid_scPtrs;
 
 void rf_shutdown_hook(RF_ThreadArg_t);
 void raidgetdefaultlabel(RF_Raid_t *, struct raid_softc *, struct disklabel *);
-void raidgetdisklabel(dev_t, struct raid_softc *, struct disklabel *, int);
+int raidgetdisklabel(dev_t, struct raid_softc *, struct disklabel *, int);
 
 int  raidlock(struct raid_softc *);
 void raidunlock(struct raid_softc *);
@@ -2101,14 +2101,13 @@ raidgetdefaultlabel(RF_Raid_t *raidPtr, struct raid_softc *rs,
  * Read the disklabel from the raid device.
  * If one is not present, fake one up.
  */
-void
+int
 raidgetdisklabel(dev_t dev, struct raid_softc *rs, struct disklabel *lp,
     int spoofonly)
 {
 	int unit = DISKUNIT(dev);
-	char *errstring;
 	RF_Raid_t *raidPtr;
-	int i;
+	int error, i;
 	struct partition *pp;
 
 	db1_printf(("Getting the disklabel...\n"));
@@ -2122,12 +2121,10 @@ raidgetdisklabel(dev_t dev, struct raid_softc *rs, struct disklabel *lp,
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), raidstrategy, lp,
+	error = readdisklabel(DISKLABELDEV(dev), raidstrategy, lp,
 	    spoofonly);
-	if (errstring) {
-		/*printf("%s: %s\n", rs->sc_xname, errstring);*/
-		return;
-	}
+	if (error)
+		return (error);
 
 	/*
 	 * Sanity check whether the found disklabel is valid.
@@ -2151,6 +2148,7 @@ raidgetdisklabel(dev_t dev, struct raid_softc *rs, struct disklabel *lp,
 			    "exceeds the size of raid (%ld)\n",
 			    rs->sc_xname, 'a' + i, (long) rs->sc_size);
 	}
+	return (0);
 }
 
 /*
