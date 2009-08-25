@@ -1091,7 +1091,6 @@
 ./usr/include/net/if_pppvar.h
 ./usr/include/net/if_slvar.h
 ./usr/include/net/if_sppp.h
-./usr/include/net/if_stripvar.h
 ./usr/include/net/if_trunk.h
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h
