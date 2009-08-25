@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.25 2009/07/23 19:29:58 kettenis Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.26 2009/08/25 20:56:40 kettenis Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -319,7 +319,7 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int busflags,
 	if ((rv = pci_mapreg_info(pa->pa_pc, pa->pa_tag, reg, type,
 	    &base, &size, &flags)) != 0)
 		return (rv);
-#if !defined(__sparc64__) && !defined(__socppc__)
+#if !defined(__sparc64__)
 	if (base == 0) {
 		struct extent *ex;
 
