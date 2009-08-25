@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.104 2009/08/20 15:04:24 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.105 2009/08/25 13:41:29 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -895,8 +895,6 @@ nfs_adv(mdp, dposp, offs, left)
 void
 nfs_init()
 {
-	static struct timeout nfs_timer_to;
-
 	rpc_vers = txdr_unsigned(RPC_VER2);
 	rpc_call = txdr_unsigned(RPC_CALL);
 	rpc_reply = txdr_unsigned(RPC_REPLY);
@@ -919,14 +917,6 @@ nfs_init()
 
 	pool_init(&nfsreqpl, sizeof(struct nfsreq), 0, 0, 0, "nfsreqpl",
 	    &pool_allocator_nointr);
-
-	/*
-	 * Initialize reply list and start timer
-	 */
-	TAILQ_INIT(&nfs_reqq);
-
-	timeout_set(&nfs_timer_to, nfs_timer, &nfs_timer_to);
-	nfs_timer(&nfs_timer_to);
 }
 
 #ifdef NFSCLIENT

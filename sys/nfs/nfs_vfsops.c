@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.89 2009/08/20 15:04:24 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.90 2009/08/25 13:41:29 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -700,6 +700,8 @@ mountnfs(argp, mp, nam, pth, hst)
 	nfs_decode_args(nmp, argp, &mp->mnt_stat.mount_info.nfs_args);
 
 	RB_INIT(&nmp->nm_ntree);
+	TAILQ_INIT(&nmp->nm_reqsq);
+	timeout_set(&nmp->nm_rtimeout, nfs_timer, nmp);
 
 	/* Set up the sockets and per-host congestion */
 	nmp->nm_sotype = argp->sotype;
@@ -748,6 +750,7 @@ nfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
+	timeout_del(&nmp->nm_rtimeout);
 	free(nmp, M_NFSMNT);
 	return (0);
 }

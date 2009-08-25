@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.94 2009/08/10 09:38:44 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.95 2009/08/25 13:41:29 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -75,8 +75,6 @@ extern u_int32_t nfs_prog;
 extern struct nfsstats nfsstats;
 extern int nfsv3_procid[NFS_NPROCS];
 extern int nfs_ticks;
-
-struct nfsreqhead nfs_reqq;
 
 extern struct pool nfsrv_descript_pl;
 
@@ -403,11 +401,9 @@ nfs_reconnect(rep)
 	 * on old socket.
 	 */
 	s = splsoftnet();
-	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
-		if (rp->r_nmp == nmp) {
-			rp->r_flags |= R_MUSTRESEND;
-			rp->r_rexmit = 0;
-		}
+	TAILQ_FOREACH(rp, &nmp->nm_reqsq, r_chain) {
+		rp->r_flags |= R_MUSTRESEND;
+		rp->r_rexmit = 0;
 	}
 	splx(s);
 	return (0);
@@ -798,7 +794,7 @@ nfsmout:
 		 * Iff no match, just drop the datagram
 		 */
 		s = splsoftnet();
-		TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
+		TAILQ_FOREACH(rep, &nmp->nm_reqsq, r_chain) {
 			if (rep->r_mrep == NULL && rxid == rep->r_xid) {
 				/* Found it.. */
 				rep->r_mrep = info.nmi_mrep;
@@ -919,7 +915,9 @@ tryagain:
 	 * to put it LAST so timer finds oldest requests first.
 	 */
 	s = splsoftnet();
-	TAILQ_INSERT_TAIL(&nfs_reqq, rep, r_chain);
+	if (TAILQ_EMPTY(&nmp->nm_reqsq))
+		timeout_add(&nmp->nm_rtimeout, nfs_ticks);
+	TAILQ_INSERT_TAIL(&nmp->nm_reqsq, rep, r_chain);
 
 	/*
 	 * If backing off another request or avoiding congestion, don't
@@ -958,7 +956,9 @@ tryagain:
 	 * RPC done, unlink the request.
 	 */
 	s = splsoftnet();
-	TAILQ_REMOVE(&nfs_reqq, rep, r_chain);
+	TAILQ_REMOVE(&nmp->nm_reqsq, rep, r_chain);
+	if (TAILQ_EMPTY(&nmp->nm_reqsq))
+		timeout_del(&nmp->nm_rtimeout);
 	splx(s);
 
 	/*
@@ -1141,20 +1141,16 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp)
  * Scan the nfsreq list and retranmit any requests that have timed out.
  */
 void
-nfs_timer(arg)
-	void *arg;
+nfs_timer(void *arg)
 {
-	struct timeout *to = (struct timeout *)arg;
+	struct nfsmount *nmp = arg;
 	struct nfsreq *rep;
 	struct mbuf *m;
 	struct socket *so;
-	struct nfsmount *nmp;
-	int timeo;
-	int s, error;
+	int timeo, s, error;
 
 	s = splsoftnet();
-	TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
-		nmp = rep->r_nmp;
+	TAILQ_FOREACH(rep, &nmp->nm_reqsq, r_chain) {
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM))
 			continue;
 		if (nfs_sigintr(nmp, rep, rep->r_procp)) {
@@ -1237,7 +1233,7 @@ nfs_timer(arg)
 		}
 	}
 	splx(s);
-	timeout_add(to, nfs_ticks);
+	timeout_add(&nmp->nm_rtimeout, nfs_ticks);
 }
 
 /*

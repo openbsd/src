@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.49 2009/08/20 15:04:24 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.50 2009/08/25 13:41:29 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -222,11 +222,6 @@ struct nfsreq {
 	int		r_rtt;		/* RTT for rpc */
 	struct proc	*r_procp;	/* Proc that did I/O system call */
 };
-
-/*
- * Queue head for nfsreq's
- */
-extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 
 /* Flag values for r_flags */
 #define R_TIMING	0x01		/* timing request (in mntp) */
