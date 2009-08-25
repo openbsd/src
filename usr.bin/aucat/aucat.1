@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.56 2009/08/21 21:25:31 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.57 2009/08/25 21:37:18 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 21 2009 $
+.Dd $Mdocdate: August 25 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Op Fl m Ar mode
 .Op Fl o Ar file
 .Op Fl r Ar rate
-.Op Fl s Ar socket
+.Op Fl s Ar name
 .Op Fl U Ar unit
 .Op Fl v Ar volume
 .Op Fl x Ar policy
@@ -70,10 +70,8 @@ Encoding of the playback or recording stream (see below).
 The default is signed, 16-bit, native byte order.
 .It Fl f Ar device
 The
-.Xr audio 4
-device or
-.Nm
-socket to use for playing and/or recording.
+.Xr sndio 7
+audio device to use for playing and/or recording.
 .It Fl h Ar fmt
 File format of the playback or record stream (see below).
 The default is auto.
@@ -83,15 +81,16 @@ If the option argument is
 .Sq -
 then standard input will be used.
 .It Fl l
-Listen for incoming connections on Unix domain sockets.
+Listen for incoming connections on a Unix domain socket.
 This allows clients to use
 .Nm
-instead of the regular
-.Xr audio 4
-device for audio input and output
+instead of the physical audio device for audio input and output
 in order to share the physical device with other clients.
-The default socket name is
-.Pa default
+The default
+.Xr sndio 7
+device exposed is
+.Pa aucat:0
+.Pq "also known as" Pa aucat:0.default
 but other names can be used with the
 .Fl s
 option.
@@ -119,13 +118,19 @@ then standard output will be used.
 .It Fl r Ar rate
 Sample rate in Hertz of the playback or record stream.
 The default is 44100Hz.
-.It Fl s Ar socket
-Add the name
-.Ar socket
-to the list of sockets to listen on.
-.Ar socket
-cannot contain '/'.
-Meaningful in server mode only.
+.It Fl s Ar name
+Add
+.Ar name
+to the list of sub-devices to expose in server mode.
+Defining multiple sub-devices allows splitting a physical audio device
+into logical devices having different properties (eg. channel ranges).
+The given
+.Ar name
+correponds to the
+.Dq option
+part of the
+.Xr sndio 7
+device name string.
 .It Fl U Ar unit
 Unit number to use when running in server mode.
 Each
@@ -192,7 +197,7 @@ Settings for input files
 .Pq Fl i ,
 output files
 .Pq Fl o ,
-and sockets
+and sub-devices
 .Pq Fl s
 can be changed using the
 .Fl Ccehrvx
@@ -225,11 +230,12 @@ If no audio device
 is specified,
 settings are applied as if
 the default device is specified as the last argument.
-If no sockets
+If no sub-devices
 .Pq Fl s
 are specified
 settings are applied as if
-the default socket is specified as the last argument.
+.Ar default
+is specified as the last argument.
 .Pp
 File formats are specified using the
 .Fl h
@@ -397,11 +403,8 @@ will exit with an error.
 The debug level:
 may be a value between 0 and 4.
 .It Ev AUDIODEVICE
-Name of the
-.Nm
-socket to connect to, or path to the
-.Xr audio 4
-device to use if the
+.Xr sndio 7
+audio device to use if the
 .Fl f
 option is not specified.
 .El
@@ -427,16 +430,24 @@ $ aucat -n -i stereo.wav -C 0:0 -o left.wav -C 1:1 -o right.wav
 The following will start
 .Nm
 in server mode using default parameters, but will create an
-additional socket for output to channels 2:3 only (rear speakers
-on most cards):
+additional sub-device for output to channels 2:3 only (rear speakers
+on most cards), exposing the
+.Pa aucat:0
+and
+.Pa aucat:0.rear
+devices:
 .Bd -literal -offset indent
 $ aucat -l -s default -c 2:3 -s rear
 .Ed
 .Pp
 The following will start
 .Nm
-in server mode creating the default socket with low volume and
-an additional socket for high volume output:
+in server mode creating the default sub-device with low volume and
+an additional sub-device for high volume output, exposing the
+.Pa aucat:0
+and
+.Pa aucat:0.max
+devices:
 .Bd -literal -offset indent
 $ aucat -l -v 65 -s default -v 127 -s max
 .Ed
