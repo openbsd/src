@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-window.c,v 1.7 2009/08/25 12:18:51 nicm Exp $ */
+/* $OpenBSD: cmd-choose-client.c,v 1.1 2009/08/25 12:18:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -21,48 +21,43 @@
 #include "tmux.h"
 
 /*
- * Enter choice mode to choose a window.
+ * Enter choice mode to choose a client.
  */
 
-int	cmd_choose_window_exec(struct cmd *, struct cmd_ctx *);
+int	cmd_choose_client_exec(struct cmd *, struct cmd_ctx *);
 
-void	cmd_choose_window_callback(void *, int);
-void	cmd_choose_window_free(void *);
+void	cmd_choose_client_callback(void *, int);
+void	cmd_choose_client_free(void *);
 
-const struct cmd_entry cmd_choose_window_entry = {
-	"choose-window", NULL,
+const struct cmd_entry cmd_choose_client_entry = {
+	"choose-client", NULL,
 	CMD_TARGET_WINDOW_USAGE " [template]",
 	CMD_ARG01, 0,
 	cmd_target_init,
 	cmd_target_parse,
-	cmd_choose_window_exec,
+	cmd_choose_client_exec,
 	cmd_target_free,
 	cmd_target_print
 };
 
-struct cmd_choose_window_data {
+struct cmd_choose_client_data {
 	u_int		 client;
-	u_int		 session;
 	char   		*template;
 };
 
 int
-cmd_choose_window_exec(struct cmd *self, struct cmd_ctx *ctx)
+cmd_choose_client_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
 	struct cmd_target_data		*data = self->data;
-	struct cmd_choose_window_data	*cdata;
-	struct session			*s;
-	struct winlink			*wl, *wm;
-	struct window			*w;
-	u_int			 	 idx, cur;
-	char				 flag, *title;
-	const char			*left, *right;
+	struct cmd_choose_client_data	*cdata;
+	struct winlink			*wl;
+	struct client			*c;
+	u_int			 	 i, idx, cur;
 
 	if (ctx->curclient == NULL) {
 		ctx->error(ctx, "must be run interactively");
 		return (-1);
 	}
-	s = ctx->curclient->session;
 
 	if ((wl = cmd_find_window(ctx, data->target, NULL)) == NULL)
 		return (-1);
@@ -71,78 +66,54 @@ cmd_choose_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (0);
 
 	cur = idx = 0;
-	RB_FOREACH(wm, winlinks, &s->windows) {
-		w = wm->window;
-
-		if (wm == s->curw)
+	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
+		c = ARRAY_ITEM(&clients, i);
+		if (c == NULL || c->session == NULL)
+			continue;
+		if (c == ctx->curclient)
 			cur = idx;
 		idx++;
 
-		flag = ' ';
-		if (session_alert_has(s, wm, WINDOW_ACTIVITY))
-			flag = '#';
-		else if (session_alert_has(s, wm, WINDOW_BELL))
-			flag = '!';
-		else if (session_alert_has(s, wm, WINDOW_CONTENT))
-			flag = '+';
-		else if (wm == s->curw)
-			flag = '*';
-		else if (wm == SLIST_FIRST(&s->lastw))
-			flag = '-';
-
-		title = w->active->screen->title;
-		if (wm == wl)
-			title = w->active->base.title;
-		left = " \"";
-		right = "\"";
-		if (*title == '\0')
-			left = right = "";
-
-		window_choose_add(wl->window->active,
-		    wm->idx, "%3d: %s%c [%ux%u] (%u panes)%s%s%s",
-		    wm->idx, w->name, flag, w->sx, w->sy, window_count_panes(w),
-		    left, title, right);
+		window_choose_add(wl->window->active, i,
+		    "%s: %s [%ux%u %s]%s", c->tty.path,
+		    c->session->name, c->tty.sx, c->tty.sy,
+		    c->tty.termname, c->tty.flags & TTY_UTF8 ? " (utf8)" : "");
 	}
 
 	cdata = xmalloc(sizeof *cdata);
-	if (session_index(s, &cdata->session) != 0)
-		fatalx("session not found");
 	if (data->arg != NULL)
 		cdata->template = xstrdup(data->arg);
 	else
-		cdata->template = xstrdup("select-window -t '%%'");
+		cdata->template = xstrdup("detach-client -t '%%'");
 	cdata->client = server_client_index(ctx->curclient);
 
-	window_choose_ready(wl->window->active, 
-	    cur, cmd_choose_window_callback, cmd_choose_window_free, cdata);
+	window_choose_ready(wl->window->active,
+	    cur, cmd_choose_client_callback, cmd_choose_client_free, cdata);
 
- 	return (0);
+	return (0);
 }
 
 void
-cmd_choose_window_callback(void *data, int idx)
+cmd_choose_client_callback(void *data, int idx)
 {
-	struct cmd_choose_window_data	*cdata = data;
-	struct client			*c;
-	struct session			*s;
+	struct cmd_choose_client_data	*cdata = data;
+	struct client  			*c, *c2;
 	struct cmd_list			*cmdlist;
 	struct cmd_ctx			 ctx;
-	char				*target, *template, *cause;
+	char				*template, *cause;
 
 	if (idx == -1)
 		return;
 	if (cdata->client > ARRAY_LENGTH(&clients) - 1)
 		return;
 	c = ARRAY_ITEM(&clients, cdata->client);
-	if (cdata->session > ARRAY_LENGTH(&sessions) - 1)
-		return;
-	s = ARRAY_ITEM(&sessions, cdata->session);
-	if (c->session != s)
-		return;
 
-	xasprintf(&target, "%s:%d", s->name, idx);
-	template = cmd_template_replace(cdata->template, target, 1);
-	xfree(target);
+	if ((u_int) idx > ARRAY_LENGTH(&clients) - 1)
+		return;
+	c2 = ARRAY_ITEM(&clients, idx);
+	if (c2 == NULL || c2->session == NULL)
+		return;
+	template = cmd_template_replace(cdata->template, c2->tty.path, 1);
 
 	if (cmd_string_parse(template, &cmdlist, &cause) != 0) {
 		if (cause != NULL) {
@@ -169,9 +140,9 @@ cmd_choose_window_callback(void *data, int idx)
 }
 
 void
-cmd_choose_window_free(void *data)
+cmd_choose_client_free(void *data)
 {
-	struct cmd_choose_window_data	*cdata = data;
+	struct cmd_choose_client_data	*cdata = data;
 
 	xfree(cdata->template);
 	xfree(cdata);
