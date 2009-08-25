@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.80 2009/08/25 17:59:43 miod Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.81 2009/08/25 18:02:42 miod Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ malloc(unsigned long size, int type, int flags)
 	caddr_t va, cp, savedlist;
 #ifdef DIAGNOSTIC
 	int32_t *end, *lp;
-	int copysize;
+	int copysize, freshalloc;
 	char *savedtype;
 #endif
 #ifdef KMEMSTATS
@@ -256,6 +256,9 @@ malloc(unsigned long size, int type, int flags)
 #endif
 		kup = btokup(va);
 		kup->ku_indx = indx;
+#ifdef DIAGNOSTIC
+		freshalloc = 1;
+#endif
 		if (allocsize > MAXALLOCSAVE) {
 			kup->ku_pagecnt = npg;
 #ifdef KMEMSTATS
@@ -294,6 +297,10 @@ malloc(unsigned long size, int type, int flags)
 		freep->next = savedlist;
 		if (savedlist == NULL)
 			kbp->kb_last = (caddr_t)freep;
+	} else {
+#ifdef DIAGNOSTIC
+		freshalloc = 0;
+#endif
 	}
 	va = kbp->kb_next;
 	kbp->kb_next = ((struct freelist *)va)->next;
@@ -301,7 +308,7 @@ malloc(unsigned long size, int type, int flags)
 	freep = (struct freelist *)va;
 	savedtype = (unsigned)freep->type < M_LAST ?
 		memname[freep->type] : "???";
-	if (kbp->kb_next) {
+	if (freshalloc == 0 && kbp->kb_next) {
 		int rv;
 		vaddr_t addr = (vaddr_t)kbp->kb_next;
 
@@ -311,11 +318,12 @@ malloc(unsigned long size, int type, int flags)
 		vm_map_unlock(kmem_map);
 
 		if (!rv)  {
-		printf("%s %d of object %p size 0x%lx %s %s (invalid addr %p)\n",
-			"Data modified on freelist: word", 
-			(int32_t *)&kbp->kb_next - (int32_t *)kbp, va, size,
-			"previous type", savedtype, kbp->kb_next);
-		kbp->kb_next = NULL;
+			printf("%s %d of object %p size 0x%lx %s %s"
+			    " (invalid addr %p)\n",
+			    "Data modified on freelist: word", 
+			    (int32_t *)&kbp->kb_next - (int32_t *)kbp, va, size,
+			    "previous type", savedtype, addr);
+			kbp->kb_next = NULL;
 		}
 	}
 
@@ -332,14 +340,18 @@ malloc(unsigned long size, int type, int flags)
 		*lp = WEIRD_ADDR;
 
 	/* and check that the data hasn't been modified. */
-	end = (int32_t *)&va[copysize];
-	for (lp = (int32_t *)va; lp < end; lp++) {
-		if (*lp == WEIRD_ADDR)
-			continue;
-		printf("%s %d of object %p size 0x%lx %s %s (0x%x != 0x%x)\n",
-			"Data modified on freelist: word", lp - (int32_t *)va,
-			va, size, "previous type", savedtype, *lp, WEIRD_ADDR);
-		break;
+	if (freshalloc == 0) {
+		end = (int32_t *)&va[copysize];
+		for (lp = (int32_t *)va; lp < end; lp++) {
+			if (*lp == WEIRD_ADDR)
+				continue;
+			printf("%s %d of object %p size 0x%lx %s %s"
+			    " (0x%x != 0x%x)\n",
+			    "Data modified on freelist: word",
+			    lp - (int32_t *)va, va, size,
+			    "previous type", savedtype, *lp, WEIRD_ADDR);
+			break;
+		}
 	}
 
 	freep->spare0 = 0;
