@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.79 2009/02/22 19:57:59 miod Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.80 2009/08/25 17:59:43 miod Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -42,6 +42,38 @@
 #include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
+
+static __inline__ long BUCKETINDX(size_t sz)
+{
+#ifdef SMALL_KERNEL
+	long b;
+
+	if (sz-- == 0)
+		return MINBUCKET;
+
+	for (b = MINBUCKET; b < MINBUCKET + 15; b++)
+		if ((sz >> b) == 0)
+			break;
+#else
+	long b, d;
+
+	/* note that this relies upon MINALLOCSIZE being 1 << MINBUCKET */
+	b = 7 + MINBUCKET; d = 4;
+	while (d != 0) {
+		if (sz <= (1 << b))
+			b -= d;
+		else
+			b += d;
+		d >>= 1;
+	}
+	if (sz <= (1 << b))
+		b += 0;
+	else
+		b += 1;
+#endif
+
+	return b;
+}
 
 static struct vm_map kmem_map_store;
 struct vm_map *kmem_map = NULL;
