@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.98 2009/08/13 21:14:40 sthen Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.99 2009/08/25 11:04:23 sthen Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1265,7 +1265,8 @@ fxp_init(void *xsc)
 	cbp->mc_all =		allm;
 #else
 	cbp->cb_command = htole16(FXP_CB_COMMAND_CONFIG | FXP_CB_COMMAND_EL);
-	if (allm)
+
+	if (allm && !prm)
 		cbp->mc_all |= 0x08;		/* accept all multicasts */
 	else
 		cbp->mc_all &= ~0x08;		/* reject all multicasts */
@@ -1706,20 +1707,17 @@ fxp_mc_setup(struct fxp_softc *sc, int doit)
 	struct ether_multi *enm;
 	int i, nmcasts = 0;
 
-	/*
-	 * Initialize multicast setup descriptor.
-	 */
-	mcsp->cb_status = htole16(0);
-	mcsp->cb_command = htole16(FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL);
-	mcsp->link_addr = htole32(-1);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ac->ac_multirangecnt > 0 || ac->ac_multicnt >= MAXMCADDR)
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
+	    ac->ac_multicnt >= MAXMCADDR) {
 		ifp->if_flags |= IFF_ALLMULTI;
-	else {
+	} else {
 		ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
 		while (enm != NULL) {
 			bcopy(enm->enm_addrlo,
 			    (void *)&mcsp->mc_addr[nmcasts][0], ETHER_ADDR_LEN);
+
 			nmcasts++;
 
 			ETHER_NEXT_MULTI(step, enm);
@@ -1729,6 +1727,12 @@ fxp_mc_setup(struct fxp_softc *sc, int doit)
 	if (doit == 0)
 		return;
 
+	/* 
+	 * Initialize multicast setup descriptor.
+	 */
+	mcsp->cb_status = htole16(0);
+	mcsp->cb_command = htole16(FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL);
+	mcsp->link_addr = htole32(-1);
 	mcsp->mc_cnt = htole16(nmcasts * ETHER_ADDR_LEN);
 
 	/*
