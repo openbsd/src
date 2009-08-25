@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.23 2009/06/10 18:38:30 deraadt Exp $
+ * $OpenBSD: calendar.holiday,v 1.24 2009/08/25 13:46:47 jmc Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -306,7 +306,7 @@
 08/19	Independence Day in Afghanistan
 08/20	Constitution Day in Hungary and birthday of King St. Istvan
 08/24	National Flag Day in Liberia
-08/25	Constitution Day in Paragual
+08/25	Constitution Day in Paraguay
 08/25	Independence Day in Uruguay
 08/26	Susan B. Anthony Day in Massachusetts
 08/26*	Bank Holiday in England and Wales
