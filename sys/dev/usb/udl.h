@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.3 2009/05/31 18:26:44 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.4 2009/08/25 19:46:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -22,6 +22,8 @@
 #define UDL_CMD_MAX_XFER_SIZE	1048576
 #define UDL_CMD_MAX_DATA_SIZE	512
 #define UDL_CMD_MAX_PIXEL_COUNT	(UDL_CMD_MAX_DATA_SIZE / 2)
+#define UDL_CMD_WRITE_HEAD_SIZE	6
+#define UDL_CMD_COPY_HEAD_SIZE	9
 
 struct udl_cmd_xfer {
 	struct udl_softc	*sc;
@@ -31,6 +33,7 @@ struct udl_cmd_xfer {
 };
 
 struct udl_cmd_buf {
+	uint16_t		 compblock;
 	uint32_t		 off;
 	uint8_t			*buf;
 };
@@ -53,10 +56,39 @@ struct udl_softc {
 	int			 sc_cmd_xfer_cnt;
 	struct udl_cmd_xfer	 sc_cmd_xfer[UDL_CMD_XFER_COUNT];
 	struct udl_cmd_buf	 sc_cmd_buf;
+	uint8_t			*sc_huffman;
+	size_t			 sc_huffman_size;
 	uint16_t		 sc_width;
 	uint16_t		 sc_height;
 	uint8_t			 sc_depth;
 	uint8_t			 sc_cursor_on;
+
+	/*
+	 * We use function pointers to the framebuffer manipulation
+	 * functions so we can easily differ between compressed and
+	 * none-compressed mode.
+	 */
+	void			 (*udl_fb_off_write)
+				     (struct udl_softc *, uint16_t, uint32_t,
+				     uint16_t);
+	void			 (*udl_fb_line_write)
+				     (struct udl_softc *, uint16_t, uint32_t,
+				     uint32_t, uint32_t);
+	void			 (*udl_fb_block_write)
+				     (struct udl_softc *, uint16_t, uint32_t,
+				     uint32_t, uint32_t, uint32_t);
+	void			 (*udl_fb_buf_write)
+				     (struct udl_softc *, uint8_t *, uint32_t,
+				     uint32_t, uint16_t);
+	void			 (*udl_fb_off_copy)
+				     (struct udl_softc *, uint32_t, uint32_t,
+				     uint16_t);
+	void			 (*udl_fb_line_copy)
+				     (struct udl_softc *, uint32_t, uint32_t,
+				     uint32_t, uint32_t, uint32_t);
+	void			 (*udl_fb_block_copy)
+				     (struct udl_softc *, uint32_t, uint32_t,
+				     uint32_t, uint32_t, uint32_t, uint32_t);
 };
 
 /*
@@ -76,6 +108,7 @@ struct udl_softc {
 
 #define UDL_BULK_CMD_FB_BASE		0x60
 #define UDL_BULK_CMD_FB_WORD		0x08
+#define UDL_BULK_CMD_FB_COMP		0x10
 #define UDL_BULK_CMD_FB_WRITE		(UDL_BULK_CMD_FB_BASE | 0x00)
 #define UDL_BULK_CMD_FB_COPY		(UDL_BULK_CMD_FB_BASE | 0x02)
 
@@ -127,6 +160,21 @@ uint8_t udl_null_key_1[] = {
 /*
  * Compression.
  */
+struct udl_huffman {
+	uint8_t		bit_count;
+	uint32_t	bit_pattern;
+} __packed;
+#define UDL_HUFFMAN_RECORD_SIZE		sizeof(struct udl_huffman)
+#define UDL_HUFFMAN_RECORDS		(65536 + 1)
+#define UDL_HUFFMAN_BASE		(((UDL_HUFFMAN_RECORDS - 1) / 2) * \
+					    UDL_HUFFMAN_RECORD_SIZE)
+
+#define UDL_CB_TOTAL_SIZE		512
+#define UDL_CB_TAIL_SIZE		4
+#define UDL_CB_BODY_SIZE		(UDL_CB_TOTAL_SIZE - UDL_CB_TAIL_SIZE)
+#define UDL_CB_RESTART1_SIZE		(UDL_CB_BODY_SIZE - 4)
+#define UDL_CB_RESTART2_SIZE		(UDL_CB_BODY_SIZE - 9)
+
 uint8_t udl_decomp_table[] = {
 	0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
 	0x00, 0x00, 0x01, 0x60, 0x01, 0x00, 0x00, 0x00, 0x61,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.22 2009/08/09 20:10:08 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.23 2009/08/25 19:46:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -26,6 +26,9 @@
  * This driver has been inspired by the cfxga(4) driver because we have
  * to deal with similar challenges, like no direct access to the video
  * memory.
+ *
+ * TODO: - Cleanup the bcopy() and endianess mess.
+ *	 - Reduce padding overhead in compressed blocks.
  */
 
 #include <sys/param.h>
@@ -67,6 +70,7 @@ int udl_debug = 1;
  */
 int		udl_match(struct device *, void *, void *);
 void		udl_attach(struct device *, struct device *, void *);
+void		udl_attach_hook(void *);
 int		udl_detach(struct device *, int);
 int		udl_activate(struct device *, enum devact);
 
@@ -95,6 +99,8 @@ usbd_status	udl_read_edid(struct udl_softc *, uint8_t *);
 usbd_status	udl_set_enc_key(struct udl_softc *, uint8_t *, uint8_t);
 usbd_status	udl_set_decomp_table(struct udl_softc *, uint8_t *, uint16_t);
 
+int		udl_load_huffman(struct udl_softc *);
+void		udl_free_huffman(struct udl_softc *);
 usbd_status	udl_cmd_alloc_xfer(struct udl_softc *);
 void		udl_cmd_free_xfer(struct udl_softc *);
 int		udl_cmd_alloc_buf(struct udl_softc *);
@@ -104,6 +110,9 @@ void		udl_cmd_insert_int_2(struct udl_softc *, uint16_t);
 void		udl_cmd_insert_int_3(struct udl_softc *, uint32_t);
 void		udl_cmd_insert_int_4(struct udl_softc *, uint32_t);
 void		udl_cmd_insert_buf(struct udl_softc *, uint8_t *, uint32_t);
+int		udl_cmd_insert_buf_comp(struct udl_softc *, uint8_t *,
+		    uint32_t);
+int		udl_cmd_insert_head_comp(struct udl_softc *, uint32_t);
 void		udl_cmd_insert_check(struct udl_cmd_buf *, int);
 void		udl_cmd_write_reg_1(struct udl_softc *, uint8_t, uint8_t);
 void		udl_cmd_write_reg_3(struct udl_softc *, uint8_t, uint32_t);
@@ -129,6 +138,20 @@ void		udl_fb_off_copy(struct udl_softc *, uint32_t, uint32_t,
 void		udl_fb_line_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 void		udl_fb_block_copy(struct udl_softc *, uint32_t, uint32_t,
+		    uint32_t, uint32_t, uint32_t, uint32_t);
+void		udl_fb_off_write_comp(struct udl_softc *, uint16_t, uint32_t,
+		    uint16_t);
+void		udl_fb_line_write_comp(struct udl_softc *, uint16_t, uint32_t,
+		    uint32_t, uint32_t);
+void		udl_fb_block_write_comp(struct udl_softc *, uint16_t, uint32_t,
+		    uint32_t, uint32_t, uint32_t);
+void		udl_fb_buf_write_comp(struct udl_softc *, uint8_t *, uint32_t,
+		    uint32_t, uint16_t);
+void		udl_fb_off_copy_comp(struct udl_softc *, uint32_t, uint32_t,
+		    uint16_t);
+void		udl_fb_line_copy_comp(struct udl_softc *, uint32_t, uint32_t,
+		    uint32_t, uint32_t, uint32_t);
+void		udl_fb_block_copy_comp(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t, uint32_t);
 void		udl_draw_char(struct udl_softc *, uint16_t, uint16_t, u_int,
 		    uint32_t, uint32_t);
@@ -291,6 +314,44 @@ udl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wsdisplay = config_found(self, &aa, wsemuldisplaydevprint);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, &sc->sc_dev);
+
+	/*
+	 * Load Huffman table.
+	 */
+	if (rootvp == NULL)
+		mountroothook_establish(udl_attach_hook, sc);
+	else
+		udl_attach_hook(sc);
+}
+
+void
+udl_attach_hook(void *arg)
+{
+	struct udl_softc *sc = arg;
+
+	if (udl_load_huffman(sc) != 0) {
+		/* compression not possible */
+		printf("%s: run in uncompressed mode\n", DN(sc));
+		sc->udl_fb_off_write = udl_fb_off_write;
+		sc->udl_fb_line_write = udl_fb_line_write;
+		sc->udl_fb_block_write = udl_fb_block_write;
+		sc->udl_fb_buf_write = udl_fb_buf_write;
+		sc->udl_fb_off_copy = udl_fb_off_copy;
+		sc->udl_fb_line_copy = udl_fb_line_copy;
+		sc->udl_fb_block_copy = udl_fb_block_copy;
+	} else {
+		/* compression possible */
+		sc->udl_fb_off_write = udl_fb_off_write_comp;
+		sc->udl_fb_line_write = udl_fb_line_write_comp;
+		sc->udl_fb_block_write = udl_fb_block_write_comp;
+		sc->udl_fb_buf_write = udl_fb_buf_write_comp;
+		sc->udl_fb_off_copy = udl_fb_off_copy_comp;
+		sc->udl_fb_line_copy = udl_fb_line_copy_comp;
+		sc->udl_fb_block_copy = udl_fb_block_copy_comp;
+	}
+#ifdef UDL_DEBUG
+	udl_init_test(sc);
+#endif
 }
 
 int
@@ -315,6 +376,11 @@ udl_detach(struct device *self, int flags)
 	 * Free command xfer.
 	 */
 	udl_cmd_free_xfer(sc);
+
+	/*
+	 * Free Huffman table.
+	 */
+	udl_free_huffman(sc);
 
 	/*
 	 * Detach wsdisplay.
@@ -503,7 +569,7 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
 
-	udl_fb_block_copy(sc, sx, sy, dx, dy, cx, cy);
+	(sc->udl_fb_block_copy)(sc, sx, sy, dx, dy, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
 }
@@ -526,10 +592,10 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 	cy = num * sc->sc_ri.ri_font->fontheight;
 
 	/* copy row block to off-screen first to fix overlay-copy problem */
-	udl_fb_block_copy(sc, 0, sy, 0, sc->sc_ri.ri_emuheight, cx, cy);
+	(sc->udl_fb_block_copy)(sc, 0, sy, 0, sc->sc_ri.ri_emuheight, cx, cy);
 
 	/* copy row block back from off-screen now */
-	udl_fb_block_copy(sc, 0, sc->sc_ri.ri_emuheight, 0, dy, cx, cy);
+	(sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, 0, dy, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
 }
@@ -609,7 +675,7 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		 * Writting a block for the space character instead rendering
 		 * it from font bits is more slim.
 		 */
-		udl_fb_block_write(sc, bgc, x, y,
+		(sc->udl_fb_block_write)(sc, bgc, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 	} else {
 		/* render a character from font bits */
@@ -646,17 +712,17 @@ udl_do_cursor(struct rasops_info *ri)
 
 	if (sc->sc_cursor_on == 0) {
 		/* safe the last character block to off-screen */
-		udl_fb_block_copy(sc, x, y, 0, sc->sc_ri.ri_emuheight,
+		(sc->udl_fb_block_copy)(sc, x, y, 0, sc->sc_ri.ri_emuheight,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 
 		/* draw cursor */
-		udl_fb_block_write(sc, 0xffff, x, y,
+		(sc->udl_fb_block_write)(sc, 0xffff, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 
 		sc->sc_cursor_on = 1;
 	} else {
 		/* restore the last safed character from off-screen */
-		udl_fb_block_copy(sc, 0, sc->sc_ri.ri_emuheight, x, y,
+		(sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 
 		sc->sc_cursor_on = 0;
@@ -808,6 +874,38 @@ udl_set_decomp_table(struct udl_softc *sc, uint8_t *buf, uint16_t len)
 
 /* ---------- */
 
+int
+udl_load_huffman(struct udl_softc *sc)
+{
+	const char *name = "udl_huffman";
+	int error;
+
+	if (sc->sc_huffman == NULL) {
+		error = loadfirmware(name, &sc->sc_huffman,
+		    &sc->sc_huffman_size);
+		if (error != 0) {
+			printf("%s: error %d, could not read huffman table "
+			    "%s!\n", DN(sc), error, name);
+			return (EIO);
+		}
+	}
+
+	DPRINTF(1, "%s: huffman table %s allocated\n", DN(sc), name);
+
+	return (0);
+}
+
+void
+udl_free_huffman(struct udl_softc *sc)
+{
+	if (sc->sc_huffman != NULL) {
+		free(sc->sc_huffman, M_DEVBUF);
+		sc->sc_huffman = NULL;
+		sc->sc_huffman_size = 0;
+		DPRINTF(1, "%s: huffman table freed\n", DN(sc));
+	}
+}
+
 usbd_status
 udl_cmd_alloc_xfer(struct udl_softc *sc)
 {
@@ -863,6 +961,7 @@ udl_cmd_alloc_buf(struct udl_softc *sc)
 		return (ENOMEM);
 	}
 	cb->off = 0;
+	cb->compblock = 0;
 
 	return (0);
 }
@@ -948,6 +1047,126 @@ udl_cmd_insert_buf(struct udl_softc *sc, uint8_t *buf, uint32_t len)
 	cb->off += len;
 }
 
+int
+udl_cmd_insert_buf_comp(struct udl_softc *sc, uint8_t *buf, uint32_t len)
+{
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
+	struct udl_huffman *h;
+	uint8_t bit_count, bit_pos;
+	uint16_t *pixels, prev;
+	int16_t diff;
+	uint32_t bit_pattern, bit_cur;
+	int i, j, bytes, eob, padding;
+
+	udl_cmd_insert_check(cb, len);
+
+	pixels = (uint16_t *)buf;
+	bit_pos = bytes = eob = padding = 0;
+
+	/*
+	 * If the header doesn't fit into the 512 byte main-block anymore,
+	 * skip the header and finish up the main-block.  We return zero
+	 * to signal our caller that the header has been skipped.
+	 */
+	if (cb->compblock >= UDL_CB_RESTART1_SIZE) {
+		cb->off -= UDL_CMD_WRITE_HEAD_SIZE;
+		cb->compblock -= UDL_CMD_WRITE_HEAD_SIZE;
+		eob = 1;
+	}
+
+	/*
+	 * Generate a sub-block with maximal 256 pixels compressed data.
+	 */
+	for (i = 0; i < len / 2 && eob == 0; i++) {
+		/* get difference between current and previous pixel */
+		if (i > 0)
+			prev = betoh16(pixels[i - 1]);
+		else
+			prev = 0;
+
+		/* get the huffman difference bit sequence */
+		diff = betoh16(pixels[i]) - prev;
+		h = (struct udl_huffman *)(sc->sc_huffman + UDL_HUFFMAN_BASE);
+		h += diff;
+		bit_count = h->bit_count;
+		bit_pattern = betoh32(h->bit_pattern);
+
+		/* generate one pixel compressed data */
+		for (j = 0; j < bit_count; j++) {
+			if (bit_pos == 0)
+				cb->buf[cb->off] = 0;
+			bit_cur = (bit_pattern >> j) & 1;
+			cb->buf[cb->off] |= (bit_cur << bit_pos);
+			bit_pos++;
+
+			if (bit_pos == 8) {
+				bit_pos = 0;
+				cb->off++;
+				cb->compblock++;
+			}
+		}
+		bytes += 2;
+
+		/* we are near the end of the main-block, so quit loop */
+		if (cb->compblock >= UDL_CB_RESTART1_SIZE)
+			eob = 1;
+	}
+
+	/*
+	 * If we have bits left in our last byte, round up to the next
+	 * byte, so we don't overwrite them.
+	 */
+	if (bit_pos != 0) {
+		cb->off++;
+		cb->compblock++;
+	}
+
+	/*
+	 * Finish up a 512 byte main-block.  The leftover space gets
+	 * padded to zero.  Finally terminate the block by writting the
+	 * 0xff-into-UDL_REG_SYNC-register sequence.
+	 */
+	if (eob == 1) {
+		padding = (UDL_CB_BODY_SIZE - cb->compblock);
+		for (i = 0; i < padding; i++) {
+			cb->buf[cb->off] = 0;
+			cb->off++;
+			cb->compblock++;
+		}
+		udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0xff);
+		cb->compblock = 0;
+	}
+
+	/* return how many bytes we have compressed */
+	return (bytes);
+}
+
+int
+udl_cmd_insert_head_comp(struct udl_softc *sc, uint32_t len)
+{
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
+	int i, padding;
+
+	udl_cmd_insert_check(cb, len);
+
+	if (cb->compblock >= UDL_CB_RESTART2_SIZE) {
+		cb->off -= UDL_CMD_COPY_HEAD_SIZE;
+		cb->compblock -= UDL_CMD_COPY_HEAD_SIZE;
+
+		padding = (UDL_CB_BODY_SIZE - cb->compblock);
+		for (i = 0; i < padding; i++) {
+			cb->buf[cb->off] = 0;
+			cb->off++;
+			cb->compblock++;
+		}
+		udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0xff);
+		cb->compblock = 0;
+		return (0);
+	}
+
+	return (len);
+}
+
 void
 udl_cmd_insert_check(struct udl_cmd_buf *cb, int len)
 {
@@ -1005,6 +1224,7 @@ udl_cmd_send(struct udl_softc *sc)
 	    DN(sc), FUNC, len, cb->off);
 fail:
 	cb->off = 0;
+	cb->compblock = 0;
 
 	return (error);
 }
@@ -1064,6 +1284,7 @@ udl_cmd_send_async(struct udl_softc *sc)
 
 	/* free command buffer, lock xfer buffer */
 	cb->off = 0;
+	cb->compblock = 0;
 	cx->busy = 1;
 	sc->sc_cmd_xfer_cnt++;
 
@@ -1318,6 +1539,194 @@ udl_fb_block_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
 }
 
 void
+udl_fb_off_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
+    uint16_t width)
+{
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
+	uint8_t buf[UDL_CMD_MAX_DATA_SIZE];
+	uint8_t *count;
+	uint16_t lwidth, lrgb16;
+	uint32_t loff;
+	int i, r, sent;
+
+	loff = off * 2;
+	lwidth = width * 2;
+
+	for (i = 0; i < lwidth; i += 2) {
+		lrgb16 = htobe16(rgb16);
+		bcopy(&lrgb16, buf + i, 2);
+	}
+
+	/*
+	 * A new compressed stream needs the 0xff-into-UDL_REG_SYNC-register
+	 * sequence always as first command.
+	 */
+	if (cb->off == 0)
+		udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0xff);
+
+	r = sent = 0;
+	while (sent < lwidth) {
+		udl_cmd_insert_int_1(sc, UDL_BULK_SOC);
+		udl_cmd_insert_int_1(sc,
+		    UDL_BULK_CMD_FB_WRITE |
+		    UDL_BULK_CMD_FB_WORD |
+		    UDL_BULK_CMD_FB_COMP);
+		udl_cmd_insert_int_3(sc, loff + sent);
+		udl_cmd_insert_int_1(sc,
+		    width >= UDL_CMD_MAX_PIXEL_COUNT ? 0 : width);
+		cb->compblock += UDL_CMD_WRITE_HEAD_SIZE;
+
+		count = &cb->buf[cb->off - 1];
+		r = udl_cmd_insert_buf_comp(sc, buf + sent, lwidth - sent);
+		if (r > 0 && r != (lwidth - sent)) {
+			*count = r / 2;
+			width -= r / 2;
+		}
+		sent += r;
+	}
+}
+
+void
+udl_fb_line_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
+    uint32_t y, uint32_t width)
+{
+	uint32_t off, block;
+
+	off = (y * sc->sc_width) + x;
+
+	while (width) {
+		if (width > UDL_CMD_MAX_PIXEL_COUNT)	
+			block = UDL_CMD_MAX_PIXEL_COUNT;
+		else
+			block = width;
+
+		(sc->udl_fb_off_write)(sc, rgb16, off, block);
+
+		off += block;
+		width -= block;
+	}
+}
+
+void
+udl_fb_block_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
+    uint32_t y, uint32_t width, uint32_t height)
+{
+	uint32_t i;
+
+	for (i = 0; i < height; i++)
+		udl_fb_line_write_comp(sc, rgb16, x, y + i, width);
+}
+
+void
+udl_fb_buf_write_comp(struct udl_softc *sc, uint8_t *buf, uint32_t x,
+    uint32_t y, uint16_t width)
+{
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
+	uint8_t *count;
+	uint16_t lwidth;
+	uint32_t off;
+	int r, sent;
+
+	off = ((y * sc->sc_width) + x) * 2;
+	lwidth = width * 2;
+
+	/*
+	 * A new compressed stream needs the 0xff-into-UDL_REG_SYNC-register
+	 * sequence always as first command.
+	 */
+	if (cb->off == 0)
+		udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0xff);
+
+	r = sent = 0;
+	while (sent < lwidth) {
+		udl_cmd_insert_int_1(sc, UDL_BULK_SOC);
+		udl_cmd_insert_int_1(sc,
+		    UDL_BULK_CMD_FB_WRITE |
+		    UDL_BULK_CMD_FB_WORD |
+		    UDL_BULK_CMD_FB_COMP);
+		udl_cmd_insert_int_3(sc, off + sent);
+		udl_cmd_insert_int_1(sc,
+		    width >= UDL_CMD_MAX_PIXEL_COUNT ? 0 : width);
+		cb->compblock += UDL_CMD_WRITE_HEAD_SIZE;
+
+		count = &cb->buf[cb->off - 1];
+		r = udl_cmd_insert_buf_comp(sc, buf + sent, lwidth - sent);
+		if (r > 0 && r != (lwidth - sent)) {
+			*count = r / 2;
+			width -= r / 2;
+		}
+		sent += r;
+	}
+}
+
+void
+udl_fb_off_copy_comp(struct udl_softc *sc, uint32_t src_off, uint32_t dst_off,
+    uint16_t width)
+{
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
+	uint32_t ldst_off, lsrc_off;
+	int r;
+
+	ldst_off = dst_off * 2;
+	lsrc_off = src_off * 2;
+
+	/*
+	 * A new compressed stream needs the 0xff-into-UDL_REG_SYNC-register
+	 * sequence always as first command.
+	 */
+	if (cb->off == 0)
+		udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0xff);
+
+	r = 0;
+	while (r < 1) {
+		udl_cmd_insert_int_1(sc, UDL_BULK_SOC);
+		udl_cmd_insert_int_1(sc,
+		    UDL_BULK_CMD_FB_COPY | UDL_BULK_CMD_FB_WORD);
+		udl_cmd_insert_int_3(sc, ldst_off);
+		udl_cmd_insert_int_1(sc,
+		    width >= UDL_CMD_MAX_PIXEL_COUNT ? 0 : width);
+		udl_cmd_insert_int_3(sc, lsrc_off);
+		cb->compblock += UDL_CMD_COPY_HEAD_SIZE;
+
+		r = udl_cmd_insert_head_comp(sc, UDL_CMD_COPY_HEAD_SIZE);
+	}
+}
+
+void
+udl_fb_line_copy_comp(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
+    uint32_t dst_x, uint32_t dst_y, uint32_t width)
+{
+	uint32_t src_off, dst_off, block;
+
+	src_off = (src_y * sc->sc_width) + src_x;
+	dst_off = (dst_y * sc->sc_width) + dst_x;
+
+	while (width) {
+		if (width > UDL_CMD_MAX_PIXEL_COUNT)
+			block = UDL_CMD_MAX_PIXEL_COUNT;
+		else
+			block = width;
+
+		udl_fb_off_copy_comp(sc, src_off, dst_off, block);
+
+		src_off += block;
+		dst_off += block;
+		width -= block;
+	}
+}
+
+void
+udl_fb_block_copy_comp(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
+    uint32_t dst_x, uint32_t dst_y, uint32_t width, uint32_t height)
+{
+	int i;
+
+	for (i = 0; i < height; i++)
+		udl_fb_line_copy_comp(sc, src_x, src_y + i, dst_x, dst_y + i,
+		    width);
+}
+
+void
 udl_draw_char(struct udl_softc *sc, uint16_t fg, uint16_t bg, u_int uc,
     uint32_t x, uint32_t y)
 {
@@ -1344,7 +1753,7 @@ udl_draw_char(struct udl_softc *sc, uint16_t fg, uint16_t bg, u_int uc,
 			bcopy(&lrgb16, line, 2);
 			line++;
 		}
-		udl_fb_buf_write(sc, buf, x, ly, font->fontwidth);
+		(sc->udl_fb_buf_write)(sc, buf, x, ly, font->fontwidth);
 		ly++;
 
 		fontchar += font->stride;
@@ -1388,7 +1797,7 @@ udl_init_test(struct udl_softc *sc)
 			parts += parts;
 			j++;
 		}
-		udl_fb_off_write(sc, color, i * UDL_CMD_MAX_PIXEL_COUNT,
+		(sc->udl_fb_off_write)(sc, color, i * UDL_CMD_MAX_PIXEL_COUNT,
 		    UDL_CMD_MAX_PIXEL_COUNT);
 	}
 	(void)udl_cmd_send(sc);
