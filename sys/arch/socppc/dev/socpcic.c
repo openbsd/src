@@ -1,4 +1,4 @@
-/*	$OpenBSD: socpcic.c,v 1.4 2009/08/22 02:54:51 mk Exp $	*/
+/*	$OpenBSD: socpcic.c,v 1.5 2009/08/25 20:50:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -76,6 +76,8 @@ socpcic_attach(struct device *parent, struct device *self, void *aux)
 	struct socpcic_softc *sc = (void *)self;
 	struct obio_attach_args *oa = aux;
 	struct pcibus_attach_args pba;
+	struct extent *io_ex;
+	struct extent *mem_ex;
 
 	sc->sc_iot = oa->oa_iot;
 	if (bus_space_map(sc->sc_iot, oa->oa_offset, 16, 0, &sc->sc_cfg_ioh)) {
@@ -83,8 +85,12 @@ socpcic_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_mem_bus_space.bus_base = 0x80000000;
+	sc->sc_mem_bus_space.bus_size = 0x21000000;
+	sc->sc_mem_bus_space.bus_io = 0;
 	sc->sc_io_bus_space.bus_base = 0xe2000000;
 	sc->sc_io_bus_space.bus_size = 0x01000000;
+	sc->sc_io_bus_space.bus_io = 1;
 
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_attach_hook = socpcic_attach_hook;
@@ -102,11 +108,22 @@ socpcic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_intr_disestablish = socpcic_intr_disestablish;
 	sc->sc_pc.pc_ether_hw_addr = socpcic_ether_hw_addr;
 
+	io_ex = extent_create("pciio", 0, 0xffffffff, M_DEVBUF, NULL, 0,
+	    EX_NOWAIT | EX_FILLED);
+	if (io_ex != NULL)
+		extent_free(io_ex, 0x00000000, 0x01000000, EX_NOWAIT);
+	mem_ex = extent_create("pcimem", 0, 0xffffffff, M_DEVBUF, NULL, 0,
+	    EX_NOWAIT | EX_FILLED);
+	if (mem_ex != NULL)
+		extent_free(mem_ex, 0x80000000, 0x20000000, EX_NOWAIT);
+
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_io_bus_space;
 	pba.pba_memt = &sc->sc_mem_bus_space;
 	pba.pba_dmat = oa->oa_dmat;
+	pba.pba_ioex = io_ex;
+	pba.pba_memex = mem_ex;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
