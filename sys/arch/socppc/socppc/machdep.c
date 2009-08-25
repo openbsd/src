@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2009/08/11 19:17:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2009/08/25 21:18:20 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 
 #include <machine/bat.h>
 #include <machine/bus.h>
+#include <machine/fdt.h>
 #include <machine/pio.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
@@ -112,6 +113,7 @@ struct bd_info {
 } bootinfo;
 
 extern struct bd_info **fwargsave;
+extern struct fdt_head *fwfdtsave;
 
 void uboot_mem_regions(struct mem_region **, struct mem_region **);
 void uboot_vmon(void);
@@ -179,7 +181,48 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 
 	/* Make a copy of the args! */
 	strlcpy(bootpathbuf, args ? args : "wd0a", sizeof bootpathbuf);
-	memcpy(&bootinfo, *fwargsave, sizeof bootinfo);
+
+	if (fwfdtsave) {
+		/*
+		 * We were loaded by a newer U-boot or RouterBOOT.
+		 * Both provide a flattened device tree.
+		 *
+		 * XXX We only support RouterBOOT and fake a bootinfo
+		 * structure.
+		 */
+		bootinfo.bi_memstart = 0x00000000;
+		bootinfo.bi_memsize = 0x07ffffff;
+		bootinfo.bi_immr_base = 0xe0000000;
+		bootinfo.bi_enetaddr[0] = 0x00;
+		bootinfo.bi_enetaddr[1] = 0x0c;
+		bootinfo.bi_enetaddr[2] = 0x42;
+		bootinfo.bi_enetaddr[3] = 0x20;
+		bootinfo.bi_enetaddr[4] = 0xc6;
+		bootinfo.bi_enetaddr[5] = 0xe5;
+	} else {
+		/*
+		 * We were loaded by an old U-Boot that didn't provide
+		 * a flattened device tree.  It should have provided a
+		 * valid bootinfo structure which we'll use to build
+		 * such a device tree ourselves.
+		 *
+		 * XXX We don't build a flattened device tree yet.
+		 */
+		memcpy(&bootinfo, *fwargsave, sizeof bootinfo);
+	}
+
+	if (fwfdtsave && fwfdtsave->fh_magic == FDT_MAGIC) {
+		/* 
+		 * Save the FDT firmware blob passed by the bootloader
+		 * before we zero all memory.
+		 * 
+		 */
+		void *fdt = (void *)endkernel;
+		memcpy(fdt, fwfdtsave, fwfdtsave->fh_size);
+		endkernel += fwfdtsave->fh_size;
+
+		fdt_init(fdt);
+	}
 
 	proc0.p_cpu = &cpu_info[0];
 	proc0.p_addr = proc0paddr;
