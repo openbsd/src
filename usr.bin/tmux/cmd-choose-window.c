@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-window.c,v 1.7 2009/08/25 12:18:51 nicm Exp $ */
+/* $OpenBSD: cmd-choose-window.c,v 1.8 2009/08/25 13:32:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -17,6 +17,8 @@
  */
 
 #include <sys/types.h>
+
+#include <ctype.h>
 
 #include "tmux.h"
 
