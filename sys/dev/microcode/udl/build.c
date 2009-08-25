@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.2 2009/08/25 21:43:24 deraadt Exp $ */
+/*	$OpenBSD: build.c,v 1.3 2009/08/25 21:45:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -40,8 +40,10 @@ main(void)
 	for (i = 0; i < UDL_HUFFMAN_RECORDS; i++) {
 		size = udl_huffman[i].size;
 		value = htobe32(udl_huffman[i].value);
-		write(fd, &size, sizeof(size));
-		write(fd, &value, sizeof(value));
+		if (write(fd, &size, sizeof(size)) == -1)
+			err(1, "write");
+		if (write(fd, &value, sizeof(value)) == -1)
+			err(1, "write");
 	}
 
 	close(fd);
