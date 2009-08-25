@@ -47,11 +47,11 @@ int	priv_init(int, char **);
 void    priv_init_done(void);
 
 int	setfilter(int, int, char *);
-int	pcap_live(const char *, int, int, u_int, pcap_direction_t);
+int	pcap_live(const char *, int, int, u_int, u_int);
 
 struct bpf_program *priv_pcap_setfilter(pcap_t *, int, u_int32_t);
 pcap_t *priv_pcap_live(const char *, int, int, int, char *, u_int,
-	    pcap_direction_t);
+	    u_int);
 pcap_t *priv_pcap_offline(const char *, char *);
 
 size_t	priv_gethostbyaddr(char *, size_t, int, char *, size_t);
