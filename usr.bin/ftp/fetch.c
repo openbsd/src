@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.95 2009/08/06 23:33:35 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.96 2009/08/26 11:54:31 sthen Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -732,7 +732,7 @@ again:
 			free(proxyurl);
 			free(newline);
 			free(cookie);
-			rval = url_get(cp, proxyenv, outfile);
+			rval = url_get(cp, proxyenv, savefile);
 			free(buf);
 			return (rval);
 		}
