@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_obio.c,v 1.1 2008/05/10 12:02:20 kettenis Exp $	*/
+/*	$OpenBSD: com_obio.c,v 1.2 2009/08/26 17:47:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -51,7 +51,7 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = oa->oa_iot;
 	sc->sc_iobase = oa->oa_offset;
-	sc->sc_frequency = 266666666; /* XXX */
+	sc->sc_frequency = comconsfreq; /* XXX */
 
 	if (sc->sc_iobase != comconsaddr) {
 		if (bus_space_map(sc->sc_iot, sc->sc_iobase,
