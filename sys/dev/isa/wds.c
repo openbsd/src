@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.28 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: wds.c,v 1.29 2009/08/26 22:29:09 jasper Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -78,10 +78,6 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/wdsreg.h>
-
-#ifndef DDB
-#define Debugger() panic("should call debugger here (wds.c)")
-#endif /* ! DDB */
 
 #define WDS_MBX_SIZE	16
 
@@ -1403,10 +1399,8 @@ wds_timeout(arg)
 	 * If The scb's mbx is not free, then the board has gone south?
 	 */
 	wds_collect_mbo(sc);
-	if (scb->flags & SCB_SENDING) {
-		printf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
-		Debugger();
-	}
+	if (scb->flags & SCB_SENDING)
+		panic("%s: not taking commands!", sc->sc_dev.dv_xname);
 #endif
 
 	/*

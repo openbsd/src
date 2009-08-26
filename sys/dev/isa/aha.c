@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.63 2009/04/14 16:01:04 oga Exp $	*/
+/*	$OpenBSD: aha.c,v 1.64 2009/08/26 22:29:09 jasper Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -72,10 +72,6 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/ahareg.h>
-
-#ifndef DDB
-#define Debugger() panic("should call debugger here (aha1542.c)")
-#endif /* ! DDB */
 
 /* XXX fixme:
  * on i386 at least, xfers to/from user memory
@@ -845,19 +841,12 @@ aha_done(sc, ccb)
 	 * into the xfer and call whoever started it
 	 */
 #ifdef AHADIAG
-	if (ccb->flags & CCB_SENDING) {
-		printf("%s: exiting ccb still in transit!\n",
-		    sc->sc_dev.dv_xname);
-		Debugger();
-		return;
-	}
+	if (ccb->flags & CCB_SENDING)
+		panic("%s: exiting ccb still in transit!", sc->sc_dev.dv_xname);
 #endif
-	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n",
-		    sc->sc_dev.dv_xname);
-		Debugger();
-		return;
-	}
+	if ((ccb->flags & CCB_ALLOC) == 0)
+		panic("%s: exiting ccb not allocated!", sc->sc_dev.dv_xname);
+
 	if (xs->error == XS_NOERROR) {
 		if (ccb->host_stat != AHA_OK) {
 			switch (ccb->host_stat) {
@@ -1434,10 +1423,8 @@ aha_timeout(arg)
 	 * If The ccb's mbx is not free, then the board has gone south?
 	 */
 	aha_collect_mbo(sc);
-	if (ccb->flags & CCB_SENDING) {
-		printf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
-		Debugger();
-	}
+	if (ccb->flags & CCB_SENDING)
+		panic("%s: not taking commands!\n", sc->sc_dev.dv_xname);
 #endif
 
 	/*
