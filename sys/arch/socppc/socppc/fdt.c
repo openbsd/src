@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.2 2009/08/25 21:27:24 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.3 2009/08/26 17:30:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -27,7 +27,6 @@ char	*fdt_get_str(u_int32_t);
 void	*skip_property(u_int32_t *);
 void	*skip_props(u_int32_t *);
 void	*skip_node_name(u_int32_t *);
-void	*fdt_find_node_recurse(void *node, char *name);
 #ifdef DEBUG
 void 	 fdt_print_node_recurse(void *, int);
 #endif
@@ -262,44 +261,41 @@ fdt_node_name(void *node)
 }
 
 void *
-fdt_find_node_recurse(void *node, char *name)
-{
-	void *child;
-	void *tmp;
-	char *nname;
-	int len;
-
-	tmp = 0;
-
-	if (!(nname = fdt_node_name(node)))
-		return NULL;
-
-	/* root directory for version >= 16 can be null */
-	if ((strlen(nname) == 0) && (tree.version >= 16)) {
-		if (!strcmp(name, "/"))
-			return node;
-	} else {
-		len = (strlen(name) > strlen(nname)) ? strlen(nname) :
-		    strlen(name);
-		if (!strncmp(name, nname, len)) {
-			return node;
-		}
-	}
-
-	for (child = fdt_child_node(node); child && (!tmp);
-	    child = fdt_next_node(child))
-		tmp = fdt_find_node_recurse(child, name);
-
-	return (tmp) ? tmp : NULL;
-}
-
-void *
 fdt_find_node(char *name)
 {
+	void *node = fdt_next_node(0);
+	const char *p = name;
+
 	if (!tree_inited)
 		return NULL;
 
-	return fdt_find_node_recurse(fdt_next_node(0), name);
+	if (*p != '/')
+		return NULL;
+
+	while (*p) {
+		void *child;
+		const char *q;
+
+		while (*p == '/')
+			p++;
+		if (*p == 0)
+			return node;
+		q = strchr(p, '/');
+		if (q == NULL)
+			q = p + strlen(p);
+
+		for (child = fdt_child_node(node); child;
+		     child = fdt_next_node(child)) {
+			if (strncmp(p, fdt_node_name(child), q - p) == 0) {
+				node = child;
+				break;
+			}
+		}
+
+		p = q;
+	}
+
+	return node;
 }
 
 #ifdef DEBUG
