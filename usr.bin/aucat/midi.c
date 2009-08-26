@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.5 2009/08/26 06:10:15 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.6 2009/08/26 08:28:21 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -331,6 +331,7 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 	struct ctl_slot *slot;
 	char name[CTL_NAMEMAX];
 	unsigned i, unit, umap = 0;
+	unsigned ser, bestser, bestidx;
 
 	/*
 	 * create a ``valid'' control name (lowcase, remove [^a-z], trucate)
@@ -380,20 +381,29 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 	}
 
 	/*
-	 * couldn't find a matching slot, pick the first free one
+	 * couldn't find a matching slot, pick oldest free slot
 	 */
-	for (i = 0, slot = p->u.ctl.slot; ; i++, slot++) {
-		if (i == CTL_NSLOT)
-			return -1;
-		if (slot->cb == NULL)
-			break;
+	bestser = 0;
+	bestidx = CTL_NSLOT;
+	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
+		if (slot->cb != NULL)
+			continue;
+		ser = p->u.ctl.serial - slot->serial;
+		if (ser > bestser) {
+			bestser = ser;
+			bestidx = i;
+		}
 	}
-	DPRINTFN(1, "ctl_newslot: overwritten %u\n", i);
+	if (bestidx == CTL_NSLOT)
+		return -1;
+	slot = p->u.ctl.slot + bestidx;
 	strlcpy(slot->name, name, CTL_NAMEMAX);
+	slot->serial = p->u.ctl.serial++;
 	slot->unit = unit;
 	slot->cb = cb;
 	slot->arg = arg;
-	return i;
+	DPRINTFN(1, "ctl_newslot: %u overwritten)\n", bestidx);
+	return bestidx;
 }
 
 void
@@ -509,7 +519,7 @@ ctl_done(struct aproc *p)
 
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
 		if (s->cb != NULL)
-			DPRINTF("ctl_done: %s%u not freed\n", s->name, s->unit);
+			DPRINTF("ctl_done: %s%u in use\n", s->name, s->unit);
 	}
 }
 
@@ -534,9 +544,11 @@ ctl_new(char *name)
 	unsigned i;
 
 	p = aproc_new(&ctl_ops, name);
+	p->u.ctl.serial = 0;
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
 		p->u.ctl.slot[i].unit = i;
 		p->u.ctl.slot[i].cb = NULL;
+		p->u.ctl.slot[i].serial = p->u.ctl.serial++;
 		strlcpy(p->u.ctl.slot[i].name, "unknown", CTL_NAMEMAX);
 	}
 	return p;
