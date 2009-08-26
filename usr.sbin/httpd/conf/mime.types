@@ -53,7 +53,7 @@ application/ocsp-request
 application/ocsp-response
 application/octet-stream	bin dms lha lzh exe class so dll
 application/oda			oda
-application/ogg			ogg
+application/ogg			ogx oggx
 application/parityfec
 application/pdf			pdf
 application/pgp-encrypted
@@ -417,6 +417,7 @@ audio/mpa
 audio/mpa-robust
 audio/mp4a-latm
 audio/mpeg			mpga mp2 mp3
+audio/ogg			oga ogga spx
 audio/parityfec
 audio/pcma
 audio/pcmu
@@ -580,6 +581,7 @@ video/mp4v-es
 video/mpv
 video/mpeg			mpeg mpg mpe
 video/nv
+video/ogg			ogv oggv
 video/parityfec
 video/pointer
 video/quicktime			qt mov
