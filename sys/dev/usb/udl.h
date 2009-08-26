@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.4 2009/08/25 19:46:51 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.5 2009/08/26 12:23:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -161,9 +161,9 @@ uint8_t udl_null_key_1[] = {
  * Compression.
  */
 struct udl_huffman {
-	uint8_t		bit_count;
+	uint32_t	bit_count;
 	uint32_t	bit_pattern;
-} __packed;
+};
 #define UDL_HUFFMAN_RECORD_SIZE		sizeof(struct udl_huffman)
 #define UDL_HUFFMAN_RECORDS		(65536 + 1)
 #define UDL_HUFFMAN_BASE		(((UDL_HUFFMAN_RECORDS - 1) / 2) * \

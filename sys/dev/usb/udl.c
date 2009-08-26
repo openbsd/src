@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.23 2009/08/25 19:46:51 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.24 2009/08/26 12:23:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1052,10 +1052,10 @@ udl_cmd_insert_buf_comp(struct udl_softc *sc, uint8_t *buf, uint32_t len)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 	struct udl_huffman *h;
-	uint8_t bit_count, bit_pos;
+	uint8_t bit_pos;
 	uint16_t *pixels, prev;
 	int16_t diff;
-	uint32_t bit_pattern, bit_cur;
+	uint32_t bit_count, bit_pattern, bit_cur;
 	int i, j, bytes, eob, padding;
 
 	udl_cmd_insert_check(cb, len);

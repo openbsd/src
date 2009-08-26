@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 2009/08/25 21:45:26 deraadt Exp $ */
+/*	$OpenBSD: build.c,v 1.4 2009/08/26 12:23:39 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -30,7 +30,7 @@ int
 main(void)
 {
 	int fd, i;
-	uint8_t size;
+	uint32_t size;
 	uint32_t value;
 
 	fd = open(FILENAME, O_WRONLY | O_CREAT | O_TRUNC, 0644);

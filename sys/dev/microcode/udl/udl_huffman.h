@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl_huffman.h,v 1.2 2009/08/25 21:36:34 deraadt Exp $ */
+/*	$OpenBSD: udl_huffman.h,v 1.3 2009/08/26 12:23:39 mglocker Exp $ */
 
 /*
  * Huffman table for pixel difference compression.
@@ -14,7 +14,7 @@
 #define UDL_HUFFMAN_RECORDS 65536 + 1
 
 struct record {
-	uint8_t		size;
+	uint32_t	size;
 	uint32_t	value;
 } udl_huffman[] = {
 	{ 20, 966905 },
