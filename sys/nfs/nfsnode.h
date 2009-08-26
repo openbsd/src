@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.35 2009/08/20 15:04:24 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.36 2009/08/26 12:08:10 thib Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -143,6 +143,7 @@ struct nfs_aiod {
 	LIST_ENTRY(nfs_aiod)	 nad_idle;
 	struct nfsmount		*nad_mnt;
 	int			 nad_exiting;
+	int			 nad_worked; /* Was removed from idle list. */
 };
 
 LIST_HEAD(nfs_aiodhead, nfs_aiod);

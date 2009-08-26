@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.63 2009/08/20 15:04:24 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.64 2009/08/26 12:08:10 thib Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -517,10 +517,11 @@ nfs_asyncio(struct buf *bp)
 	aiod = LIST_FIRST(&nfs_aiods_idle);
 	if (aiod) {
 		/*
-		 * Found an avilable aiod, wake it up and send
+		 * Found an available aiod, wake it up and send
 		 * it to work on this mount.
 		 */
 		LIST_REMOVE(aiod, nad_idle);
+		aiod->nad_worked = 1;
 		mtx_leave(&nfs_aiodl_mtx);
 		gotone = 1;
 		KASSERT(aiod->nad_mnt == NULL);

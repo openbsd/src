@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_aiod.c,v 1.1 2009/08/20 15:04:24 thib Exp $	*/
+/*	$OpenBSD: nfs_aiod.c,v 1.2 2009/08/26 12:08:10 thib Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -82,6 +82,7 @@ nfs_aiod(void *arg)
 	aiod = malloc(sizeof(*aiod), M_TEMP, M_WAITOK|M_ZERO);
 	mtx_enter(&nfs_aiodl_mtx);
 	LIST_INSERT_HEAD(&nfs_aiods_all, aiod, nad_all);
+	LIST_INSERT_HEAD(&nfs_aiods_idle, aiod, nad_idle);
 	mtx_leave(&nfs_aiodl_mtx);
 	nfs_numaiods++;
 
@@ -102,7 +103,10 @@ nfs_aiod(void *arg)
 
 loop:	/* Loop around until SIGKILL */
 	mtx_enter(&nfs_aiodl_mtx);
-	LIST_INSERT_HEAD(&nfs_aiods_idle, aiod, nad_idle);
+	if (aiod->nad_worked) {
+		LIST_INSERT_HEAD(&nfs_aiods_idle, aiod, nad_idle);
+		aiod->nad_worked = 0;
+	}
 	mtx_leave(&nfs_aiodl_mtx);
 
 	while (1) {
