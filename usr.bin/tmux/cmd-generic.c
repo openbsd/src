@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-generic.c,v 1.6 2009/08/11 12:53:37 nicm Exp $ */
+/* $OpenBSD: cmd-generic.c,v 1.7 2009/08/26 18:09:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -155,6 +155,7 @@ cmd_target_init(struct cmd *self, unused int key)
 	data->chflags = 0;
 	data->target = NULL;
 	data->arg = NULL;
+	data->arg2 = NULL;
 }
 
 int
@@ -204,6 +205,8 @@ cmd_target_free(struct cmd *self)
 		xfree(data->target);
 	if (data->arg != NULL)
 		xfree(data->arg);
+	if (data->arg2 != NULL)
+		xfree(data->arg2);
 	xfree(data);
 }
 
@@ -236,6 +239,7 @@ cmd_srcdst_init(struct cmd *self, unused int key)
 	data->src = NULL;
 	data->dst = NULL;
 	data->arg = NULL;
+	data->arg2 = NULL;
 }
 
 int
@@ -290,6 +294,8 @@ cmd_srcdst_free(struct cmd *self)
 		xfree(data->dst);
 	if (data->arg != NULL)
 		xfree(data->arg);
+	if (data->arg2 != NULL)
+		xfree(data->arg2);
 	xfree(data);
 }
 
@@ -324,6 +330,7 @@ cmd_buffer_init(struct cmd *self, unused int key)
 	data->target = NULL;
 	data->buffer = -1;
 	data->arg = NULL;
+	data->arg2 = NULL;
 }
 
 int
@@ -384,6 +391,8 @@ cmd_buffer_free(struct cmd *self)
 		xfree(data->target);
 	if (data->arg != NULL)
 		xfree(data->arg);
+	if (data->arg2 != NULL)
+		xfree(data->arg2);
 	xfree(data);
 }
 
