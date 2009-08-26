@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.4 2009/08/23 13:40:45 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.5 2009/08/26 06:10:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -325,7 +325,7 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
 }
 
 int
-ctl_slotnew(struct aproc *p, char *reqname, struct aproc *owner)
+ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 {
 	char *s;
 	struct ctl_slot *slot;
@@ -335,7 +335,7 @@ ctl_slotnew(struct aproc *p, char *reqname, struct aproc *owner)
 	/*
 	 * create a ``valid'' control name (lowcase, remove [^a-z], trucate)
 	 */
-	for (i = 0, s = reqname; ; s++) {
+	for (i = 0, s = who; ; s++) {
 		if (i == CTL_NAMEMAX - 1 || *s == '\0') {
 			name[i] = '\0';
 			break;
@@ -351,7 +351,7 @@ ctl_slotnew(struct aproc *p, char *reqname, struct aproc *owner)
 	 * find the instance number of the control name
 	 */
 	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
-		if (slot->owner == NULL)
+		if (slot->cb == NULL)
 			continue;
 		if (strcmp(slot->name, name) == 0)
 			umap |= (1 << i);
@@ -369,10 +369,11 @@ ctl_slotnew(struct aproc *p, char *reqname, struct aproc *owner)
 	 * find a free controller slot with the same name/unit
 	 */
 	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
-		if (slot->owner == NULL &&
+		if (slot->cb == NULL &&
 		    strcmp(slot->name, name) == 0 &&
 		    slot->unit == unit) {
-			slot->owner = owner;
+			slot->cb = cb;
+			slot->arg = arg;
 			DPRINTFN(1, "ctl_newslot: reusing %u\n", i);
 			return i;
 		}
@@ -384,20 +385,21 @@ ctl_slotnew(struct aproc *p, char *reqname, struct aproc *owner)
 	for (i = 0, slot = p->u.ctl.slot; ; i++, slot++) {
 		if (i == CTL_NSLOT)
 			return -1;
-		if (slot->owner == NULL)
+		if (slot->cb == NULL)
 			break;
 	}
 	DPRINTFN(1, "ctl_newslot: overwritten %u\n", i);
 	strlcpy(slot->name, name, CTL_NAMEMAX);
 	slot->unit = unit;
-	slot->owner = owner;
+	slot->cb = cb;
+	slot->arg = arg;
 	return i;
 }
 
 void
 ctl_slotdel(struct aproc *p, int index)
 {
-	p->u.ctl.slot[index].owner = NULL;
+	p->u.ctl.slot[index].cb = NULL;
 }
 
 void
@@ -417,7 +419,7 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 {
 	unsigned i;
 	unsigned chan;
-	struct aproc *owner;
+	struct ctl_slot *slot;
 
 #ifdef DEBUG
 	if (debug_level > 0) {
@@ -432,12 +434,10 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 		chan = ibuf->mdata[0] & MIDI_CHANMASK;
 		if (chan >= CTL_NSLOT)
 			return;
-		owner = p->u.ctl.slot[chan].owner;
-		if (owner == NULL || LIST_EMPTY(&owner->obuflist))
+		slot = p->u.ctl.slot + chan;
+		if (slot->cb == NULL)
 			return;
-		dev_setvol(
-		    LIST_FIRST(&owner->obuflist),
-		    MIDI_TO_ADATA(ibuf->mdata[2]));
+		slot->cb(slot->arg, ibuf->mdata[2]);
 		ctl_sendmsg(p, ibuf, ibuf->mdata, ibuf->mlen);
 	}
 }
@@ -508,7 +508,7 @@ ctl_done(struct aproc *p)
 	struct ctl_slot *s;
 
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		if (s->owner)
+		if (s->cb != NULL)
 			DPRINTF("ctl_done: %s%u not freed\n", s->name, s->unit);
 	}
 }
@@ -530,12 +530,13 @@ struct aproc *
 ctl_new(char *name)
 {
 	struct aproc *p;
+	struct ctl_slot *s;
 	unsigned i;
 
 	p = aproc_new(&ctl_ops, name);
-	for (i = 0; i < CTL_NSLOT; i++) {
+	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
 		p->u.ctl.slot[i].unit = i;
-		p->u.ctl.slot[i].owner = NULL;
+		p->u.ctl.slot[i].cb = NULL;
 		strlcpy(p->u.ctl.slot[i].name, "unknown", CTL_NAMEMAX);
 	}
 	return p;

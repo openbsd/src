@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.19 2009/08/21 16:48:03 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.20 2009/08/26 06:10:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -170,7 +170,8 @@ struct aproc {
 #define CTL_NSLOT	8
 #define CTL_NAMEMAX	8
 			struct ctl_slot {
-				struct aproc *owner;
+				void (*cb)(void *, unsigned);
+				void *arg;
 				unsigned unit;
 				char name[CTL_NAMEMAX];
 			} slot[CTL_NSLOT];
