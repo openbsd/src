@@ -467,7 +467,7 @@ application/octet-stream        bin dms lha lzh exe class tgz taz
     directive</h2>
     <a href="directive-dict.html#Syntax"
     rel="Help"><strong>Syntax:</strong></a> ProxyPass <em>path
-    url</em><br />
+    !|url</em><br />
      <a href="directive-dict.html#Default"
     rel="Help"><strong>Default:</strong></a> <em>None</em><br />
      <a href="directive-dict.html#Context"
@@ -499,6 +499,19 @@ application/octet-stream        bin dms lha lzh exe class tgz taz
     &lt;<samp>http://wibble.org/mirror/foo/bar</samp>&gt; to be
     internally converted into a proxy request to
     &lt;<samp>http://foo.com/bar</samp>&gt;.</p>
+
+    <p>The <code>!</code> directive is useful when you don't want
+    to reverse-proxy a subdirectory, <em>e.g.</em></p>
+<pre>
+   ProxyPass /mirror/foo/bar !
+   ProxyPass /mirror/foo/ http://foo.com/
+</pre>
+    <p>will proxy all requests to <samp>/mirror/foo</samp> to
+    <samp>foo.com<samp> <em>except</em> requests made to 
+    <samp>/mirror/foo/bar</samp>.</p>
+
+    <p><strong>Note:</strong> Order is important. Exclusions must
+    come <em>before</em> the general ProxyPass directive.</p>
 
     <p><strong>Warning:</strong> The <code><a
     href="#proxyrequests">ProxyRequests</a></code> directive should
