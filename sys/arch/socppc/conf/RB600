@@ -1,0 +1,65 @@
+#	$OpenBSD: RB600,v 1.1 2009/08/26 20:54:53 kettenis Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		socppc powerpc
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
+
+option		RB600
+
+option		PCIVERBOSE
+option		USBVERBOSE
+
+option		USER_PCICONF	# user-space PCI configuration
+option		APERTURE
+
+config		bsd	swap generic
+
+mainbus0	at root
+cpu0		at mainbus0
+obio0		at mainbus0
+
+# On-board IPIC
+ipic0		at obio? addr 0x00700
+
+# On-board I2C
+sociic0		at obio? addr 0x03000 ivec 14
+sociic1		at obio? addr 0x03100 ivec 15
+iic*		at sociic?
+
+# On-board DUART
+com0		at obio? addr 0x04500 ivec 9
+com1		at obio? addr 0x04600 ivec 10
+
+# On-board CF
+wdc0	at obio? addr 0xf9000000 ivec 20
+wdc1	at obio? addr 0xf9200000 ivec 22
+wd*	at wdc? flags 0x0000
+
+# On-board PCI
+socpcic0	at obio? addr 0x08300
+pci*		at socpcic?
+
+vge*		at pci?
+
+# On-board TSEC
+tsec0		at obio? addr 0x24000 ivec 32 phy 1
+tsec1		at obio? addr 0x25000 ivec 35 phy 0
+
+rgephy*		at mii?		# Realtek 8169S/8110S PHY
+eephy*		at mii?		# Marvell 88E1000 series PHY
+rlphy*		at mii?		# RealTek 8139 internal PHYs
+ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
+gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
+ukphy*		at mii?		# Generic unknown PHY
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
