@@ -1,4 +1,4 @@
-/*	$OpenBSD: socpcic.c,v 1.5 2009/08/25 20:50:15 kettenis Exp $	*/
+/*	$OpenBSD: socpcic.c,v 1.6 2009/08/26 20:53:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -214,7 +214,11 @@ int
 socpcic_intr_map(void *cpv, pcitag_t tag, int pin, int line,
     pci_intr_handle_t *ihp)
 {
+#ifdef RB600
+	*ihp = 21;		/* XXX */
+#else
 	*ihp = 20;		/* XXX */
+#endif
 	return (0);
 }
 
