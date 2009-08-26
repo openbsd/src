@@ -25,6 +25,7 @@
 ./etc/firmware/symbol-license
 ./etc/firmware/tusb3410
 ./etc/firmware/tusb3410-license
+./etc/firmware/udl_huffman
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b

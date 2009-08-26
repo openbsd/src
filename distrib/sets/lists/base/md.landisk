@@ -22,6 +22,7 @@
 ./etc/firmware/run-rt3071
 ./etc/firmware/tusb3410
 ./etc/firmware/tusb3410-license
+./etc/firmware/udl_huffman
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
 ./etc/firmware/zd1211
