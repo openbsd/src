@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.148 2009/08/25 16:16:34 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.149 2009/08/26 00:37:17 thib Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -15,6 +15,11 @@ option		KTRACE		# system call tracing, a la ktrace(1)
 option		ACCOUNTING	# acct(2) process accounting
 option		KMEMSTATS	# collect malloc(9) statistics
 option		PTRACE		# ptrace(2) system call
+
+#option		PAGEFASTRECYCLE	# fast physical page recycling 
+#option		KVA_GUARDPAGES	# slow virtual address recycling (+ guarding)
+option		POOL_DEBUG	# pool corruption detection 
+#option		VFSDEBUG	# VFS locking checks
 
 option		CRYPTO		# Cryptographic framework
 
@@ -46,7 +51,6 @@ option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
 
-#option		VFSDEBUG	# VFS debugging
 option		CD9660		# ISO 9660 + Rock Ridge file system
 option		UDF		# UDF (DVD) file system
 option		MSDOSFS		# MS-DOS file system
