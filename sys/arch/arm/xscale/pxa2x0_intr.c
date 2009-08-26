@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.19 2009/08/22 02:54:50 mk Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.20 2009/08/26 20:31:43 deraadt Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -629,7 +629,7 @@ pxa2x0_intr_disestablish(void *cookie)
  */
 void *
 sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg, char *name)
+    int (*ih_fun)(void *), void *ih_arg, const char *name)
 {
 
 	return pxa2x0_intr_establish(irq, level, ih_fun, ih_arg, name);

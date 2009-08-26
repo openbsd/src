@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.h,v 1.12 2009/03/15 19:40:40 miod Exp $ */
+/*	$OpenBSD: pxa2x0_intr.h,v 1.13 2009/08/26 20:31:43 deraadt Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */
@@ -99,7 +99,7 @@ void pxa2x0_intr_bootstrap(vaddr_t);
 
 void pxa2x0_irq_handler(void *);
 void *pxa2x0_intr_establish(int irqno, int level, int (*func)(void *),
-    void *cookie, char *name);
+    void *cookie, const char *name);
 void pxa2x0_intr_disestablish(void *cookie);
 const char *pxa2x0_intr_string(void *cookie);
 
