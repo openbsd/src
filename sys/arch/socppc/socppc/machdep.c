@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 2009/08/26 17:38:06 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 2009/08/26 19:09:44 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -183,24 +183,7 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	/* Make a copy of the args! */
 	strlcpy(bootpathbuf, args ? args : "wd0a", sizeof bootpathbuf);
 
-	if (fwfdtsave) {
-		/*
-		 * We were loaded by a newer U-boot or RouterBOOT.
-		 * Both provide a flattened device tree.
-		 *
-		 * XXX We only support RouterBOOT and fake a bootinfo
-		 * structure.
-		 */
-		bootinfo.bi_memstart = 0x00000000;
-		bootinfo.bi_memsize = 0x07ffffff;
-		bootinfo.bi_immr_base = 0xe0000000;
-		bootinfo.bi_enetaddr[0] = 0x00;
-		bootinfo.bi_enetaddr[1] = 0x0c;
-		bootinfo.bi_enetaddr[2] = 0x42;
-		bootinfo.bi_enetaddr[3] = 0x20;
-		bootinfo.bi_enetaddr[4] = 0xc6;
-		bootinfo.bi_enetaddr[5] = 0xe5;
-	} else {
+	if (fwfdtsave == NULL) {
 		/*
 		 * We were loaded by an old U-Boot that didn't provide
 		 * a flattened device tree.  It should have provided a
@@ -223,6 +206,34 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 		endkernel += fwfdtsave->fh_size;
 
 		fdt_init(fdt);
+
+		/*
+		 * XXX Create a fake bootinfo structure if we were
+		 * loaded by RouterBOOT.
+		 */
+		node = fdt_find_node("/memory");
+		if (node) {
+			char *reg;
+
+			if (fdt_node_property(node, "reg", &reg)) {
+				bootinfo.bi_memstart = *(u_int32_t *)reg;
+				bootinfo.bi_memsize = *((u_int32_t *)reg + 1);
+			}
+		}
+		node = fdt_find_node("/soc8343");
+		if (node) {
+			char *reg;
+
+			if (fdt_node_property(node, "reg", &reg))
+				bootinfo.bi_immr_base = *(u_int32_t *)reg;
+		}
+		node = fdt_find_node("/soc8343/ethernet");
+		if (node) {
+			char *addr;
+
+			if (fdt_node_property(node, "mac-address", &addr))
+				memcpy(bootinfo.bi_enetaddr, addr, 6);
+		}
 	}
 
 	proc0.p_cpu = &cpu_info[0];
