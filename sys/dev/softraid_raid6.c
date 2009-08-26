@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.5 2009/08/12 22:01:15 jordan Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.6 2009/08/26 20:14:44 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -44,6 +44,7 @@
 #include <dev/softraidvar.h>
 #include <dev/rndvar.h>
 
+uint8_t *gf_map[256];
 uint8_t	gf_pow[768];
 int	gf_log[256];
 
@@ -70,6 +71,7 @@ void	sr_put_block(struct sr_discipline *, void *);
 
 void	gf_init(void);
 uint8_t gf_inv(uint8_t);
+int	gf_premul(uint8_t);
 
 #define SR_NOFAIL		0x00
 #define SR_FAILX		(1L << 0)
@@ -608,6 +610,8 @@ sr_raid6_rw(struct sr_workunit *wu)
 				goto bad;
 
 			/* Calulate P = Dn; Q = gn * Dn */
+			if (gf_premul(gf_pow[chunk]))
+				goto bad;
 			sr_raid6_xorp(pbuf, data, length);
 			sr_raid6_xorq(qbuf, data, length, gf_pow[chunk]);
 
@@ -943,6 +947,9 @@ sr_raid6_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len,
 	ccb->ccb_wu = wu;
 	ccb->ccb_target = dsk;
 	if (pbuf || qbuf) {
+		if (qbuf && gf_premul(gn))
+			return (-1);
+
 		pqbuf = malloc(sizeof(struct sr_raid6_opaque), M_DEVBUF, M_CANFAIL);
 		if (pqbuf == NULL) {
 			sr_ccb_put(ccb);
@@ -983,12 +990,12 @@ void
 sr_raid6_xorq(void *q, void *d, int len, int gn)
 {
 	uint8_t		*qbuf = q, *data = d;
-	uint8_t		*gn_pow = gf_pow + gf_log[gn];
+	uint8_t		*gn_map = gf_map[gn];
 
 	/* Have to do this a byte at a time */
 	/* Faster multiply.. gn is always constant */
 	while (len--)
-		qbuf[len] ^= gn_pow[gf_log[data[len]]];
+		qbuf[len] ^= gn_map[data[len]];
 }
 
 /* Create GF256 log/pow tables: polynomial = 0x11D */
@@ -1013,3 +1020,19 @@ gf_inv(uint8_t a)
 	return gf_pow[255 - gf_log[a]];
 }
 
+/* Precalculate multiplication tables for drive gn */
+int
+gf_premul(uint8_t gn)
+{
+	int i;
+
+	if (gf_map[gn] != NULL)
+		return (0);
+
+	if ((gf_map[gn] = malloc(256, M_DEVBUF, M_CANFAIL)) == NULL)
+		return (-1);
+
+	for (i=0; i<256; i++)
+		gf_map[gn][i] = gf_pow[gf_log[i] + gf_log[gn]];
+	return (0);
+}
