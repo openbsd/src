@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.67 2009/08/08 23:02:43 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.68 2009/08/26 09:12:41 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -929,11 +929,6 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			SSL_get_cipher_name(sessionp->s_ssl),
 			SSL_get_cipher_bits(sessionp->s_ssl, NULL));
 		}
-
-		session_respond(sessionp, "Delivered-To: %s@%s",
-		    batchp->message.sender.user,
-		    batchp->message.sender.domain);
-
 		break;
 	}
 	case S_DONE:
