@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.66 2009/08/19 18:29:34 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.67 2009/08/26 06:33:52 jmc Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -396,7 +396,7 @@ aucat_usage(void)
 {
 	(void)fputs("usage: " PROG_AUCAT " [-lnu] [-b nframes] "
 	    "[-C min:max] [-c min:max] [-e enc] [-f device]\n"
-	    "\t[-h fmt] [-i file] [-m mode] [-o file] [-r rate] [-s socket]\n"
+	    "\t[-h fmt] [-i file] [-m mode] [-o file] [-r rate] [-s name]\n"
 	    "\t[-U unit] [-v volume] [-x policy]\n",
 	    stderr);
 }
