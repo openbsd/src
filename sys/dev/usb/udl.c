@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.25 2009/08/26 19:07:45 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.26 2009/08/26 19:30:46 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -27,8 +27,7 @@
  * to deal with similar challenges, like no direct access to the video
  * memory.
  *
- * TODO: - Cleanup the endianess mess.
- *	 - Reduce padding overhead in compressed blocks.
+ * TODO: - Reduce padding overhead in compressed blocks.
  */
 
 #include <sys/param.h>
