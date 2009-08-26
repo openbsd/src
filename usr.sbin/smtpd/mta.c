@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.68 2009/08/26 09:12:41 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.69 2009/08/26 16:40:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -929,6 +929,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			SSL_get_cipher_name(sessionp->s_ssl),
 			SSL_get_cipher_bits(sessionp->s_ssl, NULL));
 		}
+		bufferevent_enable(sessionp->s_bev, EV_WRITE);
 		break;
 	}
 	case S_DONE:
