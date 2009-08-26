@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 2009/08/25 21:18:20 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 2009/08/26 17:38:06 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 #endif
 	extern void *msgbuf_addr;
 	int exc, scratch;
+	void *node;
 
 	extern char __bss_start[], __end[];
 	bzero(__bss_start, __end - __bss_start);
@@ -421,6 +422,24 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	comconsrate = 115200;
 	comconsaddr = 0x00004500;
 	comconsiot = &mainbus_bus_space;
+
+	node = fdt_find_node("/chosen");
+	if (node) {
+		char *console;
+
+		fdt_node_property(node, "linux,stdout-path", &console);
+		node = fdt_find_node(console);
+		if (node) {
+			char *freq;
+			char *reg;
+
+			if (fdt_node_property(node, "clock-frequency", &freq))
+				comconsfreq = *(u_int32_t *)freq;
+			if (fdt_node_property(node, "reg", &reg))
+				comconsaddr = *(u_int32_t *)reg;
+		}
+	}
+
 	consinit();
 
 #ifdef DDB
