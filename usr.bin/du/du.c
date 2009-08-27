@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.20 2009/06/03 15:15:16 millert Exp $	*/
+/*	$OpenBSD: du.c,v 1.21 2009/08/27 11:29:30 millert Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static const char rcsid[] = "$OpenBSD: du.c,v 1.20 2009/06/03 15:15:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: du.c,v 1.21 2009/08/27 11:29:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,9 +185,11 @@ main(int argc, char *argv[])
 			 * or directories and this is post-order of the
 			 * root of a traversal, display the total.
 			 */
-			if (listdirs || (!listfiles && !p->fts_level))
+			if (listdirs ||
+			    (!listfiles && p->fts_level == FTS_ROOTLEVEL)) {
 				prtout((quad_t)howmany(p->fts_number, blocksize),
 				    p->fts_path, hflag);
+			}
 			break;
 		case FTS_DC:			/* Ignore. */
 			break;
@@ -204,7 +206,7 @@ main(int argc, char *argv[])
 			 * If listing each file, or a non-directory file was
 			 * the root of a traversal, display the total.
 			 */
-			if (listfiles || !p->fts_level)
+			if (listfiles || p->fts_level == FTS_ROOTLEVEL)
 				prtout(howmany(p->fts_statp->st_blocks, blocksize),
 				    p->fts_path, hflag);
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
