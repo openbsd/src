@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.24 2009/08/13 10:03:35 jasper Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.25 2009/08/27 20:41:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -824,7 +824,7 @@ tsec_up(struct tsec_softc *sc)
 	sc->sc_txdesc = TSEC_DMA_KVA(sc->sc_txring);
 
 	sc->sc_txbuf = malloc(sizeof(struct tsec_buf) * TSEC_NTXDESC,
-	    M_WAIT, M_DEVBUF);
+	    M_DEVBUF, M_WAITOK);
 	for (i = 0; i < TSEC_NTXDESC; i++) {
 		txb = &sc->sc_txbuf[i];
 		bus_dmamap_create(sc->sc_dmat, MCLBYTES, TSEC_NTXSEGS,
@@ -850,7 +850,7 @@ tsec_up(struct tsec_softc *sc)
 	sc->sc_rxdesc = TSEC_DMA_KVA(sc->sc_rxring);
 
 	sc->sc_rxbuf = malloc(sizeof(struct tsec_buf) * TSEC_NRXDESC,
-	    M_WAIT, M_DEVBUF);
+	    M_DEVBUF, M_WAITOK);
 
 	for (i = 0; i < TSEC_NRXDESC; i++) {
 		rxb = &sc->sc_rxbuf[i];
