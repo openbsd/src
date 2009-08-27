@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.33 2009/08/08 19:16:41 ian Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.34 2009/08/27 11:38:50 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 		errx(1, "unsupported mode");
 
 connected:
-	/* connect to relayd control socket */
+	/* connect to smtpd control socket */
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
