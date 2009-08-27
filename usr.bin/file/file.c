@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.19 2009/04/24 18:54:34 chl Exp $ */
+/*	$OpenBSD: file.c,v 1.20 2009/08/27 16:26:43 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -30,6 +30,10 @@
  * file - find type of a file or files - main program.
  */
 
+#include <sys/types.h>
+#include <sys/param.h>	/* for MAXPATHLEN */
+#include <sys/stat.h>
+
 #include "file.h"
 #include "magic.h"
 
@@ -37,9 +41,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/param.h>	/* for MAXPATHLEN */
-#include <sys/stat.h>
 #ifdef RESTORE_TIME
 # if (__COHERENT__ >= 0x420)
 #  include <sys/utime.h>
@@ -71,7 +72,7 @@ int getopt_long(int argc, char * const *argv, const char *optstring, const struc
 #include "patchlevel.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: file.c,v 1.19 2009/04/24 18:54:34 chl Exp $")
+FILE_RCSID("@(#)$Id: file.c,v 1.20 2009/08/27 16:26:43 deraadt Exp $")
 #endif	/* lint */
 
 

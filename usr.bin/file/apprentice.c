@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.26 2009/04/24 18:54:34 chl Exp $ */
+/*	$OpenBSD: apprentice.c,v 1.27 2009/08/27 16:26:42 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -30,6 +30,10 @@
  * apprentice - make one pass through /etc/magic, learning its secrets.
  */
 
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "file.h"
 #include "magic.h"
 #include "patchlevel.h"
@@ -41,16 +45,13 @@
 #include <assert.h>
 #include <ctype.h>
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/param.h>
 #ifdef QUICK
 #include <sys/mman.h>
 #endif
-#include <sys/types.h>
 #include <dirent.h>
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: apprentice.c,v 1.26 2009/04/24 18:54:34 chl Exp $")
+FILE_RCSID("@(#)$Id: apprentice.c,v 1.27 2009/08/27 16:26:42 deraadt Exp $")
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
