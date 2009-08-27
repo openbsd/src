@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.31 2005/06/15 14:19:45 millert Exp $	*/
+/*	$OpenBSD: function.c,v 1.32 2009/08/27 16:19:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.31 2005/06/15 14:19:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.32 2009/08/27 16:19:27 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -833,9 +833,12 @@ PLAN *
 c_maxdepth(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
+	const char *errstr = NULL;
 
 	new = palloc(N_MAXDEPTH, f_maxdepth);
-	new->max_data = atoi(arg);
+	new->max_data = strtonum(arg, 1, FTS_MAXLEVEL, &errstr);
+	if (errstr)
+		errx(1, "%s: maxdepth value %s", arg, errstr);
 	return (new);
 }
 

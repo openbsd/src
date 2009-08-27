@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.42 2009/02/11 13:24:05 otto Exp $	*/
+/*	$OpenBSD: fts.c,v 1.43 2009/08/27 16:19:27 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -633,15 +633,13 @@ fts_build(FTS *sp, int type)
 	len++;
 	maxlen = sp->fts_pathlen - len;
 
-	if (cur->fts_level == SHRT_MAX) {
-		(void)closedir(dirp);
-		cur->fts_info = FTS_ERR;
-		SET(FTS_STOP);
-		errno = ENAMETOOLONG;
-		return (NULL);
-	}
-
-	level = cur->fts_level + 1;
+	/*
+	 * fts_level is a short so we must prevent it from wrapping
+	 * around to FTS_ROOTLEVEL and FTS_ROOTPARENTLEVEL.
+	 */
+	level = cur->fts_level;
+	if (level < FTS_MAXLEVEL)
+	    level++;
 
 	/* Read the directory, attaching each entry to the `link' pointer. */
 	doadjust = 0;

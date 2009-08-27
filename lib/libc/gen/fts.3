@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.25 2009/03/23 22:57:36 sobrado Exp $
+.\"	$OpenBSD: fts.3,v 1.26 2009/08/27 16:19:27 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fts.3	8.5 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: March 23 2009 $
+.Dd $Mdocdate: August 27 2009 $
 .Dt FTS 3
 .Os
 .Sh NAME
@@ -230,10 +230,25 @@ was found.
 The
 .Li FTSENT
 structure representing the parent of the starting point (or root)
-of the traversal is numbered \-1, and the
+of the traversal is numbered
+.Ev FTS_PARENTLEVEL
+(\-1), and the
 .Li FTSENT
 structure for the root
-itself is numbered 0.
+itself is numbered
+.Ev FTS_ROOTLEVEL
+(0).
+Note that while
+.Fa fts_level
+cannot hold a number of levels greater than
+.Ev FTS_MAXLEVEL ,
+the
+.Nm
+functions themselves are not limited to a fixed number
+of levels.
+Application code that inspects
+.Fa fts_level
+should be written with this in mind.
 .It Fa fts_errno
 Upon return of an
 .Li FTSENT

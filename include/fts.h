@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.h,v 1.11 2005/06/17 20:36:55 millert Exp $	*/
+/*	$OpenBSD: fts.h,v 1.12 2009/08/27 16:19:27 millert Exp $	*/
 /*	$NetBSD: fts.h,v 1.5 1994/12/28 01:41:50 mycroft Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ typedef struct _ftsent {
 
 #define	FTS_ROOTPARENTLEVEL	-1
 #define	FTS_ROOTLEVEL		 0
+#define	FTS_MAXLEVEL		 0x7fff
 	short fts_level;		/* depth (-1 to N) */
 
 #define	FTS_D		 1		/* preorder directory */
