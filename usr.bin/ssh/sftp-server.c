@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.85 2009/04/14 16:33:42 stevesk Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.86 2009/08/27 17:28:52 djm Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -1294,7 +1294,8 @@ sftp_server_usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-he] [-l log_level] [-f log_facility]\n", __progname);
+	    "usage: %s [-he] [-l log_level] [-f log_facility] [-u umask]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -1306,13 +1307,15 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 	ssize_t len, olen, set_size;
 	SyslogFacility log_facility = SYSLOG_FACILITY_AUTH;
 	char *cp, buf[4*4096];
+	const char *errmsg;
+	mode_t mask;
 
 	extern char *optarg;
 	extern char *__progname;
 
 	log_init(__progname, log_level, log_facility, log_stderr);
 
-	while (!skipargs && (ch = getopt(argc, argv, "f:l:che")) != -1) {
+	while (!skipargs && (ch = getopt(argc, argv, "f:l:u:che")) != -1) {
 		switch (ch) {
 		case 'c':
 			/*
@@ -1333,6 +1336,13 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 			log_facility = log_facility_number(optarg);
 			if (log_facility == SYSLOG_FACILITY_NOT_SET)
 				error("Invalid log facility \"%s\"", optarg);
+			break;
+		case 'u':
+			mask = (mode_t)strtonum(optarg, 0, 0777, &errmsg);
+			if (cp != NULL)
+				fatal("Invalid umask \"%s\": %s",
+				    optarg, errmsg);
+			(void)umask(mask);
 			break;
 		case 'h':
 		default:
