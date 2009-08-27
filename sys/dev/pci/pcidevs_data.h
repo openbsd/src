@@ -3560,6 +3560,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 3870",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4350,
+	    "Radeon HD 4350",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_M76,
 	    "Mobility Radeon HD 2600",
 	},
