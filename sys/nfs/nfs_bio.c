@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.64 2009/08/26 12:08:10 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.65 2009/08/27 23:26:56 thib Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -521,13 +521,14 @@ nfs_asyncio(struct buf *bp)
 		 * it to work on this mount.
 		 */
 		LIST_REMOVE(aiod, nad_idle);
-		aiod->nad_worked = 1;
 		mtx_leave(&nfs_aiodl_mtx);
+
+		aiod->nad_flags |= NFSAIOD_WAKEUP;
 		gotone = 1;
 		KASSERT(aiod->nad_mnt == NULL);
 		aiod->nad_mnt = nmp;
 		nmp->nm_naiods++;
-		wakeup(aiod);
+		wakeup_one(aiod);
 	} else {
 		mtx_leave(&nfs_aiodl_mtx);
 	}
@@ -554,6 +555,8 @@ nfs_asyncio(struct buf *bp)
 	 */
 	if (nmp->nm_bufqlen >= nfs_aiodbufqmax) {
 		if (aiod != NULL) {
+			aiod->nad_flags &= ~NFSAIOD_WAKEUP;
+			aiod->nad_mnt = NULL;
 			mtx_enter(&nfs_aiodl_mtx);
 			LIST_INSERT_HEAD(&nfs_aiods_idle, aiod, nad_idle);
 			mtx_leave(&nfs_aiodl_mtx);

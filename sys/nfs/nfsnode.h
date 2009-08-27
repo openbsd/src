@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.36 2009/08/26 12:08:10 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.37 2009/08/27 23:26:56 thib Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -142,9 +142,15 @@ struct nfs_aiod {
 	LIST_ENTRY(nfs_aiod)	 nad_all;
 	LIST_ENTRY(nfs_aiod)	 nad_idle;
 	struct nfsmount		*nad_mnt;
-	int			 nad_exiting;
-	int			 nad_worked; /* Was removed from idle list. */
+	int			 nad_flags;
 };
+
+/* Flags for nad_flags. */
+#define	NFSAIOD_EXIT	0x0001	/* aiod being asked to exit. */
+#define	NFSAIOD_WAKEUP	0x0002	/* aiod being asked to wakeup. */
+/* used by nfs_set_naiod(), for convience. */
+#define	NFSAIOD_QUIT	(NFSAIOD_EXIT|NFSAIOD_WAKEUP)	/* aiod must quit. */
+
 
 LIST_HEAD(nfs_aiodhead, nfs_aiod);
 

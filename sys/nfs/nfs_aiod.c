@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_aiod.c,v 1.2 2009/08/26 12:08:10 thib Exp $	*/
+/*	$OpenBSD: nfs_aiod.c,v 1.3 2009/08/27 23:26:56 thib Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -102,12 +102,13 @@ nfs_aiod(void *arg)
 
 
 loop:	/* Loop around until SIGKILL */
-	mtx_enter(&nfs_aiodl_mtx);
-	if (aiod->nad_worked) {
+	
+	if (aiod->nad_flags & NFSAIOD_WAKEUP) {
+		mtx_enter(&nfs_aiodl_mtx);
 		LIST_INSERT_HEAD(&nfs_aiods_idle, aiod, nad_idle);
-		aiod->nad_worked = 0;
+		mtx_leave(&nfs_aiodl_mtx);
+		aiod->nad_flags &= ~NFSAIOD_WAKEUP;
 	}
-	mtx_leave(&nfs_aiodl_mtx);
 
 	while (1) {
 		nmp = aiod->nad_mnt;
@@ -116,9 +117,8 @@ loop:	/* Loop around until SIGKILL */
 			break;
 		}
 
-		error = tsleep(aiod, PWAIT, "nioidle", 0);
-		if (error)
-			goto out;
+		while (!(aiod->nad_flags & NFSAIOD_WAKEUP))
+			tsleep(aiod, PWAIT, "aiodidle", 0);
 
 		/*
 		 * Wakeup for this aiod happens in one of the following
@@ -130,7 +130,7 @@ loop:	/* Loop around until SIGKILL */
 		 * found some work for this thread, and if so, ignore it until
 		 * later.
 		 */
-		if (aiod->nad_exiting) {
+		if (aiod->nad_flags & NFSAIOD_EXIT) {
 			if (aiod->nad_mnt == NULL)
 				goto out1;
 			else
@@ -147,20 +147,20 @@ loop:	/* Loop around until SIGKILL */
 
 	KASSERT(nmp->nm_naiods > 0);
 	nmp->nm_naiods--;
-	if (aiod->nad_exiting)
+	if (aiod->nad_flags & NFSAIOD_EXIT)
 		goto out1;
 
 	goto loop;
 
-out:
-	mtx_enter(&nfs_aiodl_mtx);
-	LIST_REMOVE(aiod, nad_idle);
-	mtx_leave(&nfs_aiodl_mtx);
 out1:
 	free(aiod, M_TEMP);
 	nfs_numaiods--;
+	KASSERT(nfs_numaiods >= 0);
 	/* Rejust the limit of bufs to queue. See comment above. */
-	nfs_aiodbufqmax = max((bcstats.numbufs / 4) / nfs_numaiods, 64);
+	if (nfs_numaiods > 0)
+		nfs_aiodbufqmax = max((bcstats.numbufs / 4) / nfs_numaiods, 64);
+	else
+		nfs_aiodbufqmax = 0;
 	kthread_exit(error);
 }
 
@@ -201,16 +201,16 @@ nfs_set_naiod(int howmany)
 			aiod = LIST_FIRST(&nfs_aiods_idle);
 			LIST_REMOVE(aiod, nad_idle);
 			LIST_REMOVE(aiod, nad_all);	/* Yuck. */
-			aiod->nad_exiting = 1;
-			wakeup(aiod);
+			aiod->nad_flags |= NFSAIOD_QUIT;
+			wakeup_one(aiod);
 			want--;
 		}
 
 		while (!LIST_EMPTY(&nfs_aiods_all) && want > 0) {
 			aiod = LIST_FIRST(&nfs_aiods_all);
 			LIST_REMOVE(aiod, nad_all);
-			aiod->nad_exiting = 1;
-			wakeup(aiod);
+			aiod->nad_flags |= NFSAIOD_QUIT;
+			wakeup_one(aiod);
 			want--;
 		}
 		mtx_leave(&nfs_aiodl_mtx);
