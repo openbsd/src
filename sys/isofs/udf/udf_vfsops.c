@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.30 2009/08/14 22:23:45 krw Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.31 2009/08/27 23:14:47 jolan Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -128,7 +128,9 @@ udf_mount(struct mount *mp, const char *path, void *data,
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 		mp->mnt_flag |= MNT_RDONLY;
+#ifdef UDF_DEBUG
 		printf("udf_mount: enforcing read-only mode\n");
+#endif
 	}
 
 	/*
