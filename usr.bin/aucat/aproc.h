@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.21 2009/08/26 08:28:21 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.22 2009/08/27 06:31:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -176,6 +176,7 @@ struct aproc {
 				unsigned unit;
 				char name[CTL_NAMEMAX];
 				unsigned serial;
+				unsigned vol;
 			} slot[CTL_NSLOT];
 		} ctl;
 	} u;

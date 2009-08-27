@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.25 2009/08/26 06:10:15 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.26 2009/08/27 06:31:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -786,8 +786,6 @@ sock_hello(struct sock *f)
 			DPRINTF("sock_hello: out of mixer slots\n");
 			return 0;
 		}
-		if (f->mode & AMSG_PLAY)
-			ctl_slotvol(dev_midi, f->slot, MIDI_MAXCTL);
 	}
 	f->pstate = SOCK_INIT;
 	return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.6 2009/08/26 08:28:21 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.7 2009/08/27 06:31:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,10 +17,8 @@
 /*
  * TODO
  *
- * use abuf->duplex to implement bidirectionnal sockets
- * that don't receive what they send
- *
- * use shadow variables in the midi merger
+ * use shadow variables (to save NRPNs, LSB of controller) 
+ * in the midi merger
  *
  * make output and input identical when only one
  * input is used (fix running status)
@@ -71,6 +69,9 @@
 unsigned voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
 unsigned common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 
+/*
+ * send the message stored in of ibuf->mdata to obuf
+ */
 void
 thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 {
@@ -100,6 +101,9 @@ thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	p->u.thru.owner = ibuf;
 }
 
+/*
+ * send the real-time message (one byte) to obuf, similar to thrui_flush()
+ */
 void
 thru_rt(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned c)
 {
@@ -118,7 +122,10 @@ thru_rt(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned c)
 	abuf_wcommit(obuf, 1);
 }
 
-
+/*
+ * parse ibuf contents and store each message into obuf,
+ * use at most ``todo'' bytes (for throttling)
+ */
 void
 thru_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned todo)
 {
@@ -263,6 +270,11 @@ struct aproc_ops thru_ops = {
 	thru_done
 };
 
+/*
+ * call-back invoked periodically to implement throttling at each invocation
+ * gain more ``tickets'' for processing.  If one of the buffer was blocked by
+ * the throttelling mechanism, then run it
+ */
 void
 thru_cb(void *addr)
 {
@@ -293,6 +305,10 @@ thru_new(char *name)
 	return p;
 }
 
+/*
+ * broadcast a message to all output buffers on the behalf of ibuf.
+ * ie. don't sent back the message to the sender
+ */
 void
 ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len)
 {
@@ -324,6 +340,11 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
 	}
 }
 
+/*
+ * allocate a new slot (ie midi channel), register the given call-back
+ * to be called volume is changed by MIDI. The call-back is invoked at
+ * initialization to restore the saved volume.
+ */
 int
 ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 {
@@ -373,9 +394,11 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 		if (slot->cb == NULL &&
 		    strcmp(slot->name, name) == 0 &&
 		    slot->unit == unit) {
+			DPRINTFN(1, "ctl_newslot: reusing %u\n", i);
 			slot->cb = cb;
 			slot->arg = arg;
-			DPRINTFN(1, "ctl_newslot: reusing %u\n", i);
+			slot->cb(slot->arg, slot->vol);
+			ctl_slotvol(p, i, slot->vol);
 			return i;
 		}
 	}
@@ -400,30 +423,45 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 	strlcpy(slot->name, name, CTL_NAMEMAX);
 	slot->serial = p->u.ctl.serial++;
 	slot->unit = unit;
+	slot->vol = MIDI_MAXCTL;
+	DPRINTFN(1, "ctl_newslot: %u overwritten)\n", bestidx);
 	slot->cb = cb;
 	slot->arg = arg;
-	DPRINTFN(1, "ctl_newslot: %u overwritten)\n", bestidx);
+	slot->cb(slot->arg, slot->vol);
+	ctl_slotvol(p, bestidx, slot->vol);
 	return bestidx;
 }
 
+/*
+ * release the given slot
+ */
 void
 ctl_slotdel(struct aproc *p, int index)
 {
 	p->u.ctl.slot[index].cb = NULL;
 }
 
+/*
+ * notifty the mixer that volume changed, called by whom allocad the slot using
+ * ctl_slotnew(). Note: it doesn't make sens to call this from within the
+ * call-back.
+ */
 void
 ctl_slotvol(struct aproc *p, int slot, unsigned vol)
 {
 	unsigned char msg[3];
 
 	DPRINTFN(1, "ctl_slotvol: [%u] -> %u\n", slot, vol);
+	p->u.ctl.slot[slot].vol = vol;
 	msg[0] = MIDI_CTL | slot;
 	msg[1] = MIDI_CTLVOL;
 	msg[2] = vol;
 	ctl_sendmsg(p, NULL, msg, 3);
 }
 
+/*
+ * handle a MIDI event received from ibuf
+ */
 void
 ctl_ev(struct aproc *p, struct abuf *ibuf)
 {
@@ -447,7 +485,8 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 		slot = p->u.ctl.slot + chan;
 		if (slot->cb == NULL)
 			return;
-		slot->cb(slot->arg, ibuf->mdata[2]);
+		slot->vol = ibuf->mdata[2];
+		slot->cb(slot->arg, slot->vol);
 		ctl_sendmsg(p, ibuf, ibuf->mdata, ibuf->mlen);
 	}
 }
@@ -518,6 +557,9 @@ ctl_done(struct aproc *p)
 	struct ctl_slot *s;
 
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
+		/*
+		 * XXX: shouldn't we abord() here ?
+		 */
 		if (s->cb != NULL)
 			DPRINTF("ctl_done: %s%u in use\n", s->name, s->unit);
 	}
@@ -548,6 +590,7 @@ ctl_new(char *name)
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
 		p->u.ctl.slot[i].unit = i;
 		p->u.ctl.slot[i].cb = NULL;
+		p->u.ctl.slot[i].vol = MIDI_MAXCTL;
 		p->u.ctl.slot[i].serial = p->u.ctl.serial++;
 		strlcpy(p->u.ctl.slot[i].name, "unknown", CTL_NAMEMAX);
 	}
