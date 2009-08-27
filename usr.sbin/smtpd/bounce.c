@@ -1,7 +1,8 @@
-/*	$OpenBSD: bounce.c,v 1.5 2009/08/06 16:26:39 gilles Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.6 2009/08/27 11:37:30 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +33,15 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "client.h"
+
+struct client_ctx {
+	struct event		 ev;
+	struct message		 m;
+	struct smtp_client	*sp;
+};
+
+void		 bounce_event(int, short, void *);
 
 void
 bounce_process(struct smtpd *env, struct message *message)
@@ -43,140 +53,94 @@ bounce_process(struct smtpd *env, struct message *message)
 int
 bounce_session(struct smtpd *env, int fd, struct message *messagep)
 {
-	char *buf, *lbuf;
-	size_t len;
-	FILE *fp;
-	enum session_state state = S_INIT;
+	struct client_ctx	*cc = NULL;
+	int			 msgfd = -1;
 
-	fp = fdopen(fd, "r+");
-	if (fp == NULL)
+	/* init smtp session */
+	if ((cc = calloc(1, sizeof(*cc))) == NULL)
+		goto fail;
+	if ((cc->sp = client_init(fd, env->sc_hostname)) == NULL)
+		goto fail;
+	if (client_sender(cc->sp, "") < 0)
+		goto fail;
+	cc->m = *messagep;
+
+	/* assign recipient */
+	if (client_rcpt(cc->sp, "%s@%s", messagep->sender.user,
+	    messagep->sender.domain) < 0)
 		goto fail;
 
-	lbuf = NULL;
-	while ((buf = fgetln(fp, &len))) {
-		if (buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
-		else {
-			if ((lbuf = malloc(len + 1)) == NULL)
-				err(1, "malloc");
-			memcpy(lbuf, buf, len);
-			lbuf[len] = '\0';
-			buf = lbuf;
-		}
-		if (! bounce_session_switch(env, fp, &state, buf, messagep))
-			goto fail;
-	}
-	free(lbuf);
+	/* create message header */
+	if (client_data_printf(cc->sp,
+	    "From: Mailer Daemon <MAILER-DAEMON@%s>\n"
+	    "To: %s@%s\n"
+	    "\n"
+	    "Hi !\n"
+	    "\n"
+	    "This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail.\n"
+	    "An error has occurred while attempting to deliver a message.\n"
+	    "\n"
+	    "Recipient: %s@%s\n"
+	    "Reason:\n"
+	    "%s\n"
+	    "\n"
+	    "Below is a copy of the original message:\n"
+	    "\n",
+	    env->sc_hostname,
+	    messagep->sender.user, messagep->sender.domain,
+	    messagep->recipient.user, messagep->recipient.domain,
+	    messagep->session_errorline) < 0)
+		goto fail;
 
-	fclose(fp);
+	/* append original message */
+	if ((msgfd = queue_open_message_file(messagep->message_id)) == -1)
+		goto fail;
+	if (client_data_fd(cc->sp, msgfd) < 0)
+		goto fail;
+
+	/* setup event */
+	session_socket_blockmode(fd, BM_NONBLOCK);
+	event_set(&cc->ev, fd, EV_READ, bounce_event, cc);
+	event_add(&cc->ev, NULL);
+
 	return 1;
 fail:
-	if (fp != NULL)
-		fclose(fp);
-	else
-		close(fd);
+	close(msgfd);
+	if (cc && cc->sp)
+		client_close(cc->sp);
+	free(cc);
 	return 0;
 }
 
-int
-bounce_session_switch(struct smtpd *env, FILE *fp, enum session_state *state, char *line,
-	struct message *messagep)
+void
+bounce_event(int fd, short event, void *p)
 {
-	switch (*state) {
-	case S_INIT:
-		if (strncmp(line, "220 ", 4) != 0)
-			return 0;
-		fprintf(fp, "HELO %s\r\n", env->sc_hostname);
-		*state = S_GREETED;
+	struct client_ctx	*cc = p;
+	char			*ep;
+	int			(*iofunc)(struct smtp_client *, char **);
+
+	if (event & EV_READ)
+		iofunc = client_read;
+	else
+		iofunc = client_write;
+
+	switch (iofunc(cc->sp, &ep)) {
+	case CLIENT_WANT_READ:
+		event_set(&cc->ev, fd, EV_READ, bounce_event, cc);
+		event_add(&cc->ev, NULL);
+		return;
+	case CLIENT_WANT_WRITE:
+		event_set(&cc->ev, fd, EV_WRITE, bounce_event, cc);
+		event_add(&cc->ev, NULL);
+		return;
+	case CLIENT_DONE:
+		queue_remove_envelope(&cc->m);
 		break;
-
-	case S_GREETED:
-		if (strncmp(line, "250 ", 4) != 0)
-			return 0;
-
-		fprintf(fp, "MAIL FROM: <MAILER-DAEMON@%s>\r\n", env->sc_hostname);
-		*state = S_MAIL;
-		break;
-
-	case S_MAIL:
-		if (strncmp(line, "250 ", 4) != 0)
-			return 0;
-
-		fprintf(fp, "RCPT TO: <%s@%s>\r\n", messagep->sender.user,
-			messagep->sender.domain);
-		*state = S_RCPT;
-		break;
-
-	case S_RCPT:
-		if (strncmp(line, "250 ", 4) != 0)
-			return 0;
-
-		fprintf(fp, "DATA\r\n");
-		*state = S_DATA;
-		break;
-
-	case S_DATA: {
-		int msgfd;
-		FILE *srcfp;
-
-		if (strncmp(line, "354 ", 4) != 0)
-			return 0;
-
-		msgfd = queue_open_message_file(messagep->message_id);
-		if (msgfd == -1)
-			return 0;
-
-		srcfp = fdopen(msgfd, "r");
-		if (srcfp == NULL) {
-			close(msgfd);
-			return 0;
-		}
-
-		fprintf(fp, "From: Mailer Daemon <MAILER-DAEMON@%s>\r\n",
-			env->sc_hostname);
-		fprintf(fp, "To: %s@%s\r\n",
-			messagep->sender.user, messagep->sender.domain);
-		fprintf(fp, "Subject: Delivery attempt failure\r\n");
-		fprintf(fp, "\r\n");
-
-		fprintf(fp, "Hi !\r\n");
-		fprintf(fp, "This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail.\r\n");
-		fprintf(fp, "An error has occurred while attempting to deliver a message.\r\n");
-		fprintf(fp, "\r\n");
-		fprintf(fp, "Recipient: %s@%s\r\n", messagep->recipient.user,
-			messagep->recipient.domain);
-		fprintf(fp, "Reason:\r\n");
-		fprintf(fp, "%s\r\n", messagep->session_errorline);
-
-		fprintf(fp, "\r\n");
-		fprintf(fp, "Below is a copy of the original message:\r\n\r\n");
-
-		if (! file_copy(fp, srcfp, NULL, 0, 1))
-			return 0;
-
-		fprintf(fp, ".\r\n");
-
-		*state = S_DONE;
+	case CLIENT_ERROR:
+		message_set_errormsg(&cc->m, "SMTP error: %s", ep);
+		message_reset_flags(&cc->m);
 		break;
 	}
-	case S_DONE:
-		if (strncmp(line, "250 ", 4) != 0)
-			return 0;
-
-		fprintf(fp, "QUIT\r\n");
-		*state = S_QUIT;
-		break;
-
-	case S_QUIT:
-		if (strncmp(line, "221 ", 4) != 0)
-			return 0;
-
-		break;
-
-	default:
-		errx(1, "bounce_session_switch: unknown state.");
-	}
-
-	fflush(fp);
-	return 1;
+	client_close(cc->sp);
+	free(cc);
 }

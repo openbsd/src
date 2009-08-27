@@ -1,7 +1,8 @@
-/*	$OpenBSD: enqueue.c,v 1.19 2009/08/08 00:23:34 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.20 2009/08/27 11:37:30 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
+ * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,30 +37,20 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "client.h"
 
 extern struct imsgbuf	*ibuf;
 
 void	 usage(void);
 void	 sighdlr(int);
 int	 main(int, char *[]);
-void	 femail_write(const void *, size_t);
-void	 femail_put(const char *, ...);
-void	 send_cmd(const char *);
 void	 build_from(char *, struct passwd *);
-int	 parse_message(FILE *, int, int);
+int	 parse_message(FILE *, int, int, struct buf *);
 void	 parse_addr(char *, size_t, int);
 void	 parse_addr_terminal(int);
 char	*qualify_addr(char *);
 void	 rcpt_add(char *);
-void	 received(void);
 int	 open_connection(void);
-int	 read_reply(void);
-void	 greeting(int);
-void	 mailfrom(char *);
-void	 rcptto(char *);
-void	 start_data(void);
-void	 send_message(int);
-void	 end_data(void);
 
 enum headerfields {
 	HDR_NONE,
@@ -85,13 +76,6 @@ struct {
 	{ "Message-Id:",	HDR_MSGID }
 };
 
-#define	STATUS_GREETING		220
-#define	STATUS_HELO		250
-#define	STATUS_MAILFROM		250
-#define	STATUS_RCPTTO		250
-#define	STATUS_DATA		354
-#define	STATUS_QUEUED		250
-#define	STATUS_QUIT		221
 #define	SMTP_LINELEN		1000
 #define	SMTP_TIMEOUT		120
 #define	TIMEOUTMSG		"Timeout\n"
@@ -137,9 +121,11 @@ sighdlr(int sig)
 int
 enqueue(int argc, char *argv[])
 {
-	int		 i, ch, tflag = 0, status, noheader;
-	char		*fake_from = NULL;
-	struct passwd	*pw;
+	int			 i, ch, tflag = 0, noheader, ret;
+	char			*fake_from = NULL, *ep;
+	struct passwd		*pw;
+	struct smtp_client	*sp;
+	struct buf		*body;
 
 	bzero(&msg, sizeof(msg));
 	time(&timestamp);
@@ -192,68 +178,95 @@ enqueue(int argc, char *argv[])
 		argc--;
 	}
 
-	noheader = parse_message(stdin, fake_from == NULL, tflag);
-
-	if (msg.rcpt_cnt == 0)
-		errx(1, "no recipients");
-
 	signal(SIGALRM, sighdlr);
 	alarm(SMTP_TIMEOUT);
 
 	msg.fd = open_connection();
-	if ((status = read_reply()) != STATUS_GREETING)
-		errx(1, "server greets us with status %d", status);
-	greeting(1);
-	mailfrom(msg.from);
+
+	/* init session */
+	if ((sp = client_init(msg.fd, "localhost")) == NULL)
+		err(1, "client_init failed");
+	if (verbose)
+		client_verbose(sp, STDOUT_FILENO);
+
+	/* parse message */
+	if ((body = buf_dynamic(0, SIZE_T_MAX)) < 0)
+		err(1, "buf_dynamic failed");
+	noheader = parse_message(stdin, fake_from == NULL, tflag, body);
+
+	/* set envelope from */
+	if (client_sender(sp, "%s", msg.from) < 0)
+		err(1, "client_sender failed");
+
+	/* add recipients */
+	if (msg.rcpt_cnt == 0)
+		errx(1, "no recipients");
 	for (i = 0; i < msg.rcpt_cnt; i++)
-		rcptto(msg.rcpts[i]);
-	start_data();
-	send_message(noheader);
-	end_data();
+		if (client_rcpt(sp, "%s", msg.rcpts[i]) < 0)
+			err(1, "client_rcpt failed");
+
+	/* prepend Received header */
+	if (client_data_printf(sp,
+	    "Received: (from %s@localhost, uid %lu)\n"
+	    "\tby %s\n"
+	    "\t%s\n",
+	    user, (u_long)getuid(),
+	    host,
+	    time_to_text(timestamp)) < 0)
+		err(1, "client_data_printf failed");
+
+	/* add From */
+	if (!msg.saw_from) {
+		if (msg.fromname != NULL) {
+			if (client_data_printf(sp,
+			    "From: %s <%s>\n", msg.fromname, msg.from) < 0)
+				err(1, "client_data_printf failed");
+		} else
+			if (client_data_printf(sp,
+			    "From: %s\n", msg.from) < 0)
+				err(1, "client_data_printf failed");
+	}
+
+	/* add Date */
+	if (!msg.saw_date)
+		if (client_data_printf(sp,
+		    "Date: %s\n", time_to_text(timestamp)) < 0)
+			err(1, "client_data_printf failed");
+
+	/* add Message-Id */
+	if (!msg.saw_msgid)
+		if (client_data_printf(sp,
+		    "Message-Id: <%llu.enqueue@%s>\n",
+		    queue_generate_id(), host) < 0)
+			err(1, "client_data_printf failed");
+
+	/* add separating newline */
+	if (noheader)
+		if (client_data_printf(sp, "\n") < 0)
+			err(1, "client_data_printf failed");
+
+	if (client_data_printf(sp, "%.*s", buf_size(body), body->buf) < 0)
+		err(1, "client_data_printf failed");
+	buf_free(body);
+
+	/* run the protocol engine */
+	for (;;) {
+		while ((ret = client_read(sp, &ep)) == CLIENT_WANT_READ)
+			;
+		if (ep)
+			errx(1, "read error: %s", ep);
+		if (ret == CLIENT_DONE)
+			break;
+		while (client_write(sp, &ep) == CLIENT_WANT_WRITE)
+			;
+		if (ep)
+			errx(1, "write error: %s", ep);
+	}
+
+	client_close(sp);
 
 	close(msg.fd);
 	exit (0);
-}
-
-void
-femail_write(const void *buf, size_t nbytes)
-{
-	ssize_t	n;
-
-	do {
-		n = write(msg.fd, buf, nbytes);
-	} while (n == -1 && errno == EINTR);
-
-	if (n == 0)
-		errx(1, "write: connection closed");
-	if (n == -1)
-		err(1, "write");
-	if ((size_t)n < nbytes)
-		errx(1, "short write: %ld of %lu bytes written",
-		    (long)n, (u_long)nbytes);
-}
-
-void
-femail_put(const char *fmt, ...)
-{
-	va_list	ap;
-	char	buf[SMTP_LINELEN];
-
-	va_start(ap, fmt);
-	if (vsnprintf(buf, sizeof(buf), fmt, ap) >= (int)sizeof(buf))
-		errx(1, "line length exceeded");
-	va_end(ap);
-
-	femail_write(buf, strlen(buf));
-}
-
-void
-send_cmd(const char *cmd)
-{
-	if (verbose)
-		printf(">>> %s\n", cmd);
-
-	femail_put("%s\r\n", cmd);
 }
 
 void
@@ -290,12 +303,11 @@ build_from(char *fake_from, struct passwd *pw)
 }
 
 int
-parse_message(FILE *fin, int get_from, int tflag)
+parse_message(FILE *fin, int get_from, int tflag, struct buf *body)
 {
-	char	*buf, *twodots = "..";
-	size_t	 len, new_len;
-	void	*newp;
-	u_int	 i, cur = HDR_NONE, dotonly;
+	char	*buf;
+	size_t	 len;
+	u_int	 i, cur = HDR_NONE;
 	u_int	 header_seen = 0, header_done = 0;
 
 	bzero(&pstate, sizeof(pstate));
@@ -335,29 +347,10 @@ parse_message(FILE *fin, int get_from, int tflag)
 			header_seen = 1;
 
 		if (cur != HDR_BCC) {
-			/* save data, \n -> \r\n, . -> .. */
-			if (buf[len - 1] == '\n')
-				new_len = msg.len + len + 1;
-			else
-				new_len = msg.len + len + 2;
-
-			if ((len == 1 && buf[0] == '.') ||
-			    (len > 1 && buf[0] == '.' && buf[1] == '\n')) {
-				dotonly = 1;
-				new_len++;
-			} else
-				dotonly = 0;
-
-			if ((newp = realloc(msg.data, new_len)) == NULL)
-				err(1, "realloc header");
-			msg.data = newp;
-			if (dotonly)
-				memcpy(msg.data + msg.len, twodots, 2);
-			else
-				memcpy(msg.data + msg.len, buf, len);
-			msg.len = new_len;
-			msg.data[msg.len - 2] = '\r';
-			msg.data[msg.len - 1] = '\n';
+			if (buf_add(body, buf, len) < 0)
+				err(1, "buf_add failed");
+			if (buf[len - 1] != '\n' && buf_add(body, "\n", 1) < 0)
+				err(1, "buf_add failed");
 		}
 
 		/*
@@ -499,14 +492,6 @@ rcpt_add(char *addr)
 	msg.rcpts[msg.rcpt_cnt++] = qualify_addr(addr);
 }
 
-void
-received(void)
-{
-	femail_put(
-	    "Received: (from %s@%s, uid %lu)\r\n\tby %s\r\n\t%s\r\n",
-	    user, "localhost", (u_long)getuid(), host, time_to_text(timestamp));
-}
-
 int
 open_connection(void)
 {
@@ -547,176 +532,6 @@ open_connection(void)
 	}
 
 	return fd;
-}
-
-int
-read_reply(void)
-{
-	char		*lbuf = NULL;
-	size_t		 len, pos, spos;
-	long		 status = 0;
-	char		 buf[BUFSIZ];
-	ssize_t		 rlen;
-	int		 done = 0;
-
-	for (len = pos = spos = 0; !done;) {
-		if (pos == 0 ||
-		    (pos > 0 && memchr(buf + pos, '\n', len - pos) == NULL)) {
-			memmove(buf, buf + pos, len - pos);
-			len -= pos;
-			pos = 0;
-			if ((rlen = read(msg.fd, buf + len,
-			    sizeof(buf) - len)) == -1)
-				err(1, "read");
-			len += rlen;
-		}
-		spos = pos;
-
-		/* status code */
-		for (; pos < len && buf[pos] >= '0' && buf[pos] <= '9'; pos++)
-			;	/* nothing */
-
-		if (pos == len)
-			return (0);
-
-		if (buf[pos] == ' ')
-			done = 1;
-		else if (buf[pos] != '-')
-			errx(1, "invalid syntax in reply from server");
-
-		/* skip up to \n */
-		for (; pos < len && buf[pos - 1] != '\n'; pos++)
-			;	/* nothing */
-
-		if (verbose) {
-			size_t	clen;
-
-			clen = pos - spos + 1;	/* + 1 for trailing \0 */
-			if (buf[pos - 1] == '\n')
-				clen--;
-			if (buf[pos - 2] == '\r')
-				clen--;
-			if ((lbuf = malloc(clen)) == NULL)
-				err(1, NULL);
-			strlcpy(lbuf, buf + spos, clen);
-			printf("<<< %s\n", lbuf);
-			free(lbuf);
-		}
-	}
-
-	status = strtol(buf, NULL, 10);
-	if (status < 100 || status > 999)
-		errx(1, "error reading status: out of range");
-
-	return (status);
-}
-
-void
-greeting(int use_ehlo)
-{
-	int	 status;
-	char	*cmd, *how;
-
-	if (use_ehlo)
-		how = "EHLO";
-	else
-		how = "HELO";
-
-	if (asprintf(&cmd, "%s %s", how, host) == -1)
-		err(1, "asprintf");
-	send_cmd(cmd);
-	free(cmd);
-
-	if ((status = read_reply()) != STATUS_HELO) {
-		if (use_ehlo)
-			greeting(0);
-		else
-			errx(1, "remote host refuses our greeting");
-	}
-}
-
-void
-mailfrom(char *addr)
-{
-	int	 status;
-	char	*cmd;
-
-	if (asprintf(&cmd, "MAIL FROM:<%s>", addr) == -1)
-		err(1, "asprintf");
-	send_cmd(cmd);
-	free(cmd);
-
-	if ((status = read_reply()) != STATUS_MAILFROM)
-		errx(1, "mail from %s refused by server", addr);
-}
-
-void
-rcptto(char *addr)
-{
-	int	 status;
-	char	*cmd;
-
-	if (asprintf(&cmd, "RCPT TO:<%s>", addr) == -1)
-		err(1, "asprintf");
-	send_cmd(cmd);
-	free(cmd);
-
-	if ((status = read_reply()) != STATUS_RCPTTO)
-		errx(1, "rcpt to %s refused by server", addr);
-}
-
-void
-start_data(void)
-{
-	int	 status;
-
-	send_cmd("DATA");
-
-	if ((status = read_reply()) != STATUS_DATA)
-		errx(1, "server sends error after DATA");
-}
-
-void
-send_message(int noheader)
-{
-	/* our own headers */
-	received();
-
-	if (!msg.saw_from) {
-		if (msg.fromname != NULL)
-			femail_put("From: %s <%s>\r\n", msg.fromname, msg.from);
-		else
-			femail_put("From: %s\r\n", msg.from);
-	}
-
-	if (!msg.saw_date)
-		femail_put("Date: %s\r\n", time_to_text(timestamp));
-
-	if (!msg.saw_msgid)
-		femail_put("Message-Id: <%llu.enqueue@%s>\r\n",
-		    queue_generate_id(), host);
-
-	if (noheader)
-		femail_write("\r\n", 2);
-
-	if (msg.data != NULL)
-		femail_write(msg.data, msg.len);
-}
-
-void
-end_data(void)
-{
-	int	status;
-
-	femail_write(".\r\n", 3);
-
-	if ((status = read_reply()) != STATUS_QUEUED)
-		errx(1, "error after sending mail, got status %d", status);
-
-	send_cmd("QUIT");
-
-	if ((status = read_reply()) != STATUS_QUIT)
-		errx(1, "server sends error after QUIT");
 }
 
 int

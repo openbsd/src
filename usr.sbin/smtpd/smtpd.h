@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.136 2009/08/27 09:21:28 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.137 2009/08/27 11:37:30 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -859,6 +859,7 @@ int		 enqueue_offline(int, char **);
 
 /* runner.c */
 pid_t		 runner(struct smtpd *);
+void		 message_reset_flags(struct message *);
 SPLAY_PROTOTYPE(batchtree, batch, b_nodes, batch_cmp);
 
 
