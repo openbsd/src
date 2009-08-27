@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.26 2009/08/27 06:31:13 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.27 2009/08/27 06:54:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -372,8 +372,6 @@ sock_setvol(void *arg, unsigned vol)
 	struct abuf *rbuf;
 
 	f->vol = vol;
-	if (f->pstate <= SOCK_START)
-		f->lastvol = f->vol;
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
 	if (!rbuf) {
 		DPRINTF("sock_setvol: no read buffer yet\n");
@@ -1004,7 +1002,7 @@ sock_buildmsg(struct sock *f)
 	/*
 	 * if volume changed build a SETVOL message
 	 */
-	if (f->vol != f->lastvol) {
+	if (f->pstate >= SOCK_START && f->vol != f->lastvol) {
 		DPRINTFN(4, "sock_buildmsg: %p: SETVOL: %d\n", f, f->vol);
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_SETVOL;
