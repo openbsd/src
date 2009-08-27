@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.65 2009/08/27 23:26:56 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.66 2009/08/27 23:39:46 thib Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -550,7 +550,7 @@ nfs_asyncio(struct buf *bp)
 
 
 	/*
-	 * Make sure we don't queue up to much.
+	 * Make sure we don't queue up too much.
 	 * TODO: Look into implementing migration for aiods.
 	 */
 	if (nmp->nm_bufqlen >= nfs_aiodbufqmax) {

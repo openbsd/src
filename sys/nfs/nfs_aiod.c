@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_aiod.c,v 1.3 2009/08/27 23:26:56 thib Exp $	*/
+/*	$OpenBSD: nfs_aiod.c,v 1.4 2009/08/27 23:39:46 thib Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -74,10 +74,8 @@ nfs_aiod(void *arg)
 	struct nfsmount	*nmp;
 	struct proc	*p;
 	struct buf	*bp;
-	int		 error;
 
 	p = (struct proc *)arg;
-	error = 0;
 
 	aiod = malloc(sizeof(*aiod), M_TEMP, M_WAITOK|M_ZERO);
 	mtx_enter(&nfs_aiodl_mtx);
@@ -102,7 +100,6 @@ nfs_aiod(void *arg)
 
 
 loop:	/* Loop around until SIGKILL */
-	
 	if (aiod->nad_flags & NFSAIOD_WAKEUP) {
 		mtx_enter(&nfs_aiodl_mtx);
 		LIST_INSERT_HEAD(&nfs_aiods_idle, aiod, nad_idle);
@@ -161,7 +158,7 @@ out1:
 		nfs_aiodbufqmax = max((bcstats.numbufs / 4) / nfs_numaiods, 64);
 	else
 		nfs_aiodbufqmax = 0;
-	kthread_exit(error);
+	kthread_exit(0);
 }
 
 int
@@ -169,12 +166,11 @@ nfs_set_naiod(int howmany)
 {
 	struct nfs_aiod	*aiod;
 	struct proc	*p;
-	int		 want, error, dolock;
+	int		 want, error;
 
 	KASSERT(howmany >= 0);
 
 	error = 0;
-	dolock = 1;
 
 	if (nfs_numaiods == -1)
 		nfs_numaiods = 0;
