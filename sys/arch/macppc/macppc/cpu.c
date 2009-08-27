@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.63 2009/06/09 01:12:38 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.64 2009/08/27 20:42:01 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -231,7 +231,7 @@ ppc_check_procid()
 		for (p = &nop32_start; p->s; p++) {
 			for (inst = p->s; inst < p->e; inst++)
 				*inst = nop_inst;
-			syncicache(p->s, (p->e - p->s) * sizeof(p->e));
+			syncicache(p->s, (p->e - p->s) * sizeof(*p->e));
 		}
 	}
 }
