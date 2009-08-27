@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.82 2009/08/07 20:21:48 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.83 2009/08/27 09:21:28 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -232,7 +232,7 @@ parent_send_config_ruleset(struct smtpd *env, int proc)
 }
 
 void
-parent_dispatch_lka(int fd, short event, void *p)
+parent_dispatch_lka(int imsgfd, short event, void *p)
 {
 	struct smtpd		*env = p;
 	struct imsgev		*iev;
@@ -268,17 +268,20 @@ parent_dispatch_lka(int fd, short event, void *p)
 		switch (imsg.hdr.type) {
 		case IMSG_PARENT_FORWARD_OPEN: {
 			struct forward_req *fwreq = imsg.data;
-			int ret;
+			int fd;
 
 			IMSG_SIZE_CHECK(fwreq);
 
-			ret = parent_forward_open(fwreq->pw_name);
+			fd = parent_forward_open(fwreq->pw_name);
 			fwreq->status = 0;
-			if (ret == -1) {
-				if (errno == ENOENT)
-					fwreq->status = 1;
-			}
-			imsg_compose_event(iev, IMSG_PARENT_FORWARD_OPEN, 0, 0, ret, fwreq, sizeof(*fwreq));
+			if (fd == -2) {
+				/* user has no ~/.forward.  it is optional, so
+				 * set status to ok. */
+				fwreq->status = 1;
+				fd = -1;
+			} else if (fd != -1)
+				fwreq->status = 1;
+			imsg_compose_event(iev, IMSG_PARENT_FORWARD_OPEN, 0, 0, fd, fwreq, sizeof(*fwreq));
 			break;
 		}
 		default:
@@ -1536,7 +1539,6 @@ int
 parent_forward_open(char *username)
 {
 	struct passwd *pw;
-	struct stat sb;
 	char pathname[MAXPATHLEN];
 	int fd;
 
@@ -1545,36 +1547,23 @@ parent_forward_open(char *username)
 		return -1;
 
 	if (! bsnprintf(pathname, sizeof (pathname), "%s/.forward", pw->pw_dir))
-		return -1;
+		fatal("snprintf");
 
 	fd = open(pathname, O_RDONLY);
 	if (fd == -1) {
 		if (errno == ENOENT)
-			goto err;
+			return -2;
+		log_warn("parent_forward_open: %s", pathname);
 		return -1;
 	}
 
-	/* make sure ~/ is not writable by anyone but owner */
-	if (stat(pw->pw_dir, &sb) == -1)
-		goto errlog;
-
-	if (sb.st_uid != pw->pw_uid || sb.st_mode & (S_IWGRP|S_IWOTH))
-		goto errlog;
-
-	/* make sure ~/.forward is not writable by anyone but owner */
-	if (fstat(fd, &sb) == -1)
-		goto errlog;
-
-	if (sb.st_uid != pw->pw_uid || sb.st_mode & (S_IWGRP|S_IWOTH))
-		goto errlog;
+	if (! secure_file(fd, pathname, pw, 1)) {
+		log_warnx("%s: unsecure file", pathname);
+		close(fd);
+		return -1;
+	}
 
 	return fd;
-
-errlog:
-	log_info("cannot process forward file for user %s due to wrong permissions", username);
-
-err:
-	return -1;
 }
 
 int

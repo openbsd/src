@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.25 2009/08/08 00:18:38 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.26 2009/08/27 09:21:28 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -276,7 +276,7 @@ time_to_text(time_t when)
  * Check file for security. Based on usr.bin/ssh/auth.c.
  */
 int
-secure_file(int fd, char *path, struct passwd *pw)
+secure_file(int fd, char *path, struct passwd *pw, int mayread)
 {
 	char		 buf[MAXPATHLEN];
 	char		 homedir[MAXPATHLEN];
@@ -293,7 +293,7 @@ secure_file(int fd, char *path, struct passwd *pw)
 	if (fstat(fd, &st) < 0 ||
 	    !S_ISREG(st.st_mode) ||
 	    (st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
-	    (st.st_mode & 066) != 0)
+	    (st.st_mode & (mayread ? 022 : 066)) != 0)
 		return 0;
 
 	/* For each component of the canonical path, walking upwards. */
