@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.5 2009/08/26 12:23:39 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.6 2009/08/27 19:43:50 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -172,8 +172,7 @@ struct udl_huffman {
 #define UDL_CB_TOTAL_SIZE		512
 #define UDL_CB_TAIL_SIZE		4
 #define UDL_CB_BODY_SIZE		(UDL_CB_TOTAL_SIZE - UDL_CB_TAIL_SIZE)
-#define UDL_CB_RESTART1_SIZE		(UDL_CB_BODY_SIZE - 4)
-#define UDL_CB_RESTART2_SIZE		(UDL_CB_BODY_SIZE - 9)
+#define UDL_CB_RESTART_SIZE		(UDL_CB_BODY_SIZE - UDL_CB_TAIL_SIZE)
 
 uint8_t udl_decomp_table[] = {
 	0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
