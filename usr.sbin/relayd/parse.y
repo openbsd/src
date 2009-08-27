@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.141 2009/08/13 13:51:21 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.142 2009/08/27 09:26:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>
+#include <ifaddrs.h>
 
 #include <openssl/ssl.h>
 
@@ -107,6 +108,8 @@ static int		 nodedirection;
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
 int		 host_dns(const char *, struct addresslist *,
+		    int, struct portrange *, const char *, int);
+int		 host_if(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
 int		 host(const char *, struct addresslist *,
 		    int, struct portrange *, const char *, int);
@@ -2401,6 +2404,9 @@ host_dns(const char *s, struct addresslist *al, int max,
 	struct sockaddr_in6	*sin6;
 	struct address		*h;
 
+	if ((cnt = host_if(s, al, max, port, ifname, ipproto)) != 0)
+		return (cnt);
+
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
@@ -2453,6 +2459,77 @@ host_dns(const char *s, struct addresslist *al, int max,
 		    s, max);
 	}
 	freeaddrinfo(res0);
+	return (cnt);
+}
+
+int
+host_if(const char *s, struct addresslist *al, int max,
+    struct portrange *port, const char *ifname, int ipproto)
+{
+	struct ifaddrs		*ifap, *p;
+	struct sockaddr_in	*sain;
+	struct sockaddr_in6	*sin6;
+	struct address		*h;
+	int			 cnt = 0, af;
+
+	if (if_nametoindex(s) == 0)
+		return (0);
+
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs");
+
+	/* First search for IPv4 addresses */
+	af = AF_INET;
+
+ nextaf:
+	for (p = ifap; p != NULL && cnt < max; p = p->ifa_next) {
+		if (p->ifa_addr->sa_family != af ||
+		    strcmp(s, p->ifa_name) != 0)
+			continue;
+		if ((h = calloc(1, sizeof(*h))) == NULL)
+			fatal("calloc");
+
+		if (port != NULL)
+			bcopy(port, &h->port, sizeof(h->port));
+		if (ifname != NULL) {
+			if (strlcpy(h->ifname, ifname, sizeof(h->ifname)) >=
+			    sizeof(h->ifname))
+				log_warnx("host_if: interface name truncated");
+			freeifaddrs(ifap);
+			return (-1);
+		}
+		if (ipproto != -1)
+			h->ipproto = ipproto;
+		h->ss.ss_family = af;
+
+		if (af == AF_INET) {
+			sain = (struct sockaddr_in *)&h->ss;
+			sain->sin_len = sizeof(struct sockaddr_in);
+			sain->sin_addr.s_addr = ((struct sockaddr_in *)
+			    p->ifa_addr)->sin_addr.s_addr;
+		} else {
+			sin6 = (struct sockaddr_in6 *)&h->ss;
+			sin6->sin6_len = sizeof(struct sockaddr_in6);
+			memcpy(&sin6->sin6_addr, &((struct sockaddr_in6 *)
+			    p->ifa_addr)->sin6_addr, sizeof(struct in6_addr));
+			sin6->sin6_scope_id = ((struct sockaddr_in6 *)
+			    p->ifa_addr)->sin6_scope_id;
+		}
+
+		TAILQ_INSERT_HEAD(al, h, entry);
+		cnt++;
+	}
+	if (af == AF_INET) {
+		/* Next search for IPv6 addresses */
+		af = AF_INET6;
+		goto nextaf;
+	}
+
+	if (cnt > max) {
+		log_warnx("host_if: %s resolves to more than %d hosts",
+		    s, max);
+	}
+	freeifaddrs(ifap);
 	return (cnt);
 }
 
