@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.110 2009/08/27 09:26:53 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.111 2009/08/27 11:15:20 jmc Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -67,7 +67,7 @@ can be specified by IPv4 address, IPv6 address, interface name,
 or DNS hostname.
 If the address is an interface name,
 .Xr relayd 8
-will lookup the first IPv4 address and any other IPv4 and IPv6
+will look up the first IPv4 address and any other IPv4 and IPv6
 addresses of the specified network interface.
 A
 .Ar port
