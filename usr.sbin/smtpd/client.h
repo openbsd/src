@@ -1,3 +1,5 @@
+/*	$OpenBSD: client.h,v 1.2 2009/08/27 11:42:50 jacekm Exp $	*/
+
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
