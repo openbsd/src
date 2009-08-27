@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsi.h,v 1.5 2009/08/14 10:40:16 claudio Exp $ */
+/*	$OpenBSD: iscsi.h,v 1.6 2009/08/27 14:12:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -125,6 +125,20 @@ struct iscsi_pdu_scsi_response {
 
 	u_int32_t	expdatasn;
 } __packed;
+
+#define ISCSI_SCSI_F_F			0x80
+#define ISCSI_SCSI_F_R			0x40
+#define ISCSI_SCSI_F_W			0x20
+
+#define ISCSI_SCSI_ATTR_UNTAGGED	0
+#define ISCSI_SCSI_ATTR_SIMPLE		1
+#define ISCSI_SCSI_ATTR_ORDERED		2
+#define ISCSI_SCSI_ATTR_HEAD_OF_Q	3
+#define ISCSI_SCSI_ATTR_ACA		4
+
+#define ISCSI_SCSI_STAT_GOOD		0x00
+#define ISCSI_SCSI_STAT_CHCK_COND	0x02
+/* we don't care about the type of the other error conditions */
 
 struct iscsi_pdu_task_request {
 	u_int8_t	opcode;
