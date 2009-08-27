@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.19 2009/08/25 19:16:36 miod Exp $ */
+/* $OpenBSD: pckbc.c,v 1.20 2009/08/27 16:45:20 jsg Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -142,8 +142,8 @@ pckbc_poll_data1(iot, ioh_d, ioh_c, slot, checkaux)
 	int i;
 	u_char stat;
 
-	/* if 1 port read takes 1us (?), this polls for 100ms */
-	for (i = 100000; i; i--) {
+	/* polls for ~100ms */
+	for (i = 100; i; i--, delay(1000)) {
 		stat = bus_space_read_1(iot, ioh_c, 0);
 		if (stat & KBS_DIB) {
 			register u_char c;
