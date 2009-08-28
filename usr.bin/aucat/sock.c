@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.27 2009/08/27 06:54:23 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.28 2009/08/28 06:37:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -947,6 +947,12 @@ sock_execmsg(struct sock *f)
 		f->rstate = SOCK_RRET;
 		f->rtodo = sizeof(struct amsg);
 		break;
+	case AMSG_BYE:
+		DPRINTFN(2, "sock_execmsg: %p: BYE\n", f);
+		if (f->pstate != SOCK_INIT)
+			DPRINTF("sock_execmsg: %p: BYE, bad state\n", f);
+		aproc_del(f->pipe.file.rproc);
+		return 0;
 	default:
 		DPRINTF("sock_execmsg: %p bogus command\n", f);
 		aproc_del(f->pipe.file.rproc);

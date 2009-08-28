@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.25 2009/08/26 05:33:01 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.26 2009/08/28 06:37:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -271,6 +271,12 @@ aucat_close(struct sio_hdl *sh)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 
+	if (!hdl->sio.eof) {
+		AMSG_INIT(&hdl->wmsg);
+		hdl->wmsg.cmd = AMSG_BYE;
+		hdl->wtodo = sizeof(struct amsg);
+		(void)aucat_wmsg(hdl);
+	}
 	while (close(hdl->fd) < 0 && errno == EINTR)
 		; /* nothing */
 	free(hdl);

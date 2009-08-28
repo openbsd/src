@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.21 2009/07/27 06:30:34 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.22 2009/08/28 06:37:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -237,6 +237,10 @@ sio_create(struct sio_hdl *hdl, struct sio_ops *ops, unsigned mode, int nbio)
 void
 sio_close(struct sio_hdl *hdl)
 {
+	if (!hdl->eof && hdl->started) {
+		DPRINTF("sio_close: not stopped\n");
+		hdl->eof = 1;
+	}
 	hdl->ops->close(hdl);
 }
 
