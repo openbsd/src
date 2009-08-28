@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.158 2009/04/30 11:36:57 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.159 2009/08/28 13:04:40 jsing Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -744,7 +744,6 @@ _C_LABEL(cold):
 	_C_LABEL(kernel_text) = start		! for kvm_mkdb(8)
 start:
 	/* Traps from TL=0 -- traps from user mode */
-#define TABLE	user_
 	.globl	_C_LABEL(trapbase)
 _C_LABEL(trapbase):
 	b dostart; nop; TA8	! 000 = reserved -- Use it to boot
@@ -819,7 +818,7 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 	UTRAP 0x071; UTRAP 0x072; UTRAP 0x073; UTRAP 0x074; UTRAP 0x075; UTRAP 0x076
 	UTRAP 0x077; UTRAP 0x078; UTRAP 0x079; UTRAP 0x07a; UTRAP 0x07b; UTRAP 0x07c
 	UTRAP 0x07d; UTRAP 0x07e; UTRAP 0x07f
-TABLE/**/uspill:
+user_uspill:
 	USPILL64 uspill8,ASI_AIUS	! 0x080 spill_0_normal -- used to save user windows in user mode
 	SPILL32 uspill4,ASI_AIUS	! 0x084 spill_1_normal
 	SPILLBOTH uspill8,uspill4,ASI_AIUS		! 0x088 spill_2_normal
@@ -827,12 +826,12 @@ TABLE/**/uspill:
 	sir
 #endif	/* DEBUG */
 	UTRAP 0x08c; TA32	! 0x08c spill_3_normal
-TABLE/**/kspill:
+user_kspill:
 	UTRAP 0x090; TA32	! 0x090 spill_4_normal -- used to save supervisor windows
 	SPILL64 kspill8,ASI_N	! 0x094 spill_5_normal
 	SPILL32 kspill4,ASI_N	! 0x098 spill_6_normal
 	SPILLBOTH kspill8,kspill4,ASI_N	! 0x09c spill_7_normal
-TABLE/**/uspillk:
+user_uspillk:
 	USPILL64 uspillk8,ASI_AIUS	! 0x0a0 spill_0_other -- used to save user windows in supervisor mode
 	SPILL32 uspillk4,ASI_AIUS	! 0x0a4 spill_1_other
 	SPILLBOTH uspillk8,uspillk4,ASI_AIUS	! 0x0a8 spill_2_other
@@ -841,17 +840,17 @@ TABLE/**/uspillk:
 	UTRAP 0x0b4; TA32	! 0x0b4 spill_5_other
 	UTRAP 0x0b8; TA32	! 0x0b8 spill_6_other
 	UTRAP 0x0bc; TA32	! 0x0bc spill_7_other
-TABLE/**/ufill:
+user_ufill:
 	UFILL64 ufill8,ASI_AIUS ! 0x0c0 fill_0_normal -- used to fill windows when running user mode
 	FILL32 ufill4,ASI_AIUS	! 0x0c4 fill_1_normal
 	FILLBOTH ufill8,ufill4,ASI_AIUS	! 0x0c8 fill_2_normal
 	UTRAP 0x0cc; TA32	! 0x0cc fill_3_normal
-TABLE/**/kfill:
+user_kfill:
 	UTRAP 0x0d0; TA32	! 0x0d0 fill_4_normal -- used to fill windows when running supervisor mode
 	FILL64 kfill8,ASI_N	! 0x0d4 fill_5_normal
 	FILL32 kfill4,ASI_N	! 0x0d8 fill_6_normal
 	FILLBOTH kfill8,kfill4,ASI_N	! 0x0dc fill_7_normal
-TABLE/**/ufillk:
+user_ufillk:
 	UFILL64 ufillk8,ASI_AIUS	! 0x0e0 fill_0_other
 	FILL32 ufillk4,ASI_AIUS	! 0x0e4 fill_1_other
 	FILLBOTH ufillk8,ufillk4,ASI_AIUS	! 0x0e8 fill_2_other
@@ -860,7 +859,7 @@ TABLE/**/ufillk:
 	UTRAP 0x0f4; TA32	! 0x0f4 fill_5_other
 	UTRAP 0x0f8; TA32	! 0x0f8 fill_6_other
 	UTRAP 0x0fc; TA32	! 0x0fc fill_7_other
-TABLE/**/syscall:
+user_syscall:
 	SYSCALL			! 0x100 = sun syscall
 	TRAP T_BREAKPOINT	! 0x101 = pseudo breakpoint instruction
 	STRAP 0x102; STRAP 0x103; STRAP 0x104; STRAP 0x105; STRAP 0x106; STRAP 0x107
@@ -905,8 +904,6 @@ TABLE/**/syscall:
 	UTRAP 0x1f8; UTRAP 0x1f9; UTRAP 0x1fa; UTRAP 0x1fb; UTRAP 0x1fc; UTRAP 0x1fd; UTRAP 0x1fe; UTRAP 0x1ff
 
 	/* Traps from TL>0 -- traps from supervisor mode */
-#undef TABLE
-#define TABLE	nucleus_
 trapbase_priv:
 	UTRAP 0x000		! 000 = reserved -- Use it to boot
 	/* We should not get the next 5 traps */
@@ -981,17 +978,17 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	UTRAP 0x071; UTRAP 0x072; UTRAP 0x073; UTRAP 0x074; UTRAP 0x075; UTRAP 0x076
 	UTRAP 0x077; UTRAP 0x078; UTRAP 0x079; UTRAP 0x07a; UTRAP 0x07b; UTRAP 0x07c
 	UTRAP 0x07d; UTRAP 0x07e; UTRAP 0x07f
-TABLE/**/uspill:
+nucleus_uspill:
 	USPILL64 1,ASI_AIUS	! 0x080 spill_0_normal -- used to save user windows
 	SPILL32 2,ASI_AIUS	! 0x084 spill_1_normal
 	SPILLBOTH 1b,2b,ASI_AIUS	! 0x088 spill_2_normal
 	UTRAP 0x08c; TA32	! 0x08c spill_3_normal
-TABLE/**/kspill:
+nucleus_kspill:
 	UTRAP 0x090; TA32	! 0x090 spill_4_normal -- used to save supervisor windows
 	SPILL64 1,ASI_N		! 0x094 spill_5_normal
 	SPILL32 2,ASI_N		! 0x098 spill_6_normal
 	SPILLBOTH 1b,2b,ASI_N	! 0x09c spill_7_normal
-TABLE/**/uspillk:
+nucleus_uspillk:
 	USPILL64 1,ASI_AIUS	! 0x0a0 spill_0_other -- used to save user windows in nucleus mode
 	SPILL32 2,ASI_AIUS	! 0x0a4 spill_1_other
 	SPILLBOTH 1b,2b,ASI_AIUS	! 0x0a8 spill_2_other
@@ -1000,17 +997,17 @@ TABLE/**/uspillk:
 	UTRAP 0x0b4; TA32	! 0x0b4 spill_5_other
 	UTRAP 0x0b8; TA32	! 0x0b8 spill_6_other
 	UTRAP 0x0bc; TA32	! 0x0bc spill_7_other
-TABLE/**/ufill:
+nucleus_ufill:
 	UFILL64 1,ASI_AIUS	! 0x0c0 fill_0_normal -- used to fill windows when running nucleus mode from user
 	FILL32 2,ASI_AIUS	! 0x0c4 fill_1_normal
 	FILLBOTH 1b,2b,ASI_AIUS	! 0x0c8 fill_2_normal
 	UTRAP 0x0cc; TA32	! 0x0cc fill_3_normal
-TABLE/**/sfill:
+nucleus_sfill:
 	UTRAP 0x0d0; TA32	! 0x0d0 fill_4_normal -- used to fill windows when running nucleus mode from supervisor
 	FILL64 1,ASI_N		! 0x0d4 fill_5_normal
 	FILL32 2,ASI_N		! 0x0d8 fill_6_normal
 	FILLBOTH 1b,2b,ASI_N	! 0x0dc fill_7_normal
-TABLE/**/kfill:
+nucleus_kfill:
 	UFILL64 1,ASI_AIUS	! 0x0e0 fill_0_other -- used to fill user windows when running nucleus mode -- will we ever use this?
 	FILL32 2,ASI_AIUS	! 0x0e4 fill_1_other
 	FILLBOTH 1b,2b,ASI_AIUS	! 0x0e8 fill_2_other
@@ -1019,7 +1016,7 @@ TABLE/**/kfill:
 	UTRAP 0x0f4; TA32	! 0x0f4 fill_5_other
 	UTRAP 0x0f8; TA32	! 0x0f8 fill_6_other
 	UTRAP 0x0fc; TA32	! 0x0fc fill_7_other
-TABLE/**/syscall:
+nucleus_syscall:
 	SYSCALL			! 0x100 = sun syscall
 	TRAP T_BREAKPOINT	! 0x101 = pseudo breakpoint instruction
 	STRAP 0x102; STRAP 0x103; STRAP 0x104; STRAP 0x105; STRAP 0x106; STRAP 0x107
