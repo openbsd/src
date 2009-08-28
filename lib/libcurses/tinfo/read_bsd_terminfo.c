@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.14 2003/06/17 21:56:24 millert Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.15 2009/08/28 11:43:50 nicm Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.14 2003/06/17 21:56:24 millert Exp $";
+static const char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.15 2009/08/28 11:43:50 nicm Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -119,7 +119,7 @@ _nc_lookup_bsd_terminfo_entry(tn, filename, tp)
     TERMTYPE *const tp;
 {
     char  *pathvec[2];
-    char  *capbuf, *cptr, *infobuf, *iptr, lastc;
+    char  *capbuf, *cptr, *infobuf, *iptr, ch;
     int    error;
     size_t len;
 
@@ -163,13 +163,22 @@ _nc_lookup_bsd_terminfo_entry(tn, filename, tp)
 	*iptr++ = '\n';
 
 	/* Copy the rest of capbuf, converting ':' -> ',' */
-	for (++cptr, lastc = '\0'; *cptr; cptr++) {
-	    /* XXX - somewhat simplistic */
-	    if (*cptr == ':' && lastc != '\\')
+	cptr++;
+	while (*cptr != '\0') {
+	    switch (ch = *cptr++) {
+	    case '^':
+	    case '\\':
+		*iptr++ = ch;
+		if (*cptr != '\0')
+		    *iptr++ = *cptr++;
+		break;
+	    case ':':
 		*iptr++ = ',';
-	    else
-		*iptr++ = *cptr;
-	    lastc = *cptr;
+		break;
+	    default:
+		*iptr++ = ch;
+		break;
+	    }
 	}
 	*iptr++ = '\n';
 	*iptr = '\0';

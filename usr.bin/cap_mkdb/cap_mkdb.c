@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.14 2006/03/04 20:32:51 otto Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.15 2009/08/28 11:43:50 nicm Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.14 2006/03/04 20:32:51 otto Exp $";
+static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.15 2009/08/28 11:43:50 nicm Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -159,7 +159,7 @@ db_build(char **ifiles)
 	recno_t reccnt;
 	size_t len, bplen;
 	int st;
-	char *bp, *p, *t;
+	char *bp, *p, *t, *out, ch;
 
 	cgetusedb(0);		/* disable reading of .db files in getcap(3) */
 
@@ -169,12 +169,13 @@ db_build(char **ifiles)
 	     (st = (info ? igetnext(&bp, ifiles) : cgetnext(&bp, ifiles))) > 0;) {
 
 		/*
-		 * Allocate enough memory to store record, terminating
-		 * NULL and one extra byte.
+		 * Allocate enough memory to store four times the size of the
+		 * record (so an existing ':' can be expanded to '\072' for
+		 * terminfo) plus a terminating NULL and one extra byte.
 		 */
 		len = strlen(bp);
-		if (bplen <= len + 2) {
-			int newbplen = bplen + MAX(256, len + 2);
+		if (bplen <= 4 * len + 2) {
+			int newbplen = bplen + MAX(256, 4 * len + 2);
 			void *newdata;
 
 			if ((newdata = realloc(data.data, newbplen)) == NULL)
@@ -202,13 +203,36 @@ db_build(char **ifiles)
 
 		/* Create the stored record. */
 		if (info) {
-			(void) memcpy(&((u_char *)(data.data))[1], bp, len + 1);
+			/*
+			 * The record separator is :, so it is necessary to
+			 * change commas into colons. However, \, should be
+			 * left alone, unless the \ is the last part of ^\.
+			 */
 			data.size = len + 2;
-			for (t = memchr((char *)data.data + 1, ',', data.size - 1);
-			     t;
-			     t = memchr(t, ',', data.size - (t - (char *)data.data)))
-				*t++ = ':';
-
+			out = ((char *) data.data) + 1;
+			t = bp;
+			while (t < bp + len) {
+				switch (ch = *t++) {
+				case '^':
+				case '\\':
+					*out++ = ch;
+					if (*t != '\0')
+						*out++ = *t++;
+					break;
+				case ':':
+					memcpy(out, "\\072", 4);
+					out += 4;
+					data.size += 3; /* : already counted */
+					break;
+				case ',':
+					*out++ = ':';
+					break;
+				default:
+					*out++ = ch;
+					break;
+				}
+			}
+			*out++ = '\0';
 			if (memchr((char *)data.data + 1, '\0', data.size - 2)) {
 				warnx("NUL in entry: %.*s", (int)MIN(len, 20), bp);
 				continue;
