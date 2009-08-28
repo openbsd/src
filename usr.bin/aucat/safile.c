@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.14 2009/07/25 10:52:19 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.15 2009/08/28 06:30:17 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,6 +34,7 @@
 struct safile {
 	struct file file;
 	struct sio_hdl *hdl;
+	int started;
 #ifdef DEBUG
 	struct timeval itv, otv;
 #endif
@@ -150,6 +151,7 @@ safile_new(struct fileops *ops, char *path,
 	if (f == NULL)
 		goto bad_close;
 	f->hdl = hdl;
+	f->started = 0;
 	sio_onmove(f->hdl, safile_cb, f);
 	return f;
  bad_close:
@@ -167,6 +169,7 @@ safile_start(struct file *file)
 		file_close(file);
 		return;
 	}
+	f->started = 1;
 	DPRINTF("safile_start: play/rec started\n");
 }
 
@@ -180,6 +183,7 @@ safile_stop(struct file *file)
 		file_close(file);
 		return;
 	}
+	f->started = 0;
 	DPRINTF("safile_stop: play/rec stopped\n");
 }
 
@@ -281,5 +285,9 @@ safile_revents(struct file *file, struct pollfd *pfd)
 void
 safile_close(struct file *file)
 {
+	struct safile *f = (struct safile *)file;
+
+	if (f->started)
+		safile_stop(&f->file);
 	return sio_close(((struct safile *)file)->hdl);
 }
