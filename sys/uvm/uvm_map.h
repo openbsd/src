@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.41 2009/07/25 12:55:40 miod Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.42 2009/08/28 00:40:03 ariane Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -154,8 +154,12 @@ struct vm_map_entry {
 
 #define UVM_MAP_STATIC		0x01		/* static map entry */
 #define UVM_MAP_KMEM		0x02		/* from kmem entry pool */
-
 };
+
+/*
+ * Marks the map entry as a guard page, using vm_map_entry.etype.
+ */
+#define MAP_ET_KVAGUARD		0x10		/* guard entry */
 
 #define	VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)
 

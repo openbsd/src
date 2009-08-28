@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.122 2009/08/24 22:45:29 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.123 2009/08/28 00:40:03 ariane Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -201,6 +201,13 @@ int uvm_map_spacefits(struct vm_map *, vaddr_t *, vsize_t,
 
 struct vm_map_entry	*uvm_mapent_alloc(struct vm_map *);
 void			uvm_mapent_free(struct vm_map_entry *);
+
+#ifdef KVA_GUARDPAGES
+/*
+ * Number of kva guardpages in use.
+ */
+int kva_guardpages;
+#endif
 
 
 /*
@@ -712,6 +719,9 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
     struct proc *p)
 {
 	struct vm_map_entry *prev_entry, *new_entry;
+#ifdef KVA_GUARDPAGES
+	struct vm_map_entry *guard_entry;
+#endif
 	vm_prot_t prot = UVM_PROTECTION(flags), maxprot =
 	    UVM_MAXPROTECTION(flags);
 	vm_inherit_t inherit = UVM_INHERIT(flags);
@@ -725,7 +735,7 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 	UVMHIST_LOG(maphist, "  uobj/offset %p/%ld", uobj, (u_long)uoffset,0,0);
 
 #ifdef KVA_GUARDPAGES
-	if (map == kernel_map) {
+	if (map == kernel_map && !(flags & UVM_FLAG_FIXED)) {
 		/*
 		 * kva_guardstart is initialized to the start of the kernelmap
 		 * and cycles through the kva space.
@@ -795,7 +805,8 @@ uvm_map_p(struct vm_map *map, vaddr_t *startp, vsize_t size,
 		 * If the kernel pmap can't map the requested space,
 		 * then allocate more resources for it.
 		 */
-		if (map == kernel_map && uvm_maxkaddr < (*startp + size))
+		if (map == kernel_map && !(flags & UVM_FLAG_FIXED) &&
+		    uvm_maxkaddr < (*startp + size))
 			uvm_maxkaddr = pmap_growkernel(*startp + size);
 	}
 #endif
@@ -924,6 +935,11 @@ step3:
 	 * step 3: allocate new entry and link it in
 	 */
 
+#ifdef KVA_GUARDPAGES
+	if (map == kernel_map && !(flags & UVM_FLAG_FIXED))
+		size -= PAGE_SIZE;
+#endif
+
 	new_entry = uvm_mapent_alloc(map);
 	new_entry->start = *startp;
 	new_entry->end = new_entry->start + size;
@@ -977,6 +993,30 @@ step3:
 	if ((map->first_free == prev_entry) &&
 	    (prev_entry->end >= new_entry->start))
 		map->first_free = new_entry;
+
+#ifdef KVA_GUARDPAGES
+	/*
+	 * Create the guard entry.
+	 */
+	if (map == kernel_map && !(flags & UVM_FLAG_FIXED)) {
+		guard_entry = uvm_mapent_alloc(map);
+		guard_entry->start = new_entry->end;
+		guard_entry->end = guard_entry->start + PAGE_SIZE;
+		guard_entry->object.uvm_obj = uobj;
+		guard_entry->offset = uoffset;
+		guard_entry->etype = MAP_ET_KVAGUARD;
+		guard_entry->protection = prot;
+		guard_entry->max_protection = maxprot;
+		guard_entry->inheritance = inherit;
+		guard_entry->wired_count = 0;
+		guard_entry->advice = advice;
+		guard_entry->aref.ar_pageoff = 0;
+		guard_entry->aref.ar_amap = NULL;
+		uvm_map_entry_link(map, new_entry, guard_entry);
+		map->size += PAGE_SIZE;
+		kva_guardpages++;
+	}
+#endif
 
 	uvm_tree_sanity(map, "map leave");
 
@@ -1457,11 +1497,6 @@ uvm_unmap_p(vm_map_t map, vaddr_t start, vaddr_t end, struct proc *p)
 	UVMHIST_LOG(maphist, "  (map=%p, start=0x%lx, end=0x%lx)",
 	    map, start, end, 0);
 
-#ifdef KVA_GUARDPAGES
-	if (map == kernel_map)
-		end += PAGE_SIZE;	/* Add guardpage. */
-#endif
-
 	/*
 	 * work now done by helper functions.   wipe the pmap's and then
 	 * detach from the dead entries...
@@ -1576,6 +1611,12 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 * special case: handle mappings to anonymous kernel objects.
 		 * we want to free these pages right away...
 		 */
+#ifdef KVA_GUARDPAGES
+		if (map == kernel_map && entry->etype & MAP_ET_KVAGUARD) {
+			entry->etype &= ~MAP_ET_KVAGUARD;
+			kva_guardpages--;
+		} else		/* (code continues across line-break) */
+#endif
 		if (UVM_ET_ISHOLE(entry)) {
 			if (!remove_holes) {
 				entry = next;
@@ -1657,6 +1698,26 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		first_entry = entry;
 		entry = next;		/* next entry, please */
 	}
+#ifdef KVA_GUARDPAGES
+	/*
+	 * entry points at the map-entry after the last-removed map-entry.
+	 */
+	if (map == kernel_map && entry != &map->header &&
+	    entry->etype & MAP_ET_KVAGUARD && entry->start == end) {
+		/*
+		 * Removed range is followed by guard page;
+		 * remove that guard page now (or it will stay forever).
+		 */
+		entry->etype &= ~MAP_ET_KVAGUARD;
+		kva_guardpages--;
+
+		uvm_map_entry_unlink(map, entry);
+		map->size -= len;
+		entry->next = first_entry;
+		first_entry = entry;
+		entry = next;		/* next entry, please */
+	}
+#endif
 	/* if ((map->flags & VM_MAP_DYING) == 0) { */
 		pmap_update(vm_map_pmap(map));
 	/* } */
