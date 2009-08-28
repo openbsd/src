@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.38 2009/03/03 19:08:25 miod Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.39 2009/08/28 10:13:53 jasper Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -697,11 +697,6 @@ osiop_scsidone(acb, status)
 			} else {
 				printf("%s: can't find matching acb\n",
 				    sc->sc_dev.dv_xname);
-#ifdef DDB
-#if 0
-				Debugger();
-#endif
-#endif
 			}
 		}
 		OSIOP_TRACE('d', 'n', status, 0);
@@ -975,11 +970,6 @@ osiop_start(sc)
 		    osiop_read_1(sc, OSIOP_LCRC),
 		    osiop_read_1(sc, OSIOP_SIEN),
 		    osiop_read_1(sc, OSIOP_DIEN));
-#ifdef DDB
-#if 0
-		Debugger();
-#endif
-#endif
 	}
 #endif
 
@@ -1061,11 +1051,6 @@ osiop_start(sc)
 		printf("ACK! osiop was busy at start: "
 		    "script %p dsa %p active %d\n",
 		    sc->sc_script, acb->ds, sc->sc_active);
-#ifdef DDB
-#if 0
-		Debugger();
-#endif
-#endif
 	}
 #endif
 	if (TAILQ_EMPTY(&sc->nexus_list)) {
@@ -1190,9 +1175,6 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 #if 0
 			printf("ACK! osiop was busy at end: "
 			    "script %p dsa %p\n", &osiop_script, ds);
-#ifdef DDB
-			Debugger();
-#endif
 #endif
 		}
 		if (ds->msgbuf[0] != MSG_CMDCOMPLETE)
@@ -1357,9 +1339,6 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 #if 0
 			osiop_write_1(sc, OSIOP_DCNTL,
 			    osiop_read_1(sc, OSIOP_DCNTL) | OSIOP_DCNTL_STD);
-#endif
-#ifdef DDB
-			Debugger();
 #endif
 			return (0);
 		}
@@ -1621,9 +1600,6 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 			    sc->sc_dev.dv_xname);
 #if 0
 			osiop_dump(sc);
-#ifdef DDB
-			Debugger();
-#endif
 #endif
 #endif
 			osiop_write_1(sc, OSIOP_DCNTL,
@@ -1707,11 +1683,6 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 #ifdef OSIOP_DEBUG
 	if (osiop_debug & DEBUG_DMA)
 		panic("osiop_chkintr: **** temp ****");
-#if 0
-#ifdef DDB
-	Debugger();
-#endif
-#endif
 #endif
 	osiop_reset(sc);	/* hard reset */
 	*status = SCSI_OSIOP_NOSTATUS;
