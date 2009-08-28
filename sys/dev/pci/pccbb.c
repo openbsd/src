@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.67 2009/07/25 11:27:26 kettenis Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.68 2009/08/28 15:54:52 kettenis Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -482,10 +482,6 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 	/* Disable legacy register mapping. */
 	switch (sc->sc_chipset) {
 	case CB_RX5C46X:
-#if 0
-	/* The RX5C47X-series requires writes to the PCI_LEGACY register. */
-	case CB_RX5C47X:
-#endif
 		/*
 		 * The legacy pcic io-port on Ricoh RX5C46X CardBus bridges
 		 * cannot be disabled by substituting 0 into PCI_LEGACY
@@ -498,7 +494,6 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		/* XXX I don't know proper way to kill legacy I/O. */
 		pci_conf_write(pc, pa->pa_tag, PCI_LEGACY, 0x0);
 		break;
 	}
