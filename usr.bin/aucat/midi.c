@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.7 2009/08/27 06:31:13 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.8 2009/08/29 14:46:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -472,7 +472,7 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 #ifdef DEBUG
 	if (debug_level > 0) {
 		fprintf(stderr, "ctl_ev:");
-		for (i = 0; i < ibuf->mlen; i++)
+		for (i = 0; i < ibuf->mindex; i++)
 			fprintf(stderr, " %02x", ibuf->mdata[i]);
 		fprintf(stderr, "\n");
 	}
@@ -502,14 +502,27 @@ ctl_in(struct aproc *p, struct abuf *ibuf)
 	idata = abuf_rgetblk(ibuf, &icount, 0);
 	for (i = 0; i < icount; i++) {
 		c = *idata++;
-		if (c >= 0xf0) {
-			/* clock and common events not used yet */
+		if (c >= 0xf8) {
+			/* clock events not used yet */
+		} else if (c >= 0xf0) {
+			if (ibuf->mstatus == 0xf0 && c == 0xf7 &&
+			    ibuf->mindex < MDATA_NMAX) {
+				ibuf->mdata[ibuf->mindex++] = c;
+				ctl_ev(p, ibuf);
+				continue;
+			}
+			ibuf->mdata[0] = c;
+			ibuf->mlen = common_len[c & 7];
+			ibuf->mstatus = c;
+			ibuf->mindex = 1;
 		} else if (c >= 0x80) {
 			ibuf->mdata[0] = c;
 			ibuf->mlen = voice_len[(c >> 4) & 7];
 			ibuf->mstatus = c;
 			ibuf->mindex = 1;
 		} else if (ibuf->mstatus) {
+			if (ibuf->mindex == MDATA_NMAX)
+				continue;		
 			if (ibuf->mindex == 0)
 				ibuf->mdata[ibuf->mindex++] = ibuf->mstatus;
 			ibuf->mdata[ibuf->mindex++] = c;
