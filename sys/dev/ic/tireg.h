@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.25 2006/08/16 02:37:00 brad Exp $	*/
+/*	$OpenBSD: tireg.h,v 1.1 2009/08/29 21:12:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1113,6 +1113,7 @@ struct ti_softc {
 	void *			ti_intrhand;
 	struct ifmedia		ifmedia;	/* media info */
 	u_int8_t		ti_hwrev;	/* Tigon rev (1 or 2) */
+	u_int8_t		ti_sbus;	/* SBus card */
 	u_int8_t		ti_copper;	/* 1000baseTX card */
 	u_int8_t		ti_linkstat;	/* Link state */
 	bus_dma_tag_t		sc_dmatag;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tivar.h,v 1.2 2004/11/22 21:23:57 deraadt Exp $	*/
+/*	$OpenBSD: tivar.h,v 1.1 2009/08/29 21:12:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -41,3 +41,6 @@ struct tigon_firmware {
 
 	u_char		data[1];
 };
+
+int	ti_attach(struct ti_softc *sc);
+int	ti_intr(void *);

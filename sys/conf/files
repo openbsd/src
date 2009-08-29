@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.472 2009/08/25 16:16:34 jsg Exp $
+#	$OpenBSD: files,v 1.473 2009/08/29 21:12:55 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -300,6 +300,9 @@ file	dev/ic/i82596.c			ie & (ie_pci | ie_eisa | ie_gsc)
 # Sun GEM Ethernet controllers
 device	gem: ether, ifnet, ifmedia, mii
 file	dev/ic/gem.c			gem
+
+device	ti: ether, ifnet, ifmedia, mii, firmload
+file	dev/ic/ti.c			ti
 
 # 8250/16[45]50-based "com" ports
 device	com: tty

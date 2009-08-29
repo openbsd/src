@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.98 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: ti.c,v 1.1 2009/08/29 21:12:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -107,19 +107,11 @@
 #include <net/if_vlan_var.h>
 #endif
 
+#include <machine/bus.h>
+
+#include <dev/ic/tireg.h>
+#include <dev/ic/tivar.h>
 #include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-
-#include <dev/pci/if_tireg.h>
-#include <dev/pci/if_tivar.h>
-
-int ti_probe(struct device *, void *, void *);
-void ti_attach(struct device *, struct device *, void *);
-
-struct cfattach ti_ca = {
-	sizeof(struct ti_softc), ti_probe, ti_attach
-};
 
 struct cfdriver ti_cd = {
 	NULL, "ti", DV_IFNET
@@ -177,17 +169,9 @@ int ti_init_tx_ring(struct ti_softc *);
 
 int ti_64bitslot_war(struct ti_softc *);
 int ti_chipinit(struct ti_softc *);
+void ti_chipinit_pci(struct ti_softc *);
+void ti_chipinit_sbus(struct ti_softc *);
 int ti_gibinit(struct ti_softc *);
-
-const struct pci_matchid ti_devices[] = {
-	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620 },
-	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T },
-	{ PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC },
-	{ PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENICT },
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985 },
-	{ PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON },
-	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PN9000SX }
-};
 
 /*
  * Send an instruction or address to the EEPROM, check for ACK.
@@ -1261,8 +1245,6 @@ ti_64bitslot_war(struct ti_softc *sc)
 int
 ti_chipinit(struct ti_softc *sc)
 {
-	u_int32_t		cacheline;
-	u_int32_t		pci_writemax = 0;
 	u_int32_t		chip_rev;
 
 	/* Initialize link to down state. */
@@ -1305,8 +1287,32 @@ ti_chipinit(struct ti_softc *sc)
 		TI_SETBIT(sc, TI_MISC_CONF, TI_MCR_SRAM_SYNCHRONOUS);
 	}
 
+	if (sc->ti_sbus)
+		ti_chipinit_sbus(sc);
+	else
+		ti_chipinit_pci(sc);
+
+	/* Recommended settings from Tigon manual. */
+	CSR_WRITE_4(sc, TI_GCR_DMA_WRITECFG, TI_DMA_STATE_THRESH_8W);
+	CSR_WRITE_4(sc, TI_GCR_DMA_READCFG, TI_DMA_STATE_THRESH_8W);
+
+	if (ti_64bitslot_war(sc)) {
+		printf("%s: bios thinks we're in a 64 bit slot, "
+		    "but we aren't", sc->sc_dv.dv_xname);
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+void
+ti_chipinit_pci(struct ti_softc *sc)
+{
+	u_int32_t		cacheline;
+	u_int32_t		pci_writemax = 0;
+
 	/* Set up the PCI state register. */
-	CSR_WRITE_4(sc, TI_PCI_STATE, TI_PCI_READ_CMD|TI_PCI_WRITE_CMD);
+	CSR_WRITE_4(sc, TI_PCI_STATE, TI_PCI_READ_CMD | TI_PCI_WRITE_CMD);
 	if (sc->ti_hwrev == TI_HWREV_TIGON_II)
 		TI_SETBIT(sc, TI_PCI_STATE, TI_PCISTATE_USE_MEM_RD_MULT);
 
@@ -1360,18 +1366,22 @@ ti_chipinit(struct ti_softc *sc)
 	CSR_WRITE_4(sc, TI_GCR_OPMODE, TI_DMA_SWAP_OPTIONS |
 	    TI_OPMODE_WARN_ENB | TI_OPMODE_FATAL_ENB |
 	    TI_OPMODE_DONT_FRAG_JUMBO);
+}
 
-	/* Recommended settings from Tigon manual. */
-	CSR_WRITE_4(sc, TI_GCR_DMA_WRITECFG, TI_DMA_STATE_THRESH_8W);
-	CSR_WRITE_4(sc, TI_GCR_DMA_READCFG, TI_DMA_STATE_THRESH_8W);
+void
+ti_chipinit_sbus(struct ti_softc *sc)
+{
+	/* Set up the PCI state register. */
+	CSR_WRITE_4(sc, TI_PCI_STATE, TI_PCI_READ_CMD | TI_PCI_WRITE_CMD |
+	    TI_PCISTATE_NO_SWAP_READ_DMA | TI_PCISTATE_NO_SWAP_WRITE_DMA |
+	    TI_PCI_WRITEMAX_64 | TI_PCI_READMAX_64 |
+	    TI_PCISTATE_PROVIDE_LEN);
 
-	if (ti_64bitslot_war(sc)) {
-		printf("%s: bios thinks we're in a 64 bit slot, "
-		    "but we aren't", sc->sc_dv.dv_xname);
-		return (EINVAL);
-	}
-
-	return (0);
+	/* Configure DMA variables. */
+	CSR_WRITE_4(sc, TI_GCR_OPMODE, TI_OPMODE_WORDSWAP_BD |
+	    TI_OPMODE_1_DMA_ACTIVE | TI_OPMODE_SBUS |
+	    TI_OPMODE_WARN_ENB | TI_OPMODE_FATAL_ENB |
+	    TI_OPMODE_DONT_FRAG_JUMBO);
 }
 
 /*
@@ -1539,60 +1549,17 @@ ti_gibinit(struct ti_softc *sc)
 	return (0);
 }
 
-/*
- * Probe for a Tigon chip. Check the PCI vendor and device IDs
- * against our list and return its name if we find a match.
- */
 int
-ti_probe(struct device *parent, void *match, void *aux)
+ti_attach(struct ti_softc *sc)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, ti_devices,
-	    sizeof(ti_devices)/sizeof(ti_devices[0])));
-}
-
-void
-ti_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct ti_softc *sc = (struct ti_softc *)self;
-	struct pci_attach_args *pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
-	bus_size_t size;
 	bus_dma_segment_t seg;
 	int rseg;
 	struct ifnet *ifp;
 	caddr_t kva;
 
-	/*
-	 * Map control/status registers.
-	 */
-
-	if (pci_mapreg_map(pa, TI_PCI_LOMEM,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->ti_btag, &sc->ti_bhandle, NULL, &size, 0)) {
- 		printf(": can't map mem space\n");
-		return;
- 	}
-
-	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
-		goto fail_1;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	sc->ti_intrhand = pci_intr_establish(pc, ih, IPL_NET, ti_intr, sc,
-	    self->dv_xname);
-	if (sc->ti_intrhand == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto fail_1;
-	}
-
 	if (ti_chipinit(sc)) {
 		printf("%s: chip initialization failed\n", sc->sc_dv.dv_xname);
-		goto fail_2;
+		return (1);
 	}
 
 	/* Zero out the NIC's on-board SRAM. */
@@ -1601,7 +1568,7 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 	/* Init again -- zeroing memory may have clobbered some registers. */
 	if (ti_chipinit(sc)) {
 		printf("%s: chip initialization failed\n", sc->sc_dv.dv_xname);
-		goto fail_2;
+		return (1);
 	}
 
 	/*
@@ -1615,38 +1582,35 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 				TI_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
 		printf("%s: failed to read station address\n",
 		    sc->sc_dv.dv_xname);
-		free(sc, M_DEVBUF);
-		goto fail_2;
+		return (1);
 	}
 
 	/*
 	 * A Tigon chip was detected. Inform the world.
 	 */
-	printf(": %s, address %s\n", intrstr,
-	     ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	/* Allocate the general information block and ring buffers. */
-	sc->sc_dmatag = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct ti_ring_data),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc rx buffers\n", sc->sc_dv.dv_xname);
-		goto fail_2;
+		return (1);
 	}
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
 	    sizeof(struct ti_ring_data), &kva, BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		       sc->sc_dv.dv_xname, sizeof(struct ti_ring_data));
-		goto fail_3;
+		goto fail_1;
 	}
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct ti_ring_data), 1,
 	    sizeof(struct ti_ring_data), 0, BUS_DMA_NOWAIT,
 	    &sc->ti_ring_map)) {
 		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
-		goto fail_4;
+		goto fail_2;
 	}
 	if (bus_dmamap_load(sc->sc_dmatag, sc->ti_ring_map, kva,
 	    sizeof(struct ti_ring_data), NULL, BUS_DMA_NOWAIT)) {
-		goto fail_5;
+		goto fail_3;
 	}
 	sc->ti_rdata = (struct ti_ring_data *)kva;
 	bzero(sc->ti_rdata, sizeof(struct ti_ring_data));
@@ -1655,23 +1619,8 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 	if (ti_alloc_jumbo_mem(sc)) {
 		printf("%s: jumbo buffer allocation failed\n",
 		    sc->sc_dv.dv_xname);
-		goto fail_5;
+		goto fail_3;
 	}
-
-	/*
-	 * We really need a better way to tell a 1000baseTX card
-	 * from a 1000baseSX one, since in theory there could be
-	 * OEMed 1000baseTX cards from lame vendors who aren't
-	 * clever enough to change the PCI ID. For the moment
-	 * though, the AceNIC is the only copper card available.
-	 */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALTEON &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALTEON_ACENICT)
-		sc->ti_copper = 1;
-	/* Ok, it's not the only copper card available */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETGEAR &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETGEAR_GA620T)
-		sc->ti_copper = 1;
 
 	/* Set default tuneable values. */
 	sc->ti_stat_ticks = 2 * TI_TICKS_PER_SEC;
@@ -1735,23 +1684,19 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	shutdownhook_establish(ti_shutdown, sc);
-	return;
+	return (0);
 
-fail_5:
+fail_3:
 	bus_dmamap_destroy(sc->sc_dmatag, sc->ti_ring_map);
 
-fail_4:
+fail_2:
 	bus_dmamem_unmap(sc->sc_dmatag, kva,
 	    sizeof(struct ti_ring_data));
 
-fail_3:
+fail_1:
 	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
 
-fail_2:
-	pci_intr_disestablish(pc, sc->ti_intrhand);
-
-fail_1:
-	bus_space_unmap(sc->ti_btag, sc->ti_bhandle, size);
+	return (1);
 }
 
 /*
