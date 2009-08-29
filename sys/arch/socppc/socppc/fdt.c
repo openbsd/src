@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.3 2009/08/26 17:30:14 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.4 2009/08/29 11:01:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -108,7 +108,7 @@ fdt_init(void *fdt)
 }
 
 /*
- * Retrieve string pointer from srtings table.
+ * Retrieve string pointer from strings table.
  */
 char *
 fdt_get_str(u_int32_t num)
