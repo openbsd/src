@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.9 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.10 2009/08/29 13:58:51 jasper Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -52,10 +52,6 @@
 
 #define	UHA_EISA_SLOT_OFFSET	0xc80
 #define	UHA_EISA_IOSIZE		0x020
-
-#ifndef DDB
-#define	Debugger() panic("should call debugger here (uha_eisa.c)")
-#endif
 
 int	uha_eisa_match(struct device *, void *, void *);
 void	uha_eisa_attach(struct device *, struct device *, void *);
@@ -233,11 +229,9 @@ u24_start_mbox(sc, mscp)
 			break;
 		delay(100);
 	}
-	if (!spincount) {
-		printf("%s: uha_start_mbox, board not responding\n",
+	if (!spincount)
+		panic("%s: uha_start_mbox, board not responding\n",
 		    sc->sc_dev.dv_xname);
-		Debugger();
-	}
 
 	bus_space_write_4(iot, ioh, U24_OGMPTR, KVTOPHYS(mscp));
 	if (mscp->flags & MSCP_ABORT)

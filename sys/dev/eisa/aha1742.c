@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.32 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.33 2009/08/29 13:58:51 jasper Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -68,10 +68,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-
-#ifndef DDB
-#define Debugger() panic("should call debugger here (aha1742.c)")
-#endif /* ! DDB */
 
 typedef u_long physaddr;
 typedef u_long physlen;
@@ -351,10 +347,8 @@ ahb_send_mbox(sc, opcode, ecb)
 			break;
 		delay(10);
 	}
-	if (!wait) {
-		printf("%s: board not responding\n", sc->sc_dev.dv_xname);
-		Debugger();
-	}
+	if (!wait)
+		panic("%s: board not responding\n", sc->sc_dev.dv_xname);
 
 	/* don't know this will work */
 	bus_space_write_4(iot, ioh, MBOXOUT0, KVTOPHYS(ecb));
@@ -411,10 +405,8 @@ ahb_send_immed(sc, target, cmd)
 			break;
 		delay(10);
 	}
-	if (!wait) {
-		printf("%s: board not responding\n", sc->sc_dev.dv_xname);
-		Debugger();
-	}
+	if (!wait)
+		panic("%s: board not responding\n", sc->sc_dev.dv_xname);
 
 	/* don't know this will work */
 	bus_space_write_4(iot, ioh, MBOXOUT0, cmd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.24 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: adv.c,v 1.25 2009/08/29 13:58:51 jasper Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -51,11 +51,6 @@
 
 #include <dev/ic/adv.h>
 #include <dev/ic/advlib.h>
-
-#ifndef DDB
-#define	Debugger()	panic("should call debugger here (adv.c)")
-#endif /* ! DDB */
-
 
 /* #define ASC_DEBUG */
 
@@ -866,8 +861,7 @@ adv_narrow_isr_callback(sc, qdonep)
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
 	}
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
-		Debugger();
+		panic("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.38 2009/02/16 21:19:06 miod Exp $ */
+/*	$OpenBSD: adw.c,v 1.39 2009/08/29 13:58:51 jasper Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -53,10 +53,6 @@
 #include <dev/ic/adwlib.h>
 #include <dev/microcode/adw/adwmcode.h>
 #include <dev/ic/adw.h>
-
-#ifndef DDB
-#define	Debugger()	panic("should call debugger here (adw.c)")
-#endif				/* ! DDB */
 
 /******************************************************************************/
 
@@ -1058,9 +1054,8 @@ adw_isr_callback(sc, scsiq)
 	TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: unallocated ccb found on pending list!\n",
+		panic("%s: unallocated ccb found on pending list!\n",
 		    sc->sc_dev.dv_xname);
-		Debugger();
 		adw_free_ccb(sc, ccb);
 		return;
 	}
