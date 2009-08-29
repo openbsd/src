@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.16 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.17 2009/08/29 11:02:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -565,7 +565,7 @@ ioprbs_intr(struct device *dv, struct iop_msg *im, void *reply)
 	if (!err && rb->reqstatus != I2O_STATUS_SUCCESS) {
 		detail = letoh16(rb->detail);
 #ifdef I2OVERBOSE
-		if (detail > sizeof(ioprbs_errors) / sizeof(ioprbs_errors[0]))
+		if (detail >= sizeof(ioprbs_errors) / sizeof(ioprbs_errors[0]))
 			errstr = "<unknown>";
 		else
 			errstr = ioprbs_errors[detail];
