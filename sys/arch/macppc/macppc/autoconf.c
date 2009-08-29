@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.36 2008/07/21 04:35:54 todd Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.37 2009/08/29 11:41:32 miod Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.36 2008/07/21 04:35:54 todd Exp $
+ *      $Id: autoconf.c,v 1.37 2009/08/29 11:41:32 miod Exp $
  */
 
 /*
@@ -67,7 +67,6 @@
 #include <scsi/sdvar.h>
 
 void	dumpconf(void);
-struct	device *getdevunit(char *, int);
 static	struct devmap *findtype(char **);
 void	makebootdev(char *cp);
 int	getpno(char **);
@@ -238,32 +237,6 @@ getpno(char **cp)
 void
 device_register(struct device *dev, void *aux)
 {
-}
-
-/*
- * find a device matching "name" and unit number
- */
-struct device *
-getdevunit(char *name, int unit)
-{
-	struct device *dev = TAILQ_FIRST(&alldevs);
-	char num[10], fullname[16];
-	int lunit;
-
-	/* compute length of name and decimal expansion of unit number */
-	snprintf(num, sizeof num, "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strlcpy(fullname, name, sizeof fullname);
-	strlcat(fullname, num, sizeof fullname);
-
-	while (strcmp(dev->dv_xname, fullname) != 0)
-		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
-			return NULL;
-
-	return dev;
 }
 
 /*
