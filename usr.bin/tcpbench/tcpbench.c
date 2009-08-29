@@ -887,7 +887,7 @@ main(int argc, char **argv)
 	kvm_t *kvmh = NULL;
 	struct rlimit rl;
 	int ch, herr;
-
+	struct nlist nl[] = { { "_tcbtable" }, { "" } };
 	const char *host = NULL, *port = DEFAULT_PORT;
 	int nconn = 1;
 
@@ -895,8 +895,6 @@ main(int argc, char **argv)
 	Sflag = sflag = vflag = rdomain = 0;
 	kflag = NULL;
 	rflag = DEFAULT_STATS_INTERVAL;
-
-	struct nlist nl[] = { { "_tcbtable" }, { "" } };
 
 	while ((ch = getopt(argc, argv, "B:hlk:n:p:r:sS:vV:")) != -1) {
 		switch (ch) {
