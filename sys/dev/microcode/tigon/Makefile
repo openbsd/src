@@ -1,14 +1,15 @@
-# $OpenBSD: Makefile,v 1.6 2007/08/01 21:42:43 deraadt Exp $
+# $OpenBSD: Makefile,v 1.7 2009/08/29 21:37:14 kettenis Exp $
 
 NOPROG=
 NOMAN=
 CC=${HOSTCC}
 
-# PCI capable systems only
+# PCI & SBus capable systems only
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
     (${MACHINE} == "alpha") || (${MACHINE} == "sparc64") || \
-    (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "hppa") || \
-    (${MACHINE} == "hppa64") || (${MACHINE} == "sgi")
+    (${MACHINE} == "sparc") || (${MACHINE_ARCH} == "powerpc") || \
+    (${MACHINE} == "hppa") ||  (${MACHINE} == "hppa64") || \
+    (${MACHINE} == "sgi")
 
 FIRM= 	tigon1 tigon2
 
