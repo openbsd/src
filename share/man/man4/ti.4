@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.34 2009/07/29 12:14:17 jmc Exp $
+.\"	$OpenBSD: ti.4,v 1.35 2009/08/29 21:34:46 kettenis Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man4/ti.4,v 1.11 2000/08/10 19:47:32 billf Exp $
 .\"
-.Dd $Mdocdate: July 29 2009 $
+.Dd $Mdocdate: August 29 2009 $
 .Dt TI 4
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nd Alteon Networks Tigon I and II Gigabit Ethernet device
 .Sh SYNOPSIS
 .Cd "ti* at pci?"
+.Cd "ti* at sbus?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -51,6 +52,7 @@ The Tigon II contains two R4000 CPUs and other refinements.
 Either chip can be used in either a 32-bit or 64-bit PCI slot.
 Communication with the chip is achieved via PCI shared memory and
 bus master DMA.
+SBus cards are also available and use a special bridge chip.
 The Tigon I and II support hardware multicast address filtering,
 VLAN tag insertion and stripping, and Jumbo frame sizes up to
 9000 bytes.
@@ -78,6 +80,8 @@ Digital EtherWORKS 1000SX PCI Gigabit Ethernet (1000baseSX)
 Netgear GA620 Gigabit Ethernet (1000baseSX)
 .It
 Netgear GA620T Gigabit Ethernet (1000baseT)
+.It
+Sun Vector Gigabit Ethernet (1000baseSX)
 .El
 .Pp
 The following should also be supported but have not yet been tested:
@@ -210,8 +214,12 @@ device driver first appeared in
 .Ox
 support first appeared in
 .Ox 2.6 .
+SBus support was added in
+.Ox 4.7 .
 .Sh AUTHORS
 The
 .Nm
 driver was written by
 .An Bill Paul Aq wpaul@bsdi.com .
+SBus support was added by
+.An Mark Kettenis Aq kettenis@openbsd.org .
