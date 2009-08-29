@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.5 2009/08/07 00:10:17 martynas Exp $	*/
+/*	$OpenBSD: build.c,v 1.6 2009/08/29 22:53:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
-#include <dev/pci/if_tivar.h>
+#include <dev/ic/tivar.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
