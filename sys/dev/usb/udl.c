@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.27 2009/08/27 19:43:50 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.28 2009/08/29 08:19:22 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -996,7 +996,7 @@ udl_cmd_insert_int_2(struct udl_softc *sc, uint16_t value)
 	udl_cmd_insert_check(cb, 2);
 
 	lvalue = htobe16(value);
-	*(uint16_t *)(cb->buf + cb->off) = lvalue;
+	bcopy(&lvalue, cb->buf + cb->off, 2);
 
 	cb->off += 2;
 }
@@ -1013,7 +1013,7 @@ udl_cmd_insert_int_3(struct udl_softc *sc, uint32_t value)
 #else
 	lvalue = htobe32(value) >> 8;
 #endif
-	*(uint32_t *)(cb->buf + cb->off) = lvalue;
+	bcopy(&lvalue, cb->buf + cb->off, 3);
 
 	cb->off += 3;
 }
@@ -1027,7 +1027,7 @@ udl_cmd_insert_int_4(struct udl_softc *sc, uint32_t value)
 	udl_cmd_insert_check(cb, 4);
 
 	lvalue = htobe32(value);
-	*(uint32_t *)(cb->buf + cb->off) = lvalue;
+	bcopy(&lvalue, cb->buf + cb->off, 4);
 
 	cb->off += 4;
 }
@@ -1439,7 +1439,7 @@ udl_fb_off_write(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
 
 	for (i = 0; i < lwidth; i += 2) {
 		lrgb16 = htobe16(rgb16);
-		*(uint16_t *)(buf + i) = lrgb16;
+		bcopy(&lrgb16, buf + i, 2);
 	}
 
 	udl_cmd_insert_buf(sc, buf, lwidth);
@@ -1559,7 +1559,7 @@ udl_fb_off_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
 
 	for (i = 0; i < lwidth; i += 2) {
 		lrgb16 = htobe16(rgb16);
-		*(uint16_t *)(buf + i) = lrgb16;
+		bcopy(&lrgb16, buf + i, 2);
 	}
 
 	/*
@@ -1755,7 +1755,7 @@ udl_draw_char(struct udl_softc *sc, uint16_t fg, uint16_t bg, u_int uc,
 				lrgb16 = htobe16(fg);
 			else
 				lrgb16 = htobe16(bg);
-			*line = lrgb16;
+			bcopy(&lrgb16, line, 2);
 			line++;
 		}
 		(sc->udl_fb_buf_write)(sc, buf, x, ly, font->fontwidth);
