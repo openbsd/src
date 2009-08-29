@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.84 2009/07/13 19:53:58 kettenis Exp $
+#	$OpenBSD: files.sparc,v 1.85 2009/08/29 21:30:48 kettenis Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -132,6 +132,9 @@ file	arch/sparc/dev/qe.c		qe
 
 attach	gem at sbus with gem_sbus
 file	arch/sparc/dev/if_gem_sbus.c	gem_sbus
+
+attach	ti at sbus with ti_sbus
+file	arch/sparc/dev/if_ti_sbus.c	ti_sbus
 
 # HappyMeal (hme) ethernet
 device	hme: ifnet, ether, mii, ifmedia

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.93 2009/07/13 19:53:58 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.94 2009/08/29 21:30:48 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -200,6 +200,7 @@ be*	at qec?
 
 # Gigabit ethernet
 gem*	at sbus?
+ti*	at sbus?
 
 # Xylogics 753 or 7053 VME SMD disk controllers and disks, found
 # on sun4 systems.
