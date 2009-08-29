@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.10 2008/11/26 15:04:42 mbalmer Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.11 2009/08/29 11:04:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -80,7 +80,10 @@ gpio_submatch(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 	struct gpio_attach_args *ga = aux;
 
-	return (strcmp(ga->ga_dvname, cf->cf_driver->cd_name) == 0);
+	if (strcmp(ga->ga_dvname, cf->cf_driver->cd_name) != 0)
+		return (0);
+
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
 void
