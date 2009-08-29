@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.123 2009/08/11 19:17:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.124 2009/08/29 15:27:33 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -205,7 +205,7 @@ cpu_startup()
 		    vm_map_max(kernel_map) - dvma_base,
                     NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-                                UVM_ADV_NORMAL, 0)))
+                                UVM_ADV_NORMAL, UVM_FLAG_FIXED)))
 			panic("startup: can not steal dvma map");
 	}
 #endif
