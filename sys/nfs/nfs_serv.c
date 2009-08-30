@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.87 2009/08/14 13:53:16 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.88 2009/08/30 15:16:19 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -393,8 +393,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 	if (error) {
 		nfsm_reply(NFSX_POSTOPATTR(info.nmi_v3));
 		nfsm_srvpostop_attr(nfsd, dirattr_ret, &dirattr, &info);
-		error = 0;
-		goto nfsmout;
+		return (0);
 	}
 	vrele(nd.ni_startdir);
 	pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
@@ -910,8 +909,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	    &info.nmi_dpos, &dirp, procp);
 	if (dirp) {
 		if (info.nmi_v3)
-			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
-				procp);
+			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
 		else {
 			vrele(dirp);
 			dirp = NULL;
@@ -921,9 +919,11 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		nfsm_reply(NFSX_WCCDATA(info.nmi_v3));
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info);
-		error = 0;
-		goto nfsmout;
+		if (info.nmi_v3)
+			vrele(dirp);
+		return (0);
 	}
+
 	VATTR_NULL(&va);
 	if (info.nmi_v3) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
@@ -1159,9 +1159,10 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		nfsm_reply(NFSX_WCCDATA(1));
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info);
-		error = 0;
-		goto nfsmout;
+		vrele(dirp);
+		return (0);
 	}
+
 	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 	vtyp = nfsv3tov_type(*tl);
 	if (vtyp != VCHR && vtyp != VBLK && vtyp != VSOCK && vtyp != VFIFO) {
@@ -1305,11 +1306,13 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	error = nfs_namei(&nd, fhp, len, slp, nam, &info.nmi_md, &info.nmi_dpos, &dirp, procp);
 	if (dirp) {
 		if (info.nmi_v3)
-			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
-				procp);
-		else
+			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
+		else {
 			vrele(dirp);
+			dirp = NULL;
+		}
 	}
+
 	if (!error) {
 		vp = nd.ni_vp;
 		if (vp->v_type == VDIR &&
@@ -1344,9 +1347,9 @@ out:
 	if (info.nmi_v3) {
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info);
-		error = 0;
-		goto nfsmout;
+		return (0);
 	}
+
 nfsmout:
 	return(error);
 }
@@ -1415,9 +1418,11 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 		    &info);
 		nfsm_srvwcc(nfsd, tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft,
 		    &info);
-		error = 0;
-		goto nfsmout;
+		if (info.nmi_v3)
+			vrele(fdirp);
+		return (0);
 	}
+
 	fvp = fromnd.ni_vp;
 	nfsm_srvmtofh(tfhp);
 	nfsm_strsiz(len2, NFS_MAXNAMLEN);
@@ -1533,8 +1538,7 @@ nfsmout:
 
 		/*
 		 * XXX: Workaround the fact that fromnd.ni_dvp can point
-		 * to the same vnode as fdirp. The real fix is to not have
-		 * multiple pointers to the same object.
+		 * to the same vnode as fdirp.
 		 */
 		if (fromnd.ni_dvp != NULL && fromnd.ni_dvp != fdirp)
 			vrele(fromnd.ni_dvp);
@@ -1837,8 +1841,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	    &info.nmi_dpos, &dirp, procp);
 	if (dirp) {
 		if (info.nmi_v3)
-			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred,
-				procp);
+			dirfor_ret = VOP_GETATTR(dirp, &dirfor, cred, procp);
 		else {
 			vrele(dirp);
 			dirp = NULL;
@@ -1848,9 +1851,11 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 		nfsm_reply(NFSX_WCCDATA(info.nmi_v3));
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info);
-		error = 0;
-		goto nfsmout;
+		if (info.nmi_v3)
+			vrele(dirp);
+		return (0);
 	}
+
 	VATTR_NULL(&va);
 	if (info.nmi_v3) {
 		error = nfsm_srvsattr(&info.nmi_md, &va, info.nmi_mrep,
@@ -1966,10 +1971,9 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 		nfsm_reply(NFSX_WCCDATA(info.nmi_v3));
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &info);
-		if (dirp)
+		if (info.nmi_v3)
 			vrele(dirp);
-		error = 0;
-		goto nfsmout;
+		return (0);
 	}
 	vp = nd.ni_vp;
 	if (vp->v_type != VDIR) {
