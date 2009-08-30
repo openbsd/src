@@ -1,4 +1,4 @@
-#	$OpenBSD: files.socppc,v 1.7 2009/08/25 13:18:11 dms Exp $
+#	$OpenBSD: files.socppc,v 1.8 2009/08/30 14:57:41 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -17,6 +17,7 @@ file	arch/socppc/socppc/dma.c
 file	dev/cninit.c
 file	arch/socppc/socppc/db_interface.c		ddb
 file	arch/socppc/socppc/fdt.c
+file	arch/socppc/socppc/n1200_dts.S
 
 
 define	mainbus {}

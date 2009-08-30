@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 2009/08/26 19:09:44 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 2009/08/30 14:57:41 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -193,6 +193,9 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 		 * XXX We don't build a flattened device tree yet.
 		 */
 		memcpy(&bootinfo, *fwargsave, sizeof bootinfo);
+
+		extern uint8_t dt_blob_start[];
+		fdt_init(&dt_blob_start);
 	}
 
 	if (fwfdtsave && fwfdtsave->fh_magic == FDT_MAGIC) {
