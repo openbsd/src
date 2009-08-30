@@ -1,7 +1,7 @@
-/*	$OpenBSD: cmd_hppa.c,v 1.8 2004/04/07 18:24:20 mickey Exp $	*/
+/*	$OpenBSD: cmd_hppa.c,v 1.9 2009/08/30 19:30:50 miod Exp $	*/
 
 /*
- * Copyright (c) 2002 Miodrag Vallat
+ * Copyright (c) 2002, 2009 Miodrag Vallat
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*#define	DEBUG*/
-
 #include <sys/param.h>
 /* would come from <sys/param.h> if -D_KERNEL */
 #define offsetof(s, e) ((size_t)&((s *)0)->e)
@@ -36,6 +34,10 @@
 #include <machine/pdc.h>
 
 #include <arch/hppa/dev/cpudevs.h>
+#include <arch/hppa/dev/elroyreg.h>
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #include <libsa.h>
 #include "cmd.h"
@@ -69,45 +71,39 @@ struct consoledev {
 
 #define	PS2		1
 #define	HIL		2
-#define	SERIAL		3
-#define	GRAPHICS	4
+#define	USB		3
+#define	SERIAL		4
+#define	GRAPHICS	5
 
-/* max. serial ports */
 #define	MAX_SERIALS	4
-/* max. HIL and PS2 */
-#define	MAX_KEYBOARDS	2
-/* max. heads */
+#define	MAX_KEYBOARDS	4
 #define	MAX_GRAPHICS	4
 
 struct consoledev serials[MAX_SERIALS];
 struct consoledev keyboards[MAX_KEYBOARDS];
 struct consoledev graphics[MAX_GRAPHICS];
 
-/* Relaxed device comparison */
-#define	MATCH(dev1, dev2) \
-	(dev1).dp_mod == (dev2).dp_mod && \
-	(dev1).dp_bc[0] == (dev2).dp_bc[0] && \
-	(dev1).dp_bc[1] == (dev2).dp_bc[1] && \
-	(dev1).dp_bc[2] == (dev2).dp_bc[2] && \
-	(dev1).dp_bc[3] == (dev2).dp_bc[3] && \
-	(dev1).dp_bc[4] == (dev2).dp_bc[4] && \
-	(dev1).dp_bc[5] == (dev2).dp_bc[5]
-
 int walked;
 
-void bus_walk(struct device_path *);
-void register_device(struct consoledev *, int,
-			  struct device_path *, struct iodc_data *, int, int);
+void	bus_walk(struct device_path *, int);
+uint32_t dino_conf_read(u_int, int, int, u_int);
+uint32_t elroy_conf_read(u_int, int, int, u_int);
+int	path_match(struct device_path *, struct device_path *);
+void	path_shift(struct device_path *, int);
+void	pci_bus_walk(struct device_path *, struct iodc_data *,
+	    struct pdc_memmap *);
+void	register_device(struct consoledev *, int, struct device_path *,
+	    struct iodc_data *, int, int);
 
-int Xconsole(void);
-void print_console(void);
-int set_graphics(struct device_path *, int, char *);
-int set_serial(struct device_path *, int, char *);
-int set_console(struct device_path *);
+int	Xconsole(void);
+void	print_console(void);
+int	set_graphics(struct device_path *, int, char *);
+int	set_serial(struct device_path *, int, char *);
+int	set_console(struct device_path *);
 
-int Xkeyboard(void);
-void print_keyboard(void);
-int set_keyboard(struct device_path *);
+int	Xkeyboard(void);
+void	print_keyboard(void);
+int	set_keyboard(struct device_path *);
 
 struct cmd_table cmd_machine[] = {
 	{ "console",	CMDT_CMD,	Xconsole },
@@ -116,7 +112,7 @@ struct cmd_table cmd_machine[] = {
 };
 
 /* value to console speed table */
-int i_speeds[] = {
+const int i_speeds[] = {
 	50,
 	75,
 	110,
@@ -135,7 +131,7 @@ int i_speeds[] = {
 	230400,
 };
 
-char *c_speeds[] = {
+const char *c_speeds[] = {
 	"50",
 	"75",
 	"110",
@@ -155,7 +151,7 @@ char *c_speeds[] = {
 };
 
 /* values to console parity table */
-char *parities[] = {
+const char *parities[] = {
 	"none",
 	"odd",
 	"<unknown parity>",
@@ -196,7 +192,7 @@ print_console()
 
 	/* look for a serial console */
 	for (port = i = 0; i < MAX_SERIALS; i++)
-		if (MATCH(serials[i].dp, sstor.ss_console)) {
+		if (path_match(&serials[i].dp, &sstor.ss_console)) {
 			port = i + 1;
 			break;
 		}
@@ -207,7 +203,7 @@ print_console()
 		 */
 
 		for (port = i = 0; i < MAX_GRAPHICS; i++)
-			if (MATCH(graphics[i].dp, sstor.ss_console)) {
+			if (path_match(&graphics[i].dp, &sstor.ss_console)) {
 				port = i;
 				break;
 			}
@@ -269,15 +265,13 @@ set_graphics(console, port, arg)
 			if (*digit >= '0' && *digit <= '9')
 				mode = 10 * mode + (*digit - '0');
 			else {
-				printf("invalid mode specification, %s\n",
-				    arg);
+				printf("invalid mode specification, %s\n", arg);
 				return 0;
 			}
 		}
 
 		if (mode <= 0) {
-			printf("invalid mode specification, %s\n",
-			    arg);
+			printf("invalid mode specification, %s\n", arg);
 			return 0;
 		}
 	}
@@ -286,7 +280,7 @@ set_graphics(console, port, arg)
 	 * If we are just changing the mode of the same graphics
 	 * console, check that our mode is in the valid range.
 	 */
-	if (MATCH(graphics[port].dp, sstor.ss_console)) {
+	if (path_match(&graphics[port].dp, &sstor.ss_console)) {
 		maxmode = sstor.ss_console.dp_layers[1];
 
 		/* pick back same mode if unspecified */
@@ -445,7 +439,7 @@ Xconsole()
 
 	/* walk the device list if not already done */
 	if (walked == 0) {
-		bus_walk(NULL);
+		bus_walk(NULL, MAXMODBUS);
 		walked++;
 	}
 
@@ -468,8 +462,8 @@ Xconsole()
 				    CONSOLEOFFSET, &sstor.ss_console,
 				    sizeof(sstor.ss_console));
 				if (rc != 0) {
-					printf("failed to save console settings, error %d\n",
-					    rc);
+					printf("failed to save console"
+					    " settings, error %d\n", rc);
 					/* read sstor again for safety */
 					(*pdc)(PDC_STABLE, PDC_STABLE_READ,
 					    CONSOLEOFFSET, &sstor.ss_console,
@@ -519,12 +513,15 @@ print_keyboard()
 	printf("Keyboard path: ");
 
 	for (type = i = 0; i < MAX_KEYBOARDS; i++)
-		if (MATCH(keyboards[i].dp, sstor.ss_keyboard)) {
+		if (path_match(&keyboards[i].dp, &sstor.ss_keyboard)) {
 			type = keyboards[i].type;
 			break;
 		}
 
 	switch (type) {
+	case USB:
+		printf("usb");
+		break;
 	case HIL:
 		printf("hil");
 		break;
@@ -551,7 +548,10 @@ set_keyboard(keyboard)
 		type = HIL;
 	else if (strcmp(arg, "ps2") == 0)
 		type = PS2;
+	else if (strcmp(arg, "usb") == 0)
+		type = USB;
 	else {
+		/* XXX should probably handle multiple USB controllers */
 		printf("invalid device specification, %s\n", arg);
 		return 0;
 	}
@@ -574,7 +574,7 @@ Xkeyboard()
 
 	/* walk the device list if not already done */
 	if (walked == 0) {
-		bus_walk(NULL);
+		bus_walk(NULL, MAXMODBUS);
 		walked++;
 	}
 
@@ -597,8 +597,8 @@ Xkeyboard()
 				    KEYBOARDOFFSET, &sstor.ss_keyboard,
 				    sizeof(sstor.ss_keyboard));
 				if (rc != 0) {
-					printf("failed to save keyboard settings, error %d\n",
-					    rc);
+					printf("failed to save keyboard"
+					    " settings, error %d\n", rc);
 					/* read sstor again for safety */
 					(*pdc)(PDC_STABLE, PDC_STABLE_READ,
 					    KEYBOARDOFFSET, &sstor.ss_keyboard,
@@ -625,28 +625,25 @@ Xkeyboard()
  * serial ports, keyboard and graphics devices as they are found.
  */
 void
-bus_walk(struct device_path *idp)
+bus_walk(struct device_path *idp, int maxmod)
 {
 	struct device_path dp;
 	struct pdc_memmap memmap;
 	struct iodc_data mptr;
 	int err, i, kluge_ps2 = 0;	/* kluge, see below */
 
-	for (i = 0; i < MAXMODBUS; i++) {
-
+	for (i = 0; i < maxmod; i++) {
 		if (idp) {
-			dp.dp_bc[0] = idp->dp_bc[1];
-			dp.dp_bc[1] = idp->dp_bc[2];
-			dp.dp_bc[2] = idp->dp_bc[3];
-			dp.dp_bc[3] = idp->dp_bc[4];
-			dp.dp_bc[4] = idp->dp_bc[5];
-			dp.dp_bc[5] = idp->dp_mod;
+			dp = *idp;
+			path_shift(&dp, i);
 		} else {
+			dp.dp_flags = 0;
 			dp.dp_bc[0] = dp.dp_bc[1] = dp.dp_bc[2] =
 			dp.dp_bc[3] = dp.dp_bc[4] = dp.dp_bc[5] = -1;
+			dp.dp_mod = i;
+			bzero(&dp.dp_layers, sizeof dp.dp_layers);
 		}
 
-		dp.dp_mod = i;
 		if ((pdc)(PDC_MEMMAP, PDC_MEMMAP_HPA, &memmap, &dp) < 0 &&
 		    (pdc)(PDC_SYSMAP, PDC_SYSMAP_HPA, &memmap, &dp) < 0)
 			continue;
@@ -662,6 +659,7 @@ bus_walk(struct device_path *idp)
 		    dp.dp_bc[4], dp.dp_bc[5], dp.dp_flags, dp.dp_mod,
 		    mptr.iodc_type, mptr.iodc_sv_model);
 #endif
+
 		/*
 		 * If the device can be considered as a valid rs232,
 		 * graphics console or keyboard, register it.
@@ -678,21 +676,19 @@ bus_walk(struct device_path *idp)
 		 */
 		switch (mptr.iodc_type) {
 		case HPPA_TYPE_BCPORT:
-			bus_walk(&dp);
+			bus_walk(&dp, MAXMODBUS);
 			break;
-		case HPPA_TYPE_BHA:
 		case HPPA_TYPE_BRIDGE:
-			/* if there was no phantomas here */
-			if (dp.dp_bc[5] == -1) {
-				dp.dp_bc[0] = dp.dp_bc[1];
-				dp.dp_bc[1] = dp.dp_bc[2];
-				dp.dp_bc[2] = dp.dp_bc[3];
-				dp.dp_bc[3] = dp.dp_bc[4];
-				dp.dp_bc[4] = dp.dp_bc[5];
-				dp.dp_bc[5] = dp.dp_mod;
-				dp.dp_mod = 0;
+			if (mptr.iodc_sv_model == HPPA_BRIDGE_DINO) {
+				pci_bus_walk(&dp, &mptr, &memmap);
+				break;
 			}
-			bus_walk(&dp);
+			/* FALLTHROUGH */
+		case HPPA_TYPE_BHA:
+			/* if there was no phantomas(4) here */
+			if (dp.dp_bc[5] == -1)
+				path_shift(&dp, 0);
+			bus_walk(&dp, MAXMODBUS);
 			break;
 		case HPPA_TYPE_ADIRECT:
 			switch (mptr.iodc_sv_model) {
@@ -717,7 +713,7 @@ bus_walk(struct device_path *idp)
 				register_device(keyboards, MAX_KEYBOARDS,
 				    &dp, &mptr, HIL, 0);
 				break;
-			case HPPA_FIO_RS232:
+			case HPPA_FIO_RS232:	/* com@gsc */
 				register_device(serials, MAX_SERIALS,
 				    &dp, &mptr, SERIAL, 0);
 				break;
@@ -739,7 +735,7 @@ bus_walk(struct device_path *idp)
 				    &dp, &mptr, PS2, 1);
 				kluge_ps2++;
 				break;
-			case HPPA_FIO_GRS232:
+			case HPPA_FIO_GRS232:	/* com@dino, com@gsc */
 			{
 				int j, first;
 
@@ -770,10 +766,212 @@ bus_walk(struct device_path *idp)
 				register_device(graphics, MAX_GRAPHICS,
 				    &dp, &mptr, GRAPHICS, 1);
 				break;
+#if 0 /* can these really be used as console? */
+			case HPPA_FIO_GRJ16:	/* com@gsc */
+				register_device(serials, MAX_SERIALS,
+				    &dp, &mptr, SERIAL, 0);
+				break;
+#endif
+			}
+			break;
+		case HPPA_TYPE_IOA:
+			switch (mptr.iodc_sv_model) {
+			case HPPA_IOA_UTURN:
+				bus_walk(&dp, MAXMODBUS - 1);
+				break;
 			}
 			break;
 		}
 	}
+}
+
+/*
+ * PCI bus walker.
+ * The PDC device enumeration stops at the PCI bridge level, however
+ * in order to properly handle console path on systems with PCI graphics
+ * and USB controllers, it is necessary to dig further.
+ *
+ * Note that there are apparently PDC routines to access bridge configuration
+ * space, but I have yet to find documentation about them.
+ *
+ * We ignore multi-function devices and subordinate PCI busses here, since
+ * PDC PCI device paths stop at the PCI device number, and subordinate
+ * busses are unlikely to be configured by the PDC.
+ */
+
+#define	ELROY_MODEL	0x78
+#define	DINO_PAMR	0x804
+#define	DINO_CFG_ADDR	0x64
+#define	DINO_CFG_DATA	0x68
+
+void
+pci_bus_walk(struct device_path *idp, struct iodc_data *mptr,
+    struct pdc_memmap *memmap)
+{
+	struct device_path dp;
+	int dev, fn, nfuncs;
+	uint32_t id, bhlcr, class;
+	uint32_t (*conf_read)(u_int, int, int, u_int);
+
+	if (mptr->iodc_model == ELROY_MODEL)
+		conf_read = elroy_conf_read;
+	else
+		conf_read = dino_conf_read;
+
+	for (dev = 0; dev < 32; dev++) {
+		id = (*conf_read)(memmap->hpa, dev, 0, PCI_ID_REG);
+
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID || PCI_VENDOR(id) == 0)
+			continue;
+
+		bhlcr = (*conf_read)(memmap->hpa, dev, 0, PCI_BHLC_REG);
+		nfuncs = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
+
+		for (fn = 0; fn < nfuncs; fn++) {
+			dp = *idp;
+			path_shift(&dp, dev);
+			path_shift(&dp, fn);
+			
+			if (fn != 0)
+				id = (*conf_read)(memmap->hpa, dev, fn,
+				    PCI_ID_REG);
+			class = (*conf_read)(memmap->hpa, dev, fn,
+			    PCI_CLASS_REG);
+
+			/*
+			 * We are only interested in two kinds of devices
+			 * here: sti graphics, and USB controllers.
+			 */
+			if (PCI_CLASS(class) == PCI_CLASS_SERIALBUS &&
+			    PCI_SUBCLASS(class) == PCI_SUBCLASS_SERIALBUS_USB) {
+				/*
+				 * Note about the last parameter of the
+				 * register_device() call below being zero:
+				 * machines with USB keyboards have neither
+				 * PS/2 nor HIL controllers, so it doesn't
+				 * matter what order the USB controllers are
+				 * in.
+				 * However machines with PS/2 keyboards
+				 * might have an USB PCI card plugged in,
+				 * which better appear after the PS/2
+				 * keyboard.
+				 */
+				register_device(keyboards, MAX_KEYBOARDS,
+				    &dp, mptr, USB, 0);
+				continue;
+			}
+
+			switch (PCI_VENDOR(id)) {
+			case PCI_VENDOR_HP:
+				switch (PCI_PRODUCT(id)) {
+				case PCI_PRODUCT_HP_VISUALIZE_EG:
+				case PCI_PRODUCT_HP_VISUALIZE_FX2:
+				case PCI_PRODUCT_HP_VISUALIZE_FX4:
+				case PCI_PRODUCT_HP_VISUALIZE_FX6:
+				case PCI_PRODUCT_HP_VISUALIZE_FXE:
+					register_device(graphics, MAX_GRAPHICS,
+					    &dp, mptr, GRAPHICS, 0);
+					break;
+				}
+				break;
+			case PCI_VENDOR_NS:
+				if (PCI_PRODUCT(id) == PCI_PRODUCT_NS_PC87560) {
+					/* serial_2 */
+					path_shift(&dp, 2);
+					register_device(serials, MAX_SERIALS,
+					    &dp, mptr, SERIAL, 1);
+					/* serial_1 */
+					dp.dp_mod = 1;
+					register_device(serials, MAX_SERIALS,
+					    &dp, mptr, SERIAL, 1);
+				}
+				break;
+			}
+		}
+	}
+}
+
+uint32_t
+dino_conf_read(u_int hpa, int dev, int fn, u_int reg)
+{
+	volatile uint32_t *dino = (volatile uint32_t *)hpa;
+	uint32_t pamr;
+	uint32_t addr, id;
+
+	addr = (dev << 11) | (fn << 8) | reg;
+
+	pamr = dino[DINO_PAMR / 4];
+	dino[DINO_PAMR / 4] = 0;
+	dino[DINO_CFG_ADDR / 4] = addr;
+	id = dino[DINO_CFG_DATA / 4];
+	dino[DINO_PAMR / 4] = pamr;
+
+	return letoh32(id);
+}
+
+uint32_t
+elroy_conf_read(u_int hpa, int dev, int fn, u_int reg)
+{
+	volatile struct elroy_regs *elroy = (volatile struct elroy_regs *)hpa;
+	uint32_t arb_mask, err_cfg, control;
+	uint32_t addr, id;
+
+	addr = (dev << 11) | (fn << 8) | reg;
+
+	arb_mask = *(volatile uint32_t *)&elroy->arb_mask;
+	err_cfg = *(volatile uint32_t *)&elroy->err_cfg;
+	control = *(volatile uint32_t *)&elroy->control;
+
+	if (arb_mask == 0)
+		*(volatile uint32_t *)&elroy->arb_mask =
+		    htole32(ELROY_ARB_ENABLE);
+	*(volatile uint32_t *)&elroy->err_cfg = err_cfg |
+	    htole32(ELROY_ERRCFG_SMART | ELROY_ERRCFG_CM);
+	*(volatile uint32_t *)&elroy->control =
+	    (control | htole32(ELROY_CONTROL_CE)) & ~htole32(ELROY_CONTROL_HF);
+
+	*(volatile uint32_t *)&elroy->pci_conf_addr = htole32(addr);
+	addr = *(volatile uint32_t *)&elroy->pci_conf_addr;
+	id = *(volatile uint32_t *)&elroy->pci_conf_data;
+
+	*(volatile uint32_t *)&elroy->control =
+	    control | htole32(ELROY_CONTROL_CE | ELROY_CONTROL_CL);
+	*(volatile uint32_t *)&elroy->control = control;
+	*(volatile uint32_t *)&elroy->err_cfg = err_cfg;
+	if (arb_mask == 0)
+		*(volatile uint32_t *)&elroy->arb_mask = arb_mask;
+
+	return letoh32(id);
+}
+
+/*
+ * Relaxed device comparison
+ */
+int
+path_match(struct device_path *dev1, struct device_path *dev2)
+{
+	return dev1->dp_mod == dev2->dp_mod &&
+	    dev1->dp_bc[0] == dev2->dp_bc[0] &&
+	    dev1->dp_bc[1] == dev2->dp_bc[1] &&
+	    dev1->dp_bc[2] == dev2->dp_bc[2] &&
+	    dev1->dp_bc[3] == dev2->dp_bc[3] &&
+	    dev1->dp_bc[4] == dev2->dp_bc[4] &&
+	    dev1->dp_bc[5] == dev2->dp_bc[5];
+}
+
+/*
+ * Shift a device path, inserting a new value as dp_mod.
+ */
+void
+path_shift(struct device_path *dp, int nmod)
+{
+	dp->dp_bc[0] = dp->dp_bc[1];
+	dp->dp_bc[1] = dp->dp_bc[2];
+	dp->dp_bc[2] = dp->dp_bc[3];
+	dp->dp_bc[3] = dp->dp_bc[4];
+	dp->dp_bc[4] = dp->dp_bc[5];
+	dp->dp_bc[5] = dp->dp_mod;
+	dp->dp_mod = nmod;
 }
 
 void
