@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.15 2009/06/02 06:17:47 todd Exp $
+#	$OpenBSD: list,v 1.16 2009/08/30 13:52:36 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -59,6 +59,8 @@ LINK	instbin					sbin/sysctl
 
 # firmwares that might need loading
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
+COPY	${DESTDIR}/etc/firmware/zd1211		etc/firmware/zd1211
+COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b
 COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 COPY	${DESTDIR}/etc/firmware/atu-at76c503-i3863-ext etc/firmware/atu-at76c503-i3863-ext
 COPY	${DESTDIR}/etc/firmware/atu-at76c503-i3863-int etc/firmware/atu-at76c503-i3863-int
