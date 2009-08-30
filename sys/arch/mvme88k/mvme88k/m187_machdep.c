@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.20 2009/03/15 20:39:53 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.21 2009/08/30 12:11:35 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -102,7 +102,7 @@ m187_startup()
 	uvm_map(kernel_map, (vaddr_t *)&bugromva, BUG187_SIZE,
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	        UVM_ADV_NORMAL, 0));
+	        UVM_ADV_NORMAL, UVM_FLAG_FIXED));
 	if (bugromva != BUG187_START)
 		panic("bugromva %lx: BUGROM not free", bugromva);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2009/08/11 19:17:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.69 2009/08/30 12:11:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -443,7 +443,7 @@ cpu_startup()
 	uvm_map(kernel_map, (vaddr_t *)&obiova, OBIO_SIZE,
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	        UVM_ADV_NORMAL, 0));
+	        UVM_ADV_NORMAL, UVM_FLAG_FIXED));
 	if (obiova != OBIO_START)
 		panic("obiova %lx: OBIO not free", obiova);
 
