@@ -371,6 +371,8 @@
 ./usr/include/dev/ic/tcic2reg.h
 ./usr/include/dev/ic/tcic2var.h
 ./usr/include/dev/ic/tea5757.h
+./usr/include/dev/ic/tireg.h
+./usr/include/dev/ic/tivar.h
 ./usr/include/dev/ic/trm.h
 ./usr/include/dev/ic/twereg.h
 ./usr/include/dev/ic/twevar.h
@@ -590,8 +592,6 @@
 ./usr/include/dev/pci/if_skvar.h
 ./usr/include/dev/pci/if_stereg.h
 ./usr/include/dev/pci/if_stgereg.h
-./usr/include/dev/pci/if_tireg.h
-./usr/include/dev/pci/if_tivar.h
 ./usr/include/dev/pci/if_tlreg.h
 ./usr/include/dev/pci/if_txpreg.h
 ./usr/include/dev/pci/if_vgereg.h
