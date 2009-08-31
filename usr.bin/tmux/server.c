@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.24 2009/08/23 17:29:51 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.25 2009/08/31 11:37:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -915,7 +915,12 @@ server_lost_client(struct client *c)
 	}
 	log_debug("lost client %d", c->ibuf.fd);
 
-	tty_free(&c->tty);
+	/*
+	 * If CLIENT_TERMINAL hasn't been set, then tty_init hasn't been called
+	 * and tty_free might close an unrelated fd.
+	 */
+	if (c->flags & CLIENT_TERMINAL)
+		tty_free(&c->tty);
 
 	screen_free(&c->status);
 
