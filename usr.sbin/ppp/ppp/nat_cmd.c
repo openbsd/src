@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: nat_cmd.c,v 1.26 2005/07/26 01:32:25 brad Exp $
+ *	$OpenBSD: nat_cmd.c,v 1.27 2009/08/31 08:01:33 claudio Exp $
  */
 
 #include <sys/param.h>
@@ -173,7 +173,7 @@ nat_RedirectPort(struct cmdargs const *arg)
       return -1;
     }
 
-    while (laliasport <= haliasport) {
+    do {
       link = PacketAliasRedirectPort(localaddr, htons(llocalport),
 				     remoteaddr, htons(lremoteport),
                                      aliasaddr, htons(laliasport),
@@ -185,10 +185,9 @@ nat_RedirectPort(struct cmdargs const *arg)
         return 1;
       }
       llocalport++;
-      laliasport++;
       if (hremoteport)
         lremoteport++;
-    }
+    } while (laliasport++ < haliasport);
 
     return 0;
   }
