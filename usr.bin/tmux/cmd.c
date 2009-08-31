@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.15 2009/08/25 12:18:51 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.16 2009/08/31 20:46:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,6 +43,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_delete_buffer_entry,
 	&cmd_detach_client_entry,
 	&cmd_display_message_entry,
+	&cmd_display_panes_entry,
 	&cmd_down_pane_entry,
 	&cmd_find_window_entry,
 	&cmd_has_session_entry,
