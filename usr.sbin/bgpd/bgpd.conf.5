@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.94 2009/06/07 00:31:22 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.95 2009/08/31 09:08:04 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2009 $
+.Dd $Mdocdate: August 31 2009 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -698,7 +698,7 @@ Do not attempt to actively open a TCP connection to the neighbor system.
 .It Ic remote-as Ar as-number
 Set the AS number of the remote system.
 .Pp
-.It rib .Ar name
+.It Ic rib Ar name
 Bind the neighbor to the specified RIB.
 .Pp
 .It Ic route-reflector Op Ar address
