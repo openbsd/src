@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.243 2009/07/23 14:53:18 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.244 2009/08/31 13:03:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,8 +41,6 @@
 #define	TCP_MD5_KEY_LEN			80
 #define	IPSEC_ENC_KEY_LEN		32
 #define	IPSEC_AUTH_KEY_LEN		20
-
-#define	ASNUM_MAX			0xffffffff
 
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
