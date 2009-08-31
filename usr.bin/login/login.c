@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.58 2009/08/03 21:43:07 martynas Exp $	*/
+/*	$OpenBSD: login.c,v 1.59 2009/08/31 22:25:43 martynas Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: login.c,v 1.58 2009/08/03 21:43:07 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: login.c,v 1.59 2009/08/31 22:25:43 martynas Exp $";
 #endif /* not lint */
 
 /*
@@ -153,6 +153,7 @@ main(int argc, char *argv[])
 	char *lipaddr, *script, *ripaddr, *style, *type, *fqdn;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN], *copyright;
+	char mail[sizeof(_PATH_MAILDIR) + 1 + NAME_MAX];
 	int ask, ch, cnt, fflag, pflag, quietlog, rootlogin, lastchance;
 	int error, homeless, needto, authok, tries, backoff;
 	struct addrinfo *ai, hints;
@@ -606,9 +607,12 @@ failed:
 	}
 	if (term[0] == '\0')
 		(void)strlcpy(term, stypeof(tty), sizeof(term));
+	(void)snprintf(mail, sizeof(mail), "%s/%s", _PATH_MAILDIR,
+		pwd->pw_name);
 	if (setenv("TERM", term, 0) == -1 ||
 	    setenv("LOGNAME", pwd->pw_name, 1) == -1 ||
-	    setenv("USER", pwd->pw_name, 1) == -1) {
+	    setenv("USER", pwd->pw_name, 1) == -1 ||
+	    setenv("MAIL", mail, 1) == -1) {
 		warn("unable to setenv()");
 		quickexit(1);
 	}
@@ -704,9 +708,7 @@ failed:
 		    login_getcapstr(lc, "copyright", NULL, NULL)) != NULL)
 			auth_cat(copyright);
 		motd();
-		(void)snprintf(tbuf,
-		    sizeof(tbuf), "%s/%s", _PATH_MAILDIR, pwd->pw_name);
-		if (stat(tbuf, &st) == 0 && st.st_size != 0)
+		if (stat(mail, &st) == 0 && st.st_size != 0)
 			(void)printf("You have %smail.\n",
 			    (st.st_mtime > st.st_atime) ? "new " : "");
 	}
