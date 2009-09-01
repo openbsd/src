@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.39 2009/08/17 11:36:01 reyk Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.40 2009/09/01 08:51:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -83,6 +83,7 @@ struct imsgname imsgunknown = {
 };
 
 struct imsgbuf	*ibuf;
+int error = 0;
 
 __dead void
 usage(void)
@@ -234,7 +235,7 @@ main(int argc, char *argv[])
 	close(ctl_sock);
 	free(ibuf);
 
-	return (0);
+	return (error ? 1 : 0);
 }
 
 struct imsgname *
@@ -450,6 +451,7 @@ show_command_output(struct imsg *imsg)
 		break;
 	case IMSG_CTL_FAIL:
 		printf("command failed\n");
+		error++;
 		break;
 	default:
 		errx(1, "wrong message in summary: %u", imsg->hdr.type);
