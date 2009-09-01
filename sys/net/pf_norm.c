@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.119 2009/07/21 14:48:08 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.120 2009/09/01 15:51:06 jsing Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -536,7 +536,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 		goto drop;
 
 	/* Clear IP_DF if we're in no-df mode */
-	if (!(pf_status.reass & PF_REASS_NODF) && h->ip_off & htons(IP_DF)) {
+	if (pf_status.reass & PF_REASS_NODF && h->ip_off & htons(IP_DF)) {
 		u_int16_t ip_off = h->ip_off;
 
 		h->ip_off &= htons(~IP_DF);
