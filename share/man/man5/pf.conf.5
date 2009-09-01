@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.448 2009/07/28 13:29:45 claudio Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.449 2009/09/01 13:43:15 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 28 2009 $
+.Dd $Mdocdate: September 1 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -700,7 +700,7 @@ pass out on dc0 inet proto tcp from any to any port 25 \e
       queue mail
 .Ed
 .Sh TRANSLATION
-Translation rules modify either the source or destination address of the
+Translation options modify either the source or destination address of the
 packets associated with a stateful connection.
 A stateful connection is automatically created to track packets matching
 such a rule as long as they are not blocked by the filtering section of
@@ -728,17 +728,12 @@ The state entry created permits
 to keep track of the original address for traffic associated with that state
 and correctly direct return traffic for that connection.
 .Pp
-Various types of translation are possible with pf:
-.Bl -tag -width xxxx
-.It Ar binat
+Two types of translation are possible with pf:
+.Bl -tag -width xxxxxxxx
+.It Ar nat-to
 A
-.Ar binat
-rule specifies a bidirectional mapping between an external IP netblock
-and an internal IP netblock.
-.It Ar nat
-A
-.Ar nat
-rule specifies that IP addresses are to be changed as the packet
+.Ar nat-to
+option specifies that IP addresses are to be changed as the packet
 traverses the given interface.
 This technique allows one or more IP addresses
 on the translating host to support network traffic for a larger range of
@@ -751,17 +746,17 @@ Those netblocks are:
 172.16.0.0 \(en 172.31.255.255 (i.e. 172.16/12)
 192.168.0.0 \(en 192.168.255.255 (i.e. 192.168/16)
 .Ed
-.It Pa rdr
+.It Pa rdr-to
 The packet is redirected to another destination and possibly a
 different port.
-.Ar rdr
-rules can optionally specify port ranges instead of single ports.
+.Ar rdr-to
+can optionally specify port ranges instead of single ports.
 For instance:
 .Bl -tag -width Ds
-.It rdr ... port 2000:2999 -\*(Gt ... port 4000
+.It match in ... port 2000:2999 rdr-to ... port 4000
 redirects ports 2000 to 2999 (inclusive) to port 4000.
 .Pp
-.It rdr ... port 2000:2999 -\*(Gt ... port 4000:*
+.It match in ... port 2000:2999 rdr-to ... port 4000:*
 redirects port 2000 to 4000, port 2001 to 4001, ..., port 2999 to 4999.
 .El
 .El
@@ -769,38 +764,14 @@ redirects port 2000 to 4000, port 2001 to 4001, ..., port 2999 to 4999.
 In addition to modifying the address, some translation rules may modify
 source or destination ports for TCP or UDP connections;
 implicitly in the case of
-.Ar nat
-rules and explicitly in the case of
-.Ar rdr
-rules.
-Port numbers are never translated with a
-.Ar binat
-rule.
+.Ar nat-to
+options and explicitly in the case of
+.Ar rdr-to
+ones.
 .Pp
-Evaluation order of the translation rules is dependent on the type
-of the translation rules and the direction of a packet.
-.Ar binat
-rules are always evaluated first.
-Then either the
-.Ar rdr
-rules are evaluated on an inbound packet or the
-.Ar nat
-rules on an outbound packet.
-Rules of the same type are evaluated in the same order in which they
-appear in the ruleset.
-The first matching rule decides what action is taken.
-.Pp
-The
-.Ar no
-option prefixed to a translation rule causes packets to remain untranslated,
-much in the same way as
-.Ar drop quick
-works in the packet filter.
-If no rule matches the packet, it is passed to the filter engine unmodified.
-.Pp
-Translation rules apply only to packets that pass through
-the specified interface, and if no interface is specified,
-translation is applied to packets on all interfaces.
+Translation options apply only to packets that pass through the specified
+interface, and if no interface is specified, translation is applied
+to packets on all interfaces.
 For instance, redirecting port 80 on an external interface to an internal
 web server will only work for connections originating from the outside.
 Connections to the address of the external interface from local hosts will
@@ -816,7 +787,8 @@ bound solely to the loopback address, circumventing the traditional
 blocking of such connections on a real interface.
 For example:
 .Bd -literal -offset indent
-rdr on ne3 inet proto tcp to port smtp -\*(Gt 127.0.0.1 port spamd
+match in on ne3 inet proto tcp to port smtp rdr-to 127.0.0.1 \e
+      port spamd
 .Ed
 .Pp
 Unless this effect is desired, any of the local non-loopback addresses
@@ -825,11 +797,10 @@ connections only to daemons bound to this address or not bound to
 any address.
 .Pp
 For
-.Ar nat
+.Ar nat-to
 and
-.Ar rdr
-rules
-for which there is a single redirection address which has a
+.Ar rdr-to
+options for which there is a single redirection address which has a
 subnet mask smaller than 32 for IPv4 or 128 for IPv6 (more than one IP
 address), a variety of different methods for assigning this address can be
 used:
@@ -839,9 +810,9 @@ The
 .Ar bitmask
 option applies the network portion of the redirection address to the address
 to be modified (source with
-.Ar nat ,
+.Ar nat-to ,
 destination with
-.Ar rdr ) .
+.Ar rdr-to ) .
 .It Ar random Op Ar sticky-address
 The
 .Ar random
@@ -1301,12 +1272,9 @@ if one flushes the state table.
 However, states created from such intermediate packets may be missing
 connection details such as the TCP window scaling factor.
 States which modify the packet flow, such as those affected by
-.Ar nat ,
-.Ar binat ,
-or
-.Ar rdr
-rules,
-.Ar modulate
+.Ar modulate ,
+.Ar nat-to ,
+.Ar rdr-to ,
 or
 .Ar synproxy state
 options, or scrubbed with
@@ -1430,11 +1398,10 @@ Further matching rules can replace the tag with a
 new one but will not remove a previously applied tag.
 A packet is only ever assigned one tag at a time.
 Packet tagging can be done during
-.Ar nat ,
-.Ar rdr ,
+.Ar nat-to
 or
-.Ar binat
-rules in addition to filter rules.
+.Ar rdr-to
+in addition to filter rules.
 Tags take the same macros as labels (see above).
 .Pp
 .It Ar tagged Aq Ar string
@@ -1599,10 +1566,10 @@ expansion).
 Tables can be used as the source or destination of filter
 or translation rules.
 They can also be used for the redirect address of
-.Ar nat
+.Ar nat-to
 and
-.Ar rdr
-rules and in the routing options of filter rules, but only for
+.Ar rdr-to
+and in the routing options of filter rules, but only for
 .Ar round-robin
 pools.
 .Pp
@@ -1810,18 +1777,6 @@ using the following syntax:
 .Bl -tag -width xxxx
 .It Ar anchor Aq Ar name
 Evaluates the filter rules in the specified anchor.
-.It Ar binat-anchor Aq Ar name
-Evaluates the
-.Ar binat
-rules in the specified anchor.
-.It Ar nat-anchor Aq Ar name
-Evaluates the
-.Ar nat
-rules in the specified anchor.
-.It Ar rdr-anchor Aq Ar name
-Evaluates the
-.Ar rdr
-rules in the specified anchor.
 .El
 .Pp
 An anchor has a name which specifies the path where
@@ -1913,11 +1868,10 @@ For example if an ICMP source quench message referring to a stateful TCP
 connection arrives, it will be matched to the state and get passed.
 .Pp
 Finally, state tracking is required for
-.Ar binat ,
-.Ar nat ,
+.Ar nat-to
 and
-.Ar rdr
-rules, in order to track address and port translations and reverse the
+.Ar rdr-to
+options, in order to track address and port translations and reverse the
 translation on returning packets.
 .Pp
 .Xr pf 4
@@ -2437,8 +2391,8 @@ This example maps incoming requests on port 80 to port 8080, on
 which a daemon is running (because, for example, it is not run as root,
 and therefore lacks permission to bind to port 80).
 .Bd -literal -offset 4n
-rdr on $ext_if proto tcp from any to any port 80 -\*(Gt 127.0.0.1 \e
-    port 8080
+match in on $ext_if proto tcp from any to any port 80 \e
+      rdr-to 127.0.0.1 port 8080
 .Ed
 .Pp
 If the
@@ -2446,8 +2400,8 @@ If the
 modifier is given, packets matching the translation rule are passed without
 inspecting the filter rules.
 .Bd -literal -offset 4n
-rdr pass on $ext_if proto tcp from any to any port 80 -\*(Gt 127.0.0.1 \e
-    port 8080
+match in pass on $ext_if proto tcp from any to any port 80 \e
+      rdr-to 127.0.0.1 port 8080
 .Ed
 .Pp
 In the example below, vlan12 is configured as 192.168.168.1;
@@ -2459,47 +2413,42 @@ network appear as though it is the Internet routable address
 for the nodes on vlan12.
 Thus, 192.168.168.1 can talk to the 192.168.168.0/24 nodes.
 .Bd -literal -offset 4n
-nat on ! vlan12 from 192.168.168.0/24 to any -\*(Gt 204.92.77.111
+match out on ! vlan12 from 192.168.168.0/24 to any nat-to 204.92.77.111
 .Ed
 .Pp
 In the example below, the machine sits between a fake internal
 144.19.74.* network, and a routable external IP of 204.92.77.100.
-The
-.Ar no nat
-rule excludes protocol AH from being translated.
+The last rule excludes protocol AH from being translated.
 .Bd -literal -offset 4n
-no nat on $ext_if proto ah from 144.19.74.0/24 to any
-nat on $ext_if from 144.19.74.0/24 to any -\*(Gt 204.92.77.100
+pass out on $ext_if from 144.19.74.0/24 nat-to 204.92.77.100
+pass out on $ext_if proto ah from 144.19.74.0/24
 .Ed
 .Pp
 In the example below, packets bound for one specific server, as well as those
 generated by the sysadmins are not proxied; all other connections are.
 .Bd -literal -offset 4n
-no rdr on $int_if proto { tcp, udp } from any to $server port 80
-no rdr on $int_if proto { tcp, udp } from $sysadmins to any port 80
-rdr on $int_if proto { tcp, udp } from any to any port 80 \e
-    -\*(Gt 127.0.0.1 port 80
+match in on $int_if proto { tcp, udp } from any to any port 80 \e
+      rdr-to 127.0.0.1 port 80
+pass in on $int_if proto { tcp, udp } from any to $server port 80
+pass in on $int_if proto { tcp, udp } from $sysadmins to any port 80
 .Ed
 .Pp
 This example maps outgoing packets' source port
 to an assigned proxy port instead of an arbitrary port.
 In this case, proxy outgoing isakmp with port 500 on the gateway.
 .Bd -literal -offset 4n
-nat on $ext_if inet proto udp from any port isakmp to any \e
-    -\*(Gt ($ext_if) port 500
+match out on $ext_if inet proto udp from any port isakmp to any \e
+    nat-to ($ext_if) port 500
 .Ed
 .Pp
-Two more examples.
-The first uses binat to translate source and destination addresses
-(bidirectional).
-The second uses rdr to redirect a TCP and UDP port to an internal machine.
+One more example uses
+.Ar rdr-to
+to redirect a TCP and UDP port to an internal machine.
 .Bd -literal -offset 4n
-binat on $ext_if from 10.1.2.150 to any -\*(Gt $ext_if
-
-rdr on $ext_if inet proto tcp from any to ($ext_if) port 8080 \e
-    -\*(Gt 10.1.2.151 port 22
-rdr on $ext_if inet proto udp from any to ($ext_if) port 8080 \e
-    -\*(Gt 10.1.2.151 port 53
+match in on $ext_if inet proto tcp from any to ($ext_if) port 8080 \e
+      rdr-to 10.1.2.151 port 22
+match in on $ext_if inet proto udp from any to ($ext_if) port 8080 \e
+      rdr-to 10.1.2.151 port 53
 .Ed
 .Pp
 In this example, a NAT gateway is set up to translate internal addresses
@@ -2509,9 +2458,10 @@ using the source-hash keyword.
 The gateway also translates incoming web server connections
 to a group of web servers on the internal network.
 .Bd -literal -offset 4n
-nat on $ext_if inet from any to any -\*(Gt 192.0.2.16/28 source-hash
-rdr on $ext_if proto tcp from any to any port 80 \e
-    -\*(Gt { 10.1.2.155, 10.1.2.160, 10.1.2.161 } round-robin
+match out on $ext_if inet from any to any nat-to 192.0.2.16/28 \e
+    source-hash
+match in  on $ext_if proto tcp from any to any port 80 \e
+    rdr-to { 10.1.2.155, 10.1.2.160, 10.1.2.161 } round-robin
 .Ed
 .Sh FILTER EXAMPLES
 In this example,
@@ -2600,8 +2550,8 @@ In this example,
 we tag incoming packets as they are redirected to spamd(8).
 The tag is used to pass those packets through the packet filter.
 .Bd -literal -offset 4n
-rdr on $ext_if inet proto tcp from \*(Ltspammers\*(Gt to port smtp \e
-    tag SPAMD -\*(Gt 127.0.0.1 port spamd
+match in on $ext_if inet proto tcp from \*(Ltspammers\*(Gt to port smtp \e
+     tag SPAMD rdr-to 127.0.0.1 port spamd
 
 block in on $ext_if
 pass in on $ext_if inet proto tcp tagged SPAMD
@@ -2611,7 +2561,7 @@ Syntax for
 .Nm
 in BNF:
 .Bd -literal
-line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule |
+line           = ( option | pf-rule |
                  antispoof-rule | altq-rule | queue-rule | trans-anchors |
                  anchor-rule | anchor-close | load-anchor | table-rule |
                  include )
@@ -2648,30 +2598,15 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
                  "fragment" | "allow-opts" |
                  "label" string | "tag" string | [ ! ] "tagged" string |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
-                 "rtable" number | "probability" number"%"
+                 "rtable" number | "probability" number"%" |
+		 "rdr-to" ( redirhost | "{" redirhost-list "}" )
+		 [ portspec ] [ pooltype ] |
+		 "nat-to" ( redirhost | "{" redirhost-list "}" )
+		 [ portspec ] [ pooltype ] [ "static-port" ] 
 
 scrubopts      = scrubopt [ [ "," ] scrubopts ]
 scrubopt       = "no-df" | "min-ttl" number | "max-mss" number |
                  "set-tos" tos | "reassemble tcp" | "random-id"
-
-nat-rule       = [ "no" ] "nat" [ "pass" [ "log" [ "(" logopts ")" ] ] ]
-                 [ "on" ifspec ] [ af ]
-                 [ protospec ] hosts [ "tag" string ] [ "tagged" string ]
-                 [ "-\*(Gt" ( redirhost | "{" redirhost-list "}" )
-                 [ portspec ] [ pooltype ] [ "static-port" ] ]
-
-binat-rule     = [ "no" ] "binat" [ "pass" [ "log" [ "(" logopts ")" ] ] ]
-                 [ "on" interface-name ] [ af ]
-                 [ "proto" ( proto-name | proto-number ) ]
-                 "from" address [ "/" mask-bits ] "to" ipspec
-                 [ "tag" string ] [ "tagged" string ]
-                 [ "-\*(Gt" address [ "/" mask-bits ] ]
-
-rdr-rule       = [ "no" ] "rdr" [ "pass" [ "log" [ "(" logopts ")" ] ] ]
-                 [ "on" ifspec ] [ af ]
-                 [ protospec ] hosts [ "tag" string ] [ "tagged" string ]
-                 [ "-\*(Gt" ( redirhost | "{" redirhost-list "}" )
-                 [ portspec ] [ pooltype ] ]
 
 antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
                  "for" ifspec [ af ] [ "label" string ]
@@ -2695,7 +2630,7 @@ anchor-rule    = "anchor" [ string ] [ ( "in" | "out" ) ] [ "on" ifspec ]
 
 anchor-close   = "}"
 
-trans-anchors  = ( "nat-anchor" | "rdr-anchor" | "binat-anchor" ) string
+trans-anchors  = ( "nat-anchor" | "rdr-anchor" ) string
                  [ "on" ifspec ] [ af ] [ "proto" ] [ protospec ] [ hosts ]
 
 load-anchor    = "load anchor" string "from" filename
