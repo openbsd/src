@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.111 2009/08/27 11:15:20 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.112 2009/09/01 13:43:36 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 27 2009 $
+.Dd $Mdocdate: September 1 2009 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ the described options and health checking on the host they contain.
 .It Sy Redirections
 Redirections are translated to
 .Xr pf 4
-rdr rules for stateful forwarding to a target host from a
+rdr-to rules for stateful forwarding to a target host from a
 health-checked table on layer 3.
 .It Sy Relays
 Relays allow application layer load balancing, SSL acceleration, and
@@ -402,7 +402,7 @@ This mode is supported by redirections and relays.
 .Sh REDIRECTIONS
 Redirections represent a
 .Xr pf 4
-rdr rule.
+rdr-to rule.
 They are used for stateful redirections to the hosts in the specified
 tables.
 .Xr pf 4
@@ -460,7 +460,7 @@ or
 .Ar udp ;
 it defaults to
 .Ar tcp .
-The rdr rule can be optionally restricted to a given interface name.
+The rule can be optionally restricted to a given interface name.
 .It Xo
 .Ic route to
 .Aq Ar table
@@ -470,7 +470,9 @@ The rdr rule can be optionally restricted to a given interface name.
 Like the
 .Ic forward to
 directive, but directly routes the packets to the target host without
-modifying the target address.
+modifying the target address using a
+.Xr pf 4
+route-to rule.
 This can be used for
 .Dq direct server return
 to force the target host to respond via a different gateway.
@@ -482,14 +484,14 @@ Specify the inactivity timeout in seconds for established redirections.
 The default timeout is 600 seconds (10 minutes).
 .It Ic sticky-address
 This has the same effect as specifying sticky-address
-for an rdr rule in
+for an rdr-to rule in
 .Xr pf.conf 5 .
 It will ensure that multiple connections from the same source are
 mapped to the same redirection address.
 .It Ic tag Ar name
 Automatically tag packets passing through the
 .Xr pf 4
-rdr rule with the name supplied.
+rdr-to rule with the name supplied.
 This allows simpler filter rules.
 .El
 .Sh RELAYS
@@ -583,9 +585,7 @@ section above for information about table options.
 .Ic nat lookup
 .Ar options ...
 .Xc
-When redirecting connections with an
-.Ar rdr
-rule in
+When redirecting connections with an rdr-to rule in
 .Xr pf.conf 5
 to a relay listening on localhost, this directive will
 look up the real destination address of the intended target host,

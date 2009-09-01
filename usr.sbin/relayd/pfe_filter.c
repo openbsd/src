@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.38 2009/04/24 14:20:24 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.39 2009/09/01 13:43:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -24,6 +24,7 @@
 #include <net/if.h>
 #include <net/pfvar.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 
 #include <limits.h>
@@ -41,8 +42,8 @@
 struct pfdata {
 	int			 dev;
 	struct pf_anchor	*anchor;
-	struct pfioc_trans	 pft[PF_RULESET_MAX];
-	struct pfioc_trans_e	 pfte[PF_RULESET_MAX];
+	struct pfioc_trans	 pft;
+	struct pfioc_trans_e	 pfte;
 	u_int8_t		 pfused;
 };
 
@@ -329,35 +330,29 @@ flush_table(struct relayd *env, struct rdr *rdr)
 int
 transaction_init(struct relayd *env, const char *anchor)
 {
-	int i;
+	env->sc_pf->pft.size = 1;
+	env->sc_pf->pft.esize = sizeof(env->sc_pf->pfte);
+	env->sc_pf->pft.array = &env->sc_pf->pfte;
 
-	for (i = 0; i < PF_RULESET_MAX; i++) {
-		env->sc_pf->pft[i].size = 1;
-		env->sc_pf->pft[i].esize = sizeof(env->sc_pf->pfte[i]);
-		env->sc_pf->pft[i].array = &env->sc_pf->pfte[i];
+	bzero(&env->sc_pf->pfte, sizeof(env->sc_pf->pfte));
+	(void)strlcpy(env->sc_pf->pfte.anchor,
+	    anchor, PF_ANCHOR_NAME_SIZE);
+	env->sc_pf->pfte.rs_num = 0;
 
-		bzero(&env->sc_pf->pfte[i], sizeof(env->sc_pf->pfte[i]));
-		(void)strlcpy(env->sc_pf->pfte[i].anchor,
-		    anchor, PF_ANCHOR_NAME_SIZE);
-		env->sc_pf->pfte[i].rs_num = i;
+	if (ioctl(env->sc_pf->dev, DIOCXBEGIN,
+	    &env->sc_pf->pft) == -1)
+		return (-1);
 
-		if (ioctl(env->sc_pf->dev, DIOCXBEGIN,
-		    &env->sc_pf->pft[i]) == -1)
-			return (-1);
-	}
 	return (0);
 }
 
 int
 transaction_commit(struct relayd *env)
 {
-	int i;
+	if (ioctl(env->sc_pf->dev, DIOCXCOMMIT,
+	    &env->sc_pf->pft) == -1)
+		return (-1);
 
-	for (i = 0; i < PF_RULESET_MAX; i++) {
-		if (ioctl(env->sc_pf->dev, DIOCXCOMMIT,
-		    &env->sc_pf->pft[i]) == -1)
-			return (-1);
-	}
 	return (0);
 }
 
@@ -370,7 +365,6 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 	struct sockaddr_in6	*sain6;
 	struct address		*address;
 	char			 anchor[PF_ANCHOR_NAME_SIZE];
-	int			 rs;
 	struct table		*t = rdr->table;
 
 	if (!(env->sc_flags & F_NEEDPF))
@@ -402,22 +396,24 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		memset(&pio, 0, sizeof(pio));
 		(void)strlcpy(rio.anchor, anchor, sizeof(rio.anchor));
 
+		rio.rule.action = PF_PASS;
+		rio.rule.direction = PF_IN;
+		rio.rule.quick = 1; /* force first match */
+		rio.rule.keep_state = PF_STATE_NORMAL;
+
 		switch (t->conf.fwdmode) {
 		case FWD_NORMAL:
-			/* traditional redirection in the rdr-anchor */
-			rs = PF_RULESET_RDR;
-			rio.rule.action = PF_RDR;
+			/* traditional redirection */
+			if (address->ipproto == IPPROTO_TCP) {
+				rio.rule.flags = TH_SYN;
+				rio.rule.flagset = (TH_SYN|TH_ACK);
+			}
 			break;
 		case FWD_ROUTE:
 			/* re-route with pf for DSR (direct server return) */
-			rs = PF_RULESET_FILTER;
-			rio.rule.action = PF_PASS;
 			rio.rule.rt = PF_ROUTETO;
-			rio.rule.direction = PF_IN;
-			rio.rule.quick = 1; /* force first match */
 
 			/* Use sloppy state handling for half connections */
-			rio.rule.keep_state = PF_STATE_NORMAL;
 			rio.rule.rule_flag = PFRULE_STATESLOPPY;
 			break;
 		default:
@@ -425,7 +421,7 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 			/* NOTREACHED */
 		}
 
-		rio.ticket = env->sc_pf->pfte[rs].ticket;
+		rio.ticket = env->sc_pf->pfte.ticket;
 		if (ioctl(env->sc_pf->dev, DIOCBEGINADDRS, &pio) == -1)
 			fatal("sync_ruleset: cannot initialise address pool");
 
@@ -473,24 +469,24 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		    sizeof(pio.addr.addr.v.tblname)) >=
 		    sizeof(pio.addr.addr.v.tblname))
 			fatal("sync_ruleset: table name too long");
+		pio.which = PF_RDR;
 		if (ioctl(env->sc_pf->dev, DIOCADDADDR, &pio) == -1)
 			fatal("sync_ruleset: cannot add address to pool");
 
 		if (address->port.op == PF_OP_EQ ||
 		    rdr->table->conf.flags & F_PORT) {
-			rio.rule.rpool.proxy_port[0] =
+			rio.rule.rdr.proxy_port[0] =
 			    ntohs(rdr->table->conf.port);
-			rio.rule.rpool.port_op = PF_OP_EQ;
+			rio.rule.rdr.port_op = PF_OP_EQ;
 		}
-		rio.rule.rpool.opts = PF_POOL_ROUNDROBIN;
+		rio.rule.rdr.opts = PF_POOL_ROUNDROBIN;
 		if (rdr->conf.flags & F_STICKY)
-			rio.rule.rpool.opts |= PF_POOL_STICKYADDR;
+			rio.rule.rdr.opts |= PF_POOL_STICKYADDR;
 
 		if (ioctl(env->sc_pf->dev, DIOCADDRULE, &rio) == -1)
 			fatal("cannot add rule");
-		log_debug("sync_ruleset: rule added to %sanchor \"%s\"",
-		    rdr->table->conf.fwdmode == FWD_ROUTE ?
-		    "" : "rdr-", anchor);
+		log_debug("sync_ruleset: rule added to anchor \"%s\"",
+		    anchor);
 	}
 	if (transaction_commit(env) == -1)
 		log_warn("sync_ruleset: add rules transaction failed");

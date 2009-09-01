@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.17 2008/05/07 01:49:29 reyk Exp $
+.\"	$OpenBSD: relayd.8,v 1.18 2009/09/01 13:43:36 reyk Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 7 2008 $
+.Dd $Mdocdate: September 1 2009 $
 .Dt RELAYD 8
 .Os
 .Sh NAME
@@ -49,10 +49,9 @@ To allow
 .Nm
 to properly set up
 .Xr pf 4
-rules, the following lines are required in the NAT and filter sections of
+rules, the following line is required in the filter section of
 .Xr pf.conf 5 :
 .Bd -literal -offset indent
-rdr-anchor "relayd/*"
 anchor "relayd/*"
 .Ed
 .Pp
@@ -80,7 +79,7 @@ A
 represents a layer 3 load-balancing instance.
 Each instance translates to a
 .Xr pf 4
-rdr rule being added.
+rdr-to rule being added.
 A
 .Em table
 represents a group of hosts which can be checked for
