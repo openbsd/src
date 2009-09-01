@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.11 2008/02/26 18:52:53 henning Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.12 2009/09/01 14:03:59 claudio Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2008 $
+.Dd $Mdocdate: September 1 2009 $
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -60,23 +60,25 @@ Assuming the FTP control connection is from $client to $server, the
 proxy connected to the server using the $proxy source address, and
 $port is negotiated, then
 .Nm
-adds the following rules to the various anchors.
+adds the following rules to the anchor.
+$server and $orig_server are the same unless
+.Fl R
+is used to force a different $server address for all connections.
 (These example rules use inet, but the proxy also supports inet6.)
 .Pp
 In case of active mode (PORT or EPRT):
 .Bd -literal -offset 2n
-rdr from $server to $proxy port $port -> $client
-pass quick inet proto tcp \e
-    from $server to $client port $port
+pass in from $server to $proxy port $proxy_port \e
+    rdr-to $client port $port
+pass out from $server to $client port $port \e
+    nat-to $orig_server port $natport
 .Ed
 .Pp
 In case of passive mode (PASV or EPSV):
 .Bd -literal -offset 2n
-nat from $client to $server port $port -> $proxy
-pass in quick inet proto tcp \e
-    from $client to $server port $port
-pass out quick inet proto tcp \e
-    from $proxy to $server port $port
+pass in from $client to $orig_server port $proxy_port \e
+    rdr-to $server port $port
+pass out from $client to $server port $port nat-to $proxy
 .Ed
 .Pp
 The options are as follows:
@@ -161,21 +163,10 @@ The pf rules do not log by default.
 To make use of the proxy,
 .Xr pf.conf 5
 needs the following rules.
-All anchors are mandatory.
 Adjust the rules as needed.
-.Pp
-In the NAT section:
-.Bd -literal -offset 2n
-nat-anchor "ftp-proxy/*"
-rdr-anchor "ftp-proxy/*"
-rdr pass on $int_if proto tcp from $lan to any port 21 -> \e
-    127.0.0.1 port 8021
-.Ed
-.Pp
-In the rule section:
 .Bd -literal -offset 2n
 anchor "ftp-proxy/*"
-pass out proto tcp from $proxy to any port 21
+pass in quick proto tcp to port ftp rdr to 127.0.0.1 port 8021
 .Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
