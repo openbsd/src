@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.94 2009/07/12 19:17:50 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.95 2009/09/01 19:49:59 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -142,6 +142,7 @@ qe*	at qec?
 be*	at qec?
 
 hme*	at sbus?
+ti*	at sbus?
 gem*	at sbus?
 
 pciide*	at pci? flags 0x0000
