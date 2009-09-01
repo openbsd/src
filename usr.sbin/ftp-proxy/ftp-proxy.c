@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.19 2008/06/13 07:25:26 claudio Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.20 2009/09/01 13:46:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -971,25 +971,15 @@ allow_data_connection(struct session *s)
 		proxy_reply(s->cmd, orig_sa, s->proxy_port);
 		logmsg(LOG_DEBUG, "#%d proxy: %s", s->id, linebuf);
 
-		/* rdr from $client to $orig_server port $proxy_port -> $server
-		    port $port */
+		/* pass in from $client to $orig_server port $proxy_port
+		    rdr-to $server port $port */
 		if (add_rdr(s->id, client_sa, orig_sa, s->proxy_port,
 		    server_sa, s->port) == -1)
 			goto fail;
 
-		/* nat from $client to $server port $port -> $proxy */
+		/* pass out from $client to $server port $port nat-to $proxy */
 		if (add_nat(s->id, client_sa, server_sa, s->port, proxy_sa,
 		    PF_NAT_PROXY_PORT_LOW, PF_NAT_PROXY_PORT_HIGH) == -1)
-			goto fail;
-
-		/* pass in from $client to $server port $port */
-		if (add_filter(s->id, PF_IN, client_sa, server_sa,
-		    s->port) == -1)
-			goto fail;
-
-		/* pass out from $proxy to $server port $port */
-		if (add_filter(s->id, PF_OUT, proxy_sa, server_sa,
-		    s->port) == -1)
 			goto fail;
 	}
 
@@ -1002,14 +992,14 @@ allow_data_connection(struct session *s)
 			goto fail;
 		prepared = 1;
 
-		/* rdr from $server to $proxy port $proxy_port -> $client port
-		    $port */
+		/* pass in from $server to $proxy port $proxy_port
+		    rdr-to $client port $port */
 		if (add_rdr(s->id, server_sa, proxy_sa, s->proxy_port,
 		    client_sa, s->port) == -1)
 			goto fail;
 
-		/* nat from $server to $client port $port -> $orig_server port
-		    $natport */
+		/* pass out from $server to $client port $port
+		    nat-to $orig_server port $natport */
 		if (rfc_mode && s->cmd == CMD_PORT) {
 			/* Rewrite sourceport to RFC mandated 20. */
 			if (add_nat(s->id, server_sa, client_sa, s->port,
@@ -1022,16 +1012,6 @@ allow_data_connection(struct session *s)
 			    PF_NAT_PROXY_PORT_HIGH) == -1)
 			    	goto fail;
 		}
-
-		/* pass in from $server to $client port $port */
-		if (add_filter(s->id, PF_IN, server_sa, client_sa, s->port) ==
-		    -1)
-			goto fail;
-
-		/* pass out from $orig_server to $client port $port */
-		if (add_filter(s->id, PF_OUT, orig_sa, client_sa, s->port) ==
-		    -1)
-			goto fail;
 	}
 
 	/* Commit rules if they were prepared. */
