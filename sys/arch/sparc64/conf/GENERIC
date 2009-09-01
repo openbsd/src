@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.242 2009/07/12 19:17:50 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.243 2009/09/01 19:15:42 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -360,6 +360,7 @@ qe*		at qec?
 be*		at qec?
 
 hme*		at sbus?
+ti*		at sbus?
 gem*		at sbus?
 
 # Magma serial/parallel port devices
