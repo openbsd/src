@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.15 2009/08/31 20:46:19 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.16 2009/09/01 09:11:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -172,7 +172,7 @@ server_lock(void)
 
 		status_prompt_clear(c);
 		status_prompt_set(c,
-		    "Password: ", server_lock_callback, NULL, c, PROMPT_HIDDEN);
+		    "Password:", server_lock_callback, NULL, c, PROMPT_HIDDEN);
   		server_redraw_client(c);
 	}
 	server_locked = 1;

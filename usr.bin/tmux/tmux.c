@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.37 2009/09/01 09:00:54 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.38 2009/09/01 09:11:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -214,7 +214,7 @@ prepare_unlock(enum msgtype *msg, void **buf, size_t *len, int argc)
 		return (-1);
 	}
 	
-	if ((pass = getpass("Password: ")) == NULL)
+	if ((pass = getpass("Password:")) == NULL)
 		return (-1);
 
 	if (strlen(pass) >= sizeof unlockdata.pass) {
