@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.37 2007/05/31 17:23:14 sobrado Exp $
+#	$OpenBSD: files.sbus,v 1.38 2009/09/01 14:45:44 kettenis Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -44,6 +44,9 @@ file	dev/sbus/esp_sbus.c		esp_sbus | esp_dma	needs-flag
 
 attach	hme at sbus with hme_sbus
 file	dev/sbus/if_hme_sbus.c		hme_sbus
+
+attach	ti at sbus with ti_sbus
+file	dev/sbus/if_ti_sbus.c		ti_sbus
 
 attach	gem at sbus with gem_sbus
 file	dev/sbus/if_gem_sbus.c		gem_sbus
