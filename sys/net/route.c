@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.110 2009/07/28 20:54:57 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.111 2009/09/01 06:10:01 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1075,7 +1075,11 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		}
 		if ((rt = rtalloc1(dst, 0, rtableid)) != NULL) {
 			rt->rt_refcnt--;
-			if (rt->rt_ifa != ifa) {
+			/* try to find the right route */
+			while (rt && rt->rt_ifa != ifa)
+				rt = (struct rtentry *)
+				    ((struct radix_node *)rt)->rn_dupedkey;
+			if (!rt) {
 				if (m != NULL)
 					(void) m_free(m);
 				return (flags & RTF_HOST ? EHOSTUNREACH
