@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.14 2009/06/24 11:38:40 deraadt Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.15 2009/09/01 20:49:24 kettenis Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 
 /*
@@ -75,6 +75,7 @@
 
 #ifndef ISP_NOFIRMWARE
 #define ISP_FIRMWARE_1000
+#define ISP_FIRMWARE_2200
 #endif
 
 #if	defined(ISP_FIRMWARE_1000)
@@ -83,13 +84,24 @@
 #define	ISP_1000_RISC_CODE	NULL
 #endif
 
+#if	defined(ISP_FIRMWARE_2200)
+#define	ISP_2200_RISC_CODE	(u_int16_t *) isp_2200_risc_code
+#include <dev/microcode/isp/asm_2200.h>
+#else
+#define	ISP_2200_RISC_CODE	NULL
+#endif
+
 #include <dev/sbus/sbusvar.h>
 
 static int isp_sbus_intr(void *);
 static int
 isp_sbus_rd_isr(struct ispsoftc *, u_int32_t *, u_int16_t *, u_int16_t *);
+static int
+isp_sbus_rd_isr_2200(struct ispsoftc *, u_int32_t *, u_int16_t *, u_int16_t *);
 static u_int32_t isp_sbus_rd_reg(struct ispsoftc *, int);
 static void isp_sbus_wr_reg (struct ispsoftc *, int, u_int32_t);
+static u_int32_t isp_sbus_rd_reg_2200(struct ispsoftc *, int);
+static void isp_sbus_wr_reg_2200(struct ispsoftc *, int, u_int32_t);
 static int isp_sbus_mbxdma(struct ispsoftc *);
 static int isp_sbus_dmasetup(struct ispsoftc *, XS_T *, ispreq_t *, u_int32_t *,
     u_int32_t);
@@ -105,7 +117,20 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	NULL,
-	(u_int16_t *) ISP_1000_RISC_CODE
+	ISP_1000_RISC_CODE
+};
+
+static struct ispmdvec mdvec_2200 = {
+	isp_sbus_rd_isr_2200,
+	isp_sbus_rd_reg_2200,
+	isp_sbus_wr_reg_2200,
+	isp_sbus_mbxdma,
+	isp_sbus_dmasetup,
+	isp_sbus_dmateardown,
+	NULL,
+	NULL,
+	NULL,
+	ISP_2200_RISC_CODE
 };
 
 struct isp_sbussoftc {
@@ -141,7 +166,9 @@ isp_match(struct device *parent, void *vcf, void *aux)
 		strcmp("PTI,ptisp", sa->sa_name) == 0 ||
 		strcmp("ptisp", sa->sa_name) == 0 ||
 		strcmp("SUNW,isp", sa->sa_name) == 0 ||
-		strcmp("QLGC,isp", sa->sa_name) == 0);
+		strcmp("SUNW,qlc", sa->sa_name) == 0 ||
+		strcmp("QLGC,isp", sa->sa_name) == 0 ||
+		strcmp("QLGC,qla", sa->sa_name) == 0);
 #ifdef DEBUG
 	if (rv && oneshot) {
 		oneshot = 0;
@@ -254,6 +281,30 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	sbc->sbus_poff[RISC_BLOCK >> _BLK_REG_SHFT] = SBUS_RISC_REGS_OFF;
 	sbc->sbus_poff[DMA_BLOCK >> _BLK_REG_SHFT] = DMA_REGS_OFF;
 
+	if (strcmp("SUNW,qlc", sa->sa_name) == 0 ||
+	    strcmp("QLGC,qla", sa->sa_name) == 0) {
+		isp->isp_mdvec = &mdvec_2200;
+		isp->isp_bustype = ISP_BT_PCI;
+		isp->isp_type = ISP_HA_FC_2200;
+		isp->isp_param = malloc(sizeof(fcparam), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
+		if (isp->isp_param == NULL) {
+			printf("%s: no mem for sdparam table\n",
+			    self->dv_xname);
+			return;
+		}
+		sbc->sbus_poff[BIU_BLOCK >> _BLK_REG_SHFT] =
+		    0x100 + BIU_REGS_OFF;
+		sbc->sbus_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
+		    0x100 + PCI_MBOX_REGS2100_OFF;
+		sbc->sbus_poff[SXP_BLOCK >> _BLK_REG_SHFT] =
+		    0x100 + PCI_SXP_REGS_OFF;
+		sbc->sbus_poff[RISC_BLOCK >> _BLK_REG_SHFT] =
+		    0x100 + PCI_RISC_REGS_OFF;
+		sbc->sbus_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
+		    0x100 + DMA_REGS_OFF;
+	}
+
 	/* Establish interrupt channel */
 	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO, 0,
 	    isp_sbus_intr, sbc, self->dv_xname);
@@ -277,9 +328,12 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	isp->isp_role = ISP_DEFAULT_ROLES;
 
 	/*
-	 * There's no tool on sparc to set NVRAM for ISPs, so ignore it.
+	 * There's no tool on sparc to set NVRAM for ISPs, so ignore
+	 * it if we don't need to read WWNs from it.
 	 */
-	isp->isp_confopts |= ISP_CFG_NONVRAM;
+	if (IS_SCSI(isp))
+	    isp->isp_confopts |= ISP_CFG_NONVRAM;
+
 	ISP_LOCK(isp);
 	isp->isp_osinfo.no_mbox_ints = 1;
 	isp_reset(isp);
@@ -355,6 +409,28 @@ isp_sbus_rd_isr(struct ispsoftc *isp, u_int32_t *isrp,
 	return (1);
 }
 
+static int
+isp_sbus_rd_isr_2200(struct ispsoftc *isp, u_int32_t *isrp,
+    u_int16_t *semap, u_int16_t *mbp)
+{
+	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	u_int16_t isr, sema;
+
+	isr = letoh16(BXR2(sbc, IspVirt2Off(isp, BIU_ISR)));
+	sema = letoh16(BXR2(sbc, IspVirt2Off(isp, BIU_SEMA)));
+	isp_prt(isp, ISP_LOGDEBUG3, "ISR 0x%x SEMA 0x%x", isr, sema);
+	isr &= INT_PENDING_MASK(isp);
+	sema &= BIU_SEMA_LOCK;
+	if (isr == 0 && sema == 0) {
+		return (0);
+	}
+	*isrp = isr;
+	if ((*semap = sema) != 0) {
+		*mbp = letoh16(BXR2(sbc, IspVirt2Off(isp, OUTMAILBOX0)));
+	}
+	return (1);
+}
+
 static u_int32_t
 isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
 {
@@ -371,6 +447,24 @@ isp_sbus_wr_reg(struct ispsoftc *isp, int regoff, u_int32_t val)
 	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
 	offset += (regoff & 0xff);
 	bus_space_write_2(sbc->sbus_bustag, sbc->sbus_reg, offset, val);
+}
+
+static u_int32_t
+isp_sbus_rd_reg_2200(struct ispsoftc *isp, int regoff)
+{
+	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
+	offset += (regoff & 0xff);
+	return (letoh16(bus_space_read_2(sbc->sbus_bustag, sbc->sbus_reg, offset)));
+}
+
+static void
+isp_sbus_wr_reg_2200(struct ispsoftc *isp, int regoff, u_int32_t val)
+{
+	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
+	offset += (regoff & 0xff);
+	bus_space_write_2(sbc->sbus_bustag, sbc->sbus_reg, offset, htole16(val));
 }
 
 static int
@@ -423,11 +517,14 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	}
 
 	/*
-	 * Allocate and map the request and response queues
+	 * Allocate and map the request, result queues, plus FC scratch area.
 	 */
 	progress = 0;
 	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));
 	len += ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp));
+	if (IS_FC(isp)) {
+		len += ISP2100_SCRLEN;
+	}
 	if (bus_dmamem_alloc(isp->isp_dmatag, len, 0, 0, &seg, 1, &rs,
 	    BUS_DMA_NOWAIT)) {
 		goto dmafail;
@@ -453,9 +550,19 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	addr += ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));
 	isp->isp_result_dma = addr;
 
+	if (IS_FC(isp)) {
+		addr += ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp));
+		FCPARAM(isp)->isp_scdma = addr;
+
+	}
+
 	isp->isp_rquest = base;
 	base += ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));
 	isp->isp_result = base;
+	if (IS_FC(isp)) {
+		base += ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp));
+		FCPARAM(isp)->isp_scratch = base;
+	}
 	return (0);
 
 dmafail:
