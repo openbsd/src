@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.290 2009/06/25 09:30:28 sthen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.291 2009/09/01 13:42:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -541,7 +541,8 @@ struct pf_rule {
 	char			 overload_tblname[PF_TABLE_NAME_SIZE];
 
 	TAILQ_ENTRY(pf_rule)	 entries;
-	struct pf_pool		 rpool;
+	struct pf_pool		 nat;
+	struct pf_pool		 rdr;
 
 	u_int64_t		 evaluations;
 	u_int64_t		 packets[2];
@@ -1131,8 +1132,10 @@ struct pf_pdesc {
 			*eh;
 	struct pf_addr	*src;		/* src address */
 	struct pf_addr	*dst;		/* dst address */
-	u_int16_t *sport;
-	u_int16_t *dport;
+	u_int16_t	*sport;
+	u_int16_t	*dport;
+	u_int16_t	 osport;
+	u_int16_t	 odport;
 
 	u_int32_t	 p_len;		/* total length of payload */
 
@@ -1380,6 +1383,8 @@ struct pfioc_pooladdr {
 	u_int8_t		 r_action;
 	u_int8_t		 r_last;
 	u_int8_t		 af;
+	u_int8_t		 which;
+	u_int8_t		 pad[3];
 	char			 anchor[MAXPATHLEN];
 	struct pf_pooladdr	 addr;
 };
@@ -1626,7 +1631,7 @@ TAILQ_HEAD(pf_poolqueue, pf_pool);
 extern struct pf_poolqueue		  pf_pools[2];
 TAILQ_HEAD(pf_altqqueue, pf_altq);
 extern struct pf_altqqueue		  pf_altqs[2];
-extern struct pf_palist			  pf_pabuf;
+extern struct pf_palist			  pf_pabuf[2];
 
 extern u_int32_t		 ticket_altqs_active;
 extern u_int32_t		 ticket_altqs_inactive;
@@ -1860,21 +1865,19 @@ int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
 			     int, struct pf_rule **, struct pf_rule **,
 			     int *);
 
-int			 pf_map_addr(u_int8_t, struct pf_rule *,
-			    struct pf_addr *, struct pf_addr *,
-			    struct pf_addr *, struct pf_src_node **);
-struct pf_rule		*pf_get_translation(struct pf_pdesc *, struct mbuf *,
-			    int, int, struct pfi_kif *, struct pf_src_node **,
-			    struct pf_state_key **, struct pf_state_key **,
-			    struct pf_state_key **, struct pf_state_key **,
-			    struct pf_addr *, struct pf_addr *,
-			    u_int16_t, u_int16_t);
+int			 pf_get_transaddr(struct pf_rule *, struct pf_pdesc *,
+			    struct pf_addr *, u_int16_t *, struct pf_addr *,
+			    u_int16_t *);
 
-int			 pf_state_key_setup(struct pf_pdesc *, struct pf_rule *,
-			    struct pf_state_key **, struct pf_state_key **,
-			    struct pf_state_key **, struct pf_state_key **,
+int			 pf_map_addr(sa_family_t, struct pf_rule *,
 			    struct pf_addr *, struct pf_addr *,
-			    u_int16_t, u_int16_t);
+			    struct pf_addr *, struct pf_src_node **,
+			    struct pf_pool *);
+
+int			 pf_state_key_setup(struct pf_pdesc *,
+			    struct pf_state_key **, struct pf_state_key **,
+			    struct pf_addr **, struct pf_addr **,
+			    u_int16_t *, u_int16_t *);
 #endif /* _KERNEL */
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.5 2009/06/24 13:27:34 sthen Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.6 2009/09/01 13:42:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -101,13 +101,9 @@
 
 void			 pf_hash(struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);
-struct pf_rule		*pf_match_translation(struct pf_pdesc *, struct mbuf *,
-			    int, int, struct pfi_kif *,
-			    struct pf_addr *, u_int16_t, struct pf_addr *,
-			    u_int16_t, int);
 int			 pf_get_sport(sa_family_t, u_int8_t, struct pf_rule *,
 			    struct pf_addr *, struct pf_addr *, u_int16_t,
-			    struct pf_addr *, u_int16_t*, u_int16_t, u_int16_t,
+			    struct pf_addr *, u_int16_t *, u_int16_t, u_int16_t,
 			    struct pf_src_node **);
 
 #define mix(a,b,c) \
@@ -167,87 +163,6 @@ pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
 	}
 }
 
-struct pf_rule *
-pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
-    int direction, struct pfi_kif *kif, struct pf_addr *saddr, u_int16_t sport,
-    struct pf_addr *daddr, u_int16_t dport, int rs_num)
-{
-	struct pf_rule		*r, *rm = NULL;
-	struct pf_ruleset	*ruleset = NULL;
-	int			 tag = -1;
-	int			 rtableid = -1;
-	int			 asd = 0;
-
-	r = TAILQ_FIRST(pf_main_ruleset.rules[rs_num].active.ptr);
-	while (r && rm == NULL) {
-		struct pf_rule_addr	*src = NULL, *dst = NULL;
-		struct pf_addr_wrap	*xdst = NULL;
-
-		if (r->action == PF_BINAT && direction == PF_IN) {
-			src = &r->dst;
-			if (r->rpool.cur != NULL)
-				xdst = &r->rpool.cur->addr;
-		} else {
-			src = &r->src;
-			dst = &r->dst;
-		}
-
-		r->evaluations++;
-		if (pfi_kif_match(r->kif, kif) == r->ifnot)
-			r = r->skip[PF_SKIP_IFP].ptr;
-		else if (r->direction && r->direction != direction)
-			r = r->skip[PF_SKIP_DIR].ptr;
-		else if (r->af && r->af != pd->af)
-			r = r->skip[PF_SKIP_AF].ptr;
-		else if (r->proto && r->proto != pd->proto)
-			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (PF_MISMATCHAW(&src->addr, saddr, pd->af,
-		    src->neg, kif))
-			r = r->skip[src == &r->src ? PF_SKIP_SRC_ADDR :
-			    PF_SKIP_DST_ADDR].ptr;
-		else if (src->port_op && !pf_match_port(src->port_op,
-		    src->port[0], src->port[1], sport))
-			r = r->skip[src == &r->src ? PF_SKIP_SRC_PORT :
-			    PF_SKIP_DST_PORT].ptr;
-		else if (dst != NULL &&
-		    PF_MISMATCHAW(&dst->addr, daddr, pd->af, dst->neg, NULL))
-			r = r->skip[PF_SKIP_DST_ADDR].ptr;
-		else if (xdst != NULL && PF_MISMATCHAW(xdst, daddr, pd->af,
-		    0, NULL))
-			r = TAILQ_NEXT(r, entries);
-		else if (dst != NULL && dst->port_op &&
-		    !pf_match_port(dst->port_op, dst->port[0],
-		    dst->port[1], dport))
-			r = r->skip[PF_SKIP_DST_PORT].ptr;
-		else if (r->match_tag && !pf_match_tag(m, r, &tag))
-			r = TAILQ_NEXT(r, entries);
-		else if (r->os_fingerprint != PF_OSFP_ANY && (pd->proto !=
-		    IPPROTO_TCP || !pf_osfp_match(pf_osfp_fingerprint(pd, m,
-		    off, pd->hdr.tcp), r->os_fingerprint)))
-			r = TAILQ_NEXT(r, entries);
-		else {
-			if (r->tag)
-				tag = r->tag;
-			if (r->rtableid >= 0)
-				rtableid = r->rtableid;
-			if (r->anchor == NULL) {
-				rm = r;
-			} else
-				pf_step_into_anchor(&asd, &ruleset, rs_num,
-				    &r, NULL, NULL);
-		}
-		if (r == NULL)
-			pf_step_out_of_anchor(&asd, &ruleset, rs_num, &r,
-			    NULL, NULL);
-	}
-	if (pf_tag_packet(m, tag, rtableid))
-		return (NULL);
-	if (rm != NULL && (rm->action == PF_NONAT ||
-	    rm->action == PF_NORDR || rm->action == PF_NOBINAT))
-		return (NULL);
-	return (rm);
-}
-
 int
 pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
     struct pf_addr *saddr, struct pf_addr *daddr, u_int16_t dport,
@@ -259,11 +174,12 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 	u_int16_t		cut;
 
 	bzero(&init_addr, sizeof(init_addr));
-	if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn))
+	if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn, &r->nat))
 		return (1);
 
 	if (proto == IPPROTO_ICMP || proto == IPPROTO_ICMPV6) {
-		if (dport == ICMP6_ECHO_REQUEST || dport == ICMP_ECHO) {
+		if (dport == htons(ICMP6_ECHO_REQUEST) ||
+		    dport == htons(ICMP_ECHO)) {
 			low = 1;
 			high = 65535;
 		} else
@@ -283,6 +199,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 		 */
 		if (!(proto == IPPROTO_TCP || proto == IPPROTO_UDP ||
 		    proto == IPPROTO_ICMP)) {
+			/* XXX bug icmp states dont use the id on both sides */
 			key.port[0] = dport;
 			if (pf_find_state_all(&key, PF_IN, NULL) == NULL)
 				return (0);
@@ -325,10 +242,11 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 			}
 		}
 
-		switch (r->rpool.opts & PF_POOL_TYPEMASK) {
+		switch (r->nat.opts & PF_POOL_TYPEMASK) {
 		case PF_POOL_RANDOM:
 		case PF_POOL_ROUNDROBIN:
-			if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn))
+			if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn,
+			    &r->nat))
 				return (1);
 			break;
 		case PF_POOL_NONE:
@@ -343,21 +261,21 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 
 int
 pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
-    struct pf_addr *naddr, struct pf_addr *init_addr, struct pf_src_node **sn)
+    struct pf_addr *naddr, struct pf_addr *init_addr, struct pf_src_node **sn,
+    struct pf_pool *rpool)
 {
 	unsigned char		 hash[16];
-	struct pf_pool		*rpool = &r->rpool;
 	struct pf_addr		*raddr = &rpool->cur->addr.v.a.addr;
 	struct pf_addr		*rmask = &rpool->cur->addr.v.a.mask;
 	struct pf_pooladdr	*acur = rpool->cur;
 	struct pf_src_node	 k;
 
-	if (*sn == NULL && r->rpool.opts & PF_POOL_STICKYADDR &&
-	    (r->rpool.opts & PF_POOL_TYPEMASK) != PF_POOL_NONE) {
+	if (*sn == NULL && rpool->opts & PF_POOL_STICKYADDR &&
+	    (rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_NONE) {
 		k.af = af;
 		PF_ACPY(&k.addr, saddr, af);
 		if (r->rule_flag & PFRULE_RULESRCTRACK ||
-		    r->rpool.opts & PF_POOL_STICKYADDR)
+		    rpool->opts & PF_POOL_STICKYADDR)
 			k.rule.ptr = r;
 		else
 			k.rule.ptr = NULL;
@@ -522,177 +440,57 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	return (0);
 }
 
-struct pf_rule *
-pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
-    struct pfi_kif *kif, struct pf_src_node **sn,
-    struct pf_state_key **skw, struct pf_state_key **sks,
-    struct pf_state_key **skp, struct pf_state_key **nkp,
-    struct pf_addr *saddr, struct pf_addr *daddr,
-    u_int16_t sport, u_int16_t dport)
+int
+pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
+    u_int16_t *sport, struct pf_addr *daddr, u_int16_t *dport)
 {
-	struct pf_rule	*r = NULL;
+	struct pf_addr	naddr;
+	u_int16_t	nport = 0;
 
+	struct pf_src_node srcnode, *sn = &srcnode;
 
-	if (direction == PF_OUT) {
-		r = pf_match_translation(pd, m, off, direction, kif, saddr,
-		    sport, daddr, dport, PF_RULESET_BINAT);
-		if (r == NULL)
-			r = pf_match_translation(pd, m, off, direction, kif,
-			    saddr, sport, daddr, dport, PF_RULESET_NAT);
-	} else {
-		r = pf_match_translation(pd, m, off, direction, kif, saddr,
-		    sport, daddr, dport, PF_RULESET_RDR);
-		if (r == NULL)
-			r = pf_match_translation(pd, m, off, direction, kif,
-			    saddr, sport, daddr, dport, PF_RULESET_BINAT);
+	if (!TAILQ_EMPTY(&r->nat.list)) {
+		if (pf_get_sport(pd->af, pd->proto, r, saddr,
+		    daddr, *dport, &naddr, &nport, r->nat.proxy_port[0],
+		    r->nat.proxy_port[1], &sn)) {
+			DPFPRINTF(PF_DEBUG_MISC,
+			    ("pf: NAT proxy port allocation "
+			    "(%u-%u) failed\n",
+			    r->nat.proxy_port[0],
+			    r->nat.proxy_port[1]));
+			return (-1);
+		}
+		PF_ACPY(saddr, &naddr, pd->af);
+		*sport = nport;
 	}
+	if (!TAILQ_EMPTY(&r->rdr.list)) {
+		if (pf_map_addr(pd->af, r, saddr, &naddr, NULL, &sn, &r->rdr))
+			return (-1);
+		if ((r->rdr.opts & PF_POOL_TYPEMASK) == PF_POOL_BITMASK)
+			PF_POOLMASK(&naddr, &naddr,  &r->rdr.cur->addr.v.a.mask,
+			    daddr, pd->af);
 
-	if (r != NULL) {
-		struct pf_addr	*naddr;
-		u_int16_t	*nport;
-
-		if (pf_state_key_setup(pd, r, skw, sks, skp, nkp,
-		    saddr, daddr, sport, dport))
-			return r;
-
-		/* XXX We only modify one side for now. */
-		naddr = &(*nkp)->addr[1];
-		nport = &(*nkp)->port[1];
-
-		switch (r->action) {
-		case PF_NONAT:
-		case PF_NOBINAT:
-		case PF_NORDR:
-			return (NULL);
-		case PF_NAT:
-			if (pf_get_sport(pd->af, pd->proto, r, saddr,
-			    daddr, dport, naddr, nport, r->rpool.proxy_port[0],
-			    r->rpool.proxy_port[1], sn)) {
-				DPFPRINTF(PF_DEBUG_MISC,
-				    ("pf: NAT proxy port allocation "
-				    "(%u-%u) failed\n",
-				    r->rpool.proxy_port[0],
-				    r->rpool.proxy_port[1]));
-				return (NULL);
-			}
-			break;
-		case PF_BINAT:
-			switch (direction) {
-			case PF_OUT:
-				if (r->rpool.cur->addr.type == PF_ADDR_DYNIFTL){
-					switch (pd->af) {
-#ifdef INET
-					case AF_INET:
-						if (r->rpool.cur->addr.p.dyn->
-						    pfid_acnt4 < 1)
-							return (NULL);
-						PF_POOLMASK(naddr,
-						    &r->rpool.cur->addr.p.dyn->
-						    pfid_addr4,
-						    &r->rpool.cur->addr.p.dyn->
-						    pfid_mask4,
-						    saddr, AF_INET);
-						break;
-#endif /* INET */
-#ifdef INET6
-					case AF_INET6:
-						if (r->rpool.cur->addr.p.dyn->
-						    pfid_acnt6 < 1)
-							return (NULL);
-						PF_POOLMASK(naddr,
-						    &r->rpool.cur->addr.p.dyn->
-						    pfid_addr6,
-						    &r->rpool.cur->addr.p.dyn->
-						    pfid_mask6,
-						    saddr, AF_INET6);
-						break;
-#endif /* INET6 */
-					}
-				} else
-					PF_POOLMASK(naddr,
-					    &r->rpool.cur->addr.v.a.addr,
-					    &r->rpool.cur->addr.v.a.mask,
-					    saddr, pd->af);
-				break;
-			case PF_IN:
-				if (r->src.addr.type == PF_ADDR_DYNIFTL) {
-					switch (pd->af) {
-#ifdef INET
-					case AF_INET:
-						if (r->src.addr.p.dyn->
-						    pfid_acnt4 < 1)
-							return (NULL);
-						PF_POOLMASK(naddr,
-						    &r->src.addr.p.dyn->
-						    pfid_addr4,
-						    &r->src.addr.p.dyn->
-						    pfid_mask4,
-						    daddr, AF_INET);
-						break;
-#endif /* INET */
-#ifdef INET6
-					case AF_INET6:
-						if (r->src.addr.p.dyn->
-						    pfid_acnt6 < 1)
-							return (NULL);
-						PF_POOLMASK(naddr,
-						    &r->src.addr.p.dyn->
-						    pfid_addr6,
-						    &r->src.addr.p.dyn->
-						    pfid_mask6,
-						    daddr, AF_INET6);
-						break;
-#endif /* INET6 */
-					}
-				} else
-					PF_POOLMASK(naddr,
-					    &r->src.addr.v.a.addr,
-					    &r->src.addr.v.a.mask, daddr,
-					    pd->af);
-				break;
-			}
-			break;
-		case PF_RDR: {
-			if (pf_map_addr(pd->af, r, saddr, naddr, NULL, sn))
-				return (NULL);
-			if ((r->rpool.opts & PF_POOL_TYPEMASK) ==
-			    PF_POOL_BITMASK)
-				PF_POOLMASK(naddr, naddr,
-				    &r->rpool.cur->addr.v.a.mask, daddr,
-				    pd->af);
-
-			if (r->rpool.proxy_port[1]) {
+			if (r->rdr.proxy_port[1]) {
 				u_int32_t	tmp_nport;
 
-				tmp_nport = ((ntohs(dport) -
+				tmp_nport = ((ntohs(*dport) -
 				    ntohs(r->dst.port[0])) %
-				    (r->rpool.proxy_port[1] -
-				    r->rpool.proxy_port[0] + 1)) +
-				    r->rpool.proxy_port[0];
+				    (r->rdr.proxy_port[1] -
+				    r->rdr.proxy_port[0] + 1)) +
+				    r->rdr.proxy_port[0];
 
 				/* wrap around if necessary */
 				if (tmp_nport > 65535)
 					tmp_nport -= 65535;
-				*nport = htons((u_int16_t)tmp_nport);
-			} else if (r->rpool.proxy_port[0])
-				*nport = htons(r->rpool.proxy_port[0]);
-			break;
-		}
-		default:
-			return (NULL);
-		}
-		/* 
-		 * Translation was a NOP.
-		 * Pretend there was no match.
-		 */
-		if (!bcmp(*skp, *nkp, sizeof(struct pf_state_key_cmp))) {
-			pool_put(&pf_state_key_pl, *nkp);
-			pool_put(&pf_state_key_pl, *skp);
-			*skw = *sks = *nkp = *skp = NULL;
-			return (NULL);
-		}
+				nport = htons((u_int16_t)tmp_nport);
+			} else if (r->rdr.proxy_port[0])
+				nport = htons(r->rdr.proxy_port[0]);
+
+		PF_ACPY(daddr, &naddr, pd->af);
+		if (nport)
+			*dport = nport;
 	}
 
-	return (r);
+	return (0);
 }
 

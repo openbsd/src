@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.18 2008/05/07 06:23:30 markus Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.19 2009/09/01 13:42:00 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -134,7 +134,8 @@ struct pf_rule_field {
     PF_RULE_FIELD(return_ttl,		BREAK),
     PF_RULE_FIELD(overload_tblname,	BREAK),
     PF_RULE_FIELD(flush,		BREAK),
-    PF_RULE_FIELD(rpool,		BREAK),
+    PF_RULE_FIELD(rdr,			BREAK),
+    PF_RULE_FIELD(nat,			BREAK),
     PF_RULE_FIELD(logif,		BREAK),
 
     /*
@@ -287,12 +288,18 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 		if ((por = calloc(1, sizeof(*por))) == NULL)
 			err(1, "calloc");
 		memcpy(&por->por_rule, r, sizeof(*r));
-		if (TAILQ_FIRST(&r->rpool.list) != NULL) {
-			TAILQ_INIT(&por->por_rule.rpool.list);
-			pfctl_move_pool(&r->rpool, &por->por_rule.rpool);
+		if (TAILQ_FIRST(&r->rdr.list) != NULL) {
+			TAILQ_INIT(&por->por_rule.rdr.list);
+			pfctl_move_pool(&r->rdr, &por->por_rule.rdr);
 		} else
-			bzero(&por->por_rule.rpool,
-			    sizeof(por->por_rule.rpool));
+			bzero(&por->por_rule.rdr,
+			    sizeof(por->por_rule.rdr));
+		if (TAILQ_FIRST(&r->nat.list) != NULL) {
+			TAILQ_INIT(&por->por_rule.nat.list);
+			pfctl_move_pool(&r->nat, &por->por_rule.nat);
+		} else
+			bzero(&por->por_rule.nat,
+			    sizeof(por->por_rule.nat));
 
 
 		TAILQ_INSERT_TAIL(&opt_queue, por, por_entry);
@@ -322,8 +329,10 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 			if ((r = calloc(1, sizeof(*r))) == NULL)
 				err(1, "calloc");
 			memcpy(r, &por->por_rule, sizeof(*r));
-			TAILQ_INIT(&r->rpool.list);
-			pfctl_move_pool(&por->por_rule.rpool, &r->rpool);
+			TAILQ_INIT(&r->rdr.list);
+			TAILQ_INIT(&r->nat.list);
+			pfctl_move_pool(&por->por_rule.rdr, &r->rdr);
+			pfctl_move_pool(&por->por_rule.nat, &r->nat);
 			TAILQ_INSERT_TAIL(
 			    rs->rules[PF_RULESET_FILTER].active.ptr,
 			    r, entries);
@@ -908,9 +917,12 @@ load_feedback_profile(struct pfctl *pf, struct superblocks *superblocks)
 		memcpy(&por->por_rule, &pr.rule, sizeof(por->por_rule));
 		rs = pf_find_or_create_ruleset(pr.anchor_call);
 		por->por_rule.anchor = rs->anchor;
-		if (TAILQ_EMPTY(&por->por_rule.rpool.list))
-			memset(&por->por_rule.rpool, 0,
-			    sizeof(por->por_rule.rpool));
+		if (TAILQ_EMPTY(&por->por_rule.rdr.list))
+			memset(&por->por_rule.rdr, 0,
+			    sizeof(por->por_rule.rdr));
+		if (TAILQ_EMPTY(&por->por_rule.nat.list))
+			memset(&por->por_rule.nat, 0,
+			    sizeof(por->por_rule.nat));
 		TAILQ_INSERT_TAIL(&queue, por, por_entry);
 
 		/* XXX pfctl_get_pool(pf->dev, &pr.rule.rpool, nr, pr.ticket,
