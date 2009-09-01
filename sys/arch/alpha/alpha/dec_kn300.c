@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn300.c,v 1.3 2008/07/16 20:03:20 miod Exp $ */
+/* $OpenBSD: dec_kn300.c,v 1.4 2009/09/01 21:16:47 ariane Exp $ */
 /* $NetBSD: dec_kn300.c,v 1.34 2007/03/04 15:18:10 yamt Exp $ */
 
 /*
@@ -72,9 +72,9 @@ static int comcnrate = CONSPEED;
 
 #ifdef DEBUG
 int bootdev_debug;
-#define DPRINTF(x)	if (bootdev_debug) printf x
+#define DPRINTF(x)	do { if (bootdev_debug) printf x; } while (0)
 #else
-#define DPRINTF(x)
+#define DPRINTF(x)	do { } while (0)
 #endif
 
 void dec_kn300_init (void);
