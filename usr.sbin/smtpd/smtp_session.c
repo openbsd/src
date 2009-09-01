@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.114 2009/08/12 13:32:19 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.115 2009/09/01 15:23:02 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1077,6 +1077,20 @@ session_respond(struct session *s, char *fmt, ...)
 	}
 
 	bufferevent_disable(s->s_bev, EV_READ);
+
+	/*
+	 * Log failures.  Might be annoying in the long term, but it is a good
+	 * development aid for now.
+	 */
+	switch (EVBUFFER_DATA(EVBUFFER_OUTPUT(s->s_bev))[n]) {
+	case '5':
+	case '4':
+		log_debug("session error: %s: \"%.*s\"",
+		    ss_to_text(&s->s_ss),
+		    (int)EVBUFFER_LENGTH(EVBUFFER_OUTPUT(s->s_bev)) - n - 2,
+		    EVBUFFER_DATA(EVBUFFER_OUTPUT(s->s_bev)));
+		break;
+	}
 
 	/* Detect multi-line response. */
 	if (EVBUFFER_LENGTH(EVBUFFER_OUTPUT(s->s_bev)) - n < 4)
