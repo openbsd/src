@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.36 2009/08/31 20:46:19 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.37 2009/09/01 09:00:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -280,6 +280,9 @@ main(int argc, char **argv)
 			flags |= IDENTIFY_88COLOURS;
 			flags &= ~IDENTIFY_256COLOURS;
 			break;
+		case 'd':
+			flags |= IDENTIFY_HASDEFAULTS;
+			break;
 		case 'f':
 			if (cfg_file)
 				xfree(cfg_file);
@@ -290,22 +293,19 @@ main(int argc, char **argv)
 				xfree(label);
 			label = xstrdup(optarg);
 			break;
+		case 'q':
+			be_quiet = 1;
+			break;
 		case 'S':
 			if (path != NULL)
 				xfree(path);
 			path = xstrdup(optarg);
-			break;
-		case 'q':
-			be_quiet = 1;
 			break;
 		case 'u':
 			flags |= IDENTIFY_UTF8;
 			break;
 		case 'U':
 			unlock = 1;
-			break;
-		case 'd':
-			flags |= IDENTIFY_HASDEFAULTS;
 			break;
 		case 'v':
 			debug_level++;
