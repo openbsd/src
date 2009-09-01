@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.9 2006/12/17 18:03:33 stevesk Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.10 2009/09/01 08:42:31 reyk Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -337,6 +337,7 @@ static const struct keywords {
 	{ "hardware",				TOK_HARDWARE },
 	{ "host",				TOK_HOST },
 	{ "hostname",				TOK_HOSTNAME },
+	{ "ipsec-tunnel",			TOK_IPSEC_TUNNEL },
 	{ "lease",				TOK_LEASE },
 	{ "max-lease-time",			TOK_MAX_LEASE_TIME },
 	{ "netmask",				TOK_NETMASK },

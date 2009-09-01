@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.27 2008/07/21 16:51:18 millert Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.28 2009/09/01 08:42:31 reyk Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -1141,6 +1141,19 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->value = lease->ip_addr.iabuf;
 		state->options[i]->len = lease->ip_addr.len;
 		state->options[i]->buf_size = lease->ip_addr.len;
+		state->options[i]->timeout = -1;
+		state->options[i]->tree = NULL;
+	}
+
+	/* Echo back the relay agent information, if present */
+	i = DHO_RELAY_AGENT_INFORMATION;
+	if (state->giaddr.s_addr && !state->options[i] &&
+	    packet->options[i].data && packet->options[i].len) {
+		state->options[i] = new_tree_cache("relay-agent-information");
+		state->options[i]->flags = TC_TEMPORARY;
+		state->options[i]->value = packet->options[i].data;
+		state->options[i]->len = packet->options[i].len;
+		state->options[i]->buf_size = packet->options[i].len;
 		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
 	}

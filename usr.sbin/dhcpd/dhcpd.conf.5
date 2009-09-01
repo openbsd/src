@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.9 2009/08/01 03:00:14 fgsch Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.10 2009/09/01 08:42:31 reyk Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: August 1 2009 $
+.Dd $Mdocdate: September 1 2009 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -590,14 +590,16 @@ clause in the
 .Ic host
 statement.
 .Ar hardware-type
-must be the name of a physical hardware interface type.
-Currently, only the
-.Ar ethernet
-and
+must be the name of a hardware interface type.
+Currently, the
+.Ar ethernet ,
 .Ar token-ring
-types are recognized, although support for an
+and
 .Ar fddi
-hardware type (and others) would also be desirable.
+physical interface types are recognized,
+although support for DHCP-over-IPSec virtual interface type
+.Ar ipsec-tunnel
+is provided.
 The
 .Ar hardware-address
 should be a set of hexadecimal octets (numbers from 0 through ff)
@@ -929,7 +931,7 @@ manual page.
 .Xr dhcpd.leases 5 ,
 .Xr dhcpd 8
 .Pp
-RFC 2132, RFC 2131.
+RFC 2132, RFC 2131, RFC 3046, RFC 3456
 .Sh AUTHORS
 .An -nosplit
 .Xr dhcpd 8

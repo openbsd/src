@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.8 2009/01/13 21:11:57 sthen Exp $	*/
+/*	$OpenBSD: tables.c,v 1.9 2009/09/01 08:42:31 reyk Exp $	*/
 
 /* Tables of information... */
 
@@ -144,7 +144,7 @@ struct option dhcp_options[256] = {
 	{ "option-79", "X",				&dhcp_universe, 79 },
 	{ "option-80", "X",				&dhcp_universe, 80 },
 	{ "option-81", "X",				&dhcp_universe, 81 },
-	{ "option-82", "X",				&dhcp_universe, 82 },
+	{ "relay-agent-information", "X",		&dhcp_universe, 82 },
 	{ "option-83", "X",				&dhcp_universe, 83 },
 	{ "option-84", "X",				&dhcp_universe, 84 },
 	{ "nds-servers", "IA",				&dhcp_universe, 85 },
@@ -389,12 +389,13 @@ unsigned char dhcp_option_default_priority_list[256] = {
 	DHO_X_DISPLAY_MANAGER,
 	DHO_DHCP_PARAMETER_REQUEST_LIST,
 	DHO_DHCP_USER_CLASS_ID,
+	DHO_RELAY_AGENT_INFORMATION,	/* Should be the last option. */
 	DHO_PAD,
 
 	/* Presently-undefined options... */
 	           62,  63,  64,  65,  66,  67,  68,  69,
 	 70,  71,  72,  73,  74,  75,  76,       78,  79,
-	 80,  81,  82,  83,  84,  85,  86,  87,  88,  89,
+	 80,  81,       83,  84,  85,  86,  87,  88,  89,
 	 90,  91,  92,  93,  94,  95,  96,  97,  98,  99,
 	100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
 	110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
@@ -446,7 +447,7 @@ char *hardware_types[] = {
 	"unknown-28",
 	"unknown-29",
 	"unknown-30",
-	"unknown-31",
+	"ipsec-tunnel",
 	"unknown-32",
 	"unknown-33",
 	"unknown-34",
