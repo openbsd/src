@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.96 2009/09/02 17:34:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.97 2009/09/02 20:00:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -974,6 +974,7 @@ struct client_ctx {
 		CCTX_EXIT,
 		CCTX_DIED,
 		CCTX_SHUTDOWN,
+		CCTX_ERROR
 	} exittype;
 	const char	*errstr;
 };
