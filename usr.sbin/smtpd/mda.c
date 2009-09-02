@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.24 2009/08/06 13:40:45 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.25 2009/09/02 11:11:10 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -158,6 +158,9 @@ mda_dispatch_parent(int sig, short event, void *p)
 					imsg_compose_event(env->sc_ievs[PROC_PARENT],
 					    IMSG_PARENT_MAILBOX_RENAME, 0, 0, -1, batchp,
 					    sizeof(struct batch));
+			} else {
+				/* XXX: remove junk from tmp/ in mdir case */
+				messagep->status |= S_MESSAGE_TEMPFAILURE;
 			}
 
 			if (s->mboxfd != -1)
@@ -435,8 +438,8 @@ mda_remove_message(struct smtpd *env, struct batch *batchp, struct message *mess
 	imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_UPDATE, 0, 0,
 	    -1, messagep, sizeof (struct message));
 
-	if ((batchp->message.status & S_MESSAGE_TEMPFAILURE) == 0 &&
-	    (batchp->message.status & S_MESSAGE_PERMFAILURE) == 0) {
+	if ((messagep->status & S_MESSAGE_TEMPFAILURE) == 0 &&
+	    (messagep->status & S_MESSAGE_PERMFAILURE) == 0) {
 		log_info("%s: to=<%s@%s>, delay=%d, stat=Sent",
 		    messagep->message_uid,
 		    messagep->recipient.user,
