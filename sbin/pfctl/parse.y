@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.563 2009/09/01 13:42:00 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.564 2009/09/02 13:28:03 reyk Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -275,6 +275,15 @@ struct filter_opts {
 	int			 settos;
 	int			 randomid;
 	int			 max_mss;
+
+	/* route opts */
+	struct {
+		struct node_host	*host;
+		u_int8_t		 rt;
+		u_int8_t		 pool_opts;
+		sa_family_t		 af;
+		struct pf_poolhashkey	*key;
+	}			 route;
 } filter_opts;
 
 struct antispoof_opts {
@@ -395,13 +404,6 @@ typedef struct {
 			struct peer	 src, dst;
 			struct node_os	*src_os;
 		}			 fromto;
-		struct {
-			struct node_host	*host;
-			u_int8_t		 rt;
-			u_int8_t		 pool_opts;
-			sa_family_t		 af;
-			struct pf_poolhashkey	*key;
-		}			 route;
 		struct redirection	*redirection;
 		struct {
 			int			 action;
@@ -487,7 +489,6 @@ int	parseport(char *, struct range *r, int);
 %type	<v.port>		portspec port_list port_item
 %type	<v.uid>			uids uid_list uid_item
 %type	<v.gid>			gids gid_list gid_item
-%type	<v.route>		route
 %type	<v.redirection>		redirpool
 %type	<v.string>		label stringall anchorname
 %type	<v.string>		string varstring numberstring
@@ -878,6 +879,12 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 
 			if ($9.keep.action) {
 				yyerror("cannot specify state handling "
+				    "on anchors");
+				YYERROR;
+			}
+
+			if ($9.route.rt) {
+				yyerror("cannot specify route handling "
 				    "on anchors");
 				YYERROR;
 			}
@@ -1652,7 +1659,7 @@ qassign_item	: STRING			{
 		}
 		;
 
-pfrule		: action dir logquick interface route af proto fromto
+pfrule		: action dir logquick interface af proto fromto
 		    filter_opts
 		{
 			struct pf_rule		 r;
@@ -1689,67 +1696,67 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.log = $3.log;
 			r.logif = $3.logif;
 			r.quick = $3.quick;
-			r.prob = $9.prob;
-			r.rtableid = $9.rtableid;
+			r.prob = $8.prob;
+			r.rtableid = $8.rtableid;
 
-			if ($9.nodf)
+			if ($8.nodf)
 				r.scrub_flags |= PFSTATE_NODF;
-			if ($9.randomid)
+			if ($8.randomid)
 				r.scrub_flags |= PFSTATE_RANDOMID;
-			if ($9.minttl)
-				r.min_ttl = $9.minttl;
-			if ($9.max_mss)
-				r.max_mss = $9.max_mss;
-			if ($9.marker & FOM_SETTOS) {
+			if ($8.minttl)
+				r.min_ttl = $8.minttl;
+			if ($8.max_mss)
+				r.max_mss = $8.max_mss;
+			if ($8.marker & FOM_SETTOS) {
 				r.scrub_flags |= PFSTATE_SETTOS;
-				r.set_tos = $9.settos;
+				r.set_tos = $8.settos;
 			}
-			if ($9.marker & FOM_SCRUB_TCP)
+			if ($8.marker & FOM_SCRUB_TCP)
 				r.scrub_flags |= PFSTATE_SCRUB_TCP;
 
-			r.af = $6;
-			if ($9.tag)
-				if (strlcpy(r.tagname, $9.tag,
+			r.af = $5;
+			if ($8.tag)
+				if (strlcpy(r.tagname, $8.tag,
 				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
-			if ($9.match_tag)
-				if (strlcpy(r.match_tagname, $9.match_tag,
+			if ($8.match_tag)
+				if (strlcpy(r.match_tagname, $8.match_tag,
 				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
-			r.match_tag_not = $9.match_tag_not;
-			if (rule_label(&r, $9.label))
+			r.match_tag_not = $8.match_tag_not;
+			if (rule_label(&r, $8.label))
 				YYERROR;
-			free($9.label);
-			r.flags = $9.flags.b1;
-			r.flagset = $9.flags.b2;
-			if (($9.flags.b1 & $9.flags.b2) != $9.flags.b1) {
+			free($8.label);
+			r.flags = $8.flags.b1;
+			r.flagset = $8.flags.b2;
+			if (($8.flags.b1 & $8.flags.b2) != $8.flags.b1) {
 				yyerror("flags always false");
 				YYERROR;
 			}
-			if ($9.flags.b1 || $9.flags.b2 || $8.src_os) {
-				for (proto = $7; proto != NULL &&
+			if ($8.flags.b1 || $8.flags.b2 || $7.src_os) {
+				for (proto = $6; proto != NULL &&
 				    proto->proto != IPPROTO_TCP;
 				    proto = proto->next)
 					;	/* nothing */
-				if (proto == NULL && $7 != NULL) {
-					if ($9.flags.b1 || $9.flags.b2)
+				if (proto == NULL && $6 != NULL) {
+					if ($8.flags.b1 || $8.flags.b2)
 						yyerror(
 						    "flags only apply to tcp");
-					if ($8.src_os)
+					if ($7.src_os)
 						yyerror(
 						    "OS fingerprinting only "
 						    "apply to tcp");
 					YYERROR;
 				}
 #if 0
-				if (($9.flags.b1 & parse_flags("S")) == 0 &&
-				    $8.src_os) {
+				if (($8.flags.b1 & parse_flags("S")) == 0 &&
+				    $7.src_os) {
 					yyerror("OS fingerprinting requires "
 					    "the SYN TCP flag (flags S/SA)");
 					YYERROR;
@@ -1757,13 +1764,13 @@ pfrule		: action dir logquick interface route af proto fromto
 #endif
 			}
 
-			r.tos = $9.tos;
-			r.keep_state = $9.keep.action;
-			o = $9.keep.options;
+			r.tos = $8.tos;
+			r.keep_state = $8.keep.action;
+			o = $8.keep.options;
 
 			/* 'keep state' by default on pass rules. */
 			if (!r.keep_state && !r.action &&
-			    !($9.marker & FOM_KEEP)) {
+			    !($8.marker & FOM_KEEP)) {
 				r.keep_state = PF_STATE_NORMAL;
 				o = keep_state_defaults;
 				defaults = 1;
@@ -1941,7 +1948,7 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			/* 'flags S/SA' by default on stateful rules */
 			if (!r.action && !r.flags && !r.flagset &&
-			    !$9.fragment && !($9.marker & FOM_FLAGS) &&
+			    !$8.fragment && !($8.marker & FOM_FLAGS) &&
 			    r.keep_state) {
 				r.flags = parse_flags("S");
 				r.flagset =  parse_flags("SA");
@@ -1985,50 +1992,52 @@ pfrule		: action dir logquick interface route af proto fromto
 			if (r.keep_state && !statelock)
 				r.rule_flag |= default_statelock;
 
-			if ($9.fragment)
+			if ($8.fragment)
 				r.rule_flag |= PFRULE_FRAGMENT;
-			r.allow_opts = $9.allowopts;
+			r.allow_opts = $8.allowopts;
 
-			decide_address_family($8.src.host, &r.af);
-			decide_address_family($8.dst.host, &r.af);
+			decide_address_family($7.src.host, &r.af);
+			decide_address_family($7.dst.host, &r.af);
 
-			if ($5.rt) {
+			if ($8.route.rt) {
 				if (!r.direction) {
 					yyerror("direction must be explicit "
 					    "with rules that specify routing");
 					YYERROR;
 				}
-				r.rt = $5.rt;
-				r.rdr.opts = $5.pool_opts;
-				if ($5.key != NULL)
-					memcpy(&r.rdr.key, $5.key,
+				r.rt = $8.route.rt;
+				r.rdr.opts = $8.route.pool_opts;
+				if ($8.route.key != NULL)
+					memcpy(&r.rdr.key, $8.route.key,
 					    sizeof(struct pf_poolhashkey));
 			}
 			if (r.rt && r.rt != PF_FASTROUTE) {
-				decide_address_family($5.host, &r.af);
-				remove_invalid_hosts(&$5.host, &r.af);
-				if ($5.host == NULL) {
+				decide_address_family($8.route.host, &r.af);
+				remove_invalid_hosts(&$8.route.host, &r.af);
+				if ($8.route.host == NULL) {
 					yyerror("no routing address with "
 					    "matching address family found.");
 					YYERROR;
 				}
 				if ((r.rdr.opts & PF_POOL_TYPEMASK) ==
-				    PF_POOL_NONE && ($5.host->next != NULL ||
-				    $5.host->addr.type == PF_ADDR_TABLE ||
-				    DYNIF_MULTIADDR($5.host->addr)))
+				    PF_POOL_NONE && ($8.route.host->next != NULL ||
+				    $8.route.host->addr.type == PF_ADDR_TABLE ||
+				    DYNIF_MULTIADDR($8.route.host->addr)))
 					r.rdr.opts |= PF_POOL_ROUNDROBIN;
 				if ((r.rdr.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
-				    disallow_table($5.host, "tables are only "
+				    disallow_table($8.route.host,
+				    "tables are only "
 				    "supported in round-robin routing pools"))
 					YYERROR;
 				if ((r.rdr.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
-				    disallow_alias($5.host, "interface (%s) "
+				    disallow_alias($8.route.host,
+				    "interface (%s) "
 				    "is only supported in round-robin "
 				    "routing pools"))
 					YYERROR;
-				if ($5.host->next != NULL) {
+				if ($8.route.host->next != NULL) {
 					if ((r.rdr.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) {
 						yyerror("r.rpool.opts must "
@@ -2037,32 +2046,32 @@ pfrule		: action dir logquick interface route af proto fromto
 					}
 				}
 				/* fake redirspec */
-				if (($9.rdr.rdr = calloc(1,
-				    sizeof(*$9.rdr.rdr))) == NULL)
-					err(1, "$9.rdr.rdr");
-				$9.rdr.rdr->host = $5.host;	
+				if (($8.rdr.rdr = calloc(1,
+				    sizeof(*$8.rdr.rdr))) == NULL)
+					err(1, "$8.rdr.rdr");
+				$8.rdr.rdr->host = $8.route.host;	
 			}
-			if ($9.queues.qname != NULL) {
-				if (strlcpy(r.qname, $9.queues.qname,
+			if ($8.queues.qname != NULL) {
+				if (strlcpy(r.qname, $8.queues.qname,
 				    sizeof(r.qname)) >= sizeof(r.qname)) {
 					yyerror("rule qname too long (max "
 					    "%d chars)", sizeof(r.qname)-1);
 					YYERROR;
 				}
-				free($9.queues.qname);
+				free($8.queues.qname);
 			}
-			if ($9.queues.pqname != NULL) {
-				if (strlcpy(r.pqname, $9.queues.pqname,
+			if ($8.queues.pqname != NULL) {
+				if (strlcpy(r.pqname, $8.queues.pqname,
 				    sizeof(r.pqname)) >= sizeof(r.pqname)) {
 					yyerror("rule pqname too long (max "
 					    "%d chars)", sizeof(r.pqname)-1);
 					YYERROR;
 				}
-				free($9.queues.pqname);
+				free($8.queues.pqname);
 			}
-			if ((r.divert.port = $9.divert.port)) {
+			if ((r.divert.port = $8.divert.port)) {
 				if (r.direction == PF_OUT) {
-					if ($9.divert.addr) {
+					if ($8.divert.addr) {
 						yyerror("address specified "
 						    "for outgoing divert");
 						YYERROR;
@@ -2070,24 +2079,24 @@ pfrule		: action dir logquick interface route af proto fromto
 					bzero(&r.divert.addr,
 					    sizeof(r.divert.addr));
 				} else {
-					if (!$9.divert.addr) {
+					if (!$8.divert.addr) {
 						yyerror("no address specified "
 						    "for incoming divert");
 						YYERROR;
 					}
-					if ($9.divert.addr->af != r.af) {
+					if ($8.divert.addr->af != r.af) {
 						yyerror("address family "
 						    "mismatch for divert");
 						YYERROR;
 					}
 					r.divert.addr =
-					    $9.divert.addr->addr.v.a.addr;
+					    $8.divert.addr->addr.v.a.addr;
 				}
 			}	
 
-			expand_rule(&r, $4, &$9.nat, &$9.rdr, $7, $8.src_os,
-			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
-			    $9.uid, $9.gid, $9.icmpspec, "");
+			expand_rule(&r, $4, &$8.nat, &$8.rdr, $6, $7.src_os,
+			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
+			    $8.uid, $8.gid, $8.icmpspec, "");
 		}
 		;
 
@@ -2244,6 +2253,32 @@ filter_opt	: USER uids {
 			filter_opts.rdr.rdr = $2;
 			memcpy(&filter_opts.rdr.pool_opts, &$3,
 			    sizeof(filter_opts.rdr.pool_opts));
+		}
+		| FASTROUTE {
+			filter_opts.route.host = NULL;
+			filter_opts.route.rt = PF_FASTROUTE;
+			filter_opts.route.pool_opts = 0;
+		}
+		| ROUTETO routespec pool_opts {
+			filter_opts.route.host = $2;
+			filter_opts.route.rt = PF_ROUTETO;
+			filter_opts.route.pool_opts = $3.type | $3.opts;
+			if ($3.key != NULL)
+				filter_opts.route.key = $3.key;
+		}
+		| REPLYTO routespec pool_opts {
+			filter_opts.route.host = $2;
+			filter_opts.route.rt = PF_REPLYTO;
+			filter_opts.route.pool_opts = $3.type | $3.opts;
+			if ($3.key != NULL)
+				filter_opts.route.key = $3.key;
+		}
+		| DUPTO routespec pool_opts {
+			filter_opts.route.host = $2;
+			filter_opts.route.rt = PF_DUPTO;
+			filter_opts.route.pool_opts = $3.type | $3.opts;
+			if ($3.key != NULL)
+				filter_opts.route.key = $3.key;
 		}
 		;
 
@@ -3663,39 +3698,6 @@ route_host_list	: route_host optnl			{ $$ = $1; }
 
 routespec	: route_host			{ $$ = $1; }
 		| '{' optnl route_host_list '}'	{ $$ = $3; }
-		;
-
-route		: /* empty */			{
-			$$.host = NULL;
-			$$.rt = 0;
-			$$.pool_opts = 0;
-		}
-		| FASTROUTE {
-			$$.host = NULL;
-			$$.rt = PF_FASTROUTE;
-			$$.pool_opts = 0;
-		}
-		| ROUTETO routespec pool_opts {
-			$$.host = $2;
-			$$.rt = PF_ROUTETO;
-			$$.pool_opts = $3.type | $3.opts;
-			if ($3.key != NULL)
-				$$.key = $3.key;
-		}
-		| REPLYTO routespec pool_opts {
-			$$.host = $2;
-			$$.rt = PF_REPLYTO;
-			$$.pool_opts = $3.type | $3.opts;
-			if ($3.key != NULL)
-				$$.key = $3.key;
-		}
-		| DUPTO routespec pool_opts {
-			$$.host = $2;
-			$$.rt = PF_DUPTO;
-			$$.pool_opts = $3.type | $3.opts;
-			if ($3.key != NULL)
-				$$.key = $3.key;
-		}
 		;
 
 timeout_spec	: STRING NUMBER

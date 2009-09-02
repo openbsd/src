@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.245 2009/09/01 13:42:00 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.246 2009/09/02 13:28:03 reyk Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -753,20 +753,6 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		else
 			printf(" on %s", r->ifname);
 	}
-	if (r->rt) {
-		if (r->rt == PF_ROUTETO)
-			printf(" route-to");
-		else if (r->rt == PF_REPLYTO)
-			printf(" reply-to");
-		else if (r->rt == PF_DUPTO)
-			printf(" dup-to");
-		else if (r->rt == PF_FASTROUTE)
-			printf(" fastroute");
-		if (r->rt != PF_FASTROUTE) {
-			printf(" ");
-			print_pool(&r->rdr, 0, 0, r->af, PF_PASS);
-		}
-	}
 	if (r->af) {
 		if (r->af == AF_INET)
 			printf(" inet");
@@ -1038,6 +1024,20 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		printf (" rdr-to ");
 		print_pool(&r->rdr, r->rdr.proxy_port[0],
 		    r->rdr.proxy_port[1], r->af, PF_RDR);
+	}
+	if (r->rt) {
+		if (r->rt == PF_ROUTETO)
+			printf(" route-to");
+		else if (r->rt == PF_REPLYTO)
+			printf(" reply-to");
+		else if (r->rt == PF_DUPTO)
+			printf(" dup-to");
+		else if (r->rt == PF_FASTROUTE)
+			printf(" fastroute");
+		if (r->rt != PF_FASTROUTE) {
+			printf(" ");
+			print_pool(&r->rdr, 0, 0, r->af, PF_PASS);
+		}
 	}
 }
 
