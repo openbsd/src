@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.154 2009/07/20 14:55:50 jmc Exp $
+#	$OpenBSD: Makefile,v 1.155 2009/09/02 14:17:22 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -350,6 +350,7 @@ MLINKS+=VOP_LOOKUP.9 VOP_ABORTOP.9 VOP_LOOKUP.9 VOP_ACCESS.9 \
 	VOP_LOOKUP.9 VOP_STRATEGY.9 VOP_LOOKUP.9 VOP_SYMLINK.9 \
 	VOP_LOOKUP.9 VOP_UNLOCK.9 VOP_LOOKUP.9 VOP_WRITE.9
 MLINKS+=workq_add_task.9 workq_create.9 \
+	workq_add_task.9 workq_queue_task.9 \
 	workq_add_task.9 workq_destroy.9
 
 .include <bsd.prog.mk>
