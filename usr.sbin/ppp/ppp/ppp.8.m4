@@ -25,9 +25,9 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.41 2008/07/19 10:35:31 reyk Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.42 2009/09/02 08:18:17 sthen Exp $
 .\"
-.Dd $Mdocdate: July 19 2008 $
+.Dd $Mdocdate: September 2 2009 $
 .Dt PPP 8
 .Os
 .Sh NAME
@@ -367,7 +367,7 @@ For now,
 can only get encryption keys from CHAP 81 authentication.
 .Nm
 must be compiled with DES for MPPE to operate.
-.It Supports IPV6CP (RFC 2023).
+.It Supports IPV6CP (RFC 2472).
 An IPv6 connection can be made in addition to or instead of the normal
 IPv4 connection.
 .El
