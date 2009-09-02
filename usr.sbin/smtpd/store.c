@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.27 2009/09/02 10:00:58 jacekm Exp $	*/
+/*	$OpenBSD: store.c,v 1.28 2009/09/02 21:04:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,7 +44,10 @@ file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type, int s
 	char *buf, *lbuf;
 	size_t len;
 	char *escape;
-	int inheaders = 1;
+
+	if (!session && path && fprintf(dest, "Delivered-To: %s@%s\n",
+		path->user, path->domain) == -1)
+		return 0;
 
 	lbuf = NULL;
 	while ((buf = fgetln(src, &len))) {
@@ -59,20 +62,6 @@ file_copy(FILE *dest, FILE *src, struct path *path, enum action_type type, int s
 			memcpy(lbuf, buf, len);
 			lbuf[len] = '\0';
 			buf = lbuf;
-		}
-
-		/* If we are NOT dealing with a mailer daemon copy, we have
-		 * path set to the original recipient. In that case, we can
-		 * add the Delivered-To header to help loop detection.
-		 */
-		if (!session && path != NULL && inheaders &&
-			(*buf == '\0' ||
-				(!isspace((int)*buf) &&
-				 strchr(buf, ':') == NULL))) {
-			if (fprintf(dest, "Delivered-To: %s@%s\n",
-				path->user, path->domain) == -1)
-				return 0;
-			inheaders = 0;
 		}
 
 		if (!session && type == A_MBOX) {
