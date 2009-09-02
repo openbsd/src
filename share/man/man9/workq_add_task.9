@@ -1,4 +1,4 @@
-.\"	$OpenBSD: workq_add_task.9,v 1.12 2008/10/30 23:55:22 dlg Exp $
+.\"	$OpenBSD: workq_add_task.9,v 1.13 2009/09/02 14:17:56 dlg Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,11 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2008 $
+.Dd $Mdocdate: September 2 2009 $
 .Dt WORKQ_ADD_TASK 9
 .Os
 .Sh NAME
 .Nm workq_add_task ,
+.Nm workq_queue_task ,
 .Nm workq_create ,
 .Nm workq_destroy
 .Nd work queues
@@ -26,6 +27,8 @@
 .Fd #include <sys/workq.h>
 .Ft int
 .Fn "workq_add_task" "struct workq *wq" "int flags" "void (*func)(void *, void *)" "void *arg1" "void *arg2"
+.Ft void
+.Fn "workq_queue_task" "struct workq *wq" "struct workq_task *wqt" "int flags" "void (*func)(void *, void *)" "void *arg1" "void *arg2"
 .Ft struct workq *
 .Fn "workq_create" "const char *name" "int maxthreads" "int ipl"
 .Ft void
@@ -71,6 +74,26 @@ If resources are not available and this flag is not set then
 will return
 .Dv ENOMEM .
 .El
+.Pp
+.Fn workq_queue_task
+adds a task to the workq specified by the
+.Pa wq
+argument using the memory provided by the
+.Pa wqt
+argument to store that tasks entry on the workq.
+The
+.Pa flags ,
+.Pa func ,
+.Pa arg1 ,
+and
+.Pa arg2
+arguments are the same as those in the
+.Fn workq_add_task
+function.
+However, because the caller is responsible for providing the memory
+needed to store the task on the workq,
+.Fn workq_queue_task
+is guaranteed to succeed.
 .Pp
 .Fn workq_create
 creates a workq to be used when tasks would unnecessarily block the kernel
