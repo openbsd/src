@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.450 2009/09/02 13:28:02 reyk Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.451 2009/09/02 14:50:01 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2400,7 +2400,7 @@ If the
 modifier is given, packets matching the translation rule are passed without
 inspecting the filter rules.
 .Bd -literal -offset 4n
-match in pass on $ext_if proto tcp from any to any port 80 \e
+match in on $ext_if proto tcp from any to any port 80 \e
       rdr-to 127.0.0.1 port 8080
 .Ed
 .Pp
