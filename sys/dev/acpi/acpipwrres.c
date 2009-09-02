@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.1 2009/06/03 07:13:48 pirofti Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.2 2009/09/02 04:45:20 miod Exp $ */
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -198,7 +198,7 @@ acpipwrres_foundcons(struct aml_node *node, void *arg)
 			    res.v_package[i]->v_string);
 			if (pnode == sc->sc_devnode) {
 				DPRINTF(("%s: consumer match\n", DEVNAME(sc)));
-				cons = malloc(sizeof *pnode, M_DEVBUF, 
+				cons = malloc(sizeof *cons, M_DEVBUF, 
 				    M_WAITOK | M_ZERO);
 				cons->cs_node = pnode;
 				TAILQ_INSERT_HEAD(&sc->sc_cons, cons, cs_link);
