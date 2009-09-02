@@ -16,8 +16,8 @@ queue pri-med priority 1 priq(default)
 queue pri-high priority 2
 
 # NAT -N
-rdr on $ext_if inet from any to any -> 127.0.0.1
-nat on $ext_if inet from any to any -> 127.0.0.1
+match in on $ext_if inet from any to any rdr-to 127.0.0.1
+match out on $ext_if inet from any to any nat-to 127.0.0.1
 binat on $ext_if inet from 192.168.0.0/24 to 192.168.0.1/24 -> 192.168.0.3/24 
 
 # FILTER, -R

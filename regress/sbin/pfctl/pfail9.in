@@ -3,5 +3,5 @@ set require-order yes
 match in on lo0 all
 pass in on lo1000000 all
 # bork
-nat on lo0 all -> lo0
+match out on lo0 all nat-to lo0
 
