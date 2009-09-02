@@ -1,4 +1,4 @@
-/*	$OpenBSD: workq.h,v 1.5 2008/10/30 23:55:22 dlg Exp $ */
+/*	$OpenBSD: workq.h,v 1.6 2009/09/02 14:05:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -20,15 +20,29 @@
 #ifndef _SYS_WORKQ_H_
 #define _SYS_WORKQ_H_
 
-struct workq;
+#include <sys/queue.h>
+
+typedef void (*workq_fn)(void *, void *);
+
+struct workq_task {
+	int		wqt_flags;
+	workq_fn	wqt_func;
+	void		*wqt_arg1;
+	void		*wqt_arg2;
+
+	SIMPLEQ_ENTRY(workq_task) wqt_entry;
+};
 
 #define WQ_WAITOK	(1<<0)
 #define WQ_MPSAFE	(1<<1)
 
-typedef void (*workq_fn)(void *, void *);
+struct workq;
+
 struct workq	*workq_create(const char *, int, int);
 int		workq_add_task(struct workq *, int /* flags */, workq_fn,
 		    void *, void *);
+void		workq_queue_task(struct workq *, struct workq_task *,
+		    int /* flags */, workq_fn, void *, void *);
 void		workq_destroy(struct workq *);
 
 #endif /* _SYS_WORKQ_H_ */

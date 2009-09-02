@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_workq.c,v 1.10 2009/06/24 14:56:41 jsg Exp $ */
+/*	$OpenBSD: kern_workq.c,v 1.11 2009/09/02 14:05:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -26,15 +26,6 @@
 #include <sys/kthread.h>
 #include <sys/workq.h>
 
-struct workq_task {
-	int		wqt_flags;
-	workq_fn	wqt_func;
-	void		*wqt_arg1;
-	void		*wqt_arg2;
-
-	SIMPLEQ_ENTRY(workq_task) wqt_entry;
-};
-
 struct workq {
 	int		wq_flags;
 #define WQ_F_RUNNING		(1<<0)
@@ -53,6 +44,9 @@ struct workq	workq_syswq = {
 	1,
 	"syswq"
 };
+
+/* if we allocate the wqt, we need to know we free it too */ 
+#define WQT_F_POOL	(1 << 31)
 
 void			workq_init(void); /* called in init_main.c */
 void			workq_init_syswq(void *);
@@ -127,27 +121,34 @@ int
 workq_add_task(struct workq *wq, int flags, workq_fn func, void *a1, void *a2)
 {
 	struct workq_task	*wqt;
-
-	if (wq == NULL)
-		wq = &workq_syswq;
 	
 	wqt = pool_get(&workq_task_pool, (flags & WQ_WAITOK) ?
 	    PR_WAITOK : PR_NOWAIT);
 	if (!wqt)
 		return (ENOMEM);
 
+	workq_queue_task(wq, wqt, WQT_F_POOL | flags, func, a1, a2);
+
+	return (0);
+}
+
+void
+workq_queue_task(struct workq *wq, struct workq_task *wqt, int flags,
+    workq_fn func, void *a1, void *a2)
+{
 	wqt->wqt_flags = flags;
 	wqt->wqt_func = func;
 	wqt->wqt_arg1 = a1;
 	wqt->wqt_arg2 = a2;
+
+	if (wq == NULL)
+		wq = &workq_syswq;
 
 	mtx_enter(&wq->wq_mtx);
 	SIMPLEQ_INSERT_TAIL(&wq->wq_tasklist, wqt, wqt_entry);
 	mtx_leave(&wq->wq_mtx);
 
 	wakeup_one(wq);
-
-	return (0);
 }
 
 void
@@ -202,10 +203,13 @@ workq_thread(void *arg)
 {
 	struct workq		*wq = arg;
 	struct workq_task	*wqt;
+	int			mypool;
 
 	while ((wqt = workq_next_task(wq)) != NULL) {
+		mypool = (wqt->wqt_flags & WQT_F_POOL);
 		wqt->wqt_func(wqt->wqt_arg1, wqt->wqt_arg2);
-		pool_put(&workq_task_pool, wqt);
+		if (mypool)
+			pool_put(&workq_task_pool, wqt);
 	}
 
 	kthread_exit(0);
