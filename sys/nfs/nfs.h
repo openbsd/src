@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.50 2009/08/25 13:41:29 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.51 2009/09/02 18:20:54 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -55,8 +55,7 @@
 #define NFS_READDIRSIZE	8192		/* Def. readdir size */
 #define	NFS_DEFRAHEAD	1		/* Def. read ahead # blocks */
 #define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */
-#define NFS_MAXASYNCDAEMON	64	/* Max. # of aiods runnable. */
-#define NFS_DEFASYNCDAEMON	4	/* Def. # of aiods runnable. */
+#define	NFS_MAXASYNCDAEMON 	20	/* Max. number async_daemons runable */
 
 /*
  * Ideally, NFS_DIRBLKSIZ should be bigger, but I've seen servers with
@@ -190,6 +189,8 @@ struct nfsstats {
  * by them and break.
  */
 #ifdef _KERNEL
+extern int nfs_niothreads;
+
 struct uio; struct buf; struct vattr; struct nameidata;	/* XXX */
 
 #define	NFSINT_SIGMASK	(sigmask(SIGINT)|sigmask(SIGTERM)|sigmask(SIGKILL)| \

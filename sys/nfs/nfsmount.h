@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.23 2009/08/25 13:41:29 thib Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.24 2009/09/02 18:20:54 thib Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -71,9 +71,6 @@ struct	nfsmount {
 	int	nm_wsize;		/* Max size of write rpc */
 	int	nm_readdirsize;		/* Size of a readdir rpc */
 	int	nm_readahead;		/* Num. of blocks to readahead */
-	TAILQ_HEAD(, buf) nm_bufq;	/* async io buffer queue. */
-	int	nm_bufqlen;		/* number of buffers in nm_bufq */
-	int	nm_naiods;		/* # of aiods processing this mount */
 	u_char	nm_verf[NFSX_V3WRITEVERF]; /* V3 write verifier */
 	u_short	nm_acregmin;		/* Attr cache file recently modified */
 	u_short	nm_acregmax;		/* ac file not recently modified */
