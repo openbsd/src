@@ -1,34 +1,5 @@
-/*	$OpenBSD: isp_sbus.c,v 1.16 2009/09/02 15:47:37 kettenis Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.17 2009/09/02 16:05:16 kettenis Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
-
-/*
- * This driver, which is contained in NetBSD in the files:
- *
- *	sys/dev/ic/isp.c
- *	sys/dev/ic/isp_inline.h
- *	sys/dev/ic/isp_netbsd.c
- *	sys/dev/ic/isp_netbsd.h
- *	sys/dev/ic/isp_target.c
- *	sys/dev/ic/isp_target.h
- *	sys/dev/ic/isp_tpublic.h
- *	sys/dev/ic/ispmbox.h
- *	sys/dev/ic/ispreg.h
- *	sys/dev/ic/ispvar.h
- *	sys/microcode/isp/asm_sbus.h
- *	sys/microcode/isp/asm_1040.h
- *	sys/microcode/isp/asm_1080.h
- *	sys/microcode/isp/asm_12160.h
- *	sys/microcode/isp/asm_2100.h
- *	sys/microcode/isp/asm_2200.h
- *	sys/pci/isp_pci.c
- *	sys/sbus/isp_sbus.c
- *
- * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
- * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
- * Linux versions. This tends to be an interesting maintenance problem.
- *
- * Please coordinate with Matthew Jacob on changes you wish to make here.
- */
 /*
  * SBus specific probe and attach routines for QLogic ISP SCSI adapters.
  *
@@ -172,7 +143,7 @@ isp_match(struct device *parent, void *vcf, void *aux)
 #ifdef DEBUG
 	if (rv && oneshot) {
 		oneshot = 0;
-		printf("QLogic ISP Driver, NetBSD (sbus) Platform Version "
+		printf("QLogic ISP Driver, OpenBSD (sbus) Platform Version "
 		    "%d.%d Core Version %d.%d\n",
 		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
 		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
