@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.25 2009/09/02 11:11:10 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.26 2009/09/02 12:47:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -160,6 +160,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 					    sizeof(struct batch));
 			} else {
 				/* XXX: remove junk from tmp/ in mdir case */
+				env->stats->mda.write_error++;
 				messagep->status |= S_MESSAGE_TEMPFAILURE;
 			}
 

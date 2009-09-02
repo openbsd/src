@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.137 2009/08/27 11:37:30 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.138 2009/09/02 12:47:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -663,11 +663,16 @@ struct s_session {
 	size_t		delays;
 };
 
+struct s_mda {
+	size_t		write_error;
+};
+
 struct stats {
 	struct s_parent		 parent;
 	struct s_queue		 queue;
 	struct s_runner		 runner;
 	struct s_session	 mta;
+	struct s_mda		 mda;
 	struct s_session	 smtp;
 };
 
