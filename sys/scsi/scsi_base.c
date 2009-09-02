@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.134 2009/08/13 21:35:56 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.135 2009/09/02 14:19:50 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -69,9 +69,10 @@ struct pool		scsi_xfer_pool;
 struct pool		scsi_plug_pool;
 
 struct scsi_plug {
-	int		target;
-	int		lun;
-	int		how;
+	struct workq_task	wqt;
+	int			target;
+	int			lun;
+	int			how;
 };
 
 void	scsi_plug_probe(void *, void *);
@@ -104,7 +105,6 @@ int
 scsi_req_probe(struct scsibus_softc *sc, int target, int lun)
 {
 	struct scsi_plug *p;
-	int rv;
 
 	p = pool_get(&scsi_plug_pool, PR_NOWAIT);
 	if (p == NULL)
@@ -113,18 +113,15 @@ scsi_req_probe(struct scsibus_softc *sc, int target, int lun)
 	p->target = target;
 	p->lun = lun;
 
-	rv = workq_add_task(NULL, 0, scsi_plug_probe, sc, p);
-	if (rv != 0)
-		pool_put(&scsi_plug_pool, p);
+	workq_queue_task(NULL, &p->wqt, 0, scsi_plug_probe, sc, p);
 
-	return (rv);
+	return (0);
 }
 
 int
 scsi_req_detach(struct scsibus_softc *sc, int target, int lun, int how)
 {
 	struct scsi_plug *p;
-	int rv;
 
 	p = pool_get(&scsi_plug_pool, PR_NOWAIT);
 	if (p == NULL)
@@ -134,11 +131,9 @@ scsi_req_detach(struct scsibus_softc *sc, int target, int lun, int how)
 	p->lun = lun;
 	p->how = how;
 
-	rv = workq_add_task(NULL, 0, scsi_plug_detach, sc, p);
-	if (rv != 0)
-		pool_put(&scsi_plug_pool, p);
+	workq_queue_task(NULL, &p->wqt, 0, scsi_plug_detach, sc, p);
 
-	return (rv);
+	return (0);
 }
 
 void
