@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.3 2008/05/25 16:23:58 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.4 2009/09/02 20:29:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -25,6 +25,7 @@ struct mainbus_attach_args {
 	bus_space_tag_t	ma_iot;
 	bus_dma_tag_t	ma_dmat;
 	char		*ma_name;
+	int		ma_node;
 };
 
 struct obio_attach_args {
@@ -34,6 +35,7 @@ struct obio_attach_args {
 	int		oa_ivec;
 	int		oa_phy;
 	char		*oa_name;
+	int		oa_node;
 };
 
 #define cf_offset	cf_loc[0]

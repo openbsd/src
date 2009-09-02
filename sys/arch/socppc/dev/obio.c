@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.3 2008/05/25 16:23:58 kettenis Exp $	*/
+/*	$OpenBSD: obio.c,v 1.4 2009/09/02 20:29:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -22,6 +22,8 @@
 
 #include <machine/autoconf.h>
 
+#include <dev/ofw/openfirm.h>
+
 int	obio_match(struct device *, void *, void *);
 void	obio_attach(struct device *, struct device *, void *);
 
@@ -39,7 +41,16 @@ int	obio_print(void *, const char *);
 int
 obio_match(struct device *parent, void *cfdata, void *aux)
 {
-	return (1);
+	struct mainbus_attach_args *ma = aux;
+	char buf[32];
+
+	if (OF_getprop(ma->ma_node, "device_type", buf, sizeof(buf)) <= 0)
+		return (0);
+
+	if (strcmp(buf, "soc") == 0)
+		return (1);
+
+	return (0);
 }
 
 void

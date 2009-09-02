@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.3 2008/05/17 15:49:05 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.4 2009/09/02 20:29:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -22,6 +22,8 @@
 
 #include <machine/autoconf.h>
 
+#include <dev/ofw/openfirm.h>
+
 int	mainbus_match(struct device *, void *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
@@ -32,23 +34,6 @@ struct cfattach mainbus_ca = {
 struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
 };
-
-int	mainbus_search(struct device *, void *, void *);
-int	mainbus_print(void *, const char *);
-
-int
-mainbus_match(struct device *parent, void *cfdata, void *aux)
-{
-	return (1);
-}
-
-void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
-{
-	printf("\n");
-
-	config_search(mainbus_search, self, self);
-}
 
 struct ppc_bus_space mainbus_bus_space = { 0xff400000, 0x00100000, 0 };
 
@@ -69,18 +54,54 @@ struct powerpc_bus_dma_tag mainbus_bus_dma_tag = {
 	_dmamem_mmap
 };
 
+int	mainbus_print(void *, const char *);
+
 int
-mainbus_search(struct device *parent, void *cfdata, void *aux)
+mainbus_match(struct device *parent, void *cfdata, void *aux)
+{
+	return (1);
+}
+
+void
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args ma;
-	struct cfdata *cf = cfdata;
+	char name[32];
+	int node;
 
-	ma.ma_iot = &mainbus_bus_space;
-	ma.ma_dmat = &mainbus_bus_dma_tag;
-	ma.ma_name = cf->cf_driver->cd_name;
-	config_found(parent, &ma, mainbus_print);
+	printf("\n");
 
-	return (1);
+	node = OF_finddevice("/cpus");
+	if (node != -1) {
+		for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+			if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
+				continue;
+
+			bzero(&ma, sizeof(ma));
+			ma.ma_name = name;
+			ma.ma_node = node;
+			config_found(self, &ma, mainbus_print);
+			ncpusfound++;
+		}
+	}
+
+	for (node = OF_child(OF_peer(0)); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
+			continue;
+
+		if (strcmp(name, "aliases") == 0 ||
+		    strcmp(name, "chosen") == 0 ||
+		    strcmp(name, "cpus") == 0 ||
+		    strcmp(name, "memory") == 0)
+			continue;
+
+		bzero(&ma, sizeof(ma));
+		ma.ma_iot = &mainbus_bus_space;
+		ma.ma_dmat = &mainbus_bus_dma_tag;
+		ma.ma_name = name;
+		ma.ma_node = node;
+		config_found(self, &ma, mainbus_print);
+	}
 }
 
 int
@@ -89,7 +110,7 @@ mainbus_print(void *aux, const char *name)
 	struct mainbus_attach_args *ma = aux;
 
 	if (name)
-		printf("%s at %s", ma->ma_name, name);
+		printf("\"%s\" at %s", ma->ma_name, name);
 		
 	return (UNCONF);
 }

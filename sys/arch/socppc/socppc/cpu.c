@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2009/08/27 20:42:02 miod Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 2009/09/02 20:29:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -19,6 +19,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <machine/autoconf.h>
+
+#include <dev/ofw/openfirm.h>
 
 #define HID0_DOZE	(1 << (31-8))
 #define HID0_NAP	(1 << (31-9))
@@ -51,7 +55,16 @@ struct cfdriver cpu_cd = {
 int
 cpu_match(struct device *parent, void *cfdata, void *aux)
 {
-	return (1);
+	struct mainbus_attach_args *ma = aux;
+	char buf[32];
+
+	if (OF_getprop(ma->ma_node, "device_type", buf, sizeof(buf)) <= 0)
+		return (0);
+
+	if (strcmp(buf, "cpu") == 0)
+		return (1);
+
+	return (0);
 }
 
 void
