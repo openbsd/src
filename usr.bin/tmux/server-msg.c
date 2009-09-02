@@ -1,4 +1,4 @@
-/* $OpenBSD: server-msg.c,v 1.15 2009/08/23 16:45:00 nicm Exp $ */
+/* $OpenBSD: server-msg.c,v 1.16 2009/09/02 16:38:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -99,8 +99,15 @@ server_msg_dispatch(struct client *c)
 			memcpy(&unlockdata, imsg.data, sizeof unlockdata);
 
 			unlockdata.pass[(sizeof unlockdata.pass) - 1] = '\0';
-			if (server_unlock(unlockdata.pass) != 0)
+			switch (server_unlock(unlockdata.pass)) {
+			case -1:
 				server_write_error(c, "bad password");
+				break;
+			case -2:
+				server_write_error(c,
+				    "too many bad passwords, sleeping");
+				break;
+			}
 			memset(&unlockdata, 0, sizeof unlockdata);
 			server_write_client(c, MSG_EXIT, NULL, 0);
 			break;

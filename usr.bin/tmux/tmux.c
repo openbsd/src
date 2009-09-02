@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.39 2009/09/01 13:09:50 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.40 2009/09/02 16:38:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -47,7 +47,9 @@ struct options	 global_w_options;	/* window options */
 struct environ	 global_environ;
 
 int		 server_locked;
+struct passwd	*server_locked_pw;
 u_int		 password_failures;
+time_t		 password_backoff;
 char		*server_password;
 time_t		 server_activity;
 
