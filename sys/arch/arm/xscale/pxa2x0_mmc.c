@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.6 2009/09/02 02:40:43 marex Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -63,8 +63,8 @@ void	pxammc_clock_stop(struct pxammc_softc *);
 void	pxammc_clock_start(struct pxammc_softc *);
 int	pxammc_card_intr(void *);
 int	pxammc_intr(void *);
-void	pxammc_intr_cmd(struct pxammc_softc *);
-void	pxammc_intr_data(struct pxammc_softc *);
+inline void	pxammc_intr_cmd(struct pxammc_softc *);
+inline void	pxammc_intr_data(struct pxammc_softc *);
 void	pxammc_intr_done(struct pxammc_softc *);
 
 #define CSR_READ_1(sc, reg) \
@@ -562,7 +562,7 @@ end:
 	return 1;
 }
 
-void
+inline void
 pxammc_intr_cmd(struct pxammc_softc *sc)
 {
 	struct sdmmc_command *cmd = sc->sc_cmd;
@@ -633,19 +633,19 @@ pxammc_intr_cmd(struct pxammc_softc *sc)
 		pxammc_intr_done(sc);
 }
 
-void
+inline void
 pxammc_intr_data(struct pxammc_softc *sc)
 {
 	struct sdmmc_command *cmd = sc->sc_cmd;
+	int n;
+
+	n = MIN(32, cmd->c_resid);
+	cmd->c_resid -= n;
 
 	DPRINTF(2,("%s: cmd %p resid %d\n", sc->sc_dev.dv_xname,
 	    cmd, cmd->c_resid));
 
 	if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
-		int n;
-
-		n = MIN(32, cmd->c_resid);
-		cmd->c_resid -= n;
 		while (n-- > 0)
 			*cmd->c_buf++ = CSR_READ_1(sc, MMC_RXFIFO);
 
@@ -654,12 +654,9 @@ pxammc_intr_data(struct pxammc_softc *sc)
 		else
 			CSR_SET_4(sc, MMC_I_MASK, MMC_I_RXFIFO_RD_REQ);
 	} else {
-		int n;
-		int short_xfer = cmd->c_resid < 32;
+		int short_xfer = n < 32;
 
-		n = MIN(32, cmd->c_resid);
-		cmd->c_resid -= n;
-		for (n = MIN(32, cmd->c_resid); n > 0; n--)
+		while (n-- > 0)
 			CSR_WRITE_1(sc, MMC_TXFIFO, *cmd->c_buf++);
 		if (short_xfer)
 			CSR_WRITE_4(sc, MMC_PRTBUF, 1);
