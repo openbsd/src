@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.156 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.157 2009/09/02 19:05:44 fgsch Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1018,8 +1018,8 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 			error = EISDIR;
 			goto bad;
 		}
-		if ((error = vn_writechk(vp)) != 0 ||
-		    (error = VOP_ACCESS(vp, VWRITE, cred, p)) != 0)
+		if ((error = VOP_ACCESS(vp, VWRITE, cred, p)) != 0 ||
+		    (error = vn_writechk(vp)) != 0)
 			goto bad;
 	}
 	if (flags & O_TRUNC) {
@@ -1480,8 +1480,10 @@ sys_access(struct proc *p, void *v, register_t *retval)
 			flags |= VWRITE;
 		if (SCARG(uap, flags) & X_OK)
 			flags |= VEXEC;
-		if ((flags & VWRITE) == 0 || (error = vn_writechk(vp)) == 0)
-			error = VOP_ACCESS(vp, flags, cred, p);
+
+		error = VOP_ACCESS(vp, flags, cred, p);
+		if (!error && (flags & VWRITE))
+			error = vn_writechk(vp);
 	}
 	vput(vp);
 out1:
@@ -2041,8 +2043,8 @@ sys_truncate(struct proc *p, void *v, register_t *retval)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_type == VDIR)
 		error = EISDIR;
-	else if ((error = vn_writechk(vp)) == 0 &&
-	    (error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p)) == 0) {
+	else if ((error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p)) == 0 &&
+	    (error = vn_writechk(vp)) == 0) {
 		VATTR_NULL(&vattr);
 		vattr.va_size = SCARG(uap, length);
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
