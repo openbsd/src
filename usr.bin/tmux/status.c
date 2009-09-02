@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.29 2009/09/01 09:11:05 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.30 2009/09/02 06:33:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -763,7 +763,7 @@ void
 status_prompt_key(struct client *c, int key)
 {
 	struct paste_buffer	*pb;
-	char   			*s, *first, *last, word[64];
+	char   			*s, *first, *last, word[64], swapc;
 	size_t			 size, n, off, idx;
 
 	size = strlen(c->prompt_buffer);
@@ -932,6 +932,18 @@ status_prompt_key(struct client *c, int key)
 		}
 
 		c->flags |= CLIENT_STATUS;
+		break;
+	case MODEKEYEDIT_TRANSPOSECHARS:
+		idx = c->prompt_index;
+		if (idx < size)
+			idx++;
+		if (idx >= 2) {
+			swapc = c->prompt_buffer[idx - 2];
+			c->prompt_buffer[idx - 2] = c->prompt_buffer[idx - 1];
+			c->prompt_buffer[idx - 1] = swapc;
+			c->prompt_index = idx;
+			c->flags |= CLIENT_STATUS;
+		}
 		break;
  	case MODEKEYEDIT_ENTER:
 		if (*c->prompt_buffer != '\0')
