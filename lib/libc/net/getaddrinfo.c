@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.69 2009/06/04 21:38:29 pyr Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.70 2009/09/02 19:07:12 fgsch Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -827,10 +827,8 @@ get_port(struct addrinfo *ai, const char *servname, int matchonly)
 		return EAI_SERVICE;
 	case SOCK_DGRAM:
 	case SOCK_STREAM:
-		allownumeric = 1;
-		break;
 	case ANY:
-		allownumeric = 0;
+		allownumeric = 1;
 		break;
 	default:
 		return EAI_SOCKTYPE;
