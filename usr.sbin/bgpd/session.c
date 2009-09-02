@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.295 2009/08/21 15:43:27 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.296 2009/09/02 08:06:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -308,7 +308,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 				/* reinit due? */
 				if (p->conf.reconf_action == RECONF_REINIT) {
-					bgp_fsm(p, EVNT_STOP);
+					session_stop(p, ERR_CEASE_ADMIN_RESET);
 					timer_set(p, Timer_IdleHold, 0);
 				}
 
@@ -317,7 +317,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 					if (p->demoted)
 						session_demote(p, -1);
 					p->conf.demote_group[0] = 0;
-					bgp_fsm(p, EVNT_STOP);
+					session_stop(p, ERR_CEASE_PEER_UNCONF);
 					log_peer_warnx(&p->conf, "removed");
 					if (last != NULL)
 						last->next = next;
@@ -557,7 +557,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 	while ((p = peers) != NULL) {
 		peers = p->next;
-		bgp_fsm(p, EVNT_STOP);
+		session_stop(p, ERR_CEASE_ADMIN_DOWN);
 		pfkey_remove(p);
 		free(p);
 	}
@@ -746,7 +746,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			/* ignore */
 			break;
 		case EVNT_STOP:
-			session_notification(peer, ERR_CEASE, 0, NULL, 0);
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_CON_CLOSED:
@@ -791,7 +790,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			/* ignore */
 			break;
 		case EVNT_STOP:
-			session_notification(peer, ERR_CEASE, 0, NULL, 0);
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_CON_CLOSED:
@@ -826,7 +824,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			/* ignore */
 			break;
 		case EVNT_STOP:
-			session_notification(peer, ERR_CEASE, 0, NULL, 0);
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_CON_CLOSED:
@@ -1481,7 +1478,6 @@ session_notification(struct peer *p, u_int8_t errcode, u_int8_t subcode,
 {
 	struct bgp_msg		*buf;
 	u_int			 errs = 0;
-	u_int8_t		 null8 = 0;
 
 	if (p->stats.last_sent_errcode)	/* some notification already sent */
 		return;
@@ -1493,10 +1489,7 @@ session_notification(struct peer *p, u_int8_t errcode, u_int8_t subcode,
 	}
 
 	errs += buf_add(buf->buf, &errcode, sizeof(errcode));
-	if (errcode == ERR_CEASE)
-		errs += buf_add(buf->buf, &null8, sizeof(null8));
-	else
-		errs += buf_add(buf->buf, &subcode, sizeof(subcode));
+	errs += buf_add(buf->buf, &subcode, sizeof(subcode));
 
 	if (datalen > 0)
 		errs += buf_add(buf->buf, data, datalen);
@@ -2411,7 +2404,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 						bgp_fsm(p, EVNT_START);
 					} else if (!depend_ok && p->depend_ok) {
 						p->depend_ok = depend_ok;
-						bgp_fsm(p, EVNT_STOP);
+						session_stop(p,
+						    ERR_CEASE_OTHER_CHANGE);
 					}
 				}
 			break;
@@ -2839,4 +2833,20 @@ session_demote(struct peer *p, int level)
 		fatalx("imsg_compose error");
 
 	p->demoted += level;
+}
+
+void
+session_stop(struct peer *peer, u_int8_t subcode)
+{
+	switch (peer->state) {
+	case STATE_OPENSENT:
+	case STATE_OPENCONFIRM:
+	case STATE_ESTABLISHED:
+		session_notification(peer, ERR_CEASE, subcode, NULL, 0);
+		break;
+	default:
+		/* session not open, no need to send notification */
+		break;
+	}
+	bgp_fsm(peer, EVNT_STOP);
 }
