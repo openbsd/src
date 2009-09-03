@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.285 2009/09/01 13:42:00 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.286 2009/09/03 15:14:33 jmc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -227,7 +227,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-AdeghmNnOqRrvz] ", __progname);
+	fprintf(stderr, "usage: %s [-AdeghmnOqRrvz] ", __progname);
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
 	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network]\n");
 	fprintf(stderr, "\t[-k host | network | label | id] ");
