@@ -1,5 +1,0 @@
-# Test rule order processing: should fail unless nat -> filter
-set require-order yes
-pass in on lo1000000 all
-match out on lo0 all nat-to lo0
-
