@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.47 2008/06/09 16:07:00 djm Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.48 2009/09/03 07:47:27 dlg Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -53,6 +53,7 @@
 #define _CRYPTO_CRYPTO_H_
 
 #include <sys/ioccom.h>
+#include <sys/workq.h>
 
 /* Some initial values */
 #define CRYPTO_DRIVERS_INITIAL	4
@@ -143,6 +144,8 @@ struct cryptodesc {
 
 /* Structure describing complete operation */
 struct cryptop {
+	struct workq_task crp_wqt;
+
 	u_int64_t	crp_sid;	/* Session ID */
 	int		crp_ilen;	/* Input data total length */
 	int		crp_olen;	/* Result total length */
@@ -211,6 +214,8 @@ struct crypt_kop {
 #define CRF_DH_COMPUTE_KEY	(1 << CRK_DH_COMPUTE_KEY)
 
 struct cryptkop {
+	struct workq_task krp_wqt;
+
 	u_int		krp_op;		/* ie. CRK_MOD_EXP or other */
 	u_int		krp_status;	/* return status */
 	u_short		krp_iparams;	/* # of input parameters */

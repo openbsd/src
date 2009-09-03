@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.52 2008/10/30 23:55:22 dlg Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.53 2009/09/03 07:47:27 dlg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -25,7 +25,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <sys/workq.h>
 
 #include <crypto/cryptodev.h>
 
@@ -420,7 +419,7 @@ crypto_dispatch(struct cryptop *crp)
 	splx(s);
 
 	if (crypto_workq) {
-		workq_add_task(crypto_workq, 0,
+		workq_queue_task(crypto_workq, &crp->crp_wqt, 0,
 		    (workq_fn)crypto_invoke, crp, NULL);
 	} else {
 		crypto_invoke(crp);
@@ -432,9 +431,8 @@ crypto_dispatch(struct cryptop *crp)
 int
 crypto_kdispatch(struct cryptkop *krp)
 {
-
 	if (crypto_workq) {
-		workq_add_task(crypto_workq, 0,
+		workq_queue_task(crypto_workq, &krp->krp_wqt, 0,
 		    (workq_fn)crypto_kinvoke, krp, NULL);
 	} else {
 		crypto_kinvoke(krp);
@@ -640,7 +638,13 @@ void
 crypto_done(struct cryptop *crp)
 {
 	crp->crp_flags |= CRYPTO_F_DONE;
-	crp->crp_callback(crp);
+	if (crp->crp_flags & CRYPTO_F_NOQUEUE) {
+		/* not from the crypto queue, wakeup the userland process */
+		crp->crp_callback(crp);
+	} else {
+		workq_queue_task(crypto_workq, &crp->crp_wqt, 0,
+		    (workq_fn)crp->crp_callback, crp, NULL);
+	}
 }
 
 /*
@@ -649,7 +653,8 @@ crypto_done(struct cryptop *crp)
 void
 crypto_kdone(struct cryptkop *krp)
 {
-	krp->krp_callback(krp);
+	workq_queue_task(crypto_workq, &krp->krp_wqt, 0,
+	    (workq_fn)krp->krp_callback, krp, NULL);
 }
 
 int
