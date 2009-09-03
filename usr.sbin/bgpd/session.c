@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.296 2009/09/02 08:06:42 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.297 2009/09/03 09:06:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2656,7 +2656,7 @@ getpeerbyip(struct sockaddr *ip)
 			newpeer->conf.remote_masklen = 32;
 		}
 		if (newpeer->conf.remote_addr.af == AF_INET6) {
-			memcpy(&p->conf.remote_addr.v6,
+			memcpy(&newpeer->conf.remote_addr.v6,
 			    &((struct sockaddr_in6 *)ip)->sin6_addr,
 			    sizeof(newpeer->conf.remote_addr.v6));
 			newpeer->conf.remote_masklen = 128;
