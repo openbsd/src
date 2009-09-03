@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.206 2009/09/03 12:07:56 jsg Exp $
+# $OpenBSD: Makefile,v 1.207 2009/09/03 12:38:32 jsg Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -124,17 +124,13 @@ PFLOAD_UPDATES+=pfload${n}-update
 
 pfload${n}:
 	${SUDO} pfctl -o none -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -o none -a 'regress/*' -gvvsn; \
-	${SUDO} pfctl -o none -a 'regress/*' -gvvsr) | \
+	(${SUDO} pfctl -o none -a 'regress/*' -gvvsr) | \
 	    diff -u ${.CURDIR}/pf${n}.loaded /dev/stdin
-	${SUDO} pfctl -o none -a regress -Fn >/dev/null 2>&1
 	${SUDO} pfctl -o none -a regress -Fr >/dev/null 2>&1
 
 pfload${n}-update:
 	${SUDO} pfctl -o none -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -o none -a 'regress/*' -gvvsn; \
-	${SUDO} pfctl -o none -a 'regress/*' -gvvsr) > ${.CURDIR}/pf${n}.loaded
-	${SUDO} pfctl -o none -a regress -Fn >/dev/null 2>&1
+	(${SUDO} pfctl -o none -a 'regress/*' -gvvsr) > ${.CURDIR}/pf${n}.loaded
 	${SUDO} pfctl -o none -a regress -Fr >/dev/null 2>&1
 
 .endfor
@@ -151,17 +147,13 @@ PFOPTIMIZE_UPDATES+=pfoptimize${n}-update
 
 pfoptimize${n}:
 	${SUDO} pfctl -obasic -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -o none -a regress -gvvsn; \
-	${SUDO} pfctl -o none -a regress -gvvsr) | \
+	(${SUDO} pfctl -o none -a regress -gvvsr) | \
 	    diff -u ${.CURDIR}/pf${n}.optimized /dev/stdin
-	${SUDO} pfctl -o none -a regress -Fn >/dev/null 2>&1
 	${SUDO} pfctl -o none -a regress -Fr >/dev/null 2>&1
 
 pfoptimize${n}-update:
 	${SUDO} pfctl -obasic -a regress -f - < ${.CURDIR}/pf${n}.in
-	(${SUDO} pfctl -o none -a regress -gvvsn; \
-	${SUDO} pfctl -o none -a regress -gvvsr) > ${.CURDIR}/pf${n}.optimized
-	${SUDO} pfctl -o none -a regress -Fn >/dev/null 2>&1
+	(${SUDO} pfctl -o none -a regress -gvvsr) > ${.CURDIR}/pf${n}.optimized
 	${SUDO} pfctl -o none -a regress -Fr >/dev/null 2>&1
 
 .endfor
