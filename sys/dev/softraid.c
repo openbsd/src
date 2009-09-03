@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.172 2009/09/03 13:20:29 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.173 2009/09/03 13:26:38 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2693,9 +2693,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		goto unwind;
 
 	dt = malloc(bc->bc_dev_list_len, M_DEVBUF, M_WAITOK | M_ZERO);
-	if (user)
-		copyin(bc->bc_dev_list, dt, bc->bc_dev_list_len);
-	else
+	if (user) {
+		if (copyin(bc->bc_dev_list, dt, bc->bc_dev_list_len) != 0)
+			goto unwind;
+	} else
 		bcopy(bc->bc_dev_list, dt, bc->bc_dev_list_len);
 
 	sd = malloc(sizeof(struct sr_discipline), M_DEVBUF, M_WAITOK | M_ZERO);
