@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.11 2007/01/04 19:12:41 stevesk Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.12 2009/09/03 11:56:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,8 @@ ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
 
 /* dispatch.c */
 extern void (*bootp_packet_handler)(struct interface_info *,
-    struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
+    struct dhcp_packet *, int, unsigned int, struct iaddr,
+    struct hardware *);
 void discover_interfaces(struct interface_info *);
 void dispatch(void);
 void got_one(struct protocol *);
@@ -170,6 +171,7 @@ ssize_t decode_udp_ip_header(struct interface_info *, unsigned char *,
 /* dhcrelay.c */
 extern u_int16_t server_port;
 extern u_int16_t client_port;
+extern int server_fd;
 
 /* crap */
 extern time_t cur_time;

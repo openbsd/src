@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.4 2007/03/02 18:26:29 stevesk Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.5 2009/09/03 11:56:49 reyk Exp $	*/
 
 /* Protocol structures... */
 
@@ -80,13 +80,15 @@ struct dhcp_packet {
 #define BOOTP_BROADCAST 32768L
 
 /* Possible values for hardware type (htype) field... */
-#define HTYPE_ETHER	1		/* Ethernet			*/
-#define HTYPE_IEEE802	6		/* IEEE 802.2 Token Ring...	*/
-#define HTYPE_FDDI	8		/* FDDI...			*/
+#define HTYPE_ETHER		1	/* Ethernet			*/
+#define HTYPE_IEEE802		6	/* IEEE 802.2 Token Ring...	*/
+#define HTYPE_FDDI		8	/* FDDI...			*/
+#define HTYPE_IPSEC_TUNNEL	31	/* IPsec Tunnel (RFC3456)	*/
 
 /* Magic cookie validating dhcp options field (and bootp vendor
    extensions field). */
 #define DHCP_OPTIONS_COOKIE	"\143\202\123\143"
+#define DHCP_OPTIONS_COOKIE_LEN	4
 
 /* DHCP Option codes: */
 
@@ -153,6 +155,7 @@ struct dhcp_packet {
 #define DHO_DHCP_CLASS_IDENTIFIER	60
 #define DHO_DHCP_CLIENT_IDENTIFIER	61
 #define DHO_DHCP_USER_CLASS_ID		77
+#define DHO_RELAY_AGENT_INFORMATION	82
 #define DHO_END				255
 
 /* DHCP message types. */
@@ -164,3 +167,8 @@ struct dhcp_packet {
 #define DHCPNAK		6
 #define DHCPRELEASE	7
 #define DHCPINFORM	8
+
+/* Relay Agent Information sub-options */
+#define RAI_CIRCUIT_ID	1
+#define RAI_REMOTE_ID	2
+#define RAI_AGENT_ID	3

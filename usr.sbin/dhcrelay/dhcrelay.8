@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay.8,v 1.8 2007/05/31 19:20:23 jmc Exp $
+.\"	$OpenBSD: dhcrelay.8,v 1.9 2009/09/03 11:56:49 reyk Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: September 3 2009 $
 .Dt DHCRELAY 8
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Nd Dynamic Host Configuration Protocol Relay Agent
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
+.Op Fl do
 .Fl i Ar interface
 .Ar server1 Op Ar ... serverN
 .Sh DESCRIPTION
@@ -69,6 +69,14 @@ as well as the name of the network interface that
 should attempt to configure,
 must be specified on the command line.
 .Pp
+.Nm
+supports relaying of DHCP traffic to configure IPsec tunnel mode
+clients when listening on the
+.Xr enc 4
+interface.
+The DHCP server has to support RFC 3046 to echo back the relay agent
+information to allow stateless DHCP reply to IPsec tunnel mapping.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
@@ -82,12 +90,18 @@ to always run as a foreground process.
 The name of the network interface that
 .Nm
 should attempt to configure.
+At least one IPv4 address has to be configured on this interface.
+.It Fl o
+Add the relay agent information option.
+By default, this is only enabled for the
+.Xr enc 4
+interface.
 .El
 .Sh SEE ALSO
 .Xr dhclient 8 ,
 .Xr dhcpd 8
 .Pp
-RFC 2132, RFC 2131.
+RFC 2132, RFC 2131, RFC 3046, RFC 3456
 .Sh AUTHORS
 .An -nosplit
 .Nm

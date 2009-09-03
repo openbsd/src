@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.2 2004/04/20 20:56:47 canacar Exp $	*/
+/*	$OpenBSD: packet.c,v 1.3 2009/09/03 11:56:49 reyk Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -42,6 +42,7 @@
 
 #include "dhcpd.h"
 
+#include <net/if_enc.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
@@ -148,14 +149,32 @@ decode_hw_header(struct interface_info *interface, unsigned char *buf,
     int bufix, struct hardware *from)
 {
 	struct ether_header eh;
+	size_t offset = 0;
 
-	memcpy(&eh, buf + bufix, ETHER_HEADER_SIZE);
+	if (interface->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
+		u_int32_t ip_len;
+		struct ip *ip;
+
+		bufix += ENC_HDRLEN;
+		ip_len = (buf[bufix] & 0xf) << 2;
+		ip = (struct ip *)(buf + bufix);
+
+		/* Encapsulated IP */
+		if (ip->ip_p != IPPROTO_IPIP)
+			return (-1);
+
+		bzero(&eh, sizeof(eh));
+		offset = ENC_HDRLEN + ip_len;
+	} else {	
+		memcpy(&eh, buf + bufix, ETHER_HEADER_SIZE);
+		offset = sizeof(eh);
+	}
 
 	memcpy(from->haddr, eh.ether_shost, sizeof(eh.ether_shost));
 	from->htype = ARPHRD_ETHER;
 	from->hlen = sizeof(eh.ether_shost);
 
-	return (sizeof(eh));
+	return (offset);
 }
 
 ssize_t

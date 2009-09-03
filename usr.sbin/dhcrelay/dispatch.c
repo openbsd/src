@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.8 2008/09/15 20:39:21 claudio Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.9 2009/09/03 11:56:49 reyk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -44,6 +44,8 @@
 #include <sys/ioctl.h>
 
 #include <net/if_media.h>
+#include <net/if_types.h>
+
 #include <ifaddrs.h>
 #include <poll.h>
 
@@ -90,10 +92,15 @@ discover_interfaces(struct interface_info *iface)
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			struct sockaddr_dl *foo =
 			    (struct sockaddr_dl *)ifa->ifa_addr;
+			struct if_data *ifi =
+			    (struct if_data *)ifa->ifa_data;
 
 			iface->index = foo->sdl_index;
 			iface->hw_address.hlen = foo->sdl_alen;
-			iface->hw_address.htype = HTYPE_ETHER; /* XXX */
+			if (ifi->ifi_type == IFT_ENC)
+				iface->hw_address.htype = HTYPE_IPSEC_TUNNEL;
+			else
+				iface->hw_address.htype = HTYPE_ETHER; /* XXX */
 			memcpy(iface->hw_address.haddr,
 			    LLADDR(foo), foo->sdl_alen);
 		} else if (ifa->ifa_addr->sa_family == AF_INET) {

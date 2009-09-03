@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.31 2008/07/09 20:08:13 sobrado Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.32 2009/09/03 11:56:49 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -47,6 +47,9 @@ void	 relay(struct interface_info *, struct dhcp_packet *, int,
 char	*print_hw_addr(int, int, unsigned char *);
 void	 got_response(struct protocol *);
 
+ssize_t	 relay_agentinfo(struct interface_info *, struct dhcp_packet *,
+	    size_t, struct in_addr *, struct in_addr *);
+
 time_t cur_time;
 
 int log_perror = 1;
@@ -55,6 +58,8 @@ u_int16_t server_port;
 u_int16_t client_port;
 int log_priority;
 struct interface_info *interfaces = NULL;
+int server_fd;
+int oflag;
 
 struct server_list {
 	struct server_list *next;
@@ -75,7 +80,7 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "di:")) != -1) {
+	while ((ch = getopt(argc, argv, "adi:o")) != -1) {
 		switch (ch) {
 		case 'd':
 			no_daemon = 1;
@@ -89,6 +94,11 @@ main(int argc, char *argv[])
 			strlcpy(interfaces->name, optarg,
 			    sizeof(interfaces->name));
 			break;
+		case 'o':
+			/* add the relay agent information option */
+			oflag++;
+			break;
+			
 		default:
 			usage();
 			/* not reached */
@@ -125,7 +135,8 @@ main(int argc, char *argv[])
 		argv++;
 	}
 
-	log_perror = 0;
+	if (!no_daemon)
+		log_perror = 0;
 
 	if (interfaces == NULL)
 		error("no interface given");
@@ -139,6 +150,10 @@ main(int argc, char *argv[])
 		usage();
 
 	discover_interfaces(interfaces);
+
+	/* Enable the relay agent option by default for enc0 */
+	if (interfaces->hw_address.htype == HTYPE_IPSEC_TUNNEL)
+		oflag++;
 
 	bzero(&laddr, sizeof laddr);
 	laddr.sin_len = sizeof laddr;
@@ -163,6 +178,21 @@ main(int argc, char *argv[])
 		    sizeof sp->to) == -1)
 			error("connect: %m");
 		add_protocol("server", sp->fd, got_response, sp);
+	}
+
+	/* Socket used to forward packets to the DHCP server */
+	if (interfaces->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
+		laddr.sin_addr.s_addr = INADDR_ANY;
+		server_fd = socket(AF_INET, SOCK_DGRAM, 0);
+		if (server_fd == -1)
+			error("socket: %m");
+		opt = 1;
+		if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT,
+		    &opt, sizeof(opt)) == -1)
+			error("setsockopt: %m");
+		if (bind(server_fd, (struct sockaddr *)&laddr,
+		    sizeof(laddr)) == -1)
+			error("bind: %m");
 	}
 
 	tzset();
@@ -222,6 +252,13 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		memcpy(hto.haddr, packet->chaddr, hto.hlen);
 		hto.htype = packet->htype;
 
+		if ((length = relay_agentinfo(interfaces,
+		    packet, length, NULL, &to.sin_addr)) == -1) {
+			note("ingnoring BOOTREPLY with invalid "
+			    "relay agent information");
+			return;
+		}
+
 		if (send_packet(interfaces, packet, length,
 		    interfaces->primary_address, &to, &hto) != -1)
 			debug("forwarded BOOTREPLY for %s to %s",
@@ -248,6 +285,13 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 	   correct net. */
 	packet->giaddr = ip->primary_address;
 
+	if ((length = relay_agentinfo(ip, packet, length,
+	    (struct in_addr *)from.iabuf, NULL)) == -1) {
+		note("ingnoring BOOTREQUEST with invalid "
+		    "relay agent information");
+		return;
+	}
+
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
 	for (sp = servers; sp; sp = sp->next) {
@@ -265,7 +309,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-d] -i interface server1 [... serverN]\n",
+	fprintf(stderr, "usage: %s [-do] -i interface server1 [... serverN]\n",
 	    __progname);
 	exit(1);
 }
@@ -311,6 +355,7 @@ got_response(struct protocol *l)
 	} u;
 	struct server_list *sp = l->local;
 
+	memset(&u, DHO_END, sizeof(u));
 	if ((result = recv(l->fd, u.packbuf, sizeof(u), 0)) == -1 &&
 	    errno != ECONNREFUSED) {
 		/*
@@ -339,4 +384,98 @@ got_response(struct protocol *l)
 		(*bootp_packet_handler)(NULL, &u.packet, result,
 		    sp->to.sin_port, ifrom, NULL);
 	}
+}
+
+ssize_t
+relay_agentinfo(struct interface_info *info, struct dhcp_packet *packet,
+    size_t length, struct in_addr *from, struct in_addr *to)
+{
+	u_int8_t	*p;
+	u_int		 i, j, railen;
+	ssize_t		 optlen, maxlen, grow;
+
+	if (!oflag)
+		return (length);
+
+	/* Buffer length vs. received packet length */
+	maxlen = DHCP_MTU_MAX - DHCP_FIXED_LEN - DHCP_OPTIONS_COOKIE_LEN - 1;
+	optlen = length - DHCP_FIXED_NON_UDP - DHCP_OPTIONS_COOKIE_LEN;
+	if (maxlen < 1 || optlen < 1)
+		return (length);
+
+	if (memcmp(packet->options, DHCP_OPTIONS_COOKIE,
+	    DHCP_OPTIONS_COOKIE_LEN) != 0)
+		return (length);
+	p = packet->options + DHCP_OPTIONS_COOKIE_LEN;
+
+	for (i = 0; i < (u_int)optlen && *p != DHO_END;) {
+		if (*p == DHO_PAD)
+			j = 1;
+		else
+			j = p[1] + 2;
+
+		if ((i + j) > (u_int)optlen) {
+			warning("truncated dhcp options");
+			break;
+		}
+
+		/* Revert any other relay agent information */
+		if (*p == DHO_RELAY_AGENT_INFORMATION) {
+			if (to != NULL) {
+				/* Check the relay agent information */
+				railen = 8 + sizeof(struct in_addr);
+				if (j >= railen &&
+				    p[1] == (railen - 2) &&
+				    p[2] == RAI_CIRCUIT_ID &&
+				    p[3] == 2 &&
+				    p[4] == (u_int8_t)(info->index << 8) &&
+				    p[5] == (info->index & 0xff) &&
+				    p[6] == RAI_REMOTE_ID &&
+				    p[7] == sizeof(*to))
+					memcpy(to, p + 8, sizeof(*to));
+
+				/* It should be the last option */
+				memset(p, 0, j);
+				*p = DHO_END;
+			} else {
+				/* Discard invalid option from a client */
+				if (!packet->giaddr.s_addr)
+					return (-1);
+			}
+			return (length);
+		}
+
+		p += j;
+		i += j;
+
+		if (from != NULL && (*p == DHO_END || (i >= optlen))) {
+			j = 8 + sizeof(*from);
+			if ((i + j) > (u_int)maxlen) {
+				warning("skipping agent information");
+				break;
+			}
+
+			/* Append the relay agent information if it fits */
+			p[0] = DHO_RELAY_AGENT_INFORMATION;
+			p[1] = j - 2;
+			p[2] = RAI_CIRCUIT_ID;
+			p[3] = 2;
+			p[4] = info->index << 8;
+			p[5] = info->index & 0xff;
+			p[6] = RAI_REMOTE_ID;
+			p[7] = sizeof(*from);
+			memcpy(p + 8, from, sizeof(*from));
+
+			/* Do we need to increase the packet length? */
+			grow = j + 1 - (optlen - i);
+			if (grow > 0)
+				length += grow;
+			p += j;
+
+			*p = DHO_END;
+			break;
+		}
+	}
+
+	return (length);
 }

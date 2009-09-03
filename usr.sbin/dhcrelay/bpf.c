@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.6 2008/09/15 20:39:21 claudio Exp $ */
+/*	$OpenBSD: bpf.c,v 1.7 2009/09/03 11:56:49 reyk Exp $ */
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -45,6 +45,8 @@
 #include <sys/uio.h>
 
 #include <net/bpf.h>
+#include <net/if_types.h>
+
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
@@ -126,6 +128,41 @@ struct bpf_insn dhcp_bpf_filter[] = {
 
 int dhcp_bpf_filter_len = sizeof(dhcp_bpf_filter) / sizeof(struct bpf_insn);
 
+/*
+ * Packet filter program: encapsulated 'ip and udp and dst port SERVER_PORT'
+ */
+struct bpf_insn dhcp_bpf_efilter[] = {
+	/* Make sure this is an encapsulated AF_INET packet... */
+	BPF_STMT(BPF_LD + BPF_W + BPF_ABS, 0),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, AF_INET << 24, 0, 10),
+
+	/* Make sure it's an IPIP packet... */
+	BPF_STMT(BPF_LD + BPF_B + BPF_ABS, 21),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_IPIP, 0, 8),
+
+	/* Make sure it's an encapsulated UDP packet... */
+	BPF_STMT(BPF_LD + BPF_B + BPF_ABS, 41),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 6),
+
+	/* Make sure this isn't a fragment... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 38),
+	BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 4, 0),
+
+	/* Get the IP header length... */
+	BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, 32),
+
+	/* Make sure it's to the right port... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 34),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, SERVER_PORT, 0, 1),
+
+	/* If we passed all the tests, ask for the whole packet. */
+	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
+
+	/* Otherwise, drop it. */
+	BPF_STMT(BPF_RET+BPF_K, 0),
+};
+
+int dhcp_bpf_efilter_len = sizeof(dhcp_bpf_efilter) / sizeof(struct bpf_insn);
 
 /*
  * Packet write filter program: 'ip and udp and src port SERVER_PORT'
@@ -201,9 +238,13 @@ if_register_receive(struct interface_info *info)
 	info->rbuf_len = 0;
 
 	/* Set up the bpf filter program structure. */
-	p.bf_len = dhcp_bpf_filter_len;
-	p.bf_insns = dhcp_bpf_filter;
-
+	if (info->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
+		p.bf_len = dhcp_bpf_efilter_len;
+		p.bf_insns = dhcp_bpf_efilter;
+	} else {
+		p.bf_len = dhcp_bpf_filter_len;
+		p.bf_insns = dhcp_bpf_filter;
+	}
 	if (ioctl(info->rfdesc, BIOCSETF, &p) == -1)
 		error("Can't install packet filter program: %m");
 
@@ -228,6 +269,13 @@ send_packet(struct interface_info *interface,
 	struct iovec iov[2];
 	int result, bufp = 0;
 
+	if (interface->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
+		socklen_t slen = sizeof(*to);
+		result = sendto(server_fd, raw, len, 0,
+		    (struct sockaddr *)to, slen);
+		goto done;
+	}
+
 	/* Assemble the headers... */
 	assemble_hw_header(interface, buf, &bufp, hto);
 	assemble_udp_ip_header(interface, buf, &bufp, from.s_addr,
@@ -240,6 +288,7 @@ send_packet(struct interface_info *interface,
 	iov[1].iov_len = len;
 
 	result = writev(interface->wfdesc, iov, 2);
+ done:
 	if (result == -1)
 		warning("send_packet: %m");
 	return (result);
