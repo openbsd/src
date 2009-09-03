@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.565 2009/09/03 12:12:37 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.566 2009/09/03 12:16:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3882,7 +3882,7 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 		problems++;
 	}
 	if ((!TAILQ_EMPTY(&r->nat.list) ||
-	    !(r->rt || TAILQ_EMPTY(&r->rdr.list)))  &&
+	    (!r->rt && !TAILQ_EMPTY(&r->rdr.list)))  &&
 	    r->action != PF_MATCH && !r->keep_state) {
 		yyerror("nat-to and rdr-to require keep state");
 		problems++;
