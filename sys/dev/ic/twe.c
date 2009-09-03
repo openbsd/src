@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.30 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: twe.c,v 1.31 2009/09/03 10:58:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -793,6 +793,9 @@ twe_scsi_cmd(xs)
 	if (target >= TWE_MAX_UNITS || !sc->sc_hdr[target].hd_present ||
 	    link->lun != 0) {
 		xs->error = XS_DRIVER_STUFFUP;
+		lock = TWE_LOCK(sc);
+		scsi_done(xs);
+		TWE_UNLOCK(sc, lock);
 		return (COMPLETE);
 	}
 
@@ -849,6 +852,9 @@ twe_scsi_cmd(xs)
 
 	case PREVENT_ALLOW:
 		TWE_DPRINTF(TWE_D_CMD, ("PREVENT/ALLOW "));
+		lock = TWE_LOCK(sc);
+		scsi_done(xs);
+		TWE_UNLOCK(sc, lock);
 		return (COMPLETE);
 
 	case READ_COMMAND:
@@ -943,6 +949,10 @@ twe_scsi_cmd(xs)
 		    xs->cmd->opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
 	}
+
+	lock = TWE_LOCK(sc);
+	scsi_done(xs);
+	TWE_UNLOCK(sc, lock);
 
 	return (COMPLETE);
 }
