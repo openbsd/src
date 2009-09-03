@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.6 2009/09/02 02:40:43 marex Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.7 2009/09/03 18:39:08 marex Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -674,11 +674,8 @@ pxammc_intr_data(struct pxammc_softc *sc)
 void
 pxammc_intr_done(struct pxammc_softc *sc)
 {
-	u_int32_t status;
-
-	status = CSR_READ_4(sc, MMC_STAT);
 	DPRINTF(1,("%s: status %b\n", sc->sc_dev.dv_xname,
-	    status, MMC_STAT_STR));
+	    CSR_READ_4(sc, MMC_STAT), MMC_STAT_STR));
 
 	CSR_SET_4(sc, MMC_I_MASK, MMC_I_TXFIFO_WR_REQ |
 	    MMC_I_RXFIFO_RD_REQ | MMC_I_DATA_TRAN_DONE |
