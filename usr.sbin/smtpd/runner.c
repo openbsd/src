@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.63 2009/08/27 11:37:30 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.64 2009/09/03 08:19:13 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -126,7 +126,7 @@ runner_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("runner_dispatch_parent: imsg_get error");
+			fatal("runner_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -174,7 +174,7 @@ runner_dispatch_control(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("runner_dispatch_control: imsg_get error");
+			fatal("runner_dispatch_control: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -245,7 +245,7 @@ runner_dispatch_queue(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("runner_dispatch_queue: imsg_get error");
+			fatal("runner_dispatch_queue: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -299,7 +299,7 @@ runner_dispatch_mda(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("runner_dispatch_mda: imsg_get error");
+			fatal("runner_dispatch_mda: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -344,7 +344,7 @@ runner_dispatch_mta(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("runner_dispatch_mta: imsg_get error");
+			fatal("runner_dispatch_mta: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -390,7 +390,7 @@ runner_dispatch_lka(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("runner_dispatch_lka: imsg_get error");
+			fatal("runner_dispatch_lka: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -435,7 +435,7 @@ runner_dispatch_smtp(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("runner_dispatch_smtp: imsg_get error");
+			fatal("runner_dispatch_smtp: imsg_get error");
 		if (n == 0)
 			break;
 

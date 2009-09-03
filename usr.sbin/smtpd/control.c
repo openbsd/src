@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.35 2009/06/07 05:56:25 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.36 2009/09/03 08:19:13 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -512,7 +512,7 @@ control_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("control_dispatch_parent: imsg_get error");
+			fatal("control_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -575,7 +575,7 @@ control_dispatch_lka(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("control_dispatch_lka: imsg_get error");
+			fatal("control_dispatch_lka: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -620,7 +620,7 @@ control_dispatch_mfa(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("control_dispatch_mfa: imsg_get error");
+			fatal("control_dispatch_mfa: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -665,7 +665,7 @@ control_dispatch_queue(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("control_dispatch_queue: imsg_get error");
+			fatal("control_dispatch_queue: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -710,7 +710,7 @@ control_dispatch_runner(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("control_dispatch_runner: imsg_get error");
+			fatal("control_dispatch_runner: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -773,7 +773,7 @@ control_dispatch_smtp(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("control_dispatch_smtp: imsg_get error");
+			fatal("control_dispatch_smtp: imsg_get error");
 		if (n == 0)
 			break;
 

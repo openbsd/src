@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.83 2009/08/27 09:21:28 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.84 2009/09/03 08:19:13 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -261,7 +261,7 @@ parent_dispatch_lka(int imsgfd, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("parent_dispatch_lka: imsg_get error");
+			fatal("parent_dispatch_lka: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -324,7 +324,7 @@ parent_dispatch_mfa(int fd, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("parent_dispatch_mfa: imsg_get error");
+			fatal("parent_dispatch_mfa: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -369,7 +369,7 @@ parent_dispatch_mta(int fd, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("parent_dispatch_mta: imsg_get error");
+			fatal("parent_dispatch_mta: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -414,7 +414,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("parent_dispatch_mda: imsg_get error");
+			fatal("parent_dispatch_mda: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -560,7 +560,7 @@ parent_dispatch_smtp(int fd, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("parent_dispatch_smtp: imsg_get error");
+			fatal("parent_dispatch_smtp: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -620,7 +620,7 @@ parent_dispatch_runner(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("parent_dispatch_runner: imsg_get error");
+			fatal("parent_dispatch_runner: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -670,7 +670,7 @@ parent_dispatch_control(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("parent_dispatch_control: imsg_get error");
+			fatal("parent_dispatch_control: imsg_get error");
 		if (n == 0)
 			break;
 

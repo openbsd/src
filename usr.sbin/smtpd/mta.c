@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.69 2009/08/26 16:40:19 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.70 2009/09/03 08:19:13 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -100,7 +100,7 @@ mta_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("mta_dispatch_parent: imsg_get error");
+			fatal("mta_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -182,7 +182,7 @@ mta_dispatch_lka(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("mta_dispatch_lka: imsg_get error");
+			fatal("mta_dispatch_lka: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -298,7 +298,7 @@ mta_dispatch_queue(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("mta_dispatch_queue: imsg_get error");
+			fatal("mta_dispatch_queue: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -365,7 +365,7 @@ mta_dispatch_runner(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("mta_dispatch_runner: imsg_get error");
+			fatal("mta_dispatch_runner: imsg_get error");
 		if (n == 0)
 			break;
 

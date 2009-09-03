@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.15 2009/08/08 00:02:22 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.16 2009/09/03 08:19:13 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -155,7 +155,7 @@ parent_dispatch_dns(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("parent_dispatch_dns: imsg_get error");
+			fatal("parent_dispatch_dns: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -255,7 +255,7 @@ dns_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("dns_dispatch_parent: imsg_get error");
+			fatal("dns_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 

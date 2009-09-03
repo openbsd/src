@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.26 2009/09/02 12:47:06 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.27 2009/09/03 08:19:13 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -85,7 +85,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("mda_dispatch_parent: imsg_get error");
+			fatal("mda_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -212,7 +212,7 @@ mda_dispatch_queue(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("mda_dispatch_queue: imsg_get error");
+			fatal("mda_dispatch_queue: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -257,7 +257,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatalx("mda_dispatch_runner: imsg_get error");
+			fatal("mda_dispatch_runner: imsg_get error");
 		if (n == 0)
 			break;
 
