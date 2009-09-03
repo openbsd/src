@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.4 2009/08/17 14:23:09 jsing Exp $	*/
+/*	$OpenBSD: net.c,v 1.5 2009/09/03 16:49:13 jsing Exp $	*/
 /*	$NetBSD: net.c,v 1.1 2000/08/20 14:58:38 mrg Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
 
+#include "ofdev.h"
 
 static int net_mountroot_bootparams(void);
 static int net_mountroot_bootp(void);
