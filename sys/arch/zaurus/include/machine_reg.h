@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine_reg.h,v 1.1 2008/11/25 14:55:44 drahn Exp $	*/
+/*	$OpenBSD: machine_reg.h,v 1.2 2009/09/03 21:40:29 marex Exp $	*/
 /*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -79,5 +79,6 @@
 #define PXA_USB_CONNECT_PIN	41	/* connection interrupt */
 #define PXA_USB_PULLUP_PIN	45	/* show/hide device presence */
 #define GPIO_HP_IN_C3000	116	/* headphone jack */
+#define GPIO_MMC_DETECT	9	/* card detect */
 
 #endif /* _ZAURUS_REG_H */

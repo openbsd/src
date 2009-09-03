@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.8 2009/09/03 20:17:25 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.9 2009/09/03 21:40:29 marex Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -44,7 +44,6 @@
 #include <dev/sdmmc/sdmmcvar.h>
 
 /* GPIO pins */
-#define PXAMMC_CARD_DETECT	9 /* XXX zaurus-specific */
 #define PXAMMC_MMCLK		32
 #define PXAMMC_MMCMD		112
 #define PXAMMC_MMDAT0		92
@@ -135,8 +134,8 @@ pxammc_attach(struct pxammc_softc *sc, void *aux)
 	 */
 	s = splsdmmc();
 
-	pxa2x0_gpio_set_function(PXAMMC_CARD_DETECT, GPIO_IN);
-	sc->sc_card_ih = pxa2x0_gpio_intr_establish(PXAMMC_CARD_DETECT,
+	pxa2x0_gpio_set_function(sc->sc_gpio_detect, GPIO_IN);
+	sc->sc_card_ih = pxa2x0_gpio_intr_establish(sc->sc_gpio_detect,
 	    IST_EDGE_BOTH, IPL_SDMMC, pxammc_card_intr, sc, "mmccd");
 	if (sc->sc_card_ih == NULL) {
 		splx(s);
@@ -255,7 +254,8 @@ pxammc_host_ocr(sdmmc_chipset_handle_t sch)
 int
 pxammc_card_detect(sdmmc_chipset_handle_t sch)
 {
-	return !pxa2x0_gpio_get_bit(PXAMMC_CARD_DETECT);
+	struct pxammc_softc *sc = sch;
+	return !pxa2x0_gpio_get_bit(sc->sc_gpio_detect);
 }
 
 int
