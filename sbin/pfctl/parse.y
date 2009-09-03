@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.564 2009/09/02 13:28:03 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.565 2009/09/03 12:12:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3881,7 +3881,8 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 		    "synproxy state or modulate state");
 		problems++;
 	}
-	if ((!TAILQ_EMPTY(&r->nat.list) || !TAILQ_EMPTY(&r->rdr.list)) &&
+	if ((!TAILQ_EMPTY(&r->nat.list) ||
+	    !(r->rt || TAILQ_EMPTY(&r->rdr.list)))  &&
 	    r->action != PF_MATCH && !r->keep_state) {
 		yyerror("nat-to and rdr-to require keep state");
 		problems++;
@@ -3890,7 +3891,7 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 		yyerror("nat-to can only be used outbound");
 		problems++;
 	}
-	if (!TAILQ_EMPTY(&r->rdr.list) && r->direction != PF_IN) {
+	if (!r->rt && !TAILQ_EMPTY(&r->rdr.list) && r->direction != PF_IN) {
 		yyerror("rdr-to can only be used inbound");
 		problems++;
 	}
