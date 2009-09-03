@@ -6667,6 +6667,7 @@
 ./usr/share/man/cat9/workq_add_task.0
 ./usr/share/man/cat9/workq_create.0
 ./usr/share/man/cat9/workq_destroy.0
+./usr/share/man/cat9/workq_queue_task.0
 ./usr/share/man/cat9/writedisklabel.0
 ./usr/share/misc/getopt
 ./usr/share/misc/gprof.callg
