@@ -1,4 +1,4 @@
-.\"	$OpenBSD: workq_add_task.9,v 1.13 2009/09/02 14:17:56 dlg Exp $
+.\"	$OpenBSD: workq_add_task.9,v 1.14 2009/09/03 15:10:39 jmc Exp $
 .\"
 .\" Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2009 $
+.Dd $Mdocdate: September 3 2009 $
 .Dt WORKQ_ADD_TASK 9
 .Os
 .Sh NAME
@@ -78,9 +78,9 @@ will return
 .Fn workq_queue_task
 adds a task to the workq specified by the
 .Pa wq
-argument using the memory provided by the
+argument, using the memory provided by the
 .Pa wqt
-argument to store that tasks entry on the workq.
+argument to store that task's entry on the workq.
 The
 .Pa flags ,
 .Pa func ,
