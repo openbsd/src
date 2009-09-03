@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.171 2009/08/17 13:04:05 martynas Exp $ */
+/* $OpenBSD: softraid.c,v 1.172 2009/09/03 13:20:29 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -319,7 +319,6 @@ sr_meta_probe(struct sr_discipline *sd, dev_t *dt, int no_chunk)
 			if (error) {
 				DNPRINTF(SR_D_META,"%s: sr_meta_probe can't "
 				    "open %s\n", DEVNAME(sc), devname);
-				/* dev isn't open but will be closed anyway */
 				vput(vn);
 				goto unwind;
 			}
@@ -3097,7 +3096,6 @@ void
 sr_chunks_unwind(struct sr_softc *sc, struct sr_chunk_head *cl)
 {
 	struct sr_chunk		*ch_entry, *ch_next;
-	dev_t			dev;
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_chunks_unwind\n", DEVNAME(sc));
 
@@ -3108,10 +3106,9 @@ sr_chunks_unwind(struct sr_softc *sc, struct sr_chunk_head *cl)
 	    ch_entry != SLIST_END(cl); ch_entry = ch_next) {
 		ch_next = SLIST_NEXT(ch_entry, src_link);
 
-		dev = ch_entry->src_dev_mm;
 		DNPRINTF(SR_D_IOCTL, "%s: sr_chunks_unwind closing: %s\n",
 		    DEVNAME(sc), ch_entry->src_devname);
-		if (dev != NODEV) {
+		if (ch_entry->src_vn) {
 			VOP_CLOSE(ch_entry->src_vn, FREAD | FWRITE, NOCRED, 0);
 			vput(ch_entry->src_vn);
 		}
