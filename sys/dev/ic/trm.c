@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.12 2009/02/16 21:19:07 miod Exp $
+/*	$OpenBSD: trm.c,v 1.13 2009/09/03 12:12:18 dlg Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -354,12 +354,18 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 		printf("%s: target=%d >= %d\n",
 		    sc->sc_device.dv_xname, target, TRM_MAX_TARGETS);
 		xs->error = XS_DRIVER_STUFFUP;
+		intflag = splbio();
+		scsi_done(xs);
+		splx(intflag);
 		return COMPLETE;
 	}
 	if (lun >= TRM_MAX_LUNS) {
 		printf("%s: lun=%d >= %d\n",
 		    sc->sc_device.dv_xname, lun, TRM_MAX_LUNS);
 		xs->error = XS_DRIVER_STUFFUP;
+		intflag = splbio();
+		scsi_done(xs);
+		splx(intflag);
 		return COMPLETE;
 	}
 
@@ -367,6 +373,9 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	if (pDCB == NULL) {
 		/* Removed as a result of INQUIRY proving no device present */
 		xs->error = XS_DRIVER_STUFFUP;
+		intflag = splbio();
+		scsi_done(xs);
+		splx(intflag);
 		return COMPLETE;
  	}
  
@@ -377,6 +386,9 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 #endif
 		trm_reset(sc);
 		xs->error = XS_NOERROR;
+		intflag = splbio();
+		scsi_done(xs);
+		splx(intflag);
 		return COMPLETE;
 	}
 
@@ -425,6 +437,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 			 * free SRB
 			 */
 			TAILQ_INSERT_HEAD(&sc->freeSRB, pSRB, link);
+			scsi_done(xs);
 			splx(intflag);
 			return COMPLETE;
 		}
@@ -474,6 +487,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->timeout == 0)
 		trm_timeout(pSRB);
 
+	scsi_done(xs);
 	splx(intflag);
 	return COMPLETE;
 }
