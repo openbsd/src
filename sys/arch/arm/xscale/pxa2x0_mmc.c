@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.7 2009/09/03 18:39:08 marex Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.8 2009/09/03 20:17:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -395,7 +395,7 @@ pxammc_exec_command(sdmmc_chipset_handle_t sch,
 		CSR_WRITE_4(sc, MMC_NUMBLK, numblk);
 
 		/* Enable data interrupts. */
-		CSR_CLR_4(sc, MMC_I_MASK, MMC_I_DATA_TRAN_DONE |
+		CSR_CLR_4(sc, MMC_I_MASK,
 		    MMC_I_RXFIFO_RD_REQ | MMC_I_TXFIFO_WR_REQ |
 		    MMC_I_DAT_ERR);
 
@@ -524,11 +524,6 @@ pxammc_intr(void *arg)
 			goto end;
 	}
 
-	if (ISSET(status, MMC_I_TXFIFO_WR_REQ | MMC_I_RXFIFO_RD_REQ)) {
-		pxammc_intr_data(sc);
-		CLR(status, MMC_I_TXFIFO_WR_REQ | MMC_I_RXFIFO_RD_REQ);
-	}
-
 	if (ISSET(status, MMC_I_DAT_ERR)) {
 		sc->sc_cmd->c_error = EIO;
 		pxammc_intr_done(sc);
@@ -546,6 +541,11 @@ pxammc_intr(void *arg)
 		pxammc_intr_done(sc);
 		CSR_SET_4(sc, MMC_I_MASK, MMC_I_DATA_TRAN_DONE);
 		CLR(status, MMC_I_DATA_TRAN_DONE);
+	}
+
+	if (ISSET(status, MMC_I_TXFIFO_WR_REQ | MMC_I_RXFIFO_RD_REQ)) {
+		pxammc_intr_data(sc);
+		CLR(status, MMC_I_TXFIFO_WR_REQ | MMC_I_RXFIFO_RD_REQ);
 	}
 
 end:
@@ -651,10 +651,12 @@ pxammc_intr_data(struct pxammc_softc *sc)
 
 		if (cmd->c_resid > 0)
 			CSR_CLR_4(sc, MMC_I_MASK, MMC_I_RXFIFO_RD_REQ);
-		else
+		else {
 			CSR_SET_4(sc, MMC_I_MASK, MMC_I_RXFIFO_RD_REQ);
+			CSR_CLR_4(sc, MMC_I_MASK, MMC_I_DATA_TRAN_DONE);
+		}
 	} else {
-		int short_xfer = n < 32;
+		int short_xfer = (n != 0 && n != 32);
 
 		while (n-- > 0)
 			CSR_WRITE_1(sc, MMC_TXFIFO, *cmd->c_buf++);
@@ -663,8 +665,10 @@ pxammc_intr_data(struct pxammc_softc *sc)
 
 		if (cmd->c_resid > 0)
 			CSR_CLR_4(sc, MMC_I_MASK, MMC_I_TXFIFO_WR_REQ);
-		else
+		else {
 			CSR_SET_4(sc, MMC_I_MASK, MMC_I_TXFIFO_WR_REQ);
+			CSR_CLR_4(sc, MMC_I_MASK, MMC_I_DATA_TRAN_DONE);
+		}
 	}
 }
 
