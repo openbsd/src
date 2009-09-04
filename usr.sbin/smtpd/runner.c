@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.66 2009/09/04 13:33:00 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.67 2009/09/04 19:11:32 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -440,11 +440,18 @@ runner_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_SMTP_ENQUEUE:
-			if (imsg.fd == -1 || ! bounce_session(env, imsg.fd,
-			    imsg.data))
-				message_reset_flags(imsg.data);
+		case IMSG_SMTP_ENQUEUE: {
+			struct message	*m = imsg.data;
+
+			IMSG_SIZE_CHECK(m);
+
+			if (imsg.fd < 0 || ! bounce_session(env, imsg.fd, m)) {
+				m->status = S_MESSAGE_TEMPFAILURE;
+				queue_message_update(m);
+			}
 			break;
+		}
+
 		default:
 			log_warnx("runner_dispatch_smtp: got imsg %d",
 			    imsg.hdr.type);
