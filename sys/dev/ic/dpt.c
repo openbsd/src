@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.20 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.21 2009/09/04 04:57:14 miod Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -902,8 +902,10 @@ dpt_scsi_cmd(xs)
 
 	/* Cmds must be no more than 12 bytes for us */
 	if (xs->cmdlen > 12) {
-		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
+		xs->flags |= ITSDONE;
+		scsi_done(xs);
+		splx(s);
 		return (COMPLETE);
 	}
 
@@ -914,8 +916,10 @@ dpt_scsi_cmd(xs)
 #ifdef __OpenBSD__
 		if ((xs->flags & SCSI_RESET) != 0) {
 #endif /* __OpenBSD__ */
-			splx(s);
 			xs->error = XS_DRIVER_STUFFUP;
+			xs->flags |= ITSDONE;
+			scsi_done(xs);
+			splx(s);
 			return (COMPLETE);
 		}
 
@@ -1001,6 +1005,10 @@ dpt_scsi_cmd(xs)
 		
 			xs->error = XS_DRIVER_STUFFUP;
 			dpt_free_ccb(sc, ccb);
+			xs->flags |= ITSDONE;
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
 			return (COMPLETE);
 		}
 

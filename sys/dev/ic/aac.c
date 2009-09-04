@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.39 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: aac.c,v 1.40 2009/09/04 04:57:14 miod Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -111,7 +111,9 @@ int	aac_alloc_commands(struct aac_softc *);
 void	aac_free_commands(struct aac_softc *);
 void	aac_unmap_command(struct aac_command *);
 
+#if 0
 int	aac_raw_scsi_cmd(struct scsi_xfer *);
+#endif
 int	aac_scsi_cmd(struct scsi_xfer *);
 void	aac_startio(struct aac_softc *);
 void	aac_startup(struct aac_softc *);
@@ -128,9 +130,11 @@ struct scsi_adapter aac_switch = {
 	aac_scsi_cmd, aacminphys, 0, 0,
 };
 
+#if 0
 struct scsi_adapter aac_raw_switch = {
 	aac_raw_scsi_cmd, aacminphys, 0, 0,
 };
+#endif
 
 struct scsi_device aac_dev = {
 	NULL, NULL, NULL, NULL
@@ -2505,19 +2509,27 @@ aacminphys(struct buf *bp, struct scsi_link *sl)
 	minphys(bp);
 }
 
+#if 0
 int
 aac_raw_scsi_cmd(struct scsi_xfer *xs)
 {
 #ifdef AAC_DEBUG
 	struct aac_softc *sc = xs->sc_link->adapter_softc;
 #endif
+	int s;
+
 	AAC_DPRINTF(AAC_D_CMD, ("%s: aac_raw_scsi_cmd\n",
 				sc->aac_dev.dv_xname));
 
 	/* XXX Not yet implemented */
 	xs->error = XS_DRIVER_STUFFUP;
+	xs->flags |= ITSDONE;
+	s = splbio();
+	scsi_done(xs);
+	splx(s);
 	return (COMPLETE);
 }
+#endif
 
 int
 aac_scsi_cmd(struct scsi_xfer *xs)
