@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.64 2009/09/03 08:19:13 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.65 2009/09/04 11:44:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -695,6 +695,7 @@ runner_process_runqueue(struct smtpd *env)
 			fatal("runner_process_runqueue: calloc");
 		*messagep = message;
 
+		messagep->batch_id = 0;
 		batchp = batch_lookup(env, messagep);
 		if (batchp != NULL)
 			messagep->batch_id = batchp->id;
@@ -1000,7 +1001,7 @@ batch_lookup(struct smtpd *env, struct message *message)
 	/* We only support delivery of one message at a time, in MDA
 	 * and bounces messages.
 	 */
-	if (message->type & (T_BOUNCE_MESSAGE|T_MDA_MESSAGE))
+	if (message->type == T_BOUNCE_MESSAGE || message->type == T_MDA_MESSAGE)
 		return NULL;
 
 	/* If message->batch_id != 0, we can retrieve batch by id */
