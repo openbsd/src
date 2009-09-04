@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.28 2009/09/04 11:49:23 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.29 2009/09/04 16:28:42 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -422,6 +422,15 @@ mda_store(struct batch *b)
 		return 0;
 	if ((src = fdopen(b->datafd, "r")) == NULL)
 		return 0;
+
+	/* add Return-Path to preserve envelope sender */
+	/* XXX: remove user provided Return-Path, if any */
+	if (b->message.sender.user[0] &&
+	    b->message.sender.domain[0]) {
+		fprintf(dst, "Return-Path: %s@%s\n",
+		    b->message.sender.user,
+		    b->message.sender.domain);
+	}
 	 
 	/* add Delivered-To to help loop detection */
 	fprintf(dst, "Delivered-To: %s@%s\n",
