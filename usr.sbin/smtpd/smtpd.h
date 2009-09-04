@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.138 2009/09/02 12:47:06 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.139 2009/09/04 11:49:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -145,8 +145,7 @@ enum imsg_type {
 	IMSG_LKA_MAIL,
 	IMSG_LKA_RCPT,
 	IMSG_LKA_SECRET,
-	IMSG_MDA_MAILBOX_FILE,
-	IMSG_MDA_MESSAGE_FILE,
+	IMSG_MDA_FINALIZE,
 	IMSG_MFA_RCPT,
 	IMSG_MFA_MAIL,
 
@@ -175,7 +174,8 @@ enum imsg_type {
 	IMSG_PARENT_FORWARD_OPEN,
 	IMSG_PARENT_MAILBOX_OPEN,
 	IMSG_PARENT_MESSAGE_OPEN,
-	IMSG_PARENT_MAILBOX_RENAME,
+	IMSG_PARENT_MAILDIR_RENAME,
+	IMSG_PARENT_MAILDIR_FAIL,
 	IMSG_PARENT_STATS,
 
 	IMSG_PARENT_AUTHENTICATE,
@@ -455,21 +455,6 @@ enum batch_type {
 	T_BOUNCE_BATCH		= 0x4
 };
 
-enum child_type {
-	CHILD_INVALID,
-	CHILD_DAEMON,
-	CHILD_MDA,
-	CHILD_ENQUEUE_OFFLINE
-};
-
-struct child {
-	SPLAY_ENTRY(child)	entry;
-
-	pid_t			pid;
-	enum child_type		type;
-	enum smtp_proc_type	title;
-};
-
 struct batch {
 	SPLAY_ENTRY(batch)	 b_nodes;
 
@@ -490,7 +475,27 @@ struct batch {
 	FILE			*messagefp;
 	TAILQ_HEAD(, message)	 messages;
 
+	int			 mboxfd;
+	int			 datafd;
+	int			 cleanup_parent;
+
 	enum batch_status	 status;
+};
+
+enum child_type {
+	CHILD_INVALID,
+	CHILD_DAEMON,
+	CHILD_MDA,
+	CHILD_ENQUEUE_OFFLINE
+};
+
+struct child {
+	SPLAY_ENTRY(child)	 entry;
+
+	pid_t			 pid;
+	enum child_type		 type;
+	enum smtp_proc_type	 title;
+	struct batch		 mda_batch;
 };
 
 enum session_state {
@@ -881,13 +886,6 @@ void		 session_respond(struct session *, char *, ...)
 void		 session_bufferevent_new(struct session *);
 
 SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
-
-/* store.c */
-int file_copy(FILE *, FILE *, struct path *, enum action_type, int);
-int store_write_header(struct batch *, struct message *, FILE *, int);
-int store_write_message(struct batch *, struct message *);
-int store_write_daemon(struct batch *, struct message *);
-int store_message(struct batch *, struct message *);
 
 /* config.c */
 #define		 PURGE_LISTENERS	0x01

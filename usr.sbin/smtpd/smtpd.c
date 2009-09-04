@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.84 2009/09/03 08:19:13 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.85 2009/09/04 11:49:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -65,7 +65,6 @@ void		 parent_sig_handler(int, short, void *);
 int		 parent_open_message_file(struct batch *);
 int		 parent_mailbox_open(char *, struct passwd *, struct batch *);
 int		 parent_filename_open(char *, struct passwd *, struct batch *);
-int		 parent_mailfile_rename(struct batch *, struct path *);
 int		 parent_maildir_open(char *, struct passwd *, struct batch *);
 int		 parent_maildir_init(struct passwd *, char *);
 int		 parent_external_mda(char *, struct passwd *, struct batch *);
@@ -76,9 +75,13 @@ int		 path_starts_with(char *, char *);
 
 void		 fork_peers(struct smtpd *);
 
-void		 child_add(struct smtpd *, pid_t, int, int);
+struct child	*child_add(struct smtpd *, pid_t, int, int);
 void		 child_del(struct smtpd *, pid_t);
 struct child	*child_lookup(struct smtpd *, pid_t);
+
+void		 parent_mda_permfail(struct smtpd *, struct batch *);
+void		 parent_mda_tempfail(struct smtpd *, struct batch *);
+void		 parent_mda_success(struct smtpd *, struct batch *);
 
 extern char	**environ;
 
@@ -385,7 +388,7 @@ parent_dispatch_mta(int fd, short event, void *p)
 }
 
 void
-parent_dispatch_mda(int fd, short event, void *p)
+parent_dispatch_mda(int imsgfd, short event, void *p)
 {
 	struct smtpd		*env = p;
 	struct imsgev		*iev;
@@ -426,7 +429,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 			char *pw_name;
 			char *file;
 			u_int8_t i;
-			int desc;
+			int fd;
 			struct action_handler {
 				enum action_type action;
 				int (*handler)(char *, struct passwd *, struct batch *);
@@ -439,6 +442,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 
 			IMSG_SIZE_CHECK(batchp);
 
+			batchp->env = env;
 			path = &batchp->message.recipient;
 			if (batchp->type & T_BOUNCE_BATCH) {
 				path = &batchp->message.sender;
@@ -461,43 +465,48 @@ parent_dispatch_mda(int fd, short event, void *p)
 			pw = getpwnam(pw_name);
 			if (pw == NULL) {
 				if (errno)
-					batchp->message.status |= S_MESSAGE_TEMPFAILURE;
+					parent_mda_tempfail(env, batchp);
 				else
-					batchp->message.status |= S_MESSAGE_PERMFAILURE;
-				imsg_compose_event(iev, IMSG_MDA_MAILBOX_FILE, 0, 0,
-				    -1, batchp, sizeof(struct batch));
+					parent_mda_permfail(env, batchp);
 				break;
 			}
 
 			if (setegid(pw->pw_gid) || seteuid(pw->pw_uid))
 				fatal("privdrop failed");
 
-			desc = action_hdl_table[i].handler(file, pw, batchp);
-			imsg_compose_event(iev, IMSG_MDA_MAILBOX_FILE, 0, 0,
-			    desc, batchp, sizeof(struct batch));
+			fd = action_hdl_table[i].handler(file, pw, batchp);
 
 			if (setegid(0) || seteuid(0))
-				fatal("privdrop failed");
+				fatal("privraise failed");
 
+			if (fd == -1)
+				parent_mda_tempfail(env, batchp);
+			else
+				imsg_compose_event(iev,
+				    IMSG_PARENT_MAILBOX_OPEN, 0, 0, fd, batchp,
+				    sizeof(*batchp));
 			break;
 		}
 		case IMSG_PARENT_MESSAGE_OPEN: {
 			struct batch *batchp = imsg.data;
-			int desc;
+			int fd;
 
 			IMSG_SIZE_CHECK(batchp);
 
-			desc = parent_open_message_file(batchp);
+			fd = parent_open_message_file(batchp);
 
-			imsg_compose_event(iev, IMSG_MDA_MESSAGE_FILE, 0, 0,
-			    desc, batchp, sizeof(struct batch));
+			imsg_compose_event(iev, IMSG_PARENT_MESSAGE_OPEN,
+			    0, 0, fd, batchp, sizeof(struct batch));
 
 			break;
 		}
-		case IMSG_PARENT_MAILBOX_RENAME: {
-			struct batch *batchp = imsg.data;
-			struct path *path;
-			struct passwd *pw;
+		case IMSG_PARENT_MAILDIR_FAIL:
+		case IMSG_PARENT_MAILDIR_RENAME: {
+			char		 tmp[MAXPATHLEN], new[MAXPATHLEN];
+			struct batch	*batchp = imsg.data;
+			struct path	*path;
+			struct passwd	*pw;
+			int		 ret;
 
 			IMSG_SIZE_CHECK(batchp);
 
@@ -506,18 +515,39 @@ parent_dispatch_mda(int fd, short event, void *p)
 				path = &batchp->message.sender;
 			}
 
+			errno = 0;
 			pw = getpwnam(path->pw_name);
-			if (pw == NULL)
-				break;			
+			if (pw == NULL) {
+				if (errno)
+					parent_mda_tempfail(env, batchp);
+				else
+					parent_mda_permfail(env, batchp);
+				break;
+			}
+
+			if (! bsnprintf(tmp, sizeof(tmp), "%s/tmp/%s",
+				path->rule.r_value.path, batchp->message.message_uid))
+				fatal("parent_dispatch_mda: snprintf");
+			if (! bsnprintf(new, sizeof(new), "%s/new/%s",
+				path->rule.r_value.path, batchp->message.message_uid))
+				fatal("parent_dispatch_mda: snprintf");
 
 			if (seteuid(pw->pw_uid) == -1)
 				fatal("privdrop failed");
 
-			parent_mailfile_rename(batchp, path);
+			if (imsg.hdr.type == IMSG_PARENT_MAILDIR_FAIL)
+				ret = -1;
+			else
+				ret = rename(tmp, new);
 
 			if (seteuid(0) == -1)
 				fatal("privraise failed");
 
+			if (ret < 0) {
+				unlink(tmp);
+				parent_mda_tempfail(env, batchp);
+			} else
+				parent_mda_success(env, batchp);
 			break;
 		}
 		default:
@@ -757,10 +787,18 @@ parent_sig_handler(int sig, short event, void *p)
 				break;
 
 			case CHILD_MDA:
-				if (fail)
+				if (WIFSIGNALED(status) &&
+				    WTERMSIG(status) == SIGALRM) {
+					free(cause);
+					asprintf(&cause, "terminated; timeout");
+				}
+				if (fail) {
 					log_warnx("external mda %s", cause);
-				else
+					parent_mda_tempfail(env, &child->mda_batch);
+				} else {
 					log_debug("external mda %s", cause);
+					parent_mda_success(env, &child->mda_batch);
+				}
 				break;
 
 			case CHILD_ENQUEUE_OFFLINE:
@@ -779,7 +817,6 @@ parent_sig_handler(int sig, short event, void *p)
 			}
 
 			child_del(env, child->pid);
-
 			free(cause);
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
 
@@ -964,7 +1001,7 @@ fork_peers(struct smtpd *env)
 	child_add(env, smtp(env), CHILD_DAEMON, PROC_SMTP);
 }
 
-void
+struct child *
 child_add(struct smtpd *env, pid_t pid, int type, int title)
 {
 	struct child	*child;
@@ -978,6 +1015,8 @@ child_add(struct smtpd *env, pid_t pid, int type, int title)
 
 	if (SPLAY_INSERT(childtree, &env->children, child) != NULL)
 		fatalx("child_add: double insert");
+
+	return (child);
 }
 
 void
@@ -1175,10 +1214,8 @@ parent_open_message_file(struct batch *batchp)
 	hval = queue_hash(messagep->message_id);
 
 	if (! bsnprintf(pathname, sizeof(pathname), "%s%s/%d/%s/message",
-		PATH_SPOOL, PATH_QUEUE, hval, batchp->message_id)) {
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
-		return -1;
-	}
+		PATH_SPOOL, PATH_QUEUE, hval, batchp->message_id))
+		fatal("parent_open_message_file: snprintf");
 
 	fd = open(pathname, O_RDONLY);
 	return fd;
@@ -1189,21 +1226,18 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 {
 	pid_t pid;
 	int pipefd[2];
+	struct child *child;
 	char sender[MAX_PATH_SIZE];
 
 	/* This can never happen, but better safe than sorry. */
 	if (! bsnprintf(sender, MAX_PATH_SIZE, "%s@%s",
 		batchp->message.sender.user,
-		batchp->message.sender.domain)) {
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
-		return -1;
-	}
+		batchp->message.sender.domain))
+		fatal("parent_mailbox_open: bogus email length");
 
 	log_debug("executing mail.local");
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefd) == -1) {
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefd) == -1)
 		return -1;
-	}
 
 	/* raise privileges because mail.local needs root to
 	 * deliver to user mailboxes.
@@ -1215,7 +1249,6 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 	if (pid == -1) {
 		close(pipefd[0]);
 		close(pipefd[1]);
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return -1;
 	}
 
@@ -1225,6 +1258,9 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 		close(STDERR_FILENO);
 		dup2(pipefd[1], 0);
 
+		/* avoid hangs by setting a 5m timeout */
+		alarm(300);
+
 		execlp(PATH_MAILLOCAL, "mail.local", "-f", sender, pw->pw_name,
 		    (void *)NULL);
 		_exit(1);
@@ -1233,7 +1269,10 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 	if (seteuid(pw->pw_uid) == -1)
 		fatal("privdrop failed");
 
-	child_add(batchp->env, pid, CHILD_MDA, -1);
+	child = child_add(batchp->env, pid, CHILD_MDA, -1);
+
+	/* Each child relates to a batch; record this relationship. */
+	child->mda_batch = *batchp;
 
 	close(pipefd[1]);
 	return pipefd[0];
@@ -1261,55 +1300,23 @@ parent_maildir_init(struct passwd *pw, char *root)
 int
 parent_maildir_open(char *path, struct passwd *pw, struct batch *batchp)
 {
-	int fd;
 	char tmp[MAXPATHLEN];
 	int mode = O_CREAT|O_RDWR|O_TRUNC|O_SYNC;
 
-	if (! parent_maildir_init(pw, path)) {
-		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
+	if (! parent_maildir_init(pw, path))
 		return -1;
-	}
 
 	if (! bsnprintf(tmp, sizeof(tmp), "%s/tmp/%s", path,
-		batchp->message.message_uid)) {
-		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
+		batchp->message.message_uid))
 		return -1;
-	}
 
-	fd = open(tmp, mode, 0600);
-	if (fd == -1) {
-		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-		return -1;
-	}
-
-	return fd;
-}
-
-int
-parent_mailfile_rename(struct batch *batchp, struct path *path)
-{
-	char srcpath[MAXPATHLEN];
-	char dstpath[MAXPATHLEN];
-
-	if (! bsnprintf(srcpath, sizeof(srcpath), "%s/tmp/%s",
-		path->rule.r_value.path, batchp->message.message_uid) ||
-	    ! bsnprintf(dstpath, sizeof(dstpath), "%s/new/%s",
-		path->rule.r_value.path, batchp->message.message_uid))
-		return 0;
-
-	if (rename(srcpath, dstpath) == -1) {
-		if (unlink(srcpath) == -1)
-			fatal("unlink");
-		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-		return 0;
-	}
-
-	return 1;
+	return open(tmp, mode, 0600);
 }
 
 int
 parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 {
+	struct child *child;
 	pid_t pid;
 	int pipefd[2];
 	arglist args;
@@ -1321,7 +1328,6 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 	if (pipe(pipefd) == -1) {
 		if (errno == ENFILE) {
 			log_warn("parent_external_mda: pipe");
-			batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 			return -1;
 		}
 		fatal("parent_external_mda: pipe");
@@ -1332,7 +1338,6 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 		log_warn("parent_external_mda: fork");
 		close(pipefd[0]);
 		close(pipefd[1]);
-		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
 
@@ -1364,6 +1369,9 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 		if (closefrom(STDERR_FILENO + 1) == -1)
 			fatal("closefrom");
 
+		/* avoid hangs by setting a 5m timeout */
+		alarm(300);
+
 		envp[0] = "PATH=" _PATH_DEFPATH;
 		envp[1] = (char *)NULL;
 		environ = envp;
@@ -1372,7 +1380,10 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 		_exit(1);
 	}
 
-	child_add(batchp->env, pid, CHILD_MDA, -1);
+	child = child_add(batchp->env, pid, CHILD_MDA, -1);
+
+	/* Each child relates to a batch; record this relationship. */
+	child->mda_batch = *batchp;
 
 	close(pipefd[0]);
 	return pipefd[1];
@@ -1496,26 +1507,8 @@ parent_filename_open(char *path, struct passwd *pw, struct batch *batchp)
 
 	fd = open(path, mode, 0600);
 	if (fd == -1) {
-		/* XXX - this needs to be discussed ... */
-		switch (errno) {
-		case ENOTDIR:
-		case ENOENT:
-		case EACCES:
-		case ELOOP:
-		case EROFS:
-		case EDQUOT:
-		case EINTR:
-		case EIO:
-		case EMFILE:
-		case ENFILE:
-		case ENOSPC:
-			batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-			break;
-		case EWOULDBLOCK:
+		if (errno == EWOULDBLOCK)
 			goto lockfail;
-		default:
-			batchp->message.status |= S_MESSAGE_PERMFAILURE;
-		}
 		return -1;
 	}
 
@@ -1531,7 +1524,7 @@ lockfail:
 	if (fd != -1)
 		close(fd);
 
-	batchp->message.status |= S_MESSAGE_TEMPFAILURE|S_MESSAGE_LOCKFAILURE;
+	batchp->message.status |= S_MESSAGE_LOCKFAILURE;
 	return -1;
 }
 
@@ -1588,6 +1581,29 @@ child_cmp(struct child *c1, struct child *c2)
 		return (1);
 
 	return (0);
+}
+
+void
+parent_mda_permfail(struct smtpd *env, struct batch *b)
+{
+	b->message.status |= S_MESSAGE_PERMFAILURE;
+	imsg_compose_event(env->sc_ievs[PROC_MDA], IMSG_MDA_FINALIZE,
+	    0, 0, -1, b, sizeof(*b));
+}
+
+void
+parent_mda_tempfail(struct smtpd *env, struct batch *b)
+{
+	imsg_compose_event(env->sc_ievs[PROC_MDA], IMSG_MDA_FINALIZE,
+	    0, 0, -1, b, sizeof(*b));
+}
+
+void
+parent_mda_success(struct smtpd *env, struct batch *b)
+{
+	b->message.status &= ~S_MESSAGE_TEMPFAILURE;
+	imsg_compose_event(env->sc_ievs[PROC_MDA], IMSG_MDA_FINALIZE,
+	    0, 0, -1, b, sizeof(*b));
 }
 
 SPLAY_GENERATE(childtree, child, entry, child_cmp);
