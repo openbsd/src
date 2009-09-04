@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.32 2009/08/21 22:54:10 dms Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.33 2009/09/04 22:13:51 dms Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -72,6 +72,7 @@ typedef enum {
     em_80003es2lan,
     em_ich8lan,
     em_ich9lan,
+    em_ich10lan,
     em_num_macs
 } em_mac_type;
 
