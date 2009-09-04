@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.23 2009/09/04 11:44:23 jacekm Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.24 2009/09/04 13:33:00 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -299,6 +299,8 @@ bounce_delete_message(char *msgid)
 int
 bounce_record_envelope(struct message *message)
 {
+	message->lasttry = 0;
+	message->retry = 0;
 	return queue_record_layout_envelope(PATH_BOUNCE, message);
 }
 
