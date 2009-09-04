@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.44 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.45 2009/09/04 21:43:00 kettenis Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -701,14 +701,13 @@ void
 vge_attach(struct device *parent, struct device *self, void *aux)
 {
 	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int16_t		as[3];
 	struct vge_softc	*sc = (struct vge_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	struct ifnet		*ifp;
-	int			error = 0, i;
+	int			error = 0;
 	bus_size_t		iosize;
 
 	/*
@@ -747,11 +746,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
-	vge_read_eeprom(sc, (caddr_t)as, VGE_EE_EADDR, 3, 0);
-	for (i = 0; i < 3; i++) {
-		eaddr[(i * 2) + 0] = as[i] & 0xff;
-		eaddr[(i * 2) + 1] = as[i] >> 8;
-	}
+	vge_read_eeprom(sc, eaddr, VGE_EE_EADDR, 3, 1);
 
 	bcopy(eaddr, (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
