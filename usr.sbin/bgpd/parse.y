@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.234 2009/08/31 13:03:31 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.235 2009/09/04 11:50:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -717,6 +717,20 @@ neighbor	: {	curpeer = new_peer(); }
 			if (($3.prefix.af == AF_INET && $3.len != 32) ||
 			    ($3.prefix.af == AF_INET6 && $3.len != 128))
 				curpeer->conf.template = 1;
+			switch (curpeer->conf.remote_addr.af) {
+			case AF_INET:
+				if (curpeer->conf.capabilities.mp_v4 !=
+				    SAFI_ALL)
+					break;
+				curpeer->conf.capabilities.mp_v4 = SAFI_UNICAST;
+				break;
+			case AF_INET6:
+				if (curpeer->conf.capabilities.mp_v6 !=
+				    SAFI_ALL)
+					break;
+				curpeer->conf.capabilities.mp_v6 = SAFI_UNICAST;
+				break;
+			}
 			if (get_id(curpeer)) {
 				yyerror("get_id failed");
 				YYERROR;
@@ -2570,8 +2584,8 @@ alloc_peer(void)
 	p->conf.distance = 1;
 	p->conf.announce_type = ANNOUNCE_UNDEF;
 	p->conf.announce_capa = 1;
-	p->conf.capabilities.mp_v4 = SAFI_UNICAST;
-	p->conf.capabilities.mp_v6 = SAFI_NONE;
+	p->conf.capabilities.mp_v4 = SAFI_ALL;
+	p->conf.capabilities.mp_v6 = SAFI_ALL;
 	p->conf.capabilities.refresh = 1;
 	p->conf.capabilities.restart = 0;
 	p->conf.capabilities.as4byte = 0;
@@ -2914,6 +2928,12 @@ neighbor_consistent(struct peer *p)
 		    "reflector clusters");
 		return (-1);
 	}
+
+	/* the default MP capability is NONE */
+	if (p->conf.capabilities.mp_v4 == SAFI_ALL)
+		p->conf.capabilities.mp_v4 = SAFI_NONE;
+	if (p->conf.capabilities.mp_v6 == SAFI_ALL)
+		p->conf.capabilities.mp_v6 = SAFI_NONE;
 
 	return (0);
 }

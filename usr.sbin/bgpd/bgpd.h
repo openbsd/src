@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.244 2009/08/31 13:03:31 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.245 2009/09/04 11:50:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -698,6 +698,7 @@ extern struct rib_names ribnames;
 #define	SAFI_NONE	0x00
 #define	SAFI_UNICAST	0x01
 #define	SAFI_MULTICAST	0x02
+#define	SAFI_MPLS	0x04
 #define	SAFI_ALL	0xff
 
 /* 4-byte magic AS number */
