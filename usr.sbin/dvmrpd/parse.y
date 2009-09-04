@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2009/03/31 21:03:48 tobias Exp $ */
+/*	$OpenBSD: parse.y,v 1.20 2009/09/04 13:11:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -150,6 +150,8 @@ yesno		: STRING {
 			else if (!strcmp($1, "no"))
 				$$ = 0;
 			else {
+				yyerror("syntax error, "
+				    "either yes or no expected");
 				free($1);
 				YYERROR;
 			}
