@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.153 2009/07/20 05:13:30 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.154 2009/09/04 22:50:11 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -4201,4 +4201,34 @@ aml_searchrel(struct aml_node *root, const void *vname)
 		root = root->parent;
 	}
 	return NULL;
+}
+
+void acpi_getdevlist(struct acpi_devlist_head *list, struct aml_node *root,
+    struct aml_value *pkg, int off)
+{
+	struct acpi_devlist *dl;
+	struct aml_node *node;
+	int idx;
+
+	for (idx=off; idx<pkg->length; idx++) {
+		node = aml_searchname(root, pkg->v_package[idx]->v_string);
+		if (node) {
+			dl = acpi_os_malloc(sizeof(*dl));
+			if (dl) {
+				dl->dev_node = node;
+				TAILQ_INSERT_TAIL(list, dl, dev_link);
+			}
+		}
+	}
+}
+
+void
+acpi_freedevlist(struct acpi_devlist_head *list)
+{
+	struct acpi_devlist *dl;
+
+	while ((dl = TAILQ_FIRST(list)) != NULL) {
+		TAILQ_REMOVE(list, dl, dev_link);
+		acpi_os_free(dl);
+	}
 }

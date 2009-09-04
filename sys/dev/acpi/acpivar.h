@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.48 2009/06/03 00:36:59 pirofti Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.49 2009/09/04 22:50:11 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -148,6 +148,13 @@ struct gpe_block {
 	void *arg;
 	int   active;
 };
+
+struct acpi_devlist {
+	struct aml_node			*dev_node;
+	TAILQ_ENTRY(acpi_devlist)	dev_link;
+};
+
+TAILQ_HEAD(acpi_devlist_head, acpi_devlist);
 
 struct acpi_ac {
 	struct acpiac_softc	*aac_softc;

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.45 2009/08/21 22:05:01 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.46 2009/09/04 22:50:11 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -268,5 +268,9 @@ union amlpci_t
 	};
 };
 int aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *);
+
+void acpi_getdevlist(struct acpi_devlist_head *, struct aml_node *,
+	struct aml_value *, int);
+void acpi_freedevlist(struct acpi_devlist_head *);
 
 #endif /* __DEV_ACPI_DSDT_H__ */
