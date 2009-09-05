@@ -1,0 +1,227 @@
+#	$OpenBSD: GENERIC,v 1.1 2009/09/05 01:22:11 marex Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		palm arm
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
+
+options		ARM32
+options		PXAGPIO_HAS_GPION_INTRS
+
+options		CACHE_CLEAN_BLOCK_INTR
+
+makeoptions	KERNEL_BASE_PHYS="0xa0200000"
+makeoptions	KERNEL_BASE_VIRT="0xc0200000"
+makeoptions	BOARDTYPE="palm"
+
+# CPU options
+options		CPU_XSCALE_PXA2X0	# Support the XScale core
+#options	XSCALE_CACHE_WRITE_THROUGH
+options		XSCALE_CACHE_WRITE_BACK
+makeoptions	CPUFLAGS="-mcpu=xscale"
+
+option	WSDISPLAY_COMPAT_USL		# VT handling
+option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
+option	WSDISPLAY_DEFAULTSCREENS=2	# initial number of text consoles
+option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
+
+option USBVERBOSE
+
+config		bsd	root on sd1a swap on sd1b 
+#config		bsd	swap generic
+#config		bsd	root on wd0a
+
+# The main bus device
+mainbus0	at root
+cpu0		at mainbus?
+pxaip0		at mainbus?
+
+pxaintc0	at pxaip?		# interrupt controller
+pxagpio0	at pxaip?		# GPIO controller
+pxadmac0	at pxaip?		# DMA controller
+pxaost0		at pxaip? addr 0x40a00000 size 0x20
+
+# USB controllers
+pxaudc0		at pxaip?		# USB Device Controller
+ohci0		at pxaip?		# Open Host Controller
+
+# USB function support
+usbf*		at pxaudc?		# USB logical device
+#cdcef*		at usbf?		# CDC ethernet function
+
+# USB bus support
+usb*		at ohci?
+uhub*		at usb?			# USB Root Hub
+uhub*		at uhub?		# USB Hub
+
+# USB devices
+umodem*		at uhub?		# USB Modems/Serial
+ucom*		at umodem?
+uvisor*		at uhub?		# Handspring Visor
+ucom*		at uvisor?
+uvscom*		at uhub?		# SUNTAC Slipper U VS-10U serial
+ucom*		at uvscom?
+ubsa*		at uhub?		# Belkin serial adapter
+ucom*		at ubsa?
+uftdi*		at uhub?		# FTDI FT8U100AX serial adapter
+ucom*		at uftdi?
+uplcom*		at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*		at uplcom?
+umct*		at uhub?		# MCT USB-RS232 serial adapter
+ucom*		at umct?
+uslcom*		at uhub?		# Silicon Laboratories CP210x serial
+ucom*		at uslcom?
+uark*		at uhub?		# Arkmicro ARK3116 serial
+ucom*		at uark?
+uipaq*		at uhub?		# iPAQ serial adapter
+ucom*		at uipaq?
+uchcom*		at uhub?		# WinChipHead CH341/340 serial
+ucom*		at uchcom?
+uaudio*		at uhub?		# USB Audio
+audio*		at uaudio?
+umidi*		at uhub?		# USB MIDI
+midi*		at umidi?
+ulpt*		at uhub?		# USB Printers
+umass*		at uhub?		# USB Mass Storage devices
+scsibus*	at umass?
+atapiscsi*	at umass?
+uhidev*		at uhub?		# Human Interface Devices
+ums*		at uhidev?		# USB mouse
+wsmouse*	at ums? mux 0
+ukbd*		at uhidev?		# USB keyboard
+wskbd*		at ukbd? mux 1
+ucycom*		at uhidev?		# Cypress serial
+ucom*		at ucycom?
+uhid*		at uhidev?		# USB generic HID support
+aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
+atu*		at uhub?		# Atmel AT76C50x based 802.11b
+axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
+cue*		at uhub?		# CATC USB-EL1201A based Ethernet
+kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+cdce*		at uhub?		# CDC Ethernet
+upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
+udav*		at uhub?		# Davicom DM9601 based Ethernet
+ural*		at uhub?		# Ralink RT2500USB
+rum*		at uhub?		# Ralink RT2501USB/RT2601USB
+run*		at uhub?		# Ralink RT2700U/RT2800U/RT3000U
+zyd*		at uhub?		# Zydas ZD1211
+url*		at uhub?		# Realtek RTL8150L based adapters
+wi*		at uhub?		# WaveLAN IEEE 802.11DS
+urio*		at uhub?		# Diamond Multimedia Rio 500
+uscanner*	at uhub?		# USB Scanners
+usscanner*	at uhub?		# USB SCSI scanners, e.g., HP5300
+scsibus*	at usscanner?
+#uyap*		at uhub?		# Y@P firmware loader
+udsbr*		at uhub?		# D-Link DSB-R100 radio
+radio*		at udsbr?		# USB radio
+ugen*		at uhub?		# USB Generic driver
+udcf*		at uhub?		# Gude Expert mouseCLOCK
+umbg*		at uhub?		# Meinberg Funkuhren USB5131
+uow*		at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
+onewire* at uow?
+
+sd*		at scsibus?		# SCSI disk drives
+#st*		at scsibus?		# SCSI tape drives
+cd*		at scsibus?		# SCSI CD-ROM drives
+#ch*		at scsibus?		# SCSI autochangers
+#ss*		at scsibus?		# SCSI scanners
+#uk*		at scsibus?		# unknown SCSI
+
+# integrated 16550 UARTs
+options COM_PXA2X0
+com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
+com1	at pxaip? addr 0x40200000 intr 21	# BlueTooth UART
+com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
+
+# integrated PCMCIA/CF controller
+#pxapcic0	at pxaip?
+
+# PCMCIA bus support
+#pcmcia*		at pxapcic?
+
+# PCMCIA (CF) devices
+#com*		at pcmcia?		# PCMCIA modems/serial ports
+#wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
+#malo*		at pcmcia?		# Marvell 88W8385
+#ne*		at pcmcia?		# PCMCIA based NE2000 ethernet
+#wdc*		at pcmcia?		# hard disk controller
+#cfxga*		at pcmcia?		# VoyagerVGA frame buffer
+#wsdisplay*	at cfxga?
+
+wdc0		at pxaip?
+
+# IDE hard drives
+wd*		at wdc? flags 0x0000
+
+# Media Independent Interface (mii) drivers
+exphy*	at mii?				# 3Com internal PHYs
+inphy*	at mii?				# Intel 82555 PHYs
+iophy*	at mii?				# Intel 82553 PHYs
+icsphy*	at mii?				# ICS 1890 PHYs
+lxtphy*	at mii?				# Level1 LXT970 PHYs
+nsphy*	at mii?				# NS and compatible PHYs
+nsphyter* at mii?			# NS and compatible PHYs
+qsphy*	at mii?				# Quality Semi QS6612 PHYs
+sqphy*	at mii?				# Seeq 8x220 PHYs
+rlphy* at mii?				# RealTek 8139 internal PHYs
+mtdphy* at mii?				# Myson MTD972 PHYs
+#dcphy*	at mii?				# Digital Clone PHYs
+acphy*	at mii?				# Altima AC101 PHYs
+amphy*	at mii?				# AMD 79C873 PHYs
+tqphy*	at mii?				# TDK 78Q212x PHYs
+bmtphy*	at mii?				# Broadcom 10/100 PHYs
+#brgphy* at mii?			# Broadcom Gigabit PHYs
+eephy* at mii?				# Marvell 88E1000 series PHY
+#xmphy*	at mii?				# XaQti XMAC-II PHYs
+nsgphy*	at mii?				# NS gigabit PHYs
+urlphy*	at mii?				# Realtek RTL8150L internal PHY
+#rgephy* at mii?			# Realtek 8169S/8110S PHY
+#ciphy* at mii?				# Cicada CS8201 10/100/1000 copper PHY
+ukphy*	at mii?				# "unknown" PHYs
+
+# Input
+pxa27x_kpc0	at pxaip?
+wskbd0		at pxa27x_kpc0 mux 1
+
+lcd0		at pxaip?		# LCD
+wsdisplay*	at lcd? console ?
+
+pxammc0		at pxaip?		# MMC/SD/SDIO controller
+sdmmc*		at pxammc?		# SD/MMC bus
+scsibus*	at sdmmc?		# SCSI emulation
+
+# Bluetooth controllers
+sbt*	at sdmmc?			# SDIO Bluetooth
+bthub*	at sbt?
+ubt*	at uhub?			# USB Bluetooth
+bthub*	at ubt?
+
+# USB Video
+uvideo* at uhub?
+video*  at uvideo?
+
+bthidev* at bthub?			# Bluetooth HID support
+btkbd*	at bthidev?
+btms*	at bthidev?
+wskbd*	at btkbd? mux 1
+wsmouse* at btms? mux 0
+btsco*	at bthub?			# Bluetooth audio support
+audio*	at btsco?
+
+# 1-Wire devices
+option ONEWIREVERBOSE
+owid*	at onewire?			# ID
+owsbm*	at onewire?			# Smart Battery Monitor
+owtemp* at onewire?			# Temperature
+
+# Pseudo-Devices
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+pseudo-device	hotplug		1	# devices hot plugging

@@ -1,0 +1,92 @@
+#	$OpenBSD: files.palm,v 1.1 2009/09/05 01:22:11 marex Exp $
+#
+# First try for arm-specific configuration info
+#
+
+maxpartitions	16
+maxusers	2 8 64
+
+major	{wd = 16}
+major	{sd = 24}
+major	{cd = 26}
+major	{rd = 18}
+
+file	arch/arm/arm/conf.c
+
+file	arch/palm/palm/palm_machdep.c
+
+#
+# Machine-independent SCSI drivers
+#
+include "../../../scsi/files.scsi"
+include "../../../dev/atapiscsi/files.atapiscsi"
+
+# CPU support and integrated peripherals
+include "arch/arm/xscale/files.pxa2x0"
+
+# LCD frame buffer
+attach lcd at pxaip with lcd_pxaip
+file arch/palm/palm/palm_lcd.c		lcd_pxaip
+
+# SD/MMC socket controller
+attach pxammc at pxaip with pxammc_palm
+file arch/palm/dev/palm_mmc.c		pxammc_palm
+
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+
+# Drive
+#define palmvlio { [port = -1], [size = 0], [iomem = -1], [iosiz = 0], [irq = -1] }
+#device palmvlio: palmvlio
+#attach palmvlio at pxaip
+#file arch/palm/dev/palmvlio.c		palmvlio
+
+#attach wdc at palmvlio with palmhdd
+attach wdc at pxaip with palm_hdd
+file arch/palm/dev/palm_hdd.c		palm_hdd
+
+# Generic MD files
+file	arch/palm/palm/autoconf.c
+
+file	arch/arm/arm/disksubr.c			disk
+
+# ARM FPE
+file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
+file	arch/arm/fpe-arm/armfpe_init.c		armfpe
+file	arch/arm/fpe-arm/armfpe.s		armfpe
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+include "dev/pckbc/files.pckbc"
+
+# Include USB stuff
+include "dev/usb/files.usb"
+
+attach pxaudc at pxaip with pxaudc_palm
+file	arch/palm/dev/palm_udc.c	pxaudc_palm
+
+attach	pxa27x_kpc at pxaip with pxakpc_palm
+file	arch/palm/dev/palm_kpc.c	pxakpc_palm
+
+# Bluetooth
+include "dev/bluetooth/files.bluetooth"
+
+# Media Independent Interface (mii)
+include "dev/mii/files.mii"
+
+#
+# Machine-independent SD/MMC drivers
+#
+include "dev/sdmmc/files.sdmmc"
+
+#
+# Machine-independent 1-Wire drivers
+#
+include "dev/onewire/files.onewire"
