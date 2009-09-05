@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.43 2009/09/05 00:48:39 krw Exp $	*/
+/*	$OpenBSD: xy.c,v 1.44 2009/09/05 15:37:04 deraadt Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -834,7 +834,7 @@ xyioctl(dev, command, addr, flag, p)
 			if (xy->state == XY_DRIVE_NOLABEL)
 				xy->state = XY_DRIVE_ONLINE;
 
-			if (cmd == DIOCWDINFO) {
+			if (command == DIOCWDINFO) {
 				/*
 				 * Simulate opening partition 0 so write
 				 * succeeds.
