@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.297 2009/08/02 09:48:53 sthen Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.298 2009/09/05 10:24:58 miod Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3858,7 +3858,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface, scs_cmd, cfgctl;
 	int channel;
-	struct pciide_satalink *sl = sc->sc_cookie;
+	struct pciide_satalink *sl;
 
 	/* Allocate memory for private data */
 	sc->sc_cookie = malloc(sizeof(*sl), M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -4134,7 +4134,7 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int channel;
-	struct pciide_satalink *sl = sc->sc_cookie;
+	struct pciide_satalink *sl;
 
 	/* Allocate memory for private data */
 	sc->sc_cookie = malloc(sizeof(*sl), M_DEVBUF, M_NOWAIT | M_ZERO);
