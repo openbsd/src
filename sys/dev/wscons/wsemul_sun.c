@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.26 2009/09/05 14:30:24 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.27 2009/09/05 14:49:20 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -81,6 +81,7 @@ const struct wsemul_ops wsemul_sun_ops = {
 
 struct wsemul_sun_emuldata {
 	const struct wsdisplay_emulops *emulops;
+	struct wsemul_abortstate abortstate;
 	void *emulcookie;
 	void *cbcookie;
 	int scrcapabilities;
@@ -106,14 +107,14 @@ void	wsemul_sun_init(struct wsemul_sun_emuldata *,
 int	wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *, const u_char *,
 	    u_int, int);
 void	wsemul_sun_reset(struct wsemul_sun_emuldata *);
-void	wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *, u_char, int);
-void	wsemul_sun_output_normal(struct wsemul_sun_emuldata *, u_char, int);
+int	wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *, u_char, int);
+int	wsemul_sun_output_normal(struct wsemul_sun_emuldata *, u_char, int);
 void	wsemul_sun_output_haveesc(struct wsemul_sun_emuldata *, u_char);
-void	wsemul_sun_output_control(struct wsemul_sun_emuldata *, u_char);
-void	wsemul_sun_control(struct wsemul_sun_emuldata *, u_char);
+int	wsemul_sun_output_control(struct wsemul_sun_emuldata *, u_char);
+int	wsemul_sun_control(struct wsemul_sun_emuldata *, u_char);
 int	wsemul_sun_selectattribute(struct wsemul_sun_emuldata *, int, int, int,
 	    long *, long *);
-void	wsemul_sun_scrollup(struct wsemul_sun_emuldata *, u_int);
+int	wsemul_sun_scrollup(struct wsemul_sun_emuldata *, u_int);
 
 struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
 
@@ -137,6 +138,7 @@ wsemul_sun_init(struct wsemul_sun_emuldata *edp,
 	edp->crow = crow;
 	edp->ccol = ccol;
 	edp->defattr = defattr;
+	wsemul_reset_abortstate(&edp->abortstate);
 }
 
 void
@@ -222,11 +224,12 @@ wsemul_sun_attach(int console, const struct wsscreen_descr *type, void *cookie,
 	return (edp);
 }
 
-void
+int
 wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *edp, u_char c,
     int kernel)
 {
 	u_int n;
+	int rc = 0;
 
 	switch (c) {
 	case ASCII_NUL:
@@ -250,16 +253,20 @@ wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *edp, u_char c,
 	case ASCII_HT:		/* "Tab (TAB)" */
 		n = min(8 - (edp->ccol & 7), COLS_LEFT);
 		if (n != 0) {
-			(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-			    edp->ccol, n,
-			    kernel ? edp->kernattr : edp->bkgdattr);
+			WSEMULOP(rc, edp, &edp->abortstate, erasecols,
+			    (edp->emulcookie, edp->crow, edp->ccol, n,
+			     kernel ? edp->kernattr : edp->bkgdattr));
+			if (rc != 0)
+				break;
 			edp->ccol += n;
 		}
 		break;
 
 	case ASCII_FF:		/* "Form Feed (FF)" */
-		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows,
-		    edp->bkgdattr);
+		WSEMULOP(rc, edp, &edp->abortstate, eraserows,
+		    (edp->emulcookie, 0, edp->nrows, edp->bkgdattr));
+		if (rc != 0)
+			break;
 		edp->ccol = edp->crow = 0;
 		break;
 
@@ -282,27 +289,45 @@ wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *edp, u_char c,
 		/* if the cur line isn't the last, incr and leave. */
 		if (ROWS_LEFT > 0)
 			edp->crow++;
-		else
-			wsemul_sun_scrollup(edp, edp->scrolldist);
+		else {
+			rc = wsemul_sun_scrollup(edp, edp->scrolldist);
+			if (rc != 0)
+				break;
+		}
 		break;
 	}
+
+	return rc;
 }
 
-void
+int
 wsemul_sun_output_normal(struct wsemul_sun_emuldata *edp, u_char c, int kernel)
 {
+	int rc;
 
-	(*edp->emulops->putchar)(edp->emulcookie, edp->crow, edp->ccol,
-	    c, kernel ? edp->kernattr : edp->curattr);
+	WSEMULOP(rc, edp, &edp->abortstate, putchar,
+	    (edp->emulcookie, edp->crow, edp->ccol,
+	     c, kernel ? edp->kernattr : edp->curattr));
+	if (rc != 0)
+		return rc;
 
 	if (++edp->ccol >= edp->ncols) {
 		/* if the cur line isn't the last, incr and leave. */
 		if (ROWS_LEFT > 0)
 			edp->crow++;
-		else
-			wsemul_sun_scrollup(edp, edp->scrolldist);
+		else {
+			rc = wsemul_sun_scrollup(edp, edp->scrolldist);
+			if (rc != 0) {
+				/* undo line wrap */
+				edp->ccol--;
+
+				return rc;
+			}
+		}
 		edp->ccol = 0;
 	}
+
+	return 0;
 }
 
 void
@@ -324,12 +349,13 @@ wsemul_sun_output_haveesc(struct wsemul_sun_emuldata *edp, u_char c)
 	}
 }
 
-void
+int
 wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 {
 	u_int n, src, dst;
 	int flags, fgcol, bgcol;
 	long attr, bkgdattr;
+	int rc = 0;
 
 	switch (c) {
 	case '@':		/* "Insert Character (ICH)" */
@@ -337,11 +363,14 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 		src = edp->ccol;
 		dst = edp->ccol + n;
 		if (dst < edp->ncols) {
-			(*edp->emulops->copycols)(edp->emulcookie, edp->crow,
-			    src, dst, edp->ncols - dst);
+			WSEMULOP(rc, edp, &edp->abortstate, copycols,
+			    (edp->emulcookie, edp->crow, src, dst,
+			     edp->ncols - dst));
+			if (rc != 0)
+				break;
 		}
-		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-		    src, n, edp->bkgdattr);
+		WSEMULOP(rc, edp, &edp->abortstate, erasecols,
+		    (edp->emulcookie, edp->crow, src, n, edp->bkgdattr));
 		break;
 
 	case 'A':		/* "Cursor Up (CUU)" */
@@ -371,13 +400,17 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 
 	case 'J':		/* "Erase in Display (ED)" */
 		if (ROWS_LEFT > 0) {
-			(*edp->emulops->eraserows)(edp->emulcookie,
-			     edp->crow + 1, ROWS_LEFT, edp->bkgdattr);
+			WSEMULOP(rc, edp, &edp->abortstate, eraserows,
+			    (edp->emulcookie, edp->crow + 1, ROWS_LEFT,
+			     edp->bkgdattr));
+			if (rc != 0)
+				break;
 		}
 		/* FALLTHROUGH */
 	case 'K':		/* "Erase in Line (EL)" */
-		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-		    edp->ccol, COLS_LEFT + 1, edp->bkgdattr);
+		WSEMULOP(rc, edp, &edp->abortstate, erasecols,
+		    (edp->emulcookie, edp->crow, edp->ccol, COLS_LEFT + 1,
+		     edp->bkgdattr));
 		break;
 
 	case 'L':		/* "Insert Line (IL)" */
@@ -385,11 +418,13 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 		src = edp->crow;
 		dst = edp->crow + n;
 		if (dst < edp->nrows) {
-			(*edp->emulops->copyrows)(edp->emulcookie,
-			    src, dst, edp->nrows - dst);
+			WSEMULOP(rc, edp, &edp->abortstate, copyrows,
+			    (edp->emulcookie, src, dst, edp->nrows - dst));
+			if (rc != 0)
+				break;
 		}
-		(*edp->emulops->eraserows)(edp->emulcookie,
-		    src, n, edp->bkgdattr);
+		WSEMULOP(rc, edp, &edp->abortstate, eraserows,
+		    (edp->emulcookie, src, n, edp->bkgdattr));
 		break;
 
 	case 'M':		/* "Delete Line (DL)" */
@@ -397,11 +432,14 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 		src = edp->crow + n;
 		dst = edp->crow;
 		if (src < edp->nrows) {
-			(*edp->emulops->copyrows)(edp->emulcookie,
-			    src, dst, edp->nrows - src);
+			WSEMULOP(rc, edp, &edp->abortstate, copyrows,
+			    (edp->emulcookie, src, dst, edp->nrows - src));
+			if (rc != 0)
+				break;
 		}
-		(*edp->emulops->eraserows)(edp->emulcookie,
-		    dst + edp->nrows - src, n, edp->bkgdattr);
+		WSEMULOP(rc, edp, &edp->abortstate, eraserows,
+		    (edp->emulcookie, dst + edp->nrows - src, n,
+		     edp->bkgdattr));
 		break;
 
 	case 'P':		/* "Delete Character (DCH)" */
@@ -409,11 +447,15 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 		src = edp->ccol + n;
 		dst = edp->ccol;
 		if (src < edp->ncols) {
-			(*edp->emulops->copycols)(edp->emulcookie, edp->crow,
-			    src, dst, edp->ncols - src);
+			WSEMULOP(rc, edp, &edp->abortstate, copycols,
+			    (edp->emulcookie, edp->crow, src, dst,
+			     edp->ncols - src));
+			if (rc != 0)
+				break;
 		}
-		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-		    edp->ncols - n, n, edp->bkgdattr);
+		WSEMULOP(rc, edp, &edp->abortstate, erasecols,
+		    (edp->emulcookie, edp->crow, edp->ncols - n, n,
+		     edp->bkgdattr));
 		break;
 
 	case 'm':		/* "Select Graphic Rendition (SGR)" */
@@ -431,7 +473,7 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp, u_char c)
 					edp->attrflags = 0;
 					edp->fgcol = WSCOL_BLACK;
 					edp->bgcol = WSCOL_WHITE;
-					return;
+					return 0;
 				}
 				flags = 0;
 				fgcol = WSCOL_BLACK;
@@ -497,11 +539,16 @@ setattr:
 		wsemul_sun_reset(edp);
 		break;
 	}
+
+	return rc;
 }
 
-void
+int
 wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
 {
+	int oargs;
+	int rc;
+
 	switch (c) {
 	case '0': case '1': case '2': case '3': case '4': /* argument digit */
 	case '5': case '6': case '7': case '8': case '9':
@@ -523,13 +570,21 @@ wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
 		break;
 
 	default:		/* end of escape sequence */
-		edp->nargs++;
+		oargs = edp->nargs++;
 		if (edp->nargs > SUN_EMUL_NARGS)
 			edp->nargs = SUN_EMUL_NARGS;
-		wsemul_sun_control(edp, c);
+		rc = wsemul_sun_control(edp, c);
+		if (rc != 0) {
+			/* undo nargs progress */
+			edp->nargs = oargs;
+
+			return rc;
+		}
 		edp->state = SUN_EMUL_STATE_NORMAL;
 		break;
 	}
+
+	return 0;
 }
 
 u_int
@@ -541,57 +596,112 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 #ifdef JUMP_SCROLL
 	int lines;
 #endif
+	int rc = 0;
 
 #ifdef DIAGNOSTIC
 	if (kernel && !edp->console)
 		panic("wsemul_sun_output: kernel output, not console");
 #endif
 
-	/* XXX */
-	(*edp->emulops->cursor)(edp->emulcookie, 0, edp->crow, edp->ccol);
+	switch (edp->abortstate.state) {
+	case ABORT_FAILED_CURSOR:
+		/*
+		 * If we could not display the cursor back, we pretended not
+		 * having been able to display the last character. But this
+		 * is a lie, so compensate here.
+		 */
+		data++, count--;
+		processed++;
+		wsemul_reset_abortstate(&edp->abortstate);
+		break;
+	case ABORT_OK:
+		/* remove cursor image */
+		rc = (*edp->emulops->cursor)
+		    (edp->emulcookie, 0, edp->crow, edp->ccol);
+		if (rc != 0)
+			return 0;
+		break;
+	default:
+		break;
+	}
 
 	for (; count > 0; data++, count--) {
+		wsemul_resume_abort(&edp->abortstate);
+
 #ifdef JUMP_SCROLL
-		/*
-		 * If scrolling is not disabled and we are the bottom of
-		 * the screen, count newlines until an escape sequence
-		 * appears.
-		 */
-		if ((edp->state == SUN_EMUL_STATE_NORMAL || kernel) &&
-		    ROWS_LEFT == 0 && edp->scrolldist != 0)
-			lines = wsemul_sun_jump_scroll(edp, data,
-			    count, kernel);
-		else
+		switch (edp->abortstate.state) {
+		case ABORT_FAILED_JUMP_SCROLL:
+			/*
+			 * If we failed a previous jump scroll attempt, we
+			 * need to try to resume it with the same distance.
+			 * We can not recompute it since there might be more
+			 * bytes in the tty ring, causing a different result.
+			 */
+			lines = edp->abortstate.lines;
+			break;
+		case ABORT_OK:
+			/*
+			 * If scrolling is not disabled and we are the bottom of
+			 * the screen, count newlines until an escape sequence
+			 * appears.
+			 */
+			if ((edp->state == SUN_EMUL_STATE_NORMAL || kernel) &&
+			    ROWS_LEFT == 0 && edp->scrolldist != 0)
+				lines = wsemul_sun_jump_scroll(edp, data,
+				    count, kernel);
+			else
+				lines = 0;
+			break;
+		default:
+			/*
+			 * If we are recovering a non-scrolling failure,
+			 * do not try to scroll yet.
+			 */
 			lines = 0;
+			break;
+		}
 
 		if (lines > 1) {
-			wsemul_sun_scrollup(edp, lines);
+			wsemul_resume_abort(&edp->abortstate);
+			rc = wsemul_sun_scrollup(edp, lines);
+			if (rc != 0) {
+				wsemul_abort_jump_scroll(&edp->abortstate,
+				    lines);
+				return processed;
+			}
+			wsemul_reset_abortstate(&edp->abortstate);
 			edp->crow--;
 		}
 #endif
 
+		wsemul_resume_abort(&edp->abortstate);
+
 		c = *data;
 		if (c < ' ') {
-			wsemul_sun_output_lowchars(edp, c, kernel);
+			rc = wsemul_sun_output_lowchars(edp, c, kernel);
+			if (rc != 0)
+				break;
 			processed++;
 			continue;
 		}
 
 		if (kernel) {
-			wsemul_sun_output_normal(edp, c, 1);
+			rc = wsemul_sun_output_normal(edp, c, 1);
+			if (rc != 0)
+				break;
 			processed++;
 			continue;
 		}
 
 		switch (edp->state) {
 		case SUN_EMUL_STATE_NORMAL:
-			wsemul_sun_output_normal(edp, c, 0);
+			rc = wsemul_sun_output_normal(edp, c, 0);
 			break;
 		case SUN_EMUL_STATE_HAVEESC:
 			wsemul_sun_output_haveesc(edp, c);
 			break;
 		case SUN_EMUL_STATE_CONTROL:
-			wsemul_sun_output_control(edp, c);
+			rc = wsemul_sun_output_control(edp, c);
 			break;
 		default:
 #ifdef DIAGNOSTIC
@@ -599,14 +709,33 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 #else
 			/* try to recover, if things get screwed up... */
 			edp->state = SUN_EMUL_STATE_NORMAL;
-			wsemul_sun_output_normal(edp, c, 0);
+			rc = wsemul_sun_output_normal(edp, c, 0);
 #endif
 			break;
 		}
+		if (rc != 0)
+			break;
 		processed++;
 	}
-	/* XXX */
-	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);
+
+	if (rc != 0)
+		wsemul_abort_other(&edp->abortstate);
+	else {
+		/* put cursor image back */
+		rc = (*edp->emulops->cursor)
+		    (edp->emulcookie, 1, edp->crow, edp->ccol);
+		if (rc != 0) {
+			/*
+			 * Fail the last character output, remembering that
+			 * only the cursor operation really needs to be done.
+			 */
+			wsemul_abort_cursor(&edp->abortstate);
+			processed--;
+		}
+	}
+
+	if (rc == 0)
+		wsemul_reset_abortstate(&edp->abortstate);
 
 	return processed;
 }
@@ -855,26 +984,31 @@ wsemul_sun_resetop(void *cookie, enum wsemul_resetops op)
 		(*edp->emulops->cursor)(edp->emulcookie, 1, 0, 0);
 		break;
 	case WSEMUL_CLEARCURSOR:
-		(*edp->emulops->cursor)(edp->emulcookie, 0,
-		    edp->crow, edp->ccol);
+		(*edp->emulops->cursor)(edp->emulcookie, 0, edp->crow,
+		    edp->ccol);
 		break;
 	default:
 		break;
 	}
 }
 
-void
+int
 wsemul_sun_scrollup(struct wsemul_sun_emuldata *edp, u_int lines)
 {
+	int rc;
+
 	/*
 	 * if we're in wrap-around mode, go to the first
 	 * line and clear it.
 	 */
 	if (lines == 0) {
+		WSEMULOP(rc, edp, &edp->abortstate, eraserows,
+		    (edp->emulcookie, 0, 1, edp->bkgdattr));
+		if (rc != 0)
+			return rc;
+
 		edp->crow = 0;
-		(*edp->emulops->eraserows)(edp->emulcookie, 0, 1,
-		    edp->bkgdattr);
-		return;
+		return 0;
 	}
 
 	/*
@@ -882,10 +1016,18 @@ wsemul_sun_scrollup(struct wsemul_sun_emuldata *edp, u_int lines)
 	 * (usually 34), clear the screen; otherwise, scroll by the
 	 * scrolling distance.
 	 */
-	if (lines < edp->nrows)
-		(*edp->emulops->copyrows)(edp->emulcookie, lines, 0,
-		    edp->nrows - lines);
-	(*edp->emulops->eraserows)(edp->emulcookie,
-	    edp->nrows - lines, lines, edp->bkgdattr);
+	if (lines < edp->nrows) {
+		WSEMULOP(rc, edp, &edp->abortstate, copyrows,
+		    (edp->emulcookie, lines, 0, edp->nrows - lines));
+		if (rc != 0)
+			return rc;
+	}
+	WSEMULOP(rc, edp, &edp->abortstate, eraserows,
+	    (edp->emulcookie, edp->nrows - lines, lines, edp->bkgdattr));
+	if (rc != 0)
+		return rc;
+
 	edp->crow -= lines - 1;
+
+	return 0;
 }

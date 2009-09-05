@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.25 2009/09/05 14:30:24 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.26 2009/09/05 14:49:20 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -67,10 +67,10 @@ void	wsemul_vt100_init(struct wsemul_vt100_emuldata *,
 	    const struct wsscreen_descr *, void *, int, int, long);
 int	wsemul_vt100_jump_scroll(struct wsemul_vt100_emuldata *,
 	    const u_char *, u_int, int);
-void	wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *, u_char, int);
-void	wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *, u_char, int);
-void	wsemul_vt100_nextline(struct wsemul_vt100_emuldata *);
-typedef void vt100_handler(struct wsemul_vt100_emuldata *, u_char);
+int	wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *, u_char, int);
+int	wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *, u_char, int);
+int	wsemul_vt100_nextline(struct wsemul_vt100_emuldata *);
+typedef int vt100_handler(struct wsemul_vt100_emuldata *, u_char);
 vt100_handler
 	wsemul_vt100_output_esc,
 	wsemul_vt100_output_csi,
@@ -127,6 +127,7 @@ wsemul_vt100_init(struct wsemul_vt100_emuldata *edp,
 	edp->crow = crow;
 	edp->ccol = ccol;
 	edp->defattr = defattr;
+	wsemul_reset_abortstate(&edp->abortstate);
 }
 
 void *
@@ -243,14 +244,14 @@ wsemul_vt100_resetop(void *cookie, enum wsemul_resetops op)
 		vt100_initchartables(edp);
 		break;
 	case WSEMUL_CLEARSCREEN:
-		wsemul_vt100_ed(edp, 2);
+		(void)wsemul_vt100_ed(edp, 2);
 		edp->ccol = edp->crow = 0;
 		(*edp->emulops->cursor)(edp->emulcookie,
 		    edp->flags & VTFL_CURSORON, 0, 0);
 		break;
 	case WSEMUL_CLEARCURSOR:
-		(*edp->emulops->cursor)(edp->emulcookie, 0,
-		    edp->crow, edp->ccol);
+		(*edp->emulops->cursor)(edp->emulcookie, 0, edp->crow,
+		    edp->ccol);
 		break;
 	default:
 		break;
@@ -291,33 +292,42 @@ wsemul_vt100_reset(struct wsemul_vt100_emuldata *edp)
  * the bottom of the scroll area, then scroll it up. If the cursor is
  * at the bottom of the screen then don't move it down.
  */
-void
+int
 wsemul_vt100_nextline(struct wsemul_vt100_emuldata *edp)
 {
+	int rc;
+
 	if (ROWS_BELOW == 0) {
 		/* Bottom of the scroll region. */
-	  	wsemul_vt100_scrollup(edp, 1);
+	  	rc = wsemul_vt100_scrollup(edp, 1);
 	} else {
 		if ((edp->crow+1) < edp->nrows)
 			/* Cursor not at the bottom of the screen. */
 			edp->crow++;
 		CHECK_DW;
+		rc = 0;
 	}
+
+	return rc;
 }
 
 /*
  * now all the state machine bits
  */
 
-void
+int
 wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *edp, u_char c,
     int kernel)
 {
 	u_int *ct, dc;
+	int oldsschartab = edp->sschartab;
+	int rc = 0;
 
 	if ((edp->flags & (VTFL_LASTCHAR | VTFL_DECAWM)) ==
 	    (VTFL_LASTCHAR | VTFL_DECAWM)) {
-		wsemul_vt100_nextline(edp);
+		rc = wsemul_vt100_nextline(edp);
+		if (rc != 0)
+			return rc;
 		edp->ccol = 0;
 		edp->flags &= ~VTFL_LASTCHAR;
 	}
@@ -334,23 +344,41 @@ wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *edp, u_char c,
 	}
 	dc = (ct ? ct[c] : c);
 
-	if ((edp->flags & VTFL_INSERTMODE) && COLS_LEFT)
-		COPYCOLS(edp->ccol, edp->ccol + 1, COLS_LEFT);
+	if ((edp->flags & VTFL_INSERTMODE) && COLS_LEFT) {
+		WSEMULOP(rc, edp, &edp->abortstate, copycols,
+		    COPYCOLS(edp->ccol, edp->ccol + 1, COLS_LEFT));
+		if (rc != 0) {
+			/* undo potential sschartab update */
+			edp->sschartab = oldsschartab;
 
-	(*edp->emulops->putchar)(edp->emulcookie, edp->crow,
-	    edp->ccol << edp->dw, dc, kernel ? edp->kernattr : edp->curattr);
+			return rc;
+		}
+	}
+
+	WSEMULOP(rc, edp, &edp->abortstate, putchar,
+	    (edp->emulcookie, edp->crow, edp->ccol << edp->dw, dc,
+	     kernel ? edp->kernattr : edp->curattr));
+	if (rc != 0) {
+		/* undo potential sschartab update */
+		edp->sschartab = oldsschartab;
+
+		return rc;
+	}
 
 	if (COLS_LEFT)
 		edp->ccol++;
 	else
 		edp->flags |= VTFL_LASTCHAR;
+
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
     int kernel)
 {
 	u_int n;
+	int rc = 0;
 
 	switch (c) {
 	case ASCII_NUL:
@@ -430,15 +458,18 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 	case ASCII_LF:
 	case ASCII_VT:
 	case ASCII_FF:
-		wsemul_vt100_nextline(edp);
+		rc = wsemul_vt100_nextline(edp);
 		break;
 	}
+
+	return rc;
 }
 
-void
+int
 wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_NORMAL;
+	int rc = 0;
 	int i;
 
 	switch (c) {
@@ -487,7 +518,7 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		edp->ccol = 0;
 		/* FALLTHROUGH */
 	case 'D': /* IND */
-		wsemul_vt100_nextline(edp);
+		rc = wsemul_vt100_nextline(edp);
 		break;
 	case 'H': /* HTS */
 		if (edp->tabs != NULL)
@@ -520,7 +551,7 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 			CHECK_DW;
 			break;
 		}
-		wsemul_vt100_scrolldown(edp, 1);
+		rc = wsemul_vt100_scrolldown(edp, 1);
 		break;
 	case 'P': /* DCS */
 		edp->nargs = 0;
@@ -529,7 +560,9 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	case 'c': /* RIS */
 		wsemul_vt100_reset(edp);
-		wsemul_vt100_ed(edp, 2);
+		rc = wsemul_vt100_ed(edp, 2);
+		if (rc != 0)
+			break;
 		edp->ccol = edp->crow = 0;
 		break;
 	case '(': case ')': case '*': case '+': /* SCS */
@@ -561,10 +594,14 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	}
 
+	if (rc != 0)
+		return rc;
+
 	edp->state = newstate;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_scs94(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_NORMAL;
@@ -597,9 +634,10 @@ wsemul_vt100_output_scs94(struct wsemul_vt100_emuldata *edp, u_char c)
 	}
 
 	edp->state = newstate;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_scs94_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	switch (c) {
@@ -615,9 +653,10 @@ wsemul_vt100_output_scs94_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 	}
 
 	edp->state = VT100_EMUL_STATE_NORMAL;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_scs96(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_NORMAL;
@@ -671,9 +710,10 @@ setnrc:
 	}
 
 	edp->state = newstate;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_scs96_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	switch (c) {
@@ -689,9 +729,10 @@ wsemul_vt100_output_scs96_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 	}
 
 	edp->state = VT100_EMUL_STATE_NORMAL;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_esc_spc(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	switch (c) {
@@ -709,18 +750,20 @@ wsemul_vt100_output_esc_spc(struct wsemul_vt100_emuldata *edp, u_char c)
 	}
 
 	edp->state = VT100_EMUL_STATE_NORMAL;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_string(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	if (edp->dcstype && edp->dcspos < DCS_MAXLEN)
 		edp->dcsarg[edp->dcspos++] = c;
 
 	edp->state = VT100_EMUL_STATE_STRING;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_string_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	if (c == '\\') { /* ST complete */
@@ -728,9 +771,11 @@ wsemul_vt100_output_string_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		edp->state = VT100_EMUL_STATE_NORMAL;
 	} else
 		edp->state = VT100_EMUL_STATE_STRING;
+
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_DCS;
@@ -777,9 +822,10 @@ wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp, u_char c)
 	}
 
 	edp->state = newstate;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_dcs_dollar(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	switch (c) {
@@ -817,21 +863,29 @@ wsemul_vt100_output_dcs_dollar(struct wsemul_vt100_emuldata *edp, u_char c)
 	}
 
 	edp->state = VT100_EMUL_STATE_STRING;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	int i;
+	int rc = 0;
 
 	switch (c) {
 	case '5': /*  DECSWL single width, single height */
 		if (edp->dblwid != NULL && edp->dw != 0) {
-			for (i = 0; i < edp->ncols / 2; i++)
-				(*edp->emulops->copycols)(edp->emulcookie,
-				    edp->crow, 2 * i, i, 1);
-			(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-			    i, edp->ncols - i, edp->bkgdattr);
+			for (i = 0; i < edp->ncols / 2; i++) {
+				WSEMULOP(rc, edp, &edp->abortstate, copycols,
+				    (edp->emulcookie, edp->crow, 2 * i, i, 1));
+				if (rc != 0)
+					return rc;
+			}
+			WSEMULOP(rc, edp, &edp->abortstate, erasecols,
+			    (edp->emulcookie, edp->crow, i, edp->ncols - i,
+			     edp->bkgdattr));
+			if (rc != 0)
+				return rc;
 			edp->dblwid[edp->crow] = 0;
 			edp->dw = 0;
 		}
@@ -840,12 +894,19 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 	case '3': /*  DECDHL double width, double height, top half */
 	case '4': /*  DECDHL double width, double height, bottom half */
 		if (edp->dblwid != NULL && edp->dw == 0) {
-			for (i = edp->ncols / 2 - 1; i >= 0; i--)
-				(*edp->emulops->copycols)(edp->emulcookie,
-				    edp->crow, i, 2 * i, 1);
-			for (i = 0; i < edp->ncols / 2; i++)
-				(*edp->emulops->erasecols)(edp->emulcookie,
-				    edp->crow, 2 * i + 1, 1, edp->bkgdattr);
+			for (i = edp->ncols / 2 - 1; i >= 0; i--) {
+				WSEMULOP(rc, edp, &edp->abortstate, copycols,
+				    (edp->emulcookie, edp->crow, i, 2 * i, 1));
+				if (rc != 0)
+					return rc;
+			}
+			for (i = 0; i < edp->ncols / 2; i++) {
+				WSEMULOP(rc, edp, &edp->abortstate, erasecols,
+				    (edp->emulcookie, edp->crow, 2 * i + 1, 1,
+				     edp->bkgdattr));
+				if (rc != 0)
+					return rc;
+			}
 			edp->dblwid[edp->crow] = 1;
 			edp->dw = 1;
 			if (edp->ccol > (edp->ncols >> 1) - 1)
@@ -855,9 +916,12 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 	case '8': { /* DECALN */
 		int i, j;
 		for (i = 0; i < edp->nrows; i++)
-			for (j = 0; j < edp->ncols; j++)
-				(*edp->emulops->putchar)(edp->emulcookie, i, j,
-				    'E', edp->curattr);
+			for (j = 0; j < edp->ncols; j++) {
+				WSEMULOP(rc, edp, &edp->abortstate, putchar,
+				    (edp->emulcookie, i, j, 'E', edp->curattr));
+				if (rc != 0)
+					return rc;
+			}
 		}
 		edp->ccol = 0;
 		edp->crow = 0;
@@ -870,12 +934,15 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 	}
 
 	edp->state = VT100_EMUL_STATE_NORMAL;
+	return 0;
 }
 
-void
+int
 wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_CSI;
+	int oargs;
+	int rc = 0;
 
 	switch (c) {
 	case '0': case '1': case '2': case '3': case '4':
@@ -900,19 +967,24 @@ wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 		edp->modif2 = c;
 		break;
 	default: /* end of escape sequence */
-		edp->nargs++;
+		oargs = edp->nargs++;
 		if (edp->nargs > VT100_EMUL_NARGS) {
 #ifdef VT100_DEBUG
 			printf("vt100: too many arguments\n");
 #endif
 			edp->nargs = VT100_EMUL_NARGS;
 		}
-		wsemul_vt100_handle_csi(edp, c);
+		rc = wsemul_vt100_handle_csi(edp, c);
+		if (rc != 0) {
+			edp->nargs = oargs;
+			return rc;
+		}
 		newstate = VT100_EMUL_STATE_NORMAL;
 		break;
 	}
 
 	edp->state = newstate;
+	return 0;
 }
 
 u_int
@@ -924,44 +996,99 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 #ifdef JUMP_SCROLL
 	int lines;
 #endif
+	int rc = 0;
 
 #ifdef DIAGNOSTIC
 	if (kernel && !edp->console)
 		panic("wsemul_vt100_output: kernel output, not console");
 #endif
 
-	if (edp->flags & VTFL_CURSORON)
-		(*edp->emulops->cursor)(edp->emulcookie, 0,
-		    edp->crow, edp->ccol << edp->dw);
+	switch (edp->abortstate.state) {
+	case ABORT_FAILED_CURSOR:
+		/*
+		 * If we could not display the cursor back, we pretended not
+		 * having been able to display the last character. But this
+		 * is a lie, so compensate here.
+		 */
+		data++, count--;
+		processed++;
+		wsemul_reset_abortstate(&edp->abortstate);
+		break;
+	case ABORT_OK:
+		/* remove cursor image if visible */
+		if (edp->flags & VTFL_CURSORON) {
+			rc = (*edp->emulops->cursor)
+			    (edp->emulcookie, 0, edp->crow,
+			     edp->ccol << edp->dw);
+			if (rc != 0)
+				return 0;
+		}
+		break;
+	default:
+		break;
+	}
 
 	for (; count > 0; data++, count--) {
 #ifdef JUMP_SCROLL
-		/*
-		 * If we are at the bottom of the scrolling area, count
-		 * newlines until an escape sequence appears.
-		 */
-		if ((edp->state == VT100_EMUL_STATE_NORMAL || kernel) &&
-		    ROWS_BELOW == 0)
-			lines = wsemul_vt100_jump_scroll(edp, data,
-			    count, kernel);
-		else
+		switch (edp->abortstate.state) {
+		case ABORT_FAILED_JUMP_SCROLL:
+			/*
+			 * If we failed a previous jump scroll attempt, we
+			 * need to try to resume it with the same distance.
+			 * We can not recompute it since there might be more
+			 * bytes in the tty ring, causing a different result.
+			 */
+			lines = edp->abortstate.lines;
+			break;
+		case ABORT_OK:
+			/*
+			 * If we are at the bottom of the scrolling area, count
+			 * newlines until an escape sequence appears.
+			 */
+			if ((edp->state == VT100_EMUL_STATE_NORMAL || kernel) &&
+			    ROWS_BELOW == 0)
+				lines = wsemul_vt100_jump_scroll(edp, data,
+				    count, kernel);
+			else
+				lines = 0;
+			break;
+		default:
+			/*
+			 * If we are recovering a non-scrolling failure,
+			 * do not try to scroll yet.
+			 */
 			lines = 0;
+			break;
+		}
 
 		if (lines > 1) {
-			wsemul_vt100_scrollup(edp, lines);
+			wsemul_resume_abort(&edp->abortstate);
+			rc = wsemul_vt100_scrollup(edp, lines);
+			if (rc != 0) {
+				wsemul_abort_jump_scroll(&edp->abortstate,
+				    lines);
+				return processed;
+			}
+			wsemul_reset_abortstate(&edp->abortstate);
 			edp->crow -= lines;
 		}
 #endif
 
+		wsemul_resume_abort(&edp->abortstate);
+
 		c = *data;
 		if ((c & 0x7f) < 0x20) {
-			wsemul_vt100_output_c0c1(edp, c, kernel);
+			rc = wsemul_vt100_output_c0c1(edp, c, kernel);
+			if (rc != 0)
+				break;
 			processed++;
 			continue;
 		}
 
 		if (edp->state == VT100_EMUL_STATE_NORMAL || kernel) {
-			wsemul_vt100_output_normal(edp, c, kernel);
+			rc = wsemul_vt100_output_normal(edp, c, kernel);
+			if (rc != 0)
+				break;
 			processed++;
 			continue;
 		}
@@ -969,13 +1096,34 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 		if (edp->state > nitems(vt100_output))
 			panic("wsemul_vt100: invalid state %d", edp->state);
 #endif
-		vt100_output[edp->state - 1](edp, c);
+		rc = vt100_output[edp->state - 1](edp, c);
+		if (rc != 0)
+			break;
 		processed++;
 	}
 
-	if (edp->flags & VTFL_CURSORON)
-		(*edp->emulops->cursor)(edp->emulcookie, 1,
-		    edp->crow, edp->ccol << edp->dw);
+	if (rc != 0)
+		wsemul_abort_other(&edp->abortstate);
+	else {
+		/* put cursor image back if visible */
+		if (edp->flags & VTFL_CURSORON) {
+			rc = (*edp->emulops->cursor)
+			    (edp->emulcookie, 1, edp->crow,
+			     edp->ccol << edp->dw);
+			if (rc != 0) {
+				/*
+				 * Fail the last character output, remembering
+				 * that only the cursor operation really needs
+				 * to be done.
+				 */
+				wsemul_abort_cursor(&edp->abortstate);
+				processed--;
+			}
+		}
+	}
+
+	if (rc == 0)
+		wsemul_reset_abortstate(&edp->abortstate);
 
 	return processed;
 }
