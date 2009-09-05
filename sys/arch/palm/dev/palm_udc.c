@@ -1,4 +1,4 @@
-/*	$OpenBSD: palm_udc.c,v 1.1 2009/09/05 01:22:11 marex Exp $	*/
+/*	$OpenBSD: palm_udc.c,v 1.2 2009/09/05 06:46:34 marex Exp $	*/
 
 /*
  * Copyright (c) 2009 Marek Vasut <marex@openbsd.org>
@@ -78,6 +78,19 @@ palm_udc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio_pullup	= GPIO95_USB_PULLUP;
 	sc->sc_gpio_pullup_inv	= 0;
 	sc->sc_is_host		= palm_udc_is_host;
+
+	pxa2x0_gpio_set_function(sc->sc_gpio_detect, GPIO_IN);
+	pxa2x0_gpio_set_function(GPIO95_USB_PULLUP, GPIO_OUT | GPIO_SET);
+
+	pxa2x0_gpio_set_function(45, GPIO_OUT);
+	pxa2x0_gpio_set_function(40, GPIO_OUT);
+	pxa2x0_gpio_set_function(39, GPIO_IN);
+	pxa2x0_gpio_set_function(38, GPIO_IN);
+	pxa2x0_gpio_set_function(37, GPIO_OUT);
+	pxa2x0_gpio_set_function(36, GPIO_IN);
+	pxa2x0_gpio_set_function(34, GPIO_IN);
+	pxa2x0_gpio_set_function(89, GPIO_OUT);
+	pxa2x0_gpio_set_function(120, GPIO_OUT);
 
 	pxaudc_attach(sc, aux);
 }
