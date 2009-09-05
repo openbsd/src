@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.22 2009/07/23 20:06:03 martynas Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.23 2009/09/05 10:49:45 tobias Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmd3.c,v 1.22 2009/07/23 20:06:03 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: cmd3.c,v 1.23 2009/09/05 10:49:45 tobias Exp $";
 #endif
 #endif /* not lint */
 
@@ -510,7 +510,7 @@ group(void *v)
 }
 
 /*
- * Sort the passed string vecotor into ascending dictionary
+ * Sort the passed string vector into ascending dictionary
  * order.
  */
 void
