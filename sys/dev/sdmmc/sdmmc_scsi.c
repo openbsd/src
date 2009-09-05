@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.17 2009/04/07 16:35:52 blambert Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.18 2009/09/05 11:59:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -345,6 +345,9 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 	case TEST_UNIT_READY:
 	case START_STOP:
 	case SYNCHRONIZE_CACHE:
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
 		return COMPLETE;
 
 	case READ_CAPACITY:
