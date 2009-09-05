@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.101 2009/07/24 08:15:38 blambert Exp $ */
+/*	$OpenBSD: ehci.c,v 1.102 2009/09/05 10:25:55 miod Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1592,7 +1592,10 @@ ehci_open(usbd_pipe_handle pipe)
 		ival = pipe->interval;
 		if (ival == USBD_DEFAULT_INTERVAL)
 			ival = ed->bInterval;
-		return (ehci_device_setintr(sc, sqh, ival));
+		s = splusb();
+		err = ehci_device_setintr(sc, sqh, ival);
+		splx(s);
+		return (err);
 	case UE_ISOCHRONOUS:
 		pipe->methods = &ehci_device_isoc_methods;
 		if (ed->bInterval == 0 || ed->bInterval > 16) {
