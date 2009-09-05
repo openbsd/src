@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.59 2009/08/31 22:25:43 martynas Exp $	*/
+/*	$OpenBSD: login.c,v 1.60 2009/09/05 14:04:38 tobias Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: login.c,v 1.59 2009/08/31 22:25:43 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: login.c,v 1.60 2009/09/05 14:04:38 tobias Exp $";
 #endif /* not lint */
 
 /*
@@ -205,6 +205,7 @@ main(int argc, char *argv[])
 				warnx("-h option: %s", strerror(EPERM));
 				quickexit(1);
 			}
+			free(fqdn);
 			if ((fqdn = strdup(optarg)) == NULL) {
 				warn(NULL);
 				quickexit(1);
@@ -472,7 +473,7 @@ main(int argc, char *argv[])
 		backoff = (int)login_getcapnum(lc, "login-backoff", 3, 3);
 
 		/*
-		 * Turn off the fflag if we have an an invalid user
+		 * Turn off the fflag if we have an invalid user
 		 * or we are not root and we are trying to change uids.
 		 */
 		if (!pwd || (uid && uid != pwd->pw_uid))
@@ -770,7 +771,7 @@ failed:
 
 /*
  * Allow for a '.' and 16 characters for any instance as well as
- * space for a ':' and 16 charcters defining the authentication type.
+ * space for a ':' and 16 characters defining the authentication type.
  */
 #define NBUFSIZ		(UT_NAMESIZE + 1 + 16 + 1 + 16)
 
