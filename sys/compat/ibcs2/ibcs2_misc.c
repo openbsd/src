@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.29 2007/09/01 15:14:44 martin Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.30 2009/09/05 10:28:41 miod Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -535,7 +535,7 @@ ibcs2_sys_getgroups(p, v, retval)
 	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
 	if (SCARG(uap, gidsetsize)) {
 		SCARG(&sa, gidset) = stackgap_alloc(&sg, NGROUPS_MAX *
-						    sizeof(gid_t *));
+						    sizeof(gid_t));
 		iset = stackgap_alloc(&sg, SCARG(uap, gidsetsize) *
 				      sizeof(ibcs2_gid_t));
 	}
@@ -569,12 +569,12 @@ ibcs2_sys_setgroups(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
-	gp = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) * sizeof(gid_t *));
+	gp = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) * sizeof(gid_t));
 	iset = stackgap_alloc(&sg, SCARG(&sa, gidsetsize) *
-			      sizeof(ibcs2_gid_t *));
+			      sizeof(ibcs2_gid_t));
 	if (SCARG(&sa, gidsetsize)) {
 		error = copyin((caddr_t)SCARG(uap, gidset), (caddr_t)iset, 
-		    sizeof(ibcs2_gid_t *) * SCARG(uap, gidsetsize));
+		    sizeof(ibcs2_gid_t) * SCARG(uap, gidsetsize));
 		if (error)
 			return error;
 	}
@@ -708,7 +708,7 @@ ibcs2_sys_sysconf(p, v, retval)
 		caddr_t sg = stackgap_init(p->p_emul);
 
 		SCARG(&ga, which) = RLIMIT_NPROC;
-		SCARG(&ga, rlp) = stackgap_alloc(&sg, sizeof(struct rlimit *));
+		SCARG(&ga, rlp) = stackgap_alloc(&sg, sizeof(struct rlimit));
 		if ((error = sys_getrlimit(p, &ga, retval)) != 0)
 			return error;
 		*retval = SCARG(&ga, rlp)->rlim_cur;
@@ -728,7 +728,7 @@ ibcs2_sys_sysconf(p, v, retval)
 		caddr_t sg = stackgap_init(p->p_emul);
 
 		SCARG(&ga, which) = RLIMIT_NOFILE;
-		SCARG(&ga, rlp) = stackgap_alloc(&sg, sizeof(struct rlimit *));
+		SCARG(&ga, rlp) = stackgap_alloc(&sg, sizeof(struct rlimit));
 		if ((error = sys_getrlimit(p, &ga, retval)) != 0)
 			return error;
 		*retval = SCARG(&ga, rlp)->rlim_cur;
@@ -922,7 +922,7 @@ ibcs2_sys_utime(p, v, retval)
 	struct timeval *tp;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval *));
+	tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval));
         IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&sa, path) = SCARG(uap, path);
 	if (SCARG(uap, buf)) {
