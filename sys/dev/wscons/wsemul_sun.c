@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.27 2009/09/05 14:49:20 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.28 2009/09/05 16:51:19 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -626,8 +626,6 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 	}
 
 	for (; count > 0; data++, count--) {
-		wsemul_resume_abort(&edp->abortstate);
-
 #ifdef JUMP_SCROLL
 		switch (edp->abortstate.state) {
 		case ABORT_FAILED_JUMP_SCROLL:
