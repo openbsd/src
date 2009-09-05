@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.15 2007/11/27 16:37:27 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.16 2009/09/05 13:43:58 miod Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 int	vt100_selectattribute(struct wsemul_vt100_emuldata *, int, int, int,
 	    long *, long *);
 int	vt100_ansimode(struct wsemul_vt100_emuldata *, int, int);
-int	vt100_decmode(struct wsemul_vt100_emuldata *, int, int);
+void	vt100_decmode(struct wsemul_vt100_emuldata *, int, int);
 #define VTMODE_SET 33
 #define VTMODE_RESET 44
 #define VTMODE_REPORT 55
@@ -765,42 +765,53 @@ vt100_ansimode(struct wsemul_vt100_emuldata *edp, int nr, int op)
 	return (res);
 }
 
-int
+void
 vt100_decmode(struct wsemul_vt100_emuldata *edp, int nr, int op)
 {
+#if 0	/* res unused... return it by reference if ever necessary */
 	int res = 0; /* default: unknown */
-	int flags;
+#endif
+	int flags = edp->flags;
 
-	flags = edp->flags;
 	switch (nr) {
 	case 1: /* DECCKM application/nomal cursor keys */
 		if (op == VTMODE_SET)
 			flags |= VTFL_APPLCURSOR;
 		else if (op == VTMODE_RESET)
 			flags &= ~VTFL_APPLCURSOR;
+#if 0
 		res = ((flags & VTFL_APPLCURSOR) ? 1 : 2);
+#endif
 		break;
 	case 2: /* DECANM ANSI vt100/vt52 */
+#if 0
 		res = 3; /* permanently set ??? */
+#endif
 		break;
 	case 3: /* DECCOLM 132/80 cols */
 	case 4: /* DECSCLM smooth/jump scroll */
 	case 5: /* DECSCNM light/dark background */
+#if 0
 		res = 4; /* all permanently reset ??? */
+#endif
 		break;
 	case 6: /* DECOM move within/outside margins */
 		if (op == VTMODE_SET)
 			flags |= VTFL_DECOM;
 		else if (op == VTMODE_RESET)
 			flags &= ~VTFL_DECOM;
+#if 0
 		res = ((flags & VTFL_DECOM) ? 1 : 2);
+#endif
 		break;
 	case 7: /* DECAWM autowrap */
 		if (op == VTMODE_SET)
 			flags |= VTFL_DECAWM;
 		else if (op == VTMODE_RESET)
 			flags &= ~VTFL_DECAWM;
+#if 0
 		res = ((flags & VTFL_DECAWM) ? 1 : 2);
+#endif
 		break;
 	case 8: /* DECARM keyboard autorepeat */
 		break;
@@ -816,7 +827,9 @@ vt100_decmode(struct wsemul_vt100_emuldata *edp, int nr, int op)
 		if (flags != edp->flags)
 			(*edp->emulops->cursor)(edp->emulcookie,
 			    flags & VTFL_CURSORON, edp->crow, edp->ccol);
+#if 0
 		res = ((flags & VTFL_CURSORON) ? 1 : 2);
+#endif
 		break;
 	case 42: /* DECNRCM use 7-bit NRC /
 		    7/8 bit from DEC multilingual or ISO-latin-1*/
@@ -824,7 +837,9 @@ vt100_decmode(struct wsemul_vt100_emuldata *edp, int nr, int op)
 			flags |= VTFL_NATCHARSET;
 		else if (op == VTMODE_RESET)
 			flags &= ~VTFL_NATCHARSET;
+#if 0
 		res = ((flags & VTFL_NATCHARSET) ? 1 : 2);
+#endif
 		break;
 	case 66: /* DECNKM numeric keypad */
 		break;
@@ -837,6 +852,4 @@ vt100_decmode(struct wsemul_vt100_emuldata *edp, int nr, int op)
 		break;
 	}
 	edp->flags = flags;
-
-	return (res);
 }

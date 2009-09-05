@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.24 2009/05/06 20:00:57 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.25 2009/09/05 13:43:58 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -103,13 +103,13 @@ struct wsemul_sun_emuldata {
 
 void	wsemul_sun_init(struct wsemul_sun_emuldata *,
 	    const struct wsscreen_descr *, void *, int, int, long);
-void	wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *, const u_char *,
+int	wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *, const u_char *,
 	    u_int, int);
 void	wsemul_sun_reset(struct wsemul_sun_emuldata *);
 void	wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *, u_char, int);
 void	wsemul_sun_output_normal(struct wsemul_sun_emuldata *, u_char, int);
-u_int	wsemul_sun_output_haveesc(struct wsemul_sun_emuldata *, u_char);
-u_int	wsemul_sun_output_control(struct wsemul_sun_emuldata *, u_char);
+void	wsemul_sun_output_haveesc(struct wsemul_sun_emuldata *, u_char);
+void	wsemul_sun_output_control(struct wsemul_sun_emuldata *, u_char);
 void	wsemul_sun_control(struct wsemul_sun_emuldata *, u_char);
 int	wsemul_sun_selectattribute(struct wsemul_sun_emuldata *, int, int, int,
 	    long *, long *);
@@ -279,7 +279,7 @@ wsemul_sun_output_lowchars(struct wsemul_sun_emuldata *edp, u_char c,
 		break;
 
 	case ASCII_LF:		/* "Line Feed (LF)" */
-                /* if the cur line isn't the last, incr and leave. */
+		/* if the cur line isn't the last, incr and leave. */
 		if (ROWS_LEFT > 0)
 			edp->crow++;
 		else
@@ -296,7 +296,7 @@ wsemul_sun_output_normal(struct wsemul_sun_emuldata *edp, u_char c, int kernel)
 	    c, kernel ? edp->kernattr : edp->curattr);
 
 	if (++edp->ccol >= edp->ncols) {
-                /* if the cur line isn't the last, incr and leave. */
+		/* if the cur line isn't the last, incr and leave. */
 		if (ROWS_LEFT > 0)
 			edp->crow++;
 		else
@@ -305,27 +305,23 @@ wsemul_sun_output_normal(struct wsemul_sun_emuldata *edp, u_char c, int kernel)
 	}
 }
 
-u_int
+void
 wsemul_sun_output_haveesc(struct wsemul_sun_emuldata *edp, u_char c)
 {
-	u_int newstate;
-
 	switch (c) {
 	case '[':		/* continuation of multi-char sequence */
 		edp->nargs = 0;
 		bzero(edp->args, sizeof (edp->args));
-		newstate = SUN_EMUL_STATE_CONTROL;
+		edp->state = SUN_EMUL_STATE_CONTROL;
 		break;
 
 	default:
 #ifdef DEBUG
 		printf("ESC%c unknown\n", c);
 #endif
-		newstate = SUN_EMUL_STATE_NORMAL;	/* XXX is this wise? */
+		edp->state = SUN_EMUL_STATE_NORMAL;	/* XXX is this wise? */
 		break;
 	}
-
-	return (newstate);
 }
 
 void
@@ -503,11 +499,9 @@ setattr:
 	}
 }
 
-u_int
+void
 wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
 {
-	u_int newstate = SUN_EMUL_STATE_CONTROL;
-
 	switch (c) {
 	case '0': case '1': case '2': case '3': case '4': /* argument digit */
 	case '5': case '6': case '7': case '8': case '9':
@@ -522,7 +516,7 @@ wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
 		}
 		edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
 		    (c - '0');
-                break;
+		break;
 
 	case ';':		/* argument terminator */
 		edp->nargs++;
@@ -533,17 +527,19 @@ wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
 		if (edp->nargs > SUN_EMUL_NARGS)
 			edp->nargs = SUN_EMUL_NARGS;
 		wsemul_sun_control(edp, c);
-		newstate = SUN_EMUL_STATE_NORMAL;
+		edp->state = SUN_EMUL_STATE_NORMAL;
 		break;
 	}
-	return (newstate);
 }
 
 void
 wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 {
 	struct wsemul_sun_emuldata *edp = cookie;
-	u_int newstate;
+	u_char c;
+#ifdef JUMP_SCROLL
+	int lines;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (kernel && !edp->console)
@@ -562,47 +558,55 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 		 */
 		if ((edp->state == SUN_EMUL_STATE_NORMAL || kernel) &&
 		    ROWS_LEFT == 0 && edp->scrolldist != 0)
-			wsemul_sun_jump_scroll(edp, data, count, kernel);
+			lines = wsemul_sun_jump_scroll(edp, data,
+			    count, kernel);
+		else
+			lines = 0;
+
+		if (lines > 1) {
+			wsemul_sun_scrollup(edp, lines);
+			edp->crow--;
+		}
 #endif
 
-		if (*data < ' ') {
-			wsemul_sun_output_lowchars(edp, *data, kernel);
+		c = *data;
+		if (c < ' ') {
+			wsemul_sun_output_lowchars(edp, c, kernel);
 			continue;
 		}
 
 		if (kernel) {
-			wsemul_sun_output_normal(edp, *data, 1);
+			wsemul_sun_output_normal(edp, c, 1);
 			continue;
 		}
 
-		switch (newstate = edp->state) {
+		switch (edp->state) {
 		case SUN_EMUL_STATE_NORMAL:
-			wsemul_sun_output_normal(edp, *data, 0);
+			wsemul_sun_output_normal(edp, c, 0);
 			break;
 		case SUN_EMUL_STATE_HAVEESC:
-			newstate = wsemul_sun_output_haveesc(edp, *data);
+			wsemul_sun_output_haveesc(edp, c);
 			break;
 		case SUN_EMUL_STATE_CONTROL:
-			newstate = wsemul_sun_output_control(edp, *data);
+			wsemul_sun_output_control(edp, c);
 			break;
 		default:
 #ifdef DIAGNOSTIC
 			panic("wsemul_sun: invalid state %d", edp->state);
 #else
-                        /* try to recover, if things get screwed up... */
-			newstate = SUN_EMUL_STATE_NORMAL;
-			wsemul_sun_output_normal(edp, *data, 0);
+			/* try to recover, if things get screwed up... */
+			edp->state = SUN_EMUL_STATE_NORMAL;
+			wsemul_sun_output_normal(edp, c, 0);
 #endif
-                        break;
+			break;
 		}
-		edp->state = newstate;
 	}
 	/* XXX */
 	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);
 }
 
 #ifdef JUMP_SCROLL
-void
+int
 wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *edp, const u_char *data,
     u_int count, int kernel)
 {
@@ -645,10 +649,7 @@ wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *edp, const u_char *data,
 		}
 	}
 
-	if (lines > 1) {
-		wsemul_sun_scrollup(edp, lines);
-		edp->crow--;
-	}
+	return lines;
 }
 #endif
 

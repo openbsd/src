@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.23 2009/01/12 20:43:53 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.24 2009/09/05 13:43:58 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -45,11 +45,10 @@
 
 void	*wsemul_vt100_cnattach(const struct wsscreen_descr *, void *,
 				  int, int, long);
-void	*wsemul_vt100_attach(int console, const struct wsscreen_descr *,
+void	*wsemul_vt100_attach(int, const struct wsscreen_descr *,
 				  void *, int, int, void *, long);
-void	wsemul_vt100_output(void *cookie, const u_char *data, u_int count,
-				 int);
-void	wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp);
+void	wsemul_vt100_output(void *, const u_char *, u_int, int);
+void	wsemul_vt100_detach(void *, u_int *, u_int *);
 void	wsemul_vt100_resetop(void *, enum wsemul_resetops);
 
 const struct wsemul_ops wsemul_vt100_ops = {
@@ -66,12 +65,12 @@ struct wsemul_vt100_emuldata wsemul_vt100_console_emuldata;
 
 void	wsemul_vt100_init(struct wsemul_vt100_emuldata *,
 	    const struct wsscreen_descr *, void *, int, int, long);
-void	wsemul_vt100_jump_scroll(struct wsemul_vt100_emuldata *,
+int	wsemul_vt100_jump_scroll(struct wsemul_vt100_emuldata *,
 	    const u_char *, u_int, int);
 void	wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *, u_char, int);
 void	wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *, u_char, int);
 void	wsemul_vt100_nextline(struct wsemul_vt100_emuldata *);
-typedef u_int vt100_handler(struct wsemul_vt100_emuldata *, u_char);
+typedef void vt100_handler(struct wsemul_vt100_emuldata *, u_char);
 vt100_handler
 	wsemul_vt100_output_esc,
 	wsemul_vt100_output_csi,
@@ -436,7 +435,7 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 	}
 }
 
-u_int
+void
 wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_NORMAL;
@@ -562,10 +561,10 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	}
 
-	return (newstate);
+	edp->state = newstate;
 }
 
-u_int
+void
 wsemul_vt100_output_scs94(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_NORMAL;
@@ -596,10 +595,11 @@ wsemul_vt100_output_scs94(struct wsemul_vt100_emuldata *edp, u_char c)
 #endif
 		break;
 	}
-	return (newstate);
+
+	edp->state = newstate;
 }
 
-u_int
+void
 wsemul_vt100_output_scs94_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	switch (c) {
@@ -613,10 +613,11 @@ wsemul_vt100_output_scs94_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 #endif
 		break;
 	}
-	return (VT100_EMUL_STATE_NORMAL);
+
+	edp->state = VT100_EMUL_STATE_NORMAL;
 }
 
-u_int
+void
 wsemul_vt100_output_scs96(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_NORMAL;
@@ -668,10 +669,11 @@ setnrc:
 #endif
 		break;
 	}
-	return (newstate);
+
+	edp->state = newstate;
 }
 
-u_int
+void
 wsemul_vt100_output_scs96_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	switch (c) {
@@ -685,10 +687,11 @@ wsemul_vt100_output_scs96_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 #endif
 		break;
 	}
-	return (VT100_EMUL_STATE_NORMAL);
+
+	edp->state = VT100_EMUL_STATE_NORMAL;
 }
 
-u_int
+void
 wsemul_vt100_output_esc_spc(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	switch (c) {
@@ -704,28 +707,30 @@ wsemul_vt100_output_esc_spc(struct wsemul_vt100_emuldata *edp, u_char c)
 #endif
 		break;
 	}
-	return (VT100_EMUL_STATE_NORMAL);
+
+	edp->state = VT100_EMUL_STATE_NORMAL;
 }
 
-u_int
+void
 wsemul_vt100_output_string(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	if (edp->dcstype && edp->dcspos < DCS_MAXLEN)
 		edp->dcsarg[edp->dcspos++] = c;
-	return (VT100_EMUL_STATE_STRING);
+
+	edp->state = VT100_EMUL_STATE_STRING;
 }
 
-u_int
+void
 wsemul_vt100_output_string_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	if (c == '\\') { /* ST complete */
 		wsemul_vt100_handle_dcs(edp);
-		return (VT100_EMUL_STATE_NORMAL);
+		edp->state = VT100_EMUL_STATE_NORMAL;
 	} else
-		return (VT100_EMUL_STATE_STRING);
+		edp->state = VT100_EMUL_STATE_STRING;
 }
 
-u_int
+void
 wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_DCS;
@@ -755,7 +760,7 @@ wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp, u_char c)
 		case '$':
 			newstate = VT100_EMUL_STATE_DCS_DOLLAR;
 			break;
-		case '{': /* DECDLD soft charset */
+		case '{': /* DECDLD soft charset */	/* } */
 		case '!': /* DECRQUPSS user preferred supplemental set */
 			/* 'u' must follow - need another state */
 		case '|': /* DECUDK program F6..F20 */
@@ -771,10 +776,10 @@ wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp, u_char c)
 		}
 	}
 
-	return (newstate);
+	edp->state = newstate;
 }
 
-u_int
+void
 wsemul_vt100_output_dcs_dollar(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	switch (c) {
@@ -810,10 +815,11 @@ wsemul_vt100_output_dcs_dollar(struct wsemul_vt100_emuldata *edp, u_char c)
 #endif
 		break;
 	}
-	return (VT100_EMUL_STATE_STRING);
+
+	edp->state = VT100_EMUL_STATE_STRING;
 }
 
-u_int
+void
 wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	int i;
@@ -862,10 +868,11 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 #endif
 		break;
 	}
-	return (VT100_EMUL_STATE_NORMAL);
+
+	edp->state = VT100_EMUL_STATE_NORMAL;
 }
 
-u_int
+void
 wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 {
 	u_int newstate = VT100_EMUL_STATE_CSI;
@@ -904,13 +911,18 @@ wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 		newstate = VT100_EMUL_STATE_NORMAL;
 		break;
 	}
-	return (newstate);
+
+	edp->state = newstate;
 }
 
 void
 wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 {
 	struct wsemul_vt100_emuldata *edp = cookie;
+	u_char c;
+#ifdef JUMP_SCROLL
+	int lines;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (kernel && !edp->console)
@@ -929,23 +941,32 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 		 */
 		if ((edp->state == VT100_EMUL_STATE_NORMAL || kernel) &&
 		    ROWS_BELOW == 0)
-			wsemul_vt100_jump_scroll(edp, data, count, kernel);
+			lines = wsemul_vt100_jump_scroll(edp, data,
+			    count, kernel);
+		else
+			lines = 0;
+
+		if (lines > 1) {
+			wsemul_vt100_scrollup(edp, lines);
+			edp->crow -= lines;
+		}
 #endif
 
-		if ((*data & 0x7f) < 0x20) {
-			wsemul_vt100_output_c0c1(edp, *data, kernel);
+		c = *data;
+		if ((c & 0x7f) < 0x20) {
+			wsemul_vt100_output_c0c1(edp, c, kernel);
 			continue;
 		}
 
 		if (edp->state == VT100_EMUL_STATE_NORMAL || kernel) {
-			wsemul_vt100_output_normal(edp, *data, kernel);
+			wsemul_vt100_output_normal(edp, c, kernel);
 			continue;
 		}
 #ifdef DIAGNOSTIC
 		if (edp->state > nitems(vt100_output))
 			panic("wsemul_vt100: invalid state %d", edp->state);
 #endif
-		edp->state = vt100_output[edp->state - 1](edp, *data);
+		vt100_output[edp->state - 1](edp, c);
 	}
 
 	if (edp->flags & VTFL_CURSORON)
@@ -954,7 +975,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 }
 
 #ifdef JUMP_SCROLL
-void
+int
 wsemul_vt100_jump_scroll(struct wsemul_vt100_emuldata *edp, const u_char *data,
     u_int count, int kernel)
 {
@@ -1012,9 +1033,6 @@ wsemul_vt100_jump_scroll(struct wsemul_vt100_emuldata *edp, const u_char *data,
 		}
 	}
 
-	if (lines > 1) {
-		wsemul_vt100_scrollup(edp, lines);
-		edp->crow -= lines;
-	}
+	return lines;
 }
 #endif
