@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.42 2009/08/13 15:23:12 deraadt Exp $	*/
+/*	$OpenBSD: xy.c,v 1.43 2009/09/05 00:48:39 krw Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -815,17 +815,6 @@ xyioctl(dev, command, addr, flag, p)
 		    &xy->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		return 0;
 
-	case DIOCSDINFO:	/* set disk label */
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		error = setdisklabel(xy->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xy->sc_dk.dk_openmask : */ 0);
-		if (error == 0) {
-			if (xy->state == XY_DRIVE_NOLABEL)
-				xy->state = XY_DRIVE_ONLINE;
-		}
-		return error;
-
 	case DIOCWLABEL:	/* change write status of disk label */
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -836,6 +825,7 @@ xyioctl(dev, command, addr, flag, p)
 		return 0;
 
 	case DIOCWDINFO:	/* write disk label */
+	case DIOCSDINFO:	/* set disk label */
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xy->sc_dk.dk_label,
@@ -844,12 +834,17 @@ xyioctl(dev, command, addr, flag, p)
 			if (xy->state == XY_DRIVE_NOLABEL)
 				xy->state = XY_DRIVE_ONLINE;
 
-			/* Simulate opening partition 0 so write succeeds. */
-			xy->sc_dk.dk_openmask |= (1 << 0);
-			error = writedisklabel(DISKLABELDEV(dev), xystrategy,
-			    xy->sc_dk.dk_label);
-			xy->sc_dk.dk_openmask =
-			    xy->sc_dk.dk_copenmask | xy->sc_dk.dk_bopenmask;
+			if (cmd == DIOCWDINFO) {
+				/*
+				 * Simulate opening partition 0 so write
+				 * succeeds.
+				 */
+				xy->sc_dk.dk_openmask |= (1 << 0);
+				error = writedisklabel(DISKLABELDEV(dev),
+				    xystrategy, xy->sc_dk.dk_label);
+				xy->sc_dk.dk_openmask = xy->sc_dk.dk_copenmask |
+				    xy->sc_dk.dk_bopenmask;
+			}
 		}
 		return error;
 

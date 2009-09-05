@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.24 2009/08/13 15:23:13 deraadt Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.25 2009/09/05 00:48:39 krw Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -715,10 +715,11 @@ hdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		else
-			err = (cmd == DIOCSDINFO ?
-			    setdisklabel(lp, (struct disklabel *)addr, 0) :
-			    writedisklabel(dev, hdstrategy, lp));
+		error = setdisklabel(lp, (struct disklabel *)addr, 0) :
+		if (error == 0) {
+			if (cmd == DIOCWDINFO)
+			    error = writedisklabel(dev, hdstrategy, lp));
+		}
 		break;
 
 	case DIOCWLABEL:

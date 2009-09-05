@@ -1,4 +1,4 @@
-/*	$OpenBSD: presto.c,v 1.14 2008/06/15 00:36:40 krw Exp $	*/
+/*	$OpenBSD: presto.c,v 1.15 2009/09/05 00:48:39 krw Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -333,26 +333,20 @@ prestoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 		bcopy(sc->sc_dk.dk_label, data, sizeof(struct disklabel));
 		return (0);
 
+	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
 		error = setdisklabel(sc->sc_dk.dk_label,
 		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0);
-		return (error);
-
-	case DIOCWDINFO:
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		error = setdisklabel(sc->sc_dk.dk_label,
-		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0);
 		if (error == 0) {
-			error = writedisklabel(DISKLABELDEV(dev),
-			    prestostrategy, sc->sc_dk.dk_label);
+			if (cmd == DIOCWDINFO)
+				error = writedisklabel(DISKLABELDEV(dev),
+				    prestostrategy, sc->sc_dk.dk_label);
 		}
-
 		return (error);
+
 	default:
 		return (EINVAL);
 	}
