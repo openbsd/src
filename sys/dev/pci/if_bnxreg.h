@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.32 2009/07/03 06:20:16 deraadt Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -5022,7 +5022,7 @@ struct bnx_softc {
 	u_int32_t		mbuf_sim_alloc_failed;	/* Mbuf simulated allocation failure counter. */
 	u_int32_t		l2fhdr_status_errors;
 	u_int32_t		unexpected_attentions;
-	u_int32_ts		lost_status_block_updates;
+	u_int32_t		lost_status_block_updates;
 #endif
 };
 
