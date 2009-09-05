@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops15.c,v 1.6 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: rasops15.c,v 1.7 2009/09/05 14:09:35 miod Exp $	*/
 /*	$NetBSD: rasops15.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -38,11 +38,11 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-void 	rasops15_putchar(void *, int, int, u_int, long attr);
+int 	rasops15_putchar(void *, int, int, u_int, long attr);
 #ifndef RASOPS_SMALL
-void 	rasops15_putchar8(void *, int, int, u_int, long attr);
-void 	rasops15_putchar12(void *, int, int, u_int, long attr);
-void 	rasops15_putchar16(void *, int, int, u_int, long attr);
+int 	rasops15_putchar8(void *, int, int, u_int, long attr);
+int 	rasops15_putchar12(void *, int, int, u_int, long attr);
+int 	rasops15_putchar16(void *, int, int, u_int, long attr);
 void	rasops15_makestamp(struct rasops_info *, long);
 
 /*
@@ -105,7 +105,7 @@ rasops15_init(ri)
 /*
  * Paint a single character.
  */
-void
+int
 rasops15_putchar(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -121,10 +121,10 @@ rasops15_putchar(cookie, row, col, uc, attr)
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
-		return;
+		return 0;
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols)
-		return;
+		return 0;
 #endif
 
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
@@ -173,6 +173,8 @@ rasops15_putchar(cookie, row, col, uc, attr)
 			rp += 2;
 		}
 	}
+
+	return 0;
 }
 
 #ifndef RASOPS_SMALL
@@ -209,7 +211,7 @@ rasops15_makestamp(ri, attr)
 /*
  * Paint a single character. This is for 8-pixel wide fonts.
  */
-void
+int
 rasops15_putchar8(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -224,8 +226,7 @@ rasops15_putchar8(cookie, row, col, uc, attr)
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
 		stamp_mutex--;
-		rasops15_putchar(cookie, row, col, uc, attr);
-		return;
+		return rasops15_putchar(cookie, row, col, uc, attr);
 	}
 
 	ri = (struct rasops_info *)cookie;
@@ -233,12 +234,12 @@ rasops15_putchar8(cookie, row, col, uc, attr)
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 #endif
 
@@ -283,12 +284,14 @@ rasops15_putchar8(cookie, row, col, uc, attr)
 	}
 
 	stamp_mutex--;
+
+	return 0;
 }
 
 /*
  * Paint a single character. This is for 12-pixel wide fonts.
  */
-void
+int
 rasops15_putchar12(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -303,8 +306,7 @@ rasops15_putchar12(cookie, row, col, uc, attr)
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
 		stamp_mutex--;
-		rasops15_putchar(cookie, row, col, uc, attr);
-		return;
+		return rasops15_putchar(cookie, row, col, uc, attr);
 	}
 
 	ri = (struct rasops_info *)cookie;
@@ -312,12 +314,12 @@ rasops15_putchar12(cookie, row, col, uc, attr)
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 #endif
 
@@ -366,12 +368,14 @@ rasops15_putchar12(cookie, row, col, uc, attr)
 	}
 
 	stamp_mutex--;
+
+	return 0;
 }
 
 /*
  * Paint a single character. This is for 16-pixel wide fonts.
  */
-void
+int
 rasops15_putchar16(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -386,8 +390,7 @@ rasops15_putchar16(cookie, row, col, uc, attr)
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
 		stamp_mutex--;
-		rasops15_putchar(cookie, row, col, uc, attr);
-		return;
+		return rasops15_putchar(cookie, row, col, uc, attr);
 	}
 
 	ri = (struct rasops_info *)cookie;
@@ -395,12 +398,12 @@ rasops15_putchar16(cookie, row, col, uc, attr)
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 #endif
 
@@ -455,5 +458,7 @@ rasops15_putchar16(cookie, row, col, uc, attr)
 	}
 
 	stamp_mutex--;
+
+	return 0;
 }
 #endif	/* !RASOPS_SMALL */

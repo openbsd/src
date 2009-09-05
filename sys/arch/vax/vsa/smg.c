@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.22 2008/12/21 21:39:50 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.23 2009/09/05 14:09:35 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -195,8 +195,8 @@ const struct wsdisplay_accessops smg_accessops = {
 
 void	smg_blockmove(struct rasops_info *, u_int, u_int, u_int, u_int, u_int,
 	    int);
-void	smg_copycols(void *, int, int, int, int);
-void	smg_erasecols(void *, int, int, int, long);
+int	smg_copycols(void *, int, int, int, int);
+int	smg_erasecols(void *, int, int, int, long);
 
 int	smg_getcursor(struct smg_screen *, struct wsdisplay_cursor *);
 int	smg_setup_screen(struct smg_screen *);
@@ -775,7 +775,7 @@ smg_blockmove(struct rasops_info *ri, u_int sx, u_int y, u_int dx, u_int cx,
 	}
 }
 
-void
+int
 smg_copycols(void *cookie, int row, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
@@ -787,9 +787,11 @@ smg_copycols(void *cookie, int row, int src, int dst, int n)
 
 	smg_blockmove(ri, src, row, dst, n, ri->ri_font->fontheight,
 	    RR_COPY);
+
+	return 0;
 }
 
-void
+int
 smg_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -803,6 +805,8 @@ smg_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	smg_blockmove(ri, col, row, col, num, ri->ri_font->fontheight,
 	    bg == 0 ? RR_CLEAR : RR_SET);
+
+	return 0;
 }
 
 /*

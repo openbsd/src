@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.7 2006/11/29 19:11:15 miod Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.8 2009/09/05 14:09:35 miod Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -83,7 +83,7 @@ pcdisplay_cursor_init(scr, existing)
 	scr->cursoron = 1;
 }
 
-void
+int
 pcdisplay_cursor(id, on, row, col)
 	void *id;
 	int on, row, col;
@@ -108,7 +108,7 @@ pcdisplay_cursor(id, on, row, col)
 	scr->vc_ccol = col;
 
 	if ((scr->cursoron = on) == 0)
-		return;
+		return 0;
 
 	off = (scr->vc_crow * scr->type->ncols + scr->vc_ccol);
 	if (scr->active) {
@@ -119,6 +119,8 @@ pcdisplay_cursor(id, on, row, col)
 		scr->cursortmp = scr->mem[off];
 		scr->mem[off] = scr->cursortmp ^ 0x7700;
 	}
+
+	return 0;
 #else 	/* PCDISPLAY_SOFTCURSOR */
 	struct pcdisplayscreen *scr = id;
 	int pos;
@@ -137,6 +139,8 @@ pcdisplay_cursor(id, on, row, col)
 		pcdisplay_6845_write(scr->hdl, cursorh, pos >> 8);
 		pcdisplay_6845_write(scr->hdl, cursorl, pos);
 	}
+
+	return 0;
 #endif	/* PCDISPLAY_SOFTCURSOR */
 }
 
@@ -153,7 +157,7 @@ pcdisplay_mapchar_simple(id, uni)
 }
 #endif
 
-void
+int
 pcdisplay_putchar(id, row, col, c, attr)
 	void *id;
 	int row, col;
@@ -172,6 +176,8 @@ pcdisplay_putchar(id, row, col, c, attr)
 				  c | (attr << 8));
 	else
 		scr->mem[off] = c | (attr << 8);
+
+	return 0;
 }
 
 int
@@ -201,7 +207,7 @@ pcdisplay_getchar(id, row, col, cell)
 	return (0);
 }
 
-void
+int
 pcdisplay_copycols(id, row, srccol, dstcol, ncols)
 	void *id;
 	int row, srccol, dstcol, ncols;
@@ -222,9 +228,11 @@ pcdisplay_copycols(id, row, srccol, dstcol, ncols)
 					ncols);
 	else
 		bcopy(&scr->mem[srcoff], &scr->mem[dstoff], ncols * 2);
+
+	return 0;
 }
 
-void
+int
 pcdisplay_erasecols(id, row, startcol, ncols, fillattr)
 	void *id;
 	int row, startcol, ncols;
@@ -247,9 +255,11 @@ pcdisplay_erasecols(id, row, startcol, ncols, fillattr)
 	else
 		for (i = 0; i < ncols; i++)
 			scr->mem[off + i] = val;
+
+	return 0;
 }
 
-void
+int
 pcdisplay_copyrows(id, srcrow, dstrow, nrows)
 	void *id;
 	int srcrow, dstrow, nrows;
@@ -271,9 +281,11 @@ pcdisplay_copyrows(id, srcrow, dstrow, nrows)
 	else
 		bcopy(&scr->mem[srcoff], &scr->mem[dstoff],
 		      nrows * ncols * 2);
+
+	return 0;
 }
 
-void
+int
 pcdisplay_eraserows(id, startrow, nrows, fillattr)
 	void *id;
 	int startrow, nrows;
@@ -296,4 +308,6 @@ pcdisplay_eraserows(id, startrow, nrows, fillattr)
 	else
 		for (n = 0; n < count; n++)
 			scr->mem[off + n] = val;
+
+	return 0;
 }

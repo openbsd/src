@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.17 2009/06/27 22:43:41 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.18 2009/09/05 14:09:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -338,19 +338,19 @@ void	ifb_rop_ifb(void *, int, int, int, int, int, int, uint32_t, int32_t);
 void	ifb_rop_jfb(void *, int, int, int, int, int, int, uint32_t, int32_t);
 int	ifb_rop_wait(struct ifb_softc *);
 
-void	ifb_putchar_dumb(void *, int, int, u_int, long);
-void	ifb_copycols_dumb(void *, int, int, int, int);
-void	ifb_erasecols_dumb(void *, int, int, int, long);
-void	ifb_copyrows_dumb(void *, int, int, int);
-void	ifb_eraserows_dumb(void *, int, int, long);
-void	ifb_do_cursor_dumb(struct rasops_info *);
+int	ifb_putchar_dumb(void *, int, int, u_int, long);
+int	ifb_copycols_dumb(void *, int, int, int, int);
+int	ifb_erasecols_dumb(void *, int, int, int, long);
+int	ifb_copyrows_dumb(void *, int, int, int);
+int	ifb_eraserows_dumb(void *, int, int, long);
+int	ifb_do_cursor_dumb(struct rasops_info *);
 
-void	ifb_putchar(void *, int, int, u_int, long);
-void	ifb_copycols(void *, int, int, int, int);
-void	ifb_erasecols(void *, int, int, int, long);
-void	ifb_copyrows(void *, int, int, int);
-void	ifb_eraserows(void *, int, int, long);
-void	ifb_do_cursor(struct rasops_info *);
+int	ifb_putchar(void *, int, int, u_int, long);
+int	ifb_copycols(void *, int, int, int, int);
+int	ifb_erasecols(void *, int, int, int, long);
+int	ifb_copyrows(void *, int, int, int);
+int	ifb_eraserows(void *, int, int, long);
+int	ifb_do_cursor(struct rasops_info *);
 
 int
 ifbmatch(struct device *parent, void *cf, void *aux)
@@ -845,7 +845,7 @@ ifb_mapregs(struct ifb_softc *sc, struct pci_attach_args *pa)
  * Non accelerated routines.
  */
 
-void
+int
 ifb_putchar_dumb(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -855,9 +855,11 @@ ifb_putchar_dumb(void *cookie, int row, int col, u_int uc, long attr)
 	sc->sc_old_ops.putchar(cookie, row, col, uc, attr);
 	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
 	sc->sc_old_ops.putchar(cookie, row, col, uc, attr);
+
+	return 0;
 }
 
-void
+int
 ifb_copycols_dumb(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -867,9 +869,11 @@ ifb_copycols_dumb(void *cookie, int row, int src, int dst, int num)
 	sc->sc_old_ops.copycols(cookie, row, src, dst, num);
 	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
 	sc->sc_old_ops.copycols(cookie, row, src, dst, num);
+
+	return 0;
 }
 
-void
+int
 ifb_erasecols_dumb(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -879,9 +883,11 @@ ifb_erasecols_dumb(void *cookie, int row, int col, int num, long attr)
 	sc->sc_old_ops.erasecols(cookie, row, col, num, attr);
 	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
 	sc->sc_old_ops.erasecols(cookie, row, col, num, attr);
+
+	return 0;
 }
 
-void
+int
 ifb_copyrows_dumb(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -891,9 +897,11 @@ ifb_copyrows_dumb(void *cookie, int src, int dst, int num)
 	sc->sc_old_ops.copyrows(cookie, src, dst, num);
 	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
 	sc->sc_old_ops.copyrows(cookie, src, dst, num);
+
+	return 0;
 }
 
-void
+int
 ifb_eraserows_dumb(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -903,13 +911,15 @@ ifb_eraserows_dumb(void *cookie, int row, int num, long attr)
 	sc->sc_old_ops.eraserows(cookie, row, num, attr);
 	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
 	sc->sc_old_ops.eraserows(cookie, row, num, attr);
+
+	return 0;
 }
 
 /* Similar to rasops_do_cursor(), but using a 7bit pixel mask. */
 
 #define	CURSOR_MASK	0x7f7f7f7f
 
-void
+int
 ifb_do_cursor_dumb(struct rasops_info *ri)
 {
 	struct ifb_softc *sc = ri->ri_hw;
@@ -982,13 +992,15 @@ ifb_do_cursor_dumb(struct rasops_info *ri)
 			}
 		}
 	}
+
+	return 0;
 }
 
 /*
  * Accelerated routines.
  */
 
-void
+int
 ifb_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -1002,9 +1014,11 @@ ifb_copycols(void *cookie, int row, int src, int dst, int num)
 	ifb_copyrect(sc, ri->ri_xorigin + src, ri->ri_yorigin + row,
 	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight);
+
+	return 0;
 }
 
-void
+int
 ifb_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -1019,9 +1033,11 @@ ifb_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	ifb_fillrect(sc, ri->ri_xorigin + col, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
-void
+int
 ifb_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -1033,9 +1049,11 @@ ifb_copyrows(void *cookie, int src, int dst, int num)
 
 	ifb_copyrect(sc, ri->ri_xorigin, ri->ri_yorigin + src,
 	    ri->ri_xorigin, ri->ri_yorigin + dst, ri->ri_emuwidth, num);
+
+	return 0;
 }
 
-void
+int
 ifb_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -1056,6 +1074,8 @@ ifb_eraserows(void *cookie, int row, int num, long attr)
 		w = ri->ri_emuwidth;
 	}
 	ifb_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
 void
@@ -1207,7 +1227,7 @@ ifb_rop_wait(struct ifb_softc *sc)
 	return i;
 }
 
-void
+int
 ifb_do_cursor(struct rasops_info *ri)
 {
 	struct ifb_softc *sc = ri->ri_hw;
@@ -1219,4 +1239,6 @@ ifb_do_cursor(struct rasops_info *ri)
 	ifb_rop(sc, x, y, x, y, ri->ri_font->fontwidth, ri->ri_font->fontheight,
 	    IFB_ROP_XOR, IFB_PIXELMASK);
 	ifb_rop_wait(sc);
+
+	return 0;
 }

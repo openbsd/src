@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops24.c,v 1.7 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: rasops24.c,v 1.8 2009/09/05 14:09:35 miod Exp $	*/
 /*	$NetBSD: rasops24.c,v 1.12 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -40,13 +40,13 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-void 	rasops24_erasecols(void *, int, int, int, long);
-void 	rasops24_eraserows(void *, int, int, long);
-void 	rasops24_putchar(void *, int, int, u_int, long attr);
+int 	rasops24_erasecols(void *, int, int, int, long);
+int 	rasops24_eraserows(void *, int, int, long);
+int 	rasops24_putchar(void *, int, int, u_int, long attr);
 #ifndef RASOPS_SMALL
-void 	rasops24_putchar8(void *, int, int, u_int, long attr);
-void 	rasops24_putchar12(void *, int, int, u_int, long attr);
-void 	rasops24_putchar16(void *, int, int, u_int, long attr);
+int 	rasops24_putchar8(void *, int, int, u_int, long attr);
+int 	rasops24_putchar12(void *, int, int, u_int, long attr);
+int 	rasops24_putchar16(void *, int, int, u_int, long attr);
 void	rasops24_makestamp(struct rasops_info *, long);
 
 /*
@@ -112,7 +112,7 @@ rasops24_init(ri)
  * Put a single character. This is the generic version.
  * XXX this bites - we should use masks.
  */
-void
+int
 rasops24_putchar(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -128,10 +128,10 @@ rasops24_putchar(cookie, row, col, uc, attr)
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
-		return;
+		return 0;
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols)
-		return;
+		return 0;
 #endif
 
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
@@ -187,6 +187,8 @@ rasops24_putchar(cookie, row, col, uc, attr)
 			*rp++ = clr[1];
 		}
 	}
+
+	return 0;
 }
 
 #ifndef RASOPS_SMALL
@@ -236,7 +238,7 @@ rasops24_makestamp(ri, attr)
 /*
  * Put a single character. This is for 8-pixel wide fonts.
  */
-void
+int
 rasops24_putchar8(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -251,8 +253,7 @@ rasops24_putchar8(cookie, row, col, uc, attr)
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
 		stamp_mutex--;
-		rasops24_putchar(cookie, row, col, uc, attr);
-		return;
+		return rasops24_putchar(cookie, row, col, uc, attr);
 	}
 
 	ri = (struct rasops_info *)cookie;
@@ -260,12 +261,12 @@ rasops24_putchar8(cookie, row, col, uc, attr)
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 #endif
 
@@ -312,12 +313,14 @@ rasops24_putchar8(cookie, row, col, uc, attr)
 	}
 
 	stamp_mutex--;
+
+	return 0;
 }
 
 /*
  * Put a single character. This is for 12-pixel wide fonts.
  */
-void
+int
 rasops24_putchar12(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -332,8 +335,7 @@ rasops24_putchar12(cookie, row, col, uc, attr)
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
 		stamp_mutex--;
-		rasops24_putchar(cookie, row, col, uc, attr);
-		return;
+		return rasops24_putchar(cookie, row, col, uc, attr);
 	}
 
 	ri = (struct rasops_info *)cookie;
@@ -341,12 +343,12 @@ rasops24_putchar12(cookie, row, col, uc, attr)
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 #endif
 
@@ -400,12 +402,14 @@ rasops24_putchar12(cookie, row, col, uc, attr)
 	}
 
 	stamp_mutex--;
+
+	return 0;
 }
 
 /*
  * Put a single character. This is for 16-pixel wide fonts.
  */
-void
+int
 rasops24_putchar16(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -420,8 +424,7 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 	/* Can't risk remaking the stamp if it's already in use */
 	if (stamp_mutex++) {
 		stamp_mutex--;
-		rasops24_putchar(cookie, row, col, uc, attr);
-		return;
+		return rasops24_putchar(cookie, row, col, uc, attr);
 	}
 
 	ri = (struct rasops_info *)cookie;
@@ -429,12 +432,12 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols) {
 		stamp_mutex--;
-		return;
+		return 0;
 	}
 #endif
 
@@ -495,13 +498,15 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 	}
 
 	stamp_mutex--;
+
+	return 0;
 }
 #endif	/* !RASOPS_SMALL */
 
 /*
  * Erase rows. This is nice and easy due to alignment.
  */
-void
+int
 rasops24_eraserows(cookie, row, num, attr)
 	void *cookie;
 	int row, num;
@@ -515,10 +520,8 @@ rasops24_eraserows(cookie, row, num, attr)
 	 * If the color is gray, we can cheat and use the generic routines
 	 * (which are faster, hopefully) since the r,g,b values are the same.
 	 */
-	if ((attr & 4) != 0) {
-		rasops_eraserows(cookie, row, num, attr);
-		return;
-	}
+	if ((attr & 4) != 0)
+		return rasops_eraserows(cookie, row, num, attr);
 
 	ri = (struct rasops_info *)cookie;
 
@@ -532,7 +535,7 @@ rasops24_eraserows(cookie, row, num, attr)
 		num = ri->ri_rows - row;
 
 	if (num <= 0)
-		return;
+		return 0;
 #endif
 
 	clr = ri->ri_devcmap[(attr >> 16) & 0xf] & 0xffffff;
@@ -600,12 +603,14 @@ rasops24_eraserows(cookie, row, num, attr)
 
 		DELTA(dp, delta, int32_t *);
 	}
+
+	return 0;
 }
 
 /*
  * Erase columns.
  */
-void
+int
 rasops24_erasecols(cookie, row, col, num, attr)
 	void *cookie;
 	int row, col, num;
@@ -620,17 +625,15 @@ rasops24_erasecols(cookie, row, col, num, attr)
 	 * If the color is gray, we can cheat and use the generic routines
 	 * (which are faster, hopefully) since the r,g,b values are the same.
 	 */
-	if ((attr & 4) != 0) {
-		rasops_erasecols(cookie, row, col, num, attr);
-		return;
-	}
+	if ((attr & 4) != 0)
+		return rasops_erasecols(cookie, row, col, num, attr);
 
 	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
-		return;
+		return 0;
 
 	if (col < 0) {
 		num += col;
@@ -641,7 +644,7 @@ rasops24_erasecols(cookie, row, col, num, attr)
 		num = ri->ri_cols - col;
 
 	if (num <= 0)
-		return;
+		return 0;
 #endif
 
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
@@ -721,4 +724,6 @@ rasops24_erasecols(cookie, row, col, num, attr)
 			*dbp++ = clr;
 		}
 	}
+
+	return 0;
 }

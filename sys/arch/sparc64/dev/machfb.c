@@ -1,4 +1,4 @@
-/*	$OpenBSD: machfb.c,v 1.5 2009/06/05 19:16:08 kettenis Exp $	*/
+/*	$OpenBSD: machfb.c,v 1.6 2009/09/05 14:09:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -222,10 +222,10 @@ int	machfb_getcmap(struct machfb_softc *, struct wsdisplay_cmap *);
 int	machfb_putcmap(struct machfb_softc *, struct wsdisplay_cmap *);
 void	machfb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
-void	machfb_copycols(void *, int, int, int, int);
-void	machfb_erasecols(void *, int, int, int, long);
-void	machfb_copyrows(void *, int, int, int);
-void	machfb_eraserows(void *, int, int, long);
+int	machfb_copycols(void *, int, int, int, int);
+int	machfb_erasecols(void *, int, int, int, long);
+int	machfb_copyrows(void *, int, int, int);
+int	machfb_eraserows(void *, int, int, long);
 
 void	machfb_init(struct machfb_softc *);
 int	machfb_wait_fifo(struct machfb_softc *, int);
@@ -514,7 +514,7 @@ machfb_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
  * Accelerated routines.
  */
 
-void
+int
 machfb_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -528,9 +528,11 @@ machfb_copycols(void *cookie, int row, int src, int dst, int num)
 	machfb_copyrect(sc, ri->ri_xorigin + src, ri->ri_yorigin + row,
 	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight);
+
+	return 0;
 }
 
-void
+int
 machfb_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -545,9 +547,11 @@ machfb_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	machfb_fillrect(sc, ri->ri_xorigin + col, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
-void
+int
 machfb_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -559,9 +563,11 @@ machfb_copyrows(void *cookie, int src, int dst, int num)
 
 	machfb_copyrect(sc, ri->ri_xorigin, ri->ri_yorigin + src,
 	    ri->ri_xorigin, ri->ri_yorigin + dst, ri->ri_emuwidth, num);
+
+	return 0;
 }
 
-void
+int
 machfb_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -582,6 +588,8 @@ machfb_eraserows(void *cookie, int row, int num, long attr)
 		w = ri->ri_emuwidth;
 	}
 	machfb_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
 void

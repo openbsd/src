@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.10 2009/06/28 13:40:51 kettenis Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.11 2009/09/05 14:09:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -155,10 +155,10 @@ int	gfxp_getcmap(struct gfxp_softc *, struct wsdisplay_cmap *);
 int	gfxp_putcmap(struct gfxp_softc *, struct wsdisplay_cmap *);
 void	gfxp_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
-void	gfxp_copycols(void *, int, int, int, int);
-void	gfxp_erasecols(void *, int, int, int, long);
-void	gfxp_copyrows(void *, int, int, int);
-void	gfxp_eraserows(void *, int, int, long);
+int	gfxp_copycols(void *, int, int, int, int);
+int	gfxp_erasecols(void *, int, int, int, long);
+int	gfxp_copyrows(void *, int, int, int);
+int	gfxp_eraserows(void *, int, int, long);
 
 void	gfxp_init(struct gfxp_softc *);
 void	gfxp_reinit(struct gfxp_softc *);
@@ -456,7 +456,7 @@ gfxp_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
  * Accelerated routines.
  */
 
-void
+int
 gfxp_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -470,9 +470,11 @@ gfxp_copycols(void *cookie, int row, int src, int dst, int num)
 	gfxp_copyrect(sc, ri->ri_xorigin + src, ri->ri_yorigin + row,
 	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight);
+
+	return 0;
 }
 
-void
+int
 gfxp_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -487,9 +489,11 @@ gfxp_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	gfxp_fillrect(sc, ri->ri_xorigin + col, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
-void
+int
 gfxp_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -501,9 +505,11 @@ gfxp_copyrows(void *cookie, int src, int dst, int num)
 
 	gfxp_copyrect(sc, ri->ri_xorigin, ri->ri_yorigin + src,
 	    ri->ri_xorigin, ri->ri_yorigin + dst, ri->ri_emuwidth, num);
+
+	return 0;
 }
 
-void
+int
 gfxp_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -524,6 +530,8 @@ gfxp_eraserows(void *cookie, int row, int num, long attr)
 		w = ri->ri_emuwidth;
 	}
 	gfxp_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.9 2008/06/26 05:42:17 ray Exp $ */
+/*	$OpenBSD: rasops.h,v 1.10 2009/09/05 14:09:35 miod Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -105,7 +105,7 @@ struct rasops_info {
 	int	ri_caps;
 
 	/* Callbacks so we can share some code */
-	void	(*ri_do_cursor)(struct rasops_info *);
+	int	(*ri_do_cursor)(struct rasops_info *);
 	void	(*ri_updatecursor)(struct rasops_info *);
 
 #if NRASOPS_ROTATION > 0
@@ -145,8 +145,8 @@ void	rasops32_init(struct rasops_info *);
 /* rasops.c */
 int	rasops_init(struct rasops_info *, int, int);
 int	rasops_reconfig(struct rasops_info *, int, int);
-void	rasops_eraserows(void *, int, int, long);
-void	rasops_erasecols(void *, int, int, int, long);
+int	rasops_eraserows(void *, int, int, long);
+int	rasops_erasecols(void *, int, int, int, long);
 
 extern const u_char	rasops_isgray[16];
 extern const u_char	rasops_cmap[256*3];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.5 2009/03/12 19:10:22 kettenis Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.6 2009/09/05 14:09:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -161,10 +161,10 @@ int	raptor_getcmap(struct raptor_softc *, struct wsdisplay_cmap *);
 int	raptor_putcmap(struct raptor_softc *, struct wsdisplay_cmap *);
 void	raptor_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
-void	raptor_copycols(void *, int, int, int, int);
-void	raptor_erasecols(void *, int, int, int, long);
-void	raptor_copyrows(void *, int, int, int);
-void	raptor_eraserows(void *, int, int, long);
+int	raptor_copycols(void *, int, int, int, int);
+int	raptor_erasecols(void *, int, int, int, long);
+int	raptor_copyrows(void *, int, int, int);
+int	raptor_eraserows(void *, int, int, long);
 
 void	raptor_init(struct raptor_softc *);
 int	raptor_wait(struct raptor_softc *);
@@ -428,7 +428,7 @@ raptor_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
  * Accelerated routines.
  */
 
-void
+int
 raptor_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -442,9 +442,11 @@ raptor_copycols(void *cookie, int row, int src, int dst, int num)
 	raptor_copyrect(sc, ri->ri_xorigin + src, ri->ri_yorigin + row,
 	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight);
+
+	return 0;
 }
 
-void
+int
 raptor_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -459,9 +461,11 @@ raptor_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	raptor_fillrect(sc, ri->ri_xorigin + col, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
-void
+int
 raptor_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -473,9 +477,11 @@ raptor_copyrows(void *cookie, int src, int dst, int num)
 
 	raptor_copyrect(sc, ri->ri_xorigin, ri->ri_yorigin + src,
 	    ri->ri_xorigin, ri->ri_yorigin + dst, ri->ri_emuwidth, num);
+
+	return 0;
 }
 
-void
+int
 raptor_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -496,6 +502,8 @@ raptor_eraserows(void *cookie, int row, int num, long attr)
 		w = ri->ri_emuwidth;
 	}
 	raptor_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
 void

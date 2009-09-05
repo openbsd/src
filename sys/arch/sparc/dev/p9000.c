@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.22 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.23 2009/09/05 14:09:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -99,11 +99,11 @@ struct wsdisplay_accessops p9000_accessops = {
 	NULL	/* pollc */
 };
 
-void	p9000_ras_copycols(void *, int, int, int, int);
-void	p9000_ras_copyrows(void *, int, int, int);
-void	p9000_ras_do_cursor(struct rasops_info *);
-void	p9000_ras_erasecols(void *, int, int, int, long int);
-void	p9000_ras_eraserows(void *, int, int, long int);
+int	p9000_ras_copycols(void *, int, int, int, int);
+int	p9000_ras_copyrows(void *, int, int, int);
+int	p9000_ras_do_cursor(struct rasops_info *);
+int	p9000_ras_erasecols(void *, int, int, int, long int);
+int	p9000_ras_eraserows(void *, int, int, long int);
 void	p9000_ras_init(struct p9000_softc *);
 
 int	p9000match(struct device *, void *, void *);
@@ -529,7 +529,7 @@ p9000_ras_init(struct p9000_softc *sc)
 	    P9000_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height - 1));
 }
 
-void
+int
 p9000_ras_copycols(void *v, int row, int src, int dst, int n)
 {
 	struct rasops_info *ri = v;
@@ -563,9 +563,11 @@ p9000_ras_copycols(void *v, int row, int src, int dst, int n)
 	sc->sc_junk = P9000_READ_CMD(sc, P9000_PE_BLIT);
 
 	p9000_drain(sc);
+
+	return 0;
 }
 
-void
+int
 p9000_ras_copyrows(void *v, int src, int dst, int n)
 {
 	struct rasops_info *ri = v;
@@ -597,9 +599,11 @@ p9000_ras_copyrows(void *v, int src, int dst, int n)
 	sc->sc_junk = P9000_READ_CMD(sc, P9000_PE_BLIT);
 
 	p9000_drain(sc);
+
+	return 0;
 }
 
-void
+int
 p9000_ras_erasecols(void *v, int row, int col, int n, long int attr)
 {
 	struct rasops_info *ri = v;
@@ -629,9 +633,11 @@ p9000_ras_erasecols(void *v, int row, int col, int n, long int attr)
 	sc->sc_junk = P9000_READ_CMD(sc, P9000_PE_QUAD);
 
 	p9000_drain(sc);
+
+	return 0;
 }
 
-void
+int
 p9000_ras_eraserows(void *v, int row, int n, long int attr)
 {
 	struct rasops_info *ri = v;
@@ -666,9 +672,11 @@ p9000_ras_eraserows(void *v, int row, int n, long int attr)
 	sc->sc_junk = P9000_READ_CMD(sc, P9000_PE_QUAD);
 
 	p9000_drain(sc);
+
+	return 0;
 }
 
-void
+int
 p9000_ras_do_cursor(struct rasops_info *ri)
 {
 	struct p9000_softc *sc = ri->ri_hw;
@@ -694,4 +702,6 @@ p9000_ras_do_cursor(struct rasops_info *ri)
 	sc->sc_junk = P9000_READ_CMD(sc, P9000_PE_QUAD);
 
 	p9000_drain(sc);
+
+	return 0;
 }

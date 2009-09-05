@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.20 2008/12/21 21:39:50 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.21 2009/09/05 14:09:35 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -220,12 +220,12 @@ void	gpx_upload_font(struct gpx_screen *);
 int	gpx_viper_write(struct gpx_screen *, u_int, u_int16_t);
 int	gpx_wait(struct gpx_screen *, int);
 
-void	gpx_copycols(void *, int, int, int, int);
-void	gpx_copyrows(void *, int, int, int);
-void	gpx_do_cursor(struct rasops_info *);
-void	gpx_erasecols(void *, int, int, int, long);
-void	gpx_eraserows(void *, int, int, long);
-void	gpx_putchar(void *, int, int, u_int, long);
+int	gpx_copycols(void *, int, int, int, int);
+int	gpx_copyrows(void *, int, int, int);
+int	gpx_do_cursor(struct rasops_info *);
+int	gpx_erasecols(void *, int, int, int, long);
+int	gpx_eraserows(void *, int, int, long);
+int	gpx_putchar(void *, int, int, u_int, long);
 
 /*
  * Autoconf glue
@@ -507,7 +507,7 @@ gpx_burner(void *v, u_int on, u_int flags)
  * wsdisplay emulops
  */
 
-void
+int
 gpx_putchar(void *v, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = v;
@@ -560,9 +560,11 @@ gpx_putchar(void *v, int row, int col, u_int uc, long attr)
 		gpx_fillrect(ss, dx, dy + font->fontheight - 2, font->fontwidth,
 		    1, attr, LF_R3);	/* fg fill */
 	}
+
+	return 0;
 }
 
-void
+int
 gpx_copycols(void *v, int row, int src, int dst, int cnt)
 {
 	struct rasops_info *ri = v;
@@ -577,9 +579,11 @@ gpx_copycols(void *v, int row, int src, int dst, int cnt)
 	h = font->fontheight;
 
 	gpx_copyrect(ss, sx, y, dx, y, w, h);
+
+	return 0;
 }
 
-void
+int
 gpx_erasecols(void *v, int row, int col, int cnt, long attr)
 {
 	struct rasops_info *ri = v;
@@ -593,9 +597,11 @@ gpx_erasecols(void *v, int row, int col, int cnt, long attr)
 	dy = font->fontheight;
 
 	gpx_fillrect(ss, x, y, dx, dy, attr, LF_R2); /* bg fill */
+
+	return 0;
 }
 
-void
+int
 gpx_copyrows(void *v, int src, int dst, int cnt)
 {
 	struct rasops_info *ri = v;
@@ -610,9 +616,11 @@ gpx_copyrows(void *v, int src, int dst, int cnt)
 	h = cnt * font->fontheight;
 
 	gpx_copyrect(ss, x, sy, x, dy, w, h);
+
+	return 0;
 }
 
-void
+int
 gpx_eraserows(void *v, int row, int cnt, long attr)
 {
 	struct rasops_info *ri = v;
@@ -626,9 +634,11 @@ gpx_eraserows(void *v, int row, int cnt, long attr)
 	dy = cnt * font->fontheight;
 
 	gpx_fillrect(ss, x, y, dx, dy, attr, LF_R2); /* bg fill */
+
+	return 0;
 }
 
-void
+int
 gpx_do_cursor(struct rasops_info *ri)
 {
 	struct gpx_screen *ss = ri->ri_hw;
@@ -640,6 +650,8 @@ gpx_do_cursor(struct rasops_info *ri)
 	h = ri->ri_font->fontheight;
 
 	gpx_fillrect(ss, x, y, w, h, WSCOL_WHITE << 24, LF_R4);	/* invert */
+
+	return 0;
 }
 
 /*

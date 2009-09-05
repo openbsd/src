@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.16 2006/11/29 19:08:19 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.17 2009/09/05 14:09:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -82,11 +82,11 @@
 extern int rasops_alloc_cattr(void *, int, int, int, long *);
 
 int	diofb_alloc_attr(void *, int, int, int, long *);
-void	diofb_copycols(void *, int, int, int, int);
-void	diofb_erasecols(void *, int, int, int, long);
-void	diofb_copyrows(void *, int, int, int);
-void	diofb_eraserows(void *, int, int, long);
-void	diofb_do_cursor(struct rasops_info *);
+int	diofb_copycols(void *, int, int, int, int);
+int	diofb_erasecols(void *, int, int, int, long);
+int	diofb_copyrows(void *, int, int, int);
+int	diofb_eraserows(void *, int, int, long);
+int	diofb_do_cursor(struct rasops_info *);
 
 /*
  * Frame buffer geometry initialization
@@ -338,7 +338,7 @@ diofb_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
 	return (rasops_alloc_cattr(cookie, fg, bg, flg, attr));
 }
 
-void
+int
 diofb_copycols(void *cookie, int row, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
@@ -352,9 +352,11 @@ diofb_copycols(void *cookie, int row, int src, int dst, int n)
 	(*fb->bmv)(fb, ri->ri_xorigin + src, ri->ri_yorigin + row,
 	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
 	    n, ri->ri_font->fontheight, RR_COPY, 0xff);
+
+	return 0;
 }
 
-void
+int
 diofb_copyrows(void *cookie, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
@@ -367,9 +369,11 @@ diofb_copyrows(void *cookie, int src, int dst, int n)
 	(*fb->bmv)(fb, ri->ri_xorigin, ri->ri_yorigin + src,
 	    ri->ri_xorigin, ri->ri_yorigin + dst,
 	    ri->ri_emuwidth, n, RR_COPY, 0xff);
+
+	return 0;
 }
 
-void
+int
 diofb_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -390,9 +394,11 @@ diofb_erasecols(void *cookie, int row, int col, int num, long attr)
 	if ((*fb->bmv)(fb, scol, srow, scol, srow, snum,
 	    ri->ri_font->fontheight, RR_CLEAR, 0xff ^ bg) != 0)
 		rasops_erasecols(cookie, row, col, num, attr);
+
+	return 0;
 }
 
-void
+int
 diofb_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -415,9 +421,11 @@ diofb_eraserows(void *cookie, int row, int num, long attr)
 	}
 	if (rc != 0)
 		rasops_eraserows(cookie, row, num, attr);
+
+	return 0;
 }
 
-void
+int
 diofb_do_cursor(struct rasops_info *ri)
 {
 	struct diofb *fb = ri->ri_hw;
@@ -427,6 +435,8 @@ diofb_do_cursor(struct rasops_info *ri)
 	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
 	(*fb->bmv)(fb, x, y, x, y, ri->ri_font->fontwidth,
 	    ri->ri_font->fontheight, RR_INVERT, 0xff);
+
+	return 0;
 }
 
 /*

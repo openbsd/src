@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.9 2008/06/26 05:42:11 ray Exp $ */
+/* $OpenBSD: lunafb.c,v 1.10 2009/09/05 14:09:35 miod Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -106,12 +106,12 @@ struct om_hwdevconfig omfb_console_dc;
 void omfb_getdevconfig(paddr_t, struct om_hwdevconfig *);
 
 /* in omrasops.c */
-void	om_cursor(void *, int, int, int);
-void	om_putchar(void *, int, int, u_int, long);
-void	om_copycols(void *, int, int, int, int);
-void	om_copyrows(void *, int, int, int num);
-void	om_erasecols(void *, int, int, int, long);
-void	om_eraserows(void *, int, int, long);
+int	om_cursor(void *, int, int, int);
+int	om_putchar(void *, int, int, u_int, long);
+int	om_copycols(void *, int, int, int, int);
+int	om_copyrows(void *, int, int, int num);
+int	om_erasecols(void *, int, int, int, long);
+int	om_eraserows(void *, int, int, long);
 
 struct wsscreen_descr omfb_stdscreen = {
 	"std"

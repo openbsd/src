@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeonfb.c,v 1.1 2009/07/05 17:13:25 kettenis Exp $	*/
+/*	$OpenBSD: radeonfb.c,v 1.2 2009/09/05 14:09:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -149,10 +149,10 @@ int	radeonfb_getcmap(struct radeonfb_softc *, struct wsdisplay_cmap *);
 int	radeonfb_putcmap(struct radeonfb_softc *, struct wsdisplay_cmap *);
 void	radeonfb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
-void	radeonfb_copycols(void *, int, int, int, int);
-void	radeonfb_erasecols(void *, int, int, int, long);
-void	radeonfb_copyrows(void *, int, int, int);
-void	radeonfb_eraserows(void *, int, int, long);
+int	radeonfb_copycols(void *, int, int, int, int);
+int	radeonfb_erasecols(void *, int, int, int, long);
+int	radeonfb_copyrows(void *, int, int, int);
+int	radeonfb_eraserows(void *, int, int, long);
 
 void	radeonfb_wait_fifo(struct radeonfb_softc *, int);
 void	radeonfb_wait(struct radeonfb_softc *);
@@ -463,7 +463,7 @@ radeonfb_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
  * Accelerated routines.
  */
 
-void
+int
 radeonfb_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -477,9 +477,11 @@ radeonfb_copycols(void *cookie, int row, int src, int dst, int num)
 	radeonfb_copyrect(sc, ri->ri_xorigin + src, ri->ri_yorigin + row,
 	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight);
+
+	return 0;
 }
 
-void
+int
 radeonfb_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -494,9 +496,11 @@ radeonfb_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	radeonfb_fillrect(sc, ri->ri_xorigin + col, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
-void
+int
 radeonfb_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -508,9 +512,11 @@ radeonfb_copyrows(void *cookie, int src, int dst, int num)
 
 	radeonfb_copyrect(sc, ri->ri_xorigin, ri->ri_yorigin + src,
 	    ri->ri_xorigin, ri->ri_yorigin + dst, ri->ri_emuwidth, num);
+
+	return 0;
 }
 
-void
+int
 radeonfb_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -531,6 +537,8 @@ radeonfb_eraserows(void *cookie, int row, int num, long attr)
 		w = ri->ri_emuwidth;
 	}
 	radeonfb_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
 void

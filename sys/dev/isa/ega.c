@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.14 2009/08/12 15:58:31 miod Exp $ */
+/* $OpenBSD: ega.c,v 1.15 2009/09/05 14:09:35 miod Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -113,7 +113,7 @@ static void ega_init(struct ega_config *,
 static void ega_setfont(struct ega_config *, struct egascreen *);
 static int ega_alloc_attr(void *, int, int, int, long *);
 static void ega_unpack_attr(void *, long, int *, int *, int *);
-void ega_copyrows(void *, int, int, int);
+int ega_copyrows(void *, int, int, int);
 
 struct cfattach ega_ca = {
 	sizeof(struct ega_softc), ega_match, ega_attach,
@@ -925,7 +925,7 @@ ega_unpack_attr(id, attr, fg, bg, ul)
 		*fg += 8;
 }
 
-void
+int
 ega_copyrows(id, srcrow, dstrow, nrows)
 	void *id;
 	int srcrow, dstrow, nrows;
@@ -977,4 +977,6 @@ ega_copyrows(id, srcrow, dstrow, nrows)
 	} else
 		bcopy(&scr->pcs.mem[srcoff], &scr->pcs.mem[dstoff],
 		      nrows * ncols * 2);
+
+	return 0;
 }

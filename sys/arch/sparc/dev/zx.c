@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.22 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.23 2009/09/05 14:09:35 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -160,12 +160,12 @@ void	zx_fillrect(struct rasops_info *, int, int, int, int, long, int);
 int	zx_intr(void *);
 int	zx_putcmap(struct zx_softc *);
 
-void	zx_copycols(void *, int, int, int, int);
-void	zx_copyrows(void *, int, int, int);
-void	zx_do_cursor(struct rasops_info *);
-void	zx_erasecols(void *, int, int, int, long);
-void	zx_eraserows(void *, int, int, long);
-void	zx_putchar(void *, int, int, u_int, long);
+int	zx_copycols(void *, int, int, int, int);
+int	zx_copyrows(void *, int, int, int);
+int	zx_do_cursor(struct rasops_info *);
+int	zx_erasecols(void *, int, int, int, long);
+int	zx_eraserows(void *, int, int, long);
+int	zx_putchar(void *, int, int, u_int, long);
 
 struct cfattach zx_ca = {
 	sizeof(struct zx_softc), zx_match, zx_attach
@@ -614,16 +614,18 @@ zx_copyrect(struct rasops_info *ri, int sx, int sy, int dx, int dy, int w,
 	SETREG(zc->zc_copy, ZX_COORDS(dx, dy));
 }
 
-void
+int
 zx_do_cursor(struct rasops_info *ri)
 {
 
 	zx_fillrect(ri, ri->ri_ccol, ri->ri_crow, 1, 1, WSCOL_BLACK << 16,
 	    ZX_ROP_NEW_XOR_OLD | ZX_ATTR_WE_ENABLE | ZX_ATTR_OE_ENABLE |
 	    ZX_ATTR_FORCE_WID);
+
+	return 0;
 }
 
-void
+int
 zx_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri;
@@ -631,9 +633,11 @@ zx_erasecols(void *cookie, int row, int col, int num, long attr)
 	ri = (struct rasops_info *)cookie;
 
 	zx_fillrect(ri, col, row, num, 1, attr, ZX_STD_ROP);
+
+	return 0;
 }
 
-void
+int
 zx_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri;
@@ -661,9 +665,11 @@ zx_eraserows(void *cookie, int row, int num, long attr)
 		SETREG(zc->zc_fill, ZX_COORDS(0, 0) | ZX_EXTENT_DIR_BACKWARDS);
 	} else
 		zx_fillrect(ri, 0, row, ri->ri_cols, num, attr, ZX_STD_ROP);
+
+	return 0;
 }
 
-void
+int
 zx_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri;
@@ -671,9 +677,11 @@ zx_copyrows(void *cookie, int src, int dst, int num)
 	ri = (struct rasops_info *)cookie;
 
 	zx_copyrect(ri, 0, src, 0, dst, ri->ri_cols, num);
+
+	return 0;
 }
 
-void
+int
 zx_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri;
@@ -681,9 +689,11 @@ zx_copycols(void *cookie, int row, int src, int dst, int num)
 	ri = (struct rasops_info *)cookie;
 
 	zx_copyrect(ri, src, row, dst, row, num, 1);
+
+	return 0;
 }
 
-void
+int
 zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri;
@@ -707,7 +717,7 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	if (uc == ' ') {
 		zx_fillrect(ri, col, row, 1, 1, attr, ZX_STD_ROP);
 		if (ul == 0)
-			return;
+			return 0;
 
 		dp += font->fontheight << ZX_WWIDTH;
 
@@ -755,6 +765,8 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		dp -= 2 << ZX_WWIDTH;
 		*dp = 0xffffffff;
 	}
+
+	return 0;
 }
 
 void

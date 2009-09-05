@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.22 2006/12/02 11:25:09 miod Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.23 2009/09/05 14:09:35 miod Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -53,14 +53,14 @@ struct device;
  * with these functions, which is passed to them when they are invoked.
  */
 struct wsdisplay_emulops {
-	void	(*cursor)(void *c, int on, int row, int col);
+	int	(*cursor)(void *c, int on, int row, int col);
 	int	(*mapchar)(void *, int, unsigned int *);
-	void	(*putchar)(void *c, int row, int col, u_int uc, long attr);
-	void	(*copycols)(void *c, int row, int srccol, int dstcol,
+	int	(*putchar)(void *c, int row, int col, u_int uc, long attr);
+	int	(*copycols)(void *c, int row, int srccol, int dstcol,
 		    int ncols);
-	void	(*erasecols)(void *c, int row, int startcol, int ncols, long);
-	void	(*copyrows)(void *c, int srcrow, int dstrow, int nrows);
-	void	(*eraserows)(void *c, int row, int nrows, long attr);
+	int	(*erasecols)(void *c, int row, int startcol, int ncols, long);
+	int	(*copyrows)(void *c, int srcrow, int dstrow, int nrows);
+	int	(*eraserows)(void *c, int row, int nrows, long attr);
 	int	(*alloc_attr)(void *c, int fg, int bg, int flags, long *attrp);
 	void	(*unpack_attr)(void *c, long attr, int *fg, int *bg, int *ul);
 /* fg / bg values. Made identical to ANSI terminal color codes. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.11 2008/12/27 17:23:03 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.12 2009/09/05 14:09:35 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -149,11 +149,11 @@ void	mgx_loadcmap(struct mgx_softc *, int, int);
 int	mgx_putcmap(u_int8_t *, struct wsdisplay_cmap *);
 void	mgx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
-void	mgx_ras_copycols(void *, int, int, int, int);
-void	mgx_ras_copyrows(void *, int, int, int);
-void	mgx_ras_do_cursor(struct rasops_info *);
-void	mgx_ras_erasecols(void *, int, int, int, long int);
-void	mgx_ras_eraserows(void *, int, int, long int);
+int	mgx_ras_copycols(void *, int, int, int, int);
+int	mgx_ras_copyrows(void *, int, int, int);
+int	mgx_ras_do_cursor(struct rasops_info *);
+int	mgx_ras_erasecols(void *, int, int, int, long int);
+int	mgx_ras_eraserows(void *, int, int, long int);
 void	mgx_ras_init(struct mgx_softc *, uint);
 
 uint8_t	mgx_read_1(vaddr_t, uint);
@@ -646,7 +646,7 @@ mgx_ras_init(struct mgx_softc *sc, uint chipid)
 	mgx_write_1(sc->sc_xreg, ATR_BYTEMASK, 0xff);
 }
 
-void
+int
 mgx_ras_copycols(void *v, int row, int src, int dst, int n)
 {
 	struct rasops_info *ri = v;
@@ -675,9 +675,11 @@ mgx_ras_copycols(void *v, int row, int src, int dst, int n)
 	mgx_write_4(sc->sc_xreg, ATR_DST_XY, ATR_DUAL(row, dst));
 	mgx_write_4(sc->sc_xreg, ATR_WH, ATR_DUAL(ri->ri_font->fontheight, n));
 	mgx_wait_engine(sc);
+
+	return 0;
 }
 
-void
+int
 mgx_ras_copyrows(void *v, int src, int dst, int n)
 {
 	struct rasops_info *ri = v;
@@ -704,9 +706,11 @@ mgx_ras_copyrows(void *v, int src, int dst, int n)
 	mgx_write_4(sc->sc_xreg, ATR_DST_XY, ATR_DUAL(dst, ri->ri_xorigin));
 	mgx_write_4(sc->sc_xreg, ATR_WH, ATR_DUAL(n, ri->ri_emuwidth));
 	mgx_wait_engine(sc);
+
+	return 0;
 }
 
-void
+int
 mgx_ras_erasecols(void *v, int row, int col, int n, long int attr)
 {
 	struct rasops_info *ri = v;
@@ -732,9 +736,11 @@ mgx_ras_erasecols(void *v, int row, int col, int n, long int attr)
 	mgx_write_4(sc->sc_xreg, ATR_DST_XY, ATR_DUAL(row, col));
 	mgx_write_4(sc->sc_xreg, ATR_WH, ATR_DUAL(ri->ri_font->fontheight, n));
 	mgx_wait_engine(sc);
+
+	return 0;
 }
 
-void
+int
 mgx_ras_eraserows(void *v, int row, int n, long int attr)
 {
 	struct rasops_info *ri = v;
@@ -765,9 +771,11 @@ mgx_ras_eraserows(void *v, int row, int n, long int attr)
 		mgx_write_4(sc->sc_xreg, ATR_WH, ATR_DUAL(n, ri->ri_emuwidth));
 	}
 	mgx_wait_engine(sc);
+
+	return 0;
 }
 
-void
+int
 mgx_ras_do_cursor(struct rasops_info *ri)
 {
 	struct mgx_softc *sc = ri->ri_hw;
@@ -787,4 +795,6 @@ mgx_ras_do_cursor(struct rasops_info *ri)
 	mgx_write_4(sc->sc_xreg, ATR_WH,
 	    ATR_DUAL(ri->ri_font->fontheight, ri->ri_font->fontwidth));
 	mgx_wait_engine(sc);
+
+	return 0;
 }

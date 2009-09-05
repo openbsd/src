@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.7 2009/02/24 14:37:29 jsing Exp $ */
+/*	$OpenBSD: gbe.c,v 1.8 2009/09/05 14:09:35 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -136,12 +136,12 @@ void	gbe_burner(void *, u_int, u_int);
 void	gbe_rop(struct gbe_softc *, int, int, int, int, int);
 void	gbe_copyrect(struct gbe_softc *, int, int, int, int, int, int, int);
 void	gbe_fillrect(struct gbe_softc *, int, int, int, int, int);
-void	gbe_do_cursor(struct rasops_info *);
-void	gbe_putchar(void *, int, int, u_int, long);
-void	gbe_copycols(void *, int, int, int, int);
-void	gbe_erasecols(void *, int, int, int, long);
-void	gbe_copyrows(void *, int, int, int);
-void	gbe_eraserows(void *, int, int, long);
+int	gbe_do_cursor(struct rasops_info *);
+int	gbe_putchar(void *, int, int, u_int, long);
+int	gbe_copycols(void *, int, int, int, int);
+int	gbe_erasecols(void *, int, int, int, long);
+int	gbe_copyrows(void *, int, int, int);
+int	gbe_eraserows(void *, int, int, long);
 
 static struct gbe_screen gbe_consdata;
 static int gbe_console;
@@ -1143,7 +1143,7 @@ gbe_fillrect(struct gbe_softc *gsc, int x, int y, int w, int h, int bg)
 	    ((x + w - 1) << 16) | ((y + h - 1) & 0xffff));
 }
 
-void
+int
 gbe_do_cursor(struct rasops_info *ri)
 {
 	struct gbe_softc *sc = ri->ri_hw;
@@ -1155,9 +1155,11 @@ gbe_do_cursor(struct rasops_info *ri)
 	y = ri->ri_yorigin + ri->ri_crow * h;
 
 	gbe_rop(sc, x, y, w, h, LOGIC_OP_XOR);
+
+	return 0;
 }
 
-void
+int
 gbe_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -1178,9 +1180,11 @@ gbe_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	screen->ro_curpos++;
 	if ((screen->ro_curpos + 1) * w > screen->ri_tile.ri_width)
 		screen->ro_curpos = 0;
+
+	return 0;
 }
 
-void
+int
 gbe_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -1194,9 +1198,11 @@ gbe_copycols(void *cookie, int row, int src, int dst, int num)
 	gbe_copyrect(sc, BUF_TYPE_TLB_A, ri->ri_xorigin + src,
 	    ri->ri_yorigin + row, ri->ri_xorigin + dst, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight);
+
+	return 0;
 }
 
-void
+int
 gbe_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -1211,9 +1217,11 @@ gbe_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	gbe_fillrect(sc, ri->ri_xorigin + col, ri->ri_yorigin + row,
 	    num, ri->ri_font->fontheight, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
-void
+int
 gbe_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -1225,9 +1233,11 @@ gbe_copyrows(void *cookie, int src, int dst, int num)
 
 	gbe_copyrect(sc, BUF_TYPE_TLB_A, ri->ri_xorigin, ri->ri_yorigin + src,
 	    ri->ri_xorigin, ri->ri_yorigin + dst, ri->ri_emuwidth, num);
+
+	return 0;
 }
 
-void
+int
 gbe_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -1248,6 +1258,8 @@ gbe_eraserows(void *cookie, int row, int num, long attr)
 	}
 
 	gbe_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
+
+	return 0;
 }
 
 /*

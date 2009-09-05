@@ -1,4 +1,4 @@
-/*	$OpenBSD: legss.c,v 1.3 2008/08/24 20:10:57 miod Exp $	*/
+/*	$OpenBSD: legss.c,v 1.4 2009/09/05 14:09:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -163,12 +163,12 @@ const struct wsdisplay_accessops legss_accessops = {
 int	legss_setup_screen(struct legss_screen *);
 void	legss_clear_screen(struct legss_screen *);
 
-void	legss_copycols(void *, int, int, int, int);
-void	legss_copyrows(void *, int, int, int);
-void	legss_do_cursor(struct rasops_info *);
-void	legss_erasecols(void *, int, int, int, long);
-void	legss_eraserows(void *, int, int, long);
-void	legss_putchar(void *, int, int, u_int, long);
+int	legss_copycols(void *, int, int, int, int);
+int	legss_copyrows(void *, int, int, int);
+int	legss_do_cursor(struct rasops_info *);
+int	legss_erasecols(void *, int, int, int, long);
+int	legss_eraserows(void *, int, int, long);
+int	legss_putchar(void *, int, int, u_int, long);
 
 u_int	legss_probe_depth(vaddr_t);
 
@@ -488,7 +488,7 @@ legsscninit()
  * wsdisplay emulops
  */
 
-void
+int
 legss_putchar(void *v, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = v;
@@ -545,9 +545,11 @@ legss_putchar(void *v, int row, int col, u_int uc, long attr)
 			rp++;
 		}
 	}
+
+	return 0;
 }
 
-void
+int
 legss_copycols(void *v, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = v;
@@ -589,9 +591,11 @@ legss_copycols(void *v, int row, int src, int dst, int num)
 			sp += ri->ri_stride;
 		}
 	}
+
+	return 0;
 }
 
-void
+int
 legss_erasecols(void *v, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = v;
@@ -613,9 +617,11 @@ legss_erasecols(void *v, int row, int col, int num, long attr)
 			dp++;
 		}
 	}
+
+	return 0;
 }
 
-void
+int
 legss_copyrows(void *v, int src, int dst, int num)
 {
 	struct rasops_info *ri = v;
@@ -651,9 +657,11 @@ legss_copyrows(void *v, int src, int dst, int num)
 			sp += 1 << 2;
 		}
 	}
+
+	return 0;
 }
 
-void
+int
 legss_eraserows(void *v, int row, int num, long attr)
 {
 	struct rasops_info *ri = v;
@@ -675,9 +683,11 @@ legss_eraserows(void *v, int row, int num, long attr)
 
 		DELTA(dp, delta, int32_t *);
 	}
+
+	return 0;
 }
 
-void
+int
 legss_do_cursor(struct rasops_info *ri)
 {
 	struct wsdisplay_font *font = ri->ri_font;
@@ -699,6 +709,8 @@ legss_do_cursor(struct rasops_info *ri)
 			dp += 4;
 		}
 	}
+
+	return 0;
 }
 
 /* Clear the whole screen */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops32.c,v 1.5 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: rasops32.c,v 1.6 2009/09/05 14:09:35 miod Exp $	*/
 /*	$NetBSD: rasops32.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-void 	rasops32_putchar(void *, int, int, u_int, long);
+int 	rasops32_putchar(void *, int, int, u_int, long);
 
 /*
  * Initialize a 'rasops_info' descriptor for this depth.
@@ -63,7 +63,7 @@ rasops32_init(ri)
 /*
  * Paint a single character.
  */
-void
+int
 rasops32_putchar(cookie, row, col, uc, attr)
 	void *cookie;
 	int row, col;
@@ -80,10 +80,10 @@ rasops32_putchar(cookie, row, col, uc, attr)
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
-		return;
+		return 0;
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols)
-		return;
+		return 0;
 #endif
 
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
@@ -128,4 +128,6 @@ rasops32_putchar(cookie, row, col, uc, attr)
 		while (width--)
 			*rp++ = clr[1];
 	}
+
+	return 0;
 }

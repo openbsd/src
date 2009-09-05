@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.29 2009/08/30 12:05:23 maja Exp $ */
+/*	$OpenBSD: udl.c,v 1.30 2009/09/05 14:09:35 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -80,12 +80,12 @@ int		udl_show_screen(void *, void *, int,
 		    void (*)(void *, int, int), void *);
 void		udl_burner(void *, u_int, u_int);
 
-void		udl_copycols(void *, int, int, int, int);
-void		udl_copyrows(void *, int, int, int);
-void		udl_erasecols(void *, int, int, int, long);
-void		udl_eraserows(void *, int, int, long);
-void		udl_putchar(void *, int, int, u_int, long);
-void		udl_do_cursor(struct rasops_info *);
+int		udl_copycols(void *, int, int, int, int);
+int		udl_copyrows(void *, int, int, int);
+int		udl_erasecols(void *, int, int, int, long);
+int		udl_eraserows(void *, int, int, long);
+int		udl_putchar(void *, int, int, u_int, long);
+int		udl_do_cursor(struct rasops_info *);
 
 usbd_status	udl_ctrl_msg(struct udl_softc *, uint8_t, uint8_t,
 		    uint16_t, uint16_t, uint8_t *, size_t);
@@ -549,7 +549,7 @@ udl_burner(void *v, u_int on, u_int flags)
 
 /* ---------- */
 
-void
+int
 udl_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -571,9 +571,11 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 	(sc->udl_fb_block_copy)(sc, sx, sy, dx, dy, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
+
+	return 0;
 }
 
-void
+int
 udl_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
@@ -597,9 +599,11 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 	(sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, 0, dy, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
+
+	return 0;
 }
 
-void
+int
 udl_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -624,9 +628,11 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	udl_fb_block_write(sc, bgc, x, y, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
+
+	return 0;
 }
 
-void
+int
 udl_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -650,9 +656,11 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 	udl_fb_block_write(sc, bgc, x, y, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
+
+	return 0;
 }
 
-void
+int
 udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -687,9 +695,11 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	 * character will be buffered until another rasops function flush
 	 * the buffer.
 	 */
+
+	return 0;
 }
 
-void
+int
 udl_do_cursor(struct rasops_info *ri)
 {
 	struct udl_softc *sc = ri->ri_hw;
@@ -728,6 +738,8 @@ udl_do_cursor(struct rasops_info *ri)
 	}
 
 	(void)udl_cmd_send_async(sc);
+
+	return 0;
 }
 
 /* ---------- */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplayvar.h,v 1.9 2007/02/11 20:29:22 miod Exp $ */
+/* $OpenBSD: pcdisplayvar.h,v 1.10 2009/09/05 14:09:35 miod Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*
@@ -79,15 +79,15 @@ static inline void _pcdisplay_6845_write(ph, reg, val)
 
 void	pcdisplay_cursor_init(struct pcdisplayscreen *, int);
 void	pcdisplay_cursor_reset(struct pcdisplayscreen *);
-void	pcdisplay_cursor(void *, int, int, int);
+int	pcdisplay_cursor(void *, int, int, int);
 #if 0
 unsigned int pcdisplay_mapchar_simple(void *, int);
 #endif
-int pcdisplay_mapchar(void *, int, unsigned int *);
-void	pcdisplay_putchar(void *, int, int, u_int, long);
+int	pcdisplay_mapchar(void *, int, unsigned int *);
+int	pcdisplay_putchar(void *, int, int, u_int, long);
 struct wsdisplay_charcell;
 int	pcdisplay_getchar(void *, int, int, struct wsdisplay_charcell *);
-void	pcdisplay_copycols(void *, int, int, int,int);
-void	pcdisplay_erasecols(void *, int, int, int, long);
-void	pcdisplay_copyrows(void *, int, int, int);
-void	pcdisplay_eraserows(void *, int, int, long);
+int	pcdisplay_copycols(void *, int, int, int,int);
+int	pcdisplay_erasecols(void *, int, int, int, long);
+int	pcdisplay_copyrows(void *, int, int, int);
+int	pcdisplay_eraserows(void *, int, int, long);

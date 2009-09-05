@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.43 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.44 2009/09/05 14:09:35 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -99,25 +99,25 @@ struct tcx_softc {
 	paddr_t	sc_stipple;		/* Stipple space PA */
 	paddr_t	sc_blit;		/* Blitter space PA */
 	int	sc_blit_width;		/* maximal blith width */
-	void	(*sc_plain_copycols)(void *, int, int, int, int);
+	int	(*sc_plain_copycols)(void *, int, int, int, int);
 };
 
 void	tcx_accel_init(struct tcx_softc *, struct confargs *);
 void	tcx_accel_plug(struct tcx_softc *, struct confargs *);
 void	tcx_blit(struct tcx_softc *, uint32_t, uint32_t, int);
 void	tcx_burner(void *, u_int, u_int);
-void	tcx_copyrows(void *, int, int, int);
-void	tcx_copycols(void *, int, int, int, int);
-void	tcx_do_cursor(struct rasops_info *);
-void	tcx_erasecols(void *, int, int, int, long);
-void	tcx_eraserows(void *, int, int, long);
+int	tcx_copyrows(void *, int, int, int);
+int	tcx_copycols(void *, int, int, int, int);
+int	tcx_do_cursor(struct rasops_info *);
+int	tcx_erasecols(void *, int, int, int, long);
+int	tcx_eraserows(void *, int, int, long);
 int	tcx_intr(void *);
 int	tcx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static __inline__
 void	tcx_loadcmap_deferred(struct tcx_softc *, u_int, u_int);
 paddr_t	tcx_mmap(void *, off_t, int);
 void	tcx_prom(void *);
-void	tcx_putchar(void *, int, int, u_int, long);
+int	tcx_putchar(void *, int, int, u_int, long);
 void	tcx_reset(struct tcx_softc *, int);
 void	tcx_s24_reset(struct tcx_softc *, int);
 void	tcx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
@@ -660,7 +660,7 @@ tcx_accel_plug(struct tcx_softc *sc, struct confargs *ca)
  * to invoke it many times, and handle overlapping regions ourselves.
  */
 
-void
+int
 tcx_copycols(void *cookie, int row, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
@@ -670,8 +670,7 @@ tcx_copycols(void *cookie, int row, int src, int dst, int n)
 
 	if (dst > src && dst < src + n) {
 		/* Areas overlap, do it the slow but safe way */
-		(*sc->sc_plain_copycols)(cookie, row, src, dst, n);
-		return;
+		return (*sc->sc_plain_copycols)(cookie, row, src, dst, n);
 	}
 
 	/* Areas do not overlap dangerously, copy forwards */
@@ -692,9 +691,11 @@ tcx_copycols(void *cookie, int row, int src, int dst, int n)
 		srcaddr += sc->sc_sunfb.sf_width;
 		dstaddr += sc->sc_sunfb.sf_width;
 	}
+
+	return 0;
 }
 
-void
+int
 tcx_copyrows(void *cookie, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
@@ -733,6 +734,8 @@ tcx_copyrows(void *cookie, int src, int dst, int n)
 			srcaddr += sc->sc_sunfb.sf_width;
 		}
 	}
+
+	return 0;
 }
 
 /*
@@ -823,7 +826,7 @@ tcx_stipple(struct tcx_softc *sc, int x, int y, int cnt, int rop, int bg)
 	}
 }
 
-void
+int
 tcx_erasecols(void *cookie, int row, int col, int n, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -839,9 +842,11 @@ tcx_erasecols(void *cookie, int row, int col, int n, long attr)
 	cury = ri->ri_yorigin + row * ri->ri_font->fontheight;
 	for (h = ri->ri_font->fontheight; h != 0; cury++, h--)
 		tcx_stipple(sc, sx, cury, n, GXcopy, bg);
+
+	return 0;
 }
 
-void
+int
 tcx_eraserows(void *cookie, int row, int n, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -864,9 +869,11 @@ tcx_eraserows(void *cookie, int row, int n, long attr)
 
 	for (; n != 0; y++, n--)
 		tcx_stipple(sc, x, y, w, GXcopy, bg);
+
+	return 0;
 }
 
-void
+int
 tcx_do_cursor(struct rasops_info *ri)
 {
 	struct tcx_softc *sc = ri->ri_hw;
@@ -877,9 +884,11 @@ tcx_do_cursor(struct rasops_info *ri)
 
 	for (n = ri->ri_font->fontheight; n != 0; y++, n--)
 		tcx_stipple(sc, x, y, ri->ri_font->fontwidth, GXinvert, 0xff);
+
+	return 0;
 }
 
-void
+int
 tcx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = cookie;
@@ -994,4 +1003,6 @@ tcx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			soffs += sc->sc_sunfb.sf_width << 3;
 		}
 	}
+
+	return 0;
 }

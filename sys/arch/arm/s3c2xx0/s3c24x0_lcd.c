@@ -1,4 +1,4 @@
-/* $OpenBSD: s3c24x0_lcd.c,v 1.2 2009/01/05 20:37:16 jasper Exp $ */
+/* $OpenBSD: s3c24x0_lcd.c,v 1.3 2009/09/05 14:09:33 miod Exp $ */
 /* $NetBSD: s3c24x0_lcd.c,v 1.6 2007/12/15 00:39:15 perry Exp $ */
 
 /*
@@ -706,48 +706,48 @@ s3c24x0_lcd_mapchar(void *cookie, int c, unsigned int *cp)
 	return (* scr->rinfo.ri_ops.mapchar)(&scr->rinfo, c, cp);
 }
 
-static void
+static int
 s3c24x0_lcd_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct s3c24x0_lcd_screen *scr = cookie;
 
-	(* scr->rinfo.ri_ops.putchar)(&scr->rinfo,
+	return (* scr->rinfo.ri_ops.putchar)(&scr->rinfo,
 	    row, col, uc, attr);
 }
 
-static void
+static int
 s3c24x0_lcd_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct s3c24x0_lcd_screen *scr = cookie;
 
-	(* scr->rinfo.ri_ops.copycols)(&scr->rinfo,
+	return (* scr->rinfo.ri_ops.copycols)(&scr->rinfo,
 	    row, src, dst, num);
 }
 
-static void
+static int
 s3c24x0_lcd_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct s3c24x0_lcd_screen *scr = cookie;
 
-	(* scr->rinfo.ri_ops.erasecols)(&scr->rinfo,
+	return (* scr->rinfo.ri_ops.erasecols)(&scr->rinfo,
 	    row, col, num, attr);
 }
 
-static void
+static int
 s3c24x0_lcd_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct s3c24x0_lcd_screen *scr = cookie;
 
-	(* scr->rinfo.ri_ops.copyrows)(&scr->rinfo,
+	return (* scr->rinfo.ri_ops.copyrows)(&scr->rinfo,
 	    src, dst, num);
 }
 
-static void
+static int
 s3c24x0_lcd_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct s3c24x0_lcd_screen *scr = cookie;
 
-	(* scr->rinfo.ri_ops.eraserows)(&scr->rinfo,
+	return (* scr->rinfo.ri_ops.eraserows)(&scr->rinfo,
 	    row, num, attr);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.60 2009/02/06 22:51:04 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -54,13 +54,13 @@ struct cfdriver sti_cd = {
 };
 
 int	sti_alloc_attr(void *, int, int, int, long *);
-void	sti_copycols(void *, int, int, int, int);
-void	sti_copyrows(void *, int, int, int);
-void	sti_cursor(void *, int, int, int);
-void	sti_erasecols(void *, int, int, int, long);
-void	sti_eraserows(void *, int, int, long);
+int	sti_copycols(void *, int, int, int, int);
+int	sti_copyrows(void *, int, int, int);
+int	sti_cursor(void *, int, int, int);
+int	sti_erasecols(void *, int, int, int, long);
+int	sti_eraserows(void *, int, int, long);
 int	sti_mapchar(void *, int, u_int *);
-void	sti_putchar(void *, int, int, u_int, long);
+int	sti_putchar(void *, int, int, u_int, long);
 void	sti_unpack_attr(void *, long, int *, int *, int *);
 
 struct wsdisplay_emulops sti_emulops = {
@@ -1119,7 +1119,7 @@ sti_show_screen(void *v, void *cookie, int waitok,
  * wsdisplay emulops
  */
 
-void
+int
 sti_cursor(void *v, int on, int row, int col)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
@@ -1129,6 +1129,8 @@ sti_cursor(void *v, int on, int row, int col)
 	    col * fp->width, row * fp->height,
 	    col * fp->width, row * fp->height,
 	    fp->height, fp->width, bmf_invert);
+
+	return 0;
 }
 
 /*
@@ -1187,7 +1189,7 @@ sti_mapchar(void *v, int uni, u_int *index)
 	return (5);
 }
 
-void
+int
 sti_putchar(void *v, int row, int col, u_int uc, long attr)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
@@ -1244,9 +1246,11 @@ sti_putchar(void *v, int row, int col, u_int uc, long attr)
 
 		(*rom->blkmv)(&a.flags, &a.in, &a.out, &scr->scr_cfg);
 	}
+
+	return 0;
 }
 
-void
+int
 sti_copycols(void *v, int row, int srccol, int dstcol, int ncols)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
@@ -1256,9 +1260,11 @@ sti_copycols(void *v, int row, int srccol, int dstcol, int ncols)
 	    srccol * fp->width, row * fp->height,
 	    dstcol * fp->width, row * fp->height,
 	    fp->height, ncols * fp->width, bmf_copy);
+
+	return 0;
 }
 
-void
+int
 sti_erasecols(void *v, int row, int startcol, int ncols, long attr)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
@@ -1268,9 +1274,11 @@ sti_erasecols(void *v, int row, int startcol, int ncols, long attr)
 	    startcol * fp->width, row * fp->height,
 	    startcol * fp->width, row * fp->height,
 	    fp->height, ncols * fp->width, bmf_clear);
+
+	return 0;
 }
 
-void
+int
 sti_copyrows(void *v, int srcrow, int dstrow, int nrows)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
@@ -1278,9 +1286,11 @@ sti_copyrows(void *v, int srcrow, int dstrow, int nrows)
 
 	sti_bmove(scr, 0, srcrow * fp->height, 0, dstrow * fp->height,
 	    nrows * fp->height, scr->scr_cfg.scr_width, bmf_copy);
+
+	return 0;
 }
 
-void
+int
 sti_eraserows(void *v, int srcrow, int nrows, long attr)
 {
 	struct sti_screen *scr = (struct sti_screen *)v;
@@ -1288,6 +1298,8 @@ sti_eraserows(void *v, int srcrow, int nrows, long attr)
 
 	sti_bmove(scr, 0, srcrow * fp->height, 0, srcrow * fp->height,
 	    nrows * fp->height, scr->scr_cfg.scr_width, bmf_clear);
+
+	return 0;
 }
 
 int
