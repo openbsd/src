@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.33 2009/08/29 13:58:51 jasper Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.34 2009/09/05 11:28:54 dlg Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -1073,6 +1073,9 @@ ahb_scsi_cmd(xs)
 			    sc->sc_dev.dv_xname, AHB_NSEG);
 			xs->error = XS_DRIVER_STUFFUP;
 			ahb_free_ecb(sc, ecb, flags);
+			s = splbio();
+			scsi_done(xs);
+			splx(s);
 			return COMPLETE;
 		}
 	} else {	/* No data xfer, use non S/G values */
