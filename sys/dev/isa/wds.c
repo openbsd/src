@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.29 2009/08/26 22:29:09 jasper Exp $	*/
+/*	$OpenBSD: wds.c,v 1.30 2009/09/05 11:49:36 dlg Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -1060,6 +1060,9 @@ wds_scsi_cmd(xs)
 		/* XXX Fix me! */
 		printf("%s: reset!\n", sc->sc_dev.dv_xname);
 		wds_init(sc);
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
 		return COMPLETE;
 	}
 
