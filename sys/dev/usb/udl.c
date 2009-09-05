@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.30 2009/09/05 14:09:35 miod Exp $ */
+/*	$OpenBSD: udl.c,v 1.31 2009/09/05 20:35:30 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -111,6 +111,8 @@ int		udl_cmd_insert_buf_comp(struct udl_softc *, uint8_t *,
 		    uint32_t);
 int		udl_cmd_insert_head_comp(struct udl_softc *, uint32_t);
 void		udl_cmd_insert_check(struct udl_cmd_buf *, int);
+uint32_t	udl_cmd_get_offset(struct udl_softc *);
+void		udl_cmd_set_offset(struct udl_softc *, uint32_t);
 void		udl_cmd_write_reg_1(struct udl_softc *, uint8_t, uint8_t);
 void		udl_cmd_write_reg_3(struct udl_softc *, uint8_t, uint32_t);
 usbd_status	udl_cmd_send(struct udl_softc *);
@@ -555,11 +557,15 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 	struct rasops_info *ri = cookie;
 	struct udl_softc *sc;
 	int sx, sy, dx, dy, cx, cy;
+	uint32_t save_offset;
+	usbd_status error;
 
 	sc = ri->ri_hw;
 
 	DPRINTF(2, "%s: %s: row=%d, src=%d, dst=%d, num=%d\n",
 	    DN(sc), FUNC, row, src, dst, num);
+
+	save_offset = udl_cmd_get_offset(sc);
 
 	sx = src * ri->ri_font->fontwidth;
 	sy = row * ri->ri_font->fontheight;
@@ -570,9 +576,13 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 
 	(sc->udl_fb_block_copy)(sc, sx, sy, dx, dy, cx, cy);
 
-	(void)udl_cmd_send_async(sc);
+	error = udl_cmd_send_async(sc);
+	if (error != USBD_NORMAL_COMPLETION) {
+		udl_cmd_set_offset(sc, save_offset);
+		return (EAGAIN);
+	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -581,11 +591,15 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 	struct rasops_info *ri = cookie;
 	struct udl_softc *sc;
 	int sy, dy, cx, cy;
+	uint32_t save_offset;
+	usbd_status error;
 
 	sc = ri->ri_hw;
 
 	DPRINTF(2, "%s: %s: src=%d, dst=%d, num=%d\n",
 	    DN(sc), FUNC, src, dst, num);
+
+	save_offset = udl_cmd_get_offset(sc);
 
 	sy = src * sc->sc_ri.ri_font->fontheight;
 	dy = dst * sc->sc_ri.ri_font->fontheight;
@@ -598,9 +612,13 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 	/* copy row block back from off-screen now */
 	(sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, 0, dy, cx, cy);
 
-	(void)udl_cmd_send_async(sc);
+	error = udl_cmd_send_async(sc);
+	if (error != USBD_NORMAL_COMPLETION) {
+		udl_cmd_set_offset(sc, save_offset);
+		return (EAGAIN);
+	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -611,11 +629,15 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	uint16_t bgc;
 	int fg, bg;
 	int x, y, cx, cy;
+	uint32_t save_offset;
+	usbd_status error;
 
 	sc = ri->ri_hw;
 
 	DPRINTF(2, "%s: %s: row=%d, col=%d, num=%d\n",
 	    DN(sc), FUNC, row, col, num);
+
+	save_offset = udl_cmd_get_offset(sc);
 
 	sc->sc_ri.ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	bgc = (uint16_t)sc->sc_ri.ri_devcmap[bg];
@@ -627,9 +649,13 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 
 	udl_fb_block_write(sc, bgc, x, y, cx, cy);
 
-	(void)udl_cmd_send_async(sc);
+	error = udl_cmd_send_async(sc);
+	if (error != USBD_NORMAL_COMPLETION) {
+		udl_cmd_set_offset(sc, save_offset);
+		return (EAGAIN);
+	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -640,10 +666,14 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 	uint16_t bgc;
 	int fg, bg;
 	int x, y, cx, cy;
+	uint32_t save_offset;
+	usbd_status error;
 
 	sc = ri->ri_hw;
 
 	DPRINTF(2, "%s: %s: row=%d, num=%d\n", DN(sc), FUNC, row, num);
+
+	save_offset = udl_cmd_get_offset(sc);
 
 	sc->sc_ri.ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	bgc = (uint16_t)sc->sc_ri.ri_devcmap[bg];
@@ -655,9 +685,13 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 
 	udl_fb_block_write(sc, bgc, x, y, cx, cy);
 
-	(void)udl_cmd_send_async(sc);
+	error = udl_cmd_send_async(sc);
+	if (error != USBD_NORMAL_COMPLETION) {
+		udl_cmd_set_offset(sc, save_offset);
+		return (EAGAIN);
+	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -696,7 +730,7 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	 * the buffer.
 	 */
 
-	return 0;
+	return (0);
 }
 
 int
@@ -704,6 +738,9 @@ udl_do_cursor(struct rasops_info *ri)
 {
 	struct udl_softc *sc = ri->ri_hw;
 	uint32_t x, y;
+	uint32_t save_offset;
+	uint8_t save_cursor;
+	usbd_status error;
 
 	/*
 	 * XXX
@@ -715,6 +752,9 @@ udl_do_cursor(struct rasops_info *ri)
 
 	DPRINTF(2, "%s: %s: ccol=%d, crow=%d\n",
 	    DN(sc), FUNC, ri->ri_ccol, ri->ri_crow);
+
+	save_offset = udl_cmd_get_offset(sc);
+	save_cursor = sc->sc_cursor_on;
 
 	x = ri->ri_ccol * ri->ri_font->fontwidth;
 	y = ri->ri_crow * ri->ri_font->fontheight;
@@ -737,9 +777,14 @@ udl_do_cursor(struct rasops_info *ri)
 		sc->sc_cursor_on = 0;
 	}
 
-	(void)udl_cmd_send_async(sc);
+	error = udl_cmd_send_async(sc);
+	if (error != USBD_NORMAL_COMPLETION) {
+		udl_cmd_set_offset(sc, save_offset);
+		sc->sc_cursor_on = save_cursor;
+		return (EAGAIN);
+	}
 
-	return 0;
+	return (0);
 }
 
 /* ---------- */
@@ -1199,6 +1244,22 @@ udl_cmd_insert_check(struct udl_cmd_buf *cb, int len)
 	}
 }
 
+uint32_t
+udl_cmd_get_offset(struct udl_softc *sc)
+{
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
+
+	return (cb->off);
+}
+
+void
+udl_cmd_set_offset(struct udl_softc *sc, uint32_t offset)
+{
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
+
+	cb->off = offset;
+}
+
 void
 udl_cmd_write_reg_1(struct udl_softc *sc, uint8_t reg, uint8_t val)
 {
@@ -1256,19 +1317,9 @@ udl_cmd_send_async(struct udl_softc *sc)
 	usbd_status error;
 	int i, s;
 
-	/* if the ring buffer is full, wait until it's flushed completely */
-	if (sc->sc_cmd_xfer_cnt == UDL_CMD_XFER_COUNT) {
-		DPRINTF(2, "%s: %s: ring buffer full, wait until flushed\n",
-		    DN(sc), FUNC);
-		/*
-		 * XXX
-		 * Yes, this is ugly.  But since we can't tsleep() here, I
-		 * have no better idea how we can delay rasops so it doesn't
-		 * blow up our command buffer.
-		 */
-		while (sc->sc_cmd_xfer_cnt > 0)
-			delay(100);
-	}
+	/* check if command queue is full */
+	if (sc->sc_cmd_xfer_cnt == UDL_CMD_XFER_COUNT)
+		return (USBD_IN_USE);
 
 	s = splusb();	/* no callbacks please until accounting is done */
 
@@ -1296,6 +1347,7 @@ udl_cmd_send_async(struct udl_softc *sc)
 	error = usbd_transfer(cx->xfer);
 	if (error != 0 && error != USBD_IN_PROGRESS) {
 		printf("%s: %s: %s!\n", DN(sc), FUNC, usbd_errstr(error));
+		splx(s);
 		return (error);
 	}
 	DPRINTF(2, "%s: %s: sending %d bytes from buffer no. %d\n",
