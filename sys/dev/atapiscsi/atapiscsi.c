@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.82 2009/02/16 21:19:06 miod Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.83 2009/09/05 11:20:24 dlg Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -335,6 +335,9 @@ wdc_atapi_send_cmd(sc_xfer)
 
 	if (sc_xfer->sc_link->target != 0) {
 		sc_xfer->error = XS_DRIVER_STUFFUP;
+		s = splbio();
+		scsi_done(sc_xfer);
+		splx(s);
 		return (COMPLETE);
 	}
 
