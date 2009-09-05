@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.24 2009/09/05 13:43:58 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.25 2009/09/05 14:30:24 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -47,7 +47,7 @@ void	*wsemul_vt100_cnattach(const struct wsscreen_descr *, void *,
 				  int, int, long);
 void	*wsemul_vt100_attach(int, const struct wsscreen_descr *,
 				  void *, int, int, void *, long);
-void	wsemul_vt100_output(void *, const u_char *, u_int, int);
+u_int	wsemul_vt100_output(void *, const u_char *, u_int, int);
 void	wsemul_vt100_detach(void *, u_int *, u_int *);
 void	wsemul_vt100_resetop(void *, enum wsemul_resetops);
 
@@ -915,10 +915,11 @@ wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 	edp->state = newstate;
 }
 
-void
+u_int
 wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 {
 	struct wsemul_vt100_emuldata *edp = cookie;
+	u_int processed = 0;
 	u_char c;
 #ifdef JUMP_SCROLL
 	int lines;
@@ -955,11 +956,13 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 		c = *data;
 		if ((c & 0x7f) < 0x20) {
 			wsemul_vt100_output_c0c1(edp, c, kernel);
+			processed++;
 			continue;
 		}
 
 		if (edp->state == VT100_EMUL_STATE_NORMAL || kernel) {
 			wsemul_vt100_output_normal(edp, c, kernel);
+			processed++;
 			continue;
 		}
 #ifdef DIAGNOSTIC
@@ -967,11 +970,14 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 			panic("wsemul_vt100: invalid state %d", edp->state);
 #endif
 		vt100_output[edp->state - 1](edp, c);
+		processed++;
 	}
 
 	if (edp->flags & VTFL_CURSORON)
 		(*edp->emulops->cursor)(edp->emulcookie, 1,
 		    edp->crow, edp->ccol << edp->dw);
+
+	return processed;
 }
 
 #ifdef JUMP_SCROLL

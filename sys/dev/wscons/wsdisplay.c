@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.92 2009/05/31 17:02:20 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.93 2009/09/05 14:30:24 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1401,7 +1401,7 @@ wsdisplaystart(struct tty *tp)
 {
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
-	int s, n, unit;
+	int s, n, done, unit;
 	u_char *buf;
 
 	unit = WSDISPLAYUNIT(tp->t_dev);
@@ -1454,22 +1454,21 @@ wsdisplaystart(struct tty *tp)
 			mouse_hide(scr);
 		}
 #endif
-		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
-		    buf, n, 0);
+		done = (*scr->scr_dconf->wsemul->output)
+		    (scr->scr_dconf->wsemulcookie, buf, n, 0);
 	}
-	ndflush(&tp->t_outq, n);
+	ndflush(&tp->t_outq, done);
 
-	if ((n = ndqb(&tp->t_outq, 0)) > 0) {
-		buf = tp->t_outq.c_cf;
+	if (done == n) {
+		if ((n = ndqb(&tp->t_outq, 0)) > 0) {
+			buf = tp->t_outq.c_cf;
 
-		if (!(scr->scr_flags & SCR_GRAPHICS)) {
-#ifdef BURNER_SUPPORT
-			wsdisplay_burn(sc, WSDISPLAY_BURN_OUTPUT);
-#endif
-			(*scr->scr_dconf->wsemul->output)
-			    (scr->scr_dconf->wsemulcookie, buf, n, 0);
+			if (!(scr->scr_flags & SCR_GRAPHICS)) {
+				done = (*scr->scr_dconf->wsemul->output)
+				    (scr->scr_dconf->wsemulcookie, buf, n, 0);
+			}
+			ndflush(&tp->t_outq, done);
 		}
-		ndflush(&tp->t_outq, n);
 	}
 
 	s = spltty();
@@ -2089,7 +2088,7 @@ wsdisplay_cnputc(dev_t dev, int i)
 #ifdef BURNER_SUPPORT
 	/*wsdisplay_burn(wsdisplay_console_device, WSDISPLAY_BURN_OUTPUT);*/
 #endif
-	(*dc->wsemul->output)(dc->wsemulcookie, &c, 1, 1);
+	(void)(*dc->wsemul->output)(dc->wsemulcookie, &c, 1, 1);
 }
 
 int

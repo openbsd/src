@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_dumb.c,v 1.7 2007/11/27 16:37:27 miod Exp $ */
+/* $OpenBSD: wsemul_dumb.c,v 1.8 2009/09/05 14:30:24 miod Exp $ */
 /* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -46,10 +46,9 @@ void	*wsemul_dumb_cnattach(const struct wsscreen_descr *, void *,
 				   int, int, long);
 void	*wsemul_dumb_attach(int console, const struct wsscreen_descr *,
 				 void *, int, int, void *, long);
-void	wsemul_dumb_output(void *cookie, const u_char *data, u_int count,
-				int);
-int	wsemul_dumb_translate(void *cookie, keysym_t, const char **);
-void	wsemul_dumb_detach(void *cookie, u_int *crowp, u_int *ccolp);
+u_int	wsemul_dumb_output(void *, const u_char *, u_int, int);
+int	wsemul_dumb_translate(void *, keysym_t, const char **);
+void	wsemul_dumb_detach(void *, u_int *, u_int *);
 void	wsemul_dumb_resetop(void *, enum wsemul_resetops);
 
 const struct wsemul_ops wsemul_dumb_ops = {
@@ -130,7 +129,7 @@ wsemul_dumb_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 	return (edp);
 }
 
-void
+u_int
 wsemul_dumb_output(cookie, data, count, kernel)
 	void *cookie;
 	const u_char *data;
@@ -138,6 +137,7 @@ wsemul_dumb_output(cookie, data, count, kernel)
 	int kernel; /* ignored */
 {
 	struct wsemul_dumb_emuldata *edp = cookie;
+	u_int processed = 0;
 	u_char c;
 	int n;
 
@@ -150,8 +150,9 @@ wsemul_dumb_output(cookie, data, count, kernel)
 			else
 				(*edp->emulops->putchar)(edp->emulcookie, 0,
 				    0, c, 0);
+			processed++;
 		}
-		return;
+		return processed;
 	}
 
 	/* XXX */
@@ -221,9 +222,12 @@ wsemul_dumb_output(cookie, data, count, kernel)
 			edp->crow -= n - 1;
 			break;
 		}
+		processed++;
 	}
 	/* XXX */
 	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);
+
+	return processed;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulvar.h,v 1.10 2007/11/27 16:37:27 miod Exp $ */
+/* $OpenBSD: wsemulvar.h,v 1.11 2009/09/05 14:30:24 miod Exp $ */
 /* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
@@ -46,12 +46,11 @@ struct wsemul_ops {
 
 	void	*(*cnattach)(const struct wsscreen_descr *, void *,
 				  int, int, long);
-	void	*(*attach)(int console, const struct wsscreen_descr *, void *,
+	void	*(*attach)(int, const struct wsscreen_descr *, void *,
 				int, int, void *, long);
-	void	(*output)(void *cookie, const u_char *data, u_int count,
-			       int);
+	u_int	(*output)(void *, const u_char *, u_int, int);
 	int	(*translate)(void *, keysym_t, const char **);
-	void	(*detach)(void *cookie, u_int *crow, u_int *ccol);
+	void	(*detach)(void *, u_int *, u_int *);
 	void    (*reset)(void *, enum wsemul_resetops);
 };
 

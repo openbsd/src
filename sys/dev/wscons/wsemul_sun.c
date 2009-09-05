@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.25 2009/09/05 13:43:58 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.26 2009/09/05 14:30:24 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -58,7 +58,7 @@ void	*wsemul_sun_cnattach(const struct wsscreen_descr *, void *,
     int, int, long);
 void	*wsemul_sun_attach(int, const struct wsscreen_descr *,
     void *, int, int, void *, long);
-void	wsemul_sun_output(void *, const u_char *, u_int, int);
+u_int	wsemul_sun_output(void *, const u_char *, u_int, int);
 int	wsemul_sun_translate(void *, keysym_t, const char **);
 void	wsemul_sun_detach(void *, u_int *, u_int *);
 void	wsemul_sun_resetop(void *, enum wsemul_resetops);
@@ -532,10 +532,11 @@ wsemul_sun_output_control(struct wsemul_sun_emuldata *edp, u_char c)
 	}
 }
 
-void
+u_int
 wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 {
 	struct wsemul_sun_emuldata *edp = cookie;
+	u_int processed = 0;
 	u_char c;
 #ifdef JUMP_SCROLL
 	int lines;
@@ -572,11 +573,13 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 		c = *data;
 		if (c < ' ') {
 			wsemul_sun_output_lowchars(edp, c, kernel);
+			processed++;
 			continue;
 		}
 
 		if (kernel) {
 			wsemul_sun_output_normal(edp, c, 1);
+			processed++;
 			continue;
 		}
 
@@ -600,9 +603,12 @@ wsemul_sun_output(void *cookie, const u_char *data, u_int count, int kernel)
 #endif
 			break;
 		}
+		processed++;
 	}
 	/* XXX */
 	(*edp->emulops->cursor)(edp->emulcookie, 1, edp->crow, edp->ccol);
+
+	return processed;
 }
 
 #ifdef JUMP_SCROLL
