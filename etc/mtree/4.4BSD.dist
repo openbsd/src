@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.198 2009/06/30 15:23:51 robert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.199 2009/09/06 16:51:01 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1535,6 +1535,8 @@ mvme88k
 ..
 mvmeppc
 ..
+palm
+..
 sgi
 ..
 socppc
@@ -1554,28 +1556,17 @@ zaurus
 # ./usr/share/man/cat2
 cat2
 
-# ./usr/share/man/cat2/alpha
 alpha
 ..
-
-# ./usr/share/man/cat2/amd64
 amd64
 ..
-
-# ./usr/share/man/cat2/armish
 armish
 ..
-
-# ./usr/share/man/cat2/i386
 i386
-
-# ./usr/share/man/cat2/i386
 ..
-
-# ./usr/share/man/cat2/zaurus
+palm
+..
 zaurus
-
-# ./usr/share/man/cat2/zaurus
 ..
 
 # ./usr/share/man/cat2
@@ -1613,6 +1604,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+palm
 ..
 sgi
 ..
@@ -1668,6 +1661,8 @@ mvme88k
 ..
 mvmeppc
 ..
+palm
+..
 sgi
 ..
 socppc
@@ -1716,6 +1711,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+palm
 ..
 sgi
 ..
@@ -1776,6 +1773,8 @@ mvme88k
 ..
 mvmeppc
 ..
+palm
+..
 sgi
 ..
 socppc
@@ -1824,6 +1823,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+palm
 ..
 sgi
 ..
@@ -1874,6 +1875,8 @@ mvme88k
 ..
 mvmeppc
 ..
+palm
+..
 sgi
 ..
 socppc
@@ -1902,6 +1905,8 @@ armish
 aviion
 ..
 i386
+..
+palm
 ..
 zaurus
 ..
@@ -1941,6 +1946,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+palm
 ..
 sgi
 ..
@@ -1996,6 +2003,8 @@ mvme88k
 ..
 mvmeppc
 ..
+palm
+..
 sgi
 ..
 socppc
@@ -2044,6 +2053,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+palm
 ..
 sgi
 ..
@@ -2104,6 +2115,8 @@ mvme88k
 ..
 mvmeppc
 ..
+palm
+..
 sgi
 ..
 socppc
@@ -2153,6 +2166,8 @@ mvme88k
 ..
 mvmeppc
 ..
+palm
+..
 sgi
 ..
 socppc
@@ -2201,6 +2216,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+palm
 ..
 sgi
 ..
@@ -2266,6 +2283,8 @@ mvme88k
 ..
 mvmeppc
 ..
+palm
+..
 sgi
 ..
 socppc
@@ -2329,6 +2348,8 @@ mvme68k
 mvme88k
 ..
 mvmeppc
+..
+palm
 ..
 sgi
 ..
