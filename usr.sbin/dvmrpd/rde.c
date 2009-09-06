@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.20 2009/06/06 07:52:04 pyr Exp $ */
+/*	$OpenBSD: rde.c,v 1.21 2009/09/06 09:52:14 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -303,14 +303,15 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				fatalx("invalid size of OE request");
 
 			memcpy(&nm, imsg.data, sizeof(nm));
-			srt_expire_nbr(nm.address, nm.ifindex);
 
+			srt_expire_nbr(nm.address, nm.ifindex);
 			break;
 		case IMSG_RECV_PRUNE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(p))
 				fatalx("invalid size of OE request");
 			memcpy(&p, imsg.data, sizeof(p));
 
+			mfc_recv_prune(&p);
 			break;
 		default:
 			log_debug("rde_dispatch_msg: unexpected imsg %d",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_mfc.c,v 1.6 2009/07/13 18:58:46 michele Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.7 2009/09/06 09:52:14 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -35,7 +35,16 @@
 
 /* multicast forwarding cache */
 
-void	 mfc_send_prune(struct rt_node *, struct mfc_node *);
+void	 		 mfc_send_prune(struct rt_node *, struct mfc_node *);
+void			 mfc_add_prune(struct mfc_node *, struct prune *);
+struct prune_node	*mfc_find_prune(struct mfc_node *, struct prune *);
+void			 mfc_delete_prune(struct mfc_node *,
+			    struct prune_node *);
+
+int	prune_compare(struct mfc_node *, struct rt_node *, int);
+void	prune_expire_timer(int, short, void *);
+int	mfc_reset_prune_expire_timer(struct prune_node *);
+
 
 void	 mfc_expire_timer(int, short, void *);
 int	 mfc_start_expire_timer(struct mfc_node *);
@@ -370,4 +379,140 @@ mfc_check_members(struct rt_node *rn, struct iface *iface)
 	}
 
 	return (0);
+}
+
+void
+mfc_recv_prune(struct prune *p)
+{
+       struct rt_node		*rn;
+       struct mfc_node		*mn;
+       struct prune_node	*pn;
+       struct iface		*iface;
+       struct mfc		 m;
+
+	iface = if_find_index(p->ifindex);
+	if (iface == NULL) {
+		log_debug("mfc_recv_prune: unknown interface");
+		return;
+	}
+
+	rn = rt_match_origin(p->origin.s_addr);
+	if (rn == NULL) {
+		log_debug("mfc_recv_prune: no information for %s\n",
+		    inet_ntoa(p->origin));
+		return;
+	}
+
+	if (srt_find_ds(rn, p->nexthop.s_addr) == NULL) {
+		log_debug("mfc_recv_prune: prune received from a "
+		    "non downstream neighbor\n");
+		return;
+	}
+
+	mn = mfc_find(p->origin.s_addr, p->group.s_addr);
+	if (mn) {
+		log_debug("mfc_recv_prune: no information for %s\n",
+		    inet_ntoa(p->origin));
+		return;
+	}
+
+	pn = mfc_find_prune(mn, p);
+	if (pn == NULL) {
+		mfc_add_prune(mn, p);
+		if (prune_compare(mn, rn, p->ifindex) &&
+		    !rde_group_list_find(iface, p->group)) {
+			mn->ttls[p->ifindex] = 0;
+
+			m.ifindex = p->ifindex;
+			m.origin.s_addr = p->origin.s_addr;
+			m.group.s_addr = p->group.s_addr;
+			mfc_update(&m);
+		}
+	} else
+		mfc_reset_prune_expire_timer(pn);
+}
+
+void
+mfc_add_prune(struct mfc_node *mn, struct prune *p)
+{
+	struct prune_node	*pn;
+	struct timeval		 tv;
+
+	pn = calloc(1, sizeof(struct prune));
+	if (pn == NULL)
+		fatal("prune_add");
+
+	timerclear(&tv);
+	tv.tv_sec = MAX_PRUNE_LIFETIME;
+
+	pn->nbr.s_addr = p->nexthop.s_addr;
+	pn->ifindex = p->ifindex;
+	pn->parent = mn;
+
+	evtimer_set(&pn->lifetime_timer, prune_expire_timer, pn);
+	evtimer_add(&pn->lifetime_timer, &tv);
+
+	LIST_INSERT_HEAD(&mn->prune_list, pn, entry);
+
+	mn->prune_cnt[p->ifindex]++;
+}
+
+struct prune_node *
+mfc_find_prune(struct mfc_node *mn, struct prune *p)
+{
+	struct prune_node	*pn;
+
+	LIST_FOREACH(pn, &mn->prune_list, entry) {
+		if (p->nexthop.s_addr == pn->nbr.s_addr)
+			return (pn);
+	}
+
+	return (NULL);
+}
+
+void
+mfc_delete_prune(struct mfc_node *mn, struct prune_node *pn)
+{
+	unsigned int	ifindex = pn->ifindex;
+
+	if (evtimer_pending(&pn->lifetime_timer, NULL))
+		if (evtimer_del(&pn->lifetime_timer) == -1)
+			fatal("mfc_delete_prune");
+
+	LIST_REMOVE(pn, entry);
+	free(pn);
+	mn->prune_cnt[ifindex]--;
+}
+
+int
+prune_compare(struct mfc_node *mn, struct rt_node *rn, int ifindex)
+{
+	if (mn->prune_cnt[ifindex] == rn->ds_cnt[ifindex])
+		return (1);
+       
+	return (0);
+}
+
+int
+mfc_reset_prune_expire_timer(struct prune_node *pn)
+{
+	struct timeval	tv;
+
+	timerclear(&tv);
+	tv.tv_sec = MAX_PRUNE_LIFETIME;
+
+	return (evtimer_add(&pn->lifetime_timer, &tv));
+}
+
+void
+prune_expire_timer(int fd, short event, void *arg)
+{
+	struct prune_node	*pn = arg;
+
+	LIST_REMOVE(pn, entry);
+
+	pn->parent->prune_cnt[pn->ifindex]--;
+	pn->parent->ttls[pn->ifindex] = 1;
+
+	free(pn);
 }

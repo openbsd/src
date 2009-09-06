@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.15 2009/04/16 20:11:12 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.16 2009/09/06 09:52:14 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -57,15 +57,29 @@ struct rt_node {
 	u_int8_t		 connected;
 };
 
+struct prune_node {
+	LIST_ENTRY(prune_node)	 entry;
+	struct event		 lifetime_timer;
+
+	struct mfc_node		*parent;	/* back ptr to mfc_node */
+
+	struct in_addr		 nbr;
+	unsigned int		 ifindex;
+};
+
 struct mfc_node {
 	RB_ENTRY(mfc_node)	 entry;
 	struct event		 expiration_timer;
 	struct event		 prune_timer;
+
+	LIST_HEAD(, prune_node)	 prune_list;
+
 	struct in_addr		 origin;
 	struct in_addr		 group;
 	time_t			 uptime;
-	u_short			 ifindex;	/* incoming vif */
-	u_int8_t		 ttls[MAXVIFS];	/* outgoing vif(s) */
+	u_short			 ifindex;		/* incoming vif */
+	u_int8_t		 ttls[MAXVIFS];		/* outgoing vif(s) */
+	u_int8_t		 prune_cnt[MAXVIFS];
 };
 
 /* downstream neighbor per source */
@@ -96,6 +110,7 @@ void		 mfc_delete(struct mfc *);
 struct rt_node	*mfc_find_origin(struct in_addr);
 void		 mfc_update_source(struct rt_node *);
 int		 mfc_check_members(struct rt_node *, struct iface *);
+void		 mfc_recv_prune(struct prune *);
 
 /* rde_srt.c */
 void		 rt_init(void);
@@ -113,6 +128,7 @@ struct rt_node	*rt_match_origin(in_addr_t);
 int		 srt_check_route(struct route_report *, int);
 int		 src_compare(struct src_node *, struct src_node *);
 
+struct ds_nbr	*srt_find_ds(struct rt_node *, u_int32_t);
 void		 srt_expire_nbr(struct in_addr, unsigned int);
 void		 srt_check_downstream_ifaces(struct rt_node *, struct iface *);
 
