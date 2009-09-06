@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.31 2009/09/05 20:35:30 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.32 2009/09/06 10:36:04 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -574,7 +574,11 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
 
-	(sc->udl_fb_block_copy)(sc, sx, sy, dx, dy, cx, cy);
+	/* copy row block to off-screen first to fix overlay-copy problem */
+	(sc->udl_fb_block_copy)(sc, sx, sy, 0, sc->sc_ri.ri_emuheight, cx, cy);
+
+	/* copy row block back from off-screen now */
+	(sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, dx, dy, cx, cy);
 
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
