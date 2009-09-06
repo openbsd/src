@@ -1,4 +1,4 @@
-#	$OpenBSD: files.palm,v 1.1 2009/09/05 01:22:11 marex Exp $
+#	$OpenBSD: files.palm,v 1.2 2009/09/06 00:51:28 marex Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -36,12 +36,6 @@ file arch/palm/dev/palm_mmc.c		pxammc_palm
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-
-# Drive
-#define palmvlio { [port = -1], [size = 0], [iomem = -1], [iosiz = 0], [irq = -1] }
-#device palmvlio: palmvlio
-#attach palmvlio at pxaip
-#file arch/palm/dev/palmvlio.c		palmvlio
 
 #attach wdc at palmvlio with palmhdd
 attach wdc at pxaip with palm_hdd

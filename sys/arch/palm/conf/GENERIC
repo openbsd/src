@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1 2009/09/05 01:22:11 marex Exp $
+#	$OpenBSD: GENERIC,v 1.2 2009/09/06 00:51:28 marex Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -36,8 +36,6 @@ option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 option USBVERBOSE
 
 config		bsd	root on sd1a swap on sd1b 
-#config		bsd	swap generic
-#config		bsd	root on wd0a
 
 # The main bus device
 mainbus0	at root
@@ -156,7 +154,7 @@ com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
 #cfxga*		at pcmcia?		# VoyagerVGA frame buffer
 #wsdisplay*	at cfxga?
 
-wdc0		at pxaip?
+wdc0		at pxaip? addr 0x20000000
 
 # IDE hard drives
 wd*		at wdc? flags 0x0000
@@ -188,13 +186,13 @@ urlphy*	at mii?				# Realtek RTL8150L internal PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 # Input
-pxa27x_kpc0	at pxaip?
+pxa27x_kpc0	at pxaip? addr 0x41500000
 wskbd0		at pxa27x_kpc0 mux 1
 
-lcd0		at pxaip?		# LCD
+lcd0		at pxaip? addr 0x44000000	# LCD
 wsdisplay*	at lcd? console ?
 
-pxammc0		at pxaip?		# MMC/SD/SDIO controller
+pxammc0		at pxaip? addr 0x41100000	# MMC/SD/SDIO controller
 sdmmc*		at pxammc?		# SD/MMC bus
 scsibus*	at sdmmc?		# SCSI emulation
 

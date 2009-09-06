@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 2009/09/05 01:22:11 marex Exp $
+#	$OpenBSD: RAMDISK,v 1.2 2009/09/06 00:51:28 marex Exp $
 
 machine	palm	arm
 
@@ -44,8 +44,8 @@ mainbus0	at root
 cpu0		at mainbus?
 pxaip0		at mainbus?
 
-pxaintc0	at pxaip?	# interrupt controller
-pxagpio0	at pxaip?	# GPIO
+pxaintc0	at pxaip?		# interrupt controller
+pxagpio0	at pxaip?		# GPIO controller
 pxaost0		at pxaip? addr 0x40a00000 size 0x20
 
 # USB controllers
@@ -68,8 +68,8 @@ ukbd*		at uhidev?		# USB HID Keyboard devices
 wskbd*		at ukbd? mux 1
 #ums*		at uhub?		# USB Mice
 #wsmouse*	at ums? mux 0
-#ulpt*		at uhub?		# USB Printer
-#atu*		at uhub?		# Atmel AT76C50x based 802.11b
+ulpt*		at uhub?		# USB Printer
+atu*		at uhub?		# Atmel AT76C50x based 802.11b
 #aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 #axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cdce*		at uhub?		# CDC Ethernet
@@ -80,16 +80,16 @@ ural*		at uhub?		# Ralink RT2500
 #url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
-#uscanner*	at uhub?		# USB Scanner driver
-#usscanner*	at uhub?		# USB SCSI scanners
-#scsibus*	at usscanner?
-#uyap*		at uhub?		# Y@P firmware loader
-#ugen*		at uhub?		# USB Generic driver
+uscanner*	at uhub?		# USB Scanner driver
+usscanner*	at uhub?		# USB SCSI scanners
+scsibus*	at usscanner?
+uyap*		at uhub?		# Y@P firmware loader
+ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
 scsibus*	at umass?
 
 # SD/MMC support
-pxammc0		at pxaip?		# MMC/SD/SDIO controller
+pxammc0		at pxaip? addr 0x41100000	# MMC/SD/SDIO controller
 sdmmc*		at pxammc?		# SD/MMC bus
 scsibus*	at sdmmc?		# SCSI emulation
 softraid0	at root			# Software RAID
@@ -117,7 +117,7 @@ com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
 #ne*		at pcmcia?
 #wdc*		at pcmcia?
 
-wdc0		at pxaip?
+wdc0		at pxaip? addr 0x20000000
 
 # IDE hard drives
 wd*		at wdc? flags 0x0000
@@ -149,11 +149,11 @@ wd*		at wdc? flags 0x0000
 #ukphy*	at mii?			# "unknown" PHYs
 
 # Input
-pxa27x_kpc0	at pxaip?
+pxa27x_kpc0	at pxaip? addr 0x41500000
 wskbd0		at pxa27x_kpc0 mux 1
 
 # LCD
-lcd0		at pxaip?
+lcd0		at pxaip? addr 0x44000000
 wsdisplay*	at lcd? console ?
 
 # Pseudo-Devices
