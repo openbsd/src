@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.32 2009/09/06 10:36:04 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.33 2009/09/06 12:25:38 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -764,7 +764,7 @@ udl_do_cursor(struct rasops_info *ri)
 	y = ri->ri_crow * ri->ri_font->fontheight;
 
 	if (sc->sc_cursor_on == 0) {
-		/* safe the last character block to off-screen */
+		/* save the last character block to off-screen */
 		(sc->udl_fb_block_copy)(sc, x, y, 0, sc->sc_ri.ri_emuheight,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 
@@ -774,7 +774,7 @@ udl_do_cursor(struct rasops_info *ri)
 
 		sc->sc_cursor_on = 1;
 	} else {
-		/* restore the last safed character from off-screen */
+		/* restore the last saved character from off-screen */
 		(sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 
