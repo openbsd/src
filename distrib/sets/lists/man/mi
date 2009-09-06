@@ -271,6 +271,7 @@
 ./usr/share/man/cat1/page.0
 ./usr/share/man/cat1/pagesize.0
 ./usr/share/man/cat1/pagsh.0
+./usr/share/man/cat1/palm
 ./usr/share/man/cat1/passwd.0
 ./usr/share/man/cat1/paste.0
 ./usr/share/man/cat1/patch.0
@@ -582,6 +583,7 @@
 ./usr/share/man/cat2/amd64
 ./usr/share/man/cat2/armish
 ./usr/share/man/cat2/i386
+./usr/share/man/cat2/palm
 ./usr/share/man/cat2/zaurus
 ./usr/share/man/cat3
 ./usr/share/man/cat3/alpha
@@ -599,6 +601,7 @@
 ./usr/share/man/cat3/mvme68k
 ./usr/share/man/cat3/mvme88k
 ./usr/share/man/cat3/mvmeppc
+./usr/share/man/cat3/palm
 ./usr/share/man/cat3/sgi
 ./usr/share/man/cat3/socppc
 ./usr/share/man/cat3/sparc
@@ -1637,6 +1640,7 @@
 ./usr/share/man/cat4/owid.0
 ./usr/share/man/cat4/owsbm.0
 ./usr/share/man/cat4/owtemp.0
+./usr/share/man/cat4/palm
 ./usr/share/man/cat4/pcagpio.0
 ./usr/share/man/cat4/pcaled.0
 ./usr/share/man/cat4/pcdisplay.0
@@ -2183,6 +2187,7 @@
 ./usr/share/man/cat5/ntpd.conf.0
 ./usr/share/man/cat5/ospfd.conf.0
 ./usr/share/man/cat5/package.0
+./usr/share/man/cat5/palm
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/pf.conf.0
 ./usr/share/man/cat5/pf.os.0
@@ -2558,6 +2563,7 @@
 ./usr/share/man/cat8/ospfctl.0
 ./usr/share/man/cat8/ospfd.0
 ./usr/share/man/cat8/pac.0
+./usr/share/man/cat8/palm
 ./usr/share/man/cat8/pcidump.0
 ./usr/share/man/cat8/pfctl.0
 ./usr/share/man/cat8/pflogd.0
@@ -2780,6 +2786,7 @@
 ./usr/share/man/cat9/mvme68k
 ./usr/share/man/cat9/mvme88k
 ./usr/share/man/cat9/mvmeppc
+./usr/share/man/cat9/palm
 ./usr/share/man/cat9/sgi
 ./usr/share/man/cat9/socppc
 ./usr/share/man/cat9/sparc
@@ -2802,6 +2809,7 @@
 ./usr/share/man/man1/mvme68k
 ./usr/share/man/man1/mvme88k
 ./usr/share/man/man1/mvmeppc
+./usr/share/man/man1/palm
 ./usr/share/man/man1/sgi
 ./usr/share/man/man1/socppc
 ./usr/share/man/man1/sparc
@@ -2827,6 +2835,7 @@
 ./usr/share/man/man4/mvme68k
 ./usr/share/man/man4/mvme88k
 ./usr/share/man/man4/mvmeppc
+./usr/share/man/man4/palm
 ./usr/share/man/man4/sgi
 ./usr/share/man/man4/socppc
 ./usr/share/man/man4/sparc
@@ -2852,6 +2861,7 @@
 ./usr/share/man/man8/mvme68k
 ./usr/share/man/man8/mvme88k
 ./usr/share/man/man8/mvmeppc
+./usr/share/man/man8/palm
 ./usr/share/man/man8/sgi
 ./usr/share/man/man8/socppc
 ./usr/share/man/man8/sparc
@@ -2875,6 +2885,7 @@
 ./usr/share/man/ps1/mvme68k
 ./usr/share/man/ps1/mvme88k
 ./usr/share/man/ps1/mvmeppc
+./usr/share/man/ps1/palm
 ./usr/share/man/ps1/sgi
 ./usr/share/man/ps1/socppc
 ./usr/share/man/ps1/sparc
@@ -2887,6 +2898,7 @@
 ./usr/share/man/ps2/armish
 ./usr/share/man/ps2/aviion
 ./usr/share/man/ps2/i386
+./usr/share/man/ps2/palm
 ./usr/share/man/ps2/zaurus
 ./usr/share/man/ps3
 ./usr/share/man/ps3/alpha
@@ -2904,6 +2916,7 @@
 ./usr/share/man/ps3/mvme68k
 ./usr/share/man/ps3/mvme88k
 ./usr/share/man/ps3/mvmeppc
+./usr/share/man/ps3/palm
 ./usr/share/man/ps3/sgi
 ./usr/share/man/ps3/socppc
 ./usr/share/man/ps3/sparc
@@ -2927,6 +2940,7 @@
 ./usr/share/man/ps4/mvme68k
 ./usr/share/man/ps4/mvme88k
 ./usr/share/man/ps4/mvmeppc
+./usr/share/man/ps4/palm
 ./usr/share/man/ps4/sgi
 ./usr/share/man/ps4/socppc
 ./usr/share/man/ps4/sparc
@@ -2949,6 +2963,7 @@
 ./usr/share/man/ps5/mvme68k
 ./usr/share/man/ps5/mvme88k
 ./usr/share/man/ps5/mvmeppc
+./usr/share/man/ps5/palm
 ./usr/share/man/ps5/sgi
 ./usr/share/man/ps5/socppc
 ./usr/share/man/ps5/sparc
@@ -2973,6 +2988,7 @@
 ./usr/share/man/ps8/mvme68k
 ./usr/share/man/ps8/mvme88k
 ./usr/share/man/ps8/mvmeppc
+./usr/share/man/ps8/palm
 ./usr/share/man/ps8/sgi
 ./usr/share/man/ps8/socppc
 ./usr/share/man/ps8/sparc
@@ -2995,6 +3011,7 @@
 ./usr/share/man/ps9/mvme68k
 ./usr/share/man/ps9/mvme88k
 ./usr/share/man/ps9/mvmeppc
+./usr/share/man/ps9/palm
 ./usr/share/man/ps9/sgi
 ./usr/share/man/ps9/socppc
 ./usr/share/man/ps9/sparc
