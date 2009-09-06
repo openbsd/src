@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.5 2009/09/02 19:36:15 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.6 2009/09/06 19:28:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -422,6 +422,15 @@ OF_finddevice(char *name)
 
 	node = fdt_find_node(name);
 	return node ? ((char *)node - (char *)tree.header) : -1;
+}
+
+int
+OF_getproplen(int handle, char *prop)
+{
+	void *node = (char *)tree.header + handle;
+	char *data;
+
+	return fdt_node_property(node, prop, &data);
 }
 
 int
