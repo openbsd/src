@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.25 2009/08/27 20:41:35 miod Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.26 2009/09/06 20:09:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -39,6 +39,8 @@
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
+
+#include <dev/ofw/openfirm.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -283,6 +285,8 @@ struct cfdriver tsec_cd = {
 	NULL, "tsec", DV_IFNET
 };
 
+int	tsec_find_phy(int, int);
+
 uint32_t tsec_read(struct tsec_softc *, bus_addr_t);
 void	tsec_write(struct tsec_softc *, bus_addr_t, uint32_t);
 
@@ -325,6 +329,17 @@ void	tsec_fill_rx_ring(struct tsec_softc *);
 int
 tsec_match(struct device *parent, void *cfdata, void *aux)
 {
+	struct obio_attach_args *oa = aux;
+	char buf[32];
+
+	if (OF_getprop(oa->oa_node, "device_type", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "network") != 0)
+		return (0);
+
+	if (OF_getprop(oa->oa_node, "compatible", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "gianfar") != 0)
+		return (0);
+
 	return (1);
 }
 
@@ -334,7 +349,21 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 	struct tsec_softc *sc = (void *)self;
 	struct obio_attach_args *oa = aux;
 	struct ifnet *ifp;
-	int n;
+	int phy, n;
+
+	if (OF_getprop(oa->oa_node, "phy-handle", &phy,
+	    sizeof(phy)) == sizeof(phy)) {
+		int node, reg;
+
+		node = tsec_find_phy(OF_peer(0), phy);
+		if (node == -1 || OF_getprop(node, "reg", &reg,
+		    sizeof(reg)) != sizeof(reg)) {
+			printf(": can't find PHY\n");
+			return;
+		}
+
+		oa->oa_phy = reg;
+	}
 
 	sc->sc_iot = oa->oa_iot;
 	if (bus_space_map(sc->sc_iot, oa->oa_offset, 3072, 0, &sc->sc_ioh)) {
@@ -398,6 +427,24 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_dev.dv_xname);
 	intr_establish(oa->oa_ivec + 2, IST_LEVEL, IPL_NET, tsec_errintr, sc,
 	    sc->sc_dev.dv_xname);
+}
+
+int
+tsec_find_phy(int node, int phy)
+{
+	int child, handle;
+
+	if (OF_getprop(node, "linux,phandle", &handle,
+	    sizeof(handle)) == sizeof(handle) && phy == handle)
+		return (node);
+
+	for (child = OF_child(node); child != 0; child = OF_peer(child)) {
+		node = tsec_find_phy(child, phy);
+		if (node != -1)
+			return node;
+	}
+
+	return (-1);
 }
 
 uint32_t

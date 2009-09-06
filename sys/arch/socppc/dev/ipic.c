@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.8 2009/06/09 01:12:38 deraadt Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.9 2009/09/06 20:09:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -23,6 +23,8 @@
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
+
+#include <dev/ofw/openfirm.h>
 
 #define IPIC_SICFR	0x00
 #define IPIC_SIVCR	0x04
@@ -83,12 +85,20 @@ uint32_t ipic_simsr_h(int);
 uint32_t ipic_simsr_l(int);
 uint32_t ipic_semsr(int);
 
+void	intr_calculatemasks(void);
 void	ext_intr(void);
 void	ipic_do_pending_int(void);
 
 int
 ipic_match(struct device *parent, void *cfdata, void *aux)
 {
+	struct obio_attach_args *oa = aux;
+	char buf[32];
+
+	if (OF_getprop(oa->oa_node, "device_type", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "ipic") != 0)
+		return (0);
+
 	return (1);
 }
 
@@ -97,11 +107,38 @@ ipic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipic_softc *sc = (void *)self;
 	struct obio_attach_args *oa = aux;
+	int ivec;
 
 	sc->sc_iot = oa->oa_iot;
 	if (bus_space_map(sc->sc_iot, oa->oa_offset, 128, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
 		return;
+	}
+
+	/*
+	 * Deal with pre-established interrupts.
+	 */
+	for (ivec = 0; ivec < IPIC_NVEC; ivec++) {
+		if (ipic_intrhand[ivec]) {
+			int level = ipic_intrhand[ivec]->ih_level;
+			uint32_t mask;
+
+			sc->sc_simsr_h[level] |= ipic_simsr_h(ivec);
+			sc->sc_simsr_l[level] |= ipic_simsr_l(ivec);
+			sc->sc_semsr[level] |= ipic_semsr(ivec);
+			intr_calculatemasks();
+
+			/* Unmask the interrupt. */
+			mask = ipic_read(sc, IPIC_SIMSR_H);
+			mask |= ipic_simsr_h(ivec);
+			ipic_write(sc, IPIC_SIMSR_H, mask);
+			mask = ipic_read(sc, IPIC_SIMSR_L);
+			mask |= ipic_simsr_l(ivec);
+			ipic_write(sc, IPIC_SIMSR_L, mask);
+			mask = ipic_read(sc, IPIC_SEMSR);
+			mask |= ipic_semsr(ivec);
+			ipic_write(sc, IPIC_SEMSR, mask);
+		}
 	}
 
 	ipic_sc = sc;
@@ -176,7 +213,7 @@ ipic_semsr(int ivec)
 	return 0;
 }
 
-static void
+void
 intr_calculatemasks(void)
 {
 	struct ipic_softc *sc = ipic_sc;
@@ -240,10 +277,12 @@ intr_establish(int ivec, int type, int level,
 	for (p = &ipic_intrhand[ivec]; (q = *p) != NULL; p = &q->ih_next)
 		;
 
-	sc->sc_simsr_h[level] |= ipic_simsr_h(ivec);
-	sc->sc_simsr_l[level] |= ipic_simsr_l(ivec);
-	sc->sc_semsr[level] |= ipic_semsr(ivec);
-	intr_calculatemasks();
+	if (sc) {
+		sc->sc_simsr_h[level] |= ipic_simsr_h(ivec);
+		sc->sc_simsr_l[level] |= ipic_simsr_l(ivec);
+		sc->sc_semsr[level] |= ipic_semsr(ivec);
+		intr_calculatemasks();
+	}
 
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
@@ -253,16 +292,18 @@ intr_establish(int ivec, int type, int level,
 	evcount_attach(&ih->ih_count, name, NULL, &evcount_intr);
 	*p = ih;
 
-	/* Unmask the interrupt. */
-	mask = ipic_read(sc, IPIC_SIMSR_H);
-	mask |= ipic_simsr_h(ivec);
-	ipic_write(sc, IPIC_SIMSR_H, mask);
-	mask = ipic_read(sc, IPIC_SIMSR_L);
-	mask |= ipic_simsr_l(ivec);
-	ipic_write(sc, IPIC_SIMSR_L, mask);
-	mask = ipic_read(sc, IPIC_SEMSR);
-	mask |= ipic_semsr(ivec);
-	ipic_write(sc, IPIC_SEMSR, mask);
+	if (sc) {
+		/* Unmask the interrupt. */
+		mask = ipic_read(sc, IPIC_SIMSR_H);
+		mask |= ipic_simsr_h(ivec);
+		ipic_write(sc, IPIC_SIMSR_H, mask);
+		mask = ipic_read(sc, IPIC_SIMSR_L);
+		mask |= ipic_simsr_l(ivec);
+		ipic_write(sc, IPIC_SIMSR_L, mask);
+		mask = ipic_read(sc, IPIC_SEMSR);
+		mask |= ipic_semsr(ivec);
+		ipic_write(sc, IPIC_SEMSR, mask);
+	}
 
 	return (ih);
 }

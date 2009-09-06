@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_obio.c,v 1.2 2009/08/26 17:47:51 kettenis Exp $	*/
+/*	$OpenBSD: com_obio.c,v 1.3 2009/09/06 20:09:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -23,6 +23,8 @@
 
 #include <machine/autoconf.h>
 
+#include <dev/ofw/openfirm.h>
+
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
@@ -40,6 +42,17 @@ struct cfdriver com_obio_cd = {
 int
 com_obio_match(struct device *parent, void *cfdata, void *aux)
 {
+	struct obio_attach_args *oa = aux;
+	char buf[32];
+
+	if (OF_getprop(oa->oa_node, "device_type", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "serial") != 0)
+		return (0);
+
+	if (OF_getprop(oa->oa_node, "compatible", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "ns16550") != 0)
+		return (0);
+
 	return (1);
 }
 
@@ -48,10 +61,17 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct obio_attach_args *oa = aux;
+	int freq;
+
+	if (OF_getprop(oa->oa_node, "clock-frequency", &freq,
+	    sizeof(freq))!= sizeof(freq)) {
+		printf(": unknown clock frequency\n");
+		return;
+	}
 
 	sc->sc_iot = oa->oa_iot;
 	sc->sc_iobase = oa->oa_offset;
-	sc->sc_frequency = comconsfreq; /* XXX */
+	sc->sc_frequency = freq;
 
 	if (sc->sc_iobase != comconsaddr) {
 		if (bus_space_map(sc->sc_iot, sc->sc_iobase,

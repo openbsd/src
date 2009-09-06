@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.2 2009/08/24 17:55:01 kettenis Exp $	*/
+/*	$OpenBSD: wdc_mainbus.c,v 1.1 2009/09/06 20:09:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -28,10 +28,12 @@
 
 #include <machine/autoconf.h>
 
+#include <dev/ofw/openfirm.h>
+
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
-struct wdc_obio_softc {
+struct wdc_mainbus_softc {
 	struct wdc_softc	sc_wdcdev;
 	struct channel_softc	*sc_chanptr;
 	struct channel_softc	sc_channel;
@@ -39,11 +41,11 @@ struct wdc_obio_softc {
 	void	*sc_ih;
 };
 
-int	wdc_obio_match(struct device *, void *, void *);
-void	wdc_obio_attach(struct device *, struct device *, void *);
+int	wdc_mainbus_match(struct device *, void *, void *);
+void	wdc_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach wdc_obio_ca = {
-	sizeof(struct wdc_obio_softc), wdc_obio_match, wdc_obio_attach
+struct cfattach wdc_mainbus_ca = {
+	sizeof(struct wdc_mainbus_softc), wdc_mainbus_match, wdc_mainbus_attach
 };
 
 /*
@@ -52,20 +54,20 @@ struct cfattach wdc_obio_ca = {
  * LAD[11:15], which means we need to waste more than 0.5 MB of
  * address space to map 10 8-bit registers.
  */
-#define	WDC_OBIO_REG_NPORTS	WDC_NREG
-#define	WDC_OBIO_REG_SIZE	(WDC_OBIO_REG_NPORTS << 16)
-#define WDC_OBIO_REG_OFFSET	(8 << 17)
-#define	WDC_OBIO_AUXREG_NPORTS	2
-#define	WDC_OBIO_AUXREG_SIZE	(WDC_OBIO_AUXREG_NPORTS << 16)
-#define	WDC_OBIO_AUXREG_OFFSET	(6 << 16)
+#define	WDC_MAINBUS_REG_NPORTS		WDC_NREG
+#define	WDC_MAINBUS_REG_SIZE		(WDC_MAINBUS_REG_NPORTS << 16)
+#define WDC_MAINBUS_REG_OFFSET		(8 << 17)
+#define	WDC_MAINBUS_AUXREG_NPORTS	2
+#define	WDC_MAINBUS_AUXREG_SIZE		(WDC_MAINBUS_AUXREG_NPORTS << 16)
+#define	WDC_MAINBUS_AUXREG_OFFSET	(6 << 16)
 
-u_int8_t wdc_obio_read_reg(struct channel_softc *chp,  enum wdc_regs reg);
-void wdc_obio_write_reg(struct channel_softc *chp,  enum wdc_regs reg,
+u_int8_t wdc_mainbus_read_reg(struct channel_softc *chp,  enum wdc_regs reg);
+void wdc_mainbus_write_reg(struct channel_softc *chp,  enum wdc_regs reg,
     u_int8_t val);
 
-struct channel_softc_vtbl wdc_obio_vtbl = {
-	wdc_obio_read_reg,
-	wdc_obio_write_reg,
+struct channel_softc_vtbl wdc_mainbus_vtbl = {
+	wdc_mainbus_read_reg,
+	wdc_mainbus_write_reg,
 	wdc_default_lba48_write_reg,
 	wdc_default_read_raw_multi_2,
 	wdc_default_write_raw_multi_2,
@@ -74,33 +76,52 @@ struct channel_softc_vtbl wdc_obio_vtbl = {
 };
 
 int
-wdc_obio_match(struct device *parent, void *cfdata, void *aux)
+wdc_mainbus_match(struct device *parent, void *cfdata, void *aux)
 {
+	struct mainbus_attach_args *ma = aux;
+	char buf[32];
+
+	if (OF_getprop(ma->ma_node, "device_type", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "rb,cf") != 0)
+		return (0);
+
 	return (1);
 }
 
 void
-wdc_obio_attach(struct device *parent, struct device *self, void *aux)
+wdc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct wdc_obio_softc *sc = (void *)self;
-	struct obio_attach_args *oa = aux;
+	struct wdc_mainbus_softc *sc = (void *)self;
+	struct mainbus_attach_args *ma = aux;
 	struct channel_softc *chp = &sc->sc_channel;
+	int reg[2];
+	int ivec;
 
-	chp->cmd_iot = chp->ctl_iot = oa->oa_iot;
-	chp->_vtbl = &wdc_obio_vtbl;
-
-	if (bus_space_map(chp->cmd_iot, oa->oa_offset + WDC_OBIO_REG_OFFSET,
-	    WDC_OBIO_REG_SIZE, 0, &chp->cmd_ioh)) {
-		printf(": can't map registers\n");
-		return;
-	}
-	if (bus_space_map(chp->ctl_iot, oa->oa_offset + WDC_OBIO_AUXREG_OFFSET,
-	    WDC_OBIO_AUXREG_SIZE, 0, &chp->ctl_ioh)) {
-		printf(": can't map registers\n");
+	if (OF_getprop(ma->ma_node, "reg", &reg, sizeof(reg)) < sizeof(reg)) {
+		printf(": missing registers\n");
 		return;
 	}
 
-	sc->sc_ih = intr_establish(oa->oa_ivec, IST_LEVEL, IPL_BIO, wdcintr,
+	if (OF_getprop(ma->ma_node, "interrupts", &ivec, sizeof(ivec)) <= 0) {
+		printf(": missing interrupts\n");
+		return;
+	}
+
+	chp->cmd_iot = chp->ctl_iot = ma->ma_iot;
+	chp->_vtbl = &wdc_mainbus_vtbl;
+
+	if (bus_space_map(chp->cmd_iot, reg[0] + WDC_MAINBUS_REG_OFFSET,
+	    WDC_MAINBUS_REG_SIZE, 0, &chp->cmd_ioh)) {
+		printf(": can't map registers\n");
+		return;
+	}
+	if (bus_space_map(chp->ctl_iot, reg[0] + WDC_MAINBUS_AUXREG_OFFSET,
+	    WDC_MAINBUS_AUXREG_SIZE, 0, &chp->ctl_ioh)) {
+		printf(": can't map registers\n");
+		return;
+	}
+
+	sc->sc_ih = intr_establish(ivec, IST_LEVEL, IPL_BIO, wdcintr,
 	    chp, self->dv_xname);
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_PREATA;
@@ -127,7 +148,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 u_int8_t
-wdc_obio_read_reg(struct channel_softc *chp, enum wdc_regs reg)
+wdc_mainbus_read_reg(struct channel_softc *chp, enum wdc_regs reg)
 {
 	uint8_t val;
 
@@ -146,7 +167,8 @@ wdc_obio_read_reg(struct channel_softc *chp, enum wdc_regs reg)
 }
 
 void
-wdc_obio_write_reg(struct channel_softc *chp,  enum wdc_regs reg, u_int8_t val)
+wdc_mainbus_write_reg(struct channel_softc *chp, enum wdc_regs reg,
+    u_int8_t val)
 {
 	if (reg & _WDC_AUX) 
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh,

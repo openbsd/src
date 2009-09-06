@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_obio.c,v 1.1 2008/05/10 12:02:20 kettenis Exp $	*/
+/*	$OpenBSD: ehci_obio.c,v 1.2 2009/09/06 20:09:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -23,6 +23,8 @@
 #include <sys/timeout.h>
 
 #include <machine/autoconf.h>
+
+#include <dev/ofw/openfirm.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -65,6 +67,13 @@ struct powerpc_bus_dma_tag ehci_bus_dma_tag = {
 int
 ehci_obio_match(struct device *parent, void *cfdata, void *aux)
 {
+	struct obio_attach_args *oa = aux;
+	char buf[32];
+
+	if (OF_getprop(oa->oa_node, "compatible", buf, sizeof(buf)) <= 0 ||
+	    strcmp(buf, "fsl-usb2-mph") != 0)
+		return (0);
+
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.socppc,v 1.8 2009/08/30 14:57:41 kettenis Exp $
+#	$OpenBSD: files.socppc,v 1.9 2009/09/06 20:09:34 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -30,7 +30,7 @@ attach	cpu at mainbus
 file	arch/socppc/socppc/cpu.c
 
 # MPC8349E on-board devices
-device	obio {addr, [ivec = -1], [phy = -1]}
+device	obio {[addr = 0], [ivec = -1], [phy = -1]}
 attach	obio at mainbus
 file	arch/socppc/dev/obio.c
 
@@ -49,8 +49,8 @@ attach	com at obio with com_obio
 file	arch/socppc/dev/com_obio.c
 
 # On-board CF
-attach	wdc at obio with wdc_obio
-file	arch/socppc/dev/wdc_obio.c
+attach	wdc at mainbus with wdc_mainbus
+file	arch/socppc/dev/wdc_mainbus.c
 
 #
 # Media Independent Interface (mii)
@@ -79,7 +79,8 @@ file	arch/socppc/dev/pciide_machdep.c		pciide
 
 # On-board PCI
 device	socpcic: pcibus
-attach	socpcic at obio
+attach	socpcic at mainbus with socpcic_mainbus
+attach	socpcic at obio with socpcic_obio
 file	arch/socppc/dev/socpcic.c
 
 #
