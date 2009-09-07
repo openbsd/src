@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 2009/06/09 01:12:38 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 2009/09/07 21:52:17 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ resettodr(void)
 
 	microtime(&tv);
 
-	if (todr_handle == NULL || todr_settime(todr_handle, &tv) != 0)
+	if (todr_handle != NULL && todr_settime(todr_handle, &tv) != 0)
 		printf("Cannot set time in time-of-day clock\n");
 }
 
