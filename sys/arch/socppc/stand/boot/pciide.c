@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.2 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.3 2009/09/07 21:16:57 dms Exp $	*/
 /*	$NetBSD: pciide.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -32,7 +32,12 @@
 #include "libsa.h"
 #include "wdvar.h"
 
-u_int32_t wdc_base_addr = 0;
+u_int8_t pciide_read_cmdreg(struct wdc_channel *, u_int8_t);
+void pciide_write_cmdreg(struct wdc_channel *, u_int8_t, u_int8_t);
+u_int8_t pciide_read_ctlreg(struct wdc_channel *, u_int8_t);
+void pciide_write_ctlreg(struct wdc_channel *, u_int8_t, u_int8_t);
+
+u_int32_t pciide_base_addr = 0;
 
 int
 pciide_init(struct wdc_channel *chp, u_int chan)
@@ -43,7 +48,7 @@ pciide_init(struct wdc_channel *chp, u_int chan)
 	/*
 	 * two channels per chip, one drive per channel
 	 */
-	if (chan >= PCIIDE_NUM_CHANNELS || wdc_base_addr == 0)
+	if (chan >= PCIIDE_NUM_CHANNELS || pciide_base_addr == 0)
 		return (ENXIO);
 	chp->ndrives = 1;
 
@@ -52,8 +57,8 @@ pciide_init(struct wdc_channel *chp, u_int chan)
 	/*
 	 * XXX map?
 	 */
-	cmdreg = wdc_base_addr + chan * 0x10;
-	ctlreg = wdc_base_addr+0x8 + chan * 0x10;
+	cmdreg = pciide_base_addr + chan * 0x10;
+	ctlreg = pciide_base_addr+0x8 + chan * 0x10;
 
 	/* set up cmd regsiters */
 	chp->c_cmdbase = (u_int8_t *)cmdreg;
@@ -66,5 +71,33 @@ pciide_init(struct wdc_channel *chp, u_int chan)
 	/* set up ctl registers */
 	chp->c_ctlbase = (u_int8_t *)ctlreg;
 
+	chp->read_cmdreg = pciide_read_cmdreg;
+	chp->write_cmdreg = pciide_write_cmdreg;
+	chp->read_ctlreg = pciide_read_ctlreg;
+	chp->write_ctlreg = pciide_write_ctlreg;
 	return (0);
+}
+
+u_int8_t
+pciide_read_cmdreg(struct wdc_channel *chp, u_int8_t reg)
+{
+	return *chp->c_cmdreg[reg];
+}
+
+void
+pciide_write_cmdreg(struct wdc_channel *chp, u_int8_t reg, u_int8_t val)
+{
+	*chp->c_cmdreg[reg] = val;
+}	
+
+u_int8_t
+pciide_read_ctlreg(struct wdc_channel *chp, u_int8_t reg)
+{
+	return chp->c_ctlbase[reg];
+}
+
+void
+pciide_write_ctlreg(struct wdc_channel *chp, u_int8_t reg, u_int8_t val)
+{
+	chp->c_ctlbase[reg] = val;
 }

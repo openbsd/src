@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns16550.c,v 1.1 2008/05/10 20:06:26 kettenis Exp $	*/
+/*	$OpenBSD: ns16550.c,v 1.2 2009/09/07 21:16:57 dms Exp $	*/
 /*	$NetBSD: ns16550.c,v 1.3 2005/12/24 20:07:03 perry Exp $	*/
 
 /*
@@ -48,14 +48,13 @@
 
 #include "libsa.h"
 
-#define	INB(x)		*((volatile uint8_t *) (CONADDR + (x)))
-#define	OUTB(x, v)	*((volatile uint8_t *) (CONADDR + (x))) = (v)
-
+uint8_t *consaddr;
+uint32_t consspeed;
+uint32_t consfreq;
+  
+#define	INB(x)		*((volatile uint8_t *) (consaddr + (x)))
+#define	OUTB(x, v)	*((volatile uint8_t *) (consaddr + (x))) = (v)
 #define	ISSET(t,f)	((t) & (f))
-
-#ifndef NS16550_FREQ
-#define	NS16550_FREQ	COM_FREQ
-#endif
 
 static int
 comspeed(int speed)
@@ -66,10 +65,10 @@ comspeed(int speed)
 
 	if (speed <= 0)  
 		return (-1);
-	x = divrnd((NS16550_FREQ / 16), speed);
+	x = divrnd((consfreq / 16), speed);
 	if (x <= 0)
 		return (-1);
-	err = divrnd((((quad_t)NS16550_FREQ) / 16) * 1000, speed * x) - 1000;
+	err = divrnd((((quad_t)consfreq) / 16) * 1000, speed * x) - 1000;
 	if (err < 0)
 		err = -err; 
 	if (err > COM_TOLERANCE)

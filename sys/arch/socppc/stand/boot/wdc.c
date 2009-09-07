@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.2 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.3 2009/09/07 21:16:57 dms Exp $	*/
 /*	$NetBSD: wdc.c,v 1.7 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -43,6 +43,8 @@ static int  wdcprobe(struct wdc_channel *chp);
 static int  wdc_wait_for_ready(struct wdc_channel *chp);
 static int  wdc_read_block(struct wd_softc *sc, struct wdc_command *wd_c);
 static int  __wdcwait_reset(struct wdc_channel *chp, int drv_mask);
+
+int (*controller_init)(struct wdc_channel *, u_int) = 0;
 
 /*
  * Reset the controller.
@@ -173,7 +175,9 @@ wdc_init(sc, unit)
 	struct wd_softc *sc;
 	u_int unit;
 {
-	if (pciide_init(&sc->sc_channel, unit) != 0)
+	if (!controller_init)
+		return (ENXIO);
+	if ((*controller_init)(&sc->sc_channel, unit) != 0)
 		return (ENXIO);
 	if (wdcprobe(&sc->sc_channel) != 0)
 		return (ENXIO);

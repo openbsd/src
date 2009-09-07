@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.2 2008/05/11 19:58:24 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.3 2009/09/07 21:16:57 dms Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -66,8 +66,9 @@ run_loadfile(u_long *marks, int howto)
 	l += sizeof(ssym);
 	bcopy(&esym, args + l, sizeof(esym));
 	l += sizeof(esym);
+	extern int fdtaddrsave;
 
-	(*(startfuncp)(marks[MARK_ENTRY]))(0, 0, entry, args, l);
+	(*(startfuncp)(marks[MARK_ENTRY]))(fdtaddrsave, 0, entry, args, l);
 
 	/* NOTREACHED */
 }

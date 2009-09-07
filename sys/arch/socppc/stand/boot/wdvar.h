@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.1 2008/05/10 20:06:27 kettenis Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.2 2009/09/07 21:16:57 dms Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.6 2005/12/11 12:17:06 christos Exp $	*/
 
 /*-
@@ -83,12 +83,17 @@ struct wdc_channel {
 	volatile u_int16_t *c_data;
 
 	u_int8_t ndrives;
+
+	u_int8_t (*read_cmdreg)(struct wdc_channel *chp, u_int8_t reg);
+	void (*write_cmdreg)(struct wdc_channel *chp, u_int8_t reg, u_int8_t val);
+	u_int8_t (*read_ctlreg)(struct wdc_channel *chp, u_int8_t reg);
+	void (*write_ctlreg)(struct wdc_channel *chp, u_int8_t reg, u_int8_t val);
 };
 
-#define WDC_READ_REG(chp, reg)		*(chp)->c_cmdreg[(reg)]
-#define WDC_WRITE_REG(chp, reg, val)	*(chp)->c_cmdreg[(reg)] = (val)
-#define WDC_READ_CTLREG(chp, reg)	(chp)->c_ctlbase[(reg)]
-#define WDC_WRITE_CTLREG(chp, reg, val)	(chp)->c_ctlbase[(reg)] = (val)
+#define WDC_READ_REG(chp, reg)		(chp)->read_cmdreg(chp, reg)
+#define WDC_WRITE_REG(chp, reg, val)	(chp)->write_cmdreg(chp, reg, val)
+#define WDC_READ_CTLREG(chp, reg)	(chp)->read_ctlreg(chp, reg)
+#define WDC_WRITE_CTLREG(chp, reg, val)	(chp)->write_ctlreg(chp, reg, val)
 #define WDC_READ_DATA(chp)		*(chp)->c_data
 
 struct wd_softc {
@@ -129,6 +134,5 @@ int	wdccommandext		(struct wd_softc*, struct wdc_command*);
 int	wdc_exec_read		(struct wd_softc*, u_int8_t, daddr_t, void*);
 int	wdc_exec_identify	(struct wd_softc*, void*);
 
-int	pciide_init		(struct wdc_channel*, u_int);
 
 #endif /* _STAND_WDVAR_H */
