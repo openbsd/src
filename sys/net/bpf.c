@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.71 2008/11/26 18:01:43 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.72 2009/09/07 23:47:51 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ void	bpf_detachd(struct bpf_d *);
 int	bpf_setif(struct bpf_d *, struct ifreq *);
 int	bpfpoll(dev_t, int, struct proc *);
 int	bpfkqfilter(dev_t, struct knote *);
-static __inline void bpf_wakeup(struct bpf_d *);
+void	bpf_wakeup(struct bpf_d *);
 void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
 	    void (*)(const void *, void *, size_t));
 void	bpf_reset_d(struct bpf_d *);
@@ -495,7 +495,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 /*
  * If there are processes sleeping on this descriptor, wake them up.
  */
-static __inline void
+void
 bpf_wakeup(struct bpf_d *d)
 {
 	wakeup((caddr_t)d);
