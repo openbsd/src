@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.126 2009/06/28 17:01:17 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.127 2009/09/07 19:06:43 miod Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2647,7 +2647,7 @@ uvideo_querycap(void *v, struct v4l2_capability *caps)
 {
 	struct uvideo_softc *sc = v;
 
-	bzero(caps, sizeof(caps));
+	bzero(caps, sizeof(*caps));
 	strlcpy(caps->driver, DEVNAME(sc), sizeof(caps->driver));
 	strlcpy(caps->card, "Generic USB video class device",
 	    sizeof(caps->card));
