@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.6 2009/09/01 13:42:00 henning Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.7 2009/09/07 08:27:45 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -461,7 +461,8 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
 			return (-1);
 		}
 		PF_ACPY(saddr, &naddr, pd->af);
-		*sport = nport;
+		if (nport)
+			*sport = nport;
 	}
 	if (!TAILQ_EMPTY(&r->rdr.list)) {
 		if (pf_map_addr(pd->af, r, saddr, &naddr, NULL, &sn, &r->rdr))
