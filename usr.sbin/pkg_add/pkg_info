@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.73 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: pkg_info,v 1.74 2009/09/07 20:39:55 landry Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -252,7 +252,9 @@ sub print_info
 	if ($opt_I) {
 		my $l = 20 - length($pkg);
 		$l = 1 if $l <= 0;
-		print $pkg, " "x$l, get_comment($handle->info), "\n";
+		print $pkg;
+		print " "x$l, get_comment($handle->info) unless $opt_q;
+		print "\n";
 	} else {
 		my $done = 0;
 		if ($opt_c) {
