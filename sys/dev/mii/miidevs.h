@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.113 2009/08/08 18:04:41 naddy Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.114 2009/09/07 13:46:23 sthen Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.110 2009/08/08 18:03:58 naddy Exp 
+ *	OpenBSD: miidevs,v 1.111 2009/09/07 13:46:03 sthen Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -265,7 +265,7 @@
 #define	MII_STR_ICPLUS_IP101	"IP101 10/100 PHY"
 #define	MII_MODEL_ICPLUS_IP1000A	0x0008
 #define	MII_STR_ICPLUS_IP1000A	"IP1000A 10/100/1000 PHY"
-#define	MII_MODEL_ICPLUS_IP1001	0x0025
+#define	MII_MODEL_ICPLUS_IP1001	0x0019
 #define	MII_STR_ICPLUS_IP1001	"IP1001 10/100/1000 PHY"
 
 /* Integrated Circuit Systems PHYs */
