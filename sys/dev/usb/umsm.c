@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.48 2009/08/25 19:51:35 robert Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.49 2009/09/07 20:26:13 mpf Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -111,7 +111,8 @@ struct umsm_type {
 #define	DEV_UMASS1	0x0010
 #define	DEV_UMASS2	0x0020
 #define	DEV_UMASS3	0x0040
-#define DEV_UMASS	(DEV_UMASS1 | DEV_UMASS2 | DEV_UMASS3)
+#define	DEV_UMASS4	0x0080
+#define DEV_UMASS	(DEV_UMASS1 | DEV_UMASS2 | DEV_UMASS3 | DEV_UMASS4)
 };
  
 static const struct umsm_type umsm_devs[] = {
@@ -154,7 +155,7 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_U720 }, 0},
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_U727 }, DEV_UMASS1},
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_MC950D }, 0},
-	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_MERLINX950D }, 0},
+	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_MERLINX950D }, DEV_UMASS4},
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_ZEROCD2 }, 0},
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_U760 }, 0},
 
@@ -606,6 +607,8 @@ usbd_status
 umsm_umass_changemode(struct umsm_softc *sc) 
 {
 #define UMASS_CMD_REZERO_UNIT	0x01
+#define UMASS_CMD_START_STOP	0x1b
+#define UMASS_CMDPARAM_EJECT	0x02
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_xfer_handle xfer;
@@ -646,6 +649,13 @@ umsm_umass_changemode(struct umsm_softc *sc)
 		cbw.CBWCDB[3] = 0x02;
 		cbw.CBWCDB[4] = 0x52;
 		cbw.CBWCDB[5] = 0x70;
+		break;
+	case DEV_UMASS4:
+		USETDW(cbw.dCBWDataTransferLength, 0x0); 
+		cbw.bCBWFlags = CBWFLAGS_OUT;
+		cbw.CBWCDB[0] = UMASS_CMD_START_STOP;
+		cbw.CBWCDB[1] = 0x00;	/* target LUN: 0 */
+		cbw.CBWCDB[4] = UMASS_CMDPARAM_EJECT;
 		break;
 	default:
 		DPRINTF(("%s: unknown device type.\n", sc->sc_dev.dv_xname));
