@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.29 2009/09/05 17:42:16 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.30 2009/09/07 19:08:45 kili Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1228,8 +1228,8 @@ server_second_timers(void)
 	/* If locked, redraw all clients. */
 	if (server_locked) {
 		for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-			if (ARRAY_ITEM(&clients, i) != NULL)
-				server_redraw_client(ARRAY_ITEM(&clients, i));
+			if ((c = ARRAY_ITEM(&clients, i)) != NULL)
+				server_redraw_client(c);
 		}
 	}
 }
