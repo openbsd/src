@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-buffer.c,v 1.5 2009/08/18 14:48:42 nicm Exp $ */
+/* $OpenBSD: cmd-show-buffer.c,v 1.6 2009/09/07 18:50:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 
-#include <string.h>
 #include <vis.h>
 
 #include "tmux.h"
@@ -65,7 +64,7 @@ cmd_show_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if (pb == NULL)
 		return (0);
 
-	size = strlen(pb->data);
+	size = pb->size;
 	if (size > SIZE_MAX / 4 - 1)
 		size = SIZE_MAX / 4 - 1;
 	in = xmalloc(size * 4 + 1);

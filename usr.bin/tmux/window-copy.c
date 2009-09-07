@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.25 2009/08/21 07:33:58 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.26 2009/09/07 18:50:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -849,13 +849,16 @@ window_copy_copy_selection(struct window_pane *wp, struct client *c)
 		window_copy_copy_line(wp, &buf, &off, ey, 0, ex);
 	}
 
-	/* Terminate buffer, overwriting final \n. */
-	if (off != 0)
-		buf[off - 1] = '\0';
+	/* Don't bother if no data. */
+	if (off == 0) {
+		xfree(buf);
+		return;
+	}
+	off--;	/* remove final \n */
 
 	/* Add the buffer to the stack. */
 	limit = options_get_number(&c->session->options, "buffer-limit");
-	paste_add(&c->session->buffers, buf, limit);
+	paste_add(&c->session->buffers, buf, off, limit);
 }
 
 void

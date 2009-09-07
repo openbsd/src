@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.3 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.4 2009/09/07 18:50:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -75,7 +75,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (-1);
 	}
 
-	if (fwrite(pb->data, 1, strlen(pb->data), f) != strlen(pb->data)) {
+	if (fwrite(pb->data, 1, pb->size, f) != pb->size) {
 	    	ctx->error(ctx, "%s: fwrite error", data->arg);
 	    	fclose(f);
 	    	return (-1);

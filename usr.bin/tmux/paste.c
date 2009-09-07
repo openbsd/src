@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.3 2009/07/30 20:50:54 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.4 2009/09/07 18:50:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -97,7 +97,7 @@ paste_free_index(struct paste_stack *ps, u_int idx)
 }
 
 void
-paste_add(struct paste_stack *ps, char *data, u_int limit)
+paste_add(struct paste_stack *ps, u_char *data, size_t size, u_int limit)
 {
 	struct paste_buffer	*pb;
 
@@ -115,12 +115,13 @@ paste_add(struct paste_stack *ps, char *data, u_int limit)
 	ARRAY_INSERT(ps, 0, pb);
 
 	pb->data = data;
+	pb->size = size;
 	if (gettimeofday(&pb->tv, NULL) != 0)
 		fatal("gettimeofday");
 }
 
 int
-paste_replace(struct paste_stack *ps, u_int idx, char *data)
+paste_replace(struct paste_stack *ps, u_int idx, u_char *data, size_t size)
 {
 	struct paste_buffer	*pb;
 
@@ -131,6 +132,7 @@ paste_replace(struct paste_stack *ps, u_int idx, char *data)
 	xfree(pb->data);
 
 	pb->data = data;
+	pb->size = size;
 	if (gettimeofday(&pb->tv, NULL) != 0)
 		fatal("gettimeofday");
 
