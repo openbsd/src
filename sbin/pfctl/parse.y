@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.566 2009/09/03 12:16:21 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.567 2009/09/07 12:21:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -226,6 +226,7 @@ struct pool_opts {
 struct redirspec {
 	struct redirection      *rdr;
 	struct pool_opts         pool_opts;
+	int			 binat;
 };
 
 struct filter_opts {
@@ -342,7 +343,7 @@ void		 expand_label(char *, size_t, const char *, u_int8_t,
 		    struct node_port *, u_int8_t);
 int		 apply_redirspec(struct pf_pool *, struct pf_rule *,
 		    struct redirspec *, int, struct node_port *);
-void		 expand_rule(struct pf_rule *, struct node_if *,
+void		 expand_rule(struct pf_rule *, int, struct node_if *,
 		    struct redirspec *, struct redirspec *, struct node_proto *,
 		    struct node_os *, struct node_host *, struct node_port *,
 		    struct node_host *, struct node_port *, struct node_uid *,
@@ -446,7 +447,7 @@ int	parseport(char *, struct range *r, int);
 
 %token	PASS BLOCK MATCH SCRUB RETURN IN OS OUT LOG QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
-%token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT NODF
+%token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINATTO NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE URPFFAILED FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
@@ -901,7 +902,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 			decide_address_family($8.src.host, &r.af);
 			decide_address_family($8.dst.host, &r.af);
 
-			expand_rule(&r, $5, NULL, NULL, $7, $8.src_os,
+			expand_rule(&r, 0, $5, NULL, NULL, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
 			    $9.uid, $9.gid, $9.icmpspec,
 			    pf->astack[pf->asd + 1] ? pf->alast->name : $2);
@@ -1070,7 +1071,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				}
 
 				if (h != NULL)
-					expand_rule(&r, j, NULL, NULL, NULL,
+					expand_rule(&r, 0, j, NULL, NULL, NULL,
 					    NULL, h, NULL, NULL, NULL, NULL,
 					    NULL, NULL, "");
 
@@ -1091,7 +1092,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					else
 						h = ifa_lookup(i->ifname, 0);
 					if (h != NULL)
-						expand_rule(&r, NULL, NULL,
+						expand_rule(&r, 0, NULL, NULL,
 						    NULL, NULL, NULL, h, NULL,
 						    NULL, NULL, NULL, NULL,
 						    NULL, "");
@@ -2094,7 +2095,7 @@ pfrule		: action dir logquick interface af proto fromto
 				}
 			}	
 
-			expand_rule(&r, $4, &$8.nat, &$8.rdr, $6, $7.src_os,
+			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, $6, $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
 			    $8.uid, $8.gid, $8.icmpspec, "");
 		}
@@ -2238,7 +2239,7 @@ filter_opt	: USER uids {
 		}
 		| NATTO redirpool pool_opts {
 			if (filter_opts.nat.rdr) {
-				yyerror("cannot respecify nat-to");
+				yyerror("cannot respecify nat-to/binat-to");
 				YYERROR;
 			}
 			filter_opts.nat.rdr = $2;
@@ -2253,6 +2254,17 @@ filter_opt	: USER uids {
 			filter_opts.rdr.rdr = $2;
 			memcpy(&filter_opts.rdr.pool_opts, &$3,
 			    sizeof(filter_opts.rdr.pool_opts));
+		}
+		| BINATTO redirpool pool_opts {
+			if (filter_opts.nat.rdr) {
+				yyerror("cannot respecify nat-to/binat-to");
+				YYERROR;
+			}
+			filter_opts.nat.rdr = $2;
+			filter_opts.nat.binat = 1;
+			memcpy(&filter_opts.nat.pool_opts, &$3,
+			    sizeof(filter_opts.nat.pool_opts));
+			filter_opts.nat.pool_opts.staticport = 1;
 		}
 		| FASTROUTE {
 			filter_opts.route.host = NULL;
@@ -4505,7 +4517,7 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 
 
 void
-expand_rule(struct pf_rule *r, struct node_if *interfaces,
+expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
     struct redirspec *nat, struct redirspec *rdr,
     struct node_proto *protos, struct node_os *src_oses,
     struct node_host *src_hosts, struct node_port *src_ports,
@@ -4520,6 +4532,10 @@ expand_rule(struct pf_rule *r, struct node_if *interfaces,
 	char			 tagname[PF_TAG_NAME_SIZE];
 	char			 match_tagname[PF_TAG_NAME_SIZE];
 	u_int8_t		 flags, flagset, keep_state;
+	struct node_host	*srch, *dsth;
+	struct redirspec	 binat;
+	struct pf_rule		 rb;
+	int			 dir = r->direction;
 
 	if (strlcpy(label, r->label, sizeof(label)) >= sizeof(label))
 		errx(1, "expand_rule: strlcpy");
@@ -4642,6 +4658,37 @@ expand_rule(struct pf_rule *r, struct node_if *interfaces,
 			r->os_fingerprint = PF_OSFP_ANY;
 		}
 
+		if (nat && nat->rdr && nat->binat) {
+			if (disallow_table(src_host, "invalid use of table "
+			    "<%s> as the source address of a binat-to rule") ||
+			    disallow_alias(src_host, "invalid use of interface "
+			    "(%s) as the source address of a binat-to rule")) {
+				error++;
+			} else if (src_host->af == AF_UNSPEC) {
+				yyerror("binat-to requires a specified "
+				    "source and redirect address");
+				error++;
+			}
+			if (disallow_table(src_host, "invalid use of table "
+			    "<%s> as the redirect address of a "
+			    "binat-to rule") ||
+			    disallow_alias(dst_host, "invalid use of interface "
+			    "(%s) as the redirect address of a "
+			    "binat-to rule") ||
+			    disallow_urpf_failed(dst_host, "\"urpf-failed\" "
+			    "is not permitted as a binat-to destination")) {
+				error++;
+			}
+			if (r->direction != PF_INOUT) {
+				yyerror("binat-to cannot be specified "
+				    "with a direction");
+				error++;
+			}
+
+			/* first specify outbound NAT rule */
+			r->direction = PF_OUT;
+		}
+
 		error += apply_redirspec(&r->nat, r, nat, 0, dst_port);
 		error += apply_redirspec(&r->rdr, r, rdr, 1, dst_port);
 
@@ -4652,23 +4699,61 @@ expand_rule(struct pf_rule *r, struct node_if *interfaces,
 			pfctl_add_rule(pf, r, anchor_call);
 			added++;
 		}
+		r->direction = dir;
+
+		/* Generate binat's matching inbound rule */
+		if (!error && nat && nat->rdr && nat->binat) {
+			bcopy(r, &rb, sizeof(rb));
+
+			/* now specify inbound rdr rule */
+			rb.direction = PF_IN;
+
+			if ((srch = calloc(1, sizeof(*srch))) == NULL)
+				err(1, "expand_rule: calloc");
+			bcopy(src_host, srch, sizeof(*srch));
+			srch->ifname = NULL;
+			srch->next = NULL;
+			srch->tail = NULL;
+
+			if ((dsth = calloc(1, sizeof(*dsth))) == NULL)
+				err(1, "expand_rule: calloc");
+			bcopy(nat->rdr->host, dsth, sizeof(*dsth));
+			dsth->ifname = NULL;
+			dsth->next = NULL;
+			dsth->tail = NULL;
+
+			if ((binat.rdr =
+			    calloc(1, sizeof(*binat.rdr))) == NULL)
+				err(1, "expand_rule: calloc");
+			bcopy(nat->rdr, binat.rdr, sizeof(*binat.rdr));
+			bcopy(&nat->pool_opts, &binat.pool_opts,
+			    sizeof(binat.pool_opts));
+			binat.pool_opts.staticport = 0;
+			binat.rdr->host = srch;
+
+			expand_rule(&rb, 1, interface, NULL, &binat, proto,
+			    src_os, dst_host, dst_port, dsth, src_port,
+			    uid, gid, icmp_type, anchor_call);
+		}
 
 	))))))))));
 
-	FREE_LIST(struct node_if, interfaces);
-	FREE_LIST(struct node_proto, protos);
-	FREE_LIST(struct node_host, src_hosts);
-	FREE_LIST(struct node_port, src_ports);
-	FREE_LIST(struct node_os, src_oses);
-	FREE_LIST(struct node_host, dst_hosts);
-	FREE_LIST(struct node_port, dst_ports);
-	FREE_LIST(struct node_uid, uids);
-	FREE_LIST(struct node_gid, gids);
-	FREE_LIST(struct node_icmp, icmp_types);
-	if (nat && nat->rdr)
-		FREE_LIST(struct node_host, nat->rdr->host);
-	if (rdr && rdr->rdr)
-		FREE_LIST(struct node_host, rdr->rdr->host);
+	if (!keeprule) {
+		FREE_LIST(struct node_if, interfaces);
+		FREE_LIST(struct node_proto, protos);
+		FREE_LIST(struct node_host, src_hosts);
+		FREE_LIST(struct node_port, src_ports);
+		FREE_LIST(struct node_os, src_oses);
+		FREE_LIST(struct node_host, dst_hosts);
+		FREE_LIST(struct node_port, dst_ports);
+		FREE_LIST(struct node_uid, uids);
+		FREE_LIST(struct node_gid, gids);
+		FREE_LIST(struct node_icmp, icmp_types);
+		if (nat && nat->rdr)
+			FREE_LIST(struct node_host, nat->rdr->host);
+		if (rdr && rdr->rdr)
+			FREE_LIST(struct node_host, rdr->rdr->host);
+	}
 
 	if (!added)
 		yyerror("rule expands to no valid combination");
@@ -4743,8 +4828,7 @@ lookup(char *s)
 		{ "antispoof",		ANTISPOOF},
 		{ "any",		ANY},
 		{ "bandwidth",		BANDWIDTH},
-		{ "binat",		BINAT},
-		{ "binat-anchor",	BINATANCHOR},
+		{ "binat-to",		BINATTO},
 		{ "bitmask",		BITMASK},
 		{ "block",		BLOCK},
 		{ "block-policy",	BLOCKPOLICY},

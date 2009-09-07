@@ -1,10 +1,8 @@
 # invalid table constructs
 match in on lo0 from any to any rdr-to <sometable>
 match out on lo0 from any to any nat-to <sometable>
-match out on lo0 from 1.1.1.1 to any nat-to <sometable> static-port
-match in on lo0 from any to <sometable> rdr-to 1.1.1.1
-match out on lo0 from <sometable> to any nat-to 1.1.1.1 static-port
-match in on lo0 from any to 1.1.1.1 rdr-to <sometable>
+match on lo0 from 1.1.1.1 to any binat-to <sometable>
+match on lo0 from <sometable> to any binat-to 1.1.1.1
 pass in from any to any dup-to (lo0 <sometable>)
 pass in from any to any  route-to (lo0 <sometable>)
 pass in from any to any reply-to (lo0 <sometable>)

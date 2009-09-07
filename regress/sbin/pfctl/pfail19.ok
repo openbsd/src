@@ -1,2 +1,4 @@
-stdin:4: invalid use of table <sometable> as the redirect address of a binat rule
-stdin:5: invalid use of table <sometable> as the source address of a binat rule
+stdin:5: invalid use of table <sometable> as the source address of a binat-to rule
+stdin:5: invalid use of table <sometable> as the redirect address of a binat-to rule
+stdin:5: skipping rule due to errors
+stdin:5: rule expands to no valid combination

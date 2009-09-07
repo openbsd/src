@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.454 2009/09/07 11:28:34 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.455 2009/09/07 12:21:10 reyk Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -754,6 +754,16 @@ and correctly direct return traffic for that connection.
 .Pp
 Different types of translation are possible with pf:
 .Bl -tag -width xxxxxxxx
+.It Ar binat-to
+A
+.Ar binat-to
+rule specifies a bidirectional mapping between an external IP
+netblock and an internal IP netblock.
+It expands to an outbound
+.Ar nat-to
+rule and an inbound
+.Ar rdr-to
+rule.
 .It Ar nat-to
 A
 .Ar nat-to
@@ -792,6 +802,9 @@ implicitly in the case of
 options and explicitly in the case of
 .Ar rdr-to
 ones.
+Port numbers are never translated with a
+.Ar binat-to
+rule.
 .Pp
 Translation options apply only to packets that pass through the specified
 interface, and if no interface is specified, translation is applied
@@ -2553,6 +2566,24 @@ match out on $ext_if inet from any to any nat-to 192.0.2.16/28 \e
 match in  on $ext_if proto tcp from any to any port 80 \e
     rdr-to { 10.1.2.155, 10.1.2.160, 10.1.2.161 } round-robin
 .Ed
+.Pp
+The bidirectional address translation example uses a single
+.Ar binat-to
+rule that expands to a
+.Ar nat-to
+and an
+.Ar rdr-to
+rule.
+.Bd -literal -offset 4n
+pass on $ext_if from 10.1.2.120 to any binat-to 192.0.2.17
+.Ed
+.Pp
+The previous example is identical to the following set of rules:
+.Bd -literal -offset 4n
+pass out on $ext_if inet from 10.1.2.120 to any \e
+      nat-to 192.0.2.17 static-port
+pass in on $ext_if inet from any to 192.0.2.17 rdr-to 10.1.2.120
+.Ed
 .Sh GRAMMAR
 Syntax for
 .Nm
@@ -2594,10 +2625,12 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
                  "label" string | "tag" string | [ ! ] "tagged" string |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "rtable" number | "probability" number"%" |
+		 "binat-to" ( redirhost | "{" redirhost-list "}" )
+		 [ portspec ] [ pooltype ] |
 		 "rdr-to" ( redirhost | "{" redirhost-list "}" )
 		 [ portspec ] [ pooltype ] |
 		 "nat-to" ( redirhost | "{" redirhost-list "}" )
-		 [ portspec ] [ pooltype ] [ "static-port" ]
+		 [ portspec ] [ pooltype ] [ "static-port" ] |
 		 [ "fastroute" | route ]
 
 scrubopts      = scrubopt [ [ "," ] scrubopts ]
