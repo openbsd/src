@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.188 2009/09/08 17:00:40 michele Exp $
+.\"	$OpenBSD: sysctl.3,v 1.189 2009/09/08 17:52:17 michele Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1128,8 +1128,6 @@ The currently defined protocols and names are:
 .It carp	allow	integer	yes
 .It carp	log	integer	yes
 .It carp	preempt	integer	yes
-.It divert	recvspace	integer	yes
-.It divert	sendspace	integer	yes
 .It esp	enable	integer	yes
 .It esp	udpencap	integer	yes
 .It esp	udpencap_port	integer	yes
@@ -1242,10 +1240,6 @@ another active master.
 If set to any other value, carp will become master of the virtual host if it
 believes it can send advertisements more frequently than the current master.
 Disabled by default.
-.It Li divert.recvspace
-Returns the default divert receive buffer size.
-.It Li divert.sendspace
-Returns the default divert send buffer size.
 .It Li esp.enable
 If set to 1, enable the Encapsulating Security Payload
 .Pq ESP

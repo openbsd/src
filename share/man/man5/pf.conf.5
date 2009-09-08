@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.456 2009/09/08 17:00:41 michele Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.457 2009/09/08 17:52:17 michele Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -435,12 +435,6 @@ The implicit
 .Ar pass
 rule that is used when a packet does not match any rules does not
 allow IP options.
-.Pp
-.It Ar divert-packet Aq Ar port
-Used to send matching packets to
-.Xr divert 4
-sockets bound to port
-.Ar port .
 .Pp
 .It Ar divert-reply
 Used to receive replies for sockets that are bound to addresses

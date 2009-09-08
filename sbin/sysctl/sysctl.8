@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.150 2009/09/08 17:00:41 michele Exp $
+.\"	$OpenBSD: sysctl.8,v 1.151 2009/09/08 17:52:17 michele Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -210,8 +210,6 @@ not all of the variables are relevant to all architectures.
 .It vm.maxslp	integer	no
 .It vm.uspace	integer	no
 .It fs.posix.setuid	integer	yes
-.It net.inet.divert.recvspace	integer	yes
-.It net.inet.divert.sendspace	integer	yes
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.redirect	integer	yes
 .It net.inet.ip.ttl	integer	yes
@@ -446,8 +444,6 @@ definitions for third level virtual memory identifiers
 .It Aq Pa netinet/in.h
 definitions for third level IPv4/v6 identifiers and
 fourth level IPv4/v6 identifiers
-.It Aq Pa netinet/ip_divert.h
-definitions for fourth level divert identifiers
 .It Aq Pa netinet/icmp_var.h
 definitions for fourth level ICMP identifiers
 .It Aq Pa netinet6/icmp6.h

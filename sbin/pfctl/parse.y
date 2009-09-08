@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.568 2009/09/08 17:00:41 michele Exp $	*/
+/*	$OpenBSD: parse.y,v 1.569 2009/09/08 17:52:17 michele Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -266,7 +266,7 @@ struct filter_opts {
 	struct {
 		struct node_host	*addr;
 		u_int16_t		port;
-	}			 divert, divert_packet;
+	}			 divert;
 	struct redirspec	 nat;
 	struct redirspec	 rdr;
 
@@ -461,7 +461,7 @@ int	parseport(char *, struct range *r, int);
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE SETTOS
-%token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO RDRTO
+%token	DIVERTTO DIVERTREPLY NATTO RDRTO
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %token	<v.i>			PORTBINARY
@@ -2094,7 +2094,6 @@ pfrule		: action dir logquick interface af proto fromto
 					    $8.divert.addr->addr.v.a.addr;
 				}
 			}	
-			r.divert_packet.port = $8.divert_packet.port;
 
 			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, $6, $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
@@ -2227,13 +2226,6 @@ filter_opt	: USER uids {
 		}
 		| DIVERTREPLY {
 			filter_opts.divert.port = 1;	/* some random value */
-		}
-		| DIVERTPACKET PORT portplain {
-			filter_opts.divert_packet.port = $3.a;
-			if (!filter_opts.divert_packet.port) {
-				yyerror("invalid divert port: %u", ntohs($3.a));
-				YYERROR;
-			}
 		}
 		| SCRUB '(' scrub_opts ')' {
 			filter_opts.nodf = $3.nodf;
@@ -3922,10 +3914,6 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 			yyerror("divert is not supported on match rules");
 			problems++;
 		}
-		if (r->divert_packet.port) {
-			yyerror("divert is not supported on match rules");
-			problems++;
-		}
 		if (r->rt) {
 			yyerror("route-to, reply-to, dup-to and fastroute "
 			   "must not be used on match rules");
@@ -4848,7 +4836,6 @@ lookup(char *s)
 		{ "code",		CODE},
 		{ "crop",		FRAGCROP},
 		{ "debug",		DEBUG},
-		{ "divert-packet",	DIVERTPACKET},
 		{ "divert-reply",	DIVERTREPLY},
 		{ "divert-to",		DIVERTTO},
 		{ "drop",		DROP},
