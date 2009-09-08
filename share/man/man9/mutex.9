@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.9 2009/05/11 19:49:25 jmc Exp $
+.\" $OpenBSD: mutex.9,v 1.10 2009/09/08 05:58:35 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 11 2009 $
+.Dd $Mdocdate: September 8 2009 $
 .Dt MUTEX 9
 .Os
 .Sh NAME
@@ -30,6 +30,8 @@
 .Fn mtx_init "struct mutex *mtxp" "int wantipl"
 .Ft void
 .Fn mtx_enter "struct mutex *mtxp"
+.Ft int
+.Fn mtx_enter_try "struct mutex *mtxp"
 .Ft void
 .Fn mtx_leave "struct mutex *mtxp"
 .Sh DESCRIPTION
@@ -50,6 +52,12 @@ if necessary.
 The
 .Fn mtx_enter
 function acquires a mutex, spinning if necessary.
+.Pp
+The
+.Fn mtx_enter_try
+function attempts to acquire a mutex.
+If it succeeds in acquiring the mutex it will return 1, otherwise
+it will return 0.
 .Pp
 The
 .Fn mtx_leave
