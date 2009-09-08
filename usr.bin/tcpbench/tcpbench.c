@@ -738,9 +738,9 @@ serverloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop)
 }
 
 static void __dead
-clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port, int nconn)
+clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop, int nconn)
 {
-	struct addrinfo *aitop, *ai, hints;
+	struct addrinfo *ai;
 	struct statctx *psc;
 	struct pollfd *pfd;
 	char tmp[128], *buf;
@@ -757,16 +757,6 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port, int 
 		err(1, "clientloop psc calloc");
 	
 	for (i = 0; i < nconn; i++) {
-		bzero(&hints, sizeof(hints));
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = 0;
-		if ((herr = getaddrinfo(host, port, &hints, &aitop)) != 0) {
-			if (herr == EAI_SYSTEM)
-				err(1, "getaddrinfo");
-			else
-				errx(1, "c getaddrinfo: %s", gai_strerror(herr));
-		}
-
 		for (sock = -1, ai = aitop; ai != NULL; ai = ai->ai_next) {
 			saddr_ntop(ai->ai_addr, ai->ai_addrlen, tmp,
 			    sizeof(tmp));
@@ -802,7 +792,6 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port, int 
 			}
 			break;
 		}
-		freeaddrinfo(aitop);
 		if (sock == -1)
 			errx(1, "No host found");
 
@@ -818,6 +807,7 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, const char *host, const char *port, int 
 		mainstats.nconns++;
 		scnt++;
 	}
+	freeaddrinfo(aitop);
 
 	if (vflag && scnt > 1)
 		fprintf(stderr, "%u connections established\n", scnt);
@@ -964,16 +954,15 @@ main(int argc, char **argv)
 	if (!sflag)
 		host = argv[0];
 
-	if (sflag) {
-		bzero(&hints, sizeof(hints));
-		hints.ai_socktype = SOCK_STREAM;
+	bzero(&hints, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+	if (sflag)
 		hints.ai_flags = AI_PASSIVE;
-		if ((herr = getaddrinfo(host, port, &hints, &aitop)) != 0) {
-			if (herr == EAI_SYSTEM)
-				err(1, "getaddrinfo");
-			else
-				errx(1, "s getaddrinfo: %s", gai_strerror(herr));
-		}
+	if ((herr = getaddrinfo(host, port, &hints, &aitop)) != 0) {
+		if (herr == EAI_SYSTEM)
+			err(1, "getaddrinfo");
+		else
+			errx(1, "getaddrinfo: %s", gai_strerror(herr));
 	}
 
 	if (kflag) {
@@ -1004,7 +993,7 @@ main(int argc, char **argv)
 	if (sflag)
 		serverloop(kvmh, nl[0].n_value, aitop);
 	else
-		clientloop(kvmh, nl[0].n_value, host, port, nconn);
+		clientloop(kvmh, nl[0].n_value, aitop, nconn);
 
 	return 0;
 }
