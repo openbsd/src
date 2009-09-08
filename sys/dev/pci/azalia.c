@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.143 2009/08/13 23:59:15 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.144 2009/09/08 23:30:17 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -191,8 +191,7 @@ int	azalia_delete_corb(azalia_t *);
 int	azalia_halt_rirb(azalia_t *);
 int	azalia_init_rirb(azalia_t *);
 int	azalia_delete_rirb(azalia_t *);
-int	azalia_set_command(azalia_t *, nid_t, int, uint32_t,
-	uint32_t);
+int	azalia_set_command(azalia_t *, nid_t, int, uint32_t, uint32_t);
 int	azalia_get_response(azalia_t *, uint32_t *);
 void	azalia_rirb_kick_unsol_events(azalia_t *);
 void	azalia_rirb_intr(azalia_t *);
@@ -997,19 +996,36 @@ azalia_delete_rirb(azalia_t *az)
 }
 
 int
+azalia_comresp(const codec_t *codec, nid_t nid, uint32_t control,
+    uint32_t param, uint32_t* result)
+{
+	int err, s;
+
+	s = splaudio();
+	err = azalia_set_command(codec->az, codec->address, nid, control,
+	    param);
+	if (err)
+		goto exit;
+	err = azalia_get_response(codec->az, result);
+exit:
+	splx(s);
+
+	return(err);
+}
+
+int
 azalia_set_command(azalia_t *az, int caddr, nid_t nid, uint32_t control,
-		   uint32_t param)
+    uint32_t param)
 {
 	corb_entry_t *corb;
 	int  wp;
 	uint32_t verb;
 	uint16_t corbwp;
-	uint8_t rirbctl;
 
 #ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, CORBCTL) & HDA_CORBCTL_CORBRUN) == 0) {
 		printf("%s: CORB is not running.\n", XNAME(az));
-		return -1;
+		return(-1);
 	}
 #endif
 	verb = (caddr << 28) | (nid << 20) | (control << 8) | param;
@@ -1020,19 +1036,9 @@ azalia_set_command(azalia_t *az, int caddr, nid_t nid, uint32_t control,
 		wp = 0;
 	corb[wp] = verb;
 
-	/* disable RIRB interrupts */
-	rirbctl = AZ_READ_1(az, RIRBCTL);
-	if (rirbctl & HDA_RIRBCTL_RINTCTL) {
-		AZ_WRITE_1(az, RIRBCTL, rirbctl & ~HDA_RIRBCTL_RINTCTL);
-		azalia_rirb_intr(az);
-	}
-
 	AZ_WRITE_2(az, CORBWP, (corbwp & ~HDA_CORBWP_CORBWP) | wp);
-#if 0
-	DPRINTF(("%s: caddr=%d nid=%d control=0x%x param=0x%x verb=0x%8.8x wp=%d\n",
-		 __func__, caddr, nid, control, param, verb, wp));
-#endif
-	return 0;
+
+	return(0);
 }
 
 int
@@ -1041,26 +1047,28 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 	const rirb_entry_t *rirb;
 	int i;
 	uint16_t wp;
-	uint8_t rirbctl;
 
 #ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, RIRBCTL) & HDA_RIRBCTL_RIRBDMAEN) == 0) {
 		printf("%s: RIRB is not running.\n", XNAME(az));
-		return -1;
+		return(-1);
 	}
 #endif
-	for (i = 5000; i >= 0; i--) {
-		wp = AZ_READ_2(az, RIRBWP) & HDA_RIRBWP_RIRBWP;
-		if (az->rirb_rp != wp)
-			break;
-		DELAY(10);
-	}
-	if (i <= 0) {
-		printf("%s: RIRB time out\n", XNAME(az));
-		return ETIMEDOUT;
-	}
+
 	rirb = (rirb_entry_t*)az->rirb_dma.addr;
+	i = 5000;
 	for (;;) {
+		while (i > 0) {
+			wp = AZ_READ_2(az, RIRBWP) & HDA_RIRBWP_RIRBWP;
+			if (az->rirb_rp != wp)
+				break;
+			DELAY(10);
+			i--;
+		}
+		if (i <= 0) {
+			printf("%s: RIRB time out\n", XNAME(az));
+			return(ETIMEDOUT);
+		}
 		if (++az->rirb_rp >= az->rirb_size)
 			az->rirb_rp = 0;
 		if (rirb[az->rirb_rp].resp_ex & RIRB_RESP_UNSOL) {
@@ -1073,20 +1081,7 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 	if (result != NULL)
 		*result = rirb[az->rirb_rp].resp;
 
-	azalia_rirb_kick_unsol_events(az);
-#if 0
-	for (i = 0; i < 16 /*az->rirb_size*/; i++) {
-		DPRINTF(("rirb[%d] 0x%8.8x:0x%8.8x ", i, rirb[i].resp, rirb[i].resp_ex));
-		if ((i % 2) == 1)
-			DPRINTF(("\n"));
-	}
-#endif
-
-	/* re-enable RIRB interrupts */
-	rirbctl = AZ_READ_1(az, RIRBCTL);
-	AZ_WRITE_1(az, RIRBCTL, rirbctl | HDA_RIRBCTL_RINTCTL);
-
-	return 0;
+	return(0);
 }
 
 void
@@ -1129,10 +1124,9 @@ azalia_rirb_intr(azalia_t *az)
 			az->unsolq[az->unsolq_wp++].resp_ex = rirb[az->rirb_rp].resp_ex;
 			az->unsolq_wp %= UNSOLQ_SIZE;
 		} else {
-			break;
+			DPRINTF(("%s: dropped solicited response\n", __func__));
 		}
 	}
-
 	azalia_rirb_kick_unsol_events(az);
 
 	AZ_WRITE_1(az, RIRBSTS,
@@ -2420,22 +2414,6 @@ azalia_codec_add_format(codec_t *this, int chan, int prec, uint32_t rates,
 		f->frequency[f->frequency_type++] = 192000;
 	if (rates & COP_PCM_R3840)
 		f->frequency[f->frequency_type++] = 384000;
-}
-
-int
-azalia_comresp(const codec_t *codec, nid_t nid, uint32_t control,
-		     uint32_t param, uint32_t* result)
-{
-	int err, s;
-
-	s = splaudio();
-	err = azalia_set_command(codec->az, codec->address, nid, control, param);
-	if (err)
-		goto exit;
-	err = azalia_get_response(codec->az, result);
-exit:
-	splx(s);
-	return err;
 }
 
 int
