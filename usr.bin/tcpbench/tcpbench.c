@@ -737,30 +737,18 @@ serverloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop)
 	exit(1);
 }
 
-static void __dead
-clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop, int nconn)
+void
+clientconnect(struct addrinfo *aitop, struct pollfd *pfd, int nconn)
 {
+	char tmp[128];
 	struct addrinfo *ai;
-	struct statctx *psc;
-	struct pollfd *pfd;
-	char tmp[128], *buf;
-	int i, r, herr, sock = -1;
-	u_int scnt = 0;
-	ssize_t n;
+	int i, r, sock;
 
-	if ((buf = malloc(Bflag)) == NULL)
-		err(1, "malloc");
-
-	if ((pfd = calloc(nconn, sizeof(*pfd))) == NULL)
-		err(1, "clientloop pfd calloc");
-	if ((psc = calloc(nconn, sizeof(*psc))) == NULL)
-		err(1, "clientloop psc calloc");
-	
 	for (i = 0; i < nconn; i++) {
 		for (sock = -1, ai = aitop; ai != NULL; ai = ai->ai_next) {
 			saddr_ntop(ai->ai_addr, ai->ai_addrlen, tmp,
 			    sizeof(tmp));
-			if (vflag && scnt == 0)
+			if (vflag && i == 0)
 				fprintf(stderr, "Trying %s\n", tmp);
 			if ((sock = socket(ai->ai_family, ai->ai_socktype,
 			    ai->ai_protocol)) == -1) {
@@ -803,14 +791,36 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop, int nconn)
 
 		pfd[i].fd = sock;
 		pfd[i].events = POLLOUT;
-		stats_prepare(psc + i, sock, kvmh, ktcbtab);
-		mainstats.nconns++;
-		scnt++;
 	}
 	freeaddrinfo(aitop);
 
-	if (vflag && scnt > 1)
-		fprintf(stderr, "%u connections established\n", scnt);
+	if (vflag && nconn > 1)
+		fprintf(stderr, "%u connections established\n", nconn);
+}
+
+static void __dead
+clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop, int nconn)
+{
+	struct statctx *psc;
+	struct pollfd *pfd;
+	char *buf;
+	int i, sock = -1;
+	ssize_t n;
+
+	if ((pfd = calloc(nconn, sizeof(*pfd))) == NULL)
+		err(1, "clientloop pfd calloc");
+	if ((psc = calloc(nconn, sizeof(*psc))) == NULL)
+		err(1, "clientloop psc calloc");
+	
+	clientconnect(aitop, pfd, nconn);
+
+	for (i = 0; i < nconn; i++) {
+		stats_prepare(psc + i, sock, kvmh, ktcbtab);
+		mainstats.nconns++;
+	}
+
+	if ((buf = malloc(Bflag)) == NULL)
+		err(1, "malloc");
 	arc4random_buf(buf, Bflag);
 
 	print_header();
@@ -818,7 +828,7 @@ clientloop(kvm_t *kvmh, u_long ktcbtab, struct addrinfo *aitop, int nconn)
 
 	while (!done) {
 		if (proc_slice) {
-			process_slice(psc, scnt);
+			process_slice(psc, nconn);
 			stats_cleanslice();
 			proc_slice = 0;
 		}
