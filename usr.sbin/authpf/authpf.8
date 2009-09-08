@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.48 2009/09/08 06:59:18 sthen Exp $
+.\" $OpenBSD: authpf.8,v 1.49 2009/09/08 07:34:48 sthen Exp $
 .\"
 .\" Copyright (c) 1998-2007 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -73,8 +73,8 @@ or
 .Nm
 uses the
 .Xr pf.conf 5
-syntax to change filter and translation rules for an individual
-user or client IP address as long as a user maintains an active
+syntax to change rules for an individual user or client IP address
+as long as a user maintains an active
 .Xr ssh 1
 session, and logs the successful start and end of a session to
 .Xr syslogd 8 .
@@ -82,8 +82,7 @@ session, and logs the successful start and end of a session to
 retrieves the client's connecting IP address via the
 .Ev SSH_CLIENT
 environment variable and, after performing additional access checks,
-reads a template file to determine what filter and translation rules
-(if any) to add, and
+reads a template file to determine what rules (if any) to add, and
 maintains the list of IP addresses of connected users in the
 .Ar authpf_users
 table.
@@ -219,8 +218,7 @@ The contents of the file
 will also be displayed if the file exists and is readable.
 .Sh CONFIGURATION ISSUES
 .Nm
-maintains the changed filter rules as long as the user maintains an
-active session.
+maintains the changed rules as long as the user maintains an active session.
 It is important to remember however, that the existence
 of this session means the user is authenticated.
 Because of this, it is important to configure
@@ -260,10 +258,11 @@ is designed for gateway machines which typically do not have regular
 (non-administrative) users using the machine.
 An administrator must remember that
 .Nm
-can be used to modify the filter rules through the environment in
-which it is run, and as such could be used to modify the filter rules
-(based on the contents of the configuration files) by regular
-users.
+can be used to modify the
+.Xr pf 4
+rules through the environment in which it is run, and as such could be
+used to modify the rules (based on the contents of the configuration files)
+by regular users.
 In the case where a machine has regular users using it, as well
 as users with
 .Nm
@@ -276,8 +275,8 @@ or
 facilities.
 .Pp
 .Nm
-modifies the packet filter and address translation rules, and because
-of this it needs to be configured carefully.
+modifies the packet filter rules, and because of this it needs to
+be configured carefully.
 .Nm
 will not run and will exit silently if the
 .Pa /etc/authpf/authpf.conf
@@ -473,7 +472,7 @@ ext_if = "fxp1"
 ext_addr = 129.128.11.10
 int_if = "fxp0"
 # nat and tag connections...
-nat on $ext_if from $user_ip to any tag $user_ip -> $ext_addr
+match out on $ext_if from $user_ip to any tag $user_ip nat-to $ext_addr
 pass in quick on $int_if from $user_ip to any
 pass out log quick on $ext_if tagged $user_ip
 .Ed
