@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.47 2009/01/06 03:11:50 mcbride Exp $
+.\" $OpenBSD: authpf.8,v 1.48 2009/09/08 06:59:18 sthen Exp $
 .\"
 .\" Copyright (c) 1998-2007 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 6 2009 $
+.Dd $Mdocdate: September 8 2009 $
 .Dt AUTHPF 8
 .Os
 .Sh NAME
@@ -103,15 +103,12 @@ By default, the
 name "authpf" is used, and the ruleset names equal the username and PID of the
 .Nm
 processes as "username(pid)".
-The following rules need to be added to the main ruleset
+The following needs to be added to the main ruleset
 .Pa /etc/pf.conf
 in order to cause evaluation of any
 .Nm
 rules:
 .Bd -literal -offset indent
-nat-anchor "authpf/*"
-rdr-anchor "authpf/*"
-binat-anchor "authpf/*"
 anchor "authpf/*"
 .Ed
 .Pp
@@ -119,8 +116,8 @@ The "/*" at the end of the anchor name is required for
 .Xr pf 4
 to process the rulesets attached to the anchor by
 .Nm authpf .
-.Sh FILTER AND TRANSLATION RULES
-Filter and translation rules for
+.Sh FILTER RULES
+Filter rules for
 .Nm
 use the same format described in
 .Xr pf.conf 5 .
@@ -134,7 +131,7 @@ Additionally, the macro
 .Em user_id
 is assigned the user name.
 .Pp
-Filter and translation rules are stored in a file called
+Rules are stored in a file called
 .Pa authpf.rules .
 This file will first be searched for in
 .Pa /etc/authpf/users/$USER/
@@ -423,9 +420,6 @@ Example
 # ssh and use us as a dns server.
 internal_if="fxp1"
 gateway_addr="10.0.1.1"
-nat-anchor "authpf/*"
-rdr-anchor "authpf/*"
-binat-anchor "authpf/*"
 block in on $internal_if from any to any
 pass in quick on $internal_if proto tcp from any to $gateway_addr \e
       port = ssh
@@ -520,7 +514,6 @@ only for packets coming from logged in users:
 .Bd -literal
 table <authpf_users> persist
 anchor "authpf/*" from <authpf_users>
-rdr-anchor "authpf/*" from <authpf_users>
 .Ed
 .Pp
 .Sy Tunneled users
