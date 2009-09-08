@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.55 2009/08/31 10:17:35 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.56 2009/09/08 16:11:36 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -336,6 +336,7 @@ parse(int argc, char *argv[])
 	bzero(&res, sizeof(res));
 	res.community.as = COMMUNITY_UNSET;
 	res.community.type = COMMUNITY_UNSET;
+	res.flags = (F_IPV4 | F_IPV6);
 	TAILQ_INIT(&res.set);
 	if ((res.irr_outdir = getcwd(NULL, 0)) == NULL) {
 		fprintf(stderr, "getcwd failed: %s", strerror(errno));
@@ -882,8 +883,14 @@ bgpctl_getopt(int *argc, char **argv[], int type)
 	int	  ch;
 
 	optind = optreset = 1;
-	while ((ch = getopt((*argc) + 1, (*argv) - 1, "o:")) != -1) {
+	while ((ch = getopt((*argc) + 1, (*argv) - 1, "46o:")) != -1) {
 		switch (ch) {
+		case '4':
+			res.flags = (res.flags | F_IPV4) & ~F_IPV6;
+			break;
+		case '6':
+			res.flags = (res.flags | F_IPV6) & ~F_IPV4;
+			break;
 		case 'o':
 			res.irr_outdir = optarg;
 			break;

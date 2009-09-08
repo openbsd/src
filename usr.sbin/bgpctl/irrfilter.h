@@ -1,4 +1,4 @@
-/*	$OpenBSD: irrfilter.h,v 1.8 2009/09/08 15:40:25 claudio Exp $ */
+/*	$OpenBSD: irrfilter.h,v 1.9 2009/09/08 16:11:36 sthen Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,8 @@
 #include <netinet/in.h>
 
 #define	F_IMPORTONLY	0x01	/* skip export: items */
+#define	F_IPV4		0x02	/* use IPv4 items */
+#define	F_IPV6		0x04	/* use IPv6 items */
 
 int	irrflags;
 int	irrverbose;

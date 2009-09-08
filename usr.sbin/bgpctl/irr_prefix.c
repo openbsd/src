@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_prefix.c,v 1.16 2009/09/08 15:40:25 claudio Exp $ */
+/*	$OpenBSD: irr_prefix.c,v 1.17 2009/09/08 16:11:36 sthen Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -64,7 +64,9 @@ prefixset_get(char *as)
 		fflush(stdout);
 	}
 	curpfxs = pfxs;
-	if (whois(as, QTYPE_ROUTE) == -1)
+	if ((irrflags & F_IPV4) && whois(as, QTYPE_ROUTE) == -1)
+		errx(1, "whois error, prefixset_get %s", as);
+	if ((irrflags & F_IPV6) && whois(as, QTYPE_ROUTE6) == -1)
 		errx(1, "whois error, prefixset_get %s", as);
 	if (whois(as, QTYPE_ROUTE6) == -1)
 		errx(1, "whois error, prefixset_get %s", as);

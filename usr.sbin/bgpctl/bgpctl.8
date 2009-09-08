@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.49 2009/06/06 06:11:17 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.50 2009/09/08 16:11:36 sthen Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2009 $
+.Dd $Mdocdate: September 8 2009 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -79,6 +79,10 @@ The options are as follows:
 Use
 .Ar directory
 to write the filter files to.
+.It Fl 4
+Fetch only IPv4 prefixes from the registry.
+.It Fl 6
+Fetch only IPv6 prefixes from the registry.
 .El
 .It Cm neighbor Ar peer Cm up
 Take the BGP session to the specified neighbor up.
