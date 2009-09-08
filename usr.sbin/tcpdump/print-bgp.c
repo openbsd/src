@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.12 2009/09/07 12:25:36 sthen Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.13 2009/09/08 15:53:11 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-     "@(#) $Id: print-bgp.c,v 1.12 2009/09/07 12:25:36 sthen Exp $";
+     "@(#) $Id: print-bgp.c,v 1.13 2009/09/08 15:53:11 claudio Exp $";
 #endif
 
 #include <sys/param.h>
@@ -175,6 +175,7 @@ static const char *bgpopt_type[] = {
 	num_or_str(bgpopt_type, sizeof(bgpopt_type)/sizeof(bgpopt_type[0]), (x))
 
 #define BGP_CAPCODE_MP			1
+#define BGP_CAPCODE_REFRESH		2
 #define BGP_CAPCODE_RESTART		64 /* draft-ietf-idr-restart-05  */
 #define BGP_CAPCODE_AS4			65 /* RFC4893 */
 
@@ -706,12 +707,93 @@ trunc:
 }
 
 static void
+bgp_open_capa_print(const u_char *opt, int length)
+{
+	int i,cap_type,cap_len,tcap_len,cap_offset;
+
+	i = 0;
+	while (i < length) {
+		TCHECK2(opt[i], 2);
+
+		cap_type=opt[i];
+		cap_len=opt[i+1];
+		printf("%sCAP %s", i == 0 ? "(" : " ", 		/* ) */
+		    bgp_capcode(cap_type));
+
+		/* can we print the capability? */
+		TCHECK2(opt[i+2],cap_len);
+		i += 2;
+
+		switch(cap_type) {
+		case BGP_CAPCODE_MP:
+			if (cap_len != 4) {
+				printf(" BAD ENCODING");
+				break;
+			}
+			printf(" [%s %s]",
+			    af_name(EXTRACT_16BITS(opt+i)),
+			    bgp_attr_nlri_safi(opt[i+3]));
+			break;
+		case BGP_CAPCODE_REFRESH:
+			if (cap_len != 0) {
+				printf(" BAD ENCODING");
+				break;
+			}
+			break;
+		case BGP_CAPCODE_RESTART:
+			if (cap_len < 2 || (cap_len - 2) % 4) {
+				printf(" BAD ENCODING");
+				break;
+			}
+			printf(" [%s], Time %us",
+			    ((opt[i])&0x80) ? "R" : "none",
+			    EXTRACT_16BITS(opt+i)&0xfff);
+			tcap_len=cap_len - 2;
+			cap_offset=2;
+			while(tcap_len>=4) {
+				printf(" (%s %s)%s",
+				    af_name(EXTRACT_16BITS(opt+i+cap_offset)),
+				    bgp_attr_nlri_safi(opt[i+cap_offset+2]),
+				    ((opt[i+cap_offset+3])&0x80) ?
+					" forwarding state preserved" : "" );
+				tcap_len-=4;
+				cap_offset+=4;
+			}
+			break;
+		case BGP_CAPCODE_AS4:
+			if (cap_len != 4) {
+				printf(" BAD ENCODING");
+				break;
+			}
+			printf(" #");
+			if (EXTRACT_16BITS(opt+i))
+				printf("%u.",
+				    EXTRACT_16BITS(opt+i));
+			printf("%u",
+			    EXTRACT_16BITS(opt+i+2));
+			break;
+		default:
+			printf(" len %d", cap_len);
+			break;
+		}
+		i += cap_len;
+		if (i + cap_len < length)
+			printf(",");
+	}
+	/* ( */
+	printf(")");
+	return;
+trunc:
+	printf("[|BGP]");
+}
+
+static void
 bgp_open_print(const u_char *dat, int length)
 {
 	struct bgp_open bgpo;
 	struct bgp_opt bgpopt;
 	const u_char *opt;
-	int i,cap_type,cap_len,tcap_len,cap_offset;
+	int i;
 
 	TCHECK2(dat[0], BGP_OPEN_SIZE);
 	memcpy(&bgpo, dat, BGP_OPEN_SIZE);
@@ -746,52 +828,8 @@ bgp_open_print(const u_char *dat, int length)
 
 		switch(bgpopt.bgpopt_type) {
 		case BGP_OPT_CAP:
-			cap_type=opt[i+BGP_OPT_SIZE];
-			cap_len=opt[i+BGP_OPT_SIZE+1];
-			tcap_len=cap_len;
-			printf("(CAP %s",		/* ) */
-			    bgp_capcode(cap_type));
-
-			switch(cap_type) {
-			case BGP_CAPCODE_MP:
-				printf(" [%s %s]",
-				    af_name(EXTRACT_16BITS(opt+i+BGP_OPT_SIZE+2)),
-				    bgp_attr_nlri_safi(opt[i+BGP_OPT_SIZE+5]));
-				break;
-			case BGP_CAPCODE_RESTART:
-				printf(" [%s], Time %us",
-				    ((opt[i+BGP_OPT_SIZE+2])&0x80) ? "R" : "none",
-				    EXTRACT_16BITS(opt+i+BGP_OPT_SIZE+2)&0xfff);
-				tcap_len-=2;
-				cap_offset=4;
-				while(tcap_len>=4) {
-					printf(" (%s %s)%s",
-					    af_name(EXTRACT_16BITS(
-						opt+i+BGP_OPT_SIZE+cap_offset)),
-					    bgp_attr_nlri_safi(
-						opt[i+BGP_OPT_SIZE+cap_offset+2]),
-					    ((opt[i+BGP_OPT_SIZE+cap_offset+3])&0x80) ?
-						" forwarding state preserved" : "" );
-				tcap_len-=4;
-				cap_offset+=4;
-				}
-				break;
-			case BGP_CAPCODE_AS4:
-				printf(" #");
-				if (EXTRACT_16BITS(opt+i+BGP_OPT_SIZE+2))
-					printf("%u.",
-					    EXTRACT_16BITS(opt+i+BGP_OPT_SIZE+2));
-				printf("%u",
-				    EXTRACT_16BITS(opt+i+BGP_OPT_SIZE+4));
-				break;
-			default:
-				break;
-			}
-			if (vflag > 1) {
-				TCHECK2(opt[i+BGP_OPT_SIZE+2],cap_len);
-			}
-			/* ( */
-			printf(")");	
+			bgp_open_capa_print(opt + i + BGP_OPT_SIZE,
+			    bgpopt.bgpopt_len);
 			break;
 		default:
 			printf(" (option %s, len=%u)",
