@@ -1,4 +1,4 @@
-/*	$OpenBSD: irrfilter.h,v 1.7 2007/03/06 16:45:34 henning Exp $ */
+/*	$OpenBSD: irrfilter.h,v 1.8 2009/09/08 15:40:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,7 @@ struct policy_item {
 	char				*action;
 	char				*filter;
 	enum pdir			 dir;
-	u_int16_t			 peer_as;
+	u_int32_t			 peer_as;
 };
 
 TAILQ_HEAD(policy_head, policy_item);
@@ -55,7 +55,8 @@ enum qtype {
 	QTYPE_NONE,
 	QTYPE_OWNAS,
 	QTYPE_ASSET,
-	QTYPE_ROUTE
+	QTYPE_ROUTE,
+	QTYPE_ROUTE6
 };
 
 struct as_set {
@@ -72,6 +73,7 @@ struct as_set {
 struct irr_prefix {
 	union {
 		struct in_addr	in;
+		struct in6_addr	in6;
 	} addr;
 	sa_family_t	af;
 	u_int8_t	len;

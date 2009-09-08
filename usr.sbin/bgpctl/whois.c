@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.3 2007/03/05 16:43:24 henning Exp $ */
+/*	$OpenBSD: whois.c,v 1.4 2009/09/08 15:40:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,8 @@ char *qtype_opts[] = {
 	"",
 	"-T aut-num",
 	"-K -T as-set",
-	"-K -T route -i origin"
+	"-K -T route -i origin",
+	"-K -T route6 -i origin"
 };
 
 char	*server = "whois.radb.net";
