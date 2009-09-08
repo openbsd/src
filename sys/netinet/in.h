@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.79 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: in.h,v 1.80 2009/09/08 17:00:41 michele Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 #define IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_CARP		112		/* CARP */
 #define	IPPROTO_PFSYNC		240		/* PFSYNC */
+#define	IPPROTO_DIVERT		241		/* Divert sockets */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 
 #define	IPPROTO_MAX		256
@@ -326,7 +327,7 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_PFSYNC + 1)	/* don't list to IPPROTO_MAX */
+#define	IPPROTO_MAXID	(IPPROTO_DIVERT + 1)	/* don't list to IPPROTO_MAX */
 
 #define	CTL_IPPROTO_NAMES { \
 	{ "ip", CTLTYPE_NODE }, \
@@ -570,6 +571,7 @@ struct ip_mreq {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "pfsync", CTLTYPE_NODE }, \
+	{ "divert", CTLTYPE_NODE }, \
 }
 
 /*

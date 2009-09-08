@@ -1,0 +1,74 @@
+.\"     $OpenBSD: divert.4,v 1.1 2009/09/08 17:00:41 michele Exp $
+.\"
+.\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+
+.Dd $Mdocdate: September 8 2009 $
+.Dt DIVERT 4
+.Os
+.Sh NAME
+.Nm divert
+.Nd Kernel packet diversion mechanism
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/socket.h>
+.Fd #include <netinet/in.h>
+.Ft int
+.Fn socket AF_INET SOCK_RAW IPPROTO_DIVERT
+.Sh DESCRIPTION
+Divert sockets can be bound through
+.Xr bind 2
+to a divert port and they will receive every packet
+diverted to that port by
+.Xr pf 4 .
+Consult
+.Xr pf.conf 5
+for the correct syntax.
+Packets can also be reinjected into the divert socket, in which case they
+re-enter kernel packet processing skipping
+.Xr pf 4
+filters, avoiding loops.
+.Pp
+Diverted packets can be read via
+.Xr read 2 ,
+.Xr recv 2 ,
+or
+.Xr recvfrom 2
+from the divert socket.
+.Xr pf 4
+will reassemble the IP packets by default before sending them to the divert
+socket.
+In addition, TCP reassembling can be enabled on a per-rule basis, see
+.Xr pf.conf 5
+for details.
+Writing to a divert socket can be achieved using
+.Xr sendto 2
+and it will skip
+.Xr pf 4
+filters to avoid loops.
+.Pp
+If
+.Xr pf 4
+diverts packets but there are no divert sockets listening,
+the packets are dropped.
+.Sh SEE ALSO
+.Xr socket 2 ,
+.Xr ip 4 ,
+.Xr pf.conf 5 ,
+.Sh HISTORY
+The
+.Nm
+protocol first appeared in
+.Ox 4.7.
