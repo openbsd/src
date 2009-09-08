@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.157 2009/09/02 19:05:44 fgsch Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.158 2009/09/08 17:41:20 miod Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1116,7 +1116,7 @@ sys_fhstat(struct proc *p, void *v, register_t *retval)
 int
 sys_fhstatfs(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_fhstatfs_args /*
+	struct sys_fhstatfs_args /* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct statfs *) buf;
 	} */ *uap = v;
@@ -1145,7 +1145,7 @@ sys_fhstatfs(struct proc *p, void *v, register_t *retval)
 	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return (copyout(sp, SCARG(uap, buf), sizeof(sp)));
+	return (copyout(sp, SCARG(uap, buf), sizeof(*sp)));
 }
 
 /*
