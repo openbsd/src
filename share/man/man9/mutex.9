@@ -1,4 +1,4 @@
-.\" $OpenBSD: mutex.9,v 1.10 2009/09/08 05:58:35 dlg Exp $
+.\" $OpenBSD: mutex.9,v 1.11 2009/09/08 06:02:47 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -22,6 +22,7 @@
 .Nm mutex ,
 .Nm mtx_init ,
 .Nm mtx_enter ,
+.Nm mtx_enter_try ,
 .Nm mtx_leave
 .Nd interface to CPU mutexes
 .Sh SYNOPSIS
@@ -56,7 +57,7 @@ function acquires a mutex, spinning if necessary.
 The
 .Fn mtx_enter_try
 function attempts to acquire a mutex.
-If it succeeds in acquiring the mutex it will return 1, otherwise
+If it succeeds in acquiring the mutex it will non-zero, otherwise
 it will return 0.
 .Pp
 The
