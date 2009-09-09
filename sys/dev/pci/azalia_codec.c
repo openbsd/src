@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.135 2009/09/09 02:13:35 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.136 2009/09/09 02:22:21 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1242,7 +1242,6 @@ azalia_mixer_default(codec_t *this)
 	mixer_item_t *m;
 	mixer_ctrl_t mc;
 	int i, j, tgt, cap, err;
-	uint32_t result;
 
 	/* unmute all */
 	for (i = 0; i < this->nmixers; i++) {
@@ -1304,17 +1303,6 @@ azalia_mixer_default(codec_t *this)
 		azalia_mixer_set(this, m->nid, m->target, &mc);
 	}
 
-	/* turn on jack sense unsolicited responses */
-	for (i = 0; i < this->nsense_pins; i++) {
-		if (this->spkr_muters & (1 << i)) {
-			azalia_comresp(this, this->sense_pins[i],
-			    CORB_SET_UNSOLICITED_RESPONSE,
-			    CORB_UNSOL_ENABLE | AZ_TAG_SPKR, NULL);
-		}
-	}
-	if (this->spkr_muters != 0)
-		azalia_unsol_event(this, AZ_TAG_SPKR);
-
 	/* get default value for play group master */
 	for (i = 0; i < this->playvols.nslaves; i++) {
 		if (!(this->playvols.cur & (1 << i)))
@@ -1352,6 +1340,31 @@ azalia_mixer_default(codec_t *this)
 		break;
  	}
 	this->recvols.mute = 0;
+
+	err = azalia_codec_enable_unsol(this);
+	if (err)
+		return(err);
+
+	return 0;
+}
+
+int
+azalia_codec_enable_unsol(codec_t *this)
+{
+	widget_t *w;
+	uint32_t result;
+	int i, err;
+
+	/* jack sense */
+	for (i = 0; i < this->nsense_pins; i++) {
+		if (this->spkr_muters & (1 << i)) {
+			azalia_comresp(this, this->sense_pins[i],
+			    CORB_SET_UNSOLICITED_RESPONSE,
+			    CORB_UNSOL_ENABLE | AZ_TAG_SPKR, NULL);
+		}
+	}
+	if (this->spkr_muters != 0)
+		azalia_unsol_event(this, AZ_TAG_SPKR);
 
 	/* volume knob */
 	if (this->playvols.master != this->audiofunc) {
