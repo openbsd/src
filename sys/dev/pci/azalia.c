@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.148 2009/09/09 07:16:50 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.149 2009/09/09 22:25:03 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -188,8 +188,9 @@ int	azalia_pci_detach(struct device *, int);
 int	azalia_intr(void *);
 void	azalia_print_codec(codec_t *);
 int	azalia_reset(azalia_t *);
-int	azalia_attach(azalia_t *);
-void	azalia_attach_intr(struct device *);
+int	azalia_init(azalia_t *);
+int	azalia_init_codecs(azalia_t *);
+int	azalia_init_streams(azalia_t *);
 void	azalia_shutdown(void *);
 int	azalia_halt_corb(azalia_t *);
 int	azalia_init_corb(azalia_t *);
@@ -453,17 +454,26 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", interrupt_str);
 
 	sc->pciid = pa->pa_id;
-
-	if (azalia_attach(sc)) {
-		printf("%s: initialization failure\n", XNAME(sc));
-		azalia_pci_detach(self, 0);
-		return;
-	}
 	sc->subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	if (azalia_init(sc))
+		goto err_exit;
+
+	if (azalia_init_codecs(sc))
+		goto err_exit;
+
+	if (azalia_init_streams(sc))
+		goto err_exit;
+
+	sc->audiodev = audio_attach_mi(&azalia_hw_if, sc, &sc->dev);
 
 	shutdownhook_establish(azalia_shutdown, sc);
 
-	azalia_attach_intr(self);
+	return;
+
+err_exit:
+	printf("%s: initialization failure\n", XNAME(sc));
+	azalia_pci_detach(self, 0);
 }
 
 int
@@ -635,7 +645,7 @@ azalia_reset(azalia_t *az)
 }
 
 int
-azalia_attach(azalia_t *az)
+azalia_init(azalia_t *az)
 {
 	int i, n, err;
 	uint32_t gctl;
@@ -656,10 +666,6 @@ azalia_attach(azalia_t *az)
 	if (err)
 		return(err);
 
-	/* enable unsolicited response */
-	gctl = AZ_READ_4(az, GCTL);
-	AZ_WRITE_4(az, GCTL, gctl | HDA_GCTL_UNSOL);
-
 	/* 4.3 Codec discovery */
 	DELAY(1000);
 	statests = AZ_READ_2(az, STATESTS);
@@ -675,18 +681,8 @@ azalia_attach(azalia_t *az)
 		printf("%s: No HD-Audio codecs\n", XNAME(az));
 		return -1;
 	}
-	return 0;
-}
 
-void
-azalia_attach_intr(struct device *self)
-{
-	azalia_t *az;
-	codec_t *codec;
-	int err, i, j, c;
-
-	az = (azalia_t*)self;
-
+	/* clear interrupt status */
 	AZ_WRITE_2(az, STATESTS, HDA_STATESTS_SDIWAKE);
 	AZ_WRITE_1(az, RIRBSTS, HDA_RIRBSTS_RINTFL | HDA_RIRBSTS_RIRBOIS);
 	AZ_WRITE_4(az, INTSTS, HDA_INTSTS_CIS | HDA_INTSTS_GIS);
@@ -694,24 +690,39 @@ azalia_attach_intr(struct device *self)
 	AZ_WRITE_4(az, DPUBASE, 0);
 
 	/* 4.4.1 Command Outbound Ring Buffer */
-	if (azalia_init_corb(az))
-		goto err_exit;
+	err = azalia_init_corb(az);
+	if (err)
+		return(err);
+
 	/* 4.4.2 Response Inbound Ring Buffer */
-	if (azalia_init_rirb(az))
-		goto err_exit;
+	err = azalia_init_rirb(az);
+	if (err)
+		return(err);
 
 	AZ_WRITE_4(az, INTCTL,
 	    AZ_READ_4(az, INTCTL) | HDA_INTCTL_CIE | HDA_INTCTL_GIE);
 
+	/* enable unsolicited response */
+	gctl = AZ_READ_4(az, GCTL);
+	AZ_WRITE_4(az, GCTL, gctl | HDA_GCTL_UNSOL);
+
+	return(0);
+}
+
+int
+azalia_init_codecs(azalia_t *az)
+{
+	codec_t *codec;
+	int c, i, j;
+
 	c = 0;
 	for (i = 0; i < az->ncodecs; i++) {
-		err = azalia_codec_init(&az->codecs[i]);
-		if (!err)
+		if (!azalia_codec_init(&az->codecs[i]))
 			c++;
 	}
 	if (c == 0) {
 		printf("%s: No codecs found\n", XNAME(az));
-		goto err_exit;
+		return(1);
 	}
 
 	/* Use the first codec capable of analog I/O.  If there are none,
@@ -738,7 +749,7 @@ azalia_attach_intr(struct device *self)
 	az->codecno = c;
 	if (az->codecno < 0) {
 		DPRINTF(("%s: chosen codec has no converters.\n", XNAME(az)));
-		goto err_exit;
+		return(1);
 	}
 
 	printf("%s: codecs: ", XNAME(az));
@@ -766,19 +777,24 @@ azalia_attach_intr(struct device *self)
 		}
 	}
 
+	return(0);
+}
+
+int
+azalia_init_streams(azalia_t *az)
+{
+	int err;
+
 	/* Use stream#1 and #2.  Don't use stream#0. */
-	if (azalia_stream_init(&az->pstream, az, az->nistreams + 0,
-	    1, AUMODE_PLAY))
-		goto err_exit;
-	if (azalia_stream_init(&az->rstream, az, 0, 2, AUMODE_RECORD))
-		goto err_exit;
+	err = azalia_stream_init(&az->pstream, az, az->nistreams + 0,
+	    1, AUMODE_PLAY);
+	if (err)
+		return(err);
+	err = azalia_stream_init(&az->rstream, az, 0, 2, AUMODE_RECORD);
+	if (err)
+		return(err);
 
-	az->audiodev = audio_attach_mi(&azalia_hw_if, az, &az->dev);
-
-	return;
-err_exit:
-	azalia_pci_detach(self, 0);
-	return;
+	return(0);
 }
 
 int
