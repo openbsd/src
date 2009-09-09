@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.147 2009/09/09 03:15:04 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.148 2009/09/09 07:16:50 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -187,6 +187,7 @@ int	azalia_pci_activate(struct device *, enum devact);
 int	azalia_pci_detach(struct device *, int);
 int	azalia_intr(void *);
 void	azalia_print_codec(codec_t *);
+int	azalia_reset(azalia_t *);
 int	azalia_attach(azalia_t *);
 void	azalia_attach_intr(struct device *);
 void	azalia_shutdown(void *);
@@ -597,9 +598,46 @@ azalia_print_codec(codec_t *codec)
 }
 
 int
+azalia_reset(azalia_t *az)
+{
+	uint32_t gctl;
+	int i;
+
+	/* 4.2.2 Starting the High Definition Audio Controller */
+	DPRINTF(("%s: resetting\n", __func__));
+	gctl = AZ_READ_4(az, GCTL);
+	AZ_WRITE_4(az, GCTL, gctl & ~HDA_GCTL_CRST);
+	for (i = 5000; i >= 0; i--) {
+		DELAY(10);
+		if ((AZ_READ_4(az, GCTL) & HDA_GCTL_CRST) == 0)
+			break;
+	}
+	DPRINTF(("%s: reset counter = %d\n", __func__, i));
+	if (i <= 0) {
+		printf("%s: reset failure\n", XNAME(az));
+		return(ETIMEDOUT);
+	}
+	DELAY(1000);
+	gctl = AZ_READ_4(az, GCTL);
+	AZ_WRITE_4(az, GCTL, gctl | HDA_GCTL_CRST);
+	for (i = 5000; i >= 0; i--) {
+		DELAY(10);
+		if (AZ_READ_4(az, GCTL) & HDA_GCTL_CRST)
+			break;
+	}
+	DPRINTF(("%s: reset counter = %d\n", __func__, i));
+	if (i <= 0) {
+		printf("%s: reset-exit failure\n", XNAME(az));
+		return(ETIMEDOUT);
+	}
+
+	return(0);
+}
+
+int
 azalia_attach(azalia_t *az)
 {
-	int i, n;
+	int i, n, err;
 	uint32_t gctl;
 	uint16_t gcap;
 	uint16_t statests;
@@ -614,33 +652,9 @@ azalia_attach(azalia_t *az)
 	DPRINTF(("%s: host: %d output, %d input, and %d bidi streams\n",
 	    XNAME(az), az->nostreams, az->nistreams, az->nbstreams));
 
-	/* 4.2.2 Starting the High Definition Audio Controller */
-	DPRINTF(("%s: resetting\n", __func__));
-	gctl = AZ_READ_4(az, GCTL);
-	AZ_WRITE_4(az, GCTL, gctl & ~HDA_GCTL_CRST);
-	for (i = 5000; i >= 0; i--) {
-		DELAY(10);
-		if ((AZ_READ_4(az, GCTL) & HDA_GCTL_CRST) == 0)
-			break;
-	}
-	DPRINTF(("%s: reset counter = %d\n", __func__, i));
-	if (i <= 0) {
-		printf("%s: reset failure\n", XNAME(az));
-		return ETIMEDOUT;
-	}
-	DELAY(1000);
-	gctl = AZ_READ_4(az, GCTL);
-	AZ_WRITE_4(az, GCTL, gctl | HDA_GCTL_CRST);
-	for (i = 5000; i >= 0; i--) {
-		DELAY(10);
-		if (AZ_READ_4(az, GCTL) & HDA_GCTL_CRST)
-			break;
-	}
-	DPRINTF(("%s: reset counter = %d\n", __func__, i));
-	if (i <= 0) {
-		printf("%s: reset-exit failure\n", XNAME(az));
-		return ETIMEDOUT;
-	}
+	err = azalia_reset(az);
+	if (err)
+		return(err);
 
 	/* enable unsolicited response */
 	gctl = AZ_READ_4(az, GCTL);
