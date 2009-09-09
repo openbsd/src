@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.10 2009/07/31 09:21:13 blambert Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.11 2009/09/09 15:01:18 reyk Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -224,16 +224,18 @@ struct mbuf *
 lacp_input(struct trunk_port *tp, struct ether_header *eh, struct mbuf *m)
 {
 	struct lacp_port *lp = LACP_PORT(tp);
+	struct lacp_softc *lsc = lp->lp_lsc;
+	struct lacp_aggregator *la = lp->lp_aggregator;
 	u_int8_t subtype;
 
-	if (m->m_pkthdr.len < sizeof(subtype)) {
-		m_freem(m);
-		return (NULL);
-	}
-	subtype = *mtod(m, u_int8_t *);
+	if (ntohs(eh->ether_type) == ETHERTYPE_SLOW) {
+		if (m->m_pkthdr.len < sizeof(subtype)) {
+			m_freem(m);
+			return (NULL);
+		}
+		subtype = *mtod(m, u_int8_t *);
 
-	switch (subtype) {
-		/* FALLTHROUGH */
+		switch (subtype) {
 		case SLOWPROTOCOLS_SUBTYPE_LACP:
 			lacp_pdu_input(lp, eh, m);
 			return (NULL);
@@ -241,6 +243,18 @@ lacp_input(struct trunk_port *tp, struct ether_header *eh, struct mbuf *m)
 		case SLOWPROTOCOLS_SUBTYPE_MARKER:
 			lacp_marker_input(lp, eh, m);
 			return (NULL);
+		}
+	}
+
+	/*
+	 * If the port is not collecting or not in the active aggregator then
+	 * free and return.
+	 */
+	/* This port is joined to the active aggregator */
+	if ((lp->lp_state & LACP_STATE_COLLECTING) == 0 ||
+	    la == NULL || la != lsc->lsc_active_aggregator) {
+		m_freem(m);
+		return (NULL);
 	}
 
 	/* Not a subtype we are interested in */
@@ -301,36 +315,6 @@ lacp_pdu_input(struct lacp_port *lp, struct ether_header *eh, struct mbuf *m)
 bad:
 	m_freem(m);
 	return (EINVAL);
-}
-
-__inline int
-lacp_isactive(struct trunk_port *lgp)
-{
-	struct lacp_port *lp = LACP_PORT(lgp);
-	struct lacp_softc *lsc = lp->lp_lsc;
-	struct lacp_aggregator *la = lp->lp_aggregator;
-
-	/* This port is joined to the active aggregator */
-	if (la != NULL && la == lsc->lsc_active_aggregator)
-		return (1);
-
-	return (0);
-}
-
-__inline int
-lacp_iscollecting(struct trunk_port *lgp)
-{
-	struct lacp_port *lp = LACP_PORT(lgp);
-
-	return ((lp->lp_state & LACP_STATE_COLLECTING) != 0);
-}
-
-__inline int
-lacp_isdistributing(struct trunk_port *lgp)
-{
-	struct lacp_port *lp = LACP_PORT(lgp);
-
-	return ((lp->lp_state & LACP_STATE_DISTRIBUTING) != 0);
 }
 
 void
@@ -598,6 +582,26 @@ lacp_req(struct trunk_softc *sc, caddr_t data)
 		    ntohs(la->la_partner.lip_portid.lpi_portno);
 		req->partner_state = la->la_partner.lip_state;
 	}
+}
+
+u_int
+lacp_port_status(struct trunk_port *lgp)
+{
+	struct lacp_port	*lp = LACP_PORT(lgp);
+	struct lacp_softc	*lsc = lp->lp_lsc;
+	struct lacp_aggregator	*la = lp->lp_aggregator;
+	u_int			 flags = 0;
+
+	/* This port is joined to the active aggregator */
+	if (la != NULL && la == lsc->lsc_active_aggregator)
+		flags |= TRUNK_PORT_ACTIVE;
+
+	if (lp->lp_state & LACP_STATE_COLLECTING)
+		flags |= TRUNK_PORT_COLLECTING;
+	if (lp->lp_state & LACP_STATE_DISTRIBUTING)
+		flags |= TRUNK_PORT_DISTRIBUTING;
+
+	return (flags);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.h,v 1.4 2008/11/08 01:00:01 mpf Exp $	*/
+/*	$OpenBSD: trunklacp.h,v 1.5 2009/09/09 15:01:18 reyk Exp $	*/
 /*	$NetBSD: ieee8023ad_impl.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
 
 /*
@@ -267,10 +267,7 @@ void		lacp_port_destroy(struct trunk_port *);
 void		lacp_linkstate(struct trunk_port *);
 void		lacp_req(struct trunk_softc *, caddr_t);
 void		lacp_portreq(struct trunk_port *, caddr_t);
-
-int		lacp_isactive(struct trunk_port *);
-int		lacp_iscollecting(struct trunk_port *);
-int		lacp_isdistributing(struct trunk_port *);
+u_int		lacp_port_status(struct trunk_port *);
 
 /* following constants don't include terminating NUL */
 #define	LACP_MACSTR_MAX		(2*6 + 5)
