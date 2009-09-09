@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.33 2009/09/06 12:25:38 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.34 2009/09/09 07:01:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1806,9 +1806,9 @@ udl_draw_char(struct udl_softc *sc, uint16_t fg, uint16_t bg, u_int uc,
     uint32_t x, uint32_t y)
 {
 	int i, j, ly;
-	uint8_t *fontchar, fontbits, luc;
+	uint8_t *fontchar;
 	uint8_t buf[UDL_CMD_MAX_DATA_SIZE];
-	uint16_t *line, lrgb16;
+	uint16_t *line, lrgb16, fontbits, luc;
 	struct wsdisplay_font *font = sc->sc_ri.ri_font;
 
 	fontchar = (uint8_t *)(font->data + (uc - font->firstchar) *
@@ -1816,10 +1816,15 @@ udl_draw_char(struct udl_softc *sc, uint16_t fg, uint16_t bg, u_int uc,
 
 	ly = y;
 	for (i = 0; i < font->fontheight; i++) {
-		fontbits = *fontchar;
+		if (font->fontwidth > 8) {
+			fontbits = betoh16(*(uint16_t *)fontchar);
+		} else {
+			fontbits = *fontchar;
+			fontbits = fontbits << 8;
+		}
 		line = (uint16_t *)buf;
 
-		for (j = (font->fontwidth - 1); j != -1; j--) {
+		for (j = 15; j > (15 - font->fontwidth); j--) {
 			luc = 1 << j;
 			if (fontbits & luc)
 				lrgb16 = htobe16(fg);
