@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.144 2009/09/08 23:30:17 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.145 2009/09/09 00:26:57 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -96,6 +96,8 @@ int az_debug = 0;
 #define		ICH_PCI_HDCTL_CLKDETEN		0x04
 #define		ICH_PCI_HDCTL_CLKDETINV		0x02
 #define		ICH_PCI_HDCTL_SIGNALMODE	0x01
+#define ICH_PCI_HDTCSEL	0x44
+#define		ICH_PCI_HDTCSEL_MASK	0x7
 
 /* internal types */
 
@@ -386,8 +388,10 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    v | PCI_COMMAND_BACKTOBACK_ENABLE);
 
-	v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x44, v & (~0x7));
+	/* traffic class select */
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL,
+	    v & ~(ICH_PCI_HDTCSEL_MASK));
  
 	/* enable PCIe snoop */
 	switch (PCI_PRODUCT(pa->pa_id)) {

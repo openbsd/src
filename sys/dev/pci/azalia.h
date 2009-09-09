@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.52 2009/06/09 05:16:42 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.53 2009/09/09 00:26:57 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -607,12 +607,12 @@ typedef struct {
 
 typedef struct {
 	int nconv;
-	nid_t conv[HDA_MAX_CHANNELS]; /* front, surround, clfe, side, ... */
+	nid_t conv[HDA_MAX_CHANNELS];
 } convgroup_t;
 typedef struct {
 	int cur;
 	int ngroups;
-	convgroup_t groups[32];
+	convgroup_t groups[2];
 } convgroupset_t;
 
 typedef struct {
@@ -635,8 +635,6 @@ struct io_pin {
 };
 
 typedef struct codec_t {
-	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
-
 	struct azalia_t *az;
 	uint32_t vid;		/* codec vendor/device ID */
 	uint32_t subid;		/* PCI subvendor/device ID */
@@ -698,9 +696,6 @@ typedef struct codec_t {
 
 	nid_t sense_pins[HDA_MAX_SENSE_PINS];
 	int nsense_pins;
-
-	uint32_t *extra;
-	u_int rate;
 } codec_t;
 
 int	azalia_codec_init_vtbl(codec_t *);
