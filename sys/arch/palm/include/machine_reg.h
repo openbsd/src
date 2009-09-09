@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine_reg.h,v 1.1 2009/09/05 01:22:11 marex Exp $	*/
+/*	$OpenBSD: machine_reg.h,v 1.2 2009/09/09 11:34:02 marex Exp $	*/
 /*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -57,8 +57,10 @@
 
 /* GPIOs */
 #define GPIO14_MMC_DETECT		14	/* MMC detect*/
+#define GPIO12_TC_MMC_DETECT		12	/* TC MMC detect*/
 #define GPIO114_MMC_POWER		114	/* MMC power */
 #define GPIO98_PALMZ72_MMC_POWER	98	/* Z72 MMC power */
+#define GPIO32_PALMTC_MMC_POWER		32	/* TC MMC power */
 
 #define GPIO13_PALMTX_USB_DETECT	13
 #define GPIO15_USB_DETECT		15

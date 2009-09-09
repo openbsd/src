@@ -1,4 +1,4 @@
-/*	$OpenBSD: palm_udc.c,v 1.2 2009/09/05 06:46:34 marex Exp $	*/
+/*	$OpenBSD: palm_udc.c,v 1.3 2009/09/09 11:34:02 marex Exp $	*/
 
 /*
  * Copyright (c) 2009 Marek Vasut <marex@openbsd.org>
@@ -49,7 +49,7 @@ struct cfattach pxaudc_palm_ca = {
 int
 palm_udc_match(struct device *parent, void *match, void *aux)
 {
-	if (mach_is_palmld)
+	if (mach_is_palmld || mach_is_palmtc)
 		return 0;
 	return pxaudc_match();
 }

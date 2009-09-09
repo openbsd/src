@@ -1,4 +1,4 @@
-/*	$OpenBSD: palm_lcd.c,v 1.1 2009/09/05 01:22:11 marex Exp $	*/
+/*	$OpenBSD: palm_lcd.c,v 1.2 2009/09/09 11:34:02 marex Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -151,6 +151,26 @@ const struct lcd_panel_geometry palm_z72_lcd =
 	0x08,			/* EFW */
 };
 
+const struct lcd_panel_geometry palm_tc_lcd =
+{
+	320,			/* Width */
+	320,			/* Height */
+	0,			/* No extra lines */
+
+	LCDPANEL_ACTIVE | LCDPANEL_VSP | LCDPANEL_HSP,
+	2,			/* clock divider */
+	0,			/* AC bias pin freq */
+
+	0x03,			/* horizontal sync pulse width */
+	0x1d,			/* BLW */
+	0x09,			/* ELW */
+
+	0x00,			/* vertical sync pulse width */
+	0x06,			/* BFW */
+	0x07,			/* EFW */
+};
+
+
 int
 lcd_match(struct device *parent, void *cf, void *aux)
 {
@@ -159,7 +179,9 @@ lcd_match(struct device *parent, void *cf, void *aux)
 
 const struct lcd_panel_geometry *lcd_geom_get(void)
 {
-	if (mach_is_palmz72)
+	if (mach_is_palmtc)
+		return &palm_tc_lcd;
+	else if (mach_is_palmz72)
 		return &palm_z72_lcd;
 	else
 		return &palm_t5_lcd;

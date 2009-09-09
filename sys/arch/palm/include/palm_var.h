@@ -1,4 +1,4 @@
-/*	$OpenBSD: palm_var.h,v 1.1 2009/09/05 01:22:11 marex Exp $	*/
+/*	$OpenBSD: palm_var.h,v 1.2 2009/09/09 11:34:02 marex Exp $	*/
 /*	$NetBSD: lubbock_var.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -42,6 +42,7 @@
 
 extern int mach;
 
+#define mach_is_palmtc	( mach == 918 ? 1 : 0 )
 #define mach_is_palmt5	( mach == 917 ? 1 : 0 )
 #define mach_is_palmtx	( mach == 885 ? 1 : 0 )
 #define mach_is_palmld	( mach == 835 ? 1 : 0 )
@@ -50,6 +51,7 @@ extern int mach;
 static inline char *mach_name(void)
 {
 	if (mach_is_palmt5)		return "Palm Tungsten|T5";
+	else if (mach_is_palmtc)	return "Palm Tungsten|C";
 	else if (mach_is_palmtx)	return "Palm T|X";
 	else if (mach_is_palmld)	return "Palm LifeDrive";
 	else if (mach_is_palmz72)	return "Palm Zire72";
