@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.30 2007/05/25 21:27:15 krw Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.31 2009/09/09 12:14:39 marex Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -124,6 +124,8 @@
 #define PXA2X0_MEMCTL_SIZE	0x84
 #define PXA2X0_USBHC_BASE	0x4c000000 /* USB Host Controller */
 #define PXA2X0_USBHC_SIZE	0x70
+#define PXA2X0_KPC_BASE		0x41500000 /* Keypad Controller */
+#define PXA2X0_KPC_SIZE		0x50
 
 /* width of interrupt controller */
 #define ICU_LEN			32	/* but some are not used */
@@ -136,6 +138,7 @@
  */
 #define PXA2X0_INT_USBH2	2	/* USB host (all other events) */
 #define PXA2X0_INT_USBH1	3	/* USB host (OHCI) */
+#define PXA2X0_INT_KPC		4
 #define PXA2X0_INT_OST		7	/* OS timers */
 #define PXA2X0_INT_GPIO0	8
 #define PXA2X0_INT_GPIO1	9
@@ -871,5 +874,22 @@ struct pxa2x0_dma_desc {
 #define  SSSR_TNF	(1<<2)
 #define  SSSR_RNE	(1<<3)
 #define SSP_SSDR	0x10
+
+/* KPC */
+#define KPC_KPC		0x00
+#define  KPC_MIE	(1<<11)
+#define  KPC_ME		(1<<12)
+#define  KPC_MS(n)	((n & 0xff) << 13)
+#define  KPC_IMKP	(1<<21)
+#define  KPC_MI		(1<<22)
+#define  KPC_MKCN(n)	((n & 0x7) << 23)
+#define  KPC_MKRN(n)	((n & 0x7) << 26)
+#define  KPC_ASACT	(1<<29)
+#define KPC_KPAS	0x20
+#define  KPAS_CP	(0xf<<0)
+#define  KPAS_RP	(0xf<<4)
+#define  KPAS_MUKP	(0x1f<<26)
+#define  KPAS_SO	(1<<31)
+#define KPC_KPKDI	0x48
 
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.21 2007/05/15 05:26:44 miod Exp $
+#	$OpenBSD: files.pxa2x0,v 1.22 2009/09/09 12:14:39 marex Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -84,3 +84,7 @@ device	fdc
 # MMC/SD/SDIO controller
 device	pxammc: sdmmcbus
 file	arch/arm/xscale/pxa2x0_mmc.c		pxammc
+
+# PXA27x keypad
+device	pxa27x_kpc: wskbddev
+file	arch/arm/xscale/pxa27x_kpc.c		pxa27x_kpc

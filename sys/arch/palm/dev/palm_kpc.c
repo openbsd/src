@@ -1,4 +1,4 @@
-/*	$OpenBSD: palm_kpc.c,v 1.2 2009/09/09 11:30:56 marex Exp $	*/
+/*	$OpenBSD: palm_kpc.c,v 1.3 2009/09/09 12:14:39 marex Exp $	*/
 
 /*
  * Copyright (c) 2009 Marek Vasut <marex@openbsd.org>
@@ -79,7 +79,7 @@ const struct pxa27x_kpc_keymap palmkpc_keymap[] = {
 int
 palm_kpc_match(struct device *parent, void *match, void *aux)
 {
-	return pxa27x_kpc_match();
+	return pxa27x_kpc_match(aux);
 }
 
 void
