@@ -1,4 +1,4 @@
-/*	$OpenBSD: socpcic.c,v 1.7 2009/09/06 20:09:34 kettenis Exp $	*/
+/*	$OpenBSD: socpcic.c,v 1.8 2009/09/09 20:42:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -24,6 +24,7 @@
 #include <machine/bus.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pci.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -45,6 +46,10 @@ struct socpcic_softc {
 	int		sc_map_mask[4];
 	int		*sc_map;
 	int		sc_map_len;
+
+	/* Addres space. */
+	uint32_t	*sc_ranges;
+	int		sc_ranges_len;
 };
 
 int	socpcic_mainbus_match(struct device *, void *, void *);
@@ -167,6 +172,9 @@ socpcic_attach(struct socpcic_softc *sc)
 	struct pcibus_attach_args pba;
 	struct extent *io_ex;
 	struct extent *mem_ex;
+	bus_addr_t io_base, mem_base;
+	bus_size_t io_size, mem_size;
+	uint32_t *ranges;
 	int len;
 
 	if (OF_getprop(sc->sc_node, "interrupt-map-mask", sc->sc_map_mask,
@@ -186,12 +194,45 @@ socpcic_attach(struct socpcic_softc *sc)
 		KASSERT(len == sc->sc_map_len);
 	}
 
-	sc->sc_mem_bus_space.bus_base = 0x80000000;
-	sc->sc_mem_bus_space.bus_size = 0x21000000;
-	sc->sc_mem_bus_space.bus_io = 0;
-	sc->sc_io_bus_space.bus_base = 0xe2000000;
-	sc->sc_io_bus_space.bus_size = 0x01000000;
-	sc->sc_io_bus_space.bus_io = 1;
+	sc->sc_ranges_len = OF_getproplen(sc->sc_node, "ranges");
+	if (sc->sc_ranges_len <= 0) {
+		printf(": missing ranges\n");
+		return;
+	}
+
+	sc->sc_ranges = malloc(sc->sc_ranges_len, M_DEVBUF, M_NOWAIT);
+	if (ranges == NULL)
+		panic("out of memory");
+
+	len = OF_getprop(sc->sc_node, "ranges", sc->sc_ranges,
+	    sc->sc_ranges_len);
+	KASSERT(len == sc->sc_ranges_len);
+
+	ranges = sc->sc_ranges;
+	while (len >= 6 * sizeof(uint32_t)) {
+		switch (ranges[0] & OFW_PCI_PHYS_HI_SPACEMASK) {
+		case OFW_PCI_PHYS_HI_SPACE_IO:
+			KASSERT(ranges[1] == 0);
+			KASSERT(ranges[4] == 0);
+			sc->sc_io_bus_space.bus_base = ranges[3];
+			sc->sc_io_bus_space.bus_size = ranges[5];
+			sc->sc_io_bus_space.bus_io = 1;
+			io_base = ranges[2];
+			io_size = ranges[5];
+			break;
+		case  OFW_PCI_PHYS_HI_SPACE_MEM32:
+			KASSERT(ranges[1] == 0);
+			KASSERT(ranges[4] == 0);
+			sc->sc_mem_bus_space.bus_base = ranges[3];
+			sc->sc_mem_bus_space.bus_size = ranges[5];
+			sc->sc_mem_bus_space.bus_io = 0;
+			mem_base = ranges[2];
+			mem_size = ranges[5];
+			break;
+		}
+		len -= 6 * sizeof(uint32_t);
+		ranges += 6;
+	}
 
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_attach_hook = socpcic_attach_hook;
@@ -211,12 +252,12 @@ socpcic_attach(struct socpcic_softc *sc)
 
 	io_ex = extent_create("pciio", 0, 0xffffffff, M_DEVBUF, NULL, 0,
 	    EX_NOWAIT | EX_FILLED);
-	if (io_ex != NULL)
-		extent_free(io_ex, 0x00000000, 0x01000000, EX_NOWAIT);
+	if (io_ex != NULL && io_size)
+		extent_free(io_ex, io_base, io_size, EX_NOWAIT);
 	mem_ex = extent_create("pcimem", 0, 0xffffffff, M_DEVBUF, NULL, 0,
 	    EX_NOWAIT | EX_FILLED);
 	if (mem_ex != NULL)
-		extent_free(mem_ex, 0x80000000, 0x20000000, EX_NOWAIT);
+		extent_free(mem_ex, mem_base, mem_size, EX_NOWAIT);
 
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
