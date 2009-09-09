@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.10 2009/06/04 00:29:24 deraadt Exp $
+# $OpenBSD: Makefile,v 1.11 2009/09/09 12:10:35 marex Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "armish" || ${MACHINE} == "i386" || \
     ${MACHINE} == "hppa" || ${MACHINE} == "landisk" || \
     ${MACHINE} == "macppc" || ${MACHINE} == "sgi" || \
     ${MACHINE} == "socppc" || ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "zaurus"
+    ${MACHINE} == "zaurus" || ${MACHINE} == "palm"
 
 PROG=	hotplugd
 SRCS=	hotplugd.c
