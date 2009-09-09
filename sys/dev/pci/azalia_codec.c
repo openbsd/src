@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.134 2009/09/09 02:06:04 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.135 2009/09/09 02:13:35 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1405,8 +1405,12 @@ azalia_mixer_get(const codec_t *this, nid_t nid, int target,
 	nid_t n;
 	int i, err;
 
+	if (mc->type == AUDIO_MIXER_CLASS) {
+		return(0);
+	}
+
 	/* inamp mute */
-	if (IS_MI_TARGET_INAMP(target) && mc->type == AUDIO_MIXER_ENUM) {
+	else if (IS_MI_TARGET_INAMP(target) && mc->type == AUDIO_MIXER_ENUM) {
 		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		    CORB_GAGM_INPUT | CORB_GAGM_LEFT |
 		    MI_TARGET_INAMP(target), &result);
@@ -1673,8 +1677,12 @@ azalia_mixer_set(codec_t *this, nid_t nid, int target, const mixer_ctrl_t *mc)
 	uint32_t result, value;
 	int i, err;
 
+	if (mc->type == AUDIO_MIXER_CLASS) {
+		return(0);
+	}
+
 	/* inamp mute */
-	if (IS_MI_TARGET_INAMP(target) && mc->type == AUDIO_MIXER_ENUM) {
+	else if (IS_MI_TARGET_INAMP(target) && mc->type == AUDIO_MIXER_ENUM) {
 		/* set stereo mute separately to keep each gain value */
 		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		    CORB_GAGM_INPUT | CORB_GAGM_LEFT |

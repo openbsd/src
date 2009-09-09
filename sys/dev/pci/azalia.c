@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.145 2009/09/09 00:26:57 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.146 2009/09/09 02:13:35 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -3705,9 +3705,6 @@ azalia_set_port(void *v, mixer_ctrl_t *mc)
 	codec_t *co;
 	const mixer_item_t *m;
 
-	if (mc->type == AUDIO_MIXER_CLASS)
-		return 0;	/* nothing to do */
-
 	az = v;
 	co = &az->codecs[az->codecno];
 	if (mc->dev < 0 || mc->dev >= co->nmixers)
@@ -3726,9 +3723,6 @@ azalia_get_port(void *v, mixer_ctrl_t *mc)
 	azalia_t *az;
 	codec_t *co;
 	const mixer_item_t *m;
-
-	if (mc->type == AUDIO_MIXER_CLASS)
-		return 0;	/* nothing to do */
 
 	az = v;
 	co = &az->codecs[az->codecno];
