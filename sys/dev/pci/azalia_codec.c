@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.133 2009/06/26 01:48:22 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.134 2009/09/09 02:06:04 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1143,6 +1143,7 @@ azalia_mixer_init(codec_t *this)
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_OUTPUT;
 		m->target = MI_TARGET_DAC;
+		m->nid = this->audiofunc;
 		d->un.e.member[0].ord = 0;
 		strlcpy(d->un.e.member[0].label.name, "analog",
 		    MAX_AUDIO_DEV_LEN);
@@ -1162,6 +1163,7 @@ azalia_mixer_init(codec_t *this)
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_RECORD;
 		m->target = MI_TARGET_ADC;
+		m->nid = this->audiofunc;
 		d->un.e.member[0].ord = 0;
 		strlcpy(d->un.e.member[0].label.name, "analog",
 		    MAX_AUDIO_DEV_LEN);
