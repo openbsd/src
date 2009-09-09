@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.146 2009/09/09 02:13:35 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.147 2009/09/09 03:15:04 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -119,6 +119,9 @@ typedef struct {
 	azalia_dma_t buffer;
 	void (*intr)(void*);
 	void *intr_arg;
+	void *start, *end;
+	uint16_t fmt;
+	int blk;
 } stream_t;
 #define STR_READ_1(s, r)	\
 	bus_space_read_1((s)->az->iot, (s)->az->ioh, (s)->regbase + HDA_SD_##r)
@@ -204,8 +207,8 @@ int	azalia_codec_init(codec_t *);
 int	azalia_codec_delete(codec_t *);
 void	azalia_codec_add_bits(codec_t *, int, uint32_t, int);
 void	azalia_codec_add_format(codec_t *, int, int, uint32_t, int32_t);
-int	azalia_codec_connect_stream(codec_t *, int, uint16_t, int);
-int	azalia_codec_disconnect_stream(codec_t *, int);
+int	azalia_codec_connect_stream(stream_t *);
+int	azalia_codec_disconnect_stream(stream_t *);
 void	azalia_codec_print_audiofunc(const codec_t *);
 void	azalia_codec_print_groups(const codec_t *);
 int	azalia_codec_find_defdac(codec_t *, int, int);
@@ -232,8 +235,7 @@ void	azalia_widget_print_pin(const widget_t *);
 int	azalia_stream_init(stream_t *, azalia_t *, int, int, int);
 int	azalia_stream_delete(stream_t *, azalia_t *);
 int	azalia_stream_reset(stream_t *);
-int	azalia_stream_start(stream_t *, void *, void *, int,
-	void (*)(void *), void *, uint16_t);
+int	azalia_stream_start(stream_t *);
 int	azalia_stream_halt(stream_t *);
 int	azalia_stream_intr(stream_t *, uint32_t);
 
@@ -2421,31 +2423,32 @@ azalia_codec_add_format(codec_t *this, int chan, int prec, uint32_t rates,
 }
 
 int
-azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
+azalia_codec_connect_stream(stream_t *this)
 {
+	const codec_t *codec = &this->az->codecs[this->az->codecno];
 	const convgroup_t *group;
 	widget_t *w;
 	uint32_t digital, stream_chan;
 	int i, err, curchan, nchan, widchan;
 
 	err = 0;
-	nchan = (fmt & HDA_SD_FMT_CHAN) + 1;
+	nchan = (this->fmt & HDA_SD_FMT_CHAN) + 1;
 
-	if (dir == AUMODE_RECORD)
-		group = &this->adcs.groups[this->adcs.cur];
+	if (this->dir == AUMODE_RECORD)
+		group = &codec->adcs.groups[codec->adcs.cur];
 	else
-		group = &this->dacs.groups[this->dacs.cur];
+		group = &codec->dacs.groups[codec->dacs.cur];
 
 	curchan = 0;
 	for (i = 0; i < group->nconv; i++) {
-		w = &this->w[group->conv[i]];
+		w = &codec->w[group->conv[i]];
 		widchan = WIDGET_CHANNELS(w);
 
-		stream_chan = (number << 4);
+		stream_chan = (this->number << 4);
 		if (curchan < nchan) {
 			stream_chan |= curchan;
-		} else if (w->nid == this->spkr_dac ||
-		    w->nid == this->fhp_dac) {
+		} else if (w->nid == codec->spkr_dac ||
+		    w->nid == codec->fhp_dac) {
 			stream_chan |= 0;	/* first channel(s) */
 		} else
 			stream_chan = 0;	/* idle stream */
@@ -2454,17 +2457,17 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 			DPRINTFN(0, ("%s: %2.2x is idle\n", __func__, w->nid));
 		} else {
 			DPRINTFN(0, ("%s: %2.2x on stream chan %d\n", __func__,
-			    w->nid, stream_chan & ~(number << 4)));
+			    w->nid, stream_chan & ~(this->number << 4)));
 		}
 
-		err = azalia_comresp(this, w->nid, CORB_SET_CONVERTER_FORMAT,
-		    fmt, NULL);
+		err = azalia_comresp(codec, w->nid, CORB_SET_CONVERTER_FORMAT,
+		    this->fmt, NULL);
 		if (err) {
 			DPRINTF(("%s: nid %2.2x fmt %2.2x: %d\n",
-			    __func__, w->nid, fmt, err));
+			    __func__, w->nid, this->fmt, err));
 			break;
 		}
-		err = azalia_comresp(this, w->nid,
+		err = azalia_comresp(codec, w->nid,
 		    CORB_SET_CONVERTER_STREAM_CHANNEL, stream_chan, NULL);
 		if (err) {
 			DPRINTF(("%s: nid %2.2x chan %d: %d\n",
@@ -2473,7 +2476,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 		}
 
 		if (w->widgetcap & COP_AWCAP_DIGITAL) {
-			err = azalia_comresp(this, w->nid,
+			err = azalia_comresp(codec, w->nid,
 			    CORB_GET_DIGITAL_CONTROL, 0, &digital);
 			if (err) {
 				DPRINTF(("%s: nid %2.2x get digital: %d\n",
@@ -2481,7 +2484,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 				break;
 			}
 			digital = (digital & 0xff) | CORB_DCC_DIGEN;
-			err = azalia_comresp(this, w->nid,
+			err = azalia_comresp(codec, w->nid,
 			    CORB_SET_DIGITAL_CONTROL_L, digital, NULL);
 			if (err) {
 				DPRINTF(("%s: nid %2.2x set digital: %d\n",
@@ -2496,27 +2499,28 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 }
 
 int
-azalia_codec_disconnect_stream(codec_t *this, int dir)
+azalia_codec_disconnect_stream(stream_t *this)
 {
+	const codec_t *codec = &this->az->codecs[this->az->codecno];
 	const convgroup_t *group;
 	uint32_t v;
 	int i;
 	nid_t nid;
 
-	if (dir == AUMODE_RECORD)
-		group = &this->adcs.groups[this->adcs.cur];
+	if (this->dir == AUMODE_RECORD)
+		group = &codec->adcs.groups[codec->adcs.cur];
 	else
-		group = &this->dacs.groups[this->dacs.cur];
+		group = &codec->dacs.groups[codec->dacs.cur];
 	for (i = 0; i < group->nconv; i++) {
 		nid = group->conv[i];
-		azalia_comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
+		azalia_comresp(codec, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
 		    0, NULL);	/* stream#0 */
-		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
+		if (codec->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
 			/* disable S/PDIF */
-			azalia_comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
+			azalia_comresp(codec, nid, CORB_GET_DIGITAL_CONTROL,
 			    0, &v);
 			v = (v & ~CORB_DCC_DIGEN) & 0xff;
-			azalia_comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L,
+			azalia_comresp(codec, nid, CORB_SET_DIGITAL_CONTROL_L,
 			    v, NULL);
 		}
 	}
@@ -3315,17 +3319,13 @@ azalia_stream_reset(stream_t *this)
 }
 
 int
-azalia_stream_start(stream_t *this, void *start, void *end, int blk,
-    void (*intr)(void *), void *arg, uint16_t fmt)
+azalia_stream_start(stream_t *this)
 {
 	bdlist_entry_t *bdlist;
 	bus_addr_t dmaaddr, dmaend;
 	int err, index;
 	uint32_t intctl;
 	uint8_t ctl2;
-
-	this->intr = intr;
-	this->intr_arg = arg;
 
 	err = azalia_stream_reset(this);
 	if (err) {
@@ -3338,19 +3338,22 @@ azalia_stream_start(stream_t *this, void *start, void *end, int blk,
 
 	/* setup BDL */
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->buffer);
-	dmaend = dmaaddr + ((caddr_t)end - (caddr_t)start);
+	dmaend = dmaaddr + ((caddr_t)this->end - (caddr_t)this->start);
 	bdlist = (bdlist_entry_t*)this->bdlist.addr;
 	for (index = 0; index < HDA_BDL_MAX; index++) {
 		bdlist[index].low = htole32(dmaaddr);
 		bdlist[index].high = htole32(PTR_UPPER32(dmaaddr));
-		bdlist[index].length = htole32(blk);
+		bdlist[index].length = htole32(this->blk);
 		bdlist[index].flags = htole32(BDLIST_ENTRY_IOC);
-		dmaaddr += blk;
+		dmaaddr += this->blk;
 		if (dmaaddr >= dmaend) {
 			index++;
 			break;
 		}
 	}
+
+	DPRINTFN(1, ("%s: start=%p end=%p fmt=0x%4.4x index=%d\n",
+	    __func__, this->start, this->end, this->fmt, index));
 
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->bdlist);
 	STR_WRITE_4(this, BDPL, dmaaddr);
@@ -3359,11 +3362,10 @@ azalia_stream_start(stream_t *this, void *start, void *end, int blk,
 	ctl2 = STR_READ_1(this, CTL2);
 	STR_WRITE_1(this, CTL2,
 	    (ctl2 & ~HDA_SD_CTL2_STRM) | (this->number << HDA_SD_CTL2_STRM_SHIFT));
-	STR_WRITE_4(this, CBL, ((caddr_t)end - (caddr_t)start));
-	STR_WRITE_2(this, FMT, fmt);
+	STR_WRITE_4(this, CBL, ((caddr_t)this->end - (caddr_t)this->start));
+	STR_WRITE_2(this, FMT, this->fmt);
 
-	err = azalia_codec_connect_stream(&this->az->codecs[this->az->codecno],
-	    this->dir, fmt, this->number);
+	err = azalia_codec_connect_stream(this);
 	if (err)
 		return EINVAL;
 
@@ -3388,8 +3390,7 @@ azalia_stream_halt(stream_t *this)
 	STR_WRITE_2(this, CTL, ctl);
 	AZ_WRITE_4(this->az, INTCTL,
 	    AZ_READ_4(this->az, INTCTL) & ~this->intr_bit);
-	azalia_codec_disconnect_stream
-	    (&this->az->codecs[this->az->codecno], this->dir);
+	azalia_codec_disconnect_stream(this);
 	return (0);
 }
 
@@ -3815,10 +3816,16 @@ azalia_trigger_output(void *v, void *start, void *end, int blk,
 
 	err = azalia_params2fmt(param, &fmt);
 	if (err)
-		return EINVAL;
+		return(EINVAL);
 
-	return azalia_stream_start(&az->pstream, start, end, blk, intr,
-	    arg, fmt);
+	az->pstream.start = start;
+	az->pstream.end = end;
+	az->pstream.blk = blk;
+	az->pstream.fmt = fmt;
+	az->pstream.intr = intr;
+	az->pstream.intr_arg = arg;
+
+	return azalia_stream_start(&az->pstream);
 }
 
 int
@@ -3842,10 +3849,16 @@ azalia_trigger_input(void *v, void *start, void *end, int blk,
 
 	err = azalia_params2fmt(param, &fmt);
 	if (err)
-		return EINVAL;
+		return(EINVAL);
 
-	return azalia_stream_start(&az->rstream, start, end, blk, intr,
-	    arg, fmt);
+	az->rstream.start = start;
+	az->rstream.end = end;
+	az->rstream.blk = blk;
+	az->rstream.fmt = fmt;
+	az->rstream.intr = intr;
+	az->rstream.intr_arg = arg;
+
+	return azalia_stream_start(&az->rstream);
 }
 
 /* --------------------------------
