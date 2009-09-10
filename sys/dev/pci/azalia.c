@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.149 2009/09/09 22:25:03 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.150 2009/09/10 22:59:46 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -640,6 +640,7 @@ azalia_reset(azalia_t *az)
 		printf("%s: reset-exit failure\n", XNAME(az));
 		return(ETIMEDOUT);
 	}
+	DELAY(1000);
 
 	return(0);
 }
@@ -667,7 +668,6 @@ azalia_init(azalia_t *az)
 		return(err);
 
 	/* 4.3 Codec discovery */
-	DELAY(1000);
 	statests = AZ_READ_2(az, STATESTS);
 	for (i = 0, n = 0; i < 15; i++) {
 		if ((statests >> i) & 1) {
