@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.3 2009/08/26 16:23:30 nicm Exp $ */
+/* $OpenBSD: clock.c,v 1.4 2009/09/10 17:16:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -120,7 +120,7 @@ clock_draw(struct screen_write_ctx *ctx, u_int colour, int style)
 			screen_write_cursormove(ctx, x, y);
 
 			memcpy(&gc, &grid_default_cell, sizeof gc);
-			gc.fg = colour;
+			colour_set_fg(&gc, colour);
 			screen_write_puts(ctx, &gc, "%s", tim);
 		}
 		return;
@@ -130,7 +130,7 @@ clock_draw(struct screen_write_ctx *ctx, u_int colour, int style)
 	y = (screen_size_y(s) / 2) - 3;
 
 	memcpy(&gc, &grid_default_cell, sizeof gc);
-	gc.bg = colour;
+	colour_set_bg(&gc, colour);
 	for (ptr = tim; *ptr != '\0'; ptr++) {
 		if (*ptr >= '0' && *ptr <= '9')
 			idx = *ptr - '0';

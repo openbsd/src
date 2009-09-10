@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.84 2009/09/07 21:12:12 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.85 2009/09/10 17:16:24 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 7 2009 $
+.Dd $Mdocdate: September 10 2009 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1250,8 +1250,11 @@ is one of:
 .Ic blue ,
 .Ic magenta ,
 .Ic cyan ,
-.Ic white
-or
+.Ic white ,
+.Ic colour0
+to
+.Ic colour255
+from the 256-colour palette, or
 .Ic default .
 .It Ic message-fg Ar colour
 Set status line message foreground colour.

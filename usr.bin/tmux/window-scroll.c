@@ -1,4 +1,4 @@
-/* $OpenBSD: window-scroll.c,v 1.8 2009/08/13 22:32:18 nicm Exp $ */
+/* $OpenBSD: window-scroll.c,v 1.9 2009/09/10 17:16:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -192,6 +192,7 @@ window_scroll_write_line(
 {
 	struct window_scroll_mode_data	*data = wp->modedata;
 	struct screen			*s = &data->screen;
+	struct options			*oo = &wp->window->options;
 	struct grid_cell		 gc;
 	char				 hdr[32];
 	size_t	 			 size;
@@ -200,9 +201,9 @@ window_scroll_write_line(
 		memcpy(&gc, &grid_default_cell, sizeof gc);
 		size = xsnprintf(hdr, sizeof hdr,
 		    "[%u,%u/%u]", data->ox, data->oy, screen_hsize(&wp->base));
-		gc.fg = options_get_number(&wp->window->options, "mode-fg");
-		gc.bg = options_get_number(&wp->window->options, "mode-bg");
-		gc.attr |= options_get_number(&wp->window->options, "mode-attr");
+		colour_set_fg(&gc, options_get_number(oo, "mode-fg"));
+		colour_set_bg(&gc, options_get_number(oo, "mode-bg"));
+		gc.attr |= options_get_number(oo, "mode-attr");
 		screen_write_cursormove(ctx, screen_size_x(s) - size, 0);
 		screen_write_puts(ctx, &gc, "%s", hdr);
 		memcpy(&gc, &grid_default_cell, sizeof gc);
