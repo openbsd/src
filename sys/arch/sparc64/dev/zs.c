@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.22 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: zs.c,v 1.23 2009/09/10 21:30:00 kettenis Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -474,9 +474,6 @@ zs_print(aux, name)
 	return (UNCONF);
 }
 
-/* Deprecate this? */
-static volatile int zssoftpending;
-
 static int
 zshard(arg)
 	void *arg;
@@ -492,7 +489,6 @@ zshard(arg)
 	if (((zsc->zsc_cs[0] && zsc->zsc_cs[0]->cs_softreq) ||
 	     (zsc->zsc_cs[1] && zsc->zsc_cs[1]->cs_softreq)) &&
 	    zsc->zsc_softintr) {
-		zssoftpending = PIL_TTY;
 		softintr_schedule(zsc->zsc_softintr);
 	}
 	return (rval);
@@ -529,7 +525,6 @@ zssoft(arg)
 
 	/* Make sure we call the tty layer at spltty. */
 	s = spltty();
-	zssoftpending = 0;
 	(void)zsc_intr_soft(zsc);
 #ifdef TTY_DEBUG
 	{
