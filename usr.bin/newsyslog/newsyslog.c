@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.84 2007/03/20 03:50:39 tedu Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.85 2009/09/10 13:03:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -72,7 +72,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.84 2007/03/20 03:50:39 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.85 2009/09/10 13:03:35 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -1333,7 +1333,7 @@ parseDWM(char *s)
 }
 
 /*
- * Move a file using rename(2) is possible and copying if not.
+ * Move a file using rename(2) if possible and copying if not.
  */
 int
 movefile(char *from, char *to, uid_t owner_uid, gid_t group_gid, mode_t perm)
@@ -1369,9 +1369,9 @@ movefile(char *from, char *to, uid_t owner_uid, gid_t group_gid, mode_t perm)
 	if (ferror(src))
 		err(1, "error reading from %s", from);
 	if ((fclose(src)) != 0)
-		err(1, "can't fclose %s", to);
-	if ((fclose(dst)) != 0)
 		err(1, "can't fclose %s", from);
+	if ((fclose(dst)) != 0)
+		err(1, "can't fclose %s", to);
 	if ((unlink(from)) != 0)
 		err(1, "can't unlink %s", from);
 
