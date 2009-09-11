@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.34 2009/09/09 07:01:20 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.35 2009/09/11 20:12:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -110,7 +110,8 @@ void		udl_cmd_insert_buf(struct udl_softc *, uint8_t *, uint32_t);
 int		udl_cmd_insert_buf_comp(struct udl_softc *, uint8_t *,
 		    uint32_t);
 int		udl_cmd_insert_head_comp(struct udl_softc *, uint32_t);
-void		udl_cmd_insert_check(struct udl_cmd_buf *, int);
+int		udl_cmd_insert_check(struct udl_softc *, int);
+void		udl_cmd_set_xfer(struct udl_softc *, int);
 uint32_t	udl_cmd_get_offset(struct udl_softc *);
 void		udl_cmd_set_offset(struct udl_softc *, uint32_t);
 void		udl_cmd_write_reg_1(struct udl_softc *, uint8_t, uint8_t);
@@ -124,35 +125,35 @@ usbd_status	udl_init_chip(struct udl_softc *);
 void		udl_init_fb_offsets(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 usbd_status	udl_init_resolution(struct udl_softc *, uint8_t *, uint8_t);
-void		udl_fb_off_write(struct udl_softc *, uint16_t, uint32_t,
+int		udl_fb_off_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint16_t);
-void		udl_fb_line_write(struct udl_softc *, uint16_t, uint32_t,
+int		udl_fb_line_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t);
-void		udl_fb_block_write(struct udl_softc *, uint16_t, uint32_t,
+int		udl_fb_block_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
-void		udl_fb_buf_write(struct udl_softc *, uint8_t *, uint32_t,
+int		udl_fb_buf_write(struct udl_softc *, uint8_t *, uint32_t,
 		    uint32_t, uint16_t);
-void		udl_fb_off_copy(struct udl_softc *, uint32_t, uint32_t,
+int		udl_fb_off_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint16_t);
-void		udl_fb_line_copy(struct udl_softc *, uint32_t, uint32_t,
+int		udl_fb_line_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
-void		udl_fb_block_copy(struct udl_softc *, uint32_t, uint32_t,
+int		udl_fb_block_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t, uint32_t);
-void		udl_fb_off_write_comp(struct udl_softc *, uint16_t, uint32_t,
+int		udl_fb_off_write_comp(struct udl_softc *, uint16_t, uint32_t,
 		    uint16_t);
-void		udl_fb_line_write_comp(struct udl_softc *, uint16_t, uint32_t,
+int		udl_fb_line_write_comp(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t);
-void		udl_fb_block_write_comp(struct udl_softc *, uint16_t, uint32_t,
+int		udl_fb_block_write_comp(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
-void		udl_fb_buf_write_comp(struct udl_softc *, uint8_t *, uint32_t,
+int		udl_fb_buf_write_comp(struct udl_softc *, uint8_t *, uint32_t,
 		    uint32_t, uint16_t);
-void		udl_fb_off_copy_comp(struct udl_softc *, uint32_t, uint32_t,
+int		udl_fb_off_copy_comp(struct udl_softc *, uint32_t, uint32_t,
 		    uint16_t);
-void		udl_fb_line_copy_comp(struct udl_softc *, uint32_t, uint32_t,
+int		udl_fb_line_copy_comp(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
-void		udl_fb_block_copy_comp(struct udl_softc *, uint32_t, uint32_t,
+int		udl_fb_block_copy_comp(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t, uint32_t);
-void		udl_draw_char(struct udl_softc *, uint16_t, uint16_t, u_int,
+int		udl_draw_char(struct udl_softc *, uint16_t, uint16_t, u_int,
 		    uint32_t, uint32_t);
 #ifdef UDL_DEBUG
 void		udl_hexdump(void *, int, int);
@@ -285,6 +286,11 @@ udl_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	/*
+	 * Device initialization is done per synchronous xfers.
+	 */
+	udl_cmd_set_xfer(sc, UDL_CMD_XFER_SYNC);
+
+	/*
 	 * Initialize chip.
 	 */
 	error = udl_init_chip(sc);
@@ -353,6 +359,10 @@ udl_attach_hook(void *arg)
 #ifdef UDL_DEBUG
 	udl_init_test(sc);
 #endif
+	/*
+	 * From this point on we do asynchronous xfers.
+	 */
+	udl_cmd_set_xfer(sc, UDL_CMD_XFER_ASYNC);
 }
 
 int
@@ -556,7 +566,7 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
 	struct udl_softc *sc;
-	int sx, sy, dx, dy, cx, cy;
+	int sx, sy, dx, dy, cx, cy, r;
 	uint32_t save_offset;
 	usbd_status error;
 
@@ -575,13 +585,20 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 	cy = ri->ri_font->fontheight;
 
 	/* copy row block to off-screen first to fix overlay-copy problem */
-	(sc->udl_fb_block_copy)(sc, sx, sy, 0, sc->sc_ri.ri_emuheight, cx, cy);
+	r = (sc->udl_fb_block_copy)
+	    (sc, sx, sy, 0, sc->sc_ri.ri_emuheight, cx, cy);
+	if (r != 0)
+		goto fail;
 
 	/* copy row block back from off-screen now */
-	(sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, dx, dy, cx, cy);
+	r = (sc->udl_fb_block_copy)
+	    (sc, 0, sc->sc_ri.ri_emuheight, dx, dy, cx, cy);
+	if (r != 0)
+		goto fail;
 
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
+fail:
 		udl_cmd_set_offset(sc, save_offset);
 		return (EAGAIN);
 	}
@@ -594,7 +611,7 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
 	struct udl_softc *sc;
-	int sy, dy, cx, cy;
+	int sy, dy, cx, cy, r;
 	uint32_t save_offset;
 	usbd_status error;
 
@@ -611,13 +628,20 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 	cy = num * sc->sc_ri.ri_font->fontheight;
 
 	/* copy row block to off-screen first to fix overlay-copy problem */
-	(sc->udl_fb_block_copy)(sc, 0, sy, 0, sc->sc_ri.ri_emuheight, cx, cy);
+	r = (sc->udl_fb_block_copy)
+	    (sc, 0, sy, 0, sc->sc_ri.ri_emuheight, cx, cy);
+	if (r != 0)
+		goto fail;
 
 	/* copy row block back from off-screen now */
-	(sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, 0, dy, cx, cy);
+	r = (sc->udl_fb_block_copy)
+	    (sc, 0, sc->sc_ri.ri_emuheight, 0, dy, cx, cy);
+	if (r != 0)
+		goto fail;
 
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
+fail:
 		udl_cmd_set_offset(sc, save_offset);
 		return (EAGAIN);
 	}
@@ -632,7 +656,7 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	struct udl_softc *sc = ri->ri_hw;
 	uint16_t bgc;
 	int fg, bg;
-	int x, y, cx, cy;
+	int x, y, cx, cy, r;
 	uint32_t save_offset;
 	usbd_status error;
 
@@ -651,10 +675,13 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	cx = num * sc->sc_ri.ri_font->fontwidth;
 	cy = sc->sc_ri.ri_font->fontheight;
 
-	udl_fb_block_write(sc, bgc, x, y, cx, cy);
+	r = udl_fb_block_write(sc, bgc, x, y, cx, cy);
+	if (r != 0)
+		goto fail;
 
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
+fail:
 		udl_cmd_set_offset(sc, save_offset);
 		return (EAGAIN);
 	}
@@ -669,7 +696,7 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 	struct udl_softc *sc;
 	uint16_t bgc;
 	int fg, bg;
-	int x, y, cx, cy;
+	int x, y, cx, cy, r;
 	uint32_t save_offset;
 	usbd_status error;
 
@@ -687,10 +714,13 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 	cx = sc->sc_ri.ri_emuwidth;
 	cy = num * sc->sc_ri.ri_font->fontheight;
 
-	udl_fb_block_write(sc, bgc, x, y, cx, cy);
+	r = udl_fb_block_write(sc, bgc, x, y, cx, cy);
+	if (r != 0)
+		goto fail;
 
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
+fail:
 		udl_cmd_set_offset(sc, save_offset);
 		return (EAGAIN);
 	}
@@ -703,10 +733,14 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct udl_softc *sc = ri->ri_hw;
+	int r;
 	uint16_t fgc, bgc;
 	uint32_t x, y, fg, bg;
+	uint32_t save_offset;
 
 	DPRINTF(2, "%s: %s\n", DN(sc), FUNC);
+
+	save_offset = udl_cmd_get_offset(sc);
 
 	sc->sc_ri.ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	fgc = (uint16_t)sc->sc_ri.ri_devcmap[fg];
@@ -720,11 +754,15 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		 * Writting a block for the space character instead rendering
 		 * it from font bits is more slim.
 		 */
-		(sc->udl_fb_block_write)(sc, bgc, x, y,
+		r = (sc->udl_fb_block_write)(sc, bgc, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
+		if (r != 0)
+			goto fail;
 	} else {
 		/* render a character from font bits */
-		udl_draw_char(sc, fgc, bgc, uc, x, y);
+		r = udl_draw_char(sc, fgc, bgc, uc, x, y);
+		if (r != 0)
+			goto fail;
 	}
 
 	/*
@@ -735,12 +773,17 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	 */
 
 	return (0);
+
+fail:
+	udl_cmd_set_offset(sc, save_offset);
+	return (EAGAIN);
 }
 
 int
 udl_do_cursor(struct rasops_info *ri)
 {
 	struct udl_softc *sc = ri->ri_hw;
+	int r;
 	uint32_t x, y;
 	uint32_t save_offset;
 	uint8_t save_cursor;
@@ -765,24 +808,31 @@ udl_do_cursor(struct rasops_info *ri)
 
 	if (sc->sc_cursor_on == 0) {
 		/* save the last character block to off-screen */
-		(sc->udl_fb_block_copy)(sc, x, y, 0, sc->sc_ri.ri_emuheight,
+		r = (sc->udl_fb_block_copy)(sc, x, y, 0, sc->sc_ri.ri_emuheight,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
+		if (r != 0)
+			goto fail;
 
 		/* draw cursor */
-		(sc->udl_fb_block_write)(sc, 0xffff, x, y,
+		r = (sc->udl_fb_block_write)(sc, 0xffff, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
+		if (r != 0)
+			goto fail;
 
 		sc->sc_cursor_on = 1;
 	} else {
 		/* restore the last saved character from off-screen */
-		(sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, x, y,
+		r = (sc->udl_fb_block_copy)(sc, 0, sc->sc_ri.ri_emuheight, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
+		if (r != 0)
+			goto fail;
 
 		sc->sc_cursor_on = 0;
 	}
 
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
+fail:
 		udl_cmd_set_offset(sc, save_offset);
 		sc->sc_cursor_on = save_cursor;
 		return (EAGAIN);
@@ -1043,8 +1093,6 @@ udl_cmd_insert_int_1(struct udl_softc *sc, uint8_t value)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
-	udl_cmd_insert_check(cb, 1);
-
 	cb->buf[cb->off] = value;
 
 	cb->off += 1;
@@ -1055,8 +1103,6 @@ udl_cmd_insert_int_2(struct udl_softc *sc, uint16_t value)
 {
 	uint16_t lvalue;
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
-
-	udl_cmd_insert_check(cb, 2);
 
 	lvalue = htobe16(value);
 	bcopy(&lvalue, cb->buf + cb->off, 2);
@@ -1069,8 +1115,6 @@ udl_cmd_insert_int_3(struct udl_softc *sc, uint32_t value)
 {
 	uint32_t lvalue;
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
-
-	udl_cmd_insert_check(cb, 3);
 #if BYTE_ORDER == BIG_ENDIAN
 	lvalue = htobe32(value) << 8;
 #else
@@ -1087,8 +1131,6 @@ udl_cmd_insert_int_4(struct udl_softc *sc, uint32_t value)
 	uint32_t lvalue;
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
-	udl_cmd_insert_check(cb, 4);
-
 	lvalue = htobe32(value);
 	bcopy(&lvalue, cb->buf + cb->off, 4);
 
@@ -1099,8 +1141,6 @@ void
 udl_cmd_insert_buf(struct udl_softc *sc, uint8_t *buf, uint32_t len)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
-
-	udl_cmd_insert_check(cb, len);
 
 	bcopy(buf, cb->buf + cb->off, len);
 
@@ -1117,8 +1157,6 @@ udl_cmd_insert_buf_comp(struct udl_softc *sc, uint8_t *buf, uint32_t len)
 	int16_t diff;
 	uint32_t bit_count, bit_pattern, bit_cur;
 	int i, j, bytes, eob, padding, next;
-
-	udl_cmd_insert_check(cb, len);
 
 	pixels = (uint16_t *)buf;
 	bit_pos = bytes = eob = padding = 0;
@@ -1215,8 +1253,6 @@ udl_cmd_insert_head_comp(struct udl_softc *sc, uint32_t len)
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 	int i, padding;
 
-	udl_cmd_insert_check(cb, len);
-
 	if (cb->compblock > UDL_CB_BODY_SIZE) {
 		cb->off -= UDL_CMD_COPY_HEAD_SIZE;
 		cb->compblock -= UDL_CMD_COPY_HEAD_SIZE;
@@ -1235,17 +1271,37 @@ udl_cmd_insert_head_comp(struct udl_softc *sc, uint32_t len)
 	return (len);
 }
 
-void
-udl_cmd_insert_check(struct udl_cmd_buf *cb, int len)
+int
+udl_cmd_insert_check(struct udl_softc *sc, int len)
 {
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 	int total;
+	usbd_status error;
 
 	total = cb->off + len;
 
-	if (total >=  UDL_CMD_MAX_XFER_SIZE) {
-		/* XXX */
-		panic("udl_cmd_insert_check: command buffer is full");
+	if (total > UDL_CMD_MAX_XFER_SIZE) {
+		/* command buffer is almost full, try to flush it */
+		if (cb->xfer_method == UDL_CMD_XFER_ASYNC)
+			error = udl_cmd_send_async(sc);
+		else
+			error = udl_cmd_send(sc);
+		if (error != USBD_NORMAL_COMPLETION) {
+			DPRINTF(1, "%s: %s: can't flush full command buffer\n",
+			    DN(sc), FUNC);
+			return (EAGAIN);
+		}
 	}
+
+	return (0);
+}
+
+void
+udl_cmd_set_xfer(struct udl_softc *sc, int xfer_method)
+{
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
+
+	cb->xfer_method = xfer_method;
 }
 
 uint32_t
@@ -1490,14 +1546,18 @@ udl_init_resolution(struct udl_softc *sc, uint8_t *buf, uint8_t len)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-void
+int
 udl_fb_off_write(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
     uint16_t width)
 {
 	uint8_t buf[UDL_CMD_MAX_DATA_SIZE];
 	uint16_t lwidth, lrgb16;
 	uint32_t loff;
-	int i;
+	int i, r;
+
+	r = udl_cmd_insert_check(sc, UDL_CMD_WRITE_MAX_SIZE);
+	if (r != 0)
+		return (r);
 
 	loff = off * 2;
 	lwidth = width * 2;
@@ -1513,13 +1573,16 @@ udl_fb_off_write(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
 	}
 
 	udl_cmd_insert_buf(sc, buf, lwidth);
+
+	return (0);
 }
 
-void
+int
 udl_fb_line_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
     uint32_t y, uint32_t width)
 {
 	uint32_t off, block;
+	int r;
 
 	off = (y * sc->sc_width) + x;
 
@@ -1529,29 +1592,44 @@ udl_fb_line_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
 		else
 			block = width;
 
-		udl_fb_off_write(sc, rgb16, off, block);
+		r = udl_fb_off_write(sc, rgb16, off, block);
+		if (r != 0)
+			return (r);
 
 		off += block;
 		width -= block;
 	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_block_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
     uint32_t y, uint32_t width, uint32_t height)
 {
 	uint32_t i;
+	int r;
 
-	for (i = 0; i < height; i++)
-		udl_fb_line_write(sc, rgb16, x, y + i, width);
+	for (i = 0; i < height; i++) {
+		r = udl_fb_line_write(sc, rgb16, x, y + i, width);
+		if (r != 0)
+			return (r);
+	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_buf_write(struct udl_softc *sc, uint8_t *buf, uint32_t x,
     uint32_t y, uint16_t width)
 {
 	uint16_t lwidth;
 	uint32_t off;
+	int r;
+
+	r = udl_cmd_insert_check(sc, UDL_CMD_WRITE_MAX_SIZE);
+	if (r != 0)
+		return (r);
 
 	off = ((y * sc->sc_width) + x) * 2;
 	lwidth = width * 2;
@@ -1562,13 +1640,20 @@ udl_fb_buf_write(struct udl_softc *sc, uint8_t *buf, uint32_t x,
 	udl_cmd_insert_int_1(sc, width >= UDL_CMD_MAX_PIXEL_COUNT ? 0 : width);
 
 	udl_cmd_insert_buf(sc, buf, lwidth);
+
+	return (0);
 }
 
-void
+int
 udl_fb_off_copy(struct udl_softc *sc, uint32_t src_off, uint32_t dst_off,
     uint16_t width)
 {
 	uint32_t ldst_off, lsrc_off;
+	int r;
+
+	r = udl_cmd_insert_check(sc, UDL_CMD_COPY_MAX_SIZE);
+	if (r != 0)
+		return (r);
 
 	ldst_off = dst_off * 2;
 	lsrc_off = src_off * 2;
@@ -1578,13 +1663,16 @@ udl_fb_off_copy(struct udl_softc *sc, uint32_t src_off, uint32_t dst_off,
 	udl_cmd_insert_int_3(sc, ldst_off);
 	udl_cmd_insert_int_1(sc, width >= UDL_CMD_MAX_PIXEL_COUNT ? 0 : width);
 	udl_cmd_insert_int_3(sc, lsrc_off);
+
+	return (0);
 }
 
-void
+int
 udl_fb_line_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
     uint32_t dst_x, uint32_t dst_y, uint32_t width)
 {
 	uint32_t src_off, dst_off, block;
+	int r;
 
 	src_off = (src_y * sc->sc_width) + src_x;
 	dst_off = (dst_y * sc->sc_width) + dst_x;
@@ -1595,25 +1683,35 @@ udl_fb_line_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
 		else
 			block = width;
 
-		udl_fb_off_copy(sc, src_off, dst_off, block);
+		r = udl_fb_off_copy(sc, src_off, dst_off, block);
+		if (r != 0)
+			return (r);
 
 		src_off += block;
 		dst_off += block;
 		width -= block;
 	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_block_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
     uint32_t dst_x, uint32_t dst_y, uint32_t width, uint32_t height)
 {
-	int i;
+	int i, r;
 
-	for (i = 0; i < height; i++)
-		udl_fb_line_copy(sc, src_x, src_y + i, dst_x, dst_y + i, width);
+	for (i = 0; i < height; i++) {
+		r = udl_fb_line_copy(sc, src_x, src_y + i, dst_x, dst_y + i,
+		    width);
+		if (r != 0)
+			return (r);
+	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_off_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
     uint16_t width)
 {
@@ -1623,6 +1721,10 @@ udl_fb_off_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
 	uint16_t lwidth, lrgb16;
 	uint32_t loff;
 	int i, r, sent;
+
+	r = udl_cmd_insert_check(sc, UDL_CMD_WRITE_MAX_SIZE);
+	if (r != 0)
+		return (r);
 
 	loff = off * 2;
 	lwidth = width * 2;
@@ -1659,13 +1761,16 @@ udl_fb_off_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
 		}
 		sent += r;
 	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_line_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
     uint32_t y, uint32_t width)
 {
 	uint32_t off, block;
+	int r;
 
 	off = (y * sc->sc_width) + x;
 
@@ -1675,24 +1780,34 @@ udl_fb_line_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
 		else
 			block = width;
 
-		(sc->udl_fb_off_write)(sc, rgb16, off, block);
+		r = (sc->udl_fb_off_write)(sc, rgb16, off, block);
+		if (r != 0)
+			return (r);
 
 		off += block;
 		width -= block;
 	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_block_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
     uint32_t y, uint32_t width, uint32_t height)
 {
 	uint32_t i;
+	int r;
 
-	for (i = 0; i < height; i++)
-		udl_fb_line_write_comp(sc, rgb16, x, y + i, width);
+	for (i = 0; i < height; i++) {
+		r = udl_fb_line_write_comp(sc, rgb16, x, y + i, width);
+		if (r != 0)
+			return (r);
+	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_buf_write_comp(struct udl_softc *sc, uint8_t *buf, uint32_t x,
     uint32_t y, uint16_t width)
 {
@@ -1701,6 +1816,10 @@ udl_fb_buf_write_comp(struct udl_softc *sc, uint8_t *buf, uint32_t x,
 	uint16_t lwidth;
 	uint32_t off;
 	int r, sent;
+
+	r = udl_cmd_insert_check(sc, UDL_CMD_WRITE_MAX_SIZE);
+	if (r != 0)
+		return (r);
 
 	off = ((y * sc->sc_width) + x) * 2;
 	lwidth = width * 2;
@@ -1732,15 +1851,21 @@ udl_fb_buf_write_comp(struct udl_softc *sc, uint8_t *buf, uint32_t x,
 		}
 		sent += r;
 	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_off_copy_comp(struct udl_softc *sc, uint32_t src_off, uint32_t dst_off,
     uint16_t width)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 	uint32_t ldst_off, lsrc_off;
 	int r;
+
+	r = udl_cmd_insert_check(sc, UDL_CMD_COPY_MAX_SIZE);
+	if (r != 0)
+		return (r);
 
 	ldst_off = dst_off * 2;
 	lsrc_off = src_off * 2;
@@ -1765,13 +1890,16 @@ udl_fb_off_copy_comp(struct udl_softc *sc, uint32_t src_off, uint32_t dst_off,
 
 		r = udl_cmd_insert_head_comp(sc, UDL_CMD_COPY_HEAD_SIZE);
 	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_line_copy_comp(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
     uint32_t dst_x, uint32_t dst_y, uint32_t width)
 {
 	uint32_t src_off, dst_off, block;
+	int r;
 
 	src_off = (src_y * sc->sc_width) + src_x;
 	dst_off = (dst_y * sc->sc_width) + dst_x;
@@ -1782,30 +1910,39 @@ udl_fb_line_copy_comp(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
 		else
 			block = width;
 
-		udl_fb_off_copy_comp(sc, src_off, dst_off, block);
+		r = udl_fb_off_copy_comp(sc, src_off, dst_off, block);
+		if (r != 0)
+			return (r);
 
 		src_off += block;
 		dst_off += block;
 		width -= block;
 	}
+
+	return (0);
 }
 
-void
+int
 udl_fb_block_copy_comp(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
     uint32_t dst_x, uint32_t dst_y, uint32_t width, uint32_t height)
 {
-	int i;
+	int i, r;
 
-	for (i = 0; i < height; i++)
-		udl_fb_line_copy_comp(sc, src_x, src_y + i, dst_x, dst_y + i,
-		    width);
+	for (i = 0; i < height; i++) {
+		r = udl_fb_line_copy_comp(sc, src_x, src_y + i,
+		    dst_x, dst_y + i, width);
+		if (r != 0)
+			return (r);
+	}
+
+	return (0);
 }
 
-void
+int
 udl_draw_char(struct udl_softc *sc, uint16_t fg, uint16_t bg, u_int uc,
     uint32_t x, uint32_t y)
 {
-	int i, j, ly;
+	int i, j, ly, r;
 	uint8_t *fontchar;
 	uint8_t buf[UDL_CMD_MAX_DATA_SIZE];
 	uint16_t *line, lrgb16, fontbits, luc;
@@ -1833,11 +1970,15 @@ udl_draw_char(struct udl_softc *sc, uint16_t fg, uint16_t bg, u_int uc,
 			bcopy(&lrgb16, line, 2);
 			line++;
 		}
-		(sc->udl_fb_buf_write)(sc, buf, x, ly, font->fontwidth);
+		r = (sc->udl_fb_buf_write)(sc, buf, x, ly, font->fontwidth);
+		if (r != 0)
+			return (r);
 		ly++;
 
 		fontchar += font->stride;
 	}
+
+	return (0);
 }
 
 /* ---------- */

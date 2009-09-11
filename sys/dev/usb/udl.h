@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.6 2009/08/27 19:43:50 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.7 2009/09/11 20:12:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -24,6 +24,9 @@
 #define UDL_CMD_MAX_PIXEL_COUNT	(UDL_CMD_MAX_DATA_SIZE / 2)
 #define UDL_CMD_WRITE_HEAD_SIZE	6
 #define UDL_CMD_COPY_HEAD_SIZE	9
+#define UDL_CMD_WRITE_MAX_SIZE	(UDL_CMD_WRITE_HEAD_SIZE + \
+				UDL_CMD_MAX_DATA_SIZE + 2)
+#define UDL_CMD_COPY_MAX_SIZE	(UDL_CMD_COPY_HEAD_SIZE + 2)
 
 struct udl_cmd_xfer {
 	struct udl_softc	*sc;
@@ -33,6 +36,9 @@ struct udl_cmd_xfer {
 };
 
 struct udl_cmd_buf {
+#define UDL_CMD_XFER_SYNC	 0
+#define UDL_CMD_XFER_ASYNC	 1
+	uint8_t			 xfer_method;
 	uint16_t		 compblock;
 	uint32_t		 off;
 	uint8_t			*buf;
@@ -68,25 +74,25 @@ struct udl_softc {
 	 * functions so we can easily differ between compressed and
 	 * none-compressed mode.
 	 */
-	void			 (*udl_fb_off_write)
+	int			 (*udl_fb_off_write)
 				     (struct udl_softc *, uint16_t, uint32_t,
 				     uint16_t);
-	void			 (*udl_fb_line_write)
+	int			 (*udl_fb_line_write)
 				     (struct udl_softc *, uint16_t, uint32_t,
 				     uint32_t, uint32_t);
-	void			 (*udl_fb_block_write)
+	int			 (*udl_fb_block_write)
 				     (struct udl_softc *, uint16_t, uint32_t,
 				     uint32_t, uint32_t, uint32_t);
-	void			 (*udl_fb_buf_write)
+	int			 (*udl_fb_buf_write)
 				     (struct udl_softc *, uint8_t *, uint32_t,
 				     uint32_t, uint16_t);
-	void			 (*udl_fb_off_copy)
+	int			 (*udl_fb_off_copy)
 				     (struct udl_softc *, uint32_t, uint32_t,
 				     uint16_t);
-	void			 (*udl_fb_line_copy)
+	int			 (*udl_fb_line_copy)
 				     (struct udl_softc *, uint32_t, uint32_t,
 				     uint32_t, uint32_t, uint32_t);
-	void			 (*udl_fb_block_copy)
+	int			 (*udl_fb_block_copy)
 				     (struct udl_softc *, uint32_t, uint32_t,
 				     uint32_t, uint32_t, uint32_t, uint32_t);
 };
