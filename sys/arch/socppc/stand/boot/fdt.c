@@ -1,4 +1,4 @@
-/*     $OpenBSD: fdt.c,v 1.1 2009/09/07 21:16:57 dms Exp $       */
+/*     $OpenBSD: fdt.c,v 1.2 2009/09/11 17:45:01 dms Exp $       */
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -31,9 +31,7 @@ void	*skip_property(u_int32_t *);
 void	*skip_props(u_int32_t *);
 void	*skip_node_name(u_int32_t *);
 void	*fdt_find_node_recurse(void *node, char *name);
-#ifdef DEBUG
 void 	 fdt_print_node_recurse(void *, int);
-#endif
 
 static int tree_inited = 0;
 static struct fdt tree;
@@ -302,7 +300,6 @@ fdt_find_node(char *name)
 	return node;
 }
 
-#ifdef DEBUG
 /*
  * Debug methods for printing whole tree, particular odes and properies
  */
@@ -392,4 +389,3 @@ fdt_print_tree(void)
 {
 	fdt_print_node_recurse(fdt_next_node(0), 0);
 }
-#endif
