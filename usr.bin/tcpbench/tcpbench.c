@@ -136,11 +136,10 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: tcpbench -l\n"
-	    "       tcpbench [-v] [-B buf] [-k kvars] [-n connections]"
-	    " [-p port] [-r rate] [-V rdomain]\n"
-	    "                [-S space] hostname\n"
-	    "       tcpbench -s [-v] [-B buf] [-k kvars] [-p port] [-r rate]"
-	    " [-S space] [-V rdomain]\n");
+	    "       tcpbench [-v] [-B buf] [-k kvars] [-n connections] [-p port]\n"
+	    "                [-r rate] [-S space] [-V rdomain] hostname\n"
+	    "       tcpbench -s [-v] [-B buf] [-k kvars] [-p port]\n"
+	    "                [-r rate] [-S space] [-V rdomain]\n");
 	exit(1);
 }
 
