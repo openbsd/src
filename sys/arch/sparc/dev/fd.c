@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.67 2009/08/24 08:52:13 jasper Exp $	*/
+/*	$OpenBSD: fd.c,v 1.68 2009/09/12 01:23:30 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1771,16 +1771,17 @@ fdioctl(dev, cmd, addr, flag, p)
 		return (0);
 
 	case DIOCWDINFO:
+	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
 		error = setdisklabel(fd->sc_dk.dk_label,
 		    (struct disklabel *)addr, 0);
-		if (error)
-			return (error);
-
-		error = writedisklabel(DISKLABELDEV(dev), fdstrategy,
-		    fd->sc_dk.dk_label);
+		if (error == 0) {
+			if (cmd == DIOCWDINFO)
+				error = writedisklabel(DISKLABELDEV(dev),
+				    fdstrategy, fd->sc_dk.dk_label);
+		}
 		return (error);
 
 	case DIOCLOCK:
