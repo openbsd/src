@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.118 2009/09/12 09:38:45 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.119 2009/09/12 09:50:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1001,7 +1001,7 @@ session_readline(struct session *s, size_t *nr)
 {
 	char	*line, *line2;
 
-	*nr = EVBUFFER_LENGTH(s->s_bev->input);
+	*nr = 0;
 	line = evbuffer_readline(s->s_bev->input);
 	if (line == NULL) {
 		if (EVBUFFER_LENGTH(s->s_bev->input) > SMTP_ANYLINE_MAX) {
@@ -1011,7 +1011,6 @@ session_readline(struct session *s, size_t *nr)
 		}
 		return NULL;
 	}
-	*nr -= EVBUFFER_LENGTH(s->s_bev->input);
 
 	if (s->s_flags & F_WRITEONLY)
 		fatalx("session_readline: corrupt session");
@@ -1027,6 +1026,7 @@ session_readline(struct session *s, size_t *nr)
 		return NULL;
 	}
 
+	*nr = strlen(line);
 	return line;
 }
 
