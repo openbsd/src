@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.34 2009/09/12 13:01:19 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.35 2009/09/12 13:09:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1170,10 +1170,9 @@ server_check_window(struct window *w)
 {
 	struct window_pane	*wp, *wq;
 	struct options		*oo = &w->options;
-	struct client		*c;
 	struct session		*s;
 	struct winlink		*wl;
-	u_int		 	 i, j;
+	u_int		 	 i;
 	int		 	 destroyed;
 
 	destroyed = 1;
