@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.151 2009/09/12 09:11:52 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.152 2009/09/12 09:21:28 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1409,9 +1409,13 @@ azalia_codec_init(codec_t *this)
 			case CORB_CD_FIXED:
 				switch (this->w[i].d.pin.device) {
 				case CORB_CD_SPEAKER:
-					this->speaker = i;
-					this->spkr_dac =
-					    azalia_codec_find_defdac(this, i, 0);
+					if ((this->speaker == -1) ||
+					    (this->w[i].d.pin.association <
+					    this->w[this->speaker].d.pin.association)) {
+						this->speaker = i;
+						this->spkr_dac =
+						    azalia_codec_find_defdac(this, i, 0);
+					}
 					break;
 				case CORB_CD_MICIN:
 					this->mic = i;
