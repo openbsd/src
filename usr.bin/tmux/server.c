@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.33 2009/09/10 17:16:24 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.34 2009/09/12 13:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1211,21 +1211,11 @@ server_check_window(struct window *w)
 		RB_FOREACH(wl, winlinks, &s->windows) {
 			if (wl->window != w)
 				continue;
-			destroyed = session_detach(s, wl);
-			for (j = 0; j < ARRAY_LENGTH(&clients); j++) {
-				c = ARRAY_ITEM(&clients, j);
-				if (c == NULL || c->session != s)
-					continue;
-				if (!destroyed) {
-					server_redraw_client(c);
-					continue;
-				}
-				c->session = NULL;
-				server_write_client(c, MSG_EXIT, NULL, 0);
-			}
-			/* If the session was destroyed, bail now. */
-			if (destroyed)
+			if (session_detach(s, wl)) {
+				server_destroy_session(s);
 				break;
+			}
+			server_redraw_session(s);
 			goto restart;
 		}
 	}
