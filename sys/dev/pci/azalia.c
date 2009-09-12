@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.150 2009/09/10 22:59:46 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.151 2009/09/12 09:11:52 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -154,9 +154,11 @@ typedef struct azalia_t {
 	int codecno;		/* index of the using codec */
 
 	azalia_dma_t corb_dma;
-	int corb_size;
+	int corb_entries;
+	uint8_t corbsize;
 	azalia_dma_t rirb_dma;
-	int rirb_size;
+	int rirb_entries;
+	uint8_t rirbsize;
 	int rirb_rp;
 #define UNSOLQ_SIZE	256
 	rirb_entry_t *unsolq;
@@ -188,6 +190,7 @@ int	azalia_pci_detach(struct device *, int);
 int	azalia_intr(void *);
 void	azalia_print_codec(codec_t *);
 int	azalia_reset(azalia_t *);
+int	azalia_get_ctrlr_caps(azalia_t *);
 int	azalia_init(azalia_t *);
 int	azalia_init_codecs(azalia_t *);
 int	azalia_init_streams(azalia_t *);
@@ -646,12 +649,12 @@ azalia_reset(azalia_t *az)
 }
 
 int
-azalia_init(azalia_t *az)
+azalia_get_ctrlr_caps(azalia_t *az)
 {
-	int i, n, err;
-	uint32_t gctl;
+	int i, n;
 	uint16_t gcap;
 	uint16_t statests;
+	uint8_t cap;
 
 	DPRINTF(("%s: host: High Definition Audio rev. %d.%d\n",
 	    XNAME(az), AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN)));
@@ -662,10 +665,6 @@ azalia_init(azalia_t *az)
 	az->ok64 = (gcap & HDA_GCAP_64OK) != 0;
 	DPRINTF(("%s: host: %d output, %d input, and %d bidi streams\n",
 	    XNAME(az), az->nostreams, az->nistreams, az->nbstreams));
-
-	err = azalia_reset(az);
-	if (err)
-		return(err);
 
 	/* 4.3 Codec discovery */
 	statests = AZ_READ_2(az, STATESTS);
@@ -681,6 +680,59 @@ azalia_init(azalia_t *az)
 		printf("%s: No HD-Audio codecs\n", XNAME(az));
 		return -1;
 	}
+
+	/* determine CORB size */
+	az->corbsize = AZ_READ_1(az, CORBSIZE);
+	cap = az->corbsize & HDA_CORBSIZE_CORBSZCAP_MASK;
+	az->corbsize  &= ~HDA_CORBSIZE_CORBSIZE_MASK;
+	if (cap & HDA_CORBSIZE_CORBSZCAP_256) {
+		az->corb_entries = 256;
+		az->corbsize |= HDA_CORBSIZE_CORBSIZE_256;
+	} else if (cap & HDA_CORBSIZE_CORBSZCAP_16) {
+		az->corb_entries = 16;
+		az->corbsize |= HDA_CORBSIZE_CORBSIZE_16;
+	} else if (cap & HDA_CORBSIZE_CORBSZCAP_2) {
+		az->corb_entries = 2;
+		az->corbsize |= HDA_CORBSIZE_CORBSIZE_2;
+	} else {
+		printf("%s: Invalid CORBSZCAP: 0x%2x\n", XNAME(az), cap);
+		return(-1);
+	}
+
+	/* determine RIRB size */
+	az->rirbsize = AZ_READ_1(az, RIRBSIZE);
+	cap = az->rirbsize & HDA_RIRBSIZE_RIRBSZCAP_MASK;
+	az->rirbsize &= ~HDA_RIRBSIZE_RIRBSIZE_MASK;
+	if (cap & HDA_RIRBSIZE_RIRBSZCAP_256) {
+		az->rirb_entries = 256;
+		az->rirbsize |= HDA_RIRBSIZE_RIRBSIZE_256;
+	} else if (cap & HDA_RIRBSIZE_RIRBSZCAP_16) {
+		az->rirb_entries = 16;
+		az->rirbsize |= HDA_RIRBSIZE_RIRBSIZE_16;
+	} else if (cap & HDA_RIRBSIZE_RIRBSZCAP_2) {
+		az->rirb_entries = 2;
+		az->rirbsize |= HDA_RIRBSIZE_RIRBSIZE_2;
+	} else {
+		printf("%s: Invalid RIRBSZCAP: 0x%2x\n", XNAME(az), cap);
+		return(-1);
+	}
+
+	return(0);
+}
+
+int
+azalia_init(azalia_t *az)
+{
+	int err;
+	uint32_t gctl;
+
+	err = azalia_reset(az);
+	if (err)
+		return(err);
+
+	err = azalia_get_ctrlr_caps(az);
+	if (err)
+		return(err);
 
 	/* clear interrupt status */
 	AZ_WRITE_2(az, STATESTS, HDA_STATESTS_SDIWAKE);
@@ -823,43 +875,25 @@ azalia_halt_corb(azalia_t *az)
 int
 azalia_init_corb(azalia_t *az)
 {
-	int entries, err, i;
+	int err, i;
 	uint16_t corbrp, corbwp;
-	uint8_t corbsize, cap, corbctl;
+	uint8_t corbctl;
 
 	err = azalia_halt_corb(az);
 	if (err)
 		return(err);
 
-	/* determine CORB size */
-	corbsize = AZ_READ_1(az, CORBSIZE);
-	cap = corbsize & HDA_CORBSIZE_CORBSZCAP_MASK;
-	corbsize &= ~HDA_CORBSIZE_CORBSIZE_MASK;
-	if (cap & HDA_CORBSIZE_CORBSZCAP_256) {
-		entries = 256;
-		corbsize |= HDA_CORBSIZE_CORBSIZE_256;
-	} else if (cap & HDA_CORBSIZE_CORBSZCAP_16) {
-		entries = 16;
-		corbsize |= HDA_CORBSIZE_CORBSIZE_16;
-	} else if (cap & HDA_CORBSIZE_CORBSZCAP_2) {
-		entries = 2;
-		corbsize |= HDA_CORBSIZE_CORBSIZE_2;
-	} else {
-		printf("%s: Invalid CORBSZCAP: 0x%2x\n", XNAME(az), cap);
-		return -1;
-	}
-
-	err = azalia_alloc_dmamem(az, entries * sizeof(corb_entry_t),
-	    128, &az->corb_dma);
+	err = azalia_alloc_dmamem(az,
+	    az->corb_entries * sizeof(corb_entry_t), 128,
+	    &az->corb_dma);
 	if (err) {
 		printf("%s: can't allocate CORB buffer\n", XNAME(az));
 		return err;
 	}
 	AZ_WRITE_4(az, CORBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->corb_dma));
 	AZ_WRITE_4(az, CORBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->corb_dma)));
-	AZ_WRITE_1(az, CORBSIZE, corbsize);
-	az->corb_size = entries;
-
+	AZ_WRITE_1(az, CORBSIZE, az->corbsize);
+ 
 	DPRINTF(("%s: CORB allocation succeeded.\n", __func__));
 
 	/* reset CORBRP */
@@ -877,7 +911,7 @@ azalia_init_corb(azalia_t *az)
 		return -1;
 	}
 	DPRINTF(("%s: CORBWP=%d; size=%d\n", __func__,
-		 AZ_READ_2(az, CORBRP) & HDA_CORBRP_CORBRP, az->corb_size));
+		 AZ_READ_2(az, CORBRP) & HDA_CORBRP_CORBRP, az->corb_entries));
 
 	/* clear CORBWP */
 	corbwp = AZ_READ_2(az, CORBWP);
@@ -936,42 +970,24 @@ azalia_halt_rirb(azalia_t *az)
 int
 azalia_init_rirb(azalia_t *az)
 {
-	int entries, err;
+	int err;
 	uint16_t rirbwp;
-	uint8_t rirbsize, cap, rirbctl;
+	uint8_t rirbctl;
 
 	err = azalia_halt_rirb(az);
 	if (err)
 		return(err);
 
-	/* determine RIRB size */
-	rirbsize = AZ_READ_1(az, RIRBSIZE);
-	cap = rirbsize & HDA_RIRBSIZE_RIRBSZCAP_MASK;
-	rirbsize &= ~HDA_RIRBSIZE_RIRBSIZE_MASK;
-	if (cap & HDA_RIRBSIZE_RIRBSZCAP_256) {
-		entries = 256;
-		rirbsize |= HDA_RIRBSIZE_RIRBSIZE_256;
-	} else if (cap & HDA_RIRBSIZE_RIRBSZCAP_16) {
-		entries = 16;
-		rirbsize |= HDA_RIRBSIZE_RIRBSIZE_16;
-	} else if (cap & HDA_RIRBSIZE_RIRBSZCAP_2) {
-		entries = 2;
-		rirbsize |= HDA_RIRBSIZE_RIRBSIZE_2;
-	} else {
-		printf("%s: Invalid RIRBSZCAP: 0x%2x\n", XNAME(az), cap);
-		return -1;
-	}
-
-	err = azalia_alloc_dmamem(az, entries * sizeof(rirb_entry_t),
-	    128, &az->rirb_dma);
+	err = azalia_alloc_dmamem(az,
+	    az->rirb_entries * sizeof(rirb_entry_t), 128,
+	    &az->rirb_dma);
 	if (err) {
 		printf("%s: can't allocate RIRB buffer\n", XNAME(az));
 		return err;
 	}
 	AZ_WRITE_4(az, RIRBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->rirb_dma));
 	AZ_WRITE_4(az, RIRBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->rirb_dma)));
-	AZ_WRITE_1(az, RIRBSIZE, rirbsize);
-	az->rirb_size = entries;
+	AZ_WRITE_1(az, RIRBSIZE, az->rirbsize);
 
 	DPRINTF(("%s: RIRB allocation succeeded.\n", __func__));
 
@@ -994,7 +1010,8 @@ azalia_init_rirb(azalia_t *az)
 
 	/* clear the read pointer */
 	az->rirb_rp = AZ_READ_2(az, RIRBWP) & HDA_RIRBWP_RIRBWP;
-	DPRINTF(("%s: RIRBRP=%d, size=%d\n", __func__, az->rirb_rp, az->rirb_size));
+	DPRINTF(("%s: RIRBRP=%d, size=%d\n", __func__, az->rirb_rp,
+	    az->rirb_entries));
 
 	AZ_WRITE_2(az, RINTCNT, 1);
 
@@ -1068,7 +1085,7 @@ azalia_set_command(azalia_t *az, int caddr, nid_t nid, uint32_t control,
 	corbwp = AZ_READ_2(az, CORBWP);
 	wp = corbwp & HDA_CORBWP_CORBWP;
 	corb = (corb_entry_t*)az->corb_dma.addr;
-	if (++wp >= az->corb_size)
+	if (++wp >= az->corb_entries)
 		wp = 0;
 	corb[wp] = verb;
 
@@ -1105,7 +1122,7 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 			printf("%s: RIRB time out\n", XNAME(az));
 			return(ETIMEDOUT);
 		}
-		if (++az->rirb_rp >= az->rirb_size)
+		if (++az->rirb_rp >= az->rirb_entries)
 			az->rirb_rp = 0;
 		if (rirb[az->rirb_rp].resp_ex & RIRB_RESP_UNSOL) {
 			az->unsolq[az->unsolq_wp].resp = rirb[az->rirb_rp].resp;
@@ -1153,7 +1170,7 @@ azalia_rirb_intr(azalia_t *az)
 	wp = AZ_READ_2(az, RIRBWP) & HDA_RIRBWP_RIRBWP;
 	rirb = (rirb_entry_t*)az->rirb_dma.addr;
 	while (az->rirb_rp != wp) {
-		if (++az->rirb_rp >= az->rirb_size)
+		if (++az->rirb_rp >= az->rirb_entries)
 			az->rirb_rp = 0;
 		if (rirb[az->rirb_rp].resp_ex & RIRB_RESP_UNSOL) {
 			az->unsolq[az->unsolq_wp].resp = rirb[az->rirb_rp].resp;
