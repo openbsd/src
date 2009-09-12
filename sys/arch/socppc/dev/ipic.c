@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.9 2009/09/06 20:09:34 kettenis Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.10 2009/09/12 21:38:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -115,6 +115,8 @@ ipic_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	ipic_sc = sc;
+
 	/*
 	 * Deal with pre-established interrupts.
 	 */
@@ -141,7 +143,6 @@ ipic_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	ipic_sc = sc;
 	printf("\n");
 }
 
