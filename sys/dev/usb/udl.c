@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.36 2009/09/12 12:27:09 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.37 2009/09/12 21:52:25 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1834,7 +1834,7 @@ udl_fb_line_write_comp(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
 		else
 			block = width;
 
-		r = (sc->udl_fb_off_write)(sc, rgb16, off, block);
+		r = udl_fb_off_write_comp(sc, rgb16, off, block);
 		if (r != 0)
 			return (r);
 
