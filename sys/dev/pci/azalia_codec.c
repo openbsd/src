@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.136 2009/09/09 02:22:21 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.137 2009/09/12 09:34:43 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -246,7 +246,8 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x83847616:
 		this->name = "Sigmatel STAC9228X";
-		if (this->subid == 0x02271028) {	/* DELL_V1400 */
+		if (this->subid == 0x02271028 ||	/* DELL_V1400 */
+		    this->subid == 0x01f31028) {	/* DELL_I1400 */
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_2;
 	 	}
 		break;
