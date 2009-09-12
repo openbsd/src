@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.116 2009/09/12 09:01:19 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.117 2009/09/12 09:22:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -836,8 +836,9 @@ session_read_data(struct session *s, char *line, size_t nread)
 	if (s->s_msg.status & (S_MESSAGE_PERMFAILURE|S_MESSAGE_TEMPFAILURE))
 		return;
 
-	if (nread > SMTP_TEXTLINE_MAX) {
+	if (nread > SMTP_DATALINE_MAX) {
 		s->s_msg.status |= S_MESSAGE_PERMFAILURE;
+		s->s_env->stats->smtp.datalinetoolong++;
 		return;
 	}
 
@@ -849,7 +850,7 @@ session_read_data(struct session *s, char *line, size_t nread)
 
 	len = strlen(line);
 
-	if (fprintf(s->datafp, "%s\n", line) != len + 1) {
+	if (fprintf(s->datafp, "%s\n", line) != (int)len + 1) {
 		s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 		return;
 	}
@@ -1004,7 +1005,7 @@ session_readline(struct session *s, size_t *nr)
 	if (line == NULL) {
 		if (EVBUFFER_LENGTH(s->s_bev->input) > SMTP_ANYLINE_MAX) {
 			session_respond(s, "500 Line too long");
-			s->s_env->stats->smtp.linetoolong++;
+			s->s_env->stats->smtp.cmdlinetoolong++;
 			s->s_flags |= F_QUIT;
 		}
 		return NULL;

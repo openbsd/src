@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.139 2009/09/04 11:49:23 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.140 2009/09/12 09:22:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -88,9 +88,9 @@
 #define FAST_RESPONSES		2
 
 /* rfc5321 limits */
-#define	SMTP_TEXTLINE_MAX	1000
+#define	SMTP_DATALINE_MAX	1000
 #define	SMTP_CMDLINE_MAX	512
-#define	SMTP_ANYLINE_MAX	SMTP_TEXTLINE_MAX
+#define	SMTP_ANYLINE_MAX	SMTP_DATALINE_MAX
 
 #define F_STARTTLS		 0x01
 #define F_SMTPS			 0x02
@@ -664,7 +664,8 @@ struct s_session {
 	size_t		write_eof;
 	size_t		toofast;
 	size_t		tempfail;
-	size_t		linetoolong;
+	size_t		cmdlinetoolong;
+	size_t		datalinetoolong;
 	size_t		delays;
 };
 
