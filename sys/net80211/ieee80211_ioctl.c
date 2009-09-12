@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.32 2009/06/06 07:57:27 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.33 2009/09/12 19:37:27 miod Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -584,7 +584,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;
-		copyout(&ic->ic_stats, ifr->ifr_data, sizeof (ic->ic_stats));
+		error = copyout(&ic->ic_stats, ifr->ifr_data,
+		    sizeof(ic->ic_stats));
 #if 0
 		if (cmd == SIOCG80211ZSTATS)
 			memset(&ic->ic_stats, 0, sizeof(ic->ic_stats));
