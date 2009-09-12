@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 2009/02/18 12:29:18 jasper Exp $
+#	$OpenBSD: RAMDISK,v 1.7 2009/09/12 22:03:11 kettenis Exp $
 
 machine		socppc powerpc
 
@@ -23,30 +23,37 @@ mainbus0	at root
 cpu0		at mainbus0
 obio0		at mainbus0
 
+# On-board CF
+wdc0		at mainbus0
+wdc1		at mainbus0
+wd*		at wdc? flags 0x0000
+
 # On-board IPIC
-ipic0		at obio? addr 0x00700
+ipic0		at obio?
 
 # On-board I2C
-sociic0		at obio? addr 0x03000 ivec 14
-sociic1		at obio? addr 0x03100 ivec 15
+sociic0		at obio?
+sociic1		at obio?
 iic*		at sociic?
 ricohrtc0	at iic? addr 0x32	# Ricoh RTC
 fintek0		at iic?	flags 0x0001	# temp/fan controller
 
 # On-board DUART
-com0		at obio? addr 0x04500 ivec 9
-com1		at obio? addr 0x04600 ivec 10
+com0		at obio?
+com1		at obio?
 
 # On-board PCI
-socpcic0	at obio? addr 0x08300
-socpcic1	at obio? addr 0x08380
+socpcic*	at mainbus?
+socpcic*	at obio?
 pci*		at socpcic?
 
 pciide*		at pci?
 wd*		at pciide? flags 0x0000
 
+vge*		at pci?
+
 # On-board USB
-ehci0		at obio? addr 0x22100 ivec 39
+ehci0		at obio?
 usb*		at ehci?
 
 # USB devices
@@ -61,11 +68,12 @@ zyd*	at uhub?		# Zydas ZD1211
 sd*		at scsibus?
 
 # On-board TSEC
-tsec0		at obio? addr 0x24000 ivec 32 phy 17
-tsec1		at obio? addr 0x25000 ivec 35 phy 5
+tsec0		at obio?
+tsec1		at obio?
 
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
 eephy*		at mii?		# Marvell 88E1000 series PHY
+ciphy*		at mii?		# Cicada CS8201 10/100/1000 copper PHY
 gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
 ukphy*		at mii?		# Generic unknown PHY
 
