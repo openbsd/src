@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.16 2009/08/23 17:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.17 2009/09/12 09:54:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -164,6 +164,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 			fatal("tcgetattr failed");
 	} else
 		memcpy(tio.c_cc, ttydefchars, sizeof tio.c_cc);
+	tio.c_cc[VERASE] = '\177';
 	tio.c_iflag = TTYDEF_IFLAG;
 	tio.c_oflag = TTYDEF_OFLAG;
 	tio.c_lflag = TTYDEF_LFLAG;
