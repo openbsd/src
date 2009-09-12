@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.140 2009/09/12 09:22:33 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.141 2009/09/12 09:38:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -664,6 +664,7 @@ struct s_session {
 	size_t		write_eof;
 	size_t		toofast;
 	size_t		tempfail;
+	size_t		linetoolong;
 	size_t		cmdlinetoolong;
 	size_t		datalinetoolong;
 	size_t		delays;

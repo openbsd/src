@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.117 2009/09/12 09:22:33 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.118 2009/09/12 09:38:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -526,6 +526,7 @@ session_command(struct session *s, char *cmd, size_t nr)
 
 	if (nr > SMTP_CMDLINE_MAX) {
 		session_respond(s, "500 Line too long");
+		s->s_env->stats->smtp.cmdlinetoolong++;
 		return;
 	}
 
@@ -1005,7 +1006,7 @@ session_readline(struct session *s, size_t *nr)
 	if (line == NULL) {
 		if (EVBUFFER_LENGTH(s->s_bev->input) > SMTP_ANYLINE_MAX) {
 			session_respond(s, "500 Line too long");
-			s->s_env->stats->smtp.cmdlinetoolong++;
+			s->s_env->stats->smtp.linetoolong++;
 			s->s_flags |= F_QUIT;
 		}
 		return NULL;
