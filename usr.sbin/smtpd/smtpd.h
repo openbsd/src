@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.141 2009/09/12 09:38:45 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.142 2009/09/12 12:24:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -87,10 +87,8 @@
 /* how many responses per state are undelayed */
 #define FAST_RESPONSES		2
 
-/* rfc5321 limits */
-#define	SMTP_DATALINE_MAX	1000
-#define	SMTP_CMDLINE_MAX	512
-#define	SMTP_ANYLINE_MAX	SMTP_DATALINE_MAX
+/* max len of any smtp line */
+#define	SMTP_LINE_MAX		16384
 
 #define F_STARTTLS		 0x01
 #define F_SMTPS			 0x02
@@ -665,8 +663,6 @@ struct s_session {
 	size_t		toofast;
 	size_t		tempfail;
 	size_t		linetoolong;
-	size_t		cmdlinetoolong;
-	size_t		datalinetoolong;
 	size_t		delays;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.119 2009/09/12 09:50:31 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.120 2009/09/12 12:24:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -65,11 +65,11 @@ void		 session_rfc4954_auth_plain(struct session *, char *);
 void		 session_rfc4954_auth_login(struct session *, char *);
 
 void		 session_read(struct bufferevent *, void *);
-void		 session_read_data(struct session *, char *, size_t);
+void		 session_read_data(struct session *, char *);
 void		 session_write(struct bufferevent *, void *);
 void		 session_error(struct bufferevent *, short event, void *);
-void		 session_command(struct session *, char *, size_t);
-char		*session_readline(struct session *, size_t *);
+void		 session_command(struct session *, char *);
+char		*session_readline(struct session *);
 void		 session_respond_delayed(int, short, void *);
 int		 session_set_path(struct path *, char *);
 void		 session_imsg(struct session *, enum smtp_proc_type,
@@ -519,16 +519,10 @@ session_rfc5321_help_handler(struct session *s, char *args)
 }
 
 void
-session_command(struct session *s, char *cmd, size_t nr)
+session_command(struct session *s, char *cmd)
 {
 	char		*ep, *args;
 	unsigned int	 i;
-
-	if (nr > SMTP_CMDLINE_MAX) {
-		session_respond(s, "500 Line too long");
-		s->s_env->stats->smtp.cmdlinetoolong++;
-		return;
-	}
 
 	if ((ep = strchr(cmd, ':')) == NULL)
 		ep = strchr(cmd, ' ');
@@ -756,10 +750,9 @@ session_read(struct bufferevent *bev, void *p)
 {
 	struct session	*s = p;
 	char		*line;
-	size_t		 nr;
 
 	for (;;) {
-		line = session_readline(s, &nr);
+		line = session_readline(s);
 		if (line == NULL)
 			return;
 
@@ -783,11 +776,11 @@ session_read(struct bufferevent *bev, void *p)
 		case S_RCPT:
 			if (s->s_msg.status & S_MESSAGE_TEMPFAILURE)
 				goto tempfail;
-			session_command(s, line, nr);
+			session_command(s, line);
 			break;
 
 		case S_DATACONTENT:
-			session_read_data(s, line, nr);
+			session_read_data(s, line);
 			break;
 
 		default:
@@ -806,7 +799,7 @@ tempfail:
 }
 
 void
-session_read_data(struct session *s, char *line, size_t nread)
+session_read_data(struct session *s, char *line)
 {
 	size_t len;
 	size_t i;
@@ -836,12 +829,6 @@ session_read_data(struct session *s, char *line, size_t nread)
 	/* Don't waste resources on message if it's going to bin anyway. */
 	if (s->s_msg.status & (S_MESSAGE_PERMFAILURE|S_MESSAGE_TEMPFAILURE))
 		return;
-
-	if (nread > SMTP_DATALINE_MAX) {
-		s->s_msg.status |= S_MESSAGE_PERMFAILURE;
-		s->s_env->stats->smtp.datalinetoolong++;
-		return;
-	}
 
 	/* "If the first character is a period and there are other characters
 	 *  on the line, the first character is deleted." [4.5.2]
@@ -997,23 +984,32 @@ session_destroy(struct session *s)
 }
 
 char *
-session_readline(struct session *s, size_t *nr)
+session_readline(struct session *s)
 {
 	char	*line, *line2;
+	size_t	 nr;
 
-	*nr = 0;
+	nr = EVBUFFER_LENGTH(s->s_bev->input);
 	line = evbuffer_readline(s->s_bev->input);
 	if (line == NULL) {
-		if (EVBUFFER_LENGTH(s->s_bev->input) > SMTP_ANYLINE_MAX) {
+		if (EVBUFFER_LENGTH(s->s_bev->input) > SMTP_LINE_MAX) {
 			session_respond(s, "500 Line too long");
 			s->s_env->stats->smtp.linetoolong++;
 			s->s_flags |= F_QUIT;
 		}
 		return NULL;
 	}
+	nr -= EVBUFFER_LENGTH(s->s_bev->input);
 
 	if (s->s_flags & F_WRITEONLY)
 		fatalx("session_readline: corrupt session");
+
+	if (nr > SMTP_LINE_MAX) {
+		session_respond(s, "500 Line too long");
+		s->s_env->stats->smtp.linetoolong++;
+		s->s_flags |= F_QUIT;
+		return NULL;
+	}
 	
 	if ((s->s_state != S_DATACONTENT || strcmp(line, ".") == 0) &&
 	    (line2 = evbuffer_readline(s->s_bev->input)) != NULL) {
@@ -1026,7 +1022,6 @@ session_readline(struct session *s, size_t *nr)
 		return NULL;
 	}
 
-	*nr = strlen(line);
 	return line;
 }
 
