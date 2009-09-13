@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.64 2009/02/16 21:19:06 miod Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.65 2009/09/13 19:21:42 miod Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -880,6 +880,7 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 	struct ata_xfer		*xa;
 	struct ata_fis_h2d	*fis;
 	void			*buf;
+	int			 rc = 0;
 
 	xa = ata_get_xfer(ap);
 	if (xa == NULL)
@@ -930,7 +931,7 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 	case ATA_S_COMPLETE:
 		atareq->retsts = ATACMD_OK;
 		if (atareq->flags & ATACMD_READ)
-			copyout(buf, atareq->databuf, atareq->datalen);
+			rc = copyout(buf, atareq->databuf, atareq->datalen);
 		break;
 	case ATA_S_ERROR:
 		atareq->retsts = ATACMD_ERROR;
@@ -947,7 +948,7 @@ atascsi_ioctl_cmd(struct atascsi *as, struct ata_port *ap, atareq_t *atareq)
 
 	ata_put_xfer(xa);
 
-	return (0);
+	return (rc);
 }
 
 void
