@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.38 2009/09/13 08:11:52 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.39 2009/09/13 08:59:09 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -357,7 +357,8 @@ udl_attach_hook(void *arg)
 		sc->udl_fb_block_copy = udl_fb_block_copy_comp;
 	}
 #ifdef UDL_DEBUG
-	udl_init_test(sc);
+	if (udl_debug >= 4)
+		udl_init_test(sc);
 #endif
 	/*
 	 * From this point on we do asynchronous xfers.
@@ -738,7 +739,7 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	uint32_t x, y, fg, bg;
 	uint32_t save_offset;
 
-	DPRINTF(2, "%s: %s\n", DN(sc), FUNC);
+	DPRINTF(4, "%s: %s\n", DN(sc), FUNC);
 
 	save_offset = udl_cmd_get_offset(sc);
 
@@ -1486,7 +1487,7 @@ udl_cmd_send_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	DPRINTF(2, "%s: %s: sent %d bytes\n", DN(sc), FUNC, len);
+	DPRINTF(3, "%s: %s: sent %d bytes\n", DN(sc), FUNC, len);
 skip:
 	/* free xfer buffer */
 	cx->busy = 0;
