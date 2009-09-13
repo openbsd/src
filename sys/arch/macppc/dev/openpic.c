@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.55 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.56 2009/09/13 10:16:37 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -487,6 +487,8 @@ openpic_do_pending_int()
 		/* this still doesn't handle the interrupts in priority order */
 		for (pri = IPL_HIGH; pri >= IPL_NONE; pri--) {
 			pripending = hwpend & ~imask[pri];
+			if (pripending == 0)
+				continue;
 			irq = 31 - cntlzw(pripending);
 			ci->ci_ipending &= ~(1L << irq);
 			ci->ci_cpl = imask[o_intrmaxlvl[o_hwirq[irq]]];
