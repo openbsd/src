@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.37 2009/09/12 21:52:25 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.38 2009/09/13 08:11:52 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -675,7 +675,7 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	cx = num * sc->sc_ri.ri_font->fontwidth;
 	cy = sc->sc_ri.ri_font->fontheight;
 
-	r = udl_fb_block_write(sc, bgc, x, y, cx, cy);
+	r = (sc->udl_fb_block_write)(sc, bgc, x, y, cx, cy);
 	if (r != 0)
 		goto fail;
 
@@ -714,7 +714,7 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 	cx = sc->sc_ri.ri_emuwidth;
 	cy = num * sc->sc_ri.ri_font->fontheight;
 
-	r = udl_fb_block_write(sc, bgc, x, y, cx, cy);
+	r = (sc->udl_fb_block_write)(sc, bgc, x, y, cx, cy);
 	if (r != 0)
 		goto fail;
 
