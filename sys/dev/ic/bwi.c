@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.90 2009/08/02 19:33:01 blambert Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.91 2009/09/13 14:42:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -8849,40 +8849,11 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 	}
 
 	if (error) {	/* error == EFBIG */
-		struct mbuf *m_new;
-
-		error = 0;
-
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			m_freem(m);
-			error = ENOBUFS;
+		if (m_defrag(m, M_DONTWAIT)) {
 			printf("%s: can't defrag TX buffer\n",
 			    sc->sc_dev.dv_xname);
 			goto back;
 		}
-
-		M_DUP_PKTHDR(m_new, m);
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(m_new, M_DONTWAIT);
-			if (!(m_new->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m_new);
-				error = ENOBUFS;
-			}
-		}
-		
-		if (error) {
-			printf("%s: can't defrag TX buffer\n",
-			    sc->sc_dev.dv_xname);
-			goto back;
-		}
-
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m_new, caddr_t));
-		m_freem(m);
-		m_new->m_len = m_new->m_pkthdr.len;
-		m = m_new;
-		
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, tb->tb_dmap, m,
 		    BUS_DMA_NOWAIT);
 		if (error) {

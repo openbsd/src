@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.18 2009/08/10 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.19 2009/09/13 14:42:52 krw Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1823,40 +1823,13 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 		goto back;
 	}
 	if (error) {	/* error == EFBIG */
-		struct mbuf *m_new;
-
-		error = 0;
-
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
+		if (m_defrag(m, M_DONTWAIT)) {
 			m_freem(m);
 			printf("%s: can't defrag TX mbuf\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOBUFS;
 			goto back;
 		}
-
-		M_DUP_PKTHDR(m_new, m);
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(m_new, M_DONTWAIT);
-			if (!(m_new->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m_new);
-				error = ENOBUFS;
-			}
-		}
-
-		if (error) {
-			printf("%s: can't defrag TX buffer\n",
-			    sc->sc_dev.dv_xname);
-			goto back;
-		}
-
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m_new, caddr_t));
-		m_freem(m);
-		m_new->m_len = m_new->m_pkthdr.len;
-		*m0 = m = m_new;
-
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
 					     BUS_DMA_NOWAIT);
 		if (error || map->dm_nsegs == 0) {

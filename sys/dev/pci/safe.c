@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.25 2009/06/25 10:14:48 jsg Exp $	*/
+/*	$OpenBSD: safe.c,v 1.26 2009/09/13 14:42:52 krw Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -806,8 +806,13 @@ safe_process(struct cryptop *crp)
 					err = sc->sc_nqchip ? ERESTART : ENOMEM;
 					goto errout;
 				}
-				if (len == MHLEN)
-					M_DUP_PKTHDR(m, re->re_src_m);
+				if (len == MHLEN) {
+					err = m_dup_pkthdr(m, re->re_src_m);
+					if (err) {
+						m_free(m);
+						goto errout;
+					}
+				}
 				if (totlen >= MINCLSIZE) {
 					MCLGET(m, M_DONTWAIT);
 					if ((m->m_flags & M_EXT) == 0) {

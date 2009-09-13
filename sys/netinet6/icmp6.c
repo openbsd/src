@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.106 2009/07/26 12:59:17 thib Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.107 2009/09/13 14:42:52 krw Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -742,7 +742,10 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 			bzero(p, 4);
 			bcopy(hostname, p + 4, maxhlen); /* meaningless TTL */
 			noff = sizeof(struct ip6_hdr);
-			M_DUP_PKTHDR(n, m); /* just for rcvif */
+			if (m_dup_pkthdr(n, m)) { /* just for rcvif */
+				m_freem(n);
+				break;
+			}
 			n->m_pkthdr.len = n->m_len = sizeof(struct ip6_hdr) +
 				sizeof(struct icmp6_hdr) + 4 + maxhlen;
 			nicmp6->icmp6_type = ICMP6_WRUREPLY;
@@ -1383,7 +1386,10 @@ ni6_input(struct mbuf *m, int off)
 		m_freem(m);
 		return (NULL);
 	}
-	M_DUP_PKTHDR(n, m); /* just for rcvif */
+
+	if (m_dup_pkthdr(n, m)) /* just for rcvif */
+		goto bad;
+
 	if (replylen > MHLEN) {
 		if (replylen > MCLBYTES) {
 			/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.135 2009/09/08 17:52:18 michele Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.136 2009/09/13 14:42:52 krw Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -290,20 +290,6 @@ struct mbuf {
 } while (/* CONSTCOND */ 0)
 
 /*
- * Duplicate mbuf pkthdr from from to to.
- * from must have M_PKTHDR set, and to must be empty.
- */
-#define M_DUP_PKTHDR(to, from) do {					\
-	(to)->m_flags = ((to)->m_flags & (M_EXT | M_CLUSTER));		\
-	(to)->m_flags |= (from)->m_flags & M_COPYFLAGS;			\
-	(to)->m_pkthdr = (from)->m_pkthdr;				\
-	SLIST_INIT(&(to)->m_pkthdr.tags);				\
-	m_tag_copy_chain((to), (from));					\
-	if (((to)->m_flags & M_EXT) == 0)				\
-		(to)->m_data = (to)->m_pktdat;				\
-} while (/* CONSTCOND */ 0)
-
-/*
  * MOVE mbuf pkthdr from from to to.
  * from must have M_PKTHDR set, and to must be empty.
  */
@@ -433,6 +419,7 @@ struct mbuf *m_devget(char *, int, int, struct ifnet *,
 void	m_zero(struct mbuf *);
 int	m_apply(struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
+int	m_dup_pkthdr(struct mbuf *, struct mbuf *);
 
 /* Packet tag routines */
 struct m_tag *m_tag_get(int, int, int);

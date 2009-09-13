@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.94 2009/07/28 11:39:52 blambert Exp $ */
+/*	$OpenBSD: acx.c,v 1.95 2009/09/13 14:42:52 krw Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2222,38 +2222,10 @@ acx_encap(struct acx_softc *sc, struct acx_txbuf *txbuf, struct mbuf *m,
 
 	if (error) {	/* error == EFBIG */
 		/* too many fragments, linearize */
-		struct mbuf *mnew;
-
-		error = 0;
-
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
-			m_freem(m);
-			error = ENOBUFS;
+		if (m_defrag(m, M_DONTWAIT)) {
 			printf("%s: can't defrag tx mbuf\n", ifp->if_xname);
 			goto back;
 		}
-
-		M_DUP_PKTHDR(mnew, m);
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(mnew, M_DONTWAIT);
-			if (!(mnew->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(mnew);
-				error = ENOBUFS;
-			}
-		}
-
-		if (error) {
-			printf("%s: can't defrag tx mbuf\n", ifp->if_xname);
-			goto back;
-		}
-
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
-		m_freem(m);
-		mnew->m_len = mnew->m_pkthdr.len;
-		m = mnew;
-
 		error = bus_dmamap_load_mbuf(sc->sc_dmat,
 		    txbuf->tb_mbuf_dmamap, m, BUS_DMA_NOWAIT);
 		if (error) {

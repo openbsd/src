@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.82 2009/08/10 20:29:54 deraadt Exp $  */
+/*      $OpenBSD: ath.c,v 1.83 2009/09/13 14:42:52 krw Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2135,7 +2135,6 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 	int i, error, iswep, hdrlen, pktlen, len, s;
 	u_int8_t rix, cix, txrate, ctsrate;
 	struct ath_desc *ds;
-	struct mbuf *m;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k;
 	u_int32_t iv;
@@ -2238,25 +2237,11 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 	 */
 	if (error == EFBIG) {		/* too many desc's, linearize */
 		sc->sc_stats.ast_tx_linear++;
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
-			sc->sc_stats.ast_tx_nombuf++;
-			m_freem(m0);
-			return ENOMEM;
-		}
-
-		M_DUP_PKTHDR(m, m0);
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
+		if (m_defrag(m0, M_DONTWAIT)) {
 			sc->sc_stats.ast_tx_nomcl++;
 			m_freem(m0);
-			m_free(m);
 			return ENOMEM;
 		}
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
-		m_freem(m0);
-		m->m_len = m->m_pkthdr.len;
-		m0 = m;
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_dmamap, m0,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {

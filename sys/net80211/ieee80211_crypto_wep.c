@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.5 2008/08/12 16:45:44 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.6 2009/09/13 14:42:52 krw Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -95,7 +95,10 @@ ieee80211_wep_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	MGET(n0, M_DONTWAIT, m0->m_type);
 	if (n0 == NULL)
 		goto nospace;
-	M_DUP_PKTHDR(n0, m0);
+	if (m_dup_pkthdr(n0, m0)) {
+		m_free(n0);
+		goto nospace;
+	}
 	n0->m_pkthdr.len += IEEE80211_WEP_HDRLEN;
 	n0->m_len = MHLEN;
 	if (n0->m_pkthdr.len >= MINCLSIZE - IEEE80211_WEP_CRCLEN) {
@@ -227,7 +230,10 @@ ieee80211_wep_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	MGET(n0, M_DONTWAIT, m0->m_type);
 	if (n0 == NULL)
 		goto nospace;
-	M_DUP_PKTHDR(n0, m0);
+	if (m_dup_pkthdr(n0, m0)) {
+		m_free(n0);
+		goto nospace;
+	}
 	n0->m_pkthdr.len -= IEEE80211_WEP_TOTLEN;
 	n0->m_len = MHLEN;
 	if (n0->m_pkthdr.len >= MINCLSIZE) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.144 2009/09/13 14:42:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1159,8 +1159,13 @@ ubsec_process(struct cryptop *crp)
 					err = ENOMEM;
 					goto errout;
 				}
-				if (len == MHLEN)
-					M_DUP_PKTHDR(m, q->q_src_m);
+				if (len == MHLEN) {
+					err = m_dup_pkthdr(m, q->q_src_m);
+					if (err) {
+						m_freem(m);
+						goto errout;
+					}
+				}
 				if (totlen >= MINCLSIZE) {
 					MCLGET(m, M_DONTWAIT);
 					if (m->m_flags & M_EXT)

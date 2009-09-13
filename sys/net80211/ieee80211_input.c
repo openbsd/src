@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.111 2009/03/26 20:34:54 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.112 2009/09/13 14:42:52 krw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -861,7 +861,11 @@ ieee80211_align_mbuf(struct mbuf *m)
 				m_freem(m);
 				return NULL;
 			}
-			M_DUP_PKTHDR(n, m);
+			if (m_dup_pkthdr(n, m)) {
+				m_free(n);
+				m_freem(m);
+				return (NULL);
+			}
 			n->m_len = MHLEN;
 		} else {
 			MGET(n, M_DONTWAIT, MT_DATA);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.133 2009/08/12 21:44:49 henning Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.134 2009/09/13 14:42:52 krw Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -629,7 +629,8 @@ m_copym0(struct mbuf *m, int off, int len, int wait, int deep)
 		if (n == NULL)
 			goto nospace;
 		if (copyhdr) {
-			M_DUP_PKTHDR(n, m);
+			if (m_dup_pkthdr(n, m))
+				goto nospace;
 			if (len != M_COPYALL)
 				n->m_pkthdr.len = len;
 			copyhdr = 0;
@@ -1124,7 +1125,10 @@ m_split(struct mbuf *m0, int len0, int wait)
 		MGETHDR(n, wait, m0->m_type);
 		if (n == NULL)
 			return (NULL);
-		M_DUP_PKTHDR(n, m0);
+		if (m_dup_pkthdr(n, m0)) {
+			m_freem(n);
+			return (NULL);
+		}
 		n->m_pkthdr.len -= len0;
 		olen = m0->m_pkthdr.len;
 		m0->m_pkthdr.len = len0;
@@ -1314,4 +1318,29 @@ m_trailingspace(struct mbuf *m)
 	return (m->m_flags & M_EXT ? m->m_ext.ext_buf +
 	    m->m_ext.ext_size - (m->m_data + m->m_len) :
 	    &m->m_dat[MLEN] - (m->m_data + m->m_len));
+}
+
+
+/*
+ * Duplicate mbuf pkthdr from from to to.
+ * from must have M_PKTHDR set, and to must be empty.
+ */
+int
+m_dup_pkthdr(struct mbuf *to, struct mbuf *from)
+{
+	KASSERT(from->m_flags & M_PKTHDR);
+
+	to->m_flags = (to->m_flags & (M_EXT | M_CLUSTER));
+	to->m_flags |= (from->m_flags & M_COPYFLAGS);
+	to->m_pkthdr = from->m_pkthdr;
+
+	SLIST_INIT(&to->m_pkthdr.tags);
+
+	if (m_tag_copy_chain(to, from))
+		return (ENOMEM);
+
+	if ((to->m_flags & M_EXT) == 0)
+		to->m_data = to->m_pktdat;
+
+	return (0);
 }
