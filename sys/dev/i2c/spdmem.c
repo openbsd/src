@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.32 2009/05/23 09:14:39 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.33 2009/09/13 23:36:10 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -657,9 +657,6 @@ spdmem_fbdimm_decode(struct spdmem_softc *sc, struct spdmem *s)
 		printf(" %dMB", dimm_size);
 	else
 		printf(" %dGB", dimm_size / 1024);
-
-	if (s->sm_data[SPDMEM_FBDIMM_PROTO] & SPDMEM_FBDIMM_PROTO_ECC)
-		printf(" ECC");
 
 	dividend = s->sm_data[SPDMEM_FBDIMM_MTB_DIVIDEND];
 	divisor = s->sm_data[SPDMEM_FBDIMM_MTB_DIVISOR];
