@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.40 2009/09/13 10:40:08 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.41 2009/09/13 18:16:15 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1429,8 +1429,8 @@ udl_cmd_send_async(struct udl_softc *sc)
 			break;
 	}
 	if (i == UDL_CMD_XFER_COUNT) {
-		/* XXX this shouldn't happen */
-		panic("udl_cmd_send_async: buffer full");
+		/* this shouldn't happen */
+		return (USBD_IN_USE);
 	}
 	cx = &sc->sc_cmd_xfer[i];
 
