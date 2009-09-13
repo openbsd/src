@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.39 2009/09/13 08:59:09 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.40 2009/09/13 10:40:08 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -114,8 +114,8 @@ int		udl_cmd_insert_buf_comp(struct udl_softc *, uint8_t *,
 int		udl_cmd_insert_head_comp(struct udl_softc *, uint32_t);
 int		udl_cmd_insert_check(struct udl_softc *, int);
 void		udl_cmd_set_xfer(struct udl_softc *, int);
-uint32_t	udl_cmd_get_offset(struct udl_softc *);
-void		udl_cmd_set_offset(struct udl_softc *, uint32_t);
+void		udl_cmd_get_offset(struct udl_softc *);
+void		udl_cmd_set_offset(struct udl_softc *);
 void		udl_cmd_write_reg_1(struct udl_softc *, uint8_t, uint8_t);
 void		udl_cmd_write_reg_3(struct udl_softc *, uint8_t, uint32_t);
 usbd_status	udl_cmd_send(struct udl_softc *);
@@ -568,7 +568,6 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 	struct rasops_info *ri = cookie;
 	struct udl_softc *sc;
 	int sx, sy, dx, dy, cx, cy, r;
-	uint32_t save_offset;
 	usbd_status error;
 
 	sc = ri->ri_hw;
@@ -576,7 +575,7 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 	DPRINTF(2, "%s: %s: row=%d, src=%d, dst=%d, num=%d\n",
 	    DN(sc), FUNC, row, src, dst, num);
 
-	save_offset = udl_cmd_get_offset(sc);
+	udl_cmd_get_offset(sc);
 
 	sx = src * ri->ri_font->fontwidth;
 	sy = row * ri->ri_font->fontheight;
@@ -600,7 +599,7 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
 fail:
-		udl_cmd_set_offset(sc, save_offset);
+		udl_cmd_set_offset(sc);
 		return (EAGAIN);
 	}
 
@@ -613,7 +612,6 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 	struct rasops_info *ri = cookie;
 	struct udl_softc *sc;
 	int sy, dy, cx, cy, r;
-	uint32_t save_offset;
 	usbd_status error;
 
 	sc = ri->ri_hw;
@@ -621,7 +619,7 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 	DPRINTF(2, "%s: %s: src=%d, dst=%d, num=%d\n",
 	    DN(sc), FUNC, src, dst, num);
 
-	save_offset = udl_cmd_get_offset(sc);
+	udl_cmd_get_offset(sc);
 
 	sy = src * sc->sc_ri.ri_font->fontheight;
 	dy = dst * sc->sc_ri.ri_font->fontheight;
@@ -643,7 +641,7 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
 fail:
-		udl_cmd_set_offset(sc, save_offset);
+		udl_cmd_set_offset(sc);
 		return (EAGAIN);
 	}
 
@@ -658,7 +656,6 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	uint16_t bgc;
 	int fg, bg;
 	int x, y, cx, cy, r;
-	uint32_t save_offset;
 	usbd_status error;
 
 	sc = ri->ri_hw;
@@ -666,7 +663,7 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	DPRINTF(2, "%s: %s: row=%d, col=%d, num=%d\n",
 	    DN(sc), FUNC, row, col, num);
 
-	save_offset = udl_cmd_get_offset(sc);
+	udl_cmd_get_offset(sc);
 
 	sc->sc_ri.ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	bgc = (uint16_t)sc->sc_ri.ri_devcmap[bg];
@@ -683,7 +680,7 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
 fail:
-		udl_cmd_set_offset(sc, save_offset);
+		udl_cmd_set_offset(sc);
 		return (EAGAIN);
 	}
 
@@ -698,14 +695,13 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 	uint16_t bgc;
 	int fg, bg;
 	int x, y, cx, cy, r;
-	uint32_t save_offset;
 	usbd_status error;
 
 	sc = ri->ri_hw;
 
 	DPRINTF(2, "%s: %s: row=%d, num=%d\n", DN(sc), FUNC, row, num);
 
-	save_offset = udl_cmd_get_offset(sc);
+	udl_cmd_get_offset(sc);
 
 	sc->sc_ri.ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	bgc = (uint16_t)sc->sc_ri.ri_devcmap[bg];
@@ -722,7 +718,7 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
 fail:
-		udl_cmd_set_offset(sc, save_offset);
+		udl_cmd_set_offset(sc);
 		return (EAGAIN);
 	}
 
@@ -737,11 +733,10 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	int r;
 	uint16_t fgc, bgc;
 	uint32_t x, y, fg, bg;
-	uint32_t save_offset;
 
 	DPRINTF(4, "%s: %s\n", DN(sc), FUNC);
 
-	save_offset = udl_cmd_get_offset(sc);
+	udl_cmd_get_offset(sc);
 
 	sc->sc_ri.ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
 	fgc = (uint16_t)sc->sc_ri.ri_devcmap[fg];
@@ -776,7 +771,7 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	return (0);
 
 fail:
-	udl_cmd_set_offset(sc, save_offset);
+	udl_cmd_set_offset(sc);
 	return (EAGAIN);
 }
 
@@ -786,7 +781,6 @@ udl_do_cursor(struct rasops_info *ri)
 	struct udl_softc *sc = ri->ri_hw;
 	int r;
 	uint32_t x, y;
-	uint32_t save_offset;
 	uint8_t save_cursor;
 	usbd_status error;
 
@@ -801,7 +795,7 @@ udl_do_cursor(struct rasops_info *ri)
 	DPRINTF(2, "%s: %s: ccol=%d, crow=%d\n",
 	    DN(sc), FUNC, ri->ri_ccol, ri->ri_crow);
 
-	save_offset = udl_cmd_get_offset(sc);
+	udl_cmd_get_offset(sc);
 	save_cursor = sc->sc_cursor_on;
 
 	x = ri->ri_ccol * ri->ri_font->fontwidth;
@@ -834,7 +828,7 @@ udl_do_cursor(struct rasops_info *ri)
 	error = udl_cmd_send_async(sc);
 	if (error != USBD_NORMAL_COMPLETION) {
 fail:
-		udl_cmd_set_offset(sc, save_offset);
+		udl_cmd_set_offset(sc);
 		sc->sc_cursor_on = save_cursor;
 		return (EAGAIN);
 	}
@@ -1348,20 +1342,22 @@ udl_cmd_set_xfer(struct udl_softc *sc, int xfer_method)
 	cb->xfer_method = xfer_method;
 }
 
-uint32_t
+void
 udl_cmd_get_offset(struct udl_softc *sc)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
-	return (cb->off);
+	cb->off_save = cb->off;
+	cb->compblock_save = cb->compblock;
 }
 
 void
-udl_cmd_set_offset(struct udl_softc *sc, uint32_t offset)
+udl_cmd_set_offset(struct udl_softc *sc)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
-	cb->off = offset;
+	cb->off = cb->off_save;
+	cb->compblock = cb->compblock_save;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.7 2009/09/11 20:12:51 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.8 2009/09/13 10:40:08 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -40,7 +40,9 @@ struct udl_cmd_buf {
 #define UDL_CMD_XFER_ASYNC	 1
 	uint8_t			 xfer_method;
 	uint16_t		 compblock;
+	uint16_t		 compblock_save;
 	uint32_t		 off;
+	uint32_t		 off_save;
 	uint8_t			*buf;
 };
 
