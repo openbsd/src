@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.108 2009/08/10 11:22:10 deraadt Exp $	*/
+/*	$OpenBSD: if.h,v 1.109 2009/09/14 11:42:52 claudio Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -161,12 +161,53 @@ struct	ifqueue {
 /*
  * Values for if_link_state.
  */
-#define	LINK_STATE_UNKNOWN	0	/* link invalid/unknown */
-#define	LINK_STATE_DOWN		1	/* link is down */
-#define	LINK_STATE_UP		2	/* link is up */
-#define LINK_STATE_HALF_DUPLEX	3	/* link is up and half duplex */
-#define LINK_STATE_FULL_DUPLEX	4	/* link is up and full duplex */
+#define LINK_STATE_UNKNOWN	0	/* link unknown */
+#define LINK_STATE_INVALID	1	/* link invalid */
+#define LINK_STATE_DOWN		2	/* link is down */
+#define LINK_STATE_KALIVE_DOWN	3	/* keepalive reports down */
+#define LINK_STATE_UP		4	/* link is up */
+#define LINK_STATE_HALF_DUPLEX	5	/* link is up and half duplex */
+#define LINK_STATE_FULL_DUPLEX	6	/* link is up and full duplex */
+
 #define LINK_STATE_IS_UP(_s)	((_s) >= LINK_STATE_UP)
+
+/*
+ * Status bit descriptions for the various interface types.
+ */
+struct if_status_description {
+	u_char	ifs_type;
+	u_char	ifs_state;
+	const char *ifs_string;
+};
+
+#define LINK_STATE_DESC_MATCH(_ifs, _t, _s)				\
+	(((_ifs)->ifs_type == (_t) || (_ifs)->ifs_type == 0) &&		\
+	    (_ifs)->ifs_state == (_s))
+		
+	
+
+#define LINK_STATE_DESCRIPTIONS {					\
+	{ IFT_ETHER, LINK_STATE_DOWN, "no carrier" },			\
+									\
+	{ IFT_IEEE80211, LINK_STATE_DOWN, "no network" },		\
+									\
+	{ IFT_PPP, LINK_STATE_DOWN, "no carrier" },			\
+									\
+	{ IFT_CARP, LINK_STATE_DOWN, "backup" },			\
+	{ IFT_CARP, LINK_STATE_UP, "master" },				\
+	{ IFT_CARP, LINK_STATE_HALF_DUPLEX, "master" },			\
+	{ IFT_CARP, LINK_STATE_FULL_DUPLEX, "master" },			\
+									\
+	{ 0, LINK_STATE_UP, "active" },					\
+	{ 0, LINK_STATE_HALF_DUPLEX, "active" },			\
+	{ 0, LINK_STATE_FULL_DUPLEX, "active" },			\
+									\
+	{ 0, LINK_STATE_UNKNOWN, "unknown" },				\
+	{ 0, LINK_STATE_INVALID, "invalid" },				\
+	{ 0, LINK_STATE_DOWN, "down" },					\
+	{ 0, LINK_STATE_KALIVE_DOWN, "keepalive down" },		\
+	{ 0, 0, NULL }							\
+}
 
 /*
  * Structure defining a queue for a network interface.
