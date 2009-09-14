@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.145 2009/07/23 14:55:25 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.146 2009/09/14 11:49:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -860,7 +860,6 @@ show_nexthop_msg(struct imsg *imsg)
 	struct kroute		*k;
 	struct kroute6		*k6;
 	char			*s;
-	int			 ifms_type;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEXTHOP:
@@ -899,19 +898,13 @@ show_nexthop_msg(struct imsg *imsg)
 		}
 		if (p->kif.ifname[0]) {
 			char *s1;
-			ifms_type = ift2ifm(p->kif.media_type);
-			if (LINK_STATE_IS_UP(p->kif.link_state)) {
-				if (p->kif.baudrate) {
-					if (asprintf(&s1, ", %s",
-					    get_baudrate(p->kif.baudrate,
-					    "bps")) == -1)
-						err(1, NULL);
-				} else if (asprintf(&s1, ", %s", get_linkstate(
-				    ifms_type, p->kif.link_state)) == -1)
-						err(1, NULL);
-			} else if (ifms_type)
-				if (asprintf(&s1, ", %s", get_linkstate(
-				    ifms_type, p->kif.link_state)) == -1)
+			if (p->kif.baudrate) {
+				if (asprintf(&s1, ", %s",
+				    get_baudrate(p->kif.baudrate,
+				    "bps")) == -1)
+					err(1, NULL);
+			} else if (asprintf(&s1, ", %s", get_linkstate(
+			    p->kif.media_type, p->kif.link_state)) == -1)
 					err(1, NULL);
 			if (asprintf(&s, "%s (%s%s)", p->kif.ifname, 
 			    p->kif.flags & IFF_UP ? "UP" : "DOWN", s1) == -1)
@@ -940,9 +933,8 @@ show_interface_head(void)
 	    "Link state");
 }
 
-const int	ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
-const struct ifmedia_status_description
-		ifm_status_descriptions[] = IFM_STATUS_DESCRIPTIONS;
+const struct if_status_description
+		if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 const struct ifmedia_description
 		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
 
@@ -978,23 +970,15 @@ get_media_descr(int media_type)
 const char *
 get_linkstate(int media_type, int link_state)
 {
-	const struct ifmedia_status_description	*p;
-	int					 i;
+	const struct if_status_description *p;
+	static char buf[8];
 
-	if (link_state == LINK_STATE_UNKNOWN)
-		return ("unknown");
-
-	for (i = 0; ifm_status_valid_list[i] != 0; i++)
-		for (p = ifm_status_descriptions; p->ifms_valid != 0; p++) {
-			if (p->ifms_type != media_type ||
-			    p->ifms_valid != ifm_status_valid_list[i])
-				continue;
-			if (LINK_STATE_IS_UP(link_state))
-				return (p->ifms_string[1]);
-			return (p->ifms_string[0]);
-		}
-
-	return ("unknown link state");
+	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
+		if (LINK_STATE_DESC_MATCH(p, media_type, link_state))
+			return (p->ifs_string);
+	}
+	snprintf(buf, sizeof(buf), "[#%d]", link_state);
+	return (buf);
 }
 
 const char *
@@ -1032,16 +1016,12 @@ show_interface_msg(struct imsg *imsg)
 		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
 
 		if ((ifms_type = ift2ifm(k->media_type)) != 0)
-			printf("%s, %s", get_media_descr(ifms_type),
-			    get_linkstate(ifms_type, k->link_state));
-		else if (k->link_state == LINK_STATE_UNKNOWN)
-			printf("unknown");
-		else
-			printf("link state %u", k->link_state);
+			printf("%s, ", get_media_descr(ifms_type));
 
-		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0) {
+		printf("%s", get_linkstate(k->media_type, k->link_state));
+
+		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0)
 			printf(", %s", get_baudrate(k->baudrate, "Bit/s"));
-		}
 		printf("\n");
 		break;
 	case IMSG_CTL_END:

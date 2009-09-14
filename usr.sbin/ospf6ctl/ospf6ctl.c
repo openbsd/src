@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.28 2009/07/28 19:05:22 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.29 2009/09/14 11:49:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -348,8 +348,8 @@ show_interface_msg(struct imsg *imsg)
 		printf("%-11s %-29s %-6s %-10s %-10s %s\n",
 		    iface->name, netid, if_state_name(iface->state),
 		    fmt_timeframe_core(iface->hello_timer),
-		    get_linkstate(get_ifms_type(iface->mediatype),
-		    iface->linkstate), fmt_timeframe_core(iface->uptime));
+		    get_linkstate(iface->mediatype, iface->linkstate),
+		    fmt_timeframe_core(iface->uptime));
 		free(netid);
 		break;
 	case IMSG_CTL_END:
@@ -377,8 +377,7 @@ show_interface_detail_msg(struct imsg *imsg)
 		    log_in6addr(&iface->addr), inet_ntoa(iface->area));
 		printf("  Link type %s, state %s",
 		    get_media_descr(get_ifms_type(iface->mediatype)),
-		    get_linkstate(get_ifms_type(iface->mediatype),
-		    iface->linkstate));
+		    get_linkstate(iface->mediatype, iface->linkstate));
 		if (iface->linkstate != LINK_STATE_DOWN &&
 		    iface->baudrate > 0) {
 		    printf(", ");
@@ -1231,9 +1230,8 @@ show_fib_msg(struct imsg *imsg)
 	return (0);
 }
 
-const int	ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
-const struct ifmedia_status_description
-		ifm_status_descriptions[] = IFM_STATUS_DESCRIPTIONS;
+const struct if_status_description
+		if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 const struct ifmedia_description
 		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
 
@@ -1252,23 +1250,15 @@ get_media_descr(int media_type)
 const char *
 get_linkstate(int media_type, int link_state)
 {
-	const struct ifmedia_status_description	*p;
-	int					 i;
+	const struct if_status_description *p;
+	static char buf[8];
 
-	if (link_state == LINK_STATE_UNKNOWN)
-		return ("unknown");
-
-	for (i = 0; ifm_status_valid_list[i] != 0; i++)
-		for (p = ifm_status_descriptions; p->ifms_valid != 0; p++) {
-			if (p->ifms_type != media_type ||
-			    p->ifms_valid != ifm_status_valid_list[i])
-				continue;
-			if (LINK_STATE_IS_UP(link_state))
-				return (p->ifms_string[1]);
-			return (p->ifms_string[0]);
-		}
-
-	return ("unknown");
+	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
+		if (LINK_STATE_DESC_MATCH(p, media_type, link_state))
+			return (p->ifs_string);
+	}
+	snprintf(buf, sizeof(buf), "[#%d]", link_state);
+	return (buf);
 }
 
 void

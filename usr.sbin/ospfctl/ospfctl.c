@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.48 2009/06/06 07:31:26 eric Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.49 2009/09/14 11:49:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -377,8 +377,8 @@ show_interface_msg(struct imsg *imsg)
 		    iface->name, netid, if_state_name(iface->state),
 		    iface->hello_timer < 0 ? "-" :
 		    fmt_timeframe_core(iface->hello_timer),
-		    get_linkstate(get_ifms_type(iface->mediatype),
-		    iface->linkstate), fmt_timeframe_core(iface->uptime),
+		    get_linkstate(iface->mediatype, iface->linkstate),
+		    fmt_timeframe_core(iface->uptime),
 		    iface->nbr_cnt, iface->adj_cnt);
 		free(netid);
 		break;
@@ -408,8 +408,7 @@ show_interface_detail_msg(struct imsg *imsg)
 		    mask2prefixlen(iface->mask.s_addr));
 		printf("Area %s\n", inet_ntoa(iface->area));
 		printf("  Linkstate %s\n",
-		    get_linkstate(get_ifms_type(iface->mediatype),
-		    iface->linkstate));
+		    get_linkstate(iface->mediatype, iface->linkstate));
 		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
 		    if_type_name(iface->type), iface->metric);
@@ -1177,9 +1176,8 @@ show_interface_head(void)
 	    "Link state");
 }
 
-const int	ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
-const struct ifmedia_status_description
-		ifm_status_descriptions[] = IFM_STATUS_DESCRIPTIONS;
+const struct if_status_description
+		if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 const struct ifmedia_description
 		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
 
@@ -1198,23 +1196,15 @@ get_media_descr(int media_type)
 const char *
 get_linkstate(int media_type, int link_state)
 {
-	const struct ifmedia_status_description	*p;
-	int					 i;
+	const struct if_status_description *p;
+	static char buf[8];
 
-	if (link_state == LINK_STATE_UNKNOWN)
-		return ("unknown");
-
-	for (i = 0; ifm_status_valid_list[i] != 0; i++)
-		for (p = ifm_status_descriptions; p->ifms_valid != 0; p++) {
-			if (p->ifms_type != media_type ||
-			    p->ifms_valid != ifm_status_valid_list[i])
-				continue;
-			if (LINK_STATE_IS_UP(link_state))
-				return (p->ifms_string[1]);
-			return (p->ifms_string[0]);
-		}
-
-	return ("unknown");
+	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
+		if (LINK_STATE_DESC_MATCH(p, media_type, link_state))
+			return (p->ifs_string);
+	}
+	snprintf(buf, sizeof(buf), "[#%d]", link_state);
+	return (buf);
 }
 
 void
@@ -1241,28 +1231,11 @@ show_fib_interface_msg(struct imsg *imsg)
 		k = imsg->data;
 		printf("%-15s", k->ifname);
 		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
-		switch (k->media_type) {
-		case IFT_ETHER:
-			ifms_type = IFM_ETHER;
-			break;
-		case IFT_FDDI:
-			ifms_type = IFM_FDDI;
-			break;
-		case IFT_CARP:
-			ifms_type = IFM_CARP;
-			break;
-		default:
-			ifms_type = 0;
-			break;
-		}
-
+		ifms_type = get_ifms_type(k->media_type);
 		if (ifms_type)
-			printf("%s, %s", get_media_descr(ifms_type),
-			    get_linkstate(ifms_type, k->link_state));
-		else if (k->link_state == LINK_STATE_UNKNOWN)
-			printf("unknown");
-		else
-			printf("link state %u", k->link_state);
+			printf("%s, ", get_media_descr(ifms_type));
+
+		printf("%s", get_linkstate(k->media_type, k->link_state));
 
 		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0) {
 			printf(", ");
