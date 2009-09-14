@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.26 2009/09/06 20:09:34 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.27 2009/09/14 18:59:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -248,6 +248,7 @@ struct tsec_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_space_handle_t	sc_mii_ioh;
 	bus_dma_tag_t		sc_dmat;
 
 	struct arpcom		sc_ac;
@@ -289,6 +290,8 @@ int	tsec_find_phy(int, int);
 
 uint32_t tsec_read(struct tsec_softc *, bus_addr_t);
 void	tsec_write(struct tsec_softc *, bus_addr_t, uint32_t);
+uint32_t tsec_mii_read(struct tsec_softc *, bus_addr_t);
+void	tsec_mii_write(struct tsec_softc *, bus_addr_t, uint32_t);
 
 int	tsec_ioctl(struct ifnet *, u_long, caddr_t);
 void	tsec_start(struct ifnet *);
@@ -325,6 +328,20 @@ struct tsec_dmamem *
 void	tsec_dmamem_free(struct tsec_softc *, struct tsec_dmamem *);
 struct mbuf *tsec_alloc_mbuf(struct tsec_softc *, bus_dmamap_t);
 void	tsec_fill_rx_ring(struct tsec_softc *);
+
+/*
+ * The MPC8349E processor has two TSECs but only one external
+ * management interface to control external PHYs.  The registers
+ * controlling the management interface are part of TSEC1. So to
+ * control a PHY attached to TSEC2, one needs to access TSEC1's
+ * registers.  To deal with this, the first TSEC that attaches maps
+ * the register space for both TSEC1 and TSEC2 and stores the bus
+ * space tag and bus space handle in these global variables.  We use
+ * these to create subregions for each individual interface and the
+ * management interface.
+ */
+bus_space_tag_t		tsec_iot;
+bus_space_handle_t	tsec_ioh;
 
 int
 tsec_match(struct device *parent, void *cfdata, void *aux)
@@ -365,12 +382,25 @@ tsec_attach(struct device *parent, struct device *self, void *aux)
 		oa->oa_phy = reg;
 	}
 
-	sc->sc_iot = oa->oa_iot;
-	if (bus_space_map(sc->sc_iot, oa->oa_offset, 3072, 0, &sc->sc_ioh)) {
-		printf(": can't map registers\n");
-		return;
+	/* Map registers for TSEC1 & TSEC2 if they're not mapped yet. */
+	if (oa->oa_iot != tsec_iot) {
+		tsec_iot = oa->oa_iot;
+		if (bus_space_map(tsec_iot, oa->oa_offset & 0xffffc000,
+		    8192, 0, &tsec_ioh)) {
+			printf(": can't map registers\n");
+			return;
+		}
 	}
+
+	sc->sc_iot = tsec_iot;
 	sc->sc_dmat = oa->oa_dmat;
+
+	/* Ethernet Controller registers. */
+	bus_space_subregion(tsec_iot, tsec_ioh, oa->oa_offset & 0x3fff,
+	    3072, &sc->sc_ioh);
+
+	/* MII Management registers. */
+	bus_space_subregion(tsec_iot, tsec_ioh, 0, 3072, &sc->sc_mii_ioh);
 
 	myetheraddr(sc->sc_lladdr);
 	printf(": address %s\n", ether_sprintf(sc->sc_lladdr));
@@ -457,6 +487,18 @@ void
 tsec_write(struct tsec_softc *sc, bus_addr_t addr, uint32_t data)
 {
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, addr, htole32(data));
+}
+
+uint32_t
+tsec_mii_read(struct tsec_softc *sc, bus_addr_t addr)
+{
+	return (letoh32(bus_space_read_4(sc->sc_iot, sc->sc_mii_ioh, addr)));
+}
+
+void
+tsec_mii_write(struct tsec_softc *sc, bus_addr_t addr, uint32_t data)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_mii_ioh, addr, htole32(data));
 }
 
 void
@@ -599,13 +641,13 @@ tsec_mii_readreg(struct device *self, int phy, int reg)
 	uint32_t v;
 	int n;
 
-	tsec_write(sc, TSEC_MIIMADD, (phy << 8) | reg);
-	tsec_write(sc, TSEC_MIIMCOM, 0);
-	tsec_write(sc, TSEC_MIIMCOM, TSEC_MIIMCOM_READ);
+	tsec_mii_write(sc, TSEC_MIIMADD, (phy << 8) | reg);
+	tsec_mii_write(sc, TSEC_MIIMCOM, 0);
+	tsec_mii_write(sc, TSEC_MIIMCOM, TSEC_MIIMCOM_READ);
 	for (n = 0; n < 100; n++) {
-		v = tsec_read(sc, TSEC_MIIMIND);
+		v = tsec_mii_read(sc, TSEC_MIIMIND);
 		if ((v & (TSEC_MIIMIND_NOTVALID | TSEC_MIIMIND_BUSY)) == 0)
-			return (tsec_read(sc, TSEC_MIIMSTAT));
+			return (tsec_mii_read(sc, TSEC_MIIMSTAT));
 		delay(10);
 	}
 
@@ -620,10 +662,10 @@ tsec_mii_writereg(struct device *self, int phy, int reg, int val)
 	uint32_t v;
 	int n;
 
-	tsec_write(sc, TSEC_MIIMADD, (phy << 8) | reg);
-	tsec_write(sc, TSEC_MIIMCON, val);
+	tsec_mii_write(sc, TSEC_MIIMADD, (phy << 8) | reg);
+	tsec_mii_write(sc, TSEC_MIIMCON, val);
 	for (n = 0; n < 100; n++) {
-		v = tsec_read(sc, TSEC_MIIMIND);
+		v = tsec_mii_read(sc, TSEC_MIIMIND);
 		if ((v & TSEC_MIIMIND_BUSY) == 0)
 			return;
 		delay(10);
