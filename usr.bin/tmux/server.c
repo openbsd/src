@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.35 2009/09/12 13:09:43 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.36 2009/09/14 11:25:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -114,19 +114,6 @@ server_create_client(int fd)
 	}
 	ARRAY_ADD(&clients, c);
 	log_debug("new client %d", fd);
-}
-
-/* Find client index. */
-int
-server_client_index(struct client *c)
-{
-	u_int	i;
-
-	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-		if (c == ARRAY_ITEM(&clients, i))
-			return (i);
-	}
-	return (-1);
 }
 
 /* Fork new server. */

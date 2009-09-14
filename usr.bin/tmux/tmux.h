@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.103 2009/09/12 13:01:19 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.104 2009/09/14 11:25:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1435,7 +1435,6 @@ const char *key_string_lookup_key(int);
 /* server.c */
 extern struct clients clients;
 extern struct clients dead_clients;
-int	 server_client_index(struct client *);
 int	 server_start(char *);
 
 /* server-msg.c */
