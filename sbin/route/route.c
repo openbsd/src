@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.137 2009/07/23 14:23:06 sthen Exp $	*/
+/*	$OpenBSD: route.c,v 1.138 2009/09/14 11:45:48 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -60,9 +60,8 @@
 #include "keywords.h"
 #include "show.h"
 
-const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
-const struct ifmedia_status_description
-	ifm_status_descriptions[] = IFM_STATUS_DESCRIPTIONS;
+const struct if_status_description
+			if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 
 union	sockunion {
 	struct sockaddr		sa;
@@ -1213,45 +1212,15 @@ char addrnames[] =
 const char *
 get_linkstate(int mt, int link_state)
 {
-	const struct ifmedia_status_description *p;
-	int i, media_type;
+	const struct if_status_description *p;
+	static char buf[8];
 
-	switch (mt) {
-	case IFT_ETHER:
-		media_type = IFM_ETHER;
-		break;
-	case IFT_FDDI:
-		media_type = IFM_FDDI;
-		break;
-	case IFT_CARP:
-		media_type = IFM_CARP;
-		break;
-	case IFT_IEEE80211:
-		media_type = IFM_IEEE80211;
-		break;
-	default:
-		media_type = 0;
-		break;
+	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
+		if (LINK_STATE_DESC_MATCH(p, mt, link_state))
+			return (p->ifs_string);
 	}
-
-	if (link_state == LINK_STATE_UNKNOWN)
-		return ("unknown");
-
-	for (i = 0; ifm_status_valid_list[i] != 0; i++) {
-		for (p = ifm_status_descriptions; p->ifms_valid != 0; p++) {
-			if (p->ifms_type != media_type ||
-			    p->ifms_valid != ifm_status_valid_list[i])
-				continue;
-			if (LINK_STATE_IS_UP(link_state))
-				return (p->ifms_string[1]);
-			return (p->ifms_string[0]);
-		}
-	}
-
-	if (LINK_STATE_IS_UP(link_state))
-		return ("up");
-	else
-		return ("down");
+	snprintf(buf, sizeof(buf), "[#%d]", link_state);
+	return buf;
 }
 
 void
