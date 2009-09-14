@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.93 2009/09/05 14:30:24 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.94 2009/09/14 04:10:42 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1456,7 +1456,8 @@ wsdisplaystart(struct tty *tp)
 #endif
 		done = (*scr->scr_dconf->wsemul->output)
 		    (scr->scr_dconf->wsemulcookie, buf, n, 0);
-	}
+	} else
+		done = n;
 	ndflush(&tp->t_outq, done);
 
 	if (done == n) {
@@ -1466,7 +1467,8 @@ wsdisplaystart(struct tty *tp)
 			if (!(scr->scr_flags & SCR_GRAPHICS)) {
 				done = (*scr->scr_dconf->wsemul->output)
 				    (scr->scr_dconf->wsemulcookie, buf, n, 0);
-			}
+			} else
+				done = n;
 			ndflush(&tp->t_outq, done);
 		}
 	}
