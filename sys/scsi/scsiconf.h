@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.100 2009/08/13 19:49:31 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.101 2009/09/14 00:03:28 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/workq.h>
+#include <sys/mutex.h>
 #include <machine/cpu.h>
 #include <scsi/scsi_debug.h>
 
@@ -369,6 +370,7 @@ struct scsi_link {
 	struct	scsibus_softc *bus;	/* link to the scsibus we're on */
 	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
 	struct  devid id;
+	struct	mutex mtx;
 };
 
 int	scsiprint(void *, const char *);
@@ -444,6 +446,8 @@ struct scsi_xfer {
 	 * timeout structure for hba's to use for a command
 	 */
 	struct timeout stimeout;
+	void *cookie;
+	void (*done)(struct scsi_xfer *);
 };
 
 /*
@@ -559,6 +563,10 @@ int	scsi_req_detach(struct scsibus_softc *, int, int, int);
 
 extern const u_int8_t version_to_spc[];
 #define SCSISPC(x)(version_to_spc[(x) & SID_ANSII])
+
+struct scsi_xfer *	scsi_xs_get(struct scsi_link *, int);
+void			scsi_xs_exec(struct scsi_xfer *);
+void			scsi_xs_put(struct scsi_xfer *);
 
 /*
  * Entrypoints for multipathing

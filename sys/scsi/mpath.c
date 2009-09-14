@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.3 2009/08/09 16:55:02 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.4 2009/09/14 00:03:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -78,6 +78,8 @@ int		mpath_cmd(struct scsi_xfer *);
 void		mpath_minphys(struct buf *, struct scsi_link *);
 int		mpath_probe(struct scsi_link *);
 
+void		mpath_done(struct scsi_xfer *);
+
 struct scsi_adapter mpath_switch = {
 	mpath_cmd,
 	scsi_minphys,
@@ -148,36 +150,53 @@ mpath_cmd(struct scsi_xfer *xs)
 	struct scsi_link *link = xs->sc_link;
 	struct mpath_node *n = mpath_nodes[link->target];
 	struct mpath_path *p = TAILQ_FIRST(&n->node_paths);
-	int rv;
-	int s;
+	struct scsi_xfer *mxs;
 
 	if (n == NULL || p == NULL) {
 		mpath_xs_stuffup(xs);
 		return (COMPLETE);
 	}
 
-	rv = scsi_scsi_cmd(p->path_link, xs->cmd, xs->cmdlen,
-	    xs->data, xs->datalen,
-	    2, xs->timeout, NULL, SCSI_POLL |
-	    (xs->flags & (SCSI_DATA_IN|SCSI_DATA_OUT)));
-
-
-	xs->flags |= ITSDONE;
-	if (rv == 0) {
-		xs->error = XS_NOERROR;
-		xs->status = SCSI_OK;
-		xs->resid = 0;
-	} else {
-		printf("%s: t%dl%d rv %d cmd %x\n", DEVNAME(mpath),
-		    link->target, link->lun, rv, xs->cmd->opcode);
-		xs->error = XS_DRIVER_STUFFUP;
+	mxs = scsi_xs_get(p->path_link, xs->flags);
+	if (mxs == NULL) {
+		mpath_xs_stuffup(xs);
+		return (COMPLETE);
 	}
+
+	memcpy(mxs->cmd, xs->cmd, xs->cmdlen);
+	mxs->cmdlen = xs->cmdlen;
+	mxs->data = xs->data;
+	mxs->datalen = xs->datalen;
+	mxs->retries = xs->retries;
+	mxs->timeout = xs->timeout;
+	mxs->req_sense_length = xs->req_sense_length;
+
+	mxs->cookie = xs;
+	mxs->done = mpath_done;
+
+	scsi_xs_exec(mxs);
+
+	return (COMPLETE); /* doesnt matter anymore */
+}
+
+void
+mpath_done(struct scsi_xfer *mxs)
+{
+	struct scsi_xfer *xs = mxs->cookie;
+	int s;
+
+	xs->error = mxs->error;
+	xs->status = mxs->status;
+	xs->flags = mxs->flags;
+	xs->resid = mxs->resid;
+
+	memcpy(&xs->sense, &mxs->sense, sizeof(xs->sense));
+
+	scsi_xs_put(mxs);
 
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-
-	return (COMPLETE);
 }
 
 void
