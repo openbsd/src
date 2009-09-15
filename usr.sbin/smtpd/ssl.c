@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.19 2009/06/02 22:23:36 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.20 2009/09/15 16:50:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -50,7 +50,11 @@ void	 ssl_read(int, short, void *);
 void	 ssl_write(int, short, void *);
 int	 ssl_bufferevent_add(struct event *, int);
 void	 ssl_connect(int, short, void *);
-void	 ssl_client_init(struct session *);
+
+SSL	*ssl_client_init(int, char *, size_t, char *, size_t);
+
+int	 ssl_buf_read(SSL *, struct buf_read *);
+int	 ssl_buf_write(SSL *, struct msgbuf *);
 
 extern void	bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
@@ -560,57 +564,43 @@ ssl_session_init(struct session *s)
 	ssl_error("ssl_session_init");
 }
 
-void
-ssl_client_init(struct session *s)
+SSL *
+ssl_client_init(int fd, char *cert, size_t certsz, char *key, size_t keysz)
 {
 	SSL_CTX		*ctx;
-	struct ssl	 key;
-	struct ssl	*ssl;
+	SSL		*ssl;
+	int		 rv = -1;
 
-	log_debug("ssl_client_init: preparing SSL");
 	ctx = ssl_ctx_create();
 
-	if (s->batch->rule.r_value.relayhost.cert[0] != '\0') {
-		if (strlcpy(key.ssl_name,
-			s->batch->rule.r_value.relayhost.cert,
-			sizeof(key.ssl_name)) >= sizeof(key.ssl_name))
-			log_warnx("warning: certificate name too long: %s",
-			    s->batch->rule.r_value.relayhost.cert);
-		else if ((ssl = SPLAY_FIND(ssltree, s->s_env->sc_ssl,
-			    &key)) == NULL)
-			log_warnx("warning: failed to find client "
-			    "certificate: %s", key.ssl_name);
-		else if (!ssl_ctx_use_certificate_chain(ctx, ssl->ssl_cert,
-			ssl->ssl_cert_len))
-			ssl_error("ssl_client_init");
-		else if (!ssl_ctx_use_private_key(ctx, ssl->ssl_key,
-			ssl->ssl_key_len))
-			ssl_error("ssl_client_init");
+	if (cert && key) {
+		if (!ssl_ctx_use_certificate_chain(ctx, cert, certsz))
+			goto done;
+		else if (!ssl_ctx_use_private_key(ctx, key, keysz))
+			goto done;
 		else if (!SSL_CTX_check_private_key(ctx))
-			ssl_error("ssl_client_init");
+			goto done;
 	}
 
-	s->s_ssl = SSL_new(ctx);
-	if (s->s_ssl == NULL)
-		goto err;
+	if ((ssl = SSL_new(ctx)) == NULL)
+		goto done;
 
-	if (!SSL_set_ssl_method(s->s_ssl, SSLv23_client_method()))
-		goto err;
-	if (!SSL_set_fd(s->s_ssl, s->s_fd))
-		goto err;
-	SSL_set_connect_state(s->s_ssl);
+	if (!SSL_set_ssl_method(ssl, SSLv23_client_method()))
+		goto done;
+	if (!SSL_set_fd(ssl, fd))
+		goto done;
+	SSL_set_connect_state(ssl);
 
-	s->s_tv.tv_sec = SMTPD_SESSION_TIMEOUT;
-	s->s_tv.tv_usec = 0;
-
-	event_set(&s->s_ev, s->s_fd, EV_WRITE|EV_TIMEOUT, ssl_connect, s);
-	event_add(&s->s_ev, &s->s_tv);
-	return;
-
- err:
-	if (s->s_ssl != NULL)
-		SSL_free(s->s_ssl);
-	ssl_error("ssl_client_init");
+	rv = 0;
+done:
+	if (rv) {
+		if (ssl)
+			SSL_free(ssl);
+		else if (ctx)
+			SSL_CTX_free(ctx);
+		ssl = NULL;
+	}
+	return (ssl);
 }
 
 void
@@ -631,4 +621,35 @@ ssl_session_destroy(struct session *s)
 		if (s->s_flags & F_SECURE)
 			s->s_env->stats->smtp.starttls_active--;
 	}
+}
+
+int
+ssl_buf_read(SSL *s, struct buf_read *r)
+{
+	int	 ret;
+
+	ret = SSL_read(s, r->buf + r->wpos, sizeof(r->buf) - r->wpos);
+
+	if (ret > 0)
+		r->wpos += ret;
+
+	return SSL_get_error(s, ret);
+}
+
+int
+ssl_buf_write(SSL *s, struct msgbuf *msgbuf)
+{
+	struct buf	*buf;
+	int		 ret;
+	
+	buf = TAILQ_FIRST(&msgbuf->bufs);
+	if (buf == NULL)
+		return (SSL_ERROR_NONE);
+
+	ret = SSL_write(s, buf->buf + buf->rpos, buf->wpos - buf->rpos);
+
+	if (ret > 0)
+		msgbuf_drain(msgbuf, ret);
+
+	return SSL_get_error(s, ret);
 }

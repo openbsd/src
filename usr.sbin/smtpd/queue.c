@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.69 2009/09/03 08:19:13 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.70 2009/09/15 16:50:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -589,22 +589,6 @@ queue(struct smtpd *env)
 	return (0);
 }
 
-int
-queue_remove_batch_message(struct smtpd *env, struct batch *batchp, struct message *messagep)
-{
-	TAILQ_REMOVE(&batchp->messages, messagep, entry);
-	bzero(messagep, sizeof(struct message));
-	free(messagep);
-
-	if (TAILQ_FIRST(&batchp->messages) == NULL) {
-		SPLAY_REMOVE(batchtree, &env->batch_queue, batchp);
-		bzero(batchp, sizeof(struct batch));
-		free(batchp);
-		return 1;
-	}
-	return 0;
-}
-
 struct batch *
 batch_by_id(struct smtpd *env, u_int64_t id)
 {
@@ -614,28 +598,6 @@ batch_by_id(struct smtpd *env, u_int64_t id)
 	return SPLAY_FIND(batchtree, &env->batch_queue, &lookup);
 }
 
-
-struct message *
-message_by_id(struct smtpd *env, struct batch *batchp, u_int64_t id)
-{
-	struct message *messagep;
-
-	if (batchp != NULL) {
-		TAILQ_FOREACH(messagep, &batchp->messages, entry) {
-			if (messagep->id == id)
-				break;
-		}
-		return messagep;
-	}
-
-	SPLAY_FOREACH(batchp, batchtree, &env->batch_queue) {
-		TAILQ_FOREACH(messagep, &batchp->messages, entry) {
-			if (messagep->id == id)
-				return messagep;
-		}
-	}
-	return NULL;
-}
 
 void
 queue_purge(char *queuepath)

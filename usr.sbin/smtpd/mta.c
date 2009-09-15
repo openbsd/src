@@ -1,8 +1,9 @@
-/*	$OpenBSD: mta.c,v 1.71 2009/09/08 09:50:51 landry Exp $	*/
+/*	$OpenBSD: mta.c,v 1.72 2009/09/15 16:50:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
+ * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,10 +27,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <openssl/ssl.h>
-
 #include <errno.h>
 #include <event.h>
+#include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -38,24 +38,26 @@
 #include <unistd.h>
 
 #include "smtpd.h"
+#include "client.h"
 
-__dead void	mta_shutdown(void);
-void		mta_sig_handler(int, short, void *);
-void		mta_dispatch_parent(int, short, void *);
-void		mta_dispatch_queue(int, short, void *);
-void		mta_dispatch_runner(int, short, void *);
-void		mta_dispatch_lka(int, short, void *);
-void		mta_setup_events(struct smtpd *);
-void		mta_disable_events(struct smtpd *);
-void		mta_write(int, short, void *);
-int		mta_connect(struct session *);
-void		mta_read_handler(struct bufferevent *, void *);
-void		mta_write_handler(struct bufferevent *, void *);
-void		mta_error_handler(struct bufferevent *, short, void *);
-int		mta_reply_handler(struct bufferevent *, void *);
-void		mta_batch_update_queue(struct batch *);
-void		mta_mxlookup(struct smtpd *, struct session *, char *, struct rule *);
-void		ssl_client_init(struct session *);
+__dead void		 mta_shutdown(void);
+void			 mta_sig_handler(int, short, void *);
+
+void			 mta_dispatch_parent(int, short, void *);
+void			 mta_dispatch_runner(int, short, void *);
+void			 mta_dispatch_queue(int, short, void *);
+void			 mta_dispatch_lka(int, short, void *);
+
+struct mta_session	*mta_lookup(struct smtpd *, u_int64_t);
+void			 mta_enter_state(struct mta_session *, int, void *);
+void			 mta_pickup(struct mta_session *, void *);
+void			 mta_event(int, short, void *);
+
+void			 mta_status(struct mta_session *, const char *, ...);
+void			 mta_status_message(struct message *, char *);
+void			 mta_connect_done(int, short, void *);
+void			 mta_request_datafd(struct mta_session *);
+size_t			 mta_todo(struct mta_session *);
 
 void
 mta_sig_handler(int sig, short event, void *p)
@@ -153,6 +155,139 @@ mta_dispatch_parent(int sig, short event, void *p)
 }
 
 void
+mta_dispatch_runner(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgev		*iev;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	iev = env->sc_ievs[PROC_RUNNER];
+	ibuf = &iev->ibuf;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&iev->ev);
+			event_loopexit(NULL);
+			return;
+		}
+	}
+
+	if (event & EV_WRITE) {
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("mta_dispatch_runner: imsg_get error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_BATCH_CREATE: {
+			struct batch		*b = imsg.data;
+			struct mta_session	*s;
+
+			IMSG_SIZE_CHECK(b);
+
+			if ((s = calloc(1, sizeof(*s))) == NULL)
+				fatal(NULL);
+			s->id = b->id;
+			s->state = MTA_INIT;
+			s->env = env;
+			s->datafd = -1;
+
+			/* establish host name */
+			if (b->rule.r_action == A_RELAYVIA)
+				s->host = strdup(b->rule.r_value.relayhost.hostname);
+			else
+				s->host = strdup(b->hostname);
+			if (s->host == NULL)
+				fatal(NULL);
+
+			/* establish port */
+			s->port = ntohs(b->rule.r_value.relayhost.port); /* XXX */
+
+			/* have cert? */
+			s->cert = strdup(b->rule.r_value.relayhost.cert);
+			if (s->cert == NULL)
+				fatal(NULL);
+			else if (s->cert[0] == '\0') {
+				free(s->cert);
+				s->cert = NULL;
+			}
+
+			/* use auth? */
+			if ((b->rule.r_value.relayhost.flags & F_SSL) &&
+			    (b->rule.r_value.relayhost.flags & F_AUTH))
+				s->flags |= MTA_USE_AUTH;
+
+			/* force a particular SSL mode? */
+			switch (b->rule.r_value.relayhost.flags & F_SSL) {
+			case F_SSL:
+				s->flags |= MTA_FORCE_ANYSSL;
+				break;
+
+			case F_SMTPS:
+				s->flags |= MTA_FORCE_SMTPS;
+
+			case F_STARTTLS:
+				/* client_* API by default requires STARTTLS */
+				break;
+
+			default:
+				s->flags |= MTA_ALLOW_PLAIN;
+			}
+
+			TAILQ_INIT(&s->recipients);
+			TAILQ_INIT(&s->relays);
+			SPLAY_INSERT(mtatree, &env->mta_sessions, s);
+
+			env->stats->mta.sessions++;
+			env->stats->mta.sessions_active++;
+			break;
+		}
+
+		case IMSG_BATCH_APPEND: {
+			struct message		*append = imsg.data, *m;
+			struct mta_session	*s;
+
+			IMSG_SIZE_CHECK(append);
+
+			s = mta_lookup(env, append->batch_id);
+			if ((m = malloc(sizeof(*m))) == NULL)
+				fatal(NULL);
+			*m = *append;
+			strlcpy(m->session_errorline, "000 init",
+			    sizeof(m->session_errorline));
+ 			TAILQ_INSERT_TAIL(&s->recipients, m, entry);
+			break;
+		}
+
+		case IMSG_BATCH_CLOSE: {
+			struct batch		*b = imsg.data;
+
+			IMSG_SIZE_CHECK(b);
+			mta_pickup(mta_lookup(env, b->id), NULL);
+			break;
+		}
+
+		default:
+			log_warnx("mta_dispatch_runner: got imsg %d",
+			    imsg.hdr.type);
+			fatalx("mta_dispatch_runner: unexpected imsg");
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(iev);
+}
+
+void
 mta_dispatch_lka(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
@@ -187,74 +322,36 @@ mta_dispatch_lka(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_DNS_A: {
-			struct session key;
-			struct dns *reply = imsg.data;
-			struct session *s;
-			struct mxhost *mxhost;
+		case IMSG_LKA_SECRET: {
+			struct secret		*reply = imsg.data;
 
 			IMSG_SIZE_CHECK(reply);
 
-			key.s_id = reply->id;
+			mta_pickup(mta_lookup(env, reply->id), reply->secret);
+			break;
+		}
 
-			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL)
-				fatal("mta_dispatch_lka: session is gone");
+		case IMSG_DNS_A: {
+			struct dns		*reply = imsg.data;
+			struct mta_relay	*relay;
+			struct mta_session	*s;
 
-			mxhost = calloc(1, sizeof(struct mxhost));
-			if (mxhost == NULL)
-				fatal("mta_dispatch_lka: calloc");
+			IMSG_SIZE_CHECK(reply);
 
-			mxhost->ss = reply->ss;
-
- 			TAILQ_INSERT_TAIL(&s->mxhosts, mxhost, entry);
-
+			s = mta_lookup(env, reply->id);
+			if ((relay = calloc(1, sizeof(*relay))) == NULL)
+				fatal(NULL);
+			relay->sa = reply->ss;
+ 			TAILQ_INSERT_TAIL(&s->relays, relay, entry);
 			break;
 		}
 
 		case IMSG_DNS_A_END: {
-			struct session key;
-			struct dns *reply = imsg.data;
-			struct session *s;
-			int ret;
+			struct dns		*reply = imsg.data;
 
 			IMSG_SIZE_CHECK(reply);
 
-			key.s_id = reply->id;
-
-			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL)
-				fatal("smtp_dispatch_parent: session is gone");
-
-			do {
-				ret = mta_connect(s);
-			} while (ret == 0);
-
-			if (ret < 0) {
-				mta_batch_update_queue(s->batch);
-				session_destroy(s);
-			}
-
-			break;
-		}
-
-		case IMSG_LKA_SECRET: {
-			struct secret	*reply = imsg.data;
-			struct session	 key, *s;
-
-			IMSG_SIZE_CHECK(reply);
-
-			key.s_id = reply->id;
-
-			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL)
-				fatal("smtp_dispatch_parent: session is gone");
-
-			strlcpy(s->credentials, reply->secret,
-			    sizeof(s->credentials));
-
-			mta_mxlookup(env, s, s->batch->hostname,
-			    &s->batch->rule);
+			mta_pickup(mta_lookup(env, reply->id), &reply->error);
 			break;
 		}
 
@@ -304,27 +401,14 @@ mta_dispatch_queue(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_QUEUE_MESSAGE_FD: {
-			struct batch	*batchp = imsg.data;
-			struct session	*sessionp;
-			int fd;
+			struct batch	*b = imsg.data;
 
-			IMSG_SIZE_CHECK(batchp);
+			IMSG_SIZE_CHECK(b);
 
-			if ((fd = imsg.fd) == -1) {
-				/* NEEDS_FIX - unsure yet how it must be handled */
-				fatalx("mta_dispatch_queue: imsg.fd == -1");
-			}
-
-			batchp = batch_by_id(env, batchp->id);
-			sessionp = batchp->sessionp;
-
-			if ((batchp->messagefp = fdopen(fd, "r")) == NULL)
-				fatal("mta_dispatch_queue: fdopen");
-
-			session_respond(sessionp, "DATA");
-			bufferevent_enable(sessionp->s_bev, EV_READ);
+			mta_pickup(mta_lookup(env, b->id), &imsg.fd);
 			break;
 		}
+
 		default:
 			log_warnx("mta_dispatch_queue: got imsg %d",
 			    imsg.hdr.type);
@@ -336,154 +420,10 @@ mta_dispatch_queue(int sig, short event, void *p)
 }
 
 void
-mta_dispatch_runner(int sig, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct imsgev		*iev;
-	struct imsgbuf		*ibuf;
-	struct imsg		 imsg;
-	ssize_t			 n;
-
-	iev = env->sc_ievs[PROC_RUNNER];
-	ibuf = &iev->ibuf;
-
-	if (event & EV_READ) {
-		if ((n = imsg_read(ibuf)) == -1)
-			fatal("imsg_read_error");
-		if (n == 0) {
-			/* this pipe is dead, so remove the event handler */
-			event_del(&iev->ev);
-			event_loopexit(NULL);
-			return;
-		}
-	}
-
-	if (event & EV_WRITE) {
-		if (msgbuf_write(&ibuf->w) == -1)
-			fatal("msgbuf_write");
-	}
-
-	for (;;) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("mta_dispatch_runner: imsg_get error");
-		if (n == 0)
-			break;
-
-		switch (imsg.hdr.type) {
-		case IMSG_BATCH_CREATE: {
-			struct batch *request = imsg.data;
-			struct batch *batchp;
-			struct session *s;
-
-			IMSG_SIZE_CHECK(request);
-
-			/* create a client session */
-			if ((s = calloc(1, sizeof(*s))) == NULL)
-				fatal(NULL);
-			s->s_state = S_INIT;
-			s->s_env = env;
-			s->s_id = queue_generate_id();
-			TAILQ_INIT(&s->mxhosts);
-			SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
-
-			/* create the batch for this session */
-			batchp = calloc(1, sizeof (struct batch));
-			if (batchp == NULL)
-				fatal("mta_dispatch_runner: calloc");
-
-			*batchp = *request;
-			batchp->env = env;
-			batchp->sessionp = s;
-
-			s->batch = batchp;
-
-			TAILQ_INIT(&batchp->messages);
-			SPLAY_INSERT(batchtree, &env->batch_queue, batchp);
-
-			env->stats->mta.sessions++;
-			env->stats->mta.sessions_active++;
-
-			break;
-		}
-		case IMSG_BATCH_APPEND: {
-			struct message	*append = imsg.data;
-			struct message	*messagep;
-			struct batch	*batchp;
-
-			IMSG_SIZE_CHECK(append);
-
-			messagep = calloc(1, sizeof (struct message));
-			if (messagep == NULL)
-				fatal("mta_dispatch_runner: calloc");
-
-			*messagep = *append;
-
-			batchp = batch_by_id(env, messagep->batch_id);
-			if (batchp == NULL)
-				fatalx("mta_dispatch_runner: internal inconsistency.");
-
- 			TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
-			break;
-		}
-		case IMSG_BATCH_CLOSE: {
-			struct batch		*batchp = imsg.data;
-			struct session		*s;
-
-			IMSG_SIZE_CHECK(batchp);
-
-			batchp = batch_by_id(env, batchp->id);
-			if (batchp == NULL)
-				fatalx("mta_dispatch_runner: internal inconsistency.");
-
-			/* assume temporary failure by default, safest choice */
-			batchp->status = S_BATCH_TEMPFAILURE;
-
-			log_debug("batch ready, we can initiate a session");
-
-			s = batchp->sessionp;
-
-			if (batchp->rule.r_value.relayhost.flags & F_AUTH) {
-				struct secret	query;
-
-				bzero(&query, sizeof(query));
-				query.id = s->s_id;
-				strlcpy(query.host,
-				    batchp->rule.r_value.relayhost.hostname,
-				    sizeof(query.host));
-
-				imsg_compose_event(env->sc_ievs[PROC_LKA],
-				    IMSG_LKA_SECRET, 0, 0, -1, &query,
-				    sizeof(query));
-			} else
-				mta_mxlookup(env, s, batchp->hostname,
-				    &batchp->rule);
-			break;
-		}
-		default:
-			log_warnx("mta_dispatch_runner: got imsg %d",
-			    imsg.hdr.type);
-			fatalx("mta_dispatch_runner: unexpected imsg");
-		}
-		imsg_free(&imsg);
-	}
-	imsg_event_add(iev);
-}
-
-void
 mta_shutdown(void)
 {
 	log_info("mail transfer agent exiting");
 	_exit(0);
-}
-
-void
-mta_setup_events(struct smtpd *env)
-{
-}
-
-void
-mta_disable_events(struct smtpd *env)
-{
 }
 
 pid_t
@@ -546,510 +486,425 @@ mta(struct smtpd *env)
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));
 
-	SPLAY_INIT(&env->batch_queue);
+	SPLAY_INIT(&env->mta_sessions);
 
-	mta_setup_events(env);
 	event_dispatch();
 	mta_shutdown();
 
 	return (0);
 }
 
-void
-mta_mxlookup(struct smtpd *env, struct session *sessionp, char *hostname, struct rule *rule)
-{
-	int	 port;
-
-	switch (rule->r_value.relayhost.flags & F_SSL) {
-	case F_SMTPS:
-		port = 465;
-		break;
-	case F_SSL:
-		port = 465;
-		rule->r_value.relayhost.flags &= ~F_STARTTLS;
-		break;
-	default:
-		port = 25;
-	}
-	
-	if (rule->r_value.relayhost.port)
-		port = ntohs(rule->r_value.relayhost.port);
-
-	if (rule->r_action == A_RELAYVIA)
-		dns_query_mx(env, rule->r_value.relayhost.hostname, port,
-		    sessionp->s_id);
-	else
-		dns_query_mx(env, hostname, port, sessionp->s_id);
-}
-
-/* shamelessly ripped usr.sbin/relayd/check_tcp.c ;) */
 int
-mta_connect(struct session *sessionp)
+mta_session_cmp(struct mta_session *a, struct mta_session *b)
 {
-	int s;
-	int type;
-	struct linger lng;
-	struct mxhost *mxhost;
+	return (a->id < b->id ? -1 : a->id > b->id);
+}
 
-	sessionp->s_fd = -1;
+struct mta_session *
+mta_lookup(struct smtpd *env, u_int64_t id)
+{
+	struct mta_session	 key, *res;
 
-	mxhost = TAILQ_FIRST(&sessionp->mxhosts);
-	if (mxhost == NULL)
-		return -1;
-
-	if ((s = socket(mxhost->ss.ss_family, SOCK_STREAM, 0)) == -1)
-		goto bad;
-
-	bzero(&lng, sizeof(lng));
-	if (setsockopt(s, SOL_SOCKET, SO_LINGER, &lng, sizeof (lng)) == -1)
-		goto bad;
-
-	type = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &type, sizeof (type)) == -1)
-		goto bad;
-
-	session_socket_blockmode(s, BM_NONBLOCK);
-
-	if (connect(s, (struct sockaddr *)&mxhost->ss, mxhost->ss.ss_len) == -1)
-		if (errno != EINPROGRESS)
-			goto bad;
-
-	sessionp->s_tv.tv_sec = SMTPD_CONNECT_TIMEOUT;
-	sessionp->s_tv.tv_usec = 0;
-	sessionp->s_fd = s;
-	event_set(&sessionp->s_ev, s, EV_TIMEOUT|EV_WRITE, mta_write, sessionp);
-	event_add(&sessionp->s_ev, &sessionp->s_tv);
-
-	return 1;
-
-bad:
-	if (mxhost) {
-		TAILQ_REMOVE(&sessionp->mxhosts, mxhost, entry);
-		free(mxhost);
-	}
-	close(s);
-	return 0;
+	key.id = id;
+	if ((res = SPLAY_FIND(mtatree, &env->mta_sessions, &key)) == NULL)
+		fatalx("mta_lookup: session not found");
+	return (res);
 }
 
 void
-mta_write(int s, short event, void *arg)
+mta_enter_state(struct mta_session *s, int newstate, void *p)
 {
-	struct session *sessionp = arg;
-	struct batch *batchp = sessionp->batch;
-	struct mxhost *mxhost;
-	int ret;
+	struct secret		 secret;
+	struct mta_relay	*relay;
+	struct sockaddr		*sa;
+	struct message		*m;
+	int			 fd, max_reuse;
 
-	mxhost = TAILQ_FIRST(&sessionp->mxhosts);
+	s->state = newstate;
 
-	if (event == EV_TIMEOUT) {
-
-		if (mxhost) {
-			TAILQ_REMOVE(&sessionp->mxhosts, mxhost, entry);
-			free(mxhost);
-		}
-		close(s);
-		sessionp->s_fd = -1;
-
-		if (sessionp->s_bev) {
-			bufferevent_free(sessionp->s_bev);
-			sessionp->s_bev = NULL;
-		}
-		strlcpy(batchp->errorline, "connection timed-out.",
-		    sizeof(batchp->errorline));
-
-		do {
-			ret = mta_connect(sessionp);
-		} while (ret == 0);
-
-		if (ret < 0) {
-			mta_batch_update_queue(batchp);
-			session_destroy(sessionp);
-		}
-
-		return;
-	}
-
-	sessionp->s_bev = bufferevent_new(s, mta_read_handler, mta_write_handler,
-	    mta_error_handler, sessionp);
-
-	if (sessionp->s_bev == NULL) {
-		mta_batch_update_queue(batchp);
-		session_destroy(sessionp);
-		return;
-	}
-
-	if (sessionp->batch->rule.r_value.relayhost.flags & F_SMTPS) {
-		log_debug("mta_write: initializing ssl");
-		ssl_client_init(sessionp);
-		return;
-	}
-	bufferevent_enable(sessionp->s_bev, EV_READ);
-}
-
-void
-mta_read_handler(struct bufferevent *bev, void *arg)
-{
-	while (mta_reply_handler(bev, arg))
-		;
-}
-
-int
-mta_reply_handler(struct bufferevent *bev, void *arg)
-{
-	struct session *sessionp = arg;
-	struct batch *batchp = sessionp->batch;
-	struct smtpd *env = batchp->env;
-	struct message *messagep = NULL;
-	char *line;
-	int code;
-#define F_ISINFO	0x1
-#define F_ISPROTOERROR	0x2
-	char codebuf[4];
-	const char *errstr;
-	int flags = 0;
-
-	line = evbuffer_readline(bev->input);
-	if (line == NULL)
-		return 0;
-
-	log_debug("remote server sent: [%s]", line);
-
-	strlcpy(codebuf, line, sizeof(codebuf));
-	code = strtonum(codebuf, 0, UINT16_MAX, &errstr);
-	if (errstr || code < 100) {
-		/* Server sent invalid line, protocol error */
-		batchp->status = S_BATCH_PERMFAILURE;
-		strlcpy(batchp->errorline, line, sizeof(batchp->errorline));
-		mta_batch_update_queue(batchp);
-		session_destroy(sessionp);
-		return 0;
-	}
-
-	if (line[3] == '-') {
-		if (strcasecmp(&line[4], "STARTTLS") == 0)
-			sessionp->s_flags |= F_PEERHASTLS;
-		else if (strncasecmp(&line[4], "AUTH ", 5) == 0 ||
-		    strncasecmp(&line[4], "AUTH-", 5) == 0)
-			sessionp->s_flags |= F_PEERHASAUTH;
-		return 1;
-	}
-
-	switch (code) {
-	case 250:
-		if (sessionp->s_state == S_DONE) {
-			batchp->status = S_BATCH_ACCEPTED;
-			mta_batch_update_queue(batchp);
-			session_destroy(sessionp);
-			return 0;
-		}
-
-		if (sessionp->s_state == S_GREETED &&
-		    (sessionp->s_flags & F_PEERHASTLS) &&
-		    !(sessionp->s_flags & F_SECURE)) {
-			session_respond(sessionp, "STARTTLS");
-			sessionp->s_state = S_TLS;
-			return 0;
-		}
-
-		if (sessionp->s_state == S_GREETED &&
-		    (sessionp->s_flags & F_PEERHASAUTH) &&
-		    (sessionp->s_flags & F_SECURE) &&
-		    (sessionp->batch->rule.r_value.relayhost.flags & F_AUTH) &&
-		    (sessionp->credentials[0] != '\0')) {
-			log_debug("AUTH PLAIN %s", sessionp->credentials);
-			session_respond(sessionp, "AUTH PLAIN %s",
-			    sessionp->credentials);
-			sessionp->s_state = S_AUTH_INIT;
-			return 0;
-		}
-
-		if (sessionp->s_state == S_GREETED &&
-		    !(sessionp->s_flags & F_PEERHASTLS) &&
-		    (sessionp->batch->rule.r_value.relayhost.flags&F_STARTTLS)){
-			/* PERM - we want TLS but it is not advertised */
-			batchp->status = S_BATCH_PERMFAILURE;
-			mta_batch_update_queue(batchp);
-			session_destroy(sessionp);
-			return 0;
-		}
-
-		if (sessionp->s_state == S_GREETED &&
-		    !(sessionp->s_flags & F_PEERHASAUTH) &&
-		    (sessionp->batch->rule.r_value.relayhost.flags & F_AUTH)) {
-			/* PERM - we want AUTH but it is not advertised */
-			batchp->status = S_BATCH_PERMFAILURE;
-			mta_batch_update_queue(batchp);
-			session_destroy(sessionp);
-			return 0;
-		}
-
-		break;
-
-	case 220:
-		if (sessionp->s_state == S_TLS) {
-			ssl_client_init(sessionp);
-			bufferevent_disable(bev, EV_READ|EV_WRITE);
-			sessionp->s_state = S_GREETED;
-			return 0;
-		}
-
-		session_respond(sessionp, "EHLO %s", env->sc_hostname);
-		sessionp->s_state = S_GREETED;
-		return 1;
-
-	case 235:
-		if (sessionp->s_state == S_AUTH_INIT) {
-			sessionp->s_flags |= F_AUTHENTICATED;
-			sessionp->s_state = S_GREETED;
-			break;
-		}
-		return 0;
-	case 421:
-	case 450:
-	case 451:
-	case 452:
-		strlcpy(batchp->errorline, line, sizeof(batchp->errorline));
-		mta_batch_update_queue(batchp);
-		session_destroy(sessionp);
-		return 0;
-
-		/* The following codes are state dependant and will cause
-		 * a batch rejection if returned at the wrong state.
+	switch (s->state) {
+	case MTA_SECRET:
+		/*
+		 * Lookup AUTH secret.
 		 */
-	case 530:
-	case 550:
-		if (sessionp->s_state == S_RCPT) {
-			batchp->messagep->status = (S_MESSAGE_REJECTED|S_MESSAGE_PERMFAILURE);
-			log_debug("DOES NOT EXIST !!!: %s", line);
-			message_set_errormsg(batchp->messagep, "%s", line);
-			break;
-		}
-	case 354:
-		if (sessionp->s_state == S_RCPT && batchp->messagep == NULL) {
-			sessionp->s_state = S_DATA;
-			break;
-		}
+		bzero(&secret, sizeof(secret));
+		secret.id = s->id;
+		strlcpy(secret.host, s->host, sizeof(secret.host));
+		imsg_compose_event(s->env->sc_ievs[PROC_LKA], IMSG_LKA_SECRET,
+		    0, 0, -1, &secret, sizeof(secret));  
+		break;
 
-	case 221:
-		if (sessionp->s_state == S_DONE) {
-			batchp->status = S_BATCH_ACCEPTED;
-			mta_batch_update_queue(batchp);
-			session_destroy(sessionp);
-			return 0;
-		}
+	case MTA_MX:
+		/*
+		 * Lookup MX record.
+		 */
+		dns_query_mx(s->env, s->host, 0, s->id);
+		break;
 
-	case 535:
-		/* Authentication failed*/
-	case 554:
-		/* Relaying denied */
-	case 552:
-	case 553:
-		flags |= F_ISPROTOERROR;
-	default:
-		/* Server sent code we know nothing about, error */
-		if (!(flags & F_ISPROTOERROR))
-			log_warn("SMTP session returned unknown status %d.", code);
+	case MTA_DATA:
+		/*
+		 * Obtain message body fd.
+		 */
+		log_debug("mta: getting datafd");
+		mta_request_datafd(s);
+		break;
 
-		strlcpy(batchp->errorline, line, sizeof(batchp->errorline));
-		mta_batch_update_queue(batchp);
-		session_destroy(sessionp);
-		return 0;
-	}
-
-
-	switch (sessionp->s_state) {
-	case S_GREETED: {
-		char *user;
-		char *domain;
-
-		messagep = TAILQ_FIRST(&batchp->messages);
-		user = messagep->sender.user;
-		domain = messagep->sender.domain;
-
-		if (user[0] == '\0' && domain[0] == '\0')
-			session_respond(sessionp, "MAIL FROM:<>");
+	case MTA_CONNECT:
+		/*
+		 * Connect to the MX.
+		 */
+		if (s->flags & MTA_FORCE_ANYSSL)
+			max_reuse = 2;
 		else
-			session_respond(sessionp,  "MAIL FROM:<%s@%s>", user, domain);
+			max_reuse = 1;
 
-		sessionp->s_state = S_MAIL;
-
-		break;
-	}
-
-	case S_MAIL:
-		sessionp->s_state = S_RCPT;
-
-	case S_RCPT: {
-		char *user;
-		char *domain;
-
-		/* Is this the first RCPT ? */
-		if (batchp->messagep == NULL)
-			messagep = TAILQ_FIRST(&batchp->messages);
-		else {
-			/* We already had a RCPT, mark is as accepted and
-			 * fetch next one from queue.
-			 */
-			messagep = batchp->messagep;
-			if ((messagep->status & S_MESSAGE_REJECTED) == 0)
-				messagep->status = S_MESSAGE_ACCEPTED;
-			messagep = TAILQ_NEXT(batchp->messagep, entry);
-		}
-		batchp->messagep = messagep;
-
-		if (messagep) {
-			user = messagep->recipient.user;
-			domain = messagep->recipient.domain;
-			session_respond(sessionp, "RCPT TO:<%s@%s>", user, domain);
-		}
-		else {
-			/* Do we have at least one accepted recipient ? */
-			TAILQ_FOREACH(messagep, &batchp->messages, entry) {
-				if (messagep->status & S_MESSAGE_ACCEPTED)
-					break;
+		/* pick next mx */
+		while ((relay = TAILQ_FIRST(&s->relays))) {
+			if (relay->used == max_reuse) {
+				TAILQ_REMOVE(&s->relays, relay, entry);
+				free(relay);
+				continue;
 			}
-			if (messagep == NULL) {
-				batchp->status = S_BATCH_PERMFAILURE;
-				mta_batch_update_queue(batchp);
-				session_destroy(sessionp);
-				return 0;
+			relay->used++;
+
+			log_debug("mta: connect %s", ss_to_text(&relay->sa));
+			sa = (struct sockaddr *)&relay->sa;
+
+			if (s->port)
+				sa_set_port(sa, s->port);
+			else if ((s->flags & MTA_FORCE_ANYSSL) && relay->used == 1)
+				sa_set_port(sa, 465);
+			else if (s->flags & MTA_FORCE_SMTPS)
+				sa_set_port(sa, 465);
+			else
+				sa_set_port(sa, 25);
+
+			if ((fd = socket(sa->sa_family, SOCK_STREAM, 0)) == -1)
+				fatal("mta cannot create socket");
+			session_socket_blockmode(fd, BM_NONBLOCK);
+			session_socket_no_linger(fd);
+
+			if (connect(fd, sa, sa->sa_len) == -1) {
+				if (errno != EINPROGRESS) {
+					mta_status(s, "110 connect error: %s", strerror(errno));
+					close(fd);
+					continue;
+				}
 			}
-
-			imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
-			    0, 0, -1, batchp, sizeof(*batchp));
-			bufferevent_disable(sessionp->s_bev, EV_READ);
+			event_once(fd, EV_WRITE, mta_connect_done, s, NULL);
+			break;
 		}
-		break;
-	}
 
-	case S_DATA: {
-		if (sessionp->s_flags & F_SECURE) {
-			log_info("%s: version=%s cipher=%s bits=%d",
-			batchp->message_id,
-			SSL_get_cipher_version(sessionp->s_ssl),
-			SSL_get_cipher_name(sessionp->s_ssl),
-			SSL_get_cipher_bits(sessionp->s_ssl, NULL));
-		}
-		bufferevent_enable(sessionp->s_bev, EV_WRITE);
+		/* tried them all? */
+		if (relay == NULL)
+			mta_enter_state(s, MTA_DONE, NULL);
 		break;
-	}
-	case S_DONE:
-		session_respond(sessionp, "QUIT");
-		sessionp->s_state = S_QUIT;
+
+	case MTA_PROTOCOL:
+		/*
+		 * Start protocol engine.
+		 */
+		log_debug("mta: entering smtp phase");
+
+		fd = *(int *)p;
+
+		if ((s->smtp_state = client_init(fd, s->env->sc_hostname)) == NULL)
+			fatal("mta: client_init failed");
+		client_verbose(s->smtp_state, stderr);
+
+		/* lookup SSL certificate */
+		if (s->cert) {
+			struct ssl	 key, *res;
+
+			strlcpy(key.ssl_name, s->cert, sizeof(key.ssl_name));
+			res = SPLAY_FIND(ssltree, s->env->sc_ssl, &key);
+			if (res == NULL) {
+				client_close(s->smtp_state);
+				s->smtp_state = NULL;
+				mta_status(s, "190 certificate not found");
+				mta_enter_state(s, MTA_DONE, NULL);
+				break;
+			}
+			if (client_certificate(s->smtp_state,
+			    res->ssl_cert, res->ssl_cert_len,
+			    res->ssl_key, res->ssl_key_len) < 0)
+				fatal("mta: client_certificate failed");
+		}
+
+		/* choose SMTPS vs. STARTTLS */
+		relay = TAILQ_FIRST(&s->relays);
+		if ((s->flags & MTA_FORCE_ANYSSL) && relay->used == 1) {
+			if (client_ssl_smtps(s->smtp_state) < 0)
+				fatal("mta: client_ssl_smtps failed");
+		} else if (s->flags & MTA_FORCE_SMTPS) {
+			if (client_ssl_smtps(s->smtp_state) < 0)
+				fatal("mta: client_ssl_smtps failed");
+		} else if (s->flags & MTA_ALLOW_PLAIN) {
+			if (client_ssl_optional(s->smtp_state) < 0)
+				fatal("mta: client_ssl_optional failed");
+		}
+
+		/* enable AUTH */
+		if (s->secret)
+			if (client_auth(s->smtp_state, s->secret) < 0)
+				fatal("mta: client_auth failed");
+
+		/* set envelope sender */
+		m = TAILQ_FIRST(&s->recipients);
+		if (m->sender.user[0] && m->sender.domain[0])
+			if (client_sender(s->smtp_state, "%s@%s",
+			    m->sender.user, m->sender.domain) < 0)
+				fatal("mta: client_sender failed");
+			
+		/* set envelope recipients */
+		TAILQ_FOREACH(m, &s->recipients, entry) {
+			if (m->session_errorline[0] == '2' ||
+			    m->session_errorline[0] == '5')
+				continue;
+			if (client_rcpt(s->smtp_state, "%s@%s", m->recipient.user,
+			    m->recipient.domain) < 0)
+				fatal("mta: client_rcpt failed");
+			client_udata_set(s->smtp_state, m);
+		}
+
+		/* load message body */
+		if (client_data_fd(s->smtp_state, s->datafd) < 0)
+			fatal("mta: client_data_fd failed");
+
+		event_set(&s->ev, fd, EV_WRITE, mta_event, s);
+		event_add(&s->ev, client_timeout(s->smtp_state));
+		break;
+
+	case MTA_DONE:
+		/*
+		 * Update runner.
+		 */
+
+		/* update queue status */
+		while ((m = TAILQ_FIRST(&s->recipients))) {
+			switch (m->session_errorline[0]) {
+			case '5':
+				m->status = S_MESSAGE_PERMFAILURE;
+				break;
+			case '2':
+				m->status = S_MESSAGE_ACCEPTED;
+				log_info("%s: to=<%s@%s>, delay=%d, stat=Sent (%s)",
+				    m->message_uid, m->recipient.user,
+				    m->recipient.domain, time(NULL) - m->creation,
+				    m->session_errorline + 4);
+				break;
+			default:
+				m->status = S_MESSAGE_TEMPFAILURE;
+				break;
+			}
+			imsg_compose_event(s->env->sc_ievs[PROC_QUEUE],
+			    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, m, sizeof(*m));
+			TAILQ_REMOVE(&s->recipients, m, entry);
+			free(m);
+		}
+
+		/* deallocate resources */
+		SPLAY_REMOVE(mtatree, &s->env->mta_sessions, s);
+		s->env->stats->mta.sessions_active--;
+		while ((relay = TAILQ_FIRST(&s->relays))) {
+			TAILQ_REMOVE(&s->relays, relay, entry);
+			free(relay);
+		}
+		close(s->datafd);
+		free(s->secret);
+		free(s->host);
+		free(s->cert);
+		free(s);
 		break;
 
 	default:
-		log_info("unknown command: %d", sessionp->s_state);
+		fatal("mta_enter_state: unknown state");
 	}
-
-	return 1;
 }
 
 void
-mta_write_handler(struct bufferevent *bev, void *arg)
+mta_pickup(struct mta_session *s, void *p)
 {
-	struct session *sessionp = arg;
-	struct batch *batchp = sessionp->batch;
-	char *buf, *lbuf;
-	size_t len;
-	
-	if (sessionp->s_state == S_QUIT) {
-		bufferevent_disable(bev, EV_READ|EV_WRITE);
-		log_debug("closing connection because of QUIT");
-		close(sessionp->s_fd);
+	int	 fd, error;
+
+	switch (s->state) {
+	case MTA_INIT:
+		if (s->flags & MTA_USE_AUTH)
+			mta_enter_state(s, MTA_SECRET, NULL);
+		else
+			mta_enter_state(s, MTA_MX, NULL);
+		break;
+
+	case MTA_SECRET:
+		/* LKA responded to AUTH lookup. */
+		s->secret = strdup(p);
+		if (s->secret == NULL)
+			fatal(NULL);
+		else if (s->secret[0] == '\0') {
+			mta_status(s, "190 secrets lookup failed");
+			mta_enter_state(s, MTA_DONE, NULL);
+		} else
+			mta_enter_state(s, MTA_MX, NULL);
+		break;
+
+	case MTA_MX:
+		/* LKA responded to DNS lookup. */
+		error = *(int *)p;
+		if (error) {
+			mta_status(s, "100 MX lookup failed");
+			mta_enter_state(s, MTA_DONE, NULL);
+		} else
+			mta_enter_state(s, MTA_DATA, NULL);
+		break;
+
+	case MTA_DATA:
+		/* QUEUE replied to body fd request. */
+		s->datafd = *(int *)p;
+		if (s->datafd == -1)
+			fatalx("mta cannot obtain msgfd");
+		else
+			mta_enter_state(s, MTA_CONNECT, NULL);
+		break;
+
+	case MTA_CONNECT:
+		/* Remote accepted/rejected connection. */
+		fd = *(int *)p;
+		error = session_socket_error(fd);
+		if (error) {
+			mta_status(s, "110 connect error");
+			close(fd);
+			mta_enter_state(s, MTA_CONNECT, NULL);
+		} else
+			mta_enter_state(s, MTA_PROTOCOL, &fd);
+		break;
+
+	default:
+		fatalx("mta_pickup: unexpected state");
+	}
+}
+
+void
+mta_event(int fd, short event, void *p)
+{
+	struct mta_session	*s = p;
+	int			 error = 0;
+	int			(*iofunc)(struct smtp_client *);
+
+	if (event & EV_TIMEOUT) {
+		log_debug("mta: leaving smtp phase due to timeout");
+		mta_status(s, "150 timeout");
+
+		client_close(s->smtp_state);
+		s->smtp_state = NULL;
+
+		mta_enter_state(s, MTA_CONNECT, NULL);
 		return;
 	}
 
-	/* Progressively fill the output buffer with data */
-	if (sessionp->s_state == S_DATA) {
+	if (event & EV_READ)
+		iofunc = client_read;
+	else
+		iofunc = client_write;
 
-		lbuf = NULL;
-		if ((buf = fgetln(batchp->messagefp, &len))) {
-			if (buf[len - 1] == '\n')
-				buf[len - 1] = '\0';
-			else {
-				if ((lbuf = malloc(len + 1)) == NULL)
-					fatal("mta_write_handler: malloc");
-				memcpy(lbuf, buf, len);
-				lbuf[len] = '\0';
-				buf = lbuf;
-			}
-
-			/* "If first character of the line is a period, one
-			 *  additional period is inserted at the beginning."
-			 * [4.5.2]
-			 */
-			if (*buf == '.')
-				evbuffer_add_printf(sessionp->s_bev->output, ".");
-
-			session_respond(sessionp, "%s", buf);
-			free(lbuf);
-			lbuf = NULL;
-		}
-		else {
-			session_respond(sessionp, ".");
-			sessionp->s_state = S_DONE;
-			fclose(batchp->messagefp);
-			batchp->messagefp = NULL;
-		}
-	}
-}
-
-void
-mta_error_handler(struct bufferevent *bev, short error, void *arg)
-{
-	struct session *sessionp = arg;
-
-	if (error & (EVBUFFER_TIMEOUT|EVBUFFER_EOF)) {
-		bufferevent_disable(bev, EV_READ|EV_WRITE);
-		log_debug("closing connection because of an error");
-		close(sessionp->s_fd);
+	switch (iofunc(s->smtp_state)) {
+	case CLIENT_RCPT_FAIL:
+		mta_status_message(client_udata_get(s->smtp_state),
+		    client_reply(s->smtp_state));
+	case CLIENT_WANT_WRITE:
+		event_set(&s->ev, fd, EV_WRITE, mta_event, s);
+		event_add(&s->ev, client_timeout(s->smtp_state));
 		return;
+	case CLIENT_WANT_READ:
+		event_set(&s->ev, fd, EV_READ, mta_event, s);
+		event_add(&s->ev, client_timeout(s->smtp_state));
+		return;
+	case CLIENT_ERROR:
+		error = 1;
+	case CLIENT_DONE:
+		break;
 	}
+
+	log_debug("mta: leaving smtp phase");
+
+	if (error)
+		mta_status(s, "%s", client_strerror(s->smtp_state));
+	else
+		mta_status(s, "%s", client_reply(s->smtp_state));
+
+	client_close(s->smtp_state);
+	s->smtp_state = NULL;
+
+	if (mta_todo(s) == 0)
+		mta_enter_state(s, MTA_DONE, NULL);
+	else
+		mta_enter_state(s, MTA_CONNECT, NULL);
 }
 
 void
-mta_batch_update_queue(struct batch *batchp)
+mta_status(struct mta_session *s, const char *fmt, ...)
 {
-	struct smtpd *env = batchp->env;
-	struct message *messagep;
+	char		*status;
+	struct message	*m;
+	va_list		 ap;
 
-	while ((messagep = TAILQ_FIRST(&batchp->messages)) != NULL) {
+	va_start(ap, fmt);
+	if (vasprintf(&status, fmt, ap) == -1)
+		fatal("vasprintf");
+	va_end(ap);
 
-		if (batchp->status == S_BATCH_PERMFAILURE) {
-			if ((messagep->status & S_MESSAGE_PERMFAILURE) == 0) {
-				messagep->status |= S_MESSAGE_PERMFAILURE;
-				message_set_errormsg(messagep, "%s", batchp->errorline);
-			}
-		}
-		
-		if (batchp->status == S_BATCH_TEMPFAILURE) {
-			if (messagep->status != S_MESSAGE_PERMFAILURE)
-				messagep->status |= S_MESSAGE_TEMPFAILURE;
-			message_set_errormsg(messagep, "%s", batchp->errorline);
-		}
+	TAILQ_FOREACH(m, &s->recipients, entry)
+		mta_status_message(m, status);
 
-		if ((messagep->status & S_MESSAGE_TEMPFAILURE) == 0 &&
-		    (messagep->status & S_MESSAGE_PERMFAILURE) == 0) {
-			log_info("%s: to=<%s@%s>, delay=%d, stat=Sent",
-			    messagep->message_uid,
-			    messagep->recipient.user,
-			    messagep->recipient.domain,
-			    time(NULL) - messagep->creation);
-		}
-
-		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
-		    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, messagep,
-		    sizeof(struct message));
-		TAILQ_REMOVE(&batchp->messages, messagep, entry);
-		free(messagep);
-	}
-
-	SPLAY_REMOVE(batchtree, &env->batch_queue, batchp);
-
-	if (batchp->messagefp)
-		fclose(batchp->messagefp);
-
-	free(batchp);
-
+	free(status);
 }
+
+void
+mta_status_message(struct message *m, char *status)
+{
+	/*
+	 * Previous delivery attempts might have assigned an errorline of
+	 * higher status (eg. 5yz is of higher status than 4yz), so check
+	 * this before deciding to overwrite existing status with a new one.
+	 */
+	if (strncmp(m->session_errorline, status, 3) > 0)
+		return;
+
+	/* change status */
+	log_debug("mta: new status for %s@%s: %s", m->recipient.user,
+	    m->recipient.domain, status);
+	strlcpy(m->session_errorline, status, sizeof(m->session_errorline));
+}
+
+void
+mta_connect_done(int fd, short event, void *p)
+{
+	mta_pickup(p, &fd);
+}
+
+void
+mta_request_datafd(struct mta_session *s)
+{
+	struct batch	 b;
+	struct message	*m;
+
+	b.id = s->id;
+	m = TAILQ_FIRST(&s->recipients);
+	strlcpy(b.message_id, m->message_id, sizeof(b.message_id));
+	imsg_compose_event(s->env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
+	    0, 0, -1, &b, sizeof(b));
+}
+
+size_t
+mta_todo(struct mta_session *s)
+{
+	struct message	*m;
+	size_t		 n = 0;
+
+	TAILQ_FOREACH(m, &s->recipients, entry)
+		if (m->session_errorline[0] != '2' &&
+		    m->session_errorline[0] != '5')
+			n++;
+	return (n);
+}
+
+SPLAY_GENERATE(mtatree, mta_session, entry, mta_session_cmp);

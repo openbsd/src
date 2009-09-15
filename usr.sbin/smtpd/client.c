@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.2 2009/08/27 11:42:50 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.3 2009/09/15 16:50:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -32,15 +32,32 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <openssl/ssl.h>
+
 #include "imsg.h"
 #include "client.h"
 
-int		 client_readln(struct smtp_client *, char **);
-int		 client_writeln(struct smtp_client *, char *, ...);
-int		 client_error(struct smtp_client *, char **, char *);
-int		 client_data_add(struct smtp_client *, char *, size_t);
-char		*buf_getln(struct buf_read *);
+int		 client_next_state(struct smtp_client *);
 
+int		 client_getln(struct smtp_client *);
+int		 client_putln(struct smtp_client *, char *, ...);
+int		 client_data_add(struct smtp_client *, char *, size_t);
+
+#ifndef CLIENT_NO_SSL
+int		 client_ssl_connect(struct smtp_client *);
+SSL		*ssl_client_init(int, char *, size_t, char *, size_t);
+int		 ssl_buf_read(SSL *, struct buf_read *);
+int		 ssl_buf_write(SSL *, struct msgbuf *);
+#endif
+
+char		*buf_getln(struct buf_read *);
+int		 buf_read(int, struct buf_read *);
+
+/*
+ * client_init()
+ *
+ * Initialize SMTP session.
+ */
 struct smtp_client *
 client_init(int fd, char *ehlo)
 {
@@ -51,17 +68,30 @@ client_init(int fd, char *ehlo)
 		goto done;
 	if ((sp->ehlo = strdup(ehlo)) == NULL)
 		goto done;
+	if ((sp->sender = strdup("")) == NULL)
+		goto done;
 	if ((sp->data = buf_dynamic(0, SIZE_T_MAX)) == NULL)
 		goto done;
 	sp->state = CLIENT_INIT;
 	msgbuf_init(&sp->w);
 	sp->w.fd = fd;
 	TAILQ_INIT(&sp->recipients);
-	
+
+#ifndef CLIENT_NO_SSL
+	sp->exts[CLIENT_EXT_STARTTLS].want = 0;
+	sp->exts[CLIENT_EXT_STARTTLS].must = 0;
+	sp->exts[CLIENT_EXT_STARTTLS].state = CLIENT_STARTTLS;
+#endif
+
+	sp->exts[CLIENT_EXT_AUTH].want = 0;
+	sp->exts[CLIENT_EXT_AUTH].must = 0;
+	sp->exts[CLIENT_EXT_AUTH].state = CLIENT_AUTH;
+
 	rv = 0;
 done:
-	if (rv < 0) {
+	if (rv) {
 		free(sp->ehlo);
+		free(sp->sender);
 		if (sp->data)
 			buf_free(sp->data);
 		free(sp);
@@ -70,12 +100,129 @@ done:
 	return (sp);
 }
 
+/*
+ * client_verbose()
+ *
+ * Enable logging of SMTP commands.
+ */
 void
-client_verbose(struct smtp_client *sp, int fd)
+client_verbose(struct smtp_client *sp, FILE *fp)
 {
-	sp->verbose = fdopen(fd, "w");
+	sp->verbose = fp;
 }
 
+/*
+ * client_ssl_smtps()
+ *
+ * Request that connection be secured using SSL from the start.
+ */
+int
+client_ssl_smtps(struct smtp_client *sp)
+{
+	/* check if too late */
+	if (sp->state != CLIENT_INIT)
+		return (-1);
+
+#ifndef CLIENT_NO_SSL
+	sp->state = CLIENT_SSL_INIT;
+	sp->exts[CLIENT_EXT_STARTTLS].want = 0;
+	sp->exts[CLIENT_EXT_STARTTLS].must = 0;
+
+	return (0);
+#else
+	return (-1);
+#endif
+}
+
+/*
+ * client_ssl_optional()
+ *
+ * Allow session to progress in plaintext if STARTTLS fails.
+ */
+int
+client_ssl_optional(struct smtp_client *sp)
+{
+	if (sp->state != CLIENT_INIT)
+		return (-1);
+
+#ifndef CLIENT_NO_SSL
+	sp->exts[CLIENT_EXT_STARTTLS].must = 0;
+
+	return (0);
+#else
+	return (-1);
+#endif
+}
+
+/*
+ * client_certificate()
+ *
+ * Use the provided certificate during SSL handshake.
+ */
+int
+client_certificate(struct smtp_client *sp, char *cert, size_t certsz,
+    char *key, size_t keysz)
+{
+	int	 rv = -1;
+
+	if (sp->state != CLIENT_INIT && sp->state != CLIENT_SSL_INIT)
+		goto done;
+
+	if ((sp->auth.cert = malloc(certsz)) == NULL)
+		goto done;
+	if ((sp->auth.key = malloc(keysz)) == NULL)
+		goto done;
+	memcpy(sp->auth.cert, cert, certsz);
+	memcpy(sp->auth.key, key, keysz);
+	sp->auth.certsz = certsz;
+	sp->auth.keysz = keysz;
+
+	rv = 0;
+done:
+	if (rv) {
+		free(sp->auth.cert);
+		free(sp->auth.key);
+		sp->auth.cert = NULL;
+		sp->auth.certsz = 0;
+		sp->auth.key = NULL;
+		sp->auth.keysz = 0;
+	}
+	return (rv);
+}
+
+/*
+ * client_auth()
+ *
+ * Use the AUTH extension.
+ */
+int
+client_auth(struct smtp_client *sp, char *secret)
+{
+	int	 rv = -1;
+
+	if (sp->state != CLIENT_INIT && sp->state != CLIENT_SSL_INIT)
+		goto done;
+
+	if ((sp->auth.plain = strdup(secret)) == NULL)
+		goto done;
+
+	sp->exts[CLIENT_EXT_AUTH].want = 1;
+	sp->exts[CLIENT_EXT_AUTH].must = 1;
+
+	rv = 0;
+done:
+	if (rv) {
+		free(sp->auth.plain);
+		sp->auth.plain = NULL;
+	}
+	return (rv);
+}
+
+/*
+ * client_sender()
+ *
+ * Set envelope sender.  If not called, the sender is assumed to be "<>".
+ */
 int
 client_sender(struct smtp_client *sp, char *fmt, ...)
 {
@@ -88,6 +235,7 @@ client_sender(struct smtp_client *sp, char *fmt, ...)
 	/* check if too late */
 	switch (sp->state) {
 	case CLIENT_INIT:
+	case CLIENT_SSL_INIT:
 	case CLIENT_EHLO:
 	case CLIENT_HELO:
 		break;
@@ -97,18 +245,22 @@ client_sender(struct smtp_client *sp, char *fmt, ...)
 
 	if (vasprintf(&mbox, fmt, ap) == -1)
 		goto done;
-	if (sp->sender)
-		free(sp->sender);
+	free(sp->sender);
 	sp->sender = mbox;
 
 	rv = 0;
 done:
 	va_end(ap);
-	if (rv < 0)
+	if (rv)
 		free(mbox);
 	return (rv);
 }
 
+/*
+ * client_rcpt()
+ *
+ * Add mail recipient.
+ */
 int
 client_rcpt(struct smtp_client *sp, char *fmt, ...)
 {
@@ -121,6 +273,7 @@ client_rcpt(struct smtp_client *sp, char *fmt, ...)
 	/* check if too late */
 	switch (sp->state) {
 	case CLIENT_INIT:
+	case CLIENT_SSL_INIT:
 	case CLIENT_EHLO:
 	case CLIENT_HELO:
 	case CLIENT_MAILFROM:
@@ -138,7 +291,7 @@ client_rcpt(struct smtp_client *sp, char *fmt, ...)
 	rv = 0;
 done:
 	va_end(ap);
-	if (rv < 0) {
+	if (rv) {
 		if (rp)
 			free(rp->mbox);
 		free(rp);
@@ -146,6 +299,11 @@ done:
 	return (rv);
 }
 
+/*
+ * client_data_fd()
+ *
+ * Append file referenced by fd to the data buffer.
+ */
 int
 client_data_fd(struct smtp_client *sp, int fd)
 {
@@ -170,12 +328,16 @@ client_data_fd(struct smtp_client *sp, int fd)
 
 	rv = 0;
 done:
-	close(fd);
 	if (map)
 		munmap(map, sb.st_size);
 	return (rv);
 }
 
+/*
+ * client_data_printf()
+ *
+ * Append string to the data buffer.
+ */
 int
 client_data_printf(struct smtp_client *sp, char *fmt, ...)
 {
@@ -197,141 +359,410 @@ done:
 	return (rv);
 }
 
-int
-client_read(struct smtp_client *sp, char **ep)
+/*
+ * client_udata_set()
+ *
+ * Associate user pointer with the most recently recorded recipient.
+ */
+void
+client_udata_set(struct smtp_client *sp, void *p)
 {
-	char	*reply;
+	struct rcpt *lastrcpt;
 
-	*ep = NULL;
+	lastrcpt = TAILQ_LAST(&sp->recipients, rlist);
+	lastrcpt->udata = p;
+}
 
-	/* read server reply */
-	if (client_readln(sp, &reply) < 0)
-		return client_error(sp, ep, reply);
-	if (reply == NULL)
+/*
+ * client_udata_get()
+ *
+ * Return user pointer associated with most recently sent recipient.
+ */
+void *
+client_udata_get(struct smtp_client *sp)
+{
+	return (sp->rcptsent->udata);
+}
+
+/*
+ * client_read()
+ *
+ * Handler to be called when socket becomes readable.
+ */
+int
+client_read(struct smtp_client *sp)
+{
+	int	 rv = CLIENT_ERROR;
+
+#ifndef CLIENT_NO_SSL
+	if (sp->state == CLIENT_SSL_CONNECT)
+		return client_ssl_connect(sp);
+#endif
+
+	/* read data from the socket */
+#ifndef CLIENT_NO_SSL
+	if (sp->ssl_state) {
+		switch (ssl_buf_read(sp->ssl_state, &sp->r)) {
+		case SSL_ERROR_NONE:
+			break;
+
+		case SSL_ERROR_WANT_READ:
+			return (CLIENT_WANT_READ);
+
+		case SSL_ERROR_WANT_WRITE:
+			return (CLIENT_WANT_WRITE);
+
+		default:
+			strlcpy(sp->ebuf, "130 ssl_buf_read error",
+			    sizeof(sp->ebuf));
+			return (CLIENT_ERROR);
+		}
+#else
+	if (0) {
+#endif
+	} else {
+		if (buf_read(sp->w.fd, &sp->r) == -1) {
+			strlcpy(sp->ebuf, "130 buf_read error",
+			    sizeof(sp->ebuf));
+			return (CLIENT_ERROR);
+		}
+	}
+
+	/* get server reply */
+	if (client_getln(sp) < 0)
+		return (CLIENT_ERROR);
+	if (*sp->reply == '\0')
 		return (CLIENT_WANT_READ);
 
-	/* send command */
+	/*
+	 * Devalue untimely 5yz reply down to 1yz in order to protect
+	 * the caller from dropping mail for trifle reason.
+	 */ 
+	if (*sp->reply == '5' &&
+	    sp->state != CLIENT_AUTH &&
+	    sp->state != CLIENT_MAILFROM &&
+	    sp->state != CLIENT_RCPTTO &&
+	    sp->state != CLIENT_DATA &&
+	    sp->state != CLIENT_DATA_BODY) {
+		memcpy(sp->reply, "190", 3);
+		goto done;
+	}
+
 	switch (sp->state) {
 	case CLIENT_INIT:
-		if (*reply != '2')
-			client_error(sp, ep, reply);
+		if (*sp->reply != '2')
+			goto done;
 		else
 			sp->state = CLIENT_EHLO;
 		break;
 
 	case CLIENT_EHLO:
-		if (*reply != '2')
-			sp->state = CLIENT_HELO;
-		else
-			sp->state = CLIENT_MAILFROM;
+		if (*sp->reply != '2') {
+			if (sp->exts[CLIENT_EXT_STARTTLS].must ||
+			    sp->exts[CLIENT_EXT_AUTH].must)
+				goto done;
+			else
+				sp->state = CLIENT_HELO;
+			break;
+		}
+	
+		sp->state = client_next_state(sp);
 		break;
 
 	case CLIENT_HELO:
-		if (*reply != '2')
-			client_error(sp, ep, reply);
+		if (*sp->reply != '2')
+			goto done;
 		else
 			sp->state = CLIENT_MAILFROM;
 		break;
 
+	case CLIENT_STARTTLS:
+		if (*sp->reply != '2') {
+			sp->exts[CLIENT_EXT_STARTTLS].fail = 1;
+			if (client_next_state(sp))
+				sp->state = client_next_state(sp);
+			else
+				goto done;
+		} else
+			sp->state = CLIENT_SSL_INIT;
+		break;
+
+	case CLIENT_AUTH:
+		if (*sp->reply != '2')
+			sp->exts[CLIENT_EXT_AUTH].fail = 1;
+		else
+			sp->exts[CLIENT_EXT_AUTH].done = 1;
+
+		if (client_next_state(sp))
+			sp->state = client_next_state(sp);
+		else
+			goto done;
+		break;
+
 	case CLIENT_MAILFROM:
-		if (*reply != '2')
-			client_error(sp, ep, reply);
+		if (*sp->reply != '2')
+			goto done;
 		else
 			sp->state = CLIENT_RCPTTO;
 		break;
 
 	case CLIENT_RCPTTO:
-		if (*reply != '2')
-			client_error(sp, ep, reply);
-		else if (TAILQ_EMPTY(&sp->recipients))
+		if (*sp->reply != '2') {
+			rv = CLIENT_RCPT_FAIL;
+			goto done;
+		} else if (TAILQ_NEXT(sp->rcptsent, entry) == NULL)
 			sp->state = CLIENT_DATA;
 		break;
 
 	case CLIENT_DATA:
-		if (*reply != '3')
-			client_error(sp, ep, reply);
+		if (*sp->reply != '3')
+			goto done;
 		else
 			sp->state = CLIENT_DATA_BODY;
 		break;
 
 	case CLIENT_DATA_BODY:
-		if (*reply != '2')
-			client_error(sp, ep, reply);
-		else
-			return (CLIENT_DONE);
-		break;
+		if (*sp->reply == '2')
+			rv = CLIENT_DONE;
+		goto done;
 
 	default:
-		client_error(sp, ep, "invalid state");
+		abort();
 	}
-	free(reply);
 
-	/* may have been set by client_error */
-	if (*ep)
-		return (CLIENT_ERROR);
-
-	return (CLIENT_WANT_WRITE);
+	rv = CLIENT_WANT_WRITE;
+done:
+	if (rv == CLIENT_ERROR)
+		strlcpy(sp->ebuf, sp->reply, sizeof(sp->ebuf));
+	return (rv);
 }
 
+/*
+ * client_write()
+ *
+ * Handler to be called when socket becomes writable.
+ */
 int
-client_write(struct smtp_client *sp, char **ep)
+client_write(struct smtp_client *sp)
 {
-	struct rcpt	*rp;
+	int	 rv = CLIENT_ERROR;
 
-	*ep = NULL;
+#ifndef CLIENT_NO_SSL
+	if (sp->state == CLIENT_SSL_CONNECT)
+		return client_ssl_connect(sp);
+#endif
 
 	/* complete any pending write */
 	if (sp->w.queued)
 		goto write;
 
 	switch (sp->state) {
+#ifndef CLIENT_NO_SSL
+	case CLIENT_SSL_INIT:
+		if (sp->verbose)
+			fprintf(sp->verbose, "client: ssl handshake started\n");
+		sp->ssl_state = ssl_client_init(sp->w.fd,
+		    sp->auth.cert, sp->auth.certsz,
+		    sp->auth.key, sp->auth.keysz);
+		if (sp->ssl_state == NULL) {
+			strlcpy(sp->ebuf, "130 SSL init failed",
+			    sizeof(sp->ebuf));
+			return (CLIENT_ERROR);
+		} else {
+			sp->state = CLIENT_SSL_CONNECT;
+			return (CLIENT_WANT_WRITE);
+		}
+		break;
+#endif
+
+	case CLIENT_INIT:
+		/* read the banner */
+		return (CLIENT_WANT_READ);
+
 	case CLIENT_EHLO:
-		if (client_writeln(sp, "EHLO %s", sp->ehlo) < 0)
-			return client_error(sp, ep, NULL);
+	case CLIENT_HELO:
+		sp->exts[CLIENT_EXT_STARTTLS].have = 0;
+		sp->exts[CLIENT_EXT_STARTTLS].fail = 0;
+
+		sp->exts[CLIENT_EXT_AUTH].have = 0;
+		sp->exts[CLIENT_EXT_AUTH].fail = 0;
+
+		if (client_putln(sp, "%sLO %s",
+		    sp->state == CLIENT_EHLO ? "EH" : "HE", sp->ehlo) < 0)
+			goto done;
 		break;
 
-	case CLIENT_HELO:
-		if (client_writeln(sp, "HELO %s", sp->ehlo) < 0)
-			return client_error(sp, ep, NULL);
+	case CLIENT_AUTH:
+		if (client_putln(sp, "AUTH PLAIN %s", sp->auth.plain) < 0)
+			goto done;
+		break;
+
+	case CLIENT_STARTTLS:
+		if (client_putln(sp, "STARTTLS") < 0)
+			goto done;
 		break;
 
 	case CLIENT_MAILFROM:
-		if (client_writeln(sp, "MAIL FROM:<%s>", sp->sender) < 0)
-			return client_error(sp, ep, NULL);
+		if (client_putln(sp, "MAIL FROM:<%s>", sp->sender) < 0)
+			goto done;
 		break;
 
 	case CLIENT_RCPTTO:
-		rp = TAILQ_FIRST(&sp->recipients);
-		TAILQ_REMOVE(&sp->recipients, rp, entry);
-		if (client_writeln(sp, "RCPT TO:<%s>", rp->mbox) < 0)
-			return client_error(sp, ep, NULL);
-		free(rp->mbox);
-		free(rp);
+		if (sp->rcptsent == NULL)
+			sp->rcptsent = TAILQ_FIRST(&sp->recipients);
+		else
+			sp->rcptsent = TAILQ_NEXT(sp->rcptsent, entry);
+
+		if (client_putln(sp, "RCPT TO: <%s>", sp->rcptsent->mbox) < 0)
+			goto done;
 		break;
 
 	case CLIENT_DATA:
-		if (client_writeln(sp, "DATA") < 0)
-			return client_error(sp, ep, NULL);
+		if (client_putln(sp, "DATA") < 0)
+			goto done;
 		break;
 
 	case CLIENT_DATA_BODY:
-		if (buf_add(sp->data, ".\r\n", 3) == -1)
-			return client_error(sp, ep, NULL);
+		if (buf_add(sp->data, ".\r\n", 3) < 0) {
+			strlcpy(sp->ebuf, "190 buf_add error",
+			    sizeof(sp->ebuf));
+			goto done;
+		}
 		buf_close(&sp->w, sp->data);
 		sp->data = NULL;
 		break;
 
 	default:
-		return client_error(sp, ep, "invalid state");
+		abort();
 	}
 
 write:
-	if (buf_write(&sp->w) < 0)
-		return client_error(sp, ep, NULL);
+#ifndef CLIENT_NO_SSL
+	if (sp->ssl_state) {
+		switch (ssl_buf_write(sp->ssl_state, &sp->w)) {
+		case SSL_ERROR_NONE:
+			break;
 
-	return (sp->w.queued ? CLIENT_WANT_WRITE : CLIENT_WANT_READ);
+		case SSL_ERROR_WANT_READ:
+			rv = CLIENT_WANT_READ;
+			goto done;
+
+		case SSL_ERROR_WANT_WRITE:
+			rv = CLIENT_WANT_WRITE;
+			goto done;
+
+		default:
+			strlcpy(sp->ebuf, "130 ssl_buf_write error",
+			    sizeof(sp->ebuf));
+			goto done;
+		}
+#else
+	if (0) {
+#endif
+	} else {
+		if (buf_write(&sp->w) < 0) {
+			strlcpy(sp->ebuf, "130 buf_write error",
+			    sizeof(sp->ebuf));
+			goto done;
+		}
+	}
+
+	rv = sp->w.queued ? CLIENT_WANT_WRITE : CLIENT_WANT_READ;
+done:
+	return (rv);
 }
 
+#ifndef CLIENT_NO_SSL
+/*
+ * client_ssl_connect()
+ *
+ * Progress SSL handshake.
+ */
+int
+client_ssl_connect(struct smtp_client *sp)
+{
+	int	 ret;
+
+	ret = SSL_connect(sp->ssl_state);
+
+	switch (SSL_get_error(sp->ssl_state, ret)) {
+	case SSL_ERROR_NONE:
+		break;
+
+	case SSL_ERROR_WANT_READ:
+		return (CLIENT_WANT_READ);
+
+	case SSL_ERROR_WANT_WRITE:
+		return (CLIENT_WANT_WRITE);
+
+	default:
+		if (sp->verbose)
+			fprintf(sp->verbose, "client: ssl handshake failed\n");
+
+		if (sp->exts[CLIENT_EXT_STARTTLS].want) {
+			sp->exts[CLIENT_EXT_STARTTLS].fail = 1;
+
+			SSL_free(sp->ssl_state);
+			sp->ssl_state = NULL;
+
+			if (client_next_state(sp)) {
+				sp->state = client_next_state(sp);
+				return (CLIENT_WANT_WRITE);
+			} else {
+				strlcpy(sp->ebuf, "130 SSL_connect error",
+				    sizeof(sp->ebuf));
+				return (CLIENT_ERROR);
+			}
+		} else {
+			strlcpy(sp->ebuf, "130 SSL_connect error", sizeof(sp->ebuf));
+			return (CLIENT_ERROR);
+		}
+	}
+
+	if (sp->verbose)
+		fprintf(sp->verbose, "client: ssl handshake completed\n");
+
+	if (sp->exts[CLIENT_EXT_STARTTLS].want)
+		sp->state = CLIENT_EHLO;
+	else
+		sp->state = CLIENT_INIT;
+
+	sp->exts[CLIENT_EXT_STARTTLS].done = 1;
+
+	return (CLIENT_WANT_WRITE);
+}
+#endif
+
+/*
+ * client_strerror()
+ *
+ * Access error string explaining most recent client_{read,write} failure.
+ */
+char *
+client_strerror(struct smtp_client *sp)
+{
+	if (sp->ebuf[0] == '\0')
+		return (NULL);
+	else
+		return (sp->ebuf);
+}
+
+/*
+ * client_reply()
+ *
+ * Access string containing most recent server reply.
+ */
+char *
+client_reply(struct smtp_client *sp)
+{
+	return (sp->reply);
+}
+
+/*
+ * client_close()
+ *
+ * Deinitialization routine.
+ */
 void
 client_close(struct smtp_client *sp)
 {
@@ -339,6 +770,9 @@ client_close(struct smtp_client *sp)
 
 	free(sp->ehlo);
 	free(sp->sender);
+	free(sp->auth.plain);
+	free(sp->auth.cert);
+	free(sp->auth.key);
 	if (sp->data)
 		buf_free(sp->data);
 	msgbuf_clear(&sp->w);
@@ -347,39 +781,90 @@ client_close(struct smtp_client *sp)
 		free(rp->mbox);
 		free(rp);
 	}
+#ifndef CLIENT_NO_SSL
+	if (sp->ssl_state)
+		SSL_free(sp->ssl_state);
+#endif
 	close(sp->w.fd);
 	free(sp);
 }
 
+/*
+ * client_next_state()
+ *
+ * Decide if any extensions need to be requested before proceeding to
+ * the MAIL FROM command.
+ */
 int
-client_readln(struct smtp_client *sp, char **reply)
+client_next_state(struct smtp_client *sp)
 {
-	struct buf_read	*r = &sp->r;
-	size_t		 i;
-	char		*ln = NULL;
-	int		 n, rv = -1;
+	struct client_ext	*e;
+	size_t			 i;
 
-	*reply = NULL;
-
-	/* read data from the socket */
-	n = read(sp->w.fd, r->buf + r->wpos, sizeof(r->buf) - r->wpos);
-	if (n == -1) {
-		if (errno == EAGAIN || errno == EINTR)
-			rv = 0;
-		else
-			*reply = strerror(errno);
-		goto done;
+	/* Request extensions that require use of a verb. */
+	for (i = 0; i < nitems(sp->exts); i++) {
+		e = &sp->exts[i];
+		if (e->want && !e->done) {
+			if (e->have && !e->fail)
+				return (e->state);
+			else if (e->must)
+				return (0);
+		}
 	}
-	r->wpos += n;
+
+	return (CLIENT_MAILFROM);
+}
+
+/*
+ * client_timeout()
+ *
+ * Return a timeout that applies to the current session state.
+ */
+struct timeval *
+client_timeout(struct smtp_client *sp)
+{
+	switch (sp->state) {
+	case CLIENT_DATA:
+		sp->timeout.tv_sec = 120;
+		break;
+
+	case CLIENT_DATA_BODY:
+		if (sp->w.queued)
+			sp->timeout.tv_sec = 180;
+		else
+			sp->timeout.tv_sec = 600;
+		break;
+
+	default:
+		sp->timeout.tv_sec = 300;
+	}
+
+	sp->timeout.tv_usec = 0;
+
+	return (&sp->timeout);
+}
+
+/*
+ * client_getln()
+ *
+ * Read and validate next line from the input buffer.
+ */
+int
+client_getln(struct smtp_client *sp)
+{
+	char	*ln = NULL, *cause = "";
+	int	 i, rv = -1;
+
+	sp->reply[0] = '\0';
 
 	/* get a reply, dealing with multiline responses */
 	for (;;) {
 		errno = 0;
-		if ((ln = buf_getln(r)) == NULL) {
+		if ((ln = buf_getln(&sp->r)) == NULL) {
 			if (errno)
-				*reply = strerror(errno);
-			else if (r->wpos >= sizeof(r->buf))
-				*reply = "reply too big";
+				cause = "150 buf_getln error";
+			else if (sp->r.wpos >= sizeof(sp->r.buf))
+				cause = "150 reply too big";
 			else
 				rv = 0;
 			goto done;
@@ -391,34 +876,47 @@ client_readln(struct smtp_client *sp, char **reply)
 		if (strlen(ln) == 3 || ln[3] == ' ')
 			break;
 		else if (ln[3] != '-') {
-			*reply = "garbled multiline reply";
+			cause = "150 garbled multiline reply";
 			goto done;
 		}
+
+		if (strcmp(ln + 4, "STARTTLS") == 0)
+			sp->exts[CLIENT_EXT_STARTTLS].have = 1;
+		if (strncmp(ln + 4, "AUTH", 4) == 0)
+			sp->exts[CLIENT_EXT_AUTH].have = 1;
 	}
 
+	/* validate reply code */
 	if (ln[0] < '2' || ln[0] > '5' || !isdigit(ln[1]) || !isdigit(ln[2])) {
-		*reply = "reply code out of range"; 
+		cause = "150 reply code out of range";
 		goto done;
 	}
 
+	/* validate reply message */
 	for (i = 0; ln[i] != '\0'; i++) {
 		if (!isprint(ln[i])) {
-			*reply = "non-printable character in server reply";
+			cause = "150 non-printable character in reply";
 			goto done;
 		}
 	}
 
-	*reply = ln;
+	strlcpy(sp->reply, ln, sizeof(sp->reply));
 
 	rv = 0;
 done:
-	if (rv < 0)
-		free(ln);
+	if (rv)
+		strlcpy(sp->ebuf, cause, sizeof(sp->ebuf));
+	free(ln);
 	return (rv);
 }
 
+/*
+ * client_putln()
+ *
+ * Add a line to the output buffer.
+ */
 int
-client_writeln(struct smtp_client *sp, char *fmt, ...)
+client_putln(struct smtp_client *sp, char *fmt, ...)
 {
 	struct buf	*cmd = NULL;
 	char		*p = NULL;
@@ -444,6 +942,8 @@ client_writeln(struct smtp_client *sp, char *fmt, ...)
 
 	rv = 0;
 done:
+	if (rv)
+		snprintf(sp->ebuf, sizeof(sp->ebuf), "190 %s", strerror(errno));
 	va_end(ap);
 	free(p);
 	if (cmd)
@@ -451,6 +951,11 @@ done:
 	return (rv);
 }
 
+/*
+ * client_data_add()
+ *
+ * Append buffer to the data buffer, performing necessary transformations.
+ */
 int
 client_data_add(struct smtp_client *sp, char *buf, size_t len)
 {
@@ -459,6 +964,7 @@ client_data_add(struct smtp_client *sp, char *buf, size_t len)
 	/* check if too late */
 	switch (sp->state) {
 	case CLIENT_INIT:
+	case CLIENT_SSL_INIT:
 	case CLIENT_EHLO:
 	case CLIENT_HELO:
 	case CLIENT_MAILFROM:
@@ -486,18 +992,11 @@ client_data_add(struct smtp_client *sp, char *buf, size_t len)
 	return (0);
 }
 
-int
-client_error(struct smtp_client *sp, char **ep, char *errormsg)
-{
-	if (errormsg == NULL)
-		errormsg = strerror(errno);
-	strlcpy(sp->errbuf, errormsg, sizeof(sp->errbuf));
-	*ep = sp->errbuf;
-	sp->state = -1;
-
-	return (CLIENT_ERROR);
-}
-
+/*
+ * buf_getln()
+ *
+ * Read a full line from the read buffer.
+ */
 char *
 buf_getln(struct buf_read *r)
 {
@@ -528,4 +1027,31 @@ buf_getln(struct buf_read *r)
 	r->wpos -= i + 1;
 
 	return (line);
+}
+
+/*
+ * buf_read()
+ *
+ * I/O routine for reading UNIX socket.
+ */
+int
+buf_read(int fd, struct buf_read *r)
+{
+	ssize_t		 n;
+
+	n = read(fd, r->buf + r->wpos, sizeof(r->buf) - r->wpos);
+	if (n == -1) {
+		if (errno == EAGAIN || errno == EINTR)
+			return (-2);
+		return (-1);
+	}
+
+	if (n == 0) {
+		errno = 0;
+		return (-1);
+	}
+
+	r->wpos += n;
+
+	return (0);
 }

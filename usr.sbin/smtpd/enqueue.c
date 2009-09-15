@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.20 2009/08/27 11:37:30 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.21 2009/09/15 16:50:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -122,7 +122,7 @@ int
 enqueue(int argc, char *argv[])
 {
 	int			 i, ch, tflag = 0, noheader, ret;
-	char			*fake_from = NULL, *ep;
+	char			*fake_from = NULL;
 	struct passwd		*pw;
 	struct smtp_client	*sp;
 	struct buf		*body;
@@ -187,7 +187,7 @@ enqueue(int argc, char *argv[])
 	if ((sp = client_init(msg.fd, "localhost")) == NULL)
 		err(1, "client_init failed");
 	if (verbose)
-		client_verbose(sp, STDOUT_FILENO);
+		client_verbose(sp, stdout);
 
 	/* parse message */
 	if ((body = buf_dynamic(0, SIZE_T_MAX)) < 0)
@@ -251,16 +251,18 @@ enqueue(int argc, char *argv[])
 
 	/* run the protocol engine */
 	for (;;) {
-		while ((ret = client_read(sp, &ep)) == CLIENT_WANT_READ)
+		while ((ret = client_read(sp)) == CLIENT_WANT_READ)
 			;
-		if (ep)
-			errx(1, "read error: %s", ep);
+		if (ret == CLIENT_ERROR)
+			errx(1, "read error: %s", client_strerror(sp));
+		if (ret == CLIENT_RCPT_FAIL)
+			errx(1, "recipient refused: %s", client_reply(sp));
 		if (ret == CLIENT_DONE)
 			break;
-		while (client_write(sp, &ep) == CLIENT_WANT_WRITE)
+		while ((ret = client_write(sp)) == CLIENT_WANT_WRITE)
 			;
-		if (ep)
-			errx(1, "write error: %s", ep);
+		if (ret == CLIENT_ERROR)
+			errx(1, "write error: %s", client_strerror(sp));
 	}
 
 	client_close(sp);

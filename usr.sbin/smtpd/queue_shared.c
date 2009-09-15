@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.24 2009/09/04 13:33:00 jacekm Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.25 2009/09/15 16:50:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -782,6 +782,8 @@ display_envelope(struct message *envelope, int flags)
 	    status, sizeof(status));
 	getflag(&envelope->flags, F_MESSAGE_ENQUEUED, "ENQUEUED",
 	    status, sizeof(status));
+	getflag(&envelope->flags, F_MESSAGE_FORCESCHEDULE, "SCHEDULED_MANUAL",
+	    status, sizeof(status));
 
 	if (envelope->flags)
 		errx(1, "%s: unexpected flags 0x%04x", envelope->message_uid,
@@ -806,13 +808,18 @@ display_envelope(struct message *envelope, int flags)
 		printf("UNKNOWN");
 	}
 	
-	printf("|%s|%s|%s@%s|%s@%s|%d|%u\n",
+	printf("|%s|%s|%s@%s|%s@%s|%d|%u",
 	    envelope->message_uid,
 	    status,
 	    envelope->sender.user, envelope->sender.domain,
 	    envelope->recipient.user, envelope->recipient.domain,
 	    envelope->lasttry,
 	    envelope->retry);
+	
+	if (envelope->session_errorline[0] != '\0')
+		printf("|%s", envelope->session_errorline);
+
+	printf("\n");
 }
 
 void

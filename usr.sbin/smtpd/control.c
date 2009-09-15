@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.36 2009/09/03 08:19:13 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.37 2009/09/15 16:50:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -822,4 +822,26 @@ session_socket_blockmode(int fd, enum blockmodes bm)
 
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
 		fatal("fcntl F_SETFL");
+}
+
+void
+session_socket_no_linger(int fd)
+{
+	struct linger	 lng;
+
+	bzero(&lng, sizeof(lng));
+	if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &lng, sizeof(lng)) == -1)
+		fatal("session_socket_no_linger");
+}
+
+int
+session_socket_error(int fd)
+{
+	int	 err, len;
+
+	len = sizeof(err);
+	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &len) == -1)
+		fatal("session_socket_error: getsockopt");
+
+	return (err);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.26 2009/08/27 09:21:28 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.27 2009/09/15 16:50:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -391,4 +391,30 @@ char *
 message_get_errormsg(struct message *messagep)
 {
 	return messagep->session_errorline;
+}
+
+void
+sa_set_port(struct sockaddr *sa, int port)
+{
+	char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+	struct addrinfo hints, *res;
+	int error;
+
+	error = getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+	if (error)
+		fatalx("sa_set_port: getnameinfo failed");
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_NUMERICHOST|AI_NUMERICSERV;
+
+	snprintf(sbuf, sizeof(sbuf), "%d", port);
+
+	error = getaddrinfo(hbuf, sbuf, &hints, &res);
+	if (error)
+		fatalx("sa_set_port: getaddrinfo failed");
+
+	memcpy(sa, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
 }
