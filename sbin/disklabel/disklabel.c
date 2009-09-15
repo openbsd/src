@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.158 2009/06/04 21:13:03 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.159 2009/09/15 21:51:51 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.158 2009/06/04 21:13:03 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.159 2009/09/15 21:51:51 fgsch Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1444,6 +1444,10 @@ cmplabel(struct disklabel *lp1, struct disklabel *lp2)
 	lab1.d_checksum = lab2.d_checksum;
 	lab1.d_bbsize = lab2.d_bbsize;
 	lab1.d_sbsize = lab2.d_sbsize;
+	lab1.d_bstart = lab2.d_bstart;
+	lab1.d_bstarth = lab2.d_bstarth;
+	lab1.d_bend = lab2.d_bend;
+	lab1.d_bendh = lab2.d_bendh;
 
 	return (memcmp(&lab1, &lab2, sizeof(struct disklabel)));
 }
