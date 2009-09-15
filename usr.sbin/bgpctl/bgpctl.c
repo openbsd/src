@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.146 2009/09/14 11:49:25 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.147 2009/09/15 09:45:12 sthen Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -549,6 +549,10 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			printf(", Template");
 		if (p->conf.cloned)
 			printf(", Cloned");
+		if (p->conf.passive)
+			printf(", Passive");
+		if (p->conf.ebgp && p->conf.distance > 1)
+			printf(", Multihop (%u)", (int)p->conf.distance);
 		printf("\n");
 		if (p->conf.descr[0])
 			printf(" Description: %s\n", p->conf.descr);
