@@ -1,4 +1,4 @@
-/* $OpenBSD: server-msg.c,v 1.16 2009/09/02 16:38:35 nicm Exp $ */
+/* $OpenBSD: server-msg.c,v 1.17 2009/09/15 07:45:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -248,7 +248,7 @@ server_msg_identify(struct client *c, struct msg_identify_data *data, int fd)
 		c->tty.sx = 80;
 	c->tty.sy = data->sy;
 	if (c->tty.sy == 0)
-		c->tty.sy = 25;
+		c->tty.sy = 24;
 
 	c->cwd = NULL;
 	data->cwd[(sizeof data->cwd) - 1] = '\0';
@@ -278,7 +278,7 @@ server_msg_resize(struct client *c, struct msg_resize_data *data)
 		c->tty.sx = 80;
 	c->tty.sy = data->sy;
 	if (c->tty.sy == 0)
-		c->tty.sy = 25;
+		c->tty.sy = 24;
 
 	c->tty.cx = UINT_MAX;
 	c->tty.cy = UINT_MAX;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.17 2009/09/12 09:54:34 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.18 2009/09/15 07:45:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -197,7 +197,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	/* Find new session size. */
 	if (detached) {
 		sx = 80;
-		sy = 25;
+		sy = 24;
 	} else if (ctx->cmdclient != NULL) {
 		sx = ctx->cmdclient->tty.sx;
 		sy = ctx->cmdclient->tty.sy;

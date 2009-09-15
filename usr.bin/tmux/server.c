@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.36 2009/09/14 11:25:35 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.37 2009/09/15 07:45:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -97,7 +97,7 @@ server_create_client(int fd)
 
 	c->session = NULL;
 	c->tty.sx = 80;
-	c->tty.sy = 25;
+	c->tty.sy = 24;
 	screen_init(&c->status, c->tty.sx, 1, 0);
 
 	c->message_string = NULL;
