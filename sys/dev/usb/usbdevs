@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.449 2009/08/30 11:58:39 maja Exp $
+$OpenBSD: usbdevs,v 1.450 2009/09/15 18:43:39 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -867,6 +867,7 @@ product ATHEROS2 AR5523_2_NF	0x0004	AR5523
 product ATHEROS2 AR5523_3	0x0005	AR5523
 product ATHEROS2 AR5523_3_NF	0x0006	AR5523
 product ATHEROS2 TG121N		0x1001	TG121N
+product ATHEROS2 WN821NV2	0x1002	WN821NV2
 product ATHEROS2 AR9170		0x9170	AR9170
 
 /* ATI products */
