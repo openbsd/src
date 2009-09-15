@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.13 2009/08/06 21:11:39 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.14 2009/09/15 04:54:31 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -39,6 +39,17 @@ int	cpumatch(struct device *, void *, void *);
 void	cpuattach(struct device *, struct device *, void *);
 
 struct cpu_info cpu_info_primary;
+struct cpu_info *cpu_info_list = &cpu_info_primary;
+#ifdef MULTIPROCESSOR
+struct cpuset cpus_running;
+
+/*
+ * Array of CPU info structures.  Must be statically-allocated because
+ * curproc, etc. are used early.
+ */
+
+struct cpu_info *cpu_info[MAXCPUS] = { &cpu_info_primary };
+#endif
 
 u_int	CpuPrimaryInstCacheSize;
 u_int	CpuPrimaryInstCacheLSize;
@@ -59,7 +70,7 @@ u_int	CpuOnboardCacheOn;	/* RM7K */
 int cpu_is_rm7k = 0;
 
 struct cfattach cpu_ca = {
-	sizeof(struct device), cpumatch, cpuattach
+	sizeof(struct cpu_info), cpumatch, cpuattach
 };
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL, NULL, 0
@@ -83,9 +94,32 @@ cpumatch(struct device *parent, void *match, void *aux)
 void
 cpuattach(struct device *parent, struct device *dev, void *aux)
 {
+	struct cpu_info *ci = (struct cpu_info *)dev;
 	int cpuno = dev->dv_unit;
 	int isr16k = 0;
 	int displayver;
+
+#ifdef MULTIPROCESSOR
+	cpuset_add(&cpus_running, ci);
+#endif
+	if(cpuno == 0) {
+		ci = &cpu_info_primary;
+#ifdef MULTIPROCESSOR
+		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;
+#endif
+		bcopy(dev, &ci->ci_dev, sizeof *dev);
+	}
+#ifdef MULTIPROCESSOR
+	else {
+		ci->ci_next = cpu_info_list->ci_next;
+		cpu_info_list->ci_next = ci;
+		ci->ci_flags |= CPUF_PRESENT;
+	}
+	cpu_info[cpuno] = ci;
+	ncpus++;
+#endif
+	ci->ci_self = ci;
+	ci->ci_cpuid = cpuno;
 
 	printf(": ");
 
@@ -276,3 +310,15 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	printf("cpu%d: Status Register %x\n", cpuno, CpuStatusRegister);
 #endif
 }
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors(void)
+{
+}
+
+void
+cpu_unidle(struct cpu_info *ci)
+{
+}
+#endif

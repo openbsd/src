@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.20 2009/06/10 18:05:31 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.21 2009/09/15 04:54:31 syuu Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -505,6 +505,10 @@ END(u_general)
  *	Setup for and return to user.
  */
 LEAF(proc_trampoline, 0)
+#ifdef MULTIPROCESSOR
+	jal	_C_LABEL(proc_trampoline_mp)
+	nop
+#endif
 	/*
 	 * Enable interrupts, since we want kernel threads to
 	 * start at spl0 and with interrupts enabled, and these

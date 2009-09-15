@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.27 2009/08/22 02:54:51 mk Exp $ */
+/*	$OpenBSD: intr.h,v 1.28 2009/09/15 04:54:31 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -134,6 +134,7 @@ extern struct soft_intrhand *softnet_intrhand;
 				    SINTMASK(SI_SOFT))
 #define splstatclock()		splhigh()
 #define splsched()		splhigh()
+#define spllock()		splhigh()
 #define splhigh()		splraise(-1)
 #define spl0()			spllower(0)
 

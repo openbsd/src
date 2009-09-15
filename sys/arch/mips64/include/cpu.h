@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.35 2009/08/06 21:54:27 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.36 2009/09/15 04:54:31 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -356,37 +356,63 @@ extern vaddr_t uncached_base;
 
 #ifndef _LOCORE
 
+#include <sys/device.h>
+#include <sys/lock.h>
 #include <sys/sched.h>
 
+#include <machine/intr.h>
+
 struct cpu_info {
+	struct device   ci_dev;		/* our device */
+	struct cpu_info *ci_self;	/* pointer to this structure */
+	struct cpu_info *ci_next;	/* next cpu */
 	struct proc	*ci_curproc;
 
 	struct schedstate_percpu
 			 ci_schedstate;
 	int		 ci_want_resched;	/* need_resched() invoked */
-
+	cpuid_t          ci_cpuid;              /* our CPU ID */
 	u_int32_t	 ci_randseed;		/* per cpu random seed */
+#ifdef MULTIPROCESSOR
+	u_long           ci_flags;		/* flags; see below */
+#endif
 };
 
+#define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
+#define	CPUF_PRESENT	0x02		/* CPU is present */
+#define	CPUF_RUNNING	0x04		/* CPU is running */
+
 extern struct cpu_info cpu_info_primary;
+extern struct cpu_info *cpu_info_list;
+#define CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
+					    ci != NULL; ci = ci->ci_next)
 
-#define	curcpu()	(&cpu_info_primary)
+#define CPU_INFO_UNIT(ci)		((ci)->ci_dev.dv_unit)
 
-#define	CPU_IS_PRIMARY(ci)	1
-#define	CPU_INFO_ITERATOR	int
-#define	CPU_INFO_FOREACH(cii, ci)					\
-	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
-#define	CPU_INFO_UNIT(ci)	0
-#define	MAXCPUS	1
-#define	cpu_unidle(ci)
+#ifdef MULTIPROCESSOR
+#define MAXCPUS				4
+#define curcpu()			(cpu_info[cpu_number()])
+#define	CPU_IS_PRIMARY(ci)		((ci)->ci_flags & CPUF_PRIMARY)
+#define cpu_number()			hw_cpu_number()
 
-#define	cpu_number()	0
+extern struct cpuset cpus_running;
+extern struct cpu_info *cpu_info[];
+void cpu_unidle(struct cpu_info *);
+void cpu_boot_secondary_processors(void);
+
+#include <sys/mplock.h>
+#else
+#define MAXCPUS				1
+#define curcpu()			(&cpu_info_primary)
+#define	CPU_IS_PRIMARY(ci)		1
+#define cpu_number()			0
+#define cpu_unidle(ci)
+#endif
 
 #include <machine/frame.h>
 
 #endif	/* _LOCORE */
-
-#include <machine/intr.h>
 
 #ifndef _LOCORE
 
