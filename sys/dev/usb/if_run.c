@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.31 2009/08/10 17:27:03 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.32 2009/09/16 15:44:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1303,8 +1303,11 @@ run_media_change(struct ifnet *ifp)
 		sc->fixed_ridx = ridx;
 	}
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+	    (IFF_UP | IFF_RUNNING)) {
+		run_stop(ifp, 0);
 		run_init(ifp);
+	}
 
 	return 0;
 }
@@ -2197,8 +2200,7 @@ run_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCS80211CHANNEL:
 		/*
 		 * This allows for fast channel switching in monitor mode
-		 * (used by kismet). In IBSS mode, we must explicitly reset
-		 * the interface to generate a new beacon frame.
+		 * (used by kismet).
 		 */
 		error = ieee80211_ioctl(ifp, cmd, data);
 		if (error == ENETRESET &&
@@ -2216,8 +2218,10 @@ run_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
-		    (IFF_UP | IFF_RUNNING))
+		    (IFF_UP | IFF_RUNNING)) {
+			run_stop(ifp, 0);
 			run_init(ifp);
+		}
 		error = 0;
 	}
 
