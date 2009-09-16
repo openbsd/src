@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.104 2009/09/14 11:25:35 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.105 2009/09/16 12:35:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -815,7 +815,7 @@ struct session {
 #define SESSION_DEAD 0x2
 	int		 flags;
 
-	struct termios   tio;
+	struct termios	*tio;
 
 	struct environ	 environ;
 
