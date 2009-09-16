@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.21 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.22 2009/09/16 11:46:17 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -130,7 +130,8 @@ enqueue(int argc, char *argv[])
 	bzero(&msg, sizeof(msg));
 	time(&timestamp);
 
-	while ((ch = getopt(argc, argv, "46B:b:E::e:F:f:iJ::mo:p:tvx")) != -1) {
+	while ((ch = getopt(argc, argv,
+	    "A:B:b:E::e:F:f:iJ::L:mo:p:qtvx")) != -1) {
 		switch (ch) {
 		case 'f':
 			fake_from = optarg;
@@ -145,16 +146,21 @@ enqueue(int argc, char *argv[])
 			verbose = 1;
 			break;
 		/* all remaining: ignored, sendmail compat */
+		case 'A':
 		case 'B':
 		case 'b':
 		case 'E':
 		case 'e':
 		case 'i':
+		case 'L':
 		case 'm':
 		case 'o':
 		case 'p':
 		case 'x':
 			break;
+		case 'q':
+			/* XXX: implement "process all now" */
+			return (0);
 		default:
 			usage();
 		}
