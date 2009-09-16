@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.661 2009/09/16 12:26:55 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.662 2009/09/16 12:28:19 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4703,23 +4703,20 @@ pf_test_state_other(struct pf_state **state, int direction, struct pfi_kif *kif,
 				    pd->ip_sum,
 				    nk->addr[pd->sidx].v4.s_addr,
 				    0);
-
-
 			if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], AF_INET))
 				pf_change_a(&pd->dst->v4.s_addr,
 				    pd->ip_sum,
 				    nk->addr[pd->didx].v4.s_addr,
 				    0);
-
-				break;
+			break;
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			if (PF_ANEQ(pd->src, &nk->addr[pd->sidx], AF_INET6))
 				PF_ACPY(pd->src, &nk->addr[pd->sidx], pd->af);
-
 			if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], AF_INET6))
 				PF_ACPY(pd->dst, &nk->addr[pd->didx], pd->af);
+			break;
 #endif /* INET6 */
 		}
 	}
