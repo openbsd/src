@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.3 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.4 2009/09/17 23:51:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -78,8 +78,8 @@ client_init(int fd, char *ehlo)
 	TAILQ_INIT(&sp->recipients);
 
 #ifndef CLIENT_NO_SSL
-	sp->exts[CLIENT_EXT_STARTTLS].want = 0;
-	sp->exts[CLIENT_EXT_STARTTLS].must = 0;
+	sp->exts[CLIENT_EXT_STARTTLS].want = 1;
+	sp->exts[CLIENT_EXT_STARTTLS].must = 1;
 	sp->exts[CLIENT_EXT_STARTTLS].state = CLIENT_STARTTLS;
 #endif
 
