@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.116 2009/09/07 09:43:57 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.117 2009/09/17 06:37:54 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 7 2009 $
+.Dd $Mdocdate: September 17 2009 $
 .Dt SPAMD 8
 .Os
 .Sh NAME
@@ -277,16 +277,23 @@ Any addresses not found in
 .Aq spamd-white
 are redirected to
 .Nm .
-The following
+.Pp
+An example
 .Xr pf.conf 5
-example is suggested:
+fragment is given below.
+In the example, the file
+.Pa /etc/mail/nospamd
+contains addresses of hosts who should be passed directly
+to the SMTP agent (thus bypassing
+.Nm ) .
 .Bd -literal -offset 4n
 table \*(Ltspamd-white\*(Gt persist
-table \*(Ltnospamd\*(Gt persist
+table \*(Ltnospamd\*(Gt persist file "/etc/mail/nospamd"
 pass in on egress proto tcp from any to any port smtp \e
     rdr-to 127.0.0.1 port spamd
 pass in on egress proto tcp from \*(Ltnospamd\*(Gt to any port smtp
-pass in on egress proto tcp from \*(Ltspamd-white\*(Gt to any port smtp
+pass in log on egress proto tcp from \*(Ltspamd-white\*(Gt to any port smtp
+pass out log on egress proto tcp to any port smtp
 .Ed
 .Pp
 .Nm
