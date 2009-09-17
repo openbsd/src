@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.6 2009/07/30 21:39:15 miod Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.7 2009/09/17 19:26:53 miod Exp $	*/
 /*	$NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $	*/
 
 /*
@@ -487,9 +487,17 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp)
 {
 	bus_space_handle_t dh = 0, sh = 0;	/* XXX -Wuninitialized */
 	int didd, dids, errord, errors, mustd, musts;
+	int prefetchable = flags & BUS_SPACE_MAP_PREFETCHABLE;
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
 
 	mustd = 1;
-	musts = (flags & BUS_SPACE_MAP_CACHEABLE) == 0;
+	musts = prefetchable == 0;
+
+	/*
+	 * We must have dense space to map memory linearly.
+	 */
+	if (linear && !prefetchable)
+		return (EOPNOTSUPP);
 
 #ifdef EXTENT_DEBUG
 	printf("mem: allocating 0x%lx to 0x%lx\n", memaddr,
@@ -542,7 +550,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp)
 		    __S(__C(CHIP,_mem_map)), memaddr);
 	}
 
-	if (flags & BUS_SPACE_MAP_CACHEABLE)
+	if (prefetchable)
 		*memhp = dh;
 	else
 		*memhp = sh;
