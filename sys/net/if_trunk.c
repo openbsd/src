@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.68 2009/09/09 15:01:18 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.69 2009/09/17 13:13:56 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -952,6 +952,8 @@ trunk_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	int len, error = 0;
 	u_short mflags;
+
+	splassert(IPL_NET);
 
 	/* Send mbuf */
 	mflags = m->m_flags;
