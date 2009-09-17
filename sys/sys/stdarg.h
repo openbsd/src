@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.6 2008/12/21 09:59:24 ragge Exp $ */
+/*	$OpenBSD: stdarg.h,v 1.7 2009/09/17 20:46:55 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004  Marc espie <espie@openbsd.org>
  *
@@ -33,7 +33,7 @@ typedef __builtin_va_list __gnuc_va_list;
    actual type **after default promotions**.
    Thus, va_arg (..., short) is not valid.  */
 
-#define va_start(ap, last)	__builtin_stdarg_start((ap), last)
+#define va_start(ap, last)	__builtin_va_start((ap), last)
 #define va_end			__builtin_va_end
 #define va_arg			__builtin_va_arg
 #define __va_copy(dst, src)	__builtin_va_copy((dst),(src))
