@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.11 2009/09/09 15:01:18 reyk Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.12 2009/09/17 13:17:55 claudio Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -349,7 +349,7 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 	struct mbuf *m;
 	struct ether_header *eh;
 	struct lacpdu *du;
-	int error;
+	int error, s;
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -393,7 +393,9 @@ lacp_xmit_lacpdu(struct lacp_port *lp)
 	 * XXX should use higher priority queue.
 	 * otherwise network congestion can break aggregation.
 	 */
+	s = splnet();
 	error = trunk_enqueue(lp->lp_ifp, m);
+	splx(s);
 	return (error);
 }
 
@@ -404,7 +406,7 @@ lacp_xmit_marker(struct lacp_port *lp)
 	struct mbuf *m;
 	struct ether_header *eh;
 	struct markerdu *mdu;
-	int error;
+	int error, s;
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -436,7 +438,9 @@ lacp_xmit_marker(struct lacp_port *lp)
 	    ntohl(mdu->mdu_info.mi_rq_xid)));
 
 	m->m_flags |= M_MCAST;
+	s = splnet();
 	error = trunk_enqueue(lp->lp_ifp, m);
+	splx(s);
 	return (error);
 }
 
