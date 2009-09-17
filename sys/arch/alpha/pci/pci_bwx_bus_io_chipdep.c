@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_bwx_bus_io_chipdep.c,v 1.7 2009/07/30 21:39:15 miod Exp $ */
+/* $OpenBSD: pci_bwx_bus_io_chipdep.c,v 1.8 2009/09/17 19:28:20 miod Exp $ */
 /* $NetBSD: pcs_bus_io_common.c,v 1.14 1996/12/02 22:19:35 cgd Exp $ */
 
 /*
@@ -288,6 +288,12 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp)
 	bus_space_handle_t *iohp;
 {
 	int error;
+
+	/*
+	 * Can't map i/o space linearly.
+	 */
+	if (flags & BUS_SPACE_MAP_LINEAR)
+		return (EOPNOTSUPP);
 
 #ifdef EXTENT_DEBUG
 	printf("io: allocating 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
