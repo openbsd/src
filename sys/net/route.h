@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.63 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.64 2009/09/17 13:27:24 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -206,39 +206,6 @@ struct rt_msghdr {
 /* overload no longer used field */
 #define rtm_use	rtm_rmx.rmx_pksent
 
-/*
- * Comaptibility structures for version 3 messages.
- * Keep them till after OpenBSD 4.4
- */
-struct rt_ometrics {
-	u_long	rmx_locks;	/* Kernel must leave these values alone */
-	u_long	rmx_mtu;	/* MTU for this path */
-	u_long	rmx_hopcount;	/* max hops expected (deprecated) */
-	u_long	rmx_expire;	/* lifetime for route, e.g. redirect */
-	u_long	rmx_recvpipe;	/* inbound delay-bandwidth product */
-	u_long	rmx_sendpipe;	/* outbound delay-bandwidth product */
-	u_long	rmx_ssthresh;	/* outbound gateway buffer limit (deprecated) */
-	u_long	rmx_rtt;	/* overloaded with rmx_rt_tableid */
-	u_long	rmx_rttvar;	/* estimated rtt variance (deprecated) */
-	u_long	rmx_pksent;	/* packets sent using this route */
-};
-
-struct rt_omsghdr {
-	u_short	rtm_msglen;	/* to skip over non-understood messages */
-	u_char	rtm_version;	/* future binary compatibility */
-	u_char	rtm_type;	/* message type */
-	u_short	rtm_index;	/* index for associated ifp */
-	int	rtm_flags;	/* flags, incl. kern & message, e.g. DONE */
-	int	rtm_addrs;	/* bitmask identifying sockaddrs in msg */
-	pid_t	rtm_pid;	/* identify sender */
-	int	rtm_seq;	/* for sender to identify action */
-	int	rtm_errno;	/* why failed */
-	int	rtm_fmask;	/* was once rtm_use */
-	u_long	rtm_inits;	/* which metrics we are initializing */
-	struct	rt_ometrics rtm_rmx; /* metrics themselves */
-};
-
-#define RTM_OVERSION	3	/* provide some minimal backward compat */
 #define RTM_VERSION	4	/* Up the ante and ignore older versions */
 
 #define RTM_ADD		0x1	/* Add Route */
