@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.5 2009/03/23 21:48:40 jmc Exp $
+.\"	$OpenBSD: smtpd.8,v 1.6 2009/09/17 10:42:35 jacekm Exp $
 .\"
 .\" Copyright (c) 2008, Gilles Chehade <gilles@openbsd.org>
 .\" Copyright (c) 2008, Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2009 $
+.Dd $Mdocdate: September 17 2009 $
 .Dt SMTPD 8
 .Os
 .Sh NAME
@@ -81,6 +81,35 @@ configuration file.
 Unix-domain socket used for communication with
 .Xr smtpctl 8 .
 .El
+.Sh EXAMPLES
+smtpd is not enabled by default.
+In order to use it as the system mailer,
+ensure your sendmail queue is empty,
+then stop sendmail:
+.Bd -literal -offset indent
+# pkill sendmail
+.Ed
+.Pp
+Modify your
+.Xr mailwrapper 8
+settings by editing
+.Pa /etc/mailer.conf :
+.Bd -literal -offset indent
+sendmail	/usr/sbin/smtpctl
+send-mail	/usr/sbin/smtpctl
+mailq		/usr/sbin/smtpctl
+makemap		/usr/libexec/smtpd/makemap
+newaliases	/usr/libexec/smtpd/makemap
+.Ed
+.Pp
+Rebuild aliases database,
+and enable the daemon:
+.Bd -literal -offset indent
+# newaliases
+# echo "sendmail_flags=NO" >> /etc/mailer.conf
+# echo "smtpd_flags=" >> /etc/mailer.conf
+# smtpd
+.Ed
 .Sh SEE ALSO
 .Xr smtpd.conf 5 ,
 .Xr smtpctl 8
