@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.42 2009/09/04 15:15:24 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.43 2009/09/18 15:19:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -413,6 +413,7 @@ main(int argc, char **argv)
 	options_set_number(so, "repeat-time", 500);
 	options_set_number(so, "set-remain-on-exit", 0);
 	options_set_number(so, "set-titles", 0);
+	options_set_string(so, "set-titles-string", "#S:#I:#W - \"#T\"");
 	options_set_number(so, "status", 1);
 	options_set_number(so, "status-attr", 0);
 	options_set_number(so, "status-bg", 2);

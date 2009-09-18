@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.85 2009/09/10 17:16:24 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.86 2009/09/18 15:19:27 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2009 $
+.Dd $Mdocdate: September 18 2009 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1287,6 +1287,13 @@ This option is off by default.
 Note that elinks
 will only attempt to set the window title if the STY environment
 variable is set.
+.It Ic set-titles-string Ar string
+String used to set the window title if
+.Ic set-titles
+is on.
+Character sequences are replaced as for the
+.Ic status-left
+option.
 .It Xo Ic status
 .Op Ic on | off
 .Xc

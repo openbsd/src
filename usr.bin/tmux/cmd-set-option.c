@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.17 2009/09/01 13:09:49 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.18 2009/09/18 15:19:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,6 +69,7 @@ const struct set_option_entry set_option_table[] = {
 	{ "repeat-time", SET_OPTION_NUMBER, 0, SHRT_MAX, NULL },
 	{ "set-remain-on-exit", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "set-titles", SET_OPTION_FLAG, 0, 0, NULL },
+	{ "set-titles-string", SET_OPTION_STRING, 0, 0, NULL },
 	{ "status", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "status-attr", SET_OPTION_ATTRIBUTES, 0, 0, NULL },
 	{ "status-bg", SET_OPTION_COLOUR, 0, 0, NULL },
