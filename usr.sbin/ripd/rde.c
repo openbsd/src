@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.12 2009/06/06 08:20:55 eric Exp $ */
+/*	$OpenBSD: rde.c,v 1.13 2009/09/18 16:17:02 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -325,22 +325,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			if ((rt = rt_find(kr.prefix.s_addr,
 			    kr.netmask.s_addr)) != NULL)
 				rt_remove(rt);
-			break;
-		case IMSG_KROUTE_GET:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(kr)) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
-			memcpy(&kr, imsg.data, sizeof(kr));
-
-			if ((rt = rt_find(kr.prefix.s_addr,
-			    kr.netmask.s_addr)) != NULL)
-				rde_send_change_kroute(rt);
-			else
-				/* should not happen */
-				imsg_compose_event(iev_main, IMSG_KROUTE_DELETE,
- 				    0, 0, -1, &kr, sizeof(kr));
-
 			break;
 		default:
 			log_debug("rde_dispatch_parent: unexpected imsg %d",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.17 2009/07/07 12:07:23 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.18 2009/09/18 16:17:02 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -62,8 +62,9 @@ struct kif_node {
 void	kr_redistribute(int, struct kroute *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
 int	kif_compare(struct kif_node *, struct kif_node *);
+int	kr_change_fib(struct kroute_node *, struct kroute *, int);
 
-struct kroute_node	*kroute_find(in_addr_t, in_addr_t);
+struct kroute_node	*kroute_find(in_addr_t, in_addr_t, u_int8_t);
 int			 kroute_insert(struct kroute_node *);
 int			 kroute_remove(struct kroute_node *);
 void			 kroute_clear(void);
@@ -167,35 +168,8 @@ kr_init(int fs)
 }
 
 int
-kr_change(struct kroute *kroute)
+kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int action)
 {
-	struct kroute_node	*kr;
-	int			 action = RTM_ADD;
-
-	if ((kr = kroute_find(kroute->prefix.s_addr, kroute->netmask.s_addr)) !=
-	    NULL) {
-		if (!(kr->r.flags & F_KERNEL))
-			action = RTM_CHANGE;
-		else {	/* a non-rip route already exists. not a problem */
-			if (!(kr->r.flags & (F_BGPD_INSERTED|
-			    F_OSPFD_INSERTED|F_LDPD_INSERTED))) {
-				kr->r.flags |= F_RIPD_INSERTED;
-				return (0);
-			}
-			/*
-			 * rip route has higher pref
-			 * - reset flags to the rip ones
-			 * - use RTM_CHANGE
-			 * - zero out ifindex (this is no longer relevant)
-			 */
-			action = RTM_CHANGE;
-			kr->r.flags = kroute->flags | F_RIPD_INSERTED;
-			kr->r.ifindex = 0;
-			rtlabel_unref(kr->r.rtlabel);
-			kr->r.rtlabel = 0;
-		}
-	}
-
 	/* nexthop within 127/8 -> ignore silently */
 	if ((kroute->nexthop.s_addr & htonl(IN_CLASSA_NET)) ==
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
@@ -205,17 +179,20 @@ kr_change(struct kroute *kroute)
 		return (-1);
 
 	if (action == RTM_ADD) {
-		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-			log_warn("kr_change");
-			return (-1);
-		}
+		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
+			fatal("kr_change_fib");
+
 		kr->r.prefix.s_addr = kroute->prefix.s_addr;
 		kr->r.netmask.s_addr = kroute->netmask.s_addr;
 		kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
 		kr->r.flags = kroute->flags |= F_RIPD_INSERTED;
+		kr->r.priority = RTP_RIP;
 
-		if (kroute_insert(kr) == -1)
+		if (kroute_insert(kr) == -1) {
+			log_debug("kr_update_fib: cannot insert %s",
+			    inet_ntoa(kr->r.nexthop));
 			free(kr);
+		}
 	} else
 		kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
 
@@ -223,22 +200,33 @@ kr_change(struct kroute *kroute)
 }
 
 int
+kr_change(struct kroute *kroute)
+{
+	struct kroute_node	*kr;
+	int			 action = RTM_ADD;
+
+	kr = kroute_find(kroute->prefix.s_addr, kroute->netmask.s_addr,
+	    RTP_RIP);
+	if (kr != NULL)
+		action = RTM_CHANGE;
+
+	return (kr_change_fib(kr, kroute, action));
+}
+
+int
 kr_delete(struct kroute *kroute)
 {
 	struct kroute_node	*kr;
 
-	if ((kr = kroute_find(kroute->prefix.s_addr, kroute->netmask.s_addr)) ==
-	    NULL)
+	kr = kroute_find(kroute->prefix.s_addr, kroute->netmask.s_addr,
+	    RTP_RIP);
+	if (kr == NULL)
 		return (0);
 
-	if (!(kr->r.flags & F_RIPD_INSERTED))
-		return (0);
-
-	if (kr->r.flags & F_KERNEL) {
-		/* remove F_RIPD_INSERTED flag, route still exists in kernel */
-		kr->r.flags &= ~F_RIPD_INSERTED;
-		return (0);
-	}
+	if (kr->r.priority != RTP_RIP)
+		log_warn("kr_delete_fib: %s/%d has wrong priority %d",
+		    inet_ntoa(kr->r.prefix), mask2prefixlen(kr->r.netmask.s_addr),
+		    kr->r.priority);
 
 	if (send_rtmsg(kr_state.fd, RTM_DELETE, kroute) == -1)
 		return (-1);
@@ -274,7 +262,7 @@ kr_fib_couple(void)
 	kr_state.fib_sync = 1;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
-		if (!(kr->r.flags & F_KERNEL))
+		if (kr->r.priority == RTP_RIP)
 			send_rtmsg(kr_state.fd, RTM_ADD, &kr->r);
 
 	log_info("kernel routing table coupled");
@@ -289,7 +277,7 @@ kr_fib_decouple(void)
 		return;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
-		if (!(kr->r.flags & F_KERNEL))
+		if (kr->r.priority == RTP_RIP)
 			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
 
 	kr_state.fib_sync = 0;
@@ -418,6 +406,15 @@ kroute_compare(struct kroute_node *a, struct kroute_node *b)
 		return (-1);
 	if (ntohl(a->r.netmask.s_addr) > ntohl(b->r.netmask.s_addr))
 		return (1);
+
+	/* if the priority is RTP_ANY finish on the first address hit */
+	if (a->r.priority == RTP_ANY || b->r.priority == RTP_ANY)
+		return (0);
+	if (a->r.priority < b->r.priority)
+		return (-1);
+	if (a->r.priority > b->r.priority)
+		return (1);
+
 	return (0);
 }
 
@@ -429,14 +426,27 @@ kif_compare(struct kif_node *a, struct kif_node *b)
 
 /* tree management */
 struct kroute_node *
-kroute_find(in_addr_t prefix, in_addr_t netmask)
+kroute_find(in_addr_t prefix, in_addr_t netmask, u_int8_t prio)
 {
-	struct kroute_node	s;
+	struct kroute_node	s, *kn, *tmp;
 
 	s.r.prefix.s_addr = prefix;
 	s.r.netmask.s_addr = netmask;
+	s.r.priority = prio;
 
-	return (RB_FIND(kroute_tree, &krt, &s));
+	kn = RB_FIND(kroute_tree, &krt, &s);
+	if (kn && prio == RTP_ANY) {
+		tmp = RB_PREV(kroute_tree, &krt, kn);
+		while (tmp) {
+			if (kroute_compare(&s, tmp) == 0)
+				kn = tmp;
+			else
+				break;
+			tmp = RB_PREV(kroute_tree, &krt, kn);
+		}
+	}
+
+	return (kn);
 }
 
 int
@@ -570,11 +580,11 @@ kroute_match(in_addr_t key)
 	/* we will never match the default route */
 	for (i = 32; i > 0; i--)
 		if ((kr = kroute_find(key & prefixlen2mask(i),
-		    prefixlen2mask(i))) != NULL)
+		    prefixlen2mask(i), RTP_ANY)) != NULL)
 			return (kr);
 
 	/* if we don't have a match yet, try to find a default route */
-	if ((kr = kroute_find(0, 0)) != NULL)
+	if ((kr = kroute_find(0, 0, RTP_ANY)) != NULL)
 			return (kr);
 
 	return (NULL);
@@ -742,9 +752,8 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	hdr.rtm_type = action;
 	hdr.rtm_flags = RTF_PROTO3;
 	hdr.rtm_priority = RTP_RIP;
-	if (action == RTM_CHANGE)	/* force PROTO3 reset the other flags */
-		hdr.rtm_fmask =
-		    RTF_PROTO3|RTF_PROTO2|RTF_PROTO1|RTF_REJECT|RTF_BLACKHOLE;
+	if (action == RTM_CHANGE)
+		hdr.rtm_fmask = RTF_REJECT|RTF_BLACKHOLE;
 	hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
 	hdr.rtm_msglen = sizeof(hdr);
 	/* adjust iovec */
@@ -882,6 +891,7 @@ fetchtable(void)
 		}
 
 		kr->r.flags = F_KERNEL;
+		kr->r.priority = rtm->rtm_priority;
 
 		switch (sa->sa_family) {
 		case AF_INET:
@@ -896,10 +906,6 @@ fetchtable(void)
 				kr->r.flags |= F_REJECT;
 			if (rtm->rtm_flags & RTF_DYNAMIC)
 				kr->r.flags |= F_DYNAMIC;
-			if (rtm->rtm_flags & RTF_PROTO1)
-				kr->r.flags |= F_BGPD_INSERTED;
-			if (rtm->rtm_flags & RTF_PROTO2)
-				kr->r.flags |= F_OSPFD_INSERTED;
 			if (sa_in != NULL) {
 				if (sa_in->sin_len == 0)
 					break;
@@ -936,7 +942,7 @@ fetchtable(void)
 				break;
 			}
 
-		if (rtm->rtm_flags & RTF_PROTO3) {
+		if (rtm->rtm_priority & RTP_RIP) {
 			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
 			free(kr);
 		} else {
@@ -1045,7 +1051,7 @@ dispatch_rtmsg(void)
 	struct iface		*iface = NULL;
 	int			 flags;
 	u_short			 ifindex = 0;
-	u_int8_t		 metric;
+	u_int8_t		 metric, prio;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
 		log_warn("dispatch_rtmsg: read error");
@@ -1067,6 +1073,7 @@ dispatch_rtmsg(void)
 		netmask.s_addr = 0;
 		flags = F_KERNEL;
 		nexthop.s_addr = 0;
+		prio = 0;
 
 		if (rtm->rtm_type == RTM_ADD || rtm->rtm_type == RTM_CHANGE ||
 		    rtm->rtm_type == RTM_DELETE) {
@@ -1084,6 +1091,8 @@ dispatch_rtmsg(void)
 
 			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 				continue;
+
+			prio = rtm->rtm_priority;
 
 			switch (sa->sa_family) {
 			case AF_INET:
@@ -1109,10 +1118,6 @@ dispatch_rtmsg(void)
 					flags |= F_REJECT;
 				if (rtm->rtm_flags & RTF_DYNAMIC)
 					flags |= F_DYNAMIC;
-				if (rtm->rtm_flags & RTF_PROTO1)
-					flags |= F_BGPD_INSERTED;
-				if (rtm->rtm_flags & RTF_PROTO2)
-					flags |= F_OSPFD_INSERTED;
 				if (rtm->rtm_flags & RTF_MPLS)
 					flags |= F_LDPD_INSERTED;
 				break;
@@ -1144,17 +1149,14 @@ dispatch_rtmsg(void)
 				continue;
 			}
 
-			if ((kr = kroute_find(prefix.s_addr, netmask.s_addr)) !=
-			    NULL) {
-				/* rip route overridden by kernel */
-				/* pref is not checked because this is forced */
-				if (kr->r.flags & F_RIPD_INSERTED)
-					flags |= F_RIPD_INSERTED;
+			if ((kr = kroute_find(prefix.s_addr, netmask.s_addr,
+			    prio)) != NULL) {
 				if (kr->r.flags & F_REDISTRIBUTED)
 					flags |= F_REDISTRIBUTED;
 				kr->r.nexthop.s_addr = nexthop.s_addr;
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
+				kr->r.priority = prio;
 
 				rtlabel_unref(kr->r.rtlabel);
 				kr->r.rtlabel = 0;
@@ -1199,14 +1201,11 @@ dispatch_rtmsg(void)
 			}
 			break;
 		case RTM_DELETE:
-			if ((kr = kroute_find(prefix.s_addr, netmask.s_addr)) ==
-			    NULL)
+			if ((kr = kroute_find(prefix.s_addr, netmask.s_addr,
+			    prio)) == NULL)
 				continue;
 			if (!(kr->r.flags & F_KERNEL))
 				continue;
-			if (kr->r.flags & F_RIPD_INSERTED)
-				main_imsg_compose_rde(IMSG_KROUTE_GET, 0,
-				    &kr->r, sizeof(struct kroute));
 			if (kroute_remove(kr) == -1)
 				return (-1);
 			break;
