@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.77 2009/04/11 14:59:59 kettenis Exp $ */
+/*	$OpenBSD: pchb.c,v 1.78 2009/09/18 20:17:17 kettenis Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -341,6 +341,23 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			timeout_set(&sc->sc_rng_to, pchb_rnd, sc);
 			sc->sc_rng_i = 4;
 			pchb_rnd(sc);
+			break;
+		}
+		printf("\n");
+		break;
+	case PCI_VENDOR_VIATECH:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_VIATECH_VT8251_VLINK:
+			/*
+			 * For some strange reason, the VIA VT8251
+			 * chipset can be configured to its PCIe
+			 * bridge show up as a host bridge.  We whack
+			 * it into PCI bridge mode here such that we
+			 * can see the devices behind it.
+			 */
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0xfc);
+			bcreg &= ~0x00000004; /* XXX Magic */
+			pci_conf_write(pa->pa_pc, pa->pa_tag, 0xfc, bcreg);
 			break;
 		}
 		printf("\n");
