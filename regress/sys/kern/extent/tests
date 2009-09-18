@@ -1,4 +1,4 @@
-# $OpenBSD: tests,v 1.3 2009/04/10 20:57:04 kettenis Exp $
+# $OpenBSD: tests,v 1.4 2009/09/18 19:19:15 kettenis Exp $
 # $NetBSD: tests,v 1.9 2005/03/15 18:27:23 bouyer Exp $
 
 #fill up an extent, should coalesce into one allocation
@@ -122,4 +122,11 @@ extent test15 0x00000000 0xffffffff
 alloc_region 0xfce00000 0x100
 alloc_region 0xfee00000 0x100
 alloc_region 0xf8000000 0x8000000 EX_CONFLICTOK
+print
+
+# Check coallescing in combination with overlaps
+extent test16 0x00000000 0xffffffff
+alloc_region 0x0 0xa0000
+alloc_region 0xf0000 0x1ff10000
+alloc_region 0xa0000 0x60000 EX_CONFLICTOK
 print
