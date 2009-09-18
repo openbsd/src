@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.10 2009/08/22 23:17:39 schwarze Exp $
+.\"	$Id: man.7,v 1.11 2009/09/18 22:46:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2009 $
+.Dd $Mdocdate: September 18 2009 $
 .Dt MAN 7
 .Os
 .
@@ -228,6 +228,7 @@ If a next-line macro is proceded by a block macro, it is ignored.
 .It    SB    Ta    n         Ta    next-line
 .It    SM    Ta    n         Ta    next-line
 .It    TH    Ta    >1, <6    Ta    current
+.It    UC    Ta    n         Ta    current
 .It    br    Ta    0         Ta    current
 .It    fi    Ta    0         Ta    current
 .It    i     Ta    n         Ta    current
@@ -241,6 +242,7 @@ If a next-line macro is proceded by a block macro, it is ignored.
 The
 .Sq RS ,
 .Sq RE ,
+.Sq UC ,
 .Sq br ,
 .Sq fi ,
 .Sq i ,
@@ -249,9 +251,7 @@ The
 .Sq r ,
 and
 .Sq sp
-macros aren't historically part of
-.Nm
-and should not be used.  They're included for compatibility.
+macros should not be used.  They're included for compatibility.
 .
 .
 .Ss Block Macros
@@ -303,6 +303,7 @@ If a block macro is next-line scoped, it may only be followed by in-line
 macros (excluding
 .Sq DT ,
 .Sq TH ,
+.Sq UC ,
 .Sq br ,
 .Sq na ,
 .Sq sp ,
@@ -357,7 +358,7 @@ render in italics.  Whitespace between arguments is omitted in output.
 Text is rendered alternately in bold face and roman (the default font).
 Whitespace between arguments is omitted in output.
 .It DT
-Re-set the tab spacing to 0.5 inches.
+Has no effect.  Included for compatibility.
 .It HP
 Begin a paragraph whose initial output line is left-justified, but
 subsequent output lines are indented, with the following syntax:
@@ -475,6 +476,8 @@ must be a properly-formed numeric width.  If
 .Va width
 is specified, it's saved for later paragraph left-margins; if
 unspecified, the saved or default width is used.
+.It UC
+Has no effect.  Included for compatibility.
 .It br
 Breaks the current line.  Consecutive invocations have no further effect.
 .It fi
@@ -484,7 +487,7 @@ End literal mode begun by
 Italicise arguments.  If no arguments are specified, all subsequent text
 is italicised.
 .It na
-Don't alignment the right margin.
+Don't align to the right margin.
 .It nf
 Begin literal mode: all subsequent free-form lines have their end of
 line boundaries preserved.  May be ended by

@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.13 2009/08/22 23:17:40 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.14 2009/09/18 22:46:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -76,6 +76,7 @@ static	int		  pre_SS(DECL_ARGS);
 static	int		  pre_TP(DECL_ARGS);
 static	int		  pre_br(DECL_ARGS);
 static	int		  pre_fi(DECL_ARGS);
+static	int		  pre_ign(DECL_ARGS);
 static	int		  pre_nf(DECL_ARGS);
 static	int		  pre_r(DECL_ARGS);
 static	int		  pre_sp(DECL_ARGS);
@@ -120,7 +121,8 @@ static const struct termact termacts[MAN_MAX] = {
 	{ pre_r, NULL }, /* r */
 	{ NULL, NULL }, /* RE */
 	{ pre_RS, post_RS }, /* RS */
-	{ NULL, NULL }, /* DT */
+	{ pre_ign, NULL }, /* DT */
+	{ pre_ign, NULL }, /* UC */
 };
 
 static	void		  print_head(struct termp *, 
@@ -198,6 +200,15 @@ arg_width(const struct man_node *n)
 		return(atoi(p));
 
 	return(-1);
+}
+
+
+/* ARGSUSED */
+static int
+pre_ign(DECL_ARGS)
+{
+
+	return(0);
 }
 
 
