@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.61 2009/09/03 08:19:13 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.62 2009/09/18 00:04:26 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -511,17 +511,20 @@ smtp_dispatch_control(int sig, short event, void *p)
 			static struct listener	 l;
 			struct addrinfo		 hints, *res;
 			struct session		*s;
+			uid_t			 euid;
 			int			 fd[2];
 
 			bzero(&l, sizeof(l));
 			l.env = env;
 
+			memcpy(&euid, imsg.data, sizeof(euid));
+
 			if (env->stats->smtp.sessions_active >=
 			    env->sc_maxconn) {
 				log_warnx("denying local connection, too many"
 				    " sessions active");
-				imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0, -1,
-				    imsg.data, sizeof(int));
+				imsg_compose_event(iev, IMSG_SMTP_ENQUEUE,
+				    imsg.hdr.peerid, 0, -1, NULL, 0);
 				break;
 			}
 
@@ -550,8 +553,8 @@ smtp_dispatch_control(int sig, short event, void *p)
 			env->stats->smtp.sessions++;
 			env->stats->smtp.sessions_active++;
 
-			strlcpy(s->s_hostname, "localhost",
-			    sizeof(s->s_hostname));
+			bsnprintf(s->s_hostname, sizeof(s->s_hostname),
+			    "%d@localhost", euid);
 			strlcpy(s->s_msg.session_hostname, s->s_hostname,
 			    sizeof(s->s_msg.session_hostname));
 
@@ -559,8 +562,8 @@ smtp_dispatch_control(int sig, short event, void *p)
 
 			session_init(s->s_l, s);
 
-			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0, fd[1],
-			    imsg.data, sizeof(int));
+			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE,
+			    imsg.hdr.peerid, 0, fd[1], NULL, 0);
 			break;
 		}
 		case IMSG_SMTP_PAUSE:

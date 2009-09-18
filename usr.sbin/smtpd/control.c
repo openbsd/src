@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.37 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.38 2009/09/18 00:04:26 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -320,7 +320,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 				break;
 			}
 			imsg_compose_event(env->sc_ievs[PROC_SMTP],
-			    IMSG_SMTP_ENQUEUE, 0, 0, -1, &fd, sizeof(fd));
+			    IMSG_SMTP_ENQUEUE, fd, 0, -1, &euid, sizeof(euid));
 			break;
 		case IMSG_STATS:
 			if (euid)
@@ -779,13 +779,10 @@ control_dispatch_smtp(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_SMTP_ENQUEUE: {
-			int		*fd = imsg.data;
 			struct ctl_conn	*c;
 			int		client_fd;
 
-			IMSG_SIZE_CHECK(fd);
-
-			client_fd = *fd;
+			client_fd = imsg.hdr.peerid;
 
 			if ((c = control_connbyfd(client_fd)) == NULL) {
 				log_warn("control_dispatch_smtp: fd %d not found", client_fd);

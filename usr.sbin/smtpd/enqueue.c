@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.22 2009/09/16 11:46:17 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.23 2009/09/18 00:04:26 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -210,16 +210,6 @@ enqueue(int argc, char *argv[])
 	for (i = 0; i < msg.rcpt_cnt; i++)
 		if (client_rcpt(sp, "%s", msg.rcpts[i]) < 0)
 			err(1, "client_rcpt failed");
-
-	/* prepend Received header */
-	if (client_data_printf(sp,
-	    "Received: (from %s@localhost, uid %lu)\n"
-	    "\tby %s\n"
-	    "\t%s\n",
-	    user, (u_long)getuid(),
-	    host,
-	    time_to_text(timestamp)) < 0)
-		err(1, "client_data_printf failed");
 
 	/* add From */
 	if (!msg.saw_from) {
