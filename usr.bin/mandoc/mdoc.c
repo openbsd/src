@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.25 2009/08/22 21:55:06 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.26 2009/09/18 22:37:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -705,6 +705,12 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 			break;
 		else if (' ' == buf[i])
 			break;
+
+		/* Check for invalid characters. */
+
+		if (isgraph((u_char)buf[i]))
+			continue;
+		return(mdoc_perr(m, ln, i, EPRINT));
 	}
 
 	mac[j] = 0;

@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.10 2009/08/22 23:17:39 schwarze Exp $ */
+/*	$Id: man.c,v 1.11 2009/09/18 22:37:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -489,6 +489,12 @@ man_pmacro(struct man *m, int ln, char *buf)
 			break;
 		else if (' ' == buf[i])
 			break;
+
+		/* Check for invalid characters. */
+
+		if (isgraph((u_char)buf[i]))
+			continue;
+		return(man_perr(m, ln, i, WNPRINT));
 	}
 
 	mac[j] = 0;
