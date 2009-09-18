@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.39 2009/06/09 19:16:39 oga Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.40 2009/09/18 22:16:28 kettenis Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -499,26 +499,43 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 			 */
 			if (flags & EX_CONFLICTOK) {
 				/*
-				 * There are two possibilities:
+				 * There are four possibilities:
 				 *
-				 * 1. The current region overlaps.
+				 * 1. The current region overlaps with
+				 *    the start of the requested region.
 				 *    Adjust the requested region to
 				 *    start at the end of the current
-				 *    region, and try again.
+				 *    region and try again.
 				 *
 				 * 2. The current region falls
-                                 *    completely within the requested
-                                 *    region.  Free the current region
-                                 *    and try again.
+				 *    completely within the requested
+				 *    region.  Free the current region
+				 *    and try again.
+				 *
+				 * 3. The current region overlaps with
+				 *    the end of the requested region.
+				 *    Adjust the requested region to
+				 *    end at the start of the current
+				 *    region and try again.
+				 *
+				 * 4. The requested region falls
+				 *    completely within the current
+				 *    region.  We're done.
 				 */
 				if (rp->er_start <= start) {
 					start = rp->er_end + 1;
 					size = end - start + 1;
-				} else {
+					goto alloc_start;
+				} else if (rp->er_end < end) {
 					LIST_REMOVE(rp, er_link);
 					extent_free_region_descriptor(ex, rp);
+					goto alloc_start;
+				} else if (rp->er_start < end) {
+					end = rp->er_start - 1;
+					size = end - start + 1;
+					goto alloc_start;
 				}
-				goto alloc_start;
+				return (0);
 			}
 
 			extent_free_region_descriptor(ex, myrp);
