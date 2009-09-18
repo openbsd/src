@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.19 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.20 2009/09/18 19:32:41 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
 
 /*
@@ -65,6 +65,8 @@ extern u_short	mac68k_statclockipl;
 #define	IPL_STATCLOCK	PSLTOIPL(mac68k_statclockipl)
 #define	IPL_HIGH	7
 
+#define	MD_IPLTOPSL(ipl)	IPLTOPSL(ipl)
+
 /*
  * These should be used for:
  * 1) ensuring mutual exclusion (why use processor level?)
@@ -89,7 +91,6 @@ extern u_short	mac68k_statclockipl;
 #define	splsched()		splhigh()
 
 /* These spl calls are _not_ to be used by machine-independent code. */
-#define	spladb()		splhigh()
 #define	splzs()			splserial()
 
 /* watch out for side effects */

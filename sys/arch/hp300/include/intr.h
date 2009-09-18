@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.25 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.26 2009/09/18 19:32:39 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@ struct isr {
  * to raise interrupt priority to the requested level.
  */
 extern	unsigned short hp300_varpsl[NISR];
+#define	MD_IPLTOPSL(ipl)	hp300_varpsl[ipl]
 
 /* These spl calls are used by machine-independent code. */
 #define	splsoft()		_splraise(PSL_S | PSL_IPL1)
