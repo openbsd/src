@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.23 2006/04/26 02:35:08 deraadt Exp $	*/
+/*	$OpenBSD: lock.c,v 1.24 2009/09/18 20:58:35 martynas Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.23 2006/04/26 02:35:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.24 2009/09/18 20:58:35 martynas Exp $";
 #endif /* not lint */
 
 /*
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ], date[256];
 	char *p, *style, *nstyle, *ttynam;
 	struct itimerval ntimer, otimer;
-	int ch, sectimeout, usemine;
+	int ch, sectimeout, usemine, cnt, tries = 10, backoff = 3;
 	const char *errstr;
 	struct passwd *pw;
 	struct tm *timp;
@@ -107,7 +107,15 @@ main(int argc, char *argv[])
 		errx(1, "unknown uid %u.", getuid());
 
 	lc = login_getclass(pw->pw_class);
-	
+	if (lc != NULL) {
+		/*
+		 * We allow "login-tries" attempts to login but start
+		 * slowing down after "login-backoff" attempts.
+		 */
+		tries = (int)login_getcapnum(lc, "login-tries", 10, 10);
+		backoff = (int)login_getcapnum(lc, "login-backoff", 3, 3);
+	}
+
 	while ((ch = getopt(argc, argv, "a:npt:")) != -1)
 		switch (ch) {
 		case 'a':
@@ -186,7 +194,7 @@ main(int argc, char *argv[])
 		    __progname, ttynam, hostname, sectimeout, date);
 	}
 
-	for (;;) {
+	for (cnt = 0;;) {
 		if (!readpassphrase("Key: ", s, sizeof(s), RPP_ECHO_OFF) ||
 		    *s == '\0') {
 			hi(0);
@@ -209,6 +217,14 @@ main(int argc, char *argv[])
 		} else if (strcmp(s, s1) == 0)
 			break;
 		(void)putc('\a', stderr);
+		cnt %= tries;
+		if (++cnt > backoff) {
+			sigset_t set, oset;
+			sigfillset(&set);
+			sigprocmask(SIG_BLOCK, &set, &oset);
+			sleep((u_int)((cnt - backoff) * tries / 2));
+			sigprocmask(SIG_SETMASK, &oset, NULL);
+		}
 	}
 
 	exit(0);
