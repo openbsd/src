@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.8 2008/11/25 17:52:02 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.9 2009/09/18 19:17:00 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -448,6 +448,7 @@ spc_scsi_cmd(xs)
 	/* Initialize acb */
 	acb->xs = xs;
 	acb->timeout = xs->timeout;
+	timeout_set(&xs->stimeout, spc_timeout, acb);
 
 	if (xs->flags & SCSI_RESET) {
 		acb->flags |= ACB_RESET;
@@ -1728,12 +1729,9 @@ loop:
 			sc->sc_cleft = acb->scsi_cmd_length;
 
 			/* On our first connection, schedule a timeout. */
-			if ((acb->xs->flags & SCSI_POLL) == 0) {
-				timeout_set(&acb->xs->stimeout, spc_timeout,
-				    acb);
-				timeout_add(&acb->xs->stimeout,
-				    (acb->timeout * hz) / 1000);
-			}
+			if ((acb->xs->flags & SCSI_POLL) == 0)
+				timeout_add_msec(&acb->xs->stimeout,
+				    acb->timeout);
 			sc->sc_state = SPC_CONNECTED;
 		} else if ((ints & INTS_TIMEOUT) != 0) {
 			SPC_MISC(("selection timeout  "));
