@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.14 2009/02/03 11:24:19 mikeb Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.15 2009/09/18 21:08:19 martynas Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -270,25 +270,3 @@ tss_free(int sel)
 	gdt_put_slot(IDXDYNSEL(sel));
 }
 
-void
-ldt_alloc(struct pmap *pmap, char *ldt, size_t len)
-{
-	int slot;
-	struct sys_segment_descriptor *gdt;
-
-	gdt = (struct sys_segment_descriptor *)&gdtstore[DYNSEL_START];
-
-	slot = gdt_get_slot();
-	set_sys_gdt(&gdt[slot], ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0);
-	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
-}
-
-void
-ldt_free(struct pmap *pmap)
-{
-	int slot;
-
-	slot = IDXDYNSEL(pmap->pm_ldt_sel);
-
-	gdt_put_slot(slot);
-}

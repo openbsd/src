@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysarch.h,v 1.3 2004/02/27 23:45:55 deraadt Exp $	*/
+/*	$OpenBSD: sysarch.h,v 1.4 2009/09/18 21:08:19 martynas Exp $	*/
 /*	$NetBSD: sysarch.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 
 #ifndef _AMD64_SYSARCH_H_
@@ -18,21 +18,6 @@
 #define	AMD64_PMC_READ	10
 #define AMD64_GET_MTRR   11
 #define AMD64_SET_MTRR   12
-
-/*
- * XXX todo.
- */
-struct amd64_get_ldt_args {
-	int start;
-	union descriptor *desc;
-	int num;
-};
-
-struct amd64_set_ldt_args {
-	int start;
-	union descriptor *desc;
-	int num;
-};
 
 struct amd64_iopl_args {
 	int iopl;
@@ -95,8 +80,6 @@ int amd64_iopl(struct proc *, void *, register_t *);
 int amd64_get_mtrr(struct proc *, void *, register_t *);
 int amd64_set_mtrr(struct proc *, void *, register_t *);
 #else
-int amd64_get_ldt(int, union descriptor *, int);
-int amd64_set_ldt(int, union descriptor *, int);
 int amd64_iopl(int);
 int amd64_get_ioperm(u_long *);
 int amd64_set_ioperm(u_long *);
