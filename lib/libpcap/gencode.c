@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.31 2008/06/15 02:49:14 deraadt Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.32 2009/09/18 23:32:13 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -2437,6 +2437,7 @@ gen_mcode6(s1, s2, masklen, q)
 
 	if (sizeof(mask) * 8 < masklen)
 		bpf_error("mask length must be <= %u", (unsigned int)(sizeof(mask) * 8));
+	memset(&mask, 0, sizeof(mask));
 	memset(&mask, 0xff, masklen / 8);
 	if (masklen % 8) {
 		mask.s6_addr[masklen / 8] =
