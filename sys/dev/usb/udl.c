@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.45 2009/09/19 21:43:14 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.46 2009/09/19 21:48:34 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -119,7 +119,7 @@ int		udl_cmd_insert_buf_comp(struct udl_softc *, uint8_t *,
 		    uint32_t);
 int		udl_cmd_insert_head_comp(struct udl_softc *, uint32_t);
 int		udl_cmd_insert_check(struct udl_softc *, int);
-void		udl_cmd_set_xfer(struct udl_softc *, int);
+void		udl_cmd_set_xfer_type(struct udl_softc *, int);
 void		udl_cmd_save_offset(struct udl_softc *);
 void		udl_cmd_restore_offset(struct udl_softc *);
 void		udl_cmd_write_reg_1(struct udl_softc *, uint8_t, uint8_t);
@@ -294,7 +294,7 @@ udl_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Device initialization is done per synchronous xfers.
 	 */
-	udl_cmd_set_xfer(sc, UDL_CMD_XFER_SYNC);
+	udl_cmd_set_xfer_type(sc, UDL_CMD_XFER_SYNC);
 
 	/*
 	 * Initialize chip.
@@ -369,7 +369,7 @@ udl_attach_hook(void *arg)
 	/*
 	 * From this point on we do asynchronous xfers.
 	 */
-	udl_cmd_set_xfer(sc, UDL_CMD_XFER_ASYNC);
+	udl_cmd_set_xfer_type(sc, UDL_CMD_XFER_ASYNC);
 }
 
 int
@@ -1468,7 +1468,7 @@ udl_cmd_insert_check(struct udl_softc *sc, int len)
 
 	if (total > UDL_CMD_MAX_XFER_SIZE) {
 		/* command buffer is almost full, try to flush it */
-		if (cb->xfer_method == UDL_CMD_XFER_ASYNC)
+		if (cb->xfer_type == UDL_CMD_XFER_ASYNC)
 			error = udl_cmd_send_async(sc);
 		else
 			error = udl_cmd_send(sc);
@@ -1483,11 +1483,11 @@ udl_cmd_insert_check(struct udl_softc *sc, int len)
 }
 
 void
-udl_cmd_set_xfer(struct udl_softc *sc, int xfer_method)
+udl_cmd_set_xfer_type(struct udl_softc *sc, int xfer_type)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
-	cb->xfer_method = xfer_method;
+	cb->xfer_type = xfer_type;
 }
 
 void
