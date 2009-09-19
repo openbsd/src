@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.16 2009/09/19 15:56:04 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.17 2009/09/19 16:30:10 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -179,7 +179,7 @@ safile_stop(struct file *file)
 	struct safile *f = (struct safile *)file;
 
 	f->started = 0;
-	if (!sio_stop(f->hdl)) {
+	if (!sio_eof(f->hdl) && !sio_stop(f->hdl)) {
 		DPRINTF("safile_stop: sio_stop() filed\n");
 		file_close(file);
 		return;
