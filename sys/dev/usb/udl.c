@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.43 2009/09/19 20:49:53 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.44 2009/09/19 21:34:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -345,22 +345,22 @@ udl_attach_hook(void *arg)
 	if (udl_load_huffman(sc) != 0) {
 		/* compression not possible */
 		printf("%s: run in uncompressed mode\n", DN(sc));
-		sc->udl_fb_off_write = udl_fb_off_write;
-		sc->udl_fb_line_write = udl_fb_line_write;
-		sc->udl_fb_block_write = udl_fb_block_write;
 		sc->udl_fb_buf_write = udl_fb_buf_write;
-		sc->udl_fb_off_copy = udl_fb_off_copy;
-		sc->udl_fb_line_copy = udl_fb_line_copy;
+		sc->udl_fb_block_write = udl_fb_block_write;
+		sc->udl_fb_line_write = udl_fb_line_write;
+		sc->udl_fb_off_write = udl_fb_off_write;
 		sc->udl_fb_block_copy = udl_fb_block_copy;
+		sc->udl_fb_line_copy = udl_fb_line_copy;
+		sc->udl_fb_off_copy = udl_fb_off_copy;
 	} else {
 		/* compression possible */
-		sc->udl_fb_off_write = udl_fb_off_write_comp;
-		sc->udl_fb_line_write = udl_fb_line_write_comp;
-		sc->udl_fb_block_write = udl_fb_block_write_comp;
 		sc->udl_fb_buf_write = udl_fb_buf_write_comp;
-		sc->udl_fb_off_copy = udl_fb_off_copy_comp;
-		sc->udl_fb_line_copy = udl_fb_line_copy_comp;
+		sc->udl_fb_block_write = udl_fb_block_write_comp;
+		sc->udl_fb_line_write = udl_fb_line_write_comp;
+		sc->udl_fb_off_write = udl_fb_off_write_comp;
 		sc->udl_fb_block_copy = udl_fb_block_copy_comp;
+		sc->udl_fb_line_copy = udl_fb_line_copy_comp;
+		sc->udl_fb_off_copy = udl_fb_off_copy_comp;
 	}
 #ifdef UDL_DEBUG
 	if (udl_debug >= 4)
