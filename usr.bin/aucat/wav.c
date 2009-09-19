@@ -192,6 +192,8 @@ wav_read(struct file *file, unsigned char *data, unsigned count)
 		}
 	}
 	n = pipe_read(file, data, count);
+	if (n == 0)
+		return 0;
 	if (f->rbytes >= 0)
 		f->rbytes -= n;
 	if (f->map) {
