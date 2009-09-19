@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.9 2009/09/19 11:54:16 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.10 2009/09/19 20:49:53 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -108,6 +108,9 @@ struct udl_ioctl_damage {
 	int	x2;
 	int	y1;
 	int	y2;
+#define UDLIO_STATUS_OK		0
+#define UDLIO_STATUS_FAILED	1
+	int	status;
 };
 #define	UDLIO_DAMAGE			_IOWR('W', 0, struct udl_ioctl_damage)
 

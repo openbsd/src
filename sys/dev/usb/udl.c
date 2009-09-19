@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.42 2009/09/19 11:54:16 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.43 2009/09/19 20:49:53 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -463,8 +463,9 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		d = (struct udl_ioctl_damage *)data;
 		r = udl_damage(sc, sc->sc_fbmem, d->x1, d->x2, d->y1, d->y2);
 		if (r != 0) {
-			/* XXX we need to inform X11 when we failed to draw */
-			printf("%s: %s: damage draw failed!\n", DN(sc), FUNC);
+			d->status = UDLIO_STATUS_FAILED;
+		} else {
+			d->status = UDLIO_STATUS_OK;
 		}
 		break;
 	default:
@@ -934,6 +935,9 @@ udl_damage(struct udl_softc *sc, uint8_t *image,
 {
 	int r;
 	int x, y, width, height;
+	usbd_status error;
+
+	udl_cmd_get_offset(sc);
 
 	x = x1;
 	y = y1;
@@ -942,11 +946,14 @@ udl_damage(struct udl_softc *sc, uint8_t *image,
 
 	r = udl_draw_image(sc, image, x, y, width, height);
 	if (r != 0)
-		return (r);
+		goto fail;
 
-	r = udl_cmd_send_async(sc);
-	if (r != 0)
-		return (r);
+	error = udl_cmd_send_async(sc);
+	if (error != USBD_NORMAL_COMPLETION) {
+fail:
+		udl_cmd_set_offset(sc);
+		return (EAGAIN);
+	}
 
 	return (0);
 }
