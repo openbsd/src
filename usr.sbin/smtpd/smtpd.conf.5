@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.14 2009/09/16 19:51:24 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.15 2009/09/19 15:51:58 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 16 2009 $
+.Dd $Mdocdate: September 19 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -26,36 +26,13 @@
 .Nm
 is the configuration file for the mail daemon
 .Xr smtpd 8 .
-.Sh SECTIONS
-.Nm
-is divided into four main sections:
-.Bl -tag -width xxx
-.It Sy Macros
-User-defined variables may be defined and used later,
-simplifying the configuration file.
-.It Sy Global Configuration
-Global settings for
-.Xr smtpd 8 .
-.It Sy Maps
-Mail aliases,
-virtual domains,
-and authentication secrets
-are stored in maps defined in this section.
-.It Sy Filter Rules
-Mail filter provides rule-based accepting, relaying, or refusing of messages.
-.El
 .Pp
 Comments can be put anywhere in the file using a hash mark
-.Pq Sq # ,
+.Pq # ,
 and extend to the end of the current line.
+Arguments containing whitespace should be surrounded by double quotes
+.Pq \&" .
 .Pp
-Additional configuration files can be included with the
-.Ic include
-keyword, for example:
-.Bd -literal -offset indent
-include "/etc/mail/smtpd.conf.local"
-.Ed
-.Sh MACROS
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
 and underscores.
@@ -70,6 +47,13 @@ For example:
 wan_if = "fxp0"
 listen on $wan_if
 listen on $wan_if tls enable auth
+.Ed
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/mail/smtpd.conf.local"
 .Ed
 .Sh GLOBAL CONFIGURATION
 Here are the settings that can be set globally:
@@ -311,6 +295,62 @@ resolution of aliases;
 %u expands to the user part after aliases
 resolution and will typically be the system account;
 %d expands to the domain part of the email address.
+.Sh EXAMPLES
+The default
+.Nm
+file which ships with
+.Ox
+listens on the loopback network interface (lo0),
+and allows for mail from users and daemons on the local machine,
+as well as permitting email to remote servers.
+Some more complex configurations are given below.
+.Pp
+This first example is the same as the default configuration,
+but all outgoing mail is forwarded to a gmail SMTP server.
+A secrets file is needed to specify a username and password:
+.Bd -literal -offset indent
+# touch /etc/mail/secrets
+# chmod 640 /etc/mail/secrets
+# chown root:_smtpd /etc/mail/secrets
+# echo "smtp.gmail.com  username:password" \*(Gt /etc/mail/secrets
+# makemap /etc/mail/secrets
+.Ed
+.Pp
+.Nm
+would look like this:
+.Bd -literal -offset indent
+listen on lo0
+map aliases { source db "/etc/mail/aliases.db" }
+map secrets { file "/etc/mail/secrets.db" }
+accept for local deliver to mbox
+accept for all relay via smtp.gmail.com tls enable auth
+.Ed
+.Pp
+In this second example,
+the aim is to permit mail relaying for any user that can authenticate
+using their normal login credentials.
+An RSA certificate must be provided to prove the server's identity.
+The mail server has an external interface pppoe0.
+Mail with a local destination should be sent to procmail.
+First, the RSA certificate is created:
+.Bd -literal -offset indent
+# openssl genrsa -out /etc/mail/certs/pppoe0.key 4096
+# openssl req -new -x509 -key /etc/mail/certs/pppoe0.key \e
+	-out /etc/mail/certs/pppoe0.crt -days 365
+# chmod 600 /etc/mail/certs/pppoe0.*
+.Ed
+.Pp
+In the example above,
+a certificate valid for one year was created.
+The configuration file would look like this:
+.Bd -literal -offset indent
+listen on lo0
+listen on pppoe0 tls enable auth
+map aliases { source db "/etc/mail/aliases.db" }
+accept for local deliver to mda "procmail -f -"
+accept from all for domain example.org deliver to mda "procmail -f -"
+accept for all relay
+.Ed
 .Sh FILES
 .Bl -tag -width "/etc/mail/smtpd.confXXX" -compact
 .It Pa /etc/mail/smtpd.conf
@@ -320,18 +360,6 @@ configuration file.
 .It Pa /var/spool/smtpd/
 Spool directories for mail during processing.
 .El
-.Sh EXAMPLES
-The following example configures a machine to accept local delivery
-for both localhost and example.com, as well as the relaying of mail
-destined for example.org through the mx1.example.org server and mail
-destined for example.net through regular MX record lookup:
-.Bd -literal -offset indent
-listen on lo0
-accept for local deliver to mbox
-accept for domain "example.com" deliver to mbox
-accept for domain "example.org" relay via "mx1.example.org"
-accept for domain "example.net" relay
-.Ed
 .Sh SEE ALSO
 .Xr mailer.conf 5 ,
 .Xr smtpctl 8 ,
