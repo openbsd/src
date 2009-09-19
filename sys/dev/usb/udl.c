@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.41 2009/09/13 18:16:15 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.42 2009/09/19 11:54:16 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -88,6 +88,10 @@ int		udl_putchar(void *, int, int, u_int, long);
 int		udl_do_cursor(struct rasops_info *);
 int		udl_draw_char(struct udl_softc *, uint16_t, uint16_t, u_int,
 		    uint32_t, uint32_t);
+int		udl_damage(struct udl_softc *, uint8_t *,
+		    uint32_t, uint32_t, uint32_t, uint32_t);
+int		udl_draw_image(struct udl_softc *, uint8_t *,
+		    uint32_t, uint32_t, uint32_t, uint32_t);
 
 usbd_status	udl_ctrl_msg(struct udl_softc *, uint8_t, uint8_t,
 		    uint16_t, uint16_t, uint8_t *, size_t);
@@ -100,6 +104,8 @@ usbd_status	udl_set_decomp_table(struct udl_softc *, uint8_t *, uint16_t);
 
 int		udl_load_huffman(struct udl_softc *);
 void		udl_free_huffman(struct udl_softc *);
+int		udl_fbmem_alloc(struct udl_softc *);
+void		udl_fbmem_free(struct udl_softc *);
 usbd_status	udl_cmd_alloc_xfer(struct udl_softc *);
 void		udl_cmd_free_xfer(struct udl_softc *);
 int		udl_cmd_alloc_buf(struct udl_softc *);
@@ -395,6 +401,11 @@ udl_detach(struct device *self, int flags)
 	udl_free_huffman(sc);
 
 	/*
+	 * Free framebuffer memory.
+	 */
+	udl_fbmem_free(sc);
+
+	/*
 	 * Detach wsdisplay.
 	 */
 	if (sc->sc_wsdisplay != NULL)
@@ -424,6 +435,9 @@ int
 udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct udl_softc *sc;
+	struct wsdisplay_fbinfo *wdf;
+	struct udl_ioctl_damage *d;
+	int r;
 
 	sc = v;
 
@@ -434,6 +448,24 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_DL;
+		break;
+	case WSDISPLAYIO_GINFO:
+		wdf = (struct wsdisplay_fbinfo *)data;
+		wdf->height = sc->sc_height;
+		wdf->width = sc->sc_width;
+		wdf->depth = sc->sc_depth;
+		wdf->cmsize = 0;	/* XXX fill up colormap size */
+		break;
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_width * (sc->sc_depth / 8);
+		break;
+	case UDLIO_DAMAGE:
+		d = (struct udl_ioctl_damage *)data;
+		r = udl_damage(sc, sc->sc_fbmem, d->x1, d->x2, d->y1, d->y2);
+		if (r != 0) {
+			/* XXX we need to inform X11 when we failed to draw */
+			printf("%s: %s: damage draw failed!\n", DN(sc), FUNC);
+		}
 		break;
 	default:
 		return (-1);
@@ -446,12 +478,29 @@ paddr_t
 udl_mmap(void *v, off_t off, int prot)
 {
 	struct udl_softc *sc;
+	caddr_t p;
+	paddr_t pa;
 
 	sc = v;
 
 	DPRINTF(1, "%s: %s\n", DN(sc), FUNC);
 
-	return (-1);
+	/* allocate framebuffer memory */
+	if (udl_fbmem_alloc(sc) == -1)
+		return (-1);
+
+	/* return memory address to userland process */
+	p = sc->sc_fbmem + off;
+	if (pmap_extract(pmap_kernel(), (vaddr_t)p, &pa) == FALSE) {
+		printf("udl_mmap: invalid page\n");
+		udl_fbmem_free(sc);
+		return (-1);
+	}
+#if defined(__powerpc__) || defined(__sparc64__)
+	return (pa);
+#else
+	return (atop(pa));
+#endif
 }
 
 int
@@ -879,6 +928,72 @@ udl_draw_char(struct udl_softc *sc, uint16_t fg, uint16_t bg, u_int uc,
 	return (0);
 }
 
+int
+udl_damage(struct udl_softc *sc, uint8_t *image,
+    uint32_t x1, uint32_t x2, uint32_t y1, uint32_t y2)
+{
+	int r;
+	int x, y, width, height;
+
+	x = x1;
+	y = y1;
+	width = x2 - x1;
+	height = y2 - y1;
+
+	r = udl_draw_image(sc, image, x, y, width, height);
+	if (r != 0)
+		return (r);
+
+	r = udl_cmd_send_async(sc);
+	if (r != 0)
+		return (r);
+
+	return (0);
+}
+
+int
+udl_draw_image(struct udl_softc *sc, uint8_t *image,
+    uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+{
+	int i, j, r;
+	int width_cur, x_cur;
+	uint8_t buf[UDL_CMD_MAX_DATA_SIZE];
+	uint16_t *image16, lrgb16;
+	uint32_t off, block;
+
+	for (i = 0; i < height; i++) {
+		off = ((y * sc->sc_width) + x) * 2;
+		x_cur = x;
+		width_cur = width;
+
+		while (width_cur) {
+			if (width_cur > UDL_CMD_MAX_PIXEL_COUNT)
+				block = UDL_CMD_MAX_PIXEL_COUNT;
+			else
+				block = width_cur;
+
+			/* fix RGB ordering */
+			image16 = (uint16_t *)(image + off);
+			for (j = 0; j < (block * 2); j += 2) {
+				lrgb16 = htobe16(*image16);
+				bcopy(&lrgb16, buf + j, 2);
+				image16++;
+			}
+
+			r = (sc->udl_fb_buf_write)(sc, buf, x_cur, y, block);
+			if (r != 0)
+				return (r);
+
+			off += block * 2;
+			x_cur += block;
+			width_cur -= block;
+		}
+		y++;
+	}
+
+	return (0);
+}
+
 /* ---------- */
 
 usbd_status
@@ -1051,6 +1166,32 @@ udl_free_huffman(struct udl_softc *sc)
 		sc->sc_huffman = NULL;
 		sc->sc_huffman_size = 0;
 		DPRINTF(1, "%s: huffman table freed\n", DN(sc));
+	}
+}
+
+int
+udl_fbmem_alloc(struct udl_softc *sc)
+{
+	int size;
+
+	size = (sc->sc_width * sc->sc_height) * (sc->sc_depth / 8);
+	size = round_page(size);
+
+	if (sc->sc_fbmem == NULL) {
+		sc->sc_fbmem = malloc(size, M_DEVBUF, M_ZERO);
+		if (sc->sc_fbmem == NULL)
+			return (-1);
+	}
+
+	return (0);
+}
+
+void
+udl_fbmem_free(struct udl_softc *sc)
+{
+	if (sc->sc_fbmem != NULL) {
+		free(sc->sc_fbmem, M_DEVBUF);
+		sc->sc_fbmem = NULL;
 	}
 }
 

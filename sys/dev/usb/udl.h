@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.8 2009/09/13 10:40:08 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.9 2009/09/19 11:54:16 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -70,6 +70,7 @@ struct udl_softc {
 	uint16_t		 sc_height;
 	uint8_t			 sc_depth;
 	uint8_t			 sc_cursor_on;
+	uint8_t			*sc_fbmem;	/* framebuffer for X11 */
 
 	/*
 	 * We use function pointers to the framebuffer manipulation
@@ -98,6 +99,17 @@ struct udl_softc {
 				     (struct udl_softc *, uint32_t, uint32_t,
 				     uint32_t, uint32_t, uint32_t, uint32_t);
 };
+
+/*
+ * udl IOCTLs.
+ */
+struct udl_ioctl_damage {
+	int	x1;
+	int	x2;
+	int	y1;
+	int	y2;
+};
+#define	UDLIO_DAMAGE			_IOWR('W', 0, struct udl_ioctl_damage)
 
 /*
  * Chip commands.
