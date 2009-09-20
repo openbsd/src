@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.11 2009/09/19 21:48:34 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.12 2009/09/20 10:18:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -59,6 +59,8 @@ struct udl_softc {
 	struct device		*sc_wsdisplay;
 	struct rasops_info	 sc_ri;
 	uint8_t			 sc_nscreens;
+
+	int			 sc_mode;
 
 #define UDL_CMD_XFER_COUNT	 8
 	int			 sc_cmd_xfer_cnt;

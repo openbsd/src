@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.46 2009/09/19 21:48:34 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.47 2009/09/20 10:18:20 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -437,14 +437,13 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct udl_softc *sc;
 	struct wsdisplay_fbinfo *wdf;
 	struct udl_ioctl_damage *d;
-	int r;
+	int r, mode;
 
 	sc = v;
 
 	DPRINTF(1, "%s: %s: ('%c', %d, %d)\n",
 	    DN(sc), FUNC, IOCGROUP(cmd), cmd & 0xff, IOCPARM_LEN(cmd));
 
-	/* TODO */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_DL;
@@ -456,8 +455,26 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->depth = sc->sc_depth;
 		wdf->cmsize = 0;	/* XXX fill up colormap size */
 		break;
+	case WSDISPLAYIO_SMODE:
+		mode = *(u_int *)data;
+		if (mode == sc->sc_mode)
+			break;
+		switch (mode) {
+		case WSDISPLAYIO_MODE_EMUL:
+			/* TODO */
+			break;
+		case WSDISPLAYIO_MODE_DUMBFB:
+			/* TODO */
+			break;
+		}
+		sc->sc_mode = mode;
+		break;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_width * (sc->sc_depth / 8);
+		break;
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
+		/* handled for us by wscons */
 		break;
 	case UDLIO_DAMAGE:
 		d = (struct udl_ioctl_damage *)data;
