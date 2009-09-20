@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.12 2009/06/05 22:40:24 chris Exp $ */
+/*	$OpenBSD: kroute.c,v 1.13 2009/09/20 20:27:53 stsp Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -609,15 +609,17 @@ kif_update(u_short ifindex, int flags, struct if_data *ifd,
 	char		 ifname[IF_NAMESIZE];
 
 	if ((iface = if_find(ifindex)) == NULL) {
+		bzero(ifname, sizeof(ifname));
 		if (sdl && sdl->sdl_family == AF_LINK) {
-			bzero(ifname, sizeof(ifname));
 			if (sdl->sdl_nlen >= sizeof(ifname))
 				memcpy(ifname, sdl->sdl_data,
 				    sizeof(ifname) - 1);
 			else if (sdl->sdl_nlen > 0)
 				memcpy(ifname, sdl->sdl_data, sdl->sdl_nlen);
-		}
-
+			else
+				return (NULL);
+		} else
+			return (NULL);
 		if ((iface = if_new(ifindex, ifname)) == NULL)
 			return (NULL);
 		iface->cflags |= F_IFACE_AVAIL;
