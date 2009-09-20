@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.47 2009/09/20 10:18:20 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.48 2009/09/20 10:56:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -133,6 +133,7 @@ usbd_status	udl_init_chip(struct udl_softc *);
 void		udl_init_fb_offsets(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 usbd_status	udl_init_resolution(struct udl_softc *, uint8_t *, uint8_t);
+usbd_status	udl_clear_screen(struct udl_softc *);
 int		udl_fb_buf_write(struct udl_softc *, uint8_t *, uint32_t,
 		    uint32_t, uint16_t);
 int		udl_fb_block_write(struct udl_softc *, uint16_t, uint32_t,
@@ -370,6 +371,11 @@ udl_attach_hook(void *arg)
 	 * From this point on we do asynchronous xfers.
 	 */
 	udl_cmd_set_xfer_type(sc, UDL_CMD_XFER_ASYNC);
+
+	/*
+	 * Set initial wsdisplay emulation mode.
+	 */
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 }
 
 int
@@ -461,11 +467,14 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 		switch (mode) {
 		case WSDISPLAYIO_MODE_EMUL:
-			/* TODO */
+			(void)udl_clear_screen(sc);
+			/* XXX how shall we repaint the screen? */
 			break;
 		case WSDISPLAYIO_MODE_DUMBFB:
 			/* TODO */
 			break;
+		default:
+			return (EINVAL);
 		}
 		sc->sc_mode = mode;
 		break;
@@ -1736,8 +1745,7 @@ udl_init_resolution(struct udl_softc *sc, uint8_t *buf, uint8_t len)
 		return (error);
 
 	/* clear screen */
-	udl_fb_block_write(sc, 0x0000, 0, 0, sc->sc_width, sc->sc_height);
-	error = udl_cmd_send(sc);
+	error = udl_clear_screen(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
 
@@ -1745,6 +1753,24 @@ udl_init_resolution(struct udl_softc *sc, uint8_t *buf, uint8_t len)
 	udl_cmd_write_reg_1(sc, UDL_REG_SCREEN, UDL_REG_SCREEN_ON);
 	udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0xff);
 	error = udl_cmd_send(sc);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (error);
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
+udl_clear_screen(struct udl_softc *sc)
+{
+	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
+	usbd_status error;
+
+	/* clear screen */
+	udl_fb_block_write(sc, 0x0000, 0, 0, sc->sc_width, sc->sc_height);
+	if (cb->xfer_type == UDL_CMD_XFER_ASYNC)
+		error = udl_cmd_send_async(sc);
+	else
+		error = udl_cmd_send(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
 
