@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.3 2009/09/20 21:17:55 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.4 2009/09/20 21:58:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -17,6 +17,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/sensors.h>
 #include <sys/systm.h>
 
@@ -60,6 +61,9 @@
 #define LOM_IDX_LED1		0x25
 
 #define LOM_IDX_ALARM		0x30
+
+#define LOM_IDX_HOSTNAMELEN	0x38
+#define LOM_IDX_HOSTNAME	0x39
 
 #define LOM_IDX_CONFIG		0x5d
 #define LOM_IDX_FAN1_CAL	0x5e
@@ -106,6 +110,8 @@ struct lom_softc {
 
 	uint8_t			sc_fan_cal[LOM_MAX_FAN];
 	uint8_t			sc_fan_low[LOM_MAX_FAN];
+
+	char			sc_hostname[MAXHOSTNAMELEN];
 };
 
 int	lom_match(struct device *, void *, void *);
@@ -142,7 +148,7 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	struct lom_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
 	uint8_t reg, fw_rev, config, config2, config3;
-	uint8_t cal, low;
+	uint8_t cal, low, len;
 	int i;
 
 	sc->sc_iot = ea->ea_memtag;
@@ -200,6 +206,13 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sensordev_install(&sc->sc_sensordev);
+
+	/* Read hostname from LOM. */
+	lom_read(sc, LOM_IDX_HOSTNAMELEN, &len);
+	for (i = 0; i < len; i++) {
+		lom_read(sc, LOM_IDX_HOSTNAME, &reg);
+		sc->sc_hostname[i] = reg;
+	}
 
 	printf(": rev %d.%d\n", fw_rev >> 4, fw_rev & 0x0f);
 }
@@ -401,5 +414,20 @@ lom_refresh(void *arg)
 
 		sc->sc_fan[i].value = (60 * sc->sc_fan_cal[i] * val) / 100;
 		sc->sc_fan[i].flags &= ~SENSOR_FINVALID;
+	}
+
+	/*
+	 * If our hostname is set and differs from what's stored in
+	 * the LOM, write the new hostname back to the LOM.  Note that
+	 * we include the terminating NUL when writing the hostname
+	 * back to the LOM, otherwise the LOM will print any traling
+	 * garbage.
+	 */
+	if (hostnamelen > 0 &&
+	    strncmp(sc->sc_hostname, hostname, sizeof(hostname)) != 0) {
+		lom_write(sc, LOM_IDX_HOSTNAMELEN, hostnamelen + 1);
+		for (i = 0; i < hostnamelen + 1; i++)
+			lom_write(sc, LOM_IDX_HOSTNAME, hostname[i]);
+		strlcpy(sc->sc_hostname, hostname, sizeof(hostname));
 	}
 }
