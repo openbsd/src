@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.459 2009/08/11 18:46:32 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.460 2009/09/20 15:37:23 kevlo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -309,6 +309,7 @@ void	amd_family6_setperf_setup(struct cpu_info *);
 void	amd_family6_setup(struct cpu_info *);
 void	cyrix3_setperf_setup(struct cpu_info *);
 void	cyrix3_cpu_setup(struct cpu_info *);
+void	via_update_sensor(void *args);
 void	cyrix6x86_cpu_setup(struct cpu_info *);
 void	natsem6x86_cpu_setup(struct cpu_info *);
 void	intel586_cpu_setup(struct cpu_info *);
@@ -1164,7 +1165,35 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 		}
 
 		printf("\n");
+
+		/* Setup the sensors structures */
+		strlcpy(ci->ci_sensordev.xname, ci->ci_dev.dv_xname,
+		    sizeof(ci->ci_sensordev.xname));
+		ci->ci_sensor.type = SENSOR_TEMP;
+		sensor_task_register(ci, via_update_sensor, 5);
+		sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
+		sensordev_install(&ci->ci_sensordev);
+
 		break;
+	}
+}
+
+void
+via_update_sensor(void *args)
+{
+	struct cpu_info *ci = (struct cpu_info *) args;
+	u_int64_t msr;
+
+	if (ci->ci_model == 0xf) {
+		msr = rdmsr(MSR_CENT_TMTEMPERATURE);
+		ci->ci_sensor.value = (msr & 0xffffff);
+		/* micro degrees */
+		ci->ci_sensor.value *= 1000000;
+		ci->ci_sensor.value += 273150000;
+		ci->ci_sensor.flags &= ~SENSOR_FINVALID;
+	} else {
+		ci->ci_sensor.value = 0;
+		ci->ci_sensor.flags |= SENSOR_FINVALID;
 	}
 }
 
