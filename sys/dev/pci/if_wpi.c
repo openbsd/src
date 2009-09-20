@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.91 2009/08/10 17:21:15 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.92 2009/09/20 20:04:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -78,6 +78,7 @@ void		wpi_sensor_attach(struct wpi_softc *);
 #if NBPFILTER > 0
 void		wpi_radiotap_attach(struct wpi_softc *);
 #endif
+int		wpi_detach(struct device *, int);
 void		wpi_power(int, void *);
 int		wpi_nic_lock(struct wpi_softc *);
 int		wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
@@ -165,7 +166,7 @@ struct cfdriver wpi_cd = {
 };
 
 struct cfattach wpi_ca = {
-	sizeof (struct wpi_softc), wpi_match, wpi_attach
+	sizeof (struct wpi_softc), wpi_match, wpi_attach, wpi_detach
 };
 
 int
@@ -381,6 +382,45 @@ wpi_radiotap_attach(struct wpi_softc *sc)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(WPI_TX_RADIOTAP_PRESENT);
 }
 #endif
+
+int
+wpi_detach(struct device *self, int flags)
+{
+	struct wpi_softc *sc = (struct wpi_softc *)self;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s, qid;
+
+	s = splnet();
+	timeout_del(&sc->calib_to);
+
+	/* Uninstall interrupt handler. */
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
+
+	ieee80211_ifdetach(ifp);
+ 	if_detach(ifp);
+	splx(s);
+
+	/* Free DMA resources. */
+	wpi_free_rx_ring(sc, &sc->rxq);
+	for (qid = 0; qid < WPI_NTXQUEUES; qid++)
+		wpi_free_tx_ring(sc, &sc->txq[qid]);
+	wpi_free_shared(sc);
+	wpi_free_fwmem(sc);
+
+#ifndef SMALL_KERNEL
+	/* Detach the thermal sensor. */
+	sensor_detach(&sc->sensordev, &sc->sensor);
+	sensordev_deinstall(&sc->sensordev);
+#endif
+
+	if (sc->powerhook != NULL)
+		powerhook_disestablish(sc->powerhook);
+
+	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
+
+	return 0;
+}
 
 void
 wpi_power(int why, void *arg)

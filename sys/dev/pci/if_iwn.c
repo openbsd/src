@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.62 2009/08/10 17:21:15 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.63 2009/09/20 20:04:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -99,6 +99,7 @@ void		iwn_sensor_attach(struct iwn_softc *);
 #if NBPFILTER > 0
 void		iwn_radiotap_attach(struct iwn_softc *);
 #endif
+int		iwn_detach(struct device *, int);
 void		iwn_power(int, void *);
 int		iwn_nic_lock(struct iwn_softc *);
 int		iwn_eeprom_lock(struct iwn_softc *);
@@ -318,7 +319,7 @@ struct cfdriver iwn_cd = {
 };
 
 struct cfattach iwn_ca = {
-	sizeof (struct iwn_softc), iwn_match, iwn_attach
+	sizeof (struct iwn_softc), iwn_match, iwn_attach, iwn_detach
 };
 
 int
@@ -645,6 +646,46 @@ iwn_radiotap_attach(struct iwn_softc *sc)
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWN_TX_RADIOTAP_PRESENT);
 }
 #endif
+
+int
+iwn_detach(struct device *self, int flags)
+{
+	struct iwn_softc *sc = (struct iwn_softc *)self;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	int s, qid;
+
+	s = splnet();
+	timeout_del(&sc->calib_to);
+
+	/* Uninstall interrupt handler. */
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
+
+	ieee80211_ifdetach(ifp);
+ 	if_detach(ifp);
+	splx(s);
+
+	/* Free DMA resources. */
+	iwn_free_rx_ring(sc, &sc->rxq);
+	for (qid = 0; qid < sc->sc_hal->ntxqs; qid++)
+		iwn_free_tx_ring(sc, &sc->txq[qid]);
+	iwn_free_sched(sc);
+	iwn_free_kw(sc);
+	iwn_free_fwmem(sc);
+
+#ifndef SMALL_KERNEL
+	/* Detach the thermal sensor. */
+	sensor_detach(&sc->sensordev, &sc->sensor);
+	sensordev_deinstall(&sc->sensordev);
+#endif
+
+	if (sc->powerhook != NULL)
+		powerhook_disestablish(sc->powerhook);
+
+	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
+
+	return 0;
+}
 
 void
 iwn_power(int why, void *arg)
