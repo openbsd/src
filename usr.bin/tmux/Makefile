@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2009/08/31 20:46:19 nicm Exp $
+# $OpenBSD: Makefile,v 1.16 2009/09/20 19:15:01 nicm Exp $
 
 PROG=	tmux
 SRCS=	attributes.c buffer-poll.c buffer.c cfg.c client-fn.c \
@@ -23,7 +23,7 @@ SRCS=	attributes.c buffer-poll.c buffer.c cfg.c client-fn.c \
 	cmd-set-password.c cmd-set-window-option.c cmd-show-buffer.c \
 	cmd-show-options.c cmd-show-window-options.c cmd-source-file.c \
 	cmd-split-window.c cmd-start-server.c cmd-string.c cmd-if-shell.c \
-	cmd-suspend-client.c cmd-swap-pane.c cmd-swap-window.c \
+	cmd-run-shell.c cmd-suspend-client.c cmd-swap-pane.c cmd-swap-window.c \
 	cmd-switch-client.c cmd-unbind-key.c cmd-unlink-window.c \
 	cmd-set-environment.c cmd-show-environment.c cmd-choose-client.c \
 	cmd-up-pane.c cmd-display-message.c cmd-display-panes.c cmd.c \
