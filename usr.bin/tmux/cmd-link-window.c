@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-link-window.c,v 1.6 2009/09/20 17:27:18 nicm Exp $ */
+/* $OpenBSD: cmd-link-window.c,v 1.7 2009/09/20 17:31:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,7 +56,7 @@ cmd_link_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	kflag = data->chflags & CMD_CHFLAG('k');
 	dflag = data->chflags & CMD_CHFLAG('d');
 	if (server_link_window(wl, dst, idx, kflag, !dflag, &cause) != 0) {
-		ctx->error(ctx, "can't create session: %s", cause);
+		ctx->error(ctx, "can't link window: %s", cause);
 		xfree(cause);
 		return (-1);
 	}
