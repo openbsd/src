@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.2 2009/09/20 19:31:57 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.3 2009/09/20 21:17:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -39,20 +39,55 @@
 #define LOM_IDX_CMD		0x00
 #define  LOM_IDX_CMD_GENERIC	0x00
 #define  LOM_IDX_CMD_TEMP	0x04
+#define  LOM_IDX_CMD_FAN	0x05
 
 #define LOM_IDX_FW_REV		0x01	/* Firmware revision  */
 
+#define LOM_IDX_FAN1		0x04	/* Fan speed */
+#define LOM_IDX_FAN2		0x05
+#define LOM_IDX_FAN3		0x06
+#define LOM_IDX_FAN4		0x07
+
 #define LOM_IDX_TEMP1		0x18	/* Temperature */
+#define LOM_IDX_TEMP2		0x19
+#define LOM_IDX_TEMP3		0x1a
+#define LOM_IDX_TEMP4		0x1b
+#define LOM_IDX_TEMP5		0x1c
+#define LOM_IDX_TEMP6		0x1d
+#define LOM_IDX_TEMP7		0x1e
+#define LOM_IDX_TEMP8		0x1f
 
 #define LOM_IDX_LED1		0x25
 
 #define LOM_IDX_ALARM		0x30
+
+#define LOM_IDX_CONFIG		0x5d
+#define LOM_IDX_FAN1_CAL	0x5e
+#define LOM_IDX_FAN2_CAL	0x5f
+#define LOM_IDX_FAN3_CAL	0x60
+#define LOM_IDX_FAN4_CAL	0x61
+#define LOM_IDX_FAN1_LOW	0x62
+#define LOM_IDX_FAN2_LOW	0x63
+#define LOM_IDX_FAN3_LOW	0x64
+#define LOM_IDX_FAN4_LOW	0x65
+
+#define LOM_IDX_CONFIG2		0x66
+#define LOM_IDX_CONFIG3		0x67
 
 #define LOM_IDX_PROBE55		0x7e	/* Always returns 0x55 */
 #define LOM_IDX_PROBEAA		0x7f	/* Always returns 0xaa */
 
 #define LOM_IDX4_TEMP_NAME_START	0x40
 #define LOM_IDX4_TEMP_NAME_END		0xff
+
+#define LOM_IDX5_FAN_NAME_START		0x40
+#define LOM_IDX5_FAN_NAME_END		0xff
+
+#define LOM_MAX_FAN	4
+#define LOM_MAX_PSU	3
+#define LOM_MAX_TEMP	8
+
+#define LOM_MAX_SENSORS (LOM_MAX_FAN + LOM_MAX_PSU + LOM_MAX_TEMP)
 
 struct lom_softc {
 	struct device		sc_dev;
@@ -61,8 +96,16 @@ struct lom_softc {
 
 	int			sc_space;
 
-	struct ksensor		sc_sensor;
+	struct ksensor		sc_fan[LOM_MAX_FAN];
+	struct ksensor		sc_temp[LOM_MAX_TEMP];
 	struct ksensordev	sc_sensordev;
+
+	int			sc_num_fan;
+	int			sc_num_psu;
+	int			sc_num_temp;
+
+	uint8_t			sc_fan_cal[LOM_MAX_FAN];
+	uint8_t			sc_fan_low[LOM_MAX_FAN];
 };
 
 int	lom_match(struct device *, void *, void *);
@@ -98,7 +141,9 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lom_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
-	uint8_t reg, fw_rev;
+	uint8_t reg, fw_rev, config, config2, config3;
+	uint8_t cal, low;
+	int i;
 
 	sc->sc_iot = ea->ea_memtag;
 	if (ebus_bus_map(ea->ea_memtag, 0,
@@ -110,21 +155,44 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 
 	if (lom_read(sc, LOM_IDX_PROBE55, &reg) || reg != 0x55 ||
 	    lom_read(sc, LOM_IDX_PROBEAA, &reg) || reg != 0xaa ||
-	    lom_read(sc, LOM_IDX_FW_REV, &fw_rev)) {
+	    lom_read(sc, LOM_IDX_FW_REV, &fw_rev) ||
+	    lom_read(sc, LOM_IDX_CONFIG, &config) ||
+	    lom_read(sc, LOM_IDX_CONFIG2, &config2) ||
+	    lom_read(sc, LOM_IDX_CONFIG3, &config3))
+	{
 		printf(": not responding\n");
 		return;
+	}
+
+	sc->sc_num_fan = min((config >> 5) & 0x7, LOM_MAX_FAN);
+	sc->sc_num_psu = min((config >> 3) & 0x3, LOM_MAX_PSU);
+	sc->sc_num_temp = min((config2 >> 4) & 0xf, LOM_MAX_TEMP);
+
+	for (i = 0; i < sc->sc_num_fan; i++) {
+		if (lom_read(sc, LOM_IDX_FAN1_CAL + i, &cal) ||
+		    lom_read(sc, LOM_IDX_FAN1_LOW + i, &low)) {
+			printf(": can't read fan information\n");
+			return;
+		}
+		sc->sc_fan_cal[i] = cal;
+		sc->sc_fan_low[i] = low;
 	}
 
 	/* Initialize sensor data. */
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
-	sc->sc_sensor.type = SENSOR_TEMP;
+	for (i = 0; i < sc->sc_num_fan; i++) {
+		sc->sc_fan[i].type = SENSOR_FANRPM;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_fan[i]);
+	}
+	for (i = 0; i < sc->sc_num_temp; i++) {
+		sc->sc_temp[i].type = SENSOR_TEMP;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_temp[i]);
+	}
 	if (lom_init_desc(sc)) {
 		printf(": can't read sensor names\n");
 		return;
 	}
-
-	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 
 	if (sensor_task_register(sc, lom_refresh, 5) == NULL) {
 		printf(": unable to register update task\n");
@@ -236,25 +304,71 @@ int
 lom_init_desc(struct lom_softc *sc)
 {
 	uint8_t val;
-	int i, j, error;
+	int i, j, k;
+	int error;
 
+	/*
+	 * Read temperature sensor names.
+	 */
 	error = lom_write(sc, LOM_IDX_CMD, LOM_IDX_CMD_TEMP);
 	if (error)
 		return (error);
 
-	i = LOM_IDX4_TEMP_NAME_START, j = 0;
-	while (i <= LOM_IDX4_TEMP_NAME_END) {
-		error = lom_read(sc, i, &val);
+	i = 0;
+	j = 0;
+	k = LOM_IDX4_TEMP_NAME_START;
+	while (k <= LOM_IDX4_TEMP_NAME_END) {
+		error = lom_read(sc, k++, &val);
 		if (error)
 			goto fail;
 
 		if (val == 0xff)
 			break;
 
-		sc->sc_sensor.desc[j++] = val;
-		if (j > sizeof (sc->sc_sensor.desc) - 1)
+		if (val == '\0') {
+			i++;
+			j = 0;
+			if (i < sc->sc_num_temp)
+				continue;
+
 			break;
-		i++;
+		}
+
+		sc->sc_temp[i].desc[j++] = val;
+		if (j > sizeof (sc->sc_temp[i].desc) - 1)
+			break;
+	}
+
+	/*
+	 * Read fan names.
+	 */
+	error = lom_write(sc, LOM_IDX_CMD, LOM_IDX_CMD_FAN);
+	if (error)
+		return (error);
+
+	i = 0;
+	j = 0;
+	k = LOM_IDX5_FAN_NAME_START;
+	while (k <= LOM_IDX5_FAN_NAME_END) {
+		error = lom_read(sc, k++, &val);
+		if (error)
+			goto fail;
+
+		if (val == 0xff)
+			break;
+
+		if (val == '\0') {
+			i++;
+			j = 0;
+			if (i < sc->sc_num_fan)
+				continue;
+
+			break;
+		}
+
+		sc->sc_fan[i].desc[j++] = val;
+		if (j > sizeof (sc->sc_fan[i].desc) - 1)
+			break;
 	}
 
 fail:
@@ -267,12 +381,25 @@ lom_refresh(void *arg)
 {
 	struct lom_softc *sc = arg;
 	uint8_t val;
+	int i;
 
-	if (lom_read(sc, LOM_IDX_TEMP1, &val)) {
-		sc->sc_sensor.flags |= SENSOR_FINVALID;
-		return;
+	for (i = 0; i < sc->sc_num_temp; i++) {
+		if (lom_read(sc, LOM_IDX_TEMP1 + i, &val)) {
+			sc->sc_temp[i].flags |= SENSOR_FINVALID;
+			continue;
+		}
+
+		sc->sc_temp[i].value = val * 1000000 + 273150000;
+		sc->sc_temp[i].flags &= ~SENSOR_FINVALID;
 	}
 
-	sc->sc_sensor.value = val * 1000000 + 273150000;
-	sc->sc_sensor.flags &= ~SENSOR_FINVALID;
+	for (i = 0; i < sc->sc_num_fan; i++) {
+		if (lom_read(sc, LOM_IDX_FAN1 + i, &val)) {
+			sc->sc_fan[i].flags |= SENSOR_FINVALID;
+			continue;
+		}
+
+		sc->sc_fan[i].value = (60 * sc->sc_fan_cal[i] * val) / 100;
+		sc->sc_fan[i].flags &= ~SENSOR_FINVALID;
+	}
 }
