@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.14 2009/03/29 16:24:38 stsp Exp $ */
+/*	$OpenBSD: interface.c,v 1.15 2009/09/20 20:45:06 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -68,7 +68,10 @@ struct {
     {-1,		IF_EVT_NOTHING,		IF_ACT_NOTHING,	0},
 };
 
+#if 0
+/* TODO virtual links */
 static int vlink_cnt = 0;
+#endif
 
 TAILQ_HEAD(, iface)	iflist;
 
@@ -211,7 +214,9 @@ if_new(u_short ifindex, char *ifname)
 	TAILQ_INIT(&iface->ls_ack_list);
 	RB_INIT(&iface->lsa_tree);
 
-	if (ifname == NULL) {
+#if 0
+	/* TODO */
+	if (virtual) {
 		iface->type = IF_TYPE_VIRTUALLINK;
 		snprintf(iface->name, sizeof(iface->name), "vlink%d",
 		    vlink_cnt++);
@@ -219,7 +224,7 @@ if_new(u_short ifindex, char *ifname)
 		iface->mtu = IP_MSS;
 		return (iface);
 	}
-
+#endif
 	strlcpy(iface->name, ifname, sizeof(iface->name));
 	iface->ifindex = ifindex;
 
