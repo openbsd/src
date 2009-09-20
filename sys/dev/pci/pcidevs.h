@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1492 2009/09/15 12:06:52 claudio Exp 
+ *	OpenBSD: pcidevs,v 1.1493 2009/09/20 13:08:23 sthen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -728,6 +728,9 @@
 #define	PCI_PRODUCT_AMD_8111_SMB	0x746a		/* 8111 SMBus */
 #define	PCI_PRODUCT_AMD_8111_PMC	0x746b		/* 8111 Power */
 #define	PCI_PRODUCT_AMD_8111_ACA	0x746d		/* 8111 AC97 */
+#define	PCI_PRODUCT_AMD_SB900_SATA	0x7800		/* SB900 SATA */
+#define	PCI_PRODUCT_AMD_SB900_SMB	0x780b		/* SB900 SMBus */
+#define	PCI_PRODUCT_AMD_SB900_IDE	0x780c		/* SB900 IDE */
 #define	PCI_PRODUCT_AMD_RS780_HB	0x9600		/* RS780 Host */
 #define	PCI_PRODUCT_AMD_RS780_PCIE_1	0x9602		/* RS780 PCIE */
 #define	PCI_PRODUCT_AMD_RS780_PCIE_2	0x9603		/* RS780 PCIE */
