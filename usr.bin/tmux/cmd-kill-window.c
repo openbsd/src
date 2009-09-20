@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-window.c,v 1.5 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-kill-window.c,v 1.6 2009/09/20 17:27:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -47,6 +47,7 @@ cmd_kill_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (-1);
 
 	server_kill_window(wl->window);
+	recalculate_sizes();
 
 	return (0);
 }

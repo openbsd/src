@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unlink-window.c,v 1.4 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-unlink-window.c,v 1.5 2009/09/20 17:27:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -55,17 +55,7 @@ cmd_unlink_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (-1);
 	}
 
- 	destroyed = session_detach(s, wl);
-	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
-		c = ARRAY_ITEM(&clients, i);
-		if (c == NULL || c->session != s)
-			continue;
-		if (destroyed) {
-			c->session = NULL;
-			server_write_client(c, MSG_EXIT, NULL, 0);
-		} else
-			server_redraw_client(c);
-	}
+	server_unlink_window(s, wl);
 	recalculate_sizes();
 
 	return (0);
