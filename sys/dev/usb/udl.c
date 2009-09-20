@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.48 2009/09/20 10:56:02 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.49 2009/09/20 11:24:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -467,8 +467,8 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 		switch (mode) {
 		case WSDISPLAYIO_MODE_EMUL:
+			/* clear screen */
 			(void)udl_clear_screen(sc);
-			/* XXX how shall we repaint the screen? */
 			break;
 		case WSDISPLAYIO_MODE_DUMBFB:
 			/* TODO */
