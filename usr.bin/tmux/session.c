@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.8 2009/09/16 12:35:04 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.9 2009/09/20 14:58:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -126,7 +126,7 @@ session_create(const char *name, const char *cmd, const char *cwd,
 	s->flags = 0;
 
 	if (gettimeofday(&s->tv, NULL) != 0)
-		fatal("gettimeofday");
+		fatal("gettimeofday failed");
 
 	s->curw = NULL;
 	SLIST_INIT(&s->lastw);

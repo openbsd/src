@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.6 2009/09/01 13:09:49 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.7 2009/09/20 14:58:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -36,7 +36,7 @@ set_window_names(void)
 	struct timeval	 tv, tv2;
 
 	if (gettimeofday(&tv, NULL) != 0)
-		fatal("gettimeofday");
+		fatal("gettimeofday failed");
 
 	for (i = 0; i < ARRAY_LENGTH(&windows); i++) {
 		w = ARRAY_ITEM(&windows, i);

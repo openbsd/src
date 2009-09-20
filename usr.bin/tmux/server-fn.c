@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.19 2009/09/12 13:01:19 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.20 2009/09/20 14:58:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -315,7 +315,7 @@ server_set_identify(struct client *c)
 	tv.tv_usec = (delay % 1000) * 1000L;
 
 	if (gettimeofday(&c->identify_timer, NULL) != 0)
-		fatal("gettimeofday");
+		fatal("gettimeofday failed");
 	timeradd(&c->identify_timer, &tv, &c->identify_timer);
 
 	c->flags |= CLIENT_IDENTIFY;

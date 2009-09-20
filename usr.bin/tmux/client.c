@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.17 2009/09/02 23:49:25 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.18 2009/09/20 14:58:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -74,7 +74,7 @@ client_init(char *path, struct client_ctx *cctx, int cmdflags, int flags)
 	}
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		fatal("socket");
+		fatal("socket failed");
 
 	if (connect(fd, (struct sockaddr *) &sa, SUN_LEN(&sa)) == -1) {
 		if (errno == ECONNREFUSED) {

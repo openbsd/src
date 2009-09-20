@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.4 2009/09/07 18:50:45 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.5 2009/09/20 14:58:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -117,7 +117,7 @@ paste_add(struct paste_stack *ps, u_char *data, size_t size, u_int limit)
 	pb->data = data;
 	pb->size = size;
 	if (gettimeofday(&pb->tv, NULL) != 0)
-		fatal("gettimeofday");
+		fatal("gettimeofday failed");
 }
 
 int
@@ -134,7 +134,7 @@ paste_replace(struct paste_stack *ps, u_int idx, u_char *data, size_t size)
 	pb->data = data;
 	pb->size = size;
 	if (gettimeofday(&pb->tv, NULL) != 0)
-		fatal("gettimeofday");
+		fatal("gettimeofday failed");
 
 	return (0);
 }
