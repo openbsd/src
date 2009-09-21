@@ -1,4 +1,4 @@
-/*	$Id: mdoc_hash.c,v 1.5 2009/08/09 18:01:15 schwarze Exp $ */
+/*	$Id: mdoc_hash.c,v 1.6 2009/09/21 21:11:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,149 +18,71 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "libmdoc.h"
 
-#define	ADJUST_MAJOR(x) 					\
-	do if (37 == (x))					\
-		(x) = 0; 		/* %   -> 00 */		\
-	else if (91 > (x)) 					\
-		(x) -= 64; 		/* A-Z -> 01 - 26 */	\
-	else 							\
-		(x) -= 70;		/* a-z -> 27 - 52 */	\
-	while (/*CONSTCOND*/0)
+static	u_char		 table[27 * 12];
 
-#define ADJUST_MINOR(y)						\
-	do if (49 == (y))					\
-		(y) = 0;		/* 1   -> 00 */		\
-	else if (91 > (y))					\
-		(y) -= 65;		/* A-Z -> 00 - 25 */	\
-	else 							\
-		(y) -= 97;		/* a-z -> 00 - 25 */	\
-	while (/*CONSTCOND*/0)
-
-#define INDEX(maj, min) 					\
-	((maj) * 26 * 3) + ((min) * 3)
-
-#define	SLOTCMP(slot, val)					\
-	(mdoc_macronames[(slot)][0] == (val)[0] && 		\
-	 mdoc_macronames[(slot)][1] == (val)[1] && 		\
-	 (0 == (val)[2] || 					\
-	  mdoc_macronames[(slot)][2] == (val)[2]))
-
-
+/*
+ * XXX - this hash has global scope, so if intended for use as a library
+ * with multiple callers, it will need re-invocation protection.
+ */
 void
-mdoc_hash_free(void *htab)
+mdoc_hash_init(void)
 {
+	int		 i, j, major;
+	const char	*p;
 
-	free(htab);
-}
-
-
-
-void *
-mdoc_hash_alloc(void)
-{
-	int		  i, major, minor, ind;
-	const void	**htab;
-
-	htab = calloc(26 * 3 * 52, sizeof(struct mdoc_macro *));
-	if (NULL == htab) 
-		return(NULL);
+	memset(table, UCHAR_MAX, sizeof(table));
 
 	for (i = 0; i < MDOC_MAX; i++) {
-		major = mdoc_macronames[i][0];
-		assert(isalpha((u_char)major) || 37 == major);
+		p = mdoc_macronames[i];
 
-		ADJUST_MAJOR(major);
+		if (isalpha((u_char)p[1]))
+			major = 12 * (tolower((u_char)p[1]) - 97);
+		else
+			major = 12 * 26;
 
-		minor = mdoc_macronames[i][1];
-		assert(isalpha((u_char)minor) || 49 == minor);
+		for (j = 0; j < 12; j++)
+			if (UCHAR_MAX == table[major + j]) {
+				table[major + j] = (u_char)i;
+				break;
+			}
 
-		ADJUST_MINOR(minor);
-
-		ind = INDEX(major, minor);
-
-		if (NULL == htab[ind]) {
-			htab[ind] = &mdoc_macros[i];
-			continue;
-		}
-
-		if (NULL == htab[++ind]) {
-			htab[ind] = &mdoc_macros[i];
-			continue;
-		}
-
-		assert(NULL == htab[++ind]);
-		htab[ind] = &mdoc_macros[i];
+		assert(j < 12);
 	}
-
-	return((void *)htab);
 }
 
-
 int
-mdoc_hash_find(const void *arg, const char *tmp)
+mdoc_hash_find(const char *p)
 {
-	int		  major, minor, ind, slot;
-	const void	**htab;
+	int		  major, i, j;
 
-	htab = /* LINTED */
-		(const void **)arg;
-
-	if (0 == (major = tmp[0]))
+	if (0 == p[0])
 		return(MDOC_MAX);
-	if (0 == (minor = tmp[1]))
+	if ( ! isalpha((u_char)p[0]) && '%' != p[0])
 		return(MDOC_MAX);
 
-	if (tmp[2] && tmp[3])
+	if (isalpha((u_char)p[1]))
+		major = 12 * (tolower((u_char)p[1]) - 97);
+	else if ('1' == p[1])
+		major = 12 * 26;
+	else 
 		return(MDOC_MAX);
 
-	if (37 != major && ! isalpha((u_char)major))
-		return(MDOC_MAX);
-	if (49 != minor && ! isalpha((u_char)minor))
+	if (p[2] && p[3])
 		return(MDOC_MAX);
 
-	ADJUST_MAJOR(major);
-	ADJUST_MINOR(minor);
-
-	ind = INDEX(major, minor);
-
-	if (ind < 0 || ind >= 26 * 3 * 52)
-		return(MDOC_MAX);
-
-	if (htab[ind]) {
-		slot = htab[ind] - /* LINTED */
-			(void *)mdoc_macros;
-		assert(0 == (size_t)slot % sizeof(struct mdoc_macro));
-		slot /= sizeof(struct mdoc_macro);
-		if (SLOTCMP(slot, tmp))
-			return(slot);
-		ind++;
+	for (j = 0; j < 12; j++) {
+		if (UCHAR_MAX == (i = table[major + j]))
+			break;
+		if (0 == strcmp(p, mdoc_macronames[i]))
+			return(i);
 	}
-
-	if (htab[ind]) {
-		slot = htab[ind] - /* LINTED */
-			(void *)mdoc_macros;
-		assert(0 == (size_t)slot % sizeof(struct mdoc_macro));
-		slot /= sizeof(struct mdoc_macro);
-		if (SLOTCMP(slot, tmp))
-			return(slot);
-		ind++;
-	}
-
-	if (NULL == htab[ind]) 
-		return(MDOC_MAX);
-	slot = htab[ind] - /* LINTED */
-		(void *)mdoc_macros;
-	assert(0 == (size_t)slot % sizeof(struct mdoc_macro));
-	slot /= sizeof(struct mdoc_macro);
-	if (SLOTCMP(slot, tmp))
-		return(slot);
 
 	return(MDOC_MAX);
 }
-

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.20 2009/08/22 22:50:17 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.21 2009/09/21 21:11:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -53,7 +53,7 @@ static	int	  post_tilde(POST_ARGS);
 static	int	  pre_bd(PRE_ARGS);
 static	int	  pre_dl(PRE_ARGS);
 
-const	struct actions mdoc_actions[MDOC_MAX] = {
+static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ap */
 	{ NULL, post_dd }, /* Dd */ 
 	{ NULL, post_dt }, /* Dt */ 
@@ -613,7 +613,7 @@ post_bl_width(POST_ARGS)
 
 	if (0 == strcmp(p, "Ds"))
 		width = 6;
-	else if (MDOC_MAX == (tok = mdoc_hash_find(m->htab, p)))
+	else if (MDOC_MAX == (tok = mdoc_hash_find(p)))
 		return(1);
 	else if (0 == (width = mdoc_macro2len(tok))) 
 		return(mdoc_nwarn(m, n, ENOWIDTH));

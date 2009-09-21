@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.12 2009/09/18 22:46:14 schwarze Exp $ */
+/*	$Id: man.c,v 1.13 2009/09/21 21:11:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -101,9 +101,6 @@ man_free(struct man *man)
 {
 
 	man_free1(man);
-
-	if (man->htab)
-		man_hash_free(man->htab);
 	free(man);
 }
 
@@ -121,14 +118,11 @@ man_alloc(void *data, int pflags, const struct man_cb *cb)
 		return(NULL);
 	}
 
+	man_hash_init();
+
 	p->data = data;
 	p->pflags = pflags;
 	(void)memcpy(&p->cb, cb, sizeof(struct man_cb));
-
-	if (NULL == (p->htab = man_hash_alloc())) {
-		free(p);
-		return(NULL);
-	}
 	return(p);
 }
 
@@ -509,7 +503,7 @@ man_pmacro(struct man *m, int ln, char *buf)
 		return(1);
 	}
 	
-	if (MAN_MAX == (c = man_hash_find(m->htab, mac))) {
+	if (MAN_MAX == (c = man_hash_find(mac))) {
 		if ( ! (MAN_IGN_MACRO & m->pflags)) {
 			(void)man_perr(m, ln, ppos, WMACRO);
 			goto err;

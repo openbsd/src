@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.23 2009/08/22 22:39:55 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.24 2009/09/21 21:11:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -46,8 +46,8 @@ static	int	  rew_sub(enum mdoc_type, struct mdoc *,
 static	int	  rew_last(struct mdoc *, 
 			const struct mdoc_node *);
 static	int	  append_delims(struct mdoc *, int, int *, char *);
-static	int	  lookup(struct mdoc *, int, const char *);
-static	int	  lookup_raw(struct mdoc *, const char *);
+static	int	  lookup(int, const char *);
+static	int	  lookup_raw(const char *);
 static	int	  swarn(struct mdoc *, enum mdoc_type, int, int, 
 			const struct mdoc_node *);
 
@@ -258,12 +258,13 @@ mdoc_macroend(struct mdoc *m)
  * Look up a macro from within a subsequent context.
  */
 static int
-lookup(struct mdoc *mdoc, int from, const char *p)
+lookup(int from, const char *p)
 {
+	/* FIXME: make -diag lists be un-PARSED. */
 
 	if ( ! (MDOC_PARSED & mdoc_macros[from].flags))
 		return(MDOC_MAX);
-	return(lookup_raw(mdoc, p));
+	return(lookup_raw(p));
 }
 
 
@@ -271,11 +272,11 @@ lookup(struct mdoc *mdoc, int from, const char *p)
  * Lookup a macro following the initial line macro.
  */
 static int
-lookup_raw(struct mdoc *mdoc, const char *p)
+lookup_raw(const char *p)
 {
 	int		 res;
 
-	if (MDOC_MAX == (res = mdoc_hash_find(mdoc->htab, p)))
+	if (MDOC_MAX == (res = mdoc_hash_find(p)))
 		return(MDOC_MAX);
 	if (MDOC_CALLABLE & mdoc_macros[res].flags)
 		return(res);
@@ -669,7 +670,7 @@ blk_exp_close(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == c)
 			break;
 
-		if (MDOC_MAX != (c = lookup(m, tok, p))) {
+		if (MDOC_MAX != (c = lookup(tok, p))) {
 			if ( ! flushed) {
 				if ( ! rew_sub(MDOC_BLOCK, m, tok, line, ppos))
 					return(0);
@@ -753,7 +754,7 @@ in_line(MACRO_PROT_ARGS)
 
 		/* Quoted words shouldn't be looked-up. */
 
-		c = ARGS_QWORD == w ? MDOC_MAX : lookup(m, tok, p);
+		c = ARGS_QWORD == w ? MDOC_MAX : lookup(tok, p);
 
 		/* 
 		 * In this case, we've located a submacro and must
@@ -932,7 +933,7 @@ blk_full(MACRO_PROT_ARGS)
 			continue;
 		}
 
-		if (MDOC_MAX == (c = lookup(m, tok, p))) {
+		if (MDOC_MAX == (c = lookup(tok, p))) {
 			if ( ! mdoc_word_alloc(m, line, lastarg, p))
 				return(0);
 			continue;
@@ -995,7 +996,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == c)
 			break;
 
-		if (MDOC_MAX == (c = lookup(m, tok, p))) {
+		if (MDOC_MAX == (c = lookup(tok, p))) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
@@ -1098,7 +1099,7 @@ blk_part_exp(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == c)
 			break;
 
-		if (MDOC_MAX != (c = lookup(m, tok, p))) {
+		if (MDOC_MAX != (c = lookup(tok, p))) {
 			if ( ! flushed) {
 				if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 					return(0);
@@ -1209,7 +1210,7 @@ in_line_argn(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == c)
 			break;
 
-		if (MDOC_MAX != (c = lookup(m, tok, p))) {
+		if (MDOC_MAX != (c = lookup(tok, p))) {
 			if ( ! flushed && ! rew_elem(m, tok))
 				return(0);
 			flushed = 1;
@@ -1284,7 +1285,7 @@ in_line_eoln(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == w)
 			break;
 
-		c = ARGS_QWORD == w ? MDOC_MAX : lookup(m, tok, p);
+		c = ARGS_QWORD == w ? MDOC_MAX : lookup(tok, p);
 
 		if (MDOC_MAX != c) {
 			if ( ! rew_elem(m, tok))
@@ -1333,7 +1334,7 @@ phrase(struct mdoc *m, int line, int ppos, char *buf)
 		if (ARGS_EOLN == w)
 			break;
 
-		c = ARGS_QWORD == w ? MDOC_MAX : lookup_raw(m, p);
+		c = ARGS_QWORD == w ? MDOC_MAX : lookup_raw(p);
 
 		if (MDOC_MAX != c) {
 			if ( ! mdoc_macro(m, c, line, la, &pos, buf))
