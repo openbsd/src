@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.110 2009/09/21 14:46:47 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.111 2009/09/21 14:56:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1159,10 +1159,11 @@ void	options_free(struct options *);
 struct options_entry *options_find1(struct options *, const char *);
 struct options_entry *options_find(struct options *, const char *);
 void	options_remove(struct options *, const char *);
-void printflike3 options_set_string(
+struct options_entry *printflike3 options_set_string(
     	    struct options *, const char *, const char *, ...);
 char   *options_get_string(struct options *, const char *);
-void	options_set_number(struct options *, const char *, long long);
+struct options_entry *options_set_number(
+    	    struct options *, const char *, long long);
 long long options_get_number(struct options *, const char *);
 
 /* environ.c */
