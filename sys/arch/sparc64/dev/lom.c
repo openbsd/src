@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.4 2009/09/20 21:58:35 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.5 2009/09/21 22:04:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -20,6 +20,7 @@
 #include <sys/kernel.h>
 #include <sys/sensors.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -61,6 +62,13 @@
 #define LOM_IDX_LED1		0x25
 
 #define LOM_IDX_ALARM		0x30
+#define LOM_IDX_WDOG_CTL	0x31
+#define  LOM_WDOG_ENABLE	0x01
+#define  LOM_WDOG_RESET		0x02
+#define  LOM_WDOG_AL3_WDOG	0x04
+#define  LOM_WDOG_AL3_FANPSU	0x08
+#define LOM_IDX_WDOG_TIME	0x32
+#define  LOM_WDOG_TIME_MAX	127
 
 #define LOM_IDX_HOSTNAMELEN	0x38
 #define LOM_IDX_HOSTNAME	0x39
@@ -112,6 +120,9 @@ struct lom_softc {
 	uint8_t			sc_fan_low[LOM_MAX_FAN];
 
 	char			sc_hostname[MAXHOSTNAMELEN];
+
+	struct timeout		sc_wdog_to;
+	int			sc_wdog_period;
 };
 
 int	lom_match(struct device *, void *, void *);
@@ -130,6 +141,9 @@ int	lom_write(struct lom_softc *, uint8_t, uint8_t);
 
 int	lom_init_desc(struct lom_softc *sc);
 void	lom_refresh(void *);
+
+void	lom_wdog_pat(void *);
+int	lom_wdog_cb(void *, int);
 
 int
 lom_match(struct device *parent, void *match, void *aux)
@@ -213,6 +227,23 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 		lom_read(sc, LOM_IDX_HOSTNAME, &reg);
 		sc->sc_hostname[i] = reg;
 	}
+
+	/*
+	 * We configure the watchdog to turn on the fault LED when the
+	 * watchdog timer expires.  We run our own timeout to pat it
+	 * such that this won't happen unless the kernel hangs.  When
+	 * the watchdog is explicitly configured using sysctl(8), we
+	 * reconfigure it to reset the machine and let the standard
+	 * watchdog(4) machinery take over.
+	 */
+	lom_read(sc, LOM_IDX_WDOG_CTL, &reg);
+	reg |= LOM_WDOG_ENABLE;
+	lom_write(sc, LOM_IDX_WDOG_CTL, reg);
+	lom_write(sc, LOM_IDX_WDOG_TIME, LOM_WDOG_TIME_MAX);
+	timeout_set(&sc->sc_wdog_to, lom_wdog_pat, sc);
+	timeout_add_sec(&sc->sc_wdog_to, LOM_WDOG_TIME_MAX / 2);
+
+	wdog_register(sc, lom_wdog_cb);
 
 	printf(": rev %d.%d\n", fw_rev >> 4, fw_rev & 0x0f);
 }
@@ -430,4 +461,58 @@ lom_refresh(void *arg)
 			lom_write(sc, LOM_IDX_HOSTNAME, hostname[i]);
 		strlcpy(sc->sc_hostname, hostname, sizeof(hostname));
 	}
+}
+
+void
+lom_wdog_pat(void *arg)
+{
+	struct lom_softc *sc;
+
+	/* Pat the dog. */
+	lom_write(sc, LOM_IDX_CMD, 'W');
+
+	timeout_add_sec(&sc->sc_wdog_to, LOM_WDOG_TIME_MAX / 2);
+}
+
+int
+lom_wdog_cb(void *arg, int period)
+{
+	struct lom_softc *sc = arg;
+	uint8_t ctl;
+
+	if (period > 127)
+		period = 127;
+	else if (period < 0)
+		period = 0;
+
+	if (period == 0) {
+		if (sc->sc_wdog_period != 0) {
+			/* Stop watchdog from resetting the machine. */
+			lom_read(sc, LOM_IDX_WDOG_CTL, &ctl);
+			ctl &= ~LOM_WDOG_RESET;
+			lom_write(sc, LOM_IDX_WDOG_CTL, ctl);
+
+			lom_write(sc, LOM_IDX_WDOG_TIME, LOM_WDOG_TIME_MAX);
+			timeout_add_sec(&sc->sc_wdog_to, LOM_WDOG_TIME_MAX / 2);
+		}
+	} else {
+		if (sc->sc_wdog_period != period) {
+			/* Set new timeout. */
+			lom_write(sc, LOM_IDX_WDOG_TIME, period);
+		}
+		if (sc->sc_wdog_period == 0) {
+			/* Make watchdog reset the machine. */
+			lom_read(sc, LOM_IDX_WDOG_CTL, &ctl);
+			ctl |= LOM_WDOG_RESET;
+			lom_write(sc, LOM_IDX_WDOG_CTL, ctl);
+
+			timeout_del(&sc->sc_wdog_to);
+		} else {
+			/* Pat the dog. */
+			lom_write(sc, LOM_IDX_CMD, 'W');
+		}
+	}
+	sc->sc_wdog_period = period;
+
+	return (period);
 }
