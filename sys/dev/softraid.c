@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.173 2009/09/03 13:26:38 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.174 2009/09/21 16:38:13 marco Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1792,7 +1792,7 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 	int			s;
 	struct scsi_link	*link = xs->sc_link;
 	struct sr_softc		*sc = link->adapter_softc;
-	struct sr_workunit	*wu;
+	struct sr_workunit	*wu = NULL;
 	struct sr_discipline	*sd;
 
 	DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: scsibus%d xs: %p "
@@ -1807,7 +1807,6 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: attaching %p\n",
 		    DEVNAME(sc), sd);
 		if (sd == NULL) {
-			wu = NULL;
 			printf("%s: sr_scsi_cmd NULL discipline\n",
 			    DEVNAME(sc));
 			goto stuffup;
