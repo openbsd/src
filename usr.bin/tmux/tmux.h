@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.109 2009/09/21 07:00:09 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.110 2009/09/21 14:46:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1238,6 +1238,8 @@ void	tty_keys_free(struct tty *);
 int	tty_keys_next(struct tty *, int *, u_char *);
 
 /* options-cmd.c */
+const char *set_option_print(
+    	    const struct set_option_entry *, struct options_entry *);
 void	set_option_string(struct cmd_ctx *,
 	    struct options *, const struct set_option_entry *, char *, int);
 void	set_option_number(struct cmd_ctx *,
