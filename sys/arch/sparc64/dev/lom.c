@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.5 2009/09/21 22:04:13 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.6 2009/09/21 22:34:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -237,6 +237,7 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	 * watchdog(4) machinery take over.
 	 */
 	lom_read(sc, LOM_IDX_WDOG_CTL, &reg);
+	reg &= ~LOM_WDOG_RESET;
 	reg |= LOM_WDOG_ENABLE;
 	lom_write(sc, LOM_IDX_WDOG_CTL, reg);
 	lom_write(sc, LOM_IDX_WDOG_TIME, LOM_WDOG_TIME_MAX);
