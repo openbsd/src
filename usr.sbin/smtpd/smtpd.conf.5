@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.15 2009/09/19 15:51:58 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.16 2009/09/21 07:46:42 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 19 2009 $
+.Dd $Mdocdate: September 21 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -48,6 +48,20 @@ wan_if = "fxp0"
 listen on $wan_if
 listen on $wan_if tls enable auth
 .Ed
+.Pp
+Some configuration directives expect expansion of their parameters at runtime.
+Such directives (for example
+.Ar deliver to maildir ,
+.Ar deliver to mda ,
+.Ar relay via )
+may use format specifiers which will be expanded before delivery or
+relaying.
+The following formats are currently supported:
+%a expands to the user part of the email address prior to the
+resolution of aliases;
+%u expands to the user part after aliases
+resolution and will typically be the system account;
+%d expands to the domain part of the email address.
 .Pp
 Additional configuration files can be included with the
 .Ic include
@@ -209,10 +223,8 @@ Message is delivered to local user's system mailbox in
 Message is added to a maildir.
 Its location,
 .Ar path ,
-may contain format specifiers that are expanded before use,
-see the
-.Sx EXPANSION
-section below.
+may contain format specifiers that are expanded before use
+(see above).
 If
 .Ar path
 is not provided, then
@@ -222,10 +234,8 @@ is assumed.
 Message is piped to the specified
 .Ar program ,
 which is run with privileges of the user the message is destined to.
-This parameter may use conversion specifiers that are expanded before use,
-see the
-.Sx EXPANSION
-section below.
+This parameter may use conversion specifiers that are expanded before use
+(see above).
 .It Ic relay
 Message is relayed.
 The routing decision is based on the DNS system.
@@ -281,20 +291,6 @@ for example:
 .Bd -literal -offset indent
 accept for domain "example.com" deliver to mbox
 .Ed
-.Sh EXPANSION
-Some configuration directives expect expansion of their parameters at runtime.
-Such directives (for example
-.Ar deliver to maildir ,
-.Ar deliver to mda ,
-.Ar relay via )
-may use format specifiers which will be expanded before delivery or
-relaying.
-The following formats are currently supported:
-%a expands to the user part of the email address prior to the
-resolution of aliases;
-%u expands to the user part after aliases
-resolution and will typically be the system account;
-%d expands to the domain part of the email address.
 .Sh EXAMPLES
 The default
 .Nm
