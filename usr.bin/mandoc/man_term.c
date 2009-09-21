@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.14 2009/09/18 22:46:14 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.15 2009/09/21 20:28:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -217,7 +217,7 @@ static int
 pre_I(DECL_ARGS)
 {
 
-	p->flags |= TERMP_UNDER;
+	p->under++;
 	return(1);
 }
 
@@ -227,8 +227,7 @@ static int
 pre_r(DECL_ARGS)
 {
 
-	p->flags &= ~TERMP_UNDER;
-	p->flags &= ~TERMP_BOLD;
+	p->bold = p->under = 0;
 	return(1);
 }
 
@@ -239,7 +238,7 @@ post_i(DECL_ARGS)
 {
 
 	if (n->nchild)
-		p->flags &= ~TERMP_UNDER;
+		p->under--;
 }
 
 
@@ -248,7 +247,7 @@ static void
 post_I(DECL_ARGS)
 {
 
-	p->flags &= ~TERMP_UNDER;
+	p->under--;
 }
 
 
@@ -282,12 +281,12 @@ pre_IR(DECL_ARGS)
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
 		if ( ! (i % 2))
-			p->flags |= TERMP_UNDER;
+			p->under++;
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
 		print_node(p, mt, nn, m);
 		if ( ! (i % 2))
-			p->flags &= ~TERMP_UNDER;
+			p->under--;
 	}
 	return(0);
 }
@@ -301,11 +300,17 @@ pre_IB(DECL_ARGS)
 	int		 i;
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		p->flags |= i % 2 ? TERMP_BOLD : TERMP_UNDER;
+		if (i % 2)
+			p->bold++;
+		else
+			p->under++;
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
 		print_node(p, mt, nn, m);
-		p->flags &= i % 2 ? ~TERMP_BOLD : ~TERMP_UNDER;
+		if (i % 2)
+			p->bold--;
+		else
+			p->under--;
 	}
 	return(0);
 }
@@ -320,12 +325,12 @@ pre_RB(DECL_ARGS)
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
 		if (i % 2)
-			p->flags |= TERMP_BOLD;
+			p->bold++;
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
 		print_node(p, mt, nn, m);
 		if (i % 2)
-			p->flags &= ~TERMP_BOLD;
+			p->bold--;
 	}
 	return(0);
 }
@@ -340,12 +345,12 @@ pre_RI(DECL_ARGS)
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
 		if ( ! (i % 2))
-			p->flags |= TERMP_UNDER;
+			p->under++;
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
 		print_node(p, mt, nn, m);
 		if ( ! (i % 2))
-			p->flags &= ~TERMP_UNDER;
+			p->under--;
 	}
 	return(0);
 }
@@ -360,12 +365,12 @@ pre_BR(DECL_ARGS)
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
 		if ( ! (i % 2))
-			p->flags |= TERMP_BOLD;
+			p->bold++;
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
 		print_node(p, mt, nn, m);
 		if ( ! (i % 2))
-			p->flags &= ~TERMP_BOLD;
+			p->bold--;
 	}
 	return(0);
 }
@@ -379,11 +384,17 @@ pre_BI(DECL_ARGS)
 	int		 i;
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		p->flags |= i % 2 ? TERMP_UNDER : TERMP_BOLD;
+		if (i % 2)
+			p->under++;
+		else
+			p->bold++;
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
 		print_node(p, mt, nn, m);
-		p->flags &= i % 2 ? ~TERMP_UNDER : ~TERMP_BOLD;
+		if (i % 2)
+			p->under--;
+		else
+			p->bold--;
 	}
 	return(0);
 }
@@ -394,7 +405,7 @@ static int
 pre_B(DECL_ARGS)
 {
 
-	p->flags |= TERMP_BOLD;
+	p->bold++;
 	return(1);
 }
 
@@ -404,7 +415,7 @@ static void
 post_B(DECL_ARGS)
 {
 
-	p->flags &= ~TERMP_BOLD;
+	p->bold--;
 }
 
 
@@ -715,7 +726,7 @@ pre_SS(DECL_ARGS)
 		term_vspace(p);
 		break;
 	case (MAN_HEAD):
-		p->flags |= TERMP_BOLD;
+		p->bold++;
 		p->offset = HALFINDENT;
 		break;
 	case (MAN_BODY):
@@ -737,7 +748,7 @@ post_SS(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_HEAD):
 		term_newln(p);
-		p->flags &= ~TERMP_BOLD;
+		p->bold--;
 		break;
 	case (MAN_BODY):
 		term_newln(p);
@@ -764,7 +775,7 @@ pre_SH(DECL_ARGS)
 		term_vspace(p);
 		break;
 	case (MAN_HEAD):
-		p->flags |= TERMP_BOLD;
+		p->bold++;
 		p->offset = 0;
 		break;
 	case (MAN_BODY):
@@ -786,7 +797,7 @@ post_SH(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_HEAD):
 		term_newln(p);
-		p->flags &= ~TERMP_BOLD;
+		p->bold--;
 		break;
 	case (MAN_BODY):
 		term_newln(p);

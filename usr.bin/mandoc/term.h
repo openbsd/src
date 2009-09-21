@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.9 2009/08/22 18:10:02 schwarze Exp $ */
+/*	$Id: term.h,v 1.10 2009/09/21 20:28:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -32,9 +32,6 @@ struct	termp {
 	size_t		  offset;	/* Margin offest. */
 	size_t		  col;		/* Bytes in buf. */
 	int		  flags;
-#define	TERMP_STYLE	  0x3		/* Style mask. */
-#define	TERMP_BOLD	 (1 << 0)	/* Styles... */
-#define	TERMP_UNDER	 (1 << 1)
 #define	TERMP_NOSPACE	 (1 << 2)	/* No space before words. */
 #define	TERMP_NOLPAD	 (1 << 3)	/* See term_flushln(). */
 #define	TERMP_NOBREAK	 (1 << 4)	/* See term_flushln(). */
@@ -46,6 +43,8 @@ struct	termp {
 #define	TERMP_NOSPLIT	 (1 << 11)	/* See termp_an_pre/post(). */
 #define	TERMP_SPLIT	 (1 << 12)	/* See termp_an_pre/post(). */
 #define	TERMP_ANPREC	 (1 << 13)	/* See termp_an_pre(). */
+	int		  bold;
+	int		  under;
 	char		 *buf;		/* Output buffer. */
 	enum termenc	  enc;		/* Type of encoding. */
 	void		 *symtab;	/* Encoded-symbol table. */

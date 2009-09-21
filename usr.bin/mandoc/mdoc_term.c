@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.53 2009/08/22 22:50:17 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.54 2009/09/21 20:28:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -26,59 +26,43 @@
 #include "term.h"
 #include "mdoc.h"
 
+/* FIXME: check HANG lists: they seem to be broken... :
+ * .Bl -hang -width Ds
+ * .It a
+ * b
+ * .It Fl f Ns Ar option...
+ * Override default compiler behaviour.  See
+ * .Sx Compiler Options
+ * for details.
+ * Override default compiler behaviour.  See
+ * .Sx Compiler Options
+ * for details.
+ * Override default compiler behaviour.  See
+ * .Sx Compiler Options
+ * for details.
+ * Override default compiler behaviour.  See
+ * .Sx Compiler Options
+ * for details.
+ * .
+ * .It a sasd fasd as afsd sfad sfds sadfs sd sfd ssfad asfd
+ * Override default compiler behaviour.  See
+ * .Sx Compiler Options
+ * for details.
+ * Override default compiler behaviour.  See
+ * .Sx Compiler Options
+ * for details.
+ * Override default compiler behaviour.  See
+ * .Sx Compiler Options
+ * for details.
+ * Override default compiler behaviour.  See
+ * .Sx Compiler Options
+ * for details.
+ * .El
+ *
+ */
+
 #define	INDENT		  5
 #define	HALFINDENT	  3
-
-#define	TTYPE_PROG	  0
-#define	TTYPE_CMD_FLAG	  1
-#define	TTYPE_CMD_ARG	  2
-#define	TTYPE_SECTION	  3
-#define	TTYPE_FUNC_DECL	  4
-#define	TTYPE_VAR_DECL	  5
-#define	TTYPE_FUNC_TYPE	  6
-#define	TTYPE_FUNC_NAME	  7
-#define	TTYPE_FUNC_ARG	  8
-#define	TTYPE_LINK	  9
-#define	TTYPE_SSECTION	  10
-#define	TTYPE_FILE	  11
-#define	TTYPE_EMPH	  12
-#define	TTYPE_CONFIG	  13
-#define	TTYPE_CMD	  14
-#define	TTYPE_INCLUDE	  15
-#define	TTYPE_SYMB	  16
-#define	TTYPE_SYMBOL	  17
-#define	TTYPE_DIAG	  18
-#define	TTYPE_LINK_ANCHOR 19
-#define	TTYPE_LINK_TEXT	  20
-#define	TTYPE_REF_JOURNAL 21
-#define	TTYPE_LIST	  22
-#define	TTYPE_NMAX	  23
-
-const	int ttypes[TTYPE_NMAX] = {
-	TERMP_BOLD, 		/* TTYPE_PROG */
-	TERMP_BOLD,		/* TTYPE_CMD_FLAG */
-	TERMP_UNDER, 		/* TTYPE_CMD_ARG */
-	TERMP_BOLD, 		/* TTYPE_SECTION */
-	TERMP_BOLD,		/* TTYPE_FUNC_DECL */
-	TERMP_UNDER,		/* TTYPE_VAR_DECL */
-	TERMP_UNDER,		/* TTYPE_FUNC_TYPE */
-	TERMP_BOLD, 		/* TTYPE_FUNC_NAME */
-	TERMP_UNDER, 		/* TTYPE_FUNC_ARG */
-	TERMP_UNDER, 		/* TTYPE_LINK */
-	TERMP_BOLD,	 	/* TTYPE_SSECTION */
-	TERMP_UNDER,		/* TTYPE_FILE */
-	TERMP_UNDER, 		/* TTYPE_EMPH */
-	TERMP_BOLD,	 	/* TTYPE_CONFIG */
-	TERMP_BOLD,	 	/* TTYPE_CMD */
-	TERMP_BOLD,	 	/* TTYPE_INCLUDE */
-	TERMP_BOLD,	 	/* TTYPE_SYMB */
-	TERMP_BOLD,	 	/* TTYPE_SYMBOL */
-	TERMP_BOLD,	 	/* TTYPE_DIAG */
-	TERMP_UNDER, 		/* TTYPE_LINK_ANCHOR */
-	TERMP_BOLD,	 	/* TTYPE_LINK_TEXT */
-	TERMP_UNDER,	 	/* TTYPE_REF_JOURNAL */
-	TERMP_BOLD		/* TTYPE_LIST */
-};
 
 struct	termpair {
 	struct termpair	 *ppair;
@@ -97,7 +81,6 @@ struct	termact {
 };
 
 static	void	  termp____post(DECL_ARGS);
-static	void	  termp__t_post(DECL_ARGS);
 static	void	  termp_an_post(DECL_ARGS);
 static	void	  termp_aq_post(DECL_ARGS);
 static	void	  termp_bd_post(DECL_ARGS);
@@ -123,43 +106,32 @@ static	void	  termp_sq_post(DECL_ARGS);
 static	void	  termp_ss_post(DECL_ARGS);
 static	void	  termp_vt_post(DECL_ARGS);
 
-static	int	  termp__j_pre(DECL_ARGS);
-static	int	  termp__t_pre(DECL_ARGS);
 static	int	  termp_an_pre(DECL_ARGS);
 static	int	  termp_ap_pre(DECL_ARGS);
 static	int	  termp_aq_pre(DECL_ARGS);
-static	int	  termp_ar_pre(DECL_ARGS);
 static	int	  termp_bd_pre(DECL_ARGS);
 static	int	  termp_bf_pre(DECL_ARGS);
+static	int	  termp_bold_pre(DECL_ARGS);
 static	int	  termp_bq_pre(DECL_ARGS);
-static	int	  termp_br_pre(DECL_ARGS);
 static	int	  termp_brq_pre(DECL_ARGS);
 static	int	  termp_bt_pre(DECL_ARGS);
 static	int	  termp_cd_pre(DECL_ARGS);
-static	int	  termp_cm_pre(DECL_ARGS);
 static	int	  termp_d1_pre(DECL_ARGS);
 static	int	  termp_dq_pre(DECL_ARGS);
-static	int	  termp_em_pre(DECL_ARGS);
 static	int	  termp_ex_pre(DECL_ARGS);
 static	int	  termp_fa_pre(DECL_ARGS);
-static	int	  termp_fd_pre(DECL_ARGS);
 static	int	  termp_fl_pre(DECL_ARGS);
 static	int	  termp_fn_pre(DECL_ARGS);
 static	int	  termp_fo_pre(DECL_ARGS);
 static	int	  termp_ft_pre(DECL_ARGS);
-static	int	  termp_ic_pre(DECL_ARGS);
 static	int	  termp_in_pre(DECL_ARGS);
 static	int	  termp_it_pre(DECL_ARGS);
 static	int	  termp_lk_pre(DECL_ARGS);
-static	int	  termp_ms_pre(DECL_ARGS);
-static	int	  termp_mt_pre(DECL_ARGS);
 static	int	  termp_nd_pre(DECL_ARGS);
 static	int	  termp_nm_pre(DECL_ARGS);
 static	int	  termp_ns_pre(DECL_ARGS);
 static	int	  termp_op_pre(DECL_ARGS);
-static	int	  termp_pa_pre(DECL_ARGS);
 static	int	  termp_pf_pre(DECL_ARGS);
-static	int	  termp_pp_pre(DECL_ARGS);
 static	int	  termp_pq_pre(DECL_ARGS);
 static	int	  termp_qq_pre(DECL_ARGS);
 static	int	  termp_rs_pre(DECL_ARGS);
@@ -169,22 +141,19 @@ static	int	  termp_sm_pre(DECL_ARGS);
 static	int	  termp_sp_pre(DECL_ARGS);
 static	int	  termp_sq_pre(DECL_ARGS);
 static	int	  termp_ss_pre(DECL_ARGS);
-static	int	  termp_sx_pre(DECL_ARGS);
-static	int	  termp_sy_pre(DECL_ARGS);
+static	int	  termp_under_pre(DECL_ARGS);
 static	int	  termp_ud_pre(DECL_ARGS);
-static	int	  termp_va_pre(DECL_ARGS);
-static	int	  termp_vt_pre(DECL_ARGS);
 static	int	  termp_xr_pre(DECL_ARGS);
 static	int	  termp_xx_pre(DECL_ARGS);
 
-static const struct termact termacts[MDOC_MAX] = {
+static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_ap_pre, NULL }, /* Ap */
 	{ NULL, NULL }, /* Dd */
 	{ NULL, NULL }, /* Dt */
 	{ NULL, NULL }, /* Os */
 	{ termp_sh_pre, termp_sh_post }, /* Sh */
 	{ termp_ss_pre, termp_ss_post }, /* Ss */ 
-	{ termp_pp_pre, NULL }, /* Pp */ 
+	{ termp_sp_pre, NULL }, /* Pp */ 
 	{ termp_d1_pre, termp_d1_post }, /* D1 */
 	{ termp_d1_pre, termp_d1_post }, /* Dl */
 	{ termp_bd_pre, termp_bd_post }, /* Bd */
@@ -194,41 +163,41 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ termp_it_pre, termp_it_post }, /* It */
 	{ NULL, NULL }, /* Ad */ 
 	{ termp_an_pre, termp_an_post }, /* An */
-	{ termp_ar_pre, NULL }, /* Ar */
+	{ termp_under_pre, NULL }, /* Ar */
 	{ termp_cd_pre, NULL }, /* Cd */
-	{ termp_cm_pre, NULL }, /* Cm */
+	{ termp_bold_pre, NULL }, /* Cm */
 	{ NULL, NULL }, /* Dv */ 
 	{ NULL, NULL }, /* Er */ 
 	{ NULL, NULL }, /* Ev */ 
 	{ termp_ex_pre, NULL }, /* Ex */
 	{ termp_fa_pre, NULL }, /* Fa */ 
-	{ termp_fd_pre, termp_fd_post }, /* Fd */ 
+	{ termp_bold_pre, termp_fd_post }, /* Fd */ 
 	{ termp_fl_pre, NULL }, /* Fl */
 	{ termp_fn_pre, termp_fn_post }, /* Fn */ 
 	{ termp_ft_pre, termp_ft_post }, /* Ft */ 
-	{ termp_ic_pre, NULL }, /* Ic */ 
+	{ termp_bold_pre, NULL }, /* Ic */ 
 	{ termp_in_pre, termp_in_post }, /* In */ 
 	{ NULL, NULL }, /* Li */
 	{ termp_nd_pre, NULL }, /* Nd */ 
 	{ termp_nm_pre, NULL }, /* Nm */ 
 	{ termp_op_pre, termp_op_post }, /* Op */
 	{ NULL, NULL }, /* Ot */
-	{ termp_pa_pre, NULL }, /* Pa */
+	{ termp_under_pre, NULL }, /* Pa */
 	{ termp_rv_pre, NULL }, /* Rv */
 	{ NULL, NULL }, /* St */ 
-	{ termp_va_pre, NULL }, /* Va */
-	{ termp_vt_pre, termp_vt_post }, /* Vt */ 
+	{ termp_under_pre, NULL }, /* Va */
+	{ termp_under_pre, termp_vt_post }, /* Vt */
 	{ termp_xr_pre, NULL }, /* Xr */
 	{ NULL, termp____post }, /* %A */
 	{ NULL, termp____post }, /* %B */
 	{ NULL, termp____post }, /* %D */
 	{ NULL, termp____post }, /* %I */
-	{ termp__j_pre, termp____post }, /* %J */
+	{ termp_under_pre, termp____post }, /* %J */
 	{ NULL, termp____post }, /* %N */
 	{ NULL, termp____post }, /* %O */
 	{ NULL, termp____post }, /* %P */
 	{ NULL, termp____post }, /* %R */
-	{ termp__t_pre, termp__t_post }, /* %T */
+	{ termp_under_pre, termp____post }, /* %T */
 	{ NULL, termp____post }, /* %V */
 	{ NULL, NULL }, /* Ac */
 	{ termp_aq_pre, termp_aq_post }, /* Ao */
@@ -246,10 +215,10 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ termp_dq_pre, termp_dq_post }, /* Dq */
 	{ NULL, NULL }, /* Ec */
 	{ NULL, NULL }, /* Ef */
-	{ termp_em_pre, NULL }, /* Em */ 
+	{ termp_under_pre, NULL }, /* Em */ 
 	{ NULL, NULL }, /* Eo */
 	{ termp_xx_pre, NULL }, /* Fx */
-	{ termp_ms_pre, NULL }, /* Ms */
+	{ termp_bold_pre, NULL }, /* Ms */
 	{ NULL, NULL }, /* No */
 	{ termp_ns_pre, NULL }, /* Ns */
 	{ termp_xx_pre, NULL }, /* Nx */
@@ -268,8 +237,8 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ termp_sq_pre, termp_sq_post }, /* So */
 	{ termp_sq_pre, termp_sq_post }, /* Sq */
 	{ termp_sm_pre, NULL }, /* Sm */
-	{ termp_sx_pre, NULL }, /* Sx */
-	{ termp_sy_pre, NULL }, /* Sy */
+	{ termp_under_pre, NULL }, /* Sx */
+	{ termp_bold_pre, NULL }, /* Sy */
 	{ NULL, NULL }, /* Tn */
 	{ termp_xx_pre, NULL }, /* Ux */
 	{ NULL, NULL }, /* Xc */
@@ -285,9 +254,9 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Fr */
 	{ termp_ud_pre, NULL }, /* Ud */
 	{ NULL, termp_lb_post }, /* Lb */
-	{ termp_pp_pre, NULL }, /* Lp */ 
+	{ termp_sp_pre, NULL }, /* Lp */ 
 	{ termp_lk_pre, NULL }, /* Lk */ 
-	{ termp_mt_pre, NULL }, /* Mt */ 
+	{ termp_under_pre, NULL }, /* Mt */ 
 	{ termp_brq_pre, termp_brq_post }, /* Brq */ 
 	{ termp_brq_pre, termp_brq_post }, /* Bro */ 
 	{ NULL, NULL }, /* Brc */ 
@@ -296,7 +265,7 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* En */ 
 	{ termp_xx_pre, NULL }, /* Dx */ 
 	{ NULL, NULL }, /* %Q */ 
-	{ termp_br_pre, NULL }, /* br */
+	{ termp_sp_pre, NULL }, /* br */
 	{ termp_sp_pre, NULL }, /* sp */ 
 };
 
@@ -340,55 +309,51 @@ print_body(DECL_ARGS)
 {
 
 	print_node(p, pair, meta, node);
-	if ( ! node->next)
-		return;
-	print_body(p, pair, meta, node->next);
+	if (node->next)
+		print_body(p, pair, meta, node->next);
 }
 
 
+/* ARGSUSED */
 static void
 print_node(DECL_ARGS)
 {
-	int		 dochild;
+	int		 chld, bold, under;
 	struct termpair	 npair;
 	size_t		 offset, rmargin;
 
-	dochild = 1;
+	chld = 1;
 	offset = p->offset;
 	rmargin = p->rmargin;
+	bold = p->bold;
+	under = p->under;
 
+	bzero(&npair, sizeof(struct termpair));
 	npair.ppair = pair;
-	npair.flag = 0;
-	npair.count = 0;
-
-	/*
-	 * Note on termpair.  This allows a pre function to set a termp
-	 * flag that is automatically unset after the body, but before
-	 * the post function.  Thus, if a pre uses a termpair flag, it
-	 * must be reapplied in the post for use.
-	 */
 
 	if (MDOC_TEXT != node->type) {
 		if (termacts[node->tok].pre)
-			if ( ! (*termacts[node->tok].pre)(p, &npair, meta, node))
-				dochild = 0;
-	} else /* MDOC_TEXT == node->type */
+			chld = (*termacts[node->tok].pre)
+				(p, &npair, meta, node);
+	} else 
 		term_word(p, node->string);
 
-	/* Children. */
-
-	p->flags |= npair.flag;
-
-	if (dochild && node->child)
+	if (chld && node->child)
 		print_body(p, &npair, meta, node->child);
 
-	p->flags &= ~npair.flag;
+	/*
+	 * XXX - if bold/under were to span scopes, this wouldn't be
+	 * possible, but because decoration is always in-scope, we can
+	 * get away with this.
+	 */
 
-	/* Post-processing. */
+	p->bold = bold;
+	p->under = under;
 
 	if (MDOC_TEXT != node->type)
 		if (termacts[node->tok].post)
-			(*termacts[node->tok].post)(p, &npair, meta, node);
+			(*termacts[node->tok].post)
+				(p, &npair, meta, node);
 
 	p->offset = offset;
 	p->rmargin = rmargin;
@@ -867,14 +832,10 @@ termp_it_pre(DECL_ARGS)
 
 	p->flags |= TERMP_NOSPACE;
 
-	/*
-	 * Style flags.  Diagnostic heads need TTYPE_DIAG.
-	 */
-
 	switch (type) {
 	case (MDOC_Diag):
 		if (MDOC_HEAD == node->type)
-			p->flags |= ttypes[TTYPE_DIAG];
+			p->bold++;
 		break;
 	default:
 		break;
@@ -1012,16 +973,16 @@ termp_it_pre(DECL_ARGS)
 	if (MDOC_HEAD == node->type)
 		switch (type) {
 		case (MDOC_Bullet):
-			p->flags |= TERMP_BOLD;
+			p->bold++;
 			term_word(p, "\\[bu]");
-			p->flags &= ~TERMP_BOLD;
+			p->bold--;
 			break;
 		case (MDOC_Dash):
 			/* FALLTHROUGH */
 		case (MDOC_Hyphen):
-			p->flags |= TERMP_BOLD;
+			p->bold++;
 			term_word(p, "\\(hy");
-			p->flags &= ~TERMP_BOLD;
+			p->bold--;
 			break;
 		case (MDOC_Enum):
 			(pair->ppair->ppair->count)++;
@@ -1103,13 +1064,9 @@ termp_nm_pre(DECL_ARGS)
 
 	if (SEC_SYNOPSIS == node->sec)
 		term_newln(p);
-
-	pair->flag |= ttypes[TTYPE_PROG];
-	p->flags |= ttypes[TTYPE_PROG];
-
+	p->bold++;
 	if (NULL == node->child)
 		term_word(p, meta->name);
-
 	return(1);
 }
 
@@ -1119,8 +1076,7 @@ static int
 termp_fl_pre(DECL_ARGS)
 {
 
-	pair->flag |= ttypes[TTYPE_CMD_FLAG];
-	p->flags |= ttypes[TTYPE_CMD_FLAG];
+	p->bold++;
 	term_word(p, "\\-");
 	p->flags |= TERMP_NOSPACE;
 	return(1);
@@ -1188,30 +1144,10 @@ termp_an_post(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-termp_ar_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_CMD_ARG];
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
 termp_ns_pre(DECL_ARGS)
 {
 
 	p->flags |= TERMP_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp_pp_pre(DECL_ARGS)
-{
-
-	term_vspace(p);
 	return(1);
 }
 
@@ -1239,9 +1175,9 @@ termp_rv_pre(DECL_ARGS)
 	nn = node->child;
 	assert(nn);
 	for ( ; nn; nn = nn->next) {
-		p->flags |= ttypes[TTYPE_FUNC_NAME];
+		p->bold++;
 		term_word(p, nn->string);
-		p->flags &= ~ttypes[TTYPE_FUNC_NAME];
+		p->bold--;
 		p->flags |= TERMP_NOSPACE;
 		if (nn->next && NULL == nn->next->next)
 			term_word(p, "(), and");
@@ -1259,9 +1195,9 @@ termp_rv_pre(DECL_ARGS)
        	term_word(p, "the value 0 if successful; otherwise the value "
 			"-1 is returned and the global variable");
 
-	p->flags |= ttypes[TTYPE_VAR_DECL];
+	p->under++;
 	term_word(p, "errno");
-	p->flags &= ~ttypes[TTYPE_VAR_DECL];
+	p->under--;
 
        	term_word(p, "is set to indicate the error.");
 
@@ -1280,9 +1216,9 @@ termp_ex_pre(DECL_ARGS)
 	nn = node->child;
 	assert(nn);
 	for ( ; nn; nn = nn->next) {
-		p->flags |= ttypes[TTYPE_PROG];
+		p->bold++;
 		term_word(p, nn->string);
-		p->flags &= ~ttypes[TTYPE_PROG];
+		p->bold--;
 		p->flags |= TERMP_NOSPACE;
 		if (nn->next && NULL == nn->next->next)
 			term_word(p, ", and");
@@ -1365,17 +1301,6 @@ termp_xr_pre(DECL_ARGS)
 
 
 /* ARGSUSED */
-static int
-termp_vt_pre(DECL_ARGS)
-{
-
-	/* FIXME: this can be "type name". */
-	pair->flag |= ttypes[TTYPE_VAR_DECL];
-	return(1);
-}
-
-
-/* ARGSUSED */
 static void
 termp_vt_post(DECL_ARGS)
 {
@@ -1391,10 +1316,10 @@ termp_vt_post(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-termp_fd_pre(DECL_ARGS)
+termp_bold_pre(DECL_ARGS)
 {
 
-	pair->flag |= ttypes[TTYPE_FUNC_DECL];
+	p->bold++;
 	return(1);
 }
 
@@ -1429,7 +1354,7 @@ termp_sh_pre(DECL_ARGS)
 		term_vspace(p);
 		break;
 	case (MDOC_HEAD):
-		pair->flag |= ttypes[TTYPE_SECTION];
+		p->bold++;
 		break;
 	case (MDOC_BODY):
 		p->offset = INDENT;
@@ -1563,7 +1488,7 @@ termp_ft_pre(DECL_ARGS)
 	if (SEC_SYNOPSIS == node->sec)
 		if (node->prev && MDOC_Fo == node->prev->tok)
 			term_vspace(p);
-	pair->flag |= ttypes[TTYPE_FUNC_TYPE];
+	p->under++;
 	return(1);
 }
 
@@ -1588,17 +1513,17 @@ termp_fn_pre(DECL_ARGS)
 
 	/* FIXME: can be "type funcname" "type varname"... */
 
-	p->flags |= ttypes[TTYPE_FUNC_NAME];
+	p->bold++;
 	term_word(p, node->child->string);
-	p->flags &= ~ttypes[TTYPE_FUNC_NAME];
+	p->bold--;
 
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, "(");
 
 	for (n = node->child->next; n; n = n->next) {
-		p->flags |= ttypes[TTYPE_FUNC_ARG];
+		p->under++;
 		term_word(p, n->string);
-		p->flags &= ~ttypes[TTYPE_FUNC_ARG];
+		p->under--;
 		if (n->next)
 			term_word(p, ",");
 	}
@@ -1624,29 +1549,19 @@ termp_fn_post(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-termp_sx_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_LINK];
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
 termp_fa_pre(DECL_ARGS)
 {
 	struct mdoc_node *n;
 
 	if (node->parent->tok != MDOC_Fo) {
-		pair->flag |= ttypes[TTYPE_FUNC_ARG];
+		p->under++;
 		return(1);
 	}
 
 	for (n = node->child; n; n = n->next) {
-		p->flags |= ttypes[TTYPE_FUNC_ARG];
+		p->under++;
 		term_word(p, n->string);
-		p->flags &= ~ttypes[TTYPE_FUNC_ARG];
+		p->under--;
 		if (n->next)
 			term_word(p, ",");
 	}
@@ -1655,16 +1570,6 @@ termp_fa_pre(DECL_ARGS)
 		term_word(p, ",");
 
 	return(0);
-}
-
-
-/* ARGSUSED */
-static int
-termp_va_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_VAR_DECL];
-	return(1);
 }
 
 
@@ -1847,16 +1752,6 @@ termp_sq_post(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-termp_pa_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_FILE];
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
 termp_pf_pre(DECL_ARGS)
 {
 
@@ -1887,7 +1782,7 @@ termp_ss_pre(DECL_ARGS)
 			term_vspace(p);
 		break;
 	case (MDOC_HEAD):
-		pair->flag |= ttypes[TTYPE_SSECTION];
+		p->bold++;
 		p->offset = HALFINDENT;
 		break;
 	default:
@@ -1910,41 +1805,11 @@ termp_ss_post(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-termp_em_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_EMPH];
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
 termp_cd_pre(DECL_ARGS)
 {
 
-	pair->flag |= ttypes[TTYPE_CONFIG];
+	p->bold++;
 	term_newln(p);
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp_cm_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_CMD_FLAG];
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp_ic_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_CMD];
 	return(1);
 }
 
@@ -1954,9 +1819,7 @@ static int
 termp_in_pre(DECL_ARGS)
 {
 
-	pair->flag |= ttypes[TTYPE_INCLUDE];
-	p->flags |= ttypes[TTYPE_INCLUDE];
-
+	p->bold++;
 	if (SEC_SYNOPSIS == node->sec)
 		term_word(p, "#include");
 
@@ -1971,9 +1834,9 @@ static void
 termp_in_post(DECL_ARGS)
 {
 
-	p->flags |= TERMP_NOSPACE | ttypes[TTYPE_INCLUDE];
+	p->bold++;
 	term_word(p, ">");
-	p->flags &= ~ttypes[TTYPE_INCLUDE];
+	p->bold--;
 
 	if (SEC_SYNOPSIS != node->sec)
 		return;
@@ -1996,28 +1859,24 @@ termp_sp_pre(DECL_ARGS)
 {
 	int		 i, len;
 
-	if (NULL == node->child) {
-		term_vspace(p);
-		return(0);
+	switch (node->tok) {
+	case (MDOC_sp):
+		len = node->child ? atoi(node->child->string) : 1;
+		break;
+	case (MDOC_br):
+		len = 0;
+		break;
+	default:
+		len = 1;
+		break;
 	}
 
-	len = atoi(node->child->string);
 	if (0 == len)
 		term_newln(p);
 	for (i = 0; i < len; i++)
 		term_vspace(p);
 
 	return(0);
-}
-
-
-/* ARGSUSED */
-static int
-termp_br_pre(DECL_ARGS)
-{
-
-	term_newln(p);
-	return(1);
 }
 
 
@@ -2109,12 +1968,12 @@ termp_fo_pre(DECL_ARGS)
 	} else if (MDOC_HEAD != node->type) 
 		return(1);
 
-	p->flags |= ttypes[TTYPE_FUNC_NAME];
+	p->bold++;
 	for (n = node->child; n; n = n->next) {
 		assert(MDOC_TEXT == n->type);
 		term_word(p, n->string);
 	}
-	p->flags &= ~ttypes[TTYPE_FUNC_NAME];
+	p->bold--;
 
 	return(0);
 }
@@ -2148,42 +2007,21 @@ termp_bf_pre(DECL_ARGS)
 
 	if (NULL == (n = node->head->child)) {
 		if (arg_hasattr(MDOC_Emphasis, node))
-			pair->flag |= ttypes[TTYPE_EMPH];
+			p->under++;
 		else if (arg_hasattr(MDOC_Symbolic, node))
-			pair->flag |= ttypes[TTYPE_SYMB];
+			p->bold++;
 
 		return(1);
 	} 
 
 	assert(MDOC_TEXT == n->type);
 	if (0 == strcmp("Em", n->string))
-		pair->flag |= ttypes[TTYPE_EMPH];
+		p->under++;
 	else if (0 == strcmp("Sy", n->string))
-		pair->flag |= ttypes[TTYPE_SYMB];
+		p->bold++;
 
 	return(1);
 }
-
-
-/* ARGSUSED */
-static int
-termp_sy_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_SYMB];
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp_ms_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_SYMBOL];
-	return(1);
-}
-
 
 
 /* ARGSUSED */
@@ -2215,38 +2053,6 @@ termp_ap_pre(DECL_ARGS)
 
 
 /* ARGSUSED */
-static int
-termp__j_pre(DECL_ARGS)
-{
-
-	pair->flag |= ttypes[TTYPE_REF_JOURNAL];
-	return(1);
-}
-
-
-/* ARGSUSED */
-static int
-termp__t_pre(DECL_ARGS)
-{
-
-	term_word(p, "\"");
-	p->flags |= TERMP_NOSPACE;
-	return(1);
-}
-
-
-/* ARGSUSED */
-static void
-termp__t_post(DECL_ARGS)
-{
-
-	p->flags |= TERMP_NOSPACE;
-	term_word(p, "\"");
-	termp____post(p, pair, meta, node);
-}
-
-
-/* ARGSUSED */
 static void
 termp____post(DECL_ARGS)
 {
@@ -2266,32 +2072,30 @@ termp_lk_pre(DECL_ARGS)
 	n = node->child;
 
 	if (NULL == n->next) {
-		pair->flag |= ttypes[TTYPE_LINK_ANCHOR];
+		p->under++;
 		return(1);
 	}
 
-	p->flags |= ttypes[TTYPE_LINK_ANCHOR];
+	p->under++;
 	term_word(p, n->string);
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, ":");
-	p->flags &= ~ttypes[TTYPE_LINK_ANCHOR];
+	p->under--;
 
-	p->flags |= ttypes[TTYPE_LINK_TEXT];
+	p->bold++;
 	for (n = n->next; n; n = n->next) 
 		term_word(p, n->string);
+	p->bold--;
 
-	p->flags &= ~ttypes[TTYPE_LINK_TEXT];
 	return(0);
 }
 
 
 /* ARGSUSED */
 static int
-termp_mt_pre(DECL_ARGS)
+termp_under_pre(DECL_ARGS)
 {
 
-	pair->flag |= ttypes[TTYPE_LINK_ANCHOR];
+	p->under++;
 	return(1);
 }
-
-
