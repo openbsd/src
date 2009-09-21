@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.4 2009/08/18 16:21:04 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.5 2009/09/21 15:25:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -33,7 +33,6 @@ size_t	cmd_send_keys_print(struct cmd *, char *, size_t);
 
 struct cmd_send_keys_data {
 	char	*target;
-	int	 idx;
   	u_int	 nkeys;
 	int	*keys;
 };
@@ -58,7 +57,6 @@ cmd_send_keys_parse(struct cmd *self, int argc, char **argv, char **cause)
 
 	self->data = data = xmalloc(sizeof *data);
 	data->target = NULL;
-	data->idx = -1;
 	data->nkeys = 0;
 	data->keys = NULL;
 
@@ -143,8 +141,6 @@ cmd_send_keys_print(struct cmd *self, char *buf, size_t len)
 		return (off);
 	if (off < len && data->target != NULL)
 		off += cmd_prarg(buf + off, len - off, " -t ", data->target);
-	if (off < len && data->idx != -1)
-		off += xsnprintf(buf + off, len - off, " -i %d", data->idx);
 
 	for (i = 0; i < data->nkeys; i++) {
 		if (off >= len)
