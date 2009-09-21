@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.23 2009/09/18 00:04:26 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.24 2009/09/21 20:35:26 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -290,13 +290,22 @@ build_from(char *fake_from, struct passwd *pw)
 	}
 
 	if (msg.fromname == NULL && fake_from == NULL && pw != NULL) {
-		size_t		 len;
+		int	 len, apos;
 
 		len = strcspn(pw->pw_gecos, ",");
-		len++;	/* null termination */
-		if ((msg.fromname = malloc(len)) == NULL)
-			err(1, NULL);
-		strlcpy(msg.fromname, pw->pw_gecos, len);
+		if ((p = memchr(pw->pw_gecos, '&', len))) {
+			apos = p - pw->pw_gecos;
+			if (asprintf(&msg.fromname, "%.*s%s%.*s",
+			    apos, pw->pw_gecos,
+			    pw->pw_name,
+			    len - apos - 1, p + 1) == -1)
+				err(1, NULL);
+			msg.fromname[apos] = toupper(msg.fromname[apos]);
+		} else {
+			if (asprintf(&msg.fromname, "%.*s", len,
+			    pw->pw_gecos) == -1)
+				err(1, NULL);
+		}
 	}
 }
 
