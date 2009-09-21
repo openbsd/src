@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.72 2009/09/07 23:47:51 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.73 2009/09/21 16:33:42 canacar Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1070,6 +1070,7 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (caddr_t)((u_long)dev);
 
 	s = splnet();
+	D_GET(d);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
@@ -1086,6 +1087,7 @@ filt_bpfrdetach(struct knote *kn)
 	d = bpfilter_lookup(minor(dev));
 	s = splnet();
 	SLIST_REMOVE(&d->bd_sel.si_note, kn, knote, kn_selnext);
+	D_PUT(d);
 	splx(s);
 }
 
