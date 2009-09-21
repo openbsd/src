@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.12 2009/09/20 10:18:20 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.13 2009/09/21 07:41:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -101,20 +101,6 @@ struct udl_softc {
 				     (struct udl_softc *, uint32_t, uint32_t,
 				     uint32_t, uint32_t, uint32_t, uint32_t);
 };
-
-/*
- * udl IOCTLs.
- */
-struct udl_ioctl_damage {
-	int	x1;
-	int	x2;
-	int	y1;
-	int	y2;
-#define UDLIO_STATUS_OK		0
-#define UDLIO_STATUS_FAILED	1
-	int	status;
-};
-#define	UDLIO_DAMAGE			_IOWR('W', 0, struct udl_ioctl_damage)
 
 /*
  * Chip commands.

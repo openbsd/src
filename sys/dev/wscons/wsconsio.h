@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.55 2009/07/03 17:37:02 kettenis Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.56 2009/09/21 07:41:18 mglocker Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -42,7 +42,8 @@
  *	32-63	mouse ioctls (WSMOUSEIO)
  *	64-95	display ioctls (WSDISPLAYIO)
  *	96-127	mux ioctls (WSMUXIO)
- *	128-255	reserved for future use
+ *	128-159 driver private ioctls
+ *	160-255 reserved for future use
  */
 
 #include <sys/types.h>
