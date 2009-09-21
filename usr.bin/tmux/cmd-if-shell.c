@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.3 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.4 2009/09/21 15:32:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -66,7 +66,7 @@ cmd_if_shell_parse(struct cmd *self, int argc, char **argv, char **cause)
 	struct cmd_if_shell_data	*data;
 	int				 opt;
 
-	self->entry->init(self, 0);
+	self->entry->init(self, KEYC_NONE);
 	data = self->data;
 
 	while ((opt = getopt(argc, argv, "")) != -1) {

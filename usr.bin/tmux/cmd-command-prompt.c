@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.10 2009/08/25 12:18:51 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.11 2009/09/21 15:32:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -90,7 +90,7 @@ cmd_command_prompt_parse(struct cmd *self, int argc, char **argv, char **cause)
 	struct cmd_command_prompt_data	*data;
 	int				 opt;
 
-	self->entry->init(self, 0);
+	self->entry->init(self, KEYC_NONE);
 	data = self->data;
 
 	while ((opt = getopt(argc, argv, "p:t:")) != -1) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.19 2009/09/16 12:35:04 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.20 2009/09/21 15:32:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -69,7 +69,7 @@ cmd_new_session_parse(struct cmd *self, int argc, char **argv, char **cause)
 	struct cmd_new_session_data	*data;
 	int				 opt;
 
-	self->entry->init(self, 0);
+	self->entry->init(self, KEYC_NONE);
 	data = self->data;
 
 	while ((opt = getopt(argc, argv, "ds:n:")) != -1) {
