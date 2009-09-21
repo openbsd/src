@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.15 2009/08/22 17:21:23 schwarze Exp $ */
+/*	$Id: main.c,v 1.16 2009/09/21 20:57:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,8 +27,8 @@
 #include "mdoc.h"
 #include "man.h"
 
-typedef	int		(*out_mdoc)(void *, const struct mdoc *);
-typedef	int		(*out_man)(void *, const struct man *);
+typedef	void		(*out_mdoc)(void *, const struct mdoc *);
+typedef	void		(*out_man)(void *, const struct man *);
 typedef	void		(*out_free)(void *);
 
 struct	buf {
@@ -73,10 +73,10 @@ struct	curparse {
 };
 
 extern	void		 *ascii_alloc(void);
-extern	int		  tree_mdoc(void *, const struct mdoc *);
-extern	int		  tree_man(void *, const struct man *);
-extern	int		  terminal_mdoc(void *, const struct mdoc *);
-extern	int		  terminal_man(void *, const struct man *);
+extern	void		  tree_mdoc(void *, const struct mdoc *);
+extern	void		  tree_man(void *, const struct man *);
+extern	void		  terminal_mdoc(void *, const struct mdoc *);
+extern	void		  terminal_man(void *, const struct man *);
 extern	void		  terminal_free(void *);
 
 static	int		  foptions(int *, char *);
@@ -437,11 +437,9 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 	/* Execute the out device, if it exists. */
 
 	if (man && curp->outman)
-		if ( ! (*curp->outman)(curp->outdata, man))
-			return(-1);
+		(*curp->outman)(curp->outdata, man);
 	if (mdoc && curp->outmdoc)
-		if ( ! (*curp->outmdoc)(curp->outdata, mdoc))
-			return(-1);
+		(*curp->outmdoc)(curp->outdata, mdoc);
 
 	return(1);
 }

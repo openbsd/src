@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.54 2009/09/21 20:28:43 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.55 2009/09/21 20:57:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -280,27 +280,24 @@ static	void	  fmt_block_vspace(struct termp *,
 			const struct mdoc_node *,
 			const struct mdoc_node *);
 static	void  	  print_node(DECL_ARGS);
-static	void	  print_head(struct termp *, 
-			const struct mdoc_meta *);
+static	void	  print_head(DECL_ARGS);
 static	void	  print_body(DECL_ARGS);
-static	void	  print_foot(struct termp *, 
-			const struct mdoc_meta *);
+static	void	  print_foot(DECL_ARGS);
 
 
-int
-mdoc_run(struct termp *p, const struct mdoc *m)
+void
+mdoc_run(struct termp *p, const struct mdoc *mdoc)
 {
-	/*
-	 * Main output function.  When this is called, assume that the
-	 * tree is properly formed.
-	 */
-	print_head(p, mdoc_meta(m));
-	assert(mdoc_node(m));
-	assert(MDOC_ROOT == mdoc_node(m)->type);
-	if (mdoc_node(m)->child)
-		print_body(p, NULL, mdoc_meta(m), mdoc_node(m)->child);
-	print_foot(p, mdoc_meta(m));
-	return(1);
+	const struct mdoc_node	*n;
+	const struct mdoc_meta	*m;
+
+	n = mdoc_node(mdoc);
+	m = mdoc_meta(mdoc);
+
+	print_head(p, NULL, m, n);
+	if (n->child)
+		print_body(p, NULL, m, n->child);
+	print_foot(p, NULL, m, n);
 }
 
 
@@ -360,8 +357,9 @@ print_node(DECL_ARGS)
 }
 
 
+/* ARGSUSED */
 static void
-print_foot(struct termp *p, const struct mdoc_meta *meta)
+print_foot(DECL_ARGS)
 {
 	struct tm	*tm;
 	char		*buf, *os;
@@ -375,14 +373,14 @@ print_foot(struct termp *p, const struct mdoc_meta *meta)
 	 */
 
 	if (NULL == (buf = malloc(p->rmargin)))
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 	if (NULL == (os = malloc(p->rmargin)))
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 
 	tm = localtime(&meta->date);
 
 	if (0 == strftime(buf, p->rmargin, "%B %e, %Y", tm))
-		err(1, "strftime");
+		err(EXIT_FAILURE, "strftime");
 
 	(void)strlcpy(os, meta->os, p->rmargin);
 
@@ -419,8 +417,10 @@ print_foot(struct termp *p, const struct mdoc_meta *meta)
 }
 
 
+/* FIXME: put in utility library. */
+/* ARGSUSED */
 static void
-print_head(struct termp *p, const struct mdoc_meta *meta)
+print_head(DECL_ARGS)
 {
 	char		*buf, *title;
 
@@ -428,9 +428,9 @@ print_head(struct termp *p, const struct mdoc_meta *meta)
 	p->offset = 0;
 
 	if (NULL == (buf = malloc(p->rmargin)))
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 	if (NULL == (title = malloc(p->rmargin)))
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 
 	/*
 	 * The header is strange.  It has three components, which are
@@ -454,8 +454,7 @@ print_head(struct termp *p, const struct mdoc_meta *meta)
 		(void)strlcat(buf, ")", p->rmargin);
 	}
 
-	(void)snprintf(title, p->rmargin, "%s(%d)", 
-			meta->title, meta->msec);
+	snprintf(title, p->rmargin, "%s(%d)", meta->title, meta->msec);
 
 	p->offset = 0;
 	p->rmargin = (p->maxrmargin - strlen(buf) + 1) / 2;
@@ -488,6 +487,7 @@ print_head(struct termp *p, const struct mdoc_meta *meta)
 }
 
 
+/* FIXME: put in utility file for front-ends. */
 static size_t
 arg_width(const struct mdoc_argv *arg, int pos)
 {
@@ -514,6 +514,7 @@ arg_width(const struct mdoc_argv *arg, int pos)
 }
 
 
+/* FIXME: put in utility file for front-ends. */
 static int
 arg_listtype(const struct mdoc_node *n)
 {
@@ -555,6 +556,7 @@ arg_listtype(const struct mdoc_node *n)
 }
 
 
+/* FIXME: put in utility file for front-ends. */
 static size_t
 arg_offset(const struct mdoc_argv *arg)
 {
@@ -754,7 +756,7 @@ termp_it_pre(DECL_ARGS)
 		 * the 0 will be adjusted to default 10 or, if in the
 		 * last column case, set to stretch to the margin).
 		 */
-		for (i = 0, n = node->prev; n && n && 
+		for (i = 0, n = node->prev; n && 
 				i < (int)bl->args[vals[2]].argv->sz; 
 				n = n->prev, i++)
 			offset += arg_width 

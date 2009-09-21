@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.15 2009/09/21 20:28:43 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.16 2009/09/21 20:57:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -136,15 +136,13 @@ static	void		  fmt_block_vspace(struct termp *,
 static	int		  arg_width(const struct man_node *);
 
 
-int
+void
 man_run(struct termp *p, const struct man *m)
 {
 	struct mtermp	 mt;
 
 	print_head(p, man_meta(m));
 	p->flags |= TERMP_NOSPACE;
-	assert(man_node(m));
-	assert(MAN_ROOT == man_node(m)->type);
 
 	mt.fl = 0;
 	mt.lmargin = INDENT;
@@ -153,8 +151,6 @@ man_run(struct termp *p, const struct man *m)
 	if (man_node(m)->child)
 		print_body(p, &mt, man_node(m)->child, man_meta(m));
 	print_foot(p, man_meta(m));
-
-	return(1);
 }
 
 
@@ -921,12 +917,12 @@ print_foot(struct termp *p, const struct man_meta *meta)
 	char		*buf;
 
 	if (NULL == (buf = malloc(p->rmargin)))
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 
 	tm = localtime(&meta->date);
 
 	if (0 == strftime(buf, p->rmargin, "%B %d, %Y", tm))
-		err(1, "strftime");
+		err(EXIT_FAILURE, "strftime");
 
 	term_vspace(p);
 
@@ -961,9 +957,9 @@ print_head(struct termp *p, const struct man_meta *meta)
 	p->offset = 0;
 
 	if (NULL == (buf = malloc(p->rmargin)))
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 	if (NULL == (title = malloc(p->rmargin)))
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 
 	if (meta->vol)
 		(void)strlcpy(buf, meta->vol, p->rmargin);

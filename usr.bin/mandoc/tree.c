@@ -1,4 +1,4 @@
-/*	$Id: tree.c,v 1.3 2009/08/22 20:14:37 schwarze Exp $ */
+/*	$Id: tree.c,v 1.4 2009/09/21 20:57:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,22 +27,20 @@ static	void	print_man(const struct man_node *, int);
 
 
 /* ARGSUSED */
-int
+void
 tree_mdoc(void *arg, const struct mdoc *mdoc)
 {
 
 	print_mdoc(mdoc_node(mdoc), 0);
-	return(1);
 }
 
 
 /* ARGSUSED */
-int
+void
 tree_man(void *arg, const struct man *man)
 {
 
 	print_man(man_node(man), 0);
-	return(1);
 }
 
 
