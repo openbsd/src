@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.2 2009/07/21 19:54:22 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.3 2009/09/21 07:00:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -53,7 +53,7 @@ options_free(struct options *oo)
 		SPLAY_REMOVE(options_tree, &oo->tree, o);
 		xfree(o->name);
 		if (o->type == OPTIONS_STRING)
-			xfree(o->value.string);
+			xfree(o->str);
 		xfree(o);
 	}
 }
@@ -94,7 +94,7 @@ options_remove(struct options *oo, const char *name)
 	SPLAY_REMOVE(options_tree, &oo->tree, o);
 	xfree(o->name);
 	if (o->type == OPTIONS_STRING)
-		xfree(o->value.string);
+		xfree(o->str);
 	xfree(o);
 }
 
@@ -109,11 +109,11 @@ options_set_string(struct options *oo, const char *name, const char *fmt, ...)
 		o->name = xstrdup(name);
 		SPLAY_INSERT(options_tree, &oo->tree, o);
 	} else if (o->type == OPTIONS_STRING)
-		xfree(o->value.string);
+		xfree(o->str);
 
 	va_start(ap, fmt);
 	o->type = OPTIONS_STRING;
-	xvasprintf(&o->value.string, fmt, ap);
+	xvasprintf(&o->str, fmt, ap);
 	va_end(ap);
 }
 
@@ -126,7 +126,7 @@ options_get_string(struct options *oo, const char *name)
 		fatalx("missing option");
 	if (o->type != OPTIONS_STRING)
 		fatalx("option not a string");
-	return (o->value.string);
+	return (o->str);
 }
 
 void
@@ -139,10 +139,10 @@ options_set_number(struct options *oo, const char *name, long long value)
 		o->name = xstrdup(name);
 		SPLAY_INSERT(options_tree, &oo->tree, o);
 	} else if (o->type == OPTIONS_STRING)
-		xfree(o->value.string);
+		xfree(o->str);
 
 	o->type = OPTIONS_NUMBER;
-	o->value.number = value;
+	o->num = value;
 
 }
 
@@ -155,5 +155,5 @@ options_get_number(struct options *oo, const char *name)
 		fatalx("missing option");
 	if (o->type != OPTIONS_NUMBER)
 		fatalx("option not a number");
-	return (o->value.number);
+	return (o->num);
 }
