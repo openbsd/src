@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.16 2009/09/21 07:46:42 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.17 2009/09/21 10:02:50 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -70,11 +70,12 @@ keyword, for example:
 include "/etc/mail/smtpd.conf.local"
 .Ed
 .Sh GLOBAL CONFIGURATION
-Here are the settings that can be set globally:
+The following settings apply globally to
+.Xr smtpd 8 :
 .Bl -tag -width Ds
 .It Ic hostname Ar name
-Specify primary domain name of the server.
-By default, current host name is used,
+Specify the domain name of the server.
+By default the current host name is used,
 as returned by
 .Xr hostname 1 .
 .It Xo
@@ -89,31 +90,31 @@ Specify an
 and
 .Ar port
 to listen on.
-Address or domain name may be used in place of
+An IP address or domain name may be used in place of
 .Ar interface .
 .Pp
-Secured connections are provided either with STARTTLS,
+Secured connections are provided either using STARTTLS
+.Pq Ic tls ,
 by default on port 25,
-or SMTPS,
+or SMTPS
+.Pq Ic smtps ,
 by default on port 465.
+Creation of certificates is documented in
+.Xr starttls 8 .
 If no certificate
 .Ar name
 is specified, the
 .Pa /etc/mail/certs
 directory is searched for a file named by joining
-.Ar interface
-name with a .crt extension, eg.
-.Sq /etc/mail/certs/fxp0.crt .
-Creation of certificates is documented in
-.Xr starttls 8 .
+the interface name with a .crt extension, e.g.\&
+.Pa /etc/mail/certs/fxp0.crt .
 .Pp
 If the
 .Ic enable auth
 parameter is used,
 any remote sender that passed SMTPAUTH is treated as if
 it was the server's local user that was sending the mail.
-This means that filter rules using "from local" source specification
-will be matched.
+This means that filter rules using "from local" will be matched.
 .El
 .Sh MAPS
 Maps provide generic interface for associating textual key to a value.
@@ -317,7 +318,7 @@ would look like this:
 .Bd -literal -offset indent
 listen on lo0
 map aliases { source db "/etc/mail/aliases.db" }
-map secrets { file "/etc/mail/secrets.db" }
+map secrets { source db "/etc/mail/secrets.db" }
 accept for local deliver to mbox
 accept for all relay via smtp.gmail.com tls enable auth
 .Ed
