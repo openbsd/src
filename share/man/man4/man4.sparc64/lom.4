@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lom.4,v 1.1 2009/09/21 19:51:04 kettenis Exp $
+.\"     $OpenBSD: lom.4,v 1.2 2009/09/21 22:35:52 kettenis Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -27,14 +27,30 @@ The
 .Nm
 driver provides support for the LOMlite2 lights out management module found
 on Sun Fire V100/V120 and Sun Netra X1 systems.
-Temperature readings provided by the LOM are made available through the
+Temperature readings and fan status provided by the LOM are made
+available through the
 .Xr sysctl 8
 interface.
+The integrated
+.Xr watchdog 4
+timer can be configured through the
+.Xr sysctl 8
+interface as well.
+The watchdog timer supports timeouts between 1 and 127 seconds.
+If the watchdog is disabled, which is its default state, it will turn
+on the system's fault LED after the maximum timeout of 127 seconds.
+.Pp
+The
+.Nm
+driver will update the hostname stored in the LOM whenever the
+system's hostname is changed.
 .Sh SEE ALSO
+.Xr hostname 1 ,
 .Xr ebus 4 ,
 .Xr intro 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
+.Xr watchdog 8
 .Sh HISTORY
 The
 .Nm
