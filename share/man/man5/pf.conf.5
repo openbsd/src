@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.457 2009/09/08 17:52:17 michele Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.458 2009/09/22 10:42:08 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 8 2009 $
+.Dd $Mdocdate: September 22 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1176,7 +1176,7 @@ option sets the default behaviour for states:
 .Pp
 .Bl -tag -width if-bound -compact
 .It Ar if-bound
-States are bound to interface.
+States are bound to an interface.
 .It Ar floating
 States can match packets on any interfaces (the default).
 .El
@@ -1990,15 +1990,23 @@ pass in proto tcp from any to any port www synproxy state
 .Ss Stateful Tracking Options
 A number of options related to stateful tracking can be applied on a
 per-rule basis.
+One of
 .Ar keep state ,
 .Ar modulate state ,
-and
+or
 .Ar synproxy state
-support these options, and
-.Ar keep state
-must be specified explicitly to apply options to a rule.
+must be specified explicitly to apply these options to a rule.
 .Pp
 .Bl -tag -width xxxx -compact
+.It Ar floating
+States can match packets on any interfaces
+(the opposite of
+.Ar if-bound ) .
+This is the default.
+.It Ar if-bound
+States are bound to an interface
+(the opposite of
+.Ar floating ) .
 .It Ar max Aq Ar number
 Limits the number of concurrent states the rule may create.
 When this limit is reached, further packets that would create
