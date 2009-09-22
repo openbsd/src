@@ -1,4 +1,4 @@
-/*	$OpenBSD: stddef.h,v 1.9 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: stddef.h,v 1.10 2009/09/22 21:40:02 jsg Exp $	*/
 /*	$NetBSD: stddef.h,v 1.4 1994/10/26 00:56:26 cgd Exp $	*/
 
 /*-
@@ -72,6 +72,10 @@ typedef	__mbstate_t	mbstate_t;
 #endif
 #endif
 
+#if __GNUC_PREREQ__(4, 0)
+#define	offsetof(type, member)	__builtin_offsetof(type, member)
+#else
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+#endif
 
 #endif /* _STDDEF_H_ */
