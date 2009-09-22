@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.7 2009/06/06 07:52:04 pyr Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.8 2009/09/22 16:38:31 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if_types.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -236,7 +237,10 @@ dvmrpe_dispatch_main(int fd, short event, void *bula)
 	struct imsg	 imsg;
 	struct imsgev	*iev = bula;
 	struct imsgbuf  *ibuf = &iev->ibuf;
+	struct kif	*kif;
+	struct iface	*iface;
 	ssize_t		 n;
+	int		 link_ok;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -256,6 +260,33 @@ dvmrpe_dispatch_main(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_IFINFO:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct kif))
+				fatalx("IFINFO imsg with wrong len");
+			kif = imsg.data;
+			link_ok = (kif->flags & IFF_UP) &&
+			    (LINK_STATE_IS_UP(kif->link_state) ||
+			    (kif->link_state == LINK_STATE_UNKNOWN &&
+			    kif->media_type != IFT_CARP));
+
+			LIST_FOREACH(iface, &deconf->iface_list, entry) {
+				if (kif->ifindex == iface->ifindex) {
+					iface->flags = kif->flags;
+					iface->linkstate = kif->link_state;
+
+					if (link_ok) {
+						if_fsm(iface, IF_EVT_UP);
+						log_warnx("interface %s up",
+						    iface->name);
+					} else {
+						if_fsm(iface, IF_EVT_DOWN);
+						log_warnx("interface %s down",
+						    iface->name);
+					}
+				}
+			}
+			break;
 		default:
 			log_debug("dvmrpe_dispatch_main: error handling "
 			    "imsg %d", imsg.hdr.type);
