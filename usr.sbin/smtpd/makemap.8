@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.7 2009/03/23 21:48:40 jmc Exp $
+.\"	$OpenBSD: makemap.8,v 1.8 2009/09/22 13:05:20 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chechade <gilles@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2009 $
+.Dd $Mdocdate: September 22 2009 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -27,16 +27,20 @@
 .Op Fl t Ar type
 .Ar file
 .Sh DESCRIPTION
+Maps provide a generic interface for associating textual key to a value.
+Such associations may be accessed through a plaintext file, database, or DNS.
+The format of these file types is described below.
 .Nm
-creates the database maps used by keyed map lookups in
-.Xr smtpd 8 .
-It reads input from
+itself creates the database maps used by keyed map lookups specified in
+.Xr smtpd.conf 5 .
+.Pp
+.Nm
+reads input from
 .Ar file
 and writes data to a file whose name is made by adding a
 .Dq .db
 suffix to
 .Ar file .
-.Pp
 In all cases,
 .Nm
 reads lines consisting of words separated by whitespace.
@@ -69,6 +73,67 @@ virtual domains files.
 .Pp
 .El
 .Ex -std makemap
+.Sh MAP TYPES
+There are three types of map known to
+.Xr smtpd 8 :
+.Bl -tag -width Ds
+.It alias
+Map queried when resolving mail aliases.
+Query key is the user part of mail address.
+.It virtual
+Map used for creating virtual domains.
+See the
+.Sx VIRTUAL DOMAINS
+section below.
+.It secrets
+Map queried for credentials
+when relaying mail via server that requires SMTPAUTH
+before accepting mail for relaying.
+Query key is the domain name of the server acting as relay.
+.El
+.Pp
+The configuration directives that are valid in the
+.Ic map
+context are described below:
+.Bl -tag -width Ds
+.It Ic type Ar maptype
+Specifies method of accessing data.
+The following map types are supported:
+.Bl -tag -width Ds
+.It db
+Mappings are stored in a file created using
+.Nm .
+This is the default type if none is specified.
+.It dns
+Not implemented yet.
+.It file
+Not implemented yet.
+.El
+.It Ic source Ar mapsource
+Specifies the source of mapping data.
+It must be absolute path to a file in case of
+.Dq file
+and
+.Dq db
+.Ar maptype ,
+and a domain name in case of
+.Dq dns .
+.El
+.Sh VIRTUAL DOMAINS
+Virtual domains are kept in the virtual map.
+To create single virtual address, add
+.Dq user@example.com
+to the virtual map.
+To handle all mail destined to any user at example.com, add
+.Dq @example.com
+to the virtual map.
+.Pp
+In addition to adding an entry to the virtual map,
+one must add a filter rule that accepts mail for the virtual domain,
+for example:
+.Bd -literal -offset indent
+accept for domain "example.com" deliver to mbox
+.Ed
 .Sh FILES
 .Bl -tag -width "/etc/mail/aliasesXXX" -compact
 .It Pa /etc/mail/aliases
@@ -80,7 +145,7 @@ List of remote host credentials.
 .El
 .Sh SEE ALSO
 .Xr aliases 5 ,
-.Xr mailer.conf 5 ,
+.Xr smtpd.conf 5 ,
 .Xr editmap 8 ,
 .Xr newaliases 8 ,
 .Xr smtpd 8
