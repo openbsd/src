@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.297 2009/09/03 09:06:20 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.298 2009/09/22 14:07:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -65,8 +65,7 @@ void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_tcp_established(struct peer *);
 void	session_capa_ann_none(struct peer *);
-int	session_capa_add(struct peer *, struct buf *, u_int8_t, u_int8_t,
-	    u_int8_t *);
+int	session_capa_add(struct buf *, u_int8_t, u_int8_t);
 int	session_capa_add_mp(struct buf *, u_int16_t, u_int8_t);
 struct bgp_msg	*session_newmsg(enum msg_type, u_int16_t);
 int	session_sendmsg(struct bgp_msg *, struct peer *);
@@ -1249,19 +1248,12 @@ session_capa_ann_none(struct peer *peer)
 }
 
 int
-session_capa_add(struct peer *p, struct buf *opb, u_int8_t capa_code,
-    u_int8_t capa_len, u_int8_t *optparamlen)
+session_capa_add(struct buf *opb, u_int8_t capa_code, u_int8_t capa_len)
 {
-	u_int8_t	op_type, op_len, tot_len, errs = 0;
+	int errs = 0;
 
-	op_type = OPT_PARAM_CAPABILITIES;
-	op_len = sizeof(capa_code) + sizeof(capa_len) + capa_len;
-	tot_len = sizeof(op_type) + sizeof(op_len) + op_len;
-	errs += buf_add(opb, &op_type, sizeof(op_type));
-	errs += buf_add(opb, &op_len, sizeof(op_len));
 	errs += buf_add(opb, &capa_code, sizeof(capa_code));
 	errs += buf_add(opb, &capa_len, sizeof(capa_len));
-	*optparamlen += tot_len;
 	return (errs);
 }
 
@@ -1338,36 +1330,37 @@ session_open(struct peer *p)
 	struct buf		*opb;
 	struct msg_open		 msg;
 	u_int16_t		 len;
-	u_int8_t		 optparamlen = 0;
+	u_int8_t		 op_type, optparamlen = 0;
 	u_int			 errs = 0;
 
 
-	if ((opb = buf_dynamic(0, MAX_PKTSIZE - MSGSIZE_OPEN_MIN)) == NULL) {
+	if ((opb = buf_dynamic(0, UCHAR_MAX - sizeof(op_type) -
+	    sizeof(optparamlen))) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
 
 	/* multiprotocol extensions, RFC 4760 */
 	if (p->capa.ann.mp_v4) {	/* 4 bytes data */
-		errs += session_capa_add(p, opb, CAPA_MP, 4, &optparamlen);
+		errs += session_capa_add(opb, CAPA_MP, 4);
 		errs += session_capa_add_mp(opb, AFI_IPv4, p->capa.ann.mp_v4);
 	}
 	if (p->capa.ann.mp_v6) {	/* 4 bytes data */
-		errs += session_capa_add(p, opb, CAPA_MP, 4, &optparamlen);
+		errs += session_capa_add(opb, CAPA_MP, 4);
 		errs += session_capa_add_mp(opb, AFI_IPv6, p->capa.ann.mp_v6);
 	}
 
 	/* route refresh, RFC 2918 */
 	if (p->capa.ann.refresh)	/* no data */
-		errs += session_capa_add(p, opb, CAPA_REFRESH, 0, &optparamlen);
+		errs += session_capa_add(opb, CAPA_REFRESH, 0);
 
 	/* End-of-RIB marker, RFC 4724 */
 	if (p->capa.ann.restart) {	/* 2 bytes data */
 		u_char		c[2];
 
-		bzero(&c, 2);
 		c[0] = 0x80; /* we're always restarting */
-		errs += session_capa_add(p, opb, CAPA_RESTART, 2, &optparamlen);
+		c[1] = 0;
+		errs += session_capa_add(opb, CAPA_RESTART, 2);
 		errs += buf_add(opb, &c, 2);
 	}
 
@@ -1376,9 +1369,13 @@ session_open(struct peer *p)
 		u_int32_t	nas;
 
 		nas = htonl(conf->as);
-		errs += session_capa_add(p, opb, CAPA_AS4BYTE, 4, &optparamlen);
-		errs += buf_add(opb, &nas, 4);
+		errs += session_capa_add(opb, CAPA_AS4BYTE, sizeof(nas));
+		errs += buf_add(opb, &nas, sizeof(nas));
 	}
+
+	if (buf_size(opb))
+		optparamlen = buf_size(opb) + sizeof(op_type) +
+		    sizeof(optparamlen);
 
 	len = MSGSIZE_OPEN_MIN + optparamlen;
 	if (errs || (buf = session_newmsg(OPEN, len)) == NULL) {
@@ -1402,8 +1399,13 @@ session_open(struct peer *p)
 	errs += buf_add(buf->buf, &msg.bgpid, sizeof(msg.bgpid));
 	errs += buf_add(buf->buf, &msg.optparamlen, sizeof(msg.optparamlen));
 
-	if (optparamlen)
-		errs += buf_add(buf->buf, opb->buf, optparamlen);
+	if (optparamlen) {
+		op_type = OPT_PARAM_CAPABILITIES;
+		optparamlen = buf_size(opb);
+		errs += buf_add(buf->buf, &op_type, sizeof(op_type));
+		errs += buf_add(buf->buf, &optparamlen, sizeof(optparamlen));
+		errs += buf_add(buf->buf, opb->buf, buf_size(opb));
+	}
 
 	buf_free(opb);
 
