@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.4 2009/09/17 23:51:23 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.5 2009/09/22 12:24:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -81,11 +81,13 @@ client_init(int fd, char *ehlo)
 	sp->exts[CLIENT_EXT_STARTTLS].want = 1;
 	sp->exts[CLIENT_EXT_STARTTLS].must = 1;
 	sp->exts[CLIENT_EXT_STARTTLS].state = CLIENT_STARTTLS;
+	sp->exts[CLIENT_EXT_STARTTLS].name = "STARTTLS";
 #endif
 
 	sp->exts[CLIENT_EXT_AUTH].want = 0;
 	sp->exts[CLIENT_EXT_AUTH].must = 0;
 	sp->exts[CLIENT_EXT_AUTH].state = CLIENT_AUTH;
+	sp->exts[CLIENT_EXT_AUTH].name = "AUTH";
 
 	rv = 0;
 done:
@@ -466,7 +468,8 @@ client_read(struct smtp_client *sp)
 			break;
 		}
 	
-		sp->state = client_next_state(sp);
+		if ((sp->state = client_next_state(sp)) == 0)
+			return (CLIENT_ERROR);
 		break;
 
 	case CLIENT_HELO:
@@ -479,10 +482,8 @@ client_read(struct smtp_client *sp)
 	case CLIENT_STARTTLS:
 		if (*sp->reply != '2') {
 			sp->exts[CLIENT_EXT_STARTTLS].fail = 1;
-			if (client_next_state(sp))
-				sp->state = client_next_state(sp);
-			else
-				goto done;
+			if ((sp->state = client_next_state(sp)) == 0)
+				return (CLIENT_ERROR);
 		} else
 			sp->state = CLIENT_SSL_INIT;
 		break;
@@ -493,10 +494,8 @@ client_read(struct smtp_client *sp)
 		else
 			sp->exts[CLIENT_EXT_AUTH].done = 1;
 
-		if (client_next_state(sp))
-			sp->state = client_next_state(sp);
-		else
-			goto done;
+		if ((sp->state = client_next_state(sp)) == 0)
+			return (CLIENT_ERROR);
 		break;
 
 	case CLIENT_MAILFROM:
@@ -705,14 +704,10 @@ client_ssl_connect(struct smtp_client *sp)
 			SSL_free(sp->ssl_state);
 			sp->ssl_state = NULL;
 
-			if (client_next_state(sp)) {
-				sp->state = client_next_state(sp);
-				return (CLIENT_WANT_WRITE);
-			} else {
-				strlcpy(sp->ebuf, "130 SSL_connect error",
-				    sizeof(sp->ebuf));
+			if ((sp->state = client_next_state(sp)) == 0)
 				return (CLIENT_ERROR);
-			}
+			else
+				return (CLIENT_WANT_WRITE);
 		} else {
 			strlcpy(sp->ebuf, "130 SSL_connect error", sizeof(sp->ebuf));
 			return (CLIENT_ERROR);
@@ -807,8 +802,11 @@ client_next_state(struct smtp_client *sp)
 		if (e->want && !e->done) {
 			if (e->have && !e->fail)
 				return (e->state);
-			else if (e->must)
+			else if (e->must) {
+				snprintf(sp->ebuf, sizeof(sp->ebuf),
+				    "150 Could not use %s", e->name);
 				return (0);
+			}
 		}
 	}
 

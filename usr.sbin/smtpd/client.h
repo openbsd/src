@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.h,v 1.3 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: client.h,v 1.4 2009/09/22 12:24:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -67,6 +67,7 @@ struct client_ext {
 	short			 must;
 	short			 done;
 	short			 fail;
+	char			*name;
 	int			 state;
 };
 
