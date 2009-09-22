@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.5 2009/06/25 15:55:32 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.6 2009/09/22 16:43:42 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -241,7 +241,9 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	kif->k.baudrate = ifd->ifi_baudrate;
 
 	if ((reachable = (flags & IFF_UP) &&
-	    (ifd->ifi_link_state != LINK_STATE_DOWN)) == kif->k.nh_reachable)
+	    (LINK_STATE_IS_UP(ifd->ifi_link_state) ||
+	    (ifd->ifi_link_state == LINK_STATE_UNKNOWN &&
+	    ifd->ifi_type != IFT_CARP))) == kif->k.nh_reachable)
 		return;		/* nothing changed wrt nexthop validity */
 
 	kif->k.nh_reachable = reachable;
