@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.5 2009/09/22 12:24:06 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.6 2009/09/22 15:44:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -804,7 +804,8 @@ client_next_state(struct smtp_client *sp)
 				return (e->state);
 			else if (e->must) {
 				snprintf(sp->ebuf, sizeof(sp->ebuf),
-				    "150 Could not use %s", e->name);
+				     "%s %s", e->name,
+				     e->fail ? "failed" : "not available");
 				return (0);
 			}
 		}
