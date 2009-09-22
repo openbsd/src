@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.43 2009/09/18 15:19:27 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.44 2009/09/22 12:38:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -309,6 +309,7 @@ main(int argc, char **argv)
 	enum msgtype		 msg;
 	struct passwd		*pw;
 	struct options		*so, *wo;
+	struct keylist		*keylist;
 	char			*s, *path, *label, *home, *cause, **var;
 	char			 cwd[MAXPATHLEN];
 	void			*buf;
@@ -409,7 +410,6 @@ main(int argc, char **argv)
 	options_set_number(so, "message-attr", 0);
 	options_set_number(so, "message-bg", 3);
 	options_set_number(so, "message-fg", 0);
-	options_set_number(so, "prefix", '\002');
 	options_set_number(so, "repeat-time", 500);
 	options_set_number(so, "set-remain-on-exit", 0);
 	options_set_number(so, "set-titles", 0);
@@ -438,6 +438,11 @@ main(int argc, char **argv)
 	options_set_number(so, "visual-activity", 0);
 	options_set_number(so, "visual-bell", 0);
 	options_set_number(so, "visual-content", 0);
+
+	keylist = xmalloc(sizeof *keylist);
+	ARRAY_INIT(keylist);
+	ARRAY_ADD(keylist, '\002');
+	options_set_data(so, "prefix", keylist, xfree);
 
 	options_init(&global_w_options, NULL);
 	wo = &global_w_options;
