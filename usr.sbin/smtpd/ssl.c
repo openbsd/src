@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.20 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.21 2009/09/22 08:23:09 jj Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -40,7 +40,7 @@
 
 #include "smtpd.h"
 
-#define SSL_CIPHERS	"HIGH:!ADH"
+#define SSL_CIPHERS	"HIGH"
 
 void	 ssl_error(const char *);
 char	*ssl_load_file(const char *, off_t *);
@@ -56,8 +56,36 @@ SSL	*ssl_client_init(int, char *, size_t, char *, size_t);
 int	 ssl_buf_read(SSL *, struct buf_read *);
 int	 ssl_buf_write(SSL *, struct msgbuf *);
 
+DH	*get_dh512(void);
+void	 ssl_set_ephemeral_key_exchange(SSL_CTX *);
+
 extern void	bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
+
+/* From OpenSSL's documentation:
+ *
+ * If "strong" primes were used to generate the DH parameters, it is
+ * not strictly necessary to generate a new key for each handshake
+ * but it does improve forward secrecy.
+ *
+ * These are the parameters used by both sendmail and openssl's
+ * s_server.
+ *
+ * -- gilles@
+ */
+
+unsigned char dh512_p[] = {
+        0xDA,0x58,0x3C,0x16,0xD9,0x85,0x22,0x89,0xD0,0xE4,0xAF,0x75,
+        0x6F,0x4C,0xCA,0x92,0xDD,0x4B,0xE5,0x33,0xB8,0x04,0xFB,0x0F,
+        0xED,0x94,0xEF,0x9C,0x8A,0x44,0x03,0xED,0x57,0x46,0x50,0xD3,
+        0x69,0x99,0xDB,0x29,0xD7,0x76,0x27,0x6B,0xA2,0xD3,0xD4,0x12,
+        0xE2,0x18,0xF4,0xDD,0x1E,0x08,0x4C,0xF6,0xD8,0x00,0x3E,0x7C,
+        0x47,0x74,0xE8,0x33,    
+};
+
+unsigned char dh512_g[] = {
+        0x02,
+};
 
 void
 ssl_connect(int fd, short event, void *p)
@@ -437,6 +465,8 @@ ssl_setup(struct smtpd *env, struct listener *l)
 		(const unsigned char *)l->ssl_cert_name, strlen(l->ssl_cert_name) + 1))
 		goto err;
 
+	ssl_set_ephemeral_key_exchange(l->ssl_ctx);
+
 	log_debug("ssl_setup: ssl setup finished for listener: %p", l);
 	return;
 
@@ -652,4 +682,31 @@ ssl_buf_write(SSL *s, struct msgbuf *msgbuf)
 		msgbuf_drain(msgbuf, ret);
 
 	return SSL_get_error(s, ret);
+}
+
+DH *
+get_dh512(void)
+{
+        DH *dh;
+	
+        if ((dh = DH_new()) == NULL)
+		return NULL;
+
+        dh->p = BN_bin2bn(dh512_p, sizeof(dh512_p), NULL);
+        dh->g = BN_bin2bn(dh512_g, sizeof(dh512_g), NULL);
+        if (dh->p == NULL || dh->g == NULL)
+                return NULL;
+
+        return dh;
+}
+
+
+void
+ssl_set_ephemeral_key_exchange(SSL_CTX *ctx)
+{
+	DH *dh;
+
+	dh = get_dh512();
+	if (dh != NULL)
+		SSL_CTX_set_tmp_dh(ctx, dh);
 }
