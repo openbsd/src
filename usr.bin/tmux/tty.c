@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.28 2009/09/10 17:16:24 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.29 2009/09/22 19:11:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -93,7 +93,7 @@ tty_open(struct tty *tty, const char *overrides, char **cause)
 	tty->in = buffer_create(BUFSIZ);
 	tty->out = buffer_create(BUFSIZ);
 
-	tty->flags &= TTY_UTF8;
+	tty->flags &= ~(TTY_NOCURSOR|TTY_FREEZE|TTY_ESCAPE);
 
 	tty_start_tty(tty);
 
