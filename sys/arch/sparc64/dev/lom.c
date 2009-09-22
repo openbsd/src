@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.6 2009/09/21 22:34:26 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.7 2009/09/22 21:30:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -49,6 +49,14 @@
 #define LOM_IDX_FAN2		0x05
 #define LOM_IDX_FAN3		0x06
 #define LOM_IDX_FAN4		0x07
+#define LOM_IDX_PSU1		0x08	/* PSU status */
+#define LOM_IDX_PSU2		0x09
+#define LOM_IDX_PSU3		0x0a
+#define  LOM_PSU_INPUTA		0x01
+#define  LOM_PSU_INPUTB		0x02
+#define  LOM_PSU_OUTPUT		0x04
+#define  LOM_PSU_PRESENT	0x08
+#define  LOM_PSU_STANDBY	0x10
 
 #define LOM_IDX_TEMP1		0x18	/* Temperature */
 #define LOM_IDX_TEMP2		0x19
@@ -99,8 +107,6 @@
 #define LOM_MAX_PSU	3
 #define LOM_MAX_TEMP	8
 
-#define LOM_MAX_SENSORS (LOM_MAX_FAN + LOM_MAX_PSU + LOM_MAX_TEMP)
-
 struct lom_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -109,6 +115,7 @@ struct lom_softc {
 	int			sc_space;
 
 	struct ksensor		sc_fan[LOM_MAX_FAN];
+	struct ksensor		sc_psu[LOM_MAX_PSU];
 	struct ksensor		sc_temp[LOM_MAX_TEMP];
 	struct ksensordev	sc_sensordev;
 
@@ -204,6 +211,12 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sc->sc_num_fan; i++) {
 		sc->sc_fan[i].type = SENSOR_FANRPM;
 		sensor_attach(&sc->sc_sensordev, &sc->sc_fan[i]);
+	}
+	for (i = 0; i < sc->sc_num_psu; i++) {
+		sc->sc_psu[i].type = SENSOR_INDICATOR;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_psu[i]);
+		snprintf(sc->sc_psu[i].desc, sizeof(sc->sc_psu[i].desc),
+		    "PSU%d", i + 1);
 	}
 	for (i = 0; i < sc->sc_num_temp; i++) {
 		sc->sc_temp[i].type = SENSOR_TEMP;
@@ -428,16 +441,6 @@ lom_refresh(void *arg)
 	uint8_t val;
 	int i;
 
-	for (i = 0; i < sc->sc_num_temp; i++) {
-		if (lom_read(sc, LOM_IDX_TEMP1 + i, &val)) {
-			sc->sc_temp[i].flags |= SENSOR_FINVALID;
-			continue;
-		}
-
-		sc->sc_temp[i].value = val * 1000000 + 273150000;
-		sc->sc_temp[i].flags &= ~SENSOR_FINVALID;
-	}
-
 	for (i = 0; i < sc->sc_num_fan; i++) {
 		if (lom_read(sc, LOM_IDX_FAN1 + i, &val)) {
 			sc->sc_fan[i].flags |= SENSOR_FINVALID;
@@ -446,6 +449,38 @@ lom_refresh(void *arg)
 
 		sc->sc_fan[i].value = (60 * sc->sc_fan_cal[i] * val) / 100;
 		sc->sc_fan[i].flags &= ~SENSOR_FINVALID;
+	}
+
+	for (i = 0; i < sc->sc_num_psu; i++) {
+		if (lom_read(sc, LOM_IDX_PSU1 + i, &val) ||
+		    !ISSET(val, LOM_PSU_PRESENT)) {
+			sc->sc_psu[i].flags |= SENSOR_FINVALID;
+			continue;
+		}
+
+		if (val & LOM_PSU_STANDBY) {
+			sc->sc_psu[i].value = 0;
+			sc->sc_psu[i].status = SENSOR_S_UNSPEC;
+		} else {
+			sc->sc_psu[i].value = 1;
+			if (ISSET(val, LOM_PSU_INPUTA) &&
+			    ISSET(val, LOM_PSU_INPUTB) &&
+			    ISSET(val, LOM_PSU_OUTPUT))
+				sc->sc_psu[i].status = SENSOR_S_OK;
+			else
+				sc->sc_psu[i].status = SENSOR_S_CRIT;
+		}
+		sc->sc_psu[i].flags &= ~SENSOR_FINVALID;
+	}
+
+	for (i = 0; i < sc->sc_num_temp; i++) {
+		if (lom_read(sc, LOM_IDX_TEMP1 + i, &val)) {
+			sc->sc_temp[i].flags |= SENSOR_FINVALID;
+			continue;
+		}
+
+		sc->sc_temp[i].value = val * 1000000 + 273150000;
+		sc->sc_temp[i].flags &= ~SENSOR_FINVALID;
 	}
 
 	/*
