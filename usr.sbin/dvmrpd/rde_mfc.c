@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_mfc.c,v 1.7 2009/09/06 09:52:14 michele Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.8 2009/09/22 16:24:21 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -35,7 +35,7 @@
 
 /* multicast forwarding cache */
 
-void	 		 mfc_send_prune(struct rt_node *, struct mfc_node *);
+void			 mfc_send_prune(struct rt_node *, struct mfc_node *);
 void			 mfc_add_prune(struct mfc_node *, struct prune *);
 struct prune_node	*mfc_find_prune(struct mfc_node *, struct prune *);
 void			 mfc_delete_prune(struct mfc_node *,
@@ -384,11 +384,11 @@ mfc_check_members(struct rt_node *rn, struct iface *iface)
 void
 mfc_recv_prune(struct prune *p)
 {
-       struct rt_node		*rn;
-       struct mfc_node		*mn;
-       struct prune_node	*pn;
-       struct iface		*iface;
-       struct mfc		 m;
+	struct rt_node		*rn;
+	struct mfc_node		*mn;
+	struct prune_node	*pn;
+	struct iface		*iface;
+	struct mfc		 m;
 
 	iface = if_find_index(p->ifindex);
 	if (iface == NULL) {
@@ -489,7 +489,7 @@ prune_compare(struct mfc_node *mn, struct rt_node *rn, int ifindex)
 {
 	if (mn->prune_cnt[ifindex] == rn->ds_cnt[ifindex])
 		return (1);
-       
+
 	return (0);
 }
 
