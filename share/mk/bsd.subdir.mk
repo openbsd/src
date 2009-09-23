@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.subdir.mk,v 1.15 2007/11/03 15:14:32 espie Exp $
+#	$OpenBSD: bsd.subdir.mk,v 1.16 2009/09/23 20:30:20 matthieu Exp $
 #	$NetBSD: bsd.subdir.mk,v 1.11 1996/04/04 02:05:06 jtc Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
@@ -40,7 +40,7 @@ _SUBDIRUSE: .USE
 		if [ X$${skipdir} = X -o X$${subentry} != X ]; then \
 			echo "===> $${_nextdir_}"; \
 			cd ${.CURDIR}/$${_newdir_}; \
-			${MAKE} SKIPDIR="$${subskipdir}" \
+			exec ${MAKE} SKIPDIR="$${subskipdir}" \
 			    $${_makefile_spec_} _THISDIR_="$${_nextdir_}" \
 			    ${MAKE_FLAGS} \
 			    ${.TARGET:S/realinstall/install/:S/subdirdepend/depend/}; \
@@ -59,7 +59,7 @@ ${SUBDIR}::
 	fi; \
 	echo "===> $${_newdir_}"; \
 	cd ${.CURDIR}/$${_newdir_}; \
-	${MAKE} ${MAKE_FLAGS} $${_makefile_spec_} _THISDIR_="$${_newdir_}" all
+	exec ${MAKE} ${MAKE_FLAGS} $${_makefile_spec_} _THISDIR_="$${_newdir_}" all
 .endif
 
 .if !target(install)
