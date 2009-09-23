@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.7 2009/09/22 21:30:49 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.8 2009/09/23 17:53:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -130,6 +130,7 @@ struct lom_softc {
 
 	struct timeout		sc_wdog_to;
 	int			sc_wdog_period;
+	uint8_t			sc_wdog_ctl;
 };
 
 int	lom_match(struct device *, void *, void *);
@@ -249,11 +250,11 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	 * reconfigure it to reset the machine and let the standard
 	 * watchdog(4) machinery take over.
 	 */
-	lom_read(sc, LOM_IDX_WDOG_CTL, &reg);
-	reg &= ~LOM_WDOG_RESET;
-	reg |= LOM_WDOG_ENABLE;
-	lom_write(sc, LOM_IDX_WDOG_CTL, reg);
 	lom_write(sc, LOM_IDX_WDOG_TIME, LOM_WDOG_TIME_MAX);
+	lom_read(sc, LOM_IDX_WDOG_CTL, &sc->sc_wdog_ctl);
+	sc->sc_wdog_ctl &= ~LOM_WDOG_RESET;
+	sc->sc_wdog_ctl |= LOM_WDOG_ENABLE;
+	lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
 	timeout_set(&sc->sc_wdog_to, lom_wdog_pat, sc);
 	timeout_add_sec(&sc->sc_wdog_to, LOM_WDOG_TIME_MAX / 2);
 
@@ -505,7 +506,7 @@ lom_wdog_pat(void *arg)
 	struct lom_softc *sc;
 
 	/* Pat the dog. */
-	lom_write(sc, LOM_IDX_CMD, 'W');
+	lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
 
 	timeout_add_sec(&sc->sc_wdog_to, LOM_WDOG_TIME_MAX / 2);
 }
@@ -514,7 +515,6 @@ int
 lom_wdog_cb(void *arg, int period)
 {
 	struct lom_softc *sc = arg;
-	uint8_t ctl;
 
 	if (period > 127)
 		period = 127;
@@ -524,9 +524,8 @@ lom_wdog_cb(void *arg, int period)
 	if (period == 0) {
 		if (sc->sc_wdog_period != 0) {
 			/* Stop watchdog from resetting the machine. */
-			lom_read(sc, LOM_IDX_WDOG_CTL, &ctl);
-			ctl &= ~LOM_WDOG_RESET;
-			lom_write(sc, LOM_IDX_WDOG_CTL, ctl);
+			sc->sc_wdog_ctl &= ~LOM_WDOG_RESET;
+			lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
 
 			lom_write(sc, LOM_IDX_WDOG_TIME, LOM_WDOG_TIME_MAX);
 			timeout_add_sec(&sc->sc_wdog_to, LOM_WDOG_TIME_MAX / 2);
@@ -538,14 +537,13 @@ lom_wdog_cb(void *arg, int period)
 		}
 		if (sc->sc_wdog_period == 0) {
 			/* Make watchdog reset the machine. */
-			lom_read(sc, LOM_IDX_WDOG_CTL, &ctl);
-			ctl |= LOM_WDOG_RESET;
-			lom_write(sc, LOM_IDX_WDOG_CTL, ctl);
+			sc->sc_wdog_ctl |= LOM_WDOG_RESET;
+			lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
 
 			timeout_del(&sc->sc_wdog_to);
 		} else {
 			/* Pat the dog. */
-			lom_write(sc, LOM_IDX_CMD, 'W');
+			lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
 		}
 	}
 	sc->sc_wdog_period = period;
