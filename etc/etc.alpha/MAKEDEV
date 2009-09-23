@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.alpha/MAKEDEV.md,v 1.44 2009/08/13 15:12:36 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.45 2009/08/13 15:12:36 deraadt Exp 
+#	OpenBSD: MAKEDEV.common,v 1.46 2009/09/23 15:39:56 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -407,7 +407,7 @@ lpt*|lpa*)
 	M $n$U c 31 $(($U+$f)) 600
 	;;
 
-wsmouse*)
+wsmouse[0-9]*)
 	M wsmouse$U c 30 $U 600
 	;;
 
@@ -416,7 +416,7 @@ wsmux|wsmouse|wskbd)
 	M wskbd c 60 1 600
 	;;
 
-wskbd*)
+wskbd[0-9]*)
 	M wskbd$U c 29 $U 600
 	;;
 
