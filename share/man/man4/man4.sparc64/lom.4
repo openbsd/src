@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lom.4,v 1.3 2009/09/22 06:44:11 jmc Exp $
+.\"     $OpenBSD: lom.4,v 1.4 2009/09/23 22:08:07 kettenis Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 22 2009 $
+.Dd $Mdocdate: September 23 2009 $
 .Dt LOM 4 sparc64
 .Os
 .Sh NAME
@@ -25,10 +25,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the LOMlite2 lights out management module found
-on Sun Fire V100/V120 and Sun Netra X1 systems.
-Temperature readings and fan status provided by the LOM are made
-available through the
+driver provides support for the LOMlite lights out management module
+found on Sun Netra t1 systems and the LOMlite2 module found on Sun
+Fire V100/V120 and Sun Netra X1 systems.
+Temperature readings, PSU status and fan status provided by the LOM
+are made available through the
 .Xr sysctl 8
 interface.
 The integrated
@@ -36,9 +37,9 @@ The integrated
 timer can be configured through the
 .Xr sysctl 8
 interface as well.
-The watchdog timer supports timeouts between 1 and 127 seconds.
+The watchdog timer supports timeouts between 1 and 126 seconds.
 If the watchdog is disabled, which is its default state, it will turn
-on the system's fault LED after the maximum timeout of 127 seconds.
+on the system's fault LED after the maximum timeout of 126 seconds.
 .Pp
 The
 .Nm
