@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.10 2009/09/23 20:36:35 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.11 2009/09/23 22:04:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/sensors.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
@@ -155,6 +156,15 @@ struct lom_softc {
 	struct timeout		sc_wdog_to;
 	int			sc_wdog_period;
 	uint8_t			sc_wdog_ctl;
+
+	uint8_t			sc_cmd;
+	uint8_t			sc_data;
+	struct timeout		sc_state_to;
+	int			sc_state;
+#define LOM_STATE_IDLE		0
+#define LOM_STATE_READ_CMD	1
+#define LOM_STATE_READ_DATA	2
+#define LOM_STATE_READ_DONE	3
 };
 
 int	lom_match(struct device *, void *, void *);
@@ -171,7 +181,9 @@ struct cfdriver lom_cd = {
 int	lom_read(struct lom_softc *, uint8_t, uint8_t *);
 int	lom_write(struct lom_softc *, uint8_t, uint8_t);
 int	lom1_read(struct lom_softc *, uint8_t, uint8_t *);
+int	lom1_read_polled(struct lom_softc *, uint8_t, uint8_t *);
 int	lom1_write(struct lom_softc *, uint8_t, uint8_t);
+void	lom1_state(void *);
 int	lom2_read(struct lom_softc *, uint8_t, uint8_t *);
 int	lom2_write(struct lom_softc *, uint8_t, uint8_t);
 
@@ -188,7 +200,8 @@ lom_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
-	if (strcmp(ea->ea_name, "SUNW,lomh") == 0)
+	if (strcmp(ea->ea_name, "SUNW,lom") == 0 ||
+	    strcmp(ea->ea_name, "SUNW,lomh") == 0)
 		return (1);
 
 	return (0);
@@ -223,6 +236,8 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 		/* XXX Magic */
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 3, 0xca);
+
+		timeout_set(&sc->sc_state_to, lom1_state, sc);
 	}
 
 	if (lom_read(sc, LOM_IDX_PROBE55, &reg) || reg != 0x55 ||
@@ -327,10 +342,33 @@ lom_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 int
 lom1_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 {
+	int error;
+
+	KASSERT(sc->sc_state == LOM_STATE_IDLE);
+
+	if (cold)
+		return lom1_read_polled(sc, reg, val);
+
+	sc->sc_cmd = reg;
+	sc->sc_state = LOM_STATE_READ_CMD;
+	timeout_add_msec(&sc->sc_state_to, 5);
+
+	error = tsleep(&sc->sc_state, PZERO, "lomrd", hz / 10);
+	KASSERT(sc->sc_state == LOM_STATE_READ_DONE);
+
+	*val = sc->sc_data;
+	sc->sc_state = LOM_STATE_IDLE;
+
+	return (error);
+}
+
+int
+lom1_read_polled(struct lom_softc *sc, uint8_t reg, uint8_t *val)
+{
 	uint8_t str;
 	int i;
 
-	delay(15000);	/* XXX */
+	delay(15000);
 
 	/* Wait for input buffer to become available. */
 	for (i = 1000; i > 0; i--) {
@@ -344,7 +382,7 @@ lom1_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, reg);
 
-	delay(15000);	/* XXX */
+	delay(15000);
 
 	/* Wait until the microcontroller fills output buffer. */
 	for (i = 1000; i > 0; i--) {
@@ -366,7 +404,7 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 	uint8_t str;
 	int i;
 
-	delay(15000);	/* XXX */
+	delay(15000);
 
 	/* Wait for input buffer to become available. */
 	for (i = 1000; i > 0; i--) {
@@ -380,7 +418,7 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, reg | 0x80);
 
-	delay(15000);	/* XXX */
+	delay(15000);
 
 	/* Wait until the microcontroller fills output buffer. */
 	for (i = 1000; i > 0; i--) {
@@ -395,6 +433,31 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_DATA, val);
 
 	return (0);
+}
+
+void
+lom1_state(void *arg)
+{
+	struct lom_softc *sc = arg;
+	uint8_t str;
+
+	str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
+	if (str & LOM1_STATUS_BUSY) {
+		timeout_add_msec(&sc->sc_state_to, 5);
+		return;
+	}
+
+	if (sc->sc_state == LOM_STATE_READ_CMD) {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, sc->sc_cmd);
+		sc->sc_state = LOM_STATE_READ_DATA;
+		timeout_add_msec(&sc->sc_state_to, 5);
+		return;
+	}
+
+	KASSERT(sc->sc_state == LOM_STATE_READ_DATA);
+	sc->sc_data = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_DATA);
+	sc->sc_state = LOM_STATE_READ_DONE;
+	wakeup(&sc->sc_state);
 }
 
 int
@@ -624,7 +687,7 @@ lom_refresh(void *arg)
 	 * If our hostname is set and differs from what's stored in
 	 * the LOM, write the new hostname back to the LOM.  Note that
 	 * we include the terminating NUL when writing the hostname
-	 * back to the LOM, otherwise the LOM will print any traling
+	 * back to the LOM, otherwise the LOM will print any trailing
 	 * garbage.
 	 */
 	if (hostnamelen > 0 &&
@@ -686,8 +749,8 @@ lom_wdog_cb(void *arg, int period)
 {
 	struct lom_softc *sc = arg;
 
-	if (period > 127)
-		period = 127;
+	if (period > LOM_WDOG_TIME_MAX)
+		period = LOM_WDOG_TIME_MAX;
 	else if (period < 0)
 		period = 0;
 
