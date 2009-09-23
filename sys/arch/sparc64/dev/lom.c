@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.9 2009/09/23 18:04:05 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.10 2009/09/23 20:36:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -29,14 +29,22 @@
 #include <sparc64/dev/ebusvar.h>
 
 /*
- * The LOM is implemented as a H8/3437 microcontroller which has its
+ * LOMlite is a so far unidentified microcontroller.
+ */
+#define LOM1_STATUS		0x00	/* R */
+#define  LOM1_STATUS_BUSY	0x80
+#define LOM1_CMD		0x00	/* W */
+#define LOM1_DATA		0x01	/* R/W */
+
+/*
+ * LOMlite2 is implemented as a H8/3437 microcontroller which has its
  * on-chip host interface hooked up to EBus.
  */
-#define LOM_DATA		0x00	/* R/W */
-#define LOM_CMD			0x01	/* W */
-#define LOM_STATUS		0x01	/* R */
-#define  LOM_STATUS_OBF		0x01	/* Output Buffer Full */
-#define  LOM_STATUS_IBF		0x02	/* Input Buffer Full  */
+#define LOM2_DATA		0x00	/* R/W */
+#define LOM2_CMD		0x01	/* W */
+#define LOM2_STATUS		0x01	/* R */
+#define  LOM2_STATUS_OBF	0x01	/* Output Buffer Full */
+#define  LOM2_STATUS_IBF	0x02	/* Input Buffer Full  */
 
 #define LOM_IDX_CMD		0x00
 #define  LOM_IDX_CMD_GENERIC	0x00
@@ -76,10 +84,23 @@
 #define  LOM_WDOG_AL3_WDOG	0x04
 #define  LOM_WDOG_AL3_FANPSU	0x08
 #define LOM_IDX_WDOG_TIME	0x32
-#define  LOM_WDOG_TIME_MAX	127
+#define  LOM_WDOG_TIME_MAX	126
 
-#define LOM_IDX_HOSTNAMELEN	0x38
-#define LOM_IDX_HOSTNAME	0x39
+#define LOM1_IDX_HOSTNAME1	0x33
+#define LOM1_IDX_HOSTNAME2	0x34
+#define LOM1_IDX_HOSTNAME3	0x35
+#define LOM1_IDX_HOSTNAME4	0x36
+#define LOM1_IDX_HOSTNAME5	0x37
+#define LOM1_IDX_HOSTNAME6	0x38
+#define LOM1_IDX_HOSTNAME7	0x39
+#define LOM1_IDX_HOSTNAME8	0x3a
+#define LOM1_IDX_HOSTNAME9	0x3b
+#define LOM1_IDX_HOSTNAME10	0x3c
+#define LOM1_IDX_HOSTNAME11	0x3d
+#define LOM1_IDX_HOSTNAME12	0x3e
+
+#define LOM2_IDX_HOSTNAMELEN	0x38
+#define LOM2_IDX_HOSTNAME	0x39
 
 #define LOM_IDX_CONFIG		0x5d
 #define LOM_IDX_FAN1_CAL	0x5e
@@ -112,6 +133,9 @@ struct lom_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
+	int			sc_type;
+#define LOM_LOMLITE		0
+#define LOM_LOMLITE2		2
 	int			sc_space;
 
 	struct ksensor		sc_fan[LOM_MAX_FAN];
@@ -146,9 +170,15 @@ struct cfdriver lom_cd = {
 
 int	lom_read(struct lom_softc *, uint8_t, uint8_t *);
 int	lom_write(struct lom_softc *, uint8_t, uint8_t);
+int	lom1_read(struct lom_softc *, uint8_t, uint8_t *);
+int	lom1_write(struct lom_softc *, uint8_t, uint8_t);
+int	lom2_read(struct lom_softc *, uint8_t, uint8_t *);
+int	lom2_write(struct lom_softc *, uint8_t, uint8_t);
 
 int	lom_init_desc(struct lom_softc *sc);
 void	lom_refresh(void *);
+void	lom1_write_hostname(struct lom_softc *);
+void	lom2_write_hostname(struct lom_softc *);
 
 void	lom_wdog_pat(void *);
 int	lom_wdog_cb(void *, int);
@@ -170,8 +200,11 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	struct lom_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
 	uint8_t reg, fw_rev, config, config2, config3;
-	uint8_t cal, low, len;
+	uint8_t cal, low;
 	int i;
+
+	if (strcmp(ea->ea_name, "SUNW,lomh") == 0)
+		sc->sc_type = LOM_LOMLITE2;
 
 	if (ebus_bus_map(ea->ea_iotag, 0,
 	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
@@ -186,15 +219,25 @@ lom_attach(struct device *parent, struct device *self, void *aux)
                 return;
 	}
 
+	if (sc->sc_type < LOM_LOMLITE2) {
+		/* XXX Magic */
+		bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 3, 0xca);
+	}
+
 	if (lom_read(sc, LOM_IDX_PROBE55, &reg) || reg != 0x55 ||
 	    lom_read(sc, LOM_IDX_PROBEAA, &reg) || reg != 0xaa ||
 	    lom_read(sc, LOM_IDX_FW_REV, &fw_rev) ||
-	    lom_read(sc, LOM_IDX_CONFIG, &config) ||
-	    lom_read(sc, LOM_IDX_CONFIG2, &config2) ||
-	    lom_read(sc, LOM_IDX_CONFIG3, &config3))
+	    lom_read(sc, LOM_IDX_CONFIG, &config))
 	{
 		printf(": not responding\n");
 		return;
+	}
+
+	config2 = config3 = 0;
+	if (sc->sc_type >= LOM_LOMLITE2) {
+		lom_read(sc, LOM_IDX_CONFIG2, &config2);
+		lom_read(sc, LOM_IDX_CONFIG3, &config3);
 	}
 
 	sc->sc_num_fan = min((config >> 5) & 0x7, LOM_MAX_FAN);
@@ -217,6 +260,8 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sc->sc_num_fan; i++) {
 		sc->sc_fan[i].type = SENSOR_FANRPM;
 		sensor_attach(&sc->sc_sensordev, &sc->sc_fan[i]);
+		snprintf(sc->sc_fan[i].desc, sizeof(sc->sc_fan[i].desc),
+		    "fan%d", i + 1);
 	}
 	for (i = 0; i < sc->sc_num_psu; i++) {
 		sc->sc_psu[i].type = SENSOR_INDICATOR;
@@ -239,13 +284,6 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sensordev_install(&sc->sc_sensordev);
-
-	/* Read hostname from LOM. */
-	lom_read(sc, LOM_IDX_HOSTNAMELEN, &len);
-	for (i = 0; i < len; i++) {
-		lom_read(sc, LOM_IDX_HOSTNAME, &reg);
-		sc->sc_hostname[i] = reg;
-	}
 
 	/*
 	 * We configure the watchdog to turn on the fault LED when the
@@ -271,46 +309,137 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 int
 lom_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 {
-	uint8_t str;
-	int i;
-
-	/* Wait for input buffer to become available. */
-	for (i = 1000; i > 0; i--) {
-		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM_STATUS);
-		delay(10);
-		if ((str & LOM_STATUS_IBF) == 0)
-			break;
-	}
-	if (i == 0)
-		return (ETIMEDOUT);
-
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM_CMD, reg);
-
-	/* Wait until the microcontroller fills output buffer. */
-	for (i = 1000; i > 0; i--) {
-		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM_STATUS);
-		delay(10);
-		if (str & LOM_STATUS_OBF)
-			break;
-	}
-	if (i == 0)
-		return (ETIMEDOUT);
-
-	*val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM_DATA);
-	return (0);
+	if (sc->sc_type < LOM_LOMLITE2)
+		return lom1_read(sc, reg, val);
+	else
+		return lom2_read(sc, reg, val);
 }
 
 int
 lom_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
+{
+	if (sc->sc_type < LOM_LOMLITE2)
+		return lom1_write(sc, reg, val);
+	else
+		return lom2_write(sc, reg, val);
+}
+
+int
+lom1_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
+{
+	uint8_t str;
+	int i;
+
+	delay(15000);	/* XXX */
+
+	/* Wait for input buffer to become available. */
+	for (i = 1000; i > 0; i--) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
+		delay(10);
+		if ((str & LOM1_STATUS_BUSY) == 0)
+			break;
+	}
+	if (i == 0)
+		return (ETIMEDOUT);
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, reg);
+
+	delay(15000);	/* XXX */
+
+	/* Wait until the microcontroller fills output buffer. */
+	for (i = 1000; i > 0; i--) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
+		delay(10);
+		if ((str & LOM1_STATUS_BUSY) == 0)
+			break;
+	}
+	if (i == 0)
+		return (ETIMEDOUT);
+
+	*val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_DATA);
+	return (0);
+}
+
+int
+lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
+{
+	uint8_t str;
+	int i;
+
+	delay(15000);	/* XXX */
+
+	/* Wait for input buffer to become available. */
+	for (i = 1000; i > 0; i--) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
+		delay(10);
+		if ((str & LOM1_STATUS_BUSY) == 0)
+			break;
+	}
+	if (i == 0)
+		return (ETIMEDOUT);
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, reg | 0x80);
+
+	delay(15000);	/* XXX */
+
+	/* Wait until the microcontroller fills output buffer. */
+	for (i = 1000; i > 0; i--) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
+		delay(10);
+		if ((str & LOM1_STATUS_BUSY) == 0)
+			break;
+	}
+	if (i == 0)
+		return (ETIMEDOUT);
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_DATA, val);
+
+	return (0);
+}
+
+int
+lom2_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 {
 	uint8_t str;
 	int i;
 
 	/* Wait for input buffer to become available. */
 	for (i = 1000; i > 0; i--) {
-		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM_STATUS);
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
 		delay(10);
-		if ((str & LOM_STATUS_IBF) == 0)
+		if ((str & LOM2_STATUS_IBF) == 0)
+			break;
+	}
+	if (i == 0)
+		return (ETIMEDOUT);
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM2_CMD, reg);
+
+	/* Wait until the microcontroller fills output buffer. */
+	for (i = 1000; i > 0; i--) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
+		delay(10);
+		if (str & LOM2_STATUS_OBF)
+			break;
+	}
+	if (i == 0)
+		return (ETIMEDOUT);
+
+	*val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_DATA);
+	return (0);
+}
+
+int
+lom2_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
+{
+	uint8_t str;
+	int i;
+
+	/* Wait for input buffer to become available. */
+	for (i = 1000; i > 0; i--) {
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
+		delay(10);
+		if ((str & LOM2_STATUS_IBF) == 0)
 			break;
 	}
 	if (i == 0)
@@ -319,43 +448,43 @@ lom_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 	if (sc->sc_space == LOM_IDX_CMD_GENERIC && reg != LOM_IDX_CMD)
 		reg |= 0x80;
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM_CMD, reg);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM2_CMD, reg);
 
 	/* Wait until the microcontroller fills output buffer. */
 	for (i = 1000; i > 0; i--) {
-		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM_STATUS);
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
 		delay(10);
-		if (str & LOM_STATUS_OBF)
+		if (str & LOM2_STATUS_OBF)
 			break;
 	}
 	if (i == 0)
 		return (ETIMEDOUT);
 
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM_DATA);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_DATA);
 
 	/* Wait for input buffer to become available. */
 	for (i = 1000; i > 0; i--) {
-		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM_STATUS);
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
 		delay(10);
-		if ((str & LOM_STATUS_IBF) == 0)
+		if ((str & LOM2_STATUS_IBF) == 0)
 			break;
 	}
 	if (i == 0)
 		return (ETIMEDOUT);
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM_DATA, val);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM2_DATA, val);
 
 	/* Wait until the microcontroller fills output buffer. */
 	for (i = 1000; i > 0; i--) {
-		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM_STATUS);
+		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_STATUS);
 		delay(10);
-		if (str & LOM_STATUS_OBF)
+		if (str & LOM2_STATUS_OBF)
 			break;
 	}
 	if (i == 0)
 		return (ETIMEDOUT);
 
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM_DATA);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM2_DATA);
 
 	/* If we switched spaces, remember the one we're in now. */
 	if (reg == LOM_IDX_CMD)
@@ -370,6 +499,10 @@ lom_init_desc(struct lom_softc *sc)
 	uint8_t val;
 	int i, j, k;
 	int error;
+
+	/* LOMlite doesn't provide sensor descriptions. */
+	if (sc->sc_type < LOM_LOMLITE2)
+		return (0);
 
 	/*
 	 * Read temperature sensor names.
@@ -389,6 +522,9 @@ lom_init_desc(struct lom_softc *sc)
 		if (val == 0xff)
 			break;
 
+		if (j < sizeof (sc->sc_temp[i].desc) - 1)
+			sc->sc_temp[i].desc[j++] = val;
+
 		if (val == '\0') {
 			i++;
 			j = 0;
@@ -397,10 +533,6 @@ lom_init_desc(struct lom_softc *sc)
 
 			break;
 		}
-
-		sc->sc_temp[i].desc[j++] = val;
-		if (j > sizeof (sc->sc_temp[i].desc) - 1)
-			break;
 	}
 
 	/*
@@ -421,6 +553,9 @@ lom_init_desc(struct lom_softc *sc)
 		if (val == 0xff)
 			break;
 
+		if (j < sizeof (sc->sc_fan[i].desc) - 1)
+			sc->sc_fan[i].desc[j++] = val;
+
 		if (val == '\0') {
 			i++;
 			j = 0;
@@ -429,10 +564,6 @@ lom_init_desc(struct lom_softc *sc)
 
 			break;
 		}
-
-		sc->sc_fan[i].desc[j++] = val;
-		if (j > sizeof (sc->sc_fan[i].desc) - 1)
-			break;
 	}
 
 fail:
@@ -498,11 +629,45 @@ lom_refresh(void *arg)
 	 */
 	if (hostnamelen > 0 &&
 	    strncmp(sc->sc_hostname, hostname, sizeof(hostname)) != 0) {
-		lom_write(sc, LOM_IDX_HOSTNAMELEN, hostnamelen + 1);
-		for (i = 0; i < hostnamelen + 1; i++)
-			lom_write(sc, LOM_IDX_HOSTNAME, hostname[i]);
+		if (sc->sc_type < LOM_LOMLITE2)
+			lom1_write_hostname(sc);
+		else
+			lom2_write_hostname(sc);
 		strlcpy(sc->sc_hostname, hostname, sizeof(hostname));
 	}
+}
+
+void
+lom1_write_hostname(struct lom_softc *sc)
+{
+	char name[LOM1_IDX_HOSTNAME12 - LOM1_IDX_HOSTNAME1 + 1];
+	char *p;
+	int i;
+
+	/*
+	 * LOMlite generally doesn't have enough space to store the
+	 * fully qualified hostname.  If the hostname is too long,
+	 * strip off the domain name.
+	 */
+	strlcpy(name, hostname, sizeof(name));
+	if (hostnamelen > sizeof(name)) {
+		p = strchr(name, '.');
+		if (p)
+			*p = '\0';
+	}
+
+	for (i = 0; i < strlen(name) + 1; i++)
+		lom_write(sc, LOM1_IDX_HOSTNAME1 + i, name[i]);
+}
+
+void
+lom2_write_hostname(struct lom_softc *sc)
+{
+	int i;
+
+	lom_write(sc, LOM2_IDX_HOSTNAMELEN, hostnamelen + 1);
+	for (i = 0; i < hostnamelen + 1; i++)
+		lom_write(sc, LOM2_IDX_HOSTNAME, hostname[i]);
 }
 
 void
