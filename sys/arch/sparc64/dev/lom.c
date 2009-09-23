@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.8 2009/09/23 17:53:38 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.9 2009/09/23 18:04:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -173,10 +173,15 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t cal, low, len;
 	int i;
 
-	sc->sc_iot = ea->ea_memtag;
-	if (ebus_bus_map(ea->ea_memtag, 0,
+	if (ebus_bus_map(ea->ea_iotag, 0,
 	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
-	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh)) {
+	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_iotag;
+	} else if (ebus_bus_map(ea->ea_memtag, 0,
+	    EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
+	    ea->ea_regs[0].size, 0, 0, &sc->sc_ioh) == 0) {
+		sc->sc_iot = ea->ea_memtag;
+	} else {
 		printf(": can't map register space\n");
                 return;
 	}
