@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.18 2009/09/22 13:05:20 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.19 2009/09/23 10:26:01 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 22 2009 $
+.Dd $Mdocdate: September 23 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -142,24 +142,28 @@ the default action is to reject the message.
 Following the accept/reject
 decision comes the client's IP address filter:
 .Bl -tag -width Ds
-.It Ic from Ar network
-The rule will match if connection is made from the specified
-.Ar network .
-If missing,
-rule will apply to locally originated connections only.
 .It Ic from all
 Make the rule match regardless of the IP of connecting client.
+.It Ic from local
+The rule matches only locally originating connections.
+This is the default,
+and may be omitted.
+.It Ic from Ar network
+The rule matches if the connection is made from the specified
+.Ar network .
 .El
 .Pp
 Next comes the selection based on the domain the message is sent to:
 .Bl -tag -width Ds
+.It Ic for all
+Make the rule match regardless of the domain it is sent to.
 .It Ic for domain Ar domain
-This rule applies to mail destined for specified
+This rule applies to mail destined for the specified
 .Ar domain .
-This parameter supports
+This parameter supports the
 .Sq *
 wildcard,
-so that one can have single rule for all sub-domains, for example:
+so that a single rule for all sub-domains can be used, for example:
 .Bd -literal -offset indent
 accept for domain "*.example.com" deliver to mbox
 .Ed
@@ -169,17 +173,12 @@ This rule applies to mail destined to
 and to the server's fully qualified domain name,
 as returned by
 .Xr hostname 1 .
-.It Ic for all
-Make the rule match regardless of the domain it is sent to.
 .El
 .Pp
-Finally, method of delivery is specified:
+Finally, the method of delivery is specified:
 .Bl -tag -width Ds
-.It Ic deliver to mbox
-Message is delivered to local user's system mailbox in
-.Pa /var/mail .
 .It Ic deliver to maildir Ar path
-Message is added to a maildir.
+Mail is added to a maildir.
 Its location,
 .Ar path ,
 may contain format specifiers that are expanded before use
@@ -189,14 +188,17 @@ If
 is not provided, then
 .Pa ~/Maildir
 is assumed.
+.It Ic deliver to mbox
+Mail is delivered to the local user's system mailbox in
+.Pa /var/mail .
 .It Ic deliver to mda Ar program
-Message is piped to the specified
+Mail is piped to the specified
 .Ar program ,
-which is run with privileges of the user the message is destined to.
+which is run with the privileges of the user the message is destined to.
 This parameter may use conversion specifiers that are expanded before use
 (see above).
 .It Ic relay
-Message is relayed.
+Mail is relayed.
 The routing decision is based on the DNS system.
 .It Xo
 .Ic relay via
@@ -206,19 +208,19 @@ The routing decision is based on the DNS system.
 .Op Ic certificate Ar name
 .Op Ic enable auth
 .Xc
-Message is relayed through the specified
+Mail is relayed through the specified
 .Ar host
 and
 .Ar port .
 .Pp
-Security of the communication channel may be enforced using the
+The communication channel may be secured using the
 .Ic tls
 or
 .Ic smtps
-option.
-Special keyword,
-.Ic ssl ,
-means any of the two is acceptable:
+options.
+The special keyword
+.Ic ssl
+means that any of the two is acceptable:
 SMTPS is tried first, STARTTLS second.
 If a certificate
 .Ar name
@@ -229,7 +231,7 @@ requests a client certificate.
 Creation of certificates is documented in
 .Xr starttls 8 .
 .Pp
-If SMTPAUTH session with
+If an SMTPAUTH session with
 .Ar host
 is desired, use the
 .Ic enable auth
