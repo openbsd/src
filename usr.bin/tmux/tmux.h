@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.116 2009/09/23 12:03:31 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.117 2009/09/23 14:42:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -958,8 +958,7 @@ struct client {
 	void		 (*prompt_freefn)(void *);
 	void		*prompt_data;
 
-#define PROMPT_HIDDEN 0x1
-#define PROMPT_SINGLE 0x2
+#define PROMPT_SINGLE 0x1
 	int		 prompt_flags;
 
 	u_int		 prompt_hindex;
