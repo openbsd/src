@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.32 2009/09/23 06:18:48 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.33 2009/09/23 07:25:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -130,6 +130,9 @@ tty_start_tty(struct tty *tty)
 {
 	struct termios	 tio;
 	int		 what;
+
+	if (tty->fd == -1)
+		return;
 
 #if 0
 	tty_detect_utf8(tty);
