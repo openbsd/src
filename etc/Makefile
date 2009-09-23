@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.278 2009/05/24 10:45:21 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.279 2009/09/23 20:33:23 matthieu Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -134,8 +134,6 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 444 4.4BSD.dist \
 		    ${DESTDIR}/etc/mtree; \
 		${INSTALL} -c -o root -g wheel -m 444 BSD.local.dist \
-		    ${DESTDIR}/etc/mtree; \
-		${INSTALL} -c -o root -g wheel -m 444 BSD.x11.dist \
 		    ${DESTDIR}/etc/mtree
 	cd ppp; \
 		${INSTALL} -c -o root -g wheel -m 600 chap-secrets \
