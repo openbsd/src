@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.115 2009/09/23 06:18:48 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.116 2009/09/23 12:03:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -19,7 +19,7 @@
 #ifndef TMUX_H
 #define TMUX_H
 
-#define PROTOCOL_VERSION 4
+#define PROTOCOL_VERSION 5
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -130,6 +130,7 @@ enum key_code {
 
 	/* Function keys. */
 	KEYC_F1,
+
 	KEYC_F2,
 	KEYC_F3,
 	KEYC_F4,
@@ -308,7 +309,8 @@ enum msgtype {
 	MSG_WAKEUP,
 	MSG_ENVIRON,
 	MSG_UNLOCK,
-	MSG_LOCK
+	MSG_LOCK,
+	MSG_SHELL
 };
 
 /*
@@ -346,6 +348,10 @@ struct msg_lock_data {
 
 struct msg_environ_data {
 	char	     	var[ENVIRON_LENGTH];
+};
+
+struct msg_shell_data {
+	char	       	shell[MAXPATHLEN];
 };
 
 /* Mode key commands. */
