@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.18 2009/09/20 14:58:12 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.19 2009/09/23 06:05:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -45,7 +45,7 @@ client_init(char *path, struct client_ctx *cctx, int cmdflags, int flags)
 	struct winsize			ws;
 	size_t				size;
 	int				fd, fd2, mode;
-	char			       *name, *term;
+	char			       *term;
 	char		 		rpathbuf[MAXPATHLEN];
 
 	if (realpath(path, rpathbuf) == NULL)
@@ -113,13 +113,8 @@ server_started:
 				*data.term = '\0';
 		}
 
-		*data.tty = '\0';
-		if ((name = ttyname(STDIN_FILENO)) == NULL)
-			fatal("ttyname failed");
-		if (strlcpy(data.tty, name, sizeof data.tty) >= sizeof data.tty)
-			fatalx("ttyname failed");
-
-		fd2 = dup(STDIN_FILENO);
+		if ((fd2 = dup(STDIN_FILENO)) == -1)
+			fatal("dup failed");
 		imsg_compose(&cctx->ibuf, MSG_IDENTIFY,
 		    PROTOCOL_VERSION, -1, fd2, &data, sizeof data);
 	}
