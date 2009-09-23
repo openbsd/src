@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.143 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.144 2009/09/23 09:40:39 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -451,8 +451,8 @@ struct batch {
 	struct message		 message;
 	TAILQ_HEAD(, message)	 messages;
 
-	int			 mboxfd;
-	int			 datafd;
+	FILE			*mboxfp;
+	FILE			*datafp;
 	int			 cleanup_parent;
 };
 

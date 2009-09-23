@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.29 2009/09/04 16:28:42 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.30 2009/09/23 09:40:39 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -105,7 +105,11 @@ mda_dispatch_parent(int sig, short event, void *p)
 				fatalx("mda: mboxfd pass failure");
 
 			/* got user's mbox fd */
-			b->mboxfd = imsg.fd;
+			if ((b->mboxfp = fdopen(imsg.fd, "w")) == NULL) {
+				log_warn("mda: fdopen");
+				mda_done(env, b);
+				break;
+			}
 
 			/* 
 			 * From now on, delivery session must be deinited in
@@ -133,7 +137,11 @@ mda_dispatch_parent(int sig, short event, void *p)
 				break;
 			}
 
-			b->datafd = imsg.fd;
+			if ((b->datafp = fdopen(imsg.fd, "r")) == NULL) {
+				log_warn("mda: fdopen");
+				mda_done(env, b);
+				break;
+			}
 
 			/* got message content, copy it to mbox */
 			if (! mda_store(b)) {
@@ -141,13 +149,13 @@ mda_dispatch_parent(int sig, short event, void *p)
 				mda_done(env, b);
 				break;
 			}
-			close(b->datafd);
-			b->datafd = -1;
+			fclose(b->datafp);
+			b->datafp = NULL;
 
 			/* closing mboxfd will trigger EOF in forked mda */
-			fsync(b->mboxfd);
-			close(b->mboxfd);
-			b->mboxfd = -1;
+			fsync(fileno(b->mboxfp));
+			fclose(b->mboxfp);
+			b->mboxfp = NULL;
 
 			/* ... unless it is maildir, in which case we need to
 			 * "trigger EOF" differently */
@@ -277,8 +285,8 @@ mda_dispatch_runner(int sig, short event, void *p)
 				fatal(NULL);
 			*b = *req;
 			b->env = env;
-			b->mboxfd = -1;
-			b->datafd = -1;
+			b->mboxfp = NULL;
+			b->datafp = NULL;
 			SPLAY_INSERT(batchtree, &env->batch_queue, b);
 			break;
 		}
@@ -414,15 +422,10 @@ mda(struct smtpd *env)
 int
 mda_store(struct batch *b)
 {
-	FILE	 *dst;
-	FILE	 *src;
+	FILE	 *src = b->datafp;
+	FILE	 *dst = b->mboxfp;
 	int	  ch;
  
-	if ((dst = fdopen(b->mboxfd, "w")) == NULL)
-		return 0;
-	if ((src = fdopen(b->datafd, "r")) == NULL)
-		return 0;
-
 	/* add Return-Path to preserve envelope sender */
 	/* XXX: remove user provided Return-Path, if any */
 	if (b->message.sender.user[0] &&
@@ -507,8 +510,10 @@ mda_done(struct smtpd *env, struct batch *b)
 
 		/* deallocate resources */
 		SPLAY_REMOVE(batchtree, &env->batch_queue, b);
-		close(b->mboxfd);
-		close(b->datafd);
+		if (b->mboxfp)
+			fclose(b->mboxfp);
+		if (b->datafp)
+			fclose(b->datafp);
 		free(b);
 	}
 }
