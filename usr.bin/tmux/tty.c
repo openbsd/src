@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.31 2009/09/23 06:12:58 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.32 2009/09/23 06:18:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -28,8 +28,6 @@
 #include "tmux.h"
 
 void	tty_fill_acs(struct tty *);
-
-void	tty_raw(struct tty *, const char *);
 
 int	tty_try_256(struct tty *, u_char, const char *);
 int	tty_try_88(struct tty *, u_char, const char *);

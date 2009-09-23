@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.19 2009/09/22 12:38:10 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.20 2009/09/23 06:18:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -62,6 +62,7 @@ const struct set_option_entry set_option_table[] = {
 	{ "display-time", SET_OPTION_NUMBER, 1, INT_MAX, NULL },
 	{ "history-limit", SET_OPTION_NUMBER, 0, INT_MAX, NULL },
 	{ "lock-after-time", SET_OPTION_NUMBER, 0, INT_MAX, NULL },
+	{ "lock-command", SET_OPTION_STRING, 0, 0, NULL },
 	{ "message-attr", SET_OPTION_ATTRIBUTES, 0, 0, NULL },
 	{ "message-bg", SET_OPTION_COLOUR, 0, 0, NULL },
 	{ "message-fg", SET_OPTION_COLOUR, 0, 0, NULL },
