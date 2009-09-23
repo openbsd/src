@@ -7,5 +7,5 @@ pass in proto udp from any to any flags S/SA
 pass in proto { udp, icmp } from any to any flags S/SA
 
 #no routing address with matching address family found
-pass out dup-to (tun1000000 1.1.1.1) inet6 all
+pass out inet6 from any to any dup-to (tun1000000 1.1.1.1)
 
