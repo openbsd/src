@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.11 2009/09/23 22:04:02 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.12 2009/09/24 18:03:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -183,7 +183,7 @@ int	lom_write(struct lom_softc *, uint8_t, uint8_t);
 int	lom1_read(struct lom_softc *, uint8_t, uint8_t *);
 int	lom1_read_polled(struct lom_softc *, uint8_t, uint8_t *);
 int	lom1_write(struct lom_softc *, uint8_t, uint8_t);
-void	lom1_state(void *);
+void	lom1_do_state(void *);
 int	lom2_read(struct lom_softc *, uint8_t, uint8_t *);
 int	lom2_write(struct lom_softc *, uint8_t, uint8_t);
 
@@ -237,7 +237,7 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 3, 0xca);
 
-		timeout_set(&sc->sc_state_to, lom1_state, sc);
+		timeout_set(&sc->sc_state_to, lom1_do_state, sc);
 	}
 
 	if (lom_read(sc, LOM_IDX_PROBE55, &reg) || reg != 0x55 ||
@@ -351,7 +351,7 @@ lom1_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 
 	sc->sc_cmd = reg;
 	sc->sc_state = LOM_STATE_READ_CMD;
-	timeout_add_msec(&sc->sc_state_to, 5);
+	lom1_do_state(sc);
 
 	error = tsleep(&sc->sc_state, PZERO, "lomrd", hz / 10);
 	KASSERT(sc->sc_state == LOM_STATE_READ_DONE);
@@ -368,12 +368,10 @@ lom1_read_polled(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 	uint8_t str;
 	int i;
 
-	delay(15000);
-
 	/* Wait for input buffer to become available. */
-	for (i = 1000; i > 0; i--) {
+	for (i = 30; i > 0; i--) {
 		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
-		delay(10);
+		delay(1000);
 		if ((str & LOM1_STATUS_BUSY) == 0)
 			break;
 	}
@@ -382,12 +380,10 @@ lom1_read_polled(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, reg);
 
-	delay(15000);
-
 	/* Wait until the microcontroller fills output buffer. */
-	for (i = 1000; i > 0; i--) {
+	for (i = 30; i > 0; i--) {
 		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
-		delay(10);
+		delay(1000);
 		if ((str & LOM1_STATUS_BUSY) == 0)
 			break;
 	}
@@ -404,12 +400,10 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 	uint8_t str;
 	int i;
 
-	delay(15000);
-
 	/* Wait for input buffer to become available. */
-	for (i = 1000; i > 0; i--) {
+	for (i = 30; i > 0; i--) {
 		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
-		delay(10);
+		delay(1000);
 		if ((str & LOM1_STATUS_BUSY) == 0)
 			break;
 	}
@@ -418,12 +412,10 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, reg | 0x80);
 
-	delay(15000);
-
 	/* Wait until the microcontroller fills output buffer. */
-	for (i = 1000; i > 0; i--) {
+	for (i = 30; i > 0; i--) {
 		str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
-		delay(10);
+		delay(1000);
 		if ((str & LOM1_STATUS_BUSY) == 0)
 			break;
 	}
@@ -436,7 +428,7 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 }
 
 void
-lom1_state(void *arg)
+lom1_do_state(void *arg)
 {
 	struct lom_softc *sc = arg;
 	uint8_t str;
