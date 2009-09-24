@@ -1,16 +1,25 @@
-stdin:2: address family (inet/inet6) undefined
-stdin:3: address family (inet/inet6) undefined
-stdin:4: syntax error
-stdin:5: syntax error
-stdin:6: syntax error
+stdin:2: invalid use of interface (lo0) as the source address of a binat-to rule
+stdin:2: invalid use of interface (lo1000000) as the redirect address of a binat-to rule
+stdin:2: skipping rule due to errors
+stdin:2: rule expands to no valid combination
+stdin:3: invalid use of interface (lo0) as the source address of a binat-to rule
+stdin:3: skipping rule due to errors
+stdin:3: rule expands to no valid combination
+stdin:4: binat-to requires a specified source and redirect address
+stdin:4: skipping rule due to errors
+stdin:4: rule expands to no valid combination
+stdin:6: invalid use of interface (lo0) as the source address of a binat-to rule
+stdin:6: skipping rule due to errors
+stdin:6: rule expands to no valid combination
 stdin:7: syntax error
 stdin:8: syntax error
 stdin:9: syntax error
-stdin:11: syntax error
-stdin:12: multiple binat ip addresses
-stdin:13: syntax error
 stdin:14: no translation address with matching address family found.
-stdin:15: binat ip versions must match
+stdin:14: skipping rule due to errors
+stdin:14: rule expands to no valid combination
+stdin:15: rule expands to no valid combination
 stdin:16: no translation address with matching address family found.
-stdin:17: binat ip versions must match
-stdin:18: binat ip versions must match
+stdin:16: skipping rule due to errors
+stdin:16: rule expands to no valid combination
+stdin:17: rule expands to no valid combination
+stdin:18: rule expands to no valid combination

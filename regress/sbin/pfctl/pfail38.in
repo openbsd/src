@@ -1,4 +1,2 @@
-nat on lo0 tag thistagisfaaaaaartooooolooooooooongthistagisfaaaaaartooooolooooooooong -> 127.0.0.1
-rdr on lo0 tag thistagisfaaaaaartooooolooooooooongthistagisfaaaaaartooooolooooooooong -> 127.0.0.1
-no nat on lo0 tag thistagisfaaaaaartooooolooooooooongthistagisfaaaaaartooooolooooooooong
-no rdr on lo0 tag thistagisfaaaaaartooooolooooooooongthistagisfaaaaaartooooolooooooooong
+match out on lo0 tag thistagisfaaaaaartooooolooooooooongthistagisfaaaaaartooooolooooooooong nat-to 127.0.0.1
+match in on lo0 tag thistagisfaaaaaartooooolooooooooongthistagisfaaaaaartooooolooooooooong rdr-to 127.0.0.1
