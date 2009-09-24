@@ -1,0 +1,49 @@
+/*	$OpenBSD: ld.script,v 1.1 2009/09/24 19:51:32 miod Exp $	*/
+
+/*
+ * Copyright (c) 2009 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * Linker script for an alpha static ELF binary, without any C++ code
+ * (ctor/dtor/eh_frame).
+ */
+
+OUTPUT_FORMAT("elf64-alpha")
+OUTPUT_ARCH(alpha)
+ENTRY(__start)
+SECTIONS
+{
+	. = 0xfffffc0000230000;
+	.text :		{ *(.text .text.* .gnu.linkonce.t.*) }
+	PROVIDE(etext = .);
+	.rodata :	{ *(.rodata .rodata.* .gnu.linkonce.r.*) }
+	.data :		{ *(.data .data.* .gnu.linkonce.d.*) }
+	.got :		{ *(.got) }
+	.sdata :	{ *(.sdata .sdata.* .gnu.linkonce.s.*) }
+	.lit8 :		{ *(.lit8) }
+	.lita :		{ *(.lita) }
+	.sdata :	{ *(.sdata .sdata*) }
+	PROVIDE(edata = .);
+	.sbss :		{ *(.sbss .sbss.* .gnu.linkonce.sb.* .scommon) }
+	.bss :		{ *(.bss .bss.* .gnu.linkonce.b.* COMMON) }
+	PROVIDE(_end = .);
+	PROVIDE(end = .);
+	/DISCARD/ :
+	{
+		*(.comment)
+		*(.eh_frame)
+	}
+}

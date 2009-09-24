@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.45 2009/08/09 23:04:49 miod Exp $
+#	$OpenBSD: Makefile.alpha,v 1.46 2009/09/24 19:51:32 miod Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -36,15 +36,15 @@ CDIAGFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wstack-larger-than-2047 -Wvariable-decl
 
 CMACHFLAGS=	-mno-fp-regs -fno-builtin-printf -fno-builtin-log \
-		-finhibit-size-directive -Wa,-mev56
+		-Wa,-mev56
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
 COPTS?= 	-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-traditional -D_LOCORE
-LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4
-STRIPFLAGS=	-g -X -x
+LINKFLAGS=	-T ${ALPHA}/conf/ld.script -X -N -G 4
+STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB_STRUCT}
 DB_STRUCTINFO=	db_structinfo.h
