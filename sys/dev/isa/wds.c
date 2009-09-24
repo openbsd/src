@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.30 2009/09/05 11:49:36 dlg Exp $	*/
+/*	$OpenBSD: wds.c,v 1.31 2009/09/24 19:48:50 miod Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -716,6 +716,7 @@ wds_start_scbs(sc)
 #ifdef WDSDIAG
 		scb->flags |= SCB_SENDING;
 #endif
+		timeout_set(&scb->xs->stimeout, wds_timeout, scb);
 
 		/* Link scb to mbo. */
 #ifdef notyet
@@ -735,10 +736,8 @@ wds_start_scbs(sc)
 		c = WDSC_MSTART(wmbo - wmbx->mbo);
 		wds_cmd(sc, &c, sizeof c);
 
-		if ((scb->flags & SCB_POLLED) == 0) {
-			timeout_set(&scb->xs->stimeout, wds_timeout, scb);
+		if ((scb->flags & SCB_POLLED) == 0)
 			timeout_add_msec(&scb->xs->stimeout, scb->timeout);
-		}
 
 		++sc->sc_mbofull;
 		wds_nextmbx(wmbo, wmbx, mbo);
