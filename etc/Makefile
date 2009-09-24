@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.279 2009/09/23 20:33:23 matthieu Exp $
+#	$OpenBSD: Makefile,v 1.280 2009/09/24 21:45:58 miod Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -302,8 +302,8 @@ update-moduli:
 
 SUBDIR+= etc.alpha etc.amd64 etc.armish etc.aviion etc.hp300 etc.hppa
 SUBDIR+= etc.hppa64 etc.i386 etc.landisk etc.luna88k etc.mac68k etc.macppc
-SUBDIR+= etc.mvme68k etc.mvme88k etc.sgi etc.socppc etc.sparc etc.sparc64
-SUBDIR+= etc.vax etc.zaurus
+SUBDIR+= etc.mvme68k etc.mvme88k etc.palm etc.sgi etc.socppc etc.sparc
+SUBDIR+= etc.sparc64 etc.vax etc.zaurus
 
 .include <bsd.subdir.mk>
 .include <bsd.prog.mk>
