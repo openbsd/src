@@ -1,4 +1,4 @@
-/* $OpenBSD: server-msg.c,v 1.21 2009/09/23 12:03:31 nicm Exp $ */
+/* $OpenBSD: server-msg.c,v 1.22 2009/09/24 07:02:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -104,6 +104,7 @@ server_msg_dispatch(struct client *c)
 			c->flags &= ~CLIENT_SUSPENDED;
 			tty_start_tty(&c->tty);
 			server_redraw_client(c);
+			recalculate_sizes();
 			server_activity = time(NULL);
 			break;
 		case MSG_ENVIRON:

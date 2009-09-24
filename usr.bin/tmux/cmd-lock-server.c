@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-server.c,v 1.4 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-lock-server.c,v 1.5 2009/09/24 07:02:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -45,6 +45,7 @@ int
 cmd_lock_server_exec(unused struct cmd *self, unused struct cmd_ctx *ctx)
 {
 	server_lock();
+	recalculate_sizes();
 
 	return (0);
 }
