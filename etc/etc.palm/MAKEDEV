@@ -3,10 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.palm/MAKEDEV.md,v 1.20 2009/06/03 14:45:40 jj Exp
-#	OpenBSD: MAKEDEV.common,v 1.43 2009/06/03 14:45:39 jj Exp
-#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp
-#	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp
+#	OpenBSD: etc.palm/MAKEDEV.md,v 1.1 2009/09/05 02:19:09 marex Exp 
+#	OpenBSD: MAKEDEV.common,v 1.46 2009/09/23 15:39:56 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -381,11 +381,11 @@ wsmux|wsmouse|wskbd)
 	M wskbd c 63 1 600
 	;;
 
-wsmouse*)
+wsmouse[0-9]*)
 	M wsmouse$U c 62 $U 600
 	;;
 
-wskbd*)
+wskbd[0-9]*)
 	M wskbd$U c 61 $U 600
 	;;
 
