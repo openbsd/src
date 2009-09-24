@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.13 2009/09/03 12:12:18 dlg Exp $
+/*	$OpenBSD: trm.c,v 1.14 2009/09/24 19:47:09 miod Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -463,11 +463,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 
 	memcpy(pSRB->CmdBlock, xs->cmd, xs->cmdlen);
 
-	splx (intflag);
-
 	timeout_set(&xs->stimeout, trm_timeout, pSRB);
-
-	intflag = splbio();
 
 	pSRB->SRBFlag |= TRM_ON_WAITING_SRB;
 	TAILQ_INSERT_TAIL(&sc->waitingSRB, pSRB, link);
