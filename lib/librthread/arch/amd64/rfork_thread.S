@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.2 2005/12/25 00:36:29 tedu Exp $ */
+/*	$OpenBSD: rfork_thread.S,v 1.3 2009/09/24 19:47:35 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -92,4 +92,9 @@ ENTRY(rfork_thread)
 2:
 	popq	%r12
 	popq	%rbx
+#ifdef PIC
+	movq	PIC_GOT(CERROR), %rcx
+	jmp	*%rcx
+#else
 	jmp	CERROR
+#endif
