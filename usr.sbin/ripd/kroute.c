@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.18 2009/09/18 16:17:02 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.19 2009/09/24 12:30:36 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -750,7 +750,6 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_flags = RTF_PROTO3;
 	hdr.rtm_priority = RTP_RIP;
 	if (action == RTM_CHANGE)
 		hdr.rtm_fmask = RTF_REJECT|RTF_BLACKHOLE;
@@ -1118,8 +1117,6 @@ dispatch_rtmsg(void)
 					flags |= F_REJECT;
 				if (rtm->rtm_flags & RTF_DYNAMIC)
 					flags |= F_DYNAMIC;
-				if (rtm->rtm_flags & RTF_MPLS)
-					flags |= F_LDPD_INSERTED;
 				break;
 			default:
 				continue;
