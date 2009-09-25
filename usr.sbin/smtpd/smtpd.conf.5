@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.19 2009/09/23 10:26:01 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.20 2009/09/25 13:44:33 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 23 2009 $
+.Dd $Mdocdate: September 25 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -124,9 +124,52 @@ This means that filter rules using "from local" will be matched.
 .No }
 .Xc
 Maps are used to provide additional configuration information for
-.Xr smtpd 8 ,
-and are described fully in
+.Xr smtpd 8 .
+.Pp
+.Ar map
+may be one of the following:
+.Pp
+.Bl -tag -width "virtualXXX" -compact
+.It alias
+Map queried for mail aliases.
+See
+.Xr aliases 5
+and
+.Xr newaliases 8 .
+.It secrets
+Map queried for remote host credentials.
+See
 .Xr makemap 8 .
+.It virtual
+Map queried for virtual domains.
+See
+.Xr makemap 8 .
+.El
+.Pp
+.Ar maptype
+may be one of the following:
+.Pp
+.Bl -tag -width "fileXXX" -compact
+.It db
+Mappings are stored in a file created using
+.Nm .
+This is the default type if none is specified.
+.It dns
+Not implemented yet.
+.It file
+Not implemented yet.
+.El
+.Pp
+.Ar mapsource
+specifies the source of the map data.
+It must be an absolute path to a file for the
+.Dq file
+and
+.Dq db
+maptypes,
+or a domain name for the
+.Dq dns
+maptype.
 .It Ic accept | reject
 .Xr smtpd 8
 accepts and rejects messages

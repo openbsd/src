@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.8 2009/09/22 13:05:20 jmc Exp $
+.\"	$OpenBSD: makemap.8,v 1.9 2009/09/25 13:44:33 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chechade <gilles@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 22 2009 $
+.Dd $Mdocdate: September 25 2009 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -73,52 +73,6 @@ virtual domains files.
 .Pp
 .El
 .Ex -std makemap
-.Sh MAP TYPES
-There are three types of map known to
-.Xr smtpd 8 :
-.Bl -tag -width Ds
-.It alias
-Map queried when resolving mail aliases.
-Query key is the user part of mail address.
-.It virtual
-Map used for creating virtual domains.
-See the
-.Sx VIRTUAL DOMAINS
-section below.
-.It secrets
-Map queried for credentials
-when relaying mail via server that requires SMTPAUTH
-before accepting mail for relaying.
-Query key is the domain name of the server acting as relay.
-.El
-.Pp
-The configuration directives that are valid in the
-.Ic map
-context are described below:
-.Bl -tag -width Ds
-.It Ic type Ar maptype
-Specifies method of accessing data.
-The following map types are supported:
-.Bl -tag -width Ds
-.It db
-Mappings are stored in a file created using
-.Nm .
-This is the default type if none is specified.
-.It dns
-Not implemented yet.
-.It file
-Not implemented yet.
-.El
-.It Ic source Ar mapsource
-Specifies the source of mapping data.
-It must be absolute path to a file in case of
-.Dq file
-and
-.Dq db
-.Ar maptype ,
-and a domain name in case of
-.Dq dns .
-.El
 .Sh VIRTUAL DOMAINS
 Virtual domains are kept in the virtual map.
 To create single virtual address, add
