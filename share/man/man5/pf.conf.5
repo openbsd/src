@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.458 2009/09/22 10:42:08 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.459 2009/09/25 14:08:04 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 22 2009 $
+.Dd $Mdocdate: September 25 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1094,17 +1094,20 @@ Alias for
 .It Ar set reassemble
 The
 .Ar reassemble
-option turns reassembly of fragmented packets on or off.
+option is used to enable or disable the reassembly of fragmented packets,
+and can be set to
+.Ar on
+(the default) or
+.Ar off .
 If
 .Ar no-df
-is given, fragments with the
+is also specified, fragments with the
 .Ar dont-fragment
-bit set have it cleared before entering the fragment cache,
-and thus the reassembled packet doesn't have
+bit set are reassembled too,
+instead of being dropped;
+the reassembled packet will have the
 .Ar dont-fragment
-set either.
-Setting this option does not affect non-fragmented packets.
-Fragment reassembly is turned on by default.
+bit cleared.
 .It Ar set require-order
 If set to
 .Ar yes ,
@@ -2150,10 +2153,10 @@ Enforces a minimum TTL for matching IP packets.
 Clears the
 .Ar dont-fragment
 bit from a matching IP packet.
-Some operating systems are known to generate fragmented packets with the
+Some operating systems have NFS implementations
+which are known to generate fragmented packets with the
 .Ar dont-fragment
 bit set.
-This is particularly true with NFS.
 .Xr pf 4
 will drop such fragmented
 .Ar dont-fragment
