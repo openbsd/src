@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.2 2009/09/06 00:51:28 marex Exp $
+#	$OpenBSD: RAMDISK,v 1.3 2009/09/25 18:07:16 jasper Exp $
 
 machine	palm	arm
 
@@ -70,8 +70,8 @@ wskbd*		at ukbd? mux 1
 #wsmouse*	at ums? mux 0
 ulpt*		at uhub?		# USB Printer
 atu*		at uhub?		# Atmel AT76C50x based 802.11b
-#aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
-#axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
+aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
+axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cdce*		at uhub?		# CDC Ethernet
 cue*		at uhub?		# CATC USB-EL1201A based Ethernet
 kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
@@ -135,18 +135,18 @@ wd*		at wdc? flags 0x0000
 #rlphy* at mii?			# RealTek 8139 internal PHYs
 #mtdphy* at mii?			# Myson MTD972 PHYs
 #dcphy*	at mii?			# Digital Clone PHYs
-#acphy*	at mii?			# Altima AC101 PHYs
+acphy*	at mii?			# Altima AC101 PHYs
 #amphy*	at mii?			# AMD 79C873 PHYs
 #tqphy*	at mii?			# TDK 78Q212x PHYs
-#bmtphy*	at mii?			# Broadcom 10/100 PHYs
+bmtphy*	at mii?			# Broadcom 10/100 PHYs
 #brgphy* at mii?		# Broadcom Gigabit PHYs
-#eephy* at mii?			# Marvell 88E1000 series PHY
+eephy* at mii?			# Marvell 88E1000 series PHY
 #xmphy*	at mii?			# XaQti XMAC-II PHYs
 #nsgphy*	at mii?			# NS gigabit PHYs
 #urlphy*	at mii?			# Realtek RTL8150L internal PHY
-#rgephy* at mii?		# Realtek 8169S/8110S PHY
+rgephy* at mii?		# Realtek 8169S/8110S PHY
 #ciphy* at mii?			# Cicada CS8201 10/100/1000 copper PHY
-#ukphy*	at mii?			# "unknown" PHYs
+ukphy*	at mii?			# "unknown" PHYs
 
 # Input
 pxa27x_kpc0	at pxaip? addr 0x41500000
