@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2009/09/26 11:12:50 michele Exp $ */
+/*	$OpenBSD: parse.y,v 1.27 2009/09/26 18:24:58 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -101,7 +101,7 @@ typedef struct {
 
 %}
 
-%token	SPLIT_HORIZON TRIGGERED_UPDATES FIBUPDATE REDISTRIBUTE
+%token	SPLIT_HORIZON TRIGGERED_UPDATES FIBUPDATE REDISTRIBUTE RDOMAIN
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	INTERFACE RTLABEL
 %token	COST PASSIVE
@@ -175,6 +175,13 @@ conf_main	: SPLIT_HORIZON STRING {
 				conf->options |= OPT_TRIGGERED_UPDATES;
 			else
 				conf->options &= ~OPT_TRIGGERED_UPDATES;
+		}
+		| RDOMAIN NUMBER {
+			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
+				yyerror("invalid rdomain");
+				YYERROR;
+			}
+			conf->rdomain = $2;
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)
@@ -403,6 +410,7 @@ lookup(char *s)
 	    {"interface",		INTERFACE},
 	    {"no",			NO},
 	    {"passive",			PASSIVE},
+	    {"rdomain",			RDOMAIN},
 	    {"redistribute",		REDISTRIBUTE},
 	    {"rtlabel",			RTLABEL},
 	    {"split-horizon",		SPLIT_HORIZON},

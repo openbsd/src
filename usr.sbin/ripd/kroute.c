@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.19 2009/09/24 12:30:36 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.20 2009/09/26 18:24:58 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -47,6 +47,7 @@ struct {
 	int			fib_sync;
 	int			fd;
 	struct event		ev;
+	u_int			rdomain;
 } kr_state;
 
 struct kroute_node {
@@ -111,7 +112,7 @@ kif_init(void)
 }
 
 int
-kr_init(int fs)
+kr_init(int fs, u_int rdomain)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
@@ -159,6 +160,7 @@ kr_init(int fs)
 		flag_all_rip_routers = 1;
 
 	kr_state.fib_sync = fs; /* now set correct sync mode */
+	kr_state.rdomain = rdomain;
 
 	event_set(&kr_state.ev, kr_state.fd, EV_READ | EV_PERSIST,
 	    kr_dispatch_msg, NULL);
@@ -751,6 +753,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
 	hdr.rtm_priority = RTP_RIP;
+	hdr.rtm_tableid = kr_state.rdomain;
 	if (action == RTM_CHANGE)
 		hdr.rtm_fmask = RTF_REJECT|RTF_BLACKHOLE;
 	hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
@@ -848,7 +851,7 @@ fetchtable(void)
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	mib[6] = 0;	/* rtableid */
+	mib[6] = kr_state.rdomain;	/* rtableid */
 
 	if (sysctl(mib, 7, NULL, &len, NULL, 0) == -1) {
 		log_warn("sysctl");
@@ -1079,7 +1082,7 @@ dispatch_rtmsg(void)
 			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
-			if (rtm->rtm_tableid != 0)
+			if (rtm->rtm_tableid != kr_state.rdomain)
 				continue;
 
 			if (rtm->rtm_pid == kr_state.pid)	/* cause by us */

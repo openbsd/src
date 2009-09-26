@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.7 2009/09/26 11:12:50 michele Exp $ */
+/*	$OpenBSD: interface.c,v 1.8 2009/09/26 18:24:58 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -72,8 +72,23 @@ static const char * const if_event_names[] = {
 void
 if_init(struct ripd_conf *xconf, struct iface *iface)
 {
+	struct ifreq	ifr;
+	u_int		rdomain;
+
 	/* XXX as in ospfd I would like to kill that. This is a design error */
 	iface->fd = xconf->rip_socket;
+
+	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
+	if (ioctl(iface->fd, SIOCGIFRTABLEID, (caddr_t)&ifr) == -1)
+		rdomain = 0;
+	else {
+		rdomain = ifr.ifr_rdomainid;
+		if (setsockopt(iface->fd, IPPROTO_IP, SO_RDOMAIN, &rdomain,
+		    sizeof(rdomain)) == -1)
+			fatal("failed to set rdomain");
+	}
+	if (rdomain != xconf->rdomain)
+		fatalx("interface rdomain mismatch");
 
 	ripe_demote_iface(iface, 0);
 }
