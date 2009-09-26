@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.50 2009/09/21 07:41:18 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.51 2009/09/26 09:46:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1379,7 +1379,7 @@ udl_cmd_insert_buf_comp(struct udl_softc *sc, uint8_t *buf, uint32_t len)
 	 * skip the header and finish up the main-block.  We return zero
 	 * to signal our caller that the header has been skipped.
 	 */
-	if (cb->compblock > UDL_CB_RESTART_SIZE) {
+	if (cb->compblock >= UDL_CB_RESTART_SIZE) {
 		cb->off -= UDL_CMD_WRITE_HEAD_SIZE;
 		cb->compblock -= UDL_CMD_WRITE_HEAD_SIZE;
 		eob = 1;
