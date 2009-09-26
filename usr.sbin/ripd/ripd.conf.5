@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.10 2009/07/31 16:04:34 michele Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.11 2009/09/26 19:45:52 michele Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 31 2009 $
+.Dd $Mdocdate: September 26 2009 $
 .Dt RIPD.CONF 5
 .Os
 .Sh NAME
@@ -76,6 +76,12 @@ do not update the Forwarding Information Base, a.k.a. the kernel routing
 table.
 The default is
 .Ic yes .
+.Pp
+.It Ic rdomain Ar tableid
+Specifies the routing table
+.Xr ripd 8
+should modify.
+Table 0 is the default table.
 .Pp
 .It Xo
 .Op Ic no
