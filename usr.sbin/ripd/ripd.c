@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.16 2009/06/06 08:20:55 eric Exp $ */
+/*	$OpenBSD: ripd.c,v 1.17 2009/09/26 11:12:50 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 		case 'd':
 			debug = 1;
 			break;
-                case 'D':
+		case 'D':
 			if (cmdline_symset(optarg) < 0)
 				log_warnx("could not parse macro definition %s",
 				    optarg);
@@ -338,10 +338,10 @@ main_dispatch_ripe(int fd, short event, void *bula)
 {
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
-	struct imsg	 	 imsg;
+	struct imsg		 imsg;
 	struct demote_msg	 dmsg;
-	ssize_t		 	 n;
-	int		 	 shut = 0;
+	ssize_t			 n;
+	int			 shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -543,28 +543,28 @@ rip_redistribute(struct kroute *kr)
 void
 imsg_event_add(struct imsgev *iev)
 {
-        if (iev->handler == NULL) {
-                imsg_flush(&iev->ibuf);
-                return;
-        }
-        
-        iev->events = EV_READ;
-        if (iev->ibuf.w.queued)
-                iev->events |= EV_WRITE;
-                        
-        event_del(&iev->ev);
-        event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
-        event_add(&iev->ev, NULL);   
+	if (iev->handler == NULL) {
+		imsg_flush(&iev->ibuf);
+		return;
+	}
+
+	iev->events = EV_READ;
+	if (iev->ibuf.w.queued)
+		iev->events |= EV_WRITE;
+
+	event_del(&iev->ev);
+	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
+	event_add(&iev->ev, NULL);
 }
-                         
+
 int
 imsg_compose_event(struct imsgev *iev, u_int16_t type,
     u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
 {
-        int     ret;
-                            
-        if ((ret = imsg_compose(&iev->ibuf, type, peerid,
-            pid, fd, data, datalen)) != -1)
-                imsg_event_add(iev);
-        return (ret);
+	int	ret;
+
+	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
+	    pid, fd, data, datalen)) != -1)
+		imsg_event_add(iev);
+	return (ret);
 }

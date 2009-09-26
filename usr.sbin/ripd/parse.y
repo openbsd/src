@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2009/07/31 16:04:34 michele Exp $ */
+/*	$OpenBSD: parse.y,v 1.26 2009/09/26 11:12:50 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -342,7 +342,7 @@ interfaceopts_l	: interfaceopts_l interfaceoptsl nl
 		| interfaceoptsl optnl
 		;
 
-interfaceoptsl	: PASSIVE  		{ iface->passive = 1; }
+interfaceoptsl	: PASSIVE		{ iface->passive = 1; }
 		| DEMOTE STRING		{
 			if (strlcpy(iface->demote_group, $2,
 			    sizeof(iface->demote_group)) >=

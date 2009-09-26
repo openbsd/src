@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.18 2009/09/24 12:30:36 michele Exp $ */
+/*	$OpenBSD: ripd.h,v 1.19 2009/09/26 11:12:50 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -329,7 +329,7 @@ void		 main_imsg_compose_ripe(int, pid_t, void *, u_int16_t);
 void		 main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
 int		 rip_redistribute(struct kroute *);
 void		 imsg_event_add(struct imsgev *);
-int	 	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
+int		 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 		    pid_t, int, void *, u_int16_t);
 
 /* parse.y */
