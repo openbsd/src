@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.12 2009/09/24 18:03:23 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.13 2009/09/27 17:01:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -119,6 +119,8 @@
 #define LOM_IDX_PROBE55		0x7e	/* Always returns 0x55 */
 #define LOM_IDX_PROBEAA		0x7f	/* Always returns 0xaa */
 
+#define LOM_IDX_WRITE		0x80
+
 #define LOM_IDX4_TEMP_NAME_START	0x40
 #define LOM_IDX4_TEMP_NAME_END		0xff
 
@@ -128,6 +130,13 @@
 #define LOM_MAX_FAN	4
 #define LOM_MAX_PSU	3
 #define LOM_MAX_TEMP	8
+
+struct lom_cmd {
+	uint8_t			lc_cmd;
+	uint8_t			lc_data;
+
+	TAILQ_ENTRY(lom_cmd)	lc_next;
+};
 
 struct lom_softc {
 	struct device		sc_dev;
@@ -156,15 +165,16 @@ struct lom_softc {
 	struct timeout		sc_wdog_to;
 	int			sc_wdog_period;
 	uint8_t			sc_wdog_ctl;
+	struct lom_cmd		sc_wdog_pat;
 
-	uint8_t			sc_cmd;
-	uint8_t			sc_data;
+	TAILQ_HEAD(, lom_cmd)	sc_queue;
+	struct mutex		sc_queue_mtx;
 	struct timeout		sc_state_to;
 	int			sc_state;
 #define LOM_STATE_IDLE		0
-#define LOM_STATE_READ_CMD	1
-#define LOM_STATE_READ_DATA	2
-#define LOM_STATE_READ_DONE	3
+#define LOM_STATE_CMD		1
+#define LOM_STATE_DATA		2
+	int			sc_retry;
 };
 
 int	lom_match(struct device *, void *, void *);
@@ -180,12 +190,18 @@ struct cfdriver lom_cd = {
 
 int	lom_read(struct lom_softc *, uint8_t, uint8_t *);
 int	lom_write(struct lom_softc *, uint8_t, uint8_t);
+void	lom_queue_cmd(struct lom_softc *, struct lom_cmd *);
 int	lom1_read(struct lom_softc *, uint8_t, uint8_t *);
-int	lom1_read_polled(struct lom_softc *, uint8_t, uint8_t *);
 int	lom1_write(struct lom_softc *, uint8_t, uint8_t);
-void	lom1_do_state(void *);
+int	lom1_read_polled(struct lom_softc *, uint8_t, uint8_t *);
+int	lom1_write_polled(struct lom_softc *, uint8_t, uint8_t);
+void	lom1_queue_cmd(struct lom_softc *, struct lom_cmd *);
+void	lom1_dequeue_cmd(struct lom_softc *, struct lom_cmd *);
+void	lom1_process_queue(void *);
+void	lom1_process_queue_locked(struct lom_softc *);
 int	lom2_read(struct lom_softc *, uint8_t, uint8_t *);
 int	lom2_write(struct lom_softc *, uint8_t, uint8_t);
+void	lom2_queue_cmd(struct lom_softc *, struct lom_cmd *);
 
 int	lom_init_desc(struct lom_softc *sc);
 void	lom_refresh(void *);
@@ -237,7 +253,9 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 3, 0xca);
 
-		timeout_set(&sc->sc_state_to, lom1_do_state, sc);
+		TAILQ_INIT(&sc->sc_queue);
+		mtx_init(&sc->sc_queue_mtx, IPL_BIO);
+		timeout_set(&sc->sc_state_to, lom1_process_queue, sc);
 	}
 
 	if (lom_read(sc, LOM_IDX_PROBE55, &reg) || reg != 0x55 ||
@@ -339,25 +357,53 @@ lom_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 		return lom2_write(sc, reg, val);
 }
 
+void
+lom_queue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
+{
+	if (sc->sc_type < LOM_LOMLITE2)
+		return lom1_queue_cmd(sc, lc);
+	else
+		return lom2_queue_cmd(sc, lc);
+}
+
 int
 lom1_read(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 {
+	struct lom_cmd lc;
 	int error;
-
-	KASSERT(sc->sc_state == LOM_STATE_IDLE);
 
 	if (cold)
 		return lom1_read_polled(sc, reg, val);
 
-	sc->sc_cmd = reg;
-	sc->sc_state = LOM_STATE_READ_CMD;
-	lom1_do_state(sc);
+	lc.lc_cmd = reg;
+	lc.lc_data = 0xff;
+	lom1_queue_cmd(sc, &lc);
 
-	error = tsleep(&sc->sc_state, PZERO, "lomrd", hz / 10);
-	KASSERT(sc->sc_state == LOM_STATE_READ_DONE);
+	error = tsleep(&lc, PZERO, "lomrd", hz);
+	if (error)
+		lom1_dequeue_cmd(sc, &lc);
 
-	*val = sc->sc_data;
-	sc->sc_state = LOM_STATE_IDLE;
+	*val = lc.lc_data;
+
+	return (error);
+}
+
+int
+lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
+{
+	struct lom_cmd lc;
+	int error;
+
+	if (cold)
+		return lom1_write_polled(sc, reg, val);
+
+	lc.lc_cmd = reg | LOM_IDX_WRITE;
+	lc.lc_data = val;
+	lom1_queue_cmd(sc, &lc);
+
+	error = tsleep(&lc, PZERO, "lomwr", hz);
+	if (error)
+		lom1_dequeue_cmd(sc, &lc);
 
 	return (error);
 }
@@ -395,7 +441,7 @@ lom1_read_polled(struct lom_softc *sc, uint8_t reg, uint8_t *val)
 }
 
 int
-lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
+lom1_write_polled(struct lom_softc *sc, uint8_t reg, uint8_t val)
 {
 	uint8_t str;
 	int i;
@@ -410,7 +456,8 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 	if (i == 0)
 		return (ETIMEDOUT);
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, reg | 0x80);
+	reg |= LOM_IDX_WRITE;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, reg);
 
 	/* Wait until the microcontroller fills output buffer. */
 	for (i = 30; i > 0; i--) {
@@ -428,28 +475,85 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 }
 
 void
-lom1_do_state(void *arg)
+lom1_queue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
+{
+	mtx_enter(&sc->sc_queue_mtx);
+	TAILQ_INSERT_TAIL(&sc->sc_queue, lc, lc_next);
+	if (sc->sc_state == LOM_STATE_IDLE) {
+		sc->sc_state = LOM_STATE_CMD;
+		lom1_process_queue_locked(sc);
+	}
+	mtx_leave(&sc->sc_queue_mtx);
+}
+
+void
+lom1_dequeue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
+{
+	struct lom_cmd *lcp;
+
+	mtx_enter(&sc->sc_queue_mtx);
+	TAILQ_FOREACH(lcp, &sc->sc_queue, lc_next) {
+		if (lcp == lc) {
+			TAILQ_REMOVE(&sc->sc_queue, lc, lc_next);
+			break;
+		}
+	}
+	mtx_leave(&sc->sc_queue_mtx);
+}
+
+void
+lom1_process_queue(void *arg)
 {
 	struct lom_softc *sc = arg;
+
+	mtx_enter(&sc->sc_queue_mtx);
+	lom1_process_queue_locked(sc);
+	mtx_leave(&sc->sc_queue_mtx);
+}
+
+void
+lom1_process_queue_locked(struct lom_softc *sc)
+{
+	struct lom_cmd *lc;
 	uint8_t str;
+
+	lc = TAILQ_FIRST(&sc->sc_queue);
+	KASSERT(lc != NULL);
 
 	str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
 	if (str & LOM1_STATUS_BUSY) {
-		timeout_add_msec(&sc->sc_state_to, 5);
+		if (sc->sc_retry++ > 30)
+			return;
+		timeout_add_msec(&sc->sc_state_to, 1);
 		return;
 	}
 
-	if (sc->sc_state == LOM_STATE_READ_CMD) {
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, sc->sc_cmd);
-		sc->sc_state = LOM_STATE_READ_DATA;
-		timeout_add_msec(&sc->sc_state_to, 5);
+	sc->sc_retry = 0;
+
+	if (sc->sc_state == LOM_STATE_CMD) {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_CMD, lc->lc_cmd);
+		sc->sc_state = LOM_STATE_DATA;
+		timeout_add_msec(&sc->sc_state_to, 250);
 		return;
 	}
 
-	KASSERT(sc->sc_state == LOM_STATE_READ_DATA);
-	sc->sc_data = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_DATA);
-	sc->sc_state = LOM_STATE_READ_DONE;
-	wakeup(&sc->sc_state);
+	KASSERT(sc->sc_state == LOM_STATE_DATA);
+	if ((lc->lc_cmd & LOM_IDX_WRITE) == 0)
+		lc->lc_data = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_DATA);
+	else
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_DATA, lc->lc_data);
+
+	TAILQ_REMOVE(&sc->sc_queue, lc, lc_next);
+
+	wakeup(lc);
+
+	if (!TAILQ_EMPTY(&sc->sc_queue)) {
+		sc->sc_state = LOM_STATE_CMD;
+		timeout_add_msec(&sc->sc_state_to, 1);
+		return;
+	}
+
+	sc->sc_state = LOM_STATE_IDLE;
 }
 
 int
@@ -546,6 +650,13 @@ lom2_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 		sc->sc_space = val;
 
 	return (0);
+}
+
+void
+lom2_queue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
+{
+	KASSERT(lc->lc_cmd & LOM_IDX_WRITE);
+	lom2_write(sc, lc->lc_cmd, lc->lc_data);
 }
 
 int
@@ -712,7 +823,8 @@ lom1_write_hostname(struct lom_softc *sc)
 	}
 
 	for (i = 0; i < strlen(name) + 1; i++)
-		lom_write(sc, LOM1_IDX_HOSTNAME1 + i, name[i]);
+		if (lom_write(sc, LOM1_IDX_HOSTNAME1 + i, name[i]))
+			break;
 }
 
 void
@@ -731,7 +843,9 @@ lom_wdog_pat(void *arg)
 	struct lom_softc *sc;
 
 	/* Pat the dog. */
-	lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
+	sc->sc_wdog_pat.lc_cmd = LOM_IDX_WDOG_CTL | LOM_IDX_WRITE;
+	sc->sc_wdog_pat.lc_data = sc->sc_wdog_ctl;
+	lom_queue_cmd(sc, &sc->sc_wdog_pat);
 
 	timeout_add_sec(&sc->sc_wdog_to, LOM_WDOG_TIME_MAX / 2);
 }
@@ -768,7 +882,9 @@ lom_wdog_cb(void *arg, int period)
 			timeout_del(&sc->sc_wdog_to);
 		} else {
 			/* Pat the dog. */
-			lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
+			sc->sc_wdog_pat.lc_cmd = LOM_IDX_WDOG_CTL | LOM_IDX_WRITE;
+			sc->sc_wdog_pat.lc_data = sc->sc_wdog_ctl;
+			lom_queue_cmd(sc, &sc->sc_wdog_pat);
 		}
 	}
 	sc->sc_wdog_period = period;
