@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.12 2009/07/15 20:32:28 martynas Exp $	*/
+/*	$OpenBSD: display.c,v 1.13 2009/09/27 06:27:03 maja Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -39,12 +39,16 @@
 #include "wsconsctl.h"
 
 int dpytype;
+u_int width, height, depth;
 int focus;
 struct field_pc brightness, contrast, backlight;
 int burnon, burnoff, vblank, kbdact, msact, outact;
 
 struct field display_field_tab[] = {
     { "type",		&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
+    { "width",		&width,		FMT_UINT,	FLG_RDONLY },
+    { "height",		&height,	FMT_UINT,	FLG_RDONLY },
+    { "depth",		&depth,		FMT_UINT,	FLG_RDONLY },
     { "focus",		&focus,		FMT_INT,	FLG_MODIFY },
     { "brightness",	&brightness,	FMT_PC,		FLG_MODIFY|FLG_INIT },
     { "contrast",	&contrast,	FMT_PC,		FLG_MODIFY|FLG_INIT },
@@ -67,11 +71,12 @@ display_get_values(const char *pre, int fd)
 	struct wsdisplay_addscreendata gscr;
 	struct wsdisplay_param param;
 	struct wsdisplay_burner burners;
+	struct wsdisplay_fbinfo fbinfo;
 	struct field *pf;
 	const char *cmd_str;
 	void *ptr;
 	unsigned long cmd;
-	int bon = 0;
+	int bon = 0, fbon = 0;
 
 	focus = gscr.idx = -1;
 	for (pf = display_field_tab; pf->name; pf++) {
@@ -102,6 +107,12 @@ display_get_values(const char *pre, int fd)
 			ptr = &burners;
 			if (!bon)
 				bzero(&burners, sizeof(burners));
+		} else if (ptr == &height || ptr == &width ||
+			   ptr == &depth) {
+			fillioctl(WSDISPLAYIO_GINFO);
+			ptr = &fbinfo;
+			if (!fbon)
+				bzero(&fbinfo, sizeof(fbinfo));
 		} else
 			cmd = 0;
 
@@ -109,7 +120,9 @@ display_get_values(const char *pre, int fd)
 			fillioctl(WSDISPLAYIO_GETPARAM);
 		}
 
-		if (!bon || cmd != WSDISPLAYIO_GBURNER) {
+		if ((cmd != WSDISPLAYIO_GBURNER && cmd != WSDISPLAYIO_GINFO) ||
+		    (cmd == WSDISPLAYIO_GBURNER && !bon) ||
+		    (cmd == WSDISPLAYIO_GINFO && !fbon)) {
 			errno = ENOTTY;
 			if (!cmd || ioctl(fd, cmd, ptr) < 0) {
 				if (errno == ENOTTY) {
@@ -130,6 +143,13 @@ display_get_values(const char *pre, int fd)
 				outact = burners.flags & WSDISPLAY_BURN_OUTPUT;
 			}
 			bon++;
+		} else if (ptr == &fbinfo) {
+			if (!fbon) {
+				width = fbinfo.width;
+				height = fbinfo.height;
+				depth = fbinfo.depth;
+			}
+			fbon++;
 		} else if (ptr == &param) {
 			struct field_pc *pc = pf->valp;
 
