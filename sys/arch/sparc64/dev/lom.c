@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.13 2009/09/27 17:01:15 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.14 2009/09/27 17:59:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -751,6 +751,10 @@ lom_refresh(void *arg)
 		}
 
 		sc->sc_fan[i].value = (60 * sc->sc_fan_cal[i] * val) / 100;
+		if (val < sc->sc_fan_low[i])
+			sc->sc_fan[i].status = SENSOR_S_CRIT;
+		else
+			sc->sc_fan[i].status = SENSOR_S_OK;
 		sc->sc_fan[i].flags &= ~SENSOR_FINVALID;
 	}
 
