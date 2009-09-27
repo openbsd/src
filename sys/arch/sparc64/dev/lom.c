@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.14 2009/09/27 17:59:55 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.15 2009/09/27 18:08:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -336,7 +336,9 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 
 	wdog_register(sc, lom_wdog_cb);
 
-	printf(": rev %d.%d\n", fw_rev >> 4, fw_rev & 0x0f);
+	printf(": %s rev %d.%d\n",
+	    sc->sc_type < LOM_LOMLITE2 ? "LOMlite" : "LOMlite2",
+	    fw_rev >> 4, fw_rev & 0x0f);
 }
 
 int
