@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.2 2005/08/01 15:43:12 miod Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.3 2009/09/27 18:20:13 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,14 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <uvm/uvm.h>
+
+#include <mips64/sysarch.h>
+
+#include <machine/autoconf.h>
+
+int	mips64_cacheflush(struct proc *, struct mips64_cacheflush_args *);
+
 int
 sys_sysarch(p, v, retval)
 	struct proc *p;
@@ -63,9 +71,75 @@ sys_sysarch(p, v, retval)
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
+	case MIPS64_CACHEFLUSH:
+	    {
+		struct mips64_cacheflush_args cfa;
+
+		if ((error = copyin(SCARG(uap, parms), &cfa, sizeof cfa)) != 0)
+			return error;
+		error = mips64_cacheflush(p, &cfa);
+	    }
+		break;
 	default:
 		error = EINVAL;
 		break;
 	}
-	return(error);
+
+	return error;
+}
+
+int
+mips64_cacheflush(struct proc *p, struct mips64_cacheflush_args *cfa)
+{
+	vaddr_t va;
+	paddr_t pa;
+	size_t sz, chunk;
+	struct vm_map *map = &p->p_vmspace->vm_map;
+	struct pmap *pm = map->pmap;
+	struct vm_map_entry *entry;
+	int rc = 0;
+
+	/*
+	 * Sanity checks.
+	 */
+	if ((cfa->which & BCACHE) != cfa->which)
+		return EINVAL;
+
+	if (cfa->which == 0)
+		return 0;
+
+	va = cfa->va;
+	sz = cfa->sz;
+	chunk = PAGE_SIZE - (va & PAGE_MASK);
+	vm_map_lock_read(map);
+	if (va < vm_map_min(map) || va + sz > vm_map_max(map) || va + sz < va)
+		rc = EFAULT;
+	else while (sz != 0) {
+		if (chunk > sz)
+			chunk = sz;
+
+		/*
+		 * Check for a resident mapping first, this is faster than
+		 * uvm_map_lookup_entry().
+		 */
+		if (pmap_extract(pm, va, &pa) != 0) {
+			if (cfa->which & ICACHE)
+				Mips_InvalidateICache(va, chunk);
+			if (cfa->which & DCACHE)
+				Mips_HitSyncDCache(va, chunk);
+		} else {
+			if (uvm_map_lookup_entry(map, va, &entry) == FALSE) {
+				rc = EFAULT;
+				break;
+			}
+			/* else simply not resident at the moment */
+		}
+
+		va += chunk;
+		sz -= chunk;
+		chunk = PAGE_SIZE;
+	}
+	vm_map_unlock_read(map);
+
+	return rc;
 }
