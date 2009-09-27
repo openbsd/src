@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.51 2009/09/26 09:46:51 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.52 2009/09/27 18:17:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -30,7 +30,9 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 #include <uvm/uvm.h>
 
 #include <machine/bus.h>
@@ -444,7 +446,7 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct udl_softc *sc;
 	struct wsdisplay_fbinfo *wdf;
 	struct udl_ioctl_damage *d;
-	int r, mode;
+	int r, error, mode;
 
 	sc = v;
 
@@ -488,11 +490,18 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case UDLIO_DAMAGE:
 		d = (struct udl_ioctl_damage *)data;
+		d->status = UDLIO_STATUS_OK;
 		r = udl_damage(sc, sc->sc_fbmem, d->x1, d->x2, d->y1, d->y2);
 		if (r != 0) {
-			d->status = UDLIO_STATUS_FAILED;
-		} else {
-			d->status = UDLIO_STATUS_OK;
+			error = tsleep(sc, 0, "udlio", hz / 100);
+			if (error) {
+				d->status = UDLIO_STATUS_FAILED;
+			} else {
+				r = udl_damage(sc, sc->sc_fbmem, d->x1, d->x2,
+				    d->y1, d->y2);
+				if (r != 0)
+					d->status = UDLIO_STATUS_FAILED;
+			}
 		}
 		break;
 	default:
@@ -1663,6 +1672,9 @@ skip:
 	/* free xfer buffer */
 	cx->busy = 0;
 	sc->sc_cmd_xfer_cnt--;
+
+	/* wakeup UDLIO_DAMAGE if it sleeps for a free xfer buffer */
+	wakeup(sc);
 }
 
 /* ---------- */
