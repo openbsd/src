@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.79 2009/06/24 15:02:18 todd Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.80 2009/09/27 19:30:38 sthen Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -224,7 +224,7 @@ vga*	at pci?				# PCI VGA graphics
 tga*	at pci?				# DEC ZLXp-E[123] graphics
 
 # Media Independent Interface (mii) drivers
-eephy*	at mii?				# Marvell PHYs for Intel GigE
+eephy*	at mii?				# Marvell PHYs
 exphy*	at mii?				# 3Com internal PHYs
 inphy*	at mii?				# Intel 82555 PHYs
 iophy*	at mii?				# Intel 82553 PHYs
