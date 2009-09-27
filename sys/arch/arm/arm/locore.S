@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 2009/09/27 18:14:52 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ ASENTRY_NP(start)
 
 	adr	r0, .Lmainreturned
 	b	_C_LABEL(panic)
-	/* NOTEACHED */
+	/* NOTREACHED */
 
 .Lstart:
 	.word	_edata
@@ -97,7 +97,7 @@ svcstk:
 	.align	0
 
 #ifndef OFW
-	/* OFW based systems will used OF_boot() */
+	/* OFW based systems will use OF_boot() */
 	
 .Lcpufuncs:	
 	.word	_C_LABEL(cpufuncs)
