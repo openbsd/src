@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.10 2009/07/25 10:52:19 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.11 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -113,7 +113,6 @@ listen_revents(struct file *file, struct pollfd *pfd)
 	int sock;
 
 	if (pfd->revents & POLLIN) {
-		DPRINTF("listen_revents: %s: accepting connection\n", f->path);
 		caddrlen = sizeof(caddrlen);
 		sock = accept(f->fd, &caddr, &caddrlen);
 		if (sock < 0) {

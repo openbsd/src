@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.10 2009/08/26 06:10:15 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.11 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,6 +58,7 @@ struct sock {
 	int lastvol;			/* last volume */
 	int slot;			/* mixer ctl slot number */
 	struct opt *opt;		/* "subdevice" definition */
+	char who[12];			/* label, mostly for debugging */
 };
 
 struct sock *sock_new(struct fileops *, int fd);

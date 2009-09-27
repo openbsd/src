@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.29 2009/08/21 16:48:03 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.30 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -131,8 +131,6 @@ dev_loopdone(void)
 {
 	struct file *f;
 
-	DPRINTF("dev_loopdone:\n");
-
 	dev_sub->refs--;
 	dev_sub = NULL;
 	dev_mix->refs--;
@@ -183,23 +181,9 @@ dev_init(char *devpath,
 	if (f == NULL)
 		return 0;
 	if (dipar) {
-#ifdef DEBUG
-		if (debug_level > 0) {
-			fprintf(stderr, "dev_init: hw recording ");
-			aparams_print(dipar);
-			fprintf(stderr, "\n");
-		}
-#endif
 		dev_rate = dipar->rate;
 	}
 	if (dopar) {
-#ifdef DEBUG
-		if (debug_level > 0) {
-			fprintf(stderr, "dev_init: hw playing ");
-			aparams_print(dopar);
-			fprintf(stderr, "\n");
-		}
-#endif
 		dev_rate = dopar->rate;
 	}
 	ibufsz = obufsz = dev_bufsz;
@@ -234,7 +218,7 @@ dev_init(char *devpath,
 		 * Append a converter, if needed.
 		 */
 		if (!aparams_eqenc(dipar, &ipar)) {
-			conv = dec_new("subin", dipar);
+			conv = dec_new("rec", dipar);
 			aproc_setin(conv, buf);
 			buf = abuf_new(nfr, &ipar);
 			aproc_setout(conv, buf);
@@ -245,7 +229,7 @@ dev_init(char *devpath,
 		/*
 		 * Append a "sub" to which clients will connect.
 		 */
-		dev_sub = sub_new("sub", nfr);
+		dev_sub = sub_new("rec", nfr);
 		dev_sub->refs++;
 		aproc_setin(dev_sub, buf);
 	} else {
@@ -271,7 +255,7 @@ dev_init(char *devpath,
 		 * Append a converter, if needed.
 		 */
 		if (!aparams_eqenc(&opar, dopar)) {
-			conv = enc_new("mixout", dopar);
+			conv = enc_new("play", dopar);
 			aproc_setout(conv, buf);
 			buf = abuf_new(nfr, &opar);
 			aproc_setin(conv, buf);
@@ -282,7 +266,7 @@ dev_init(char *devpath,
 		/*
 		 * Append a "mix" to which clients will connect.
 		 */
-		dev_mix = mix_new("mix", nfr);
+		dev_mix = mix_new("play", nfr);
 		dev_mix->refs++;
 		aproc_setout(dev_mix, buf);
 	} else {
@@ -290,7 +274,6 @@ dev_init(char *devpath,
 		dev_mix = NULL;
 	}
 	dev_bufsz = (dopar) ? obufsz : ibufsz;
-	DPRINTF("dev_init: using %u fpb\n", dev_bufsz);
 	dev_midi = ctl_new("ctl");
 	dev_midi->refs++;
 	dev_start();
@@ -306,7 +289,6 @@ dev_done(void)
 {
 	struct file *f;
 
-	DPRINTF("dev_done: dev_mix = %p, dev_sub = %p\n", dev_mix, dev_sub);
 	dev_midi->refs--;
 	aproc_del(dev_midi);
 	dev_midi = NULL;
@@ -426,7 +408,6 @@ dev_getep(struct abuf **sibuf, struct abuf **sobuf)
 		ibuf = *sibuf;
 		for (;;) {
 			if (!ibuf || !ibuf->rproc) {
-				DPRINTF("dev_getep: reader desappeared\n");
 				return 0;
 			}
 			if (ibuf->rproc == dev_mix)
@@ -439,7 +420,6 @@ dev_getep(struct abuf **sibuf, struct abuf **sobuf)
 		obuf = *sobuf;
 		for (;;) {
 			if (!obuf || !obuf->wproc) {
-				DPRINTF("dev_getep: writer desappeared\n");
 				return 0;
 			}
 			if (obuf->wproc == dev_sub)
@@ -481,9 +461,6 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
 	    rbuf->bpf * (pbuf->abspos + pbuf->used) -
 	    pbuf->bpf *  rbuf->abspos;
 	delta /= pbuf->bpf * rbuf->bpf;
-	DPRINTF("dev_sync: delta = %d, ppos = %u, pused = %u, rpos = %u\n",
-	    delta, pbuf->abspos, pbuf->used, rbuf->abspos);
-
 	if (delta > 0) {
 		/*
 		 * If the play chain is ahead (most cases) drop some of
@@ -498,8 +475,7 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
 		 */
 		ibuf->silence += -delta * ibuf->bpf;
 		abuf_opos(ibuf, delta);
-	} else
-		DPRINTF("dev_sync: nothing to do\n");
+	}
 }
 
 /*
@@ -609,13 +585,10 @@ dev_attach(char *name,
 void
 dev_setvol(struct abuf *ibuf, int vol)
 {
-	DPRINTF("dev_setvol: %p\n", ibuf);
 	if (!dev_getep(&ibuf, NULL)) {
-		DPRINTF("dev_setvol: not connected yet\n");
 		return;
 	}
 	ibuf->mixvol = vol;
-	DPRINTF("dev_setvol: %p -> %d\n", ibuf, vol);
 }
 
 /*
@@ -628,10 +601,6 @@ dev_clear(void)
 	struct abuf *buf;
 
 	if (dev_mix) {
-		if (!LIST_EMPTY(&dev_mix->ibuflist)) {
-			fprintf(stderr, "dev_clear: mixer not idle\n");
-			abort();
-		}
 		buf = LIST_FIRST(&dev_mix->obuflist);
 		while (buf) {
 			abuf_clear(buf);
@@ -640,10 +609,6 @@ dev_clear(void)
 		mix_clear(dev_mix);
 	}
 	if (dev_sub) {
-		if (!LIST_EMPTY(&dev_sub->obuflist)) {
-			fprintf(stderr, "dev_suspend: demux not idle\n");
-			abort();
-		}
 		buf = LIST_FIRST(&dev_sub->ibuflist);
 		while (buf) {
 			abuf_clear(buf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.8 2009/07/25 10:52:19 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.9 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -75,6 +75,7 @@ void filelist_unlisten(void);
 
 struct file *file_new(struct fileops *, char *, unsigned);
 void file_del(struct file *);
+void file_dbg(struct file *);
 
 void file_attach(struct file *, struct aproc *, struct aproc *);
 unsigned file_read(struct file *, unsigned char *, unsigned);

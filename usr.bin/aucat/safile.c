@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.17 2009/09/19 16:30:10 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.18 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,9 +35,6 @@ struct safile {
 	struct file file;
 	struct sio_hdl *hdl;
 	int started;
-#ifdef DEBUG
-	struct timeval itv, otv;
-#endif
 };
 
 void safile_close(struct file *);
@@ -50,7 +47,7 @@ int safile_pollfd(struct file *, struct pollfd *, int);
 int safile_revents(struct file *, struct pollfd *);
 
 struct fileops safile_ops = {
-	"sndio",
+	"sio",
 	sizeof(struct safile),
 	safile_close,
 	safile_read,
@@ -146,7 +143,6 @@ safile_new(struct fileops *ops, char *path,
 	}
 	*bufsz = par.bufsz;
 	*round = par.round;
-	DPRINTF("safile_new: using %u(%u) fpb\n", *bufsz, *round);
 	f = (struct safile *)file_new(ops, "hdl", sio_nfds(hdl));
 	if (f == NULL)
 		goto bad_close;
@@ -165,12 +161,10 @@ safile_start(struct file *file)
 	struct safile *f = (struct safile *)file;
 
 	if (!sio_start(f->hdl)) {
-		DPRINTF("safile_start: sio_start() failed\n");
 		file_close(file);
 		return;
 	}
 	f->started = 1;
-	DPRINTF("safile_start: play/rec started\n");
 }
 
 void
@@ -180,11 +174,9 @@ safile_stop(struct file *file)
 
 	f->started = 0;
 	if (!sio_eof(f->hdl) && !sio_stop(f->hdl)) {
-		DPRINTF("safile_stop: sio_stop() filed\n");
 		file_close(file);
 		return;
 	}
-	DPRINTF("safile_stop: play/rec stopped\n");
 }
 
 unsigned
@@ -192,36 +184,16 @@ safile_read(struct file *file, unsigned char *data, unsigned count)
 {
 	struct safile *f = (struct safile *)file;
 	unsigned n;
-#ifdef DEBUG
-	struct timeval tv0, tv1, dtv;
-	unsigned us;
 
-	if (!(f->file.state & FILE_ROK)) {
-		DPRINTF("safile_read: %s: bad state\n", f->file.name);
-		abort();
-	}
-	gettimeofday(&tv0, NULL);
-#endif
 	n = sio_read(f->hdl, data, count);
 	if (n == 0) {
 		f->file.state &= ~FILE_ROK;
 		if (sio_eof(f->hdl)) {
-			fprintf(stderr, "safile_read: eof\n");
 			file_eof(&f->file);
 		} else {
-			DPRINTFN(3, "safile_read: %s: blocking...\n",
-			    f->file.name);
 		}
 		return 0;
 	}
-#ifdef DEBUG
-	gettimeofday(&tv1, NULL);
-	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
-	DPRINTFN(us < 5000 ? 4 : 2,
-	    "safile_read: %s: got %d bytes in %uus\n",
-	    f->file.name, n, us);
-#endif
 	return n;
 
 }
@@ -231,36 +203,16 @@ safile_write(struct file *file, unsigned char *data, unsigned count)
 {
 	struct safile *f = (struct safile *)file;
 	unsigned n;
-#ifdef DEBUG
-	struct timeval tv0, tv1, dtv;
-	unsigned us;
 
-	if (!(f->file.state & FILE_WOK)) {
-		DPRINTF("safile_write: %s: bad state\n", f->file.name);
-		abort();
-	}
-	gettimeofday(&tv0, NULL);
-#endif
 	n = sio_write(f->hdl, data, count);
 	if (n == 0) {
 		f->file.state &= ~FILE_WOK;
 		if (sio_eof(f->hdl)) {
-			fprintf(stderr, "safile_write: %s: hup\n", f->file.name);
 			file_hup(&f->file);
 		} else {
-			DPRINTFN(3, "safile_write: %s: blocking...\n",
-			    f->file.name);
 		}
 		return 0;
 	}
-#ifdef DEBUG
-	gettimeofday(&tv1, NULL);
-	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
-	DPRINTFN(us < 5000 ? 4 : 2,
-	    "safile_write: %s: wrote %d bytes in %uus\n",
-	    f->file.name, n, us);
-#endif
 	return n;
 }
 

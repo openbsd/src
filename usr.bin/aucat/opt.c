@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.1 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.2 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,15 +53,6 @@ opt_new(char *name, struct aparams *wpar, struct aparams *rpar, int maxweight)
 	o->wpar = *wpar;
 	o->rpar = *rpar;
 	o->maxweight = maxweight;
-#ifdef DEBUG
-	if (debug_level > 0) {
-		fprintf(stderr, "opt_new: %s: wpar=", o->name);
-		aparams_print(&o->wpar);
-		fprintf(stderr, ", rpar=");
-		aparams_print(&o->rpar);
-		fprintf(stderr, ", vol=%u\n", o->maxweight);
-	}
-#endif
 	SLIST_INSERT_HEAD(&opt_list, o, entry);
 }
 
@@ -72,11 +63,9 @@ opt_byname(char *name)
 
 	SLIST_FOREACH(o, &opt_list, entry) {
 		if (strcmp(name, o->name) == 0) {
-			DPRINTF("opt_byname: %s found\n", o->name);
 			return o;
 		}
 	}
-	DPRINTF("opt_byname: %s not found\n", name);
 	return NULL;
 }
 

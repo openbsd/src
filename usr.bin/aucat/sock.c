@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.28 2009/08/28 06:37:06 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.29 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -57,7 +57,6 @@ rsock_done(struct aproc *p)
 {
 	struct sock *f = (struct sock *)p->u.io.file;
 
-	DPRINTFN(1, "rsock_done: %p\n", f);
 	if (f == NULL)
 		return;
 	sock_reset(f);
@@ -77,8 +76,6 @@ rsock_in(struct aproc *p, struct abuf *ibuf_dummy)
 	struct sock *f = (struct sock *)p->u.io.file;
 	struct abuf *obuf;
 
-	DPRINTFN(4, "rsock_in: %p\n", f);
-
 	if (!sock_read(f))
 		return 0;
 	obuf = LIST_FIRST(&p->obuflist);
@@ -97,8 +94,6 @@ rsock_out(struct aproc *p, struct abuf *obuf)
 	if (f->pipe.file.state & FILE_RINUSE)
 		return 0;
 
-	DPRINTFN(4, "rsock_out: %p\n", f);
-
 	/*
 	 * When calling sock_read(), we may receive a ``STOP'' command,
 	 * and detach ``obuf''. In this case, there's no more caller and
@@ -116,14 +111,12 @@ rsock_out(struct aproc *p, struct abuf *obuf)
 void
 rsock_eof(struct aproc *p, struct abuf *ibuf_dummy)
 {
-	DPRINTFN(3, "rsock_eof: %p\n", p->u.io.file);
 	aproc_del(p);
 }
 
 void
 rsock_hup(struct aproc *p, struct abuf *ibuf)
 {
-	DPRINTFN(3, "rsock_hup: %p\n", p->u.io.file);
 	aproc_del(p);
 }
 
@@ -136,9 +129,6 @@ rsock_opos(struct aproc *p, struct abuf *obuf, int delta)
 		return;
 
 	f->delta += delta;
-	DPRINTFN(3, "rsock_opos: %p: delta = %d, f->delta = %d\n",
-	    f, delta, f->delta);
-
 	/*
 	 * Negative deltas are xrun notifications for internal uses
 	 * only. Don't generate a packet for this, the client will be
@@ -171,7 +161,6 @@ wsock_done(struct aproc *p)
 {
 	struct sock *f = (struct sock *)p->u.io.file;
 
-	DPRINTFN(1, "wsock_done: %p\n", f);
 	if (f == NULL)
 		return;
 	sock_reset(f);
@@ -192,8 +181,6 @@ wsock_in(struct aproc *p, struct abuf *ibuf)
 
 	if (f->pipe.file.state & FILE_WINUSE)
 		return 0;
-
-	DPRINTFN(4, "wsock_in: %p\n", f);
 	/*
 	 * See remark in rsock_out().
 	 */
@@ -210,10 +197,7 @@ wsock_out(struct aproc *p, struct abuf *obuf_dummy)
 	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
 	struct sock *f = (struct sock *)p->u.io.file;
 
-	DPRINTFN(3, "wsock_out: %p\n", f);
-
 	if (ibuf) {
-		DPRINTFN(3, "wsock_out: %p, filling ibuf\n", f);
 		if (!abuf_fill(ibuf))
 			return 0;
 	}
@@ -225,14 +209,12 @@ wsock_out(struct aproc *p, struct abuf *obuf_dummy)
 void
 wsock_eof(struct aproc *p, struct abuf *obuf)
 {
-	DPRINTFN(3, "wsock_eof: %p\n", p->u.io.file);
 	aproc_del(p);
 }
 
 void
 wsock_hup(struct aproc *p, struct abuf *obuf_dummy)
 {
-	DPRINTFN(3, "wsock_hup: %p\n", p->u.io.file);
 	aproc_del(p);
 }
 
@@ -245,8 +227,6 @@ wsock_ipos(struct aproc *p, struct abuf *obuf, int delta)
 		return;
 
 	f->delta += delta;
-	DPRINTFN(3, "wsock_ipos: %p, delta = %d, f->delta = %d\n",
-	    f, delta, f->delta);
 	/*
 	 * Negative deltas are xrun notifications for internal uses
 	 * only. Don't generate a packet for this, the client will be
@@ -327,7 +307,6 @@ sock_freebuf(struct sock *f)
 	struct abuf *rbuf, *wbuf;
 
 	f->pstate = SOCK_INIT;
-	DPRINTF("sock_freebuf:\n");
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
 	if (rbuf)
 		abuf_eof(rbuf);
@@ -354,9 +333,6 @@ sock_allocbuf(struct sock *f)
 	}
 	f->delta = 0;
 	f->tickpending = 0;
-
-	DPRINTF("sock_allocbuf: %p, using %u frames buffer\n", f, f->bufsz);
-
 	f->pstate = SOCK_START;
 	if (!(f->mode & AMSG_PLAY))
 		(void)sock_attach(f, 0);
@@ -374,7 +350,6 @@ sock_setvol(void *arg, unsigned vol)
 	f->vol = vol;
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
 	if (!rbuf) {
-		DPRINTF("sock_setvol: no read buffer yet\n");
 		return;
 	}
 	dev_setvol(rbuf, MIDI_TO_ADATA(vol));
@@ -398,7 +373,6 @@ sock_attach(struct sock *f, int force)
 	if (!force && rbuf && ABUF_WOK(rbuf))
 		return 0;
 
-	DPRINTF("sock_attach: %p\n", f);
 	f->pstate = SOCK_RUN;
 
 	/*
@@ -451,7 +425,6 @@ sock_rmsg(struct sock *f)
 
 	while (f->rtodo > 0) {
 		if (!(f->pipe.file.state & FILE_ROK)) {
-			DPRINTFN(4, "sock_rmsg: blk, rtodo = %u\n", f->rtodo);
 			return 0;
 		}
 		data = (unsigned char *)&f->rmsg;
@@ -461,7 +434,6 @@ sock_rmsg(struct sock *f)
 			return 0;
 		f->rtodo -= count;
 	}
-	DPRINTFN(4, "sock_rmsg: %p: done\n", f);
 	return 1;
 }
 
@@ -478,7 +450,6 @@ sock_wmsg(struct sock *f, struct amsg *m, unsigned *ptodo)
 
 	while (*ptodo > 0) {
 		if (!(f->pipe.file.state & FILE_WOK)) {
-			DPRINTFN(4, "sock_wmsg: blk, *ptodo = %u\n", *ptodo);
 			return 0;
 		}
 		data = (unsigned char *)m;
@@ -488,7 +459,6 @@ sock_wmsg(struct sock *f, struct amsg *m, unsigned *ptodo)
 			return 0;
 		*ptodo -= count;
 	}
-	DPRINTFN(4, "sock_wmsg: %p: done\n", f);
 	return 1;
 }
 
@@ -504,12 +474,6 @@ sock_rdata(struct sock *f)
 	unsigned char *data;
 	unsigned count, n;
 
-#ifdef DEBUG
-	if (f->pstate != SOCK_MIDI && f->rtodo == 0) {
-		fprintf(stderr, "sock_rdata: bad call: zero arg\n");
-		abort();
-	}
-#endif
 	p = f->pipe.file.rproc;
 	obuf = LIST_FIRST(&p->obuflist);
 	if (obuf == NULL)
@@ -542,12 +506,6 @@ sock_wdata(struct sock *f)
 #define ZERO_MAX 0x1000
 	static char zero[ZERO_MAX];
 
-#ifdef DEBUG
-	if (f->pstate != SOCK_MIDI && f->wtodo == 0) {
-		fprintf(stderr, "sock_wdata: bad call: zero arg\n");
-		abort();
-	}
-#endif
 	if (!(f->pipe.file.state & FILE_WOK))
 		return 0;
 	p = f->pipe.file.wproc;
@@ -592,12 +550,11 @@ sock_setpar(struct sock *f)
 
 	if (AMSG_ISSET(p->legacy_mode)) {
 		/*
-		 * XXX: allow old clients that don't support HELLO
-		 * to work
+		 * allow old clients that don't support HELLO to work
+		 * XXX: remove this.
 		 */
 		if ((p->legacy_mode & ~(AMSG_PLAY | AMSG_REC)) ||
 		    (p->legacy_mode == 0)) {
-			DPRINTF("sock_setpar: bad mode %x\n", p->legacy_mode);
 			return 0;
 		}
 		f->mode = 0;
@@ -605,23 +562,19 @@ sock_setpar(struct sock *f)
 			f->mode |= AMSG_PLAY;
 		if ((p->legacy_mode & AMSG_REC) && dev_sub)
 			f->mode |= AMSG_REC;
-		DPRINTF("sock_setpar: mode -> %x\n", f->mode);
 	}
 	if (AMSG_ISSET(p->bits)) {
 		if (p->bits < BITS_MIN || p->bits > BITS_MAX) {
-			DPRINTF("sock_setpar: bits out of bounds\n");
 			return 0;
 		}
 		if (AMSG_ISSET(p->bps)) {
 			if (p->bps < ((p->bits + 7) / 8) || p->bps > 4) {
-				DPRINTF("sock_setpar: bps out of bounds\n");
 				return 0;
 			}
 		} else
 			p->bps = APARAMS_BPS(p->bits);
 		f->rpar.bits = f->wpar.bits = p->bits;
 		f->rpar.bps = f->wpar.bps = p->bps;
-		DPRINTF("sock_setpar: bits/bps -> %u/%u\n", p->bits, p->bps);
 	}
 	if (AMSG_ISSET(p->sig))
 		f->rpar.sig = f->wpar.sig = p->sig ? 1 : 0;
@@ -638,8 +591,6 @@ sock_setpar(struct sock *f)
 		f->wpar.cmax = f->opt->wpar.cmin + p->rchan - 1;
 		if (f->wpar.cmax > f->opt->wpar.cmax)
 			f->wpar.cmax = f->opt->wpar.cmax;
-		DPRINTF("sock_setpar: rchan -> %u:%u\n",
-		    f->wpar.cmin, f->wpar.cmax);
 	}
 	if (AMSG_ISSET(p->pchan) && (f->mode & AMSG_PLAY)) {
 		if (p->pchan < 1)
@@ -650,8 +601,6 @@ sock_setpar(struct sock *f)
 		f->rpar.cmax = f->opt->rpar.cmin + p->pchan - 1;
 		if (f->rpar.cmax > f->opt->rpar.cmax)
 			f->rpar.cmax = f->opt->rpar.cmax;
-		DPRINTF("sock_setpar: pchan -> %u:%u\n",
-		    f->rpar.cmin, f->rpar.cmax);
 	}
 	if (AMSG_ISSET(p->rate)) {
 		if (p->rate < RATE_MIN)
@@ -662,27 +611,21 @@ sock_setpar(struct sock *f)
 		f->rpar.rate = f->wpar.rate = p->rate;
 		if (!AMSG_ISSET(p->appbufsz)) {
 			p->appbufsz = dev_bufsz / dev_round * f->round;
-			DPRINTF("sock_setpar: appbufsz -> %u\n", p->appbufsz);
 		}
-		DPRINTF("sock_setpar: rate -> %u, round -> %u\n",
-		    p->rate, f->round);
 	}
 	if (AMSG_ISSET(p->xrun)) {
 		if (p->xrun != AMSG_IGNORE &&
 		    p->xrun != AMSG_SYNC &&
 		    p->xrun != AMSG_ERROR) {
-			DPRINTF("sock_setpar: bad xrun: %u\n", p->xrun);
 			return 0;
 		}
 		f->xrun = p->xrun;
-		DPRINTF("sock_setpar: xrun -> %u\n", f->xrun);
 	}
 	if (AMSG_ISSET(p->bufsz)) {
 		/*
 		 * XXX: bufsz will become read-only, but for now
 		 *      allow old library to properly work
 		 */
-		DPRINTF("sock_setpar: bufsz: %u\n", p->bufsz);
 		min = (dev_bufsz / dev_round) * f->round;
 		if (p->bufsz < min)
 			p->bufsz = min;
@@ -701,17 +644,7 @@ sock_setpar(struct sock *f)
 		if (p->appbufsz > max)
 			p->appbufsz = max;
 		f->bufsz = p->appbufsz;
-		DPRINTF("sock_setpar: bufsz -> %u\n", f->bufsz);
 	}
-#ifdef DEBUG
-	if (debug_level > 0) {
-		fprintf(stderr, "sock_setpar: %p: rpar=", f);
-		aparams_print(&f->rpar);
-		fprintf(stderr, ", wpar=");
-		aparams_print(&f->wpar);
-		fprintf(stderr, ", mode=%u, bufsz=%u\n", f->mode, f->bufsz);
-	}
-#endif
 	return 1;
 }
 
@@ -739,11 +672,11 @@ sock_hello(struct sock *f)
 {
 	struct amsg_hello *p = &f->rmsg.u.hello;
 
-	DPRINTF("sock_hello: from <%s>, mode = %x\n", p->who, p->proto);
+	/* XXX : set file name to p->who */
+	/* XXX : dev_midi can no longer be NULL, right ? */
 
 	if (dev_midi && (p->proto & (AMSG_MIDIIN | AMSG_MIDIOUT))) {
 		if (p->proto & ~(AMSG_MIDIIN | AMSG_MIDIOUT)) {
-			DPRINTF("sock_hello: %x: bad proto\n", p->proto);
 			return 0;
 		}
 		f->mode = p->proto;
@@ -760,20 +693,17 @@ sock_hello(struct sock *f)
 		f->rpar = f->opt->rpar;
 	if ((p->proto & ~(AMSG_PLAY | AMSG_REC)) != 0 ||
 	    (p->proto &  (AMSG_PLAY | AMSG_REC)) == 0) {
-		DPRINTF("sock_hello: %x: unsupported proto\n", p->proto);
 		return 0;
 	}
 	f->mode = 0;
 	if (p->proto & AMSG_PLAY) {
 		if (!dev_mix) {
-			DPRINTF("sock_hello: playback not supported\n");
 			return 0;
 		}
 		f->mode |= AMSG_PLAY;
 	}
 	if (p->proto & AMSG_REC) {
 		if (!dev_sub) {
-			DPRINTF("sock_hello: recording not supported\n");
 			return 0;
 		}
 		f->mode |= AMSG_REC;
@@ -781,7 +711,6 @@ sock_hello(struct sock *f)
 	if (dev_midi) {
 		f->slot = ctl_slotnew(dev_midi, p->who, sock_setvol, f);
 		if (f->slot < 0) {
-			DPRINTF("sock_hello: out of mixer slots\n");
 			return 0;
 		}
 	}
@@ -802,35 +731,28 @@ sock_execmsg(struct sock *f)
 	 * XXX: allow old clients to work without hello on the default socket
 	 */
 	if (f->pstate == SOCK_HELLO && m->cmd != AMSG_HELLO && f->opt != NULL) {
-		DPRINTF("sock_execmsg: legacy client\n");
 		f->pstate = SOCK_INIT;
 	}
 
 	switch (m->cmd) {
 	case AMSG_DATA:
-		DPRINTFN(4, "sock_execmsg: %p: DATA\n", f);
 		if (f->pstate != SOCK_RUN && f->pstate != SOCK_START) {
-			DPRINTF("sock_execmsg: %p: DATA, bad state\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
 		if (!(f->mode & AMSG_PLAY)) {
-			DPRINTF("sock_execmsg: %p: DATA, not allowed\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
 		f->rstate = SOCK_RDATA;
 		f->rtodo = m->u.data.size;
 		if (f->rtodo == 0) {
-			DPRINTF("sock_execmsg: zero-length data chunk\n");
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
 		break;
 	case AMSG_START:
-		DPRINTFN(2, "sock_execmsg: %p: START\n", f);
 		if (f->pstate != SOCK_INIT) {
-			DPRINTF("sock_execmsg: %p: START, bad state\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -839,9 +761,7 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_STOP:
-		DPRINTFN(2, "sock_execmsg: %p: STOP\n", f);
 		if (f->pstate != SOCK_RUN && f->pstate != SOCK_START) {
-			DPRINTF("sock_execmsg: %p: STOP, bad state\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -854,9 +774,7 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_SETPAR:
-		DPRINTFN(2, "sock_execmsg: %p: SETPAR\n", f);
 		if (f->pstate != SOCK_INIT) {
-			DPRINTF("sock_execmsg: %p: SETPAR, bad state\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -868,9 +786,7 @@ sock_execmsg(struct sock *f)
 		f->rstate = SOCK_RMSG;
 		break;
 	case AMSG_GETPAR:
-		DPRINTFN(2, "sock_execmsg: %p: GETPAR\n", f);
 		if (f->pstate != SOCK_INIT) {
-			DPRINTF("sock_execmsg: %p: GETPAR, bad state\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -893,9 +809,7 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_GETCAP:
-		DPRINTFN(2, "sock_execmsg: %p: GETCAP\n", f);
 		if (f->pstate != SOCK_INIT) {
-			DPRINTF("sock_execmsg: %p: GETCAP, bad state\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -912,19 +826,15 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_SETVOL:
-		DPRINTFN(2, "sock_execmsg: %p: SETVOL\n", f);
 		if (f->pstate != SOCK_RUN &&
 		    f->pstate != SOCK_START && f->pstate != SOCK_INIT) {
-			DPRINTF("sock_execmsg: %p: SETVOL, bad state\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
 		if (m->u.vol.ctl > MIDI_MAXCTL) {
-			DPRINTF("sock_execmsg: %p: SETVOL, out of range\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
-		DPRINTF("sock_execmsg: SETVOL %u\n", m->u.vol.ctl);
 		sock_setvol(f, m->u.vol.ctl);
 		if (dev_midi && f->slot >= 0)
 			ctl_slotvol(dev_midi, f->slot, m->u.vol.ctl);
@@ -932,9 +842,7 @@ sock_execmsg(struct sock *f)
 		f->rstate = SOCK_RMSG;
 		break;
 	case AMSG_HELLO:
-		DPRINTFN(2, "sock_execmsg: %p: HELLO\n", f);
 		if (f->pstate != SOCK_HELLO) {
-			DPRINTF("sock_execmsg: %p: HELLO, bad state\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -948,13 +856,11 @@ sock_execmsg(struct sock *f)
 		f->rtodo = sizeof(struct amsg);
 		break;
 	case AMSG_BYE:
-		DPRINTFN(2, "sock_execmsg: %p: BYE\n", f);
-		if (f->pstate != SOCK_INIT)
-			DPRINTF("sock_execmsg: %p: BYE, bad state\n", f);
+		if (f->pstate != SOCK_INIT) {
+		}
 		aproc_del(f->pipe.file.rproc);
 		return 0;
 	default:
-		DPRINTF("sock_execmsg: %p bogus command\n", f);
 		aproc_del(f->pipe.file.rproc);
 		return 0;
 	}
@@ -962,7 +868,6 @@ sock_execmsg(struct sock *f)
 		if (f->wstate != SOCK_WIDLE ||
 		    !sock_wmsg(f, &f->rmsg, &f->rtodo))
 			return 0;
-		DPRINTF("sock_execmsg: %p RRET done\n", f);
 		if (f->pstate == SOCK_MIDI && (f->mode & AMSG_MIDIOUT)) {
 			f->rstate = SOCK_RDATA;
 			f->rtodo = 0;
@@ -984,7 +889,6 @@ sock_buildmsg(struct sock *f)
 	struct abuf *ibuf;
 
 	if (f->pstate == SOCK_MIDI) {
-		DPRINTFN(4, "sock_buildmsg: %p: switched to midi\n", f);
 		f->wstate = SOCK_WDATA;
 		f->wtodo = 0;
 		return 1;
@@ -994,7 +898,6 @@ sock_buildmsg(struct sock *f)
 	 * If pos changed, build a MOVE message.
 	 */
 	if (f->tickpending && f->delta >= 0) {
-		DPRINTFN(4, "sock_buildmsg: %p: POS: %d\n", f, f->delta);
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_MOVE;
 		f->wmsg.u.ts.delta = f->delta;
@@ -1009,7 +912,6 @@ sock_buildmsg(struct sock *f)
 	 * if volume changed build a SETVOL message
 	 */
 	if (f->pstate >= SOCK_START && f->vol != f->lastvol) {
-		DPRINTFN(4, "sock_buildmsg: %p: SETVOL: %d\n", f, f->vol);
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_SETVOL;
 		f->wmsg.u.vol.ctl = f->vol;
@@ -1035,8 +937,6 @@ sock_buildmsg(struct sock *f)
 		f->wstate = SOCK_WMSG;
 		return 1;
 	}
-
-	DPRINTFN(4, "sock_buildmsg: %p: idling...\n", f);
 	f->wstate = SOCK_WIDLE;
 	return 0;
 }
@@ -1049,9 +949,6 @@ sock_buildmsg(struct sock *f)
 int
 sock_read(struct sock *f)
 {
-	DPRINTFN(4, "sock_read: %p; rstate = %u, rtodo = %u\n",
-	    f, f->rstate, f->rtodo);
-
 	switch (f->rstate) {
 	case SOCK_RMSG:
 		if (!sock_rmsg(f))
@@ -1070,10 +967,8 @@ sock_read(struct sock *f)
 			(void)sock_attach(f, 0);
 		break;
 	case SOCK_RRET:
-		DPRINTF("sock_read: %p: blocked in RRET\n", f);
 		return 0;
 	}
-	DPRINTFN(4, "sock_read: %p: done, rstate = %u\n", f, f->rstate);
 	return 1;
 }
 
@@ -1088,7 +983,6 @@ sock_return(struct sock *f)
 	while (f->rstate == SOCK_RRET) {
 		if (!sock_wmsg(f, &f->rmsg, &f->rtodo))
 			return 0;
-		DPRINTF("sock_return: %p: done\n", f);
 		if (f->pstate == SOCK_MIDI && (f->mode & AMSG_MIDIOUT)) {
 			f->rstate = SOCK_RDATA;
 			f->rtodo = 0;
@@ -1123,9 +1017,6 @@ sock_return(struct sock *f)
 int
 sock_write(struct sock *f)
 {
-	DPRINTFN(4, "sock_write: %p: wstate = %u, wtodo = %u\n",
-	    f, f->wstate, f->wtodo);
-
 	switch (f->wstate) {
 	case SOCK_WMSG:
 		if (!sock_wmsg(f, &f->wmsg, &f->wtodo))
@@ -1152,9 +1043,6 @@ sock_write(struct sock *f)
 		if (!sock_buildmsg(f))
 			return 0;
 		break;
-	default:
-		fprintf(stderr, "sock_write: unknown state\n");
-		abort();
 	}
 	return 1;
 }

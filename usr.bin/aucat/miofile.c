@@ -1,4 +1,4 @@
-/*	$OpenBSD: miofile.c,v 1.1 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: miofile.c,v 1.2 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -72,7 +72,7 @@ miofile_new(struct fileops *ops, char *path, int input, int output)
 	hdl = mio_open(path, mode, 1);
 	if (hdl == NULL)
 		return NULL;
-	f = (struct miofile *)file_new(ops, "miohdl", mio_nfds(hdl));
+	f = (struct miofile *)file_new(ops, "hdl", mio_nfds(hdl));
 	if (f == NULL)
 		goto bad_close;
 	f->hdl = hdl;
@@ -92,11 +92,8 @@ miofile_read(struct file *file, unsigned char *data, unsigned count)
 	if (n == 0) {
 		f->file.state &= ~FILE_ROK;
 		if (mio_eof(f->hdl)) {
-			fprintf(stderr, "miofile_read: eof\n");
 			file_eof(&f->file);
 		} else {
-			DPRINTFN(3, "miofile_read: %s: blocking...\n",
-			    f->file.name);
 		}
 		return 0;
 	}
@@ -114,11 +111,8 @@ miofile_write(struct file *file, unsigned char *data, unsigned count)
 	if (n == 0) {
 		f->file.state &= ~FILE_WOK;
 		if (mio_eof(f->hdl)) {
-			fprintf(stderr, "miofile_write: %s: hup\n", f->file.name);
 			file_hup(&f->file);
 		} else {
-			DPRINTFN(3, "miofile_write: %s: blocking...\n",
-			    f->file.name);
 		}
 		return 0;
 	}

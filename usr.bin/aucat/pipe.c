@@ -58,21 +58,10 @@ pipe_read(struct file *file, unsigned char *data, unsigned count)
 {
 	struct pipe *f = (struct pipe *)file;
 	int n;
-#ifdef DEBUG
-	struct timeval tv0, tv1, dtv;
-	unsigned us;
-
-	if (!(f->file.state & FILE_ROK)) {
-		DPRINTF("pipe_read: %s: bad state\n", f->file.name);
-		abort();
-	}
-	gettimeofday(&tv0, NULL);
-#endif
+	
 	while ((n = read(f->fd, data, count)) < 0) {
 		f->file.state &= ~FILE_ROK;
 		if (errno == EAGAIN) {
-			DPRINTFN(3, "pipe_read: %s: blocking...\n",
-			    f->file.name);
 		} else {
 			warn("%s", f->file.name);
 			file_eof(&f->file);
@@ -80,19 +69,10 @@ pipe_read(struct file *file, unsigned char *data, unsigned count)
 		return 0;
 	}
 	if (n == 0) {
-		DPRINTFN(2, "pipe_read: %s: eof\n", f->file.name);
-		f->file.state &= ~FILE_ROK;
+		f->file.state &= ~FILE_ROK; /* XXX: already cleared in file_eof */
 		file_eof(&f->file);
 		return 0;
 	}
-#ifdef DEBUG
-	gettimeofday(&tv1, NULL);
-	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
-	DPRINTFN(us < 5000 ? 4 : 2,
-	    "pipe_read: %s: got %d bytes in %uus\n",
-	    f->file.name, n, us);
-#endif
 	return n;
 }
 
@@ -102,21 +82,10 @@ pipe_write(struct file *file, unsigned char *data, unsigned count)
 {
 	struct pipe *f = (struct pipe *)file;
 	int n;
-#ifdef DEBUG
-	struct timeval tv0, tv1, dtv;
-	unsigned us;
 
-	if (!(f->file.state & FILE_WOK)) {
-		DPRINTF("pipe_write: %s: bad state\n", f->file.name);
-		abort();
-	}
-	gettimeofday(&tv0, NULL);
-#endif
 	while ((n = write(f->fd, data, count)) < 0) {
 		f->file.state &= ~FILE_WOK;
 		if (errno == EAGAIN) {
-			DPRINTFN(3, "pipe_write: %s: blocking...\n",
-			    f->file.name);
 		} else {
 			if (errno != EPIPE)
 				warn("%s", f->file.name);
@@ -124,14 +93,6 @@ pipe_write(struct file *file, unsigned char *data, unsigned count)
 		}
 		return 0;
 	}
-#ifdef DEBUG
-	gettimeofday(&tv1, NULL);
-	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
-	DPRINTFN(us < 5000 ? 4 : 2,
-	    "pipe_write: %s: wrote %d bytes in %uus\n",
-	    f->file.name, n, us);
-#endif
 	return n;
 }
 

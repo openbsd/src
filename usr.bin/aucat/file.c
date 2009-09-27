@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.13 2009/07/25 10:52:19 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.14 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -90,16 +90,6 @@ timo_add(struct timo *o, unsigned delta)
 	unsigned val;
 	int diff;
 
-#ifdef DEBUG
-	if (o->set) {
-		fprintf(stderr, "timo_set: already set\n");
-		abort();
-	}
-	if (delta == 0) {
-		fprintf(stderr, "timo_set: zero timeout is evil\n");
-		abort();
-	}
-#endif
 	val = timo_abstime + delta;
 	for (i = &timo_queue; *i != NULL; i = &(*i)->next) {
 		diff = (*i)->val - val;
@@ -128,7 +118,6 @@ timo_del(struct timo *o)
 			return;
 		}
 	}
-	DPRINTF("timo_del: not found\n");
 }
 
 /*
@@ -182,31 +171,9 @@ timo_init(void)
 void
 timo_done(void)
 {
-	if (timo_queue != NULL) {
-		fprintf(stderr, "timo_done: timo_queue not empty!\n");
-		abort();
-	}
 	timo_queue = (struct timo *)0xdeadbeef;
 }
 
-void
-file_dprint(int n, struct file *f)
-{
-#ifdef DEBUG
-	if (debug_level < n)
-		return;
-	fprintf(stderr, "%s:%s <", f->ops->name, f->name);
-	if (f->state & FILE_ROK)
-		fprintf(stderr, "ROK");
-	if (f->state & FILE_WOK)
-		fprintf(stderr, "WOK");
-	if (f->state & FILE_EOF)
-		fprintf(stderr, "EOF");
-	if (f->state & FILE_HUP)
-		fprintf(stderr, "HUP");
-	fprintf(stderr, ">");
-#endif
-}
 
 struct file *
 file_new(struct fileops *ops, char *name, unsigned nfds)
@@ -216,7 +183,6 @@ file_new(struct fileops *ops, char *name, unsigned nfds)
 	LIST_FOREACH(f, &file_list, entry)
 		nfds += f->ops->nfds(f);
 	if (nfds > MAXFDS) {
-		DPRINTF("file_new: %s: too many polled files\n", name);
 		return NULL;
 	}
 	f = malloc(ops->size);
@@ -228,21 +194,15 @@ file_new(struct fileops *ops, char *name, unsigned nfds)
 	f->rproc = NULL;
 	f->wproc = NULL;
 	LIST_INSERT_HEAD(&file_list, f, entry);
-	DPRINTF("file_new: %s:%s\n", ops->name, f->name);
 	return f;
 }
 
 void
 file_del(struct file *f)
 {
-	DPRINTF("file_del: ");
-	file_dprint(1, f);
 	if (f->state & (FILE_RINUSE | FILE_WINUSE)) {
-		DPRINTF(": delayed\n");
 		f->state |= FILE_ZOMB;
-		return;
 	} else {
-		DPRINTF(": immediate\n");
 		LIST_REMOVE(f, entry);
 		f->ops->close(f);
 		free(f);
@@ -265,7 +225,6 @@ file_poll(void)
 	 * Fill the pfds[] array with files that are blocked on reading
 	 * and/or writing, skipping those that are just waiting.
 	 */
-	DPRINTFN(4, "file_poll:");
 	nfds = 0;
 	LIST_FOREACH(f, &file_list, entry) {
 		events = 0;
@@ -273,7 +232,6 @@ file_poll(void)
 			events |= POLLIN;
 		if (f->wproc && !(f->state & FILE_WOK))
 			events |= POLLOUT;
-		DPRINTFN(4, " %s(%x)", f->name, events);
 		n = f->ops->pollfd(f, pfds + nfds, events);
 		if (n == 0) {
 			f->pfd = NULL;
@@ -282,15 +240,7 @@ file_poll(void)
 		f->pfd = pfds + nfds;
 		nfds += n;
 	}
-	DPRINTFN(4, "\n");
-	if (debug_level >= 4) {
-		DPRINTF("file_poll: pfds[] =");
-		for (n = 0; n < nfds; n++)
-			DPRINTF(" %x", pfds[n].events);
-		DPRINTF("\n");
-	}
 	if (LIST_EMPTY(&file_list)) {
-		DPRINTF("file_poll: nothing to do...\n");
 		return 0;
 	}
 	if (nfds > 0) {
@@ -323,11 +273,12 @@ file_poll(void)
 		if (!(f->state & FILE_ZOMB) && (revents & POLLIN)) {
 			revents &= ~POLLIN;
 			f->state |= FILE_ROK;
-			DPRINTFN(3, "file_poll: %s rok\n", f->name);
 			f->state |= FILE_RINUSE;
 			for (;;) {
 				p = f->rproc;
-				if (!p || !p->ops->in(p, NULL))
+				if (!p)
+					break;
+				if (!p->ops->in(p, NULL))
 					break;
 			}
 			f->state &= ~FILE_RINUSE;
@@ -335,21 +286,20 @@ file_poll(void)
 		if (!(f->state & FILE_ZOMB) && (revents & POLLOUT)) {
 			revents &= ~POLLOUT;
 			f->state |= FILE_WOK;
-			DPRINTFN(3, "file_poll: %s wok\n", f->name);
 			f->state |= FILE_WINUSE;
 			for (;;) {
 				p = f->wproc;
-				if (!p || !p->ops->out(p, NULL))
+				if (!p)
+					break;
+				if (!p->ops->out(p, NULL))
 					break;
 			}
 			f->state &= ~FILE_WINUSE;
 		}
 		if (!(f->state & FILE_ZOMB) && (revents & POLLHUP)) {
-			DPRINTFN(2, "file_poll: %s: disconnected\n", f->name);
 			f->state |= (FILE_EOF | FILE_HUP);
 		}
 		if (!(f->state & FILE_ZOMB) && (f->state & FILE_EOF)) {
-			DPRINTFN(2, "file_poll: %s: eof\n", f->name);
 			p = f->rproc;
 			if (p) {
 				f->state |= FILE_RINUSE;
@@ -359,7 +309,6 @@ file_poll(void)
 			f->state &= ~FILE_EOF;
 		}
 		if (!(f->state & FILE_ZOMB) && (f->state & FILE_HUP)) {
-			DPRINTFN(2, "file_poll: %s hup\n", f->name);
 			p = f->wproc;
 			if (p) {
 				f->state |= FILE_WINUSE;
@@ -374,7 +323,6 @@ file_poll(void)
 		f = fnext;
 	}
 	if (LIST_EMPTY(&file_list)) {
-		DPRINTFN(2, "file_poll: terminated\n");
 		return 0;
 	}
 	return 1;
@@ -397,18 +345,7 @@ filelist_init(void)
 void
 filelist_done(void)
 {
-	struct file *f;
-
 	timo_done();
-	if (!LIST_EMPTY(&file_list)) {
-		fprintf(stderr, "filelist_done: list not empty:\n");
-		LIST_FOREACH(f, &file_list, entry) {
-			fprintf(stderr, "\t");
-			file_dprint(0, f);
-			fprintf(stderr, "\n");
-		}
-		abort();
-	}
 }
 
 /*
@@ -429,15 +366,19 @@ filelist_unlisten(void)
 }
 
 unsigned
-file_read(struct file *file, unsigned char *data, unsigned count)
+file_read(struct file *f, unsigned char *data, unsigned count)
 {
-	return file->ops->read(file, data, count);
+	unsigned n;
+	n = f->ops->read(f, data, count);
+	return n;
 }
 
 unsigned
-file_write(struct file *file, unsigned char *data, unsigned count)
+file_write(struct file *f, unsigned char *data, unsigned count)
 {
-	return file->ops->write(file, data, count);
+	unsigned n;
+	n = f->ops->write(f, data, count);
+	return n;
 }
 
 void
@@ -446,7 +387,6 @@ file_eof(struct file *f)
 	struct aproc *p;
 
 	if (!(f->state & (FILE_RINUSE | FILE_WINUSE))) {
-		DPRINTFN(2, "file_eof: %s: immediate\n", f->name);
 		p = f->rproc;
 		if (p) {
 			f->state |= FILE_RINUSE;
@@ -456,7 +396,6 @@ file_eof(struct file *f)
 		if (f->state & FILE_ZOMB)
 			file_del(f);
 	} else {
-		DPRINTFN(2, "file_eof: %s: delayed\n", f->name);
 		f->state &= ~FILE_ROK;
 		f->state |= FILE_EOF;
 	}
@@ -468,7 +407,6 @@ file_hup(struct file *f)
 	struct aproc *p;
 
 	if (!(f->state & (FILE_RINUSE | FILE_WINUSE))) {
-		DPRINTFN(2, "file_hup: %s immediate\n", f->name);
 		p = f->wproc;
 		if (p) {
 			f->state |= FILE_WINUSE;
@@ -478,7 +416,6 @@ file_hup(struct file *f)
 		if (f->state & FILE_ZOMB)
 			file_del(f);
 	} else {
-		DPRINTFN(2, "file_hup: %s: delayed\n", f->name);
 		f->state &= ~FILE_WOK;
 		f->state |= FILE_HUP;
 	}
@@ -490,7 +427,6 @@ file_close(struct file *f)
 	struct aproc *p;
 
 	if (!(f->state & (FILE_RINUSE | FILE_WINUSE))) {
-		DPRINTFN(2, "file_close: %s: immediate\n", f->name);
 		p = f->rproc;
 		if (p) {
 			f->state |= FILE_RINUSE;
@@ -506,7 +442,6 @@ file_close(struct file *f)
 		if (f->state & FILE_ZOMB)
 			file_del(f);
 	} else {
-		DPRINTFN(2, "file_close: %s: delayed\n", f->name);
 		f->state &= ~(FILE_ROK | FILE_WOK);
 		f->state |= (FILE_EOF | FILE_HUP);
 	}

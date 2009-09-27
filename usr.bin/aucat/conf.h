@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.9 2009/08/17 16:17:46 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.10 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,30 +17,6 @@
 #ifndef CONF_H
 #define CONF_H
 
-/*
- * Debug trace levels:
- *
- * 0 - traces are off
- * 1 - init, free, stuff that's done only once
- * 2 - rare real-time events: eof / hup, etc...
- * 3 - poll(), block / unblock state changes
- * 4 - read()/write()
- */
-#ifdef DEBUG
-
-/* defined in main.c */
-extern int debug_level;
-
-#define DPRINTF(...) DPRINTFN(1, __VA_ARGS__)
-#define DPRINTFN(n, ...)					\
-	do {							\
-		if (debug_level >= (n))				\
-			fprintf(stderr, __VA_ARGS__);		\
-	} while(0)
-#else
-#define DPRINTF(...) do {} while(0)
-#define DPRINTFN(n, ...) do {} while(0)
-#endif
 
 /*
  * Number of blocks in the device play/record buffers.  Because Sun API
@@ -65,6 +41,6 @@ extern int debug_level;
 /*
  * MIDI buffer size
  */
-#define MIDI_BUFSZ		3125	/* 1 second */
+#define MIDI_BUFSZ		3125	/* 1 second at 31.25kbit/s */
 
 #endif /* !defined(CONF_H) */

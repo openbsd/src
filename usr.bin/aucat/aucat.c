@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.67 2009/08/26 06:33:52 jmc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.68 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,7 +47,6 @@
 #define PROG_AUCAT	"aucat"
 #define PROG_MIDICAT	"midicat"
 
-int debug_level = 0;
 volatile int quit_flag = 0;
 
 /*
@@ -63,39 +62,6 @@ sigint(int s)
 	quit_flag = 1;
 }
 
-/*
- * Increase debug level on SIGUSR1.
- */
-void
-sigusr1(int s)
-{
-	if (debug_level < 4)
-		debug_level++;
-}
-
-/*
- * Decrease debug level on SIGUSR2.
- */
-void
-sigusr2(int s)
-{
-	if (debug_level > 0)
-		debug_level--;
-}
-
-void
-set_debug_level(char *envname)
-{
-	char *dbgenv;
-	const char *errstr;
-
-	dbgenv = getenv(envname);
-	if (dbgenv) {
-		debug_level = strtonum(dbgenv, 0, 4, &errstr);
-		if (errstr)
-			errx(1, "%s is %s: %s", envname, errstr, dbgenv);
-	}
-}
 
 void
 opt_ch(struct aparams *par)
@@ -203,10 +169,8 @@ farg_add(struct farglist *list,
 		if (namelen >= 4 &&
 		    strcasecmp(optarg + namelen - 4, ".wav") == 0) {
 			fa->hdr = HDR_WAV;
-			DPRINTF("%s: assuming wav file format\n", optarg);
 		} else {
 			fa->hdr = HDR_RAW;
-			DPRINTF("%s: assuming headerless file\n", optarg);
 		}
 	} else
 		fa->hdr = hdr;
@@ -336,19 +300,11 @@ setsig(void)
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = sigint;
 	if (sigaction(SIGINT, &sa, NULL) < 0)
-		DPRINTF("sigaction(int) failed\n");
+		err(1, "sigaction(int) failed");
 	if (sigaction(SIGTERM, &sa, NULL) < 0)
-		DPRINTF("sigaction(term) failed\n");
+		err(1, "sigaction(term) failed");
 	if (sigaction(SIGHUP, &sa, NULL) < 0)
-		DPRINTF("sigaction(hup) failed\n");
-#ifdef DEBUG
-	sa.sa_handler = sigusr1;
-	if (sigaction(SIGUSR1, &sa, NULL) < 0)
-		DPRINTF("sigaction(usr1) failed\n");
-	sa.sa_handler = sigusr2;
-	if (sigaction(SIGUSR2, &sa, NULL) < 0)
-		DPRINTF("sigaction(usr2) failed1n");
-#endif
+		err(1, "sigaction(hup) failed");
 }
 
 void
@@ -359,18 +315,12 @@ unsetsig(void)
 	sigfillset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_DFL;
-#ifdef DEBUG
-	if (sigaction(SIGUSR2, &sa, NULL) < 0)
-		DPRINTF("unsetsig(usr2): sigaction failed\n");
-	if (sigaction(SIGUSR1, &sa, NULL) < 0)
-		DPRINTF("unsetsig(usr1): sigaction failed\n");
-#endif
 	if (sigaction(SIGHUP, &sa, NULL) < 0)
-		DPRINTF("unsetsig(hup): sigaction failed\n");
+		err(1, "unsetsig(hup): sigaction failed\n");
 	if (sigaction(SIGTERM, &sa, NULL) < 0)
-		DPRINTF("unsetsig(term): sigaction failed\n");
+		err(1, "unsetsig(term): sigaction failed\n");
 	if (sigaction(SIGINT, &sa, NULL) < 0)
-		DPRINTF("unsetsig(int): sigaction failed\n");
+		err(1, "unsetsig(int): sigaction failed\n");
 }
 
 void
@@ -625,7 +575,7 @@ aucat_main(int argc, char **argv)
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_SOFTAUDIO, unit);
 		listen_new(&listen_ops, path);
-		if (debug_level == 0 && daemon(0, 0) < 0)
+		if (daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
 
@@ -648,7 +598,6 @@ aucat_main(int argc, char **argv)
 			if (!l_flag)
 				break;
 			if (!suspend) {
-				DPRINTF("suspending\n");
 				suspend = 1;
 				dev_stop();
 				dev_clear();
@@ -657,7 +606,6 @@ aucat_main(int argc, char **argv)
 		if ((dev_mix && dev_mix->u.mix.idle == 0) ||
 		    (dev_sub && dev_sub->u.sub.idle == 0)) {
 			if (suspend) {
-				DPRINTF("resuming\n");
 				suspend = 0;
 				dev_start();
 			}
@@ -669,7 +617,6 @@ aucat_main(int argc, char **argv)
 			warn("rmdir(\"%s\")", base);
 	}
 	if (suspend) {
-		DPRINTF("resuming to drain\n");
 		suspend = 0;
 		dev_start();
 	}
@@ -772,7 +719,7 @@ midicat_main(int argc, char **argv)
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_MIDITHRU, unit);
 		listen_new(&listen_ops, path);
-		if (debug_level == 0 && daemon(0, 0) < 0)
+		if (daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
 	while (!SLIST_EMPTY(&ifiles)) {
@@ -850,10 +797,8 @@ main(int argc, char **argv)
 	else
 		prog++;
 	if (strcmp(prog, PROG_AUCAT) == 0) {
-		set_debug_level("AUCAT_DEBUG");
 		return aucat_main(argc, argv);
 	} else if (strcmp(prog, PROG_MIDICAT) == 0) {
-		set_debug_level("MIDICAT_DEBUG");
 		return midicat_main(argc, argv);
 	} else {
 		fprintf(stderr, "%s: can't determine program to run\n", prog);

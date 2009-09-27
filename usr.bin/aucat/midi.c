@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.8 2009/08/29 14:46:44 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.9 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -80,11 +80,9 @@ thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 
 	itodo = ibuf->mused;
 	idata = ibuf->mdata;
-	DPRINTFN(4, "thru_flush: mused = %u\n", itodo);
 	while (itodo > 0) {
 		if (!ABUF_WOK(obuf)) {
 			abuf_rdiscard(obuf, obuf->used);
-			DPRINTFN(2, "thru_flush: discarded %u\n", obuf->used);
 			if (p->u.thru.owner == ibuf)
 				p->u.thru.owner = NULL;
 			return;
@@ -110,9 +108,7 @@ thru_rt(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned c)
 	unsigned ocount;
 	unsigned char *odata;
 
-	DPRINTFN(4, "thru_rt:\n");
 	if (!ABUF_WOK(obuf)) {
-		DPRINTFN(2, "thru_rt: discarded %u\n", obuf->used);
 		abuf_rdiscard(obuf, obuf->used);
 		if (p->u.thru.owner == ibuf)
 			p->u.thru.owner = NULL;
@@ -200,12 +196,9 @@ thru_in(struct aproc *p, struct abuf *ibuf)
 	struct abuf *i, *inext;
 	unsigned todo;
 
-	DPRINTFN(3, "thru_in: %s\n", p->name);
-
 	if (!ABUF_ROK(ibuf))
 		return 0;
 	if (ibuf->mtickets == 0) {
-		DPRINTFN(2, "thru_in: out of tickets\n");
 		return 0;
 	}
 	todo = ibuf->used;
@@ -232,13 +225,11 @@ thru_out(struct aproc *p, struct abuf *obuf)
 void
 thru_eof(struct aproc *p, struct abuf *ibuf)
 {
-	DPRINTF("thru_eof: %s: eof\n", p->name);
 }
 
 void
 thru_hup(struct aproc *p, struct abuf *obuf)
 {
-	DPRINTF("thru_hup: %s: detached\n", p->name);
 }
 
 void
@@ -324,13 +315,11 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
 		idata = msg;
 		while (itodo > 0) {
 			if (!ABUF_WOK(i)) {
-				DPRINTFN(2, "ctl_sendmsg: lost %u\n", i->used);
 				abuf_rdiscard(i, i->used);
 			}
 			odata = abuf_wgetblk(i, &ocount, 0);
 			if (ocount > itodo)
 				ocount = itodo;
-			DPRINTFN(2, "ctl_sendmsg: xfer %u\n", ocount);
 			memcpy(odata, idata, ocount);
 			abuf_wcommit(i, ocount);
 			itodo -= ocount;
@@ -384,9 +373,6 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 		if ((umap & (1 << i)) == 0)
 			break;
 	}
-
-	DPRINTF("ctl_newslot: using %s%u as control name\n", name, unit);
-
 	/*
 	 * find a free controller slot with the same name/unit
 	 */
@@ -394,7 +380,6 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 		if (slot->cb == NULL &&
 		    strcmp(slot->name, name) == 0 &&
 		    slot->unit == unit) {
-			DPRINTFN(1, "ctl_newslot: reusing %u\n", i);
 			slot->cb = cb;
 			slot->arg = arg;
 			slot->cb(slot->arg, slot->vol);
@@ -424,7 +409,6 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 	slot->serial = p->u.ctl.serial++;
 	slot->unit = unit;
 	slot->vol = MIDI_MAXCTL;
-	DPRINTFN(1, "ctl_newslot: %u overwritten)\n", bestidx);
 	slot->cb = cb;
 	slot->arg = arg;
 	slot->cb(slot->arg, slot->vol);
@@ -451,7 +435,6 @@ ctl_slotvol(struct aproc *p, int slot, unsigned vol)
 {
 	unsigned char msg[3];
 
-	DPRINTFN(1, "ctl_slotvol: [%u] -> %u\n", slot, vol);
 	p->u.ctl.slot[slot].vol = vol;
 	msg[0] = MIDI_CTL | slot;
 	msg[1] = MIDI_CTLVOL;
@@ -465,18 +448,8 @@ ctl_slotvol(struct aproc *p, int slot, unsigned vol)
 void
 ctl_ev(struct aproc *p, struct abuf *ibuf)
 {
-	unsigned i;
 	unsigned chan;
 	struct ctl_slot *slot;
-
-#ifdef DEBUG
-	if (debug_level > 0) {
-		fprintf(stderr, "ctl_ev:");
-		for (i = 0; i < ibuf->mindex; i++)
-			fprintf(stderr, " %02x", ibuf->mdata[i]);
-		fprintf(stderr, "\n");
-	}
-#endif
 	if ((ibuf->mdata[0] & MIDI_CMDMASK) == MIDI_CTL &&
 	    ibuf->mdata[1] == MIDI_CTLVOL) {
 		chan = ibuf->mdata[0] & MIDI_CHANMASK;
@@ -545,13 +518,11 @@ ctl_out(struct aproc *p, struct abuf *obuf)
 void
 ctl_eof(struct aproc *p, struct abuf *ibuf)
 {
-	DPRINTF("ctl_eof: %s: eof\n", p->name);
 }
 
 void
 ctl_hup(struct aproc *p, struct abuf *obuf)
 {
-	DPRINTF("ctl_hup: %s: detached\n", p->name);
 }
 
 void
@@ -566,16 +537,6 @@ ctl_newin(struct aproc *p, struct abuf *ibuf)
 void
 ctl_done(struct aproc *p)
 {
-	unsigned i;
-	struct ctl_slot *s;
-
-	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
-		/*
-		 * XXX: shouldn't we abord() here ?
-		 */
-		if (s->cb != NULL)
-			DPRINTF("ctl_done: %s%u in use\n", s->name, s->unit);
-	}
 }
 
 struct aproc_ops ctl_ops = {

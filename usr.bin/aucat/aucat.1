@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.57 2009/08/25 21:37:18 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.58 2009/09/27 11:51:20 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 25 2009 $
+.Dd $Mdocdate: September 27 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -187,11 +187,6 @@ is sent
 or
 .Dv SIGTERM ,
 it terminates recording to files.
-If sent
-.Dv SIGUSR1
-or
-.Dv SIGUSR2 ,
-it increases or decreases debug level, respectively.
 .Pp
 Settings for input files
 .Pq Fl i ,
@@ -399,9 +394,6 @@ If the device does not support the encoding,
 will exit with an error.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUDIODEVICE" -compact
-.It Ev AUCAT_DEBUG
-The debug level:
-may be a value between 0 and 4.
 .It Ev AUDIODEVICE
 .Xr sndio 7
 audio device to use if the

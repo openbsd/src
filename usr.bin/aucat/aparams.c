@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.c,v 1.8 2009/08/17 15:07:49 ratchov Exp $	*/
+/*	$OpenBSD: aparams.c,v 1.9 2009/09/27 11:51:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,10 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "aparams.h"
 
@@ -185,27 +181,6 @@ aparams_init(struct aparams *par, unsigned cmin, unsigned cmax, unsigned rate)
 	par->rate = rate;
 }
 
-/*
- * Print the format/channels/encoding on stderr.
- */
-void
-aparams_print(struct aparams *par)
-{
-	char enc[ENCMAX];
-
-	aparams_enctostr(par, enc);
-	fprintf(stderr, "%s", enc);
-	fprintf(stderr, ",%u:%u", par->cmin, par->cmax);
-	fprintf(stderr, ",%uHz", par->rate);
-}
-
-void
-aparams_print2(struct aparams *par1, struct aparams *par2)
-{
-	aparams_print(par1);
-	fprintf(stderr, " -> ");
-	aparams_print(par2);
-}
 
 /*
  * Return true if both encodings are the same.

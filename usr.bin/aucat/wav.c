@@ -14,13 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-
-#include <err.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "conf.h"
 #include "wav.h"
@@ -186,7 +180,6 @@ wav_read(struct file *file, unsigned char *data, unsigned count)
 	if (f->rbytes >= 0 && count > f->rbytes) {
 		count = f->rbytes; /* file->rbytes fits in count */
 		if (count == 0) {
-			DPRINTFN(2, "wav_read: %s: complete\n", f->pipe.file.name);
 			file_eof(&f->pipe.file);
 			return 0;
 		}
@@ -212,8 +205,6 @@ wav_write(struct file *file, unsigned char *data, unsigned count)
 	if (f->wbytes >= 0 && count > f->wbytes) {
 		count = f->wbytes; /* wbytes fits in count */
 		if (count == 0) {
-			DPRINTFN(2, "wav_write: %s: complete\n",
-			    f->pipe.file.name);
 			file_hup(&f->pipe.file);
 			return 0;
 		}
