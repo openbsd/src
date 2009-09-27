@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2009/05/17 01:55:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.33 2009/09/27 11:36:14 maja Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
    ${MACHINE} == "hp300" || ${MACHINE} == "hppa" || \
@@ -7,7 +7,8 @@
    ${MACHINE} == "sgi" || ${MACHINE} == "sparc" || \
    ${MACHINE} == "sparc64" || ${MACHINE} == "vax" || \
    ${MACHINE} == "zaurus" || ${MACHINE} == "landisk" || \
-   ${MACHINE} == "socppc"
+   ${MACHINE} == "socppc" || ${MACHINE} == "palm" || \
+   ${MACHINE} == "armish"
 
 PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
