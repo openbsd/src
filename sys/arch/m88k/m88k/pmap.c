@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.48 2009/05/02 14:32:29 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.49 2009/09/27 19:16:10 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -2593,9 +2593,7 @@ pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
 			ci = curcpu();
 #endif
 			/* CPU_INFO_FOREACH(cpu, ci) */ {
-				if (ci->ci_curpmap == pmap)
-					cmmu_flush_inst_cache(ci->ci_cpuid,
-					    pa, count);
+				cmmu_flush_inst_cache(ci->ci_cpuid, pa, count);
 			}
 		}
 		va += count;
