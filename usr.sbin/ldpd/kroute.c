@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.4 2009/08/06 09:07:49 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.5 2009/09/28 09:48:46 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -412,7 +412,7 @@ kr_redist_remove(struct kroute_node *kn)
 	rr.kr = kn->r;
 
 	if (kn == NULL) {
-		main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, &rr,
+		main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, &rr.kr,
 		    sizeof(struct rroute));
 	}
 }
@@ -484,7 +484,7 @@ kr_redistribute(struct kroute_node *kh)
 		    sizeof(struct rroute));
 	} else {
 		rr.kr = kh->r;
-		main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, &rr,
+		main_imsg_compose_lde(IMSG_NETWORK_DEL, 0, &rr.kr,
 		    sizeof(struct rroute));
 	}
 }
@@ -1530,14 +1530,15 @@ dispatch_rtmsg(void)
 				continue;
 			if (!(kr->r.flags & F_KERNEL))
 				continue;
-			/*
-			 * last route is getting removed request the
-			 * ldp route from the RDE to insert instead
-			 */
+
 			if (kr->r.flags & F_LDPD_INSERTED) {
-				main_imsg_compose_lde(IMSG_KROUTE_GET, 0,
+				main_imsg_compose_lde(IMSG_NETWORK_DEL, 0,
 				    &kr->r, sizeof(struct kroute));
+
+				send_rtlabelmsg(kr_state.fd, RTM_DELETE,
+				    &kr->r, AF_MPLS);
 			}
+
 			if (kroute_remove(kr) == -1)
 				return (-1);
 			break;

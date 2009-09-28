@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.5 2009/08/02 16:19:17 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.6 2009/09/28 09:48:46 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -250,6 +250,39 @@ lde_kernel_insert(struct kroute *kr)
 	}
 
 	lde_send_insert_klabel(rn);
+}
+
+void
+lde_kernel_remove(struct kroute *kr)
+{
+	struct rt_node		*rn;
+	struct rt_label		*rl;
+	struct lde_nbr		*ln;
+
+	rn = rt_find(kr->prefix.s_addr, kr->prefixlen);
+	if (rn == NULL)
+		return;
+
+	if (ldeconf->mode & MODE_RET_LIBERAL) {
+		rl = calloc(1, sizeof(*rl));
+		if (rl == NULL)
+			fatal("lde_kernel_remove");
+
+		rl->label = rn->remote_label;
+
+		ln = lde_find_address(rn->nexthop);
+		if (ln == NULL)
+			fatalx("lde_kernel_remove: unable to find neighbor");
+
+		rl->nexthop = ln;
+
+		TAILQ_INSERT_TAIL(&rn->labels_list, rl, entry);
+	}
+
+	/* XXX */
+	rn->remote_label = 0;
+	rn->nexthop.s_addr = INADDR_ANY;
+	rn->present = 0;
 }
 
 void
