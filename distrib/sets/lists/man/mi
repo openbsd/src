@@ -485,6 +485,7 @@
 ./usr/share/man/cat1/sparc/fdformat.0
 ./usr/share/man/cat1/sparc64
 ./usr/share/man/cat1/sparc64/fdformat.0
+./usr/share/man/cat4/sparc64/lom.0
 ./usr/share/man/cat1/sparc64/mksuncd.0
 ./usr/share/man/cat1/spell.0
 ./usr/share/man/cat1/split.0
