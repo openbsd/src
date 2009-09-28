@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.286 2009/09/03 15:14:33 jmc Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.287 2009/09/28 22:13:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -95,6 +95,8 @@ int	 pfctl_load_ruleset(struct pfctl *, char *,
 		struct pf_ruleset *, int, int);
 int	 pfctl_load_rule(struct pfctl *, char *, struct pf_rule *, int);
 const char	*pfctl_lookup_option(char *, const char **);
+void	pfctl_state_store(int, const char *);
+void	pfctl_state_load(int, const char *);
 
 struct pf_anchor_global	 pf_anchors;
 struct pf_anchor	 pf_main_anchor;
@@ -231,9 +233,10 @@ usage(void)
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
 	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network]\n");
 	fprintf(stderr, "\t[-k host | network | label | id] ");
-	fprintf(stderr, "[-o level] [-p device]\n");
-	fprintf(stderr, "\t[-s modifier] ");
-	fprintf(stderr, "[-t table -T command [address ...]] [-x level]\n");
+	fprintf(stderr, "[-L statefile] [-o level] [-p device]\n");
+	fprintf(stderr, "\t[-s modifier] [-S statefile] ");
+	fprintf(stderr, "[-t table -T command [address ...]]\n");
+	fprintf(stderr, "\t[-x level]\n");
 	exit(1);
 }
 
@@ -1934,6 +1937,75 @@ pfctl_lookup_option(char *cmd, const char **list)
 	return (NULL);
 }
 
+
+void
+pfctl_state_store(int dev, const char *file)
+{
+	FILE *f;
+	struct pfioc_states ps;
+	char *inbuf = NULL, *newinbuf = NULL;
+	unsigned int len = 0;
+	size_t n;
+
+	f = fopen(file, "w");
+	if (f == NULL)
+		err(1, "open: %s", file);
+
+	memset(&ps, 0, sizeof(ps));
+	for (;;) {
+		ps.ps_len = len;
+		if (len) {
+			newinbuf = realloc(inbuf, len);
+			if (newinbuf == NULL)
+				err(1, "realloc");
+			ps.ps_buf = inbuf = newinbuf;
+		}
+		if (ioctl(dev, DIOCGETSTATES, &ps) < 0)
+			err(1, "DIOCGETSTATES");
+
+		if (ps.ps_len + sizeof(struct pfioc_states) < len)
+			break;
+		if (len == 0 && ps.ps_len == 0)
+			return;
+		if (len == 0 && ps.ps_len != 0)
+			len = ps.ps_len;
+		if (ps.ps_len == 0)
+			return; /* no states */
+		len *= 2;
+	}
+
+	n = ps.ps_len / sizeof(struct pfsync_state);
+	if (fwrite(inbuf, sizeof(struct pfsync_state), n, f) < n)
+		err(1, "fwrite");
+
+	fclose(f);
+}
+
+void
+pfctl_state_load(int dev, const char *file)
+{
+	FILE *f;
+	struct pfioc_state ps;
+
+	f = fopen(file, "r");
+	if (f == NULL)
+		err(1, "open: %s", file);
+
+	while (fread(&ps.state, sizeof(ps.state), 1, f) == 1) {
+		if (ioctl(dev, DIOCADDSTATE, &ps) < 0) {
+			switch (errno) {
+			case EEXIST:
+			case EINVAL:
+				break;
+			default:
+				err(1, "DIOCADDSTATE");
+			}
+		}
+	} 
+
+	fclose(f);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1944,12 +2016,13 @@ main(int argc, char *argv[])
 	int	 optimize = PF_OPTIMIZE_BASIC;
 	char	 anchorname[MAXPATHLEN];
 	char	*path;
+	char	*lfile = NULL, *sfile = NULL;
 
 	if (argc < 2)
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:AdD:eqf:F:ghi:k:K:mnOo:p:rRs:t:T:vx:z")) != -1) {
+	    "a:AdD:eqf:F:ghi:k:K:L:mnOo:p:rRS:s:t:T:vx:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -2068,6 +2141,13 @@ main(int argc, char *argv[])
 		case 'z':
 			opts |= PF_OPT_CLRRULECTRS;
 			mode = O_RDWR;
+			break;
+		case 'S':
+			sfile = optarg;
+			break;
+		case 'L':
+			mode = O_RDWR;
+			lfile = optarg;
 			break;
 		case 'h':
 			/* FALLTHROUGH */
@@ -2314,6 +2394,11 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
+
+	if (sfile != NULL)
+		pfctl_state_store(dev, sfile);
+	if (lfile != NULL)
+		pfctl_state_load(dev, lfile);
 
 	exit(error);
 }
