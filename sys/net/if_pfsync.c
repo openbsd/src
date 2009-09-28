@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.128 2009/08/16 13:01:57 jsg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.129 2009/09/28 03:01:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -570,9 +570,10 @@ pfsync_state_import(struct pfsync_state *sp, u_int8_t flags)
 	if (!ISSET(flags, PFSYNC_SI_IOCTL))
 		SET(st->state_flags, PFSTATE_NOSYNC);
 
-	if ((error = pf_state_insert(kif, skw, sks, st)) != 0) {
+	if (pf_state_insert(kif, skw, sks, st) != 0) {
 		/* XXX when we have nat_rule/anchors, use STATE_DEC_COUNTERS */
 		r->states_cur--;
+		error = EEXIST;
 		goto cleanup_state;
 	}
 
