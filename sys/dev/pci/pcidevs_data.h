@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1493 2009/09/20 13:08:23 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1494 2009/09/29 16:29:13 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -14116,6 +14116,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SAA7135 TV",
 	},
 	{
+	    PCI_VENDOR_PHISON, PCI_PRODUCT_PHISON_PS5000,
+	    "PS5000",
+	},
+	{
 	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT80C826,
 	    "PT80C826",
 	},
@@ -18798,6 +18802,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_JMICRON,
 	    "JMicron",
+	},
+	{
+	    PCI_VENDOR_PHISON,
+	    "Phison",
 	},
 	{
 	    PCI_VENDOR_ASPEED,

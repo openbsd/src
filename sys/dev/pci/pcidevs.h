@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1493 2009/09/20 13:08:23 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1494 2009/09/29 16:29:13 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -308,6 +308,7 @@
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technology */
 #define	PCI_VENDOR_AGEIA	0x1971		/* Ageia */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron */
+#define	PCI_VENDOR_PHISON	0x1987		/* Phison */
 #define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_AWT	0x1a3b		/* AWT */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
@@ -4261,6 +4262,9 @@
 #define	PCI_PRODUCT_PHILIPS_SAA7133	0x7133		/* SAA7133 TV */
 #define	PCI_PRODUCT_PHILIPS_SAA7134	0x7134		/* SAA7134 TV */
 #define	PCI_PRODUCT_PHILIPS_SAA7135	0x7135		/* SAA7135 TV */
+
+/* Phison products */
+#define	PCI_PRODUCT_PHISON_PS5000	0x5000		/* PS5000 */
 
 /* Picopower */
 #define	PCI_PRODUCT_PICOPOWER_PT80C826	0x0000		/* PT80C826 */
