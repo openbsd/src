@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.287 2009/09/28 22:13:20 dlg Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.288 2009/09/29 12:54:14 jmc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -234,7 +234,7 @@ usage(void)
 	fprintf(stderr, "\t[-f file] [-i interface] [-K host | network]\n");
 	fprintf(stderr, "\t[-k host | network | label | id] ");
 	fprintf(stderr, "[-L statefile] [-o level] [-p device]\n");
-	fprintf(stderr, "\t[-s modifier] [-S statefile] ");
+	fprintf(stderr, "\t[-S statefile] [-s modifier] ");
 	fprintf(stderr, "[-t table -T command [address ...]]\n");
 	fprintf(stderr, "\t[-x level]\n");
 	exit(1);
