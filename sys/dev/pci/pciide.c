@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.298 2009/09/05 10:24:58 miod Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.299 2009/09/29 17:51:07 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -280,6 +280,9 @@ void ixp_setup_channel(struct channel_softc *);
 
 void jmicron_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void jmicron_setup_channel(struct channel_softc *);
+
+void phison_chip_map(struct pciide_softc *, struct pci_attach_args *);
+void phison_setup_channel(struct channel_softc *);
 
 void sch_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void sch_setup_channel(struct channel_softc *);
@@ -1166,6 +1169,13 @@ const struct pciide_product_desc pciide_jmicron_products[] = {
 	}
 };
 
+const struct pciide_product_desc pciide_phison_products[] = {
+	{ PCI_PRODUCT_PHISON_PS5000,
+	  0,
+	  phison_chip_map
+	},
+};
+
 struct pciide_vendor_desc {
 	u_int32_t ide_vendor;
 	const struct pciide_product_desc *ide_products;
@@ -1208,7 +1218,9 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_ATI, pciide_ati_products,
 	  sizeof(pciide_ati_products)/sizeof(pciide_ati_products[0]) },
 	{ PCI_VENDOR_JMICRON, pciide_jmicron_products,
-	  sizeof(pciide_jmicron_products)/sizeof(pciide_jmicron_products[0]) }
+	  sizeof(pciide_jmicron_products)/sizeof(pciide_jmicron_products[0]) },
+	{ PCI_VENDOR_PHISON, pciide_phison_products,
+	  sizeof(pciide_phison_products)/sizeof(pciide_phison_products[0]) }
 };
 
 /* options passed via the 'flags' config keyword */
@@ -8444,6 +8456,122 @@ jmicron_setup_channel(struct channel_softc *chp)
 			    (drvp->UDMA_mode > 2))
 				drvp->UDMA_mode = 2;
 
+			mode = drvp->PIO_mode;
+		} else if ((chp->wdc->cap & WDC_CAPABILITY_DMA) != 0 &&
+		    (drvp->drive_flags & DRIVE_DMA) != 0) {
+			/* Setup multiword DMA mode */
+			drvp->drive_flags &= ~DRIVE_UDMA;
+
+			/* mode = min(pio, dma + 2) */
+			if (drvp->PIO_mode <= (drvp->DMA_mode + 2))
+				mode = drvp->PIO_mode;
+			else
+				mode = drvp->DMA_mode + 2;
+		} else {
+			mode = drvp->PIO_mode;
+			goto pio;
+		}
+		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+
+pio:
+		/* Setup PIO mode */
+		if (mode <= 2) {
+			drvp->DMA_mode = 0;
+			drvp->PIO_mode = 0;
+		} else {
+			drvp->PIO_mode = mode;
+			drvp->DMA_mode = mode - 2;
+		}
+	}
+
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL(channel), idedma_ctl);
+	}
+
+	pciide_print_modes(cp);
+}
+
+void
+phison_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	int channel;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	bus_size_t cmdsize, ctlsize;
+	u_int32_t conf;
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 5;
+	sc->sc_wdcdev.set_modes = phison_setup_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = 1;
+
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+		if (cp->hw_ok == 0) {
+			pciide_unmap_compat_intr(pa, cp, channel, interface);
+			continue;
+		}
+
+		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+	}
+	WDCDEBUG_PRINT(("%s: new conf register 0x%x\n",
+	    sc->sc_wdcdev.sc_dev.dv_xname, conf), DEBUG_PROBE);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, NFORCE_CONF, conf);
+}
+
+void
+phison_setup_channel(struct channel_softc *chp)
+{
+	struct ata_drive_datas *drvp;
+	int drive, mode;
+	u_int32_t idedma_ctl;
+	struct pciide_channel *cp = (struct pciide_channel *)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int channel = chp->channel;
+
+	/* Setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	/* Clear all bits for this channel */
+	idedma_ctl = 0;
+
+	/* Per channel settings */
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+
+		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) != 0 &&
+		    (drvp->drive_flags & DRIVE_UDMA) != 0) {
+			/* Setup UltraDMA mode */
+			drvp->drive_flags &= ~DRIVE_DMA;
 			mode = drvp->PIO_mode;
 		} else if ((chp->wdc->cap & WDC_CAPABILITY_DMA) != 0 &&
 		    (drvp->drive_flags & DRIVE_DMA) != 0) {
