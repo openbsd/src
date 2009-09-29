@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.38 2008/08/02 11:39:38 stefan Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.39 2009/09/29 17:26:09 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -985,10 +985,11 @@ sysctl_pty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 /*
  * Check if a pty is free to use.
  */
-static __inline int
+static int
 pty_isfree_locked(int minor)
 {
 	struct pt_softc *pt = pt_softc[minor];
+
 	return (pt == NULL || pt->pt_tty == NULL ||
 	    pt->pt_tty->t_oproc == NULL);
 }
