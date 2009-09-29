@@ -485,7 +485,6 @@
 ./usr/share/man/cat1/sparc/fdformat.0
 ./usr/share/man/cat1/sparc64
 ./usr/share/man/cat1/sparc64/fdformat.0
-./usr/share/man/cat4/sparc64/lom.0
 ./usr/share/man/cat1/sparc64/mksuncd.0
 ./usr/share/man/cat1/spell.0
 ./usr/share/man/cat1/split.0
@@ -1845,6 +1844,7 @@
 ./usr/share/man/cat4/sparc64/lebuffer.0
 ./usr/share/man/cat4/sparc64/led.0
 ./usr/share/man/cat4/sparc64/ledma.0
+./usr/share/man/cat4/sparc64/lom.0
 ./usr/share/man/cat4/sparc64/machfb.0
 ./usr/share/man/cat4/sparc64/magma.0
 ./usr/share/man/cat4/sparc64/mem.0
@@ -2565,6 +2565,7 @@
 ./usr/share/man/cat8/ospfd.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/palm
+./usr/share/man/cat8/palm/MAKEDEV.0
 ./usr/share/man/cat8/pcidump.0
 ./usr/share/man/cat8/pfctl.0
 ./usr/share/man/cat8/pflogd.0
