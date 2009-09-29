@@ -603,6 +603,7 @@
 ./usr/share/man/cat3/mvmeppc
 ./usr/share/man/cat3/palm
 ./usr/share/man/cat3/sgi
+./usr/share/man/cat3/sgi/cacheflush.0
 ./usr/share/man/cat3/socppc
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sparc64
