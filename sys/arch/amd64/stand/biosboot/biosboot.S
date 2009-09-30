@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.4 2007/09/07 09:44:20 weingart Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.5 2009/09/30 19:03:17 weingart Exp $	*/
 
 /*
  * Copyright (c) 2003 Tobias Weingartner
@@ -45,7 +45,7 @@
 /*
  * Memory layout:
  *
- * 0x00000 -> 0x079FF	our stack		(to  30k5)
+ * 0x00000 -> 0x07BFF	our stack		(to  31k)
  * 0x07A00 -> 0x07BFF	typical MBR loc		(at  30k5)
  * 0x07C00 -> 0x07DFF	our code		(at  31k)
  * 0x07E00 -> ...    	/boot inode block	(at  31k5)
@@ -61,7 +61,7 @@
  * (In real mode on x86, segment registers contain a base address in
  * paragraphs (16 bytes).  0000:00010 is the same as 0001:0000.)
  *
- * We set the stack to start at 0000:79FC (grows down on i386)
+ * We set the stack to start at 0000:7BFC (grows down on i386)
  *
  * We then read the inode for /boot into memory just above us at
  * 07E0:0000, and run through the direct block table (and the first
