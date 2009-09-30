@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.71 2009/09/19 16:22:10 sthen Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.72 2009/09/30 14:30:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -779,7 +779,7 @@ orig_rtr_lsa(struct area *area)
 				/* RFC 3137: stub router support */
 				if (oeconf->flags & OSPFD_FLAG_STUB_ROUTER ||
 				    oe_nofib)
-					rtr_link.metric = 0xffff;
+					rtr_link.metric = MAX_METRIC;
 				else
 					rtr_link.metric = htons(iface->metric);
 				num_links++;
@@ -854,7 +854,7 @@ orig_rtr_lsa(struct area *area)
 				/* RFC 3137: stub router support */
 				if (oeconf->flags & OSPFD_FLAG_STUB_ROUTER ||
 				    oe_nofib)
-					rtr_link.metric = 0xffff;
+					rtr_link.metric = MAX_METRIC;
 				else
 					rtr_link.metric = htons(iface->metric);
 				num_links++;
@@ -890,7 +890,7 @@ orig_rtr_lsa(struct area *area)
 					/* RFC 3137: stub router support */
 					if (oe_nofib || oeconf->flags &
 					    OSPFD_FLAG_STUB_ROUTER)
-						rtr_link.metric = 0xffff;
+						rtr_link.metric = MAX_METRIC;
 					else
 						rtr_link.metric =
 						    htons(iface->metric);
@@ -910,7 +910,7 @@ orig_rtr_lsa(struct area *area)
 		/* RFC 3137: stub router support */
 		if ((oeconf->flags & OSPFD_FLAG_STUB_ROUTER || oe_nofib) &&
 		    rtr_link.type != LINK_TYPE_STUB_NET)
-			rtr_link.metric = 0xffff;
+			rtr_link.metric = MAX_METRIC;
 		else
 			rtr_link.metric = htons(iface->metric);
 		num_links++;
