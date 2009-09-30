@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.25 2009/09/30 20:16:31 miod Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.26 2009/09/30 20:18:06 miod Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ dec_kn20aa_intr_map(pa, ihp)
 	}
 
 	kn20aa_irq += buspin - 1;
-	if (kn20aa_irq > KN20AA_MAX_IRQ)
+	if (kn20aa_irq >= KN20AA_MAX_IRQ)
 		panic("pci_kn20aa_map_int: kn20aa_irq too large (%d)",
 		    kn20aa_irq);
 

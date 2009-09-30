@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_kn300.c,v 1.3 2009/08/22 02:54:50 mk Exp $ */
+/* $OpenBSD: pci_kn300.c,v 1.4 2009/09/30 20:18:06 miod Exp $ */
 /* $NetBSD: pci_kn300.c,v 1.28 2005/12/11 12:16:17 christos Exp $ */
 
 /*
@@ -180,7 +180,7 @@ dec_kn300_intr_string(ccv, ih)
 	int irq;
 
 	irq = ih & 0x3ff;
-	if (irq > NIRQ)
+	if (irq >= NIRQ)
 		panic("dec_kn300_intr_string: bogus kn300 IRQ 0x%x", irq);
 
 	snprintf(irqstr, sizeof irqstr, "kn300 irq %ld", irq);
@@ -201,7 +201,7 @@ dec_kn300_intr_establish(ccv, ih, level, func, arg, name)
 	int irq;
 
 	irq = ih & 0x3ff;
-	if (irq > NIRQ)
+	if (irq >= NIRQ)
 		panic("dec_kn300_intr_establish: bogus kn300 IRQ 0x%x", irq);
 
 	cookie = alpha_shared_intr_establish(kn300_pci_intr, irq, IST_LEVEL,
