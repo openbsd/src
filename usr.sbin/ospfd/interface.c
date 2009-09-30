@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.64 2009/08/09 23:04:16 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.65 2009/09/30 14:37:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -139,11 +139,9 @@ if_fsm(struct iface *iface, enum iface_event event)
 	if (iface->state != old_state)
 		orig_rtr_lsa(iface->area);
 
-	if (old_state & (IF_STA_MULTI | IF_STA_POINTTOPOINT) &&
-	    (iface->state & (IF_STA_MULTI | IF_STA_POINTTOPOINT)) == 0)
+	if (old_state & IF_STA_MULTI && (iface->state & IF_STA_MULTI) == 0)
 		ospfe_demote_iface(iface, 0);
-	if ((old_state & (IF_STA_MULTI | IF_STA_POINTTOPOINT)) == 0 &&
-	    iface->state & (IF_STA_MULTI | IF_STA_POINTTOPOINT))
+	if ((old_state & IF_STA_MULTI) == 0 && iface->state & IF_STA_MULTI)
 		ospfe_demote_iface(iface, 1);
 
 	log_debug("if_fsm: event %s resulted in action %s and changing "

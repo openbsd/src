@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.72 2009/09/30 14:30:24 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.73 2009/09/30 14:37:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -827,12 +827,21 @@ orig_rtr_lsa(struct area *area)
 				}
 			}
 
-			if ((iface->flags & IFF_UP) == 0 ||
-			    iface->linkstate == LINK_STATE_DOWN ||
-			    (!LINK_STATE_IS_UP(iface->linkstate) &&
-			    iface->media_type == IFT_CARP))
+			/*
+			 * do not add a stub net LSA for interfaces that are:
+			 *  - down
+			 *  - have a linkstate which is down and are not carp
+			 *  - have a linkstate unknown and are carp
+			 * carp uses linkstate down for backup and unknown
+			 * in cases where a major fubar happend.
+			 */
+			if (!(iface->flags & IFF_UP) ||
+			    (iface->media_type != IFT_CARP &&
+			    !(LINK_STATE_IS_UP(iface->linkstate) ||
+			    iface->linkstate == LINK_STATE_UNKNOWN)) ||
+			    (iface->media_type == IFT_CARP &&
+			    iface->linkstate == LINK_STATE_UNKNOWN))
 				continue;
-
 			log_debug("orig_rtr_lsa: stub net, "
 			    "interface %s", iface->name);
 
@@ -840,7 +849,21 @@ orig_rtr_lsa(struct area *area)
 			    iface->addr.s_addr & iface->mask.s_addr;
 			rtr_link.data = iface->mask.s_addr;
 			rtr_link.type = LINK_TYPE_STUB_NET;
-			break;
+
+			rtr_link.num_tos = 0;
+			/*
+			 * backup carp interfaces are anounced with high metric
+			 * for faster failover.
+			 */
+			if (iface->media_type == IFT_CARP &&
+			    iface->linkstate == LINK_STATE_DOWN)
+				rtr_link.metric = MAX_METRIC;
+			else
+				rtr_link.metric = htons(iface->metric);
+			num_links++;
+			if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
+				fatalx("orig_rtr_lsa: buf_add failed");
+			continue;
 		case IF_TYPE_VIRTUALLINK:
 			LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 				if (nbr != iface->self &&
@@ -1123,6 +1146,9 @@ ospfe_demote_iface(struct iface *iface, int active)
 		dmsg.level = -1;
 	else
 		dmsg.level = 1;
+
+	log_warnx("ospfe_demote_iface: group %s level %d", dmsg.demote_group,
+		dmsg.level);
 
 	ospfe_imsg_compose_parent(IMSG_DEMOTE, 0, &dmsg, sizeof(dmsg));
 }

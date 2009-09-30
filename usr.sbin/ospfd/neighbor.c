@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.37 2008/02/11 12:37:37 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.38 2009/09/30 14:37:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -211,6 +211,11 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 			gettimeofday(&now, NULL);
 			nbr->uptime = now.tv_sec;
+
+			/* demote P2P links if the neighbor resets */
+			if (nbr->iface->type == IF_TYPE_POINTOPOINT)
+				ospfe_demote_iface(nbr->iface,
+				    !(old_state & NBR_STA_FULL));
 		}
 
 		/* bidirectional communication lost */
