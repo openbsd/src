@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.111 2008/10/08 17:47:28 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.112 2009/09/30 19:39:34 naddy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.111 2008/10/08 17:47:28 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.112 2009/09/30 19:39:34 naddy Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ void	usage(void);
 void	dotimes(void);
 void	doforkst(void);
 void	needhdr(int);
-int	pct(long, long);
+int	pct(int64_t, int64_t);
 void	printhdr(void);
 
 char	**choosedrives(char **);
@@ -509,24 +509,22 @@ dotimes(void)
 }
 
 int
-pct(long top, long bot)
+pct(int64_t top, int64_t bot)
 {
 	int ans;
 
 	if (bot == 0)
 		return(0);
-	ans = (quad_t)top * 100 / bot;
+	ans = top * 100 / bot;
 	return (ans);
 }
-
-#define	PCT(top, bot) pct((long)(top), (long)(bot))
 
 void
 dosum(void)
 {
 	struct nchstats nchstats;
 	int mib[2], nselcoll;
-	long nchtotal;
+	long long nchtotal;
 	size_t size;
 
 	if (nlistf == NULL && memf == NULL) {
@@ -603,16 +601,16 @@ dosum(void)
 	nchtotal = nchstats.ncs_goodhits + nchstats.ncs_neghits +
 	    nchstats.ncs_badhits + nchstats.ncs_falsehits +
 	    nchstats.ncs_miss + nchstats.ncs_long;
-	(void)printf("%11ld total name lookups\n", nchtotal);
+	(void)printf("%11lld total name lookups\n", nchtotal);
 	(void)printf("%11s cache hits (%d%% pos + %d%% neg) system %d%% "
 	    "per-directory\n",
-	    "", PCT(nchstats.ncs_goodhits, nchtotal),
-	    PCT(nchstats.ncs_neghits, nchtotal),
-	    PCT(nchstats.ncs_pass2, nchtotal));
+	    "", pct(nchstats.ncs_goodhits, nchtotal),
+	    pct(nchstats.ncs_neghits, nchtotal),
+	    pct(nchstats.ncs_pass2, nchtotal));
 	(void)printf("%11s deletions %d%%, falsehits %d%%, toolong %d%%\n", "",
-	    PCT(nchstats.ncs_badhits, nchtotal),
-	    PCT(nchstats.ncs_falsehits, nchtotal),
-	    PCT(nchstats.ncs_long, nchtotal));
+	    pct(nchstats.ncs_badhits, nchtotal),
+	    pct(nchstats.ncs_falsehits, nchtotal),
+	    pct(nchstats.ncs_long, nchtotal));
 
 	if (nlistf == NULL && memf == NULL) {
 		size = sizeof(nselcoll);
