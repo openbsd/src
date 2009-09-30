@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.h,v 1.8 2000/11/08 21:27:22 ericj Exp $ */
+/* $OpenBSD: prom.h,v 1.9 2009/09/30 19:41:54 miod Exp $ */
 /* $NetBSD: prom.h,v 1.12 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
@@ -49,7 +49,6 @@ typedef union {
 
 #ifdef _STANDALONE
 int	getchar(void);
-int	prom_open(char *, int);
 void	putchar(int);
 #endif
 
@@ -93,6 +92,8 @@ void	hwrpb_restart_setup(void);
  * either don't need to copy anything, or don't need the copy because it's
  * already being done elsewhere, are defined here.
  */
+#define	prom_open(dev, len)						\
+	prom_dispatch(PROM_R_OPEN, (dev), (len), 0, 0)
 #define	prom_close(chan)						\
 	prom_dispatch(PROM_R_CLOSE, chan, 0, 0, 0)
 #define	prom_read(chan, len, buf, blkno)				\

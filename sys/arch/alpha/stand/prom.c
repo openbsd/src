@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.5 1997/01/24 19:58:07 niklas Exp $	*/
+/*	$OpenBSD: prom.c,v 1.6 2009/09/30 19:41:59 miod Exp $	*/
 /*	$NetBSD: prom.c,v 1.2 1996/11/25 16:18:16 cgd Exp $	*/
 
 /*  
@@ -99,18 +99,4 @@ prom_getenv(id, buf, len)
 	buf[ret.u.retval] = '\0';
 
 	return (ret.u.retval);
-}
-
-int
-prom_open(dev, len)
-	char *dev;
-	int len;
-{
-	prom_return_t ret;
-
-	ret.bits = prom_dispatch(PROM_R_OPEN, dev, len);
-	if (ret.u.status & 0x4)
-		return (-1);
-	else
-		return (ret.u.retval);
 }
