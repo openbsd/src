@@ -1,4 +1,4 @@
-/* $OpenBSD: rpb.h,v 1.10 2004/01/13 06:21:09 deraadt Exp $ */
+/* $OpenBSD: rpb.h,v 1.11 2009/09/30 19:30:52 miod Exp $ */
 /* $NetBSD: rpb.h,v 1.38 2000/07/06 23:29:13 thorpej Exp $ */
 
 /*
@@ -82,6 +82,8 @@ struct rpb {
 #define	ST_DEC_WILDFIRE		35		/* "Wildfire" */
 #define	ST_DEC_CUSCO		36		/* "CUSCO" */
 #define	ST_DEC_EIGER		37		/* "Eiger" */
+#define	ST_DEC_TITAN		38		/* EV6-Titan based systems */
+#define	ST_DEC_MARVEL		39		/* "Marvel" */
 
 	/* Alpha Processor, Inc. systypes */
 #define	ST_API_NAUTILUS		201		/* EV6-AMD 751 UP1000 */
@@ -452,7 +454,7 @@ struct mddt {
 		u_long		mddt_p_bitaddr;	/*  20: bitmap phys addr */
 		int64_t		mddt_bit_cksum;	/*  28: bitmap checksum */
 
-#define	MDDT_NONVOLATILE		0x10	/* cluster is non-volatile */
+#define	MDDT_NONVOLATILE		0x02	/* cluster is non-volatile */
 #define	MDDT_PALCODE			0x01	/* console and PAL only */
 #define	MDDT_SYSTEM			0x00	/* system software only */
 #define	MDDT_mbz	  0xfffffffffffffffc	/* 2:63 -- must be zero */
