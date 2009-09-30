@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.19 2009/08/06 21:11:39 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.20 2009/09/30 06:22:00 syuu Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -84,7 +84,8 @@ tlb_miss_err_r5k:
 	.globl	tlb_miss
 	.ent	tlb_miss, 0
 tlb_miss:
-	PTR_L	k1, curprocpaddr
+	GET_CPU_INFO(k1, k0)
+	PTR_L	k1, CI_CURPROCPADDR(k1)
 	dmfc0	k0, COP_0_BAD_VADDR
 	bltz	k0, _k_miss		# kernel address space
 	PTR_SRL	k0, k0, SEGSHIFT - LOGREGSZ
@@ -141,8 +142,12 @@ xtlb_miss:
 	PTR_SRL	k0, k0, SEGSHIFT
 	sltiu	k1, k0, PMAP_SEGTABSIZE
 	beqz	k1, _inv_seg		# wrong if outside pm_segtab
+	nop
+	GET_CPU_INFO(k1, k0)
+	PTR_L	k1, CI_CURPROCPADDR(k1)
+	dmfc0	k0, COP_0_BAD_VADDR
+	PTR_SRL	k0, k0, SEGSHIFT
 	PTR_SLL	k0, k0, LOGREGSZ
-	PTR_L	k1, curprocpaddr
 	PTR_L	k1, PCB_SEGTAB(k1)
 	PTR_ADDU k1, k1, k0
 	PTR_L	k1, 0(k1)		# get pointer to page table
@@ -321,7 +326,8 @@ NLEAF(k_tlb_miss, 0)
 	eret
 
 sys_stk_chk:
-	PTR_L	k1, curprocpaddr
+	GET_CPU_INFO(k1, k0)
+	PTR_L	k1, CI_CURPROCPADDR(k1)
 	PTR_SUBU k0, sp, k1			# check to see if we have a
 	sltiu	k0, 2048			#  valid kernel stack
 	beqz	k0, go_k_general		# yes, handle.

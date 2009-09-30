@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.21 2009/09/15 04:54:31 syuu Exp $ */
+/*	$OpenBSD: exception.S,v 1.22 2009/09/30 06:22:00 syuu Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -46,8 +46,6 @@
 #include <machine/cpustate.h>
 
 #include "assym.h"
-
-#define curproc	(cpu_info_primary + CI_CURPROC)
 
 	.set	mips3
 
@@ -221,7 +219,8 @@ END(k_intr)
 NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	.set	noat
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
-	PTR_L	k0, curprocpaddr
+	GET_CPU_INFO(k1, k0)
+	PTR_L	k0, CI_CURPROCPADDR(k1)
 	SAVE_CPU(k0, 0)
 #if 0
 	cfc0	v1, COP_0_ICR
@@ -248,12 +247,13 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	ITLBNOPFIX
 
 0:
-	PTR_L	t0, curproc
+	GET_CPU_INFO(t1, t0)
+	PTR_L	t0, CI_CURPROC(t1)
 	lw	v0, P_ASTPENDING(t0)	# any pending AST?
 	beq	v0, zero, 4f
 	nop
 
-	PTR_L	t0, P_ADDR(t0)		# curprocpaddr
+	PTR_L	t0, CI_CURPROCPADDR(t1)	# curprocpaddr
 	SAVE_CPU_SREG(t0, 0)
 
 #ifdef PERFCNTRS
@@ -287,7 +287,8 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	lw	t0, cpu_is_rm7k
 	beqz	t0, 1f			# not an RM7K. Don't do perf setup.
 
-	PTR_L	t1, curproc		# set up rm7k.
+	GET_CPU_INFO(t1, t0)
+	PTR_L	t0, CI_CURPROC(t1)	# set up rm7k.
 	ld	v0, P_WATCH_1(t1)
 	dmtc0	v0, COP_0_WATCH_1
 	ld	v0, P_WATCH_2(t1)
@@ -303,7 +304,8 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	nop;nop;nop;nop
 1:
 #endif
-	PTR_L	t0, curprocpaddr
+	GET_CPU_INFO(t1, t0)
+	PTR_L	t0, CI_CURPROCPADDR(t1)
 	RESTORE_CPU_SREG(t0, 0)
 
 	b	0b
@@ -325,7 +327,8 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
 	ITLBNOPFIX
 
-	PTR_L	k0, curprocpaddr
+	GET_CPU_INFO(k1, k0)
+	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_REG(a3, CPL, k0, 0)
 	sw	a3, cpl
 	.set	noat
@@ -396,7 +399,8 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	.set	noat
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 
-	PTR_L	k0, curprocpaddr
+	GET_CPU_INFO(k1, k0)
+	PTR_L	k0, CI_CURPROCPADDR(k1)
 	SAVE_CPU(k0, 0)
 #if 0
 	cfc0	v1, COP_0_ICR
@@ -415,7 +419,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	beqz	t0, 1f			# not an RM7K. Don't do perf save.
 
 	mfc0	v0, COP_0_PC_CTRL
-	PTR_L	t0, curproc
+	PTR_L	t0, CI_CURPROC(k1)
 	sw	v0, P_PC_CTRL(t0)
 	dmfc0	v0, COP_0_WATCH_1
 	dmfc0	v1, COP_0_WATCH_2
@@ -434,7 +438,8 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
 
 0:
-	PTR_L	t0, curproc
+	GET_CPU_INFO(t1, t0)
+	PTR_L	t0, CI_CURPROC(t1)
 	lw	v0, P_ASTPENDING(t0)	# any pending AST?
 	beq	v0, zero, 4f
 	nop
@@ -445,7 +450,8 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	jal	ast
 	nop
 
-	PTR_L	t0, curprocpaddr
+	GET_CPU_INFO(t1, t0)
+	PTR_L	t0, CI_CURPROCPADDR(t1)
 	RESTORE_CPU_SREG(t0, 0)
 
 	b	0b
@@ -456,7 +462,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	lw	t0, cpu_is_rm7k
 	beqz	t0, 1f			# not an RM7K. Don't do perf setup.
 
-	LOAD	t0, curproc		# set up rm7k.
+	LOAD	t0, CI_CURPROC(k1)	# set up rm7k.
 	ld	v0, P_WATCH_1(t0)
 	dmtc0	v0, COP_0_WATCH_1
 	ld	v0, P_WATCH_2(t0)
@@ -482,7 +488,8 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
 	ITLBNOPFIX
 
-	PTR_L	k0, curprocpaddr
+	GET_CPU_INFO(k1, k0)
+	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_REG(a3, CPL, k0, 0)
 	sw	a3, cpl
 	.set	noat
@@ -571,7 +578,8 @@ LEAF(proc_trampoline, 0)
 	ITLBNOPFIX
 
 	.set	noat
-	PTR_L	k0, curprocpaddr
+	GET_CPU_INFO(k1, k0)
+	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_CPU_SREG(k0, 0)
 	RESTORE_REG(a0, PC, k0, 0)
 #if 0

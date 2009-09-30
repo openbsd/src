@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.36 2009/09/15 04:54:31 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.37 2009/09/30 06:22:00 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -367,6 +367,7 @@ struct cpu_info {
 	struct cpu_info *ci_self;	/* pointer to this structure */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct proc	*ci_curproc;
+	struct user *ci_curprocpaddr;
 
 	struct schedstate_percpu
 			 ci_schedstate;

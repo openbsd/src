@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.82 2009/08/19 12:33:06 jasper Exp $ */
+/*	$OpenBSD: machdep.c,v 1.83 2009/09/30 06:22:00 syuu Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -103,7 +103,6 @@ int	physmem;		/* Max supported memory, changes to actual. */
 int	rsvdmem;		/* Reserved memory not usable. */
 int	ncpu = 1;		/* At least one CPU in the system. */
 struct	user *proc0paddr;
-struct	user *curprocpaddr;
 int	console_ok;		/* Set when console initialized. */
 int	kbd_reset;
 int16_t	masternasid;
@@ -490,7 +489,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	/*
 	 * Allocate U page(s) for proc[0], pm_tlbpid 1.
 	 */
-	proc0.p_addr = proc0paddr = curprocpaddr =
+	proc0.p_addr = proc0paddr = curcpu()->ci_curprocpaddr =
 	    (struct user *)pmap_steal_memory(USPACE, NULL, NULL);
 	proc0.p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
 	tlb_set_pid(1);

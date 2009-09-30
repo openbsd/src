@@ -1,15 +1,15 @@
-/*	$OpenBSD: cpu.h,v 1.2 2009/09/15 04:54:31 syuu Exp $ */
+/*	$OpenBSD: cpu.h,v 1.3 2009/09/30 06:22:00 syuu Exp $ */
 
 /* Use Mips generic include file */
 
 #ifdef _KERNEL
 #ifdef MULTIPROCESSOR
 #if defined(TGT_OCTANE)
-#define HW_CPU_NUMBER 0x900000000ff50000/* HEART_PRID */
-#else
+#define HW_CPU_NUMBER_REG 0x900000000ff50000 /* HEART_PRID */
+#else /* TGT_OCTANE */
 #error MULTIPROCESSOR kernel not supported on this configuration
-#endif
-#define hw_cpu_number() (*(uint64_t *)HW_CPU_NUMBER)
+#endif /* TGT_OCTANE */
+#define hw_cpu_number() (*(uint64_t *)HW_CPU_NUMBER_REG)
 #else/* MULTIPROCESSOR */
 #define hw_cpu_number() 0
 #endif/* MULTIPROCESSOR */

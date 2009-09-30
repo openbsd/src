@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.23 2009/08/06 21:11:39 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.24 2009/09/30 06:22:00 syuu Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,8 +38,6 @@
 #endif
 
 #include "assym.h"
-
-#define curproc	(cpu_info_primary + CI_CURPROC)
 
 	.set	mips3
 
@@ -105,7 +103,8 @@ END(cpu_idle_cycle)
  * cpu_switchto(struct proc *oldproc, struct proc *newproc)
  */
 NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
-	PTR_L	t3, curprocpaddr
+	GET_CPU_INFO(t1, t3)
+	PTR_L	t3, CI_CURPROCPADDR(t1)
 	REG_S	sp, PCB_CONTEXT+8*REGSZ(t3)	# save old sp
 
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
@@ -148,9 +147,10 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	move	a0, s0
 
 	PTR_L	t3, P_ADDR(s0)			# get uarea pointer.
-	PTR_S	s0, curproc			# set curproc
-	PTR_S	t3, curprocpaddr
-
+	GET_CPU_INFO(t1, t0)
+	PTR_S	s0, CI_CURPROC(t1)		# set curproc
+	PTR_S	t3, CI_CURPROCPADDR(t1)
+	
 	li	t1, SONPROC
 	sb	t1, P_STAT(s0)			# set to onproc.
 
