@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.24 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.25 2009/09/30 20:16:31 miod Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -224,8 +224,7 @@ dec_kn20aa_intr_disestablish(ccv, cookie)
 
 	s = splhigh();
 
-	alpha_shared_intr_disestablish(kn20aa_pci_intr, cookie,
-	    "kn20aa irq");
+	alpha_shared_intr_disestablish(kn20aa_pci_intr, cookie);
 	if (alpha_shared_intr_isactive(kn20aa_pci_intr, irq) == 0) {
 		kn20aa_disable_intr(irq);
 		alpha_shared_intr_set_dfltsharetype(kn20aa_pci_intr, irq,

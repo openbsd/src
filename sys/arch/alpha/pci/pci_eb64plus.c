@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.12 2009/08/22 02:54:50 mk Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.13 2009/09/30 20:16:30 miod Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -225,8 +225,7 @@ dec_eb64plus_intr_disestablish(acv, cookie)
  
 	s = splhigh();
 
-	alpha_shared_intr_disestablish(eb64plus_pci_intr, cookie,
-	    "eb64+ irq");
+	alpha_shared_intr_disestablish(eb64plus_pci_intr, cookie);
 	if (alpha_shared_intr_isactive(eb64plus_pci_intr, irq) == 0) {
 		eb64plus_intr_disable(irq);
 		alpha_shared_intr_set_dfltsharetype(eb64plus_pci_intr, irq,

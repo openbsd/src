@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.15 2006/06/15 20:08:29 brad Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.16 2009/09/30 20:16:22 miod Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -180,10 +180,9 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 }
 
 void
-alpha_shared_intr_disestablish(intr, cookie, basename)
+alpha_shared_intr_disestablish(intr, cookie)
 	struct alpha_shared_intr *intr;
 	void *cookie;
-	const char *basename;
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int num = ih->ih_num;

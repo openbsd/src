@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.30 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.31 2009/09/30 20:16:31 miod Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -478,7 +478,7 @@ sio_intr_disestablish(v, cookie)
 	s = splhigh();
 
 	/* Remove it from the link. */
-	alpha_shared_intr_disestablish(sio_intr, cookie, "isa irq");
+	alpha_shared_intr_disestablish(sio_intr, cookie);
 
 	/*
 	 * Decide if we should disable the interrupt.  We must ensure

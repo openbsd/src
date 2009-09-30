@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.33 2009/03/25 21:41:41 miod Exp $ */
+/* $OpenBSD: intr.h,v 1.34 2009/09/30 20:16:29 miod Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -274,8 +274,7 @@ int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,
 	    unsigned int);
 void	*alpha_shared_intr_establish(struct alpha_shared_intr *,
 	    unsigned int, int, int, int (*)(void *), void *, const char *);
-void	alpha_shared_intr_disestablish(struct alpha_shared_intr *,
-	    void *, const char *);
+void	alpha_shared_intr_disestablish(struct alpha_shared_intr *, void *);
 int	alpha_shared_intr_get_sharetype(struct alpha_shared_intr *,
 	    unsigned int);
 int	alpha_shared_intr_isactive(struct alpha_shared_intr *,

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.23 2009/08/22 02:54:50 mk Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.24 2009/09/30 20:16:30 miod Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -293,8 +293,7 @@ dec_eb164_intr_disestablish(ccv, cookie)
  
 	s = splhigh();
 
-	alpha_shared_intr_disestablish(eb164_pci_intr, cookie,
-	    "eb164 irq");
+	alpha_shared_intr_disestablish(eb164_pci_intr, cookie);
 	if (alpha_shared_intr_isactive(eb164_pci_intr, irq) == 0) {
 		eb164_intr_disable(irq);
 		alpha_shared_intr_set_dfltsharetype(eb164_pci_intr, irq,
