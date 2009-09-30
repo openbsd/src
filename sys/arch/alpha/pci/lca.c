@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca.c,v 1.21 2009/03/30 21:43:13 kettenis Exp $	*/
+/*	$OpenBSD: lca.c,v 1.22 2009/09/30 19:32:11 miod Exp $	*/
 /*	$NetBSD: lca.c,v 1.14 1996/12/05 01:39:35 cgd Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 #include <machine/rpb.h>
 
 #include <dev/isa/isareg.h>
@@ -102,6 +103,8 @@ int	lcaprint(void *, const char *pnp);
 int	lca_bus_get_window(int, int,
 	    struct alpha_bus_space_translation *);
 #endif
+void	lca_machine_check(unsigned long, struct trapframe *, unsigned long,
+	    unsigned long);
 
 /* There can be only one. */
 int lcafound;
@@ -220,6 +223,9 @@ lcaattach(parent, self, aux)
 
 	lca_dma_init(lcp);
 
+	/* safe to override since LCA machines do not set mcheck_handler */
+	platform.mcheck_handler = lca_machine_check;
+
 	switch (cputype) {
 #ifdef DEC_AXPPCI_33
 	case ST_DEC_AXPPCI_33:
@@ -296,3 +302,15 @@ lca_bus_get_window(type, window, abst)
 	return (alpha_bus_space_get_window(st, window, abst));
 }
 #endif
+
+void
+lca_machine_check(unsigned long mces, struct trapframe *framep,
+    unsigned long vector, unsigned long param)
+{
+	int64_t stat0;
+
+	machine_check(mces, framep, vector, param);
+	/* clear error flags in IOC_STATUS0 register */
+	stat0 = REGVAL64(LCA_IOC_STAT0);
+	REGVAL64(LCA_IOC_STAT0) = stat0;
+}
