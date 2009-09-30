@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.6 2009/09/30 19:41:59 miod Exp $	*/
+/*	$OpenBSD: prom.c,v 1.7 2009/09/30 19:43:44 miod Exp $	*/
 /*	$NetBSD: prom.c,v 1.2 1996/11/25 16:18:16 cgd Exp $	*/
 
 /*  
@@ -91,12 +91,23 @@ prom_getenv(id, buf, len)
 	int id, len;
 	char *buf;
 {
+	/*
+	 * On at least some systems, the GETENV call requires a
+	 * 8-byte-aligned buffer, or it bails out with a "kernel stack
+	 * not valid halt". Provide a local, aligned buffer here and
+	 * then copy to the caller's buffer.
+	 */
+	static char abuf[128] __attribute__ ((aligned (8)));
 	prom_return_t ret;
 
-	ret.bits = prom_dispatch(PROM_R_GETENV, id, buf, len-1);
+	ret.bits = prom_dispatch(PROM_R_GETENV, id, abuf, 128);
 	if (ret.u.status & 0x4)
 		ret.u.retval = 0;
-	buf[ret.u.retval] = '\0';
+	len--;
+	if (len > ret.u.retval)
+		len = ret.u.retval;
+	memcpy(buf, abuf, len);
+	buf[len] = '\0';
 
-	return (ret.u.retval);
+	return (len);
 }
