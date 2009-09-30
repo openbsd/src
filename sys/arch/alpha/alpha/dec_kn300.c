@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn300.c,v 1.4 2009/09/01 21:16:47 ariane Exp $ */
+/* $OpenBSD: dec_kn300.c,v 1.5 2009/09/30 19:28:55 miod Exp $ */
 /* $NetBSD: dec_kn300.c,v 1.34 2007/03/04 15:18:10 yamt Exp $ */
 
 /*
@@ -231,7 +231,7 @@ dec_kn300_device_register(dev, aux)
 		DPRINTF(("proto:%s bus:%d slot:%d chan:%d", b->protocol,
 		    b->bus, b->slot, b->channel));
 		if (b->remote_address)
-			printf(" remote_addr:%s", b->remote_address);
+			DPRINTF((" remote_addr:%s", b->remote_address));
 		DPRINTF((" un:%d bdt:%d", b->unit, b->boot_dev_type));
 		if (b->ctrl_dev_type)
 			DPRINTF((" cdt:%s\n", b->ctrl_dev_type));
