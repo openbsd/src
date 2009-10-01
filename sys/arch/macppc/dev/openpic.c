@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.57 2009/09/15 21:02:24 kettenis Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.58 2009/10/01 20:19:18 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -71,8 +71,8 @@ static int mapirq(int irq);
 int openpic_prog_button(void *arg);
 void openpic_enable_irq_mask(int irq_mask);
 
-#define HWIRQ_MAX 27
-#define HWIRQ_MASK 0x0fffffff
+#define HWIRQ_MAX (31 - (SI_NQUEUES + 1))
+#define HWIRQ_MASK (0xffffffff >> (SI_NQUEUES + 1))
 
 /* IRQ vector used for inter-processor interrupts. */
 #define IPI_VECTOR_NOP	64
@@ -414,9 +414,9 @@ openpic_calc_mask()
 
 	for (i = IPL_NONE; i <= IPL_HIGH; i++) {
 		if (i > IPL_NONE)
-			imask[i] |= SINT_MASK;
+			imask[i] |= SINT_ALLMASK;
 		if (i >= IPL_CLOCK)
-			imask[i] |= SPL_CLOCK;
+			imask[i] |= SPL_CLOCKMASK;
 	}
 	imask[IPL_HIGH] = 0xffffffff;
 }
@@ -492,7 +492,7 @@ openpic_do_pending_int()
 			if (pripending == 0)
 				continue;
 			irq = 31 - cntlzw(pripending);
-			ci->ci_ipending &= ~(1L << irq);
+			ci->ci_ipending &= ~(1 << irq);
 			ci->ci_cpl = imask[o_intrmaxlvl[o_hwirq[irq]]];
 			openpic_enable_irq_mask(~ci->ci_cpl);
 			ih = o_intrhand[irq];
@@ -512,7 +512,7 @@ openpic_do_pending_int()
 		hwpend = ci->ci_ipending & ~pcpl;/* Catch new pendings */
 		hwpend &= HWIRQ_MASK;
 	}
-	ci->ci_cpl = pcpl | SINT_MASK;
+	ci->ci_cpl = pcpl | SINT_ALLMASK;
 	openpic_enable_irq_mask(~ci->ci_cpl);
 	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_HARD);
 
@@ -537,25 +537,19 @@ openpic_do_pending_softint(int pcpl)
 			ci->ci_cpl = SINT_CLOCK|SINT_NET|SINT_TTY;
 			ppc_intr_enable(1);
 			KERNEL_LOCK();
-			softclock();
+			softintr_dispatch(SI_SOFTCLOCK);
 			KERNEL_UNLOCK();
 			ppc_intr_disable();
 			continue;
 		}
 		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
-			extern int netisr;
-			int pisr;
-		       
 			ci->ci_ipending &= ~SINT_NET;
 			ci->ci_cpl = SINT_NET|SINT_TTY;
-			while ((pisr = netisr) != 0) {
-				atomic_clearbits_int(&netisr, pisr);
-				ppc_intr_enable(1);
-				KERNEL_LOCK();
-				softnet(pisr);
-				KERNEL_UNLOCK();
-				ppc_intr_disable();
-			}
+			ppc_intr_enable(1);
+			KERNEL_LOCK();
+			softintr_dispatch(SI_SOFTNET);
+			KERNEL_UNLOCK();
+			ppc_intr_disable();
 			continue;
 		}
 		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
@@ -563,12 +557,12 @@ openpic_do_pending_softint(int pcpl)
 			ci->ci_cpl = SINT_TTY;
 			ppc_intr_enable(1);
 			KERNEL_LOCK();
-			softtty();
+			softintr_dispatch(SI_SOFTTTY);
 			KERNEL_UNLOCK();
 			ppc_intr_disable();
 			continue;
 		}
-	} while ((ci->ci_ipending & SINT_MASK) & ~pcpl);
+	} while ((ci->ci_ipending & SINT_ALLMASK) & ~pcpl);
 	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
 
 	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.29 2009/06/09 01:12:38 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.30 2009/10/01 20:19:18 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ decr_intr(struct clockframe *frame)
 	 */
 	ppc_mtdec(nextevent - tb);
 
-	if (ci->ci_cpl & SPL_CLOCK) {
+	if (ci->ci_cpl & SPL_CLOCKMASK) {
 		ci->ci_statspending += nstats;
 	} else {
 		KERNEL_LOCK();

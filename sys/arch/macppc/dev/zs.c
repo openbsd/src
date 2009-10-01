@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.17 2008/08/19 07:59:19 kettenis Exp $	*/
+/*	$OpenBSD: zs.c,v 1.18 2009/10/01 20:19:18 kettenis Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ struct cfattach zsc_ca = {
 extern struct cfdriver zsc_cd;
 
 int zshard(void *);
-int zssoft(void *);
+void zssoft(void *);
 #ifdef ZS_TXDMA
 int zs_txdma_int(void *);
 #endif
@@ -393,6 +393,9 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	mac_intr_establish(parent, intr[1][1], IST_LEVEL, IPL_TTY,
 	    zs_txdma_int, (void *)1, "zsdma1");
 #endif
+	zsc->zsc_softintr = softintr_establish(IPL_SOFTTTY, zssoft, zsc);
+	if (zsc->zsc_softintr == NULL)
+		panic("zsattach: could not establish soft interrupt");
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
@@ -476,8 +479,7 @@ zshard(void *arg)
 			/* We are at splzs here, so no need to lock. */
 			if (zssoftpending == 0) {
 				zssoftpending = 1;
-				/* XXX setsoftserial(); */
-				setsofttty(); /* UGLY HACK!!! */
+				softintr_schedule(zsc->zsc_softintr);
 			}
 		}
 	}
@@ -487,7 +489,7 @@ zshard(void *arg)
 /*
  * Similar scheme as for zshard (look at all of them)
  */
-int
+void
 zssoft(arg)
 	void *arg;
 {
@@ -496,7 +498,7 @@ zssoft(arg)
 
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
-		return (0);
+		return;
 
 	/*
 	 * The soft intr. bit will be set by zshard only if
@@ -510,7 +512,6 @@ zssoft(arg)
 			continue;
 		(void) zsc_intr_soft(zsc);
 	}
-	return (1);
 }
 
 #ifdef ZS_TXDMA
@@ -534,7 +535,7 @@ zs_txdma_int(arg)
 	if (cs->cs_softreq) {
 		if (zssoftpending == 0) {
 			zssoftpending = 1;
-			setsoftserial();
+			softintr_schedule(zsc->zsc_softintr);
 		}
 	}
 	return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.10 2009/09/12 21:38:01 kettenis Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.11 2009/10/01 20:19:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -221,7 +221,7 @@ intr_calculatemasks(void)
 	int level;
 
 	for (level = IPL_NONE; level < IPL_NUM; level++)
-		imask[level] = SINT_MASK | (1 << level);
+		imask[level] = SINT_ALLMASK | (1 << level);
 
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
@@ -233,7 +233,7 @@ intr_calculatemasks(void)
 	imask[IPL_NET] |= imask[IPL_BIO];
 	imask[IPL_TTY] |= imask[IPL_NET];
 	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCK;
+	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCKMASK;
 
 	/*
 	 * These are pseudo-levels.
@@ -376,8 +376,8 @@ ipic_do_pending_int(void)
 	uint32_t mask;
 	int level;
 
-	ci->ci_ipending &= SINT_MASK;
-	level = cntlzw(31 - (ci->ci_cpl & ~(SPL_CLOCK|SINT_MASK)));
+	ci->ci_ipending &= SINT_ALLMASK;
+	level = cntlzw(31 - (ci->ci_cpl & ~(SPL_CLOCKMASK|SINT_ALLMASK)));
 	mask = sc->sc_simsr_h[IPL_HIGH] & ~sc->sc_simsr_h[level];
 	ipic_write(sc, IPIC_SIMSR_H, mask);
 	mask = sc->sc_simsr_l[IPL_HIGH] & ~sc->sc_simsr_l[level];

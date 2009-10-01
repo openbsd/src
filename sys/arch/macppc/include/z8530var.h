@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.7 2008/06/13 00:31:09 krw Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.8 2009/10/01 20:19:18 kettenis Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.5 2002/03/17 19:40:45 atatat Exp $	*/
 
 /*
@@ -92,12 +92,13 @@ struct xzs_chanstate {
 };
 
 struct zsc_softc {
-	struct	device zsc_dev;		/* required first: base device */
-	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
+	struct device		zsc_dev;	/* base device */
+	struct zs_chanstate 	*zsc_cs[2];	/* channel A and B soft state */
 	/* Machine-dependent part follows... */
-	struct xzs_chanstate xzsc_xcs_store[2];
-	dbdma_regmap_t *zsc_txdmareg[2];
-	dbdma_command_t *zsc_txdmacmd[2];
+	void			*zsc_softintr;
+	struct xzs_chanstate	xzsc_xcs_store[2];
+	dbdma_regmap_t		*zsc_txdmareg[2];
+	dbdma_command_t		*zsc_txdmacmd[2];
 	/* XXX tx only, for now */
 };
 

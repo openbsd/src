@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.42 2009/08/22 02:54:50 mk Exp $ */
+/*	$OpenBSD: intr.h,v 1.43 2009/10/01 20:19:19 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -59,13 +59,6 @@
 #define PPC_CLK_IRQ	64
 #define PPC_STAT_IRQ	65
 
-void setsoftclock(void);
-void clearsoftclock(void);
-int  splsoftclock(void);
-void setsoftnet(void);
-void clearsoftnet(void);
-int  splsoftnet(void);
-
 int	splraise(int);
 int	spllower(int);
 void	splx(int);
@@ -79,13 +72,56 @@ extern int imask[IPL_NUM];
 #define	splassert(wantipl)	/* nothing */
 #define	splsoftassert(wantipl)	/* nothing */
 
-#define	set_sint(p)	atomic_setbits_int(&curcpu()->ci_ipending, p)
+#define SINTBIT(q)	(31 - (q))
+#define SINTMASK(q)	(1 << SINTBIT(q))
 
-#define	SINT_CLOCK	0x10000000
-#define	SINT_NET	0x20000000
-#define	SINT_TTY	0x40000000
-#define	SPL_CLOCK	0x80000000
-#define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_TTY)
+#define	SPL_CLOCKMASK	SINTMASK(SI_NQUEUES)
+
+/* Soft interrupt masks. */
+
+#define	IPL_SOFTCLOCK	0
+#define	IPL_SOFTNET	1
+#define	IPL_SOFTTTY	2
+
+#define	SI_SOFTCLOCK	0	/* for IPL_SOFTCLOCK */
+#define	SI_SOFTNET	1	/* for IPL_SOFTNET */
+#define	SI_SOFTTTY	2	/* for IPL_SOFTTY */
+
+#define	SINT_ALLMASK	(SINTMASK(SI_SOFTCLOCK) | \
+			 SINTMASK(SI_SOFTNET) | SINTMASK(SI_SOFTTTY))
+#define	SI_NQUEUES	3
+
+#include <machine/mutex.h>
+#include <sys/queue.h>
+
+struct soft_intrhand {
+	TAILQ_ENTRY(soft_intrhand) sih_list;
+	void	(*sih_func)(void *);
+	void	*sih_arg;
+	struct soft_intrq *sih_siq;
+	int	sih_pending;
+};
+
+struct soft_intrq {
+	TAILQ_HEAD(, soft_intrhand) siq_list;
+	int siq_si;
+	struct mutex siq_mtx;
+};
+
+void	 softintr_disestablish(void *);
+void	 softintr_dispatch(int);
+void	*softintr_establish(int, void (*)(void *), void *);
+void	 softintr_init(void);
+void	 softintr_schedule(void *);
+
+/* XXX For legacy software interrupts. */
+extern struct soft_intrhand *softnet_intrhand;
+
+#define	setsoftnet()	softintr_schedule(softnet_intrhand)
+
+#define	SINT_CLOCK	SINTMASK(SI_SOFTCLOCK)
+#define	SINT_NET	SINTMASK(SI_SOFTNET)
+#define	SINT_TTY	SINTMASK(SI_SOFTTTY)
 
 #define splbio()	splraise(imask[IPL_BIO])
 #define splnet()	splraise(imask[IPL_NET])
@@ -99,10 +135,6 @@ extern int imask[IPL_NUM];
 #define	splsoftclock()	splraise(SINT_CLOCK)
 #define	splsoftnet()	splraise(SINT_NET|SINT_CLOCK)
 #define	splsofttty()	splraise(SINT_TTY|SINT_NET|SINT_CLOCK)
-
-#define	setsoftclock()	set_sint(SINT_CLOCK);
-#define	setsoftnet()	set_sint(SINT_NET);
-#define	setsofttty()	set_sint(SINT_TTY);
 
 #define	splhigh()	splraise(0xffffffff)
 #define	spl0()		spllower(0)

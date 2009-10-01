@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2009/08/30 14:57:41 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 2009/10/01 20:19:19 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -56,8 +56,6 @@
 #include <machine/pio.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
-
-#include <net/netisr.h>
 
 #include <dev/cons.h>
 
@@ -476,21 +474,6 @@ dumpsys(void)
 }
 
 int imask[IPL_NUM];
-
-int netisr;
-
-/*
- * Soft networking interrupts.
- */
-void
-softnet(int isr)
-{
-#define DONETISR(flag, func) \
-	if (isr & (1 << flag))\
-		func();
-
-#include <net/netisr_dispatch.h>
-}
 
 int
 lcsplx(int ipl)
@@ -1138,40 +1121,32 @@ do_pending_int(void)
 			ci->ci_cpl = SINT_CLOCK|SINT_NET|SINT_TTY;
 			ppc_intr_enable(1);
 			KERNEL_LOCK();
-			softclock();
+			softintr_dispatch(SI_SOFTCLOCK);
 			KERNEL_UNLOCK();
 			ppc_intr_disable();
 			continue;
 		}
 		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
-			extern int netisr;
-			int pisr;
-		       
 			ci->ci_ipending &= ~SINT_NET;
 			ci->ci_cpl = SINT_NET|SINT_TTY;
-			while ((pisr = netisr) != 0) {
-				atomic_clearbits_int(&netisr, pisr);
-				ppc_intr_enable(1);
-				KERNEL_LOCK();
-				softnet(pisr);
-				KERNEL_UNLOCK();
-				ppc_intr_disable();
-			}
+			ppc_intr_enable(1);
+			KERNEL_LOCK();
+			softintr_dispatch(SI_SOFTNET);
+			KERNEL_UNLOCK();
+			ppc_intr_disable();
 			continue;
 		}
-#if 0
 		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
 			ci->ci_ipending &= ~SINT_TTY;
 			ci->ci_cpl = SINT_TTY;
 			ppc_intr_enable(1);
 			KERNEL_LOCK();
-			softtty();
+			softintr_dispatch(SI_SOFTTTY);
 			KERNEL_UNLOCK();
 			ppc_intr_disable();
 			continue;
 		}
-#endif
-	} while ((ci->ci_ipending & SINT_MASK) & ~pcpl);
+	} while ((ci->ci_ipending & SINT_ALLMASK) & ~pcpl);
 	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
 
 	ci->ci_iactive = 0;

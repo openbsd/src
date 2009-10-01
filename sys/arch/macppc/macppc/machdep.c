@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.114 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.115 2009/10/01 20:19:19 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -53,8 +53,6 @@
 #include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
 
 #include <dev/cons.h>
 
@@ -829,37 +827,6 @@ dumpsys()
 }
 
 int imask[IPL_NUM];
-
-/*
- * this is a hack interface to allow zs to work better until
- * a true soft interrupt mechanism is created.
- */
-#include "zstty.h"
-#if NZSTTY > 0
-	extern void zssoft(void *);
-#endif
-void
-softtty()
-{
-#if NZSTTY > 0
-	zssoft(0);
-#endif
-}
-
-int netisr;
-
-/*
- * Soft networking interrupts.
- */
-void
-softnet(int isr)
-{
-#define DONETISR(flag, func) \
-	if (isr & (1 << flag))\
-		func();
-
-#include <net/netisr_dispatch.h>
-}
 
 int
 lcsplx(int ipl)

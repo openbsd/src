@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.38 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.39 2009/10/01 20:19:18 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -374,7 +374,7 @@ intr_calculatemasks()
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (m_intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs | SINT_MASK;
+		imask[level] = irqs | SINT_ALLMASK;
 	}
 
 	/*
@@ -387,7 +387,7 @@ intr_calculatemasks()
 	imask[IPL_NET] |= imask[IPL_BIO];
 	imask[IPL_TTY] |= imask[IPL_NET];
 	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCK;
+	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCKMASK;
 
 	/*
 	 * These are pseudo-levels.
@@ -400,7 +400,7 @@ intr_calculatemasks()
 		register int irqs = 1 << irq;
 		for (q = m_intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
-		m_intrmask[irq] = irqs | SINT_MASK;
+		m_intrmask[irq] = irqs | SINT_ALLMASK;
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */
@@ -579,23 +579,17 @@ mac_intr_do_pending_int()
 	do {
 		if((ci->ci_ipending & SINT_CLOCK) & ~pcpl) {
 			ci->ci_ipending &= ~SINT_CLOCK;
-			softclock();
+			softintr_dispatch(SI_SOFTCLOCK);
 		}
 		if((ci->ci_ipending & SINT_NET) & ~pcpl) {
-			extern int netisr;
-			int pisr;
-
 			ci->ci_ipending &= ~SINT_NET;
-			while ((pisr = netisr) != 0) {
-				atomic_clearbits_int(&netisr, pisr);
-				softnet(pisr);
-			}
+			softintr_dispatch(SI_SOFTNET);
 		}
 		if((ci->ci_ipending & SINT_TTY) & ~pcpl) {
 			ci->ci_ipending &= ~SINT_TTY;
-			softtty();
+			softintr_dispatch(SI_SOFTTTY);
 		}
-	} while ((ci->ci_ipending & SINT_MASK) & ~pcpl);
+	} while ((ci->ci_ipending & SINT_ALLMASK) & ~pcpl);
 	ci->ci_ipending &= pcpl;
 	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
 	ppc_intr_enable(s);
