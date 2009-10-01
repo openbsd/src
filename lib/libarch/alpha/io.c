@@ -1,4 +1,4 @@
-/* $OpenBSD: io.c,v 1.1 2002/07/07 14:24:04 matthieu Exp $ */
+/* $OpenBSD: io.c,v 1.2 2009/10/01 19:37:16 miod Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -150,19 +150,19 @@ writel(void *handle, u_int32_t offset, u_int32_t val)
 void
 writeb_nb(void *handle, u_int32_t offset, u_int8_t val)
 {
-	return ops->writeb(handle, offset, val);
+	ops->writeb(handle, offset, val);
 }
 
 void
 writew_nb(void *handle, u_int32_t offset, u_int16_t val)
 {
-	return ops->writew(handle, offset, val);
+	ops->writew(handle, offset, val);
 }
 
 void
 writel_nb(void *handle, u_int32_t offset, u_int32_t val)
 {
-	return ops->writel(handle, offset, val);
+	ops->writel(handle, offset, val);
 }
 
 u_int64_t
