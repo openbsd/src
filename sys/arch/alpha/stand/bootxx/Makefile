@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2007/11/25 18:25:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2009/10/01 15:42:14 miod Exp $
 #	$NetBSD: Makefile,v 1.12 1997/04/17 07:27:49 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -18,7 +18,7 @@ HEADERSIZE_PROG = headersize
 CLEANFILES+= ${PROG}.sym ${PROG}.nosym ${PROG}.trunc ${HEADERSIZE_PROG}
 
 .PATH:	${S}/lib/libkern/arch/alpha ${S}/lib/libkern
-SRCS+=	bzero.c
+SRCS+=	bzero.c memcpy.c
 
 DEFNS= -DPRIMARY_BOOTBLOCK
 DEFNS+= -DALPHA_BOOT_ELF
