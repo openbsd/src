@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.6 2009/09/06 19:28:12 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.7 2009/10/01 20:21:05 dms Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -31,6 +31,7 @@ char	*fdt_get_str(u_int32_t);
 void	*skip_property(u_int32_t *);
 void	*skip_props(u_int32_t *);
 void	*skip_node_name(u_int32_t *);
+void	*fdt_parent_node_recurse(void *, void *);
 #ifdef DEBUG
 void 	 fdt_print_node_recurse(void *, int);
 #endif
@@ -302,6 +303,31 @@ fdt_find_node(char *name)
 	return node;
 }
 
+void *
+fdt_parent_node_recurse(void *pnode, void *child)
+{
+	void *node = fdt_child_node(pnode);
+	void *tmp;
+	
+	while (node && (node != child)) {
+		if ((tmp = fdt_parent_node_recurse(node, child)))
+			return tmp;
+		node = fdt_next_node(node);
+	}
+	return (node) ? pnode : NULL;
+}
+
+void *
+fdt_parent_node(void *node)
+{
+	void *pnode = fdt_next_node(0);
+
+	if (!tree_inited)
+		return NULL;
+
+	return fdt_parent_node_recurse(pnode, node);
+}
+
 #ifdef DEBUG
 /*
  * Debug methods for printing whole tree, particular odes and properies
@@ -412,6 +438,15 @@ OF_child(int handle)
 	void *node = (char *)tree.header + handle;
 
 	node = fdt_child_node(node);
+	return node ? ((char *)node - (char *)tree.header) : 0;
+}
+
+int
+OF_parent(int handle)
+{
+	void *node = (char *)tree.header + handle;
+	
+	node = fdt_parent_node(node);
 	return node ? ((char *)node - (char *)tree.header) : 0;
 }
 

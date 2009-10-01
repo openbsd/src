@@ -1,4 +1,4 @@
-/*     $OpenBSD: fdt.c,v 1.2 2009/09/11 17:45:01 dms Exp $       */
+/*     $OpenBSD: fdt.c,v 1.3 2009/10/01 20:21:05 dms Exp $       */
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -30,7 +30,8 @@ char	*fdt_get_str(u_int32_t);
 void	*skip_property(u_int32_t *);
 void	*skip_props(u_int32_t *);
 void	*skip_node_name(u_int32_t *);
-void	*fdt_find_node_recurse(void *node, char *name);
+void	*fdt_parent_node_recurse(void *, void *);
+void	*fdt_find_node_recurse(void *, char *);
 void 	 fdt_print_node_recurse(void *, int);
 
 static int tree_inited = 0;
@@ -298,6 +299,31 @@ fdt_find_node(char *name)
 	}
 
 	return node;
+}
+
+void *
+fdt_parent_node_recurse(void *pnode, void *child)
+{
+	void *node = fdt_child_node(pnode);
+	void *tmp;
+
+	while (node && (node != child)) {
+		if ((tmp = fdt_parent_node_recurse(node, child)))
+			return tmp;
+		node = fdt_next_node(node);
+	}
+	return (node) ? pnode : NULL;
+}
+
+void *
+fdt_parent_node(void *node)
+{
+	void *pnode = fdt_next_node(0);
+
+	if (!tree_inited)
+		return NULL;
+
+	return fdt_parent_node_recurse(pnode, node);
 }
 
 /*
