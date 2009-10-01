@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.221 2009/08/12 20:01:54 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.222 2009/10/01 16:28:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.221 2009/08/12 20:01:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.222 2009/10/01 16:28:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1685,7 +1685,7 @@ editor_help(char *arg)
 "The 'n' command is used to set the mount point for a partition (ie: name it).\n"
 "It takes as an optional argument the partition letter to name.  If you do\n"
 "not specify a partition letter, you will be prompted for one.  This option\n"
-"is only valid if disklabel was invoked with the -F flag.\n");
+"is only valid if disklabel was invoked with the -f flag.\n");
 		break;
 	case 'r':
 		puts(
