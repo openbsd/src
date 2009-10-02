@@ -1,0 +1,34 @@
+dnl	$OpenBSD: contents,v 1.1 2009/10/02 07:26:15 jasper Exp $
+TopPart
+
+OpenBSDdistsets
+
+OpenBSDbsd
+
+OpenBSDrd
+dnl not yet...
+dnl Cocoboot
+
+DistributionDescription(eleven)
+
+OpenBSDbase(47742339,128402380)
+
+OpenBSDcomp(19899514,66786294)
+
+OpenBSDetc(516201,1376199)
+
+OpenBSDgame(2667467,5978240)
+
+OpenBSDman(8226904,30048572)
+
+OpenBSDmisc(2935447,9912406)
+
+dnl OpenBSDxbase(10844908,30932044)
+
+dnl OpenBSDxetc(76099,282509)
+
+dnl OpenBSDxfont(35584217,43728442)
+
+dnl OpenBSDxserv(5776670,15092362)
+
+dnl OpenBSDxshare(2766294,14738211)

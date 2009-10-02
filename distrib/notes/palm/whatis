@@ -1,0 +1,5 @@
+dnl	$OpenBSD: whatis,v 1.1 2009/10/02 07:26:15 jasper Exp $
+
+OpenBSD/MACHINE runs on PDAs made by Palm with an ARM PXA2xx processor.
+Currently models supported include the Tungsten T|5, T|X, LifeDrive and
+the Zire 72.
