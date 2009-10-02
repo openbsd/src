@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.24 2009/08/11 18:43:33 blambert Exp $ */
+/* $OpenBSD: cpu.c,v 1.25 2009/10/02 17:55:52 miod Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -141,6 +141,10 @@ static const char *ev4minor[] = {
 	"pass 2.2.1", "pass 2.3 or 2.4", "pass 2.1.2", "pass 2.2.2",
 	"pass 2.2.3 or 2.2.5", "pass 2.2.4", "pass 2.5", "pass 2.4.1",
 	"pass 2.5.1", "pass 2.6", 0
+}, *ev68cbminor[] = {
+	/* what are the values for pass 2.3 and pass 2.4? */
+	"", "", "", "", "", "",
+	"pass 4.0", 0
 };
 
 
@@ -160,7 +164,7 @@ struct cputable_struct {
 	{ PCS_PROC_PCA56,	"PCA56",	pca56minor	},
 	{ PCS_PROC_PCA57,	"PCA57",	pca57minor	},
 	{ PCS_PROC_EV67,	"21264A",	ev67minor	},
-	{ PCS_PROC_EV68CB,	"21264C",	NULL		},
+	{ PCS_PROC_EV68CB,	"21264C",	ev68cbminor	},
 	{ PCS_PROC_EV68AL,	"21264B",	NULL		},
 	{ PCS_PROC_EV68CX,	"21264D",	NULL		},
 };
@@ -238,11 +242,11 @@ cpuattach(parent, dev, aux)
 	printf(": ID %d%s, ", ma->ma_slot,
 	    ma->ma_slot == hwrpb->rpb_primary_cpu_id ? " (primary)" : "");
 
-	for(i = 0; i < sizeof cpunametable / sizeof cpunametable[0]; ++i) {
+	for (i = 0; i < sizeof cpunametable / sizeof cpunametable[0]; ++i) {
 		if (cpunametable[i].cpu_major_code == major) {
 			printf("%s-%d", cpunametable[i].cpu_major_name, minor);
 			s = cpunametable[i].cpu_minor_names;
-			for(i = 0; s && s[i]; ++i) {
+			for (i = 0; s && s[i]; ++i) {
 				if (i == minor && strlen(s[i]) != 0) {
 					printf(" (%s)", s[i]);
 					goto recognized;
