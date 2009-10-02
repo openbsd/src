@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.1 2009/09/24 19:51:32 miod Exp $	*/
+/*	$OpenBSD: ld.script,v 1.2 2009/10/02 17:57:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -26,7 +26,22 @@ OUTPUT_ARCH(alpha)
 ENTRY(__start)
 SECTIONS
 {
-	. = 0xfffffc0000230000;
+	/*
+	 * The start address needs to be a physical address allowing for
+	 * enough room for the console firmware, and the boot loader.
+	 * On most alpha machines, the console fits in no more than
+	 * 2MB, to which we need to add 256KB of boot blocks and the
+	 * initial kernel stack.
+	 * However, some of the last alpha models (*5 D and E series,
+	 * *7, and G series) have much larger console sizes.
+	 * The largest console encountered so far is 0x51c000 bytes long
+	 * (on DS25).
+	 *
+	 * If you change this value, make sure to update KERNBASE in
+	 * <machine/param.h> as well.
+	 */
+	. = 0xfffffc0000580000;
+
 	.text :		{ *(.text .text.* .gnu.linkonce.t.*) }
 	PROVIDE(etext = .);
 	.rodata :	{ *(.rodata .rodata.* .gnu.linkonce.r.*) }
