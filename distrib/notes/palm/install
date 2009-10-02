@@ -1,11 +1,11 @@
-dnl     $OpenBSD: install,v 1.1 2009/10/02 07:26:15 jasper Exp $
+dnl     $OpenBSD: install,v 1.2 2009/10/02 07:47:44 jasper Exp $
 OpenBSDInstallPrelude
 
 An OpenBSD/palm installation will use the PalmOS to bootstrap itself.
 Although this has be done manually, upon each reboot.
 
 After the SD card and USB hub have been setup, reset the device, wait
-untill it's finished booting.
+until it's finished booting.
 
 Hit the reset button on the device, wait till it reboots, pop in the SD
 card with bootloader and kernel, run 'Cocoboot' and hit the 'Boot'
@@ -37,7 +37,7 @@ OpenBSDInstallWrapup
 
 OpenBSDCongratulations
 
-        Please keep in mind that upon reseting the device the clock will
-        be resetted too. Even if you correctly set the time in PalmOS,
+        Please keep in mind that upon resetting the device the clock will
+        be reset too. Even if you correctly set the time in PalmOS,
         OpenBSD will not pick this up. So it is strongly advised to use
         ntpd(1).

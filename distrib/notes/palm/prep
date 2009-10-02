@@ -1,10 +1,10 @@
-dnl     $OpenBSD: prep,v 1.1 2009/10/02 07:26:15 jasper Exp $
+dnl     $OpenBSD: prep,v 1.2 2009/10/02 07:47:44 jasper Exp $
 
 There are several things that need to be done in order to install
 OpenBSD/MACHINE .
 
 In case we'll be installing on the SD card driven by PXAMCI, We'll need
-like 8 Mb FAT16 formated partition at the begining of the card, that'll
+like 8 Mb FAT16 formatted partition at the beginning of the card, that'll
 be for the bootloader running for PalmOS and will contain also the
 kernel binary. We can create this partition by for example running
 fdisk(8).  Once we have the partition ready, we have to create a
@@ -24,7 +24,7 @@ This step is needed as cocoboot cannot be distributed with OpenBSD since
 it's licensed under the GPL.
 Of course, you can operate with 'cocoboot.conf' and make the bootloader
 pick a proper kernel name, but that's up to users comfort and beyond the
-scrope of this document. You need to be sure to copy the kernel with
+scope of this document. You need to be sure to copy the kernel with
 RAMDISK, otherwise the installer won't be there and you won't be able to
 install, but instead you'll end with kernel debugger shell complaining
 there is no boot device.
@@ -44,7 +44,7 @@ schematics:
 | Palm |]-------=[ A to A converter ]=--------------=[ USB hub ]
 '------'
 
-Now that everything's ready, plug the USB cable into Palm if you haven't
+Now that everything is ready, plug the USB cable into Palm if you haven't
 done so yet.
 
 When booting OpenBSD on at least the Tungsten T|5 model, make sure the

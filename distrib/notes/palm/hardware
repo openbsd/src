@@ -1,5 +1,5 @@
-dnl	$OpenBSD: hardware,v 1.1 2009/10/02 07:26:15 jasper Exp $
-The following Palm PDA models are supported by OpenBSD:
+dnl	$OpenBSD: hardware,v 1.2 2009/10/02 07:47:44 jasper Exp $
+The following Palm PDA models are supported by OpenBSD/MACHINE OSREV
 
 	Tungsten T|5
 	Tungsten T|X
