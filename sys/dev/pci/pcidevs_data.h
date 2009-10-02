@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1495 2009/09/30 19:20:33 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1496 2009/10/02 17:54:26 miod Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5178,6 +5178,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_ZLXPL2,
 	    "ZLXP-L2 (Pixelvision)",
+	},
+	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_MC,
+	    "Memory Channel Cluster Controller",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142,
