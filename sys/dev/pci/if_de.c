@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.103 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.104 2009/10/02 23:11:56 deraadt Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -321,7 +321,6 @@ tulip_media_set(tulip_softc_t * const sc, tulip_media_t media)
 	    printf(TULIP_PRINTF_FMT ": warning: board is running (FD).\n", TULIP_PRINTF_ARGS);
 	if ((TULIP_CSR_READ(sc, csr_command) & TULIP_CMD_FULLDUPLEX) == 0)
 	    printf(TULIP_PRINTF_FMT ": setting full duplex.\n", TULIP_PRINTF_ARGS);
-		       TULIP_PRINTF_ARGS);
 #endif
 	sc->tulip_cmdmode |= TULIP_CMD_FULLDUPLEX;
 	TULIP_CSR_WRITE(sc, csr_command, sc->tulip_cmdmode & ~(TULIP_CMD_RXRUN|TULIP_CMD_TXRUN));
