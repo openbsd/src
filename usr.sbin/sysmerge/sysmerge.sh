@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.51 2009/08/24 19:14:13 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.52 2009/10/02 11:53:45 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -570,6 +570,9 @@ do_compare() {
 do_post() {
 	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U > /dev/null
+	if [ -n "${XTGZ}" ]; then
+		mtree -qdef ${DESTDIR}/etc/mtree/BSD.x11.dist -p ${DESTDIR:=/} -U > /dev/null
+	fi
 
 	if [ "${NEED_NEWALIASES}" ]; then
 		echo "===> A new ${DESTDIR}/etc/mail/aliases file was installed." >> ${REPORT}
