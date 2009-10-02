@@ -1,10 +1,20 @@
-dnl	$OpenBSD: hardware,v 1.103 2009/06/28 13:29:02 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.104 2009/10/02 18:01:45 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run OpenBSD,
 or if you are able to run OpenBSD on hardware not listed here, please
 send mail to <alpha@OpenBSD.org> with as much information as possible.
 
 Supported hardware:
+    DS15, DS15A, DS25, ES45, TS15 and TS202C
+	  Supported devices:
+		Built-in serial and parallel ports.
+		Built-in Ethernet.
+		Built-in SCSI.
+		Built-in IDE controller.
+		Most PCI devices (see below).
+	  Unsupported devices:
+		Floppy drive.
+
     XP900, XP1000, CS20, DS10, DS20, DS20L, ES40, 264DP, and other EV6
     machines using the Tsunami chipset (only one processor on multiprocessor
     models will be used)
@@ -141,7 +151,6 @@ Supported hardware:
 	DECpc AXP150 (2000/300) ``Jensen'' systems (EISA-bus PC-like systems)
 	AlphaServer 2000, 2100 and 2100A
 	AlphaServer 8200, 8400, GS60 and GS140
-	AlphaServer DS15, DS15A, TS15, DS25, ES45 and TS202C
 	AlphaServer ES47, ES80 and GS1280
 	AlphaServer GS80, GS160 and GS320
 	Alpha XL systems (no SRM)

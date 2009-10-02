@@ -1,4 +1,4 @@
-/* $OpenBSD: tsreg.h,v 1.4 2006/01/04 10:32:10 martin Exp $ */
+/* $OpenBSD: tsreg.h,v 1.5 2009/10/02 18:01:47 miod Exp $ */
 /* $NetBSD: tsreg.h,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -199,15 +199,8 @@ typedef struct _ts_gr {
 /*
  * Tsunami Pchip
  */
-struct	ts_pchip {
-	TS_GR	tsp_wsba[4];	/* Window Space Base Address */
 
-	TS_GR	tsp_wsm[4];	/* Window Space Mask */
-
-	TS_GR	tsp_tba[4];	/* Translated Base Address */
-
-	TS_GR	tsp_pctl;	/* Pchip Control */
-	TS_GR	tsp_plat;	/* Pchip Latency */
+struct	ts_pport {
 	TS_GR	tsp_resA;
 	TS_GR	tsp_error;	/* Pchip Error */
 
@@ -222,6 +215,56 @@ struct	ts_pchip {
 	TS_GR	tsp_resC;
 
 	TS_GR	tsp_resD_K[8];
+};
+
+struct	ts_gport {
+	TS_GR	tsp_resA[2];
+	TS_GR	tsp_serror;
+	TS_GR	tsp_serrmask;
+	TS_GR	tsp_serrset;
+	TS_GR	tsp_resB;
+	TS_GR	tsp_gperrmask;
+	TS_GR	tsp_gperren;
+	TS_GR	tsp_gperrset;
+	TS_GR	tsp_resC;
+	TS_GR	tsp_tlbiv;
+	TS_GR	tsp_tlbia;
+	TS_GR	tsp_resD[2];
+	TS_GR	tsp_sctl;
+	TS_GR	tsp_resE[3];
+};
+
+struct	ts_aport {
+	TS_GR	tsp_resA[2];
+	TS_GR	tsp_agperror;
+	TS_GR	tsp_agperrmask;
+	TS_GR	tsp_agperrset;
+	TS_GR	tsp_agplastwr;
+	TS_GR	tsp_aperror;
+	TS_GR	tsp_aperrmask;
+	TS_GR	tsp_aperrset;
+	TS_GR	tsp_resB;
+	TS_GR	tsp_tlbiv;
+	TS_GR	tsp_tlbia;
+	TS_GR	tsp_resC[6];
+};
+
+struct	ts_pchip {
+	TS_GR	tsp_wsba[4];	/* Window Space Base Address */
+
+	TS_GR	tsp_wsm[4];	/* Window Space Mask */
+
+	TS_GR	tsp_tba[4];	/* Translated Base Address */
+
+	TS_GR	tsp_pctl;	/* Pchip Control */
+	TS_GR	tsp_plat;	/* Pchip Latency */
+
+	union {
+		struct ts_pport	p;
+		struct ts_gport	g;
+		struct ts_aport	a;
+	} port;
 
 	TS_GR	tsp_sprts;	/* ??? */
+	TS_GR	tsp_res[31];
 };

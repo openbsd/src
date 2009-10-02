@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuconf.c,v 1.12 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: cpuconf.c,v 1.13 2009/10/02 18:01:47 miod Exp $ */
 /* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
@@ -175,6 +175,7 @@ static const struct cpuinit cpuinit[] = {
 	cpu_notsupp(ST_DEC_EV56_PBP, "EV56 Passive Backplane Board"),
 	cpu_notsupp(ST_DEC_ALPHAVME_320, "AlphaVME 320"),
 	cpu_init(ST_DEC_6600, dec_6600_init, "DEC_6600"),
+	cpu_init(ST_DEC_TITAN, dec_6600_init, "DEC_6600"),
 	cpu_init(ST_API_NAUTILUS, api_up1000_init, "API_UP1000"),
 };
 static const int ncpuinit = (sizeof(cpuinit) / sizeof(cpuinit[0]));

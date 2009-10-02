@@ -1,4 +1,4 @@
-/* $OpenBSD: tsc.c,v 1.14 2009/03/30 21:43:13 kettenis Exp $ */
+/* $OpenBSD: tsc.c,v 1.15 2009/10/02 18:01:47 miod Exp $ */
 /* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
 
 /*-
@@ -64,7 +64,7 @@ struct cfdriver tsc_cd = {
         NULL, "tsc", DV_DULL,
 };
 
-struct tsp_config tsp_configuration[2];
+struct tsp_config tsp_configuration[4];
 
 static int tscprint(void *, const char *pnp);
 
@@ -101,12 +101,17 @@ tscmatch(parent, match, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return cputype == ST_DEC_6600
-	    && strcmp(ma->ma_name, tsc_cd.cd_name) == 0
-	    && !tscfound;
+	switch (cputype) {
+	case ST_DEC_6600:
+	case ST_DEC_TITAN:
+		return strcmp(ma->ma_name, tsc_cd.cd_name) == 0 && !tscfound;
+	default:
+		return 0;
+	}
 }
 
-void tscattach(parent, self, aux)
+void
+tscattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -115,17 +120,18 @@ void tscattach(parent, self, aux)
 	u_int64_t csc, aar;
 	struct tsp_attach_args tsp;
 	struct mainbus_attach_args *ma = aux;
+	int titan = cputype == ST_DEC_TITAN;
 
 	tscfound = 1;
 
 	csc = LDQP(TS_C_CSC);
 
 	nbus = 1 + (CSC_BC(csc) >= 2);
-	printf(": 21272 Chipset, Cchip rev %d\n"
-		"%s%d: %c Dchips, %d memory bus%s of %d bytes\n",
-		(int)MISC_REV(LDQP(TS_C_MISC)),
-		ma->ma_name, ma->ma_slot, "2448"[CSC_BC(csc)],
-		nbus, nbus > 1 ? "es" : "", 16 + 16 * ((csc & CSC_AW) != 0));
+	printf(": 2127%c Chipset, Cchip rev %d\n"
+	       "%s%d: %c Dchips, %d memory bus%s of %d bytes\n",
+	    titan ? '4' : '2', (int)MISC_REV(LDQP(TS_C_MISC)),
+	    ma->ma_name, ma->ma_slot, "2448"[CSC_BC(csc)],
+	    nbus, nbus > 1 ? "es" : "", 16 + 16 * ((csc & CSC_AW) != 0));
 	printf("%s%d: arrays present: ", ma->ma_name, ma->ma_slot);
 	for(i = 0; i < 4; ++i) {
 		aar = LDQP(TS_C_AAR0 + i * TS_STEP);
@@ -134,13 +140,21 @@ void tscattach(parent, self, aux)
 	}
 	printf(", Dchip 0 rev %d\n", (int)LDQP(TS_D_DREV) & 0xf);
 
-	bzero(&tsp, sizeof tsp);
 	tsp.tsp_name = "tsp";
-	config_found(self, &tsp, NULL);
-
-	if(LDQP(TS_C_CSC) & CSC_P1P) {
-		++tsp.tsp_slot;
+	tsp.tsp_slot = 0;
+	config_found(self, &tsp, tscprint);
+	if (titan) {
+		tsp.tsp_slot += 2;
 		config_found(self, &tsp, tscprint);
+	}
+
+	if (csc & CSC_P1P) {
+		tsp.tsp_slot = 1;
+		config_found(self, &tsp, tscprint);
+		if (titan) {
+			tsp.tsp_slot += 2;
+			config_found(self, &tsp, tscprint);
+		}
 	}
 }
 
@@ -149,10 +163,11 @@ tscprint(aux, p)
 	void *aux;
 	const char *p;
 {
-	register struct tsp_attach_args *tsp = aux;
+	struct tsp_attach_args *tsp = aux;
 
-	if(p)
-		printf("%s%d at %s", tsp->tsp_name, tsp->tsp_slot, p);
+	if (p)
+		printf("%s at %s", tsp->tsp_name, p);
+	printf(" hose %d", tsp->tsp_slot);
 	return UNCONF;
 }
 
@@ -166,8 +181,13 @@ tspmatch(parent, match, aux)
 {
 	struct tsp_attach_args *t = aux;
 
-	return  cputype == ST_DEC_6600
-	    && strcmp(t->tsp_name, tsp_cd.cd_name) == 0;
+	switch (cputype) {
+	case ST_DEC_6600:
+	case ST_DEC_TITAN:
+		return strcmp(t->tsp_name, tsp_cd.cd_name) == 0;
+	default:
+		return 0;
+	}
 }
 
 void
@@ -182,7 +202,7 @@ tspattach(parent, self, aux)
 	printf("\n");
 	pcp = tsp_init(1, t->tsp_slot);
 
-	tsp_dma_init(pcp);
+	tsp_dma_init(self, pcp);
 	
 	/*
 	 * Do PCI memory initialization that needs to be deferred until
@@ -212,15 +232,26 @@ tspattach(parent, self, aux)
 struct tsp_config *
 tsp_init(mallocsafe, n)
 	int mallocsafe;
-	int n;	/* Pchip number */
+	int n;	/* hose number */
 {
 	struct tsp_config *pcp;
+	int titan = cputype == ST_DEC_TITAN;
 
-	KASSERT((n | 1) == 1);
+	KASSERT(n >= 0 && n < nitems(tsp_configuration));
 	pcp = &tsp_configuration[n];
 	pcp->pc_pslot = n;
 	pcp->pc_iobase = TS_Pn(n, 0);
-	pcp->pc_csr = S_PAGE(TS_Pn(n, P_CSRBASE));
+	pcp->pc_csr = S_PAGE(TS_Pn(n & 1, P_CSRBASE));
+	if (n & 2) {
+		/* `A' port of PA Chip */
+		pcp->pc_csr++;
+	}
+	if (titan) {
+		/* same address on G and A ports */
+		pcp->pc_tlbia = &pcp->pc_csr->port.g.tsp_tlbia.tsg_r;
+	} else {
+		pcp->pc_tlbia = &pcp->pc_csr->port.p.tsp_tlbia.tsg_r;
+	}
 	snprintf(pcp->pc_io_ex_name, sizeof pcp->pc_io_ex_name,
 	    "tsp%d_bus_io", n);
 	snprintf(pcp->pc_mem_ex_name, sizeof pcp->pc_mem_ex_name,
@@ -239,11 +270,14 @@ tsp_init(mallocsafe, n)
 	pcp->pc_mallocsafe = mallocsafe;
 	tsp_pci_init(&pcp->pc_pc, pcp);
 	alpha_pci_chipset = &pcp->pc_pc;
-	alpha_pci_chipset->pc_name = "tsunami";
+	if (titan)
+		alpha_pci_chipset->pc_name = "titan";
+	else
+		alpha_pci_chipset->pc_name = "tsunami";
 	alpha_pci_chipset->pc_mem = P_PCI_MEM;
 	alpha_pci_chipset->pc_ports = P_PCI_IO;
 	alpha_pci_chipset->pc_hae_mask = 0;
-	alpha_pci_chipset->pc_dense = TS_P0(0);
+	alpha_pci_chipset->pc_dense = TS_P0(0);	/* XXX */
 	alpha_pci_chipset->pc_bwx = 1;
 	pcp->pc_initted = 1;
 	return pcp;
@@ -256,7 +290,7 @@ tspprint(aux, p)
 {
 	register struct pcibus_attach_args *pci = aux;
 
-	if(p)
+	if (p)
 		printf("%s at %s", pci->pba_busname, p);
 	printf(" bus %d", pci->pba_bus);
 	return UNCONF;
