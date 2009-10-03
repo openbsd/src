@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.21 2009/09/22 08:23:09 jj Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.22 2009/10/03 07:59:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -598,7 +598,7 @@ SSL *
 ssl_client_init(int fd, char *cert, size_t certsz, char *key, size_t keysz)
 {
 	SSL_CTX		*ctx;
-	SSL		*ssl;
+	SSL		*ssl = NULL;
 	int		 rv = -1;
 
 	ctx = ssl_ctx_create();
