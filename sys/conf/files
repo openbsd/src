@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.476 2009/09/08 17:52:17 michele Exp $
+#	$OpenBSD: files,v 1.477 2009/10/03 19:51:53 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -433,6 +433,11 @@ file	dev/usb/ehci.c			ehci	needs-flag
 # SDHC SD/MMC controller
 device	sdhc: sdmmcbus
 file	dev/sdmmc/sdhc.c		sdhc	needs-flag
+
+# Winbond Integrated Media Reader
+device wbsd: sdmmcbus
+file	dev/ic/w83l518d.c		wbsd
+file	dev/ic/w83l518d_sdmmc.c		wbsd
 
 # radio devices, attaches to radio hardware driver
 device	radio
