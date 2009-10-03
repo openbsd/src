@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.87 2008/04/09 16:49:17 thib Exp $	*/
+/*	$OpenBSD: trap.c,v 1.88 2009/10/03 21:51:00 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -426,6 +426,10 @@ trap(struct trapframe frame)
 		KERNEL_PROC_LOCK(p);
 		trapsignal(p, SIGFPE, frame.tf_err, FPE_INTOVF, sv);
 		KERNEL_PROC_UNLOCK(p);
+		goto out;
+
+	case T_XFTRAP|T_USER:
+		npxtrap(&frame);
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
