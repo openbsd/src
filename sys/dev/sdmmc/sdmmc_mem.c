@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.12 2009/04/07 16:35:52 blambert Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.13 2009/10/03 18:42:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -19,6 +19,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>

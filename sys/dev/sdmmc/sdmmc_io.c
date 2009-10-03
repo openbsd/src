@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.15 2009/07/15 20:52:04 mk Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.16 2009/10/03 18:42:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -19,6 +19,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>

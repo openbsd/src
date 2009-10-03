@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_cis.c,v 1.1 2006/06/01 21:53:41 uwe Exp $	*/
+/*	$OpenBSD: sdmmc_cis.c,v 1.2 2009/10/03 18:42:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -19,6 +19,7 @@
 /* Routines to decode the Card Information Structure of SD I/O cards */
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/systm.h>
 
 #include <dev/sdmmc/sdmmc_ioreg.h>

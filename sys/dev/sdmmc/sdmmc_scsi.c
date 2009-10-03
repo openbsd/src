@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.18 2009/09/05 11:59:58 dlg Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.19 2009/10/03 18:42:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
