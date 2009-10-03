@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.70 2009/10/03 00:10:47 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.71 2009/10/03 00:48:27 sthen Exp $
 This is a list of currently known FTP servers at the time of the OSREV release.
 For a more recent list, please refer to
 
@@ -8,12 +8,12 @@ Main server in Canada:
     ftp://ftp.OpenBSD.org/pub/OpenBSD (Alberta)
 
 2nd level mirrors:
-    ftp://anga.funkfeuer.at/pub/OpenBSD/ (Vienna, Austria)
-    ftp://ftp.wu-wien.ac.at/pub/OpenBSD/ (Vienna, Austria)
-    ftp://ftp.eu.openbsd.org/pub/OpenBSD/ (Stockholm, Sweden)
-    ftp://ftp5.usa.openbsd.org/pub/OpenBSD/ (Redwood City, CA, USA)
-    ftp://ftp3.usa.openbsd.org/pub/OpenBSD/ (Boulder, CO, USA) 
-    ftp://obsd.cec.mtu.edu/pub/OpenBSD/ (Houghton, Michigan, USA)
+    ftp://anga.funkfeuer.at/pub/OpenBSD (Vienna, Austria)
+    ftp://ftp.wu-wien.ac.at/pub/OpenBSD (Vienna, Austria)
+    ftp://ftp.eu.openbsd.org/pub/OpenBSD (Stockholm, Sweden)
+    ftp://ftp5.usa.openbsd.org/pub/OpenBSD (Redwood City, CA, USA)
+    ftp://ftp3.usa.openbsd.org/pub/OpenBSD (Boulder, CO, USA)
+    ftp://obsd.cec.mtu.edu/pub/OpenBSD (Houghton, Michigan, USA)
 
 Argentina:
     ftp://openbsd.noc.jgm.gov.ar/pub/OpenBSD (Buenos Aires)
