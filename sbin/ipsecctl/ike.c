@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.66 2009/08/04 15:05:50 jsing Exp $	*/
+/*	$OpenBSD: ike.c,v 1.67 2009/10/04 11:39:32 jsing Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -111,6 +111,7 @@ ike_section_ids(struct ipsec_rule *r, FILE *fd)
 			err(1, "ike_section_ids: gethostname");
 		if ((r->auth->srcid = strdup(myname)) == NULL)
 			err(1, "ike_section_ids: strdup");
+		r->auth->srcid_type = ID_FQDN;
 	}
 	if (r->auth->srcid) {
 		fprintf(fd, SET "[%s]:ID=id-%s force\n", r->p1name,
