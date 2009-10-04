@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skvar.h,v 1.5 2009/07/08 20:18:05 sthen Exp $	*/
+/*	$OpenBSD: if_skvar.h,v 1.6 2009/10/04 18:32:41 deraadt Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -26,7 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_skvar.h,v 1.5 2009/07/08 20:18:05 sthen Exp $	*/
+/*	$OpenBSD: if_skvar.h,v 1.6 2009/10/04 18:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -184,7 +184,9 @@ struct sk_softc {
 	struct device		sk_dev;		/* generic device */
 	bus_space_handle_t	sk_bhandle;	/* bus space handle */
 	bus_space_tag_t		sk_btag;	/* bus space tag */
+	bus_size_t		sk_bsize;	/* bus space size */
 	void			*sk_intrhand;	/* irq handler handle */
+	pci_chipset_tag_t	sk_pc;
 	u_int8_t		sk_coppertype;
 	u_int8_t		sk_pmd;		/* physical media type */
 	u_int8_t		sk_type;
@@ -217,12 +219,15 @@ struct sk_if_softc {
 	struct sk_chain_data	sk_cdata;
 	struct sk_ring_data	*sk_rdata;
 	bus_dmamap_t		sk_ring_map;
+	bus_dma_segment_t	sk_ring_seg;
+	int			sk_ring_nseg;
 	struct sk_softc		*sk_softc;	/* parent controller */
 	int			sk_tx_bmu;	/* TX BMU register */
 	int			sk_if_flags;
 	LIST_HEAD(__sk_jfreehead, sk_jpool_entry)	sk_jfree_listhead;
 	LIST_HEAD(__sk_jinusehead, sk_jpool_entry)	sk_jinuse_listhead;
 	SIMPLEQ_HEAD(__sk_txmaphead, sk_txmap_entry)	sk_txmap_head;
+	void			*sk_sdhook;
 };
 
 struct skc_attach_args {
