@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.77 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.78 2009/10/04 18:32:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -828,8 +828,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	struct skc_attach_args *sa = aux;
 	struct ifnet *ifp;
 	caddr_t kva;
-	bus_dma_segment_t seg;
-	int i, rseg;
+	int i;
 	u_int32_t chunk;
 	int mii_flags;
 	int error;
@@ -877,11 +876,13 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Allocate the descriptor queues. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct msk_ring_data),
-	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+	    PAGE_SIZE, 0, &sc_if->sk_ring_seg, 1, &sc_if->sk_ring_nseg,
+	    BUS_DMA_NOWAIT)) {
 		printf(": can't alloc rx buffers\n");
 		goto fail;
 	}
-	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
+	if (bus_dmamem_map(sc->sc_dmatag, &sc_if->sk_ring_seg,
+	    sc_if->sk_ring_nseg,
 	    sizeof(struct msk_ring_data), &kva, BUS_DMA_NOWAIT)) {
 		printf(": can't map dma buffers (%lu bytes)\n",
 		       (ulong)sizeof(struct msk_ring_data));
@@ -987,7 +988,7 @@ fail_3:
 fail_2:
 	bus_dmamem_unmap(sc->sc_dmatag, kva, sizeof(struct msk_ring_data));
 fail_1:
-	bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+	bus_dmamem_free(sc->sc_dmatag, &sc_if->sk_ring_seg, sc_if->sk_ring_nseg);
 fail:
 	sc->sk_if[sa->skc_port] = NULL;
 }
