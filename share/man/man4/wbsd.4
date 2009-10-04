@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wbsd.4,v 1.1 2009/10/03 20:14:34 kettenis Exp $
+.\"	$OpenBSD: wbsd.4,v 1.2 2009/10/04 11:36:55 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,20 +14,20 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 3 2009 $
+.Dd $Mdocdate: October 4 2009 $
 .Dt WBSD 4
 .Os
 .Sh NAME
 .Nm wbsd
-.Nd Winbond WD83L158D/WD83L159D SD Memory Card Interface
+.Nd Winbond W83L518D/W83L519D SD memory card interface
 .Sh SYNOPSIS
 .Cd "wbsd* at ebus?"
 .Cd "sdmmc* at wbsd?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the SD Memory Card Interface of the
-Winbond W83L518D/W83L519D Integrated Media Reader.
+driver provides support for the SD memory card interface of the
+Winbond W83L518D/W83L519D integrated media reader.
 .Pp
 The
 .Xr sdmmc 4
@@ -40,9 +40,6 @@ whatever MMC, SD, SDHC, or SDIO devices are inserted into the SD slot.
 The
 .Nm
 driver first appeared in
-.Nx 6.0 .
-.Ox
-support was added in
 .Ox 4.7 .
 .Sh AUTHORS
 .An -nosplit
