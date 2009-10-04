@@ -1762,6 +1762,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet/ip6.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet/ip_ah.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet/ip_carp.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netinet/ip_divert.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet/ip_ecn.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet/ip_esp.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet/ip_ether.ph
