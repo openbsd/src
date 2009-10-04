@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.3 2009/10/04 16:08:37 michele Exp $
+.\"     $OpenBSD: divert.4,v 1.4 2009/10/04 20:02:36 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\"
@@ -14,13 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-
 .Dd $Mdocdate: October 4 2009 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
 .Nm divert
-.Nd Kernel packet diversion mechanism
+.Nd kernel packet diversion mechanism
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
@@ -56,7 +55,7 @@ from the divert socket.
 .Xr pf 4
 will reassemble the IP packets by default before sending them to the divert
 socket.
-In addition, TCP reassembling is enabled for packet divert rules, see
+In addition, TCP reassembling is enabled for packet divert rules; see
 .Xr pf.conf 5
 for details.
 Writing to a divert socket can be achieved using
@@ -72,7 +71,7 @@ the packets are dropped.
 .Sh SEE ALSO
 .Xr socket 2 ,
 .Xr ip 4 ,
-.Xr pf.conf 5 ,
+.Xr pf.conf 5
 .Sh HISTORY
 The
 .Nm
