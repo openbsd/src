@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-key.c,v 1.18 2009/10/04 08:23:01 nicm Exp $ */
+/* $OpenBSD: mode-key.c,v 1.19 2009/10/04 08:26:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -223,9 +223,11 @@ const struct mode_key_entry mode_key_emacs_choice[] = {
 	{ '\003' /* C-c */,	0, MODEKEYCHOICE_CANCEL },
 	{ '\016' /* C-n */,	0, MODEKEYCHOICE_DOWN },
 	{ '\020' /* C-p */,	0, MODEKEYCHOICE_UP },
+	{ '\026' /* C-v */,	0, MODEKEYCHOICE_PAGEDOWN },
 	{ '\033' /* Escape */,	0, MODEKEYCHOICE_CANCEL },
 	{ '\r',			0, MODEKEYCHOICE_CHOOSE },
 	{ 'q',			0, MODEKEYCHOICE_CANCEL },
+	{ 'v' | KEYC_ESCAPE,	0, MODEKEYCHOICE_PAGEUP },
 	{ KEYC_DOWN,		0, MODEKEYCHOICE_DOWN },
 	{ KEYC_NPAGE,		0, MODEKEYCHOICE_PAGEDOWN },
 	{ KEYC_PPAGE,		0, MODEKEYCHOICE_PAGEUP },
