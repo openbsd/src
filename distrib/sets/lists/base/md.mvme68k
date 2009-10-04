@@ -971,6 +971,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/uhavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/vgareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/vgavar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/w83l518d_sdmmc.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/w83l518dreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/w83l518dvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/wdcevent.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/wdcreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/wdcvar.ph
