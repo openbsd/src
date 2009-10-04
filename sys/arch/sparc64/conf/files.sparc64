@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.128 2009/10/03 19:56:14 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.129 2009/10/04 17:49:33 deraadt Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -250,7 +250,7 @@ file	arch/sparc64/dev/ce4231.c		audioce
 file	arch/sparc64/dev/stp_sbus.c		stp_sbus
 
 attach	wbsd at ebus with wbsd_ebus
-file	arch/sparc64/dev/wbsd_ebus.c
+file	arch/sparc64/dev/wbsd_ebus.c		wbsd
 
 #
 # Console related stuff
