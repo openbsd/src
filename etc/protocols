@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.21 2004/05/07 16:27:23 henning Exp $
+#	$OpenBSD: protocols,v 1.22 2009/10/04 16:08:37 michele Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.iana.org/assignments/protocol-numbers
@@ -142,3 +142,4 @@ fc	133	FC		# Fibre Channel
 rsvp-e2e-ignore	134	RSVP-E2E-IGNORE
 pfsync	240	PFSYNC		# PF Synchronization
 reserved 255	Reserved	#
+divert	258	DIVERT		# Divert pseudo-protocol [non IANA]

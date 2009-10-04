@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.164 2009/09/08 17:52:17 michele Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.165 2009/10/04 16:08:37 michele Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.164 2009/09/08 17:52:17 michele Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.165 2009/10/04 16:08:37 michele Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.164 2009/09/08 17:52:17 mich
 #include <netinet/ip_gre.h>
 #include <netinet/ip_ipcomp.h>
 #include <netinet/ip_carp.h>
+#include <netinet/ip_divert.h>
 
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
@@ -549,7 +550,8 @@ parse(char *string, int flags)
 			    (mib[2] == IPPROTO_IPCOMP && mib[3] == IPCOMPCTL_STATS) ||
 			    (mib[2] == IPPROTO_ICMP && mib[3] == ICMPCTL_STATS) ||
 			    (mib[2] == IPPROTO_CARP && mib[3] == CARPCTL_STATS) ||
-			    (mib[2] == IPPROTO_PFSYNC && mib[3] == PFSYNCCTL_STATS)) {
+			    (mib[2] == IPPROTO_PFSYNC && mib[3] == PFSYNCCTL_STATS) ||
+			    (mib[2] == IPPROTO_DIVERT && mib[3] == DIVERTCTL_STATS)) {
 				if (flags == 0)
 					return;
 				warnx("use netstat to view %s information",
@@ -1322,6 +1324,7 @@ struct ctlname mobileipname[] = MOBILEIPCTL_NAMES;
 struct ctlname ipcompname[] = IPCOMPCTL_NAMES;
 struct ctlname carpname[] = CARPCTL_NAMES;
 struct ctlname pfsyncname[] = PFSYNCCTL_NAMES;
+struct ctlname divertname[] = DIVERTCTL_NAMES;
 struct ctlname bpfname[] = CTL_NET_BPF_NAMES;
 struct ctlname ifqname[] = CTL_IFQ_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
@@ -1576,6 +1579,15 @@ struct list inetvars[] = {
 	{ 0, 0 },
 	{ 0, 0 },
 	{ pfsyncname, PFSYNCCTL_MAXID },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ divertname, DIVERTCTL_MAXID },
 };
 struct list bpflist = { bpfname, NET_BPF_MAXID };
 struct list ifqlist = { ifqname, IFQCTL_MAXID };

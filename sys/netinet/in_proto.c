@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.50 2009/09/08 17:52:17 michele Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.51 2009/10/04 16:08:37 michele Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -171,6 +171,11 @@
 #include <net/if_pfsync.h>
 #endif
 
+#include "pf.h"
+#if NPF > 0
+#include <netinet/ip_divert.h>
+#endif
+
 extern	struct domain inetdomain;
 
 struct protosw inetsw[] = {
@@ -286,6 +291,13 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,		pfsync_sysctl
 },
 #endif /* NPFSYNC > 0 */
+#if NPF > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_DIVERT,	PR_ATOMIC|PR_ADDR,
+  divert_input,	0,		0,		rip_ctloutput,
+  divert_usrreq,
+  divert_init,	0,		0,		0,		divert_sysctl
+},
+#endif /* NPF > 0 */
 /* raw wildcard */
 { SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	0,		rip_ctloutput,

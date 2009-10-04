@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.110 2009/02/07 15:06:04 chl Exp $	*/
+/*	$OpenBSD: inet.c,v 1.111 2009/10/04 16:08:37 michele Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 #include <netinet/ip_ipcomp.h>
 #include <netinet/ip_ether.h>
 #include <netinet/ip_carp.h>
+#include <netinet/ip_divert.h>
 #include <net/if.h>
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
@@ -173,12 +174,12 @@ protopr0(u_long off, char *name, int af)
 				printf(" (including servers)");
 			putchar('\n');
 			if (Aflag)
-				printf("%-*.*s %-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n",
+				printf("%-*.*s %-6.6s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n",
 				    PLEN, PLEN, "PCB", "Proto", "Recv-Q",
 				    "Send-Q", "Local Address",
 				    "Foreign Address", "(state)");
 			else
-				printf("%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+				printf("%-6.6s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
 				    "Proto", "Recv-Q", "Send-Q",
 				    "Local Address", "Foreign Address",
 				    "(state)");
@@ -196,7 +197,7 @@ protopr0(u_long off, char *name, int af)
 			name = namebuf;
 		} else
 			name = name0;
-		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
+		printf("%-6.6s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 		    sockb.so_snd.sb_cc);
 		if (inpcb.inp_flags & INP_IPV6) {
 			inet6print(&inpcb.inp_laddr6, (int)inpcb.inp_lport,
@@ -459,6 +460,37 @@ ip_stats(char *name)
 	p(ips_inhwcsum, "\t%lu input datagram%s checksum-processed by hardware\n");
 	p(ips_outhwcsum, "\t%lu output datagram%s checksum-processed by hardware\n");
 	p(ips_notmember, "\t%lu multicast packet%s which we don't join\n");
+#undef p
+#undef p1
+}
+
+/*
+ * Dump DIVERT statistics structure.
+ */
+void
+div_stats(char *name)
+{
+	struct divstat divstat;
+	int mib[] = { CTL_NET, AF_INET, IPPROTO_DIVERT, DIVERTCTL_STATS };
+	size_t len = sizeof(divstat);
+
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    &divstat, &len, NULL, 0) == -1) {
+		if (errno != ENOPROTOOPT)
+			warn(name);
+		return;
+	}
+
+	printf("%s:\n", name);
+#define	p(f, m) if (divstat.f || sflag <= 1) \
+	printf(m, divstat.f, plural(divstat.f))
+#define	p1(f, m) if (divstat.f || sflag <= 1) \
+	printf(m, divstat.f)
+	p(divs_ipackets, "\t%lu total packet%s received\n");
+	p1(divs_noport, "\t%lu dropped due to no socket\n");
+	p1(divs_fullsock, "\t%lu dropped due to full socket buffers\n");
+	p(divs_opackets, "\t%lu packet%s output\n");
+	p1(divs_errors, "\t%lu errors\n");
 #undef p
 #undef p1
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.136 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.137 2009/10/04 16:08:37 michele Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ struct pkthdr_pf {
 #define	PF_TAG_FRAGCACHE		0x02
 #define	PF_TAG_TRANSLATE_LOCALHOST	0x04
 #define	PF_TAG_DIVERTED			0x08
+#define	PF_TAG_DIVERTED_PACKET		0x10
 
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
 struct	pkthdr {

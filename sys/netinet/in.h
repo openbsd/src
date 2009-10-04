@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.81 2009/09/08 17:52:17 michele Exp $	*/
+/*	$OpenBSD: in.h,v 1.82 2009/10/04 16:08:37 michele Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -77,6 +77,10 @@
 #define	IPPROTO_RAW		255		/* raw IP packet */
 
 #define	IPPROTO_MAX		256
+
+/* Only used internally, so it can be outside the range of valid IP protocols */
+#define	IPPROTO_DIVERT		258		/* Divert sockets */
+
 
 /*
  * From FreeBSD:
@@ -326,7 +330,7 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_PFSYNC + 1)	/* don't list to IPPROTO_MAX */
+#define	IPPROTO_MAXID	(IPPROTO_DIVERT + 1)	/* don't list to IPPROTO_MAX */
 
 #define	CTL_IPPROTO_NAMES { \
 	{ "ip", CTLTYPE_NODE }, \
@@ -570,6 +574,24 @@ struct ip_mreq {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "pfsync", CTLTYPE_NODE }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "divert", CTLTYPE_NODE }, \
 }
 
 /*

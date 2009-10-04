@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.662 2009/09/16 12:28:19 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.663 2009/10/04 16:08:37 michele Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -75,6 +75,7 @@
 #include <netinet/udp_var.h>
 #include <netinet/icmp_var.h>
 #include <netinet/if_ether.h>
+#include <netinet/ip_divert.h>
 
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
@@ -5382,6 +5383,9 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (m->m_pkthdr.pf.flags & PF_TAG_GENERATED)
 		return (PF_PASS);
 
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED_PACKET)
+		return (PF_PASS);
+
 	/* packet reassembly here if 1) enabled 2) we deal with a fragment */
 	h = mtod(m, struct ip *);
 	if (pf_status.reass && (h->ip_off & htons(IP_MF | IP_OFFMASK)) &&
@@ -5601,6 +5605,15 @@ done:
 		}
 	}
 
+	if (action == PF_PASS && r->divert_packet.port) {
+		struct pf_divert *divert;
+
+		if ((divert = pf_get_divert(m)))
+			divert->port = r->divert_packet.port;
+
+		action = PF_DIVERT;
+	}
+
 	if (log) {
 		struct pf_rule		*lr;
 		struct pf_rule_item	*ri;
@@ -5679,6 +5692,11 @@ done:
 	case PF_SYNPROXY_DROP:
 		m_freem(*m0);
 	case PF_DEFER:
+		*m0 = NULL;
+		action = PF_PASS;
+		break;
+	case PF_DIVERT:
+		divert_packet(m, dir);
 		*m0 = NULL;
 		action = PF_PASS;
 		break;
