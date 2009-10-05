@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.265 2009/08/06 08:53:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.266 2009/10/05 11:35:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2695,7 +2695,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 
 	peer = peer_get(id);
 	if (peer == NULL) {
-		log_warnx("peer_down: unknown peer id %d", id);
+		log_warnx("peer_dump: unknown peer id %d", id);
 		return;
 	}
 
@@ -2720,7 +2720,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 		peer_send_eor(peer, afi, safi);
 }
 
-/* End-of-RIB marker, draft-ietf-idr-restart-13.txt */
+/* End-of-RIB marker, RFC 4724 */
 void
 peer_send_eor(struct rde_peer *peer, u_int16_t afi, u_int16_t safi)
 {
