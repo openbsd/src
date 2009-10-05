@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2009/09/07 21:16:57 dms Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2009/10/05 22:05:28 dms Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -35,7 +35,6 @@ int     wdc_obio_init           (struct wdc_channel*, u_int);
 void
 machdep(void)
 {
-	char soc[32];
 	void *node;
 	char *tmp;
 	int len;
@@ -62,12 +61,10 @@ machdep(void)
 			if (len == 8)
 				consaddr = (uint8_t *)*(int *)tmp;
 		}
-		memcpy(soc, console, 32);
-		if (strchr(soc + 1, '/')!=0) {
-			/* we are on a soc */
-			*strchr(soc + 1, '/') = 0;
-			node = fdt_find_node(soc);
-			if (node) {
+		if (node = fdt_parent_node(node)) {
+			fdt_node_property(node, "device_type", &tmp);
+			if (strncmp(tmp, "soc", 3) == 0) {
+				/* we are on a soc */
 				len = fdt_node_property(node, "reg", &tmp);
 				if (len == 8)
 					consaddr += *(int *)tmp;
