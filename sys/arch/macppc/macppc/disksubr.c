@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.67 2009/08/13 15:23:10 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.68 2009/10/05 22:20:35 dms Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -182,8 +182,6 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	if (biowait(bp))
 		return(bp->b_error);
 
-	if (hfspartoff == -1)
-		hfspartoff = 0;
 	return checkdisklabel(bp->b_data + LABELOFFSET, lp, hfspartoff,
 	    hfspartend);
 }
