@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.42 2008/06/26 05:42:16 ray Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.43 2009/10/05 20:01:40 jsg Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -54,8 +54,10 @@ struct channel_softc { /* Per channel data */
 	/* Our registers */
 	bus_space_tag_t       cmd_iot;
 	bus_space_handle_t    cmd_ioh;
+	bus_size_t            cmd_iosz;
 	bus_space_tag_t       ctl_iot;
 	bus_space_handle_t    ctl_ioh;
+	bus_size_t            ctl_iosz;
 	/* data32{iot,ioh} are only used for 32 bit xfers */
 	bus_space_tag_t         data32iot;
 	bus_space_handle_t      data32ioh;

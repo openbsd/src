@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.299 2009/09/29 17:51:07 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.300 2009/10/05 20:01:40 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1228,13 +1228,14 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 
 int	pciide_match(struct device *, void *, void *);
 void	pciide_attach(struct device *, struct device *, void *);
+int	pciide_detach(struct device *, int);
 
 struct cfattach pciide_pci_ca = {
-	sizeof(struct pciide_softc), pciide_match, pciide_attach
+	sizeof(struct pciide_softc), pciide_match, pciide_attach, pciide_detach,
 };
 
 struct cfattach pciide_jmb_ca = {
-	sizeof(struct pciide_softc), pciide_match, pciide_attach
+	sizeof(struct pciide_softc), pciide_match, pciide_attach, pciide_detach,
 };
 
 struct cfdriver pciide_cd = {
@@ -1354,6 +1355,18 @@ pciide_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
+pciide_detach(struct device *self, int flags)
+{
+	struct pciide_softc *sc = (struct pciide_softc *)self;
+	if (sc->chip_unmap == NULL)
+		panic("unmap not yet implemented for this chipset");
+	else
+		sc->chip_unmap(sc, flags);
+
+	return 0;
+}
+
+int
 pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp,
     int compatchan, bus_size_t *cmdsizep, bus_size_t *ctlsizep)
 {
@@ -1393,6 +1406,12 @@ pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp,
 }
 
 int
+pciide_unmapregs_compat(struct pciide_softc *sc, struct pciide_channel *cp)
+{
+	panic("unmapregs_compat not implemented");
+}
+
+int
 pciide_mapregs_native(struct pci_attach_args *pa, struct pciide_channel *cp,
     bus_size_t *cmdsizep, bus_size_t *ctlsizep, int (*pci_intr)(void *))
 {
@@ -1428,6 +1447,7 @@ pciide_mapregs_native(struct pci_attach_args *pa, struct pciide_channel *cp,
 		}
 	}
 	cp->ih = sc->sc_pci_ih;
+	sc->sc_pc = pa->pa_pc;
 
 	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag,
 	    PCIIDE_REG_CMD_BASE(wdc_cp->channel));
@@ -1468,7 +1488,28 @@ pciide_mapregs_native(struct pci_attach_args *pa, struct pciide_channel *cp,
 		bus_space_unmap(wdc_cp->cmd_iot, cp->ctl_baseioh, *ctlsizep);
 		return (0);
 	}
+	wdc_cp->cmd_iosz = *cmdsizep;
+	wdc_cp->ctl_iosz = *ctlsizep;
+
 	return (1);
+}
+
+int
+pciide_unmapregs_native(struct pciide_softc *sc, struct pciide_channel *cp)
+{
+	struct channel_softc *wdc_cp = &cp->wdc_channel;
+
+	bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, wdc_cp->cmd_iosz);
+
+	/* Unmap the whole control space, not just the sub-region */
+	bus_space_unmap(wdc_cp->ctl_iot, cp->ctl_baseioh, wdc_cp->ctl_iosz);
+
+	if (sc->sc_pci_ih != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_pci_ih);
+		sc->sc_pci_ih = NULL;
+	}
+
+	return (0);
 }
 
 void
@@ -1516,7 +1557,8 @@ pciide_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_MAPREG_MEM_TYPE_32BIT:
 		sc->sc_dma_ok = (pci_mapreg_map(pa,
 		    PCIIDE_REG_BUS_MASTER_DMA, maptype, 0,
-		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL, 0) == 0);
+		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, &sc->sc_dma_iosz,
+		    0) == 0);
 		sc->sc_dmat = pa->pa_dmat;
 		if (sc->sc_dma_ok == 0) {
 			printf(", unused (couldn't map registers)");
@@ -1533,6 +1575,12 @@ pciide_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 		printf(", (unsupported maptype 0x%x)", maptype);
 		break;
 	}
+}
+
+void
+pciide_unmapreg_dma(struct pciide_softc *sc)
+{
+	bus_space_unmap(sc->sc_dma_iot, sc->sc_dma_ioh, sc->sc_dma_iosz);
 }
 
 int
@@ -1929,6 +1977,14 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 	return (1);
 }
 
+void
+pciide_chanfree(struct pciide_softc *sc, int channel)
+{
+	struct pciide_channel *cp = &sc->pciide_channels[channel];
+	if (cp->wdc_channel.ch_queue)
+		free(cp->wdc_channel.ch_queue, M_DEVBUF);
+}
+
 /* some common code used by several chip channel_map */
 void
 pciide_mapchan(struct pci_attach_args *pa, struct pciide_channel *cp,
@@ -1948,6 +2004,19 @@ pciide_mapchan(struct pci_attach_args *pa, struct pciide_channel *cp,
 	wdc_cp->data32iot = wdc_cp->cmd_iot;
 	wdc_cp->data32ioh = wdc_cp->cmd_ioh;
 	wdcattach(wdc_cp);
+}
+
+void
+pciide_unmap_chan(struct pciide_softc *sc, struct pciide_channel *cp, int flags)
+{
+	struct channel_softc *wdc_cp = &cp->wdc_channel;
+
+	wdcdetach(wdc_cp, flags);
+
+	if (cp->compat != 0)
+		pciide_unmapregs_compat(sc, cp);
+	else
+		pciide_unmapregs_native(sc, cp);
 }
 
 /*
@@ -2166,6 +2235,24 @@ next:
 			PCIIDE_DMACTL_WRITE(sc, channel, idedma_ctl);
 		}
 	}
+}
+
+void
+default_chip_unmap(struct pciide_softc *sc, int flags)
+{
+	struct pciide_channel *cp;
+	int channel;
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		pciide_unmap_chan(sc, cp, flags);
+		pciide_chanfree(sc, channel);
+	}
+
+	pciide_unmapreg_dma(sc);
+
+	if (sc->sc_cookie)
+		free(sc->sc_cookie, M_DEVBUF);
 }
 
 void
@@ -3875,6 +3962,8 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	/* Allocate memory for private data */
 	sc->sc_cookie = malloc(sizeof(*sl), M_DEVBUF, M_NOWAIT | M_ZERO);
 	sl = sc->sc_cookie;
+
+	sc->chip_unmap = default_chip_unmap;
 
 #define	SII3112_RESET_BITS						\
 	(SCS_CMD_PBM_RESET | SCS_CMD_ARB_RESET |			\
@@ -8501,6 +8590,8 @@ phison_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
 	u_int32_t conf;
+
+	sc->chip_unmap = default_chip_unmap;
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);

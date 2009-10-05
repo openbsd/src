@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.18 2009/01/04 10:37:40 jsg Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.19 2009/10/05 20:01:40 jsg Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ struct pciide_softc {
 	int			sc_dma_ok;	/* bus-master DMA info */
 	bus_space_tag_t		sc_dma_iot;
 	bus_space_handle_t	sc_dma_ioh;
+	bus_size_t		sc_dma_iosz;
 	bus_dma_tag_t		sc_dmat;
 
 	/*
@@ -71,6 +72,8 @@ struct pciide_softc {
 
 	/* Chip description */
 	const struct pciide_product_desc *sc_pp;
+	/* unmap/detach */
+	void (*chip_unmap)(struct pciide_softc *, int);
 	/* Chip revision */
 	int sc_rev;
 	/* common definitions */
@@ -156,6 +159,17 @@ int	 pciide_dma_finish(void *, int, int, int);
 void	 pciide_irqack(struct channel_softc *);
 void	 pciide_print_modes(struct pciide_channel *);
 void	 pciide_print_channels(int, pcireg_t);
+
+void	 default_chip_unmap(struct pciide_softc *, int);
+void	 pciide_unmapreg_dma(struct pciide_softc *);
+void	 pciide_chanfree(struct pciide_softc *, int);
+void	 pciide_unmap_chan(struct pciide_softc *, struct pciide_channel *, int);
+int	 pciide_unmapregs_compat(struct pciide_softc *,
+	     struct pciide_channel *);
+int	 pciide_unmapregs_native(struct pciide_softc *,
+	     struct pciide_channel *);
+int	 pciide_dma_table_free(struct pciide_softc *, int, int);
+void	 pciide_channel_dma_free(struct pciide_channel *);
 
 /*
  * Functions defined by machine-dependent code.
