@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.68 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.69 2009/10/05 07:05:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -344,7 +344,7 @@ getbasepath(char *base, size_t size)
 void
 aucat_usage(void)
 {
-	(void)fputs("usage: " PROG_AUCAT " [-lnu] [-b nframes] "
+	(void)fputs("usage: " PROG_AUCAT " [-dlnu] [-b nframes] "
 	    "[-C min:max] [-c min:max] [-e enc] [-f device]\n"
 	    "\t[-h fmt] [-i file] [-m mode] [-o file] [-r rate] [-s name]\n"
 	    "\t[-U unit] [-v volume] [-x policy]\n",
@@ -354,7 +354,7 @@ aucat_usage(void)
 int
 aucat_main(int argc, char **argv)
 {
-	int c, u_flag, l_flag, n_flag, hdr, xrun, suspend = 0, unit;
+	int c, u_flag, d_flag, l_flag, n_flag, hdr, xrun, suspend = 0, unit;
 	struct farg *fa;
 	struct farglist ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
@@ -366,6 +366,7 @@ aucat_main(int argc, char **argv)
 	aparams_init(&ipar, 0, 1, 44100);
 	aparams_init(&opar, 0, 1, 44100);
 	u_flag = 0;
+	d_flag = 0;
 	l_flag = 0;
 	n_flag = 0;
 	unit = -1;
@@ -379,8 +380,11 @@ aucat_main(int argc, char **argv)
 	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
 	mode = 0;
 
-	while ((c = getopt(argc, argv, "nb:c:C:e:r:h:x:v:i:o:f:m:lus:U:")) != -1) {
+	while ((c = getopt(argc, argv, "dnb:c:C:e:r:h:x:v:i:o:f:m:lus:U:")) != -1) {
 		switch (c) {
+		case 'd':
+			d_flag = 1;
+			break;
 		case 'n':
 			n_flag = 1;
 			break;
@@ -575,7 +579,7 @@ aucat_main(int argc, char **argv)
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_SOFTAUDIO, unit);
 		listen_new(&listen_ops, path);
-		if (daemon(0, 0) < 0)
+		if (!d_flag && daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
 
@@ -632,14 +636,14 @@ aucat_main(int argc, char **argv)
 void
 midicat_usage(void)
 {
-	(void)fputs("usage: " PROG_MIDICAT " [-l] [-f device] "
+	(void)fputs("usage: " PROG_MIDICAT " [-dl] [-f device] "
 	    "[-i file] [-o file] [-U unit]\n",
 	    stderr);
 }
 int
 midicat_main(int argc, char **argv)
 {
-	int c, l_flag, unit, fd;
+	int c, d_flag, l_flag, unit, fd;
 	struct farglist dfiles, ifiles, ofiles;
 	char base[PATH_MAX], path[PATH_MAX];
 	struct farg *fa;
@@ -647,14 +651,18 @@ midicat_main(int argc, char **argv)
 	struct aproc *p;
 	struct abuf *buf;
 
+	d_flag = 0;
 	l_flag = 0;
 	unit = -1;
 	SLIST_INIT(&dfiles);
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
 
-	while ((c = getopt(argc, argv, "i:o:lf:U:")) != -1) {
+	while ((c = getopt(argc, argv, "di:o:lf:U:")) != -1) {
 		switch (c) {
+		case 'd':
+			d_flag = 1;
+			break;
 		case 'i':
 			farg_add(&ifiles, &aparams_none, &aparams_none,
 			    0, HDR_RAW, 0, optarg);
@@ -719,7 +727,7 @@ midicat_main(int argc, char **argv)
 		snprintf(path, sizeof(path), "%s/%s%u", base,
 		    DEFAULT_MIDITHRU, unit);
 		listen_new(&listen_ops, path);
-		if (daemon(0, 0) < 0)
+		if (!d_flag && daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
 	while (!SLIST_EMPTY(&ifiles)) {

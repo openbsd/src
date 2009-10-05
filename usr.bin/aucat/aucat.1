@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.58 2009/09/27 11:51:20 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.59 2009/10/05 07:05:24 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2009 $
+.Dd $Mdocdate: October 5 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm aucat
 .Bk -words
-.Op Fl lnu
+.Op Fl dlnu
 .Op Fl b Ar nframes
 .Op Fl C Ar min : Ns Ar max
 .Op Fl c Ar min : Ns Ar max
@@ -65,6 +65,12 @@ and thus controls the playback latency.
 .Xc
 The range of channel numbers on the record or playback stream, respectively.
 The default is 0:1, i.e. stereo.
+.It Fl d
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground and log to
+.Em stderr .
 .It Fl e Ar enc
 Encoding of the playback or recording stream (see below).
 The default is signed, 16-bit, native byte order.
