@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.121 2009/08/06 08:53:11 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.122 2009/10/05 12:03:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -265,6 +265,7 @@ struct rib_entry {
 
 enum rib_state {
 	RIB_NONE,
+	RIB_NEW,
 	RIB_ACTIVE,
 	RIB_DELETE
 };

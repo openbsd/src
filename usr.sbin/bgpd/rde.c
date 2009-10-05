@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.266 2009/10/05 11:35:48 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.267 2009/10/05 12:03:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,6 +81,7 @@ void		 rde_dump_done(void *);
 void		 rde_up_dump_upcall(struct rib_entry *, void *);
 void		 rde_softreconfig_out(struct rib_entry *, void *);
 void		 rde_softreconfig_in(struct rib_entry *, void *);
+void		 rde_softreconfig_load(struct rib_entry *, void *);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(void);
 
@@ -668,7 +669,15 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					reconf_in = 1;
 				}
 			}
-			/* XXX this needs rework anyway */
+			/* bring ribs in sync before softreconfig dance */
+			for (rid = 0; rid < rib_size; rid++) {
+				if (ribs[rid].state == RIB_DELETE)
+					rib_free(&ribs[rid]);
+				else if (ribs[rid].state == RIB_NEW)
+					rib_dump(&ribs[0],
+					    rde_softreconfig_load, &ribs[rid],
+					    AF_UNSPEC);
+			}
 			/* sync local-RIB first */
 			if (reconf_in)
 				rib_dump(&ribs[0], rde_softreconfig_in, NULL,
@@ -676,9 +685,13 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			/* then sync peers */
 			if (reconf_out) {
 				int i;
-				for (i = 1; i < rib_size; i++)
+				for (i = 1; i < rib_size; i++) {
+					if (ribs[i].state == RIB_NEW)
+						/* already synced by _load */
+						continue;
 					rib_dump(&ribs[i], rde_softreconfig_out,
 					    NULL, AF_UNSPEC);
+				}
 			}
 
 			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
@@ -688,10 +701,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			}
 			free(rules_l);
 			rules_l = newrules;
-			for (rid = 0; rid < rib_size; rid++) {
-				if (ribs[rid].state == RIB_DELETE)
-					rib_free(&ribs[rid]);
-			}
 			log_info("RDE reconfigured");
 			break;
 		case IMSG_NEXTHOP_UPDATE:
@@ -2248,6 +2257,10 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 			continue;
 
 		for (i = 1; i < rib_size; i++) {
+			/* only active ribs need a softreconfig rerun */
+			if (ribs[i].state != RIB_ACTIVE)
+				continue;
+
 			/* check if prefix changed */
 			oa = rde_filter(i, &oasp, rules_l, peer, asp, &addr,
 			    pt->prefixlen, peer, DIR_IN);
@@ -2275,7 +2288,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 				if (path_compare(nasp, oasp) == 0)
 					goto done;
 				/* send update */
-				path_update(&ribs[1], peer, nasp, &addr,
+				path_update(&ribs[i], peer, nasp, &addr,
 				    pt->prefixlen);
 			}
 
@@ -2285,6 +2298,40 @@ done:
 			if (nasp != asp)
 				path_put(nasp);
 		}
+	}
+}
+
+void
+rde_softreconfig_load(struct rib_entry *re, void *ptr)
+{
+	struct rib		*rib = ptr;
+	struct prefix		*p, *np;
+	struct pt_entry		*pt;
+	struct rde_peer		*peer;
+	struct rde_aspath	*asp, *nasp;
+	enum filter_actions	 action;
+	struct bgpd_addr	 addr;
+
+	pt = re->prefix;
+	pt_getaddr(pt, &addr);
+	for (p = LIST_FIRST(&re->prefix_h); p != NULL; p = np) {
+		np = LIST_NEXT(p, rib_l);
+
+		/* store aspath as prefix may change till we're done */
+		asp = p->aspath;
+		peer = asp->peer;
+
+		action = rde_filter(rib->id, &nasp, newrules, peer, asp, &addr,
+		    pt->prefixlen, peer, DIR_IN);
+		nasp = nasp != NULL ? nasp : asp;
+
+		if (action == ACTION_ALLOW) {
+			/* update Local-RIB */
+			path_update(rib, peer, nasp, &addr, pt->prefixlen);
+		}
+
+		if (nasp != asp)
+			path_put(nasp);
 	}
 }
 
