@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.300 2009/10/05 20:01:40 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.301 2009/10/05 20:39:26 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1401,6 +1401,8 @@ pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp,
 		    PCIIDE_COMPAT_CMD_SIZE);
 		return (0);
 	}
+	wdc_cp->cmd_iosz = *cmdsizep;
+	wdc_cp->ctl_iosz = *ctlsizep;
 
 	return (1);
 }
@@ -1408,7 +1410,17 @@ pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp,
 int
 pciide_unmapregs_compat(struct pciide_softc *sc, struct pciide_channel *cp)
 {
-	panic("unmapregs_compat not implemented");
+	struct channel_softc *wdc_cp = &cp->wdc_channel;
+
+	bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, wdc_cp->cmd_iosz);
+	bus_space_unmap(wdc_cp->ctl_iot, wdc_cp->cmd_ioh, wdc_cp->ctl_iosz);
+
+	if (sc->sc_pci_ih != NULL) {
+		pciide_machdep_compat_intr_disestablish(sc->sc_pc, sc->sc_pci_ih);
+		sc->sc_pci_ih = NULL;
+	}
+
+	return (0);
 }
 
 int
