@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.54 2007/09/05 08:02:21 moritz Exp $	*/
+/*	$OpenBSD: at.c,v 1.55 2009/10/05 20:47:19 deraadt Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.54 2007/09/05 08:02:21 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.55 2009/10/05 20:47:19 deraadt Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -55,7 +55,6 @@ char *no_export[] =
 int program = AT;		/* default program mode */
 char atfile[MAX_FNAME];		/* path to the at spool file */
 int fcreated;			/* whether or not we created the file yet */
-char *atinput = NULL;		/* where to get input from */
 char atqueue = 0;		/* which queue to examine for jobs (atq) */
 char vflag = 0;			/* show completed but unremoved jobs (atq) */
 char force = 0;			/* suppress errors (atrm) */
@@ -189,7 +188,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	struct passwd *pass_entry;
 	struct tm runtime;
 	int fdes, lockdes, fd2;
-	FILE *fp, *fpin;
+	FILE *fp;
 	struct sigaction act;
 	char **atenv;
 	int ch;
@@ -290,11 +289,6 @@ writefile(const char *cwd, time_t runtimer, char queue)
 			shell = _PATH_BSHELL;
 	}
 
-	if (atinput != NULL) {
-		fpin = freopen(atinput, "r", stdin);
-		if (fpin == NULL)
-			perr("Cannot open input file");
-	}
 	(void)fprintf(fp, "#!/bin/sh\n# atrun uid=%lu gid=%lu\n# mail %*s %d\n",
 	    (unsigned long)real_uid, (unsigned long)real_gid,
 	    MAX_UNAME, mailname, send_mail);
@@ -930,6 +924,7 @@ int
 main(int argc, char **argv)
 {
 	time_t timer = -1;
+	char *atinput = NULL;			/* where to get input from */
 	char queue = DEFAULT_AT_QUEUE;
 	char queue_set = 0;
 	char *options = "q:f:t:bcdlmrv";	/* default options for at */
@@ -1045,6 +1040,18 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	switch (program) {
+	case AT:
+	case BATCH:
+		if (atinput != NULL) {
+			if (freopen(atinput, "r", stdin) == NULL)
+				perr("Cannot open input file");
+		}
+		break;
+	default:
+		;
+	}
 
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		perr("Cannot get current working directory");
