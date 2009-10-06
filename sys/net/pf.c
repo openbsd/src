@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.663 2009/10/04 16:08:37 michele Exp $ */
+/*	$OpenBSD: pf.c,v 1.664 2009/10/06 21:21:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3195,6 +3195,9 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
     struct pf_addr *daddr, u_int16_t dport, u_int16_t virtual_type,
     int icmp_dir, struct mbuf *m, int off)
 {
+	if (PF_ANEQ(daddr, pd->dst, pd->af))
+		pd->destchg = 1;
+
 	switch (pd->proto) {
 	case IPPROTO_TCP:
 		if (PF_ANEQ(saddr, pd->src, pd->af) || *pd->sport != sport)
@@ -3916,6 +3919,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			    &th->th_sum, &nk->addr[pd->sidx],
 			    nk->port[pd->sidx], 0, pd->af);
 
+		if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], pd->af))
+			pd->destchg = 1;
 		if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], pd->af) ||
 		    nk->port[pd->didx] != th->th_dport)
 			pf_change_ap(pd->dst, &th->th_dport, pd->ip_sum,
@@ -3986,6 +3991,8 @@ pf_test_state_udp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			    &uh->uh_sum, &nk->addr[pd->sidx],
 			    nk->port[pd->sidx], 1, pd->af);
 
+		if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], pd->af))
+			pd->destchg = 1;
 		if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], pd->af) ||
 		    nk->port[pd->didx] != uh->uh_dport)
 			pf_change_ap(pd->dst, &uh->uh_dport, pd->ip_sum,
@@ -4117,10 +4124,12 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    nk->addr[pd->sidx].v4.s_addr, 0);
 
 				if (PF_ANEQ(pd->dst, &nk->addr[pd->didx],
-				    AF_INET))
+				    AF_INET)) {
 					pf_change_a(&daddr->v4.s_addr,
 					    pd->ip_sum,
 					    nk->addr[pd->didx].v4.s_addr, 0);
+					pd->destchg = 1;
+				}
 
 				if (nk->port[iidx] !=
 				    pd->hdr.icmp->icmp_id) {
@@ -4145,10 +4154,12 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 					    &nk->addr[pd->sidx], 0);
 
 				if (PF_ANEQ(pd->dst,
-				    &nk->addr[pd->didx], AF_INET6))
+				    &nk->addr[pd->didx], AF_INET6)) {
 					pf_change_a6(daddr,
 					    &pd->hdr.icmp6->icmp6_cksum,
 					    &nk->addr[pd->didx], 0);
+					pd->destchg = 1;
+				}
 
 				m_copyback(m, off,
 				    sizeof(struct icmp6_hdr),
@@ -4704,19 +4715,24 @@ pf_test_state_other(struct pf_state **state, int direction, struct pfi_kif *kif,
 				    pd->ip_sum,
 				    nk->addr[pd->sidx].v4.s_addr,
 				    0);
-			if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], AF_INET))
+			if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], AF_INET)) {
 				pf_change_a(&pd->dst->v4.s_addr,
 				    pd->ip_sum,
 				    nk->addr[pd->didx].v4.s_addr,
 				    0);
+				pd->destchg = 1;
+			}
 			break;
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			if (PF_ANEQ(pd->src, &nk->addr[pd->sidx], AF_INET6))
 				PF_ACPY(pd->src, &nk->addr[pd->sidx], pd->af);
-			if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], AF_INET6))
+
+			if (PF_ANEQ(pd->dst, &nk->addr[pd->didx], AF_INET6)) {
 				PF_ACPY(pd->dst, &nk->addr[pd->didx], pd->af);
+				pd->destchg = 1;
+			}
 			break;
 #endif /* INET6 */
 		}
@@ -5588,12 +5604,12 @@ done:
 	 * bound specifically to loopback due to security implications,
 	 * see tcp_input() and in_pcblookup_listen().
 	 */
-	if (dir == PF_IN && action == PF_PASS && (pd.proto == IPPROTO_TCP ||
-	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&
-	    (s->nat_rule.ptr->action == PF_RDR ||
-	    s->nat_rule.ptr->action == PF_BINAT) &&
+	if (pd.destchg &&
 	    (ntohl(pd.dst->v4.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
 		m->m_pkthdr.pf.flags |= PF_TAG_TRANSLATE_LOCALHOST;
+	/* We need to redo the route lookup on outgoing routes. */
+	if (pd.destchg && dir == PF_OUT)
+		m->m_pkthdr.pf.flags |= PF_TAG_REROUTE;
 
 	if (dir == PF_IN && action == PF_PASS && r->divert.port) {
 		struct pf_divert *divert;
@@ -6040,12 +6056,12 @@ done:
 	}
 #endif /* ALTQ */
 
-	if (dir == PF_IN && action == PF_PASS && (pd.proto == IPPROTO_TCP ||
-	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&
-	    (s->nat_rule.ptr->action == PF_RDR ||
-	    s->nat_rule.ptr->action == PF_BINAT) &&
+	if (pd.destchg &&
 	    IN6_IS_ADDR_LOOPBACK(&pd.dst->v6))
 		m->m_pkthdr.pf.flags |= PF_TAG_TRANSLATE_LOCALHOST;
+	/* We need to redo the route lookup on outgoing routes. */
+	if (pd.destchg && dir == PF_OUT)
+		m->m_pkthdr.pf.flags |= PF_TAG_REROUTE;
 
 	if (dir == PF_IN && action == PF_PASS && r->divert.port) {
 		struct pf_divert *divert;

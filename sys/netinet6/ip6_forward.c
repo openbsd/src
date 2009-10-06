@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.43 2009/05/18 20:37:13 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.44 2009/10/06 21:21:48 claudio Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -138,6 +138,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 	}
 	ip6->ip6_hlim -= IPV6_HLIMDEC;
 
+#if NPF > 0
+reroute:
+#endif
+
 #ifdef IPSEC
 	if (!ipsec_in_use)
 		goto done_spd;
@@ -263,7 +267,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 		}
 	} else if (ip6_forward_rt.ro_rt == 0 ||
 	   (ip6_forward_rt.ro_rt->rt_flags & RTF_UP) == 0 ||
-	   !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr)) {
+	   !IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst->sin6_addr) ||
+	   ip6_forward_rtableid != rtableid) {
 		if (ip6_forward_rt.ro_rt) {
 			RTFREE(ip6_forward_rt.ro_rt);
 			ip6_forward_rt.ro_rt = 0;
@@ -274,7 +279,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 		dst->sin6_addr = ip6->ip6_dst;
 
 		rtalloc_mpath((struct route *)&ip6_forward_rt,
-		    &ip6->ip6_src.s6_addr32[0], 0);
+		    &ip6->ip6_src.s6_addr32[0], rtableid);
+		ip6_forward_rtableid = rtableid;
 
 		if (ip6_forward_rt.ro_rt == 0) {
 			ip6stat.ip6s_noroute++;
@@ -341,6 +347,13 @@ ip6_forward(struct mbuf *m, int srcrt)
 			goto senderr;
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
+		/*
+		 * PF_TAG_REROUTE handling or not...
+		 * Packet is entering IPsec so the routing is
+		 * already overruled by the IPsec policy.
+		 * Until now the change was not reconsidered.
+		 * What's the behaviour?
+		 */
 #endif
 		tdb = gettdb(sspi, &sdst, sproto);
 		if (tdb == NULL) {
@@ -463,6 +476,16 @@ ip6_forward(struct mbuf *m, int srcrt)
 		goto senderr;
 
 	ip6 = mtod(m, struct ip6_hdr *);
+	if ((m->m_pkthdr.pf.flags & (PF_TAG_REROUTE | PF_TAG_GENERATED)) ==
+	    (PF_TAG_REROUTE | PF_TAG_GENERATED)) {
+		/* already rerun the route lookup, go on */
+		m->m_pkthdr.pf.flags &= ~(PF_TAG_GENERATED | PF_TAG_REROUTE);
+	} else if (m->m_pkthdr.pf.flags & PF_TAG_REROUTE) {
+		/* tag as generated to skip over pf_test on rerun */
+		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+		srcrt = 1;
+		goto reroute;
+	}
 #endif 
 
 	error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
