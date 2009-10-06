@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.7 2009/10/04 08:50:05 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.8 2009/10/06 07:32:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -121,6 +121,8 @@ key_string_lookup_string(const char *string)
 		if (ptr[1] == '\0') {
 			if (ptr[0] == 32)
 				return (0);
+			if (ptr[0] == 63)
+				return (KEYC_BSPACE);
 			if (ptr[0] >= 64 && ptr[0] <= 95)
 				return (ptr[0] - 64);
 			if (ptr[0] >= 97 && ptr[0] <= 122)
