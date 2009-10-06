@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2009/05/30 04:01:29 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2009/10/06 23:59:18 deraadt Exp $
 
-kernels: bsd
+kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP27/bsd \
 	    ${RELEASEDIR}/bsd.IP27
 	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP30/bsd \
@@ -19,7 +19,11 @@ bsd:
 	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP32 && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
-MDEXT=	bsd.IP27 bsd.rd.IP27 bsd.IP30 bsd.rd.IP30 bsd.IP32 bsd.rd.IP32 \
-	cd${OSrev}.iso
+bootblocks:
+	cp ${DESTDIR}/usr/mdec/boot32 ${RELEASEDIR}
+	cp ${DESTDIR}/usr/mdec/boot64 ${RELEASEDIR}
 
-.PHONY: bsd
+MDEXT=	bsd.IP27 bsd.rd.IP27 bsd.IP30 bsd.rd.IP30 bsd.IP32 bsd.rd.IP32 \
+	boot32 boot64 cd${OSrev}.iso
+
+.PHONY: bsd bootblocks
