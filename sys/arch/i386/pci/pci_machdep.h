@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.17 2009/08/22 02:54:50 mk Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.18 2009/10/06 21:35:43 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -108,3 +108,10 @@ void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
  * controller on a PC.
  */
 #define	I386_PCI_INTERRUPT_LINE_NO_CONNECTION	0xff
+
+/*
+ * PCI address space is shared with ISA, so avoid legacy ISA I/O
+ * registers.
+ */
+#define PCI_IO_START	0x400
+#define PCI_IO_END	0xffff
