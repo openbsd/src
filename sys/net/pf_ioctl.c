@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.220 2009/09/01 13:42:00 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.221 2009/10/06 02:31:36 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1106,20 +1106,24 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		rule->states_cur = 0;
 		rule->src_nodes = 0;
 		rule->entries.tqe_prev = NULL;
-#ifndef INET
-		if (rule->af == AF_INET) {
-			pool_put(&pf_rule_pl, rule);
-			error = EAFNOSUPPORT;
+
+		switch (rule->af) {
+		case 0:
 			break;
-		}
+#ifdef INET
+		case AF_INET:
+			break;
 #endif /* INET */
-#ifndef INET6
-		if (rule->af == AF_INET6) {
+#ifdef INET6
+		case AF_INET6:
+			break;
+#endif /* INET6 */
+		default:
 			pool_put(&pf_rule_pl, rule);
 			error = EAFNOSUPPORT;
-			break;
+			goto fail;
 		}
-#endif /* INET6 */
+
 		tail = TAILQ_LAST(ruleset->rules[rs_num].inactive.ptr,
 		    pf_rulequeue);
 		if (tail)
@@ -1350,20 +1354,24 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			/* initialize refcounting */
 			newrule->states_cur = 0;
 			newrule->entries.tqe_prev = NULL;
-#ifndef INET
-			if (newrule->af == AF_INET) {
-				pool_put(&pf_rule_pl, newrule);
-				error = EAFNOSUPPORT;
+
+			switch (newrule->af) {
+			case 0:
 				break;
-			}
+#ifdef INET
+			case AF_INET:
+				break;
 #endif /* INET */
-#ifndef INET6
-			if (newrule->af == AF_INET6) {
+#ifdef INET6
+			case AF_INET6:
+				break;
+#endif /* INET6 */
+			default:
 				pool_put(&pf_rule_pl, newrule);
 				error = EAFNOSUPPORT;
-				break;
+				goto fail;
 			}
-#endif /* INET6 */
+
 			if (newrule->ifname[0]) {
 				newrule->kif = pfi_kif_get(newrule->ifname);
 				if (newrule->kif == NULL) {
@@ -1985,18 +1993,23 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EBUSY;
 			break;
 		}
-#ifndef INET
-		if (pp->af == AF_INET) {
-			error = EAFNOSUPPORT;
+
+		switch (pp->af) {
+		case 0:
 			break;
-		}
+#ifdef INET
+		case AF_INET:
+			break;
 #endif /* INET */
-#ifndef INET6
-		if (pp->af == AF_INET6) {
-			error = EAFNOSUPPORT;
+#ifdef INET6
+		case AF_INET6:
 			break;
-		}
 #endif /* INET6 */
+		default:
+			error = EAFNOSUPPORT;
+			goto fail;
+		}
+
 		if (pp->addr.addr.type != PF_ADDR_ADDRMASK &&
 		    pp->addr.addr.type != PF_ADDR_DYNIFTL &&
 		    pp->addr.addr.type != PF_ADDR_TABLE) {
@@ -2121,20 +2134,24 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 			bcopy(&pca->addr, newpa, sizeof(struct pf_pooladdr));
-#ifndef INET
-			if (pca->af == AF_INET) {
-				pool_put(&pf_pooladdr_pl, newpa);
-				error = EAFNOSUPPORT;
+
+			switch (pca->af) {
+			case 0:
 				break;
-			}
+#ifdef INET
+			case AF_INET:
+				break;
 #endif /* INET */
-#ifndef INET6
-			if (pca->af == AF_INET6) {
+#ifdef INET6
+			case AF_INET6:
+				break;
+#endif /* INET6 */
+			default:
 				pool_put(&pf_pooladdr_pl, newpa);
 				error = EAFNOSUPPORT;
-				break;
+				goto fail;
 			}
-#endif /* INET6 */
+
 			if (newpa->ifname[0]) {
 				newpa->kif = pfi_kif_get(newpa->ifname);
 				if (newpa->kif == NULL) {
