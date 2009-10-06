@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.236 2009/09/04 13:08:49 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.237 2009/10/06 09:44:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,8 +162,8 @@ typedef struct {
 %token	RDE RIB EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
-%token	ANNOUNCE DEMOTE CONNECTRETRY
-%token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND DOWN SOFTRECONFIG
+%token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY
+%token	DEMOTE ENFORCE NEIGHBORAS REFLECTOR DEPEND DOWN SOFTRECONFIG
 %token	DUMP IN OUT
 %token	LOG ROUTECOLL TRANSPARENT
 %token	TCP MD5SIG PASSWORD KEY TTLSECURITY
@@ -899,6 +899,15 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| ANNOUNCE CAPABILITIES yesno {
 			curpeer->conf.announce_capa = $3;
+		}
+		| ANNOUNCE REFRESH yesno {
+			curpeer->conf.capabilities.refresh = $3;
+		}
+		| ANNOUNCE RESTART yesno {
+			curpeer->conf.capabilities.restart = $3;
+		}
+		| ANNOUNCE AS4BYTE yesno {
+			curpeer->conf.capabilities.as4byte = $3;
 		}
 		| ANNOUNCE SELF {
 			curpeer->conf.announce_type = ANNOUNCE_SELF;
@@ -1895,6 +1904,7 @@ lookup(char *s)
 		{ "allow",		ALLOW},
 		{ "announce",		ANNOUNCE},
 		{ "any",		ANY},
+		{ "as-4byte",		AS4BYTE },
 		{ "blackhole",		BLACKHOLE},
 		{ "capabilities",	CAPABILITIES},
 		{ "community",		COMMUNITY},
@@ -1952,6 +1962,7 @@ lookup(char *s)
 		{ "qualify",		QUALIFY},
 		{ "quick",		QUICK},
 		{ "rde",		RDE},
+		{ "refresh",		REFRESH },
 		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
 		{ "restart",		RESTART},
@@ -2589,8 +2600,8 @@ alloc_peer(void)
 	p->conf.capabilities.mp_v4 = SAFI_ALL;
 	p->conf.capabilities.mp_v6 = SAFI_ALL;
 	p->conf.capabilities.refresh = 1;
-	p->conf.capabilities.restart = 0;
-	p->conf.capabilities.as4byte = 0;
+	p->conf.capabilities.restart = 1;
+	p->conf.capabilities.as4byte = 1;
 	p->conf.local_as = conf->as;
 	p->conf.local_short_as = conf->short_as;
 	p->conf.softreconfig_in = 1;
@@ -2910,10 +2921,6 @@ neighbor_consistent(struct peer *p)
 		yyerror("AS needs to be given before neighbor definitions");
 		return (-1);
 	}
-
-	/* for testing: enable 4-byte AS number capability if necessary */
-	if (conf->as > USHRT_MAX || p->conf.remote_as > USHRT_MAX)
-		p->conf.capabilities.as4byte = 1;
 
 	/* set default values if they where undefined */
 	p->conf.ebgp = (p->conf.remote_as != conf->as);

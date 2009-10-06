@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.96 2009/09/28 08:25:25 sthen Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.97 2009/10/06 09:44:13 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 28 2009 $
+.Dd $Mdocdate: October 6 2009 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -483,6 +483,17 @@ Only routes for that address family and subsequent address family will be
 announced and processed.
 .Pp
 .It Xo
+.Ic announce as-4byte
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic no ,
+the 4-byte AS capability is not announced and so native 4-byte AS support is
+disabled.
+The default is
+.Ic yes .
+.Pp
+.It Xo
 .Ic announce capabilities
 .Pq Ic yes Ns \&| Ns Ic no
 .Xc
@@ -490,6 +501,29 @@ If set to
 .Ic no ,
 capability negotiation is disabled during the establishment of the session.
 This can be helpful to connect to old or broken BGP implementations.
+The default is
+.Ic yes .
+.Pp
+.It Xo
+.Ic announce refresh
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic no ,
+the route refresh capability is not announced.
+The default is
+.Ic yes .
+.Pp
+.It Xo
+.Ic announce restart
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic no ,
+the graceful restart capability is not announced.
+Currently only the End-of-RIB marker is supported and announced by the
+.Ic restart
+capability.
 The default is
 .Ic yes .
 .Pp
