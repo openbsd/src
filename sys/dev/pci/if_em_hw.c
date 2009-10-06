@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.38 2009/09/04 22:13:51 dms Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.39 2009/10/06 02:01:04 dms Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -4243,15 +4243,6 @@ em_detect_gig_phy(struct em_hw *hw)
         hw->mac_type == em_82574 ||
         hw->mac_type == em_80003es2lan)) {
         hw->phy_type = em_phy_undefined;
-        return E1000_SUCCESS;
-    }
-    
-    /* until something better comes along... makes the Lenovo X200 work */
-    if (hw->mac_type == em_ich9lan &&
-        (hw->device_id == E1000_DEV_ID_ICH9_IGP_M ||
-         hw->device_id == E1000_DEV_ID_ICH9_IGP_M_AMT)) {
-        hw->phy_id = IGP03E1000_E_PHY_ID;
-        hw->phy_type = em_phy_igp_3;
         return E1000_SUCCESS;
     }
     
