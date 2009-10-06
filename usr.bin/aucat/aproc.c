@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.34 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.35 2009/10/06 18:06:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,6 +58,7 @@ aproc_new(struct aproc_ops *ops, char *name)
 	p->name = name;
 	p->ops = ops;
 	p->refs = 0;
+	p->zomb = 0;
 	return p;
 }
 
@@ -66,24 +67,23 @@ aproc_del(struct aproc *p)
 {
 	struct abuf *i;
 
-	/*
-	 * XXX: souldn't call ops->done() and friends twice
-	 * use a ``zomb'' flag or whatever
-	 */
-
-	if (p->ops->done) {
-		p->ops->done(p);
+	if (!p->zomb) {
+		if (p->ops->done) {
+			p->ops->done(p);
+		}
+		while (!LIST_EMPTY(&p->ibuflist)) {
+			i = LIST_FIRST(&p->ibuflist);
+			abuf_hup(i);
+		}
+		while (!LIST_EMPTY(&p->obuflist)) {
+			i = LIST_FIRST(&p->obuflist);
+			abuf_eof(i);
+		}
+		p->zomb = 1;
 	}
-	while (!LIST_EMPTY(&p->ibuflist)) {
-		i = LIST_FIRST(&p->ibuflist);
-		abuf_hup(i);
-	}
-	while (!LIST_EMPTY(&p->obuflist)) {
-		i = LIST_FIRST(&p->obuflist);
-		abuf_eof(i);
-	}
-	if (p->refs > 0)
+	if (p->refs > 0) {
 		return;
+	}
 	free(p);
 }
 

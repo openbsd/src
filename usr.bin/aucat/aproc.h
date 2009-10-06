@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.23 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.24 2009/10/06 18:06:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -123,6 +123,7 @@ struct aproc {
 	LIST_HEAD(, abuf) ibuflist;		/* list of inputs */
 	LIST_HEAD(, abuf) obuflist;		/* list of outputs */
 	unsigned refs;				/* extern references */
+	unsigned zomb;				/* destroyed but not freed */
 	union {					/* follow type-specific data */
 		struct {			/* file/device io */
 			struct file *file;	/* file to read/write */
