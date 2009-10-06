@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.120 2009/09/12 12:24:51 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.121 2009/10/06 18:20:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -150,6 +150,11 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
+		return 1;
+	}
+
+	if (s->s_state != S_HELO) {
+		session_respond(s, "503 Session already in progress");
 		return 1;
 	}
 
