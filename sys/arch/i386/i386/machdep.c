@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.462 2009/10/07 02:15:48 kevlo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.463 2009/10/07 07:26:36 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -231,6 +231,7 @@ struct vm_map *phys_map = NULL;
 int p4_model;
 int p3_early;
 void (*update_cpuspeed)(void) = NULL;
+void	via_update_sensor(void *args);
 #endif
 int kbd_reset;
 
@@ -1183,7 +1184,6 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 }
 
 #if !defined(SMALL_KERNEL)
-void	via_update_sensor(void *args);
 void
 via_update_sensor(void *args)
 {
