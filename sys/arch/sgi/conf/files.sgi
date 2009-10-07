@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.32 2009/08/18 19:34:14 miod Exp $
+#	$OpenBSD: files.sgi,v 1.33 2009/10/07 20:39:43 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -119,6 +119,7 @@ file	arch/sgi/dev/com_iof.c			com_iof
 device	dsrtc
 attach	dsrtc at macebus with dsrtc_macebus
 attach	dsrtc at ioc with dsrtc_ioc
+attach	dsrtc at iof with dsrtc_iof
 file	arch/sgi/dev/dsrtc.c			dsrtc
 
 # GBE framebuffer

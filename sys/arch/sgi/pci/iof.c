@@ -1,4 +1,4 @@
-/*	$OpenBSD: iof.c,v 1.2 2009/10/07 04:18:19 miod Exp $	*/
+/*	$OpenBSD: iof.c,v 1.3 2009/10/07 20:39:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -190,6 +190,7 @@ iof_attach(struct device *parent, struct device *self, void *aux)
 	iof_attach_child(self, "com", IOC4_UARTC_BASE, IOC4DEV_SERIAL_C);
 	iof_attach_child(self, "com", IOC4_UARTD_BASE, IOC4DEV_SERIAL_D);
 	iof_attach_child(self, "iockbc", IOC4_KBC_BASE, IOC4DEV_KBC);
+	iof_attach_child(self, "dsrtc", IOC4_BYTEBUS_0, IOC4DEV_RTC);
 
 	return;
 
@@ -249,7 +250,8 @@ static const struct {
 	{ IOC4_SIRQ_UARTC, 0 },
 	{ IOC4_SIRQ_UARTD, 0 },
 	{ 0, IOC4_OIRQ_KBC },
-	{ 0, IOC4_OIRQ_ATAPI }
+	{ 0, IOC4_OIRQ_ATAPI },
+	{ 0, 0 }	/* no RTC interrupt */
 };
 
 void *
@@ -260,6 +262,9 @@ iof_intr_establish(void *cookie, uint dev, int level, int (*func)(void *),
 	struct iof_intr *ii;
 
 	if (dev < 0 || dev >= IOC4_NDEVS)
+		return NULL;
+
+	if (ioc4_intrbits[dev].sio == 0 && ioc4_intrbits[dev].other == 0)
 		return NULL;
 
 	ii = (struct iof_intr *)malloc(sizeof(*ii), M_DEVBUF, M_NOWAIT);

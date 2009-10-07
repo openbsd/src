@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.6 2009/07/26 19:58:49 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.7 2009/10/07 20:39:45 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -45,6 +45,7 @@
 #include <sgi/localbus/macebus.h>
 #include <sgi/pci/iocreg.h>
 #include <sgi/pci/iocvar.h>
+#include <sgi/pci/iofvar.h>
 
 struct	dsrtc_softc {
 	struct device		sc_dev;
@@ -58,6 +59,7 @@ struct	dsrtc_softc {
 
 int	dsrtc_match(struct device *, void *, void *);
 void	dsrtc_attach_ioc(struct device *, struct device *, void *);
+void	dsrtc_attach_iof(struct device *, struct device *, void *);
 void	dsrtc_attach_macebus(struct device *, struct device *, void *);
 
 struct cfdriver dsrtc_cd = {
@@ -69,6 +71,10 @@ struct cfattach dsrtc_macebus_ca = {
 };
 
 struct cfattach dsrtc_ioc_ca = {
+	sizeof(struct dsrtc_softc), dsrtc_match, dsrtc_attach_ioc
+};
+
+struct cfattach dsrtc_iof_ca = {
 	sizeof(struct dsrtc_softc), dsrtc_match, dsrtc_attach_ioc
 };
 
@@ -208,6 +214,46 @@ done:
 		sys_tod.tod_get = ds1742_get;
 		sys_tod.tod_set = ds1742_set;
 	}
+
+	return;
+
+fail:
+	printf(": can't map registers\n");
+}
+
+void
+dsrtc_attach_iof(struct device *parent, struct device *self, void *aux)
+{
+	struct dsrtc_softc *sc = (void *)self;
+	struct iof_attach_args *iaa = aux;
+	bus_space_handle_t ih;
+
+	/*
+	 * The IOC4 RTC is a DS1747 or compatible (itself being a Mostek
+	 * MK48T35 clone).
+	 */
+
+	if (bus_space_subregion(iaa->iaa_memt, iaa->iaa_memh,
+	    iaa->iaa_base + MK48T35_CLKOFF,
+	    MK48T35_CLKSZ - MK48T35_CLKOFF, &ih) != 0)
+		goto fail;
+
+	printf(": DS1742W\n");
+
+	sc->sc_clkh = ih;
+
+	/*
+	 * For some reason, the base year differs between IP27
+	 * and IP35.
+	 */
+	sc->sc_yrbase = sys_config.system_type == SGI_O300 ?
+	    POSIX_BASE_YEAR - 2 : POSIX_BASE_YEAR;
+	/* mips64 clock code expects year relative to 1900 */
+	sc->sc_yrbase -= 1900;
+
+	sys_tod.tod_cookie = self;
+	sys_tod.tod_get = ds1742_get;
+	sys_tod.tod_set = ds1742_set;
 
 	return;
 
