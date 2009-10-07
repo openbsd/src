@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.461 2009/09/20 21:58:31 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.462 2009/10/07 02:15:48 kevlo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1075,6 +1075,20 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 		/*
 		 * C3 Nehemiah & later: fall through.
 		 */
+	
+	case 10: /* C7-M Type A */
+	case 13: /* C7-M Type D */
+	case 15: /* Nano */
+#if !defined(SMALL_KERNEL)
+		/* Setup the sensors structures */
+		strlcpy(ci->ci_sensordev.xname, ci->ci_dev.dv_xname,
+		    sizeof(ci->ci_sensordev.xname));
+		ci->ci_sensor.type = SENSOR_TEMP;
+		sensor_task_register(ci, via_update_sensor, 5);
+		sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
+		sensordev_install(&ci->ci_sensordev);
+#endif
+
 	default:
 		/*
 		 * C3 Nehemiah/Esther & later models:
@@ -1167,6 +1181,31 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 		break;
 	}
 }
+
+#if !defined(SMALL_KERNEL)
+void	via_update_sensor(void *args);
+void
+via_update_sensor(void *args)
+{
+	struct cpu_info *ci = (struct cpu_info *) args;
+	u_int64_t msr;
+
+	switch (ci->ci_model) {
+	case 0xa:
+	case 0xd:
+		msr = rdmsr(MSR_C7M_TMTEMPERATURE);
+		break;
+	case 0xf:
+		msr = rdmsr(MSR_CENT_TMTEMPERATURE);
+		break;
+	}
+	ci->ci_sensor.value = (msr & 0xffffff);
+	/* micro degrees */
+	ci->ci_sensor.value *= 1000000;
+	ci->ci_sensor.value += 273150000;
+	ci->ci_sensor.flags &= ~SENSOR_FINVALID;
+}
+#endif
 
 void
 cyrix6x86_cpu_setup(struct cpu_info *ci)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.16 2009/09/20 21:58:31 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.17 2009/10/07 02:15:48 kevlo Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -256,6 +256,9 @@
 #define MSR_MC3_STATUS		0x411
 #define MSR_MC3_ADDR		0x412
 #define MSR_MC3_MISC		0x413
+
+/* VIA MSR */
+#define MSR_CENT_TMTEMPERATURE	0x1423	/* Thermal monitor temperature */
 
 /*
  * AMD K6/K7 MSRs.
