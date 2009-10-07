@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_iof.c,v 1.1 2009/08/18 19:34:15 miod Exp $	*/
+/*	$OpenBSD: com_iof.c,v 1.2 2009/10/07 04:17:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -87,7 +87,10 @@ com_iof_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	sc->sc_frequency = 22000000 / 3;
+	/* XXX need to get PCI bus speed from parent */
+	sc->sc_frequency = 66666667;
+	if (0)
+		sc->sc_frequency >>= 1;
 
 	/* if it's in use as console, it's there. */
 	if (!(console && !comconsattached)) {
@@ -107,6 +110,7 @@ com_iof_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		sc->sc_iot = comconsiot;
 		sc->sc_iobase = comconsaddr;
+		sc->sc_frequency = comconsfreq;
 
 		if (comcnattach(sc->sc_iot, sc->sc_iobase, TTYDEF_SPEED,
 		    sc->sc_frequency, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
