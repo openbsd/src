@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.8 2009/05/27 19:06:20 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.9 2009/10/07 08:35:47 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -385,25 +385,30 @@ xheart_intr_makemasks(struct xheart_softc *sc)
 	imask[IPL_HIGH] = -1;
 
 	heart_intem = sc->sc_intrmask;
-	hw_setintrmask(0);
+	if(CPU_IS_PRIMARY(curcpu()))
+		hw_setintrmask(0);
 }
 
 void
 xheart_do_pending_int(int newcpl)
 {
+	struct cpu_info *ci = curcpu();
+
 	/* Update masks to new cpl. Order highly important! */
 	__asm__ (" .set noreorder\n");
-	cpl = newcpl;
+	ci->ci_cpl = newcpl;
 	__asm__ (" sync\n .set reorder\n");
-	hw_setintrmask(newcpl);
+	if(CPU_IS_PRIMARY(ci))
+		hw_setintrmask(newcpl);
 	/* If we still have softints pending trigger processing. */
-	if (ipending & SINT_ALLMASK & ~newcpl)
+	if (ci->ci_ipending & SINT_ALLMASK & ~newcpl)
 		setsoftintr0();
 }
 
 intrmask_t
 xheart_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 {
+	struct cpu_info *ci = curcpu();
 	paddr_t heart;
 	uint64_t imr, isr;
 	int icpl;
@@ -429,7 +434,7 @@ xheart_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	 * If interrupts are spl-masked, mark them as pending only.
 	 */
 	if ((mask = isr & frame->cpl) != 0) {
-		atomic_setbits_int(&ipending, mask);
+		atomic_setbits_int(&ci->ci_ipending, mask);
 		isr &= ~mask;
 	}
 
@@ -437,10 +442,10 @@ xheart_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	 * Now process unmasked interrupts.
 	 */
 	if (isr != 0) {
-		atomic_clearbits_int(&ipending, isr);
+		atomic_clearbits_int(&ci->ci_ipending, isr);
 
 		__asm__ (" .set noreorder\n");
-		icpl = cpl;
+		icpl = ci->ci_cpl;
 		__asm__ (" sync\n .set reorder\n");
 
 		/* XXX Rework this to dispatch in decreasing levels */
@@ -468,7 +473,7 @@ xheart_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 		*(volatile uint64_t *)(heart + HEART_IMR(0)) |= isr;
 
 		__asm__ (" .set noreorder\n");
-		cpl = icpl;
+		ci->ci_cpl = icpl;
 		__asm__ (" sync\n .set reorder\n");
 	}
 

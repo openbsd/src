@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.41 2009/08/06 21:05:49 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.42 2009/10/07 08:35:47 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -57,9 +57,6 @@
 
 static struct evcount soft_count;
 static int soft_irq = 0;
-
-volatile intrmask_t cpl;
-volatile intrmask_t ipending;
 
 intrmask_t imask[NIPLS];
 
@@ -134,6 +131,7 @@ void interrupt(struct trap_frame *);
 void
 interrupt(struct trap_frame *trapframe)
 {
+	struct cpu_info *ci = curcpu();
 	u_int32_t pending;
 	u_int32_t cause;
 	int i;
@@ -189,12 +187,12 @@ interrupt(struct trap_frame *trapframe)
 #endif
 
 	xcpl = splsoft();
-	if ((ipending & SINT_ALLMASK) & ~xcpl) {
+	if ((ci->ci_ipending & SINT_ALLMASK) & ~xcpl) {
 		dosoftint(xcpl);
 	}
 
 	__asm__ (" .set noreorder\n");
-	cpl = xcpl;
+	ci->ci_cpl = xcpl;
 	__asm__ (" sync\n .set reorder\n");
 }
 
@@ -275,11 +273,12 @@ splinit()
 int
 splraise(int newcpl)
 {
+	struct cpu_info *ci = curcpu();
         int oldcpl;
 
 	__asm__ (" .set noreorder\n");
-	oldcpl = cpl;
-	cpl = oldcpl | newcpl;
+	oldcpl = ci->ci_cpl;
+	ci->ci_cpl = oldcpl | newcpl;
 	__asm__ (" sync\n .set reorder\n");
 	return (oldcpl);
 }
@@ -287,11 +286,13 @@ splraise(int newcpl)
 void
 splx(int newcpl)
 {
-	if (ipending & ~newcpl)
+	struct cpu_info *ci = curcpu();
+
+	if (ci->ci_ipending & ~newcpl)
 		(*pending_hand)(newcpl);
 	else {
 		__asm__ (" .set noreorder\n");
-		cpl = newcpl;
+		ci->ci_cpl = newcpl;
 		__asm__ (" sync\n .set reorder\n");
 #ifdef IMASK_EXTERNAL
 		hw_setintrmask(newcpl);
@@ -302,9 +303,10 @@ splx(int newcpl)
 int
 spllower(int newcpl)
 {
+	struct cpu_info *ci = curcpu();
 	int oldcpl;
 
-	oldcpl = cpl;
+	oldcpl = ci->ci_cpl;
 	splx(newcpl);
 	return (oldcpl);
 }

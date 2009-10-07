@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.22 2009/09/30 06:22:00 syuu Exp $ */
+/*	$OpenBSD: exception.S,v 1.23 2009/10/07 08:35:47 syuu Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -330,7 +330,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	GET_CPU_INFO(k1, k0)
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_REG(a3, CPL, k0, 0)
-	sw	a3, cpl
+	sw	a3, CI_CPL(k1)
 	.set	noat
 	RESTORE_REG(a0, PC, k0, 0)
 #if 0
@@ -491,7 +491,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	GET_CPU_INFO(k1, k0)
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_REG(a3, CPL, k0, 0)
-	sw	a3, cpl
+	sw	a3, CI_CPL(k1)
 	.set	noat
 	RESTORE_CPU_SREG(k0, 0)
 	RESTORE_REG(a0, PC, k0, 0)
@@ -521,8 +521,9 @@ LEAF(proc_trampoline, 0)
 	 * start at spl0 and with interrupts enabled, and these
 	 * won't ``return to userland''.
 	 */
-	sw	zero, cpl		# lower to spl0
-	lw	t0, ipending
+	GET_CPU_INFO(t0, t1)
+	sw	zero, CI_CPL(t0)	# lower to spl0
+	lw	t0, CI_IPENDING(t0)
 	beqz	t0, 1f
 	nop
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpustate.h,v 1.6 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: cpustate.h,v 1.7 2009/10/07 08:35:47 syuu Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -79,7 +79,8 @@
 	SAVE_REG(a3, PC, frame, bo)		;\
 	SAVE_REG(sp, SP, frame, bo)		;\
 	PTR_ADDU a0, frame, bo			;\
-	lw	a2, cpl				;\
+	GET_CPU_INFO(v0, v1)			;\
+	lw	a2, CI_CPL(v0)			;\
 	SAVE_REG(a2, CPL, frame, bo)
 
 /*

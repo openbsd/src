@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.20 2009/10/07 04:17:48 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.21 2009/10/07 08:35:47 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -666,19 +666,23 @@ ip27_hub_intr_makemasks()
 	imask[IPL_NONE] = 0;
 	imask[IPL_HIGH] = -1;
 
-	hw_setintrmask(0);
+	if(CPU_IS_PRIMARY(curcpu()))
+		hw_setintrmask(0);
 }
 
 void
 ip27_hub_do_pending_int(int newcpl)
 {
+	struct cpu_info *ci = curcpu();
+
 	/* Update masks to new cpl. Order highly important! */
 	__asm__ (" .set noreorder\n");
-	cpl = newcpl;
+	ci->ci_cpl = newcpl;
 	__asm__ (" sync\n .set reorder\n");
-	hw_setintrmask(newcpl);
+	if(CPU_IS_PRIMARY(ci))
+		hw_setintrmask(newcpl);
 	/* If we still have softints pending trigger processing. */
-	if (ipending & SINT_ALLMASK & ~newcpl)
+	if (ci->ci_ipending & SINT_ALLMASK & ~newcpl)
 		setsoftintr0();
 }
 
@@ -691,6 +695,7 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	intrmask_t mask;
 	struct intrhand *ih;
 	int rc;
+	struct cpu_info *ci = curcpu();
 
 	/* XXX this assumes we run on cpu0 */
 	isr = IP27_LHUB_L(HUBPI_IR0);
@@ -710,7 +715,7 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	 * If interrupts are spl-masked, mark them as pending only.
 	 */
 	if ((mask = isr & frame->cpl) != 0) {
-		atomic_setbits_int(&ipending, mask);
+		atomic_setbits_int(&ci->ci_ipending, mask);
 		isr &= ~mask;
 		imr &= ~mask;
 	}
@@ -719,10 +724,10 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	 * Now process unmasked interrupts.
 	 */
 	if (isr != 0) {
-		atomic_clearbits_int(&ipending, isr);
+		atomic_clearbits_int(&ci->ci_ipending, isr);
 
 		__asm__ (" .set noreorder\n");
-		icpl = cpl;
+		icpl = ci->ci_cpl;
 		__asm__ (" sync\n .set reorder\n");
 
 		/* XXX Rework this to dispatch in decreasing levels */
@@ -754,7 +759,7 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 		(void)IP27_LHUB_L(HUBPI_IR0);
 		
 		__asm__ (" .set noreorder\n");
-		cpl = icpl;
+		ci->ci_cpl = icpl;
 		__asm__ (" sync\n .set reorder\n");
 	}
 
