@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.85 2009/09/04 11:49:23 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.86 2009/10/07 18:19:39 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -120,7 +120,6 @@ parent_send_config(int fd, short event, void *p)
 {
 	parent_send_config_listeners(p);
 	parent_send_config_client_certs(p);
-	parent_send_config_ruleset(p, PROC_MFA);
 	parent_send_config_ruleset(p, PROC_LKA);
 }
 
