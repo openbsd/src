@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.144 2009/09/23 09:40:39 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.145 2009/10/07 18:09:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -136,6 +136,7 @@ enum imsg_type {
 	IMSG_LKA_MAIL,
 	IMSG_LKA_RCPT,
 	IMSG_LKA_SECRET,
+	IMSG_LKA_RULEMATCH,
 	IMSG_MDA_FINALIZE,
 	IMSG_MFA_RCPT,
 	IMSG_MFA_MAIL,
@@ -697,6 +698,11 @@ struct secret {
 	u_int64_t		 id;
 	char			 host[MAXHOSTNAMELEN];
 	char			 secret[MAX_LINE_SIZE];
+};
+
+struct rulematch {
+	u_int64_t		 id;
+	struct submit_status	 ss;
 };
 
 enum lkasession_flags {

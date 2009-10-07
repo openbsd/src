@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.38 2009/10/07 17:30:41 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.39 2009/10/07 18:09:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -45,6 +45,7 @@ void		mfa_disable_events(struct smtpd *);
 
 void		mfa_test_mail(struct smtpd *, struct message *);
 void		mfa_test_rcpt(struct smtpd *, struct message *);
+void		mfa_test_rcpt_resume(struct smtpd *, struct submit_status *);
 
 int		strip_source_route(char *, size_t);
 
@@ -311,6 +312,14 @@ mfa_dispatch_lka(int sig, short event, void *p)
 			    0, 0, -1, ss, sizeof(*ss));
 			break;
 		}
+		case IMSG_LKA_RULEMATCH: {
+			struct submit_status	 *ss = imsg.data;
+
+			IMSG_SIZE_CHECK(ss);
+
+			mfa_test_rcpt_resume(env, ss);
+			break;
+		}
 		default:
 			log_warnx("mfa_dispatch_lka: got imsg %d",
 			    imsg.hdr.type);
@@ -503,7 +512,6 @@ void
 mfa_test_rcpt(struct smtpd *env, struct message *m)
 {
 	struct submit_status	 ss;
-	struct rule *r;
 
 	if (! valid_message_id(m->message_id))
 		fatalx("mfa_test_rcpt: received corrupted message_id");
@@ -524,22 +532,25 @@ mfa_test_rcpt(struct smtpd *env, struct message *m)
 	if (ss.flags & F_MESSAGE_AUTHENTICATED)
 		ss.u.path.flags |= F_PATH_AUTHENTICATED;
 
-	r = ruleset_match(env, &ss.u.path, &ss.ss);
-	if (r == NULL)
-		goto refuse;
+	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RULEMATCH, 0, 0, -1,
+	    &ss, sizeof(ss));
 
-	ss.u.path.rule = *r;
-	goto accept;
-		
+	return;
 refuse:
 	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, &ss,
 	    sizeof(ss));
-	return;
+}
 
-accept:
-	ss.code = 250;
+void
+mfa_test_rcpt_resume(struct smtpd *env, struct submit_status *ss) {
+	if (ss->code != 250) {
+		imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, ss,
+		    sizeof(*ss));
+		return;
+	}
+
 	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
-	    &ss, sizeof(ss));
+	    ss, sizeof(*ss));
 }
 
 int

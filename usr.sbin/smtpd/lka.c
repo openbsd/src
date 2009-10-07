@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.64 2009/10/07 17:30:41 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.65 2009/10/07 18:09:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -341,6 +341,25 @@ lka_dispatch_mfa(int sig, short event, void *p)
 
 			imsg_compose_event(iev, IMSG_LKA_MAIL, 0, 0, -1,
 				ss, sizeof(*ss));
+
+			break;
+		}
+		case IMSG_LKA_RULEMATCH: {
+			struct submit_status	*ss = imsg.data;
+			struct rule *r;
+
+			IMSG_SIZE_CHECK(ss);
+
+			ss->code = 530;
+
+			r = ruleset_match(env, &ss->u.path, &ss->ss);
+			if (r != NULL) {
+				ss->code = 250;
+				ss->u.path.rule = *r;
+			}
+
+			imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RULEMATCH, 0, 0, -1,
+			    ss, sizeof(*ss));
 
 			break;
 		}
