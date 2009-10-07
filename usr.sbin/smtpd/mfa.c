@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.37 2009/09/03 08:19:13 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.38 2009/10/07 17:30:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -468,7 +468,6 @@ void
 mfa_test_mail(struct smtpd *env, struct message *m)
 {
 	struct submit_status	 ss;
-	struct rule *r;
 
 	ss.id = m->id;
 	ss.code = 530;
@@ -487,11 +486,6 @@ mfa_test_mail(struct smtpd *env, struct message *m)
 	}
 
 	/* Current policy is to allow all well-formed addresses. */
-	r = ruleset_match(env, &ss.u.path, NULL);
-	if (r == NULL)
-		ss.u.path.rule.r_action = A_RELAY;
-	else
-		ss.u.path.rule = *r;
 	goto accept;
 
 refuse:

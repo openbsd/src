@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.63 2009/09/03 08:19:13 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.64 2009/10/07 17:30:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -53,7 +53,6 @@ void		lka_dispatch_mta(int, short, void *);
 void		lka_setup_events(struct smtpd *);
 void		lka_disable_events(struct smtpd *);
 int		lka_verify_mail(struct smtpd *, struct path *);
-int		lka_resolve_mail(struct smtpd *, struct rule *, struct path *);
 int		lka_forward_file(struct passwd *);
 size_t		lka_expand(char *, size_t, struct path *);
 int		aliases_exist(struct smtpd *, char *);
@@ -738,54 +737,6 @@ lka(struct smtpd *env)
 int
 lka_verify_mail(struct smtpd *env, struct path *path)
 {
-	struct rule *r;
-
-	r = ruleset_match(env, path, NULL);
-	if (r == NULL) {
-		path->rule.r_action = A_RELAY;
-		return 1;
-	}
-
-	path->rule = *r;
-	if (r->r_action == A_MBOX ||
-	    r->r_action == A_MAILDIR ||
-	    r->r_action == A_EXT) {
-		lka_resolve_mail(env, r, path);
-		return 1;
-	}
-
-	return 1;
-}
-
-int
-lka_resolve_mail(struct smtpd *env, struct rule *rule, struct path *path)
-{
-	char username[MAXLOGNAME];
-	struct passwd *pw;
-	char *p;
-
-	(void)strlcpy(username, path->user, sizeof(username));
-
-	for (p = &username[0]; *p != '\0' && *p != '+'; ++p)
-		*p = tolower((int)*p);
-	*p = '\0';
-
-	if (aliases_virtual_exist(env, path))
-		path->flags |= F_PATH_VIRTUAL;
-	else if (aliases_exist(env, username))
-		path->flags |= F_PATH_ALIAS;
-	else {
-		pw = getpwnam(username);
-		if (pw == NULL)
-			return 0;
-		(void)strlcpy(path->pw_name, pw->pw_name,
-		    sizeof(path->pw_name));
-		if (lka_expand(path->rule.r_value.path,
-		    sizeof(path->rule.r_value.path), path) >=
-		    sizeof(path->rule.r_value.path))
-			return 0;
-	}
-
 	return 1;
 }
 
