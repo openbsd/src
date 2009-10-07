@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.21 2009/10/06 07:19:32 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.22 2009/10/07 07:02:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -409,7 +409,7 @@ cmd_find_client(struct cmd_ctx *ctx, const char *arg)
 			return (ctx->curclient);
 		/*
 		 * No current client set. Find the current session and see if
-		 * it has only has one client.
+		 * it has only one client.
 		 */
 		s = cmd_current_session(ctx);
 		if (s != NULL) {
