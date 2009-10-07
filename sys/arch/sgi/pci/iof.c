@@ -1,4 +1,4 @@
-/*	$OpenBSD: iof.c,v 1.1 2009/08/18 19:34:17 miod Exp $	*/
+/*	$OpenBSD: iof.c,v 1.2 2009/10/07 04:18:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -115,9 +115,11 @@ iof_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t memsize;
 	const char *intrstr;
 
+	printf(": ");
+
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
 	    &memt, &memh, NULL, &memsize, 0)) {
-		printf(": can't map mem space\n");
+		printf("can't map mem space\n");
 		return;
 	}
 
@@ -136,7 +138,7 @@ iof_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mem_bus_space = malloc(sizeof (*sc->sc_mem_bus_space),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mem_bus_space == NULL) {
-		printf(": can't allocate bus_space\n");
+		printf("can't allocate bus_space\n");
 		goto unmap;
 	}
 
@@ -166,7 +168,7 @@ iof_attach(struct device *parent, struct device *self, void *aux)
 	    bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC4_OTHER_IR));
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": failed to map interrupt!\n");
+		printf("failed to map interrupt!\n");
 		goto unmap;
 	}
 	intrstr = pci_intr_string(sc->sc_pc, ih);
@@ -174,7 +176,7 @@ iof_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_TTY, iof_intr,
 	    sc, self->dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": failed to establish interrupt at %s\n", intrstr);
+		printf("failed to establish interrupt at %s\n", intrstr);
 		goto unmap;
 	}
 	printf("%s\n", intrstr);
