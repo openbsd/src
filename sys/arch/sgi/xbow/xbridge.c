@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.46 2009/08/22 02:54:51 mk Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.47 2009/10/07 04:19:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -507,6 +507,12 @@ xbridge_attach_bus(struct xbridge_softc *sc, uint busno, bus_space_tag_t regt)
 	pba.pba_dmat = xb->xb_dmat;
 	pba.pba_ioex = xb->xb_ioex;
 	pba.pba_memex = xb->xb_memex;
+#ifdef DEBUG
+	if (xb->xb_ioex != NULL)
+		extent_print(xb->xb_ioex);
+	if (xb->xb_memex != NULL)
+		extent_print(xb->xb_memex);
+#endif
 	pba.pba_pc = &xb->xb_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
@@ -1964,8 +1970,12 @@ xbridge_setup(struct xbridge_bus *xb)
 	 */
 
 	for (dev = 0; dev < xb->xb_nslots; dev++) {
-		pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE +
-		    (dev << 12) + PCI_ID_REG;
+		if (ISSET(xb->xb_flags, XF_PIC))
+			pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE +
+			    ((dev + 1) << 12) + PCI_ID_REG;
+		else
+			pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE +
+			    (dev << 12) + PCI_ID_REG;
 		if (guarded_read_4(pa, &xb->xb_devices[dev].id) != 0)
 			xb->xb_devices[dev].id =
 			    PCI_ID_CODE(PCI_VENDOR_INVALID, 0xffff);
@@ -2156,6 +2166,11 @@ xbridge_resource_setup(struct xbridge_bus *xb)
 	 * Configure all regular PCI devices.
 	 */
 
+#ifdef DEBUG
+	for (dev = 0; dev < xb->xb_nslots; dev++)
+		printf("device %d: devio %08x\n",
+		    dev, xbridge_read_reg(xb, BRIDGE_DEVICE(dev)));
+#endif
 	nppb = npccbb = 0;
 	for (dev = 0; dev < xb->xb_nslots; dev++) {
 		id = xb->xb_devices[dev].id;
@@ -2192,10 +2207,8 @@ xbridge_resource_setup(struct xbridge_bus *xb)
 		 */
 
 		devio = xbridge_read_reg(xb, BRIDGE_DEVICE(dev));
-#ifdef DEBUG
-		printf("device %d: devio %08x\n", dev, devio);
-#endif
-		if (id != PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3))
+		if (id != PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3) &&
+		    id != PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC4))
 			need_setup = 1;
 		else
 			need_setup = xb->xb_devio_skew !=
@@ -2212,6 +2225,7 @@ xbridge_resource_setup(struct xbridge_bus *xb)
 			devio |= BRIDGE_DEVICE_SWAP_PMU;
 		devio |= BRIDGE_DEVICE_SWAP_DIR;
 		if (id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3) ||
+		    id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC4) ||
 		    id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_RAD1))
 			devio &=
 			    ~(BRIDGE_DEVICE_SWAP_DIR | BRIDGE_DEVICE_SWAP_PMU);
@@ -2325,8 +2339,8 @@ xbridge_extent_setup(struct xbridge_bus *xb)
 	bus_addr_t start, end;
 	uint32_t devio;
 
-	snprintf(xb->xb_ioexname, sizeof(xb->xb_ioexname), "%s_io",
-	    DEVNAME(xb));
+	snprintf(xb->xb_ioexname, sizeof(xb->xb_ioexname), "%s_io%d",
+	    DEVNAME(xb), xb->xb_busno);
 	xb->xb_ioex = extent_create(xb->xb_ioexname, 0, 0xffffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 
@@ -2374,8 +2388,8 @@ xbridge_extent_setup(struct xbridge_bus *xb)
 		}
 	}
 
-	snprintf(xb->xb_memexname, sizeof(xb->xb_memexname), "%s_mem",
-	    DEVNAME(xb));
+	snprintf(xb->xb_memexname, sizeof(xb->xb_memexname), "%s_mem%d",
+	    DEVNAME(xb), xb->xb_busno);
 	xb->xb_memex = extent_create(xb->xb_memexname, 0, 0xffffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 
@@ -2703,8 +2717,8 @@ xbridge_resource_manage(struct xbridge_bus *xb, pcitag_t tag,
 		 * ARCS but can be reinitialized as we see fit).
 		 */
 #ifdef DEBUG
-		printf("bar %02x type %d base %p size %p",
-		    reg, type, base, size);
+		printf("tag %04x bar %02x type %d base %p size %p",
+		    tag, reg, type, base, size);
 #endif
 		switch (type) {
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
