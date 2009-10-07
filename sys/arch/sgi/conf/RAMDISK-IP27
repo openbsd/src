@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.8 2009/07/15 18:15:21 miod Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.9 2009/10/07 04:16:42 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -65,6 +65,11 @@ onewire*	at ioc?
 option ONEWIREVERBOSE
 owmac*		at onewire?
 owserial*	at onewire?
+
+# IOC4
+iof*		at pci?
+com0		at iof? base 0x380
+com*		at iof?
 
 #### SCSI controllers
 ahc*		at pci?
