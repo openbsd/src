@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.47 2009/10/07 04:19:30 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.48 2009/10/07 20:39:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -81,10 +81,10 @@ struct xbridge_bus {
 	 * with 64 bit operations, although the hardware was supposed
 	 * to be directly compatible with XBridge on that aspect.
 	 */
-	uint32_t	(*xb_read_reg)(bus_space_tag_t, bus_space_handle_t,
+	uint64_t	(*xb_read_reg)(bus_space_tag_t, bus_space_handle_t,
 			    bus_addr_t);
 	void		(*xb_write_reg)(bus_space_tag_t, bus_space_handle_t,
-			    bus_addr_t, uint32_t);
+			    bus_addr_t, uint64_t);
 
 	uint		xb_busno;
 	uint		xb_nslots;
@@ -257,20 +257,20 @@ void	xbridge_resource_setup(struct xbridge_bus *);
 void	xbridge_rrb_setup(struct xbridge_bus *, int);
 void	xbridge_setup(struct xbridge_bus *);
 
-uint32_t bridge_read_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t);
+uint64_t bridge_read_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t);
 void	bridge_write_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    uint32_t);
-uint32_t pic_read_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t);
+	    uint64_t);
+uint64_t pic_read_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t);
 void	pic_write_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    uint32_t);
+	    uint64_t);
 
-static __inline__ uint32_t
+static __inline__ uint64_t
 xbridge_read_reg(struct xbridge_bus *xb, bus_addr_t a)
 {
 	return (*xb->xb_read_reg)(xb->xb_regt, xb->xb_regh, a);
 }
 static __inline__ void
-xbridge_write_reg(struct xbridge_bus *xb, bus_addr_t a, uint32_t v)
+xbridge_write_reg(struct xbridge_bus *xb, bus_addr_t a, uint64_t v)
 {
 	(*xb->xb_write_reg)(xb->xb_regt, xb->xb_regh, a, v);
 }
@@ -826,7 +826,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	struct xbridge_bus *xb = (struct xbridge_bus *)cookie;
 	struct xbridge_intr *xi;
 	struct xbridge_intrhandler *xih;
-	uint32_t int_addr;
+	uint64_t int_addr;
 	int intrbit = XBRIDGE_INTR_BIT(ih);
 	int device = XBRIDGE_INTR_DEVICE(ih);
 	int intrsrc;
@@ -1037,29 +1037,29 @@ xbridge_intr_handler(void *v)
  ********************* chip register access.
  */
 
-uint32_t
+uint64_t
 bridge_read_reg(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t a)
 {
-	return widget_read_4(t, h, a);
+	return (uint64_t)widget_read_4(t, h, a);
 }
 void
 bridge_write_reg(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t a,
-    uint32_t v)
+    uint64_t v)
 {
-	widget_write_4(t, h, a, v);
+	widget_write_4(t, h, a, (uint32_t)v);
 }
 
-uint32_t
+uint64_t
 pic_read_reg(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t a)
 {
-	return (uint32_t)widget_read_8(t, h, a);
+	return widget_read_8(t, h, a);
 }
 
 void
 pic_write_reg(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t a,
-    uint32_t v)
+    uint64_t v)
 {
-	widget_write_8(t, h, a, (uint64_t)v);
+	widget_write_8(t, h, a, v);
 }
 
 /*
