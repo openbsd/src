@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.4 2008/11/24 17:23:26 drahn Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.5 2009/10/07 13:55:38 fkr Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -615,6 +615,14 @@ fillin_program(prog_t * p)
 				p->objdir = strdup(path);
 			else
 				p->objdir = p->srcdir;
+		}
+		/* Fill p->mf_name so it is not a null pointer */
+		for (i = 0; mf_name[i] != NULL; i++) {
+			snprintf(path, sizeof(path), "%s/%s", p->srcdir, mf_name[i]);
+			if (is_nonempty_file(path)) {
+				p->mf_name = mf_name[i];
+				break;
+			}
 		}
 	}
 	/* We have a sourcedir and no explicit objs, try */
