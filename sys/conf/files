@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.478 2009/10/04 16:08:37 michele Exp $
+#	$OpenBSD: files,v 1.479 2009/10/08 20:35:44 matthieu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -108,6 +108,12 @@ include "dev/pci/drm/files.drm"
 device	vga: wsemuldisplaydev, pcdisplayops, drmdev, agpint
 file	dev/ic/vga.c			vga & (vga_pci | vga_isa) needs-flag
 file	dev/ic/vga_subr.c		vga & (vga_pci | vga_isa) needs-flag
+
+# Video modes 
+define	edid
+file	dev/videomode/edid.c		edid
+file    dev/videomode/vesagtf.c         edid
+file    dev/videomode/videomode.c       edid
 
 # Attribute for devices that read/write an IEEE 802.3u MII bus using the
 # bit-bang method.
