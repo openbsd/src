@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.48 2009/10/07 20:39:14 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.49 2009/10/08 19:10:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -309,10 +309,8 @@ static const struct {
 	{ XBOW_VENDOR_SGI4, XBOW_PRODUCT_SGI4_BRIDGE,	0 },
 	/* XBridge */
 	{ XBOW_VENDOR_SGI3, XBOW_PRODUCT_SGI3_XBRIDGE,	XF_XBRIDGE },
-	/* PIC first half */
-	{ XBOW_VENDOR_SGI3, XBOW_PRODUCT_SGI3_PIC0,	XF_PIC },
-	/* PIC second half */
-	{ XBOW_VENDOR_SGI3, XBOW_PRODUCT_SGI3_PIC1,	XF_PIC }
+	/* PIC */
+	{ XBOW_VENDOR_SGI3, XBOW_PRODUCT_SGI3_PIC,	XF_PIC }
 };
 
 int
