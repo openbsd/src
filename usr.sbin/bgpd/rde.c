@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.267 2009/10/05 12:03:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.268 2009/10/08 09:27:56 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2154,15 +2154,12 @@ rde_send_pftable_commit(void)
 void
 rde_send_nexthop(struct bgpd_addr *next, int valid)
 {
-	size_t			 size;
 	int			 type;
 
 	if (valid)
 		type = IMSG_NEXTHOP_ADD;
 	else
 		type = IMSG_NEXTHOP_REMOVE;
-
-	size = sizeof(struct bgpd_addr);
 
 	if (imsg_compose(ibuf_main, type, 0, 0, -1, next,
 	    sizeof(struct bgpd_addr)) == -1)
