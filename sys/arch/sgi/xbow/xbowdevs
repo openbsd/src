@@ -1,4 +1,4 @@
-$OpenBSD: xbowdevs,v 1.3 2009/10/08 19:10:53 miod Exp $
+$OpenBSD: xbowdevs,v 1.4 2009/10/08 19:13:00 miod Exp $
 /*
  * Copyright (c) 2008 Miodrag Vallat.
  *
@@ -27,6 +27,7 @@ vendor	SGI5		0x02aa
 
 product	SGI	XBOW		0x0000	XBow
 product	SGI	XXBOW		0xd000	XXBow
+product	SGI	BEDROCK		0xd100	Bedrock
 
 product	SGI2	ODYSSEY		0xc013	Odyssey
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.18 2009/10/08 19:11:59 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.19 2009/10/08 19:13:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -285,8 +285,12 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 	vendor = (wid & WIDGET_ID_VENDOR_MASK) >> WIDGET_ID_VENDOR_SHIFT;
 	product = (wid & WIDGET_ID_PRODUCT_MASK) >> WIDGET_ID_PRODUCT_SHIFT;
 	p = xbow_identify(vendor, product);
-	printf(": %s revision %d\n",
-	    p != NULL ? p->productname : "unknown xbow",
+	if (p == NULL)
+		printf(": unknown xbow (vendor %x product %x)",
+		    vendor, product);
+	else
+		printf(": %s", p->productname);
+	printf(" revision %d\n",
 	    (wid & WIDGET_ID_REV_MASK) >> WIDGET_ID_REV_SHIFT);
 
 	memset(&cfg, 0, sizeof cfg);
