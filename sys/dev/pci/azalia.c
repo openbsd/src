@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.153 2009/09/14 09:08:03 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.154 2009/10/08 01:57:44 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -336,6 +336,9 @@ static const char *line_colors[16] = {
 #define NVIDIA_PCIE_SNOOP_REG		0x4e
 #define NVIDIA_PCIE_SNOOP_MASK		0xf0
 #define NVIDIA_PCIE_SNOOP_ENABLE	0x0f
+#define NVIDIA_HDA_ISTR_COH_REG		0x4d
+#define NVIDIA_HDA_OSTR_COH_REG		0x4c
+#define NVIDIA_HDA_STR_COH_ENABLE	0x01
 
 uint8_t
 azalia_pci_read(pci_chipset_tag_t pc, pcitag_t pa, int reg)
@@ -431,10 +434,32 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP89_HDA_2:
 	case PCI_PRODUCT_NVIDIA_MCP89_HDA_3:
 	case PCI_PRODUCT_NVIDIA_MCP89_HDA_4:
-		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag, NVIDIA_PCIE_SNOOP_REG);
+		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag,
+		    NVIDIA_HDA_OSTR_COH_REG);
+		reg |= NVIDIA_HDA_STR_COH_ENABLE;
+		azalia_pci_write(pa->pa_pc, pa->pa_tag,
+		    NVIDIA_HDA_OSTR_COH_REG, reg);
+
+		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag,
+		    NVIDIA_HDA_ISTR_COH_REG);
+		reg |= NVIDIA_HDA_STR_COH_ENABLE;
+		azalia_pci_write(pa->pa_pc, pa->pa_tag,
+		    NVIDIA_HDA_ISTR_COH_REG, reg);
+
+		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag,
+		    NVIDIA_PCIE_SNOOP_REG);
 		reg &= NVIDIA_PCIE_SNOOP_MASK;
 		reg |= NVIDIA_PCIE_SNOOP_ENABLE;
-		azalia_pci_write(pa->pa_pc, pa->pa_tag, NVIDIA_PCIE_SNOOP_REG, reg);
+		azalia_pci_write(pa->pa_pc, pa->pa_tag,
+		    NVIDIA_PCIE_SNOOP_REG, reg);
+
+		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag,
+		    NVIDIA_PCIE_SNOOP_REG);
+		if ((reg & NVIDIA_PCIE_SNOOP_ENABLE) !=
+		    NVIDIA_PCIE_SNOOP_ENABLE) {
+			printf(": could not enable PCIe cache snooping!\n");
+		}
+
 		break;
 	}
 
