@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.93 2009/06/05 00:18:10 claudio Exp $ */
+/* $OpenBSD: netcat.c,v 1.94 2009/10/08 15:56:46 mpf Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -403,8 +403,10 @@ main(int argc, char *argv[])
 					    uflag ? "udp" : "tcp");
 				}
 
-				printf("Connection to %s %s port [%s/%s] succeeded!\n",
-				    host, portlist[i], uflag ? "udp" : "tcp",
+				fprintf(stderr,
+				    "Connection to %s %s port [%s/%s] "
+				    "succeeded!\n", host, portlist[i],
+				    uflag ? "udp" : "tcp",
 				    sv ? sv->s_name : "*");
 			}
 			if (!zflag)
