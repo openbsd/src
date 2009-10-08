@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.17 2009/07/26 19:57:12 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.18 2009/10/08 19:11:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -425,16 +425,18 @@ xbow_kl_search_brd(lboard_t *brd, void *arg)
 		if (cfg->probe_order == NULL)
 			switch (brd->brd_type) {
 			case IP27_BRD_IBRICK:
+			case IP27_BRD_IXBRICK:
 				cfg->probe_order = xbow_probe_ibrick;
 				break;
 			case IP27_BRD_PBRICK:
+			case IP27_BRD_PXBRICK:
 				cfg->probe_order = xbow_probe_pbrick;
 				break;
 			case IP27_BRD_XBRICK:
 				cfg->probe_order = xbow_probe_xbrick;
 				break;
 			default:
-				/* unknown brick */
+				/* other brick */
 				break;
 			}
 		break;

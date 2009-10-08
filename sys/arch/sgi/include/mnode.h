@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.9 2009/07/11 19:56:02 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.10 2009/10/08 19:11:57 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -195,6 +195,11 @@ typedef struct lboard_s {
 #define	IP27_BRD_IBRICK		(IP27_BC_BRICK | 0x01)
 #define	IP27_BRD_PBRICK		(IP27_BC_BRICK | 0x02)
 #define	IP27_BRD_XBRICK		(IP27_BC_BRICK | 0x03)
+#define	IP27_BRD_NBRICK		(IP27_BC_BRICK | 0x04)
+#define	IP27_BRD_PEBRICK	(IP27_BC_BRICK | 0x05)
+#define	IP27_BRD_PXBRICK	(IP27_BC_BRICK | 0x06)
+#define	IP27_BRD_IXBRICK	(IP27_BC_BRICK | 0x07)
+#define	IP27_BRD_CGBRICK	(IP27_BC_BRICK | 0x08)
 
 
 /* Component info. Common info about a component. */
