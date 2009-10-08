@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.19 2009/10/08 19:13:00 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.20 2009/10/08 19:14:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -306,7 +306,9 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 		if (xbow_intr_widget_register == 0)
 			xbow_intr_widget_register =
 			    (1UL << 47) /* XIO I/O space */ |
-			    ((paddr_t)IP27_RHUB_ADDR(nasid, HUBPI_IR_CHANGE) -
+			    (nasid <<
+			      (sys_config.system_type == SGI_O300 ? 39 : 38)) |
+			    ((paddr_t)IP27_RHUB_ADDR(0, HUBPI_IR_CHANGE) -
 			     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
 
 		klcfg.cfg = &cfg;
