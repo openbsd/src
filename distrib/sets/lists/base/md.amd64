@@ -1610,6 +1610,13 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/vesa/vesabiosvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/video_if.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/videomode
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/videomode/ediddevs.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/videomode/ediddevs_data.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/videomode/edidreg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/videomode/edidvar.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/videomode/vesagtf.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/videomode/videomode.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/vndioctl.ph

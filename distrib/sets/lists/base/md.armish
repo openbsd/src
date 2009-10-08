@@ -1603,6 +1603,13 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vesa/vesabiosvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/video_if.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/videomode
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/videomode/ediddevs.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/videomode/ediddevs_data.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/videomode/edidreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/videomode/edidvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/videomode/vesagtf.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/videomode/videomode.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/vndioctl.ph

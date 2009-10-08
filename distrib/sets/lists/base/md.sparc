@@ -928,6 +928,13 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/vesa/vesabiosvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/video_if.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/videomode
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/videomode/ediddevs.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/videomode/ediddevs_data.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/videomode/edidreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/videomode/edidvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/videomode/vesagtf.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/videomode/videomode.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/vndioctl.ph

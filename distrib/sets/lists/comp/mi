@@ -881,6 +881,13 @@
 ./usr/include/dev/vesa/vesabiosvar.h
 ./usr/include/dev/vesa/vesafbvar.h
 ./usr/include/dev/video_if.h
+./usr/include/dev/videomode
+./usr/include/dev/videomode/ediddevs.h
+./usr/include/dev/videomode/ediddevs_data.h
+./usr/include/dev/videomode/edidreg.h
+./usr/include/dev/videomode/edidvar.h
+./usr/include/dev/videomode/vesagtf.h
+./usr/include/dev/videomode/videomode.h
 ./usr/include/dev/videovar.h
 ./usr/include/dev/vmtvar.h
 ./usr/include/dev/vndioctl.h

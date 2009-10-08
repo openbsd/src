@@ -1534,6 +1534,13 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/vesa/vesabiosvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/vesa/vesafbvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/video_if.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/videomode
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/videomode/ediddevs.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/videomode/ediddevs_data.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/videomode/edidreg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/videomode/edidvar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/videomode/vesagtf.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/videomode/videomode.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/videovar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/vmtvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/vndioctl.ph
