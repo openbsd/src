@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.222 2009/09/04 22:13:51 dms Exp $ */
+/* $OpenBSD: if_em.c,v 1.223 2009/10/09 20:50:32 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -152,6 +152,7 @@ const struct pci_matchid em_devices[] = {
  *********************************************************************/
 int  em_probe(struct device *, void *, void *);
 void em_attach(struct device *, struct device *, void *);
+int  em_detach(struct device *, int);
 int  em_intr(void *);
 void em_power(int, void *);
 void em_start(struct ifnet *);
@@ -219,7 +220,7 @@ u_int32_t em_fill_descriptors(u_int64_t address, u_int32_t length,
  *********************************************************************/
 
 struct cfattach em_ca = {
-	sizeof(struct em_softc), em_probe, em_attach
+	sizeof(struct em_softc), em_probe, em_attach, em_detach
 };
 
 struct cfdriver em_cd = {
@@ -1751,6 +1752,25 @@ em_setup_interface(struct em_softc *sc)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+}
+
+int
+em_detach(struct device *self, int flags)
+{
+	struct em_softc *sc = (struct em_softc *)self;
+	struct ifnet *ifp = &sc->interface_data.ac_if;
+
+	em_dma_free(sc, &sc->rxdma);
+	em_dma_free(sc, &sc->txdma);
+	em_free_pci_resources(sc);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+
+	return (0);
 }
 
 
