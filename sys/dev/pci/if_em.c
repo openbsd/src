@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.223 2009/10/09 20:50:32 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.224 2009/10/09 21:04:03 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1759,6 +1759,9 @@ em_detach(struct device *self, int flags)
 {
 	struct em_softc *sc = (struct em_softc *)self;
 	struct ifnet *ifp = &sc->interface_data.ac_if;
+
+	timeout_del(&sc->timer_handle);
+	timeout_del(&sc->tx_fifo_timer_handle);
 
 	em_dma_free(sc, &sc->rxdma);
 	em_dma_free(sc, &sc->txdma);
