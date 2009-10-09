@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.46 2009/09/23 12:03:31 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.47 2009/10/09 07:27:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -441,6 +441,7 @@ main(int argc, char **argv)
 	options_set_number(wo, "window-status-fg", 8);
 	options_set_number(wo, "xterm-keys", 0);
  	options_set_number(wo, "remain-on-exit", 0);
+	options_set_number(wo, "synchronize-panes", 0);
 
  	if (flags & IDENTIFY_UTF8) {
 		options_set_number(so, "status-utf8", 1);
