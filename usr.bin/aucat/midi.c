@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.9 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.10 2009/10/09 16:49:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -70,7 +70,7 @@ unsigned voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
 unsigned common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 
 /*
- * send the message stored in of ibuf->mdata to obuf
+ * send the message stored in of ibuf->r.midi.msg to obuf
  */
 void
 thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
@@ -78,8 +78,8 @@ thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	unsigned ocount, itodo;
 	unsigned char *odata, *idata;
 
-	itodo = ibuf->mused;
-	idata = ibuf->mdata;
+	itodo = ibuf->r.midi.used;
+	idata = ibuf->r.midi.msg;
 	while (itodo > 0) {
 		if (!ABUF_WOK(obuf)) {
 			abuf_rdiscard(obuf, obuf->used);
@@ -95,7 +95,7 @@ thru_flush(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 		itodo -= ocount;
 		idata += ocount;
 	}
-	ibuf->mused = 0;
+	ibuf->r.midi.used = 0;
 	p->u.thru.owner = ibuf;
 }
 
@@ -145,44 +145,44 @@ thru_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf, unsigned todo)
 		c = *idata++;
 		icount--;
 		if (c < 0x80) {
-			if (ibuf->mindex == 0 && ibuf->mstatus) {
-				ibuf->mdata[ibuf->mused++] = ibuf->mstatus;
-				ibuf->mindex++;
+			if (ibuf->r.midi.idx == 0 && ibuf->r.midi.st) {
+				ibuf->r.midi.msg[ibuf->r.midi.used++] = ibuf->r.midi.st;
+				ibuf->r.midi.idx++;
 			}
-			ibuf->mdata[ibuf->mused++] = c;
-			ibuf->mindex++;
-			if (ibuf->mindex == ibuf->mlen) {
+			ibuf->r.midi.msg[ibuf->r.midi.used++] = c;
+			ibuf->r.midi.idx++;
+			if (ibuf->r.midi.idx == ibuf->r.midi.len) {
 				thru_flush(p, ibuf, obuf);
-				if (ibuf->mstatus >= 0xf0)
-					ibuf->mstatus = 0;
-				ibuf->mindex = 0;
+				if (ibuf->r.midi.st >= 0xf0)
+					ibuf->r.midi.st = 0;
+				ibuf->r.midi.idx = 0;
 			}
-			if (ibuf->mused == MDATA_NMAX) {
-				if (ibuf->mused == ibuf->mindex ||
+			if (ibuf->r.midi.used == MIDI_MSGMAX) {
+				if (ibuf->r.midi.used == ibuf->r.midi.idx ||
 				    p->u.thru.owner == ibuf)
 					thru_flush(p, ibuf, obuf);
 				else
-					ibuf->mused = 0;
+					ibuf->r.midi.used = 0;
 			}
 		} else if (c < 0xf8) {
-			if (ibuf->mused == ibuf->mindex ||
+			if (ibuf->r.midi.used == ibuf->r.midi.idx ||
 			    p->u.thru.owner == ibuf) {
 				thru_flush(p, ibuf, obuf);
 			} else
-				ibuf->mused = 0;
-			ibuf->mdata[0] = c;
-			ibuf->mused = 1;
-			ibuf->mlen = (c >= 0xf0) ? 
+				ibuf->r.midi.used = 0;
+			ibuf->r.midi.msg[0] = c;
+			ibuf->r.midi.used = 1;
+			ibuf->r.midi.len = (c >= 0xf0) ? 
 			    common_len[c & 7] :
 			    voice_len[(c >> 4) & 7];
-			if (ibuf->mlen == 1) {
+			if (ibuf->r.midi.len == 1) {
 				thru_flush(p, ibuf, obuf);
-				ibuf->mindex = 0;
-				ibuf->mstatus = 0;
-				ibuf->mlen = 0;
+				ibuf->r.midi.idx = 0;
+				ibuf->r.midi.st = 0;
+				ibuf->r.midi.len = 0;
 			} else { 
-				ibuf->mstatus = c;
-				ibuf->mindex = 1;
+				ibuf->r.midi.st = c;
+				ibuf->r.midi.idx = 1;
 			}
 		} else {
 			thru_rt(p, ibuf, obuf, c);
@@ -198,13 +198,13 @@ thru_in(struct aproc *p, struct abuf *ibuf)
 
 	if (!ABUF_ROK(ibuf))
 		return 0;
-	if (ibuf->mtickets == 0) {
+	if (ibuf->tickets == 0) {
 		return 0;
 	}
 	todo = ibuf->used;
-	if (todo > ibuf->mtickets)
-		todo = ibuf->mtickets;
-	ibuf->mtickets -= todo;
+	if (todo > ibuf->tickets)
+		todo = ibuf->tickets;
+	ibuf->tickets -= todo;
 	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
 		if (ibuf->duplex == i)
@@ -235,11 +235,11 @@ thru_hup(struct aproc *p, struct abuf *obuf)
 void
 thru_newin(struct aproc *p, struct abuf *ibuf)
 {
-	ibuf->mused = 0;
-	ibuf->mlen = 0;
-	ibuf->mindex = 0;
-	ibuf->mstatus = 0;
-	ibuf->mtickets = MIDITHRU_XFER;
+	ibuf->r.midi.used = 0;
+	ibuf->r.midi.len = 0;
+	ibuf->r.midi.idx = 0;
+	ibuf->r.midi.st = 0;
+	ibuf->tickets = MIDITHRU_XFER;
 }
 
 void
@@ -277,8 +277,8 @@ thru_cb(void *addr)
 	
 	for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
-		tickets = i->mtickets;
-		i->mtickets = MIDITHRU_XFER;
+		tickets = i->tickets;
+		i->tickets = MIDITHRU_XFER;
 		if (tickets == 0)
 			abuf_run(i);
 	}
@@ -450,17 +450,17 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 {
 	unsigned chan;
 	struct ctl_slot *slot;
-	if ((ibuf->mdata[0] & MIDI_CMDMASK) == MIDI_CTL &&
-	    ibuf->mdata[1] == MIDI_CTLVOL) {
-		chan = ibuf->mdata[0] & MIDI_CHANMASK;
+	if ((ibuf->r.midi.msg[0] & MIDI_CMDMASK) == MIDI_CTL &&
+	    ibuf->r.midi.msg[1] == MIDI_CTLVOL) {
+		chan = ibuf->r.midi.msg[0] & MIDI_CHANMASK;
 		if (chan >= CTL_NSLOT)
 			return;
 		slot = p->u.ctl.slot + chan;
 		if (slot->cb == NULL)
 			return;
-		slot->vol = ibuf->mdata[2];
+		slot->vol = ibuf->r.midi.msg[2];
 		slot->cb(slot->arg, slot->vol);
-		ctl_sendmsg(p, ibuf, ibuf->mdata, ibuf->mlen);
+		ctl_sendmsg(p, ibuf, ibuf->r.midi.msg, ibuf->r.midi.len);
 	}
 }
 
@@ -478,30 +478,30 @@ ctl_in(struct aproc *p, struct abuf *ibuf)
 		if (c >= 0xf8) {
 			/* clock events not used yet */
 		} else if (c >= 0xf0) {
-			if (ibuf->mstatus == 0xf0 && c == 0xf7 &&
-			    ibuf->mindex < MDATA_NMAX) {
-				ibuf->mdata[ibuf->mindex++] = c;
+			if (ibuf->r.midi.st == 0xf0 && c == 0xf7 &&
+			    ibuf->r.midi.idx < MIDI_MSGMAX) {
+				ibuf->r.midi.msg[ibuf->r.midi.idx++] = c;
 				ctl_ev(p, ibuf);
 				continue;
 			}
-			ibuf->mdata[0] = c;
-			ibuf->mlen = common_len[c & 7];
-			ibuf->mstatus = c;
-			ibuf->mindex = 1;
+			ibuf->r.midi.msg[0] = c;
+			ibuf->r.midi.len = common_len[c & 7];
+			ibuf->r.midi.st = c;
+			ibuf->r.midi.idx = 1;
 		} else if (c >= 0x80) {
-			ibuf->mdata[0] = c;
-			ibuf->mlen = voice_len[(c >> 4) & 7];
-			ibuf->mstatus = c;
-			ibuf->mindex = 1;
-		} else if (ibuf->mstatus) {
-			if (ibuf->mindex == MDATA_NMAX)
+			ibuf->r.midi.msg[0] = c;
+			ibuf->r.midi.len = voice_len[(c >> 4) & 7];
+			ibuf->r.midi.st = c;
+			ibuf->r.midi.idx = 1;
+		} else if (ibuf->r.midi.st) {
+			if (ibuf->r.midi.idx == MIDI_MSGMAX)
 				continue;		
-			if (ibuf->mindex == 0)
-				ibuf->mdata[ibuf->mindex++] = ibuf->mstatus;
-			ibuf->mdata[ibuf->mindex++] = c;
-			if (ibuf->mindex == ibuf->mlen) {
+			if (ibuf->r.midi.idx == 0)
+				ibuf->r.midi.msg[ibuf->r.midi.idx++] = ibuf->r.midi.st;
+			ibuf->r.midi.msg[ibuf->r.midi.idx++] = c;
+			if (ibuf->r.midi.idx == ibuf->r.midi.len) {
 				ctl_ev(p, ibuf);
-				ibuf->mindex = 0;
+				ibuf->r.midi.idx = 0;
 			}
 		}
 	}
@@ -528,10 +528,10 @@ ctl_hup(struct aproc *p, struct abuf *obuf)
 void
 ctl_newin(struct aproc *p, struct abuf *ibuf)
 {
-	ibuf->mused = 0;
-	ibuf->mlen = 0;
-	ibuf->mindex = 0;
-	ibuf->mstatus = 0;
+	ibuf->r.midi.used = 0;
+	ibuf->r.midi.len = 0;
+	ibuf->r.midi.idx = 0;
+	ibuf->r.midi.st = 0;
 }
 
 void

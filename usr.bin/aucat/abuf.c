@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.15 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.16 2009/10/09 16:49:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -72,7 +72,6 @@ abuf_new(unsigned nfr, struct aparams *par)
 	buf->rproc = NULL;
 	buf->wproc = NULL;
 	buf->duplex = NULL;
-	buf->data = (unsigned char *)buf + sizeof(*buf);
 	return buf;
 }
 
@@ -113,7 +112,7 @@ abuf_rgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 	if (count > used)
 		count = used;
 	*rsize = count;
-	return buf->data + start;
+	return (unsigned char *)buf + sizeof(struct abuf) + start;
 }
 
 /*
@@ -155,7 +154,7 @@ abuf_wgetblk(struct abuf *buf, unsigned *rsize, unsigned ofs)
 	if (count > avail)
 			count = avail;
 	*rsize = count;
-	return buf->data + end;
+	return (unsigned char *)buf + sizeof(struct abuf) + end;
 }
 
 /*

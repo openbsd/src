@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.35 2009/10/06 18:06:55 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.36 2009/10/09 16:49:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -345,12 +345,12 @@ mix_bzero(struct abuf *obuf, unsigned zcount)
 	short *odata;
 	unsigned ocount;
 
-	odata = (short *)abuf_wgetblk(obuf, &ocount, obuf->mixitodo);
+	odata = (short *)abuf_wgetblk(obuf, &ocount, obuf->w.mix.todo);
 	ocount -= ocount % obuf->bpf;
 	if (ocount > zcount)
 		ocount = zcount;
 	memset(odata, 0, ocount);
-	obuf->mixitodo += ocount;
+	obuf->w.mix.todo += ocount;
 }
 
 /*
@@ -375,19 +375,19 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	/*
 	 * Zero-fill if necessary.
 	 */
-	zcount = ibuf->mixodone + icount * obuf->bpf;
-	if (zcount > obuf->mixitodo)
-		mix_bzero(obuf, zcount - obuf->mixitodo);
+	zcount = ibuf->r.mix.done + icount * obuf->bpf;
+	if (zcount > obuf->w.mix.todo)
+		mix_bzero(obuf, zcount - obuf->w.mix.todo);
 
 	/*
 	 * Calculate the maximum we can write.
 	 */
-	odata = (short *)abuf_wgetblk(obuf, &ocount, ibuf->mixodone);
+	odata = (short *)abuf_wgetblk(obuf, &ocount, ibuf->r.mix.done);
 	ocount /= obuf->bpf;
 	if (ocount == 0)
 		return;
 
-	vol = (ibuf->mixweight * ibuf->mixvol) >> ADATA_SHIFT;
+	vol = (ibuf->r.mix.weight * ibuf->r.mix.vol) >> ADATA_SHIFT;
 	ostart = ibuf->cmin - obuf->cmin;
 	onext = obuf->cmax - ibuf->cmax + ostart;
 	icnt = ibuf->cmax - ibuf->cmin + 1;
@@ -402,7 +402,7 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 		odata += onext;
 	}
 	abuf_rdiscard(ibuf, scount * ibuf->bpf);
-	ibuf->mixodone += scount * obuf->bpf;
+	ibuf->r.mix.done += scount * obuf->bpf;
 
 }
 
@@ -414,16 +414,16 @@ mix_xrun(struct abuf *i, struct abuf *obuf)
 {
 	unsigned fdrop;
 
-	if (i->mixodone > 0)
+	if (i->r.mix.done > 0)
 		return 1;
-	if (i->xrun == XRUN_ERROR) {
+	if (i->r.mix.xrun == XRUN_ERROR) {
 		abuf_hup(i);
 		return 0;
 	}
 	mix_bzero(obuf, obuf->len);
-	fdrop = obuf->mixitodo / obuf->bpf;
-	i->mixodone += fdrop * obuf->bpf;
-	if (i->xrun == XRUN_SYNC)
+	fdrop = obuf->w.mix.todo / obuf->bpf;
+	i->r.mix.done += fdrop * obuf->bpf;
+	if (i->r.mix.xrun == XRUN_SYNC)
 		i->drop += fdrop * i->bpf;
 	else {
 		abuf_opos(i, -(int)fdrop);
@@ -449,17 +449,17 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 		if (!abuf_fill(i))
 			continue; /* eof */
 		mix_badd(i, obuf);
-		if (odone > i->mixodone)
-			odone = i->mixodone;
+		if (odone > i->r.mix.done)
+			odone = i->r.mix.done;
 	}
 	if (LIST_EMPTY(&p->ibuflist) || odone == 0)
 		return 0;
 	p->u.mix.lat += odone / obuf->bpf;
 	LIST_FOREACH(i, &p->ibuflist, ient) {
-		i->mixodone -= odone;
+		i->r.mix.done -= odone;
 	}
 	abuf_wcommit(obuf, odone);
-	obuf->mixitodo -= odone;
+	obuf->w.mix.todo -= odone;
 	if (!abuf_flush(obuf))
 		return 0; /* hup */
 	return 1;
@@ -485,8 +485,8 @@ mix_out(struct aproc *p, struct abuf *obuf)
 			}
 		} else
 			mix_badd(i, obuf);
-		if (odone > i->mixodone)
-			odone = i->mixodone;
+		if (odone > i->r.mix.done)
+			odone = i->r.mix.done;
 	}
 	if (LIST_EMPTY(&p->ibuflist)) {
 		if (p->u.mix.flags & MIX_AUTOQUIT) {
@@ -496,17 +496,17 @@ mix_out(struct aproc *p, struct abuf *obuf)
 		if (!(p->u.mix.flags & MIX_DROP))
 			return 0;
 		mix_bzero(obuf, obuf->len);
-		odone = obuf->mixitodo;
+		odone = obuf->w.mix.todo;
 		p->u.mix.idle += odone / obuf->bpf;
 	}
 	if (odone == 0)
 		return 0;
 	p->u.mix.lat += odone / obuf->bpf;
 	LIST_FOREACH(i, &p->ibuflist, ient) {
-		i->mixodone -= odone;
+		i->r.mix.done -= odone;
 	}
 	abuf_wcommit(obuf, odone);
-	obuf->mixitodo -= odone;
+	obuf->w.mix.todo -= odone;
 	return 1;
 }
 
@@ -524,17 +524,17 @@ mix_eof(struct aproc *p, struct abuf *ibuf)
 		 */
 		odone = obuf->len;
 		LIST_FOREACH(i, &p->ibuflist, ient) {
-			if (ABUF_ROK(i) && i->mixodone < obuf->mixitodo) {
+			if (ABUF_ROK(i) && i->r.mix.done < obuf->w.mix.todo) {
 				abuf_run(i);
 				return;
 			}
-			if (odone > i->mixodone)
-				odone = i->mixodone;
+			if (odone > i->r.mix.done)
+				odone = i->r.mix.done;
 		}
 		/*
 		 * No blocked inputs. Check if output is blocked.
 		 */
-		if (LIST_EMPTY(&p->ibuflist) || odone == obuf->mixitodo)
+		if (LIST_EMPTY(&p->ibuflist) || odone == obuf->w.mix.todo)
 			abuf_run(obuf);
 	}
 }
@@ -549,17 +549,17 @@ void
 mix_newin(struct aproc *p, struct abuf *ibuf)
 {
 	p->u.mix.idle = 0;
-	ibuf->mixodone = 0;
-	ibuf->mixvol = ADATA_UNIT;
-	ibuf->mixweight = ADATA_UNIT;
-	ibuf->mixmaxweight = ADATA_UNIT;
-	ibuf->xrun = XRUN_IGNORE;
+	ibuf->r.mix.done = 0;
+	ibuf->r.mix.vol = ADATA_UNIT;
+	ibuf->r.mix.weight = ADATA_UNIT;
+	ibuf->r.mix.maxweight = ADATA_UNIT;
+	ibuf->r.mix.xrun = XRUN_IGNORE;
 }
 
 void
 mix_newout(struct aproc *p, struct abuf *obuf)
 {
-	obuf->mixitodo = 0;
+	obuf->w.mix.todo = 0;
 }
 
 void
@@ -611,9 +611,9 @@ mix_setmaster(struct aproc *p)
 	}
 	LIST_FOREACH(buf, &p->ibuflist, ient) {
 		weight = ADATA_UNIT / n;
-		if (weight > buf->mixmaxweight)
-			weight = buf->mixmaxweight;
-		buf->mixweight = weight;
+		if (weight > buf->r.mix.maxweight)
+			weight = buf->r.mix.maxweight;
+		buf->r.mix.weight = weight;
 	}
 }
 
@@ -623,7 +623,7 @@ mix_clear(struct aproc *p)
 	struct abuf *obuf = LIST_FIRST(&p->obuflist);
 
 	p->u.mix.lat = 0;
-	obuf->mixitodo = 0;
+	obuf->w.mix.todo = 0;
 }
 
 /*
@@ -636,7 +636,7 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 	unsigned i, j, ocnt, inext, istart;
 	unsigned icount, ocount, scount;
 
-	idata = (short *)abuf_rgetblk(ibuf, &icount, obuf->subidone);
+	idata = (short *)abuf_rgetblk(ibuf, &icount, obuf->w.sub.done);
 	icount /= ibuf->bpf;
 	if (icount == 0)
 		return;
@@ -658,7 +658,7 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 		idata += inext;
 	}
 	abuf_wcommit(obuf, scount * obuf->bpf);
-	obuf->subidone += scount * ibuf->bpf;
+	obuf->w.sub.done += scount * ibuf->bpf;
 }
 
 /*
@@ -669,14 +669,14 @@ sub_xrun(struct abuf *ibuf, struct abuf *i)
 {
 	unsigned fdrop;
 
-	if (i->subidone > 0)
+	if (i->w.sub.done > 0)
 		return 1;
-	if (i->xrun == XRUN_ERROR) {
+	if (i->w.sub.xrun == XRUN_ERROR) {
 		abuf_eof(i);
 		return 0;
 	}
 	fdrop = ibuf->used / ibuf->bpf;
-	if (i->xrun == XRUN_SYNC)
+	if (i->w.sub.xrun == XRUN_SYNC)
 		i->silence += fdrop * i->bpf;
 	else {
 		abuf_ipos(i, -(int)fdrop);
@@ -685,7 +685,7 @@ sub_xrun(struct abuf *ibuf, struct abuf *i)
 			abuf_opos(i->duplex, -(int)fdrop);
 		}
 	}
-	i->subidone += fdrop * ibuf->bpf;
+	i->w.sub.done += fdrop * ibuf->bpf;
 	return 1;
 }
 
@@ -707,8 +707,8 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 			}
 		} else
 			sub_bcopy(ibuf, i);
-		if (idone > i->subidone)
-			idone = i->subidone;
+		if (idone > i->w.sub.done)
+			idone = i->w.sub.done;
 		if (!abuf_flush(i))
 			continue;
 	}
@@ -725,7 +725,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 	if (idone == 0)
 		return 0;
 	LIST_FOREACH(i, &p->obuflist, oent) {
-		i->subidone -= idone;
+		i->w.sub.done -= idone;
 	}
 	abuf_rdiscard(ibuf, idone);
 	p->u.sub.lat -= idone / ibuf->bpf;
@@ -747,15 +747,15 @@ sub_out(struct aproc *p, struct abuf *obuf)
 	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
 		sub_bcopy(ibuf, i);
-		if (idone > i->subidone)
-			idone = i->subidone;
+		if (idone > i->w.sub.done)
+			idone = i->w.sub.done;
 		if (!abuf_flush(i))
 			continue;
 	}
 	if (LIST_EMPTY(&p->obuflist) || idone == 0)
 		return 0;
 	LIST_FOREACH(i, &p->obuflist, oent) {
-		i->subidone -= idone;
+		i->w.sub.done -= idone;
 	}
 	abuf_rdiscard(ibuf, idone);
 	p->u.sub.lat -= idone / ibuf->bpf;
@@ -780,12 +780,12 @@ sub_hup(struct aproc *p, struct abuf *obuf)
 		 */
 		idone = ibuf->len;
 		LIST_FOREACH(i, &p->obuflist, oent) {
-			if (ABUF_WOK(i) && i->subidone < ibuf->used) {
+			if (ABUF_WOK(i) && i->w.sub.done < ibuf->used) {
 				abuf_run(i);
 				return;
 			}
-			if (idone > i->subidone)
-				idone = i->subidone;
+			if (idone > i->w.sub.done)
+				idone = i->w.sub.done;
 		}
 		/*
 		 * No blocked outputs. Check if input is blocked.
@@ -799,8 +799,8 @@ void
 sub_newout(struct aproc *p, struct abuf *obuf)
 {
 	p->u.sub.idle = 0;
-	obuf->subidone = 0;
-	obuf->xrun = XRUN_IGNORE;
+	obuf->w.sub.done = 0;
+	obuf->w.sub.xrun = XRUN_IGNORE;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.30 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.31 2009/10/09 16:49:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -528,8 +528,8 @@ dev_attach(char *name,
 		}
 		aproc_setin(dev_mix, ibuf);
 		abuf_opos(ibuf, -dev_mix->u.mix.lat);
-		ibuf->xrun = underrun;
-		ibuf->mixmaxweight = vol;
+		ibuf->r.mix.xrun = underrun;
+		ibuf->r.mix.maxweight = vol;
 		mix_setmaster(dev_mix);
 	}
 	if (obuf) {
@@ -566,7 +566,7 @@ dev_attach(char *name,
 		}
 		aproc_setout(dev_sub, obuf);
 		abuf_ipos(obuf, -dev_sub->u.sub.lat);
-		obuf->xrun = overrun;
+		obuf->w.sub.xrun = overrun;
 	}
 
 	/*
@@ -588,7 +588,7 @@ dev_setvol(struct abuf *ibuf, int vol)
 	if (!dev_getep(&ibuf, NULL)) {
 		return;
 	}
-	ibuf->mixvol = vol;
+	ibuf->r.mix.vol = vol;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.18 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.19 2009/10/09 16:49:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,37 +19,17 @@
 
 #include <sys/queue.h>
 
+#define XRUN_IGNORE	0	/* on xrun silently insert/discard samples */
+#define XRUN_SYNC	1	/* catchup to sync to the mix/sub */
+#define XRUN_ERROR	2	/* xruns are errors, eof/hup buffer */
+#define MIDI_MSGMAX	16	/* max size of MIDI messaage */
+
 struct aproc;
 struct aparams;
 
 struct abuf {
-	/*
-	 * Misc aproc-specific per-buffer parameters.
-	 * since the buffer can connect any pair of aproc structure,
-	 * each aproc must have it's own specific data. Thus we cannot
-	 * use a union. The only exception is the xrun field, because
-	 * there can be only one aproc that absorbs xruns in any
-	 * intput->output path.
-	 */
-	int mixweight;		/* dynamic range for the source stream */
-	int mixmaxweight;	/* max dynamic range allowed */
-	unsigned mixvol;	/* volume within the dynamic range */
-	unsigned mixodone;	/* bytes done on the dest stream */
-	unsigned mixitodo;	/* bytes to do on the source stream */
-	unsigned subidone;	/* bytes copied from the source stream */
-#define XRUN_IGNORE	0	/* on xrun silently insert/discard samples */
-#define XRUN_SYNC	1	/* catchup to sync to the mix/sub */
-#define XRUN_ERROR	2	/* xruns are errors, eof/hup buffer */
-	unsigned xrun;		/* common to mix and sub */
-	LIST_ENTRY(abuf) ient;	/* for mix inputs list */
-	LIST_ENTRY(abuf) oent;	/* for sub outputs list */
-	unsigned mstatus;	/* MIDI running status */
-	unsigned mindex;	/* current MIDI message size */
-	unsigned mused;		/* bytes used from mdata */
-	unsigned mlen;		/* MIDI message length */
-#define MDATA_NMAX 16
-	unsigned char mdata[MDATA_NMAX]; /* MIDI message data */
-	unsigned mtickets;	/* max data to transmit (throttling) */
+	LIST_ENTRY(abuf) ient;	/* reader's list of inputs entry */
+	LIST_ENTRY(abuf) oent;	/* writer's list of outputs entry */
 
 	/*
 	 * fifo parameters
@@ -66,7 +46,40 @@ struct abuf {
 	struct aproc *wproc;	/* writer */
 	struct abuf *duplex;	/* link to buffer of the other direction */
 	unsigned inuse;		/* in abuf_{flush,fill,run}() */
-	unsigned char *data;	/* actual data (immediately following) */
+	unsigned tickets;	/* max data to (if throttling) */
+
+	/*
+	 * Misc reader aproc-specific per-buffer parameters.
+	 */
+	union {
+		struct {
+			int weight;	/* dynamic range */	
+			int maxweight;	/* max dynamic range allowed */
+			unsigned vol;	/* volume within the dynamic range */
+			unsigned done;	/* bytes ready */
+			unsigned xrun;	/* underrun policy */
+		} mix;
+		struct {
+			unsigned st;	/* MIDI running status */
+			unsigned used;	/* bytes used from ``msg'' */
+			unsigned idx;	/* actual MIDI message size */
+			unsigned len;	/* MIDI message length */
+			unsigned char msg[MIDI_MSGMAX];
+		} midi;
+	} r;
+
+	/*
+	 * Misc reader aproc-specific per-buffer parameters.
+	 */
+	union {
+		struct {
+			unsigned todo;	/* bytes to process */
+		} mix;
+		struct {
+			unsigned done;	/* bytes copied */
+			unsigned xrun;	/* overrun policy */
+		} sub;
+	} w;
 };
 
 /*
