@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.34 2009/09/23 12:03:31 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.35 2009/10/09 07:23:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -524,6 +524,8 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int py, u_int ox, u_int oy)
 	const struct grid_utf8	*gu;
 	u_int			 i, sx;
 
+	tty_update_mode(tty, tty->mode & ~MODE_CURSOR);
+
 	sx = screen_size_x(s);
 	if (sx > s->grid->linedata[s->grid->hsize + py].cellsize)
 		sx = s->grid->linedata[s->grid->hsize + py].cellsize;
@@ -548,8 +550,10 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int py, u_int ox, u_int oy)
 			tty_cell(tty, gc, gu);
 	}
 
-	if (sx >= tty->sx)
+	if (sx >= tty->sx) {
+		tty_update_mode(tty, tty->mode);
 		return;
+	}
 	tty_reset(tty);
 
 	tty_cursor(tty, sx, py, ox, oy);
@@ -559,6 +563,7 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int py, u_int ox, u_int oy)
 		for (i = sx; i < screen_size_x(s); i++)
 			tty_putc(tty, ' ');
 	}
+	tty_update_mode(tty, tty->mode);
 }
 
 void
@@ -587,7 +592,6 @@ tty_write(void (*cmdfn)(
 		if (c->session->curw->window == wp->window) {
 			if (c->tty.flags & TTY_FREEZE || c->tty.term == NULL)
 				continue;
-			tty_update_mode(&c->tty, c->tty.mode & ~MODE_CURSOR);
 			cmdfn(&c->tty, ctx);
 		}
 	}
