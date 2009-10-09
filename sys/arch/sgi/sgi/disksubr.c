@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.17 2009/08/13 15:23:11 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.18 2009/10/09 04:25:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -113,8 +113,8 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 {
 	struct sgilabel *dlp;
 	int i, *p, cs = 0;
-	int fsoffs = 0;
-	u_int fsend;
+	u_int64_t fsoffs = 0;
+	u_int64_t fsend = DL_GETBEND(lp);
 	int offset;
 
 	bp->b_blkno = 0;
