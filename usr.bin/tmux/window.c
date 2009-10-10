@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.28 2009/10/10 10:02:48 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.29 2009/10/10 14:51:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -301,6 +301,23 @@ window_set_active_pane(struct window *w, struct window_pane *wp)
 			w->active = TAILQ_LAST(&w->panes, window_panes);
 		if (w->active == wp)
 			return;
+	}
+}
+
+void
+window_set_active_at(struct window *w, u_int x, u_int y)
+{
+	struct window_pane	*wp;
+
+	TAILQ_FOREACH(wp, &w->panes, entry) {
+		if (!window_pane_visible(wp))
+			continue;
+		if (x < wp->xoff || x >= wp->xoff + wp->sx)
+			continue;
+		if (y < wp->yoff || y >= wp->yoff + wp->sy)
+			continue;
+		window_set_active_pane(w, wp);
+		break;
 	}
 }
 
