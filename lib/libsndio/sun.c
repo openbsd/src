@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.23 2009/10/10 11:19:55 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.24 2009/10/10 11:27:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -130,7 +130,11 @@ sun_infotoenc(struct sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
 static void
 sun_enctoinfo(struct sun_hdl *hdl, unsigned *renc, struct sio_par *par)
 {
-	if (par->le && par->sig) {
+	if (par->le == ~0U && par->sig == ~0U) {
+		*renc = ~0U;
+	} else if (par->le == ~0U || par->sig == ~0U) {
+		*renc = AUDIO_ENCODING_SLINEAR;
+	} else if (par->le && par->sig) {
 		*renc = AUDIO_ENCODING_SLINEAR_LE;
 	} else if (!par->le && par->sig) {
 		*renc = AUDIO_ENCODING_SLINEAR_BE;
@@ -553,13 +557,28 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 			hdl->sio.eof = 1;
 			return 0;
 		}
-		if (hdl->sio.mode != (SIO_REC | SIO_PLAY))
-			break;
 		if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
 			DPERROR("sun_setpar: getinfo(pars)");
 			hdl->sio.eof = 1;
 			return 0;
 		}
+		enc = (hdl->sio.mode & SIO_REC) ?
+		    aui.record.encoding : aui.play.encoding;
+		switch (enc) {
+		case AUDIO_ENCODING_SLINEAR_LE:
+		case AUDIO_ENCODING_SLINEAR_BE:
+		case AUDIO_ENCODING_ULINEAR_LE:
+		case AUDIO_ENCODING_ULINEAR_BE:
+		case AUDIO_ENCODING_SLINEAR:
+		case AUDIO_ENCODING_ULINEAR:
+			break;
+		default:
+			DPRINTF("sun_setpar: couldn't set linear encoding\n");
+			hdl->sio.eof = 1;
+			return 0;
+		}
+		if (hdl->sio.mode != (SIO_REC | SIO_PLAY))
+			break;
 		if (aui.play.sample_rate == aui.record.sample_rate &&
 		    aui.play.precision == aui.record.precision &&
 		    aui.play.encoding == aui.record.encoding)
