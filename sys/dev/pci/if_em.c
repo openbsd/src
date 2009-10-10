@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.224 2009/10/09 21:04:03 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.225 2009/10/10 04:49:26 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1763,9 +1763,9 @@ em_detach(struct device *self, int flags)
 	timeout_del(&sc->timer_handle);
 	timeout_del(&sc->tx_fifo_timer_handle);
 
+	em_free_pci_resources(sc);
 	em_dma_free(sc, &sc->rxdma);
 	em_dma_free(sc, &sc->txdma);
-	em_free_pci_resources(sc);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
