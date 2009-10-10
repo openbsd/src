@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.7 2009/09/20 14:58:12 nicm Exp $ */
+/* $OpenBSD: names.c,v 1.8 2009/10/10 15:23:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -71,6 +71,12 @@ set_window_names(void)
 			else
 				wname = parse_window_name(name);
 			xfree(name);
+		}
+
+		if (w->active->fd == -1) {
+			xasprintf(&name, "%s[dead]", wname);
+			xfree(wname);
+			wname = name;
 		}
 
 		if (strcmp(wname, w->name) == 0)
