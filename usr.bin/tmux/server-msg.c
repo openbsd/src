@@ -1,4 +1,4 @@
-/* $OpenBSD: server-msg.c,v 1.22 2009/09/24 07:02:56 nicm Exp $ */
+/* $OpenBSD: server-msg.c,v 1.23 2009/10/10 09:46:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -105,7 +105,8 @@ server_msg_dispatch(struct client *c)
 			tty_start_tty(&c->tty);
 			server_redraw_client(c);
 			recalculate_sizes();
-			server_activity = time(NULL);
+			if (c->session != NULL)
+				c->session->activity = time(NULL);
 			break;
 		case MSG_ENVIRON:
 			if (datalen != sizeof environdata)
@@ -181,7 +182,8 @@ server_msg_command(struct client *c, struct msg_command_data *data)
 	int		 argc;
 	char	       **argv, *cause;
 
-	server_activity = time(NULL);
+	if (c->session != NULL)
+		c->session->activity = time(NULL);
 
 	ctx.error = server_msg_command_error;
 	ctx.print = server_msg_command_print;

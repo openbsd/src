@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.122 2009/10/09 07:33:12 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.123 2009/10/10 09:46:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -800,6 +800,7 @@ struct session_alert {
 struct session {
 	char		*name;
 	struct timeval	 tv;
+	time_t		 activity;
 
 	u_int		 sx;
 	u_int		 sy;
@@ -1117,7 +1118,6 @@ extern struct options global_s_options;
 extern struct options global_w_options;
 extern struct environ global_environ;
 extern char	*cfg_file;
-extern time_t	 server_activity;
 extern int	 debug_level;
 extern int	 be_quiet;
 extern time_t	 start_time;
