@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.126 2009/10/10 15:03:01 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.127 2009/10/10 17:19:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1367,6 +1367,7 @@ extern const struct cmd_entry cmd_list_buffers_entry;
 extern const struct cmd_entry cmd_list_clients_entry;
 extern const struct cmd_entry cmd_list_commands_entry;
 extern const struct cmd_entry cmd_list_keys_entry;
+extern const struct cmd_entry cmd_list_panes_entry;
 extern const struct cmd_entry cmd_list_sessions_entry;
 extern const struct cmd_entry cmd_list_windows_entry;
 extern const struct cmd_entry cmd_load_buffer_entry;
