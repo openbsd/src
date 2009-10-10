@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.52 2009/09/27 18:17:45 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.53 2009/10/10 08:59:18 maja Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -45,6 +45,9 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
+
+#include <dev/videomode/videomode.h>
+#include <dev/videomode/edidvar.h>
 
 #include <dev/usb/udl.h>
 #include <dev/usb/udlio.h>
@@ -102,6 +105,9 @@ usbd_status	udl_poll(struct udl_softc *, uint32_t *);
 usbd_status	udl_read_1(struct udl_softc *, uint16_t, uint8_t *);
 usbd_status	udl_write_1(struct udl_softc *, uint16_t, uint8_t);
 usbd_status	udl_read_edid(struct udl_softc *, uint8_t *);
+uint8_t		udl_lookup_mode(uint16_t, uint16_t, uint8_t, uint16_t,
+		    uint32_t);
+int		udl_select_chip(struct udl_softc *);
 usbd_status	udl_set_enc_key(struct udl_softc *, uint8_t *, uint8_t);
 usbd_status	udl_set_decomp_table(struct udl_softc *, uint8_t *, uint16_t);
 
@@ -135,8 +141,9 @@ void		udl_cmd_send_async_cb(usbd_xfer_handle, usbd_private_handle,
 usbd_status	udl_init_chip(struct udl_softc *);
 void		udl_init_fb_offsets(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
-usbd_status	udl_init_resolution(struct udl_softc *, uint8_t *, uint8_t);
+usbd_status	udl_init_resolution(struct udl_softc *);
 usbd_status	udl_clear_screen(struct udl_softc *);
+void		udl_select_mode(struct udl_softc *);
 int		udl_fb_buf_write(struct udl_softc *, uint8_t *, uint32_t,
 		    uint32_t, uint16_t);
 int		udl_fb_block_write(struct udl_softc *, uint16_t, uint32_t,
@@ -219,20 +226,26 @@ struct wsdisplay_accessops udl_accessops = {
 /*
  * Matching devices.
  */
-static const struct usb_devno udl_devs[] = {
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LCD4300U },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LCD8000U },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LD220 },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_VCUD60 },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_DLDVI },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_VGA10 },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_WSDVI },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_EC008 },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_HPDOCK },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_M01061 },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_SWDVI },
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_UM7X0 }
+struct udl_type {
+	struct usb_devno	udl_dev;
+	u_int16_t		udl_chip;
 };
+
+static const struct udl_type udl_devs[] = {
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LCD4300U },	DL120 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LCD8000U },	DL120 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LD220 },	DL165 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_VCUD60 },	DL160 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_DLDVI },	DL160 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_VGA10 },	DL120 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_WSDVI },	DLUNK },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_EC008 },	DL160 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_HPDOCK },	DL160 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_M01061 },	DL195 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_SWDVI },	DL160 },
+	{{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_UM7X0 },	DL120 }
+};
+#define udl_lookup(v, p) ((struct udl_type *)usb_lookup(udl_devs, v, p))
 
 int
 udl_match(struct device *parent, void *match, void *aux)
@@ -242,7 +255,7 @@ udl_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	if (usb_lookup(udl_devs, uaa->vendor, uaa->product) != NULL)
+	if (udl_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
@@ -258,6 +271,33 @@ udl_attach(struct device *parent, struct device *self, void *aux)
 	int err;
 
 	sc->sc_udev = uaa->device;
+	sc->sc_chip = udl_lookup(uaa->vendor, uaa->product)->udl_chip;
+	sc->sc_width = 0;
+	sc->sc_height = 0;
+	sc->sc_depth = 16;
+	sc->sc_cur_mode = MAX_DL_MODES;
+
+	/*
+	 * Override chip if requested.
+	 */
+	if ((sc->sc_dev.dv_cfdata->cf_flags & 0xff00) > 0) {
+		uint16_t i;
+
+		i = ((sc->sc_dev.dv_cfdata->cf_flags & 0xff00) >> 8) - 1;
+		if (i <= DLMAX) {
+			sc->sc_chip = i;
+			printf("%s: %s: cf_flags (0x%04x) forced chip to %d\n",
+			    DN(sc), FUNC,
+			    sc->sc_dev.dv_cfdata->cf_flags, i);
+		}
+	}
+
+	/*
+	 * The product might have more than one chip
+	 */
+	if (sc->sc_chip == DLUNK)
+		if (udl_select_chip(sc))
+			return;
 
 	/*
 	 * Set device configuration descriptor number.
@@ -308,14 +348,29 @@ udl_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	/*
-	 * Initialize resolution.
+	 * Select edid mode.
 	 */
-	sc->sc_width = 800;	/* XXX shouldn't we do this somewhere else? */
-	sc->sc_height = 600;
-	sc->sc_depth = 16;
+	udl_select_mode(sc);
 
-	error = udl_init_resolution(sc, udl_reg_vals_800,
-	    sizeof(udl_reg_vals_800));
+	/*
+	 * Override mode if requested.
+	 */
+	if ((sc->sc_dev.dv_cfdata->cf_flags & 0xff) > 0) {
+		uint8_t i = (sc->sc_dev.dv_cfdata->cf_flags & 0xff) - 1;
+
+		if (i < MAX_DL_MODES) {
+			if (udl_modes[i].chip <= sc->sc_chip) {
+				sc->sc_width = udl_modes[i].hdisplay;
+				sc->sc_height = udl_modes[i].vdisplay;
+				printf("%s: %s: cf_flags (0x%04x) forced mode to %d\n",
+				    DN(sc), FUNC,
+				    sc->sc_dev.dv_cfdata->cf_flags, i);
+				sc->sc_cur_mode = i;
+			}
+		}
+	}
+	
+	error = udl_init_resolution(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
 
@@ -573,7 +628,7 @@ udl_alloc_screen(void *v, const struct wsscreen_descr *type,
 		sc->sc_ri.ri_bpos = 0;
 	}
 
-	rasops_init(&sc->sc_ri, 100, 100);
+	rasops_init(&sc->sc_ri, 100, 200);
 
 	sc->sc_ri.ri_ops.copycols = udl_copycols;
 	sc->sc_ri.ri_ops.copyrows = udl_copyrows;
@@ -612,6 +667,8 @@ udl_free_screen(void *v, void *cookie)
 	sc = v;
 
 	DPRINTF(1, "%s: %s\n", DN(sc), FUNC);
+
+	sc->sc_nscreens--;
 }
 
 int
@@ -1143,6 +1200,86 @@ udl_read_edid(struct udl_softc *sc, uint8_t *buf)
 fail:
 	printf("%s: %s: %s!\n", DN(sc), FUNC, usbd_errstr(error));
 	return (error);
+}
+
+uint8_t
+udl_lookup_mode(uint16_t hdisplay, uint16_t vdisplay, uint8_t hz,
+	uint16_t chip, uint32_t clock)
+{
+	uint8_t	idx = 0;
+
+	/*
+	 * Check first if we have a matching mode with pixelclock
+	 */
+	while (idx < MAX_DL_MODES) {
+		if ((udl_modes[idx].hdisplay == hdisplay) &&
+		    (udl_modes[idx].vdisplay == vdisplay) &&
+		    (udl_modes[idx].clock == clock) &&
+		    (udl_modes[idx].chip <= chip)) {
+			return(idx);
+		}
+		idx++;
+	}
+
+	/*
+	 * If not, check for matching mode with update frequency
+	 */
+	idx = 0;
+	while (idx < MAX_DL_MODES) {
+		if ((udl_modes[idx].hdisplay == hdisplay) &&
+		    (udl_modes[idx].vdisplay == vdisplay) &&
+		    (udl_modes[idx].hz == hz) &&
+		    (udl_modes[idx].chip <= chip)) {
+			return(idx);
+		}
+		idx++;
+	}
+	return(idx);
+}
+
+int
+udl_select_chip(struct udl_softc *sc)
+{
+	char serialnum[USB_MAX_STRING_LEN];
+	usb_device_descriptor_t *dd;
+	usb_string_descriptor_t us;
+	usbd_status error;
+	int len, i, n;
+	char *s;
+	u_int16_t c;
+
+	sc->sc_chip = DL120;
+
+	dd = usbd_get_device_descriptor(sc->sc_udev);
+
+	bzero(serialnum, sizeof serialnum);
+	error = usbd_get_string_desc(sc->sc_udev, dd->iSerialNumber,
+	    0, &us, &len);
+	if (error != USBD_NORMAL_COMPLETION)
+		return (1);
+		
+	s = &serialnum[0];
+	n = len / 2 - 1;
+	for (i = 0; i < n && i < USB_MAX_STRING_LEN; i++) {
+		c = UGETW(us.bString[i]);
+		/* Convert from Unicode, handle buggy strings. */
+		if ((c & 0xff00) == 0)
+			*s++ = c;
+		else if ((c & 0x00ff) == 0)
+			*s++ = c >> 8;
+		else
+			*s++ = '?';
+	}
+	*s++ = 0;
+
+	if (strlen(serialnum) > 7)
+		if (strncmp(serialnum, "0198-13", 7) == 0)
+			sc->sc_chip = DL160;
+
+	DPRINTF(1, "%s: %s: iSerialNumber (%s) used to select chip (%d)\n",
+	     DN(sc), FUNC, serialnum, sc->sc_chip);
+
+	return (0);
 }
 
 usbd_status
@@ -1684,7 +1821,6 @@ udl_init_chip(struct udl_softc *sc)
 {
 	uint8_t ui8;
 	uint32_t ui32;
-	int8_t edid[128];
 	usbd_status error;
 
 	error = udl_poll(sc, &ui32);
@@ -1702,13 +1838,11 @@ udl_init_chip(struct udl_softc *sc)
 		return (error);
 	DPRINTF(1, "%s: %s: write 0x01 to 0xc41f\n", DN(sc), FUNC);
 
-	error = udl_read_edid(sc, edid);
+	error = udl_read_edid(sc, sc->sc_edid);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
-	DPRINTF(1, "%s: %s: read EDID=\n", DN(sc), FUNC);
-#ifdef UDL_DEBUG
-	udl_hexdump(edid, sizeof(edid), 0);
-#endif
+	DPRINTF(1, "%s: %s: read EDID\n", DN(sc), FUNC);
+
 	error = udl_set_enc_key(sc, udl_null_key_1, sizeof(udl_null_key_1));
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
@@ -1741,14 +1875,15 @@ udl_init_fb_offsets(struct udl_softc *sc, uint32_t start16, uint32_t stride16,
 }
 
 usbd_status
-udl_init_resolution(struct udl_softc *sc, uint8_t *buf, uint8_t len)
+udl_init_resolution(struct udl_softc *sc)
 {
 	int i;
 	usbd_status error;
+	uint8_t *buf = udl_modes[sc->sc_cur_mode].mode;
 
 	/* write resolution values and set video memory offsets */
 	udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0x00);
-	for (i = 0; i < len; i++)
+	for (i = 0; i < UDL_MODE_SIZE; i++)
 		udl_cmd_write_reg_1(sc, i, buf[i]);
 	udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0xff);
 
@@ -1788,6 +1923,83 @@ udl_clear_screen(struct udl_softc *sc)
 		return (error);
 
 	return (USBD_NORMAL_COMPLETION);
+}
+
+void
+udl_select_mode(struct udl_softc *sc)
+{
+	struct udl_mode mode;
+	int index = MAX_DL_MODES, i;
+
+	/* try to get the preferred mode from EDID */
+	edid_parse(sc->sc_edid, &sc->sc_edid_info);
+#ifdef UDL_DEBUG
+	edid_print(&sc->sc_edid_info);
+#endif
+
+	if (sc->sc_edid_info.edid_preferred_mode != NULL) {
+		mode.hz = 
+		    (sc->sc_edid_info.edid_preferred_mode->dot_clock * 1000) /
+		    (sc->sc_edid_info.edid_preferred_mode->htotal*
+		     sc->sc_edid_info.edid_preferred_mode->vtotal);
+		mode.clock = 
+		    sc->sc_edid_info.edid_preferred_mode->dot_clock/10;
+		mode.hdisplay =
+		    sc->sc_edid_info.edid_preferred_mode->hdisplay;
+		mode.vdisplay =
+		    sc->sc_edid_info.edid_preferred_mode->vdisplay;
+		index = udl_lookup_mode(mode.hdisplay, mode.vdisplay, mode.hz,
+		    sc->sc_chip, mode.clock);
+		sc->sc_cur_mode = index;
+	} else {
+		DPRINTF(1, "%s: %s: no preferred mode found!\n", DN(sc), FUNC);
+	}
+
+	if (index == MAX_DL_MODES) {
+
+		DPRINTF(1, "%s: %s: no mode line found for %dx%d @ %dHz!\n",
+		    DN(sc), FUNC, mode.hdisplay, mode.vdisplay, mode.hz);
+
+		i = 0;
+		while (i < sc->sc_edid_info.edid_nmodes) {
+			mode.hz = 
+			    (sc->sc_edid_info.edid_modes[i].dot_clock * 1000) /
+			    (sc->sc_edid_info.edid_modes[i].htotal*
+			     sc->sc_edid_info.edid_modes[i].vtotal);
+			mode.clock = 
+			    sc->sc_edid_info.edid_modes[i].dot_clock/10;
+			mode.hdisplay =
+			    sc->sc_edid_info.edid_modes[i].hdisplay;
+			mode.vdisplay =
+			    sc->sc_edid_info.edid_modes[i].vdisplay;
+			index = udl_lookup_mode(mode.hdisplay, mode.vdisplay,
+			    mode.hz, sc->sc_chip, mode.clock);
+			if (index < MAX_DL_MODES)
+				if ((sc->sc_cur_mode == MAX_DL_MODES) ||
+				    (index > sc->sc_cur_mode))
+					sc->sc_cur_mode = index;
+			i++;
+		}
+	}
+
+	/*
+	 * If no mode found. Use default.
+	 */
+	if (sc->sc_cur_mode == MAX_DL_MODES) {
+		sc->sc_cur_mode = udl_lookup_mode(800, 600, 60, sc->sc_chip, 0);
+	}
+
+	mode = udl_modes[sc->sc_cur_mode];
+	sc->sc_width = mode.hdisplay;
+	sc->sc_height = mode.vdisplay;
+
+	/*
+	 * we always use 16bit color depth for now
+	 */
+	sc->sc_depth = 16;
+
+	DPRINTF(1, "%s: %s: %dx%d @ %dHz\n",
+	    DN(sc), FUNC, mode.hdisplay, mode.vdisplay, mode.hz);
 }
 
 int
