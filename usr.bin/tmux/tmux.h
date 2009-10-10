@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.127 2009/10/10 17:19:38 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.128 2009/10/10 18:42:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -578,8 +578,10 @@ struct job {
 	void		*data;
 
 	RB_ENTRY(job)	 entry;
+	SLIST_ENTRY(job) lentry;
 };
 RB_HEAD(jobs, job);
+SLIST_HEAD(joblist, job);
 
 /* Screen selection. */
 struct screen_sel {
@@ -1199,7 +1201,7 @@ struct options_entry *options_set_data(
 void   *options_get_data(struct options *, const char *);
 
 /* job.c */
-extern struct jobs jobs_tree;
+extern struct joblist all_jobs;
 int	job_cmp(struct job *, struct job *);
 RB_PROTOTYPE(jobs, job, entry, job_cmp);
 void	job_tree_init(struct jobs *);
