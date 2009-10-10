@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.111 2009/09/01 06:10:01 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.112 2009/10/10 22:08:26 dms Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1104,12 +1104,16 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 	 */
 	info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 	error = rtrequest1(cmd, &info, RTP_CONNECTED, &nrt, rtableid);
-	if (cmd == RTM_DELETE && error == 0 && (rt = nrt) != NULL) {
-		rt_newaddrmsg(cmd, ifa, error, nrt);
-		if (rt->rt_refcnt <= 0) {
-			rt->rt_refcnt++;
-			rtfree(rt);
+	if (cmd == RTM_DELETE) {
+		if (error == 0 && (rt = nrt) != NULL) {
+			rt_newaddrmsg(cmd, ifa, error, nrt);
+			if (rt->rt_refcnt <= 0) {
+				rt->rt_refcnt++;
+				rtfree(rt);
+			}
 		}
+		if (m != NULL)
+			(void) m_free(m);
 	}
 	if (cmd == RTM_ADD && error == 0 && (rt = nrt) != NULL) {
 		rt->rt_refcnt--;
