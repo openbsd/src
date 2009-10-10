@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.4 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.5 2009/10/10 09:27:30 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -171,12 +171,14 @@ sub add_newer
 {
 	my ($self, @handles) = @_;
 	push(@{$self->{newer}}, @handles);
+	return $self;
 }
 
 sub add_older
 {
 	my ($self, @handles) = @_;
 	push(@{$self->{older}}, @handles);
+	return $self;
 }
 
 sub newer
