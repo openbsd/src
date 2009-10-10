@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.33 2009/10/10 11:58:41 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.34 2009/10/10 12:43:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -40,32 +40,6 @@ dev_thruinit(void)
 {
 	dev_midi = thru_new("thru");
 	dev_midi->refs++;
-}
-
-/*
- * Terminate the MIDI thru box
- */
-void
-dev_thrudone(void)
-{
-	struct file *f;
-
- restart:
-	LIST_FOREACH(f, &file_list, entry) {
-		if (f->rproc && aproc_depend(dev_midi, f->rproc)) {
-			file_eof(f);
-			goto restart;
-		}
-	}
-	while (!LIST_EMPTY(&dev_midi->ibuflist)) {
-		if (!file_poll())
-			break;
-	}
-	dev_midi->refs--;
-	aproc_del(dev_midi);
-	dev_midi = NULL;
-	while (file_poll())
-		; /* nothing */
 }
 
 /*
@@ -264,13 +238,15 @@ dev_done(void)
 	struct file *f;
 
 	if (dev_midi) {
-		/*
-		 * We don't have the necessary bits to drain
-		 * control MIDI device, so just kill it
-		 */
-		dev_midi->refs--;
-		aproc_del(dev_midi);
-		dev_midi = NULL;
+		dev_midi->u.mix.flags |= THRU_AUTOQUIT;
+ 	restart_midi:
+		LIST_FOREACH(f, &file_list, entry) {
+			if (f->rproc &&
+			    aproc_depend(dev_midi, f->rproc)) {
+				file_eof(f);
+				goto restart_midi;
+			}
+		}
 	}
 	if (dev_mix) {
 		/*
@@ -330,6 +306,12 @@ dev_done(void)
 		if (dev_rec->zomb)
 			aproc_del(dev_rec);
 		dev_rec = NULL;
+	}
+	if (dev_midi) {
+		dev_midi->refs--;
+		if (dev_midi->zomb)
+			aproc_del(dev_midi);
+		dev_midi = NULL;
 	}
 	for (;;) {
 		if (!file_poll())

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.70 2009/10/10 11:58:41 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.71 2009/10/10 12:43:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -707,6 +707,8 @@ midicat_main(int argc, char **argv)
 	filelist_init();
 
 	dev_thruinit();
+	if (!l_flag)
+		dev_midi->u.thru.flags |= THRU_AUTOQUIT;
 	if ((!SLIST_EMPTY(&ifiles) || !SLIST_EMPTY(&ofiles)) && 
 	    SLIST_EMPTY(&dfiles)) {
 		farg_add(&dfiles, &aparams_none, &aparams_none,
@@ -774,8 +776,6 @@ midicat_main(int argc, char **argv)
 		if (quit_flag) {
 			break;
 		}
-		if (!l_flag && LIST_EMPTY(&dev_midi->ibuflist))
-			break;
 		if (!file_poll())
 			break;
 	}
@@ -784,7 +784,7 @@ midicat_main(int argc, char **argv)
 		if (rmdir(base) < 0)
 			warn("rmdir(\"%s\")", base);
 	}
-	dev_thrudone();
+	dev_done();
 	filelist_done();
 	unsetsig();
 	return 0;

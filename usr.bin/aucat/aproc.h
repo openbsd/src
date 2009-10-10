@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.24 2009/10/06 18:06:55 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.25 2009/10/10 12:43:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -166,6 +166,8 @@ struct aproc {
 		struct {
 			struct abuf *owner;	/* current input stream */
 			struct timo timo;	/* timout for throtteling */
+#define THRU_AUTOQUIT	1
+			unsigned flags;		/* bit mask of above */
 		} thru;
 		struct {
 #define CTL_NSLOT	8
