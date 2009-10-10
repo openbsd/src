@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-session.c,v 1.7 2009/09/07 21:01:50 nicm Exp $ */
+/* $OpenBSD: cmd-choose-session.c,v 1.8 2009/10/10 10:02:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -54,7 +54,9 @@ cmd_choose_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct cmd_choose_session_data	*cdata;
 	struct winlink			*wl;
 	struct session			*s;
+	struct session_group		*sg;
 	u_int			 	 i, idx, cur;
+	char				 tmp[64];
 
 	if (ctx->curclient == NULL) {
 		ctx->error(ctx, "must be run interactively");
@@ -76,10 +78,18 @@ cmd_choose_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 			cur = idx;
 		idx++;
 
+		sg = session_group_find(s);
+		if (sg == NULL)
+			*tmp = '\0';
+		else {
+			idx = session_group_index(sg);
+			xsnprintf(tmp, sizeof tmp, " (group %u)", idx);
+		}
+
 		window_choose_add(wl->window->active, i,
-		    "%s: %u windows [%ux%u]%s", s->name,
+		    "%s: %u windows [%ux%u]%s%s", s->name,
 		    winlink_count(&s->windows), s->sx, s->sy,
-		    s->flags & SESSION_UNATTACHED ? "" : " (attached)");
+		    tmp, s->flags & SESSION_UNATTACHED ? "" : " (attached)");
 	}
 
 	cdata = xmalloc(sizeof *cdata);

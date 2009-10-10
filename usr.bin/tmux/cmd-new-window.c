@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-window.c,v 1.7 2009/09/21 15:32:06 nicm Exp $ */
+/* $OpenBSD: cmd-new-window.c,v 1.8 2009/10/10 10:02:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -164,9 +164,9 @@ cmd_new_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 	if (!data->flag_detached) {
 		session_select(s, wl->idx);
-		server_redraw_session(s);
-	} else
-		server_status_session(s);
+		server_redraw_session_group(s);
+	} else	
+		server_status_session_group(s);
 
 	return (0);
 }

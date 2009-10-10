@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.6 2009/08/13 20:11:58 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.7 2009/10/10 10:02:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -78,6 +78,7 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
  		session_select(s, wl->idx);
 
 	server_redraw_session(s);
+	server_status_session_group(s);
 
 	return (0);
 }

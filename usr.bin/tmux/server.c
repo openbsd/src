@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.46 2009/10/10 09:46:11 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.47 2009/10/10 10:02:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -247,6 +247,7 @@ server_start(char *path)
 	ARRAY_INIT(&dead_clients);
 	ARRAY_INIT(&sessions);
 	ARRAY_INIT(&dead_sessions);
+	TAILQ_INIT(&session_groups);
 	mode_key_init_trees();
 	key_bindings_init();
 	utf8_build();
@@ -1243,10 +1244,11 @@ server_check_window(struct window *w)
 			if (wl->window != w)
 				continue;
 			if (session_detach(s, wl)) {
-				server_destroy_session(s);
+				server_destroy_session_group(s);
 				break;
 			}
 			server_redraw_session(s);
+			server_status_session_group(s);
 			goto restart;
 		}
 	}

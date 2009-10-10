@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.36 2009/09/23 14:42:48 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.37 2009/10/10 10:02:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -516,7 +516,7 @@ status_print(struct session *s, struct winlink *wl, struct grid_cell *gc)
 		gc->attr = attr;
 
 	flag = ' ';
- 	if (wl == SLIST_FIRST(&s->lastw))
+ 	if (wl == TAILQ_FIRST(&s->lastw))
 		flag = '-';
 	if (wl == s->curw) {
 		fg = options_get_number(oo, "window-status-current-fg");
