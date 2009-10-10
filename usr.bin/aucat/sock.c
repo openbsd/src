@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.30 2009/10/05 07:05:24 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.31 2009/10/10 13:55:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -272,9 +272,9 @@ sock_new(struct fileops *ops, int fd)
 	f->mode = 0;
 	f->opt = opt_byname("default");
 	if (f->opt) {
-		if (dev_rec)
+		if (dev_sub)
 			f->wpar = f->opt->wpar;
-		if (dev_play)
+		if (dev_mix)
 			f->rpar = f->opt->rpar;
 	}
 	f->xrun = AMSG_IGNORE;
@@ -688,9 +688,9 @@ sock_hello(struct sock *f)
 	f->opt = opt_byname(p->opt);
 	if (f->opt == NULL)
 		return 0;
-	if (dev_rec)
+	if (dev_sub)
 		f->wpar = f->opt->wpar;
-	if (dev_play)
+	if (dev_mix)
 		f->rpar = f->opt->rpar;
 	if ((p->proto & ~(AMSG_PLAY | AMSG_REC)) != 0 ||
 	    (p->proto &  (AMSG_PLAY | AMSG_REC)) == 0) {
