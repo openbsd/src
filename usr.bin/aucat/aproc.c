@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.36 2009/10/09 16:49:48 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.37 2009/10/10 09:54:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -201,8 +201,10 @@ rpipe_done(struct aproc *p)
 
 	if (f == NULL)
 		return;
-	f->rproc = NULL;
-	if (f->wproc == NULL)
+	if (f->wproc) {
+		f->rproc = NULL;
+		aproc_del(f->wproc);
+	} else
 		file_del(f);
 	p->u.io.file = NULL;
 }
@@ -250,8 +252,10 @@ wpipe_done(struct aproc *p)
 
 	if (f == NULL)
 		return;
-	f->wproc = NULL;
-	if (f->rproc == NULL)
+	if (f->rproc) {
+		f->wproc = NULL;
+		aproc_del(f->rproc);
+	} else
 		file_del(f);
 	p->u.io.file = NULL;
 }

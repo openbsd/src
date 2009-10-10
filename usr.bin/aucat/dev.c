@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.31 2009/10/09 16:49:48 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.32 2009/10/10 09:54:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -289,68 +289,77 @@ dev_done(void)
 {
 	struct file *f;
 
-	dev_midi->refs--;
-	aproc_del(dev_midi);
-	dev_midi = NULL;
-
-	if (dev_mix) {
-		dev_mix->refs--;
-		dev_mix->u.mix.flags |= MIX_AUTOQUIT;
-		dev_mix = NULL;
+	if (dev_midi) {
 		/*
-		 * Generate EOF on all inputs (but not the device), and
-		 * put the mixer in ``autoquit'' state, so once buffers
-		 * are drained the mixer will terminate and shutdown the
-		 * write-end of the device.
+		 * We don't have the necessary bits to drain
+		 * control MIDI device, so just kill it
+		 */
+		dev_midi->refs--;
+		aproc_del(dev_midi);
+		dev_midi = NULL;
+	}
+	if (dev_mix) {
+		/*
+		 * Put the mixer in ``autoquit'' state and generate
+		 * EOF on all inputs connected it. Once buffers are
+		 * drained the mixer will terminate and shutdown the
+		 * device.
 		 *
 		 * NOTE: since file_eof() can destroy the file and
 		 * reorder the file_list, we have to restart the loop
 		 * after each call to file_eof().
 		 */
-	restart:
+		dev_mix->u.mix.flags |= MIX_AUTOQUIT;
+	restart_mix:
 		LIST_FOREACH(f, &file_list, entry) {
-			if (f->rproc != NULL && f->rproc != dev_rec) {
+			if (f->rproc != NULL &&
+			    aproc_depend(dev_mix, f->rproc)) {
 				file_eof(f);
-				goto restart;
+				goto restart_mix;
 			}
 		}
-
+	} else if (dev_sub) {
 		/*
-		 * Wait for play chain to terminate.
-		 */
-		if (dev_play) {
-			while (!LIST_EMPTY(&dev_play->ibuflist)) {
-				if (!file_poll())
-					break;
+		 * Same as above, but since there's no mixer, 
+		 * we generate EOF on the record-end of the
+		 * device.
+		 */	
+	restart_sub:
+		LIST_FOREACH(f, &file_list, entry) {
+			if (f->rproc != NULL &&
+			    aproc_depend(dev_sub, f->rproc)) {
+				file_eof(f);
+				goto restart_sub;
 			}
-			dev_play->refs--;
-			aproc_del(dev_play);
-			dev_play = NULL;
 		}
+	}
+	if (dev_mix) {
+		dev_mix->refs--;
+		if (dev_mix->zomb)
+			aproc_del(dev_mix);
+		dev_mix = NULL;
+	}
+	if (dev_play) {
+		dev_play->refs--;
+		if (dev_play->zomb)
+			aproc_del(dev_play);
+		dev_play = NULL;
 	}
 	if (dev_sub) {
 		dev_sub->refs--;
-		dev_sub->u.sub.flags |= SUB_AUTOQUIT;
+		if (dev_sub->zomb)
+			aproc_del(dev_sub);
 		dev_sub = NULL;
-		/*
-		 * Same as above, but for the record chain: generate eof
-		 * on the read-end of the device and wait record buffers
-		 * to disappear.  We must stop the device first, because
-		 * play-end will underrun (and xrun correction code will
-		 * insert silence on the record-end of the device).
-		 */
-		if (dev_rec) {
-			dev_stop();
-			if (dev_rec->u.io.file)
-				file_eof(dev_rec->u.io.file);
-			while (!LIST_EMPTY(&dev_rec->obuflist)) {
-				if (!file_poll())
-					break;
-			}
-			dev_rec->refs--;
+	}
+	if (dev_rec) {
+		dev_rec->refs--;
+		if (dev_rec->zomb)
 			aproc_del(dev_rec);
-			dev_rec = NULL;
-		}
+		dev_rec = NULL;
+	}
+	for (;;) {
+		if (!file_poll())
+			break;
 	}
 }
 
