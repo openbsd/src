@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.22 2009/10/10 08:34:12 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.23 2009/10/10 11:19:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -346,7 +346,6 @@ sio_open_sun(const char *str, unsigned mode, int nbio)
 {
 	int fd, flags, fullduplex;
 	struct sun_hdl *hdl;
-	struct audio_info aui;
 	struct sio_par par;
 	char path[PATH_MAX];
 
@@ -385,17 +384,17 @@ sio_open_sun(const char *str, unsigned mode, int nbio)
 		}
 	}
 	hdl->fd = fd;
-	AUDIO_INITINFO(&aui);
-	if (hdl->sio.mode & SIO_PLAY)
-		aui.play.encoding = AUDIO_ENCODING_SLINEAR;
-	if (hdl->sio.mode & SIO_REC)
-		aui.record.encoding = AUDIO_ENCODING_SLINEAR;
-	if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-		DPERROR("sio_open_sun: setinfo");
-		goto bad_close;
-	}
+
+	/*
+	 * Default parameters may not be compatible with libsndio (eg. mulaw
+	 * encodings, different playback and recording parameters, etc...), so
+	 * set parameters to a random value. If the requested parameters are
+	 * not supported by the device, then sio_setpar() will pick supported
+	 * ones.
+	 */
 	sio_initpar(&par);
 	par.rate = 48000;
+	par.le = SIO_LE_NATIVE;
 	par.sig = 1;
 	par.bits = 16;
 	par.appbufsz = 1200;
