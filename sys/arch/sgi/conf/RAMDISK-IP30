@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP30,v 1.8 2009/07/15 18:15:21 miod Exp $
+#	$OpenBSD: RAMDISK-IP30,v 1.9 2009/10/10 19:23:05 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 
@@ -60,6 +60,7 @@ pci*		at xbridge?
 ioc*		at pci?
 com0		at ioc? base 0x00020178
 com1		at ioc? base 0x00020170
+com*		at ioc?
 dsrtc0		at ioc?
 
 onewire*	at ioc?
