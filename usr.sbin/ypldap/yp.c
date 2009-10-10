@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.3 2009/07/23 19:37:38 blambert Exp $ */
+/*	$OpenBSD: yp.c,v 1.4 2009/10/10 23:51:56 robert Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -321,7 +321,7 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 	struct groupent		*ge;
 	static struct ypresp_val res;
 	const char		*estr;
-	char			 key[_PW_NAME_LEN+1];
+	char			 key[YPMAXRECORD+1];
 
 	if (yp_valid_domain(arg->domain, (struct ypresp_val *)&res) == -1)
 		return (&res);
@@ -440,7 +440,7 @@ ypproc_next_2_svc(ypreq_key *arg, struct svc_req *req)
 	struct groupent			*ge;
 	char				*line;
 	static struct ypresp_key_val	 res;
-	char				 key[_PW_NAME_LEN+1];
+	char				 key[YPMAXRECORD+1];
 
 	if (yp_valid_domain(arg->domain, (struct ypresp_val *)&res) == -1)
 		return (&res);
