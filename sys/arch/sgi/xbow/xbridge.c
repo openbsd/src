@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.50 2009/10/08 19:14:23 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.51 2009/10/10 19:59:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -887,6 +887,12 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	LIST_INSERT_HEAD(&xi->xi_handlers, xih, xih_nxt);
 
 	if (new) {
+		/*
+		 * Note that, while PIC uses a complete XIO address,
+		 * Bridge will only store the interrupt source and high
+		 * bits of the address, and will reuse the widget interrupt
+		 * address for the low 38 bits of the XIO address.
+		 */
 		if (ISSET(xb->xb_flags, XF_PIC))
 			int_addr = ((uint64_t)intrsrc << 48) |
 			    (xbow_intr_widget_register & ((1UL << 48) - 1));
@@ -1464,7 +1470,7 @@ xbridge_ate_dump(struct xbridge_bus *xb)
 void
 xbridge_ate_setup(struct xbridge_bus *xb)
 {
-	uint32_t ctrl;
+	uint64_t ctrl;
 	uint a;
 	struct xbridge_ate *ate;
 
@@ -1959,7 +1965,7 @@ void
 xbridge_setup(struct xbridge_bus *xb)
 {
 	paddr_t pa;
-	uint32_t ctrl;
+	uint64_t ctrl, int_addr;
 	int dev;
 
 	/*
@@ -2028,23 +2034,19 @@ xbridge_setup(struct xbridge_bus *xb)
 
 	/*
 	 * Setup interrupt handling.
+	 * Note that, on PIC, the `lower address' register is a 64 bit
+	 * register and thus need to be initialized with the whole 64 bit
+	 * address; the `upper address' register is hardwired to zero and
+	 * ignores writes, so we can use the same logic on Bridge and PIC.
 	 */
 
+	int_addr = ((uint64_t)xbow_intr_widget << 48) |
+	    (xbow_intr_widget_register & ((1UL << 48) - 1));
 	xbridge_write_reg(xb, BRIDGE_IER, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_MODE, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_DEV, 0);
-
-	if (ISSET(xb->xb_flags, XF_PIC)) {
-		xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_LOWER,
-		    ((uint64_t)xbow_intr_widget << 48) |
-		    (xbow_intr_widget_register & ((1UL << 48) - 1)));
-	} else {
-		xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_UPPER,
-		    (xbow_intr_widget_register >> 32) |
-		    (xbow_intr_widget << 16));
-		xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_LOWER,
-		    (uint32_t)xbow_intr_widget_register);
-	}
+	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_LOWER, int_addr);
+	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_UPPER, int_addr >> 32);
 
 	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 }
