@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.32 2009/10/10 09:54:06 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.33 2009/10/10 11:58:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -121,32 +121,6 @@ dev_loopinit(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 
 	*dipar = dev_ipar;
 	*dopar = dev_opar;
-}
-
-/*
- * Same as dev_done(), but destroy a loopback device.
- */
-void
-dev_loopdone(void)
-{
-	struct file *f;
-
-	dev_sub->refs--;
-	dev_sub = NULL;
-	dev_mix->refs--;
-	dev_mix = NULL;
-	/*
-	 * Generate EOF on all inputs.
-	 */
- restart:
-	LIST_FOREACH(f, &file_list, entry) {
-		if (f->rproc != NULL) {
-			file_eof(f);
-			goto restart;
-		}
-	}
-	while (file_poll())
-		; /* nothing */
 }
 
 unsigned
