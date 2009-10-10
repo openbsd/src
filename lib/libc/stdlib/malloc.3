@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.62 2009/02/13 23:36:17 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.63 2009/10/10 18:36:52 otto Exp $
 .\"
-.Dd $Mdocdate: February 13 2009 $
+.Dd $Mdocdate: October 10 2009 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -425,26 +425,29 @@ The
 function conforms to
 .St -ansiC .
 .Sh HISTORY
-The present implementation of
-.Fn malloc
-started out as a filesystem on a drum
-attached to a 20-bit binary challenged computer built with discrete germanium
-transistors, and it has since graduated to handle primary storage rather than
-secondary.
-.Pp
-The main difference from other
-.Fn malloc
-implementations are believed to be that
-the free pages are not accessed until allocated.
-Most
-.Fn malloc
-implementations will store a data structure containing a,
-possibly double-, linked list in the free chunks of memory, used to tie
-all the free memory together.
-That is a quite suboptimal thing to do.
-Every time the free-list is traversed, all the otherwise unused, and very
-likely paged out, pages get faulted into primary memory, just to see what
-lies after them in the list.
-.Pp
-On systems which are paging, this can increase the page-faults
-of a process by a factor of five.
+The
+.Nm
+family of functions first appeared in
+.At v7 .
+A new implementation by Chris Kingsley was introduced in
+.Bx 4.2 ,
+followed by a complete rewrite by Poul-Henning Kamp which appeared in
+.Fx 2.2
+and was included in
+.Ox 2.0 .
+These implementations were all
+.Xr sbrk 2
+based.
+In
+.Ox 3.8 ,
+Thierry Deval rewrote
+.Nm
+to use the
+.Xr mmap 2
+system call,
+making the page addresses returned by
+.Nm
+random.
+A rewrite by Otto Moerbeek introducing a new central data stucture and more
+randomization appeared in
+.Ox 4.4 .
