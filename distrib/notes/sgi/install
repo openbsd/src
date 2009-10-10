@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.17 2009/05/30 05:00:37 miod Exp $
+dnl	$OpenBSD: install,v 1.18 2009/10/10 19:20:28 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -12,6 +12,15 @@ dnl XXX provide more details!!!
 First, a bootp or dhcpd server needs to be set up. The bootpd(8) or
 dhcpd(8) manual page on your server should provide detailed information
 on how to set up the server.
+
+The PROM, by default, will configure itself to use the IP address set in
+the `netaddr' environment variable. To force the PROM to always get an
+address from a bootp or dhcp server, clear the variable (`unsetenv netaddr')
+before attempting to boot from the network. Alternatively, you may want to
+make sure the value of this variable is correct.
+
+Note that, if the `netaddr' variable is unset, the PROM will initialize it
+to the address obtained from the bootp or dhcp server.
 
 The bootp or dhcp server needs to know the ethernet address of the
 system. On O2 systems, this address can be found by using the ``printenv''

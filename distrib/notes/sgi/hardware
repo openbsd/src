@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.7 2009/05/30 23:56:05 miod Exp $
+dnl	$OpenBSD: hardware,v 1.8 2009/10/10 19:20:28 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machines:
 	IP27 class machines:
 		Origin 200, Onyx 2
@@ -13,13 +13,20 @@ OpenBSD/MACHINE OSREV runs on the following machines:
 		 are supported)
 	IP35 class machines:
 		Origin 300, Origin 3000, Onyx 300
-dnl		Origin 350, Onyx 350, Onyx 4
+		Origin 350, Onyx 350, Onyx 4
 		Fuel
-dnl		Tezro
+		Tezro
 
 Supported devices {:-include-:}:
 - Ethernet Adapters
         built-in O2 Mace Ethernet Controller (mec)
+	Broadcom BCM570x (a.k.a. Tigon3) based PCI adapters (bge) including:
+		3Com 3c996-SX
+		3Com 3c996B-T
+		HP ProLiant NC7770 PCI-X Gigabit NIC
+		Netgear GA302T
+		SysKonnect SK-9D21
+		SysKonnect SK-9D41
         Intel/DEC 21443 "Tulip" clones (dc)
 	3Com EtherLink III and Fast EtherLink III Ethernet (ep)
         Intel i8255x-based (fxp) including:
@@ -35,7 +42,7 @@ Supported devices {:-include-:}:
 	3Com EtherLink XL and Fast EtherLink XL (xl)
 - SCSI Host Adapters
         O2 built-in Adaptec AIC-7880 (ahc)
-	IP27/IP30/IP32 built-in QLogic ISP (isp)
+	IP27/IP30/IP32/IP35 built-in QLogic ISP (isp)
         LSI Logic Fusion-MPT Message Passing Interface (mpi)
         53C8xx-based SCSI (siop)
 - RS-232 devices
