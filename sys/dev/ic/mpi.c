@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.112 2009/08/12 14:28:02 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.113 2009/10/11 02:11:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -175,15 +175,23 @@ void		mpi_refresh_sensors(void *);
 #define mpi_wait_db_ack(s)	mpi_wait_eq((s), MPI_INTR_STATUS, \
 				    MPI_INTR_STATUS_IOCDOORBELL, 0)
 
+#define MPI_PG_EXTENDED		(1<<0)
+#define MPI_PG_POLL		(1<<1)
+#define MPI_PG_FMT		"\020" "\002POLL" "\001EXTENDED"
+
 #define mpi_cfg_header(_s, _t, _n, _a, _h) \
-	mpi_req_cfg_header((_s), (_t), (_n), (_a), 0, (_h))
+	mpi_req_cfg_header((_s), (_t), (_n), (_a), \
+	    MPI_PG_POLL, (_h))
 #define mpi_ecfg_header(_s, _t, _n, _a, _h) \
-	mpi_req_cfg_header((_s), (_t), (_n), (_a), 1, (_h))
+	mpi_req_cfg_header((_s), (_t), (_n), (_a), \
+	    MPI_PG_POLL|MPI_PG_EXTENDED, (_h))
 
 #define mpi_cfg_page(_s, _a, _h, _r, _p, _l) \
-	mpi_req_cfg_page((_s), (_a), 0, (_h), (_r), (_p), (_l))
+	mpi_req_cfg_page((_s), (_a), MPI_PG_POLL, \
+	    (_h), (_r), (_p), (_l))
 #define mpi_ecfg_page(_s, _a, _h, _r, _p, _l) \
-	mpi_req_cfg_page((_s), (_a), 1, (_h), (_r), (_p), (_l))
+	mpi_req_cfg_page((_s), (_a), MPI_PG_POLL|MPI_PG_EXTENDED, \
+	    (_h), (_r), (_p), (_l))
 
 int
 mpi_attach(struct mpi_softc *sc)
@@ -2403,7 +2411,7 @@ out:
 
 int
 mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
-    u_int32_t address, int extended, void *p)
+    u_int32_t address, int flags, void *p)
 {
 	struct mpi_ccb				*ccb;
 	struct mpi_msg_config_request		*cq;
@@ -2415,8 +2423,8 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	int					s;
 
 	DNPRINTF(MPI_D_MISC, "%s: mpi_req_cfg_header type: %#x number: %x "
-	    "address: 0x%08x extended: %d\n", DEVNAME(sc), type, number,
-	    address, extended);
+	    "address: 0x%08x flags: 0x%b\n", DEVNAME(sc), type, number,
+	    address, flags, MPI_PG_FMT);
 
 	s = splbio();
 	ccb = mpi_get_ccb(sc);
@@ -2427,12 +2435,11 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 		return (1);
 	}
 
-	if (extended) {
+	if (ISSET(flags, MPI_PG_EXTENDED)) {
 		etype = type;
 		type = MPI_CONFIG_REQ_PAGE_TYPE_EXTENDED;
 	}
 
-	ccb->ccb_done = mpi_empty_done;
 	cq = ccb->ccb_cmd;
 
 	cq->function = MPI_FUNCTION_CONFIG;
@@ -2447,9 +2454,20 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 	cq->page_buffer.sg_hdr = htole32(MPI_SGE_FL_TYPE_SIMPLE |
 	    MPI_SGE_FL_LAST | MPI_SGE_FL_EOB | MPI_SGE_FL_EOL);
 
-	if (mpi_poll(sc, ccb, 50000) != 0) {
-		DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header poll\n", DEVNAME(sc));
-		return (1);
+	if (ISSET(flags, MPI_PG_POLL)) {
+		ccb->ccb_done = mpi_empty_done;
+		if (mpi_poll(sc, ccb, 50000) != 0) {
+			DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header poll\n",
+			    DEVNAME(sc));
+			return (1);
+		}
+	} else {
+		ccb->ccb_done = (void (*)(struct mpi_ccb *))wakeup;
+		s = splbio();
+		mpi_start(sc, ccb);
+		while (ccb->ccb_state != MPI_CCB_READY)
+			tsleep(ccb, PRIBIO, "mpipghdr", 0);
+		splx(s);
 	}
 
 	if (ccb->ccb_rcb == NULL)
@@ -2477,7 +2495,7 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 
 	if (letoh16(cp->ioc_status) != MPI_IOCSTATUS_SUCCESS)
 		rv = 1;
-	else if (extended) {
+	else if (ISSET(flags, MPI_PG_EXTENDED)) {
 		bzero(ehdr, sizeof(*ehdr));
 		ehdr->page_version = cp->config_header.page_version;
 		ehdr->page_number = cp->config_header.page_number;
@@ -2494,7 +2512,7 @@ mpi_req_cfg_header(struct mpi_softc *sc, u_int8_t type, u_int8_t number,
 }
 
 int
-mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int extended,
+mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
     void *p, int read, void *page, size_t len)
 {
 	struct mpi_ccb				*ccb;
@@ -2511,7 +2529,7 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int extended,
 	DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_page address: %d read: %d type: %x\n",
 	    DEVNAME(sc), address, read, hdr->page_type);
 
-	page_length = extended ?
+	page_length = ISSET(flags, MPI_PG_EXTENDED) ?
 	    letoh16(ehdr->ext_page_length) : hdr->page_length;
 
 	if (len > MPI_REQUEST_SIZE - sizeof(struct mpi_msg_config_request) ||
@@ -2526,7 +2544,6 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int extended,
 		return (1);
 	}
 
-	ccb->ccb_done = mpi_empty_done;
 	cq = ccb->ccb_cmd;
 
 	cq->function = MPI_FUNCTION_CONFIG;
@@ -2535,7 +2552,7 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int extended,
 	cq->action = (read ? MPI_CONFIG_REQ_ACTION_PAGE_READ_CURRENT :
 	    MPI_CONFIG_REQ_ACTION_PAGE_WRITE_CURRENT);
 
-	if (extended) {
+	if (ISSET(flags, MPI_PG_EXTENDED)) {
 		cq->config_header.page_version = ehdr->page_version;
 		cq->config_header.page_number = ehdr->page_number;
 		cq->config_header.page_type = ehdr->page_type;
@@ -2561,9 +2578,20 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int extended,
 	if (!read)
 		bcopy(page, kva, len);
 
-	if (mpi_poll(sc, ccb, 50000) != 0) {
-		DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_page poll\n", DEVNAME(sc));
-		return (1);
+	if (ISSET(flags, MPI_PG_POLL)) {
+		ccb->ccb_done = mpi_empty_done;
+		if (mpi_poll(sc, ccb, 50000) != 0) {
+			DNPRINTF(MPI_D_MISC, "%s: mpi_cfg_header poll\n",
+			    DEVNAME(sc));
+			return (1);
+		}
+	} else {
+		ccb->ccb_done = (void (*)(struct mpi_ccb *))wakeup;
+		s = splbio();
+		mpi_start(sc, ccb);
+		while (ccb->ccb_state != MPI_CCB_READY)
+			tsleep(ccb, PRIBIO, "mpipghdr", 0);
+		splx(s);
 	}
 
 	if (ccb->ccb_rcb == NULL) {
