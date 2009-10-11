@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.10 2009/04/19 15:18:23 espie Exp $
+# $OpenBSD: Search.pm,v 1.11 2009/10/11 18:04:41 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -100,6 +100,12 @@ sub new
 {
 	my ($class, $stem) = @_;
 
+	my $flavors;
+
+	if ($stem =~ m/^(.*)\-\-(.*)/) {
+		# XXX
+		return OpenBSD::Search::Exact->new("$1-*-$2");
+    	}
 	return bless {stem => $stem}, $class;
 }
 
