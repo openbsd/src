@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.284 2009/10/07 22:05:51 sthen Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.285 2009/10/11 10:36:31 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -240,6 +240,10 @@ const struct pci_matchid bge_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714S },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5715 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5715S },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5717C },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5717S },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5718C },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5718S },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5720 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5721 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5722 },
@@ -395,6 +399,7 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5787, "unknown BCM5754/5787" },
 	{ BGE_ASICREV_BCM5906, "unknown BCM5906" },
 	{ BGE_ASICREV_BCM57780, "unknown BCM57780" },
+	{ BGE_ASICREV_BCM5717, "unknown BCM5717" },
 
 	{ 0, NULL }
 };
@@ -1340,7 +1345,8 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Configure mbuf pool watermarks */
 	/* new Broadcom docs strongly recommend these: */
-	if (BGE_IS_5705_PLUS(sc)) {
+	if (BGE_IS_5705_PLUS(sc) &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
@@ -1397,7 +1403,10 @@ bge_blockinit(struct bge_softc *sc)
 	/* Initialize the standard RX ring control block */
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
-	if (BGE_IS_5705_PLUS(sc))
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717)
+		rcb->bge_maxlen_flags = (BGE_RCB_MAXLEN_FLAGS(512, 0) |
+					(ETHER_MAX_DIX_LEN << 2));
+	else if (BGE_IS_5705_PLUS(sc))
 		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(512, 0);
 	else
 		rcb->bge_maxlen_flags =
@@ -1455,6 +1464,11 @@ bge_blockinit(struct bge_softc *sc)
 	 */
 	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, 8);
 	CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, 8);
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717) {
+		CSR_WRITE_4(sc, BGE_STD_REPL_LWM, 4);
+		CSR_WRITE_4(sc, BGE_JUMBO_REPL_LWM, 4);
+	}
 
 	/*
 	 * Disable all unused send rings by setting the 'ring disabled'
@@ -1825,8 +1839,15 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	      >> BGE_PCIMISCCTL_ASICREV_SHIFT);
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_USE_PRODID_REG) {
-		sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
-		    BGE_PCI_PRODID_ASICREV);
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717C ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717S ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717C ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717S)
+			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
+			    BGE_PCI_GEN2_PRODID_ASICREV);
+		else
+			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
+			    BGE_PCI_PRODID_ASICREV);
 	}
 
 	printf(", ");
@@ -1878,7 +1899,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		sc->bge_flags |= BGE_5714_FAMILY;
 
 	/* Intentionally exclude BGE_ASICREV_BCM5906 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
@@ -1958,6 +1980,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((BGE_IS_5705_PLUS(sc)) &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906 &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57780) {
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
@@ -2411,7 +2434,9 @@ bge_reset(struct bge_softc *sc)
 	}
 
 	if (sc->bge_flags & BGE_PCIE &&
-	    sc->bge_chipid != BGE_CHIPID_BCM5750_A0) {
+	    sc->bge_chipid != BGE_CHIPID_BCM5750_A0 &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785) {
 		u_int32_t v;
 
 		/* Enable PCI Express bug fix */

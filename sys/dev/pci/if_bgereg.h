@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.98 2009/07/21 13:09:41 naddy Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.99 2009/10/11 10:36:31 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -209,6 +209,7 @@
 #define BGE_PCI_ISR_MBX_HI		0xB0
 #define BGE_PCI_ISR_MBX_LO		0xB4
 #define BGE_PCI_PRODID_ASICREV		0xBC
+#define BGE_PCI_GEN2_PRODID_ASICREV	0xF4
 
 /* XXX:
  * Used in PCI-Express code for 575x chips.
@@ -324,6 +325,7 @@
 #define BGE_ASICREV_BCM5784		0x5784
 #define BGE_ASICREV_BCM5785		0x5785
 #define BGE_ASICREV_BCM57780		0x57780
+#define BGE_ASICREV_BCM5717		0x5717
 
 /* chip revisions */
 #define BGE_CHIPREV(x)			((x) >> 8)
@@ -1243,6 +1245,9 @@
 #define BGE_RBDI_STD_REPL_THRESH	0x2C18
 #define BGE_RBDI_JUMBO_REPL_THRESH	0x2C1C
 
+#define BGE_STD_REPL_LWM		0x2D00
+#define BGE_JUMBO_REPL_LWM		0x2D04
+
 /* Receive BD Initiator Mode register */
 #define BGE_RBDIMODE_RESET		0x00000001
 #define BGE_RBDIMODE_ENABLE		0x00000002
@@ -2098,6 +2103,7 @@ struct bge_tx_bd {
 #define BGE_TXBDFLAG_IP_CSUM		0x0002
 #define BGE_TXBDFLAG_END		0x0004
 #define BGE_TXBDFLAG_IP_FRAG		0x0008
+#define BGE_TXBDFLAG_JMB_PKT		0x0008
 #define BGE_TXBDFLAG_IP_FRAG_END	0x0010
 #define BGE_TXBDFLAG_VLAN_TAG		0x0040
 #define BGE_TXBDFLAG_COAL_NOW		0x0080
