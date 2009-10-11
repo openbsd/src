@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.40 2009/10/11 00:18:37 dms Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.41 2009/10/11 23:54:49 dms Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -4246,7 +4246,15 @@ em_detect_gig_phy(struct em_hw *hw)
         hw->phy_type = em_phy_undefined;
         return E1000_SUCCESS;
     }
-    
+
+    /* Up to 82543 (incl), we need reset the phy, or it might not get 
+     * detected */
+    if (hw->mac_type <= em_82543) {
+        ret_val = em_phy_hw_reset(hw);
+        if (ret_val)
+            return ret_val;
+    }
+
     /* ESB-2 PHY reads require em_phy_gg82563 to be set because of a work-
      * around that forces PHY page 0 to be set or the reads fail.  The rest of
      * the code in this routine uses em_read_phy_reg to read the PHY ID.
