@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.155 2009/10/11 00:07:06 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.156 2009/10/11 00:59:37 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -500,7 +500,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 err_exit:
-	printf("%s: initialization failure\n", XNAME(sc));
+	printf("%s: initialization failure, detaching\n", XNAME(sc));
 	azalia_pci_detach(self, 0);
 }
 
@@ -702,7 +702,7 @@ azalia_get_ctrlr_caps(azalia_t *az)
 	}
 	az->ncodecs = n;
 	if (az->ncodecs < 1) {
-		printf("%s: No HD-Audio codecs\n", XNAME(az));
+		printf("%s: no HD-Audio codecs\n", XNAME(az));
 		return -1;
 	}
 
@@ -720,7 +720,7 @@ azalia_get_ctrlr_caps(azalia_t *az)
 		az->corb_entries = 2;
 		az->corbsize |= HDA_CORBSIZE_CORBSIZE_2;
 	} else {
-		printf("%s: Invalid CORBSZCAP: 0x%2x\n", XNAME(az), cap);
+		printf("%s: invalid CORBSZCAP: 0x%2x\n", XNAME(az), cap);
 		return(-1);
 	}
 
@@ -738,7 +738,7 @@ azalia_get_ctrlr_caps(azalia_t *az)
 		az->rirb_entries = 2;
 		az->rirbsize |= HDA_RIRBSIZE_RIRBSIZE_2;
 	} else {
-		printf("%s: Invalid RIRBSZCAP: 0x%2x\n", XNAME(az), cap);
+		printf("%s: invalid RIRBSZCAP: 0x%2x\n", XNAME(az), cap);
 		return(-1);
 	}
 
