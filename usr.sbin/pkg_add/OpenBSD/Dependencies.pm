@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.66 2009/10/11 11:26:40 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.67 2009/10/11 12:35:53 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -124,7 +124,7 @@ sub find_in_new_source
 
 sub find_elsewhere
 {
-	my ($self, $state, $solver, $obj) = @_;
+	my ($self, $solver, $state, $obj) = @_;
 
 	for my $dep (@{$solver->{plist}->{depend}}) {
 		my $r = $solver->find_old_lib($state, 
