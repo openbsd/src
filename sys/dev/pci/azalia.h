@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.54 2009/09/09 02:22:21 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.55 2009/10/11 00:07:06 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -257,6 +257,7 @@
 #define			COP_PINCAP_OUTPUT	0x00000010
 #define			COP_PINCAP_INPUT	0x00000020
 #define			COP_PINCAP_BALANCE	0x00000040
+#define			COP_PINCAP_HDMI		0x00000080
 #define			COP_PINCAP_VREF(x)	((x >> 8) & 0xff)
 #define			COP_PINCAP_EAPD		0x00010000
 #define		COP_INPUT_AMPCAP	0x0d
@@ -647,6 +648,11 @@ typedef struct codec_t {
 	widget_t *w;		/* widgets in the audio function.
 				 * w[0] to w[wstart-1] are unused. */
 #define FOR_EACH_WIDGET(this, i)	for (i = (this)->wstart; i < (this)->wend; i++)
+
+	int codec_type;
+#define AZ_CODEC_TYPE_ANALOG	0
+#define AZ_CODEC_TYPE_DIGITAL	1
+#define AZ_CODEC_TYPE_HDMI	2
 
 	int qrks;
 
