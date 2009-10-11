@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.28 2009/05/18 20:10:12 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.29 2009/10/11 12:59:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -188,7 +188,7 @@ static unsigned char julia_eeprom[ENVY_EEPROM_MAXSZ] = {
 	0x20, 0x80, 0xf8, 0xc3, 
 	0x9f, 0xff, 0x7f, 
 	0x9f, 0xff, 0x7f,
-	0x16, 0x80, 0x00
+	0x60, 0x00, 0x00
 };
 
 struct envy_codec ak4524_dac = {
@@ -413,7 +413,6 @@ ak4524_dac_ndev(struct envy_softc *sc)
 	return 3 * (sc->card->noch / 2);
 }
 
-
 void
 ak4524_dac_devinfo(struct envy_softc *sc, struct mixer_devinfo *dev, int idx)
 {
@@ -439,7 +438,7 @@ ak4524_dac_devinfo(struct envy_softc *sc, struct mixer_devinfo *dev, int idx)
 		dev->un.e.member[1].ord = 1;
 		strlcpy(dev->un.e.member[1].label.name, AudioNon,
 		   MAX_AUDIO_DEV_LEN);
-		dev->un.s.num_mem = 2;
+		dev->un.e.num_mem = 2;
 		snprintf(dev->label.name, MAX_AUDIO_DEV_LEN,
 		    AudioNmute "%d-%d", 2 * idx, 2 * idx + 1);
 	}
@@ -729,13 +728,24 @@ envy_reset(struct envy_softc *sc)
 	/*
 	 * write eeprom values to corresponding registers
 	 */
-	pci_conf_write(sc->pci_pc, sc->pci_tag, ENVY_CONF, 
-	    sc->eeprom[ENVY_EEPROM_CONF] |
-	    (sc->eeprom[ENVY_EEPROM_ACLINK] << 8) |
-	    (sc->eeprom[ENVY_EEPROM_I2S] << 16) |
-	    (sc->eeprom[ENVY_EEPROM_SPDIF] << 24));
-
-	envy_gpio_setmask(sc, envy_eeprom_gpioxxx(sc, ENVY_EEPROM_GPIOMASK));
+	if (sc->isht) {
+		envy_ccs_write(sc, ENVY_CCS_CONF,
+		    sc->eeprom[ENVY_EEPROM_CONF]);
+		envy_ccs_write(sc, ENVY_CCS_ACLINK,
+		    sc->eeprom[ENVY_EEPROM_ACLINK]);
+		envy_ccs_write(sc, ENVY_CCS_I2S,
+		    sc->eeprom[ENVY_EEPROM_I2S]);
+		envy_ccs_write(sc, ENVY_CCS_SPDIF,
+		    sc->eeprom[ENVY_EEPROM_SPDIF]);
+	} else {
+		pci_conf_write(sc->pci_pc, sc->pci_tag, ENVY_CONF, 
+		    sc->eeprom[ENVY_EEPROM_CONF] |
+		    (sc->eeprom[ENVY_EEPROM_ACLINK] << 8) |
+		    (sc->eeprom[ENVY_EEPROM_I2S] << 16) |
+		    (sc->eeprom[ENVY_EEPROM_SPDIF] << 24));
+	}
+	    
+	envy_gpio_setmask(sc, envy_eeprom_gpioxxx(sc, ENVY_EEPROM_GPIOMASK(sc)));
 	envy_gpio_setdir(sc, envy_eeprom_gpioxxx(sc, ENVY_EEPROM_GPIODIR(sc)));
 	envy_gpio_setstate(sc, envy_eeprom_gpioxxx(sc, ENVY_EEPROM_GPIOST(sc)));
 

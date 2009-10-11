@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.9 2009/05/08 17:52:18 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.10 2009/10/11 12:59:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,6 +36,10 @@
 #define   ENVY_CCS_INT_TMR	0x80
 #define   ENVY_CCS_INT_MIDI0	0x80
 #define ENVY_CCS_INTSTAT	0x02
+#define ENVY_CCS_CONF		0x04	/* Envy24HT only */
+#define ENVY_CCS_ACLINK		0x05	/* Envy24HT only */
+#define ENVY_CCS_I2S		0x06	/* Envy24HT only */
+#define ENVY_CCS_SPDIF		0x07	/* Envy24HT only */
 #define ENVY_CCS_GPIODATA0	0x14	/* Envy24HT only */
 #define ENVY_CCS_GPIODATA1	0x15	/* Envy24HT only */
 #define ENVY_CCS_GPIODATA2	0x1e	/* Envy24HT only */
@@ -86,9 +90,9 @@
 #define ENVY_EEPROM_ACLINK	7
 #define ENVY_EEPROM_I2S		8
 #define ENVY_EEPROM_SPDIF	9
-#define ENVY_EEPROM_GPIOMASK	10
+#define ENVY_EEPROM_GPIOMASK(s)	((s)->isht ? 13 : 10)
 #define ENVY_EEPROM_GPIOST(s)	((s)->isht ? 16 : 11)
-#define ENVY_EEPROM_GPIODIR(s)	((s)->isht ? 13 : 12)
+#define ENVY_EEPROM_GPIODIR(s)	((s)->isht ? 10 : 12)
 
 /*
  * MT registers for play/record params
