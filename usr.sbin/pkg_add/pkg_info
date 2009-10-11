@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.76 2009/10/11 18:41:21 espie Exp $
+# $OpenBSD: pkg_info,v 1.77 2009/10/11 20:09:48 jmc Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -387,7 +387,7 @@ sub print_info
 	}
 }
 
-set_usage('pkg_info [-AacCDdfIiKkLmMPqRrSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
+set_usage('pkg_info [-AacCDdfIiKkLMmPqRrSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
 
 my %defines;
 my $locked;
