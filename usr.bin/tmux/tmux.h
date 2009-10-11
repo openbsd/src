@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.129 2009/10/11 07:01:10 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.130 2009/10/11 07:20:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -567,6 +567,7 @@ ARRAY_DECL(keylist, int);
 struct job {
 	char		*cmd;
 	pid_t		 pid;
+	int		 status;
 
 	struct client	*client;
 
@@ -576,6 +577,9 @@ struct job {
 	void		(*callbackfn)(struct job *);
 	void		(*freefn)(void *);
 	void		*data;
+
+	int		 flags;
+#define JOB_DONE 0x1
 
 	RB_ENTRY(job)	 entry;
 	SLIST_ENTRY(job) lentry;
