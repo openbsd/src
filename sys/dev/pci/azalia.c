@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.156 2009/10/11 00:59:37 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.157 2009/10/11 06:45:46 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -149,7 +149,7 @@ typedef struct azalia_t {
 	pcireg_t pciid;
 	uint32_t subid;
 
-	codec_t codecs[15];
+	codec_t *codecs;
 	int ncodecs;		/* number of codecs */
 	int codecno;		/* index of the using codec */
 
@@ -545,6 +545,10 @@ azalia_pci_detach(struct device *self, int flags)
 		azalia_codec_delete(&az->codecs[i]);
 	}
 	az->ncodecs = 0;
+	if (az->codecs != NULL) {
+		free(az->codecs, M_DEVBUF);
+		az->codecs = NULL;
+	}
 
 	DPRINTF(("%s: delete CORB and RIRB\n", __func__));
 	azalia_delete_corb(az);
@@ -693,17 +697,28 @@ azalia_get_ctrlr_caps(azalia_t *az)
 
 	/* 4.3 Codec discovery */
 	statests = AZ_READ_2(az, STATESTS);
-	for (i = 0, n = 0; i < 15; i++) {
+	for (i = 0, n = 0; i < HDA_MAX_CODECS; i++) {
 		if ((statests >> i) & 1) {
 			DPRINTF(("%s: found a codec at #%d\n", XNAME(az), i));
-			az->codecs[n].address = i;
-			az->codecs[n++].az = az;
+			n++;
 		}
 	}
 	az->ncodecs = n;
 	if (az->ncodecs < 1) {
 		printf("%s: no HD-Audio codecs\n", XNAME(az));
 		return -1;
+	}
+	az->codecs = malloc(sizeof(codec_t) * az->ncodecs, M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+	if (az->codecs == NULL) {
+		printf("%s: can't allocate memory for codecs\n", XNAME(az));
+		return ENOMEM;
+	}
+	for (i = 0, n = 0; n < az->ncodecs; i++) {
+		if ((statests >> i) & 1) {
+			az->codecs[n].address = i;
+			az->codecs[n++].az = az;
+		}
 	}
 
 	/* determine CORB size */

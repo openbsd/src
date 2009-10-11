@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.55 2009/10/11 00:07:06 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.56 2009/10/11 06:45:46 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -484,6 +484,7 @@
 #define CORB_NID_ROOT		0
 #define HDA_MAX_CHANNELS	16
 #define HDA_MAX_SENSE_PINS	16
+#define HDA_MAX_CODECS		15
 
 #define AZ_MAX_VOL_SLAVES	16
 #define AZ_TAG_SPKR		0x01
