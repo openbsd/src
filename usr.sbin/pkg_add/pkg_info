@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.75 2009/10/11 18:15:08 espie Exp $
+# $OpenBSD: pkg_info,v 1.76 2009/10/11 18:41:21 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -184,6 +184,24 @@ sub filter_files
 	return @result;
 }
 
+sub manual_filter
+{
+	require OpenBSD::PackingList;
+
+	my @result = ();
+	for my $arg (@_) {
+		find_pkg($arg, 
+		    sub {
+		    	my ($pkgname, $handle) = @_;
+
+			my $plist = $handle->plist(\&OpenBSD::PackingList::ConflictOnly);
+				
+			push(@result, $pkgname) if $plist->has('manual-installation');
+		    });
+	}
+	return @result;
+}
+
 my $path_info;
 
 sub add_to_path_info
@@ -227,7 +245,7 @@ sub find_by_path
 
 our ($opt_c, $opt_C, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, 
     $opt_L, $opt_Q, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h,
-    $opt_l, $opt_a, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P, $opt_t);
+    $opt_l, $opt_a, $opt_m, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P, $opt_t);
 my $terse = 0;
 my $exit_code = 0;
 my $error_e = 0;
@@ -369,7 +387,7 @@ sub print_info
 	}
 }
 
-set_usage('pkg_info [-AacCDdfIiKkLMPqRrSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
+set_usage('pkg_info [-AacCDdfIiKkLmMPqRrSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
 
 my %defines;
 my $locked;
@@ -466,6 +484,10 @@ if (@ARGV > 0 && $opt_t) {
 	Usage "Can't specify package name(s) with -t";
 }
 
+if (@ARGV > 0 && $opt_m) {
+	Usage "Can't specify package name(s) with -m";
+}
+
 if (@ARGV == 0 && !$error_e) {
 	@ARGV = sort(installed_packages(defined $opt_A ? 0 : 1));
 	if ($opt_t) {
@@ -485,6 +507,10 @@ if (@sought_files) {
 			$exit_code = 1;
 		}
 	}
+}
+
+if ($opt_m) {
+	@ARGV = manual_filter(@ARGV);
 }
 
 for my $pkg (@ARGV) {
