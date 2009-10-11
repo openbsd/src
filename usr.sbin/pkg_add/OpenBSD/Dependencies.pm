@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.65 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.66 2009/10/11 11:26:40 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -85,7 +85,7 @@ sub find_in_already_done
 	my ($self, $solver, $state, $obj) = @_;
 
 
-	my $r = $solver->check_lib_spec($solver->{plist}->localbase, $obj, 
+	my $r = $solver->check_lib_spec($solver->{localbase}, $obj, 
 	    $self->{known});
 	if ($r) {
 		print "found libspec $obj in package $r\n" if $state->{verbose};
@@ -114,7 +114,7 @@ sub find_in_new_source
 {
 	my ($self, $solver, $state, $obj, $dep) = @_;
 	OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
-	if ($solver->check_lib_spec($solver->{plist}->localbase, $obj, 
+	if ($solver->check_lib_spec($solver->{localbase}, $obj, 
 	    {$dep => 1})) {
 		print "found libspec $obj in package $dep\n" if $state->{verbose};
 		return $dep;
@@ -128,7 +128,7 @@ sub find_elsewhere
 
 	for my $dep (@{$solver->{plist}->{depend}}) {
 		my $r = $solver->find_old_lib($state, 
-		    $solver->{plist}->localbase, $dep->{pattern}, $obj);
+		    $solver->{localbase}, $dep->{pattern}, $obj);
 		if ($r) {
 			print "found libspec $obj in old package $r\n" if $state->{verbose};
 			return $r;
@@ -453,6 +453,7 @@ sub solve_wantlibs
 	my $lib_finder = OpenBSD::lookup::library->new($solver);
 	for my $h ($solver->{set}->newer) {
 		for my $lib (@{$h->{plist}->{wantlib}}) {
+			$solver->{localbase} = $h->{plist}->localbase;
 			next if $lib_finder->lookup($solver, $state, 
 			    $lib->{name});
 			OpenBSD::Error::Warn "Can't install ", 
