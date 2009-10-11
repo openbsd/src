@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.226 2009/10/11 00:18:37 dms Exp $ */
+/* $OpenBSD: if_em.c,v 1.227 2009/10/11 19:24:48 dms Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -808,7 +808,6 @@ em_intr(void *arg)
 
 		if (reg_icr & E1000_ICR_RXO) {
 			sc->rx_overruns++;
-			ifp->if_ierrors++;
 			refill = 1;
 		}
 
