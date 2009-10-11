@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.79 2009/10/11 18:45:42 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.80 2009/10/11 22:08:27 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -24,10 +24,11 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Bk -words
-.Op Fl acIinqruvx
+.Op Fl acIinqruvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl F Ar keywords
+.Op Fl l Ar file
 .Op Fl L Ar localbase
 .Op Fl P Ar type
 .Op Fl Q Ar quick-destdir
@@ -277,6 +278,18 @@ If scripts exist for a given package, do not execute them.
 Switch on interactive mode.
 .Nm
 may ask questions to the user if faced with difficult decisions.
+.It Fl l Ar file
+installs packages from the raw output of
+.Xr pkg_info 1 ,
+as saved in 
+.Ar file .
+Generally, use with
+.Li pkg_info >file ,
+to reproduce an installation from machine to machine.
+.Fl l
+will try its best to reproduce the installation, even if the
+version numbers don't quite match and even if some packages cannot
+be found.
 .It Fl L Ar localbase
 Install a package under
 .Ar localbase .
@@ -364,6 +377,12 @@ turn on more verbose output.
 .It Fl x
 Disable progress-meter.
 .El
+.It Fl z
+Fuzzy package addition:
+.Nm
+should do its best to match package names passed on the command line,
+even if the versions don't match and it will proceed even if 
+some packages can't be found.
 .Pp
 By default, when adding packages via FTP, the
 .Xr ftp 1

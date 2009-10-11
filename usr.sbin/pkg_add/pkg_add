@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.341 2009/10/11 13:54:41 espie Exp $
+# $OpenBSD: pkg_add,v 1.342 2009/10/11 22:08:27 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -680,13 +680,13 @@ sub reorder
 	}
 }
 
-set_usage('pkg_add [-acIinqruvx] [-A arch] [-B pkg-destdir] [-F keywords]',
-'[-L localbase] [-P type] [-Q quick-destdir] pkg-name [...]');
+set_usage('pkg_add [-acIinqruvxz] [-A arch] [-B pkg-destdir] [-F keywords]',
+'[-L localbase] [-l list] [-P type] [-Q quick-destdir] pkg-name [...]');
 
-our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c, $opt_i, $opt_u);
+our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c, $opt_i, $opt_u, $opt_l, $opt_z);
 $opt_v = 0;
 try { 
-	getopts('aqchivnruxIL:f:F:B:A:P:Q:',
+	getopts('aqchivnruxzIl:L:f:F:B:A:P:Q:',
 	{
 	 'h' => sub { Usage(); },
 	 'F' => sub { 
@@ -761,19 +761,66 @@ $state->{interactive} = $opt_i;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
 $state->{allow_replacing} = $opt_r || $opt_u;
 
-if (@ARGV == 0 && !$opt_u) {
+if (@ARGV == 0 && !$opt_u && !$opt_l) {
 	Usage "Missing pkgname";
 }
+
+if ($opt_l && @ARGV != 0) {
+	Usage "No pkgnames after -l";
+}
+
 
 lock_db($state->{not}) unless $state->{defines}->{nolock};
 $state->setup_progressmeter($opt_x);
 $state->check_root;
 
-
 my @todo = ();
 my @todo2 = ();
 
-if ($opt_u) {
+if ($opt_l) {
+	open my $f, '<', $opt_l or die "$!: bad list $opt_l";
+	my $_;
+	while (<$f>) {
+		chomp;
+		s/\s.*//;
+		push(@ARGV, $_);
+	}
+}
+
+if ($opt_l || $opt_z) {
+	my $k = OpenBSD::Search::FilterLocation->keep_most_recent;
+	$state->progress->set_header("Looking for packages");
+	for my $_ (@ARGV) {
+		my $l;
+		# first try to find us exactly
+		$state->progress->message("Looking for $_");
+		$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Exact->new($_));
+		if (@$l == 0) {
+			my @search =();
+			my $t = $_;
+			$t =~ s/\-\d([^-]*)\-?/--/;
+			push(@search, OpenBSD::Search::Stem->new($t));
+			$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Stem->new($t), $k);
+		}
+		if (@$l == 0) {
+			$state->progress->clear;
+			print "Can't find $_\n";
+		} elsif (@$l > 1) {
+			if ($state->{interactive}) {
+				my %cnd = map {($_->name, $_)} @$l;
+				my $result = OpenBSD::Interactive::choose1($_, 
+				    1, sort keys %cnd);
+				push @todo, $cnd{$result} if defined $result;
+			} else {
+				$state->progress->clear;
+				print "Ambiguous: $_\n";
+			}
+		} else {
+			push(@todo, $l->[0]);
+		}
+	@todo2 = map { OpenBSD::UpdateSet->from_location($_) } @todo;
+	}
+} elsif ($opt_u) {
 	require OpenBSD::Update;
 
 	if (@ARGV == 0) {
