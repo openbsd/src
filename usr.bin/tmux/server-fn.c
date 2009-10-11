@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.25 2009/10/10 10:02:48 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.26 2009/10/11 10:39:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -284,8 +284,10 @@ server_link_window(struct session *src, struct winlink *srcwl,
 			winlink_remove(&dst->windows, dstwl);
 
 			/* Force select/redraw if current. */
-			if (dstwl == dst->curw)
+			if (dstwl == dst->curw) {
 				selectflag = 1;
+				dst->curw = NULL;
+			}
 		}
 	}
 
