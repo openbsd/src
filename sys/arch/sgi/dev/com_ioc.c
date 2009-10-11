@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ioc.c,v 1.5 2009/07/26 19:58:49 miod Exp $ */
+/*	$OpenBSD: com_ioc.c,v 1.6 2009/10/11 19:36:25 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,6 +54,7 @@ extern struct cfdriver com_cd;
 int
 com_ioc_probe(struct device *parent, void *match, void *aux)
 {
+	struct cfdata *cf = match;
 	struct ioc_attach_args *iaa = aux;
 	bus_space_tag_t iot = iaa->iaa_memt;
 	bus_space_handle_t ioh;
@@ -72,6 +73,10 @@ com_ioc_probe(struct device *parent, void *match, void *aux)
 			rv = comprobe1(iot, ioh);
 	} else
 		rv = 1;
+
+	/* make a config stanza with exact locators match over a generic line */
+	if (cf->cf_loc[0] != -1)
+		rv += rv;
 
 	return rv;
 }
