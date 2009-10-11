@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Formated.pm,v 1.3 2005/03/05 11:02:35 espie Exp $
+# $OpenBSD: Formated.pm,v 1.4 2009/10/11 08:14:37 sthen Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -96,7 +96,7 @@ sub handle
 	}
 	# Not all man pages are in english
 	# weird hex is `Namae' in japanese
-	if (m/^(?:NAME|NAMES|NAMN|Name|\xbe|\xcc\xbe\xbe\xce|\xcc\xbe\xc1\xb0)\s*$/) {
+	if (m/^(?:NAME|NAMES|NAMN|NOMBRE|NOME|Name|\xbe|\xcc\xbe\xbe\xce|\xcc\xbe\xc1\xb0)\s*$/) {
 	    unless (defined $section) {
 		# try to retrieve section from filename
 		if ($filename =~ m/(?:cat|man)([\dln])\//) {
