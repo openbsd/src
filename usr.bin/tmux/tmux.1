@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.105 2009/10/10 17:39:55 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.106 2009/10/11 08:58:05 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 10 2009 $
+.Dd $Mdocdate: October 11 2009 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2068,8 +2068,8 @@ option.
 .D1 (alias: Ic run )
 Execute
 .Ar command
-without creating a window.
-Any output to stdout is displayed in output mode.
+in the background without creating a window.
+After the command finishes, any output to stdout is displayed in output mode.
 If
 .Ar command
 doesn't return success, the exit status is also displayed.
