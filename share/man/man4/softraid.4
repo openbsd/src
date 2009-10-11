@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.24 2009/07/20 04:12:25 cnst Exp $
+.\"	$OpenBSD: softraid.4,v 1.25 2009/10/11 14:29:49 sobrado Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 20 2009 $
+.Dd $Mdocdate: October 11 2009 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -80,13 +80,17 @@ Unlike traditional RAID 1,
 .Nm
 supports the use of more than two chunks in a RAID 1 setup.
 .It RAID 4
-A striping discipline with a fixed parity chunk.
+A striping discipline with a
+.Em fixed parity
+chunk.
 It stripes data across chunks and provides parity to prevent data loss of
 a single chunk failure.
 Read performance is increased,
 though write performance is limited by the parity chunk.
 .It RAID 5
-A striping discipline with floating parity across all chunks.
+A striping discipline with
+.Em floating parity
+across all chunks.
 It stripes data across chunks and provides parity to prevent data loss of
 a single chunk failure.
 Read performance is increased;
