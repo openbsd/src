@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.338 2009/10/11 11:01:44 espie Exp $
+# $OpenBSD: pkg_add,v 1.339 2009/10/11 11:07:55 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -217,7 +217,7 @@ sub setup_header
 
 	my $header = $state->deptree_header($pkgname).$pkgname;
 	if ($set->older) {
-		$header.=" (replacing ". join(', ', (map {$_->{pkgname}} $set->older)). ")";
+		$header.=" (replacing ". join(', ', $set->older_names). ")";
 	}
 	if (!$state->progress->set_header($header)) {
 	    print $state->{not} ? "Pretending to add " : "Adding ";
