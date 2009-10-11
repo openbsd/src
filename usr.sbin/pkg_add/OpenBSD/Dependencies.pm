@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.67 2009/10/11 12:35:53 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.68 2009/10/11 16:46:37 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -198,7 +198,7 @@ sub new
 {
 	my ($class, $set) = @_;
 	bless {set => $set, plist => $set->handle->{plist}, 
-	    to_install => {}, deplist => [], to_register => {} }, $class;
+	    to_install => {}, to_update => {}, deplist => [], to_register => {} }, $class;
 }
 
 sub dependencies
@@ -230,9 +230,12 @@ sub add_todo
 	require OpenBSD::PackageName;
 
 	for my $set (@extra) {
-		my $fullname = $set->handle->{pkgname};
-		$self->{to_install}->
-		    {OpenBSD::PackageName::url2pkgname($fullname)} = $set;
+		for my $n ($set->newer) {
+			$self->{to_install}->{OpenBSD::PackageName::url2pkgname($n->{pkgname})} = $set;
+		}
+		for my $n ($set->older) {
+			$self->{to_update}->{OpenBSD::PackageName::url2pkgname($n->{pkgname})} = $set;
+		}
 	}
 }
 
