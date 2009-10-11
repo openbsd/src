@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.285 2009/10/11 10:36:31 sthen Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.286 2009/10/11 16:53:13 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1841,8 +1841,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_USE_PRODID_REG) {
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717C ||
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717S ||
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717C ||
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5717S)
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5718C ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5718S)
 			sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
 			    BGE_PCI_GEN2_PRODID_ASICREV);
 		else
