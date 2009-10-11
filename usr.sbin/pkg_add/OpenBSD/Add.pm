@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.88 2009/04/20 08:29:02 espie Exp $
+# $OpenBSD: Add.pm,v 1.89 2009/10/11 18:38:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -149,8 +149,8 @@ sub tweak_plist_status
 sub tag_user_packages
 {
 	for my $set (@_) {
-		for my $handle ($set->newer) {
-			$user_tagged->{$handle->{pkgname}} = 1;
+		for my $n ($set->newer_names) {
+			$user_tagged->{OpenBSD::PackageName::url2pkgname($n)} = 1;
 		}
 	}
 }
