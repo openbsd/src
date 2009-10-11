@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.339 2009/10/11 11:07:55 espie Exp $
+# $OpenBSD: pkg_add,v 1.340 2009/10/11 12:56:13 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -233,17 +233,22 @@ sub complete
 {
 	my ($set, $state) = @_;
 
-	$set->handle->complete($state);
-	return if $set->handle->has_error;
+	for my $n ($set->newer) {
+		$n->complete($state);
+		return if $n->has_error;
+	}
+
 	return if defined $set->{installable};
 
 	$set->{installable} = $set->can_install($state);
 
 	if (!$set->{installable}) {
-		$set->handle->{location}->close_with_client_error;
-		$set->handle->{location}->wipe_info;
-		delete $set->handle->{plist};
-		$set->handle->set_error(OpenBSD::Handle::CANT_INSTALL);
+		for my $n ($set->newer) {
+			$n->{location}->close_with_client_error;
+			$n->{location}->wipe_info;
+			delete $n->{plist};
+			$n->set_error(OpenBSD::Handle::CANT_INSTALL);
+ 		}
 	}
 }
 
@@ -274,68 +279,69 @@ BIGLOOP: 	while (my ($pkg, $h) = each %todo) {
 sub can_install
 {
 	my ($set, $state) = @_;
-	my $handle = $set->handle;
-	my $plist = $handle->{plist};
-	my $pkgname = $handle->{pkgname};
-	my @conflicts = OpenBSD::PkgCfl::find_all($plist, $state);
-	return 1 if @conflicts == 0;
+	for my $handle ($set->newer) {
+		my $plist = $handle->{plist};
+		my $pkgname = $handle->{pkgname};
+		my @conflicts = OpenBSD::PkgCfl::find_all($plist, $state);
+		next if @conflicts == 0;
 
-	my %conflicts = map {($_,1)} @conflicts;
-	@conflicts = keys %conflicts;
+		my %conflicts = map {($_,1)} @conflicts;
+		@conflicts = keys %conflicts;
 
-	if (!$state->{allow_replacing}) {
-		if ($state->{defines}->{conflicts}) {
-			print "Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts), ")\n";
-			return 1;
-		}
-		print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
-		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
-		return;
-	}
-
-	if (@conflicts >  5) {
-		print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
-		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
-		return;
-	}
-
-	require OpenBSD::Replace;
-
-	if (!OpenBSD::Replace::is_new_package_safe($plist, $state)) {
-		print "Can't safely update to $pkgname (use -F update to force it)\n";
-		$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
-		return;
-	}
-
-	for my $toreplace (@conflicts) {
-		if ($state->is_installed($toreplace)) {
-			Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
+		if (!$state->{allow_replacing}) {
+			if ($state->{defines}->{conflicts}) {
+				print "Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts), ")\n";
+				return 1;
+			}
+			print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
 			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
 
-		my $old_handle = OpenBSD::Handle->create_old($toreplace, $state);
-		if ($old_handle->has_error(OpenBSD::Handle::NOT_FOUND)) {
-			Fatal "Can't find $toreplace as an installed package\n";
-		}
-		if ($old_handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
-			Fatal "Couldn't find packing-list for $toreplace\n";
-		}
-
-		if (!OpenBSD::Replace::can_old_package_be_replaced($old_handle->{plist}, 
-		    $pkgname, $state, \%conflicts)) {
-			print "Can't update $toreplace into $pkgname\n";
+		if (@conflicts >  5) {
+			print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
 			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
-		$set->add_older($old_handle);
 
-		if ($old_handle->{plist}->has('manual-installation') && 
-		    !$plist->has('manual-installation')) {
-		    	OpenBSD::PackingElement::ManualInstallation->add($plist);
+		require OpenBSD::Replace;
+
+		if (!OpenBSD::Replace::is_new_package_safe($plist, $state)) {
+			print "Can't safely update to $pkgname (use -F update to force it)\n";
+			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
+			return;
 		}
+
+		for my $toreplace (@conflicts) {
+			if ($state->is_installed($toreplace)) {
+				Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
+				$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
+				return;
+			}
+
+			my $old_handle = OpenBSD::Handle->create_old($toreplace, $state);
+			if ($old_handle->has_error(OpenBSD::Handle::NOT_FOUND)) {
+				Fatal "Can't find $toreplace as an installed package\n";
+			}
+			if ($old_handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) {
+				Fatal "Couldn't find packing-list for $toreplace\n";
+			}
+
+			if (!OpenBSD::Replace::can_old_package_be_replaced($old_handle->{plist}, 
+			    $pkgname, $state, \%conflicts)) {
+				print "Can't update $toreplace into $pkgname\n";
+				$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
+				return;
+			}
+			$set->add_older($old_handle);
+
+			if ($old_handle->{plist}->has('manual-installation') && 
+			    !$plist->has('manual-installation')) {
+				OpenBSD::PackingElement::ManualInstallation->add($plist);
+			}
+		}
+		$set->{skipupdatedeps} = \%conflicts;
 	}
-	$set->{skipupdatedeps} = \%conflicts;
 	return 1;
 }
 
