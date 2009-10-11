@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.23 2009/10/10 17:19:38 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.24 2009/10/11 10:04:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -71,6 +71,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_next_layout_entry,
 	&cmd_next_window_entry,
 	&cmd_paste_buffer_entry,
+	&cmd_pipe_pane_entry,
 	&cmd_previous_layout_entry,
 	&cmd_previous_window_entry,
 	&cmd_refresh_client_entry,

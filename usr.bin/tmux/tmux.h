@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.130 2009/10/11 07:20:16 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.131 2009/10/11 10:04:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -715,6 +715,10 @@ struct window_pane {
 
 	struct input_ctx ictx;
 
+	int		 pipe_fd;
+	struct buffer	*pipe_buf;
+	size_t		 pipe_off;
+
 	struct screen	*screen;
 	struct screen	 base;
 
@@ -1394,6 +1398,7 @@ extern const struct cmd_entry cmd_new_window_entry;
 extern const struct cmd_entry cmd_next_layout_entry;
 extern const struct cmd_entry cmd_next_window_entry;
 extern const struct cmd_entry cmd_paste_buffer_entry;
+extern const struct cmd_entry cmd_pipe_pane_entry;
 extern const struct cmd_entry cmd_previous_layout_entry;
 extern const struct cmd_entry cmd_previous_window_entry;
 extern const struct cmd_entry cmd_refresh_client_entry;
