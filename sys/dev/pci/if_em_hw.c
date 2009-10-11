@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.39 2009/10/06 02:01:04 dms Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.40 2009/10/11 00:18:37 dms Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -484,6 +484,7 @@ em_set_mac_type(struct em_hw *hw)
     case E1000_DEV_ID_ICH9_IGP_C:
     case E1000_DEV_ID_ICH9_IGP_M:
     case E1000_DEV_ID_ICH9_IGP_M_AMT:
+    case E1000_DEV_ID_ICH9_IGP_M_V:
     case E1000_DEV_ID_ICH10_R_BM_LF:
     case E1000_DEV_ID_ICH10_R_BM_LM:
     case E1000_DEV_ID_ICH10_R_BM_V:
