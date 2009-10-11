@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.49 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: Replace.pm,v 1.50 2009/10/11 11:51:22 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -76,6 +76,13 @@ sub separate_element
 {
 	my ($self, $libs, $c1, $c2) = @_;
 	$c1->{$self} = 1;
+	$c2->{$self} = 1;
+}
+
+package OpenBSD::PackingElement::DigitalSignature;
+sub separate_element
+{
+	my ($self, $libs, $c1, $c2) = @_;
 	$c2->{$self} = 1;
 }
 
