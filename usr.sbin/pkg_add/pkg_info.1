@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.32 2009/04/14 17:53:58 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.33 2009/10/11 18:41:42 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: April 14 2009 $
+.Dd $Mdocdate: October 11 2009 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm pkg_info
 .Bk -words
-.Op Fl AacCDdfIiKkLMPqRrSstUv
+.Op Fl AacCDdfIiKkLmMPqRrSstUv
 .Op Fl E Ar filename
 .Op Fl e Ar pkg-name
 .Op Fl l Ar str
@@ -138,6 +138,9 @@ lot of different information fields at once for a package, but don't
 necessarily want the output intermingled in such a way that they can't
 organize it.
 This lets you add a special token to the start of each field.
+.It Fl m
+Only show packages tagged as manual installations. It should omit anything
+installed automatically as a dependency.
 .It Fl M
 Show the install-message file (if any) for each package.
 .It Fl P
