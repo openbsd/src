@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.340 2009/10/11 12:56:13 espie Exp $
+# $OpenBSD: pkg_add,v 1.341 2009/10/11 13:54:41 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -389,26 +389,28 @@ sub really_add
 
 	$set->validate_plists($state);
 
-	my $handle = $set->handle;
-	my $plist = $handle->{plist};
-	my $pkgname = $handle->{pkgname};
 	my $errors = 0;
-	$state->set_name_from_handle($handle);
-	if ($plist->is_signed) {
-		if ($state->{defines}->{nosig}) {
-			print STDERR "NOT CHECKING DIGITAL SIGNATURE FOR ",
-				$plist->pkgname, "\n";
-			$state->{check_digest} = 0;
-		} else {
-			require OpenBSD::x509;
+	$state->set_name_from_handle($set->handle);
+	for my $handle ($set->newer) {
+		my $plist = $handle->{plist};
+		if ($plist->is_signed) {
+			if ($state->{defines}->{nosig}) {
+				print STDERR 
+				    "NOT CHECKING DIGITAL SIGNATURE FOR ",
+				    $plist->pkgname, "\n";
+				$state->{check_digest} = 0;
+			} else {
+				require OpenBSD::x509;
 
-			if (!OpenBSD::x509::check_signature($plist, $state)) {
-				Fatal "fatal issues in ", $set->print;
+				if (!OpenBSD::x509::check_signature($plist, 
+				    $state)) {
+					Fatal "fatal issues in ", $set->print;
+				}
+				$state->{check_digest} = 1;
 			}
-			$state->{check_digest} = 1;
+		} else {
+			$state->{check_digest} = 0;
 		}
-	} else {
-		$state->{check_digest} = 0;
 	}
 
 	$set->setup_header($state);
@@ -444,20 +446,24 @@ sub really_add
 	$set->compute_size;
 
 	if ($replacing) {
-		$state->progress->set_header("$pkgname (extracting)");
+		for my $handle ($set->newer) {
+			my $pkgname = $handle->{pkgname};
+			$state->progress->set_header("$pkgname (extracting)");
 
-		try {
-			OpenBSD::Replace::perform_extraction($handle, $state);
-		} catchall {
-			unless ($state->{interrupted}) {
-				Warn $_;
-				$errors++;
+			try {
+				OpenBSD::Replace::perform_extraction($handle, 
+				    $state);
+			} catchall {
+				unless ($state->{interrupted}) {
+					Warn $_;
+					$errors++;
+				}
+			};
+			$state->progress->clear;
+			if ($state->{interrupted} || $errors) {
+				Fatal partial_install("Installation of $pkgname failed",
+				    $set, $state);
 			}
-		};
-		$state->progress->clear;
-		if ($state->{interrupted} || $errors) {
-			Fatal partial_install("Installation of $pkgname failed",
-			    $set, $state);
 		}
 
 		$set->{solver}->record_old_dependencies($state);
@@ -482,39 +488,47 @@ sub really_add
 			$state->progress->clear;
 		}
 		# Here there should be code to handle old libs
+	}
 
+	for my $handle ($set->newer) {
+		my $pkgname = $handle->{pkgname};
+		my $plist = $handle->{plist};
 		$state->progress->set_header("$pkgname (installing)");
 		$state->set_name_from_handle($handle);
-	}
 
-	try {
-		OpenBSD::Add::perform_installation($handle, $state);
-		if (!$state->{interrupted} && $plist->has(INSTALL)) {
-			$plist->get(INSTALL)->run($state, 'POST-INSTALL');
-		}
-	} catchall {
-		unless ($state->{interrupted}) {
-			Warn $_;
-			$errors++;
-		}
-	};
-	$state->progress->next;
+		try {
+			OpenBSD::Add::perform_installation($handle, $state);
+			if (!$state->{interrupted} && $plist->has(INSTALL)) {
+				$plist->get(INSTALL)->run($state, 'POST-INSTALL');
+			}
+		} catchall {
+			unless ($state->{interrupted}) {
+				Warn $_;
+				$errors++;
+			}
+		};
+		$state->progress->next;
 
-	unlink($plist->infodir.CONTENTS);
-	if ($state->{interrupted} || $errors) {
-		Fatal partial_install("Installation of $pkgname failed",
-		    $set, $state);
+		unlink($plist->infodir.CONTENTS);
+		if ($state->{interrupted} || $errors) {
+			Fatal partial_install("Installation of $pkgname failed",
+			    $set, $state);
+		}
 	}
-	OpenBSD::SharedLibs::add_libs_from_plist($plist);
-	OpenBSD::Add::tweak_plist_status($plist, $state);
-	$plist->to_cache;
-	OpenBSD::Add::register_installation($plist);
-	$set->{solver}->register_dependencies($state);
-	add_installed($pkgname);
-	delete $handle->{partial};
-	OpenBSD::PkgCfl::register($plist, $state);
-	if ($plist->has(DISPLAY)) {
-		$plist->get(DISPLAY)->prepare($state);
+	for my $handle ($set->newer) {
+		my $pkgname = $handle->{pkgname};
+		my $plist = $handle->{plist};
+		OpenBSD::SharedLibs::add_libs_from_plist($plist);
+		OpenBSD::Add::tweak_plist_status($plist, $state);
+		$plist->to_cache;
+		OpenBSD::Add::register_installation($plist);
+		$set->{solver}->register_dependencies($state);
+		add_installed($pkgname);
+		delete $handle->{partial};
+		OpenBSD::PkgCfl::register($plist, $state);
+		if ($plist->has(DISPLAY)) {
+			$plist->get(DISPLAY)->prepare($state);
+		}
 	}
 	$set->{solver}->adjust_old_dependencies($state);
 	if ($state->{repairdependencies}) {
