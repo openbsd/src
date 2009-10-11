@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.74 2009/09/07 20:39:55 landry Exp $
+# $OpenBSD: pkg_info,v 1.75 2009/10/11 18:15:08 espie Exp $
 #
-# Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -226,7 +226,7 @@ sub find_by_path
 }
 
 our ($opt_c, $opt_C, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, 
-    $opt_L, $opt_m, $opt_Q, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h,
+    $opt_L, $opt_Q, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h,
     $opt_l, $opt_a, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P, $opt_t);
 my $terse = 0;
 my $exit_code = 0;
@@ -418,7 +418,7 @@ if ($opt_D) {
 }
 
 unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || $opt_i ||
-	$opt_k || $opt_L || $opt_m || $opt_R || $opt_r || $opt_s || 
+	$opt_k || $opt_L || $opt_R || $opt_r || $opt_s || 
 	$opt_S || $opt_P || $terse) {
 	if (@ARGV == 0) {
 		$opt_I = $opt_a = 1;
@@ -443,7 +443,7 @@ if ($opt_Q) {
 
 if ($opt_v) {
 	$opt_c = $opt_d = $opt_f = $opt_i = $opt_k = $opt_r = $opt_M =
-	    $opt_U = $opt_m = $opt_R = $opt_s = $opt_S = 1;
+	    $opt_U = $opt_R = $opt_s = $opt_S = 1;
 }
 
 if (!defined $opt_l) {
