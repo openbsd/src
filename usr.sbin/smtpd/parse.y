@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2009/09/16 20:22:18 jacekm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.40 2009/10/11 17:40:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -119,7 +119,7 @@ typedef struct {
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
-%token	ARROW ENABLE AUTH TLS LOCAL
+%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
@@ -641,6 +641,25 @@ condition	: NETWORK mapref		{
 			c->c_map = $2;
 			$$ = c;
 		}
+		| VIRTUAL MAP STRING		{
+			struct cond	*c;
+			struct map	*m;
+
+			if ((m = map_findbyname(conf, $3)) == NULL) {
+				yyerror("no such map: %s", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
+			m->m_flags |= F_USED;
+
+
+			if ((c = calloc(1, sizeof *c)) == NULL)
+				fatal("out of memory");
+			c->c_type = C_VDOM;
+			c->c_map = m->m_id;
+			$$ = c;
+		}
 		| LOCAL {
 			struct cond	*c;
 			struct map	*m;
@@ -934,6 +953,7 @@ lookup(char *s)
 		{ "to",			TO },
 		{ "type",		TYPE },
 		{ "via",		VIA },
+		{ "virtual",		VIRTUAL },
 	};
 	const struct keywords	*p;
 

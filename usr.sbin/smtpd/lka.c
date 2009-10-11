@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.65 2009/10/07 18:09:12 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.66 2009/10/11 17:40:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -61,8 +61,6 @@ int		lka_resolve_alias(struct smtpd *, struct path *, struct alias *);
 int		lka_parse_include(char *);
 int		lka_check_source(struct smtpd *, struct map *, struct sockaddr_storage *);
 int		lka_match_mask(struct sockaddr_storage *, struct netaddr *);
-int		aliases_virtual_get(struct smtpd *, struct aliaseslist *, struct path *);
-int		aliases_virtual_exist(struct smtpd *, struct path *);
 int		lka_resolve_path(struct smtpd *, struct path *);
 void		lka_expand_rcpt(struct smtpd *, struct aliaseslist *, struct lkasession *);
 int		lka_expand_rcpt_iteration(struct smtpd *, struct aliaseslist *, struct lkasession *);
@@ -420,7 +418,8 @@ lka_dispatch_mfa(int sig, short event, void *p)
 				ret = aliases_get(env, &lkasession->aliaseslist, lkasession->path.user);
 			}
 			else if (lkasession->path.flags & F_PATH_VIRTUAL) {
-				ret = aliases_virtual_get(env, &lkasession->aliaseslist, &lkasession->path);
+				ret = aliases_virtual_get(env, lkasession->path.cond->c_match,
+				    &lkasession->aliaseslist, &lkasession->path);
 			}
 			else
 				fatal("lka_dispatch_mfa: path with illegal flag");
@@ -993,7 +992,9 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 	struct alias *rmalias = NULL;
 	struct alias *alias;
 	struct forward_req fwreq;
+	struct path *lkasessionpath;
 
+	lkasessionpath = &lkasession->path;
 	rmalias = NULL;
 	TAILQ_FOREACH(alias, aliases, entry) {
 		if (rmalias) {
@@ -1003,7 +1004,7 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 		}
 		
 		if (alias->type == ALIAS_ADDRESS) {
-			if (aliases_virtual_get(env, aliases, &alias->u.path)) {
+			if (aliases_virtual_get(env, lkasessionpath->cond->c_match, aliases, &alias->u.path)) {
 				rmalias = alias;
 				done = 0;
 			}
@@ -1043,34 +1044,44 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 int
 lka_resolve_path(struct smtpd *env, struct path *path)
 {
-	char username[MAXLOGNAME];
-	struct passwd *pw;
-	char *p;
+	switch (path->cond->c_type) {
+	case C_DOM: {
+		char username[MAXLOGNAME];
+		struct passwd *pw;
 
-	(void)strlcpy(username, path->user, sizeof(username));
+		lowercase(username, path->user, sizeof(username));
+		if (aliases_exist(env, username)) {
+			path->flags |= F_PATH_ALIAS;
+			return 1;
+		}
 
-	for (p = &username[0]; *p != '\0' && *p != '+'; ++p)
-		*p = tolower((int)*p);
-	*p = '\0';
-
-	if (aliases_virtual_exist(env, path))
-		path->flags |= F_PATH_VIRTUAL;
-	else if (aliases_exist(env, username))
-		path->flags |= F_PATH_ALIAS;
-	else {
 		path->flags |= F_PATH_ACCOUNT;
 		pw = getpwnam(username);
 		if (pw == NULL)
-			return 0;
+			break;
+
 		(void)strlcpy(path->pw_name, pw->pw_name,
 		    sizeof(path->pw_name));
 		if (lka_expand(path->rule.r_value.path,
-		    sizeof(path->rule.r_value.path), path) >=
+			sizeof(path->rule.r_value.path), path) >=
 		    sizeof(path->rule.r_value.path))
-			return 0;
+			break;
+
+		return 1;
+	}
+	case C_VDOM: {
+
+		if (aliases_virtual_exist(env, path->cond->c_match, path)) {
+			path->flags |= F_PATH_VIRTUAL;
+			return 1;
+		}
+		break;
+	}
+	default:
+		fatalx("lka_resolve_path: unexpected type");
 	}
 
-	return 1;
+	return 0;
 }
 
 void

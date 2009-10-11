@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.2 2009/10/07 13:29:40 jacekm Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.3 2009/10/11 17:40:49 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -67,8 +67,21 @@ ruleset_match(struct smtpd *env, struct path *path, struct sockaddr_storage *ss)
 				map = cond->c_match;
 				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
 					if (hostname_match(path->domain, me->me_key.med_string)) {
+						path->cond = cond;
 						return r;
 					}
+				}
+			}
+
+			if (cond->c_type == C_VDOM) {
+				cond->c_match = map_find(env, cond->c_map);
+				if (cond->c_match == NULL)
+					fatal("failed to lookup map.");
+
+				map = cond->c_match;
+				if (aliases_vdomain_exists(env, map, path->domain)) {
+					path->cond = cond;
+					return r;
 				}
 			}
 		}

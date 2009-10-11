@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.19 2009/08/08 00:02:22 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.20 2009/10/11 17:40:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -136,18 +136,46 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 }
 
 int
-aliases_virtual_exist(struct smtpd *env, struct path *path)
+aliases_vdomain_exists(struct smtpd *env, struct map *map, char *hostname)
+{
+	int	ret;
+	DBT	key;
+	DBT	val;
+	DB     *vtable;
+	char	strkey[MAX_LINE_SIZE];
+
+	vtable = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
+	if (vtable == NULL) {
+		log_warn("aliases_vdomain_exists: dbopen");
+		return 0;
+	}
+
+	if (! bsnprintf(strkey, sizeof(strkey), "%s", hostname)) {
+		vtable->close(vtable);
+		return 0;
+	}
+	lowercase(strkey, strkey, sizeof(strkey));
+
+	key.data = strkey;
+	key.size = strlen(key.data) + 1;
+
+	ret = vtable->get(vtable, &key, &val, 0);
+	if (ret == -1)
+		log_warn("aliases_vdomain_exists");
+
+	vtable->close(vtable);
+
+	return (ret == 0);
+}
+
+int
+aliases_virtual_exist(struct smtpd *env, struct map *map, struct path *path)
 {
 	int ret;
 	DBT key;
 	DBT val;
 	DB *aliasesdb;
-	struct map *map;
 	char	strkey[MAX_LINE_SIZE];
-
-	map = map_findbyname(env, "virtual");
-	if (map == NULL)
-		return 0;
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL) {
@@ -190,8 +218,8 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 }
 
 int
-aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
-	struct path *path)
+aliases_virtual_get(struct smtpd *env, struct map *map,
+    struct aliaseslist *aliases, struct path *path)
 {
 	int ret;
 	DBT key;
@@ -201,12 +229,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	struct alias alias;
 	struct alias *aliasp;
 	struct alias *nextalias;
-	struct map *map;
 	char	strkey[MAX_LINE_SIZE];
-
-	map = map_findbyname(env, "virtual");
-	if (map == NULL)
-		return 0;
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL) {

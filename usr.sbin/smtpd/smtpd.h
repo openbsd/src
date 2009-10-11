@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.145 2009/10/07 18:09:12 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.146 2009/10/11 17:40:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -284,7 +284,8 @@ struct map {
 enum cond_type {
 	C_ALL,
 	C_NET,
-	C_DOM
+	C_DOM,
+	C_VDOM
 };
 
 struct cond {
@@ -345,6 +346,7 @@ enum path_flags {
 struct path {
 	TAILQ_ENTRY(path)		 entry;
 	struct rule			 rule;
+	struct cond			*cond;
 	enum path_flags			 flags;
 	u_int8_t			 forwardcnt;
 	char				 user[MAX_LOCALPART_SIZE];
@@ -765,8 +767,9 @@ struct mta_session {
 /* aliases.c */
 int aliases_exist(struct smtpd *, char *);
 int aliases_get(struct smtpd *, struct aliaseslist *, char *);
-int aliases_virtual_exist(struct smtpd *, struct path *);
-int aliases_virtual_get(struct smtpd *, struct aliaseslist *, struct path *);
+int aliases_vdomain_exists(struct smtpd *, struct map *, char *);
+int aliases_virtual_exist(struct smtpd *, struct map *, struct path *);
+int aliases_virtual_get(struct smtpd *, struct map *, struct aliaseslist *, struct path *);
 int alias_parse(struct alias *, char *);
 
 /* authenticate.c */

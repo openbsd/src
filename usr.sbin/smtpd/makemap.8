@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.9 2009/09/25 13:44:33 jmc Exp $
+.\"	$OpenBSD: makemap.8,v 1.10 2009/10/11 17:40:49 gilles Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chechade <gilles@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 25 2009 $
+.Dd $Mdocdate: October 11 2009 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -74,19 +74,21 @@ virtual domains files.
 .El
 .Ex -std makemap
 .Sh VIRTUAL DOMAINS
-Virtual domains are kept in the virtual map.
+Virtual domains are kept in maps.
 To create single virtual address, add
-.Dq user@example.com
+.Dq user@example.com	user
 to the virtual map.
 To handle all mail destined to any user at example.com, add
-.Dq @example.com
+.Dq @example.com	user
 to the virtual map.
 .Pp
 In addition to adding an entry to the virtual map,
-one must add a filter rule that accepts mail for the virtual domain,
+one must add a filter rule that accepts mail for virtual domains,
 for example:
 .Bd -literal -offset indent
-accept for domain "example.com" deliver to mbox
+map "vdomains" { source db "/etc/mail/vdomains.db" }
+
+accept for virtual map "vdomains" deliver to mbox
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/mail/aliasesXXX" -compact
