@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.81 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: Delete.pm,v 1.82 2009/10/11 11:01:44 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -115,6 +115,7 @@ sub delete_package
 	OpenBSD::Vstat::synchronize();
 
 	delete_plist($plist, $state);
+	$state->progress->next;
 }
 
 sub unregister_dependencies
@@ -147,7 +148,6 @@ sub delete_plist
 	$plist->register_manpage($state);
 	manpages_unindex($state);
 	$plist->delete_and_progress($state, \$donesize, $totsize);
-	$state->progress->next;
 	if ($plist->has(UNDISPLAY)) {
 		$plist->get(UNDISPLAY)->prepare($state);
 	}

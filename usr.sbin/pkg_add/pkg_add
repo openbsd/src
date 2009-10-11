@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.337 2009/10/11 10:49:05 espie Exp $
+# $OpenBSD: pkg_add,v 1.338 2009/10/11 11:01:44 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -448,7 +448,7 @@ sub really_add
 				$errors++;
 			}
 		};
-		$state->progress->next;
+		$state->progress->clear;
 		if ($state->{interrupted} || $errors) {
 			Fatal partial_install("Installation of $pkgname failed",
 			    $set, $state);
@@ -473,6 +473,7 @@ sub really_add
 				delete $state->{updatedepends}->{$oldname};
 			}
 			OpenBSD::PkgCfl::unregister($o->{plist}, $state);
+			$state->progress->clear;
 		}
 		# Here there should be code to handle old libs
 
