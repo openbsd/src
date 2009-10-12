@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.268 2009/10/08 09:27:56 sthen Exp $ */
+/*	$OpenBSD: rde.c,v 1.269 2009/10/12 13:14:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2750,6 +2750,9 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 			else
 				rib_dump(&ribs[peer->ribid], rde_up_dump_upcall,
 				    peer, AF_INET);
+			if (peer->capa_received.restart &&
+			    peer->capa_announced.restart)
+				peer_send_eor(peer, AFI_IPv4, SAFI_UNICAST);
 		}
 	if (afi == AFI_ALL || afi == AFI_IPv6)
 		if (safi == SAFI_ALL || safi == SAFI_UNICAST) {
@@ -2758,10 +2761,10 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 			else
 				rib_dump(&ribs[peer->ribid], rde_up_dump_upcall,
 				    peer, AF_INET6);
+			if (peer->capa_received.restart &&
+			    peer->capa_announced.restart)
+				peer_send_eor(peer, AFI_IPv6, SAFI_UNICAST);
 		}
-
-	if (peer->capa_received.restart && peer->capa_announced.restart)
-		peer_send_eor(peer, afi, safi);
 }
 
 /* End-of-RIB marker, RFC 4724 */
