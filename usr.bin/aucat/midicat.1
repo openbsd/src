@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.4 2009/10/05 07:05:24 ratchov Exp $
+.\"	$OpenBSD: midicat.1,v 1.5 2009/10/12 17:32:33 sobrado Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 5 2009 $
+.Dd $Mdocdate: October 12 2009 $
 .Dt MIDICAT 1
 .Os
 .Sh NAME
@@ -39,6 +39,12 @@ or to another application in a uniform way.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl d
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground and log to
+.Em stderr .
 .It Fl f Ar device
 The
 .Xr midi 4
@@ -46,12 +52,6 @@ device or
 .Nm
 socket to use for MIDI input/output.
 In server mode, devices are subscribed to the MIDI thru box.
-.It Fl d
-Do not daemonize.
-If this option is specified,
-.Nm
-will run in the foreground and log to
-.Em stderr .
 .It Fl i Ar file
 Send contents of this file to the device.
 If the option argument is
