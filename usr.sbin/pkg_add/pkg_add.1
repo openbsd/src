@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.80 2009/10/11 22:08:27 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.81 2009/10/12 05:17:33 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 11 2009 $
+.Dd $Mdocdate: October 12 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -28,8 +28,8 @@
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl F Ar keywords
-.Op Fl l Ar file
 .Op Fl L Ar localbase
+.Op Fl l Ar file
 .Op Fl P Ar type
 .Op Fl Q Ar quick-destdir
 .Ar pkg-name Op Ar ...
@@ -278,18 +278,6 @@ If scripts exist for a given package, do not execute them.
 Switch on interactive mode.
 .Nm
 may ask questions to the user if faced with difficult decisions.
-.It Fl l Ar file
-installs packages from the raw output of
-.Xr pkg_info 1 ,
-as saved in 
-.Ar file .
-Generally, use with
-.Li pkg_info >file ,
-to reproduce an installation from machine to machine.
-.Fl l
-will try its best to reproduce the installation, even if the
-version numbers don't quite match and even if some packages cannot
-be found.
 .It Fl L Ar localbase
 Install a package under
 .Ar localbase .
@@ -310,6 +298,18 @@ See
 .Xr bsd.port.mk 5
 for a description of
 .Ev LOCALBASE .
+.It Fl l Ar file
+Installs packages from the raw output of
+.Xr pkg_info 1 ,
+as saved in
+.Ar file .
+Generally, use with
+.Li pkg_info \*(Gtfile ,
+to reproduce an installation from machine to machine.
+.Fl l
+will try its best to reproduce the installation, even if the
+version numbers don't quite match and even if some packages cannot
+be found.
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
@@ -376,13 +376,13 @@ Several
 turn on more verbose output.
 .It Fl x
 Disable progress-meter.
-.El
 .It Fl z
 Fuzzy package addition:
 .Nm
 should do its best to match package names passed on the command line,
-even if the versions don't match and it will proceed even if 
+even if the versions don't match and it will proceed even if
 some packages can't be found.
+.El
 .Pp
 By default, when adding packages via FTP, the
 .Xr ftp 1
