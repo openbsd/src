@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.69 2009/10/12 10:57:27 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.70 2009/10/12 11:35:20 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -126,14 +126,16 @@ sub find_elsewhere
 {
 	my ($self, $solver, $state, $obj) = @_;
 
-	for my $dep (@{$solver->{plist}->{depend}}) {
-		my $r = $solver->find_old_lib($state, 
-		    $solver->{localbase}, $dep->{pattern}, $obj);
-		if ($r) {
-			print "found libspec $obj in old package $r\n" if $state->{verbose};
-			return $r;
+	for my $n ($solver->{set}->newer) {
+		for my $dep (@{$n->{plist}->{depend}}) {
+			my $r = $solver->find_old_lib($state, 
+			    $solver->{localbase}, $dep->{pattern}, $obj);
+			if ($r) {
+				print "found libspec $obj in old package $r\n" if $state->{verbose};
+				return $r;
+			}
 		}
-    	}
+	}
 	return undef;
 }
 
@@ -326,9 +328,11 @@ sub solve_depends
 
 	$self->add_todo(@extra);
 
-	for my $dep (@{$self->{plist}->{depend}}) {
-		my $v = $self->solve_dependency($state, $dep);
-		$self->{to_register}->{$v} = $dep;
+	for my $package ($self->{set}->newer) {
+		for my $dep (@{$package->{plist}->{depend}}) {
+			my $v = $self->solve_dependency($state, $dep);
+			$self->{to_register}->{$v} = $dep;
+		}
 	}
 
 	return @{$self->{deplist}};
