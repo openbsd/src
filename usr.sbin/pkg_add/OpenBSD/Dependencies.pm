@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.70 2009/10/12 11:35:20 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.71 2009/10/12 11:57:36 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -219,12 +219,6 @@ sub has_dep
 	return $self->{to_register}->{$dep};
 }
 
-sub pkgname
-{
-	my $self = shift;
-	return $self->{plist}->pkgname;
-}
-
 sub add_todo
 {
 	my ($self, @extra) = @_;
@@ -264,7 +258,7 @@ sub find_dep_in_repositories
 		@pkgs = ((grep {$_ eq $dep->{def}} @pkgs),
 		    (sort (grep {$_ ne $dep->{def}} @pkgs)));
 		my $good =  OpenBSD::Interactive::ask_list(
-		    'Ambiguous: choose dependency for '.$self->pkgname.': ',
+		    'Ambiguous: choose dependency for '.$self->{set}->short_print.': ',
 		    $state->{interactive}, @pkgs);
 		return $c{$good};
 	} else {
@@ -353,8 +347,8 @@ sub dump
 {
 	my $self = shift;
 	if ($self->dependencies) {
-	    print "Dependencies for ", $self->pkgname, " resolve to: ", 
-	    	join(', ',  $self->dependencies);
+	    print "Dependencies for ", $self->{set}->short_print, 
+	    	" resolve to: ", join(', ',  $self->dependencies);
 	    print " (todo: ", 
 	    	join(',', (map {$_->handle->{pkgname}} @{$self->{deplist}})), 
 		")" 
@@ -368,7 +362,7 @@ sub register_dependencies
 	my ($self, $state) = @_;
 
 	require OpenBSD::RequiredBy;
-	my $pkgname = $self->pkgname;
+	my $pkgname = $self->{set}->handle->{pkgname};
 	my @l = $self->dependencies;
 
 	OpenBSD::Requiring->new($pkgname)->add(@l);
