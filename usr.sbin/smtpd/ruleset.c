@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.3 2009/10/11 17:40:49 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.4 2009/10/12 18:14:51 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -56,8 +56,10 @@ ruleset_match(struct smtpd *env, struct path *path, struct sockaddr_storage *ss)
 			continue;
 
 		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
-			if (cond->c_type == C_ALL)
+			if (cond->c_type == C_ALL) {
+				path->cond = cond;
 				return r;
+			}
 
 			if (cond->c_type == C_DOM) {
 				cond->c_match = map_find(env, cond->c_map);
