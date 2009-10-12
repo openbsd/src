@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.70 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.71 2009/10/12 22:34:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,6 +55,9 @@ int		queue_record_layout_envelope(char *, struct message *);
 int		queue_remove_layout_envelope(char *, struct message *);
 int		queue_commit_layout_message(char *, struct message *);
 int		queue_open_layout_messagefile(char *, struct message *);
+
+void		queue_submit_envelope(struct smtpd *, struct message *);
+void	        queue_commit_envelopes(struct smtpd *, struct message*);
 
 void
 queue_sig_handler(int sig, short event, void *p)
@@ -410,8 +413,8 @@ queue_dispatch_lka(int sig, short event, void *p)
 			messagep->id = queue_generate_id();
 			ss.id = messagep->session_id;
 
-			if (IS_MAILBOX(messagep->recipient.rule.r_action) ||
-			    IS_EXT(messagep->recipient.rule.r_action))
+			if (IS_MAILBOX(messagep->recipient) ||
+			    IS_EXT(messagep->recipient))
 				messagep->type = T_MDA_MESSAGE;
 			else
 				messagep->type = T_MTA_MESSAGE;
@@ -611,4 +614,20 @@ queue_purge(char *queuepath)
 		queue_delete_layout_message(queuepath, basename(path));
 
 	qwalk_close(q);
+}
+
+void
+queue_submit_envelope(struct smtpd *env, struct message *message)
+{
+	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+	    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
+	    message, sizeof(struct message));
+}
+
+void
+queue_commit_envelopes(struct smtpd *env, struct message *message)
+{
+	imsg_compose_event(env->sc_ievs[PROC_QUEUE],
+	    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1,
+	    message, sizeof(struct message));
 }

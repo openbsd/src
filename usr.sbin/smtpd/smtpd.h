@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.146 2009/10/11 17:40:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.147 2009/10/12 22:34:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -314,9 +314,10 @@ enum action_type {
 	A_FILENAME,
 	A_EXT
 };
-#define IS_MAILBOX(x)	((x) == A_MAILDIR || (x) == A_MBOX || (x) == A_FILENAME)
-#define IS_RELAY(x)	((x) == A_RELAY || (x) == A_RELAYVIA)
-#define IS_EXT(x)	((x) == A_EXT)
+
+#define IS_MAILBOX(x)	((x).rule.r_action == A_MAILDIR || (x).rule.r_action == A_MBOX || (x).rule.r_action == A_FILENAME)
+#define IS_RELAY(x)	((x).rule.r_action == A_RELAY || (x).rule.r_action == A_RELAYVIA)
+#define IS_EXT(x)	((x).rule.r_action == A_EXT)
 
 struct rule {
 	TAILQ_ENTRY(rule)		 r_entry;

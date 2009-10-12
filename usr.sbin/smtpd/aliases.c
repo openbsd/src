@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.20 2009/10/11 17:40:49 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.21 2009/10/12 22:34:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -144,6 +144,9 @@ aliases_vdomain_exists(struct smtpd *env, struct map *map, char *hostname)
 	DB     *vtable;
 	char	strkey[MAX_LINE_SIZE];
 
+	if (map == NULL)
+		return 0;
+
 	vtable = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (vtable == NULL) {
 		log_warn("aliases_vdomain_exists: dbopen");
@@ -176,6 +179,9 @@ aliases_virtual_exist(struct smtpd *env, struct map *map, struct path *path)
 	DBT val;
 	DB *aliasesdb;
 	char	strkey[MAX_LINE_SIZE];
+
+	if (map == NULL)
+		return 0;
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL) {
@@ -230,6 +236,9 @@ aliases_virtual_get(struct smtpd *env, struct map *map,
 	struct alias *aliasp;
 	struct alias *nextalias;
 	char	strkey[MAX_LINE_SIZE];
+
+	if (map == NULL)
+		return 0;
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL) {

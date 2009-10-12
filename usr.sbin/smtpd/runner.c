@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.67 2009/09/04 19:11:32 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.68 2009/10/12 22:34:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -982,8 +982,7 @@ batch_record(struct smtpd *env, struct message *messagep)
 		    sizeof(batchp->hostname));
 
 		if (batchp->type != T_BOUNCE_BATCH) {
-			if (IS_MAILBOX(path->rule.r_action) ||
-			    IS_EXT(path->rule.r_action)) {
+			if (IS_MAILBOX(*path) || IS_EXT(*path)) {
 				batchp->type = T_MDA_BATCH;
 			}
 			else {

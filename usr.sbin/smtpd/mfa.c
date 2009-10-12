@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.40 2009/10/07 18:19:39 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.41 2009/10/12 22:34:37 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -434,6 +434,7 @@ mfa_test_rcpt(struct smtpd *env, struct message *m)
 	ss.u.path = m->session_rcpt;
 	ss.ss = m->session_ss;
 	ss.msg = *m;
+	ss.msg.recipient = m->session_rcpt;
 	ss.flags = m->flags;
 
 	strip_source_route(ss.u.path.user, sizeof(ss.u.path.user));
