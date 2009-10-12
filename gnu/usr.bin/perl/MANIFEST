@@ -1027,7 +1027,6 @@ ext/Module-Pluggable/t/acme/Acme/MyTest/Plugin/Foo.pm	Module::Pluggable tests
 ext/Module-Pluggable/t/lib/Acme/Foo-Bar.pm			Module::Pluggable tests
 ext/Module-Pluggable/t/lib/Acme/MyTest/Plugin/Foo.pm	Module::Pluggable tests
 ext/Module-Pluggable/t/lib/EditorJunk/Plugin/Bar.pm		Module::Pluggable tests
-ext/Module-Pluggable/t/lib/EditorJunk/Plugin/Bar.pm~	Module::Pluggable tests
 ext/Module-Pluggable/t/lib/EditorJunk/Plugin/Bar.pm.swo	Module::Pluggable tests
 ext/Module-Pluggable/t/lib/EditorJunk/Plugin/Bar.pm.swp	Module::Pluggable tests
 ext/Module-Pluggable/t/lib/EditorJunk/Plugin/Foo.pm		Module::Pluggable tests
