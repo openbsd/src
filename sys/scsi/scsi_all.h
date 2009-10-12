@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.46 2008/06/02 15:43:59 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.47 2009/10/12 00:30:15 dlg Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ struct scsi_vpd_serial {
 
 struct scsi_vpd_devid_hdr {
 	u_int8_t pi_code;
-#define VPD_DEVID_PI(_f)	(((_f) >> 4) & 0xf0)
+#define VPD_DEVID_PI(_f)	(((_f) >> 4) & 0x0f)
 #define VPD_DEVID_CODE(_f)	(((_f) >> 0) & 0x0f)
 #define VPD_DEVID_CODE_BINARY		0x1
 #define VPD_DEVID_CODE_ASCII		0x2
