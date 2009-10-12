@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.20 2009/08/08 00:02:22 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.21 2009/10/12 18:19:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -221,8 +221,11 @@ parse_entry(char *line, size_t len, size_t lineno)
 {
 	DBT	 key;
 	DBT	 val;
+	DBT	 domkey;
+	DBT	 domval;
 	char	*keyp;
 	char	*valp;
+	char	*domp;
 
 	keyp = line;
 	while (isspace((int)*keyp))
@@ -259,6 +262,22 @@ parse_entry(char *line, size_t len, size_t lineno)
 		warn("dbput");
 		return 0;
 	}
+
+	/* add key for domain */
+	if ((domp = strrchr(key.data, '@')) != NULL) {
+		domkey.data = domp + 1;
+		domkey.size = strlen(domkey.data) + 1;
+
+		domval.data  = "<empty>";
+		domval.size = strlen(domval.data) + 1;
+
+		if (db->put(db, &domkey, &domval, 0) == -1) {
+			warn("dbput");
+			return 0;
+		}
+	}
+	
+
 	dbputs++;
 
 	free(val.data);
