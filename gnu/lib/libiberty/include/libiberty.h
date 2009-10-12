@@ -342,6 +342,28 @@ extern void hex_init (void);
    the argument being performed exactly once.  */
 #define hex_value(c)	((unsigned int) _hex_value[(unsigned char) (c)])
 
+/* Flags for pex_init.  These are bits to be or'ed together.  */
+
+/* Record subprocess times, if possible.  */
+#define PEX_RECORD_TIMES	0x1
+
+/* Use pipes for communication between processes, if possible.  */
+#define PEX_USE_PIPES		0x2
+   
+/* Save files used for communication between processes.  */
+#define PEX_SAVE_TEMPS		0x4
+
+/* Prepare to execute one or more programs, with standard output of
+   each program fed to standard input of the next.
+   FLAGS        As above.
+   PNAME        The name of the program to report in error messages. 
+   TEMPBASE     A base name to use for temporary files; may be NULL to
+                use a random name.
+   Returns NULL on error.  */
+                
+extern struct pex_obj *pex_init (int flags, const char *pname,
+		const char *tempbase);
+
 /* Definitions used by the pexecute routine.  */
 
 #define PEXECUTE_FIRST   1
@@ -349,6 +371,44 @@ extern void hex_init (void);
 #define PEXECUTE_ONE     (PEXECUTE_FIRST + PEXECUTE_LAST)
 #define PEXECUTE_SEARCH  4
 #define PEXECUTE_VERBOSE 8
+
+/* Last program in pipeline.  Standard output of program goes to
+   OUTNAME, or, if OUTNAME is NULL, to standard output of caller.  Do
+   not set this if you want to call pex_read_output.  After this is
+   set, pex_run may no longer be called with the same struct
+   pex_obj.  */
+#define PEX_LAST	 0x1
+
+/* Search for program in executable search path.  */
+#define PEX_SEARCH	 0x2
+
+/* OUTNAME is a suffix.  */
+#define PEX_SUFFIX	 0x4
+
+/* Send program's standard error to standard output.  */
+#define PEX_STDERR_TO_STDOUT	0x8
+   
+/* Input file should be opened in binary mode.  This flag is ignored
+   on Unix.  */
+#define PEX_BINARY_INPUT 0x10
+
+/* Output file should be opened in binary mode.  This flag is ignored
+   on Unix.  For proper behaviour PEX_BINARY_INPUT and
+   PEX_BINARY_OUTPUT have to match appropriately--i.e., a call using
+   PEX_BINARY_OUTPUT should be followed by a call using
+   PEX_BINARY_INPUT.  */
+#define PEX_BINARY_OUTPUT	0x20
+
+/* Prepare to execute one or more programs, with standard output of
+   each program fed to standard input of the next.
+   FLAGS        As above.
+   PNAME        The name of the program to report in error messages.
+   TEMPBASE     A base name to use for temporary files; may be NULL to
+                use a random name.
+   Returns NULL on error.  */
+
+extern struct pex_obj *pex_init (int flags, const char *pname,
+				const char *tempbase);
 
 /* Execute a program.  */
 
@@ -358,6 +418,14 @@ extern int pexecute (const char *, char * const *, const char *,
 /* Wait for pexecute to finish.  */
 
 extern int pwait (int, int *, int);
+
+struct pex_time
+{
+  unsigned long user_seconds;
+  unsigned long user_microseconds;
+  unsigned long system_seconds;
+  unsigned long system_microseconds;
+};
 
 #if !HAVE_DECL_ASPRINTF
 /* Like sprintf but provides a pointer to malloc'd storage, which must

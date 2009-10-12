@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2008/05/27 18:52:40 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 2009/10/12 22:32:19 robert Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR)/src -I$(.CURDIR)/include -I$(.OBJDIR)
@@ -11,15 +11,15 @@ HOST_FILES!=	cat $(.OBJDIR)/needed-list 2>/dev/null||true
 
 # XXX remove oldhashtab.c once gcc 2.95 is no longer used
 SRCS=		argv.c choose-temp.c concat.c cplus-dem.c cp-demangle.c \
-		dyn-string.c \
-		fdmatch.c getopt.c getopt1.c getpwd.c getruntime.c \
+		dyn-string.c fdmatch.c fopen_unlocked.c \
+		getopt.c getopt1.c getpwd.c getruntime.c \
 		hashtab.c hex.c fibheap.c partition.c \
 		floatformat.c make-temp-file.c make-relative-prefix.c \
-		objalloc.c obstack.c oldhashtab.c \
-		pexecute.c regex.c safe-ctype.c spaces.c splay-tree.c \
+		md5.c objalloc.c obstack.c oldhashtab.c pex-common.c \
+		pex-unix.c pexecute.c regex.c safe-ctype.c spaces.c splay-tree.c \
 		strerror.c strsignal.c strverscmp.c \
 		xatexit.c xexit.c xmalloc.c xmemdup.c xstrerror.c xstrdup.c \
-		physmem.c lbasename.c lrealpath.c \
+		physmem.c lbasename.c lrealpath.c unlink-if-ordinary.c \
 		$(HOST_FILES)
 
 # XXX -- These files are generated during the PREREQ variable assignment.
