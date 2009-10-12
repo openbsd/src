@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.269 2009/10/12 13:14:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.270 2009/10/12 15:19:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2744,7 +2744,8 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 	}
 
 	if (afi == AFI_ALL || afi == AFI_IPv4)
-		if (safi == SAFI_ALL || safi == SAFI_UNICAST) {
+		if ((safi == SAFI_ALL || safi == SAFI_UNICAST) &&
+		    peer->conf.capabilities.mp_v4 != SAFI_NONE) {
 			if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(rules_l, peer, AF_INET);
 			else
@@ -2755,7 +2756,9 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 				peer_send_eor(peer, AFI_IPv4, SAFI_UNICAST);
 		}
 	if (afi == AFI_ALL || afi == AFI_IPv6)
-		if (safi == SAFI_ALL || safi == SAFI_UNICAST) {
+		if ((safi == SAFI_ALL || safi == SAFI_UNICAST) &&
+		    peer->capa_announced.mp_v6 != SAFI_NONE &&
+		    peer->capa_received.mp_v6 != SAFI_NONE) {
 			if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(rules_l, peer, AF_INET6);
 			else
