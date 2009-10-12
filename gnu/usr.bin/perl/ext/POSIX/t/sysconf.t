@@ -48,8 +48,11 @@ plan $tests
      : (skip_all => "No tests to run on this OS")
 ;
 
-my $curdir = File::Spec->curdir;
-$curdir = VMS::Filespec::fileify($curdir) if $^O eq 'VMS';
+# Don't test on "." as it can be networked storage which returns EINVAL
+# Testing on "/" may not be portable to non-Unix as it may not be readable
+# "/tmp" should be readable and likely also local.
+my $testdir = File::Spec->tmpdir;
+$testdir = VMS::Filespec::fileify($testdir) if $^O eq 'VMS';
 
 my $r;
 
@@ -77,8 +80,9 @@ sub _check_and_report {
 
 # testing fpathconf() on a non-terminal file
 SKIP: {
-    my $fd = POSIX::open($curdir, O_RDONLY)
-        or skip "could not open current directory ($!)", 3 * @path_consts;
+    my $fd = POSIX::open($testdir, O_RDONLY)
+        or skip "could not open test directory '$testdir' ($!)",
+	  3 * @path_consts;
 
     for my $constant (@path_consts) {
 	    $! = 0;
@@ -92,8 +96,8 @@ SKIP: {
 # testing pathconf() on a non-terminal file
 for my $constant (@path_consts) {
 	$! = 0;
-        $r = eval { pathconf( $curdir, eval "$constant()" ) };
-        _check_and_report( $@, $r, qq[calling pathconf("$curdir", $constant)] );
+        $r = eval { pathconf( $testdir, eval "$constant()" ) };
+        _check_and_report( $@, $r, qq[calling pathconf("$testdir", $constant)] );
 }
 
 SKIP: {

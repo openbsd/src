@@ -86,17 +86,15 @@ other <strong>cool </strong></em>&gt; stuff &gt;&gt;</p>
 <h2><a name="new__"><code>new()</code></a></h2>
 <p>Constructor method.  Accepts the following config options:</p>
 <dl>
-<dt><strong><a name="foo" class="item">foo</a></strong>
+<dt><strong><a name="foo" class="item">foo</a></strong></dt>
 
 <dd>
 <p>The foo item.</p>
 </dd>
-</li>
-<dt><strong><a name="bar" class="item">bar</a></strong>
+<dt><strong><a name="bar" class="item">bar</a></strong></dt>
 
 <dd>
 <p>The bar item.</p>
-</dd>
 <p>This is a list within a list</p>
 <ul>
 <li>
@@ -106,30 +104,36 @@ other <strong>cool </strong></em>&gt; stuff &gt;&gt;</p>
 <p>The waz item.</p>
 </li>
 </ul>
-<dt><strong><a name="baz" class="item">baz</a></strong>
+</dd>
+<dt><strong><a name="baz" class="item">baz</a></strong></dt>
 
 <dd>
 <p>The baz item.</p>
 </dd>
-</li>
 </dl>
 <p>Title on the same line as the =item + * bullets</p>
 <ul>
 <li><strong><a name="black_cat" class="item"><code>Black</code> Cat</a></strong>
 
+</li>
 <li><strong><a name="sat_on_the" class="item">Sat <em>on</em>&nbsp;the</a></strong>
 
+</li>
 <li><strong><a name="mat" class="item">Mat&lt;!&gt;</a></strong>
 
+</li>
 </ul>
 <p>Title on the same line as the =item + numerical bullets</p>
 <ol>
 <li><strong><a name="cat" class="item">Cat</a></strong>
 
+</li>
 <li><strong><a name="sat" class="item">Sat</a></strong>
 
+</li>
 <li><strong><a name="mat2" class="item">Mat</a></strong>
 
+</li>
 </ol>
 <p>No bullets, no title</p>
 <dl>
@@ -137,17 +141,14 @@ other <strong>cool </strong></em>&gt; stuff &gt;&gt;</p>
 <dd>
 <p>Cat</p>
 </dd>
-</li>
 <dt>
 <dd>
 <p>Sat</p>
 </dd>
-</li>
 <dt>
 <dd>
 <p>Mat</p>
 </dd>
-</li>
 </dl>
 <p>
 </p>
@@ -157,7 +158,7 @@ other <strong>cool </strong></em>&gt; stuff &gt;&gt;</p>
 </p>
 <hr />
 <h1><a name="testing_for_and_begin">TESTING FOR AND BEGIN</a></h1>
-<br>
+<br />
 <p>
 blah blah
 </p><p>intermediate text</p>

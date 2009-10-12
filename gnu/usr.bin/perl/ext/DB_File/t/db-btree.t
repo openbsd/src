@@ -1472,7 +1472,7 @@ ok(165,1);
    $h{"fred"} = "joe" ;
    ok(173, $h{"fred"} eq "joe");
 
-   eval { grep { $h{$_} } (1, 2, 3) };
+   eval { my @r= grep { $h{$_} } (1, 2, 3) };
    ok (174, ! $@);
 
 
@@ -1488,7 +1488,7 @@ ok(165,1);
 
    ok(176, $db->FIRSTKEY() eq "fred") ;
    
-   eval { grep { $h{$_} } (1, 2, 3) };
+   eval { my @r= grep { $h{$_} } (1, 2, 3) };
    ok (177, ! $@);
 
    undef $db ;

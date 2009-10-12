@@ -27,11 +27,14 @@ BEGIN {
     $ENV{'PERL5LIB'}  = join $Config{'path_sep'}, 
                         grep { defined } $ENV{'PERL5LIB'}, @paths, @rel2abs;
     
-    ### add our own path to the front of $ENV{PATH}, so that cpanp-run-perl
-    ### and friends get picked up
-    $old_env_path = $ENV{PATH};
-    $ENV{'PATH'}  = join $Config{'path_sep'}, 
+    ### add CPANPLUS' bin dir to the front of $ENV{PATH}, so that cpanp-run-perl
+    ### and friends get picked up, only under PERL_CORE though.
+    if ( $ENV{PERL_CORE} ) {
+       $old_env_path = $ENV{PATH};
+       $ENV{'PATH'}  = join $Config{'path_sep'}, 
                     grep { defined } "$FindBin::Bin/../../../bin", $ENV{'PATH'};
+
+    }
 
     ### Fix up the path to perl, as we're about to chdir
     ### but only under perlcore, or if the path contains delimiters,
@@ -85,16 +88,135 @@ use File::Basename  qw[basename];
     $Locale::Maketext::Lexicon::VERSION = 0;
 }
 
-### clean up files for PERLCORE mostly -- make clean isn't invoked
-### there... otoh, we should clean up after ourselves anyway.
-END {
-    ### chdir to our own test dir, so we know all files are relative 
-    ### to this point, no matter whether run from perlcore tests or
-    ### regular CPAN installs
-    chdir "$FindBin::Bin" if -d "$FindBin::Bin";
+my $Env = 'PERL5_CPANPLUS_TEST_VERBOSE';
 
-    ### XXX hardcoded
-    _clean_test_dir( [qw|dummy-perl dummy-cpanplus| ] );
+# prereq has to be in our package file && core!
+use constant TEST_CONF_PREREQ           => 'Cwd';   
+use constant TEST_CONF_MODULE           => 'Foo::Bar::EU::NOXS';
+use constant TEST_CONF_MODULE_SUB       => 'Foo::Bar::EU::NOXS::Sub';
+use constant TEST_CONF_AUTHOR           => 'EUNOXS';
+use constant TEST_CONF_INST_MODULE      => 'Foo::Bar';
+use constant TEST_CONF_INVALID_MODULE   => 'fnurk';
+use constant TEST_CONF_MIRROR_DIR       => 'dummy-localmirror';
+use constant TEST_CONF_CPAN_DIR         => 'dummy-CPAN';
+use constant TEST_CONF_CPANPLUS_DIR     => 'dummy-cpanplus';
+use constant TEST_CONF_INSTALL_DIR      => File::Spec->rel2abs(
+                                                File::Spec->catdir(      
+                                                    TEST_CONF_CPANPLUS_DIR,
+                                                    'install'
+                                                )
+                                            );       
+
+### we might need this Some Day when we're installing into
+### our own sandbox. see t/20.t for details
+# use constant TEST_INSTALL_DIR       => do {
+#     my $dir = File::Spec->rel2abs( 'dummy-perl' );
+# 
+#     ### clean up paths if we are on win32    
+#     ### dirs with spaces will be.. bad :(
+#     $^O eq 'MSWin32'
+#         ? Win32::GetShortPathName( $dir )
+#         : $dir;
+# };        
+
+# use constant TEST_INSTALL_DIR_LIB 
+#     => File::Spec->catdir( TEST_INSTALL_DIR, 'lib' );
+# use constant TEST_INSTALL_DIR_BIN 
+#     => File::Spec->catdir( TEST_INSTALL_DIR, 'bin' );
+# use constant TEST_INSTALL_DIR_MAN1 
+#     => File::Spec->catdir( TEST_INSTALL_DIR, 'man', 'man1' );
+# use constant TEST_INSTALL_DIR_MAN3
+#     => File::Spec->catdir( TEST_INSTALL_DIR, 'man', 'man3' );
+# use constant TEST_INSTALL_DIR_ARCH
+#     => File::Spec->catdir( TEST_INSTALL_DIR, 'arch' );
+# 
+# use constant TEST_INSTALL_EU_MM_FLAGS =>
+#     ' INSTALLDIRS=site' .
+#     ' INSTALLSITELIB='     . TEST_INSTALL_DIR_LIB .
+#     ' INSTALLSITEARCH='    . TEST_INSTALL_DIR_ARCH .    # .packlist
+#     ' INSTALLARCHLIB='     . TEST_INSTALL_DIR_ARCH .    # perllocal.pod
+#     ' INSTALLSITEBIN='     . TEST_INSTALL_DIR_BIN .
+#     ' INSTALLSCRIPT='      . TEST_INSTALL_DIR_BIN .
+#     ' INSTALLSITEMAN1DIR=' . TEST_INSTALL_DIR_MAN1 .
+#     ' INSTALLSITEMAN3DIR=' . TEST_INSTALL_DIR_MAN3;
+
+
+sub dummy_cpan_dir {
+    ### VMS needs this in directory format for rel2abs
+    my $test_dir = $^O eq 'VMS'
+                    ? File::Spec->catdir(TEST_CONF_CPAN_DIR)
+                    : TEST_CONF_CPAN_DIR;
+
+    ### Convert to an absolute file specification
+    my $abs_test_dir = File::Spec->rel2abs($test_dir);
+    
+    ### According to John M: the hosts path needs to be in UNIX format.  
+    ### File::Spec::Unix->rel2abs does not work at all on VMS
+    $abs_test_dir    = VMS::Filespec::unixify( $abs_test_dir ) if $^O eq 'VMS';
+
+    return $abs_test_dir;
+}
+
+sub gimme_conf { 
+
+    ### don't load any other configs than the heuristic one
+    ### during tests. They might hold broken/incorrect data
+    ### for our test suite. Bug [perl #43629] showed this.
+    my $conf = CPANPLUS::Configure->new( load_configs => 0 );
+
+    my $dummy_cpan = dummy_cpan_dir();
+    
+    $conf->set_conf( hosts  => [ { 
+                        path        => $dummy_cpan,
+                        scheme      => 'file',
+                    } ],      
+    );
+    $conf->set_conf( base       => File::Spec->rel2abs(TEST_CONF_CPANPLUS_DIR));
+    $conf->set_conf( dist_type  => '' );
+    $conf->set_conf( signature  => 0 );
+    $conf->set_conf( verbose    => 1 ) if $ENV{ $Env };
+    
+    ### never use a pager in the test suite
+    $conf->set_program( pager   => '' );
+
+    ### dmq tells us that we should run with /nologo
+    ### if using nmake, as it's very noisy otherwise.
+    {   my $make = $conf->get_program('make');
+        if( $make and basename($make) =~ /^nmake/i ) {
+            $conf->set_conf( makeflags => '/nologo' );
+        }
+    }
+
+    $conf->set_conf( source_engine =>  $ENV{CPANPLUS_SOURCE_ENGINE} )
+        if $ENV{CPANPLUS_SOURCE_ENGINE};
+    
+    _clean_test_dir( [
+        $conf->get_conf('base'),     
+        TEST_CONF_MIRROR_DIR,
+#         TEST_INSTALL_DIR_LIB,
+#         TEST_INSTALL_DIR_BIN,
+#         TEST_INSTALL_DIR_MAN1, 
+#         TEST_INSTALL_DIR_MAN3,
+    ], (  $ENV{PERL_CORE} ? 0 : 1 ) );
+        
+    return $conf;
+};
+
+# placeholder
+
+### clean these files if we're under perl core
+END { 
+    if ( $ENV{PERL_CORE} ) {
+
+        _clean_test_dir( [
+            gimme_conf->get_conf('base'),   
+            TEST_CONF_MIRROR_DIR,
+    #         TEST_INSTALL_DIR_LIB,
+    #         TEST_INSTALL_DIR_BIN,
+    #         TEST_INSTALL_DIR_MAN1, 
+    #         TEST_INSTALL_DIR_MAN3,
+        ], 0 ); # DO NOT be verbose under perl core -- makes tests fail
+    }
 }
 
 ### whenever we start a new script, we want to clean out our
@@ -115,31 +237,30 @@ sub _clean_test_dir {
             
             my $path = File::Spec->catfile( $dir, $file );
             
-            ### John Malmberg reports yet another VMS issue:
-            ### A directory name on VMS in VMS format ends with .dir 
-            ### when it is referenced as a file.
-            ### In UNIX format traditionally PERL on VMS does not remove the
-            ### '.dir', however the VMS C library conversion routines do remove
-            ### the '.dir' and the VMS C library routines can not handle the
-            ### '.dir' being present on UNIX format filenames.
-            ### So code doing the fixup has on VMS has to be able to handle both
-            ### UNIX format names and VMS format names. 
-            ### XXX See http://www.xray.mpe.mpg.de/
-            ### mailing-lists/perl5-porters/2007-10/msg00064.html
-            ### for details -- the below regex could use some touchups
-            ### according to John. M.
-
             ### directory, rmtree it
             if( -d $path ) {
 
+                ### John Malmberg reports yet another VMS issue:
+                ### A directory name on VMS in VMS format ends with .dir 
+                ### when it is referenced as a file.
+                ### In UNIX format traditionally PERL on VMS does not remove the
+                ### '.dir', however the VMS C library conversion routines do
+                ### remove the '.dir' and the VMS C library routines can not 
+                ### handle the '.dir' being present on UNIX format filenames.
+                ### So code doing the fixup has on VMS has to be able to handle 
+                ### both UNIX format names and VMS format names. 
+                
+                ### XXX See http://www.xray.mpe.mpg.de/
+                ### mailing-lists/perl5-porters/2007-10/msg00064.html
+                ### for details -- the below regex could use some touchups
+                ### according to John. M.            
                 $file =~ s/\.dir$//i if $^O eq 'VMS';
-
-                ### Need a path specification here, not a file.
+                
                 my $dirpath = File::Spec->catdir( $dir, $file );
 
                 print "# Deleting directory '$dirpath'\n" if $verbose;
                 eval { rmtree( $dirpath ) };
-                warn "Could not delete '$dirpath' while cleaning up '$dir'"
+                warn "Could not delete '$dirpath' while cleaning up '$dir'" 
                     if $@;
            
             ### regular file
@@ -154,5 +275,4 @@ sub _clean_test_dir {
     
     return 1;
 }
-
 1;

@@ -66,13 +66,22 @@ my $email = qr {
     (?&address)
 }x;
 
-my $count = 0;
 
-$| = 1;
-while (<DATA>) {
-    chomp;
-    next if /^#/;
-    print /^$email$/ ? "ok " : "not ok ", ++ $count, "\n";
+run_tests() unless caller;
+
+sub run_tests {
+    my $count = 0;
+
+    $| = 1;
+    # rewinding DATA is necessary with PERLIO=stdio when this
+    # test is run from another thread
+    seek *DATA, 0, 0;
+    while (<DATA>) { last if /^__DATA__/ }
+    while (<DATA>) {
+	chomp;
+	next if /^#/;
+	print /^$email$/ ? "ok " : "not ok ", ++ $count, "\n";
+    }
 }
 
 #

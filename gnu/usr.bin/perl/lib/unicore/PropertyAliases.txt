@@ -1,8 +1,8 @@
-# PropertyAliases-5.0.0.txt
-# Date: 2006-03-03, 08:23:34 GMT [MD]
+# PropertyAliases-5.1.0.txt
+# Date: 2008-02-28, 12:28:00 PST [KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2006 Unicode, Inc.
+# Copyright (c) 1991-2008 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 #
@@ -50,6 +50,7 @@
 # ================================================
 # Numeric Properties
 # ================================================
+ccc       ; Canonical_Combining_Class
 nv        ; Numeric_Value
 
 # ================================================
@@ -60,8 +61,7 @@ cf        ; Case_Folding
 dm        ; Decomposition_Mapping
 FC_NFKC   ; FC_NFKC_Closure
 lc        ; Lowercase_Mapping
-scc       ; Special_Case_Condition
-sfc       ; Simple_Case_Folding
+scf       ; Simple_Case_Folding         ; sfc
 slc       ; Simple_Lowercase_Mapping
 stc       ; Simple_Titlecase_Mapping
 suc       ; Simple_Uppercase_Mapping
@@ -72,6 +72,7 @@ uc        ; Uppercase_Mapping
 # Miscellaneous Properties
 # ================================================
 isc       ; ISO_Comment
+JSN       ; Jamo_Short_Name
 na        ; Name
 na1       ; Unicode_1_Name
 URS       ; Unicode_Radical_Stroke
@@ -87,7 +88,6 @@ sc        ; Script
 # Enumerated Properties
 # ================================================
 bc        ; Bidi_Class
-ccc       ; Canonical_Combining_Class
 dt        ; Decomposition_Type
 ea        ; East_Asian_Width
 gc        ; General_Category

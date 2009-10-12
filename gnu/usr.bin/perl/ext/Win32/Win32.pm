@@ -8,7 +8,7 @@ BEGIN {
     require DynaLoader;
 
     @ISA = qw|Exporter DynaLoader|;
-    $VERSION = '0.34';
+    $VERSION = '0.39';
     $XS_VERSION = $VERSION;
     $VERSION = eval $VERSION;
 
@@ -157,86 +157,62 @@ sub CSIDL_CDBURN_AREA          ()       { 0x003B }     # <user name>\Local Setti
 ### This method is just a simple interface into GetOSVersion().  More
 ### specific or demanding situations should use that instead.
 
-my ($found_os, $found_desc);
+my ($cached_os, $cached_desc);
 
 sub GetOSName {
-    my ($os,$desc,$major, $minor, $build, $id)=("","");
-    unless (defined $found_os) {
-        # If we have a run this already, we have the results cached
-        # If so, return them
+    unless (defined $cached_os) {
+	my($desc, $major, $minor, $build, $id, undef, undef, undef, $producttype)
+	    = Win32::GetOSVersion();
+	($cached_os, $cached_desc) = _GetOSName($desc, $major, $minor, $build, $id, $producttype);
+    }
+    return wantarray ? ($cached_os, $cached_desc) : $cached_os;
+}
 
-        # Use the standard API call to determine the version
-        ($desc, $major, $minor, $build, $id) = Win32::GetOSVersion();
+sub _GetOSName {
+    my($desc, $major, $minor, $build, $id, $producttype) = @_;
 
-        # If id==0 then its a win32s box -- Meaning Win3.11
-        unless($id) {
-            $os = 'Win32s';
-        }
-	else {
-	    # Magic numbers from MSDN documentation of OSVERSIONINFO
-	    # Most version names can be parsed from just the id and minor
-	    # version
-	    $os = {
-		1 => {
-		    0  => "95",
-		    10 => "98",
-		    90 => "Me"
-		},
-		2 => {
-		    0  => "NT4",
-		    1  => "XP/.Net",
-		    2  => "2003",
-		    51 => "NT3.51"
-		}
-	    }->{$id}->{$minor};
+    my($os,$tag);
+    if ($id == 0) {
+	$os = "Win32s";
+    }
+    elsif ($id == 1) {
+	$os = { 0 => "95", 10 => "98", 90 => "Me" }->{$minor};
+    }
+    elsif ($id == 2) {
+	if ($major == 3) {
+	    $os = "NT3.51";
 	}
-
-        # This _really_ shouldnt happen.  At least not for quite a while
-        # Politely warn and return undef
-        unless (defined $os) {
-            warn qq[Windows version [$id:$major:$minor] unknown!];
-            return undef;
-        }
-
-        my $tag = "";
-
-        # But distinguising W2k and Vista from NT4 requires looking at the major version
-        if ($os eq "NT4") {
-	    $os = {5 => "2000", 6 => "Vista"}->{$major} || "NT4";
-        }
-
-        # For the rest we take a look at the build numbers and try to deduce
-	# the exact release name, but we put that in the $desc
-        elsif ($os eq "95") {
-            if ($build eq '67109814') {
-                    $tag = '(a)';
-            }
-	    elsif ($build eq '67306684') {
-                    $tag = '(b1)';
-            }
-	    elsif ($build eq '67109975') {
-                    $tag = '(b2)';
-            }
-        }
-	elsif ($os eq "98" && $build eq '67766446') {
-            $tag = '(2nd ed)';
-        }
-
-	if (length $tag) {
-	    if (length $desc) {
-	        $desc = "$tag $desc";
-	    }
-	    else {
-	        $desc = $tag;
-	    }
+	elsif ($major == 4) {
+	    $os = "NT4";
 	}
-
-        # cache the results, so we dont have to do this again
-        $found_os      = "Win$os";
-        $found_desc    = $desc;
+	elsif ($major == 5) {
+	    $os = { 0 => "2000", 1 => "XP/.Net", 2 => "2003" }->{$minor};
+	}
+	elsif ($major == 6) {
+	    $os = { 0 => "Vista", 1 => "7" }->{$minor};
+	    # 2008 is same as Vista but has "Domaincontroller" or "Server" type
+	    $os = "2008" if $os eq "Vista" && $producttype != 1;
+	}
     }
 
-    return wantarray ? ($found_os, $found_desc) : $found_os;
+    unless (defined $os) {
+	warn "Unknown Windows version [$id:$major:$minor]";
+	return;
+    }
+
+    # Take a look at the build numbers and try to deduce
+    # the exact release name, but we put that in the $desc
+    if ($os eq "95") {
+	$tag = { 67109814 => "(a)", 67306684 => "(b1)", "67109975" => "(b2)" }->{$build};
+    }
+    elsif ($os eq "98" && $build eq "67766446") {
+	$tag = "(2nd ed)";
+    }
+    if ($tag) {
+	$desc = length($desc) ? "$tag $desc" : $tag;
+    }
+
+     return ("Win$os", $desc);
 }
 
 # "no warnings 'redefine';" doesn't work for 5.8.7 and earlier
@@ -403,14 +379,24 @@ If supported by the core Perl version, this function will return an
 ANSI path name for the current directory if the long pathname cannot
 be represented in the system codepage.
 
+=item Win32::GetCurrentProcessId()
+
+Returns the process identifier of the current process.  Until the
+process terminates, the process identifier uniquely identifies the
+process throughout the system.
+
+The current process identifier is normally also available via the
+predefined $$ variable.  Under fork() emulation however $$ may contain
+a pseudo-process identifier that is only meaningful to the Perl
+kill(), wait() and waitpid() functions.  The
+Win32::GetCurrentProcessId() function will always return the regular
+Windows process id, even when called from inside a pseudo-process.
+
 =item Win32::GetCurrentThreadId()
 
 Returns the thread identifier of the calling thread.  Until the thread
 terminates, the thread identifier uniquely identifies the thread
 throughout the system.
-
-Note: the current process identifier is available via the predefined
-$$ variable.
 
 =item Win32::GetFileVersion(FILENAME)
 
@@ -526,7 +512,8 @@ elements are, respectively: An arbitrary descriptive string, the major
 version number of the operating system, the minor version number, the
 build number, and a digit indicating the actual operating system.
 For the ID, the values are 0 for Win32s, 1 for Windows 9X/Me and 2 for
-Windows NT/2000/XP/2003/Vista.  In scalar context it returns just the ID.
+Windows NT/2000/XP/2003/Vista/2008/7.  In scalar context it returns just
+the ID.
 
 Currently known values for ID MAJOR and MINOR are as follows:
 
@@ -541,9 +528,15 @@ Currently known values for ID MAJOR and MINOR are as follows:
     Windows XP             2      5       1
     Windows Server 2003    2      5       2
     Windows Vista          2      6       0
+    Windows Server 2008    2      6       0
+    Windows 7              2      6       1
 
 On Windows NT 4 SP6 and later this function returns the following
 additional values: SPMAJOR, SPMINOR, SUITEMASK, PRODUCTTYPE.
+
+The version numbers for Windows Vista and Windows Server 2008 are
+identical; the PRODUCTTYPE field must be used to differentiate
+between them.
 
 SPMAJOR and SPMINOR are are the version numbers of the latest
 installed service pack.
@@ -574,7 +567,10 @@ be one of the following integer values:
 
     1 - Workstation (NT 4, 2000 Pro, XP Home, XP Pro, Vista)
     2 - Domaincontroller
-    3 - Server
+    3 - Server (2000 Server, Server 2003, Server 2008)
+
+Note that a server that is also a domain controller is reported as
+PRODUCTTYPE 2 (Domaincontroller) and not PRODUCTTYPE 3 (Server).
 
 =item Win32::GetOSName()
 
@@ -587,7 +583,18 @@ GetOSVersion() in list context.
 
 Currently the possible values for the OS name are
 
- Win32s Win95 Win98 WinMe WinNT3.51 WinNT4 Win2000 WinXP/.Net Win2003 WinVista
+    WinWin32s
+    Win95
+    Win98
+    WinMe
+    WinNT3.51
+    WinNT4
+    Win2000
+    WinXP/.Net
+    Win2003
+    WinVista
+    Win2008
+    Win7
 
 This routine is just a simple interface into GetOSVersion().  More
 specific or demanding situations should use that instead.  Another
@@ -599,6 +606,9 @@ The name "WinXP/.Net" is used for historical reasons only, to maintain
 backwards compatibility of the Win32 module.  Windows .NET Server has
 been renamed as Windows 2003 Server before final release and uses a
 different major/minor version number than Windows XP.
+
+Similarly the name "WinWin32s" should have been "Win32s" but has been
+kept as-is for backwards compatibility reasons too.
 
 =item Win32::GetShortPathName(PATHNAME)
 

@@ -6,7 +6,12 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 88;
+plan tests => 93;
+
+is(lc(undef),	   "", "lc(undef) is ''");
+is(lcfirst(undef), "", "lcfirst(undef) is ''");
+is(uc(undef),	   "", "uc(undef) is ''");
+is(ucfirst(undef), "", "ucfirst(undef) is ''");
 
 $a = "HELLO.* world";
 $b = "hello.* WORLD";
@@ -212,3 +217,6 @@ for ("$temp") {
     lc $_;
     is($_, "Hello");
 }
+
+# new in Unicode 5.1.0
+is(lc("\x{1E9E}"), "\x{df}", "lc(LATIN CAPITAL LETTER SHARP S)");

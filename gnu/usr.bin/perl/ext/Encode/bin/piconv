@@ -1,5 +1,5 @@
 #!./perl
-# $Id: piconv,v 2.3 2007/04/06 12:53:41 dankogai Exp $
+# $Id: piconv,v 2.4 2009/07/08 13:34:15 dankogai Exp $
 #
 use 5.8.0;
 use strict;
@@ -40,7 +40,19 @@ $Opt{from} || $Opt{to} || help();
 my $from = $Opt{from} || $locale or help("from_encoding unspecified");
 my $to   = $Opt{to}   || $locale or help("to_encoding unspecified");
 $Opt{string} and Encode::from_to($Opt{string}, $from, $to) and print $Opt{string} and exit;
-my $scheme = exists $Scheme{$Opt{scheme}} ? $Opt{scheme} :  'from_to';
+my $scheme = do {
+    if (defined $Opt{scheme}) {
+	if (!exists $Scheme{$Opt{scheme}}) {
+	    warn "Unknown scheme '$Opt{scheme}', fallback to 'from_to'.\n";
+	    'from_to';
+	} else {
+	    $Opt{scheme};
+	}
+    } else {
+	'from_to';
+    }
+};
+
 $Opt{check} ||= $Opt{c};
 $Opt{perlqq}   and $Opt{check} = Encode::PERLQQ;
 $Opt{htmlcref} and $Opt{check} = Encode::HTMLCREF;
@@ -56,29 +68,48 @@ To:     $to => $cto
 EOT
 }
 
+my %use_bom = map { $_ => 1 } qw/UTF-16 UTF-32/;
+
 # we do not use <> (or ARGV) for the sake of binmode()
 @ARGV or push @ARGV, \*STDIN;
 
 unless ( $scheme eq 'perlio' ) {
     binmode STDOUT;
+    my $need2slurp = $use_bom{ find_encoding($to)->name };
     for my $argv (@ARGV) {
         my $ifh = ref $argv ? $argv : undef;
+	$ifh or open $ifh, "<", $argv or warn "Can't open $argv: $!" and next;
         $ifh or open $ifh, "<", $argv or next;
         binmode $ifh;
         if ( $scheme eq 'from_to' ) {    # default
-            while (<$ifh>) {
-                Encode::from_to( $_, $from, $to, $Opt{check} );
-                print;
-            }
+	    if ($need2slurp){
+		local $/;
+		$_ = <$ifh>;
+		Encode::from_to( $_, $from, $to, $Opt{check} );
+		print;
+	    }else{
+		while (<$ifh>) {
+		    Encode::from_to( $_, $from, $to, $Opt{check} );
+		    print;
+		}
+	    }
         }
         elsif ( $scheme eq 'decode_encode' ) {    # step-by-step
-            while (<$ifh>) {
+	    if ($need2slurp){
+		local $/;
+		$_ = <$ifh>;
                 my $decoded = decode( $from, $_, $Opt{check} );
                 my $encoded = encode( $to, $decoded );
                 print $encoded;
-            }
-        }
-        else {                                    # won't reach
+	    }else{
+		while (<$ifh>) {
+		    my $decoded = decode( $from, $_, $Opt{check} );
+		    my $encoded = encode( $to, $decoded );
+		    print $encoded;
+		}
+	    }
+	}
+	else {                                    # won't reach
             die "$name: unknown scheme: $scheme";
         }
     }
@@ -89,6 +120,7 @@ else {
     binmode STDOUT => "raw:encoding($to)";
     for my $argv (@ARGV) {
         my $ifh = ref $argv ? $argv : undef;
+	$ifh or open $ifh, "<", $argv or warn "Can't open $argv: $!" and next;
         $ifh or open $ifh, "<", $argv or next;
         binmode $ifh => "raw:encoding($from)";
         print while (<$ifh>);
@@ -257,8 +289,8 @@ Like the I<-D> option, this is also for Encode hackers.
 
 =head1 SEE ALSO
 
-L<iconv/1>
-L<locale/3>
+L<iconv(1)>
+L<locale(3)>
 L<Encode>
 L<Encode::Supported>
 L<Encode::Alias>

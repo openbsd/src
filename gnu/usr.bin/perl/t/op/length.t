@@ -2,10 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
+    require './test.pl';
     @INC = '../lib';
 }
 
-print "1..20\n";
+plan (tests => 22);
 
 print "not " unless length("")    == 0;
 print "ok 1\n";
@@ -148,3 +149,15 @@ print "ok 3\n";
     substr($a, 0, 1) = '';
     print length $a == 998 ? "ok 20\n" : "not ok 20\n";
 }
+
+curr_test(21);
+
+require Tie::Scalar;
+
+$u = "ASCII";
+
+tie $u, 'Tie::StdScalar', chr 256;
+
+is(length $u, 1, "Length of a UTF-8 scalar returned from tie");
+is(length $u, 1, "Again! Again!");
+

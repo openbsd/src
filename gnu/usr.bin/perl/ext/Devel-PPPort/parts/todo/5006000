@@ -1,0 +1,151 @@
+5.006000
+PERL_SYS_INIT3                 # U
+SvIOK_UV                       # U
+SvIOK_notUV                    # U
+SvIOK_only_UV                  # U
+SvPOK_only_UTF8                # U
+SvPVbyte_nolen                 # U
+SvPVbytex                      # U
+SvPVbytex_force                # U
+SvPVutf8                       # U
+SvPVutf8_force                 # U
+SvPVutf8_nolen                 # U
+SvPVutf8x                      # U
+SvPVutf8x_force                # U
+SvUOK                          # U
+SvUTF8                         # U
+SvUTF8_off                     # U
+SvUTF8_on                      # U
+av_delete                      # U
+av_exists                      # U
+call_atexit                    # E
+cast_i32                       # U (cast_i32)
+cast_iv                        # U (cast_iv)
+cast_ulong                     # U
+cast_uv                        # U (cast_uv)
+do_gv_dump                     # U
+do_gvgv_dump                   # U
+do_hv_dump                     # U
+do_magic_dump                  # U
+do_op_dump                     # U
+do_open9                       # U
+do_pmop_dump                   # U
+do_sv_dump                     # U
+dump_all                       # U
+dump_eval                      # U
+dump_form                      # U
+dump_indent                    # U
+dump_packsubs                  # U
+dump_sub                       # U
+dump_vindent                   # U
+get_context                    # U
+get_ppaddr                     # E
+gv_dump                        # U
+init_i18nl10n                  # U (perl_init_i18nl10n)
+init_i18nl14n                  # U (perl_init_i18nl14n)
+is_uni_alnum                   # U
+is_uni_alnum_lc                # U
+is_uni_alnumc                  # U
+is_uni_alnumc_lc               # U
+is_uni_alpha                   # U
+is_uni_alpha_lc                # U
+is_uni_ascii                   # U
+is_uni_ascii_lc                # U
+is_uni_cntrl                   # U
+is_uni_cntrl_lc                # U
+is_uni_digit                   # U
+is_uni_digit_lc                # U
+is_uni_graph                   # U
+is_uni_graph_lc                # U
+is_uni_idfirst                 # U
+is_uni_idfirst_lc              # U
+is_uni_lower                   # U
+is_uni_lower_lc                # U
+is_uni_print                   # U
+is_uni_print_lc                # U
+is_uni_punct                   # U
+is_uni_punct_lc                # U
+is_uni_space                   # U
+is_uni_space_lc                # U
+is_uni_upper                   # U
+is_uni_upper_lc                # U
+is_uni_xdigit                  # U
+is_uni_xdigit_lc               # U
+is_utf8_alnum                  # U
+is_utf8_alnumc                 # U
+is_utf8_alpha                  # U
+is_utf8_ascii                  # U
+is_utf8_char                   # U
+is_utf8_cntrl                  # U
+is_utf8_digit                  # U
+is_utf8_graph                  # U
+is_utf8_idfirst                # U
+is_utf8_lower                  # U
+is_utf8_mark                   # U
+is_utf8_print                  # U
+is_utf8_punct                  # U
+is_utf8_space                  # U
+is_utf8_upper                  # U
+is_utf8_xdigit                 # U
+magic_dump                     # U
+mess                           # E (Perl_mess)
+my_atof                        # U
+my_fflush_all                  # U
+newANONATTRSUB                 # U
+newATTRSUB                     # U
+newXS                          # E (Perl_newXS)
+newXSproto                     # E
+new_collate                    # U (perl_new_collate)
+new_ctype                      # U (perl_new_ctype)
+new_numeric                    # U (perl_new_numeric)
+op_dump                        # U
+perl_parse                     # E (perl_parse)
+pmop_dump                      # U
+re_intuit_string               # U
+reginitcolors                  # U
+require_pv                     # U (perl_require_pv)
+safesyscalloc                  # U
+safesysfree                    # U
+safesysmalloc                  # U
+safesysrealloc                 # U
+save_I8                        # U
+save_alloc                     # U
+save_destructor                # E (Perl_save_destructor)
+save_destructor_x              # E
+save_re_context                # U
+save_vptr                      # U
+scan_bin                       # U
+set_context                    # U
+set_numeric_local              # U (perl_set_numeric_local)
+set_numeric_radix              # U
+set_numeric_standard           # U (perl_set_numeric_standard)
+str_to_version                 # U
+sv_2pvutf8                     # U
+sv_2pvutf8_nolen               # U
+sv_force_normal                # U
+sv_len_utf8                    # U
+sv_pos_b2u                     # U
+sv_pos_u2b                     # U
+sv_pv                          # U
+sv_pvbyte                      # U
+sv_pvbyten                     # U
+sv_pvbyten_force               # U
+sv_pvutf8                      # U
+sv_pvutf8n                     # U
+sv_pvutf8n_force               # U
+sv_rvweaken                    # U
+sv_utf8_decode                 # U
+sv_utf8_downgrade              # U
+sv_utf8_encode                 # U
+swash_init                     # U
+tmps_grow                      # U
+to_uni_lower_lc                # U
+to_uni_title_lc                # U
+to_uni_upper_lc                # U
+utf8_distance                  # U
+utf8_hop                       # U
+vcroak                         # U
+vform                          # U
+vmess                          # U
+vwarn                          # U
+vwarner                        # U

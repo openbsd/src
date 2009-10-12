@@ -149,6 +149,7 @@ for my $pkg ( qw[ Log::Message          Log::Message::Config
     
         ### XXX whitebox test!
         local $Params::Check::VERBOSE = 1; # so the warnings are emitted
+        local $Params::Check::VERBOSE = 1; # so the warnings are emitted
     
         my $rv  = $log->retrieve( frobnitz => $$ );
         ok( !$rv,                       q[Retrieval with bogus args] );

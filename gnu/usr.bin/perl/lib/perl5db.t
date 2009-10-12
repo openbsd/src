@@ -14,13 +14,19 @@ BEGIN {
 	print "1..0 # Skip: no /dev/null\n";
 	exit 0;
     }
-    if (!-c "/dev/tty") {
-	print "1..0 # Skip: no /dev/tty\n";
+my $dev_tty = '/dev/tty';
+   $dev_tty = 'TT:' if ($^O eq 'VMS');
+    if (!-c $dev_tty) {
+	print "1..0 # Skip: no $dev_tty\n";
+	exit 0;
+    }
+    if ($ENV{PERL5DB}) {
+	print "1..0 # Skip: \$ENV{PERL5DB} is already set to '$ENV{PERL5DB}'\n";
 	exit 0;
     }
 }
 
-plan(1);
+plan(2);
 
 sub rc {
     open RC, ">", ".perldb" or die $!;
@@ -70,8 +76,14 @@ like($contents, qr/sub factorial/,
     'The ${main::_<filename} variable in the debugger was not destroyed'
 );
 
+{
+    local $ENV{PERLDB_OPTS} = "ReadLine=0";
+    my $output = runperl(switches => [ '-d' ], progfile => '../lib/perl5db/t/lvalue-bug');
+    like($output, qr/foo is defined/, 'lvalue subs work in the debugger');
+}
+
 # clean up.
 
 END {
-    unlink qw(.perldb db.out);
+    1 while unlink qw(.perldb db.out);
 }

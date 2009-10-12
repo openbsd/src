@@ -113,7 +113,7 @@ if (open(my $EIN, "$cwd/win32/${exename}_exe.uu")) {
 }
 else {
     my $minus_o = '';
-    if ($Config{cc} eq 'gcc')
+    if ($Config{cc} =~ /^gcc/i)
      {
       $minus_o = "-o $exename.exe";
      }

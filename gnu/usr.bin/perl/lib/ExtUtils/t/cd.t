@@ -17,7 +17,8 @@ use File::Spec;
 
 use Test::More tests => 4;
 
-my @cd_args = ("some/dir", "command1", "command2");
+my $dir = File::Spec->catdir("some", "dir");
+my @cd_args = ($dir, "command1", "command2");
 
 {
     package Test::MM_Win32;
@@ -33,7 +34,7 @@ my @cd_args = ("some/dir", "command1", "command2");
         my $expected_updir = File::Spec->catdir(@dirs);
         
         ::is $mm->cd(@cd_args),
-qq{cd some/dir
+qq{cd $dir
 	command1
 	command2
 	cd $expected_updir};
@@ -43,15 +44,15 @@ qq{cd some/dir
         local *make = sub { "dmake" };
 
         ::is $mm->cd(@cd_args),
-q{cd some/dir && command1
-	cd some/dir && command2};
+qq{cd $dir && command1
+	cd $dir && command2};
     }
 }
 
 {
     is +ExtUtils::MM_Unix->cd(@cd_args),
-q{cd some/dir && command1
-	cd some/dir && command2};
+qq{cd $dir && command1
+	cd $dir && command2};
 }
 
 SKIP: {

@@ -24,10 +24,12 @@ mapping:
       perl:
         type: text
       perlconfig:
+        &matchhash_common
         type: map
         mapping:
           =:
             type: text
+      env: *matchhash_common
   install:
     &args_env_expect
     type: map
@@ -82,3 +84,9 @@ mapping:
     mapping:
       =:
         type: text
+  features:
+    type: seq
+    sequence:
+      - type: text
+  reminder:
+    type: text

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = do { my @r = ( q$Revision: 2.5 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.6 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use XSLoader;
 XSLoader::load( __PACKAGE__, $VERSION );
@@ -69,7 +69,7 @@ Encode::Unicode -- Various Unicode Transformation Formats
 
 =head1 SYNOPSIS
 
-    use Encode qw/encode decode/; 
+    use Encode qw/encode decode/;
     $ucs2 = encode("UCS-2BE", $utf8);
     $utf8 = decode("UCS-2BE", $ucs2);
 
@@ -230,7 +230,7 @@ And to desurrogate;
  $uni = 0x10000 + ($hi - 0xD800) * 0x400 + ($lo - 0xDC00);
 
 Note this move has made \x{D800}-\x{DFFF} into a forbidden zone but
-perl does not prohibit the use of characters within this range.  To perl, 
+perl does not prohibit the use of characters within this range.  To perl,
 every one of \x{0000_0000} up to \x{ffff_ffff} (*) is I<a character>.
 
   (*) or \x{ffff_ffff_ffff_ffff} if your perl is compiled with 64-bit
@@ -241,11 +241,11 @@ every one of \x{0000_0000} up to \x{ffff_ffff} (*) is I<a character>.
 Unlike most encodings which accept various ways to handle errors,
 Unicode encodings simply croaks.
 
-  % perl -MEncode -e '$_ = "\xfe\xff\xd8\xd9\xda\xdb\0\n"' \
-         -e 'Encode::from_to($_, "utf16","shift_jis", 0); print'
+  % perl -MEncode -e'$_ = "\xfe\xff\xd8\xd9\xda\xdb\0\n"' \
+         -e'Encode::from_to($_, "utf16","shift_jis", 0); print'
   UTF-16:Malformed LO surrogate d8d9 at /path/to/Encode.pm line 184.
-  % perl -MEncode -e '$a = "BOM missing"' \
-         -e ' Encode::from_to($a, "utf16", "shift_jis", 0); print'
+  % perl -MEncode -e'$a = "BOM missing"' \
+         -e' Encode::from_to($a, "utf16", "shift_jis", 0); print'
   UTF-16:Unrecognised BOM 424f at /path/to/Encode.pm line 184.
 
 Unlike other encodings where mappings are not one-to-one against
@@ -264,7 +264,7 @@ RFC 2781 L<http://rfc.net/rfc2781.html>,
 The whole Unicode standard L<http://www.unicode.org/unicode/uni2book/u2.html>
 
 Ch. 15, pp. 403 of C<Programming Perl (3rd Edition)>
-by Larry Wall, Tom Christiansen, Jon Orwant; 
+by Larry Wall, Tom Christiansen, Jon Orwant;
 O'Reilly & Associates; ISBN 0-596-00027-8
 
 =cut

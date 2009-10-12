@@ -4,7 +4,7 @@ use strict;
 use vars qw($VERSION);
 use Carp;
 
-$VERSION = '2.13';
+$VERSION = '2.14';
 
 
 # LOAD FILTERING MODULE...
@@ -72,15 +72,9 @@ sub is_block
 	return !$ishash;
 }
 
-
-my $EOP = qr/\n|\Z/;
-my $CUT = qr/\n=cut.*$EOP/;
-my $pod_or_DATA = qr/ ^=(?:head[1-4]|item) .*? $CUT
-                    | ^=pod .*? $CUT
-                    | ^=for .*? $EOP
-                    | ^=begin \s* (\S+) .*? \n=end \s* \1 .*? $EOP
-                    | ^__(DATA|END)__\n.*
-                    /smx;
+my $pod_or_DATA = qr/ ^=[A-Za-z] .*? ^=cut (?![A-Za-z]) .*? $
+		    | ^__(DATA|END)__\n.*
+		    /smx;
 
 my $casecounter = 1;
 sub filter_blocks
@@ -115,7 +109,8 @@ sub filter_blocks
 			}
 			next component;
 		}
-		if ($source =~ m/\G\s*($pod_or_DATA)/gc) {
+		if ($source =~ m/(\G\s*$pod_or_DATA)/gc) {
+			$text .= $1;
 			next component;
 		}
 		@pos = Text::Balanced::_match_variable(\$source,qr/\s*/);
@@ -513,8 +508,8 @@ Switch - A switch statement for Perl
 
 =head1 VERSION
 
-This document describes version 2.11 of Switch,
-released Nov 22, 2006.
+This document describes version 2.14 of Switch,
+released Dec 29, 2008.
 
 =head1 SYNOPSIS
 
@@ -524,10 +519,9 @@ released Nov 22, 2006.
 	case 1		{ print "number 1" }
 	case "a"	{ print "string a" }
 	case [1..10,42]	{ print "number in list" }
-	case (@array)	{ print "number in list" }
+	case (\@array)	{ print "number in list" }
 	case /\w+/	{ print "pattern" }
 	case qr/\w+/	{ print "pattern" }
-	case (%hash)	{ print "entry in hash" }
 	case (\%hash)	{ print "entry in hash" }
 	case (\&sub)	{ print "arg to subroutine" }
 	else		{ print "previous case not true" }
@@ -841,7 +835,7 @@ and then treats the two resulting references as arguments to C<&&>:
 
 This boolean expression is inevitably true, since both references are
 non-false. Fortunately, the overloaded C<'bool'> operator catches this
-situation and flags it as a error. 
+situation and flags it as an error. 
 
 =head1 DEPENDENCIES
 
@@ -850,8 +844,9 @@ and requires both these modules to be installed.
 
 =head1 AUTHOR
 
-Damian Conway (damian@conway.org). The maintainer of this module is now Rafael
-Garcia-Suarez (rgarciasuarez@gmail.com).
+Damian Conway (damian@conway.org). This module is now maintained by Rafael
+Garcia-Suarez (rgarciasuarez@gmail.com) and more generally by the Perl 5
+Porters (perl5-porters@perl.org), as part of the Perl core.
 
 =head1 BUGS
 
@@ -878,6 +873,6 @@ use smaller source files.
 
 =head1 COPYRIGHT
 
-    Copyright (c) 1997-2006, Damian Conway. All Rights Reserved.
+    Copyright (c) 1997-2008, Damian Conway. All Rights Reserved.
     This module is free software. It may be used, redistributed
         and/or modified under the same terms as Perl itself.

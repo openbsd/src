@@ -67,4 +67,6 @@ $err = $thrx->error();
 isa_ok($err, 'Foo', 'error object');
 is($err->{error}, 'bogus', 'error field');
 
+exit(0);
+
 # EOF

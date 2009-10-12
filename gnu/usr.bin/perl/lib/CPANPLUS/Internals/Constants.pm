@@ -13,8 +13,6 @@ use vars    qw[$VERSION @ISA @EXPORT];
 
 use Package::Constants;
 
-
-$VERSION    = 0.01;
 @ISA        = qw[Exporter];
 @EXPORT     = Package::Constants->list( __PACKAGE__ );
 
@@ -26,7 +24,9 @@ use constant INSTALLER_BUILD
 use constant INSTALLER_MM   => 'CPANPLUS::Dist::MM';    
 use constant INSTALLER_SAMPLE   
                             => 'CPANPLUS::Dist::Sample';
-use constant INSTALLER_BASE => 'CPANPLUS::Dist::Base';                            
+use constant INSTALLER_BASE => 'CPANPLUS::Dist::Base';  
+use constant INSTALLER_AUTOBUNDLE
+                            => 'CPANPLUS::Dist::Autobundle';
 
 use constant SHELL_DEFAULT  => 'CPANPLUS::Shell::Default';
 use constant SHELL_CLASSIC  => 'CPANPLUS::Shell::Classic';
@@ -36,6 +36,10 @@ use constant CONFIG_USER    => 'CPANPLUS::Config::User';
 use constant CONFIG_SYSTEM  => 'CPANPLUS::Config::System';
 use constant CONFIG_BOXED   => 'CPANPLUS::Config::Boxed';
 
+use constant DEFAULT_SOURCE_ENGINE
+                            => 'CPANPLUS::Internals::Source::Memory';
+
+use constant TARGET_INIT    => 'init';
 use constant TARGET_CREATE  => 'create';
 use constant TARGET_PREPARE => 'prepare';
 use constant TARGET_INSTALL => 'install';
@@ -139,7 +143,12 @@ use constant BUILD_PL       => sub { return @_
                                                             'Build.PL' )
                                         : 'Build.PL';
                             };
-                            
+                      
+use constant META_YML       => sub { return @_
+                                        ? File::Spec->catfile( @_, 'META.yml' )
+                                        : 'META.yml';
+                            }; 
+
 use constant BLIB           => sub { return @_
                                         ? File::Spec->catfile(@_, 'blib')
                                         : 'blib';
@@ -203,6 +212,15 @@ use constant README         => sub { my $obj = $_[0];
                                              '.readme';
                                      return $pkg;
                             };
+use constant META_EXT       => 'meta';
+
+use constant META           => sub { my $obj = $_[0];
+                                     my $pkg = $obj->package_name;
+                                     $pkg .= '-' . $obj->package_version .
+                                             '.' . META_EXT;
+                                     return $pkg;
+                            };                          
+                            
 use constant OPEN_FILE      => sub {
                                     my($file, $mode) = (@_, '');
                                     my $fh;
@@ -261,13 +279,13 @@ use constant CPANPLUS_UA    => sub { ### for the version number ###
                                      "CPANPLUS/$CPANPLUS::Internals::VERSION" 
                                 };
 use constant TESTERS_URL    => sub {
-                                    "http://testers.cpan.org/show/" .
-                                    $_[0] .".yaml" 
+                                    'http://cpantesters.org/distro/'.
+                                    uc(substr($_[0],0,1)) .'/'. $_[0] . '.yaml';
                                 };
 use constant TESTERS_DETAILS_URL
                             => sub {
-                                    'http://testers.cpan.org/show/' .
-                                    $_[0] . '.html';
+                                    'http://cpantesters.org/distro/'.
+                                    uc(substr($_[0],0,1)) .'/'. $_[0];
                                 };         
 
 use constant CREATE_FILE_URI    
@@ -285,6 +303,9 @@ use constant CUSTOM_AUTHOR_ID
 
 use constant DOT_SHELL_DEFAULT_RC
                             => '.shell-default.rc';
+                            
+use constant SOURCE_SQLITE_DB
+                            => 'db.sql';
 
 use constant PREREQ_IGNORE  => 0;                
 use constant PREREQ_INSTALL => 1;
@@ -296,6 +317,7 @@ use constant CALLING_FUNCTION
                                      return join '::', (caller(2+$lvl))[3] 
                                 };
 use constant PERL_CORE      => 'perl';
+use constant STORABLE_EXT   => '.stored';
 
 use constant GET_XS_FILES   => sub { my $dir = $_[0] or return;
                                      require File::Find;

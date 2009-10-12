@@ -11,11 +11,19 @@
 #############################################################################
 
 package Pod::Find;
+use strict;
 
 use vars qw($VERSION);
-$VERSION = 1.34;   ## Current version of this package
+$VERSION = '1.35';   ## Current version of this package
 require  5.005;   ## requires this Perl version or later
 use Carp;
+
+BEGIN {
+   if ($] < 5.006) {
+      require Symbol;
+      import Symbol;
+   }
+}
 
 #############################################################################
 
@@ -48,7 +56,6 @@ files/directories like RCS, CVS, SCCS, .svn are ignored.
 
 =cut
 
-use strict;
 #use diagnostics;
 use Exporter;
 use File::Spec;
@@ -108,7 +115,7 @@ B<scriptdir>. This is taken from the local L<Config|Config> module.
 
 Search for PODs in the current Perl interpreter's I<@INC> paths. This
 automatically considers paths specified in the C<PERL5LIB> environment
-as this is prepended to I<@INC> by the Perl interpreter itself.
+as this is included in I<@INC> by the Perl interpreter itself.
 
 =back
 
@@ -143,10 +150,10 @@ sub pod_find
             for (@new_INC) {
                 if ( $_ eq '.' ) {
                     $_ = ':';
-                } elsif ( $_ =~ s|^((?:\.\./)+)|':' x (length($1)/3)|e ) {
+                } elsif ( $_ =~ s{^((?:\.\./)+)}{':' x (length($1)/3)}e ) {
                     $_ = ':'. $_;
                 } else {
-                    $_ =~ s|^\./|:|;
+                    $_ =~ s{^\./}{:};
                 }
             }
             push(@search, grep($_ ne File::Spec->curdir, @new_INC));
@@ -230,20 +237,20 @@ sub pod_find
         }, $try); # end of File::Find::find
     }
     chdir $pwd;
-    %pods;
+    return %pods;
 }
 
 sub _check_for_duplicates {
     my ($file, $name, $names_ref, $pods_ref) = @_;
     if($$names_ref{$name}) {
         warn "Duplicate POD found (shadowing?): $name ($file)\n";
-        warn "    Already seen in ",
+        warn '    Already seen in ',
             join(' ', grep($$pods_ref{$_} eq $name, keys %$pods_ref)),"\n";
     }
     else {
         $$names_ref{$name} = 1;
     }
-    $$pods_ref{$file} = $name;
+    return $$pods_ref{$file} = $name;
 }
 
 sub _check_and_extract_name {
@@ -252,33 +259,33 @@ sub _check_and_extract_name {
     # check extension or executable flag
     # this involves testing the .bat extension on Win32!
     unless(-f $file && -T $file && ($file =~ /\.(pod|pm|plx?)\z/i || -x $file )) {
-      return undef;
+      return;
     }
 
-    return undef unless contains_pod($file,$verbose);
+    return unless contains_pod($file,$verbose);
 
     # strip non-significant path components
     # TODO what happens on e.g. Win32?
     my $name = $file;
     if(defined $root_rx) {
-        $name =~ s!$root_rx!!s;
-        $name =~ s!$SIMPLIFY_RX!!os if(defined $SIMPLIFY_RX);
+        $name =~ s/$root_rx//s;
+        $name =~ s/$SIMPLIFY_RX//s if(defined $SIMPLIFY_RX);
     }
     else {
         if ($^O eq 'MacOS') {
             $name =~ s/^.*://s;
         } else {
-            $name =~ s:^.*/::s;
+            $name =~ s{^.*/}{}s;
         }
     }
     _simplify($name);
-    $name =~ s!/+!::!g; #/
+    $name =~ s{/+}{::}g;
     if ($^O eq 'MacOS') {
-        $name =~ s!:+!::!g; # : -> ::
+        $name =~ s{:+}{::}g; # : -> ::
     } else {
-        $name =~ s!/+!::!g; # / -> ::
+        $name =~ s{/+}{::}g; # / -> ::
     }
-    $name;
+    return $name;
 }
 
 =head2 C<simplify_name( $str )>
@@ -297,10 +304,10 @@ sub simplify_name {
     if ($^O eq 'MacOS') {
         $str =~ s/^.*://s;
     } else {
-        $str =~ s:^.*/::s;
+        $str =~ s{^.*/}{}s;
     }
     _simplify($str);
-    $str;
+    return $str;
 }
 
 # internal sub only
@@ -400,10 +407,10 @@ sub pod_where {
         for (@new_INC) {
             if ( $_ eq '.' ) {
                 $_ = ':';
-            } elsif ( $_ =~ s|^((?:\.\./)+)|':' x (length($1)/3)|e ) {
+            } elsif ( $_ =~ s{^((?:\.\./)+)}{':' x (length($1)/3)}e ) {
                 $_ = ':'. $_;
             } else {
-                $_ =~ s|^\./|:|;
+                $_ =~ s{^\./}{:};
             }
         }
         push (@search_dirs, @new_INC);
@@ -423,7 +430,7 @@ sub pod_where {
       if -d $Config::Config{'scriptdir'};
   }
 
-  warn "Search path is: ".join(' ', @search_dirs)."\n"
+  warn 'Search path is: '.join(' ', @search_dirs)."\n"
         if $options{'-verbose'};
 
   # Loop over directories
@@ -431,7 +438,7 @@ sub pod_where {
 
     # Don't bother if can't find the directory
     if (-d $dir) {
-      warn "Looking in directory $dir\n" 
+      warn "Looking in directory $dir\n"
         if $options{'-verbose'};
 
       # Now concatenate this directory with the pod we are searching for
@@ -442,7 +449,7 @@ sub pod_where {
       # Loop over possible extensions
       foreach my $ext ('', '.pod', '.pm', '.pl') {
         my $fullext = $fullname . $ext;
-        if (-f $fullext && 
+        if (-f $fullext &&
          contains_pod($fullext, $options{'-verbose'}) ) {
           warn "FOUND: $fullext\n" if $options{'-verbose'};
           return $fullext;
@@ -470,7 +477,7 @@ sub pod_where {
     }
   }
   # No match;
-  return undef;
+  return;
 }
 
 =head2 C<contains_pod( $file , $verbose )>
@@ -486,15 +493,20 @@ sub contains_pod {
   $verbose = shift if @_;
 
   # check for one line of POD
-  unless(open(POD,"<$file")) {
+  my $podfh;
+  if ($] < 5.006) {
+    $podfh = gensym();
+  }
+
+  unless(open($podfh,"<$file")) {
     warn "Error: $file is unreadable: $!\n";
-    return undef;
+    return;
   }
   
   local $/ = undef;
-  my $pod = <POD>;
-  close(POD) || die "Error closing $file: $!\n";
-  unless($pod =~ /^=(head\d|pod|over|item)\b/m) {
+  my $pod = <$podfh>;
+  close($podfh) || die "Error closing $file: $!\n";
+  unless($pod =~ /^=(head\d|pod|over|item|cut)\b/m) {
     warn "No POD in $file, skipping.\n"
       if($verbose);
     return 0;

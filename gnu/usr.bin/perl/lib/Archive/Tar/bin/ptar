@@ -1,12 +1,13 @@
 #!/usr/bin/perl
 use strict;
 
+use File::Find;
 use Getopt::Std;
 use Archive::Tar;
-use File::Find;
+use Data::Dumper;
 
 my $opts = {};
-getopts('dcvzthxf:I', $opts) or die usage();
+getopts('Ddcvzthxf:I', $opts) or die usage();
 
 ### show the help message ###
 die usage() if $opts->{h};
@@ -33,72 +34,63 @@ if( $opts->{c} ) {
     find( sub { push @files, $File::Find::name;
                 print $File::Find::name.$/ if $verbose }, @ARGV );
 
+    if ($file eq '-') {
+        use IO::Handle;
+        $file = IO::Handle->new();
+        $file->fdopen(fileno(STDOUT),"w");
+    }
+
     Archive::Tar->create_archive( $file, $compress, @files );
-    exit;
+
+} else {
+    if ($file eq '-') {
+        use IO::Handle;
+        $file = IO::Handle->new();
+        $file->fdopen(fileno(STDIN),"r");
+    }
+
+    ### print the files we're finding?
+    my $print = $verbose || $opts->{'t'} || 0;
+
+    my $iter = Archive::Tar->iter( $file );
+        
+    while( my $f = $iter->() ) {
+        print $f->full_path . $/ if $print;
+
+        ### data dumper output
+        print Dumper( $f ) if $opts->{'D'};
+        
+        ### extract it
+        $f->extract if $opts->{'x'};
+    }
 }
 
-my $tar = Archive::Tar->new($file, $compress);
-
-if( $opts->{t} ) {
-    print map { $_->full_path . $/ } $tar->get_files;
-
-} elsif( $opts->{x} ) {
-    print map { $_->full_path . $/ } $tar->get_files
-        if $verbose;
-    Archive::Tar->extract_archive($file, $compress);
-}
-
-
-
+### pod & usage in one
 sub usage {
-    qq[
-Usage:  ptar -c [-v] [-z] [-f ARCHIVE_FILE] FILE FILE ...
-        ptar -x [-v] [-z] [-f ARCHIVE_FILE]
-        ptar -t [-z] [-f ARCHIVE_FILE]
-        ptar -h
+    my $usage .= << '=cut';
+=pod
+
+=head1 NAME
+
+    ptar - a tar-like program written in perl
+
+=head1 DESCRIPTION
 
     ptar is a small, tar look-alike program that uses the perl module
     Archive::Tar to extract, create and list tar archives.
 
-Options:
-    x   Extract from ARCHIVE_FILE
-    c   Create ARCHIVE_FILE from FILE
-    t   List the contents of ARCHIVE_FILE
-    f   Name of the ARCHIVE_FILE to use. Default is './default.tar'
-    z   Read/Write zlib compressed ARCHIVE_FILE (not always available)
-    v   Print filenames as they are added or extraced from ARCHIVE_FILE
-    h   Prints this help message
-    I   Enable 'Insecure Extract Mode', which allows archives to extract
-        files outside the current working directory. (Not advised).
-
-See Also:
-    tar(1)
-    Archive::Tar
-
-    \n]
-}
-
-=head1 NAME
-
-ptar - a tar-like program written in perl
-
-=head1 DESCRIPTION
-
-ptar is a small, tar look-alike program that uses the perl module
-Archive::Tar to extract, create and list tar archives.
-
 =head1 SYNOPSIS
 
-    ptar -c [-v] [-z] [-f ARCHIVE_FILE] FILE FILE ...
-    ptar -x [-v] [-z] [-f ARCHIVE_FILE]
-    ptar -t [-z] [-f ARCHIVE_FILE]
+    ptar -c [-v] [-z] [-f ARCHIVE_FILE | -] FILE FILE ...
+    ptar -x [-v] [-z] [-f ARCHIVE_FILE | -]
+    ptar -t [-z] [-f ARCHIVE_FILE | -]
     ptar -h
 
 =head1 OPTIONS
 
-    x   Extract from ARCHIVE_FILE
-    c   Create ARCHIVE_FILE from FILE
-    t   List the contents of ARCHIVE_FILE
+    c   Create ARCHIVE_FILE or STDOUT (-) from FILE
+    x   Extract from ARCHIVE_FILE or STDIN (-)
+    t   List the contents of ARCHIVE_FILE or STDIN (-)
     f   Name of the ARCHIVE_FILE to use. Default is './default.tar'
     z   Read/Write zlib compressed ARCHIVE_FILE (not always available)
     v   Print filenames as they are added or extraced from ARCHIVE_FILE
@@ -106,6 +98,17 @@ Archive::Tar to extract, create and list tar archives.
 
 =head1 SEE ALSO
 
-tar(1), L<Archive::Tar>.
+    tar(1), L<Archive::Tar>.
 
 =cut
+
+    ### strip the pod directives
+    $usage =~ s/=pod\n//g;
+    $usage =~ s/=head1 //g;
+    
+    ### add some newlines
+    $usage .= $/.$/;
+    
+    return $usage;
+}
+

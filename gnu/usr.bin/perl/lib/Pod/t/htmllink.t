@@ -108,24 +108,21 @@ __DATA__
 <h2><a name="section_three">section three</a></h2>
 <p>This is section three.</p>
 <dl>
-<dt><strong><a name="item1" class="item">item1</a></strong>
+<dt><strong><a name="item1" class="item">item1</a></strong></dt>
 
 <dd>
 <p>This is item one.</p>
 </dd>
-</li>
-<dt><strong><a name="item_2" class="item">item 2</a></strong>
+<dt><strong><a name="item_2" class="item">item 2</a></strong></dt>
 
 <dd>
 <p>This is item two.</p>
 </dd>
-</li>
-<dt><strong><a name="item_three" class="item">item three</a></strong>
+<dt><strong><a name="item_three" class="item">item three</a></strong></dt>
 
 <dd>
 <p>This is item three.</p>
 </dd>
-</li>
 </dl>
 
 </body>

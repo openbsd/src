@@ -1,0 +1,28 @@
+#########################################################################
+This is a binary file that was packed with the 'uupacktool.pl' which
+is included in the Perl distribution.
+
+To unpack this file use the following command:
+
+     uupacktool.pl -u lib/CPANPLUS/Dist/Build/t/dummy-CPAN/modules/03modlist.data.gz.packed lib/CPANPLUS/Dist/Build/t/dummy-CPAN/modules/03modlist.data.gz
+
+To recreate it use the following command:
+
+     uupacktool.pl -p lib/CPANPLUS/Dist/Build/t/dummy-CPAN/modules/03modlist.data.gz lib/CPANPLUS/Dist/Build/t/dummy-CPAN/modules/03modlist.data.gz.packed
+
+Created at Mon May 18 16:36:58 2009
+#########################################################################
+__UU__
+M'XL("#'FO$4``S`S;6]D;&ES="YD871A`%U3_6O;,!#].?HKCBXC"20A=<@&
+M"@OIYV!;/Z`-&V1E*/:U%I4M(\D-)N1_WTFVFVS&H.=W>N^>SO:U5,BAN2;3
+M3"=*6C=.A!/L$FUL9.&DSCD\IF@1A$%P*8*O$Q`N,$6Y(56*"<@\E,FF5,@Z
+MWFL(F])YMH),5+#Q5=(8C#'WO*@E2CBT#@IM'2:L4SN$+'#WA@:<S!"VV%.*
+M;%X1;!FBB&!MZT2L$Y,;=2@M97$:"B-##U*F6E%08>AQJT$_>_;?-A>E,11)
+M5522%NC.=2V.A<4QN]%)K,O<A7%%T]F,_332.<Q'YQ5QF4K(9BM<G$+_#:+Q
+M=!(-8%/!69X8%';\76,N7Y8BEYD8)\@NZ<3OH[\V<@C1#+[1`:+))(+))QY]
+MYI,I?+UY9,QO*43\*EX0+N[/;CF_>4\^#]4/L+)4Y<V9R5QP?EEF!9K1(L=M
+M?_V_;K3P,WL:C!9^&V@#5F92"1/\;+FIW_*.U0FS"KH&;:D<?('=?GY$4\M,
+MF(KX$QJH3$[:XC.9]I==[S/8T;0K^)@*F\Y99^G7W;(;:V7W)%QV_Q#;-!@M
+M=MU0;YWW?LOO1EM;[YNUD<SK&>T9"Y:T?4U$+\3I#3VT3K@C:`]0':`\P**&
+MR>$GJ`GZMDSK&:>B<.&1/5&"<-"F]3KDZ5UKS?FY,)Q?K3B_O?OU$)1>VX*D
+K!44+[EK0KO[5W?]8/<"C_T?NZP^A+5ZMCFU/3WL$GH8^T%]3O>X%W0,`````

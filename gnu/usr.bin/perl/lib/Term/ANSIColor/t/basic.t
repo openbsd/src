@@ -1,133 +1,86 @@
 #!/usr/bin/perl
-# $Id: basic.t 55 2006-06-22 17:56:02Z eagle $
 #
 # t/basic.t -- Test suite for the Term::ANSIColor Perl module.
+#
+# Copyright 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2009
+#     Russ Allbery <rra@stanford.edu>
+#
+# This program is free software; you may redistribute it and/or modify it
+# under the same terms as Perl itself.
 
-##############################################################################
-# Ensure module can be loaded
-##############################################################################
+use strict;
+use Test::More tests => 29;
 
-BEGIN { $| = 1; print "1..16\n" }
-END   { print "not ok 1\n" unless $loaded }
-delete $ENV{ANSI_COLORS_DISABLED};
-use Term::ANSIColor qw(:constants color colored uncolor);
-$loaded = 1;
-print "ok 1\n";
-
-##############################################################################
-# Test suite
-##############################################################################
-
-# Test simple color attributes.
-if (color ('blue on_green', 'bold') eq "\e[34;42;1m") {
-    print "ok 2\n";
-} else {
-    print "not ok 2\n";
+BEGIN {
+    delete $ENV{ANSI_COLORS_DISABLED};
+    use_ok ('Term::ANSIColor', qw/:pushpop color colored uncolor/);
 }
 
-# Test colored.
-if (colored ("testing", 'blue', 'bold') eq "\e[34;1mtesting\e[0m") {
-    print "ok 3\n";
-} else {
-    print "not ok 3\n";
-}
-
-# Test the constants.
-if (BLUE BOLD "testing" eq "\e[34m\e[1mtesting") {
-    print "ok 4\n";
-} else {
-    print "not ok 4\n";
-}
-
-# Test AUTORESET.
+# Various basic tests.
+is (color ('blue on_green', 'bold'), "\e[34;42;1m", 'Simple attributes');
+is (colored ('testing', 'blue', 'bold'), "\e[34;1mtesting\e[0m", 'colored');
+is ((BLUE BOLD "testing"), "\e[34m\e[1mtesting", 'Constants');
 $Term::ANSIColor::AUTORESET = 1;
-if (BLUE BOLD "testing" eq "\e[34m\e[1mtesting\e[0m\e[0m") {
-    print "ok 5\n";
-} else {
-    print "not ok 5\n";
-}
-
-# Test EACHLINE.
+is ((BLUE BOLD "testing"), "\e[34m\e[1mtesting\e[0m\e[0m", 'AUTORESET');
 $Term::ANSIColor::EACHLINE = "\n";
-if (colored ("test\n\ntest", 'bold')
-    eq "\e[1mtest\e[0m\n\n\e[1mtest\e[0m") {
-    print "ok 6\n";
-} else {
-    print colored ("test\n\ntest", 'bold'), "\n";
-    print "not ok 6\n";
-}
-
-# Test EACHLINE with multiple trailing delimiters.
+is (colored ("test\n\ntest", 'bold'), "\e[1mtest\e[0m\n\n\e[1mtest\e[0m",
+    'EACHLINE');
 $Term::ANSIColor::EACHLINE = "\r\n";
-if (colored ("test\ntest\r\r\n\r\n", 'bold')
-    eq "\e[1mtest\ntest\r\e[0m\r\n\r\n") {
-    print "ok 7\n";
-} else {
-    print "not ok 7\n";
-}
-
-# Test the array ref form.
+is (colored ("test\ntest\r\r\n\r\n", 'bold'),
+    "\e[1mtest\ntest\r\e[0m\r\n\r\n",
+    'EACHLINE with multiple delimiters');
 $Term::ANSIColor::EACHLINE = "\n";
-if (colored (['bold', 'on_green'], "test\n", "\n", "test")
-    eq "\e[1;42mtest\e[0m\n\n\e[1;42mtest\e[0m") {
-    print "ok 8\n";
-} else {
-    print colored (['bold', 'on_green'], "test\n", "\n", "test");
-    print "not ok 8\n";
-}
+is (colored (['bold', 'on_green'], "test\n", "\n", "test"),
+    "\e[1;42mtest\e[0m\n\n\e[1;42mtest\e[0m",
+    'colored with reference to array');
+is_deeply ([ uncolor ('1;42', "\e[m", '', "\e[0m") ],
+           [ qw/bold on_green clear/ ], 'uncolor');
 
-# Test uncolor.
-my @names = uncolor ('1;42', "\e[m", '', "\e[0m");
-if (join ('|', @names) eq 'bold|on_green|clear') {
-    print "ok 9\n";
-} else {
-    print join ('|', @names), "\n";
-    print "not ok 9\n";
-}
-
-# Test ANSI_COLORS_DISABLED.
+# Several tests for ANSI_COLORS_DISABLED.
 $ENV{ANSI_COLORS_DISABLED} = 1;
-if (color ('blue') eq '') {
-    print "ok 10\n";
-} else {
-    print "not ok 10\n";
-}
-if (colored ('testing', 'blue', 'on_red') eq 'testing') {
-    print "ok 11\n";
-} else {
-    print "not ok 11\n";
-}
-if (GREEN 'testing' eq 'testing') {
-    print "ok 12\n";
-} else {
-    print "not ok 12\n";
-}
+is (color ('blue'), '', 'color support for ANSI_COLORS_DISABLED');
+is (colored ('testing', 'blue', 'on_red'), 'testing',
+    'colored support for ANSI_COLORS_DISABLED');
+is ((GREEN 'testing'), 'testing', 'Constant support for ANSI_COLORS_DISABLED');
 delete $ENV{ANSI_COLORS_DISABLED};
 
 # Make sure DARK is exported.  This was omitted in versions prior to 1.07.
-if (DARK "testing" eq "\e[2mtesting\e[0m") {
-    print "ok 13\n";
-} else {
-    print "not ok 13\n";
-}
+is ((DARK "testing"), "\e[2mtesting\e[0m", 'DARK');
 
 # Test colored with 0 and EACHLINE.
 $Term::ANSIColor::EACHLINE = "\n";
-if (colored ('0', 'blue', 'bold') eq "\e[34;1m0\e[0m") {
-    print "ok 14\n";
-} else {
-    print "not ok 14\n";
-}
-if (colored ("0\n0\n\n", 'blue', 'bold')
-    eq "\e[34;1m0\e[0m\n\e[34;1m0\e[0m\n\n") {
-    print "ok 15\n";
-} else {
-    print "not ok 15\n";
-}
+is (colored ('0', 'blue', 'bold'), "\e[34;1m0\e[0m",
+    'colored with 0 and EACHLINE');
+is (colored ("0\n0\n\n", 'blue', 'bold'), "\e[34;1m0\e[0m\n\e[34;1m0\e[0m\n\n",
+    'colored with 0, EACHLINE, and multiple lines');
 
 # Test colored with the empty string and EACHLINE.
-if (colored ('', 'blue', 'bold') eq '') {
-    print "ok 16\n";
-} else {
-    print "not ok 16\n";
-}
+is (colored ('', 'blue', 'bold'), '',
+    'colored with an empty string and EACHLINE');
+
+# Test push and pop support.
+$Term::ANSIColor::AUTORESET = 0;
+is ((PUSHCOLOR RED ON_GREEN "text"), "\e[31m\e[42mtext",
+    'PUSHCOLOR does not break constants');
+is ((PUSHCOLOR BLUE "text"), "\e[34mtext", '...and adding another level');
+is ((RESET BLUE "text"), "\e[0m\e[34mtext", '...and using reset');
+is ((POPCOLOR "text"), "\e[31m\e[42mtext", '...and POPCOLOR works');
+is ((LOCALCOLOR GREEN ON_BLUE "text"), "\e[32m\e[44mtext\e[31m\e[42m",
+    'LOCALCOLOR');
+$Term::ANSIColor::AUTOLOCAL = 1;
+is ((ON_BLUE "text"), "\e[44mtext\e[31m\e[42m", 'AUTOLOCAL');
+$Term::ANSIColor::AUTOLOCAL = 0;
+is ((POPCOLOR "text"), "\e[0mtext", 'POPCOLOR with empty stack');
+
+# Test push and pop support with the syntax from the original openmethods.com
+# submission, which uses a different coding style.
+is (PUSHCOLOR (RED ON_GREEN), "\e[31m\e[42m",
+    'PUSHCOLOR with explict argument');
+is (PUSHCOLOR (BLUE), "\e[34m", '...and another explicit argument');
+is (RESET . BLUE . "text", "\e[0m\e[34mtext",
+    '...and constants with concatenation');
+is (POPCOLOR . "text", "\e[31m\e[42mtext",
+    '...and POPCOLOR works without an argument');
+is (LOCALCOLOR(GREEN . ON_BLUE . "text"), "\e[32m\e[44mtext\e[31m\e[42m",
+    'LOCALCOLOR with two arguments');
+is (POPCOLOR . "text", "\e[0mtext", 'POPCOLOR with no arguments');

@@ -1,0 +1,186 @@
+
+                             Compress-Raw-Bzip2
+
+                             Version 2.020
+
+                               3rd June 2009
+
+       Copyright (c) 2005-2009 Paul Marquess. All rights reserved.
+          This program is free software; you can redistribute it
+           and/or modify it under the same terms as Perl itself.
+
+             The directory bzip2-src contains a subset of the 
+          source files copied directly from bzip2 version 1.0.5.
+           These files are Copyright(C) 1996-2007 Julian Seward.
+    See the file bzip2-src/LICENSE for licence details for these files.
+             Full source for the bzip2 library is available at
+                           http://www.bzip.org/
+
+    Note that the files bzip2.c, bzip2recover.c, bzlib.c & decompress.c
+      have been modified to allow them to build with a C++ compiler. 
+           The file bzip2-src/bzip2-cpp.patch contains the patch 
+               that was used to modify the original source.
+
+DESCRIPTION
+-----------
+
+Compress-Raw-Bzip2 provides the interface to the bzip2 library for the modules
+IO::Compress::Bzip2 and IO::Compress::Bunzip2.
+
+PREREQUISITES
+-------------
+
+Before you can build Compress-Raw-Bzip2 you need to have the following
+installed on your system:
+
+    * A C compiler
+
+    * Perl 5.004 or better. 
+
+BUILDING THE MODULE
+-------------------
+
+Assuming you have met all the prerequisites, the module can now be built
+using this sequence of commands:
+
+    perl Makefile.PL
+    make
+    make test
+
+INSTALLATION
+------------
+
+To install Compress-Raw-Bzip2, run the command below:
+
+    make install
+
+TROUBLESHOOTING
+---------------
+
+Solaris build fails with "language optional software package not installed"
+---------------------------------------------------------------------------
+
+If you are trying to build this module under Solaris and you get an
+error message like this
+
+    /usr/ucb/cc: language optional software package not installed
+
+it means that Perl cannot find the C compiler on your system. The cryptic
+message is just Sun's way of telling you that you haven't bought their
+C compiler.
+
+When you build a Perl module that needs a C compiler, the Perl build
+system tries to use the same C compiler that was used to build perl
+itself. In this case your Perl binary was built with a C compiler that
+lived in /usr/ucb.
+
+To continue with building this module, you need to get a C compiler,
+or tell Perl where your C compiler is, if you already have one.
+
+Assuming you have now got a C compiler, what you do next will be dependent
+on what C compiler you have installed. If you have just installed Sun's
+C compiler, you shouldn't have to do anything. Just try rebuilding
+this module.
+
+If you have installed another C compiler, say gcc, you have to tell perl
+how to use it instead of /usr/ucb/cc.
+
+This set of options seems to work if you want to use gcc. Your mileage
+may vary.
+
+    perl Makefile.PL CC=gcc CCCDLFLAGS=-fPIC OPTIMIZE=" "
+    make test
+
+If that doesn't work for you, it's time to make changes to the Makefile
+by hand. Good luck!
+
+Solaris build fails with "gcc: unrecognized option `-KPIC'"
+-----------------------------------------------------------
+
+You are running Solaris and you get an error like this when you try to
+build this Perl module
+
+    gcc: unrecognized option `-KPIC'
+
+This symptom usually means that you are using a Perl binary that has been
+built with the Sun C compiler, but you are using gcc to build this module.
+
+When Perl builds modules that need a C compiler, it will attempt to use
+the same C compiler and command line options that was used to build perl
+itself. In this case "-KPIC" is a valid option for the Sun C compiler,
+but not for gcc. The equivalent option for gcc is "-fPIC".
+
+The solution is either:
+
+    1. Build both Perl and this module with the same C compiler, either
+       by using the Sun C compiler for both or gcc for both.
+
+    2. Try generating the Makefile for this module like this perl
+
+           perl Makefile.PL CC=gcc CCCDLFLAGS=-fPIC OPTIMIZE=" " LD=gcc
+           make test
+
+       This second option seems to work when mixing a Perl binary built
+       with the Sun C compiler and this module built with gcc. Your
+       mileage may vary.
+
+HP-UX Notes
+-----------
+
+I've had a report that when building Compress-Raw-Bzip2 under HP-UX that it
+is necessary to have first built the bzip2 library with the -fpic
+option.
+
+FEEDBACK
+--------
+
+How to report a problem with Compress-Raw-Bzip2.
+
+To help me help you, I need all of the following information:
+
+ 1. The Versions of everything relevant.
+    This includes:
+
+     a. The *complete* output from running this
+     
+            perl -V
+     
+        Do not edit the output in any way.
+        Note, I want you to run "perl -V" and NOT "perl -v".
+     
+        If your perl does not understand the "-V" option it is too
+        old. This module needs Perl version 5.004 or better.     
+
+     b. The version of Compress-Raw-Bzip2 you have. 
+        If you have successfully installed Compress-Raw-Bzip2, this one-liner
+        will tell you:
+
+           perl -MCompress::Raw::Bzip2 -e 'print qq[ver $Compress::Raw::Bzip2::VERSION\n]'
+
+        If you are  running windows use this
+
+           perl -MCompress::Raw::Bzip2 -e "print qq[ver $Compress::Raw::Bzip2::VERSION\n]"
+
+        If you haven't installed Compress-Raw-Bzip2 then search Compress::Raw::Bzip2.pm
+        for a line like this:
+
+          $VERSION = "2.020" ;
+
+     c. The version of bzip2 you have used.
+        If you have successfully installed Compress-Raw-Bzip2, this one-liner
+        will tell you:
+
+          perl -MCompress::Raw::Bzip2 -e "print q[bzip2 ver ]. Compress::Raw::Bzip2::ZLIB_VERSION.qq[\n]" 
+
+        If not, look at the beginning of the file zlib.h. 
+
+ 2. If you are having problems building Compress-Raw-Bzip2, send me a
+    complete log of what happened. Start by unpacking the Compress-Raw-Bzip2
+    module into a fresh directory and keep a log of all the steps
+
+        [edit config.in, if necessary]
+        perl Makefile.PL
+        make
+        make test TEST_VERBOSE=1          
+
+Paul Marquess <pmqs@cpan.org>

@@ -29,11 +29,6 @@ BEGIN
   print "# INC = @INC\n";
 
   plan tests => 2;
-  if ($] < 5.006)
-    {
-    for (1..2) { skip (1,'Not supported on older Perls'); }
-    exit;
-    }
   } 
 
 use Math::BigFloat ':constant';

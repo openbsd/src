@@ -485,8 +485,6 @@ of Perl in OS/400 PASE.
 
 perlreref has been added: it is a regular expressions quick reference.
 
-=head1 Performance Enhancements
-
 =head1 Installation and Configuration Improvements
 
 The UNIX standard Perl location, F</usr/bin/perl>, is no longer

@@ -211,13 +211,13 @@ installation directory.
 I see you already have this file:
     %1
 
-If you continue & save this file, the previous version will be overwritten.
+The file will not be overwritten until you explicitly save it.
 
             ], $file );
             
             redo ASK_CONFIG_TYPE 
                 unless $term->ask_yn(
-                    prompt  => loc( "Shall I overwrite it?"),
+                    prompt  => loc( "Do you wish to use this file?"),
                     default => 'n',
                 );
         }
@@ -965,6 +965,32 @@ Would you like to do this?
                 : loc("I will not use Storable");
 
         $conf->set_conf( $type => $yn );
+    }
+
+    {
+        ###################
+        ## use sqlite  ? ##
+        ###################
+
+        print loc("
+        
+To limit the amount of RAM used by CPANPLUS, you can use the SQLite 
+source backend instead. Note that it is currently still experimental.
+Would you like to do this?
+
+");
+        my $type    = 'source_engine';
+        my $class   = 'CPANPLUS::Internals::Source::SQLite';
+        my $yn      = $term->ask_yn(
+                        prompt  => loc("Use SQLite?"),
+                        default => $conf->get_conf( $type ) eq $class ? 1 : 0,
+                      );
+        print "\n";
+        print $yn
+                ? loc("I will use SQLite")
+                : loc("I will not use SQLite");
+
+        $conf->set_conf( $type => $class );
     }
 
     {

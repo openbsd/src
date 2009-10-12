@@ -8,7 +8,7 @@ BEGIN {
     }
     use Config;
     if (! $Config{'useithreads'}) {
-        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        print("1..0 # SKIP Perl not compiled with 'useithreads'\n");
         exit(0);
     }
 }
@@ -18,12 +18,8 @@ use ExtUtils::testlib;
 use threads;
 
 BEGIN {
-    eval {
-        require threads::shared;
-        threads::shared->import();
-    };
-    if ($@ || ! $threads::shared::threads_shared) {
-        print("1..0 # Skip: threads::shared not available\n");
+    if (! eval 'use threads::shared; 1') {
+        print("1..0 # SKIP threads::shared not available\n");
         exit(0);
     }
 
@@ -155,5 +151,7 @@ $ctx = $thr->wantarray();
 ok(! defined($ctx), 'Explicit void context');
 $res = $thr->join();
 ok(! defined($res), 'Explicit void context');
+
+exit(0);
 
 # EOF

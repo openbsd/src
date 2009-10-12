@@ -1,10 +1,10 @@
 #!/usr/local/bin/perl
 #
-# $Id: ucmlint,v 2.1 2006/05/03 18:24:10 dankogai Exp $
+# $Id: ucmlint,v 2.2 2008/03/12 09:51:11 dankogai Exp $
 #
 
 use strict;
-our  $VERSION = do { my @r = (q$Revision: 2.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our  $VERSION = do { my @r = (q$Revision: 2.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use Getopt::Std;
 our %Opt;
@@ -30,7 +30,7 @@ $0 -[Dehfv] [ucm files ...]
 }
 
 $| = 1;
-my (%Hdr, %U2E, %E2U);
+my (%Hdr, %U2E, %E2U, %Fallback);
 my $in_charmap = 0;
 my $nerror = 0;
 my $nwarning = 0;
@@ -39,92 +39,94 @@ sub nit($;$){
     my ($msg, $level) = @_;
     my $lstr;
     if ($level == 2){
-    $lstr = 'notice';
+        $lstr = 'notice';
     }elsif ($level == 1){
-    $lstr = 'warning'; $nwarning++;
+        $lstr = 'warning'; $nwarning++;
     }else{
-    $lstr = 'error'; $nerror++;
+        $lstr = 'error'; $nerror++;
     }
     print "$ARGV:$lstr in line $.: $msg\n";
 }
 
 for $ARGV (@ARGV){
     open UCM, $ARGV or die "$ARGV:$!";
-    %Hdr = %U2E = %E2U = ();
+    %Hdr = %U2E = %E2U = %Fallback = ();
     $in_charmap = $nerror = $nwarning = 0;
     $. = 0;
     while(<UCM>){
-    chomp;
-    s/\s*#.*$//o; /^$/ and next;
-    if ($_ eq "CHARMAP"){ 
-        $in_charmap = 1;
-        for my $must (qw/code_set_name mb_cur_min mb_cur_max/){
-        exists $Hdr{$must} or nit "<$must> nonexistent";
-        }
-        $Hdr{mb_cur_min} > $Hdr{mb_cur_max}
-        and nit sprintf("mb_cur_min(%d) > mb_cur_max(%d)",
-                $Hdr{mb_cur_min},$Hdr{mb_cur_max});
-        $in_charmap = 1;
-        next;
-    }
-    unless ($in_charmap){
-        my($hkey, $hvalue) = /^<(\S+)>\s+[\"\']?([^\"\']+)/o or next;
-        $Opt{D} and warn "$hkey => $hvalue";
-        if ($hkey eq "code_set_name"){ # name check
-        exists $Hdr{code_set_name} 
-        and nit "Duplicate <code_set_name>: $hkey";
-        }
-        if ($hkey eq "code_set_alias"){ # alias check
-        $hvalue eq $Hdr{code_set_name}
-        and nit qq(alias "$hvalue" is already in <code_set_name>);
-        }
-        $Hdr{$hkey} = $hvalue;
-    }else{
-        my $name = $Hdr{code_set_name};
-        my($unistr, $encstr, $fb) = /^(\S+)\s+(\S+)\s(\S+)/o or next;
-        $Opt{v} and nit $_, 2;
-        my $uni = uniparse($unistr);
-        my $enc = encparse($encstr);
-        $fb =~ /^\|([0123])$/ or nit "malformed fallback: $fb";
-        $fb = $1; 
-        $Opt{f} and $fb = 0;
-        unless ($fb == 1){ # check uni -> enc
-        if (exists $U2E{$uni}){
-            nit "dupe encode map: U$uni => $U2E{$uni} and $enc", 1;
-        }else{
-            $U2E{$uni} = $enc;
-            if ($Opt{e} and $fb != 3) {
-            my $e = hex2enc($enc);
-            my $u = hex2uni($uni);
-            my $eu = Encode::encode($name, $u);
-            $e eq $eu
-                or nit qq(encode('$name', $uni) != $enc);
+        chomp;
+        s/\s*#.*$//o; /^$/ and next;
+        if ($_ eq "CHARMAP"){ 
+            $in_charmap = 1;
+            for my $must (qw/code_set_name mb_cur_min mb_cur_max/){
+                exists $Hdr{$must} or nit "<$must> nonexistent";
             }
+            $Hdr{mb_cur_min} > $Hdr{mb_cur_max}
+                and nit sprintf("mb_cur_min(%d) > mb_cur_max(%d)",
+                                $Hdr{mb_cur_min},$Hdr{mb_cur_max});
+            $in_charmap = 1;
+            next;
         }
-        }
-        unless ($fb == 3){  # check enc -> uni
-        if (exists $E2U{$enc}){
-            nit "dupe decode map: $enc => U$E2U{$enc} and U$uni", 1;
-        }else{
-            $E2U{$enc} = $uni;
-            if ($Opt{e} and $fb != 1) {
-            my $e = hex2enc($enc);
-            my $u = hex2uni($uni);
-            $Opt{D} and warn "$uni, $enc";
-            my $de = Encode::decode($name, $e);
-            $de eq $u
-                or nit qq(decode('$name', $enc) != $uni);
+        unless ($in_charmap){
+            my($hkey, $hvalue) = /^<(\S+)>\s+[\"\']?([^\"\']+)/o or next;
+            $Opt{D} and warn "$hkey => $hvalue";
+            if ($hkey eq "code_set_name"){ # name check
+                exists $Hdr{code_set_name} 
+                    and nit "Duplicate <code_set_name>: $hkey";
             }
+            if ($hkey eq "code_set_alias"){ # alias check
+                $hvalue eq $Hdr{code_set_name}
+                    and nit qq(alias "$hvalue" is already in <code_set_name>);
+            }
+            $Hdr{$hkey} = $hvalue;
+        }else{
+            my $name = $Hdr{code_set_name};
+            my($unistr, $encstr, $fb) = /^(\S+)\s+(\S+)\s(\S+)/o or next;
+            $Opt{v} and nit $_, 2;
+            my $uni = uniparse($unistr);
+            my $enc = encparse($encstr);
+            $fb =~ /^\|([0123])$/ or nit "malformed fallback: $fb";
+            $fb = $1; 
+            $Opt{f} and $fb = 0;
+            unless ($fb == 3){ # check uni -> enc
+                if (exists $U2E{$uni}){
+                    nit "dupe encode map: U$uni => $U2E{$uni} and $enc", 1;
+                }else{
+                    $U2E{$uni} = $enc;
+                    $Fallback{$uni}{$enc} = 1 if $fb == 1;
+                    if ($Opt{e}) {
+                        my $e = hex2enc($enc);
+                        my $u = hex2uni($uni);
+                        my $eu = Encode::encode($name, $u);
+                        $e eq $eu
+                            or nit qq(encode('$name', $uni) != $enc);
+                    }
+                }
+            }
+            unless ($fb == 1){  # check enc -> uni
+                if (exists $E2U{$enc}){
+                    nit "dupe decode map: $enc => U$E2U{$enc} and U$uni", 1;
+                }else{
+                    $E2U{$enc} = $uni;
+                    $Fallback{$enc}{$uni} = 1 if $fb == 3;
+                    if ($Opt{e}) {
+                        my $e = hex2enc($enc);
+                        my $u = hex2uni($uni);
+                        $Opt{D} and warn "$uni, $enc";
+                        my $de = Encode::decode($name, $e);
+                        $de eq $u
+                            or nit qq(decode('$name', $enc) != $uni);
+                    }
+                }
+            }
+            # warn "$uni, $enc, $fb";
         }
-        }
-        # warn "$uni, $enc, $fb";
-    }
     }
     $in_charmap or nit "Where is CHARMAP?";
     checkRT();
     printf ("$ARGV: %s error%s found\n", 
-        ($nerror == 0 ? 'no' : $nerror),
-        ($nerror > 1 ? 's' : ''));
+            ($nerror == 0 ? 'no' : $nerror),
+            ($nerror > 1 ? 's' : ''));
 }
 
 exit;
@@ -138,14 +140,14 @@ sub hex2uni{
 
 sub checkRT{
     for my $uni (keys %E2U){
-    my $enc = $U2E{$uni} or next; # okay
-    $E2U{$U2E{$uni}} eq $uni or
-        nit "RT failure: U$uni => $enc =>U$E2U{$U2E{$uni}}";
+        my $enc = $U2E{$uni} or next; # okay
+        $E2U{$U2E{$uni}} eq $uni or $Fallback{$uni}{$enc} or
+            nit "RT failure: U$uni => $enc =>U$E2U{$U2E{$uni}}";
     }
     for my $enc (keys %E2U){
-    my $uni =  $E2U{$enc} or next; # okay
-    $U2E{$E2U{$enc}} eq $enc or
-        nit "RT failure: $enc => U$uni => $U2E{$E2U{$enc}}";
+        my $uni = $E2U{$enc} or next; # okay
+        $U2E{$E2U{$enc}} eq $enc or $Fallback{$enc}{$uni} or
+            nit "RT failure: $enc => U$uni => $U2E{$E2U{$enc}}";
     }
 }
 
@@ -155,8 +157,8 @@ sub uniparse{
     my @u;
     push @u, $1 while($str =~ /\G<U(.*?)>/ig);
     for my $u (@u){
-    $u =~ /^([0-9A-Za-z]+)$/o
-        or nit "malformed Unicode character: $u";
+        $u =~ /^([0-9A-Za-z]+)$/o
+            or nit "malformed Unicode character: $u";
     }
     return join(',', @u);
 }
@@ -165,10 +167,10 @@ sub encparse{
     my $str = shift;
     my @e;
     for my $e (split /\\x/io, $str){
-    $e or next; # first \x
-    $e =~ /^([0-9A-Za-z]{1,2})$/io
-        or nit "Hex $e in $str is bogus";
-    push @e, $1;
+        $e or next; # first \x
+        $e =~ /^([0-9A-Za-z]{1,2})$/io
+            or nit "Hex $e in $str is bogus";
+        push @e, $1;
     }
     return join(',', @e);
 }

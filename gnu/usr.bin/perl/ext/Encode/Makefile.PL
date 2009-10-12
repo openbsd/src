@@ -1,10 +1,11 @@
 #
-# $Id: Makefile.PL,v 2.5 2007/05/29 18:15:32 dankogai Exp dankogai $
+# $Id: Makefile.PL,v 2.8 2009/07/08 13:34:15 dankogai Exp $
 #
 use 5.007003;
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
+use File::Spec;
 
 # Just for sure :)
 my %ARGV = map { my @r = split /=/,$_; defined $r[1] or $r[1]=1; @r } @ARGV;
@@ -28,26 +29,23 @@ my @more_exe_files = qw(
             );
 my @pmlibdirs = qw(lib Encode);
 
-$ARGV{MORE_SCRIOPTS} and push @exe_files, @more_exe_files;
+$ARGV{MORE_SCRIPTS} and push @exe_files, @more_exe_files;
 $ARGV{INSTALL_UCM}   and push @pmlibdirs, "ucm";
-my @man =  ();
-@man = ( MAN1PODS => {}, MAN3PODS => {} ) if $ENV{PERL_CORE};
 
 WriteMakefile(
-          NAME		=> "Encode",
-          EXE_FILES         => \@exe_files,
-          VERSION_FROM	=> 'Encode.pm',
-          OBJECT		=> '$(O_FILES)',
-          'dist'		=> {
-          COMPRESS	=> 'gzip -9f',
-          SUFFIX	=> 'gz',
-          DIST_DEFAULT => 'all tardist',
-          },
-	  @man,
-          INC       => "-I./Encode",
-          PMLIBDIRS => \@pmlibdirs,
-          INSTALLDIRS => 'perl',
-          );
+    NAME         => "Encode",
+    EXE_FILES    => \@exe_files,
+    VERSION_FROM => 'Encode.pm',
+    OBJECT       => '$(O_FILES)',
+    'dist'       => {
+        COMPRESS     => 'gzip -9f',
+        SUFFIX       => 'gz',
+        DIST_DEFAULT => 'all tardist',
+    },
+    INC         => '-I' . File::Spec->catfile( '.', 'Encode' ),
+    PMLIBDIRS   => \@pmlibdirs,
+    INSTALLDIRS => 'perl',
+);
 
 package MY;
 

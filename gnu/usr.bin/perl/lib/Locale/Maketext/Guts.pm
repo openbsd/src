@@ -1,5 +1,7 @@
 package Locale::Maketext::Guts;
 
+$VERSION = '1.13';
+
 BEGIN {
     # Just so we're nice and define SOMETHING in "our" package.
     *zorp = sub { return scalar @_ } unless defined &zorp;
@@ -259,9 +261,9 @@ sub _compile {
     }
 
     die q{Last chunk isn't null??} if @c and length $c[-1]; # sanity
-    DEBUG and print scalar(@c), " chunks under closure\n";
+    DEBUG and warn scalar(@c), " chunks under closure\n";
     if(@code == 0) { # not possible?
-        DEBUG and print "Empty code\n";
+        DEBUG and warn "Empty code\n";
         return \'';
     }
     elsif(@code > 1) { # most cases, presumably!
@@ -270,7 +272,7 @@ sub _compile {
     unshift @code, "use strict; sub {\n";
     push @code, "}\n";
 
-    DEBUG and print @code;
+    DEBUG and warn @code;
     my $sub = eval(join '', @code);
     die "$@ while evalling" . join('', @code) if $@; # Should be impossible.
     return $sub;

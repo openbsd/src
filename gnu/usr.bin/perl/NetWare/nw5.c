@@ -318,7 +318,7 @@ nw_crypt(const char *txt, const char *salt)
     return des_fcrypt(txt, salt, w32_crypt_buffer);
 #else
     Perl_croak(aTHX_ "The crypt() function is not implemented on NetWare\n");
-    return Nullch;
+    return NULL;
 #endif
 }
 
@@ -843,7 +843,7 @@ sys_intern_clear(pTHX)
 void
 sys_intern_dup(pTHX_ struct interp_intern *src, struct interp_intern *dst)
 {
-
+    PERL_ARGS_ASSERT_SYS_INTERN_DUP;
 }
 #endif	/* HAVE_INTERP_INTERN */
 
@@ -1001,7 +1001,7 @@ do_spawn2(char *cmd, int exectype)
 	    if (*s)
 		*s++ = '\0';
 	}
-	*a = Nullch;
+	*a = NULL;
 	if (argv[0]) {
 	    switch (exectype) {
 			case EXECF_SPAWN:
@@ -1031,7 +1031,7 @@ do_spawn2(char *cmd, int exectype)
 	while (++i < nw_perlshell_items)
 	    argv[i] = nw_perlshell_vec[i];
 	argv[i++] = cmd;
-	argv[i] = Nullch;
+	argv[i] = NULL;
 	switch (exectype) {
 		case EXECF_SPAWN:
 			status = nw_spawnvp(P_WAIT, argv[0], (char **)argv);

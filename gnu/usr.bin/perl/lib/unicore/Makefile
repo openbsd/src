@@ -8,5 +8,5 @@ test:   TestProp.pl
 	../../miniperl -I../../lib TestProp.pl
 
 clean:
-	rm -f *.pl */*.pl
+	rm -f *.pl */*.pl */*/*.pl
 	rm -f Properties

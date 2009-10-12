@@ -2,7 +2,7 @@ package Module::Build::Platform::MacOS;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.2808_01';
+$VERSION = '0.340201';
 $VERSION = eval $VERSION;
 use Module::Build::Base;
 use vars qw(@ISA);
@@ -111,7 +111,7 @@ The sole purpose of this module is to inherit from
 C<Module::Build::Base> and override a few methods.  Please see
 L<Module::Build> for the docs.
 
-=head2 Overriden Methods
+=head2 Overridden Methods
 
 =over 4
 

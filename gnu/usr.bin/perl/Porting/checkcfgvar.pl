@@ -34,6 +34,7 @@ my @CFG = (
 	   "win32/config.vc64",
 	   "win32/config.ce",
 	   "configure.com",
+	   "Porting/config.sh",
 	  );
 
 sub read_file {
@@ -80,13 +81,13 @@ sub check_cfg {
 
 for my $cfg (@CFG) {
     unless (exists $MANIFEST{$cfg}) {
-	print "[skipping not-expected '$cfg']\n";
+	print STDERR "[skipping not-expected '$cfg']\n";
 	next;
     }
     my %cfg;
     read_file($cfg,
 	      sub {
-		  return if /^\#/ || /^\s*$/;
+		  return if /^\#/ || /^\s*$/ || /^\:/;
 		  if ($cfg eq 'configure.com') {
 		      s/(\s*!.*|\s*)$//; # remove trailing comments or whitespace
 		      return if ! /^\$\s+WC "(\w+)='(.*)'"$/;

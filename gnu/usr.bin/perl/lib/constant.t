@@ -12,11 +12,11 @@ use vars qw{ @warnings $fagwoosh $putt $kloong};
 BEGIN {				# ...and save 'em for later
     $SIG{'__WARN__'} = sub { push @warnings, @_ }
 }
-END { print STDERR @warnings }
+END { @warnings && print STDERR join "\n- ", "accumulated warnings:", @warnings }
 
 
 use strict;
-use Test::More tests => 97;
+use Test::More tests => 95;
 my $TB = Test::More->builder;
 
 BEGIN { use_ok('constant'); }
@@ -80,13 +80,6 @@ use constant MESS	=> q('"'\\"'"\\);
 is MESS, q('"'\\"'"\\);
 is length(MESS), 8;
 
-use constant TRAILING	=> '12 cats';
-{
-    local $^W;
-    cmp_ok TRAILING, '==', 12;
-}
-is TRAILING, '12 cats';
-
 use constant LEADING	=> " \t1234";
 cmp_ok LEADING, '==', 1234;
 is LEADING, " \t1234";
@@ -112,7 +105,7 @@ cmp_ok E2BIG, '==', 7;
 # text may vary, so we can't test much better than this.
 cmp_ok length(E2BIG), '>', 6;
 
-is @warnings, 0 or diag join "\n", "unexpected warning", @warnings;
+is @warnings, 0 or diag join "\n- ", "unexpected warning:", @warnings;
 @warnings = ();		# just in case
 undef &PI;
 ok @warnings && ($warnings[0] =~ /Constant sub.* undefined/) or
@@ -122,9 +115,9 @@ shift @warnings;
 is @warnings, 0, "unexpected warning";
 
 my $curr_test = $TB->current_test;
-use constant CSCALAR	=> \"ok 37\n";
-use constant CHASH	=> { foo => "ok 38\n" };
-use constant CARRAY	=> [ undef, "ok 39\n" ];
+use constant CSCALAR	=> \"ok 35\n";
+use constant CHASH	=> { foo => "ok 36\n" };
+use constant CARRAY	=> [ undef, "ok 37\n" ];
 use constant CCODE	=> sub { "ok $_[0]\n" };
 
 my $output = $TB->output ;
@@ -305,7 +298,7 @@ sub zit;
     eval 'use constant zit => 4; 1' or die $@;
 
     # empty prototypes are reported differently in different versions
-    my $no_proto = $] < 5.008 ? "" : ": none";
+    my $no_proto = $] < 5.008004 ? "" : ": none";
 
     is(scalar @warnings, 1, "1 warning");
     like ($warnings[0], qr/^Prototype mismatch: sub main::zit$no_proto vs \(\)/,

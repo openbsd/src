@@ -9,10 +9,7 @@ use Config;
 
 require "test.pl";
 
-my $file = "crlf$$.dat";
-END {
-    1 while unlink($file);
-}
+my $file = tempfile();
 
 if (find PerlIO::Layer 'perlio') {
     plan(tests => 16);

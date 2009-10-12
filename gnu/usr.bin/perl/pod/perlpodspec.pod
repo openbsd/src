@@ -189,7 +189,7 @@ is a verbatim paragraph, because its first line starts with a literal
 whitespace character (and there's no "=begin"..."=end" region around).
 
 The "=begin I<identifier>" ... "=end I<identifier>" commands stop
-paragraphs that they surround from being parsed as data or verbatim
+paragraphs that they surround from being parsed as ordinary or verbatim
 paragraphs, if I<identifier> doesn't begin with a colon.  This
 is discussed in detail in the section
 L</About Data Paragraphs and "=beginE<sol>=end" Regions>.
@@ -337,8 +337,8 @@ paragraph.
 This command, which should occur early in the document (at least
 before any non-US-ASCII data!), declares that this document is
 encoded in the encoding I<encodingname>, which must be
-an encoding name that L<Encoding> recognizes.  (Encoding's list
-of supported encodings, in L<Encoding::Supported>, is useful here.)
+an encoding name that L<Encode> recognizes.  (Encode's list
+of supported encodings, in L<Encode::Supported>, is useful here.)
 If the Pod parser cannot decode the declared encoding, it 
 should emit a warning and may abort parsing the document
 altogether.
@@ -346,8 +346,8 @@ altogether.
 A document having more than one "=encoding" line should be
 considered an error.  Pod processors may silently tolerate this if
 the not-first "=encoding" lines are just duplicates of the
-first one (e.g., if there's a "=use utf8" line, and later on
-another "=use utf8" line).  But Pod processors should complain if
+first one (e.g., if there's a "=encoding utf8" line, and later on
+another "=encoding utf8" line).  But Pod processors should complain if
 there are contradictory "=encoding" lines in the same document
 (e.g., if there is a "=encoding utf8" early in the document and
 "=encoding big5" later).  Pod processors that recognize BOMs

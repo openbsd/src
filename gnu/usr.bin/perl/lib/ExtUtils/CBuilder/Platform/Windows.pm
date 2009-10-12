@@ -7,9 +7,10 @@ use File::Basename;
 use File::Spec;
 
 use ExtUtils::CBuilder::Base;
+use IO::File;
 
 use vars qw($VERSION @ISA);
-$VERSION = '0.21';
+$VERSION = '0.2602';
 @ISA = qw(ExtUtils::CBuilder::Base);
 
 sub new {
@@ -33,61 +34,24 @@ sub _compiler_type {
 }
 
 sub split_like_shell {
-  # As it turns out, Windows command-parsing is very different from
-  # Unix command-parsing.  Double-quotes mean different things,
-  # backslashes don't necessarily mean escapes, and so on.  So we
-  # can't use Text::ParseWords::shellwords() to break a command string
-  # into words.  The algorithm below was bashed out by Randy and Ken
-  # (mostly Randy), and there are a lot of regression tests, so we
-  # should feel free to adjust if desired.
-  
+  # Since Windows will pass the whole command string (not an argument
+  # array) to the target program and make the program parse it itself,
+  # we don't actually need to do any processing here.
   (my $self, local $_) = @_;
   
   return @$_ if defined() && UNIVERSAL::isa($_, 'ARRAY');
-  
-  my @argv;
-  return @argv unless defined() && length();
-  
-  my $arg = '';
-  my( $i, $quote_mode ) = ( 0, 0 );
-  
-  while ( $i < length() ) {
-    
-    my $ch      = substr( $_, $i  , 1 );
-    my $next_ch = substr( $_, $i+1, 1 );
-    
-    if ( $ch eq '\\' && $next_ch eq '"' ) {
-      $arg .= '"';
-      $i++;
-    } elsif ( $ch eq '\\' && $next_ch eq '\\' ) {
-      $arg .= '\\';
-      $i++;
-    } elsif ( $ch eq '"' && $next_ch eq '"' && $quote_mode ) {
-      $quote_mode = !$quote_mode;
-      $arg .= '"';
-      $i++;
-    } elsif ( $ch eq '"' && $next_ch eq '"' && !$quote_mode &&
-	      ( $i + 2 == length()  ||
-		substr( $_, $i + 2, 1 ) eq ' ' )
-	    ) { # for cases like: a"" => [ 'a' ]
-      push( @argv, $arg );
-      $arg = '';
-      $i += 2;
-    } elsif ( $ch eq '"' ) {
-      $quote_mode = !$quote_mode;
-    } elsif ( $ch eq ' ' && !$quote_mode ) {
-      push( @argv, $arg ) if $arg;
-      $arg = '';
-      ++$i while substr( $_, $i + 1, 1 ) eq ' ';
-    } else {
-      $arg .= $ch;
-    }
-    
-    $i++;
-  }
-  
-  push( @argv, $arg ) if defined( $arg ) && length( $arg );
-  return @argv;
+  return unless defined() && length();
+  return ($_);
+}
+
+sub do_system {
+  # See above
+  my $self = shift;
+  my $cmd = join(" ",
+		 grep length,
+		 map {$a=$_;$a=~s/\t/ /g;$a=~s/^\s+|\s+$//;$a}
+		 grep defined, @_);
+  return $self->SUPER::do_system($cmd);
 }
 
 sub arg_defines {
@@ -119,7 +83,7 @@ sub compile {
     cflags      => [
                      $self->split_like_shell($cf->{ccflags}),
                      $self->split_like_shell($cf->{cccdlflags}),
-                     $self->split_like_shell($cf->{extra_compiler_flags}),
+                     $self->split_like_shell($args{extra_compiler_flags}),
                    ],
     optimize    => [ $self->split_like_shell($cf->{optimize})    ],
     defines     => \@defines,
@@ -329,17 +293,15 @@ sub write_compiler_script {
   $self->add_to_cleanup($script);
   print "Generating script '$script'\n" if !$self->{quiet};
 
-  open( SCRIPT, ">$script" )
+  my $SCRIPT = IO::File->new( ">$script" )
     or die( "Could not create script '$script': $!" );
 
-  print SCRIPT join( "\n",
+  print $SCRIPT join( "\n",
     map { ref $_ ? @{$_} : $_ }
     grep defined,
     delete(
       @spec{ qw(includes cflags optimize defines perlinc) } )
   );
-
-  close SCRIPT;
 
   push @{$spec{includes}}, '@"' . $script . '"';
 
@@ -385,7 +347,7 @@ sub format_linker_cmd {
   # Embed the manifest file for VC 2005 (aka VC 8) or higher, but not for the 64-bit Platform SDK compiler
   if ($cf->{ivsize} == 4 && $cf->{cc} eq 'cl' and $cf->{ccversion} =~ /^(\d+)/ and $1 >= 14) {
     push @cmds, [
-      'mt', '-nologo', $spec{manifest}, '-outputresource:' . "$output;2"
+      'if', 'exist', $spec{manifest}, 'mt', '-nologo', $spec{manifest}, '-outputresource:' . "$output;2"
     ];
   }
 
@@ -402,10 +364,10 @@ sub write_linker_script {
 
   print "Generating script '$script'\n" if !$self->{quiet};
 
-  open( SCRIPT, ">$script" )
+  my $SCRIPT = IO::File->new( ">$script" )
     or die( "Could not create script '$script': $!" );
 
-  print SCRIPT join( "\n",
+  print $SCRIPT join( "\n",
     map { ref $_ ? @{$_} : $_ }
     grep defined,
     delete(
@@ -413,8 +375,6 @@ sub write_linker_script {
                 startup objects libperl perllibs
                 def_file implib map_file)            } )
   );
-
-  close SCRIPT;
 
   push @{$spec{lddlflags}}, '@"' . $script . '"';
 
@@ -459,7 +419,7 @@ sub write_compiler_script {
 
   print "Generating script '$script'\n" if !$self->{quiet};
 
-  open( SCRIPT, ">$script" )
+  my $SCRIPT = IO::File->new( ">$script" )
     or die( "Could not create script '$script': $!" );
 
   # XXX Borland "response files" seem to be unable to accept macro
@@ -467,14 +427,12 @@ sub write_compiler_script {
   # backslash doesn't work, and any level of quotes are stripped. The
   # result is is a floating point number in the source file where a
   # string is expected. So we leave the macros on the command line.
-  print SCRIPT join( "\n",
+  print $SCRIPT join( "\n",
     map { ref $_ ? @{$_} : $_ }
     grep defined,
     delete(
       @spec{ qw(includes cflags optimize perlinc) } )
   );
-
-  close SCRIPT;
 
   push @{$spec{includes}}, '@"' . $script . '"';
 
@@ -525,28 +483,24 @@ sub write_linker_script {
   print "Generating scripts '$ld_script' and '$ld_libs'.\n" if !$self->{quiet};
 
   # Script 1: contains options & names of object files.
-  open( LD_SCRIPT, ">$ld_script" )
+  my $LD_SCRIPT = IO::File->new( ">$ld_script" )
     or die( "Could not create linker script '$ld_script': $!" );
 
-  print LD_SCRIPT join( " +\n",
+  print $LD_SCRIPT join( " +\n",
     map { @{$_} }
     grep defined,
     delete(
       @spec{ qw(lddlflags libpath other_ldflags startup objects) } )
   );
 
-  close LD_SCRIPT;
-
   # Script 2: contains name of libs to link against.
-  open( LD_LIBS, ">$ld_libs" )
+  my $LD_LIBS = IO::File->new( ">$ld_libs" )
     or die( "Could not create linker script '$ld_libs': $!" );
 
-  print LD_LIBS join( " +\n",
+  print $LD_LIBS join( " +\n",
      (delete $spec{libperl}  || ''),
     @{delete $spec{perllibs} || []},
   );
-
-  close LD_LIBS;
 
   push @{$spec{lddlflags}}, '@"' . $ld_script  . '"';
   push @{$spec{perllibs}},  '@"' . $ld_libs    . '"';
@@ -669,31 +623,29 @@ sub write_linker_script {
 
   print "Generating script '$script'\n" if !$self->{quiet};
 
-  open( SCRIPT, ">$script" )
+  my $SCRIPT = IO::File->new( ">$script" )
     or die( "Could not create script '$script': $!" );
 
-  print( SCRIPT 'SEARCH_DIR(' . $_ . ")\n" )
+  print $SCRIPT ( 'SEARCH_DIR(' . $_ . ")\n" )
     for @{delete $spec{libpath} || []};
 
   # gcc takes only one startup file, so the first object in startup is
   # specified as the startup file and any others are shifted into the
   # beginning of the list of objects.
   if ( $spec{startup} && @{$spec{startup}} ) {
-    print SCRIPT 'STARTUP(' . shift( @{$spec{startup}} ) . ")\n";
+    print $SCRIPT 'STARTUP(' . shift( @{$spec{startup}} ) . ")\n";
     unshift @{$spec{objects}},
       @{delete $spec{startup} || []};
   }
 
-  print SCRIPT 'INPUT(' . join( ',',
+  print $SCRIPT 'INPUT(' . join( ',',
     @{delete $spec{objects}  || []}
   ) . ")\n";
 
-  print SCRIPT 'INPUT(' . join( ' ',
+  print $SCRIPT 'INPUT(' . join( ' ',
      (delete $spec{libperl}  || ''),
     @{delete $spec{perllibs} || []},
   ) . ")\n";
-
-  close SCRIPT;
 
   push @{$spec{other_ldflags}}, '"' . $script . '"';
 

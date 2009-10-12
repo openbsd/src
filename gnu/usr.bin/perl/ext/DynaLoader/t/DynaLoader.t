@@ -42,15 +42,23 @@ use_ok( 'DynaLoader' );
 
 # Check functions
 can_ok( 'DynaLoader' => 'bootstrap'               ); # defined in Perl section
-can_ok( 'DynaLoader' => 'dl_error'                ); # defined in XS section
-can_ok( 'DynaLoader' => 'dl_find_symbol'          ); # defined in XS section
-can_ok( 'DynaLoader' => 'dl_install_xsub'         ); # defined in XS section
-can_ok( 'DynaLoader' => 'dl_load_file'            ); # defined in XS section
 can_ok( 'DynaLoader' => 'dl_load_flags'           ); # defined in Perl section
-can_ok( 'DynaLoader' => 'dl_undef_symbols'        ); # defined in XS section
-SKIP: {
-    skip "unloading unsupported on $^O", 1 if ($^O eq 'VMS' || $^O eq 'darwin');
-    can_ok( 'DynaLoader' => 'dl_unload_file'          ); # defined in XS section
+can_ok( 'DynaLoader' => 'dl_error'                ); # defined in XS section
+if ($Config{usedl}) {
+    can_ok( 'DynaLoader' => 'dl_find_symbol'      ); # defined in XS section
+    can_ok( 'DynaLoader' => 'dl_install_xsub'     ); # defined in XS section
+    can_ok( 'DynaLoader' => 'dl_load_file'        ); # defined in XS section
+    can_ok( 'DynaLoader' => 'dl_undef_symbols'    ); # defined in XS section
+    SKIP: {
+        skip "unloading unsupported on $^O", 1 if ($^O eq 'VMS' || $^O eq 'darwin');
+        can_ok( 'DynaLoader' => 'dl_unload_file'  ); # defined in XS section
+    }
+} else {
+    foreach my $symbol (qw(dl_find_symbol dl_install_sub dl_load_file
+			   dl_undef_symbols dl_unload_file)) {
+	is(DynaLoader->can($symbol), undef,
+	   "Without dynamic loading, DynaLoader should not have $symbol");
+    }
 }
 
 TODO: {
@@ -68,16 +76,24 @@ like( $@, q{/^Usage: DynaLoader::bootstrap\(module\)/},
         "calling DynaLoader::bootstrap() with no argument" );
 
 eval { package egg_bacon_sausage_and_spam; DynaLoader::bootstrap("egg_bacon_sausage_and_spam") };
-like( $@, q{/^Can't locate loadable object for module egg_bacon_sausage_and_spam/},
+if ($Config{usedl}) {
+    like( $@, q{/^Can't locate loadable object for module egg_bacon_sausage_and_spam/},
         "calling DynaLoader::bootstrap() with a package without binary object" );
+} else {
+     like( $@, q{/^Can't load module egg_bacon_sausage_and_spam/},
+        "calling DynaLoader::bootstrap() with a package without binary object" );
+}
 
 # .. for dl_load_file()
-eval { DynaLoader::dl_load_file() };
-like( $@, q{/^Usage: DynaLoader::dl_load_file\(filename, flags=0\)/},
-        "calling DynaLoader::dl_load_file() with no argument" );
+SKIP: {
+    skip "no dl_load_file with dl_none.xs", 2 unless $Config{usedl};
+    eval { DynaLoader::dl_load_file() };
+    like( $@, q{/^Usage: DynaLoader::dl_load_file\(filename, flags=0\)/},
+            "calling DynaLoader::dl_load_file() with no argument" );
 
-eval { no warnings 'uninitialized'; DynaLoader::dl_load_file(undef) };
-is( $@, '', "calling DynaLoader::dl_load_file() with undefined argument" );     # is this expected ?
+    eval { no warnings 'uninitialized'; DynaLoader::dl_load_file(undef) };
+    is( $@, '', "calling DynaLoader::dl_load_file() with undefined argument" );     # is this expected ?
+}
 
 my ($dlhandle, $dlerr);
 eval { $dlhandle = DynaLoader::dl_load_file("egg_bacon_sausage_and_spam") };

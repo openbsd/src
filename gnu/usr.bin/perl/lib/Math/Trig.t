@@ -26,9 +26,10 @@ BEGIN {
     }
 }
 
-plan(tests => 69);
+plan(tests => 153);
 
-use Math::Trig 1.03;
+use Math::Trig 1.18;
+use Math::Trig 1.18 qw(:pi Inf);
 
 my $pip2 = pi / 2;
 
@@ -48,6 +49,42 @@ sub near ($$;$) {
     print "# near? $_[0] $_[1] : $d : $e\n";
     $_[1] ? ($d < $e) : abs($_[0]) < $e;
 }
+
+print "# Sanity checks\n";
+
+ok(near(sin(1), 0.841470984807897));
+ok(near(cos(1), 0.54030230586814));
+ok(near(tan(1), 1.5574077246549));
+
+ok(near(sec(1), 1.85081571768093));
+ok(near(csc(1), 1.18839510577812));
+ok(near(cot(1), 0.642092615934331));
+
+ok(near(asin(1), 1.5707963267949));
+ok(near(acos(1), 0));
+ok(near(atan(1), 0.785398163397448));
+
+ok(near(asec(1), 0));
+ok(near(acsc(1), 1.5707963267949));
+ok(near(acot(1), 0.785398163397448));
+
+ok(near(sinh(1), 1.1752011936438));
+ok(near(cosh(1), 1.54308063481524));
+ok(near(tanh(1), 0.761594155955765));
+
+ok(near(sech(1), 0.648054273663885));
+ok(near(csch(1), 0.850918128239322));
+ok(near(coth(1), 1.31303528549933));
+
+ok(near(asinh(1), 0.881373587019543));
+ok(near(acosh(1), 0));
+ok(near(atanh(0.9), 1.47221948958322)); # atanh(1.0) would be an error.
+
+ok(near(asech(0.9), 0.467145308103262));
+ok(near(acsch(2), 0.481211825059603));
+ok(near(acoth(2), 0.549306144334055));
+
+print "# Basics\n";
 
 $x = 0.9;
 ok(near(tan($x), sin($x) / cos($x)));
@@ -145,8 +182,8 @@ use Math::Trig ':radial';
     ok(near(great_circle_distance(0, 0, pi, pi), pi));
 
     # London to Tokyo.
-    my @L = (deg2rad(-0.5), deg2rad(90 - 51.3));
-    my @T = (deg2rad(139.8),deg2rad(90 - 35.7));
+    my @L = (deg2rad(-0.5),  deg2rad(90 - 51.3));
+    my @T = (deg2rad(139.8), deg2rad(90 - 35.7));
 
     my $km = great_circle_distance(@L, @T, 6378);
 
@@ -269,5 +306,88 @@ use Math::Trig ':radial';
 
     ok(near($dst1, $dst2));
 }
+
+print "# Infinity\n";
+
+my $BigDouble = 1e40;
+
+# E.g. netbsd-alpha core dumps on Inf arith without this.
+local $SIG{FPE} = sub { };
+
+ok(Inf() > $BigDouble);  # This passes in netbsd-alpha.
+ok(Inf() + $BigDouble > $BigDouble); # This coredumps in netbsd-alpha.
+ok(Inf() + $BigDouble == Inf());
+ok(Inf() - $BigDouble > $BigDouble);
+ok(Inf() - $BigDouble == Inf());
+ok(Inf() * $BigDouble > $BigDouble);
+ok(Inf() * $BigDouble == Inf());
+ok(Inf() / $BigDouble > $BigDouble);
+ok(Inf() / $BigDouble == Inf());
+
+ok(-Inf() < -$BigDouble);
+ok(-Inf() + $BigDouble < $BigDouble);
+ok(-Inf() + $BigDouble == -Inf());
+ok(-Inf() - $BigDouble < -$BigDouble);
+ok(-Inf() - $BigDouble == -Inf());
+ok(-Inf() * $BigDouble < -$BigDouble);
+ok(-Inf() * $BigDouble == -Inf());
+ok(-Inf() / $BigDouble < -$BigDouble);
+ok(-Inf() / $BigDouble == -Inf());
+
+print "# sinh/sech/cosh/csch/tanh/coth unto infinity\n";
+
+ok(near(sinh(100), 1.3441e+43, 1e-3));
+ok(near(sech(100), 7.4402e-44, 1e-3));
+ok(near(cosh(100), 1.3441e+43, 1e-3));
+ok(near(csch(100), 7.4402e-44, 1e-3));
+ok(near(tanh(100), 1));
+ok(near(coth(100), 1));
+
+ok(near(sinh(-100), -1.3441e+43, 1e-3));
+ok(near(sech(-100),  7.4402e-44, 1e-3));
+ok(near(cosh(-100),  1.3441e+43, 1e-3));
+ok(near(csch(-100), -7.4402e-44, 1e-3));
+ok(near(tanh(-100), -1));
+ok(near(coth(-100), -1));
+
+cmp_ok(sinh(1e5), '==', Inf());
+cmp_ok(sech(1e5), '==', 0);
+cmp_ok(cosh(1e5), '==', Inf());
+cmp_ok(csch(1e5), '==', 0);
+cmp_ok(tanh(1e5), '==', 1);
+cmp_ok(coth(1e5), '==', 1);
+
+cmp_ok(sinh(-1e5), '==', -Inf());
+cmp_ok(sech(-1e5), '==', 0);
+cmp_ok(cosh(-1e5), '==', Inf());
+cmp_ok(csch(-1e5), '==', 0);
+cmp_ok(tanh(-1e5), '==', -1);
+cmp_ok(coth(-1e5), '==', -1);
+
+print "# great_circle_distance with small angles\n";
+
+for my $e (qw(1e-2 1e-3 1e-4 1e-5)) {
+    # Can't assume == 0 because of floating point fuzz,
+    # but let's hope for at least < $e.
+    cmp_ok(great_circle_distance(0, $e, 0, $e), '<', $e);
+}
+
+print "# asin_real, acos_real\n";
+
+is(acos_real(-2.0), pi);
+is(acos_real(-1.0), pi);
+is(acos_real(-0.5), acos(-0.5));
+is(acos_real( 0.0), acos( 0.0));
+is(acos_real( 0.5), acos( 0.5));
+is(acos_real( 1.0), 0);
+is(acos_real( 2.0), 0);
+
+is(asin_real(-2.0), -&pip2);
+is(asin_real(-1.0), -&pip2);
+is(asin_real(-0.5), asin(-0.5));
+is(asin_real( 0.0), asin( 0.0));
+is(asin_real( 0.5), asin( 0.5));
+is(asin_real( 1.0),  pip2);
+is(asin_real( 2.0),  pip2);
 
 # eof

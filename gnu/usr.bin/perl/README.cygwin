@@ -558,18 +558,17 @@ be kept as clean as possible.
 =item Documentation
 
   INSTALL README.cygwin README.win32 MANIFEST
-  Changes Changes5.004 Changes5.005 Changes5.6 Changes5.8
   pod/perl.pod pod/perlport.pod pod/perlfaq3.pod
   pod/perldelta.pod pod/perl5004delta.pod pod/perl56delta.pod
   pod/perl561delta.pod pod/perl570delta.pod pod/perl572delta.pod
   pod/perl573delta.pod pod/perl58delta.pod pod/perl581delta.pod
   pod/perl590delta.pod pod/perlhist.pod pod/perlmodlib.pod
-  pod/perltoc.pod pod.lst Porting/Glossary Porting/repository.pod
+  pod/perltoc.pod pod.lst Porting/Glossary pod/perlrepository.pod
   Porting/checkAUTHORS.pl
-  ext/Compress/Raw/Zlib/Changes ext/Compress/Raw/Zlib/README
-  ext/Compress/Zlib/Changes ext/Cwd/Changes ext/DB_File/Changes
-  ext/Encode/Changes ext/Sys/Syslog/Changes ext/Time/HiRes/Changes
-  ext/Win32API/File/Changes lib/CGI/Changes lib/ExtUtils/CBuilder/Changes
+  ext/Compress-Raw-Zlib/Changes ext/Compress-Raw-Zlib/README
+  ext/Compress-Zlib/Changes ext/Cwd/Changes ext/DB_File/Changes
+  ext/Encode/Changes ext/Sys-Syslog/Changes ext/Time-HiRes/Changes
+  ext/Win32API-File/Changes lib/CGI/Changes lib/ExtUtils/CBuilder/Changes
   lib/ExtUtils/Changes lib/ExtUtils/NOTES lib/ExtUtils/PATCHING
   lib/ExtUtils/README lib/Module/Build/Changes lib/Net/Ping/Changes
   lib/Test/Harness/Changes
@@ -631,9 +630,9 @@ be kept as clean as possible.
 
 =item Compiled Module Source
 
-  ext/Compress/Raw/Zlib/Makefile.PL
+  ext/Compress-Raw-Zlib/Makefile.PL
                         - Can't install via CPAN shell under Cygwin
-  ext/Compress/Raw/Zlib/zlib-src/zutil.h
+  ext/Compress-Raw-Zlib/zlib-src/zutil.h
                         - Cygwin is Unix-like and has vsnprintf
   ext/Errno/Errno_pm.PL - Special handling for Win32 Perl under Cygwin
   ext/POSIX/POSIX.xs    - tzname defined externally
@@ -645,13 +644,13 @@ be kept as clean as possible.
                         - Cygwin has syslog.h
   ext/Sys/Syslog/win32/compile.pl
                         - Convert paths to Windows paths
-  ext/Time/HiRes/HiRes.xs
+  ext/Time-HiRes/HiRes.xs
                         - Various timers not available
-  ext/Time/HiRes/Makefile.PL
+  ext/Time-HiRes/Makefile.PL
                         - Find w32api/windows.h
   ext/Win32/Makefile.PL - Use various libraries under Cygwin
   ext/Win32/Win32.xs    - Child dir and child env under Cygwin
-  ext/Win32API/File/File.xs
+  ext/Win32API-File/File.xs
                         - _open_osfhandle not implemented under Cygwin
   ext/Win32CORE/Win32CORE.c
                         - __declspec(dllexport)
@@ -659,13 +658,13 @@ be kept as clean as possible.
 =item Perl Modules/Scripts
 
   ext/B/t/OptreeCheck.pm - Comment about stderr/stdout order under Cygwin
-  ext/Digest/SHA/bin/shasum
+  ext/Digest-SHA/bin/shasum
                         - Use binary mode under Cygwin
   ext/Sys/Syslog/win32/Win32.pm
                         - Convert paths to Windows paths
-  ext/Time/HiRes/HiRes.pm
+  ext/Time-HiRes/HiRes.pm
                         - Comment about various timers not available
-  ext/Win32API/File/File.pm
+  ext/Win32API-File/File.pm
                         - _open_osfhandle not implemented under Cygwin
   ext/Win32CORE/Win32CORE.pm
                         - History of Win32CORE under Cygwin
@@ -715,21 +714,21 @@ be kept as clean as possible.
 
 =item Perl Module Tests
 
-  ext/Compress/Zlib/t/14gzopen.t
+  ext/Compress-Zlib/t/14gzopen.t
   ext/Cwd/t/cwd.t
   ext/DB_File/t/db-btree.t
   ext/DB_File/t/db-hash.t
   ext/DB_File/t/db-recno.t
   ext/DynaLoader/t/DynaLoader.t
-  ext/File/Glob/t/basic.t
+  ext/File-Glob/t/basic.t
   ext/GDBM_File/t/gdbm.t
   ext/POSIX/t/sysconf.t
   ext/POSIX/t/time.t
   ext/SDBM_File/t/sdbm.t
   ext/Sys/Syslog/t/syslog.t
-  ext/Time/HiRes/t/HiRes.t
+  ext/Time-HiRes/t/HiRes.t
   ext/Win32/t/Unicode.t
-  ext/Win32API/File/t/file.t
+  ext/Win32API-File/t/file.t
   ext/Win32CORE/t/win32core.t
   lib/AnyDBM_File.t
   lib/Archive/Extract/t/01_Archive-Extract.t

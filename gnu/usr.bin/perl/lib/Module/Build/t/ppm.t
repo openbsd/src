@@ -3,12 +3,13 @@
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
 use MBTest;
+
 use Module::Build;
 use Module::Build::ConfigData;
+use Config;
 
 my $manpage_support = Module::Build::ConfigData->feature('manpage_support');
 my $HTML_support = Module::Build::ConfigData->feature('HTML_support');
-
 
 {
   my ($have_c_compiler, $C_support_feature) = check_compiler();
@@ -16,6 +17,8 @@ my $HTML_support = Module::Build::ConfigData->feature('HTML_support');
     plan skip_all => 'C_support not enabled';
   } elsif ( ! $have_c_compiler ) {
     plan skip_all => 'C_support enabled, but no compiler found';
+  } elsif ( !$Config{usedl} ) {
+    plan skip_all => 'Perl not compiled for dynamic loading'
   } elsif ( ! eval {require Archive::Tar} ) {
     plan skip_all => "Archive::Tar not installed to read archives.";
   } elsif ( ! eval {IO::Zlib->VERSION(1.01)} ) {
@@ -23,13 +26,12 @@ my $HTML_support = Module::Build::ConfigData->feature('HTML_support');
   } elsif ( $^O eq 'VMS' ) {
     plan skip_all => "Needs porting work on VMS";
   } else {
-    plan tests => 12;
+    plan tests => 13;
   }
 }
+ensure_blib('Module::Build');
 
 
-use Cwd ();
-my $cwd = Cwd::cwd;
 my $tmp = MBTest->tmpdir;
 
 
@@ -60,7 +62,7 @@ $dist->change_build_pl
 });
 $dist->regen;
 
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 use File::Spec::Functions qw(catdir);
 
@@ -183,11 +185,7 @@ SKIP: {
 }
 
 
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );
 
 
 ########################################

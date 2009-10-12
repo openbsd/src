@@ -2,7 +2,7 @@ package Encode::Guess;
 use strict;
 use warnings;
 use Encode qw(:fallbacks find_encoding);
-our $VERSION = do { my @r = ( q$Revision: 2.2 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.3 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 my $Canon = 'Guess';
 sub DEBUG () { 0 }
@@ -68,7 +68,7 @@ sub guess {
     my $octet = shift;
 
     # sanity check
-    return unless defined $octet and length $octet;
+    return "Empty string, empty guess" unless defined $octet and length $octet;
 
     # cheat 0: utf8 flag;
     if ( Encode::is_utf8($octet) ) {

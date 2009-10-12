@@ -3,7 +3,7 @@
  *    perlapi.c
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -18,7 +18,9 @@
  *
  * Up to the threshold of the door there mounted a flight of twenty-seven
  * broad stairs, hewn by some unknown art of the same black stone.  This
- * was the only entrance to the tower.
+ * was the only entrance to the tower; ...
+ *
+ *     [p.577 of _The Lord of the Rings_, III/x: "The Voice of Saruman"]
  *
  */
 

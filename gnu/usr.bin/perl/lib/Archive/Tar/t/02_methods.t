@@ -1,7 +1,7 @@
 BEGIN {
     if( $ENV{PERL_CORE} ) {
         chdir '../lib/Archive/Tar' if -d '../lib/Archive/Tar';
-    }       
+    }
     use lib '../../..';
 }
 
@@ -21,8 +21,14 @@ use File::Spec::Unix    ();
 use File::Basename      ();
 use Data::Dumper;
 
-use Archive::Tar;
+### need the constants at compile time;
 use Archive::Tar::Constant;
+
+my $Class   = 'Archive::Tar';
+my $FClass  = $Class . '::File';
+use_ok( $Class );
+
+
 
 ### XXX TODO:
 ### * change to fullname
@@ -72,22 +78,23 @@ if ($TOO_LONG) {
 }
 
 my @ROOT        = grep { length }   'src', $TOO_LONG ? 'short' : 'long';
-
-my $ZLIB        = eval { require IO::Zlib; 1 } ? 1 : 0;
 my $NO_UNLINK   = $ARGV[0] ? 1 : 0;
 
 ### enable debugging?
-$Archive::Tar::DEBUG = 1 if $ARGV[1];
+### pesky warnings
+$Archive::Tar::DEBUG = $Archive::Tar::DEBUG = 1 if $ARGV[1];
 
 ### tests for binary and x/x files
-my $TARBIN      = Archive::Tar->new;
-my $TARX        = Archive::Tar->new;
+my $TARBIN      = $Class->new;
+my $TARX        = $Class->new;
 
 ### paths to a .tar and .tgz file to use for tests
 my $TAR_FILE        = File::Spec->catfile( @ROOT, 'bar.tar' );
 my $TGZ_FILE        = File::Spec->catfile( @ROOT, 'foo.tgz' );
+my $TBZ_FILE        = File::Spec->catfile( @ROOT, 'foo.tbz' );
 my $OUT_TAR_FILE    = File::Spec->catfile( @ROOT, 'out.tar' );
 my $OUT_TGZ_FILE    = File::Spec->catfile( @ROOT, 'out.tgz' );
+my $OUT_TBZ_FILE    = File::Spec->catfile( @ROOT, 'out.tbz' );
 
 my $COMPRESS_FILE = 'copy';
 $^O eq 'VMS' and $COMPRESS_FILE .= '.';
@@ -96,18 +103,19 @@ chmod 0644, $COMPRESS_FILE;
 
 ### done setting up environment ###
 
-
-### did we probe IO::Zlib support ok? ###
-{   is( Archive::Tar->can_handle_compressed_files, $ZLIB,
-                                    "Proper IO::Zlib support detected" );
+### check for zlib/bzip2 support
+{   for my $meth ( qw[has_zlib_support has_bzip2_support] ) {
+        can_ok( $Class, $meth );
+    }
 }
 
 
+
 ### tar error tests
-{   my $tar     = Archive::Tar->new;
+{   my $tar     = $Class->new;
 
     ok( $tar,                       "Object created" );
-    isa_ok( $tar,                   'Archive::Tar');
+    isa_ok( $tar,                   $Class );
 
     local $Archive::Tar::WARN  = 0;
 
@@ -133,151 +141,155 @@ chmod 0644, $COMPRESS_FILE;
 
     ### check if ->error eq $error
     is( $tar->error, $Archive::Tar::error,
-                                    '$error matches error() method' );
-                     
-    ### check that 'contains_file' doesn't warn about missing files.                     
+                                    "Error '$Archive::Tar::error' matches $Class->error method" );
+
+    ### check that 'contains_file' doesn't warn about missing files.
     {   ### turn on warnings in general!
         local $Archive::Tar::WARN  = 1;
 
         my $warnings = '';
         local $SIG{__WARN__} = sub { $warnings .= "@_" };
-        
+
         my $rv = $tar->contains_file( $$ );
         ok( !$rv,                   "Does not contain file '$$'" );
         is( $warnings, '',          "   No warnings issued during lookup" );
-    }        
+    }
 }
 
 ### read tests ###
-{   ### normal tar + gz compressed file
-    my $archive         = $TAR_FILE;
-    my $compressed      = $TGZ_FILE;
-    my $tar             = Archive::Tar->new;
-    my $gzip            = 0;
+{   my @to_try = ($TAR_FILE);
+    push @to_try, $TGZ_FILE if $Class->has_zlib_support;
+    push @to_try, $TBZ_FILE if $Class->has_bzip2_support;
 
-    ### check we got the object
-    ok( $tar,                       "Object created" );
-    isa_ok( $tar,                   'Archive::Tar');
+    for my $type( @to_try ) {
 
-    for my $type( $archive, $compressed ) {
-        my $state = $gzip ? 'compressed' : 'uncompressed';
+        ### normal tar + gz compressed file
+        my $tar             = $Class->new;
 
-        SKIP: {
+        ### check we got the object
+        ok( $tar,               "Object created" );
+        isa_ok( $tar,           $Class );
 
-            ### skip gz compressed archives wihtout IO::Zlib
-            skip(   "No IO::Zlib - cannot read compressed archives",
-                    4 + 2 * (scalar @EXPECT_NORMAL)
-            ) if( $gzip and !$ZLIB);
+        ### ->read test
+        my @list    = $tar->read( $type );
+        my $cnt     = scalar @list;
+        my $expect  = scalar __PACKAGE__->get_expect();
 
-            ### ->read test
-            {   my @list    = $tar->read( $type );
-                my $cnt     = scalar @list;
-                my $expect  = scalar __PACKAGE__->get_expect();
+        ok( $cnt,               "Reading '$type' using 'read()'" );
+        is( $cnt, $expect,      "   All files accounted for" );
 
-                ok( $cnt,           "Reading $state file using 'read()'" );
-                is( $cnt, $expect,  "   All files accounted for" );
+        for my $file ( @list ) {
+            ok( $file,          "       Got File object" );
+            isa_ok( $file,  $FClass );
 
-                for my $file ( @list ) {
-                    ok( $file,      "Got File object" );
-                    isa_ok( $file,  "Archive::Tar::File" );
-
-                    ### whitebox test -- make sure find_entry gets the
-                    ### right files
-                    for my $test ( $file->full_path, $file ) {
-                        is( $tar->_find_entry( $test ), $file,
-                                    "   Found proper object" );
-                    }
-                    
-                    next unless $file->is_file;
-
-                    my $name = $file->full_path;
-                    my($expect_name, $expect_content) =
-                        get_expect_name_and_contents( $name, \@EXPECT_NORMAL );
-
-                    ### ->fullname!
-                    ok($expect_name,"   Found expected file '$name'" );
-
-                    like($tar->get_content($name), $expect_content,
-                                    "   Content OK" );
-                }
+            ### whitebox test -- make sure find_entry gets the
+            ### right files
+            for my $test ( $file->full_path, $file ) {
+                is( $tar->_find_entry( $test ), $file,
+                                "           Found proper object" );
             }
 
+            next unless $file->is_file;
 
-            ### list_archive test
-            {   my @list    = Archive::Tar->list_archive( $archive );
-                my $cnt     = scalar @list;
-                my $expect  = scalar __PACKAGE__->get_expect();
+            my $name = $file->full_path;
+            my($expect_name, $expect_content) =
+                get_expect_name_and_contents( $name, \@EXPECT_NORMAL );
 
-                ok( $cnt,           "Reading $state file using 'list_archive'");
-                is( $cnt, $expect,  "   All files accounted for" );
+            ### ->fullname!
+            ok($expect_name,    "           Found expected file '$name'" );
 
-                for my $file ( @list ) {
-                    next if __PACKAGE__->is_dir( $file ); # directories
-
-                    my($expect_name, $expect_content) =
-                        get_expect_name_and_contents( $file, \@EXPECT_NORMAL );
-
-                    ok( $expect_name,
-                                    "   Found expected file '$file'" );
-                }
-            }
+            like($tar->get_content($name), $expect_content,
+                                "           Content OK" );
         }
 
-        ### now we try gz compressed archives
-        $gzip++;
+
+        ### list_archive test
+        {   my @list    = $Class->list_archive( $type );
+            my $cnt     = scalar @list;
+            my $expect  = scalar __PACKAGE__->get_expect();
+
+            ok( $cnt,           "Reading '$type' using 'list_archive'");
+            is( $cnt, $expect,  "   All files accounted for" );
+
+            for my $file ( @list ) {
+                next if __PACKAGE__->is_dir( $file ); # directories
+
+                my($expect_name, $expect_content) =
+                    get_expect_name_and_contents( $file, \@EXPECT_NORMAL );
+
+                ok( $expect_name,
+                                "   Found expected file '$file'" );
+            }
+        }
     }
 }
 
 ### add files tests ###
 {   my @add     = map { File::Spec->catfile( @ROOT, @$_ ) } ['b'];
     my @addunix = map { File::Spec::Unix->catfile( @ROOT, @$_ ) } ['b'];
-    my $tar     = Archive::Tar->new;
+    my $tar     = $Class->new;
 
     ### check we got the object
     ok( $tar,                       "Object created" );
-    isa_ok( $tar,                   'Archive::Tar');
+    isa_ok( $tar,                   $Class );
 
     ### add the files
     {   my @files = $tar->add_files( @add );
 
         is( scalar @files, scalar @add,
-                                    "Adding files");
-        is( $files[0]->name, 'b',   "   Proper name" );
+                                    "   Adding files");
+        is( $files[0]->name,'b',    "      Proper name" );
 
         SKIP: {
             skip( "You are building perl using symlinks", 1)
                 if ($ENV{PERL_CORE} and $Config{config_args} =~/Dmksymlinks/);
 
-            is( $files[0]->is_file, 1,  
-                                    "   Proper type" );
+            is( $files[0]->is_file, 1,
+                                    "       Proper type" );
         }
 
         like( $files[0]->get_content, qr/^bbbbbbbbbbb\s*$/,
-                                    "   Content OK" );
+                                    "       Content OK" );
 
         ### check if we have then in our tar object
         for my $file ( @addunix ) {
             ok( $tar->contains_file($file),
-                                    "   File found in archive" );
+                                    "       File found in archive" );
         }
     }
 
     ### check adding files doesn't conflict with a secondary archive
     ### old A::T bug, we should keep testing for it
-    {   my $tar2    = Archive::Tar->new;
+    {   my $tar2    = $Class->new;
         my @added   = $tar2->add_files( $COMPRESS_FILE );
         my @count   = $tar2->list_files;
 
-        is( scalar @added, 1,       "Added files to secondary archive" );
+        is( scalar @added, 1,       "   Added files to secondary archive" );
         is( scalar @added, scalar @count,
-                                    "   Does not conflict with first archive" );
+                                    "       No conflict with first archive" );
 
         ### check the adding of directories
         my @add_dirs  = File::Spec->catfile( @ROOT );
         my @dirs      = $tar2->add_files( @add_dirs );
         is( scalar @dirs, scalar @add_dirs,
-                                    "Adding dirs");
-        ok( $dirs[0]->is_dir,       "   Proper type" );
+                                    "       Adding dirs");
+        ok( $dirs[0]->is_dir,       "           Proper type" );
+    }
+
+    ### check if we can add a A::T::File object
+    {   my $tar2    = $Class->new;
+        my($added)  = $tar2->add_files( $add[0] );
+
+        ok( $added,                 "   Added a file '$add[0]' to new object" );
+        isa_ok( $added, $FClass,    "       Object" );
+
+        my($added2) = $tar2->add_files( $added );
+        ok( $added2,                "       Added an $FClass object" );
+        isa_ok( $added2, $FClass,   "           Object" );
+
+        is_deeply( [$added, $added2], [$tar2->get_files],
+                                    "       All files accounted for" );
+        isnt( $added, $added2,      "       Different memory allocations" );
     }
 }
 
@@ -285,20 +297,20 @@ chmod 0644, $COMPRESS_FILE;
 {
     {   ### standard data ###
         my @to_add  = ( 'a', 'aaaaa' );
-        my $tar     = Archive::Tar->new;
+        my $tar     = $Class->new;
 
         ### check we got the object
         ok( $tar,                   "Object created" );
-        isa_ok( $tar,               'Archive::Tar');
+        isa_ok( $tar,               $Class );
 
         ### add a new file item as data
         my $obj = $tar->add_data( @to_add );
 
-        ok( $obj,                   "Adding data" );
-        is( $obj->name, $to_add[0], "   Proper name" );
-        is( $obj->is_file, 1,       "   Proper type" );
+        ok( $obj,                   "   Adding data" );
+        is( $obj->name, $to_add[0], "       Proper name" );
+        is( $obj->is_file, 1,       "       Proper type" );
         like( $obj->get_content, qr/^$to_add[1]\s*$/,
-                                    "   Content OK" );
+                                    "       Content OK" );
     }
 
     {   ### binary data +
@@ -318,19 +330,19 @@ chmod 0644, $COMPRESS_FILE;
 
                 my $obj = $tar->add_data( $path, $data );
 
-                ok( $obj,               "Adding data '$file'" );
+                ok( $obj,               "   Adding data '$file'" );
                 is( $obj->full_path, $path,
-                                        "   Proper name" );
-                ok( $obj->is_file,      "   Proper type" );
+                                        "       Proper name" );
+                ok( $obj->is_file,      "       Proper type" );
                 is( $obj->get_content, $data,
-                                        "   Content OK" );
+                                        "       Content OK" );
             }
         }
     }
 }
 
 ### rename/replace_content tests ###
-{   my $tar     = Archive::Tar->new;
+{   my $tar     = $Class->new;
     my $from    = 'c';
     my $to      = 'e';
 
@@ -362,13 +374,13 @@ chmod 0644, $COMPRESS_FILE;
 
 ### remove tests ###
 {   my $remove  = 'c';
-    my $tar     = Archive::Tar->new;
+    my $tar     = $Class->new;
 
     ok( $tar->read( $TAR_FILE ),    "Read in '$TAR_FILE'" );
 
     ### remove returns the files left, which should be equal to list_files
     is( scalar($tar->remove($remove)), scalar($tar->list_files),
-                                    "Removing file '$remove'" );
+                                    "   Removing file '$remove'" );
 
     ### so what's left should be all expected files minus 1
     is( scalar($tar->list_files), scalar(__PACKAGE__->get_expect) - 1,
@@ -376,12 +388,14 @@ chmod 0644, $COMPRESS_FILE;
 }
 
 ### write + read + extract tests ###
-SKIP: {
-    skip('no IO::String', 326) if   !$Archive::Tar::HAS_PERLIO && 
+SKIP: {                             ### pesky warnings
+    skip('no IO::String', 326) if   !$Archive::Tar::HAS_PERLIO &&
+                                    !$Archive::Tar::HAS_PERLIO &&
+                                    !$Archive::Tar::HAS_IO_STRING &&
                                     !$Archive::Tar::HAS_IO_STRING;
-                                    
-    my $tar = Archive::Tar->new;
-    my $new = Archive::Tar->new;
+
+    my $tar = $Class->new;
+    my $new = $Class->new;
     ok( $tar->read( $TAR_FILE ),    "Read in '$TAR_FILE'" );
 
     for my $aref (  [$tar,    \@EXPECT_NORMAL],
@@ -392,28 +406,33 @@ SKIP: {
 
         ### check if we stringify it ok
         {   my $string = $obj->write;
-            ok( $string,           "Stringified tar file has size" );
+            ok( $string,           "    Stringified tar file has size" );
             cmp_ok( length($string) % BLOCK, '==', 0,
-                                    "Tar archive stringified" );
+                                    "       Tar archive stringified" );
         }
 
         ### write tar tests
         {   my $out = $OUT_TAR_FILE;
 
+            ### bug #41798: 'Nonempty $\ when writing a TAR file produces a
+            ### corrupt TAR file' shows that setting $\ breaks writing tar files
+            ### set it here purposely so we can verify NOTHING breaks
+            local $\ = 'FOOBAR';
+
             {   ### write()
                 ok( $obj->write($out),
-                                    "Wrote tarfile using 'write'" );
+                                    "       Wrote tarfile using 'write'" );
                 check_tar_file( $out );
                 check_tar_object( $obj, $struct );
 
                 ### now read it in again
                 ok( $new->read( $out ),
-                                    "Read '$out' in again" );
+                                    "       Read '$out' in again" );
 
                 check_tar_object( $new, $struct );
 
                 ### now extract it again
-                ok( $new->extract,  "Extracted '$out' with 'extract'" );
+                ok( $new->extract,  "       Extracted '$out' with 'extract'" );
                 check_tar_extract( $new, $struct );
 
                 rm( $out ) unless $NO_UNLINK;
@@ -421,63 +440,54 @@ SKIP: {
 
 
             {   ### create_archive()
-                ok( Archive::Tar->create_archive( $out, 0, $COMPRESS_FILE ),
-                                    "Wrote tarfile using 'create_archive'" );
+                ok( $Class->create_archive( $out, 0, $COMPRESS_FILE ),
+                                    "       Wrote tarfile using 'create_archive'" );
                 check_tar_file( $out );
 
                 ### now extract it again
-                ok( Archive::Tar->extract_archive( $out ),
-                                    "Extracted file using 'extract_archive'");
+                ok( $Class->extract_archive( $out ),
+                                    "       Extracted file using 'extract_archive'");
                 rm( $out ) unless $NO_UNLINK;
             }
         }
 
         ## write tgz tests
-        {   my $out = $OUT_TGZ_FILE;
+        {   my @out;
+            push @out, [ $OUT_TGZ_FILE => 1             ] if $Class->has_zlib_support;
+            push @out, [ $OUT_TBZ_FILE => COMPRESS_BZIP ] if $Class->has_bzip2_support;
 
-            SKIP: {
+            for my $entry ( @out ) {
 
-                ### weird errors from scalar(@x,@y,@z), dot it this way...
-                my $file_cnt;
-                map { $file_cnt += scalar @$_ } \@EXPECT_NORMAL, \@EXPECTBIN,
-                                                \@EXPECTX;
-
-                my $cnt =   5 +                 # the tests below
-                            (5*3*2) +           # check_tgz_file
-                                                # check_tar_object fixed tests
-                            (3 * 2 * (2 + $file_cnt)) +
-                            ((4*$file_cnt) + 1);# check_tar_extract tests
-
-                skip( "No IO::Zlib - cannot write compressed archives", $cnt )
-                    unless $ZLIB;
+                my( $out, $compression ) = @$entry;
 
                 {   ### write()
-                    ok($obj->write($out, 1),
-                                    "Writing compressed file using 'write'" );
-                    check_tgz_file( $out );
+                    ok($obj->write($out, $compression),
+                                    "       Writing compressed file '$out' using 'write'" );
+                    check_compressed_file( $out );
+
                     check_tar_object( $obj, $struct );
 
                     ### now read it in again
                     ok( $new->read( $out ),
-                                    "Read '$out' in again" );
+                                    "       Read '$out' in again" );
                     check_tar_object( $new, $struct );
 
                     ### now extract it again
                     ok( $new->extract,
-                                    "Extracted '$out' again" );
+                                    "       Extracted '$out' again" );
                     check_tar_extract( $new, $struct );
 
                     rm( $out ) unless $NO_UNLINK;
                 }
 
                 {   ### create_archive()
-                    ok( Archive::Tar->create_archive( $out, 1, $COMPRESS_FILE ),
-                                    "Wrote gzip file using 'create_archive'" );
-                    check_tgz_file( $out );
+                    ok( $Class->create_archive( $out, $compression, $COMPRESS_FILE ),
+                                    "       Wrote '$out' using 'create_archive'" );
+                    check_compressed_file( $out );
 
                     ### now extract it again
-                    ok( Archive::Tar->extract_archive( $out, 1 ),
-                                    "Extracted file using 'extract_archive'");
+                    ok( $Class->extract_archive( $out, $compression ),
+                                    "       Extracted file using 'extract_archive'");
                     rm( $out ) unless $NO_UNLINK;
                 }
             }
@@ -487,7 +497,7 @@ SKIP: {
 
 
 ### limited read + extract tests ###
-{   my $tar     = Archive::Tar->new;
+{   my $tar     = $Class->new;
     my @files   = $tar->read( $TAR_FILE, 0, { limit => 1 } );
     my $obj     = $files[0];
 
@@ -506,8 +516,8 @@ SKIP: {
         for my $arg ( $obj, $obj->full_path ) {
 
             ok( $tar->$meth( $arg ),
-                                    "Extracted '$name' to cwd() with $meth" );
-            ok( -e $obj->full_path, "   Extracted file exists" );
+                                    "   Extract '$name' to cwd() with $meth" );
+            ok( -e $obj->full_path, "       Extracted file exists" );
             rm( $obj->full_path ) unless $NO_UNLINK;
         }
     }
@@ -519,8 +529,8 @@ SKIP: {
         my $outfile = File::Spec->catfile( $outpath, $$ ); #$obj->full_path );
 
         ok( $tar->$meth( $obj->full_path, $outfile ),
-                                    "Extracted file '$name' to $outpath with $meth" );
-        ok( -e $outfile,            "   Extracted file '$outfile' exists" );
+                                    "   Extract file '$name' to $outpath with $meth" );
+        ok( -e $outfile,            "       Extracted file '$outfile' exists" );
         rm( $outfile ) unless $NO_UNLINK;
     }
 
@@ -528,7 +538,7 @@ SKIP: {
 
 
 ### clear tests ###
-{   my $tar     = Archive::Tar->new;
+{   my $tar     = $Class->new;
     my @files   = $tar->read( $TAR_FILE );
 
     my $cnt = $tar->list_files();
@@ -540,7 +550,7 @@ SKIP: {
 }
 
 ### $DO_NOT_USE_PREFIX tests
-{   my $tar     = Archive::Tar->new;
+{   my $tar     = $Class->new;
 
 
     ### first write a tar file without prefix
@@ -549,14 +559,17 @@ SKIP: {
         my $file    = File::Basename::basename( $COMPRESS_FILE );
 
         ok( $obj,                   "File added" );
-        isa_ok( $obj,               "Archive::Tar::File" );
+        isa_ok( $obj,               $FClass );
 
         ### internal storage ###
         is( $obj->name, $file,      "   Name set to '$file'" );
         is( $obj->prefix, $dir,     "   Prefix set to '$dir'" );
 
         ### write the tar file without a prefix in it
+        ### pesky warnings
         local $Archive::Tar::DO_NOT_USE_PREFIX = 1;
+        local $Archive::Tar::DO_NOT_USE_PREFIX = 1;
+
         ok( $tar->write( $OUT_TAR_FILE ),
                                     "   Tar file written" );
 
@@ -566,18 +579,18 @@ SKIP: {
 
     ### now read it back in, there should be no prefix
     {   ok( $tar->read( $OUT_TAR_FILE ),
-                                    "Tar file read in again" );
+                                    "   Tar file read in again" );
 
         my ($obj) = $tar->get_files;
-        ok( $obj,                   "   File retrieved" );
-        isa_ok( $obj,               "Archive::Tar::File" );
+        ok( $obj,                   "       File retrieved" );
+        isa_ok( $obj, $FClass,      "       Object" );
 
         is( $obj->name, $COMPRESS_FILE,
-                                    "   Name now set to '$COMPRESS_FILE'" );
-        is( $obj->prefix, '',       "   Prefix now empty" );
+                                    "       Name now set to '$COMPRESS_FILE'" );
+        is( $obj->prefix, '',       "       Prefix now empty" );
 
         my $re = quotemeta $COMPRESS_FILE;
-        like( $obj->raw, qr/^$re/,  "   Prefix + name in name slot of header" );
+        like( $obj->raw, qr/^$re/,  "       Prefix + name in name slot of header" );
     }
 
     rm( $OUT_TAR_FILE ) unless $NO_UNLINK;
@@ -645,10 +658,10 @@ sub check_tar_file {
     return $contents;
 }
 
-sub check_tgz_file {
+sub check_compressed_file {
     my $file                = shift;
     my $filesize            = -s $file;
-    my $contents            = slurp_gzfile( $file );
+    my $contents            = slurp_compressed_file( $file );
     my $uncompressedsize    = length $contents;
 
     ok( defined( $contents ),   "   File read and uncompressed" );
@@ -724,22 +737,22 @@ sub check_tar_extract {
         close $fh;
         $NO_UNLINK or 1 while unlink $path;
 
-        ### alternate extract path tests 
+        ### alternate extract path tests
         ### to abs and rel paths
         {   for my $outpath (   File::Spec->catdir( @ROOT ),
-                                File::Spec->rel2abs( 
+                                File::Spec->rel2abs(
                                     File::Spec->catdir( @ROOT )
                                 )
             ) {
 
                 my $outfile = File::Spec->catfile( $outpath, $$ );
-    
+
                 ok( $tar->extract_file( $file->full_path, $outfile ),
                                 "   Extracted file '$path' to $outfile" );
                 ok( -e $outfile,"   Extracted file '$outfile' exists" );
-    
+
                 rm( $outfile ) unless $NO_UNLINK;
-            }            
+            }
         }
     }
 
@@ -762,18 +775,29 @@ sub slurp_binfile {
     return <$fh>;
 }
 
-sub slurp_gzfile {
+sub slurp_compressed_file {
     my $file = shift;
+    my $fh;
+
+    ### bzip2
+    if( $file =~ /.tbz$/ ) {
+        require IO::Uncompress::Bunzip2;
+        $fh = IO::Uncompress::Bunzip2->new( $file )
+            or warn( "Error opening '$file' with IO::Uncompress::Bunzip2" ), return
+
+    ### gzip
+    } else {
+        require IO::Zlib;
+        $fh = new IO::Zlib;
+        $fh->open( $file, READ_ONLY->(1) )
+            or warn( "Error opening '$file' with IO::Zlib" ), return
+    }
+
     my $str;
     my $buff;
-
-    require IO::Zlib;
-    my $fh = new IO::Zlib;
-    $fh->open( $file, READ_ONLY->(1) )
-        or warn( "Error opening '$file' with IO::Zlib" ), return undef;
-
     $str .= $buff while $fh->read( $buff, 4096 ) > 0;
     $fh->close();
+
     return $str;
 }
 

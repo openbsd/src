@@ -59,7 +59,7 @@ ok( chdir 'Big-Dummy', "chdir'd to Big-Dummy" ) ||
     );
     is $warnings, 
     sprintf("Warning: prerequisite strict 99999 not found. We have %s.\n",
-            strict->VERSION);
+            $strict::VERSION);
 
     $warnings = '';
     WriteMakefile(
@@ -82,7 +82,7 @@ ok( chdir 'Big-Dummy', "chdir'd to Big-Dummy" ) ||
     is $warnings, 
     "Warning: prerequisite I::Do::Not::Exist 0 not found.\n".
     sprintf("Warning: prerequisite strict 99999 not found. We have %s.\n",
-            strict->VERSION);
+            $strict::VERSION);
     
     $warnings = '';
     eval {

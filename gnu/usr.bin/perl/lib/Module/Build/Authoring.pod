@@ -100,9 +100,12 @@ Module::Build directly:
 This is relatively straightforward, and is the best way to do things
 if your My::Builder class contains lots of code.  The
 C<create_build_script()> method will ensure that the current value of
-C<@INC> (including the C</nonstandard/library/path>) is propogated to
+C<@INC> (including the C</nonstandard/library/path>) is propagated to
 the Build script, so that My::Builder can be found when running build
-actions.
+actions.  If you find that you need to C<chdir> into a different directories
+in your subclass methods or actions, be sure to always return to the original
+directory (available via the C<base_dir()> method before returning control
+to the parent class.  This is important to avoid data serialization problems.
 
 For very small additions, Module::Build provides a C<subclass()>
 method that lets you subclass Module::Build more conveniently, without
@@ -159,7 +162,8 @@ or C<CPANPLUS> will be expected to pick C<configure_requires> out of the
 F<META.yml> file and install these items before running the
 C<Build.PL>.
 
-*TODO* auto-add M::B?  In what circumstances?
+If no configure_requires is specified, the current version of Module::Build
+is automatically added to configure_requires.
 
 =item build_requires
 
@@ -280,7 +284,7 @@ C<Build> script.
 
 Note that if you want to provide both a F<Makefile.PL> and a
 F<Build.PL> for your distribution, you probably want to add the
-following to C<WriteMakefile> in your F<Makefile.PL> so that MakeMaker
+following to C<WriteMakefile> in your F<Makefile.PL> so that C<MakeMaker>
 doesn't try to run your F<Build.PL> as a normal F<.PL> file:
 
   PL_FILES => {},

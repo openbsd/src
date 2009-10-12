@@ -16,7 +16,7 @@ use strict;
 use File::Path;
 use Config;
 
-use Test::More tests => 21;
+use Test::More tests => 20;
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::BFD;
 
@@ -51,7 +51,6 @@ run("$make");   # this is necessary due to a dmake bug.
 my $install_out = run("$make install");
 is( $?, 0, '  make install exited normally' ) || diag $install_out;
 like( $install_out, qr/^Installing /m );
-like( $install_out, qr/^Writing /m );
 
 ok( -r '../dummy-install',      '  install dir created' );
 

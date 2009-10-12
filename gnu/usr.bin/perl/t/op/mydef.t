@@ -3,12 +3,13 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 print "1..70\n";
 
 my $test = 0;
-sub ok ($$) {
+sub ok ($@) {
     my ($ok, $name) = @_;
     ++$test;
     print $ok ? "ok $test - $name\n" : "not ok $test - $name\n";
@@ -175,8 +176,7 @@ $_ = "global";
     ::ok( $1 eq 'notmain', '...m// defaults to our $_ in main::' );
 }
 
-my $file = 'dolbar1.tmp';
-END { unlink $file; }
+my $file = tempfile();
 {
     open my $_, '>', $file or die "Can't open $file: $!";
     print $_ "hello\n";

@@ -8,6 +8,8 @@ $VERSION = '0.01';
 $VERBOSE = 0;
 
 
+use Carp;
+
 use Cwd ();
 use File::Basename ();
 use File::Find ();
@@ -17,12 +19,32 @@ use IO::File ();
 use Tie::CPHash;
 use Data::Dumper;
 
+my $vms_mode;
+my $vms_lower_case;
+
 BEGIN {
-    if( $^O eq 'VMS' ) {
-        # For things like vmsify()
-        require VMS::Filespec;
-        VMS::Filespec->import;
+  $vms_mode = 0;
+  $vms_lower_case = 0;
+  if( $^O eq 'VMS' ) {
+    # For things like vmsify()
+    require VMS::Filespec;
+    VMS::Filespec->import;
+    $vms_mode = 1;
+    $vms_lower_case = 1;
+    my $vms_efs_case = 0;
+    my $unix_rpt = 0;
+    if (eval { local $SIG{__DIE__}; require VMS::Feature; }) {
+        $unix_rpt = VMS::Feature::current("filename_unix_report");
+        $vms_efs_case = VMS::Feature::current("efs_case_preserve");
+    } else {
+        my $env_unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        $unix_rpt = $env_unix_rpt =~ /^[ET1]/i; 
+        my $efs_case = $ENV{'DECC$EFS_CASE_PRESERVE'} || '';
+        $vms_efs_case = $efs_case =~ /^[ET1]/i;
     }
+    $vms_mode = 0 if $unix_rpt;
+    $vms_lower_case = 0 if $vms_efs_case;
+  }
 }
 BEGIN {
   require Exporter;
@@ -31,6 +53,16 @@ BEGIN {
     undent
   );
 }
+
+sub undent {
+  my ($string) = @_;
+
+  my ($space) = $string =~ m/^(\s+)/;
+  $string =~ s/^$space//gm;
+
+  return($string);
+}
+########################################################################
 
 sub new {
   my $package = shift;
@@ -46,6 +78,9 @@ sub new {
   );
   my $self = bless( \%data, $package );
 
+  # So we can clean up later even if the caller chdir()s
+  $self->{dir} = File::Spec->rel2abs($self->{dir});
+
   tie %{$self->{filedata}}, 'Tie::CPHash';
 
   tie %{$self->{pending}{change}}, 'Tie::CPHash';
@@ -58,16 +93,6 @@ sub new {
   $self->_gen_default_filedata();
 
   return $self;
-}
-
-# not a method
-sub undent {
-  my ($string) = @_;
-
-  my ($space) = $string =~ m/^(\s+)/;
-  $string =~ s/^$space//gm;
-
-  return($string);
 }
 
 sub _gen_default_filedata {
@@ -180,19 +205,24 @@ sub _gen_default_filedata {
           OUTPUT:
               RETVAL
 
-      char *
+      const char *
       xs_version()
           CODE:
         RETVAL = XS_VERSION;
           OUTPUT:
         RETVAL
 
-      char *
+      const char *
       version()
           CODE:
         RETVAL = VERSION;
           OUTPUT:
         RETVAL
+      ---
+
+  # 5.6 is missing const char * in its typemap
+  $self->$add_unless('typemap', undent(<<"      ---"));
+      const char *              T_PV
       ---
 
   $self->$add_unless('t/basic.t', undent(<<"    ---"));
@@ -248,8 +278,8 @@ sub regen {
   if ( $opts{clean} ) {
     $self->clean() if -d $dist_dirname;
   } else {
-    # TODO: This might leave dangling directories. Eg if the removed file
-    # is 'lib/Simple/Simon.pm', The directory 'lib/Simple' will be left
+    # TODO: This might leave dangling directories; e.g. if the removed file
+    # is 'lib/Simple/Simon.pm', the directory 'lib/Simple' will be left
     # even if there are no files left in it. However, clean() will remove it.
     my @files = keys %{$self->{pending}{remove}};
     foreach my $file ( @files ) {
@@ -320,6 +350,7 @@ sub clean {
   tie %names, 'Tie::CPHash';
   foreach my $file ( keys %{$self->{filedata}} ) {
     my $filename = $self->_real_filename( $file );
+    $filename = lc($filename) if $vms_lower_case;
     my $dirname = File::Basename::dirname( $filename );
 
     $names{$filename} = 0;
@@ -341,9 +372,13 @@ sub clean {
   File::Find::finddepth( sub {
     my $name = File::Spec->canonpath( $File::Find::name );
 
+    if ($vms_mode) {
+        if ($name ne '.') {
+            $name =~ s/\.\z//;
+            $name = vmspath($name) if -d $name;
+        }
+    }
     if ($^O eq 'VMS') {
-        $name =~ s/\.\z//;
-        $name = vmspath($name) if -d $name;
         $name = File::Spec->rel2abs($name) if $name eq File::Spec->curdir();
     }
 
@@ -351,14 +386,18 @@ sub clean {
       print "Removing '$name'\n" if $VERBOSE;
       File::Path::rmtree( $_ );
     }
-  }, ($^O eq "VMS" ? './' : File::Spec->curdir) );
+  }, ($^O eq 'VMS' ? './' : File::Spec->curdir) );
 
   chdir( $here );
 }
 
 sub remove {
   my $self = shift;
-  File::Path::rmtree( File::Spec->canonpath($self->dirname) );
+  croak("invalid usage -- remove()") if(@_);
+  $self->chdir_original if($self->did_chdir);
+  File::Path::rmtree( $self->dirname );
+  # might as well check
+  croak("\nthis test should have used chdir_in()") unless(Cwd::getcwd);
 }
 
 sub revert {
@@ -391,6 +430,12 @@ sub change_build_pl {
     use strict;
     use Module::Build;
     my \$b = Module::Build->new(
+    # Some CPANPLUS::Dist::Build versions need to allow mismatches 
+    # On logic: thanks to Module::Install, CPAN.pm must set both keys, but
+    # CPANPLUS sets only the one
+    allow_mb_mismatch => ( 
+      \$ENV{PERL5_CPANPLUS_IS_RUNNING} && ! \$ENV{PERL5_CPAN_IS_RUNNING} ? 1 : 0
+    ),
     $args
     );
     \$b->create_build_script();
@@ -404,6 +449,38 @@ sub change_file {
   $self->{filedata}{$file} = $data;
   $self->{pending}{change}{$file} = 1;
 }
+
+sub get_file {
+  my $self = shift;
+  my $file = shift;
+  exists($self->{filedata}{$file}) or croak("no such entry: '$file'");
+  return $self->{filedata}{$file};
+}
+
+sub chdir_in {
+  my $self = shift;
+
+  $self->{original_dir} ||= Cwd::cwd; # only once
+  my $dir = $self->dirname;
+  chdir($dir) or die "Can't chdir to '$dir': $!";
+}
+########################################################################
+
+sub did_chdir {
+  my $self = shift;
+
+  return exists($self->{original_dir});
+}
+########################################################################
+
+sub chdir_original {
+  my $self = shift;
+
+  croak("never called chdir_in()") unless($self->{original_dir});
+  my $dir = $self->{original_dir};
+  chdir($dir) or die "Can't chdir to '$dir': $!";
+}
+########################################################################
 
 1;
 
@@ -482,6 +559,19 @@ Regenerate all missing or changed files.
 If the optional C<clean> argument is given, it also removes any
 extraneous files that do not belong to the distribution.
 
+=head2 chdir_in
+
+Change directory into the dist root.
+
+  $dist->chdir_in;
+
+=head2 chdir_original
+
+Returns to whatever directory you were in before chdir_in() (regardless
+of the cwd.)
+
+  $dist->chdir_original;
+
 =head3 clean()
 
 Removes any files that are not part of the distribution.
@@ -508,7 +598,7 @@ Removes the entire distribution directory.
 =head2 Editing Files
 
 Note that C<$filename> should always be specified with unix-style paths,
-and are relative to the distribution root directory. Eg 'lib/Module.pm'
+and are relative to the distribution root directory, e.g. C<lib/Module.pm>.
 
 No filesystem action is performed until the distribution is regenerated.
 

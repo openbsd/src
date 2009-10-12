@@ -4,10 +4,14 @@ perltodo - Perl TO-DO List
 
 =head1 DESCRIPTION
 
-This is a list of wishes for Perl. The tasks we think are smaller or easier
-are listed first. Anyone is welcome to work on any of these, but it's a good
-idea to first contact I<perl5-porters@perl.org> to avoid duplication of
-effort. By all means contact a pumpking privately first if you prefer.
+This is a list of wishes for Perl. The most up to date version of this file
+is at http://perl5.git.perl.org/perl.git/blob_plain/HEAD:/pod/perltodo.pod
+
+The tasks we think are smaller or easier are listed first. Anyone is welcome
+to work on any of these, but it's a good idea to first contact
+I<perl5-porters@perl.org> to avoid duplication of effort, and to learn from
+any previous attempts. By all means contact a pumpking privately first if you
+prefer.
 
 Whilst patches to make the list shorter are most welcome, ideas to add to
 the list are also encouraged. Check the perl5-porters archives for past
@@ -22,27 +26,16 @@ programming languages offer you 1 line of immortality?
 
 =head1 Tasks that only need Perl knowledge
 
+=head2 Remove macperl references from tests
+
+MacPerl is gone. The tests don't need to be there.
+
 =head2 Remove duplication of test setup.
 
 Schwern notes, that there's duplication of code - lots and lots of tests have
 some variation on the big block of C<$Is_Foo> checks.  We can safely put this
 into a file, change it to build an C<%Is> hash and require it.  Maybe just put
 it into F<test.pl>. Throw in the handy tainting subroutines.
-
-=head2 merge common code in installperl and installman
-
-There are some common subroutines and a common C<BEGIN> block in F<installperl>
-and F<installman>. These should probably be merged. It would also be good to
-check for duplication in all the utility scripts supplied in the source
-tarball. It might be good to move them all to a subdirectory, but this would
-require careful checking to find all places that call them, and change those
-correctly.
-
-=head2 common test code for timed bail out
-
-Write portable self destruct code for tests to stop them burning CPU in
-infinite loops. This needs to avoid using alarm, as some of the tests are
-testing alarm/sleep or timers.
 
 =head2 POD -E<gt> HTML conversion in the core still sucks
 
@@ -56,49 +49,29 @@ is needed to improve the cross-linking.
 The addition of C<Pod::Simple> and its related modules may make this task
 easier to complete.
 
-=head2 merge checkpods and podchecker
+=head2 Make ExtUtils::ParseXS use strict;
 
-F<pod/checkpods.PL> (and C<make check> in the F<pod/> subdirectory)
-implements a very basic check for pod files, but the errors it discovers
-aren't found by podchecker. Add this check to podchecker, get rid of
-checkpods and have C<make check> use podchecker.
+F<lib/ExtUtils/ParseXS.pm> contains this line
 
-=head2 perlmodlib.PL rewrite
+    # use strict;  # One of these days...
 
-Currently perlmodlib.PL needs to be run from a source directory where perl
-has been built, or some modules won't be found, and others will be
-skipped. Make it run from a clean perl source tree (so it's reproducible).
+Simply uncomment it, and fix all the resulting issues :-)
+
+The more practical approach, to break the task down into manageable chunks, is
+to work your way though the code from bottom to top, or if necessary adding
+extra C<{ ... }> blocks, and turning on strict within them.
 
 =head2 Parallel testing
 
 (This probably impacts much more than the core: also the Test::Harness
 and TAP::* modules on CPAN.)
 
-The core regression test suite is getting ever more comprehensive, which has
-the side effect that it takes longer to run. This isn't so good. Investigate
-whether it would be feasible to give the harness script the B<option> of
-running sets of tests in parallel. This would be useful for tests in
-F<t/op/*.t> and F<t/uni/*.t> and maybe some sets of tests in F<lib/>.
-
-Questions to answer
-
-=over 4
-
-=item 1
-
-How does screen layout work when you're running more than one test?
-
-=item 2
-
-How does the caller of test specify how many tests to run in parallel?
-
-=item 3
-
-How do setup/teardown tests identify themselves?
-
-=back
-
-Pugs already does parallel testing - can their approach be re-used?
+All of the tests in F<t/> can now be run in parallel, if C<$ENV{TEST_JOBS}>
+is set. However, tests within each directory in F<ext> and F<lib> are still
+run in series, with directories run in parallel. This is an adequate
+heuristic, but it might be possible to relax it further, and get more
+throughput. Specifically, it would be good to audit all of F<lib/*.t>, and
+make them use C<File::Temp>.
 
 =head2 Make Schwern poorer
 
@@ -115,28 +88,6 @@ tests that are currently missing.
 =head2 test B
 
 A full test suite for the B module would be nice.
-
-=head2 Deparse inlined constants
-
-Code such as this
-
-    use constant PI => 4;
-    warn PI
-
-will currently deparse as
-
-    use constant ('PI', 4);
-    warn 4;
-
-because the tokenizer inlines the value of the constant subroutine C<PI>.
-This allows various compile time optimisations, such as constant folding
-and dead code elimination. Where these haven't happened (such as the example
-above) it ought be possible to make B::Deparse work out the name of the
-original constant, because just enough information survives in the symbol
-table to do this. Specifically, the same scalar is used for the constant in
-the optree as is used for the constant subroutine, so by iterating over all
-symbol tables and generating a mapping of SV address to constant name, it
-would be possible to provide B::Deparse with this functionality.
 
 =head2 A decent benchmark
 
@@ -162,10 +113,11 @@ do so. Test it with older perl releases, and fix the problems you find.
 To make a minimal perl distribution, it's useful to look at
 F<t/lib/commonsense.t>.
 
-=head2 Improving C<threads::shared>
+=head2 Bundle dual life modules in ext/
 
-Investigate whether C<threads::shared> could share aggregates properly with
-only Perl level changes to shared.pm
+For maintenance (and branch merging) reasons, it would be useful to move
+some architecture-independent dual-life modules from lib/ to ext/, if this
+has no negative impact on the build of perl itself.
 
 =head2 POSIX memory footprint
 
@@ -203,6 +155,13 @@ be more consistent (and less surprising) to arrange for all lexical pragmas
 in force at the __END__ block to be in force within each autoloaded subroutine.
 
 There's a similar problem with SelfLoader.
+
+=head2 profile installman
+
+The F<installman> script is slow. All it is doing text processing, which we're
+told is something Perl is good at. So it would be nice to know what it is doing
+that is taking so much CPU, and where possible address it.
+
 
 =head1 Tasks that need a little sysadmin-type knowledge
 
@@ -360,15 +319,102 @@ file/directory copying back and forth.
 
 Make F<pod/roffitall> be updated by F<pod/buildtoc>.
 
+=head2 Split "linker" from "compiler"
+
+Right now, Configure probes for two commands, and sets two variables:
+
+=over 4
+
+=item * C<cc> (in F<cc.U>)
+
+This variable holds the name of a command to execute a C compiler which
+can resolve multiple global references that happen to have the same
+name.  Usual values are F<cc> and F<gcc>.
+Fervent ANSI compilers may be called F<c89>.  AIX has F<xlc>.
+
+=item * C<ld> (in F<dlsrc.U>)
+
+This variable indicates the program to be used to link
+libraries for dynamic loading.  On some systems, it is F<ld>.
+On ELF systems, it should be C<$cc>.  Mostly, we'll try to respect
+the hint file setting.
+
+=back
+
+There is an implicit historical assumption from around Perl5.000alpha
+something, that C<$cc> is also the correct command for linking object files
+together to make an executable. This may be true on Unix, but it's not true
+on other platforms, and there are a maze of work arounds in other places (such
+as F<Makefile.SH>) to cope with this.
+
+Ideally, we should create a new variable to hold the name of the executable
+linker program, probe for it in F<Configure>, and centralise all the special
+case logic there or in hints files.
+
+A small bikeshed issue remains - what to call it, given that C<$ld> is already
+taken (arguably for the wrong thing now, but on SunOS 4.1 it is the command
+for creating dynamically-loadable modules) and C<$link> could be confused with
+the Unix command line executable of the same name, which does something
+completely different. Andy Dougherty makes the counter argument "In parrot, I
+tried to call the command used to link object files and  libraries into an
+executable F<link>, since that's what my vaguely-remembered DOS and VMS
+experience suggested. I don't think any real confusion has ensued, so it's
+probably a reasonable name for perl5 to use."
+
+"Alas, I've always worried that introducing it would make things worse, 
+since now the module building utilities would have to look for 
+C<$Config{link}> and institute a fall-back plan if it weren't found."
+Although I can see that as confusing, given that C<$Config{d_link}> is true
+when (hard) links are available.
+
+=head2 Configure Windows using PowerShell
+
+Currently, Windows uses hard-coded config files based to build the
+config.h for compiling Perl.  Makefiles are also hard-coded and need to be 
+hand edited prior to building Perl. While this makes it easy to create a perl.exe 
+that works across multiple Windows versions, being able to accurately
+configure a perl.exe for a specific Windows versions and VS C++ would be
+a nice enhancement.  With PowerShell available on Windows XP and up, this 
+may now be possible.  Step 1 might be to investigate whether this is possible
+and use this to clean up our current makefile situation.  Step 2 would be to 
+see if there would be a way to use our existing metaconfig units to configure a
+Windows Perl or whether we go in a separate direction and make it so.  Of 
+course, we all know what step 3 is.
+
+=head2 decouple -g and -DDEBUGGING
+
+Currently F<Configure> automatically adds C<-DDEBUGGING> to the C compiler
+flags if it spots C<-g> in the optimiser flags. The pre-processor directive
+C<DEBUGGING> enables F<perl>'s command line <-D> options, but in the process
+makes F<perl> slower. It would be good to disentangle this logic, so that
+C-level debugging with C<-g> and Perl level debugging with C<-D> can easily
+be enabled independently.
+
 =head1 Tasks that need a little C knowledge
 
 These tasks would need a little C knowledge, but don't need any specific
 background or experience with XS, or how the Perl interpreter works
 
-=head2 Exterminate PL_na!
+=head2 Weed out needless PERL_UNUSED_ARG
 
-C<PL_na> festers still in the darkest corners of various typemap files.
-It needs to be exterminated, replaced by a local variable of type C<STRLEN>.
+The C code uses the macro C<PERL_UNUSED_ARG> to stop compilers warning about
+unused arguments. Often the arguments can't be removed, as there is an
+external constraint that determines the prototype of the function, so this
+approach is valid. However, there are some cases where C<PERL_UNUSED_ARG>
+could be removed. Specifically
+
+=over 4
+
+=item *
+
+The prototypes of (nearly all) static functions can be changed
+
+=item *
+
+Unused arguments generated by short cut macros are wasteful - the short cut
+macro used can be changed.
+
+=back
 
 =head2 Modernize the order of directories in @INC
 
@@ -385,28 +431,6 @@ On these systems, it might be the default compilation mode, and there
 is currently no guarantee that passing no use64bitall option to the
 Configure process will build a 32bit perl. Implementing -Duse32bit*
 options would be nice for perl 5.12.
-
-=head2 Make it clear from -v if this is the exact official release
-
-Currently perl from C<p4>/C<rsync> ships with a F<patchlevel.h> file that
-usually defines one local patch, of the form "MAINT12345" or "RC1". The output
-of perl -v doesn't report that a perl isn't an official release, and this
-information can get lost in bugs reports. Because of this, the minor version
-isn't bumped up until RC time, to minimise the possibility of versions of perl
-escaping that believe themselves to be newer than they actually are.
-
-It would be useful to find an elegant way to have the "this is an interim
-maintenance release" or "this is a release candidate" in the terse -v output,
-and have it so that it's easy for the pumpking to remove this just as the
-release tarball is rolled up. This way the version pulled out of rsync would
-always say "I'm a development release" and it would be safe to bump the
-reported minor version as soon as a release ships, which would aid perl
-developers.
-
-This task is really about thinking of an elegant way to arrange the C source
-such that it's trivial for the Pumpking to flag "this is an official release"
-when making a tarball, yet leave the default source saying "I'm not the
-official release".
 
 =head2 Profile Perl - am I hot or not?
 
@@ -425,6 +449,8 @@ Except that it's not clear if these really are the most commonly used ops. So
 as part of exercising your skills with coverage and profiling tools you might
 want to determine what ops I<really> are the most commonly used. And in turn
 suggest evictions and promotions to achieve a better F<pp_hot.c>.
+
+One piece of Perl code that might make a good testbed is F<installman>.
 
 =head2 Allocate OPs from arenas
 
@@ -468,6 +494,31 @@ warnings are also currently suppressed by adding -D_CRT_NONSTDC_NO_DEPRECATE. It
 might be nice to do as Microsoft suggest here too, although, unlike the secure
 functions issue, there is presumably little or no benefit in this case.
 
+=head2 Fix POSIX::access() and chdir() on Win32
+
+These functions currently take no account of DACLs and therefore do not behave
+correctly in situations where access is restricted by DACLs (as opposed to the
+read-only attribute).
+
+Furthermore, POSIX::access() behaves differently for directories having the
+read-only attribute set depending on what CRT library is being used. For
+example, the _access() function in the VC6 and VC7 CRTs (wrongly) claim that
+such directories are not writable, whereas in fact all directories are writable
+unless access is denied by DACLs. (In the case of directories, the read-only
+attribute actually only means that the directory cannot be deleted.) This CRT
+bug is fixed in the VC8 and VC9 CRTs (but, of course, the directory may still
+not actually be writable if access is indeed denied by DACLs).
+
+For the chdir() issue, see ActiveState bug #74552:
+http://bugs.activestate.com/show_bug.cgi?id=74552
+
+Therefore, DACLs should be checked both for consistency across CRTs and for
+the correct answer.
+
+(Note that perl's -w operator should not be modified to check DACLs. It has
+been written so that it reflects the state of the read-only attribute, even
+for directories (whatever CRT is being used), for symmetry with chmod().)
+
 =head2 strcat(), strcpy(), strncat(), strncpy(), sprintf(), vsprintf()
 
 Maybe create a utility that checks after each libperl.a creation that
@@ -488,11 +539,127 @@ These should probably be used for compiling Perl whenever available,
 Configure and/or hints files should be adjusted to probe for the
 availability of these features and enable them as appropriate.
 
+=head2 Arenas for GPs? For MAGIC?
+
+C<struct gp> and C<struct magic> are both currently allocated by C<malloc>.
+It might be a speed or memory saving to change to using arenas. Or it might
+not. It would need some suitable benchmarking first. In particular, C<GP>s
+can probably be changed with minimal compatibility impact (probably nothing
+outside of the core, or even outside of F<gv.c> allocates them), but they
+probably aren't allocated/deallocated often enough for a speed saving. Whereas
+C<MAGIC> is allocated/deallocated more often, but in turn, is also something
+more externally visible, so changing the rules here may bite external code.
+
+=head2 Shared arenas
+
+Several SV body structs are now the same size, notably PVMG and PVGV, PVAV and
+PVHV, and PVCV and PVFM. It should be possible to allocate and return same
+sized bodies from the same actual arena, rather than maintaining one arena for
+each. This could save 4-6K per thread, of memory no longer tied up in the
+not-yet-allocated part of an arena.
+
+
 =head1 Tasks that need a knowledge of XS
 
 These tasks would need C knowledge, and roughly the level of knowledge of
 the perl API that comes from writing modules that use XS to interface to
 C.
+
+=head2 Remove the use of SVs as temporaries in dump.c
+
+F<dump.c> contains debugging routines to dump out the contains of perl data
+structures, such as C<SV>s, C<AV>s and C<HV>s. Currently, the dumping code
+B<uses> C<SV>s for its temporary buffers, which was a logical initial
+implementation choice, as they provide ready made memory handling.
+
+However, they also lead to a lot of confusion when it happens that what you're
+trying to debug is seen by the code in F<dump.c>, correctly or incorrectly, as
+a temporary scalar it can use for a temporary buffer. It's also not possible
+to dump scalars before the interpreter is properly set up, such as during
+ithreads cloning. It would be good to progressively replace the use of scalars
+as string accumulation buffers with something much simpler, directly allocated
+by C<malloc>. The F<dump.c> code is (or should be) only producing 7 bit
+US-ASCII, so output character sets are not an issue.
+
+Producing and proving an internal simple buffer allocation would make it easier
+to re-write the internals of the PerlIO subsystem to avoid using C<SV>s for
+B<its> buffers, use of which can cause problems similar to those of F<dump.c>,
+at similar times.
+
+=head2 safely supporting POSIX SA_SIGINFO
+
+Some years ago Jarkko supplied patches to provide support for the POSIX
+SA_SIGINFO feature in Perl, passing the extra data to the Perl signal handler.
+
+Unfortunately, it only works with "unsafe" signals, because under safe
+signals, by the time Perl gets to run the signal handler, the extra
+information has been lost. Moreover, it's not easy to store it somewhere,
+as you can't call mutexs, or do anything else fancy, from inside a signal
+handler.
+
+So it strikes me that we could provide safe SA_SIGINFO support
+
+=over 4
+
+=item 1
+
+Provide global variables for two file descriptors
+
+=item 2
+
+When the first request is made via C<sigaction> for C<SA_SIGINFO>, create a
+pipe, store the reader in one, the writer in the other
+
+=item 3
+
+In the "safe" signal handler (C<Perl_csighandler()>/C<S_raise_signal()>), if
+the C<siginfo_t> pointer non-C<NULL>, and the writer file handle is open,
+
+=over 8
+
+=item 1
+
+serialise signal number, C<struct siginfo_t> (or at least the parts we care
+about) into a small auto char buff
+
+=item 2
+
+C<write()> that (non-blocking) to the writer fd
+
+=over 12
+
+=item 1
+
+if it writes 100%, flag the signal in a counter of "signals on the pipe" akin
+to the current per-signal-number counts
+
+=item 2
+
+if it writes 0%, assume the pipe is full. Flag the data as lost?
+
+=item 3
+
+if it writes partially, croak a panic, as your OS is broken.
+
+=back
+
+=back
+
+=item 4
+
+in the regular C<PERL_ASYNC_CHECK()> processing, if there are "signals on
+the pipe", read the data out, deserialise, build the Perl structures on
+the stack (code in C<Perl_sighandler()>, the "unsafe" handler), and call as
+usual.
+
+=back
+
+I think that this gets us decent C<SA_SIGINFO> support, without the current risk
+of running Perl code inside the signal handler context. (With all the dangers
+of things like C<malloc> corruption that that currently offers us)
+
+For more information see the thread starting with this message:
+http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2008-03/msg00305.html
 
 =head2 autovivification
 
@@ -610,13 +777,6 @@ only the interpretation of non-ASCII characters, and not for the script file
 handle. To make it work needs some investigation of the ordering of function
 calls during startup, and (by implication) a bit of tweaking of that order.
 
-=head2 Propagate const outwards from Perl_moreswitches()
-
-Change 32057 changed the parameter and return value of C<Perl_moreswitches()>
-from <char *> to <const char *>. It should now be possible to propagate
-const-correctness outwards to C<S_parse_body()>, C<Perl_moreswitches()>
-and C<Perl_yylex()>.
-
 =head2 Duplicate logic in S_method_common() and Perl_gv_fetchmethod_autoload()
 
 A comment in C<S_method_common> notes
@@ -667,6 +827,59 @@ also the warning messages (see L<perllexwarn>, C<warnings.pl>).
 These tasks would need C knowledge, and knowledge of how the interpreter works,
 or a willingness to learn.
 
+=head2 forbid labels with keyword names
+
+Currently C<goto keyword> "computes" the label value:
+
+    $ perl -e 'goto print'
+    Can't find label 1 at -e line 1.
+
+It would be nice to forbid labels with keyword names, to avoid confusion.
+
+=head2 truncate() prototype
+
+The prototype of truncate() is currently C<$$>. It should probably
+be C<*$> instead. (This is changed in F<opcode.pl>)
+
+=head2 decapsulation of smart match argument
+
+Currently C<$foo ~~ $object> will die with the message "Smart matching a
+non-overloaded object breaks encapsulation". It would be nice to allow
+to bypass this by using explictly the syntax C<$foo ~~ %$object> or
+C<$foo ~~ @$object>.
+
+=head2 error reporting of [$a ; $b]
+
+Using C<;> inside brackets is a syntax error, and we don't propose to change
+that by giving it any meaning. However, it's not reported very helpfully:
+
+    $ perl -e '$a = [$b; $c];'
+    syntax error at -e line 1, near "$b;"
+    syntax error at -e line 1, near "$c]"
+    Execution of -e aborted due to compilation errors.
+
+It should be possible to hook into the tokeniser or the lexer, so that when a
+C<;> is parsed where it is not legal as a statement terminator (ie inside
+C<{}> used as a hashref, C<[]> or C<()>) it issues an error something like
+I<';' isn't legal inside an expression - if you need multiple statements use a
+do {...} block>. See the thread starting at
+http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2008-09/msg00573.html
+
+=head2 lexicals used only once
+
+This warns:
+
+    $ perl -we '$pie = 42'
+    Name "main::pie" used only once: possible typo at -e line 1.
+
+This does not:
+
+    $ perl -we 'my $pie = 42'
+
+Logically all lexicals used only once should warn, if the user asks for
+warnings.  An unworked RT ticket (#5087) has been open for almost seven
+years for this discrepancy.
+
 =head2 UTF-8 revamp
 
 The handling of Unicode is unclean in many places. For example, the regexp
@@ -713,6 +926,15 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2007-03/msg00481.html>
 There is no method on tied filehandles to allow them to be called back by
 formats.
 
+=head2 Propagate compilation hints to the debugger
+
+Currently a debugger started with -dE on the command-line doesn't see the
+features enabled by -E. More generally hints (C<$^H> and C<%^H>) aren't
+propagated to the debugger. Probably it would be a good thing to propagate
+hints from the innermost non-C<DB::> scope: this would make code eval'ed
+in the debugger see the features (and strictures, etc.) currently in
+scope.
+
 =head2 Attach/detach debugger from running program
 
 The old perltodo notes "With C<gdb>, you can attach the debugger to a running
@@ -720,21 +942,10 @@ program if you pass the process ID. It would be good to do this with the Perl
 debugger on a running Perl program, although I'm not sure how it would be
 done." ssh and screen do this with named pipes in /tmp. Maybe we can too.
 
-=head2 Optimize away empty destructors
-
-Defining an empty DESTROY method might be useful (notably in
-AUTOLOAD-enabled classes), but it's still a bit expensive to call. That
-could probably be optimized.
-
 =head2 LVALUE functions for lists
 
 The old perltodo notes that lvalue functions don't work for list or hash
 slices. This would be good to fix.
-
-=head2 LVALUE functions in the debugger
-
-The old perltodo notes that lvalue functions don't work in the debugger. This
-would be good to fix.
 
 =head2 regexp optimiser optional
 
@@ -839,9 +1050,125 @@ See also L</"Extend PerlIO and PerlIO::Scalar">.
 
 =head2 Investigate PADTMP hash pessimisation
 
-The peephole optimier converts constants used for hash key lookups to shared
-hash key scalars. Under ithreads, something is undoing this work. See
+The peephole optimiser converts constants used for hash key lookups to shared
+hash key scalars. Under ithreads, something is undoing this work.
 See http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2007-09/msg00793.html
+
+=head2 Store the current pad in the OP slab allocator
+
+=for clarification
+I hope that I got that "current pad" part correct
+
+Currently we leak ops in various cases of parse failure. I suggested that we
+could solve this by always using the op slab allocator, and walking it to
+free ops. Dave comments that as some ops are already freed during optree
+creation one would have to mark which ops are freed, and not double free them
+when walking the slab. He notes that one problem with this is that for some ops
+you have to know which pad was current at the time of allocation, which does
+change. I suggested storing a pointer to the current pad in the memory allocated
+for the slab, and swapping to a new slab each time the pad changes. Dave thinks
+that this would work.
+
+=head2 repack the optree
+
+Repacking the optree after execution order is determined could allow
+removal of NULL ops, and optimal ordering of OPs with respect to cache-line
+filling.  The slab allocator could be reused for this purpose.  I think that
+the best way to do this is to make it an optional step just before the
+completed optree is attached to anything else, and to use the slab allocator
+unchanged, so that freeing ops is identical whether or not this step runs.
+Note that the slab allocator allocates ops downwards in memory, so one would
+have to actually "allocate" the ops in reverse-execution order to get them
+contiguous in memory in execution order.
+
+See http://www.nntp.perl.org/group/perl.perl5.porters/2007/12/msg131975.html
+
+Note that running this copy, and then freeing all the old location ops would
+cause their slabs to be freed, which would eliminate possible memory wastage if
+the previous suggestion is implemented, and we swap slabs more frequently.
+
+=head2 eliminate incorrect line numbers in warnings
+
+This code
+
+    use warnings;
+    my $undef;
+    
+    if ($undef == 3) {
+    } elsif ($undef == 0) {
+    }
+
+used to produce this output:
+
+    Use of uninitialized value in numeric eq (==) at wrong.pl line 4.
+    Use of uninitialized value in numeric eq (==) at wrong.pl line 4.
+
+where the line of the second warning was misreported - it should be line 5.
+Rafael fixed this - the problem arose because there was no nextstate OP
+between the execution of the C<if> and the C<elsif>, hence C<PL_curcop> still
+reports that the currently executing line is line 4. The solution was to inject
+a nextstate OPs for each C<elsif>, although it turned out that the nextstate
+OP needed to be a nulled OP, rather than a live nextstate OP, else other line
+numbers became misreported. (Jenga!)
+
+The problem is more general than C<elsif> (although the C<elsif> case is the
+most common and the most confusing). Ideally this code
+
+    use warnings;
+    my $undef;
+    
+    my $a = $undef + 1;
+    my $b
+      = $undef
+      + 1;
+
+would produce this output
+
+    Use of uninitialized value $undef in addition (+) at wrong.pl line 4.
+    Use of uninitialized value $undef in addition (+) at wrong.pl line 7.
+
+(rather than lines 4 and 5), but this would seem to require every OP to carry
+(at least) line number information.
+
+What might work is to have an optional line number in memory just before the
+BASEOP structure, with a flag bit in the op to say whether it's present.
+Initially during compile every OP would carry its line number. Then add a late
+pass to the optimiser (potentially combined with L</repack the optree>) which
+looks at the two ops on every edge of the graph of the execution path. If
+the line number changes, flags the destination OP with this information.
+Once all paths are traced, replace every op with the flag with a
+nextstate-light op (that just updates C<PL_curcop>), which in turn then passes
+control on to the true op. All ops would then be replaced by variants that
+do not store the line number. (Which, logically, why it would work best in
+conjunction with L</repack the optree>, as that is already copying/reallocating
+all the OPs)
+
+(Although I should note that we're not certain that doing this for the general
+case is worth it)
+
+=head2 optimize tail-calls
+
+Tail-calls present an opportunity for broadly applicable optimization;
+anywhere that C<< return foo(...) >> is called, the outer return can
+be replaced by a goto, and foo will return directly to the outer
+caller, saving (conservatively) 25% of perl's call&return cost, which
+is relatively higher than in C.  The scheme language is known to do
+this heavily.  B::Concise provides good insight into where this
+optimization is possible, ie anywhere entersub,leavesub op-sequence
+occurs.
+
+ perl -MO=Concise,-exec,a,b,-main -e 'sub a{ 1 }; sub b {a()}; b(2)'
+
+Bottom line on this is probably a new pp_tailcall function which
+combines the code in pp_entersub, pp_leavesub.  This should probably
+be done 1st in XS, and using B::Generate to patch the new OP into the
+optrees.
+
+=head2 C<\N>
+
+It should be possible to add a C<\N> regex assertion, meaning "every
+character except C<\n>° independently of the context. That would
+of course imply that C<\N> couldn't be followed by an opening C<{>.
 
 =head1 Big projects
 
@@ -879,3 +1206,24 @@ This will allow the use of a regex from inside (?{ }), (??{ }) and
 Apparently these are quite useful. Anyway, Jeffery Friedl wants them.
 
 demerphq has this on his todo list, but right at the bottom.  
+
+
+=head1 Tasks for microperl
+
+
+[ Each and every one of these may be obsolete, but they were listed
+  in the old Todo.micro file]
+
+
+=head2 make creating uconfig.sh automatic 
+
+=head2 make creating Makefile.micro automatic
+
+=head2 do away with fork/exec/wait?
+
+(system, popen should be enough?)
+
+=head2 some of the uconfig.sh really needs to be probed (using cc) in buildtime:
+
+(uConfigure? :-) native datatype widths and endianness come to mind
+

@@ -14,6 +14,7 @@ use CPANPLUS::Internals::Constants;
 
 use Test::More 'no_plan';
 use Data::Dumper;
+use File::Spec;
 use File::Path ();
 
 my $Conf    = gimme_conf();
@@ -142,7 +143,7 @@ isa_ok( $Auth->parent,          'CPANPLUS::Backend' );
         skip(q[You chose not to enable checksum verification], 5)
             unless $Conf->get_conf('md5');
     
-        my $cksum_file = $Mod->checksums( force => 1 );
+        my $cksum_file = $Mod->checksums;
         ok( $cksum_file,    "Checksum file found" );
         is( $cksum_file, $Mod->status->checksums,
                             "   File stored in module object" );
@@ -152,6 +153,15 @@ isa_ok( $Auth->parent,          'CPANPLUS::Backend' );
         ### XXX test checksum_value if there's digest::md5 + config wants it
         ok( $Mod->status->checksum_ok,
                             "   Checksum is ok" );
+                            
+        ### check ttl code for checksums; fetching it now means the cache 
+        ### should kick in
+        {   CPANPLUS::Error->flush;
+            ok( $Mod->checksums,       
+                            "   Checksums re-fetched" );
+            like( CPANPLUS::Error->stack_as_string, qr/Using cached file/,
+                            "       Cached file used" );
+        }                            
     }
 }
 
@@ -176,7 +186,7 @@ isa_ok( $Auth->parent,          'CPANPLUS::Backend' );
 ### dslip & related
 {   my $dslip = $Mod->dslip;   
     ok( $dslip,             "Got dslip information from $ModName ($dslip)" );
-    
+
     ### now find it for a submodule
     {   my $submod = $CB->module_tree( TEST_CONF_MODULE_SUB );
         ok( $submod,        "   Found submodule " . $submod->name );
@@ -260,6 +270,44 @@ isa_ok( $Auth->parent,          'CPANPLUS::Backend' );
         ok( defined $bundle->status->prereqs->{$_->module},
                                 "       Prereq was registered" );
     }
+}
+
+{   ### testing autobundles
+    my $file    = File::Spec->catfile( 
+                        dummy_cpan_dir(), 
+                        $Conf->_get_build('autobundle'),
+                        'Snapshot.pm' 
+                    );
+    my $uri     = $CB->_host_to_uri( scheme => 'file', path => $file );
+    my $bundle  = $CB->parse_module( module => $uri );
+    
+    ok( -e $file,               "Creating bundle from '$file'" );
+    ok( $bundle,                "   Object created" );
+    isa_ok( $bundle, 'CPANPLUS::Module',
+                                "   Object" );
+    ok( $bundle->is_bundle,     "   Recognized as bundle" );
+    ok( $bundle->is_autobundle, "   Recognized as autobundle" );
+    
+    my $type = $bundle->get_installer_type;
+    ok( $type,                  "   Found installer type" );
+    is( $type, INSTALLER_AUTOBUNDLE,
+                                "       Installer type is $type" );
+
+    my $where = $bundle->fetch;
+    ok( $where,                 "   Autobundle fetched" );
+    ok( -e $where,              "       File exists" );
+
+
+    my @list = $bundle->bundle_modules;
+    ok( scalar(@list),          "   Prereqs found" );
+    is( scalar(@list), 1,       "       Right number of prereqs" );
+    isa_ok( $list[0], 'CPANPLUS::Module',
+                                "       Object" );
+                                
+    ### skiptests to make sure we don't get any test header mismatches
+    my $rv = $bundle->create( prereq_target => 'create', skiptest => 1 );
+    ok( $rv,                    "   Tested prereqs" );
+
 }
 
 ### test module from perl core ###

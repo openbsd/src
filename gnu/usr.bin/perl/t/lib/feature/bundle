@@ -1,0 +1,50 @@
+Check feature bundles.
+
+__END__
+# Standard feature bundle
+use feature ":5.10";
+say "Hello", "world";
+EXPECT
+Helloworld
+########
+# more specific: 5.10.0 maps to 5.10
+use feature ":5.10.0";
+say "Hello", "world";
+EXPECT
+Helloworld
+########
+# as does 5.10.1
+use feature ":5.10.1";
+say "Hello", "world";
+EXPECT
+Helloworld
+########
+# as does 5.10.99
+use feature ":5.10.99";
+say "Hello", "world";
+EXPECT
+Helloworld
+########
+# 5.9.5 also supported
+use feature ":5.9.5";
+say "Hello", "world";
+EXPECT
+Helloworld
+########
+# 5.9 not supported
+use feature ":5.9";
+EXPECT
+OPTIONS regex
+^Feature bundle "5.9" is not supported by Perl \d+\.\d+\.\d+ at - line \d+
+########
+# 5.9.4 not supported
+use feature ":5.9.4";
+EXPECT
+OPTIONS regex
+^Feature bundle "5.9.4" is not supported by Perl \d+\.\d+\.\d+ at - line \d+
+########
+# 5.8.8 not supported
+use feature ":5.8.8";
+EXPECT
+OPTIONS regex
+^Feature bundle "5.8.8" is not supported by Perl \d+\.\d+\.\d+ at - line \d+

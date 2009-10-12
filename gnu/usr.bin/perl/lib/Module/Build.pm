@@ -15,7 +15,7 @@ use Module::Build::Base;
 
 use vars qw($VERSION @ISA);
 @ISA = qw(Module::Build::Base);
-$VERSION = '0.2808_01';
+$VERSION = '0.340201';
 $VERSION = eval $VERSION;
 
 # Okay, this is the brute-force method of finding out what kind of
@@ -30,15 +30,18 @@ my %OSTYPES = qw(
 		 dynixptx  Unix
 		 freebsd   Unix
 		 linux     Unix
+		 haiku     Unix
 		 hpux      Unix
 		 irix      Unix
 		 darwin    Unix
 		 machten   Unix
 		 midnightbsd Unix
+		 mirbsd    Unix
 		 next      Unix
 		 openbsd   Unix
 		 netbsd    Unix
 		 dec_osf   Unix
+		 nto       Unix
 		 svr4      Unix
 		 svr5      Unix
 		 sco_sv    Unix
@@ -49,7 +52,10 @@ my %OSTYPES = qw(
 		 cygwin    Unix
 		 os2       Unix
 		 interix   Unix
-		 
+		 gnu       Unix
+		 gnukfreebsd Unix
+		 nto       Unix
+
 		 dos       Windows
 		 MSWin32   Windows
 
@@ -104,6 +110,11 @@ sub is_unixish { return ((os_type() || '') eq 'Unix') }
 
 __END__
 
+=for :stopwords
+bindoc binhtml destdir distcheck distclean distdir distmeta distsign disttest
+fakeinstall html installdirs installsitebin installsitescript installvendorbin
+installvendorscript libdoc libhtml pardist ppd ppmdist realclean skipcheck
+testall testcover testdb testpod testpodcoverage versioninstall
 
 =head1 NAME
 
@@ -156,11 +167,11 @@ This illustrates initial configuration and the running of three
 'actions'.  In this case the actions run are 'build' (the default
 action), 'test', and 'install'.  Other actions defined so far include:
 
-  build                          manifest    
-  clean                          manpages    
-  code                           pardist     
-  config_data                    ppd         
-  diff                           ppmdist     
+  build                          manpages    
+  clean                          pardist     
+  code                           ppd         
+  config_data                    ppmdist     
+  diff                           prereq_data 
   dist                           prereq_report
   distcheck                      pure_install
   distclean                      realclean   
@@ -173,6 +184,7 @@ action), 'test', and 'install'.  Other actions defined so far include:
   help                           testpod     
   html                           testpodcoverage
   install                        versioninstall
+  manifest                                   
 
 
 You can run the 'help' action for a complete list of actions.
@@ -244,7 +256,7 @@ The following build actions are provided by default.
 If you run the C<Build> script without any arguments, it runs the
 C<build> action, which in turn runs the C<code> and C<docs> actions.
 
-This is analogous to the MakeMaker 'make all' target.
+This is analogous to the C<MakeMaker> I<make all> target.
 
 =item clean
 
@@ -258,7 +270,7 @@ C<_build/> directory and the C<Build> script itself).
 
 [version 0.20]
 
-This action builds your codebase.
+This action builds your code base.
 
 By default it just creates a C<blib/> directory and copies any C<.pm>
 and C<.pod> files from your C<lib/> directory into the C<blib/>
@@ -305,10 +317,9 @@ module for source distribution through a medium like CPAN.  It will create a
 tarball of the files listed in F<MANIFEST> and compress the tarball using
 GZIP compression.
 
-By default, this action will use the external C<tar> and C<gzip>
-executables on Unix-like platforms, and the C<Archive::Tar> module
-elsewhere.  However, you can force it to use whatever executable you
-want by supplying an explicit C<tar> (and optional C<gzip>) parameter:
+By default, this action will use the C<Archive::Tar> module. However, you can
+force it to use binary "tar" and "gzip" executables by supplying an explicit 
+C<tar> (and optional C<gzip>) parameter:
 
   ./Build dist --tar C:\path\to\tar.exe --gzip C:\path\to\zip.exe
 
@@ -340,7 +351,7 @@ This directory is what the distribution tarball is created from.
 
 Creates the F<META.yml> file that describes the distribution.
 
-F<META.yml> is a file containing various bits of "metadata" about the
+F<META.yml> is a file containing various bits of I<metadata> about the
 distribution.  The metadata includes the distribution name, version,
 abstract, prerequisites, license, and various other data about the
 distribution.  This file is created as F<META.yml> in YAML format.
@@ -375,13 +386,13 @@ that directory.
 
 [version 0.20]
 
-This will generate documentation (e.g. Unix man pages and html
+This will generate documentation (e.g. Unix man pages and HTML
 documents) for any installable items under B<blib/> that
 contain POD.  If there are no C<bindoc> or C<libdoc> installation
 targets defined (as will be the case on systems that don't support
 Unix manpages) no action is taken for manpages.  If there are no
 C<binhtml> or C<libhtml> installation targets defined no action is
-taken for html documents.
+taken for HTML documents.
 
 =item fakeinstall
 
@@ -488,7 +499,7 @@ installed on your system.
 Build a PPD file for your distribution.
 
 This action takes an optional argument C<codebase> which is used in
-the generated ppd file to specify the (usually relative) URL of the
+the generated PPD file to specify the (usually relative) URL of the
 distribution.  By default, this value is the distribution name without
 any path information.
 
@@ -501,12 +512,20 @@ Example:
 [version 0.23]
 
 Generates a PPM binary distribution and a PPD description file.  This
-action also invokes the 'ppd' action, so it can accept the same
+action also invokes the C<ppd> action, so it can accept the same
 C<codebase> argument described under that action.
 
 This uses the same mechanism as the C<dist> action to tar & zip its
 output, so you can supply C<tar> and/or C<gzip> parameters to affect
 the result.
+
+=item prereq_data
+
+[version 0.32]
+
+This action prints out a Perl data structure of all prerequisites and the versions
+required.  The output can be loaded again using C<eval()>.  This can be useful for
+external tools that wish to query a Build script for prerequisites.
 
 =item prereq_report
 
@@ -557,16 +576,24 @@ F<MANIFEST.SKIP> file (See L<manifest> for details)
 
 [version 0.01]
 
-This will use C<Test::Harness> to run any regression tests and report
-their results.  Tests can be defined in the standard places: a file
-called C<test.pl> in the top-level directory, or several files ending
-with C<.t> in a C<t/> directory.
+This will use C<Test::Harness> or C<TAP::Harness> to run any regression
+tests and report their results. Tests can be defined in the standard
+places: a file called C<test.pl> in the top-level directory, or several
+files ending with C<.t> in a C<t/> directory.
 
 If you want tests to be 'verbose', i.e. show details of test execution
 rather than just summary information, pass the argument C<verbose=1>.
 
 If you want to run tests under the perl debugger, pass the argument
 C<debugger=1>.
+
+If you want to have Module::Build find test files with different file
+name extensions, pass the C<test_file_exts> argument with an array
+of extensions, such as C<[qw( .t .s .z )]>.
+
+If you want test to be run by C<TAP::Harness>, rather than C<Test::Harness>,
+pass the argument C<tap_harness_args> as an array reference of arguments to
+pass to the TAP::Harness constructor.
 
 In addition, if a file called C<visual.pl> exists in the top-level
 directory, this file will be executed as a Perl script and its output
@@ -590,7 +617,7 @@ or use a C<glob()>-style pattern:
 
 =item testall
 
-[verion 0.2807]
+[version 0.2807]
 
 [Note: the 'testall' action and the code snippets below are currently
 in alpha stage, see
@@ -611,7 +638,7 @@ enumerate them in the test_types parameter.
     ...
     test_types  => {
       special => '.st',
-      author  => '.at',
+      author  => ['.at', '.pt' ],
     },
     ...
 
@@ -694,9 +721,9 @@ respective action.
 NOTE: There is some preliminary support for options to use the more
 familiar long option style.  Most options can be preceded with the
 C<--> long option prefix, and the underscores changed to dashes
-(e.g. --use-rcfile).  Additionally, the argument to boolean options is
+(e.g. C<--use-rcfile>).  Additionally, the argument to boolean options is
 optional, and boolean options can be negated by prefixing them with
-'no' or 'no-' (e.g. --noverbose or --no-verbose).
+C<no> or C<no-> (e.g. C<--noverbose> or C<--no-verbose>).
 
 =over 4
 
@@ -719,6 +746,11 @@ Suppresses the check upon startup that the version of Module::Build
 we're now running under is the same version that was initially invoked
 when building the distribution (i.e. when the C<Build.PL> script was
 first run).  Use with caution.
+
+=item debug
+
+Prints Module::Build debugging information to STDOUT, such as a trace of
+executed build actions.
 
 =back
 
@@ -756,7 +788,7 @@ when you invoke C<perl Build.PL>.
            --install_path html=/home/ken/docs/html
 
 If you wish to locate your resource file in a different location, you
-can set the environment variable 'MODULEBUILDRC' to the complete
+can set the environment variable C<MODULEBUILDRC> to the complete
 absolute path of the file containing your options.
 
 
@@ -785,7 +817,7 @@ Usually pure-Perl module files ending in F<.pm>.
 =item arch
 
 "Architecture-dependent" module files, usually produced by compiling
-XS, Inline, or similar code.
+XS, L<Inline>, or similar code.
 
 =item script
 
@@ -813,11 +845,11 @@ pages belonging to the 'man3' category.
 
 =item binhtml
 
-This is the same as C<bindoc> above, but applies to html documents.
+This is the same as C<bindoc> above, but applies to HTML documents.
 
 =item libhtml
 
-This is the same as C<bindoc> above, but applies to html documents.
+This is the same as C<bindoc> above, but applies to HTML documents.
 
 =back
 
@@ -847,7 +879,7 @@ parameter as follows:
   binhtml => installhtml1dir installsitehtml1dir installvendorhtml1dir [*]
   libhtml => installhtml3dir installsitehtml3dir installvendorhtml3dir [*]
 
-  * Under some OS (eg. MSWin32) the destination for html documents is
+  * Under some OS (eg. MSWin32) the destination for HTML documents is
     determined by the C<Config.pm> entry C<installhtmldir>.
 
 The default value of C<installdirs> is "site".  If you're creating
@@ -865,7 +897,7 @@ with perl itself (i.e. a "core module"), then you may set
 C<installdirs> to "core" to overwrite the module in its present
 location.
 
-(Note that the 'script' line is different from MakeMaker -
+(Note that the 'script' line is different from C<MakeMaker> -
 unfortunately there's no such thing as "installsitescript" or
 "installvendorscript" entry in C<Config.pm>, so we use the
 "installsitebin" and "installvendorbin" entries to at least get the
@@ -900,7 +932,7 @@ system, you'll install as follows:
   binhtml => /home/ken/html
   libhtml => /home/ken/html
 
-Note that this is I<different> from how MakeMaker's C<PREFIX>
+Note that this is I<different> from how C<MakeMaker>'s C<PREFIX>
 parameter works.  C<install_base> just gives you a default layout under the
 directory you specify, which may have little to do with the
 C<installdirs=site> layout.
@@ -928,10 +960,10 @@ platform you're installing on.
 
 =item prefix
 
-Provided for compatibility with ExtUtils::MakeMaker's PREFIX argument.
+Provided for compatibility with C<ExtUtils::MakeMaker>'s PREFIX argument.
 C<prefix> should be used when you wish Module::Build to install your
 modules, documentation and scripts in the same place
-ExtUtils::MakeMaker does.
+C<ExtUtils::MakeMaker> does.
 
 The following are equivalent.
 
@@ -939,13 +971,13 @@ The following are equivalent.
     perl Makefile.PL PREFIX=/tmp/foo
 
 Because of the very complex nature of the prefixification logic, the
-behavior of PREFIX in MakeMaker has changed subtly over time.
+behavior of PREFIX in C<MakeMaker> has changed subtly over time.
 Module::Build's --prefix logic is equivalent to the PREFIX logic found
-in ExtUtils::MakeMaker 6.30.
+in C<ExtUtils::MakeMaker> 6.30.
 
-If you do not need to retain compatibility with ExtUtils::MakeMaker or
-are starting a fresh Perl installation we recommand you use
-C<install_base> instead (and C<INSTALL_BASE> in ExtUtils::MakeMaker).
+If you do not need to retain compatibility with C<ExtUtils::MakeMaker> or
+are starting a fresh Perl installation we recommend you use
+C<install_base> instead (and C<INSTALL_BASE> in C<ExtUtils::MakeMaker>).
 See L<Module::Build::Cookbook/Instaling in the same location as
 ExtUtils::MakeMaker> for further information.
 
@@ -956,13 +988,13 @@ ExtUtils::MakeMaker> for further information.
 =head1 MOTIVATIONS
 
 There are several reasons I wanted to start over, and not just fix
-what I didn't like about MakeMaker:
+what I didn't like about C<MakeMaker>:
 
 =over 4
 
 =item *
 
-I don't like the core idea of MakeMaker, namely that C<make> should be
+I don't like the core idea of C<MakeMaker>, namely that C<make> should be
 involved in the build process.  Here are my reasons:
 
 =over 4
@@ -987,25 +1019,25 @@ build/install process to do what they want.
 
 =item *
 
-There are several architectural decisions in MakeMaker that make it
+There are several architectural decisions in C<MakeMaker> that make it
 very difficult to customize its behavior.  For instance, when using
-MakeMaker you do C<use ExtUtils::MakeMaker>, but the object created in
+C<MakeMaker> you do C<use ExtUtils::MakeMaker>, but the object created in
 C<WriteMakefile()> is actually blessed into a package name that's
 created on the fly, so you can't simply subclass
 C<ExtUtils::MakeMaker>.  There is a workaround C<MY> package that lets
-you override certain MakeMaker methods, but only certain explicitly
-preselected (by MakeMaker) methods can be overridden.  Also, the method
+you override certain C<MakeMaker> methods, but only certain explicitly
+preselected (by C<MakeMaker>) methods can be overridden.  Also, the method
 of customization is very crude: you have to modify a string containing
 the Makefile text for the particular target.  Since these strings
 aren't documented, and I<can't> be documented (they take on different
 values depending on the platform, version of perl, version of
-MakeMaker, etc.), you have no guarantee that your modifications will
-work on someone else's machine or after an upgrade of MakeMaker or
+C<MakeMaker>, etc.), you have no guarantee that your modifications will
+work on someone else's machine or after an upgrade of C<MakeMaker> or
 perl.
 
 =item *
 
-It is risky to make major changes to MakeMaker, since it does so many
+It is risky to make major changes to C<MakeMaker>, since it does so many
 things, is so important, and generally works.  C<Module::Build> is an
 entirely separate package so that I can work on it all I want, without
 worrying about backward compatibility.

@@ -356,7 +356,7 @@ S_good_stack_size(pTHX_ IV stack_size)
 #  endif
         if ((long)MY_POOL.page_size < 0) {
             if (errno) {
-                SV * const error = get_sv("@", FALSE);
+                SV * const error = get_sv("@", 0);
                 (void)SvUPGRADE(error, SVt_PV);
                 Perl_croak(aTHX_ "PANIC: sysconf: %s", SvPV_nolen(error));
             } else {
@@ -452,7 +452,7 @@ S_ithread_run(void * arg)
         SPAGAIN;
         for (ii=len-1; ii >= 0; ii--) {
             SV *sv = POPs;
-            if (jmp_rc == 0 && (! (thread->gimme & G_VOID))) {
+            if (jmp_rc == 0 && (thread->gimme & G_WANT) != G_VOID) {
                 av_store(params, ii, SvREFCNT_inc(sv));
             }
         }
@@ -870,7 +870,7 @@ ithread_create(...)
             /* threads->create() */
             classname = (char *)SvPV_nolen(ST(0));
             stack_size = MY_POOL.default_stack_size;
-            thread_exit_only = get_sv("threads::thread_exit_only", TRUE);
+            thread_exit_only = get_sv("threads::thread_exit_only", GV_ADD);
             exit_opt = (SvTRUE(thread_exit_only))
                                     ? PERL_ITHR_THREAD_EXIT_ONLY : 0;
         }
@@ -1122,7 +1122,7 @@ ithread_join(...)
         MUTEX_LOCK(&thread->mutex);
         /* Get the return value from the call_sv */
         /* Objects do not survive this process - FIXME */
-        if (! (thread->gimme & G_VOID)) {
+        if ((thread->gimme & G_WANT) != G_VOID) {
             AV *params_copy;
             PerlInterpreter *other_perl;
             CLONE_PARAMS clone_params;
@@ -1459,9 +1459,9 @@ ithread_wantarray(...)
     CODE:
         PERL_UNUSED_VAR(items);
         thread = S_SV_to_ithread(aTHX_ ST(0));
-        ST(0) = (thread->gimme & G_ARRAY) ? &PL_sv_yes :
-                (thread->gimme & G_VOID)  ? &PL_sv_undef
-                           /* G_SCALAR */ : &PL_sv_no;
+        ST(0) = ((thread->gimme & G_WANT) == G_ARRAY) ? &PL_sv_yes :
+                ((thread->gimme & G_WANT) == G_VOID)  ? &PL_sv_undef
+                                       /* G_SCALAR */ : &PL_sv_no;
         /* XSRETURN(1); - implied */
 
 

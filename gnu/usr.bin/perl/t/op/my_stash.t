@@ -5,11 +5,10 @@ package Foo;
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
-use Test;
-
-plan tests => 7;
+plan 7;
 
 use constant MyClass => 'Foo::Bar::Biz::Baz';
 

@@ -2,14 +2,13 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 49;
+use MBTest tests => 53;
 
-use Cwd ();
-my $cwd = Cwd::cwd;
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
+
 my $tmp = MBTest->tmpdir;
 
-
-use Module::Build;
 use Module::Build::ConfigData;
 
 my %metadata = 
@@ -34,18 +33,28 @@ $dist->regen;
 my $simple_file = 'lib/Simple.pm';
 my $simple2_file = 'lib/Simple2.pm';
 
-   #TODO:
    # Traditional VMS will return the file in in lower case, and is_deeply
    # does exact case comparisons.
-   # When ODS-5 support is active for preserved case file names, this will
-   # need to be changed.
+   # When ODS-5 support is active for preserved case file names we do not
+   # change the case.
    if ($^O eq 'VMS') {
-       $simple_file = lc($simple_file);
-       $simple2_file = lc($simple2_file);
+       my $lower_case_expect = 1;
+       my $vms_efs_case = 0;
+       if (eval 'require VMS::Feature') {
+           $vms_efs_case = VMS::Feature::current("efs_case_preserve");
+       } else {
+           my $efs_case = $ENV{'DECC$EFS_CASE_PRESERVE'} || '';
+           $vms_efs_case = $efs_case =~ /^[ET1]/i;
+       }
+       $lower_case_expect = 0 if $vms_efs_case;
+       if ($lower_case_expect) {
+           $simple_file = lc($simple_file);
+           $simple2_file = lc($simple2_file);
+       }
    }
 
 
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 use Module::Build;
 my $mb = Module::Build->new_from_context;
@@ -55,6 +64,7 @@ my $mb = Module::Build->new_from_context;
 # Test for valid META.yml
 
 {
+  my $mb_prereq = { 'Module::Build' => $Module::Build::VERSION };
   my $node = $mb->prepare_metadata( {} );
 
   # exists() doesn't seem to work here
@@ -63,6 +73,7 @@ my $mb = Module::Build->new_from_context;
   is $node->{abstract}, $metadata{dist_abstract};
   is_deeply $node->{author}, $metadata{dist_author};
   is $node->{license}, $metadata{license};
+  is_deeply $node->{configure_requires}, $mb_prereq, 'Add M::B to configure_requires';
   like $node->{generated_by}, qr{Module::Build};
   ok defined( $node->{'meta-spec'}{version} ),
       "'meta-spec' -> 'version' field present in META.yml";
@@ -70,6 +81,16 @@ my $mb = Module::Build->new_from_context;
       "'meta-spec' -> 'url' field present in META.yml";
   is_deeply $node->{keywords}, $metadata{meta_add}{keywords};
   is_deeply $node->{resources}, $metadata{meta_add}{resources};
+}
+
+{
+  my $mb_prereq = { 'Module::Build' => 0 };
+  $mb->configure_requires( $mb_prereq );
+  my $node = $mb->prepare_metadata( {} );
+
+
+  # exists() doesn't seem to work here
+  is_deeply $node->{configure_requires}, $mb_prereq, 'Add M::B to configure_requires';
 }
 
 $dist->clean;
@@ -156,8 +177,8 @@ $VERSION = version->new('0.61.' . (qw$Revision: 129 $)[1]);
 ---
   $dist->regen;
   my $provides = new_build()->prepare_metadata()->{provides};
-  is $provides->{'Simple'}{version}, '0.60.128', "Check version";
-  is $provides->{'Simple::Simon'}{version}, '0.61.129', "Check version";
+  is $provides->{'Simple'}{version}, 'v0.60.128', "Check version";
+  is $provides->{'Simple::Simon'}{version}, 'v0.61.129', "Check version";
   is ref($provides->{'Simple'}{version}), '', "Versions from prepare_metadata() aren't refs";
   is ref($provides->{'Simple::Simon'}{version}), '', "Versions from prepare_metadata() aren't refs";
 }
@@ -582,8 +603,4 @@ is_deeply($mb->find_dist_packages, {});
 
 ############################################################
 # cleanup
-chdir( $cwd ) or die "Can't chdir to '$cwd': $!";
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );

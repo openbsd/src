@@ -7,20 +7,20 @@ BEGIN {
         print "1..0 # Skip -- Perl configured without B module\n";
         exit 0;
     }
-    if ($Config::Config{'extensions'} !~ /\bPOSIX\b/) {
-        print "1..0 # Skip -- Perl configured without POSIX\n";
+    if ($Config::Config{'extensions'} !~ /\bFcntl\b/) {
+        print "1..0 # Skip -- Perl configured without Fcntl\n";
         exit 0;
     }
-    # errno is a real subroutine, and acts as control
+    # S_IFMT is a real subroutine, and acts as control
     # SEEK_SET is a proxy constant subroutine.
-    @symbols = qw(errno SEEK_SET);
+    @symbols = qw(S_IFMT SEEK_SET);
 }
 
 use strict;
 use warnings;
 use Test::More tests => 4 * @symbols;
 use B qw(svref_2object GVf_IMPORTED_CV);
-use POSIX @symbols;
+use Fcntl @symbols;
 
 # GVf_IMPORTED_CV should not be set on the original, but should be set on the
 # imported GV.
@@ -29,7 +29,7 @@ foreach my $symbol (@symbols) {
     my ($ps, $ms);
     {
 	no strict 'refs';
-	$ps = svref_2object(\*{"POSIX::$symbol"});
+	$ps = svref_2object(\*{"Fcntl::$symbol"});
 	$ms = svref_2object(\*{"::$symbol"});
     }
     isa_ok($ps, 'B::GV');

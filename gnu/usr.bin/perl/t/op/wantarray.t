@@ -1,22 +1,29 @@
 #!./perl
 
-print "1..12\n";
-sub context {
-  my ( $cona, $testnum ) = @_;
-  my $conb = (defined wantarray) ? ( wantarray ? 'A' : 'S' ) : 'V';
-  unless ( $cona eq $conb ) {
-	print "# Context $conb should be $cona\nnot ";
-  }
-  print "ok $testnum\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
 }
 
-context('V',1);
-$a = context('S',2);
-@a = context('A',3);
-scalar context('S',4);
-$a = scalar context('S',5);
-($a) = context('A',6);
-($a) = scalar context('S',7);
+use strict;
+
+plan 13;
+
+sub context {
+  local $::Level = $::Level + 1;
+  my ( $cona, $testnum ) = @_;
+  my $conb = (defined wantarray) ? ( wantarray ? 'A' : 'S' ) : 'V';
+  is $cona, $conb;
+}
+
+context('V');
+my $a = context('S');
+my @a = context('A');
+scalar context('S');
+$a = scalar context('S');
+($a) = context('A');
+($a) = scalar context('S');
 
 {
   # [ID 20020626.011] incorrect wantarray optimisation
@@ -27,18 +34,21 @@ $a = scalar context('S',5);
   }
   my @b = inline();
   my $c = inline();
-  print +(@b == 1 && "@b" eq "2") ? "ok 8\n" : "not ok 8\t# <@b>\n";
-  print +($c == 2) ? "ok 9\n" : "not ok 9\t# <$c>\n";
+  is @b, 1;
+  is "@b", "2";
+  is $c, 2;
 }
+
+my $q;
 
 my $qcontext = q{
   $q = (defined wantarray) ? ( wantarray ? 'A' : 'S' ) : 'V';
 };
 eval $qcontext;
-print $q eq 'V' ? "ok 10\n" : "not ok 10\n";
+is $q, 'V';
 $a = eval $qcontext;
-print $q eq 'S' ? "ok 11\n" : "not ok 11\n";
+is $q, 'S';
 @a = eval $qcontext;
-print $q eq 'A' ? "ok 12\n" : "not ok 12\n";
+is $q, 'A';
 
 1;

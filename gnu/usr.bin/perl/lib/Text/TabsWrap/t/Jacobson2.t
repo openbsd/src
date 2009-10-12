@@ -8,7 +8,7 @@ $huge='overflow';
 $Text::Wrap::columns=9;
 $break="(?<=[,.])";
 eval {
-$a=wrap('','',
+$a=$a=wrap('','',
 "mmmm,n,ooo,ppp.qqqq.rrrrr.adsljasdf\nlasjdflajsdflajsdfljasdfl\nlasjdflasjdflasf,sssssssssssss,ttttttttt,uu,vvv wwwwwwwww####\n");
 };
 

@@ -4,7 +4,8 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '3.2501';
+$VERSION = '3.30';
+$VERSION = eval $VERSION;
 
 @ISA = qw(File::Spec::Unix);
 
@@ -54,6 +55,8 @@ sub catdir {
 
 sub canonpath {
     my ($self,$path) = @_;
+    return unless defined $path;
+
     $path =~ s/^([a-z]:)/\l$1/s;
     $path =~ s|\\|/|g;
     $path =~ s|([^/])/+|$1/|g;                  # xx////xx  -> xx/xx

@@ -12,10 +12,8 @@ BEGIN { require "./test.pl"; }
 plan(tests => 2);
 
 my $r;
-my @tmpfiles = ();
-END { unlink @tmpfiles }
 
-my $filename = 'swdtest.tmp';
+my $filename = tempfile();
 SKIP: {
 	open my $f, ">$filename"
 	    or skip( "Can't write temp file $filename: $!" );
@@ -31,19 +29,18 @@ package main;
 Foo::foo(3);
 __SWDTEST__
     close $f;
-    push @tmpfiles, $filename;
     $| = 1; # Unbufferize.
     $r = runperl(
 		 switches => [ '-Ilib', '-f', '-d:switchd' ],
 		 progfile => $filename,
 		 args => ['3'],
 		);
-    like($r, qr/^sub<Devel::switchd::import>;import<Devel::switchd>;DB<main,swdtest.tmp,9>;sub<Foo::foo>;DB<Foo,swdtest.tmp,5>;DB<Foo,swdtest.tmp,6>;DB<Foo,swdtest.tmp,6>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;$/);
+    like($r, qr/^sub<Devel::switchd::import>;import<Devel::switchd>;DB<main,$::tempfile_regexp,9>;sub<Foo::foo>;DB<Foo,$::tempfile_regexp,5>;DB<Foo,$::tempfile_regexp,6>;DB<Foo,$::tempfile_regexp,6>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;$/);
     $r = runperl(
 		 switches => [ '-Ilib', '-f', '-d:switchd=a,42' ],
 		 progfile => $filename,
 		 args => ['4'],
 		);
-    like($r, qr/^sub<Devel::switchd::import>;import<Devel::switchd a 42>;DB<main,swdtest.tmp,9>;sub<Foo::foo>;DB<Foo,swdtest.tmp,5>;DB<Foo,swdtest.tmp,6>;DB<Foo,swdtest.tmp,6>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;sub<Bar::bar>;DB<Bar,swdtest.tmp,2>;$/);
+    like($r, qr/^sub<Devel::switchd::import>;import<Devel::switchd a 42>;DB<main,$::tempfile_regexp,9>;sub<Foo::foo>;DB<Foo,$::tempfile_regexp,5>;DB<Foo,$::tempfile_regexp,6>;DB<Foo,$::tempfile_regexp,6>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;sub<Bar::bar>;DB<Bar,$::tempfile_regexp,2>;$/);
 }
 

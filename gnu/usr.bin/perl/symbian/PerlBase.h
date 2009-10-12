@@ -47,6 +47,9 @@ class CPerlBase : public CBase
   public:
     CPerlBase();
     IMPORT_C virtual ~CPerlBase();
+    IMPORT_C static CPerlBase* NewInterpreter(TBool aCloseStdlib = ETrue,
+                                               void (*aStdioInitFunc)(void*) = NULL,
+                                               void *aStdioInitCookie = NULL);
     IMPORT_C static CPerlBase* NewInterpreterL(TBool aCloseStdlib = ETrue,
                                                void (*aStdioInitFunc)(void*) = NULL,
                                                void *aStdioInitCookie = NULL);

@@ -1,10 +1,10 @@
 #!/usr/bin/perl -w
 
 BEGIN {
-	if ($ENV{PERL_CORE}) {
-		chdir 't' if -d 't';
-		unshift @INC, '../lib';
-	}
+    if ($ENV{PERL_CORE}) {
+        chdir 't' if -d 't';
+        unshift @INC, '../lib';
+    }
 }
 
 use strict;
@@ -18,12 +18,12 @@ isa_ok( $cmb, 'CPAN::Mirrored::By' );
 
 @$cmb = qw( continent country url );
 is( $cmb->continent(), 'continent',
-	'continent() should return continent entry' );
+    'continent() should return continent entry' );
 is( $cmb->country(), 'country', 'country() should return country entry' );
 is( $cmb->url(), 'url', 'url() should return url entry' );
 
 __END__
 # Local Variables:
 # mode: cperl
-# cperl-indent-level: 2
+# cperl-indent-level: 4
 # End:

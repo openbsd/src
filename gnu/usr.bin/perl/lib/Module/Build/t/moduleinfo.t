@@ -1,23 +1,23 @@
 #!/usr/bin/perl -w
+# -*- mode: cperl; tab-width: 8; indent-tabs-mode: nil; basic-offset: 2 -*-
+# vim:ts=8:sw=2:et:sta:sts=2
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 81;
+use MBTest tests => 82;
 
-use Cwd ();
-my $cwd = Cwd::cwd;
+use_ok 'Module::Build::ModuleInfo';
+ensure_blib('Module::Build::ModuleInfo');
+
 my $tmp = MBTest->tmpdir;
 
 use DistGen;
 my $dist = DistGen->new( dir => $tmp );
 $dist->regen;
 
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 #########################
-
-
-use_ok( 'Module::Build::ModuleInfo' );
 
 # class method C<find_module_by_name>
 my $module = Module::Build::ModuleInfo->find_module_by_name(
@@ -54,7 +54,7 @@ my @modules = (
 package Simple;
 our $VERSION = '1.23';
 ---
-  <<'---', # declared & defined on seperate lines with 'our'
+  <<'---', # declared & defined on separate lines with 'our'
 package Simple;
 our $VERSION;
 $VERSION = '1.23';
@@ -199,11 +199,10 @@ foreach my $module ( @modules ) {
 }
 
 # revert to pristine state
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
 $dist = DistGen->new( dir => $tmp );
 $dist->regen;
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 
 # Find each package only once
@@ -258,11 +257,10 @@ is( $pm_info->version, '1.23_01', 'alpha version reported');
 ok( $pm_info->version > 1.23, 'alpha version greater than non');
 
 # revert to pristine state
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
 $dist = DistGen->new( dir => $tmp );
 $dist->regen;
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 
 # parse $VERSION lines scripts for package main
@@ -427,8 +425,4 @@ $VERSION = version->new('0.61.' . (qw$Revision: 129 $)[1]);
 
 
 # cleanup
-chdir( $cwd ) or die "Can't chdir to '$cwd': $!";
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );

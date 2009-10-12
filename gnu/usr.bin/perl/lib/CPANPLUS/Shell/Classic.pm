@@ -314,7 +314,7 @@ sub _shell {
 
         $cb->_chdir( dir => $obj->status->extract )   or next;
 
-        local $ENV{PERL5OPT} = CPANPLUS::inc->original_perl5opt;
+        #local $ENV{PERL5OPT} = CPANPLUS::inc->original_perl5opt;
         if( system($shell) and $! ) {
             print "Error executing your subshell '$shell': $!\n";
             next;

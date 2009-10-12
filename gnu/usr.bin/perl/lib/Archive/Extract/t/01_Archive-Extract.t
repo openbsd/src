@@ -42,21 +42,28 @@ if ((IS_WIN32 or IS_CYGWIN) && ! $ENV{PERL_CORE}) {
     diag( "See bug #19713 in rt.cpan.org. It is safe to ignore them" );
 }
 
-my $Debug   = $ARGV[0] ? 1 : 0;
 my $Me      = basename( $0 );
 my $Class   = 'Archive::Extract';
+
+use_ok($Class);
+
+### debug will always be enabled on dev versions
+my $Debug   = (not $ENV{PERL_CORE} and 
+              ($ARGV[0] or $Archive::Extract::VERSION =~ /_/))
+                ? 1 
+                : 0;
+
 my $Self    = File::Spec->rel2abs( 
                     IS_WIN32 ? &Win32::GetShortPathName( cwd() ) : cwd() 
                 );
 my $SrcDir  = File::Spec->catdir( $Self,'src' );
 my $OutDir  = File::Spec->catdir( $Self,'out' );
 
-use_ok($Class);
-
-### set verbose if debug is on ###
 ### stupid stupid silly stupid warnings silly! ###
-$Archive::Extract::VERBOSE  = $Archive::Extract::VERBOSE = $Debug;
-$Archive::Extract::WARN     = $Archive::Extract::WARN    = $Debug ? 1 : 0;
+$Archive::Extract::DEBUG    = $Archive::Extract::DEBUG  = $Debug;
+$Archive::Extract::WARN     = $Archive::Extract::WARN   = $Debug;
+
+diag( "\n\n*** DEBUG INFORMATION ENABLED ***\n\n" ) if $Debug;
 
 my $tmpl = {
     ### plain files
@@ -105,6 +112,11 @@ my $tmpl = {
                     method      => 'is_zip',
                     outfile     => 'a',
                 },                
+    'x.lzma' => {   programs    => [qw[unlzma]],
+                    modules     => [qw[Compress::unLZMA]],
+                    method      => 'is_lzma',
+                    outfile     => 'a',
+                },
     ### with a directory
     'y.tbz'     => {    programs    => [qw[bunzip2 tar]],
                         modules     => [qw[Archive::Tar 
@@ -201,7 +213,52 @@ if( $Debug ) {
         ok( $obj,               "   Object created based on '$type'" );
         ok( !$obj->error,       "       No error logged" );
     }
+    
+    ### test unknown type
+    {   ### must turn on warnings to catch error here
+        local $Archive::Extract::WARN = 1;
+        
+        my $warnings;
+        local $SIG{__WARN__} = sub { $warnings .= "@_" };
+        
+        my $ae = $Class->new( archive => $Me );
+        ok( !$ae,               "   No archive created based on '$Me'" );
+        ok( !$Class->error,     "       Error not captured in class method" );
+        ok( $warnings,          "       Error captured as warning" );
+        like( $warnings, qr/Cannot determine file type for/,
+                                "           Error is: unknown file type" );
+    }                                
 }    
+
+### test multiple errors
+### XXX whitebox test
+{   ### grab a random file from the template, so we can make an object
+    my $ae = Archive::Extract->new( 
+                archive =>  File::Spec->catfile($SrcDir,[keys %$tmpl]->[0]) 
+             );
+    ok( $ae,                    "Archive created" );
+    ok( not($ae->error),        "   No errors yet" );
+
+    ### log a few errors
+    {   local $Archive::Extract::WARN = 0;
+        $ae->_error( $_ ) for 1..5;
+    }
+
+    my $err = $ae->error;
+    ok( $err,                   "   Errors retrieved" );
+    
+    my $expect = join $/, 1..5;
+    is( $err, $expect,          "       As expected" );
+
+    ### this resets the errors
+    ### override the 'check' routine to return false, so we bail out of 
+    ### extract() early and just run the error reset code;
+    {   no warnings qw[once redefine];
+        local *Archive::Extract::check = sub { return }; 
+        $ae->extract;
+    }
+    ok( not($ae->error),        "   Errors erased after ->extract() call" );
+}
 
 ### XXX whitebox test
 ### test __get_extract_dir 
@@ -237,174 +294,213 @@ SKIP: {   my $meth = '__get_extract_dir';
     }        
 }
 
-for my $switch (0,1) {
+### configuration to run in: allow perl or allow binaries
+for my $switch ( [0,1], [1,0] ) {
+    my $cfg = "PP: $switch->[0] Bin: $switch->[1]";
 
-    local $Archive::Extract::PREFER_BIN = $switch;
-    diag("Running extract with PREFER_BIN = $Archive::Extract::PREFER_BIN")
-        if $Debug;
+    local $Archive::Extract::_ALLOW_PURE_PERL   = $switch->[0];
+    local $Archive::Extract::_ALLOW_BIN         = $switch->[1];
+    
+    diag("Running extract with configuration: $cfg") if $Debug;
 
     for my $archive (keys %$tmpl) {
-
-        diag("Extracting $archive") if $Debug;
 
         ### check first if we can do the proper
 
         my $ae = Archive::Extract->new(
                         archive => File::Spec->catfile($SrcDir,$archive) );
 
-        isa_ok( $ae, $Class );
+        ### Do an extra run with _ALLOW_TAR_ITER = 0 if it's a tar file of some
+        ### sort
+        my @with_tar_iter = ( 1 );
+        push @with_tar_iter, 0 if grep { $ae->$_ } qw[is_tbz is_tgz is_tar];
 
-        my $method = $tmpl->{$archive}->{method};
-        ok( $ae->$method(),         "Archive type recognized properly" );
+        for my $tar_iter (@with_tar_iter) { SKIP: {
 
-    ### 10 tests from here on down ###
-    SKIP: {
-        my $file        = $tmpl->{$archive}->{outfile};
-        my $dir         = $tmpl->{$archive}->{outdir};  # can be undef
-        my $rel_path    = File::Spec->catfile( grep { defined } $dir, $file );
-        my $abs_path    = File::Spec->catfile( $OutDir, $rel_path );
-        my $abs_dir     = File::Spec->catdir( 
-                            grep { defined } $OutDir, $dir );
-        my $nix_path    = File::Spec::Unix->catfile(
-                            grep { defined } $dir, $file );
-
-        ### check if we can run this test ###
-        my $pgm_fail; my $mod_fail;
-        for my $pgm ( @{$tmpl->{$archive}->{programs}} ) {
-            ### no binary extract method
-            $pgm_fail++, next unless $pgm;
-
-            ### we dont have the program
-            $pgm_fail++ unless $Archive::Extract::PROGRAMS->{$pgm} &&
-                               $Archive::Extract::PROGRAMS->{$pgm};
-
-        }
-
-        for my $mod ( @{$tmpl->{$archive}->{modules}} ) {
-            ### no module extract method
-            $mod_fail++, next unless $mod;
-
-            ### we dont have the module
-            $mod_fail++ unless check_install( module => $mod );
-        }
-
-        ### where to extract to -- try both dir and file for gz files
-        ### XXX test me!
-        #my @outs = $ae->is_gz ? ($abs_path, $OutDir) : ($OutDir);
-        my @outs = $ae->is_gz || $ae->is_bz2 || $ae->is_Z 
-                        ? ($abs_path) 
-                        : ($OutDir);
-
-        skip "No binaries or modules to extract ".$archive, 
-            (10 * scalar @outs) if $mod_fail && $pgm_fail;
-
-        ### we dont warnings spewed about missing modules, that might
-        ### be a problem...
-        local $IPC::Cmd::WARN = 0;
-        local $IPC::Cmd::WARN = 0;
+            ### Doesn't matter unless .tar, .tbz, .tgz
+            local $Archive::Extract::_ALLOW_TAR_ITER = $tar_iter; 
         
-        for my $use_buffer ( IPC::Cmd->can_capture_buffer , 0 ) {
+            diag("Archive::Tar->iter: $tar_iter") if $Debug;
 
-            ### test buffers ###
-            my $turn_off = !$use_buffer && !$pgm_fail &&
-                            $Archive::Extract::PREFER_BIN;
+            isa_ok( $ae, $Class );
 
-            ### whitebox test ###
-            ### stupid warnings ###
-            local $IPC::Cmd::USE_IPC_RUN    = 0 if $turn_off;
-            local $IPC::Cmd::USE_IPC_RUN    = 0 if $turn_off;
-            local $IPC::Cmd::USE_IPC_OPEN3  = 0 if $turn_off;
-            local $IPC::Cmd::USE_IPC_OPEN3  = 0 if $turn_off;
+            my $method = $tmpl->{$archive}->{method};
+            ok( $ae->$method(),         "Archive type recognized properly" );
+
+        
+            my $file        = $tmpl->{$archive}->{outfile};
+            my $dir         = $tmpl->{$archive}->{outdir};  # can be undef
+            my $rel_path    = File::Spec->catfile( grep { defined } $dir, $file );
+            my $abs_path    = File::Spec->catfile( $OutDir, $rel_path );
+            my $abs_dir     = File::Spec->catdir( 
+                                grep { defined } $OutDir, $dir );
+            my $nix_path    = File::Spec::Unix->catfile(
+                                grep { defined } $dir, $file );
+
+            ### check if we can run this test ###
+            my $pgm_fail; my $mod_fail;
+            for my $pgm ( @{$tmpl->{$archive}->{programs}} ) {
+                ### no binary extract method
+                $pgm_fail++, next unless $pgm;
+
+                ### we dont have the program
+                $pgm_fail++ unless $Archive::Extract::PROGRAMS->{$pgm} &&
+                                   $Archive::Extract::PROGRAMS->{$pgm};
+
+            }
+
+            for my $mod ( @{$tmpl->{$archive}->{modules}} ) {
+                ### no module extract method
+                $mod_fail++, next unless $mod;
+
+                ### we dont have the module
+                $mod_fail++ unless check_install( module => $mod );
+            }
+
+            ### where to extract to -- try both dir and file for gz files
+            ### XXX test me!
+            #my @outs = $ae->is_gz ? ($abs_path, $OutDir) : ($OutDir);
+            my @outs = $ae->is_gz || $ae->is_bz2 || $ae->is_Z || $ae->is_lzma
+                            ? ($abs_path) 
+                            : ($OutDir);
+
+            ### 10 tests from here on down ###
+            if( ($mod_fail && ($pgm_fail || !$Archive::Extract::_ALLOW_BIN))
+                ||
+                ($pgm_fail && ($mod_fail || !$Archive::Extract::_ALLOW_PURE_PERL))
+            ) {                
+                skip "No binaries or modules to extract ".$archive, 
+                    (10 * scalar @outs);
+            }
+
+            ### we dont warnings spewed about missing modules, that might
+            ### be a problem...
+            local $IPC::Cmd::WARN = 0;
+            local $IPC::Cmd::WARN = 0;
+            
+            for my $use_buffer ( IPC::Cmd->can_capture_buffer , 0 ) {
+
+                ### test buffers ###
+                my $turn_off = !$use_buffer && !$pgm_fail &&
+                                $Archive::Extract::_ALLOW_BIN;
+
+                ### whitebox test ###
+                ### stupid warnings ###
+                local $IPC::Cmd::USE_IPC_RUN    = 0 if $turn_off;
+                local $IPC::Cmd::USE_IPC_RUN    = 0 if $turn_off;
+                local $IPC::Cmd::USE_IPC_OPEN3  = 0 if $turn_off;
+                local $IPC::Cmd::USE_IPC_OPEN3  = 0 if $turn_off;
 
 
-            ### try extracting ###
-            for my $to ( @outs ) {
+                ### try extracting ###
+                for my $to ( @outs ) {
 
-                diag("Extracting to: $to")                  if $Debug;
-                diag("Buffers enabled: ".!$turn_off)        if $Debug;
-  
-                my $rv = $ae->extract( to => $to );
-    
-                ok( $rv, "extract() for '$archive' reports success");
-    
-                diag("Extractor was: " . $ae->_extractor)   if $Debug;
-    
-                SKIP: {
-                    my $re  = qr/^No buffer captured/;
-                    my $err = $ae->error || '';
-              
-                    ### skip buffer tests if we dont have buffers or
-                    ### explicitly turned them off
-                    skip "No buffers available", 7,
-                        if ( $turn_off || !IPC::Cmd->can_capture_buffer)
-                            && $err =~ $re;
-
-                    ### if we /should/ have buffers, there should be
-                    ### no errors complaining we dont have them...
-                    unlike( $err, $re,
-                                    "No errors capturing buffers" );
-    
-                    ### might be 1 or 2, depending wether we extracted 
-                    ### a dir too
-                    my $file_cnt = grep { defined } $file, $dir;
-                    is( scalar @{ $ae->files || []}, $file_cnt,
-                                    "Found correct number of output files" );
-                    is( $ae->files->[-1], $nix_path,
-                                    "Found correct output file '$nix_path'" );
-    
-                    ok( -e $abs_path,
-                                    "Output file '$abs_path' exists" );
-                    ok( $ae->extract_path,
-                                    "Extract dir found" );
-                    ok( -d $ae->extract_path,
-                                    "Extract dir exists" );
-                    is( $ae->extract_path, $abs_dir,
-                                    "Extract dir is expected '$abs_dir'" );
-                }
-
-                SKIP: {
-                    skip "Unlink tests are unreliable on Win32", 3 if IS_WIN32;
-
-                    1 while unlink $abs_path;
-                    ok( !(-e $abs_path), "Output file successfully removed" );
+                    diag("Extracting to: $to")                  if $Debug;
+                    diag("Buffers enabled: ".!$turn_off)        if $Debug;
+      
+                    my $rv = $ae->extract( to => $to );
         
                     SKIP: {
-                        skip "No extract path captured, can't remove paths", 2
-                            unless $ae->extract_path;
+                        my $re  = qr/^No buffer captured/;
+                        my $err = $ae->error || '';
+                  
+                        ### skip buffer tests if we dont have buffers or
+                        ### explicitly turned them off
+                        skip "No buffers available", 8
+                            if ( $turn_off || !IPC::Cmd->can_capture_buffer)
+                                && $err =~ $re;
+
+                        ### skip tests if we dont have an extractor
+                        skip "No extractor available", 8 
+                            if $err =~ /Extract failed; no extractors available/;
+                            
+                        ### win32 + bin utils is notorious, and none of them are
+                        ### officially supported by strawberry. So if we 
+                        ### encounter an error while extracting whlie running 
+                        ### with $PREFER_BIN on win32, just skip the tests.
+                        ### See rt#46948: unable to install install on win32
+                        ### for details on the pain
+                        skip "Binary tools on Win32 are very unreliable", 8
+                            if $err and $Archive::Extract::_ALLOW_BIN 
+                                    and IS_WIN32;
         
-                        ### if something went wrong with determining the out
-                        ### path, don't go deleting stuff.. might be Really Bad
-                        my $out_re = quotemeta( $OutDir );
-                        
-                        ### VMS directory layout is different. Craig Berry
-                        ### explains:
-                        ### the test is trying to determine if C</disk1/foo/bar>
-                        ### is part of C</disk1/foo/bar/baz>.  Except in VMS
-                        ### syntax, that would mean trying to determine whether
-                        ### C<disk1:[foo.bar]> is part of C<disk1:[foo.bar.baz]>
-                        ### Because we have both a directory delimiter
-                        ### (dot) and a directory spec terminator (right 
-                        ### bracket), we have to trim the right bracket from 
-                        ### the first one to make it successfully match the
-                        ### second one.  Since we're asserting the same truth --
-                        ### that one path spec is the leading part of the other
-                        ### -- it seems to me ok to have this in the test only.
-                        ### 
-                        ### so we strip the ']' of the back of the regex
-                        $out_re =~ s/\\\]// if IS_VMS; 
-                        
-                        if( $ae->extract_path !~ /^$out_re/ ) {   
-                            ok( 0, "Extractpath WRONG (".$ae->extract_path.")"); 
-                            skip(  "Unsafe operation -- skip cleanup!!!" ), 1;
-                        }                    
+                        ok( $rv, "extract() for '$archive' reports success ($cfg)");
         
-                        eval { rmtree( $ae->extract_path ) }; 
-                        ok( !$@,        "   rmtree gave no error" );
-                        ok( !(-d $ae->extract_path ),
-                                        "   Extract dir succesfully removed" );
+                        diag("Extractor was: " . $ae->_extractor)   if $Debug;
+        
+                        ### if we /should/ have buffers, there should be
+                        ### no errors complaining we dont have them...
+                        unlike( $err, $re,
+                                        "No errors capturing buffers" );
+        
+                        ### might be 1 or 2, depending wether we extracted 
+                        ### a dir too
+                        my $files    = $ae->files || [];
+                        my $file_cnt = grep { defined } $file, $dir;
+                        is( scalar @$files, $file_cnt,
+                                        "Found correct number of output files (@$files)" );
+                        
+                        ### due to prototypes on is(), if there's no -1 index on
+                        ### the array ref, it'll give a fatal exception:
+                        ### "Modification of non-creatable array value attempted,
+                        ### subscript -1 at -e line 1." So wrap it in do { }
+                        is( do { $files->[-1] }, $nix_path,
+                                        "Found correct output file '$nix_path'" );
+        
+                        ok( -e $abs_path,
+                                        "Output file '$abs_path' exists" );
+                        ok( $ae->extract_path,
+                                        "Extract dir found" );
+                        ok( -d $ae->extract_path,
+                                        "Extract dir exists" );
+                        is( $ae->extract_path, $abs_dir,
+                                        "Extract dir is expected '$abs_dir'" );
+                    }
+
+                    SKIP: {
+                        skip "Unlink tests are unreliable on Win32", 3 if IS_WIN32;
+
+                        1 while unlink $abs_path;
+                        ok( !(-e $abs_path), "Output file successfully removed" );
+            
+                        SKIP: {
+                            skip "No extract path captured, can't remove paths", 2
+                                unless $ae->extract_path;
+            
+                            ### if something went wrong with determining the out
+                            ### path, don't go deleting stuff.. might be Really Bad
+                            my $out_re = quotemeta( $OutDir );
+                            
+                            ### VMS directory layout is different. Craig Berry
+                            ### explains:
+                            ### the test is trying to determine if C</disk1/foo/bar>
+                            ### is part of C</disk1/foo/bar/baz>.  Except in VMS
+                            ### syntax, that would mean trying to determine whether
+                            ### C<disk1:[foo.bar]> is part of C<disk1:[foo.bar.baz]>
+                            ### Because we have both a directory delimiter
+                            ### (dot) and a directory spec terminator (right 
+                            ### bracket), we have to trim the right bracket from 
+                            ### the first one to make it successfully match the
+                            ### second one.  Since we're asserting the same truth --
+                            ### that one path spec is the leading part of the other
+                            ### -- it seems to me ok to have this in the test only.
+                            ### 
+                            ### so we strip the ']' of the back of the regex
+                            $out_re =~ s/\\\]// if IS_VMS; 
+                            
+                            if( $ae->extract_path !~ /^$out_re/ ) {   
+                                ok( 0, "Extractpath WRONG (".$ae->extract_path.")"); 
+                                skip(  "Unsafe operation -- skip cleanup!!!" ), 1;
+                            }                    
+            
+                            eval { rmtree( $ae->extract_path ) }; 
+                            ok( !$@,        "   rmtree gave no error" );
+                            ok( !(-d $ae->extract_path ),
+                                            "   Extract dir succesfully removed" );
+                        }
                     }
                 }
             }
-        }
-    } }
+        } }
+    }
 }

@@ -3,7 +3,7 @@ package Package::Constants;
 use strict;
 use vars qw[$VERSION $DEBUG];
 
-$VERSION    = '0.01';
+$VERSION    = '0.02';
 $DEBUG      = 0;
 
 =head1 NAME 
@@ -83,20 +83,18 @@ sub _debug { warn "@_\n" if $DEBUG; }
 
 1;
 
+=head1 BUG REPORTS
+
+Please report bugs or other issues to E<lt>bug-package-constants@rt.cpan.org<gt>.
+
 =head1 AUTHOR
 
-This module by
-Jos Boumans E<lt>kane@cpan.orgE<gt>.
+This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-This module is
-copyright (c) 2004-2005 Jos Boumans E<lt>kane@cpan.orgE<gt>.
-All rights reserved.
-
-This library is free software;
-you may redistribute and/or modify it under the same
-terms as Perl itself.
+This library is free software; you may redistribute and/or modify it 
+under the same terms as Perl itself.
 
 =cut
 

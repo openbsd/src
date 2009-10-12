@@ -8,8 +8,10 @@
  */
 
 /*
- * "For the rest, they shall represent the other Free Peoples of the World:
- * Elves, Dwarves, and Men." --Elrond
+ * 'For the rest, they shall represent the other Free Peoples of the World:
+ *  Elves, Dwarves, and Men.'                                --Elrond
+ *
+ *     [p.275 of _The Lord of the Rings_, II/iii: "The Ring Goes South"]
  */
 
 /* This file exists to #include "perl.h" _ONCE_ with

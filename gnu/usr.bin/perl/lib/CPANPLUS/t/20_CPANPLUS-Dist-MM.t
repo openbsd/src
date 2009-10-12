@@ -22,7 +22,6 @@ use File::Spec ();
 my $conf    = gimme_conf();
 my $cb      = CPANPLUS::Backend->new( $conf );
 my $File    = 'Bar.pm';
-my $Verbose = @ARGV ? 1 : 0;
 
 ### if we need sudo that's no guarantee we can actually run it
 ### so set $noperms if sudo is required, as that may mean tests
@@ -45,14 +44,13 @@ $cb->_callbacks->send_test_report( sub { 0 } );
 $conf->set_conf( cpantest => 0 );
 
 ### Redirect errors to file ###
-*STDERR                          = output_handle() unless $Verbose;
+*STDERR = output_handle() unless $conf->get_conf('verbose');
 
 ### dont uncomment this, it screws up where STDOUT goes and makes
 ### test::harness create test counter mismatches
 #*STDOUT                          = output_handle() unless @ARGV;
 ### for the same test-output counter mismatch, we disable verbose
 ### mode
-$conf->set_conf( verbose => $Verbose );
 $conf->set_conf( allow_build_interactivity => 0 );
 
 ### start with fresh sources ###
@@ -100,6 +98,13 @@ ok( $Mod,                       "Loaded object for: " . $InstMod->name );
 ok( $Mod->fetch,                "Fetching module to ".$Mod->status->fetch );
 ok( $Mod->extract,              "Extracting module to ".$Mod->status->extract );
 
+### test target => 'init'
+{   my $dist = $Mod->dist( target => TARGET_INIT );
+    ok( $dist,                  "Dist created with target => " . TARGET_INIT );
+    ok( !$dist->status->prepared,
+                                "   Prepare was not run" );
+}                                
+
 ok( $Mod->test,                 "Testing module" );
 
 ok( $Mod->status->dist_cpan->status->test,
@@ -129,16 +134,6 @@ SKIP: {
     skip(q[No install tests under core perl],            10) if $ENV{PERL_CORE};
     skip(q[Possibly no permission to install, skipping], 10) if $noperms;
 
-    ### XXX new EU::I should be forthcoming pending this patch from Steffen
-    ### Mueller on p5p: http://www.xray.mpe.mpg.de/mailing-lists/ \ 
-    ###     perl5-porters/2007-01/msg00895.html
-    ### This should become EU::I 1.42.. if so, we should upgrade this bit of
-    ### code and remove the diag, since we can then install in our dummy dir..
-    diag("\nSorry, installing into your real perl dir, rather than our test");
-    diag("area since ExtUtils::Installed does not probe for .packlists in " );
-    diag('other dirs than those in %Config. See bug #6871 on rt.cpan.org ' );
-    diag('for details');
-
     ### we now say 'no perms' if sudo is configured, as per #29904
     #diag(q[Note: 'sudo' might ask for your password to do the install test])
     #    if $conf->get_program('sudo');
@@ -151,17 +146,25 @@ SKIP: {
     ### include INSTALL_BASE
     {   local $ENV{'PERL5_MM_OPT'};
     
-        ok( $Mod->install( force =>1 ),
-                                "Installing module" );
+        ### add the new dir to the configuration too, so eu::installed tests
+        ### work as they should
+        $conf->set_conf( lib => [ TEST_CONF_INSTALL_DIR ] );
+    
+        ok( $Mod->install(  force           => 1, 
+                            makemakerflags  => 'PREFIX='.TEST_CONF_INSTALL_DIR, 
+                        ),      "Installing module" );
     }                                
                                 
     ok( $Mod->status->installed,"   Module installed according to status" );
 
 
     SKIP: {   ### EU::Installed tests ###
-
-        skip("makemakerflags set -- probably EU::Installed tests will fail", 8)
-           if $conf->get_conf('makemakerflags');
+        ### EU::I sometimes fails. See:
+        ### #43292: ~/CPANPLUS-0.85_04 fails t/20_CPANPLUS-Dist-MM.t
+        ### #46890: ExtUtils::Installed + EU::MM PREFIX= don't always work
+        ### well together
+        skip( "ExtUtils::Installed issue #46890 prevents these tests from running reliably", 8 );
+    
     
         skip( "Old perl on cygwin detected " .
               "-- tests will fail due to known bugs", 8
@@ -221,9 +224,8 @@ SKIP: {
 
 ### test exceptions in Dist::MM->create ###
 {   ok( $Mod->status->mk_flush, "Old status info flushed" );
-    my $dist = CPANPLUS::Dist->new( module => $Mod,
-                                    format => INSTALLER_MM );
-
+    my $dist = INSTALLER_MM->new( module => $Mod );
+    
     ok( $dist,                  "New dist object made" );
     ok(!$dist->prepare,         "   Dist->prepare failed" );
     like( CPANPLUS::Error->stack_as_string, qr/No dir found to operate on/,

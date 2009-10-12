@@ -2,7 +2,7 @@ package Module::Build::Platform::MPEiX;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.2808_01';
+$VERSION = '0.340201';
 $VERSION = eval $VERSION;
 use Module::Build::Base;
 

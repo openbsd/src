@@ -441,14 +441,14 @@ PerlStdIOGetc(struct IPerlStdIO* piPerl, PerlIO* pf)
     return nw_getc((FILE*)pf);
 }
 
-char*
+STDCHAR*
 PerlStdIOGetBase(struct IPerlStdIO* piPerl, PerlIO* pf)
 {
 #ifdef FILE_base
     FILE *f = (FILE*)pf;
     return FILE_base(f);
 #else
-    return Nullch;
+    return NULL;
 #endif
 }
 
@@ -474,14 +474,14 @@ PerlStdIOGetCnt(struct IPerlStdIO* piPerl, PerlIO* pf)
 #endif
 }
 
-char*
+STDCHAR*
 PerlStdIOGetPtr(struct IPerlStdIO* piPerl, PerlIO* pf)
 {
 #ifdef USE_STDIO_PTR
     FILE *f = (FILE*)pf;
     return FILE_ptr(f);
 #else
-    return Nullch;
+    return NULL;
 #endif
 }
 
@@ -568,7 +568,7 @@ PerlStdIOSetCnt(struct IPerlStdIO* piPerl, PerlIO* pf, int n)
 }
 
 void
-PerlStdIOSetPtrCnt(struct IPerlStdIO* piPerl, PerlIO* pf, char * ptr, int n)
+PerlStdIOSetPtrCnt(struct IPerlStdIO* piPerl, PerlIO* pf, STDCHAR * ptr, int n)
 {
 #ifdef STDIO_PTR_LVALUE
     FILE *f = (FILE*)pf;

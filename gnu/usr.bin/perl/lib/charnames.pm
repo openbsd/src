@@ -2,7 +2,7 @@ package charnames;
 use strict;
 use warnings;
 use File::Spec;
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 
 use bytes ();		# for $bytes::hint_bits
 
@@ -540,6 +540,11 @@ given and C<undef> is returned.  (Though if you ask for a code point
 past U+10FFFF you do get a warning.)
 
 =head1 BUGS
+
+Unicode standard named sequences are not recognized, such as
+C<LATIN CAPITAL LETTER A WITH MACRON AND GRAVE>
+(which should mean C<LATIN CAPITAL LETTER A WITH MACRON> with an additional
+C<COMBINING GRAVE ACCENT>).
 
 Since evaluation of the translation function happens in a middle of
 compilation (of a string literal), the translation function should not

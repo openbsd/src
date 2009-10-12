@@ -1,5 +1,5 @@
 #
-# $Id: macJapanese.ucm,v 2.0 2004/05/16 20:55:27 dankogai Exp $
+# $Id: macJapanese.ucm,v 2.1 2008/03/12 09:51:11 dankogai Exp $
 #
 # Original table can be obtained at
 # http://www.unicode.org/Public/MAPPINGS/VENDORS/APPLE/JAPANESE.TXT
@@ -135,7 +135,7 @@ CHARMAP
 <U007B> \x7B |0 # LEFT CURLY BRACKET
 <U007C> \x7C |0 # VERTICAL LINE
 <U007D> \x7D |0 # RIGHT CURLY BRACKET
-<U007E> \x7E |0 # TILDE # Apple change from standard Shift-JIS
+<U007E> \x7E |0 # TILDE # Apple change from standard Shift_JIS
 <U00A0> \xA0 |0 # NO-BREAK SPACE # Apple addition
 <U00A2> \x81\x91 |0 # CENT SIGN
 <U00A3> \x81\x92 |0 # POUND SIGN

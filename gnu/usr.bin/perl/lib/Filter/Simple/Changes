@@ -105,3 +105,16 @@ Revision history for Perl extension Filter::Simple
     - Fixed INSTALLDIRS=>perl in Makefile.PL (thanks all)
 
     - Fixed other problems caused by de-schwernification
+
+
+0.83    Sat Oct 18 18:51:51 CET 2008
+    
+    - Updated contact details: Maintained by the Perl5-Porters.
+    - Some tiny distribution fixes.
+
+
+0.84    Tue Jan  6 12:58:12 CET 2009
+
+    - Explicit dependency on Text::Balanced 1.97 because that fixed
+      a problem with HERE-docs. (RT #27326)
+

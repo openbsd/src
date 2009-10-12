@@ -200,7 +200,7 @@ Or use the CPAN search engine:
 COPYRIGHT AND DISCLAIMER
 ========================
 
-Module Getopt::Long is Copyright 2006,1990 by Johan Vromans.
+Module Getopt::Long is Copyright 2009,1990 by Johan Vromans.
 This program is free software; you can redistribute it and/or
 modify it under the terms of the Perl Artistic License or the
 GNU General Public License as published by the Free Software

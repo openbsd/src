@@ -33,6 +33,14 @@ $VAR1 = {
       ],
       "type" => "int"
     },
+    "features" => {
+      "sequence" => [
+        {
+          "type" => "text"
+        }
+      ],
+      "type" => "seq"
+    },
     "goto" => {
       "type" => "text"
     },
@@ -100,20 +108,21 @@ $VAR1 = {
         "distribution" => {
           "type" => "text"
         },
-        "module" => {
-          "type" => "text"
-        },
-        "perl" => {
-          "type" => "text"
-        },
-        "perlconfig" => {
+        "env" => {
           "mapping" => {
             "=" => {
               "type" => "text"
             }
           },
           "type" => "map"
-        }
+        },
+        "module" => {
+          "type" => "text"
+        },
+        "perl" => {
+          "type" => "text"
+        },
+        "perlconfig" => {}
       },
       "type" => "map"
     },
@@ -126,6 +135,9 @@ $VAR1 = {
       "type" => "seq"
     },
     "pl" => {},
+    "reminder" => {
+      "type" => "text"
+    },
     "test" => {}
   },
   "type" => "map"
@@ -133,5 +145,6 @@ $VAR1 = {
 $VAR1->{"mapping"}{"depends"}{"mapping"}{"configure_requires"} = $VAR1->{"mapping"}{"depends"}{"mapping"}{"build_requires"};
 $VAR1->{"mapping"}{"depends"}{"mapping"}{"requires"} = $VAR1->{"mapping"}{"depends"}{"mapping"}{"build_requires"};
 $VAR1->{"mapping"}{"make"} = $VAR1->{"mapping"}{"install"};
+$VAR1->{"mapping"}{"match"}{"mapping"}{"perlconfig"} = $VAR1->{"mapping"}{"match"}{"mapping"}{"env"};
 $VAR1->{"mapping"}{"pl"} = $VAR1->{"mapping"}{"install"};
 $VAR1->{"mapping"}{"test"} = $VAR1->{"mapping"}{"install"};

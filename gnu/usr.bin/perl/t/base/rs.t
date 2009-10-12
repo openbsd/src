@@ -1,9 +1,11 @@
 #!./perl
 # Test $!
 
-print "1..17\n";
+print "1..28\n";
 
+$test_count = 1;
 $teststring = "1\n12\n123\n1234\n1234\n12345\n\n123456\n1234567\n";
+$teststring2 = "1234567890123456789012345678901234567890";
 
 # Create our test datafile
 1 while unlink 'foo';                # in case junk left around
@@ -13,85 +15,25 @@ binmode TESTFILE;
 print TESTFILE $teststring;
 close TESTFILE or die "error $! $^E closing";
 
+$test_count_start = $test_count;  # Needed to know how many tests to skip
 open TESTFILE, "<./foo";
 binmode TESTFILE;
-
-# Check the default $/
-$bar = <TESTFILE>;
-if ($bar eq "1\n") {print "ok 1\n";} else {print "not ok 1\n";}
-
-# explicitly set to \n
-$/ = "\n";
-$bar = <TESTFILE>;
-if ($bar eq "12\n") {print "ok 2\n";} else {print "not ok 2\n";}
-
-# Try a non line terminator
-$/ = 3;
-$bar = <TESTFILE>;
-if ($bar eq "123") {print "ok 3\n";} else {print "not ok 3\n";}
-
-# Eat the line terminator
-$/ = "\n";
-$bar = <TESTFILE>;
-
-# How about a larger terminator
-$/ = "34";
-$bar = <TESTFILE>;
-if ($bar eq "1234") {print "ok 4\n";} else {print "not ok 4\n";}
-
-# Eat the line terminator
-$/ = "\n";
-$bar = <TESTFILE>;
-
-# Does paragraph mode work?
-$/ = '';
-$bar = <TESTFILE>;
-if ($bar eq "1234\n12345\n\n") {print "ok 5\n";} else {print "not ok 5\n";}
-
-# Try slurping the rest of the file
-$/ = undef;
-$bar = <TESTFILE>;
-if ($bar eq "123456\n1234567\n") {print "ok 6\n";} else {print "not ok 6\n";}
+test_string(*TESTFILE);
+close TESTFILE;
+unlink "./foo";
 
 # try the record reading tests. New file so we don't have to worry about
 # the size of \n.
-close TESTFILE;
-unlink "./foo";
 open TESTFILE, ">./foo";
-print TESTFILE "1234567890123456789012345678901234567890";
+print TESTFILE $teststring2;
 binmode TESTFILE;
 close TESTFILE;
 open TESTFILE, "<./foo";
 binmode TESTFILE;
-
-# Test straight number
-$/ = \2;
-$bar = <TESTFILE>;
-if ($bar eq "12") {print "ok 7\n";} else {print "not ok 7\n";}
-
-# Test stringified number
-$/ = \"2";
-$bar = <TESTFILE>;
-if ($bar eq "34") {print "ok 8\n";} else {print "not ok 8\n";}
-
-# Integer variable
-$foo = 2;
-$/ = \$foo;
-$bar = <TESTFILE>;
-if ($bar eq "56") {print "ok 9\n";} else {print "not ok 9\n";}
-
-# String variable
-$foo = "2";
-$/ = \$foo;
-$bar = <TESTFILE>;
-if ($bar eq "78") {print "ok 10\n";} else {print "not ok 10\n";}
-
-# Naughty straight number - should get the rest of the file
-$/ = \0;
-$bar = <TESTFILE>;
-if ($bar eq "90123456789012345678901234567890") {print "ok 11\n";} else {print "not ok 11\n";}
-
+test_record(*TESTFILE);
 close TESTFILE;
+$test_count_end = $test_count;  # Needed to know how many tests to skip
+
 
 # Now for the tricky bit--full record reading
 if ($^O eq 'VMS') {
@@ -115,23 +57,30 @@ if ($^O eq 'VMS') {
   open TESTFILE, "<./foo.bar";
   $/ = \10;
   $bar = <TESTFILE>;
-  if ($bar eq "foo\n") {print "ok 12\n";} else {print "not ok 12\n";}
+  if ($bar eq "foo\n") {print "ok $test_count\n";} else {print "not ok $test_count\n";}
+  $test_count++;
   $bar = <TESTFILE>;
-  if ($bar eq "foobar\n") {print "ok 13\n";} else {print "not ok 13\n";}
+  if ($bar eq "foobar\n") {print "ok $test_count\n";} else {print "not ok $test_count\n";}
+  $test_count++;
   # can we do a short read?
   $/ = \2;
   $bar = <TESTFILE>;
-  if ($bar eq "ba") {print "ok 14\n";} else {print "not ok 14\n";}
+  if ($bar eq "ba") {print "ok $test_count\n";} else {print "not ok $test_count\n";}
+  $test_count++;
   # do we get the rest of the record?
   $bar = <TESTFILE>;
-  if ($bar eq "z\n") {print "ok 15\n";} else {print "not ok 15\n";}
+  if ($bar eq "z\n") {print "ok $test_count\n";} else {print "not ok $test_count\n";}
+  $test_count++;
 
   close TESTFILE;
   1 while unlink qw(foo.bar foo.com foo.fdl);
 } else {
   # Nobody else does this at the moment (well, maybe OS/390, but they can
   # put their own tests in) so we just punt
-  foreach $test (12..15) {print "ok $test # skipped on non-VMS system\n"};
+  foreach $test ($test_count..$test_count + 3) {
+      print "ok $test # skipped on non-VMS system\n";
+      $test_count++;
+  }
 }
 
 $/ = "\n";
@@ -147,7 +96,8 @@ $/ = "\n";
     else {
 	print "not ";
     }
-    print "ok 16\n";
+    print "ok $test_count # open/readline/close on our variable\n";
+    $test_count++;
 }
 
 {
@@ -160,8 +110,129 @@ $/ = "\n";
     else {
 	print "not ";
     }
-    print "ok 17\n";
+    print "ok $test_count # open/readline/close on my variable\n";
+    $test_count++;
+}
+
+
+if (not eval q/use PerlIO::scalar; use PerlIO::via::scalar; 1/) {
+  # In-memory files necessitate PerlIO::via::scalar, thus a perl with
+  # perlio and dynaloading enabled. miniperl won't be able to run this
+  # test, so skip it
+
+  # PerlIO::via::scalar has to be tested as well.
+  # use PerlIO::scalar succeeds with ./TEST and with ./perl harness but not with ./perl
+
+  for $test ($test_count .. $test_count + ($test_count_end - $test_count_start - 1)) {
+    print "ok $test # skipped - Can't test in memory file with miniperl/without PerlIO::Scalar\n";
+    $test_count++;
+  }
+}
+else {
+  # Test if a file in memory behaves the same as a real file (= re-run the test with a file in memory)
+  open TESTFILE, "<", \$teststring;
+  test_string(*TESTFILE);
+  close TESTFILE;
+
+  open TESTFILE, "<", \$teststring2;
+  test_record(*TESTFILE);
+  close TESTFILE;
 }
 
 # Get rid of the temp file
 END { unlink "./foo"; }
+
+sub test_string {
+  *FH = shift;
+
+  # Check the default $/
+  $bar = <FH>;
+  if ($bar ne "1\n") {print "not ";}
+  print "ok $test_count # default \$/\n";
+  $test_count++;
+
+  # explicitly set to \n
+  $/ = "\n";
+  $bar = <FH>;
+  if ($bar ne "12\n") {print "not ";}
+  print "ok $test_count # \$/ = \"\\n\"\n";
+  $test_count++;
+
+  # Try a non line terminator
+  $/ = 3;
+  $bar = <FH>;
+  if ($bar ne "123") {print "not ";}
+  print "ok $test_count # \$/ = 3\n";
+  $test_count++;
+
+  # Eat the line terminator
+  $/ = "\n";
+  $bar = <FH>;
+
+  # How about a larger terminator
+  $/ = "34";
+  $bar = <FH>;
+  if ($bar ne "1234") {print "not ";}
+  print "ok $test_count # \$/ = \"34\"\n";
+  $test_count++;
+
+  # Eat the line terminator
+  $/ = "\n";
+  $bar = <FH>;
+
+  # Does paragraph mode work?
+  $/ = '';
+  $bar = <FH>;
+  if ($bar ne "1234\n12345\n\n") {print "not ";}
+  print "ok $test_count # \$/ = ''\n";
+  $test_count++;
+
+  # Try slurping the rest of the file
+  $/ = undef;
+  $bar = <FH>;
+  if ($bar ne "123456\n1234567\n") {print "not ";}
+  print "ok $test_count # \$/ = undef\n";
+  $test_count++;
+}
+
+sub test_record {
+  *FH = shift;
+
+  # Test straight number
+  $/ = \2;
+  $bar = <FH>;
+  if ($bar ne "12") {print "not ";}
+  print "ok $test_count # \$/ = \\2\n";
+  $test_count++;
+
+  # Test stringified number
+  $/ = \"2";
+  $bar = <FH>;
+  if ($bar ne "34") {print "not ";}
+  print "ok $test_count # \$/ = \"2\"\n";
+  $test_count++;
+
+  # Integer variable
+  $foo = 2;
+  $/ = \$foo;
+  $bar = <FH>;
+  if ($bar ne "56") {print "not ";}
+  print "ok $test_count # \$/ = \\\$foo (\$foo = 2)\n";
+  $test_count++;
+
+  # String variable
+  $foo = "2";
+  $/ = \$foo;
+  $bar = <FH>;
+  if ($bar ne "78") {print "not ";}
+  print "ok $test_count # \$/ = \\\$foo (\$foo = \"2\")\n";
+  $test_count++;
+
+  # Naughty straight number - should get the rest of the file
+  $/ = \0;
+  $bar = <FH>;
+  if ($bar ne "90123456789012345678901234567890") {print "not ";}
+  print "ok $test_count # \$/ = \\0\n";
+  $test_count++;
+}
+

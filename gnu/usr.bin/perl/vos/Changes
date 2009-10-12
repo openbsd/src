@@ -1,6 +1,12 @@
 This file documents the changes made to port Perl to the Stratus
 VOS operating system.
 
+For 5.8.9:
+     Updated vos hints file (vos.sh) to use the POSIX-2001
+     standard and to recognize the V Series architecture of
+     i786.  Cleaned-up a few issues so that more tests pass.
+     This version builds on VOS Release 15.3.0.
+
 For 5.10.0:
      Added support for the syslog family of functions to vos.c.
      This allows the source code to be built on versions of VOS

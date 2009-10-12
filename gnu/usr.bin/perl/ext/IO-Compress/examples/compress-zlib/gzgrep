@@ -1,0 +1,27 @@
+#!/usr/local/bin/perl
+
+use strict ;
+use warnings ;
+
+use Compress::Zlib ;
+
+die "Usage: gzgrep pattern file...\n"
+    unless @ARGV >= 2;
+
+my $pattern = shift ;
+
+my $file ;
+
+foreach $file (@ARGV) {
+    my $gz = gzopen($file, "rb") 
+         or die "Cannot open $file: $gzerrno\n" ;
+
+    while ($gz->gzreadline($_) > 0) {
+        print if /$pattern/ ;
+    }
+
+    die "Error reading from $file: $gzerrno\n" 
+        if $gzerrno != Z_STREAM_END ;
+    
+    $gz->gzclose() ;
+}

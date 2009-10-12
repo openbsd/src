@@ -34,7 +34,7 @@ $Config{startperl}
 use File::Spec;
 
 my $prove = File::Spec->catfile(File::Spec->catdir(File::Spec->updir,
-	"lib", "Test", "Harness", "bin"), "prove");
+	"ext", "Test-Harness", "bin"), "prove");
 
 if (open(PROVE, $prove)) {
     print OUT <PROVE>;

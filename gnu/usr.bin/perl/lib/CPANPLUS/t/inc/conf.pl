@@ -96,48 +96,15 @@ use constant TEST_CONF_INST_MODULE      => 'Foo::Bar';
 use constant TEST_CONF_INVALID_MODULE   => 'fnurk';
 use constant TEST_CONF_MIRROR_DIR       => 'dummy-localmirror';
 use constant TEST_CONF_CPAN_DIR         => 'dummy-CPAN';
+use constant TEST_CONF_CPANPLUS_DIR     => 'dummy-cpanplus';
+use constant TEST_CONF_INSTALL_DIR      => File::Spec->rel2abs(
+                                                File::Spec->catdir(      
+                                                    TEST_CONF_CPANPLUS_DIR,
+                                                    'install'
+                                                )
+                                            );
 
-### we might need this Some Day when we're installing into
-### our own sandbox. see t/20.t for details
-# use constant TEST_INSTALL_DIR       => do {
-#     my $dir = File::Spec->rel2abs( 'dummy-perl' );
-# 
-#     ### clean up paths if we are on win32    
-#     ### dirs with spaces will be.. bad :(
-#     $^O eq 'MSWin32'
-#         ? Win32::GetShortPathName( $dir )
-#         : $dir;
-# };        
-
-# use constant TEST_INSTALL_DIR_LIB 
-#     => File::Spec->catdir( TEST_INSTALL_DIR, 'lib' );
-# use constant TEST_INSTALL_DIR_BIN 
-#     => File::Spec->catdir( TEST_INSTALL_DIR, 'bin' );
-# use constant TEST_INSTALL_DIR_MAN1 
-#     => File::Spec->catdir( TEST_INSTALL_DIR, 'man', 'man1' );
-# use constant TEST_INSTALL_DIR_MAN3
-#     => File::Spec->catdir( TEST_INSTALL_DIR, 'man', 'man3' );
-# use constant TEST_INSTALL_DIR_ARCH
-#     => File::Spec->catdir( TEST_INSTALL_DIR, 'arch' );
-# 
-# use constant TEST_INSTALL_EU_MM_FLAGS =>
-#     ' INSTALLDIRS=site' .
-#     ' INSTALLSITELIB='     . TEST_INSTALL_DIR_LIB .
-#     ' INSTALLSITEARCH='    . TEST_INSTALL_DIR_ARCH .    # .packlist
-#     ' INSTALLARCHLIB='     . TEST_INSTALL_DIR_ARCH .    # perllocal.pod
-#     ' INSTALLSITEBIN='     . TEST_INSTALL_DIR_BIN .
-#     ' INSTALLSCRIPT='      . TEST_INSTALL_DIR_BIN .
-#     ' INSTALLSITEMAN1DIR=' . TEST_INSTALL_DIR_MAN1 .
-#     ' INSTALLSITEMAN3DIR=' . TEST_INSTALL_DIR_MAN3;
-
-
-sub gimme_conf { 
-
-    ### don't load any other configs than the heuristic one
-    ### during tests. They might hold broken/incorrect data
-    ### for our test suite. Bug [perl #43629] showed this.
-    my $conf = CPANPLUS::Configure->new( load_configs => 0 );
-
+sub dummy_cpan_dir {
     ### VMS needs this in directory format for rel2abs
     my $test_dir = $^O eq 'VMS'
                     ? File::Spec->catdir(TEST_CONF_CPAN_DIR)
@@ -149,13 +116,25 @@ sub gimme_conf {
     ### According to John M: the hosts path needs to be in UNIX format.  
     ### File::Spec::Unix->rel2abs does not work at all on VMS
     $abs_test_dir    = VMS::Filespec::unixify( $abs_test_dir ) if $^O eq 'VMS';
+
+    return $abs_test_dir;
+}
+
+sub gimme_conf { 
+
+    ### don't load any other configs than the heuristic one
+    ### during tests. They might hold broken/incorrect data
+    ### for our test suite. Bug [perl #43629] showed this.
+    my $conf = CPANPLUS::Configure->new( load_configs => 0 );
+
+    my $dummy_cpan = dummy_cpan_dir();
     
     $conf->set_conf( hosts  => [ { 
-                        path        => $abs_test_dir,
+                        path        => $dummy_cpan,
                         scheme      => 'file',
                     } ],      
     );
-    $conf->set_conf( base       => File::Spec->rel2abs('dummy-cpanplus') );
+    $conf->set_conf( base       => File::Spec->rel2abs(TEST_CONF_CPANPLUS_DIR));
     $conf->set_conf( dist_type  => '' );
     $conf->set_conf( signature  => 0 );
     $conf->set_conf( verbose    => 1 ) if $ENV{ $Env };
@@ -164,15 +143,15 @@ sub gimme_conf {
     $conf->set_program( pager   => '' );
 
     ### dmq tells us that we should run with /nologo
-    ### if using nmake, as it's very noise otherwise.
+    ### if using nmake, as it's very noisy otherwise.
     {   my $make = $conf->get_program('make');
-        if( $make and basename($make) =~ /^nmake/i and
-            $make !~ m|/nologo|
-        ) {
-            $make .= ' /nologo';
-            $conf->set_program( make => $make );
+        if( $make and basename($make) =~ /^nmake/i ) {
+            $conf->set_conf( makeflags => '/nologo' );
         }
     }
+
+    $conf->set_conf( source_engine =>  $ENV{CPANPLUS_SOURCE_ENGINE} )
+        if $ENV{CPANPLUS_SOURCE_ENGINE};
     
     _clean_test_dir( [
         $conf->get_conf('base'),     

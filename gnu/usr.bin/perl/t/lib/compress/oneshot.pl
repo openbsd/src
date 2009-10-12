@@ -16,7 +16,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 970 + $extra ;
+    plan tests => 986 + $extra ;
 
     use_ok('IO::Uncompress::AnyUncompress', qw(anyuncompress $AnyUncompressError)) ;
 
@@ -41,6 +41,9 @@ sub run
         my $Error = getErrorRef($bit);
         my $Func = getTopFuncRef($bit);
         my $TopType = getTopFuncName($bit);
+
+        #my $inverse = getInverse($bit);
+        #my $InverseFunc = getTopFuncRef($inverse);
 
         title "Testing $TopType Error Cases";
 
@@ -510,6 +513,7 @@ sub run
 
         my $TopTypeInverse = getInverse($bit);
         my $FuncInverse = getTopFuncRef($TopTypeInverse);
+        my $ErrorInverse = getErrorRef($TopTypeInverse);
 
         my $lex = new LexFile(my $file1, my $file2) ;
 
@@ -605,6 +609,34 @@ sub run
                 is $got, join('', @uexpected), "  Got Expected uncompressed data";
                 my @headers = getHeaders($file3);
                 is @headers, $ms ? @input : 1, "  Header count ok";
+            }
+
+            SKIP:
+            {
+                title "Truncated file";
+                skip '', 7
+                    if $CompressClass =~ /lzop|lzf/i ;
+
+                my @in ;
+                push @in, "abcde" x 10;
+                push @in, "defgh" x 1000;
+                push @in, "12345" x 50000;
+
+                my $out;
+
+                for (@in) {
+                  ok &$Func(\$_ , \$out, Append => 1 ), '  Compressed ok'
+                    or diag $$Error;
+                }
+                #ok &$Func(\@in, \$out, MultiStream => 1 ), '  Compressed ok'
+                substr($out, -179) = '';
+
+                my $got;
+                my $status ;
+                ok $status = &$FuncInverse(\$out => \$got, MultiStream => 0), "  Uncompressed stream 1 ok";
+                is $got, "abcde" x 10 ;
+                ok ! &$FuncInverse(\$out => \$got, MultiStream => 1), "  Didn't uncompress";
+                is $$ErrorInverse, "unexpected end of file", "  Got unexpected eof";
             }
         }
     }

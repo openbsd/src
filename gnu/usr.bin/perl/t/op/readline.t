@@ -12,11 +12,11 @@ eval { for (\2) { $_ = <FH> } };
 like($@, 'Modification of a read-only value attempted', '[perl #19566]');
 
 {
-  open A,"+>a"; $a = 3;
+  my $file = tempfile();
+  open A,'+>',$file; $a = 3;
   is($a .= <A>, 3, '#21628 - $a .= <A> , A eof');
   close A; $a = 4;
   is($a .= <A>, 4, '#21628 - $a .= <A> , A closed');
-  unlink "a";
 }
 
 # 82 is chosen to exceed the length for sv_grow in do_readline (80)

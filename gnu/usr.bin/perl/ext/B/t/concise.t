@@ -14,10 +14,9 @@ BEGIN {
         exit 0;
     }
     require 'test.pl';		# we use runperl from 'test.pl', so can't use Test::More
-    sub diag { print "# @_\n" } # but this is still handy
 }
 
-plan tests => 156;
+plan tests => 157;
 
 require_ok("B::Concise");
 
@@ -201,7 +200,8 @@ SKIP: {
 
 	sub defd_empty {};
 	($res,$err) = render('-basic', \&defd_empty);
-	is(scalar split(/\n/, $res), 3,
+	my @lines = split(/\n/, $res);
+	is(scalar @lines, 3,
 	   "'sub defd_empty {}' seen as 3 liner");
 
 	is(1, $res =~ /leavesub/ && $res =~ /(next|db)state/,
@@ -406,6 +406,12 @@ like($out, qr/PAD_FAKELEX_MULTI is a constant sub, optimized to a IV/,
 
 like($out, qr/\# 4\d\d: \s+ \$l->concise\(\$level\);/,
      "src-line rendering works");
+
+$out = runperl ( switches => ["-MO=Concise,-stash=ExtUtils::Mksymlists,-src,-exec"],
+		 prog => '-e 1', stderr => 1 );
+
+like($out, qr/FUNC: \*ExtUtils::Mksymlists::_write_vms/,
+     "stash rendering loads package as needed");
 
 $out = runperl ( switches => ["-MO=Concise,-stash=Data::Dumper,-src,-exec"],
 		 prog => '-e 1', stderr => 1 );

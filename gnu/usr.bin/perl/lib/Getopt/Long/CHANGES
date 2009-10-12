@@ -1,3 +1,25 @@
+Changes in version 2.38
+-----------------------
+
+* Bugfix for Ticket 35759: First arg to callback function evaluates
+  to false when used in bool context.
+
+* Fix problem with prototypes of GetOptionsFrom* functions.
+
+* Fix restoring default die handler.
+
+* Bugfix for Ticket 24941: Autoabbrev with + incorrect.
+
+Changes in version 2.37
+-----------------------
+
+* The first argument to callback function is now an object and will
+  get methods for finer control in the future. The object stringifies
+  to the option name, so current code should not notice a difference.
+
+* Bugfix: With gnu_compat, --foo= will no longer trigger "Option
+  requires an argument" but return the empty string.
+
 Changes in version 2.36
 -----------------------
 

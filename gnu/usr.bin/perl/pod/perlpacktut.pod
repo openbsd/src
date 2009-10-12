@@ -853,6 +853,51 @@ template for C<pack> and C<unpack> because C<pack> can't determine
 a repeat count for a C<()>-group.
 
 
+=head2 Intel HEX
+
+Intel HEX is a file format for representing binary data, mostly for
+programming various chips, as a text file. (See
+L<http://en.wikipedia.org/wiki/.hex> for a detailed description, and
+L<http://en.wikipedia.org/wiki/SREC_(file_format)> for the Motorola
+S-record format, which can be unravelled using the same technique.)
+Each line begins with a colon (':') and is followed by a sequence of
+hexadecimal characters, specifying a byte count I<n> (8 bit),
+an address (16 bit, big endian), a record type (8 bit), I<n> data bytes
+and a checksum (8 bit) computed as the least significant byte of the two's
+complement sum of the preceding bytes. Example: C<:0300300002337A1E>.
+
+The first step of processing such a line is the conversion, to binary,
+of the hexadecimal data, to obtain the four fields, while checking the
+checksum. No surprise here: we'll start with a simple C<pack> call to 
+convert everything to binary:
+
+   my $binrec = pack( 'H*', substr( $hexrec, 1 ) );
+
+The resulting byte sequence is most convenient for checking the checksum.
+Don't slow your program down with a for loop adding the C<ord> values
+of this string's bytes - the C<unpack> code C<%> is the thing to use
+for computing the 8-bit sum of all bytes, which must be equal to zero:
+
+   die unless unpack( "%8C*", $binrec ) == 0;
+
+Finally, let's get those four fields. By now, you shouldn't have any
+problems with the first three fields - but how can we use the byte count
+of the data in the first field as a length for the data field? Here
+the codes C<x> and C<X> come to the rescue, as they permit jumping
+back and forth in the string to unpack.
+
+   my( $addr, $type, $data ) = unpack( "x n C X4 C x3 /a", $bin ); 
+
+Code C<x> skips a byte, since we don't need the count yet. Code C<n> takes
+care of the 16-bit big-endian integer address, and C<C> unpacks the
+record type. Being at offset 4, where the data begins, we need the count.
+C<X4> brings us back to square one, which is the byte at offset 0.
+Now we pick up the count, and zoom forth to offset 4, where we are
+now fully furnished to extract the exact number of data bytes, leaving
+the trailing checksum byte alone.
+
+
+
 =head1 Packing and Unpacking C Structures
 
 In previous sections we have seen how to pack numbers and character

@@ -26,6 +26,10 @@
 #undef MAX
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 
+/* Test #undef'ining an existing constant function */
+#define NOTTRUE 0
+#undef NOTTRUE
+
 /* Test #ifdef */
 #ifdef __SOME_UNIMPORTANT_PROPERTY
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
@@ -68,9 +72,11 @@ function Tru64_Pascal(n: Integer): Integer;
  *  with `use lib qw(/opt/perl5/lib/site_perl/i586-linux/linux);' or whatever
  *  your equivalent is...
  */
+#if 0
 #include <sys/socket.h>
 #import "sys/ioctl.h"
 #include_next <sys/fcntl.h>
+#endif
 
 /* typedefs should be ignored */
 typedef struct a_struct {

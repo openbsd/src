@@ -25,7 +25,7 @@ sub ok;
 
 use Storable qw(freeze thaw);
 
-print "1..16\n";
+print "1..19\n";
 
 package OVERLOADED;
 
@@ -103,4 +103,17 @@ ok 13, $@ eq "";
 ok 14, ref ($t) eq 'REF';
 ok 15, ref ($$t) eq 'HAS_OVERLOAD';
 ok 16, $$$t eq 'snow';
+
+
+#---
+# blessed reference to overloded object.
+{
+  my $a = bless [88], 'OVERLOADED';
+  my $c = thaw freeze bless \$a, 'main';
+  ok 17, ref $c eq 'main';
+  ok 18, ref $$c eq 'OVERLOADED';
+  ok 19, "$$c" eq "88";
+
+}
+
 1;

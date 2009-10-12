@@ -205,7 +205,7 @@ source filter (see Decryption Filters, below).
 
 All decryption filters work on the principle of "security through
 obscurity." Regardless of how well you write a decryption filter and
-how strong your encryption algorithm, anyone determined enough can
+how strong your encryption algorithm is, anyone determined enough can
 retrieve the original source code. The reason is quite simple - once
 the decryption filter has decrypted the source back to its original
 form, fragments of it will be stored in the computer's memory as Perl
@@ -227,7 +227,7 @@ module.
 An alternative to writing the filter in C is to create a separate
 executable in the language of your choice. The separate executable
 reads from standard input, does whatever processing is necessary, and
-writes the filtered data to standard output. C<Filter:cpp> is an
+writes the filtered data to standard output. C<Filter::cpp> is an
 example of a source filter implemented as a separate executable - the
 executable is the C preprocessor bundled with your C compiler.
 

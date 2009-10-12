@@ -1,8 +1,10 @@
 #!./perl
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
+    if( $ENV{PERL_CORE} ) {
+        chdir 't' if -d 't';
+        @INC = '../lib';
+    }
 }
 
 use warnings;
@@ -102,10 +104,12 @@ is($result, qq{"field1"|"field2\\\nstill field2"|"field3"});
 $result = join('|', parse_line("\t", 0, $string));
 is($result, "field1|field2\nstill field2|field3");
 
-# unicode
-$string = qq{"field1"\x{1234}"field2\\\x{1234}still field2"\x{1234}"field3"};
-$result = join('|', parse_line("\x{1234}", 0, $string));
-is($result, "field1|field2\x{1234}still field2|field3");
+SKIP: { # unicode
+  skip "No unicode",1 if $]<5.008;
+  $string = qq{"field1"\x{1234}"field2\\\x{1234}still field2"\x{1234}"field3"};
+  $result = join('|', parse_line("\x{1234}", 0, $string));
+  is($result, "field1|field2\x{1234}still field2|field3",'Unicode');
+}
 
 # missing quote after matching regex used to hang after change #22997
 "1234" =~ /(1)(2)(3)(4)/;

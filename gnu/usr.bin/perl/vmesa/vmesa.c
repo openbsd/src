@@ -136,7 +136,7 @@ do_aspawn(SV* really, SV **mark, SV **sp)
        fdMap[STDOUT_FILENO] = Perl_stdout_fd;
        fdMap[STDERR_FILENO] = STDERR_FILENO;
        nFd                  = 3;
-       *a = Nullch;
+       *a = NULL;
        /*-----------------------------------------------------*/
        /* Will execvp() use PATH?                             */
        /*-----------------------------------------------------*/
@@ -272,7 +272,7 @@ do_spawn(char *cmd, int execf)
        if (*s)
            *s++ = '\0';
     }
-    *a                   = Nullch;
+    *a                   = NULL;
     fdMap[STDIN_FILENO]  = Perl_stdin_fd;
     fdMap[STDOUT_FILENO] = Perl_stdout_fd;
     fdMap[STDERR_FILENO] = STDERR_FILENO;
@@ -421,7 +421,7 @@ my_popen(char *cmd, char *mode)
             close(pFd[that]);
          }
          else
-            fd = Nullfp;
+            fd = NULL;
       }
       else
       {
@@ -434,7 +434,7 @@ my_popen(char *cmd, char *mode)
       }
    }
    else
-      fd = Nullfp;
+      fd = NULL;
    return (fd);
 }
 

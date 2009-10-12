@@ -101,7 +101,7 @@ If you see a compiler error that talks about the variable C<thr> not
 being declared (when building a module that has XS code),  you need
 to add C<dTHR;> at the beginning of the block that elicited the error.
 
-The API function C<perl_get_sv("@",FALSE)> should be used instead of
+The API function C<perl_get_sv("@",GV_ADD)> should be used instead of
 directly accessing perl globals as C<GvSV(errgv)>.  The API call is
 backward compatible with existing perls and provides source compatibility
 with threading is enabled.

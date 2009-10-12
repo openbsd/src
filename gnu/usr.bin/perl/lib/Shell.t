@@ -41,6 +41,14 @@ ok(($^O eq 'os2' xor !(-s $tmpfile)), '$Shell::capture_stderr');
 
 $Shell::capture_stderr = 0;
 
+# Trying to do two repeated C<ls>s in t in core and expecting the same output
+# is a race condition when tests are running in parallel, and using it as a
+# temporary directory. So go somewhere quieter.
+if ($ENV{PERL_CORE} && -d 'uni') {
+  chdir 'uni';
+  $chdir++;
+}
+
 # someone will have to fill in the blanks for other platforms
 
 if ($Is_VMS) {
@@ -70,3 +78,7 @@ if ($Is_VMS) {
 
 }
 open(STDERR, ">&SAVERR") ;
+
+if ($chdir) {
+  chdir "..";
+}

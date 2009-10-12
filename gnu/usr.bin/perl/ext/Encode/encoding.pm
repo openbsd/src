@@ -1,6 +1,6 @@
-# $Id: encoding.pm,v 2.6 2007/04/22 14:56:12 dankogai Exp $
+# $Id: encoding.pm,v 2.8 2009/02/15 17:44:13 dankogai Exp $
 package encoding;
-our $VERSION = do { my @r = ( q$Revision: 2.6 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = '2.6_01';
 
 use Encode;
 use strict;
@@ -50,11 +50,11 @@ sub _get_locale_encoding {
 
     no warnings 'uninitialized';
 
-    if ( not $locale_encoding && in_locale() ) {
-        if ( $ENV{LC_ALL} =~ /^([^.]+)\.([^.]+)$/ ) {
+    if ( (not $locale_encoding) && in_locale() ) {
+        if ( $ENV{LC_ALL} =~ /^([^.]+)\.([^.@]+)(@.*)?$/ ) {
             ( $country_language, $locale_encoding ) = ( $1, $2 );
         }
-        elsif ( $ENV{LANG} =~ /^([^.]+)\.([^.]+)$/ ) {
+        elsif ( $ENV{LANG} =~ /^([^.]+)\.([^.@]+)(@.*)?$/ ) {
             ( $country_language, $locale_encoding ) = ( $1, $2 );
         }
 
@@ -206,8 +206,8 @@ encoding - allows you to write your script in non-ascii or non-utf8
 
   # or you can even do this if your shell supports your native encoding
 
-  perl -Mencoding=latin2 -e '...' # Feeling centrally European?
-  perl -Mencoding=euc-kr -e '...' # Or Korean?
+  perl -Mencoding=latin2 -e'...' # Feeling centrally European?
+  perl -Mencoding=euc-kr -e'...' # Or Korean?
 
   # more control
 
@@ -315,22 +315,6 @@ always the same as the length of C<$/> in the native encoding.
 
 This pragma affects utf8::upgrade, but not utf8::downgrade.
 
-=head2 Side effects
-
-If the C<encoding> pragma is in scope then the lengths returned are
-calculated from the length of C<$/> in Unicode characters, which is not
-always the same as the length of C<$/> in the native encoding.
-
-This pragma affects utf8::upgrade, but not utf8::downgrade.
-
-=head2 Side effects
-
-If the C<encoding> pragma is in scope then the lengths returned are
-calculated from the length of C<$/> in Unicode characters, which is not
-always the same as the length of C<$/> in the native encoding.
-
-This pragma affects utf8::upgrade, but not utf8::downgrade.
-
 =head1 FEATURES THAT REQUIRE 5.8.1
 
 Some of the features offered by this pragma requires perl 5.8.1.  Most
@@ -347,14 +331,14 @@ encodings as Shift_JIS and Big-5 that may contain '\' (BACKSLASH;
 accidentally escape the quoting character that follows.  Perl 5.8.1
 or later fixes this problem.
 
-=item tr// 
+=item tr//
 
 C<tr//> was overlooked by Perl 5 porters when they released perl 5.8.0
 See the section below for details.
 
 =item DATA pseudo-filehandle
 
-Another feature that was overlooked was C<DATA>. 
+Another feature that was overlooked was C<DATA>.
 
 =back
 
@@ -364,7 +348,7 @@ Another feature that was overlooked was C<DATA>.
 
 =item use encoding [I<ENCNAME>] ;
 
-Sets the script encoding to I<ENCNAME>.  And unless ${^UNICODE} 
+Sets the script encoding to I<ENCNAME>.  And unless ${^UNICODE}
 exists and non-zero, PerlIO layers of STDIN and STDOUT are set to
 ":encoding(I<ENCNAME>)".
 
@@ -442,13 +426,13 @@ utf8> to C<${"\x{4eba}"}++>.
 =head2 NOT SCOPED
 
 The pragma is a per script, not a per block lexical.  Only the last
-C<use encoding> or C<no encoding> matters, and it affects 
-B<the whole script>.  However, the <no encoding> pragma is supported and 
-B<use encoding> can appear as many times as you want in a given script. 
+C<use encoding> or C<no encoding> matters, and it affects
+B<the whole script>.  However, the <no encoding> pragma is supported and
+B<use encoding> can appear as many times as you want in a given script.
 The multiple use of this pragma is discouraged.
 
 By the same reason, the use this pragma inside modules is also
-discouraged (though not as strongly discouraged as the case above.  
+discouraged (though not as strongly discouraged as the case above.
 See below).
 
 If you still have to write a module with this pragma, be very careful
@@ -617,7 +601,7 @@ To understand it, try the code below.
   .
   $camel = "*non-ascii*";
   binmode(STDOUT=>':encoding(utf8)'); # bang!
-  write;              # funny 
+  write;              # funny
   print $camel, "\n"; # fine
 
 Without binmode this happens to work but without binmode, print()
@@ -650,7 +634,7 @@ returned is used as the default encoding for the open pragma.
 
 If 1. didn't work but we are under the locale pragma, the environment
 variables LC_ALL and LANG (in that order) are matched for encodings
-(the part after C<.>, if any), and if any found, that is used 
+(the part after C<.>, if any), and if any found, that is used
 as the default encoding for the open pragma.
 
 =item 3.
@@ -669,7 +653,7 @@ B<any subsequent file open>, is UTF-8.
 
 =head1 HISTORY
 
-This pragma first appeared in Perl 5.8.0.  For features that require 
+This pragma first appeared in Perl 5.8.0.  For features that require
 5.8.1 and better, see above.
 
 The C<:locale> subpragma was implemented in 2.01, or Perl 5.8.6.

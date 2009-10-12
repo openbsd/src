@@ -994,7 +994,7 @@ EOM
    $h[0] = "joe" ;
    ok(155, $h[0] eq "joe");
 
-   eval { grep { $h[$_] } (1, 2, 3) };
+   eval { my @r= grep { $h[$_] } (1, 2, 3) };
    ok (156, ! $@);
 
 
@@ -1008,7 +1008,7 @@ EOM
 
    ok(157, $h[1] eq "joe");
 
-   eval { grep { $h[$_] } (1, 2, 3) };
+   eval { my @r= grep { $h[$_] } (1, 2, 3) };
    ok (158, ! $@);
 
    undef $db ;
@@ -1477,7 +1477,7 @@ sub test_splice {
 
     foreach ($ms_error, @ms_warnings) {
 	chomp;
-	s/ at \S+ line \d+\.?.*//s;
+    s/ at \S+(\s+\S+)*? line \d+\.?.*//s;
     }
 
     return "different errors: '$s_error' vs '$ms_error'"

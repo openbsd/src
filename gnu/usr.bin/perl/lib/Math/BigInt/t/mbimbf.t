@@ -32,7 +32,7 @@ BEGIN
   print "# INC = @INC\n";
 
   plan tests => 684 
-    + 23;		# own tests
+    + 26;		# own tests
   }
 
 use Math::BigInt 1.70;
@@ -100,3 +100,11 @@ $x = Math::BigFloat->new(100);
 $x = $x->blog(Math::BigInt->new(10));
 
 ok ($x,2);
+
+# bug until v1.88 for sqrt() with enough digits
+for my $i (80,88,100)
+  {
+  $x = Math::BigFloat->new("1." . ("0" x $i) . "1");
+  $x = $x->bsqrt;
+  ok ($x, 1);
+  }

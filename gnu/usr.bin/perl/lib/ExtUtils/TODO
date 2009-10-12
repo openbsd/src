@@ -73,3 +73,6 @@ Make out of date check on 'make dist' more useful
 http://archive.develooper.com/makemaker@perl.org/msg01075.html
 
 Make maniadd() return a tied, case-insensitive hash on VMS.
+
+
+TER

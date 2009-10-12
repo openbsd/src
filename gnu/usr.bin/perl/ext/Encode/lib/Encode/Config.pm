@@ -2,7 +2,7 @@
 # Demand-load module list
 #
 package Encode::Config;
-our $VERSION = do { my @r = ( q$Revision: 2.4 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.5 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use strict;
 use warnings;
@@ -38,6 +38,7 @@ our %ExtModule = (
     'cp855'                 => 'Encode::Byte',
     'cp856'                 => 'Encode::Byte',
     'cp857'                 => 'Encode::Byte',
+    'cp858'                 => 'Encode::Byte',
     'cp860'                 => 'Encode::Byte',
     'cp861'                 => 'Encode::Byte',
     'cp862'                 => 'Encode::Byte',

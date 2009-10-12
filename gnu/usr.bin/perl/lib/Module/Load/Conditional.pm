@@ -9,7 +9,7 @@ use Locale::Maketext::Simple Style  => 'gettext';
 use Carp        ();
 use File::Spec  ();
 use FileHandle  ();
-use version     qw[qv];
+use version;
 
 use constant ON_VMS  => $^O eq 'VMS';
 
@@ -18,7 +18,7 @@ BEGIN {
                         $FIND_VERSION $ERROR $CHECK_INC_HASH];
     use Exporter;
     @ISA            = qw[Exporter];
-    $VERSION        = '0.22';
+    $VERSION        = '0.30';
     $VERBOSE        = 0;
     $FIND_VERSION   = 1;
     $CHECK_INC_HASH = 0;
@@ -115,6 +115,11 @@ to find the file:
 =item file
 
 Full path to the file that contains the module
+
+=item dir
+
+Directory, or more exact the C<@INC> entry, where the module was
+loaded from.
 
 =item version
 
@@ -226,6 +231,9 @@ sub check_install {
                 }
             }
     
+            ### store the directory we found the file in
+            $href->{dir} = $dir;
+    
             ### files need to be in unix format under vms,
             ### or they might be loaded twice
             $href->{file} = ON_VMS
@@ -236,18 +244,20 @@ sub check_install {
             if( $FIND_VERSION ) {
                 
                 my $in_pod = 0;
-                while (local $_ = <$fh> ) {
+                while ( my $line = <$fh> ) {
     
                     ### stolen from EU::MM_Unix->parse_version to address
                     ### #24062: "Problem with CPANPLUS 0.076 misidentifying
                     ### versions after installing Text::NSP 1.03" where a 
                     ### VERSION mentioned in the POD was found before
                     ### the real $VERSION declaration.
-                    $in_pod = /^=(?!cut)/ ? 1 : /^=cut/ ? 0 : $in_pod;
+                    $in_pod = $line =~ /^=(?!cut)/  ? 1 : 
+                              $line =~ /^=cut/      ? 0 : 
+                              $in_pod;
                     next if $in_pod;
                     
                     ### try to find a version declaration in this string.
-                    my $ver = __PACKAGE__->_parse_version( $_ );
+                    my $ver = __PACKAGE__->_parse_version( $line );
 
                     if( defined $ver ) {
                         $href->{version} = $ver;
@@ -280,8 +290,14 @@ sub check_install {
         ### use qv(), as it will deal with developer release number
         ### ie ones containing _ as well. This addresses bug report
         ### #29348: Version compare logic doesn't handle alphas?
+        ###
+        ### Update from JPeacock: apparently qv() and version->new
+        ### are different things, and we *must* use version->new
+        ### here, or things like #30056 might start happening
         $href->{uptodate} = 
-            qv( $args->{version} ) <= qv( $href->{version} ) ? 1 : 0;
+            version->new( $args->{version} ) <= version->new( $href->{version} )
+                ? 1 
+                : 0;
     }
 
     return $href;
@@ -301,7 +317,8 @@ sub _parse_version {
     ### regex breaks under -T, we must modifiy it so
     ### it captures the entire expression, and eval /that/
     ### rather than $_, which is insecure.
-
+    my $taint_safe_str = do { $str =~ /(^.*$)/sm; $1 };
+        
     if( $str =~ /(?<!\\)([\$*])(([\w\:\']*)\bVERSION)\b.*\=/ ) {
         
         print "Evaluating: $str\n" if $verbose;
@@ -321,7 +338,7 @@ sub _parse_version {
 
             local $1$2;
             \$$2=undef; do {
-                $str
+                $taint_safe_str
             }; \$$2
         };
         
@@ -426,9 +443,14 @@ sub can_load {
             ### use qv(), as it will deal with developer release number
             ### ie ones containing _ as well. This addresses bug report
             ### #29348: Version compare logic doesn't handle alphas?
+            ###
+            ### Update from JPeacock: apparently qv() and version->new
+            ### are different things, and we *must* use version->new
+            ### here, or things like #30056 might start happening            
             if (    !$args->{nocache}
                     && defined $CACHE->{$mod}->{usable}
-                    && (qv($CACHE->{$mod}->{version}||0) >= qv($href->{$mod}))
+                    && (version->new( $CACHE->{$mod}->{version}||0 ) 
+                        >= version->new( $href->{$mod} ) )
             ) {
                 $error = loc( q[Already tried to use '%1', which was unsuccessful], $mod);
                 last BLOCK;

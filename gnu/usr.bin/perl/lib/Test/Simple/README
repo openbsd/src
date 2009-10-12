@@ -13,3 +13,10 @@ perl Makefile.PL
 make
 make test
 make install
+
+It requires Perl version 5.6.0 or newer and Test::Harness 2.03 or newer.
+
+
+* More Info
+
+More information can be found at http://test-more.googlecode.com/

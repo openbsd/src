@@ -14,6 +14,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test::More;
 use Safe;
 plan(tests => 6);
@@ -22,6 +23,7 @@ my $c = new Safe;
 $c->permit(qw(require caller));
 
 my $r = $c->reval(q!
+    no warnings 'redefine';
     sub UNIVERSAL::isa { "pwned" }
     (bless[],"Foo")->isa("Foo");
 !);
@@ -32,6 +34,7 @@ is( (bless[],"Foo")->isa("Foo"), 1, "... but not outside" );
 sub Foo::foo {}
 
 $r = $c->reval(q!
+    no warnings 'redefine';
     sub UNIVERSAL::can { "pwned" }
     (bless[],"Foo")->can("foo");
 !);

@@ -76,6 +76,8 @@ extern "C" {
 #ifdef PERL_GLOBAL_STRUCT /* Avoid unused variable warning. */
         dVAR;
 #endif
+        if(!PL_appctx)
+        	((CPerlBase*)PL_appctx) = CPerlBase::NewInterpreter();
         return ((CPerlBase*)PL_appctx)->ConsoleRead(fd, b, n);
     }
     EXPORT_C SSize_t symbian_write_stdout(const int fd, const char *b, int n)
@@ -83,6 +85,8 @@ extern "C" {
 #ifdef PERL_GLOBAL_STRUCT /* Avoid unused variable warning. */
         dVAR;
 #endif
+        if(!PL_appctx)
+        	((CPerlBase*)PL_appctx) = CPerlBase::NewInterpreter();
         return ((CPerlBase*)PL_appctx)->ConsoleWrite(fd, b, n);
     }
     static const char NullErr[] = "";
@@ -200,8 +204,13 @@ extern "C" {
         tick -= PL_timesbase.tms_utime;
         TInt64 tickus = TInt64(tick) * TInt64(periodus);
         TInt64 tmps   = tickus / 1000000;
+#ifdef __SERIES60_3X__
+        if (sec)  *sec  = I64LOW(tmps);
+        if (usec) *usec = I64LOW(tickus) - I64LOW(tmps) * 1000000;
+#else
         if (sec)  *sec  = tmps.Low();
         if (usec) *usec = tickus.Low() - tmps.Low() * 1000000;
+#endif //__SERIES60_3X__
         return 0;
     }
     EXPORT_C int symbian_usleep(unsigned int usec)
@@ -287,11 +296,17 @@ extern "C" {
                 error = proc.Create(aFilename,
                                     func,
                                     KStackSize,
+#ifdef __SERIES60_3X__                                    
+                                    KHeapMin,
+                                    KHeapMax,
+                                    (TAny*)command,
+#else
                                     (TAny*)command,
                                     &lib,
                                     RThread().Heap(),
                                     KHeapMin,
                                     KHeapMax,
+#endif                                    
                                     EOwnerProcess);
             else
                 error = KErrNotFound;

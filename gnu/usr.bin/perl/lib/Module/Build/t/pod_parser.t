@@ -2,14 +2,12 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 7;
-
-use Cwd ();
-my $cwd = Cwd::cwd;
-
-#########################
+use MBTest tests => 8;
 
 use_ok 'Module::Build::PodParser';
+ensure_blib('Module::Build::PodParser');
+
+#########################
 
 {
   package IO::StringBased;

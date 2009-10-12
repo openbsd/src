@@ -1,5 +1,77 @@
 Revision history for Perl extension ExtUtils::CBuilder.
 
+0.2602 - Sat Jul  4 10:57:12 EDT 2009
+
+ Bugs fixed:
+ - Fixed 00-have-compiler.t if $^X is a relative path [David Wheeler]
+
+0.2601 - Wed Jul  1 09:37:39 EDT 2009
+
+ Bugs fixed:
+ - On VMS, cleans up extra files generated during testing
+   [John E. Malmberg, Craig Berry]
+
+0.26 - Mon Jun 29 20:11:52 EDT 2009
+
+ - No changes from 0.25_01
+
+0.25_01 - Sat Jun 27 23:13:20 EDT 2009
+
+ - Changed test library to Test::More
+
+ - Added tests for have_compiler
+
+ - Skips tests that need a compiler if have_compiler is false
+
+ - have_compiler will try to compile in the current directory
+   if compiling in tmpdir fails for whatever reason
+
+0.25 - Fri Jun 26 16:18:13 EDT 2009
+
+ - Slight diagnostic improvements in link.t
+
+0.24_01 - Sun Mar  8 14:50:10 2009
+
+ - On Windows, don't generate "mt" command when CRT is statically
+   linked. [Jan Dubois]
+
+ - On Cygwin, examine $Config{useshrplib} to see whether we're
+   supposed to be linking with a shared perl library or not. [Reini
+   Urban]
+
+ - In link_executable() on Cygwin, trust $Config{ld} rather than using
+   $Config{cc} for linking. [Reini Urban]
+
+ - Add 'haiku' as a Unix-like platform. [Ingo Weinhold]
+
+0.24 - Fri Aug 15 22:01:48 2008
+
+ - Added 'gnu' and 'gnukfreebsd' as Unix variants. [Niko Tyni]
+
+ - Brought in some VMS fixes from bleadperl: "Correct and complete
+   CBuilder's handling of external libraries when linking on VMS."
+   [Craig Berry]
+
+0.23 - Sat Apr 19 22:28:03 2008
+
+ - Fixed some problems (some old, some new) with Strawberry Perl on
+   Windows. [Alberto Simo~es]
+
+ - Will now install in the core perl lib directory when the user's
+   perl is new enough to have us in core. [Yi Ma Mao]
+
+0.22 - Fri Feb  8 21:52:21 2008
+
+ - Replaced the split_like_shell() method on Windows with a
+   near-no-op, which is probably more correct and has the benefit of
+   not messing up UNC paths. [John R. LoVerso, see
+   http://rt.cpan.org/Ticket/Display.html?id=26545]
+
+ - Fixed extra_compiler_flags on Windows, they were being
+   ignored. [Robert May]
+
+0.21 - Tue Oct 30 06:46:01 2007
+
  - Clean up perl_src path using Cwd::realpath().  Only affects usage
    as part of the perl core.
 

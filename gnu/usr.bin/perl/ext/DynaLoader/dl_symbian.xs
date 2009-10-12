@@ -78,7 +78,7 @@ void* dlopen(const char *filename, int flags) {
         h = new PerlSymbianLibHandle;
         if (h) {
             h->error   = KErrNone;
-            h->symbols = Nullhv;
+            h->symbols = (HV *)NULL;
         } else
             error = KErrNoMemory;
     }
@@ -205,7 +205,7 @@ void
 dl_install_xsub(perl_name, symref, filename="$Package")
     char *		perl_name
     void *		symref 
-    char *		filename
+    const char *	filename
     CODE:
     ST(0) = sv_2mortal(newRV((SV*)newXS_flags(perl_name,
 					      (void(*)(pTHX_ CV *))symref,
@@ -220,5 +220,20 @@ dl_error()
     RETVAL = dl_last_error;
     OUTPUT:
     RETVAL
+
+#if defined(USE_ITHREADS)
+
+void
+CLONE(...)
+    CODE:
+    MY_CXT_CLONE;
+
+    /* MY_CXT_CLONE just does a memcpy on the whole structure, so to avoid
+     * using Perl variables that belong to another thread, we create our 
+     * own for this thread.
+     */
+    MY_CXT.x_dl_last_error = newSVpvn("", 0);
+
+#endif
 
 # end.

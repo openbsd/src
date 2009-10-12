@@ -25,9 +25,12 @@ my $CB          = CPANPLUS::Backend->new( $conf );
 my $ModName     = TEST_CONF_MODULE;
 my $ModPrereq   = TEST_CONF_PREREQ;
 
-### divide by many -- possibly ~0 is unsigned, and we cause an overflow,
-### as happens to version.pm 0.7203 among others.
-my $HighVersion = ~0/1000;
+### pick a high number, but not ~0 as possibly ~0 is unsigned, and we cause 
+### an overflow, as happens to version.pm 0.7203 among others.
+### ANOTHER bug in version.pm, this time for 64bit:
+### https://rt.cpan.org/Ticket/Display.html?id=45241
+### so just use a 'big number'(tm) and go from there.
+my $HighVersion = 1234567890;
 my $Mod         = $CB->module_tree($ModName);
 my $int_ver     = $CPANPLUS::Internals::VERSION;
 
@@ -134,9 +137,22 @@ my $map = {
                     ],
         check       => 0,    
     },
-    
-    
-    
+    prereq_not_on_cpan_but_core => {
+        pre_hook    => sub {
+                        my $mod     = shift;
+                        my $clone   = $mod->clone;
+                        $clone->status->prereqs( 
+                            { TEST_CONF_PREREQ, 0 } 
+                        );
+                        return $clone;
+                    },
+        failed      => 1,
+        match       => ['/This distribution has been tested/',
+                        '/http://testers.cpan.org/',
+                        '/UNKNOWN/',
+                    ],
+        check       => 0,    
+    },
 };
 
 ### test config settings 
@@ -362,15 +378,19 @@ SKIP: {
                     ? $map->{$type}->{'pre_hook'}->( $Mod )
                     : $Mod;
 
-        my $file = $CB->_send_report(
+        my $file = do {
+            ### so T::R does not try to resolve our maildomain, which can 
+            ### lead to large timeouts for *every* invocation in T::R < 1.51_01
+            ### see: http://code.google.com/p/test-reporter/issues/detail?id=15
+            local $ENV{MAILDOMAIN} ||= 'example.com';
+            $CB->_send_report(
                         module        => $mod,
                         buffer        => $map->{$type}{'buffer'},
                         failed        => $map->{$type}{'failed'},
                         tests_skipped => ($map->{$type}{'skiptests'} ? 1 : 0),
                         save          => 1,
-                        dontcc        => 1, # no need to send, and also skips
-                                            # fetching reports from testers.cpan
                     );
+        };
 
         ok( $file,              "Type '$type' written to file" );
         ok( -e $file,           "   File exists" );
@@ -413,7 +433,6 @@ SKIP: {
 #                            buffer  => $map->{$type}->{'buffer'},
 #                            failed  => $map->{$type}->{'failed'},
 #                            address => NOBODY,
-#                            dontcc  => 1,
 #                        );
 #            ok( $ok,                "   Mailed report to NOBODY" );
 #       }

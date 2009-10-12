@@ -18,7 +18,7 @@ BEGIN
     $extra = 1
         if $st ;
 
-    plan(tests => 670 + $extra) ;
+    plan(tests => 666 + $extra) ;
 }
 
 sub myGZreadFile
@@ -47,6 +47,7 @@ sub run
     my $Error           = getErrorRef($CompressClass);
     my $UnError         = getErrorRef($UncompressClass);
 
+    if(1)
     {
 
         title "Testing $CompressClass Errors";
@@ -56,13 +57,6 @@ sub run
         like $@, mkEvalErr("^$CompressClass: output buffer is read-only") ;
             
         my($out, $gz);
-        $out = "" ;
-        eval qq[\$a = new $CompressClass ] . '$out ;' ;
-        like $@, mkEvalErr("^$CompressClass: output filename is undef or null string");
-            
-        $out = undef ;
-        eval qq[\$a = new $CompressClass \$out ;] ;
-        like $@, mkEvalErr("^$CompressClass: output filename is undef or null string");
             
         my $x ;
         $gz = new $CompressClass(\$x); 
@@ -75,13 +69,12 @@ sub run
 
         eval ' $gz->write({})' ;
         like $@, mkEvalErr("^${CompressClass}::write: not a scalar reference");
-        #like $@, mkEvalErr("^${CompressClass}::write: input parameter not a filename, filehandle, array ref or scalar ref");
 
         eval ' $gz->syswrite("abc", 1, 5)' ;
         like $@, mkEvalErr("^${CompressClass}::write: offset outside string");
 
         eval ' $gz->syswrite("abc", 1, -4)' ;
-        like $@, mkEvalErr("^${CompressClass}::write: offset outside string");
+        like $@, mkEvalErr("^${CompressClass}::write: offset outside string"), "write outside string";
     }
 
 
@@ -89,18 +82,13 @@ sub run
         title "Testing $UncompressClass Errors";
 
         my $out = "" ;
-        eval qq[\$a = new $UncompressClass \$out ;] ;
-        like $@, mkEvalErr("^$UncompressClass: input filename is undef or null string");
-        $out = undef ;
-        eval qq[\$a = new $UncompressClass \$out ;] ;
-        like $@, mkEvalErr("^$UncompressClass: input filename is undef or null string");
 
         my $lex = new LexFile my $name ;
 
         ok ! -e $name, "  $name does not exist";
         
-        eval qq[\$a = new $UncompressClass "$name" ;] ;
-        is $$UnError, "input file '$name' does not exist";
+        $a = new $UncompressClass "$name" ;
+        is $a, undef;
 
         my $gc ;
         my $guz = new $CompressClass(\$gc); 
@@ -117,6 +105,7 @@ sub run
         }
 
     }
+
 
     {
         title "Testing $CompressClass and $UncompressClass";
@@ -161,7 +150,6 @@ sub run
 
 
             my $lex = new LexFile my $name ;
-            #my $name = "/tmp/try.lzf";
 
             my $hello = <<EOM ;
 hello world
@@ -322,7 +310,6 @@ EOM
 
               ok $x->close, "  close" ;
             }
-            #exit;
 
             is $uncomp, $hello, "  expected output" ;
         }
@@ -419,11 +406,11 @@ EOM
               ok ! defined $x->fileno() ;
               1 while $x->read($uncomp) > 0  ;
 
-              ok $x->close ;
+              ok $x->close, "closed" ;
             }
 
-            is $uncomp, $hello ;
-            ok $buffer eq $keep ;
+            is $uncomp, $hello, "got expected uncompressed data" ;
+            ok $buffer eq $keep, "compressed input not changed" ;
         }
 
         if ($CompressClass ne 'RawDeflate')
@@ -434,8 +421,9 @@ EOM
             my $buffer = '';
             {
               my $x ;
-              ok $x = new $CompressClass(\$buffer) ;
-              ok $x->close ;
+              $x = new $CompressClass(\$buffer);
+              ok $x, "new $CompressClass" ;
+              ok $x->close, "close ok" ;
           
             }
 
@@ -541,7 +529,6 @@ EOM
             read($fh1, $rest, 5000);
             is $x->trailingData() . $rest, $trailer ;
             #print "# [".$x->trailingData() . "][$rest]\n" ;
-            #exit;
 
         }
 
@@ -1415,7 +1402,6 @@ EOT
 
             }
         }
-
 
         {
             title "write tests - invalid data" ;

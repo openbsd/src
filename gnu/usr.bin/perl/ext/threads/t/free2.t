@@ -6,10 +6,16 @@ BEGIN {
         chdir 't';
         unshift @INC, '../lib';
     }
+
+    # Import test.pl into its own package
+    {
+        package Test;
+        require($ENV{PERL_CORE} ? './test.pl' : './t/test.pl');
+    }
+
     use Config;
     if (! $Config{'useithreads'}) {
-        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
-        exit(0);
+        Test::skip_all(q/Perl not compiled with 'useithreads'/);
     }
 }
 
@@ -18,18 +24,12 @@ use ExtUtils::testlib;
 use threads;
 
 BEGIN {
-    eval {
-        require threads::shared;
-        threads::shared->import();
-    };
-    if ($@ || ! $threads::shared::threads_shared) {
-        print("1..0 # Skip: threads::shared not available\n");
-        exit(0);
+    if (! eval 'use threads::shared; 1') {
+        Test::skip_all(q/threads::shared not available/);
     }
 
     if (($] < 5.008002) && ($threads::shared::VERSION < 0.92)) {
-        print("1..0 # Skip: Needs threads::shared 0.92 or later\n");
-        exit(0);
+        Test::skip_all(q/Needs threads::shared 0.92 or later/);
     }
 
     require Thread::Queue;
@@ -38,6 +38,7 @@ BEGIN {
     print("1..78\n");   ### Number of tests that will be run ###
 }
 
+Test::watchdog(60);   # In case we get stuck
 
 my $q = Thread::Queue->new();
 my $TEST = 1;
@@ -87,8 +88,8 @@ sub th_start
         lock(%READY);
 
         # Create next thread
-        if ($tid < 17) {
-            my $next = 'th' . ($tid+1);
+        if ($tid < 18) {
+            my $next = 'th' . $tid;
             my $th = threads->create($next, $q);
         } else {
             # Last thread signals first
@@ -123,6 +124,7 @@ sub th_signal
 {
     my $q = shift;
     my $other = shift;
+    $other++;
     my $tid = threads->tid();
 
     $q->enqueue($tid, "Thread $tid signalling $other");
@@ -232,8 +234,8 @@ sub th3
     th_signal($q, $other);
     sleep(1);
     $q->enqueue(1, "Thread $tid getting return from thread $other");
-    my $ret = threads->object($other)->join();
-    $q->enqueue($ret == $other, "Thread $tid saw that thread $other returned $ret");
+    my $ret = threads->object($other+1)->join();
+    $q->enqueue($ret == $other+1, "Thread $tid saw that thread $other returned $ret");
     th_done($q);
 }
 
@@ -256,8 +258,8 @@ sub th7
     threads->detach();
     th_signal($q, $other);
     $q->enqueue(1, "Thread $tid getting return from thread $other");
-    my $ret = threads->object($other)->join();
-    $q->enqueue($ret == $other, "Thread $tid saw that thread $other returned $ret");
+    my $ret = threads->object($other+1)->join();
+    $q->enqueue($ret == $other+1, "Thread $tid saw that thread $other returned $ret");
     th_done($q);
 }
 
@@ -282,8 +284,8 @@ sub th13
     th_signal($q, $other);
     sleep(1);
     $q->enqueue(1, "Thread $tid getting return from thread $other");
-    my $ret = threads->object($other)->join();
-    $q->enqueue($ret == $other, "Thread $tid saw that thread $other returned $ret");
+    my $ret = threads->object($other+1)->join();
+    $q->enqueue($ret == $other+1, "Thread $tid saw that thread $other returned $ret");
     th_done($q);
 }
 
@@ -306,8 +308,8 @@ sub th17
     threads->detach();
     th_signal($q, $other);
     $q->enqueue(1, "Thread $tid getting return from thread $other");
-    my $ret = threads->object($other)->join();
-    $q->enqueue($ret == $other, "Thread $tid saw that thread $other returned $ret");
+    my $ret = threads->object($other+1)->join();
+    $q->enqueue($ret == $other+1, "Thread $tid saw that thread $other returned $ret");
     th_done($q);
 }
 
@@ -335,5 +337,7 @@ TEST_STARTS_HERE:
     sleep(1);
 }
 ok($COUNT == 17, "Done - $COUNT threads");
+
+exit(0);
 
 # EOF

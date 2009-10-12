@@ -8,7 +8,7 @@ use Digest ();
 
 use vars qw($VERSION @ISA @EXPORT_OK);
 
-$VERSION = "1.00";
+$VERSION = "1.16";
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(digest_file_ctx digest_file digest_file_hex digest_file_base64);
 
@@ -16,7 +16,7 @@ sub digest_file_ctx {
     my $file = shift;
     croak("No digest algorithm specified") unless @_;
     local *F;
-    open(F, $file) || croak("Can't open '$file': $!");
+    open(F, "<", $file) || croak("Can't open '$file': $!");
     binmode(F);
     my $ctx = Digest->new(@_);
     $ctx->addfile(*F);

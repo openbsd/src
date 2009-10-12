@@ -3,7 +3,8 @@ package File::Spec::Epoc;
 use strict;
 use vars qw($VERSION @ISA);
 
-$VERSION = '3.2501';
+$VERSION = '3.30';
+$VERSION = eval $VERSION;
 
 require File::Spec::Unix;
 @ISA = qw(File::Spec::Unix);
@@ -45,6 +46,7 @@ path. On UNIX eliminated successive slashes and successive "/.".
 
 sub canonpath {
     my ($self,$path) = @_;
+    return unless defined $path;
 
     $path =~ s|/+|/|g;                             # xx////xx  -> xx/xx
     $path =~ s|(/\.)+/|/|g;                        # xx/././xx -> xx/xx

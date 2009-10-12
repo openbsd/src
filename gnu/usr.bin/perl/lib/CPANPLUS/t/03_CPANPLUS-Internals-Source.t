@@ -6,10 +6,16 @@ BEGIN {
 
 use strict;
 
+use Module::Load;
+use Test::More eval { 
+            load $ENV{CPANPLUS_SOURCE_ENGINE} if $ENV{CPANPLUS_SOURCE_ENGINE}; 1 
+        } ? 'no_plan'
+          : (skip_all => "SQLite engine not available");
+
+use CPANPLUS::Error;
 use CPANPLUS::Backend;
 use CPANPLUS::Internals::Constants;
 
-use Test::More 'no_plan';
 use Data::Dumper;
 use File::Basename qw[dirname];
 
@@ -21,34 +27,77 @@ my $cb   = CPANPLUS::Backend->new( $conf );
 
 isa_ok($cb, "CPANPLUS::Internals" );
 
-my $mt      = $cb->_module_tree;
-my $at      = $cb->_author_tree;
 my $modname = TEST_CONF_MODULE;
 
-for my $name (qw[auth mod dslip] ) {
-    my $file = File::Spec->catfile( 
-                        $conf->get_conf('base'),
-                        $conf->_get_source($name)
-                );            
-    ok( (-e $file && -f _ && -s _), "$file exists" );
-}    
-
-ok( scalar keys %$at,           "Authortree loaded successfully" );
-ok( scalar keys %$mt,           "Moduletree loaded successfully" );
-
 ### test lookups
-{   my $auth    = $at->{'EUNOXS'};
+{   my $mt      = $cb->_module_tree;
+    my $at      = $cb->_author_tree;
+
+    ### source files should be copied from the 'server' now
+    for my $name (qw[auth mod dslip] ) {
+        my $file = File::Spec->catfile( 
+                            $conf->get_conf('base'),
+                            $conf->_get_source($name)
+                    );            
+        ok( (-e $file && -f _ && -s _), "$file exists" );
+    }    
+
+    ok( $at,                    "Authortree loaded successfully" );
+    ok( scalar keys %$at,       "   Authortree has items in it" );
+    ok( $mt,                    "Moduletree loaded successfully" );
+    ok( scalar keys %$mt,       "   Moduletree has items in it" );
+
+    my $auth    = $at->{'EUNOXS'};
     my $mod     = $mt->{$modname};
 
     isa_ok( $auth,              'CPANPLUS::Module::Author' );
     isa_ok( $mod,               'CPANPLUS::Module' );
 }
 
+### save state tests
+SKIP: {   
+    skip "Save state tests for custom engine $ENV{CPANPLUS_SOURCE_ENGINE}", 7
+        if $ENV{CPANPLUS_SOURCE_ENGINE};
+
+    ok( 1,                      "Testing save state functionality" );
+
+
+    ### check we dont have a status set yet
+    {   my $mod     = $cb->_module_tree->{$modname};
+        ok( !$mod->_status,     "   No status set yet in module object" );
+        ok( $mod->status,       "       Status now set" );
+    }
+
+    ### now save this to disk
+    {   CPANPLUS::Error->flush;
+
+        my $rv = $cb->save_state;
+        ok( $rv,                "   State information saved" );
+        
+        like( CPANPLUS::Error->stack_as_string, qr/Writing compiled source/,    
+                                "       Diagnostics confirmed" );
+    }
+    
+    ### now we rebuild the trees from disk and
+    ### check if the module object has a status saved with it
+    {   CPANPLUS::Error->flush;
+        ok( $cb->_build_trees( uptodate => 1, use_stored => 1),
+                                "   Trees are rebuilt" );
+
+        like( CPANPLUS::Error->stack_as_string, qr/Retrieving/,    
+                                "       Diagnostics confirmed" );
+
+    
+        my $mod     = $cb->_module_tree->{$modname};
+        ok( $mod->status,       "       Status now set in module object" );
+    }  
+}
+
 ### check custom sources
 ### XXX whitebox test
 SKIP: {   
     ### first, find a file to serve as a source
-    my $mod     = $mt->{$modname};
+    my $mod     = $cb->_module_tree->{$modname};
     my $package = File::Spec->rel2abs(
                         File::Spec->catfile( 
                             $FindBin::Bin,
@@ -126,7 +175,7 @@ SKIP: {
         ok( $cb->$meth,         "Sources file loaded" );
 
         my $add_name = TEST_CONF_INST_MODULE;
-        my $add      = $mt->{$add_name};
+        my $add      = $cb->_module_tree->{$add_name};
         ok( $add,               "   Found added module" );
 
         ok( $add->status->_fetch_from,  

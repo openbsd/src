@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 use Config;
 use strict;
 
-our $VERSION = "1.10";
+our $VERSION = "1.11";
 
 my %err = ();
 my %wsa = ();
@@ -13,7 +13,8 @@ my $IsSymbian = exists $ENV{SDK} && -d "$ENV{SDK}\\epoc32";
 my $IsMSWin32 = $^O eq 'MSWin32' && !$IsSymbian;
 
 unlink "Errno.pm" if -f "Errno.pm";
-open OUT, ">Errno.pm" or die "Cannot open Errno.pm: $!";
+unlink "Errno.tmp" if -f "Errno.tmp";
+open OUT, ">Errno.tmp" or die "Cannot open Errno.tmp: $!";
 select OUT;
 my $file;
 my @files = get_files();
@@ -39,6 +40,9 @@ else {
 }
 write_errno_pm();
 unlink "errno.c" if -f "errno.c";
+close OUT or die "Error closing Errno.tmp: $!";
+select STDOUT;
+rename "Errno.tmp", "Errno.pm" or die "Cannot rename Errno.tmp to Errno.pm: $!";
 
 sub process_file {
     my($file) = @_;
@@ -155,7 +159,7 @@ sub get_files {
 	# we might miss out on compiler-specific ones
 	$file{"$ENV{GUSI}include:sys:errno.h"} = 1;
 
-    } elsif ($^O eq 'beos') {
+    } elsif ($^O eq 'beos' || $^O eq 'haiku') {
 	# hidden in a special place
 	$file{'/boot/develop/headers/posix/errno.h'} = 1;
 

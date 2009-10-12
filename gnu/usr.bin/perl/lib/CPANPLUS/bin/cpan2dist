@@ -273,7 +273,7 @@ for my $name (@modules) {
     my $obj;
     
     ### is it a tarball? then we get it locally and transform it
-    ### and it's dependencies into .debs
+    ### and its dependencies into .debs
     if( $tarball ) {
         ### make sure we use an absolute path, so chdirs() dont
         ### mess things up
@@ -434,7 +434,7 @@ sub usage {
     specified on the command line, and all their prerequisites.
     
     Can also create a distribution of type FMT from a local
-    archive and all it's prerequisites
+    archive and all of its prerequisites.
 
 =cut
 
@@ -520,11 +520,11 @@ Options:
 
 Examples:
 
-    ### build a debian package of DBI and it's prerequisites, 
+    ### build a debian package of DBI and its prerequisites, 
     ### don't bother running tests
     cpan2dist --format CPANPLUS::Dist::Deb --buildprereq --skiptest DBI
     
-    ### build a debian package of DBI and it's prerequisites and install them
+    ### build a debian package of DBI and its prerequisites and install them
     cpan2dist --format CPANPLUS::Dist::Deb --buildprereq --install DBI
     
     ### Build a package, whose format is determined by your config, of 
@@ -537,7 +537,7 @@ Examples:
     ### patterns mentioned in /tmp/ban
     cpan2dist --ban Foo --ban Bar --banlist /tmp/ban Net::FTP
     
-    ### build a package from Net::FTP, but ignore it's listed dependency
+    ### build a package from Net::FTP, but ignore its listed dependency
     ### on IO::Socket, as it's shipped per default with the OS we're on
     cpan2dist --ignore IO::Socket Net::FTP
     

@@ -9,6 +9,7 @@ BEGIN {
 
 use strict;
 
+use Config;
 use Test::More;
 use Time::Local;
 
@@ -73,13 +74,13 @@ if ($^O eq 'VMS') {
     $neg_epoch_ok = 0; # time_t is unsigned
 }
 
+my $epoch_is_64 = eval { $Config{ivsize} == 8 && ( gmtime 2**40 )[5] == 34912 };
+
 my $tests = (@time * 12);
 $tests += @neg_time * 12;
 $tests += @bad_time;
 $tests += @years;
-$tests += 10;
-$tests += 2 if $ENV{PERL_CORE};
-$tests += 8 if $ENV{MAINTAINER};
+$tests += 23;
 
 plan tests => $tests;
 
@@ -192,7 +193,24 @@ SKIP:
     is($@, '', 'no error with leap day of 1996 (year passed as 96)');
 }
 
-if ($ENV{MAINTAINER}) {
+SKIP:
+{
+    skip 'These tests require a system with 64-bit time_t.', 3
+        unless $epoch_is_64;
+
+    is( timegm( 8, 14, 3, 19, 0, ( 1900 + 138 ) ), 2**31,
+        'can call timegm for 2**31 epoch seconds' );
+    is( timegm( 16, 28, 6, 7, 1, ( 1900 + 206 ) ), 2**32,
+        'can call timegm for 2**32 epoch seconds (on a 64-bit system)' );
+    is( timegm( 16, 36, 0, 20, 1, ( 34912 + 1900 ) ), 2**40,
+        'can call timegm for 2**40 epoch seconds (on a 64-bit system)' );
+}
+
+SKIP:
+{
+    skip 'These tests only run for the package maintainer.', 8
+        unless $ENV{MAINTAINER};
+
     require POSIX;
 
     local $ENV{TZ} = 'Europe/Vienna';
@@ -246,14 +264,20 @@ if ($ENV{MAINTAINER}) {
         'hour is 2 when given 2:00 AM on Europe/London date change' );
 }
 
-if ($ENV{PERL_CORE}) {
-  package test;
-  require 'timelocal.pl';
+SKIP:
+{
+    skip 'These tests are only run when $ENV{PERL_CORE} is true.', 2
+        unless $ENV{PERL_CORE};
 
-  # need to get ok() from main package
-  ::is(timegm(0,0,0,1,0,80), main::timegm(0,0,0,1,0,80),
-     'timegm in timelocal.pl');
+    {
+        package test;
+        require 'timelocal.pl';
 
-  ::is(timelocal(1,2,3,4,5,88), main::timelocal(1,2,3,4,5,88),
-     'timelocal in timelocal.pl');
+        # need to get ok() from main package
+        ::is(timegm(0,0,0,1,0,80), main::timegm(0,0,0,1,0,80),
+             'timegm in timelocal.pl');
+
+        ::is(timelocal(1,2,3,4,5,88), main::timelocal(1,2,3,4,5,88),
+             'timelocal in timelocal.pl');
+    }
 }

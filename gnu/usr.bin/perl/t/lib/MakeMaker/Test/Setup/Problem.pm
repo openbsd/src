@@ -7,6 +7,7 @@ require Exporter;
 use strict;
 use File::Path;
 use File::Basename;
+use MakeMaker::Test::Utils;
 
 my %Files = (
              'Problem-Module/Makefile.PL'   => <<'END',
@@ -37,6 +38,11 @@ sub setup_recurs {
         open(FILE, ">$file") || die "Can't create $file: $!";
         print FILE $text;
         close FILE;
+
+        # ensure file at least 1 second old for makes that assume
+        # files with the same time are out of date.
+        my $time = calibrate_mtime();
+        utime $time, $time - 1, $file;
     }
 
     return 1;

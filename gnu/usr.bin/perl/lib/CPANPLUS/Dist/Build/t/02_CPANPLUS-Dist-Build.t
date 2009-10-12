@@ -15,7 +15,6 @@ use Config;
 use Test::More      'no_plan';
 use File::Basename  qw[basename];
 use Data::Dumper;
-use Config;
 use IPC::Cmd        'can_run';
 
 $SIG{__WARN__} = sub {warn @_ unless @_ && $_[0] =~ /redefined|isn't numeric/};
@@ -28,15 +27,22 @@ use ExtUtils::Installed;
 my $Class   = 'CPANPLUS::Dist::Build';
 my $Utils   = 'CPANPLUS::Internals::Utils';
 my $Have_CC =  can_run($Config{'cc'} )? 1 : 0;
+my $Usedl   = $Config{usedl} ? 1 : 0;
 
 
 my $Lib     = File::Spec->rel2abs(File::Spec->catdir( qw[dummy-perl] ));
 my $Src     = File::Spec->rel2abs(File::Spec->catdir( qw[src] ));
 
 my $Verbose = @ARGV ? 1 : 0;
-my $CB      = CPANPLUS::Backend->new;
-my $Conf    = $CB->configure_object;
+my $Conf    = gimme_conf();
+my $CB      = CPANPLUS::Backend->new( $Conf );
 
+#$Conf->set_conf( base       => 'dummy-cpanplus' );
+#$Conf->set_conf( dist_type  => '' );
+#$Conf->set_conf( verbose    => $Verbose );
+#$Conf->set_conf( signature  => 0 );
+### running tests will mess with the test output so skip 'm
+#$Conf->set_conf( skiptest   => 1 );
 
 ### create a fake object, so we don't use the actual module tree
 ### make sure to add dslip data, so CPANPLUS doesn't try to find
@@ -49,13 +55,6 @@ my $Mod = CPANPLUS::Module::Fake->new(
                 package => 'Foo-Bar-0.01.tar.gz',
                 dslip   => 'RdpO?',
             );
-
-$Conf->set_conf( base       => 'dummy-cpanplus' );
-$Conf->set_conf( dist_type  => '' );
-$Conf->set_conf( verbose    => $Verbose );
-$Conf->set_conf( signature  => 0 );
-### running tests will mess with the test output so skip 'm
-$Conf->set_conf( skiptest   => 1 );
 
 ### dmq tells us that we should run with /nologo
 ### if using nmake, as it's very noise otherwise.
@@ -129,11 +128,14 @@ while( my($path,$need_cc) = each %Map ) {
 
     ### we might not have a C compiler
     SKIP: {
+        skip("Perl wasn't built with support for dynamic loading " .
+             "-- skipping compile tests", 5) unless $Usedl;
         skip("The CC compiler listed in Config.pm is not available " .
              "-- skipping compile tests", 5) if $need_cc && !$Have_CC;
         skip("Module::Build is not compiled with C support ".
              "-- skipping compile tests", 5) 
-             unless Module::Build->_mb_feature('C_support');
+             unless eval { require Module::Build::ConfigData;
+             Module::Build::ConfigData->feature('C_support') };
 
         ok( $mod->create( ),    "Creating module" );
         ok( $mod->status->dist_cpan->status->created,
@@ -194,8 +196,10 @@ while( my($path,$need_cc) = each %Map ) {
 }
 
 ### test ENV setting while running Build.PL code
-{   ### use print() not die() -- we're redirecting STDERR in tests!
-    my $env     = 'ENV_CPANPLUS_IS_EXECUTING';
+SKIP: {   ### use print() not die() -- we're redirecting STDERR in tests!
+    my $env     = ENV_CPANPLUS_IS_EXECUTING;
+    skip("Can't test ENV{$env} -- no buffers available")
+      unless IPC::Cmd->can_capture_buffer;
     my $clone   = $Mod->clone;
     
     ok( $clone,                 'Testing ENV settings $dist->prepare' );
@@ -214,15 +218,15 @@ while( my($path,$need_cc) = each %Map ) {
     ### clear errors    
     CPANPLUS::Error->flush;
 
-    ### since we're die'ing in the Build.PL, do a local *STDERR,
-    ### so we dont spam the result through the test -- this is expected
-    ### behaviour after all.
-    ### also quell the warning for print() on unopened fh...
-    my $rv = do { 
-                local $^W;
-                local *STDERR; 
-                $clone->prepare( force => 1 ) 
-            };
+    ### since we're die'ing in the Build.PL, localize 
+    ### $CPANPLUS::Error::ERROR_FH and redirect to devnull
+    ### so we dont spam the result through the test 
+    ### as this is expected behaviour after all.
+    my $rv = do {
+        local *CPANPLUS::Error::ERROR_FH;
+        open $CPANPLUS::Error::ERROR_FH, ">", File::Spec->devnull;
+        $clone->prepare( force => 1 ) 
+    };
     ok( !$rv,                   '   $mod->prepare failed' );
 
     my $re = quotemeta( $build_pl );

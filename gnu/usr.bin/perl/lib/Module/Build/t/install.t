@@ -2,8 +2,12 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 34;
+use MBTest tests => 36;
 
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
+
+use Config;
 use Cwd ();
 my $cwd = Cwd::cwd;
 my $tmp = MBTest->tmpdir;
@@ -11,13 +15,9 @@ my $tmp = MBTest->tmpdir;
 use DistGen;
 my $dist = DistGen->new( dir => $tmp );
 $dist->regen;
-
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 #########################
-
-use Module::Build;
-use Config;
 
 
 $dist->add_file( 'script', <<'---' );
@@ -225,11 +225,10 @@ Simple Man <simple@example.com>
   is keys %$pms, 0;
 
   # revert to pristine state
-  chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
   $dist->remove;
   $dist = DistGen->new( dir => $tmp );
   $dist->regen;
-  chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+  $dist->chdir_in;
 }
 
 sub strip_volume {
@@ -246,8 +245,4 @@ sub file_exists {
 
 
 # cleanup
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );

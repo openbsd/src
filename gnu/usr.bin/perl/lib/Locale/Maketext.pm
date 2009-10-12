@@ -10,7 +10,7 @@ use I18N::LangTags 0.30 ();
 BEGIN { unless(defined &DEBUG) { *DEBUG = sub () {0} } }
 # define the constant 'DEBUG' at compile-time
 
-$VERSION = '1.12';
+$VERSION = '1.13';
 @ISA = ();
 
 $MATCH_SUPERS = 1;
@@ -189,9 +189,9 @@ sub maketext {
     foreach my $h_r (
         @{  $isa_scan{ref($handle) || $handle} || $handle->_lex_refs  }
     ) {
-        DEBUG and print "* Looking up \"$phrase\" in $h_r\n";
+        DEBUG and warn "* Looking up \"$phrase\" in $h_r\n";
         if(exists $h_r->{$phrase}) {
-            DEBUG and print "  Found \"$phrase\" in $h_r\n";
+            DEBUG and warn "  Found \"$phrase\" in $h_r\n";
             unless(ref($value = $h_r->{$phrase})) {
                 # Nonref means it's not yet compiled.  Compile and replace.
                 $value = $h_r->{$phrase} = $handle->_compile($value);
@@ -200,7 +200,7 @@ sub maketext {
         }
         elsif($phrase !~ m/^_/s and $h_r->{'_AUTO'}) {
             # it's an auto lex, and this is an autoable key!
-            DEBUG and print "  Automaking \"$phrase\" into $h_r\n";
+            DEBUG and warn "  Automaking \"$phrase\" into $h_r\n";
 
             $value = $h_r->{$phrase} = $handle->_compile($phrase);
             last;
@@ -210,9 +210,9 @@ sub maketext {
     }
 
     unless(defined($value)) {
-        DEBUG and print "! Lookup of \"$phrase\" in/under ", ref($handle) || $handle, " fails.\n";
+        DEBUG and warn "! Lookup of \"$phrase\" in/under ", ref($handle) || $handle, " fails.\n";
         if(ref($handle) and $handle->{'fail'}) {
-            DEBUG and print "WARNING0: maketext fails looking for <$phrase>\n";
+            DEBUG and warn "WARNING0: maketext fails looking for <$phrase>\n";
             my $fail;
             if(ref($fail = $handle->{'fail'}) eq 'CODE') { # it's a sub reference
                 return &{$fail}($handle, $phrase, @_);
@@ -264,7 +264,7 @@ sub get_handle {  # This is a constructor and, yes, it CAN FAIL.
     # Complain if they use __PACKAGE__ as a project base class?
 
     if( @languages ) {
-        DEBUG and print 'Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
+        DEBUG and warn 'Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
         if($USING_LANGUAGE_TAGS) {   # An explicit language-list was given!
             @languages =
             map {; $_, I18N::LangTags::alternate_language_tags($_) }
@@ -274,7 +274,7 @@ sub get_handle {  # This is a constructor and, yes, it CAN FAIL.
             # If it's a locale ID, try converting to a lg tag (untainted),
             # otherwise nix it.
             @languages;
-            DEBUG and print 'Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
+            DEBUG and warn 'Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
         }
     }
     else {
@@ -302,19 +302,19 @@ sub _langtag_munging {
     # We have all these DEBUG statements because otherwise it's hard as hell
     # to diagnose ifwhen something goes wrong.
 
-    DEBUG and print 'Lgs1: ', map("<$_>", @languages), "\n";
+    DEBUG and warn 'Lgs1: ', map("<$_>", @languages), "\n";
 
     if($USING_LANGUAGE_TAGS) {
-        DEBUG and print 'Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
+        DEBUG and warn 'Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
         @languages     = $base_class->_add_supers( @languages );
 
         push @languages, I18N::LangTags::panic_languages(@languages);
-        DEBUG and print "After adding panic languages:\n",
+        DEBUG and warn "After adding panic languages:\n",
         ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
 
         push @languages, $base_class->fallback_languages;
         # You are free to override fallback_languages to return empty-list!
-        DEBUG and print 'Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
+        DEBUG and warn 'Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
 
         @languages =  # final bit of processing to turn them into classname things
         map {
@@ -324,21 +324,21 @@ sub _langtag_munging {
             $it;
         } @languages
         ;
-        DEBUG and print "Nearing end of munging:\n",
+        DEBUG and warn "Nearing end of munging:\n",
         ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
     }
     else {
-        DEBUG and print "Bypassing language-tags.\n",
+        DEBUG and warn "Bypassing language-tags.\n",
         ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
     }
 
-    DEBUG and print "Before adding fallback classes:\n",
+    DEBUG and warn "Before adding fallback classes:\n",
     ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
 
     push @languages, $base_class->fallback_language_classes;
     # You are free to override that to return whatever.
 
-    DEBUG and print "Finally:\n",
+    DEBUG and warn "Finally:\n",
     ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
 
     return @languages;
@@ -358,23 +358,23 @@ sub _add_supers {
 
     if (!$MATCH_SUPERS) {
         # Nothing
-        DEBUG and print "Bypassing any super-matching.\n",
+        DEBUG and warn "Bypassing any super-matching.\n",
         ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
 
     }
     elsif( $MATCH_SUPERS_TIGHTLY ) {
-        DEBUG and print "Before adding new supers tightly:\n",
+        DEBUG and warn "Before adding new supers tightly:\n",
         ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
         @languages = I18N::LangTags::implicate_supers( @languages );
-        DEBUG and print "After adding new supers tightly:\n",
+        DEBUG and warn "After adding new supers tightly:\n",
         ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
 
     }
     else {
-        DEBUG and print "Before adding supers to end:\n",
+        DEBUG and warn "Before adding supers to end:\n",
         ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
         @languages = I18N::LangTags::implicate_supers_strictly( @languages );
-        DEBUG and print "After adding supers to end:\n",
+        DEBUG and warn "After adding supers to end:\n",
         ' Lgs@', __LINE__, ': ', map("<$_>", @languages), "\n";
     }
 
@@ -405,17 +405,17 @@ sub _try_use {   # Basically a wrapper around "require Modulename"
         # weird case: we never use'd it, but there it is!
     }
 
-    DEBUG and print " About to use $module ...\n";
+    DEBUG and warn " About to use $module ...\n";
     {
         local $SIG{'__DIE__'};
         eval "require $module"; # used to be "use $module", but no point in that.
     }
     if($@) {
-        DEBUG and print "Error using $module \: $@\n";
+        DEBUG and warn "Error using $module \: $@\n";
         return $tried{$module} = 0;
     }
     else {
-        DEBUG and print " OK, $module is used\n";
+        DEBUG and warn " OK, $module is used\n";
         return $tried{$module} = 1;
     }
 }
@@ -427,7 +427,7 @@ sub _lex_refs {  # report the lexicon references for this handle's class
     no strict 'refs';
     no warnings 'once';
     my $class = ref($_[0]) || $_[0];
-    DEBUG and print "Lex refs lookup on $class\n";
+    DEBUG and warn "Lex refs lookup on $class\n";
     return $isa_scan{$class} if exists $isa_scan{$class};  # memoization!
 
     my @lex_refs;
@@ -435,14 +435,14 @@ sub _lex_refs {  # report the lexicon references for this handle's class
 
     if( defined( *{$class . '::Lexicon'}{'HASH'} )) {
         push @lex_refs, *{$class . '::Lexicon'}{'HASH'};
-        DEBUG and print '%' . $class . '::Lexicon contains ',
+        DEBUG and warn '%' . $class . '::Lexicon contains ',
             scalar(keys %{$class . '::Lexicon'}), " entries\n";
     }
 
     # Implements depth(height?)-first recursive searching of superclasses.
     # In hindsight, I suppose I could have just used Class::ISA!
     foreach my $superclass (@{$class . '::ISA'}) {
-        DEBUG and print " Super-class search into $superclass\n";
+        DEBUG and warn " Super-class search into $superclass\n";
         next if $seen_r->{$superclass}++;
         push @lex_refs, @{&_lex_refs($superclass, $seen_r)};  # call myself
     }

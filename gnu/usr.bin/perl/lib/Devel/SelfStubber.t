@@ -48,7 +48,7 @@ close FH;
   push @cleanup, $file;
   open FH, ">$file" or die $!;
   select FH;
-  Devel::SelfStubber->stub('Child', $inlib);
+  Devel::SelfStubber->stub('xChild', $inlib);
   select STDOUT;
   print "ok 1\n";
   close FH or die $!;
@@ -56,7 +56,7 @@ close FH;
   open FH, $file or die $!;
   my @A = <FH>;
 
-  if (@A == 1 && $A[0] =~ /^\s*sub\s+Child::foo\s*;\s*$/) {
+  if (@A == 1 && $A[0] =~ /^\s*sub\s+xChild::foo\s*;\s*$/) {
     print "ok 2\n";
   } else {
     print "not ok 2\n";
@@ -112,14 +112,14 @@ close FH;
 }
 
 # "wrong" and "right" may change if SelfLoader is changed.
-my %wrong = ( Parent => 'Parent', Child => 'Parent' );
-my %right = ( Parent => 'Parent', Child => 'Child' );
+my %wrong = ( xParent => 'xParent', xChild => 'xParent' );
+my %right = ( xParent => 'xParent', xChild => 'xChild' );
 if ($^O eq 'VMS') {
     # extra line feeds for MBX IPC
-    %wrong = ( Parent => "Parent\n", Child => "Parent\n" );
-    %right = ( Parent => "Parent\n", Child => "Child\n" );
+    %wrong = ( xParent => "xParent\n", xChild => "xParent\n" );
+    %right = ( xParent => "xParent\n", xChild => "xChild\n" );
 }
-my @module = qw(Parent Child)
+my @module = qw(xParent xChild)
 ;
 sub fail {
   my ($left, $right) = @_;
@@ -225,18 +225,18 @@ if (/Did the documentation here survive\?/) {
 }
 
 __DATA__
-################ Parent.pm
-package Parent;
+################ xParent.pm
+package xParent;
 
 sub foo {
   return __PACKAGE__;
 }
 1;
 __END__
-################ Child.pm
-package Child;
-require Parent;
-@ISA = 'Parent';
+################ xChild.pm
+package xChild;
+require xParent;
+@ISA = 'xParent';
 use SelfLoader;
 
 1;

@@ -2,10 +2,11 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 2;
+use MBTest tests => 4;
 
-use Cwd ();
-my $cwd = Cwd::cwd;
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
+
 my $tmp = MBTest->tmpdir;
 
 use DistGen;
@@ -13,8 +14,6 @@ my $dist = DistGen->new( dir => $tmp );
 $dist->regen;
 
 #########################
-
-use Module::Build;
 
 my @mod = split( /::/, $dist->name );
 my $file = File::Spec->catfile( $dist->dirname, 'lib', @mod ) . '.pm';
@@ -25,6 +24,3 @@ ok( Module::Build->compare_versions( '1.01_01', '>', '1.01' ), 'compare: 1.0_01 
 
 # cleanup
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );

@@ -2,13 +2,13 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 18;
+use MBTest tests => 20;
 
-use Cwd ();
-my $cwd = Cwd::cwd;
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
+
 my $tmp = MBTest->tmpdir;
 
-use Module::Build;
 use Module::Build::ConfigData;
 use DistGen;
 
@@ -22,7 +22,7 @@ SKIP: {
   my $dist = DistGen->new( dir => $tmp, skip_manifest => 1 );
   $dist->regen;
 
-  chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+  $dist->chdir_in;
 
   ok ! -e 'MANIFEST';
 
@@ -36,7 +36,6 @@ SKIP: {
 
   ok -e 'META.yml';
 
-  chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
   $dist->remove;
 }
 
@@ -74,7 +73,7 @@ $dist->change_build_pl
 });
 $dist->regen;
 
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 
 # .pm File with pod
@@ -143,8 +142,4 @@ is( $mb->dist_abstract, "A simple module",
 
 ############################################################
 # cleanup
-chdir( $cwd ) or die "Can't chdir to '$cwd': $!";
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );

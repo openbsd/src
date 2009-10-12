@@ -37,6 +37,11 @@ for my $type ( CPANPLUS::Module->accessors() ) {
 ### search for authors ###
 my $auth = $Mod->author;
 for my $type ( CPANPLUS::Module::Author->accessors() ) {
+    
+    ### don't muck around with references/objects
+    ### or private identifiers
+    next if ref $auth->$type() or $type =~/^_/;
+
     my @aref = $CB->search(
                     type    => $type,
                     allow   => [$auth->$type()],

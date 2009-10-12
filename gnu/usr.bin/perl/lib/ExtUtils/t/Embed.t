@@ -105,10 +105,8 @@ if ($^O eq 'VMS') {
         s!-bE:(\S+)!-bE:$perl_exp!;
     }
    }
-   elsif ($^O eq 'cygwin') { # Cygwin needs the shared libperl copied
-     my $v_e_r_s = $Config{version};
-     $v_e_r_s =~ tr/./_/;
-     system("cp ../cygperl$v_e_r_s.dll ./");    # for test 1
+   elsif ($^O eq 'cygwin') { # Cygwin needs no special treatment like below
+       ;
    }
    elsif ($Config{'libperl'} !~ /\Alibperl\./) {
      # Everyone needs libperl copied if it's not found by '-lperl'.
@@ -137,7 +135,7 @@ print "# $_\n" foreach @out;
 
 if ($^O eq 'VMS' && !$status) {
   print "# @cmd2\n";
-  $status = system(join(' ',@cmd2)); 
+  $status = system(join(' ',@cmd2));
 }
 print (($status? 'not ': '')."ok 1\n");
 
@@ -163,7 +161,7 @@ __END__
 
 #define my_puts(a) if(puts(a) < 0) exit(666)
 
-static char *cmds[] = { "perl","-e", "$|=1; print qq[ok 5\\n]", NULL };
+static const char * cmds [] = { "perl", "-e", "$|=1; print qq[ok 5\\n]", NULL };
 
 #ifdef PERL_GLOBAL_STRUCT_PRIVATE
 static struct perl_vars *my_plvarsp;
@@ -171,12 +169,11 @@ struct perl_vars* Perl_GetVarsPrivate(void) { return my_plvarsp; }
 #endif
 
 #ifdef NO_ENV_ARRAY_IN_MAIN
-extern char **environ;
-int main(int argc, char **argv)
+int main(int argc, char **argv) {
+    char **env;
 #else
-int main(int argc, char **argv, char **env)
+int main(int argc, char **argv, char **env) {
 #endif
-{
     PerlInterpreter *my_perl;
 #ifdef PERL_GLOBAL_STRUCT
     dVAR;
@@ -188,11 +185,7 @@ int main(int argc, char **argv, char **env)
 
     (void)argc; /* PERL_SYS_INIT3 may #define away their use */
     (void)argv;
-#ifdef NO_ENV_ARRAY_IN_MAIN
-    PERL_SYS_INIT3(&argc,&argv,&environ);
-#else
-    PERL_SYS_INIT3(&argc,&argv,&env);
-#endif
+    PERL_SYS_INIT3(&argc, &argv, &env);
 
     my_perl = perl_alloc();
 
@@ -202,11 +195,7 @@ int main(int argc, char **argv, char **env)
 
     my_puts("ok 3");
 
-#ifdef NO_ENV_ARRAY_IN_MAIN
-    perl_parse(my_perl, NULL, (sizeof(cmds)/sizeof(char *))-1, cmds, environ);
-#else
-    perl_parse(my_perl, NULL, (sizeof(cmds)/sizeof(char *))-1, cmds, env);
-#endif
+    perl_parse(my_perl, NULL, (sizeof(cmds)/sizeof(char *))-1, (char **)cmds, env);
 
     my_puts("ok 4");
 

@@ -7,7 +7,7 @@ other interesting bits.
 .ie n .SH "This ""is"" a ""level 1"" heading"
 .el .SH "This \f(CWis\fP a ``level 1'' heading"
 .IX Header "This is a level 1 heading"
-.Sh "``Level'' ""2 \fIheading\fP"
+.SS "``Level'' ""2 \fIheading\fP"
 .IX Subsection "``Level'' ""2 heading"
 \fILevel 3 \f(BIheading \f(BIwith \f(CB\*(C`weird \f(CBstuff "" (double quote)\f(CB\*(C'\f(BI\f(BI\fI\fR
 .IX Subsection "Level 3 heading with weird stuff """" (double quote)"
@@ -20,7 +20,7 @@ Now try again with \fBintermixed\fR \fItext\fR.
 .el .SH "This \f(CWis\fP a ``level 1'' heading"
 .IX Header "This is a level 1 heading"
 Text.
-.Sh "``Level'' 2 \fIheading\fP"
+.SS "``Level'' 2 \fIheading\fP"
 .IX Subsection "``Level'' 2 heading"
 Text.
 .PP

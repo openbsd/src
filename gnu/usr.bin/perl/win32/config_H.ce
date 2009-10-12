@@ -636,6 +636,12 @@
  */
 #define	I_ARPA_INET		/**/
 
+/* I_ASSERT:
+ *	This symbol, if defined, indicates to the C program that it could
+ *	include <assert.h> to get the assert() macro.
+ */
+#define	I_ASSERT		/**/
+
 /* I_DBM:
  *	This symbol, if defined, indicates that <dbm.h> exists and should
  *	be included.
@@ -3242,7 +3248,13 @@
  *	This symbol contains the number of bits a variable of type NVTYPE
  *	can preserve of a variable of type UVTYPE.
  */
-/* NV_ZERO_IS_ALLBITS_ZERO:
+/* NV_OVERFLOWS_INTEGERS_AT
+ *	This symbol gives the largest integer value that NVs can hold. This
+ *	value + 1.0 cannot be stored accurately. It is expressed as constant
+ *	floating point expression to reduce the chance of decimale/binary
+ *	conversion issues. If it can not be determined, the value 0 is given.
+ */
+/* NV_ZERO_IS_ALLBITS_ZERO
  *	This symbol, if defined, indicates that a variable of type NVTYPE
  *	stores 0.0 in memory as all bits zero.
  */
@@ -3274,6 +3286,7 @@
 #define	NVSIZE		8		/**/
 #define	NV_PRESERVES_UV
 #define	NV_PRESERVES_UV_BITS	undef
+#define	NV_OVERFLOWS_INTEGERS_AT	256.0*256.0*256.0*256.0*256.0*256.0*2.0*2.0*2.0*2.0*2.0
 #undef	NV_ZERO_IS_ALLBITS_ZERO
 #if UVSIZE == 8
 #   ifdef BYTEORDER
@@ -3348,7 +3361,7 @@
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
 #define PRIVLIB "\\Storage Card\\perl58m\\lib"		/**/
-#define PRIVLIB_EXP (win32_get_privlib("5.10.0"))	/**/
+#define PRIVLIB_EXP (win32_get_privlib("5.10.1"))	/**/
 
 /* PTRSIZE:
  *	This symbol contains the size of a pointer, so that the C preprocessor
@@ -3479,7 +3492,7 @@
  *	be tacked onto this variable to generate a list of directories to search.
  */
 #define SITELIB "\\Storage Card\\perl58m\\site\\lib"		/**/
-#define SITELIB_EXP (win32_get_sitelib("5.10.0"))	/**/
+#define SITELIB_EXP (win32_get_sitelib("5.10.1"))	/**/
 #define SITELIB_STEM ""		/**/
 
 /* Size_t_size:
@@ -3657,6 +3670,12 @@
 #endif
 /*#define	OLD_PTHREADS_API		/**/
 /*#define	USE_REENTRANT_API	/**/
+
+/* USE_DTRACE
+ *	This symbol, if defined, indicates that Perl should
+ *	be built with support for DTrace.
+ */
+/*#define USE_DTRACE			/ **/
 
 /* PERL_VENDORARCH:
  *	If defined, this symbol contains the name of a private library.

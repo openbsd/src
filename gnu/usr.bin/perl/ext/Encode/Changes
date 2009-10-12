@@ -1,8 +1,149 @@
 # Revision history for Perl extension Encode.
 #
-# $Id: Changes,v 2.23 2007/05/29 18:15:32 dankogai Exp dankogai $
-#
-$Revision: 2.23 $ $Date: 2007/05/29 18:15:32 $
+# $Id: Changes,v 2.35 2009/07/13 02:06:30 dankogai Exp dankogai $
+$Revision: 2.35 $ $Date: 2009/07/13 02:06:30 $
+! lib/Encode/MIME/Header.pm
+  Addressed RT #40027:
+   decode of MIME-Header removes too much whitespace
+  http://rt.cpan.org/Ticket/Display.html?id=40027
+  http://rt.cpan.org/Ticket/Display.html?id=42902
+! t/piconv.t
+  Addressed by CSJEWELL: t/piconv.t loops infinitely on Win32
+  http://rt.cpan.org/Ticket/Display.html?id=47760
+
+2.34 2009/07/08 13:34:15
+! bin/piconv
+  duplicate-BOM problem now fixed.
+  Message-Id: <10ECB9B7-006E-4570-9EB6-51C49F04ADCF@dan.co.jp>
+! bin/piconv
++ t/piconv.t
+  patches and tests by SREZIC
+  Message-Id: <4A5366DA.8050801@iconmobile.com>
+! Makefile.PL
+  man* removed on behalf of blead
+  Message-Id: <20090326135219.GU18164@plum.flirble.org>
+
+2.33 2009/03/25 07:55:57
+! lib/Encode/MIME/Header.pm
+  Decontaminated $& which sneaked in on 2.31.
+  Message-Id: <67FC9F3A39C746DA95AAB6BB01539099@robmhp>
+  Message-Id: <693254b90903242352x2dc26ba6p5e68deb871fa88ae@mail.gmail.com>
+  http://coderepos.org/share/changeset/31542
+
+2.32 2009/03/07 07:32:37
+! lib/Encode/Alias.pm t/Alias.t
+  Encode now resolves 'en_US.UTF-8' to utf-8-strict like 'ja_JP.euc'
+  Those who set locale on their shells should be happier now.
+! AUTHORS
+  added tokuhirom
+! Encode.pm
+  "encode(undef, 'str') should die earlier"
+  http://coderepos.org/share/changeset/30790
+
+2.31 2009/02/16 06:18:09
+! lib/Encode/MIME/Header.pm
+  "Revert [29767] and [29771] since it breaks perl 5.8" by miyagawa
+  http://coderepos.org/share/changeset/30111
+
+2.30 2009/02/15 17:44:13
+! encoding.pm
+  fixed regexes, et cetera. by drry
+  http://coderepos.org/share/changeset/29767
+! lib/Encode/MIME/Header.pm
+  Addressed: Encode::MIME::Header::decode should respect CHECK
+  http://rt.cpan.org/Ticket/Display.html?id=43204
+  http://coderepos.org/share/changeset/29767
+
+2.29 2009/02/01 13:14:37
+! Encode.pm
+  VERSION++ just to make PAUSE happy
+  Message-Id: <877i4anwwt.fsf@k75.linux.bogus>
+
+2.28 Date: 2009/02/01 12:30:18
+! Unicode/Unicode.xs
+  Latest refactoring broke the backward compatibility 
+  w/ Perl 5.8.6 and before now restored
+  Message-Id: <1233185156.DABa130.74940@basic2.hostingcompartido.com>
+  Message-Id: <693254b90902010027x277a5d0fm4f5700ba2f276239@mail.gmail.com>
+! lib/Encode/MIME/Header.pm
+  Addressed: Split header lines are joined incorrectly
+  http://rt.cpan.org/Ticket/Display.html?id=42902
+
+2.27 2009/01/21 22:55:07
+! lib/Encode/MIME/Header.pm t/mime-header.t
+  Addressed: Encode::MIME::Header MIME-Q encoding truncates 
+    trailing zeros in some circumstances
+  http://rt.cpan.org/Ticket/Display.html?id=42627
+! lib/Encode/Alias.pm
+  Added alias: unicode-1-1-utf-7
+  http://rt.cpan.org/Ticket/Display.html?id=38558  
+! Encode.pm
+  Documented: _utf8_on() does not work for tainted values
+  http://rt.cpan.org/Ticket/Display.html?id=41163
+! bin/enc2xs
+  s[oss.software.ibm.com/icu][www.icu-project.org]g
+  http://rt.cpan.org/Ticket/Display.html?id=40245
+! lib/Encode/Guess.pm t/guess.t
+  Addressed:Empty file should produce an error message
+  http://rt.cpan.org/Ticket/Display.html?id=38652
+! Unicode/Unicode.xs AUTHORS
+  Refactored by Alex Davies
+  http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2007-10/msg00745.html
+  Message-Id: <7637669B2E3D46B187591747DA27F4C8@Amelie>
+
+2.26 2008/07/01 20:56:17
+! Encode.pm
+  Absense of Encode::ConfigLocal no longer carps no matter what.
+  http://bugzilla.redhat.com/show_bug.cgi?id=435505#c2
+  http://rt.cpan.org/Ticket/Display.html?id=28638
+  http://rt.cpan.org/Ticket/Display.html?id=11511
+! lib/Encode/JIS7.pm
+  use encoding 'utf8' and 'iso-2022-jp' glitches on perl 5.10
+  Thanks, MIYAGAWA
+  Message-Id: <693254b90807011224h3ab50d76v50c6fea87baf223c@mail.gmail.com>
+! lib/Encode/Alias.pm t/Aliases.t
+  macintosh' not recognize as MacRoman
+  http://rt.cpan.org/Ticket/Display.html?id=36326
+! Makefile.PL
+  s{INC => "-I./Encode"}
+   {INC         => '-I' . File::Spec->catfile( '.', 'Encode' )}
+  To prevent some platforms from forgetting to include Encode/encode.h.  
+  http://rt.cpan.org/Ticket/Display.html?id=36348
+
+2.25 2008/05/07 20:56:05
+! Encode.pm
+  added ':default' to Exporter option.
+! lib/Encode/GSM0338.pm
+  GSM0338 now handles coderef in CHECK
+  http://rt.cpan.org/Ticket/Display.html?id=31335
+! Makefile.PL
+  Perl 5.10/Encode 2.24: Tiny typo in Encode's Makefile.PL arg processing
+  Message-Id: <961C2A4F-92B3-416D-A9F9-E7B0ADA9F134@fsck.com>
+! lib/Encode/Alias.pm
+  "This fix for Encode::Alias should make Solaris happy:"
+  Message-ID: <47D886D9.6060001@iki.fi>
+
+2.24 2008/03/12 09:51:11
+! lib/Encode/Config.pm
+  adds and  fixes also adds cp858 support.
+! Encode.pm encoding.pm lib/Encode/Alias.pm ucm/cp858.ucm
+  Merged perl@33486.
+  > Change 33486 by rgs@scipion on 2008/03/12 08:50:11
+    An unfortunate side-effect of Encode and Encode::Alias use'ing each
+    other, and Encode::Alias exporting functions into Encode for it to use
+    as methods, broke the loading of the find_alias() Encode method in some
+    cases since 5.10. Breaking the recursive inheritance fixes it.
+  Message-Id: <b77c1dce0803120151o4166c3a0gfcfd14681ab7e10d@mail.gmail.com>
+! Encode.pm
+  POD fix by tels
+  Message-Id: <200711281835.36125@bloodgate.com>
+! bin/ucmlint
+  Fix by MIYAGAWA via CodeRepos
+  http://coderepos.org/share/changeset/1791
+! encoding.pm t/mime_header_iso2022jp.t
+  ported back from Perl 5.10-RC1
+
+2.23 2007/05/29 18:15:32
 ! Encode.xs
   got rid of global fallback_cb; encode_method() now takes one more
   argument which is a coderef to fallback.  This should make

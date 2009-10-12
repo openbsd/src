@@ -1,3 +1,12 @@
+#!./perl
+
+# DAPM: this description is from the original commit message:
+# this appears to be a HP leak detection thing:
+#
+#    Add a script for cleaning out the "known noise"
+#    from Third Degree reports: either noise caused
+#    by libc itself, or Perl_yyparse leaks.
+
 local $/;
 $_ = <ARGV>;
 

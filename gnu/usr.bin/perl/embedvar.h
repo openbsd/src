@@ -3,7 +3,7 @@
  *    embedvar.h
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -75,6 +75,7 @@
 #define PL_body_arenas		(vTHX->Ibody_arenas)
 #define PL_body_roots		(vTHX->Ibody_roots)
 #define PL_bodytarget		(vTHX->Ibodytarget)
+#define PL_breakable_sub_gen	(vTHX->Ibreakable_sub_gen)
 #define PL_checkav		(vTHX->Icheckav)
 #define PL_checkav_save		(vTHX->Icheckav_save)
 #define PL_chopset		(vTHX->Ichopset)
@@ -248,6 +249,7 @@
 #define PL_regex_pad		(vTHX->Iregex_pad)
 #define PL_regex_padav		(vTHX->Iregex_padav)
 #define PL_reginterp_cnt	(vTHX->Ireginterp_cnt)
+#define PL_registered_mros	(vTHX->Iregistered_mros)
 #define PL_regmatch_slab	(vTHX->Iregmatch_slab)
 #define PL_regmatch_state	(vTHX->Iregmatch_state)
 #define PL_rehash_seed		(vTHX->Irehash_seed)
@@ -301,6 +303,7 @@
 #define PL_sv_no		(vTHX->Isv_no)
 #define PL_sv_objcount		(vTHX->Isv_objcount)
 #define PL_sv_root		(vTHX->Isv_root)
+#define PL_sv_serial		(vTHX->Isv_serial)
 #define PL_sv_undef		(vTHX->Isv_undef)
 #define PL_sv_yes		(vTHX->Isv_yes)
 #define PL_sys_intern		(vTHX->Isys_intern)
@@ -387,6 +390,7 @@
 #define PL_Ibody_arenas		PL_body_arenas
 #define PL_Ibody_roots		PL_body_roots
 #define PL_Ibodytarget		PL_bodytarget
+#define PL_Ibreakable_sub_gen	PL_breakable_sub_gen
 #define PL_Icheckav		PL_checkav
 #define PL_Icheckav_save	PL_checkav_save
 #define PL_Ichopset		PL_chopset
@@ -560,6 +564,7 @@
 #define PL_Iregex_pad		PL_regex_pad
 #define PL_Iregex_padav		PL_regex_padav
 #define PL_Ireginterp_cnt	PL_reginterp_cnt
+#define PL_Iregistered_mros	PL_registered_mros
 #define PL_Iregmatch_slab	PL_regmatch_slab
 #define PL_Iregmatch_state	PL_regmatch_state
 #define PL_Irehash_seed		PL_rehash_seed
@@ -613,6 +618,7 @@
 #define PL_Isv_no		PL_sv_no
 #define PL_Isv_objcount		PL_sv_objcount
 #define PL_Isv_root		PL_sv_root
+#define PL_Isv_serial		PL_sv_serial
 #define PL_Isv_undef		PL_sv_undef
 #define PL_Isv_yes		PL_sv_yes
 #define PL_Isys_intern		PL_sys_intern

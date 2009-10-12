@@ -4,10 +4,13 @@ package re;
 use strict;
 use warnings;
 
-our $VERSION     = "0.08";
+our $VERSION     = "0.09";
 our @ISA         = qw(Exporter);
-our @EXPORT_OK   = qw(is_regexp regexp_pattern regmust 
-                      regname regnames regnames_count);
+my @XS_FUNCTIONS = qw(regmust);
+my %XS_FUNCTIONS = map { $_ => 1 } @XS_FUNCTIONS;
+our @EXPORT_OK   = (@XS_FUNCTIONS,
+                    qw(is_regexp regexp_pattern
+                       regname regnames regnames_count));
 our %EXPORT_OK = map { $_ => 1 } @EXPORT_OK;
 
 # *** WARNING *** WARNING *** WARNING *** WARNING *** WARNING ***
@@ -142,8 +145,15 @@ sub bits {
 	    last;
         } elsif (exists $bitmask{$s}) {
 	    $bits |= $bitmask{$s};
+        } elsif ($XS_FUNCTIONS{$s}) {
+            _do_install();
+            if (! $installed) {
+                require Carp;
+                Carp::croak("\"re\" function '$s' not available");
+            }
+            require Exporter;
+            re->export_to_level(2, 're', $s);
 	} elsif ($EXPORT_OK{$s}) {
-	    _do_install();
 	    require Exporter;
 	    re->export_to_level(2, 're', $s);
 	} else {

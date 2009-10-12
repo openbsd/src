@@ -2,7 +2,10 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest 'no_plan';#tests => 0;
+use MBTest tests => 25;
+
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
 
 use Cwd ();
 use File::Path ();
@@ -30,8 +33,6 @@ my $restart = sub {
 };
 
 chdir($dist->dirname) or die "Can't chdir to '@{[$dist->dirname]}': $!";
-
-use_ok 'Module::Build';
 
 ########################################################################
 { # check the =item style

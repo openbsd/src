@@ -11,7 +11,7 @@
 # Version 1.01 $Revision: 1.18 $ $Date: 2001/06/24 17:16:47 $
 
 package Memoize;
-$VERSION = '1.01_02';
+$VERSION = '1.01_03';
 
 # Compile-time constants
 sub SCALAR () { 0 } 
@@ -1003,11 +1003,10 @@ memoization and about the internals of Memoize that appeared in The
 Perl Journal, issue #13.  (This article is also included in the
 Memoize distribution as `article.html'.)
 
-My upcoming book will discuss memoization (and many other fascinating
-topics) in tremendous detail.  It will be published by Morgan Kaufmann
-in 2002, possibly under the title I<Perl Advanced Techniques
-Handbook>.  It will also be available on-line for free.  For more
-information, visit http://perl.plover.com/book/ .
+The author's book I<Higher Order Perl> (2005, ISBN 1558607013, published
+by Morgan Kaufmann) discusses memoization (and many other fascinating
+topics) in tremendous detail. It will also be available on-line for free.
+For more information, visit http://perl.plover.com/book/ .
 
 To join a mailing list for announcements about C<Memoize>, send an
 empty message to C<mjd-perl-memoize-request@plover.com>.  This mailing

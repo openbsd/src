@@ -1,8 +1,8 @@
-# Blocks-5.0.0.txt
-# Date: 2006-02-15, 15:40:00 [KW]
+# Blocks-5.1.0.txt
+# Date: 2008-03-20, 17:41:00 PDT [KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2006 Unicode, Inc.
+# Copyright (c) 1991-2008 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 #
@@ -78,6 +78,9 @@
 19E0..19FF; Khmer Symbols
 1A00..1A1F; Buginese
 1B00..1B7F; Balinese
+1B80..1BBF; Sundanese
+1C00..1C4F; Lepcha
+1C50..1C7F; Ol Chiki
 1D00..1D7F; Phonetic Extensions
 1D80..1DBF; Phonetic Extensions Supplement
 1DC0..1DFF; Combining Diacritical Marks Supplement
@@ -113,6 +116,7 @@
 2D00..2D2F; Georgian Supplement
 2D30..2D7F; Tifinagh
 2D80..2DDF; Ethiopic Extended
+2DE0..2DFF; Cyrillic Extended-A
 2E00..2E7F; Supplemental Punctuation
 2E80..2EFF; CJK Radicals Supplement
 2F00..2FDF; Kangxi Radicals
@@ -133,10 +137,16 @@
 4E00..9FFF; CJK Unified Ideographs
 A000..A48F; Yi Syllables
 A490..A4CF; Yi Radicals
+A500..A63F; Vai
+A640..A69F; Cyrillic Extended-B
 A700..A71F; Modifier Tone Letters
 A720..A7FF; Latin Extended-D
 A800..A82F; Syloti Nagri
 A840..A87F; Phags-pa
+A880..A8DF; Saurashtra
+A900..A92F; Kayah Li
+A930..A95F; Rejang
+AA00..AA5F; Cham
 AC00..D7AF; Hangul Syllables
 D800..DB7F; High Surrogates
 DB80..DBFF; High Private Use Surrogates
@@ -157,6 +167,10 @@ FFF0..FFFF; Specials
 10080..100FF; Linear B Ideograms
 10100..1013F; Aegean Numbers
 10140..1018F; Ancient Greek Numbers
+10190..101CF; Ancient Symbols
+101D0..101FF; Phaistos Disc
+10280..1029F; Lycian
+102A0..102DF; Carian
 10300..1032F; Old Italic
 10330..1034F; Gothic
 10380..1039F; Ugaritic
@@ -166,6 +180,7 @@ FFF0..FFFF; Specials
 10480..104AF; Osmanya
 10800..1083F; Cypriot Syllabary
 10900..1091F; Phoenician
+10920..1093F; Lydian
 10A00..10A5F; Kharoshthi
 12000..123FF; Cuneiform
 12400..1247F; Cuneiform Numbers and Punctuation
@@ -175,6 +190,8 @@ FFF0..FFFF; Specials
 1D300..1D35F; Tai Xuan Jing Symbols
 1D360..1D37F; Counting Rod Numerals
 1D400..1D7FF; Mathematical Alphanumeric Symbols
+1F000..1F02F; Mahjong Tiles
+1F030..1F09F; Domino Tiles
 20000..2A6DF; CJK Unified Ideographs Extension B
 2F800..2FA1F; CJK Compatibility Ideographs Supplement
 E0000..E007F; Tags

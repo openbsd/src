@@ -387,16 +387,16 @@ Perl recognizes the following POSIX character classes:
  alpha  Any alphabetical character.
  alnum  Any alphanumerical character.
  ascii  Any ASCII character.
- blank  A GNU extension, equal to a space or a horizontal tab (C<\t>).
+ blank  A GNU extension, equal to a space or a horizontal tab ("\t").
  cntrl  Any control character.
- digit  Any digit, equivalent to C<\d>.
+ digit  Any digit, equivalent to "\d".
  graph  Any printable character, excluding a space.
  lower  Any lowercase character.
  print  Any printable character, including a space.
  punct  Any punctuation character.
- space  Any white space character. C<\s> plus the vertical tab (C<\cK>).
+ space  Any white space character. "\s" plus the vertical tab ("\cK").
  upper  Any uppercase character.
- word   Any "word" character, equivalent to C<\w>.
+ word   Any "word" character, equivalent to "\w".
  xdigit Any hexadecimal digit, '0' - '9', 'a' - 'f', 'A' - 'F'.
 
 The exact set of characters matched depends on whether the source string
@@ -471,7 +471,7 @@ Some examples:
 
 Perl will recognize the POSIX character classes C<[=class=]>, and
 C<[.class.]>, but does not (yet?) support this construct. Use of
-such a constructs will lead to an error.
+such a construct will lead to an error.
 
 
 =head4 Examples

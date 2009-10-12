@@ -50,17 +50,6 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 0.60
-
-
-	- Re-re-re-fixed NEXT::UNSEEN bug under diamond inheritance 
-	  (Note to self: don't code whilst on vacation!)
-
-	- Implemented and documented EVERY functionality
-
-
-==============================================================================
-
 AVAILABILITY
 
 NEXT has been uploaded to the CPAN

@@ -104,7 +104,7 @@ There is no equivalent to C<fgets>; one should use C<sv_gets> instead:
     p = realloc(p, n)           	Renew(p, n, t)
     memcpy(dst, src, n)         	Copy(src, dst, n, t)
     memmove(dst, src, n)        	Move(src, dst, n, t)
-    memcpy/*(struct foo *)      	StructCopy(src, dst, t)
+    memcpy(dst, src, sizeof(t))		StructCopy(src, dst, t)
     memset(dst, 0, n * sizeof(t))	Zero(dst, n, t)
     memzero(dst, 0)			Zero(dst, n, char)
     free(p)             	        Safefree(p)
@@ -176,9 +176,9 @@ table, C<c> is a C<char>, and C<u> is a Unicode codepoint.
 
     atof(s)                     Atof(s)
     atol(s)                     Atol(s)
-    strtod(s, *p)               Nothing.  Just don't use it.
-    strtol(s, *p, n)            Strtol(s, *p, n)
-    strtoul(s, *p, n)           Strtoul(s, *p, n)
+    strtod(s, &p)               Nothing.  Just don't use it.
+    strtol(s, &p, n)            Strtol(s, &p, n)
+    strtoul(s, &p, n)           Strtoul(s, &p, n)
 
 Notice also the C<grok_bin>, C<grok_hex>, and C<grok_oct> functions in
 F<numeric.c> for converting strings representing numbers in the respective

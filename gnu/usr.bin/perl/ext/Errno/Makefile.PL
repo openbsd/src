@@ -1,8 +1,6 @@
 use ExtUtils::MakeMaker;
 use Config;
 
-@VMS = ($^O eq 'VMS') ? (MAN3PODS => {}) : ();
-
 my $arch = "$Config{'archname'}-$Config{'osvers'}";
 my $got = "";
 if (-e 'arch.txt') {
@@ -24,7 +22,6 @@ if ($got ne $arch) {
 WriteMakefile(
     NAME	 => 'Errno',
     VERSION_FROM => 'Errno_pm.PL',
-    MAN3PODS     => {}, 	# Pods will be built by installman.
     PL_FILES	 => {'Errno_pm.PL'=>'Errno.pm'},
     PM		 => {'Errno.pm' => '$(INST_LIBDIR)/Errno.pm'},
     'clean'	 => {FILES => 'Errno.pm arch.txt'},
@@ -33,7 +30,6 @@ WriteMakefile(
 	SUFFIX   => '.gz', 
 	DIST_DEFAULT => 'd/Errno.pm tardist',
     },
-    @VMS,
 );
 
 sub MY::postamble {

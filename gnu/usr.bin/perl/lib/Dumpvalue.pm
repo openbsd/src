@@ -1,7 +1,7 @@
 use 5.006_001;			# for (defined ref) and $#$v and our
 package Dumpvalue;
 use strict;
-our $VERSION = '1.12';
+our $VERSION = '1.13';
 our(%address, $stab, @stab, %stab, %subs);
 
 # documentation nits, handle complex data structures better by chromatic
@@ -488,7 +488,7 @@ Dumpvalue - provides screen dump of Perl data.
 =head1 SYNOPSIS
 
   use Dumpvalue;
-  my $dumper = new Dumpvalue;
+  my $dumper = Dumpvalue->new;
   $dumper->set(globPrint => 1);
   $dumper->dumpValue(\*::);
   $dumper->dumpvars('main');
@@ -500,7 +500,7 @@ Dumpvalue - provides screen dump of Perl data.
 
 A new dumper is created by a call
 
-  $d = new Dumpvalue(option1 => value1, option2 => value2)
+  $d = Dumpvalue->new(option1 => value1, option2 => value2)
 
 Recognized options:
 

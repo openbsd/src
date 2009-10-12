@@ -105,7 +105,7 @@ the given POD files has syntax errors.
 The status 2 indicates that at least one of the specified 
 files does not contain I<any> POD commands.
 
-Status 1 overrides status 2. If you want unambigouus
+Status 1 overrides status 2. If you want unambiguous
 results, call B<podchecker> with one single argument only.
 
 =head1 SEE ALSO
@@ -152,23 +152,25 @@ my $status = 0;
 @ARGV = qw(-) unless(@ARGV);
 for my $podfile (@ARGV) {
     if($podfile eq '-') {
-      $podfile = "<&STDIN";
+      $podfile = '<&STDIN';
     }
     elsif(-d $podfile) {
       warn "podchecker: Warning: Ignoring directory '$podfile'\n";
       next;
     }
-    my $errors = podchecker($podfile, undef, '-warnings' => $options{warnings});
+    my $errors =
+      podchecker($podfile, undef, '-warnings' => $options{warnings});
     if($errors > 0) {
         # errors occurred
-        printf STDERR ("%s has %d pod syntax %s.\n",
-          $podfile, $errors, ($errors == 1) ? "error" : "errors");
         $status = 1;
+        printf STDERR ("%s has %d pod syntax %s.\n",
+          $podfile, $errors,
+          ($errors == 1) ? 'error' : 'errors');
     }
     elsif($errors < 0) {
-        print STDERR "$podfile does not contain any pod commands.\n";
         # no pod found
         $status = 2 unless($status);
+        print STDERR "$podfile does not contain any pod commands.\n";
     }
     else {
         print STDERR "$podfile pod syntax OK.\n";

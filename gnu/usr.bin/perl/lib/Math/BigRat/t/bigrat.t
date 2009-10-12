@@ -8,7 +8,7 @@ BEGIN
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib'; # for running manually
-  plan tests => 193;
+  plan tests => 198;
   }
 
 # basic testing of Math::BigRat
@@ -197,8 +197,8 @@ $x = $cr->new('1/2');  $z = $x->bpow('3/1'); ok ($x,'1/8');
 $x = $cr->new('1/3');  $z = $x->bpow('4/1'); ok ($x,'1/81');
 $x = $cr->new('2/3');  $z = $x->bpow('4/1'); ok ($x,'16/81');
 
-# XXX todo:
-#$x = $cr->new('2/3');  $z = $x->bpow('5/3'); ok ($x,'32/81 ???');
+$x = $cr->new('2/3');  $z = $x->bpow('5/3'); 
+ok ($x, '31797617848703662994667839220546583581/62500000000000000000000000000000000000');
 
 ##############################################################################
 # bfac
@@ -279,7 +279,7 @@ ok (ref($x->copy()->bmodinv($y)), $cr);
 
 # square root with exact result
 $x = $cr->new('1.44');
-ok ($x->copy()->broot(2), '12/10');
+ok ($x->copy()->broot(2), '6/5');
 ok (ref($x->copy()->broot(2)), $cr);
 
 # log with exact result
@@ -310,6 +310,19 @@ $x = Math::BigRat->from_oct('0100');
 ok ($x, '64', 'from_oct');
 $x = $cr->from_oct('0100');
 ok ($x, '64', 'from_oct');
+
+##############################################################################
+# as_float()
+
+$x = Math::BigRat->new('1/2'); my $f = $x->as_float();
+
+ok ($x, '1/2', '$x unmodified');
+ok ($f, '0.5', 'as_float(0.5)');
+
+$x = Math::BigRat->new('2/3'); $f = $x->as_float(5);
+
+ok ($x, '2/3', '$x unmodified');
+ok ($f, '0.66667', 'as_float(2/3,5)');
 
 ##############################################################################
 # done

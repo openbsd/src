@@ -22,7 +22,7 @@ unless( $ENV{PERL_CORE} ) {
 
 Some of these tests assume you are connected to the
 internet. If you are not, or if certain protocols or hosts
-are blocked and/or firewalled, these tests will fail due
+are blocked and/or firewalled, these tests could fail due
 to no fault of the module itself.
 
 ###########################################################
@@ -115,6 +115,13 @@ push @map, (
 ) if &File::Fetch::ON_WIN;
 
 
+### sanity tests
+{   like( $File::Fetch::USER_AGENT, qr/$File::Fetch::VERSION/,
+                                "User agent contains version" );
+    like( $File::Fetch::FROM_EMAIL, qr/@/,
+                                q[Email contains '@'] );
+}                                
+
 ### parse uri tests ###
 for my $entry (@map ) {
     my $uri = $entry->{'uri'};
@@ -148,14 +155,14 @@ for my $entry (@map) {
     my $prefix = &File::Fetch::ON_UNIX ? 'file://' : 'file:///';
     my $uri = $prefix . cwd() .'/'. basename($0);
 
-    for (qw[lwp file]) {
+    for (qw[lwp lftp file]) {
         _fetch_uri( file => $uri, $_ );
     }
 }
 
 ### ftp:// tests ###
 {   my $uri = 'ftp://ftp.funet.fi/pub/CPAN/index.html';
-    for (qw[lwp netftp wget curl ncftp]) {
+    for (qw[lwp netftp wget curl lftp ncftp]) {
 
         ### STUPID STUPID warnings ###
         next if $_ eq 'ncftp' and $File::Fetch::FTP_PASSIVE
@@ -167,9 +174,10 @@ for my $entry (@map) {
 
 ### http:// tests ###
 {   for my $uri ( 'http://www.cpan.org/index.html',
-                  'http://www.cpan.org/index.html?q=1&y=2'
+                  'http://www.cpan.org/index.html?q=1',
+                  'http://www.cpan.org/index.html?q=1&y=2',
     ) {
-        for (qw[lwp wget curl lynx]) {
+        for (qw[lwp wget curl lftp lynx]) {
             _fetch_uri( http => $uri, $_ );
         }
     }
@@ -196,24 +204,43 @@ sub _fetch_uri {
         $File::Fetch::METHODS =
         $File::Fetch::METHODS = { $type => [$method] };
     
+        ### fetch regularly
         my $ff  = File::Fetch->new( uri => $uri );
-    
+        
         ok( $ff,                "FF object for $uri (fetch with $method)" );
-    
-        my $file = $ff->fetch( to => 'tmp' );
-    
-        SKIP: {
-            skip "You do not have '$method' installed/available", 3
+        
+        for my $to ( 'tmp', do { \my $o } ) { SKIP: {
+        
+            
+            my $how     = ref $to ? 'slurp' : 'file';
+            my $skip    = ref $to ? 4       : 3;
+        
+            ok( 1,              "   Fetching '$uri' in $how mode" );
+         
+            my $file = $ff->fetch( to => $to );
+        
+            skip "You do not have '$method' installed/available", $skip
                 if $File::Fetch::METHOD_FAIL->{$method} &&
                    $File::Fetch::METHOD_FAIL->{$method};
+                
+            ### if the file wasn't fetched, it may be a network/firewall issue                
+            skip "Fetch failed; no network connectivity for '$type'?", $skip 
+                unless $file;
+                
             ok( $file,          "   File ($file) fetched with $method ($uri)" );
+
+            ### check we got some contents if we were meant to slurp
+            if( ref $to ) {
+                ok( $$to,       "   Contents slurped" );
+            }
+
             ok( $file && -s $file,   
                                 "   File has size" );
             is( $file && basename($file), $ff->output_file,
                                 "   File has expected name" );
     
             unlink $file;
-        }
+        }}
     }
 }
 

@@ -616,14 +616,14 @@ PerlStdIOGetc(struct IPerlStdIO* piPerl, FILE* pf)
     return win32_getc(pf);
 }
 
-char*
+STDCHAR*
 PerlStdIOGetBase(struct IPerlStdIO* piPerl, FILE* pf)
 {
 #ifdef FILE_base
     FILE *f = pf;
     return FILE_base(f);
 #else
-    return Nullch;
+    return NULL;
 #endif
 }
 
@@ -649,14 +649,14 @@ PerlStdIOGetCnt(struct IPerlStdIO* piPerl, FILE* pf)
 #endif
 }
 
-char*
+STDCHAR*
 PerlStdIOGetPtr(struct IPerlStdIO* piPerl, FILE* pf)
 {
 #ifdef USE_STDIO_PTR
     FILE *f = pf;
     return FILE_ptr(f);
 #else
-    return Nullch;
+    return NULL;
 #endif
 }
 
@@ -742,7 +742,7 @@ PerlStdIOSetCnt(struct IPerlStdIO* piPerl, FILE* pf, int n)
 }
 
 void
-PerlStdIOSetPtr(struct IPerlStdIO* piPerl, FILE* pf, char * ptr)
+PerlStdIOSetPtr(struct IPerlStdIO* piPerl, FILE* pf, STDCHAR * ptr)
 {
 #ifdef STDIO_PTR_LVALUE
     FILE *f = pf;
@@ -1782,7 +1782,7 @@ restart:
 	    if (PL_restartop) {
 		POPSTACK_TO(PL_mainstack);
 		PL_op = PL_restartop;
-		PL_restartop = Nullop;
+		PL_restartop = (OP*)NULL;
 		goto restart;
 	    }
 	    PerlIO_printf(Perl_error_log, "panic: restartop\n");
@@ -1794,7 +1794,7 @@ restart:
 
 	/* XXX hack to avoid perl_destruct() freeing optree */
         win32_checkTLS(my_perl);
-	PL_main_root = Nullop;
+	PL_main_root = (OP*)NULL;
     }
 
     win32_checkTLS(my_perl);

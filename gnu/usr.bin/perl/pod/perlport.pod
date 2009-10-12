@@ -815,6 +815,7 @@ are a few of the more popular Unix flavors:
     dgux          dgux       AViiON-dgux
     DYNIX/ptx     dynixptx   i386-dynixptx
     FreeBSD       freebsd    freebsd-i386    
+    Haiku         haiku      BePC-haiku
     Linux         linux      arm-linux
     Linux         linux      i386-linux
     Linux         linux      i586-linux
@@ -1247,19 +1248,20 @@ Perl on VOS is discussed in F<README.vos> in the perl distribution
 (installed as L<perlvos>).  Perl on VOS can accept either VOS- or
 Unix-style file specifications as in either of the following:
 
-    C<< $ perl -ne "print if /perl_setup/i" >system>notices >>
-    C<< $ perl -ne "print if /perl_setup/i" /system/notices >>
+    $ perl -ne "print if /perl_setup/i" >system>notices
+    $ perl -ne "print if /perl_setup/i" /system/notices
 
 or even a mixture of both as in:
 
-    C<< $ perl -ne "print if /perl_setup/i" >system/notices >>
+    $ perl -ne "print if /perl_setup/i" >system/notices
 
 Even though VOS allows the slash character to appear in object
 names, because the VOS port of Perl interprets it as a pathname
 delimiting character, VOS files, directories, or links whose names
 contain a slash character cannot be processed.  Such files must be
 renamed before they can be processed by Perl.  Note that VOS limits
-file names to 32 or fewer characters.
+file names to 32 or fewer characters, file names cannot start with a
+C<-> character, or contain any character matching C<< tr/ !%&'()*+;<>?// >>
 
 The value of C<$^O> on VOS is "VOS".  To determine the architecture that
 you are running on without resorting to loading all of C<%Config> you
@@ -1579,6 +1581,11 @@ L<Config> for a full description of available variables.
 C<-r>, C<-w>, and C<-x> have a limited meaning only; directories
 and applications are executable, and there are no uid/gid
 considerations.  C<-o> is not supported.  (S<Mac OS>)
+
+C<-w> only inspects the read-only file attribute (FILE_ATTRIBUTE_READONLY),
+which determines whether the directory can be deleted, not whether it can
+be written to. Directories always have read and write access unless denied
+by discretionary access control lists (DACLs).  (S<Win32>)
 
 C<-r>, C<-w>, C<-x>, and C<-o> tell whether the file is accessible,
 which may not reflect UIC-based file protections.  (VMS)
@@ -2004,7 +2011,7 @@ be implemented even in UNIX platforms.
 
 =item socketpair
 
-Not implemented. (Win32, S<RISC OS>, VOS, VM/ESA)
+Not implemented. (S<RISC OS>, VOS, VM/ESA)
 
 Available on 64 bit OpenVMS 8.2 and later.  (VMS)
 

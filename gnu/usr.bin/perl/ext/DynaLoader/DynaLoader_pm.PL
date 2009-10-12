@@ -85,7 +85,7 @@ package DynaLoader;
 # Tim.Bunce@ig.co.uk, August 1994
 
 BEGIN {
-    $VERSION = '1.08';
+    $VERSION = '1.10';
 }
 
 require AutoLoader;
@@ -109,14 +109,19 @@ $dl_debug = $ENV{PERL_DL_DEBUG} || 0 unless defined $dl_debug;
 
 sub dl_load_flags { 0x00 }
 
-# ($dl_dlext, $dlsrc)
-#         = @Config::Config{'dlext', 'dlsrc'};
 EOT
 
-$dl_dlext = $Config::Config{'dlext'};
-$dl_so = $Config::Config{'so'};
-print OUT "  (\$dl_dlext, \$dlsrc) = ('$dl_dlext', ",
-          to_string($Config::Config{'dlsrc'}), ")\n;";
+if ($ENV{PERL_BUILD_EXPAND_CONFIG_VARS}) {
+    print OUT "(\$dl_dlext, \$dl_so, \$dlsrc) = (",
+              to_string($Config{'dlext'}), ",",
+              to_string($Config{'so'}), ",",
+              to_string($Config{'dlsrc'}), ")\n;" ;
+}
+else {
+    print OUT <<'EOT';
+($dl_dlext, $dl_so, $dlsrc) = @Config::Config{qw(dlext so dlsrc)};
+EOT
+}
 
 print OUT expand_os_specific(<<'EOT');
 
@@ -310,8 +315,8 @@ sub bootstrap {
     my $modpname = join(<<$^O-eq-MacOS>>':'<<|$^O-eq-MacOS>>'/'<</$^O-eq-MacOS>>,@modparts);
 
     print STDERR "DynaLoader::bootstrap for $module ",
-		       <<$^O-eq-MacOS>> "(:auto:$modpname:$modfname.<<=$dl_dlext>>)\n" 
-		       <<|$^O-eq-MacOS>>"(auto/$modpname/$modfname.<<=$dl_dlext>>)\n"<</$^O-eq-MacOS>>
+		       <<$^O-eq-MacOS>> "(:auto:$modpname:$modfname.$dl_dlext)\n" 
+		       <<|$^O-eq-MacOS>>"(auto/$modpname/$modfname.$dl_dlext)\n"<</$^O-eq-MacOS>>
 	if $dl_debug;
 
     foreach (@INC) {
@@ -330,10 +335,8 @@ sub bootstrap {
 	next unless -d $dir; # skip over uninteresting directories
 	
 	# check for common cases to avoid autoload of dl_findfile
-	my $try = <<$^O-eq-MacOS>> "$dir:$modfname.<<=$dl_dlext>>" <<|$^O-eq-MacOS>> "$dir/$modfname.<<=$dl_dlext>>"<</$^O-eq-MacOS>>;
-	last if $file = <<$^O-eq-VMS>>($do_expand) ? dl_expandspec($try) : ((-f $try) && $try);
-	<<|$^O-eq-VMS>>(-f $try) && $try;
-	<</$^O-eq-VMS>>
+	my $try = <<$^O-eq-MacOS>> "$dir:$modfname.$dl_dlext" <<|$^O-eq-MacOS>> "$dir/$modfname.$dl_dlext"<</$^O-eq-MacOS>>;
+	last if $file = ($do_expand) ? dl_expandspec($try) : ((-f $try) && $try);
 	
 	# no luck here, save dir for possible later dl_findfile search
 	push @dirs, $dir;
@@ -492,13 +495,13 @@ sub dl_findfile {
         my(@names, $name);    # what filenames to look for
         if (m:-l: ) {          # convert -lname to appropriate library name
             s/-l//;
-            push(@names,"lib$_.<<=$dl_so>>");
+            push(@names,"lib$_.$dl_so");
             push(@names,"lib$_.a");
         } else {                # Umm, a bare name. Try various alternatives:
             # these should be ordered with the most likely first
-            push(@names,"$_.<<=$dl_dlext>>")    unless m/\.<<=$dl_dlext>>$/o;
-            push(@names,"$_.<<=$dl_so>>")     unless m/\.<<=$dl_so>>$/o;
-            push(@names,"lib$_.<<=$dl_so>>")  unless m:/:;
+            push(@names,"$_.$dl_dlext")    unless m/\.$dl_dlext$/o;
+            push(@names,"$_.$dl_so")     unless m/\.$dl_so$/o;
+            push(@names,"lib$_.$dl_so")  unless m:/:;
             push(@names,"$_.a")          if !m/\.a$/ and $dlsrc eq "dl_dld.xs";
             push(@names, $_);
         }

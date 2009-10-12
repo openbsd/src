@@ -8,7 +8,7 @@ BEGIN {
     }
     use Config;
     if (! $Config{'useithreads'}) {
-        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        print("1..0 # SKIP Perl not compiled with 'useithreads'\n");
         exit(0);
     }
 }
@@ -47,5 +47,7 @@ ok(3, threads->set_stack_size(144*4096) == 128*4096,
         'Set returns previous value');
 ok(4, threads->get_stack_size() == 144*4096,
         'Get stack size');
+
+exit(0);
 
 # EOF

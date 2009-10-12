@@ -1,7 +1,7 @@
 package Encode::JP::JIS7;
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 2.3 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.4 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
@@ -130,6 +130,7 @@ sub jis_euc {
 
 sub euc_jis {
     no warnings qw(uninitialized);
+    local ${^ENCODING};
     my $r_str   = shift;
     my $jis0212 = shift;
     $$r_str =~ s{

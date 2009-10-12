@@ -87,14 +87,14 @@ community which allows everyone to grow and learn from each other."
 
 =head2 User Groups
 
-Many cities around the world have local PerlMongers chapters. A PerlMongers
+Many cities around the world have local Perl Mongers chapters. A Perl Mongers
 chapter is a local user group which typically holds regular in-person meetings,
 both social and technical; helps organize local conferences, workshops, and
 hackathons; and provides a mailing list or other continual contact method for
 its members to keep in touch.
 
-To find your local PerlMongers (or PM as they're commonly abbreviated) group
-check the international PerlMongers directory at L<http://www.pm.org/>.
+To find your local Perl Mongers (or PM as they're commonly abbreviated) group
+check the international Perl Mongers directory at L<http://www.pm.org/>.
 
 =head2 Workshops
 
@@ -132,7 +132,7 @@ Europe, Asia) in a stunning grassroots display by the Perl community. For more
 information about either conference, check out their respective web pages:
 OSCON L<http://conferences.oreillynet.com/>; YAPC L<http://www.yapc.org>.
 
-A relatively new conference franchize with a large Perl portion is the
+A relatively new conference franchise with a large Perl portion is the
 Open Source Developers Conference or OSDC. First held in Australia it has
 recently also spread to Israel. More information can be found at:
 L<http://www.osdc.com.au/> for Australia, and L<http://www.osdc.org.il>
@@ -140,13 +140,16 @@ for Israel.
 
 =head2 Calendar of Perl Events
 
-The Perl Foundation maintains a website and Google calendar for tracking
-Workshops, Hackathons, Perl Mongers meetings, and the larger conventions
-mentioned above. The web page is located at
-L<http://www.perl.org/events.html>; the Google calendar is named
-I<Perl Events>. Disclaimer: not every Perl Mongers group is on that calendar,
-so don't lose heart if you don't see yours posted. Read the section above
-on L<"User Groups"> to find yours.
+The Perl Review, L<http://www.theperlreview.com> maintains a website
+and Google calendar
+(L<http://www.theperlreview.com/community_calendar>) for tracking
+workshops, hackathons, Perl Mongers meetings, and other events. Views
+of this calendar are at L<http://www.perl.org/events.html> and
+L<http://www.yapc.org>.
+
+Not every event or Perl Mongers group is on that calendar, so don't lose
+heart if you don't see yours posted. To have your event or group listed,
+contact brian d foy (brian@theperlreview.com).
 
 =head1 AUTHOR
 

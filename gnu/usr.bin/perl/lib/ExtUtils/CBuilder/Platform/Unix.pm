@@ -4,12 +4,15 @@ use strict;
 use ExtUtils::CBuilder::Base;
 
 use vars qw($VERSION @ISA);
-$VERSION = '0.21';
+$VERSION = '0.2602';
 @ISA = qw(ExtUtils::CBuilder::Base);
 
 sub link_executable {
   my $self = shift;
-  # $Config{cc} is usually a better bet for linking executables than $Config{ld}
+
+  # On some platforms (which ones??) $Config{cc} seems to be a better
+  # bet for linking executables than $Config{ld}.  Cygwin is a notable
+  # exception.
   local $self->{config}{ld} =
     $self->{config}{cc} . " " . $self->{config}{ldflags};
   return $self->SUPER::link_executable(@_);

@@ -6,7 +6,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..18\n";
+print "1..20\n";
 
 my $t = 1;
 tie my $c => 'Tie::Monitor';
@@ -49,6 +49,10 @@ $s = $c = 'x' . $c;
 ok_string($s, 'x0', 2, 1);
 $s = $c = $c . $c;
 ok_string($s, '00', 3, 1);
+
+# multiple magic in core functions
+$s = chop($c);
+ok_string($s, '0', 1, 1);
 
 # adapted from Tie::Counter by Abigail
 package Tie::Monitor;

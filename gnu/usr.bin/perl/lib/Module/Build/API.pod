@@ -2,6 +2,7 @@
 
 Module::Build::API - API Reference for Module Authors
 
+=for :stopwords apache bsd distdir distsign gpl installdirs lgpl mit mozilla packlists
 
 =head1 DESCRIPTION
 
@@ -70,6 +71,14 @@ version.
 An array reference of files to be cleaned up when the C<clean> action
 is performed. See also the L<add_to_cleanup()|/"add_to_cleanup(@files)">
 method.
+
+=item auto_configure_requires
+
+[version 0.34]
+
+This parameter determines whether Module::Build will add itself
+automatically to configure_requires (and build_requires) if Module::Build
+is not already there.  The default value is true.
 
 =item auto_features
 
@@ -151,7 +160,7 @@ for the details of how requirements can be specified.
 [version 0.28]
 
 If true, this parameter tells Module::Build to create a F<.packlist>
-file during the C<install> action, just like ExtUtils::MakeMaker does.
+file during the C<install> action, just like C<ExtUtils::MakeMaker> does.
 The file is created in a subdirectory of the C<arch> installation
 location.  It is used by some other tools (CPAN, CPANPLUS, etc.) for
 determining what files are part of an install.
@@ -182,13 +191,23 @@ installed.
 See the documentation for L<Module::Build::Authoring/"PREREQUISITES">
 for the details of how requirements can be specified.
 
+=item create_license
+
+[version 0.31]
+
+This parameter tells Module::Build to automatically create a
+F<LICENSE> file at the top level of your distribution, containing the
+full text of the author's chosen license.  This requires
+C<Software::License> on the author's machine, and further requires
+that the C<license> parameter specifies a license that it knows about.
+
 =item create_makefile_pl
 
 [version 0.19]
 
-This parameter lets you use Module::Build::Compat during the
+This parameter lets you use C<Module::Build::Compat> during the
 C<distdir> (or C<dist>) action to automatically create a Makefile.PL
-for compatibility with ExtUtils::MakeMaker.  The parameter's value
+for compatibility with C<ExtUtils::MakeMaker>.  The parameter's value
 should be one of the styles named in the L<Module::Build::Compat>
 documentation.
 
@@ -201,7 +220,7 @@ file at the top level of your distribution.  Currently it will simply
 use C<Pod::Text> (or C<Pod::Readme> if it's installed) on the file
 indicated by C<dist_version_from> and put the result in the F<README>
 file.  This is by no means the only recommended style for writing a
-README, but it seems to be one common one used on the CPAN.
+F<README>, but it seems to be one common one used on the CPAN.
 
 If you generate a F<README> in this way, it's probably a good idea to
 create a separate F<INSTALL> file if that information isn't in the
@@ -211,12 +230,12 @@ generated F<README>.
 
 [version 0.20]
 
-This should be a short description of the distribution.  This is used
-when generating metadata for F<META.yml> and PPD files.  If it is not
-given then C<Module::Build> looks in the POD of the module from which
-it gets the distribution's version.  It looks for the first line
-matching C<$package\s-\s(.+)>, and uses the captured text as the
-abstract.
+This should be a short description of the distribution.  This is used when
+generating metadata for F<META.yml> and PPD files.  If it is not given
+then C<Module::Build> looks in the POD of the module from which it gets
+the distribution's version.  If it finds a POD section marked "=head1
+NAME", then it looks for the first line matching C<\s+-\s+(.+)>,
+and uses the captured text as the abstract.
 
 =item dist_author
 
@@ -267,6 +286,10 @@ eval()-ing that line, then checking the value of the C<$VERSION>
 variable.  Quite ugly, really, but all the modules on CPAN depend on
 this process, so there's no real opportunity to change to something
 better.
+
+If the target file of L</dist_version_from> contains more than one package
+declaration, the version returned will be the one matching the configured
+L</module_name>.
 
 =item dynamic_config
 
@@ -502,16 +525,16 @@ choose to provide this field, you should make sure that you keep it in
 sync with your written documentation if you ever change your licensing
 terms.
 
+You may also use a license type of C<unknown> if you don't wish to
+specify your terms in the metadata.
+
 It is a fatal error to use a license other than the ones mentioned
 above.  This is not because I wish to impose licensing terms on you -
 please let me know if you would like another license option to be
-added to the list.  You may also use a license type of C<unknown> if
-you don't wish to specify your terms (but this is usually not a good
-idea for you to do!).
-
-I just started out with a small set of licenses to keep things simple,
-figuring I'd let people with actual working knowledge in this area
-tell me what to do.  So if that's you, drop me a line.
+added to the list.  I just started out with a small set of licenses to
+keep things simple, figuring I'd let people with actual working
+knowledge in this area tell me what to do.  So if that's you, drop me
+a line.
 
 =item meta_add
 
@@ -560,8 +583,9 @@ specify explicitly.
 
 An optional parameter specifying a set of C<.PL> files in your
 distribution.  These will be run as Perl scripts prior to processing
-the rest of the files in your distribution.  They are usually used as
-templates for creating other files dynamically, so that a file like
+the rest of the files in your distribution with the name of the file
+they're generating as an argument.  They are usually used as templates
+for creating other files dynamically, so that a file like
 C<lib/Foo/Bar.pm.PL> might create the file C<lib/Foo/Bar.pm>.
 
 The files are specified with the C<.PL> files as hash keys, and the
@@ -588,6 +612,21 @@ files:
                'lib/funny.PL'      => [],
               }
 
+Here's an example of a simple PL file.
+
+    my $output_file = shift;
+    open my $fh, ">", $output_file or die "Can't open $output_file: $!";
+
+    print $fh <<'END';
+    #!/usr/bin/perl
+
+    print "Hello, world!\n";
+    END
+
+PL files are not installed by default, so its safe to put them in
+F<lib/> and F<bin/>.
+
+
 =item pm_files
 
 [version 0.19]
@@ -599,7 +638,7 @@ locations based on their package name, i.e. where they would be found
 in a "normal" Module::Build-style distribution.  This parameter is
 mainly intended to support alternative layouts of files.
 
-For instance, if you have an old-style MakeMaker distribution for a
+For instance, if you have an old-style C<MakeMaker> distribution for a
 module called C<Foo::Bar> and a F<Bar.pm> file at the top level of the
 distribution, you could specify your layout in your C<Build.PL> like
 this:
@@ -683,13 +722,13 @@ for the details of how requirements can be specified.
 
 An optional parameter specifying a set of files that should be
 installed as executable Perl scripts when the module is installed.
-May be given as an array reference of the files, or as a hash
-reference whose keys are the files (and whose values will currently be
-ignored).
+May be given as an array reference of the files, as a hash reference
+whose keys are the files (and whose values will currently be ignored),
+as a string giving the name of a directory in which to find scripts,
+or as a string giving the name of a single script file.
 
-The default is to install no script files - in other words, there is
-no default location where Module::Build will look for script files to
-install.
+The default is to install any scripts found in a F<bin> directory at
+the top level of the distribution, minus any keys of L<PL_files>.
 
 For backward compatibility, you may use the parameter C<scripts>
 instead of C<script_files>.  Please consider this usage deprecated,
@@ -725,6 +764,26 @@ C<*.t> in the F<t/> subdirectory.  If the C<recursive_test_files>
 property is true, then the C<t/> directory will be scanned recursively
 for C<*.t> files.
 
+=item use_tap_harness
+
+[version 0.2808_03]
+
+An optional parameter indicating whether or not to use TAP::Harness for
+testing rather than Test::Harness. Defaults to false. If set to true, you must
+therefore be sure to add TAP::Harness as a requirement for your module in
+L</build_requires>. Implicitly set to a true value if C<tap_harness_args> is
+specified.
+
+=item tap_harness_args
+
+[version 0.2808_03]
+
+An optional parameter specifying parameters to be passed to TAP::Harness when
+running tests. Must be given as a hash reference of parameters; see the
+L<TAP::Harness|TAP::Harness> documentation for details. Note that specifying
+this parameter will implicitly set C<use_tap_harness> to a true value. You
+must therefore be sure to add TAP::Harness as a requirement for your module in
+L</build_requires>.
 
 =item xs_files
 
@@ -770,6 +829,86 @@ must provide either a C<class> or C<code> parameter, or both.  The
 C<class> parameter indicates the name to use for the new subclass, and
 defaults to C<MyModuleBuilder>.  The C<code> parameter specifies Perl
 code to use as the body of the subclass.
+
+=item add_property
+
+[version 0.31]
+
+  package 'My::Build';
+  use base 'Module::Build';
+  __PACKAGE__->add_property( 'pedantic' );
+  __PACKAGE__->add_property( answer => 42 );
+  __PACKAGE__->add_property(
+     'epoch',
+      default => sub { time },
+      check   => sub {
+          return 1 if /^\d+$/;
+          shift->property_error( "'$_' is not an epoch time" );
+          return 0;
+      },
+  );
+
+Adds a property to a Module::Build class. Properties are those attributes of a
+Module::Build object which can be passed to the constructor and which have
+accessors to get and set them. All of the core properties, such as
+C<module_name> and C<license>, are defined using this class method.
+
+The first argument to C<add_property()> is always the name of the property.
+The second argument can be either a default value for the property, or a list
+of key/value pairs. The supported keys are:
+
+=over
+
+=item C<default>
+
+The default value. May optionally be specified as a code reference, in which
+case the return value from the execution of the code reference will be used.
+If you need the default to be a code reference, just use a code reference to
+return it, e.g.:
+
+      default => sub { sub { ... } },
+
+=item C<check>
+
+A code reference that checks that a value specified for the property is valid.
+During the execution of the code reference, the new value will be included in
+the C<$_> variable. If the value is correct, the C<check> code reference
+should return true. If the value is not correct, it sends an error message to
+C<property_error()> and returns false.
+
+=back
+
+When this method is called, a new property will be installed in the
+Module::Build class, and an accessor will be built to allow the property to be
+get or set on the build object.
+
+  print $build->pedantic, $/;
+  $build->pedantic(0);
+
+If the default value is a hash reference, this generates a special-case
+accessor method, wherein individual key/value pairs may be set or fetched:
+
+  print "stuff{foo} is: ", $build->stuff( 'foo' ), $/;
+  $build->stuff( foo => 'bar' );
+  print $build->stuff( 'foo' ), $/; # Outputs "bar"
+
+Of course, you can still set the entire hash reference at once, as well:
+
+  $build->stuff( { foo => 'bar', baz => 'yo' } );
+
+In either case, if a C<check> has been specified for the property, it will be
+applied to the entire hash. So the check code reference should look something
+like:
+
+      check => sub {
+            return 1 if defined $_ && exists $_->{foo};
+            shift->property_error(qq{Property "stuff" needs "foo"});
+            return 0;
+      },
+
+=item property_error
+
+[version 0.31]
 
 =back
 
@@ -854,6 +993,21 @@ soon as it begins execution.
 
 Returns a hash reference indicating the C<build_requires>
 prerequisites that were passed to the C<new()> method.
+
+=item can_action( $action )
+
+Returns a reference to the method that defines C<$action>, or false
+otherwise. This is handy for actions defined (or maybe not!) in subclasses.
+
+[version 0.32_xx]
+
+=item cbuilder()
+
+[version 0.2809]
+
+Returns the internal ExtUtils::CBuilder object that can be used for
+compiling & linking C code.  If no such object is available (e.g. if
+the system has no compiler installed) an exception will be thrown.
 
 =item check_installed_status($module, $version)
 
@@ -1026,7 +1180,7 @@ when the C<realclean> action is performed.
 Among the files created in C<_build/> is a F<_build/prereqs> file
 containing the set of prerequisites for this distribution, as a hash
 of hashes.  This file may be C<eval()>-ed to obtain the authoritative
-set of prereqs, which might be different from the contents of
+set of prerequisites, which might be different from the contents of
 F<META.yml> (because F<Build.PL> might have set them dynamically).
 But fancy developers take heed: do not put any fancy custom runtime
 code in the F<_build/prereqs> file, leave it as a static declaration
@@ -1137,7 +1291,7 @@ Perl's C<system()>.  It returns true or false to indicate success or
 failure (the opposite of how C<system()> works, but more intuitive).
 
 Note that if you supply a single argument to C<do_system()>, it
-will/may be processed by the systems's shell, and any special
+will/may be processed by the system's shell, and any special
 characters will do their special things.  If you supply multiple
 arguments, no shell will get involved and the command will be executed
 directly.
@@ -1166,6 +1320,19 @@ The C<feature()> and C<config_data()> methods represent
 Module::Build's main support for configuration of installed modules.
 See also L<Module::Build::Authoring/"SAVING CONFIGURATION INFORMATION">.
 
+=item fix_shebang_line(@files)
+
+[version 0.??]
+
+Modify any "shebang" line in the specified files to use the path to the
+perl executable being used for the current build.  Files are modified
+in-place.  The existing shebang line must have a command that contains
+"C<perl>"; arguments to the command do not count.  In particular, this
+means that the use of C<#!/usr/bin/env perl> will not be changed.
+
+For an explanation of shebang lines, see
+L<http://en.wikipedia.org/wiki/Shebang_%28Unix%29>.
+
 =item have_c_compiler()
 
 [version 0.21]
@@ -1188,14 +1355,14 @@ want to set the relative install path for custom build elements.
 
 With no argument, it returns a reference to a hash containing all
 elements and their respective values. This hash should not be modified
-directly; use the multi-argument below form to change values.
+directly; use the multiple argument below form to change values.
 
 The single argument form returns the value associated with the
 element C<$type>.
 
-The multi-argument form allows you to set the paths for element types.
-C<$value> must be a relative path using unix-like paths.  (A series of
-directories seperated by slashes.  Eg 'foo/bar'.)  The return value is a
+The multiple argument form allows you to set the paths for element types.
+C<$value> must be a relative path using Unix-like paths.  (A series of
+directories separated by slashes, e.g. C<foo/bar>.)  The return value is a
 localized path based on C<$value>.
 
 Assigning the value C<undef> to an element causes it to be removed.
@@ -1226,12 +1393,12 @@ like C<install_base()>.
 
 With no argument, it returns a reference to a hash containing all
 elements and their respective values. This hash should not be modified
-directly; use the multi-argument below form to change values.
+directly; use the multiple argument below form to change values.
 
 The single argument form returns the value associated with the
 element C<$type>.
 
-The multi-argument form allows you to set the paths for element types.
+The multiple argument form allows you to set the paths for element types.
 The supplied C<$path> should be an absolute path to install elements
 of C<$type>.  The return value is C<$path>.
 
@@ -1254,7 +1421,7 @@ exist.
 
 This is the name of the original action invoked by the user.  This
 value is set when the user invokes F<Build.PL>, the F<Build> script,
-or programatically through the L<dispatch()|/"dispatch($action, %args)">
+or programmatically through the L<dispatch()|/"dispatch($action, %args)">
 method.  It does not change as sub-actions are executed as
 dependencies are evaluated.
 
@@ -1274,7 +1441,7 @@ information about the build, and to share that information among
 different entities involved in the build.  See the example in the
 C<current()> method.
 
-The C<notes()> method is essentally a glorified hash access.  With no
+The C<notes()> method is essentially a glorified hash access.  With no
 arguments, C<notes()> returns the entire hash of notes.  With one argument,
 C<notes($key)> returns the value associated with the given key.  With two
 arguments, C<notes($key, $value)> sets the value associated with the given key
@@ -1348,9 +1515,9 @@ use the three-argument below form to change values.
 The two argument form returns the value associated with the
 element C<$type>.
 
-The multi-argument form allows you to set the paths for element types.
-C<$value> must be a relative path using unix-like paths.  (A series of
-directories seperated by slashes.  Eg 'foo/bar'.)  The return value is a
+The multiple argument form allows you to set the paths for element types.
+C<$value> must be a relative path using Unix-like paths.  (A series of
+directories separated by slashes, e.g. C<foo/bar>.)  The return value is a
 localized path based on C<$value>.
 
 Assigning the value C<undef> to an element causes it to be removed.
@@ -1422,6 +1589,18 @@ Examples:
       print "Failure for $name: $hash->{message}\n";
     }
   }
+
+=item prereq_data()
+
+[version 0.32]
+
+Returns a reference to a hash describing all prerequisites.  The keys of the
+hash will the various prerequisite types ('requires', 'build_requires',
+'configure_requires', 'recommends', or 'conflicts') and the values will
+references to hashes of module names and version numbers.  Only prerequisites
+types that are defined will be included.  The C<prereq_data> action is just a
+thin wrapper around the C<prereq_data()> method and dumps the hash as a string
+that can be loaded using C<eval()>.
 
 =item prereq_report()
 
@@ -1508,7 +1687,7 @@ call to C<new()>.  This allows you to programmatically tell if C<perl Build.PL>
 or any execution of C<./Build> had command line options specified that
 override valid properties.
 
-The C<runtime_params()> method is essentally a glorified read-only hash.  With
+The C<runtime_params()> method is essentially a glorified read-only hash.  With
 no arguments, C<runtime_params()> returns the entire hash of properties
 specified on the command line.  With one argument, C<runtime_params($key)>
 returns the value associated with the given key.
@@ -1580,6 +1759,8 @@ accessor methods for the following properties:
 
 =item allow_mb_mismatch()
 
+=item auto_configure_requires()
+
 =item autosplit()
 
 =item base_dir()
@@ -1606,11 +1787,15 @@ accessor methods for the following properties:
 
 =item conflicts()
 
+=item create_license()
+
 =item create_makefile_pl()
 
 =item create_packlist()
 
 =item create_readme()
+
+=item debug()
 
 =item debugger()
 
@@ -1660,6 +1845,8 @@ accessor methods for the following properties:
 
 =item prereq_action_types()
 
+=item program_name()
+
 =item quiet()
 
 =item recommends()
@@ -1672,7 +1859,15 @@ accessor methods for the following properties:
 
 =item scripts()
 
+=item sign()
+
+=item tap_harness_args()
+
+=item test_file_exts()
+
 =item use_rcfile()
+
+=item use_tap_harness()
 
 =item verbose()
 
@@ -1702,7 +1897,7 @@ See L<http://module-build.sourceforge.net/META-spec-current.html#keywords>.
 
 A list of additional resources available for users of the
 distribution. This can include links to a homepage on the web, a
-bugtracker, the repository location, a even subscription page for the
+bug tracker, the repository location, a even subscription page for the
 distribution mailing list.
 
 See L<http://module-build.sourceforge.net/META-spec-current.html#resources>.

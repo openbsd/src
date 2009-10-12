@@ -6,13 +6,13 @@ BEGIN {
         chdir 't';
         unshift @INC, '../lib';
     }
-    use Config;
-    if (! $Config{'useithreads'}) {
-        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
-        exit(0);
-    }
 
     require($ENV{PERL_CORE} ? "./test.pl" : "./t/test.pl");
+
+    use Config;
+    if (! $Config{'useithreads'}) {
+        skip_all(q/Perl not compiled with 'useithreads'/);
+    }
 }
 
 use ExtUtils::testlib;
@@ -20,13 +20,8 @@ use ExtUtils::testlib;
 use threads;
 
 BEGIN {
-    eval {
-        require threads::shared;
-        threads::shared->import();
-    };
-    if ($@ || ! $threads::shared::threads_shared) {
-        print("1..0 # Skip: threads::shared not available\n");
-        exit(0);
+    if (! eval 'use threads::shared; 1') {
+        skip_all('threads::shared not available');
     }
 
     $| = 1;
@@ -171,7 +166,7 @@ package main;
 
 # bugid #24165
 
-run_perl(prog => 'use threads 1.67;' .
+run_perl(prog => 'use threads 1.72;' .
                  'sub a{threads->create(shift)} $t = a sub{};' .
                  '$t->tid; $t->join; $t->tid',
          nolib => ($ENV{PERL_CORE}) ? 0 : 1,
@@ -313,5 +308,7 @@ SKIP: {
         }),
         "counts of calls to DESTROY");
 }
+
+exit(0);
 
 # EOF

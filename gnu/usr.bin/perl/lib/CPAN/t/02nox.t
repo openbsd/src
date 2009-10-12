@@ -23,7 +23,7 @@ is( $CPAN::Suppress_readline, 1, 'should set suppress readline flag' );
 # all of these modules have XS components, should be marked unavailable
 my $mod;
 for $mod (qw( Digest::MD5 LWP Compress::Zlib )) {
-	is( $CPAN::META->has_inst($mod), 0, "$mod should be marked unavailable" );
+  is( $CPAN::META->has_inst($mod), 0, "$mod should be marked unavailable" );
 }
 
 # and these will be set to those in CPAN

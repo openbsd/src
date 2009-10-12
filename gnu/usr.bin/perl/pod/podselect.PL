@@ -45,7 +45,7 @@ print OUT <<'!NO!SUBS!';
 #############################################################################
 
 use strict;
-use diagnostics;
+#use diagnostics;
 
 =head1 NAME
 
@@ -113,13 +113,13 @@ use Getopt::Long;
 
 ## Define options
 my %options = (
-        "help"     => 0,
-        "man"      => 0,
-        "sections" => [],
+        'help'     => 0,
+        'man'      => 0,
+        'sections' => [],
 );
 
 ## Parse options
-GetOptions(\%options, "help", "man", "sections|select=s@")  ||  pod2usage(2);
+GetOptions(\%options, 'help', 'man', 'sections|select=s@')  ||  pod2usage(2);
 pod2usage(1)  if ($options{help});
 pod2usage(-verbose => 2)  if ($options{man});
 
@@ -127,8 +127,8 @@ pod2usage(-verbose => 2)  if ($options{man});
 pod2usage(2) if ((@ARGV == 0) && (-t STDIN));
 
 ## Invoke podselect().
-if (@{ $options{"sections"} } > 0) {
-    podselect({ -sections => $options{"sections"} }, @ARGV);
+if (@{ $options{'sections'} } > 0) {
+    podselect({ -sections => $options{'sections'} }, @ARGV);
 }
 else {
     podselect(@ARGV);

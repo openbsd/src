@@ -10,30 +10,31 @@ To recreate it use the following command:
 
      uupacktool.pl -p lib/CPANPLUS/t/dummy-CPAN/authors/id/EUNOXS/Foo-Bar-0.01.tar.gz lib/CPANPLUS/t/dummy-CPAN/authors/id/EUNOXS/Foo-Bar-0.01.tar.gz.packed
 
-Created at Fri Dec 14 13:43:16 2007
+Created at Sat Jun 27 16:51:08 2009
 #########################################################################
 __UU__
-M'XL("/8X34("`T9O;RU"87(M,"XP,2YT87(`[9KQ;]I&%,?Y^?Z*1YE$(A5C
-M8YM(SE*-K69!*LD4Z%:IJZ(#'V!A^[SSN2F:]K_O#ML,6)ONAP+M\CY*XMCW
-MS/EX]WWWGNT^YZT?J6B9AFFU:X?!5%RXKMY:%ZZUO:VH66:G8W=LQ^YV:Z;5
-M<1VS!F[M".29I`*@MJ0)>\SN<^W50*KM-T)_V_\_7?=N?O9'A_"_XSB?]G_'
-M*?VO)L"%]K_M=MP:F.C_@S,`&@.%TO,P"R-&:LB384?_P][-H.^/Q@?0?_<1
-M_7?L_?BO_CJH_V-0"I_<^;V70Y\,Z9+I&&#\\HI4LX%(EDDCC4@43MIJOK35
-M?#'2F$S"I#WC?*+W(C+TQSUC%4?P.88\R",&,9.T%5!)X8P&`0M@L@+=N_X5
-MYQB#3J+_TH='UK_C=O;T[Z@4$/5_#!JPD#+UVNUX+<O6)`^CP,AX+J9LQL6<
-M&0F3ZXG1RE(V-18RCDCC30&,%V$&ZH="*KCD<I6R>KT.,)#P$$813!<TF3,(
-M$Y`+!K-<YF)ML#Z[01(:,V\3&,JI2-XSD84\*1OTQ*P.W<\$CSW8BT-AHEP8
-M14$H,G5.%DI&!/LC#P7+/$*",),BG.12GZ\OT(-BJ&3.$B:H9,']9.6!_T&^
-MEF&4>=XF"D'9+72-CDN>@/[+0'_T_+]K[>7_CNE<H/Z/HO]Z.\]$6Z_E*1,1
-M(:D($PG/+,.P?D^>75;[?`G%/BZ9_U_]Z\#Z5=S_L6VSB_=_3N)_O;">W/^.
-M:5OH_Y/YOTBLCK7^:]?OK?^NB?7_<2!7"T8#"VYZJOHG(QJGJC9OZ5P<5&T/
-M67%`_4LJR][K\?7MW<9V2!/XOC#[@7U8;XTICU]L[&_'U[XRKW+I*$Q8IBN"
-ME`>0+7@>J=)?E0CSA`L6>.2[7_V[T>#V!JZ@F7`)?.G!7&VK\W4)H,^M-R]5
-M%]-<JI2%3I=4E1GJHCU/S5W5T(!_]:<N*F:)S#[6:0/^4[?E1ZR[;JB2IBA^
-M=&FSW1L\L*9@$'&^#).Y^N[$SJC.FEIKS?.WYKM+@,;6Y;#W-&H&A/Q)]/$'
-M5C7Q)%J!5!5)446I.D?N=CCC>:)&`:K/*8V(+IL^-9Z,37D2[`\K8'I,?Q%B
-M88+WA/,_705\)?F?A<__3N/_S1W=+^M_]S'_.^[^^F]9^/SOI/5_,0U4O8]+
-MPM.)_UM/?[YT_'],_QW7WK__YUHVZO\XPV<?N_6M=/^;""6K9L39.JG41<+V
-MH[RK%]"LDN[F\[5)F7;>]^]NAY7);EE9&OIO_/O^X)4_^N>SWC9W%J#FN^>Z
-M@9Q?K@TP"AU<_\5#X(/D?X^__[.O?]NQ+-3_,2C?_RD\CZ__(`B"(`B"(`B"
-?(`B"(`B"(`B"(`B"(`B"(`B"(,@WP=^)5B"Y`%``````
+M'XL(`#P*BD<``^V:;6_B1A"`\WE_Q214(I$.QQ@;)*<YE;M"$^E(JB37GG0]
+M10M>P,+>=>WUY:*J_[V[?D$Q).1.`J=2YI&B!>^8V?6\>,;.4(C6.QJW3,-L
+M'^_M!E/1<YQ\[.:CHARSSVVS9UNVV>EUU/&VU6MW]L#9T7HJI(FD,<#>@G*V
+M2>YNSEBP87YE4UM>Y<X8/K3_V.>[\('OL[]E=:R.W>EVE?T[=M=&^]?!FOVG
+M0HQI;$2;]OJ#Z.OA;+*_[13V5P[0T_9W5`+8@UHNXBNW?V/_.$WBS/(1BP-"
+MHMCG$@YR-S@X(:1]0EYZD<C.J,3_^[/^Q6^#ZVWKR$+<MI^.?\M>B?].S\3X
+MKX5SH"%0*"P/4S]@&.ZOB$K\!_[X?U/_65C_U<&:_=6!;?O`C]O?MDP'[5\'
+MC]K_G6X`PJWI>.;^KTV_5O_;)M[_ZX"<SAGUVG#1'PT(N:9A%#!H@?("4"T`
+M)/D!]9&4DOV/-V>75TO9$>7P<R[V"_N6C<9$A&^7\I<W9P,E_I7%B2\X!#YG
+M"?@<(N%!,A=IX,&8@3_C(F:>2W[Z8W!U?7YY`:?0Y$*"6+@P4V-Y_C06H3YW
+MOZEZD]-)*E7+0B<+.F-ZT:ZK?%=--&!-GUI4R+A,'E/:@.]26_Q$IKH!<NZK
+M'T[4R"K:X(XU8P:!$`N?S]2UBRN[.FSJ6&L>?3:_G``T'BR'?:5!TR/D'Z*/
+MW[%R2O#@'B1=L$S5U(\3654X%2E7NP"E<T(#-<*3^TG81'!O=5L>TWOZ%YN]
+M5T<E_X^4C^D.P/C]PS9UZ'RXZ?F/Y716\K_=[?8P_]=!FC`8?),?I1\DKJL=
+M0/_I%/IG[$M6>L1AEE3T30(></H6FF72;;[)1(JT<SN\NAR5(M6RHA`<?!K<
+M#L\_J)YS^5N?FY4'D,TO;_0$.3K)!#`Q[8)J_/<OSH>#ZYLMZ]#QT-WP_,?J
+MK-7_)M9_]5`\^"%7@_ZOJ@)\<`<@I3<0R1*IXI%4XYA4@I6,!C=]XSX,X#E&
+MPDM5W1@R25L>E10.J><Q50#=PS+]'&&PUT0U_@L;;EG'<_'?-9V5][]V6XEA
+M_-=``^921N[Q<9B%96N<^H%G)"*-)TQU+C-F<"8SQV@E$9L8<QD&I/$I!VZ*
+M%HA"%`LIY'W$]O?W`<XEW/E!`),YY:HQ4]U7UKFD,HTS@>SL!N$T9.XR,12N
+M6':*Q81VS/+0K6Y77%C)0SY7)@P"3_5%ZIQ$52TD9G^G?LP2W=FI7:@.AT_]
+MF5)^6\Y`DD:1B"59G\H59T7*^SO/7<]@Q:*(YR<R]L>IU$O3>W<AOXIDQCB+
+MJ63>[?C>?:R^6C9@7<-R7C+95>(_OPEL7<<SSW]T`;#Z_L?!^*^'XOU/;GE\
+M_?/JJ,1_4>AM6\>S\=]MK_;_ZA/&?QT\]?\?;<-H_\4/3LKO8@'Y]Y=>,((@
+F"((@"((@"((@"((@"((@"((@"((@"((@"((@>_\!0F6@FP!0````

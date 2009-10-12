@@ -3,23 +3,61 @@ package MBTest;
 use strict;
 
 use File::Spec;
+use File::Temp ();
 use File::Path ();
 
-BEGIN {
-  # Make sure none of our tests load the users ~/.modulebuildrc file
-  $ENV{MODULEBUILDRC} = 'NONE';
 
-  # In case the test wants to use Test::More or our other bundled
-  # modules, make sure they can be loaded.  They'll still do "use
-  # Test::More" in the test script.
+# Setup the code to clean out %ENV
+BEGIN {
+    # Environment variables which might effect our testing
+    my @delete_env_keys = qw(
+        DEVEL_COVER_OPTIONS
+        MODULEBUILDRC
+        HARNESS_TIMER
+        HARNESS_OPTIONS
+        HARNESS_VERBOSE
+        PREFIX
+        INSTALL_BASE
+        INSTALLDIRS
+    );
+
+    # Remember the ENV values because on VMS %ENV is global
+    # to the user, not the process.
+    my %restore_env_keys;
+
+    sub clean_env {
+        for my $key (@delete_env_keys) {
+            if( exists $ENV{$key} ) {
+                $restore_env_keys{$key} = delete $ENV{$key};
+            }
+            else {
+                delete $ENV{$key};
+            }
+        }
+    }
+
+    END {
+        while( my($key, $val) = each %restore_env_keys ) {
+            $ENV{$key} = $val;
+        }
+    }
+}
+
+
+BEGIN {
+  clean_env();
+
+  # In case the test wants to use our other bundled
+  # modules, make sure they can be loaded.
   my $t_lib = File::Spec->catdir('t', 'bundled');
 
   unless ($ENV{PERL_CORE}) {
     push @INC, $t_lib; # Let user's installed version override
   } else {
-    # We change directories, so expand @INC to absolute paths
+    # We change directories, so expand @INC and $^X to absolute paths
     # Also add .
     @INC = (map(File::Spec->rel2abs($_), @INC), ".");
+    $^X = File::Spec->rel2abs($^X);
 
     # we are in 't', go up a level so we don't create t/t/_tmp
     chdir '..' or die "Couldn't chdir to ..";
@@ -39,7 +77,7 @@ use Cwd ();
 
 # We pass everything through to Test::More
 use vars qw($VERSION @ISA @EXPORT %EXPORT_TAGS $TODO);
-$VERSION = 0.01;
+$VERSION = 0.01_01;
 @ISA = qw(Test::More); # Test::More isa Exporter
 @EXPORT = @Test::More::EXPORT;
 %EXPORT_TAGS = %Test::More::EXPORT_TAGS;
@@ -54,22 +92,22 @@ my @extra_exports = qw(
   find_in_path
   check_compiler
   have_module
+  ensure_blib
 );
 push @EXPORT, @extra_exports;
 __PACKAGE__->export(scalar caller, @extra_exports);
 # XXX ^-- that should really happen in import()
+
+
 ########################################################################
 
-{ # Setup a temp directory if it doesn't exist
+# always return to the current directory
+{ 
   my $cwd = Cwd::cwd;
-  my $tmp = File::Spec->catdir( $cwd, 't', '_tmp' . $$);
-  mkdir $tmp, 0777 unless -d $tmp;
 
-  sub tmpdir { $tmp }
   END {
-    if(-d $tmp) {
-      File::Path::rmtree($tmp) or warn "cannot clean dir '$tmp'";
-    }
+    # Go back to where you came from!
+    chdir $cwd or die "Couldn't chdir to $cwd";
   }
 }
 ########################################################################
@@ -82,6 +120,13 @@ __PACKAGE__->export(scalar caller, @extra_exports);
   }
 }
 ########################################################################
+
+# Setup a temp directory 
+sub tmpdir { 
+  return File::Temp::tempdir( 'MB-XXXXXXXX', 
+    CLEANUP => 1, DIR => $ENV{PERL_CORE} ? Cwd::cwd : File::Spec->tmpdir
+  );
+}
 
 sub save_handle {
   my ($handle, $subr) = @_;
@@ -161,6 +206,21 @@ sub check_compiler {
 sub have_module {
   my $module = shift;
   return eval "use $module; 1";
+}
+
+sub ensure_blib {
+  # Make sure the given module was loaded from blib/, not the larger system
+  my $mod = shift;
+  (my $path = $mod) =~ s{::}{/}g;
+ 
+  local $Test::Builder::Level = $Test::Builder::Level + 1; 
+ SKIP: {
+    skip "no blib in core", 1 if $ENV{PERL_CORE};
+    like $INC{"$path.pm"}, qr/\bblib\b/, "Make sure $mod was loaded from blib/"
+      or diag "PERL5LIB: " . ($ENV{PERL5LIB} || '') . "\n" .
+              "PERL5OPT: " . ($ENV{PERL5OPT} || '') . "\n" .
+              "\@INC contains:\n  " . join("\n  ", @INC) . "\n"; 
+  }
 }
 
 1;

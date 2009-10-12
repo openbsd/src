@@ -1,0 +1,8 @@
+--- #YAML:1.0
+name: HTML-WebDAO
+version: 0.04
+author:
+  - |-
+    Zahatski Aliaksandr, E<lt>zagap@users.sourceforge.netE<gt>
+abstract: Perl extension for create complex web application
+license: perl

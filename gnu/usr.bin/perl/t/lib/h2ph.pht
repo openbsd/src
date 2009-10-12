@@ -1,6 +1,6 @@
 require '_h2ph_pre.ph';
 
-no warnings 'redefine';
+no warnings qw(redefine misc);
 
 unless(defined(&SQUARE)) {
     sub SQUARE {
@@ -22,6 +22,8 @@ unless(defined(&_H2PH_H_)) {
         my($a,$b) = @_;
 	    eval q((($a) > ($b) ? ($a) : ($b)));
     }' unless defined(&MAX);
+    eval 'sub NOTTRUE () {0;}' unless defined(&NOTTRUE);
+    undef(&NOTTRUE) if defined(&NOTTRUE);
     if(defined(&__SOME_UNIMPORTANT_PROPERTY)) {
 	eval 'sub MIN {
 	    my($a,$b) = @_;
@@ -47,15 +49,17 @@ unless(defined(&_H2PH_H_)) {
     } else {
 	eval 'sub WHATEVER () {1000;}' unless defined(&WHATEVER);
     }
-    require 'sys/socket.ph';
-    require 'sys/ioctl.ph';
-    eval {
-	my(@REM);
-	my(%INCD) = map { $INC{$_} => 1 } (grep { $_ eq "sys/fcntl.ph" } keys(%INC));
-	@REM = map { "$_/sys/fcntl.ph" } (grep { not exists($INCD{"$_/sys/fcntl.ph"}) and -f "$_/sys/fcntl.ph" } @INC);
-	require "$REM[0]" if @REM;
-    };
-    warn($@) if $@;
+    if(0) {
+	require 'sys/socket.ph';
+	require 'sys/ioctl.ph';
+	eval {
+	    my(@REM);
+	    my(%INCD) = map { $INC{$_} => 1 } (grep { $_ eq "sys/fcntl.ph" } keys(%INC));
+	    @REM = map { "$_/sys/fcntl.ph" } (grep { not exists($INCD{"$_/sys/fcntl.ph"}) and -f "$_/sys/fcntl.ph" } @INC);
+	    require "$REM[0]" if @REM;
+	};
+	warn($@) if $@;
+    }
     eval("sub sun () { 0; }") unless defined(&sun);
     eval("sub mon () { 1; }") unless defined(&mon);
     eval("sub tue () { 2; }") unless defined(&tue);

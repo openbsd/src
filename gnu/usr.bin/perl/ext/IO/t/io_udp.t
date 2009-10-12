@@ -5,13 +5,11 @@ BEGIN {
 	chdir 't' if -d 't';
 	@INC = '../lib';
     }
-}
 
-use Config;
+    require($ENV{PERL_CORE} ? './test.pl' : './t/test.pl');
 
-BEGIN {
+    use Config;
     my $reason;
-
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bSocket\b/) {
       $reason = 'Socket was not built';
     }
@@ -22,10 +20,7 @@ BEGIN {
       $reason = "unknown *FIXME*";
     }
     undef $reason if $^O eq 'VMS' and $Config{d_socket};
-    if ($reason) {
-	print "1..0 # Skip: $reason\n";
-	exit 0;
-    }
+    skip_all($reason) if $reason;
 }
 
 sub compare_addr {
@@ -49,8 +44,8 @@ sub compare_addr {
     "$a[0]$a[1]" eq "$b[0]$b[1]";
 }
 
-$| = 1;
-print "1..7\n";
+plan(7);
+watchdog(15);
 
 use Socket;
 use IO::Socket qw(AF_INET SOCK_DGRAM INADDR_ANY);
@@ -58,35 +53,32 @@ use IO::Socket qw(AF_INET SOCK_DGRAM INADDR_ANY);
 $udpa = IO::Socket::INET->new(Proto => 'udp', LocalAddr => 'localhost')
      || IO::Socket::INET->new(Proto => 'udp', LocalAddr => '127.0.0.1')
     or die "$! (maybe your system does not have a localhost at all, 'localhost' or 127.0.0.1)";
-
-print "ok 1\n";
+ok(1);
 
 $udpb = IO::Socket::INET->new(Proto => 'udp', LocalAddr => 'localhost')
      || IO::Socket::INET->new(Proto => 'udp', LocalAddr => '127.0.0.1')
     or die "$! (maybe your system does not have a localhost at all, 'localhost' or 127.0.0.1)";
+ok(1);
 
-print "ok 2\n";
+$udpa->send('BORK', 0, $udpb->sockname);
 
-$udpa->send("ok 4\n",0,$udpb->sockname);
+ok(compare_addr($udpa->peername,$udpb->sockname, 'peername', 'sockname'));
 
-print "not "
-  unless compare_addr($udpa->peername,$udpb->sockname, 'peername', 'sockname');
-print "ok 3\n";
-
-my $where = $udpb->recv($buf="",5);
-print $buf;
+my $where = $udpb->recv($buf="", 4);
+is($buf, 'BORK');
 
 my @xtra = ();
 
-unless(compare_addr($where,$udpa->sockname, 'recv name', 'sockname')) {
-    print "not ";
-    @xtra = (0,$udpa->sockname);
+if (! ok(compare_addr($where,$udpa->sockname, 'recv name', 'sockname'))) {
+    @xtra = (0, $udpa->sockname);
 }
-print "ok 5\n";
 
-$udpb->send("ok 6\n",@xtra);
-$udpa->recv($buf="",5);
-print $buf;
+$udpb->send('FOObar', @xtra);
+$udpa->recv($buf="", 6);
+is($buf, 'FOObar');
 
-print "not " if $udpa->connected;
-print "ok 7\n";
+ok(! $udpa->connected);
+
+exit(0);
+
+# EOF

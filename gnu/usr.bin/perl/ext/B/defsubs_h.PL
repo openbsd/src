@@ -68,6 +68,11 @@ if ($] >= 5.009) {
     doconst(AVf_REAL);
 }  
 
+if ($] < 5.011) {
+    # Constant not present after 5.10.x
+    doconst(CVf_LOCKED);
+}
+
 foreach my $tuple (['op.h'],['cop.h'],['regexp.h','RXf_'])
  {
   my $file = $tuple->[0];

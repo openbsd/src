@@ -1,6 +1,35 @@
 # ChangeLog for Pod::Simple dist
 #---------------------------------------------------------------------------
 
+2008-06-04   Allison Randal <allison@perl.org>
+	* Release 3.07
+
+	Fix module dependencies, make HTML::Entities optional and require
+	Test::More.
+
+2008-06-03   Allison Randal <allison@perl.org>
+	* Release 3.06
+
+	Fix bugs related to passing $1 to File::Spec, reported by Andrew Hamlin and
+	John McNamara.
+
+	Applied a suggested fix from Kevin Ryde to return a successful exit
+	code when Pod::Simple::HTML is run from the command line.
+
+	Fix handling of complex L<URL> entries, thanks to tests supplied in RT#4896.
+
+	Fix incorrect handling of S<> entries made up of entirely whitespace, thanks
+	to test case from Andreas Koenig.
+
+	Launch Pod::Simple::XHTML, an XHTML compliant, more easily extensible
+	HTML formatter.
+
+	Add feature to parse additional text after =begin target as a block
+	title, requested by Adam Kennedy.
+
+	Thanks to Hans Dieter Pearcey for applying patches, resolving bugs,
+	and generally getting ready for the release.
+
 2007-03-03   Allison Randal <allison@perl.org>
 	* Release 3.05
 

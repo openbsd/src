@@ -8,7 +8,7 @@ my %tables = (
           byte_t => 
           [
            # misc. vendors
-           'gsm0338.ucm',
+           # 'gsm0338.ucm', now in Encode::GSM0338
            'nextstep.ucm',
            'hp-roman8.ucm',
            'viscii.ucm',

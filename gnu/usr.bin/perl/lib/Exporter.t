@@ -25,7 +25,7 @@ sub ok ($;$) {
 
 BEGIN {
     $test = 1;
-    print "1..28\n";
+    print "1..30\n";
     require Exporter;
     ok( 1, 'Exporter compiled' );
 }
@@ -217,4 +217,9 @@ The::Import->import;
 
 my $val = eval { wibble() };
 ::ok($val eq "wobble", "exported importer worked");
+
+# Check that Carp recognizes Exporter as internal to Perl 
+require Carp;
+::ok($Carp::Internal{Exporter}, "Carp recognizes Exporter");
+::ok($Carp::Internal{'Exporter::Heavy'}, "Carp recognizes Exporter::Heavy");
 

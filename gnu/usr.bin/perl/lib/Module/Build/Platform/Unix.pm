@@ -2,19 +2,12 @@ package Module::Build::Platform::Unix;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.2808_01';
+$VERSION = '0.340201';
 $VERSION = eval $VERSION;
 use Module::Build::Base;
 
 use vars qw(@ISA);
 @ISA = qw(Module::Build::Base);
-
-sub make_tarball {
-  my $self = shift;
-  $self->{args}{tar}  ||= ['tar'];
-  $self->{args}{gzip} ||= ['gzip'];
-  $self->SUPER::make_tarball(@_);
-}
 
 sub is_executable {
   # We consider the owner bit to be authoritative on a file, because
@@ -42,12 +35,16 @@ sub _construct {
   return $self;
 }
 
+# Open group says username should be portable filename characters,
+# but some Unix OS working with ActiveDirectory wind up with user-names
+# with back-slashes in the name.  The new code below is very liberal
+# in what it accepts.
 sub _detildefy {
   my ($self, $value) = @_;
-  $value =~ s[^~(\w*)(?=/|$)]   # tilde with optional username
+  $value =~ s[^~([^/]+)?(?=/|$)]   # tilde with optional username
     [$1 ?
      ((getpwnam $1)[7] || "~$1") :
-     (getpwuid $>)[7]
+     ($ENV{HOME} || (getpwuid $>)[7])
     ]ex;
   return $value;
 }

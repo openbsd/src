@@ -165,6 +165,33 @@ If you would like to open a bidirectional pipe, the IPC::Open2
 library will handle this for you.  Check out 
 L<perlipc/"Bidirectional Communication with Another Process">
 
+perl-5.6.x introduced a version of piped open that executes a process
+based on its command line arguments without relying on the shell. (Similar
+to the C<system(@LIST)> notation.) This is safer and faster than executing
+a single argument pipe-command, but does not allow special shell
+constructs. (It is also not supported on Microsoft Windows, Mac OS Classic
+or RISC OS.)
+
+Here's an example of C<open '-|'>, which prints a random Unix
+fortune cookie as uppercase:
+
+    my $collection = shift(@ARGV);
+    open my $fortune, '-|', 'fortune', $collection
+        or die "Could not find fortune - $!";
+    while (<$fortune>)
+    {
+        print uc($_);
+    }
+    close($fortune);
+
+And this C<open '|-'> pipes into lpr:
+
+    open my $printer, '|-', 'lpr', '-Plp1'
+        or die "can't run lpr: $!";
+    print {$printer} "stuff\n";
+    close($printer)
+        or die "can't close lpr: $!";
+
 =head2 The Minus File
 
 Again following the lead of the standard shell utilities, Perl's
@@ -307,7 +334,7 @@ One of the more interesting applications is to change files of a certain
 name into pipes.  For example, to autoprocess gzipped or compressed
 files by decompressing them with I<gzip>:
 
-    @ARGV = map { /^\.(gz|Z)$/ ? "gzip -dc $_ |" : $_  } @ARGV;
+    @ARGV = map { /\.(gz|Z)$/ ? "gzip -dc $_ |" : $_  } @ARGV;
 
 Or, if you have the I<GET> program installed from LWP,
 you can fetch URLs before processing them:

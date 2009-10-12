@@ -37,14 +37,6 @@ if ($useperlio || $fflushNULL || $d_sfio) {
 my $runperl = $^X =~ m/\s/ ? qq{"$^X"} : $^X;
 $runperl .= qq{ "-I../lib"};
 
-my @delete;
-
-END {
-    for (@delete) {
-	unlink $_ or warn "unlink $_: $!";
-    }
-}
-
 sub file_eq {
     my $f   = shift;
     my $val = shift;
@@ -60,7 +52,8 @@ sub file_eq {
 
 # This script will be used as the command to execute from
 # child processes
-open PROG, "> ff-prog" or die "open ff-prog: $!";
+my $ffprog = tempfile();
+open PROG, "> $ffprog" or die "open $ffprog: $!";
 print PROG <<'EOF';
 my $f = shift;
 my $str = shift;
@@ -69,8 +62,7 @@ print OUT $str;
 close OUT;
 EOF
     ;
-close PROG or die "close ff-prog: $!";;
-push @delete, "ff-prog";
+close PROG or die "close $ffprog: $!";;
 
 $| = 0; # we want buffered output
 
@@ -78,7 +70,7 @@ $| = 0; # we want buffered output
 if (!$d_fork) {
     print "ok 1 # skipped: no fork\n";
 } else {
-    my $f = "ff-fork-$$";
+    my $f = tempfile();
     open OUT, "> $f" or die "open $f: $!";
     print OUT "Pe";
     my $pid = fork;
@@ -89,7 +81,7 @@ if (!$d_fork) {
     } elsif (defined $pid) {
 	# Kid
 	print OUT "r";
-	my $command = qq{$runperl "ff-prog" "$f" "l"};
+	my $command = qq{$runperl "$ffprog" "$f" "l"};
 	print "# $command\n";
 	exec $command or die $!;
 	exit;
@@ -99,7 +91,6 @@ if (!$d_fork) {
     }
 
     print file_eq($f, "Perl") ? "ok 1\n" : "not ok 1\n";
-    push @delete, $f;
 }
 
 # Test flush on system/qx/pipe open
@@ -121,15 +112,14 @@ my %subs = (
 my $t = 2;
 for (qw(system qx popen)) {
     my $code    = $subs{$_};
-    my $f       = "ff-$_-$$";
-    my $command = qq{$runperl "ff-prog" "$f" "rl"};
+    my $f       = tempfile();
+    my $command = qq{$runperl $ffprog "$f" "rl"};
     open OUT, "> $f" or die "open $f: $!";
     print OUT "Pe";
     close OUT or die "close $f: $!";;
     print "# $command\n";
     $code->($command);
     print file_eq($f, "Perl") ? "ok $t\n" : "not ok $t\n";
-    push @delete, $f;
     ++$t;
 }
 

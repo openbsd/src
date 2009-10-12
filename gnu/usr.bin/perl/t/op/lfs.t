@@ -11,6 +11,7 @@ BEGIN {
 		print "1..0 # Skip: no 64-bit file offsets\n";
 		exit(0);
 	}
+	require './test.pl';
 }
 
 use strict;
@@ -18,11 +19,12 @@ use strict;
 our @s;
 our $fail;
 
+my $big0 = tempfile();
+my $big1 = tempfile();
+my $big2 = tempfile();
+
 sub zap {
     close(BIG);
-    unlink("big");
-    unlink("big1");
-    unlink("big2");
 }
 
 sub bye {
@@ -82,33 +84,33 @@ my ($SEEK_SET, $SEEK_CUR, $SEEK_END) = (0, 1, 2);
 # consume less blocks than one megabyte (assuming nobody has
 # one megabyte blocks...)
 
-open(BIG, ">big1") or
-    do { warn "open big1 failed: $!\n"; bye };
+open(BIG, ">$big1") or
+    do { warn "open $big1 failed: $!\n"; bye };
 binmode(BIG) or
-    do { warn "binmode big1 failed: $!\n"; bye };
+    do { warn "binmode $big1 failed: $!\n"; bye };
 seek(BIG, 1_000_000, $SEEK_SET) or
-    do { warn "seek big1 failed: $!\n"; bye };
+    do { warn "seek $big1 failed: $!\n"; bye };
 print BIG "big" or
-    do { warn "print big1 failed: $!\n"; bye };
+    do { warn "print $big1 failed: $!\n"; bye };
 close(BIG) or
-    do { warn "close big1 failed: $!\n"; bye };
+    do { warn "close $big1 failed: $!\n"; bye };
 
-my @s1 = stat("big1");
+my @s1 = stat($big1);
 
 print "# s1 = @s1\n";
 
-open(BIG, ">big2") or
-    do { warn "open big2 failed: $!\n"; bye };
+open(BIG, ">$big2") or
+    do { warn "open $big2 failed: $!\n"; bye };
 binmode(BIG) or
-    do { warn "binmode big2 failed: $!\n"; bye };
+    do { warn "binmode $big2 failed: $!\n"; bye };
 seek(BIG, 2_000_000, $SEEK_SET) or
-    do { warn "seek big2 failed; $!\n"; bye };
+    do { warn "seek $big2 failed; $!\n"; bye };
 print BIG "big" or
-    do { warn "print big2 failed; $!\n"; bye };
+    do { warn "print $big2 failed; $!\n"; bye };
 close(BIG) or
-    do { warn "close big2 failed; $!\n"; bye };
+    do { warn "close $big2 failed; $!\n"; bye };
 
-my @s2 = stat("big2");
+my @s2 = stat($big2);
 
 print "# s2 = @s2\n";
 
@@ -129,13 +131,13 @@ print "# we seem to have sparse files...\n";
 $ENV{LC_ALL} = "C";
 
 my $r = system '../perl', '-e', <<'EOF';
-open(BIG, ">big");
+open(BIG, ">$big0");
 seek(BIG, 5_000_000_000, 0);
-print BIG "big";
+print BIG $big0;
 exit 0;
 EOF
 
-open(BIG, ">big") or do { warn "open failed: $!\n"; bye };
+open(BIG, ">$big0") or do { warn "open failed: $!\n"; bye };
 binmode BIG;
 if ($r or not seek(BIG, 5_000_000_000, $SEEK_SET)) {
     my $err = $r ? 'signal '.($r & 0x7f) : $!;
@@ -160,7 +162,7 @@ unless ($print && $close) {
     bye();
 }
 
-@s = stat("big");
+@s = stat($big0);
 
 print "# @s\n";
 
@@ -169,7 +171,7 @@ unless ($s[7] == 5_000_000_003) {
     bye();
 }
 
-sub fail () {
+sub fail {
     print "not ";
     $fail++;
 }
@@ -202,16 +204,16 @@ $fail = 0;
 fail unless $s[7] == 5_000_000_003;	# exercizes pp_stat
 print "ok 1\n";
 
-fail unless -s "big" == 5_000_000_003;	# exercizes pp_ftsize
+fail unless -s $big0 == 5_000_000_003;	# exercizes pp_ftsize
 print "ok 2\n";
 
-fail unless -e "big";
+fail unless -e $big0;
 print "ok 3\n";
 
-fail unless -f "big";
+fail unless -f $big0;
 print "ok 4\n";
 
-open(BIG, "big") or do { warn "open failed: $!\n"; bye };
+open(BIG, $big0) or do { warn "open failed: $!\n"; bye };
 binmode BIG;
 
 fail unless seek(BIG, 4_500_000_000, $SEEK_SET);
@@ -270,9 +272,8 @@ bye(); # does the necessary cleanup
 END {
     # unlink may fail if applied directly to a large file
     # be paranoid about leaving 5 gig files lying around
-    open(BIG, ">big"); # truncate
+    open(BIG, ">$big0"); # truncate
     close(BIG);
-    1 while unlink "big"; # standard portable idiom
 }
 
 # eof

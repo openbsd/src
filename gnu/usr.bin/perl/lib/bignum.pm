@@ -1,7 +1,7 @@
 package bignum;
-use 5.006002;
+use 5.006;
 
-$VERSION = '0.22';
+$VERSION = '0.23';
 use Exporter;
 @ISA 		= qw( bigint );
 @EXPORT_OK	= qw( PI e bexp bpi ); 

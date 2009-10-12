@@ -11,7 +11,7 @@ use strict;
 BEGIN {
     use vars        qw[$VERSION $AUTOREPLY $VERBOSE $INVALID];
     $VERBOSE    =   1;
-    $VERSION    =   '0.18';
+    $VERSION    =   '0.20';
     $INVALID    =   loc('Invalid selection, please try again: ');
 }
 
@@ -147,7 +147,7 @@ sub get_reply {
             
             ### so this choice is the default? add it to 'prompt_add'
             ### so we can construct a "foo? [DIGIT]" type prompt
-            $prompt_add = $i if $choice eq $args->{default};
+            $prompt_add = $i if (defined $args->{default} and $choice eq $args->{default});
 
             ### create a "DIGIT> choice" type line
             $args->{print_me} .= sprintf "\n%3s> %-s", $i, $choice;

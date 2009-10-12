@@ -12,7 +12,28 @@ BEGIN {
 require 'test.pl';
 plan( tests => 19 );
 
-$wanted_filename = $^O eq 'VMS' ? '0.' : '0';
+my $unix_mode = 1;
+
+if ($^O eq 'VMS') {
+    # We have to know if VMS is in UNIX mode.  In UNIX mode, trailing dots
+    # should not be present.  There are actually two settings that control this.
+
+    $unix_mode = 0;
+    my $unix_rpt = 0;
+    my $drop_dot = 0;
+    if (eval 'require VMS::Feature') {
+        $unix_rpt = VMS::Feature::current('filename_unix_report');
+        $drop_dot = VMS::Feature::current('readdir_dropdotnotype');
+    } else {
+        my $unix_report = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        $unix_rpt = $unix_report =~ /^[ET1]/i; 
+        my $drop_dot_notype = $ENV{'DECC$READDIR_DROPDOTNOTYPE'} || '';
+        $drop_dot = $drop_dot_notype =~ /^[ET1]/i;
+    }
+    $unix_mode = 1 if $drop_dot && unix_rpt;
+}
+
+$wanted_filename = $unix_mode ? '0' : '0.';
 $saved_filename = $^O eq 'MacOS' ? ':0' : './0';
 
 cmp_ok($warns,'==',0,'no warns at start');

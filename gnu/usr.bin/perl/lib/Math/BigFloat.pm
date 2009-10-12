@@ -12,7 +12,7 @@ package Math::BigFloat;
 #   _a	: accuracy
 #   _p	: precision
 
-$VERSION = '1.59';
+$VERSION = '1.60';
 require 5.006;
 
 require Exporter;
@@ -2142,8 +2142,9 @@ sub bsqrt
   # But we need at least $scale digits, so calculate how many are missing
   my $shift = $scale - $digits;
 
-  # That should never happen (we take care of integer guesses above)
-  # $shift = 0 if $shift < 0; 
+  # This happens if the input had enough digits
+  # (we take care of integer guesses above)
+  $shift = 0 if $shift < 0; 
 
   # Multiply in steps of 100, by shifting left two times the "missing" digits
   my $s2 = $shift * 2;
@@ -2846,12 +2847,49 @@ sub batan2
 
   return $y->bnan() if ($y->{sign} eq $nan) || ($x->{sign} eq $nan);
 
-  return $upgrade->new($y)->batan2($upgrade->new($x),@r) if defined $upgrade;
-
   # Y X
   # 0 0 result is 0
   # 0 +x result is 0
-  return $y->bzero(@r) if $y->is_zero() && $x->{sign} eq '+';
+  # ? inf result is 0
+  return $y->bzero(@r) if ($x->is_inf('+') && !$y->is_inf()) || ($y->is_zero() && $x->{sign} eq '+');
+
+  # Y    X
+  # != 0 -inf result is +- pi
+  if ($x->is_inf() || $y->is_inf())
+    {
+    # calculate PI
+    my $pi = $self->bpi(@r);
+    if ($y->is_inf())
+      {
+      # upgrade to BigRat etc. 
+      return $upgrade->new($y)->batan2($upgrade->new($x),@r) if defined $upgrade;
+      if ($x->{sign} eq '-inf')
+        {
+        # calculate 3 pi/4
+        $MBI->_mul($pi->{_m}, $MBI->_new(3));
+        $MBI->_div($pi->{_m}, $MBI->_new(4));
+        }
+      elsif ($x->{sign} eq '+inf')
+	{
+        # calculate pi/4
+        $MBI->_div($pi->{_m}, $MBI->_new(4));
+	}
+      else
+        {
+        # calculate pi/2
+        $MBI->_div($pi->{_m}, $MBI->_new(2));
+        }
+      $y->{sign} = substr($y->{sign},0,1); # keep +/-
+      }
+    # modify $y in place
+    $y->{_m} = $pi->{_m};
+    $y->{_e} = $pi->{_e};
+    $y->{_es} = $pi->{_es};
+    # keep the sign of $y
+    return $y;
+    }
+
+  return $upgrade->new($y)->batan2($upgrade->new($x),@r) if defined $upgrade;
 
   # Y X
   # 0 -x result is PI
@@ -2859,7 +2897,7 @@ sub batan2
     {
     # calculate PI
     my $pi = $self->bpi(@r);
-    # modify $x in place
+    # modify $y in place
     $y->{_m} = $pi->{_m};
     $y->{_e} = $pi->{_e};
     $y->{_es} = $pi->{_es};
@@ -2870,16 +2908,15 @@ sub batan2
   # Y X
   # +y 0 result is PI/2
   # -y 0 result is -PI/2
-  if ($y->is_inf() || $x->is_zero())
+  if ($x->is_zero())
     {
     # calculate PI/2
     my $pi = $self->bpi(@r);
-    # modify $x in place
+    # modify $y in place
     $y->{_m} = $pi->{_m};
     $y->{_e} = $pi->{_e};
     $y->{_es} = $pi->{_es};
     # -y => -PI/2, +y => PI/2
-    $y->{sign} = substr($y->{sign},0,1);		# +inf => +
     $MBI->_div($y->{_m}, $MBI->_new(2));
     return $y;
     }
@@ -2918,7 +2955,7 @@ sub batan2
       {
       # 1,1 => PI/4
       my $pi_4 = $self->bpi( $scale - 3);
-      # modify $x in place
+      # modify $y in place
       $y->{_m} = $pi_4->{_m};
       $y->{_e} = $pi_4->{_e};
       $y->{_es} = $pi_4->{_es};
@@ -3639,6 +3676,14 @@ sub as_number
 
   return $x if $x->modify('as_number');
 
+  if (!$x->isa('Math::BigFloat'))
+    {
+    # if the object can as_number(), use it
+    return $x->as_number() if $x->can('as_number');
+    # otherwise, get us a float and then a number
+    $x = $x->can('as_float') ? $x->as_float() : $self->new(0+"$x");
+    }
+
   my $z = $MBI->_copy($x->{_m});
   if ($x->{_es} eq '-')			# < 0
     {
@@ -4146,14 +4191,19 @@ You can change this by using:
 
 	use Math::BigFloat lib => 'GMP';
 
+B<Note>: General purpose packages should not be explicit about the library
+to use; let the script author decide which is best.
+
 Note: The keyword 'lib' will warn when the requested library could not be
 loaded. To suppress the warning use 'try' instead:
 
 	use Math::BigFloat try => 'GMP';
 
-To turn the warning into a die(), use 'only' instead:
+If your script works with huge numbers and Calc is too slow for them,
+you can also for the loading of one of these libraries and if none
+of them can be used, the code will die:
 
-	use Math::BigFloat only => 'GMP';
+        use Math::BigFloat only => 'GMP,Pari';
 
 The following would first try to find Math::BigInt::Foo, then
 Math::BigInt::Bar, and when this also fails, revert to Math::BigInt::Calc:

@@ -2,10 +2,11 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 14 + 12;
+use MBTest tests => 15 + 12;
 
-use Cwd ();
-my $cwd = Cwd::cwd();
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
+
 my $tmp = MBTest->tmpdir;
 
 use DistGen;
@@ -33,12 +34,8 @@ die "don't run this non-test file";
 ---
 
 $dist->regen;
-
-chdir($dist->dirname) or die "Can't chdir to '@{[$dist->dirname]}': $!";
-
+$dist->chdir_in;
 #########################
-
-use_ok 'Module::Build';
 
 my $mb = Module::Build->subclass(
    code => q#
@@ -101,7 +98,6 @@ is(scalar(@{[$all_output =~ m/OK 1/mg]}), 3 );
 is(scalar(@{[$all_output =~ m/OK/mg]}),   8 );
 is(scalar(@{[$all_output =~ m/ALL TESTS SUCCESSFUL\./mg]}),   1);
 
-chdir($cwd) or die "Can't chdir to '$cwd': $!";
 $dist->remove;
 
 { # once-again
@@ -118,8 +114,7 @@ use strict; use Simple;
 ok 1;
 ---
 $dist->regen;
-
-chdir($dist->dirname) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 my $mb = Module::Build->subclass(
    code => q#
@@ -179,7 +174,6 @@ like($all_output, qr/^OK 2 - SECOND TEST IN ANOTHER_EXT/m);
 is(scalar(@{[$all_output =~ m/(OK 1)/mg]}), 5 );
 is(scalar(@{[$all_output =~ m/(OK)/mg]}),   13 );
 
-chdir($cwd) or die "Can't chdir to '$cwd': $!";
 $dist->remove;
 } # end once-again
 

@@ -1457,6 +1457,9 @@ invocant between the method and its arguments:
   give $gollum "Fisssssh!";
   give $gollum "Precious!";
 
+In modern Perl, calling methods this way is often considered bad practice and
+to be avoided.
+
 =item indirect object slot
 
 The syntactic position falling between a method call and its arguments

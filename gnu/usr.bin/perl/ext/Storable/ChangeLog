@@ -1,3 +1,12 @@
+Mon May 18 09:38:20 IST 2009   Abhijit Menon-Sen <ams@toroid.org>
+
+    Version 2.20
+
+	Fix bug handling blessed references to overloaded objects, plus
+	other miscellaneous fixes.
+
+	(Version 2.19 was released with 5.8.9.)
+
 Thu Nov 22 13:24:18 IST 2007   Abhijit Menon-Sen <ams@toroid.org>
 
     Version 2.18

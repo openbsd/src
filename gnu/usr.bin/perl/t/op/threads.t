@@ -16,7 +16,7 @@ BEGIN {
        exit 0;
      }
 
-     plan(10);
+     plan(14);
 }
 
 use strict;
@@ -158,5 +158,36 @@ EOI
     $_->join for @t;
     ok(1, '[perl #45053]');
 }
+
+sub matchit {
+    is (ref $_[1], "Regexp");
+    like ($_[0], $_[1]);
+}
+
+threads->new(\&matchit, "Pie", qr/pie/i)->join();
+
+# tests in threads don't get counted, so
+curr_test(curr_test() + 2);
+
+# the seen_evals field of a regexp was getting zeroed on clone, so
+# within a thread it didn't  know that a regex object contrained a 'safe'
+# re_eval expression, so it later died with 'Eval-group not allowed' when
+# you tried to interpolate the object
+
+sub safe_re {
+    my $re = qr/(?{1})/;	# this is literal, so safe
+    eval { "a" =~ /$re$re/ };	# interpolating safe values, so safe
+    ok($@ eq "", 'clone seen-evals');
+}
+threads->new(\&safe_re)->join();
+
+# tests in threads don't get counted, so
+curr_test(curr_test() + 1);
+
+# This used to crash in 5.10.0 [perl #64954]
+
+undef *a;
+threads->new(sub {})->join;
+pass("undefing a typeglob doesn't cause a crash during cloning");
 
 # EOF

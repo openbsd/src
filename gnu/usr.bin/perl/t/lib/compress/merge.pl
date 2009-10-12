@@ -89,15 +89,7 @@ sub run
                 
                 ok ! $gz, "  Did not create $CompressClass object";
 
-                {
-                    if ($to_file) {
-                        is $$Error, "Output file '$out_file' is not writable",
-                                "  Got non-writable filename message" ;
-                    }
-                    else {
-                        ok $$Error, "  Got error message" ;
-                    }
-                }
+                ok $$Error, "  Got error message" ;
             }
 
             chmod 0777, $out_file ;
@@ -137,7 +129,7 @@ sub run
 
             ok ! $CompressClass->new($buffer, Merge => 1), "  constructor fails";
             {
-                like $$Error, '/Cannot create InflateScan object: (Header Error|unexpected end of file)/', "  got Bad Magic" ;
+                like $$Error, '/Cannot create InflateScan object: (Header Error|unexpected end of file|Inflation Error: data error)/', "  got Bad Magic" ;
             }
 
         }

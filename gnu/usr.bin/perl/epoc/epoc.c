@@ -85,7 +85,7 @@ XS(epoc_getcwd)   /* more or less stolen from win32.c */
     }
 
     /* 
-     * If ptr != Nullch 
+     * If ptr != NULL 
      *   then it worked, set PV valid, 
      *   else return 'undef' 
      */

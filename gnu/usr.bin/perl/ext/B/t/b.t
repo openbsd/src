@@ -74,8 +74,11 @@ ok( B::svref_2object(\$.)->MAGIC->TYPE eq "\0", '$. has \0 magic' );
 	'$. has no more magic' );
 }
 
-ok(B::svref_2object(qr/foo/)->MAGIC->precomp() eq 'foo', 'Get string from qr//');
-like(B::svref_2object(qr/foo/)->MAGIC->REGEX(), qr/\d+/, "REGEX() returns numeric value");
+my $r = qr/foo/;
+my $obj = B::svref_2object($r);
+my $regexp =  ($] < 5.011) ? $obj->MAGIC : $obj;
+ok($regexp->precomp() eq 'foo', 'Get string from qr//');
+like($regexp->REGEX(), qr/\d+/, "REGEX() returns numeric value");
 my $iv = 1;
 my $iv_ref = B::svref_2object(\$iv);
 is(ref $iv_ref, "B::IV", "Test B:IV return from svref_2object");
@@ -126,21 +129,25 @@ my $null_ret = $nv_ref->object_2svref();
 is(ref $null_ret, "SCALAR", "Test object_2svref() return is SCALAR");
 is($$null_ret, $nv, "Test object_2svref()");
 
+my $RV_class = $] >= 5.011 ? 'B::IV' : 'B::RV';
 my $cv = sub{ 1; };
 my $cv_ref = B::svref_2object(\$cv);
-is($cv_ref->REFCNT, 1, "Test B::RV->REFCNT");
-is(ref $cv_ref, "B::RV", "Test B::RV return from svref_2object - code");
+is($cv_ref->REFCNT, 1, "Test $RV_class->REFCNT");
+is(ref $cv_ref, "$RV_class",
+   "Test $RV_class return from svref_2object - code");
 my $cv_ret = $cv_ref->object_2svref();
 is(ref $cv_ret, "REF", "Test object_2svref() return is REF");
 is($$cv_ret, $cv, "Test object_2svref()");
 
 my $av = [];
 my $av_ref = B::svref_2object(\$av);
-is(ref $av_ref, "B::RV", "Test B::RV return from svref_2object - array");
+is(ref $av_ref, "$RV_class",
+   "Test $RV_class return from svref_2object - array");
 
 my $hv = [];
 my $hv_ref = B::svref_2object(\$hv);
-is(ref $hv_ref, "B::RV", "Test B::RV return from svref_2object - hash");
+is(ref $hv_ref, "$RV_class",
+   "Test $RV_class return from svref_2object - hash");
 
 local *gv = *STDOUT;
 my $gv_ref = B::svref_2object(\*gv);

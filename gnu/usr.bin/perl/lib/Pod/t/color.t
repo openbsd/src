@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: color.t,v 1.3 2006-01-28 22:31:50 eagle Exp $
 #
 # color.t -- Additional specialized tests for Pod::Text::Color.
 #

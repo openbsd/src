@@ -1,5 +1,8 @@
 #!./perl -w
 # this script must be run by the current perl to get perl's version right
+#
+# Create a META.yml file in the current directory. Must be run from the
+# root directory of a perl source tree.
 
 use strict;
 use warnings;
@@ -43,8 +46,13 @@ version: $]
 abstract: Practical Extraction and Report Language
 author: perl5-porters\@perl.org
 license: perl
+resources:
+  homepage: http://www.perl.org/
+  bugtracker: http://rt.perl.org/perlbug/
+  license: http://dev.perl.org/licenses/
 distribution_type: core
-private:
+generated_by: $0
+no_index:
   directory:
 $dirs
   file:

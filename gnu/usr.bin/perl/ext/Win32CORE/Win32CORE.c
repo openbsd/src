@@ -10,7 +10,13 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+#if defined(__CYGWIN__) && !defined(USEIMPORTLIB)
+  #undef WIN32
+#endif
 #include "EXTERN.h"
+#if defined(__CYGWIN__) && !defined(USEIMPORTLIB)
+  #define EXTCONST extern const
+#endif
 #include "perl.h"
 #include "XSUB.h"
 
@@ -62,7 +68,7 @@ XS(boot_Win32CORE)
      * should never be called though, as Win32CORE.pm doesn't use DynaLoader.
      */
 }
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) && defined(USEIMPORTLIB)
 __declspec(dllexport)
 #endif
 void

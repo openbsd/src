@@ -24,14 +24,17 @@ ftp://ftp.stratus.com/pub/vos/utility/utility.html.
 
 If you are running VOS Release 14.4.1 or later, you can obtain a
 pre-compiled, supported copy of perl by purchasing Release 2.0.1
-(or later) of the VOS GNU C++ and GNU Tools product from Stratus
-Technologies.
+(or later) of the VOS GNU C/C++ and GNU Tools product from
+Stratus Technologies.
 
 =head1 BUILDING PERL FOR VOS
 
-To build perl from its source code, you must have a Continuum
-platform running VOS Release 14.5.0 or later, the STCP product,
-and the GNU C++ and GNU Tools, Release 2.0.1 or later.
+To build perl from its source code on the Stratus Continuum
+platform, you must be have VOS Release 14.5.0 or later, the STCP
+product, and the GNU C/C++ and GNU Tools, Release 2.0.1 or
+later.  On the V Series platform you must have VOS Release
+15.0.0 or later, and any version of the GNU C/C++ and GNU Tools
+product.
 
 To build full perl using the supplied Configure script and
 makefiles, change to the "vos" subdirectory and type the command
@@ -45,7 +48,8 @@ will configure, build, and test perl.
 =item 1
 
 If you have built perl using the Configure script, ensure that
-you have modify permission to C<< >system>ported >> and type
+you have modify and default write permission to C<<
+>system>ported >> and all subdirectories.  Then type
 
      gmake install
 
@@ -57,6 +61,7 @@ directories can be used to hold such files:
 
      >system>ported>lib>perl5>5.9.0>7100
      >system>ported>lib>perl5>5.9.0>8000
+     >system>ported>lib>perl5>5.9.0>i786
 
 =item 3
 
@@ -70,6 +75,7 @@ following directories:
 
      >system>ported>lib>perl5>site_perl>5.9.0>7100
      >system>ported>lib>perl5>site_perl>5.9.0>8000
+     >system>ported>lib>perl5>site_perl>5.9.0>i786
 
 =item 4
 
@@ -109,13 +115,13 @@ other floating-point computations that underflow or overflow
 will probably result in SIGFPE.  Don't push your luck.
 
 As of VOS Release 14.7.0, the VOS POSIX runtime sets up the
-PA-RISC hardware floating-point status register so that the
-overflow and underflow exceptions do not trap, but instead
-automatically convert the result to infinity or zero, as
+PA-RISC and IA-32 hardware floating-point status register so
+that the overflow and underflow exceptions do not trap, but
+instead automatically convert the result to infinity or zero, as
 appropriate.  As of this writing, there are still floating-point
 operations that can trap, for example, subtracting two infinite
-values.  This is recorded as suggestion posix-1022, which is not
-yet fixed.
+values.  This is recorded as suggestion posix-1022, which has
+been fixed in VOS Release 15.2 and higher.
 
 =head1 TEST STATUS
 
@@ -142,7 +148,7 @@ excellent books available on the Perl language; consult a book
 seller.
 
 If you want a supported version of perl for VOS, purchase the
-VOS GNU C++ and GNU Tools Release 2.0.1 (or later) product from
+VOS GNU C/C++ and GNU Tools Release 2.0.1 (or later) product from
 Stratus Technologies, along with a support contract (or from
 anyone else who will sell you support).
 
@@ -152,6 +158,6 @@ Paul Green (Paul.Green@stratus.com)
 
 =head1 LAST UPDATE
 
-January 15, 2004
+February 7, 2008
 
 =cut

@@ -13,7 +13,7 @@ chdir 't';
 
 use strict;
 
-use Test::More tests => 66;
+use Test::More tests => 94;
 use Cwd;
 
 use File::Spec;
@@ -22,6 +22,18 @@ use File::Find;
 use Config;
 
 my $Is_VMS = $^O eq 'VMS';
+my $Is_VMS_noefs = $Is_VMS;
+if ($Is_VMS) {
+    my $vms_efs = 0;
+    if (eval 'require VMS::Feature') {
+        $vms_efs = VMS::Feature::current("efs_charset");
+    } else {
+        my $efs_charset = $ENV{'DECC$EFS_CHARSET'} || '';
+        $vms_efs = $efs_charset =~ /^[ET1]/i; 
+    }
+    $Is_VMS_noefs = 0 if $vms_efs;
+}
+
 
 # We're going to be chdir'ing and modules are sometimes loaded on the
 # fly in this test, so we need an absolute @INC.
@@ -33,10 +45,11 @@ sub add_file {
     my ($file, $data) = @_;
     $data ||= 'foo';
     1 while unlink $file;  # or else we'll get multiple versions on VMS
-    open( T, '>'.$file) or return;
+    open( T, '> '.$file) or return;
     print T $data;
-    ++$Files{$file};
     close T;
+    return 0 unless -e $file;  # exists under the name we gave it ?
+    ++$Files{$file};
 }
 
 sub read_manifest {
@@ -60,7 +73,7 @@ sub remove_dir {
 BEGIN { 
     use_ok( 'ExtUtils::Manifest', 
             qw( mkmanifest manicheck filecheck fullcheck 
-                maniread manicopy skipcheck maniadd) ); 
+                maniread manicopy skipcheck maniadd maniskip) ); 
 }
 
 my $cwd = Cwd::getcwd();
@@ -173,12 +186,12 @@ $files = maniread();
 eval { (undef, $warn) = catch_warning( sub {
  		manicopy( $files, 'copy', 'cp' ) })
 };
-like( $@, qr/^Can't read none: /, 'croaked about none' );
 
 # a newline comes through, so get rid of it
 chomp($warn);
-
-# the copy should have given one warning and one error
+# the copy should have given a warning
+like($warn, qr/^none not found/, 'carped about none' );
+($res, $warn) = catch_warning( \&skipcheck );
 like($warn, qr/^Skipping MANIFEST.SKIP/i, 'warned about MANIFEST.SKIP' );
 
 # tell ExtUtils::Manifest to use a different file
@@ -218,13 +231,67 @@ is( $files->{wibble}, '',    'maniadd() with undef comment' );
 is( $files->{yarrow}, 'hock','          with comment' );
 is( $files->{foobar}, '',    '          preserved old entries' );
 
+my %funky_files;
+# test including a filename with a space
+SKIP: {
+    add_file( 'foo bar' => "space" )
+        or skip "couldn't create spaced test file", 2;
+    local $ExtUtils::Manifest::MANIFEST = "albatross";
+    maniadd({ 'foo bar' => "contains space"});
+    is( maniread()->{'foo bar'}, "contains space",
+	'spaced manifest filename' );
+    add_file( 'albatross.bak', '' );
+    ($res, $warn) = catch_warning( \&mkmanifest );
+    like( $warn, qr/\A(Added to.*\n)+\z/m,
+	  'no warnings about funky filename' );
+    $funky_files{'space'} = 'foo bar';
+}
+
+# test including a filename with a space and a quote
+SKIP: {
+    add_file( 'foo\' baz\'quux' => "quote" )
+        or skip "couldn't create quoted test file", 1;
+    local $ExtUtils::Manifest::MANIFEST = "albatross";
+    maniadd({ 'foo\' baz\'quux' => "contains quote"});
+    is( maniread()->{'foo\' baz\'quux'}, "contains quote",
+	'quoted manifest filename' );
+    $funky_files{'space_quote'} = 'foo\' baz\'quux';
+}
+
+# test including a filename with a space and a backslash
+SKIP: {
+    add_file( 'foo bar\\baz' => "backslash" )
+        or skip "couldn't create backslash test file", 1;
+    local $ExtUtils::Manifest::MANIFEST = "albatross";
+    maniadd({ 'foo bar\\baz' => "contains backslash"});
+    is( maniread()->{'foo bar\\baz'}, "contains backslash",
+	'backslashed manifest filename' );
+    $funky_files{'space_backslash'} = 'foo bar\\baz';
+}
+
+# test including a filename with a space, quote, and a backslash
+SKIP: {
+    add_file( 'foo bar\\baz\'quux' => "backslash/quote" )
+        or skip "couldn't create backslash/quote test file", 1;
+    local $ExtUtils::Manifest::MANIFEST = "albatross";
+    maniadd({ 'foo bar\\baz\'quux' => "backslash and quote"});
+    is( maniread()->{'foo bar\\baz\'quux'}, "backslash and quote",
+	'backslashed and quoted manifest filename' );
+    $funky_files{'space_quote_backslash'} = 'foo bar\\baz\'quux';
+}
+
+my @funky_keys = qw(space space_quote space_backslash space_quote_backslash);
 # test including an external manifest.skip file in MANIFEST.SKIP
 {
     maniadd({ foo => undef , albatross => undef,
               'mymanifest.skip' => undef, 'mydefault.skip' => undef});
+    for (@funky_keys) {
+        maniadd( {$funky_files{$_} => $_} ) if defined $funky_files{$_};
+    }
+
     add_file('mymanifest.skip' => "^foo\n");
     add_file('mydefault.skip'  => "^my\n");
-    $ExtUtils::Manifest::DEFAULT_MSKIP =
+    local $ExtUtils::Manifest::DEFAULT_MSKIP =
          File::Spec->catfile($cwd, qw(mantest mydefault.skip));
     my $skip = File::Spec->catfile($cwd, qw(mantest mymanifest.skip));
     add_file('MANIFEST.SKIP' =>
@@ -234,10 +301,26 @@ is( $files->{foobar}, '',    '          preserved old entries' );
         like( $warn, qr/Skipping \b$_\b/,
               "Skipping $_" );
     }
+    for my $funky_key (@funky_keys) {
+        SKIP: {
+            my $funky_file = $funky_files{$funky_key};
+	    skip "'$funky_key' not created", 1 unless $funky_file;
+	    like( $warn, qr/Skipping \b\Q$funky_file\E\b/,
+	      "Skipping $funky_file");
+	}
+    }
     ($res, $warn) = catch_warning( \&mkmanifest );
     for (qw(albatross foo foobar mymanifest.skip mydefault.skip)) {
         like( $warn, qr/Removed from MANIFEST: \b$_\b/,
               "Removed $_ from MANIFEST" );
+    }
+    for my $funky_key (@funky_keys) {
+        SKIP: {
+            my $funky_file = $funky_files{$funky_key};
+	    skip "'$funky_key' not created", 1 unless $funky_file;
+	    like( $warn, qr/Removed from MANIFEST: \b\Q$funky_file\E\b/,
+	      "Removed $funky_file from MANIFEST");
+	}
     }
     my $files = maniread;
     ok( ! exists $files->{albatross}, 'albatross excluded via MANIFEST.SKIP' );
@@ -249,7 +332,45 @@ is( $files->{foobar}, '',    '          preserved old entries' );
         'mymanifest.skip excluded via mydefault.skip' );
     ok( ! exists $files->{'mydefault.skip'},
         'mydefault.skip excluded via mydefault.skip' );
-    my $extsep = $Is_VMS ? '_' : '.';
+
+    # test exclusion of funky files
+    for my $funky_key (@funky_keys) {
+        SKIP: {
+            my $funky_file = $funky_files{$funky_key};
+	    skip "'$funky_key' not created", 1 unless $funky_file;
+	    ok( ! exists $files->{$funky_file},
+		  "'$funky_file' excluded via mymanifest.skip" );
+	}
+    }
+
+    # tests for maniskip
+    my $skipchk = maniskip();
+    is ( $skipchk->('albatross'), 1,
+	'albatross excluded via MANIFEST.SKIP' );
+    is( $skipchk->('yarrow'), '',
+	'yarrow included in MANIFEST' );
+    is( $skipchk->('bar'), '',
+	'bar included in MANIFEST' );
+    $skipchk = maniskip('mymanifest.skip');
+    is( $skipchk->('foobar'), 1,
+	'foobar excluded via mymanifest.skip' );
+    is( $skipchk->('foo'), 1,
+	'foo excluded via mymanifest.skip' );
+    is( $skipchk->('mymanifest.skip'), '',
+        'mymanifest.skip included via mydefault.skip' );
+    is( $skipchk->('mydefault.skip'), '',
+        'mydefault.skip included via mydefault.skip' );
+    $skipchk = maniskip('mydefault.skip');
+    is( $skipchk->('foobar'), '',
+	'foobar included via mydefault.skip' );
+    is( $skipchk->('foo'), '',
+	'foo included via mydefault.skip' );
+    is( $skipchk->('mymanifest.skip'), 1,
+        'mymanifest.skip excluded via mydefault.skip' );
+    is( $skipchk->('mydefault.skip'), 1,
+        'mydefault.skip excluded via mydefault.skip' );
+
+    my $extsep = $Is_VMS_noefs ? '_' : '.';
     $Files{"$_.bak"}++ for ('MANIFEST', "MANIFEST${extsep}SKIP");
 }
 

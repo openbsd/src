@@ -8,7 +8,7 @@ BEGIN {
     }
     use Config;
     if (! $Config{'useithreads'}) {
-        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        print("1..0 # SKIP Perl not compiled with 'useithreads'\n");
         exit(0);
     }
 }
@@ -101,5 +101,7 @@ $thr->join();
 
 ok(18, threads->get_stack_size() == 160*4096,
         'Default thread sized changed in thread');
+
+exit(0);
 
 # EOF

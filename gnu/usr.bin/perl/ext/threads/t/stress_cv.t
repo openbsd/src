@@ -8,7 +8,7 @@ BEGIN {
     }
     use Config;
     if (! $Config{'useithreads'}) {
-        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        print("1..0 # SKIP Perl not compiled with 'useithreads'\n");
         exit(0);
     }
 }
@@ -57,5 +57,7 @@ for (1..$cnt) {
     $result = $thr->join if $thr;
     ok($thr, "Thread joined - iter $_");
 }
+
+exit(0);
 
 # EOF

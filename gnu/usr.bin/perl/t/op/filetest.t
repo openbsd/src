@@ -10,7 +10,7 @@ BEGIN {
 }
 
 use Config;
-plan(tests => 24);
+plan(tests => 28);
 
 ok( -d 'op' );
 ok( -f 'TEST' );
@@ -78,6 +78,16 @@ ok( ! -f -d 'op' );
 ok( -x -d -x 'op' );
 ok( (-s -f 'TEST' > 1), "-s returns real size" );
 ok( -f -s 'TEST' == 1 );
+
+# now with an empty file
+my $tempfile = tempfile();
+open my $fh, ">", $tempfile;
+close $fh;
+ok( -f $tempfile );
+is( -s $tempfile, 0 );
+is( -f -s $tempfile, 0 );
+is( -s -f $tempfile, 0 );
+unlink $tempfile;
 
 # test that _ is a bareword after filetest operators
 

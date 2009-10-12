@@ -47,7 +47,7 @@ For example, a simple 'Hello, World!' plugin:
     sub hw { print "Hello, world!\n" }
     
 When the user in the default shell now issues the C</helloworld> command,
-this command will be dispatched to the plugin, and it's C<hw> method will
+this command will be dispatched to the plugin, and its C<hw> method will
 be called
 
 =head2 Registering Plugin Help

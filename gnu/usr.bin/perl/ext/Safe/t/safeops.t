@@ -49,7 +49,7 @@ plan(tests => scalar @op);
 sub testop {
     my ($op, $opname, $code) = @_;
     pass("$op : skipped") and return if $code =~ /^SKIP/;
-    pass("$op : skipped") and return if $code =~ m://: && $] < 5.009; # no dor
+    pass("$op : skipped") and return if $code =~ m://|~~: && $] < 5.010;
     my $c = new Safe;
     $c->deny_only($op);
     $c->reval($code);
@@ -423,4 +423,10 @@ setstate	SKIP
 method_named	$x->y()
 dor		$x // $y
 dorassign	$x //= $y
+once		SKIP {use feature 'state'; state $foo = 42;}
+say		SKIP {use feature 'say'; say "foo";}
+smartmatch	$x ~~ $y
+aeach		SKIP each @t
+akeys		SKIP keys @t
+avalues		SKIP values @t
 custom		SKIP (no way)

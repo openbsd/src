@@ -5,7 +5,7 @@ use File::Path ();
 use File::Basename ();
 
 use vars qw($VERSION @ISA);
-$VERSION = '0.21';
+$VERSION = '0.2602';
 $VERSION = eval $VERSION;
 
 # Okay, this is the brute-force method of finding out what kind of
@@ -36,6 +36,9 @@ my %OSTYPES = qw(
 		 sunos     Unix
 		 cygwin    Unix
 		 os2       Unix
+		 gnu       Unix
+		 gnukfreebsd Unix
+		 haiku     Unix
 		 
 		 dos       Windows
 		 MSWin32   Windows
@@ -127,7 +130,8 @@ commands before executing them:
 
 Returns true if the current system has a working C compiler and
 linker, false otherwise.  To determine this, we actually compile and
-link a sample C library.
+link a sample C library.  The sample will be compiled in the system
+tempdir or, if that fails for some reason, in the current directory.
 
 =item compile
 

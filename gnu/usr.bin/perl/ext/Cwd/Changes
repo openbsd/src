@@ -1,5 +1,124 @@
 Revision history for Perl distribution PathTools.
 
+3.30 - Sun May 10 10:55:00 2009
+
+- Promote to stable release.
+
+3.29_01 - Thu May  7 20:22:00 2009
+
+- Minor fixes for QNX6. [Sean Boudreau]
+
+- Update to support VMS in Unix compatible mode and/or file names using
+  extended character sets. (RT #42154) [John Malmberg]
+
+- VMS support for Unix and extended file specifications in File::Spec
+  (RT #42153) [John Malmberg]
+
+3.29 - Wed Oct 29 20:48:11 2008
+
+- Promote to stable release.
+
+3.28_03 - Mon Oct 27 22:12:11 2008
+
+- In Cwd.pm, pass the un-munged $VERSION to XSLoader/DynaLoader,
+  otherwise development releases fail tests on Win32.
+
+3.28_02 - Mon Oct 27 20:13:11 2008
+
+ - Fixed some issues on QNX/NTO related to paths with double
+   slashes. [Matt Kraai & Nicholas Clark]
+
+3.28_01 - Fri Jul 25 21:18:11 2008
+
+ - Fixed and clarified the behavior of splitpath() with a $no_file
+   argument on VMS.  [Craig A. Berry, Peter Edwards]
+
+ - Removed some function prototypes and other Perl::Critic violations.
+
+ - canonpath() and catdir() and catfile() on Win32 now make an
+   explicit (and unnecessary) copy of their arguments right away,
+   because apparently if we don't, we sabotage all of Win32dom. [RT
+   #33675]
+
+ - The Makefile.PL now has 'use 5.005;' to explicitly show what
+   minimum version of perl we support. [Spotted by Alexandr Ciornii]
+
+3.2701 - Mon Feb 11 21:43:51 2008
+
+ - Fixed an edge case for Win32 catdir('C:', 'foo') and catfile('C:',
+   'foo.txt') (which the caller's not really supposed to do, that's
+   what catpath() is for) that changed between versions.  Now we're
+   back to the old behavior, which was to return C:\foo and C:\foo.txt .
+   [Audrey Tang]
+
+3.27 - Wed Jan 16 20:20:49 2008
+
+ - If strlcpy() and strlcat() aren't available on the user's system,
+   we now use ppport.h to provide them, so our C code works. [Steve
+   Peters]
+
+ - Upgraded to a newer version of ppport.h [Steve Peters]
+
+3.26 - Sun Jan 13 21:59:20 2008
+
+ - case_tolerant() on Cygwin will now avoid a painful death when
+   Cygwin::mount_flags() isn't defined, as is the case for perl <
+   5.10.  It will now just return 1, which is what it always did
+   before it got so smart. [Spotted by Emanuele Zeppieri]
+
+ - abs_path() on Unix(ish) platforms has been upgraded to a much later
+   version of the underlying C code from BSD. [Michael Schwern]
+
+3.2501 - Mon Dec 24 20:33:02 2007
+
+ - Reimplemented abs_path() on VMS to use
+   VMS::Filespec::vms_realpath() when it's available. [John E. Malmberg]
+
+ - tmpdir() on Cygwin now also looks in $ENV{TMP} and $ENV{TEMP}.
+
+ - case_tolerant() on Cygwin and Win32 now take an optional path
+   argument, defaulting to the C drive, to check for case tolerance,
+   because this fact can vary on different volumes.
+
+ - File::Spec on Unix now uses Cwd::getcwd() rather than Cwd::cwd() to
+   get the current directory because I guess someone on p5p thought it
+   was more appropriate.
+
+ - Added a large set of File::Spec tests for the Cygwin platform.
+
+ - abs_path() now behaves correctly with symbolic links on VMS.
+
+ - Someone fixed a couple of mysterious edge cases in VMS' canonpath()
+   and splitdir().
+
+3.25_01 - Sat Oct 13 21:13:57 2007
+
+ - Major fixes on Win32, including a rewrite of catdir(), catfile(),
+   and canonpath() in terms of a single body of code. [Heinrich Tegethoff]
+
+ - For Win32 and Cygwin, case-tolerance can vary depending on the
+   volume under scrutiny.  When Win32API::File is available, it will
+   be employed to determine case-sensitivity of the given filesystem
+   (C: by default), otherwise we still return the default of 1. [Reini
+   Urban]
+
+ - On Cygwin, we added $ENV{'TMP'} and $ENV{'TEMP'} to the list of
+   possible places to look for tmpdir() return values. [Reini Urban]
+
+ - Added lots more tests for Cygwin. [Reini Urban]
+
+ - canonpath() with no arguments and canonpath(undef) now consistently
+   return undef on all platforms. [Spotted by Peter John Edwards]
+
+ - Fixed splitdir('') and splitdir(undef) and splitdir() to return an
+   empty list on VMS and MacOS, like it does on other platforms.
+   [Craig A. Berry]
+
+ - All .pm files now have the same $VERSION number, rather than a
+   hodgepodge of various numbers.
+
+3.25 - Mon May 21 21:07:26 2007
+
  - Added a workaround for auto-vivication-of-function-args Perl bug
    (triggered by OS/2-specific code). [Ilya Zakharevich]
 

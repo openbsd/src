@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-perldelta - what is new for perl 5.10.0
+perl5100delta - what is new for perl 5.10.0
 
 =head1 DESCRIPTION
 
@@ -103,7 +103,7 @@ nested balanced angle brackets:
 	<                   #   match an opening angle bracket
 	(?:                 #   match one of:
 	    (?>             #     don't backtrack over the inside of this group
-		[^<>]+      #       one or more non angle brackets
+	        [^<>]+      #       one or more non angle brackets
 	    )               #     end non backtracking group
 	|                   #     ... or ...
 	    (?1)            #     recurse to bracket 1 and try it again
@@ -228,9 +228,9 @@ overriding the lexical declaration with C<our $_>. (Rafael Garcia-Suarez)
 =head2 The C<_> prototype
 
 A new prototype character has been added. C<_> is equivalent to C<$> but
-defaults to C<$_> if the corresponding argument isn't supplied. (both C<$>
-and C<_> denote a scalar). Due to the optional nature of the argument, you
-can only use it at the end of a prototype, or before a semicolon.
+defaults to C<$_> if the corresponding argument isn't supplied (both C<$>
+and C<_> denote a scalar). Due to the optional nature of the argument, 
+you can only use it at the end of a prototype, or before a semicolon.
 
 This has a small incompatible consequence: the prototype() function has
 been adjusted to return C<_> for some built-ins in appropriate cases (for
@@ -313,7 +313,7 @@ To use state variables, one needs to enable them by using
     use feature 'state';
 
 or by using the C<-E> command-line switch in one-liners.
-See L<perlsub/"Persistent variables via state()">.
+See L<perlsub/"Persistent Private Variables">.
 
 =head2 Stacked filetest operators
 
@@ -396,7 +396,7 @@ details.
 
 This variable gives the native status returned by the last pipe close,
 backtick command, successful call to wait() or waitpid(), or from the
-system() operator. See L<perlrun> for details. (Contributed by Gisle Aas.)
+system() operator. See L<perlvar> for details. (Contributed by Gisle Aas.)
 
 =item C<${^RE_TRIE_MAXBUF}>
 
@@ -1030,7 +1030,7 @@ their system dependent constants - as a result C<use POSIX;> now takes about
 
 The new compilation flag C<PERL_DONT_CREATE_GVSV>, introduced as an option
 in perl 5.8.8, is turned on by default in perl 5.9.3. It prevents perl
-from creating an empty scalar with every new typeglob. See L<perl588delta>
+from creating an empty scalar with every new typeglob. See L<perl589delta>
 for details.
 
 =head2 Weak references are cheaper

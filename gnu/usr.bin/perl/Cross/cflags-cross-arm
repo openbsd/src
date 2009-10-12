@@ -149,7 +149,7 @@ if test -f .patch; then
 fi
 
     : Can we perhaps use $ansi2knr here
-    echo "$CROSSCC -c -DPERL_CORE $ccflags $stdflags $optimize $warn $extra"
+    echo "$CROSSCC -c -DUSE_CROSS_COMPILE -DPERL_CORE $ccflags $stdflags $optimize $warn $extra"
     eval "$also "'"$CROSSCC -DUSE_CROSS_COMPILE -DPERL_CORE -c $ccflags $stdflags $optimize $warn $extra"'
 
     . $TOP/Cross/config-arm.sh

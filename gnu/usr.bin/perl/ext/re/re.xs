@@ -69,92 +69,6 @@ install()
         PL_colorset = 0;	/* Allow reinspection of ENV. */
         /* PL_debug |= DEBUG_r_FLAG; */
 	XPUSHs(sv_2mortal(newSViv(PTR2IV(&my_reg_engine))));
-	
-
-void
-regexp_pattern(sv)
-    SV * sv
-PROTOTYPE: $
-PREINIT:
-    REGEXP *re;
-PPCODE:
-{
-    /*
-       Checks if a reference is a regex or not. If the parameter is
-       not a ref, or is not the result of a qr// then returns false
-       in scalar context and an empty list in list context.
-       Otherwise in list context it returns the pattern and the
-       modifiers, in scalar context it returns the pattern just as it
-       would if the qr// was stringified normally, regardless as
-       to the class of the variable and any strigification overloads
-       on the object. 
-    */
-
-    if ((re = SvRX(sv))) /* assign deliberate */
-    {
-        /* Housten, we have a regex! */
-        SV *pattern;
-        STRLEN patlen = 0;
-        STRLEN left = 0;
-        char reflags[6];
-        
-        if ( GIMME_V == G_ARRAY ) {
-            /*
-               we are in list context so stringify
-               the modifiers that apply. We ignore "negative
-               modifiers" in this scenario. 
-            */
-
-            char *fptr = INT_PAT_MODS;
-            char ch;
-            U16 match_flags = (U16)((re->extflags & PMf_COMPILETIME) >> 12);
-
-            while((ch = *fptr++)) {
-                if(match_flags & 1) {
-                    reflags[left++] = ch;
-                }
-                match_flags >>= 1;
-            }
-
-            pattern = sv_2mortal(newSVpvn(re->precomp,re->prelen));
-            if (re->extflags & RXf_UTF8) SvUTF8_on(pattern);
-
-            /* return the pattern and the modifiers */
-            XPUSHs(pattern);
-            XPUSHs(sv_2mortal(newSVpvn(reflags,left)));
-            XSRETURN(2);
-        } else {
-            /* Scalar, so use the string that Perl would return */
-            /* return the pattern in (?msix:..) format */
-            pattern = sv_2mortal(newSVpvn(re->wrapped,re->wraplen));
-            if (re->extflags & RXf_UTF8) 
-                SvUTF8_on(pattern);
-            XPUSHs(pattern);
-            XSRETURN(1);
-        }
-    } else {
-        /* It ain't a regexp folks */
-        if ( GIMME_V == G_ARRAY ) {
-            /* return the empty list */
-            XSRETURN_UNDEF;
-        } else {
-            /* Because of the (?:..) wrapping involved in a 
-               stringified pattern it is impossible to get a 
-               result for a real regexp that would evaluate to 
-               false. Therefore we can return PL_sv_no to signify
-               that the object is not a regex, this means that one 
-               can say
-               
-                 if (regex($might_be_a_regex) eq '(?:foo)') { }
-               
-               and not worry about undefined values.
-            */
-            XSRETURN_NO;
-        }    
-    }
-    /* NOT-REACHED */
-}
-
 
 void
 regmust(sv)
@@ -168,15 +82,15 @@ PPCODE:
     {
         SV *an = &PL_sv_no;
         SV *fl = &PL_sv_no;
-        if (re->anchored_substr) {
-            an = newSVsv(re->anchored_substr);
-        } else if (re->anchored_utf8) {
-            an = newSVsv(re->anchored_utf8);
+        if (RX_ANCHORED_SUBSTR(re)) {
+            an = newSVsv(RX_ANCHORED_SUBSTR(re));
+        } else if (RX_ANCHORED_UTF8(re)) {
+            an = newSVsv(RX_ANCHORED_UTF8(re));
         }
-        if (re->float_substr) {
-            fl = newSVsv(re->float_substr);
-        } else if (re->float_utf8) {
-            fl = newSVsv(re->float_utf8);
+        if (RX_FLOAT_SUBSTR(re)) {
+            fl = newSVsv(RX_FLOAT_SUBSTR(re));
+        } else if (RX_FLOAT_UTF8(re)) {
+            fl = newSVsv(RX_FLOAT_UTF8(re));
         }
         XPUSHs(an);
         XPUSHs(fl);

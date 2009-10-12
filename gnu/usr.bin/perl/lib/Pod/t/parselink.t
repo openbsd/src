@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: parselink.t,v 1.1 2001/11/23 10:09:06 eagle Exp $
 #
 # parselink.t -- Tests for Pod::ParseLink.
 #

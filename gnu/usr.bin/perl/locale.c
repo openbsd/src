@@ -1,7 +1,7 @@
 /*    locale.c
  *
- *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
- *    2001, 2002, 2003, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
+ *    2002, 2003, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -9,13 +9,15 @@
  */
 
 /*
- * A Elbereth Gilthoniel,
- * silivren penna míriel
- * o menel aglar elenath!
- * Na-chaered palan-díriel
- * o galadhremmin ennorath,
- * Fanuilos, le linnathon
- * nef aear, si nef aearon!
+ *      A Elbereth Gilthoniel,
+ *      silivren penna míriel
+ *      o menel aglar elenath!
+ *      Na-chaered palan-díriel
+ *      o galadhremmin ennorath,
+ *      Fanuilos, le linnathon
+ *      nef aear, si nef aearon!
+ *
+ *     [p.238 of _The Lord of the Rings_, II/i: "Many Meetings"]
  */
 
 /* utility functions for handling locale-specific stuff like what
@@ -55,6 +57,8 @@ S_stdize_locale(pTHX_ char *locs)
 {
     const char * const s = strchr(locs, '=');
     bool okay = TRUE;
+
+    PERL_ARGS_ASSERT_STDIZE_LOCALE;
 
     if (s) {
 	const char * const t = strchr(s, '.');
@@ -174,6 +178,8 @@ Perl_new_ctype(pTHX_ const char *newctype)
     dVAR;
     int i;
 
+    PERL_ARGS_ASSERT_NEW_CTYPE;
+
     for (i = 0; i < 256; i++) {
 	if (isUPPER_LC(i))
 	    PL_fold_locale[i] = toLOWER_LC(i);
@@ -184,6 +190,7 @@ Perl_new_ctype(pTHX_ const char *newctype)
     }
 
 #endif /* USE_LOCALE_CTYPE */
+    PERL_ARGS_ASSERT_NEW_CTYPE;
     PERL_UNUSED_ARG(newctype);
     PERL_UNUSED_CONTEXT;
 }
@@ -576,6 +583,8 @@ Perl_mem_collxfrm(pTHX_ const char *s, STRLEN len, STRLEN *xlen)
     dVAR;
     char *xbuf;
     STRLEN xAlloc, xin, xout; /* xalloc is a reserved word in VC */
+
+    PERL_ARGS_ASSERT_MEM_COLLXFRM;
 
     /* the first sizeof(collationix) bytes are used by sv_collxfrm(). */
     /* the +1 is for the terminating NUL. */

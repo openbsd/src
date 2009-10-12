@@ -72,15 +72,13 @@ print "ok 8\n";
 
 my @donetests;
 eval {
-  require File::Spec; import File::Spec;
-  require File::Path; import File::Path;
-  require File::Temp; import File::Temp qw/ :mktemp unlink0 /;
+  require File::Temp; import File::Temp qw/ tempfile unlink0 /;
 
-  my $template = File::Spec->catfile(File::Spec->tmpdir, 'fcmpXXXX');
-  my($tfh,$filename) = mkstemp($template);
+  my($tfh,$filename) = tempfile('fcmpXXXX', TMPDIR => 1);
   # NB. The trailing space is intentional (see [perl #37716])
-  open my $tfhSP, ">", "$filename "
-      or die "Could not open '$filename ' for writing: $!";
+  my $whsp = get_valid_whitespace();
+  open my $tfhSP, ">", "$filename$whsp"
+      or die "Could not open '$filename$whsp' for writing: $!";
   binmode($tfhSP);
   {
     local $/; #slurp
@@ -95,10 +93,14 @@ eval {
   }
   seek($tfh,0,0);
   $donetests[0] = compare($tfh, 'README');
+  if ($^O eq 'VMS') {
+      unlink0($tfh,$filename);  # queue for later removal
+      close $tfh;               # may not be opened shared
+  }
   $donetests[1] = compare($filename, 'README');
   unlink0($tfh,$filename);
-  $donetests[2] = compare('README', "$filename ");
-  unlink "$filename ";
+  $donetests[2] = compare('README', "$filename$whsp");
+  unlink "$filename$whsp";
 };
 print "# problem '$@' when testing with a temporary file\n" if $@;
 
@@ -114,4 +116,11 @@ if (@donetests == 3) {
 }
 else {
   print "ok 11# Skip\nok 12 # Skip\nok 13 # Skip Likely due to File::Temp\n";
+}
+
+sub get_valid_whitespace {
+    return ' ' unless $^O eq 'VMS';
+    return (exists $ENV{'DECC$EFS_CHARSET'} && $ENV{'DECC$EFS_CHARSET'} =~ /^[ET1]/i) 
+           ? ' '
+           : '_';  # traditional mode eats spaces in filenames
 }

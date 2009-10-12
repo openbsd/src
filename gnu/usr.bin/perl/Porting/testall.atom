@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# testall.atom
+# testall.atom - test suite profiling on Tru 64
 # 
 # This script creates all.Counts file that can be fed to prof(1)
 # to produce various basic block counting profiles.

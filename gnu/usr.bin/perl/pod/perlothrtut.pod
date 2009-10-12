@@ -607,10 +607,10 @@ this:
     sleep 10; 
     $DataQueue->enqueue(undef);
 
-You create the queue with new Thread::Queue.  Then you can add lists of
-scalars onto the end with enqueue(), and pop scalars off the front of
-it with dequeue().  A queue has no fixed size, and can grow as needed
-to hold everything pushed on to it.
+You create the queue with C<< Thread::Queue->new >>.  Then you can add
+lists of scalars onto the end with enqueue(), and pop scalars off the
+front of it with dequeue().  A queue has no fixed size, and can grow as
+needed to hold everything pushed on to it.
 
 If a queue is empty, dequeue() blocks until another thread enqueues
 something.  This makes queues ideal for event loops and other
@@ -740,10 +740,10 @@ it.  A more elaborate example looks like this:
 
     use Thread qw(yield); 
 
-    new Thread \&thread_sub, 1; 
-    new Thread \&thread_sub, 2; 
-    new Thread \&thread_sub, 3; 
-    new Thread \&thread_sub, 4;
+    Thread->new(\&thread_sub, 1);
+    Thread->new(\&thread_sub, 2);
+    Thread->new(\&thread_sub, 3);
+    Thread->new(\&thread_sub, 4);
 
     sub sync_sub :locked { 
         my $CallingThread = shift @_; 
@@ -790,7 +790,7 @@ method attribute indicates whether the subroutine is really a method.
     }
 
     foreach my $thrnum (1..10) { 
-        new Thread \&tester, $thrnum; 
+        Thread->new(\&tester, $thrnum);
     }
 
     package Foo; 

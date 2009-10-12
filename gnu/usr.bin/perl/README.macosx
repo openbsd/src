@@ -69,6 +69,12 @@ for creating a universal binary:
                 -Aldflags="-arch i686 -arch ppc -Wl,-syslibroot,$SDK" \
                 -de
 
+In Leopard (MacOSX 10.5.6 at the time of this writing) you must use the 10.5 SDK:
+
+    export SDK=/Developer/SDKs/MacOSX10.5.sdk
+
+You can use the same compiler flags you would use with the 10.4u SDK.
+
 Keep in mind that these compiler and linker settings will also be used when
 building CPAN modules. For XS modules to be compiled as a universal binary, any
 libraries it links to must also be universal binaries. The system libraries that

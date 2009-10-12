@@ -90,7 +90,8 @@ sub testfile ($$$$$$) {
   my ($str, $write_c, $read_c, $how_w, $how_r, $why) = @_;
   my @data = grep length, split /(.{1,$write_c})/s, $str;
 
-  open my $fh, '>', 'io_io.tmp' or die;
+  my $filename = tempfile();
+  open my $fh, '>', $filename or die;
   select $fh;
   binmode $fh, ':crlf' 
       if defined $main::use_crlf && $main::use_crlf == 1;
@@ -106,7 +107,7 @@ sub testfile ($$$$$$) {
     die "Unrecognized write: '$how_w'";
   }
   close $fh or die "close: $!";
-  open $fh, '<', 'io_io.tmp' or die;
+  open $fh, '<', $filename or die;
   binmode $fh, ':crlf'
       if defined $main::use_crlf && $main::use_crlf == 1;
   testread($fh, $str, $read_c, $how_r, $write_c, $how_w, "file$why");
@@ -142,7 +143,5 @@ for my $s (1..2) {
     }
   }
 }
-
-unlink 'io_io.tmp';
 
 1;

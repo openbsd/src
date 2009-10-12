@@ -20,8 +20,8 @@ use Test::More 'no_plan';
 
 use constant ON_VMS     => $^O eq 'VMS';
 
-use lib "$FindBin::Bin/../lib";
-use lib "$FindBin::Bin/to_load";
+use lib File::Spec->catdir($FindBin::Bin, qw[.. lib] );
+use lib File::Spec->catdir($FindBin::Bin, q[to_load] );
 
 use_ok( 'Module::Load::Conditional' );
 
@@ -46,6 +46,23 @@ use_ok( 'Module::Load::Conditional' );
     ok( $rv->{uptodate},    q[Verify self] );
     is( $rv->{version}, $Module::Load::Conditional::VERSION,  
                             q[  Found proper version] );
+    ok( $rv->{dir},         q[  Found directory information] );
+    
+    {   my $dir = File::Spec->canonpath( $rv->{dir} );
+
+        ### special rules apply on VMS, as always...
+        if (ON_VMS) {
+            ### Need path syntax for VMS compares.
+            $dir = VMS::Filespec::pathify($dir);
+            ### Remove the trailing VMS specific directory delimiter
+            $dir =~ s/\]//;
+        }    
+    
+        ### quote for Win32 paths, use | to avoid slash confusion
+        my $dir_re = qr|^\Q$dir\E|i;
+        like( File::Spec->canonpath( $rv->{file} ), $dir_re,
+                            q[      Dir subset of file path] );
+    }
 
     ### break up the specification
     my @rv_path = do {
@@ -64,11 +81,17 @@ use_ok( 'Module::Load::Conditional' );
         ### and return it    
         @path;
     };
-    
-    is( $INC{'Module/Load/Conditional.pm'},            
+    my $inc_path = $INC{'Module/Load/Conditional.pm'};
+    if ( $^O eq 'MSWin32' ) {
+        $inc_path = File::Spec->canonpath( $inc_path );
+        $inc_path =~ s{\\}{/}g; # to meet with unix path
+    }
+    is( $inc_path,
             File::Spec::Unix->catfile(@rv_path),
                             q[  Found proper file]
     );
+    
+    
 
 }
 

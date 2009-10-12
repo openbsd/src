@@ -110,7 +110,7 @@ Destructor method
 
 =head1 TESTING FOR AND BEGIN
 
-=for html    <br>
+=for html    <br />
 <p>
 blah blah
 </p>

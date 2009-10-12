@@ -17,22 +17,15 @@ use strict;
 use Config;
 use ExtUtils::MakeMaker;
 
-use Test::More tests => 83;
+use Test::More tests => 79;
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::BFD;
 use File::Find;
 use File::Spec;
 use File::Path;
 
-# 'make disttest' sets a bunch of environment variables which interfere
-# with our testing.
-delete @ENV{qw(PREFIX LIB MAKEFLAGS)};
-
 my $perl = which_perl();
 my $Is_VMS = $^O eq 'VMS';
-
-# GNV logical interferes with testing
-$ENV{'bin'} = '[.bin]' if $Is_VMS;
 
 chdir 't';
 
@@ -93,21 +86,21 @@ ok( open(PPD, 'Big-Dummy.ppd'), '  .ppd file generated' );
 my $ppd_html;
 { local $/; $ppd_html = <PPD> }
 close PPD;
-like( $ppd_html, qr{^<SOFTPKG NAME="Big-Dummy" VERSION="0,01,0,0">}m, 
+like( $ppd_html, qr{^<SOFTPKG NAME="Big-Dummy" VERSION="0.01">}m, 
                                                            '  <SOFTPKG>' );
-like( $ppd_html, qr{^\s*<TITLE>Big-Dummy</TITLE>}m,        '  <TITLE>'   );
 like( $ppd_html, qr{^\s*<ABSTRACT>Try "our" hot dog's</ABSTRACT>}m,         
                                                            '  <ABSTRACT>');
 like( $ppd_html, 
       qr{^\s*<AUTHOR>Michael G Schwern &lt;schwern\@pobox.com&gt;</AUTHOR>}m,
                                                            '  <AUTHOR>'  );
 like( $ppd_html, qr{^\s*<IMPLEMENTATION>}m,          '  <IMPLEMENTATION>');
-like( $ppd_html, qr{^\s*<DEPENDENCY NAME="strict" VERSION="0,0,0,0" />}m,
-                                                           '  <DEPENDENCY>' );
-like( $ppd_html, qr{^\s*<OS NAME="$Config{osname}" />}m,
-                                                           '  <OS>'      );
+like( $ppd_html, qr{^\s*<REQUIRE NAME="strict::" />}m,  '  <REQUIRE>' );
+
 my $archname = $Config{archname};
-$archname .= "-". substr($Config{version},0,3) if $] >= 5.008;
+if( $] >= 5.008 ) {
+    # XXX This is a copy of the internal logic, so it's not a great test
+    $archname .= "-$Config{PERL_REVISION}.$Config{PERL_VERSION}";
+}
 like( $ppd_html, qr{^\s*<ARCHITECTURE NAME="$archname" />}m,
                                                            '  <ARCHITECTURE>');
 like( $ppd_html, qr{^\s*<CODEBASE HREF="" />}m,            '  <CODEBASE>');
@@ -133,7 +126,6 @@ is( $?, 0,                                  '  exited normally' ) ||
 my $install_out = run("$make install");
 is( $?, 0, 'install' ) || diag $install_out;
 like( $install_out, qr/^Installing /m );
-like( $install_out, qr/^Writing /m );
 
 ok( -r '../dummy-install',     '  install dir created' );
 my %files = ();
@@ -154,12 +146,11 @@ ok( $files{'perllocal.pod'},'  perllocal.pod created' );
 
 
 SKIP: {
-    skip 'VMS install targets do not preserve $(PREFIX)', 9 if $Is_VMS;
+    skip 'VMS install targets do not preserve $(PREFIX)', 8 if $Is_VMS;
 
     $install_out = run("$make install PREFIX=elsewhere");
     is( $?, 0, 'install with PREFIX override' ) || diag $install_out;
     like( $install_out, qr/^Installing /m );
-    like( $install_out, qr/^Writing /m );
 
     ok( -r 'elsewhere',     '  install dir created' );
     %files = ();
@@ -174,13 +165,12 @@ SKIP: {
 
 
 SKIP: {
-    skip 'VMS install targets do not preserve $(DESTDIR)', 11 if $Is_VMS;
+    skip 'VMS install targets do not preserve $(DESTDIR)', 10 if $Is_VMS;
 
     $install_out = run("$make install PREFIX= DESTDIR=other");
     is( $?, 0, 'install with DESTDIR' ) || 
         diag $install_out;
     like( $install_out, qr/^Installing /m );
-    like( $install_out, qr/^Writing /m );
 
     ok( -d 'other',  '  destdir created' );
     %files = ();
@@ -215,13 +205,12 @@ SKIP: {
 
 
 SKIP: {
-    skip 'VMS install targets do not preserve $(PREFIX)', 10 if $Is_VMS;
+    skip 'VMS install targets do not preserve $(PREFIX)', 9 if $Is_VMS;
 
     $install_out = run("$make install PREFIX=elsewhere DESTDIR=other/");
     is( $?, 0, 'install with PREFIX override and DESTDIR' ) || 
         diag $install_out;
     like( $install_out, qr/^Installing /m );
-    like( $install_out, qr/^Writing /m );
 
     ok( !-d 'elsewhere',       '  install dir not created' );
     ok( -d 'other/elsewhere',  '  destdir created' );
@@ -250,25 +239,42 @@ ok( !-f 'META.yml',  'META.yml not written to source dir' );
 ok( -f $meta_yml,    'META.yml written to dist dir' );
 ok( !-e "META_new.yml", 'temp META.yml file not left around' );
 
+SKIP: {
+    # META.yml spec 1.4 was added in 0.11
+    skip "Test::YAML::Meta >= 0.11 required", 2
+      unless eval { require Test::YAML::Meta }   and
+             Test::YAML::Meta->VERSION >= 0.11;
+
+    Test::YAML::Meta::meta_spec_ok($meta_yml);
+}
+
 ok open META, $meta_yml or diag $!;
 my $meta = join '', <META>;
 ok close META;
 
 is $meta, <<"END";
 --- #YAML:1.0
-name:                Big-Dummy
-version:             0.01
-abstract:            Try "our" hot dog's
-license:             ~
-author:              
+name:               Big-Dummy
+version:            0.01
+abstract:           Try "our" hot dog's
+author:
     - Michael G Schwern <schwern\@pobox.com>
-generated_by:        ExtUtils::MakeMaker version $ExtUtils::MakeMaker::VERSION
-distribution_type:   module
-requires:     
-    strict:                        0
+license:            unknown
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
+requires:
+    strict:  0
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version $ExtUtils::MakeMaker::VERSION
 meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4
 END
 
 my $manifest = maniread("$distdir/MANIFEST");
@@ -300,7 +306,7 @@ ok( grep(/^Writing $makefile for Big::Dummy/, @mpl_out) == 1,
 # I know we'll get ignored errors from make here, that's ok.
 # Send STDERR off to oblivion.
 open(SAVERR, ">&STDERR") or die $!;
-open(STDERR, ">".File::Spec->devnull) or die $!;
+open(STDERR, ">",File::Spec->devnull) or die $!;
 
 my $realclean_out = run("$make realclean");
 is( $?, 0, 'realclean' ) || diag($realclean_out);

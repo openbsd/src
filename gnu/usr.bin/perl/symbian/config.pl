@@ -30,6 +30,9 @@ if ($SYMBIAN_ROOT eq 'C:\Symbian\Series60_1_2_CW') {
 my $WIN = $ENV{WIN} ; # 'wins', 'winscw' (from sdk.pl)
 my $ARM = 'thumb';    # 'thumb', 'armv5'
 my $S60SDK = $ENV{S60SDK}; # qw(1.2 2.0 2.1 2.6) (from sdk.pl)
+    if ($SDK_VARIANT eq 'S60' && $S60SDK =~ /^5\./) {
+        $ARM = 'armv5';    # 'thumb', 'armv5' # Configuration for S60 5th Edition SDK v1.0
+    }
 my $S80SDK = $ENV{S80SDK}; # qw(2.0) (from sdk.pl)
 my $S90SDK = $ENV{S90SDK}; # qw(1.1) (from sdk.pl)
 my $UIQSDK = $ENV{UIQSDK}; # qw(2.0 2.1) (from sdk.pl)
@@ -71,16 +74,26 @@ sub create_mmp {
         print $fh <<__EOF__;
 TARGET		$target.$type
 TARGETTYPE	$type
-$targetpath
-EPOCHEAPSIZE	1024 8388608
-EPOCSTACKSIZE	65536
+__EOF__
+        if ($SDK_VARIANT eq 'S60' && $S60SDK =~ /^5\./) {
+            print $fh "UID\t0 0xEA3E9181\n" if $miniperl;
+            print $fh "UID\t0 0xED04DD86\n" if $perl;
+            print $fh "UID\t0x1000008d 0xE8667302\n" unless $miniperl || $perl; 
+            print $fh "CAPABILITY\tNONE\n";
+        } else {
+            print $targetpath; 
+            print $fh "EPOCHEAPSIZE\t1024 8388608"; 
+            print $fh "EPOCSTACKSIZE\t65536"; 
+        }
+        print $fh <<__EOF__;
 EXPORTUNFROZEN
 SRCDBG
 __EOF__
         if ($SDK_VARIANT eq 'S60') {
-	    print $fh "MACRO\t__SERIES60__\n";
-	    print $fh "MACRO\t__SERIES60_1X__\n" if $S60SDK =~ /^1\./;
-	    print $fh "MACRO\t__SERIES60_2X__\n" if $S60SDK =~ /^2\./;
+            print $fh "MACRO\t__SERIES60__\n";
+            print $fh "MACRO\t__SERIES60_1X__\n" if $S60SDK =~ /^1\./;
+            print $fh "MACRO\t__SERIES60_2X__\n" if $S60SDK =~ /^2\./;
+            print $fh "MACRO\t__SERIES60_3X__\n" if $S60SDK =~ /^5\./; 
 	}
         if ($SDK_VARIANT eq 'S80') {
 	    print $fh "MACRO\t__SERIES80__\n";
@@ -180,9 +193,15 @@ __EOF__
             print $fh <<__EOF__;
 MACRO		PERL_GLOBAL_STRUCT
 MACRO		PERL_GLOBAL_STRUCT_PRIVATE
-RESOURCE	symbian\\PerlUi.rss
 __EOF__
-        }
+    }
+        unless ($miniperl || $perl ) {
+            if ($SDK_VARIANT eq 'S60' && $S60SDK =~ /^5\./) {
+                print $fh "START RESOURCE\tsymbian\\PerlUi.rss\nEND\n";
+            } else {
+                print $fh "RESOURCE\tsymbian\\PerlUi.rss";
+            }
+	}
         close $fh;
     }
     else {

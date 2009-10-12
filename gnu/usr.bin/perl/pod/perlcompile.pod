@@ -134,7 +134,7 @@ I<myperlprogram> to the file I<report>:
 =head2 The Decompiling Back End
 
 The Deparse back end turns your Perl source back into Perl source.  It
-can reformat along the way, making it useful as a de-obfuscator.  The
+can reformat along the way, making it useful as a deobfuscator.  The
 most basic way to use it is:
 
   $ perl -MO=Deparse myperlprogram

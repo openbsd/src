@@ -1,4 +1,4 @@
-# tests shared between t/op/caller.t and ext/XS/APItest/t/op.t
+# tests shared between t/op/caller.t and ext/XS-APItest/t/op.t
 
 use strict;
 use warnings;

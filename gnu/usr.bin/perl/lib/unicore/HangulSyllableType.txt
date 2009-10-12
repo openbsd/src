@@ -1,8 +1,8 @@
-# HangulSyllableType-5.0.0.txt
-# Date: 2006-03-09, 23:14:14 GMT [MD]
+# HangulSyllableType-5.1.0.txt
+# Date: 2008-03-03, 21:57:58 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2006 Unicode, Inc.
+# Copyright (c) 1991-2008 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 

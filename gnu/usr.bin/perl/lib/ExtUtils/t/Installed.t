@@ -45,7 +45,7 @@ ok( $ei->_is_type(0, 'all'), '_is_type() should be true for type of "all"' );
 
 foreach my $path (qw( man1dir man3dir )) {
     SKIP: {
-        my $dir = $Config{$path.'exp'};
+        my $dir = File::Spec->canonpath($Config{$path.'exp'});
         skip("no man directory $path on this system", 2 ) unless $dir;
 
         my $file = $dir . '/foo';

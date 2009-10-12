@@ -21,7 +21,7 @@ use File::Spec;
 use Encode qw(decode encode find_encoding _utf8_off);
 
 #use Test::More qw(no_plan);
-use Test::More tests => 29;
+use Test::More tests => 30;
 use_ok("Encode::Guess");
 {
     no warnings;
@@ -35,6 +35,7 @@ my $utf8off = $utf8on; _utf8_off($utf8off);
 my $utf16 = encode('UTF-16', $utf8on);
 my $utf32 = encode('UTF-32', $utf8on);
 
+like(guess_encoding(''), qr/empty string/io, 'empty string');
 is(guess_encoding($ascii)->name, 'ascii', 'ascii');
 like(guess_encoding($latin1), qr/No appropriate encoding/io, 'no ascii');
 is(guess_encoding($latin1, 'latin1')->name, 'iso-8859-1', 'iso-8859-1');

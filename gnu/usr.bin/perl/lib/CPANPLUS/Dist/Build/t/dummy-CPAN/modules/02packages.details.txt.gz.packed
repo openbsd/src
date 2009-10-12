@@ -1,0 +1,26 @@
+#########################################################################
+This is a binary file that was packed with the 'uupacktool.pl' which
+is included in the Perl distribution.
+
+To unpack this file use the following command:
+
+     uupacktool.pl -u 02packages.details.txt.gz.packed 02packages.details.txt.gz
+
+To recreate it use the following command:
+
+     uupacktool.pl -p 02packages.details.txt.gz 02packages.details.txt.gz.packed
+
+Created at Sat Jun 13 10:56:20 2009
+#########################################################################
+__UU__
+M'XL("*MG,TH"`S`R<&%C:V%G97,N9&5T86EL<RYT>'0`G=-1;],P$`?PY^93
+MW`,/(#6.EZH"^8FF:Z=!VU64:'M#7GQK+1([LB\KW:?'7AG;*CH&ITB1G+]_
+M/D?V5-<HX*%XWLKJNURC9PI)ZMHS^D%)^67VF($-42NR;+O=LA9=S2K;9./E
+M:)$U5G4U^NR(<HJ^<KHE;4W0EOL(&-F@AQO;&07:@-(.*[)N!V_N3=G1QCJ?
+M:94E8UMWC?&_6FF?`'VX1><#W`_#M$G.#:%1J-*I=0)&'=E&$BJX0:HVX&Q'
+MVJ#O[Q</$(*R5=>@(1G;8\FETQ2(M-C%U9I::4];&2>_O86<#7C^#JYW,#+*
+MH?3LLT6CUQ^ET8T,>TYF@4_'84\4IY]\2&;24UJV*G8AX!)5'P8</DD#.><Y
+M\*'(P_,>SN9?DV1JK1"%=$),2B&N5G!0G/&3^)Z45ZLLA-.03>,@(^G8^NX)
+M,"]>`N;%JX#%Q2'Q",1O?R'B)HX3D_(?""%6W?7_$'"D7D$4X62&.R*.40?$
+M/I[^21IO%;Q4^7,I7JXAXWSXC0]^$^%.+&=E^!&GX42&?CI=JUXOKM(KSA=G
+5%ZOL(9+&1'H?>-;%3[#Q)H#R`P``

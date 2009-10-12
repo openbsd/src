@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-require q(./test.pl); plan(tests => 11);
+require q(./test.pl); plan(tests => 12);
 
 {
 
@@ -78,5 +78,16 @@ require q(./test.pl); plan(tests => 11);
 
         eval { $baz->bar() };
         ok($@, '... calling bar() with next::method failed') || diag $@;
-    }    
+    }
+
+    # Test with non-existing class (used to segfault)
+    {
+        package Qux;
+        use mro;
+        sub foo { No::Such::Class->next::can }
+    }
+
+    eval { Qux->foo() };
+    is($@, '', "->next::can on non-existing package name");
+
 }

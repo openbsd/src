@@ -14,7 +14,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 28;
+use Test::More tests => 35;
 
 use TieOut;
 use MakeMaker::Test::Utils;
@@ -126,8 +126,8 @@ VERIFY
     $warnings = '';
     eval {
         $mm = WriteMakefile(
-        NAME       => 'Big::Dummy',
-        VERSION    => [1,2,3],
+            NAME       => 'Big::Dummy',
+            VERSION    => [1,2,3],
         );
     };
     like( $warnings, qr{^WARNING: VERSION takes a version object or string/number} );
@@ -135,8 +135,8 @@ VERIFY
     $warnings = '';
     eval {
         $mm = WriteMakefile(
-        NAME       => 'Big::Dummy',
-        VERSION    => 1.002_003,
+            NAME       => 'Big::Dummy',
+            VERSION    => 1.002_003,
         );
     };
     is( $warnings, '' );
@@ -145,8 +145,8 @@ VERIFY
     $warnings = '';
     eval {
         $mm = WriteMakefile(
-        NAME       => 'Big::Dummy',
-        VERSION    => '1.002_003',
+            NAME       => 'Big::Dummy',
+            VERSION    => '1.002_003',
         );
     };
     is( $warnings, '' );
@@ -156,39 +156,66 @@ VERIFY
     $warnings = '';
     eval {
         $mm = WriteMakefile(
-        NAME       => 'Big::Dummy',
-        VERSION    => bless {}, "Some::Class",
+            NAME       => 'Big::Dummy',
+            VERSION    => bless {}, "Some::Class",
         );
     };
     like( $warnings, '/^WARNING: VERSION takes a version object or string/number not a Some::Class object/' );
 
 
     SKIP: {
-        skip("Can't test version objects",6) unless eval { require version };
+        skip("Can't test version objects", 8) unless eval { require version };
         version->import;
 
         my $version = version->new("1.2.3");
         $warnings = '';
-        eval {
+        ok eval {
             $mm = WriteMakefile(
-            NAME       => 'Big::Dummy',
-            VERSION    => $version,
+                NAME       => 'Big::Dummy',
+                VERSION    => $version,
             );
-        };
+        } || diag $@;
         is( $warnings, '' );
         isa_ok( $mm->{VERSION}, 'version' );
         is( $mm->{VERSION}, $version );
 
         $warnings = '';
         $version = qv('1.2.3');
-        eval {
+        ok eval {
             $mm = WriteMakefile(
-            NAME       => 'Big::Dummy',
-            VERSION    => $version,
+                NAME       => 'Big::Dummy',
+                VERSION    => $version,
             );
-        };
+        } || diag $@;
         is( $warnings, '' );
         isa_ok( $mm->{VERSION}, 'version' );
         is( $mm->{VERSION}, $version );
     }
+
+
+    # DISTNAME
+    $warnings = '';
+    eval {
+        $mm = WriteMakefile(
+            NAME       => 'Big::Dummy',
+            VERSION    => '1.00',
+            DISTNAME   => "Hooballa",
+        );
+    };
+    is( $warnings, '' );
+    is( $mm->{DISTNAME},  "Hooballa" );
+    is( $mm->{DISTVNAME}, $Is_VMS ? "Hooballa-1_00" : "Hooballa-1.00" );
+
+
+    # DISTVNAME (rt.cpan.org 43217)
+    $warnings = '';
+    eval {
+        $mm = WriteMakefile(
+            NAME       => 'Big::Dummy',
+            VERSION    => 1.00,
+            DISTVNAME  => "Hooballoo",
+        );
+    };
+    is( $warnings, '' );
+    is( $mm->{DISTVNAME}, 'Hooballoo' );
 }

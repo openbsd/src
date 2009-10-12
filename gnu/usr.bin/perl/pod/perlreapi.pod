@@ -334,7 +334,7 @@ just die when assigned to in the default engine.
 Get the C<length> of a capture variable. There's a special callback
 for this so that perl doesn't have to do a FETCH and run C<length> on
 the result, since the length is (in perl's case) known from an offset
-stored in C<<rx->offs> this is much more efficient:
+stored in C<< rx->offs >> this is much more efficient:
 
     I32 s1  = rx->offs[paren].start;
     I32 s2  = rx->offs[paren].end;

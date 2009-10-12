@@ -1,7 +1,6 @@
 
 require 5.004;
 package Test;
-# Time-stamp: "2004-04-28 21:46:51 ADT"
 
 use strict;
 
@@ -21,7 +20,7 @@ sub _reset_globals {
     $planned    = 0;
 }
 
-$VERSION = '1.25';
+$VERSION = '1.25_02';
 require Exporter;
 @ISA=('Exporter');
 
@@ -937,13 +936,13 @@ L<Test::Inline> and L<SelfTest> let you embed tests in code.
 
 =head1 AUTHOR
 
-Copyright (c) 1998-2000 Joshua Nathaniel Pritikin.  All rights reserved.
+Copyright (c) 1998-2000 Joshua Nathaniel Pritikin. 
 
 Copyright (c) 2001-2002 Michael G. Schwern.
 
-Copyright (c) 2002-2004 and counting Sean M. Burke.
+Copyright (c) 2002-2004 Sean M. Burke.
 
-Current maintainer: Sean M. Burke. E<lt>sburke@cpan.orgE<gt>
+Current maintainer: Jesse Vincent. E<lt>jesse@bestpractical.comE<gt>
 
 This package is free software and is provided "as is" without express
 or implied warranty.  It may be used, redistributed and/or modified

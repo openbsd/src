@@ -15,6 +15,15 @@ require './test.pl';
 
 plan(5);
 
+# Fetching the list of files in two different ways and expecting them 
+# to be the same is a race condition when tests are running in parallel.
+# So go somewhere quieter.
+my $chdir;
+if ($ENV{PERL_CORE} && -d 'uni') {
+  chdir 'uni';
+  $chdir++;
+};
+
 $dot = new DirHandle ($^O eq 'MacOS' ? ':' : '.');
 
 ok(defined($dot));
@@ -33,3 +42,7 @@ cmp_ok(+(join("\0", @b), 'eq', join("\0", @c)));
 $dot->close;
 $dot->rewind;
 ok(!defined($dot->read));
+
+if ($chdir) {
+  chdir "..";
+}

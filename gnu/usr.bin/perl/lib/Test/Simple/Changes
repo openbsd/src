@@ -1,8 +1,226 @@
+0.92  Fri Jul  3 11:08:56 PDT 2009
+    Test Fixes
+    * Silence noise on VMS in exit.t (Craig Berry)
+    * Skip Builder/fork_with_new_stdout.t on systems without fork (Craig Berry)
+    
+
+0.90  Thu Jul  2 13:18:25 PDT 2009
+    Docs
+    * Finally added a note about the "Wide character in print" warning and
+      how to work around it.
+    * Note the IO::Stringy license in our copy of it.
+      [test-more.googlecode.com 47]
+
+    Test Fixes
+    * Small fixes for integration with the Perl core
+      [bleadperl eaa0815147e13cd4ab5b3d6ca8f26544a9f0c3b4]
+    * exit code tests could be effected by errno when PERLIO=stdio
+      [bleadperl c76230386fc5e6fba9fdbeab473abbf4f4adcbe3]
+
+    Other
+    * This is a stable release for 5.10.1.  It does not include
+      the subtest() work in 0.89_01.
+
+
+0.88  Sat May 30 12:31:24 PDT 2009
+    Turing 0.87_03 into a stable release.
+
+
+0.87_03  Sun May 24 13:41:40 PDT 2009
+    New Features
+    * isa_ok() now works on classes. (Peter Scott)
+
+
+0.87_02  Sat Apr 11 12:54:14 PDT 2009
+    Test Fixes
+    * Some filesystems don't like it when you open a file for writing multiple
+      times.  Fixes t/Builder/reset.t. [rt.cpan.org 17298]
+    * Check how an operating system is going to map exit codes.  Some OS'
+      will map them... sometimes.  [rt.cpan.org 42148]
+    * Fix Test::Builder::NoOutput on 5.6.2.
+
+
+0.87_01  Sun Mar 29 09:56:52 BST 2009
+    New Features
+    * done_testing() allows you to declare that you have finished running tests,
+      and how many you ran.  It is a safer no_plan and effectively replaces it.
+    * output() now supports scalar references.
+
+    Feature Changes
+    * You can now run a test without first declaring a plan.  This allows
+      done_testing() to work.
+    * You can now call current_test() without first declaring a plan.
+
+    Bug Fixes
+    * skip_all() with no reason would output "1..0" which is invalid TAP.  It will
+      now always include the SKIP directive.
+
+    Other
+    * Repository moved to github.
+
+
+0.86  Sun Nov  9 01:09:05 PST 2008
+    Same as 0.85_01
+
+
+0.85_01  Thu Oct 23 18:57:38 PDT 2008
+    New Features
+    * cmp_ok() now displays the error if the comparison throws one.
+      For example, broken overloaded objects.
+
+    Bug Fixes
+    * cmp_ok() no longer stringifies or numifies its arguments before comparing.
+      This makes cmp_ok() properly test overloaded ops.
+      [rt.cpan.org 24186] [code.google.com 16]
+    * diag() properly escapes blank lines.
+
+    Feature Changes
+    * cmp_ok() now reports warnings and errors as coming from inside cmp_ok,
+      as well as reporting the caller's file and line.  This let's the user
+      know where cmp_ok() was called from while reminding them that it is
+      being run in a different context.
+
+    Other
+    * Dependency on ExtUtils::MakeMaker 6.27 only on Windows otherwise the
+      nested tests won't run.
+
+
+0.84  Wed Oct 15 09:06:12 EDT 2008
+    Other
+    * 0.82 accidentally shipped with experimental Mouse dependency.
+
+
+0.82  Tue Oct 14 23:06:56 EDT 2008
+    Bug Fixes
+    - 0.81_01 broke $TODO such that $TODO = '' was considered todo.
+
+
+0.81_02  Tue Sep  9 04:35:40 PDT 2008
+    New Features
+    * Test::Builder->reset_outputs() to reset all the output methods back to
+      their defaults.
+
+    Bug Fixes
+    - Fixed the file and line number reported by like when it gets a bad
+      regex.
+
+    Features Changed
+    - Now preserves the tests' exit code if it exits abnormally, rather than
+      setting it to 255.
+    - Changed the "Looks like your test died" message to
+      "Looks like your test exited with $exit_code"
+    - no_plan now only warns if given an argument.  There were a lot of people
+      doing that, and it's a sensible mistake.  [test-more.googlecode.com 13]
+
+
+0.81_01  Sat Sep  6 15:13:50 PDT 2008
+    New Features
+    * Adam Kennedy bribed me to add new_ok().  The price was one DEFCON license key.
+      [rt.cpan.org 8891]
+    * TODO tests can now start and end with 'todo_start' and 'todo_end'
+      Test::Builder methods. [rt.cpan.org 38018]
+    * Added Test::Builder->in_todo() for a safe way to check if a test is inside a
+      TODO block.  This allows TODO tests with no reason.
+    * Added note() and explain() to both Test::More and Test::Builder.
+      [rt.cpan.org 14764] [test-more.googlecode.com 3]
+
+    Features Changed
+    * Changed the message for extra tests run to show the number of tests run rather than
+      the number extra to avoid the user having to do mental math.
+      [rt.cpan.org 7022]    
+
+    Bug fixes
+    - using a relative path to perl broke tests              [rt.cpan.org 34050]
+    - use_ok() broke $SIG{__DIE__} in the used module        [rt.cpan.org 34065]
+    - diagnostics for isnt() were confusing on failure       [rt.cpan.org 33642]
+    - warnings when MakeMaker's version contained _          [rt.cpan.org 33626]
+    - add explicit test that non-integer plans die correctly [rt.cpan.org 28836]
+      (Thanks to Hans Dieter Pearcey [confound] for fixing the above)
+    - die if no_plan is given an argument                    [rt.cpan.org 27429]
+
+
+0.80  Sun Apr  6 17:25:01 CEST 2008
+    Test fixes
+    - Completely disable the utf8 test.  It was causing perl to panic on some OS's.
+
+
+0.79_01  Wed Feb 27 03:04:54 PST 2008
+    Bug fixes
+    - Let's try the IO layer copying again, this time with the test
+      fixed for 5.10.
+
+
+0.78  Wed Feb 27 01:59:09 PST 2008
+    Bug fixes
+    * Whoops, the version of Test::Builder::Tester got moved backwards.
+
+
+0.77  Wed Feb 27 01:55:55 PST 2008
+    Bug fixes
+    - "use Test::Builder::Module" no longer sets exported_to() or does
+      any other importing.
+    - Fix the $TODO finding code so it can find $TODO without the benefit
+      of exported_to(), which is often wrong.
+    - Turn off the filehandle locale stuff for the moment, there's a 
+      problem on 5.10.  We'll try it again next release.
+      
+    Doc improvements
+    - Improve the Test::Builder SYNOPSIS to use Test::Builder::Module
+      rather than write it's own import().
+
+
+0.76_02  Sun Feb 24 13:12:55 PST 2008
+    Bug fixes
+    * The default test output filehandles will NOT use utf8.
+      They will now copy the IO layers from STDOUT and STDERR.
+      This means if :utf8 is on then it will honor it and not
+      warn about wide characters.
+
+
+0.76_01  Sat Feb 23 20:44:32 PST 2008
+    Bug fixes
+    * Test::Builder no longer uses a __DIE__ handler.  This resolves a number
+      of problems with exit codes being swallowed or other module's handlers
+      being interfered with.  [rt.cpan.org 25294]
+    - Allow maybe_regex() to detect blessed regexes.  [bleadperl @32880]
+    - The default test output filehandles will now use utf8.
+      [rt.cpan.org 21091]
+
+    Test fixes
+    - Remove the signature test.  Adds no security and just generates
+      failures.
+
+
+0.75  Sat Feb 23 19:03:38 PST 2008
+    Incompatibilities
+    * The minimum version is now 5.6.0.
+
+    Bug fixes
+    - Turns out require_ok() had the same bug as use_ok() in a BEGIN block.
+    - ok() was not honoring exported_to() when looking for $TODO as it
+      should be.
+    
+    Test fixes
+    * is_deeply_with_threads.t will not run unless AUTHOR_TESTING is set.
+      This is because it tickles intermittent threading bugs in many perls
+      and causes a lot of bug reports about which I can do nothing.
+    
+    Misc
+    - Ran through perlcritic and did some cleaning.
+
+0.74  Thu Nov 29 15:39:57 PST 2007
+    Misc
+    - Add abstract and author to the meta information.
+
+0.73_01  Mon Oct 15 20:35:15 EDT 2007
+    Bug fixes
+    * Put the use_ok() fix from 0.71 back.
+
 0.72  Wed Sep 19 20:08:07 PDT 2007
     Bug unfixes
     * The BEGIN { use_ok } fix for [rt.cpan.org 28345] revealed a small pile of 
-      mistakes in CPAN module test suites.  Rolling the fix back to give the authors
-      a bit of time to fix their tests.
+      mistakes in CPAN module test suites.  Rolling the fix back to give the
+      authors a bit of time to fix their tests.
 
 0.71  Thu Sep 13 20:42:36 PDT 2007
     Bug fixes
@@ -15,8 +233,8 @@
     - Removed dependency on Text::Soundex [rt.cpan.org 25022]
     - Fixed a 5.5.x failure in fail-more.t
     * Got rid of the annoying sort_bug.t test that revealed problems with some
-      threaded perls.  It was testing the deprecated eq_* functions and not worth the
-      bother.  Now it tests is_deeply().  [rt.cpan.org 17791]
+      threaded perls.  It was testing the deprecated eq_* functions and not
+      worth the bother.  Now it tests is_deeply().  [rt.cpan.org 17791]
 
     Doc fixes
     - Minor POD mistake in Test::Builder [rt.cpan.org 28869]

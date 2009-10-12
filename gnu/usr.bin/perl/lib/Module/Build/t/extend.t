@@ -2,22 +2,20 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 65;
+use MBTest tests => 66;
 
-use Cwd ();
-my $cwd = Cwd::cwd;
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
+
 my $tmp = MBTest->tmpdir;
 
 use DistGen;
 my $dist = DistGen->new( dir => $tmp );
 $dist->regen;
 
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 #########################
-
-use Module::Build;
-ok 1;
 
 # Here we make sure actions are only called once per dispatch()
 $::x = 0;
@@ -52,7 +50,9 @@ print "Hello, World!\n";
   $mb->test_files('*t*');
   my $files = $mb->test_files;
   ok  grep {$_ eq 'script'}    @$files;
-  ok  grep {$_ eq File::Spec->catfile('t', 'basic.t')} @$files;
+  my $t_basic_t = File::Spec->catfile('t', 'basic.t');
+  $t_basic_t = VMS::Filespec::vmsify($t_basic_t) if $^O eq 'VMS';
+  ok  grep {$_ eq $t_basic_t} @$files;
   ok !grep {$_ eq 'Build.PL' } @$files;
 
   # Make sure order is preserved
@@ -276,8 +276,4 @@ print "Hello, World!\n";
 }
 
 # cleanup
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );

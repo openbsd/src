@@ -41,7 +41,7 @@ BEGIN {
   $DB::subname = '';    # currently executing sub (fullly qualified name)
   $DB::lineno = '';     # current line number
 
-  $DB::VERSION = $DB::VERSION = '1.01';
+  $DB::VERSION = $DB::VERSION = '1.02';
 
   # initialize private globals to avoid warnings
 

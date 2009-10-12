@@ -1,78 +1,91 @@
 #!../miniperl
 
+use strict;
+use warnings;
+
 $ENV{LC_ALL} = 'C';
 
+use FindBin;
+chdir $FindBin::Bin or die "$0: Can't chdir $FindBin::Bin: $!";
+
+my $Quiet = @ARGV && $ARGV[0] eq '-q';
+
 open (OUT, ">perlmodlib.pod") or die $!;
-my (@pragma, @mod, @MANIFEST);
+my (@pragma, @mod, @files);
+
+# MANIFEST itself is Unix style filenames, so we have to assume that Unix style
+# filenames will work.
 
 open (MANIFEST, "../MANIFEST") or die $!;
-@MANIFEST = grep !m</(?:t|demo)/>, <MANIFEST>;
-push @MANIFEST, 'lib/Config.pod', 'lib/Errno.pm', 'lib/lib.pm',
-    'lib/DynaLoader.pm', 'lib/XSLoader.pm';
+@files = grep m#(?:\.pm|\.pod|_pm\.PL)#, map {s/\s.*//s; $_}
+    grep {m#^lib# || m#^ext#} grep !m#/(?:t|demo)/#, <MANIFEST>;
 
--f "../lib/DynaLoader.pm" or die "Must be run from a source tree where perl has been built\n";
+my %exceptions = (
+    'abbrev' => 'Text::Abbrev',
+    'carp' => 'Carp',
+    'getopt' => 'Getopt::Std',
+    'B<CGI::Carp>' => 'CGI::Carp',
+    'ModuleInfo' => 'Module::Build::ModuleInfo',
+    '$notes_name' => 'Module::Build::Notes',
+    'Encode::MIME::NAME' => 'Encode::MIME::Name',
+    'libnetFAQ' => 'Net::libnetFAQ',
+);
 
-for (@MANIFEST) {
-     my $filename;
-     next unless s|^lib/|| or m|^ext/|;
-     my ($origfilename) = ($filename) = m|^(\S+)|;
-     $filename =~ s|^[^/]+/|| if $filename =~ s|^ext/||;
-     next unless $filename =~ m!\.p(m|od)$!;
-     unless (open (MOD, "../lib/$filename")) {
-	unless (open (MOD, "../$origfilename")) {
-	    warn "Couldn't open ../$origfilename: $!";
-	    next;
+for my $filename (@files) {
+    unless (open MOD, '<', "../$filename") {
+	warn "Couldn't open ../$filename: $!";
+	next;
+    }
+
+    my ($name, $thing);
+    my $foundit = 0;
+    {
+	local $/ = "";
+	while (<MOD>) {
+	    next unless /^=head1 NAME/;
+	    $foundit++;
+	    last;
 	}
-	$filename = $origfilename;
-     }
+    }
+    unless ($foundit) {
+	warn "$filename missing =head1 NAME (OK if respective .pod exists)\n"
+	    unless $Quiet;
+	next;
+    }
+    my $title = <MOD>;
+    chomp $title;
+    close MOD;
 
+    ($name, $thing) = split / --? /, $title, 2;
 
-     my ($name, $thing);
-     my $foundit=0;
-     {
-	 local $/="";
-	 while (<MOD>) {
-	     next unless /^=head1 NAME/;
-	     $foundit++;
-	     last;
-	 }
-     }
-     unless ($foundit) {
-	 warn "$filename missing =head1 NAME (okay if there is respective .pod)\n";
-	 next;
-     }
-     my $title = <MOD>;
-     chomp($title);
-     close MOD;
+    unless ($name and $thing) {
+	warn "$filename missing name\n"  unless $name;
+	warn "$filename missing thing\n" unless $thing or $Quiet;
+	next;
+    }
 
-     my $perlname = $filename;
-     $perlname =~ s!^.*\b(ext|lib)/!!;
-     $perlname =~ s!\.p(m|od)$!!;
-     $perlname =~ s!\b(\w+)/\1\b!$1!;
-     $perlname =~ s!/!::!g;
+    $name =~ s/[^A-Za-z0-9_:\$<>].*//;
+    $name = $exceptions{$name} || $name;
+    $thing =~ s/^perl pragma to //i;
+    $thing = ucfirst $thing;
+    $title = "=item $name\n\n$thing\n\n";
 
-     # modules with non standard locations
-     $perlname =~ s{Base64::QuotedPrint}{QuotedPrint};
-
-     ($name, $thing) = split / --? /, $title, 2;
-
-     unless ($name and $thing) {
-	 warn "$filename missing name\n"  unless $name;
-	 warn "$filename missing thing\n" unless $thing;
-	 next;
-     }
-
-
-     $thing =~ s/^perl pragma to //i;
-     $thing = ucfirst($thing);
-     $title = "=item $perlname\n\n$thing\n\n";
-
-     if ($filename =~ /[A-Z]/) {
-          push @mod, $title;
-     } else {
-          push @pragma, $title;
-     }
+    if ($name =~ /[A-Z]/) {
+	push @mod, $title;
+    } else {
+	push @pragma, $title;
+    }
 }
+
+# Much easier to special case it like this than special case the depending on
+# and parsing lib/Config.pod, or special case opening configpm and finding its
+# =head1 (which is not found with the $/="" above)
+push @mod, <<'CONFIG';
+=item Config
+
+Access Perl configuration information
+
+CONFIG
 
 print OUT <<'EOF';
 =for maintainers

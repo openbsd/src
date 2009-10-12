@@ -11,8 +11,8 @@ implement the Unicode standard or the accompanying technical reports
 from cover to cover, Perl does support many Unicode features.
 
 People who want to learn to use Unicode in Perl, should probably read
-L<the Perl Unicode tutorial|perlunitut> before reading this reference
-document.
+L<the Perl Unicode tutorial, perlunitut|perlunitut>, before reading
+this reference document.
 
 =over 4
 
@@ -79,6 +79,16 @@ character semantics.  For operations where this determination cannot
 be made without additional information from the user, Perl decides in
 favor of compatibility and chooses to use byte semantics.
 
+Under byte semantics, when C<use locale> is in effect, Perl uses the 
+semantics associated with the current locale.  Absent a C<use locale>, Perl
+currently uses US-ASCII (or Basic Latin in Unicode terminology) byte semantics,
+meaning that characters whose ordinal numbers are in the range 128 - 255 are
+undefined except for their ordinal numbers.  This means that none have case
+(upper and lower), nor are any a member of character classes, like C<[:alpha:]>
+or C<\w>.
+(But all do belong to the C<\W> class or the Perl regular expression extension
+C<[:^alpha:]>.)
+
 This behavior preserves compatibility with earlier versions of Perl,
 which allowed byte semantics in Perl operations only if
 none of the program's inputs were marked as being as source of Unicode
@@ -105,10 +115,8 @@ Otherwise, byte semantics are in effect.  The C<bytes> pragma should
 be used to force byte semantics on Unicode data.
 
 If strings operating under byte semantics and strings with Unicode
-character data are concatenated, the new string will be created by
-decoding the byte strings as I<ISO 8859-1 (Latin-1)>, even if the
-old Unicode string used EBCDIC.  This translation is done without
-regard to the system's native 8-bit encoding. 
+character data are concatenated, the new string will have 
+character semantics.  This can cause surprises: See L</BUGS>, below
 
 Under character semantics, many operations that formerly operated on
 bytes now operate on characters. A character in Perl is
@@ -135,7 +143,7 @@ occur directly within the literal strings in UTF-8 encoding, or UTF-16.
 Unicode characters can also be added to a string by using the C<\x{...}>
 notation.  The Unicode code for the desired character, in hexadecimal,
 should be placed in the braces. For instance, a smiley face is
-C<\x{263A}>.  This encoding scheme only works for all characters, but
+C<\x{263A}>.  This encoding scheme works for all characters, but
 for characters under 0x100, note that Perl may use an 8 bit encoding
 internally, for optimization and/or backward compatibility.
 
@@ -184,7 +192,7 @@ The special pattern C<\X> matches any extended Unicode
 sequence--"a combining character sequence" in Standardese--where the
 first character is a base character and subsequent characters are mark
 characters that apply to the base character.  C<\X> is equivalent to
-C<(?:\PM\pM*)>.
+C<< (?>\PM\pM*) >>.
 
 =item *
 
@@ -933,14 +941,14 @@ Level 1 - Basic Unicode Support
              Alphabetic, Lowercase, Uppercase, WhiteSpace,
              NoncharacterCodePoint, DefaultIgnorableCodePoint, Any,
              ASCII, Assigned), but also bidirectional types, blocks, etc.
-             (see L</"Unicode Character Properties">)
+             (see "Unicode Character Properties")
         [4]  \d \D \s \S \w \W \X [:prop:] [:^prop:]
         [5]  can use regular expression look-ahead [a] or
              user-defined character properties [b] to emulate set operations
         [6]  \b \B
         [7]  note that Perl does Full case-folding in matching, not Simple:
-             for example U+1F88 is equivalent with U+1F00 U+03B9,
-             not with 1F80.  This difference matters for certain Greek
+             for example U+1F88 is equivalent to U+1F00 U+03B9,
+             not with 1F80.  This difference matters mainly for certain Greek
              capital letters with certain modifiers: the Full case-folding
              decomposes the letter, while the Simple case-folding would map
              it to a single character.
@@ -1299,15 +1307,13 @@ readdir, readlink
 =head2 Forcing Unicode in Perl (Or Unforcing Unicode in Perl)
 
 Sometimes (see L</"When Unicode Does Not Happen">) there are
-situations where you simply need to force Perl to believe that a byte
-string is UTF-8, or vice versa.  The low-level calls
-utf8::upgrade($bytestring) and utf8::downgrade($utf8string) are
+situations where you simply need to force a byte
+string into UTF-8, or vice versa.  The low-level calls
+utf8::upgrade($bytestring) and utf8::downgrade($utf8string[, FAIL_OK]) are
 the answers.
 
-Do not use them without careful thought, though: Perl may easily get
-very confused, angry, or even crash, if you suddenly change the 'nature'
-of scalar like that.  Especially careful you have to be if you use the
-utf8::upgrade(): any random byte string is not valid UTF-8.
+Note that utf8::downgrade() can fail if the string contains characters
+that don't fit into a byte.
 
 =head2 Using Unicode in XS
 
@@ -1321,7 +1327,7 @@ details.
 =item *
 
 C<DO_UTF8(sv)> returns true if the C<UTF8> flag is on and the bytes
-pragma is not in effect.  C<SvUTF8(sv)> returns true is the C<UTF8>
+pragma is not in effect.  C<SvUTF8(sv)> returns true if the C<UTF8>
 flag is on; the bytes pragma is ignored.  The C<UTF8> flag being on
 does B<not> mean that there are any characters of code points greater
 than 255 (or 127) in the scalar or that there are even any characters
@@ -1334,15 +1340,15 @@ Unicode model is not to use UTF-8 until it is absolutely necessary.
 
 =item *
 
-C<uvuni_to_utf8(buf, chr)> writes a Unicode character code point into
+C<uvchr_to_utf8(buf, chr)> writes a Unicode character code point into
 a buffer encoding the code point as UTF-8, and returns a pointer
-pointing after the UTF-8 bytes.
+pointing after the UTF-8 bytes.  It works appropriately on EBCDIC machines.
 
 =item *
 
-C<utf8_to_uvuni(buf, lenp)> reads UTF-8 encoded bytes from a buffer and
+C<utf8_to_uvchr(buf, lenp)> reads UTF-8 encoded bytes from a buffer and
 returns the Unicode character code point and, optionally, the length of
-the UTF-8 byte sequence.
+the UTF-8 byte sequence.  It works appropriately on EBCDIC machines.
 
 =item *
 
@@ -1388,7 +1394,7 @@ two pointers pointing to the same UTF-8 encoded buffer.
 
 =item *
 
-C<utf8_hop(s, off)> will return a pointer to an UTF-8 encoded buffer
+C<utf8_hop(s, off)> will return a pointer to a UTF-8 encoded buffer
 that is C<off> (positive or negative) Unicode characters displaced
 from the UTF-8 buffer C<s>.  Be careful not to overstep the buffer:
 C<utf8_hop()> will merrily run off the end or the beginning of the
@@ -1406,7 +1412,7 @@ output more readable.
 
 =item *
 
-C<ibcmp_utf8(s1, pe1, u1, l1, u1, s2, pe2, l2, u2)> can be used to
+C<ibcmp_utf8(s1, pe1, l1, u1, s2, pe2, l2, u2)> can be used to
 compare two strings case-insensitively in Unicode.  For case-sensitive
 comparisons you can just use C<memEQ()> and C<memNE()> as usual.
 
@@ -1425,6 +1431,28 @@ Perl attempts to attach 8-bit locale info to characters in the range
 use characters above that range when mapped into Unicode.  Perl's
 Unicode support will also tend to run slower.  Use of locales with
 Unicode is discouraged.
+
+=head2 Problems with characters whose ordinal numbers are in the range 128 - 255 with no Locale specified
+
+Without a locale specified, unlike all other characters or code points,
+these characters have very different semantics in byte semantics versus
+character semantics.
+In character semantics they are interpreted as Unicode code points, which means
+they are viewed as Latin-1 (ISO-8859-1).
+In byte semantics, they are considered to be unassigned characters,
+meaning that the only semantics they have is their
+ordinal numbers, and that they are not members of various character classes.
+None are considered to match C<\w> for example, but all match C<\W>.
+Besides these class matches,
+the known operations that this affects are those that change the case,
+regular expression matching while ignoring case,
+and B<quotemeta()>.
+This can lead to unexpected results in which a string's semantics suddenly
+change if a code point above 255 is appended to or removed from it,
+which changes the string's semantics from byte to character or vice versa.
+This behavior is scheduled to change in version 5.12, but in the meantime,
+a workaround is to always call utf8::upgrade($string), or to use the
+standard modules L<Encode> or L<charnames>.
 
 =head2 Interaction with Extensions
 
@@ -1505,6 +1533,15 @@ the Unicode properties (character classes) like C<\p{Nd}> are known to
 be quite a bit slower (5-20 times) than their simpler counterparts
 like C<\d> (then again, there 268 Unicode characters matching C<Nd>
 compared with the 10 ASCII characters matching C<d>).
+
+=head2 Possible problems on EBCDIC platforms
+
+In earlier versions, when byte and character data were concatenated,
+the new string was sometimes created by
+decoding the byte strings as I<ISO 8859-1 (Latin-1)>, even if the
+old Unicode string used EBCDIC.
+
+If you find any of these, please report them as bugs.
 
 =head2 Porting code from perl-5.6.X
 

@@ -1,16 +1,24 @@
-                       Term::ANSIColor version 1.12
+                       Term::ANSIColor version 2.00
               (A simple ANSI text attribute control module)
 
-  Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006 Russ Allbery
-  <rra@stanford.edu> and Zenin.  This program is free software; you may
-  redistribute it and/or modify it under the same terms as Perl itself.
+  Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2007, 2009
+  Russ Allbery <rra@stanford.edu> and Zenin.  This program is free
+  software; you may redistribute it and/or modify it under the same terms
+  as Perl itself.
 
   I welcome bug reports and patches for this package at rra@stanford.edu.
   However, please be aware that I tend to be extremely busy and to get a
   lot of mail.  I'll save your mail and get to it as soon as I can, but
   depending on how busy I am it may take me a couple of months.
 
-INTRODUCTION
+BLURB
+
+  Term::ANSIColor provides constants and simple functions for sending ANSI
+  text attributes, most notably colors.  It can be used to set the current
+  text attributes or to apply a set of attributes to a string and reset
+  the current text attributes at the end of that string.
+
+DESCRIPTION
 
   This module grew out of a thread on comp.lang.perl.misc where several of
   us were throwing around different ways to print colored text from Perl
@@ -34,17 +42,33 @@ INTRODUCTION
   attribute and the other of which uses two subs which take strings of
   attributes as arguments.
 
-  The most recent version of this module is available at its web site:
-
-      <http://www.eyrie.org/~eagle/software/ansicolor/>
-
   See the POD documentation for complete details, features, and usage.
 
   This module is distributed as part of the Perl core distribution as of
   Perl 5.6.0.  You only need to install this module if you want a newer
   version than came with Perl or if you have an old version of Perl.
 
+REQUIREMENTS
+
+  Term::ANSIColor is written in pure Perl and has no module dependencies
+  that aren't found in Perl core.  It should work with any version of Perl
+  after 5.001, although it hasn't been tested with old versions in some
+  time.
+
+  The test suite requires the Test::More module.  To check the POD
+  documentation, Test::Pod is also required.  To check spelling,
+  Pod::Spell and either aspell or ispell with the american dictionary are
+  also required.  The user's path is searched for aspell or ispell and
+  aspell is preferred.  Spelling tests are disabled by default since
+  spelling dictionaries differ too much between systems.  To enable those
+  tests, set RRA_MAINTAINER_TESTS to a true value.
+
 INSTALLATION
+
+  WARNING: Installation of this package will replace the Term::ANSIColor
+  that came with Perl for Perl 5.6.0 or later.  Term::ANSIColor that came
+  with Perl.  You may want to save a backup copy of the standard version
+  first.
 
   Follow the standard installation procedure for Perl modules, which is to
   type the following commands:
@@ -58,9 +82,23 @@ INSTALLATION
   install the module by hand, simply copy it into a directory named Term
   in your Perl library directory.
 
-  Note that make install, for Perl 5.6.0 or later, will replace the
-  Term::ANSIColor that came with Perl.  You may wan to save a backup copy
-  of the standard version first.
+HOMEPAGE AND SOURCE REPOSITORY
+
+  The Term::ANSIColor web page at:
+
+      http://www.eyrie.org/~eagle/software/ansicolor/
+
+  will always have the current version of this package, the current
+  documentation, and pointers to any additional resources.
+
+  Term::ANSIColor is maintained using Git.  You can access the current
+  source by cloning the repository at:
+
+      git://git.eyrie.org/perl/ansicolor.git
+
+  or view the repository on the web at:
+
+      http://git.eyrie.org/?p=perl/ansicolor.git
 
 THANKS
 
@@ -103,5 +141,11 @@ THANKS
 
   To Baron Schwartz for pointing out that cyan and white were missing from
   the documentation.
+
+  To Michael R. Wolf for pointing out that Wikipedia and the ECMA standard
+  use faint instead of dark as the name of attribute 2.
+
+  To openmethods.com voice solutions for contributing PUSHCOLOR, POPCOLOR,
+  and LOCALCOLOR support.
 
   To Larry Wall, as always, for Perl.

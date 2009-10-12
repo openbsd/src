@@ -1,18 +1,18 @@
-# ArabicShaping-5.0.0.txt
-# Date: 2006-07-14, 11:23:00 PST [KW]
+# ArabicShaping-5.1.0.txt
+# Date: 2008-03-20, 17:39:00 PDT [KW]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
 #
-# Copyright (c) 1991-2006 Unicode, Inc.
+# Copyright (c) 1991-2008 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # This file defines the shaping classes for Arabic and Syriac
 # positional shaping, repeating in machine readable form the
 # information printed in Tables 8-3, 8-7, 8-8, 8-11, 8-12, and
-# 8-13 of The Unicode Standard, Version 4.0.
+# 8-13 of The Unicode Standard, Version 5.0.
 #
-# See sections 8.2 and 8.3 of The Unicode Standard, Version 4.0
+# See sections 8.2 and 8.3 of The Unicode Standard, Version 5.0
 # for more information.
 #
 # Each line contains four fields, separated by a semicolon.
@@ -75,6 +75,7 @@
 0601; ARABIC SIGN SANAH; U; No_Joining_Group
 0602; ARABIC FOOTNOTE MARKER; U; No_Joining_Group
 0603; ARABIC SIGN SAFHA; U; No_Joining_Group
+0608; ARABIC RAY; U; No_Joining_Group
 060B; AFGHANI SIGN; U; No_Joining_Group
 0621; HAMZA; U; No_Joining_Group
 0622; MADDA ON ALEF; R; ALEF
@@ -102,6 +103,11 @@
 0638; ZAH; D; TAH
 0639; AIN; D; AIN
 063A; GHAIN; D; AIN
+063B; KEHEH WITH 2 DOTS ABOVE; D; GAF
+063C; KEHEH WITH 3 DOTS BELOW; D; GAF 
+063D; FARSI YEH WITH INVERTED V; D; YEH
+063E; FARSI YEH WITH 2 DOTS ABOVE; D; YEH
+063F; FARSI YEH WITH 3 DOTS ABOVE; D; YEH
 0640; TATWEEL; C; No_Joining_Group
 0641; FEH; D; FEH
 0642; QAF; D; QAF
@@ -292,6 +298,24 @@
 076B; REH WITH 2 DOTS VERTICALLY ABOVE; R; REH
 076C; REH WITH HAMZA ABOVE; R; REH
 076D; SEEN WITH 2 DOTS VERTICALLY ABOVE; D; SEEN
+076E; HAH WITH SMALL TAH BELOW; D; HAH
+076F; HAH WITH SMALL TAH AND 2 DOTS; D; HAH
+0770; SEEN WITH SMALL TAH AND 2 DOTS; D; SEEN
+0771; REH WITH SMALL TAH AND 2 DOTS; R; REH
+0772; HAH WITH SMALL TAH ABOVE; D; HAH
+0773; ALEF WITH DIGIT TWO ABOVE; R; ALEF
+0774; ALEF WITH DIGIT THREE ABOVE; R; ALEF
+0775; DOTLESS YEH WITH DIGIT TWO ABOVE; D; YEH
+0776; DOTLESS YEH WITH DIGIT THREE ABOVE; D; YEH
+0777; DOTLESS YEH WITH DIGIT FOUR BELOW; D; YEH
+0778; WAW WITH DIGIT TWO ABOVE; R; WAW
+0779; WAW WITH DIGIT THREE ABOVE; R; WAW
+077A; YEH BARREE WITH DIGIT TWO ABOVE; D; BURUSHASKI YEH BARREE
+077B; YEH BARREE WITH DIGIT THREE ABOVE; D; BURUSHASKI YEH BARREE
+077C; HAH WITH DIGIT FOUR BELOW; D; HAH
+077D; SEEN WITH DIGIT FOUR ABOVE; D; SEEN
+077E; SEEN WITH INVERTED V; D; SEEN
+077F; KAF WITH 2 DOTS ABOVE; D; KAF
 
 # N'Ko Characters
 

@@ -203,6 +203,14 @@ sub cmpFile
     return readFile($filename) eq unpack("u", $uue) ;
 }
 
+sub isRawFormat
+{
+    my $class = shift;
+    my %raw = map { $_ => 1 } qw( RawDeflate );
+
+    return defined $raw{$class};
+}
+
 sub uncompressBuffer
 {
     my $compWith = shift ;
@@ -222,6 +230,8 @@ sub uncompressBuffer
                     'IO::Compress::Lzop::lzop'               => 'IO::Uncompress::UnLzop',
                     'IO::Compress::Lzf'                      => 'IO::Uncompress::UnLzf' ,
                     'IO::Compress::Lzf::lzf'                 => 'IO::Uncompress::UnLzf',
+                    'IO::Compress::PPMd'                     => 'IO::Uncompress::UnPPMd' ,
+                    'IO::Compress::PPMd::ppmd'               => 'IO::Uncompress::UnPPMd',
                     'IO::Compress::DummyComp'                => 'IO::Uncompress::DummyUncomp',
                     'IO::Compress::DummyComp::dummycomp'     => 'IO::Uncompress::DummyUncomp',
                 );
@@ -265,6 +275,10 @@ my %ErrorMap = (    'IO::Compress::Gzip'                => \$IO::Compress::Gzip:
                     'IO::Compress::Lzf::lzf'            => \$IO::Compress::Lzf::LzfError,
                     'IO::Uncompress::UnLzf'             => \$IO::Uncompress::UnLzf::UnLzfError,
                     'IO::Uncompress::UnLzf::unlzf'      => \$IO::Uncompress::UnLzf::UnLzfError,
+                    'IO::Compress::PPMd'                 => \$IO::Compress::PPMd::PPMdError,
+                    'IO::Compress::PPMd::ppmd'            => \$IO::Compress::PPMd::PPMdError,
+                    'IO::Uncompress::UnPPMd'             => \$IO::Uncompress::UnPPMd::UnPPMdError,
+                    'IO::Uncompress::UnPPMd::unppmd'      => \$IO::Uncompress::UnPPMd::UnPPMdError,
 
                     'IO::Compress::DummyComp'           => \$IO::Compress::DummyComp::DummyCompError,
                     'IO::Compress::DummyComp::dummycomp'=> \$IO::Compress::DummyComp::DummyCompError,
@@ -293,6 +307,8 @@ my %TopFuncMap = (  'IO::Compress::Gzip'          => 'IO::Compress::Gzip::gzip',
                     'IO::Uncompress::UnLzop'      => 'IO::Uncompress::UnLzop::unlzop',
                     'IO::Compress::Lzf'           => 'IO::Compress::Lzf::lzf',
                     'IO::Uncompress::UnLzf'       => 'IO::Uncompress::UnLzf::unlzf',
+                    'IO::Compress::PPMd'           => 'IO::Compress::PPMd::ppmd',
+                    'IO::Uncompress::UnPPMd'       => 'IO::Uncompress::UnPPMd::unppmd',
                     'IO::Compress::DummyComp'     => 'IO::Compress::DummyComp::dummyuncomp',
                     'IO::Uncompress::DummyUncomp' => 'IO::Uncompress::DummyUncomp::dummyuncomp',
                  );
@@ -319,6 +335,8 @@ my %inverse  = ( 'IO::Compress::Gzip'                    => 'IO::Uncompress::Gun
                  'IO::Compress::Lzop'                    => 'IO::Uncompress::UnLzop',
                  'IO::Compress::Lzf::lzf'                => 'IO::Uncompress::UnLzf::unlzf',
                  'IO::Compress::Lzf'                     => 'IO::Uncompress::UnLzf',
+                 'IO::Compress::PPMd::ppmd'              => 'IO::Uncompress::UnPPMd::unppmd',
+                 'IO::Compress::PPMd'                    => 'IO::Uncompress::UnPPMd',
                  'IO::Compress::DummyComp::dummycomp'    => 'IO::Uncompress::DummyUncomp::dummyuncomp',
                  'IO::Compress::DummyComp'               => 'IO::Uncompress::DummyUncomp',
              );
@@ -372,6 +390,8 @@ sub compressBuffer
                     'IO::Uncompress::UnLzop::unlzop'          => 'IO::Compress::Lzop',
                     'IO::Uncompress::UnLzp'                   => 'IO::Compress::Lzf',
                     'IO::Uncompress::UnLzf::unlzf'            => 'IO::Compress::Lzf',
+                    'IO::Uncompress::UnPPMd'                  => 'IO::Compress::PPMd',
+                    'IO::Uncompress::UnPPMd::unppmd'          => 'IO::Compress::PPMd',
                     'IO::Uncompress::AnyInflate'              => 'IO::Compress::Gzip',
                     'IO::Uncompress::AnyInflate::anyinflate'  => 'IO::Compress::Gzip',
                     'IO::Uncompress::AnyUncompress'           => 'IO::Compress::Gzip',

@@ -1,3 +1,74 @@
+  Version 3.43
+  1. Documentation patch from MARKSTOS@cpan.org to replace all occurrences of
+  "new CGI" with CGI->new()" to reflect best perl practices.
+  2. Patch from Stepan Kasal to fix utf-8 related problems in perl 5.10
+
+  Version 3.42
+  1. Added patch from Renee Baecker that makes it possible to subclass
+  CGI::Pretty.
+  2. Added patch from Nicholas Clark to allow ~ characters in temporary directories.
+  3. Added patch from Renee Baecker that fixes the inappropriate escaping of fields
+     in multipart headers.
+
+  Version 3.41
+  1. Fix url() returning incorrect path when query string contains escaped newline.
+  2. Added additional windows temporary directories and environment variables, courtesy patch from Renee Baecker
+  3. Added a handle() method to the lightweight upload
+  filehandles. This method returns a real IO::Handle object.
+  4. Added patch from Tony Vanlingen to fix deep recursion warnings in CGI::Pretty.
+
+  Version 3.40
+  1. Fixed CGI::Fast docs to eliminate references to a "special"
+  version of Perl.
+  2. Makefile.PL now depends on FCGI so that CGI::Fast installs properly.
+  3. Fix script_name() call from Stephane Chazelas.
+
+  Version 3.39
+  1. Fixed regression in "exists" function when using tied interface to CGI via $q->Vars.
+
+  Version 3.38
+  1. Fix annoying warning in http://rt.cpan.org/Ticket/Display.html?id=34551
+  2. Added nobr() function http://rt.cpan.org/Ticket/Display.html?id=35377
+  3. popup_menu() allows multiple items to be selected by default, satisfying
+   http://rt.cpan.org/Ticket/Display.html?id=35376
+  4. Patch from Renee Backer to avoid doubled <http-equiv> headers.
+  5. Fixed documentation bug that describes what happens when a
+  parameter is empty (e.g. "?test1=").
+  6. Fixed minor warning described at http://rt.cpan.org/Public/Bug/Display.html?id=36435
+  7. Fixed overlap of attribute and parameter space described in http://rt.perl.org/rt3//Ticket/Display.html?id=24294
+
+  Version 3.37
+  1. Fix pragmas so that they persist over modperl invocations (e.g. RT 34761)
+  2. Fixed handling of chunked multipart uploads; thanks to Michael Bernhardt
+     who reported and fixed the problem.
+
+  Version 3.36
+  1. Fix CGI::Cookie to support cookies that are separated by "," instead of ";".
+
+  Version 3.35
+  1. Resync with bleadperl, primarily fixing a bug in parsing semicolons in uploaded filenames.
+
+  Version 3.34
+  1. Handle Unicode %uXXXX  escapes properly -- patch from DANKOGAI@cpan.org
+  2. Fix url() method to not choke on path names that contain regex characters.
+
+  Version 3.33
+  1. Remove uninit variable warning when calling url(-relative=>1)
+  2. Fix uninit variable warnings for two lc calls
+  3. Fixed failure of tempfile upload due to sprintf() taint failure in perl 5.10
+
+  Version 3.32
+  1. Patch from Miguel Santinho to prevent sending premature headers under mod_perl 2.0
+
+  Version 3.31
+  1. Patch from Xavier Robin so that CGI::Carp issues a 500 Status code rather than a 200 status code.
+  2. Patch from Alexander Klink to select correct temporary directory in OSX Leopard so that upload works.
+  3. Possibly fixed "wrapped pack" error on 5.10 and higher.
+
+  Version 3.30
+  1. Patch from Mike Barry to handle POSTDATA in the same way as PUT.
+  2. Patch from Rafael Garcia-Suarez to correctly reencode unicode values as byte values.
+
   Version 3.29
   1. The position of file handles is now reset to zero when CGI->new is called.
     (Mark Stosberg)

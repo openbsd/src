@@ -1,0 +1,27 @@
+#!/usr/local/bin/perl
+
+use strict ;
+use warnings ;
+
+use Compress::Zlib ;
+
+#die "Usage: gzcat file...\n"
+#    unless @ARGV ;
+
+my $filename ;
+
+@ARGV = '-' unless @ARGV ;
+
+foreach my $filename (@ARGV) {
+    my $buffer ;
+
+    my $gz = gzopen($filename, "rb") 
+         or die "Cannot open $filename: $gzerrno\n" ;
+
+    print $buffer while $gz->gzread($buffer) > 0 ;
+
+    die "Error reading from $filename: $gzerrno" . ($gzerrno+0) . "\n" 
+        if $gzerrno != Z_STREAM_END ;
+    
+    $gz->gzclose() ;
+}

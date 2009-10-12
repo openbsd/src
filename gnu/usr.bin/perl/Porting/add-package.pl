@@ -8,44 +8,82 @@ use File::Basename;
 use FindBin;
 
 my $Opts = {};
-getopts( 'r:p:e:vud', $Opts );
+getopts( 'r:p:e:c:vudn', $Opts );
 
 my $Cwd         = cwd();
 my $Verbose     = 1;
-my $ExcludeRe   = $Opts->{e} ? qr/$Opts->{e}/ : undef;
+my $ExcludeRe   = $Opts->{e} ? qr/$Opts->{e}/i : undef;
 my $Debug       = $Opts->{v} || 0;
 my $RunDiff     = $Opts->{d} || 0;
 my $PkgDir      = $Opts->{p} || cwd();
-my $MasterRepo  = $Opts->{r} or die "Need repository!\n". usage();
+my $Repo        = $Opts->{r} or die "Need repository!\n". usage();
+my $Changes     = $Opts->{c} || 'Changes ChangeLog';
+my $NoBranch    = $Opts->{n} || 0;
 
 ### strip trailing slashes;
-$MasterRepo =~ s|/$||;
+$Repo =~ s|/$||;
 
 my $CPV         = $Debug ? '-v' : '';
 my $TestBin     = 'ptardiff';
 my $PkgDirRe    = quotemeta( $PkgDir .'/' );
-my $Repo        = $MasterRepo . '-' . basename( $PkgDir ) . '.' . $$;
+my $BranchName  = basename( $PkgDir ) . '.' . $$;
+my $OrigRepo    = $Repo;
 
-### chdir there
-chdir $PkgDir or die "Could not chdir to $PkgDir: $!";
+### establish working directory, either branch or full copy
+if ( $NoBranch ) {
+    ### create a copy of the repo directory
+    my $RepoCopy = "$Repo-$BranchName";
+    print "Copying repository to $RepoCopy ..." if $Verbose;
 
-### set up the repo dir from the master repo
-{   print "Setting up working repo under '$Repo'..." if $Verbose;
-    unless( -d $Repo ) {
-        system( "mkdir -p $Repo" )
-            and die "Could not create working repo '$Repo': $?";
+    ### --archive == -dPpR, but --archive is not portable, and neither
+    ### is -d, so settling for -PpR
+    system( "cp -PpR -f $Repo $RepoCopy" )
+        and die "Copying master repo to $RepoCopy failed: $?";
+
+    ### Going forward, use the copy in place of the original repo
+    $Repo = $RepoCopy;
+
+    print "done\n" if $Verbose;
+}
+else {
+    ### create a git branch for the new package
+    print "Setting up a branch from blead called '$BranchName'..." if $Verbose;
+    chdir $Repo or die "Could not chdir to $Repo: $!";
+    unless ( -d '.git' ) {
+        die "\n$Repo is not a git repository\n";
     }
-
-    system( "cp -Rf $MasterRepo/* $Repo" )
-        and die "Copying master repo to $Repo failed: $?";
+    my $status = `git status`;
+    unless ( $status =~ /nothing to commit/ims ) {
+      die "\nWorking directory not clean. Stopping.\n";
+    }
+    system( "git checkout -b $BranchName blead" )
+            and die "Could not create branch '$BranchName': $?";
 
     print "done\n" if $Verbose;
 }
 
+### chdir there
+chdir $PkgDir or die "Could not chdir to $PkgDir: $!";
+
 ### copy over all files under lib/
+my @LibFiles;
 {   print "Copying libdir..." if $Verbose;
+    die "Can't (yet) copy from a repository (found .git or .svn)"
+        if -d '.git' || -d '.svn';
     die "No lib/ directory found\n" unless -d 'lib';
     system( "cp -fR $CPV lib $Repo" ) and die "Copy of lib/ failed: $?";
+
+    @LibFiles =    map { chomp; $_ }
+                    ### should we get rid of this file?
+                    grep { $ExcludeRe && $_ =~ $ExcludeRe
+                        ? do {  warn "Removing $Repo/$_\n";
+                                system("rm $Repo/$_") and die "rm '$Repo/$_' failed: $?";
+                                undef
+                            }
+                        : 1
+                     } `find lib -type f`
+        or die "Could not detect library files\n";
+
     print "done\n" if $Verbose;
 }
 
@@ -100,46 +138,67 @@ my @TestFiles;
        ? system( "cp -fR $CPV t $TopDir" ) && die "Copy of t/ failed: $?"
        : warn "No t/ directory found\n";
 
-    @TestFiles =    map { chomp; s|^$TopDirRe||; $_ }
+    @TestFiles =    map { chomp; s|^$TopDirRe||; s|//|/|g; $_ }
                     ### should we get rid of this file?
                     grep { $ExcludeRe && $_ =~ $ExcludeRe
                         ? do {  warn "Removing $_\n";
-                                system("rm $_") and die "rm '$_' failed: $?";
+                                system("rm $TopDir/$_") and die "rm '$_' failed: $?";
                                 undef
                             }
                         : 1
-                     } `find $TopDir/t -type f`
+                     } `find t -type f`
         or die "Could not detect testfiles\n";
 
     print "done\n" if $Verbose;
 }
 
+my $BinDir;
 my @BinFiles;
+my $TopBinDir;
 BIN: {
-    unless (-d 'bin') {
-        print "No bin/ directory found\n" if $Verbose;
+    $BinDir = -d 'bin'      ? 'bin' :
+              -d 'scripts'  ? 'scripts' : undef ;
+    unless ($BinDir) {
+        print "No bin/ or scripts/ directory found\n" if $Verbose;
         last BIN;
     }
-    print "Copying bin/* files to $TopDir..." if $Verbose;
+    my $TopBinDir = "$TopDir/$BinDir/";
+    print "Copying $BinDir/* files to $TopBinDir..." if $Verbose;
 
-    system("cp -fR $CPV bin/* $TopDir/bin/") && die "Copy of bin/ failed: $?";
+    my $CopyCmd = "cp -fR $CPV $BinDir $TopDir";
+    print "Running '$CopyCmd'..." if $Verbose;
 
-    @BinFiles = map { chomp; s|^$TopDirRe||; $_ }
+    system($CopyCmd) && die "Copy of $BinDir failed: $?";
+
+    @BinFiles = map { chomp; s|^$TopDirRe||; s|//|/|g; $_ }
                 ### should we get rid of this file?
                 grep { $ExcludeRe && $_ =~ $ExcludeRe
                     ? do {  warn "Removing $_\n";
-                            system("rm $_") and die "rm '$_' failed: $?";
+                            system("rm $TopDir/$_") and die "rm '$_' failed: $?";
                             undef
                         }
                     : 1
-                 } `find $TopDir/bin -type f`
+                 } `find $BinDir -type f`
         or die "Could not detect binfiles\n";
 
     print "done\n" if $Verbose;
 }
 
+### copy over change log
+my @Changes;
+foreach my $cl (split m/\s+/ => $Changes) {
+    -f $cl or next;
+    push @Changes, $cl;
+    print "Copying $cl files to $TopDir..." if $Verbose;
+
+    system( "cp -f $CPV $cl $TopDir" )
+        and die "Copy of $cl failed: $?";
+}
+
+
 ### add files where they are required
 my @NewFiles;
+my @ChangedFiles;
 {   for my $bin ( map { basename( $_ ) } @BinFiles ) {
         print "Registering $bin with system files...\n";
 
@@ -157,6 +216,7 @@ my @NewFiles;
                 system("$^X -pi -e 's/($TestBin\\|)/$bin|\$1/' $Repo/$file")
                     and die "Could not add $bin to $file: $?";
                 print "done\n" if $Verbose;
+                push @ChangedFiles, $file;
             } else {
                 print "    $bin already mentioned in $file\n" if $Verbose;
             }
@@ -174,6 +234,7 @@ my @NewFiles;
                 system("$^X -pi -e 's!($TestBin)!\$1\nutils/$bin!' $Repo/$file")
                     and die "Could not add $bin to $file: $?";
                 print "done\n" if $Verbose;
+                push @ChangedFiles, $file;
             } else {
                 print "    $bin already mentioned in $file\n" if $Verbose;
             }
@@ -200,7 +261,7 @@ my @NewFiles;
 
                 ### change the 'updir' path
                 ### make sure to escape the \[ character classes
-                my $updir = join ' ', (split('/', $RelTopDir), 'bin');
+                my $updir = join ' ', (split('/', $RelTopDir), $BinDir);
                 system( "$^X -pi -e'".
                         's/^(.*?File::Spec->updir, qw\[).+?(\].*)$/'.
                         "\$1 $updir \$2/' $Repo/$file"
@@ -222,8 +283,8 @@ my @NewFiles;
             push @NewFiles, $file;
         }
 
-        ### add an entry to utils/Makefile for $bin
-        {   my $file = "utils/Makefile";
+        ### add an entry to utils/Makefile.SH for $bin
+        {   my $file = "utils/Makefile.SH";
 
             ### not there already?
             unless( `grep $bin $Repo/$file` ) {
@@ -251,6 +312,7 @@ my @NewFiles;
                         "' $Repo/$file"
                 ) and die "Could not add $bin as a make directive: $?";
 
+                push @ChangedFiles, $file;
                 print "done\n" if $Verbose;
             } else {
                 print "    $bin already added to $file\n" if $Verbose;
@@ -274,6 +336,7 @@ my @NewFiles;
                 system( "$^X -pi -e's/( $TestBin)/\$1 $bin/' $Repo/$file" )
                     and die "Could not add $bin to $file: $?\n";
 
+                push @ChangedFiles, $file;
                 print "done\n" if $Verbose;
             } else {
                 print "    $bin already added to $file\n" if $Verbose;
@@ -374,6 +437,10 @@ my @NewFiles;
                                             basename($_) ." utility\n";
     }
 
+    for ( @Changes ) {
+        $pkg_files{"$RelTopDir/$_"} = "$RelTopDir/$_\t$ModName change log\n";
+    }
+
     for ( @NewFiles ) {
         $pkg_files{$_}              = "$_\tthe ".
                                         do { m/(.+?)\.PL$/; basename($1) } .
@@ -389,7 +456,7 @@ my @NewFiles;
 
     push @manifest, values %pkg_files;
 
-    {   chmod 0755, $file;
+    {   chmod 0644, $file;
         open my $fh, ">$file" or die "Could not open $file for writing: $!";
         #print $fh sort { lc $a cmp lc $b } @manifest;
         ### XXX stolen from pod/buildtoc:sub do_manifest
@@ -401,33 +468,65 @@ my @NewFiles;
 
         close $fh;
     }
+    push @ChangedFiles, 'MANIFEST';
 }
+
 
 ### would you like us to show you a diff?
 if( $RunDiff ) {
-    my $diff = $Repo; $diff =~ s/$$/patch/;
+    if ( $NoBranch ) {
 
-    ### weird RV ;(
-    my $master = basename( $MasterRepo );
-    my $repo   = basename( $Repo );
-    my $chdir  = dirname( $MasterRepo );
+        my $diff = $Repo; $diff =~ s/$$/patch/;
 
-    ### the .patch file is added by an rsync from the APC
-    ### but isn't actually in the p4 repo, so exclude it
-    my $cmd = "cd $chdir; diff -ruN --exclude=.patch $master $repo > $diff";
+        ### weird RV ;(
+        my $master = basename( $OrigRepo );
+        my $repo   = basename( $Repo );
+        my $chdir  = dirname( $OrigRepo );
 
-    print "Running: '$cmd'\n";
+        ### the .patch file is added by an rsync from the APC
+        ### but isn't actually in the p4 repo, so exclude it
+        my $cmd = "cd $chdir; diff -ruN --exclude=.patch $master $repo > $diff";
 
-    print "Generating diff..." if $Verbose;
+        print "Running: '$cmd'\n";
 
-    system( $cmd );
-        #and die "Could not write diff to '$diff': $?";
-    die "Could not write diff to '$diff'" unless -e $diff && -s _;
+        print "Generating diff..." if $Verbose;
 
-    print "done\n" if $Verbose;
-    print "\nDiff can be applied with patch -p1 in $MasterRepo\n\n";
-    print "  Diff written to: $diff\n\n" if $Verbose;
+        system( $cmd );
+            #and die "Could not write diff to '$diff': $?";
+        die "Could not write diff to '$diff'" unless -e $diff && -s _;
+
+        print "done\n" if $Verbose;
+        print "\nDiff can be applied with patch -p1 in $OrigRepo\n\n";
+        print "  Diff written to: $diff\n\n" if $Verbose;
+    }
+    else {
+        my $diff = "$Repo/$BranchName"; $diff =~ s/$$/patch/;
+        my $cmd = "cd $Repo; git diff > $diff";
+
+        print "Running: '$cmd'\n";
+
+        print "Generating diff..." if $Verbose;
+
+        system( $cmd );
+            #and die "Could not write diff to '$diff': $?";
+        die "Could not write diff to '$diff'" unless -e $diff && -s _;
+
+        print "done\n" if $Verbose;
+        print "  Diff written to: $diff\n\n" if $Verbose;
+    }
 }
+
+
+# add files to git index
+unless ( $NoBranch ) {
+    chdir $Repo;
+    system( "git add $CPV $_" )
+        for ( @LibFiles, @NewFiles, @ChangedFiles,
+              map { "$RelTopDir/$_" } @TestFiles, @BinFiles, @Changes );
+}
+
+# return to original directory
+chdir $Cwd;
 
 sub usage {
     my $me = basename($0);
@@ -436,11 +535,13 @@ sub usage {
 Usage: $me -r PERL_REPO_DIR [-p PACKAGE_DIR] [-v] [-d] [-e REGEX]
 
 Options:
-  -r    Path to perl-core repository
+  -r    Path to perl-core git repository
   -v    Run verbosely
+  -c    File containing changelog (default 'Changes' or 'ChangeLog')
   -e    Perl regex matching files that shouldn't be included
   -d    Create a diff as patch file
   -p    Path to the package to add. Defaults to cwd()
+  -n    No branching; repository is not a git repo
 
     \n];
 

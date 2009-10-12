@@ -2,17 +2,18 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 113;
+use MBTest tests => 115;
 
-use Cwd ();
-my $cwd = Cwd::cwd;
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
+
 my $tmp = MBTest->tmpdir;
 
 use DistGen;
 my $dist = DistGen->new( dir => $tmp );
 $dist->regen;
 
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 
 use Config;
@@ -23,7 +24,6 @@ use File::Spec::Functions qw( catdir splitdir splitpath );
 # We need to create a well defined environment to test install paths.
 # We do this by setting up appropriate Config entries.
 
-use Module::Build;
 my @installstyle = qw(lib perl5);
 my $mb = Module::Build->new_from_context(
   installdirs => 'site',
@@ -321,8 +321,4 @@ sub test_install_destinations {
 }
 
 
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );

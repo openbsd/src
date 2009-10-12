@@ -3,7 +3,7 @@
  *    perlapi.h
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -186,6 +186,8 @@ END_EXTERN_C
 #define PL_body_roots		(*Perl_Ibody_roots_ptr(aTHX))
 #undef  PL_bodytarget
 #define PL_bodytarget		(*Perl_Ibodytarget_ptr(aTHX))
+#undef  PL_breakable_sub_gen
+#define PL_breakable_sub_gen	(*Perl_Ibreakable_sub_gen_ptr(aTHX))
 #undef  PL_checkav
 #define PL_checkav		(*Perl_Icheckav_ptr(aTHX))
 #undef  PL_checkav_save
@@ -532,6 +534,8 @@ END_EXTERN_C
 #define PL_regex_padav		(*Perl_Iregex_padav_ptr(aTHX))
 #undef  PL_reginterp_cnt
 #define PL_reginterp_cnt	(*Perl_Ireginterp_cnt_ptr(aTHX))
+#undef  PL_registered_mros
+#define PL_registered_mros	(*Perl_Iregistered_mros_ptr(aTHX))
 #undef  PL_regmatch_slab
 #define PL_regmatch_slab	(*Perl_Iregmatch_slab_ptr(aTHX))
 #undef  PL_regmatch_state
@@ -638,6 +642,8 @@ END_EXTERN_C
 #define PL_sv_objcount		(*Perl_Isv_objcount_ptr(aTHX))
 #undef  PL_sv_root
 #define PL_sv_root		(*Perl_Isv_root_ptr(aTHX))
+#undef  PL_sv_serial
+#define PL_sv_serial		(*Perl_Isv_serial_ptr(aTHX))
 #undef  PL_sv_undef
 #define PL_sv_undef		(*Perl_Isv_undef_ptr(aTHX))
 #undef  PL_sv_yes

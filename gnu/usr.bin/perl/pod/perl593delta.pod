@@ -263,7 +263,7 @@ their system dependent constants - as a result C<use POSIX;> now takes about
 
 The new compilation flag C<PERL_DONT_CREATE_GVSV>, introduced as an option
 in perl 5.8.8, is turned on by default in perl 5.9.3. It prevents perl
-from creating an empty scalar with every new typeglob. See L<perl588delta>
+from creating an empty scalar with every new typeglob. See L<perl589delta>
 for details.
 
 =head2 Weak references are cheaper

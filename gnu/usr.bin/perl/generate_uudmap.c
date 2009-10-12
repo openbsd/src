@@ -14,7 +14,7 @@ int main() {
   char *p;
 
   for (i = 0; i < sizeof(PL_uuemap) - 1; ++i)
-    PL_uudmap[(U8)PL_uuemap[i]] = i;
+    PL_uudmap[(U8)PL_uuemap[i]] = (char)i;
   /*
    * Because ' ' and '`' map to the same value,
    * we need to decode them both the same.

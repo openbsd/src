@@ -20,6 +20,26 @@ BEGIN {
     $numtests = ($^O eq 'VMS') ? 16 : ($^O eq 'MacOS') ? 0 : 17;
 }
 
+
+my $vms_exit_mode = 0;
+
+if ($^O eq 'VMS') {
+    if (eval 'require VMS::Feature') {
+        $vms_exit_mode = !(VMS::Feature::current("posix_exit"));
+    } else {
+        my $env_unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        my $env_posix_ex = $ENV{'PERL_VMS_POSIX_EXIT'} || '';
+        my $unix_rpt = $env_unix_rpt =~ /^[ET1]/i; 
+        my $posix_ex = $env_posix_ex =~ /^[ET1]/i;
+        if (($unix_rpt || $posix_ex) ) {
+            $vms_exit_mode = 0;
+        } else {
+            $vms_exit_mode = 1;
+        }
+    }
+    $numtests = 29 unless $vms_exit_mode;
+}
+
 require "test.pl";
 plan(tests => $numtests);
 
@@ -34,10 +54,11 @@ is( $exit >> 8, 0,              'Normal exit' );
 is( $exit, $?,                  'Normal exit $?' );
 is( ${^CHILD_ERROR_NATIVE}, $native_success,  'Normal exit ${^CHILD_ERROR_NATIVE}' );
 
-if ($^O ne 'VMS') {
+if (!$vms_exit_mode) {
   my $posix_ok = eval { require POSIX; };
   my $wait_macros_ok = defined &POSIX::WIFEXITED;
-
+  eval { POSIX::WIFEXITED(${^CHILD_ERROR_NATIVE}) };
+  $wait_macros_ok = 0 if $@;
   $exit = run('exit 42');
   is( $exit >> 8, 42,             'Non-zero exit' );
   is( $exit, $?,                  'Non-zero exit $?' );
@@ -51,7 +72,11 @@ if ($^O ne 'VMS') {
   }
 
   SKIP: {
-    skip("Skip signals and core dump tests on Win32", 7) if $^O eq 'MSWin32';
+    skip("Skip signals and core dump tests on Win32 and VMS", 7) 
+        if ($^O eq 'MSWin32' || $^O eq 'VMS');
+
+    #TODO VMS will backtrace on this test and exits with code of 0
+    #instead of 15.
 
     $exit = run('kill 15, $$; sleep(1);');
 
@@ -68,7 +93,9 @@ if ($^O ne 'VMS') {
     }
   }
 
-} else {
+}
+
+if ($^O eq 'VMS') {
 
 # On VMS, successful returns from system() are reported 0,  VMS errors that
 # can not be translated to UNIX are reported as EVMSERR, which has a value
@@ -124,7 +151,7 @@ if ($^O ne 'VMS') {
 $exit_arg = 42;
 $exit = run("END { \$? = $exit_arg }");
 
-# On VMS, in the child process the actual exit status will be SS$_ABORT, 
+# On VMS, in the child process the actual exit status will be SS$_ABORT,
 # or 44, which is what you get from any non-zero value of $? except for
 # 65535 that has been dePOSIXified by STATUS_UNIX_SET.  If $? is set to
 # 65535 internally when there is a VMS status code that is valid, and
@@ -138,7 +165,7 @@ $exit = run("END { \$? = $exit_arg }");
 # status codes to SS$_ABORT on exit, but passes through unmodified UNIX
 # status codes that exit() is called with by scripts.
 
-$exit_arg = (44 & 7) if $^O eq 'VMS';  
+$exit_arg = (44 & 7) if $vms_exit_mode;
 
 is( $exit >> 8, $exit_arg,             'Changing $? in END block' );
 }

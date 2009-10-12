@@ -18,7 +18,7 @@
  *      65587   even better. 
  */
 long
-sdbm_hash(register char *str, register int len)
+sdbm_hash(register const char *str, register int len)
 {
 	register unsigned long n = 0;
 

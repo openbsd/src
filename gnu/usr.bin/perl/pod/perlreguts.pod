@@ -385,7 +385,7 @@ A grammar form might be something like this:
 
 =head3 Debug Output
 
-In the 5.9.x development version of perl you can C<<use re Debug => 'PARSE'>>
+In the 5.9.x development version of perl you can C<< use re Debug => 'PARSE' >>
 to see some trace information about the parse process. We will start with some
 simple patterns and build up to more complex patterns.
 

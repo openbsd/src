@@ -553,6 +553,13 @@ $         basename = -
 $         found = F$SEARCH(dirname + basename)
 $         file_2_find = file_2_find + "," + basename
 $       ENDIF
+$       tildeloc = f$locate("~",basename)
+$       IF (found .EQS. "" .AND. tildeloc .LT. f$length(basename))
+$       THEN
+$         basename[tildeloc,1] := "_"
+$         found = F$SEARCH(dirname + basename)
+$         file_2_find = file_2_find + "," + basename
+$       ENDIF
 $       IF (found .EQS. "")
 $       THEN
 $         WRITE MISSING file_2_find
@@ -1401,9 +1408,10 @@ $   SET NOON
 $   OPEN/READ PATCH [-].patch
 $   READ PATCH line
 $   CLOSE PATCH
-$   tmp = F$EDIT(line,"COLLAPSE")
+$   tmp = F$EDIT(line,"TRIM,COMPRESS")
+$   IF F$ELEMENT(3, " ", tmp) .NES. "" THEN tmp = F$ELEMENT(3, " ", tmp)
 $   SET ON
-$   IF tmp .GT. perl_patchlevel then perl_patchlevel = tmp
+$   IF tmp .NES. "" THEN perl_patchlevel = tmp
 $ ENDIF
 $!
 $ version_patchlevel_string = "version ''patchlevel' subversion ''subversion'"
@@ -2712,22 +2720,65 @@ $   IF F$EXTRACT(0,4,line) .NES. "ext/" .AND. -
        F$EXTRACT(0,8,line) .NES. "vms/ext/" THEN goto ext_loop
 $   line = F$EDIT(line,"COMPRESS")
 $   line = F$ELEMENT(0," ",line)
-$   line_len = F$LENGTH(line)
-$   IF F$EXTRACT(line_len - 12,12,line) .NES. "/Makefile.PL" THEN goto ext_loop
-$   IF F$EXTRACT(0,4,line) .EQS. "ext/" THEN -
-      xxx = F$EXTRACT(4,line_len - 16,line)
+$   IF F$EXTRACT(0,4,line) .EQS. "ext/"
+$   THEN
+$     xxx = F$ELEMENT(1,"/",line)
+$     IF F$SEARCH("[-.ext]''xxx'.DIR;1") .EQS. "" THEN GOTO ext_loop
+$   ENDIF
+$   IF F$EXTRACT(0,8,line) .EQS. "vms/ext/"
+$   THEN
+$     xxx = F$ELEMENT(2,"/",line)
+$     IF F$SEARCH("[-.vms.ext]''xxx'.DIR;1") .EQS. "" THEN GOTO ext_loop
+$     xxx = "VMS/" + xxx
+$   ENDIF
 $   IF xxx .EQS. "DynaLoader" THEN goto ext_loop     ! omit
-$   IF xxx .EQS. "SDBM_File/sdbm" THEN goto ext_loop ! sub extension - omit
-$   IF xxx .EQS. "Devel/PPPort/harness" THEN goto ext_loop ! sub extension - omit
-$   IF F$EXTRACT(0,7,xxx) .EQS. "Encode/" THEN goto ext_loop  ! sub extension - omit
-$   IF xxx .EQS. "B/C" THEN goto ext_loop  ! sub extension - omit
-$   IF F$EXTRACT(0,8,line) .EQS. "vms/ext/" THEN -
-      xxx = "VMS/" + F$EXTRACT(8,line_len - 20,line)
-$   known_extensions = known_extensions + " ''xxx'"
+$!
+$! (extspec = xxx) =~ tr!-!/!
+$ extspec = ""
+$ idx = 0
+$ replace_dash_with_slash:
+$   before = F$ELEMENT(idx, "-", xxx)
+$   IF before .EQS. "-" THEN goto end_replace_dash_with_slash
+$   IF extspec .NES. "" 
+$   THEN
+$	extspec = extspec + "/"
+$   ENDIF
+$   extspec = extspec + before
+$   idx = idx + 1
+$   goto replace_dash_with_slash
+$
+$ end_replace_dash_with_slash:
+$   
+$ xxx = known_extensions
+$ may_already_have_extension:
+$   idx = F$LOCATE(extspec, xxx)
+$   extlen = F$LENGTH(xxx) 
+$   IF idx .EQ. extlen THEN goto found_new_extension
+$!  But "Flirble" may just be part of "Acme-Flirble"
+$   IF idx .GT. 0 .AND. F$EXTRACT(idx - 1, 1, xxx) .NES. " "
+$   THEN
+$	xxx = F$EXTRACT(idx + F$LENGTH(extspec) + 1, extlen, xxx)
+$	GOTO may_already_have_extension
+$   ENDIF
+$!  But "Foo" may just be part of "Foo-Bar" so check for equality.
+$   xxx = F$EXTRACT(idx, extlen - idx, xxx)
+$   IF F$ELEMENT(0, " ", xxx) .EQS. extspec
+$   THEN 
+$	GOTO ext_loop
+$   ELSE 
+$	xxx = F$EXTRACT(F$LENGTH(extspec) + 1, extlen, xxx)
+	GOTO may_already_have_extension
+$   ENDIF
+$!
+$ found_new_extension:
+$   known_extensions = known_extensions + " ''extspec'"
 $   goto ext_loop
 $end_ext:
 $ close CONFIG
 $ DELETE/SYMBOL xxx
+$ DELETE/SYMBOL idx
+$ DELETE/SYMBOL extspec
+$ DELETE/SYMBOL extlen
 $ known_extensions = F$EDIT(known_extensions,"TRIM,COMPRESS")
 $ dflt = known_extensions
 $ IF ccname .NES. "DEC" .AND. ccname .NES. "CXX"
@@ -3162,6 +3213,7 @@ $ THEN d_mymalloc="define"
 $ ELSE d_mymalloc="undef"
 $ ENDIF
 $!
+$ usedevel="undef"
 $ usedl="define"
 $ startperl="""$ perl 'f$env(\""procedure\"")' \""'"+"'p1'\"" \""'"+"'p2'\"" \""'"+"'p3'\"" \""'"+"'p4'\"" \""'"+"'p5'\"" \""'"+"'p6'\"" \""'"+"'p7'\"" \""'"+"'p8'\""!\n"
 $ startperl=startperl + "$ exit++ + ++$status!=0 and $exit=$status=undef; while($#ARGV != -1 and $ARGV[$#ARGV] eq '"+"'){pop @ARGV;}"""
@@ -3183,9 +3235,8 @@ $! perllibs should be libs with all non-core libs (such as gdbm) removed.
 $!
 $ perllibs=libs
 $!
-$! Are we 64 bit?
 $!
-$ IF use64bitint .OR. use64bitint .EQS. "define"
+$ IF archname .NES. "VMS_VAX"
 $ THEN
 $   d_PRId64 = "define"
 $   d_PRIu64 = "define"
@@ -3201,7 +3252,11 @@ $   sPRIx64 = """Lx"""
 $   d_quad = "define"
 $   quadtype = "long long"
 $   uquadtype = "unsigned long long"
-$   quadkind  = "QUAD_IS_LONG_LONG"
+$   quadkind  = "3"
+$!
+$   d_frexpl = "define"
+$   d_modfl = "define"
+$   d_modflproto = "define"
 $ ELSE
 $   d_PRId64 = "undef"
 $   d_PRIXU64 = "undef"
@@ -3215,17 +3270,10 @@ $   sPRIo64 = ""
 $   sPRIu64 = ""
 $   sPRIx64 = ""
 $   d_quad = "undef"
-$   quadtype = "long"
-$   uquadtype = "unsigned long"
-$   quadkind  = "QUAD_IS_LONG"
-$ ENDIF
+$   quadtype = "undef"
+$   uquadtype = "undef"
+$   quadkind  = "undef"
 $!
-$ IF archname .NES. "VMS_VAX"
-$ THEN
-$   d_frexpl = "define"
-$   d_modfl = "define"
-$   d_modflproto = "define"
-$ ELSE
 $   d_frexpl = "undef"
 $   d_modfl = "undef"
 $   d_modflproto = "undef"
@@ -3951,6 +3999,12 @@ $!
 $ tmp = "sys/mode.h"
 $ GOSUB inhdr
 $ i_sysmode = tmp
+$!
+$! Check for poll.h
+$!
+$ tmp = "sys/poll.h"
+$ gosub inhdr
+$ i_syspoll = tmp
 $!
 $! Check for sys/access.h
 $!
@@ -5483,53 +5537,102 @@ $ echo "(IV will be ""''ivtype'"", ''ivsize' bytes)"
 $ echo "(UV will be ""''uvtype'"", ''uvsize' bytes)"
 $ echo "(NV will be ""''nvtype'"", ''nvsize' bytes)"
 $!
-$ echo4 "Checking whether your NVs can preserve your UVs..."
+$ d_nv_preserves_uv = "undef"
+$ echo4 "Checking how many bits of your UVs your NVs can preserve..."
 $ OS
 $ WS "#if defined(__DECC) || defined(__DECCXX)"
 $ WS "#include <stdlib.h>"
 $ WS "#endif"
 $ WS "#include <stdio.h>"
 $ WS "int main() {"
-$ WS "    ''uvtype' k = (''uvtype')~0, l;"
-$ WS "    ''nvtype' d;"
-$ WS "    l = k;"
-$ WS "    d = (''nvtype')l;"
-$ WS "    l = (''uvtype')d;"
-$ WS "    if (l == k)"
-$ WS "       printf(""preserve\n"");"
+$ WS "    ''uvtype' u = 0;"
+$ WS "    int     n = 8 * ''uvsize';"
+$ WS "    int     i;"
+$ WS "    for (i = 0; i < n; i++) {"
+$ WS "      u = u << 1 | (''uvtype')1;"
+$ WS "      if ((''uvtype')(''nvtype')u != u)"
+$ WS "        break;"
+$ WS "    }"
+$ WS "    printf(""%d\n"", i);"
 $ WS "    exit(0);"
 $ WS "}"
 $ CS
 $ GOSUB compile
-$ IF tmp .EQS. "preserve"
-$ THEN 
+$ nv_preserves_uv_bits = tmp
+$ IF F$INTEGER(nv_preserves_uv_bits) .GE. (F$INTEGER(uvsize) * 8)
+$ THEN
 $   d_nv_preserves_uv = "define"
-$   echo "Yes, they can." 
-$   nv_preserves_uv_bits = F$STRING(F$INTEGER(uvsize) * 8)
+$   echo "Your NVs can preserve all ''nv_preserves_uv_bits' bits of your UVs."
 $ ELSE
-$   d_nv_preserves_uv = "undef"
-$   echo "No, they can't."
-$   echo4 "Checking how many bits of your UVs your NVs can preserve..."
-$   OS
-$   WS "#if defined(__DECC) || defined(__DECCXX)"
-$   WS "#include <stdlib.h>"
-$   WS "#endif"
-$   WS "#include <stdio.h>"
-$   WS "int main() {"
-$   WS "    ''uvtype' u = 0;"
-$   WS "    int     n = 8 * ''uvsize';"
-$   WS "    int     i;"
-$   WS "    for (i = 0; i < n; i++) {"
-$   WS "      u = u << 1 | (''uvtype')1;"
-$   WS "      if ((''uvtype')(''nvtype')u != u)"
-$   WS "        break;"
-$   WS "    }"
-$   WS "    printf(""%d\n"", i);"
-$   WS "    exit(0);"
-$   WS "}"
-$   CS
-$   GOSUB compile
-$   nv_preserves_uv_bits = tmp
+$   d_nv_preserves_uv = "undef""
+$   echo "Your NVs can preserve only ''nv_preserves_uv_bits' bits of your UVs."	
+$ ENDIF
+$!
+$ nv_overflows_integers_at = "0"
+$ echo4 "Checking to find the largest integer value your NVs can hold..."
+$ OS
+$ WS "#include <stdio.h>"
+$ WS ""
+$ WS "typedef ''nvtype' NV;"
+$ WS ""
+$ WS "int"
+$ WS "main() {"
+$ WS "  NV value = 2;"
+$ WS "  int count = 1;"
+$ WS ""
+$ WS "  while(count < 256) {"
+$ WS "    volatile NV up = value + 1.0;"
+$ WS "    volatile NV negated = -value;"
+$ WS "    volatile NV down = negated - 1.0;"
+$ WS "    volatile NV got_up = up - value;"
+$ WS "    int up_good = got_up == 1.0;"
+$ WS "    int got_down = down - negated;"
+$ WS "    int down_good = got_down == -1.0;"
+$ WS ""
+$ WS "    if (down_good != up_good) {"
+$ WS "      fprintf(stderr,"
+$ WS "              ""Inconsistency - up %d %f; down %d %f; for 2**%d (%.20f)\n"","
+$ WS "              up_good, (double) got_up, down_good, (double) got_down,"
+$ WS "              count, (double) value);"
+$ WS "      return 1;"
+$ WS "    }"
+$ WS "    if (!up_good) {"
+$ WS "      while (1) {"
+$ WS "        if (count > 8) {"
+$ WS "          count -= 8;"
+$ WS "          fputs(""256.0"", stdout);"
+$ WS "        } else {"
+$ WS "          count--;"
+$ WS "          fputs(""2.0"", stdout);"
+$ WS "        }"
+$ WS "        if (!count) {"
+$ WS "          puts("""");"
+$ WS "          return 0;"
+$ WS "        }"
+$ WS "        fputs(""*"", stdout);"
+$ WS "      }"
+$ WS "    }"
+$ WS "    value *= 2;"
+$ WS "    ++count;"
+$ WS "  }"
+$ WS "  fprintf(stderr, ""Cannot overflow integer range, even at 2**%d (%.20f)\n"","
+$ WS "          count, (double) value);"
+$ WS "  return 1;"
+$ WS "}"
+$ CS
+$ GOSUB compile
+$ IF F$LENGTH(tmp) .GT. 0
+$ THEN
+$   IF F$EXTRACT(0,1,tmp) .EQS. "2"
+$   THEN
+$     echo "The largest integer your NVs can preserve is equal to ''tmp'"
+$     nv_overflows_integers_at = tmp
+$   ELSE
+$     echo "Cannot determine the largest integer value your NVs can hold, unexpected output"
+$     echo "''tmp'"
+$   ENDIF
+$ ELSE
+$   echo "Cannot determine the largest integer value your NVs can hold"
 $ ENDIF
 $!
 $! Check for signbit (must already know nvtype)
@@ -5757,9 +5860,11 @@ $ WC "d_accessx='undef'"
 $ WC "d_aintl='undef'"
 $ WC "d_alarm='define'"
 $ WC "d_archlib='define'"
+$ WC "d_asctime64='undef'"
 $ WC "d_atolf='" + d_atolf + "'"
 $ WC "d_atoll='" + d_atoll + "'"
 $ WC "d_attribute_format='" + d_attribut + "'"
+$ WC "d_attribute_deprecated='undef'"
 $ WC "d_attribute_malloc='undef'"
 $ WC "d_attribute_nonnull='undef'"
 $ WC "d_attribute_noreturn='undef'"
@@ -5790,11 +5895,13 @@ $ WC "d_cplusplus='" + d_cplusplus + "'"
 $ WC "d_crypt='define'"
 $ WC "d_csh='undef'"
 $ WC "d_ctermid='define'"
+$ WC "d_ctime64='undef'"
 $ WC "d_cuserid='define'"
 $ WC "d_c99_variadic_macros='undef'"
 $ WC "d_dbl_dig='define'"
 $ WC "d_dbminitproto='undef'"
 $ WC "d_difftime='define'"
+$ WC "d_difftime64='undef'"
 $ WC "d_dir_dd_fd='undef'"
 $ WC "d_dirfd='undef'"
 $ WC "d_dirnamlen='define'"
@@ -5840,6 +5947,9 @@ $ WC "d_fstatvfs='" + d_fstatvfs + "'"
 $ WC "d_fsync='undef'"
 $ WC "d_ftello='" + d_ftello + "'"
 $ WC "d_futimes='undef'"
+$ WC "d_gdbmndbm_h_uses_prototypes='undef'"
+$ WC "d_gdbm_ndbm_h_uses_prototypes='undef'"
+$ WC "d_getaddrinfo='undef'"
 $ WC "d_getcwd='define'"
 $ WC "d_getespwnam='undef'"
 $ WC "d_getfsstat='undef'"
@@ -5854,6 +5964,7 @@ $ WC "d_getitimer='" + d_getitimer + "'"
 $ WC "d_getlogin='define'"
 $ WC "d_getmnt='undef'"
 $ WC "d_getmntent='undef'"
+$ WC "d_getnameinfo='undef'"
 $ WC "d_getnbyaddr='" + d_getnbyaddr + "'"
 $ WC "d_getnbyname='" + d_getnbyname + "'"
 $ WC "d_getnent='" + d_getnent + "'"
@@ -5876,6 +5987,7 @@ $ WC "d_getsent='" + d_getsent + "'"
 $ WC "d_getservprotos='" + d_getservprotos + "'"
 $ WC "d_getspnam='undef'"
 $ WC "d_gettimeod='" + d_gettimeod + "'"
+$ WC "d_gmtime64='undef'"
 $ WC "d_gnulibc='undef'"
 $ WC "d_grpasswd='undef'"
 $ WC "d_hasmntopt='undef'"
@@ -5884,6 +5996,8 @@ $ WC "d_ilogbl='undef'"
 $ WC "d_inc_version_list='undef'"
 $ WC "d_index='" + d_index + "'"
 $ WC "d_inetaton='undef'"
+$ WC "d_inetntop='undef'"
+$ WC "d_inetpton='undef'"
 $ WC "d_int64_t='" + d_int64_t + "'"
 $ WC "d_isascii='define'"
 $ WC "d_isfinite='undef'"
@@ -5896,6 +6010,7 @@ $ WC "d_ldbl_dig='define'"
 $ WC "d_libm_lib_version='undef'"
 $ WC "d_link='" + d_link + "'"
 $ WC "d_llseek='undef'"
+$ WC "d_localtime64='undef'"
 $ WC "d_locconv='" + d_locconv + "'"
 $ WC "d_lockf='undef'"
 $ WC "d_longdbl='" + d_longdbl + "'"
@@ -5920,6 +6035,7 @@ $ WC "d_mknod='undef'"
 $ WC "d_mkstemp='" + d_mkstemp + "'"
 $ WC "d_mkstemps='" + d_mkstemps + "'"
 $ WC "d_mktime='" + d_mktime + "'"
+$ WC "d_mktime64='undef'"
 $ WC "d_mmap='" + d_mmap + "'"
 $ WC "d_modfl='" + d_modfl + "'"
 $ WC "d_modflproto='" + d_modflproto + "'"
@@ -5936,9 +6052,11 @@ $ WC "d_msync='" + d_msync + "'"
 $ WC "d_munmap='" + d_munmap + "'"
 $ WC "d_mymalloc='" + d_mymalloc + "'"
 $ WC "d_nanosleep='" + d_nanosleep + "'"
+$ WC "d_ndbm_h_uses_prototypes='undef'"
 $ WC "d_nice='define'"
 $ WC "d_nl_langinfo='" + d_nl_langinfo + "'"
 $ WC "d_nv_preserves_uv='" + d_nv_preserves_uv + "'"
+$ WC "nv_overflows_integers_at='" + nv_overflows_integers_at + "'"
 $ WC "nv_preserves_uv_bits='" + nv_preserves_uv_bits + "'"
 $ WC "d_nv_zero_is_allbits_zero='define'"
 $ WC "d_off64_t='" + d_off64_t + "'"
@@ -6076,6 +6194,7 @@ $ WC "d_tcsetpgrp='undef'"
 $ WC "d_telldir='define'"
 $ WC "d_telldirproto='define'"
 $ WC "d_time='define'"
+$ WC "d_timegm='undef'"
 $ WC "d_times='define'"
 $ IF ("''F$EXTRACT(1,3, F$GETSYI(""VERSION""))'".GES."7.0")
 $ THEN
@@ -6127,6 +6246,7 @@ $ WC "dlobj='" + dlobj + "'"
 $ WC "dlsrc='dl_vms.c'"
 $ WC "doublesize='" + doublesize + "'"
 $ WC "drand01='" + drand01 + "'"
+$ WC "dtrace='" + "'"
 $!
 $! The extensions symbol may be quite long
 $!
@@ -6168,6 +6288,7 @@ $ WC "i64type='" + i64type + "'"
 $ WC "i8size='" + i8size + "'"
 $ WC "i8type='" + i8type + "'"
 $ WC "i_arpainet='undef'"
+$ WC "i_assert='define'"
 $ WC "i_crypt='undef'"
 $ WC "i_db='undef'"
 $ WC "i_dbm='undef'"
@@ -6178,6 +6299,8 @@ $ WC "i_float='define'"
 $ WC "i_fp='undef'"
 $ WC "i_fp_class='undef'"
 $ WC "i_gdbm='undef'"
+$ WC "i_gdbm_ndbm='undef'"
+$ WC "i_gdbmndbm='undef'"
 $ WC "i_grp='" + i_grp + "'"
 $ WC "i_ieeefp='undef'"
 $ WC "i_inttypes='" + i_inttypes + "'"
@@ -6187,6 +6310,7 @@ $ WC "i_limits='define'"
 $ WC "i_locale='" + i_locale + "'"
 $ WC "i_machcthr='undef'"
 $ WC "i_machcthreads='undef'"
+$ WC "i_mallocmalloc='undef'"
 $ WC "i_math='define'"
 $ WC "i_memory='undef'"
 $ WC "i_mntent='undef'"
@@ -6219,6 +6343,7 @@ $ WC "i_sysmode='" + i_sysmode + "'"
 $ WC "i_sysmount='undef'"
 $ WC "i_sysndir='undef'"
 $ WC "i_sysparam='undef'"
+$ WC "i_syspoll='" + i_syspoll + "'"
 $ WC "i_sysresrc='undef'"
 $ WC "i_syssecrt='" + i_syssecrt + "'"
 $ WC "i_sysselct='undef'"
@@ -6349,6 +6474,10 @@ $ WC "randseedtype='" + randseedtype + "'"
 $ WC "ranlib='" + "'"
 $ WC "rd_nodata=' '"
 $ WC "revision='" + revision + "'"
+$ WC "sGMTIME_max='4294967295'"
+$ WC "sGMTIME_min='0'"
+$ WC "sLOCALTIME_max='4294967295'"
+$ WC "sLOCALTIME_min='0'"
 $ WC "sPRId64='" + sPRId64 + "'"
 $ WC "sPRIEldbl='" + sPRIEUldbl + "'"
 $ WC "sPRIFldbl='" + sPRIFUldbl + "'"
@@ -6440,7 +6569,9 @@ $ WC "usecasesensitive='" + be_case_sensitive + "'"    ! VMS-specific
 $ WC "usedebugging_perl='"+use_debugging_perl+"'"
 $ WC "usedefaulttypes='" + usedefaulttypes + "'"    ! VMS-specific
 $ WC "usecrosscompile='undef'"
+$ WC "usedevel='" + usedevel + "'"
 $ WC "usedl='" + usedl + "'"
+$ WC "usedtrace='undef'"
 $ WC "usefaststdio='" + usefaststdio + "'"
 $ WC "useieee='" + useieee + "'"                    ! VMS-specific
 $ WC "useithreads='" + useithreads + "'"
@@ -6803,80 +6934,6 @@ $ mcr []munchconfig 'config_sh' 'Makefile_SH' -f extra_subs.txt
 $! Clean up after ourselves
 $ DELETE/NOLOG/NOCONFIRM []munchconfig.exe;
 $ DELETE/NOLOG/NOCONFIRM []extra_subs.txt;
-$!
-$ echo4 "Extracting make_ext.com (without variable substitutions)"
-$ Create Sys$Disk:[-]make_ext.com
-$ Deck/Dollar="$EndOfTpl$"
-$!++ make_ext.com
-$!   NOTE: This file is extracted as part of the VMS configuration process.
-$!   Any changes made to it directly will be lost.  If you need to make any
-$!   changes, please edit the template in Configure.Com instead.
-$    mydefault = F$Environment("Default")
-$!   p1 - how to invoke miniperl (passed in from descrip.mms)
-$    p1 = F$Edit(p1,"Upcase,Compress,Trim")
-$    If F$Locate("MCR ",p1).eq.0 Then p1 = F$Extract(3,255,p1)
-$    miniperl = "$" + F$Search(F$Parse(p1,".Exe"))
-$!   p2 - how to invoke local make utility (passed in from descrip.mms)
-$    makeutil = p2
-$    if f$type('p2') .nes. "" then makeutil = 'p2'
-$!   p3 - make target (passed in from descrip.mms)
-$    targ = F$Edit(p3,"Lowercase")
-$    sts = 1
-$    extensions = ""
-$    open/read CONFIG config.sh
-$ find_ext_loop:
-$    read/end=end_ext_loop CONFIG line
-$    if (f$extract(0,12,line) .NES. "extensions='")
-$    then goto find_ext_loop
-$    else extensions = f$extract(12,f$length(line),line) - "'"
-$    endif
-$ end_ext_loop:
-$    close CONFIG
-$    extensions = f$edit(extensions,"TRIM,COMPRESS")
-$    i = 0
-$ next_ext:
-$    ext = f$element(i," ",extensions)
-$    If ext .eqs. " " .or. ext .eqs. "" Then Goto done
-$    Define/User_mode Perl_Env_Tables CLISYM_LOCAL
-$    miniperl
-$    deck
-     ($extdir = $ENV{'ext'}) =~ s/::/./g;
-     $extdir =~ s#/#.#g;
-     if ($extdir =~ /^vms/i) { $extdir =~ s/vms/.vms.ext/i; }
-     else                    { $extdir = ".ext.$extdir";   }
-     ($ENV{'extdir'} = "[$extdir]");
-     ($ENV{'up'} = ('-') x ($extdir =~ tr/././));
-$    eod
-$    Set Default &extdir
-$    redesc = 0
-$    If F$Locate("clean",targ) .eqs. F$Length(targ)
-$    Then
-$      Write Sys$Output ""
-$      Write Sys$Output "	Making ''ext' (dynamic)"
-$      On Error Then Goto done
-$      If F$Search("Descrip.MMS") .eqs. ""
-$      Then
-$        redesc = 1
-$      Else
-$        If F$CvTime(F$File("Descrip.MMS","rdt")) .lts. -
-            F$CvTime(F$File("Makefile.PL","rdt")) Then redesc = 1
-$      EndIf
-$    Else
-$      Write Sys$Output "''targ'ing ''ext' . . ."
-$      On Error Then Continue
-$    EndIf
-$    If redesc Then -
-       miniperl "-I[''up'.lib]" Makefile.PL "INST_LIB=[''up'.lib]" "INST_ARCHLIB=[''up'.lib]"  "PERL_CORE=1"
-$    makeutil 'targ'
-$    i = i + 1
-$    Set Def &mydefault
-$    Goto next_ext
-$ done:
-$    sts = $Status
-$    Set Def &mydefault
-$    Exit sts
-$!-- make_ext.com
-$EndOfTpl$
 $!
 $! Note that the /key qualifier to search, as in:
 $! search README.* "=head"/key=(position=1)/window=0/output=extra.pods

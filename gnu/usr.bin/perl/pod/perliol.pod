@@ -145,7 +145,7 @@ same as the public C<PerlIO_xxxxx> functions:
    IV		(*Pushed)(pTHX_ PerlIO *f,const char *mode,SV *arg, PerlIO_funcs *tab);
    IV		(*Popped)(pTHX_ PerlIO *f);
    PerlIO *	(*Open)(pTHX_ PerlIO_funcs *tab,
-  			AV *layers, IV n,
+  			PerlIO_list_t *layers, IV n,
   			const char *mode,
   			int fd, int imode, int perm,
   			PerlIO *old,
@@ -486,7 +486,7 @@ C<PerlIO_fdopen> and C<PerlIO_reopen>.  The full prototype is as
 follows:
 
  PerlIO *	(*Open)(pTHX_ PerlIO_funcs *tab,
-			AV *layers, IV n,
+			PerlIO_list_t *layers, IV n,
 			const char *mode,
 			int fd, int imode, int perm,
 			PerlIO *old,
@@ -494,7 +494,7 @@ follows:
 
 Open should (perhaps indirectly) call C<PerlIO_allocate()> to allocate
 a slot in the table and associate it with the layers information for
-the opened file, by calling C<PerlIO_push>.  The I<layers> AV is an
+the opened file, by calling C<PerlIO_push>.  The I<layers> is an
 array of all the layers destined for the C<PerlIO *>, and any
 arguments passed to them, I<n> is the index into that array of the
 layer being called. The macro C<PerlIOArg> will return a (possibly

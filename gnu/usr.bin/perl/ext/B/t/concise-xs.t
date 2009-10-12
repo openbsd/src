@@ -159,7 +159,7 @@ my $testpkgs = {
 	XS => [qw( svref_2object perlstring opnumber main_start
 		   main_root main_cv )],
 
-	constant => [qw/ ASSIGN CVf_LOCKED CVf_LVALUE
+	constant => [qw/ ASSIGN CVf_LVALUE
 		     CVf_METHOD LIST_CONTEXT OP_CONST OP_LIST OP_RV2SV
 		     OP_STRINGIFY OPf_KIDS OPf_MOD OPf_REF OPf_SPECIAL
 		     OPf_STACKED OPf_WANT OPf_WANT_LIST OPf_WANT_SCALAR
@@ -173,11 +173,22 @@ my $testpkgs = {
 		     PMf_MULTILINE PMf_ONCE PMf_SINGLELINE
 		     POSTFIX SVf_FAKE SVf_IOK SVf_NOK SVf_POK SVf_ROK
 		     SVpad_OUR SVs_RMG SVs_SMG SWAP_CHILDREN OPpPAD_STATE
-		     /, $] > 5.009 ? ('RXf_SKIPWHITE') : ('PMf_SKIPWHITE')],
+		     /, $] > 5.009 ? ('RXf_SKIPWHITE') : ('PMf_SKIPWHITE'),
+		    'CVf_LOCKED', # This ends up as a constant, pre or post 5.10
+		    ],
 		 },
 
     POSIX => { dflt => 'constant',			# all but 252/589
-	       skip => [qw/ _POSIX_JOB_CONTROL /],	# platform varying
+	       skip => [qw/ _POSIX_JOB_CONTROL /,	# platform varying
+			# Might be XS or imported from Fcntl, depending on your
+			# perl version:
+			qw / S_ISBLK S_ISCHR S_ISDIR S_ISFIFO S_ISREG /,
+			# Might be XS or AUTOLOADed, depending on your perl
+			# version:
+			qw /WEXITSTATUS WIFEXITED WIFSIGNALED WIFSTOPPED
+			    WSTOPSIG WTERMSIG/,
+		       'int_macro_int', # Removed in POSIX 1.16
+		       ],
 	       perl => [qw/ import croak AUTOLOAD /],
 
 	       XS => [qw/ write wctomb wcstombs uname tzset tzname
@@ -191,7 +202,7 @@ my $testpkgs = {
 		      mblen lseek log10 localeconv ldexp lchown
 		      isxdigit isupper isspace ispunct isprint
 		      islower isgraph isdigit iscntrl isalpha
-		      isalnum int_macro_int getcwd frexp fpathconf
+		      isalnum getcwd frexp fpathconf
 		      fmod floor dup2 dup difftime cuserid ctime
 		      ctermid cosh constant close clock ceil
 		      bootstrap atan asin asctime acos access abort

@@ -66,11 +66,11 @@ die "$0: must be run on an ASCII system\n" unless ord 'A' == 65;
 # the test below to allow that version too. DAPM Feb 04.
 
 my $version = `$bison -V`;
-unless ($version =~ /\b(1\.875[a-z]?|2\.[013])\b/) { die <<EOF; }
+unless ($version =~ /\b(1\.875[a-z]?|2\.[0134])\b/) { die <<EOF; }
 
 You have the wrong version of bison in your path; currently 1.875
-2.0, 2.1 or 2.3 is required.  Try installing
-    http://ftp.gnu.org/gnu/bison/bison-2.1.tar.gz
+2.0, 2.1, 2.3 or 2.4 is required.  Try installing
+    http://ftp.gnu.org/gnu/bison/bison-2.4.1.tar.gz
 or similar.  Your bison identifies itself as:
 
 $version
@@ -112,6 +112,9 @@ open TMPH_FILE, $tmph_file or die "Can't open $tmph_file: $!\n";
 chmod 0644, $h_file;
 open H_FILE, ">$h_file" or die "Can't open $h_file: $!\n";
 my $endcore_done = 0;
+# Token macros need to be generated manually on bison 2.4
+my $gather_tokens = ($version =~ /\b2\.4\b/ ? undef : 0);
+my $tokens;
 while (<TMPH_FILE>) {
     print H_FILE "#ifdef PERL_CORE\n" if $. == 1;
     if (!$endcore_done and /YYSTYPE_IS_DECLARED/) {
@@ -119,6 +122,19 @@ while (<TMPH_FILE>) {
 	$endcore_done = 1;
     }
     next if /^#line \d+ ".*"/;
+    if (not defined $gather_tokens) {
+	$gather_tokens = 1 if /^\s* enum \s* yytokentype \s* \{/x;
+    }
+    elsif ($gather_tokens) {
+	if (/^\# \s* endif/x) { # The #endif just after the end of the token enum
+	    $gather_tokens = 0;
+	    $_ .= "\n/* Tokens.  */\n$tokens";
+	}
+	else {
+	    my ($tok, $val) = /(\w+) \s* = \s* (\d+)/x;
+	    $tokens .= "#define $tok $val\n" if $tok;
+	}
+    }
     print H_FILE $_;
 }
 close TMPH_FILE;
@@ -153,13 +169,16 @@ sub extract {
     $clines =~ m@
 	switch \s* \( \s* \w+ \s* \) \s* { \s*
 	(
-	    case \s* \d+ \s* : \s*
+	    case \s* \d+ \s* :
+	    \s*
+	    (?: \s* /\* .*? \*/ \s* )*	# optional C-comments
+	    \s*
 	    \#line [^\n]+"\Q$y_file\E"
 	    .*?
 	)
 	}
 	\s*
-	( \s* /\* .*? \*/ \s* )*	# optional C-comments
+	(?: \s* /\* .*? \*/ \s* )*	# optional C-comments
 	\s*
 	(
 	    \#line[^\n]+\.c"
@@ -171,6 +190,9 @@ sub extract {
     @xms
 	or die "Can't extract actions from $tmpc_file\n";
     $actlines = $1;
+
+    # Remove extraneous comments from bison 2.4
+    $actlines =~ s!\s* /\* \s* Line \s* \d+ \s* of \s* yacc\.c \s* \*/!!gx;
 
     # C<#line 188 "perlytmp.c"> gets picked up by make depend, so remove them.
     $actlines =~ s/^#line \d+ "\Q$tmpc_file\E".*$//gm;

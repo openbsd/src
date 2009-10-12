@@ -7,10 +7,12 @@ use Module::Build;
 use Module::Build::ConfigData;
 
 if ( Module::Build::ConfigData->feature('manpage_support') ) {
-  plan tests => 21;
+  plan tests => 22;
 } else {
   plan skip_all => 'manpage_support feature is not enabled';
 }
+ensure_blib('Module::Build');
+
 
 #########################
 
@@ -55,7 +57,7 @@ Simple Man <simple@example.com>
 $dist->regen;
 
 
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 use File::Spec::Functions qw( catdir );
 my $destdir = catdir($cwd, 't', 'install_test' . $$);
@@ -137,11 +139,10 @@ $mb->dispatch('realclean');
 
 
 # revert to a pristine state
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
 $dist = DistGen->new( dir => $tmp );
 $dist->regen;
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
 
 my $mb2 = Module::Build->new(
@@ -164,8 +165,4 @@ foreach ('testcover', 'disttest') {
 
 
 # cleanup
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );

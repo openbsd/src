@@ -3,7 +3,8 @@ package File::Spec::Unix;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '3.2501';
+$VERSION = '3.30';
+$VERSION = eval $VERSION;
 
 =head1 NAME
 
@@ -41,6 +42,7 @@ actually traverse the filesystem cleaning up paths like this.
 
 sub canonpath {
     my ($self,$path) = @_;
+    return unless defined $path;
     
     # Handle POSIX-style node names beginning with double slash (qnx, nto)
     # (POSIX says: "a pathname that begins with two successive slashes
@@ -48,7 +50,10 @@ sub canonpath {
     # more than two leading slashes shall be treated as a single slash.")
     my $node = '';
     my $double_slashes_special = $^O eq 'qnx' || $^O eq 'nto';
-    if ( $double_slashes_special && $path =~ s{^(//[^/]+)(?:/|\z)}{/}s ) {
+
+
+    if ( $double_slashes_special
+         && ( $path =~ s{^(//[^/]+)/?\z}{}s || $path =~ s{^(//[^/]+)/}{/}s ) ) {
       $node = $1;
     }
     # This used to be
@@ -103,7 +108,7 @@ Returns a string representation of the current directory.  "." on UNIX.
 
 =cut
 
-sub curdir () { '.' }
+sub curdir { '.' }
 
 =item devnull
 
@@ -111,7 +116,7 @@ Returns a string representation of the null device. "/dev/null" on UNIX.
 
 =cut
 
-sub devnull () { '/dev/null' }
+sub devnull { '/dev/null' }
 
 =item rootdir
 
@@ -119,7 +124,7 @@ Returns a string representation of the root directory.  "/" on UNIX.
 
 =cut
 
-sub rootdir () { '/' }
+sub rootdir { '/' }
 
 =item tmpdir
 
@@ -168,7 +173,7 @@ Returns a string representation of the parent directory.  ".." on UNIX.
 
 =cut
 
-sub updir () { '..' }
+sub updir { '..' }
 
 =item no_upwards
 
@@ -189,7 +194,7 @@ is not or is significant when comparing file specifications.
 
 =cut
 
-sub case_tolerant () { 0 }
+sub case_tolerant { 0 }
 
 =item file_name_is_absolute
 

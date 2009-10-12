@@ -20,7 +20,8 @@ if (@ARGV) {
     ### strip the leading dash
     $input =~ s/^\s*-//;
     ### pass the command line to the shell
-    $shell->dispatch_on_input(input => $input, noninteractive => 1);
+    ### exit with a useful return value on return
+    exit not $shell->dispatch_on_input(input => $input, noninteractive => 1);
 } else {
     ### open a shell for the user
     $shell->shell();

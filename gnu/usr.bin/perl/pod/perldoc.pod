@@ -222,6 +222,10 @@ Having PERLDOCDEBUG set to a positive integer will make perldoc emit
 even more descriptive output than the C<-v> switch does -- the higher the
 number, the more it emits.
 
+=head1 SEE ALSO
+
+L<perlpod>, L<Pod::Perldoc>
+
 =head1 AUTHOR
 
 Current maintainer: Sean M. Burke, <sburke@cpan.org>

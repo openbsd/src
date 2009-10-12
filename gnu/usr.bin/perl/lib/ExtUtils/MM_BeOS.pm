@@ -25,9 +25,8 @@ use File::Spec;
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 
-use vars qw(@ISA $VERSION);
-@ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-$VERSION = '6.42';
+our @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
+our $VERSION = '6.55_02';
 
 
 =item os_flavor

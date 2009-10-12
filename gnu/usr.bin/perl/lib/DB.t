@@ -86,7 +86,7 @@ BEGIN {
 # test DB::_clientname()
 is( DB::_clientname('foo=A(1)'), 'foo',
     'DB::_clientname should return refname');
-cmp_ok( DB::_clientname('bar'), 'eq', '',
+is( DB::_clientname('bar'), undef,
         'DB::_clientname should not return non refname');
 
 # test DB::next() and DB::step()

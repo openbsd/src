@@ -60,7 +60,7 @@ ok( my $stdout = tie *STDOUT, 'TieOut' );
         INSTALLMAN3DIR  => 'none'
     );
 
-    ok( !keys %{ $mm->{MAN3PODS} } );
+    is_deeply( $mm->{MAN3PODS}, {} );
 }
 
 

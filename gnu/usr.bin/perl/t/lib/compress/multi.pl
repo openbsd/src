@@ -13,7 +13,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 694 + $extra ;
+    plan tests => 1324 + $extra ;
 
     use_ok('IO::Uncompress::AnyUncompress', qw($AnyUncompressError)) ;
 
@@ -46,6 +46,9 @@ EOM
     push @buffers, <<EOM ;
 even more stuff
 EOM
+
+    my $b0length = length $buffers[0];  
+    my $bufcount = @buffers;
 
     {
         my $cc ;
@@ -136,6 +139,46 @@ EOM
                 }
 
                 foreach my $unc ($UncompressClass, 'IO::Uncompress::AnyUncompress') {
+                  foreach my $blk (1, 20, $b0length - 1, $b0length, $b0length +1) {
+                    title "  Testing $CompressClass with $unc, BlockSize $blk and $i streams, from $fb";
+                    $cc = $output ;
+                    if ($fb eq 'filehandle')
+                    {
+                        $cc = new IO::File "<$name" ;
+                    }
+                    my @opts = $unc ne $UncompressClass 
+                                    ? (RawInflate => 1)
+                                    : ();
+                    my $gz = new $unc($cc,
+                                   @opts,
+                                   Strict      => 1,
+                                   AutoClose   => 1,
+                                   Append      => 1,
+                                   MultiStream => 1,
+                                   Transparent => 0)
+                        or diag $$UnError;
+                    isa_ok $gz, $UncompressClass, '    $gz' ;
+
+                    my $un = '';
+                    my $b = $blk;
+                    # Want the first read to be in the middle of a stream
+                    # and the second to cross a stream boundary
+                    $b = 1000 while $gz->read($un, $b) > 0 ;
+                    #print "[[$un]]\n" while $gz->read($un) > 0 ;
+                    ok ! $gz->error(), "      ! error()"
+                        or diag "Error is " . $gz->error() ;
+                    ok $gz->eof(), "      eof()";
+                    ok $gz->close(), "    close() ok"
+                        or diag "errno $!\n" ;
+
+                    is $gz->streamCount(), $i +1, "    streamCount ok " .  ($i +1)
+                        or diag "Stream count is " . $gz->streamCount();
+                    ok $un eq join('', @buffs), "    expected output" ;
+
+                  }
+                }
+
+                foreach my $unc ($UncompressClass, 'IO::Uncompress::AnyUncompress') {
                     title "  Testing $CompressClass with $unc nextStream and $i streams, from $fb";
                     $cc = $output ;
                     if ($fb eq 'filehandle')
@@ -195,7 +238,8 @@ EOM
                         is $gz->tell(), 0, "    tell is 0";
                     }
 
-                    is $gz->nextStream(), 0, "    nextStream ok";
+                    is $gz->nextStream(), 0, "    nextStream ok"
+                        or diag $gz->error() ;
                     ok $gz->eof(), "      eof()";
                     ok $gz->close(), "    close() ok"
                         or diag "errno $!\n" ;

@@ -22,6 +22,9 @@ sub config_names  { keys %$config }
 sub write {
   my $me = __FILE__;
   require IO::File;
+
+  # Can't use Module::Build::Dumper here because M::B is only a
+  # build-time prereq of this module
   require Data::Dumper;
 
   my $mode_orig = (stat $me)[2] & 07777;
@@ -33,9 +36,11 @@ sub write {
   }
   die "Couldn't find __DATA__ token in $me" if eof($fh);
 
-  local $Data::Dumper::Terse = 1;
   seek($fh, tell($fh), 0);
-  $fh->print( Data::Dumper::Dumper([$config, $features, $auto_features]) );
+  my $data = [$config, $features, $auto_features];
+  $fh->print( 'do{ my '
+	      . Data::Dumper->new([$data],['x'])->Purity(1)->Dump()
+	      . '$x; }' );
   truncate($fh, tell($fh));
   $fh->close;
 
@@ -62,6 +67,7 @@ sub feature {
     while (my ($modname, $spec) = each %p) {
       my $status = Module::Build->check_installed_status($modname, $spec);
       if ((!$status->{ok}) xor ($type =~ /conflicts$/)) { return 0; }
+      if ( ! eval "require $modname; 1" ) { return 0; }
     }
   }
   return 1;
@@ -159,36 +165,37 @@ authorship claim or copyright claim to the contents of C<Module::Build::ConfigDa
 
 __DATA__
 
-[
-          {},
-          {},
-          {
-            'YAML_support' => {
-                                'requires' => {
-                                                'YAML' => ' >= 0.35, != 0.49_01 '
-                                              },
-                                'description' => 'Use YAML.pm to write META.yml files'
-                              },
-            'manpage_support' => {
-                                   'requires' => {
-                                                   'Pod::Man' => 0
-                                                 },
-                                   'description' => 'Create Unix man pages'
-                                 },
-            'C_support' => {
+do{ my $x = [
+       {},
+       {},
+       {
+         'YAML_support' => {
                              'requires' => {
-                                             'ExtUtils::CBuilder' => '0.15'
+                                             'YAML' => ' >= 0.35, != 0.49_01 '
                                            },
-                             'recommends' => {
-                                               'ExtUtils::ParseXS' => '1.02'
-                                             },
-                             'description' => 'Compile/link C & XS code'
+                             'description' => 'Use YAML.pm to write META.yml files'
                            },
-            'HTML_support' => {
+         'manpage_support' => {
                                 'requires' => {
-                                                'Pod::Html' => 0
+                                                'Pod::Man' => 0
                                               },
-                                'description' => 'Create HTML documentation'
-                              }
-          }
-        ]
+                                'description' => 'Create Unix man pages'
+                              },
+         'C_support' => {
+                          'requires' => {
+                                          'ExtUtils::CBuilder' => '0.15'
+                                        },
+                          'recommends' => {
+                                            'ExtUtils::ParseXS' => '1.02'
+                                          },
+                          'description' => 'Compile/link C & XS code'
+                        },
+         'HTML_support' => {
+                             'requires' => {
+                                             'Pod::Html' => 0
+                                           },
+                             'description' => 'Create HTML documentation'
+                           }
+       }
+     ];
+$x; }

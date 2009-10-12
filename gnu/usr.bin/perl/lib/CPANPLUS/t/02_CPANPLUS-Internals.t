@@ -73,6 +73,30 @@ is($cb->_id, $cb->_last_id, "Comparing ID's");
                                                 "   '$mod' loaded" );
 }
 
+### add to inc path tests
+{   my $meth = '_add_to_includepath';
+    can_ok( $cb,                $meth );
+    
+    my $p5lib   = $ENV{PERL5LIB} || '';
+    my $inc     = "@INC";         
+    ok( $cb->$meth( directories => [$$] ),    
+                                "   CB->$meth( $$ )" );
+    
+    my $new_p5lib   = $ENV{PERL5LIB};
+    my $new_inc     = "@INC";    
+    isnt( $p5lib, $new_p5lib,   "       PERL5LIB is now: $new_p5lib" );
+    like( $new_p5lib, qr/$$/,   "           Matches $$" );
+
+    isnt( $inc, $new_inc,       '       @INC is expanded with: ' . $$ );
+    like( $new_inc, qr/$$/,     "           Matches $$" );
+    
+    ok( $cb->$meth( directories => [$$] ),    
+                                "       CB->$meth( $$ ) again" );
+    is( "@INC", $new_inc,       '           @INC unchanged' );
+    is( $new_p5lib, $ENV{PERL5LIB},
+                                "           PERL5LIB unchanged" );
+}    
+
 ### callback registering tests ###
 {    my $callback_map = {
         ### name                default value    

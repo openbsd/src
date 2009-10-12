@@ -129,7 +129,7 @@ do_aspawn (pTHX_ SV *really,SV **mark,SV **sp)
             *a++ = SvPVx(*mark, n_a);
         else
             *a++ = "";
-    *a = Nullch;
+    *a = NULL;
 
     if (argv[0][0] != '/' && argv[0][0] != '\\'
         && !(argv[0][0] && argv[0][1] == ':'
@@ -204,7 +204,7 @@ doshell:
 	if (*s)
 	    *s++='\0';
     }
-    *a=Nullch;
+    *a=NULL;
     if (!PL_Argv[0])
         return -1;
 

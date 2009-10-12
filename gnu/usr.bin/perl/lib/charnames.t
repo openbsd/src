@@ -15,7 +15,7 @@ require File::Spec;
 
 $| = 1;
 
-print "1..78\n";
+print "1..79\n";
 
 use charnames ':full';
 
@@ -271,11 +271,8 @@ print "ok 46\n";
 
 # ---- Alias extensions
 
-my $tmpfile = "tmp0000";
 my $alifile = File::Spec->catfile(File::Spec->updir, qw(lib unicore xyzzy_alias.pl));
 my $i = 0;
-1 while -e ++$tmpfile;
-END { if ($tmpfile) { 1 while unlink $tmpfile; } }
 
 my @prgs;
 {   local $/ = undef;
@@ -286,6 +283,7 @@ my $i = 46;
 for (@prgs) {
     my ($code, $exp) = ((split m/\nEXPECT\n/), '$');
     my ($prog, $fil) = ((split m/\nFILE\n/, $code), "");
+    my $tmpfile = tempfile();
     open my $tmp, "> $tmpfile" or die "Could not open $tmpfile: $!";
     print $tmp $prog, "\n";
     close $tmp or die "Could not close $tmpfile: $!";
@@ -323,7 +321,6 @@ for (@prgs) {
         print "not ";
 	}
     print "ok ", ++$i, "\n";
-    1 while unlink $tmpfile;
     $fil or next;
     1 while unlink $alifile;
     }
@@ -358,6 +355,10 @@ if ($@) {
     print "not " unless $evaltry eq "Eval: \N{LEFT-POINTING DOUBLE ANGLE QUOTATION MARK}";
     print "ok 78\n";
 }
+
+# Verify that db includes the normative NameAliases.txt names
+print "not " unless "\N{U+1D0C5}" eq "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}";
+print "ok 79\n";
 
 __END__
 # unsupported pragma

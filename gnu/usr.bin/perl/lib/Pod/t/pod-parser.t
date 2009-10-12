@@ -1,9 +1,8 @@
 #!/usr/bin/perl -w
-# $Id: pod-parser.t,v 1.2 2006-09-16 21:09:57 eagle Exp $
 #
 # pod-parser.t -- Tests for backward compatibility with Pod::Parser.
 #
-# Copyright 2006 by Russ Allbery <rra@stanford.edu>
+# Copyright 2006, 2008 by Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -17,8 +16,10 @@ BEGIN {
     }
     unshift (@INC, '../blib/lib');
     $| = 1;
-    print "1..3\n";
+    print "1..4\n";
 }
+
+my $loaded;
 
 END {
     print "not ok 1\n" unless $loaded;
@@ -26,6 +27,7 @@ END {
 
 use Pod::Man;
 use Pod::Text;
+use strict;
 
 $loaded = 1;
 print "ok 1\n";
@@ -67,6 +69,31 @@ if ($output eq "    Some random text.\n\n") {
     print "ok 3\n";
 } else {
     print "not ok 3\n";
+    print "Expected\n========\n    Some random text.\n\n\n";
+    print "Output\n======\n$output\n";
+}
+
+# Test the pod2text function, particularly with only one argument.
+open (TMP, '> tmp.pod') or die "Cannot create tmp.pod: $!\n";
+print TMP "=pod\n\nSome random B<text>.\n";
+close TMP;
+open (OUT, '> out.tmp') or die "Cannot create out.tmp: $!\n";
+open (SAVE, '>&STDOUT') or die "Cannot dup stdout: $!\n";
+open (STDOUT, '>&OUT') or die "Cannot replace stdout: $!\n";
+pod2text ('tmp.pod');
+close OUT;
+open (STDOUT, '>&SAVE') or die "Cannot fix stdout: $!\n";
+close SAVE;
+open (OUT, 'out.tmp') or die "Cannot open out.tmp: $!\n";
+{
+    local $/;
+    $output = <OUT>;
+}
+close OUT;
+if ($output eq "    Some random text.\n\n") {
+    print "ok 4\n";
+} else {
+    print "not ok 4\n";
     print "Expected\n========\n    Some random text.\n\n\n";
     print "Output\n======\n$output\n";
 }

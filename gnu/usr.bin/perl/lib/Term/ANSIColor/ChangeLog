@@ -1,3 +1,51 @@
+2009-02-28  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 2.00 released.
+
+	* Makefile.PL: Add LICENSE to the distribution metadata for Perl
+	5.10 and later.
+
+	* ANSIColor.pm: Add explicit return statements instead of relying
+	on the implicit return of the last expression.  Use all caps for
+	all global variables.
+
+	* ANSIColor.pm: Add the new functions to a :pushpop export tag.
+	(PUSHCOLOR): New function that stores in an internal stack the
+	attributes that are being set.
+	(POPCOLOR): New function that pops the attributes being set and
+	sets the attributes previously found on the stack.
+	(LOCALCOLOR): New function that surrounds its argument in
+	PUSHCOLOR and POPCOLOR.
+	(AUTOLOAD): If $AUTOLOCAL is set, surround all color constants
+	with an implicit LOCALCOLOR.
+	* t/basic.t: Test PUSHCOLOR, POPCOLOR, and LOCALCOLOR.
+
+	* t/pod-spelling.t: Rewrite to use Test::More.  Support and prefer
+	aspell.
+
+	* ANSIColor.pm: Fix additional spelling errors and rewrap the POD
+	documentation to a 74-character margin.
+
+	* t/basic.t: Rewrite to use Test::More.
+	* t/pod.t: Likewise.
+
+	* ANSIColor.pm (AUTOLOAD): If ANSI_COLORS_DISABLED is set, return
+	the stringified arguments rather than creating a sub.  This allows
+	colors to work later if ANSI_COLORS_DISABLED is unset rather than
+	making its effects permanent.  It also avoids adding a reset
+	escape sequence when $AUTORESET and ANSI_COLORS_DISABLED are both
+	set.
+
+2008-09-14  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Add faint as a synonym for dark and improve the
+	documentation of text attributes.
+
+	* t/pod-spelling.t: New check to spell-check POD documentation
+	using ispell with Pod::Spell.
+	* ANSIColor.pm: Fix spelling and markup errors in documentation
+	and add stop-words where appropriate.
+
 2007-04-22  Russ Allbery  <rra@stanford.edu>
 
 	* ANSIColor.pm: Version 1.12 released.

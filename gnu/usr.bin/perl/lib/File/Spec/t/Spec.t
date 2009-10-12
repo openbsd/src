@@ -13,6 +13,22 @@ eval {
    require VMS::Filespec ;
 } ;
 
+my $vms_unix_rpt;
+my $vms_efs;
+
+if ($^O eq 'VMS') {
+    if (eval 'require VMS::Feature') {
+        $vms_unix_rpt = VMS::Feature::current("filename_unix_report");
+        $vms_efs = VMS::Feature::current("efs_charset");
+    } else {
+        my $unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        my $efs_charset = $ENV{'DECC$EFS_CHARSET'} || '';
+        $vms_unix_rpt = $unix_rpt =~ /^[ET1]/i; 
+        $vms_efs = $efs_charset =~ /^[ET1]/i; 
+    }
+}
+
+
 my $skip_exception = "Install VMS::Filespec (from vms/ext)" ;
 
 if ( $@ ) {
@@ -85,6 +101,7 @@ if ($^O eq 'MacOS') {
 [ "Unix->splitdir('d1/d2/d3')",   'd1,d2,d3'   ],
 
 [ "Unix->catdir()",                     ''          ],
+[ "Unix->catdir('')",                   '/'         ],
 [ "Unix->catdir('/')",                  '/'         ],
 [ "Unix->catdir('','d1','d2','d3','')", '/d1/d2/d3' ],
 [ "Unix->catdir('d1','d2','d3','')",    'd1/d2/d3'  ],
@@ -191,10 +208,10 @@ if ($^O eq 'MacOS') {
 [ "Win32->catdir('\\d1','d2')",             '\\d1\\d2'         ],
 [ "Win32->catdir('\\d1','\\d2')",           '\\d1\\d2'         ],
 [ "Win32->catdir('\\d1','\\d2\\')",         '\\d1\\d2'         ],
-[ "Win32->catdir('','/d1','d2')",           '\\\\d1\\d2'         ],
-[ "Win32->catdir('','','/d1','d2')",        '\\\\\\d1\\d2'       ],
-[ "Win32->catdir('','//d1','d2')",          '\\\\\\d1\\d2'       ],
-[ "Win32->catdir('','','//d1','d2')",       '\\\\\\\\d1\\d2'     ],
+[ "Win32->catdir('','/d1','d2')",           '\\d1\\d2'         ],
+[ "Win32->catdir('','','/d1','d2')",        '\\d1\\d2'         ],
+[ "Win32->catdir('','//d1','d2')",          '\\d1\\d2'         ],
+[ "Win32->catdir('','','//d1','d2')",       '\\d1\\d2'         ],
 [ "Win32->catdir('','d1','','d2','')",      '\\d1\\d2'           ],
 [ "Win32->catdir('','d1','d2','d3','')",    '\\d1\\d2\\d3'       ],
 [ "Win32->catdir('d1','d2','d3','')",       'd1\\d2\\d3'         ],
@@ -206,13 +223,16 @@ if ($^O eq 'MacOS') {
 [ "Win32->catdir('A:/d1','B:/d2','d3','')", 'A:\\d1\\B:\\d2\\d3' ],
 [ "Win32->catdir('A:/')",                   'A:\\'               ],
 [ "Win32->catdir('\\', 'foo')",             '\\foo'              ],
-
+[ "Win32->catdir('','','..')",              '\\'                 ],
+[ "Win32->catdir('A:', 'foo')",             'A:\\foo'            ],
 
 [ "Win32->catfile('a','b','c')",        'a\\b\\c' ],
 [ "Win32->catfile('a','b','.\\c')",      'a\\b\\c'  ],
 [ "Win32->catfile('.\\a','b','c')",      'a\\b\\c'  ],
 [ "Win32->catfile('c')",                'c' ],
 [ "Win32->catfile('.\\c')",              'c' ],
+[ "Win32->catfile('a/..','../b')",       '..\\b' ],
+[ "Win32->catfile('A:', 'foo')",         'A:\\foo'            ],
 
 
 [ "Win32->canonpath('')",               ''                    ],
@@ -224,9 +244,9 @@ if ($^O eq 'MacOS') {
 [ "Win32->canonpath('//a\\b//c')",      '\\\\a\\b\\c'         ],
 [ "Win32->canonpath('/a/..../c')",      '\\a\\....\\c'        ],
 [ "Win32->canonpath('//a/b\\c')",       '\\\\a\\b\\c'         ],
-[ "Win32->canonpath('////')",           '\\\\\\'              ],
+[ "Win32->canonpath('////')",           '\\'                  ],
 [ "Win32->canonpath('//')",             '\\'                  ],
-[ "Win32->canonpath('/.')",             '\\.'                 ],
+[ "Win32->canonpath('/.')",             '\\'                  ],
 [ "Win32->canonpath('//a/b/../../c')",  '\\\\a\\b\\c'         ],
 [ "Win32->canonpath('//a/b/c/../d')",   '\\\\a\\b\\d'         ],
 [ "Win32->canonpath('//a/b/c/../../d')",'\\\\a\\b\\d'         ],
@@ -282,40 +302,81 @@ if ($^O eq 'MacOS') {
 
 [ "VMS->case_tolerant()",         '1'  ],
 
-[ "VMS->catfile('a','b','c')",         '[.a.b]c'  ],
+[ "VMS->catfile('a','b','c')", $vms_unix_rpt ? 'a/b/c' : '[.a.b]c'  ],
 [ "VMS->catfile('a','b','[]c')",       '[.a.b]c'  ],
 [ "VMS->catfile('[.a]','b','c')",       '[.a.b]c'  ],
 [ "VMS->catfile('c')",                 'c' ],
 [ "VMS->catfile('[]c')",               'c' ],
 
-[ "VMS->catfile('0','b','c')",     '[.0.b]c' ],
-[ "VMS->catfile('a','0','c')",     '[.a.0]c' ],
-[ "VMS->catfile('a','b','0')",     '[.a.b]0' ],
-[ "VMS->catfile('0','0','c')",     '[.0.0]c' ],
-[ "VMS->catfile('a','0','0')",     '[.a.0]0' ],
-[ "VMS->catfile('0','b','0')",     '[.0.b]0' ],
-[ "VMS->catfile('0','0','0')",     '[.0.0]0' ],
+[ "VMS->catfile('0','b','c')", $vms_unix_rpt ? '0/b/c' : '[.0.b]c' ],
+[ "VMS->catfile('a','0','c')", $vms_unix_rpt ? 'a/0/c' : '[.a.0]c' ],
+[ "VMS->catfile('a','b','0')", $vms_unix_rpt ? 'a/b/0' : '[.a.b]0' ],
+[ "VMS->catfile('0','0','c')", $vms_unix_rpt ? '0/0/c' : '[.0.0]c' ],
+[ "VMS->catfile('a','0','0')", $vms_unix_rpt ? 'a/0/0' : '[.a.0]0' ],
+[ "VMS->catfile('0','b','0')", $vms_unix_rpt ? '0/b/0' : '[.0.b]0' ],
+[ "VMS->catfile('0','0','0')", $vms_unix_rpt ? '0/0/0' : '[.0.0]0' ],
 
 
 [ "VMS->splitpath('file')",                                       ',,file'                                   ],
 [ "VMS->splitpath('[d1.d2.d3]')",                                 ',[d1.d2.d3],'                               ],
 [ "VMS->splitpath('[.d1.d2.d3]')",                                ',[.d1.d2.d3],'                              ],
 [ "VMS->splitpath('[d1.d2.d3]file')",                             ',[d1.d2.d3],file'                           ],
-[ "VMS->splitpath('d1/d2/d3/file')",                              ',[.d1.d2.d3],file'                          ],
-[ "VMS->splitpath('/d1/d2/d3/file')",                             'd1:,[d2.d3],file'                         ],
+[ "VMS->splitpath('d1/d2/d3/file')",
+       $vms_efs ? ',d1/d2/d3/,file' : ',[.d1.d2.d3],file' ],
+[ "VMS->splitpath('/d1/d2/d3/file')",
+       $vms_efs ? ',/d1/d2/d3/,file' : 'd1:,[d2.d3],file' ],
 [ "VMS->splitpath('[.d1.d2.d3]file')",                            ',[.d1.d2.d3],file'                          ],
 [ "VMS->splitpath('node::volume:[d1.d2.d3]')",                    'node::volume:,[d1.d2.d3],'                  ],
 [ "VMS->splitpath('node::volume:[d1.d2.d3]file')",                'node::volume:,[d1.d2.d3],file'              ],
 [ "VMS->splitpath('node\"access_spec\"::volume:[d1.d2.d3]')",     'node"access_spec"::volume:,[d1.d2.d3],'     ],
 [ "VMS->splitpath('node\"access_spec\"::volume:[d1.d2.d3]file')", 'node"access_spec"::volume:,[d1.d2.d3],file' ],
 
+[ "VMS->splitpath('[]')",                                         ',[],'                                       ],
+[ "VMS->splitpath('[-]')",                                        ',[-],'                                      ],
+[ "VMS->splitpath('[]file')",                                     ',[],file'                                   ],
+[ "VMS->splitpath('[-]file')",                                    ',[-],file'                                  ],
+[ "VMS->splitpath('')",                                           ',,'                                         ],
+[ "VMS->splitpath('0')",                                          ',,0'                                        ],
+[ "VMS->splitpath('[0]')",                                        ',[0],'                                      ],
+[ "VMS->splitpath('[.0]')",                                       ',[.0],'                                     ],
+[ "VMS->splitpath('[0.0.0]')",                                    ',[0.0.0],'                                  ],
+[ "VMS->splitpath('[.0.0.0]')",                                   ',[.0.0.0],'                                 ],
+[ "VMS->splitpath('[0]0')",                                       ',[0],0'                                     ],
+[ "VMS->splitpath('[0.0.0]0')",                                   ',[0.0.0],0'                                 ],
+[ "VMS->splitpath('[.0.0.0]0')",                                  ',[.0.0.0],0'                                ],
+[ "VMS->splitpath('0/0')",    $vms_efs ? ',0/,0' : ',[.0],0'  ],
+[ "VMS->splitpath('0/0/0')",  $vms_efs ? ',0/0/,0' : ',[.0.0],0'  ],
+[ "VMS->splitpath('/0/0')",   $vms_efs ? ',/0/,0' : '0:,[000000],0'  ],
+[ "VMS->splitpath('/0/0/0')", $vms_efs ? ',/0/0/,0' : '0:,[0],0'  ],
+[ "VMS->splitpath('d1',1)",                                       ',d1,'                                       ],
+# $no_file tests
+[ "VMS->splitpath('[d1.d2.d3]',1)",                               ',[d1.d2.d3],'                               ],
+[ "VMS->splitpath('[.d1.d2.d3]',1)",                              ',[.d1.d2.d3],'                              ],
+[ "VMS->splitpath('d1/d2/d3',1)",  $vms_efs ? ',d1/d2/d3,' : ',[.d1.d2.d3],' ],
+[ "VMS->splitpath('/d1/d2/d3',1)", $vms_efs ? ',/d1/d2/d3,' : 'd1:,[d2.d3],' ],
+[ "VMS->splitpath('node::volume:[d1.d2.d3]',1)",                  'node::volume:,[d1.d2.d3],'                  ],
+[ "VMS->splitpath('node\"access_spec\"::volume:[d1.d2.d3]',1)",   'node"access_spec"::volume:,[d1.d2.d3],'     ],
+[ "VMS->splitpath('[]',1)",                                       ',[],'                                       ],
+[ "VMS->splitpath('[-]',1)",                                      ',[-],'                                      ],
+[ "VMS->splitpath('',1)",                                         ',,'                                         ],
+[ "VMS->splitpath('0',1)",                                        ',0,'                                        ],
+[ "VMS->splitpath('[0]',1)",                                      ',[0],'                                      ],
+[ "VMS->splitpath('[.0]',1)",                                     ',[.0],'                                     ],
+[ "VMS->splitpath('[0.0.0]',1)",                                  ',[0.0.0],'                                  ],
+[ "VMS->splitpath('[.0.0.0]',1)",                                 ',[.0.0.0],'                                 ],
+[ "VMS->splitpath('0/0',1)",    $vms_efs ? ',0/0,' : ',[.0.0],' ],
+[ "VMS->splitpath('0/0/0',1)",  $vms_efs ? ',0/0/0,' : ',[.0.0.0],' ],
+[ "VMS->splitpath('/0/0',1)",   $vms_efs ? ',/0/0,' : '0:,[000000.0],' ],
+[ "VMS->splitpath('/0/0/0',1)", $vms_efs ? ',/0/0/0,' : '0:,[0.0],' ],
+
 [ "VMS->catpath('','','file')",                                       'file'                                     ],
 [ "VMS->catpath('','[d1.d2.d3]','')",                                 '[d1.d2.d3]'                               ],
 [ "VMS->catpath('','[.d1.d2.d3]','')",                                '[.d1.d2.d3]'                              ],
 [ "VMS->catpath('','[d1.d2.d3]','file')",                             '[d1.d2.d3]file'                           ],
 [ "VMS->catpath('','[.d1.d2.d3]','file')",                            '[.d1.d2.d3]file'                          ],
-[ "VMS->catpath('','d1/d2/d3','file')",                               '[.d1.d2.d3]file'                            ],
-[ "VMS->catpath('v','d1/d2/d3','file')",                              'v:[.d1.d2.d3]file'                            ],
+[ "VMS->catpath('','d1/d2/d3','file')",
+                             $vms_efs ? 'd1/d2/d3/file' : '[.d1.d2.d3]file' ],
+[ "VMS->catpath('v','d1/d2/d3','file')",                              'v:[.d1.d2.d3]file' ],
 [ "VMS->catpath('v','w:[d1.d2.d3]','file')",                          'v:[d1.d2.d3]file'                         ],
 [ "VMS->catpath('node::volume:','[d1.d2.d3]','')",                    'node::volume:[d1.d2.d3]'                  ],
 [ "VMS->catpath('node::volume:','[d1.d2.d3]','file')",                'node::volume:[d1.d2.d3]file'              ],
@@ -370,15 +431,18 @@ if ($^O eq 'MacOS') {
 [ "VMS->splitdir('[d1.][000000.d2]')",  'd1,d2'  ],
 [ "VMS->splitdir('[.d1.d2^.d3]')", 'd1,d2^.d3' ],
 
-[ "VMS->catdir('')",                                                      ''                 ],
-[ "VMS->catdir('d1','d2','d3')",                                          '[.d1.d2.d3]'         ],
-[ "VMS->catdir('d1','d2/','d3')",                                         '[.d1.d2.d3]'         ],
-[ "VMS->catdir('','d1','d2','d3')",                                       '[.d1.d2.d3]'        ],
-[ "VMS->catdir('','-','d2','d3')",                                        '[-.d2.d3]'         ],
-[ "VMS->catdir('','-','','d3')",                                          '[-.d3]'            ],
-[ "VMS->catdir('dir.dir','d2.dir','d3.dir')",                             '[.dir.d2.d3]'        ],
-[ "VMS->catdir('[.name]')",                                               '[.name]'            ],
-[ "VMS->catdir('[.name]','[.name]')",                                     '[.name.name]'],
+[ "VMS->catdir('')",                            ''                 ],
+[ "VMS->catdir('d1','d2','d3')",   $vms_unix_rpt ? 'd1/d2/d3' : '[.d1.d2.d3]' ],
+[ "VMS->catdir('d1','d2/','d3')",  $vms_efs ? 'd1/d2/d3' : '[.d1.d2.d3]' ],
+[ "VMS->catdir('','d1','d2','d3')", 
+             $vms_unix_rpt ? '/d1/d2/d3' : 
+                  $vms_efs ? '[d1.d2.d3]' : '[.d1.d2.d3]' ],
+[ "VMS->catdir('','-','d2','d3')",              '[-.d2.d3]'         ],
+[ "VMS->catdir('','-','','d3')",                '[-.d3]'            ],
+[ "VMS->catdir('dir.dir','d2.dir','d3.dir')",
+              $vms_unix_rpt ? 'dir.dir/d2.dir/d3.dir' : '[.dir.d2.d3]' ],
+[ "VMS->catdir('[.name]')",                     '[.name]'            ],
+[ "VMS->catdir('[.name]','[.name]')",           '[.name.name]'],
 
 [  "VMS->abs2rel('node::volume:[t1.t2.t3]','node::volume:[t1.t2.t3]')", '[]'                 ],
 [  "VMS->abs2rel('node::volume:[t1.t2.t3]','[t1.t2.t3]')", 'node::volume:[t1.t2.t3]'                 ],
@@ -694,10 +758,11 @@ if ($^O eq 'MacOS') {
 [ "Cygwin->rel2abs('..','/t1/t2/t3')",             '/t1/t2/t3/..'    ],
 [ "Cygwin->rel2abs('../t4','/t1/t2/t3')",          '/t1/t2/t3/../t4' ],
 [ "Cygwin->rel2abs('/t1','/t1/t2/t3')",            '/t1'             ],
+[ "Cygwin->rel2abs('//t1/t2/t3','/foo')",          '//t1/t2/t3'      ],
 
 ) ;
 
-
+my $test_count = scalar @tests;
 
 plan tests => scalar @tests;
 

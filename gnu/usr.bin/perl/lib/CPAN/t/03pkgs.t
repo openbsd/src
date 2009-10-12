@@ -6,7 +6,16 @@ use lib "lib";
 
 my @m;
 if ($ENV{PERL_CORE}){
-  @m = ("CPAN", map { "CPAN::$_" } qw(Debug DeferedCode FirstTime Nox Queue Tarzip Version));
+  @m = ("CPAN", map { "CPAN::$_" } qw(Debug
+                                      DeferredCode
+                                      Distroprefs
+                                      FirstTime
+                                      Kwalify
+                                      Nox
+                                      Queue
+                                      Tarzip
+                                      Version
+                                     ));
 } else {
   opendir DH, "lib/CPAN" or die;
   @m = ("CPAN", map { "CPAN::$_" } grep { s/\.pm$// } readdir DH);

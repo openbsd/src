@@ -18,7 +18,7 @@ BEGIN {
         plan skip_all => 'Non-Unix platform';
     }
     else {
-        plan tests => 109;
+        plan tests => 110;
     }
 }
 
@@ -31,21 +31,20 @@ my $class = 'ExtUtils::MM_Unix';
 
 # only one of the following can be true
 # test should be removed if MM_Unix ever stops handling other OS than Unix
-my $os =  ($ExtUtils::MM_Unix::Is_OS2 	|| 0)
-	+ ($ExtUtils::MM_Unix::Is_Win32 || 0) 
-	+ ($ExtUtils::MM_Unix::Is_Dos 	|| 0)
-	+ ($ExtUtils::MM_Unix::Is_VMS   || 0); 
-ok ( $os <= 1,  'There can be only one (or none)');
+my $os =  ($ExtUtils::MM_Unix::Is{OS2}   || 0)
+        + ($ExtUtils::MM_Unix::Is{Win32} || 0) 
+        + ($ExtUtils::MM_Unix::Is{Dos}   || 0)
+        + ($ExtUtils::MM_Unix::Is{VMS}   || 0); 
+cmp_ok ( $os, '<=', 1,  'There can be only one (or none)');
 
-cmp_ok ($ExtUtils::MM_Unix::VERSION, '>=', '1.12606', 'Should be at least version 1.12606');
+is($ExtUtils::MM_Unix::VERSION, $ExtUtils::MakeMaker::VERSION, 'MM_Unix has a $VERSION');
 
 # when the following calls like canonpath, catdir etc are replaced by
 # File::Spec calls, the test's become a bit pointless
 
-foreach ( qw( xx/ ./xx/ xx/././xx xx///xx) )
-  {
-  is ($class->canonpath($_), File::Spec->canonpath($_), "canonpath $_");
-  }
+foreach ( qw( xx/ ./xx/ xx/././xx xx///xx) ) {
+    is ($class->canonpath($_), File::Spec->canonpath($_), "canonpath $_");
+}
 
 is ($class->catdir('xx','xx'), File::Spec->catdir('xx','xx'),
      'catdir(xx, xx) => xx/xx');
@@ -171,9 +170,14 @@ is ($t->libscan('Fatty'), 'Fatty', 'libscan on something not a VC file' );
 # maybe_command
 
 open(FILE, ">command"); print FILE "foo"; close FILE;
-ok (!$t->maybe_command('command') ,"non executable file isn't a command");
-chmod 0755, "command";
-ok ($t->maybe_command('command'),        "executable file is a command");
+SKIP: {
+    skip("no separate execute mode on VOS", 2) if $^O eq "vos";
+
+    ok !$t->maybe_command('command') ,"non executable file isn't a command";
+
+    chmod 0755, "command";
+    ok ($t->maybe_command('command'),        "executable file is a command");
+}
 unlink "command";
 
 
@@ -185,19 +189,20 @@ my $self_name = $ENV{PERL_CORE} ? '../lib/ExtUtils/t/MM_Unix.t'
 is ($t->perl_script($self_name),$self_name, 'we pass as a perl_script()');
 
 ###############################################################################
-# perm_rw perm_rwx
+# PERM_RW and PERM_RWX
 
 $t->init_PERM;
-is ($t->perm_rw(),'644', 'perm_rw() is 644');
-is ($t->perm_rwx(),'755', 'perm_rwx() is 755');
+is ($t->{PERM_RW},'644', 'PERM_RW is 644');
+is ($t->{PERM_RWX},'755', 'PERM_RWX is 755');
+is ($t->{PERM_DIR},'755', 'PERM_DIR is 755');
+
 
 ###############################################################################
 # post_constants, postamble, post_initialize
 
-foreach (qw/ post_constants postamble post_initialize/)
-  {
+foreach (qw/ post_constants postamble post_initialize/) {
   is ($t->$_(),'', "$_() is an empty string");
-  }
+}
 
 ###############################################################################
 # replace_manpage_separator 

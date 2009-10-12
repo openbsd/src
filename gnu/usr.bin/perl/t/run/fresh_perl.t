@@ -716,36 +716,6 @@ ok
 print join '', @a, "\n";
 EXPECT
 123456789
-######## [ID 20020104.007] "coredump on dbmclose"
-package Foo;
-eval { require AnyDBM_File }; # not all places have dbm* functions
-if ($@) {
-    print "ok\n";
-    exit 0;
-}
-package Foo;
-sub new {
-        my $proto = shift;
-        my $class = ref($proto) || $proto;
-        my $self  = {};
-        bless($self,$class);
-        my %LT;
-        dbmopen(%LT, "dbmtest", 0666) ||
-	    die "Can't open dbmtest because of $!\n";
-        $self->{'LT'} = \%LT;
-        return $self;
-}
-sub DESTROY {
-        my $self = shift;
-	dbmclose(%{$self->{'LT'}});
-	1 while unlink 'dbmtest';
-	1 while unlink <dbmtest.*>;
-	print "ok\n";
-}
-package main;
-$test = Foo->new(); # must be package var
-EXPECT
-ok
 ######## example from Camel 5, ch. 15, pp.406 (with my)
 # SKIP: ord "A" == 193 # EBCDIC
 use strict;

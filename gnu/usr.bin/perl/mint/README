@@ -10,5 +10,5 @@ when compiling Perl.
 
 The file system.c is an enhanced version of the system() function
 in the MiNTLib.  It is strongly recommended that you insert this
-version into your libc before you compile Perl (see README.MiNT
+version into your libc before you compile Perl (see README.mint
 in the toplevel directory for details).

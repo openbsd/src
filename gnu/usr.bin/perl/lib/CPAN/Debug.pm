@@ -3,7 +3,7 @@ package CPAN::Debug;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = sprintf "%.6f", substr(q$Rev: 2212 $,4)/1000000 + 5.4;
+$VERSION = "5.5";
 # module is internal to CPAN.pm
 
 %CPAN::DEBUG = qw[

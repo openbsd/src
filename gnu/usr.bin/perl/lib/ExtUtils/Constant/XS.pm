@@ -10,13 +10,13 @@ require ExtUtils::Constant::Base;
 @ISA = qw(ExtUtils::Constant::Base Exporter);
 @EXPORT_OK = qw(%XS_Constant %XS_TypeSet);
 
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 $is_perl56 = ($] < 5.007 && $] > 5.005_50);
 
 =head1 NAME
 
-ExtUtils::Constant::Base - base class for ExtUtils::Constant objects
+ExtUtils::Constant::XS - generate C code for XS modules' constants.
 
 =head1 SYNOPSIS
 

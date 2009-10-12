@@ -464,8 +464,6 @@ CSS. Some formatting problems were also corrected. (Jari Aalto)
 A new manual page, L<perlunifaq> (the Perl Unicode FAQ), has been added
 (Juerd Waalboer).
 
-=head1 Performance Enhancements
-
 =head1 Installation and Configuration Improvements
 
 =head2 C++ compatibility
@@ -562,10 +560,6 @@ an hash/array when the op is flagged with OPf_SPECIAL (Nicholas Clark).
 =for p5p XXX have we some docs on how to create regexp engine plugins, since that's now possible ? (perlreguts)
 
 =for p5p XXX new BIND SV type, #29544, #29642
-
-=head1 Known Problems
-
-=head2 Platform Specific Problems
 
 =head1 Reporting Bugs
 

@@ -16,7 +16,30 @@ use File::Path;
 
 use lib File::Spec->catdir('t', 'lib');
 use Test::More;
-require VMS::Filespec if $^O eq 'VMS';
+
+my $IsVMS = $^O eq 'VMS';
+my $IsMacOS = $^O eq 'MacOS';
+
+my $vms_unix_rpt = 0;
+my $vms_efs = 0;
+my $vms_mode = 0;
+
+if ($IsVMS) {
+    require VMS::Filespec;
+    use Carp;
+    use Carp::Heavy;
+    $vms_mode = 1;
+    if (eval 'require VMS::Feature') {
+        $vms_unix_rpt = VMS::Feature::current("filename_unix_report");
+        $vms_efs = VMS::Feature::current("efs_charset");
+    } else {
+        my $unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        my $efs_charset = $ENV{'DECC$EFS_CHARSET'} || '';
+        $vms_unix_rpt = $unix_rpt =~ /^[ET1]/i; 
+        $vms_efs = $efs_charset =~ /^[ET1]/i; 
+    }
+    $vms_mode = 0 if ($vms_unix_rpt);
+}
 
 my $tests = 30;
 # _perl_abs_path() currently only works when the directory separator
@@ -30,8 +53,6 @@ SKIP: {
   like $INC{'Cwd.pm'}, qr{blib}i, "Cwd should be loaded from blib/ during testing";
 }
 
-my $IsVMS = $^O eq 'VMS';
-my $IsMacOS = $^O eq 'MacOS';
 
 # check imports
 can_ok('main', qw(cwd getcwd fastcwd fastgetcwd));
@@ -80,8 +101,17 @@ SKIP: {
 
     # Win32's cd returns native C:\ style
     $start =~ s,\\,/,g if ($^O eq 'MSWin32' || $^O eq "NetWare");
-    # DCL SHOW DEFAULT has leading spaces
-    $start =~ s/^\s+// if $IsVMS;
+    if ($IsVMS) {
+        # DCL SHOW DEFAULT has leading spaces
+        $start =~ s/^\s+//;
+
+        # When in UNIX report mode, need to convert to compare it.
+        if ($vms_unix_rpt) {
+            $start = VMS::Filespec::unixpath($start);
+            # Remove trailing slash.
+            $start =~ s#/$##;
+        }
+    }
     SKIP: {
         skip("'$pwd_cmd' failed, nothing to test against", 4) if $?;
         skip("/afs seen, paths unlikely to match", 4) if $start =~ m|/afs/|;
@@ -135,23 +165,18 @@ foreach my $func (qw(cwd getcwd fastcwd fastgetcwd)) {
 # Cwd::chdir should also update $ENV{PWD}
 dir_ends_with( $ENV{PWD}, $Test_Dir, 'Cwd::chdir() updates $ENV{PWD}' );
 my $updir = File::Spec->updir;
-Cwd::chdir $updir;
-print "#$ENV{PWD}\n";
-Cwd::chdir $updir;
-print "#$ENV{PWD}\n";
-Cwd::chdir $updir;
-print "#$ENV{PWD}\n";
-Cwd::chdir $updir;
-print "#$ENV{PWD}\n";
-Cwd::chdir $updir;
-print "#$ENV{PWD}\n";
+
+for (1..@test_dirs) {
+  Cwd::chdir $updir;
+  print "#$ENV{PWD}\n";
+}
 
 rmtree($test_dirs[0], 0, 0);
 
 {
-  my $check = ($IsVMS   ? qr|\b((?i)t)\]$| :
-	       $IsMacOS ? qr|\bt:$| :
-			  qr|\bt$| );
+  my $check = ($vms_mode ? qr|\b((?i)t)\]$| :
+	       $IsMacOS  ? qr|\bt:$| :
+			   qr|\bt$| );
   
   like($ENV{PWD}, $check);
 }
@@ -168,23 +193,31 @@ rmtree($test_dirs[0], 0, 0);
 SKIP: {
     skip "no symlinks on this platform", 2+$EXTRA_ABSPATH_TESTS unless $Config{d_symlink};
 
+    my $file = "linktest";
     mkpath([$Test_Dir], 0, 0777);
-    symlink $Test_Dir, "linktest";
+    symlink $Test_Dir, $file;
 
-    my $abs_path      =  Cwd::abs_path("linktest");
-    my $fast_abs_path =  Cwd::fast_abs_path("linktest");
+    my $abs_path      =  Cwd::abs_path($file);
+    my $fast_abs_path =  Cwd::fast_abs_path($file);
     my $want          =  quotemeta(
-                             File::Spec->rel2abs(
-			         $ENV{PERL_CORE} ? $Test_Dir : File::Spec->catdir('t', $Test_Dir)
-                                                )
-                                  );
+                           File::Spec->rel2abs( $Test_Dir )
+                         );
+    if ($^O eq 'VMS') {
+       # Not easy to predict the physical volume name
+       $want = $ENV{PERL_CORE} ? $Test_Dir : File::Spec->catdir('t', $Test_Dir);
+
+       # So just use the relative volume name
+       $want =~ s/^\[//;
+
+       $want = quotemeta($want);
+    }
 
     like($abs_path,      qr|$want$|i);
     like($fast_abs_path, qr|$want$|i);
-    like(Cwd::_perl_abs_path("linktest"), qr|$want$|i) if $EXTRA_ABSPATH_TESTS;
+    like(Cwd::_perl_abs_path($file), qr|$want$|i) if $EXTRA_ABSPATH_TESTS;
 
     rmtree($test_dirs[0], 0, 0);
-    1 while unlink "linktest";
+    1 while unlink $file;
 }
 
 if ($ENV{PERL_CORE}) {

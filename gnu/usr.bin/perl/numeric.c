@@ -1,7 +1,7 @@
 /*    numeric.c
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
- *    2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -9,8 +9,10 @@
  */
 
 /*
- * "That only makes eleven (plus one mislaid) and not fourteen, unless
- * wizards count differently to other people."
+ * "That only makes eleven (plus one mislaid) and not fourteen,
+ *  unless wizards count differently to other people."  --Beorn
+ *
+ *     [p.115 of _The Hobbit_: "Queer Lodgings"]
  */
 
 /*
@@ -132,7 +134,8 @@ number may use '_' characters to separate digits.
  */
 
 UV
-Perl_grok_bin(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result) {
+Perl_grok_bin(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
+{
     const char *s = start;
     STRLEN len = *len_p;
     UV value = 0;
@@ -142,6 +145,8 @@ Perl_grok_bin(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result) {
     const bool allow_underscores = (bool)(*flags & PERL_SCAN_ALLOW_UNDERSCORES);
     bool overflowed = FALSE;
     char bit;
+
+    PERL_ARGS_ASSERT_GROK_BIN;
 
     if (!(*flags & PERL_SCAN_DISALLOW_PREFIX)) {
         /* strip off leading b or 0b.
@@ -248,16 +253,18 @@ number may use '_' characters to separate digits.
  */
 
 UV
-Perl_grok_hex(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result) {
+Perl_grok_hex(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
+{
     dVAR;
     const char *s = start;
     STRLEN len = *len_p;
     UV value = 0;
     NV value_nv = 0;
-
     const UV max_div_16 = UV_MAX / 16;
     const bool allow_underscores = (bool)(*flags & PERL_SCAN_ALLOW_UNDERSCORES);
     bool overflowed = FALSE;
+
+    PERL_ARGS_ASSERT_GROK_HEX;
 
     if (!(*flags & PERL_SCAN_DISALLOW_PREFIX)) {
         /* strip off leading x or 0x.
@@ -363,15 +370,17 @@ number may use '_' characters to separate digits.
  */
 
 UV
-Perl_grok_oct(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result) {
+Perl_grok_oct(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *result)
+{
     const char *s = start;
     STRLEN len = *len_p;
     UV value = 0;
     NV value_nv = 0;
-
     const UV max_div_8 = UV_MAX / 8;
     const bool allow_underscores = (bool)(*flags & PERL_SCAN_ALLOW_UNDERSCORES);
     bool overflowed = FALSE;
+
+    PERL_ARGS_ASSERT_GROK_OCT;
 
     for (; len-- && *s; s++) {
          /* gcc 2.95 optimiser not smart enough to figure that this subtraction
@@ -465,6 +474,8 @@ Perl_scan_bin(pTHX_ const char *start, STRLEN len, STRLEN *retlen)
     I32 flags = *retlen ? PERL_SCAN_ALLOW_UNDERSCORES : 0;
     const UV ruv = grok_bin (start, &len, &flags, &rnv);
 
+    PERL_ARGS_ASSERT_SCAN_BIN;
+
     *retlen = len;
     return (flags & PERL_SCAN_GREATER_THAN_UV_MAX) ? rnv : (NV)ruv;
 }
@@ -476,6 +487,8 @@ Perl_scan_oct(pTHX_ const char *start, STRLEN len, STRLEN *retlen)
     I32 flags = *retlen ? PERL_SCAN_ALLOW_UNDERSCORES : 0;
     const UV ruv = grok_oct (start, &len, &flags, &rnv);
 
+    PERL_ARGS_ASSERT_SCAN_OCT;
+
     *retlen = len;
     return (flags & PERL_SCAN_GREATER_THAN_UV_MAX) ? rnv : (NV)ruv;
 }
@@ -486,6 +499,8 @@ Perl_scan_hex(pTHX_ const char *start, STRLEN len, STRLEN *retlen)
     NV rnv;
     I32 flags = *retlen ? PERL_SCAN_ALLOW_UNDERSCORES : 0;
     const UV ruv = grok_hex (start, &len, &flags, &rnv);
+
+    PERL_ARGS_ASSERT_SCAN_HEX;
 
     *retlen = len;
     return (flags & PERL_SCAN_GREATER_THAN_UV_MAX) ? rnv : (NV)ruv;
@@ -503,6 +518,9 @@ Perl_grok_numeric_radix(pTHX_ const char **sp, const char *send)
 {
 #ifdef USE_LOCALE_NUMERIC
     dVAR;
+
+    PERL_ARGS_ASSERT_GROK_NUMERIC_RADIX;
+
     if (PL_numeric_radix_sv && IN_LOCALE) { 
         STRLEN len;
         const char * const radix = SvPV(PL_numeric_radix_sv, len);
@@ -514,6 +532,9 @@ Perl_grok_numeric_radix(pTHX_ const char **sp, const char *send)
     /* always try "." if numeric radix didn't match because
      * we may have data from different locales mixed */
 #endif
+
+    PERL_ARGS_ASSERT_GROK_NUMERIC_RADIX;
+
     if (*sp < send && **sp == '.') {
         ++*sp;
         return TRUE;
@@ -554,6 +575,8 @@ Perl_grok_number(pTHX_ const char *pv, STRLEN len, UV *valuep)
   int numtype = 0;
   int sawinf = 0;
   int sawnan = 0;
+
+  PERL_ARGS_ASSERT_GROK_NUMBER;
 
   while (s < send && isSPACE(*s))
     s++;
@@ -809,6 +832,9 @@ Perl_my_atof(pTHX_ const char* s)
     NV x = 0.0;
 #ifdef USE_LOCALE_NUMERIC
     dVAR;
+
+    PERL_ARGS_ASSERT_MY_ATOF;
+
     if (PL_numeric_local && IN_LOCALE) {
 	NV y;
 
@@ -847,6 +873,8 @@ Perl_my_atof2(pTHX_ const char* orig, NV* value)
     I32 digit = 0;
     I32 old_digit = 0;
     I32 sig_digits = 0; /* noof significant digits seen so far */
+
+    PERL_ARGS_ASSERT_MY_ATOF2;
 
 /* There is no point in processing more significant digits
  * than the NV can hold. Note that NV_DIG is a lower-bound value,

@@ -4,7 +4,8 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '3.2501';
+$VERSION = '3.30';
+$VERSION = eval $VERSION;
 
 @ISA = qw(File::Spec::Unix);
 
@@ -39,6 +40,8 @@ and then File::Spec::Unix canonpath() is called on the result.
 
 sub canonpath {
     my($self,$path) = @_;
+    return unless defined $path;
+
     $path =~ s|\\|/|g;
 
     # Handle network path names beginning with double slash
@@ -51,6 +54,7 @@ sub canonpath {
 
 sub catdir {
     my $self = shift;
+    return unless @_;
 
     # Don't create something that looks like a //network/path
     if ($_[0] and ($_[0] eq '/' or $_[0] eq '\\')) {
@@ -108,10 +112,10 @@ Default: 1
 
 =cut
 
-sub case_tolerant () {
-  if ($^O ne 'cygwin') {
-    return 1;
-  }
+sub case_tolerant {
+  return 1 unless $^O eq 'cygwin'
+    and defined &Cygwin::mount_flags;
+
   my $drive = shift;
   if (! $drive) {
       my @flags = split(/,/, Cygwin::mount_flags('/cygwin'));

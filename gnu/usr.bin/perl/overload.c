@@ -85,7 +85,7 @@ const U8 PL_AMG_namelens[NofAMmeth] = {
     7
 };
 
-char * const PL_AMG_names[NofAMmeth] = {
+const char * const PL_AMG_names[NofAMmeth] = {
   /* Names kept in the symbol table.  fallback => "()", the rest has
      "(" prepended.  The only other place in perl which knows about
      this convention is AMG_id2name (used for debugging output and

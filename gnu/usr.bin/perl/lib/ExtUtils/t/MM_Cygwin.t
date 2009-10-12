@@ -16,7 +16,7 @@ use Test::More;
 
 BEGIN {
 	if ($^O =~ /cygwin/i) {
-		plan tests => 11;
+		plan tests => 14;
 	} else {
 		plan skip_all => "This is not cygwin";
 	}
@@ -25,6 +25,7 @@ BEGIN {
 use Config;
 use File::Spec;
 use ExtUtils::MM;
+use Config;
 
 use_ok( 'ExtUtils::MM_Cygwin' );
 
@@ -97,6 +98,30 @@ like( $res, qr/pure_all.*foo.*foo.1/s, '... should add MAN3PODS targets' );
     is( $MM->{EXPORT_LIST},         $export,    'EXPORT_LIST' );
 }
 
+# Tests for correct handling of maybe_command in /cygdrive/*
+# and c:/*.  $ENV{COMSPEC}, if it exists, should always be executable.
+SKIP: {
+    skip "Needs Cygwin::win_to_posix_path()", 2 unless defined &Cygwin::win_to_posix_path;
+
+    SKIP: {
+        my $comspec = $ENV{COMSPEC};
+        skip(q[$ENV{COMSPEC} does not exist], 1) unless $comspec;
+
+        $comspec = Cygwin::win_to_posix_path($comspec);
+
+        ok(MM->maybe_command($comspec), qq{'$comspec' should be executable"});
+    }
+
+    # 'C:/' should *never* be executable, it's a directory.
+    {
+        my $cdrive = Cygwin::win_to_posix_path("C:/");
+
+        ok(!MM->maybe_command($cdrive), qq{'$cdrive' should never be executable});
+    }
+}
+
+# Our copy of Perl (with a unix-path) should always be executable.
+ok(MM->maybe_command($Config{perlpath}), qq{'$Config{perlpath}' should be executable});
 
 
 package FakeOut;

@@ -17,9 +17,9 @@ PCSZ			T_PVNULLC
 #############################################################################
 INPUT
 T_PVNULL
-	$var = ( SvOK($arg) ? ($type)SvPV($arg,PL_na) : NULL )
+	$var = ( SvOK($arg) ? ($type)SvPV_nolen($arg) : NULL )
 T_PVNULLC
-	$var = ( SvOK($arg) ? ($type)SvPV($arg,PL_na) : NULL )
+	$var = ( SvOK($arg) ? ($type)SvPV_nolen($arg) : NULL )
 #############################################################################
 OUTPUT
 T_PVNULL

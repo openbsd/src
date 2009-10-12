@@ -17,7 +17,7 @@ BEGIN
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 7 + $extra ;
+    plan tests => 15 + $extra ;
 
     use_ok('IO::File') ;
 }
@@ -72,6 +72,43 @@ EOM
         }
 
         ok anyUncompress($name) eq $hello ;
+    }
+    
+    {
+        title "Testing DESTROY doesn't clobber \$! etc ";
+
+        my $lex = new LexFile my $name ;
+
+        my $out;
+        my $result;
+        
+        {
+            ok my $z = new $CompressClass($name); 
+            $z->write("abc") ;
+            $! = 22 ;
+
+            cmp_ok $!, '==', 22, '  $! is 22';
+        }
+        
+        cmp_ok $!, '==', 22, "  \$! has not been changed by $CompressClass destructor";
+
+                
+        {
+                my $uncomp;
+                ok my $x = new $UncompressClass($name, -Append => 1)  ;
+                
+                my $len ;
+                1 while ($len = $x->read($result)) > 0 ;
+                
+                $! = 22 ;
+
+                cmp_ok $!, '==', 22, '  $! is 22';
+        }    
+           
+        cmp_ok $!, '==', 22, "  \$! has not been changed by $UncompressClass destructor";
+                
+        is $result, "abc", "  Got uncompressed content ok";
+ 
     }
 }
 

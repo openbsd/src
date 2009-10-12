@@ -2088,7 +2088,7 @@ algorithm.
     while( $command = <> ){
         $command =~ s/^\s+|\s+$//g;  # trim leading and trailing spaces
         if( ( @matches = $kwds =~ /\b$command\w*/g ) == 1 ){
-            print "command: '$matches'\n";
+            print "command: '@matches'\n";
         } elsif( @matches == 0 ){
             print "no such command: '$command'\n";
         } else {
@@ -2133,8 +2133,8 @@ example is
 This style of commenting has been largely superseded by the raw,
 freeform commenting that is allowed with the C<//x> modifier.
 
-The modifiers C<//i>, C<//m>, C<//s>, C<//x> and C<//k> (or any
-combination thereof) can also embedded in
+The modifiers C<//i>, C<//m>, C<//s> and C<//x> (or any
+combination thereof) can also be embedded in
 a regexp using C<(?i)>, C<(?m)>, C<(?s)>, and C<(?x)>.  For instance,
 
     /(?i)yes/;  # match 'yes' case insensitively
@@ -2159,7 +2159,7 @@ that must have different modifiers:
         }
     }
 
-The second advantage is that embedded modifiers (except C<//k>, which
+The second advantage is that embedded modifiers (except C<//p>, which
 modifies the entire regexp) only affect the regexp
 inside the group the embedded modifier is contained in.  So grouping
 can be used to localize the modifier's effects:
@@ -2420,9 +2420,9 @@ containing just one word character is a palindrome. Otherwise it must
 have a word character up front and the same at its end, with another
 palindrome in between.
 
-    /(?: (\w) (?...Here be a palindrome...) \{-1} | \w? )/x
+    /(?: (\w) (?...Here be a palindrome...) \g{-1} | \w? )/x
 
-Adding C<\W*> at either end to eliminate was is to be ignored, we already
+Adding C<\W*> at either end to eliminate what is to be ignored, we already
 have the full pattern:
 
     my $pp = qr/^(\W* (?: (\w) (?1) \g{-1} | \w? ) \W*)$/ix;

@@ -43,7 +43,15 @@ The official (threaded) builds from HP, as they are shipped on the
 Application DVD/CD's are available on
 http://www.software.hp.com/cgi-bin/swdepot_parser.cgi/cgi/displayProductInfo.pl?productNumber=PERL
 for both PA-RISC and IPF (Itanium Processor Family). They are built
-with the HP ANSI-C compiler.
+with the HP ANSI-C compiler by ActiveState.
+
+To see what version is included on the DVD (assumed here to be mounted
+on /cdrom), issue this command:
+
+  # swlist -s /cdrom perl
+  # perl           D.5.8.8.B  5.8.8 Perl Programming Language
+    perl.Perl5-32  D.5.8.8.B  32-bit 5.8.8 Perl Programming Language with Extensions
+    perl.Perl5-64  D.5.8.8.B  64-bit 5.8.8 Perl Programming Language with Extensions
 
 =head2 Using perl from HP's porting centre
 
@@ -87,11 +95,11 @@ chips, but any machine with this chip in it is quite obsolete and this
 document will not attempt to address issues for compiling Perl on the
 Motorola chipset.
 
-The most recent version of PA-RISC at the time of this document's last
-update is 2.0. HP PA-RISC systems are usually refered to with model
-description "HP 9000". The last CPU in this series is the PA-8900.
-Support for PA-RISC architectured machines officially ends as shown
-in the following table:
+The version of PA-RISC at the time of this document's last update is 2.0,
+which is also the last there will be. HP PA-RISC systems are usually
+refered to with model description "HP 9000". The last CPU in this series
+is the PA-8900.  Support for PA-RISC architectured machines officially
+ends as shown in the following table:
 
    PA-RISC End-of-Life Roadmap
  +--------+----------------+----------------+-----------------+
@@ -113,6 +121,13 @@ in the following table:
  | 1-4    |                | PA-8800/rp34x0 | 2012            |
  | cores  |                | PA-8900/rp34x0 | 2014            |
  +--------+----------------+----------------+-----------------+
+
+From http://www.hp.com/products1/evolution/9000/eol_announcement.html:
+
+ The last order date for HP9000 PA-RISC systems is planned for
+ December 31, 2008 and ship date of April 1, 2009. Operating system
+ releases for HP-UX will continue shipping past the HP9000 systems
+ last order date.
 
 A complete list of models at the time the OS was built is in the file
 /usr/sam/lib/mo/sched.models. The first column corresponds to the last
@@ -234,15 +249,33 @@ is told to have Madison 6. As of the date of this document's last update,
 the following systems contain Itanium or Itanium 2 chips (this is likely
 to be out of date):
 
-  BL60p, BL860c, cx2600, cx2620, rx1600, rx1620, rx2600, rx2600hptc,
-  rx2620, rx2660, rx3600, rx4610, rx4640, rx5670, rx6600, rx7420,
-  rx7620, rx7640, rx8420, rx8620, rx8640, rx9610, sx1000, sx2000
+  BL60p, BL860c, BL870c, cx2600, cx2620, rx1600, rx1620, rx2600,
+  rx2600hptc, rx2620, rx2660, rx3600, rx4610, rx4640, rx5670,
+  rx6600, rx7420, rx7620, rx7640, rx8420, rx8620, rx8640, rx9610,
+  sx1000, sx2000
 
 To see all about your machine, type
 
   # model
   ia64 hp server rx2600
   # /usr/contrib/bin/machinfo
+
+=head2 HP-UX versions
+
+Not all architectures (PA = PA-RISC, IPF = Itanium Processor Family)
+support all versions of HP-UX, here is a short list
+
+  HP-UX version  Kernel  Architecture
+  -------------  ------  ------------
+  10.20          32 bit  PA
+  11.00          32/64   PA
+  11.11  11i v1  32/64   PA
+  11.22  11i v2     64        IPF
+  11.23  11i v2     64   PA & IPF
+  11.31  11i v3     64   PA & IPF
+
+See for the full list of hardware/OS support and expected end-of-life
+http://www.hp.com/go/hpuxservermatrix
 
 =head2 Building Dynamic Extensions on HP-UX
 
@@ -382,10 +415,11 @@ are often multiple versions of the same package available).
 
 Above mentioned distributions are depots. H.Merijn Brand has made prebuilt
 gcc binaries available on http://mirrors.develooper.com/hpux/ and/or
-http://www.cmve.net/~merijn/ for HP-UX 10.20, HP-UX 11.00, and HP-UX 11.11
-(HP-UX 11i) in both 32- and 64-bit versions. These are bzipped tar archives
-that also include recent GNU binutils and GNU gdb.  Read the instructions
-on that page to rebuild gcc using itself.
+http://www.cmve.net/~merijn/ for HP-UX 10.20, HP-UX 11.00, HP-UX 11.11
+(HP-UX 11i v1), and HP-UX 11.23 (HP-UX 11i v2) in both 32- and 64-bit
+versions. These are bzipped tar archives that also include recent GNU
+binutils and GNU gdb.  Read the instructions on that page to rebuild gcc
+using itself.
 
 On PA-RISC you need a different compiler for 32-bit applications and for
 64-bit applications. On PA-RISC, 32-bit objects and 64-bit objects do
@@ -640,6 +674,6 @@ With much assistance regarding shared libraries from Marc Sabatella.
 
 =head1 DATE
 
-Version 0.8.0: 2007-09-09
+Version 0.8.3: 2008-06-24
 
 =cut

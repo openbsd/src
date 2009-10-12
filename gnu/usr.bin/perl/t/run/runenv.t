@@ -12,14 +12,13 @@ BEGIN {
         print "1..0 # Skip: no fork\n";
 	    exit 0;
     }
+    require './test.pl'
 }
-
-use Test;
 
 plan tests => 17;
 
-my $STDOUT = './results-0';
-my $STDERR = './results-1';
+my $STDOUT = tempfile();
+my $STDERR = tempfile();
 my $PERL = $ENV{PERL} || './perl';
 my $FAILURE_CODE = 119;
 
@@ -27,18 +26,12 @@ delete $ENV{PERLLIB};
 delete $ENV{PERL5LIB};
 delete $ENV{PERL5OPT};
 
-# Run perl with specified environment and arguments returns a list.
-# First element is true if Perl's stdout and stderr match the
-# supplied $stdout and $stderr argument strings exactly.
-# second element is an explanation of the failure
-sub runperl {
-  local *F;
-  my ($env, $args, $stdout, $stderr) = @_;
 
+sub runperl_and_capture {
+  local *F;
+  my ($env, $args) = @_;
   unshift @$args, '-I../lib';
 
-  $stdout = '' unless defined $stdout;
-  $stderr = '' unless defined $stderr;
   local %ENV = %ENV;
   delete $ENV{PERLLIB};
   delete $ENV{PERL5LIB};
@@ -55,13 +48,7 @@ sub runperl {
     open F, "< $STDERR" or return (0, "Couldn't read $STDERR file");
     { local $/; $actual_stderr = <F> }
 
-    if ($actual_stdout ne $stdout) {
-      return (0, "Stdout mismatch: expected [$stdout], saw [$actual_stdout]");
-    } elsif ($actual_stderr ne $stderr) {
-      return (0, "Stderr mismatch: expected [$stderr], saw [$actual_stderr]");
-    } else {
-      return 1;                 # success
-    }
+    return ($actual_stdout, $actual_stderr);
   } else {                      # child
     for my $k (keys %$env) {
       $ENV{$k} = $env->{$k};
@@ -73,6 +60,22 @@ sub runperl {
   }
 }
 
+# Run perl with specified environment and arguments returns a list.
+# First element is true if Perl's stdout and stderr match the
+# supplied $stdout and $stderr argument strings exactly.
+# second element is an explanation of the failure
+sub runperl {
+  local *F;
+  my ($env, $args, $stdout, $stderr) = @_;
+  my ($actual_stdout, $actual_stderr) = runperl_and_capture($env, $args);
+  if ($actual_stdout ne $stdout) {
+    return (0, "Stdout mismatch: expected [$stdout], saw [$actual_stdout]");
+  } elsif ($actual_stderr ne $stderr) {
+    return (0, "Stderr mismatch: expected [$stderr], saw [$actual_stderr]");
+  } else {
+    return 1;                 # success
+  }
+}
 
 sub it_didnt_work {
     print STDOUT "IWHCWJIHCI\cNHJWCJQWKJQJWCQW\n";
@@ -82,7 +85,8 @@ sub it_didnt_work {
 sub try {
   my ($success, $reason) = runperl(@_);
   $reason =~ s/\n/\\n/g if defined $reason;
-  ok( !!$success, 1, $reason );
+  local $::Level = $::Level + 1;
+  ok( $success, $reason );
 }
 
 #  PERL5OPT    Command-line options (switches).  Switches in

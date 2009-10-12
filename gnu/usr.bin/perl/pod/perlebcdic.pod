@@ -15,9 +15,10 @@ Portions that are still incomplete are marked with XXX.
 
 =head2 ASCII
 
-The American Standard Code for Information Interchange is a set of
+The American Standard Code for Information Interchange (ASCII or US-ASCII) is a
+set of
 integers running from 0 to 127 (decimal) that imply character 
-interpretation by the display and other system(s) of computers.  
+interpretation by the display and other systems of computers.  
 The range 0..127 can be covered by setting the bits in a 7-bit binary 
 digit, hence the set is sometimes referred to as a "7-bit ASCII".  
 ASCII was described by the American National Standards Institute 
@@ -62,20 +63,30 @@ and typically run on host computers.  The EBCDIC encodings derive
 from 8 bit byte extensions of Hollerith punched card encodings.
 The layout on the cards was such that high bits were set for the
 upper and lower case alphabet characters [a-z] and [A-Z], but there
-were gaps within each latin alphabet range.
+were gaps within each Latin alphabet range.
 
 Some IBM EBCDIC character sets may be known by character code set 
 identification numbers (CCSID numbers) or code page numbers.  Leading
 zero digits in CCSID numbers within this document are insignificant.
 E.g. CCSID 0037 may be referred to as 37 in places.
 
-=head2 13 variant characters
+Perl can be compiled on platforms that run any of three commonly used EBCDIC
+character sets, listed below.
+
+=head2 The 13 variant characters
 
 Among IBM EBCDIC character code sets there are 13 characters that
 are often mapped to different integer values.  Those characters
 are known as the 13 "variant" characters and are:
 
     \ [ ] { } ^ ~ ! # | $ @ ` 
+
+When Perl is compiled for a platform, it looks at some of these characters to
+guess which EBCDIC character set the platform uses, and adapts itself
+accordingly to that platform.  If the platform uses a character set that is not
+one of the three Perl knows about, Perl will either fail to compile, or
+mistakenly and silently choose one of the three.
+They are:
 
 =head2 0037
 
@@ -123,10 +134,7 @@ equal I<A with acute> or chr(101), and unpack("U", "A") would equal
 
 =item *
 
-Many of the remaining seem to be related to case-insensitive matching:
-for example, C<< /[\x{131}]/ >> (LATIN SMALL LETTER DOTLESS I) does
-not match "I" case-insensitively, as it should under Unicode.
-(The match succeeds in ASCII-derived platforms.)
+Many of the remaining problems seem to be related to case-insensitive matching
 
 =item *
 
@@ -137,15 +145,38 @@ supported under EBCDIC, likewise for the encoding pragma.
 
 =head2 Unicode and UTF
 
-UTF is a Unicode Transformation Format.  UTF-8 is a Unicode conforming
-representation of the Unicode standard that looks very much like ASCII.
-UTF-EBCDIC is an attempt to represent Unicode characters in an EBCDIC
-transparent manner.
+UTF stands for C<Unicode Transformation Format>.
+UTF-8 is an encoding of Unicode into a sequence of 8-bit byte chunks, based on
+ASCII and Latin-1.
+The length of a sequence required to represent a Unicode code point
+depends on the ordinal number of that code point,
+with larger numbers requiring more bytes.
+UTF-EBCDIC is like UTF-8, but based on EBCDIC.
+
+You may see the term C<invariant> character or code point.
+This simply means that the character has the same numeric
+value when encoded as when not.
+(Note that this is a very different concept from L</The 13 variant characters>
+mentioned above.)
+For example, the ordinal value of 'A' is 193 in most EBCDIC code pages,
+and also is 193 when encoded in UTF-EBCDIC.
+All other code points occupy at least two bytes when encoded.
+In UTF-8, the code points corresponding to the lowest 128
+ordinal numbers (0 - 127: the ASCII characters) are invariant.
+In UTF-EBCDIC, there are 160 invariant characters.
+(If you care, the EBCDIC invariants are those characters
+which have ASCII equivalents, plus those that correspond to
+the C1 controls (80..9f on ASCII platforms).)
+
+A string encoded in UTF-EBCDIC may be longer (but never shorter) than
+one encoded in UTF-8.
 
 =head2 Using Encode
 
 Starting from Perl 5.8 you can use the standard new module Encode
-to translate from EBCDIC to Latin-1 code points
+to translate from EBCDIC to Latin-1 code points.
+Encode knows about more EBCDIC character sets than Perl can currently
+be compiled to run on.
 
 	use Encode 'from_to';
 
@@ -181,9 +212,11 @@ you to use different encodings per IO channel.  For example you may use
     open($f, ">:encoding(utf8)", "test.utf8");
     print $f "Hello World!\n";
 
-to get two files containing "Hello World!\n" in ASCII, CP 37 EBCDIC,
-ISO 8859-1 (Latin-1) (in this example identical to ASCII) respective
-UTF-EBCDIC (in this example identical to normal EBCDIC).  See the
+to get four files containing "Hello World!\n" in ASCII, CP 37 EBCDIC,
+ISO 8859-1 (Latin-1) (in this example identical to ASCII since only ASCII
+characters were printed), and 
+UTF-EBCDIC (in this example identical to normal EBCDIC since only characters
+that don't differ between EBCDIC and UTF-EBCDIC were printed).  See the
 documentation of Encode::PerlIO for details.
 
 As the PerlIO layer uses raw IO (bytes) internally, all this totally
@@ -618,11 +651,11 @@ However, it would be unwise to write tests such as:
     $is_ascii = "\r" ne chr(13);  #  WRONG
     $is_ascii = "\n" ne chr(10);  #  ILL ADVISED
 
-Obviously the first of these will fail to distinguish most ASCII machines
-from either a CCSID 0037, a 1047, or a POSIX-BC EBCDIC machine since "\r" eq 
+Obviously the first of these will fail to distinguish most ASCII platforms
+from either a CCSID 0037, a 1047, or a POSIX-BC EBCDIC platform since "\r" eq 
 chr(13) under all of those coded character sets.  But note too that 
 because "\n" is chr(13) and "\r" is chr(10) on the MacIntosh (which is an 
-ASCII machine) the second C<$is_ascii> test will lead to trouble there.
+ASCII platform) the second C<$is_ascii> test will lead to trouble there.
 
 To determine whether or not perl was built under an EBCDIC 
 code page you can use the Config module like so:
@@ -702,15 +735,15 @@ The OS/390 and z/OS C run time libraries provide _atoe() and _etoa() functions.
 =head1 OPERATOR DIFFERENCES
 
 The C<..> range operator treats certain character ranges with 
-care on EBCDIC machines.  For example the following array
-will have twenty six elements on either an EBCDIC machine
-or an ASCII machine:
+care on EBCDIC platforms.  For example the following array
+will have twenty six elements on either an EBCDIC platform
+or an ASCII platform:
 
     @alphabet = ('A'..'Z');   #  $#alphabet == 25
 
 The bitwise operators such as & ^ | may return different results
 when operating on string or character data in a perl program running 
-on an EBCDIC machine than when run on an ASCII machine.  Here is
+on an EBCDIC platform than when run on an ASCII platform.  Here is
 an example adapted from the one in L<perlop>:
 
     # EBCDIC-based examples
@@ -722,7 +755,7 @@ an example adapted from the one in L<perlop>:
 An interesting property of the 32 C0 control characters
 in the ASCII table is that they can "literally" be constructed
 as control characters in perl, e.g. C<(chr(0) eq "\c@")> 
-C<(chr(1) eq "\cA")>, and so on.  Perl on EBCDIC machines has been 
+C<(chr(1) eq "\cA")>, and so on.  Perl on EBCDIC platforms has been 
 ported to take "\c@" to chr(0) and "\cA" to chr(1) as well, but the
 thirty three characters that result depend on which code page you are
 using.  The table below uses the character names from the previous table 
@@ -732,9 +765,9 @@ s/HORIZONTAL/HORIZ./; s/DEVICE CONTROL/D.C./; s/SEPARATOR/SEP./;
 s/NEGATIVE ACKNOWLEDGE/NEG. ACK./;.  The POSIX-BC and 1047 sets are
 identical throughout this range and differ from the 0037 set at only 
 one spot (21 decimal).  Note that the C<LINE FEED> character
-may be generated by "\cJ" on ASCII machines but by "\cU" on 1047 or POSIX-BC 
-machines and cannot be generated as a C<"\c.letter."> control character on 
-0037 machines.  Note also that "\c\\" maps to two characters
+may be generated by "\cJ" on ASCII platforms but by "\cU" on 1047 or POSIX-BC 
+platforms and cannot be generated as a C<"\c.letter."> control character on 
+0037 platforms.  Note also that "\c\\" maps to two characters
 not one.
 
     chr   ord  8859-1               0037                1047 && POSIX-BC     
@@ -781,13 +814,13 @@ not one.
 =item chr()
 
 chr() must be given an EBCDIC code number argument to yield a desired 
-character return value on an EBCDIC machine.  For example:
+character return value on an EBCDIC platform.  For example:
 
     $CAPITAL_LETTER_A = chr(193);
 
 =item ord()
 
-ord() will return EBCDIC code number values on an EBCDIC machine.
+ord() will return EBCDIC code number values on an EBCDIC platform.
 For example:
 
     $the_number_193 = ord("A");
@@ -830,7 +863,7 @@ further details.
 
 The formats that can convert characters to numbers and vice versa
 will be different from their ASCII counterparts when executed
-on an EBCDIC machine.  Examples include:
+on an EBCDIC platform.  Examples include:
 
     printf("%c%c%c",193,194,195);  # prints ABC
 
@@ -866,7 +899,7 @@ is a gap character from the alphabetic viewpoint.
 
 If you do want to match the alphabet gap characters in a single octet 
 regular expression try matching the hex or octal code such 
-as C</\313/> on EBCDIC or C</\364/> on ASCII machines to 
+as C</\313/> on EBCDIC or C</\364/> on ASCII platforms to 
 have your regular expression match C<o WITH CIRCUMFLEX>.
 
 Another construct to be wary of is the inappropriate use of hex or
@@ -900,7 +933,7 @@ set of subs:
 
 The above would be adequate if the concern was only with numeric code points.
 However, the concern may be with characters rather than code points 
-and on an EBCDIC machine it may be desirable for constructs such as 
+and on an EBCDIC platform it may be desirable for constructs such as 
 C<if (is_print_ascii("A")) {print "A is a printable character\n";}> to print
 out the expected message.  One way to represent the above collection
 of character classification subs that is capable of working across the
@@ -994,7 +1027,7 @@ output.
 
 One big difference between ASCII based character sets and EBCDIC ones
 are the relative positions of upper and lower case letters and the
-letters compared to the digits.  If sorted on an ASCII based machine the
+letters compared to the digits.  If sorted on an ASCII based platform the
 two letter abbreviation for a physician comes before the two letter
 for drive, that is:
 
@@ -1004,15 +1037,15 @@ for drive, that is:
 The property of lower case before uppercase letters in EBCDIC is
 even carried to the Latin 1 EBCDIC pages such as 0037 and 1047.
 An example would be that E<Euml> C<E WITH DIAERESIS> (203) comes 
-before E<euml> C<e WITH DIAERESIS> (235) on an ASCII machine, but 
-the latter (83) comes before the former (115) on an EBCDIC machine.  
+before E<euml> C<e WITH DIAERESIS> (235) on an ASCII platform, but 
+the latter (83) comes before the former (115) on an EBCDIC platform.  
 (Astute readers will note that the upper case version of E<szlig> 
 C<SMALL LETTER SHARP S> is simply "SS" and that the upper case version of 
 E<yuml> C<y WITH DIAERESIS> is not in the 0..255 range but it is 
 at U+x0178 in Unicode, or C<"\x{178}"> in a Unicode enabled Perl).
 
 The sort order will cause differences between results obtained on
-ASCII machines versus EBCDIC machines.  What follows are some suggestions
+ASCII platforms versus EBCDIC platforms.  What follows are some suggestions
 on how to deal with these differences.
 
 =head2 Ignore ASCII vs. EBCDIC sort differences.
@@ -1035,7 +1068,7 @@ and include Latin-1 characters then apply:
 
 then sort().  Do note however that such Latin-1 manipulation does not 
 address the E<yuml> C<y WITH DIAERESIS> character that will remain at 
-code point 255 on ASCII machines, but 223 on most EBCDIC machines 
+code point 255 on ASCII platforms, but 223 on most EBCDIC platforms 
 where it will sort to a place less than the EBCDIC numerals.  With a 
 Unicode enabled Perl you might try:
 
@@ -1049,7 +1082,7 @@ of the data and may not be acceptable for that reason.
 This is the most expensive proposition that does not employ a network
 connection.
 
-=head2 Perform sorting on one type of machine only.
+=head2 Perform sorting on one type of platform only.
 
 This strategy can employ a network connection.  As such
 it would be computationally expensive.
@@ -1180,13 +1213,13 @@ that the @e2a array is filled in appropriately:
 
 =head2 Quoted-Printable encoding and decoding
 
-On ASCII encoded machines it is possible to strip characters outside of
+On ASCII encoded platforms it is possible to strip characters outside of
 the printable set using:
 
     # This QP encoder works on ASCII only
     $qp_string =~ s/([=\x00-\x1F\x80-\xFF])/sprintf("=%02X",ord($1))/ge;
 
-Whereas a QP encoder that works on both ASCII and EBCDIC machines 
+Whereas a QP encoder that works on both ASCII and EBCDIC platforms 
 would look somewhat like the following (where the EBCDIC branch @e2a 
 array is omitted for brevity):
 
@@ -1211,7 +1244,7 @@ Such QP strings can be decoded with:
     $string =~ s/=([0-9A-Fa-f][0-9A-Fa-f])/chr hex $1/ge;
     $string =~ s/=[\n\r]+$//;
 
-Whereas a QP decoder that works on both ASCII and EBCDIC machines 
+Whereas a QP decoder that works on both ASCII and EBCDIC platforms 
 would look somewhat like the following (where the @a2e array is
 omitted for brevity):
 
@@ -1229,7 +1262,7 @@ on the 26 letter English version of the Latin alphabet.  Rot13 has the
 interesting property that alternate subsequent invocations are identity maps 
 (thus rot13 is its own non-trivial inverse in the group of 26 alphabet 
 rotations).  Hence the following is a rot13 encoder and decoder that will 
-work on ASCII and EBCDIC machines:
+work on ASCII and EBCDIC platforms:
 
     #!/usr/local/bin/perl
 
@@ -1247,13 +1280,13 @@ In one-liner form:
 
 To the extent that it is possible to write code that depends on 
 hashing order there may be differences between hashes as stored
-on an ASCII based machine and hashes stored on an EBCDIC based machine.
+on an ASCII based platform and hashes stored on an EBCDIC based platform.
 XXX
 
 =head1 I18N AND L10N
 
 Internationalization(I18N) and localization(L10N) are supported at least 
-in principle even on EBCDIC machines.  The details are system dependent 
+in principle even on EBCDIC platforms.  The details are system dependent 
 and discussed under the L<perlebcdic/OS ISSUES> section below.
 
 =head1 MULTI OCTET CHARACTER SETS
@@ -1349,13 +1382,13 @@ L<perllocale>, L<perlfunc>, L<perlunicode>, L<utf8>.
 
 =head1 REFERENCES
 
-http://anubis.dkuug.dk/i18n/charmaps
+L<http://anubis.dkuug.dk/i18n/charmaps>
 
-http://www.unicode.org/
+L<http://www.unicode.org/>
 
-http://www.unicode.org/unicode/reports/tr16/
+L<http://www.unicode.org/unicode/reports/tr16/>
 
-http://www.wps.com/texts/codes/
+L<http://www.wps.com/texts/codes/>
 B<ASCII: American Standard Code for Information Infiltration> Tom Jennings,
 September 1999.
 
@@ -1373,7 +1406,7 @@ B<Codes, Ciphers, and Other Cryptic and Clandestine Communication>
 Fred B. Wrixon, ISBN 1-57912-040-7, Black Dog & Leventhal Publishers,
 1998.
 
-http://www.bobbemer.com/P-BIT.HTM
+L<http://www.bobbemer.com/P-BIT.HTM>
 B<IBM - EBCDIC and the P-bit; The biggest Computer Goof Ever> Robert Bemer.
 
 =head1 HISTORY

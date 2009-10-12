@@ -1,4 +1,13 @@
 
+= 2009/03/05
+
+Test improvements from Dave Mitchel sent back in 2005...
+
+Added code to increase $columns if it's not big enough to accommodate
+the subsequent tab.
+
+Minor documentation fixes from David Landgren <david at landgren.net>.
+
 Use warnings::warnif instead of just warn for columns < 2.  Appled per
 request of Rafael Garcia-Suarez <rgarciasuarez at gmail.com>.
 

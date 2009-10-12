@@ -10,64 +10,65 @@ BEGIN {
 	print "1..0 # Skip: readdir() not available\n";
 	exit 0;
     }
+
+    require($ENV{PERL_CORE} ? "./test.pl" : "./t/test.pl");
+    plan(16);
+
+    use_ok('IO::Dir');
+    IO::Dir->import(DIR_UNLINK);
 }
 
-select(STDERR); $| = 1;
-select(STDOUT); $| = 1;
-
-use IO::Dir qw(DIR_UNLINK);
-
-my $tcount = 0;
-
-sub ok {
-  $tcount++;
-  my $not = $_[0] ? '' : 'not ';
-  print "${not}ok $tcount\n";
-}
-
-print "1..10\n";
+use strict;
 
 my $DIR = $^O eq 'MacOS' ? ":" : ".";
 
-$dot = new IO::Dir $DIR;
+my $CLASS = "IO::Dir";
+my $dot = $CLASS->new($DIR);
 ok(defined($dot));
 
-@a = sort <*>;
+my @a = sort <*>;
+my $first;
 do { $first = $dot->read } while defined($first) && $first =~ /^\./;
 ok(+(grep { $_ eq $first } @a));
 
-@b = sort($first, (grep {/^[^.]/} $dot->read));
+my @b = sort($first, (grep {/^[^.]/} $dot->read));
 ok(+(join("\0", @a) eq join("\0", @b)));
 
-$dot->rewind;
-@c = sort grep {/^[^.]/} $dot->read;
+ok($dot->rewind,'rewind');
+my @c = sort grep {/^[^.]/} $dot->read;
 ok(+(join("\0", @b) eq join("\0", @c)));
 
-$dot->close;
-$dot->rewind;
+ok($dot->close,'close');
+{ local $^W; # avoid warnings on invalid dirhandle
+ok(!$dot->rewind, "rewind on closed");
 ok(!defined($dot->read));
+}
 
 open(FH,'>X') || die "Can't create x";
 print FH "X";
 close(FH) or die "Can't close: $!";
 
-tie %dir, IO::Dir, $DIR;
+my %dir;
+tie %dir, $CLASS, $DIR;
 my @files = keys %dir;
 
 # I hope we do not have an empty dir :-)
 ok(scalar @files);
 
 my $stat = $dir{'X'};
-ok(defined($stat) && UNIVERSAL::isa($stat,'File::stat') && $stat->size == 1);
+isa_ok($stat,'File::stat');
+ok(defined($stat) && $stat->size == 1);
 
 delete $dir{'X'};
 
 ok(-f 'X');
 
-tie %dirx, IO::Dir, $DIR, DIR_UNLINK;
+my %dirx;
+tie %dirx, $CLASS, $DIR, DIR_UNLINK;
 
 my $statx = $dirx{'X'};
-ok(defined($statx) && UNIVERSAL::isa($statx,'File::stat') && $statx->size == 1);
+isa_ok($statx,'File::stat');
+ok(defined($statx) && $statx->size == 1);
 
 delete $dirx{'X'};
 

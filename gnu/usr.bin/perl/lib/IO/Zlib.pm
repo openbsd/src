@@ -6,7 +6,7 @@
 
 package IO::Zlib;
 
-$VERSION = "1.07";
+$VERSION = "1.09";
 
 =head1 NAME
 
@@ -260,10 +260,6 @@ We must know how much to read.
 
 The LENGTH must be less than or equal to the buffer size.
 
-=item IO::Zlib::WRITE: OFFSET is not supported
-
-Offsets of gzipped streams are not supported.
-
 =back
 
 =head1 SEE ALSO
@@ -287,7 +283,7 @@ it and/or modify it under the same terms as Perl itself.
 
 =cut
 
-require 5.004;
+require 5.006;
 
 use strict;
 use vars qw($VERSION $AUTOLOAD @ISA);

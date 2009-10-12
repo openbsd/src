@@ -2,13 +2,12 @@ package ExtUtils::MM;
 
 use strict;
 use ExtUtils::MakeMaker::Config;
-use vars qw(@ISA $VERSION);
-$VERSION = '6.42';
+
+our $VERSION = '6.55_02';
 
 require ExtUtils::Liblist;
 require ExtUtils::MakeMaker;
-
-@ISA = qw(ExtUtils::Liblist ExtUtils::MakeMaker);
+our @ISA = qw(ExtUtils::Liblist ExtUtils::MakeMaker);
 
 =head1 NAME
 
@@ -38,16 +37,16 @@ away.
 {
     # Convenient alias.
     package MM;
-    use vars qw(@ISA);
-    @ISA = qw(ExtUtils::MM);
+    our @ISA = qw(ExtUtils::MM);
     sub DESTROY {}
 }
 
 sub _is_win95 {
     # miniperl might not have the Win32 functions available and we need
     # to run in miniperl.
-    return defined &Win32::IsWin95 ? Win32::IsWin95() 
-                                   : ! defined $ENV{SYSTEMROOT}; 
+    my $have_win32 = eval { require Win32 };
+    return $have_win32 && defined &Win32::IsWin95 ? Win32::IsWin95()
+                                                  : ! defined $ENV{SYSTEMROOT};
 }
 
 my %Is = ();
@@ -60,7 +59,7 @@ if( $^O eq 'MSWin32' ) {
 $Is{UWIN}   = $^O =~ /^uwin(-nt)?$/;
 $Is{Cygwin} = $^O eq 'cygwin';
 $Is{NW5}    = $Config{osname} eq 'NetWare';  # intentional
-$Is{BeOS}   = $^O =~ /beos/i;    # XXX should this be that loose?
+$Is{BeOS}   = ($^O =~ /beos/i or $^O eq 'haiku');
 $Is{DOS}    = $^O eq 'dos';
 if( $Is{NW5} ) {
     $^O = 'NetWare';
@@ -69,6 +68,7 @@ if( $Is{NW5} ) {
 $Is{VOS}    = $^O eq 'vos';
 $Is{QNX}    = $^O eq 'qnx';
 $Is{AIX}    = $^O eq 'aix';
+$Is{Darwin} = $^O eq 'darwin';
 
 $Is{Unix}   = !grep { $_ } values %Is;
 
@@ -78,7 +78,7 @@ my($OS) = keys %Is;
 
 
 my $class = "ExtUtils::MM_$OS";
-eval "require $class" unless $INC{"ExtUtils/MM_$OS.pm"};
+eval "require $class" unless $INC{"ExtUtils/MM_$OS.pm"}; ## no critic
 die $@ if $@;
 unshift @ISA, $class;
 

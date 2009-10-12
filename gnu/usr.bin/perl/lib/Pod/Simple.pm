@@ -18,7 +18,7 @@ use vars qw(
 );
 
 @ISA = ('Pod::Simple::BlackBox');
-$VERSION = '3.05';
+$VERSION = '3.07';
 
 @Known_formatting_codes = qw(I B C L E F S X Z); 
 %Known_formatting_codes = map(($_=>1), @Known_formatting_codes);
@@ -983,6 +983,7 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
   # L<text|name/"sec"> or L<text|name/sec>
   # L<text|/"sec"> or L<text|/sec> or L<text|"sec">
   # L<scheme:...>
+  # Ltext|scheme:...>
 
   my($self,@stack) = @_;
 
@@ -1002,11 +1003,12 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
       
       
       # By here, $treelet->[$i] is definitely an L node
-      DEBUG > 1 and print "Ogling L node $treelet->[$i]\n";
+      my $ell = $treelet->[$i];
+      DEBUG > 1 and print "Ogling L node $ell\n";
         
       # bitch if it's empty
-      if(  @{$treelet->[$i]} == 2
-       or (@{$treelet->[$i]} == 3 and $treelet->[$i][2] eq '')
+      if(  @{$ell} == 2
+       or (@{$ell} == 3 and $ell->[2] eq '')
       ) {
         $self->whine( $start_line, "An empty L<>" );
         $treelet->[$i] = 'L<>';  # just make it a text node
@@ -1014,55 +1016,70 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
       }
      
       # Catch URLs:
-      # URLs can, alas, contain E<...> sequences, so we can't /assume/
-      #  that this is one text node.  But it has to START with one text
-      #  node...
-      if(! ref $treelet->[$i][2] and
-        $treelet->[$i][2] =~ m/^\w+:[^:\s]\S*$/s
+
+      # there are a number of possible cases:
+      # 1) text node containing url: http://foo.com
+      #   -> [ 'http://foo.com' ]
+      # 2) text node containing url and text: foo|http://foo.com
+      #   -> [ 'foo|http://foo.com' ]
+      # 3) text node containing url start: mailto:xE<at>foo.com
+      #   -> [ 'mailto:x', [ E ... ], 'foo.com' ]
+      # 4) text node containing url start and text: foo|mailto:xE<at>foo.com
+      #   -> [ 'foo|mailto:x', [ E ... ], 'foo.com' ]
+      # 5) other nodes containing text and url start: OE<39>Malley|http://foo.com
+      #   -> [ 'O', [ E ... ], 'Malley', '|http://foo.com' ]
+      # ... etc.
+
+      # anything before the url is part of the text.
+      # anything after it is part of the url.
+      # the url text node itself may contain parts of both.
+
+      if (my ($url_index, $text_part, $url_part) =
+        # grep is no good here; we want to bail out immediately so that we can
+        # use $1, $2, etc. without having to do the match twice.
+        sub {
+          for (2..$#$ell) {
+            next if ref $ell->[$_];
+            next unless $ell->[$_] =~ m/^(?:([^|]*)\|)?(\w+:[^:\s]\S*)$/s;
+            return ($_, $1, $2);
+          }
+          return;
+        }->()
       ) {
-        $treelet->[$i][1]{'type'} = 'url';
-        $treelet->[$i][1]{'content-implicit'} = 'yes';
+        $ell->[1]{'type'} = 'url';
 
-        # TODO: deal with rel: URLs here?
+        my @text = @{$ell}[2..$url_index-1];
+        push @text, $text_part if defined $text_part;
 
-        if( 3 == @{ $treelet->[$i] } ) {
-          # But if it IS just one text node (most common case)
-          DEBUG > 1 and printf qq{Catching "%s as " as ho-hum L<URL> link.\n},
-            $treelet->[$i][2]
-          ;
-          $treelet->[$i][1]{'to'} = Pod::Simple::LinkSection->new(
-            $treelet->[$i][2]
-          );                   # its own treelet
-        } else {
-          # It's a URL but complex (like "L<foo:bazE<123>bar>").  Feh.
-          #$treelet->[$i][1]{'to'} = [ @{$treelet->[$i]} ];
-          #splice @{ $treelet->[$i][1]{'to'} }, 0,2;
-          #DEBUG > 1 and printf qq{Catching "%s as " as complex L<URL> link.\n},
-          #  join '~', @{$treelet->[$i][1]{'to'  }};
-          
-          $treelet->[$i][1]{'to'} = Pod::Simple::LinkSection->new(
-            $treelet->[$i]  # yes, clone the whole content as a treelet
-          );
-          $treelet->[$i][1]{'to'}[0] = ''; # set the copy's tagname to nil
-          die "SANITY FAILURE" if $treelet->[0] eq ''; # should never happen!
-          DEBUG > 1 and print
-           qq{Catching "$treelet->[$i][1]{'to'}" as a complex L<URL> link.\n};
+        my @url  = @{$ell}[$url_index+1..$#$ell];
+        unshift @url, $url_part;
+
+        unless (@text) {
+          $ell->[1]{'content-implicit'} = 'yes';
+          @text = @url;
         }
 
-        next; # and move on
+        $ell->[1]{to} = Pod::Simple::LinkSection->new(
+          @url == 1
+          ? $url[0]
+          : [ '', {}, @url ],
+        );
+
+        splice @$ell, 2, $#$ell, @text;
+
+        next;
       }
       
-      
       # Catch some very simple and/or common cases
-      if(@{$treelet->[$i]} == 3 and ! ref $treelet->[$i][2]) {
-        my $it = $treelet->[$i][2];
+      if(@{$ell} == 3 and ! ref $ell->[2]) {
+        my $it = $ell->[2];
         if($it =~ m/^[-a-zA-Z0-9]+\([-a-zA-Z0-9]+\)$/s) { # man sections
           # Hopefully neither too broad nor too restrictive a RE
           DEBUG > 1 and print "Catching \"$it\" as manpage link.\n";
-          $treelet->[$i][1]{'type'} = 'man';
+          $ell->[1]{'type'} = 'man';
           # This's the only place where man links can get made.
-          $treelet->[$i][1]{'content-implicit'} = 'yes';
-          $treelet->[$i][1]{'to'  } =
+          $ell->[1]{'content-implicit'} = 'yes';
+          $ell->[1]{'to'  } =
             Pod::Simple::LinkSection->new( $it ); # treelet!
 
           next;
@@ -1071,9 +1088,9 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
           # Extremely forgiving idea of what constitutes a bare
           #  modulename link like L<Foo::Bar> or even L<Thing::1.0::Docs::Tralala>
           DEBUG > 1 and print "Catching \"$it\" as ho-hum L<Modulename> link.\n";
-          $treelet->[$i][1]{'type'} = 'pod';
-          $treelet->[$i][1]{'content-implicit'} = 'yes';
-          $treelet->[$i][1]{'to'  } =
+          $ell->[1]{'type'} = 'pod';
+          $ell->[1]{'content-implicit'} = 'yes';
+          $ell->[1]{'to'  } =
             Pod::Simple::LinkSection->new( $it ); # treelet!
           next;
         }
@@ -1089,7 +1106,6 @@ sub _treat_Ls {  # Process our dear dear friends, the L<...> sequences
       
       
       my $link_text; # set to an arrayref if found
-      my $ell = $treelet->[$i];
       my @ell_content = @$ell;
       splice @ell_content,0,2; # Knock off the 'L' and {} bits
 
@@ -1443,7 +1459,7 @@ sub _out {
    "\nAbout to parse source: {{\n$_[0]\n}}\n\n";
   
   
-  my $parser = $class->new;
+  my $parser = ref $class && $class->isa(__PACKAGE__) ? $class : $class->new;
   $parser->hide_line_numbers(1);
 
   my $out = '';

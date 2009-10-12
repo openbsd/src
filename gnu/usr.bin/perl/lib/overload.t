@@ -47,7 +47,7 @@ sub numify { 0 + "${$_[0]}" }	# Not needed, additional overhead
 package main;
 
 $| = 1;
-use Test::More tests => 556;
+use Test::More tests => 561;
 
 
 $a = new Oscalar "087";
@@ -361,6 +361,13 @@ is(($aII << 3), '_<<_087_<<_');
 }
 is($int, 9);
 is($out, 1024);
+is($int, 9);
+{
+  BEGIN { overload::constant 'integer' => sub {$int++; shift()+1}; }
+  eval q{$out = 42};
+}
+is($int, 10);
+is($out, 43);
 
 $foo = 'foo';
 $foo1 = 'f\'o\\o';
@@ -1425,6 +1432,22 @@ foreach my $op (qw(<=> == != < <= > >=)) {
     is($aref/1, $num_val, 'division of ref');
     is($aref%100, $num_val%100, 'modulo of ref');
     is($aref**1, $num_val, 'exponentiation of ref');
+}
+
+{
+    package CopyConstructorFallback;
+    use overload
+        '++'        => sub { "$_[0]"; $_[0] },
+        fallback    => 1;
+    sub new { bless {} => shift }
+
+    package main;
+
+    my $o = CopyConstructorFallback->new;
+    my $x = $o++; # would segfault
+    my $y = ++$o;
+    is($x, $o, "copy constructor falls back to assignment (postinc)");
+    is($y, $o, "copy constructor falls back to assignment (preinc)");
 }
 
 # EOF

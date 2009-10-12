@@ -3,11 +3,11 @@ package CPAN::Tarzip;
 use strict;
 use vars qw($VERSION @ISA $BUGHUNTING);
 use CPAN::Debug;
-use File::Basename ();
-$VERSION = sprintf "%.6f", substr(q$Rev: 2213 $,4)/1000000 + 5.4;
+use File::Basename qw(basename);
+$VERSION = "5.501";
 # module is internal to CPAN.pm
 
-@ISA = qw(CPAN::Debug);
+@ISA = qw(CPAN::Debug); ## no critic
 $BUGHUNTING ||= 0; # released code must have turned off
 
 # it's ok if file doesn't exist, it just matters if it is .gz or .bz2
@@ -23,12 +23,9 @@ sub new {
     if (0) {
     } elsif ($file =~ /\.bz2$/i) {
         unless ($me->{UNGZIPPRG} = $CPAN::Config->{bzip2}) {
-            my $bzip2;
-            if ($CPAN::META->has_inst("File::Which")) {
-                $bzip2 = File::Which::which("bzip2");
-            }
+            my $bzip2 = _my_which("bzip2");
             if ($bzip2) {
-                $me->{UNGZIPPRG} = $bzip2 || "bzip2";
+                $me->{UNGZIPPRG} = $bzip2;
             } else {
                 $CPAN::Frontend->mydie(qq{
 CPAN.pm needs the external program bzip2 in order to handle '$file'.
@@ -38,10 +35,32 @@ program.
             }
         }
     } else {
-        # yes, we let gzip figure it out in *any* other case
-        $me->{UNGZIPPRG} = $CPAN::Config->{gzip} || "gzip";
+        $me->{UNGZIPPRG} = _my_which("gzip");
     }
+    $me->{TARPRG} = _my_which("tar") || _my_which("gtar");
     bless $me, $class;
+}
+
+sub _my_which {
+    my($what) = @_;
+    if ($CPAN::Config->{$what}) {
+        return $CPAN::Config->{$what};
+    }
+    if ($CPAN::META->has_inst("File::Which")) {
+        return File::Which::which($what);
+    }
+    my @cand = MM->maybe_command($what);
+    return $cand[0] if @cand;
+    require File::Spec;
+    my $component;
+  PATH_COMPONENT: foreach $component (File::Spec->path()) {
+        next unless defined($component) && $component;
+        my($abs) = File::Spec->catfile($component,$what);
+        if (MM->maybe_command($abs)) {
+            return $abs;
+        }
+    }
+    return;
 }
 
 sub gzip {
@@ -195,29 +214,56 @@ sub DESTROY {
     undef $self;
 }
 
-
 sub untar {
     my($self) = @_;
     my $file = $self->{FILE};
     my($prefer) = 0;
 
+    my $exttar = $self->{TARPRG} || "";
+    $exttar = "" if $exttar =~ /^\s+$/; # user refuses to use it
+    my $extgzip = $self->{UNGZIPPRG} || "";
+    $extgzip = "" if $extgzip =~ /^\s+$/; # user refuses to use it
     if (0) { # makes changing order easier
     } elsif ($BUGHUNTING) {
         $prefer=2;
-    } elsif (MM->maybe_command($self->{UNGZIPPRG})
-             &&
-             MM->maybe_command($CPAN::Config->{tar})) {
-        # should be default until Archive::Tar handles bzip2
+    } elsif ($exttar && $extgzip && $file =~ /\.bz2$/i) {
+        # until Archive::Tar handles bzip2
         $prefer = 1;
     } elsif (
              $CPAN::META->has_usable("Archive::Tar")
              &&
              $CPAN::META->has_inst("Compress::Zlib") ) {
         $prefer = 2;
+    } elsif ($exttar && $extgzip) {
+        # no modules and not bz2
+        $prefer = 1;
     } else {
+        my $foundtar = $exttar ? "'$exttar'" : "nothing";
+        my $foundzip = $extgzip ? "'$extgzip'" : $foundtar ? "nothing" : "also nothing";
+        my $foundAT;
+        if ($CPAN::META->has_usable("Archive::Tar")) {
+            $foundAT = sprintf "'%s'", "Archive::Tar::"->VERSION;
+        } else {
+            $foundAT = "nothing";
+        }
+        my $foundCZ;
+        if ($CPAN::META->has_inst("Compress::Zlib")) {
+            $foundCZ = sprintf "'%s'", "Compress::Zlib::"->VERSION;
+        } elsif ($foundAT) {
+            $foundCZ = "nothing";
+        } else {
+            $foundCZ = "also nothing";
+        }
         $CPAN::Frontend->mydie(qq{
-CPAN.pm needs either the external programs tar, gzip and bzip2
-installed. Can't continue.
+
+CPAN.pm needs either the external programs tar and gzip -or- both
+modules Archive::Tar and Compress::Zlib installed.
+
+For tar I found $foundtar, for gzip $foundzip.
+
+For Archive::Tar I found $foundAT, for Compress::Zlib $foundCZ;
+
+Can't continue cutting file '$file'.
 });
     }
     my $tar_verb = "v";
@@ -228,9 +274,9 @@ installed. Can't continue.
     if ($prefer==1) { # 1 => external gzip+tar
         my($system);
         my $is_compressed = $self->gtest();
-        my $tarcommand = CPAN::HandleConfig->safe_quote($CPAN::Config->{tar}) || "tar";
+        my $tarcommand = CPAN::HandleConfig->safe_quote($exttar);
         if ($is_compressed) {
-            my $command = CPAN::HandleConfig->safe_quote($self->{UNGZIPPRG});
+            my $command = CPAN::HandleConfig->safe_quote($extgzip);
             $system = qq{$command -dc }.
                 qq{< "$file" | $tarcommand x${tar_verb}f -};
         } else {
@@ -241,7 +287,7 @@ installed. Can't continue.
             # pipes
             if ($is_compressed) {
                 (my $ungzf = $file) =~ s/\.gz(?!\n)\Z//;
-                $ungzf = File::Basename::basename($ungzf);
+                $ungzf = basename $ungzf;
                 my $ct = CPAN::Tarzip->new($file);
                 if ($ct->gunzip($ungzf)) {
                     $CPAN::Frontend->myprint(qq{Uncompressed $file successfully\n});
@@ -265,6 +311,12 @@ installed. Can't continue.
         unless ($CPAN::META->has_usable("Archive::Tar")) {
             $CPAN::Frontend->mydie("Archive::Tar not installed, please install it to continue");
         }
+        # Make sure AT does not use uid/gid/permissions in the archive
+        # This leaves it to the user's umask instead
+        local $Archive::Tar::CHMOD = 1;
+        local $Archive::Tar::SAME_PERMISSIONS = 0;
+        # Make sure AT leaves current user as owner
+        local $Archive::Tar::CHOWN = 0;
         my $tar = Archive::Tar->new($file,1);
         my $af; # archive file
         my @af;

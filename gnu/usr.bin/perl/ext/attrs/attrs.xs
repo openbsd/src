@@ -52,8 +52,9 @@ SV *	sub
 		sub = Nullsv;
 	}
 	else {
-	    const char * const name = SvPV_nolen(sub);
-	    sub = (SV*)perl_get_cv(name, FALSE);
+	    STRLEN len;
+	    const char * const name = SvPV(sub, len);
+	    sub = (SV*)get_cvn_flags(name, len, SvUTF8(sub));
 	}
 	if (!sub)
 	    croak("invalid subroutine reference or name");

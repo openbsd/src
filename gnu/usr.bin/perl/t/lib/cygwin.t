@@ -43,7 +43,7 @@ chdir($pwd);
 is(Cygwin::win_to_posix_path($winpath, 1), "/", "win to absolute posix path");
 
 my $mount = join '', `/usr/bin/mount`;
-$mount =~ m|on /usr/bin type .+ \((\w+mode)\)|m;
+$mount =~ m|on /usr/bin type .+ \((\w+mode)[,\)]|m;
 my $binmode = $1 eq 'binmode';
 is(Cygwin::is_binmount("/"),  $binmode ? 1 : '', "check / for binmount");
 

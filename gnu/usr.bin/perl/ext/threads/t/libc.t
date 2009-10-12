@@ -51,4 +51,6 @@ for (1..$i) {
     is($threads[$_]->join(), 0, 'localtime() thread-safe');
 }
 
+exit(0);
+
 # EOF

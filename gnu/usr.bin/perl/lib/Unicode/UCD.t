@@ -1,6 +1,6 @@
 #!perl -w
 BEGIN {
-    if (ord("A") == 193) {
+    if (ord("A") != 65) {
 	print "1..0 # Skip: EBCDIC\n";
 	exit 0;
     }
@@ -18,7 +18,7 @@ use strict;
 use Unicode::UCD;
 use Test::More;
 
-BEGIN { plan tests => 194 };
+BEGIN { plan tests => 239 };
 
 use Unicode::UCD 'charinfo';
 
@@ -172,6 +172,26 @@ is($charinfo->{title},          '');
 is($charinfo->{block},          'Mathematical Alphanumeric Symbols');
 is($charinfo->{script},         'Common');
 
+$charinfo = charinfo(0x9FBA);	#Bug 58428
+
+is($charinfo->{code},           '9FBA', 'U+9FBA');
+is($charinfo->{name},           'CJK UNIFIED IDEOGRAPH-9FBA');
+is($charinfo->{category},       'Lo');
+is($charinfo->{combining},      '0');
+is($charinfo->{bidi},           'L');
+is($charinfo->{decomposition},  '');
+is($charinfo->{decimal},        '');
+is($charinfo->{digit},          '');
+is($charinfo->{numeric},        '');
+is($charinfo->{mirrored},       'N');
+is($charinfo->{unicode10},      '');
+is($charinfo->{comment},        '');
+is($charinfo->{upper},          '');
+is($charinfo->{lower},          '');
+is($charinfo->{title},          '');
+is($charinfo->{block},          'CJK Unified Ideographs');
+is($charinfo->{script},         'Han');
+
 use Unicode::UCD qw(charblock charscript);
 
 # 0x0590 is in the Hebrew block but unused.
@@ -254,7 +274,9 @@ ok(exists $bt->{L}, 'has L');
 is($bt->{L}, 'Left-to-Right', 'L is Left-to-Right');
 is($bt->{AL}, 'Right-to-Left Arabic', 'AL is Right-to-Left Arabic');
 
-is(Unicode::UCD::UnicodeVersion, '5.0.0', 'UnicodeVersion');
+# If this fails, then maybe one should look at the Unicode changes to see
+# what else might need to be updated.
+is(Unicode::UCD::UnicodeVersion, '5.1.0', 'UnicodeVersion');
 
 use Unicode::UCD qw(compexcl);
 
@@ -267,15 +289,70 @@ my $casefold;
 
 $casefold = casefold(0x41);
 
-ok($casefold->{code} eq '0041' &&
-   $casefold->{status} eq 'C'  &&
-   $casefold->{mapping} eq '0061', 'casefold 0x41');
+is($casefold->{code}, '0041', 'casefold 0x41 code');
+is($casefold->{status}, 'C', 'casefold 0x41 status');
+is($casefold->{mapping}, '0061', 'casefold 0x41 mapping');
+is($casefold->{full}, '0061', 'casefold 0x41 full');
+is($casefold->{simple}, '0061', 'casefold 0x41 simple');
+is($casefold->{turkic}, "", 'casefold 0x41 turkic');
 
 $casefold = casefold(0xdf);
 
-ok($casefold->{code} eq '00DF' &&
-   $casefold->{status} eq 'F'  &&
-   $casefold->{mapping} eq '0073 0073', 'casefold 0xDF');
+is($casefold->{code}, '00DF', 'casefold 0xDF code');
+is($casefold->{status}, 'F', 'casefold 0xDF status');
+is($casefold->{mapping}, '0073 0073', 'casefold 0xDF mapping');
+is($casefold->{full}, '0073 0073', 'casefold 0xDF full');
+is($casefold->{simple}, "", 'casefold 0xDF simple');
+is($casefold->{turkic}, "", 'casefold 0xDF turkic');
+
+# Do different tests depending on if version <= 3.1, or not.
+(my $version = Unicode::UCD::UnicodeVersion) =~ /^(\d+)\.(\d+)/;
+if (defined $1 && ($1 <= 2 || $1 == 3 && defined $2 && $2 <= 1)) {
+	$casefold = casefold(0x130);
+
+	is($casefold->{code}, '0130', 'casefold 0x130 code');
+	is($casefold->{status}, 'I' , 'casefold 0x130 status');
+	is($casefold->{mapping}, '0069', 'casefold 0x130 mapping');
+	is($casefold->{full}, '0069', 'casefold 0x130 full');
+	is($casefold->{simple}, "0069", 'casefold 0x130 simple');
+	is($casefold->{turkic}, "0069", 'casefold 0x130 turkic');
+
+	$casefold = casefold(0x131);
+
+	is($casefold->{code}, '0131', 'casefold 0x131 code');
+	is($casefold->{status}, 'I' , 'casefold 0x131 status');
+	is($casefold->{mapping}, '0069', 'casefold 0x131 mapping');
+	is($casefold->{full}, '0069', 'casefold 0x131 full');
+	is($casefold->{simple}, "0069", 'casefold 0x131 simple');
+	is($casefold->{turkic}, "0069", 'casefold 0x131 turkic');
+} else {
+	$casefold = casefold(0x49);
+
+	is($casefold->{code}, '0049', 'casefold 0x49 code');
+	is($casefold->{status}, 'C' , 'casefold 0x49 status');
+	is($casefold->{mapping}, '0069', 'casefold 0x49 mapping');
+	is($casefold->{full}, '0069', 'casefold 0x49 full');
+	is($casefold->{simple}, "0069", 'casefold 0x49 simple');
+	is($casefold->{turkic}, "0131", 'casefold 0x49 turkic');
+
+	$casefold = casefold(0x130);
+
+	is($casefold->{code}, '0130', 'casefold 0x130 code');
+	is($casefold->{status}, 'F' , 'casefold 0x130 status');
+	is($casefold->{mapping}, '0069 0307', 'casefold 0x130 mapping');
+	is($casefold->{full}, '0069 0307', 'casefold 0x130 full');
+	is($casefold->{simple}, "", 'casefold 0x130 simple');
+	is($casefold->{turkic}, "0069", 'casefold 0x130 turkic');
+}
+
+$casefold = casefold(0x1F88);
+
+is($casefold->{code}, '1F88', 'casefold 0x1F88 code');
+is($casefold->{status}, 'S' , 'casefold 0x1F88 status');
+is($casefold->{mapping}, '1F80', 'casefold 0x1F88 mapping');
+is($casefold->{full}, '1F00 03B9', 'casefold 0x1F88 full');
+is($casefold->{simple}, '1F80', 'casefold 0x1F88 simple');
+is($casefold->{turkic}, "", 'casefold 0x1F88 turkic');
 
 ok(!casefold(0x20));
 
@@ -306,7 +383,7 @@ ok($casespec->{az}->{code} eq '0307' &&
 
 for (1) {my $a=compexcl $_}
 ok(1, 'compexcl read-only $_: perl #7305');
-grep {compexcl $_} %{{1=>2}};
+map {compexcl $_} %{{1=>2}};
 ok(1, 'compexcl read-only hash: perl #7305');
 
 is(Unicode::UCD::_getcode('123'),     123, "_getcode(123)");
@@ -325,7 +402,7 @@ is(Unicode::UCD::_getcode('U+123x'),  undef, "_getcode(x123)");
 {
     my $r1 = charscript('Latin');
     my $n1 = @$r1;
-    is($n1, 35, "number of ranges in Latin script (Unicode 5.0.0)");
+    is($n1, 42, "number of ranges in Latin script (Unicode 5.1.0)");
     shift @$r1 while @$r1;
     my $r2 = charscript('Latin');
     is(@$r2, $n1, "modifying results should not mess up internal caches");

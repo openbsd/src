@@ -3,14 +3,14 @@
 # This is a hints file for Stratus VOS, using the POSIX environment
 # in VOS 14.4.0 and higher.
 #
-# VOS POSIX is based on POSIX.1-1996.  It ships with gcc as the standard
-# compiler.
+# VOS POSIX is based on POSIX.1-1996 and contains elements of
+# POSIX.1-2001.  It ships with gcc as the standard compiler.
 #
 # Paul Green (Paul.Green@stratus.com)
 
 # C compiler and default options.
 cc=gcc
-ccflags="-D_SVID_SOURCE -D_POSIX_C_SOURCE=199509L"
+ccflags="-D_SVID_SOURCE -D_POSIX_C_SOURCE=200112L"
 
 # Make command.
 make="/system/gnu_library/bin/gmake"
@@ -18,7 +18,11 @@ make="/system/gnu_library/bin/gmake"
   _make="/system/gnu_library/bin/gmake"
 
 # Architecture name
-archname="hppa1.1"
+if test `uname -m` = i786; then
+     archname="i786"
+else
+     archname="hppa1.1"
+fi
 
 # Executable suffix.
 # No, this is not a typo.  The ".pm" really is the native
@@ -37,7 +41,13 @@ loclibpth="$loclibpth /system/object_library"
 glibpth="$loclibpth"
 
 # Include library paths
-locincpth="/system/stcp/include_library"
+# Pick up vos/syslog.h on Continuum Platform.
+if test "$archname" = "i786"; then
+     locincpth=""
+else
+     locincpth=`pwd`/vos
+fi
+locincpth="$locincpth /system/stcp/include_library"
 locincpth="$locincpth /system/include_library/sysv"
 usrinc="/system/include_library"
 

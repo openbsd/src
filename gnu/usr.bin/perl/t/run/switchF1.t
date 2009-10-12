@@ -1,7 +1,7 @@
 #!perl -w
 print "1..5\n";
 
-my $file = "F-Pathological.pl";
+my $file = "Run_switchF1.pl";
 
 open F, ">$file" or die "Open $file: $!";
 

@@ -145,11 +145,13 @@ strings differently, depending on the internal state.
 
 Affected are C<uc>, C<lc>, C<ucfirst>, C<lcfirst>, C<\U>, C<\L>, C<\u>, C<\l>,
 C<\d>, C<\s>, C<\w>, C<\D>, C<\S>, C<\W>, C</.../i>, C<(?i:...)>,
-C</[[:posix:]]/>.
+C</[[:posix:]]/>, and C<quotemeta> (though this last should not cause any real
+problems).
 
 To force Unicode semantics, you can upgrade the internal representation to
-by doing C<utf8::upgrade($string)>. This does not change strings that were
-already upgraded.
+by doing C<utf8::upgrade($string)>. This can be used
+safely on any string, as it checks and does not change strings that have
+already been upgraded.
 
 For a more detailed discussion, see L<Unicode::Semantics> on CPAN.
 

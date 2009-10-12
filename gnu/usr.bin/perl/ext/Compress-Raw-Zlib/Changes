@@ -1,0 +1,167 @@
+CHANGES
+-------
+
+  2.020 3 June 2009
+
+      * Minor documentation update.
+
+  2.019 4 May 2009
+
+      * No Changes
+
+  2.018 3 May 2009
+
+      * No Changes
+
+  2.017 28 March 2009
+
+      * Added 'LimitOutput' option
+
+      * Removed MAN3PODS from Makefile.PL
+
+      * Fixed coring issue when LimitOutput was used.
+
+      * Documented Compress::Raw::Zlib::zlib_version()
+
+      * Documented Compress::Raw::Zlib::deflateReset()
+        [RT #40566]
+
+  2.015 3 September 2008
+
+      * Makefile.PL
+        Backout changes made in 2.014
+
+  2.014 2 September 2008
+
+      * Makefile.PL
+        Updated to check for indirect dependencies.
+
+  2.012 15 July 2008
+
+      * Document the gzip flags that WindowBits can take.
+
+      * Allow a dictionary to be used with a raw inflate. 
+        Needs zlib 1.2.2.1 or better.
+        [RT #36046]
+      
+  2.011 5 May 2008
+
+      * A C++-style comment sneaked in with the last update. Fixed.
+        [core patch #33828]
+
+  2.010 5 May 2008
+
+      * No Changes
+
+  2.009 20 April 2008
+
+      * No Changes
+
+  2.008 2 November 2007
+
+      * Minor documentation changes in README
+
+  2.006 1 September 2007
+
+      * Makefile.PL
+        Added INSTALLDIRS directive to install as a core module when built
+        on a perl >= 5.9.
+
+  2.005 18 June 2007
+
+      * Only include ppport.h when not being built with perl.
+        [core patch #30655]
+
+  2.004 3 March 2007
+
+      * Fixed lvalue substr issue
+
+      * Remove redundant code from Zlib.xs
+
+  2.003 2 January 2007
+
+      * Added explicit version checking
+
+  2.002 29 December 2006
+
+      * Documentation updates.
+
+  2.001 1 November 2006
+
+      * Remove beta status.
+
+  2.000_14 26 October 2006
+
+      * Fixed memory leak on realloc.
+
+      * Ticket #18986 says that ExtUtils::Install 1.39 fixes the in-use
+        issue on win32/cygwin, so make the code that checks whether trying
+        to install via the cpan shell conditional on the version of
+        ExtUtils::Install.
+        http://rt.cpan.org/Ticket/Display.html?id=18986
+
+  2.000_10 13 March 2006
+
+      * Fixed a potential NULL pointer dereference problem in
+        Compress::Raw::Zlib::resetLastBlockByte.
+        Issue highlighted by David Dyck and reproduced by Marcus Holland-Moritz.
+
+  2.000_09 3 March 2006
+
+      * Released onto CPAN
+
+      * Documentation updates.
+
+  2.000_08 2 March 2006
+
+      * Moved the IO::* modules out into their own distributions.
+
+      * Breakout zlib specific code into separate modules.
+
+      * Limited support for reading/writing zip files added.
+
+  2.000_06 5 October 2005
+
+      * Added eof parameter to Compress::Zlib::inflate method.
+
+      * Fixed issue with 64-bit
+
+  2.000_05 4 October 2005
+
+      * Renamed IO::* to IO::Compress::* & IO::Uncompress::*
+
+  2.000_04 23 September 2005
+
+      * Fixed some more non-portable test that were failing on VMS.
+
+      * fixed problem where error messages in the oneshot interface were
+        getting lost.
+
+  2.000_03 12 September 2005
+
+      * Fixed some non-portable test that were failing on VMS.
+
+      * Fixed export of zlib constants from the IO::* classes
+
+  2.000_02 6 September 2005
+
+      * Split Append mode into Append and Merge
+
+      * Fixed typos in the documentation.
+
+      * Added pod/FAQ.pod
+
+      * Added libscan to Makefile.PL
+
+      * Added InputLength for IO::Gunzip et al
+
+  2.000_01 22 August 2005
+
+      * Fixed VERSION in Compress::Gzip::Constants
+
+      * Removed Compress::Gzip::Info from the distribution.
+
+  2.000_00 21 August 2005
+
+      * First Beta relase of Compress::zlib rewrite.
+

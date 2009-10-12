@@ -24,7 +24,7 @@ Unicode 1.0 was released in October 1991, and 4.0 in April 2003.
 A Unicode I<character> is an abstract entity.  It is not bound to any
 particular integer width, especially not to the C language C<char>.
 Unicode is language-neutral and display-neutral: it does not encode the
-language of the text and it does not define fonts or other graphical
+language of the text and it does not generally define fonts or other graphical
 layout details.  Unicode operates on characters and on text built from
 those characters.
 
@@ -125,8 +125,7 @@ serious Unicode work.  The maintenance release 5.6.1 fixed many of the
 problems of the initial Unicode implementation, but for example
 regular expressions still do not work with Unicode in 5.6.1.
 
-B<Starting from Perl 5.8.0, the use of C<use utf8> is no longer
-necessary.> In earlier releases the C<utf8> pragma was used to declare
+B<Starting from Perl 5.8.0, the use of C<use utf8> is needed only in much more restricted circumstances.> In earlier releases the C<utf8> pragma was used to declare
 that operations in the current block or file would be Unicode-aware.
 This model was found to be wrong, or at least clumsy: the "Unicodeness"
 is now carried with the data, instead of being attached to the
@@ -514,8 +513,8 @@ CAPITAL LETTER As should be considered equal, or even As of any case.
 The long answer is that you need to consider character normalization
 and casing issues: see L<Unicode::Normalize>, Unicode Technical
 Reports #15 and #21, I<Unicode Normalization Forms> and I<Case
-Mappings>, http://www.unicode.org/unicode/reports/tr15/ and
-http://www.unicode.org/unicode/reports/tr21/
+Mappings>, L<http://www.unicode.org/unicode/reports/tr15/> and
+L<http://www.unicode.org/unicode/reports/tr21/>
 
 As of Perl 5.8.0, the "Full" case-folding of I<Case
 Mappings/SpecialCasing> is implemented.
@@ -538,7 +537,7 @@ C<0x00C1> > C<0x00C0>.
 The long answer is that "it depends", and a good answer cannot be
 given without knowing (at the very least) the language context.
 See L<Unicode::Collate>, and I<Unicode Collation Algorithm>
-http://www.unicode.org/unicode/reports/tr10/
+L<http://www.unicode.org/unicode/reports/tr10/>
 
 =back
 
@@ -552,7 +551,7 @@ Character Ranges and Classes
 
 Character ranges in regular expression character classes (C</[a-z]/>)
 and in the C<tr///> (also known as C<y///>) operator are not magically
-Unicode-aware.  What this means that C<[A-Za-z]> will not magically start
+Unicode-aware.  What this means is that C<[A-Za-z]> will not magically start
 to mean "all alphabetic letters"; not that it does mean that even for
 8-bit characters, you should be using C</[[:alpha:]]/> in that case.
 
@@ -603,11 +602,12 @@ Unicode; for that, see the earlier I/O discussion.
 
 How Do I Know Whether My String Is In Unicode?
 
-You shouldn't care.  No, you really shouldn't.  No, really.  If you
-have to care--beyond the cases described above--it means that we
-didn't get the transparency of Unicode quite right.
+You shouldn't have to care.  But you may, because currently the semantics of the
+characters whose ordinals are in the range 128 to 255 is different depending on
+whether the string they are contained within is in Unicode or not.
+(See L<perlunicode>.) 
 
-Okay, if you insist:
+To determine if a string is in Unicode, use:
 
     print utf8::is_utf8($string) ? 1 : 0, "\n";
 
@@ -634,8 +634,8 @@ C<$a> will stay byte-encoded.
 
 Sometimes you might really need to know the byte length of a string
 instead of the character length. For that use either the
-C<Encode::encode_utf8()> function or the C<bytes> pragma and its only
-defined function C<length()>:
+C<Encode::encode_utf8()> function or the C<bytes> pragma  and
+the C<length()> function:
 
     my $unicode = chr(0x100);
     print length($unicode), "\n"; # will print 1
@@ -653,8 +653,8 @@ Use the C<Encode> package to try converting it.
 For example,
 
     use Encode 'decode_utf8';
-    eval { decode_utf8($string, Encode::FB_CROAK) };
-    if ($@) {
+
+    if (eval { decode_utf8($string, Encode::FB_CROAK); 1 }) {
         # $string is valid utf8
     } else {
         # $string is not valid utf8
@@ -724,18 +724,20 @@ or:
 
     $Unicode = pack("U0a*", $bytes);
 
-You can convert well-formed UTF-8 to a sequence of bytes, but if
-you just want to convert random binary data into UTF-8, you can't.
-B<Any random collection of bytes isn't well-formed UTF-8>.  You can
-use C<unpack("C*", $string)> for the former, and you can create
-well-formed Unicode data by C<pack("U*", 0xff, ...)>.
+You can find the bytes that make up a UTF-8 sequence with
+
+	@bytes = unpack("C*", $Unicode_string)
+
+and you can create well-formed Unicode with
+
+	$Unicode_string = pack("U*", 0xff, ...)
 
 =item *
 
 How Do I Display Unicode?  How Do I Input Unicode?
 
-See http://www.alanwood.net/unicode/ and
-http://www.cl.cam.ac.uk/~mgk25/unicode.html
+See L<http://www.alanwood.net/unicode/> and
+L<http://www.cl.cam.ac.uk/~mgk25/unicode.html>
 
 =item *
 
@@ -787,44 +789,44 @@ show a decimal number in hexadecimal.  If you have just the
 
 Unicode Consortium
 
-http://www.unicode.org/
+L<http://www.unicode.org/>
 
 =item *
 
 Unicode FAQ
 
-http://www.unicode.org/unicode/faq/
+L<http://www.unicode.org/unicode/faq/>
 
 =item *
 
 Unicode Glossary
 
-http://www.unicode.org/glossary/
+L<http://www.unicode.org/glossary/>
 
 =item *
 
 Unicode Useful Resources
 
-http://www.unicode.org/unicode/onlinedat/resources.html
+L<http://www.unicode.org/unicode/onlinedat/resources.html>
 
 =item *
 
 Unicode and Multilingual Support in HTML, Fonts, Web Browsers and Other Applications
 
-http://www.alanwood.net/unicode/
+L<http://www.alanwood.net/unicode/>
 
 =item *
 
 UTF-8 and Unicode FAQ for Unix/Linux
 
-http://www.cl.cam.ac.uk/~mgk25/unicode.html
+L<http://www.cl.cam.ac.uk/~mgk25/unicode.html>
 
 =item *
 
 Legacy Character Sets
 
-http://www.czyborra.com/
-http://www.eki.ee/letter/
+L<http://www.czyborra.com/>
+L<http://www.eki.ee/letter/>
 
 =item *
 

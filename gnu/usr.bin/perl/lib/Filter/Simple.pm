@@ -4,7 +4,7 @@ use Text::Balanced ':ALL';
 
 use vars qw{ $VERSION @EXPORT };
 
-$VERSION = '0.82';
+$VERSION = '0.84';
 
 use Filter::Util::Call;
 use Carp;
@@ -774,10 +774,24 @@ BANG;> call must appear by itself on a separate line, or it is ignored.
 
 =head1 AUTHOR
 
-Damian Conway (damian@conway.org)
+Damian Conway
 
-=head1 COPYRIGHT
+=head1 CONTACT
 
-    Copyright (c) 2000-2001, Damian Conway. All Rights Reserved.
+Filter::Simple is now maintained by the Perl5-Porters.
+Please submit bug via the C<perlbug> tool that comes with your perl.
+For usage instructions, read C<perldoc perlbug> or possibly C<man perlbug>.
+For mostly anything else, please contact E<lt>perl5-porters@perl.orgE<gt>.
+
+Maintainer of the CPAN release is Steffen Mueller E<lt>smueller@cpan.orgE<gt>.
+Contact him with technical difficulties with respect to the packaging of the
+CPAN module.
+
+Praise of the module, flowers, and presents still go to the author,
+Damian Conway E<lt>damian@conway.orgE<gt>.
+
+=head1 COPYRIGHT AND LICENSE
+
+    Copyright (c) 2000-2008, Damian Conway. All Rights Reserved.
     This module is free software. It may be used, redistributed
     and/or modified under the same terms as Perl itself.

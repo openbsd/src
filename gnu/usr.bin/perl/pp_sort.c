@@ -1,7 +1,7 @@
 /*    pp_sort.c
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007 by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -9,8 +9,10 @@
  */
 
 /*
- *   ...they shuffled back towards the rear of the line. 'No, not at the
- *   rear!'  the slave-driver shouted. 'Three files up. And stay there...
+ *   ...they shuffled back towards the rear of the line.  'No, not at the
+ *   rear!' the slave-driver shouted.  'Three files up. And stay there...
+ *
+ *     [p.931 of _The Lord of the Rings_, VI/ii: "The Land of Shadow"]
  */
 
 /* This file contains pp ("push/pop") functions that
@@ -204,7 +206,7 @@ dynprep(pTHX_ gptr *list1, gptr *list2, size_t nmemb, const SVCOMPARE_t cmp)
 	    if (r >= t) p = r = t;	/* too short to care about */
 	    else {
 		while (((cmp(aTHX_ *(p-1), *p) > 0) == sense) &&
-		       ((p -= 2) > q));
+		       ((p -= 2) > q)) {}
 		if (p <= q) {
 		    /* b through r is a (long) run.
 		    ** Extend it as far as possible.
@@ -762,16 +764,16 @@ STATIC void /* the standard unstable (u) quicksort (qsort) */
 S_qsortsvu(pTHX_ SV ** array, size_t num_elts, SVCOMPARE_t compare)
 {
    register SV * temp;
-
    struct partition_stack_entry partition_stack[QSORT_MAX_STACK];
    int next_stack_entry = 0;
-
    int part_left;
    int part_right;
 #ifdef QSORT_ORDER_GUESS
    int qsort_break_even;
    int swapped;
 #endif
+
+    PERL_ARGS_ASSERT_QSORTSVU;
 
    /* Make sure we actually have work to do.
    */
@@ -1441,6 +1443,8 @@ flexible routine.
 void
 Perl_sortsv(pTHX_ SV **array, size_t nmemb, SVCOMPARE_t cmp)
 {
+    PERL_ARGS_ASSERT_SORTSV;
+
     sortsv_flags(array, nmemb, cmp, 0);
 }
 
@@ -1454,6 +1458,8 @@ Sort an array, with various options.
 void
 Perl_sortsv_flags(pTHX_ SV **array, size_t nmemb, SVCOMPARE_t cmp, U32 flags)
 {
+    PERL_ARGS_ASSERT_SORTSV_FLAGS;
+
     if (flags & SORTf_QSORT)
 	S_qsortsv(aTHX_ array, nmemb, cmp, flags);
     else
@@ -1512,7 +1518,7 @@ PP(pp_sort)
 	else {
 	    cv = sv_2cv(*++MARK, &stash, &gv, 0);
 	    if (cv && SvPOK(cv)) {
-		const char * const proto = SvPV_nolen_const((SV*)cv);
+		const char * const proto = SvPV_nolen_const(MUTABLE_SV(cv));
 		if (proto && strEQ(proto, "$$")) {
 		    hasargs = TRUE;
 		}
@@ -1549,19 +1555,20 @@ PP(pp_sort)
     if (priv & OPpSORT_INPLACE) {
 	assert( MARK+1 == SP && *SP && SvTYPE(*SP) == SVt_PVAV);
 	(void)POPMARK; /* remove mark associated with ex-OP_AASSIGN */
-	av = (AV*)(*SP);
+	av = MUTABLE_AV((*SP));
 	max = AvFILL(av) + 1;
 	if (SvMAGICAL(av)) {
 	    MEXTEND(SP, max);
-	    p2 = SP;
 	    for (i=0; i < max; i++) {
 		SV **svp = av_fetch(av, i, FALSE);
 		*SP++ = (svp) ? *svp : NULL;
 	    }
+	    SP--;
+	    p1 = p2 = SP - (max-1);
 	}
 	else {
 	    if (SvREADONLY(av))
-		Perl_croak(aTHX_ PL_no_modify);
+		Perl_croak(aTHX_ "%s", PL_no_modify);
 	    else
 		SvREADONLY_on(av);
 	    p1 = p2 = AvARRAY(av);
@@ -1658,10 +1665,10 @@ PP(pp_sort)
 
 		    if (hasargs) {
 			/* This is mostly copied from pp_entersub */
-			AV * const av = (AV*)PAD_SVl(0);
+			AV * const av = MUTABLE_AV(PAD_SVl(0));
 
 			cx->blk_sub.savearray = GvAV(PL_defgv);
-			GvAV(PL_defgv) = (AV*)SvREFCNT_inc_simple(av);
+			GvAV(PL_defgv) = MUTABLE_AV(SvREFCNT_inc_simple(av));
 			CX_CURPAD_SAVE(cx->blk_sub);
 			cx->blk_sub.argarray = av;
 		    }
@@ -1713,7 +1720,7 @@ PP(pp_sort)
 	SvREADONLY_off(av);
     else if (av && !sorting_av) {
 	/* simulate pp_aassign of tied AV */
-	SV** const base = ORIGMARK+1;
+	SV** const base = MARK+1;
 	for (i=0; i < max; i++) {
 	    base[i] = newSVsv(base[i]);
 	}
@@ -1740,6 +1747,9 @@ S_sortcv(pTHX_ SV *a, SV *b)
     const I32 oldsaveix = PL_savestack_ix;
     const I32 oldscopeix = PL_scopestack_ix;
     I32 result;
+ 
+    PERL_ARGS_ASSERT_SORTCV;
+
     GvSV(PL_firstgv) = a;
     GvSV(PL_secondgv) = b;
     PL_stack_sp = PL_stack_base;
@@ -1765,6 +1775,8 @@ S_sortcv_stacked(pTHX_ SV *a, SV *b)
     const I32 oldscopeix = PL_scopestack_ix;
     I32 result;
     AV * const av = GvAV(PL_defgv);
+
+    PERL_ARGS_ASSERT_SORTCV_STACKED;
 
     if (AvMAX(av) < 1) {
 	SV** ary = AvALLOC(av);
@@ -1803,8 +1815,10 @@ S_sortcv_xsub(pTHX_ SV *a, SV *b)
     dVAR; dSP;
     const I32 oldsaveix = PL_savestack_ix;
     const I32 oldscopeix = PL_scopestack_ix;
-    CV * const cv=(CV*)PL_sortcop;
+    CV * const cv=MUTABLE_CV(PL_sortcop);
     I32 result;
+
+    PERL_ARGS_ASSERT_SORTCV_XSUB;
 
     SP = PL_stack_base;
     PUSHMARK(SP);
@@ -1831,6 +1845,9 @@ S_sv_ncmp(pTHX_ SV *a, SV *b)
 {
     const NV nv1 = SvNSIV(a);
     const NV nv2 = SvNSIV(b);
+
+    PERL_ARGS_ASSERT_SV_NCMP;
+
     return nv1 < nv2 ? -1 : nv1 > nv2 ? 1 : 0;
 }
 
@@ -1839,6 +1856,9 @@ S_sv_i_ncmp(pTHX_ SV *a, SV *b)
 {
     const IV iv1 = SvIV(a);
     const IV iv2 = SvIV(b);
+
+    PERL_ARGS_ASSERT_SV_I_NCMP;
+
     return iv1 < iv2 ? -1 : iv1 > iv2 ? 1 : 0;
 }
 
@@ -1854,6 +1874,9 @@ S_amagic_ncmp(pTHX_ register SV *a, register SV *b)
 {
     dVAR;
     SV * const tmpsv = tryCALL_AMAGICbin(a,b,ncmp);
+
+    PERL_ARGS_ASSERT_AMAGIC_NCMP;
+
     if (tmpsv) {
         if (SvIOK(tmpsv)) {
             const I32 i = SvIVX(tmpsv);
@@ -1872,6 +1895,9 @@ S_amagic_i_ncmp(pTHX_ register SV *a, register SV *b)
 {
     dVAR;
     SV * const tmpsv = tryCALL_AMAGICbin(a,b,ncmp);
+
+    PERL_ARGS_ASSERT_AMAGIC_I_NCMP;
+
     if (tmpsv) {
         if (SvIOK(tmpsv)) {
             const I32 i = SvIVX(tmpsv);
@@ -1890,6 +1916,9 @@ S_amagic_cmp(pTHX_ register SV *str1, register SV *str2)
 {
     dVAR;
     SV * const tmpsv = tryCALL_AMAGICbin(str1,str2,scmp);
+
+    PERL_ARGS_ASSERT_AMAGIC_CMP;
+
     if (tmpsv) {
         if (SvIOK(tmpsv)) {
             const I32 i = SvIVX(tmpsv);
@@ -1908,6 +1937,9 @@ S_amagic_cmp_locale(pTHX_ register SV *str1, register SV *str2)
 {
     dVAR;
     SV * const tmpsv = tryCALL_AMAGICbin(str1,str2,scmp);
+
+    PERL_ARGS_ASSERT_AMAGIC_CMP_LOCALE;
+
     if (tmpsv) {
         if (SvIOK(tmpsv)) {
             const I32 i = SvIVX(tmpsv);

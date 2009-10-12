@@ -2,12 +2,12 @@
 
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
-use MBTest tests => 27;
+use MBTest tests => 28;
+
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
 
 #########################
-
-use Module::Build;
-ok(1);
 
 package Foo;
 sub foo;

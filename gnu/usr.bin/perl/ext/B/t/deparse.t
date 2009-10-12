@@ -27,7 +27,8 @@ BEGIN {
     require feature;
     feature->import(':5.10');
 }
-use Test::More tests => 54;
+use Test::More tests => 70;
+use Config ();
 
 use B::Deparse;
 my $deparse = B::Deparse->new();
@@ -49,24 +50,27 @@ while (<DATA>) {
     chomp;
     # This code is pinched from the t/lib/common.pl for TODO.
     # It's not clear how to avoid duplication
-    my ($skip, $skip_reason);
-    s/^#\s*SKIP\s*(.*)\n//m and $skip_reason = $1;
-    # If the SKIP reason starts ? then it's taken as a code snippet to evaluate
-    # This provides the flexibility to have conditional SKIPs
-    if ($skip_reason && $skip_reason =~ s/^\?//) {
-	my $temp = eval $skip_reason;
-	if ($@) {
-	    die "# In SKIP code reason:\n# $skip_reason\n$@";
+    # Now tweaked a bit to do skip or todo
+    my %reason;
+    foreach my $what (qw(skip todo)) {
+	s/^#\s*\U$what\E\s*(.*)\n//m and $reason{$what} = $1;
+	# If the SKIP reason starts ? then it's taken as a code snippet to
+	# evaluate. This provides the flexibility to have conditional SKIPs
+	if ($reason{$what} && $reason{$what} =~ s/^\?//) {
+	    my $temp = eval $reason{$what};
+	    if ($@) {
+		die "# In \U$what\E code reason:\n# $reason{$what}\n$@";
+	    }
+	    $reason{$what} = $temp;
 	}
-	$skip_reason = $temp;
     }
 
-    s/#\s*(.*)$//mg;
+    s/^\s*#\s*(.*)$//mg;
     my ($num, $testname) = $1 =~ m/(\d+)\s*(.*)/;
 
-    if ($skip_reason) {
+    if ($reason{skip}) {
 	# Like this to avoid needing a label SKIP:
-	Test::More->builder->skip($skip_reason);
+       Test::More->builder->skip($reason{skip});
 	next;
     }
 
@@ -90,6 +94,8 @@ while (<DATA>) {
 	$regex =~ s/(\S+)/\Q$1/g;
 	$regex =~ s/\s+/\\s+/g;
 	$regex = '^\{\s*' . $regex . '\s*\}$';
+
+	local $::TODO = $reason{todo};
         like($deparsed, qr/$regex/, $testname);
     }
 }
@@ -102,8 +108,9 @@ is("{\n    (-1) ** \$a;\n}", $deparse->coderef2text(sub{(-1) ** $a }));
 
 use constant cr => ['hello'];
 my $string = "sub " . $deparse->coderef2text(\&cr);
-my $val = (eval $string)->();
-ok( ref($val) eq 'ARRAY' && $val->[0] eq 'hello');
+my $val = (eval $string)->() or diag $string;
+is(ref($val), 'ARRAY');
+is($val->[0], 'hello');
 
 my $Is_VMS = $^O eq 'VMS';
 my $Is_MacOS = $^O eq 'MacOS';
@@ -146,9 +153,18 @@ sub getcode {
    return $deparser->coderef2text(shift);
 }
 
+package Moo;
+use overload '0+' => sub { 42 };
+
 package main;
 use strict;
 use warnings;
+use constant GLIPP => 'glipp';
+use constant PI => 4;
+use constant OVERLOADED_NUMIFICATION => bless({}, 'Moo');
+use Fcntl qw/O_TRUNC O_APPEND O_EXCL/;
+BEGIN { delete $::Fcntl::{O_APPEND}; }
+use POSIX qw/O_CREAT/;
 sub test {
    my $val = shift;
    my $res = B::Deparse::Wrapper::getcode($val);
@@ -384,3 +400,128 @@ $a = sub {
     return $x++;
 }
 ;
+####
+# SKIP ?$] < 5.011 && 'each @array not implemented on this Perl version'
+# 49 each @array;
+each @ARGV;
+each @$a;
+####
+# SKIP ?$] < 5.011 && 'each @array not implemented on this Perl version'
+# 50 keys @array; values @array
+keys @$a if keys @ARGV;
+values @ARGV if values @$a;
+####
+# 51 Anonymous arrays and hashes, and references to them
+my $a = {};
+my $b = \{};
+my $c = [];
+my $d = \[];
+####
+# SKIP ?$] < 5.010 && "smartmatch and given/when not implemented on this Perl version"
+# 52 implicit smartmatch in given/when
+given ('foo') {
+    when ('bar') { continue; }
+    when ($_ ~~ 'quux') { continue; }
+    default { 0; }
+}
+####
+# 53 conditions in elsifs (regression in change #33710 which fixed bug #37302)
+if ($a) { x(); }
+elsif ($b) { x(); }
+elsif ($a and $b) { x(); }
+elsif ($a or $b) { x(); }
+else { x(); }
+####
+# 54 interpolation in regexps
+my($y, $t);
+/x${y}z$t/;
+####
+# TODO new undocumented cpan-bug #33708
+# 55  (cpan-bug #33708)
+%{$_ || {}}
+####
+# TODO hash constants not yet fixed
+# 56  (cpan-bug #33708)
+use constant H => { "#" => 1 }; H->{"#"}
+####
+# TODO optimized away 0 not yet fixed
+# 57  (cpan-bug #33708)
+foreach my $i (@_) { 0 }
+####
+# 58 placeholder for skipped edbe35ea95
+1;
+####
+# 59 placeholder for skipped edbe35ea95
+1;
+####
+# 60 tests that should be constant folded
+x() if 1;
+x() if GLIPP;
+x() if !GLIPP;
+x() if GLIPP && GLIPP;
+x() if !GLIPP || GLIPP;
+x() if do { GLIPP };
+x() if do { no warnings 'void'; 5; GLIPP };
+x() if do { !GLIPP };
+if (GLIPP) { x() } else { z() }
+if (!GLIPP) { x() } else { z() }
+if (GLIPP) { x() } elsif (GLIPP) { z() }
+if (!GLIPP) { x() } elsif (GLIPP) { z() }
+if (GLIPP) { x() } elsif (!GLIPP) { z() }
+if (!GLIPP) { x() } elsif (!GLIPP) { z() }
+if (!GLIPP) { x() } elsif (!GLIPP) { z() } elsif (GLIPP) { t() }
+if (!GLIPP) { x() } elsif (!GLIPP) { z() } elsif (!GLIPP) { t() }
+if (!GLIPP) { x() } elsif (!GLIPP) { z() } elsif (!GLIPP) { t() }
+>>>>
+x();
+x();
+'???';
+x();
+x();
+x();
+x();
+do {
+    '???'
+};
+do {
+    x()
+};
+do {
+    z()
+};
+do {
+    x()
+};
+do {
+    z()
+};
+do {
+    x()
+};
+'???';
+do {
+    t()
+};
+'???';
+!1;
+####
+# TODO Only strict 'refs' currently supported
+# 68 strict
+no strict;
+$x;
+####
+# TODO Subsets of warnings could be encoded textually, rather than as bitflips.
+no warnings 'deprecated';
+my $x;
+####
+# TODO Better test for CPAN #33708 - the deparsed code has different behaviour
+use strict;
+no warnings;
+
+foreach (0..3) {
+    my $x = 2;
+    {
+	my $x if 0;
+	print ++$x, "\n";
+    }
+}

@@ -10,7 +10,7 @@ To recreate it use the following command:
 
      uupacktool.pl -p lib/CPANPLUS/t/dummy-CPAN/authors/01mailrc.txt.gz lib/CPANPLUS/t/dummy-CPAN/authors/01mailrc.txt.gz.packed
 
-Created at Fri Dec 14 13:43:16 2007
+Created at Sat Jun 27 16:51:08 2009
 #########################################################################
 __UU__
 M'XL("%_EO$4``S`Q;6%I;')C+G1X=`!+S,E,+%9P#8T(5@`#)=>*DM"2S)QB

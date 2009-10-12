@@ -1,6 +1,6 @@
 package B::Lint;
 
-our $VERSION = '1.09';    ## no critic
+our $VERSION = '1.11';    ## no critic
 
 =head1 NAME
 
@@ -185,6 +185,10 @@ This is only a very preliminary version.
 
 Malcolm Beattie, mbeattie@sable.ox.ac.uk.
 
+=head1 ACKNOWLEDGEMENTS
+
+Sebastien Aperghis-Tramoni - bug fixes
+
 =cut
 
 use strict;
@@ -347,8 +351,8 @@ for (
         my @elts       = map +( $_->ARRAY )[$ix], @entire_pad;
         ($elt) = first {
             eval { $_->isa('B::SV') } ? $_ : ();
-            }
-            @elts[ 0, reverse 1 .. $#elts ];
+        }
+        @elts[ 0, reverse 1 .. $#elts ];
         return $elt;
     };
 }
@@ -511,7 +515,7 @@ IMPLICIT_FOO: {
 # scratchpad to find things. I suppose this is so a optree can be
 # shared between threads and all symbol table muckery will just get
 # written to a scratchpad.
-*B::PADOP::lint = \&B::SVOP::lint;
+*B::PADOP::lint = *B::PADOP::lint = \&B::SVOP::lint;
 
 sub B::SVOP::lint {
     my ($op) = @_;

@@ -1,6 +1,6 @@
 /*    xsutils.c
  *
- *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
+ *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
  *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
@@ -9,8 +9,10 @@
  */
 
 /*
- * "Perilous to us all are the devices of an art deeper than we possess
- * ourselves." --Gandalf
+ * 'Perilous to us all are the devices of an art deeper than we possess
+ *  ourselves.'                                            --Gandalf
+ *
+ *     [p.597 of _The Lord of the Rings_, III/xi: "The Palantír"]
  */
 
 
@@ -73,32 +75,30 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 	    switch ((int)len) {
 	    case 6:
 		switch (name[3]) {
-#ifdef CVf_LVALUE
 		case 'l':
 		    if (memEQ(name, "lvalue", 6)) {
 			if (negated)
-			    CvFLAGS((CV*)sv) &= ~CVf_LVALUE;
+			    CvFLAGS(MUTABLE_CV(sv)) &= ~CVf_LVALUE;
 			else
-			    CvFLAGS((CV*)sv) |= CVf_LVALUE;
+			    CvFLAGS(MUTABLE_CV(sv)) |= CVf_LVALUE;
 			continue;
 		    }
 		    break;
-#endif
 		case 'k':
 		    if (memEQ(name, "locked", 6)) {
 			if (negated)
-			    CvFLAGS((CV*)sv) &= ~CVf_LOCKED;
+			    CvFLAGS(MUTABLE_CV(sv)) &= ~CVf_LOCKED;
 			else
-			    CvFLAGS((CV*)sv) |= CVf_LOCKED;
+			    CvFLAGS(MUTABLE_CV(sv)) |= CVf_LOCKED;
 			continue;
 		    }
 		    break;
 		case 'h':
 		    if (memEQ(name, "method", 6)) {
 			if (negated)
-			    CvFLAGS((CV*)sv) &= ~CVf_METHOD;
+			    CvFLAGS(MUTABLE_CV(sv)) &= ~CVf_METHOD;
 			else
-			    CvFLAGS((CV*)sv) |= CVf_METHOD;
+			    CvFLAGS(MUTABLE_CV(sv)) |= CVf_METHOD;
 			continue;
 		    }
 		    break;
@@ -120,7 +120,7 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 		    break;
 		case 'e':
 		    if (memEQ(name, "uniqu", 5)) {
-			if (SvTYPE(sv) == SVt_PVGV) {
+			if (isGV_with_GP(sv)) {
 			    if (negated) {
 				GvUNIQUE_off(sv);
 			    } else {
@@ -150,10 +150,9 @@ XS(XS_attributes_bootstrap)
 {
     dVAR;
     dXSARGS;
-    PERL_UNUSED_ARG(cv);
 
     if( items > 1 )
-        Perl_croak(aTHX_ "Usage: attributes::bootstrap $module");
+	croak_xs_usage(cv, "$module");
 
     newXS("attributes::_modify_attrs",	XS_attributes__modify_attrs,	file);
     newXSproto("attributes::_guess_stash", XS_attributes__guess_stash, file, "$");
@@ -168,12 +167,10 @@ XS(XS_attributes__modify_attrs)
     dVAR;
     dXSARGS;
     SV *rv, *sv;
-    PERL_UNUSED_ARG(cv);
 
     if (items < 1) {
 usage:
-	Perl_croak(aTHX_
-		   "Usage: attributes::_modify_attrs $reference, @attributes");
+	croak_xs_usage(cv, "@attributes");
     }
 
     rv = ST(0);
@@ -192,12 +189,10 @@ XS(XS_attributes__fetch_attrs)
     dXSARGS;
     SV *rv, *sv;
     cv_flags_t cvflags;
-    PERL_UNUSED_ARG(cv);
 
     if (items != 1) {
 usage:
-	Perl_croak(aTHX_
-		   "Usage: attributes::_fetch_attrs $reference");
+	croak_xs_usage(cv, "$reference");
     }
 
     rv = ST(0);
@@ -208,21 +203,19 @@ usage:
 
     switch (SvTYPE(sv)) {
     case SVt_PVCV:
-	cvflags = CvFLAGS((CV*)sv);
+	cvflags = CvFLAGS((const CV *)sv);
 	if (cvflags & CVf_LOCKED)
-	    XPUSHs(sv_2mortal(newSVpvs("locked")));
-#ifdef CVf_LVALUE
+	    XPUSHs(newSVpvs_flags("locked", SVs_TEMP));
 	if (cvflags & CVf_LVALUE)
-	    XPUSHs(sv_2mortal(newSVpvs("lvalue")));
-#endif
+	    XPUSHs(newSVpvs_flags("lvalue", SVs_TEMP));
 	if (cvflags & CVf_METHOD)
-	    XPUSHs(sv_2mortal(newSVpvs("method")));
-        if (GvUNIQUE(CvGV((CV*)sv)))
-	    XPUSHs(sv_2mortal(newSVpvs("unique")));
+	    XPUSHs(newSVpvs_flags("method", SVs_TEMP));
+        if (GvUNIQUE(CvGV((const CV *)sv)))
+	    XPUSHs(newSVpvs_flags("unique", SVs_TEMP));
 	break;
     case SVt_PVGV:
-	if (GvUNIQUE(sv))
-	    XPUSHs(sv_2mortal(newSVpvs("unique")));
+	if (isGV_with_GP(sv) && GvUNIQUE(sv))
+	    XPUSHs(newSVpvs_flags("unique", SVs_TEMP));
 	break;
     default:
 	break;
@@ -237,12 +230,10 @@ XS(XS_attributes__guess_stash)
     dXSARGS;
     SV *rv, *sv;
     dXSTARG;
-    PERL_UNUSED_ARG(cv);
 
     if (items != 1) {
 usage:
-	Perl_croak(aTHX_
-		   "Usage: attributes::_guess_stash $reference");
+	croak_xs_usage(cv, "$reference");
     }
 
     rv = ST(0);
@@ -267,8 +258,8 @@ usage:
 		stash = CvSTASH(sv);
 	    break;
 	case SVt_PVGV:
-	    if (GvGP(sv) && GvESTASH((GV*)sv))
-		stash = GvESTASH((GV*)sv);
+	    if (isGV_with_GP(sv) && GvGP(sv) && GvESTASH(MUTABLE_GV(sv)))
+		stash = GvESTASH(MUTABLE_GV(sv));
 	    break;
 	default:
 	    break;
@@ -287,12 +278,10 @@ XS(XS_attributes_reftype)
     dXSARGS;
     SV *rv, *sv;
     dXSTARG;
-    PERL_UNUSED_ARG(cv);
 
     if (items != 1) {
 usage:
-	Perl_croak(aTHX_
-		   "Usage: attributes::reftype $reference");
+	croak_xs_usage(cv, "$reference");
     }
 
     rv = ST(0);

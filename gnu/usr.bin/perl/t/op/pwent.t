@@ -41,6 +41,71 @@ BEGIN {
 	}
     }
 
+    if (not defined $where &&		# Try dscl
+	$Config{useperlio} eq 'define') {	# need perlio
+
+	# Map dscl items to passwd fields, and provide support for
+	# mucking with the dscl output if we need to (and we do).
+	my %want = do {
+	    my $inx = 0;
+	    map {$_ => {inx => $inx++, mung => sub {$_[0]}}}
+		qw{RecordName Password UniqueID PrimaryGroupID
+		RealName NFSHomeDirectory UserShell};
+	};
+
+	# The RecordName for a /User record is the username. In some
+	# cases there are synonyms (e.g. _www and www), in which case we
+	# get a blank-delimited list. We prefer the first entry in the
+	# list because getpwnam() does.
+	$want{RecordName}{mung} = sub {(split '\s+', $_[0], 2)[0]};
+
+	# The UniqueID and PrimaryGroupID for a /User record are the
+	# user ID and the primary group ID respectively. In cases where
+	# the high bit is set, 'dscl' returns a negative number, whereas
+	# getpwnam() returns its twos complement. This mungs the dscl
+	# output to agree with what getpwnam() produces. Interestingly
+	# enough, getpwuid(-2) returns the right record ('nobody'), even
+	# though it returns the uid as 4294967294. If you track uid_t
+	# on an i386, you find it is an unsigned int, which makes the
+	# unsigned version the right one; but both /etc/passwd and
+	# /etc/master.passwd contain negative numbers.
+	$want{UniqueID}{mung} = $want{PrimaryGroupID}{mung} = sub {
+	    unpack 'L', pack 'l', $_[0]};
+
+	foreach my $dscl (qw(/usr/bin/dscl)) {
+	    -x $dscl or next;
+	    open (my $fh, '-|', join (' ', $dscl, qw{. -readall /Users},
+		    keys %want, '2>/dev/null')) or next;
+	    my $data;
+	    my @rec;
+	    while (<$fh>) {
+		chomp;
+		if ($_ eq '-') {
+		    @rec and $data .= join (':', @rec) . "\n";
+		    @rec = ();
+		    next;
+		}
+		my ($name, $value) = split ':\s+', $_, 2;
+		unless (defined $value) {
+		    s/:$//;
+		    $name = $_;
+		    $value = <$fh>;
+		    chomp $value;
+		    $value =~ s/^\s+//;
+		}
+		if (defined (my $info = $want{$name})) {
+		    $rec[$info->{inx}] = $info->{mung}->($value);
+		}
+	    }
+	    @rec and $data .= join (':', @rec) . "\n";
+	    if (open (PW, '<', \$data)) {
+		$where = "dscl . -readall /Users";
+		undef $reason;
+		last;
+	    }
+	}
+    }
+
     if (not defined $where) {	# Try local.
 	my $PW = "/etc/passwd";
 	if (-f $PW && open(PW, $PW) && defined(<PW>)) {

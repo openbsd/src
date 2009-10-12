@@ -2,7 +2,7 @@
 # Test for File::Temp - OO interface
 
 use strict;
-use Test::More tests => 26;
+use Test::More tests => 30;
 use File::Spec;
 
 # Will need to check that all files were unlinked correctly
@@ -44,7 +44,22 @@ ok( (-f "$fh"), "File $fh still exists after close" );
 # Check again at exit
 push(@files, "$fh");
 
-# TEMPDIR test
+# OO tempdir
+my $tdir = File::Temp->newdir();
+my $dirname = "$tdir"; # Stringify overload
+ok( -d $dirname, "Directory $tdir exists");
+undef $tdir;
+ok( !-d $dirname, "Directory should now be gone");
+
+# Quick basic tempfile test
+my $qfh = File::Temp->new();
+my $qfname = "$qfh";
+ok (-f $qfname, "temp file exists");
+undef $qfh;
+ok( !-f $qfname, "temp file now gone");
+
+
+# TEMPDIR test as somewhere to put the temp files
 # Create temp directory in current dir
 my $template = 'tmpdirXXXXXX';
 print "# Template: $template\n";

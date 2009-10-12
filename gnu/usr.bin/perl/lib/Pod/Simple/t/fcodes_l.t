@@ -7,7 +7,7 @@ BEGIN {
 
 use strict;
 use Test;
-BEGIN { plan tests => 93 };
+BEGIN { plan tests => 99 };
 
 #use Pod::Simple::Debug (10);
 
@@ -397,6 +397,27 @@ ok( $x->_out(qq{=pod\n\nI like L<<< the F<< various >> attributes|/Member Data >
 ok( $x->_out(qq{=pod\n\nI like L<<< the F<< various >> attributes|"Member Data" >>>.\n}),
  '<Document><Para>I like <L section="Member Data" type="pod">the <F>various</F> attributes</L>.</Para></Document>'
 );
+
+ok( $x->_out(qq{=pod\n\nI like L<<< B<text>s|http://text.com >>>.\n}),
+'<Document><Para>I like <L to="http://text.com" type="url"><B>text</B>s</L>.</Para></Document>'
+);
+ok( $x->_out(qq{=pod\n\nI like L<<< text|https://text.com/1/2 >>>.\n}),
+'<Document><Para>I like <L to="https://text.com/1/2" type="url">text</L>.</Para></Document>'
+);
+ok( $x->_out(qq{=pod\n\nI like L<<< I<text>|http://text.com >>>.\n}),
+'<Document><Para>I like <L to="http://text.com" type="url"><I>text</I></L>.</Para></Document>'
+);
+ok( $x->_out(qq{=pod\n\nI like L<<< C<text>|http://text.com >>>.\n}),
+'<Document><Para>I like <L to="http://text.com" type="url"><C>text</C></L>.</Para></Document>'
+);
+ok( $x->_out(qq{=pod\n\nI like L<<< I<tI<eI<xI<t>>>>|mailto:earlE<64>text.com >>>.\n}),
+'<Document><Para>I like <L to="mailto:earl@text.com" type="url"><I>t<I>e<I>x<I>t</I></I></I></I></L>.</Para></Document>'
+);
+ok( $x->_out(qq{=pod\n\nI like L<<< textZ<>|http://text.com >>>.\n}),
+'<Document><Para>I like <L to="http://text.com" type="url">text</L>.</Para></Document>'
+);
+
+
 
 
 #

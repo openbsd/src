@@ -9,7 +9,7 @@ require ExtUtils::Constant::XS;
 use ExtUtils::Constant::Utils qw(C_stringify);
 use ExtUtils::Constant::XS qw(%XS_TypeSet);
 
-$VERSION = '0.05';
+$VERSION = '0.06';
 @ISA = 'ExtUtils::Constant::XS';
 
 %type_to_struct =
@@ -197,9 +197,19 @@ sub WriteConstants {
     my $athx = $self->C_constant_prefix_param();
     my $symbol_table = C_stringify($package) . '::';
 
+    my $can_do_pcs = $] >= 5.009;
+    my $cast_CONSTSUB = $] < 5.010 ? '(char *)' : '';
+
     print $c_fh $self->header(), <<"EOADD";
 static void
 ${c_subname}_add_symbol($pthx HV *hash, const char *name, I32 namelen, SV *value) {
+EOADD
+    if (!$can_do_pcs) {
+	print $c_fh <<'EO_NOPCS';
+    if (namelen == namelen) {
+EO_NOPCS
+    } else {
+	print $c_fh <<"EO_PCS";
     SV **sv = hv_fetch(hash, name, namelen, TRUE);
     if (!sv) {
         Perl_croak($athx "Couldn't add key '%s' to %%$package_sprintf_safe\::",
@@ -207,13 +217,27 @@ ${c_subname}_add_symbol($pthx HV *hash, const char *name, I32 namelen, SV *value
     }
     if (SvOK(*sv) || SvTYPE(*sv) == SVt_PVGV) {
 	/* Someone has been here before us - have to make a real sub.  */
-	newCONSTSUB(hash, name, value);
+EO_PCS
+    }
+    # This piece of code is common to both
+    print $c_fh <<"EOADD";
+	newCONSTSUB(hash, ${cast_CONSTSUB}name, value);
+EOADD
+    if ($can_do_pcs) {
+	print $c_fh <<'EO_PCS';
     } else {
 	SvUPGRADE(*sv, SVt_RV);
 	SvRV_set(*sv, value);
 	SvROK_on(*sv);
 	SvREADONLY_on(value);
     }
+EO_PCS
+    } else {
+	print $c_fh <<'EO_NOPCS';
+    }
+EO_NOPCS
+    }
+    print $c_fh <<'EOADD';
 }
 
 EOADD
@@ -294,7 +318,7 @@ BOOT:
 #ifdef dTHX
     dTHX;
 #endif
-    HV *symbol_table = get_hv("$symbol_table", TRUE);
+    HV *symbol_table = get_hv("$symbol_table", GV_ADD);
 #ifndef SYMBIAN
     HV *${c_subname}_missing;
 #endif
@@ -411,7 +435,8 @@ EXPLODE
 		/* It turns out to be incredibly hard to deal with all the
 		   corner cases of sub foo (); and reporting errors correctly,
 		   so lets cheat a bit.  Start with a constant subroutine  */
-		CV *cv = newCONSTSUB(symbol_table, value_for_notfound->name,
+		CV *cv = newCONSTSUB(symbol_table,
+				     ${cast_CONSTSUB}value_for_notfound->name,
 				     &PL_sv_yes);
 		/* and then turn it into a non constant declaration only.  */
 		SvREFCNT_dec(CvXSUBANY(cv).any_ptr);

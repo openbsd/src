@@ -708,7 +708,7 @@ L<perlrun>
 
 =head1 AUTHOR
 
-Richard Foley <richard@rfi.net> Copyright (c) 2000
+Richard Foley <richard.foley@rfi.net> Copyright (c) 2000
 
 
 =head1 CONTRIBUTORS

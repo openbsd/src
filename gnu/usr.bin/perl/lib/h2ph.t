@@ -1,4 +1,5 @@
 #!./perl
+use strict;
 
 # quickie tests to see if h2ph actually runs and does more or less what is
 # expected
@@ -8,6 +9,8 @@ BEGIN {
     @INC = '../lib';
 }
 
+require './test.pl';
+
 my $extracted_program = '../utils/h2ph'; # unix, nt, ...
 if ($^O eq 'VMS') { $extracted_program = '[-.utils]h2ph.com'; }
 if (!(-e $extracted_program)) {
@@ -15,23 +18,35 @@ if (!(-e $extracted_program)) {
     exit 0;
 }
 
-print "1..2\n";
+plan(4);
 
 # quickly compare two text files
 sub txt_compare {
-    local ($/, $A, $B);
+    local $/;
+    my ($A, $B);
     for (($A,$B) = @_) { open(_,"<$_") ? $_ = <_> : die "$_ : $!"; close _ }
     $A cmp $B;
 }
 
-# does it run?
-$ok = system("$^X \"-I../lib\" $extracted_program -d. \"-Q\" lib/h2ph.h");
-print(($ok == 0 ? "" : "not "), "ok 1\n");
+my $result = runperl( progfile => $extracted_program, 
+                      args => ['-d.', '-Q', 'lib/h2ph.h']);
+is( $?, 0, "$extracted_program runs successfully" );
     
-# does it work? well, does it do what we expect? :-)
-$ok = txt_compare("lib/h2ph.ph", "lib/h2ph.pht");
-print(($ok == 0 ? "" : "not "), "ok 2\n");
+is ( txt_compare("lib/h2ph.ph", "lib/h2ph.pht"), 
+     0,
+     "generated file has expected contents" );
     
-# cleanup - should this be in an END block?
-unlink("lib/h2ph.ph");
-unlink("_h2ph_pre.ph");
+$result = runperl( progfile => 'lib/h2ph.pht', 
+                   switches => ['-c'], 
+                   stderr => 1 );
+like( $result, qr/syntax OK$/, "output compiles");
+
+$result = runperl( switches => ["-w"], 
+                   prog => '$SIG{__WARN__} = sub { die $_[0] }; require q(lib/h2ph.pht);');
+is( $result, '', "output free of warnings" );
+
+# cleanup
+END {
+    1 while unlink("lib/h2ph.ph");
+    1 while unlink("_h2ph_pre.ph");
+}

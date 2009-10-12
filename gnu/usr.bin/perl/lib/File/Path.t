@@ -2,17 +2,19 @@
 
 use strict;
 
-use Test::More tests => 99;
+use Test::More tests => 121;
+use Config;
 
 BEGIN {
-    use_ok('File::Path');
+    use_ok('Cwd');
+    use_ok('File::Path', qw(rmtree mkpath make_path remove_tree));
     use_ok('File::Spec::Functions');
 }
 
 eval "use Test::Output";
 my $has_Test_Output = $@ ? 0 : 1;
 
-my $Is_VMS   = $^O eq 'VMS';
+my $Is_VMS = $^O eq 'VMS';
 
 # first check for stupid permissions second for full, so we clean up
 # behind ourselves
@@ -45,7 +47,7 @@ my @dir = (
 );
 
 # create them
-my @created = mkpath(@dir);
+my @created = mkpath([@dir]);
 
 is(scalar(@created), 7, "created list of directories");
 
@@ -79,18 +81,98 @@ is(scalar(@created), 0, "Can't create a directory named ''");
 my $dir;
 my $dir2;
 
+sub gisle {
+    # background info: @_ = 1; !shift # gives '' not 0
+    # Message-Id: <3C820CE6-4400-4E91-AF43-A3D19B356E68@activestate.com>
+    # http://www.nntp.perl.org/group/perl.perl5.porters/2008/05/msg136625.html
+    mkpath(shift, !shift, 0755);
+}
+
+sub count {
+    opendir D, shift or return -1;
+    my $count = () = readdir D;
+    closedir D or return -1;
+    return $count;
+}
+
+{
+    mkdir 'solo', 0755;
+    chdir 'solo';
+    open my $f, '>', 'foo.dat';
+    close $f;
+    my $before = count(curdir());
+    cmp_ok($before, '>', 0, "baseline $before");
+
+    gisle('1st', 1);
+    is(count(curdir()), $before + 1, "first after $before");
+
+    $before = count(curdir());
+    gisle('2nd', 1);
+    is(count(curdir()), $before + 1, "second after $before");
+
+    chdir updir();
+    rmtree 'solo';
+}
+
+{
+    mkdir 'solo', 0755;
+    chdir 'solo';
+    open my $f, '>', 'foo.dat';
+    close $f;
+    my $before = count(curdir());
+    cmp_ok($before, '>', 0, "ARGV $before");
+    {
+        local @ARGV = (1);
+        mkpath('3rd', !shift, 0755);
+    }
+    is(count(curdir()), $before + 1, "third after $before");
+
+    $before = count(curdir());
+    {
+        local @ARGV = (1);
+        mkpath('4th', !shift, 0755);
+    }
+    is(count(curdir()), $before + 1, "fourth after $before");
+
+    chdir updir();
+    rmtree 'solo';
+}
+
 SKIP: {
-    $dir = catdir($tmp_base, 'B');
-    $dir2 = catdir($dir, updir());
-    # IOW: File::Spec->catdir( qw(foo bar), File::Spec->updir ) eq 'foo'
-    # rather than foo/bar/..    
-    skip "updir() canonicalises path on this platform", 2
-        if $dir2 eq $tmp_base
-            or $^O eq 'cygwin';
-        
-    @created = mkpath($dir2, {mask => 0700});
-    is(scalar(@created), 1, "make directory with trailing parent segment");
-    is($created[0], $dir, "made parent");
+    # tests for rmtree() of ancestor directory
+    my $nr_tests = 6;
+    my $cwd = getcwd() or skip "failed to getcwd: $!", $nr_tests;
+    my $dir  = catdir($cwd, 'remove');
+    my $dir2 = catdir($cwd, 'remove', 'this', 'dir');
+
+    skip "failed to mkpath '$dir2': $!", $nr_tests
+        unless mkpath($dir2, {verbose => 0});
+    skip "failed to chdir dir '$dir2': $!", $nr_tests
+        unless chdir($dir2);
+
+    rmtree($dir, {error => \$error});
+    my $nr_err = @$error;
+    is($nr_err, 1, "ancestor error");
+
+    if ($nr_err) {
+        my ($file, $message) = each %{$error->[0]};
+        is($file, $dir, "ancestor named");
+        my $ortho_dir = $^O eq 'MSWin32' ? File::Path::_slash_lc($dir2) : $dir2;
+        $^O eq 'MSWin32' and $message
+            =~ s/\A(cannot remove path when cwd is )(.*)\Z/$1 . File::Path::_slash_lc($2)/e;
+        is($message, "cannot remove path when cwd is $ortho_dir", "ancestor reason");
+        ok(-d $dir2, "child not removed");
+        ok(-d $dir, "ancestor not removed");
+    }
+    else {
+        fail( "ancestor 1");
+        fail( "ancestor 2");
+        fail( "ancestor 3");
+        fail( "ancestor 4");
+    }
+    chdir $cwd;
+    rmtree($dir);
+    ok(!(-d $dir), "ancestor now removed");
 };
 
 my $count = rmtree({error => \$error});
@@ -104,7 +186,7 @@ is(scalar(@created), 0, "skipped making existing directories (old style 1)")
 $dir = catdir($tmp_base,'C');
 # mkpath returns unix syntax filespecs on VMS
 $dir = VMS::Filespec::unixify($dir) if $Is_VMS;
-@created = mkpath($tmp_base, $dir);
+@created = make_path($tmp_base, $dir);
 is(scalar(@created), 1, "created directory (new style 1)");
 is($created[0], $dir, "created directory (new style 1) cross-check");
 
@@ -115,7 +197,7 @@ is(scalar(@created), 0, "skipped making existing directories (old style 2)")
 $dir2 = catdir($tmp_base,'D');
 # mkpath returns unix syntax filespecs on VMS
 $dir2 = VMS::Filespec::unixify($dir2) if $Is_VMS;
-@created = mkpath($tmp_base, $dir, $dir2);
+@created = make_path($tmp_base, $dir, $dir2);
 is(scalar(@created), 1, "created directory (new style 2)");
 is($created[0], $dir2, "created directory (new style 2) cross-check");
 
@@ -135,7 +217,7 @@ cmp_ok(scalar(@created), '>=', 1, "made one or more dirs because of ..");
 cmp_ok(scalar(@created), '<=', 2, "made less than two dirs because of ..");
 ok( -d catdir($tmp_base, 'Y'), "directory after parent" );
 
-@created = mkpath(catdir(curdir(), $tmp_base));
+@created = make_path(catdir(curdir(), $tmp_base));
 is(scalar(@created), 0, "nothing created")
     or diag(@created);
 
@@ -195,22 +277,22 @@ else {
 $dir   = catdir('a', 'd1');
 $dir2  = catdir('a', 'd2');
 
-@created = mkpath( $dir, 0, $dir2 );
+@created = make_path( $dir, 0, $dir2 );
 is(scalar @created, 3, 'new-style 3 dirs created');
 
-$count = rmtree( $dir, 0, $dir2, );
+$count = remove_tree( $dir, 0, $dir2, );
 is($count, 3, 'new-style 3 dirs removed');
 
-@created = mkpath( $dir, $dir2, 1 );
+@created = make_path( $dir, $dir2, 1 );
 is(scalar @created, 3, 'new-style 3 dirs created (redux)');
 
-$count = rmtree( $dir, $dir2, 1 );
+$count = remove_tree( $dir, $dir2, 1 );
 is($count, 3, 'new-style 3 dirs removed (redux)');
 
-@created = mkpath( $dir, $dir2 );
+@created = make_path( $dir, $dir2 );
 is(scalar @created, 2, 'new-style 2 dirs created');
 
-$count = rmtree( $dir, $dir2 );
+$count = remove_tree( $dir, $dir2 );
 is($count, 2, 'new-style 2 dirs removed');
 
 if (chdir updir()) {
@@ -218,6 +300,60 @@ if (chdir updir()) {
 }
 else {
     fail("chdir parent: $!");
+}
+
+SKIP: {
+    skip "This is not a MSWin32 platform", 1
+        unless $^O eq 'MSWin32';
+
+    my $UNC_path_taint = $ENV{PERL_FILE_PATH_UNC_TESTDIR};
+    skip "PERL_FILE_PATH_UNC_TESTDIR environment variable not set", 1
+        unless defined($UNC_path_taint);
+
+    my ($UNC_path) = ($UNC_path_taint =~ m{^([/\\]{2}\w+[/\\]\w+[/\\]\w+)$});
+    
+    skip "PERL_FILE_PATH_UNC_TESTDIR environment variable does not point to a directory", 1
+        unless -d $UNC_path;
+    
+    my $removed = rmtree($UNC_path);
+    cmp_ok($removed, '>', 0, "removed $removed entries from $UNC_path");
+}
+
+SKIP: {
+    # test bug http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=487319
+    skip "Don't need Force_Writeable semantics on $^O", 4
+        if grep {$^O eq $_} qw(amigaos dos epoc MSWin32 MacOS os2);
+    skip "Symlinks not available", 4 unless $Config{'d_symlink'};
+    $dir  = 'bug487319';
+    $dir2 = 'bug487319-symlink';
+    @created = make_path($dir, {mask => 0700});
+    is(scalar @created, 1, 'bug 487319 setup');
+    symlink($dir, $dir2);
+    ok(-e $dir2, "debian bug 487319 setup symlink") or diag($dir2);
+
+    chmod 0500, $dir;
+    my $mask_initial = (stat $dir)[2];
+    remove_tree($dir2);
+
+    my $mask = (stat $dir)[2];
+    is( $mask, $mask_initial, 'mask of symlink target dir unchanged (debian bug 487319)');
+
+    # now try a file
+    my $file = catfile($dir, 'file');
+    open my $out, '>', $file;
+    close $out;
+
+    chmod 0500, $file;
+    $mask_initial = (stat $file)[2];
+
+    my $file2 = catfile($dir, 'symlink');
+    symlink($file, $file2);
+    remove_tree($file2);
+
+    $mask = (stat $file)[2];
+    is( $mask, $mask_initial, 'mask of symlink target file unchanged (debian bug 487319)');
+
+    remove_tree($dir);
 }
 
 # see what happens if a file exists where we want a directory
@@ -245,6 +381,7 @@ my $extra =  catdir(curdir(), qw(EXTRA 1 a));
 SKIP: {
     skip "extra scenarios not set up, see eg/setup-extra-tests", 14
         unless -e $extra;
+    skip "Symlinks not available", 14 unless $Config{'d_symlink'};
 
     my ($list, $err);
     $dir = catdir( 'EXTRA', '1' );
@@ -333,8 +470,7 @@ cannot remove directory for [^:]+: .* at \1 line \2
 cannot unlink file for [^:]+: .* at \1 line \2
 cannot restore permissions to \d+ for [^:]+: .* at \1 line \2
 cannot make child directory read-write-exec for [^:]+: .* at \1 line \2
-cannot remove directory for [^:]+: .* at \1 line \2
-cannot restore permissions to \d+ for [^:]+: .* at \1 line \2},
+cannot remove directory for [^:]+: .* at \1 line \2},
             'rmtree with insufficient privileges'
         );
     }
@@ -355,8 +491,8 @@ cannot restore permissions to \d+ for [^:]+: .* at \1 line \2},
         "rmtree of empty dir carps sensibly"
     );
 
-    stderr_is( sub { mkpath() }, '', "mkpath no args does not carp" );
-    stderr_is( sub { rmtree() }, '', "rmtree no args does not carp" );
+    stderr_is( sub { make_path() }, '', "make_path no args does not carp" );
+    stderr_is( sub { remove_tree() }, '', "remove_tree no args does not carp" );
 
     stdout_is(
         sub {@created = mkpath($dir, 1)},
@@ -409,7 +545,7 @@ SKIP: {
         unless -d catdir(qw(EXTRA 1));
 
     rmtree 'EXTRA', {safe => 0, error => \$error};
-    is( scalar(@$error), 11, 'seven deadly sins' ); # well there used to be 7
+    is( scalar(@$error), 10, 'seven deadly sins' ); # well there used to be 7
 
     rmtree 'EXTRA', {safe => 1, error => \$error};
     is( scalar(@$error), 9, 'safe is better' );
@@ -426,6 +562,27 @@ SKIP: {
     }
 }
 
-rmtree($tmp_base, {result => \$list} );
-is(ref($list), 'ARRAY', "received a final list of results");
-ok( !(-d $tmp_base), "test base directory gone" );
+SKIP: {
+    my $nr_tests = 6;
+    my $cwd = getcwd() or skip "failed to getcwd: $!", $nr_tests;
+    rmtree($tmp_base, {result => \$list} );
+    is(ref($list), 'ARRAY', "received a final list of results");
+    ok( !(-d $tmp_base), "test base directory gone" );
+    
+    my $p = getcwd();
+    my $x = "x$$";
+    my $xx = $x . "x";
+    
+    # setup
+    ok(mkpath($xx));
+    ok(chdir($xx));
+    END {
+         ok(chdir($p));
+         ok(rmtree($xx));
+    }
+    
+    # create and delete directory
+    my $px = catdir($p, $x);
+    ok(mkpath($px));
+    ok(rmtree($px), "rmtree");     # fails in File-Path-2.07
+}

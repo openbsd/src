@@ -154,6 +154,7 @@ contents of this variable are treated as if they were the argument
 of an C<o ...> debugger command (q.v. in L<perldebug/Options>).
 
 =head3 Debugger internal variables
+
 In addition to the file and subroutine-related variables mentioned above,
 the debugger also maintains various magical internal variables.
 

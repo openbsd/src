@@ -63,7 +63,7 @@ do_aspawn (SV *really, void **mark, void **sp)
             *a++ = SvPVx((SV *)*mark, n_a);
         else
             *a++ = "";
-    *a = Nullch;
+    *a = (char*)NULL;
 
     if (argv[0][0] != '/' && argv[0][0] != '\\'
         && !(argv[0][0] && argv[0][1] == ':'
@@ -83,7 +83,8 @@ int
 do_spawn (char *cmd)
 {
     dTHX;
-    char **a,*s,*metachars = "$&*(){}[]'\";\\?>|<~`\n";
+    char const **a;
+    char *s,*metachars = "$&*(){}[]'\";\\?>|<~`\n";
     const char *command[4];
 
     while (*cmd && isSPACE(*cmd))
@@ -121,7 +122,7 @@ do_spawn (char *cmd)
 	    return do_spawnvp("sh",command);
 	}
 
-    Newx (PL_Argv,(s-cmd)/2+2,char*);
+    Newx (PL_Argv,(s-cmd)/2+2,const char*);
     PL_Cmd=savepvn (cmd,s-cmd);
     a=PL_Argv;
     for (s=PL_Cmd; *s;) {
@@ -132,7 +133,7 @@ do_spawn (char *cmd)
 	if (*s)
 	    *s++='\0';
     }
-    *a=Nullch;
+    *a = (char*)NULL;
     if (!PL_Argv[0])
         return -1;
 

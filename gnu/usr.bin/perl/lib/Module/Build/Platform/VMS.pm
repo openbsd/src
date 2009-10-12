@@ -2,7 +2,7 @@ package Module::Build::Platform::VMS;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.2808_01';
+$VERSION = '0.340201';
 $VERSION = eval $VERSION;
 use Module::Build::Base;
 
@@ -136,10 +136,15 @@ sub _quote_args {
                    ? 1 
                    : 0;
 
-  map { $_ = q(").$_.q(") if !/^\"/ && length($_) > 0 }
-     ($got_arrayref ? @{$args[0]} 
-                    : @args
-     );
+  # Do not quote qualifiers that begin with '/'.
+  map { if (!/^\//) { 
+          $_ =~ s/\"/""/g;     # escape C<"> by doubling
+          $_ = q(").$_.q(");
+        }
+  }
+    ($got_arrayref ? @{$args[0]} 
+                   : @args
+    );
 
   return $got_arrayref ? $args[0] 
                        : join(' ', @args);
@@ -183,6 +188,21 @@ sub do_system {
   return !system("$cmd $args");
 }
 
+=item oneliner
+
+Override to ensure that we do not quote the command.
+
+=cut
+
+sub oneliner {
+    my $self = shift;
+    my $oneliner = $self->SUPER::oneliner(@_);
+
+    $oneliner =~ s/^\"\S+\"//;
+
+    return "MCR $^X $oneliner";
+}
+
 =item _infer_xs_spec
 
 Inherit the standard version but tweak the library file name to be 
@@ -209,8 +229,9 @@ sub _infer_xs_spec {
 
 =item rscan_dir
 
-Inherit the standard version but remove dots at end of name.  This may not be 
-necessary if File::Find has been fixed or DECC$FILENAME_UNIX_REPORT is in effect.
+Inherit the standard version but remove dots at end of name.
+If the extended character set is in effect, do not remove dots from filenames
+with Unix path delimiters.
 
 =cut
 
@@ -219,7 +240,11 @@ sub rscan_dir {
 
   my $result = $self->SUPER::rscan_dir( $dir, $pattern );
 
-  for my $file (@$result) { $file =~ s/\.$//; }
+  for my $file (@$result) {
+      if (!_efs() && ($file =~ m#/#)) {
+          $file =~ s/\.$//;
+      }
+  }
   return $result;
 }
 
@@ -234,7 +259,7 @@ sub dist_dir {
   my $self = shift;
 
   my $dist_dir = $self->SUPER::dist_dir;
-  $dist_dir =~ s/\./_/g;
+  $dist_dir =~ s/\./_/g unless _efs();
   return $dist_dir;
 }
 
@@ -296,14 +321,20 @@ sub _detildefy {
         # Remove the tilde
         $spec =~ s/^~//;
 
-        # Remove any slash folloing the tilde if present.
+        # Remove any slash following the tilde if present.
         $spec =~ s#^/##;
 
         # break up the paths for the merge
         my $home = VMS::Filespec::unixify($ENV{HOME});
 
+        # In the default VMS mode, the trailing slash is present.
+        # In Unix report mode it is not.  The parsing logic assumes that
+        # it is present.
+        $home .= '/' unless $home =~ m#/$#;
+
         # Trivial case of just ~ by it self
         if ($spec eq '') {
+            $home =~ s#/$##;
             return $home;
         }
 
@@ -340,9 +371,8 @@ sub _detildefy {
         # Now put the two cases back together
         $arg = File::Spec::Unix->catpath($hvol, $newdirs, $file);
 
-    } else {
-        return $arg;
     }
+    return $arg;
 
 }
 
@@ -355,7 +385,84 @@ lossy.
 
 =cut
 
-sub find_perl_interpreter { return $^X; }
+sub find_perl_interpreter {
+    return VMS::Filespec::vmsify($^X);
+}
+
+=item localize_file_path
+
+Convert the file path to the local syntax
+
+=cut
+
+sub localize_file_path {
+  my ($self, $path) = @_;
+  $path = VMS::Filespec::vmsify($path);
+  $path =~ s/\.\z//;
+  return $path;
+}
+
+=item localize_dir_path
+
+Convert the directory path to the local syntax
+
+=cut
+
+sub localize_dir_path {
+  my ($self, $path) = @_;
+  return VMS::Filespec::vmspath($path);
+}
+
+=item ACTION_clean
+
+The home-grown glob() expands a bit too aggressively when given a bare name,
+so default in a zero-length extension.
+
+=cut
+
+sub ACTION_clean {
+  my ($self) = @_;
+  foreach my $item (map glob(VMS::Filespec::rmsexpand($_, '.;0')), $self->cleanup) {
+    $self->delete_filetree($item);
+  }
+}
+
+
+# Need to look up the feature settings.  The preferred way is to use the
+# VMS::Feature module, but that may not be available to dual life modules.
+
+my $use_feature;
+BEGIN {
+    if (eval { local $SIG{__DIE__}; require VMS::Feature; }) {
+        $use_feature = 1;
+    }
+}
+
+# Need to look up the UNIX report mode.  This may become a dynamic mode
+# in the future.
+sub _unix_rpt {
+    my $unix_rpt;
+    if ($use_feature) {
+        $unix_rpt = VMS::Feature::current("filename_unix_report");
+    } else {
+        my $env_unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        $unix_rpt = $env_unix_rpt =~ /^[ET1]/i; 
+    }
+    return $unix_rpt;
+}
+
+# Need to look up the EFS character set mode.  This may become a dynamic
+# mode in the future.
+sub _efs {
+    my $efs;
+    if ($use_feature) {
+        $efs = VMS::Feature::current("efs_charset");
+    } else {
+        my $env_efs = $ENV{'DECC$EFS_CHARSET'} || '';
+        $efs = $env_efs =~ /^[ET1]/i; 
+    }
+    return $efs;
+}
 
 =back
 

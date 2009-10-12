@@ -1,3 +1,35 @@
+IO 1.25 -- Wed May 13 18:37:33 CDT 2009
+  * Fix test warnings in io_dir
+  * skip tests known to cause a segfault 5.10.0
+
+IO 1.24 -- Mon May 11 14:15:51 CDT 2009
+
+  * Make Makefile.PL usable by core and CPAN
+  * Reorganize files to be under lib/ directory structure now matches core perl
+  * Update with following changes made to core perl distribution
+  * Silence Win32 compiler warning in IO.xs
+  * Make non-blocking mode work on Windows in IO::Socket::INET
+  * fix some missing parts of IO::Handle pod
+  * Implement IO::Handle::say the same way as the builtin say().
+  * Undo io_linenum.t part of #34148. It was io_multihomed.t that I meant (my mistake), and that is now covered by #34155.
+  * watchdog() some IO tests
+  * Some more missing isGV_with_GP()s
+  * IO::Dir destructor
+  * IO::Socket::INET unnecessarily resolves "udp"
+  * IO::Handle->say should ignore $\ (bug #49266)
+  * consting IO.xs
+  * Net::SMTP can't send large messages with bleadperl
+  * Fix for IO::Socket send method
+  * Fixes for the test suite on OS/2
+  * Silence VC++ compiler warnings
+  * IO::Socket's IO.xs fails to compile
+  * IO::Socket::connect returns wrong errno on timeout
+  * Coverity correctly reports that gv might (just) be NULL. So don't derefernece it if it is.
+  * Simplify tests for fork() capabilities
+  * Fix syntax error in io_pipe test
+  * Making IO::Socket pass test on Win32
+  * ext/IO/t/io_unix.t
+
 IO 1.23 -- Sat Mar 25 19:28:28 CST 2006
 
  * Adjust the regression tests to use t/test.pl when $ENV{PERL_CORE} is defined

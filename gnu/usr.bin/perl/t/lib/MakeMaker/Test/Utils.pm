@@ -4,21 +4,56 @@ use File::Spec;
 use strict;
 use Config;
 
-use vars qw($VERSION @ISA @EXPORT);
-
 require Exporter;
-@ISA = qw(Exporter);
+our @ISA = qw(Exporter);
 
-$VERSION = 0.03;
+our $Is_VMS   = $^O eq 'VMS';
+our $Is_MacOS = $^O eq 'MacOS';
 
-@EXPORT = qw(which_perl perl_lib makefile_name makefile_backup
-             make make_run run make_macro calibrate_mtime
-             setup_mm_test_root
-	     have_compiler
-            );
+our @EXPORT = qw(which_perl perl_lib makefile_name makefile_backup
+                 make make_run run make_macro calibrate_mtime
+                 setup_mm_test_root
+                 have_compiler slurp
+                 $Is_VMS $Is_MacOS
+                 run_ok
+                );
 
-my $Is_VMS   = $^O eq 'VMS';
-my $Is_MacOS = $^O eq 'MacOS';
+
+# Setup the code to clean out %ENV
+{
+    # Environment variables which might effect our testing
+    my @delete_env_keys = qw(
+        PERL_MM_OPT
+        PERL_MM_USE_DEFAULT
+        HARNESS_TIMER
+        HARNESS_OPTIONS
+        HARNESS_VERBOSE
+        PREFIX
+        MAKEFLAGS
+    );
+
+    # Remember the ENV values because on VMS %ENV is global
+    # to the user, not the process.
+    my %restore_env_keys;
+
+    sub clean_env {
+        for my $key (@delete_env_keys) {
+            if( exists $ENV{$key} ) {
+                $restore_env_keys{$key} = delete $ENV{$key};
+            }
+            else {
+                delete $ENV{$key};
+            }
+        }
+    }
+
+    END {
+        while( my($key, $val) = each %restore_env_keys ) {
+            $ENV{$key} = $val;
+        }
+    }
+}
+clean_env();
 
 
 =head1 NAME
@@ -44,6 +79,8 @@ MakeMaker::Test::Utils - Utility routines for testing MakeMaker
   my $out           = run($cmd);
 
   my $have_compiler = have_compiler();
+
+  my $text          = slurp($filename);
 
 
 =head1 DESCRIPTION
@@ -253,9 +290,10 @@ sub run {
 
     use ExtUtils::MM;
 
-    # Unix can handle 2>&1 and OS/2 from 5.005_54 up.
+    # Unix, modern Windows and OS/2 from 5.005_54 up can handle 2>&1 
     # This makes our failure diagnostics nicer to read.
-    if( MM->os_flavor_is('Unix') or
+    if( MM->os_flavor_is('Unix')                                   or
+        (MM->os_flavor_is('Win32') and !MM->os_flavor_is('Win9x')) or
         ($] > 5.00554 and MM->os_flavor_is('OS/2'))
       ) {
         return `$cmd 2>&1`;
@@ -263,6 +301,27 @@ sub run {
     else {
         return `$cmd`;
     }
+}
+
+
+=item B<run_ok>
+
+  my @out = run_ok($cmd);
+
+Like run() but it tests that the result exited normally.
+
+The output from run() will be used as a diagnostic if it fails.
+
+=cut
+
+sub run_ok {
+    my $tb = Test::Builder->new;
+
+    my @out = run(@_);
+
+    $tb->cmp_ok( $?, '==', 0, "run(@_)" ) || $tb->diag(@out);
+
+    return wantarray ? @out : join "", @out;
 }
 
 =item B<setup_mm_test_root>
@@ -321,6 +380,26 @@ sub have_compiler {
     return $have_compiler;
 }
 
+=item slurp
+
+  $contents = slurp($filename);
+
+Returns the $contents of $filename.
+
+Will die if $filename cannot be opened.
+
+=cut
+
+sub slurp {
+    my $filename = shift;
+
+    local $/ = undef;
+    open my $fh, $filename or die "Can't open $filename for reading: $!";
+    my $text = <$fh>;
+    close $fh;
+
+    return $text;
+}
 
 =back
 

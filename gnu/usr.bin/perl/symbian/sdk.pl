@@ -12,7 +12,7 @@ if ($ENV{PATH} =~ m!\\Symbian\\(.+?)\\(.+?)\\Epoc32\\gcc\\bin!i) {
     $SDK_NAME = $2;
     $WIN = ($SDK_NAME =~ m!_CW!i || $SDK_NAME eq '8.1a') ?
 	'winscw' : 'wins';
-    $ENV{WIN} = $WIN; 
+    $ENV{WIN} = $WIN;
     if ($SDK_NAME =~ m!Series60_v20!) {
 	$SDK_VARIANT = 'S60';
 	$SDK_VERSION = $ENV{S60SDK} = '2.0';
@@ -32,6 +32,13 @@ if ($ENV{PATH} =~ m!\\Symbian\\(.+?)\\(.+?)\\Epoc32\\gcc\\bin!i) {
 	$SDK_VARIANT = 'S90';
 	$SDK_VERSION = $ENV{S90SDK} = '1.1';
     }
+} elsif ($ENV{PATH} =~ m!\\S60\\devices\\(.+?)\\epoc32\\gcc\\bin!i) {
+	$SDK_VARIANT = 'S60';
+	$SDK_NAME = $1;
+	$WIN = $ENV{WIN} = 'winscw';
+	$SYMBIAN_VERSION = '9.4';
+	$SDK_VERSION = $ENV{S60SDK} = '5.0';
+	$SYMBIAN_ROOT = $ENV{EPOCROOT};
 } elsif ($ENV{PATH} =~ m!\\Symbian\\UIQ_(\d)(\d)\\Epoc32\\gcc\\bin!i) {
     $SDK_NAME    = 'UIQ';
     $SDK_VARIANT = 'UIQ';
@@ -42,7 +49,7 @@ if ($ENV{PATH} =~ m!\\Symbian\\(.+?)\\(.+?)\\Epoc32\\gcc\\bin!i) {
 	die "$0: Unknown UIQ version '$SDK_VERSION'\n";
     }
     $WIN = 'winscw'; # This is CodeWarrior, how about Borland?
-    $ENV{WIN} = $WIN; 
+    $ENV{WIN} = $WIN;
 }
 
 if (open(GCC, "gcc -v 2>&1 |")) {
@@ -52,7 +59,7 @@ if (open(GCC, "gcc -v 2>&1 |")) {
        $SYMBIAN_ROOT = $1;
        # The S60SDK tells the Series 60 SDK version.
        if ($ENV{S60SDK}) {
-	   if ($SYMBIAN_ROOT eq 'C:\Symbian\6.1\Shared') { # Visual C. 
+	   if ($SYMBIAN_ROOT eq 'C:\Symbian\6.1\Shared') { # Visual C.
 	       $SYMBIAN_ROOT = 'C:\Symbian\6.1\Series60';
 	       $SDK_VERSION = $ENV{S60SDK} = '1.2';
 	   } elsif ($SYMBIAN_ROOT eq 'C:\Symbian\Series60_1_2_CW') { # CodeWarrior.
@@ -112,7 +119,7 @@ $ENV{UARM} = $UARM;
 # set INCLUDE=%MSVC_INC%
 # set LIB=%MSVC_LIB%
 # set USERDEFS=%USERDEFS% -D__SERIES60_12__ -D__SERIES60_MAJOR__=1 -D__SERIES60_MINOR__=2 -D__SERIES60_1X__
-# 
+#
 # s60-2.0-cw:
 #
 # set EPOCROOT=\Symbian\7.0s\Series60_v20_CW\
@@ -120,7 +127,7 @@ $ENV{UARM} = $UARM;
 # symbiancommon
 # set PATH=%EPOC_BIN%;%MWCW%\Bin;%MWCW%\Symbian_Tools\Command_Line_Tools;%MSVC_BIN%;C:\perl\bin;C:\winnt\system32;%PATH%
 # set USERDEFS=%USERDEFS% -D__SERIES60_20__ -D__SERIES60_MAJOR__=2 -D__SERIES60_MINOR__=0 -D__SERIES60_2X__
-# 
+#
 # s60-2.0-vc:
 #
 # set EPOCROOT=\Symbian\7.0s\Series60_v20\
@@ -130,7 +137,7 @@ $ENV{UARM} = $UARM;
 # set INCLUDE=%MSVC_INC%
 # set LIB=%MSVC_LIB%
 # set USERDEFS=%USERDEFS% -D__SERIES60_20__ -D__SERIES60_MAJOR__=2 -D__SERIES60_MINOR__=0 -D__SERIES60_2X__
-# 
+#
 # s60-2.1-cw:
 #
 # set EPOCROOT=\Symbian\7.0s\Series60_v21_CW\
@@ -138,7 +145,7 @@ $ENV{UARM} = $UARM;
 # symbiancommon
 # set PATH=%EPOC_BIN%;%MWCW%\Bin;%MWCW%\Symbian_Tools\Command_Line_Tools;%MSVC_BIN%;C:\perl\bin;C:\winnt\system32;%PATH%
 # set USERDEFS=%USERDEFS% -D__SERIES60_21__ -D__SERIES60_MAJOR__=2 -D__SERIES60_MINOR__=1 -D__SERIES60_2X__
-# 
+#
 # s60-2.6-cw:
 #
 # set EPOCROOT=\Symbian\8.0a\S60_2nd_FP2_CW\
@@ -146,7 +153,7 @@ $ENV{UARM} = $UARM;
 # symbiancommon
 # set PATH=%EPOC_BIN%;%MWCW%\Bin;%MWCW%\Symbian_Tools\Command_Line_Tools;%MSVC_BIN%;C:\perl\bin;C:\winnt\system32;%PATH%
 # set USERDEFS=%USERDEFS% -D__SERIES60_26__ -D__SERIES60_MAJOR__=2 -D__SERIES60_MINOR__=6 -D__SERIES60_2X__ -D__BLUETOOTH_API_V2__
-# 
+#
 # s60-2.6-vc:
 #
 # set EPOCROOT=\Symbian\8.0a\S60_2nd_FP2\
@@ -156,7 +163,7 @@ $ENV{UARM} = $UARM;
 # set INCLUDE=%MSVC_INC%
 # set LIB=%MSVC_LIB%
 # set USERDEFS=%USERDEFS% -D__SERIES60_26__ -D__SERIES60_MAJOR__=2 -D__SERIES60_MINOR__=6 -D__SERIES60_2X__ -D__BLUETOOTH_API_V2__
-# 
+#
 # s60-2.8-cw:
 #
 # set EPOCROOT=\Symbian\8.1a\S60_2nd_FP3\
@@ -164,7 +171,7 @@ $ENV{UARM} = $UARM;
 # symbiancommon
 # set PATH=%EPOC_BIN%;%MWCW%\Bin;%MWCW%\Symbian_Tools\Command_Line_Tools;%MSVC_BIN%;C:\perl\bin;C:\winnt\system32;%PATH%
 # set USERDEFS=%USERDEFS% -D__SERIES60_28__ -D__SERIES60_MAJOR__=2 -D__SERIES60_MINOR__=8 -D__SERIES60_2X__ -D__BLUETOOTH_API_V2__
-# 
+#
 # s60-2.8-vc:
 #
 # set EPOCROOT=\Symbian\8.1a\S60_2nd_FP3\
@@ -172,6 +179,11 @@ $ENV{UARM} = $UARM;
 # symbiancommon
 # set PATH=%EPOC_BIN%;%MSVC_BIN%;C:\perl\bin;C:\winnt\system32;%PATH%
 # set USERDEFS=%USERDEFS% -D__SERIES60_28__ -D__SERIES60_MAJOR__=2 -D__SERIES60_MINOR__=8 -D__SERIES60_2X__ -D__BLUETOOTH_API_V2__
+#
+# s60-5.0  - S60 5th Edition SDK v1.0:
+#
+# set EPOCROOT=\S60\devices\S60_5th_Edition_SDK_v1.0\
+# set PATH=%EPOCROOT%Epoc32\gcc\bin;%EPOCROOT%Epoc32\tools;%PATH%
 #
 # s80-2.0-cw:
 #
@@ -202,4 +214,3 @@ $ENV{UARM} = $UARM;
 # set USERDEFS=%USERDEFS% -D__UIQ_21__ -D__UIQ_MAJOR__=2 -D__UIQ_MINOR__=1 -D__UIQ_2X__
 #
 # EOF
-

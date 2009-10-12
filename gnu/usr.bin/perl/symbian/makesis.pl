@@ -16,7 +16,7 @@ my ($SYMBIAN_ROOT, $SYMBIAN_VERSION, $SDK_NAME, $SDK_VARIANT, $SDK_VERSION) =
 my $UID  = do "uid.pl" or die $@;
 my %PORT = %{ do "port.pl" or die $@ };
 
-my $ARM = 'thumb'; # TODO
+my $ARM = 'armv5';#'thumb'; # TODO
 my $S60SDK = $ENV{S60SDK}; # from sdk.pl
 my $S80SDK = $ENV{S80SDK}; # from sdk.pl
 my $S90SDK = $ENV{S90SDK}; # from sdk.pl
@@ -175,6 +175,9 @@ qq[;Supports Series 90 v1.1\n(0x101FBE05), 0, 0, 0, {"Series90ProductID"}\n] :
 ; The installation name and header data
 ;
 #{"\u$target"},($uid),$MAJOR,$MINOR,$PATCH
+;
+;Localised Vendor name
+%{"Vendor-EN"}
 ;
 ; Private key and certificate (unused)
 ;

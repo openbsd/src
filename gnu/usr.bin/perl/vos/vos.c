@@ -6,6 +6,8 @@
      have pow(0,0) return 1, avoiding c-1471. */
 /* Modified 06-09-25 by Paul Green (Paul.Green@stratus.com) to
      add syslog entries. */
+/* Modified 08-02-04 by Paul Green (Paul.Green@stratus.com) to
+     open the syslog file in the working dir. */
 /* End of modification history */
 
 #include <errno.h>
@@ -87,7 +89,7 @@ int  vos_syslog_logopt = 0;
 char vos_syslog_ident[IDENT_LEN] = "";
 int  vos_syslog_ident_len = 0;
 int  vos_syslog_mask = ALL_PRIORITIES;
-char vos_syslog_path[PATH_LEN] = "/Stratus/Green/build_farm/build_farm.syslog";
+char vos_syslog_path[PATH_LEN] = "syslog";
 
 char vos_syslog_facility_name [17][10] = {
      "[KERN] ",    /* LOG_KERN */

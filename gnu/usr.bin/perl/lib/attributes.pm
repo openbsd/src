@@ -1,6 +1,6 @@
 package attributes;
 
-our $VERSION = 0.08;
+our $VERSION = 0.09;
 
 @EXPORT_OK = qw(get reftype);
 @EXPORT = ();
@@ -156,6 +156,37 @@ error is trappable, but it still stops the compilation within that
 C<eval>.)  Setting an attribute with a name that's all lowercase
 letters that's not a built-in attribute (such as "foo") will result in
 a warning with B<-w> or C<use warnings 'reserved'>.
+
+=head2 What C<import> does
+
+In the description it is mentioned that
+
+  sub foo : method;
+
+is equivalent to
+
+  use attributes __PACKAGE__, \&foo, 'method';
+
+As you might know this calls the C<import> function of C<attributes> at compile 
+time with these parameters: 'attributes', the caller's package name, the reference 
+to the code and 'method'.
+
+  attributes->import( __PACKAGE__, \&foo, 'method' );
+
+So you want to know what C<import> actually does?
+
+First of all C<import> gets the type of the third parameter ('CODE' in this case).
+C<attributes.pm> checks if there is a subroutine called C<< MODIFY_<reftype>_ATTRIBUTES >>
+in the caller's namespace (here: 'main'). In this case a subroutine C<MODIFY_CODE_ATTRIBUTES> is
+required. Then this method is called to check if you have used a "bad attribute".
+The subroutine call in this example would look like
+
+  MODIFY_CODE_ATTRIBUTES( 'main', \&foo, 'method' );
+
+C<< MODIFY_<reftype>_ATTRIBUTES >> has to return a list of all "bad attributes".
+If there are any bad attributes C<import> croaks.
+
+(See L<"Package-specific Attribute Handling"> below.)
 
 =head2 Built-in Attributes
 
@@ -405,6 +436,52 @@ Effect:
 This last example is purely for purposes of completeness.  You should not
 be trying to mess with the attributes of something in a package that's
 not your own.
+
+=head1 MORE EXAMPLES
+
+=over 4
+
+=item 1.
+
+    sub MODIFY_CODE_ATTRIBUTES {
+       my ($class,$code,@attrs) = @_;
+
+       my $allowed = 'MyAttribute';
+       my @bad = grep { $_ ne $allowed } @attrs;
+
+       return @bad;
+    }
+
+    sub foo : MyAttribute {
+       print "foo\n";
+    }
+
+This example runs. At compile time C<MODIFY_CODE_ATTRIBUTES> is called. In that
+subroutine, we check if any attribute is disallowed and we return a list of
+these "bad attributes".
+
+As we return an empty list, everything is fine.
+
+=item 2.
+
+  sub MODIFY_CODE_ATTRIBUTES {
+     my ($class,$code,@attrs) = @_;
+
+     my $allowed = 'MyAttribute';
+     my @bad = grep{ $_ ne $allowed }@attrs;
+
+     return @bad;
+  }
+
+  sub foo : MyAttribute Test {
+     print "foo\n";
+  }
+
+This example is aborted at compile time as we use the attribute "Test" which
+isn't allowed. C<MODIFY_CODE_ATTRIBUTES> returns a list that contains a single
+element ('Test').
+
+=back
 
 =head1 SEE ALSO
 

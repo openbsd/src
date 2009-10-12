@@ -11,7 +11,7 @@ use lib File::Spec->catdir('t', 'lib');
 use Test::More;
 
 if( $^O eq 'MSWin32' ) {
-  plan tests => 3;
+  plan tests => 4;
 } else {
   plan skip_all => 'this is not win32';
 }
@@ -29,3 +29,10 @@ if (defined $ddir) {
   # May not have a D: drive mounted
   ok 1;
 }
+
+# Ensure compatibility with naughty versions of Template::Toolkit,
+# which pass in a bare $1 as an argument
+'Foo/strawberry' =~ /(.*)/;
+my $result = File::Spec::Win32->catfile('C:/cache', $1);
+is( $result, 'C:\cache\Foo\strawberry' );
+

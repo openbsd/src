@@ -55,7 +55,7 @@ my $ModPrereq   = TEST_CONF_INST_MODULE;
 ### XXX this version doesn't exist, but we don't check for it either ###
 my $Prereq      = { $ModPrereq => '1000' };
 
-### since it's in this file, not in it's own module file,
+### since it's in this file, not in its own module file,
 ### make M::L::C think it already was loaded
 $Module::Load::Conditional::CACHE->{$Module}->{usable} = 1;
 
@@ -71,10 +71,7 @@ ok( $Mod,                       "Got module object" );
 
 
 ### straight forward dist build - prepare, create, install
-{   my $dist = CPANPLUS::Dist->new(
-                            format  => $Module,
-                            module  => $Mod
-                        );
+{   my $dist = $Module->new( module => $Mod );
 
     ok( $dist,                  "New dist object created" );
     isa_ok( $dist,              'CPANPLUS::Dist' );
@@ -103,10 +100,7 @@ ok( $Mod,                       "Got module object" );
 
     {   $conf->_set_build('sanity_check' => 0);
 
-        my $dist = CPANPLUS::Dist->new(
-                                format => $Module,
-                                module => $Mod
-                            );
+        my $dist = $Module->new( module => $Mod );
 
         ok( $dist,              "Dist created with sanity check off" );
         isa_ok( $dist,          $Module );
@@ -114,11 +108,9 @@ ok( $Mod,                       "Got module object" );
     }
 
     {   $conf->_set_build('sanity_check' => 1);
-        my $dist = CPANPLUS::Dist->new(
-                                format => $Module,
-                                module => $Mod
-                            );
-
+        
+        my $dist = $Module->new( module => $Mod );
+        
         ok( !$dist,             "Dist not created with sanity check on" );
         like( CPANPLUS::Error->stack_as_string,
                 qr/Format '$Module' is not available/,
@@ -129,16 +121,43 @@ ok( $Mod,                       "Got module object" );
 ### undef the status hash, make sure it complains ###
 {   local $CPANPLUS::Dist::_Test::Init = 0;
 
-    my $dist = CPANPLUS::Dist->new(
-                        format => $Module,
-                        module => $Mod
-                    );
-
+    my $dist = $Module->new( module => $Mod );
+    
     ok( !$dist,                 "No dist created by failed init" );
     like( CPANPLUS::Error->stack_as_string,
             qr/Dist initialization of '$Module' failed for/s,
                                 "   Error recorded as expected" );
 }
+
+### configure_requires tests
+{   my $meta    = META->( $Mod );
+    ok( $meta,                  "Reading 'configure_requires' from '$meta'" );
+    
+    my $clone   = $Mod->clone;
+    ok( $clone,                 "   Package cloned" );
+
+    ### set the new location to fetch from
+    $clone->package( $meta );
+    
+    my $file = $clone->fetch;
+    ok( $file,                  "   Meta file fetched" );
+    ok( -e $file,               "       File '$file' exits" );
+    
+    my $dist = $Module->new( module => $Mod );
+
+    ok( $dist,                  "   Dist object created" );
+        
+    my $meth = 'find_configure_requires';    
+    can_ok( $dist,              $meth );
+    
+    my $href = $dist->$meth( file => $file );
+    ok( $href,                  "   '$meth' returned hashref" );
+    
+    ok( scalar(keys(%$href)),   "       Contains entries" );
+    ok( $href->{ +TEST_CONF_PREREQ },
+                                "       Contains the right prereq" );
+}    
+
 
 ### test _resolve prereqs, in a somewhat simulated set of circumstances
 {   my $old_prereq = $conf->get_conf('prereqs');
@@ -207,6 +226,13 @@ ok( $Mod,                       "Got module object" );
                 ### set the conf back ###
                 sub { $conf->set_conf(prereqs => PREREQ_INSTALL); },
             ],
+            'Perl binary version too low' => [
+                sub { $cb->module_tree( $ModName )
+                        ->status->prereqs({ PERL_CORE, 10000000000 }); '' },
+                sub { like( CPANPLUS::Error->stack_as_string, 
+                            qr/needs perl version/,
+                            "   Perl version not high enough" ) },
+            ],                            
         },
         1 => {
             'Simple create'     => [
@@ -286,8 +312,14 @@ ok( $Mod,                       "Got module object" );
                       qr/Recursive dependency detected/,
                             "   Recursive dependency recorded ok" ) },
             ],
-
-          },
+            'Perl binary version sufficient' => [
+                sub { $cb->module_tree( $ModName )
+                        ->status->prereqs({ PERL_CORE, 1 }); '' },
+                sub { unlike( CPANPLUS::Error->stack_as_string, 
+                            qr/needs perl version/,
+                            "   Perl version sufficient" ) },
+            ],                            
+        },
     };
 
     for my $bool ( sort keys %$map ) {
@@ -310,10 +342,8 @@ ok( $Mod,                       "Got module object" );
             $cb->_status->mk_flush;
 
             ### get a new dist from Text::Bastardize ###
-            my $dist = CPANPLUS::Dist->new(
-                        format => $Module,
-                        module => $cb->module_tree( $ModName ),
-                    );
+            my $mod  = $cb->module_tree( $ModName );
+            my $dist = $Module->new( module => $mod );
 
             ### first sub returns target ###
             my $sub    = shift @$aref;
@@ -323,7 +353,7 @@ ok( $Mod,                       "Got module object" );
                             format  => $Module,
                             force   => 1,
                             target  => $target,
-                            prereqs => $Prereq );
+                            prereqs => ($mod->status->prereqs || $Prereq) );
 
             is( !!$flag, !!$bool,   $txt );
 
@@ -352,10 +382,7 @@ ok( $Mod,                       "Got module object" );
     ok( $mod,                   "Fake module created" );
     is( $mod->version, 1,       "   Version set correctly" );
     
-     my $dist = CPANPLUS::Dist->new(
-                            format  => $Module,
-                            module  => $Mod
-                        );
+     my $dist = $Module->new( module => $Mod );
     
     ok( $dist,                  "Dist object created" );
     isa_ok( $dist,              $Module );

@@ -14,6 +14,8 @@ require './test.pl';
 plan(skip_all => "Your system has no SIGALRM") if !exists $SIG{ALRM};
 plan(tests => 8);
 
+require mro;
+
 =pod
 
 These are like the 010_complex_merge_classless test,

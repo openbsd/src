@@ -28,6 +28,7 @@ $startsh
 # Note that the text lines /^Summary of/ .. /^\s*$/ are copied into Config.pm.
 cat <<'!NO!SUBS!'
 Summary of my $package (revision $revision $version_patchlevel_string) configuration:
+  $git_commit_id_title $git_commit_id$git_ancestor_line
   Platform:
     osname=$osname, osvers=$osvers, archname=$archname
     uname='$myuname'

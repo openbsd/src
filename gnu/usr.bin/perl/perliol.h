@@ -170,7 +170,7 @@ PERL_EXPORT_C void PerlIO_list_free(pTHX_ PerlIO_list_t *list);
 
 /* PerlIO_teardown doesn't need exporting, but the EXTERN_C is needed
  * for compiling as C++.  Must also match with what perl.h says. */
-EXTERN_C void PerlIO_teardown();
+EXTERN_C void PerlIO_teardown(void);
 
 /*--------------------------------------------------------------------------------------*/
 /* Generic, or stub layer functions */
@@ -285,3 +285,13 @@ PERL_EXPORT_C SSize_t   PerlIOUnix_write(pTHX_ PerlIO *f, const void *vbuf, Size
 PERL_EXPORT_C IV        PerlIOUtf8_pushed(pTHX_ PerlIO *f, const char *mode, SV *arg, PerlIO_funcs *tab);
 
 #endif				/* _PERLIOL_H */
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

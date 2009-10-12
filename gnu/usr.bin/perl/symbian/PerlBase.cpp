@@ -55,6 +55,19 @@ CPerlBase::~CPerlBase()
     Destruct();
 }
 
+EXPORT_C CPerlBase* CPerlBase::NewInterpreter(TBool aCloseStdlib,
+                                               void (*aStdioInitFunc)(void*),
+                                               void *aStdioInitCookie)
+{
+   CPerlBase* self = new (ELeave) CPerlBase;
+   self->iCloseStdlib     = aCloseStdlib;
+   self->iStdioInitFunc   = aStdioInitFunc;
+   self->iStdioInitCookie = aStdioInitCookie;
+   self->ConstructL();
+   PERL_APPCTX_SET(self);
+   return self;
+}
+
 EXPORT_C CPerlBase* CPerlBase::NewInterpreterL(TBool aCloseStdlib,
                                                void (*aStdioInitFunc)(void*),
                                                void *aStdioInitCookie)

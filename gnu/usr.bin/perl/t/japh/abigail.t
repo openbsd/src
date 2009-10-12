@@ -16,7 +16,7 @@
 # is unfortunately not a trivial task.
 #
 # WARNING: these tests are obfuscated.  Do not get frustrated.
-# Ask Abigail <abigail@foad.org>, or use the Deparse or Concise
+# Ask Abigail <abigail@abigail.be>, or use the Deparse or Concise
 # modules (the former parses Perl to Perl, the latter shows the
 # op syntax tree) like this:
 # ./perl -Ilib -MO=Deparse foo.pl

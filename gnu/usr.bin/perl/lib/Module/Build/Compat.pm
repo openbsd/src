@@ -2,8 +2,9 @@ package Module::Build::Compat;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.2808_01';
+$VERSION = '0.340201';
 
+use File::Basename ();
 use File::Spec;
 use IO::File;
 use Config;
@@ -11,19 +12,57 @@ use Module::Build;
 use Module::Build::ModuleInfo;
 use Data::Dumper;
 
+my %convert_installdirs = (
+    PERL        => 'core',
+    SITE        => 'site',
+    VENDOR      => 'vendor',
+);
+
 my %makefile_to_build = 
   (
    TEST_VERBOSE => 'verbose',
    VERBINST     => 'verbose',
-   INC     => sub { map {('--extra_compiler_flags', $_)} Module::Build->split_like_shell(shift) },
-   POLLUTE => sub { ('--extra_compiler_flags', '-DPERL_POLLUTE') },
-   INSTALLDIRS => sub {local $_ = shift; 'installdirs=' . (/^perl$/ ? 'core' : $_) },
-   LIB => sub { ('--install_path', 'lib='.shift()) },
+   INC          => sub { map {(extra_compiler_flags => $_)} Module::Build->split_like_shell(shift) },
+   POLLUTE      => sub { (extra_compiler_flags => '-DPERL_POLLUTE') },
+   INSTALLDIRS  => sub { (installdirs => $convert_installdirs{uc shift()}) },
+   LIB          => sub {
+       my $lib = shift;
+       my %config = (
+           installprivlib  => $lib,
+           installsitelib  => $lib,
+           installarchlib  => "$lib/$Config{archname}",
+           installsitearch => "$lib/$Config{archname}"
+       );
+       return map { (config => "$_=$config{$_}") } keys %config;
+   },
+
+   # Convert INSTALLVENDORLIB and friends.
+   (
+       map {
+           my $name = $_;
+           $name => sub {
+                 my @ret = (config => lc($name) . "=" . shift );
+                 print STDERR "# Converted to @ret\n";
+
+                 return @ret;
+           }
+       } qw(
+         INSTALLARCHLIB  INSTALLSITEARCH     INSTALLVENDORARCH
+         INSTALLPRIVLIB  INSTALLSITELIB      INSTALLVENDORLIB
+         INSTALLBIN      INSTALLSITEBIN      INSTALLVENDORBIN
+         INSTALLSCRIPT   INSTALLSITESCRIPT   INSTALLVENDORSCRIPT
+         INSTALLMAN1DIR  INSTALLSITEMAN1DIR  INSTALLVENDORMAN1DIR
+         INSTALLMAN3DIR  INSTALLSITEMAN3DIR  INSTALLVENDORMAN3DIR
+       )
+   ),
 
    # Some names they have in common
    map {$_, lc($_)} qw(DESTDIR PREFIX INSTALL_BASE UNINST),
   );
 
+my %macro_to_build = %makefile_to_build;
+# "LIB=foo make" is not the same as "perl Makefile.PL LIB=foo"
+delete $macro_to_build{LIB};
 
 
 sub create_makefile_pl {
@@ -37,6 +76,8 @@ sub create_makefile_pl {
     $fh = $args{fh};
   } else {
     $args{file} ||= 'Makefile.PL';
+    local $build->{properties}{quiet} = 1;
+    $build->delete_filetree($args{file});
     $fh = IO::File->new("> $args{file}") or die "Can't write $args{file}: $!";
   }
 
@@ -50,7 +91,7 @@ sub create_makefile_pl {
   }
 
   # If a *bundled* custom subclass is being used, make sure we add its
-  # directory to @INC.
+  # directory to @INC.  Also, lib.pm always needs paths in Unix format.
   my $subclass_load = '';
   if (ref($build) ne "Module::Build") {
     my $subclass_dir = $package->subclass_dir($build);
@@ -60,10 +101,13 @@ sub create_makefile_pl {
 
       if ($build->dir_contains($base_dir, $subclass_dir)) {
 	$subclass_dir = File::Spec->abs2rel($subclass_dir, $base_dir);
+	$subclass_dir = $package->unixify_dir($subclass_dir);
         $subclass_load = "use lib '$subclass_dir';";
       }
+      # Otherwise, leave it the empty string
 
     } else {
+      $subclass_dir = $package->unixify_dir($subclass_dir);
       $subclass_load = "use lib '$subclass_dir';";
     }
   }
@@ -107,6 +151,9 @@ EOF
     eval "use Module::Build::Compat 0.02; 1" or die $@;
     %s
     Module::Build::Compat->run_build_pl(args => \@ARGV);
+    my $build_script = 'Build';  
+    $build_script .= '.com' if $^O eq 'VMS';
+    exit(0) unless(-e $build_script); # cpantesters convention
     require %s;
     Module::Build::Compat->write_makefile(build_class => '%s');
 EOF
@@ -132,15 +179,19 @@ EOF
     %prereq = ( %{$build->requires}, %{$build->build_requires} );
     %prereq = map {$_, $prereq{$_}} sort keys %prereq;
     
-    delete $prereq{perl};
+     delete $prereq{perl};
     $MM_Args{PREREQ_PM} = \%prereq;
     
     $MM_Args{INSTALLDIRS} = $build->installdirs eq 'core' ? 'perl' : $build->installdirs;
     
     $MM_Args{EXE_FILES} = [ sort keys %{$build->script_files} ] if $build->script_files;
     
-    $MM_Args{PL_FILES} = {};
-    
+    $MM_Args{PL_FILES} = $build->PL_files || {};
+
+    if ($build->recursive_test_files) {
+        $MM_Args{TESTS} = join q{ }, $package->_test_globs($build);
+    }
+
     local $Data::Dumper::Terse = 1;
     my $args = Data::Dumper::Dumper(\%MM_Args);
     $args =~ s/\{(.*)\}/($1)/s;
@@ -153,6 +204,12 @@ EOF
   }
 }
 
+sub _test_globs {
+  my ($self, $build) = @_;
+
+  return map { File::Spec->catfile($_, '*.t') }
+         @{$build->rscan_dir('t', sub { -d $File::Find::name })};
+}
 
 sub subclass_dir {
   my ($self, $build) = @_;
@@ -161,8 +218,13 @@ sub subclass_dir {
 	  || File::Spec->catdir($build->config_dir, 'lib'));
 }
 
+sub unixify_dir {
+  my ($self, $path) = @_;
+  return join '/', File::Spec->splitdir($path);
+}
+
 sub makefile_to_build_args {
-  shift;
+  my $class = shift;
   my @out;
   foreach my $arg (@_) {
     next if $arg eq '';
@@ -171,31 +233,57 @@ sub makefile_to_build_args {
 		       die "Malformed argument '$arg'");
 
     # Do tilde-expansion if it looks like a tilde prefixed path
-    ( $val ) = glob( $val ) if $val =~ /^~/;
+    ( $val ) = Module::Build->_detildefy( $val ) if $val =~ /^~/;
 
     if (exists $makefile_to_build{$key}) {
       my $trans = $makefile_to_build{$key};
-      push @out, ref($trans) ? $trans->($val) : ("--$trans", $val);
+      push @out, $class->_argvify( ref($trans) ? $trans->($val) : ($trans => $val) );
     } elsif (exists $Config{lc($key)}) {
-      push @out, '--config', lc($key) . "=$val";
+      push @out, $class->_argvify( config => lc($key) . "=$val" );
     } else {
       # Assume M::B can handle it in lowercase form
-      push @out, "--\L$key", $val;
+      push @out, $class->_argvify("\L$key" => $val);
     }
+  }
+  return @out;
+}
+
+sub _argvify {
+  my ($self, @pairs) = @_;
+  my @out;
+  while (@pairs) {
+    my ($k, $v) = splice @pairs, 0, 2;
+    push @out, ("--$k", $v);
   }
   return @out;
 }
 
 sub makefile_to_build_macros {
   my @out;
-  while (my ($macro, $trans) = each %makefile_to_build) {
+  my %config; # must accumulate and return as a hashref
+  while (my ($macro, $trans) = each %macro_to_build) {
     # On some platforms (e.g. Cygwin with 'make'), the mere presence
     # of "EXPORT: FOO" in the Makefile will make $ENV{FOO} defined.
     # Therefore we check length() too.
     next unless exists $ENV{$macro} && length $ENV{$macro};
     my $val = $ENV{$macro};
-    push @out, ref($trans) ? $trans->($val) : ($trans => $val);
+    my @args = ref($trans) ? $trans->($val) : ($trans => $val);
+    while (@args) {
+      my ($k, $v) = splice(@args, 0, 2);
+      if ( $k eq 'config' ) {
+        if ( $v =~ /^([^=]+)=(.*)$/ ) {
+          $config{$1} = $2;
+        }
+        else {
+          warn "Couldn't parse config '$v'\n";
+        }
+      }
+      else {
+        push @out, ($k => $v);
+      }
+    }
   }
+  push @out, (config => \%config) if %config; 
   return @out;
 }
 
@@ -216,32 +304,54 @@ sub fake_makefile {
   my $class = $args{build_class};
 
   my $perl = $class->find_perl_interpreter;
-  my $noop = ($class->is_windowsish ? 'rem>nul'  :
-	      $class->is_vmsish     ? 'Continue' :
-	      'true');
-  my $Build = 'Build --makefile_env_macros 1';
 
-  # Start with a couple special actions
+  # VMS MMS/MMK need to use MCR to run the Perl image.
+  $perl = 'MCR ' . $perl if $self->_is_vms_mms;
+
+  my $noop = ($class->is_windowsish ? 'rem>nul'  :
+	      $self->_is_vms_mms    ? 'Continue' :
+	      'true');
+
+  my $filetype = $class->is_vmsish ? '.COM' : '';
+
+  my $Build = 'Build' . $filetype . ' --makefile_env_macros 1';
+  my $unlink = $class->oneliner('1 while unlink $ARGV[0]', [], [$args{makefile}]);
+  $unlink =~ s/\$/\$\$/g unless $class->is_vmsish;
+
   my $maketext = <<"EOF";
 all : force_do_it
 	$perl $Build
 realclean : force_do_it
 	$perl $Build realclean
-	$perl -e unlink -e shift $args{makefile}
+	$unlink
+distclean : force_do_it
+	$perl $Build distclean
+	$unlink
+
 
 force_do_it :
 	@ $noop
 EOF
 
   foreach my $action ($class->known_actions) {
-    next if $action =~ /^(all|realclean|force_do_it)$/;  # Don't double-define
+    next if $action =~ /^(all|distclean|realclean|force_do_it)$/;  # Don't double-define
     $maketext .= <<"EOF";
 $action : force_do_it
 	$perl $Build $action
 EOF
   }
   
-  $maketext .= "\n.EXPORT : " . join(' ', keys %makefile_to_build) . "\n\n";
+  if ($self->_is_vms_mms) {
+    # Roll our own .EXPORT as MMS/MMK don't honor that directive.
+    $maketext .= "\n.FIRST\n\t\@ $noop\n"; 
+    for my $macro (keys %macro_to_build) {
+      $maketext .= ".IFDEF $macro\n\tDEFINE $macro \"\$($macro)\"\n.ENDIF\n";
+    }
+    $maketext .= "\n"; 
+  }
+  else {
+    $maketext .= "\n.EXPORT : " . join(' ', keys %macro_to_build) . "\n\n";
+  }
   
   return $maketext;
 }
@@ -267,16 +377,28 @@ sub fake_prereqs {
 
 sub write_makefile {
   my ($pack, %in) = @_;
-  $in{makefile} ||= 'Makefile';
+
+  unless (exists $in{build_class}) {
+    warn "Unknown 'build_class', defaulting to 'Module::Build'\n";
+    $in{build_class} = 'Module::Build';
+  }
+  my $class = $in{build_class};
+  $in{makefile} ||= $pack->_is_vms_mms ? 'Descrip.MMS' : 'Makefile';
+
   open  MAKE, "> $in{makefile}" or die "Cannot write $in{makefile}: $!";
   print MAKE $pack->fake_prereqs;
   print MAKE $pack->fake_makefile(%in);
   close MAKE;
 }
 
+sub _is_vms_mms {
+  return Module::Build->is_vmsish && ($Config{make} =~ m/MM[SK]/i);
+}
+
 1;
 __END__
 
+=for :stopwords passthrough
 
 =head1 NAME
 
@@ -296,15 +418,15 @@ Module::Build::Compat - Compatibility with ExtUtils::MakeMaker
 
 =head1 DESCRIPTION
 
-Because ExtUtils::MakeMaker has been the standard way to distribute
+Because C<ExtUtils::MakeMaker> has been the standard way to distribute
 modules for a long time, many tools (CPAN.pm, or your system
-administrator) may expect to find a working Makefile.PL in every
+administrator) may expect to find a working F<Makefile.PL> in every
 distribution they download from CPAN.  If you want to throw them a
-bone, you can use Module::Build::Compat to automatically generate a
-Makefile.PL for you, in one of several different styles.
+bone, you can use C<Module::Build::Compat> to automatically generate a
+F<Makefile.PL> for you, in one of several different styles.
 
-Module::Build::Compat also provides some code that helps out the
-Makefile.PL at runtime.
+C<Module::Build::Compat> also provides some code that helps out the
+F<Makefile.PL> at runtime.
 
 
 =head1 METHODS
@@ -313,11 +435,11 @@ Makefile.PL at runtime.
 
 =item create_makefile_pl($style, $build)
 
-Creates a Makefile.PL in the current directory in one of several
-styles, based on the supplied Module::Build object C<$build>.  This is
+Creates a F<Makefile.PL> in the current directory in one of several
+styles, based on the supplied C<Module::Build> object C<$build>.  This is
 typically controlled by passing the desired style as the
-C<create_makefile_pl> parameter to Module::Build's C<new()> method;
-the Makefile.PL will then be automatically created during the
+C<create_makefile_pl> parameter to C<Module::Build>'s C<new()> method;
+the F<Makefile.PL> will then be automatically created during the
 C<distdir> action.
 
 The currently supported styles are:
@@ -326,37 +448,37 @@ The currently supported styles are:
 
 =item small
 
-A small Makefile.PL will be created that passes all functionality
-through to the Build.PL script in the same directory.  The user must
-already have Module::Build installed in order to use this, or else
+A small F<Makefile.PL> will be created that passes all functionality
+through to the F<Build.PL> script in the same directory.  The user must
+already have C<Module::Build> installed in order to use this, or else
 they'll get a module-not-found error.
 
 =item passthrough
 
-This is just like the C<small> option above, but if Module::Build is
+This is just like the C<small> option above, but if C<Module::Build> is
 not already installed on the user's system, the script will offer to
 use C<CPAN.pm> to download it and install it before continuing with
 the build.
 
 =item traditional
 
-A Makefile.PL will be created in the "traditional" style, i.e. it will
+A F<Makefile.PL> will be created in the "traditional" style, i.e. it will
 use C<ExtUtils::MakeMaker> and won't rely on C<Module::Build> at all.
-In order to create the Makefile.PL, we'll include the C<requires> and
+In order to create the F<Makefile.PL>, we'll include the C<requires> and
 C<build_requires> dependencies as the C<PREREQ_PM> parameter.
 
 You don't want to use this style if during the C<perl Build.PL> stage
 you ask the user questions, or do some auto-sensing about the user's
-environment, or if you subclass Module::Build to do some
-customization, because the vanilla Makefile.PL won't do any of that.
+environment, or if you subclass C<Module::Build> to do some
+customization, because the vanilla F<Makefile.PL> won't do any of that.
 
 =back
 
 =item run_build_pl(args => \@ARGV)
 
-This method runs the Build.PL script, passing it any arguments the
+This method runs the F<Build.PL> script, passing it any arguments the
 user may have supplied to the C<perl Makefile.PL> command.  Because
-ExtUtils::MakeMaker and Module::Build accept different arguments, this
+C<ExtUtils::MakeMaker> and C<Module::Build> accept different arguments, this
 method also performs some translation between the two.
 
 C<run_build_pl()> accepts the following named parameters:
@@ -377,8 +499,8 @@ This is the filename of the script to run - it defaults to C<Build.PL>.
 
 =item write_makefile()
 
-This method writes a 'dummy' Makefile that will pass all commands
-through to the corresponding Module::Build actions.
+This method writes a 'dummy' F<Makefile> that will pass all commands
+through to the corresponding C<Module::Build> actions.
 
 C<write_makefile()> accepts the following named parameters:
 
@@ -401,10 +523,10 @@ So, some common scenarios are:
 
 =item 1.
 
-Just include a Build.PL script (without a Makefile.PL
-script), and give installation directions in a README or INSTALL
+Just include a F<Build.PL> script (without a F<Makefile.PL>
+script), and give installation directions in a F<README> or F<INSTALL>
 document explaining how to install the module.  In particular, explain
-that the user must install Module::Build before installing your
+that the user must install C<Module::Build> before installing your
 module.
 
 Note that if you do this, you may make things easier for yourself, but
@@ -414,23 +536,19 @@ F<Makefile.PL>/C<ExtUtils::MakeMaker> way of doing things.
 
 =item 2.
 
-Include a Build.PL script and a "traditional" Makefile.PL,
+Include a F<Build.PL> script and a "traditional" F<Makefile.PL>,
 created either manually or with C<create_makefile_pl()>.  Users won't
-ever have to install Module::Build if they use the Makefile.PL, but
-they won't get to take advantage of Module::Build's extra features
+ever have to install C<Module::Build> if they use the F<Makefile.PL>, but
+they won't get to take advantage of C<Module::Build>'s extra features
 either.
 
-If you go this route, make sure you explicitly set C<PL_FILES> in the
-call to C<WriteMakefile()> (probably to an empty hash reference), or
-else MakeMaker will mistakenly run the Build.PL and you'll get an
-error message about "Too early to run Build script" or something.  For
-good measure, of course, test both the F<Makefile.PL> and the
+For good measure, of course, test both the F<Makefile.PL> and the
 F<Build.PL> before shipping.
 
 =item 3.
 
-Include a Build.PL script and a "pass-through" Makefile.PL
-built using Module::Build::Compat.  This will mean that people can
+Include a F<Build.PL> script and a "pass-through" F<Makefile.PL>
+built using C<Module::Build::Compat>.  This will mean that people can
 continue to use the "old" installation commands, and they may never
 notice that it's actually doing something else behind the scenes.  It
 will also mean that your installation process is compatible with older

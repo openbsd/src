@@ -6,7 +6,7 @@
 
 SRCDIR     = ..
 PV         = 59
-INST_VER   = 5.10.0
+INST_VER   = 5.10.1
 
 # INSTALL_ROOT specifies a path where this perl will be installed on CE device
 INSTALL_ROOT=/netzwerk/sprache/perl
@@ -759,12 +759,12 @@ NOT_COMPILE_EXT = $(NOT_COMPILE_EXT) !XS/Typemap
 NOT_COMPILE_EXT = $(NOT_COMPILE_EXT) !XS/Typemap
 !endif
 
-Extensions: .\buildext.pl $(PERLDEP) $(CONFIGPM)
-	$(HPERL) -I..\lib -I. -MCross=$(CROSS_NAME) .\buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) \
+Extensions: ..\make_ext.pl $(PERLDEP) $(CONFIGPM)
+	$(HPERL) -I..\lib -I. -MCross=$(CROSS_NAME) ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --all \
 	!POSIX $(NOT_COMPILE_EXT)
 
 Extensions_clean:
-	-if exist $(MINIPERL) $(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) clean
+	-if exist $(MINIPERL) $(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --all --target=clean
 
 #----------------------------------------------------------------------------------
 
@@ -779,6 +779,7 @@ clean:
 	-rm -f $(MACHINE)/*.lib
 	-rm -f ../config.sh ../lib/Config.pm
 	-rm -f config.h xconfig.h perl.res
+	-rm -f ../t/test_state
 
 XDLLOBJS = \
 $(DLLDIR)\av.obj \
@@ -850,8 +851,8 @@ $(DLLDIR)\perllib$(o)	: perllib.c .\perlhost.h .\vdir.h .\vmem.h
 	rem (frustrated) mv perllib.obj $(DLLDIR)
 !ENDIF
 
-perldll.def : $(HPERL) $(CONFIGPM) ..\global.sym ..\pp.sym ..\makedef.pl
-	$(HPERL) -MCross -I..\lib buildext.pl --create-perllibst-h
+perldll.def : $(HPERL) $(CONFIGPM) ..\global.sym ..\pp.sym ..\makedef.pl create_perllibst_h.pl
+	$(HPERL) -MCross -I..\lib create_perllibst_h.pl
 	$(HPERL) -w ..\makedef.pl PLATFORM=wince $(OPTIMIZE) $(DEFINES) $(BUILDOPT) \
 	    CCTYPE=$(CCTYPE) -DPERL_DLL=$(PERLDLL) > perldll.def
 

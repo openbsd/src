@@ -607,7 +607,7 @@ sub _spray_css {
     my $url = $chunk->[0];
     my $outfile;
     if( ref($chunk->[-1]) and $url =~ m{^(_[-a-z0-9_]+\.css$)} ) {
-      $outfile = $self->filespecsys->catfile( $outdir, $1 );
+      $outfile = $self->filespecsys->catfile( $outdir, "$1" );
       DEBUG > 5 and print "Noting $$chunk[0] as a file I'll create.\n";
     } else {
       DEBUG > 5 and print "OK, noting $$chunk[0] as an external CSS.\n";
@@ -772,7 +772,7 @@ sub _spray_javascript {
     my $outfile;
     
     if( ref($script->[-1]) and $url =~ m{^(_[-a-z0-9_]+\.js$)} ) {
-      $outfile = $self->filespecsys->catfile( $outdir, $1 );
+      $outfile = $self->filespecsys->catfile( $outdir, "$1" );
       DEBUG > 5 and print "Noting $$script[0] as a file I'll create.\n";
     } else {
       DEBUG > 5 and print "OK, noting $$script[0] as an external JavaScript.\n";

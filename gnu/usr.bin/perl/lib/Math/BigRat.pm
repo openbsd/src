@@ -23,7 +23,7 @@ use vars qw($VERSION @ISA $upgrade $downgrade
 
 @ISA = qw(Math::BigFloat);
 
-$VERSION = '0.21';
+$VERSION = '0.22';
 
 use overload;			# inherit overload from Math::BigFloat
 
@@ -937,6 +937,13 @@ sub bpow
 
   return $x->round(@r) if $x->is_zero();  # 0**y => 0 (if not y <= 0)
 
+  # shortcut if y == 1/N (is then sqrt() respective broot())
+  if ($MBI->_is_one($y->{_n}))
+    {
+    return $x->bsqrt(@r) if $MBI->_is_two($y->{_d});	# 1/2 => sqrt
+    return $x->broot($MBI->_str($y->{_d}),@r);		# 1/N => root(N)
+    }
+
   # shortcut y/1 (and/or x/1)
   if ($MBI->_is_one($y->{_d}))
     {
@@ -974,21 +981,18 @@ sub bpow
     return $x->round(@r);
     }
 
-  # regular calculation (this is wrong for d/e ** f/g)
-  my $pow2 = $self->bone();
-  my $y1 = $MBI->_div ( $MBI->_copy($y->{_n}), $y->{_d});
-  my $two = $MBI->_two();
+#  print STDERR "# $x $y\n";
 
-  while (!$MBI->_is_one($y1))
-    {
-    $pow2->bmul($x) if $MBI->_is_odd($y1);
-    $MBI->_div($y1, $two);
-    $x->bmul($x);
-    }
-  $x->bmul($pow2) unless $pow2->is_one();
-  # n ** -x => 1/n ** x
-  ($x->{_d},$x->{_n}) = ($x->{_n},$x->{_d}) if $y->{sign} eq '-'; 
-  $x->bnorm()->round(@r);
+  # otherwise:
+
+  #      n/d     n  ______________
+  # a/b       =  -\/  (a/b) ** d
+
+  # (a/b) ** n == (a ** n) / (b ** n)
+  $MBI->_pow($x->{_n}, $y->{_n} );
+  $MBI->_pow($x->{_d}, $y->{_n} );
+
+  return $x->broot($MBI->_str($y->{_d}),@r);		# n/d => root(n)
   }
 
 sub blog
@@ -1020,21 +1024,21 @@ sub blog
 sub bexp
   {
   # set up parameters
-  my ($self,$x,$y,$a,$p,$r) = (ref($_[0]),@_);
+  my ($self,$x,$y,@r) = (ref($_[0]),@_);
 
   # objectify is costly, so avoid it
   if ((!ref($_[0])) || (ref($_[0]) ne ref($_[1])))
     {
-    ($self,$x,$y,$a,$p,$r) = objectify(2,$class,@_);
+    ($self,$x,$y,@r) = objectify(2,$class,@_);
     }
 
-  return $x->binf() if $x->{sign} eq '+inf';
-  return $x->bzero() if $x->{sign} eq '-inf';
+  return $x->binf(@r) if $x->{sign} eq '+inf';
+  return $x->bzero(@r) if $x->{sign} eq '-inf';
 
   # we need to limit the accuracy to protect against overflow
   my $fallback = 0;
   my ($scale,@params);
-  ($x,@params) = $x->_find_round_parameters($a,$p,$r);
+  ($x,@params) = $x->_find_round_parameters(@r);
 
   # also takes care of the "error in _find_round_parameters?" case
   return $x if $x->{sign} eq 'NaN';
@@ -1043,11 +1047,11 @@ sub bexp
   if (scalar @params == 0)
     {
     # simulate old behaviour
-    $params[0] = $self->div_scale();    # and round to it as accuracy
-    $params[1] = undef;                 # P = undef
-    $scale = $params[0]+4;              # at least four more for proper round
-    $params[2] = $r;                    # round mode by caller or undef
-    $fallback = 1;                      # to clear a/p afterwards
+    $params[0] = $self->div_scale();	# and round to it as accuracy
+    $params[1] = undef;			# P = undef
+    $scale = $params[0]+4;		# at least four more for proper round
+    $params[2] = $r[2];			# round mode by caller or undef
+    $fallback = 1;			# to clear a/p afterwards
     }
   else
     {
@@ -1165,7 +1169,7 @@ sub _as_float
   if ($a != 0 || !$MBI->_is_one($x->{_d}))
     {
     # n/d
-    return Math::BigFloat->new($x->{sign} . $MBI->_str($x->{_n}))->bdiv( $MBI->_str($x->{_d}), $x->accuracy());
+    return scalar Math::BigFloat->new($x->{sign} . $MBI->_str($x->{_n}))->bdiv( $MBI->_str($x->{_d}), $x->accuracy());
     }
   # just n
   Math::BigFloat->new($x->{sign} . $MBI->_str($x->{_n}));
@@ -1187,7 +1191,7 @@ sub broot
     }
 
   # do it with floats
-  $x->_new_from_float( $x->_as_float()->broot($y,@r) );
+  $x->_new_from_float( $x->_as_float()->broot($y->_as_float(),@r) )->bnorm()->bround(@r);
   }
 
 sub bmodpow
@@ -1415,6 +1419,28 @@ sub as_number
   my $u = Math::BigInt->bzero();
   $u->{sign} = $x->{sign};
   $u->{value} = $MBI->_div( $MBI->_copy($x->{_n}), $x->{_d});	# 22/7 => 3
+  $u;
+  }
+
+sub as_float
+  {
+  # return N/D as Math::BigFloat
+
+  # set up parameters
+  my ($self,$x,@r) = (ref($_[0]),@_);
+  # objectify is costly, so avoid it
+  ($self,$x,@r) = objectify(1,$class,@_) unless ref $_[0];
+
+  # NaN, inf etc
+  return Math::BigFloat->new($x->{sign}) if $x->{sign} !~ /^[+-]$/;
+ 
+  my $u = Math::BigFloat->bzero();
+  $u->{sign} = $x->{sign};
+  # n
+  $u->{_m} = $MBI->_copy($x->{_n});
+  $u->{_e} = $MBI->_zero();
+  $u->bdiv( $MBI->_str($x->{_d}), @r);
+  # return $u
   $u;
   }
 
@@ -1655,7 +1681,7 @@ BigInts.
 
 Returns the object as a scalar. This will lose some data if the object
 cannot be represented by a normal Perl scalar (integer or float), so
-use as_int() instead.
+use L<as_int()> or L<as_float()> instead.
 
 This routine is automatically used whenever a scalar is required:
 
@@ -1671,6 +1697,19 @@ This routine is automatically used whenever a scalar is required:
 Returns a copy of the object as BigInt, truncated to an integer.
 
 C<as_number()> is an alias for C<as_int()>.
+
+=head2 as_float()
+
+	$x = Math::BigRat->new('13/7');
+	print $x->as_float(),"\n";		# '1'
+
+	$x = Math::BigRat->new('2/3');
+	print $x->as_float(5),"\n";		# '0.66667'
+
+Returns a copy of the object as BigFloat, preserving the
+accuracy as wanted, or the default of 40 digits.
+
+This method was added in v0.22 of Math::BigRat (April 2008).
 
 =head2 as_hex()
 
@@ -1933,6 +1972,10 @@ By passing a reference to a hash you may set the configuration values. This
 works only for values that a marked with a C<RW> above, anything else is
 read-only.
 
+=head2 objectify()
+
+This is an internal routine that turns scalars into objects.
+
 =head1 BUGS
 
 Some things are not yet implemented, or only implemented half-way:
@@ -1969,6 +2012,6 @@ may contain more documentation and examples as well as testcases.
 
 =head1 AUTHORS
 
-(C) by Tels L<http://bloodgate.com/> 2001 - 2007.
+(C) by Tels L<http://bloodgate.com/> 2001 - 2008.
 
 =cut

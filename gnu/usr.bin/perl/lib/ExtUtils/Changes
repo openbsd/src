@@ -1,3 +1,324 @@
+6.55_02  Wed Aug  5 00:36:36 PDT 2009
+    Feature Changes
+    * PREFIX now applies to relative directories.  This is a change since
+      6.20 when they were ignored.  Its necessary for relocatable Perls.
+
+    VMS
+    * Refactoring of "MakeMaker Parameters" section in 6.55_01 broke VMS.
+      (Craig Berry)
+
+
+6.55_01  Tue Jul 14 15:53:30 PDT 2009
+    Test Fixes
+    * The tests got a bit overzealous and removed the LIB environment variable
+      while is necessary for some compilers to work. [rt.cpan.org 47722]
+      (Jan Dubois)
+    * Another fix for arch_check() on Windows changing how we normalize
+      long and short filenames. [rt.cpan.org 47723] (Jan Dubois)
+
+    New Features
+    * BUILD_REQUIRES is added, similar to PREREQ_PM but for modules which
+      are necessary to build, but not run, your module. (Alexandr Ciornii)
+
+
+6.54  Tue Jul  7 16:48:22 PDT 2009
+    Test Fixes
+    * Added perl core boilerplate code to a few new tests which were missing
+      them.
+
+
+6.53_03  Thu Jul  2 14:47:45 PDT 2009
+    Bug Fixes
+    * You'd get a warning if you had a PREREQ_PM on a module with no $VERSION
+      like Config (broken in 6.51_01) [rt.cpan.org 47448]
+
+    Test Fixes
+    * Upgrade the version of Test::More we ship with to 0.88.
+    * Fix MM_Cygwin.t for older Perls missing Cygwin::win_to_posix_path()
+      broken in 6.53_01.
+    * Fix miniperl.t for Windows.  Our method of shutting off XS didn't
+      work for Win32.pm
+    * Old versions of version.pm, like what ships with OS X, dent Foo->VERSION
+      causing prereq.t to fail.  [rt.cpan.org 47296]
+    * Add missing core test boilerplates
+      [blead e39d780342f3e91579069fdc80eda72bfe639ae7]
+
+
+6.53_02  Sun Jun  7 19:24:56 PDT 2009
+    Test Fixes
+    * Stray use of Shell::Command broke older perls
+
+    Other
+    * MakeMaker will now automatically test itself with multiple
+      perl versions before releasing.
+
+
+6.53_01  Sun Jun  7 19:02:20 PDT 2009
+    Bug Fixes
+    * blib will now be rebuilt if the Makefile is changed
+      [rt.cpan.org 46658]
+    * 6.52 broke the setting of EXTRALIBS, LDLOADLIBS and BSLOADLIBS
+      when $self->{LIBS}[0] is undefined.
+      [rt.cpan.org 46633] (Craig Berry)
+
+    Cygwin
+    * Fixed MM_Cygwin.t when the path prefix (ie. cygdrive) has been
+      changed by the user. [rt.cpan.org 46585] (JDHEDDEN)
+
+    VMS
+    * Removed attempts to compensate for the "bin" logical added
+      by some versions of GNV, Craig says they're futile.
+      Put a warning into the Makefile.PL instead.
+      [rt.cpan.org 46679] (Craig Berry)
+    * Removed the arch_check() special case for VMS.
+      [rt.cpan.org 46678] (Craig Berry)
+
+    Win32
+    * Restore building the core by not trying to load the Win32
+      module in arch_check() with miniperl.
+      [rt.cpan.org 46667] (Max Maischein)
+
+    Tests
+    * Forgot to get rid of the tests for bytes and vmsish
+      which were removed in 6.51_01.
+    * Stopped running a Windows specific arch_check.t test
+      on non-Windows. (Craig Berry)
+      [rt.cpan.org 46678]
+
+
+6.52  Sat May 30 11:22:04 PDT 2009
+    Docs
+    * Documented CONFIGURE_REQUIRES (Alexandr Ciornii)
+    * Modernized the docs for PREREQ_PM
+
+
+6.51_04  Sun May 24 14:04:11 PDT 2009
+    Other
+    * All work on INSTALLHTML* has been reverted pending a fix for
+      [rt.cpan.org 45600]
+
+
+6.51_03  Sat May 23 22:38:26 PDT 2009
+    Bug Fixes
+    * Building *.C files was broken in 6.37. [rt.cpan.org 45557]
+      Thanks to Rajesh Mandalemula for spotting it.
+    New Features
+    * Optional parameter CONFIGURE_REQUIRES was added, to control
+      this section in META.yml (Alexandr Ciornii)
+
+
+6.51_02  Mon Apr 13 21:19:56 PDT 2009
+    Bug Fixes
+    * Fix a minor bug with the new PERM_DIR stuff which caused EUI to think
+      PERM_DIR was an install skip file.
+    * A Win32 function call in the last alpha broke Win32 builds.
+
+
+6.51_01  Fri Apr 10 14:30:27 PDT 2009
+    New Features
+    * Module installation will not be stopped by a broken Pod::Man.
+      Man pages will just not be installed.
+      [rt.cpan.org 43546] (Jesse Vincent)
+    * vim swap files, *.swp, will now be ignored by MakeMaker.
+    * Added PERM_DIR to control permissions on directories.
+      [rt.cpan.org 3927] (Rajesh Mandalemula)
+
+    Feature Changes
+    * Modules in PREREQ_PM are no longer loaded in order to figure out
+      their version.  parse_version() is used instead.
+      [rt.cpan.org 44646]
+    * PPD files generated with "make ppd" now use the new REQUIRES key
+      rather than the now deprecated DEPENDENCY.
+      [rt.cpan.org 25179] (GAAS)
+    * PPD files no longer contain the deprecated OS tag.
+    * fixin is a bit less restrictive allowing things like 
+      #!perl5.8.8 and #!perl-debug [rt.cpan.org 29442]
+    * Remove the unused perm_rw() and perm_rwx() methods.
+
+    Bug Fixes
+    * On 5.10 "make ppd" would generate the wrong ARCHITECTURE saying the
+      version is 5.1 instead of 5.10.
+    * Our pod2man emulation now requires an argument to --perm_rw.
+      [rt.cpan.org 35190] (imacat)
+    * DISTVNAME was documented as a WriteMakefile() param but you'd
+      get a warning if you tried to use it.  [rt.cpan.org 43217]
+    * Better support for parallel make installs.
+      [rt.cpan.org 32758] (Brendan O'Dea)
+    * parse_version() will now skip uses of $VERSION in conditions
+      [rt.cpan.org 9452] (jc@unser.net)
+    * The architecture mismatch warning could show up on Win32 due
+      to long vs short filenames being used to compare.
+      [rt.cpan.org 33532] (DAGOLDEN)
+    * maybe_command() will recognize Windows executables in
+      /cygdrive on Cygwin [rt.cpan.org 16375] (PJF)
+    * parse_version() will now look for the first use of $VERSION
+      that results in $VERSION being set.
+
+    Test Fixes
+    * basic.t will not leave a "bin" environment variable defined on VMS.
+      [rt.cpan.org 42150] (John E. Malmberg)
+    * Made the tests work ok on systems whose makes assume that files which
+      have the same mod time are out of date.  This is often the case for
+      the tests which generate files and run make rapidly.
+      [rt.cpan.org 29955] (Ken Hirsch)
+    * skip test numbers were wrong on VMS in t/basic.t
+      [rt.cpan.org 43511] (John E. Malmberg)
+
+    Portability
+    * Removed a few hard coded uses of the "false" command.
+      [rt.cpan.org 44504]
+
+    VMS
+    * Fixed a few calls to catfile() that should be catdir().
+      (John E. Malmberg)
+    * Override catdir() and catfile() to expand macros.  This is normally done
+      inside File::Spec::VMS but is really a MakeMaker-only thing.
+      (John E. Malmberg)
+
+    Other
+    * Remove ExtUtils::MakeMaker::bytes and vmsish which are unused and
+      seem to never have been used.
+    * Repository now on github.
+
+
+6.50  Sun Mar 22 12:28:06 PDT 2009
+    Windows    
+    * Remove the special checks for compilers that need a "manifest".  Instead,
+      the code will just be a no-op if there's no manifest.  Or something.
+      I dunno, I'm hoping Jan and Steve know what they're doing.
+      [rt.perl.org 61492]
+
+
+6.49_01  Thu Feb 19 17:06:36 PST 2009
+    New OS Support
+    * Recognize "Haiku", a resurrection of BeOS.
+
+    New Features
+    - META.yml now includes ExtUtils::MakeMaker in build_requires by
+      default.
+
+    Test Fixes
+    - ExtUtils::Install 1.51 changed its output breaking some tests that
+      were looking for /^Writing/ [rt.cpan.org 42927]
+
+    Bug Fixes
+    - Upgrade bundled modules:  ExtUtils::Install 1.52, ExtUtils::Command
+      1.16, ExtUtils::Manifest 1.56.
+
+    Other
+    - The MakeMaker repository moved slightly.  Changed the metadata to
+      reflect this.  [rt.cpan.org 41571]
+
+
+6.48  Mon Oct 20 11:18:13 PDT 2008
+    Test Fixes
+    * Protect against stray environment variables effecting the tests.
+      [rt.cpan.org 14930]
+
+
+6.47_02  Thu Oct 16 16:14:20 PDT 2008
+    Test Fixes
+    * MIN_PERL_VERSION test had some goofs on VMS. [thanks Craig Berry]
+
+
+6.47_01  Tue Oct 14 12:38:05 EDT 2008
+    New Features
+    * Added optional parameter MIN_PERL_VERSION, to define minimal
+      required perl version for dependency checks and to pass on to
+      META.yml and ppd files.        [rt.cpan.org 28374]
+      Thanks to David Golden, Alexandr Ciornii (chorny) and Martin Becker
+
+    Bug Fixes
+    * Guard against a path to Perl with a space in it.
+      From Max Maischein.  [bleadperl@32905]  
+
+    Test Fixes
+    - Small fix for VOS from Paul Green [bleadperl@33259]
+
+    Other
+    * $ExtUtils::MakeMaker::Revision, $ExtUtils::MM_Unix::Revision and 
+      $ExtUtils::MM_VMS::Revision are all now based on $VERSION.  You
+      shouldn't be using them for anything anyway.
+
+
+6.46  Sat Sep 27 17:34:03 EDT 2008
+    Bug Fixes
+    - Fix META_MERGE for more than one level of hashes.  [rt.cpan.org 39348]
+
+
+6.45_02  Sun Sep  7 13:59:14 PDT 2008
+    Bug Fixes
+    - Updated bundled ExtUtils::Command to 1.14, ExtUtils::Install to
+      1.50 and ExtUtils::Manifest to 1.54
+
+    Test Fixes
+    - t/writemakefile_args.t had the wrong skip amount causing failures
+      when run without version.pm (mostly 5.6 users)
+
+
+6.45_01  Sat Sep  6 03:19:03 PDT 2008
+    New Features
+    * META_ADD and META_MERGE have been added to manipulate the META.yml.
+      Thanks to Adriano Ferreira.                       [rt.cpan.org 21282]
+    - META.yml now includes configure_requires ExtUtils::MakeMaker by
+      default.                                          [rt.cpan.org 32337]
+    - META.yml now excludes t/ and inc/ from indexing by default.
+    - META.yml license is now "unknown" instead of undef if a LICENSE is not
+      given.
+    - META.yml now conforms to version 1.4 of the spec.
+
+    Bug Fixes
+    - Make @MM_Sections and @Overridable global again.  It's an undocumented
+      but used way to manipulate MakeMaker behavior. [rt.cpan.org 36047]
+
+    Portability
+    * Changed the name/dmake test in MM_Win32.pm to use regexs to that
+      they are able to handle Perl on a Stick absolute paths.
+
+
+6.44  Thu Feb 28 16:06:04 PST 2008
+    Bug Fixes
+    * Updated bundled ExtUtils::Install to 1.45 which should fix some
+      Cygwin issues. [rt.cpan.org 33291]
+
+
+6.43_01  Tue Jan  1 16:06:47 PST 2008
+    Bug Fixes
+    * Change the "is this really a Perl core library directory" checks to
+      look for strict instead of Exporter.  Now that Exporter is on CPAN
+      it can wind up in site_perl.
+    * split_command() will now set aside a little more space for macro
+      expansion.  This should help on systems with cramped command line
+      lengths.  Specifically, Pugs on Win32.  [rt.cpan.org 20145]
+
+    Installation
+    * MakeMaker would not install if the installed MakeMaker was too old,
+      like on 5.6.1.  The installation process was still using the
+      installed MakeMaker in a few places.  This has been fixed.
+      [rt.cpan.org 24746]
+
+    OS X
+    * "make dist" will no longer bundle up resource fork files (._foo).
+      [rt.cpan.org 29525]
+
+    Docs
+    * The documentation of VERSION_FROM was recommending vstrings (1.2.3)
+      which have never worked right.
+    * The documentation for the accepted values of LICENSE moved to
+      Module::Build::API. [rt.cpan.org 32020]
+
+    Tests
+    * The compilation test was testing the installed modules, not the
+      about-to-be-installed.
+    * xs.t would fail if ExtUtils::CBuilder was not installed.
+    
+    Misc
+    * Cleanups brought to you by no more 5.5 compatibility!
+    * MakeMaker is now perlcritic clean at severity level 5... except
+      the really silly ones.
+    * DIE use vars DIE!
+    * Added some resources to the META.yml
+
 6.42  Fri Dec  7 17:00:14 PST 2007
     Bug Fixes
     - 6.33 moved PREREQ_FATAL to happen after CONFIGURE.  This meant if
@@ -727,7 +1048,7 @@
       causing warnings when generating the Makefile.
 
 6.06_03 Sat Mar 29 19:44:53 PST 2003
-    - Added AUTHOR and ABSTRACT_FROM info for ppd generation.
+    - Added AUTHOR and ABSTRACT_FROM info to Makefile.PL for ppd generation.
     - Added echo() method to portably echo text to a file.
     - Worked around 5.8.0 eval 'require Foo::Bar' bug causing MakeMaker
       to think modules weren't installed.

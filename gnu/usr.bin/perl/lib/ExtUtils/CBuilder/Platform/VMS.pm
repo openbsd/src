@@ -4,7 +4,7 @@ use strict;
 use ExtUtils::CBuilder::Base;
 
 use vars qw($VERSION @ISA);
-$VERSION = '0.22';
+$VERSION = '0.2602';
 @ISA = qw(ExtUtils::CBuilder::Base);
 
 use File::Spec::Functions qw(catfile catdir);
@@ -134,7 +134,7 @@ sub _liblist_ext {
   # In general, we pass through the basic libraries from %Config unchanged.
   # The one exception is that if we're building in the Perl source tree, and
   # a library spec could be resolved via a logical name, we go to some trouble
-  # to insure that the copy in the local tree is used, rather than one to
+  # to ensure that the copy in the local tree is used, rather than one to
   # which a system-wide logical may point.
   if ($self->perl_src) {
     my($lib,$locspec,$type);

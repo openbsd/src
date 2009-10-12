@@ -42,6 +42,25 @@ my %tests = (
 
 my $max = keys %tests;
 
+my $vms_exit_mode = 0;
+
+if ($^O eq 'VMS') {
+    if (eval 'require VMS::Feature') {
+        $vms_exit_mode = !(VMS::Feature::current("posix_exit"));
+    } else {
+        my $env_unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        my $env_posix_ex = $ENV{'PERL_VMS_POSIX_EXIT'} || '';
+        my $unix_rpt = $env_unix_rpt =~ /^[ET1]/i; 
+        my $posix_ex = $env_posix_ex =~ /^[ET1]/i;
+        if (($unix_rpt || $posix_ex) ) {
+            $vms_exit_mode = 0;
+        } else {
+            $vms_exit_mode = 1;
+        }
+    }
+}
+
+
 print "1..$max\n";
 
 # Dump any error messages from the dying processes off to a temp file.
@@ -58,9 +77,9 @@ foreach my $test (1 .. $max) {
     }
     my $exit = $?;
 
-    # VMS exit code 44 (SS$_ABORT) is returned if a program dies.  We only get
-    # the severity bits, which boils down to 4.  See L<perlvms/$?>.
-    $bang = 4 if $^O eq 'VMS';
+    # The legacy VMS exit code 44 (SS$_ABORT) is returned if a program dies.
+    # We only get the severity bits, which boils down to 4.  See L<perlvms/$?>.
+    $bang = 4 if $vms_exit_mode;
 
     printf "# 0x%04x  0x%04x  0x%04x\n", $exit, $bang, $query;
     print "not " unless $exit == (($bang || ($query >> 8) || 255) << 8);

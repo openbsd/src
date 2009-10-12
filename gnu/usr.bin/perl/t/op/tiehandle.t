@@ -10,9 +10,11 @@ my $data = "";
 my @data = ();
 
 require './test.pl';
-plan(tests => 41);
+plan(tests => 50);
 
 sub compare {
+    local $Level = $Level + 1;
+
     return unless @expect;
     return ::fail() unless(@_ == @expect);
 
@@ -163,6 +165,32 @@ is($r, 1);
 }
 
 {
+    package Bar::Say;
+    use feature 'say';
+    use base qw(Implement);
+
+    my $ors;
+    sub PRINT     {
+        $ors = $\;
+        my $self = shift;
+        return $self->SUPER::PRINT(@_);
+    }
+
+    my $fh = Symbol::gensym;
+    @expect = (TIEHANDLE => 'Bar::Say');
+    ::ok( my $obj = tie *$fh, 'Bar::Say' );
+
+    local $\ = 'something';
+    @expect = (PRINT => $obj, "stuff", "and", "things");
+    ::ok( print $fh @expect[2..4] );
+    ::is( $ors, 'something' );
+    
+    ::ok( say $fh @expect[2..4] );
+    ::is( $ors, "\n",        'say sets $\ to \n in PRINT' );
+    ::is( $\,   "something", "  and it's localized" );
+}
+
+{
     # Test for change #11536
     package Foo;
     use strict;
@@ -244,5 +272,4 @@ is($r, 1);
     sub TIEHANDLE { bless {}, $_[0] }
     sub READLINE { "foobar\n" }
 }
-
 

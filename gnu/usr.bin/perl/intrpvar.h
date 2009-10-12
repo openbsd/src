@@ -1,8 +1,7 @@
 /*   intrpvar.h 
  *
  *    Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
- *    2006, 2007
- *    by Larry Wall and others
+ *    2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -348,7 +347,7 @@ PERLVARI(Icurcopdb,	COP *,	NULL)
 PERLVAR(Ifilemode,	int)		/* so nextargv() can preserve mode */
 PERLVAR(Ilastfd,	int)		/* what to preserve mode on */
 PERLVAR(Ioldname,	char *)		/* what to preserve mode on */
-PERLVAR(IArgv,		char **)	/* stuff to free from do_aexec, vfork safe */
+PERLVAR(IArgv,		const char **)	/* stuff to free from do_aexec, vfork safe */
 PERLVAR(ICmd,		char *)		/* stuff to free from do_aexec, vfork safe */
 /* Elements in this array have ';' appended and are injected as a single line
    into the tokeniser. You can't put any (literal) newlines into any program
@@ -526,6 +525,8 @@ PERLVAR(Ilast_swash_klen,	U8)	/* Only needs to store 0-10  */
 PERLVARI(Icryptseen,	bool,	FALSE)	/* has fast crypt() been initialized? */
 #endif
 
+/* Space for a U8 */
+
 PERLVARI(Iglob_index,	int,	0)
 
 
@@ -533,8 +534,12 @@ PERLVAR(Iparser,	yy_parser *)	/* current parser state */
 
 PERLVAR(Ibitcount,	char *)
 
+/* Array of signal handlers, indexed by signal number, through which the C
+   signal handler dispatches.  */
 PERLVAR(Ipsig_ptr, SV**)
-PERLVAR(Ipsig_name, SV**)
+/* Array of names of signals, indexed by signal number, for (re)use as the first
+   argument to a signal handler.   */
+PERLVAR(Ipsig_name, SV**)		
 
 #if defined(PERL_IMPLICIT_SYS)
 PERLVAR(IMem,		struct IPerlMem*)
@@ -561,9 +566,12 @@ PERLVAR(Inumeric_radix_sv,	SV *)	/* The radix separator if not '.' */
 #endif
 
 #if defined(USE_ITHREADS)
-PERLVAR(Iregex_pad,     SV**)		/* All regex objects */
-PERLVAR(Iregex_padav,   AV*)		/* All regex objects */
-
+PERLVAR(Iregex_pad,     SV**)		/* Shortcut into the array of
+					   regex_padav */
+PERLVAR(Iregex_padav,   AV*)		/* All regex objects, indexed via the
+					   values in op_pmoffset of pmop.
+					   Entry 0 is an array of IVs listing
+					   the now-free slots in the array */
 #endif
 
 #ifdef USE_REENTRANT_API
@@ -670,6 +678,19 @@ PERLVARI(Islab_count, U32, 0)	/* Size of the array */
 
 /* Can shared object be destroyed */
 PERLVARI(Idestroyhook, destroyable_proc_t, MEMBER_TO_FPTR(Perl_sv_destroyable))
+
+/* Perl_Ibreakable_sub_generation_ptr was too long for VMS, hence "gen"  */
+PERLVARI(Ibreakable_sub_gen, U32, 0)
+
+#ifdef DEBUG_LEAKING_SCALARS
+PERLVARI(Isv_serial, U32, 0) /* SV serial number, used in sv.c */
+#endif
+
+/* Register of known Method Resolution Orders.
+   What this actually points to is an implementation detail (it may change to
+   a structure incorporating a reference count - use mro_get_from_name to
+   retrieve a C<struct mro_alg *>  */
+PERLVAR(Iregistered_mros, HV *)
 
 /* If you are adding a U8 or U16, check to see if there are 'Space' comments
  * above on where there are gaps which currently will be structure padding.  */

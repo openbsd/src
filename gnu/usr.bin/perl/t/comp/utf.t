@@ -26,12 +26,12 @@ my $BOM = chr(0xFEFF);
 
 sub test {
     my ($enc, $tag, $bom) = @_;
-    open(UTF_PL, ">:raw:encoding($enc)", "utf.pl")
+    open(UTF_PL, ">:raw:encoding($enc)", "utf$$.pl")
 	or die "utf.pl($enc,$tag,$bom): $!";
     print UTF_PL $BOM if $bom;
     print UTF_PL "$tag\n";
     close(UTF_PL);
-    my $got = do "./utf.pl";
+    my $got = do "./utf$$.pl";
     is($got, $tag);
 }
 
@@ -53,5 +53,5 @@ test("utf16be",    1234,  0);
 test("utf16be",    12345, 0);
 
 END {
-    1 while unlink "utf.pl";
+    1 while unlink "utf$$.pl";
 }

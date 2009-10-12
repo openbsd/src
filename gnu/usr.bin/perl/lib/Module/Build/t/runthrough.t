@@ -3,15 +3,15 @@
 use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
 use MBTest tests => 32;
-use Module::Build;
-use Module::Build::ConfigData;
 
+use_ok 'Module::Build';
+ensure_blib('Module::Build');
+
+use Module::Build::ConfigData;
 my $have_yaml = Module::Build::ConfigData->feature('YAML_support');
 
 #########################
 
-use Cwd ();
-my $cwd = Cwd::cwd;
 my $tmp = MBTest->tmpdir;
 
 use DistGen;
@@ -55,17 +55,8 @@ close FH;
 ---
 $dist->regen;
 
-chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+$dist->chdir_in;
 
-#########################
-
-use Module::Build;
-ok(1);
-
-SKIP: {
-  skip "no blib in core", 1 if $ENV{PERL_CORE};
-  like $INC{'Module/Build.pm'}, qr/\bblib\b/, "Make sure version from blib/ is loaded";
-}
 
 #########################
 
@@ -82,11 +73,22 @@ ok -e $mb->build_script;
 
 my $dist_dir = 'Simple-0.01';
 
-# VMS may or may not need to modify the name, vmsify will do this if
-# the name looks like a UNIX directory.
+# VMS in traditional mode needs the $dist_dir name to not have a '.' in it
+# as this is a directory delimiter.  In extended character set mode the dot
+# is permitted for Unix format file specifications.
 if ($^O eq 'VMS') {
-   my @dist_dirs = File::Spec->splitdir(VMS::Filespec::vmsify($dist_dir.'/'));
-   $dist_dir = $dist_dirs[0];
+    my $Is_VMS_noefs = 1;
+    my $vms_efs = 0;
+    if (eval 'require VMS::Feature') {
+        $vms_efs = VMS::Feature::current("efs_charset");
+    } else {
+        my $efs_charset = $ENV{'DECC$EFS_CHARSET'} || '';
+        $vms_efs = $efs_charset =~ /^[ET1]/i; 
+    }
+    $Is_VMS_noefs = 0 if $vms_efs;
+    if ($Is_VMS_noefs) {
+        $dist_dir = 'Simple-0_01';
+    }
 }
 
 is $mb->dist_dir, $dist_dir;
@@ -149,7 +151,7 @@ SKIP: {
 
   SKIP: {
     skip( "not sure if we can create a tarball on this platform", 1 )
-      unless $mb->check_installed_status('Archive::Tar', 0) ||
+      unless $mb->check_installed_version('Archive::Tar', 0) ||
 	     $mb->isa('Module::Build::Platform::Unix');
 
     $mb->add_to_cleanup($mb->dist_dir . ".tar.gz");
@@ -206,7 +208,6 @@ ok ! -e $mb->build_script;
 ok ! -e $mb->config_dir;
 ok ! -e $mb->dist_dir;
 
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
 
 SKIP: {
@@ -227,7 +228,7 @@ echo Hello, World!
   $dist->add_file( 'bin/script.bat', $script_data );
 
   $dist->regen;
-  chdir( $dist->dirname ) or die "Can't chdir to '@{[$dist->dirname]}': $!";
+  $dist->chdir_in;
 
   $mb = Module::Build->new_from_context;
   ok $mb;
@@ -241,13 +242,8 @@ echo Hello, World!
   my $out = slurp( $script_file );
   is $out, $script_data, '  unmodified by pl2bat';
 
-  chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
   $dist->remove;
 }
 
 # cleanup
-chdir( $cwd ) or die "Can''t chdir to '$cwd': $!";
 $dist->remove;
-
-use File::Path;
-rmtree( $tmp );

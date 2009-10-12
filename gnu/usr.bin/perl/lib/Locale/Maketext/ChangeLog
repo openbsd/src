@@ -1,5 +1,14 @@
 Revision history for Perl suite Locale::Maketext
 
+2008-05-28  Adriano Ferreira
+    * Release 1.13
+
+    New maintainer. No noteworthy changes.
+
+    When debugging is turned on, "DEBUG and warn" is now
+    used instead of "DEBUG and print". It makes web applications
+    happier. CPAN RT #36238
+	
 2007-11-17
     * Release 1.12
 

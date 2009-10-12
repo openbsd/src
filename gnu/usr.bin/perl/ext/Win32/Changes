@@ -1,5 +1,28 @@
 Revision history for the Perl extension Win32.
 
+0.39	[2009-01-19]
+	- Add support for Windows 2008 Server and Windows 7 in
+	  Win32::GetOSName() and in the documentation for
+	  Win32::GetOSVersion().
+	- Make Win32::GetOSName() implementation testable.
+	- Document that the OSName for Win32s is actually "WinWin32s".
+
+0.38	[2008-06-27]
+	- Fix Cygwin releated problems in t/GetCurrentThreadId.t
+	  (Jerry D. Hedden).
+
+0.37	[2008-06-26]
+	- Add Win32::GetCurrentProcessId() function
+
+0.36	[2008-04-17]
+	- Add typecasts for Win64 compilation
+
+0.35	[2008-03-31]
+	Integrate changes from bleadperl:
+	- Silence Borland compiler warning (Steve Hay)
+	- Fix memory leak in Win32::GetOSVersion (Vincent Pit)
+	- Test Win32::GetCurrentThreadId on cygwin (Reini Urban, Steve Hay)
+
 0.34	[2007-11-21]
 	- Document "WinVista" return value for Win32::GetOSName()
 	  (Steve Hay).

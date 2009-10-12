@@ -8,7 +8,7 @@ BEGIN {
     }
     use Config;
     if (! $Config{'useithreads'}) {
-        print("1..0 # Skip: Perl not compiled with 'useithreads'\n");
+        print("1..0 # SKIP Perl not compiled with 'useithreads'\n");
         exit(0);
     }
 }
@@ -68,5 +68,7 @@ ok(13, $thread == $thr_x,                'Thread in list');
 $thread->join();
 ok(14, scalar @{[threads->list()]} == 0, 'Thread list empty');
 ok(15, threads->list() == 0,             'Thread list empty');
+
+exit(0);
 
 # EOF

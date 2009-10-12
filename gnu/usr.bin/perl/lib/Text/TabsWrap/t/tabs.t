@@ -86,8 +86,9 @@ DONE
 
 $| = 1;
 
-my $numtests = scalar(@tests) / 2;
-print "1..$numtests\n";
+print "1..";
+print @tests/2;
+print "\n";
 
 use Text::Tabs;
 

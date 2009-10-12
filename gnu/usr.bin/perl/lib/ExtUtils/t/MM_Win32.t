@@ -16,7 +16,7 @@ use Test::More;
 
 BEGIN {
 	if ($^O =~ /MSWin32/i) {
-		plan tests => 41;
+		plan tests => 49;
 	} else {
 		plan skip_all => 'This is not Win32';
 	}
@@ -234,6 +234,37 @@ EOSCRIPT
 }
 unlink "${script_name}$script_ext" if -f "${script_name}$script_ext";
 
+# is_make_type()
+{
+    # Check for literal nmake
+    SKIP: {
+        skip("Not using 'nmake'", 2) unless $Config{make} eq 'nmake';
+        ok(   $MM->is_make_type('nmake'), '->is_make_type(nmake) true'  );
+	ok( ! $MM->is_make_type('dmake'), '->is_make_type(dmake) false' );
+    }
+
+    # Check for literal nmake
+    SKIP: {
+        skip("Not using /nmake/", 2) unless $Config{make} =~ /nmake/;
+        ok(   $MM->is_make_type('nmake'), '->is_make_type(nmake) true'  );
+	ok( ! $MM->is_make_type('dmake'), '->is_make_type(dmake) false' );
+    }
+
+    # Check for literal dmake
+    SKIP: {
+        skip("Not using 'dmake'", 2) unless $Config{make} eq 'dmake';
+        ok(   $MM->is_make_type('dmake'), '->is_make_type(dmake) true'  );
+	ok( ! $MM->is_make_type('nmake'), '->is_make_type(nmake) false' );
+    }
+
+    # Check for literal dmake
+    SKIP: {
+        skip("Not using /dmake/", 2) unless $Config{make} =~ /dmake/;
+        ok(   $MM->is_make_type('dmake'), '->is_make_type(dmake) true'  );
+	ok( ! $MM->is_make_type('nmake'), '->is_make_type(nmake) false' );
+    }
+
+}
 
 # xs_o() should look into that
 # top_targets() should look into that

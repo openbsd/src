@@ -11,6 +11,8 @@ BEGIN {
 }
 chdir 't';
 
+use strict;
+
 use Test::More;
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::XS;
@@ -18,18 +20,17 @@ use File::Find;
 use File::Spec;
 use File::Path;
 
+my $Skipped = 0;
 if( have_compiler() ) {
-    plan tests => 7;
+    plan tests => 5;
 }
 else {
+    $Skipped = 1;
     plan skip_all => "ExtUtils::CBuilder not installed or couldn't find a compiler";
 }
 
 my $Is_VMS = $^O eq 'VMS';
 my $perl = which_perl();
-
-# GNV logical interferes with testing
-$ENV{'bin'} = '[.bin]' if $Is_VMS;
 
 chdir 't';
 
@@ -39,8 +40,10 @@ $| = 1;
 
 ok( setup_xs(), 'setup' );
 END {
-    ok( chdir File::Spec->updir );
-    ok( teardown_xs(), 'teardown' );
+    unless( $Skipped ) {
+        chdir File::Spec->updir or die;
+        teardown_xs(), 'teardown' or die;
+    }
 }
 
 ok( chdir('XS-Test'), "chdir'd to XS-Test" ) ||

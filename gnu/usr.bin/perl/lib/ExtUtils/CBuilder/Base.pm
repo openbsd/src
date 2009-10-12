@@ -6,9 +6,10 @@ use File::Basename;
 use Cwd ();
 use Config;
 use Text::ParseWords;
+use IO::File;
 
 use vars qw($VERSION);
-$VERSION = '0.21';
+$VERSION = '0.2602';
 
 sub new {
   my $class = shift;
@@ -115,27 +116,40 @@ sub compile {
 sub have_compiler {
   my ($self) = @_;
   return $self->{have_compiler} if defined $self->{have_compiler};
-  
-  my $tmpfile = File::Spec->catfile(File::Spec->tmpdir, 'compilet.c');
-  {
-    local *FH;
-    open FH, "> $tmpfile" or die "Can't create $tmpfile: $!";
-    print FH "int boot_compilet() { return 1; }\n";
-    close FH;
+
+  my $result;
+  my $attempts = 3;
+  # tmpdir has issues for some people so fall back to current dir
+  DIR: for my $dir ( File::Spec->tmpdir, '.' ) {
+
+    # don't clobber existing files (rare, but possible)
+    my $rand = int(rand(2**31));
+    my $tmpfile = File::Spec->catfile($dir, "compilet-$rand.c");
+    if ( -e $tmpfile ) {
+      redo DIR if $attempts--;
+      next DIR;
+    }
+
+    {
+      my $FH = IO::File->new("> $tmpfile") or die "Can't create $tmpfile: $!";
+      print $FH "int boot_compilet() { return 1; }\n";
+    }
+
+    my ($obj_file, @lib_files);
+    eval {
+      local $^W = 0;
+      $obj_file = $self->compile(source => $tmpfile);
+      @lib_files = $self->link(objects => $obj_file, module_name => 'compilet');
+    };
+    $result = $@ ? 0 : 1;
+
+    foreach (grep defined, $tmpfile, $obj_file, @lib_files) {
+      1 while unlink;
+    }
+    last DIR if $result;
   }
 
-  my ($obj_file, @lib_files);
-  eval {
-    $obj_file = $self->compile(source => $tmpfile);
-    @lib_files = $self->link(objects => $obj_file, module_name => 'compilet');
-  };
-  warn $@ if $@;
-  my $result = $self->{have_compiler} = $@ ? 0 : 1;
-  
-  foreach (grep defined, $tmpfile, $obj_file, @lib_files) {
-    1 while unlink;
-  }
-  return $result;
+  return $self->{have_compiler} = $result;
 }
 
 sub lib_file {

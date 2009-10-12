@@ -1,9 +1,9 @@
 #!/usr/bin/perl -w
-# $Id: man.t,v 1.12 2007-11-29 01:35:54 eagle Exp $
 #
 # man.t -- Additional specialized tests for Pod::Man.
 #
-# Copyright 2002, 2003, 2004, 2006, 2007 by Russ Allbery <rra@stanford.edu>
+# Copyright 2002, 2003, 2004, 2006, 2007, 2008
+#     Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -17,7 +17,7 @@ BEGIN {
     }
     unshift (@INC, '../blib/lib');
     $| = 1;
-    print "1..22\n";
+    print "1..25\n";
 }
 
 END {
@@ -29,6 +29,9 @@ use Pod::Man;
 $loaded = 1;
 print "ok 1\n";
 
+# Test whether we can use binmode to set encoding.
+my $have_encoding = (eval { require PerlIO::encoding; 1 } and not $@);
+
 my $parser = Pod::Man->new or die "Cannot create parser\n";
 my $n = 2;
 while (<DATA>) {
@@ -38,7 +41,7 @@ while (<DATA>) {
     # We have a test in ISO 8859-1 encoding.  Make sure that nothing strange
     # happens if Perl thinks the world is Unicode.  Wrap this in eval so that
     # older versions of Perl don't croak.
-    eval { binmode (\*TMP, ':encoding(iso-8859-1)') };
+    eval { binmode (\*TMP, ':encoding(iso-8859-1)') if $have_encoding };
 
     while (<DATA>) {
         last if $_ eq "###\n";
@@ -344,7 +347,7 @@ Oboy, is this C++ "fun" yet! (guesswork)
 ###
 .SH "NAME"
 "Stuff" (no guesswork)
-.Sh "\s-1THINGS\s0"
+.SS "\s-1THINGS\s0"
 .IX Subsection "THINGS"
 Oboy, is this \*(C+ \*(L"fun\*(R" yet! (guesswork)
 ###
@@ -430,4 +433,52 @@ Don't escape `this' but do escape C<`this'> (and don't surround it in quotes).
 .SH "Quote escaping"
 .IX Header "Quote escaping"
 Don't escape `this' but do escape \f(CW\`this\*(Aq\fR (and don't surround it in quotes).
+###
+
+###
+=pod
+
+E<eth>
+###
+.PP
+\&\*(d-
+###
+
+###
+=head1 C<one> and C<two>
+###
+.ie n .SH """one"" and ""two"""
+.el .SH "\f(CWone\fP and \f(CWtwo\fP"
+.IX Header "one and two"
+###
+
+###
+=pod
+
+Some text.
+
+=for man
+Some raw nroff.
+
+=for roff \fBBold text.\fP
+
+=for html
+Stuff that's hidden.
+
+=for MAN \fIItalic text.\fP
+
+=for ROFF
+.PP
+\&A paragraph.
+
+More text.
+###
+Some text.
+Some raw nroff.
+\fBBold text.\fP
+\fIItalic text.\fP
+.PP
+\&A paragraph.
+.PP
+More text.
 ###

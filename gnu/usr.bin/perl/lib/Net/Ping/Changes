@@ -1,6 +1,19 @@
 CHANGES
 -------
 
+2.35  Feb 08 14:42 2008
+	- Patch in Perl change #33242 by Nicholas Clark 
+		<http://public.activestate.com/cgi-bin/perlbrowse/p/33242>
+
+2.34  Dec 19 08:51 2007
+        - Release primarily to prevent problems with the Perl core in
+	  preparation for the Perl 5.10 release.  No real bug fixes, but
+          text fixes are included.
+	- skip test t/510_ping_udp.t on Windows Vista.  Thanks to Jan
+	  Dubois for the code to test for Vista.
+        - t/510_ping_udp.t should check for a udp echo port, not a tcp
+	  echo port.
+
 2.33  Jul 31 20:15 2007
 	- add new method port_number() rather than asking users to
           twiddle with the internals of Net::Ping to probe a specific

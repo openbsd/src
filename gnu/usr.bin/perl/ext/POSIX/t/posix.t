@@ -28,6 +28,28 @@ $Is_OS2     = $^O eq 'os2';
 $Is_UWin    = $^O eq 'uwin';
 $Is_OS390   = $^O eq 'os390';
 
+my $vms_unix_rpt = 0;
+my $vms_efs = 0;
+my $unix_mode = 1;
+
+if ($Is_VMS) {
+    $unix_mode = 0;
+    if (eval 'require VMS::Feature') {
+        $vms_unix_rpt = VMS::Feature::current("filename_unix_report");
+        $vms_efs = VMS::Feature::current("efs_charset");
+    } else {
+        my $unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        my $efs_charset = $ENV{'DECC$EFS_CHARSET'} || '';
+        $vms_unix_rpt = $unix_rpt =~ /^[ET1]/i;
+        $vms_efs = $efs_charset =~ /^[ET1]/i;
+    }
+
+    # Traditional VMS mode only if VMS is not in UNIX compatible mode.
+    $unix_mode = ($vms_efs && $vms_unix_rpt);
+
+}
+
+
 ok( $testfd = open("TEST", O_RDONLY, 0),        'O_RDONLY with open' );
 read($testfd, $buffer, 4) if $testfd > 2;
 is( $buffer, "#!./",                      '    with read' );
@@ -128,11 +150,11 @@ my $pat;
 if ($Is_MacOS) {
     $pat = qr/:t:$/;
 } 
-elsif ( $Is_VMS ) {
-    $pat = qr/\.T]/i;
+elsif ( $unix_mode ) {
+    $pat = qr#[\\/]t$#i;
 }
 else {
-    $pat = qr#[\\/]t$#i;
+    $pat = qr/\.T]/i;
 }
 like( getcwd(), qr/$pat/, 'getcwd' );
 

@@ -164,7 +164,7 @@ sub changes2 {
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sub go { exit Pod::Simple::HTML->parse_from_file(@ARGV) }
+sub go { Pod::Simple::HTML->parse_from_file(@ARGV); exit 0 }
  # Just so we can run from the command line.  No options.
  #  For that, use perldoc!
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

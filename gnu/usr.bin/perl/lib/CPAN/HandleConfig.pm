@@ -2,7 +2,7 @@ package CPAN::HandleConfig;
 use strict;
 use vars qw(%can %keys $loading $VERSION);
 
-$VERSION = sprintf "%.6f", substr(q$Rev: 2212 $,4)/1000000 + 5.4;
+$VERSION = "5.5";
 
 %can = (
         commit   => "Commit changes to disk",
@@ -14,6 +14,13 @@ $VERSION = sprintf "%.6f", substr(q$Rev: 2212 $,4)/1000000 + 5.4;
 # Q: where is the "How do I add a new config option" HOWTO?
 # A1: svn diff -r 757:758 # where dagolden added test_report
 # A2: svn diff -r 985:986 # where andk added yaml_module
+# A3: 1. add new config option to %keys below
+#     2. add a Pod description in CPAN::FirstTime; it should include a
+#        prompt line; see others for examples
+#     3. add a "matcher" section in CPAN::FirstTime::init that includes
+#        a prompt function; see others for examples
+#     4. add config option to documentation section in CPAN.pm
+
 %keys = map { $_ => undef }
     (
      "applypatch",
@@ -31,6 +38,7 @@ $VERSION = sprintf "%.6f", substr(q$Rev: 2212 $,4)/1000000 + 5.4;
      "colorize_warn",
      "commandnumber_in_prompt",
      "commands_quote",
+     "connect_to_internet_ok",
      "cpan_home",
      "curl",
      "dontload_hash", # deprecated after 1.83_68 (rev. 581)
@@ -38,9 +46,12 @@ $VERSION = sprintf "%.6f", substr(q$Rev: 2212 $,4)/1000000 + 5.4;
      "ftp",
      "ftp_passive",
      "ftp_proxy",
+     "ftpstats_size",
+     "ftpstats_period",
      "getcwd",
      "gpg",
      "gzip",
+     "halt_on_failure",
      "histfile",
      "histsize",
      "http_proxy",
@@ -65,6 +76,8 @@ $VERSION = sprintf "%.6f", substr(q$Rev: 2212 $,4)/1000000 + 5.4;
      "pager",
      "password",
      "patch",
+     "patches_dir",
+     "perl5lib_verbosity",
      "prefer_installer",
      "prefs_dir",
      "prerequisites_policy",
@@ -81,6 +94,7 @@ $VERSION = sprintf "%.6f", substr(q$Rev: 2212 $,4)/1000000 + 5.4;
      "term_is_latin",
      "term_ornaments",
      "test_report",
+     "trust_test_report_history",
      "unzip",
      "urllist",
      "use_sqlite",
@@ -101,21 +115,6 @@ my %prefssupport = map { $_ => 1 }
      "test_report",
     );
 
-if ($^O eq "MSWin32") {
-    for my $k (qw(
-                  mbuild_install_build_command
-                  make_install_make_command
-                 )) {
-        delete $keys{$k};
-        if (exists $CPAN::Config->{$k}) {
-            for ("deleting previously set config variable '$k' => '$CPAN::Config->{$k}'") {
-                $CPAN::Frontend ? $CPAN::Frontend->mywarn($_) : warn $_;
-            }
-            delete $CPAN::Config->{$k};
-        }
-    }
-}
-
 # returns true on successful action
 sub edit {
     my($self,@args) = @_;
@@ -123,10 +122,11 @@ sub edit {
     CPAN->debug("self[$self]args[".join(" | ",@args)."]");
     my($o,$str,$func,$args,$key_exists);
     $o = shift @args;
-    $DB::single = 1;
     if($can{$o}) {
-        $self->$o(args => \@args); # o conf init => sub init => sub load
-        return 1;
+        my $success = $self->$o(args => \@args); # o conf init => sub init => sub load
+        unless ($success) {
+            die "Panic: could not configure CPAN.pm for args [@args]. Giving up.";
+        }
     } else {
         CPAN->debug("o[$o]") if $CPAN::DEBUG;
         unless (exists $keys{$o}) {
@@ -289,12 +289,13 @@ Please specify a filename where to save the configuration or try
     }
 
     my $msg;
+    my $home = home();
     $msg = <<EOF unless $configpm =~ /MyConfig/;
 
 # This is CPAN.pm's systemwide configuration file. This file provides
 # defaults for users, and the values can be changed in a per-user
 # configuration file. The user-config file is being looked for as
-# ~/.cpan/CPAN/MyConfig.pm.
+# $home/.cpan/CPAN/MyConfig.pm.
 
 EOF
     $msg ||= "\n";
@@ -491,8 +492,20 @@ sub require_myconfig_or_config () {
 
 sub home () {
     my $home;
+    # Suppress load messages until we load the config and know whether
+    # load messages are desired.  Otherwise, it's unexpected and odd 
+    # why one load message pops up even when verbosity is turned off.
+    # This means File::HomeDir load messages are never seen, but I
+    # think that's probably OK -- DAGOLDEN
+    
+    # 5.6.2 seemed to segfault localizing a value in a hashref 
+    # so do it manually instead
+    my $old_v = $CPAN::Config->{load_module_verbosity};
+    $CPAN::Config->{load_module_verbosity} = q[none];
     if ($CPAN::META->has_usable("File::HomeDir")) {
-        $home = File::HomeDir->my_data;
+        $home = File::HomeDir->can('my_dot_config')
+            ? File::HomeDir->my_dot_config
+                : File::HomeDir->my_data;
         unless (defined $home) {
             $home = File::HomeDir->my_home
         }
@@ -500,6 +513,7 @@ sub home () {
     unless (defined $home) {
         $home = $ENV{HOME};
     }
+    $CPAN::Config->{load_module_verbosity} = $old_v;
     $home;
 }
 
@@ -512,6 +526,7 @@ sub load {
     use Carp;
     require_myconfig_or_config;
     my @miss = $self->missing_config_data;
+    CPAN->debug("doit[$doit]loading[$loading]miss[@miss]") if $CPAN::DEBUG;
     return unless $doit || @miss;
     return if $loading;
     $loading++;
@@ -559,9 +574,9 @@ some missing parameters...
 END
         $args{args} = \@miss;
     }
-    CPAN::FirstTime::init($configpm, %args);
+    my $initialized = CPAN::FirstTime::init($configpm, %args);
     $loading--;
-    return;
+    return $initialized;
 }
 
 
@@ -586,7 +601,7 @@ sub missing_config_data {
          "makepl_arg",
          "mbuild_arg",
          "mbuild_install_arg",
-         "mbuild_install_build_command",
+         ($^O eq "MSWin32" ? "" : "mbuild_install_build_command"),
          "mbuildpl_arg",
          "no_proxy",
          #"pager",
@@ -690,10 +705,10 @@ sub prefs_lookup {
 
     use strict;
     use vars qw($AUTOLOAD $VERSION);
-    $VERSION = sprintf "%.2f", substr(q$Rev: 2212 $,4)/100;
+    $VERSION = "5.5";
 
     # formerly CPAN::HandleConfig was known as CPAN::Config
-    sub AUTOLOAD {
+    sub AUTOLOAD { ## no critic
         my $class = shift; # e.g. in dh-make-perl: CPAN::Config
         my($l) = $AUTOLOAD;
         $CPAN::Frontend->mywarn("Dispatching deprecated method '$l' to CPAN::HandleConfig\n");

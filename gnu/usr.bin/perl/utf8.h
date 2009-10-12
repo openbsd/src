@@ -1,6 +1,6 @@
 /*    utf8.h
  *
- *    Copyright (C) 2000, 2001, 2002, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 2000, 2001, 2002, 2005, 2006, 2007, 2009 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -340,3 +340,13 @@ encoded character.
 #define IS_UTF8_CHAR_FAST(n) ((n) <= 4)
 
 #endif /* IS_UTF8_CHAR() for UTF-8 */
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

@@ -4,10 +4,15 @@ use strict;
 use lib $ENV{PERL_CORE} ? '../lib/Module/Build/t/lib' : 't/lib';
 use MBTest;
 
+use Module::Build;
+
 my @unix_splits = 
   (
    { q{one t'wo th'ree f"o\"ur " "five" } => [ 'one', 'two three', 'fo"ur ', 'five' ] },
    { q{ foo bar }                         => [ 'foo', 'bar'                         ] },
+   { q{ D\'oh f\{g\'h\"i\]\* }            => [ "D'oh", "f{g'h\"i]*"                 ] },
+   { q{ D\$foo }                          => [ 'D$foo'                              ] },
+   { qq{one\\\ntwo}                       => [ "one\ntwo"                           ] },  # TODO
   );
 
 my @win_splits = 
@@ -53,12 +58,11 @@ my @win_splits =
    { 'a " b " c'            => [ 'a', ' b ', 'c' ] },
 );
 
-plan tests => 10 + 2*@unix_splits + 2*@win_splits;
+plan tests => 10 + 4*@unix_splits + 4*@win_splits;
+
+ensure_blib('Module::Build');
 
 #########################
-
-use Module::Build;
-ok(1);
 
 # Should always return an array unscathed
 foreach my $platform ('', '::Platform::Unix', '::Platform::Windows') {
@@ -68,8 +72,13 @@ foreach my $platform ('', '::Platform::Unix', '::Platform::Windows') {
   is "@result", "foo bar baz", "Split using $pkg";
 }
 
+# I think 3.24 isn't actually the majik version, my 3.23 seems to pass...
+my $low_TPW_version = Text::ParseWords->VERSION < 3.24;
 use Module::Build::Platform::Unix;
 foreach my $test (@unix_splits) {
+  # Text::ParseWords bug:
+  local $TODO = $low_TPW_version && ((keys %$test)[0] =~ m{\\\n});
+
   do_split_tests('Module::Build::Platform::Unix', $test);
 }
 
@@ -94,13 +103,49 @@ foreach my $test (@win_splits) {
 }
 
 {
+  # Make sure data can make a round-trip through an external perl
+  # process, which can involve the shell command line
+
+  # silence the printing for easier matching
+  local *Module::Build::log_info = sub {};
+
+  my @data = map values(%$_), @unix_splits, @win_splits;
+  for my $d (@data) {
+    my $out = stdout_of
+      ( sub {
+	  Module::Build->run_perl_script('-le', [], ['print join " ", map "{$_}", @ARGV', @$d]);
+	} );
+    chomp $out;
+    is($out, join(' ', map "{$_}", @$d), "perl round trip for ".join('',map "{$_}", @$d));
+  }
+}
+
+{
+  # Make sure data can make a round-trip through an external backtick
+  # process, which can involve the shell command line
+
+  # silence the printing for easier matching
+  local *Module::Build::log_info = sub {};
+
+  my @data = map values(%$_), @unix_splits, @win_splits;
+  for my $d (@data) {
+    chomp(my $out = Module::Build->_backticks($^X, '-le', 'print join " ", map "{$_}", @ARGV', @$d));
+    is($out, join(' ', map "{$_}", @$d), "backticks round trip for ".join('',map "{$_}", @$d));
+  }
+}
+
+{
   # Make sure run_perl_script() propagates @INC
-  my $dir = 'whosiewhatzit';
-  mkdir $dir, 0777;
+  my $dir = MBTest->tmpdir;
+  if ($^O eq 'VMS') {
+      # VMS can store INC paths in Unix format with out the trailing
+      # directory delimiter.
+      $dir = VMS::Filespec::unixify($dir);
+      $dir =~ s#/$##;
+  }
   local @INC = ($dir, @INC);
-  my $output = stdout_of( sub { Module::Build->run_perl_script('', ['-le', 'print for @INC']) } );
-  like $output, qr{^$dir}m;
-  rmdir $dir;
+  my $output = stdout_of( sub { Module::Build->run_perl_script('-le', [], ['print for @INC']) } );
+  like $output, qr{^\Q$dir\E}m;
 }
 
 ##################################################################
@@ -112,5 +157,7 @@ sub do_split_tests {
   is( 0 + grep( !defined(), @result ), # all defined
       0,
       "'$string' result all defined" );
-  is_deeply(\@result, $expected);
+  is_deeply(\@result, $expected) or
+    diag("$package split_like_shell error \n" .
+      ">$string< is not splitting as >" . join("|", @$expected) . '<');
 }

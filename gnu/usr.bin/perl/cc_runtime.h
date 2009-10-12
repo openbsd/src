@@ -1,6 +1,6 @@
 /*    cc_runtime.h
  *
- *    Copyright (C) 1999, 2000, 2001, by Larry Wall and others
+ *    Copyright (C) 1999, 2000, 2001, 2004, 2006, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -54,7 +54,7 @@
 	switch (ret) {				\
 	case 0:					\
 	    PL_op = ppaddr(aTHX);		\
-	    if (PL_op != nxt) CALLRUNOPS();	\
+	    if (PL_op != nxt) CALLRUNOPS(aTHX);	\
 	    JMPENV_POP;				\
 	    break;				\
 	case 1: JMPENV_POP; JMPENV_JUMP(1);	\

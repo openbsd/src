@@ -164,6 +164,12 @@ itself or any of the standard library modules back to the developers;
 please read through the documentation for F<perlbug> thoroughly before
 using it to submit a bug report.
 
+=item L<perlthanks|perlthanks>
+
+This program provides an easy way to send a thank-you message back to the
+authors and maintainers of perl. It's just F<perlbug> installed under
+another name.
+
 =item L<h2ph|h2ph>
 
 Back before Perl had the XS system for connecting with C libraries,

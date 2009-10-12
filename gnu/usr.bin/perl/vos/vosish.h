@@ -4,6 +4,10 @@
 #include "unixish.h"
 #endif
 
+/* VOS does not support SA_SIGINFO, so undefine the macro.  This
+   is a work-around for posix-1302.  */
+#undef SA_SIGINFO
+
 /* The following declaration is an avoidance for posix-950. */
 extern int ioctl (int fd, int request, ...);
 

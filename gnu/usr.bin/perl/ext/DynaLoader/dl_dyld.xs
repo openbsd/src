@@ -9,11 +9,13 @@
  */
 
 /*
-    And Gandalf said: 'Many folk like to know beforehand what is to
-    be set on the table; but those who have laboured to prepare the
-    feast like to keep their secret; for wonder makes the words of
-    praise louder.'
-*/
+ *  And Gandalf said: 'Many folk like to know beforehand what is to
+ *  be set on the table; but those who have laboured to prepare the
+ *  feast like to keep their secret; for wonder makes the words of
+ *  praise louder.'
+ *
+ *     [p.970 of _The Lord of the Rings_, VI/v: "The Steward and the King"]
+ */
 
 /* Porting notes:
 
@@ -201,7 +203,7 @@ void
 dl_install_xsub(perl_name, symref, filename="$Package")
     char *	perl_name
     void *	symref
-    char *	filename
+    const char *	filename
     CODE:
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, "dl_install_xsub(name=%s, symref=%x)\n",
 	    perl_name, symref));
@@ -218,5 +220,20 @@ dl_error()
     RETVAL = dl_last_error ;
     OUTPUT:
     RETVAL
+
+#if defined(USE_ITHREADS)
+
+void
+CLONE(...)
+    CODE:
+    MY_CXT_CLONE;
+
+    /* MY_CXT_CLONE just does a memcpy on the whole structure, so to avoid
+     * using Perl variables that belong to another thread, we create our 
+     * own for this thread.
+     */
+    MY_CXT.x_dl_last_error = newSVpvn("", 0);
+
+#endif
 
 # end.

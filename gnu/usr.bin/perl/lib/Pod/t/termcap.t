@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: termcap.t,v 1.4 2006-01-28 22:31:50 eagle Exp $
 #
 # termcap.t -- Additional specialized tests for Pod::Text::Termcap.
 #

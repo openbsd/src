@@ -135,13 +135,13 @@ chdir(File::Spec->updir) or die "cannot change to parent of t/ directory: $!";
     eval {
         $num_warnings = validate qq{
             lib                -d || die
-            $path_to_libFile   cd
+            '$path_to_libFile' cd
             Spec               -e
             Spec               -f
-            $path_to_dist      cd
+            '$path_to_dist'    cd
             README             -ef
             INSTALL            -d || warn
-            $path_to_libFile   -d || die
+            '$path_to_libFile' -d || die
         };
     };
 

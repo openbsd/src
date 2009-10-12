@@ -211,7 +211,15 @@ merchantability or fitness for a particular purpose.
 
 Original author: Sean M. Burke C<sburke@cpan.org>
 
-Maintained by: Allison Randal C<allison@perl.org>
+Maintained by: 
+
+=over
+
+=item * Allison Randal C<allison@perl.org>
+
+=item * Hans Dieter Pearcey C<hdp@cpan.org>
+
+=back
 
 =cut
 

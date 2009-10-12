@@ -67,9 +67,9 @@ sub make_tmp_file {
 my $Perl = which_perl();
 my $quote = $Is_VMS || $Is_Win32 ? '"' : "'";
 
-my $tmperr             = 'cloexece.tmp';
-my $tmpfile1           = 'cloexec1.tmp';
-my $tmpfile2           = 'cloexec2.tmp';
+my $tmperr             = tempfile();
+my $tmpfile1           = tempfile();
+my $tmpfile2           = tempfile();
 my $tmpfile1_contents  = "tmpfile1 line 1\ntmpfile1 line 2\n";
 my $tmpfile2_contents  = "tmpfile2 line 1\ntmpfile2 line 2\n";
 make_tmp_file($tmpfile1, $tmpfile1_contents);
@@ -164,9 +164,3 @@ cmp_ok( $parentfd1, '<=', $^F, "parent open fd=$parentfd1 (\$^F=$^F)" );
 test_inherited($parentfd1);
 close FHPARENT1 or die "close '$tmpfile1': $!";
 close FHPARENT2 or die "close '$tmpfile2': $!";
-
-END {
-    defined $tmperr   and unlink($tmperr);
-    defined $tmpfile1 and unlink($tmpfile1);
-    defined $tmpfile2 and unlink($tmpfile2);
-}

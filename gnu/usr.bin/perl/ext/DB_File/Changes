@@ -1,9 +1,43 @@
 
 
+1.820 28 March 2009
+
+   * remove MAN3PODS from Makefile.PL to match core.
+
+1.819 18 February 2009
+
+   * t/db-recno.t fails if run in a path that contains spaces
+     [rt.cpan.org #43288]
+
+1.818 21 January 2009
+
+   * Updated Makefile.PL for Strawberry Perl. 
+     Patch suggested by David Golden.
+
+   * Remove IRIX notes from README. The page referenced doesn't exist
+     anymore.
+
+1.817 27 March 2008
+
+   * Updated dbinfo
+
+   * Applied core patch 32299 - Re-apply change #30562
+
+   * Applied core patch 32208
+
+   * Applied core patch 32884 - use MM->parse_version() in Makefile.PL
+
+   * Applied core patch 32883 -  Silence new warning grep in void context warning
+
+   * Applied core patch 32704 to remove use of PL_na in typemap
+
+   * Applied core patch 30562 to fix a build issue on OSF
+
 1.816 28 October 2007
 
    * Clarified the warning about building with a different version of
      Berkeley DB that is used at runtime.
+
    * Also made the boot version check less strict.
      [rt.cpan.org #30013]
 

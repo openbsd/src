@@ -2,6 +2,7 @@ package ExtUtils::Installed;
 
 use 5.00503;
 use strict;
+#use warnings; # XXX requires 5.6
 use Carp qw();
 use ExtUtils::Packlist;
 use ExtUtils::MakeMaker;
@@ -16,7 +17,7 @@ my $DOSISH = ($^O =~ /^(MSWin\d\d|os2|dos|mint)$/);
 require VMS::Filespec if $Is_VMS;
 
 use vars qw($VERSION);
-$VERSION = '1.43';
+$VERSION = '1.999_001';
 $VERSION = eval $VERSION;
 
 sub _is_prefix {
@@ -28,9 +29,8 @@ sub _is_prefix {
         $path   = VMS::Filespec::unixify($path);
     }
 
-    # Sloppy Unix path normalization.
-    $prefix =~ s{/+}{/}g;
-    $path   =~ s{/+}{/}g;
+    # Unix path normalization.
+    $prefix = File::Spec->canonpath($prefix);
 
     return 1 if substr($path, 0, length($prefix)) eq $prefix;
 
@@ -58,12 +58,10 @@ sub _is_type {
     return 1 if $type eq "all";
 
     return($self->_is_doc($path)) if $type eq "doc";
-
+    my $conf= $self->{':private:'}{Config};
     if ($type eq "prog") {
-        return($self->_is_prefix($path, $self->{':private:'}{Config}{prefix} || $self->{':private:'}{Config}{prefixexp})
-               &&
-               !($self->_is_doc($path))
-               ? 1 : 0);
+        return($self->_is_prefix($path, $conf->{prefix} || $conf->{prefixexp})
+               && !($self->_is_doc($path)) ? 1 : 0);
     }
     return(0);
 }
@@ -78,13 +76,63 @@ sub _is_under {
     return(0);
 }
 
+sub _fix_dirs {
+    my ($self, @dirs)= @_;
+    # File::Find does not know how to deal with VMS filepaths.
+    if( $Is_VMS ) {
+        $_ = VMS::Filespec::unixify($_)
+            for @dirs;
+    }
+
+    if ($DOSISH) {
+        s|\\|/|g for @dirs;
+    }
+    return wantarray ? @dirs : $dirs[0];
+}
+
+sub _make_entry {
+    my ($self, $module, $packlist_file, $modfile)= @_;
+
+    my $data= {
+        module => $module,
+        packlist => scalar(ExtUtils::Packlist->new($packlist_file)),
+        packlist_file => $packlist_file,
+    };
+
+    if (!$modfile) {
+        $data->{version} = $self->{':private:'}{Config}{version};
+    } else {
+        $data->{modfile} = $modfile;
+        # Find the top-level module file in @INC
+        $data->{version} = '';
+        foreach my $dir (@{$self->{':private:'}{INC}}) {
+            my $p = File::Spec->catfile($dir, $modfile);
+            if (-r $p) {
+                $module = _module_name($p, $module) if $Is_VMS;
+
+                $data->{version} = MM->parse_version($p);
+                $data->{version_from} = $p;
+                $data->{packlist_valid} = exists $data->{packlist}{$p};
+                last;
+            }
+        }
+    }
+    $self->{$module}= $data;
+}
+
+our $INSTALLED;
 sub new {
     my ($class) = shift(@_);
     $class = ref($class) || $class;
 
     my %args = @_;
 
-    my $self = {};
+    return $INSTALLED if $INSTALLED and ($args{default_get} || $args{default});
+
+    my $self = bless {}, $class;
+
+    $INSTALLED= $self if $args{default_set} || $args{default};
+
 
     if ($args{config_override}) {
         eval {
@@ -96,9 +144,9 @@ sub new {
     else {
         $self->{':private:'}{Config} = \%Config;
     }
-    
+
     for my $tuple ([inc_override => INC => [ @INC ] ],
-                   [ extra_libs => EXTRA => [] ]) 
+                   [ extra_libs => EXTRA => [] ])
     {
         my ($arg,$key,$val)=@$tuple;
         if ( $args{$arg} ) {
@@ -114,33 +162,17 @@ sub new {
     }
     {
         my %dupe;
-        @{$self->{':private:'}{INC}} = grep { -e $_ && !$dupe{$_}++ }
-            @{$self->{':private:'}{INC}}, @{$self->{':private:'}{EXTRA}};        
-    }                
-    my $perl5lib = defined $ENV{PERL5LIB} ? $ENV{PERL5LIB} : "";
-
-    my @dirs = ( $self->{':private:'}{Config}{archlibexp},
-                 $self->{':private:'}{Config}{sitearchexp},
-                 split(/\Q$Config{path_sep}\E/, $perl5lib),
-                 @{$self->{':private:'}{EXTRA}},
-               );   
-    
-    # File::Find does not know how to deal with VMS filepaths.
-    if( $Is_VMS ) {
-        $_ = VMS::Filespec::unixify($_) 
-            for @dirs;
+        @{$self->{':private:'}{LIBDIRS}} = grep { -e $_ && !$dupe{$_}++ }
+            @{$self->{':private:'}{EXTRA}}, @{$self->{':private:'}{INC}};
     }
 
-    if ($DOSISH) {
-        s|\\|/|g for @dirs;
-    }
-    my $archlib = $dirs[0];
-    
+    my @dirs= $self->_fix_dirs(@{$self->{':private:'}{LIBDIRS}});
+
     # Read the core packlist
-    $self->{Perl}{packlist} =
-      ExtUtils::Packlist->new( File::Spec->catfile($archlib, '.packlist') );
-    $self->{Perl}{version} = $self->{':private:'}{Config}{version};
+    my $archlib = $self->_fix_dirs($self->{':private:'}{Config}{archlibexp});
+    $self->_make_entry("Perl",File::Spec->catfile($archlib, '.packlist'));
 
+    my $root;
     # Read the module packlists
     my $sub = sub {
         # Only process module .packlists
@@ -148,41 +180,26 @@ sub new {
 
         # Hack of the leading bits of the paths & convert to a module name
         my $module = $File::Find::name;
-        my $found;
-        for (@dirs) {
-            $found = $module =~ s!\Q$_\E/?auto/(.*)/.packlist!$1!s
-                and last;
-        }            
-        unless ($found) {
+        my $found = $module =~ s!^.*?/auto/(.*)/.packlist!$1!s
+            or do {
             # warn "Woah! \$_=$_\n\$module=$module\n\$File::Find::dir=$File::Find::dir\n",
             #    join ("\n",@dirs);
             return;
-        }            
+        };
+
         my $modfile = "$module.pm";
         $module =~ s!/!::!g;
 
-        # Find the top-level module file in @INC
-        $self->{$module}{version} = '';
-        foreach my $dir (@{$self->{':private:'}{INC}}) {
-            my $p = File::Spec->catfile($dir, $modfile);
-            if (-r $p) {
-                $module = _module_name($p, $module) if $Is_VMS;
-
-                $self->{$module}{version} = MM->parse_version($p);
-                last;
-            }
-        }
-
-        # Read the .packlist
-        $self->{$module}{packlist} =
-          ExtUtils::Packlist->new($File::Find::name);
+        return if $self->{$module}; #shadowing?
+        $self->_make_entry($module,$File::Find::name,$modfile);
     };
-    my %dupe;
-    @dirs= grep { -e $_ && !$dupe{$_}++ } @dirs;
-    $self->{':private:'}{LIBDIRS} = \@dirs;    
-    find($sub, @dirs) if @dirs;
+    while (@dirs) {
+        $root= shift @dirs;
+        next if !-d $root;
+        find($sub,$root);
+    }
 
-    return(bless($self, $class));
+    return $self;
 }
 
 # VMS's non-case preserving file-system means the package name can't
@@ -213,10 +230,9 @@ sub _module_name {
     return $module;
 }
 
-
-
 sub modules {
     my ($self) = @_;
+    $self= $self->new(default=>1) if !ref $self;
 
     # Bug/feature of sort in scalar context requires this.
     return wantarray
@@ -226,6 +242,7 @@ sub modules {
 
 sub files {
     my ($self, $module, $type, @under) = @_;
+    $self= $self->new(default=>1) if !ref $self;
 
     # Validate arguments
     Carp::croak("$module is not installed") if (! exists($self->{$module}));
@@ -244,6 +261,7 @@ sub files {
 
 sub directories {
     my ($self, $module, $type, @under) = @_;
+    $self= $self->new(default=>1) if !ref $self;
     my (%dirs);
     foreach my $file ($self->files($module, $type, @under)) {
         $dirs{dirname($file)}++;
@@ -253,6 +271,7 @@ sub directories {
 
 sub directory_tree {
     my ($self, $module, $type, @under) = @_;
+    $self= $self->new(default=>1) if !ref $self;
     my (%dirs);
     foreach my $dir ($self->directories($module, $type, @under)) {
         $dirs{$dir}++;
@@ -269,20 +288,31 @@ sub directory_tree {
 
 sub validate {
     my ($self, $module, $remove) = @_;
+    $self= $self->new(default=>1) if !ref $self;
     Carp::croak("$module is not installed") if (! exists($self->{$module}));
     return($self->{$module}{packlist}->validate($remove));
 }
 
 sub packlist {
     my ($self, $module) = @_;
+    $self= $self->new(default=>1) if !ref $self;
     Carp::croak("$module is not installed") if (! exists($self->{$module}));
     return($self->{$module}{packlist});
 }
 
 sub version {
     my ($self, $module) = @_;
+    $self= $self->new(default=>1) if !ref $self;
     Carp::croak("$module is not installed") if (! exists($self->{$module}));
     return($self->{$module}{version});
+}
+
+sub debug_dump {
+    my ($self, $module) = @_;
+    $self= $self->new(default=>1) if !ref $self;
+    local $self->{":private:"}{Config};
+    require Data::Dumper;
+    print Data::Dumper->new([$self])->Sortkeys(1)->Indent(1)->Dump();
 }
 
 
@@ -321,7 +351,13 @@ stores their contents. The .packlists can be queried with the functions
 described below. Where it searches by default is determined by the settings found
 in C<%Config::Config>, and what the value is of the PERL5LIB environment variable.
 
-=head1 FUNCTIONS
+=head1 METHODS
+
+Unless specified otherwise all method can be called as class methods, or as object
+methods. If called as class methods then the "default" object will be used, and if
+necessary created using the current processes %Config and @INC.  See the
+'default' option to new() for details.
+
 
 =over 4
 
@@ -344,18 +380,29 @@ pass that in.
 
 Similarly, the parameter C<inc_override> may be a reference to an
 array which is used in place of the default module search paths
-from C<@INC>. 
+from C<@INC>.
 
     use Config;
     my @dirs = split(/\Q$Config{path_sep}\E/, $ENV{PERL5LIB});
     my $p5libs = ExtUtils::Installed->new(inc_override=>\@dirs);
 
-The parameter c<extra_libs> can be used to specify B<additional> paths to 
-search for installed modules. For instance 
+B<Note>: You probably do not want to use these options alone, almost always
+you will want to set both together.
+
+The parameter c<extra_libs> can be used to specify B<additional> paths to
+search for installed modules. For instance
 
     my $installed = ExtUtils::Installed->new(extra_libs=>["/my/lib/path"]);
 
 This should only be necessary if C</my/lib/path> is not in PERL5LIB.
+
+Finally there is the 'default', and the related 'default_get' and 'default_set'
+options. These options control the "default" object which is provided by the
+class interface to the methods. Setting C<default_get> to true tells the constructor
+to return the default object if it is defined. Setting C<default_set> to true tells
+the constructor to make the default object the constructed object. Setting the
+C<default> option is like setting both to true. This is used primarily internally
+and probably isn't interesting to any real user.
 
 =item modules()
 

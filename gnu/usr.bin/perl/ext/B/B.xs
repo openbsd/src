@@ -26,13 +26,18 @@ static const char* const svclassnames[] = {
 #endif
     "B::IV",
     "B::NV",
+#if PERL_VERSION <= 10
     "B::RV",
+#endif
     "B::PV",
     "B::PVIV",
     "B::PVNV",
     "B::PVMG",
 #if PERL_VERSION <= 8
     "B::BM",
+#endif
+#if PERL_VERSION >= 11
+    "B::REGEXP",
 #endif
 #if PERL_VERSION >= 9
     "B::GV",
@@ -458,6 +463,16 @@ cchar(pTHX_ SV *sv)
     return sstr;
 }
 
+#if PERL_VERSION >= 9
+#  define PMOP_pmreplstart(o)	o->op_pmstashstartu.op_pmreplstart
+#  define PMOP_pmreplroot(o)	o->op_pmreplrootu.op_pmreplroot
+#else
+#  define PMOP_pmreplstart(o)	o->op_pmreplstart
+#  define PMOP_pmreplroot(o)	o->op_pmreplroot
+#  define PMOP_pmpermflags(o)	o->op_pmpermflags
+#  define PMOP_pmdynflags(o)      o->op_pmdynflags
+#endif
+
 static void
 walkoptree(pTHX_ SV *opsv, const char *method)
 {
@@ -487,12 +502,7 @@ walkoptree(pTHX_ SV *opsv, const char *method)
 	}
     }
     if (o && (cc_opclass(aTHX_ o) == OPc_PMOP) && o->op_type != OP_PUSHRE
-#if PERL_VERSION >= 9
-	    && (kid = cPMOPo->op_pmreplrootu.op_pmreplroot)
-#else
-	    && (kid = cPMOPo->op_pmreplroot)
-#endif
-	)
+           && (kid = PMOP_pmreplroot(cPMOPo)))
     {
 	sv_setiv(newSVrv(opsv, cc_opclassname(aTHX_ kid)), PTR2IV(kid));
 	walkoptree(aTHX_ opsv, method);
@@ -518,11 +528,7 @@ oplist(pTHX_ OP *o, SV **SP)
 	XPUSHs(opsv);
         switch (o->op_type) {
 	case OP_SUBST:
-#if PERL_VERSION >= 9
-            SP = oplist(aTHX_ cPMOPo->op_pmstashstartu.op_pmreplstart, SP);
-#else
-            SP = oplist(aTHX_ cPMOPo->op_pmreplstart, SP);
-#endif
+            SP = oplist(aTHX_ PMOP_pmreplstart(cPMOPo), SP);
             continue;
 	case OP_SORT:
 	    if (o->op_flags & OPf_STACKED && o->op_flags & OPf_SPECIAL) {
@@ -564,6 +570,9 @@ typedef SV	*B__IV;
 typedef SV	*B__PV;
 typedef SV	*B__NV;
 typedef SV	*B__PVMG;
+#if PERL_VERSION >= 11
+typedef SV	*B__REGEXP;
+#endif
 typedef SV	*B__PVLV;
 typedef SV	*B__BM;
 typedef SV	*B__RV;
@@ -587,7 +596,7 @@ PROTOTYPES: DISABLE
 BOOT:
 {
     HV *stash = gv_stashpvn("B", 1, GV_ADD);
-    AV *export_ok = perl_get_av("B::EXPORT_OK",TRUE);
+    AV *export_ok = perl_get_av("B::EXPORT_OK", GV_ADD);
     MY_CXT_INIT;
     specialsv_list[0] = Nullsv;
     specialsv_list[1] = &PL_sv_undef;
@@ -907,7 +916,7 @@ OP_type(o)
 
 #if PERL_VERSION >= 9
 
-U8
+U16
 OP_opt(o)
 	B::OP		o
 
@@ -929,7 +938,7 @@ OP_private(o)
 
 #if PERL_VERSION >= 9
 
-U8
+U16
 OP_spare(o)
 	B::OP		o
 
@@ -980,13 +989,6 @@ LISTOP_children(o)
     OUTPUT:
         RETVAL
 
-#if PERL_VERSION >= 9
-#  define PMOP_pmreplstart(o)	o->op_pmstashstartu.op_pmreplstart
-#else
-#  define PMOP_pmreplstart(o)	o->op_pmreplstart
-#  define PMOP_pmpermflags(o)	o->op_pmpermflags
-#  define PMOP_pmdynflags(o)      o->op_pmdynflags
-#endif
 #define PMOP_pmnext(o)		o->op_pmnext
 #define PMOP_pmregexp(o)	PM_GETRE(o)
 #ifdef USE_ITHREADS
@@ -1101,7 +1103,7 @@ PMOP_precomp(o)
 	ST(0) = sv_newmortal();
 	rx = PM_GETRE(o);
 	if (rx)
-	    sv_setpvn(ST(0), rx->precomp, rx->prelen);
+	    sv_setpvn(ST(0), RX_PRECOMP(rx), RX_PRELEN(rx));
 
 #if PERL_VERSION >= 9
 
@@ -1113,7 +1115,7 @@ PMOP_reflags(o)
 	ST(0) = sv_newmortal();
 	rx = PM_GETRE(o);
 	if (rx)
-	    sv_setuv(ST(0), rx->extflags);
+	    sv_setuv(ST(0), RX_EXTFLAGS(rx));
 
 #endif
 
@@ -1134,7 +1136,7 @@ SVOP_gv(o)
 #define PADOP_sv(o)	(o->op_padix ? PAD_SVl(o->op_padix) : Nullsv)
 #define PADOP_gv(o)	((o->op_padix \
 			  && SvTYPE(PAD_SVl(o->op_padix)) == SVt_PVGV) \
-			 ? (GV*)PAD_SVl(o->op_padix) : Nullgv)
+			 ? (GV*)PAD_SVl(o->op_padix) : (GV *)NULL)
 
 MODULE = B	PACKAGE = B::PADOP		PREFIX = PADOP_
 
@@ -1193,7 +1195,7 @@ B::OP
 LOOP_lastop(o)
 	B::LOOP	o
 
-#define COP_label(o)	o->cop_label
+#define COP_label(o)	CopLABEL(o)
 #define COP_stashpv(o)	CopSTASHPV(o)
 #define COP_stash(o)	CopSTASH(o)
 #define COP_file(o)	CopFILE(o)
@@ -1209,9 +1211,19 @@ LOOP_lastop(o)
 
 MODULE = B	PACKAGE = B::COP		PREFIX = COP_
 
+#if PERL_VERSION >= 11
+
+const char *
+COP_label(o)
+	B::COP	o
+
+#else
+
 char *
 COP_label(o)
 	B::COP	o
+
+#endif
 
 char *
 COP_stashpv(o)
@@ -1366,6 +1378,24 @@ packiv(sv)
 	    ST(0) = sv_2mortal(newSVpvn((char *)&w, 4));
 	}
 
+
+#if PERL_VERSION >= 11
+
+B::SV
+RV(sv)
+        B::IV   sv
+    CODE:
+        if( SvROK(sv) ) {
+            RETVAL = SvRV(sv);
+        }
+        else {
+            croak( "argument is not SvROK" );
+        }
+    OUTPUT:
+        RETVAL
+
+#endif
+
 MODULE = B	PACKAGE = B::NV		PREFIX = Sv
 
 NV
@@ -1392,11 +1422,15 @@ U32
 PARENT_FAKELEX_FLAGS(sv)
 	B::NV	sv
 
+#if PERL_VERSION < 11
+
 MODULE = B	PACKAGE = B::RV		PREFIX = Sv
 
 B::SV
 SvRV(sv)
 	B::RV	sv
+
+#endif
 
 MODULE = B	PACKAGE = B::PV		PREFIX = Sv
 
@@ -1476,6 +1510,31 @@ B::HV
 SvSTASH(sv)
 	B::PVMG	sv
 
+MODULE = B	PACKAGE = B::REGEXP
+
+#if PERL_VERSION >= 11
+
+IV
+REGEX(sv)
+	B::REGEXP	sv
+    CODE:
+	RETVAL = PTR2IV(((struct xregexp *)SvANY(sv))->xrx_regexp);
+    OUTPUT:
+        RETVAL
+
+SV*
+precomp(sv)
+	B::REGEXP	sv
+	REGEXP* rx = NO_INIT
+    CODE:
+	rx = ((struct xregexp *)SvANY(sv))->xrx_regexp;
+	/* FIXME - UTF-8? And the equivalent precomp methods? */
+	RETVAL = newSVpvn( RX_PRECOMP(rx), RX_PRELEN(rx) );
+    OUTPUT:
+        RETVAL
+
+#endif
+
 #define MgMOREMAGIC(mg) mg->mg_moremagic
 #define MgPRIVATE(mg) mg->mg_private
 #define MgTYPE(mg) mg->mg_type
@@ -1536,7 +1595,7 @@ precomp(mg)
             REGEXP* rx = (REGEXP*)mg->mg_obj;
             RETVAL = Nullsv;
             if( rx )
-                RETVAL = newSVpvn( rx->precomp, rx->prelen );
+                RETVAL = newSVpvn( RX_PRECOMP(rx), RX_PRELEN(rx) );
         }
         else {
             croak( "precomp is only meaningful on r-magic" );
@@ -1958,7 +2017,7 @@ HvARRAY(hv)
 	    (void)hv_iterinit(hv);
 	    EXTEND(sp, HvKEYS(hv) * 2);
 	    while ((sv = hv_iternextsv(hv, &key, &len))) {
-		PUSHs(newSVpvn(key, len));
+		mPUSHp(key, len);
 		PUSHs(make_sv_object(aTHX_ sv_newmortal(), sv));
 	    }
 	}

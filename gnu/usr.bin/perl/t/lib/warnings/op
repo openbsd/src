@@ -211,6 +211,8 @@ eval { getgrgid 1 };	# OP_GGRGID
 eval { getpwnam 1 };	# OP_GPWNAM
 eval { getpwuid 1 };	# OP_GPWUID
 prototype "foo";	# OP_PROTOTYPE
+$a ~~ $b;		# OP_SMARTMATCH
+$a <=> $b;		# OP_NCMP
 EXPECT
 Useless use of repeat (x) in void context at - line 3.
 Useless use of wantarray in void context at - line 5.
@@ -250,6 +252,8 @@ Useless use of getgrgid in void context at - line 51.
 Useless use of getpwnam in void context at - line 52.
 Useless use of getpwuid in void context at - line 53.
 Useless use of subroutine prototype in void context at - line 54.
+Useless use of smart match in void context at - line 55.
+Useless use of numeric comparison (<=>) in void context at - line 56.
 ########
 # op.c
 use warnings 'void' ; close STDIN ;

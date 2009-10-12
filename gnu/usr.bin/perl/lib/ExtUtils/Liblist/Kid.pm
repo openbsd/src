@@ -5,12 +5,11 @@ package ExtUtils::Liblist::Kid;
 # This kid package is to be used by MakeMaker.  It will not work if
 # $self is not a Makemaker.
 
-use 5.00503;
+use 5.006;
 # Broken out of MakeMaker from version 4.11
 
 use strict;
-use vars qw($VERSION);
-$VERSION = 6.42;
+our $VERSION = 6.55_02;
 
 use Config;
 use Cwd 'cwd';
@@ -50,11 +49,11 @@ sub _unix_os2_ext {
     my(@libpath) = split " ", $Config{'libpth'};
     my(@ldloadlibs, @bsloadlibs, @extralibs, @ld_run_path, %ld_run_path_seen);
     my(@libs, %libs_seen);
-    my($fullname, $thislib, $thispth, @fullname);
+    my($fullname, @fullname);
     my($pwd) = cwd(); # from Cwd.pm
     my($found) = 0;
 
-    foreach $thislib (split ' ', $potential_libs){
+    foreach my $thislib (split ' ', $potential_libs) {
 
 	# Handle possible linker path arguments.
 	if ($thislib =~ s/^(-[LR]|-Wl,-R)//){	# save path flag type
@@ -89,7 +88,7 @@ sub _unix_os2_ext {
 	}
 
 	my($found_lib)=0;
-	foreach $thispth (@searchpath, @libpath){
+	foreach my $thispth (@searchpath, @libpath) {
 
 		# Try to find the full name of the library.  We need this to
 		# determine whether it's a dynamically-loadable library or not.
@@ -128,7 +127,7 @@ sub _unix_os2_ext {
 	    } elsif (-f ($fullname="$thispth/lib$thislib.$so")
 		 && (($Config{'dlsrc'} ne "dl_dld.xs") || ($thislib eq "m"))){
 	    } elsif (-f ($fullname="$thispth/lib${thislib}_s$Config_libext")
-                 && (! $Config{'archname'} =~ /RM\d\d\d-svr4/)
+                 && ($Config{'archname'} !~ /RM\d\d\d-svr4/)
 		 && ($thislib .= "_s") ){ # we must explicitly use _s version
 	    } elsif (-f ($fullname="$thispth/lib$thislib$Config_libext")){
 	    } elsif (-f ($fullname="$thispth/$thislib$Config_libext")){
@@ -259,7 +258,7 @@ sub _win32_ext {
     my $lib		= '';
     my $found		= 0;
     my $search		= 1;
-    my($fullname, $thislib, $thispth);
+    my($fullname);
 
     # add "$Config{installarchlib}/CORE" to default search path
     push @libpath, "$Config{installarchlib}/CORE";
@@ -270,7 +269,7 @@ sub _win32_ext {
 
     foreach (Text::ParseWords::quotewords('\s+', 0, $potential_libs)){
 
-	$thislib = $_;
+	my $thislib = $_;
 
         # see if entry is a flag
 	if (/^:\w+$/) {
@@ -323,7 +322,7 @@ sub _win32_ext {
 	}
 
 	my $found_lib = 0;
-	foreach $thispth (@searchpath, @libpath){
+	foreach my $thispth (@searchpath, @libpath){
 	    unless (-f ($fullname="$thispth\\$_")) {
 		warn "'$thislib' not found as '$fullname'\n" if $verbose;
 		next;
@@ -372,7 +371,7 @@ sub _win32_ext {
 
 
 sub _vms_ext {
-  my($self, $potential_libs,$verbose,$give_libs) = @_;
+  my($self, $potential_libs, $verbose, $give_libs) = @_;
   $verbose ||= 0;
 
   my(@crtls,$crtlstr);
@@ -386,8 +385,8 @@ sub _vms_ext {
   # to insure that the copy in the local tree is used, rather than one to
   # which a system-wide logical may point.
   if ($self->{PERL_SRC}) {
-    my($lib,$locspec,$type);
-    foreach $lib (@crtls) { 
+    my($locspec,$type);
+    foreach my $lib (@crtls) { 
       if (($locspec,$type) = $lib =~ m{^([\w\$-]+)(/\w+)?} and $locspec =~ /perl/i) {
         if    (lc $type eq '/share')   { $locspec .= $Config{'exe_ext'}; }
         elsif (lc $type eq '/library') { $locspec .= $Config{'lib_ext'}; }
@@ -404,7 +403,7 @@ sub _vms_ext {
     return ('', '', $crtlstr, '', ($give_libs ? [] : ()));
   }
 
-  my(@dirs,@libs,$dir,$lib,%found,@fndlibs,$ldlib);
+  my(%found,@fndlibs,$ldlib);
   my $cwd = cwd();
   my($so,$lib_ext,$obj_ext) = @Config{'so','lib_ext','obj_ext'};
   # List of common Unix library names and their VMS equivalents
@@ -421,7 +420,8 @@ sub _vms_ext {
   warn "Potential libraries are '$potential_libs'\n" if $verbose;
 
   # First, sort out directories and library names in the input
-  foreach $lib (split ' ',$potential_libs) {
+  my(@dirs, @libs);
+  foreach my $lib (split ' ',$potential_libs) {
     push(@dirs,$1),   next if $lib =~ /^-L(.*)/;
     push(@dirs,$lib), next if $lib =~ /[:>\]]$/;
     push(@dirs,$lib), next if -d $lib;
@@ -433,7 +433,7 @@ sub _vms_ext {
   # Now make sure we've got VMS-syntax absolute directory specs
   # (We don't, however, check whether someone's hidden a relative
   # path in a logical name.)
-  foreach $dir (@dirs) {
+  foreach my $dir (@dirs) {
     unless (-d $dir) {
       warn "Skipping nonexistent Directory $dir\n" if $verbose > 1;
       $dir = '';
@@ -450,13 +450,13 @@ sub _vms_ext {
   @dirs = grep { length($_) } @dirs;
   unshift(@dirs,''); # Check each $lib without additions first
 
-  LIB: foreach $lib (@libs) {
+  LIB: foreach my $lib (@libs) {
     if (exists $libmap{$lib}) {
       next unless length $libmap{$lib};
       $lib = $libmap{$lib};
     }
 
-    my(@variants,$variant,$cand);
+    my(@variants,$cand);
     my($ctype) = '';
 
     # If we don't have a file type, consider it a possibly abbreviated name and
@@ -469,10 +469,10 @@ sub _vms_ext {
     }
     push(@variants,$lib);
     warn "Looking for $lib\n" if $verbose;
-    foreach $variant (@variants) {
+    foreach my $variant (@variants) {
       my($fullname, $name);
 
-      foreach $dir (@dirs) {
+      foreach my $dir (@dirs) {
         my($type);
 
         $name = "$dir$variant";
@@ -536,7 +536,7 @@ sub _vms_ext {
   push @fndlibs, @{$found{OBJ}}                      if exists $found{OBJ};
   push @fndlibs, map { "$_/Library" } @{$found{OLB}} if exists $found{OLB};
   push @fndlibs, map { "$_/Share"   } @{$found{SHR}} if exists $found{SHR};
-  $lib = join(' ',@fndlibs);
+  my $lib = join(' ',@fndlibs);
 
   $ldlib = $crtlstr ? "$lib $crtlstr" : $lib;
   warn "Result:\n\tEXTRALIBS: $lib\n\tLDLOADLIBS: $ldlib\n" if $verbose;

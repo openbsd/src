@@ -5,7 +5,8 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '3.2501';
+$VERSION = '3.30';
+$VERSION = eval $VERSION;
 
 @ISA = qw(File::Spec::Unix);
 
@@ -41,7 +42,7 @@ sub devnull {
     return "nul";
 }
 
-sub rootdir () { '\\' }
+sub rootdir { '\\' }
 
 
 =item tmpdir
@@ -87,7 +88,7 @@ Default: 1
 
 =cut
 
-sub case_tolerant () {
+sub case_tolerant {
   eval { require Win32API::File; } or return 1;
   my $drive = shift || "C:";
   my $osFsType = "\0"x256;
@@ -126,23 +127,37 @@ complete path ending with a filename
 =cut
 
 sub catfile {
-    my $self = shift;
-    my $file = $self->canonpath(pop @_);
-    return $file unless @_;
-    my $dir = $self->catdir(@_);
-    $dir .= "\\" unless substr($dir,-1) eq "\\";
-    return $dir.$file;
+    shift;
+
+    # Legacy / compatibility support
+    #
+    shift, return _canon_cat( "/", @_ )
+	if $_[0] eq "";
+
+    # Compatibility with File::Spec <= 3.26:
+    #     catfile('A:', 'foo') should return 'A:\foo'.
+    return _canon_cat( ($_[0].'\\'), @_[1..$#_] )
+        if $_[0] =~ m{^$DRIVE_RX\z}o;
+
+    return _canon_cat( @_ );
 }
 
 sub catdir {
-    my $self = shift;
-    my @args = @_;
-    foreach (@args) {
-	tr[/][\\];
-        # append a backslash to each argument unless it has one there
-        $_ .= "\\" unless m{\\$};
-    }
-    return $self->canonpath(join('', @args));
+    shift;
+
+    # Legacy / compatibility support
+    #
+    return ""
+    	unless @_;
+    shift, return _canon_cat( "/", @_ )
+	if $_[0] eq "";
+
+    # Compatibility with File::Spec <= 3.26:
+    #     catdir('A:', 'foo') should return 'A:\foo'.
+    return _canon_cat( ($_[0].'\\'), @_[1..$#_] )
+        if $_[0] =~ m{^$DRIVE_RX\z}o;
+
+    return _canon_cat( @_ );
 }
 
 sub path {
@@ -165,25 +180,10 @@ On Win32 makes
 =cut
 
 sub canonpath {
-    my ($self,$path) = @_;
-    
-    $path =~ s/^([a-z]:)/\u$1/s;
-    $path =~ s|/|\\|g;
-    $path =~ s|([^\\])\\+|$1\\|g;                  # xx\\\\xx  -> xx\xx
-    $path =~ s|(\\\.)+\\|\\|g;                     # xx\.\.\xx -> xx\xx
-    $path =~ s|^(\.\\)+||s unless $path eq ".\\";  # .\xx      -> xx
-    $path =~ s|\\\Z(?!\n)||
-	unless $path =~ m{^([A-Z]:)?\\\Z(?!\n)}s;  # xx\       -> xx
-    # xx1/xx2/xx3/../../xx -> xx1/xx
-    $path =~ s|\\\.\.\.\\|\\\.\.\\\.\.\\|g; # \...\ is 2 levels up
-    $path =~ s|^\.\.\.\\|\.\.\\\.\.\\|g;    # ...\ is 2 levels up
-    return $path if $path =~ m|^\.\.|;      # skip relative paths
-    return $path unless $path =~ /\.\./;    # too few .'s to cleanup
-    return $path if $path =~ /\.\.\.\./;    # too many .'s to cleanup
-    $path =~ s{^\\\.\.$}{\\};                      # \..    -> \
-    1 while $path =~ s{^\\\.\.}{};                 # \..\xx -> \xx
-
-    return $self->_collapse($path);
+    # Legacy / compatibility support
+    #
+    return $_[1] if !defined($_[1]) or $_[1] eq '';
+    return _canon_cat( $_[1] );
 }
 
 =item splitpath
@@ -374,5 +374,71 @@ See L<File::Spec> and L<File::Spec::Unix>.  This package overrides the
 implementation of these methods, not the semantics.
 
 =cut
+
+
+sub _canon_cat				# @path -> path
+{
+    my ($first, @rest) = @_;
+
+    my $volume = $first =~ s{ \A ([A-Za-z]:) ([\\/]?) }{}x	# drive letter
+    	       ? ucfirst( $1 ).( $2 ? "\\" : "" )
+	       : $first =~ s{ \A (?:\\\\|//) ([^\\/]+)
+				 (?: [\\/] ([^\\/]+) )?
+	       			 [\\/]? }{}xs			# UNC volume
+	       ? "\\\\$1".( defined $2 ? "\\$2" : "" )."\\"
+	       : $first =~ s{ \A [\\/] }{}x			# root dir
+	       ? "\\"
+	       : "";
+    my $path   = join "\\", $first, @rest;
+
+    $path =~ tr#\\/#\\\\#s;		# xx/yy --> xx\yy & xx\\yy --> xx\yy
+
+    					# xx/././yy --> xx/yy
+    $path =~ s{(?:
+		(?:\A|\\)		# at begin or after a slash
+		\.
+		(?:\\\.)*		# and more
+		(?:\\|\z) 		# at end or followed by slash
+	       )+			# performance boost -- I do not know why
+	     }{\\}gx;
+
+    # XXX I do not know whether more dots are supported by the OS supporting
+    #     this ... annotation (NetWare or symbian but not MSWin32).
+    #     Then .... could easily become ../../.. etc:
+    # Replace \.\.\. by (\.\.\.+)  and substitute with
+    # { $1 . ".." . "\\.." x (length($2)-2) }gex
+	     				# ... --> ../..
+    $path =~ s{ (\A|\\)			# at begin or after a slash
+    		\.\.\.
+		(?=\\|\z) 		# at end or followed by slash
+	     }{$1..\\..}gx;
+    					# xx\yy\..\zz --> xx\zz
+    while ( $path =~ s{(?:
+		(?:\A|\\)		# at begin or after a slash
+		[^\\]+			# rip this 'yy' off
+		\\\.\.
+		(?<!\A\.\.\\\.\.)	# do *not* replace ^..\..
+		(?<!\\\.\.\\\.\.)	# do *not* replace \..\..
+		(?:\\|\z) 		# at end or followed by slash
+	       )+			# performance boost -- I do not know why
+	     }{\\}sx ) {}
+
+    $path =~ s#\A\\##;			# \xx --> xx  NOTE: this is *not* root
+    $path =~ s#\\\z##;			# xx\ --> xx
+
+    if ( $volume =~ m#\\\z# )
+    {					# <vol>\.. --> <vol>\
+	$path =~ s{ \A			# at begin
+		    \.\.
+		    (?:\\\.\.)*		# and more
+		    (?:\\|\z) 		# at end or followed by slash
+		 }{}x;
+
+	return $1			# \\HOST\SHARE\ --> \\HOST\SHARE
+	    if    $path eq ""
+	      and $volume =~ m#\A(\\\\.*)\\\z#s;
+    }
+    return $path ne "" || $volume ? $volume.$path : ".";
+}
 
 1;

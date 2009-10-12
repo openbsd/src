@@ -11,6 +11,8 @@ BEGIN {
 
 require q(./test.pl); plan(tests => 1);
 
+require mro;
+
 =pod
 
 This example is take from: http://www.python.org/2.3/mro.html

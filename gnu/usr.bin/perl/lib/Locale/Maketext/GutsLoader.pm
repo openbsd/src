@@ -1,5 +1,7 @@
 package Locale::Maketext::GutsLoader;
 
+$VERSION = '1.13';
+
 use strict;
 sub zorp { return scalar @_ }
 
@@ -16,7 +18,7 @@ BEGIN {
 #
 
 $Locale::Maketext::GUTSPATH = '';
-Locale::Maketext::DEBUG and print "Requiring Locale::Maketext::Guts...\n";
+Locale::Maketext::DEBUG and warn "Requiring Locale::Maketext::Guts...\n";
 eval 'require Locale::Maketext::Guts';
 
 if ($@) {
@@ -38,10 +40,10 @@ if ($@) {
     }
     eval $source;
     die "Can't compile $path\n...The error I got was:\n$@\nAborting" if $@;
-    Locale::Maketext::DEBUG and print "Non-utf8'd Locale::Maketext::Guts fine\n";
+    Locale::Maketext::DEBUG and warn "Non-utf8'd Locale::Maketext::Guts fine\n";
 }
 else {
-    Locale::Maketext::DEBUG and print "Loaded Locale::Maketext::Guts fine\n";
+    Locale::Maketext::DEBUG and warn "Loaded Locale::Maketext::Guts fine\n";
 }
 
 1;

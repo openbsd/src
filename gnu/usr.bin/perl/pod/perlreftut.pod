@@ -67,11 +67,11 @@ entire hash (or to just about anything else).  Names are one kind of
 reference that you're already familiar with.  Think of the President
 of the United States: a messy, inconvenient bag of blood and bones.
 But to talk about him, or to represent him in a computer program, all
-you need is the easy, convenient scalar string "George Bush".
+you need is the easy, convenient scalar string "Barack Obama".
 
 References in Perl are like names for arrays and hashes.  They're
 Perl's private, internal names, so you can be sure they're
-unambiguous.  Unlike "George Bush", a reference only refers to one
+unambiguous.  Unlike "Barack Obama", a reference only refers to one
 thing, and you always know what it refers to.  If you have a reference
 to an array, you can recover the entire array from it.  If you have a
 reference to a hash, you can recover the entire hash.  But the

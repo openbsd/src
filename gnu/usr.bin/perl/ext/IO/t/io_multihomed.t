@@ -5,11 +5,10 @@ BEGIN {
 	chdir 't' if -d 't';
 	@INC = '../lib';
     }
-}
 
-use Config;
+    require($ENV{PERL_CORE} ? './test.pl' : './t/test.pl');
 
-BEGIN {
+    use Config;
     my $can_fork = $Config{d_fork} ||
 		    (($^O eq 'MSWin32' || $^O eq 'NetWare') and
 		     $Config{useithreads} and 
@@ -25,20 +24,13 @@ BEGIN {
     elsif (!$can_fork) {
         $reason = 'no fork';
     }
-    if ($reason) {
-	print "1..0 # Skip: $reason\n";
-	exit 0;
-    }
+    skip_all($reason) if $reason;
 }
 
 $| = 1;
 
 print "1..8\n";
-
-eval {
-    $SIG{ALRM} = sub { die; };
-    alarm 60;
-};
+watchdog(15);
 
 package Multi;
 require IO::Socket::INET;
