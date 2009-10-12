@@ -1,6 +1,6 @@
 package Tie::Hash;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 =head1 NAME
 
@@ -173,7 +173,7 @@ proper time, see L<perltie>.
 C<SCALAR> is only defined in B<Tie::StdHash> and B<Tie::ExtraHash>.
 
 If needed, these methods should be defined by the package inheriting from
-B<Tie::Hash>, B<Tie::StdHash>, or B<Tie::ExtraHash>. See L<pertie/"SCALAR">
+B<Tie::Hash>, B<Tie::StdHash>, or B<Tie::ExtraHash>. See L<perltie/"SCALAR">
 to find out what happens when C<SCALAR> does not exist.
 
 =head1 MORE INFORMATION

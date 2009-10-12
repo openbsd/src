@@ -260,9 +260,11 @@ X<*>
 Binary "/" divides two numbers.
 X</> X<slash>
 
-Binary "%" computes the modulus of two numbers.  Given integer
+Binary "%" is the modulo operator, which computes the division
+remainder of its first argument with respect to its second argument.
+Given integer
 operands C<$a> and C<$b>: If C<$b> is positive, then C<$a % $b> is
-C<$a> minus the largest multiple of C<$b> that is not greater than
+C<$a> minus the largest multiple of C<$b> less than or equal to
 C<$a>.  If C<$b> is negative, then C<$a % $b> is C<$a> minus the
 smallest multiple of C<$b> that is not less than C<$a> (i.e. the
 result will be less than or equal to zero).  If the operands
@@ -273,14 +275,14 @@ the integer portion of C<$a> and C<$b> will be used in the operation
 If the absolute value of the right operand (C<abs($b)>) is greater than
 or equal to C<(UV_MAX + 1)>, "%" computes the floating-point remainder
 C<$r> in the equation C<($r = $a - $i*$b)> where C<$i> is a certain
-integer that makes C<$r> should have the same sign as the right operand
+integer that makes C<$r> have the same sign as the right operand
 C<$b> (B<not> as the left operand C<$a> like C function C<fmod()>)
 and the absolute value less than that of C<$b>.
 Note that when C<use integer> is in scope, "%" gives you direct access
-to the modulus operator as implemented by your C compiler.  This
+to the modulo operator as implemented by your C compiler.  This
 operator is not as well defined for negative operands, but it will
 execute faster.
-X<%> X<remainder> X<modulus> X<mod>
+X<%> X<remainder> X<modulo> X<mod>
 
 Binary "x" is the repetition operator.  In scalar context or if the left
 operand is not enclosed in parentheses, it returns a string consisting
@@ -447,8 +449,6 @@ X<cmp>
 
 Binary "~~" does a smart match between its arguments. Smart matching
 is described in L<perlsyn/"Smart matching in detail">.
-This operator is only available if you enable the "~~" feature:
-see L<feature> for more information.
 X<~~>
 
 "lt", "le", "ge", "gt" and "cmp" use the collation (sort) order specified
@@ -602,10 +602,10 @@ Examples:
 As a scalar operator:
 
     if (101 .. 200) { print; } # print 2nd hundred lines, short for
-                               #   if ($. == 101 .. $. == 200) ...
+                               #   if ($. == 101 .. $. == 200) { print; }
 
     next LINE if (1 .. /^$/);  # skip header lines, short for
-                               #   ... if ($. == 1 .. /^$/);
+                               #   next LINE if ($. == 1 .. /^$/);
                                # (typically in a loop labeled LINE)
 
     s/^/> / if (/^$/ .. eof());  # quote body
@@ -615,9 +615,9 @@ As a scalar operator:
         $in_header =   1  .. /^$/;
         $in_body   = /^$/ .. eof;
         if ($in_header) {
-            # ...
+            # do something
         } else { # in body
-            # ...
+            # do something else
         }
     } continue {
         close ARGV if eof;             # reset $. each file
@@ -783,10 +783,17 @@ In list context, it's just the list argument separator, and inserts
 both its arguments into the list.  These arguments are also evaluated
 from left to right.
 
-The C<< => >> operator is a synonym for the comma, but forces any word
-(consisting entirely of word characters) to its left to be interpreted
-as a string (as of 5.001).  This includes words that might otherwise be
-considered a constant or function call.
+The C<< => >> operator is a synonym for the comma except that it causes
+its left operand to be interpreted as a string if it begins with a letter
+or underscore and is composed only of letters, digits and underscores.
+This includes operands that might otherwise be interpreted as operators,
+constants, single number v-strings or function calls. If in doubt about
+this behaviour, the left operand can be quoted explicitly.
+
+Otherwise, the C<< => >> operator behaves exactly as the comma operator
+or list argument separator, according to context.
+
+For example:
 
     use constant FOO => "something";
 
@@ -799,9 +806,6 @@ is equivalent to:
 It is I<NOT>:
 
     my %h = ("something", 23);
-
-If the argument on the left is not a word, it is first interpreted as
-an expression, and then the string value of that is used.
 
 The C<< => >> operator is helpful in documenting the correspondence
 between keys and values in hashes, and other paired elements in lists.
@@ -947,7 +951,6 @@ from the next line.  This allows you to write:
 The following escape sequences are available in constructs that interpolate
 and in transliterations.
 X<\t> X<\n> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N>
-X<\t> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N>
 
     \t		tab             (HT, TAB)
     \n		newline         (NL)
@@ -1005,7 +1008,7 @@ and although they often accept just C<"\012">, they seldom tolerate just
 C<"\015">.  If you get in the habit of using C<"\n"> for networking,
 you may be burned some day.
 X<newline> X<line terminator> X<eol> X<end of line>
-X<\r>
+X<\n> X<\r> X<\r\n>
 
 For constructs that do interpolate, variables beginning with "C<$>"
 or "C<@>" are interpolated.  Subscripted variables such as C<$a[3]> or
@@ -1152,6 +1155,8 @@ the life of the script.  However, mentioning C</o> constitutes a promise
 that you won't change the variables in the pattern.  If you change them,
 Perl won't even notice.  See also L<"qr/STRING/msixpo">.
 
+=item The empty pattern //
+
 If the PATTERN evaluates to the empty string, the last
 I<successfully> matched regular expression is used instead. In this
 case, only the C<g> and C<c> flags on the empty pattern is honoured -
@@ -1167,6 +1172,8 @@ C<$a///> (is that C<($a) / (//)> or C<$a // />?) and C<print $fh //>
 will assume you meant defined-or.  If you meant the empty regex, just
 use parentheses or spaces to disambiguate, or even prefix the empty
 regex with an C<m> (so C<//> becomes C<m//>).
+
+=item Matching in list context
 
 If the C</g> option is not used, C<m//> in list context returns a
 list consisting of the subexpressions matched by the parentheses in the
@@ -1213,6 +1220,8 @@ function; see L<perlfunc/pos>.   A failed match normally resets the
 search position to the beginning of the string, but you can avoid that
 by adding the C</c> modifier (e.g. C<m//gc>).  Modifying the target
 string also resets the search position.
+
+=item \G assertion
 
 You can intermix C<m//g> matches with C<m/\G.../g>, where C<\G> is a
 zero-width assertion that matches the exact position where the previous
@@ -2207,6 +2216,18 @@ into the $ARGV variable.  It also uses filehandle I<ARGV>
 internally--<> is just a synonym for <ARGV>, which
 is magical.  (The pseudo code above doesn't work because it treats
 <ARGV> as non-magical.)
+
+Since the null filehandle uses the two argument form of L<perlfunc/open>
+it interprets special characters, so if you have a script like this:
+
+    while (<>) {
+        print;
+    }
+
+and call it with C<perl dangerous.pl 'rm -rfv *|'>, it actually opens a
+pipe, executes the C<rm> command and reads C<rm>'s output from that pipe.
+If you want all items in C<@ARGV> to be interpreted as file names, you
+can use the module C<ARGV::readonly> from CPAN.
 
 You can modify @ARGV before the first <> as long as the array ends up
 containing the list of filenames you really want.  Line numbers (C<$.>)

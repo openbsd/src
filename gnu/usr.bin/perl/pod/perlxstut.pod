@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlxstut - Tutorial for writing XSUBs
+perlXStut - Tutorial for writing XSUBs
 
 =head1 DESCRIPTION
 
@@ -90,8 +90,8 @@ extension, it will print out a well-known message and return.
 
 Run "C<h2xs -A -n Mytest>".  This creates a directory named Mytest,
 possibly under ext/ if that directory exists in the current working
-directory.  Several files will be created in the Mytest dir, including
-MANIFEST, Makefile.PL, Mytest.pm, Mytest.xs, Mytest.t, and Changes.
+directory.  Several files will be created under the Mytest dir, including
+MANIFEST, Makefile.PL, lib/Mytest.pm, Mytest.xs, t/Mytest.t, and Changes.
 
 The MANIFEST file contains the names of all the files just created in the
 Mytest directory.
@@ -196,7 +196,7 @@ been deleted):
     %
 
 You can safely ignore the line about "prototyping behavior" - it is
-explained in the section "The PROTOTYPES: Keyword" in L<perlxs>.
+explained in L<perlxs/"The PROTOTYPES: Keyword">.
 
 If you are on a Win32 system, and the build process fails with linker
 errors for functions in the C library, check if your Perl is configured
@@ -252,7 +252,7 @@ Now perform the same steps as before, generating a Makefile from the
 Makefile.PL file, and running make.
 
 In order to test that our extension works, we now need to look at the
-file t/Mytest.t.  This file is set up to imitate the same kind of testing
+file Mytest.t.  This file is set up to imitate the same kind of testing
 structure that Perl itself has.  Within the test script, you perform a
 number of tests to confirm the behavior of the extension, printing "ok"
 when the test is correct, "not ok" when it is not.
@@ -428,7 +428,7 @@ line starts with optional whitespace, and may have an optional terminating
 semicolon.
 
 The list of output parameters occurs at the very end of the function, just
-before after the OUTPUT: directive.  The use of RETVAL tells Perl that you
+after the OUTPUT: directive.  The use of RETVAL tells Perl that you
 wish to send this value back as the return value of the XSUB function.  In
 Example 3, we wanted the "return value" placed in the original variable
 which we passed in, so we listed it (and not RETVAL) in the OUTPUT: section.

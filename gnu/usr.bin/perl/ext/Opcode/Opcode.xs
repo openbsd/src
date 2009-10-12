@@ -145,7 +145,7 @@ new_opset(pTHX_ SV *old_opset)
 static int
 verify_opset(pTHX_ SV *opset, int fatal)
 {
-    const char *err = Nullch;
+    const char *err = NULL;
     dMY_CXT;
 
     if      (!SvOK(opset))              err = "undefined";

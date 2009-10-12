@@ -2,7 +2,7 @@ package Tie::RefHash;
 
 use vars qw/$VERSION/;
 
-$VERSION = "1.37";
+$VERSION = "1.38";
 
 use 5.005;
 

@@ -126,7 +126,7 @@ signal handlers like this:
 
     sub REAPER {
 	$waitedpid = wait;
-	# loathe sysV: it makes us not only reinstate
+	# loathe SysV: it makes us not only reinstate
 	# the handler, but place it after the wait
 	$SIG{CHLD} = \&REAPER;
     }
@@ -145,7 +145,7 @@ or better still:
         while (($child = waitpid(-1,WNOHANG)) > 0) {
 	    $Kid_Status{$child} = $?;
 	}
-	$SIG{CHLD} = \&REAPER;  # still loathe sysV
+	$SIG{CHLD} = \&REAPER;  # still loathe SysV
     }
     $SIG{CHLD} = \&REAPER;
     # do something that forks...
@@ -536,7 +536,7 @@ output doesn't wind up on the user's terminal).
 				or die "Can't write to /dev/null: $!";
 	defined(my $pid = fork)	or die "Can't fork: $!";
 	exit if $pid;
-	setsid			or die "Can't start a new session: $!";
+	die "Can't start a new session: $!" if setsid == -1;
 	open STDERR, '>&STDOUT'	or die "Can't dup stdout: $!";
     }
 
@@ -581,7 +581,7 @@ you opened whatever your kid writes to his STDOUT.
 	open (FILE, "> /safe/file")
 	    || die "can't open /safe/file: $!";
 	while (<STDIN>) {
-	    print FILE; # child's STDIN is parent's KID
+	    print FILE; # child's STDIN is parent's KID_TO_WRITE
 	}
 	exit;  # don't forget this
     }
@@ -630,6 +630,68 @@ And here's a safe pipe open for writing:
 	# NOTREACHED
     }
 
+It is very easy to dead-lock a process using this form of open(), or
+indeed any use of pipe() and multiple sub-processes.  The above
+example is 'safe' because it is simple and calls exec().  See
+L</"Avoiding Pipe Deadlocks"> for general safety principles, but there
+are extra gotchas with Safe Pipe Opens.
+
+In particular, if you opened the pipe using C<open FH, "|-">, then you
+cannot simply use close() in the parent process to close an unwanted
+writer.  Consider this code:
+
+    $pid = open WRITER, "|-";
+    defined $pid or die "fork failed; $!";
+    if ($pid) {
+        if (my $sub_pid = fork()) {
+            close WRITER;
+            # do something else...
+        }
+        else {
+            # write to WRITER...
+	    exit;
+        }
+    }
+    else {
+        # do something with STDIN...
+	exit;
+    }
+
+In the above, the true parent does not want to write to the WRITER
+filehandle, so it closes it.  However, because WRITER was opened using
+C<open FH, "|-">, it has a special behaviour: closing it will call
+waitpid() (see L<perlfunc/waitpid>), which waits for the sub-process
+to exit.  If the child process ends up waiting for something happening
+in the section marked "do something else", then you have a deadlock.
+
+This can also be a problem with intermediate sub-processes in more
+complicated code, which will call waitpid() on all open filehandles
+during global destruction; in no predictable order.
+
+To solve this, you must manually use pipe(), fork(), and the form of
+open() which sets one file descriptor to another, as below:
+
+    pipe(READER, WRITER);
+    $pid = fork();
+    defined $pid or die "fork failed; $!";
+    if ($pid) {
+	close READER;
+        if (my $sub_pid = fork()) {
+            close WRITER;
+        }
+        else {
+            # write to WRITER...
+	    exit;
+        }
+        # write to WRITER...
+    }
+    else {
+        open STDIN, "<&READER";
+        close WRITER;
+        # do something...
+        exit;
+    }
+
 Since Perl 5.8.0, you can also use the list form of C<open> for pipes :
 the syntax
 
@@ -644,6 +706,30 @@ Note that these operations are full Unix forks, which means they may not be
 correctly implemented on alien systems.  Additionally, these are not true
 multithreading.  If you'd like to learn more about threading, see the
 F<modules> file mentioned below in the SEE ALSO section.
+
+=head2 Avoiding Pipe Deadlocks
+
+In general, if you have more than one sub-process, you need to be very
+careful that any process which does not need the writer half of any
+pipe you create for inter-process communication does not have it open.
+
+The reason for this is that any child process which is reading from
+the pipe and expecting an EOF will never receive it, and therefore
+never exit.  A single process closing a pipe is not enough to close it;
+the last process with the pipe open must close it for it to read EOF.
+
+There are some features built-in to unix to help prevent this most of
+the time.  For instance, filehandles have a 'close on exec' flag (set
+I<en masse> with Perl using the C<$^F> L<perlvar>), so that any
+filehandles which you didn't explicitly route to the STDIN, STDOUT or
+STDERR of a child I<program> will automatically be closed for you.
+
+So, always explicitly and immediately call close() on the writable end
+of any pipe, unless that process is actually writing to it.  If you
+don't explicitly call close() then be warned Perl will still close()
+all the filehandles during global destruction.  As warned above, if
+those filehandles were opened with Safe Pipe Open, they will also call
+waitpid() and you might again deadlock.
 
 =head2 Bidirectional Communication with Another Process
 
@@ -933,7 +1019,7 @@ go back to service a new client.
         while ((my $pid = waitpid(-1,WNOHANG)) > 0 && WIFEXITED($?)) {
             logmsg "reaped $waitedpid" . ($? ? " with exit $?" : '');
         }
-        $SIG{CHLD} = \&REAPER;  # loathe sysV
+        $SIG{CHLD} = \&REAPER;  # loathe SysV
     }
 
     $SIG{CHLD} = \&REAPER;
@@ -1115,7 +1201,7 @@ to be on the localhost, and thus everything works right.
         while (($waitedpid = waitpid(-1,WNOHANG)) > 0) {
 	    logmsg "reaped $waitedpid" . ($? ? " with exit $?" : '');
 	}
-	$SIG{CHLD} = \&REAPER;  # loathe sysV
+	$SIG{CHLD} = \&REAPER;  # loathe SysV
     }
 
     $SIG{CHLD} = \&REAPER;

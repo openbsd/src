@@ -1648,7 +1648,7 @@ calling C<POSIX::open>.
 
 	$fd = POSIX::open( "foo", &POSIX::O_WRONLY );
 	$buf = "hello";
-	$bytes = POSIX::write( $b, $buf, 5 );
+	$bytes = POSIX::write( $fd, $buf, 5 );
 
 Returns C<undef> on failure.
 
@@ -1732,13 +1732,13 @@ Setting the %SIGRT elements is equivalent to calling this:
 
   sub new {
     my ($rtsig, $handler, $flags) = @_;
-    my $sigset = POSIX:SigSet($rtsig);
+    my $sigset = POSIX::SigSet($rtsig);
     my $sigact = POSIX::SigAction->new($handler, $sigset, $flags);
     sigaction($rtsig, $sigact);
   }
 
 The flags default to zero, if you want something different you can
-either use C<local> on $POSIX::RtSig::SIGACTION_FLAGS, or you can
+either use C<local> on $POSIX::SigRt::SIGACTION_FLAGS, or you can
 derive from POSIX::SigRt and define your own C<new()> (the tied hash
 STORE method of the %SIGRT calls C<new($rtsig, $handler, $SIGACTION_FLAGS)>,
 where the $rtsig ranges from zero to SIGRTMAX - SIGRTMIN + 1).

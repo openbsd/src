@@ -3,7 +3,7 @@
  *    embed.h
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -38,6 +38,7 @@
 #if defined(MYMALLOC)
 #ifdef PERL_CORE
 #define malloced_size		Perl_malloced_size
+#define malloc_good_size	Perl_malloc_good_size
 #endif
 #endif
 #define get_context		Perl_get_context
@@ -98,6 +99,7 @@
 #endif
 #define croak			Perl_croak
 #define vcroak			Perl_vcroak
+#define croak_xs_usage		Perl_croak_xs_usage
 #if defined(PERL_IMPLICIT_CONTEXT)
 #define croak_nocontext		Perl_croak_nocontext
 #define die_nocontext		Perl_die_nocontext
@@ -175,7 +177,7 @@
 #define do_exec			Perl_do_exec
 #endif
 #endif
-#if defined(WIN32) || defined(__SYMBIAN32__)
+#if defined(WIN32) || defined(__SYMBIAN32__) || defined(VMS)
 #define do_aspawn		Perl_do_aspawn
 #define do_spawn		Perl_do_spawn
 #define do_spawn_nowait		Perl_do_spawn_nowait
@@ -188,7 +190,7 @@
 #ifdef PERL_CORE
 #define do_execfree		Perl_do_execfree
 #endif
-#ifdef PERL_IN_DOIO_C
+#if defined(PERL_IN_DOIO_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
 #define exec_failed		S_exec_failed
 #endif
@@ -401,6 +403,7 @@
 #define magic_clearenv		Perl_magic_clearenv
 #define magic_clear_all_env	Perl_magic_clear_all_env
 #define magic_clearhint		Perl_magic_clearhint
+#define magic_clearisa		Perl_magic_clearisa
 #define magic_clearpack		Perl_magic_clearpack
 #define magic_clearsig		Perl_magic_clearsig
 #define magic_existspack	Perl_magic_existspack
@@ -426,14 +429,26 @@
 #define magic_setamagic		Perl_magic_setamagic
 #define magic_setarylen		Perl_magic_setarylen
 #define magic_freearylen_p	Perl_magic_freearylen_p
+#endif
+#ifndef NO_MATHOMS
+#ifdef PERL_CORE
 #define magic_setbm		Perl_magic_setbm
+#define magic_setfm		Perl_magic_setfm
+#endif
+#endif
+#ifdef PERL_CORE
 #define magic_setdbline		Perl_magic_setdbline
 #define magic_setdefelem	Perl_magic_setdefelem
 #define magic_setenv		Perl_magic_setenv
-#define magic_setfm		Perl_magic_setfm
 #define magic_sethint		Perl_magic_sethint
 #define magic_setisa		Perl_magic_setisa
+#endif
+#ifndef NO_MATHOMS
+#ifdef PERL_CORE
 #define magic_setglob		Perl_magic_setglob
+#endif
+#endif
+#ifdef PERL_CORE
 #define magic_setmglob		Perl_magic_setmglob
 #define magic_setnkeys		Perl_magic_setnkeys
 #define magic_setpack		Perl_magic_setpack
@@ -546,7 +561,6 @@
 #define newSUB			Perl_newSUB
 #define newXS_flags		Perl_newXS_flags
 #define newXS			Perl_newXS
-#define newAV			Perl_newAV
 #define newAVREF		Perl_newAVREF
 #define newBINOP		Perl_newBINOP
 #define newCVREF		Perl_newCVREF
@@ -554,7 +568,6 @@
 #define newGVgen		Perl_newGVgen
 #define newGVREF		Perl_newGVREF
 #define newHVREF		Perl_newHVREF
-#define newHV			Perl_newHV
 #define newHVhv			Perl_newHVhv
 #define newIO			Perl_newIO
 #define newLISTOP		Perl_newLISTOP
@@ -573,6 +586,7 @@
 #define newSVnv			Perl_newSVnv
 #define newSVpv			Perl_newSVpv
 #define newSVpvn		Perl_newSVpvn
+#define newSVpvn_flags		Perl_newSVpvn_flags
 #define newSVhek		Perl_newSVhek
 #define newSVpvn_share		Perl_newSVpvn_share
 #define newSVpvf		Perl_newSVpvf
@@ -751,16 +765,14 @@
 #define save_delete		Perl_save_delete
 #define save_destructor		Perl_save_destructor
 #define save_destructor_x	Perl_save_destructor_x
-#define save_freesv		Perl_save_freesv
-#ifdef PERL_CORE
-#define save_freeop		Perl_save_freeop
-#endif
-#define save_freepv		Perl_save_freepv
 #define save_generic_svref	Perl_save_generic_svref
 #define save_generic_pvref	Perl_save_generic_pvref
 #define save_shared_pvref	Perl_save_shared_pvref
 #define save_gp			Perl_save_gp
 #define save_hash		Perl_save_hash
+#ifdef PERL_CORE
+#define save_hints		Perl_save_hints
+#endif
 #define save_helem		Perl_save_helem
 #define save_hptr		Perl_save_hptr
 #define save_I16		Perl_save_I16
@@ -771,18 +783,25 @@
 #define save_iv			Perl_save_iv
 #define save_list		Perl_save_list
 #define save_long		Perl_save_long
-#define save_mortalizesv	Perl_save_mortalizesv
 #define save_nogv		Perl_save_nogv
-#ifdef PERL_CORE
-#define save_op			Perl_save_op
-#endif
 #define save_scalar		Perl_save_scalar
 #define save_pptr		Perl_save_pptr
 #define save_vptr		Perl_save_vptr
 #define save_re_context		Perl_save_re_context
 #define save_padsv		Perl_save_padsv
+#define save_padsv_and_mortalize	Perl_save_padsv_and_mortalize
 #define save_sptr		Perl_save_sptr
 #define save_svref		Perl_save_svref
+#define save_pushptr		Perl_save_pushptr
+#ifdef PERL_CORE
+#define save_pushi32ptr		Perl_save_pushi32ptr
+#define save_pushptrptr		Perl_save_pushptrptr
+#endif
+#if defined(PERL_IN_SCOPE_C) || defined(PERL_DECL_PROT)
+#ifdef PERL_CORE
+#define save_pushptri32ptr	S_save_pushptri32ptr
+#endif
+#endif
 #ifdef PERL_CORE
 #define sawparens		Perl_sawparens
 #define scalar			Perl_scalar
@@ -826,7 +845,7 @@
 #define sv_2bool		Perl_sv_2bool
 #define sv_2cv			Perl_sv_2cv
 #define sv_2io			Perl_sv_2io
-#ifdef PERL_IN_SV_C
+#if defined(PERL_IN_SV_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
 #define glob_2number		S_glob_2number
 #define glob_2pv		S_glob_2pv
@@ -883,7 +902,7 @@
 #define sv_gets			Perl_sv_gets
 #define sv_grow			Perl_sv_grow
 #define sv_inc			Perl_sv_inc
-#define sv_insert		Perl_sv_insert
+#define sv_insert_flags		Perl_sv_insert_flags
 #define sv_isa			Perl_sv_isa
 #define sv_isobject		Perl_sv_isobject
 #define sv_len			Perl_sv_len
@@ -1185,7 +1204,6 @@
 #define ck_readline		Perl_ck_readline
 #define ck_repeat		Perl_ck_repeat
 #define ck_require		Perl_ck_require
-#define ck_retarget		Perl_ck_retarget
 #define ck_return		Perl_ck_return
 #define ck_rfun			Perl_ck_rfun
 #define ck_rvconst		Perl_ck_rvconst
@@ -1212,6 +1230,7 @@
 #define modkids			S_modkids
 #define scalarboolean		S_scalarboolean
 #define newDEFSVOP		S_newDEFSVOP
+#define search_const		S_search_const
 #define new_logop		S_new_logop
 #define simplify_sort		S_simplify_sort
 #define gv_ename		S_gv_ename
@@ -1257,7 +1276,14 @@
 #define nuke_stacks		S_nuke_stacks
 #define open_script		S_open_script
 #define usage			S_usage
-#define validate_suid		S_validate_suid
+#endif
+#ifdef DOSUID
+#  ifdef IAMSUID
+#  else
+#  endif
+#else
+#  ifndef SETUID_SCRIPTS_ARE_SECURE_NOW
+#  endif
 #endif
 #  if defined(IAMSUID)
 #ifdef PERL_CORE
@@ -1472,9 +1498,15 @@
 #endif
 #  endif
 #  if !defined(NV_PRESERVES_UV)
+#    ifdef DEBUGGING
 #ifdef PERL_CORE
 #define sv_2iuv_non_preserve	S_sv_2iuv_non_preserve
 #endif
+#    else
+#ifdef PERL_CORE
+#define sv_2iuv_non_preserve	S_sv_2iuv_non_preserve
+#endif
+#    endif
 #  endif
 #ifdef PERL_CORE
 #define expect_number		S_expect_number
@@ -1574,6 +1606,11 @@
 #define vdie_common		S_vdie_common
 #define write_no_mem		S_write_no_mem
 #endif
+#if defined(PERL_MEM_LOG) && defined(PERL_MEM_LOG_STDERR)
+#ifdef PERL_CORE
+#define mem_log_common		S_mem_log_common
+#endif
+#endif
 #endif
 #if defined(PERL_IN_NUMERIC_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
@@ -1628,7 +1665,7 @@
 #ifdef PERL_CORE
 #define deb_stack_all		Perl_deb_stack_all
 #endif
-#ifdef PERL_IN_DEB_C
+#if defined(PERL_IN_DEB_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
 #define deb_stack_n		S_deb_stack_n
 #endif
@@ -1898,9 +1935,6 @@
 #endif
 #if !defined(HAS_SIGNBIT)
 #endif
-#ifdef PERL_CORE
-#define mro_meta_init		Perl_mro_meta_init
-#endif
 #if defined(USE_ITHREADS)
 #ifdef PERL_CORE
 #define mro_meta_dup		Perl_mro_meta_dup
@@ -1909,7 +1943,6 @@
 #define mro_get_linear_isa	Perl_mro_get_linear_isa
 #if defined(PERL_IN_MRO_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
-#define mro_get_linear_isa_c3	S_mro_get_linear_isa_c3
 #define mro_get_linear_isa_dfs	S_mro_get_linear_isa_dfs
 #endif
 #endif
@@ -2333,6 +2366,7 @@
 #if defined(MYMALLOC)
 #ifdef PERL_CORE
 #define malloced_size		Perl_malloced_size
+#define malloc_good_size	Perl_malloc_good_size
 #endif
 #endif
 #define get_context		Perl_get_context
@@ -2392,6 +2426,7 @@
 #define create_eval_scope(a)	Perl_create_eval_scope(aTHX_ a)
 #endif
 #define vcroak(a,b)		Perl_vcroak(aTHX_ a,b)
+#define croak_xs_usage(a,b)	Perl_croak_xs_usage(aTHX_ a,b)
 #if defined(PERL_IMPLICIT_CONTEXT)
 #endif
 #ifdef PERL_CORE
@@ -2454,7 +2489,7 @@
 #define do_exec(a)		Perl_do_exec(aTHX_ a)
 #endif
 #endif
-#if defined(WIN32) || defined(__SYMBIAN32__)
+#if defined(WIN32) || defined(__SYMBIAN32__) || defined(VMS)
 #define do_aspawn(a,b,c)	Perl_do_aspawn(aTHX_ a,b,c)
 #define do_spawn(a)		Perl_do_spawn(aTHX_ a)
 #define do_spawn_nowait(a)	Perl_do_spawn_nowait(aTHX_ a)
@@ -2467,7 +2502,7 @@
 #ifdef PERL_CORE
 #define do_execfree()		Perl_do_execfree(aTHX)
 #endif
-#ifdef PERL_IN_DOIO_C
+#if defined(PERL_IN_DOIO_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
 #define exec_failed(a,b,c)	S_exec_failed(aTHX_ a,b,c)
 #endif
@@ -2690,6 +2725,7 @@
 #define magic_clearenv(a,b)	Perl_magic_clearenv(aTHX_ a,b)
 #define magic_clear_all_env(a,b)	Perl_magic_clear_all_env(aTHX_ a,b)
 #define magic_clearhint(a,b)	Perl_magic_clearhint(aTHX_ a,b)
+#define magic_clearisa(a,b)	Perl_magic_clearisa(aTHX_ a,b)
 #define magic_clearpack(a,b)	Perl_magic_clearpack(aTHX_ a,b)
 #define magic_clearsig(a,b)	Perl_magic_clearsig(aTHX_ a,b)
 #define magic_existspack(a,b)	Perl_magic_existspack(aTHX_ a,b)
@@ -2715,14 +2751,26 @@
 #define magic_setamagic(a,b)	Perl_magic_setamagic(aTHX_ a,b)
 #define magic_setarylen(a,b)	Perl_magic_setarylen(aTHX_ a,b)
 #define magic_freearylen_p(a,b)	Perl_magic_freearylen_p(aTHX_ a,b)
+#endif
+#ifndef NO_MATHOMS
+#ifdef PERL_CORE
 #define magic_setbm(a,b)	Perl_magic_setbm(aTHX_ a,b)
+#define magic_setfm(a,b)	Perl_magic_setfm(aTHX_ a,b)
+#endif
+#endif
+#ifdef PERL_CORE
 #define magic_setdbline(a,b)	Perl_magic_setdbline(aTHX_ a,b)
 #define magic_setdefelem(a,b)	Perl_magic_setdefelem(aTHX_ a,b)
 #define magic_setenv(a,b)	Perl_magic_setenv(aTHX_ a,b)
-#define magic_setfm(a,b)	Perl_magic_setfm(aTHX_ a,b)
 #define magic_sethint(a,b)	Perl_magic_sethint(aTHX_ a,b)
 #define magic_setisa(a,b)	Perl_magic_setisa(aTHX_ a,b)
+#endif
+#ifndef NO_MATHOMS
+#ifdef PERL_CORE
 #define magic_setglob(a,b)	Perl_magic_setglob(aTHX_ a,b)
+#endif
+#endif
+#ifdef PERL_CORE
 #define magic_setmglob(a,b)	Perl_magic_setmglob(aTHX_ a,b)
 #define magic_setnkeys(a,b)	Perl_magic_setnkeys(aTHX_ a,b)
 #define magic_setpack(a,b)	Perl_magic_setpack(aTHX_ a,b)
@@ -2834,7 +2882,6 @@
 #define newSUB(a,b,c,d)		Perl_newSUB(aTHX_ a,b,c,d)
 #define newXS_flags(a,b,c,d,e)	Perl_newXS_flags(aTHX_ a,b,c,d,e)
 #define newXS(a,b,c)		Perl_newXS(aTHX_ a,b,c)
-#define newAV()			Perl_newAV(aTHX)
 #define newAVREF(a)		Perl_newAVREF(aTHX_ a)
 #define newBINOP(a,b,c,d)	Perl_newBINOP(aTHX_ a,b,c,d)
 #define newCVREF(a,b)		Perl_newCVREF(aTHX_ a,b)
@@ -2842,7 +2889,6 @@
 #define newGVgen(a)		Perl_newGVgen(aTHX_ a)
 #define newGVREF(a,b)		Perl_newGVREF(aTHX_ a,b)
 #define newHVREF(a)		Perl_newHVREF(aTHX_ a)
-#define newHV()			Perl_newHV(aTHX)
 #define newHVhv(a)		Perl_newHVhv(aTHX_ a)
 #define newIO()			Perl_newIO(aTHX)
 #define newLISTOP(a,b,c,d)	Perl_newLISTOP(aTHX_ a,b,c,d)
@@ -2861,6 +2907,7 @@
 #define newSVnv(a)		Perl_newSVnv(aTHX_ a)
 #define newSVpv(a,b)		Perl_newSVpv(aTHX_ a,b)
 #define newSVpvn(a,b)		Perl_newSVpvn(aTHX_ a,b)
+#define newSVpvn_flags(a,b,c)	Perl_newSVpvn_flags(aTHX_ a,b,c)
 #define newSVhek(a)		Perl_newSVhek(aTHX_ a)
 #define newSVpvn_share(a,b,c)	Perl_newSVpvn_share(aTHX_ a,b,c)
 #define vnewSVpvf(a,b)		Perl_vnewSVpvf(aTHX_ a,b)
@@ -3037,16 +3084,16 @@
 #define save_delete(a,b,c)	Perl_save_delete(aTHX_ a,b,c)
 #define save_destructor(a,b)	Perl_save_destructor(aTHX_ a,b)
 #define save_destructor_x(a,b)	Perl_save_destructor_x(aTHX_ a,b)
-#define save_freesv(a)		Perl_save_freesv(aTHX_ a)
 #ifdef PERL_CORE
-#define save_freeop(a)		Perl_save_freeop(aTHX_ a)
 #endif
-#define save_freepv(a)		Perl_save_freepv(aTHX_ a)
 #define save_generic_svref(a)	Perl_save_generic_svref(aTHX_ a)
 #define save_generic_pvref(a)	Perl_save_generic_pvref(aTHX_ a)
 #define save_shared_pvref(a)	Perl_save_shared_pvref(aTHX_ a)
 #define save_gp(a,b)		Perl_save_gp(aTHX_ a,b)
 #define save_hash(a)		Perl_save_hash(aTHX_ a)
+#ifdef PERL_CORE
+#define save_hints()		Perl_save_hints(aTHX)
+#endif
 #define save_helem(a,b,c)	Perl_save_helem(aTHX_ a,b,c)
 #define save_hptr(a)		Perl_save_hptr(aTHX_ a)
 #define save_I16(a)		Perl_save_I16(aTHX_ a)
@@ -3057,18 +3104,27 @@
 #define save_iv(a)		Perl_save_iv(aTHX_ a)
 #define save_list(a,b)		Perl_save_list(aTHX_ a,b)
 #define save_long(a)		Perl_save_long(aTHX_ a)
-#define save_mortalizesv(a)	Perl_save_mortalizesv(aTHX_ a)
 #define save_nogv(a)		Perl_save_nogv(aTHX_ a)
 #ifdef PERL_CORE
-#define save_op()		Perl_save_op(aTHX)
 #endif
 #define save_scalar(a)		Perl_save_scalar(aTHX_ a)
 #define save_pptr(a)		Perl_save_pptr(aTHX_ a)
 #define save_vptr(a)		Perl_save_vptr(aTHX_ a)
 #define save_re_context()	Perl_save_re_context(aTHX)
 #define save_padsv(a)		Perl_save_padsv(aTHX_ a)
+#define save_padsv_and_mortalize(a)	Perl_save_padsv_and_mortalize(aTHX_ a)
 #define save_sptr(a)		Perl_save_sptr(aTHX_ a)
 #define save_svref(a)		Perl_save_svref(aTHX_ a)
+#define save_pushptr(a,b)	Perl_save_pushptr(aTHX_ a,b)
+#ifdef PERL_CORE
+#define save_pushi32ptr(a,b,c)	Perl_save_pushi32ptr(aTHX_ a,b,c)
+#define save_pushptrptr(a,b,c)	Perl_save_pushptrptr(aTHX_ a,b,c)
+#endif
+#if defined(PERL_IN_SCOPE_C) || defined(PERL_DECL_PROT)
+#ifdef PERL_CORE
+#define save_pushptri32ptr(a,b,c,d)	S_save_pushptri32ptr(aTHX_ a,b,c,d)
+#endif
+#endif
 #ifdef PERL_CORE
 #define sawparens(a)		Perl_sawparens(aTHX_ a)
 #define scalar(a)		Perl_scalar(aTHX_ a)
@@ -3112,7 +3168,7 @@
 #define sv_2bool(a)		Perl_sv_2bool(aTHX_ a)
 #define sv_2cv(a,b,c,d)		Perl_sv_2cv(aTHX_ a,b,c,d)
 #define sv_2io(a)		Perl_sv_2io(aTHX_ a)
-#ifdef PERL_IN_SV_C
+#if defined(PERL_IN_SV_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
 #define glob_2number(a)		S_glob_2number(aTHX_ a)
 #define glob_2pv(a,b)		S_glob_2pv(aTHX_ a,b)
@@ -3168,7 +3224,7 @@
 #define sv_gets(a,b,c)		Perl_sv_gets(aTHX_ a,b,c)
 #define sv_grow(a,b)		Perl_sv_grow(aTHX_ a,b)
 #define sv_inc(a)		Perl_sv_inc(aTHX_ a)
-#define sv_insert(a,b,c,d,e)	Perl_sv_insert(aTHX_ a,b,c,d,e)
+#define sv_insert_flags(a,b,c,d,e,f)	Perl_sv_insert_flags(aTHX_ a,b,c,d,e,f)
 #define sv_isa(a,b)		Perl_sv_isa(aTHX_ a,b)
 #define sv_isobject(a)		Perl_sv_isobject(aTHX_ a)
 #define sv_len(a)		Perl_sv_len(aTHX_ a)
@@ -3466,7 +3522,6 @@
 #define ck_readline(a)		Perl_ck_readline(aTHX_ a)
 #define ck_repeat(a)		Perl_ck_repeat(aTHX_ a)
 #define ck_require(a)		Perl_ck_require(aTHX_ a)
-#define ck_retarget(a)		Perl_ck_retarget(aTHX_ a)
 #define ck_return(a)		Perl_ck_return(aTHX_ a)
 #define ck_rfun(a)		Perl_ck_rfun(aTHX_ a)
 #define ck_rvconst(a)		Perl_ck_rvconst(aTHX_ a)
@@ -3497,6 +3552,7 @@
 #define modkids(a,b)		S_modkids(aTHX_ a,b)
 #define scalarboolean(a)	S_scalarboolean(aTHX_ a)
 #define newDEFSVOP()		S_newDEFSVOP(aTHX)
+#define search_const(a)		S_search_const(aTHX_ a)
 #define new_logop(a,b,c,d)	S_new_logop(aTHX_ a,b,c,d)
 #define simplify_sort(a)	S_simplify_sort(aTHX_ a)
 #define gv_ename(a)		S_gv_ename(aTHX_ a)
@@ -3544,7 +3600,20 @@
 #define nuke_stacks()		S_nuke_stacks(aTHX)
 #define open_script(a,b,c,d,e)	S_open_script(aTHX_ a,b,c,d,e)
 #define usage(a)		S_usage(aTHX_ a)
-#define validate_suid(a,b,c,d,e,f)	S_validate_suid(aTHX_ a,b,c,d,e,f)
+#endif
+#ifdef DOSUID
+#  ifdef IAMSUID
+#ifdef PERL_CORE
+#endif
+#  else
+#ifdef PERL_CORE
+#endif
+#  endif
+#else
+#  ifndef SETUID_SCRIPTS_ARE_SECURE_NOW
+#ifdef PERL_CORE
+#endif
+#  endif
 #endif
 #  if defined(IAMSUID)
 #ifdef PERL_CORE
@@ -3764,9 +3833,15 @@
 #endif
 #  endif
 #  if !defined(NV_PRESERVES_UV)
+#    ifdef DEBUGGING
 #ifdef PERL_CORE
 #define sv_2iuv_non_preserve(a,b)	S_sv_2iuv_non_preserve(aTHX_ a,b)
 #endif
+#    else
+#ifdef PERL_CORE
+#define sv_2iuv_non_preserve(a)	S_sv_2iuv_non_preserve(aTHX_ a)
+#endif
+#    endif
 #  endif
 #ifdef PERL_CORE
 #define expect_number(a)	S_expect_number(aTHX_ a)
@@ -3839,14 +3914,14 @@
 #  endif
 #  if defined(DEBUGGING)
 #ifdef PERL_CORE
-#define tokereport(a)		S_tokereport(aTHX_ a)
+#define tokereport(a,b)		S_tokereport(aTHX_ a,b)
 #define printbuf(a,b)		S_printbuf(aTHX_ a,b)
 #endif
 #  endif
 #endif
 #if defined(PERL_IN_UNIVERSAL_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
-#define isa_lookup(a,b,c)	S_isa_lookup(aTHX_ a,b,c)
+#define isa_lookup(a,b)		S_isa_lookup(aTHX_ a,b)
 #endif
 #endif
 #if defined(PERL_IN_LOCALE_C) || defined(PERL_DECL_PROT)
@@ -3863,6 +3938,11 @@
 #define vdie_croak_common(a,b,c,d)	S_vdie_croak_common(aTHX_ a,b,c,d)
 #define vdie_common(a,b,c,d)	S_vdie_common(aTHX_ a,b,c,d)
 #define write_no_mem()		S_write_no_mem(aTHX)
+#endif
+#if defined(PERL_MEM_LOG) && defined(PERL_MEM_LOG_STDERR)
+#ifdef PERL_CORE
+#define mem_log_common		S_mem_log_common
+#endif
 #endif
 #endif
 #if defined(PERL_IN_NUMERIC_C) || defined(PERL_DECL_PROT)
@@ -3918,7 +3998,7 @@
 #ifdef PERL_CORE
 #define deb_stack_all()		Perl_deb_stack_all(aTHX)
 #endif
-#ifdef PERL_IN_DEB_C
+#if defined(PERL_IN_DEB_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
 #define deb_stack_n(a,b,c,d,e)	S_deb_stack_n(aTHX_ a,b,c,d,e)
 #endif
@@ -4195,7 +4275,6 @@
 #if defined(PERL_CORE) || defined(PERL_EXT)
 #endif
 #ifdef PERL_CORE
-#define mro_meta_init(a)	Perl_mro_meta_init(aTHX_ a)
 #endif
 #if defined(USE_ITHREADS)
 #ifdef PERL_CORE
@@ -4205,7 +4284,6 @@
 #define mro_get_linear_isa(a)	Perl_mro_get_linear_isa(aTHX_ a)
 #if defined(PERL_IN_MRO_C) || defined(PERL_DECL_PROT)
 #ifdef PERL_CORE
-#define mro_get_linear_isa_c3(a,b)	S_mro_get_linear_isa_c3(aTHX_ a,b)
 #define mro_get_linear_isa_dfs(a,b)	S_mro_get_linear_isa_dfs(aTHX_ a,b)
 #endif
 #endif

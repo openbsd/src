@@ -486,7 +486,7 @@ of passing NULL.)
 
 Portable cases are:
 
-    PerlIO_binmode(f,ptype,O_BINARY,Nullch);
+    PerlIO_binmode(f,ptype,O_BINARY,NULL);
 and
     PerlIO_binmode(f,ptype,O_TEXT,":crlf");
 

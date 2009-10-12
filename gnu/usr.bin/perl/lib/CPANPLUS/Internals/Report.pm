@@ -19,7 +19,7 @@ require CPANPLUS::Internals;
 
 =head1 NAME
 
-CPANPLUS::Internals::Report - send test reports to CPANPLUS testers
+CPANPLUS::Internals::Report -  send test reports to http://testers.cpan.org
 
 =head1 SYNOPSIS
 
@@ -103,36 +103,44 @@ otherwise.
 
 This function queries the CPAN testers database at
 I<http://testers.cpan.org/> for test results of specified module objects,
-module names or distributions.
+module names or distributions. 
 
 The optional argument C<all_versions> controls whether all versions of
 a given distribution should be grabbed.  It defaults to false
 (fetching only reports for the current version).
 
 Returns the a list with the following data structures (for CPANPLUS
-version 0.042) on success, or false on failure:
+version 0.042) on success, or false on failure. The contents of the
+data structure depends on what I<http://testers.cpan.org> returns,
+but generally looks like this:
 
           {
             'grade' => 'PASS',
             'dist' => 'CPANPLUS-0.042',
             'platform' => 'i686-pld-linux-thread-multi'
+            'details' => 'http://nntp.x.perl.org/group/perl.cpan.testers/98316'
+            ...
           },
           {
             'grade' => 'PASS',
             'dist' => 'CPANPLUS-0.042',
             'platform' => 'i686-linux-thread-multi'
+            'details' => 'http://nntp.x.perl.org/group/perl.cpan.testers/99416'
+            ...
           },
           {
             'grade' => 'FAIL',
             'dist' => 'CPANPLUS-0.042',
             'platform' => 'cygwin-multi-64int',
             'details' => 'http://nntp.x.perl.org/group/perl.cpan.testers/99371'
+            ...
           },
           {
             'grade' => 'FAIL',
             'dist' => 'CPANPLUS-0.042',
             'platform' => 'i586-linux',
             'details' => 'http://nntp.x.perl.org/group/perl.cpan.testers/99396'
+            ...
           },
 
 The status of the test can be one of the following:
@@ -195,20 +203,21 @@ sub _query_report {
         return;
     };
 
-    my $dist = $mod->package_name .'-'. $mod->package_version;
+    my $dist    = $mod->package_name .'-'. $mod->package_version;
+    my $details = TESTERS_DETAILS_URL->($mod->package_name);
 
     my @rv;
     for my $href ( @$aref ) {
         next unless $all or defined $href->{'distversion'} && 
                             $href->{'distversion'} eq $dist;
 
-        push @rv, { platform    => $href->{'platform'},
-                    grade       => $href->{'action'},
-                    dist        => $href->{'distversion'},
-                    ( $href->{'action'} eq 'FAIL'
-                        ? (details => TESTERS_DETAILS_URL->($mod->package_name))
-                        : ()
-                    ) };
+        $href->{'details'}  = $details;
+        
+        ### backwards compatibility :(
+        $href->{'dist'}     ||= $href->{'distversion'};
+        $href->{'grade'}    ||= $href->{'action'} || $href->{'status'};
+
+        push @rv, $href;
     }
 
     return @rv if @rv;
@@ -217,7 +226,7 @@ sub _query_report {
 
 =pod
 
-=head2 $bool = $cb->_send_report( module => $modobj, buffer => $make_output, failed => BOOL, [save => BOOL, address => $email_to, dontcc => BOOL, verbose => BOOL, force => BOOL]);
+=head2 $bool = $cb->_send_report( module => $modobj, buffer => $make_output, failed => BOOL, [save => BOOL, address => $email_to, verbose => BOOL, force => BOOL]);
 
 This function sends a testers report to C<cpan-testers@perl.org> for a
 particular distribution.
@@ -254,16 +263,6 @@ override this, but it might be useful for debugging purposes.
 
 Defaults to C<cpan-testers@perl.org>.
 
-=item dontcc
-
-Boolean indicating whether or not we should Cc: the author. If false,
-previous error reports are inspected and checked if the author should
-be mailed. If set to true, these tests are skipped and the author is
-definitely not Cc:'d.
-You should probably not change this setting.
-
-Defaults to false.
-
 =item verbose
 
 Boolean indicating on whether or not to be verbose.
@@ -296,7 +295,7 @@ sub _send_report {
     }
 
     ### check arguments ###
-    my ($buffer, $failed, $mod, $verbose, $force, $address, $save, $dontcc,
+    my ($buffer, $failed, $mod, $verbose, $force, $address, $save, 
         $tests_skipped );
     my $tmpl = {
             module  => { required => 1, store => \$mod, allow => IS_MODOBJ },
@@ -304,7 +303,6 @@ sub _send_report {
             failed  => { required => 1, store => \$failed },
             address => { default  => CPAN_TESTERS_EMAIL, store => \$address },
             save    => { default  => 0, store => \$save },
-            dontcc  => { default  => 0, store => \$dontcc },
             verbose => { default  => $conf->get_conf('verbose'),
                             store => \$verbose },
             force   => { default  => $conf->get_conf('force'),
@@ -324,6 +322,9 @@ sub _send_report {
     my $int_ver = $CPANPLUS::Internals::VERSION;
     my $cb      = $mod->parent;
 
+
+    ### will be 'fetch', 'make', 'test', 'install', etc ###
+    my $stage   = TEST_FAIL_STAGE->($buffer);
 
     ### determine the grade now ###
 
@@ -347,8 +348,17 @@ sub _send_report {
         
             while( my($prq_name,$prq_ver) = each %$prq ) {
                 my $obj = $cb->module_tree( $prq_name );
+                my $sub = CPANPLUS::Module->can(         
+                            'module_is_supplied_with_perl_core' );
                 
-                unless( $obj ) {
+                ### if we can't find the module and it's not supplied with core.
+                ### this addresses: #32064: NA reports generated for failing
+                ### tests where core prereqs are specified
+                ### Note that due to a bug in Module::CoreList, in some released
+                ### version of perl (5.8.6+ and 5.9.2-4 at the time of writing)
+                ### 'Config' is not recognized as a core module. See this bug:
+                ###    http://rt.cpan.org/Ticket/Display.html?id=32155
+                if( not $obj and not $sub->( $prq_name ) ) {
                     msg(loc( "Prerequisite '%1' for '%2' could not be obtained".
                              " from CPAN -- sending N/A grade", 
                              $prq_name, $name ), $verbose );
@@ -396,6 +406,10 @@ sub _send_report {
         ### see if the thing even had tests ###
         } elsif ( NO_TESTS_DEFINED->( $buffer ) ) {
             $grade = GRADE_UNKNOWN;
+        ### failures in PL or make/build stage are now considered UNKNOWN
+        } elsif ( $stage !~ /\btest\b/ ) {
+
+            $grade = GRADE_UNKNOWN
 
         } else {
             
@@ -409,7 +423,10 @@ sub _send_report {
     } }
 
     ### so an error occurred, let's see what stage it went wrong in ###
-    my $message;
+
+    ### the header -- always include so the CPANPLUS version is apparent
+    my $message =  REPORT_MESSAGE_HEADER->( $int_ver, $author );
+
     if( $grade eq GRADE_FAIL or $grade eq GRADE_UNKNOWN) {
 
         ### return if one or more missing external libraries
@@ -419,15 +436,9 @@ sub _send_report {
             return 1;
         }
 
-        ### will be 'fetch', 'make', 'test', 'install', etc ###
-        my $stage   = TEST_FAIL_STAGE->($buffer);
-
         ### return if we're only supposed to report make_test failures ###
         return 1 if $cp_conf =~  /\bmaketest_only\b/i
                     and ($stage !~ /\btest\b/);
-
-        ### the header
-        $message =  REPORT_MESSAGE_HEADER->( $int_ver, $author );
 
         ### the bit where we inform what went wrong
         $message .= REPORT_MESSAGE_FAIL_HEADER->( $stage, $buffer );
@@ -460,52 +471,38 @@ sub _send_report {
     ### that tests got skipped, since the buffer is not added in
     } elsif ( $tests_skipped ) {
         $message .= REPORT_TESTS_SKIPPED->();
-    }        
-
-    ### if it failed, and that already got reported, we're not cc'ing the
-    ### author. Also, 'dont_cc' might be in the config, so check this;
-    my $dont_cc_author = $dontcc;
-
-    unless( $dont_cc_author ) {
-        if( $cp_conf =~ /\bdont_cc\b/i ) {
-            $dont_cc_author++;
-
-        } elsif ( $grade eq GRADE_PASS ) {
-            $dont_cc_author++
-
-        } elsif( $grade eq GRADE_FAIL ) {
-            my @already_sent =
-                $self->_query_report( module => $mod, verbose => $verbose );
-
-            ### if we can't fetch it, we'll just assume no one
-            ### mailed him yet
-            my $count = 0;
-            if( @already_sent ) {
-                for my $href (@already_sent) {
-                    $count++ if uc $href->{'grade'} eq uc GRADE_FAIL;
-                }
-            }
-
-            if( $count > MAX_REPORT_SEND and !$force) {
-                msg(loc("'%1' already reported for '%2', ".
-                        "not cc-ing the author",
-                        GRADE_FAIL, $dist ), $verbose );
-                $dont_cc_author++;
-            }
-        }
-    }
+    } elsif( $grade eq GRADE_NA) {
     
+        ### the bit where we inform what went wrong
+        $message .= REPORT_MESSAGE_FAIL_HEADER->( $stage, $buffer );
+
+        ### the footer
+        $message .= REPORT_MESSAGE_FOOTER->();
+
+    }
+
     msg( loc("Sending test report for '%1'", $dist), $verbose);
 
     ### reporter object ###
-    my $reporter = Test::Reporter->new(
-                        grade           => $grade,
-                        distribution    => $dist,
-                        via             => "CPANPLUS $int_ver",
-                        timeout         => $conf->get_conf('timeout') || 60,
-                        debug           => $conf->get_conf('debug'),
-                    );
-                    
+    my $reporter = do {
+        my $args = $conf->get_conf('cpantest_reporter_args') || {};
+        
+        unless( UNIVERSAL::isa( $args, 'HASH' ) ) {
+            error(loc("'%1' must be a hashref, ignoring...",
+                      'cpantest_reporter_args'));
+            $args = {};
+        }
+        
+        Test::Reporter->new(
+            grade           => $grade,
+            distribution    => $dist,
+            via             => "CPANPLUS $int_ver",
+            timeout         => $conf->get_conf('timeout') || 60,
+            debug           => $conf->get_conf('debug'),
+            %$args,
+        );
+    };
+    
     ### set a custom mx, if requested
     $reporter->mx( [ $conf->get_conf('cpantest_mx') ] ) 
         if $conf->get_conf('cpantest_mx');
@@ -537,10 +534,6 @@ sub _send_report {
         $reporter->edit_comments;
     }
 
-    ### people to mail ###
-    my @inform;
-    #push @inform, $email unless $dont_cc_author;
-
     ### allow to be overridden, but default to the normal address ###
     $reporter->address( $address );
 
@@ -556,9 +549,8 @@ sub _send_report {
             return;
         }
 
-    ### should we send it to a bunch of people? ###
     ### XXX should we do an 'already sent' check? ###
-    } elsif( $reporter->send( @inform ) ) {
+    } elsif( $reporter->send( ) ) {
         msg(loc("Successfully sent '%1' report for '%2'", $grade, $dist),
             $verbose);
         return 1;

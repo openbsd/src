@@ -22,7 +22,7 @@
 /* 
  * forward 
  */
-static int seepair proto((char *, int, char *, int));
+static int seepair proto((char *, int, const char *, int));
 
 /*
  * page format:
@@ -218,7 +218,7 @@ delpair(char *pag, datum key)
  * return 0 if not found.
  */
 static int
-seepair(char *pag, register int n, register char *key, register int siz)
+seepair(char *pag, register int n, register const char *key, register int siz)
 {
 	register int i;
 	register int off = PBLKSIZ;

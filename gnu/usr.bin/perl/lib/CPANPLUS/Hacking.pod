@@ -2,27 +2,20 @@
 
 =head1 NAME
 
-CPANPLUS::Hacking - developing in the CPANPLUS environment
+CPANPLUS::Hacking - developing with the CPANPLUS environment
 
 =head1 DESCRIPTION
 
-This document attempts to describe how to easiest develop with the
-CPANPLUS environment, how certain things work and why.
+This document attempts to describe how to develop with the
+CPANPLUS environment most easily, how certain things work and why.
 
 This is basically a quick-start guide to people who want to add
 features or patches to CPANPLUS.
 
 =head1 OBTAINING CPANPLUS
 
-CPANPLUS offers snapshots from the stable and unstable branches.
-After every patch to either of the branches, the snapshot is
-automatically updated.
-
-You can find the stable branch here (which should be equal to the
-CPAN release): L<http://p4.elixus.org/snap/cpanplus-dist.tar.gz>
-
-And the development branch here:
-L<http://p4.elixus.org/snap/cpanplus-devel.tar.gz>
+Checkout CPANPLUS from its Subversion repository at 
+L<http://oss.dwim.org/cpanplus-devel> .
 
 =head1 INSTALLING CPANPLUS
 

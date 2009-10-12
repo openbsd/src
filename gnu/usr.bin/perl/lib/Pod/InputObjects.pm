@@ -9,9 +9,10 @@
 #############################################################################
 
 package Pod::InputObjects;
+use strict;
 
 use vars qw($VERSION);
-$VERSION = 1.30;  ## Current version of this package
+$VERSION = '1.31';  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################
@@ -75,12 +76,6 @@ Each of these input objects are described in further detail in the
 sections which follow.
 
 =cut
-
-#############################################################################
-
-use strict;
-#use diagnostics;
-#use Carp;
 
 #############################################################################
 
@@ -314,7 +309,7 @@ This method will return the corresponding text of the paragraph.
 sub text {
    (@_ > 1)  and  $_[0]->{'-text'} = $_[1];
    return $_[0]->{'-text'};
-}       
+}
 
 ##---------------------------------------------------------------------------
 
@@ -329,7 +324,7 @@ as it appeared in the input.
 
 sub raw_text {
    return $_[0]->{'-text'}  unless (defined $_[0]->{'-name'});
-   return $_[0]->{'-prefix'} . $_[0]->{'-name'} . 
+   return $_[0]->{'-prefix'} . $_[0]->{'-name'} .
           $_[0]->{'-separator'} . $_[0]->{'-text'};
 }
 
@@ -380,7 +375,7 @@ This method will get/set the corresponding parse-tree of the paragraph's text.
 sub parse_tree {
    (@_ > 1)  and  $_[0]->{'-ptree'} = $_[1];
    return $_[0]->{'-ptree'};
-}       
+}
 
 ## let ptree() be an alias for parse_tree()
 *ptree = \&parse_tree;
@@ -561,7 +556,7 @@ sub prepend {
    $self->{'-ptree'}->prepend(@_);
    _set_child2parent_links($self, @_);
    return $self;
-}       
+}
 
 ##---------------------------------------------------------------------------
 
@@ -580,7 +575,7 @@ sub append {
    $self->{'-ptree'}->append(@_);
    _set_child2parent_links($self, @_);
    return $self;
-}       
+}
 
 ##---------------------------------------------------------------------------
 
@@ -673,7 +668,7 @@ sequence's text.
 sub parse_tree {
    (@_ > 1)  and  $_[0]->{'-ptree'} = $_[1];
    return $_[0]->{'-ptree'};
-}       
+}
 
 ## let ptree() be an alias for parse_tree()
 *ptree = \&parse_tree;
@@ -831,7 +826,7 @@ sub prepend {
    local *ptree = $self;
    for (@_) {
       next  unless length;
-      if (@ptree  and  !(ref $ptree[0])  and  !(ref $_)) {
+      if (@ptree && !(ref $ptree[0]) && !(ref $_)) {
          $ptree[0] = $_ . $ptree[0];
       }
       else {
@@ -883,7 +878,7 @@ exactly as it appeared in the input.
 
 sub raw_text {
    my $self = shift;
-   my $text = "";
+   my $text = '';
    for ( @$self ) {
       $text .= (ref $_) ? $_->raw_text : $_;
    }

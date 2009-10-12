@@ -1,7 +1,7 @@
 /*    cop.h
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -132,6 +132,7 @@ typedef struct jmpenv JMPENV;
 #define CATCH_SET(v)		(PL_top_env->je_mustcatch = (v))
 
 
+#include "mydtrace.h"
 
 struct cop {
     BASEOP
@@ -261,7 +262,7 @@ struct cop {
 		PL_hints |= HINT_LOCALIZE_HH | HINT_ARYBASE;		\
 	    (c)->cop_hints_hash						\
 	       = Perl_refcounted_he_new(aTHX_ (c)->cop_hints_hash,	\
-					sv_2mortal(newSVpvs("$[")),	\
+					newSVpvs_flags("$[", SVs_TEMP),	\
 					sv_2mortal(newSViv(b)));	\
 	}								\
     } STMT_END
@@ -295,6 +296,10 @@ struct block_sub {
  * decremented by LEAVESUB, the other by LEAVE. */
 
 #define PUSHSUB_BASE(cx)						\
+	ENTRY_PROBE(GvENAME(CvGV(cv)),		       			\
+		CopFILE((const COP *)CvSTART(cv)),			\
+		CopLINE((const COP *)CvSTART(cv)));			\
+									\
 	cx->blk_sub.cv = cv;						\
 	cx->blk_sub.olddepth = CvDEPTH(cv);				\
 	cx->blk_sub.hasargs = hasargs;					\
@@ -342,7 +347,11 @@ struct block_sub {
 
 #define POPSUB(cx,sv)							\
     STMT_START {							\
-	if (cx->blk_sub.hasargs) {					\
+	RETURN_PROBE(GvENAME(CvGV((const CV*)cx->blk_sub.cv)),		\
+		CopFILE((COP*)CvSTART((const CV*)cx->blk_sub.cv)),	\
+		CopLINE((COP*)CvSTART((const CV*)cx->blk_sub.cv)));	\
+									\
+	if (CxHASARGS(cx)) {						\
 	    POP_SAVEARRAY();						\
 	    /* abandon @_ if it got reified */				\
 	    if (AvREAL(cx->blk_sub.argarray)) {				\
@@ -351,14 +360,14 @@ struct block_sub {
 		cx->blk_sub.argarray = newAV();				\
 		av_extend(cx->blk_sub.argarray, fill);			\
 		AvREIFY_only(cx->blk_sub.argarray);			\
-		CX_CURPAD_SV(cx->blk_sub, 0) = (SV*)cx->blk_sub.argarray;	\
+		CX_CURPAD_SV(cx->blk_sub, 0) = MUTABLE_SV(cx->blk_sub.argarray); \
 	    }								\
 	    else {							\
 		CLEAR_ARGARRAY(cx->blk_sub.argarray);			\
 	    }								\
 	}								\
-	sv = (SV*)cx->blk_sub.cv;					\
-	if (sv && (CvDEPTH((CV*)sv) = cx->blk_sub.olddepth))		\
+	sv = MUTABLE_SV(cx->blk_sub.cv);				\
+	if (sv && (CvDEPTH((const CV*)sv) = cx->blk_sub.olddepth))	\
 	    sv = NULL;						\
     } STMT_END
 
@@ -384,6 +393,9 @@ struct block_eval {
     JMPENV *	cur_top_env; /* value of PL_top_env when eval CX created */
 };
 
+#define CxOLD_IN_EVAL(cx)	(0 + (cx)->blk_eval.old_in_eval)
+#define CxOLD_OP_TYPE(cx)	(0 + (cx)->blk_eval.old_op_type)
+
 #define PUSHEVAL(cx,n,fgv)						\
     STMT_START {							\
 	cx->blk_eval.old_in_eval = PL_in_eval;				\
@@ -398,8 +410,8 @@ struct block_eval {
 
 #define POPEVAL(cx)							\
     STMT_START {							\
-	PL_in_eval = cx->blk_eval.old_in_eval;				\
-	optype = cx->blk_eval.old_op_type;				\
+	PL_in_eval = CxOLD_IN_EVAL(cx);					\
+	optype = CxOLD_OP_TYPE(cx);					\
 	PL_eval_root = cx->blk_eval.old_eval_root;			\
 	if (cx->blk_eval.old_namesv)					\
 	    sv_2mortal(cx->blk_eval.old_namesv);			\
@@ -419,6 +431,9 @@ struct block_loop {
     OP *	next_op;
     SV **	itervar;
 #endif
+    /* Eliminated in blead by change 33080, but for binary compatibility
+       reasons we can't remove it from the middle of a struct in a maintenance
+       release, so it gets to stay, and be set to NULL.  */
     SV *	itersave;
     /* (from inspection of source code) for a .. range of strings this is the
        current string.  */
@@ -453,18 +468,17 @@ struct block_loop {
 	 : (SV**)NULL)
 #  define CX_ITERDATA_SET(cx,idata)					\
 	CX_CURPAD_SAVE(cx->blk_loop);					\
-	if ((cx->blk_loop.iterdata = (idata)))				\
-	    cx->blk_loop.itersave = SvREFCNT_inc(*CxITERVAR(cx));	\
-	else								\
-	    cx->blk_loop.itersave = NULL;
+	cx->blk_loop.itersave = NULL;					\
+	cx->blk_loop.iterdata = (idata);
 #else
 #  define CxITERVAR(c)		((c)->blk_loop.itervar)
 #  define CX_ITERDATA_SET(cx,ivar)					\
-	if ((cx->blk_loop.itervar = (SV**)(ivar)))			\
-	    cx->blk_loop.itersave = SvREFCNT_inc(*CxITERVAR(cx));	\
-	else								\
-	    cx->blk_loop.itersave = NULL;
+	cx->blk_loop.itersave = NULL;					\
+	cx->blk_loop.itervar = (SV**)(ivar);
 #endif
+#define CxLABEL(c)	(0 + (c)->blk_loop.label)
+#define CxHASARGS(c)	(0 + (c)->blk_sub.hasargs)
+#define CxLVAL(c)	(0 + (c)->blk_sub.lval)
 
 #ifdef USE_ITHREADS
 #  define PUSHLOOP_OP_NEXT		/* No need to do anything.  */
@@ -486,16 +500,6 @@ struct block_loop {
 
 #define POPLOOP(cx)							\
 	SvREFCNT_dec(cx->blk_loop.iterlval);				\
-	if (CxITERVAR(cx)) {						\
-            if (SvPADMY(cx->blk_loop.itersave)) {			\
-		SV ** const s_v_p = CxITERVAR(cx);			\
-		sv_2mortal(*s_v_p);					\
-		*s_v_p = cx->blk_loop.itersave;				\
-	    }								\
-	    else {							\
-		SvREFCNT_dec(cx->blk_loop.itersave);			\
-	    }								\
-	}								\
 	if (cx->blk_loop.iterary && cx->blk_loop.iterary != PL_curstack)\
 	    SvREFCNT_dec(cx->blk_loop.iterary);
 
@@ -622,6 +626,8 @@ struct subst {
 	rxres_save(&cx->sb_rxres, rx);					\
 	(void)ReREFCNT_inc(rx)
 
+#define CxONCE(cx)		(0 + cx->sb_once)
+
 #define POPSUBST(cx) cx = &cxstack[cxstack_ix--];			\
 	rxres_free(&cx->sb_rxres);					\
 	ReREFCNT_dec(cx->sb_rx)
@@ -667,13 +673,13 @@ struct context {
 #define CxTYPE(c)	((c)->cx_type & CXTYPEMASK)
 #define CxMULTICALL(c)	(((c)->cx_type & CXp_MULTICALL)			\
 			 == CXp_MULTICALL)
-#define CxREALEVAL(c)	(((c)->cx_type & (CXt_EVAL|CXp_REAL))		\
+#define CxREALEVAL(c)	(((c)->cx_type & (CXTYPEMASK|CXp_REAL))		\
 			 == (CXt_EVAL|CXp_REAL))
-#define CxTRYBLOCK(c)	(((c)->cx_type & (CXt_EVAL|CXp_TRYBLOCK))	\
+#define CxTRYBLOCK(c)	(((c)->cx_type & (CXTYPEMASK|CXp_TRYBLOCK))	\
 			 == (CXt_EVAL|CXp_TRYBLOCK))
-#define CxFOREACH(c)	(((c)->cx_type & (CXt_LOOP|CXp_FOREACH))	\
+#define CxFOREACH(c)	(((c)->cx_type & (CXTYPEMASK|CXp_FOREACH))	\
                          == (CXt_LOOP|CXp_FOREACH))
-#define CxFOREACHDEF(c)	(((c)->cx_type & (CXt_LOOP|CXp_FOREACH|CXp_FOR_DEF))\
+#define CxFOREACHDEF(c)	(((c)->cx_type & (CXTYPEMASK|CXp_FOREACH|CXp_FOR_DEF))\
 			 == (CXt_LOOP|CXp_FOREACH|CXp_FOR_DEF))
 
 #define CXINC (cxstack_ix < cxstack_max ? ++cxstack_ix : (cxstack_ix = cxinc()))
@@ -714,6 +720,7 @@ L<perlcall>.
 #define G_SCALAR	0
 #define G_ARRAY		1
 #define G_VOID		128	/* skip this bit when adding flags below */
+#define G_WANT		(128|1)
 
 /* extra flags for Perl_call_* routines */
 #define G_DISCARD	2	/* Call FREETMPS.
@@ -857,6 +864,7 @@ See L<perlcall/Lightweight Callbacks>.
  	multicall_oldcatch = CATCH_GET;					\
 	SAVETMPS; SAVEVPTR(PL_op);					\
 	CATCH_SET(TRUE);						\
+	PUSHSTACKi(PERLSI_SORT);					\
 	PUSHBLOCK(cx, CXt_SUB|CXp_MULTICALL, PL_stack_sp);		\
 	PUSHSUB(cx);							\
 	if (++CvDEPTH(cv) >= 2) {					\
@@ -880,8 +888,10 @@ See L<perlcall/Lightweight Callbacks>.
 	LEAVESUB(multicall_cv);						\
 	CvDEPTH(multicall_cv)--;					\
 	POPBLOCK(cx,PL_curpm);						\
+	POPSTACK;							\
 	CATCH_SET(multicall_oldcatch);					\
 	LEAVE;								\
+	SPAGAIN;							\
     } STMT_END
 
 /*

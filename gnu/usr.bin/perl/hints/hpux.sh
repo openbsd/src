@@ -218,18 +218,6 @@ case "$archname" in
 	# While here, override so=sl auto-detection
 	so='so'
 	;;
-    *)
-	case "$uselongdouble" in
-	    *) ;;
-	    $define|true|[yY]*)
-		cat <<EOM >&4
-
-*** long doubles are not (yet) supported on HP-UX (any version)
-*** Until it does, we cannot continue, aborting.
-EOM
-		exit 1 ;;
-	    esac
-	;;
     esac
 
 case "$use64bitint" in

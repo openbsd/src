@@ -19,7 +19,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Internals::Search - find module objects matching criteria
+CPANPLUS::Internals::Search - find CPAN modules
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ based on certain criteria and return them.
 
 =head1 METHODS
 
-=head2 _search_module_tree( type => TYPE, allow => \@regexex, [data => \@previous_results ] )
+=head2 _search_module_tree( type => TYPE, allow => \@regexes, [data => \@previous_results ] )
 
 Searches the moduletree for module objects matching the criteria you
 specify. Returns an array ref of module objects on success, and false
@@ -137,13 +137,14 @@ specified in C<data> if provided, rather than the moduletree itself.
 #
 
 sub _search_module_tree {
+
     my $self = shift;
     my $conf = $self->configure_object;
     my %hash = @_;
 
     my($mods,$list,$verbose,$type);
     my $tmpl = {
-        data    => { default    => [values %{$self->module_tree}],
+        data    => { default    => [],
                      strict_type=> 1, store     => \$mods },
         allow   => { required   => 1, default   => [ ], strict_type => 1,
                      store      => \$list },
@@ -153,9 +154,17 @@ sub _search_module_tree {
                      store      => \$type },
     };
 
-    my $args = check( $tmpl, \%hash ) or return;
+    my $args = do {
+        ### don't check the template for sanity
+        ### -- we know it's good and saves a lot of performance
+        local $Params::Check::SANITY_CHECK_TEMPLATE = 0;
 
-    {   local $Params::Check::VERBOSE = 0;
+        check( $tmpl, \%hash );
+    } or return;
+
+    ### a list of module objects was supplied
+    if( @$mods ) {   
+        local $Params::Check::VERBOSE = 0;
 
         my @rv;
         for my $mod (@$mods) {
@@ -166,6 +175,13 @@ sub _search_module_tree {
             push @rv, $mod if allow( $mod->$type() => $list );
 
         }
+        return \@rv;
+
+    } else {
+        my @rv = $self->_source_search_module_tree(
+            allow   => $list,
+            type    => $type,
+        );
         return \@rv;
     }
 }
@@ -214,7 +230,7 @@ sub _search_author_tree {
 
     my($authors,$list,$verbose,$type);
     my $tmpl = {
-        data    => { default    => [values %{$self->author_tree}],
+        data    => { default    => [],
                      strict_type=> 1, store     => \$authors },
         allow   => { required   => 1, default   => [ ], strict_type => 1,
                      store      => \$list },
@@ -226,7 +242,8 @@ sub _search_author_tree {
 
     my $args = check( $tmpl, \%hash ) or return;
 
-    {   local $Params::Check::VERBOSE = 0;
+    if( @$authors ) {   
+        local $Params::Check::VERBOSE = 0;
 
         my @rv;
         for my $auth (@$authors) {
@@ -237,9 +254,13 @@ sub _search_author_tree {
             push @rv, $auth if allow( $auth->$type() => $list );
         }
         return \@rv;
+    } else {
+        my @rv = $self->_source_search_author_tree(
+            allow   => $list,
+            type    => $type,
+        );            
+        return \@rv;
     }
-
-
 }
 
 =pod

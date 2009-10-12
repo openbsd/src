@@ -68,8 +68,8 @@ dl_unload_all_files(pTHX_ void *unused)
     AV *dl_librefs;
     SV *dl_libref;
 
-    if ((sub = get_cv("DynaLoader::dl_unload_file", FALSE)) != NULL) {
-        dl_librefs = get_av("DynaLoader::dl_librefs", FALSE);
+    if ((sub = get_cv("DynaLoader::dl_unload_file", 0)) != NULL) {
+        dl_librefs = get_av("DynaLoader::dl_librefs", 0);
         while ((dl_libref = av_pop(dl_librefs)) != &PL_sv_undef) {
            dSP;
            ENTER;

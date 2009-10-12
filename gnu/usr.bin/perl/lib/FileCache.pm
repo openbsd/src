@@ -1,12 +1,14 @@
 package FileCache;
 
-our $VERSION = '1.07';
+our $VERSION = '1.08';
 
 =head1 NAME
 
 FileCache - keep more files open than the system permits
 
 =head1 SYNOPSIS
+
+    no strict 'refs';
 
     use FileCache;
     # or
@@ -70,6 +72,9 @@ ability to use FileCache on pipes may be removed in a future release.
 FileCache does not store the current file offset if it finds it necessary to
 close a file.  When the file is reopened, the offset will be as specified by the
 original C<open> file mode.  This could be construed to be a bug.
+
+The module functionality relies on symbolic references, so things will break
+under 'use strict' unless 'no strict "refs"' is also specified.
 
 =head1 BUGS
 

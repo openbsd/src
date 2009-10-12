@@ -6,7 +6,7 @@ our ($VERSION, @ISA, @EXPORT);
 require 5.000;
 require Exporter;
 
-$VERSION	= 1.02;
+$VERSION	= 1.03;
 @ISA		= qw(Exporter);
 @EXPORT		= qw(open2);
 
@@ -27,6 +27,9 @@ IPC::Open2, open2 - open a process for both reading and writing
     $pid = open2($chld_out, $chld_in, 'some cmd and args');
       # or without using the shell
     $pid = open2($chld_out, $chld_in, 'some', 'cmd', 'and', 'args');
+
+    waitpid( $pid, 0 );
+    my $child_exit_status = $? >> 8;
 
 =head1 DESCRIPTION
 

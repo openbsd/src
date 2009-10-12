@@ -1,7 +1,6 @@
 # Pod::Text::Termcap -- Convert POD data to ASCII text with format escapes.
-# $Id: Termcap.pm,v 1.6 2008/09/29 17:36:14 millert Exp $
 #
-# Copyright 1999, 2001, 2002, 2004, 2006 by Russ Allbery <rra@stanford.edu>
+# Copyright 1999, 2001, 2002, 2004, 2006, 2008 Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -27,10 +26,7 @@ use vars qw(@ISA $VERSION);
 
 @ISA = qw(Pod::Text);
 
-# Don't use the CVS revision as the version, since this module is also in Perl
-# core and too many things could munge CVS magic revision strings.  This
-# number should ideally be the same as the CVS revision in podlators, however.
-$VERSION = 2.03;
+$VERSION = '2.05';
 
 ##############################################################################
 # Overrides
@@ -136,6 +132,9 @@ __END__
 
 Pod::Text::Termcap - Convert POD data to ASCII text with format escapes
 
+=for stopwords
+ECMA-48 VT100 Allbery
+
 =head1 SYNOPSIS
 
     use Pod::Text::Termcap;
@@ -176,7 +175,8 @@ Russ Allbery <rra@stanford.edu>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2001, 2002, 2004, 2006 by Russ Allbery <rra@stanford.edu>.
+Copyright 1999, 2001, 2002, 2004, 2006, 2008 Russ Allbery
+<rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

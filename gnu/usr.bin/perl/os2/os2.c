@@ -998,7 +998,7 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 	if (flag == P_WAIT)
 		flag = P_NOWAIT;
 	if (really && !*(real_name = SvPV(really, n_a)))
-	    really = Nullsv;
+	    really = NULL;
 
       retry:
 	if (strEQ(PL_Argv[0],"/bin/sh")) 
@@ -1265,7 +1265,7 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 				/* XXXX This is good only until we refuse
 				        quoted arguments... */
 				PL_Argv[0] = inicmd;
-				PL_Argv[1] = Nullch;
+				PL_Argv[1] = NULL;
 			    }
 			} else if (!buf[0] && inicmd) { /* No file */
 			    /* Start with the original cmdline. */
@@ -1273,7 +1273,7 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 			            quoted arguments... */
 
 			    PL_Argv[0] = inicmd;
-			    PL_Argv[1] = Nullch;
+			    PL_Argv[1] = NULL;
 			    nargs = 2;	/* shell -c */
 			} 
 
@@ -1458,7 +1458,7 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
 	if (*s)
 	    *s++ = '\0';
     }
-    *a = Nullch;
+    *a = NULL;
     if (PL_Argv[0])
 	rc = do_spawn_ve(aTHX_ NULL, flag, execf, cmd, mergestderr);
     else
@@ -1500,7 +1500,7 @@ os2_aspawn_4(pTHX_ SV *really, register SV **args, I32 cnt, int execing)
 	    else
 		*a++ = "";
 	}
-	*a = Nullch;
+	*a = NULL;
 
 	if ( flag_set && (a == PL_Argv + 1)
 	     && !really && execing == ASPAWN_WAIT ) { 		/* One arg? */
@@ -1573,7 +1573,7 @@ my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args)
 	taint_proper("Insecure %s%s", "EXEC");
     }
     if (pipe(p) < 0)
-	return Nullfp;
+	return NULL;
     /* Now we need to spawn the child. */
     if (p[this] == (*mode == 'r')) {	/* if fh 0/1 was initially closed. */
 	int new = dup(p[this]);
@@ -1592,7 +1592,7 @@ my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args)
 	  closepipes:
 	    close(p[0]);
 	    close(p[1]);
-	    return Nullfp;
+	    return NULL;
 	}
     } else
 	fh_fl = fcntl(*mode == 'r', F_GETFD);
@@ -1605,7 +1605,7 @@ my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args)
     if (newfd != -1)
 	fcntl(newfd, F_SETFD, FD_CLOEXEC);
     if (cnt) {	/* Args: "Real cmd", before first arg, the last, execing */
-	pid = os2_aspawn_4(aTHX_ Nullsv, args, cnt, ASPAWN_NOWAIT);
+	pid = os2_aspawn_4(aTHX_ NULL, args, cnt, ASPAWN_NOWAIT);
     } else
 	pid = do_spawn_nowait(aTHX_ cmd);
     if (newfd == -1)
@@ -1620,7 +1620,7 @@ my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args)
 	close(p[that]);
     if (pid == -1) {
 	close(p[this]);
-	return Nullfp;
+	return NULL;
     }
     if (p[that] < p[this]) {		/* Make fh as small as possible */
 	dup2(p[this], p[that]);
@@ -1879,8 +1879,8 @@ XS(XS_OS2_replaceModule)
 	Perl_croak(aTHX_ "Usage: OS2::replaceModule(target [, source [, backup]])");
     {
 	char *	target = (char *)SvPV_nolen(ST(0));
-	char *	source = (items < 2) ? Nullch : (char *)SvPV_nolen(ST(1));
-	char *	backup = (items < 3) ? Nullch : (char *)SvPV_nolen(ST(2));
+	char *	source = (items < 2) ? NULL : (char *)SvPV_nolen(ST(1));
+	char *	backup = (items < 3) ? NULL : (char *)SvPV_nolen(ST(2));
 
 	if (!replaceModule(target, source, backup))
 	    croak_with_os2error("replaceModule() error");
@@ -2072,7 +2072,7 @@ os2error(int rc)
 	dTHX;
 	ULONG len;
 	char *s;
-	int number = SvTRUE(get_sv("OS2::nsyserror", TRUE));
+	int number = SvTRUE(get_sv("OS2::nsyserror", GV_ADD));
 
         if (!(_emx_env & 0x200)) return ""; /* Nop if not OS/2. */
 	if (rc == 0)
@@ -2159,7 +2159,7 @@ dllname2buffer(pTHX_ char *buf, STRLEN l)
 {
     char *o;
     STRLEN ll;
-    SV *dll = Nullsv;
+    SV *dll = NULL;
 
     dll = module_name(mod_name_full);
     o = SvPV(dll, ll);
@@ -4092,14 +4092,14 @@ XS(XS_OS2_pipe)
 	Perl_croak(aTHX_ "Usage: OS2::pipe(pszName, ulOpenMode, connect= 1, count= 1, ulInbufLength= 8192, ulOutbufLength= ulInbufLength, ulPipeMode= count | NP_NOWAIT | NP_TYPE_BYTE | NP_READMODE_BYTE, ulTimeout= 0)");
     {
 	ULONG	RETVAL;
-	PCSZ	pszName = ( SvOK(ST(0)) ? (PCSZ)SvPV(ST(0),PL_na) : NULL );
+	PCSZ	pszName = ( SvOK(ST(0)) ? (PCSZ)SvPV_nolen(ST(0)) : NULL );
 	HPIPE	hpipe;
 	SV	*OpenMode = ST(1);
 	ULONG	ulOpenMode;
 	int	connect = 0, count, message_r = 0, message = 0, b = 0;
 	ULONG	ulInbufLength,	ulOutbufLength,	ulPipeMode, ulTimeout, rc;
 	STRLEN	len;
-	char	*s, buf[10], *s1, *perltype = Nullch;
+	char	*s, buf[10], *s1, *perltype = NULL;
 	PerlIO	*perlio;
 	double	timeout;
 
@@ -4360,10 +4360,10 @@ XS(XS_OS2_pipeCntl)
 				      &PipeState), "DosPeekNPipe() for state");
 	    if (state) {
 		EXTEND(SP, 3);
-		PUSHs(newSVuv(PipeState));
+		mPUSHu(PipeState);
 		/*   Bytes (available/in-message) */
-		PUSHs(newSViv(BytesAvail.cbpipe));
-		PUSHs(newSViv(BytesAvail.cbmessage));
+		mPUSHi(BytesAvail.cbpipe);
+		mPUSHi(BytesAvail.cbmessage);
 		XSRETURN(3);
 	    } else if (info) {
 		/* L S S C C C/Z*
@@ -4390,12 +4390,12 @@ XS(XS_OS2_pipeCntl)
 		else
 		    size = strlen(b.pInfo.szName);
 		EXTEND(SP, 6);
-		PUSHs(newSVpvn(b.pInfo.szName, size));
-		PUSHs(newSVuv(b.id));
-		PUSHs(newSViv(b.pInfo.cbOut));
-		PUSHs(newSViv(b.pInfo.cbIn));
-		PUSHs(newSViv(b.pInfo.cbMaxInst));
-		PUSHs(newSViv(b.pInfo.cbCurInst));
+		mPUSHp(b.pInfo.szName, size);
+		mPUSHu(b.id);
+		mPUSHi(b.pInfo.cbOut);
+		mPUSHi(b.pInfo.cbIn);
+		mPUSHi(b.pInfo.cbMaxInst);
+		mPUSHi(b.pInfo.cbCurInst);
 		XSRETURN(6);
 	    } else if (BytesAvail.cbpipe == 0) {
 		XSRETURN_NO;
@@ -4450,7 +4450,7 @@ XS(XS_OS2_open)
 	ULONG rc;
 #line 113 "pipe.c"
 	ULONG	RETVAL;
-	PCSZ	pszFileName = ( SvOK(ST(0)) ? (PCSZ)SvPV(ST(0),PL_na) : NULL );
+	PCSZ	pszFileName = ( SvOK(ST(0)) ? (PCSZ)SvPV_nolen(ST(0)) : NULL );
 	HFILE	hFile;
 	ULONG	ulAction;
 	ULONG	ulOpenMode = (ULONG)SvUV(ST(1));

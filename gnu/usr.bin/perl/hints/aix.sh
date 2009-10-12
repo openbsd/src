@@ -80,6 +80,12 @@ EOF
 	;;
     esac
 
+ s=`lslpp -lc bos.adt.libm >/dev/null`
+if [ $? != 0 ]; then
+    echo "You cannot build perl without the bos.adt.libm package installed" >&4
+    exit
+    fi
+
 # uname -m output is too specific and not appropriate here
 case "$archname" in
     '') archname="$osname" ;;
@@ -158,7 +164,7 @@ case "$cc" in
 # -bE:$(BASEEXT).exp	    Export these symbols.  This file contains only one
 #			    symbol: boot_$(EXP)	 can it be auto-generated?
 if test $usenativedlopen = 'true' ; then
-    lddlflags="$lddlflags -bhalt:4 -bexpall -G -bnoentry -lc"
+    lddlflags="$lddlflags -bhalt:4 -G -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -bnoentry -lc -lm"
 else
     lddlflags="$lddlflags -bhalt:4 -bM:SRE -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -bnoentry -lc"
     fi
@@ -232,37 +238,25 @@ case "$usethreads" in
 
 	ccflags="$ccflags -DNEED_PTHREAD_INIT"
 	case "$cc" in
-	    *gcc*) ccflags="-D_THREAD_SAFE $ccflags" ;;
-
-	    cc_r) ;;
-	    '') cc=cc_r ;;
-
+	    *gcc*) 
+	      ccflags="-D_THREAD_SAFE $ccflags" 
+	      ;;
+	    cc_r) 
+	      ;;
+	    xlc_r) 
+	      # for -qlonglong
+	      ccflags="$ccflags -qlanglvl=extended"
+	      ;;
+	    # we do not need the C++ compiler
+	    xlC_r) 
+	      # for -qlonglong
+	      ccflags="$ccflags -qlanglvl=extended"
+	      cc=xlc_r 
+	      ;;
+	    '') 
+	      cc=cc_r 
+	      ;;
 	    *)
-
-
-	    # No | alternation in aix sed. :-(
-	    newcc=`echo $cc | sed -e 's/cc$/cc_r/' -e 's/xl[cC]$/cc_r/' -e 's/xl[cC]_r$/cc_r/'`
-	    case "$newcc" in
-		$cc) # No change
-		;;
-
-		*cc_r)
-		echo >&4 "Switching cc to cc_r because of POSIX threads."
-		# xlc_r has been known to produce buggy code in AIX 4.3.2.
-		# (e.g. pragma/overload core dumps)	 Let's suspect xlC_r, too.
-		# --jhi@iki.fi
-		cc="$newcc"
-		;;
-
-		*)
-		cat >&4 <<EOM
-*** For pthreads you should use the AIX C compiler cc_r.
-*** (now your compiler was set to '$cc')
-*** Cannot continue, aborting.
-EOM
-		exit 1
-		;;
-	    esac
 	esac
 
 	# Insert pthreads to libswanted, before any libc or libC.
@@ -273,6 +267,21 @@ EOM
 	set `echo X "$lddlflags " | sed -e 's/ \(-l[cC]\) / -lpthreads \1 /'`
 	shift
 	lddlflags="$*"
+	;;
+    *)
+	case "$cc" in
+	    xlc) 
+	      # for -qlonglong
+	      ccflags="$ccflags -qlanglvl=extended"
+	      ;;
+	    # we do not need the C++ compiler
+	    xlC) 
+	      # for -qlonglong
+	      ccflags="$ccflags -qlanglvl=extended"
+	      cc=xlc 
+	      ;;
+	    *)
+	esac
 	;;
 esac
 EOCBU
@@ -295,10 +304,10 @@ ldflags_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LDFLAGS 2>/dev/null`"
 	    fi
 	if test X"$use64bitint:$quadtype" = X"$define:long" -o X"$use64bitall" = Xdefine; then
 # Keep this at the left margin.
-libswanted_uselargefiles="`getconf XBS5_LP64_OFF64_LIBS 2>/dev/null|sed -e 's@^-l@@' -e 's@ -l@ @g`"
+libswanted_uselargefiles="`getconf XBS5_LP64_OFF64_LIBS 2>/dev/null|sed -e 's@^-l@@' -e 's@ -l@ @g'`"
 	else
 # Keep this at the left margin.
-libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@^-l@@' -e 's@ -l@ @g`"
+libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@^-l@@' -e 's@ -l@ @g'`"
 	    fi
 
 	case "$ccflags_uselargefiles$ldflags_uselargefiles$libs_uselargefiles" in
@@ -419,7 +428,7 @@ EOM
 	# string is simply not detectable by any means.  Since it doesn't
 	# do any harm, I didn't pursue it. -- sh
 	qaldflags="`echo $qaldflags`"
-	qalibs="`getconf XBS5_LP64_OFF64_LIBS 2>/dev/null|sed -e 's@^-l@@' -e 's@ -l@ @g`"
+	qalibs="`getconf XBS5_LP64_OFF64_LIBS 2>/dev/null|sed -e 's@^-l@@' -e 's@ -l@ @g'`"
 	# -q32 and -b32 may have been set by uselargefiles or user.
 	# Remove them.
 	ccflags="`echo $ccflags | sed -e 's@-q32@@'`"
@@ -523,5 +532,17 @@ EOF
 	    esac
 	;;
     esac
+
+# remove libbsd.a from wanted libraries
+libswanted=`echo " $libswanted " | sed -e 's/ bsd / /'`
+libswanted=`echo " $libswanted " | sed -e 's/ BSD / /'`
+d_flock='undef'
+
+# remove libgdbm from wanted libraries
+# The libgdbm 1.8.3 from the AIX Toolbox is not working 
+# (the dbm_store() function is defective)
+libswanted=`echo " $libswanted " | sed -e 's/ gdbm / /'`
+i_gdbm='undef'
+i_gdbmndbm='undef'
 
 # EOF

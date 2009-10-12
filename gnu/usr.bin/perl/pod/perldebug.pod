@@ -372,8 +372,8 @@ Delete all installed actions.
 =item w expr
 X<debugger command, w>
 
-Add a global watch-expression.  We hope you know what one of these
-is, because they're supposed to be obvious.
+Add a global watch-expression. Whenever a watched global changes the
+debugger will stop and display the old and new values.
 
 =item W expr
 X<debugger command, W>
@@ -1056,11 +1056,12 @@ Note that any variables and functions that are not documented in
 this document (or in L<perldebguts>) are considered for internal
 use only, and as such are subject to change without notice.
 
-=head2 Readline Support
+=head2 Readline Support / History in the debugger
 
 As shipped, the only command-line history supplied is a simplistic one
 that checks for leading exclamation points.  However, if you install
-the Term::ReadKey and Term::ReadLine modules from CPAN, you will
+the Term::ReadKey and Term::ReadLine modules from CPAN (such as
+Term::ReadLine::Gnu, Term::ReadLine::Perl, ...) you will
 have full editing capabilities much like GNU I<readline>(3) provides.
 Look for these in the F<modules/by-module/Term> directory on CPAN.
 These do not support normal B<vi> command-line editing, however.
@@ -1068,6 +1069,9 @@ These do not support normal B<vi> command-line editing, however.
 A rudimentary command-line completion is also available.
 Unfortunately, the names of lexical variables are not available for
 completion.
+
+Without Readline support you may see the symbols "^[[A", "^[[C", "^[[B",
+"^[[D"", "^H", ... when using the arrow keys and/or the backspace key.
 
 =head2 Editor Support for Debugging
 
@@ -1100,7 +1104,7 @@ X<profile> X<profiling> X<profiler>
 If you wish to supply an alternative debugger for Perl to run, just
 invoke your script with a colon and a package argument given to the
 B<-d> flag.  The most popular alternative debuggers for Perl is the
-Perl profiler.  Devel::DProf is now included with the standard Perl
+Perl profiler.  Devel::DProf is included with the standard Perl
 distribution.  To profile your Perl program in the file F<mycode.pl>,
 just type:
 
@@ -1109,7 +1113,8 @@ just type:
 When the script terminates the profiler will dump the profile
 information to a file called F<tmon.out>.  A tool like B<dprofpp>,
 also supplied with the standard Perl distribution, can be used to
-interpret the information in that profile.
+interpret the information in that profile.  More powerful profilers,
+such as C<Devel::NYTProf> are available from the CPAN.
 
 =head1 Debugging regular expressions
 X<regular expression, debugging>

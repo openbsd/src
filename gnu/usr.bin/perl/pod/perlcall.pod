@@ -904,8 +904,7 @@ and some C to call it
         /* Check the eval first */
         if (SvTRUE(ERRSV))
         {
-	    STRLEN n_a;
-            printf ("Uh oh - %s\n", SvPV(ERRSV, n_a));
+            printf ("Uh oh - %s\n", SvPV_nolen(ERRSV));
             POPs;
         }
         else
@@ -947,8 +946,7 @@ The code
 
     if (SvTRUE(ERRSV))
     {
-	STRLEN n_a;
-        printf ("Uh oh - %s\n", SvPV(ERRSV, n_a));
+        printf ("Uh oh - %s\n", SvPV_nolen(ERRSV));
         POPs;
     }
 
@@ -1220,9 +1218,9 @@ virtual. The static method, C<PrintID>, prints out simply the class
 name and a version number. The virtual method, C<Display>, prints out a
 single element of the array.  Here is an all Perl example of using it.
 
-    $a = new Mine ('red', 'green', 'blue');
+    $a = Mine->new('red', 'green', 'blue');
     $a->Display(1);
-    PrintID Mine;
+    Mine->PrintID;
 
 will print
 
@@ -1279,7 +1277,7 @@ the C<PrintID> and C<Display> methods from C.
 
 So the methods C<PrintID> and C<Display> can be invoked like this
 
-    $a = new Mine ('red', 'green', 'blue');
+    $a = Mine->new('red', 'green', 'blue');
     call_Method($a, 'Display', 1);
     call_PrintID('Mine', 'PrintID');
 

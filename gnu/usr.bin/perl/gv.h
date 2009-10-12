@@ -1,7 +1,7 @@
 /*    gv.h
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -27,27 +27,27 @@ struct gp {
 
 #if defined (DEBUGGING) && defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN) && !defined(__INTEL_COMPILER)
 #  define GvGP(gv)							\
-	(*({GV *const shplep = (GV *) (gv);				\
-	    assert(SvTYPE(shplep) == SVt_PVGV || SvTYPE(shplep) == SVt_PVLV); \
-	    assert(isGV_with_GP(shplep));				\
-	    &((shplep)->sv_u.svu_gp);}))
+	(*({GV *const _gvgp = (GV *) (gv);				\
+	    assert(SvTYPE(_gvgp) == SVt_PVGV || SvTYPE(_gvgp) == SVt_PVLV); \
+	    assert(isGV_with_GP(_gvgp));				\
+	    &((_gvgp)->sv_u.svu_gp);}))
 #  define GvFLAGS(gv)							\
-	(*({GV *const yaah  = (GV *) (gv);				\
-	    assert(SvTYPE(yaah) == SVt_PVGV || SvTYPE(yaah) == SVt_PVLV); \
-	    assert(isGV_with_GP(yaah));					\
-	    &(GvXPVGV(yaah)->xpv_cur);}))
+	(*({GV *const _gvflags = (GV *) (gv);				\
+	    assert(SvTYPE(_gvflags) == SVt_PVGV || SvTYPE(_gvflags) == SVt_PVLV); \
+	    assert(isGV_with_GP(_gvflags));				\
+	    &(GvXPVGV(_gvflags)->xpv_cur);}))
 #  define GvSTASH(gv)							\
-	(*({ GV * const _gv = (GV *) (gv);				\
-	    assert(isGV_with_GP(_gv));					\
-	    assert(SvTYPE(_gv) == SVt_PVGV || SvTYPE(_gv) >= SVt_PVLV);	\
-	    &(GvXPVGV(_gv)->xnv_u.xgv_stash);				\
+	(*({ GV * const _gvstash = (GV *) (gv);				\
+	    assert(isGV_with_GP(_gvstash));				\
+	    assert(SvTYPE(_gvstash) == SVt_PVGV || SvTYPE(_gvstash) >= SVt_PVLV); \
+	    &(GvXPVGV(_gvstash)->xnv_u.xgv_stash);			\
 	 }))
 #  define GvNAME_HEK(gv)						\
-	(*({ GV * const zzzz = (GV *) (gv);				\
-	   assert(isGV_with_GP(zzzz));					\
-	   assert(SvTYPE(zzzz) == SVt_PVGV || SvTYPE(zzzz) >= SVt_PVLV); \
-	   assert(!SvVALID(zzzz));					\
-	   &(GvXPVGV(zzzz)->xiv_u.xivu_namehek);			\
+    (*({ GV * const _gvname_hek = (GV *) (gv);				\
+	   assert(isGV_with_GP(_gvname_hek));				\
+	   assert(SvTYPE(_gvname_hek) == SVt_PVGV || SvTYPE(_gvname_hek) >= SVt_PVLV); \
+	   assert(!SvVALID(_gvname_hek));				\
+	   &(GvXPVGV(_gvname_hek)->xiv_u.xivu_namehek);			\
 	 }))
 #  define GvNAME_get(gv)	({ assert(GvNAME_HEK(gv)); HEK_KEY(GvNAME_HEK(gv)); })
 #  define GvNAMELEN_get(gv)	({ assert(GvNAME_HEK(gv)); HEK_LEN(GvNAME_HEK(gv)); })
@@ -88,7 +88,7 @@ Return the SV from the GV.
 #endif
 
 #define GvREFCNT(gv)	(GvGP(gv)->gp_refcnt)
-#define GvIO(gv)	((gv) && SvTYPE((SV*)gv) == SVt_PVGV && GvGP(gv) ? GvIOp(gv) : NULL)
+#define GvIO(gv)	((gv) && SvTYPE((const SV*)gv) == SVt_PVGV && GvGP(gv) ? GvIOp(gv) : NULL)
 #define GvIOp(gv)	(GvGP(gv)->gp_io)
 #define GvIOn(gv)	(GvIO(gv) ? GvIOp(gv) : GvIOp(gv_IOadd(gv)))
 

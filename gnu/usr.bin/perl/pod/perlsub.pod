@@ -1034,7 +1034,7 @@ corresponding built-in.
     sub myreverse (@)	     myreverse $a, $b, $c
     sub myjoin ($@)	     myjoin ":", $a, $b, $c
     sub mypop (\@)	     mypop @array
-    sub mysplice (\@$$@)     mysplice @array, @array, 0, @pushme
+    sub mysplice (\@$$@)     mysplice @array, 0, 2, @pushme
     sub mykeys (\%)	     mykeys %{$hashref}
     sub myopen (*;$)	     myopen HANDLE, $name
     sub mypipe (**)	     mypipe READHANDLE, WRITEHANDLE

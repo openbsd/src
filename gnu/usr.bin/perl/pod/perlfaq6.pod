@@ -97,7 +97,7 @@ to newlines.  But it's imperative that $/ be set to something other
 than the default, or else we won't actually ever have a multiline
 record read in.
 
-	$/ = '';  		# read in more whole paragraph, not just one line
+	$/ = '';  		# read in whole paragraph, not just one line
 	while ( <> ) {
 		while ( /\b([\w'-]+)(\s+\1)+\b/gi ) {  	# word starts alpha
 			print "Duplicate $1 at paragraph $.\n";
@@ -107,7 +107,7 @@ record read in.
 Here's code that finds sentences that begin with "From " (which would
 be mangled by many mailers):
 
-	$/ = '';  		# read in more whole paragraph, not just one line
+	$/ = '';  		# read in whole paragraph, not just one line
 	while ( <> ) {
 		while ( /^From /gm ) { # /m makes ^ match next to \n
 		print "leading from in paragraph $.\n";
@@ -149,11 +149,52 @@ Here's another example of using C<..>:
 		$. = 0 if eof;	# fix $.
 	}
 
+=head2 How do I match XML, HTML, or other nasty, ugly things with a regex?
+X<regex, XML> X<regex, HTML> X<XML> X<HTML> X<pain> X<frustration>
+X<sucking out, will to live>
+
+(contributed by brian d foy)
+
+If you just want to get work done, use a module and forget about the
+regular expressions. The C<XML::Parser> and C<HTML::Parser> modules
+are good starts, although each namespace has other parsing modules
+specialized for certain tasks and different ways of doing it. Start at
+CPAN Search ( http://search.cpan.org ) and wonder at all the work people
+have done for you already! :)
+
+The problem with things such as XML is that they have balanced text
+containing multiple levels of balanced text, but sometimes it isn't
+balanced text, as in an empty tag (C<< <br/> >>, for instance). Even then,
+things can occur out-of-order. Just when you think you've got a
+pattern that matches your input, someone throws you a curveball.
+
+If you'd like to do it the hard way, scratching and clawing your way
+toward a right answer but constantly being disappointed, beseiged by
+bug reports, and weary from the inordinate amount of time you have to
+spend reinventing a triangular wheel, then there are several things
+you can try before you give up in frustration:
+
+=over 4
+
+=item * Solve the balanced text problem from another question in L<perlfaq6>
+
+=item * Try the recursive regex features in Perl 5.10 and later. See L<perlre>
+
+=item * Try defining a grammar using Perl 5.10's C<(?DEFINE)> feature.
+
+=item * Break the problem down into sub-problems instead of trying to use a single regex
+
+=item * Convince everyone not to use XML or HTML in the first place
+
+=back
+
+Good luck!
+
 =head2 I put a regular expression into $/ but it didn't work. What's wrong?
 X<$/, regexes in> X<$INPUT_RECORD_SEPARATOR, regexes in>
 X<$RS, regexes in>
 
-$/ has to be a string.  You can use these examples if you really need to 
+$/ has to be a string.  You can use these examples if you really need to
 do this.
 
 If you have File::Stream, this is easy.
@@ -169,21 +210,21 @@ If you have File::Stream, this is easy.
 
 If you don't have File::Stream, you have to do a little more work.
 
-You can use the four argument form of sysread to continually add to
+You can use the four-argument form of sysread to continually add to
 a buffer.  After you add to the buffer, you check if you have a
 complete line (using your regular expression).
 
 	local $_ = "";
 	while( sysread FH, $_, 8192, length ) {
-		while( s/^((?s).*?)your_pattern/ ) {
+		while( s/^((?s).*?)your_pattern// ) {
 			my $record = $1;
 			# do stuff here.
 		}
 	}
 
- You can do the same thing with foreach and a match using the
- c flag and the \G anchor, if you do not mind your entire file
- being in memory at the end.
+You can do the same thing with foreach and a match using the
+c flag and the \G anchor, if you do not mind your entire file
+being in memory at the end.
 
 	local $_ = "";
 	while( sysread FH, $_, 8192, length ) {
@@ -224,9 +265,9 @@ And here it is as a subroutine, modeled after the above:
 			substr($mask, -1) x (length($new) - length($old))
     }
 
-	$a = "this is a TEsT case";
-	$a =~ s/(test)/preserve_case($1, "success")/egi;
-	print "$a\n";
+	$string = "this is a TEsT case";
+	$string =~ s/(test)/preserve_case($1, "success")/egi;
+	print "$string\n";
 
 This prints:
 
@@ -356,7 +397,7 @@ This example takes a regular expression from the argument list and
 prints the lines of input that match it:
 
 	my $pattern = shift @ARGV;
-	
+
 	while( <> ) {
 		print if m/$pattern/;
 		}
@@ -367,7 +408,7 @@ would prevent this by telling Perl to compile the pattern the first
 time, then reuse that for subsequent iterations:
 
 	my $pattern = shift @ARGV;
-	
+
 	while( <> ) {
 		print if m/$pattern/o; # useful for Perl < 5.6
 		}
@@ -387,7 +428,7 @@ compiling the regular expression on each iteration. With Perl 5.6 or
 later, you should only see C<re> report that for the first iteration.
 
 	use re 'debug';
-	
+
 	$regex = 'Perl';
 	foreach ( qw(Perl Java Ruby Python) ) {
 		print STDERR "-" x 73, "\n";
@@ -452,40 +493,138 @@ whitespace and comments.  Here it is expanded, courtesy of Fred Curtis.
        )
      }{defined $2 ? $2 : ""}gxse;
 
-A slight modification also removes C++ comments, as long as they are not
-spread over multiple lines using a continuation character):
+A slight modification also removes C++ comments, possibly spanning multiple lines
+using a continuation character:
 
-	s#/\*[^*]*\*+([^/*][^*]*\*+)*/|//[^\n]*|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#defined $2 ? $2 : ""#gse;
+ s#/\*[^*]*\*+([^/*][^*]*\*+)*/|//([^\\]|[^\n][\n]?)*?\n|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#defined $3 ? $3 : ""#gse;
 
 =head2 Can I use Perl regular expressions to match balanced text?
 X<regex, matching balanced test> X<regexp, matching balanced test>
-X<regular expression, matching balanced test>
+X<regular expression, matching balanced test> X<possessive> X<PARNO>
+X<Text::Balanced> X<Regexp::Common> X<backtracking> X<recursion>
 
-Historically, Perl regular expressions were not capable of matching
-balanced text.  As of more recent versions of perl including 5.6.1
-experimental features have been added that make it possible to do this.
-Look at the documentation for the (??{ }) construct in recent perlre manual
-pages to see an example of matching balanced parentheses.  Be sure to take
-special notice of the  warnings present in the manual before making use
-of this feature.
+(contributed by brian d foy)
 
-CPAN contains many modules that can be useful for matching text
-depending on the context.  Damian Conway provides some useful
-patterns in Regexp::Common.  The module Text::Balanced provides a
-general solution to this problem.
+Your first try should probably be the C<Text::Balanced> module, which
+is in the Perl standard library since Perl 5.8. It has a variety of
+functions to deal with tricky text. The C<Regexp::Common> module can
+also help by providing canned patterns you can use.
 
-One of the common applications of balanced text matching is working
-with XML and HTML.  There are many modules available that support
-these needs.  Two examples are HTML::Parser and XML::Parser. There
-are many others.
+As of Perl 5.10, you can match balanced text with regular expressions
+using recursive patterns. Before Perl 5.10, you had to resort to
+various tricks such as using Perl code in C<(??{})> sequences.
 
-An elaborate subroutine (for 7-bit ASCII only) to pull out balanced
-and possibly nested single chars, like C<`> and C<'>, C<{> and C<}>,
-or C<(> and C<)> can be found in
-http://www.cpan.org/authors/id/TOMC/scripts/pull_quotes.gz .
+Here's an example using a recursive regular expression. The goal is to
+capture all of the text within angle brackets, including the text in
+nested angle brackets. This sample text has two "major" groups: a
+group with one level of nesting and a group with two levels of
+nesting. There are five total groups in angle brackets:
 
-The C::Scan module from CPAN also contains such subs for internal use,
-but they are undocumented.
+	I have some <brackets in <nested brackets> > and
+	<another group <nested once <nested twice> > >
+	and that's it.
+
+The regular expression to match the balanced text  uses two new (to
+Perl 5.10) regular expression features. These are covered in L<perlre>
+and this example is a modified version of one in that documentation.
+
+First, adding the new possesive C<+> to any quantifier finds the
+longest match and does not backtrack. That's important since you want
+to handle any angle brackets through the recursion, not backtracking.
+The group C<< [^<>]++ >> finds one or more non-angle brackets without
+backtracking.
+
+Second, the new C<(?PARNO)> refers to the sub-pattern in the
+particular capture buffer given by C<PARNO>. In the following regex,
+the first capture buffer finds (and remembers) the balanced text, and
+you  need that same pattern within the first buffer to get past the
+nested text. That's the recursive part. The C<(?1)> uses the pattern
+in the outer capture buffer as an independent part of the regex.
+
+Putting it all together, you have:
+
+	#!/usr/local/bin/perl5.10.0
+
+	my $string =<<"HERE";
+	I have some <brackets in <nested brackets> > and
+	<another group <nested once <nested twice> > >
+	and that's it.
+	HERE
+
+	my @groups = $string =~ m/
+			(                   # start of capture buffer 1
+			<                   # match an opening angle bracket
+				(?:
+					[^<>]++     # one or more non angle brackets, non backtracking
+					  |
+					(?1)        # found < or >, so recurse to capture buffer 1
+				)*
+			>                   # match a closing angle bracket
+			)                   # end of capture buffer 1
+			/xg;
+
+	$" = "\n\t";
+	print "Found:\n\t@groups\n";
+
+The output shows that Perl found the two major groups:
+
+	Found:
+		<brackets in <nested brackets> >
+		<another group <nested once <nested twice> > >
+
+With a little extra work, you can get the all of the groups in angle
+brackets even if they are in other angle brackets too. Each time you
+get a balanced match, remove its outer delimiter (that's the one you
+just matched so don't match it again) and add it to a queue of strings
+to process. Keep doing that until you get no matches:
+
+	#!/usr/local/bin/perl5.10.0
+
+	my @queue =<<"HERE";
+	I have some <brackets in <nested brackets> > and
+	<another group <nested once <nested twice> > >
+	and that's it.
+	HERE
+
+	my $regex = qr/
+			(                   # start of bracket 1
+			<                   # match an opening angle bracket
+				(?:
+					[^<>]++     # one or more non angle brackets, non backtracking
+					  |
+					(?1)        # recurse to bracket 1
+				)*
+			>                   # match a closing angle bracket
+			)                   # end of bracket 1
+			/x;
+
+	$" = "\n\t";
+
+	while( @queue )
+		{
+		my $string = shift @queue;
+
+		my @groups = $string =~ m/$regex/g;
+		print "Found:\n\t@groups\n\n" if @groups;
+
+		unshift @queue, map { s/^<//; s/>$//; $_ } @groups;
+		}
+
+The output shows all of the groups. The outermost matches show up
+first and the nested matches so up later:
+
+	Found:
+		<brackets in <nested brackets> >
+		<another group <nested once <nested twice> > >
+
+	Found:
+		<nested brackets>
+
+	Found:
+		<nested once <nested twice> >
+
+	Found:
+		<nested twice>
 
 =head2 What does it mean that regexes are greedy?  How can I get around it?
 X<greedy> X<greediness>
@@ -575,7 +714,7 @@ X<regular expression, efficiency>
 
 Avoid asking Perl to compile a regular expression every time
 you want to match it.  In this example, perl must recompile
-the regular expression for every iteration of the foreach()
+the regular expression for every iteration of the C<foreach>
 loop since it has no way to know what $pattern will be.
 
 	@patterns = qw( foo bar baz );
@@ -592,10 +731,10 @@ loop since it has no way to know what $pattern will be.
 			}
 		}
 
-The qr// operator showed up in perl 5.005.  It compiles a
+The C<qr//> operator showed up in perl 5.005.  It compiles a
 regular expression, but doesn't apply it.  When you use the
 pre-compiled version of the regex, perl does less work. In
-this example, I inserted a map() to turn each pattern into
+this example, I inserted a C<map> to turn each pattern into
 its pre-compiled form.  The rest of the script is the same,
 but faster.
 
@@ -605,8 +744,11 @@ but faster.
 		{
 		foreach $pattern ( @patterns )
 			{
-			print if /$pattern/i;
-			next LINE;
+			if( /$pattern/ )
+				{
+				print;
+				next LINE;
+				}
 			}
 		}
 
@@ -621,8 +763,8 @@ backtracking though.
 		print if /\b(?:$regex)\b/i;
 		}
 
-For more details on regular expression efficiency, see Mastering
-Regular Expressions by Jeffrey Freidl.  He explains how regular
+For more details on regular expression efficiency, see I<Mastering
+Regular Expressions> by Jeffrey Freidl.  He explains how regular
 expressions engine work and why some patterns are surprisingly
 inefficient.  Once you understand how perl applies regular
 expressions, you can tune them for individual situations.
@@ -705,6 +847,11 @@ $`, $& and $'.  These arrays contain pointers to the beginning and end
 of each match (see perlvar for the full story), so they give you
 essentially the same information, but without the risk of excessive
 string copying.
+
+Perl 5.10 added three specials, C<${^MATCH}>, C<${^PREMATCH}>, and
+C<${^POSTMATCH}> to do the same job but without the global performance
+penalty. Perl 5.10 only sets these variables if you compile or execute the
+regular expression with the C</p> modifier.
 
 =head2 What good is C<\G> in a regular expression?
 X<\G>
@@ -983,15 +1130,15 @@ Or...
 
 =head1 REVISION
 
-Revision: $Revision: 10126 $
+Revision: $Revision$
 
-Date: $Date: 2007-10-27 21:29:20 +0200 (Sat, 27 Oct 2007) $
+Date: $Date$
 
 See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

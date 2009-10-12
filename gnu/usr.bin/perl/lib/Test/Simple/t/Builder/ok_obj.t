@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: ok_obj.t,v 1.1 2009/05/16 21:42:58 simon Exp $
 
 # Testing to make sure Test::Builder doesn't accidentally store objects
 # passed in as test arguments.

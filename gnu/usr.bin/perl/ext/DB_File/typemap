@@ -29,8 +29,9 @@ T_dbtkeydatum
 	    $var.size = (int)sizeof(recno_t);
         }
         else if (SvOK(my_sv)) {
-	    $var.data = SvPVbyte(my_sv, PL_na);
-	    $var.size = (int)PL_na;
+	    STRLEN len;
+	    $var.data = SvPVbyte(my_sv, len);
+	    $var.size = (int)len;
 	}
     }
 T_dbtdatum
@@ -40,8 +41,9 @@ T_dbtdatum
 	DBT_clear($var) ;
 	SvGETMAGIC(my_sv) ;
 	if (SvOK(my_sv)) {
-	    $var.data = SvPVbyte(my_sv, PL_na);
-	    $var.size = (int)PL_na;
+	    STRLEN len;
+	    $var.data = SvPVbyte(my_sv, len);
+	    $var.size = (int)len;
 	}
     }
 

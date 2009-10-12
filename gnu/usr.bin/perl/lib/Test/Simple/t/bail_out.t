@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: bail_out.t,v 1.2 2009/05/16 21:42:57 simon Exp $
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -19,30 +18,22 @@ BEGIN {
 
 use Test::Builder;
 use Test::More;
-use TieOut;
 
-my $output = tie *FAKEOUT, 'TieOut';
+my $output;
 my $TB = Test::More->builder;
-$TB->output(\*FAKEOUT);
+$TB->output(\$output);
 
 my $Test = Test::Builder->create;
 $Test->level(0);
 
-if( $] >= 5.005 ) {
-    $Test->plan(tests => 3);
-}
-else {
-    $Test->plan(skip_all => 
-          'CORE::GLOBAL::exit, introduced in 5.005, is needed for testing');
-}
-
+$Test->plan(tests => 3);
 
 plan tests => 4;
 
 BAIL_OUT("ROCKS FALL! EVERYONE DIES!");
 
 
-$Test->is_eq( $output->read, <<'OUT' );
+$Test->is_eq( $output, <<'OUT' );
 1..4
 Bail out!  ROCKS FALL! EVERYONE DIES!
 OUT

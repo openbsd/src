@@ -1,7 +1,7 @@
 /*    perl.h
  *
- *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+ *    2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -39,6 +39,24 @@
 #   else
 #       include "xconfig.h"
 #   endif
+#endif
+
+/* This logic needs to come after reading config.h, but before including
+   proto.h  */
+#ifdef IAMSUID
+#  ifndef DOSUID
+#    define DOSUID
+#  endif
+#endif
+
+#ifdef SETUID_SCRIPTS_ARE_SECURE_NOW
+#  ifdef DOSUID
+#    undef DOSUID
+#  endif
+#  ifdef IAMSUID
+#    undef IAMSUID
+#    define SETUID_SCRIPTS_ARE_SECURE_NOW_AND_IAMSUID
+#  endif
 #endif
 
 /* See L<perlguts/"The Perl API"> for detailed notes on
@@ -127,10 +145,23 @@
 #   endif
 #endif
 
+#undef START_EXTERN_C
+#undef END_EXTERN_C
+#undef EXTERN_C
+#ifdef __cplusplus
+#  define START_EXTERN_C extern "C" {
+#  define END_EXTERN_C }
+#  define EXTERN_C extern "C"
+#else
+#  define START_EXTERN_C
+#  define END_EXTERN_C
+#  define EXTERN_C extern
+#endif
+
 #ifdef PERL_GLOBAL_STRUCT
 #  ifndef PERL_GET_VARS
 #    ifdef PERL_GLOBAL_STRUCT_PRIVATE
-       extern struct perl_vars* Perl_GetVarsPrivate();
+       EXTERN_C struct perl_vars* Perl_GetVarsPrivate();
 #      define PERL_GET_VARS() Perl_GetVarsPrivate() /* see miniperlmain.c */
 #      ifndef PERLIO_FUNCS_CONST
 #        define PERLIO_FUNCS_CONST /* Can't have these lying around. */
@@ -201,13 +232,13 @@
 #define CALLREGCOMP_ENG(prog, sv, flags) \
     CALL_FPTR(((prog)->comp))(aTHX_ sv, flags)
 #define CALLREGEXEC(prog,stringarg,strend,strbeg,minend,screamer,data,flags) \
-    CALL_FPTR((prog)->engine->exec)(aTHX_ (prog),(stringarg),(strend), \
+    CALL_FPTR(RX_ENGINE(prog)->exec)(aTHX_ (prog),(stringarg),(strend), \
         (strbeg),(minend),(screamer),(data),(flags))
 #define CALLREG_INTUIT_START(prog,sv,strpos,strend,flags,data) \
-    CALL_FPTR((prog)->engine->intuit)(aTHX_ (prog), (sv), (strpos), \
+    CALL_FPTR(RX_ENGINE(prog)->intuit)(aTHX_ (prog), (sv), (strpos), \
         (strend),(flags),(data))
 #define CALLREG_INTUIT_STRING(prog) \
-    CALL_FPTR((prog)->engine->checkstr)(aTHX_ (prog))
+    CALL_FPTR(RX_ENGINE(prog)->checkstr)(aTHX_ (prog))
 
 #define CALLREG_AS_STR(mg,lp,flags,haseval) \
         Perl_reg_stringify(aTHX_ (mg), (lp), (flags), (haseval))
@@ -217,56 +248,56 @@
     Perl_pregfree(aTHX_ (prog))
 
 #define CALLREGFREE_PVT(prog) \
-    if(prog) CALL_FPTR((prog)->engine->free)(aTHX_ (prog))
+    if(prog) CALL_FPTR(RX_ENGINE(prog)->free)(aTHX_ (prog))
 
 #define CALLREG_NUMBUF_FETCH(rx,paren,usesv)                                \
-    CALL_FPTR((rx)->engine->numbered_buff_FETCH)(aTHX_ (rx),(paren),(usesv))
+    CALL_FPTR(RX_ENGINE(rx)->numbered_buff_FETCH)(aTHX_ (rx),(paren),(usesv))
 
 #define CALLREG_NUMBUF_STORE(rx,paren,value) \
-    CALL_FPTR((rx)->engine->numbered_buff_STORE)(aTHX_ (rx),(paren),(value))
+    CALL_FPTR(RX_ENGINE(rx)->numbered_buff_STORE)(aTHX_ (rx),(paren),(value))
 
 #define CALLREG_NUMBUF_LENGTH(rx,sv,paren)                              \
-    CALL_FPTR((rx)->engine->numbered_buff_LENGTH)(aTHX_ (rx),(sv),(paren))
+    CALL_FPTR(RX_ENGINE(rx)->numbered_buff_LENGTH)(aTHX_ (rx),(sv),(paren))
 
 #define CALLREG_NAMED_BUFF_FETCH(rx, key, flags) \
-    CALL_FPTR((rx)->engine->named_buff)(aTHX_ (rx), (key), NULL, ((flags) | RXapif_FETCH))
+    CALL_FPTR(RX_ENGINE(rx)->named_buff)(aTHX_ (rx), (key), NULL, ((flags) | RXapif_FETCH))
 
 #define CALLREG_NAMED_BUFF_STORE(rx, key, value, flags) \
-    CALL_FPTR((rx)->engine->named_buff)(aTHX_ (rx), (key), (value), ((flags) | RXapif_STORE))
+    CALL_FPTR(RX_ENGINE(rx)->named_buff)(aTHX_ (rx), (key), (value), ((flags) | RXapif_STORE))
 
 #define CALLREG_NAMED_BUFF_DELETE(rx, key, flags) \
-    CALL_FPTR((rx)->engine->named_buff)(aTHX_ (rx),(key), NULL, ((flags) | RXapif_DELETE))
+    CALL_FPTR(RX_ENGINE(rx)->named_buff)(aTHX_ (rx),(key), NULL, ((flags) | RXapif_DELETE))
 
 #define CALLREG_NAMED_BUFF_CLEAR(rx, flags) \
-    CALL_FPTR((rx)->engine->named_buff)(aTHX_ (rx), NULL, NULL, ((flags) | RXapif_CLEAR))
+    CALL_FPTR(RX_ENGINE(rx)->named_buff)(aTHX_ (rx), NULL, NULL, ((flags) | RXapif_CLEAR))
 
 #define CALLREG_NAMED_BUFF_EXISTS(rx, key, flags) \
-    CALL_FPTR((rx)->engine->named_buff)(aTHX_ (rx), (key), NULL, ((flags) | RXapif_EXISTS))
+    CALL_FPTR(RX_ENGINE(rx)->named_buff)(aTHX_ (rx), (key), NULL, ((flags) | RXapif_EXISTS))
 
 #define CALLREG_NAMED_BUFF_FIRSTKEY(rx, flags) \
-    CALL_FPTR((rx)->engine->named_buff_iter)(aTHX_ (rx), NULL, ((flags) | RXapif_FIRSTKEY))
+    CALL_FPTR(RX_ENGINE(rx)->named_buff_iter)(aTHX_ (rx), NULL, ((flags) | RXapif_FIRSTKEY))
 
 #define CALLREG_NAMED_BUFF_NEXTKEY(rx, lastkey, flags) \
-    CALL_FPTR((rx)->engine->named_buff_iter)(aTHX_ (rx), (lastkey), ((flags) | RXapif_NEXTKEY))
+    CALL_FPTR(RX_ENGINE(rx)->named_buff_iter)(aTHX_ (rx), (lastkey), ((flags) | RXapif_NEXTKEY))
 
 #define CALLREG_NAMED_BUFF_SCALAR(rx, flags) \
-    CALL_FPTR((rx)->engine->named_buff)(aTHX_ (rx), NULL, NULL, ((flags) | RXapif_SCALAR))
+    CALL_FPTR(RX_ENGINE(rx)->named_buff)(aTHX_ (rx), NULL, NULL, ((flags) | RXapif_SCALAR))
 
 #define CALLREG_NAMED_BUFF_COUNT(rx) \
-    CALL_FPTR((rx)->engine->named_buff)(aTHX_ (rx), NULL, NULL, RXapif_REGNAMES_COUNT)
+    CALL_FPTR(RX_ENGINE(rx)->named_buff)(aTHX_ (rx), NULL, NULL, RXapif_REGNAMES_COUNT)
 
 #define CALLREG_NAMED_BUFF_ALL(rx, flags) \
-    CALL_FPTR((rx)->engine->named_buff)(aTHX_ (rx), NULL, NULL, flags)
+    CALL_FPTR(RX_ENGINE(rx)->named_buff)(aTHX_ (rx), NULL, NULL, flags)
 
 #define CALLREG_PACKAGE(rx) \
-    CALL_FPTR((rx)->engine->qr_package)(aTHX_ (rx))
+    CALL_FPTR(RX_ENGINE(rx)->qr_package)(aTHX_ (rx))
 
 #if defined(USE_ITHREADS)         
 #define CALLREGDUPE(prog,param) \
     Perl_re_dup(aTHX_ (prog),(param))
 
 #define CALLREGDUPE_PVT(prog,param) \
-    (prog ? CALL_FPTR((prog)->engine->dupe)(aTHX_ (prog),(param)) \
+    (prog ? CALL_FPTR(RX_ENGINE(prog)->dupe)(aTHX_ (prog),(param)) \
           : (REGEXP *)NULL) 
 #endif
 
@@ -391,19 +422,6 @@
 #  endif
 #endif
 
-#undef START_EXTERN_C
-#undef END_EXTERN_C
-#undef EXTERN_C
-#ifdef __cplusplus
-#  define START_EXTERN_C extern "C" {
-#  define END_EXTERN_C }
-#  define EXTERN_C extern "C"
-#else
-#  define START_EXTERN_C
-#  define END_EXTERN_C
-#  define EXTERN_C extern
-#endif
-
 /* Some platforms require marking function declarations
  * for them to be exportable.  Used in perlio.h, proto.h
  * is handled either by the makedef.pl or by defining the
@@ -434,8 +452,12 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 
 /* gcc (-ansi) -pedantic doesn't allow gcc statement expressions,
  * g++ allows them but seems to have problems with them
- * (insane errors ensue). */
-#if defined(PERL_GCC_PEDANTIC) || (defined(__GNUC__) && defined(__cplusplus))
+ * (insane errors ensue).
+ * g++ does not give insane errors now (RMB 2008-01-30, gcc 4.2.2).
+ */
+#if defined(PERL_GCC_PEDANTIC) || \
+    (defined(__GNUC__) && defined(__cplusplus) && \
+	((__GNUC__ < 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ < 2))))
 #  ifndef PERL_GCC_BRACE_GROUPS_FORBIDDEN
 #    define PERL_GCC_BRACE_GROUPS_FORBIDDEN
 #  endif
@@ -510,11 +532,7 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 #endif
 
 #if defined(HASVOLATILE) || defined(STANDARD_C)
-#   ifdef __cplusplus
-#	define VOL		/* to temporarily suppress warnings */
-#   else
 #	define VOL volatile
-#   endif
 #else
 #   define VOL
 #endif
@@ -661,6 +679,11 @@ register struct op *Perl_op asm(stringify(OP_IN_REGISTER));
 /* If this causes problems, set i_unistd=undef in the hint file.  */
 #ifdef I_UNISTD
 #   include <unistd.h>
+#endif
+
+/* for WCOREDUMP */
+#ifdef I_SYS_WAIT
+#   include <sys/wait.h>
 #endif
 
 #ifdef __SYMBIAN32__
@@ -921,6 +944,11 @@ EXTERN_C int usleep(unsigned int);
    at least on FreeBSD.  YMMV, so experiment.  */
 #ifndef PERL_ARENA_SIZE
 #define PERL_ARENA_SIZE 4080
+#endif
+
+/* Maximum level of recursion */
+#ifndef PERL_SUB_DEPTH_WARN
+#define PERL_SUB_DEPTH_WARN 100
 #endif
 
 #endif /* PERL_CORE */
@@ -1258,6 +1286,11 @@ EXTERN_C char *crypt(const char *, const char *);
 	    set_errno(errcode);		\
 	    set_vaxc_errno(vmserrcode);	\
 	} STMT_END
+#   define dSAVEDERRNO    int saved_errno; unsigned saved_vms_errno
+#   define dSAVE_ERRNO    int saved_errno = errno; unsigned saved_vms_errno = vaxc$errno
+#   define SAVE_ERRNO     ( saved_errno = errno, saved_vms_errno = vaxc$errno )
+#   define RESTORE_ERRNO  SETERRNO(saved_errno, saved_vms_errno)
+
 #   define LIB_INVARG 		LIB$_INVARG
 #   define RMS_DIR    		RMS$_DIR
 #   define RMS_FAC    		RMS$_FAC
@@ -1272,6 +1305,11 @@ EXTERN_C char *crypt(const char *, const char *);
 #   define SS_NORMAL  		SS$_NORMAL
 #else
 #   define SETERRNO(errcode,vmserrcode) (errno = (errcode))
+#   define dSAVEDERRNO    int saved_errno
+#   define dSAVE_ERRNO    int saved_errno = errno
+#   define SAVE_ERRNO     (saved_errno = errno)
+#   define RESTORE_ERRNO  (errno = saved_errno)
+
 #   define LIB_INVARG 		0
 #   define RMS_DIR    		0
 #   define RMS_FAC    		0
@@ -1287,8 +1325,12 @@ EXTERN_C char *crypt(const char *, const char *);
 #endif
 
 #define ERRSV GvSV(PL_errgv)
-/* FIXME? Change the assignments to PL_defgv to instantiate GvSV?  */
-#define DEFSV GvSVn(PL_defgv)
+#ifdef PERL_CORE
+# define DEFSV (0 + GvSVn(PL_defgv))
+#else
+# define DEFSV GvSVn(PL_defgv)
+#endif
+#define DEFSV_set(sv) (GvSV(PL_defgv) = (sv))
 #define SAVE_DEFSV SAVESPTR(GvSV(PL_defgv))
 
 #define ERRHV GvHV(PL_errgv)	/* XXX unused, here for compatibility */
@@ -1520,15 +1562,15 @@ EXTERN_C char *crypt(const char *, const char *);
 #   define S_IRWXO (S_IROTH|S_IWOTH|S_IXOTH)
 #endif
 
-/* BeOS 5.0 seems to define S_IREAD and S_IWRITE in <posix/fcntl.h>
+/* BeOS 5.0 and Haiku R1 seem to define S_IREAD and S_IWRITE in <posix/fcntl.h>
  * which would get included through <sys/file.h >, but that is 3000
  * lines in the future.  --jhi */
 
-#if !defined(S_IREAD) && !defined(__BEOS__)
+#if !defined(S_IREAD) && !(defined(__BEOS__) || defined(__HAIKU__))
 #   define S_IREAD S_IRUSR
 #endif
 
-#if !defined(S_IWRITE) && !defined(__BEOS__)
+#if !defined(S_IWRITE) && !(defined(__BEOS__) || defined(__HAIKU__))
 #   define S_IWRITE S_IWUSR
 #endif
 
@@ -2551,7 +2593,10 @@ typedef struct clone_params CLONE_PARAMS;
 #   define ISHISH "macos classic"
 #endif
 
-#if defined(__BEOS__)
+#if defined(__HAIKU__)
+#   include "haiku/haikuish.h"
+#   define ISHISH "haiku"
+#elif defined(__BEOS__)
 #   include "beos/beosish.h"
 #   define ISHISH "beos"
 #endif
@@ -2631,7 +2676,11 @@ typedef struct clone_params CLONE_PARAMS;
 #    if HAS_FLOATINGPOINT_H
 #      include <floatingpoint.h>
 #    endif
-#    define PERL_FPU_INIT fpsetmask(0)
+/* Some operating systems have this as a macro, which in turn expands to a comma
+   expression, and the last sub-expression is something that gets calculated,
+   and then they have the gall to warn that a value computed is not used. Hence
+   cast to void.  */
+#    define PERL_FPU_INIT (void)fpsetmask(0)
 #  else
 #    if defined(SIGFPE) && defined(SIG_IGN) && !defined(PERL_MICRO)
 #      define PERL_FPU_INIT       PL_sigfpe_saved = (Sighandler_t) signal(SIGFPE, SIG_IGN)
@@ -2651,6 +2700,25 @@ typedef struct clone_params CLONE_PARAMS;
 #ifndef PERL_SYS_INIT3_BODY
 #  define PERL_SYS_INIT3_BODY(argvp,argcp,envp) PERL_SYS_INIT_BODY(argvp,argcp)
 #endif
+
+/*
+=for apidoc Am|void|PERL_SYS_INIT|int argc|char** argv
+Provides system-specific tune up of the C runtime environment necessary to
+run Perl interpreters. This should be called only once, before creating
+any Perl interpreters.
+
+=for apidoc Am|void|PERL_SYS_INIT3|int argc|char** argv|char** env
+Provides system-specific tune up of the C runtime environment necessary to
+run Perl interpreters. This should be called only once, before creating
+any Perl interpreters.
+
+=for apidoc Am|void|PERL_SYS_TERM|
+Provides system-specific clean up of the C runtime environment after
+running Perl interpreters. This should be called only once, after
+freeing any remaining Perl interpreters.
+
+=cut
+ */
 
 #define PERL_SYS_INIT(argc, argv)	Perl_sys_init(argc, argv)
 #define PERL_SYS_INIT3(argc, argv, env)	Perl_sys_init3(argc, argv, env)
@@ -2701,6 +2769,9 @@ typedef struct clone_params CLONE_PARAMS;
 
 #ifndef PERL_MICRO
 #if defined __GNUC__ && !defined(__INTEL_COMPILER)
+#  if __GNUC__ == 3 && __GNUC_MINOR__ >= 1 || __GNUC__ > 3 /* 3.1 -> */
+#    define HASATTRIBUTE_DEPRECATED
+#  endif
 #  if __GNUC__ >= 3 /* 3.0 -> */ /* XXX Verify this version */
 #    define HASATTRIBUTE_FORMAT
 #    if defined __MINGW32__
@@ -2884,11 +2955,11 @@ typedef pthread_key_t	perl_key;
 	} STMT_END
 
   /* STATUS_UNIX_EXIT_SET - Takes a UNIX/POSIX exit code and sets
-   * the NATIVE error status based on it.  It does not assume that
-   * the UNIX/POSIX exit codes have any relationship to errno, except
-   * that 0 indicates a success.  When in the default mode to comply
-   * with the Perl VMS documentation, any other code sets the NATIVE
-   * status to a failure code of SS$_ABORT.
+   * the NATIVE error status based on it.
+   *
+   * When in the default mode to comply with the Perl VMS documentation,
+   * 0 is a success and any other code sets the NATIVE status to a failure
+   * code of SS$_ABORT.
    *
    * In the new POSIX EXIT mode, native status will be set so that the
    * actual exit code will can be retrieved by the calling program or
@@ -2902,29 +2973,30 @@ typedef pthread_key_t	perl_key;
 	STMT_START {					\
 	    I32 evalue = (I32)n;			\
 	    PL_statusvalue = evalue;			\
-	    if (evalue != -1) {				\
-	      if (evalue <= 0xFF00) {			\
-		if (evalue > 0xFF)			\
-		  evalue = (evalue >> child_offset_bits) & 0xFF; \
-		if (evalue == 0)			\
-		  PL_statusvalue_vms == SS$_NORMAL;	\
-		else					\
-		  if (MY_POSIX_EXIT)			\
-		    PL_statusvalue_vms =	\
-		       (C_FAC_POSIX | (evalue << 3 ) | (evalue == 1)? \
-		        (STS$K_ERROR | STS$M_INHIB_MSG) : 1); \
-		  else					\
-		    PL_statusvalue_vms = SS$_ABORT; \
-	      } else { /* forgive them Perl, for they have sinned */ \
-		if (evalue != EVMSERR) PL_statusvalue_vms = evalue; \
-		else PL_statusvalue_vms = vaxc$errno;		\
-	        /* And obviously used a VMS status value instead of UNIX */ \
-	        PL_statusvalue = EVMSERR;				\
-	      }							\
-	    }							\
-	    else PL_statusvalue_vms = SS$_ABORT;		\
-	    set_vaxc_errno(PL_statusvalue_vms);			\
+	    if (MY_POSIX_EXIT) { \
+	      if (evalue <= 0xFF00) {		\
+		  if (evalue > 0xFF)			\
+		    evalue = (evalue >> child_offset_bits) & 0xFF; \
+		  PL_statusvalue_vms =		\
+		    (C_FAC_POSIX | (evalue << 3 ) |	\
+		    ((evalue == 1) ? (STS$K_ERROR | STS$M_INHIB_MSG) : 1)); \
+	      } else /* forgive them Perl, for they have sinned */ \
+		PL_statusvalue_vms = evalue; \
+	    } else { \
+	      if (evalue == 0)			\
+		PL_statusvalue_vms = SS$_NORMAL;	\
+	      else if (evalue <= 0xFF00) \
+		PL_statusvalue_vms = SS$_ABORT; \
+	      else { /* forgive them Perl, for they have sinned */ \
+		  if (evalue != EVMSERR) PL_statusvalue_vms = evalue; \
+		  else PL_statusvalue_vms = vaxc$errno;	\
+		  /* And obviously used a VMS status value instead of UNIX */ \
+		  PL_statusvalue = EVMSERR;		\
+	      } \
+	      set_vaxc_errno(PL_statusvalue_vms);	\
+	    }						\
 	} STMT_END
+
 
   /* STATUS_EXIT_SET - Takes a NATIVE/UNIX/POSIX exit code
    * and sets the NATIVE error status based on it.  This special case
@@ -2938,6 +3010,9 @@ typedef pthread_key_t	perl_key;
    * actual exit code will can be retrieved by the calling program or
    * shell.
    *
+   * A POSIX exit code is from 0 to 255.  If the exit code is higher
+   * than this, it needs to be assumed that it is a VMS exit code and
+   * passed through.
    */
 
 #   define STATUS_EXIT_SET(n)				\
@@ -2945,9 +3020,10 @@ typedef pthread_key_t	perl_key;
 	    I32 evalue = (I32)n;			\
 	    PL_statusvalue = evalue;			\
 	    if (MY_POSIX_EXIT)				\
-		PL_statusvalue_vms =			\
-		  (C_FAC_POSIX | (evalue << 3 ) | (evalue == 1)? \
-		   (STS$K_ERROR | STS$M_INHIB_MSG) : 1); \
+		if (evalue > 255) PL_statusvalue_vms = evalue; else {	\
+		  PL_statusvalue_vms = \
+		    (C_FAC_POSIX | (evalue << 3 ) |	\
+		     ((evalue == 1) ? (STS$K_ERROR | STS$M_INHIB_MSG) : 1));} \
 	    else					\
 		PL_statusvalue_vms = evalue ? evalue : SS$_NORMAL; \
 	    set_vaxc_errno(PL_statusvalue_vms);		\
@@ -3024,10 +3100,18 @@ typedef pthread_key_t	perl_key;
 #  define MEMBER_TO_FPTR(name)		name
 #endif
 
+#ifndef PERL_CORE
 /* format to use for version numbers in file/directory names */
 /* XXX move to Configure? */
-#ifndef PERL_FS_VER_FMT
-#  define PERL_FS_VER_FMT	"%d.%d.%d"
+/* This was only ever used for the current version, and that can be done at
+   compile time, as PERL_FS_VERSION, so should we just delete it?  */
+#  ifndef PERL_FS_VER_FMT
+#    define PERL_FS_VER_FMT	"%d.%d.%d"
+#  endif
+#endif
+
+#ifndef PERL_FS_VERSION
+#  define PERL_FS_VERSION	PERL_VERSION_STRING
 #endif
 
 /* This defines a way to flush all output buffers.  This may be a
@@ -3115,6 +3199,9 @@ typedef pthread_key_t	perl_key;
 #  endif
 #endif
 
+#ifdef HASATTRIBUTE_DEPRECATED
+#  define __attribute__deprecated__         __attribute__((deprecated))
+#endif
 #ifdef HASATTRIBUTE_FORMAT
 #  define __attribute__format__(x,y,z)      __attribute__((format(x,y,z)))
 #endif
@@ -3138,6 +3225,9 @@ typedef pthread_key_t	perl_key;
 #endif
 
 /* If we haven't defined the attributes yet, define them to blank. */
+#ifndef __attribute__deprecated__
+#  define __attribute__deprecated__
+#endif
 #ifndef __attribute__format__
 #  define __attribute__format__(x,y,z)
 #endif
@@ -3306,6 +3396,17 @@ struct nexttoken {
     I32 next_type;	/* type of next token */
     MADPROP *next_mad;	/* everything else about that token */
 };
+#endif
+
+/* macros to define bit-fields in structs. */
+#ifndef PERL_BITFIELD8
+#  define PERL_BITFIELD8 unsigned
+#endif
+#ifndef PERL_BITFIELD16
+#  define PERL_BITFIELD16 unsigned
+#endif
+#ifndef PERL_BITFIELD32
+#  define PERL_BITFIELD32 unsigned
 #endif
 
 #include "regexp.h"
@@ -3966,7 +4067,7 @@ typedef Sighandler_t Sigsave_t;
 #endif
 
 #ifdef USE_PERLIO
-EXTERN_C void PerlIO_teardown();
+EXTERN_C void PerlIO_teardown(void);
 # ifdef USE_ITHREADS
 #  define PERLIO_INIT MUTEX_INIT(&PL_perlio_mutex)
 #  define PERLIO_TERM 				\
@@ -4021,6 +4122,8 @@ struct perl_memory_debug_header {
 	(MEM_ALIGNBYTES - sizeof(struct perl_memory_debug_header) \
 	 %MEM_ALIGNBYTES) % MEM_ALIGNBYTES)
 
+#else
+#  define sTHX	0
 #endif
 
 #ifdef PERL_TRACK_MEMPOOL
@@ -4033,6 +4136,34 @@ struct perl_memory_debug_header {
 #  define INIT_TRACK_MEMPOOL(header, interp)
 #endif
 
+#ifdef I_MALLOCMALLOC
+/* Needed for malloc_size(), malloc_good_size() on some systems */
+#  include <malloc/malloc.h>
+#endif
+
+#ifdef MYMALLOC
+#  define Perl_safesysmalloc_size(where)	Perl_malloced_size(where)
+#else
+#  ifdef HAS_MALLOC_SIZE
+#    ifdef PERL_TRACK_MEMPOOL
+#	define Perl_safesysmalloc_size(where)			\
+	    (malloc_size(((char *)(where)) - sTHX) - sTHX)
+#    else
+#	define Perl_safesysmalloc_size(where) malloc_size(where)
+#    endif
+#  endif
+#  ifdef HAS_MALLOC_GOOD_SIZE
+#    ifdef PERL_TRACK_MEMPOOL
+#	define Perl_malloc_good_size(how_much)			\
+	    (malloc_good_size((how_much) + sTHX) - sTHX)
+#    else
+#	define Perl_malloc_good_size(how_much) malloc_good_size(how_much)
+#    endif
+#  else
+/* Having this as the identity operation makes some code simpler.  */
+#	define Perl_malloc_good_size(how_much)	(how_much)
+#  endif
+#endif
 
 typedef int (CPERLscope(*runops_proc_t)) (pTHX);
 typedef void (CPERLscope(*share_proc_t)) (pTHX_ SV *sv);
@@ -4549,6 +4680,8 @@ enum {		/* pass one of these to get_vtbl */
 #define HINT_FILETEST_ACCESS	0x00400000 /* filetest pragma */
 #define HINT_UTF8		0x00800000 /* utf8 pragma */
 
+#define HINT_NO_AMAGIC		0x01000000 /* overloading pragma */
+
 /* The following are stored in $^H{sort}, not in PL_hints */
 #define HINT_SORT_SORT_BITS	0x000000FF /* allow 256 different ones */
 #define HINT_SORT_QUICKSORT	0x00000001
@@ -4625,6 +4758,10 @@ typedef struct exitlistentry {
 #define PERL_PATCHLEVEL_H_IMPLICIT
 #include "patchlevel.h"
 #undef PERL_PATCHLEVEL_H_IMPLICIT
+
+#define PERL_VERSION_STRING	STRINGIFY(PERL_REVISION) "." \
+				STRINGIFY(PERL_VERSION) "." \
+				STRINGIFY(PERL_SUBVERSION)
 
 #ifdef PERL_GLOBAL_STRUCT
 struct perl_vars {
@@ -4888,7 +5025,7 @@ MGVTBL_SET(
     0,
     MEMBER_TO_FPTR(Perl_magic_setisa),
     0,
-    MEMBER_TO_FPTR(Perl_magic_setisa),
+    MEMBER_TO_FPTR(Perl_magic_clearisa),
     0,
     0,
     0,
@@ -5006,7 +5143,7 @@ MGVTBL_SET(
 MGVTBL_SET(
     PL_vtbl_bm,
     0,
-    MEMBER_TO_FPTR(Perl_magic_setbm),
+    MEMBER_TO_FPTR(Perl_magic_setregexp),
     0,
     0,
     0,
@@ -5018,7 +5155,7 @@ MGVTBL_SET(
 MGVTBL_SET(
     PL_vtbl_fm,
     0,
-    MEMBER_TO_FPTR(Perl_magic_setfm),
+    MEMBER_TO_FPTR(Perl_magic_setregexp),
     0,
     0,
     0,
@@ -5240,7 +5377,8 @@ typedef struct am_table_short AMTS;
 #define PERLDB_ALL		(PERLDBf_SUB	| PERLDBf_LINE	|	\
 				 PERLDBf_NOOPT	| PERLDBf_INTER	|	\
 				 PERLDBf_SUBLINE| PERLDBf_SINGLE|	\
-				 PERLDBf_NAMEEVAL| PERLDBf_NAMEANON )
+				 PERLDBf_NAMEEVAL| PERLDBf_NAMEANON |   \
+				 PERLDBf_SAVESRC)
 					/* No _NONAME, _GOTO, _ASSERTION */
 #define PERLDBf_SUB		0x01	/* Debug sub enter/exit */
 #define PERLDBf_LINE		0x02	/* Keep line # */
@@ -5253,6 +5391,11 @@ typedef struct am_table_short AMTS;
 #define PERLDBf_GOTO		0x80	/* Report goto: call DB::goto */
 #define PERLDBf_NAMEEVAL	0x100	/* Informative names for evals */
 #define PERLDBf_NAMEANON	0x200	/* Informative names for anon subs */
+#define PERLDBf_SAVESRC  	0x400	/* Save source lines into @{"_<$filename"} */
+#define PERLDBf_SAVESRC_NOSUBS	0x800	/* Including evals that generate no subrouties */
+#if 0 /* Not yet working. */
+#define PERLDBf_SAVESRC_INVALID	0x1000	/* Save source that did not compile */
+#endif
 
 #define PERLDB_SUB	(PL_perldb && (PL_perldb & PERLDBf_SUB))
 #define PERLDB_LINE	(PL_perldb && (PL_perldb & PERLDBf_LINE))
@@ -5265,6 +5408,11 @@ typedef struct am_table_short AMTS;
 #define PERLDB_NAMEEVAL	(PL_perldb && (PL_perldb & PERLDBf_NAMEEVAL))
 #define PERLDB_NAMEANON	(PL_perldb && (PL_perldb & PERLDBf_NAMEANON))
 #define PERLDB_ASSERTION (PL_perldb && (PL_perldb & PERLDBf_ASSERTION))
+#define PERLDB_SAVESRC 	(PL_perldb && (PL_perldb & PERLDBf_SAVESRC))
+#define PERLDB_SAVESRC_NOSUBS	(PL_perldb && (PL_perldb & PERLDBf_SAVESRC_NOSUBS))
+#if 0 /* Not yet working. */
+#define PERLDB_SAVESRC_INVALID	(PL_perldb && (PL_perldb & PERLDBf_SAVESRC_INVALID))
+#endif
 
 #ifdef USE_LOCALE_NUMERIC
 
@@ -5561,6 +5709,7 @@ typedef struct am_table_short AMTS;
 #define START_MY_CXT	static my_cxt_t my_cxt;
 #define dMY_CXT_SV	dNOOP
 #define dMY_CXT		dNOOP
+#define dMY_CXT_INTERP(my_perl)	dNOOP
 #define MY_CXT_INIT	NOOP
 #define MY_CXT_CLONE	NOOP
 #define MY_CXT		my_cxt
@@ -5609,9 +5758,10 @@ int flock(int fd, int op);
 #if O_TEXT != O_BINARY
     /* If you have different O_TEXT and O_BINARY and you are a CLRF shop,
      * that is, you are somehow DOSish. */
-#   if defined(__BEOS__) || defined(__VOS__) || defined(__CYGWIN__)
-    /* BeOS has O_TEXT != O_BINARY but O_TEXT and O_BINARY have no effect;
-     * BeOS is always UNIXoid (LF), not DOSish (CRLF). */
+#   if defined(__BEOS__) || defined(__HAIKU__) || defined(__VOS__) || \
+	defined(__CYGWIN__)
+    /* BeOS/Haiku has O_TEXT != O_BINARY but O_TEXT and O_BINARY have no effect;
+     * BeOS/Haiku is always UNIXoid (LF), not DOSish (CRLF). */
     /* VOS has O_TEXT != O_BINARY, and they have effect,
      * but VOS always uses LF, never CRLF. */
     /* If you have O_TEXT different from your O_BINARY but you still are
@@ -5686,7 +5836,7 @@ int flock(int fd, int op);
 #endif
 
 #ifndef EXEC_ARGV_CAST
-#define EXEC_ARGV_CAST(x) x
+#define EXEC_ARGV_CAST(x) (char **)x
 #endif
 
 #define IS_NUMBER_IN_UV		      0x01 /* number within UV range (maybe not
@@ -5926,3 +6076,15 @@ extern void moncontrol(int);
 */
 
 #endif /* Include guard */
+
+#define CLEAR_ERRSV() STMT_START { sv_setpvn(ERRSV,"",0); if (SvMAGICAL(ERRSV)) { mg_free(ERRSV); } SvPOK_only(ERRSV); } STMT_END
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

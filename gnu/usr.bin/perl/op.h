@@ -1,7 +1,7 @@
 /*    op.h
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -45,6 +45,8 @@
 #  define MADPROP_IN_BASEOP
 #endif
 
+typedef PERL_BITFIELD16 Optype;
+
 #ifdef BASEOP_DEFINITION
 #define BASEOP BASEOP_DEFINITION
 #else
@@ -54,21 +56,31 @@
     OP*		(CPERLscope(*op_ppaddr))(pTHX);		\
     MADPROP_IN_BASEOP			\
     PADOFFSET	op_targ;		\
-    unsigned	op_type:9;		\
-    unsigned	op_opt:1;		\
-    unsigned	op_latefree:1;		\
-    unsigned	op_latefreed:1;		\
-    unsigned	op_attached:1;		\
-    unsigned	op_spare:3;		\
+    PERL_BITFIELD16 op_type:9;		\
+    PERL_BITFIELD16 op_opt:1;		\
+    PERL_BITFIELD16 op_latefree:1;	\
+    PERL_BITFIELD16 op_latefreed:1;	\
+    PERL_BITFIELD16 op_attached:1;	\
+    PERL_BITFIELD16 op_spare:3;		\
     U8		op_flags;		\
     U8		op_private;
 #endif
+
+/* If op_type:9 is changed to :10, also change PUSHEVAL in cop.h.
+   Also, if the type of op_type is ever changed (e.g. to PERL_BITFIELD32)
+   then all the other bit-fields before/after it should change their
+   types too to let VC pack them into the same 4 byte integer.*/
 
 #define OP_GIMME(op,dfl) \
 	(((op)->op_flags & OPf_WANT) == OPf_WANT_VOID   ? G_VOID   : \
 	 ((op)->op_flags & OPf_WANT) == OPf_WANT_SCALAR ? G_SCALAR : \
 	 ((op)->op_flags & OPf_WANT) == OPf_WANT_LIST   ? G_ARRAY   : \
 	 dfl)
+
+#define OP_GIMME_REVERSE(flags)			\
+	((flags & G_VOID) ? OPf_WANT_VOID :	\
+	(flags & G_ARRAY) ? OPf_WANT_LIST :	\
+			    OPf_WANT_SCALAR)
 
 /*
 =head1 "Gimme" Values
@@ -184,7 +196,7 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpENTERSUB_DB		16	/* Debug subroutine. */
 #define OPpENTERSUB_HASTARG	32	/* Called from OP tree. */
 #define OPpENTERSUB_NOMOD	64	/* Immune to mod() for :attrlist. */
-  /* OP_RV2CV only */
+  /* OP_ENTERSUB and OP_RV2CV only */
 #define OPpENTERSUB_AMPER	8	/* Used & form to call. */
 #define OPpENTERSUB_NOPAREN	128	/* bare sub call (without parens) */
 #define OPpENTERSUB_INARGS	4	/* Lval used as arg to a sub. */
@@ -245,9 +257,6 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpSORT_DESCEND		16	/* Descending sort */
 #define OPpSORT_QSORT		32	/* Use quicksort (not mergesort) */
 #define OPpSORT_STABLE		64	/* Use a stable algorithm */
-
-/* Private for OP_THREADSV */
-#define OPpDONE_SVREF		64	/* Been through newSVREF once */
 
 /* Private for OP_OPEN and OP_BACKTICK */
 #define OPpOPEN_IN_RAW		16	/* binmode(F,":raw") on input fh */
@@ -333,17 +342,32 @@ struct pmop {
 
 #ifdef USE_ITHREADS
 #define PM_GETRE(o)     (INT2PTR(REGEXP*,SvIVX(PL_regex_pad[(o)->op_pmoffset])))
-#define PM_SETRE(o,r)   STMT_START { \
-                            SV* const sv = PL_regex_pad[(o)->op_pmoffset]; \
-                            sv_setiv(sv, PTR2IV(r)); \
+/* The assignment is just to enforce type safety (or at least get a warning).
+ */
+#define PM_SETRE(o,r)	STMT_START {					\
+                            const REGEXP *const slosh = (r);		\
+                            PM_SETRE_OFFSET((o), PTR2IV(slosh));	\
                         } STMT_END
+/* Actually you can assign any IV, not just an offset. And really should it be
+   UV? */
+#define PM_SETRE_OFFSET(o,iv) \
+			STMT_START { \
+                            SV* const sv = PL_regex_pad[(o)->op_pmoffset]; \
+                            sv_setiv(sv, (iv)); \
+                        } STMT_END
+
+#  ifndef PERL_CORE
+/* No longer used anywhere in the core.  Migrate to Devel::PPPort?  */
 #define PM_GETRE_SAFE(o) (PL_regex_pad ? PM_GETRE(o) : (REGEXP*)0)
 #define PM_SETRE_SAFE(o,r) if (PL_regex_pad) PM_SETRE(o,r)
+#  endif
 #else
 #define PM_GETRE(o)     ((o)->op_pmregexp)
 #define PM_SETRE(o,r)   ((o)->op_pmregexp = (r))
+#  ifndef PERL_CORE
 #define PM_GETRE_SAFE PM_GETRE
 #define PM_SETRE_SAFE PM_SETRE
+#  endif
 #endif
 
 
@@ -367,7 +391,8 @@ struct pmop {
 #define PMf_EVAL	0x0400		/* evaluating replacement as expr */
 
 /* The following flags have exact equivalents in regcomp.h with the prefix RXf_
- * which are stored in the regexp->extflags member.
+ * which are stored in the regexp->extflags member. If you change them here,
+ * you have to change them there, and vice versa.
  */
 #define PMf_LOCALE	0x00800		/* use locale for character types */
 #define PMf_MULTILINE	0x01000		/* assume multiple lines */
@@ -509,7 +534,7 @@ struct loop {
 #define cSVOPo_sv		cSVOPx_sv(o)
 #define kSVOP_sv		cSVOPx_sv(kid)
 
-#define Nullop Null(OP*)
+#define Nullop ((OP*)NULL)
 
 /* Lowest byte-and-a-bit of PL_opargs */
 #define OA_MARK 1
@@ -590,9 +615,9 @@ struct loop {
 #endif
 
 /* flags used by Perl_load_module() */
-#define PERL_LOADMOD_DENY		0x1
-#define PERL_LOADMOD_NOIMPORT		0x2
-#define PERL_LOADMOD_IMPORT_OPS		0x4
+#define PERL_LOADMOD_DENY		0x1	/* no Module */
+#define PERL_LOADMOD_NOIMPORT		0x2	/* use Module () */
+#define PERL_LOADMOD_IMPORT_OPS		0x4	/* use Module (...) */
 
 #if defined(PERL_IN_PERLY_C) || defined(PERL_IN_OP_C)
 #define ref(o, type) doref(o, type, TRUE)

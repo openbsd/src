@@ -1,5 +1,6 @@
-package Overloaded;
-# $Id$
+package Overloaded;  ##no critic (Modules::RequireFilenameMatchesPackage)
+
+use strict;
 
 sub new {
     my $class = shift;
@@ -7,8 +8,9 @@ sub new {
 }
 
 package Overloaded::Compare;
-use vars qw(@ISA);
-@ISA = qw(Overloaded);
+
+use strict;
+our @ISA = qw(Overloaded);
 
 # Sometimes objects have only comparison ops overloaded and nothing else.
 # For example, DateTime objects.
@@ -17,8 +19,9 @@ use overload
   q{==} => sub { $_[0]->{num} == $_[1] };
 
 package Overloaded::Ify;
-use vars qw(@ISA);
-@ISA = qw(Overloaded);
+
+use strict;
+our @ISA = qw(Overloaded);
 
 use overload
   q{""} => sub { $_[0]->{string} },

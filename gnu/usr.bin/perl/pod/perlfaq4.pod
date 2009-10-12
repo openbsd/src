@@ -48,35 +48,45 @@ numbers.  What you think in the above as 'three' is really more like
 
 =head2 Why isn't my octal data interpreted correctly?
 
-Perl only understands octal and hex numbers as such when they occur as
-literals in your program.  Octal literals in perl must start with a
-leading C<0> and hexadecimal literals must start with a leading C<0x>.
-If they are read in from somewhere and assigned, no automatic
-conversion takes place.  You must explicitly use C<oct()> or C<hex()> if you
-want the values converted to decimal.  C<oct()> interprets hexadecimal (C<0x350>),
-octal (C<0350> or even without the leading C<0>, like C<377>) and binary
-(C<0b1010>) numbers, while C<hex()> only converts hexadecimal ones, with
-or without a leading C<0x>, such as C<0x255>, C<3A>, C<ff>, or C<deadbeef>.
-The inverse mapping from decimal to octal can be done with either the
-<%o> or C<%O> C<sprintf()> formats.
+(contributed by brian d foy)
 
-This problem shows up most often when people try using C<chmod()>,
-C<mkdir()>, C<umask()>, or C<sysopen()>, which by widespread tradition
-typically take permissions in octal.
+You're probably trying to convert a string to a number, which Perl only
+converts as a decimal number. When Perl converts a string to a number, it
+ignores leading spaces and zeroes, then assumes the rest of the digits
+are in base 10:
 
-	chmod(644,  $file);   # WRONG
-	chmod(0644, $file);   # right
+	my $string = '0644';
 
-Note the mistake in the first line was specifying the decimal literal
-C<644>, rather than the intended octal literal C<0644>.  The problem can
-be seen with:
+	print $string + 0;  # prints 644
 
-	printf("%#o",644);   # prints 01204
+	print $string + 44; # prints 688, certainly not octal!
 
-Surely you had not intended C<chmod(01204, $file);> - did you?  If you
-want to use numeric literals as arguments to chmod() et al. then please
-try to express them as octal constants, that is with a leading zero and
-with the following digits restricted to the set C<0..7>.
+This problem usually involves one of the Perl built-ins that has the
+same name a unix command that uses octal numbers as arguments on the
+command line. In this example, C<chmod> on the command line knows that
+its first argument is octal because that's what it does:
+
+	%prompt> chmod 644 file
+
+If you want to use the same literal digits (644) in Perl, you have to tell
+Perl to treat them as octal numbers either by prefixing the digits with
+a C<0> or using C<oct>:
+
+	chmod(     0644, $file);   # right, has leading zero
+	chmod( oct(644), $file );  # also correct
+
+The problem comes in when you take your numbers from something that Perl
+thinks is a string, such as a command line argument in C<@ARGV>:
+
+	chmod( $ARGV[0],      $file);   # wrong, even if "0644"
+
+	chmod( oct($ARGV[0]), $file );  # correct, treat string as octal
+
+You can always check the value you're using by printing it in octal
+notation to ensure it matches what you think it should be. Print it
+in octal  and decimal format:
+
+	printf "0%o %d", $number, $number;
 
 =head2 Does Perl have a round() function?  What about ceil() and floor()?  Trig functions?
 
@@ -363,7 +373,7 @@ pseudorandom generator than comes with your operating system, look at
 =head2 How do I get a random number between X and Y?
 
 To get a random number between two values, you can use the C<rand()>
-builtin to get a random number between 0 and 1. From there, you shift
+built-in to get a random number between 0 and 1. From there, you shift
 that into the range that you want.
 
 C<rand($x)> returns a number such that C<< 0 <= rand($x) < $x >>. Thus
@@ -373,7 +383,7 @@ from 0 to the difference between your I<X> and I<Y>.
 That is, to get a number between 10 and 15, inclusive, you want a
 random number between 0 and 5 that you can then add to 10.
 
-	my $number = 10 + int rand( 15-10+1 );
+	my $number = 10 + int rand( 15-10+1 ); # ( 10,11,12,13,14, or 15 )
 
 Hence you derive the following simple function to abstract
 that. It selects a random integer between the two given
@@ -478,6 +488,9 @@ Julian day)
 	31
 
 =head2 How do I find yesterday's date?
+X<date> X<yesterday> X<DateTime> X<Date::Calc> X<Time::Local>
+X<daylight saving time> X<day> X<Today_and_Now> X<localtime>
+X<timelocal>
 
 (contributed by brian d foy)
 
@@ -503,6 +516,22 @@ Most people try to use the time rather than the calendar to figure out
 dates, but that assumes that days are twenty-four hours each.  For
 most people, there are two days a year when they aren't: the switch to
 and from summer time throws this off. Let the modules do the work.
+
+If you absolutely must do it yourself (or can't use one of the
+modules), here's a solution using C<Time::Local>, which comes with
+Perl:
+
+	# contributed by Gunnar Hjalmarsson
+	 use Time::Local;
+	 my $today = timelocal 0, 0, 12, ( localtime )[3..5];
+	 my ($d, $m, $y) = ( localtime $today-86400 )[3..5];
+	 printf "Yesterday: %d-%02d-%02d\n", $y+1900, $m+1, $d;
+
+In this case, you measure the day starting at noon, and subtract 24
+hours. Even if the length of the calendar day is 23 or 25 hours,
+you'll still end up on the previous calendar day, although not at
+noon. Since you don't care about the time, the one hour difference
+doesn't matter and you end up with the previous date.
 
 =head2 Does Perl have a Year 2000 problem? Is Perl Y2K compliant?
 
@@ -780,15 +809,43 @@ result to a scalar, producing a count of the number of matches.
 
 	$count = () = $string =~ /-\d+/g;
 
+=head2 Does Perl have a Year 2038 problem?
+
+No, all of Perl's built in date and time functions and modules will
+work to about 2 billion years before and after 1970.
+
+Many systems cannot count time past the year 2038.  Older versions of
+Perl were dependent on the system to do date calculation and thus
+shared their 2038 bug.
+
 =head2 How do I capitalize all the words on one line?
+X<Text::Autoformat> X<capitalize> X<case, title> X<case, sentence>
 
-To make the first letter of each word upper case:
+(contributed by brian d foy)
 
-	$line =~ s/\b(\w)/\U$1/g;
+Damian Conway's L<Text::Autoformat> handles all of the thinking
+for you.
 
-This has the strange effect of turning "C<don't do it>" into "C<Don'T
-Do It>".  Sometimes you might want this.  Other times you might need a
-more thorough solution (Suggested by brian d foy):
+	use Text::Autoformat;
+	my $x = "Dr. Strangelove or: How I Learned to Stop ".
+	  "Worrying and Love the Bomb";
+
+	print $x, "\n";
+	for my $style (qw( sentence title highlight )) {
+		print autoformat($x, { case => $style }), "\n";
+		}
+
+How do you want to capitalize those words?
+
+	FRED AND BARNEY'S LODGE        # all uppercase
+	Fred And Barney's Lodge        # title case
+	Fred and Barney's Lodge        # highlight case
+
+It's not as easy a problem as it looks. How many words do you think
+are in there? Wait for it... wait for it.... If you answered 5
+you're right. Perl words are groups of C<\w+>, but that's not what
+you want to capitalize. How is Perl supposed to know not to capitalize
+that C<s> after the apostrophe? You could try a regular expression:
 
 	$string =~ s/ (
 				 (^\w)    #at the beginning of the line
@@ -799,34 +856,8 @@ more thorough solution (Suggested by brian d foy):
 
 	$string =~ s/([\w']+)/\u\L$1/g;
 
-To make the whole line upper case:
-
-	$line = uc($line);
-
-To force each word to be lower case, with the first letter upper case:
-
-	$line =~ s/(\w+)/\u\L$1/g;
-
-You can (and probably should) enable locale awareness of those
-characters by placing a C<use locale> pragma in your program.
-See L<perllocale> for endless details on locales.
-
-This is sometimes referred to as putting something into "title
-case", but that's not quite accurate.  Consider the proper
-capitalization of the movie I<Dr. Strangelove or: How I Learned to
-Stop Worrying and Love the Bomb>, for example.
-
-Damian Conway's L<Text::Autoformat> module provides some smart
-case transformations:
-
-	use Text::Autoformat;
-	my $x = "Dr. Strangelove or: How I Learned to Stop ".
-	  "Worrying and Love the Bomb";
-
-	print $x, "\n";
-	for my $style (qw( sentence title highlight )) {
-		print autoformat($x, { case => $style }), "\n";
-		}
+Now, what if you don't want to capitalize that "and"? Just use
+L<Text::Autoformat> and get on with the next problem. :)
 
 =head2 How can I split a [character] delimited string except when inside [character]?
 
@@ -980,7 +1011,7 @@ appear as part of the data.
 
 If you want to work with comma-separated values, don't do this since
 that format is a bit more complicated. Use one of the modules that
-handle that fornat, such as C<Text::CSV>, C<Text::CSV_XS>, or
+handle that format, such as C<Text::CSV>, C<Text::CSV_XS>, or
 C<Text::CSV_PP>.
 
 If you want to break apart an entire line of fixed columns, you can use
@@ -1030,7 +1061,7 @@ what's left in the string:
 
 The C</e> will also silently ignore violations of strict, replacing
 undefined variable names with the empty string. Since I'm using the
-C</e> flag (twice even!), I have all of the same security problems I 
+C</e> flag (twice even!), I have all of the same security problems I
 have with C<eval> in its string form. If there's something odd in
 C<$foo>, perhaps something like C<@{[ system "rm -rf /" ]}>, then
 I could get myself in trouble.
@@ -1042,7 +1073,7 @@ can replace the missing value with a marker, in this case C<???> to
 signal that I missed something:
 
 	my $string = 'This has $foo and $bar';
-	
+
 	my %Replacements = (
 		foo  => 'Fred',
 		);
@@ -1273,16 +1304,32 @@ same thing.
 
 =head2 How can I tell whether a certain element is contained in a list or array?
 
-(portions of this answer contributed by Anno Siegel)
+(portions of this answer contributed by Anno Siegel and brian d foy)
 
 Hearing the word "in" is an I<in>dication that you probably should have
 used a hash, not a list or array, to store your data.  Hashes are
 designed to answer this question quickly and efficiently.  Arrays aren't.
 
-That being said, there are several ways to approach this.  If you
+That being said, there are several ways to approach this.  In Perl 5.10
+and later, you can use the smart match operator to check that an item is
+contained in an array or a hash:
+
+	use 5.010;
+
+	if( $item ~~ @array )
+		{
+		say "The array contains $item"
+		}
+
+	if( $item ~~ %hash )
+		{
+		say "The hash contains $item"
+		}
+
+With earlier versions of Perl, you have to do a bit more work. If you
 are going to make this query many times over arbitrary string values,
 the fastest way is probably to invert the original array and maintain a
-hash whose keys are the first array's values.
+hash whose keys are the first array's values:
 
 	@blues = qw/azure cerulean teal turquoise lapis-lazuli/;
 	%is_blue = ();
@@ -1356,6 +1403,21 @@ Note that this is the I<symmetric difference>, that is, all elements
 in either A or in B but not in both.  Think of it as an xor operation.
 
 =head2 How do I test whether two arrays or hashes are equal?
+
+With Perl 5.10 and later, the smart match operator can give you the answer
+with the least amount of work:
+
+	use 5.010;
+
+	if( @array1 ~~ @array2 )
+		{
+		say "The arrays are the same";
+		}
+
+	if( %hash1 ~~ %hash2 ) # doesn't check values!
+		{
+		say "The hash keys are the same";
+		}
 
 The following code works for single-level arrays.  It uses a
 stringwise comparison, and does not distinguish defined versus
@@ -1487,14 +1549,24 @@ You could add to the list this way:
 But again, Perl's built-in are virtually always good enough.
 
 =head2 How do I handle circular lists?
+X<circular> X<array> X<Tie::Cycle> X<Array::Iterator::Circular>
+X<cycle> X<modulus>
 
-Circular lists could be handled in the traditional fashion with linked
-lists, or you could just do something like this with an array:
+(contributed by brian d foy)
 
-	unshift(@array, pop(@array));  # the last shall be first
-	push(@array, shift(@array));   # and vice versa
+If you want to cycle through an array endlessy, you can increment the
+index modulo the number of elements in the array:
 
-You can also use C<Tie::Cycle>:
+	my @array = qw( a b c );
+	my $i = 0;
+
+	while( 1 ) {
+		print $array[ $i++ % @array ], "\n";
+		last if $i > 20;
+		}
+
+You can also use C<Tie::Cycle> to use a scalar that always has the
+next element of the circular array:
 
 	use Tie::Cycle;
 
@@ -1503,6 +1575,19 @@ You can also use C<Tie::Cycle>:
 	print $cycle; # FFFFFF
 	print $cycle; # 000000
 	print $cycle; # FFFF00
+
+The C<Array::Iterator::Circular> creates an iterator object for
+circular arrays:
+
+	use Array::Iterator::Circular;
+
+	my $color_iterator = Array::Iterator::Circular->new(
+		qw(red green blue orange)
+		);
+
+	foreach ( 1 .. 20 ) {
+		print $color_iterator->next, "\n";
+		}
 
 =head2 How do I shuffle an array randomly?
 
@@ -1517,6 +1602,8 @@ If not, you can use a Fisher-Yates shuffle.
 
 	sub fisher_yates_shuffle {
 		my $deck = shift;  # $deck is a reference to an array
+		return unless @$deck; # must not be empty!
+
 		my $i = @$deck;
 		while (--$i) {
 			my $j = int rand ($i+1);
@@ -1656,7 +1743,7 @@ C<NextPermute> uses string order and C<NextPermuteNum> numeric order, so
 you can enumerate all the permutations of C<0..9> like this:
 
 	use Algorithm::Loops qw(NextPermuteNum);
-	
+
     my @list= 0..9;
     do { print "@list\n" } while NextPermuteNum @list;
 
@@ -1713,14 +1800,23 @@ See also the question later in L<perlfaq4> on sorting hashes.
 Use C<pack()> and C<unpack()>, or else C<vec()> and the bitwise
 operations.
 
-For example, this sets C<$vec> to have bit N set if C<$ints[N]> was
-set:
+For example, you don't have to store individual bits in an array
+(which would mean that you're wasting a lot of space). To convert an
+array of bits to a string, use C<vec()> to set the right bits. This
+sets C<$vec> to have bit N set only if C<$ints[N]> was set:
 
+	@ints = (...); # array of bits, e.g. ( 1, 0, 0, 1, 1, 0 ... )
 	$vec = '';
-	foreach(@ints) { vec($vec,$_,1) = 1 }
+	foreach( 0 .. $#ints ) {
+		vec($vec,$_,1) = 1 if $ints[$_];
+		}
 
-Here's how, given a vector in C<$vec>, you can get those bits into your
-C<@ints> array:
+The string C<$vec> only takes up as many bits as it needs. For
+instance, if you had 16 entries in C<@ints>, C<$vec> only needs two
+bytes to store them (not counting the scalar variable overhead).
+
+Here's how, given a vector in C<$vec>, you can get those bits into
+your C<@ints> array:
 
 	sub bitvec_to_list {
 		my $vec = shift;
@@ -1842,7 +1938,7 @@ can then get the value through the particular key you're processing:
 		}
 
 Once you have the list of keys, you can process that list before you
-process the hashh elements. For instance, you can sort the keys so you
+process the hash elements. For instance, you can sort the keys so you
 can process them in lexical order:
 
 	foreach my $key ( sort keys %hash ) {
@@ -1860,7 +1956,7 @@ those using C<grep>:
 		}
 
 If the hash is very large, you might not want to create a long list of
-keys. To save some memory, you can grab on key-value pair at a time using
+keys. To save some memory, you can grab one key-value pair at a time using
 C<each()>, which returns a pair you haven't seen yet:
 
 	while( my( $key, $value ) = each( %hash ) ) {
@@ -1877,6 +1973,62 @@ all of the elements. Additionally, a hash has only one iterator, so if
 you use C<keys>, C<values>, or C<each> on the same hash, you can reset
 the iterator and mess up your processing. See the C<each> entry in
 L<perlfunc> for more details.
+
+=head2 How do I merge two hashes?
+X<hash> X<merge> X<slice, hash>
+
+(contributed by brian d foy)
+
+Before you decide to merge two hashes, you have to decide what to do
+if both hashes contain keys that are the same and if you want to leave
+the original hashes as they were.
+
+If you want to preserve the original hashes, copy one hash (C<%hash1>)
+to a new hash (C<%new_hash>), then add the keys from the other hash
+(C<%hash2> to the new hash. Checking that the key already exists in
+C<%new_hash> gives you a chance to decide what to do with the
+duplicates:
+
+	my %new_hash = %hash1; # make a copy; leave %hash1 alone
+
+	foreach my $key2 ( keys %hash2 )
+		{
+		if( exists $new_hash{$key2} )
+			{
+			warn "Key [$key2] is in both hashes!";
+			# handle the duplicate (perhaps only warning)
+			...
+			next;
+			}
+		else
+			{
+			$new_hash{$key2} = $hash2{$key2};
+			}
+		}
+
+If you don't want to create a new hash, you can still use this looping
+technique; just change the C<%new_hash> to C<%hash1>.
+
+	foreach my $key2 ( keys %hash2 )
+		{
+		if( exists $hash1{$key2} )
+			{
+			warn "Key [$key2] is in both hashes!";
+			# handle the duplicate (perhaps only warning)
+			...
+			next;
+			}
+		else
+			{
+			$hash1{$key2} = $hash2{$key2};
+			}
+		}
+
+If you don't care that one hash overwrites keys and values from the other, you
+could just use a hash slice to add one hash to another. In this case, values
+from C<%hash2> replace values from C<%hash1> when they have keys in common:
+
+	@hash1{ keys %hash2 } = values %hash2;
 
 =head2 What happens if I add or remove keys from a hash while iterating over it?
 
@@ -1914,14 +2066,35 @@ worry you, you can always reverse the hash into a hash of arrays instead:
 
 =head2 How can I know how many entries are in a hash?
 
-If you mean how many keys, then all you have to do is
-use the keys() function in a scalar context:
+(contributed by brian d foy)
 
-    $num_keys = keys %hash;
+This is very similar to "How do I process an entire hash?", also in
+L<perlfaq4>, but a bit simpler in the common cases.
 
-The keys() function also resets the iterator, which means that you may
+You can use the C<keys()> built-in function in scalar context to find out
+have many entries you have in a hash:
+
+	my $key_count = keys %hash; # must be scalar context!
+	
+If you want to find out how many entries have a defined value, that's
+a bit different. You have to check each value. A C<grep> is handy: 
+
+	my $defined_value_count = grep { defined } values %hash;
+
+You can use that same structure to count the entries any way that
+you like. If you want the count of the keys with vowels in them,
+you just test for that instead:
+
+	my $vowel_count = grep { /[aeiou]/ } keys %hash;
+	
+The C<grep> in scalar context returns the count. If you want the list
+of matching items, just use it in list context instead:
+
+	my @defined_values = grep { defined } values %hash;
+
+The C<keys()> function also resets the iterator, which means that you may
 see strange results if you use this between uses of other hash operators
-such as each().
+such as C<each()>.
 
 =head2 How do I sort a hash (optionally by value instead of key)?
 
@@ -1937,7 +2110,7 @@ create a report which lists the keys in ASCIIbetical order.
 
 	foreach my $key ( @keys )
 		{
-		printf "%-20s %6d\n", $key, $hash{$value};
+		printf "%-20s %6d\n", $key, $hash{$key};
 		}
 
 We could get more fancy in the C<sort()> block though. Instead of
@@ -2131,20 +2304,44 @@ Use the C<Tie::IxHash> from CPAN.
 
 =head2 Why does passing a subroutine an undefined element in a hash create it?
 
-If you say something like:
+(contributed by brian d foy)
 
-	somefunc($hash{"nonesuch key here"});
+Are you using a really old version of Perl?
 
-Then that element "autovivifies"; that is, it springs into existence
-whether you store something there or not.  That's because functions
-get scalars passed in by reference.  If somefunc() modifies C<$_[0]>,
-it has to be ready to write it back into the caller's version.
+Normally, accessing a hash key's value for a nonexistent key will
+I<not> create the key.
 
-This has been fixed as of Perl5.004.
+	my %hash  = ();
+	my $value = $hash{ 'foo' };
+	print "This won't print\n" if exists $hash{ 'foo' };
 
-Normally, merely accessing a key's value for a nonexistent key does
-I<not> cause that key to be forever there.  This is different than
-awk's behavior.
+Passing C<$hash{ 'foo' }> to a subroutine used to be a special case, though.
+Since you could assign directly to C<$_[0]>, Perl had to be ready to
+make that assignment so it created the hash key ahead of time:
+
+    my_sub( $hash{ 'foo' } );
+	print "This will print before 5.004\n" if exists $hash{ 'foo' };
+
+	sub my_sub {
+		# $_[0] = 'bar'; # create hash key in case you do this
+		1;
+		}
+
+Since Perl 5.004, however, this situation is a special case and Perl
+creates the hash key only when you make the assignment:
+
+    my_sub( $hash{ 'foo' } );
+	print "This will print, even after 5.004\n" if exists $hash{ 'foo' };
+
+	sub my_sub {
+		$_[0] = 'bar';
+		}
+
+However, if you want the old behavior (and think carefully about that
+because it's a weird side effect), you can pass a hash slice instead.
+Perl 5.004 didn't make this a special case:
+
+	my_sub( @hash{ qw/foo/ } );
 
 =head2 How can I make the Perl equivalent of a C structure/C++ class/hash or array of hashes or arrays?
 
@@ -2166,18 +2363,31 @@ in L<perltoot>.
 
 =head2 How can I use a reference as a hash key?
 
-(contributed by brian d foy)
+(contributed by brian d foy and Ben Morrow)
 
 Hash keys are strings, so you can't really use a reference as the key.
 When you try to do that, perl turns the reference into its stringified
 form (for instance, C<HASH(0xDEADBEEF)>). From there you can't get
 back the reference from the stringified form, at least without doing
-some extra work on your own. Also remember that hash keys must be
-unique, but two different variables can store the same reference (and
-those variables can change later).
+some extra work on your own.
 
-The C<Tie::RefHash> module, which is distributed with perl, might be
-what you want. It handles that extra work.
+Remember that the entry in the hash will still be there even if
+the referenced variable  goes out of scope, and that it is entirely
+possible for Perl to subsequently allocate a different variable at
+the same address. This will mean a new variable might accidentally
+be associated with the value for an old.
+
+If you have Perl 5.10 or later, and you just want to store a value
+against the reference for lookup later, you can use the core
+Hash::Util::Fieldhash module. This will also handle renaming the
+keys if you use multiple threads (which causes all variables to be
+reallocated at new addresses, changing their stringification), and
+garbage-collecting the entries when the referenced variable goes out
+of scope.
+
+If you actually need to be able to get a real reference back from
+each hash entry, you can use the Tie::RefHash module, which does the
+required work for you.
 
 =head1 Data: Misc
 
@@ -2280,7 +2490,14 @@ you wanted to copy.
 
 =head2 How do I define methods for every class/object?
 
-Use the C<UNIVERSAL> class (see L<UNIVERSAL>).
+(contributed by Ben Morrow)
+
+You can use the C<UNIVERSAL> class (see L<UNIVERSAL>). However, please
+be very careful to consider the consequences of doing this: adding
+methods to every object is very likely to have unintended
+consequences. If possible, it would be better to have all your object
+inherit from some common base class, or to use an object system like
+Moose that supports roles.
 
 =head2 How do I verify a credit card checksum?
 
@@ -2288,21 +2505,23 @@ Get the C<Business::CreditCard> module from CPAN.
 
 =head2 How do I pack arrays of doubles or floats for XS code?
 
-The kgbpack.c code in the C<PGPLOT> module on CPAN does just this.
+The arrays.h/arrays.c code in the C<PGPLOT> module on CPAN does just this.
 If you're doing a lot of float or double processing, consider using
 the C<PDL> module from CPAN instead--it makes number-crunching easy.
 
+See L<http://search.cpan.org/dist/PGPLOT> for the code.
+
 =head1 REVISION
 
-Revision: $Revision: 10394 $
+Revision: $Revision$
 
-Date: $Date: 2007-12-09 18:47:15 +0100 (Sun, 09 Dec 2007) $
+Date: $Date$
 
 See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

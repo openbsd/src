@@ -170,8 +170,8 @@ C<do { } while> construct.  See L<perlsyn/"Loop Control">.
 
 =item *
 
-There's no switch statement.  (But it's easy to build one on the fly,
-see L<perlsyn/"Basic BLOCKs and Switch Statements">)
+The switch statement is called C<given/when> and only available in
+perl 5.10 or newer. See L<perlsyn/"Switch statements">.
 
 =item *
 

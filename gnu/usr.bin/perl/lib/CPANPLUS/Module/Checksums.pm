@@ -19,7 +19,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Module::Checksums - functions for validating distribution checksums
+CPANPLUS::Module::Checksums - distribution checksum validation
 
 =head1 SYNOPSIS
 
@@ -141,7 +141,7 @@ sub _get_checksums_file {
     my $clone = $self->clone;
     $clone->package( CHECKSUMS );
 
-    my $file = $clone->fetch( %hash, force => 1 ) or return;
+    my $file = $clone->fetch( ttl => 3600, %hash ) or return;
 
     return $file;
 }
@@ -160,7 +160,7 @@ sub _parse_checksums_file {
 
     ### loop over the header, there might be a pgp signature ###
     my $signed;
-    while (<$fh>) {
+    while (local $_ = <$fh>) {
         last if /^\$cksum = \{\s*$/;    # skip till this line
         my $header = PGP_HEADER;        # but be tolerant of whitespace
         $signed = 1 if /^${header}\s*$/;# due to crossplatform linebreaks
@@ -170,7 +170,7 @@ sub _parse_checksums_file {
     ### *should* be valid perl code
     my $dist;
     my $cksum = {};
-    while (<$fh>) {
+    while (local $_ = <$fh>) {
 
         if (/^\s*'([^']+)' => \{\s*$/) {
             $dist = $1;
@@ -214,7 +214,7 @@ sub _check_signature_for_checksum_file {
     my $fh = OPEN_FILE->($file) or return;
 
     my $signed;
-    while (<$fh>) {
+    while (local $_ = <$fh>) {
         my $header = PGP_HEADER;
         $signed = 1 if /^$header$/;
     }

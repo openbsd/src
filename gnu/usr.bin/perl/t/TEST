@@ -14,6 +14,7 @@ $| = 1;
 # Let tests know they're running in the perl core.  Useful for modules
 # which live dual lives on CPAN.
 $ENV{PERL_CORE} = 1;
+delete $ENV{PERL5LIB};
 
 # remove empty elements due to insertion of empty symbols via "''p1'" syntax
 @ARGV = grep($_,@ARGV) if $^O eq 'VMS';
@@ -140,9 +141,8 @@ unless (@ARGV) {
     }
     my $mani = File::Spec->catfile($updir, "MANIFEST");
     if (open(MANI, $mani)) {
-	my $ext_pat = $^O eq 'MSWin32' ? '(?:win32/)?ext' : 'ext';
 	while (<MANI>) { # similar code in t/harness
-	    if (m!^($ext_pat/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
+	    if (m!^(ext/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
 		my $t = $1;
 		my $extension = $2;
 		if (!$::core || $t =~ m!^lib/[a-z]!)
@@ -151,6 +151,9 @@ unless (@ARGV) {
 			$extension =~ s!/t$!!;
 			# XXX Do I want to warn that I'm skipping these?
 			next if $skip{$extension};
+			my $flat_extension = $extension;
+			$flat_extension =~ s!-!/!g;
+			next if $skip{$flat_extension}; # Foo/Bar may live in Foo-Bar
 		    }
 		    my $path = File::Spec->catfile($updir, $t);
 		    push @ARGV, $path;
@@ -163,7 +166,6 @@ unless (@ARGV) {
 	warn "$0: cannot open $mani: $!\n";
     }
     unless ($::core) {
-	_find_tests('Module_Pluggable');
 	_find_tests('pod');
 	_find_tests('x2p');
 	_find_tests('japh') if $::torture;
@@ -336,6 +338,14 @@ EOT
 	my %todo;
 	while (<RESULTS>) {
 	    next if /^\s*$/; # skip blank lines
+	    if (/^1..$/ && ($^O eq 'VMS')) {
+		# VMS pipe bug inserts blank lines.
+		my $l2 = <RESULTS>;
+		if ($l2 =~ /^\s*$/) {
+		    $l2 = <RESULTS>;
+		}
+		$_ = '1..' . $l2;
+	    }
 	    if ($::verbose) {
 		print $_;
 	    }
@@ -383,7 +393,7 @@ EOT
 
 			    # SKIP is essentially the same as TODO for t/TEST
 			    # this still conforms to TAP:
-			    # http://search.cpan.org/dist/Test-Harness/lib/Test/Harness/TAP.pod
+			    # http://search.cpan.org/dist/TAP/TAP.pod
 			    $extra and $istodo = $extra =~ /#\s*(?:TODO|SKIP)\b/;
 			    $istodo = 1 if $todo{$num};
 

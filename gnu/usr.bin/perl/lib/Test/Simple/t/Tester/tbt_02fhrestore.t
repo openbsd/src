@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-# $Id: tbt_02fhrestore.t,v 1.1 2009/05/16 21:42:58 simon Exp $
 
 use Test::Builder::Tester tests => 4;
 use Test::More;

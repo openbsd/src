@@ -1,7 +1,7 @@
 /*    patchlevel.h
  *
- *    Copyright (C) 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
- *    2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1993, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+ *    2003, 2004, 2005, 2006, 2007, 2008, 2009, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -15,7 +15,7 @@
 
 #define PERL_REVISION	5		/* age */
 #define PERL_VERSION	10		/* epoch */
-#define PERL_SUBVERSION	0		/* generation */
+#define PERL_SUBVERSION	1		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API
@@ -116,8 +116,21 @@ hunk.
  */
 
 #if !defined(PERL_PATCHLEVEL_H_IMPLICIT) && !defined(LOCAL_PATCH_COUNT)
+#  if defined(PERL_IS_MINIPERL)
+#    define PERL_PATCHNUM "UNKNOWN-miniperl"
+#    define PERL_GIT_UNCOMMITTED_CHANGES ,"UNKNOWN"
+#    define PERL_GIT_UNPUSHED_COMMITS /*leave-this-comment*/
+#  elif defined(PERL_MICRO)
+#    define PERL_PATCHNUM "UNKNOWN-microperl"
+#    define PERL_GIT_UNCOMMITTED_CHANGES ,"UNKNOWN"
+#    define PERL_GIT_UNPUSHED_COMMITS /*leave-this-comment*/
+#  else
+#include "git_version.h"
+#  endif
 static const char * const local_patches[] = {
 	NULL
+	PERL_GIT_UNPUSHED_COMMITS    	/* do not remove this line */
+        PERL_GIT_UNCOMMITTED_CHANGES	/* do not remove this line */
 	,NULL
 };
 

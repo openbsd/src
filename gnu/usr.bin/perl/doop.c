@@ -1,7 +1,7 @@
 /*    doop.c
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2004, 2005, 2006, 2007, 2008, 2009 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -9,7 +9,9 @@
  */
 
 /*
- * "'So that was the job I felt I had to do when I started,' thought Sam."
+ *  'So that was the job I felt I had to do when I started,' thought Sam.
+ *
+ *     [p.934 of _The Lord of the Rings_, VI/iii: "Mount Doom"]
  */
 
 /* This file contains some common functions needed to carry out certain
@@ -33,8 +35,10 @@ S_do_trans_simple(pTHX_ SV * const sv)
     STRLEN len;
     U8 *s = (U8*)SvPV(sv,len);
     U8 * const send = s+len;
-
     const short * const tbl = (short*)cPVOP->op_pv;
+
+    PERL_ARGS_ASSERT_DO_TRANS_SIMPLE;
+
     if (!tbl)
 	Perl_croak(aTHX_ "panic: do_trans_simple line %d",__LINE__);
 
@@ -100,8 +104,10 @@ S_do_trans_count(pTHX_ SV * const sv)
     const U8 *s = (const U8*)SvPV_const(sv, len);
     const U8 * const send = s + len;
     I32 matches = 0;
-
     const short * const tbl = (short*)cPVOP->op_pv;
+
+    PERL_ARGS_ASSERT_DO_TRANS_COUNT;
+
     if (!tbl)
 	Perl_croak(aTHX_ "panic: do_trans_count line %d",__LINE__);
 
@@ -136,8 +142,10 @@ S_do_trans_complex(pTHX_ SV * const sv)
     U8 *s = (U8*)SvPV(sv, len);
     U8 * const send = s+len;
     I32 matches = 0;
-
     const short * const tbl = (short*)cPVOP->op_pv;
+
+    PERL_ARGS_ASSERT_DO_TRANS_COMPLEX;
+
     if (!tbl)
 	Perl_croak(aTHX_ "panic: do_trans_complex line %d",__LINE__);
 
@@ -306,19 +314,20 @@ S_do_trans_simple_utf8(pTHX_ SV * const sv)
     I32 matches = 0;
     const I32 grows = PL_op->op_private & OPpTRANS_GROWS;
     STRLEN len;
-
     SV* const  rv =
 #ifdef USE_ITHREADS
 		    PAD_SVl(cPADOP->op_padix);
 #else
-		    (SV*)cSVOP->op_sv;
+		    MUTABLE_SV(cSVOP->op_sv);
 #endif
-    HV* const  hv = (HV*)SvRV(rv);
+    HV* const  hv = MUTABLE_HV(SvRV(rv));
     SV* const * svp = hv_fetchs(hv, "NONE", FALSE);
     const UV none = svp ? SvUV(*svp) : 0x7fffffff;
     const UV extra = none + 1;
     UV final = 0;
     U8 hibit = 0;
+
+    PERL_ARGS_ASSERT_DO_TRANS_SIMPLE_UTF8;
 
     s = (U8*)SvPV(sv, len);
     if (!SvUTF8(sv)) {
@@ -407,18 +416,19 @@ S_do_trans_count_utf8(pTHX_ SV * const sv)
     const U8 *send;
     I32 matches = 0;
     STRLEN len;
-
     SV* const  rv =
 #ifdef USE_ITHREADS
 		    PAD_SVl(cPADOP->op_padix);
 #else
-		    (SV*)cSVOP->op_sv;
+		    MUTABLE_SV(cSVOP->op_sv);
 #endif
-    HV* const hv = (HV*)SvRV(rv);
+    HV* const hv = MUTABLE_HV(SvRV(rv));
     SV* const * const svp = hv_fetchs(hv, "NONE", FALSE);
     const UV none = svp ? SvUV(*svp) : 0x7fffffff;
     const UV extra = none + 1;
     U8 hibit = 0;
+
+    PERL_ARGS_ASSERT_DO_TRANS_COUNT_UTF8;
 
     s = (const U8*)SvPV_const(sv, len);
     if (!SvUTF8(sv)) {
@@ -461,9 +471,9 @@ S_do_trans_complex_utf8(pTHX_ SV * const sv)
 #ifdef USE_ITHREADS
 		    PAD_SVl(cPADOP->op_padix);
 #else
-		    (SV*)cSVOP->op_sv;
+		    MUTABLE_SV(cSVOP->op_sv);
 #endif
-    HV * const hv = (HV*)SvRV(rv);
+    HV * const hv = MUTABLE_HV(SvRV(rv));
     SV * const *svp = hv_fetchs(hv, "NONE", FALSE);
     const UV none = svp ? SvUV(*svp) : 0x7fffffff;
     const UV extra = none + 1;
@@ -472,8 +482,10 @@ S_do_trans_complex_utf8(pTHX_ SV * const sv)
     STRLEN len;
     U8 *dstart, *dend;
     U8 hibit = 0;
-
     U8 *s = (U8*)SvPV(sv, len);
+
+    PERL_ARGS_ASSERT_DO_TRANS_COMPLEX_UTF8;
+
     if (!SvUTF8(sv)) {
 	const U8 *t = s;
 	const U8 * const e = s + len;
@@ -621,11 +633,13 @@ Perl_do_trans(pTHX_ SV *sv)
     const I32 hasutf = (PL_op->op_private &
                     (OPpTRANS_FROM_UTF|OPpTRANS_TO_UTF));
 
-    if (SvREADONLY(sv)) {
+    PERL_ARGS_ASSERT_DO_TRANS;
+
+    if (SvREADONLY(sv) && !(PL_op->op_private & OPpTRANS_IDENTICAL)) {
         if (SvIsCOW(sv))
             sv_force_normal_flags(sv, 0);
-        if (SvREADONLY(sv) && !(PL_op->op_private & OPpTRANS_IDENTICAL))
-            Perl_croak(aTHX_ PL_no_modify);
+        if (SvREADONLY(sv))
+            Perl_croak(aTHX_ "%s", PL_no_modify);
     }
     (void)SvPV_const(sv, len);
     if (!len)
@@ -671,6 +685,8 @@ Perl_do_join(pTHX_ register SV *sv, SV *delim, register SV **mark, register SV *
     register STRLEN len;
     STRLEN delimlen;
 
+    PERL_ARGS_ASSERT_DO_JOIN;
+
     (void) SvPV_const(delim, delimlen); /* stringify and get the delimlen */
     /* SvCUR assumes it's SvPOK() and woe betide you if it's not. */
 
@@ -693,7 +709,7 @@ Perl_do_join(pTHX_ register SV *sv, SV *delim, register SV **mark, register SV *
 	++mark;
     }
 
-    sv_setpvn(sv, "", 0);
+    sv_setpvs(sv, "");
     /* sv_setpv retains old UTF8ness [perl #24846] */
     SvUTF8_off(sv);
 
@@ -727,6 +743,8 @@ Perl_do_sprintf(pTHX_ SV *sv, I32 len, SV **sarg)
     const char * const pat = SvPV_const(*sarg, patlen);
     bool do_taint = FALSE;
 
+    PERL_ARGS_ASSERT_DO_SPRINTF;
+
     SvUTF8_off(sv);
     if (DO_UTF8(*sarg))
         SvUTF8_on(sv);
@@ -744,6 +762,8 @@ Perl_do_vecget(pTHX_ SV *sv, I32 offset, I32 size)
     STRLEN srclen, len, uoffset, bitoffs = 0;
     const unsigned char *s = (const unsigned char *) SvPV_const(sv, srclen);
     UV retnum = 0;
+
+    PERL_ARGS_ASSERT_DO_VECGET;
 
     if (offset < 0)
 	return 0;
@@ -895,6 +915,8 @@ Perl_do_vecset(pTHX_ SV *sv)
     STRLEN len;
     SV * const targ = LvTARG(sv);
 
+    PERL_ARGS_ASSERT_DO_VECSET;
+
     if (!targ)
 	return;
     s = (unsigned char*)SvPV_force(targ, targlen);
@@ -974,20 +996,22 @@ Perl_do_chop(pTHX_ register SV *astr, register SV *sv)
     STRLEN len;
     char *s;
 
+    PERL_ARGS_ASSERT_DO_CHOP;
+
     if (SvTYPE(sv) == SVt_PVAV) {
 	register I32 i;
-	AV* const av = (AV*)sv;
+	AV *const av = MUTABLE_AV(sv);
 	const I32 max = AvFILL(av);
 
 	for (i = 0; i <= max; i++) {
-	    sv = (SV*)av_fetch(av, i, FALSE);
+	    sv = MUTABLE_SV(av_fetch(av, i, FALSE));
 	    if (sv && ((sv = *(SV**)sv), sv != &PL_sv_undef))
 		do_chop(astr, sv);
 	}
         return;
     }
     else if (SvTYPE(sv) == SVt_PVHV) {
-	HV* const hv = (HV*)sv;
+	HV* const hv = MUTABLE_HV(sv);
 	HE* entry;
         (void)hv_iterinit(hv);
         while ((entry = hv_iternext(hv)))
@@ -1000,7 +1024,7 @@ Perl_do_chop(pTHX_ register SV *astr, register SV *sv)
 	    sv_force_normal_flags(sv, 0);
         }
         if (SvREADONLY(sv))
-            Perl_croak(aTHX_ PL_no_modify);
+            Perl_croak(aTHX_ "%s", PL_no_modify);
     }
 
     if (PL_encoding && !SvUTF8(sv)) {
@@ -1011,7 +1035,7 @@ Perl_do_chop(pTHX_ register SV *astr, register SV *sv)
 
     s = SvPV(sv, len);
     if (len && !SvPOK(sv))
-	s = SvPV_force(sv, len);
+	s = SvPV_force_nomg(sv, len);
     if (DO_UTF8(sv)) {
 	if (s && len) {
 	    char * const send = s + len;
@@ -1028,7 +1052,7 @@ Perl_do_chop(pTHX_ register SV *astr, register SV *sv)
 	    }
 	}
 	else
-	    sv_setpvn(astr, "", 0);
+	    sv_setpvs(astr, "");
     }
     else if (s && len) {
 	s += --len;
@@ -1039,7 +1063,7 @@ Perl_do_chop(pTHX_ register SV *astr, register SV *sv)
 	SvNIOK_off(sv);
     }
     else
-	sv_setpvn(astr, "", 0);
+	sv_setpvs(astr, "");
     SvSETMAGIC(sv);
 }
 
@@ -1053,6 +1077,8 @@ Perl_do_chomp(pTHX_ register SV *sv)
     char *temp_buffer = NULL;
     SV* svrecode = NULL;
 
+    PERL_ARGS_ASSERT_DO_CHOMP;
+
     if (RsSNARF(PL_rs))
 	return 0;
     if (RsRECORD(PL_rs))
@@ -1060,18 +1086,18 @@ Perl_do_chomp(pTHX_ register SV *sv)
     count = 0;
     if (SvTYPE(sv) == SVt_PVAV) {
 	register I32 i;
-	AV* const av = (AV*)sv;
+	AV *const av = MUTABLE_AV(sv);
 	const I32 max = AvFILL(av);
 
 	for (i = 0; i <= max; i++) {
-	    sv = (SV*)av_fetch(av, i, FALSE);
+	    sv = MUTABLE_SV(av_fetch(av, i, FALSE));
 	    if (sv && ((sv = *(SV**)sv), sv != &PL_sv_undef))
 		count += do_chomp(sv);
 	}
         return count;
     }
     else if (SvTYPE(sv) == SVt_PVHV) {
-	HV* const hv = (HV*)sv;
+	HV* const hv = MUTABLE_HV(sv);
 	HE* entry;
         (void)hv_iterinit(hv);
         while ((entry = hv_iternext(hv)))
@@ -1084,7 +1110,7 @@ Perl_do_chomp(pTHX_ register SV *sv)
 	    sv_force_normal_flags(sv, 0);
         }
         if (SvREADONLY(sv))
-            Perl_croak(aTHX_ PL_no_modify);
+            Perl_croak(aTHX_ "%s", PL_no_modify);
     }
 
     if (PL_encoding) {
@@ -1201,10 +1227,17 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
     bool right_utf;
     STRLEN needlen = 0;
 
+    PERL_ARGS_ASSERT_DO_VOP;
 
     if (sv != left || (optype != OP_BIT_AND && !SvOK(sv) && !SvGMAGICAL(sv)))
-	sv_setpvn(sv, "", 0);	/* avoid undef warning on |= and ^= */
-    lsave = lc = SvPV_nomg_const(left, leftlen);
+	sv_setpvs(sv, "");	/* avoid undef warning on |= and ^= */
+    if (sv == left) {
+	lsave = lc = SvPV_force_nomg(left, leftlen);
+    }
+    else {
+	lsave = lc = SvPV_nomg_const(left, leftlen);
+	SvPV_force_nomg_nolen(sv);
+    }
     rsave = rc = SvPV_nomg_const(right, rightlen);
 
     /* This need to come after SvPV to ensure that string overloading has
@@ -1217,13 +1250,13 @@ Perl_do_vop(pTHX_ I32 optype, SV *sv, SV *left, SV *right)
 	/* Avoid triggering overloading again by using temporaries.
 	   Maybe there should be a variant of sv_utf8_upgrade that takes pvn
 	*/
-	right = sv_2mortal(newSVpvn(rsave, rightlen));
+	right = newSVpvn_flags(rsave, rightlen, SVs_TEMP);
 	sv_utf8_upgrade(right);
 	rsave = rc = SvPV_nomg_const(right, rightlen);
 	right_utf = TRUE;
     }
     else if (!left_utf && right_utf) {
-	left = sv_2mortal(newSVpvn(lsave, leftlen));
+	left = newSVpvn_flags(lsave, leftlen, SVs_TEMP);
 	sv_utf8_upgrade(left);
 	lsave = lc = SvPV_nomg_const(left, leftlen);
 	left_utf = TRUE;
@@ -1406,7 +1439,7 @@ Perl_do_kv(pTHX)
 {
     dVAR;
     dSP;
-    HV * const hv = (HV*)POPs;
+    HV * const hv = MUTABLE_HV(POPs);
     HV *keys;
     register HE *entry;
     const I32 gimme = GIMME_V;
@@ -1440,7 +1473,7 @@ Perl_do_kv(pTHX)
 		sv_magic(TARG, NULL, PERL_MAGIC_nkeys, NULL, 0);
 	    }
 	    LvTYPE(TARG) = 'k';
-	    if (LvTARG(TARG) != (SV*)keys) {
+	    if (LvTARG(TARG) != (const SV *)keys) {
 		if (LvTARG(TARG))
 		    SvREFCNT_dec(LvTARG(TARG));
 		LvTARG(TARG) = SvREFCNT_inc_simple(keys);
@@ -1449,7 +1482,7 @@ Perl_do_kv(pTHX)
 	    RETURN;
 	}
 
-	if (! SvTIED_mg((SV*)keys, PERL_MAGIC_tied) )
+	if (! SvTIED_mg((const SV *)keys, PERL_MAGIC_tied) )
 	{
 	    i = HvKEYS(keys);
 	}

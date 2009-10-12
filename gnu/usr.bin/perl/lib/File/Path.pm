@@ -16,17 +16,22 @@ BEGIN {
 }
 
 use Exporter ();
-use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '2.04';
-@ISA     = qw(Exporter);
-@EXPORT  = qw(mkpath rmtree);
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+$VERSION   = '2.07_03';
+@ISA       = qw(Exporter);
+@EXPORT    = qw(mkpath rmtree);
+@EXPORT_OK = qw(make_path remove_tree);
 
-my $Is_VMS   = $^O eq 'VMS';
-my $Is_MacOS = $^O eq 'MacOS';
+my $Is_VMS     = $^O eq 'VMS';
+my $Is_MacOS   = $^O eq 'MacOS';
 
 # These OSes complain if you want to remove a file that you have no
 # write permission to:
 my $Force_Writeable = grep {$^O eq $_} qw(amigaos dos epoc MSWin32 MacOS os2);
+
+# Unix-like systems need to stat each directory in order to detect
+# race condition. MS-Windows is immune to this particular attack.
+my $Need_Stat_Check = !($^O eq 'MSWin32');
 
 sub _carp {
     require Carp;
@@ -45,22 +50,21 @@ sub _error {
 
     if ($arg->{error}) {
         $object = '' unless defined $object;
-        push @{${$arg->{error}}}, {$object => "$message: $!"};
+        $message .= ": $!" if $!;
+        push @{${$arg->{error}}}, {$object => $message};
     }
     else {
         _carp(defined($object) ? "$message for $object: $!" : "$message: $!");
     }
 }
 
+sub make_path {
+    push @_, {} unless @_ and UNIVERSAL::isa($_[-1],'HASH');
+    goto &mkpath;
+}
+
 sub mkpath {
-    my $old_style = (
-        UNIVERSAL::isa($_[0],'ARRAY')
-        or (@_ == 2 and (defined $_[1] ? $_[1] =~ /\A\d+\z/ : 1))
-        or (@_ == 3
-            and (defined $_[1] ? $_[1] =~ /\A\d+\z/ : 1)
-            and (defined $_[2] ? $_[2] =~ /\A\d+\z/ : 1)
-        )
-    ) ? 1 : 0;
+    my $old_style = !(@_ and UNIVERSAL::isa($_[-1],'HASH'));
 
     my $arg;
     my $paths;
@@ -69,19 +73,14 @@ sub mkpath {
         my ($verbose, $mode);
         ($paths, $verbose, $mode) = @_;
         $paths = [$paths] unless UNIVERSAL::isa($paths,'ARRAY');
-        $arg->{verbose} = defined $verbose ? $verbose : 0;
-        $arg->{mode}    = defined $mode    ? $mode    : 0777;
+        $arg->{verbose} = $verbose;
+        $arg->{mode}    = defined $mode ? $mode : 0777;
     }
     else {
-        if (@_ > 0 and UNIVERSAL::isa($_[-1], 'HASH')) {
-            $arg = pop @_;
-            exists $arg->{mask} and $arg->{mode} = delete $arg->{mask};
-            $arg->{mode} = 0777 unless exists $arg->{mode};
-            ${$arg->{error}} = [] if exists $arg->{error};
-        }
-        else {
-            @{$arg}{qw(verbose mode)} = (0, 0777);
-        }
+        $arg = pop @_;
+        $arg->{mode}      = delete $arg->{mask} if exists $arg->{mask};
+        $arg->{mode}      = 0777 unless exists $arg->{mode};
+        ${$arg->{error}}  = [] if exists $arg->{error};
         $paths = [@_];
     }
     return _mkpath($arg, $paths);
@@ -91,10 +90,9 @@ sub _mkpath {
     my $arg   = shift;
     my $paths = shift;
 
-    local($")=$Is_MacOS ? ":" : "/";
     my(@created,$path);
     foreach $path (@$paths) {
-        next unless length($path);
+        next unless defined($path) and length($path);
         $path .= '/' if $^O eq 'os2' and $path =~ /^\w:\z/s; # feature of CRT 
         # Logic wants Unix paths, so go with the flow.
         if ($Is_VMS) {
@@ -129,15 +127,31 @@ sub _mkpath {
     return @created;
 }
 
+sub remove_tree {
+    push @_, {} unless @_ and UNIVERSAL::isa($_[-1],'HASH');
+    goto &rmtree;
+}
+
+sub _is_subdir {
+    my($dir, $test) = @_;
+
+    my($dv, $dd) = File::Spec->splitpath($dir, 1);
+    my($tv, $td) = File::Spec->splitpath($test, 1);
+
+    # not on same volume
+    return 0 if $dv ne $tv;
+
+    my @d = File::Spec->splitdir($dd);
+    my @t = File::Spec->splitdir($td);
+
+    # @t can't be a subdir if it's shorter than @d
+    return 0 if @t < @d;
+
+    return join('/', @d) eq join('/', splice @t, 0, +@d);
+}
+
 sub rmtree {
-    my $old_style = (
-        UNIVERSAL::isa($_[0],'ARRAY')
-        or (@_ == 2 and (defined $_[1] ? $_[1] =~ /\A\d+\z/ : 1))
-        or (@_ == 3
-            and (defined $_[1] ? $_[1] =~ /\A\d+\z/ : 1)
-            and (defined $_[2] ? $_[2] =~ /\A\d+\z/ : 1)
-        )
-    ) ? 1 : 0;
+    my $old_style = !(@_ and UNIVERSAL::isa($_[-1],'HASH'));
 
     my $arg;
     my $paths;
@@ -145,7 +159,7 @@ sub rmtree {
     if ($old_style) {
         my ($verbose, $safe);
         ($paths, $verbose, $safe) = @_;
-        $arg->{verbose} = defined $verbose ? $verbose : 0;
+        $arg->{verbose} = $verbose;
         $arg->{safe}    = defined $safe    ? $safe    : 0;
 
         if (defined($paths) and length($paths)) {
@@ -157,32 +171,53 @@ sub rmtree {
         }
     }
     else {
-        if (@_ > 0 and UNIVERSAL::isa($_[-1],'HASH')) {
-            $arg = pop @_;
-            ${$arg->{error}}  = [] if exists $arg->{error};
-            ${$arg->{result}} = [] if exists $arg->{result};
-        }
-        else {
-            @{$arg}{qw(verbose safe)} = (0, 0);
-        }
+        $arg = pop @_;
+        ${$arg->{error}}  = [] if exists $arg->{error};
+        ${$arg->{result}} = [] if exists $arg->{result};
         $paths = [@_];
     }
 
     $arg->{prefix} = '';
     $arg->{depth}  = 0;
 
+    my @clean_path;
     $arg->{cwd} = getcwd() or do {
         _error($arg, "cannot fetch initial working directory");
         return 0;
     };
     for ($arg->{cwd}) { /\A(.*)\Z/; $_ = $1 } # untaint
 
-    @{$arg}{qw(device inode)} = (stat $arg->{cwd})[0,1] or do {
+    for my $p (@$paths) {
+        # need to fixup case and map \ to / on Windows
+        my $ortho_root = $^O eq 'MSWin32' ? _slash_lc($p)          : $p;
+        my $ortho_cwd  = $^O eq 'MSWin32' ? _slash_lc($arg->{cwd}) : $arg->{cwd};
+        my $ortho_root_length = length($ortho_root);
+        $ortho_root_length-- if $^O eq 'VMS'; # don't compare '.' with ']'
+        if ($ortho_root_length && _is_subdir($ortho_root, $ortho_cwd)) {
+            local $! = 0;
+            _error($arg, "cannot remove path when cwd is $arg->{cwd}", $p);
+            next;
+        }
+
+        if ($Is_MacOS) {
+            $p  = ":$p" unless $p =~ /:/;
+            $p .= ":"   unless $p =~ /:\z/;
+        }
+        elsif ($^O eq 'MSWin32') {
+            $p =~ s{[/\\]\z}{};
+        }
+        else {
+            $p =~ s{/\z}{};
+        }
+        push @clean_path, $p;
+    }
+
+    @{$arg}{qw(device inode perm)} = (lstat $arg->{cwd})[0,1] or do {
         _error($arg, "cannot stat initial working directory", $arg->{cwd});
         return 0;
     };
 
-    return _rmtree($arg, $paths);
+    return _rmtree($arg, \@clean_path);
 }
 
 sub _rmtree {
@@ -196,14 +231,6 @@ sub _rmtree {
     my (@files, $root);
     ROOT_DIR:
     foreach $root (@$paths) {
-        if ($Is_MacOS) {
-            $root  = ":$root" unless $root =~ /:/;
-            $root .= ":"      unless $root =~ /:\z/;
-        }
-        else {
-            $root =~ s{/\z}{};
-        }
-
         # since we chdir into each directory, it may not be obvious
         # to figure out where we are if we generate a message about
         # a file name. We therefore construct a semi-canonical
@@ -219,6 +246,7 @@ sub _rmtree {
 
         if ( -d _ ) {
             $root = VMS::Filespec::pathify($root) if $Is_VMS;
+
             if (!chdir($root)) {
                 # see if we can escalate privileges to get in
                 # (e.g. funny protection mask such as -w- instead of rwx)
@@ -234,13 +262,15 @@ sub _rmtree {
                 }
             }
 
-            my ($device, $inode, $perm) = (stat $curdir)[0,1,2] or do {
+            my ($cur_dev, $cur_inode, $perm) = (stat $curdir)[0,1,2] or do {
                 _error($arg, "cannot stat current working directory", $canon);
                 next ROOT_DIR;
             };
 
-            ($ldev eq $device and $lino eq $inode)
-                or _croak("directory $canon changed before chdir, expected dev=$ldev inode=$lino, actual dev=$device ino=$inode, aborting.");
+            if ($Need_Stat_Check) {
+                ($ldev eq $cur_dev and $lino eq $cur_inode)
+                    or _croak("directory $canon changed before chdir, expected dev=$ldev ino=$lino, actual dev=$cur_dev ino=$cur_inode, aborting.");
+            }
 
             $perm &= 07777; # don't forget setuid, setgid, sticky bits
             my $nperm = $perm | 0700;
@@ -281,13 +311,14 @@ sub _rmtree {
                 @files = map {$_ eq '.' ? '.;' : $_} reverse @files;
                 ($root = VMS::Filespec::unixify($root)) =~ s/\.dir\z//;
             }
+
             @files = grep {$_ ne $updir and $_ ne $curdir} @files;
 
             if (@files) {
                 # remove the contained files before the directory itself
                 my $narg = {%$arg};
                 @{$narg}{qw(device inode cwd prefix depth)}
-                    = ($device, $inode, $updir, $canon, $arg->{depth}+1);
+                    = ($cur_dev, $cur_inode, $updir, $canon, $arg->{depth}+1);
                 $count += _rmtree($narg, \@files);
             }
 
@@ -304,11 +335,13 @@ sub _rmtree {
 
             # ensure that a chdir upwards didn't take us somewhere other
             # than we expected (see CVE-2002-0435)
-            ($device, $inode) = (stat $curdir)[0,1]
+            ($cur_dev, $cur_inode) = (stat $curdir)[0,1]
                 or _croak("cannot stat prior working directory $arg->{cwd}: $!, aborting.");
 
-            ($arg->{device} eq $device and $arg->{inode} eq $inode)
-                or _croak("previous directory $arg->{cwd} changed before entering $canon, expected dev=$ldev inode=$lino, actual dev=$device ino=$inode, aborting.");
+            if ($Need_Stat_Check) {
+                ($arg->{device} eq $cur_dev and $arg->{inode} eq $cur_inode)
+                    or _croak("previous directory $arg->{cwd} changed before entering $canon, expected dev=$ldev ino=$lino, actual dev=$cur_dev ino=$cur_inode, aborting.");
+            }
 
             if ($arg->{depth} or !$arg->{keep_root}) {
                 if ($arg->{safe} &&
@@ -316,10 +349,8 @@ sub _rmtree {
                     print "skipped $root\n" if $arg->{verbose};
                     next ROOT_DIR;
                 }
-                if (!chmod $perm | 0700, $root) {
-                    if ($Force_Writeable) {
-                        _error($arg, "cannot make directory writeable", $canon);
-                    }
+                if ($Force_Writeable and !chmod $perm | 0700, $root) {
+                    _error($arg, "cannot make directory writeable", $canon);
                 }
                 print "rmdir $root\n" if $arg->{verbose};
                 if (rmdir $root) {
@@ -328,7 +359,7 @@ sub _rmtree {
                 }
                 else {
                     _error($arg, "cannot remove directory", $canon);
-                    if (!chmod($perm, ($Is_VMS ? VMS::Filespec::fileify($root) : $root))
+                    if ($Force_Writeable && !chmod($perm, ($Is_VMS ? VMS::Filespec::fileify($root) : $root))
                     ) {
                         _error($arg, sprintf("cannot restore permissions to 0%o",$perm), $canon);
                     }
@@ -338,7 +369,7 @@ sub _rmtree {
         else {
             # not a directory
             $root = VMS::Filespec::vmsify("./$root")
-                if $Is_VMS 
+                if $Is_VMS
                    && !File::Spec->file_name_is_absolute($root)
                    && ($root !~ m/(?<!\^)[\]>]+/);  # not already in VMS syntax
 
@@ -351,10 +382,8 @@ sub _rmtree {
             }
 
             my $nperm = $perm & 07777 | 0600;
-            if ($nperm != $perm and not chmod $nperm, $root) {
-                if ($Force_Writeable) {
-                    _error($arg, "cannot make file writeable", $canon);
-                }
+            if ($Force_Writeable and $nperm != $perm and not chmod $nperm, $root) {
+                _error($arg, "cannot make file writeable", $canon);
             }
             print "unlink $canon\n" if $arg->{verbose};
             # delete all versions under VMS
@@ -373,8 +402,15 @@ sub _rmtree {
             }
         }
     }
-
     return $count;
+}
+
+sub _slash_lc {
+    # fix up slashes and case on MSWin32 so that we can determine that
+    # c:\path\to\dir is underneath C:/Path/To
+    my $path = shift;
+    $path =~ tr{\\}{/};
+    return lc($path);
 }
 
 1;
@@ -386,59 +422,65 @@ File::Path - Create or remove directory trees
 
 =head1 VERSION
 
-This document describes version 2.04 of File::Path, released
-2007-11-13.
+This document describes version 2.07 of File::Path, released
+2008-11-09.
 
 =head1 SYNOPSIS
 
-    use File::Path;
+  use File::Path qw(make_path remove_tree);
 
-    # modern
-    mkpath( 'foo/bar/baz', '/zug/zwang', {verbose => 1} );
+  make_path('foo/bar/baz', '/zug/zwang');
+  make_path('foo/bar/baz', '/zug/zwang', {
+      verbose => 1,
+      mode => 0711,
+  });
 
-    rmtree(
-        'foo/bar/baz', '/zug/zwang',
-        { verbose => 1, error  => \my $err_list }
-    );
+  remove_tree('foo/bar/baz', '/zug/zwang');
+  remove_tree('foo/bar/baz', '/zug/zwang', {
+      verbose => 1,
+      error  => \my $err_list,
+  });
 
-    # traditional
-    mkpath(['/foo/bar/baz', 'blurfl/quux'], 1, 0711);
-    rmtree(['foo/bar/baz', 'blurfl/quux'], 1, 1);
+  # legacy (interface promoted before v2.00)
+  mkpath('/foo/bar/baz');
+  mkpath('/foo/bar/baz', 1, 0711);
+  mkpath(['/foo/bar/baz', 'blurfl/quux'], 1, 0711);
+  rmtree('foo/bar/baz', 1, 1);
+  rmtree(['foo/bar/baz', 'blurfl/quux'], 1, 1);
+
+  # legacy (interface promoted before v2.06)
+  mkpath('foo/bar/baz', '/zug/zwang', { verbose => 1, mode => 0711 });
+  rmtree('foo/bar/baz', '/zug/zwang', { verbose => 1, mode => 0711 });
 
 =head1 DESCRIPTION
 
-The C<mkpath> function provides a convenient way to create directories
-of arbitrary depth. Similarly, the C<rmtree> function provides a
-convenient way to delete an entire directory subtree from the
-filesystem, much like the Unix command C<rm -r>.
+This module provide a convenient way to create directories of
+arbitrary depth and to delete an entire directory subtree from the
+filesystem.
 
-Both functions may be called in one of two ways, the traditional,
-compatible with code written since the dawn of time, and modern,
-that offers a more flexible and readable idiom. New code should use
-the modern interface.
+The following functions are provided:
 
-=head2 FUNCTIONS
+=over
 
-The modern way of calling C<mkpath> and C<rmtree> is with a list
-of directories to create, or remove, respectively, followed by an
-optional hash reference containing keys to control the
-function's behaviour.
+=item make_path( $dir1, $dir2, .... )
 
-=head3 C<mkpath>
+=item make_path( $dir1, $dir2, ...., \%opts )
 
-The following keys are recognised as parameters to C<mkpath>.
-The function returns the list of files actually created during the
-call.
+The C<make_path> function creates the given directories if they don't
+exists before, much like the Unix command C<mkdir -p>.
 
-  my @created = mkpath(
-    qw(/tmp /flub /home/nobody),
-    {verbose => 1, mode => 0750},
-  );
-  print "created $_\n" for @created;
+The function accepts a list of directories to be created. Its
+behaviour may be tuned by an optional hashref appearing as the last
+parameter on the call.
 
-=over 4
+The function returns the list of directories actually created during
+the call; in scalar context the number of directories created.
 
-=item mode
+The following keys are recognised in the option hash:
+
+=over
+
+=item mode => $num
 
 The numeric permissions mode to apply to each created directory
 (defaults to 0777), to be modified by the current C<umask>. If the
@@ -447,16 +489,17 @@ the permissions will not be modified.
 
 C<mask> is recognised as an alias for this parameter.
 
-=item verbose
+=item verbose => $bool
 
-If present, will cause C<mkpath> to print the name of each directory
+If present, will cause C<make_path> to print the name of each directory
 as it is created. By default nothing is printed.
 
-=item error
+=item error => \$err
 
-If present, will be interpreted as a reference to a list, and will
-be used to store any errors that are encountered.  See the ERROR
-HANDLING section for more information.
+If present, it should be a reference to a scalar.
+This scalar will be made to reference an array, which will
+be used to store any errors that are encountered.  See the L</"ERROR
+HANDLING"> section for more information.
 
 If this parameter is not used, certain error conditions may raise
 a fatal error that will cause the program will halt, unless trapped
@@ -464,53 +507,80 @@ in an C<eval> block.
 
 =back
 
-=head3 C<rmtree>
+=item mkpath( $dir )
 
-=over 4
+=item mkpath( $dir, $verbose, $mode )
 
-=item verbose
+=item mkpath( [$dir1, $dir2,...], $verbose, $mode )
 
-If present, will cause C<rmtree> to print the name of each file as
+=item mkpath( $dir1, $dir2,..., \%opt )
+
+The mkpath() function provide the legacy interface of make_path() with
+a different interpretation of the arguments passed.  The behaviour and
+return value of the function is otherwise identical to make_path().
+
+=item remove_tree( $dir1, $dir2, .... )
+
+=item remove_tree( $dir1, $dir2, ...., \%opts )
+
+The C<remove_tree> function deletes the given directories and any
+files and subdirectories they might contain, much like the Unix
+command C<rm -r> or C<del /s> on Windows.
+
+The function accepts a list of directories to be
+removed. Its behaviour may be tuned by an optional hashref
+appearing as the last parameter on the call.
+
+The functions returns the number of files successfully deleted.
+
+The following keys are recognised in the option hash:
+
+=over
+
+=item verbose => $bool
+
+If present, will cause C<remove_tree> to print the name of each file as
 it is unlinked. By default nothing is printed.
 
-=item safe
+=item safe => $bool
 
-When set to a true value, will cause C<rmtree> to skip the files
+When set to a true value, will cause C<remove_tree> to skip the files
 for which the process lacks the required privileges needed to delete
 files, such as delete privileges on VMS. In other words, the code
 will make no attempt to alter file permissions. Thus, if the process
 is interrupted, no filesystem object will be left in a more
 permissive mode.
 
-=item keep_root
+=item keep_root => $bool
 
 When set to a true value, will cause all files and subdirectories
 to be removed, except the initially specified directories. This comes
 in handy when cleaning out an application's scratch directory.
 
-  rmtree( '/tmp', {keep_root => 1} );
+  remove_tree( '/tmp', {keep_root => 1} );
 
-=item result
+=item result => \$res
 
-If present, will be interpreted as a reference to a list, and will
-be used to store the list of all files and directories unlinked
-during the call. If nothing is unlinked, a reference to an empty
-list is returned (rather than C<undef>).
+If present, it should be a reference to a scalar.
+This scalar will be made to reference an array, which will
+be used to store all files and directories unlinked
+during the call. If nothing is unlinked, the array will be empty.
 
-  rmtree( '/tmp', {result => \my $list} );
+  remove_tree( '/tmp', {result => \my $list} );
   print "unlinked $_\n" for @$list;
 
 This is a useful alternative to the C<verbose> key.
 
-=item error
+=item error => \$err
 
-If present, will be interpreted as a reference to a list,
-and will be used to store any errors that are encountered.
-See the ERROR HANDLING section for more information.
+If present, it should be a reference to a scalar.
+This scalar will be made to reference an array, which will
+be used to store any errors that are encountered.  See the L</"ERROR
+HANDLING"> section for more information.
 
 Removing things is a much more dangerous proposition than
 creating things. As such, there are certain conditions that
-C<rmtree> may encounter that are so dangerous that the only
+C<remove_tree> may encounter that are so dangerous that the only
 sane action left is to kill the program.
 
 Use C<error> to trap all that is reasonable (problems with
@@ -519,130 +589,66 @@ of hand. This is the safest course of action.
 
 =back
 
-=head2 TRADITIONAL INTERFACE
+=item rmtree( $dir )
 
-The old interfaces of C<mkpath> and C<rmtree> take a reference to
-a list of directories (to create or remove), followed by a series
-of positional, numeric, modal parameters that control their behaviour.
+=item rmtree( $dir, $verbose, $safe )
 
-This design made it difficult to add additional functionality, as
-well as posed the problem of what to do when the calling code only
-needs to set the last parameter. Even though the code doesn't care
-how the initial positional parameters are set, the programmer is
-forced to learn what the defaults are, and specify them.
+=item rmtree( [$dir1, $dir2,...], $verbose, $safe )
 
-Worse, if it turns out in the future that it would make more sense
-to change the default behaviour of the first parameter (for example,
-to avoid a security vulnerability), all existing code will remain
-hard-wired to the wrong defaults.
+=item rmtree( $dir1, $dir2,..., \%opt )
 
-Finally, a series of numeric parameters are much less self-documenting
-in terms of communicating to the reader what the code is doing. Named
-parameters do not have this problem.
-
-In the traditional API, C<mkpath> takes three arguments:
-
-=over 4
-
-=item *
-
-The name of the path to create, or a reference to a list of paths
-to create,
-
-=item *
-
-a boolean value, which if TRUE will cause C<mkpath> to print the
-name of each directory as it is created (defaults to FALSE), and
-
-=item *
-
-the numeric mode to use when creating the directories (defaults to
-0777), to be modified by the current umask.
+The rmtree() function provide the legacy interface of remove_tree()
+with a different interpretation of the arguments passed. The behaviour
+and return value of the function is otherwise identical to
+remove_tree().
 
 =back
-
-It returns a list of all directories (including intermediates, determined
-using the Unix '/' separator) created.  In scalar context it returns
-the number of directories created.
-
-If a system error prevents a directory from being created, then the
-C<mkpath> function throws a fatal error with C<Carp::croak>. This error
-can be trapped with an C<eval> block:
-
-  eval { mkpath($dir) };
-  if ($@) {
-    print "Couldn't create $dir: $@";
-  }
-
-In the traditional API, C<rmtree> takes three arguments:
-
-=over 4
-
-=item *
-
-the root of the subtree to delete, or a reference to a list of
-roots. All of the files and directories below each root, as well
-as the roots themselves, will be deleted. If you want to keep
-the roots themselves, you must use the modern API.
-
-=item *
-
-a boolean value, which if TRUE will cause C<rmtree> to print a
-message each time it examines a file, giving the name of the file,
-and indicating whether it's using C<rmdir> or C<unlink> to remove
-it, or that it's skipping it.  (defaults to FALSE)
-
-=item *
-
-a boolean value, which if TRUE will cause C<rmtree> to skip any
-files to which you do not have delete access (if running under VMS)
-or write access (if running under another OS). This will change
-in the future when a criterion for 'delete permission' under OSs
-other than VMS is settled.  (defaults to FALSE)
-
-=back
-
-It returns the number of files, directories and symlinks successfully
-deleted.  Symlinks are simply deleted and not followed.
-
-Note also that the occurrence of errors in C<rmtree> using the
-traditional interface can be determined I<only> by trapping diagnostic
-messages using C<$SIG{__WARN__}>; it is not apparent from the return
-value. (The modern interface may use the C<error> parameter to
-record any problems encountered).
 
 =head2 ERROR HANDLING
 
-If C<mkpath> or C<rmtree> encounter an error, a diagnostic message
-will be printed to C<STDERR> via C<carp> (for non-fatal errors),
-or via C<croak> (for fatal errors).
+=over 4
+
+=item B<NOTE:>
+
+The following error handling mechanism is considered
+experimental and is subject to change pending feedback from
+users.
+
+=back
+
+If C<make_path> or C<remove_tree> encounter an error, a diagnostic
+message will be printed to C<STDERR> via C<carp> (for non-fatal
+errors), or via C<croak> (for fatal errors).
 
 If this behaviour is not desirable, the C<error> attribute may be
 used to hold a reference to a variable, which will be used to store
-the diagnostics. The result is a reference to a list of hash
-references. For each hash reference, the key is the name of the
-file, and the value is the error message (usually the contents of
-C<$!>). An example usage looks like:
+the diagnostics. The variable is made a reference to an array of hash
+references.  Each hash contain a single key/value pair where the key
+is the name of the file, and the value is the error message (including
+the contents of C<$!> when appropriate).  If a general error is
+encountered the diagnostic key will be empty.
 
-  rmpath( 'foo/bar', 'bar/rat', {error => \my $err} );
-  for my $diag (@$err) {
-    my ($file, $message) = each %$diag;
-    print "problem unlinking $file: $message\n";
+An example usage looks like:
+
+  remove_tree( 'foo/bar', 'bar/rat', {error => \my $err} );
+  if (@$err) {
+      for my $diag (@$err) {
+          my ($file, $message) = %$diag;
+          if ($file eq '') {
+              print "general error: $message\n";
+          }
+          else {
+              print "problem unlinking $file: $message\n";
+          }
+      }
+  }
+  else {
+      print "No error encountered\n";
   }
 
-If no errors are encountered, C<$err> will point to an empty list
-(thus there is no need to test for C<undef>). If a general error
-is encountered (for instance, C<rmtree> attempts to remove a directory
-tree that does not exist), the diagnostic key will be empty, only
-the value will be set:
-
-  rmpath( '/no/such/path', {error => \my $err} );
-  for my $diag (@$err) {
-    my ($file, $message) = each %$diag;
-    if ($file eq '') {
-      print "general error: $message\n";
-    }
-  }
+Note that if no errors are encountered, C<$err> will reference an
+empty array.  This means that C<$err> will always end up TRUE; so you
+need to test C<@$err> to determine if errors occured.
 
 =head2 NOTES
 
@@ -653,38 +659,18 @@ invited to specify what it is you are expecting to use:
 
   use File::Path 'rmtree';
 
-=head3 HEURISTICS
+The routines C<make_path> and C<remove_tree> are B<not> exported
+by default. You must specify which ones you want to use.
 
-The functions detect (as far as possible) which way they are being
-called and will act appropriately. It is important to remember that
-the heuristic for detecting the old style is either the presence
-of an array reference, or two or three parameters total and second
-and third parameters are numeric. Hence...
+  use File::Path 'remove_tree';
 
-    mkpath 486, 487, 488;
+Note that a side-effect of the above is that C<mkpath> and C<rmtree>
+are no longer exported at all. This is due to the way the C<Exporter>
+module works. If you are migrating a codebase to use the new
+interface, you will have to list everything explicitly. But that's
+just good practice anyway.
 
-... will not assume the modern style and create three directories, rather
-it will create one directory verbosely, setting the permission to
-0750 (488 being the decimal equivalent of octal 750). Here, old
-style trumps new. It must, for backwards compatibility reasons.
-
-If you want to ensure there is absolutely no ambiguity about which
-way the function will behave, make sure the first parameter is a
-reference to a one-element list, to force the old style interpretation:
-
-    mkpath [486], 487, 488;
-
-and get only one directory created. Or add a reference to an empty
-parameter hash, to force the new style:
-
-    mkpath 486, 487, 488, {};
-
-... and hence create the three directories. If the empty hash
-reference seems a little strange to your eyes, or you suspect a
-subsequent programmer might I<helpfully> optimise it away, you
-can add a parameter set to a default value:
-
-    mkpath 486, 487, 488, {verbose => 0};
+  use File::Path qw(remove_tree rmtree);
 
 =head3 SECURITY CONSIDERATIONS
 
@@ -701,7 +687,7 @@ See the following pages for more information:
 
 Additionally, unless the C<safe> parameter is set (or the
 third parameter in the traditional interface is TRUE), should a
-C<rmtree> be interrupted, files that were originally in read-only
+C<remove_tree> be interrupted, files that were originally in read-only
 mode may now have their permissions set to a read-write (or "delete
 OK") mode.
 
@@ -723,43 +709,43 @@ they will be C<carp>ed about. Program execution will not be halted.
 
 =item mkdir [path]: [errmsg] (SEVERE)
 
-C<mkpath> was unable to create the path. Probably some sort of
+C<make_path> was unable to create the path. Probably some sort of
 permissions error at the point of departure, or insufficient resources
 (such as free inodes on Unix).
 
 =item No root path(s) specified
 
-C<mkpath> was not given any paths to create. This message is only
+C<make_path> was not given any paths to create. This message is only
 emitted if the routine is called with the traditional interface.
 The modern interface will remain silent if given nothing to do.
 
 =item No such file or directory
 
-On Windows, if C<mkpath> gives you this warning, it may mean that
+On Windows, if C<make_path> gives you this warning, it may mean that
 you have exceeded your filesystem's maximum path length.
 
 =item cannot fetch initial working directory: [errmsg]
 
-C<rmtree> attempted to determine the initial directory by calling
+C<remove_tree> attempted to determine the initial directory by calling
 C<Cwd::getcwd>, but the call failed for some reason. No attempt
 will be made to delete anything.
 
 =item cannot stat initial working directory: [errmsg]
 
-C<rmtree> attempted to stat the initial directory (after having
+C<remove_tree> attempted to stat the initial directory (after having
 successfully obtained its name via C<getcwd>), however, the call
 failed for some reason. No attempt will be made to delete anything.
 
 =item cannot chdir to [dir]: [errmsg]
 
-C<rmtree> attempted to set the working directory in order to
+C<remove_tree> attempted to set the working directory in order to
 begin deleting the objects therein, but was unsuccessful. This is
 usually a permissions issue. The routine will continue to delete
 other things, but this directory will be left intact.
 
-=item directory [dir] changed before chdir, expected dev=[n] inode=[n], actual dev=[n] ino=[n], aborting. (FATAL)
+=item directory [dir] changed before chdir, expected dev=[n] ino=[n], actual dev=[n] ino=[n], aborting. (FATAL)
 
-C<rmtree> recorded the device and inode of a directory, and then
+C<remove_tree> recorded the device and inode of a directory, and then
 moved into it. It then performed a C<stat> on the current directory
 and detected that the device and inode were no longer the same. As
 this is at the heart of the race condition problem, the program
@@ -767,14 +753,14 @@ will die at this point.
 
 =item cannot make directory [dir] read+writeable: [errmsg]
 
-C<rmtree> attempted to change the permissions on the current directory
+C<remove_tree> attempted to change the permissions on the current directory
 to ensure that subsequent unlinkings would not run into problems,
 but was unable to do so. The permissions remain as they were, and
 the program will carry on, doing the best it can.
 
 =item cannot read [dir]: [errmsg]
 
-C<rmtree> tried to read the contents of the directory in order
+C<remove_tree> tried to read the contents of the directory in order
 to acquire the names of the directory entries to be unlinked, but
 was unsuccessful. This is usually a permissions issue. The
 program will continue, but the files in this directory will remain
@@ -782,61 +768,70 @@ after the call.
 
 =item cannot reset chmod [dir]: [errmsg]
 
-C<rmtree>, after having deleted everything in a directory, attempted
+C<remove_tree>, after having deleted everything in a directory, attempted
 to restore its permissions to the original state but failed. The
 directory may wind up being left behind.
 
+=item cannot remove [dir] when cwd is [dir]
+
+The current working directory of the program is F</some/path/to/here>
+and you are attempting to remove an ancestor, such as F</some/path>.
+The directory tree is left untouched.
+
+The solution is to C<chdir> out of the child directory to a place
+outside the directory tree to be removed.
+
 =item cannot chdir to [parent-dir] from [child-dir]: [errmsg], aborting. (FATAL)
 
-C<rmtree>, after having deleted everything and restored the permissions
-of a directory, was unable to chdir back to the parent. This is usually
-a sign that something evil this way comes.
+C<remove_tree>, after having deleted everything and restored the permissions
+of a directory, was unable to chdir back to the parent. The program
+halts to avoid a race condition from occurring.
 
 =item cannot stat prior working directory [dir]: [errmsg], aborting. (FATAL)
 
-C<rmtree> was unable to stat the parent directory after have returned
+C<remove_tree> was unable to stat the parent directory after have returned
 from the child. Since there is no way of knowing if we returned to
 where we think we should be (by comparing device and inode) the only
 way out is to C<croak>.
 
-=item previous directory [parent-dir] changed before entering [child-dir], expected dev=[n] inode=[n], actual dev=[n] ino=[n], aborting. (FATAL)
+=item previous directory [parent-dir] changed before entering [child-dir], expected dev=[n] ino=[n], actual dev=[n] ino=[n], aborting. (FATAL)
 
-When C<rmtree> returned from deleting files in a child directory, a
+When C<remove_tree> returned from deleting files in a child directory, a
 check revealed that the parent directory it returned to wasn't the one
 it started out from. This is considered a sign of malicious activity.
 
 =item cannot make directory [dir] writeable: [errmsg]
 
 Just before removing a directory (after having successfully removed
-everything it contained), C<rmtree> attempted to set the permissions
+everything it contained), C<remove_tree> attempted to set the permissions
 on the directory to ensure it could be removed and failed. Program
 execution continues, but the directory may possibly not be deleted.
 
 =item cannot remove directory [dir]: [errmsg]
 
-C<rmtree> attempted to remove a directory, but failed. This may because
+C<remove_tree> attempted to remove a directory, but failed. This may because
 some objects that were unable to be removed remain in the directory, or
 a permissions issue. The directory will be left behind.
 
 =item cannot restore permissions of [dir] to [0nnn]: [errmsg]
 
-After having failed to remove a directory, C<rmtree> was unable to
+After having failed to remove a directory, C<remove_tree> was unable to
 restore its permissions from a permissive state back to a possibly
 more restrictive setting. (Permissions given in octal).
 
 =item cannot make file [file] writeable: [errmsg]
 
-C<rmtree> attempted to force the permissions of a file to ensure it
+C<remove_tree> attempted to force the permissions of a file to ensure it
 could be deleted, but failed to do so. It will, however, still attempt
 to unlink the file.
 
 =item cannot unlink file [file]: [errmsg]
 
-C<rmtree> failed to remove a file. Probably a permissions issue.
+C<remove_tree> failed to remove a file. Probably a permissions issue.
 
 =item cannot restore permissions of [file] to [0nnn]: [errmsg]
 
-After having failed to remove a file, C<rmtree> was also unable
+After having failed to remove a file, C<remove_tree> was also unable
 to restore the permissions on the file to a possibly less permissive
 setting. (Permissions given in octal).
 
@@ -879,16 +874,18 @@ O'Dea wrote an implementation for Debian that addressed the problem.
 That code was used as a basis for the current code. Their efforts
 are greatly appreciated.
 
+Gisle Aas made a number of improvements to the documentation for
+2.07 and his advice and assistance is also greatly appreciated.
+
 =head1 AUTHORS
 
-Tim Bunce <F<Tim.Bunce@ig.co.uk>> and Charles Bailey
-<F<bailey@newman.upenn.edu>>. Currently maintained by David Landgren
+Tim Bunce and Charles Bailey. Currently maintained by David Landgren
 <F<david@landgren.net>>.
 
 =head1 COPYRIGHT
 
 This module is copyright (C) Charles Bailey, Tim Bunce and
-David Landgren 1995-2007.  All rights reserved.
+David Landgren 1995-2008. All rights reserved.
 
 =head1 LICENSE
 

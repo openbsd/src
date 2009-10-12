@@ -24,17 +24,15 @@ use File::Basename;
 use File::Spec;
 use ExtUtils::MakeMaker qw( neatvalue );
 
-use vars qw(@ISA $VERSION);
-
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
-@ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-$VERSION = '6.42';
+our @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
+our $VERSION = '6.55_02';
 
 $ENV{EMXSHELL} = 'sh'; # to run `commands`
 
-my $BORLAND = 1 if $Config{'cc'} =~ /^bcc/i;
-my $GCC     = 1 if $Config{'cc'} =~ /^gcc/i;
+my $BORLAND = $Config{'cc'} =~ /^bcc/i ? 1 : 0;
+my $GCC     = $Config{'cc'} =~ /^gcc/i ? 1 : 0;
 
 
 =head2 Overridden methods
@@ -128,12 +126,10 @@ Using \ for Windows.
 sub init_DIRFILESEP {
     my($self) = shift;
 
-    my $make = $self->make;
-
     # The ^ makes sure its not interpreted as an escape in nmake
-    $self->{DIRFILESEP} = $make eq 'nmake' ? '^\\' :
-                          $make eq 'dmake' ? '\\\\'
-                                           : '\\';
+    $self->{DIRFILESEP} = $self->is_make_type('nmake') ? '^\\' :
+                          $self->is_make_type('dmake') ? '\\\\'
+                                                       : '\\';
 }
 
 =item B<init_others>
@@ -153,26 +149,15 @@ Adjustments are made for Borland's quirks needing -L to come first.
 sub init_others {
     my ($self) = @_;
 
-    # Used in favor of echo because echo won't strip quotes. :(
-    $self->{ECHO}     ||= $self->oneliner('print qq{@ARGV}', ['-l']);
-    $self->{ECHO_N}   ||= $self->oneliner('print qq{@ARGV}');
-
-    $self->{TOUCH}    ||= '$(ABSPERLRUN) -MExtUtils::Command -e touch';
-    $self->{CHMOD}    ||= '$(ABSPERLRUN) -MExtUtils::Command -e chmod'; 
-    $self->{CP}       ||= '$(ABSPERLRUN) -MExtUtils::Command -e cp';
-    $self->{RM_F}     ||= '$(ABSPERLRUN) -MExtUtils::Command -e rm_f';
-    $self->{RM_RF}    ||= '$(ABSPERLRUN) -MExtUtils::Command -e rm_rf';
-    $self->{MV}       ||= '$(ABSPERLRUN) -MExtUtils::Command -e mv';
     $self->{NOOP}     ||= 'rem';
-    $self->{TEST_F}   ||= '$(ABSPERLRUN) -MExtUtils::Command -e test_f';
     $self->{DEV_NULL} ||= '> NUL';
 
     $self->{FIXIN}    ||= $self->{PERL_CORE} ? 
       "\$(PERLRUN) $self->{PERL_SRC}/win32/bin/pl2bat.pl" : 
       'pl2bat.bat';
 
-    $self->{LD}     ||= $Config{ld} || 'link';
-    $self->{AR}     ||= $Config{ar} || 'lib';
+    $self->{LD}     ||= 'link';
+    $self->{AR}     ||= 'lib';
 
     $self->SUPER::init_others;
 
@@ -236,7 +221,7 @@ sub special_targets {
 
     my $make_frag = $self->SUPER::special_targets;
 
-    $make_frag .= <<'MAKE_FRAG' if $self->make eq 'dmake';
+    $make_frag .= <<'MAKE_FRAG' if $self->is_make_type('dmake');
 .USESHELL :
 MAKE_FRAG
 
@@ -331,7 +316,7 @@ $(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP) $(INST_ARCHAUTODIR)$(DFSEP).
     } elsif ($BORLAND) {
       push(@m,
        q{	$(LD) $(LDDLFLAGS) $(OTHERLDFLAGS) }.$ldfrom.q{,$@,,}
-       .($self->make eq 'dmake' 
+       .($self->is_make_type('dmake')
                 ? q{$(PERL_ARCHIVE:s,/,\,) $(LDLOADLIBS:s,/,\,) }
 		 .q{$(MYEXTLIB:s,/,\,),$(EXPORT_LIST:s,/,\,)}
 		: q{$(subst /,\,$(PERL_ARCHIVE)) $(subst /,\,$(LDLOADLIBS)) }
@@ -342,13 +327,10 @@ $(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP) $(INST_ARCHAUTODIR)$(DFSEP).
        q{	$(LD) -out:$@ $(LDDLFLAGS) }.$ldfrom.q{ $(OTHERLDFLAGS) }
       .q{$(MYEXTLIB) $(PERL_ARCHIVE) $(LDLOADLIBS) -def:$(EXPORT_LIST)});
 
-      # VS2005 (aka VC 8) or higher, but not for 64-bit compiler from Platform SDK
-      if ($Config{ivsize} == 4 && $Config{cc} eq 'cl' and $Config{ccversion} =~ /^(\d+)/ and $1 >= 14) 
-    {
-        push(@m,
-          q{
-	mt -nologo -manifest $@.manifest -outputresource:$@;2 && del $@.manifest});
-      }
+      # Embed the manifest file if it exists
+      push(@m, q{
+       if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;2
+       if exist $@.manifest del $@.manifest});
     }
     push @m, '
 	$(CHMOD) $(PERM_RWX) $@
@@ -419,7 +401,32 @@ banner.
 
 sub pasthru {
     my($self) = shift;
-    return "PASTHRU = " . ($self->make eq 'nmake' ? "-nologo" : "");
+    return "PASTHRU = " . ($self->is_make_type('nmake') ? "-nologo" : "");
+}
+
+
+=item arch_check (override)
+
+Normalize all arguments for consistency of comparison.
+
+=cut
+
+sub arch_check {
+    my $self = shift;
+
+    # Win32 is an XS module, minperl won't have it.
+    # arch_check() is not critical, so just fake it.
+    return 1 unless $self->can_load_xs;
+    return $self->SUPER::arch_check( map { $self->_normalize_path_name($_) } @_);
+}
+
+sub _normalize_path_name {
+    my $self = shift;
+    my $file = shift;
+
+    require Win32;
+    my $short = Win32::GetShortPathName($file);
+    return defined $short ? lc $short : lc $file;
 }
 
 
@@ -458,7 +465,7 @@ sub quote_literal {
     # quotes; however it transforms {{ into { either inside and outside double
     # quotes.  It also translates }} into }.  The escaping below is not
     # 100% correct.
-    if( $self->make eq 'dmake' ) {
+    if( $self->is_make_type('dmake') ) {
         $text =~ s/{/{{/g;
         $text =~ s/}}/}}}/g;
     }
@@ -482,19 +489,17 @@ sub escape_newlines {
 dmake can handle Unix style cd'ing but nmake (at least 1.5) cannot.  It
 wants:
 
-    cd dir
+    cd dir1\dir2
     command
     another_command
-    cd ..
-
-NOTE: This only works with simple relative directories.  Throw it an absolute dir or something with .. in it and things will go wrong.
+    cd ..\..
 
 =cut
 
 sub cd {
     my($self, $dir, @cmds) = @_;
 
-    return $self->SUPER::cd($dir, @cmds) unless $self->make eq 'nmake';
+    return $self->SUPER::cd($dir, @cmds) unless $self->is_make_type('nmake');
 
     my $cmd = join "\n\t", map "$_", @cmds;
 
@@ -562,6 +567,11 @@ OPTIMIZE = $self->{OPTIMIZE}
 PERLTYPE = $self->{PERLTYPE}
 };
 
+}
+
+sub is_make_type {
+    my($self, $type) = @_;
+    return !! ($self->make =~ /\b$type(?:\.exe)?$/);
 }
 
 1;

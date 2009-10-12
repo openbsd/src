@@ -290,7 +290,7 @@ esac
 
 # we want dynamic fp rounding mode, and we want ieee exception semantics
 case "$isgcc" in
-gcc)	;;
+gcc)	ccflags="$ccflags -mfp-rounding-mode=d -mieee" ;;
 *)	case "$_DEC_cc_style" in
 	new)	ccflags="$ccflags -fprm d -ieee"	;;
 	esac
@@ -516,6 +516,27 @@ esac
 case "$LD_LIBRARY_PATH" in
 '') ;;
 * ) export LD_LIBRARY_PATH ;;
+esac
+
+# Enforce strict data.
+case "$isgcc" in
+gcc)   ;;
+*)     # -trapuv poisons uninitialized stack with
+       #  0xfff58005fff58005 which is as a pointer a segmentation fault and
+       #  as a floating point a signaling NaN.  As integers/longs that causes
+       #  no traps but at least it is not zero.
+       # -readonly_strings moves string constants into read-only section
+       #  which hopefully means that modifying them leads into segmentation
+       #  faults.
+       #
+       for i in -trapuv -readonly_strings
+       do
+               case "$ccflags" in
+               *$i*) ;;
+               *) ccflags="$ccflags $i" ;;
+               esac
+       done
+       ;;
 esac
 
 #

@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -56,14 +55,14 @@ ERR
 }
 
 {
-    # line 60
+    # line 59 
     like("foo", "not a regex");
     $TB->is_eq($out->read, <<OUT);
 not ok 2
 OUT
 
     $TB->is_eq($err->read, <<OUT);
-#   Failed test at $0 line 60.
+#   Failed test at $0 line 59.
 #     'not a regex' doesn't look much like a regex to me.
 OUT
 

@@ -13,7 +13,7 @@ package CGI::Cookie;
 # wish, but if you redistribute a modified version, please attach a note
 # listing the modifications you have made.
 
-$CGI::Cookie::VERSION='1.28';
+$CGI::Cookie::VERSION='1.29';
 
 use CGI::Util qw(rearrange unescape escape);
 use CGI;
@@ -51,7 +51,7 @@ sub fetch {
    my %results;
    my($key,$value);
    
-   my(@pairs) = split("[;,] ?",$raw_cookie);
+   my @pairs = split("[;,] ?",$raw_cookie);
    foreach (@pairs) {
      s/\s*(.*?)\s*/$1/;
      if (/^([^=]+)=(.*)/) {
@@ -88,7 +88,7 @@ sub parse {
   my ($self,$raw_cookie) = @_;
   my %results;
 
-  my(@pairs) = split("; ?",$raw_cookie);
+  my @pairs = split("[;,] ?",$raw_cookie);
   foreach (@pairs) {
     s/\s*(.*?)\s*/$1/;
     my($key,$value) = split("=",$_,2);

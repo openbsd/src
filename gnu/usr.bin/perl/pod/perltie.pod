@@ -900,11 +900,13 @@ C<syswrite> function.
 X<PRINT>
 
 This method will be triggered every time the tied handle is printed to
-with the C<print()> function.
-Beyond its self reference it also expects the list that was passed to
-the print function.
+with the C<print()> or C<say()> functions.  Beyond its self reference
+it also expects the list that was passed to the print function.
 
     sub PRINT { $r = shift; $$r++; print join($,,map(uc($_),@_)),$\ }
+
+C<say()> acts just like C<print()> except $\ will be localized to C<\n> so
+you need do nothing special to handle C<say()> in C<PRINT()>.
 
 =item PRINTF this, LIST
 X<PRINTF>
@@ -1166,7 +1168,7 @@ tie methods for slice operations.
 You cannot easily tie a multilevel data structure (such as a hash of
 hashes) to a dbm file.  The first problem is that all but GDBM and
 Berkeley DB have size limitations, but beyond that, you also have problems
-with how references are to be represented on disk.  One experimental
+with how references are to be represented on disk.  One
 module that does attempt to address this need is DBM::Deep.  Check your
 nearest CPAN site as described in L<perlmodlib> for source code.  Note
 that despite its name, DBM::Deep does not use dbm.  Another earlier attempt

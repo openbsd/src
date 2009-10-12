@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: fail_one.t,v 1.2 2009/05/16 21:42:57 simon Exp $
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -13,51 +12,32 @@ BEGIN {
 
 use strict;
 
-require Test::Simple::Catch;
-my($out, $err) = Test::Simple::Catch::caught();
+# Normalize the output whether we're running under Test::Harness or not.
 local $ENV{HARNESS_ACTIVE} = 0;
 
+use Test::Builder;
+use Test::Builder::NoOutput;
 
-# Can't use Test.pm, that's a 5.005 thing.
-package My::Test;
+my $Test = Test::Builder->new;
 
-print "1..2\n";
+{
+    my $tb = Test::Builder::NoOutput->create;
 
-my $test_num = 1;
-# Utility testing functions.
-sub ok ($;$) {
-    my($test, $name) = @_;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-    $test_num++;
+    $tb->plan( tests => 1 );
 
-    return $test ? 1 : 0;
-}
+#line 28
+    $tb->ok(0);
+    $tb->_ending;
 
-
-package main;
-
-require Test::Simple;
-Test::Simple->import(tests => 1);
-
-#line 45
-ok(0);
-
-END {
-    My::Test::ok($$out eq <<OUT);
+    $Test->is_eq($tb->read('out'), <<OUT);
 1..1
 not ok 1
 OUT
 
-    My::Test::ok($$err eq <<ERR) || print $$err;
-#   Failed test at $0 line 45.
+    $Test->is_eq($tb->read('err'), <<ERR);
+#   Failed test at $0 line 28.
 # Looks like you failed 1 test of 1.
 ERR
 
-    # Prevent Test::Simple from existing with non-zero
-    exit 0;
+    $Test->done_testing(2);
 }

@@ -2,8 +2,7 @@ package Encode::Alias;
 use strict;
 use warnings;
 no warnings 'redefine';
-use Encode;
-our $VERSION = do { my @r = ( q$Revision: 2.7 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.12 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 sub DEBUG () { 0 }
 
 use base qw(Exporter);
@@ -20,6 +19,7 @@ our @Alias;    # ordered matching list
 our %Alias;    # cached known aliases
 
 sub find_alias {
+    require Encode;
     my $class = shift;
     my $find  = shift;
     unless ( exists $Alias{$find} ) {
@@ -128,13 +128,14 @@ sub undef_aliases {
 }
 
 sub init_aliases {
+    require Encode;
     undef_aliases();
 
     # Try all-lower-case version should all else fails
     define_alias( qr/^(.*)$/ => '"\L$1"' );
 
     # UTF/UCS stuff
-    define_alias( qr/^UTF-?7$/i     => '"UTF-7"' );
+    define_alias( qr/^(unicode-1-1-)?UTF-?7$/i     => '"UTF-7"' );
     define_alias( qr/^UCS-?2-?LE$/i => '"UCS-2LE"' );
     define_alias(
         qr/^UCS-?2-?(BE)?$/i    => '"UCS-2BE"',
@@ -150,8 +151,7 @@ sub init_aliases {
     # ASCII
     define_alias( qr/^(?:US-?)ascii$/i       => '"ascii"' );
     define_alias( 'C'                        => 'ascii' );
-    define_alias( qr/\bISO[-_]?646[-_]?US$/i => '"ascii"' );
-    define_alias( '646'                      => 'ascii' );
+    define_alias( qr/\b(?:ISO[-_]?)?646(?:[-_]?US)?$/i => '"ascii"' );
 
     # Allow variants of iso-8859-1 etc.
     define_alias( qr/\biso[-_]?(\d+)[-_](\d+)$/i => '"iso-$1-$2"' );
@@ -207,6 +207,8 @@ sub init_aliases {
     # predefined in *.ucm; unneeded
     # define_alias( qr/\bmacIcelandic$/i => '"macIceland"');
     define_alias( qr/^mac_(.*)$/i => '"mac$1"' );
+    # http://rt.cpan.org/Ticket/Display.html?id=36326
+    define_alias( qr/^macintosh$/i => '"MacRoman"' );
 
     # Ououououou. gone.  They are differente!
     # define_alias( qr/\bmacRomanian$/i => '"macRumanian"');
@@ -254,7 +256,7 @@ sub init_aliases {
     }
 
     # utf8 is blessed :)
-    define_alias( qr/^UTF-8$/i => '"utf-8-strict"' );
+    define_alias( qr/\bUTF-8$/i => '"utf-8-strict"' );
 
     # At last, Map white space and _ to '-'
     define_alias( qr/^(\S+)[\s_]+(.*)$/i => '"$1-$2"' );

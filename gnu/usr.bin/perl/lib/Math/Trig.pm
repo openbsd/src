@@ -10,21 +10,23 @@ package Math::Trig;
 use 5.005;
 use strict;
 
-use Math::Complex 1.36;
+use Math::Complex 1.56;
 use Math::Complex qw(:trig :pi);
 
 use vars qw($VERSION $PACKAGE @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 
 @ISA = qw(Exporter);
 
-$VERSION = 1.04;
+$VERSION = 1.20;
 
 my @angcnv = qw(rad2deg rad2grad
 		deg2rad deg2grad
 		grad2rad grad2deg);
 
+my @areal = qw(asin_real acos_real);
+
 @EXPORT = (@{$Math::Complex::EXPORT_TAGS{'trig'}},
-	   @angcnv);
+	   @angcnv, @areal);
 
 my @rdlcnv = qw(cartesian_to_cylindrical
 		cartesian_to_spherical
@@ -44,7 +46,7 @@ my @greatcircle = qw(
 
 my @pi = qw(pi pi2 pi4 pip2 pip4);
 
-@EXPORT_OK = (@rdlcnv, @greatcircle, @pi);
+@EXPORT_OK = (@rdlcnv, @greatcircle, @pi, 'Inf');
 
 # See e.g. the following pages:
 # http://www.movable-type.co.uk/scripts/LatLong.html
@@ -92,6 +94,22 @@ sub rad2grad ($;$) { my $d = _RG * $_[0]; $_[1] ? $d : grad2grad($d) }
 
 sub grad2rad ($;$) { my $d = _GR * $_[0]; $_[1] ? $d : rad2rad($d) }
 
+#
+# acos and asin functions which always return a real number
+#
+
+sub acos_real {
+    return 0  if $_[0] >=  1;
+    return pi if $_[0] <= -1;
+    return acos($_[0]);
+}
+
+sub asin_real {
+    return  &pip2 if $_[0] >=  1;
+    return -&pip2 if $_[0] <= -1;
+    return asin($_[0]);
+}
+
 sub cartesian_to_spherical {
     my ( $x, $y, $z ) = @_;
 
@@ -99,7 +117,7 @@ sub cartesian_to_spherical {
 
     return ( $rho,
              atan2( $y, $x ),
-             $rho ? acos( $z / $rho ) : 0 );
+             $rho ? acos_real( $z / $rho ) : 0 );
 }
 
 sub spherical_to_cartesian {
@@ -141,29 +159,29 @@ sub great_circle_distance {
     my $lat1 = pip2 - $phi1;
 
     return $rho *
-        acos(cos( $lat0 ) * cos( $lat1 ) * cos( $theta0 - $theta1 ) +
-             sin( $lat0 ) * sin( $lat1 ) );
+	acos_real( cos( $lat0 ) * cos( $lat1 ) * cos( $theta0 - $theta1 ) +
+		   sin( $lat0 ) * sin( $lat1 ) );
 }
 
 sub great_circle_direction {
     my ( $theta0, $phi0, $theta1, $phi1 ) = @_;
 
-    my $distance = &great_circle_distance;
+    my $distance = great_circle_distance($theta0, $phi0, $theta1, $phi1);
 
     my $lat0 = pip2 - $phi0;
     my $lat1 = pip2 - $phi1;
 
     my $direction =
-	acos((sin($lat1) - sin($lat0) * cos($distance)) /
-	     (cos($lat0) * sin($distance)));
-
+ 	acos_real((sin($lat1) - sin($lat0) * cos($distance)) /
+		  (cos($lat0) * sin($distance)));
+  
     $direction = pi2 - $direction
 	if sin($theta1 - $theta0) < 0;
 
     return rad2rad($direction);
 }
 
-*great_circle_bearing = \&great_circle_direction;
+*great_circle_bearing         = \&great_circle_direction;
 
 sub great_circle_waypoint {
     my ( $theta0, $phi0, $theta1, $phi1, $point ) = @_;
@@ -189,8 +207,8 @@ sub great_circle_waypoint {
     my $z = $A * sin($lat0)                + $B * sin($lat1);
 
     my $theta = atan2($y, $x);
-    my $phi   = acos($z);
-    
+    my $phi   = acos_real($z);
+
     return ($theta, $phi);
 }
 
@@ -203,7 +221,9 @@ sub great_circle_destination {
 
     my $lat0 = pip2 - $phi0;
 
-    my $phi1   = asin(sin($lat0)*cos($dst)+cos($lat0)*sin($dst)*cos($dir0));
+    my $phi1   = asin_real(sin($lat0)*cos($dst) +
+			   cos($lat0)*sin($dst)*cos($dir0));
+
     my $theta1 = $theta0 + atan2(sin($dir0)*sin($dst)*cos($lat0),
 				 cos($dst)-sin($lat0)*sin($phi1));
 
@@ -289,12 +309,12 @@ and cotanh/coth are aliases)
 
 B<csch>, B<cosech>, B<sech>, B<coth>, B<cotanh>
 
-The arcus (also known as the inverse) functions of the hyperbolic
+The area (also known as the inverse) functions of the hyperbolic
 sine, cosine, and tangent
 
 B<asinh>, B<acosh>, B<atanh>
 
-The arcus cofunctions of the hyperbolic sine, cosine, and tangent
+The area cofunctions of the hyperbolic sine, cosine, and tangent
 (acsch/acosech and acoth/acotanh are aliases)
 
 B<acsch>, B<acosech>, B<asech>, B<acoth>, B<acotanh>
@@ -538,7 +558,7 @@ optional, it defaults to 1 (the unit sphere), therefore the distance
 defaults to radians.
 
 If you think geographically the I<theta> are longitudes: zero at the
-Greenwhich meridian, eastward positive, westward negative--and the
+Greenwhich meridian, eastward positive, westward negative -- and the
 I<phi> are latitudes: zero at the North Pole, northward positive,
 southward negative.  B<NOTE>: this formula thinks in mathematics, not
 geographically: the I<phi> zero is at the North Pole, not at the
@@ -570,18 +590,22 @@ The result of great_circle_direction is in radians, zero indicating
 straight north, pi or -pi straight south, pi/2 straight west, and
 -pi/2 straight east.
 
+=head2 great_circle_destination
+
 You can inversely compute the destination if you know the
 starting point, direction, and distance:
 
-=head2 great_circle_destination
-
   use Math::Trig 'great_circle_destination';
 
-  # thetad and phid are the destination coordinates,
-  # dird is the final direction at the destination.
+  # $diro is the original direction,
+  # for example from great_circle_bearing().
+  # $distance is the angular distance in radians,
+  # for example from great_circle_distance().
+  # $thetad and $phid are the destination coordinates,
+  # $dird is the final direction at the destination.
 
   ($thetad, $phid, $dird) =
-    great_circle_destination($theta, $phi, $direction, $distance);
+    great_circle_destination($theta, $phi, $diro, $distance);
 
 or the midpoint if you know the end points:
 
@@ -617,9 +641,11 @@ You can import all the great circle formulas by
 
 Notice that the resulting directions might be somewhat surprising if
 you are looking at a flat worldmap: in such map projections the great
-circles quite often do not look like the shortest routes-- but for
+circles quite often do not look like the shortest routes --  but for
 example the shortest possible routes from Europe or North America to
-Asia do often cross the polar regions.
+Asia do often cross the polar regions.  (The common Mercator projection
+does B<not> show great circles as straight lines: straight lines in the
+Mercator projection are lines of constant bearing.)
 
 =head1 EXAMPLES
 
@@ -647,13 +673,69 @@ The midpoint between London and Tokyo being
 
     my @M = great_circle_midpoint(@L, @T);
 
-or about 89.16N 68.93E, practically at the North Pole.
+or about 69 N 89 E, in the frozen wastes of Siberia.
+
+B<NOTE>: you B<cannot> get from A to B like this:
+
+   Dist = great_circle_distance(A, B)
+   Dir  = great_circle_direction(A, B)
+   C    = great_circle_destination(A, Dist, Dir)
+
+and expect C to be B, because the bearing constantly changes when
+going from A to B (except in some special case like the meridians or
+the circles of latitudes) and in great_circle_destination() one gives
+a B<constant> bearing to follow.
 
 =head2 CAVEAT FOR GREAT CIRCLE FORMULAS
 
 The answers may be off by few percentages because of the irregular
 (slightly aspherical) form of the Earth.  The errors are at worst
 about 0.55%, but generally below 0.3%.
+
+=head2 Real-valued asin and acos
+
+For small inputs asin() and acos() may return complex numbers even
+when real numbers would be enough and correct, this happens because of
+floating-point inaccuracies.  You can see these inaccuracies for
+example by trying theses:
+
+  print cos(1e-6)**2+sin(1e-6)**2 - 1,"\n";
+  printf "%.20f", cos(1e-6)**2+sin(1e-6)**2,"\n";
+
+which will print something like this
+
+  -1.11022302462516e-16
+  0.99999999999999988898
+
+even though the expected results are of course exactly zero and one.
+The formulas used to compute asin() and acos() are quite sensitive to
+this, and therefore they might accidentally slip into the complex
+plane even when they should not.  To counter this there are two
+interfaces that are guaranteed to return a real-valued output.
+
+=over 4
+
+=item asin_real
+
+    use Math::Trig qw(asin_real);
+
+    $real_angle = asin_real($input_sin);
+
+Return a real-valued arcus sine if the input is between [-1, 1],
+B<inclusive> the endpoints.  For inputs greater than one, pi/2
+is returned.  For inputs less than minus one, -pi/2 is returned.
+
+=item acos_real
+
+    use Math::Trig qw(acos_real);
+
+    $real_angle = acos_real($input_cos);
+
+Return a real-valued arcus cosine if the input is between [-1, 1],
+B<inclusive> the endpoints.  For inputs greater than one, zero
+is returned.  For inputs less than minus one, pi is returned.
+
+=back
 
 =head1 BUGS
 
@@ -669,10 +751,17 @@ an answer instead of giving a fatal runtime error.
 
 Do not attempt navigation using these formulas.
 
+L<Math::Complex>
+
 =head1 AUTHORS
 
 Jarkko Hietaniemi <F<jhi!at!iki.fi>> and 
 Raphael Manfredi <F<Raphael_Manfredi!at!pobox.com>>.
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself. 
 
 =cut
 

@@ -3,6 +3,7 @@ package CPANPLUS::Module::Author;
 use strict;
 
 use CPANPLUS::Error;
+use CPANPLUS::Internals::Constants;
 use Params::Check               qw[check];
 use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
 
@@ -12,7 +13,7 @@ local $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Module::Author - author objects used by CPANPLUS
+CPANPLUS::Module::Author - CPANPLUS module author class
 
 =head1 SYNOPSIS
 
@@ -129,7 +130,10 @@ sub modules {
 
     my $aref = $cb->_search_module_tree(
                     type    => 'author',
-                    allow   => [$self],
+                    ### XXX, depending on backend, this is either an object
+                    ### or the cpanid string. Dont know an elegant way to
+                    ### solve this right now, so passing both
+                    allow   => [$self, $self->cpanid],
                 );
     return @$aref if $aref;
     return;
@@ -173,18 +177,33 @@ sub distributions {
     my $href = $mod->_parse_checksums_file( file => $file ) or return;
 
     my @rv;
-    for my $dist ( keys %$href ) {
-        my $clone = $mod->clone;
+    for my $name ( keys %$href ) {
 
-        $clone->package( $dist );
-        $clone->module(  $clone->package_name );
-        $clone->version( $clone->package_version );
-        $clone->mtime(   $href->{$dist}->{'mtime'} );   # release date
-
+        ### shortcut asap, so we avoid extra ops. On big checksums files
+        ### the call to clone() takes up a lot of time.
         ### .meta files are now also in the checksums file,
         ### which means we have to filter out things that dont
         ### match our regex
-        push @rv, $clone if $clone->package_extension;
+        next if $mod->package_extension( $name ) eq META_EXT;
+
+        ### used to do this wiht ->clone. However, that calls ->dslip,
+        ### (which is wrong anyway, as we're doing a different module),
+        ### which in turn calls ->contains, which scans the entire
+        ### module tree using _search_module_tree, which uses P::C
+        ### and is therefor VERY VERY slow.
+        ### so let's do this the direct way for speed ups.
+        my $dist = CPANPLUS::Module::Fake->new(
+                        module  =>  do { my $m = $mod->package_name( $name );
+                                         $m =~ s/-/::/g; $m;
+                                    },      
+                        version =>  $mod->package_version(  $name ),
+                        package =>  $name,
+                        path    =>  $mod->path,     # same author after all
+                        author  =>  $mod->author,   # same author after all
+                        mtime   =>  $href->{$name}->{'mtime'},  # release date
+                    );
+
+        push @rv, $dist;
     }
 
     return @rv;

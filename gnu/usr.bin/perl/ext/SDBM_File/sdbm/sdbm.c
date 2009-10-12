@@ -77,23 +77,28 @@ sdbm_open(register char *file, register int flags, register int mode)
 	register DBM *db;
 	register char *dirname;
 	register char *pagname;
-	register int n;
+	size_t filelen;
+	const size_t dirfext_len = sizeof(DIRFEXT "");
+	const size_t pagfext_len = sizeof(PAGFEXT "");
 
 	if (file == NULL || !*file)
 		return errno = EINVAL, (DBM *) NULL;
 /*
  * need space for two seperate filenames
  */
-	n = strlen(file) * 2 + strlen(DIRFEXT) + strlen(PAGFEXT) + 2;
+	filelen = strlen(file);
 
-	if ((dirname = (char *) malloc((unsigned) n)) == NULL)
+	if ((dirname = (char *) malloc(filelen + dirfext_len + 1
+				       + filelen + pagfext_len + 1)) == NULL)
 		return errno = ENOMEM, (DBM *) NULL;
 /*
  * build the file names
  */
-	dirname = strcat(strcpy(dirname, file), DIRFEXT);
-	pagname = strcpy(dirname + strlen(dirname) + 1, file);
-	pagname = strcat(pagname, PAGFEXT);
+	memcpy(dirname, file, filelen);
+	memcpy(dirname + filelen, DIRFEXT, dirfext_len + 1);
+	pagname = dirname + filelen + dirfext_len + 1;
+	memcpy(pagname, file, filelen);
+	memcpy(pagname + filelen, PAGFEXT, pagfext_len + 1);
 
 	db = sdbm_prep(dirname, pagname, flags, mode);
 	free((char *) dirname);

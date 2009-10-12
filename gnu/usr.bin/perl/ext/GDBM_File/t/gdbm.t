@@ -487,7 +487,7 @@ EOM
    $h{"fred"} = "joe" ;
    ok(76, $h{"fred"} eq "joe");
 
-   eval { grep { $h{$_} } (1, 2, 3) };
+   eval { my @r= grep { $h{$_} } (1, 2, 3) };
    ok (77, ! $@);
 
 
@@ -503,7 +503,7 @@ EOM
 
    ok(79, $db->FIRSTKEY() eq "fred") ;
    
-   eval { grep { $h{$_} } (1, 2, 3) };
+   eval { my @r= grep { $h{$_} } (1, 2, 3) };
    ok (80, ! $@);
 
    undef $db ;

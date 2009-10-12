@@ -1,7 +1,7 @@
 /*    perlsdio.h
  *
  *    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001,
- *    2002, 2003, 2006, 2007, by Larry Wall and others
+ *    2002, 2003, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -152,3 +152,13 @@
 
 #endif	/* NETWARE */
 #endif /* PERLIO_IS_STDIO */
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

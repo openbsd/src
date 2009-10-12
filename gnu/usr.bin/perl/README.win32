@@ -135,21 +135,18 @@ and edit win32/config.vc to change "make=nmake" into "make=dmake".  The
 latter step is only essential if you want to use dmake as your default
 make for building extensions using MakeMaker.
 
-=item Microsoft Visual C++ 2008 Express Edition Beta 2
+=item Microsoft Visual C++ 2008 Express Edition
 
 This free version of Visual C++ 2008 Professional contains the same compiler
 and linker that ship with the full version, and also contains everything
 necessary to build Perl, rather than requiring a separate download of the
 Platform SDK like previous versions did.
 
-The Beta 2 package is currently available from 
-
-http://msdn2.microsoft.com/en-us/express/future/default.aspx
-http://msdn2.microsoft.com/en-gb/express/future/default.aspx
-
-The final release version will probably be found by searching in the Download
-Center at http://www.microsoft.com/downloads/search.aspx?displaylang=en in due
-course.
+This package can be downloaded by searching for "Visual Studio 2008 Express
+Edition" in the Download Center at
+http://www.microsoft.com/downloads/search.aspx?displaylang=en.  (Providing exact
+links to these packages has proven a pointless task because the links keep on
+changing so often.)
 
 Install Visual C++ 2008, then setup your environment using
 

@@ -1,11 +1,21 @@
 #!/usr/bin/perl -w
+# 
+# Regenerate (overwriting only if changed):
+#
+#    keywords.h
+#
+# from information stored in the DATA section of this file.
+#
+# Accepts the standard regen_lib -q and -v args.
+#
+# This script is normally invoked from regen.pl.
+
 use strict;
 
 require 'regen_lib.pl';
-safer_unlink ("keywords.h");
-open(KW, ">keywords.h") || die "Can't create keywords.h: $!\n";
-binmode KW;
-select KW;
+
+my $kw = safer_open("keywords.h-new");
+select $kw;
 
 print <<EOM;
 /* -*- buffer-read-only: t -*-
@@ -35,9 +45,11 @@ while (<DATA>) {
     print &tab(5, "#define KEY_$keyword"), $keynum++, "\n";
 }
 
-print KW "\n/* ex: set ro: */\n";
+print $kw "\n/* ex: set ro: */\n";
 
-close KW or die "Error closing keywords.h: $!";
+safer_close($kw);
+
+rename_if_different("keywords.h-new", "keywords.h");
 
 ###########################################################################
 sub tab {

@@ -12,6 +12,18 @@ with fewer hidden snags.  Additionally, because the language has more
 builtin functionality, it can rely less upon external (and possibly
 untrustworthy) programs to accomplish its purposes.
 
+=head1 SECURITY VULNERABILITY CONTACT INFORMATION
+
+If you believe you have found a security vulnerability in Perl, please email
+perl5-security-report@perl.org with details.  This points to a closed
+subscription, unarchived mailing list.  Please only use this address for
+security issues in the Perl core, not for modules independently distributed on
+CPAN.
+
+=head1 SECURITY MECHANISMS AND CONCERNS
+
+=head2 Taint mode
+
 Perl automatically enables a set of special security checks, called I<taint
 mode>, when it detects its program running with differing real and effective
 user or group IDs.  The setuid bit in Unix permissions is mode 04000, the
@@ -358,7 +370,11 @@ notices the otherwise useless setuid/gid bits on Perl scripts.  It does
 this via a special executable called F<suidperl> that is automatically
 invoked for you if it's needed.
 
-However, if the kernel set-id script feature isn't disabled, Perl will
+B<The use of suidperl is considered deprecated>, and will be removed
+in Perl 5.12.0.  It is I<strongly> recommended that all code uses
+the simplier and more secure C-wrappers described below.
+
+If the kernel set-id script feature isn't disabled, Perl will
 complain loudly that your set-id script is insecure.  You'll need to
 either disable the kernel set-id script feature, or put a C wrapper around
 the script.  A C wrapper is just a compiled program that does nothing
@@ -388,7 +404,8 @@ should never have to specify this yourself.  Most modern releases of
 SysVr4 and BSD 4.4 use this approach to avoid the kernel race condition.
 
 Prior to release 5.6.1 of Perl, bugs in the code of F<suidperl> could
-introduce a security hole.
+introduce a security hole.  The use of F<suidperl> is considered
+deprecated, and will be removed in Perl 5.12.0.
 
 =head2 Protecting Your Programs
 
@@ -420,11 +437,11 @@ code, but none can definitively conceal it (this is true of every
 language, not just Perl).
 
 If you're concerned about people profiting from your code, then the
-bottom line is that nothing but a restrictive licence will give you
+bottom line is that nothing but a restrictive license will give you
 legal security.  License your software and pepper it with threatening
 statements like "This is unpublished proprietary software of XYZ Corp.
 Your access to it does not give you permission to use it blah blah
-blah."  You should see a lawyer to be sure your licence's wording will
+blah."  You should see a lawyer to be sure your license's wording will
 stand up in court.
 
 =head2 Unicode
@@ -457,13 +474,16 @@ the hash function is randomly perturbed by a pseudorandom seed which
 makes generating such naughty hash keys harder.
 See L<perlrun/PERL_HASH_SEED> for more information.
 
-The random perturbation is done by default but if one wants for some
-reason emulate the old behaviour one can set the environment variable
-PERL_HASH_SEED to zero (or any other integer).  One possible reason
-for wanting to emulate the old behaviour is that in the new behaviour
-consecutive runs of Perl will order hash keys differently, which may
-confuse some applications (like Data::Dumper: the outputs of two
-different runs are no more identical).
+In Perl 5.8.1 the random perturbation was done by default, but as of
+5.8.2 it is only used on individual hashes if the internals detect the
+insertion of pathological data. If one wants for some reason emulate the
+old behaviour (and expose oneself to DoS attacks) one can set the
+environment variable PERL_HASH_SEED to zero to disable the protection
+(or any other integer to force a known perturbation, rather than random). 
+One possible reason for wanting to emulate the old behaviour is that in the
+new behaviour consecutive runs of Perl will order hash keys differently,
+which may confuse some applications (like Data::Dumper: the outputs of two
+different runs are no longer identical).
 
 B<Perl has never guaranteed any ordering of the hash keys>, and the
 ordering has already changed several times during the lifetime of
@@ -493,15 +513,14 @@ Perl running out of memory.
 
 Sorting - the quicksort algorithm used in Perls before 5.8.0 to
 implement the sort() function is very easy to trick into misbehaving
-so that it consumes a lot of time.  Nothing more is required than
-resorting a list already sorted.  Starting from Perl 5.8.0 a different
-sorting algorithm, mergesort, is used.  Mergesort is insensitive to
-its input data, so it cannot be similarly fooled.
+so that it consumes a lot of time.  Starting from Perl 5.8.0 a different
+sorting algorithm, mergesort, is used by default.  Mergesort cannot
+misbehave on any input.
 
 =back
 
 See L<http://www.cs.rice.edu/~scrosby/hash/> for more information,
-and any computer science textbook on the algorithmic complexity.
+and any computer science textbook on algorithmic complexity.
 
 =head1 SEE ALSO
 

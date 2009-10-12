@@ -23,7 +23,7 @@ use AutoLoader;
 use FileHandle;
 use vars qw($canonical $forgive_me $VERSION);
 
-$VERSION = '2.18';
+$VERSION = '2.20';
 *AUTOLOAD = \&AutoLoader::AUTOLOAD;		# Grrr...
 
 #
@@ -1177,7 +1177,7 @@ Storable was written by Raphael Manfredi F<E<lt>Raphael_Manfredi@pobox.comE<gt>>
 Maintenance is now done by the perl5-porters F<E<lt>perl5-porters@perl.orgE<gt>>
 
 Please e-mail us with problems, bug fixes, comments and complaints,
-although if you have complements you should send them to Raphael.
+although if you have compliments you should send them to Raphael.
 Please don't e-mail Raphael with problems, as he no longer works on
 Storable, and your message will be delayed while he forwards it to us.
 

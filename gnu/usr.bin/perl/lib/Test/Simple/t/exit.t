@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 
 # Can't use Test.pm, that's a 5.005 thing.
 package My::Test;
@@ -11,21 +10,6 @@ BEGIN {
     }
 }
 
-unless( eval { require File::Spec } ) {
-    print "1..0 # Skip Need File::Spec to run this test\n";
-    exit 0;
-}
-
-if( $^O eq 'VMS' && $] <= 5.00503 ) {
-    print "1..0 # Skip test will hang on older VMS perls\n";
-    exit 0;
-}
-
-if( $^O eq 'MacOS' ) {
-    print "1..0 # Skip exit status broken on Mac OS\n";
-    exit 0;
-}
-
 require Test::Builder;
 my $TB = Test::Builder->create();
 $TB->level(0);
@@ -33,29 +17,21 @@ $TB->level(0);
 
 package main;
 
-my $IsVMS = $^O eq 'VMS';
+use Cwd;
+use File::Spec;
 
-print "# Ahh!  I see you're running VMS.\n" if $IsVMS;
+my $Orig_Dir = cwd;
 
-my %Tests = (
-             #                      Everyone Else   VMS
-             'success.plx'              => [0,      0],
-             'one_fail.plx'             => [1,      4],
-             'two_fail.plx'             => [2,      4],
-             'five_fail.plx'            => [5,      4],
-             'extras.plx'               => [2,      4],
-             'too_few.plx'              => [255,    4],
-             'too_few_fail.plx'         => [2,      4],
-             'death.plx'                => [255,    4],
-             'last_minute_death.plx'    => [255,    4],
-             'pre_plan_death.plx'       => ['not zero',    'not zero'],
-             'death_in_eval.plx'        => [0,      0],
-             'require.plx'              => [0,      0],
-             'death_with_handler.plx'   => [255,    4],
-             'exit.plx'                 => [1,      4],
-            );
+my $Perl = File::Spec->rel2abs($^X);
+if( $^O eq 'VMS' ) {
+    # VMS can't use its own $^X in a system call until almost 5.8
+    $Perl = "MCR $^X" if $] < 5.007003;
 
-$TB->plan( tests => scalar keys(%Tests) );
+    # Quiet noisy 'SYS$ABORT'
+    $Perl .= q{ -"I../lib"} if $ENV{PERL_CORE};
+    $Perl .= q{ -"Mvmsish=hushed"};
+}
+
 
 eval { require POSIX; &POSIX::WEXITSTATUS(0) };
 if( $@ ) {
@@ -65,34 +41,74 @@ else {
     *exitstatus = sub { POSIX::WEXITSTATUS($_[0]) }
 }
 
-my $Perl = File::Spec->rel2abs($^X);
+
+# Some OS' will alter the exit code to their own native sense...
+# sometimes.  Rather than deal with the exception we'll just
+# build up the mapping.
+print "# Building up a map of exit codes.  May take a while.\n";
+my %Exit_Map;
+
+open my $fh, ">", "exit_map_test" or die $!;
+print $fh <<'DONE';
+if ($^O eq 'VMS') {
+    require vmsish;
+    import vmsish qw(hushed);
+}
+my $exit = shift;
+print "exit $exit\n";
+END { $? = $exit };
+DONE
+
+close $fh;
+END { 1 while unlink "exit_map_test" }
+
+for my $exit (0..255) {
+    # This correctly emulates Test::Builder's behavior.
+    my $out = qx[$Perl exit_map_test $exit];
+    $TB->like( $out, qr/^exit $exit\n/, "exit map test for $exit" );
+    $Exit_Map{$exit} = exitstatus($?);
+}
+print "# Done.\n";
+
+
+my %Tests = (
+             # File                        Exit Code
+             'success.plx'              => 0,
+             'one_fail.plx'             => 1,
+             'two_fail.plx'             => 2,
+             'five_fail.plx'            => 5,
+             'extras.plx'               => 2,
+             'too_few.plx'              => 255,
+             'too_few_fail.plx'         => 2,
+             'death.plx'                => 255,
+             'last_minute_death.plx'    => 255,
+             'pre_plan_death.plx'       => 'not zero',
+             'death_in_eval.plx'        => 0,
+             'require.plx'              => 0,
+             'death_with_handler.plx'   => 255,
+             'exit.plx'                 => 1,
+            );
 
 chdir 't';
 my $lib = File::Spec->catdir(qw(lib Test Simple sample_tests));
-while( my($test_name, $exit_codes) = each %Tests ) {
-    my($exit_code) = $exit_codes->[$IsVMS ? 1 : 0];
-
-    if( $^O eq 'VMS' ) {
-        # VMS can't use its own $^X in a system call until almost 5.8
-        $Perl = "MCR $^X" if $] < 5.007003;
-
-        # Quiet noisy 'SYS$ABORT'.  'hushed' only exists in 5.6 and up,
-        # but it doesn't do any harm on eariler perls.
-        $Perl .= q{ -"Mvmsish=hushed"};
-    }
-
+while( my($test_name, $exit_code) = each %Tests ) {
     my $file = File::Spec->catfile($lib, $test_name);
     my $wait_stat = system(qq{$Perl -"I../blib/lib" -"I../lib" -"I../t/lib" $file});
     my $actual_exit = exitstatus($wait_stat);
 
     if( $exit_code eq 'not zero' ) {
-        $TB->isnt_num( $actual_exit, 0,
+        $TB->isnt_num( $actual_exit, $Exit_Map{0},
                       "$test_name exited with $actual_exit ".
-                      "(expected $exit_code)");
+                      "(expected non-zero)");
     }
     else {
-        $TB->is_num( $actual_exit, $exit_code, 
+        $TB->is_num( $actual_exit, $Exit_Map{$exit_code}, 
                       "$test_name exited with $actual_exit ".
-                      "(expected $exit_code)");
+                      "(expected $Exit_Map{$exit_code})");
     }
 }
+
+$TB->done_testing( scalar keys(%Tests) + 256 );
+
+# So any END block file cleanup works.
+chdir $Orig_Dir;

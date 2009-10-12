@@ -14,6 +14,7 @@ use CPANPLUS::Backend::RV;
 use FileHandle;
 use File::Spec                  ();
 use File::Spec::Unix            ();
+use File::Basename              ();
 use Params::Check               qw[check];
 use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
 
@@ -35,7 +36,7 @@ $ENV{'PERL5_CPANPLUS_IS_VERSION'} = __PACKAGE__->VERSION;
 
 =head1 NAME
 
-CPANPLUS::Backend - programmer's interface to CPANPLUS
+CPANPLUS::Backend - programmer's interface to the CPANPLUS module
 
 =head1 SYNOPSIS
 
@@ -369,19 +370,21 @@ for my $func (qw[fetch extract install readme files distributions]) {
         my $conf = $self->configure_object;
         my %hash = @_;
 
-        local $Params::Check::NO_DUPLICATES = 1;
-        local $Params::Check::ALLOW_UNKNOWN = 1;
-
         my ($mods);
-        my $tmpl = {
-            modules     => { default  => [],    strict_type => 1,
-                             required => 1,     store => \$mods },
-        };
+        my $args = do {
+            local $Params::Check::NO_DUPLICATES = 1;
+            local $Params::Check::ALLOW_UNKNOWN = 1;
 
-        my $args = check( $tmpl, \%hash ) or return;
+            my $tmpl = {
+                modules     => { default  => [],    strict_type => 1,
+                                 required => 1,     store => \$mods },
+            };
+
+            check( $tmpl, \%hash );
+        } or return;
 
         ### make them all into module objects ###
-        my %mods = map {$_ => $self->parse_module(module => $_) || ''} @$mods;
+        my %mods = map { $_ => $self->parse_module(module => $_) || '' } @$mods;
 
         my $flag; my $href;
         while( my($name,$obj) = each %mods ) {
@@ -403,7 +406,7 @@ for my $func (qw[fetch extract install readme files distributions]) {
 
 =pod
 
-=head2 $mod_obj = $cb->parse_module( module => $modname|$distname|$modobj|URI )
+=head2 $mod_obj = $cb->parse_module( module => $modname|$distname|$modobj|URI|PATH )
 
 C<parse_module> tries to find a C<CPANPLUS::Module> object that
 matches your query. Here's a list of examples you could give to
@@ -427,12 +430,23 @@ C<parse_module>;
 
 =item file:///tmp/Text-Bastardize-1.06.tar.gz
 
+=item /tmp/Text-Bastardize-1.06
+
+=item ./Text-Bastardize-1.06
+
+=item .
+
 =back
 
 These items would all come up with a C<CPANPLUS::Module> object for
 C<Text::Bastardize>. The ones marked explicitly as being version 1.06
 would give back a C<CPANPLUS::Module> object of that version.
 Even if the version on CPAN is currently higher.
+
+The last three are examples of PATH resolution. In the first, we supply
+an absolute path to the unwrapped distribution. In the second the 
+distribution is relative to the current working directory.
+In the third, we will use the current working directory.
 
 If C<parse_module> is unable to actually find the module you are looking
 for in its module tree, but you supplied it with an author, module
@@ -476,6 +490,48 @@ sub parse_module {
         ### perhaps we can find it in the module tree?
         my $maybe = $self->module_tree($mod);
         return $maybe if IS_MODOBJ->( module => $maybe );
+    }
+
+    ### Special case arbitary file paths such as '.' etc.
+    if (-d File::Spec->rel2abs($mod) ) {
+        my $dir    = File::Spec->rel2abs($mod);
+        my $parent = File::Spec->rel2abs( File::Spec->catdir( $dir, '..' ) );
+
+        ### fix paths on VMS
+        if (ON_VMS) {
+            $dir    = VMS::Filespec::unixify($dir);
+            $parent = VMS::Filespec::unixify($parent);
+        }
+
+        my $dist   = $mod = File::Basename::basename($dir);
+        $dist     .= '-0'      unless $dist =~ /\-[0-9._]+$/;
+        $dist     .= '.tar.gz' unless $dist =~ /\.[A-Za-z]+$/;
+
+        my $modobj = CPANPLUS::Module::Fake->new(
+                        module  => $mod,
+                        version => 0,
+                        package => $dist,
+                        path    => $parent,
+                        author  => CPANPLUS::Module::Author::Fake->new
+                    );
+
+        ### better guess for the version
+        $modobj->version( $modobj->package_version ) 
+            if defined $modobj->package_version;
+        
+        ### better guess at module name, if possible
+        if ( my $pkgname = $modobj->package_name ) {
+            $pkgname =~ s/-/::/g;
+        
+            ### no sense replacing it unless we changed something
+            $modobj->module( $pkgname ) 
+                if ($pkgname ne $modobj->package_name) || $pkgname !~ /-/;
+        }                
+
+        $modobj->status->fetch( $parent );
+        $modobj->status->extract( $dir );
+        $modobj->get_installer_type;
+        return $modobj;
     }
 
     ### ok, so it looks like a distribution then?
@@ -556,8 +612,8 @@ sub parse_module {
     } else {
         $author = shift @parts || '';
     }
-    
-    my($pkg, $version, $ext) = 
+
+    my($pkg, $version, $ext, $full) = 
         $self->_split_package_string( package => $dist );
     
     ### translate a distribution into a module name ###
@@ -599,8 +655,12 @@ sub parse_module {
                 my $modobj = CPANPLUS::Module::Fake->new(
                     module  => $maybe->module,
                     version => $version,
-                    package => $pkg . '-' . $version . '.' .
-                                    $maybe->package_extension,
+                    ### no extension? use the extension the original package
+                    ### had instead
+                    package => do { $ext 
+                                        ? $full 
+                                        : $full .'.'. $maybe->package_extension 
+                                },
                     path    => $path,
                     author  => $auth_obj,
                     _id     => $maybe->_id
@@ -941,7 +1001,14 @@ sub local_mirror {
 
 Writes out a snapshot of your current installation in C<CPAN> bundle
 style. This can then be used to install the same modules for a
-different or on a different machine.
+different or on a different machine by issuing the following commands:
+
+    ### using the default shell:
+    CPAN Terminal> i file://path/to/Snapshot_XXYY.pm
+    
+    ### using the API
+    $modobj = $cb->parse_module( module => 'file://path/to/Snapshot_XXYY.pm' );
+    $modobj->install;
 
 It will, by default, write to an 'autobundle' directory under your
 cpanplus homedirectory, but you can override that by supplying a
@@ -1022,7 +1089,7 @@ sub autobundle {
     my $perl_v  = join '', `$^X -V`;
 
     print $fh <<EOF;
-package $name
+package $name;
 
 \$VERSION = '0.01';
 
@@ -1036,7 +1103,9 @@ $name - Snapshot of your installation at $now
 
 $head SYNOPSIS
 
-perl -MCPANPLUS -e "install $name"
+To install the modules from this snapshot, run:
+
+  cpanp -i file://full/path/to/${name}.pm
 
 $head CONTENTS
 
@@ -1057,6 +1126,31 @@ EOF
 
     return $file;
 }
+
+=head2 $bool = $cb->save_state
+
+Explicit command to save memory state to disk. This can be used to save
+information to disk about where a module was extracted, the result of 
+C<make test>, etc. This will then be re-loaded into memory when a new
+session starts.
+
+The capability of saving state to disk depends on the source engine
+being used (See C<CPANPLUS::Config> for the option to choose your
+source engine). The default storage engine supports this option.
+
+Most users will not need this command, but it can handy for automated
+systems like setting up CPAN smoke testers.
+
+The method will return true if it managed to save the state to disk, 
+or false if it did not.
+
+=cut
+
+sub save_state {
+    my $self = shift;
+    return $self->_save_state( @_ );
+}
+
 
 ### XXX these wrappers are not individually tested! only the underlying
 ### code through source.t and indirectly trought he CustomSource plugin.

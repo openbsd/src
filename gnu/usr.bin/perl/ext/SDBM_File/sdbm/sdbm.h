@@ -47,7 +47,7 @@ typedef struct {
 #define sdbm_pagfno(db)	((db)->pagf)
 
 typedef struct {
-	char *dptr;
+	const char *dptr;
 	int dsize;
 } datum;
 
@@ -85,7 +85,7 @@ extern int sdbm_exists proto((DBM *, datum));
  * other
  */
 extern DBM *sdbm_prep proto((char *, char *, int, int));
-extern long sdbm_hash proto((char *, int));
+extern long sdbm_hash proto((const char *, int));
 
 #ifndef SDBM_ONLY
 #define dbm_open sdbm_open

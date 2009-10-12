@@ -1,5 +1,4 @@
 #!perl -w
-# $Id$
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -25,7 +24,7 @@ package My::Test;
 # Test::Builder's own and the ending diagnostics don't come out right.
 require Test::Builder;
 my $TB = Test::Builder->create;
-$TB->plan(tests => 23);
+$TB->plan(tests => 78);
 
 sub like ($$;$) {
     $TB->like(@_);
@@ -35,26 +34,26 @@ sub is ($$;$) {
     $TB->is_eq(@_);
 }
 
-sub main::err_ok ($) {
-    my($expect) = @_;
-    my $got = $err->read;
-
-    return $TB->is_eq( $got, $expect );
+sub main::out_ok ($$) {
+    $TB->is_eq( $out->read, shift );
+    $TB->is_eq( $err->read, shift );
 }
 
-sub main::err_like ($) {
-    my($expect) = @_;
-    my $got = $err->read;
+sub main::out_like ($$) {
+    my($output, $failure) = @_;
 
-    return $TB->like( $got, qr/$expect/ );
+    $TB->like( $out->read, qr/$output/ );
+    $TB->like( $err->read, qr/$failure/ );
 }
 
 
 package main;
 
 require Test::More;
-my $Total = 36;
+our $TODO;
+my $Total = 37;
 Test::More->import(tests => $Total);
+$out->read;  # clear the plan from $out
 
 # This should all work in the presence of a __DIE__ handler.
 local $SIG{__DIE__} = sub { $TB->ok(0, "DIE handler called: ".join "", @_); };
@@ -65,234 +64,387 @@ $tb->use_numbers(0);
 
 my $Filename = quotemeta $0;
 
-# Preserve the line numbers.
+
 #line 38
 ok( 0, 'failing' );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - failing
+OUT
 #   Failed test 'failing'
 #   at $0 line 38.
 ERR
 
+
 #line 40
 is( "foo", "bar", 'foo is bar?');
-is( undef, '',    'undef is empty string?');
-is( undef, 0,     'undef is 0?');
-is( '',    0,     'empty string is 0?' );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - foo is bar?
+OUT
 #   Failed test 'foo is bar?'
 #   at $0 line 40.
 #          got: 'foo'
 #     expected: 'bar'
+ERR
+
+#line 89
+is( undef, '',    'undef is empty string?');
+out_ok( <<OUT, <<ERR );
+not ok - undef is empty string?
+OUT
 #   Failed test 'undef is empty string?'
-#   at $0 line 41.
+#   at $0 line 89.
 #          got: undef
 #     expected: ''
+ERR
+
+#line 99
+is( undef, 0,     'undef is 0?');
+out_ok( <<OUT, <<ERR );
+not ok - undef is 0?
+OUT
 #   Failed test 'undef is 0?'
-#   at $0 line 42.
+#   at $0 line 99.
 #          got: undef
 #     expected: '0'
+ERR
+
+#line 110
+is( '',    0,     'empty string is 0?' );
+out_ok( <<OUT, <<ERR );
+not ok - empty string is 0?
+OUT
 #   Failed test 'empty string is 0?'
-#   at $0 line 43.
+#   at $0 line 110.
 #          got: ''
 #     expected: '0'
 ERR
 
-#line 45
+#line 121
 isnt("foo", "foo", 'foo isnt foo?' );
-isn't("foo", "foo",'foo isn\'t foo?' );
-isnt(undef, undef, 'undef isnt undef?');
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - foo isnt foo?
+OUT
 #   Failed test 'foo isnt foo?'
-#   at $0 line 45.
+#   at $0 line 121.
 #          got: 'foo'
 #     expected: anything else
+ERR
+
+#line 132
+isn't("foo", "foo",'foo isn\'t foo?' );
+out_ok( <<OUT, <<ERR );
+not ok - foo isn't foo?
+OUT
 #   Failed test 'foo isn\'t foo?'
-#   at $0 line 46.
+#   at $0 line 132.
 #          got: 'foo'
 #     expected: anything else
+ERR
+
+#line 143
+isnt(undef, undef, 'undef isnt undef?');
+out_ok( <<OUT, <<ERR );
+not ok - undef isnt undef?
+OUT
 #   Failed test 'undef isnt undef?'
-#   at $0 line 47.
+#   at $0 line 143.
 #          got: undef
 #     expected: anything else
 ERR
 
-#line 48
+#line 154
 like( "foo", '/that/',  'is foo like that' );
-unlike( "foo", '/foo/', 'is foo unlike foo' );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - is foo like that
+OUT
 #   Failed test 'is foo like that'
-#   at $0 line 48.
+#   at $0 line 154.
 #                   'foo'
 #     doesn't match '/that/'
+ERR
+
+#line 165
+unlike( "foo", '/foo/', 'is foo unlike foo' );
+out_ok( <<OUT, <<ERR );
+not ok - is foo unlike foo
+OUT
 #   Failed test 'is foo unlike foo'
-#   at $0 line 49.
+#   at $0 line 165.
 #                   'foo'
 #           matches '/foo/'
 ERR
 
 # Nick Clark found this was a bug.  Fixed in 0.40.
-# line 60
+# line 177
 like( "bug", '/(%)/',   'regex with % in it' );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - regex with % in it
+OUT
 #   Failed test 'regex with % in it'
-#   at $0 line 60.
+#   at $0 line 177.
 #                   'bug'
 #     doesn't match '/(%)/'
 ERR
 
-#line 67
+#line 188
 fail('fail()');
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - fail()
+OUT
 #   Failed test 'fail()'
-#   at $0 line 67.
+#   at $0 line 188.
 ERR
 
-#line 52
+#line 197
 can_ok('Mooble::Hooble::Yooble', qw(this that));
-can_ok('Mooble::Hooble::Yooble', ());
-can_ok(undef, undef);
-can_ok([], "foo");
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - Mooble::Hooble::Yooble->can(...)
+OUT
 #   Failed test 'Mooble::Hooble::Yooble->can(...)'
-#   at $0 line 52.
+#   at $0 line 197.
 #     Mooble::Hooble::Yooble->can('this') failed
 #     Mooble::Hooble::Yooble->can('that') failed
+ERR
+
+#line 208
+can_ok('Mooble::Hooble::Yooble', ());
+out_ok( <<OUT, <<ERR );
+not ok - Mooble::Hooble::Yooble->can(...)
+OUT
 #   Failed test 'Mooble::Hooble::Yooble->can(...)'
-#   at $0 line 53.
+#   at $0 line 208.
 #     can_ok() called with no methods
+ERR
+
+#line 218
+can_ok(undef, undef);
+out_ok( <<OUT, <<ERR );
+not ok - ->can(...)
+OUT
 #   Failed test '->can(...)'
-#   at $0 line 54.
+#   at $0 line 218.
 #     can_ok() called with empty class or reference
+ERR
+
+#line 228
+can_ok([], "foo");
+out_ok( <<OUT, <<ERR );
+not ok - ARRAY->can('foo')
+OUT
 #   Failed test 'ARRAY->can('foo')'
-#   at $0 line 55.
+#   at $0 line 228.
 #     ARRAY->can('foo') failed
 ERR
 
-#line 55
+#line 238
 isa_ok(bless([], "Foo"), "Wibble");
-isa_ok(42,    "Wibble", "My Wibble");
-isa_ok(undef, "Wibble", "Another Wibble");
-isa_ok([],    "HASH");
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - The object isa Wibble
+OUT
 #   Failed test 'The object isa Wibble'
-#   at $0 line 55.
+#   at $0 line 238.
 #     The object isn't a 'Wibble' it's a 'Foo'
-#   Failed test 'My Wibble isa Wibble'
-#   at $0 line 56.
-#     My Wibble isn't a reference
-#   Failed test 'Another Wibble isa Wibble'
-#   at $0 line 57.
-#     Another Wibble isn't defined
-#   Failed test 'The object isa HASH'
-#   at $0 line 58.
-#     The object isn't a 'HASH' it's a 'ARRAY'
 ERR
 
+#line 248
+isa_ok(42,    "Wibble", "My Wibble");
+out_ok( <<OUT, <<ERR );
+not ok - My Wibble isa Wibble
+OUT
+#   Failed test 'My Wibble isa Wibble'
+#   at $0 line 248.
+#     My Wibble isn't a class or reference
+ERR
 
-#line 188
+#line 258
+isa_ok(undef, "Wibble", "Another Wibble");
+out_ok( <<OUT, <<ERR );
+not ok - Another Wibble isa Wibble
+OUT
+#   Failed test 'Another Wibble isa Wibble'
+#   at $0 line 258.
+#     Another Wibble isn't defined
+ERR
+
+#line 268
+isa_ok([],    "HASH");
+out_ok( <<OUT, <<ERR );
+not ok - The reference isa HASH
+OUT
+#   Failed test 'The reference isa HASH'
+#   at $0 line 268.
+#     The reference isn't a 'HASH' it's a 'ARRAY'
+ERR
+
+#line 278
 new_ok(undef);
-err_like( <<ERR );
+out_like( <<OUT, <<ERR );
+not ok - new\\(\\) died
+OUT
 #   Failed test 'new\\(\\) died'
-#   at $Filename line 188.
+#   at $Filename line 278.
 #     Error was:  Can't call method "new" on an undefined value at .*
 ERR
 
-#line 211
+#line 288
 new_ok( "Does::Not::Exist" );
-err_like( <<ERR );
+out_like( <<OUT, <<ERR );
+not ok - new\\(\\) died
+OUT
 #   Failed test 'new\\(\\) died'
-#   at $Filename line 211.
+#   at $Filename line 288.
 #     Error was:  Can't locate object method "new" via package "Does::Not::Exist" .*
 ERR
+
 
 { package Foo; sub new { } }
 { package Bar; sub new { {} } }
 { package Baz; sub new { bless {}, "Wibble" } }
 
-#line 219
+#line 303
 new_ok( "Foo" );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - The object isa Foo
+OUT
 #   Failed test 'The object isa Foo'
-#   at $0 line 219.
+#   at $0 line 303.
 #     The object isn't defined
 ERR
 
-# line 231
+# line 313
 new_ok( "Bar" );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - The object isa Bar
+OUT
 #   Failed test 'The object isa Bar'
-#   at $0 line 231.
+#   at $0 line 313.
 #     The object isn't a 'Bar' it's a 'HASH'
 ERR
 
-#line 239
+#line 323
 new_ok( "Baz" );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - The object isa Baz
+OUT
 #   Failed test 'The object isa Baz'
-#   at $0 line 239.
+#   at $0 line 323.
 #     The object isn't a 'Baz' it's a 'Wibble'
 ERR
 
-#line 247
+#line 333
 new_ok( "Baz", [], "no args" );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - no args isa Baz
+OUT
 #   Failed test 'no args isa Baz'
-#   at $0 line 247.
+#   at $0 line 333.
 #     no args isn't a 'Baz' it's a 'Wibble'
 ERR
 
-
-#line 68
+#line 343
 cmp_ok( 'foo', 'eq', 'bar', 'cmp_ok eq' );
-cmp_ok( 42.1,  '==', 23,  , '       ==' );
-cmp_ok( 42,    '!=', 42   , '       !=' );
-cmp_ok( 1,     '&&', 0    , '       &&' );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok - cmp_ok eq
+OUT
 #   Failed test 'cmp_ok eq'
-#   at $0 line 68.
+#   at $0 line 343.
 #          got: 'foo'
 #     expected: 'bar'
+ERR
+
+#line 354
+cmp_ok( 42.1,  '==', 23,  , '       ==' );
+out_ok( <<OUT, <<ERR );
+not ok -        ==
+OUT
 #   Failed test '       =='
-#   at $0 line 69.
+#   at $0 line 354.
 #          got: 42.1
 #     expected: 23
+ERR
+
+#line 365
+cmp_ok( 42,    '!=', 42   , '       !=' );
+out_ok( <<OUT, <<ERR );
+not ok -        !=
+OUT
 #   Failed test '       !='
-#   at $0 line 70.
+#   at $0 line 365.
 #          got: 42
 #     expected: anything else
+ERR
+
+#line 376
+cmp_ok( 1,     '&&', 0    , '       &&' );
+out_ok( <<OUT, <<ERR );
+not ok -        &&
+OUT
 #   Failed test '       &&'
-#   at $0 line 71.
+#   at $0 line 376.
 #     '1'
 #         &&
 #     '0'
 ERR
 
-
-# line 196
+# line 388
 cmp_ok( 42,    'eq', "foo", '       eq with numbers' );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok -        eq with numbers
+OUT
 #   Failed test '       eq with numbers'
-#   at $0 line 196.
+#   at $0 line 388.
 #          got: '42'
 #     expected: 'foo'
 ERR
 
-
 {
-    my $warnings;
+    my $warnings = '';
     local $SIG{__WARN__} = sub { $warnings .= join '', @_ };
 
-# line 211
+# line 404
     cmp_ok( 42,    '==', "foo", '       == with strings' );
-    err_ok( <<ERR );
+    out_ok( <<OUT, <<ERR );
+not ok -        == with strings
+OUT
 #   Failed test '       == with strings'
-#   at $0 line 211.
+#   at $0 line 404.
 #          got: 42
 #     expected: foo
 ERR
-    My::Test::like $warnings,
-     qr/^Argument "foo" isn't numeric in .* at cmp_ok \[from $Filename line 211\] line 1\.\n$/;
+    My::Test::like(
+        $warnings,
+        qr/^Argument "foo" isn't numeric in .* at cmp_ok \[from $Filename line 404\] line 1\.\n$/
+    );
+    $warnings = '';
+}
 
+
+{
+    my $warnings = '';
+    local $SIG{__WARN__} = sub { $warnings .= join '', @_ };
+
+#line 426
+    cmp_ok( undef, "ne", "", "undef ne empty string" );
+
+    $TB->is_eq( $out->read, <<OUT );
+not ok - undef ne empty string
+OUT
+
+    TODO: {
+        local $::TODO = 'cmp_ok() gives the wrong "expected" for undef';
+
+        $TB->is_eq( $err->read, <<ERR );
+#   Failed test 'undef ne empty string'
+#   at $0 line 426.
+#          got: undef
+#     expected: ''
+ERR
+    }
+
+    My::Test::like(
+        $warnings,
+        qr/^Use of uninitialized value.* in string ne at cmp_ok \[from $Filename line 426\] line 1\.\n\z/
+    );
 }
 
 
@@ -300,88 +452,58 @@ ERR
 -e "wibblehibble";
 my $Errno_Number = $!+0;
 my $Errno_String = $!.'';
-#line 80
+#line 425
 cmp_ok( $!,    'eq', '',    '       eq with stringified errno' );
-cmp_ok( $!,    '==', -1,    '       eq with numerified errno' );
-err_ok( <<ERR );
+out_ok( <<OUT, <<ERR );
+not ok -        eq with stringified errno
+OUT
 #   Failed test '       eq with stringified errno'
-#   at $0 line 80.
+#   at $0 line 425.
 #          got: '$Errno_String'
 #     expected: ''
+ERR
+
+#line 436
+cmp_ok( $!,    '==', -1,    '       eq with numerified errno' );
+out_ok( <<OUT, <<ERR );
+not ok -        eq with numerified errno
+OUT
 #   Failed test '       eq with numerified errno'
-#   at $0 line 81.
+#   at $0 line 436.
 #          got: $Errno_Number
 #     expected: -1
 ERR
 
-#line 84
+#line 447
 use_ok('Hooble::mooble::yooble');
-
 my $more_err_re = <<ERR;
 #   Failed test 'use Hooble::mooble::yooble;'
-#   at $Filename line 84\\.
+#   at $Filename line 447\\.
 #     Tried to use 'Hooble::mooble::yooble'.
 #     Error:  Can't locate Hooble.* in \\\@INC .*
 ERR
+out_like(
+    qr/^\Qnot ok - use Hooble::mooble::yooble;\E\n\z/,
+    qr/^$more_err_re/
+);
 
-My::Test::like($err->read, "/^$more_err_re/");
-
-
-#line 85
+#line 460
 require_ok('ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble');
 $more_err_re = <<ERR;
 #   Failed test 'require ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble;'
-#   at $Filename line 85\\.
+#   at $Filename line 460\\.
 #     Tried to require 'ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble'.
 #     Error:  Can't locate ALL.* in \\\@INC .*
 ERR
+out_like(
+    qr/^\Qnot ok - require ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble;\E\n\z/,
+    qr/^$more_err_re/
+);
 
-My::Test::like($err->read, "/^$more_err_re/");
 
-
-#line 88
 END {
-    $TB->is_eq($$out, <<OUT, 'failing output');
-1..$Total
-not ok - failing
-not ok - foo is bar?
-not ok - undef is empty string?
-not ok - undef is 0?
-not ok - empty string is 0?
-not ok - foo isnt foo?
-not ok - foo isn't foo?
-not ok - undef isnt undef?
-not ok - is foo like that
-not ok - is foo unlike foo
-not ok - regex with % in it
-not ok - fail()
-not ok - Mooble::Hooble::Yooble->can(...)
-not ok - Mooble::Hooble::Yooble->can(...)
-not ok - ->can(...)
-not ok - ARRAY->can('foo')
-not ok - The object isa Wibble
-not ok - My Wibble isa Wibble
-not ok - Another Wibble isa Wibble
-not ok - The object isa HASH
-not ok - new() died
-not ok - new() died
-not ok - The object isa Foo
-not ok - The object isa Bar
-not ok - The object isa Baz
-not ok - no args isa Baz
-not ok - cmp_ok eq
-not ok -        ==
-not ok -        !=
-not ok -        &&
-not ok -        eq with numbers
-not ok -        == with strings
-not ok -        eq with stringified errno
-not ok -        eq with numerified errno
-not ok - use Hooble::mooble::yooble;
-not ok - require ALL::YOUR::BASE::ARE::BELONG::TO::US::wibble;
+    out_like( <<OUT, <<ERR );
 OUT
-
-err_ok( <<ERR );
 # Looks like you failed $Total tests of $Total.
 ERR
 

@@ -1,6 +1,6 @@
 package ops;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 use Opcode qw(opmask_add opset invert_opset);
 

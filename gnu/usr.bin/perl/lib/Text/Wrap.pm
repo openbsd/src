@@ -7,7 +7,7 @@ require Exporter;
 @EXPORT = qw(wrap fill);
 @EXPORT_OK = qw($columns $break $huge);
 
-$VERSION = 2006.1117;
+$VERSION = 2009.0305;
 
 use vars qw($VERSION $columns $debug $break $huge $unexpand $tabstop
 	$separator $separator2);
@@ -35,9 +35,15 @@ sub wrap
 	my $tail = pop(@t);
 	my $t = expand(join("", (map { /\s+\z/ ? ( $_ ) : ($_, ' ') } @t), $tail));
 	my $lead = $ip;
+	my $nll = $columns - length(expand($xp)) - 1;
+	if ($nll <= 0 && $xp ne '') {
+		my $nc = length(expand($xp)) + 2;
+		warnings::warnif "Increasing \$Text::Wrap::columns from $columns to $nc to accommodate length of subsequent tab";
+		$columns = $nc;
+		$nll = 1;
+	}
 	my $ll = $columns - length(expand($ip)) - 1;
 	$ll = 0 if $ll < 0;
-	my $nll = $columns - length(expand($xp)) - 1;
 	my $nl = "";
 	my $remainder = "";
 
@@ -176,9 +182,10 @@ use C<local($Text::Wrap::VARIABLE) = YOURVALUE> when you change the
 values so that the original value is restored.  This C<local()> trick
 will not work if you import the variable into your own namespace.
 
-Lines are wrapped at C<$Text::Wrap::columns> columns.  C<$Text::Wrap::columns>
-should be set to the full width of your output device.  In fact,
-every resulting line will have length of no more than C<$columns - 1>.  
+Lines are wrapped at C<$Text::Wrap::columns> columns (default value: 76).
+C<$Text::Wrap::columns> should be set to the full width of your output
+device.  In fact, every resulting line will have length of no more than
+C<$columns - 1>.
 
 It is possible to control which characters terminate words by
 modifying C<$Text::Wrap::break>. Set this to a string such as
@@ -187,6 +194,9 @@ such as C<qr/[\s']/> (to break before spaces or apostrophes). The
 default is simply C<'\s'>; that is, words are terminated by spaces.
 (This means, among other things, that trailing punctuation  such as
 full stops or commas stay with the word they are "attached" to.)
+Setting C<$Text::Wrap::break> to a regular expression that doesn't
+eat any characters (perhaps just a forward look-ahead assertion) will
+cause warnings.
 
 Beginner note: In example 2, above C<$columns> is imported into
 the local namespace, and set locally.  In example 3,
@@ -201,8 +211,8 @@ the number of characters you do want for your tabstops.
 
 If you want to separate your lines with something other than C<\n>
 then set C<$Text::Wrap::separator> to your preference.  This replaces
-all newlines with C<$Text::Wrap::separator>.  If you just to preserve
-existing newlines but add new breaks with something else, set 
+all newlines with C<$Text::Wrap::separator>.  If you just want to 
+preserve existing newlines but add new breaks with something else, set
 C<$Text::Wrap::separator2> instead.
 
 When words that are longer than C<$columns> are encountered, they
@@ -240,11 +250,16 @@ Result:
 
   "This is a bit of|text that forms a|normal book-style|paragraph"
 
+=head1 SEE ALSO
+
+For wrapping multi-byte characters: L<Text::WrapI18N>.
+For more detailed controls: L<Text::Format>.
+
 =head1 LICENSE
 
-David Muir Sharnoff <muir@idiom.com> with help from Tim Pierce and
-many many others.  Copyright (C) 1996-2006 David Muir Sharnoff.  
+David Muir Sharnoff <muir@idiom.org> with help from Tim Pierce and
+many many others.  Copyright (C) 1996-2009 David Muir Sharnoff.  
 This module may be modified, used, copied, and redistributed at
-your own risk.  Publicly redistributed modified versions must use 
-a different name.
+your own risk.  Publicly redistributed versions that are modified 
+must use a different name.
 

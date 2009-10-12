@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: reset.t,v 1.1 2009/05/16 21:42:58 simon Exp $
 
 # Test Test::Builder->reset;
 
@@ -16,24 +15,23 @@ chdir 't';
 
 
 use Test::Builder;
-my $tb = Test::Builder->new;
+my $Test = Test::Builder->new;
+my $tb = Test::Builder->create;
 
+# We'll need this later to know the outputs were reset
 my %Original_Output;
 $Original_Output{$_} = $tb->$_ for qw(output failure_output todo_output);
 
+# Alter the state of Test::Builder as much as possible.
+my $output = '';
+$tb->output(\$output);
+$tb->failure_output(\$output);
+$tb->todo_output(\$output);
 
 $tb->plan(tests => 14);
 $tb->level(0);
 
-# Alter the state of Test::Builder as much as possible.
 $tb->ok(1, "Running a test to alter TB's state");
-
-my $tmpfile = 'foo.tmp';
-
-$tb->output($tmpfile);
-$tb->failure_output($tmpfile);
-$tb->todo_output($tmpfile);
-END { 1 while unlink $tmpfile }
 
 # This won't print since we just sent output off to oblivion.
 $tb->ok(0, "And a failure for fun");
@@ -50,41 +48,26 @@ $tb->no_ending(1);
 # Now reset it.
 $tb->reset;
 
-my $test_num = 2;   # since we already printed 1
-# Utility testing functions.
-sub ok ($;$) {
-    my($test, $name) = @_;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-    $test_num++;
 
-    return $test;
-}
+$Test->ok( !defined $tb->exported_to, 'exported_to' );
+$Test->is_eq( $tb->expected_tests, 0, 'expected_tests' );
+$Test->is_eq( $tb->level,          1, 'level' );
+$Test->is_eq( $tb->use_numbers,    1, 'use_numbers' );
+$Test->is_eq( $tb->no_header,      0, 'no_header' );
+$Test->is_eq( $tb->no_ending,      0, 'no_ending' );
+$Test->is_eq( $tb->current_test,   0, 'current_test' );
+$Test->is_eq( scalar $tb->summary, 0, 'summary' );
+$Test->is_eq( scalar $tb->details, 0, 'details' );
+$Test->is_eq( fileno $tb->output,
+              fileno $Original_Output{output},         'output' );
+$Test->is_eq( fileno $tb->failure_output,
+              fileno $Original_Output{failure_output}, 'failure_output' );
+$Test->is_eq( fileno $tb->todo_output,
+              fileno $Original_Output{todo_output},    'todo_output' );
 
-
-ok( !defined $tb->exported_to,          'exported_to' );
-ok( $tb->expected_tests == 0,           'expected_tests' );
-ok( $tb->level          == 1,           'level' );
-ok( $tb->use_numbers    == 1,           'use_numbers' );
-ok( $tb->no_header      == 0,           'no_header' );
-ok( $tb->no_ending      == 0,           'no_ending' );
-ok( fileno $tb->output         == fileno $Original_Output{output},    
-                                        'output' );
-ok( fileno $tb->failure_output == fileno $Original_Output{failure_output},    
-                                        'failure_output' );
-ok( fileno $tb->todo_output    == fileno $Original_Output{todo_output},
-                                        'todo_output' );
-ok( $tb->current_test   == 0,           'current_test' );
-ok( $tb->summary        == 0,           'summary' );
-ok( $tb->details        == 0,           'details' );
-
-$tb->no_ending(1);
-$tb->no_header(1);
-$tb->plan(tests => 14);
-$tb->current_test(13);
+$tb->current_test(12);
 $tb->level(0);
 $tb->ok(1, 'final test to make sure output was reset');
+
+$Test->current_test(13);
+$Test->done_testing(13);

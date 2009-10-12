@@ -4,7 +4,7 @@
 ######################### We start with some black magic to print on failure.
 use lib '.','../blib/lib','../blib/arch';
 
-BEGIN {$| = 1; print "1..33\n"; }
+BEGIN {$| = 1; print "1..34\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use CGI ();
 use Config;
@@ -74,6 +74,7 @@ my $p = $q->Vars;
 test(29,$p->{bar} eq 'froz',"tied interface fetch");
 $p->{bar} = join("\0",qw(foo bar baz));
 test(30,join(' ',$q->param('bar')) eq 'foo bar baz','tied interface store');
+test(31,exists $p->{bar});
 
 # test posting
 $q->_reset_globals;
@@ -88,11 +89,11 @@ if ($Config{d_fork}) {
     exit 0;
   }
   # at this point, we're in a new (child) process
-  test(31,$q=new CGI,"CGI::new() from POST");
-  test(32,$q->param('weather') eq 'nice',"CGI::param() from POST");
-  test(33,$q->url_param('big_balls') eq 'basketball',"CGI::url_param()");
+  test(32,$q=new CGI,"CGI::new() from POST");
+  test(33,$q->param('weather') eq 'nice',"CGI::param() from POST");
+  test(34,$q->url_param('big_balls') eq 'basketball',"CGI::url_param()");
 } else {
-  print "ok 31 # Skip\n";
   print "ok 32 # Skip\n";
   print "ok 33 # Skip\n";
+  print "ok 34 # Skip\n";
 }

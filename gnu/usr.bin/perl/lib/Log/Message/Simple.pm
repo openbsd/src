@@ -13,7 +13,7 @@ BEGIN {
 
 =head1 NAME
 
-Log::Message::Simple - standard logging facilities using Log::Message
+Log::Message::Simple - standardized logging facilities using Log::Message
 
 =head1 SYNOPSIS
 

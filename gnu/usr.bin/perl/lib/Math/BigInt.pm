@@ -18,7 +18,7 @@ package Math::BigInt;
 my $class = "Math::BigInt";
 use 5.006;
 
-$VERSION = '1.88';
+$VERSION = '1.89';
 
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(objectify bgcd blcm); 
@@ -3000,11 +3000,47 @@ sub batan2
 
   return $y->bnan() if ($y->{sign} eq $nan) || ($x->{sign} eq $nan);
 
-  return $y->bzero() if	$y->is_zero() && $x->{sign} eq '+';		# x >= 0
-
-  # inf handling
-  # +-inf => --PI/2 => +-1
-  return $y->bone( substr($y->{sign},0,1) ) if $y->{sign} =~ /^[+-]inf$/;
+  # Y    X
+  # != 0 -inf result is +- pi
+  if ($x->is_inf() || $y->is_inf())
+    {
+    # upgrade to BigFloat etc.
+    return $upgrade->new($y)->batan2($upgrade->new($x),@r) if defined $upgrade;
+    if ($y->is_inf())
+      {
+      if ($x->{sign} eq '-inf')
+        {
+        # calculate 3 pi/4 => 2.3.. => 2
+        $y->bone( substr($y->{sign},0,1) );
+        $y->bmul($self->new(2));
+        }
+      elsif ($x->{sign} eq '+inf')
+        {
+        # calculate pi/4 => 0.7 => 0
+        $y->bzero();
+        }
+      else
+        {
+        # calculate pi/2 => 1.5 => 1
+        $y->bone( substr($y->{sign},0,1) );
+        }
+      }
+    else
+      {
+      if ($x->{sign} eq '+inf')
+        {
+        # calculate pi/4 => 0.7 => 0
+        $y->bzero();
+        }
+      else
+        {
+        # PI => 3.1415.. => 3
+        $y->bone( substr($y->{sign},0,1) );
+        $y->bmul($self->new(3));
+        }
+      }
+    return $y;
+    }
 
   return $upgrade->new($y)->batan2($upgrade->new($x),@r) if defined $upgrade;
 
@@ -3056,15 +3092,19 @@ Math::BigInt - Arbitrary size integer/float math package
 
   use Math::BigInt;
 
-  # or make it faster: install (optional) Math::BigInt::GMP
-  # and always use (it will fall back to pure Perl if the
-  # GMP library is not installed):
+  # or make it faster with huge numbers: install (optional)
+  # Math::BigInt::GMP and always use (it will fall back to
+  # pure Perl if the GMP library is not installed):
+  # (See also the L<MATH LIBRARY> section!)
 
   # will warn if Math::BigInt::GMP cannot be found
   use Math::BigInt lib => 'GMP';
 
   # to supress the warning use this:
   # use Math::BigInt try => 'GMP';
+
+  # dies if GMP cannot be loaded:
+  # use Math::BigInt only => 'GMP';
 
   my $str = '1234567890';
   my @values = (64,74,18);
@@ -4390,26 +4430,46 @@ instead relying on the internal representation.
 Math with the numbers is done (by default) by a module called
 C<Math::BigInt::Calc>. This is equivalent to saying:
 
-	use Math::BigInt lib => 'Calc';
+	use Math::BigInt try => 'Calc';
 
-You can change this by using:
+You can change this backend library by using:
 
-	use Math::BigInt lib => 'BitVect';
+	use Math::BigInt try => 'GMP';
+
+B<Note>: General purpose packages should not be explicit about the library
+to use; let the script author decide which is best.
+
+If your script works with huge numbers and Calc is too slow for them,
+you can also for the loading of one of these libraries and if none
+of them can be used, the code will die:
+
+	use Math::BigInt only => 'GMP,Pari';
 
 The following would first try to find Math::BigInt::Foo, then
 Math::BigInt::Bar, and when this also fails, revert to Math::BigInt::Calc:
 
-	use Math::BigInt lib => 'Foo,Math::BigInt::Bar';
+	use Math::BigInt try => 'Foo,Math::BigInt::Bar';
 
-Since Math::BigInt::GMP is in almost all cases faster than Calc (especially in
-math involving really big numbers, where it is B<much> faster), and there is
-no penalty if Math::BigInt::GMP is not installed, it is a good idea to always
-use the following:
+The library that is loaded last will be used. Note that this can be
+overwritten at any time by loading a different library, and numbers
+constructed with different libraries cannot be used in math operations
+together.
 
-	use Math::BigInt lib => 'GMP';
+=head3 What library to use?
 
-Different low-level libraries use different formats to store the
-numbers. You should B<NOT> depend on the number having a specific format
+B<Note>: General purpose packages should not be explicit about the library
+to use; let the script author decide which is best.
+
+L<Math::BigInt::GMP> and L<Math::BigInt::Pari> are in cases involving big
+numbers much faster than Calc, however it is slower when dealing with very
+small numbers (less than about 20 digits) and when converting very large
+numbers to decimal (for instance for printing, rounding, calculating their
+length in decimal etc).
+
+So please select carefully what libary you want to use.
+
+Different low-level libraries use different formats to store the numbers.
+However, you should B<NOT> depend on the number having a specific format
 internally.
 
 See the respective math library module documentation for further details.
@@ -4571,11 +4631,8 @@ modules and see if they help you.
 
 =head2 Alternative math libraries
 
-You can use an alternative library to drive Math::BigInt via:
-
-	use Math::BigInt lib => 'Module';
-
-See L<MATH LIBRARY> for more information.
+You can use an alternative library to drive Math::BigInt. See the section
+L<MATH LIBRARY> for more information.
 
 For more benchmark results see L<http://bloodgate.com/perl/benchmarks.html>.
 

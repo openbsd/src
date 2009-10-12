@@ -19,7 +19,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Internals::Fetch - fetches files for CPANPLUS
+CPANPLUS::Internals::Fetch - fetch files for CPANPLUS
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ This is the rough flow:
 
 =cut
 
-=head1 $path = _fetch( module => $modobj, [fetchdir => '/path/to/save/to', fetch_from => 'scheme://path/to/fetch/from', verbose => BOOL, force => BOOL, prefer_bin => BOOL] )
+=head1 $path = _fetch( module => $modobj, [fetchdir => '/path/to/save/to', fetch_from => 'scheme://path/to/fetch/from', verbose => BOOL, force => BOOL, prefer_bin => BOOL, ttl => $seconds] )
 
 C<_fetch> will fetch files based on the information in a module
 object. You always need a module object. If you want a fake module
@@ -71,6 +71,10 @@ C<prefer_bin> indicates whether you prefer the use of commandline
 programs over perl modules. Defaults to your corresponding config
 setting.
 
+C<ttl> (in seconds) indicates how long a cached copy is valid for. If
+the fetch time of the local copy is within the ttl, the cached copy is
+returned. Otherwise, the file is refetched.
+
 C<_fetch> figures out, based on the host list, what scheme to use and
 from there, delegates to C<File::Fetch> do the actual fetching.
 
@@ -91,7 +95,7 @@ sub _fetch {
 
     local $Params::Check::NO_DUPLICATES = 0;
 
-    my ($modobj, $verbose, $force, $fetch_from);
+    my ($modobj, $verbose, $force, $fetch_from, $ttl);
     my $tmpl = {
         module      => { required => 1, allow => IS_MODOBJ, store => \$modobj },
         fetchdir    => { default => $conf->get_conf('fetchdir') },
@@ -101,13 +105,15 @@ sub _fetch {
         verbose     => { default => $conf->get_conf('verbose'),
                             store => \$verbose },
         prefer_bin  => { default => $conf->get_conf('prefer_bin') },
+        ttl         => { default => 0, store => \$ttl },
     };
 
 
     my $args = check( $tmpl, \%hash ) or return;
 
     ### check if we already downloaded the thing ###
-    if( (my $where = $modobj->status->fetch()) && !$force ) {
+    if( (my $where = $modobj->status->fetch()) and not $force and not $ttl ) {
+
         msg(loc("Already fetched '%1' to '%2', " .
                 "won't fetch again without force",
                 $modobj->module, $where ), $verbose );
@@ -138,24 +144,52 @@ sub _fetch {
                                     $modobj->package,
                         )
                     );
-    }
 
-    ### do we already have the file? ###
-    if( -e $local_file ) {
+        ### do we already have the file? if so, can we use the cached version,
+        ### or do we need to refetch?
+        if( -e $local_file ) {
+        
+            my $unlink      = 0;
+            my $use_cached  = 0;
+            
+            ### if force is in effect, we have to refetch
+            if( $force ) {
+                $unlink++
+            
+            ### if you provided a ttl, and it was exceeded, we'll refetch, 
+            } elsif( $ttl and ([stat $local_file]->[9] + $ttl > time) ) {
+                msg(loc("Using cached file '%1' on disk; ".
+                        "ttl (%2s) is not exceeded",
+                        $local_file, $ttl), $verbose );
+    
+                $use_cached++;
 
-        if( $args->{force} ) {
+            ### if you provided a ttl, and the above conditional didn't match,
+            ### we exceeded the ttl, so we refetch
+            } elsif ( $ttl ) {
+                $unlink++;
+            
+            ### otherwise we can use the cached version
+            } else {
+                $use_cached++;
+            }                
 
-            ### some fetches will fail if the files exist already, so let's
-            ### delete them first
-            unlink $local_file
-                or msg( loc("Could not delete %1, some methods may " .
-                            "fail to force a download", $local_file), $verbose);
-         } else {
-
-            ### store where we fetched it ###
-            $modobj->status->fetch( $local_file );
-
-            return $local_file;
+            if( $unlink ) {
+                ### some fetches will fail if the files exist already, so let's
+                ### delete them first
+                1 while unlink $local_file;
+                
+                msg(loc("Could not delete %1, some methods may " .
+                        "fail to force a download", $local_file), $verbose)
+                    if -e $local_file;
+            
+            } else {
+    
+                ### store where we fetched it ###
+                $modobj->status->fetch( $local_file );
+    
+                return $local_file;
+            }
         }
     }
 
@@ -366,6 +400,10 @@ sub __file_fetch {
 
         } else {
             my $abs = File::Spec->rel2abs( $file );
+            
+            ### so TTLs will work
+            $self->_update_timestamp( file => $abs );
+            
             return $abs;
         }
 

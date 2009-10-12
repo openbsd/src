@@ -1,8 +1,9 @@
 # Pod::Text::Overstrike -- Convert POD data to formatted overstrike text
-# $Id: Overstrike.pm,v 1.5 2008/09/29 17:36:14 millert Exp $
 #
 # Created by Joe Smith <Joe.Smith@inwap.com> 30-Nov-2000
 #   (based on Pod::Text::Color by Russ Allbery <rra@stanford.edu>)
+# Copyright 2000 Joe Smith <Joe.Smith@inwap.com>.
+# Copyright 2001, 2004, 2008 Russ Allbery <rra@stanford.edu>.
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -33,10 +34,7 @@ use vars qw(@ISA $VERSION);
 
 @ISA = qw(Pod::Text);
 
-# Don't use the CVS revision as the version, since this module is also in Perl
-# core and too many things could munge CVS magic revision strings.  This
-# number should ideally be the same as the CVS revision in podlators, however.
-$VERSION = 2.00;
+$VERSION = '2.03';
 
 ##############################################################################
 # Overrides
@@ -148,7 +146,13 @@ __END__
 
 =head1 NAME
 
+=for stopwords
+overstrike
+
 Pod::Text::Overstrike - Convert POD data to formatted overstrike text
+
+=for stopwords
+overstruck Overstruck Allbery terminal's
 
 =head1 SYNOPSIS
 
@@ -165,11 +169,11 @@ Pod::Text::Overstrike - Convert POD data to formatted overstrike text
 
 Pod::Text::Overstrike is a simple subclass of Pod::Text that highlights
 output text using overstrike sequences, in a manner similar to nroff.
-Characters in bold text are overstruck (character, backspace, character) and
-characters in underlined text are converted to overstruck underscores
-(underscore, backspace, character).  This format was originally designed for
-hardcopy terminals and/or lineprinters, yet is readable on softcopy (CRT)
-terminals.
+Characters in bold text are overstruck (character, backspace, character)
+and characters in underlined text are converted to overstruck underscores
+(underscore, backspace, character).  This format was originally designed
+for hard-copy terminals and/or line printers, yet is readable on soft-copy
+(CRT) terminals.
 
 Overstruck text is best viewed by page-at-a-time programs that take
 advantage of the terminal's B<stand-out> and I<underline> capabilities, such

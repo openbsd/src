@@ -15,7 +15,7 @@ BEGIN {
     $is_epoc = $^O eq 'epoc';
     $is_vms = $^O eq 'VMS';
     $is_macos = $^O eq 'MacOS';
-    $VERSION = '5.63';
+    $VERSION = '5.68';
 }
 
 AUTOLOAD {
@@ -49,21 +49,6 @@ AUTOLOAD {
     }
     $@ = $save;
     goto &$sub;
-}
-
-sub can {
-    my ($self, $method) = @_;
-
-    my $parent          = $self->SUPER::can( $method );
-    return $parent if $parent;
-
-    my $package         = ref( $self ) || $self;
-    my $filename        = AutoLoader::find_filename( $package . '::' . $method );
-    local $@;
-    return unless eval { require $filename };
-
-    no strict 'refs';
-    return \&{ $package . '::' . $method };
 }
 
 sub find_filename {
@@ -152,7 +137,6 @@ sub import {
 	if ( @_ and $_[0] =~ /^&?AUTOLOAD$/ ) {
 	    no strict 'refs';
 	    *{ $callpkg . '::AUTOLOAD' } = \&AUTOLOAD;
-	    *{ $callpkg . '::can'      } = \&can;
 	}
     }
 
@@ -171,17 +155,20 @@ sub import {
     (my $calldir = $callpkg) =~ s#::#/#g;
     my $path = $INC{$calldir . '.pm'};
     if (defined($path)) {
-	# Try absolute path name.
+	# Try absolute path name, but only eval it if the
+        # transformation from module path to autosplit.ix path
+        # succeeded!
+	my $replaced_okay;
 	if ($is_macos) {
 	    (my $malldir = $calldir) =~ tr#/#:#;
-	    $path =~ s#^(.*)$malldir\.pm\z#$1auto:$malldir:autosplit.ix#s;
+	    $replaced_okay = ($path =~ s#^(.*)$malldir\.pm\z#$1auto:$malldir:autosplit.ix#s);
 	} else {
-	    $path =~ s#^(.*)$calldir\.pm\z#$1auto/$calldir/autosplit.ix#;
+	    $replaced_okay = ($path =~ s#^(.*)$calldir\.pm\z#$1auto/$calldir/autosplit.ix#);
 	}
 
-	eval { require $path; };
+	eval { require $path; } if $replaced_okay;
 	# If that failed, try relative path with normal @INC searching.
-	if ($@) {
+	if (!$replaced_okay or $@) {
 	    $path ="auto/$calldir/autosplit.ix";
 	    eval { require $path; };
 	}
@@ -198,7 +185,7 @@ sub unimport {
 
     no strict 'refs';
 
-    for my $exported (qw( AUTOLOAD can )) {
+    for my $exported (qw( AUTOLOAD )) {
 	my $symname = $callpkg . '::' . $exported;
 	undef *{ $symname } if \&{ $symname } == \&{ $exported };
 	*{ $symname } = \&{ $symname };
@@ -368,5 +355,75 @@ does C<chdir>.
 =head1 SEE ALSO
 
 L<SelfLoader> - an autoloader that doesn't use external files.
+
+=head1 AUTHOR
+
+C<AutoLoader> is maintained by the perl5-porters. Please direct
+any questions to the canonical mailing list. Anything that
+is applicable to the CPAN release can be sent to its maintainer,
+though.
+
+Author and Maintainer: The Perl5-Porters <perl5-porters@perl.org>
+
+Maintainer of the CPAN release: Steffen Mueller <smueller@cpan.org>
+
+=head1 COPYRIGHT AND LICENSE
+
+This package has been part of the perl core since the first release
+of perl5. It has been released separately to CPAN so older installations
+can benefit from bug fixes.
+
+This package has the same copyright and license as the perl core:
+
+             Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+        2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+        by Larry Wall and others
+    
+			    All rights reserved.
+    
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of either:
+    
+	a) the GNU General Public License as published by the Free
+	Software Foundation; either version 1, or (at your option) any
+	later version, or
+    
+	b) the "Artistic License" which comes with this Kit.
+    
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
+    the GNU General Public License or the Artistic License for more details.
+    
+    You should have received a copy of the Artistic License with this
+    Kit, in the file named "Artistic".  If not, I'll be glad to provide one.
+    
+    You should also have received a copy of the GNU General Public License
+    along with this program in the file named "Copying". If not, write to the 
+    Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+    02111-1307, USA or visit their web page on the internet at
+    http://www.gnu.org/copyleft/gpl.html.
+    
+    For those of you that choose to use the GNU General Public License,
+    my interpretation of the GNU General Public License is that no Perl
+    script falls under the terms of the GPL unless you explicitly put
+    said script under the terms of the GPL yourself.  Furthermore, any
+    object code linked with perl does not automatically fall under the
+    terms of the GPL, provided such object code only adds definitions
+    of subroutines and variables, and does not otherwise impair the
+    resulting interpreter from executing any standard Perl script.  I
+    consider linking in C subroutines in this manner to be the moral
+    equivalent of defining subroutines in the Perl language itself.  You
+    may sell such an object file as proprietary provided that you provide
+    or offer to provide the Perl source, as specified by the GNU General
+    Public License.  (This is merely an alternate way of specifying input
+    to the program.)  You may also sell a binary produced by the dumping of
+    a running Perl script that belongs to you, provided that you provide or
+    offer to provide the Perl source as specified by the GPL.  (The
+    fact that a Perl interpreter and your code are in the same binary file
+    is, in this case, a form of mere aggregation.)  This is my interpretation
+    of the GPL.  If you still have concerns or difficulties understanding
+    my intent, feel free to contact me.  Of course, the Artistic License
+    spells all this out for your protection, so you may prefer to use that.
 
 =cut

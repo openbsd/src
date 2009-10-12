@@ -7,7 +7,7 @@ use File::Spec;
 use warnings;
 use strict;
 
-our $VERSION = '4.3';
+our $VERSION = '4.4';
 our @ISA     = qw(Exporter);
 our @EXPORT  = qw(validate);
 

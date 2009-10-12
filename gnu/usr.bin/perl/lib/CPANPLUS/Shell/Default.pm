@@ -26,7 +26,7 @@ local $Data::Dumper::Indent     = 1; # for dumpering from !
 BEGIN {
     use vars        qw[ $VERSION @ISA ];
     @ISA        =   qw[ CPANPLUS::Shell::_Base::ReadLine ];
-    $VERSION = "0.84";
+    $VERSION = "0.88";
 }
 
 load CPANPLUS::Shell;
@@ -73,7 +73,7 @@ my $Prompt  = $Brand . '> ';
 
 =head1 NAME
 
-CPANPLUS::Shell::Default - default user interface to CPANPLUS
+CPANPLUS::Shell::Default - default CPANPLUS user interface
 
 =head1 SYNOPSIS
 
@@ -104,6 +104,7 @@ CPANPLUS::Shell::Default - default user interface to CPANPLUS
     cpanp> i Acme::Foo       # install Acme::Foo
     cpanp> i Acme-Foo-1.3    # install version 1.3 of Acme::Foo
     cpanp> i <URI>           # install from URI, like ftp://foo.com/X.tgz
+    cpanp> i <DIR>           # install from an absolute or relative directory
     cpanp> i 1 3..5          # install search results 1, 3, 4 and 5
     cpanp> i *               # install all search results
     cpanp> a KANE; i *;      # find modules by kane, install all results
@@ -247,8 +248,13 @@ sub _input_loop {
         $cb->_flush( list => [qw|lib load|] );
 
     } continue {
+        ### clear the sigint count
         $self->_signals->{INT}{count}--
-            if $self->_signals->{INT}{count}; # clear the sigint count
+            if $self->_signals->{INT}{count};  
+            
+        ### reset the 'install prereq?' cached answer
+        $self->settings->{'install_all_prereqs'} = undef;                                
+                            
     }
 
     return 1;
@@ -273,7 +279,9 @@ sub dispatch_on_input {
     ### prompt after the command has finished.
     $self->noninteractive($noninteractive) if defined $noninteractive;
 
-    my @cmds =  split ';', $string;
+    my $rv = 1;
+    
+    my @cmds = split ';', $string;
     while( my $input = shift @cmds ) {
 
         ### to send over the socket ###
@@ -319,8 +327,11 @@ sub dispatch_on_input {
         my $method = $map->{$key};
 
         ### dispatch meta locally at all times ###
-        $self->$method(input => $input, options => $options), next
-            if $key eq '/';
+        if( $key eq '/' ) {
+            ### keep track of failures
+            $rv *= length $self->$method(input => $input, options => $options);
+            next;
+        }
 
         ### flush unless we're trying to print the stack
         CPANPLUS::Error->flush unless $key eq 'p';
@@ -343,6 +354,9 @@ sub dispatch_on_input {
                 $self->__print( "\n", loc("Command failed!"), "\n\n" )
                     unless $status;
 
+                ### keep track of failures
+                $rv *= length $status;
+
                 $self->_pager_open if $buff =~ tr/\n// > $self->_term_rowcount;
                 $self->__print( $buff );
                 $self->_pager_close;
@@ -362,7 +376,9 @@ sub dispatch_on_input {
                 @mods = $self->_select_modules($input)
                         unless grep {$key eq $_} qw[! m a v w x p s b / ? h];
 
-                eval { $self->$method(  modules => \@mods,
+                ### keep track of failures
+                $rv *= defined eval { $self->$method(   
+                                        modules => \@mods,
                                         options => $options,
                                         input   => $input,
                                         choice  => $key )
@@ -371,6 +387,9 @@ sub dispatch_on_input {
             }
         }
     }
+
+    ### outside the shell loop, we can return the actual return value;
+    return $rv if $self->noninteractive;
 
     return;
 }
@@ -425,7 +444,7 @@ sub _select_modules {
 
 sub _format_version {
     my $self    = shift;
-    my $version = shift;
+    my $version = shift || 0;
 
     ### fudge $version into the 'optimal' format
     $version = 0 if $version eq 'undef';
@@ -483,6 +502,8 @@ sub __display_results {
     } else {
         $self->__print( loc("No results to display"), "\n" );
     }
+    
+    return 1;
 }
 
 
@@ -493,6 +514,8 @@ sub _quit {
             if defined $rc->{'logout'};
 
     $self->__print( loc("Exiting CPANPLUS shell"), "\n" );
+    
+    return 1;
 }
 
 ###########################
@@ -531,6 +554,7 @@ loc('    w                      # display the result of your last search again' 
 loc('[Operations]'                                                                  ),
 loc('    i MODULE | NUMBER ...  # install module(s), by name or by search number'   ),
 loc('    i URI | ...            # install module(s), by URI (ie http://foo.com/X.tgz)'   ),
+loc('    i DIR | ...            # install module(s), by path (ie ./Module-1.0)'   ),
 loc('    t MODULE | NUMBER ...  # test module(s), by name or by search number'      ),
 loc('    u MODULE | NUMBER ...  # uninstall module(s), by name or by search number' ),
 loc('    d MODULE | NUMBER ...  # download module(s)'                               ),
@@ -568,6 +592,8 @@ loc('   /? [PLUGIN NAME]        # show usage for (a particular) plugin(s)'  ),
         $self->__print( map {"$_\n"} @help );
         $self->__print( $/ );
         $self->_pager_close;
+    
+        return 1;
     }
 }
 
@@ -592,7 +618,9 @@ sub _bang {
     eval $input;
     error( $@ ) if $@;
     $self->__print( "\n" );
-    return;
+
+    return if $@;
+    return 1;
 }
 
 sub _search_module {
@@ -717,8 +745,11 @@ sub _fetch {
     }
 
     $self->_pager_open if @$mods >= $self->_term_rowcount;
+    my $rv = 1;
     for my $mod (@$mods) {
         my $where = $mod->fetch( %$opts );
+
+        $rv *= length $where;
 
         $self->__print(
             $where
@@ -729,7 +760,9 @@ sub _fetch {
         $self->__print( "\n" );
     }
     $self->_pager_close;
-
+    
+    return 1 if $rv;
+    return;
 }
 
 sub _shell {
@@ -808,7 +841,7 @@ sub _distributions {
     $self->cache([undef,@rv]);
     $self->__display_results;
 
-    return; 1;
+    return 1;
 }
 
 sub _reload_indices {
@@ -959,6 +992,12 @@ sub __ask_about_install {
     $Shell->__print( loc("Module '%1' requires '%2' to be installed",
                          $mod->module, $prereq->module ) );
     $Shell->__print( "\n\n" );
+    
+    ### previously cached answer?
+    return $Shell->settings->{'install_all_prereqs'}
+        if defined $Shell->settings->{'install_all_prereqs'};
+    
+    
     $Shell->__print( 
         loc(    "If you don't wish to see this question anymore\n".
                 "you can disable it by entering the following ".
@@ -966,12 +1005,28 @@ sub __ask_about_install {
                 's conf prereqs 1; s save' ) );
     $Shell->__print("\n\n");
 
-    my $bool =  $term->ask_yn(
+    my $yes     = loc("Yes");
+    my $no      = loc("No");
+    my $all     = loc("Yes to all (for this module)");
+    my $none    = loc("No to all  (for this module)");
+
+    my $reply   = $term->get_reply(
                     prompt  => loc("Should I install this module?"),
-                    default => 'y'
+                    choices => [ $yes, $no, $all, $none ],
+                    default => $yes,
                 );
 
-    return $bool;
+    ### if 'all' or 'none', save this, so we can apply it to 
+    ### other prereqs in this chain.
+    $Shell->settings->{'install_all_prereqs'} = 
+        $reply eq $all  ? 1 :
+        $reply eq $none ? 0 :
+        undef;
+
+    ### if 'yes' or 'all', the user wants it installed
+    return  $reply eq $all ? 1 :
+            $reply eq $yes ? 1 :
+            0;
 }
 
 sub __ask_about_send_test_report {
@@ -1054,7 +1109,8 @@ sub _details {
     $self->_pager_open if scalar @$mods * 10 > $self->_term_rowcount;
 
 
-    my $format = "%-30s %-30s\n";
+    my $format  = "%-24s %-45s\n";
+    my $cformat = "%-24s %-45s %-10s\n";
     for my $mod (@$mods) {
         my $href = $mod->details( %$opts );
         my @list = sort { $a->module cmp $b->module } $mod->contains;
@@ -1074,7 +1130,8 @@ sub _details {
             my $showed;
             for my $item ( @list ) {
                 $self->__printf(
-                    $format, ($showed ? '' : 'Contains:'), $item->module
+                    $cformat, ($showed ? '' : 'Contains:'), 
+                             $item->module, $item->version
                 );
                 $showed++;
             }
@@ -1172,7 +1229,7 @@ sub _set_conf {
             boxed   => CONFIG_BOXED,
         }->{ $key } || CONFIG_USER;      
         
-        ### boxed is special, so let's get it's value from %INC
+        ### boxed is special, so let's get its value from %INC
         ### so we can tell it where to save
         ### XXX perhaps this logic should be generic for all
         ### types, and put in the ->save() routine
@@ -1205,14 +1262,14 @@ sub _set_conf {
             user    => CONFIG_USER,
             system  => CONFIG_SYSTEM,
         }->{ $key } || CONFIG_USER;      
-        
+
         my $file = $conf->_config_pm_to_file( $where );
         system("$editor $file");
 
         ### now reload it
         ### disable warnings for this
         {   require Module::Loaded;
-            Module::Loaded::mark_as_unloaded( $_ ) for $conf->configs;
+            Module::Loaded::mark_as_unloaded( $where );
 
             ### reinitialize the config
             local $^W;
@@ -1233,6 +1290,9 @@ sub _set_conf {
             $i++;
             $self->__print( "\t[$i] $uri\n" );
         }
+        
+        $self->__print(
+            loc("\nTo edit this list, please type: '%1'\n", 's edit') );
 
     } elsif ( $type eq 'selfupdate' ) {
         my %valid = map { $_ => $_ } 
@@ -1314,11 +1374,11 @@ sub _set_conf {
                     $self->__printf( "    $format\n", $name, $val );
                 }
 
-            } elsif ( $key eq 'hosts' ) {
+            } elsif ( $key eq 'hosts' or $key eq 'lib' ) {
                 $self->__print( 
-                    loc(  "Setting hosts is not trivial.\n" .
-                          "It is suggested you use '%1' and edit the " .
-                          "configuration file manually", 's edit')
+                    loc(  "Setting %1 is not trivial.\n" .
+                          "It is suggested you use '%2' and edit the " .
+                          "configuration file manually", $key, 's edit')
                 );
             } else {
                 my $method = 'set_' . $type;
@@ -1568,7 +1628,6 @@ sub _reports {
     return 1;
 }
 
-
 ### Load plugins
 {   my @PluginModules;
     my %Dispatch = ( 
@@ -1582,6 +1641,7 @@ sub _reports {
     
     my $init_done;
     sub _plugins_init {
+
         ### only initialize once
         return if $init_done++;
         
@@ -1626,7 +1686,7 @@ sub _reports {
         }
     }
     
-    ### dispatch a plugin command to it's function
+    ### dispatch a plugin command to its function
     sub _meta {
         my $self = shift;
         my %hash = @_;
@@ -1681,7 +1741,10 @@ sub _reports {
             
             my $who = $pkg eq $this
                 ? "Standard Plugin"
-                : do { $pkg =~ s/^$this/../; "Provided by: $pkg" };
+                : do {  my $v = $self->_format_version($pkg->VERSION) || '';
+                        $pkg =~ s/^$this/../;
+                        sprintf "Provided by: %-30s %-10s", $pkg, $v; 
+                    };
             
             $self->__printf( $help_format, $name, $who );
         }          
@@ -1808,6 +1871,10 @@ sub _read_configuration_from_rc {
         loc( "You can run an interactive setup using '%1'", 's reconfigure' ),    
         loc( "You can add custom sources to your index. See '%1' for details",
              '/cs --help' ),
+        loc( "CPANPLUS now has an experimental SQLite backend. You can enable ".
+             "it via: '%1'. Update dependencies via '%2'",
+             's conf source_engine CPANPLUS::Internals::Source::SQLite; s save',
+             's selfupdate enabled_features ' ),             
     );
     
     sub _show_random_tip {

@@ -1,50 +1,23 @@
 #!./perl -w
-BEGIN { @INC = qw(lib) }
+BEGIN {
+    @INC = qw(lib);
+    
+    # This needs to be at BEGIN time, before any use of Config
+    require './install_lib.pl';
+}
 use strict;
 
-BEGIN {
-    use Config;
-    if ($Config{userelocatableinc}) {
-	# This might be a considered a hack. Need to get information about the
-	# configuration from Config.pm *before* Config.pm expands any .../
-	# prefixes.
-	#
-	# So we set $^X to pretend that we're the already installed perl, so
-	# Config.pm doesits ... expansion off that location.
-
-	my $location = $Config{initialinstalllocation};
-	die <<'OS' unless defined $location;
-$Config{initialinstalllocation} is not defined - can't install a relocatable
-perl without this.
-OS
-	$^X = "$location/perl";
-	# And then remove all trace of ever having loaded Config.pm, so that
-	# it will reload with the revised $^X
-	undef %Config::;
-	delete $INC{"Config.pm"};
-	delete $INC{"Config_heavy.pl"};
-	# You never saw us. We weren't here.
-    }
-}
-
-use Config;
 use Getopt::Long;
 use File::Find;
 use File::Copy;
 use File::Path qw(mkpath);
 use ExtUtils::Packlist;
 use Pod::Man;
-use subs qw(unlink chmod rename link);
-use vars qw($packlist);
-
-if ($Config{d_umask}) {
-    umask(022); # umasks like 077 aren't that useful for installations
-}
+use vars qw($Is_VMS $Is_W32 $Is_OS2 $Is_Cygwin $Is_Darwin $Is_NetWare
+	    %opts $packlist);
 
 $ENV{SHELL} = 'sh' if $^O eq 'os2';
 
-my $ver = $Config{version};     # Not used presently.
-my $release = substr($],0,3);   # Not used presently.
 my $patchlevel = substr($],3,2);
 die "Patchlevel of perl ($patchlevel)",
     "and patchlevel of config.sh ($Config{'PERL_VERSION'}) don't match\n"
@@ -64,7 +37,6 @@ my $usage =
         --verbose (or -V) report all progress.
         --silent  (or -S) be silent. Only report errors.\n";
 
-my %opts;
 GetOptions( \%opts,
             qw( man1dir=s man1ext=s man3dir=s man3ext=s batchlimit=i
                 destdir:s notify n help silent S verbose V)) 
@@ -72,14 +44,10 @@ GetOptions( \%opts,
 die $usage if $opts{help};
 $opts{destdir} //= '';
 
-$opts{man1dir} = "$opts{destdir}$Config{'installman1dir'}"
-    unless defined($opts{man1dir}); 
-$opts{man1ext} = $Config{'man1ext'}
-    unless defined($opts{man1ext}); 
-$opts{man3dir} = "$opts{destdir}$Config{'installman3dir'}"
-    unless defined($opts{man3dir}); 
-$opts{man3ext} = $Config{'man3ext'}
-    unless defined($opts{man3ext}); 
+foreach my $pre (qw(man1 man3)) {
+    $opts{"${pre}dir"} //= $opts{destdir} . $Config{"install${pre}dir"};
+    $opts{"${pre}ext"} //= $Config{"${pre}ext"};
+}
 $opts{silent} ||= $opts{S};
 $opts{notify} ||= $opts{n};
 $opts{verbose} ||= $opts{V} || $opts{notify};
@@ -234,45 +202,6 @@ print "  Installation complete\n" if $opts{verbose};
 
 exit 0;
 
-###############################################################################
-# Utility subroutines from installperl
-
-sub unlink {
-    my(@names) = @_;
-    my $cnt = 0;
-
-    foreach my $name (@names) {
-	next unless -e $name;
-	chmod 0777, $name if $^O eq 'os2';
-	print "  unlink $name\n" if $opts{verbose};
-	( CORE::unlink($name) and ++$cnt 
-	    or warn "Couldn't unlink $name: $!\n" ) unless $opts{notify};
-    }
-    return $cnt;
-}
-
-sub link {
-    my($from,$to) = @_;
-    my($success) = 0;
-
-    print "  ln $from $to\n" if $opts{verbose};
-    eval {
-        CORE::link($from, $to)
-            ? $success++
-            : ($from =~ m#^/afs/# || $to =~ m#^/afs/#)
-              ? die "AFS"  # okay inside eval {}
-              : warn "Couldn't link $from to $to: $!\n"
-          unless $opts{notify};
-    };
-    if ($@) {
-        File::Copy::copy($from, $to)
-            ? $success++
-            : warn "Couldn't copy $from to $to: $!\n"
-          unless $opts{notify};
-    }
-    $success;
-}
-
 sub rename {
     my($from,$to) = @_;
     if (-f $to and not unlink($to)) {
@@ -285,26 +214,4 @@ sub rename {
     }
     link($from,$to) || return 0;
     unlink($from);
-}
-
-sub chmod {
-    my($mode,$name) = @_;
-
-    printf "  chmod %o %s\n", $mode, $name if $opts{verbose};
-    CORE::chmod($mode,$name) || warn sprintf("Couldn't chmod %o %s: $!\n",$mode,$name)
-	unless $opts{notify};
-}
-
-sub samepath {
-    my($p1, $p2) = @_;
-    my($dev1, $ino1, $dev2, $ino2);
-
-    if ($p1 ne $p2) {
-	($dev1, $ino1) = stat($p1);
-	($dev2, $ino2) = stat($p2);
-	($dev1 == $dev2 && $ino1 == $ino2);
-    }
-    else {
-	1;
-    }
 }

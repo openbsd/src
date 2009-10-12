@@ -59,7 +59,7 @@ users the informal support will more than suffice.  See the answer to
 (contributed by brian d foy)
 
 There is often a matter of opinion and taste, and there isn't any one
-answer that fits anyone.  In general, you want to use either the current
+answer that fits everyone. In general, you want to use either the current
 stable release, or the stable release immediately prior to that one.
 Currently, those are perl5.10.x and perl5.8.x, respectively.
 
@@ -107,8 +107,8 @@ as its whitewashed bones have fractured or eroded.
 
 =item *
 
-There is no Perl 6 release scheduled, but it will be available when 
-it's ready.  Stay tuned, but don't worry that you'll have to change 
+There is no Perl 6 release scheduled, but it will be available when
+it's ready.  Stay tuned, but don't worry that you'll have to change
 major versions of Perl; no one is going to take Perl 5 away from you.
 
 =item *
@@ -285,7 +285,7 @@ will sleep easier, too--Wall Street programs not withstanding. :-)
 One bit.  Oh, you weren't talking ASCII? :-) Larry now uses "Perl" to
 signify the language proper and "perl" the implementation of it, i.e.
 the current interpreter.  Hence Tom's quip that "Nothing but perl can
-parse Perl."  
+parse Perl."
 
 Before the first edition of I<Programming perl>, people commonly
 referred to the language as "perl", and its name appeared that way in
@@ -335,10 +335,7 @@ to sign email and usenet messages starting in the late 1980s. He
 previously used the phrase with many subjects ("Just another x hacker,"),
 so to distinguish his JAPH, he started to write them as Perl programs:
 
-	print "Just another Perl hacker, ";
-
-Note the trailing comma and space, which allows the addition of other
-JAxH clauses for his many other interests.
+	print "Just another Perl hacker,";
 
 Other people picked up on this and started to write clever or obfuscated
 programs to produce the same output, spinning things quickly out of
@@ -400,15 +397,15 @@ You might find these links useful:
 
 =head1 REVISION
 
-Revision: $Revision: 10427 $
+Revision: $Revision$
 
-Date: $Date: 2007-12-14 00:39:01 +0100 (Fri, 14 Dec 2007) $
+Date: $Date$
 
 See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

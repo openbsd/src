@@ -12,9 +12,34 @@ use vars qw(@ISA @EXPORT @EXPORT_OK $VERSION);
 @ISA       = qw(Exporter);
 @EXPORT    = qw(cp rm_f rm_rf mv cat eqtime mkpath touch test_f test_d chmod
                 dos2unix);
-$VERSION = '1.13';
+$VERSION = '1.16';
 
-my $Is_VMS = $^O eq 'VMS';
+my $Is_VMS   = $^O eq 'VMS';
+my $Is_VMS_mode = $Is_VMS;
+my $Is_VMS_noefs = $Is_VMS;
+my $Is_Win32 = $^O eq 'MSWin32';
+
+if( $Is_VMS ) {
+    my $vms_unix_rpt;
+    my $vms_efs;
+    my $vms_case;
+
+    if (eval { local $SIG{__DIE__}; require VMS::Feature; }) {
+        $vms_unix_rpt = VMS::Feature::current("filename_unix_report");
+        $vms_efs = VMS::Feature::current("efs_charset");
+        $vms_case = VMS::Feature::current("efs_case_preserve");
+    } else {
+        my $unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        my $efs_charset = $ENV{'DECC$EFS_CHARSET'} || '';
+        my $efs_case = $ENV{'DECC$EFS_CASE_PRESERVE'} || '';
+        $vms_unix_rpt = $unix_rpt =~ /^[ET1]/i; 
+        $vms_efs = $efs_charset =~ /^[ET1]/i;
+        $vms_case = $efs_case =~ /^[ET1]/i;
+    }
+    $Is_VMS_mode = 0 if $vms_unix_rpt;
+    $Is_VMS_noefs = 0 if ($vms_efs);
+}
+
 
 =head1 NAME
 
@@ -210,6 +235,10 @@ sub cp {
     my $nok = 0;
     foreach my $src (@src) {
         $nok ||= !copy($src,$dst);
+
+        # Win32 does not update the mod time of a copied file, just the
+        # created time which make does not look at.
+        utime(time, time, $dst) if $Is_Win32;
     }
     return $nok;
 }
@@ -227,7 +256,7 @@ sub chmod {
     my $mode = shift(@ARGV);
     expand_wildcards();
 
-    if( $Is_VMS ) {
+    if( $Is_VMS_mode && $Is_VMS_noefs) {
         foreach my $idx (0..$#ARGV) {
             my $path = $ARGV[$idx];
             next unless -d $path;

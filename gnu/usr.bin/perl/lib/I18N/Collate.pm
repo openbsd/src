@@ -1,7 +1,7 @@
 package I18N::Collate;
 
 use strict;
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 =head1 NAME
 
@@ -11,8 +11,8 @@ I18N::Collate - compare 8-bit scalar data according to the current locale
 
     use I18N::Collate;
     setlocale(LC_COLLATE, 'locale-of-your-choice'); 
-    $s1 = new I18N::Collate "scalar_data_1";
-    $s2 = new I18N::Collate "scalar_data_2";
+    $s1 = I18N::Collate->new("scalar_data_1");
+    $s2 = I18N::Collate->new("scalar_data_2");
 
 =head1 DESCRIPTION
 
@@ -81,8 +81,8 @@ European character set.
 #
 # Usage:	use I18N::Collate;
 #	        setlocale(LC_COLLATE, 'locale-of-your-choice'); # 4)
-#		$s1 = new I18N::Collate "scalar_data_1";
-#		$s2 = new I18N::Collate "scalar_data_2";
+#		$s1 = I18N::Collate->("scalar_data_1");
+#		$s2 = I18N::Collate->("scalar_data_2");
 #		
 #		now you can compare $s1 and $s2: $s1 le $s2
 #		to extract the data itself, you need to deref: $$s1

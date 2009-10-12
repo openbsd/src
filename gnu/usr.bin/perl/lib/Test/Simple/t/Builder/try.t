@@ -1,5 +1,4 @@
 #!perl -w
-# $Id: try.t,v 1.1 2009/05/16 21:42:58 simon Exp $
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {

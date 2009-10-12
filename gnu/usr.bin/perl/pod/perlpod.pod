@@ -300,7 +300,9 @@ module.  Examples:
 
 =back
 
-And don't forget, when using any command, that the command lasts up
+C<=encoding> affects the whole document, and must occur only once.
+
+And don't forget, when using any other command, that the command lasts up
 until the end of its I<paragraph>, not its line.  So in the
 examples below, you can see that every command needs the blank
 line after it, to end its paragraph.

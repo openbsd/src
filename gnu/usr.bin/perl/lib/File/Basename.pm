@@ -54,7 +54,7 @@ our(@ISA, @EXPORT, $VERSION, $Fileparse_fstype, $Fileparse_igncase);
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(fileparse fileparse_set_fstype basename dirname);
-$VERSION = "2.76";
+$VERSION = "2.77";
 
 fileparse_set_fstype($^O);
 
@@ -88,7 +88,7 @@ If @suffixes are given each element is a pattern (either a string or a
 C<qr//>) matched against the end of the $filename.  The matching
 portion is removed and becomes the $suffix.
 
-     # On Unix returns ("baz", "/foo/bar", ".txt")
+     # On Unix returns ("baz", "/foo/bar/", ".txt")
      fileparse("/foo/bar/baz.txt", qr/\.[^.]*/);
 
 If type is non-Unix (see C<fileparse_set_fstype()>) then the pattern

@@ -27,7 +27,7 @@ my %socket_type = ( tcp  => SOCK_STREAM,
 		  );
 my %proto_number;
 $proto_number{tcp}  = Socket::IPPROTO_TCP()  if defined &Socket::IPPROTO_TCP;
-$proto_number{upd}  = Socket::IPPROTO_UDP()  if defined &Socket::IPPROTO_UDP;
+$proto_number{udp}  = Socket::IPPROTO_UDP()  if defined &Socket::IPPROTO_UDP;
 $proto_number{icmp} = Socket::IPPROTO_ICMP() if defined &Socket::IPPROTO_ICMP;
 my %proto_name = reverse %proto_number;
 

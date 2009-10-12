@@ -58,14 +58,14 @@ the change may affect other modules which rely on the default values
 of the special variables that you have changed. This is one of the
 correct ways to read the whole file at once:
 
-    open my $fh, "foo" or die $!;
+    open my $fh, "<", "foo" or die $!;
     local $/; # enable localized slurp mode
     my $content = <$fh>;
     close $fh;
 
 But the following code is quite bad:
 
-    open my $fh, "foo" or die $!;
+    open my $fh, "<", "foo" or die $!;
     undef $/; # enable slurp mode
     my $content = <$fh>;
     close $fh;
@@ -81,7 +81,7 @@ inside some short C<{}> block, you should create one yourself. For
 example:
 
     my $content = '';
-    open my $fh, "foo" or die $!;
+    open my $fh, "<", "foo" or die $!;
     {
         local $/;
         $content = <$fh>;
@@ -148,18 +148,24 @@ don't use it:
 
 =item *
 
-Various unary functions, including functions like ord() and int(), as well
-as the all file tests (C<-f>, C<-d>) except for C<-t>, which defaults to
-STDIN.
+The following functions:
+
+abs, alarm, chomp, chop, chr, chroot, cos, defined, eval, exp, glob,
+hex, int, lc, lcfirst, length, log, lstat, mkdir, oct, ord, pos, print,
+quotemeta, readlink, readpipe, ref, require, reverse (in scalar context only),
+rmdir, sin, split (on its second argument), sqrt, stat, study, uc, ucfirst, 
+unlink, unpack.
 
 =item *
 
-Various list functions like print() and unlink().
+All file tests (C<-f>, C<-d>) except for C<-t>, which defaults to STDIN.
+See L<perlfunc/-X>
+
 
 =item *
 
-The pattern matching operations C<m//>, C<s///>, and C<tr///> when used
-without an C<=~> operator.
+The pattern matching operations C<m//>, C<s///> and C<tr///> (aka C<y///>)
+when used without an C<=~> operator.
 
 =item *
 
@@ -169,6 +175,10 @@ variable is supplied.
 =item *
 
 The implicit iterator variable in the grep() and map() functions.
+
+=item *
+
+The implicit variable of given().
 
 =item *
 
@@ -231,7 +241,7 @@ See L</@-> for a replacement.
 =item ${^MATCH}
 X<${^MATCH}>
 
-This is similar to C<$&> (C<$POSTMATCH>) except that it does not incur the
+This is similar to C<$&> (C<$MATCH>) except that it does not incur the
 performance penalty associated with that variable, and is only guaranteed
 to return a defined value when the pattern was compiled or executed with
 the C</p> modifier.
@@ -339,6 +349,8 @@ past where $2 ends, and so on.  You can use C<$#+> to determine
 how many subgroups were in the last successful match.  See the
 examples given for the C<@-> variable.
 
+=item %LAST_PAREN_MATCH
+
 =item %+
 X<%+>
 
@@ -433,7 +445,7 @@ instead of lines, with the maximum record size being the referenced
 integer.  So this:
 
     local $/ = \32768; # or \"32768", or \$var_containing_32768
-    open my $fh, $myfile or die $!;
+    open my $fh, "<", $myfile or die $!;
     local $_ = <$fh>;
 
 will read a record of no more than 32768 bytes from FILE.  If you're
@@ -469,7 +481,8 @@ buffered otherwise.  Setting this variable is useful primarily when
 you are outputting to a pipe or socket, such as when you are running
 a Perl program under B<rsh> and want to see the output as it's
 happening.  This has no effect on input buffering.  See L<perlfunc/getc>
-for that.  (Mnemonic: when you want your pipes to be piping hot.)
+for that.  See L<perldoc/select> on how to select the output channel. 
+See also L<IO::Handle>. (Mnemonic: when you want your pipes to be piping hot.)
 
 =item IO::Handle->output_field_separator EXPR
 
@@ -780,7 +793,7 @@ variable, or in other words, if a system or library call fails, it
 sets this variable.  This means that the value of C<$!> is meaningful
 only I<immediately> after a B<failure>:
 
-    if (open(FH, $filename)) {
+    if (open my $fh, "<", $filename) {
 	# Here $! is meaningless.
 	...
     } else {
@@ -1010,6 +1023,9 @@ to ps(1) (assuming the operating system plays along).  Note that
 the view of C<$0> the other threads have will not change since they
 have their own copies of it.
 
+If the program has been given to perl via the switches C<-e> or C<-E>,
+C<$0> will contain the string C<"-e">.
+
 =item $[
 X<$[>
 
@@ -1206,7 +1222,8 @@ Debug subroutine enter/exit.
 
 =item 0x02
 
-Line-by-line debugging.
+Line-by-line debugging. Causes DB::DB() subroutine to be called for each
+statement executed. Also causes saving source code lines (like 0x400).
 
 =item 0x04
 
@@ -1243,12 +1260,13 @@ were compiled.
 
 =item 0x400
 
-Debug assertion subroutines enter/exit.
+Save source code lines into C<@{"_<$filename"}>.
 
 =back
 
 Some bits may be relevant at compile-time only, some at
 run-time only.  This is a new mechanism and the details may change.
+See also L<perldebguts>.
 
 =item $LAST_REGEXP_CODE_RESULT
 

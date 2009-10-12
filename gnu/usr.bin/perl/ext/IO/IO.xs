@@ -121,7 +121,12 @@ io_blocking(pTHX_ InputStream f, int block)
     }
     return RETVAL;
 #else
+#   ifdef WIN32
+    char flags = (char)block;
+    return ioctl(PerlIO_fileno(f), FIONBIO, &flags);
+#   else
     return -1;
+#   endif
 #endif
 }
 
@@ -205,7 +210,7 @@ MODULE = IO	PACKAGE = IO::File	PREFIX = f
 
 void
 new_tmpfile(packname = "IO::File")
-    char *	packname
+    const char * packname
     PREINIT:
 	OutputStream fp;
 	GV *gv;

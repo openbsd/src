@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: details.t,v 1.1 2009/05/16 21:42:57 simon Exp $
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -30,13 +29,11 @@ push @Expected_Details, { 'ok'      => 1,
 
 # Inline TODO tests will confuse pre 1.20 Test::Harness, so we
 # should just avoid the problem and not print it out.
-my $out_fh  = $Test->output;
-my $todo_fh = $Test->todo_output;
 my $start_test = $Test->current_test + 1;
-require TieOut;
-tie *FH, 'TieOut';
-$Test->output(\*FH);
-$Test->todo_output(\*FH);
+
+my $output = '';
+$Test->output(\$output);
+$Test->todo_output(\$output);
 
 SKIP: {
     $Test->skip( 'just testing skip' );
@@ -69,8 +66,7 @@ push @Expected_Details, { 'ok'      => 1,
                         };
 
 for ($start_test..$Test->current_test) { print "ok $_\n" }
-$Test->output($out_fh);
-$Test->todo_output($todo_fh);
+$Test->reset_outputs;
 
 $Test->is_num( scalar $Test->summary(), 4,   'summary' );
 push @Expected_Details, { 'ok'      => 1,

@@ -15,15 +15,18 @@ utils/h2ph
 utils/h2xs
 utils/instmodsh
 utils/libnetcfg
-utils/perlbug
+utils/perlbug	# link = utils/perlthanks
 utils/perldoc   # pod = pod/perldoc.pod
 utils/perlivp
 utils/piconv
 utils/pl2pm
 utils/prove
+utils/ptar
+utils/ptardiff
 utils/cpanp-run-perl
 utils/cpanp
 utils/cpan2dist
+utils/shasum
 utils/splain
 utils/xsubpp
 x2p/a2p         # pod = x2p/a2p.pod

@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: overload.t,v 1.2 2009/05/16 21:42:57 simon Exp $
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -12,15 +11,15 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 15;
+use Test::More tests => 19;
 
 
 package Overloaded;
 
 use overload
-  q{eq}    => sub { $_[0]->{string} },
-  q{==}    => sub { $_[0]->{num} },
-  q{""}    => sub { $_[0]->{stringfy}++; $_[0]->{string} },
+  q{eq}    => sub { $_[0]->{string} eq $_[1] },
+  q{==}    => sub { $_[0]->{num} == $_[1] },
+  q{""}    => sub { $_[0]->{stringify}++; $_[0]->{string} },
   q{0+}    => sub { $_[0]->{numify}++;   $_[0]->{num}    }
 ;
 
@@ -46,11 +45,11 @@ local $SIG{__DIE__} = sub {
 my $obj = Overloaded->new('foo', 42);
 isa_ok $obj, 'Overloaded';
 
-is $obj, 'foo',            'is() with string overloading';
-cmp_ok $obj, 'eq', 'foo',  'cmp_ok() ...';
-is $obj->{stringify}, 0, 'cmp_ok() eq does not stringify';
-cmp_ok $obj, '==', 42,     'cmp_ok() with number overloading';
-is $obj->{numify}, 0,    'cmp_ok() == does not numify';
+cmp_ok $obj, 'eq', 'foo',       'cmp_ok() eq';
+is $obj->{stringify}, 0,        '  does not stringify';
+is $obj, 'foo',                 'is() with string overloading';
+cmp_ok $obj, '==', 42,          'cmp_ok() with number overloading';
+is $obj->{numify}, 0,           '  does not numify';
 
 is_deeply [$obj], ['foo'],                 'is_deeply with string overloading';
 ok eq_array([$obj], ['foo']),              'eq_array ...';
@@ -73,4 +72,15 @@ Test::More->builder->is_eq ($obj, "foo");
     ::is_deeply({'TestPackage' => 'TestPackage'}, 
                 {'TestPackage' => 'TestPackage'});
     ::is_deeply('TestPackage', 'TestPackage');
+}
+
+
+# Make sure 0 isn't a special case. [rt.cpan.org 41109]
+{
+    my $obj = Overloaded->new('0', 42);
+    isa_ok $obj, 'Overloaded';
+
+    cmp_ok $obj, 'eq', '0',  'cmp_ok() eq';
+    is $obj->{stringify}, 0, '  does not stringify';
+    is $obj, '0',            'is() with string overloading';
 }

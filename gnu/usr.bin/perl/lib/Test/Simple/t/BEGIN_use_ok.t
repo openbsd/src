@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: BEGIN_use_ok.t,v 1.1 2009/05/16 21:42:57 simon Exp $
 
 # [rt.cpan.org 28345]
 #
@@ -19,11 +18,9 @@ use Test::More;
 
 my $result;
 BEGIN {
-    eval {
-        use_ok("Wibble");
-    };
-    $result = $@;
+    $result = use_ok("strict");
 }
 
-plan tests => 1;
-like $result, '/^You tried to run a test without a plan/';
+ok( $result, "use_ok() ran" );
+done_testing(2);
+

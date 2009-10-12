@@ -7,7 +7,7 @@ use strict;
 use integer;
 
 use vars qw( $VERSION @ISA @EXPORT @EXPORT_OK );
-$VERSION   = '1.18';
+$VERSION   = '1.1901';
 
 @ISA       = qw( Exporter );
 @EXPORT    = qw( timegm timelocal );
@@ -29,16 +29,16 @@ use constant SECS_PER_MINUTE => 60;
 use constant SECS_PER_HOUR   => 3600;
 use constant SECS_PER_DAY    => 86400;
 
-my $MaxInt = ( ( 1 << ( 8 * $Config{intsize} - 2 ) ) -1 ) * 2 + 1;
-my $MaxDay = int( ( $MaxInt - ( SECS_PER_DAY / 2 ) ) / SECS_PER_DAY ) - 1;
-
+my $MaxInt;
 if ( $^O eq 'MacOS' ) {
     # time_t is unsigned...
-    $MaxInt = ( 1 << ( 8 * $Config{intsize} ) ) - 1;
+    $MaxInt = ( 1 << ( 8 * $Config{ivsize} ) ) - 1;
 }
 else {
-    $MaxInt = ( ( 1 << ( 8 * $Config{intsize} - 2 ) ) - 1 ) * 2 + 1;
+    $MaxInt = ( ( 1 << ( 8 * $Config{ivsize} - 2 ) ) - 1 ) * 2 + 1;
 }
+
+my $MaxDay = int( ( $MaxInt - ( SECS_PER_DAY / 2 ) ) / SECS_PER_DAY ) - 1;
 
 # Determine the EPOC day for this machine
 my $Epoc = 0;
@@ -68,7 +68,7 @@ sub _daygm {
     return $_[3] + (
         $Cheat{ pack( 'ss', @_[ 4, 5 ] ) } ||= do {
             my $month = ( $_[4] + 10 ) % 12;
-            my $year  = $_[5] + 1900 - $month / 10;
+            my $year  = ( $_[5] + 1900 ) - ( $month / 10 );
 
             ( ( 365 * $year )
               + ( $year / 4 )
@@ -99,12 +99,6 @@ sub timegm {
     }
 
     unless ( $Options{no_range_check} ) {
-        if ( abs($year) >= 0x7fff ) {
-            $year += 1900;
-            croak
-                "Cannot handle date ($sec, $min, $hour, $mday, $month, *$year*)";
-        }
-
         croak "Month '$month' out of range 0..11"
             if $month > 11
             or $month < 0;

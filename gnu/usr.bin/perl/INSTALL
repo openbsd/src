@@ -42,8 +42,8 @@ If you have problems, corrections, or questions, please see
 L<"Reporting Problems"> below.
 
 For information on what's new in this release, see the
-pod/perl5100delta.pod file.  For more detailed information about specific
-changes, see the Changes file.
+pod/perl5101delta.pod file.  For more information about how to find more
+specific detail about changes, see the Changes file.
 
 =head1 DESCRIPTION
 
@@ -75,12 +75,13 @@ directory.
 
 =head2 Changes and Incompatibilities
 
-Please see pod/perl5100delta.pod for a description of the changes and
+Please see pod/perl5101delta.pod for a description of the changes and
 potential incompatibilities introduced with this release.  A few of
 the most important issues are listed below, but you should refer
-to pod/perl5100delta.pod for more detailed information.
+to pod/perl5101delta.pod for more detailed information.
 
-B<WARNING:> This version is not binary compatible with prior releases of Perl.
+B<WARNING:> This version is not binary compatible with releases of
+Perl prior to 5.10.0.
 If you have built extensions (i.e. modules that include C code)
 using an earlier version of Perl, you will need to rebuild and reinstall
 those extensions.
@@ -93,7 +94,7 @@ The standard extensions supplied with Perl will be handled automatically.
 
 On a related issue, old modules may possibly be affected by the changes
 in the Perl language in the current release.  Please see
-pod/perl5100delta.pod for a description of what's changed.  See your
+pod/perl5101delta.pod for a description of what's changed.  See your
 installed copy of the perllocal.pod file for a (possibly incomplete)
 list of locally installed modules.  Also see CPAN::autobundle for one
 way to make a "bundle" of your currently installed modules.
@@ -464,8 +465,8 @@ for example:
 There is also an potential problem with the shared perl library if you
 want to have more than one "flavor" of the same version of perl (e.g.
 with and without -DDEBUGGING).  For example, suppose you build and
-install a standard Perl 5.10.0 with a shared library.  Then, suppose you
-try to build Perl 5.10.0 with -DDEBUGGING enabled, but everything else
+install a standard Perl 5.10.1 with a shared library.  Then, suppose you
+try to build Perl 5.10.1 with -DDEBUGGING enabled, but everything else
 the same, including all the installation directories.  How can you
 ensure that your newly built perl will link with your newly built
 libperl.so.8 rather with the installed libperl.so.8?  The answer is
@@ -524,9 +525,9 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.10.0.
+By default, Configure will use the following directories for 5.10.1.
 $version is the full perl version number, including subversion, e.g.
-5.10.0 or 5.9.5, and $archname is a string like sun4-sunos,
+5.10.1 or 5.9.5, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
 variables are in the file Porting/Glossary.
 
@@ -772,6 +773,21 @@ simply do:
 
 =back
 
+=head2 Relocatable @INC
+
+To create a relocatable perl tree, use the following command line:
+
+    sh Configure -Duserelocatableinc
+
+Then the paths in @INC (and everything else in %Config) can be
+optionally located via the path of the perl executable.
+
+That means that, if the string ".../" is found at the start of any
+path, it's substituted with the directory of $^X. So, the relocation
+can be configured on a per-directory basis, although the default with
+"-Duserelocatableinc" is that everything is relocated. The initial
+install is done to the original configured prefix.
+
 =head2 Site-wide Policy settings
 
 After Configure runs, it stores a number of common site-wide "policy"
@@ -890,6 +906,22 @@ Removes -g from optimize, and -DDEBUGGING from ccflags.
 If you are using a shared libperl, see the warnings about multiple
 versions of perl under L<Building a shared Perl library>.
 
+Note that a perl built with -DDEBUGGING will be bigger and will run more
+slowly than a standard perl.
+
+=head2 DTrace support
+
+On platforms where DTrace is available, it may be enabled by 
+using the -Dusedtrace option to Configure. DTrace probes are available for
+subroutine entry (sub-entry) and subroutine exit (sub-exit). Here's a
+simple D script that uses them:
+
+  perl$target:::sub-entry, perl$target:::sub-return {
+    printf("%s %s (%s:%d)\n", probename == "sub-entry" ? "->" : "<-",
+              copyinstr(arg0), copyinstr(arg1), arg2);
+  }
+
+
 =head2 Extensions
 
 Perl ships with a number of standard extensions.  These are contained
@@ -970,34 +1002,36 @@ Again, this should all happen automatically.  This should also work if
 you have gdbm installed in any of (/usr/local, /opt/local, /usr/gnu,
 /opt/gnu, /usr/GNU, or /opt/GNU).
 
-=item gdbm in /usr/you
+=item BerkeleyDB in /usr/local/BerkeleyDB
 
-Suppose you have gdbm installed in some place other than /usr/local,
-but you still want Configure to find it.  To be specific, assume you
-have /usr/you/include/gdbm.h and /usr/you/lib/libgdbm.a.  You
-still have to add -I/usr/you/include to cc flags, but you have to take
-an extra step to help Configure find libgdbm.a.  Specifically, when
-Configure prompts you for library directories, you have to add
-/usr/you/lib to the list.
+The version of BerkeleyDB distributed by sleepycat.com installs in a
+version-specific directory by default, typically something like
+/usr/local/BerkeleyDB.4.7.  To have Configure find that, you need to add
+-I/usr/local/BerkeleyDB.4.7/include to cc flags, as in the previous example,
+and you will also have to take extra steps to help Configure find -ldb.
+Specifically, when Configure prompts you for library directories,
+add /usr/local/BerkeleyDB.4.7/lib to the list.  Also, you will need to
+add appropriate linker flags to tell the runtime linker where to find the
+BerkeleyDB shared libraries.
 
-It is possible to specify this from the command line too (all on one
+It is possible to specify this from the command line (all on one
 line):
 
     sh Configure -de \
-        -Dlocincpth="/usr/you/include" \
-        -Dloclibpth="/usr/you/lib"
+        -Dlocincpth='/usr/local/BerkeleyDB.4.7/include /usr/local/include' \
+        -Dloclibpth='/usr/local/BerkeleyDB.4.7/lib /usr/local/lib' \
+        -Aldflags='-R/usr/local/BerkeleyDB.4.7/lib'
 
 locincpth is a space-separated list of include directories to search.
 Configure will automatically add the appropriate -I directives.
 
 loclibpth is a space-separated list of library directories to search.
-Configure will automatically add the appropriate -L directives.  If
-you have some libraries under /usr/local/ and others under
-/usr/you, then you have to include both, namely
+Configure will automatically add the appropriate -L directives.
 
-    sh Configure -de \
-        -Dlocincpth="/usr/you/include /usr/local/include" \
-        -Dloclibpth="/usr/you/lib /usr/local/lib"
+The addition to ldflags is so that the dynamic linker knows where to find
+the BerkeleyDB libraries.  For Linux and Solaris, the -R option does that.
+Other systems may use different flags.  Use the appropriate flag for your
+system.
 
 =back
 
@@ -1368,6 +1402,18 @@ The latter is especially useful if you see something like this
 
 at Perl startup.
 
+=item other environment variables
+
+Configure does not check for environment variables that can sometimes
+have a major influence on how perl is built or tested. For example,
+OBJECT_MODE on AIX determines the way the compiler and linker deal with
+their objects, but this is a variable that only influences build-time
+behaviour, and should not affect the perl scripts that are eventually
+executed by the perl binary. Other variables, like PERL_UNICODE,
+PERL5LIB, and PERL5OPT will influence the behaviour of the test suite.
+So if you are getting strange test failures, you may want to try
+retesting with the various PERL variables unset.
+
 =item varargs
 
 If you get varargs problems with gcc, be sure that gcc is installed
@@ -1534,11 +1580,9 @@ the extension passes its tests anyway (see L<"make test"> below),
 then don't worry about the warning message.  The extension
 Makefile.PL goes looking for various libraries needed on various
 systems; few systems will need all the possible libraries listed.
-For example, a system may have -lcposix or -lposix, but it's
-unlikely to have both, so most users will see warnings for the one
-they don't have.  The phrase 'probably harmless' is intended to
-reassure you that nothing unusual is happening, and the build
-process is continuing.
+Most users will see warnings for the ones they don't have.  The
+phrase 'probably harmless' is intended to reassure you that nothing
+unusual is happening, and the build process is continuing.
 
 On the other hand, if you are building GDBM_File and you get the
 message
@@ -1862,8 +1906,8 @@ If your system is quite busy and doesn't respond quickly enough,
 these tests might fail.  If possible, try running the tests again
 with the system under a lighter load.  These timing-sensitive
 and load-sensitive tests include F<t/op/alarm.t>,
-F<ext/Time/HiRes/t/HiRes.t>, F<ext/threads/shared/t/waithires.t>,
-F<ext/threads/shared/t/stress.t>, F<lib/Benchmark.t>,
+F<ext/Time-HiRes/t/HiRes.t>, F<ext/threads-shared/t/waithires.t>,
+F<ext/threads-shared/t/stress.t>, F<lib/Benchmark.t>,
 F<lib/Memoize/t/expmod_t.t>, and F<lib/Memoize/t/speed.t>.
 
 You might also experience some failures in F<t/op/stat.t> if you build
@@ -1885,6 +1929,13 @@ to see if you have any better luck.  If your perl still fails this
 test, it does not necessarily mean you have a broken perl.  This test
 tries to exercise the regular expression subsystem quite thoroughly,
 and may well be far more demanding than your normal usage.
+
+=item libgcc_s.so.1: cannot open shared object file
+
+This message has been reported on gcc-3.2.3 and earlier installed with
+a non-standard prefix.  Setting the LD_LIBRARY_PATH environment variable
+(or equivalent) to include gcc's lib/ directory with the libgcc_s.so.1
+shared library should fix the problem.
 
 =item Failures from lib/File/Temp/t/security saying "system possibly insecure"
 
@@ -1937,6 +1988,18 @@ See the documentation for the File::Temp module for more information
 about the various security aspects of temporary files.
 
 =back
+
+The core distribution can now run its regression tests in parallel on
+Unix-like platforms. Instead of running C<make test>, set C<TEST_JOBS> in
+your environment to the number of tests to run in parallel, and run
+C<make test_harness>. On a Bourne-like shell, this can be done as
+
+    TEST_JOBS=3 make test_harness  # Run 3 tests in parallel
+
+An environment variable is used, rather than parallel make itself, because
+L<TAP::Harness> needs to be able to schedule individual non-conflicting test
+scripts itself, and there is no standard interface to C<make> utilities to
+interact with their job schedulers.
 
 =head1 make install
 
@@ -2200,14 +2263,24 @@ attachments or encodings may actually reduce the number of people who
 read your message.  Your message will get relayed to over 400
 subscribers around the world so please try to keep it brief but clear.
 
+If the bug you are reporting has security implications, which make it
+inappropriate to send to a publicly archived mailing list, then please send
+it to perl5-security-report@perl.org. This points to a closed subscription
+unarchived mailing list, which includes all the core committers, who be able
+to help assess the impact of issues, figure out a resolution, and help
+co-ordinate the release of patches to mitigate or fix the problem across all
+platforms on which Perl is supported. Please only use this address for security
+issues in the Perl core, not for modules independently distributed on CPAN.
+
 If you are unsure what makes a good bug report please read "How to
 report Bugs Effectively" by Simon Tatham:
 http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.10 is not binary compatible with earlier versions of Perl.
-In other words, you will have to recompile your XS modules.
+This version is not binary compatible with releases of Perl prior
+to 5.10.0.  In other words, you will have to recompile any XS modules
+installed under version 5.8.9 (or earlier).
 
 In general, you can usually safely upgrade from one version of Perl (e.g.
 5.X.Y) to another similar minor version (e.g. 5.X.(Y+1))) without
@@ -2218,59 +2291,37 @@ Usually, most extensions will probably not need to be recompiled to be
 used with a newer version of Perl.  Here is how it is supposed to work.
 (These examples assume you accept all the Configure defaults.)
 
-Suppose you already have version 5.8.7 installed.  The directories
-searched by 5.8.7 are typically like:
+Suppose you already have versions 5.8.9 and 5.10.0 installed, and you
+are now installing 5.10.1.  The directories searched by version 5.10.1
+will be:
 
-	/usr/local/lib/perl5/5.8.7/$archname
-	/usr/local/lib/perl5/5.8.7
-	/usr/local/lib/perl5/site_perl/5.8.7/$archname
-	/usr/local/lib/perl5/site_perl/5.8.7
+    /usr/local/lib/perl5/5.10.1/$archname
+    /usr/local/lib/perl5/5.10.1
+    /usr/local/lib/perl5/site_perl/5.10.1/$archname
+    /usr/local/lib/perl5/site_perl/5.10.1
 
-Now, suppose you install version 5.8.8.  The directories
-searched by version 5.8.8 will be:
+    /usr/local/lib/perl5/site_perl/5.10.0/$archname
+    /usr/local/lib/perl5/site_perl/5.10.0
+    /usr/local/lib/perl5/site_perl/5.8.9
+    /usr/local/lib/perl5/site_perl
 
-	/usr/local/lib/perl5/5.8.8/$archname
-	/usr/local/lib/perl5/5.8.8
-	/usr/local/lib/perl5/site_perl/5.8.8/$archname
-	/usr/local/lib/perl5/site_perl/5.8.8
-
-	/usr/local/lib/perl5/site_perl/5.8.7/$archname
-	/usr/local/lib/perl5/site_perl/5.8.7
-	/usr/local/lib/perl5/site_perl/
-
-Notice the last three entries -- Perl understands the default structure
+Notice the last four entries -- Perl understands the default structure
 of the $sitelib directories and will look back in older, compatible
-directories.  This way, modules installed under 5.8.7 will continue
-to be usable by 5.8.7 but will also accessible to 5.8.8.  Further,
-suppose that you upgrade a module to one which requires features
-present only in 5.8.8.  That new module will get installed into
-/usr/local/lib/perl5/site_perl/5.8.8 and will be available to 5.8.8,
-but will not interfere with the 5.8.7 version.
+directories.  It will load up architecture-dependent modules from your
+5.10.0 installation, and pure perl modules from either your 5.10.0 or
+5.8.9 installations.  The last entry, /usr/local/lib/perl5/site_perl/,
+is there for 5.004-era pure perl modules.
 
-The last entry, /usr/local/lib/perl5/site_perl/, is there so that
-5.6.0 and above will look for 5.004-era pure perl modules.
-
-Lastly, suppose you now install 5.10.0, which is not binary compatible
-with 5.8.x.  The directories searched by 5.10.0 (if you don't change the
-Configure defaults) will be:
-
-	/usr/local/lib/perl5/5.10.0/$archname
-	/usr/local/lib/perl5/5.10.0
-	/usr/local/lib/perl5/site_perl/5.10.0/$archname
-	/usr/local/lib/perl5/site_perl/5.10.0
-
-	/usr/local/lib/perl5/site_perl/5.8.8
-
-	/usr/local/lib/perl5/site_perl/5.8.7
-
-	/usr/local/lib/perl5/site_perl/
-
-Note that the earlier $archname entries are now gone, but pure perl
-modules from earlier versions will still be found.
+Next, suppose that you now upgrade a module to one which requires
+features present only in 5.10.1.  That new module will get installed into
+/usr/local/lib/perl5/site_perl/5.10.1 and will be available to 5.10.1,
+but will not interfere with the 5.10.0 version.
 
 This way, you can choose to share compatible extensions, but also upgrade
 to a newer version of an extension that may be incompatible with earlier
 versions, without breaking the earlier versions' installations.
+
+This search order is scheduled for revision starting in version 5.11.0.
 
 =head2 Maintaining completely separate versions
 
@@ -2280,9 +2331,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.10.0
+	sh Configure -Dprefix=/opt/perl5.10.1
 
-and adding /opt/perl5.10.0/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.10.1/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2297,11 +2348,11 @@ yet.
 
 =head2 Upgrading from 5.8.x or earlier
 
-B<Perl 5.10.0 is binary incompatible with Perl 5.8.x and any earlier
+B<Perl 5.10.1 is binary incompatible with Perl 5.8.x and any earlier
 Perl release.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.10.0.  If you find you do need to rebuild an extension with
-5.10.0, you may safely do so without disturbing the older
+used with 5.10.1.  If you find you do need to rebuild an extension with
+5.10.1, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 

@@ -37,7 +37,7 @@ print OUT <<'!NO!SUBS!';
 
 # pod2text -- Convert POD data to formatted ASCII text.
 #
-# Copyright 1999, 2000, 2001, 2004, 2006 by Russ Allbery <rra@stanford.edu>
+# Copyright 1999, 2000, 2001, 2004, 2006, 2008 Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -79,7 +79,9 @@ $options{sentence} = 0;
 Getopt::Long::config ('bundling');
 GetOptions (\%options, 'alt|a', 'code', 'color|c', 'help|h', 'indent|i=i',
             'loose|l', 'margin|left-margin|m=i', 'overstrike|o',
-            'quotes|q=s', 'sentence|s', 'termcap|t', 'width|w=i') or exit 1;
+            'quotes|q=s', 'sentence|s', 'stderr', 'termcap|t', 'utf8|u',
+            'width|w=i')
+    or exit 1;
 pod2usage (1) if $options{help};
 
 # Figure out what formatter we're going to use.  -c overrides -t.
@@ -111,10 +113,14 @@ __END__
 
 pod2text - Convert POD data to formatted ASCII text
 
+=for stopwords
+-aclostu --alt --stderr Allbery --overstrike overstrike --termcap --utf8
+UTF-8
+
 =head1 SYNOPSIS
 
-pod2text [B<-aclost>] [B<--code>] [B<-i> I<indent>] S<[B<-q> I<quotes>]>
-S<[B<-w> I<width>]> [I<input> [I<output> ...]]
+pod2text [B<-aclostu>] [B<--code>] [B<-i> I<indent>] S<[B<-q> I<quotes>]>
+    [B<--stderr>] S<[B<-w> I<width>]> [I<input> [I<output> ...]]
 
 pod2text B<-h>
 
@@ -125,12 +131,12 @@ to generate formatted ASCII text from POD source.  It can optionally use
 either termcap sequences or ANSI color escape sequences to format the text.
 
 I<input> is the file to read for POD source (the POD can be embedded in
-code).  If I<input> isn't given, it defaults to STDIN.  I<output>, if given,
-is the file to which to write the formatted output.  If I<output> isn't
-given, the formatted output is written to STDOUT.  Several POD files can be
-processed in the same B<pod2text> invocation (saving module load and compile
-times) by providing multiple pairs of I<input> and I<output> files on the
-command line.
+code).  If I<input> isn't given, it defaults to C<STDIN>.  I<output>, if
+given, is the file to which to write the formatted output.  If I<output>
+isn't given, the formatted output is written to C<STDOUT>.  Several POD
+files can be processed in the same B<pod2text> invocation (saving module
+load and compile times) by providing multiple pairs of I<input> and
+I<output> files on the command line.
 
 =head1 OPTIONS
 
@@ -176,7 +182,7 @@ indented; for the latter, see B<-i> option.
 
 =item B<-o>, B<--overstrike>
 
-Format the output with overstruck printing.  Bold text is rendered as
+Format the output with overstrike printing.  Bold text is rendered as
 character, backspace, character.  Italics and file names are rendered as
 underscore, backspace, character.  Many pagers, such as B<less>, know how
 to convert this to bold or underlined text.
@@ -199,6 +205,13 @@ Assume each sentence ends with two spaces and try to preserve that spacing.
 Without this option, all consecutive whitespace in non-verbatim paragraphs
 is compressed into a single space.
 
+=item B<--stderr>
+
+By default, B<pod2text> puts any errors detected in the POD input in a POD
+ERRORS section in the output manual page.  If B<--stderr> is given, errors
+are sent to standard error instead and the POD ERRORS section is
+suppressed.
+
 =item B<-t>, B<--termcap>
 
 Try to determine the width of the screen and the bold and underline
@@ -208,6 +221,18 @@ width of your terminal device.  Using this option requires that your system
 have a termcap file somewhere where Term::Cap can find it and requires that
 your system support termios.  With this option, the output of B<pod2text>
 will contain terminal control sequences for your current terminal type.
+
+=item B<-u>, B<--utf8>
+
+By default, B<pod2text> tries to use the same output encoding as its input
+encoding (to be backward-compatible with older versions).  This option
+says to instead force the output encoding to UTF-8.
+
+Be aware that, when using this option, the input encoding of your POD
+source must be properly declared unless it is US-ASCII or Latin-1.  POD
+input without an C<=encoding> command will be assumed to be in Latin-1,
+and if it's actually in UTF-8, the output will be double-encoded.  See
+L<perlpod(1)> for more information on the C<=encoding> command.
 
 =item B<-w>, B<--width=>I<width>, B<->I<width>
 
@@ -260,7 +285,7 @@ current terminal device.
 =head1 SEE ALSO
 
 L<Pod::Text>, L<Pod::Text::Color>, L<Pod::Text::Overstrike>,
-L<Pod::Text::Termcap>, L<Pod::Simple>
+L<Pod::Text::Termcap>, L<Pod::Simple>, L<perlpod(1)>
 
 The current version of this script is always available from its web site at
 L<http://www.eyrie.org/~eagle/software/podlators/>.  It is also part of the
@@ -272,7 +297,8 @@ Russ Allbery <rra@stanford.edu>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2004, 2006 by Russ Allbery <rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2004, 2006, 2008 Russ Allbery
+<rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

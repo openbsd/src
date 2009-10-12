@@ -21,11 +21,10 @@ mmk may be used in place of mms in the last three steps.
 
 =head2 Important safety tip
 
-The build and install procedures have changed significantly from the 5.004
-releases!  Make sure you read the "Configuring the Perl Build", "Building 
-Perl", and "Installing Perl" sections of this document before you build or 
-install.  Also please note other changes in the current release by having
-a look at L<perldelta/VMS>.
+For best results, make sure you read the "Configuring the Perl Build",
+"Building  Perl", and "Installing Perl" sections of this document before
+you build or install.  Also please note other changes in the current
+release by having a look at L<perldelta/VMS>.
 
 Also note that, as of Perl version 5.005 and later, an ANSI C compliant 
 compiler is required to build Perl.  VAX C is *not* ANSI compliant, as it 
@@ -73,11 +72,10 @@ HP (formerly Compaq, more formerly DEC) C for VMS (VAX, Alpha, or Itanium).
 
 =item 2  A make tool. 
 
-DEC's MMS (v2.6 or later), or MadGoat's free MMS
-analog MMK (available from ftp.madgoat.com/madgoat) both work
-just fine. Gnu Make might work, but it's been so long since
-anyone's tested it that we're not sure.  MMK is free though, so
-go ahead and use that.
+HP's MMS may work, but MadGoat's free MMS analog MMK (available from
+http://www.kednos.com/kednos/Resources/MMK) has consistently worked
+better. Gnu Make might work, but it's been so long since anyone's tested
+it that we're not sure.  MMK is free though, so go ahead and use that.
 
 =back
 
@@ -109,7 +107,7 @@ files with ^. escaped periods in them.  See below for further workarounds.
 
 A port of GNU tar is also available as part of the GNV package:
 
-    http://gnv.sourceforge.net/
+    http://h71000.www7.hp.com/opensource/gnv.html
 
 =item 3  UNZIP.EXE for VMS
 
@@ -119,7 +117,6 @@ Unzip is available from a number of web/ftp sites.
     http://www.info-zip.org/UnZip.html
     http://www.hp.com/go/openvms/freeware/
     ftp://ftp.hp.com/pub/openvms
-    ftp://ftp.madgoat.com/madgoat/
     ftp://ftp.process.com/vms-freeware/fileserv
 
 =item 4  MOST
@@ -139,7 +136,7 @@ Such patches are created by the GNU diff program (part of the diffutils
 distribution) and applied with GNU patch.  VMS ports of these utilities are
 available here:
 
-    http://www.crinoid.com/utils/
+    http://www.antinode.info/dec/sw/diffutils.html
     http://www.hp.com/go/openvms/freeware/
 
 =back
@@ -174,12 +171,12 @@ compatability qualifier.  Instead, use a command like the following:
 
 or:
 
-    vmstar -xvf perl-5^.10^.0.tar
+    vmstar -xvf perl-5^.10^.1.tar
 
 Then rename the top-level source directory like so:
 
-    set security/protection=(o:rwed) perl-5^.10^.0.dir
-    rename perl-5^.10^.0.dir perl-5_10_0.dir
+    set security/protection=(o:rwed) perl-5^.10^.1.dir
+    rename perl-5^.10^.1.dir perl-5_10_1.dir
 
 The reason for this last step is that while filenames with multiple dots
 are generally supported by Perl on VMS, I<directory> names with multiple
@@ -569,7 +566,7 @@ script prints!
 The next big gotcha is directory depth.  Perl can create directories four,
 five, or even six levels deep during the build, so you don't have to be 
 too deep to start to hit the RMS 8 level limit (for ODS 2 volumes which were
-common on versions of VMS prior to V7.2 and even with V7.2 on the VAX).  
+common on versions of VMS prior to V7.2 and even with V7.3 on the VAX).  
 It is best to do:
 
     DEFINE/TRANS=(CONC,TERM) PERLSRC "disk:[dir.dir.dir.perldir.]"
@@ -756,8 +753,6 @@ Be sure to do so from the subscribed account that you are canceling.
 Vmsperl pages on the web include:
 
     http://www.sidhe.org/vmsperl/index.html
-    http://www.crinoid.com/
-    http://duphy4.physics.drexel.edu/pub/cgi_info.htmlx
     http://www.cpan.org/modules/by-module/VMS/
     http://www.xray.mpe.mpg.de/mailing-lists/vmsperl/
     http://www-ang.kfunigraz.ac.at/~binder/perl.html
@@ -768,17 +763,14 @@ Vmsperl pages on the web include:
 =head1 SEE ALSO
 
 Perl information for users and programmers about the port of perl to VMS is
-available from the [.VMS]PERLVMS.POD file that gets installed as L<perlvms>.
+available from the [.POD]PERLVMS.POD file that gets installed as L<perlvms>.
 For administrators the perlvms document also includes a detailed discussion 
 of extending vmsperl with CPAN modules after Perl has been installed.
 
 =head1 AUTHORS
 
-Revised 3-December-2007 by Craig Berry craigberry@mac.com.  
-Revised 25-February-2000 by Peter Prymmer pvhp@best.com.  
-Revised 27-October-1999 by Craig Berry craigberry@mac.com.  
-Revised 01-March-1999 by Dan Sugalski dan@sidhe.org.  
-Originally by Charles Bailey bailey@newman.upenn.edu.
+Originally by Charles Bailey bailey@newman.upenn.edu.  See the git repository
+for history.
 
 =head1 ACKNOWLEDGEMENTS
 
@@ -811,6 +803,8 @@ missed someone.  That said, special thanks are due to the following:
      the opportunity to test and develop for the AXP,
   John Hasstedt John.Hasstedt@sunysb.edu
      for VAX VMS V7.2 support
+  John Malmberg wb8tyw@qsl.net
+     for ODS-5 filename handling and other modernizations
 
 and to the entire VMSperl group for useful advice and suggestions.  In
 addition the perl5-porters deserve credit for their creativity and

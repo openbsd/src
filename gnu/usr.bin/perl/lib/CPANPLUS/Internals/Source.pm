@@ -20,11 +20,61 @@ use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
 
 $Params::Check::VERBOSE = 1;
 
+### list of methods the parent class must implement
+{   for my $sub ( qw[_init_trees _finalize_trees 
+                     _standard_trees_completed _custom_trees_completed
+                     _add_module_object _add_author_object _save_state
+                    ] 
+    ) {
+        no strict 'refs';
+        *$sub = sub { 
+            my $self    = shift;
+            my $class   = ref $self || $self;
+            
+            require Carp; 
+            Carp::croak( loc( "Class %1 must implement method '%2'", 
+                              $class, $sub ) );
+        }
+    }
+}    
+
+{
+    my $recurse; # flag to prevent recursive calls to *_tree functions
+
+    ### lazy loading of module tree
+    sub _module_tree {
+        my $self = $_[0];
+
+        unless ($self->_mtree or $recurse++ > 0) {
+            my $uptodate = $self->_check_trees( @_[1..$#_] );
+            $self->_build_trees(uptodate => $uptodate);
+        }
+
+        $recurse--;
+        return $self->_mtree;
+    }
+
+    ### lazy loading of author tree
+    sub _author_tree {
+        my $self = $_[0];
+
+        unless ($self->_atree or $recurse++ > 0) {
+            my $uptodate = $self->_check_trees( @_[1..$#_] );
+            $self->_build_trees(uptodate => $uptodate);
+        }
+
+        $recurse--;
+        return $self->_atree;
+    }
+
+}
+
+
 =pod
 
 =head1 NAME
 
-CPANPLUS::Internals::Source - parse source files for CPANPLUS
+CPANPLUS::Internals::Source - updating and parsing of source files for CPANPLUS
 
 =head1 SYNOPSIS
 
@@ -51,14 +101,19 @@ The flow looks like this:
             $cb->__update_custom_module_sources 
                 $cb->__update_custom_module_source
         $cb->_build_trees
+            ### engine methods
+            {   $cb->_init_trees;
+                $cb->_standard_trees_completed
+                $cb->_custom_trees_completed
+            }                
             $cb->__create_author_tree
-                $cb->__retrieve_source
+                ### engine methods
+                { $cb->_add_author_object }
             $cb->__create_module_tree
-                $cb->__retrieve_source
                 $cb->__create_dslip_tree
-                    $cb->__retrieve_source
+                ### engine methods
+                { $cb->_add_module_object }
             $cb->__create_custom_module_entries                    
-            $cb->_save_source
 
     $cb->_dslip_defs
 
@@ -66,35 +121,127 @@ The flow looks like this:
 
 =cut
 
-{
-    my $recurse; # flag to prevent recursive calls to *_tree functions
+=pod
 
-    ### lazy loading of module tree
-    sub _module_tree {
-        my $self = $_[0];
+=head2 $cb->_build_trees( uptodate => BOOL, [use_stored => BOOL, path => $path, verbose => BOOL] )
 
-        unless ($self->{_modtree} or $recurse++ > 0) {
-            my $uptodate = $self->_check_trees( @_[1..$#_] );
-            $self->_build_trees(uptodate => $uptodate);
+This method rebuilds the author- and module-trees from source.
+
+It takes the following arguments:
+
+=over 4
+
+=item uptodate
+
+Indicates whether any on disk caches are still ok to use.
+
+=item path
+
+The absolute path to the directory holding the source files.
+
+=item verbose
+
+A boolean flag indicating whether or not to be verbose.
+
+=item use_stored
+
+A boolean flag indicating whether or not it is ok to use previously
+stored trees. Defaults to true.
+
+=back
+
+Returns a boolean indicating success.
+
+=cut
+
+### (re)build the trees ###
+sub _build_trees {
+    my ($self, %hash)   = @_;
+    my $conf            = $self->configure_object;
+
+    my($path,$uptodate,$use_stored,$verbose);
+    my $tmpl = {
+        path        => { default => $conf->get_conf('base'), store => \$path },
+        verbose     => { default => $conf->get_conf('verbose'), store => \$verbose },
+        uptodate    => { required => 1, store => \$uptodate },
+        use_stored  => { default => 1, store => \$use_stored },
+    };
+
+    my $args = check( $tmpl, \%hash ) or return;
+
+    $self->_init_trees(
+        path        => $path,
+        uptodate    => $uptodate,
+        verbose     => $verbose,
+        use_stored  => $use_stored,
+    ) or do {
+        error( loc("Could not initialize trees" ) );
+        return;
+    };        
+
+    ### return if we weren't able to build the trees ###
+    return unless $self->_mtree && $self->_atree;
+ 
+    ### did we get everything from a stored state? if not,
+    ### process them now.
+    if( not $self->_standard_trees_completed ) {
+     
+        ### first, prep the author tree
+        $self->__create_author_tree(
+                uptodate    => $uptodate,
+                path        => $path,
+                verbose     => $verbose, 
+        ) or return;
+
+        ### and now the module tree
+        $self->_create_mod_tree(
+                uptodate    => $uptodate,
+                path        => $path,
+                verbose     => $verbose, 
+        ) or return;
+    }
+    
+    ### XXX unpleasant hack. since custom sources uses ->parse_module, we
+    ### already have a special module object with extra meta data. that 
+    ### doesn't gelwell with the sqlite storage engine. So, we check 'normal'
+    ### trees from seperate trees, so the engine can treat them differently.
+    ### Effectively this means that with the SQLite engine, for now, custom
+    ### sources are continuously reparsed =/ -kane
+    if( not $self->_custom_trees_completed ) {
+    
+        ### update them if the other sources are also deemed out of date
+        if( $conf->get_conf('enable_custom_sources') ) {
+            $self->__update_custom_module_sources( verbose => $verbose ) 
+                or error(loc("Could not update custom module sources"));
+        }      
+
+        ### add custom sources here if enabled
+        if( $conf->get_conf('enable_custom_sources') ) {
+            $self->__create_custom_module_entries( verbose => $verbose )
+                or error(loc("Could not create custom module entries"));
         }
-
-        $recurse--;
-        return $self->{_modtree};
     }
 
-    ### lazy loading of author tree
-    sub _author_tree {
-        my $self = $_[0];
+    ### give the source engine a chance to wrap up creation
+    $self->_finalize_trees(
+        path        => $path,
+        uptodate    => $uptodate,
+        verbose     => $verbose,    
+        use_stored  => $use_stored,
+    ) or do {
+        error(loc( "Could not finalize trees" ));
+        return;
+    };        
+    
+    ### still necessary? can only run one instance now ###
+    ### will probably stay that way --kane
+#     my $id = $self->_store_id( $self );
+#
+#     unless ( $id == $self->_id ) {
+#         error( loc("IDs do not match: %1 != %2. Storage failed!", $id, $self->_id) );
+#     }
 
-        unless ($self->{_authortree} or $recurse++ > 0) {
-            my $uptodate = $self->_check_trees( @_[1..$#_] );
-            $self->_build_trees(uptodate => $uptodate);
-        }
-
-        $recurse--;
-        return $self->{_authortree};
-    }
-
+    return 1;
 }
 
 =pod
@@ -160,7 +307,7 @@ sub _check_trees {
     for my $name (qw[auth dslip mod]) {
         for my $file ( $conf->_get_source( $name ) ) {
             $self->__check_uptodate(
-                file            => File::Spec->catfile( $args->{path}, $file ),
+                file            => File::Spec->catfile( $path, $file ),
                 name            => $name,
                 update_source   => $update_source,
                 verbose         => $verbose,
@@ -334,275 +481,6 @@ sub _update_source {
 
 =pod
 
-=head2 $cb->_build_trees( uptodate => BOOL, [use_stored => BOOL, path => $path, verbose => BOOL] )
-
-This method rebuilds the author- and module-trees from source.
-
-It takes the following arguments:
-
-=over 4
-
-=item uptodate
-
-Indicates whether any on disk caches are still ok to use.
-
-=item path
-
-The absolute path to the directory holding the source files.
-
-=item verbose
-
-A boolean flag indicating whether or not to be verbose.
-
-=item use_stored
-
-A boolean flag indicating whether or not it is ok to use previously
-stored trees. Defaults to true.
-
-=back
-
-Returns a boolean indicating success.
-
-=cut
-
-### (re)build the trees ###
-sub _build_trees {
-    my ($self, %hash)   = @_;
-    my $conf            = $self->configure_object;
-
-    my($path,$uptodate,$use_stored);
-    my $tmpl = {
-        path        => { default => $conf->get_conf('base'), store => \$path },
-        verbose     => { default => $conf->get_conf('verbose') },
-        uptodate    => { required => 1, store => \$uptodate },
-        use_stored  => { default => 1, store => \$use_stored },
-    };
-
-    my $args = check( $tmpl, \%hash ) or return undef;
-
-    ### retrieve the stored source files ###
-    my $stored      = $self->__retrieve_source(
-                            path        => $path,
-                            uptodate    => $uptodate && $use_stored,
-                            verbose     => $args->{'verbose'},
-                        ) || {};
-
-    ### build the trees ###
-    $self->{_authortree} =  $stored->{_authortree} ||
-                            $self->__create_author_tree(
-                                    uptodate    => $uptodate,
-                                    path        => $path,
-                                    verbose     => $args->{verbose},
-                                );
-    $self->{_modtree}    =  $stored->{_modtree} ||
-                            $self->_create_mod_tree(
-                                    uptodate    => $uptodate,
-                                    path        => $path,
-                                    verbose     => $args->{verbose},
-                                );
-
-    ### return if we weren't able to build the trees ###
-    return unless $self->{_modtree} && $self->{_authortree};
-
-    ### update them if the other sources are also deemed out of date
-    unless( $uptodate ) {
-        $self->__update_custom_module_sources( verbose => $args->{verbose} ) 
-            or error(loc("Could not update custom module sources"));
-    }      
-
-    ### add custom sources here
-    $self->__create_custom_module_entries( verbose => $args->{verbose} )
-        or error(loc("Could not create custom module entries"));
-
-    ### write the stored files to disk, so we can keep using them
-    ### from now on, till they become invalid
-    ### write them if the original sources weren't uptodate, or
-    ### we didn't just load storable files
-    $self->_save_source() if !$uptodate or not keys %$stored;
-
-    ### still necessary? can only run one instance now ###
-    ### will probably stay that way --kane
-#     my $id = $self->_store_id( $self );
-#
-#     unless ( $id == $self->_id ) {
-#         error( loc("IDs do not match: %1 != %2. Storage failed!", $id, $self->_id) );
-#     }
-
-    return 1;
-}
-
-=pod
-
-=head2 $cb->__retrieve_source(name => $name, [path => $path, uptodate => BOOL, verbose => BOOL])
-
-This method retrieves a I<storable>d tree identified by C<$name>.
-
-It takes the following arguments:
-
-=over 4
-
-=item name
-
-The internal name for the source file to retrieve.
-
-=item uptodate
-
-A flag indicating whether the file-cache is up-to-date or not.
-
-=item path
-
-The absolute path to the directory holding the source files.
-
-=item verbose
-
-A boolean flag indicating whether or not to be verbose.
-
-=back
-
-Will get information from the config file by default.
-
-Returns a tree on success, false on failure.
-
-=cut
-
-sub __retrieve_source {
-    my $self = shift;
-    my %hash = @_;
-    my $conf = $self->configure_object;
-
-    my $tmpl = {
-        path     => { default => $conf->get_conf('base') },
-        verbose  => { default => $conf->get_conf('verbose') },
-        uptodate => { default => 0 },
-    };
-
-    my $args = check( $tmpl, \%hash ) or return;
-
-    ### check if we can retrieve a frozen data structure with storable ###
-    my $storable = can_load( modules => {'Storable' => '0.0'} )
-                        if $conf->get_conf('storable');
-
-    return unless $storable;
-
-    ### $stored is the name of the frozen data structure ###
-    my $stored = $self->__storable_file( $args->{path} );
-
-    if ($storable && -e $stored && -s _ && $args->{'uptodate'}) {
-        msg( loc("Retrieving %1", $stored), $args->{'verbose'} );
-
-        my $href = Storable::retrieve($stored);
-        return $href;
-    } else {
-        return;
-    }
-}
-
-=pod
-
-=head2 $cb->_save_source([verbose => BOOL, path => $path])
-
-This method saves all the parsed trees in I<storable>d format if
-C<Storable> is available.
-
-It takes the following arguments:
-
-=over 4
-
-=item path
-
-The absolute path to the directory holding the source files.
-
-=item verbose
-
-A boolean flag indicating whether or not to be verbose.
-
-=back
-
-Will get information from the config file by default.
-
-Returns true on success, false on failure.
-
-=cut
-
-sub _save_source {
-    my $self = shift;
-    my %hash = @_;
-    my $conf = $self->configure_object;
-
-
-    my $tmpl = {
-        path     => { default => $conf->get_conf('base'), allow => DIR_EXISTS },
-        verbose  => { default => $conf->get_conf('verbose') },
-        force    => { default => 1 },
-    };
-
-    my $args = check( $tmpl, \%hash ) or return;
-
-    my $aref = [qw[_modtree _authortree]];
-
-    ### check if we can retrieve a frozen data structure with storable ###
-    my $storable;
-    $storable = can_load( modules => {'Storable' => '0.0'} )
-                    if $conf->get_conf('storable');
-    return unless $storable;
-
-    my $to_write = {};
-    foreach my $key ( @$aref ) {
-        next unless ref( $self->{$key} );
-        $to_write->{$key} = $self->{$key};
-    }
-
-    return unless keys %$to_write;
-
-    ### $stored is the name of the frozen data structure ###
-    my $stored = $self->__storable_file( $args->{path} );
-
-    if (-e $stored && not -w $stored) {
-        msg( loc("%1 not writable; skipped.", $stored), $args->{'verbose'} );
-        return;
-    }
-
-    msg( loc("Writing compiled source information to disk. This might take a little while."),
-	    $args->{'verbose'} );
-
-    my $flag;
-    unless( Storable::nstore( $to_write, $stored ) ) {
-        error( loc("could not store %1!", $stored) );
-        $flag++;
-    }
-
-    return $flag ? 0 : 1;
-}
-
-sub __storable_file {
-    my $self = shift;
-    my $conf = $self->configure_object;
-    my $path = shift or return;
-
-    ### check if we can retrieve a frozen data structure with storable ###
-    my $storable = $conf->get_conf('storable')
-                        ? can_load( modules => {'Storable' => '0.0'} )
-                        : 0;
-
-    return unless $storable;
-    
-    ### $stored is the name of the frozen data structure ###
-    ### changed to use File::Spec->catfile -jmb
-    my $stored = File::Spec->rel2abs(
-        File::Spec->catfile(
-            $path,                          #base dir
-            $conf->_get_source('stored')    #file
-            . '.' .
-            $Storable::VERSION              #the version of storable 
-            . '.stored'                     #append a suffix
-        )
-    );
-
-    return $stored;
-}
-
-=pod
-
 =head2 $cb->__create_author_tree([path => $path, uptodate => BOOL, verbose => BOOL])
 
 This method opens a source files and parses its contents into a
@@ -646,7 +524,7 @@ sub __create_author_tree {
     };
 
     my $args = check( $tmpl, \%hash ) or return;
-    my $tree = {};
+
     my $file = File::Spec->catfile(
                                 $args->{path},
                                 $conf->_get_source('auth')
@@ -675,15 +553,15 @@ sub __create_author_tree {
                                     "\s* ([^\"\<]+?) \s* <(.+)> \s*"
                                 /x;
 
-        $tree->{$id} = CPANPLUS::Module::Author->new(
+        $self->_add_author_object(
             author  => $name,           #authors name
             email   => $email,          #authors email address
             cpanid  => $id,             #authors CPAN ID
-            _id     => $self->_id,    #id of this internals object
-        );
+        ) or error( loc("Could not add author '%1'", $name ) );
+
     }
 
-    return $tree;
+    return $self->_atree;
 
 } #__create_author_tree
 
@@ -750,21 +628,43 @@ sub _create_mod_tree {
         $ae->extract( to => $out )                              or return;
     }
 
-    my $cont    = $self->_get_file_contents( file => $out ) or return;
+    my $content = $self->_get_file_contents( file => $out ) or return;
+    my $lines   = $content =~ tr/\n/\n/;
 
     ### don't need it anymore ###
     unlink $out;
 
-    my $tree = {};
-    my $flag;
-
-    for ( split /\n/, $cont ) {
+    my($past_header, $count);
+    for ( split /\n/, $content ) {
 
         ### quick hack to read past the header of the file ###
         ### this is still rather evil... fix some time - Kane
-        $flag = 1 if m|^\s*$|;
-        next unless $flag;
-
+        if( m|^\s*$| ) {
+            unless( $count ) {
+                error(loc("Could not determine line count from %1", $file));
+                return;
+            }
+            $past_header = 1;
+        }            
+        
+        ### we're still in the header -- find the amount of lines we expect
+        unless( $past_header ) {
+            
+            ### if the line count doesn't match what we expect, bail out
+            ### this should address: #45644: detect broken index
+            $count = $1 if /^Line-Count:\s+(\d+)/;
+            if( $count ) {
+                if( $lines < $count ) {
+                    error(loc("Expected to read at least %1 lines, but %2 ".
+                              "contains only %3 lines!",
+                              $count, $file, $lines ));
+                    return;
+                }  
+            }
+            ### still in the header, keep moving
+            next;
+        }
+        
         ### skip empty lines ###
         next unless /\S/;
         chomp;
@@ -784,8 +684,8 @@ sub _create_mod_tree {
         ### remove file name from the path
         $data[2] =~ s|/[^/]+$||;
 
-
-        unless( $self->author_tree($author) ) {
+        my $aobj = $self->author_tree($author);
+        unless( $aobj ) {
             error( loc( "No such author '%1' -- can't make module object " .
                         "'%2' that is supposed to belong to this author",
                         $author, $data[0] ) );
@@ -802,30 +702,35 @@ sub _create_mod_tree {
                             ? $dslip_tree->{ $data[0] }->{$item}
                             : ' ';
         }
+        
+        ### XXX this could be sped up if we used author names, not author
+        ### objects in creation, and then look them up in the author tree
+        ### when needed. This will need a fix to all the places that create
+        ### fake author/module objects as well.
 
-        ### Every module get's stored as a module object ###
-        $tree->{ $data[0] } = CPANPLUS::Module->new(
-                module      => $data[0],            # full module name
-                version     => ($data[1] eq 'undef' # version number 
-                                    ? '0.0' 
-                                    : $data[1]), 
-                path        => File::Spec::Unix->catfile(
-                                    $conf->_get_mirror('base'),
-                                    $data[2],
-                                ),          # extended path on the cpan mirror,
-                                            # like /A/AB/ABIGAIL
-                comment     => $data[3],    # comment on the module
-                author      => $self->author_tree($author),
-                package     => $package,    # package name, like
-                                            # 'foo-bar-baz-1.03.tar.gz'
-                description => $dslip_tree->{ $data[0] }->{'description'},
-                dslip       => $dslip,
-                _id         => $self->_id,  # id of this internals object
-        );
+        ### callback to store the individual object
+        $self->_add_module_object(
+            module      => $data[0],            # full module name
+            version     => ($data[1] eq 'undef' # version number 
+                                ? '0.0' 
+                                : $data[1]), 
+            path        => File::Spec::Unix->catfile(
+                                $conf->_get_mirror('base'),
+                                $data[2],
+                            ),          # extended path on the cpan mirror,
+                                        # like /A/AB/ABIGAIL
+            comment     => $data[3],    # comment on the module
+            author      => $aobj,
+            package     => $package,    # package name, like
+                                        # 'foo-bar-baz-1.03.tar.gz'
+            description => $dslip_tree->{ $data[0] }->{'description'},
+            dslip       => $dslip,
+            mtime       => '',
+        ) or error( loc( "Could not add module '%1'", $data[0] ) );
 
     } #for
 
-    return $tree;
+    return $self->_mtree;
 
 } #_create_mod_tree
 
@@ -1174,6 +1079,12 @@ Returns a list of key value pairs as follows:
 sub __list_custom_module_sources {
     my $self = shift;
     my $conf = $self->configure_object;
+    
+    my($verbose);
+    my $tmpl = {   
+        verbose => { default => $conf->get_conf('verbose'),
+                     store   => \$verbose },
+    };    
 
     my $dir = File::Spec->catdir(
                     $conf->get_conf('base'),
@@ -1181,7 +1092,7 @@ sub __list_custom_module_sources {
                 );
 
     unless( IS_DIR->( $dir ) ) {
-        msg(loc("No '%1' dir, skipping custom sources", $dir));
+        msg(loc("No '%1' dir, skipping custom sources", $dir), $verbose);
         return;
     }
     
@@ -1335,7 +1246,7 @@ sub __update_custom_module_source {
             #msg(loc("Index file written to '%1'", $to), $verbose);
         }
     
-    ### copy it to the real spot and update it's timestamp
+    ### copy it to the real spot and update its timestamp
     } else {            
         $self->_move( file => $res, to => $local ) or return;
         $self->_update_timestamp( file => $local );
@@ -1451,7 +1362,7 @@ Returns true on success, false on failure.
     
             my $fh = OPEN_FILE->( $file ) or next;
     
-            while( <$fh> ) {
+            while( local $_ = <$fh> ) {
                 chomp;
                 next if /^#/;
                 next unless /\S+/;
@@ -1500,13 +1411,5 @@ Returns true on success, false on failure.
         return 1;
     }
 }
-
-
-# Local variables:
-# c-indentation-style: bsd
-# c-basic-offset: 4
-# indent-tabs-mode: nil
-# End:
-# vim: expandtab shiftwidth=4:
 
 1;

@@ -364,7 +364,7 @@
    Avoid LONG and BYTE types in SHA.xs as they was in conflict
    with similar definitions in <winnt.h>.
 
-   Patch by Marko Asplund <aspa@hip.fi> to make the the alignment
+   Patch by Marko Asplund <aspa@hip.fi> to make the alignment
    test program link successfully with sfio-perl.
 
    Fixed a typo in MD5.xs that might have affected 64-bit systems.

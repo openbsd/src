@@ -3,7 +3,7 @@ package DBM_Filter::int32 ;
 use strict;
 use warnings;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 # todo get Filter to figure endian.
 

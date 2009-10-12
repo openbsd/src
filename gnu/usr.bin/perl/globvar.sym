@@ -3,6 +3,7 @@
 # *** Only structures/arrays with constant initializers should go here.
 # *** Usual globals initialized at runtime should be added in *var*.h.
 
+bincompat_options
 block_type
 check
 fold

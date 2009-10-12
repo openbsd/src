@@ -1,5 +1,4 @@
 #!perl -w
-# $Id$
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -95,5 +94,5 @@ SKIP: {
         pass "This does not run";
     }
 
-    like $warning, '/^skip\(\) was passed a non-numeric number of tests/';
+    like $warning, qr/^skip\(\) was passed a non-numeric number of tests/;
 }

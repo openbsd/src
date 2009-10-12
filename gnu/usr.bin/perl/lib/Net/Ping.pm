@@ -16,7 +16,7 @@ use Carp;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(pingecho);
-$VERSION = "2.33";
+$VERSION = "2.36";
 
 sub SOL_IP { 0; };
 sub IP_TOS { 1; };
@@ -35,11 +35,20 @@ $syn_forking = 0;
 if ($^O =~ /Win32/i) {
   # Hack to avoid this Win32 spewage:
   # Your vendor has not defined POSIX macro ECONNREFUSED
-  *ECONNREFUSED = sub() {10061;}; # "Unknown Error" Special Win32 Response?
-  *ENOTCONN     = sub() {10057;};
-  *ECONNRESET   = sub() {10054;};
-  *EINPROGRESS  = sub() {10036;};
-  *EWOULDBLOCK  = sub() {10035;};
+  my @pairs = (ECONNREFUSED => 10061, # "Unknown Error" Special Win32 Response?
+	       ENOTCONN     => 10057,
+	       ECONNRESET   => 10054,
+	       EINPROGRESS  => 10036,
+	       EWOULDBLOCK  => 10035,
+	  );
+  while (my $name = shift @pairs) {
+    my $value = shift @pairs;
+    # When defined, these all are non-zero
+    unless (eval $name) {
+      no strict 'refs';
+      *{$name} = defined prototype \&{$name} ? sub () {$value} : sub {$value};
+    }
+  }
 #  $syn_forking = 1;    # XXX possibly useful in < Win2K ?
 };
 
@@ -1763,6 +1772,6 @@ Copyright (c) 2001, Colin McMillen.  All rights reserved.
 This program is free software; you may redistribute it and/or
 modify it under the same terms as Perl itself.
 
-$Id: Ping.pm,v 1.8 2008/09/29 17:36:13 millert Exp $
+$Id: Ping.pm,v 1.9 2009/10/12 18:24:41 millert Exp $
 
 =cut

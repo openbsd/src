@@ -418,7 +418,7 @@ The two control characters ^D and ^Z, and the tokens __END__ and __DATA__
 may be used to indicate the logical end of the script before the actual
 end of file.  Any following text is ignored.
 
-Text after __DATA__ but may be read via the filehandle C<PACKNAME::DATA>,
+Text after __DATA__ may be read via the filehandle C<PACKNAME::DATA>,
 where C<PACKNAME> is the package that was current when the __DATA__
 token was encountered.  The filehandle is left open pointing to the
 contents after __DATA__.  It is the program's responsibility to
@@ -442,8 +442,11 @@ be treated as if it were a quoted string.  These are known as
 "barewords".  As with filehandles and labels, a bareword that consists
 entirely of lowercase letters risks conflict with future reserved
 words, and if you use the C<use warnings> pragma or the B<-w> switch, 
-Perl will warn you about any
-such words.  Some people may wish to outlaw barewords entirely.  If you
+Perl will warn you about any such words.  Perl limits barewords (like
+identifiers) to about 250 characters.  Future versions of Perl are likely
+to eliminate these arbitrary limitations.
+
+Some people may wish to outlaw barewords entirely.  If you
 say
 
     use strict 'subs';
@@ -674,7 +677,7 @@ name of the array (without the leading C<@>), then the subscript inside
 square brackets.  For example:
 
     @myarray = (5, 50, 500, 5000);
-    print "Element Number 2 is", $myarray[2], "\n";
+    print "The Third Element is", $myarray[2], "\n";
 
 The array indices start with 0. A negative subscript retrieves its 
 value from the end.  In our example, C<$myarray[-1]> would have been 

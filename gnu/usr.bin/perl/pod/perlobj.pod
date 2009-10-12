@@ -158,8 +158,8 @@ through @ISA are known as base classes of the current class.
 
 All classes implicitly inherit from class C<UNIVERSAL> as their
 last base class.  Several commonly used methods are automatically
-supplied in the UNIVERSAL class; see L<"Default UNIVERSAL methods"> for
-more details.
+supplied in the UNIVERSAL class; see L<"Default UNIVERSAL methods"> or
+L<UNIVERSAL|UNIVERSAL> for more details.
 X<UNIVERSAL> X<base class> X<class, base>
 
 If a missing method is found in a base class, it is cached
@@ -313,6 +313,19 @@ The right side of the arrow typically is the method name, but a simple
 scalar variable containing either the method name or a subroutine 
 reference can also be used.
 
+If the right side of the arrow is a scalar containing a reference
+to a subroutine, then this is equivalent to calling the referenced
+subroutine directly with the class name or object on the left side
+of the arrow as its first argument. No lookup is done and there is
+no requirement that the subroutine be defined in any package related
+to the class name or object on the left side of the arrow.
+
+For example, the following calls to $display are equivalent:
+
+    my $display = sub { my $self = shift; ... };
+    $fred->$display("Height", "Weight");
+    $display->($fred, "Height", "Weight");
+
 =head2 Indirect Object Syntax
 X<indirect object syntax> X<invocation, indirect> X<indirect>
 
@@ -392,31 +405,18 @@ X<isa>
 
 C<isa> returns I<true> if its object is blessed into a subclass of C<CLASS>
 
-You can also call C<UNIVERSAL::isa> as a subroutine with two arguments.  Of
-course, this will do the wrong thing if someone has overridden C<isa> in a
-class, so don't do it.
+=item DOES(ROLE)
+X<DOES>
 
-If you need to determine whether you've received a valid invocant, use the
-C<blessed> function from L<Scalar::Util>:
-X<invocant> X<blessed>
-
-    if (blessed($ref) && $ref->isa( 'Some::Class')) {
-        # ...
-    }
-
-C<blessed> returns the name of the package the argument has been
-blessed into, or C<undef>.
+C<DOES> returns I<true> if its object claims to perform the role C<ROLE>.  By
+default, this is equivalent to C<isa>.
 
 =item can(METHOD)
 X<can>
 
 C<can> checks to see if its object has a method called C<METHOD>,
 if it does then a reference to the sub is returned, if it does not then
-I<undef> is returned.
-
-C<UNIVERSAL::can> can also be called as a subroutine with two arguments.  It'll
-always return I<undef> if its first argument isn't an object or a class name.
-The same caveats for calling C<UNIVERSAL::isa> directly apply here, too.
+C<undef> is returned.
 
 =item VERSION( [NEED] )
 X<VERSION>
@@ -424,23 +424,14 @@ X<VERSION>
 C<VERSION> returns the version number of the class (package).  If the
 NEED argument is given then it will check that the current version (as
 defined by the $VERSION variable in the given package) not less than
-NEED; it will die if this is not the case.  This method is normally
-called as a class method.  This method is called automatically by the
-C<VERSION> form of C<use>.
+NEED; it will die if this is not the case.  This method is called automatically
+by the C<VERSION> form of C<use>.
 
-    use A 1.2 qw(some imported subs);
+    use Package 1.2 qw(some imported subs);
     # implies:
-    A->VERSION(1.2);
+    Package->VERSION(1.2);
 
 =back
-
-B<NOTE:> C<can> directly uses Perl's internal code for method lookup, and
-C<isa> uses a very similar method and cache-ing strategy. This may cause
-strange effects if the Perl code dynamically changes @ISA in any package.
-
-You may add other methods to the UNIVERSAL class via Perl or XS code.
-You do not need to C<use UNIVERSAL> to make these methods
-available to your program (and you should not do so).
 
 =head2 Destructors
 X<destructor> X<DESTROY>

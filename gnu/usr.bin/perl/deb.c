@@ -1,7 +1,7 @@
 /*    deb.c
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000,
- *    2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
+ *    2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -9,8 +9,10 @@
  */
 
 /*
- * "Didst thou think that the eyes of the White Tower were blind?  Nay, I
- * have seen more than thou knowest, Gray Fool."  --Denethor
+ * 'Didst thou think that the eyes of the White Tower were blind?  Nay,
+ *  I have seen more than thou knowest, Grey Fool.'        --Denethor
+ *
+ *     [p.853 of _The Lord of the Rings_, V/vii: "The Pyre of Denethor"]
  */
 
 /*
@@ -29,6 +31,7 @@ Perl_deb_nocontext(const char *pat, ...)
 #ifdef DEBUGGING
     dTHX;
     va_list args;
+    PERL_ARGS_ASSERT_DEB_NOCONTEXT;
     va_start(args, pat);
     vdeb(pat, &args);
     va_end(args);
@@ -42,6 +45,7 @@ void
 Perl_deb(pTHX_ const char *pat, ...)
 {
     va_list args;
+    PERL_ARGS_ASSERT_DEB;
     va_start(args, pat);
 #ifdef DEBUGGING
     vdeb(pat, &args);
@@ -59,6 +63,8 @@ Perl_vdeb(pTHX_ const char *pat, va_list *args)
     const char* const file = PL_curcop ? OutCopFILE(PL_curcop) : "<null>";
     const char* const display_file = file ? file : "<free>";
     const long line = PL_curcop ? (long)CopLINE(PL_curcop) : 0;
+
+    PERL_ARGS_ASSERT_VDEB;
 
     if (DEBUG_v_TEST)
 	PerlIO_printf(Perl_debug_log, "(%ld:%s:%ld)\t",
@@ -110,6 +116,9 @@ S_deb_stack_n(pTHX_ SV** stack_base, I32 stack_min, I32 stack_max,
     dVAR;
     register I32 i = stack_max - 30;
     const I32 *markscan = PL_markstack + mark_min;
+
+    PERL_ARGS_ASSERT_DEB_STACK_N;
+
     if (i < stack_min)
 	i = stack_min;
     

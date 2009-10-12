@@ -242,7 +242,7 @@ if [ "$osname" = "qnx" ]; then
 else
   # $^O eq nto
 
-  ccflags='-DDLOPEN_WONT_DO_RELATIVE_PATHS'
+  ccflags='-U__STRICT_ANSI__'
 
   # Options required to get dynamic linking to work
   lddlflags='-shared'
@@ -259,7 +259,10 @@ else
   # If we use perl's malloc, it dies with an invalid sbrk.
   # This is probably worth tracking down someday.
   usemymalloc='false'
+  
+  libswanted=`echo " $libswanted "| sed 's/ malloc / /'`
 
-  # crypt isn't detected in the C library even though it's there.
-  d_crypt='define'
+  # Some routines are only in our static libc.
+  # eg crypt() getlogin() getlogin_r()
+  usenm=false
 fi

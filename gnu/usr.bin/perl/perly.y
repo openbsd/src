@@ -1,6 +1,7 @@
 /*    perly.y
  *
  *    Copyright (c) 1991-2002, 2003, 2004, 2005, 2006 Larry Wall
+ *    Copyright (c) 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -9,8 +10,12 @@
 
 /*
  * 'I see,' laughed Strider.  'I look foul and feel fair.  Is that it?
- * All that is gold does not glitter, not all those who wander are lost.'
+ *  All that is gold does not glitter, not all those who wander are lost.'
  *
+ *     [p.171 of _The Lord of the Rings_, I/x: "Strider"]
+ */
+
+/*
  * This file holds the grammar for the Perl language. If edited, you need
  * to run regen_perly.pl, which re-creates the files perly.h, perly.tab
  * and perly.act which are derived from this.
@@ -177,7 +182,7 @@ mremember:	/* NULL */	/* start a partial lexical scope */
 
 /* A collection of "lines" in the program */
 lineseq	:	/* NULL */
-			{ $$ = Nullop; }
+			{ $$ = (OP*)NULL; }
 	|	lineseq decl
 			{
 			$$ = IF_MAD(
@@ -213,7 +218,7 @@ line	:	label cond
 			  else {
 			      $$ = IF_MAD(
 					newOP(OP_NULL, 0),
-					Nullop);
+					(OP*)NULL);
                               PL_parser->copline = NOLINE;
 			      TOKEN_FREE($1);
 			      TOKEN_GETMAD($2,$$,';');
@@ -240,7 +245,7 @@ line	:	label cond
 
 /* An expression which may have a side-effect */
 sideff	:	error
-			{ $$ = Nullop; }
+			{ $$ = (OP*)NULL; }
 	|	expr
 			{ $$ = $1; }
 	|	expr IF expr
@@ -261,21 +266,21 @@ sideff	:	error
 			}
 	|	expr FOR expr
 			{ $$ = newFOROP(0, NULL, (line_t)IVAL($2),
-					Nullop, $3, $1, Nullop);
+					(OP*)NULL, $3, $1, (OP*)NULL);
 			  TOKEN_GETMAD($2,((LISTOP*)$$)->op_first->op_sibling,'w');
 			}
 	;
 
 /* else and elsif blocks */
 else	:	/* NULL */
-			{ $$ = Nullop; }
+			{ $$ = (OP*)NULL; }
 	|	ELSE mblock
 			{ ($2)->op_flags |= OPf_PARENS; $$ = scope($2);
 			  TOKEN_GETMAD($1,$$,'o');
 			}
 	|	ELSIF '(' mexpr ')' mblock else
 			{ PL_parser->copline = (line_t)IVAL($1);
-			    $$ = newCONDOP(0, $3, scope($5), $6);
+			    $$ = newCONDOP(0, newSTATEOP(OPf_SPECIAL,NULL,$3), scope($5), $6);
 			    PL_hints |= HINT_BLOCK_SCOPE;
 			  TOKEN_GETMAD($1,$$,'I');
 			  TOKEN_GETMAD($2,$$,'(');
@@ -312,7 +317,7 @@ case	:	WHEN '(' remember mexpr ')' mblock
 
 /* Continue blocks */
 cont	:	/* NULL */
-			{ $$ = Nullop; }
+			{ $$ = (OP*)NULL; }
 	|	CONTINUE block
 			{ $$ = scope($2);
 			  TOKEN_GETMAD($1,$$,'o');
@@ -325,7 +330,7 @@ loop	:	label WHILE '(' remember texpr ')' mintro mblock cont
 			  PL_parser->copline = (line_t)$2;
 			    $$ = block_end($4,
 				   newSTATEOP(0, PVAL($1),
-				     innerop = newWHILEOP(0, 1, (LOOP*)Nullop,
+				     innerop = newWHILEOP(0, 1, (LOOP*)(OP*)NULL,
 						IVAL($2), $5, $8, $9, $7)));
 			  TOKEN_GETMAD($1,innerop,'L');
 			  TOKEN_GETMAD($2,innerop,'W');
@@ -338,7 +343,7 @@ loop	:	label WHILE '(' remember texpr ')' mintro mblock cont
 			  PL_parser->copline = (line_t)$2;
 			    $$ = block_end($4,
 				   newSTATEOP(0, PVAL($1),
-				     innerop = newWHILEOP(0, 1, (LOOP*)Nullop,
+				     innerop = newWHILEOP(0, 1, (LOOP*)(OP*)NULL,
 						IVAL($2), $5, $8, $9, $7)));
 			  TOKEN_GETMAD($1,innerop,'L');
 			  TOKEN_GETMAD($2,innerop,'W');
@@ -370,7 +375,7 @@ loop	:	label WHILE '(' remember texpr ')' mintro mblock cont
 			{ OP *innerop;
 			  $$ = block_end($4,
 			     innerop = newFOROP(0, PVAL($1), (line_t)IVAL($2),
-						    Nullop, $5, $7, $8));
+						    (OP*)NULL, $5, $7, $8));
 			  TOKEN_GETMAD($1,((LISTOP*)innerop)->op_first,'L');
 			  TOKEN_GETMAD($2,((LISTOP*)innerop)->op_first->op_sibling,'W');
 			  TOKEN_GETMAD($3,((LISTOP*)innerop)->op_first->op_sibling,'(');
@@ -382,7 +387,7 @@ loop	:	label WHILE '(' remember texpr ')' mintro mblock cont
 			{ OP *forop;
 			  PL_parser->copline = (line_t)IVAL($2);
 			  forop = newSTATEOP(0, PVAL($1),
-					    newWHILEOP(0, 1, (LOOP*)Nullop,
+					    newWHILEOP(0, 1, (LOOP*)(OP*)NULL,
 						IVAL($2), scalar($7),
 						$12, $10, $9));
 #ifdef MAD
@@ -410,8 +415,8 @@ loop	:	label WHILE '(' remember texpr ')' mintro mblock cont
 			  $$ = block_end($4, forop); }
 	|	label block cont  /* a block is a loop that happens once */
 			{ $$ = newSTATEOP(0, PVAL($1),
-				 newWHILEOP(0, 1, (LOOP*)Nullop,
-					    NOLINE, Nullop, $2, $3, 0));
+				 newWHILEOP(0, 1, (LOOP*)(OP*)NULL,
+					    NOLINE, (OP*)NULL, $2, $3, 0));
 			  TOKEN_GETMAD($1,((LISTOP*)$$)->op_first,'L'); }
 	;
 
@@ -432,7 +437,7 @@ mintro	:	/* NULL */
 
 /* Normal expression */
 nexpr	:	/* NULL */
-			{ $$ = Nullop; }
+			{ $$ = (OP*)NULL; }
 	|	sideff
 	;
 
@@ -509,13 +514,13 @@ format	:	FORMAT startformsub formname block
 			  token_free($1);
 #else
 			  newFORM($2, $3, $4);
-			  $$ = Nullop;
+			  $$ = (OP*)NULL;
 #endif
 			}
 	;
 
 formname:	WORD		{ $$ = $1; }
-	|	/* NULL */	{ $$ = Nullop; }
+	|	/* NULL */	{ $$ = (OP*)NULL; }
 	;
 
 /* Unimplemented "my sub foo { }" */
@@ -526,7 +531,7 @@ mysubrout:	MYSUB startsub subname proto subattrlist subbody
 			  token_getmad($1,$$,'d');
 #else
 			  newMYSUB($2, $3, $4, $5, $6);
-			  $$ = Nullop;
+			  $$ = (OP*)NULL;
 #endif
 			}
 	;
@@ -549,7 +554,7 @@ subrout	:	SUB startsub subname proto subattrlist subbody
 			    }
 #else
 			  newATTRSUB($2, $3, $4, $5, $6);
-			  $$ = Nullop;
+			  $$ = (OP*)NULL;
 #endif
 			}
 	;
@@ -581,13 +586,13 @@ subname	:	WORD	{ const char *const name = SvPV_nolen_const(((SVOP*)$1)->op_sv);
 
 /* Subroutine prototype */
 proto	:	/* NULL */
-			{ $$ = Nullop; }
+			{ $$ = (OP*)NULL; }
 	|	THING
 	;
 
 /* Optional list of subroutine attributes */
 subattrlist:	/* NULL */
-			{ $$ = Nullop; }
+			{ $$ = (OP*)NULL; }
 	|	COLONATTR THING
 			{ $$ = $2;
 			  TOKEN_GETMAD($1,$$,':');
@@ -595,7 +600,7 @@ subattrlist:	/* NULL */
 	|	COLONATTR
 			{ $$ = IF_MAD(
 				    newOP(OP_NULL, 0),
-				    Nullop
+				    (OP*)NULL
 				);
 			  TOKEN_GETMAD($1,$$,':');
 			}
@@ -609,7 +614,7 @@ myattrlist:	COLONATTR THING
 	|	COLONATTR
 			{ $$ = IF_MAD(
 				    newOP(OP_NULL, 0),
-				    Nullop
+				    (OP*)NULL
 				);
 			  TOKEN_GETMAD($1,$$,':');
 			}
@@ -619,7 +624,7 @@ myattrlist:	COLONATTR THING
 subbody	:	block	{ $$ = $1; }
 	|	';'	{ $$ = IF_MAD(
 				    newOP(OP_NULL,0),
-				    Nullop
+				    (OP*)NULL
 				);
 			  PL_parser->expect = XSTATE;
 			  TOKEN_GETMAD($1,$$,';');
@@ -634,7 +639,7 @@ package :	PACKAGE WORD ';'
 			  token_getmad($3,$$,';');
 #else
 			  package($2);
-			  $$ = Nullop;
+			  $$ = (OP*)NULL;
 #endif
 			}
 	;
@@ -652,7 +657,7 @@ use	:	USE startsub
 			      append_madprops(newMADPROP('!', MAD_PV, "", 0), $$, 0);
 #else
 			  utilize(IVAL($1), $2, $4, $5, $6);
-			  $$ = Nullop;
+			  $$ = (OP*)NULL;
 #endif
 			}
 	;
@@ -750,7 +755,7 @@ listop	:	LSTOP indirob argexpr /* map {...} @args or print $fh @args */
 			}
 	|	LSTOPSUB startanonsub block /* sub f(&@);   f { foo } ... */
 			{ SvREFCNT_inc_simple_void(PL_compcv);
-			  $<opval>$ = newANONATTRSUB($2, 0, Nullop, $3); }
+			  $<opval>$ = newANONATTRSUB($2, 0, (OP*)NULL, $3); }
 		    listexpr		%prec LSTOP  /* ... @bar */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				 append_elem(OP_LIST,
@@ -856,7 +861,7 @@ subscripted:    star '{' expr ';' '}'        /* *main::{something} */
 			  TOKEN_GETMAD($6,$$,']');
 			}
 	|	'(' ')' '[' expr ']'                 /* empty list slice! */
-			{ $$ = newSLICEOP(0, $4, Nullop);
+			{ $$ = newSLICEOP(0, $4, (OP*)NULL);
 			  TOKEN_GETMAD($1,$$,'(');
 			  TOKEN_GETMAD($2,$$,')');
 			  TOKEN_GETMAD($3,$$,'[');
@@ -986,7 +991,7 @@ anonymous:	'[' expr ']'
 			  TOKEN_GETMAD($3,$$,']');
 			}
 	|	'[' ']'
-			{ $$ = newANONLIST(Nullop);
+			{ $$ = newANONLIST((OP*)NULL);
 			  TOKEN_GETMAD($1,$$,'[');
 			  TOKEN_GETMAD($2,$$,']');
 			}
@@ -997,7 +1002,7 @@ anonymous:	'[' expr ']'
 			  TOKEN_GETMAD($4,$$,'}');
 			}
 	|	HASHBRACK ';' '}'	%prec '(' /* { } (';' by tokener) */
-			{ $$ = newANONHASH(Nullop);
+			{ $$ = newANONHASH((OP*)NULL);
 			  TOKEN_GETMAD($1,$$,'{');
 			  TOKEN_GETMAD($2,$$,';');
 			  TOKEN_GETMAD($3,$$,'}');
@@ -1028,7 +1033,7 @@ termdo	:       DO term	%prec UNIOP                     /* do $filename */
 				scalar(newCVREF(
 				    (OPpENTERSUB_AMPER<<8),
 				    scalar($2)
-				)),Nullop)); dep();
+				)),(OP*)NULL)); dep();
 			  TOKEN_GETMAD($1,$$,'o');
 			  TOKEN_GETMAD($3,$$,'(');
 			  TOKEN_GETMAD($4,$$,')');
@@ -1049,7 +1054,7 @@ termdo	:       DO term	%prec UNIOP                     /* do $filename */
 	|	DO scalar '(' ')'                      /* do $subref () */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_SPECIAL|OPf_STACKED,
 			    prepend_elem(OP_LIST,
-				scalar(newCVREF(0,scalar($2))), Nullop)); dep();
+				scalar(newCVREF(0,scalar($2))), (OP*)NULL)); dep();
 			  TOKEN_GETMAD($1,$$,'o');
 			  TOKEN_GETMAD($3,$$,'(');
 			  TOKEN_GETMAD($4,$$,')');
@@ -1265,13 +1270,13 @@ myterm	:	'(' expr ')'
 
 /* Basic list expressions */
 listexpr:	/* NULL */ %prec PREC_LOW
-			{ $$ = Nullop; }
+			{ $$ = (OP*)NULL; }
 	|	argexpr    %prec PREC_LOW
 			{ $$ = $1; }
 	;
 
 listexprcom:	/* NULL */
-			{ $$ = Nullop; }
+			{ $$ = (OP*)NULL; }
 	|	expr
 			{ $$ = $1; }
 	|	expr ','

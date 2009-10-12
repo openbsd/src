@@ -6,8 +6,32 @@
 # and by AIX for creating libperl.a when -Dusershrplib is in effect,
 # and by MacOS Classic.
 #
-# reads global.sym, pp.sym, perlvars.h, intrpvar.h, config.h
-# On OS/2 reads miniperl.map and the previous version of perl5.def as well
+# Reads from information stored in
+#
+#    config.h
+#    config.sh
+#    global.sym
+#    globvar.sym
+#    intrpvar.h
+#    macperl.sym  (on MacOS)
+#    miniperl.map (on OS/2)
+#    perl5.def    (on OS/2; this is the old version of the file being made)
+#    perlio.sym
+#    perlvars.h
+#
+# plus long lists of function names hard-coded directly in this script and
+# in the DATA section.
+#
+# Writes the result to STDOUT.
+#
+# Normally this script is invoked from a makefile (e.g. win32/Makefile),
+# which redirects STDOUT to a suitable file, such as:
+#
+#    perl5.def   OS/2
+#    perldll.def Windows
+#    perl.exp    AIX
+#    perl.imp    NetWare
+
 
 BEGIN { unshift @INC, "lib" }
 use strict;
@@ -129,6 +153,7 @@ while (<CFG>) {
     $define{$1} = 1 if /^\s*#\s*define\s+(MULTIPLICITY)\b/;
     $define{$1} = 1 if /^\s*#\s*define\s+(PERL_\w+)\b/;
     $define{$1} = 1 if /^\s*#\s*define\s+(USE_\w+)\b/;
+    $define{$1} = 1 if /^\s*#\s*define\s+(HAS_\w+)\b/;
 }
 close(CFG);
 
@@ -404,6 +429,13 @@ elsif ($PLATFORM eq 'aix') {
 		     PL_statusvalue_vms
 		     PL_sys_intern
 		     )]);
+    skip_symbols([qw(
+		     Perl_signbit
+		     )])
+	if $define{'HAS_SIGNBIT'};
+    emit_symbols([qw(
+		     boot_DynaLoader
+		     )]);
 }
 elsif ($PLATFORM eq 'os2') {
     emit_symbols([qw(
@@ -593,7 +625,6 @@ unless ($define{'DEBUGGING'}) {
 		    Perl_debstack
 		    Perl_debstackptrs
 		    Perl_pad_sv
-		    Perl_sv_peek
 		    Perl_hv_assert
 		    PL_block_type
 		    PL_watchaddr
@@ -667,6 +698,7 @@ else {
 		    Perl_dump_mstats
 		    Perl_get_mstats
 		    Perl_malloced_size
+		    Perl_malloc_good_size
 		    MallocCfg_ptr
 		    MallocCfgP_ptr
 		    )];
@@ -820,6 +852,12 @@ unless ($define{'PERL_NEED_APPCTX'}) {
 unless ($define{'PERL_NEED_TIMESBASE'}) {
     skip_symbols [qw(
 		    PL_timesbase
+		    )];
+}
+
+unless ($define{'DEBUG_LEAKING_SCALARS'}) {
+    skip_symbols [qw(
+		    PL_sv_serial
 		    )];
 }
 
@@ -999,8 +1037,10 @@ my @layer_syms = qw(
 		    PerlIO_arg_fetch
 		    PerlIO_debug
 		    PerlIO_define_layer
+		    PerlIO_find_layer
 		    PerlIO_isutf8
 		    PerlIO_layer_fetch
+		    PerlIO_list_alloc
 		    PerlIO_list_free
 		    PerlIO_modestr
 		    PerlIO_parse_layers

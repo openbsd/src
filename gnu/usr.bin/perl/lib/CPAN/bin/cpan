@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: cpan,v 1.3 2008/09/29 17:36:10 millert Exp $
+# $Id: cpan,v 1.4 2009/10/12 18:24:39 millert Exp $
 use strict;
 
 =head1 NAME
@@ -173,7 +173,7 @@ use CPAN ();
 use Getopt::Std;
 
 my $VERSION =
-	sprintf "%d.%d", q$Revision: 1.3 $ =~ m/ (\d+) \. (\d+) /xg;
+	sprintf "%d.%d", q$Revision: 1.4 $ =~ m/ (\d+) \. (\d+) /xg;
 
 if( $ARGV[0] eq 'install' )
 	{
@@ -225,7 +225,7 @@ my %Method_table = (
 	O => [ \&_show_out_of_date,  0, 0, 'Showing Out of date'    ],
 	L => [ \&_show_author_mods,  1, 0, 'Showing author mods'    ],
 	a => [ \&_create_autobundle, 0, 0, 'Creating autobundle'    ],
-	r => [ \&_recompile,         0, 0, 'Recompiling'            ],
+	r => [ \&_recompiling,       0, 0, 'Recompiling'            ],
 
 	c => [ \&_default,           1, 0, 'Running `make clean`'   ],
 	f => [ \&_default,           1, 0, 'Installing with force'  ],
@@ -338,7 +338,7 @@ sub _create_autobundle
 	CPAN::Shell->autobundle;
 	}
 
-sub _recompile
+sub _recompiling
 	{
 	print "Recompiling dynamically-loaded extensions\n";
 

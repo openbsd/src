@@ -120,7 +120,7 @@ cat > UU/usethreads.cbu <<'EOCBU'
 case "$usethreads" in
 $define|true|[yY]*)
 	case "$osvers" in 
-	3.*|4.*)	ccflags="-D_REENTRANT $ccflags"	
+	3.*|4.*)        ccflags="-D_REENTRANT -D_THREAD_SAFE -pthread $ccflags"
 	    ;;
 	*)   cat <<EOM >&4
 I did not know that BSD/OS $osvers supports POSIX threads.

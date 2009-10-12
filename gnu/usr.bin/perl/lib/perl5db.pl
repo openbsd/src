@@ -511,7 +511,7 @@ package DB;
 BEGIN {eval 'use IO::Handle'};	# Needed for flush only? breaks under miniperl
 
 # Debugger for Perl 5.00x; perl5db.pl patch level:
-$VERSION = 1.30;
+$VERSION = 1.32;
 
 $header = "perl5db.pl version $VERSION";
 
@@ -941,6 +941,14 @@ sub eval {
 #   + Added macosx_get_fork_TTY support 
 # Changes: 1.30: Mar 06, 2007 Andreas Koenig <andk@cpan.org>
 #   + Added HistFile, HistSize
+# Changes: 1.31
+#   + Remove support for assertions and -A
+#   + stop NEXT::AUTOLOAD from emitting warnings under the debugger. RT #25053
+#   + "update for Mac OS X 10.5" [finding the tty device]
+#   + "What I needed to get the forked debugger to work" [on VMS]
+#   + [perl #57016] debugger: o warn=0 die=0 ignored
+#   + Note, but don't use, PERLDBf_SAVESRC
+#   + Fix #7013: lvalue subs not working inside debugger
 ########################################################################
 
 =head1 DEBUGGER INITIALIZATION
@@ -1363,7 +1371,9 @@ running interactively, this is C<.perldb>; if not, it's C<perldb.ini>.
 # As noted, this test really doesn't check accurately that the debugger
 # is running at a terminal or not.
 
-if ( -e "/dev/tty" ) {                      # this is the wrong metric!
+my $dev_tty = '/dev/tty';
+   $dev_tty = 'TT:' if ($^O eq 'VMS');
+if ( -e $dev_tty ) {                      # this is the wrong metric!
     $rcfile = ".perldb";
 }
 else {
@@ -2998,7 +3008,7 @@ Same as for C</>, except the loop runs backwards.
 =head4 C<$rc> - Recall command
 
 Manages the commands in C<@hist> (which is created if C<Term::ReadLine> reports
-that the terminal supports history). It find the command required, puts it
+that the terminal supports history). It find the the command required, puts it
 into C<$cmd>, and redoes the loop to execute it.
 
 =cut
@@ -3625,6 +3635,8 @@ arguments with which the subroutine was invoked
 =cut
 
 sub sub {
+	# Do not use a regex in this subroutine -> results in corrupted memory
+	# See: [perl #66110]
 
 	# lock ourselves under threads
 	lock($DBGR);
@@ -3633,7 +3645,7 @@ sub sub {
     # sub's return value in (if needed), and an array to put the sub's
     # return value in (if needed).
     my ( $al, $ret, @ret ) = "";
-	if ($sub =~ /^threads::new$/ && $ENV{PERL5DB_THREADED}) {
+	if ($sub eq 'threads::new' && $ENV{PERL5DB_THREADED}) {
 		print "creating new thread\n"; 
 	}
 
@@ -3773,6 +3785,69 @@ sub sub {
         $ret;
     } ## end else [ if (wantarray)
 } ## end sub sub
+
+sub lsub : lvalue {
+
+	# lock ourselves under threads
+	lock($DBGR);
+
+    # Whether or not the autoloader was running, a scalar to put the
+    # sub's return value in (if needed), and an array to put the sub's
+    # return value in (if needed).
+    my ( $al, $ret, @ret ) = "";
+	if ($sub =~ /^threads::new$/ && $ENV{PERL5DB_THREADED}) {
+		print "creating new thread\n";
+	}
+
+    # If the last ten characters are C'::AUTOLOAD', note we've traced
+    # into AUTOLOAD for $sub.
+    if ( length($sub) > 10 && substr( $sub, -10, 10 ) eq '::AUTOLOAD' ) {
+        $al = " for $$sub";
+    }
+
+    # We stack the stack pointer and then increment it to protect us
+    # from a situation that might unwind a whole bunch of call frames
+    # at once. Localizing the stack pointer means that it will automatically
+    # unwind the same amount when multiple stack frames are unwound.
+    local $stack_depth = $stack_depth + 1;    # Protect from non-local exits
+
+    # Expand @stack.
+    $#stack = $stack_depth;
+
+    # Save current single-step setting.
+    $stack[-1] = $single;
+
+    # Turn off all flags except single-stepping.
+    $single &= 1;
+
+    # If we've gotten really deeply recursed, turn on the flag that will
+    # make us stop with the 'deep recursion' message.
+    $single |= 4 if $stack_depth == $deep;
+
+    # If frame messages are on ...
+    (
+        $frame & 4    # Extended frame entry message
+        ? (
+            print_lineinfo( ' ' x ( $stack_depth - 1 ), "in  " ),
+
+            # Why -1? But it works! :-(
+            # Because print_trace will call add 1 to it and then call
+            # dump_trace; this results in our skipping -1+1 = 0 stack frames
+            # in dump_trace.
+            print_trace( $LINEINFO, -1, 1, 1, "$sub$al" )
+          )
+        : print_lineinfo( ' ' x ( $stack_depth - 1 ), "entering $sub$al\n" )
+
+          # standard frame entry message
+      )
+      if $frame;
+
+    # Pop the single-step value back off the stack.
+    $single |= $stack[ $stack_depth-- ];
+
+    # call the original lvalue sub.
+    &$sub;
+}
 
 =head1 EXTENDED COMMAND HANDLING AND THE COMMAND API
 
@@ -6100,6 +6175,16 @@ qq[3>&1 xterm -title "Daughter Perl debugger $pids $name" -e sh -c 'tty 1>&3;\
 
     $pidprompt = '';    # Shown anyway in titlebar
 
+    # We need $term defined or we can not switch to the newly created xterm
+    if ($tty ne '' && !defined $term) {
+        eval { require Term::ReadLine } or die $@;
+        if ( !$rl ) {
+            $term = new Term::ReadLine::Stub 'perldb', $IN, $OUT;
+        }
+        else {
+            $term = new Term::ReadLine 'perldb', $IN, $OUT;
+        }
+    }
     # There's our new TTY.
     return $tty;
 } ## end sub xterm_get_fork_TTY
@@ -6766,18 +6851,6 @@ we go ahead and set C<$console> and C<$tty> to the file indicated.
 
 sub TTY {
 
-    # With VMS we can get here with $term undefined, so we do not
-    # switch to this terminal.  There may be a better place to make
-    # sure that $term is defined on VMS
-    if ( @_ and ($^O eq 'VMS') and !defined($term) ) {
-	eval { require Term::ReadLine } or die $@;
-        if ( !$rl ) {
-	    $term = new Term::ReadLine::Stub 'perldb', $IN, $OUT;
-	}
-	else {
-	    $term = new Term::ReadLine 'perldb', $IN, $OUT;
-	}
-    }
     if ( @_ and $term and $term->Features->{newTTY} ) {
 
         # This terminal supports switching to a new TTY.
@@ -7735,6 +7808,8 @@ sub warnLevel {
         }
         elsif ($prevwarn) {
             $SIG{__WARN__} = $prevwarn;
+        } else {
+            undef $SIG{__WARN__};
         }
     } ## end if (@_)
     $warnLevel;
@@ -7776,6 +7851,9 @@ sub dieLevel {
         elsif ($prevdie) {
             $SIG{__DIE__} = $prevdie;
             print $OUT "Default die handler restored.\n";
+        } else {
+            undef $SIG{__DIE__};
+            print $OUT "Die handler removed.\n";
         }
     } ## end if (@_)
     $dieLevel;
@@ -7922,26 +8000,28 @@ sub methods_via {
     # This is a package that is contributing the methods we're about to print.
     my $prefix  = shift;
     my $prepend = $prefix ? "via $prefix: " : '';
+    my @to_print;
 
-    my $name;
-    for $name (
+    # Extract from all the symbols in this class.
+    while (my ($name, $glob) = each %{"${class}::"}) {
+	# references directly in the symbol table are Proxy Constant
+	# Subroutines, and are by their very nature defined
+	# Otherwise, check if the thing is a typeglob, and if it is, it decays
+	# to a subroutine reference, which can be tested by defined.
+	# $glob might also be the value -1  (from sub foo;)
+	# or (say) '$$' (from sub foo ($$);)
+	# \$glob will be SCALAR in both cases.
+	if ((ref $glob || ($glob && ref \$glob eq 'GLOB' && defined &$glob))
+	    && !$seen{$name}++) {
+	    push @to_print, "$prepend$name\n";
+	}
+    }
 
-        # Keep if this is a defined subroutine in this class.
-        grep { defined &{ ${"${class}::"}{$_} } }
-
-        # Extract from all the symbols in this class.
-        sort keys %{"${class}::"}
-      )
     {
-
-        # If we printed this already, skip it.
-        next if $seen{$name}++;
-
-        # Print the new method name.
-        local $\ = '';
-        local $, = '';
-        print $DB::OUT "$prepend$name\n";
-    } ## end for $name (grep { defined...
+	local $\ = '';
+	local $, = '';
+	print $DB::OUT $_ foreach sort @to_print;
+    }
 
     # If the $crawl_upward argument is false, just quit here.
     return unless shift;
@@ -8698,8 +8778,12 @@ BEGIN {
         PERLDBf_GOTO      => 0x80,     # Report goto: call DB::goto
         PERLDBf_NAMEEVAL  => 0x100,    # Informative names for evals
         PERLDBf_NAMEANON  => 0x200,    # Informative names for anon subs
+        PERLDBf_SAVESRC   => 0x400,    # Save source lines into @{"_<$filename"}
         PERLDB_ALL        => 0x33f,    # No _NONAME, _GOTO
     );
+    # PERLDBf_LINE also enables the actions of PERLDBf_SAVESRC, so the debugger
+    # doesn't need to set it. It's provided for the benefit of profilers and
+    # other code analysers.
 
     %DollarCaretP_flags_r = reverse %DollarCaretP_flags;
 }

@@ -2,7 +2,8 @@ package base;
 
 use strict 'vars';
 use vars qw($VERSION);
-$VERSION = '2.13';
+$VERSION = '2.14';
+$VERSION = eval $VERSION;
 
 # constant.pm is slow
 sub SUCCESS () { 1 }
@@ -191,6 +192,9 @@ base - Establish an ISA relationship with base classes at compile time
     use base qw(Foo Bar);
 
 =head1 DESCRIPTION
+
+Unless you are using the C<fields> pragma, consider this module discouraged
+in favor of the lighter-weight C<parent>.
 
 Allows you to both load one or more modules, while setting up inheritance from
 those modules at the same time.  Roughly similar in effect to

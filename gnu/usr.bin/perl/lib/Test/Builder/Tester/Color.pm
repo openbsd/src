@@ -1,8 +1,10 @@
 package Test::Builder::Tester::Color;
 
 use strict;
+our $VERSION = "1.18";
 
 require Test::Builder::Tester;
+
 
 =head1 NAME
 

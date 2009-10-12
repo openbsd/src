@@ -1,4 +1,19 @@
 #!/usr/bin/perl -w
+# 
+# Regenerate (overwriting only if changed):
+#
+#    opcode.h
+#    opnames.h
+#    pp_proto.h
+#    pp.sym
+#
+# from information stored in the DATA section of this file, plus the
+# values hardcoded into this script in @raw_alias.
+#
+# Accepts the standard regen_lib -q and -v args.
+#
+# This script is normally invoked from regen.pl.
+
 use strict;
 
 BEGIN {
@@ -8,11 +23,9 @@ BEGIN {
 
 my $opcode_new = 'opcode.h-new';
 my $opname_new = 'opnames.h-new';
-open(OC, ">$opcode_new") || die "Can't create $opcode_new: $!\n";
-binmode OC;
-open(ON, ">$opname_new") || die "Can't create $opname_new: $!\n";
-binmode ON;
-select OC;
+my $oc = safer_open($opcode_new);
+my $on = safer_open($opname_new);
+select $oc;
 
 # Read data.
 
@@ -126,13 +139,13 @@ PERL_PPDEF(Perl_unimplemented_op)
 
 END
 
-print ON <<"END";
+print $on <<"END";
 /* -*- buffer-read-only: t -*-
  *
  *    opnames.h
  *
  *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
- *    2007 by Larry Wall and others
+ *    2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -148,13 +161,13 @@ END
 
 my $i = 0;
 for (@ops) {
-    print ON "\t", &tab(3,"OP_\U$_,"), "/* ", $i++, " */\n";
+    print $on "\t", &tab(3,"OP_\U$_,"), "/* ", $i++, " */\n";
 }
-print ON "\t", &tab(3,"OP_max"), "\n";
-print ON "} opcode;\n";
-print ON "\n#define MAXO ", scalar @ops, "\n";
-print ON "#define OP_phoney_INPUT_ONLY -1\n";
-print ON "#define OP_phoney_OUTPUT_ONLY -2\n\n";
+print $on "\t", &tab(3,"OP_max"), "\n";
+print $on "} opcode;\n";
+print $on "\n#define MAXO ", scalar @ops, "\n";
+print $on "#define OP_phoney_INPUT_ONLY -1\n";
+print $on "#define OP_phoney_OUTPUT_ONLY -2\n\n";
 
 # Emit op names and descriptions.
 
@@ -289,6 +302,8 @@ END
 
 # Emit allowed argument types.
 
+my $ARGBITS = 32;
+
 print <<END;
 #ifndef PERL_GLOBAL_STRUCT_INIT
 
@@ -325,39 +340,54 @@ my %opclass = (
     '}',  13,		# loopexop
 );
 
+my %opflags = (
+    'm' =>   1,		# needs stack mark
+    'f' =>   2,		# fold constants
+    's' =>   4,		# always produces scalar
+    't' =>   8,		# needs target scalar
+    'T' =>   8 | 256,	# ... which may be lexical
+    'i' =>  16,		# always produces integer
+    'I' =>  32,		# has corresponding int op
+    'd' =>  64,		# danger, unknown side effects
+    'u' => 128,		# defaults to $_
+);
+
 my %OP_IS_SOCKET;
 my %OP_IS_FILETEST;
+my $OCSHIFT = 9;
+my $OASHIFT = 13;
 
-for (@ops) {
+for my $op (@ops) {
     my $argsum = 0;
-    my $flags = $flags{$_};
-    $argsum |= 1 if $flags =~ /m/;		# needs stack mark
-    $argsum |= 2 if $flags =~ /f/;		# fold constants
-    $argsum |= 4 if $flags =~ /s/;		# always produces scalar
-    $argsum |= 8 if $flags =~ /t/;		# needs target scalar
-    $argsum |= (8|256) if $flags =~ /T/;	# ... which may be lexical
-    $argsum |= 16 if $flags =~ /i/;		# always produces integer
-    $argsum |= 32 if $flags =~ /I/;		# has corresponding int op
-    $argsum |= 64 if $flags =~ /d/;		# danger, unknown side effects
-    $argsum |= 128 if $flags =~ /u/;		# defaults to $_
-    $flags =~ /([\W\d_])/ or die qq[Opcode "$_" has no class indicator];
-    $argsum |= $opclass{$1} << 9;
-    my $mul = 0x2000;				# 2 ^ OASHIFT
-    for my $arg (split(' ',$args{$_})) {
+    my $flags = $flags{$op};
+    for my $flag (keys %opflags) {
+	if ($flags =~ s/$flag//) {
+	    die "Flag collision for '$op' ($flags{$op}, $flag)\n"
+		if $argsum & $opflags{$flag};
+	    $argsum |= $opflags{$flag};
+	}
+    }
+    die qq[Opcode '$op' has no class indicator ($flags{$op} => $flags)\n]
+	unless exists $opclass{$flags};
+    $argsum |= $opclass{$flags} << $OCSHIFT;
+    my $argshift = $OASHIFT;
+    for my $arg (split(' ',$args{$op})) {
 	if ($arg =~ /^F/) {
-           $OP_IS_SOCKET{$_}   = 1 if $arg =~ s/s//;
-           $OP_IS_FILETEST{$_} = 1 if $arg =~ s/-//;
+           $OP_IS_SOCKET{$op}   = 1 if $arg =~ s/s//;
+           $OP_IS_FILETEST{$op} = 1 if $arg =~ s/-//;
         }
 	my $argnum = ($arg =~ s/\?//) ? 8 : 0;
-        die "op = $_, arg = $arg\n" unless length($arg) == 1;
+        die "op = $op, arg = $arg\n"
+	    unless exists $argnum{$arg};
 	$argnum += $argnum{$arg};
-	warn "# Conflicting bit 32 for '$_'.\n"
-	    if $argnum & 8 and $mul == 0x10000000;
-	$argsum += $argnum * $mul;
-	$mul <<= 4;
+	die "Argument overflow for '$op'\n"
+	    if $argshift >= $ARGBITS ||
+	       $argnum > ((1 << ($ARGBITS - $argshift)) - 1);
+	$argsum += $argnum << $argshift;
+	$argshift += 4;
     }
     $argsum = sprintf("0x%08x", $argsum);
-    print "\t", &tab(3, "$argsum,"), "/* $_ */\n";
+    print "\t", &tab(3, "$argsum,"), "/* $op */\n";
 }
 
 print <<END;
@@ -371,40 +401,35 @@ END_EXTERN_C
 END
 
 if (keys %OP_IS_SOCKET) {
-    print ON "\n#define OP_IS_SOCKET(op)	\\\n\t(";
-    print ON join(" || \\\n\t ",
+    print $on "\n#define OP_IS_SOCKET(op)	\\\n\t(";
+    print $on join(" || \\\n\t ",
                map { "(op) == OP_" . uc() } sort keys %OP_IS_SOCKET);
-    print ON ")\n\n";
+    print $on ")\n\n";
 }
 
 if (keys %OP_IS_FILETEST) {
-    print ON "\n#define OP_IS_FILETEST(op)	\\\n\t(";
-    print ON join(" || \\\n\t ",
+    print $on "\n#define OP_IS_FILETEST(op)	\\\n\t(";
+    print $on join(" || \\\n\t ",
                map { "(op) == OP_" . uc() } sort keys %OP_IS_FILETEST);
-    print ON ")\n\n";
+    print $on ")\n\n";
 }
 
-print OC "/* ex: set ro: */\n";
-print ON "/* ex: set ro: */\n";
+print $oc "/* ex: set ro: */\n";
+print $on "/* ex: set ro: */\n";
 
-close OC or die "Error closing opcode.h: $!";
-close ON or die "Error closing opnames.h: $!";
+safer_close($oc);
+safer_close($on);
 
-foreach ('opcode.h', 'opnames.h') {
-    safer_rename_silent $_, "$_-old";
-}
-safer_rename $opcode_new, 'opcode.h';
-safer_rename $opname_new, 'opnames.h';
+rename_if_different $opcode_new, 'opcode.h';
+rename_if_different $opname_new, 'opnames.h';
 
 my $pp_proto_new = 'pp_proto.h-new';
 my $pp_sym_new  = 'pp.sym-new';
 
-open PP, ">$pp_proto_new" or die "Error creating $pp_proto_new: $!";
-binmode PP;
-open PPSYM, ">$pp_sym_new" or die "Error creating $pp_sym_new: $!";
-binmode PPSYM;
+my $pp = safer_open($pp_proto_new);
+my $ppsym = safer_open($pp_sym_new);
 
-print PP <<"END";
+print $pp <<"END";
 /* -*- buffer-read-only: t -*-
    !!!!!!!   DO NOT EDIT THIS FILE   !!!!!!!
    This file is built by opcode.pl from its data.  Any changes made here
@@ -413,7 +438,7 @@ print PP <<"END";
 
 END
 
-print PPSYM <<"END";
+print $ppsym <<"END";
 # -*- buffer-read-only: t -*-
 #
 # !!!!!!!   DO NOT EDIT THIS FILE   !!!!!!!
@@ -425,30 +450,27 @@ END
 
 
 for (sort keys %ckname) {
-    print PP "PERL_CKDEF(Perl_$_)\n";
-    print PPSYM "Perl_$_\n";
+    print $pp "PERL_CKDEF(Perl_$_)\n";
+    print $ppsym "Perl_$_\n";
 #OP *\t", &tab(3,$_),"(OP* o);\n";
 }
 
-print PP "\n\n";
+print $pp "\n\n";
 
 for (@ops) {
     next if /^i_(pre|post)(inc|dec)$/;
     next if /^custom$/;
-    print PP "PERL_PPDEF(Perl_pp_$_)\n";
-    print PPSYM "Perl_pp_$_\n";
+    print $pp "PERL_PPDEF(Perl_pp_$_)\n";
+    print $ppsym "Perl_pp_$_\n";
 }
-print PP "\n/* ex: set ro: */\n";
-print PPSYM "\n# ex: set ro:\n";
+print $pp "\n/* ex: set ro: */\n";
+print $ppsym "\n# ex: set ro:\n";
 
-close PP or die "Error closing pp_proto.h: $!";
-close PPSYM or die "Error closing pp.sym: $!";
+safer_close($pp);
+safer_close($ppsym);
 
-foreach ('pp_proto.h', 'pp.sym') {
-    safer_rename_silent $_, "$_-old";
-}
-safer_rename $pp_proto_new, 'pp_proto.h';
-safer_rename $pp_sym_new, 'pp.sym';
+rename_if_different $pp_proto_new, 'pp_proto.h';
+rename_if_different $pp_sym_new, 'pp.sym';
 
 END {
   foreach ('opcode.h', 'opnames.h', 'pp_proto.h', 'pp.sym') {
@@ -711,14 +733,14 @@ abs		abs			ck_fun		fsTu%	S?
 
 # String stuff.
 
-length		length			ck_lengthconst	isTu%	S?
+length		length			ck_lengthconst	ifsTu%	S?
 substr		substr			ck_substr	st@	S S S? S?
 vec		vec			ck_fun		ist@	S S S
 
 index		index			ck_index	isT@	S S S?
 rindex		rindex			ck_index	isT@	S S S?
 
-sprintf		sprintf			ck_fun		mst@	S L
+sprintf		sprintf			ck_fun		fmst@	S L
 formline	formline		ck_fun		ms@	S L
 ord		ord			ck_fun		ifsTu%	S?
 chr		chr			ck_fun		fsTu%	S?
@@ -744,7 +766,7 @@ keys		keys			ck_fun		t%	H
 delete		delete			ck_delete	%	S
 exists		exists			ck_exists	is%	S
 rv2hv		hash dereference	ck_rvconst	dt1	
-helem		hash element		ck_null		s2@	H S
+helem		hash element		ck_null		s2	H S
 hslice		hash slice		ck_null		m@	H L
 
 # Explosives and implosives.

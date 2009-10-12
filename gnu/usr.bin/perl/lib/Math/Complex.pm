@@ -7,31 +7,85 @@
 
 package Math::Complex;
 
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $Inf);
+use strict;
 
-$VERSION = 1.37;
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $Inf $ExpInf);
+
+$VERSION = 1.56;
+
+use Config;
 
 BEGIN {
-    unless ($^O eq 'unicosmk') {
+    my %DBL_MAX =
+	(
+	  4  => '1.70141183460469229e+38',
+	  8  => '1.7976931348623157e+308',
+	 # AFAICT the 10, 12, and 16-byte long doubles
+	 # all have the same maximum.
+	 10 => '1.1897314953572317650857593266280070162E+4932',
+	 12 => '1.1897314953572317650857593266280070162E+4932',
+	 16 => '1.1897314953572317650857593266280070162E+4932',
+	);
+    my $nvsize = $Config{nvsize} ||
+	        ($Config{uselongdouble} && $Config{longdblsize}) ||
+                 $Config{doublesize};
+    die "Math::Complex: Could not figure out nvsize\n"
+	unless defined $nvsize;
+    die "Math::Complex: Cannot not figure out max nv (nvsize = $nvsize)\n"
+	unless defined $DBL_MAX{$nvsize};
+    my $DBL_MAX = eval $DBL_MAX{$nvsize};
+    die "Math::Complex: Could not figure out max nv (nvsize = $nvsize)\n"
+	unless defined $DBL_MAX;
+    my $BIGGER_THAN_THIS = 1e30;  # Must find something bigger than this.
+    if ($^O eq 'unicosmk') {
+	$Inf = $DBL_MAX;
+    } else {
+	local $SIG{FPE} = { };
         local $!;
-	# We do want an arithmetic overflow, Inf INF inf Infinity:.
-        undef $Inf unless eval <<'EOE' and $Inf =~ /^inf(?:inity)?$/i;
-	  local $SIG{FPE} = sub {die};
-	  my $t = CORE::exp 30;
-	  $Inf = CORE::exp $t;
-EOE
-	if (!defined $Inf) {		# Try a different method
-	  undef $Inf unless eval <<'EOE' and $Inf =~ /^inf(?:inity)?$/i;
-	    local $SIG{FPE} = sub {die};
-	    my $t = 1;
-	    $Inf = $t + "1e99999999999999999999999999999999";
-EOE
+	# We do want an arithmetic overflow, Inf INF inf Infinity.
+	for my $t (
+	    'exp(99999)',  # Enough even with 128-bit long doubles.
+	    'inf',
+	    'Inf',
+	    'INF',
+	    'infinity',
+	    'Infinity',
+	    'INFINITY',
+	    '1e99999',
+	    ) {
+	    local $^W = 0;
+	    my $i = eval "$t+1.0";
+	    if (defined $i && $i > $BIGGER_THAN_THIS) {
+		$Inf = $i;
+		last;
+	    }
 	}
+	$Inf = $DBL_MAX unless defined $Inf;  # Oh well, close enough.
+	die "Math::Complex: Could not get Infinity"
+	    unless $Inf > $BIGGER_THAN_THIS;
+	$ExpInf = exp(99999);
     }
-    $Inf = "Inf" if !defined $Inf || !($Inf > 0); # Desperation.
+    # print "# On this machine, Inf = '$Inf'\n";
 }
 
-use strict;
+use Scalar::Util qw(set_prototype);
+
+use warnings;
+no warnings 'syntax';  # To avoid the (_) warnings.
+
+BEGIN {
+    # For certain functions that we override, in 5.10 or better
+    # we can set a smarter prototype that will handle the lexical $_
+    # (also a 5.10+ feature).
+    if ($] >= 5.010000) {
+        set_prototype \&abs, '_';
+        set_prototype \&cos, '_';
+        set_prototype \&exp, '_';
+        set_prototype \&log, '_';
+        set_prototype \&sin, '_';
+        set_prototype \&sqrt, '_';
+    }
+}
 
 my $i;
 my %LOGN;
@@ -65,7 +119,7 @@ my @trig = qw(
 	     ),
 	   @trig);
 
-my @pi = qw(pi pi2 pi4 pip2 pip4);
+my @pi = qw(pi pi2 pi4 pip2 pip4 Inf);
 
 @EXPORT_OK = @pi;
 
@@ -109,8 +163,6 @@ my $eps            = 1e-14;		# Epsilon
 #	c_dirty		cartesian form not up-to-date
 #	p_dirty		polar form not up-to-date
 #	display		display format (package's global when not set)
-#	bn_cartesian
-#       bnc_dirty
 #
 
 # Die on bad *make() arguments.
@@ -578,7 +630,7 @@ sub _conjugate {
 # Compute or set complex's norm (rho).
 #
 sub abs {
-	my ($z, $rho) = @_;
+	my ($z, $rho) = @_ ? @_ : $_;
 	unless (ref $z) {
 	    if (@_ == 2) {
 		$_[0] = $_[1];
@@ -639,7 +691,7 @@ sub arg {
 # Therefore if you want the two solutions use the root().
 #
 sub sqrt {
-	my ($z) = @_;
+	my ($z) = @_ ? $_[0] : $_;
 	my ($re, $im) = ref $z ? @{$z->_cartesian} : ($z, 0);
 	return $re < 0 ? cplx(0, CORE::sqrt(-$re)) : CORE::sqrt($re)
 	    if $im == 0;
@@ -772,9 +824,10 @@ sub theta {
 # Computes exp(z).
 #
 sub exp {
-	my ($z) = @_;
-	my ($x, $y) = @{$z->_cartesian};
-	return (ref $z)->emake(CORE::exp($x), $y);
+    my ($z) = @_ ? @_ : $_;
+    return CORE::exp($z) unless ref $z;
+    my ($x, $y) = @{$z->_cartesian};
+    return (ref $z)->emake(CORE::exp($x), $y);
 }
 
 #
@@ -804,7 +857,7 @@ sub _logofzero {
 # Compute log(z).
 #
 sub log {
-	my ($z) = @_;
+	my ($z) = @_ ? @_ : $_;
 	unless (ref $z) {
 	    _logofzero("log") if $z == 0;
 	    return $z > 0 ? CORE::log($z) : cplx(CORE::log(-$z), pi);
@@ -852,13 +905,13 @@ sub logn {
 # Compute cos(z) = (exp(iz) + exp(-iz))/2.
 #
 sub cos {
-	my ($z) = @_;
+	my ($z) = @_ ? @_ : $_;
 	return CORE::cos($z) unless ref $z;
 	my ($x, $y) = @{$z->_cartesian};
 	my $ey = CORE::exp($y);
 	my $sx = CORE::sin($x);
 	my $cx = CORE::cos($x);
-	my $ey_1 = $ey ? 1 / $ey : $Inf;
+	my $ey_1 = $ey ? 1 / $ey : Inf();
 	return (ref $z)->make($cx * ($ey + $ey_1)/2,
 			      $sx * ($ey_1 - $ey)/2);
 }
@@ -869,13 +922,13 @@ sub cos {
 # Compute sin(z) = (exp(iz) - exp(-iz))/2.
 #
 sub sin {
-	my ($z) = @_;
+	my ($z) = @_ ? @_ : $_;
 	return CORE::sin($z) unless ref $z;
 	my ($x, $y) = @{$z->_cartesian};
 	my $ey = CORE::exp($y);
 	my $sx = CORE::sin($x);
 	my $cx = CORE::cos($x);
-	my $ey_1 = $ey ? 1 / $ey : $Inf;
+	my $ey_1 = $ey ? 1 / $ey : Inf();
 	return (ref $z)->make($sx * ($ey + $ey_1)/2,
 			      $cx * ($ey - $ey_1)/2);
 }
@@ -1069,11 +1122,11 @@ sub cosh {
 	my $ex;
 	unless (ref $z) {
 	    $ex = CORE::exp($z);
-	    return $ex ? ($ex + 1/$ex)/2 : $Inf;
+            return $ex ? ($ex == $ExpInf ? Inf() : ($ex + 1/$ex)/2) : Inf();
 	}
 	my ($x, $y) = @{$z->_cartesian};
 	$ex = CORE::exp($x);
-	my $ex_1 = $ex ? 1 / $ex : $Inf;
+	my $ex_1 = $ex ? 1 / $ex : Inf();
 	return (ref $z)->make(CORE::cos($y) * ($ex + $ex_1)/2,
 			      CORE::sin($y) * ($ex - $ex_1)/2);
 }
@@ -1089,13 +1142,13 @@ sub sinh {
 	unless (ref $z) {
 	    return 0 if $z == 0;
 	    $ex = CORE::exp($z);
-	    return $ex ? ($ex - 1/$ex)/2 : "-$Inf";
+            return $ex ? ($ex == $ExpInf ? Inf() : ($ex - 1/$ex)/2) : -Inf();
 	}
 	my ($x, $y) = @{$z->_cartesian};
 	my $cy = CORE::cos($y);
 	my $sy = CORE::sin($y);
 	$ex = CORE::exp($x);
-	my $ex_1 = $ex ? 1 / $ex : $Inf;
+	my $ex_1 = $ex ? 1 / $ex : Inf();
 	return (ref $z)->make(CORE::cos($y) * ($ex - $ex_1)/2,
 			      CORE::sin($y) * ($ex + $ex_1)/2);
 }
@@ -1109,7 +1162,10 @@ sub tanh {
 	my ($z) = @_;
 	my $cz = cosh($z);
 	_divbyzero "tanh($z)", "cosh($z)" if ($cz == 0);
-	return sinh($z) / $cz;
+	my $sz = sinh($z);
+	return  1 if $cz ==  $sz;
+	return -1 if $cz == -$sz;
+	return $sz / $cz;
 }
 
 #
@@ -1152,7 +1208,10 @@ sub coth {
 	my ($z) = @_;
 	my $sz = sinh($z);
 	_divbyzero "coth($z)", "sinh($z)" if $sz == 0;
-	return cosh($z) / $sz;
+	my $cz = cosh($z);
+	return  1 if $cz ==  $sz;
+	return -1 if $cz == -$sz;
+	return $cz / $sz;
 }
 
 #
@@ -1165,7 +1224,7 @@ sub cotanh { Math::Complex::coth(@_) }
 #
 # acosh
 #
-# Computes the arc hyperbolic cosine acosh(z) = log(z + sqrt(z*z-1)).
+# Computes the area/inverse hyperbolic cosine acosh(z) = log(z + sqrt(z*z-1)).
 #
 sub acosh {
 	my ($z) = @_;
@@ -1193,7 +1252,7 @@ sub acosh {
 #
 # asinh
 #
-# Computes the arc hyperbolic sine asinh(z) = log(z + sqrt(z*z+1))
+# Computes the area/inverse hyperbolic sine asinh(z) = log(z + sqrt(z*z+1))
 #
 sub asinh {
 	my ($z) = @_;
@@ -1213,7 +1272,7 @@ sub asinh {
 #
 # atanh
 #
-# Computes the arc hyperbolic tangent atanh(z) = 1/2 log((1+z) / (1-z)).
+# Computes the area/inverse hyperbolic tangent atanh(z) = 1/2 log((1+z) / (1-z)).
 #
 sub atanh {
 	my ($z) = @_;
@@ -1229,7 +1288,7 @@ sub atanh {
 #
 # asech
 #
-# Computes the hyperbolic arc secant asech(z) = acosh(1 / z).
+# Computes the area/inverse hyperbolic secant asech(z) = acosh(1 / z).
 #
 sub asech {
 	my ($z) = @_;
@@ -1240,7 +1299,7 @@ sub asech {
 #
 # acsch
 #
-# Computes the hyperbolic arc cosecant acsch(z) = asinh(1 / z).
+# Computes the area/inverse hyperbolic cosecant acsch(z) = asinh(1 / z).
 #
 sub acsch {
 	my ($z) = @_;
@@ -1258,7 +1317,7 @@ sub acosech { Math::Complex::acsch(@_) }
 #
 # acoth
 #
-# Computes the arc hyperbolic cotangent acoth(z) = 1/2 log((1+z) / (z-1)).
+# Computes the area/inverse hyperbolic cotangent acoth(z) = 1/2 log((1+z) / (z-1)).
 #
 sub acoth {
 	my ($z) = @_;
@@ -1392,7 +1451,7 @@ sub _stringify_cartesian {
 	    if ($x =~ /^NaN[QS]?$/i) {
 		$re = $x;
 	    } else {
-		if ($x =~ /^-?$Inf$/oi) {
+		if ($x =~ /^-?\Q$Inf\E$/oi) {
 		    $re = $x;
 		} else {
 		    $re = defined $format ? sprintf($format, $x) : $x;
@@ -1406,7 +1465,7 @@ sub _stringify_cartesian {
 	    if ($y =~ /^(NaN[QS]?)$/i) {
 		$im = $y;
 	    } else {
-		if ($y =~ /^-?$Inf$/oi) {
+		if ($y =~ /^-?\Q$Inf\E$/oi) {
 		    $im = $y;
 		} else {
 		    $im =
@@ -1450,7 +1509,7 @@ sub _stringify_polar {
 	my %format = $z->display_format;
 	my $format = $format{format};
 
-	if ($t =~ /^NaN[QS]?$/i || $t =~ /^-?$Inf$/oi) {
+	if ($t =~ /^NaN[QS]?$/i || $t =~ /^-?\Q$Inf\E$/oi) {
 	    $theta = $t; 
 	} elsif ($t == pi) {
 	    $theta = "pi";
@@ -1486,6 +1545,10 @@ sub _stringify_polar {
 	}
 
 	return "[$r,$theta]";
+}
+
+sub Inf {
+    return $Inf;
 }
 
 1;
@@ -1755,11 +1818,11 @@ The I<k>th root for C<z = [r,t]> is given by:
 You can return the I<k>th root directly by C<root(z, n, k)>,
 indexing starting from I<zero> and ending at I<n - 1>.
 
-The I<spaceship> comparison operator, E<lt>=E<gt>, is also defined. In
-order to ensure its restriction to real numbers is conform to what you
-would expect, the comparison is run on the real part of the complex
-number first, and imaginary parts are compared only when the real
-parts match.
+The I<spaceship> numeric comparison operator, E<lt>=E<gt>, is also
+defined. In order to ensure its restriction to real numbers is conform
+to what you would expect, the comparison is run on the real part of
+the complex number first, and imaginary parts are compared only when
+the real parts match.
 
 =head1 CREATION
 
@@ -1907,6 +1970,8 @@ Here are some examples:
 	$j->arg(2);			# (the last two aka rho, theta)
 					# can be used also as mutators.
 
+=head1 CONSTANTS
+
 =head2 PI
 
 The constant C<pi> and some handy multiples of it (pi2, pi4,
@@ -1915,6 +1980,32 @@ exported:
 
     use Math::Complex ':pi'; 
     $third_of_circle = pi2 / 3;
+
+=head2 Inf
+
+The floating point infinity can be exported as a subroutine Inf():
+
+    use Math::Complex qw(Inf sinh);
+    my $AlsoInf = Inf() + 42;
+    my $AnotherInf = sinh(1e42);
+    print "$AlsoInf is $AnotherInf\n" if $AlsoInf == $AnotherInf;
+
+Note that the stringified form of infinity varies between platforms:
+it can be for example any of
+
+   inf
+   infinity
+   INF
+   1.#INF
+
+or it can be something else. 
+
+Also note that in some platforms trying to use the infinity in
+arithmetic operations may result in Perl crashing because using
+an infinity causes SIGFPE or its moral equivalent to be sent.
+The way to ignore this is
+
+  local $SIG{FPE} = sub { };
 
 =head1 ERRORS DUE TO DIVISION BY ZERO OR LOGARITHM OF ZERO
 
@@ -1980,11 +2071,20 @@ in root(), cos(), sin(), cosh(), sinh(), losing accuracy fast.  Beware.
 The bug may be in UNICOS math libs, in UNICOS C compiler, in Math::Complex.
 Whatever it is, it does not manifest itself anywhere else where Perl runs.
 
+=head1 SEE ALSO
+
+L<Math::Trig>
+
 =head1 AUTHORS
 
 Daniel S. Lewart <F<lewart!at!uiuc.edu>>
 Jarkko Hietaniemi <F<jhi!at!iki.fi>>
 Raphael Manfredi <F<Raphael_Manfredi!at!pobox.com>>
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself. 
 
 =cut
 

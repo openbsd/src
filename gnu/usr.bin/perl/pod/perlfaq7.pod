@@ -63,7 +63,7 @@ one-liners:
 
 	if ($whoops) { exit 1 }
 	@nums = (1, 2, 3);
-	
+
 	if ($whoops) {
 		exit 1;
 	}
@@ -153,7 +153,7 @@ deliberately have precedence lower than that of list operators for
 just such situations as the one above.
 
 Another operator with surprising precedence is exponentiation.  It
-binds more tightly even than unary minus, making C<-2**2> product a
+binds more tightly even than unary minus, making C<-2**2> produce a
 negative not a positive four.  It is also right-associating, meaning
 that C<2**3**2> is two raised to the ninth power, not eight squared.
 
@@ -172,7 +172,7 @@ Here's an example:
 	$person = {};                   # new anonymous hash
 	$person->{AGE}  = 24;           # set field AGE to 24
 	$person->{NAME} = "Nat";        # set field NAME to "Nat"
-	
+
 If you're looking for something a bit more rigorous, try L<perltoot>.
 
 =head2 How do I create a module?
@@ -202,6 +202,9 @@ distributions.
 
 (contributed by brian d foy)
 
+The full answer to this can be found at
+http://cpan.org/modules/04pause.html#takeover
+
 The easiest way to take over a module is to have the current
 module maintainer either make you a co-maintainer or transfer
 the module to you.
@@ -223,7 +226,7 @@ Write to modules@perl.org explaining what you did to contact the
 current maintainer. The PAUSE admins will also try to reach the
 maintainer.
 
-=item 
+=item
 
 Post a public message in a heavily trafficked site announcing your
 intention to take over the module.
@@ -231,16 +234,26 @@ intention to take over the module.
 =item
 
 Wait a bit. The PAUSE admins don't want to act too quickly in case
-the current maintainer is on holiday. If there's no response to 
+the current maintainer is on holiday. If there's no response to
 private communication or the public post, a PAUSE admin can transfer
 it to you.
 
 =back
 
 =head2 How do I create a class?
+X<class, creation> X<package>
 
-See L<perltoot> for an introduction to classes and objects, as well as
-L<perlobj> and L<perlbot>.
+(contributed by brian d foy)
+
+In Perl, a class is just a package, and methods are just subroutines.
+Perl doesn't get more formal than that and lets you set up the package
+just the way that you like it (that is, it doesn't set up anything for
+you).
+
+The Perl documentation has several tutorials that cover class
+creation, including L<perlboot> (Barnyard Object Oriented Tutorial),
+L<perltoot> (Tom's Object Oriented Tutorial), L<perlbot> (Bag o'
+Object Tricks), and L<perlobj>.
 
 =head2 How can I tell if a variable is tainted?
 
@@ -256,7 +269,7 @@ I<Closure> is a computer science term with a precise but
 hard-to-explain meaning. Usually, closures are implemented in Perl as
 anonymous subroutines with lasting references to lexical variables
 outside their own scopes. These lexicals magically refer to the
-variables that were around when the subroutine was defined (deep 
+variables that were around when the subroutine was defined (deep
 binding).
 
 Closures are most often used in programming languages where you can
@@ -291,7 +304,7 @@ value that the lexical had when the function was created.
 		my $addpiece = shift;
 		return sub { shift() + $addpiece };
 	}
-	
+
 	$f1 = make_adder(20);
 	$f2 = make_adder(555);
 
@@ -486,9 +499,11 @@ You could also investigate the can() method in the UNIVERSAL class
 
 (contributed by brian d foy)
 
-Perl doesn't have "static" variables, which can only be accessed from
-the function in which they are declared. You can get the same effect
-with lexical variables, though.
+In Perl 5.10, declare the variable with C<state>. The C<state>
+declaration creates the lexical variable that persists between calls
+to the subroutine:
+
+	sub counter { state $count = 1; $counter++ }
 
 You can fake a static variable by using a lexical variable which goes
 out of scope. In this example, you define the subroutine C<counter>, and
@@ -508,11 +523,11 @@ C<counter>.
 		my $count = 1;
 		sub counter { $count++ }
 	}
-	
+
 	my $start = counter();
-	
+
 	.... # code that calls counter();
-	
+
 	my $end = counter();
 
 In the previous example, you created a function-private variable
@@ -559,19 +574,19 @@ For instance:
 	sub visible {
 		print "var has value $var\n";
 		}
-	
+
 	sub dynamic {
 		local $var = 'local';	# new temporary value for the still-global
 		visible();              #   variable called $var
 		}
-	
+
 	sub lexical {
 		my $var = 'private';    # new private variable, $var
 		visible();              # (invisible outside of sub scope)
 		}
-	
+
 	$var = 'global';
-	
+
 	visible();      		# prints global
 	dynamic();      		# prints local
 	lexical();      		# prints global
@@ -670,26 +685,56 @@ see L<perltoot/"Overridden Methods">.
 
 =head2 What's the difference between calling a function as &foo and foo()?
 
-When you call a function as C<&foo>, you allow that function access to
-your current @_ values, and you bypass prototypes.
-The function doesn't get an empty @_--it gets yours!  While not
-strictly speaking a bug (it's documented that way in L<perlsub>), it
-would be hard to consider this a feature in most cases.
+(contributed by brian d foy)
 
-When you call your function as C<&foo()>, then you I<do> get a new @_,
-but prototyping is still circumvented.
+Calling a subroutine as C<&foo> with no trailing parentheses ignores
+the prototype of C<foo> and passes it the current value of the argumet
+list, C<@_>. Here's an example; the C<bar> subroutine calls C<&foo>,
+which prints what its arguments list:
 
-Normally, you want to call a function using C<foo()>.  You may only
-omit the parentheses if the function is already known to the compiler
-because it already saw the definition (C<use> but not C<require>),
-or via a forward reference or C<use subs> declaration.  Even in this
-case, you get a clean @_ without any of the old values leaking through
-where they don't belong.
+	sub bar { &foo }
+
+	sub foo { print "Args in foo are: @_\n" }
+
+	bar( qw( a b c ) );
+
+When you call C<bar> with arguments, you see that C<foo> got the same C<@_>:
+
+	Args in foo are: a b c
+
+Calling the subroutine with trailing parentheses, with or without arguments,
+does not use the current C<@_> and respects the subroutine prototype. Changing
+the example to put parentheses after the call to C<foo> changes the program:
+
+	sub bar { &foo() }
+
+	sub foo { print "Args in foo are: @_\n" }
+
+	bar( qw( a b c ) );
+
+Now the output shows that C<foo> doesn't get the C<@_> from its caller.
+
+	Args in foo are:
+
+The main use of the C<@_> pass-through feature is to write subroutines
+whose main job it is to call other subroutines for you. For further
+details, see L<perlsub>.
 
 =head2 How do I create a switch or case statement?
 
+In Perl 5.10, use the C<given-when> construct described in L<perlsyn>:
+
+	use 5.010;
+
+	given ( $string ) {
+		when( 'Fred' )        { say "I found Fred!" }
+		when( 'Barney' )      { say "I found Barney!" }
+		when( /Bamm-?Bamm/ )  { say "I found Bamm-Bamm!" }
+		default               { say "I don't recognize the name!" }
+		};
+
 If one wants to use pure Perl and to be compatible with Perl versions
-prior to 5.10, the general answer is to write a construct like this:
+prior to 5.10, the general answer is to use C<if-elsif-else>:
 
 	for ($variable_to_test) {
 		if    (/pat1/)  { }     # do something
@@ -758,7 +803,7 @@ A totally different approach is to create a hash of function references.
 		"done"  => sub { die "See ya!" },
 		"mad"   => \&angry,
 	);
-	
+
 	print "How are you? ";
 	chomp($string = <STDIN>);
 	if ($commands{$string}) {
@@ -766,9 +811,6 @@ A totally different approach is to create a hash of function references.
 	} else {
 		print "No such command: $string\n";
 	}
-
-Note that starting from version 5.10, Perl has now a native switch
-statement. See L<perlsyn>.
 
 Starting from Perl 5.8, a source filter module, C<Switch>, can also be
 used to get switch and case. Its use is now discouraged, because it's
@@ -807,52 +849,89 @@ L<perlobj>.
 Make sure to read about creating modules in L<perlmod> and
 the perils of indirect objects in L<perlobj/"Method Invocation">.
 
-=head2 How can I find out my current package?
+=head2 How can I find out my current or calling package?
 
-If you're just a random program, you can do this to find
-out what the currently compiled package is:
+(contributed by brian d foy)
 
-	my $packname = __PACKAGE__;
+To find the package you are currently in, use the special literal
+C<__PACKAGE__>, as documented in L<perldata>. You can only use the
+special literals as separate tokens, so you can't interpolate them
+into strings like you can with variables:
 
-But, if you're a method and you want to print an error message
-that includes the kind of object you were called on (which is
-not necessarily the same as the one in which you were compiled):
+	my $current_package = __PACKAGE__;
+	print "I am in package $current_package\n";
 
-	sub amethod {
-		my $self  = shift;
-		my $class = ref($self) || $self;
-		warn "called me from a $class object";
-		}
+This is different from finding out the package an object is blessed
+into, which might not be the current package. For that, use C<blessed>
+from C<Scalar::Util>, part of the Standard Library since Perl 5.8:
 
-=head2 How can I comment out a large block of perl code?
+	use Scalar::Util qw(blessed);
+	my $object_package = blessed( $object );
 
-You can use embedded POD to discard it.  Enclose the blocks you want
-to comment out in POD markers.  The <=begin> directive marks a section
-for a specific formatter.  Use the C<comment> format, which no formatter
-should claim to understand (by policy).  Mark the end of the block
-with <=end>.
+Most of the time, you shouldn't care what package an object is blessed
+into, however, as long as it claims to inherit from that class:
 
-	# program is here
-	
-	=begin comment
-	
-	all of this stuff
-	
-	here will be ignored
-	by everyone
-	
-	=end comment
-	
+	my $is_right_class = eval { $object->isa( $package ) }; # true or false
+
+If you want to find the package calling your code, perhaps to give better
+diagnostics as C<Carp> does, use the C<caller> built-in:
+
+	sub foo {
+		my @args = ...;
+		my( $package, $filename, $line ) = caller;
+
+		print "I was called from package $package\n";
+		);
+
+By default, your program starts in package C<main>, so you should
+always be in some package unless someone uses the C<package> built-in
+with no namespace. See the C<package> entry in L<perlfunc> for the
+details of empty packges.
+
+=head2 How can I comment out a large block of Perl code?
+
+(contributed by brian d foy)
+
+The quick-and-dirty way to comment out more than one line of Perl is
+to surround those lines with Pod directives. You have to put these
+directives at the beginning of the line and somewhere where Perl
+expects a new statement (so not in the middle of statements like the #
+comments). You end the comment with C<=cut>, ending the Pod section:
+
+	=pod
+
+	my $object = NotGonnaHappen->new();
+
+	ignored_sub();
+
+	$wont_be_assigned = 37;
+
 	=cut
-	
-	# program continues
 
-The pod directives cannot go just anywhere.  You must put a
-pod directive where the parser is expecting a new statement,
-not just in the middle of an expression or some other
-arbitrary grammar production.
+The quick-and-dirty method only works well when you don't plan to 
+leave the commented code in the source. If a Pod parser comes along,
+you're multiline comment is going to show up in the Pod translation.
+A better way hides it from Pod parsers as well. 
 
-See L<perlpod> for more details.
+The C<=begin> directive can mark a section for a particular purpose.
+If the Pod parser doesn't want to handle it, it just ignores it. Label
+the comments with C<comment>. End the comment using C<=end> with the
+same label. You still need the C<=cut> to go back to Perl code from
+the Pod comment:
+
+	=begin comment
+
+	my $object = NotGonnaHappen->new();
+
+	ignored_sub();
+
+	$wont_be_assigned = 37;
+
+	=end comment
+
+	=cut
+
+For more information on Pod, check out L<perlpod> and L<perlpodspec>.
 
 =head2 How do I clear a package?
 
@@ -1011,15 +1090,15 @@ where you expect it so you need to adjust your shebang line.
 
 =head1 REVISION
 
-Revision: $Revision: 10100 $
+Revision: $Revision$
 
-Date: $Date: 2007-10-21 20:59:30 +0200 (Sun, 21 Oct 2007) $
+Date: $Date$
 
 See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

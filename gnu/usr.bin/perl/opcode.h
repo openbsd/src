@@ -1650,12 +1650,12 @@ EXTCONST U32 PL_opargs[] = {
 	0x0001378e,	/* hex */
 	0x0001378e,	/* oct */
 	0x0001378e,	/* abs */
-	0x0001379c,	/* length */
+	0x0001379e,	/* length */
 	0x1322280c,	/* substr */
 	0x0022281c,	/* vec */
 	0x0122291c,	/* index */
 	0x0122291c,	/* rindex */
-	0x0004280d,	/* sprintf */
+	0x0004280f,	/* sprintf */
 	0x00042805,	/* formline */
 	0x0001379e,	/* ord */
 	0x0001378e,	/* chr */

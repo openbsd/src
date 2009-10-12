@@ -516,24 +516,19 @@ This construct is very flexible and powerful. For example:
 	when (undef) {
 	    say '$foo is undefined';
 	}
-	
 	when ("foo") {
 	    say '$foo is the string "foo"';
 	}
-	
 	when ([1,3,5,7,9]) {
 	    say '$foo is an odd digit';
 	    continue; # Fall through
 	}
-	
 	when ($_ < 100) {
 	    say '$foo is numerically less than 100';
 	}
-	
 	when (\&complicated_check) {
-	    say 'complicated_check($foo) is true';
+	    say 'a complicated check for $foo is true';
 	}
-	
 	default {
 	    die q(I don't know what to do with $foo);
 	}
@@ -555,51 +550,63 @@ is exactly equivalent to
 
 	when($_ ~~ $foo)
 
-In fact C<when(EXPR)> is treated as an implicit smart match most of the
-time. The exceptions are that when EXPR is:
+Most of the time, C<when(EXPR)> is treated as an implicit smart match of
+C<$_>, i.e. C<$_ ~~ EXPR>. (See L</"Smart matching in detail"> for more
+information on smart matching.) But when EXPR is one of the below
+exceptional cases, it is used directly as a boolean:
 
 =over 4
 
-=item o
+=item *
 
 a subroutine or method call
 
-=item o
+=item *
 
 a regular expression match, i.e. C</REGEX/> or C<$foo =~ /REGEX/>,
-or a negated regular expression match C<$foo !~ /REGEX/>.
+or a negated regular expression match (C<!/REGEX/> or C<$foo !~ /REGEX/>).
 
-=item o
+=item *
 
 a comparison such as C<$_ E<lt> 10> or C<$x eq "abc">
 (or of course C<$_ ~~ $c>)
 
-=item o
+=item *
 
 C<defined(...)>, C<exists(...)>, or C<eof(...)>
 
-=item o
+=item *
 
-A negated expression C<!(...)> or C<not (...)>, or a logical
+a negated expression C<!(...)> or C<not (...)>, or a logical
 exclusive-or C<(...) xor (...)>.
+
+=item *
+
+a filetest operator, with the exception of C<-s>, C<-M>, C<-A>, and C<-C>,
+that return numerical values, not boolean ones.
+
+=item *
+
+the C<..> and C<...> flip-flop operators.
 
 =back
 
-then the value of EXPR is used directly as a boolean.
+In those cases the value of EXPR is used directly as a boolean.
+
 Furthermore:
 
 =over 4
 
-=item o
+=item *
 
 If EXPR is C<... && ...> or C<... and ...>, the test
 is applied recursively to both arguments. If I<both>
 arguments pass the test, then the argument is treated
 as boolean.
 
-=item o
+=item *
 
-If EXPR is C<... || ...> or C<... or ...>, the test
+If EXPR is C<... || ...>, C<... // ...> or C<... or ...>, the test
 is applied recursively to the first argument.
 
 =back
@@ -610,15 +617,12 @@ you want. For example you could write:
     when (/^\d+$/ && $_ < 75) { ... }
 
 Another useful shortcut is that, if you use a literal array
-or hash as the argument to C<when>, it is turned into a
+or hash as the argument to C<given>, it is turned into a
 reference. So C<given(@foo)> is the same as C<given(\@foo)>,
 for example.
 
 C<default> behaves exactly like C<when(1 == 1)>, which is
 to say that it always matches.
-
-See L</"Smart matching in detail"> for more information
-on smart matching.
 
 =head3 Breaking out
 
@@ -634,7 +638,7 @@ case to the next:
     given($foo) {
 	when (/x/) { say '$foo contains an x'; continue }
 	when (/y/) { say '$foo contains a y' }
-	default    { say '$foo contains neither an x nor a y' }
+	default    { say '$foo does not contain a y' }
     }
 
 =head3 Switching in a loop
@@ -659,56 +663,75 @@ variable C<$_>. (You can use C<for my $_ (@array)>.)
 
 =head3 Smart matching in detail
 
-The behaviour of a smart match depends on what type of thing
-its arguments are. It is always commutative, i.e. C<$a ~~ $b>
-behaves the same as C<$b ~~ $a>. The behaviour is determined
-by the following table: the first row that applies, in either
-order, determines the match behaviour.
+The behaviour of a smart match depends on what type of thing its arguments
+are. The behaviour is determined by the following table: the first row
+that applies determines the match behaviour (which is thus mostly
+determined by the type of the right operand). Note that the smart match
+implicitly dereferences any non-blessed hash or array ref, so the "Hash"
+and "Array" entries apply in those cases. (For blessed references, the
+"Object" entries apply.)
 
+Note that the "Matching Code" column is not always an exact rendition.  For
+example, the smart match operator short-circuits whenever possible, but
+C<grep> does not.
 
     $a      $b        Type of Match Implied    Matching Code
     ======  =====     =====================    =============
-    (overloading trumps everything)
-
-    Code[+] Code[+]   referential equality     $a == $b
-    Any     Code[+]   scalar sub truth         $b->($a)
-
-    Hash    Hash      hash keys identical      [sort keys %$a]~~[sort keys %$b]
-    Hash    Array     hash slice existence     grep {exists $a->{$_}} @$b
-    Hash    Regex     hash key grep            grep /$b/, keys %$a
-    Hash    Any       hash entry existence     exists $a->{$b}
-
-    Array   Array     arrays are identical[*]
-    Array   Regex     array grep               grep /$b/, @$a
-    Array   Num       array contains number    grep $_ == $b, @$a
-    Array   Any       array contains string    grep $_ eq $b, @$a
-
     Any     undef     undefined                !defined $a
-    Any     Regex     pattern match            $a =~ /$b/
-    Code()  Code()    results are equal        $a->() eq $b->()
-    Any     Code()    simple closure truth     $b->() # ignoring $a
-    Num     numish[!] numeric equality         $a == $b
-    Any     Str       string equality          $a eq $b
-    Any     Num       numeric equality         $a == $b
 
+    Any     Object    invokes ~~ overloading on $object, or dies
+
+    Hash    CodeRef   sub truth for each key[1] !grep { !$b->($_) } keys %$a
+    Array   CodeRef   sub truth for each elt[1] !grep { !$b->($_) } @$a
+    Any     CodeRef   scalar sub truth          $b->($a)
+
+    Hash    Hash      hash keys identical (every key is found in both hashes)
+    Array   Hash      hash slice existence     grep { exists $b->{$_} } @$a
+    Regex   Hash      hash key grep            grep /$a/, keys %$b
+    undef   Hash      always false (undef can't be a key)
+    Any     Hash      hash entry existence     exists $b->{$a}
+
+    Hash    Array     hash slice existence     grep { exists $a->{$_} } @$b
+    Array   Array     arrays are comparable[2]
+    Regex   Array     array grep               grep /$a/, @$b
+    undef   Array     array contains undef     grep !defined, @$b
+    Any     Array     match against an array element[3]
+                                               grep $a ~~ $_, @$b
+
+    Hash    Regex     hash key grep            grep /$b/, keys %$a
+    Array   Regex     array grep               grep /$b/, @$a
+    Any     Regex     pattern match            $a =~ /$b/
+
+    Object  Any       invokes ~~ overloading on $object, or falls back:
+    Any     Num       numeric equality         $a == $b
+    Num     numish[4] numeric equality         $a == $b
+    undef   Any       undefined                !defined($b)
     Any     Any       string equality          $a eq $b
 
-
- + - this must be a code reference whose prototype (if present) is not ""
-     (subs with a "" prototype are dealt with by the 'Code()' entry lower down)
- * - that is, each element matches the element of same index in the other
-     array. If a circular reference is found, we fall back to referential
-     equality.
- ! - either a real number, or a string that looks like a number
-
-The "matching code" doesn't represent the I<real> matching code,
-of course: it's just there to explain the intended meaning. Unlike
-C<grep>, the smart match operator will short-circuit whenever it can.
+ 1 - empty hashes or arrays will match.
+ 2 - that is, each element smart-matches the element of same index in the
+     other array. [3]
+ 3 - If a circular reference is found, we fall back to referential equality.
+ 4 - either a real number, or a string that looks like a number
 
 =head3 Custom matching via overloading
 
 You can change the way that an object is matched by overloading
-the C<~~> operator. This trumps the usual smart match semantics.
+the C<~~> operator. This may alter the usual smart match semantics.
+
+It should be noted that C<~~> will refuse to work on objects that
+don't overload it (in order to avoid relying on the object's
+underlying structure).
+
+Note also that smart match's matching rules take precedence over
+overloading, so if C<$obj> has smart match overloading, then
+
+    $obj ~~ X
+
+will not automatically invoke the overload method with X as an argument;
+instead the table above is consulted as normal, and based in the type of X,
+overloading may or may not be invoked.
+
 See L<overload>.
 
 =head3 Differences from Perl 6

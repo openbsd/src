@@ -2,9 +2,9 @@
 #
 # written by Paul Marquess (pmqs@cpan.org)
 # last modified 28th October 2007
-# version 1.816
+# version 1.818
 #
-#     Copyright (c) 1995-2007 Paul Marquess. All rights reserved.
+#     Copyright (c) 1995-2009 Paul Marquess. All rights reserved.
 #     This program is free software; you can redistribute it and/or
 #     modify it under the same terms as Perl itself.
 
@@ -165,7 +165,8 @@ our ($db_version, $use_XSLoader, $splice_end_array, $Error);
 use Carp;
 
 
-$VERSION = "1.816_1" ;
+$VERSION = "1.820" ;
+$VERSION = eval $VERSION; # needed for dev releases
 
 {
     local $SIG{__WARN__} = sub {$splice_end_array = "@_";};

@@ -131,7 +131,7 @@ for example, turn C<-w -U> into C<-wU>.
 
 (F) msgsnd() requires a string at least as long as sizeof(long).
 
-=item %s argument is not a HASH or ARRAY element
+=item %s argument is not a HASH or ARRAY element or a subroutine
 
 (F) The argument to exists() must be a hash or array element or a
 subroutine with an ampersand, such as:
@@ -902,13 +902,6 @@ method, nor does any of its base classes.  See L<perlobj>.
 (W syntax) The @ISA array contained the name of another package that
 doesn't seem to exist.
 
-=item Can't locate package %s for the parents of %s
-
-(W syntax) You did not define (or require/use) the first package,
-which is named as a (possibly indirect) parent of the second by
-C<@ISA> inheritance.  Perl will treat this as if the undefined
-package had an empty C<@ISA>.
-
 =item Can't locate PerlIO%s
 
 (F) You tried to use in open() a PerlIO layer that does not exist,
@@ -1424,6 +1417,9 @@ L<perlfunc/pack>.
 infinite recursion, unless you're writing strange benchmark programs, in
 which case it indicates something else.
 
+This threshold can be changed from 100, by recompiling the F<perl> binary,
+setting the C pre-processor macro C<PERL_SUB_DEPTH_WARN> to the desired value.
+
 =item defined(@array) is deprecated
 
 (D deprecated) defined() is not usually useful on arrays because it
@@ -1597,7 +1593,7 @@ conversion routines don't handle.  Drat.
 expression that contains the C<(?{ ... })> zero-width assertion, which
 is unsafe.  See L<perlre/(?{ code })>, and L<perlsec>.
 
-=item %s: Eval-group not allowed at run time
+=item %s: Eval-group not allowed at runtime, use re 'eval'
 
 (F) Perl tried to compile a regular expression containing the
 C<(?{ ... })> zero-width assertion at run time, as it would when the
@@ -2194,8 +2190,12 @@ neither as a system call or an ioctl call (SIOCATMARK).
 =item $* is no longer supported
 
 (S deprecated, syntax) The special variable C<$*>, deprecated in older perls, has
-been removed as of 5.9.0 and is no longer supported. You should use the
-C<//m> and C<//s> regexp modifiers instead.
+been removed as of 5.9.0 and is no longer supported. In previous versions of perl the use of
+C<$*> enabled or disabled multi-line matching within a string.
+
+Instead of using C<$*> you should use the C</m> (and maybe C</s>) regexp
+modifiers. (In older versions: when C<$*> was set to a true value then all regular
+expressions behaved as if they were written using C</m>.)
 
 =item $# is no longer supported
 
@@ -2428,7 +2428,7 @@ can vary from one line to the next.
 
 =item Missing right brace on %s
 
-(F) Missing right brace in C<\p{...}> or C<\P{...}>.
+(F) Missing right brace in C<\x{...}>, C<\p{...}> or C<\P{...}>.
 
 =item Missing right curly or square bracket
 
@@ -2698,6 +2698,11 @@ package has restricted the set of allowed keys using the L<fields> pragma.
 
 (F) You provided a class qualifier in a "my", "our" or "state" declaration, but
 this class doesn't exist at this point in your program.
+
+=item No such hook: %s
+
+(F) You specified a signal hook that was not recognized by Perl.  Currently, Perl
+accepts C<__DIE__> and C<__WARN__> as valid signal hooks
 
 =item No such pipe open
 
@@ -3179,6 +3184,11 @@ then discovered it wasn't a subroutine or eval context.
 =item panic: scan_num
 
 (P) scan_num() got called on something that wasn't a number.
+
+=item panic: sv_chop %s
+
+(P) The sv_chop() routine was passed a position that is not within the
+scalar's string buffer.
 
 =item panic: sv_insert
 
@@ -3895,6 +3905,12 @@ superfluous.
 (W signal) The signal handler named in %SIG doesn't, in fact, exist.
 Perhaps you put it into the wrong package?
 
+=item Smart matching a non-overloaded object breaks encapsulation
+
+(F) You should not use the C<~~> operator on an object that does not
+overload it: Perl refuses to use the object's underlying structure for
+the smart match.
+
 =item sort is now a reserved word
 
 (F) An ancient error message that almost nobody ever runs into anymore.
@@ -4186,8 +4202,15 @@ system call to call, silly dilly.
 =item Too late for "-%s" option
 
 (X) The #! line (or local equivalent) in a Perl script contains the
-B<-M>, B<-m> or B<-C> option.  This is an error because those options
-are not intended for use inside scripts.  Use the C<use> pragma instead.
+B<-M>, B<-m> or B<-C> option.
+
+In the case of B<-M> and B<-m>, this is an error because those options are
+not intended for use inside scripts.  Use the C<use> pragma instead.
+
+The B<-C> option only works if it is specified on the command line as well
+(with the same sequence of letters or numbers following). Either specify
+this option on the command line, or, if your system supports it, make your
+script executable and run it directly instead of passing it to perl. 
 
 =item Too late to run %s block
 
@@ -4656,8 +4679,13 @@ returns no useful value.  See L<perlmod>.
 
 =item Use of bare << to mean <<"" is deprecated
 
-(D deprecated) You are now encouraged to use the explicitly quoted form
-if you wish to use an empty line as the terminator of the here-document.
+(D deprecated, W syntax) You are now encouraged to use the explicitly quoted
+form if you wish to use an empty line as the terminator of the here-document.
+
+=item Use of comma-less variable list is deprecated
+
+(D deprecated, W syntax) The values you give to a format should be
+separated by commas, not just aligned on a line.
 
 =item Use of chdir('') or chdir(undef) as chdir() deprecated
 
@@ -4706,8 +4734,8 @@ repeatedly, the C</g> has no effect.
 
 =item Use of implicit split to @_ is deprecated
 
-(D deprecated) It makes a lot of work for the compiler when you clobber
-a subroutine's argument list, so it's better if you assign the results
+(D deprecated, W syntax) It makes a lot of work for the compiler when you
+clobber a subroutine's argument list, so it's better if you assign the results
 of a split() explicitly to an array (or list).
 
 =item Use of inherited AUTOLOAD for non-method %s() is deprecated
@@ -4935,18 +4963,6 @@ the version number.
 (W misc) The version string contains invalid characters at the end, which
 are being ignored.
 
-=item v-string in use/require is non-portable
-
-(W portable) The use of v-strings is non-portable to older, pre-5.6, Perls.
-If you want your scripts to be backward portable, use the floating
-point version number: for example, instead of C<use 5.6.1> say
-C<use 5.006_001>. This of course won't make older Perls suddenly start
-understanding newer features, but at least they will show a sensible
-error message indicating the required minimum version.
-
-This warning is suppressed if the C<use 5.x.y> is preceded by a
-C<use 5.006> (see C<use VERSION> in L<perlfunc/use>).
-
 =item Warning: something's wrong
 
 (W) You passed warn() an empty string (the equivalent of C<warn "">) or
@@ -4979,7 +4995,7 @@ So put in parentheses to say what you really mean.
 
 =item Wide character in %s
 
-(W utf8) Perl met a wide character (>255) when it wasn't expecting
+(S utf8) Perl met a wide character (>255) when it wasn't expecting
 one.  This warning is by default on for I/O (like print).  The easiest
 way to quiet this warning is simply to add the C<:utf8> layer to the
 output, e.g. C<binmode STDOUT, ':utf8'>.  Another way to turn off the

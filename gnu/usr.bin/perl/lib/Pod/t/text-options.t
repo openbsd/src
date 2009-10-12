@@ -1,9 +1,8 @@
 #!/usr/bin/perl -w
-# $Id: text-options.t,v 1.3 2008/09/29 17:36:14 millert Exp $
 #
 # text-options.t -- Additional tests for Pod::Text options.
 #
-# Copyright 2002, 2004, 2006 by Russ Allbery <rra@stanford.edu>
+# Copyright 2002, 2004, 2006, 2008 by Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -17,7 +16,7 @@ BEGIN {
     }
     unshift (@INC, '../blib/lib');
     $| = 1;
-    print "1..5\n";
+    print "1..13\n";
 }
 
 END {
@@ -25,6 +24,19 @@ END {
 }
 
 use Pod::Text;
+
+# Redirect stderr to a file.
+sub stderr_save {
+    open (OLDERR, '>&STDERR') or die "Can't dup STDERR: $!\n";
+    open (STDERR, '> out.err') or die "Can't redirect STDERR: $!\n";
+}
+
+# Restore stderr.
+sub stderr_restore {
+    close STDERR;
+    open (STDERR, '>&OLDERR') or die "Can't dup STDERR: $!\n";
+    close OLDERR;
+}
 
 $loaded = 1;
 print "ok 1\n";
@@ -46,7 +58,9 @@ while (<DATA>) {
     close TMP;
     my $parser = Pod::Text->new (%options) or die "Cannot create parser\n";
     open (OUT, '> out.tmp') or die "Cannot create out.tmp: $!\n";
+    stderr_save;
     $parser->parse_from_file ('tmp.pod', \*OUT);
+    stderr_restore;
     close OUT;
     open (TMP, 'out.tmp') or die "Cannot open out.tmp: $!\n";
     my $output;
@@ -55,7 +69,7 @@ while (<DATA>) {
         $output = <TMP>;
     }
     close TMP;
-    unlink ('tmp.pod', 'out.tmp');
+    1 while unlink ('tmp.pod', 'out.tmp');
     my $expected = '';
     while (<DATA>) {
         last if $_ eq "###\n";
@@ -66,6 +80,26 @@ while (<DATA>) {
     } else {
         print "not ok $n\n";
         print "Expected\n========\n$expected\nOutput\n======\n$output\n";
+    }
+    $n++;
+    open (ERR, 'out.err') or die "Cannot open out.err: $!\n";
+    my $errors;
+    {
+        local $/;
+        $errors = <ERR>;
+    }
+    close ERR;
+    unlink ('out.err');
+    $expected = '';
+    while (<DATA>) {
+        last if $_ eq "###\n";
+        $expected .= $_;
+    }
+    if ($errors eq $expected) {
+        print "ok $n\n";
+    } else {
+        print "not ok $n\n";
+        print "Expected errors:\n    ${expected}Errors:\n    $errors";
     }
     $n++;
 }
@@ -112,6 +146,7 @@ Paragraph.
         Paragraph.
 
 ###
+###
 
 ###
 margin 4
@@ -144,6 +179,7 @@ This is another indented paragraph.
               This is another indented paragraph.
 
 ###
+###
 
 ###
 code 1
@@ -174,6 +210,7 @@ SAMPLE
 
 This is more random text.
 ###
+###
 
 ###
 sentence 1
@@ -189,4 +226,46 @@ EXAMPLE
     Whitespace around "this." must be ignored per perlpodspec.  >> needs to
     eat all of the space in front of it.
 
+###
+###
+
+###
+###
+=over 4
+
+=item Foo
+
+Bar.
+
+=head1 NEXT
+###
+    Foo Bar.
+
+NEXT
+POD ERRORS
+    Hey! The above document had some coding errors, which are explained
+    below:
+
+    Around line 7:
+        You forgot a '=back' before '=head1'
+
+###
+###
+
+###
+stderr 1
+###
+=over 4
+
+=item Foo
+
+Bar.
+
+=head1 NEXT
+###
+    Foo Bar.
+
+NEXT
+###
+tmp.pod around line 7: You forgot a '=back' before '=head1'
 ###

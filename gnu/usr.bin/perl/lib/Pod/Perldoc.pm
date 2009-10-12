@@ -12,7 +12,7 @@ use File::Spec::Functions qw(catfile catdir splitdir);
 use vars qw($VERSION @Pagers $Bindir $Pod2man
   $Temp_Files_Created $Temp_File_Lifetime
 );
-$VERSION = '3.14_02';
+$VERSION = '3.14_04';
 #..........................................................................
 
 BEGIN {  # Make a DEBUG constant very first thing...
@@ -492,7 +492,7 @@ sub find_good_formatter_class {
       } else {
         $^W = 0;
         # The average user just has no reason to be seeing
-        #  $^W-suppressible warnings from the require!
+        #  $^W-suppressable warnings from the the require!
       }
 
       eval "require $c";
@@ -824,17 +824,20 @@ sub add_formatter_option { # $self->add_formatter_option('key' => 'value');
 
 #.........................................................................
 
-sub pod_dirs { # @dirs = pod_dirs($translator);
-    my $tr = shift;
-    return $tr->pod_dirs if $tr->can('pod_dirs');
-    
-    my $mod = ref $tr || $tr;
-    $mod =~ s|::|/|g;
-    $mod .= '.pm';
+sub new_translator { # $tr = $self->new_translator($lang);
+    my $self = shift;
+    my $lang = shift;
 
-    my $dir = $INC{$mod};
-    $dir =~ s/\.pm\z//;
-    return $dir;
+    my $pack = 'POD2::' . uc($lang);
+    eval "require $pack";
+    if ( !$@ && $pack->can('new') ) {
+	return $pack->new();
+    }
+
+    eval { require POD2::Base };
+    return if $@;
+    
+    return POD2::Base->new({ lang => $lang });
 }
 
 #.........................................................................
@@ -842,15 +845,17 @@ sub pod_dirs { # @dirs = pod_dirs($translator);
 sub add_translator { # $self->add_translator($lang);
     my $self = shift;
     for my $lang (@_) {
-        my $pack = 'POD2::' . uc($lang);
-        eval "require $pack";
-        if ( $@ ) {
-            # XXX warn: non-installed translator package
+        my $tr = $self->new_translator($lang);
+        if ( defined $tr ) {
+            push @{ $self->{'translators'} }, $tr;
+            push @{ $self->{'extra_search_dirs'} }, $tr->pod_dirs;
+
+            $self->aside( "translator for '$lang' loaded\n" );
         } else {
-            push @{ $self->{'translators'} }, $pack;
-            push @{ $self->{'extra_search_dirs'} }, pod_dirs($pack);
-            # XXX DEBUG
+            # non-installed or bad translator package
+            warn "Perldoc cannot load translator package for '$lang': ignored\n";
         }
+
     }
     return;
 }
@@ -1456,13 +1461,13 @@ sub maybe_diddle_INC {
   
   # Does this look like a module or extension directory?
   
-  if (-f "Makefile.PL") {
+  if (-f "Makefile.PL" || -f "Build.PL") {
 
     # Add "." and "lib" to @INC (if they exist)
     eval q{ use lib qw(. lib); 1; } or die;
 
     # don't add if superuser
-    if ($< && $> && -f "blib") {   # don't be looking too hard now!
+    if ($< && $> && -d "blib") {   # don't be looking too hard now!
       eval q{ use blib; 1 };
       warn $@ if $@ && $self->opt_v;
     }

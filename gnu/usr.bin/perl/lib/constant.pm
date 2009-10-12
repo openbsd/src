@@ -4,7 +4,7 @@ use strict;
 use warnings::register;
 
 use vars qw($VERSION %declared);
-$VERSION = '1.13';
+$VERSION = '1.17';
 
 #=======================================================================
 
@@ -168,7 +168,7 @@ read, more likely to be maintained (and maintained correctly), and
 far less likely to send a space probe to the wrong planet because
 nobody noticed the one equation in which you wrote C<3.14195>.
 
-When a constant is used in an expression, perl replaces it with its
+When a constant is used in an expression, Perl replaces it with its
 value at compile time, and may then optimize the expression further.
 In particular, any code in an C<if (CONSTANT)> block will be optimized
 away if the constant is false.
@@ -331,6 +331,20 @@ immediately to its left, you have to say C<< CONSTANT() => 'value' >>
 (or simply use a comma in place of the big arrow) instead of
 C<< CONSTANT => 'value' >>.
 
+=head1 SEE ALSO
+
+L<Readonly> - Facility for creating read-only scalars, arrays, hashes.
+
+L<Const> - Facility for creating read-only variables. Similar to C<Readonly>,
+but uses C<SvREADONLY> instead of C<tie>.
+
+L<Attribute::Constant> - Make read-only variables via attribute
+
+L<Scalar::Readonly> - Perl extension to the C<SvREADONLY> scalar flag
+
+L<Hash::Util> - A selection of general-utility hash subroutines (mostly
+to lock/unlock keys and values)
+
 =head1 BUGS
 
 Please report any bugs or feature requests via the perlbug(1) utility.
@@ -350,7 +364,7 @@ This program is maintained by the Perl 5 Porters.
 The CPAN distribution is maintained by SE<eacute>bastien Aperghis-Tramoni
 E<lt>F<sebastien@aperghis.net>E<gt>.
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT & LICENSE
 
 Copyright (C) 1997, 1999 Tom Phoenix
 

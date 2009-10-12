@@ -45,7 +45,7 @@ print OUT <<'!NO!SUBS!';
 #############################################################################
 
 use strict;
-use diagnostics;
+#use diagnostics;
 
 =head1 NAME
 
@@ -106,7 +106,7 @@ list should be separated by a ':' on Unix (';' on MSWin32 and DOS).
 =item I<file>
 
 The pathname of a file containing pod documentation to be output in
-usage mesage format (defaults to standard input).
+usage message format (defaults to standard input).
 
 =back
 
@@ -114,7 +114,7 @@ usage mesage format (defaults to standard input).
 
 B<pod2usage> will read the given input file looking for pod
 documentation and will print the corresponding usage message.
-If no input file is specified than standard input is read.
+If no input file is specified then standard input is read.
 
 B<pod2usage> invokes the B<pod2usage()> function in the B<Pod::Usage>
 module. Please see L<Pod::Usage/pod2usage()>.
@@ -140,12 +140,12 @@ use Getopt::Long;
 ## Define options
 my %options = ();
 my @opt_specs = (
-    "help",
-    "man",
-    "exit=i",
-    "output=s",
-    "pathlist=s",
-    "verbose=i",
+    'help',
+    'man',
+    'exit=i',
+    'output=s',
+    'pathlist=s',
+    'verbose=i',
 );
 
 ## Parse options
@@ -156,7 +156,7 @@ pod2usage(VERBOSE => 2)  if ($options{man});
 ## Dont default to STDIN if connected to a terminal
 pod2usage(2) if ((@ARGV == 0) && (-t STDIN));
 
-@ARGV = ("-")  unless (@ARGV > 0);
+@ARGV = ('-')  unless (@ARGV);
 if (@ARGV > 1) {
     print STDERR "pod2usage: Too many filenames given\n\n";
     pod2usage(2);
@@ -164,10 +164,10 @@ if (@ARGV > 1) {
 
 my %usage = ();
 $usage{-input}    = shift(@ARGV);
-$usage{-exitval}  = $options{"exit"}      if (defined $options{"exit"});
-$usage{-output}   = $options{"output"}    if (defined $options{"output"});
-$usage{-verbose}  = $options{"verbose"}   if (defined $options{"verbose"});
-$usage{-pathlist} = $options{"pathlist"}  if (defined $options{"pathlist"});
+$usage{-exitval}  = $options{'exit'}      if (defined $options{'exit'});
+$usage{-output}   = $options{'output'}    if (defined $options{'output'});
+$usage{-verbose}  = $options{'verbose'}   if (defined $options{'verbose'});
+$usage{-pathlist} = $options{'pathlist'}  if (defined $options{'pathlist'});
 
 pod2usage(\%usage);
 

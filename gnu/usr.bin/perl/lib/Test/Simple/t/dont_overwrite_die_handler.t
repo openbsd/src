@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: dont_overwrite_die_handler.t,v 1.1 2009/05/16 21:42:57 simon Exp $
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {

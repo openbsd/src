@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: tbm_doesnt_set_exported_to.t,v 1.1 2009/05/16 21:42:57 simon Exp $
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {

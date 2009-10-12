@@ -3,7 +3,7 @@ use strict;
 require Exporter;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION = 1.08;
+$VERSION = 1.09;
 @ISA = qw(Exporter);
 @EXPORT = qw(pod2html htmlify);
 @EXPORT_OK = qw(anchorify);
@@ -246,8 +246,8 @@ my $Verbose;
 my $Doindex;
 
 my $Backlink;
-my($Listlevel, @Listend);
-my $After_Lpar;
+my($Listlevel, @Listtype);
+my $ListNewTerm;
 use vars qw($Ignore);  # need to localize it later.
 
 my(%Items_Named, @Items_Seen);
@@ -286,7 +286,7 @@ sub init_globals {
     $Htmldir = "";	    	# The directory to which the html pages
 				# will (eventually) be written.
     $Htmlfile = "";		# write to stdout by default
-    $Htmlfileurl = "" ;		# The url that other files would use to
+    $Htmlfileurl = "";		# The url that other files would use to
 				# refer to this file.  This is only used
 				# to make relative urls that point to
 				# other files.
@@ -302,8 +302,9 @@ sub init_globals {
     $Doindex = 1;   	    	# non-zero if we should generate an index
     $Backlink = '';		# text for "back to top" links
     $Listlevel = 0;		# current list depth
-    @Listend = ();		# the text to use to end the list.
-    $After_Lpar = 0;            # set to true after a par in an =item
+    @Listtype = ();		# list types for open lists
+    $ListNewTerm = 0;		# indicates new term in definition list; used
+    				# to correctly open/close <dd> tags
     $Ignore = 1;		# whether or not to format text.  we don't
 				#   format text until we hit our first pod
 				#   directive.
@@ -519,7 +520,6 @@ END_OF_INDEX
 
     # now convert this file
     my $after_item;             # set to true after an =item
-    my $need_dd = 0;
     warn "Converting input file $Podfile\n" if $Verbose;
     foreach my $i (0..$#poddata){
 	$_ = $poddata[$i];
@@ -527,7 +527,6 @@ END_OF_INDEX
 	if (/^(=.*)/s) {	# is it a pod directive?
 	    $Ignore = 0;
 	    $after_item = 0;
-	    $need_dd = 0;
 	    $_ = $1;
 	    if (/^=begin\s+(\S+)\s*(.*)/si) {# =begin
 		process_begin($1, $2);
@@ -543,12 +542,12 @@ END_OF_INDEX
 		if (/^=(head[1-6])\s+(.*\S)/s) {	# =head[1-6] heading
 		    process_head( $1, $2, $Doindex && $index );
 		} elsif (/^=item\s*(.*\S)?/sm) {	# =item text
-		    $need_dd = process_item( $1 );
+		    process_item( $1 );
 		    $after_item = 1;
 		} elsif (/^=over\s*(.*)/) {		# =over N
 		    process_over();
 		} elsif (/^=back/) {		# =back
-		    process_back($need_dd);
+		    process_back();
 		} elsif (/^=for\s+(\S+)\s*(.*)/si) {# =for
 		    process_for($1,$2);
 		} else {
@@ -563,8 +562,14 @@ END_OF_INDEX
 	    next if $Ignore;
 	    next if @Begin_Stack && $Begin_Stack[-1] ne 'html';
 	    print HTML and next if @Begin_Stack && $Begin_Stack[-1] eq 'html';
-	    print HTML "<dd>\n" if $need_dd;
 	    my $text = $_;
+
+	    # Open tag for definition list as we have something to put in it
+	    if( $ListNewTerm ){
+		print HTML "<dd>\n";
+		$ListNewTerm = 0;
+	    }
+
 	    if( $text =~ /\A\s+/ ){
 		process_pre( \$text );
 	        print HTML "<pre>\n$text</pre>\n";
@@ -594,12 +599,8 @@ END_OF_INDEX
 		}
 		## end of experimental
 
-		if( $after_item ){
-		    $After_Lpar = 1;
-		}
 		print HTML "<p>$text</p>\n";
 	    }
-	    print HTML "</dd>\n" if $need_dd;
 	    $after_item = 0;
 	}
     }
@@ -1074,12 +1075,12 @@ sub scan_items {
 
 	# figure out what kind of item it is.
 	# Build string for referencing this item.
-	if ( $txt =~ /\A=item\s+\*\s*(.*)\Z/s ) { # bullet
+	if ( $txt =~ /\A=item\s+\*\s*(.*)\Z/s ) { # bulleted list
 	    next unless $1;
 	    $item = $1;
         } elsif( $txt =~ /\A=item\s+(?>\d+\.?)\s*(.*)\Z/s ) { # numbered list
 	    $item = $1;
-	} elsif( $txt =~ /\A=item\s+(.*)\Z/s ) { # plain item
+	} elsif( $txt =~ /\A=item\s+(.*)\Z/s ) { # definition list
 	    $item = $1;
 	} else {
 	    next;
@@ -1099,12 +1100,7 @@ sub process_head {
     $tag =~ /head([1-6])/;
     my $level = $1;
 
-    if( $Listlevel ){
-	warn "$0: $Podfile: unterminated list at =head in paragraph $Paragraph.  ignoring.\n" unless $Quiet;
-        while( $Listlevel ){
-            process_back();
-        }
-    }
+    finish_list();
 
     print HTML "<p>\n";
     if( $level == 1 && ! $Top ){
@@ -1143,19 +1139,32 @@ sub emit_item_tag($$$){
         $name = anchorify($name);
 	print HTML qq{<a name="$name" class="item">}, process_text( \$otext ), '</a>';
     }
-    print HTML "</strong>\n";
+    print HTML "</strong>";
     undef( $EmittedItem );
 }
 
-sub emit_li {
+sub new_listitem {
     my( $tag ) = @_;
-    if( $Items_Seen[$Listlevel]++ == 0 ){
-	push( @Listend, "</$tag>" );
-	print HTML "<$tag>\n";
+    # Open tag for definition list as we have something to put in it
+    if( ($tag ne 'dl') && ($ListNewTerm) ){
+	print HTML "<dd>\n";
+	$ListNewTerm = 0;
     }
-    my $emitted = $tag eq 'dl' ? 'dt' : 'li';
-    print HTML "<$emitted>";
-    return $emitted;
+
+    if( $Items_Seen[$Listlevel]++ == 0 ){
+	# start of new list
+	push( @Listtype, "$tag" );
+	print HTML "<$tag>\n";
+    } else {
+	# if this is not the first item, close the previous one
+	if ( $tag eq 'dl' ){
+	    print HTML "</dd>\n" unless $ListNewTerm;
+	} else {
+	    print HTML "</li>\n";
+	}
+    }
+    my $opentag = $tag eq 'dl' ? 'dt' : 'li';
+    print HTML "<$opentag>";
 }
 
 #
@@ -1163,7 +1172,6 @@ sub emit_li {
 #
 sub process_item {
     my( $otext ) = @_;
-    my $need_dd = 0; # set to 1 if we need a <dd></dd> after an item
 
     # lots of documents start a list without doing an =over.  this is
     # bad!  but, the proper thing to do seems to be to just assume
@@ -1173,43 +1181,41 @@ sub process_item {
 	process_over();
     }
 
-    # formatting: insert a paragraph if preceding item has >1 paragraph
-    if( $After_Lpar ){
-	print HTML $need_dd ? "</dd>\n" : "</li>\n" if $After_Lpar;
-	$After_Lpar = 0;
-    }
-
     # remove formatting instructions from the text
     my $text = depod( $otext );
 
-    my $emitted; # the tag actually emitted, used for closing
-
     # all the list variants:
     if( $text =~ /\A\*/ ){ # bullet
-        $emitted = emit_li( 'ul' );
+        new_listitem( 'ul' );
         if ($text =~ /\A\*\s+(\S.*)\Z/s ) { # with additional text
             my $tag = $1;
             $otext =~ s/\A\*\s+//;
             emit_item_tag( $otext, $tag, 1 );
+            print HTML "\n";
         }
 
     } elsif( $text =~ /\A\d+/ ){ # numbered list
-        $emitted = emit_li( 'ol' );
+        new_listitem( 'ol' );
         if ($text =~ /\A(?>\d+\.?)\s*(\S.*)\Z/s ) { # with additional text
             my $tag = $1;
             $otext =~ s/\A\d+\.?\s*//;
             emit_item_tag( $otext, $tag, 1 );
+            print HTML "\n";
         }
 
     } else {			# definition list
-        $emitted = emit_li( 'dl' );
+        # new_listitem takes care of opening the <dt> tag
+        new_listitem( 'dl' );
         if ($text =~ /\A(.+)\Z/s ){ # should have text
             emit_item_tag( $otext, $text, 1 );
+	    # write the definition term and close <dt> tag
+	    print HTML "</dt>\n";
         }
-        $need_dd = 1;
+        # trigger opening a <dd> tag for the actual definition; will not
+        # happen if next paragraph is also a definition term (=item)
+        $ListNewTerm = 1;
     }
     print HTML "\n";
-    return $need_dd;
 }
 
 #
@@ -1219,30 +1225,31 @@ sub process_over {
     # start a new list
     $Listlevel++;
     push( @Items_Seen, 0 );
-    $After_Lpar = 0;
 }
 
 #
 # process_back - process a pod back tag and convert it to HTML format.
 #
 sub process_back {
-    my $need_dd = shift;
     if( $Listlevel == 0 ){
 	warn "$0: $Podfile: unexpected =back directive in paragraph $Paragraph.  ignoring.\n" unless $Quiet;
 	return;
     }
 
-    # close off the list.  note, I check to see if $Listend[$Listlevel] is
+    # close off the list.  note, I check to see if $Listtype[$Listlevel] is
     # defined because an =item directive may have never appeared and thus
-    # $Listend[$Listlevel] may have never been initialized.
+    # $Listtype[$Listlevel] may have never been initialized.
     $Listlevel--;
-    if( defined $Listend[$Listlevel] ){
-	print HTML $need_dd ? "</dd>\n" : "</li>\n" if $After_Lpar;
-	print HTML $Listend[$Listlevel];
-        print HTML "\n";
-        pop( @Listend );
+    if( defined $Listtype[$Listlevel] ){
+        if ( $Listtype[$Listlevel] eq 'dl' ){
+            print HTML "</dd>\n" unless $ListNewTerm;
+        } else {
+            print HTML "</li>\n";
+        }
+        print HTML "</$Listtype[$Listlevel]>\n";
+        pop( @Listtype );
+        $ListNewTerm = 0;
     }
-    $After_Lpar = 0;
 
     # clean up item count
     pop( @Items_Seen );
@@ -2025,9 +2032,11 @@ sub relative_url {
 # after the entire pod file has been read and converted.
 #
 sub finish_list {
-    while ($Listlevel > 0) {
-	print HTML "</dl>\n";
-	$Listlevel--;
+    if( $Listlevel ){
+	warn "$0: $Podfile: unterminated list(s) at =head in paragraph $Paragraph.  ignoring.\n" unless $Quiet;
+	while( $Listlevel ){
+            process_back();
+        }
     }
 }
 

@@ -348,8 +348,8 @@ As an example of this case, this code prints the message
 
 But when the following lines are added at the end:
 
-    $thr1->join;
-    $thr2->join;
+    $thr1->join();
+    $thr2->join();
 
 it prints two lines of output, a perhaps more useful outcome.
 
@@ -424,8 +424,8 @@ number of pitfalls.  One pitfall is the race condition:
     my $thr1 = threads->create(\&sub1);
     my $thr2 = threads->create(\&sub2);
 
-    $thr1->join;
-    $thr2->join;
+    $thr1->join();
+    $thr2->join();
     print("$a\n");
 
     sub sub1 { my $foo = $a; $a = $foo + 1; }
@@ -449,8 +449,8 @@ possibility of error:
     my $c :shared;
     my $thr1 = threads->create(sub { $b = $a; $a = $b + 1; });
     my $thr2 = threads->create(sub { $c = $a; $a = $c + 1; });
-    $thr1->join;
-    $thr2->join;
+    $thr1->join();
+    $thr2->join();
 
 Two threads both access C<$a>.  Each thread can potentially be interrupted
 at any point, or be executed in any order.  At the end, C<$a> could be 3
@@ -853,33 +853,31 @@ things we've covered.  This program finds prime numbers using threads.
      7 use threads;
      8 use Thread::Queue;
      9
-    10 my $stream = Thread::Queue->new();
-    11 for my $i ( 3 .. 1000 ) {
-    12     $stream->enqueue($i);
-    13 }
-    14 $stream->enqueue(undef);
-    15
-    16 threads->create(\&check_num, $stream, 2);
-    17 $kid->join();
-    18
-    19 sub check_num {
-    20     my ($upstream, $cur_prime) = @_;
-    21     my $kid;
-    22     my $downstream = Thread::Queue->new();
-    23     while (my $num = $upstream->dequeue()) {
-    24         next unless ($num % $cur_prime);
-    25         if ($kid) {
-    26             $downstream->enqueue($num);
-    27         } else {
-    28             print("Found prime $num\n");
-    29             $kid = threads->create(\&check_num, $downstream, $num);
-    30         }
-    31     }
-    32     if ($kid) {
-    33         $downstream->enqueue(undef);
-    34         $kid->join();
-    35     }
-    36 }
+    10 sub check_num {
+    11     my ($upstream, $cur_prime) = @_;
+    12     my $kid;
+    13     my $downstream = Thread::Queue->new();
+    14     while (my $num = $upstream->dequeue()) {
+    15         next unless ($num % $cur_prime);
+    16         if ($kid) {
+    17             $downstream->enqueue($num);
+    18         } else {
+    19             print("Found prime: $num\n");
+    20             $kid = threads->create(\&check_num, $downstream, $num);
+    21             if (! $kid) {
+    22                 warn("Sorry.  Ran out of threads.\n");
+    23                 last;
+    24             }
+    25         }
+    26     }
+    27     if ($kid) {
+    28         $downstream->enqueue(undef);
+    29         $kid->join();
+    30     }
+    31 }
+    32
+    33 my $stream = Thread::Queue->new(3..1000, undef);
+    34 check_num($stream, 2);
 
 This program uses the pipeline model to generate prime numbers.  Each
 thread in the pipeline has an input queue that feeds numbers to be
@@ -898,33 +896,32 @@ number is, it's a number that's only evenly divisible by itself and 1.)
 The bulk of the work is done by the C<check_num()> subroutine, which
 takes a reference to its input queue and a prime number that it's
 responsible for.  After pulling in the input queue and the prime that
-the subroutine is checking (line 20), we create a new queue (line 22)
+the subroutine is checking (line 11), we create a new queue (line 13)
 and reserve a scalar for the thread that we're likely to create later
-(line 21).
+(line 12).
 
-The while loop from lines 23 to line 31 grabs a scalar off the input
+The while loop from line 14 to line 26 grabs a scalar off the input
 queue and checks against the prime this thread is responsible
-for.  Line 24 checks to see if there's a remainder when we divide the
+for.  Line 15 checks to see if there's a remainder when we divide the
 number to be checked by our prime.  If there is one, the number
 must not be evenly divisible by our prime, so we need to either pass
-it on to the next thread if we've created one (line 26) or create a
+it on to the next thread if we've created one (line 17) or create a
 new thread if we haven't.
 
-The new thread creation is line 29.  We pass on to it a reference to
-the queue we've created, and the prime number we've found.
+The new thread creation is line 20.  We pass on to it a reference to
+the queue we've created, and the prime number we've found.  In lines 21
+through 24, we check to make sure that our new thread got created, and
+if not, we stop checking any remaining numbers in the queue.
 
 Finally, once the loop terminates (because we got a 0 or C<undef> in the
 queue, which serves as a note to terminate), we pass on the notice to our
-child and wait for it to exit if we've created a child (lines 32 and
-35).
+child, and wait for it to exit if we've created a child (lines 27 and
+30).
 
-Meanwhile, back in the main thread, we first create a queue (line 10) and
-queue up all the numbers from 3 to 1000 for checking (lines 11-13),
-plus a termination notice (line 14).  Then we create the initial child
-threads (line 16), passing it the queue and the first prime: 2.  Finally,
-we wait for the first child thread to terminate (line 17).  Because a
-child won't terminate until its child has terminated, we know that we're
-done once we return from the C<join()>.
+Meanwhile, back in the main thread, we first create a queue (line 33) and
+queue up all the numbers from 3 to 1000 for checking, plus a termination
+notice.  Then all we have to do to get the ball rolling is pass the queue
+and the first prime to the C<check_num()> subroutine (line 34).
 
 That's how it works.  It's pretty simple; as with many Perl programs,
 the explanation is much longer than the program.

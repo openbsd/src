@@ -55,10 +55,6 @@ when run with multiple L<TAP::Harness/jobs>.
 
 =head1 SYNOPSIS
 
-=cut
-
-=head1 METHODS
-
 =head2 Class Methods
 
 =head3 C<header>

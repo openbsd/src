@@ -1,7 +1,7 @@
 /*    taint.c
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
- *    2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -9,9 +9,11 @@
  */
 
 /*
- * "...we will have peace, when you and all your works have perished--and
- * the works of your dark master to whom you would deliver us.  You are a
- * liar, Saruman, and a corrupter of men's hearts."  --Theoden
+ * '...we will have peace, when you and all your works have perished--and
+ *  the works of your dark master to whom you would deliver us.  You are a
+ *  liar, Saruman, and a corrupter of men's hearts.'       --Théoden
+ *
+ *     [p.580 of _The Lord of the Rings_, III/x: "The Voice of Saruman"]
  */
 
 /* This file contains a few functions for handling data tainting in Perl
@@ -26,6 +28,9 @@ Perl_taint_proper(pTHX_ const char *f, const char *s)
 {
 #if defined(HAS_SETEUID) && defined(DEBUGGING)
     dVAR;
+
+    PERL_ARGS_ASSERT_TAINT_PROPER;
+
 #   if Uid_t_size == 1
     {
 	const UV  uid = PL_uid;
@@ -94,7 +99,7 @@ Perl_taint_env(pTHX)
     /* If there's no %ENV hash of if it's not magical, croak, because
      * it probably doesn't reflect the actual environment */
     if (!GvHV(PL_envgv) || !(SvRMAGICAL(GvHV(PL_envgv))
-	    && mg_find((SV*)GvHV(PL_envgv), PERL_MAGIC_env))) {
+	    && mg_find((const SV *)GvHV(PL_envgv), PERL_MAGIC_env))) {
 	const bool was_tainted = PL_tainted;
 	const char * const name = GvENAME(PL_envgv);
 	PL_tainted = TRUE;

@@ -1,6 +1,6 @@
 =head1 NAME
 
-Net::libnetFAQ - libnet Frequently Asked Questions
+libnetFAQ - libnet Frequently Asked Questions
 
 =head1 DESCRIPTION
 

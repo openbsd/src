@@ -71,8 +71,8 @@ these types of data structures.
 =head1 REFERENCES
 X<reference> X<dereference> X<dereferencing> X<pointer>
 
-The most important thing to understand about all data structures in Perl
--- including multidimensional arrays--is that even though they might
+The most important thing to understand about all data structures in
+Perl--including multidimensional arrays--is that even though they might
 appear otherwise, Perl C<@ARRAY>s and C<%HASH>es are all internally
 one-dimensional.  They can hold only scalar values (meaning a string,
 number, or a reference).  They cannot directly contain other arrays or
@@ -568,7 +568,7 @@ X<array of hashes> X<AoH>
  }
 
 =head1 HASHES OF HASHES
-X<hass of hashes> X<HoH>
+X<hash of hashes> X<HoH>
 
 =head2 Declaration of a HASH OF HASHES
 

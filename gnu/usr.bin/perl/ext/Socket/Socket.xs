@@ -182,7 +182,7 @@ my_inet_aton(register const char *cp, struct in_addr *addr)
 
 
 static int
-not_here(char *s)
+not_here(const char *s)
 {
     croak("Socket::%s not implemented on this architecture", s);
     return -1;

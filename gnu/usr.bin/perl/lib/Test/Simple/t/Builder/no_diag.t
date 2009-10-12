@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: no_diag.t,v 1.1 2009/05/16 21:42:57 simon Exp $
 
 use Test::More 'no_diag', tests => 2;
 

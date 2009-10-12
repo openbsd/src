@@ -51,7 +51,8 @@ http://sourceforge.net/projects/psh/ .
 
 Zoidberg is a similar project and provides a shell written in perl,
 configured in perl and operated in perl. It is intended as a login shell
-and development environment. It can be found at http://zoidberg.sf.net/
+and development environment. It can be found at
+http://pardus-larus.student.utwente.nl/~pardus/projects/zoidberg/
 or your local CPAN mirror.
 
 The Shell.pm module (distributed with Perl) makes Perl try commands
@@ -61,10 +62,19 @@ be what you want.
 
 =head2 How do I find which modules are installed on my system?
 
-You can use the ExtUtils::Installed module to show all installed
-distributions, although it can take awhile to do its magic.  The
-standard library which comes with Perl just shows up as "Perl" (although
-you can get those with Module::CoreList).
+From the command line, you can use the C<cpan> command's C<-l> switch:
+
+	$ cpan -l
+
+You can also use C<cpan>'s C<-a> switch to create an autobundle file
+that C<CPAN.pm> understands and cna use to re-install every module:
+
+	$ cpan -a
+
+Inside a Perl program, you can use the ExtUtils::Installed module to
+show all installed distributions, although it can take awhile to do
+its magic.  The standard library which comes with Perl just shows up
+as "Perl" (although you can get those with Module::CoreList).
 
 	use ExtUtils::Installed;
 
@@ -76,22 +86,30 @@ can use File::Find::Rule.
 
 	use File::Find::Rule;
 
-	my @files = File::Find::Rule->file()->name( '*.pm' )->in( @INC );
+	my @files = File::Find::Rule->
+		extras({follow => 1})->
+		file()->
+		name( '*.pm' )->
+		in( @INC )
+		;
 
 If you do not have that module, you can do the same thing
 with File::Find which is part of the standard library.
 
-    use File::Find;
-    my @files;
+	use File::Find;
+	my @files;
 
-    find(
-      sub {
-      	push @files, $File::Find::name
-      		if -f $File::Find::name && /\.pm$/
-      	},
-
-      @INC
-      );
+	find(
+	    {
+		wanted => sub {
+		    push @files, $File::Find::fullname
+			if -f $File::Find::fullname && /\.pm$/
+		},
+		follow => 1,
+		follow_skip => 2,
+	    },
+	    @INC
+	);
 
 	print join "\n", @files;
 
@@ -101,12 +119,12 @@ read the documentation the module is most likely installed.
 If you cannot read the documentation, the module might not
 have any (in rare cases).
 
-	prompt% perldoc Module::Name
+	$ perldoc Module::Name
 
 You can also try to include the module in a one-liner to see if
 perl finds it.
 
-	perl -MModule::Name -e1
+	$ perl -MModule::Name -e1
 
 =head2 How do I debug my Perl programs?
 
@@ -148,38 +166,61 @@ from Activestate (Windows and Mac OS X), or EPIC (most platforms).
 
 =head2 How do I profile my Perl programs?
 
-You should get the Devel::DProf module from the standard distribution
-(or separately on CPAN) and also use Benchmark.pm from the standard
-distribution.  The Benchmark module lets you time specific portions of
-your code, while Devel::DProf gives detailed breakdowns of where your
-code spends its time.
+(contributed by brian d foy, updated Fri Jul 25 12:22:26 PDT 2008)
 
-Here's a sample use of Benchmark:
+The C<Devel> namespace has several modules which you can use to
+profile your Perl programs. The C<Devel::DProf> module comes with Perl
+and you can invoke it with the C<-d> switch:
 
-  use Benchmark;
+	perl -d:DProf program.pl
 
-  @junk = `cat /etc/motd`;
-  $count = 10_000;
+After running your program under C<DProf>, you'll get a F<tmon.out> file
+with the profile data. To look at the data, you can turn it into a
+human-readable report with the C<dprofpp> program that comes with
+C<Devel::DProf>.
 
-  timethese($count, {
-            'map' => sub { my @a = @junk;
-			   map { s/a/b/ } @a;
-			   return @a },
-            'for' => sub { my @a = @junk;
-			   for (@a) { s/a/b/ };
-			   return @a },
-           });
+	dprofpp
 
-This is what it prints (on one machine--your results will be dependent
-on your hardware, operating system, and the load on your machine):
+You can also do the profiling and reporting in one step with the C<-p>
+switch to <dprofpp>:
 
-  Benchmark: timing 10000 iterations of for, map...
-         for:  4 secs ( 3.97 usr  0.01 sys =  3.98 cpu)
-         map:  6 secs ( 4.97 usr  0.00 sys =  4.97 cpu)
+	dprofpp -p program.pl
 
-Be aware that a good benchmark is very hard to write.  It only tests the
-data you give it and proves little about the differing complexities
-of contrasting algorithms.
+The C<Devel::NYTProf> (New York Times Profiler) does both statement
+and subroutine profiling. It's available from CPAN and you also invoke
+it with the C<-d> switch:
+
+	perl -d:NYTProf some_perl.pl
+
+Like C<DProf>, it creates a database of the profile information that you
+can turn into reports. The C<nytprofhtml> command turns the data into
+an HTML report similar to the C<Devel::Cover> report:
+
+	nytprofhtml
+
+CPAN has several other profilers that you can invoke in the same
+fashion. You might also be interested in using the C<Benchmark> to
+measure and compare code snippets.
+
+You can read more about profiling in I<Programming Perl>, chapter 20,
+or I<Mastering Perl>, chapter 5.
+
+L<perldebguts> documents creating a custom debugger if you need to
+create a special sort of profiler. brian d foy describes the process
+in I<The Perl Journal>, "Creating a Perl Debugger",
+http://www.ddj.com/184404522 , and "Profiling in Perl"
+http://www.ddj.com/184404580 .
+
+Perl.com has two interesting articles on profiling: "Profiling Perl",
+by Simon Cozens, http://www.perl.com/lpt/a/850 and "Debugging and
+Profiling mod_perl Applications", by Frank Wiles,
+http://www.perl.com/pub/a/2006/02/09/debug_mod_perl.html .
+
+Randal L. Schwartz writes about profiling in "Speeding up Your Perl
+Programs" for I<Unix Review>,
+http://www.stonehenge.com/merlyn/UnixReview/col49.html , and "Profiling
+in Template Toolkit via Overriding" for I<Linux Magazine>,
+http://www.stonehenge.com/merlyn/LinuxMag/col75.html .
 
 =head2 How do I cross-reference my Perl programs?
 
@@ -281,11 +322,19 @@ http://www.optiperl.com/
 OptiPerl is a Windows IDE with simulated CGI environment, including
 debugger and syntax highlighting editor.
 
+=item Padre
+
+http://padre.perlide.org/
+
+Padre is cross-platform IDE for Perl written in Perl using the the wxWidgets
+to provide a native look and feel. It's open source under the Artistic
+License.
+
 =item PerlBuilder
 
 http://www.solutionsoft.com/perl.htm
 
-PerlBuidler is an integrated development environment for Windows that
+PerlBuilder is an integrated development environment for Windows that
 supports Perl development.
 
 =item visiPerl+
@@ -379,7 +428,7 @@ incarnation of it, and secondly because you can embed Perl inside it
 to use Perl as the scripting language.  nvi is not alone in this,
 though: at least also vim and vile offer an embedded Perl.
 
-The following are Win32 multilanguage editor/IDESs that support Perl:
+The following are Win32 multilanguage editor/IDEs that support Perl:
 
 =over 4
 
@@ -394,6 +443,10 @@ http://www.MultiEdit.com/
 =item SlickEdit
 
 http://www.slickedit.com/
+
+=item ConTEXT
+
+http://www.contexteditor.org/
 
 =back
 
@@ -415,7 +468,7 @@ from the Cygwin package ( http://sources.redhat.com/cygwin/ )
 
 =item Ksh
 
-from the MKS Toolkit ( http://www.mks.com/ ), or the Bourne shell of
+from the MKS Toolkit ( http://www.mkssoftware.com/ ), or the Bourne shell of
 the U/WIN environment ( http://www.research.att.com/sw/tools/uwin/ )
 
 =item Tcsh
@@ -430,10 +483,10 @@ http://www.zsh.org/
 =back
 
 MKS and U/WIN are commercial (U/WIN is free for educational and
-research purposes), Cygwin is covered by the GNU Public License (but
-that shouldn't matter for Perl use).  The Cygwin, MKS, and U/WIN all
-contain (in addition to the shells) a comprehensive set of standard
-UNIX toolkit utilities.
+research purposes), Cygwin is covered by the GNU General Public
+License (but that shouldn't matter for Perl use).  The Cygwin, MKS,
+and U/WIN all contain (in addition to the shells) a comprehensive set
+of standard UNIX toolkit utilities.
 
 If you're transferring text files between Unix and Windows using FTP
 be sure to transfer them in ASCII mode so the ends of lines are
@@ -464,9 +517,6 @@ are text editors for Mac OS that have a Perl sensitivity mode
 
 
 =back
-
-Pepper and Pe are programming language sensitive text editors for Mac
-OS X and BeOS respectively ( http://www.hekkelman.com/ ).
 
 =head2 Where can I get Perl macros for vi?
 
@@ -519,8 +569,8 @@ simple gui. It hasn't been updated in a while.
 
 =item Wx
 
-This is a Perl binding for the cross-platform wxWidgets toolkit 
-L<http://www.wxwidgets.org>. It works under Unix, Win32 and Mac OS X,
+This is a Perl binding for the cross-platform wxWidgets toolkit
+( http://www.wxwidgets.org ). It works under Unix, Win32 and Mac OS X,
 using native widgets (Gtk under Unix). The interface follows the C++
 interface closely, but the documentation is a little sparse for someone
 who doesn't know the library, mostly just referring you to the C++
@@ -528,7 +578,7 @@ documentation.
 
 =item Gtk and Gtk2
 
-These are Perl bindings for the Gtk toolkit L<http://www.gtk.org>. The
+These are Perl bindings for the Gtk toolkit ( http://www.gtk.org ). The
 interface changed significantly between versions 1 and 2 so they have
 separate Perl modules. It runs under Unix, Win32 and Mac OS X (currently
 it requires an X server on Mac OS, but a 'native' port is underway), and
@@ -547,7 +597,7 @@ require familiarity with the C Win32 APIs, or reference to MSDN.
 
 =item CamelBones
 
-CamelBones L<http://camelbones.sourceforge.net> is a Perl interface to
+CamelBones ( http://camelbones.sourceforge.net ) is a Perl interface to
 Mac OS X's Cocoa GUI toolkit, and as such can be used to produce native
 GUIs on Mac OS X. It's not on CPAN, as it requires frameworks that
 CPAN.pm doesn't know how to install, but installation is via the
@@ -745,7 +795,7 @@ You usually can't. Memory allocated to lexicals (i.e. my() variables)
 cannot be reclaimed or reused even if they go out of scope. It is
 reserved in case the variables come back into scope. Memory allocated
 to global variables can be reused (within your program) by using
-undef()ing and/or delete().
+undef() and/or delete().
 
 On most operating systems, memory allocated to a program can never be
 returned to the system. That's why long-running programs sometimes re-
@@ -1033,15 +1083,15 @@ to process and install a Perl distribution.
 
 =head1 REVISION
 
-Revision: $Revision: 10127 $
+Revision: $Revision$
 
-Date: $Date: 2007-10-27 21:40:20 +0200 (Sat, 27 Oct 2007) $
+Date: $Date$
 
 See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

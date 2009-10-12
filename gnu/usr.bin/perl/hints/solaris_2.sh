@@ -450,7 +450,7 @@ case "$uselargefiles" in
 # Keep these in the left margin.
 ccflags_uselargefiles="`getconf LFS_CFLAGS 2>/dev/null`"
 ldflags_uselargefiles="`getconf LFS_LDFLAGS 2>/dev/null`"
-libswanted_uselargefiles="`getconf LFS_LIBS 2>/dev/null|sed -e 's@^-l@@' -e 's@ -l@ @g`"
+libswanted_uselargefiles="`getconf LFS_LIBS 2>/dev/null|sed -e 's@^-l@@' -e 's@ -l@ @g'`"
 
     ccflags="$ccflags $ccflags_uselargefiles"
     ldflags="$ldflags $ldflags_uselargefiles"

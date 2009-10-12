@@ -20,11 +20,16 @@ the name of the operating system (not its release number) that your perl
 binary was built for.
 
 =head2 How come exec() doesn't return?
+X<exec> X<system> X<fork> X<open> X<pipe>
 
-Because that's what it does: it replaces your currently running
-program with a different one.  If you want to keep going (as is
-probably the case if you're asking this question) use system()
-instead.
+(contributed by brian d foy)
+
+The C<exec> function's job is to turn your process into another
+command and never to return. If that's not what you want to do, don't
+use C<exec>. :)
+
+If you want to run an external command and still keep your Perl process
+going, look at a piped C<open>, C<fork>, or C<system>.
 
 =head2 How do I do fancy stuff with the keyboard/screen/mouse?
 
@@ -169,23 +174,49 @@ not to block:
 
 =head2 How do I clear the screen?
 
-If you only have do so infrequently, use C<system>:
+(contributed by brian d foy)
 
-	system("clear");
+To clear the screen, you just have to print the special sequence
+that tells the terminal to clear the screen. Once you have that
+sequence, output it when you want to clear the screen.
 
-If you have to do this a lot, save the clear string
-so you can print it 100 times without calling a program
-100 times:
+You can use the C<Term::ANSIScreen> module to get the special
+sequence. Import the C<cls> function (or the C<:screen> tag):
 
-	$clear_string = `clear`;
-	print $clear_string;
+	use Term::ANSIScreen qw(cls);
+	my $clear_screen = cls();
 
-If you're planning on doing other screen manipulations, like cursor
-positions, etc, you might wish to use Term::Cap module:
+	print $clear_screen;
+
+The C<Term::Cap> module can also get the special sequence if you want
+to deal with the low-level details of terminal control. The C<Tputs>
+method returns the string for the given capability:
 
 	use Term::Cap;
-	$terminal = Term::Cap->Tgetent( {OSPEED => 9600} );
+
+	$terminal = Term::Cap->Tgetent( { OSPEED => 9600 } );
 	$clear_string = $terminal->Tputs('cl');
+
+	print $clear_screen;
+
+On Windows, you can use the C<Win32::Console> module. After creating
+an object for the output filehandle you want to affect, call the
+C<Cls> method:
+
+	Win32::Console;
+
+	$OUT = Win32::Console->new(STD_OUTPUT_HANDLE);
+	my $clear_string = $OUT->Cls;
+
+	print $clear_screen;
+
+If you have a command-line program that does the job, you can call
+it in backticks to capture whatever it outputs so you can use it
+later:
+
+	$clear_string = `clear`;
+
+	print $clear_string;
 
 =head2 How do I get the screen size?
 
@@ -346,18 +377,25 @@ passwd(1), for example).
 
 =head2 How do I start a process in the background?
 
-Several modules can start other processes that do not block
-your Perl program.  You can use IPC::Open3, Parallel::Jobs,
-IPC::Run, and some of the POE modules.  See CPAN for more
-details.
+(contributed by brian d foy)
 
-You could also use
+There's not a single way to run code in the background so you don't
+have to wait for it to finish before your program moves on to other
+tasks. Process management depends on your particular operating system,
+and many of the techniques are in L<perlipc>.
+
+Several CPAN modules may be able to help, including IPC::Open2 or
+IPC::Open3, IPC::Run, Parallel::Jobs, Parallel::ForkManager, POE,
+Proc::Background, and Win32::Process. There are many other modules you
+might use, so check those namespaces for other options too.
+
+If you are on a unix-like system, you might be able to get away with a
+system call where you put an C<&> on the end of the command:
 
 	system("cmd &")
 
-or you could use fork as documented in L<perlfunc/"fork">, with
-further examples in L<perlipc>.  Some things to be aware of, if you're
-on a Unix-like system:
+You can also try using C<fork>, as described in L<perlfunc> (although
+this is the same thing that many of the modules will do for you).
 
 =over 4
 
@@ -1181,52 +1219,75 @@ and use?".
 
 =head2 What's the difference between require and use?
 
-Perl offers several different ways to include code from one file into
-another.  Here are the deltas between the various inclusion constructs:
+(contributed by brian d foy)
 
-	1)  do $file is like eval `cat $file`, except the former
-	1.1: searches @INC and updates %INC.
-	1.2: bequeaths an *unrelated* lexical scope on the eval'ed code.
+Perl runs C<require> statement at run-time. Once Perl loads, compiles,
+and runs the file, it doesn't do anything else. The C<use> statement
+is the same as a C<require> run at compile-time, but Perl also calls the
+C<import> method for the loaded package. These two are the same:
 
-	2)  require $file is like do $file, except the former
-	2.1: checks for redundant loading, skipping already loaded files.
-	2.2: raises an exception on failure to find, compile, or execute $file.
+	use MODULE qw(import list);
 
-	3)  require Module is like require "Module.pm", except the former
-	3.1: translates each "::" into your system's directory separator.
-	3.2: primes the parser to disambiguate class Module as an indirect object.
+	BEGIN {
+		require MODULE;
+		MODULE->import(import list);
+		}
 
-	4)  use Module is like require Module, except the former
-	4.1: loads the module at compile time, not run-time.
-	4.2: imports symbols and semantics from that package to the current one.
+However, you can suppress the C<import> by using an explicit, empty
+import list. Both of these still happen at compile-time:
 
-In general, you usually want C<use> and a proper Perl module.
+	use MODULE ();
+
+	BEGIN {
+		require MODULE;
+		}
+
+Since C<use> will also call the C<import> method, the actual value
+for C<MODULE> must be a bareword. That is, C<use> cannot load files
+by name, although C<require> can:
+
+	require "$ENV{HOME}/lib/Foo.pm"; # no @INC searching!
+
+See the entry for C<use> in L<perlfunc> for more details.
 
 =head2 How do I keep my own module/library directory?
 
 When you build modules, tell Perl where to install the modules.
 
-For C<Makefile.PL>-based distributions, use the PREFIX and LIB options
+For C<Makefile.PL>-based distributions, use the INSTALL_BASE option
 when generating Makefiles:
 
-	perl Makefile.PL PREFIX=/mydir/perl LIB=/mydir/perl/lib
+	perl Makefile.PL INSTALL_BASE=/mydir/perl
 
 You can set this in your CPAN.pm configuration so modules automatically install
 in your private library directory when you use the CPAN.pm shell:
 
 	% cpan
-	cpan> o conf makepl_arg PREFIX=/mydir/perl,LIB=/mydir/perl/lib
+	cpan> o conf makepl_arg INSTALL_BASE=/mydir/perl
 	cpan> o conf commit
 
 For C<Build.PL>-based distributions, use the --install_base option:
 
-	perl Build.PL --install_base /mydir/perl 
+	perl Build.PL --install_base /mydir/perl
 
 You can configure CPAN.pm to automatically use this option too:
 
 	% cpan
 	cpan> o conf mbuild_arg --install_base /mydir/perl
 	cpan> o conf commit
+
+INSTALL_BASE tells these tools to put your modules into
+F</mydir/perl/lib/perl5>.  See L<How do I add a directory to my
+include path (@INC) at runtime?> for details on how to run your newly
+installed moudles.
+
+There is one caveat with INSTALL_BASE, though, since it acts
+differently than the PREFIX and LIB settings that older versions of
+ExtUtils::MakeMaker advocated. INSTALL_BASE does not support
+installing modules for multiple versions of Perl or different
+architectures under the same directory. You should consider if you
+really want that , and if you do, use the older PREFIX and LIB
+settings. See the ExtUtils::Makemaker documentation for more details.
 
 =head2 How do I add the directory my program lives in to the module/library search path?
 
@@ -1237,7 +1298,7 @@ for any other directory. You might <use lib> if you know the directory
 at compile time:
 
 	use lib $directory;
-	
+
 The trick in this task is to find the directory. Before your script does
 anything else (such as a C<chdir>), you can get the current working
 directory with the C<Cwd> module, which comes with Perl:
@@ -1246,30 +1307,28 @@ directory with the C<Cwd> module, which comes with Perl:
 		use Cwd;
 		our $directory = cwd;
 		}
-	
+
 	use lib $directory;
-	
+
 You can do a similar thing with the value of C<$0>, which holds the
 script name. That might hold a relative path, but C<rel2abs> can turn
-it into an absolute path. Once you have the 
+it into an absolute path. Once you have the
 
-	BEGIN {	
+	BEGIN {
 		use File::Spec::Functions qw(rel2abs);
 		use File::Basename qw(dirname);
-		
+
 		my $path   = rel2abs( $0 );
 		our $directory = dirname( $path );
 		}
-		
+
 	use lib $directory;
 
-The C<FindBin> module, which comes with Perl, might work. It searches
-through C<$ENV{PATH}> (so your script has to be in one of those
-directories). You can then use that directory (in C<$FindBin::Bin>)
-to locate nearby directories you want to add:
+The C<FindBin> module, which comes with Perl, might work. It finds the
+directory of the currently running script and puts it in C<$Bin>, which
+you can then use to construct the right library path:
 
-	use FindBin;
-	use lib "$FindBin::Bin/../lib";
+	use FindBin qw($Bin);
 
 =head2 How do I add a directory to my include path (@INC) at runtime?
 
@@ -1310,15 +1369,15 @@ but other times it is not.  Modern programs C<use Socket;> instead.
 
 =head1 REVISION
 
-Revision: $Revision: 10183 $
+Revision: $Revision$
 
-Date: $Date: 2007-11-07 09:35:12 +0100 (Wed, 07 Nov 2007) $
+Date: $Date$
 
 See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

@@ -1,7 +1,7 @@
 /*    regexp.h
  *
  *    Copyright (C) 1993, 1994, 1996, 1997, 1999, 2000, 2001, 2003,
- *    2005, 2006, 2007, by Larry Wall and others
+ *    2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -110,6 +110,8 @@ typedef struct regexp {
 	I32 refcnt;             /* Refcount of this regexp */
 } regexp;
 
+#define RXp_PAREN_NAMES(rx)	((rx)->paren_names)
+
 /* used for high speed searches */
 typedef struct re_scream_pos_data_s
 {
@@ -179,7 +181,7 @@ typedef struct regexp_engine {
 /* Whether this is being called from a re:: function */
 #define RXapif_REGNAME         0x0400
 #define RXapif_REGNAMES        0x0800
-#define RXapif_REGNAMES_COUNT  0x1000 
+#define RXapif_REGNAMES_COUNT  0x1000
 
 /*
 =head1 REGEXP Functions
@@ -216,7 +218,7 @@ and check for NULL.
 #define SvRXOK(sv) (Perl_get_re_arg(aTHX_ sv) ? TRUE : FALSE)
 
 
-/* Flags stored in regexp->extflags 
+/* Flags stored in regexp->extflags
  * These are used by code external to the regexp engine
  *
  * Note that flags starting with RXf_PMf_ have exact equivalents
@@ -224,7 +226,7 @@ and check for NULL.
  * numerically here only for clarity.
  *
  * NOTE: if you modify any RXf flags you should run regen.pl or regcomp.pl
- * so that regnodes.h is updated with the changes. 
+ * so that regnodes.h is updated with the changes.
  *
  */
 
@@ -246,7 +248,9 @@ and check for NULL.
 #define RXf_WHITE		0x00000400 /* Pattern is /\s+/ */
 #define RXf_NULL		0x40000000 /* Pattern is // */
 
-/* 0x1F800 of extflags is used by (RXf_)PMf_COMPILETIME */
+/* 0x1F800 of extflags is used by (RXf_)PMf_COMPILETIME
+ * If you change these you need to change the equivalent flags in op.h, and
+ * vice versa.  */
 #define RXf_PMf_LOCALE  	0x00000800 /* use locale */
 #define RXf_PMf_MULTILINE	0x00001000 /* /m         */
 #define RXf_PMf_SINGLELINE	0x00002000 /* /s         */
@@ -254,6 +258,7 @@ and check for NULL.
 #define RXf_PMf_EXTENDED	0x00008000 /* /x         */
 #define RXf_PMf_KEEPCOPY	0x00010000 /* /p         */
 /* these flags are transfered from the PMOP->op_pmflags member during compilation */
+#define RXf_PMf_STD_PMMOD_SHIFT	12
 #define RXf_PMf_STD_PMMOD	(RXf_PMf_MULTILINE|RXf_PMf_SINGLELINE|RXf_PMf_FOLD|RXf_PMf_EXTENDED)
 #define RXf_PMf_COMPILETIME	(RXf_PMf_MULTILINE|RXf_PMf_SINGLELINE|RXf_PMf_LOCALE|RXf_PMf_FOLD|RXf_PMf_EXTENDED|RXf_PMf_KEEPCOPY)
 
@@ -296,7 +301,7 @@ and check for NULL.
 
 /*
  * NOTE: if you modify any RXf flags you should run regen.pl or regcomp.pl
- * so that regnodes.h is updated with the changes. 
+ * so that regnodes.h is updated with the changes.
  *
  */
 
@@ -334,24 +339,52 @@ and check for NULL.
 
 /*
  * NOTE: if you modify any RXf flags you should run regen.pl or regcomp.pl
- * so that regnodes.h is updated with the changes. 
+ * so that regnodes.h is updated with the changes.
  *
  */
 
 #define RX_HAS_CUTGROUP(prog) ((prog)->intflags & PREGf_CUTGROUP_SEEN)
-#define RX_MATCH_TAINTED(prog)	((prog)->extflags & RXf_TAINTED_SEEN)
-#define RX_MATCH_TAINTED_on(prog) ((prog)->extflags |= RXf_TAINTED_SEEN)
-#define RX_MATCH_TAINTED_off(prog) ((prog)->extflags &= ~RXf_TAINTED_SEEN)
+#define RXp_MATCH_TAINTED(prog)	(RXp_EXTFLAGS(prog) & RXf_TAINTED_SEEN)
+#define RX_MATCH_TAINTED(prog)	(RX_EXTFLAGS(prog) & RXf_TAINTED_SEEN)
+#define RX_MATCH_TAINTED_on(prog) (RX_EXTFLAGS(prog) |= RXf_TAINTED_SEEN)
+#define RX_MATCH_TAINTED_off(prog) (RX_EXTFLAGS(prog) &= ~RXf_TAINTED_SEEN)
 #define RX_MATCH_TAINTED_set(prog, t) ((t) \
 				       ? RX_MATCH_TAINTED_on(prog) \
 				       : RX_MATCH_TAINTED_off(prog))
 
-#define RX_MATCH_COPIED(prog)		((prog)->extflags & RXf_COPY_DONE)
-#define RX_MATCH_COPIED_on(prog)	((prog)->extflags |= RXf_COPY_DONE)
-#define RX_MATCH_COPIED_off(prog)	((prog)->extflags &= ~RXf_COPY_DONE)
+#define RXp_MATCH_COPIED(prog)		(RXp_EXTFLAGS(prog) & RXf_COPY_DONE)
+#define RX_MATCH_COPIED(prog)		(RX_EXTFLAGS(prog) & RXf_COPY_DONE)
+#define RXp_MATCH_COPIED_on(prog)	(RXp_EXTFLAGS(prog) |= RXf_COPY_DONE)
+#define RX_MATCH_COPIED_on(prog)	(RX_EXTFLAGS(prog) |= RXf_COPY_DONE)
+#define RXp_MATCH_COPIED_off(prog)	(RXp_EXTFLAGS(prog) &= ~RXf_COPY_DONE)
+#define RX_MATCH_COPIED_off(prog)	(RX_EXTFLAGS(prog) &= ~RXf_COPY_DONE)
 #define RX_MATCH_COPIED_set(prog,t)	((t) \
 					 ? RX_MATCH_COPIED_on(prog) \
 					 : RX_MATCH_COPIED_off(prog))
+
+#define RXp_EXTFLAGS(rx)	((rx)->extflags)
+
+#define RX_PRECOMP(prog)	((prog)->precomp)
+/* *** 5.10.x-specific definition of RX_PRECOMP_const */
+#define RX_PRECOMP_const(prog)	((prog)->precomp)
+#define RX_PRELEN(prog)		((prog)->prelen)
+#define RX_WRAPPED(prog)	((prog)->wrapped)
+#define RX_WRAPLEN(prog)	((prog)->wraplen)
+#define RX_CHECK_SUBSTR(prog)	((prog)->check_substr)
+#define RX_EXTFLAGS(prog)	((prog)->extflags)
+#define RX_REFCNT(prog)		((prog)->refcnt)
+#define RX_ENGINE(prog)		((prog)->engine)
+#define RX_SUBBEG(prog)		((prog)->subbeg)
+#define RX_OFFS(prog)		((prog)->offs)
+#define RX_NPARENS(prog)	((prog)->nparens)
+#define RX_SUBLEN(prog)		((prog)->sublen)
+#define RX_SUBBEG(prog)		((prog)->subbeg)
+#define RX_MINLEN(prog)		((prog)->minlen)
+#define RX_MINLENRET(prog)	((prog)->minlenret)
+#define RX_GOFS(prog)		((prog)->gofs)
+#define RX_LASTPAREN(prog)	((prog)->lastparen)
+#define RX_LASTCLOSEPAREN(prog)	((prog)->lastcloseparen)
+#define RX_SEEN_EVALS(prog)	((prog)->seen_evals)
 
 #endif /* PLUGGABLE_RE_EXTENSION */
 
@@ -363,24 +396,28 @@ and check for NULL.
 	    SV_CHECK_THINKFIRST_COW_DROP(rx->saved_copy); \
 	} \
 	if (RX_MATCH_COPIED(rx)) { \
-	    Safefree(rx->subbeg); \
+	    Safefree(RX_SUBBEG(rx)); \
 	    RX_MATCH_COPIED_off(rx); \
 	}} STMT_END
 #else
 #define RX_MATCH_COPY_FREE(rx) \
 	STMT_START {if (RX_MATCH_COPIED(rx)) { \
-	    Safefree(rx->subbeg); \
+	    Safefree(RX_SUBBEG(rx)); \
 	    RX_MATCH_COPIED_off(rx); \
 	}} STMT_END
 #endif
 
-#define RX_MATCH_UTF8(prog)		((prog)->extflags & RXf_MATCH_UTF8)
-#define RX_MATCH_UTF8_on(prog)		((prog)->extflags |= RXf_MATCH_UTF8)
-#define RX_MATCH_UTF8_off(prog)		((prog)->extflags &= ~RXf_MATCH_UTF8)
+#define RXp_MATCH_UTF8(prog)		(RXp_EXTFLAGS(prog) & RXf_MATCH_UTF8)
+#define RX_MATCH_UTF8(prog)		(RX_EXTFLAGS(prog) & RXf_MATCH_UTF8)
+#define RX_MATCH_UTF8_on(prog)		(RX_EXTFLAGS(prog) |= RXf_MATCH_UTF8)
+#define RX_MATCH_UTF8_off(prog)		(RX_EXTFLAGS(prog) &= ~RXf_MATCH_UTF8)
 #define RX_MATCH_UTF8_set(prog, t)	((t) \
 			? (RX_MATCH_UTF8_on(prog), (PL_reg_match_utf8 = 1)) \
 			: (RX_MATCH_UTF8_off(prog), (PL_reg_match_utf8 = 0)))
-    
+
+/* Whether the pattern stored at RX_WRAPPED is in UTF-8  */
+#define RX_UTF8(prog)			(RX_EXTFLAGS(prog) & RXf_UTF8)
+
 #define REXEC_COPY_STR	0x01		/* Need to copy the string. */
 #define REXEC_CHECKED	0x02		/* check_substr already checked. */
 #define REXEC_SCREAM	0x04		/* use scream table. */

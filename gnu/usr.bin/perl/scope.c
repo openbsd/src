@@ -1,7 +1,7 @@
 /*    scope.c
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007 by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -9,8 +9,10 @@
  */
 
 /*
- * "For the fashion of Minas Tirith was such that it was built on seven
- * levels..."
+ * For the fashion of Minas Tirith was such that it was built on seven
+ * levels...
+ *
+ *     [p.751 of _The Lord of the Rings_, V/i: "Minas Tirith"]
  */
 
 /* This file contains functions to manipulate several of Perl's stacks;
@@ -28,6 +30,9 @@ SV**
 Perl_stack_grow(pTHX_ SV **sp, SV **p, int n)
 {
     dVAR;
+
+    PERL_ARGS_ASSERT_STACK_GROW;
+
     PL_stack_sp = sp;
 #ifndef STRESS_REALLOC
     av_extend(PL_curstack, (p - PL_stack_base) + (n) + 128);
@@ -165,6 +170,8 @@ S_save_scalar_at(pTHX_ SV **sptr)
     SV * const osv = *sptr;
     register SV * const sv = *sptr = newSV(0);
 
+    PERL_ARGS_ASSERT_SAVE_SCALAR_AT;
+
     if (SvTYPE(osv) >= SVt_PVMG && SvMAGIC(osv) && SvTYPE(osv) != SVt_PVGV) {
 	if (SvGMAGICAL(osv)) {
 	    const bool oldtainted = PL_tainted;
@@ -177,18 +184,28 @@ S_save_scalar_at(pTHX_ SV **sptr)
     return sv;
 }
 
+void
+Perl_save_pushptrptr(pTHX_ void *const ptr1, void *const ptr2, const int type)
+{
+    dVAR;
+    SSCHECK(3);
+    SSPUSHPTR(ptr1);
+    SSPUSHPTR(ptr2);
+    SSPUSHINT(type);
+}
+
 SV *
 Perl_save_scalar(pTHX_ GV *gv)
 {
     dVAR;
     SV ** const sptr = &GvSVn(gv);
+
+    PERL_ARGS_ASSERT_SAVE_SCALAR;
+
     PL_localizing = 1;
     SvGETMAGIC(*sptr);
     PL_localizing = 0;
-    SSCHECK(3);
-    SSPUSHPTR(SvREFCNT_inc_simple(gv));
-    SSPUSHPTR(SvREFCNT_inc(*sptr));
-    SSPUSHINT(SAVEt_SV);
+    save_pushptrptr(SvREFCNT_inc_simple(gv), SvREFCNT_inc(*sptr), SAVEt_SV);
     return save_scalar_at(sptr);
 }
 
@@ -198,10 +215,10 @@ void
 Perl_save_generic_svref(pTHX_ SV **sptr)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHPTR(sptr);
-    SSPUSHPTR(SvREFCNT_inc(*sptr));
-    SSPUSHINT(SAVEt_GENERIC_SVREF);
+
+    PERL_ARGS_ASSERT_SAVE_GENERIC_SVREF;
+
+    save_pushptrptr(sptr, SvREFCNT_inc(*sptr), SAVEt_GENERIC_SVREF);
 }
 
 /* Like save_pptr(), but also Safefree()s the new value if it is different
@@ -211,10 +228,10 @@ void
 Perl_save_generic_pvref(pTHX_ char **str)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHPTR(*str);
-    SSPUSHPTR(str);
-    SSPUSHINT(SAVEt_GENERIC_PVREF);
+
+    PERL_ARGS_ASSERT_SAVE_GENERIC_PVREF;
+
+    save_pushptrptr(*str, str, SAVEt_GENERIC_PVREF);
 }
 
 /* Like save_generic_pvref(), but uses PerlMemShared_free() rather than Safefree().
@@ -224,10 +241,10 @@ void
 Perl_save_shared_pvref(pTHX_ char **str)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHPTR(str);
-    SSPUSHPTR(*str);
-    SSPUSHINT(SAVEt_SHARED_PVREF);
+
+    PERL_ARGS_ASSERT_SAVE_SHARED_PVREF;
+
+    save_pushptrptr(str, *str, SAVEt_SHARED_PVREF);
 }
 
 /* set the SvFLAGS specified by mask to the values in val */
@@ -236,6 +253,9 @@ void
 Perl_save_set_svflags(pTHX_ SV* sv, U32 mask, U32 val)
 {
     dVAR;
+
+    PERL_ARGS_ASSERT_SAVE_SET_SVFLAGS;
+
     SSCHECK(4);
     SSPUSHPTR(sv);
     SSPUSHINT(mask);
@@ -247,10 +267,10 @@ void
 Perl_save_gp(pTHX_ GV *gv, I32 empty)
 {
     dVAR;
-    SSGROW(3);
-    SSPUSHPTR(SvREFCNT_inc(gv));
-    SSPUSHPTR(GvGP(gv));
-    SSPUSHINT(SAVEt_GP);
+
+    PERL_ARGS_ASSERT_SAVE_GP;
+
+    save_pushptrptr(SvREFCNT_inc(gv), GvGP(gv), SAVEt_GP);
 
     if (empty) {
 	GP *gp = Perl_newGP(aTHX_ gv);
@@ -284,17 +304,16 @@ Perl_save_ary(pTHX_ GV *gv)
     AV * const oav = GvAVn(gv);
     AV *av;
 
+    PERL_ARGS_ASSERT_SAVE_ARY;
+
     if (!AvREAL(oav) && AvREIFY(oav))
 	av_reify(oav);
-    SSCHECK(3);
-    SSPUSHPTR(gv);
-    SSPUSHPTR(oav);
-    SSPUSHINT(SAVEt_AV);
+    save_pushptrptr(gv, oav, SAVEt_AV);
 
     GvAV(gv) = NULL;
     av = GvAVn(gv);
     if (SvMAGIC(oav))
-	mg_localize((SV*)oav, (SV*)av);
+	mg_localize(MUTABLE_SV(oav), MUTABLE_SV(av));
     return av;
 }
 
@@ -304,15 +323,14 @@ Perl_save_hash(pTHX_ GV *gv)
     dVAR;
     HV *ohv, *hv;
 
-    SSCHECK(3);
-    SSPUSHPTR(gv);
-    SSPUSHPTR(ohv = GvHVn(gv));
-    SSPUSHINT(SAVEt_HV);
+    PERL_ARGS_ASSERT_SAVE_HASH;
+
+    save_pushptrptr(gv, (ohv = GvHVn(gv)), SAVEt_HV);
 
     GvHV(gv) = NULL;
     hv = GvHVn(gv);
     if (SvMAGIC(ohv))
-	mg_localize((SV*)ohv, (SV*)hv);
+	mg_localize(MUTABLE_SV(ohv), MUTABLE_SV(hv));
     return hv;
 }
 
@@ -322,26 +340,20 @@ Perl_save_item(pTHX_ register SV *item)
     dVAR;
     register SV * const sv = newSVsv(item);
 
-    SSCHECK(3);
-    SSPUSHPTR(item);		/* remember the pointer */
-    SSPUSHPTR(sv);		/* remember the value */
-    SSPUSHINT(SAVEt_ITEM);
-}
+    PERL_ARGS_ASSERT_SAVE_ITEM;
 
-void
-Perl_save_int(pTHX_ int *intp)
-{
-    dVAR;
-    SSCHECK(3);
-    SSPUSHINT(*intp);
-    SSPUSHPTR(intp);
-    SSPUSHINT(SAVEt_INT);
+    save_pushptrptr(item, /* remember the pointer */
+		    sv,   /* remember the value */
+		    SAVEt_ITEM);
 }
 
 void
 Perl_save_bool(pTHX_ bool *boolp)
 {
     dVAR;
+
+    PERL_ARGS_ASSERT_SAVE_BOOL;
+
     SSCHECK(3);
     SSPUSHBOOL(*boolp);
     SSPUSHPTR(boolp);
@@ -349,33 +361,53 @@ Perl_save_bool(pTHX_ bool *boolp)
 }
 
 void
-Perl_save_I8(pTHX_ I8 *bytep)
+Perl_save_pushi32ptr(pTHX_ const I32 i, void *const ptr, const int type)
 {
     dVAR;
     SSCHECK(3);
-    SSPUSHINT(*bytep);
-    SSPUSHPTR(bytep);
-    SSPUSHINT(SAVEt_I8);
+    SSPUSHINT(i);
+    SSPUSHPTR(ptr);
+    SSPUSHINT(type);
+}
+
+void
+Perl_save_int(pTHX_ int *intp)
+{
+    dVAR;
+
+    PERL_ARGS_ASSERT_SAVE_INT;
+
+    save_pushi32ptr(*intp, intp, SAVEt_INT);
+}
+
+void
+Perl_save_I8(pTHX_ I8 *bytep)
+{
+    dVAR;
+
+    PERL_ARGS_ASSERT_SAVE_I8;
+
+    save_pushi32ptr(*bytep, bytep, SAVEt_I8);
 }
 
 void
 Perl_save_I16(pTHX_ I16 *intp)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHINT(*intp);
-    SSPUSHPTR(intp);
-    SSPUSHINT(SAVEt_I16);
+
+    PERL_ARGS_ASSERT_SAVE_I16;
+
+    save_pushi32ptr(*intp, intp, SAVEt_I16);
 }
 
 void
 Perl_save_I32(pTHX_ I32 *intp)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHINT(*intp);
-    SSPUSHPTR(intp);
-    SSPUSHINT(SAVEt_I32);
+
+    PERL_ARGS_ASSERT_SAVE_I32;
+
+    save_pushi32ptr(*intp, intp, SAVEt_I32);
 }
 
 /* Cannot use save_sptr() to store a char* since the SV** cast will
@@ -385,104 +417,80 @@ void
 Perl_save_pptr(pTHX_ char **pptr)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHPTR(*pptr);
-    SSPUSHPTR(pptr);
-    SSPUSHINT(SAVEt_PPTR);
+
+    PERL_ARGS_ASSERT_SAVE_PPTR;
+
+    save_pushptrptr(*pptr, pptr, SAVEt_PPTR);
 }
 
 void
 Perl_save_vptr(pTHX_ void *ptr)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHPTR(*(char**)ptr);
-    SSPUSHPTR(ptr);
-    SSPUSHINT(SAVEt_VPTR);
+
+    PERL_ARGS_ASSERT_SAVE_VPTR;
+
+    save_pushptrptr(*(char**)ptr, ptr, SAVEt_VPTR);
 }
 
 void
 Perl_save_sptr(pTHX_ SV **sptr)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHPTR(*sptr);
-    SSPUSHPTR(sptr);
-    SSPUSHINT(SAVEt_SPTR);
+
+    PERL_ARGS_ASSERT_SAVE_SPTR;
+
+    save_pushptrptr(*sptr, sptr, SAVEt_SPTR);
 }
 
 void
-Perl_save_padsv(pTHX_ PADOFFSET off)
+Perl_save_padsv_and_mortalize(pTHX_ PADOFFSET off)
 {
     dVAR;
     SSCHECK(4);
     ASSERT_CURPAD_ACTIVE("save_padsv");
-    SSPUSHPTR(PL_curpad[off]);
+    SSPUSHPTR(SvREFCNT_inc_simple_NN(PL_curpad[off]));
     SSPUSHPTR(PL_comppad);
     SSPUSHLONG((long)off);
-    SSPUSHINT(SAVEt_PADSV);
+    SSPUSHINT(SAVEt_PADSV_AND_MORTALIZE);
 }
 
 void
 Perl_save_hptr(pTHX_ HV **hptr)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHPTR(*hptr);
-    SSPUSHPTR(hptr);
-    SSPUSHINT(SAVEt_HPTR);
+
+    PERL_ARGS_ASSERT_SAVE_HPTR;
+
+    save_pushptrptr(*hptr, hptr, SAVEt_HPTR);
 }
 
 void
 Perl_save_aptr(pTHX_ AV **aptr)
 {
     dVAR;
-    SSCHECK(3);
-    SSPUSHPTR(*aptr);
-    SSPUSHPTR(aptr);
-    SSPUSHINT(SAVEt_APTR);
+
+    PERL_ARGS_ASSERT_SAVE_APTR;
+
+    save_pushptrptr(*aptr, aptr, SAVEt_APTR);
 }
 
 void
-Perl_save_freesv(pTHX_ SV *sv)
+Perl_save_pushptr(pTHX_ void *const ptr, const int type)
 {
     dVAR;
     SSCHECK(2);
-    SSPUSHPTR(sv);
-    SSPUSHINT(SAVEt_FREESV);
-}
-
-void
-Perl_save_mortalizesv(pTHX_ SV *sv)
-{
-    dVAR;
-    SSCHECK(2);
-    SSPUSHPTR(sv);
-    SSPUSHINT(SAVEt_MORTALIZESV);
-}
-
-void
-Perl_save_freeop(pTHX_ OP *o)
-{
-    dVAR;
-    SSCHECK(2);
-    SSPUSHPTR(o);
-    SSPUSHINT(SAVEt_FREEOP);
-}
-
-void
-Perl_save_freepv(pTHX_ char *pv)
-{
-    dVAR;
-    SSCHECK(2);
-    SSPUSHPTR(pv);
-    SSPUSHINT(SAVEt_FREEPV);
+    SSPUSHPTR(ptr);
+    SSPUSHINT(type);
 }
 
 void
 Perl_save_clearsv(pTHX_ SV **svp)
 {
     dVAR;
+
+    PERL_ARGS_ASSERT_SAVE_CLEARSV;
+
     ASSERT_CURPAD_ACTIVE("save_clearsv");
     SSCHECK(2);
     SSPUSHLONG((long)(svp-PL_curpad));
@@ -494,17 +502,19 @@ void
 Perl_save_delete(pTHX_ HV *hv, char *key, I32 klen)
 {
     dVAR;
-    SSCHECK(4);
-    SSPUSHINT(klen);
-    SSPUSHPTR(key);
-    SSPUSHPTR(SvREFCNT_inc_simple(hv));
-    SSPUSHINT(SAVEt_DELETE);
+
+    PERL_ARGS_ASSERT_SAVE_DELETE;
+
+    save_pushptri32ptr(key, klen, SvREFCNT_inc_simple(hv), SAVEt_DELETE);
 }
 
 void
 Perl_save_destructor(pTHX_ DESTRUCTORFUNC_NOCONTEXT_t f, void* p)
 {
     dVAR;
+
+    PERL_ARGS_ASSERT_SAVE_DESTRUCTOR;
+
     SSCHECK(3);
     SSPUSHDPTR(f);
     SSPUSHPTR(p);
@@ -522,16 +532,46 @@ Perl_save_destructor_x(pTHX_ DESTRUCTORFUNC_t f, void* p)
 }
 
 void
+Perl_save_hints(pTHX)
+{
+    dVAR;
+    SSCHECK(4);
+    if (PL_hints & HINT_LOCALIZE_HH) {
+	SSPUSHPTR(GvHV(PL_hintgv));
+	GvHV(PL_hintgv) = Perl_hv_copy_hints_hv(aTHX_ GvHV(PL_hintgv));
+    }
+    if (PL_compiling.cop_hints_hash) {
+	HINTS_REFCNT_LOCK;
+	PL_compiling.cop_hints_hash->refcounted_he_refcnt++;
+	HINTS_REFCNT_UNLOCK;
+    }
+    SSPUSHPTR(PL_compiling.cop_hints_hash);
+    SSPUSHINT(PL_hints);
+    SSPUSHINT(SAVEt_HINTS);
+}
+
+static void
+S_save_pushptri32ptr(pTHX_ void *const ptr1, const I32 i, void *const ptr2,
+			const int type)
+{
+    SSCHECK(4);
+    SSPUSHPTR(ptr1);
+    SSPUSHINT(i);
+    SSPUSHPTR(ptr2);
+    SSPUSHINT(type);
+}
+
+void
 Perl_save_aelem(pTHX_ AV *av, I32 idx, SV **sptr)
 {
     dVAR;
     SV *sv;
+
+    PERL_ARGS_ASSERT_SAVE_AELEM;
+
     SvGETMAGIC(*sptr);
-    SSCHECK(4);
-    SSPUSHPTR(SvREFCNT_inc_simple(av));
-    SSPUSHINT(idx);
-    SSPUSHPTR(SvREFCNT_inc(*sptr));
-    SSPUSHINT(SAVEt_AELEM);
+    save_pushptri32ptr(SvREFCNT_inc_simple(av), idx, SvREFCNT_inc(*sptr),
+		       SAVEt_AELEM);
     /* if it gets reified later, the restore will have the wrong refcnt */
     if (!AvREAL(av) && AvREIFY(av))
 	SvREFCNT_inc_void(*sptr);
@@ -550,6 +590,9 @@ Perl_save_helem(pTHX_ HV *hv, SV *key, SV **sptr)
 {
     dVAR;
     SV *sv;
+
+    PERL_ARGS_ASSERT_SAVE_HELEM;
+
     SvGETMAGIC(*sptr);
     SSCHECK(4);
     SSPUSHPTR(SvREFCNT_inc_simple(hv));
@@ -570,21 +613,12 @@ SV*
 Perl_save_svref(pTHX_ SV **sptr)
 {
     dVAR;
-    SvGETMAGIC(*sptr);
-    SSCHECK(3);
-    SSPUSHPTR(sptr);
-    SSPUSHPTR(SvREFCNT_inc(*sptr));
-    SSPUSHINT(SAVEt_SVREF);
-    return save_scalar_at(sptr);
-}
 
-void
-Perl_save_op(pTHX)
-{
-    dVAR;
-    SSCHECK(2);
-    SSPUSHPTR(PL_op);
-    SSPUSHINT(SAVEt_OP);
+    PERL_ARGS_ASSERT_SAVE_SVREF;
+
+    SvGETMAGIC(*sptr);
+    save_pushptrptr(sptr, SvREFCNT_inc(*sptr), SAVEt_SVREF);
+    return save_scalar_at(sptr);
 }
 
 I32
@@ -615,24 +649,28 @@ Perl_leave_scope(pTHX_ I32 base)
     void* ptr;
     register char* str;
     I32 i;
+    /* Localise the effects of the TAINT_NOT inside the loop.  */
+    const bool was = PL_tainted;
 
     if (base < -1)
 	Perl_croak(aTHX_ "panic: corrupt saved stack index");
     while (PL_savestack_ix > base) {
+	TAINT_NOT;
+
 	switch (SSPOPINT) {
 	case SAVEt_ITEM:			/* normal string */
-	    value = (SV*)SSPOPPTR;
-	    sv = (SV*)SSPOPPTR;
+	    value = MUTABLE_SV(SSPOPPTR);
+	    sv = MUTABLE_SV(SSPOPPTR);
 	    sv_replace(sv,value);
 	    PL_localizing = 2;
 	    SvSETMAGIC(sv);
 	    PL_localizing = 0;
 	    break;
 	case SAVEt_SV:				/* scalar reference */
-	    value = (SV*)SSPOPPTR;
-	    gv = (GV*)SSPOPPTR;
+	    value = MUTABLE_SV(SSPOPPTR);
+	    gv = MUTABLE_GV(SSPOPPTR);
 	    ptr = &GvSV(gv);
-	    av = (AV*)gv; /* what to refcnt_dec */
+	    av = MUTABLE_AV(gv); /* what to refcnt_dec */
 	restore_sv:
 	    sv = *(SV**)ptr;
 	    DEBUG_S(PerlIO_printf(Perl_debug_log,
@@ -669,7 +707,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	    }
 	    break;
 	case SAVEt_GENERIC_SVREF:		/* generic sv */
-	    value = (SV*)SSPOPPTR;
+	    value = MUTABLE_SV(SSPOPPTR);
 	    ptr = SSPOPPTR;
 	    sv = *(SV**)ptr;
 	    *(SV**)ptr = value;
@@ -677,28 +715,28 @@ Perl_leave_scope(pTHX_ I32 base)
 	    SvREFCNT_dec(value);
 	    break;
 	case SAVEt_AV:				/* array reference */
-	    av = (AV*)SSPOPPTR;
-	    gv = (GV*)SSPOPPTR;
+	    av = MUTABLE_AV(SSPOPPTR);
+	    gv = MUTABLE_GV(SSPOPPTR);
 	    if (GvAV(gv)) {
 		SvREFCNT_dec(GvAV(gv));
 	    }
 	    GvAV(gv) = av;
 	    if (SvMAGICAL(av)) {
 		PL_localizing = 2;
-		SvSETMAGIC((SV*)av);
+		SvSETMAGIC(MUTABLE_SV(av));
 		PL_localizing = 0;
 	    }
 	    break;
 	case SAVEt_HV:				/* hash reference */
-	    hv = (HV*)SSPOPPTR;
-	    gv = (GV*)SSPOPPTR;
+	    hv = MUTABLE_HV(SSPOPPTR);
+	    gv = MUTABLE_GV(SSPOPPTR);
 	    if (GvHV(gv)) {
 		SvREFCNT_dec(GvHV(gv));
 	    }
 	    GvHV(gv) = hv;
 	    if (SvMAGICAL(hv)) {
 		PL_localizing = 2;
-		SvSETMAGIC((SV*)hv);
+		SvSETMAGIC(MUTABLE_SV(hv));
 		PL_localizing = 0;
 	    }
 	    break;
@@ -724,7 +762,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	    break;
 	case SAVEt_SPTR:			/* SV* reference */
 	    ptr = SSPOPPTR;
-	    *(SV**)ptr = (SV*)SSPOPPTR;
+	    *(SV**)ptr = MUTABLE_SV(SSPOPPTR);
 	    break;
 	case SAVEt_VPTR:			/* random* reference */
 	case SAVEt_PPTR:			/* char* reference */
@@ -733,15 +771,15 @@ Perl_leave_scope(pTHX_ I32 base)
 	    break;
 	case SAVEt_HPTR:			/* HV* reference */
 	    ptr = SSPOPPTR;
-	    *(HV**)ptr = (HV*)SSPOPPTR;
+	    *(HV**)ptr = MUTABLE_HV(SSPOPPTR);
 	    break;
 	case SAVEt_APTR:			/* AV* reference */
 	    ptr = SSPOPPTR;
-	    *(AV**)ptr = (AV*)SSPOPPTR;
+	    *(AV**)ptr = MUTABLE_AV(SSPOPPTR);
 	    break;
 	case SAVEt_GP:				/* scalar reference */
 	    ptr = SSPOPPTR;
-	    gv = (GV*)SSPOPPTR;
+	    gv = MUTABLE_GV(SSPOPPTR);
 	    gp_free(gv);
 	    GvGP(gv) = (GP*)ptr;
             /* putting a method back into circulation ("local")*/
@@ -751,11 +789,11 @@ Perl_leave_scope(pTHX_ I32 base)
 	    break;
 	case SAVEt_FREESV:
 	    ptr = SSPOPPTR;
-	    SvREFCNT_dec((SV*)ptr);
+	    SvREFCNT_dec(MUTABLE_SV(ptr));
 	    break;
 	case SAVEt_MORTALIZESV:
 	    ptr = SSPOPPTR;
-	    sv_2mortal((SV*)ptr);
+	    sv_2mortal(MUTABLE_SV(ptr));
 	    break;
 	case SAVEt_FREEOP:
 	    ptr = SSPOPPTR;
@@ -796,10 +834,10 @@ Perl_leave_scope(pTHX_ I32 base)
 		case SVt_NULL:
 		    break;
 		case SVt_PVAV:
-		    av_clear((AV*)sv);
+		    av_clear(MUTABLE_AV(sv));
 		    break;
 		case SVt_PVHV:
-		    hv_clear((HV*)sv);
+		    hv_clear(MUTABLE_HV(sv));
 		    break;
 		case SVt_PVCV:
 		    Perl_croak(aTHX_ "panic: leave_scope pad code");
@@ -812,8 +850,8 @@ Perl_leave_scope(pTHX_ I32 base)
 	    else {	/* Someone has a claim on this, so abandon it. */
 		const U32 padflags = SvFLAGS(sv) & (SVs_PADMY|SVs_PADTMP);
 		switch (SvTYPE(sv)) {	/* Console ourselves with a new value */
-		case SVt_PVAV:	*(SV**)ptr = (SV*)newAV();	break;
-		case SVt_PVHV:	*(SV**)ptr = (SV*)newHV();	break;
+		case SVt_PVAV:	*(SV**)ptr = MUTABLE_SV(newAV());	break;
+		case SVt_PVHV:	*(SV**)ptr = MUTABLE_SV(newHV());	break;
 		default:	*(SV**)ptr = newSV(0);		break;
 		}
 		SvREFCNT_dec(sv);	/* Cast current value to the winds. */
@@ -824,9 +862,10 @@ Perl_leave_scope(pTHX_ I32 base)
 	    break;
 	case SAVEt_DELETE:
 	    ptr = SSPOPPTR;
-	    hv = (HV*)ptr;
+	    hv = MUTABLE_HV(ptr);
+	    i = SSPOPINT;
 	    ptr = SSPOPPTR;
-	    (void)hv_delete(hv, (char*)ptr, (I32)SSPOPINT, G_DISCARD);
+	    (void)hv_delete(hv, (char*)ptr, i, G_DISCARD);
 	    SvREFCNT_dec(hv);
 	    Safefree(ptr);
 	    break;
@@ -848,16 +887,16 @@ Perl_leave_scope(pTHX_ I32 base)
 	    cxstack[i].blk_oldsp = SSPOPINT;
 	    break;
 	case SAVEt_AELEM:		/* array element */
-	    value = (SV*)SSPOPPTR;
+	    value = MUTABLE_SV(SSPOPPTR);
 	    i = SSPOPINT;
-	    av = (AV*)SSPOPPTR;
+	    av = MUTABLE_AV(SSPOPPTR);
 	    ptr = av_fetch(av,i,1);
 	    if (!AvREAL(av) && AvREIFY(av)) /* undo reify guard */
 		SvREFCNT_dec(value);
 	    if (ptr) {
 		sv = *(SV**)ptr;
 		if (sv && sv != &PL_sv_undef) {
-		    if (SvTIED_mg((SV*)av, PERL_MAGIC_tied))
+		    if (SvTIED_mg((const SV *)av, PERL_MAGIC_tied))
 			SvREFCNT_inc_void_NN(sv);
 		    goto restore_sv;
 		}
@@ -866,23 +905,22 @@ Perl_leave_scope(pTHX_ I32 base)
 	    SvREFCNT_dec(value);
 	    break;
 	case SAVEt_HELEM:		/* hash element */
-	    value = (SV*)SSPOPPTR;
-	    sv = (SV*)SSPOPPTR;
-	    hv = (HV*)SSPOPPTR;
+	    value = MUTABLE_SV(SSPOPPTR);
+	    sv = MUTABLE_SV(SSPOPPTR);
+	    hv = MUTABLE_HV(SSPOPPTR);
 	    ptr = hv_fetch_ent(hv, sv, 1, 0);
+	    SvREFCNT_dec(sv);
 	    if (ptr) {
 		const SV * const oval = HeVAL((HE*)ptr);
 		if (oval && oval != &PL_sv_undef) {
 		    ptr = &HeVAL((HE*)ptr);
-		    if (SvTIED_mg((SV*)hv, PERL_MAGIC_tied))
+		    if (SvTIED_mg((const SV *)hv, PERL_MAGIC_tied))
 			SvREFCNT_inc_void(*(SV**)ptr);
-		    SvREFCNT_dec(sv);
-		    av = (AV*)hv; /* what to refcnt_dec */
+		    av = MUTABLE_AV(hv); /* what to refcnt_dec */
 		    goto restore_sv;
 		}
 	    }
 	    SvREFCNT_dec(hv);
-	    SvREFCNT_dec(sv);
 	    SvREFCNT_dec(value);
 	    break;
 	case SAVEt_OP:
@@ -890,15 +928,15 @@ Perl_leave_scope(pTHX_ I32 base)
 	    break;
 	case SAVEt_HINTS:
 	    if ((PL_hints & HINT_LOCALIZE_HH) && GvHV(PL_hintgv)) {
-		SvREFCNT_dec((SV*)GvHV(PL_hintgv));
+		SvREFCNT_dec(MUTABLE_SV(GvHV(PL_hintgv)));
 		GvHV(PL_hintgv) = NULL;
 	    }
 	    *(I32*)&PL_hints = (I32)SSPOPINT;
 	    Perl_refcounted_he_free(aTHX_ PL_compiling.cop_hints_hash);
 	    PL_compiling.cop_hints_hash = (struct refcounted_he *) SSPOPPTR;
 	    if (PL_hints & HINT_LOCALIZE_HH) {
-		SvREFCNT_dec((SV*)GvHV(PL_hintgv));
-		GvHV(PL_hintgv) = (HV*)SSPOPPTR;
+		SvREFCNT_dec(MUTABLE_SV(GvHV(PL_hintgv)));
+		GvHV(PL_hintgv) = MUTABLE_HV(SSPOPPTR);
 		assert(GvHV(PL_hintgv));
 	    } else if (!GvHV(PL_hintgv)) {
 		/* Need to add a new one manually, else gv_fetchpv() can
@@ -929,19 +967,25 @@ Perl_leave_scope(pTHX_ I32 base)
 	    else
 		PL_curpad = NULL;
 	    break;
-	case SAVEt_PADSV:
+	case SAVEt_PADSV_AND_MORTALIZE:
 	    {
 		const PADOFFSET off = (PADOFFSET)SSPOPLONG;
+		SV **svp;
 		ptr = SSPOPPTR;
-		if (ptr)
-		    AvARRAY((PAD*)ptr)[off] = (SV*)SSPOPPTR;
+		assert (ptr);
+		svp = AvARRAY((PAD*)ptr) + off;
+		/* This mortalizing used to be done by POPLOOP() via itersave.
+		   But as we have all the information here, we can do it here,
+		   save even having to have itersave in the struct.  */
+		sv_2mortal(*svp);
+		*svp = MUTABLE_SV(SSPOPPTR);
 	    }
 	    break;
 	case SAVEt_SAVESWITCHSTACK:
 	    {
 		dSP;
-		AV* const t = (AV*)SSPOPPTR;
-		AV* const f = (AV*)SSPOPPTR;
+		AV *const t = MUTABLE_AV(SSPOPPTR);
+		AV *const f = MUTABLE_AV(SSPOPPTR);
 		SWITCHSTACK(t,f);
 		PL_curstackinfo->si_stack = f;
 	    }
@@ -950,20 +994,48 @@ Perl_leave_scope(pTHX_ I32 base)
 	    {
 		const U32 val  = (U32)SSPOPINT;
 		const U32 mask = (U32)SSPOPINT;
-		sv = (SV*)SSPOPPTR;
+		sv = MUTABLE_SV(SSPOPPTR);
 		SvFLAGS(sv) &= ~mask;
 		SvFLAGS(sv) |= val;
 	    }
 	    break;
-	    /* These are only saved in mathoms.c */
+
+	    /* This would be a mathom, but Perl_save_svref() calls a static
+	       function, S_save_scalar_at(), so has to stay in this file.  */
 	case SAVEt_SVREF:			/* scalar reference */
-	    value = (SV*)SSPOPPTR;
+	    value = MUTABLE_SV(SSPOPPTR);
 	    ptr = SSPOPPTR;
 	    av = NULL; /* what to refcnt_dec */
 	    goto restore_sv;
+
+	    /* These are only saved in mathoms.c */
+	case SAVEt_NSTAB:
+	    gv = MUTABLE_GV(SSPOPPTR);
+	    (void)sv_clear(MUTABLE_SV(gv));
+	    break;
 	case SAVEt_LONG:			/* long reference */
 	    ptr = SSPOPPTR;
 	    *(long*)ptr = (long)SSPOPLONG;
+	    break;
+	case SAVEt_IV:				/* IV reference */
+	    ptr = SSPOPPTR;
+	    *(IV*)ptr = (IV)SSPOPIV;
+	    break;
+
+	    /* This case is rendered redundant by the integration of change
+	       33078. See the comment near Perl_save_padsv().  */
+	case SAVEt_PADSV:
+	    {
+		const PADOFFSET off = (PADOFFSET)SSPOPLONG;
+		ptr = SSPOPPTR;
+		if (ptr)
+		    AvARRAY((PAD*)ptr)[off] = (SV*)SSPOPPTR;
+		else {
+		  /* Can we ever get here?
+		     POPs must balance PUSHes.  */
+		    (void) SSPOPPTR;
+		}
+	    }
 	    break;
 	case SAVEt_I16:				/* I16 reference */
 	    ptr = SSPOPPTR;
@@ -972,14 +1044,6 @@ Perl_leave_scope(pTHX_ I32 base)
 	case SAVEt_I8:				/* I8 reference */
 	    ptr = SSPOPPTR;
 	    *(I8*)ptr = (I8)SSPOPINT;
-	    break;
-	case SAVEt_IV:				/* IV reference */
-	    ptr = SSPOPPTR;
-	    *(IV*)ptr = (IV)SSPOPIV;
-	    break;
-	case SAVEt_NSTAB:
-	    gv = (GV*)SSPOPPTR;
-	    (void)sv_clear((SV*)gv);
 	    break;
 	case SAVEt_DESTRUCTOR:
 	    ptr = SSPOPPTR;
@@ -1023,12 +1087,17 @@ Perl_leave_scope(pTHX_ I32 base)
 	    Perl_croak(aTHX_ "panic: leave_scope inconsistency");
 	}
     }
+
+    PL_tainted = was;
 }
 
 void
 Perl_cx_dump(pTHX_ PERL_CONTEXT *cx)
 {
     dVAR;
+
+    PERL_ARGS_ASSERT_CX_DUMP;
+
 #ifdef DEBUGGING
     PerlIO_printf(Perl_debug_log, "CX %ld = %s\n", (long)(cx - cxstack), PL_block_type[CxTYPE(cx)]);
     if (CxTYPE(cx) != CXt_SUBST) {
@@ -1053,7 +1122,7 @@ Perl_cx_dump(pTHX_ PERL_CONTEXT *cx)
 	PerlIO_printf(Perl_debug_log, "BLK_SUB.DFOUTGV = 0x%"UVxf"\n",
 		PTR2UV(cx->blk_sub.dfoutgv));
 	PerlIO_printf(Perl_debug_log, "BLK_SUB.HASARGS = %d\n",
-		(int)cx->blk_sub.hasargs);
+		      (int)CxHASARGS(cx));
 	PerlIO_printf(Perl_debug_log, "BLK_SUB.RETOP = 0x%"UVxf"\n",
 		PTR2UV(cx->blk_sub.retop));
 	break;
@@ -1063,18 +1132,17 @@ Perl_cx_dump(pTHX_ PERL_CONTEXT *cx)
 	PerlIO_printf(Perl_debug_log, "BLK_SUB.OLDDEPTH = %ld\n",
 		(long)cx->blk_sub.olddepth);
 	PerlIO_printf(Perl_debug_log, "BLK_SUB.HASARGS = %d\n",
-		(int)cx->blk_sub.hasargs);
-	PerlIO_printf(Perl_debug_log, "BLK_SUB.LVAL = %d\n",
-		(int)cx->blk_sub.lval);
+		(int)CxHASARGS(cx));
+	PerlIO_printf(Perl_debug_log, "BLK_SUB.LVAL = %d\n", (int)CxLVAL(cx));
 	PerlIO_printf(Perl_debug_log, "BLK_SUB.RETOP = 0x%"UVxf"\n",
 		PTR2UV(cx->blk_sub.retop));
 	break;
     case CXt_EVAL:
 	PerlIO_printf(Perl_debug_log, "BLK_EVAL.OLD_IN_EVAL = %ld\n",
-		(long)cx->blk_eval.old_in_eval);
+		(long)CxOLD_IN_EVAL(cx));
 	PerlIO_printf(Perl_debug_log, "BLK_EVAL.OLD_OP_TYPE = %s (%s)\n",
-		PL_op_name[cx->blk_eval.old_op_type],
-		PL_op_desc[cx->blk_eval.old_op_type]);
+		PL_op_name[CxOLD_OP_TYPE(cx)],
+		PL_op_desc[CxOLD_OP_TYPE(cx)]);
 	if (cx->blk_eval.old_namesv)
 	    PerlIO_printf(Perl_debug_log, "BLK_EVAL.OLD_NAME = %s\n",
 			  SvPVX_const(cx->blk_eval.old_namesv));
@@ -1085,8 +1153,7 @@ Perl_cx_dump(pTHX_ PERL_CONTEXT *cx)
 	break;
 
     case CXt_LOOP:
-	PerlIO_printf(Perl_debug_log, "BLK_LOOP.LABEL = %s\n",
-		cx->blk_loop.label);
+	PerlIO_printf(Perl_debug_log, "BLK_LOOP.LABEL = %s\n", CxLABEL(cx));
 	PerlIO_printf(Perl_debug_log, "BLK_LOOP.RESETSP = %ld\n",
 		(long)cx->blk_loop.resetsp);
 	PerlIO_printf(Perl_debug_log, "BLK_LOOP.MY_OP = 0x%"UVxf"\n",
@@ -1099,9 +1166,6 @@ Perl_cx_dump(pTHX_ PERL_CONTEXT *cx)
 		PTR2UV(cx->blk_loop.iterary));
 	PerlIO_printf(Perl_debug_log, "BLK_LOOP.ITERVAR = 0x%"UVxf"\n",
 		PTR2UV(CxITERVAR(cx)));
-	if (CxITERVAR(cx))
-	    PerlIO_printf(Perl_debug_log, "BLK_LOOP.ITERSAVE = 0x%"UVxf"\n",
-		PTR2UV(cx->blk_loop.itersave));
 	PerlIO_printf(Perl_debug_log, "BLK_LOOP.ITERLVAL = 0x%"UVxf"\n",
 		PTR2UV(cx->blk_loop.iterlval));
 	break;
@@ -1114,7 +1178,7 @@ Perl_cx_dump(pTHX_ PERL_CONTEXT *cx)
 	PerlIO_printf(Perl_debug_log, "SB_RFLAGS = %ld\n",
 		(long)cx->sb_rflags);
 	PerlIO_printf(Perl_debug_log, "SB_ONCE = %ld\n",
-		(long)cx->sb_once);
+		(long)CxONCE(cx));
 	PerlIO_printf(Perl_debug_log, "SB_ORIG = %s\n",
 		cx->sb_orig);
 	PerlIO_printf(Perl_debug_log, "SB_DSTR = 0x%"UVxf"\n",
@@ -1135,6 +1199,22 @@ Perl_cx_dump(pTHX_ PERL_CONTEXT *cx)
     PERL_UNUSED_CONTEXT;
     PERL_UNUSED_ARG(cx);
 #endif	/* DEBUGGING */
+}
+
+/* This is rendered a mathom by the integration of change 33078. However, until
+   we have versioned mathom logic in mathoms.c, we can't move it there for
+   5.10.1, as other code in production may have linked to it.  */
+
+void
+Perl_save_padsv(pTHX_ PADOFFSET off)
+{
+    dVAR;
+    SSCHECK(4);
+    ASSERT_CURPAD_ACTIVE("save_padsv");
+    SSPUSHPTR(PL_curpad[off]);
+    SSPUSHPTR(PL_comppad);
+    SSPUSHLONG((long)off);
+    SSPUSHINT(SAVEt_PADSV);
 }
 
 /*

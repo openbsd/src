@@ -1,72 +1,104 @@
-#!perl -w
+# -*-perl-*-
+use strict;
+use vars qw($Expect);
+use Test qw($TESTOUT $TESTERR $ntest ok skip plan); 
+plan tests => 14;
+
+open F, ">fails";
+$TESTOUT = *F{IO};
+$TESTERR = *F{IO};
+
+my $r=0;
+{
+    # Shut up deprecated usage warning.
+    local $^W = 0;
+    $r |= skip(0,0);
+}
+$r |= ok(0);
+$r |= ok(0,1);
+$r |= ok(sub { 1+1 }, 3);
+$r |= ok(sub { 1+1 }, sub { 2 * 0});
+
+my @list = (0,0);
+$r |= ok @list, 1, "\@list=".join(',',@list);
+$r |= ok @list, 1, sub { "\@list=".join ',',@list };
+$r |= ok 'segmentation fault', '/bongo/';
+
+for (1..2) { $r |= ok(0); }
+
+$r |= ok(1, undef);
+$r |= ok(undef, 1);
+
+ok($r); # (failure==success :-)
+
+close F;
+$TESTOUT = *STDOUT{IO};
+$TESTERR = *STDERR{IO};
+$ntest = 1;
+
+open F, "fails";
+my $O;
+while (<F>) { $O .= $_; }
+close F;
+unlink "fails";
+
+ok join(' ', map { m/(\d+)/; $1 } grep /^not ok/, split /\n+/, $O),
+    join(' ', 1..13);
+
+my @got = split /not ok \d+\n/, $O;
+shift @got;
+
+$Expect =~ s/\n+$//;
+my @expect = split /\n\n/, $Expect;
+
+
+sub commentless {
+  my $in = $_[0];
+  $in =~ s/^#[^\n]*\n//mg;
+  $in =~ s/\n#[^\n]*$//mg;
+  return $in;
+}
+
+
+for (my $x=0; $x < @got; $x++) {
+    ok commentless($got[$x]), commentless($expect[$x]."\n");
+}
+
 
 BEGIN {
-    if( $ENV{PERL_CORE} ) {
-        chdir 't';
-        @INC = ('../lib', 'lib');
-    }
-    else {
-        unshift @INC, 't/lib';
-    }
-}
+    $Expect = <<"EXPECT";
+# Failed test 1 in $0 at line 15
 
-use strict;
+# Failed test 2 in $0 at line 17
 
-require Test::Simple::Catch;
-my($out, $err) = Test::Simple::Catch::caught();
-local $ENV{HARNESS_ACTIVE} = 0;
+# Test 3 got: '0' ($0 at line 18)
+#   Expected: '1'
 
+# Test 4 got: '2' ($0 at line 19)
+#   Expected: '3'
 
-# Can't use Test.pm, that's a 5.005 thing.
-package My::Test;
+# Test 5 got: '2' ($0 at line 20)
+#   Expected: '0'
 
-print "1..2\n";
+# Test 6 got: '2' ($0 at line 23)
+#   Expected: '1' (\@list=0,0)
 
-my $test_num = 1;
-# Utility testing functions.
-sub ok ($;$) {
-    my($test, $name) = @_;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-    $test_num++;
-}
+# Test 7 got: '2' ($0 at line 24)
+#   Expected: '1' (\@list=0,0)
 
+# Test 8 got: 'segmentation fault' ($0 at line 25)
+#   Expected: qr{bongo}
 
-package main;
+# Failed test 9 in $0 at line 27
 
-require Test::Simple;
-Test::Simple->import(tests => 5);
+# Failed test 10 in $0 at line 27 fail #2
 
-#line 35
-ok( 1, 'passing' );
-ok( 2, 'passing still' );
-ok( 3, 'still passing' );
-ok( 0, 'oh no!' );
-ok( 0, 'damnit' );
+# Failed test 11 in $0 at line 29
 
+# Test 12 got: <UNDEF> ($0 at line 30)
+#    Expected: '1'
 
-END {
-    My::Test::ok($$out eq <<OUT);
-1..5
-ok 1 - passing
-ok 2 - passing still
-ok 3 - still passing
-not ok 4 - oh no!
-not ok 5 - damnit
-OUT
+# Failed test 13 in $0 at line 32
+EXPECT
 
-    My::Test::ok($$err eq <<ERR);
-#   Failed test 'oh no!'
-#   at $0 line 38.
-#   Failed test 'damnit'
-#   at $0 line 39.
-# Looks like you failed 2 tests of 5.
-ERR
-
-    # Prevent Test::Simple from exiting with non zero
-    exit 0;
 }

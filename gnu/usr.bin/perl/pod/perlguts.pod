@@ -191,7 +191,7 @@ have "magic".  See L<Magic Virtual Tables> later in this document.
 If you know the name of a scalar variable, you can get a pointer to its SV
 by using the following:
 
-    SV*  get_sv("package::varname", FALSE);
+    SV*  get_sv("package::varname", 0);
 
 This returns NULL if the variable does not exist.
 
@@ -367,7 +367,7 @@ then nothing is done.
 If you know the name of an array variable, you can get a pointer to its AV
 by using the following:
 
-    AV*  get_av("package::varname", FALSE);
+    AV*  get_av("package::varname", 0);
 
 This returns NULL if the variable does not exist.
 
@@ -442,7 +442,7 @@ specified below.
 If you know the name of a hash variable, you can get a pointer to its HV
 by using the following:
 
-    HV*  get_hv("package::varname", FALSE);
+    HV*  get_hv("package::varname", 0);
 
 This returns NULL if the variable does not exist.
 
@@ -600,7 +600,7 @@ The most useful types that will be returned are:
     SVt_PVGV  Glob (possible a file handle)
     SVt_PVMG  Blessed or Magical Scalar
 
-    See the sv.h header file for more details.
+See the F<sv.h> header file for more details.
 
 =head2 Blessed References and Class Objects
 
@@ -667,9 +667,9 @@ to write:
 To create a new Perl variable with an undef value which can be accessed from
 your Perl script, use the following routines, depending on the variable type.
 
-    SV*  get_sv("package::varname", TRUE);
-    AV*  get_av("package::varname", TRUE);
-    HV*  get_hv("package::varname", TRUE);
+    SV*  get_sv("package::varname", GV_ADD);
+    AV*  get_av("package::varname", GV_ADD);
+    HV*  get_hv("package::varname", GV_ADD);
 
 Notice the use of TRUE as the second parameter.  The new variable can now
 be set, using the routines appropriate to the data type.
@@ -878,7 +878,7 @@ following code:
     extern int  dberror;
     extern char *dberror_list;
 
-    SV* sv = get_sv("dberror", TRUE);
+    SV* sv = get_sv("dberror", GV_ADD);
     sv_setiv(sv, (IV) dberror);
     sv_setpv(sv, dberror_list[dberror]);
     SvIOK_on(sv);
@@ -985,9 +985,9 @@ routine types:
 
 
 This MGVTBL structure is set at compile-time in F<perl.h> and there are
-currently 19 types (or 21 with overloading turned on).  These different
-structures contain pointers to various routines that perform additional
-actions depending on which function is being called.
+currently 32 types.  These different structures contain pointers to various
+routines that perform additional actions depending on which function is
+being called.
 
     Function pointer    Action taken
     ----------------    ------------
@@ -1959,7 +1959,7 @@ sanctioned for use in extensions) begins like this:
   void
   Perl_sv_setiv(pTHX_ SV* dsv, IV num)
 
-C<pTHX_> is one of a number of macros (in perl.h) that hide the
+C<pTHX_> is one of a number of macros (in F<perl.h>) that hide the
 details of the interpreter's context.  THX stands for "thread", "this",
 or "thingy", as the case may be.  (And no, George Lucas is not involved. :-)
 The first character could be 'p' for a B<p>rototype, 'a' for B<a>rgument,
@@ -2028,7 +2028,7 @@ built with PERL_IMPLICIT_CONTEXT enabled.
 
 There are three ways to do this.  First, the easy but inefficient way,
 which is also the default, in order to maintain source compatibility
-with extensions: whenever XSUB.h is #included, it redefines the aTHX
+with extensions: whenever F<XSUB.h> is #included, it redefines the aTHX
 and aTHX_ macros to call a function that will return the context.
 Thus, something like:
 
@@ -2165,7 +2165,7 @@ This allows the ability to provide an extra pointer (called the "host"
 environment) for all the system calls.  This makes it possible for
 all the system stuff to maintain their own state, broken down into
 seven C structures.  These are thin wrappers around the usual system
-calls (see win32/perllib.c) for the default perl executable, but for a
+calls (see F<win32/perllib.c>) for the default perl executable, but for a
 more ambitious host (like the one that would do fork() emulation) all
 the extra work needed to pretend that different interpreters are
 actually different "processes", would be done here.
@@ -2610,9 +2610,7 @@ you can use C<*s = uv>.
 =item *
 
 Mixing UTF-8 and non-UTF-8 strings is tricky. Use C<bytes_to_utf8> to get
-a new string which is UTF-8 encoded. There are tricks you can use to
-delay deciding whether you need to use a UTF-8 string until you get to a
-high character - C<HALF_UPGRADE> is one of those.
+a new string which is UTF-8 encoded, and then combine them.
 
 =back
 

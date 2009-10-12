@@ -36,9 +36,8 @@ $Config{startperl}
 print OUT <<'!NO!SUBS!';
 
 # pod2man -- Convert POD data to formatted *roff input.
-# $Id: pod2man.PL,v 1.16 2006-01-21 01:53:55 eagle Exp $
 #
-# Copyright 1999, 2000, 2001, 2004, 2006 by Russ Allbery <rra@stanford.edu>
+# Copyright 1999, 2000, 2001, 2004, 2006, 2008 Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -59,14 +58,15 @@ use vars qw($running_under_some_shell);
 my $stdin;
 @ARGV = map { $_ eq '-' && !$stdin++ ? ('--', $_) : $_ } @ARGV;
 
-# Parse our options, trying to retain backwards compatibility with pod2man but
+# Parse our options, trying to retain backward compatibility with pod2man but
 # allowing short forms as well.  --lax is currently ignored.
 my %options;
+$options{errors} = 'pod';
 Getopt::Long::config ('bundling_override');
-GetOptions (\%options, 'section|s=s', 'release|r:s', 'center|c=s',
-            'date|d=s', 'fixed=s', 'fixedbold=s', 'fixeditalic=s',
-            'fixedbolditalic=s', 'name|n=s', 'official|o', 'quotes|q=s',
-            'lax|l', 'help|h', 'verbose|v') or exit 1;
+GetOptions (\%options, 'center|c=s', 'date|d=s', 'fixed=s', 'fixedbold=s',
+            'fixeditalic=s', 'fixedbolditalic=s', 'help|h', 'lax|l',
+            'name|n=s', 'official|o', 'quotes|q=s', 'release|r:s',
+            'section|s=s', 'stderr', 'verbose|v', 'utf8|u') or exit 1;
 pod2usage (0) if $options{help};
 
 # Official sets --center, but don't override things explicitly set.
@@ -78,7 +78,7 @@ if ($options{official} && !defined $options{center}) {
 my $verbose = $options{verbose};
 delete $options{verbose};
 
-# This isn't a valid Pod::Man option and is only accepted for backwards
+# This isn't a valid Pod::Man option and is only accepted for backward
 # compatibility.
 delete $options{lax};
 
@@ -98,14 +98,18 @@ __END__
 
 pod2man - Convert POD data to formatted *roff input
 
+=for stopwords
+en em --stderr stderr --utf8 UTF-8 overdo markup MT-LEVEL Allbery Solaris
+URL troff troff-specific formatters uppercased Christiansen
+
 =head1 SYNOPSIS
 
-pod2man [B<--section>=I<manext>] [B<--release>[=I<version>]]
-[B<--center>=I<string>] [B<--date>=I<string>] [B<--fixed>=I<font>]
-[B<--fixedbold>=I<font>] [B<--fixeditalic>=I<font>]
-[B<--fixedbolditalic>=I<font>] [B<--name>=I<name>] [B<--official>]
-[B<--lax>] [B<--quotes>=I<quotes>] [B<--verbose>]
-[I<input> [I<output>] ...]
+pod2man [B<--center>=I<string>] [B<--date>=I<string>]
+    [B<--fixed>=I<font>] [B<--fixedbold>=I<font>] [B<--fixeditalic>=I<font>]
+    [B<--fixedbolditalic>=I<font>] [B<--name>=I<name>] [B<--official>]
+    [B<--quotes>=I<quotes>] [B<--release>[=I<version>]]
+    [B<--section>=I<manext>] [B<--stderr>] [B<--utf8>] [B<--verbose>]
+    [I<input> [I<output>] ...]
 
 pod2man B<--help>
 
@@ -116,22 +120,22 @@ from POD source.  The resulting *roff code is suitable for display on a
 terminal using nroff(1), normally via man(1), or printing using troff(1).
 
 I<input> is the file to read for POD source (the POD can be embedded in
-code).  If I<input> isn't given, it defaults to STDIN.  I<output>, if given,
-is the file to which to write the formatted output.  If I<output> isn't
-given, the formatted output is written to STDOUT.  Several POD files can be
-processed in the same B<pod2man> invocation (saving module load and compile
-times) by providing multiple pairs of I<input> and I<output> files on the
-command line.
+code).  If I<input> isn't given, it defaults to C<STDIN>.  I<output>, if
+given, is the file to which to write the formatted output.  If I<output>
+isn't given, the formatted output is written to C<STDOUT>.  Several POD
+files can be processed in the same B<pod2man> invocation (saving module
+load and compile times) by providing multiple pairs of I<input> and
+I<output> files on the command line.
 
-B<--section>, B<--release>, B<--center>, B<--date>, and B<--official> can be
-used to set the headers and footers to use; if not given, Pod::Man will
+B<--section>, B<--release>, B<--center>, B<--date>, and B<--official> can
+be used to set the headers and footers to use; if not given, Pod::Man will
 assume various defaults.  See below or L<Pod::Man> for details.
 
-B<pod2man> assumes that your *roff formatters have a fixed-width font named
-CW.  If yours is called something else (like CR), use B<--fixed> to specify
-it.  This generally only matters for troff output for printing.  Similarly,
-you can set the fonts used for bold, italic, and bold italic fixed-width
-output.
+B<pod2man> assumes that your *roff formatters have a fixed-width font
+named C<CW>.  If yours is called something else (like C<CR>), use
+B<--fixed> to specify it.  This generally only matters for troff output
+for printing.  Similarly, you can set the fonts used for bold, italic, and
+bold italic fixed-width output.
 
 Besides the obvious pod conversions, Pod::Man, and therefore pod2man also
 takes care of formatting func(), func(n), and simple variable references
@@ -155,30 +159,31 @@ Contributed Perl Documentation", but also see B<--official> below.
 
 Set the left-hand footer string to this value.  By default, the modification
 date of the input file will be used, or the current date if input comes from
-STDIN.
+C<STDIN>.
 
 =item B<--fixed>=I<font>
 
-The fixed-width font to use for vertabim text and code.  Defaults to CW.
-Some systems may want CR instead.  Only matters for troff(1) output.
+The fixed-width font to use for verbatim text and code.  Defaults to
+C<CW>.  Some systems may want C<CR> instead.  Only matters for troff(1)
+output.
 
 =item B<--fixedbold>=I<font>
 
-Bold version of the fixed-width font.  Defaults to CB.  Only matters for
-troff(1) output.
+Bold version of the fixed-width font.  Defaults to C<CB>.  Only matters
+for troff(1) output.
 
 =item B<--fixeditalic>=I<font>
 
 Italic version of the fixed-width font (actually, something of a misnomer,
 since most fixed-width fonts only have an oblique version, not an italic
-version).  Defaults to CI.  Only matters for troff(1) output.
+version).  Defaults to C<CI>.  Only matters for troff(1) output.
 
 =item B<--fixedbolditalic>=I<font>
 
 Bold italic (probably actually oblique) version of the fixed-width font.
-Pod::Man doesn't assume you have this, and defaults to CB.  Some systems
-(such as Solaris) have this font available as CX.  Only matters for troff(1)
-output.
+Pod::Man doesn't assume you have this, and defaults to C<CB>.  Some
+systems (such as Solaris) have this font available as C<CX>.  Only matters
+for troff(1) output.
 
 =item B<-h>, B<--help>
 
@@ -186,9 +191,9 @@ Print out usage information.
 
 =item B<-l>, B<--lax>
 
-No longer used.  B<pod2man> used to check its input for validity as a manual
-page, but this should now be done by L<podchecker(1)> instead.  Accepted for
-backwards compatibility; this option no longer does anything.
+No longer used.  B<pod2man> used to check its input for validity as a
+manual page, but this should now be done by L<podchecker(1)> instead.
+Accepted for backward compatibility; this option no longer does anything.
 
 =item B<-n> I<name>, B<--name>=I<name>
 
@@ -240,8 +245,37 @@ formats, 5 for miscellaneous information, and 7 for devices.  Still others
 use 1m instead of 8, or some mix of both.  About the only section numbers
 that are reliably consistent are 1, 2, and 3.
 
-By default, section 1 will be used unless the file ends in .pm in which case
-section 3 will be selected.
+By default, section 1 will be used unless the file ends in C<.pm>, in
+which case section 3 will be selected.
+
+=item B<--stderr>
+
+By default, B<pod2man> puts any errors detected in the POD input in a POD
+ERRORS section in the output manual page.  If B<--stderr> is given, errors
+are sent to standard error instead and the POD ERRORS section is
+suppressed.
+
+=item B<-u>, B<--utf8>
+
+By default, B<pod2man> produces the most conservative possible *roff
+output to try to ensure that it will work with as many different *roff
+implementations as possible.  Many *roff implementations cannot handle
+non-ASCII characters, so this means all non-ASCII characters are converted
+either to a *roff escape sequence that tries to create a properly accented
+character (at least for troff output) or to C<X>.
+
+This option says to instead output literal UTF-8 characters.  If your
+*roff implementation can handle it, this is the best output format to use
+and avoids corruption of documents containing non-ASCII characters.
+However, be warned that *roff source with literal UTF-8 characters is not
+supported by many implementations and may even result in segfaults and
+other bad behavior.
+
+Be aware that, when using this option, the input encoding of your POD
+source must be properly declared unless it is US-ASCII or Latin-1.  POD
+input without an C<=encoding> command will be assumed to be in Latin-1,
+and if it's actually in UTF-8, the output will be double-encoded.  See
+L<perlpod(1)> for more information on the C<=encoding> command.
 
 =item B<-v>, B<--verbose>
 
@@ -266,7 +300,7 @@ even/odd paging, at least on some versions of man(7).
 
     troff -man -rC1 -rD1 perl.1 perldata.1 perlsyn.1 ...
 
-To get index entries on stderr, turn on the F register, as in:
+To get index entries on C<STDERR>, turn on the F register, as in:
 
     troff -man -rF1 perl.1
 
@@ -310,7 +344,7 @@ The standard sections of a manual page are:
 =item NAME
 
 Mandatory section; should be a comma-separated list of programs or functions
-documented by this podpage, such as:
+documented by this POD page, such as:
 
     foo, bar - programs to do something
 
@@ -376,10 +410,11 @@ functions.
 Exceptions, error return codes, exit statuses, and errno settings.
 Typically used for function documentation; program documentation uses
 DIAGNOSTICS instead.  The general rule of thumb is that errors printed to
-STDOUT or STDERR and intended for the end user are documented in DIAGNOSTICS
-while errors passed internal to the calling program and intended for other
-programmers are documented in ERRORS.  When documenting a function that sets
-errno, a full list of the possible errno values should be given here.
+C<STDOUT> or C<STDERR> and intended for the end user are documented in
+DIAGNOSTICS while errors passed internal to the calling program and
+intended for other programmers are documented in ERRORS.  When documenting
+a function that sets errno, a full list of the possible errno values
+should be given here.
 
 =item DIAGNOSTICS
 
@@ -518,8 +553,8 @@ section numbering conventions.
 
 =head1 SEE ALSO
 
-L<Pod::Man>, L<Pod::Simple>, L<man(1)>, L<nroff(1)>, L<podchecker(1)>,
-L<troff(1)>, L<man(7)>
+L<Pod::Man>, L<Pod::Simple>, L<man(1)>, L<nroff(1)>, L<perlpod(1)>,
+L<podchecker(1)>, L<troff(1)>, L<man(7)>
 
 The man page documenting the an macro set may be L<man(5)> instead of
 L<man(7)> on your system.
@@ -537,7 +572,8 @@ page, are taken from the B<pod2man> documentation by Tom.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2004, 2006 by Russ Allbery <rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2004, 2006, 2008 Russ Allbery
+<rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

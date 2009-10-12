@@ -16,28 +16,34 @@ FATALFUNC		T_OPAQUEPTR
 INPUT
 T_DATUM_K
 	DBM_ckFilter($arg, filter_store_key, \"filter_store_key\");
-	$var.dptr = SvPVbyte($arg, PL_na);
-	$var.dsize = (int)PL_na;
+	{
+	    STRLEN len;
+	    $var.dptr = SvPVbyte($arg, len);
+	    $var.dsize = (int)len;
+	}
 T_DATUM_K_C
 	{
 	    SV * tmpSV;
+	    STRLEN len;
 	    if (db->filter_store_key) {
 	        tmpSV = sv_2mortal(newSVsv($arg)); 
 	        DBM_ckFilter(tmpSV, filter_store_key, \"filter_store_key\");
             }
             else
                 tmpSV = $arg;
-	    $var.dptr = SvPVbyte(tmpSV, PL_na);
-	    $var.dsize = (int)PL_na;
+	    $var.dptr = SvPVbyte(tmpSV, len);
+	    $var.dsize = (int)len;
 	}
 T_DATUM_V
         DBM_ckFilter($arg, filter_store_value, \"filter_store_value\");
 	if (SvOK($arg)) {
-	    $var.dptr = SvPVbyte($arg, PL_na);
-	    $var.dsize = (int)PL_na;
+	    STRLEN len;
+	    $var.dptr = SvPVbyte($arg, len);
+	    $var.dsize = (int)len;
 	}
 	else {
-	    $var.dptr = \"\";
+	    $var.dptr = (char *)\"\";	
+	    /* better would be for .dptr to be const char * */
 	    $var.dsize = 0;
 	}
 OUTPUT

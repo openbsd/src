@@ -17,7 +17,6 @@ else                  { $myextlib = 'sdbm/libsdbm$(LIB_EXT)';  }
 WriteMakefile(
               NAME	=> 'SDBM_File',
               MYEXTLIB => $myextlib,
-              MAN3PODS 	=> {}, 	# Pods will be built by installman.
               XSPROTOARG => '-noprototypes', 		# XXX remove later?
               VERSION_FROM => 'SDBM_File.pm',
               DEFINE => $define,

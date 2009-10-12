@@ -12,49 +12,42 @@ related matters.
 
 The standard release of perl (the one maintained by the perl
 development team) is distributed only in source code form.  You
-can find this at http://www.cpan.org/src/latest.tar.gz , which
-is in a standard Internet format (a gzipped archive in POSIX tar format).
+can find the latest releases at http://www.cpan.org/src/README.html .
 
 Perl builds and runs on a bewildering number of platforms.  Virtually
 all known and current Unix derivatives are supported (perl's native
 platform), as are other systems like VMS, DOS, OS/2, Windows,
 QNX, BeOS, OS X, MPE/iX and the Amiga.
 
-Binary distributions for some proprietary platforms, including
-Apple systems, can be found http://www.cpan.org/ports/ directory.
-Because these are not part of the standard distribution, they may
-and in fact do differ from the base perl port in a variety of ways.
-You'll have to check their respective release notes to see just
-what the differences are.  These differences can be either positive
-(e.g. extensions for the features of the particular platform that
-are not supported in the source release of perl) or negative (e.g.
-might be based upon a less current source release of perl).
+Binary distributions for some proprietary platforms can be found
+http://www.cpan.org/ports/ directory. Because these are not part of
+the standard distribution, they may and in fact do differ from the
+base perl port in a variety of ways. You'll have to check their
+respective release notes to see just what the differences are.  These
+differences can be either positive (e.g. extensions for the features
+of the particular platform that are not supported in the source
+release of perl) or negative (e.g. might be based upon a less current
+source release of perl).
 
 =head2 How can I get a binary version of perl?
 
-For Windows, ActiveState provides a pre-built Perl for free:
+(contributed by brian d foy)
+
+ActiveState: Windows, Linux, Mac OS X, Solaris, AIX and HP-UX
 
 	http://www.activestate.com/
 
-Sunfreeware.com provides binaries for many utilities, including
-Perl, for Solaris on both Intel and SPARC hardware:
+Sunfreeware.com: Solaris 2.5 to Solaris 10 (SPARC and x86)
 
 	http://www.sunfreeware.com/
 
-If you don't have a C compiler because your vendor for whatever
-reasons did not include one with your system, the best thing to do is
-grab a binary version of gcc from the net and use that to compile perl
-with.  CPAN only has binaries for systems that are terribly hard to
-get free compilers for, not for Unix systems.
+Strawberry Perl: Windows, Perl 5.8.8 and 5.10.0
 
-Some URLs that might help you are:
+	http://www.strawberryperl.com
+	
+IndigoPerl: Windows
 
-	http://www.cpan.org/ports/
-	http://www.perl.com/pub/language/info/software.html
-
-Someone looking for a perl for Win16 might look to Laszlo Molnar's
-djgpp port in http://www.cpan.org/ports/#msdos , which comes with
-clear installation instructions.
+	http://indigostar.com/
 
 =head2 I don't have a C compiler. How can I build my own Perl interpreter?
 
@@ -65,15 +58,15 @@ What you need to do is get a binary version of gcc for your system
 first.  Consult the Usenet FAQs for your operating system for
 information on where to get such a binary version.
 
-You might look around the net for a pre-built binary of Perl (or a 
+You might look around the net for a pre-built binary of Perl (or a
 C compiler!) that meets your needs, though:
 
 For Windows, Vanilla Perl ( http://vanillaperl.com/ ) and Strawberry Perl
-( http://strawberryperl.com/ ) come with a 
+( http://strawberryperl.com/ ) come with a
 bundled C compiler. ActivePerl is a pre-compiled version of Perl
 ready-to-use.
 
-For Sun systems, SunFreeware.com provides binaries of most popular 
+For Sun systems, SunFreeware.com provides binaries of most popular
 applications, including compilers and Perl.
 
 =head2 I copied the perl binary from one machine to another, but scripts don't work.
@@ -187,13 +180,11 @@ by the time you read this.  These URLs might also be useful:
 
 Several groups devoted to the Perl language are on Usenet:
 
-    comp.lang.perl.announce 		Moderated announcement group
-    comp.lang.perl.misc     		High traffic general Perl discussion
-    comp.lang.perl.moderated        Moderated discussion group
-    comp.lang.perl.modules  		Use and development of Perl modules
-    comp.lang.perl.tk           	Using Tk (and X) from Perl
-
-    comp.infosystems.www.authoring.cgi 	Writing CGI scripts for the Web.
+	comp.lang.perl.announce      Moderated announcement group
+	comp.lang.perl.misc          High traffic general Perl discussion
+	comp.lang.perl.moderated     Moderated discussion group
+	comp.lang.perl.modules       Use and development of Perl modules
+	comp.lang.perl.tk            Using Tk (and X) from Perl
 
 Some years ago, comp.lang.perl was divided into those groups, and
 comp.lang.perl itself officially removed.  While that group may still
@@ -298,8 +289,8 @@ Recommended books on (or mostly on) Perl follow.
 
 	Perl 5 Pocket Reference
 	by Johan Vromans
-	ISBN 0-596-00032-4 [3rd edition May 2000]
-	http://www.oreilly.com/catalog/perlpr3/
+	ISBN 0-596-00374-9 [4th edition July 2002]
+	http://www.oreilly.com/catalog/perlpr4/
 
 =item Tutorials
 
@@ -315,8 +306,8 @@ Recommended books on (or mostly on) Perl follow.
 
 	Learning Perl
 	by Randal L. Schwartz, Tom Phoenix, and brian d foy
-	ISBN 0-596-10105-8 [4th edition July 2005]
-	http://www.oreilly.com/catalog/learnperl4/
+	ISBN 0-596-52010-7 [5th edition June 2008]
+	http://oreilly.com/catalog/9780596520106/
 
 	Intermediate Perl (the "Alpaca Book")
 	by Randal L. Schwartz and brian d foy, with Tom Phoenix (foreword by Damian Conway)
@@ -408,7 +399,7 @@ Recommended books on (or mostly on) Perl follow.
 	by Richard Foley with Andy Lester
 	ISBN 1-59059-454-1 [1st edition July 2005]
 	http://www.apress.com/book/view/1590594541
-	
+
 =back
 
 =head2 Which magazines have Perl content?
@@ -455,7 +446,7 @@ A comprehensive list of Perl related mailing lists can be found at:
 The Google search engine now carries archived and searchable newsgroup
 content.
 
-http://groups.google.com/groups?group=comp.lang.perl.misc
+http://groups.google.com/group/comp.lang.perl.misc/topics
 
 If you have a question, you can be sure someone has already asked the
 same question at some point on c.l.p.m. It requires some time and patience
@@ -485,20 +476,31 @@ also all come with perl.
 
 =head2 Where do I send bug reports?
 
-If you are reporting a bug in the perl interpreter or the modules
-shipped with Perl, use the I<perlbug> program in the Perl distribution or
-mail your report to perlbug@perl.org or at http://rt.perl.org/perlbug/ .
+(contributed by brian d foy)
 
-For Perl modules, you can submit bug reports to the Request Tracker set
-up at http://rt.cpan.org .
+First, ensure that you've found an actual bug. Second, ensure you've
+found an actual bug.
 
-If you are posting a bug with a non-standard port (see the answer to
-"What platforms is perl available for?"), a binary distribution, or a
-non-standard module (such as Tk, CGI, etc), then please see the
-documentation that came with it to determine the correct place to post
-bugs.
+If you've found a bug with the perl interpreter or one of the modules
+in the standard library (those that come with Perl), you can use the
+C<perlbug> utility that comes with Perl (>= 5.004). It collects
+information about your installation to include with your message, then
+sends the message to the right place.
 
-Read the perlbug(1) man page (perl5.004 or later) for more information.
+To determine if a module came with your version of Perl, you can
+use the C<Module::CoreList> module. It has the information about
+the modules (with their versions) included with each release of Perl.
+
+Every CPAN module has a bug tracker set up in RT, http://rt.cpan.org .
+You can submit bugs to RT either through its web interface or by
+email. To email a bug report, send it to
+bug-E<lt>distribution-nameE<gt>@rt.cpan.org . For example, if you
+wanted to report a bug in C<Business::ISBN>, you could send a message to
+bug-Business-ISBN@rt.cpan.org .
+
+Some modules might have special reporting requirements, such as a
+Sourceforge or Google Code tracking system, so you should check the
+module documentation too.
 
 =head2 What is perl.com? Perl Mongers? pm.org? perl.org? cpan.org?
 
@@ -529,15 +531,15 @@ the I<What is CPAN?> question earlier in this document.
 
 =head1 REVISION
 
-Revision: $Revision: 10144 $
+Revision: $Revision$
 
-Date: $Date: 2007-10-31 13:50:01 +0100 (Wed, 31 Oct 2007) $
+Date: $Date$
 
 See L<perlfaq> for source control details and availability.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2007 Tom Christiansen, Nathan Torkington, and
+Copyright (c) 1997-2009 Tom Christiansen, Nathan Torkington, and
 other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it

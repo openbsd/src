@@ -1,7 +1,7 @@
 /*    cv.h
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000,
- *    2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000, 2001,
+ *    2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -109,13 +109,13 @@ Returns the stash of the CV.
 
 #define Nullcv Null(CV*)
 
-#define CvSTASH(sv)	((XPVCV*)SvANY(sv))->xcv_stash
-#define CvSTART(sv)	((XPVCV*)SvANY(sv))->xcv_start_u.xcv_start
-#define CvROOT(sv)	((XPVCV*)SvANY(sv))->xcv_root_u.xcv_root
-#define CvXSUB(sv)	((XPVCV*)SvANY(sv))->xcv_root_u.xcv_xsub
-#define CvXSUBANY(sv)	((XPVCV*)SvANY(sv))->xcv_start_u.xcv_xsubany
-#define CvGV(sv)	((XPVCV*)SvANY(sv))->xcv_gv
-#define CvFILE(sv)	((XPVCV*)SvANY(sv))->xcv_file
+#define CvSTASH(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_stash
+#define CvSTART(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_start_u.xcv_start
+#define CvROOT(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_root_u.xcv_root
+#define CvXSUB(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_root_u.xcv_xsub
+#define CvXSUBANY(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_start_u.xcv_xsubany
+#define CvGV(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_gv
+#define CvFILE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_file
 #ifdef USE_ITHREADS
 #  define CvFILE_set_from_cop(sv, cop)	(CvFILE(sv) = savepv(CopFILE(cop)))
 #else
@@ -123,18 +123,17 @@ Returns the stash of the CV.
 #endif
 #define CvFILEGV(sv)	(gv_fetchfile(CvFILE(sv)))
 #if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
-#  define CvDEPTH(sv) (*({const CV *_cv = (CV *)sv; \
-			  assert(SvTYPE(_cv) == SVt_PVCV ||	 \
-				 SvTYPE(_cv) == SVt_PVFM);	 \
-			  &((XPVCV*)SvANY(_cv))->xiv_u.xivu_i32; \
+#  define CvDEPTH(sv) (*({const CV *const _cvdepth = (const CV *)sv; \
+			  assert(SvTYPE(_cvdepth) == SVt_PVCV);	 \
+			  &((XPVCV*)SvANY(_cvdepth))->xiv_u.xivu_i32; \
 			}))
 #else
-#  define CvDEPTH(sv)	((XPVCV*)SvANY(sv))->xiv_u.xivu_i32
+#  define CvDEPTH(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xiv_u.xivu_i32
 #endif
-#define CvPADLIST(sv)	((XPVCV*)SvANY(sv))->xcv_padlist
-#define CvOUTSIDE(sv)	((XPVCV*)SvANY(sv))->xcv_outside
-#define CvFLAGS(sv)	((XPVCV*)SvANY(sv))->xcv_flags
-#define CvOUTSIDE_SEQ(sv) ((XPVCV*)SvANY(sv))->xcv_outside_seq
+#define CvPADLIST(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist
+#define CvOUTSIDE(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_outside
+#define CvFLAGS(sv)	((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_flags
+#define CvOUTSIDE_SEQ(sv) ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_outside_seq
 
 #define CVf_METHOD	0x0001	/* CV is explicitly marked as a method */
 #define CVf_LOCKED	0x0002	/* CV locks itself or first arg on entry */

@@ -10,9 +10,26 @@
 # Tim Bunce, June 1997
 
 use ExtUtils::Manifest qw(fullcheck);
+$ExtUtils::Manifest::Quiet = 1;
+use Getopt::Std;
 
 $|=1;
-$relroot = "..";	# XXX make an option
+
+sub usage { die <<EOF; }
+usage: $0 [ -r rootdir ] [-s suffix ] [ -b ]
+    -r rootdir   directory under which to create the build dir and tarball
+                 defaults to '..'
+    -s suffix    suffix to append to to the perl-x.y.z dir and tarball name
+		 defaults to the concatenaion of the local_patches entry
+		 in patchlevel.h (or blank, if none)
+    -b           make a .bz2 file in addtion to a .gz file
+EOF
+
+my %opts;
+getopts('br:s:', \%opts) or usage;
+@ARGV && usage;
+
+$relroot = defined $opts{r} ? $opts{r} : "..";
 
 die "Must be in root of the perl source tree.\n"
 	unless -f "./MANIFEST" and -f "patchlevel.h";
@@ -37,14 +54,25 @@ $lpatch_tags   = join "-", @lpatch_tags;
 
 $perl = "perl-$vers";
 $reldir = "$perl";
+
+$lpatch_tags = $opts{s} if defined $opts{s};
 $reldir .= "-$lpatch_tags" if $lpatch_tags;
 
 print "\nMaking a release for $perl in $relroot/$reldir\n\n";
 
 print "Cross-checking the MANIFEST...\n";
 ($missfile, $missentry) = fullcheck();
-warn "Can't make a release with MANIFEST files missing.\n" if @$missfile;
-warn "Can't make a release with files not listed in MANIFEST.\n" if @$missentry;
+@$missentry
+    = grep {$_ !~ m!^\.git/! and $_ !~ m!(?:/|^)\.gitignore!} @$missentry;
+if (@$missfile ) {
+    warn "Can't make a release with MANIFEST files missing:\n";
+    warn "\t".$_."\n" for (@$missfile);
+}
+if (@$missentry ) {
+    warn "Can't make a release with files not listed in MANIFEST\n";
+    warn "\t".$_."\n" for (@$missentry);
+
+}
 if ("@$missentry" =~ m/\.orig\b/) {
     # Handy listing of find command and .orig files from patching work.
     # I tend to run 'xargs rm' and copy and paste the file list.
@@ -95,8 +123,6 @@ my @exe = qw(
     Porting/findrfuncs
     Porting/genlog
     Porting/makerel
-    Porting/p4genpatch
-    Porting/patchls
     Porting/*.pl
     mpeix/nm
     mpeix/relink
@@ -120,13 +146,10 @@ my @writables = qw(
     global.sym
     overload.c
     overload.h
-    pod/perlintern.pod
-    pod/perlapi.pod
-    pod/perltoc.pod
     perlapi.h
     perlapi.c
-    ext/Devel/PPPort/module2.c
-    ext/Devel/PPPort/module3.c
+    ext/Devel-PPPort/module2.c
+    ext/Devel-PPPort/module3.c
     reentr.c
     reentr.h
     regcharclass.h
@@ -171,11 +194,26 @@ print "\n";
 
 chdir ".." or die $!;
 
-print "Creating and compressing the tar file...\n";
 my $src = (-e $perl) ? $perl : 'perl'; # 'perl' in maint branch
+
+print "Creating and compressing the tar.gz file...\n";
 $cmd = "tar cf - $reldir | gzip --best > $reldir.tar.gz";
-system($cmd) == 0
-    or die "$cmd failed";
+system($cmd) == 0 or die "$cmd failed";
+
+if ($opts{b}) {
+    print "Creating and compressing the tar.bz2 file...\n";
+    $cmd = "tar cf - $reldir | bzip2 > $reldir.tar.bz2";
+    system($cmd) == 0 or die "$cmd failed";
+}
+
 print "\n";
 
 system("ls -ld $perl*");
+print "\n";
+
+for my $sha (qw(sha1 shasum sha1sum)) {
+    if (`which $sha 2>/dev/null`) {
+	system("$sha $perl*.tar.*");
+	last;
+    }
+}

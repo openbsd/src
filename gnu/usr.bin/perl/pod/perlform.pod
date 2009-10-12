@@ -59,12 +59,12 @@ characters for field definitions:
 X<format, picture line>
 X<@> X<^> X<< < >> X<< | >> X<< > >> X<#> X<0> X<.> X<...>
 X<@*> X<^*> X<~> X<~~>
-  
+
    @    start of regular field
    ^    start of special field
-   <    pad character for left adjustification
+   <    pad character for left justification
    |    pad character for centering
-   >    pad character for right adjustificat
+   >    pad character for right justification
    #    pad character for a right justified numeric field
    0    instead of first #: pad number with leading zeroes
    .    decimal point within a numeric field

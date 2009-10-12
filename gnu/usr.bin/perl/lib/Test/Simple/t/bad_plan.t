@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -8,32 +7,17 @@ BEGIN {
     }
 }
 
-my $test_num = 1;
-# Utility testing functions.
-sub ok ($;$) {
-    my($test, $name) = @_;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-    $test_num++;
-
-    return $test;
-}
-
-
 use Test::Builder;
 my $Test = Test::Builder->new;
+$Test->plan( tests => 2 );
+$Test->level(0);
 
-print "1..2\n";
+my $tb = Test::Builder->create;
 
-eval { $Test->plan(7); };
-ok( $@ =~ /^plan\(\) doesn't understand 7/, 'bad plan()' ) ||
+eval { $tb->plan(7); };
+$Test->like( $@, qr/^plan\(\) doesn't understand 7/, 'bad plan()' ) ||
     print STDERR "# $@";
 
-eval { $Test->plan(wibble => 7); };
-ok( $@ =~ /^plan\(\) doesn't understand wibble 7/, 'bad plan()' ) ||
+eval { $tb->plan(wibble => 7); };
+$Test->like( $@, qr/^plan\(\) doesn't understand wibble 7/, 'bad plan()' ) ||
     print STDERR "# $@";
-

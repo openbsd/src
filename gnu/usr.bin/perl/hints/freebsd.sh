@@ -211,7 +211,7 @@ EOM
 	      exit 1
 	      ;;
 
-	*)
+	[3-5].*)
 	      if [ ! -r "$lc_r" ]; then
 	      cat <<EOM >&4
 POSIX threads should be supported by FreeBSD $osvers --
@@ -241,6 +241,14 @@ EOM
 	      # Presumably earlier it didn't even exist.
 	      d_gethostbyaddr_r="undef"
 	      d_gethostbyaddr_r_proto="0"
+	      ;;
+
+	*)
+	      # 7.x doesn't install libc_r by default, and Configure
+	      # would fail in the code following
+	      #
+	      # gethostbyaddr_r() appears to have been implemented in 6.x+
+	      ldflags="-pthread $ldflags"
 	      ;;
 
 	esac

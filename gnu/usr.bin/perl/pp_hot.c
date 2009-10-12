@@ -1,7 +1,7 @@
 /*    pp_hot.c
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007 by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -12,8 +12,10 @@
  * Then he heard Merry change the note, and up went the Horn-cry of Buckland,
  * shaking the air.
  *
- *            Awake!  Awake!  Fear, Fire, Foes!  Awake!
- *                     Fire, Foes!  Awake!
+ *                  Awake!  Awake!  Fear, Fire, Foes!  Awake!
+ *                               Fire, Foes!  Awake!
+ *
+ *     [p.1007 of _The Lord of the Rings_, VI/viii: "The Scouring of the Shire"]
  */
 
 /* This file contains 'hot' pp ("push/pop") functions that
@@ -43,7 +45,7 @@ PP(pp_const)
         /* This is a const op added to hold the hints hash for
            pp_entereval. The hash can be modified by the code
            being eval'ed, so we return a copy instead. */
-        XPUSHs(sv_2mortal((SV*)Perl_hv_copy_hints_hv(aTHX_ (HV*)cSVOP_sv)));
+        mXPUSHs((SV*)Perl_hv_copy_hints_hv(aTHX_ (HV*)cSVOP_sv));
     else
         /* Normal const. */
         XPUSHs(cSVOP_sv);
@@ -103,7 +105,7 @@ PP(pp_stringify)
 PP(pp_gv)
 {
     dVAR; dSP;
-    XPUSHs((SV*)cGVOP_gv);
+    XPUSHs(MUTABLE_SV(cGVOP_gv));
     RETURN;
 }
 
@@ -150,7 +152,7 @@ PP(pp_sassign)
 		   The gv becomes a(nother) reference to the constant.  */
 		SV *const value = SvRV(cv);
 
-		SvUPGRADE((SV *)gv, SVt_RV);
+		SvUPGRADE(MUTABLE_SV(gv), SVt_RV);
 		SvPCS_IMPORTED_on(gv);
 		SvRV_set(gv, value);
 		SvREFCNT_inc_simple_void(value);
@@ -162,7 +164,7 @@ PP(pp_sassign)
 	/* Need to fix things up.  */
 	if (gv_type != SVt_PVGV) {
 	    /* Need to fix GV.  */
-	    right = (SV*)gv_fetchsv(right, GV_ADD, SVt_PVGV);
+	    right = MUTABLE_SV(gv_fetchsv(right, GV_ADD, SVt_PVGV));
 	}
 
 	if (!got_coderef) {
@@ -176,8 +178,8 @@ PP(pp_sassign)
 		   all sorts of fun as the reference to our new sub is
 		   donated to the GV that we're about to assign to.
 		*/
-		SvRV_set(left, (SV *)newCONSTSUB(GvSTASH(right), NULL,
-						 SvRV(cv)));
+		SvRV_set(left, MUTABLE_SV(newCONSTSUB(GvSTASH(right), NULL,
+						      SvRV(cv))));
 		SvREFCNT_dec(cv);
 		LEAVE;
 	    } else {
@@ -194,7 +196,7 @@ PP(pp_sassign)
 		   So change the reference so that it points to the subroutine
 		   of that typeglob, as that's what they were after all along.
 		*/
-		GV *const upgraded = (GV *) cv;
+		GV *const upgraded = MUTABLE_GV(cv);
 		CV *const source = GvCV(upgraded);
 
 		assert(source);
@@ -202,7 +204,7 @@ PP(pp_sassign)
 
 		SvREFCNT_inc_void(source);
 		SvREFCNT_dec(upgraded);
-		SvRV_set(left, (SV *)source);
+		SvRV_set(left, MUTABLE_SV(source));
 	    }
 	}
 
@@ -248,7 +250,7 @@ PP(pp_concat)
 	/* mg_get(right) may happen here ... */
 	rpv = SvPV_const(right, rlen);
 	rbyte = !DO_UTF8(right);
-	right = sv_2mortal(newSVpvn(rpv, rlen));
+	right = newSVpvn_flags(rpv, rlen, SVs_TEMP);
 	rpv = SvPV_const(right, rlen);	/* no point setting UTF-8 here */
 	rcopied = TRUE;
     }
@@ -269,7 +271,7 @@ PP(pp_concat)
 	if (!SvOK(TARG)) {
 	    if (left == right && ckWARN(WARN_UNINITIALIZED))
 		report_uninit(right);
-	    sv_setpvn(left, "", 0);
+	    sv_setpvs(left, "");
 	}
 	(void)SvPV_nomg_const(left, llen);    /* Needed to set UTF8 flag */
 	lbyte = !DO_UTF8(left);
@@ -287,7 +289,7 @@ PP(pp_concat)
 	    sv_utf8_upgrade_nomg(TARG);
 	else {
 	    if (!rcopied)
-		right = sv_2mortal(newSVpvn(rpv, rlen));
+		right = newSVpvn_flags(rpv, rlen, SVs_TEMP);
 	    sv_utf8_upgrade_nomg(right);
 	    rpv = SvPV_const(right, rlen);
 	}
@@ -320,16 +322,16 @@ PP(pp_readline)
 {
     dVAR;
     tryAMAGICunTARGET(iter, 0);
-    PL_last_in_gv = (GV*)(*PL_stack_sp--);
-    if (SvTYPE(PL_last_in_gv) != SVt_PVGV) {
-	if (SvROK(PL_last_in_gv) && SvTYPE(SvRV(PL_last_in_gv)) == SVt_PVGV)
-	    PL_last_in_gv = (GV*)SvRV(PL_last_in_gv);
+    PL_last_in_gv = MUTABLE_GV(*PL_stack_sp--);
+    if (!isGV_with_GP(PL_last_in_gv)) {
+	if (SvROK(PL_last_in_gv) && isGV_with_GP(SvRV(PL_last_in_gv)))
+	    PL_last_in_gv = MUTABLE_GV(SvRV(PL_last_in_gv));
 	else {
 	    dSP;
-	    XPUSHs((SV*)PL_last_in_gv);
+	    XPUSHs(MUTABLE_SV(PL_last_in_gv));
 	    PUTBACK;
 	    pp_rv2gv();
-	    PL_last_in_gv = (GV*)(*PL_stack_sp--);
+	    PL_last_in_gv = MUTABLE_GV(*PL_stack_sp--);
 	}
     }
     return do_readline();
@@ -411,8 +413,8 @@ PP(pp_eq)
 PP(pp_preinc)
 {
     dVAR; dSP;
-    if (SvTYPE(TOPs) >= SVt_PVGV && SvTYPE(TOPs) != SVt_PVLV)
-	DIE(aTHX_ PL_no_modify);
+    if (SvTYPE(TOPs) >= SVt_PVAV || isGV_with_GP(TOPs))
+	DIE(aTHX_ "%s", PL_no_modify);
     if (!SvREADONLY(TOPs) && SvIOK_notUV(TOPs) && !SvNOK(TOPs) && !SvPOK(TOPs)
         && SvIVX(TOPs) != IV_MAX)
     {
@@ -663,8 +665,8 @@ PP(pp_add)
 PP(pp_aelemfast)
 {
     dVAR; dSP;
-    AV * const av = PL_op->op_flags & OPf_SPECIAL ?
-		(AV*)PAD_SV(PL_op->op_targ) : GvAV(cGVOP_gv);
+    AV * const av = PL_op->op_flags & OPf_SPECIAL
+	? MUTABLE_AV(PAD_SV(PL_op->op_targ)) : GvAV(cGVOP_gv);
     const U32 lval = PL_op->op_flags & OPf_MOD;
     SV** const svp = av_fetch(av, PL_op->op_private, lval);
     SV *sv = (svp ? *svp : &PL_sv_undef);
@@ -699,7 +701,7 @@ PP(pp_pushre)
     Copy(&PL_op, &LvTARGOFF(sv), 1, OP*);
     XPUSHs(sv);
 #else
-    XPUSHs((SV*)PL_op);
+    XPUSHs(MUTABLE_SV(PL_op));
 #endif
     RETURN;
 }
@@ -712,10 +714,11 @@ PP(pp_print)
     IO *io;
     register PerlIO *fp;
     MAGIC *mg;
-    GV * const gv = (PL_op->op_flags & OPf_STACKED) ? (GV*)*++MARK : PL_defoutgv;
+    GV * const gv
+	= (PL_op->op_flags & OPf_STACKED) ? MUTABLE_GV(*++MARK) : PL_defoutgv;
 
     if (gv && (io = GvIO(gv))
-	&& (mg = SvTIED_mg((SV*)io, PERL_MAGIC_tiedscalar)))
+	&& (mg = SvTIED_mg((const SV *)io, PERL_MAGIC_tiedscalar)))
     {
       had_magic:
 	if (MARK == ORIGMARK) {
@@ -728,9 +731,14 @@ PP(pp_print)
 	    ++SP;
 	}
 	PUSHMARK(MARK - 1);
-	*MARK = SvTIED_obj((SV*)io, mg);
+	*MARK = SvTIED_obj(MUTABLE_SV(io), mg);
 	PUTBACK;
 	ENTER;
+	if( PL_op->op_type == OP_SAY ) {
+		/* local $\ = "\n" */
+		SAVEGENERICSV(PL_ors_sv);
+		PL_ors_sv = newSVpvs("\n");
+	}
 	call_method("PRINT", G_SCALAR);
 	LEAVE;
 	SPAGAIN;
@@ -741,7 +749,7 @@ PP(pp_print)
     }
     if (!(io = GvIO(gv))) {
         if ((GvEGV(gv)) && (io = GvIO(GvEGV(gv)))
-	    && (mg = SvTIED_mg((SV*)io, PERL_MAGIC_tiedscalar)))
+	    && (mg = SvTIED_mg((const SV *)io, PERL_MAGIC_tiedscalar)))
             goto had_magic;
 	if (ckWARN2(WARN_UNOPENED,WARN_CLOSED))
 	    report_evil_fh(gv, io, PL_op->op_type);
@@ -810,8 +818,6 @@ PP(pp_rv2av)
 {
     dVAR; dSP; dTOPss;
     const I32 gimme = GIMME_V;
-    static const char return_array_to_lvalue_scalar[] = "Can't return array to lvalue scalar context";
-    static const char return_hash_to_lvalue_scalar[] = "Can't return hash to lvalue scalar context";
     static const char an_array[] = "an ARRAY";
     static const char a_hash[] = "a HASH";
     const bool is_pp_rv2av = PL_op->op_type == OP_RV2AV;
@@ -830,14 +836,13 @@ PP(pp_rv2av)
 	}
 	else if (LVRET) {
 	    if (gimme != G_ARRAY)
-		Perl_croak(aTHX_ is_pp_rv2av ? return_array_to_lvalue_scalar
-			   : return_hash_to_lvalue_scalar);
+		goto croak_cant_return;
 	    SETs(sv);
 	    RETURN;
 	}
 	else if (PL_op->op_flags & OPf_MOD
 		&& PL_op->op_private & OPpLVAL_INTRO)
-	    Perl_croak(aTHX_ PL_no_localize_ref);
+	    Perl_croak(aTHX_ "%s", PL_no_localize_ref);
     }
     else {
 	if (SvTYPE(sv) == type) {
@@ -847,9 +852,7 @@ PP(pp_rv2av)
 	    }
 	    else if (LVRET) {
 		if (gimme != G_ARRAY)
-		    Perl_croak(aTHX_
-			       is_pp_rv2av ? return_array_to_lvalue_scalar
-			       : return_hash_to_lvalue_scalar);
+		    goto croak_cant_return;
 		SETs(sv);
 		RETURN;
 	    }
@@ -857,7 +860,7 @@ PP(pp_rv2av)
 	else {
 	    GV *gv;
 	
-	    if (SvTYPE(sv) != SVt_PVGV) {
+	    if (!isGV_with_GP(sv)) {
 		if (SvGMAGICAL(sv)) {
 		    mg_get(sv);
 		    if (SvROK(sv))
@@ -869,20 +872,18 @@ PP(pp_rv2av)
 		    RETURN;
 	    }
 	    else {
-		gv = (GV*)sv;
+		gv = MUTABLE_GV(sv);
 	    }
-	    sv = is_pp_rv2av ? (SV*)GvAVn(gv) : (SV*)GvHVn(gv);
+	    sv = is_pp_rv2av ? MUTABLE_SV(GvAVn(gv)) : MUTABLE_SV(GvHVn(gv));
 	    if (PL_op->op_private & OPpLVAL_INTRO)
-		sv = is_pp_rv2av ? (SV*)save_ary(gv) : (SV*)save_hash(gv);
+		sv = is_pp_rv2av ? MUTABLE_SV(save_ary(gv)) : MUTABLE_SV(save_hash(gv));
 	    if (PL_op->op_flags & OPf_REF) {
 		SETs(sv);
 		RETURN;
 	    }
 	    else if (LVRET) {
 		if (gimme != G_ARRAY)
-		    Perl_croak(aTHX_
-			       is_pp_rv2av ? return_array_to_lvalue_scalar
-			       : return_hash_to_lvalue_scalar);
+		    goto croak_cant_return;
 		SETs(sv);
 		RETURN;
 	    }
@@ -890,7 +891,7 @@ PP(pp_rv2av)
     }
 
     if (is_pp_rv2av) {
-	AV *const av = (AV*)sv;
+	AV *const av = MUTABLE_AV(sv);
 	/* The guts of pp_rv2av, with no intenting change to preserve history
 	   (until such time as we get tools that can do blame annotation across
 	   whitespace changes.  */
@@ -926,11 +927,16 @@ PP(pp_rv2av)
     }
     else if (gimme == G_SCALAR) {
 	dTARGET;
-    TARG = Perl_hv_scalar(aTHX_ (HV*)sv);
+    TARG = Perl_hv_scalar(aTHX_ MUTABLE_HV(sv));
 	SPAGAIN;
 	SETTARG;
     }
     }
+    RETURN;
+
+ croak_cant_return:
+    Perl_croak(aTHX_ "Can't return %s to lvalue scalar context",
+	       is_pp_rv2av ? "array" : "hash");
     RETURN;
 }
 
@@ -938,6 +944,9 @@ STATIC void
 S_do_oddball(pTHX_ HV *hash, SV **relem, SV **firstrelem)
 {
     dVAR;
+
+    PERL_ARGS_ASSERT_DO_ODDBALL;
+
     if (*relem) {
 	SV *tmpstr;
         const HE *didstore;
@@ -953,7 +962,7 @@ S_do_oddball(pTHX_ HV *hash, SV **relem, SV **firstrelem)
 	    }
 	    else
 		err = "Odd number of elements in hash assignment";
-	    Perl_warner(aTHX_ packWARN(WARN_MISC), err);
+	    Perl_warner(aTHX_ packWARN(WARN_MISC), "%s", err);
 	}
 
         tmpstr = newSV(0);
@@ -1016,7 +1025,7 @@ PP(pp_aassign)
 	sv = *lelem++;
 	switch (SvTYPE(sv)) {
 	case SVt_PVAV:
-	    ary = (AV*)sv;
+	    ary = MUTABLE_AV(sv);
 	    magic = SvMAGICAL(ary) != 0;
 	    av_clear(ary);
 	    av_extend(ary, lastrelem - relem);
@@ -1028,20 +1037,26 @@ PP(pp_aassign)
 		*(relem++) = sv;
 		didstore = av_store(ary,i++,sv);
 		if (magic) {
-		    if (SvSMAGICAL(sv))
+		    if (SvSMAGICAL(sv)) {
+			/* More magic can happen in the mg_set callback, so we
+			 * backup the delaymagic for now. */
+			U16 dmbak = PL_delaymagic;
+			PL_delaymagic = 0;
 			mg_set(sv);
+			PL_delaymagic = dmbak;
+		    }
 		    if (!didstore)
 			sv_2mortal(sv);
 		}
 		TAINT_NOT;
 	    }
 	    if (PL_delaymagic & DM_ARRAY)
-		SvSETMAGIC((SV*)ary);
+		SvSETMAGIC(MUTABLE_SV(ary));
 	    break;
 	case SVt_PVHV: {				/* normal hash */
 		SV *tmpstr;
 
-		hash = (HV*)sv;
+		hash = MUTABLE_HV(sv);
 		magic = SvMAGICAL(hash) != 0;
 		hv_clear(hash);
 		firsthashrelem = relem;
@@ -1059,8 +1074,12 @@ PP(pp_aassign)
 			duplicates += 2;
 		    didstore = hv_store_ent(hash,sv,tmpstr,0);
 		    if (magic) {
-			if (SvSMAGICAL(tmpstr))
+			if (SvSMAGICAL(tmpstr)) {
+			    U16 dmbak = PL_delaymagic;
+			    PL_delaymagic = 0;
 			    mg_set(tmpstr);
+			    PL_delaymagic = dmbak;
+			}
 			if (!didstore)
 			    sv_2mortal(tmpstr);
 		    }
@@ -1084,7 +1103,13 @@ PP(pp_aassign)
 	    }
 	    else
 		sv_setsv(sv, &PL_sv_undef);
-	    SvSETMAGIC(sv);
+
+	    if (SvSMAGICAL(sv)) {
+		U16 dmbak = PL_delaymagic;
+		PL_delaymagic = 0;
+		mg_set(sv);
+		PL_delaymagic = dmbak;
+	    }
 	    break;
 	}
     }
@@ -1195,7 +1220,8 @@ PP(pp_qr)
     SV * const pkg = CALLREG_PACKAGE(rx);
     SV * const rv = sv_newmortal();
     SV * const sv = newSVrv(rv, SvPV_nolen(pkg));
-    if (rx->extflags & RXf_TAINTED)
+    SvREFCNT_dec(pkg);
+    if (RX_EXTFLAGS(rx) & RXf_TAINTED)
         SvTAINTED_on(rv);
     sv_magic(sv,(SV*)ReREFCNT_inc(rx), PERL_MAGIC_qr,0,0);
     XPUSHs(rv);
@@ -1237,7 +1263,7 @@ PP(pp_match)
     if (!s)
 	DIE(aTHX_ "panic: pp_match");
     strend = s + len;
-    rxtainted = ((rx->extflags & RXf_TAINTED) ||
+    rxtainted = ((RX_EXTFLAGS(rx) & RXf_TAINTED) ||
 		 (PL_tainted && (pm->op_pmflags & PMf_RETAINT)));
     TAINT_NOT;
 
@@ -1260,32 +1286,32 @@ PP(pp_match)
 
 
     /* empty pattern special-cased to use last successful pattern if possible */
-    if (!rx->prelen && PL_curpm) {
+    if (!RX_PRELEN(rx) && PL_curpm) {
 	pm = PL_curpm;
 	rx = PM_GETRE(pm);
     }
 
-    if (rx->minlen > (I32)len)
+    if (RX_MINLEN(rx) > (I32)len)
 	goto failure;
 
     truebase = t = s;
 
     /* XXXX What part of this is needed with true \G-support? */
     if ((global = dynpm->op_pmflags & PMf_GLOBAL)) {
-	rx->offs[0].start = -1;
+	RX_OFFS(rx)[0].start = -1;
 	if (SvTYPE(TARG) >= SVt_PVMG && SvMAGIC(TARG)) {
 	    MAGIC* const mg = mg_find(TARG, PERL_MAGIC_regex_global);
 	    if (mg && mg->mg_len >= 0) {
-		if (!(rx->extflags & RXf_GPOS_SEEN))
-		    rx->offs[0].end = rx->offs[0].start = mg->mg_len;
-		else if (rx->extflags & RXf_ANCH_GPOS) {
+		if (!(RX_EXTFLAGS(rx) & RXf_GPOS_SEEN))
+		    RX_OFFS(rx)[0].end = RX_OFFS(rx)[0].start = mg->mg_len;
+		else if (RX_EXTFLAGS(rx) & RXf_ANCH_GPOS) {
 		    r_flags |= REXEC_IGNOREPOS;
-		    rx->offs[0].end = rx->offs[0].start = mg->mg_len;
-		} else if (rx->extflags & RXf_GPOS_FLOAT) 
+		    RX_OFFS(rx)[0].end = RX_OFFS(rx)[0].start = mg->mg_len;
+		} else if (RX_EXTFLAGS(rx) & RXf_GPOS_FLOAT) 
 		    gpos = mg->mg_len;
 		else 
-		    rx->offs[0].end = rx->offs[0].start = mg->mg_len;
-		minmatch = (mg->mg_flags & MGf_MINMATCH) ? rx->gofs + 1 : 0;
+		    RX_OFFS(rx)[0].end = RX_OFFS(rx)[0].start = mg->mg_len;
+		minmatch = (mg->mg_flags & MGf_MINMATCH) ? RX_GOFS(rx) + 1 : 0;
 		update_minmatch = 0;
 	    }
 	}
@@ -1295,39 +1321,40 @@ PP(pp_match)
        /g matches against large strings.  So far a solution to this problem
        appears to be quite tricky.
        Test for the unsafe vars are TODO for now. */
-    if ((  !global &&  rx->nparens) 
+    if ((  !global && RX_NPARENS(rx)) 
 	    || SvTEMP(TARG) || PL_sawampersand ||
-	    (rx->extflags & (RXf_EVAL_SEEN|RXf_PMf_KEEPCOPY)))
+	    (RX_EXTFLAGS(rx) & (RXf_EVAL_SEEN|RXf_PMf_KEEPCOPY)))
 	r_flags |= REXEC_COPY_STR;
     if (SvSCREAM(TARG))
 	r_flags |= REXEC_SCREAM;
 
 play_it_again:
-    if (global && rx->offs[0].start != -1) {
-	t = s = rx->offs[0].end + truebase - rx->gofs;
-	if ((s + rx->minlen) > strend || s < truebase)
+    if (global && RX_OFFS(rx)[0].start != -1) {
+	t = s = RX_OFFS(rx)[0].end + truebase - RX_GOFS(rx);
+	if ((s + RX_MINLEN(rx)) > strend || s < truebase)
 	    goto nope;
 	if (update_minmatch++)
 	    minmatch = had_zerolen;
     }
-    if (rx->extflags & RXf_USE_INTUIT &&
-	DO_UTF8(TARG) == ((rx->extflags & RXf_UTF8) != 0)) {
+    if (RX_EXTFLAGS(rx) & RXf_USE_INTUIT &&
+	DO_UTF8(TARG) == (RX_UTF8(rx) != 0)) {
 	/* FIXME - can PL_bostr be made const char *?  */
 	PL_bostr = (char *)truebase;
 	s = CALLREG_INTUIT_START(rx, TARG, (char *)s, (char *)strend, r_flags, NULL);
 
 	if (!s)
 	    goto nope;
-	if ( (rx->extflags & RXf_CHECK_ALL)
+	if ( (RX_EXTFLAGS(rx) & RXf_CHECK_ALL)
 	     && !PL_sawampersand
-	     && !(rx->extflags & RXf_PMf_KEEPCOPY)
-	     && ((rx->extflags & RXf_NOSCAN)
-		 || !((rx->extflags & RXf_INTUIT_TAIL)
+	     && !(RX_EXTFLAGS(rx) & RXf_PMf_KEEPCOPY)
+	     && ((RX_EXTFLAGS(rx) & RXf_NOSCAN)
+		 || !((RX_EXTFLAGS(rx) & RXf_INTUIT_TAIL)
 		      && (r_flags & REXEC_SCREAM)))
 	     && !SvROK(TARG))	/* Cannot trust since INTUIT cannot guess ^ */
 	    goto yup;
     }
-    if (CALLREGEXEC(rx, (char*)s, (char *)strend, (char*)truebase, minmatch, TARG, INT2PTR(void*, gpos), r_flags))
+    if (CALLREGEXEC(rx, (char*)s, (char *)strend, (char*)truebase,
+                    minmatch, TARG, NUM2PTR(void*, gpos), r_flags))
     {
 	PL_curpm = pm;
 	if (dynpm->op_pmflags & PMf_ONCE) {
@@ -1348,7 +1375,7 @@ play_it_again:
 	RX_MATCH_TAINTED_on(rx);
     TAINT_IF(RX_MATCH_TAINTED(rx));
     if (gimme == G_ARRAY) {
-	const I32 nparens = rx->nparens;
+	const I32 nparens = RX_NPARENS(rx);
 	I32 i = (global && !nparens) ? 1 : 0;
 
 	SPAGAIN;			/* EVAL blocks could move the stack. */
@@ -1356,10 +1383,10 @@ play_it_again:
 	EXTEND_MORTAL(nparens + i);
 	for (i = !i; i <= nparens; i++) {
 	    PUSHs(sv_newmortal());
-	    if ((rx->offs[i].start != -1) && rx->offs[i].end != -1 ) {
-		const I32 len = rx->offs[i].end - rx->offs[i].start;
-		s = rx->offs[i].start + truebase;
-	        if (rx->offs[i].end < 0 || rx->offs[i].start < 0 ||
+	    if ((RX_OFFS(rx)[i].start != -1) && RX_OFFS(rx)[i].end != -1 ) {
+		const I32 len = RX_OFFS(rx)[i].end - RX_OFFS(rx)[i].start;
+		s = RX_OFFS(rx)[i].start + truebase;
+	        if (RX_OFFS(rx)[i].end < 0 || RX_OFFS(rx)[i].start < 0 ||
 		    len < 0 || len > strend - s)
 		    DIE(aTHX_ "panic: pp_match start/end pointers");
 		sv_setpvn(*SP, s, len);
@@ -1380,17 +1407,17 @@ play_it_again:
 		    mg = sv_magicext(TARG, NULL, PERL_MAGIC_regex_global,
 				     &PL_vtbl_mglob, NULL, 0);
 		}
-		if (rx->offs[0].start != -1) {
-		    mg->mg_len = rx->offs[0].end;
-		    if (rx->offs[0].start + rx->gofs == (UV)rx->offs[0].end)
+		if (RX_OFFS(rx)[0].start != -1) {
+		    mg->mg_len = RX_OFFS(rx)[0].end;
+		    if (RX_OFFS(rx)[0].start + RX_GOFS(rx) == (UV)RX_OFFS(rx)[0].end)
 			mg->mg_flags |= MGf_MINMATCH;
 		    else
 			mg->mg_flags &= ~MGf_MINMATCH;
 		}
 	    }
-	    had_zerolen = (rx->offs[0].start != -1
-			   && (rx->offs[0].start + rx->gofs
-			       == (UV)rx->offs[0].end));
+	    had_zerolen = (RX_OFFS(rx)[0].start != -1
+			   && (RX_OFFS(rx)[0].start + RX_GOFS(rx)
+			       == (UV)RX_OFFS(rx)[0].end));
 	    PUTBACK;			/* EVAL blocks may use stack */
 	    r_flags |= REXEC_IGNOREPOS | REXEC_NOT_FIRST;
 	    goto play_it_again;
@@ -1415,9 +1442,9 @@ play_it_again:
 		mg = sv_magicext(TARG, NULL, PERL_MAGIC_regex_global,
 				 &PL_vtbl_mglob, NULL, 0);
 	    }
-	    if (rx->offs[0].start != -1) {
-		mg->mg_len = rx->offs[0].end;
-		if (rx->offs[0].start + rx->gofs == (UV)rx->offs[0].end)
+	    if (RX_OFFS(rx)[0].start != -1) {
+		mg->mg_len = RX_OFFS(rx)[0].end;
+		if (RX_OFFS(rx)[0].start + RX_GOFS(rx) == (UV)RX_OFFS(rx)[0].end)
 		    mg->mg_flags |= MGf_MINMATCH;
 		else
 		    mg->mg_flags &= ~MGf_MINMATCH;
@@ -1440,24 +1467,24 @@ yup:					/* Confirmed by INTUIT */
 #endif
     }
     if (RX_MATCH_COPIED(rx))
-	Safefree(rx->subbeg);
+	Safefree(RX_SUBBEG(rx));
     RX_MATCH_COPIED_off(rx);
-    rx->subbeg = NULL;
+    RX_SUBBEG(rx) = NULL;
     if (global) {
 	/* FIXME - should rx->subbeg be const char *?  */
-	rx->subbeg = (char *) truebase;
-	rx->offs[0].start = s - truebase;
+	RX_SUBBEG(rx) = (char *) truebase;
+	RX_OFFS(rx)[0].start = s - truebase;
 	if (RX_MATCH_UTF8(rx)) {
-	    char * const t = (char*)utf8_hop((U8*)s, rx->minlenret);
-	    rx->offs[0].end = t - truebase;
+	    char * const t = (char*)utf8_hop((U8*)s, RX_MINLENRET(rx));
+	    RX_OFFS(rx)[0].end = t - truebase;
 	}
 	else {
-	    rx->offs[0].end = s - truebase + rx->minlenret;
+	    RX_OFFS(rx)[0].end = s - truebase + RX_MINLENRET(rx);
 	}
-	rx->sublen = strend - truebase;
+	RX_SUBLEN(rx) = strend - truebase;
 	goto gotcha;
     }
-    if (PL_sawampersand || rx->extflags & RXf_PMf_KEEPCOPY) {
+    if (PL_sawampersand || RX_EXTFLAGS(rx) & RXf_PMf_KEEPCOPY) {
 	I32 off;
 #ifdef PERL_OLD_COPY_ON_WRITE
 	if (SvIsCOW(TARG) || (SvFLAGS(TARG) & CAN_COW_MASK) == CAN_COW_FLAGS) {
@@ -1468,29 +1495,29 @@ yup:					/* Confirmed by INTUIT */
 			      (int)(t-truebase));
 	    }
 	    rx->saved_copy = sv_setsv_cow(rx->saved_copy, TARG);
-	    rx->subbeg = (char *) SvPVX_const(rx->saved_copy) + (t - truebase);
+	    RX_SUBBEG(rx) = (char *) SvPVX_const(rx->saved_copy) + (t - truebase);
 	    assert (SvPOKp(rx->saved_copy));
 	} else
 #endif
 	{
 
-	    rx->subbeg = savepvn(t, strend - t);
+	    RX_SUBBEG(rx) = savepvn(t, strend - t);
 #ifdef PERL_OLD_COPY_ON_WRITE
 	    rx->saved_copy = NULL;
 #endif
 	}
-	rx->sublen = strend - t;
+	RX_SUBLEN(rx) = strend - t;
 	RX_MATCH_COPIED_on(rx);
-	off = rx->offs[0].start = s - t;
-	rx->offs[0].end = off + rx->minlenret;
+	off = RX_OFFS(rx)[0].start = s - t;
+	RX_OFFS(rx)[0].end = off + RX_MINLENRET(rx);
     }
     else {			/* startp/endp are used by @- @+. */
-	rx->offs[0].start = s - truebase;
-	rx->offs[0].end = s - truebase + rx->minlenret;
+	RX_OFFS(rx)[0].start = s - truebase;
+	RX_OFFS(rx)[0].end = s - truebase + RX_MINLENRET(rx);
     }
-    /* including rx->nparens in the below code seems highly suspicious.
+    /* including RX_NPARENS(rx) in the below code seems highly suspicious.
        -dmq */
-    rx->nparens = rx->lastparen = rx->lastcloseparen = 0;	/* used by @-, @+, and $^N */
+    RX_NPARENS(rx) = RX_LASTPAREN(rx) = RX_LASTCLOSEPAREN(rx) = 0;	/* used by @-, @+, and $^N */
     LEAVE_SCOPE(oldsave);
     RETPUSHYES;
 
@@ -1522,10 +1549,10 @@ Perl_do_readline(pTHX)
     const I32 gimme = GIMME_V;
 
     if (io) {
-	MAGIC * const mg = SvTIED_mg((SV*)io, PERL_MAGIC_tiedscalar);
+	MAGIC * const mg = SvTIED_mg((const SV *)io, PERL_MAGIC_tiedscalar);
 	if (mg) {
 	    PUSHMARK(SP);
-	    XPUSHs(SvTIED_obj((SV*)io, mg));
+	    XPUSHs(SvTIED_obj(MUTABLE_SV(io), mg));
 	    PUTBACK;
 	    ENTER;
 	    call_method("READLINE", gimme);
@@ -1549,7 +1576,7 @@ Perl_do_readline(pTHX)
 		    if (av_len(GvAVn(PL_last_in_gv)) < 0) {
 			IoFLAGS(io) &= ~IOf_START;
 			do_open(PL_last_in_gv,"-",1,FALSE,O_RDONLY,0,NULL);
-			sv_setpvn(GvSVn(PL_last_in_gv), "-", 1);
+			sv_setpvs(GvSVn(PL_last_in_gv), "-");
 			SvSETMAGIC(GvSV(PL_last_in_gv));
 			fp = IoIFP(io);
 			goto have_fp;
@@ -1747,7 +1774,7 @@ PP(pp_helem)
     HE* he;
     SV **svp;
     SV * const keysv = POPs;
-    HV * const hv = (HV*)POPs;
+    HV * const hv = MUTABLE_HV(POPs);
     const U32 lval = PL_op->op_flags & OPf_MOD || LVRET;
     const U32 defer = PL_op->op_private & OPpLVAL_DEFER;
     SV *sv;
@@ -1763,12 +1790,12 @@ PP(pp_helem)
 	/* does the element we're localizing already exist? */
 	preeminent = /* can we determine whether it exists? */
 	    (    !SvRMAGICAL(hv)
-		|| mg_find((SV*)hv, PERL_MAGIC_env)
-		|| (     (mg = mg_find((SV*)hv, PERL_MAGIC_tied))
+		|| mg_find((const SV *)hv, PERL_MAGIC_env)
+		|| (     (mg = mg_find((const SV *)hv, PERL_MAGIC_tied))
 			/* Try to preserve the existenceness of a tied hash
 			* element by using EXISTS and DELETE if possible.
 			* Fallback to FETCH and STORE otherwise */
-		    && (stash = SvSTASH(SvRV(SvTIED_obj((SV*)hv, mg))))
+		    && (stash = SvSTASH(SvRV(SvTIED_obj(MUTABLE_SV(hv), mg))))
 		    && gv_fetchmethod_autoload(stash, "EXISTS", TRUE)
 		    && gv_fetchmethod_autoload(stash, "DELETE", TRUE)
 		)
@@ -1795,7 +1822,7 @@ PP(pp_helem)
 	}
 	if (PL_op->op_private & OPpLVAL_INTRO) {
 	    if (HvNAME_get(hv) && isGV(*svp))
-		save_gp((GV*)*svp, !(PL_op->op_flags & OPf_SPECIAL));
+		save_gp(MUTABLE_GV(*svp), !(PL_op->op_flags & OPf_SPECIAL));
 	    else {
 		if (!preeminent) {
 		    STRLEN keylen;
@@ -1899,10 +1926,10 @@ PP(pp_iter)
 	if (cx->blk_loop.iterlval) {
 	    /* string increment */
 	    register SV* cur = cx->blk_loop.iterlval;
+	    /* If the maximum is !SvOK(), pp_enteriter substitutes PL_sv_no.
+	       It has SvPVX of "" and SvCUR of 0, which is what we want.  */
 	    STRLEN maxlen = 0;
-	    const char *max =
-	      SvOK((SV*)av) ?
-	      SvPV_const((SV*)av, maxlen) : (const char *)"";
+	    const char *max = SvPV_const((SV*)av, maxlen);
 	    if (!SvNIOK(cur) && SvCUR(cur) <= maxlen) {
 		if (SvREFCNT(*itersvp) == 1 && !SvMAGICAL(*itersvp)) {
 		    /* safe to reuse old SV */
@@ -1943,6 +1970,15 @@ PP(pp_iter)
 	    *itersvp = newSViv(cx->blk_loop.iterix++);
 	    SvREFCNT_dec(oldsv);
 	}
+
+	/* Handle end of range at IV_MAX */
+	if ((cx->blk_loop.iterix == IV_MIN) &&
+	    (cx->blk_loop.itermax == IV_MAX))
+	{
+	    cx->blk_loop.iterix++;
+	    cx->blk_loop.itermax++;
+	}
+
 	RETPUSHYES;
     }
 
@@ -2024,7 +2060,7 @@ PP(pp_subst)
     I32 maxiters;
     register I32 i;
     bool once;
-    bool rxtainted;
+    U8 rxtainted;
     char *orig;
     I32 r_flags;
     register REGEXP *rx = PM_GETRE(pm);
@@ -2033,6 +2069,7 @@ PP(pp_subst)
     const I32 oldsave = PL_savestack_ix;
     STRLEN slen;
     bool doutf8 = FALSE;
+    I32 matched;
 #ifdef PERL_OLD_COPY_ON_WRITE
     bool is_cow;
 #endif
@@ -2065,13 +2102,13 @@ PP(pp_subst)
 	 || ( ((SvTYPE(TARG) == SVt_PVGV && isGV_with_GP(TARG))
 	       || SvTYPE(TARG) > SVt_PVLV)
 	     && !(SvTYPE(TARG) == SVt_PVGV && SvFAKE(TARG)))))
-	DIE(aTHX_ PL_no_modify);
+	DIE(aTHX_ "%s", PL_no_modify);
     PUTBACK;
 
     s = SvPV_mutable(TARG, len);
     if (!SvPOKp(TARG) || SvTYPE(TARG) == SVt_PVGV)
 	force_on_match = 1;
-    rxtainted = ((rx->extflags & RXf_TAINTED) ||
+    rxtainted = ((RX_EXTFLAGS(rx) & RXf_TAINTED) ||
 		 (PL_tainted && (pm->op_pmflags & PMf_RETAINT)));
     if (PL_tainted)
 	rxtainted |= 2;
@@ -2089,29 +2126,29 @@ PP(pp_subst)
 				   position, once with zero-length,
 				   second time with non-zero. */
 
-    if (!rx->prelen && PL_curpm) {
+    if (!RX_PRELEN(rx) && PL_curpm) {
 	pm = PL_curpm;
 	rx = PM_GETRE(pm);
     }
-    r_flags = (rx->nparens || SvTEMP(TARG) || PL_sawampersand
-	    || (rx->extflags & (RXf_EVAL_SEEN|RXf_PMf_KEEPCOPY)) )
+    r_flags = (RX_NPARENS(rx) || SvTEMP(TARG) || PL_sawampersand
+	    || (RX_EXTFLAGS(rx) & (RXf_EVAL_SEEN|RXf_PMf_KEEPCOPY)) )
 	       ? REXEC_COPY_STR : 0;
     if (SvSCREAM(TARG))
 	r_flags |= REXEC_SCREAM;
 
     orig = m = s;
-    if (rx->extflags & RXf_USE_INTUIT) {
+    if (RX_EXTFLAGS(rx) & RXf_USE_INTUIT) {
 	PL_bostr = orig;
 	s = CALLREG_INTUIT_START(rx, TARG, s, strend, r_flags, NULL);
 
 	if (!s)
 	    goto nope;
 	/* How to do it in subst? */
-/*	if ( (rx->extflags & RXf_CHECK_ALL)
+/*	if ( (RX_EXTFLAGS(rx) & RXf_CHECK_ALL)
 	     && !PL_sawampersand
-	     && !(rx->extflags & RXf_KEEPCOPY)
-	     && ((rx->extflags & RXf_NOSCAN)
-		 || !((rx->extflags & RXf_INTUIT_TAIL)
+	     && !(RX_EXTFLAGS(rx) & RXf_KEEPCOPY)
+	     && ((RX_EXTFLAGS(rx) & RXf_NOSCAN)
+		 || !((RX_EXTFLAGS(rx) & RXf_INTUIT_TAIL)
 		      && (r_flags & REXEC_SCREAM))))
 	    goto yup;
 */
@@ -2119,7 +2156,8 @@ PP(pp_subst)
 
     /* only replace once? */
     once = !(rpm->op_pmflags & PMf_GLOBAL);
-
+    matched = CALLREGEXEC(rx, s, strend, orig, 0, TARG, NULL,
+			 r_flags | REXEC_CHECKED);
     /* known replacement string? */
     if (dstr) {
 	/* replacement needing upgrading? */
@@ -2148,11 +2186,10 @@ PP(pp_subst)
 #ifdef PERL_OLD_COPY_ON_WRITE
 	&& !is_cow
 #endif
-	&& (I32)clen <= rx->minlenret && (once || !(r_flags & REXEC_COPY_STR))
-	&& !(rx->extflags & RXf_LOOKBEHIND_SEEN)
+	&& (I32)clen <= RX_MINLENRET(rx) && (once || !(r_flags & REXEC_COPY_STR))
+	&& !(RX_EXTFLAGS(rx) & RXf_LOOKBEHIND_SEEN)
 	&& (!doutf8 || SvUTF8(TARG))) {
-	if (!CALLREGEXEC(rx, s, strend, orig, 0, TARG, NULL,
-			 r_flags | REXEC_CHECKED))
+	if (!matched)
 	{
 	    SPAGAIN;
 	    PUSHs(&PL_sv_no);
@@ -2175,8 +2212,8 @@ PP(pp_subst)
 	SvSCREAM_off(TARG);	/* disable possible screamer */
 	if (once) {
 	    rxtainted |= RX_MATCH_TAINTED(rx);
-	    m = orig + rx->offs[0].start;
-	    d = orig + rx->offs[0].end;
+	    m = orig + RX_OFFS(rx)[0].start;
+	    d = orig + RX_OFFS(rx)[0].end;
 	    s = orig;
 	    if (m - s > strend - d) {  /* faster to shorten from end */
 		if (clen) {
@@ -2194,10 +2231,8 @@ PP(pp_subst)
 	    else if ((i = m - s)) {	/* faster from front */
 		d -= clen;
 		m = d;
+		Move(s, d - i, i, char);
 		sv_chop(TARG, d-i);
-		s += i;
-		while (i--)
-		    *--d = *--s;
 		if (clen)
 		    Copy(c, m, clen, char);
 	    }
@@ -2218,7 +2253,7 @@ PP(pp_subst)
 		if (iters++ > maxiters)
 		    DIE(aTHX_ "Substitution loop");
 		rxtainted |= RX_MATCH_TAINTED(rx);
-		m = rx->offs[0].start + orig;
+		m = RX_OFFS(rx)[0].start + orig;
 		if ((i = m - s)) {
 		    if (s != d)
 			Move(s, d, i, char);
@@ -2228,7 +2263,7 @@ PP(pp_subst)
 		    Copy(c, d, clen, char);
 		    d += clen;
 		}
-		s = rx->offs[0].end + orig;
+		s = RX_OFFS(rx)[0].end + orig;
 	    } while (CALLREGEXEC(rx, s, strend, orig, s == m,
 				 TARG, NULL,
 				 /* don't match same null twice */
@@ -2240,7 +2275,7 @@ PP(pp_subst)
 	    }
 	    TAINT_IF(rxtainted & 1);
 	    SPAGAIN;
-	    PUSHs(sv_2mortal(newSViv((I32)iters)));
+	    mPUSHi((I32)iters);
 	}
 	(void)SvPOK_only_UTF8(TARG);
 	TAINT_IF(rxtainted);
@@ -2256,8 +2291,7 @@ PP(pp_subst)
 	RETURN;
     }
 
-    if (CALLREGEXEC(rx, s, strend, orig, 0, TARG, NULL,
-		    r_flags | REXEC_CHECKED))
+    if (matched)
     {
 	if (force_on_match) {
 	    force_on_match = 0;
@@ -2268,10 +2302,8 @@ PP(pp_subst)
       have_a_cow:
 #endif
 	rxtainted |= RX_MATCH_TAINTED(rx);
-	dstr = newSVpvn(m, s-m);
+	dstr = newSVpvn_utf8(m, s-m, DO_UTF8(TARG));
 	SAVEFREESV(dstr);
-	if (DO_UTF8(TARG))
-	    SvUTF8_on(dstr);
 	PL_curpm = pm;
 	if (!c) {
 	    register PERL_CONTEXT *cx;
@@ -2284,19 +2316,19 @@ PP(pp_subst)
 	    if (iters++ > maxiters)
 		DIE(aTHX_ "Substitution loop");
 	    rxtainted |= RX_MATCH_TAINTED(rx);
-	    if (RX_MATCH_COPIED(rx) && rx->subbeg != orig) {
+	    if (RX_MATCH_COPIED(rx) && RX_SUBBEG(rx) != orig) {
 		m = s;
 		s = orig;
-		orig = rx->subbeg;
+		orig = RX_SUBBEG(rx);
 		s = orig + (m - s);
 		strend = s + (strend - m);
 	    }
-	    m = rx->offs[0].start + orig;
+	    m = RX_OFFS(rx)[0].start + orig;
 	    if (doutf8 && !SvUTF8(dstr))
 		sv_catpvn_utf8_upgrade(dstr, s, m - s, nsv);
             else
 		sv_catpvn(dstr, s, m-s);
-	    s = rx->offs[0].end + orig;
+	    s = RX_OFFS(rx)[0].end + orig;
 	    if (clen)
 		sv_catpvn(dstr, c, clen);
 	    if (once)
@@ -2329,7 +2361,7 @@ PP(pp_subst)
 
 	TAINT_IF(rxtainted & 1);
 	SPAGAIN;
-	PUSHs(sv_2mortal(newSViv((I32)iters)));
+	mPUSHi((I32)iters);
 
 	(void)SvPOK_only(TARG);
 	if (doutf8)
@@ -2395,7 +2427,7 @@ PP(pp_grepwhile)
 	if (PL_op->op_private & OPpGREP_LEX)
 	    PAD_SVl(PL_op->op_targ) = src;
 	else
-	    DEFSV = src;
+	    DEFSV_set(src);
 
 	RETURNOP(cLOGOP->op_other);
     }
@@ -2482,7 +2514,7 @@ PP(pp_leavesublv)
 
     TAINT_NOT;
 
-    if (cx->blk_sub.lval & OPpENTERSUB_INARGS) {
+    if (CxLVAL(cx) & OPpENTERSUB_INARGS) {
 	/* We are an argument to a function or grep().
 	 * This kind of lvalueness was legal before lvalue
 	 * subroutines too, so be backward compatible:
@@ -2509,7 +2541,7 @@ PP(pp_leavesublv)
 	    }
 	}
     }
-    else if (cx->blk_sub.lval) {     /* Leave it as it is if we can. */
+    else if (CxLVAL(cx)) {     /* Leave it as it is if we can. */
 	/* Here we go for robustness, not for speed, so we change all
 	 * the refcounts so the caller gets a live guy. Cannot set
 	 * TEMP, so sv_2mortal is out of question. */
@@ -2640,7 +2672,9 @@ PP(pp_entersub)
     switch (SvTYPE(sv)) {
 	/* This is overwhelming the most common case:  */
     case SVt_PVGV:
-	if (!(cv = GvCVu((GV*)sv))) {
+	if (!isGV_with_GP(sv))
+	    DIE(aTHX_ "Not a CODE reference");
+	if (!(cv = GvCVu((const GV *)sv))) {
 	    HV *stash;
 	    cv = sv_2cv(sv, &stash, &gv, 0);
 	}
@@ -2686,7 +2720,7 @@ PP(pp_entersub)
 	    SV * const * sp = &sv;		/* Used in tryAMAGICunDEREF macro. */
 	    tryAMAGICunDEREF(to_cv);
 	}	
-	cv = (CV*)SvRV(sv);
+	cv = MUTABLE_CV(SvRV(sv));
 	if (SvTYPE(cv) == SVt_PVCV)
 	    break;
 	/* FALL THROUGH */
@@ -2695,7 +2729,7 @@ PP(pp_entersub)
 	DIE(aTHX_ "Not a CODE reference");
 	/* This is the second most common case:  */
     case SVt_PVCV:
-	cv = (CV*)sv;
+	cv = MUTABLE_CV(sv);
 	break;
     }
 
@@ -2740,7 +2774,14 @@ try_autoload:
 	 Perl_get_db_sub(aTHX_ &sv, cv);
 	 if (CvISXSUB(cv))
 	     PL_curcopdb = PL_curcop;
-	 cv = GvCV(PL_DBsub);
+         if (CvLVALUE(cv)) {
+             /* check for lsub that handles lvalue subroutines */
+	     cv = GvCV(gv_HVadd(gv_fetchpv("DB::lsub", GV_ADDMULTI, SVt_PVHV)));
+             /* if lsub not found then fall back to DB::sub */
+	     if (!cv) cv = GvCV(PL_DBsub);
+         } else {
+             cv = GvCV(PL_DBsub);
+         }
 
 	if (!cv || (!CvXSUB(cv) && !CvSTART(cv)))
 	    DIE(aTHX_ "No DB::sub routine defined");
@@ -2767,7 +2808,7 @@ try_autoload:
 	SAVECOMPPAD();
 	PAD_SET_CUR_NOSAVE(padlist, CvDEPTH(cv));
 	if (hasargs) {
-	    AV* const av = (AV*)PAD_SVl(0);
+	    AV *const av = MUTABLE_AV(PAD_SVl(0));
 	    if (AvREAL(av)) {
 		/* @_ is normally not REAL--this should only ever
 		 * happen when DB::sub() calls things that modify @_ */
@@ -2776,7 +2817,7 @@ try_autoload:
 		AvREIFY_on(av);
 	    }
 	    cx->blk_sub.savearray = GvAV(PL_defgv);
-	    GvAV(PL_defgv) = (AV*)SvREFCNT_inc_simple(av);
+	    GvAV(PL_defgv) = MUTABLE_AV(SvREFCNT_inc_simple(av));
 	    CX_CURPAD_SAVE(cx->blk_sub);
 	    cx->blk_sub.argarray = av;
 	    ++MARK;
@@ -2807,7 +2848,7 @@ try_autoload:
 	 * stuff so that __WARN__ handlers can safely dounwind()
 	 * if they want to
 	 */
-	if (CvDEPTH(cv) == 100 && ckWARN(WARN_RECURSION)
+	if (CvDEPTH(cv) == PERL_SUB_DEPTH_WARN && ckWARN(WARN_RECURSION)
 	    && !(PERLDB_SUB && cv == GvCV(PL_DBsub)))
 	    sub_crush_depth(cv);
 #if 0
@@ -2862,6 +2903,8 @@ try_autoload:
 void
 Perl_sub_crush_depth(pTHX_ CV *cv)
 {
+    PERL_ARGS_ASSERT_SUB_CRUSH_DEPTH;
+
     if (CvANON(cv))
 	Perl_warner(aTHX_ packWARN(WARN_RECURSION), "Deep recursion on anonymous subroutine");
     else {
@@ -2878,7 +2921,7 @@ PP(pp_aelem)
     SV** svp;
     SV* const elemsv = POPs;
     IV elem = SvIV(elemsv);
-    AV* const av = (AV*)POPs;
+    AV *const av = MUTABLE_AV(POPs);
     const U32 lval = PL_op->op_flags & OPf_MOD || LVRET;
     const U32 defer = (PL_op->op_private & OPpLVAL_DEFER) && (elem > av_len(av));
     SV *sv;
@@ -2935,26 +2978,22 @@ PP(pp_aelem)
 void
 Perl_vivify_ref(pTHX_ SV *sv, U32 to_what)
 {
+    PERL_ARGS_ASSERT_VIVIFY_REF;
+
     SvGETMAGIC(sv);
     if (!SvOK(sv)) {
 	if (SvREADONLY(sv))
-	    Perl_croak(aTHX_ PL_no_modify);
-	if (SvTYPE(sv) < SVt_RV)
-	    sv_upgrade(sv, SVt_RV);
-	else if (SvTYPE(sv) >= SVt_PV) {
-	    SvPV_free(sv);
-            SvLEN_set(sv, 0);
-	    SvCUR_set(sv, 0);
-	}
+	    Perl_croak(aTHX_ "%s", PL_no_modify);
+	prepare_SV_for_RV(sv);
 	switch (to_what) {
 	case OPpDEREF_SV:
 	    SvRV_set(sv, newSV(0));
 	    break;
 	case OPpDEREF_AV:
-	    SvRV_set(sv, (SV*)newAV());
+	    SvRV_set(sv, MUTABLE_SV(newAV()));
 	    break;
 	case OPpDEREF_HV:
-	    SvRV_set(sv, (SV*)newHV());
+	    SvRV_set(sv, MUTABLE_SV(newHV()));
 	    break;
 	}
 	SvROK_on(sv);
@@ -3003,12 +3042,14 @@ S_method_common(pTHX_ SV* meth, U32* hashp)
     const char * const name = SvPV_const(meth, namelen);
     SV * const sv = *(PL_stack_base + TOPMARK + 1);
 
+    PERL_ARGS_ASSERT_METHOD_COMMON;
+
     if (!sv)
 	Perl_croak(aTHX_ "Can't call method \"%s\" on an undefined value", name);
 
     SvGETMAGIC(sv);
     if (SvROK(sv))
-	ob = (SV*)SvRV(sv);
+	ob = MUTABLE_SV(SvRV(sv));
     else {
 	GV* iogv;
 
@@ -3024,7 +3065,7 @@ S_method_common(pTHX_ SV* meth, U32* hashp)
 	if (!SvOK(sv) ||
 	    !(packname) ||
 	    !(iogv = gv_fetchsv(sv, 0, SVt_PVIO)) ||
-	    !(ob=(SV*)GvIO(iogv)))
+	    !(ob=MUTABLE_SV(GvIO(iogv))))
 	{
 	    /* this isn't the name of a filehandle either */
 	    if (!packname ||
@@ -3048,12 +3089,14 @@ S_method_common(pTHX_ SV* meth, U32* hashp)
 	    goto fetch;
 	}
 	/* it _is_ a filehandle name -- replace with a reference */
-	*(PL_stack_base + TOPMARK + 1) = sv_2mortal(newRV((SV*)iogv));
+	*(PL_stack_base + TOPMARK + 1) = sv_2mortal(newRV(MUTABLE_SV(iogv)));
     }
 
     /* if we got here, ob should be a reference or a glob */
     if (!ob || !(SvOBJECT(ob)
-		 || (SvTYPE(ob) == SVt_PVGV && (ob = (SV*)GvIO((GV*)ob))
+		 || (SvTYPE(ob) == SVt_PVGV 
+		     && isGV_with_GP(ob)
+		     && (ob = MUTABLE_SV(GvIO((const GV *)ob)))
 		     && SvOBJECT(ob))))
     {
 	Perl_croak(aTHX_ "Can't call method \"%s\" on unblessed reference",
@@ -3071,15 +3114,15 @@ S_method_common(pTHX_ SV* meth, U32* hashp)
     if (hashp) {
 	const HE* const he = hv_fetch_ent(stash, meth, 0, *hashp);
 	if (he) {
-	    gv = (GV*)HeVAL(he);
+	    gv = MUTABLE_GV(HeVAL(he));
 	    if (isGV(gv) && GvCV(gv) &&
 		(!GvCVGEN(gv) || GvCVGEN(gv)
                   == (PL_sub_generation + HvMROMETA(stash)->cache_gen)))
-		return (SV*)GvCV(gv);
+		return MUTABLE_SV(GvCV(gv));
 	}
     }
 
-    gv = gv_fetchmethod(stash ? stash : (HV*)packsv, name);
+    gv = gv_fetchmethod(stash ? stash : MUTABLE_HV(packsv), name);
 
     if (!gv) {
 	/* This code tries to figure out just what went wrong with
@@ -3154,7 +3197,7 @@ S_method_common(pTHX_ SV* meth, U32* hashp)
 		       leaf, (int)packlen, packname, (int)packlen, packname);
 	}
     }
-    return isGV(gv) ? (SV*)GvCV(gv) : (SV*)gv;
+    return isGV(gv) ? MUTABLE_SV(GvCV(gv)) : MUTABLE_SV(gv);
 }
 
 /*

@@ -3,7 +3,7 @@ use 5.006;
 use strict;
 use warnings;
 use warnings::register;
-our $VERSION = '1.12';
+our $VERSION = '1.14';
 require Exporter;
 require Cwd;
 
@@ -78,13 +78,14 @@ Here are the possible keys for the hash:
 =item C<wanted>
 
 The value should be a code reference.  This code reference is
-described in L<The wanted function> below.
+described in L<The wanted function> below. The C<&wanted> subroutine is
+mandatory.
 
 =item C<bydepth>
 
 Reports the name of a directory only AFTER all its entries
 have been reported.  Entry point C<finddepth()> is a shortcut for
-specifying C<<{ bydepth => 1 }>> in the first argument of C<find()>.
+specifying C<< { bydepth => 1 } >> in the first argument of C<find()>.
 
 =item C<preprocess>
 
@@ -241,7 +242,7 @@ table below summarizes all variants:
               /etc/x             /etc              /etc/x
 
 
-When <follow> or <follow_fast> are in effect, there is
+When C<follow> or C<follow_fast> are in effect, there is
 also a C<$File::Find::fullname>.  The function may set
 C<$File::Find::prune> to prune the tree unless C<bydepth> was
 specified.  Unless C<follow> or C<follow_fast> is specified, for
@@ -409,6 +410,10 @@ hierarchy.
 File::Find used to produce incorrect results if called recursively.
 During the development of perl 5.8 this bug was fixed.
 The first fixed version of File::Find was 1.01.
+
+=head1 SEE ALSO
+
+find, find2perl.
 
 =cut
 
@@ -795,7 +800,7 @@ sub _find_dir($$$) {
     if ($Is_MacOS) {
 	$dir_pref= ($p_dir =~ /:$/) ? $p_dir : "$p_dir:"; # preface
     } elsif ($^O eq 'MSWin32') {
-	$dir_pref = ($p_dir =~ m|\w:/$| ? $p_dir : "$p_dir/" );
+	$dir_pref = ($p_dir =~ m|\w:/?$| ? $p_dir : "$p_dir/" );
     } elsif ($^O eq 'VMS') {
 
 	#	VMS is returning trailing .dir on directories
@@ -987,7 +992,7 @@ sub _find_dir($$$) {
 		$dir_pref = "$dir_name:";
 	    }
 	    elsif ($^O eq 'MSWin32') {
-		$dir_name = ($p_dir =~ m|\w:/$| ? "$p_dir$dir_rel" : "$p_dir/$dir_rel");
+		$dir_name = ($p_dir =~ m|\w:/?$| ? "$p_dir$dir_rel" : "$p_dir/$dir_rel");
 		$dir_pref = "$dir_name/";
 	    }
 	    elsif ($^O eq 'VMS') {
@@ -1266,6 +1271,9 @@ sub _find_dir_symlnk($$$) {
 sub wrap_wanted {
     my $wanted = shift;
     if ( ref($wanted) eq 'HASH' ) {
+        unless( exists $wanted->{wanted} and ref( $wanted->{wanted} ) eq 'CODE' ) {
+            die 'no &wanted subroutine given';
+        }
 	if ( $wanted->{follow} || $wanted->{follow_fast}) {
 	    $wanted->{follow_skip} = 1 unless defined $wanted->{follow_skip};
 	}
@@ -1276,8 +1284,11 @@ sub wrap_wanted {
 	}
 	return $wanted;
     }
-    else {
+    elsif( ref( $wanted ) eq 'CODE' ) {
 	return { wanted => $wanted };
+    }
+    else {
+       die 'no &wanted subroutine given';
     }
 }
 

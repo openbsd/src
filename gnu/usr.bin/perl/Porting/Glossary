@@ -34,7 +34,7 @@ afsroot (afs.U):
 	This variable is by default set to '/afs'. In the unlikely case
 	this is not the correct root, it is possible to override this with
 	a hint value or command line option.  This will be used in subsequent
-	tests for AFSness in the Perl configure and test process.
+	tests for AFSness in the configure and test process.
 
 alignbytes (alignbytes.U):
 	This variable holds the number of bytes required to align a
@@ -142,7 +142,7 @@ baserev (baserev.U):
 
 bash (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 bin (bin.U):
 	This variable holds the name of the directory in which the user wants
@@ -246,7 +246,7 @@ cf_time (cf_who.U):
 
 chgrp (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 chmod (Loc.U):
 	This variable is used internally by Configure to determine the
@@ -255,7 +255,7 @@ chmod (Loc.U):
 
 chown (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 clocktype (d_times.U):
 	This variable holds the type returned by times(). It can be long,
@@ -269,7 +269,7 @@ comm (Loc.U):
 
 compress (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 contains (contains.U):
 	This variable holds the command to do a grep with a proper return
@@ -284,7 +284,7 @@ cp (Loc.U):
 
 cpio (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 cpp (Loc.U):
 	This variable is used internally by Configure to determine the
@@ -389,6 +389,10 @@ d_archlib (archlib.U):
 	of architecture-dependent library files for $package.  If
 	$archlib is the same as $privlib, then this is set to undef.
 
+d_asctime64 (d_timefuncs64.U):
+	This variable conditionally defines the HAS_ASCTIME64 symbol, which
+	indicates to the C program that the asctime64 () routine is available.
+
 d_asctime_r (d_asctime_r.U):
 	This variable conditionally defines the HAS_ASCTIME_R symbol,
 	which indicates to the C program that the asctime_r()
@@ -401,6 +405,11 @@ d_atolf (atolf.U):
 d_atoll (atoll.U):
 	This variable conditionally defines the HAS_ATOLL symbol, which
 	indicates to the C program that the atoll() routine is available.
+
+d_attribute_deprecated (d_attribut.U):
+	This variable conditionally defines HASATTRIBUTE_DEPRECATED, which
+	indicates that GCC can handle the attribute for marking deprecated
+	APIs
 
 d_attribute_format (d_attribut.U):
 	This variable conditionally defines HASATTRIBUTE_FORMAT, which
@@ -563,6 +572,10 @@ d_ctermid_r (d_ctermid_r.U):
 	which indicates to the C program that the ctermid_r()
 	routine is available.
 
+d_ctime64 (d_timefuncs64.U):
+	This variable conditionally defines the HAS_CTIME64 symbol, which
+	indicates to the C program that the ctime64 () routine is available.
+
 d_ctime_r (d_ctime_r.U):
 	This variable conditionally defines the HAS_CTIME_R symbol,
 	which indicates to the C program that the ctime_r()
@@ -587,6 +600,10 @@ d_dbminitproto (d_dbminitproto.U):
 d_difftime (d_difftime.U):
 	This variable conditionally defines the HAS_DIFFTIME symbol, which
 	indicates to the C program that the difftime() routine is available.
+
+d_difftime64 (d_timefuncs64.U):
+	This variable conditionally defines the HAS_DIFFTIME64 symbol, which
+	indicates to the C program that the difftime64 () routine is available.
 
 d_dir_dd_fd (d_dir_dd_fd.U):
 	This variable conditionally defines the HAS_DIR_DD_FD symbol, which
@@ -864,6 +881,29 @@ d_Gconvert (d_gconvert.U):
 	call-back unit so that long doubles can be formatted without
 	loss of precision.
 
+d_gdbm_ndbm_h_uses_prototypes (i_ndbm.U):
+	This variable conditionally defines the NDBM_H_USES_PROTOTYPES symbol,
+	which indicates that the gdbm-ndbm.h include file uses real ANSI C
+	prototypes instead of K&R style function declarations. K&R style
+	declarations are unsupported in C++, so the include file requires
+	special handling when using a C++ compiler and this variable is
+	undefined. Consult the different d_*ndbm_h_uses_prototypes variables
+	to get the same information for alternative ndbm.h include files.
+
+d_gdbmndbm_h_uses_prototypes (i_ndbm.U):
+	This variable conditionally defines the NDBM_H_USES_PROTOTYPES symbol,
+	which indicates that the gdbm/ndbm.h include file uses real ANSI C
+	prototypes instead of K&R style function declarations. K&R style
+	declarations are unsupported in C++, so the include file requires
+	special handling when using a C++ compiler and this variable is
+	undefined. Consult the different d_*ndbm_h_uses_prototypes variables
+	to get the same information for alternative ndbm.h include files.
+
+d_getaddrinfo (d_getaddrinfo.U):
+	This variable conditionally defines the HAS_GETADDRINFO symbol,
+	which indicates to the C program that the getaddrinfo() function
+	is available.
+
 d_getcwd (d_getcwd.U):
 	This variable conditionally defines the HAS_GETCWD symbol, which
 	indicates to the C program that the getcwd() routine is available
@@ -965,6 +1005,11 @@ d_getmntent (d_getmntent.U):
 	This variable conditionally defines the HAS_GETMNTENT symbol, which
 	indicates to the C program that the getmntent() routine is available
 	to iterate through mounted files to get their mount info.
+
+d_getnameinfo (d_getnameinfo.U):
+	This variable conditionally defines the HAS_GETNAMEINFO symbol,
+	which indicates to the C program that the getnameinfo() function
+	is available.
 
 d_getnbyaddr (d_getnbyad.U):
 	This variable conditionally defines the HAS_GETNETBYADDR symbol, which
@@ -1140,6 +1185,10 @@ d_gettimeod (d_ftime.U):
 	indicates that the gettimeofday() system call exists (to obtain a
 	sub-second accuracy clock). You should probably include <sys/resource.h>.
 
+d_gmtime64 (d_timefuncs64.U):
+	This variable conditionally defines the HAS_GMTIME64 symbol, which
+	indicates to the C program that the gmtime64 () routine is available.
+
 d_gmtime_r (d_gmtime_r.U):
 	This variable conditionally defines the HAS_GMTIME_R symbol,
 	which indicates to the C program that the gmtime_r()
@@ -1178,6 +1227,16 @@ d_inetaton (d_inetaton.U):
 	This variable conditionally defines the HAS_INET_ATON symbol, which
 	indicates to the C program that the inet_aton() function is available
 	to parse IP address "dotted-quad" strings.
+
+d_inetntop (d_inetntop.U):
+	This variable conditionally defines the HAS_INETNTOP symbol,
+	which indicates to the C program that the inet_ntop() function
+	is available.
+
+d_inetpton (d_inetpton.U):
+	This variable conditionally defines the HAS_INETPTON symbol,
+	which indicates to the C program that the inet_pton() function
+	is available.
 
 d_int64_t (d_int64_t.U):
 	This symbol will be defined if the C compiler supports int64_t.
@@ -1225,6 +1284,10 @@ d_libm_lib_version (d_libm_lib_version.U):
 d_link (d_link.U):
 	This variable conditionally defines HAS_LINK if link() is
 	available to create hard links.
+
+d_localtime64 (d_timefuncs64.U):
+	This variable conditionally defines the HAS_LOCALTIME64 symbol, which
+	indicates to the C program that the localtime64 () routine is available.
 
 d_localtime_r (d_localtime_r.U):
 	This variable conditionally defines the HAS_LOCALTIME_R symbol,
@@ -1342,6 +1405,10 @@ d_mktime (d_mktime.U):
 	This variable conditionally defines the HAS_MKTIME symbol, which
 	indicates to the C program that the mktime() routine is available.
 
+d_mktime64 (d_timefuncs64.U):
+	This variable conditionally defines the HAS_MKTIME64 symbol, which
+	indicates to the C program that the mktime64 () routine is available.
+
 d_mmap (d_mmap.U):
 	This variable conditionally defines HAS_MMAP if mmap() is
 	available to map a file into memory.
@@ -1428,6 +1495,23 @@ d_mymalloc (mallocsrc.U):
 	This variable conditionally defines MYMALLOC in case other parts
 	of the source want to take special action if MYMALLOC is used.
 	This may include different sorts of profiling or error detection.
+
+d_ndbm (i_ndbm.U):
+	This variable conditionally defines the HAS_NDBM symbol, which
+	indicates that both the ndbm.h include file and an appropriate ndbm
+	library exist.  Consult the different i_*ndbm variables
+	to find out the actual include location.  Sometimes, a system has the
+	header file but not the library.  This variable will only be set if
+	the system has both.
+
+d_ndbm_h_uses_prototypes (i_ndbm.U):
+	This variable conditionally defines the NDBM_H_USES_PROTOTYPES symbol,
+	which indicates that the ndbm.h include file uses real ANSI C
+	prototypes instead of K&R style function declarations. K&R style
+	declarations are unsupported in C++, so the include file requires
+	special handling when using a C++ compiler and this variable is
+	undefined. Consult the different d_*ndbm_h_uses_prototypes variables
+	to get the same information for alternative ndbm.h include files.
 
 d_nice (d_nice.U):
 	This variable conditionally defines the HAS_NICE symbol, which
@@ -2205,6 +2289,10 @@ d_time (d_time.U):
 	that the time() routine exists.  The time() routine is normaly
 	provided on UNIX systems.
 
+d_timegm (d_timegm.U):
+	This variable conditionally defines the HAS_TIMEGM symbol, which
+	indicates to the C program that the timegm () routine is available.
+
 d_times (d_times.U):
 	This variable conditionally defines the HAS_TIMES symbol, which indicates
 	that the times() routine exists.  The times() routine is normaly
@@ -2414,6 +2502,9 @@ drand48_r_proto (d_drand48_r.U):
 	REENTRANT_PROTO_T_ABC macros of reentr.h if d_drand48_r
 	is defined.
 
+dtrace (usedtrace.U):
+	This variable holds the location of the dtrace executable.
+
 dynamic_ext (Extensions.U):
 	This variable holds a list of XS extension files we want to
 	link dynamically into the package.  It is used by Makefile.
@@ -2441,7 +2532,7 @@ egrep (Loc.U):
 
 emacs (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 endgrent_r_proto (d_endgrent_r.U):
 	This variable encodes the prototype of endgrent_r.
@@ -2498,6 +2589,10 @@ extensions (Extensions.U):
 	and is typically used to test whether a particular extesion
 	is available.
 
+extern_C (Csym.U):
+	ANSI C requires 'extern' where C++ requires 'extern "C"'. This
+	variable can be used in Configure to do the right thing.
+
 extras (Extras.U):
 	This variable holds a list of extra modules to install.
 
@@ -2514,7 +2609,7 @@ fflushNULL (fflushall.U):
 
 find (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 firstmakefile (Unix.U):
 	This variable defines the first file searched by make.  On unix,
@@ -2524,7 +2619,7 @@ firstmakefile (Unix.U):
 
 flex (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 fpossize (fpossize.U):
 	This variable contains the size of a fpostype in bytes.
@@ -2824,6 +2919,11 @@ i_arpainet (i_arpainet.U):
 	This variable conditionally defines the I_ARPA_INET symbol,
 	and indicates whether a C program should include <arpa/inet.h>.
 
+i_assert (i_assert.U):
+	This variable conditionally defines the I_ASSERT symbol, which
+	indicates to the C program that <assert.h> exists and could be
+	included.
+
 i_bsdioctl (i_sysioctl.U):
 	This variable conditionally defines the I_SYS_BSDIOCTL symbol, which
 	indicates to the C program that <sys/bsdioctl.h> exists and should
@@ -2878,6 +2978,18 @@ i_gdbm (i_gdbm.U):
 	indicates to the C program that <gdbm.h> exists and should
 	be included.
 
+i_gdbm_ndbm (i_ndbm.U):
+	This variable conditionally defines the I_GDBM_NDBM symbol, which
+	indicates to the C program that <gdbm-ndbm.h> exists and should
+	be included.  This is the location of the ndbm.h compatibility file
+	in Debian 4.0.
+
+i_gdbmndbm (i_ndbm.U):
+	This variable conditionally defines the I_GDBMNDBM symbol, which
+	indicates to the C program that <gdbm/ndbm.h> exists and should
+	be included.  This was the location of the ndbm.h compatibility file
+	in RedHat 7.1.
+
 i_grp (i_grp.U):
 	This variable conditionally defines the I_GRP symbol, and indicates
 	whether a C program should include <grp.h>.
@@ -2914,6 +3026,10 @@ i_machcthr (i_machcthr.U):
 i_malloc (i_malloc.U):
 	This variable conditionally defines the I_MALLOC symbol, and indicates
 	whether a C program should include <malloc.h>.
+
+i_mallocmalloc (i_mallocmalloc.U):
+	This variable conditionally defines the I_MALLOCMALLOC symbol,
+	and indicates whether a C program should include <malloc/malloc.h>.
 
 i_math (i_math.U):
 	This variable conditionally defines the I_MATH symbol, and indicates
@@ -3062,6 +3178,10 @@ i_sysparam (i_sysparam.U):
 	This variable conditionally defines the I_SYS_PARAM symbol, and indicates
 	whether a C program should include <sys/param.h>.
 
+i_syspoll (i_syspoll.U):
+	This variable conditionally defines the I_SYS_POLL symbol, which
+	indicates to the C program that it should include <sys/poll.h>.
+
 i_sysresrc (i_sysresrc.U):
 	This variable conditionally defines the I_SYS_RESOURCE symbol,
 	and indicates whether a C program should include <sys/resource.h>.
@@ -3205,7 +3325,7 @@ incpath (usrinc.U):
 
 inews (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 initialinstalllocation (bin.U):
 	When userelocatableinc is true, this variable holds the location
@@ -3419,7 +3539,7 @@ known_extensions (Extensions.U):
 
 ksh (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 ld (dlsrc.U):
 	This variable indicates the program to be used to link
@@ -3501,11 +3621,11 @@ libswanted_uselargefiles (uselfs.U):
 
 line (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 lint (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 lkflags (ccflags.U):
 	This variable contains any additional C partial linker flags desired by
@@ -3555,11 +3675,11 @@ longsize (intsize.U):
 
 lp (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 lpr (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 ls (Loc.U):
 	This variable is used internally by Configure to determine the
@@ -3594,11 +3714,11 @@ madlysrc (mad.U):
 
 mail (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 mailx (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 make (Loc.U):
 	This variable is used internally by Configure to determine the
@@ -3615,7 +3735,7 @@ make_set_make (make.U):
 
 	make_set_make="MAKE=$make"	# if it doesn't.
 
-	This uses a comment character to distinguish a
+	This uses a comment character so that we can distinguish a
 	'set' value (from a previous config.sh or Configure '-D' option)
 	from an uncomputed value.
 
@@ -3664,11 +3784,6 @@ man3ext (man3dir.U):
 	have: one of 'n', 'l', or '3'.  The Makefile must supply the '.'.
 	See man3dir.
 
-Mcc (Loc.U):
-	This variable is used internally by Configure to determine the
-	full pathname (if any) of the Mcc program.  After Configure runs,
-	the value is reset to a plain "Mcc" and is not useful.
-
 mips_type (usrinc.U):
 	This variable holds the environment type for the mips system.
 	Possible values are "BSD 4.3" and "System V".
@@ -3708,7 +3823,7 @@ multiarch (multiarch.U):
 
 mv (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 myarchname (archname.U):
 	This variable holds the architecture name computed by Configure in
@@ -3791,6 +3906,11 @@ nroff (Loc.U):
 	This variable is used internally by Configure to determine the
 	full pathname (if any) of the nroff program.  After Configure runs,
 	the value is reset to a plain "nroff" and is not useful.
+
+nv_overflows_integers_at (perlxv.U):
+	This variable gives the largest integer value that NVs can hold
+	as a constant floating point expression.
+	If it could not be determined, it holds the value 0.
 
 nv_preserves_uv_bits (perlxv.U):
 	This variable indicates how many of bits type uvtype
@@ -3903,7 +4023,7 @@ path_sep (Unix.U):
 
 perl (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 perl5 (perl5.U):
 	This variable contains the full path (if any) to a previously
@@ -4002,11 +4122,11 @@ plibpth (libpth.U):
 
 pmake (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 pr (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 prefix (prefix.U):
 	This variable holds the name of the directory below which the
@@ -4108,7 +4228,7 @@ rm_try (Unix.U):
 
 rmail (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 run (Cross.U):
 	This variable contains the command used by Configure
@@ -4160,7 +4280,7 @@ selecttype (selecttype.U):
 
 sendmail (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 setgrent_r_proto (d_setgrent_r.U):
 	This variable encodes the prototype of setgrent_r.
@@ -4204,6 +4324,14 @@ setservent_r_proto (d_setservent_r.U):
 	REENTRANT_PROTO_T_ABC macros of reentr.h if d_setservent_r
 	is defined.
 
+sGMTIME_max (time_size.U):
+	This variable defines the maximum value of the time_t offset that
+	the system function gmtime () accepts
+
+sGMTIME_min (time_size.U):
+	This variable defines the minimum value of the time_t offset that
+	the system function gmtime () accepts
+
 sh (sh.U):
 	This variable contains the full pathname of the shell used
 	on this system to execute Bourne shell scripts.  Usually, this will be
@@ -4216,7 +4344,7 @@ sh (sh.U):
 
 shar (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 sharpbang (spitshell.U):
 	This variable contains the string #! if this system supports that
@@ -4430,11 +4558,19 @@ sizetype (sizetype.U):
 
 sleep (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
+
+sLOCALTIME_max (time_size.U):
+	This variable defines the maximum value of the time_t offset that
+	the system function localtime () accepts
+
+sLOCALTIME_min (time_size.U):
+	This variable defines the minimum value of the time_t offset that
+	the system function localtime () accepts
 
 smail (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 so (so.U):
 	This variable holds the extension used to identify shared libraries
@@ -4534,9 +4670,9 @@ srandom_r_proto (d_srandom_r.U):
 	is defined.
 
 src (src.U):
-	This variable holds the path to the package source. It is up to
-	the Makefile to use this variable and set VPATH accordingly to
-	find the sources remotely.
+	This variable holds the (possibly relative) path of the package source.
+	It is up to the Makefile to use this variable and set VPATH accordingly
+	to find the sources remotely.  Use $pkgsrc to have an absolute path.
 
 sSCNfldbl (longdblfio.U):
 	This variable, if defined, contains the string used by stdio to
@@ -4613,7 +4749,7 @@ strings (i_string.U):
 
 submit (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 subversion (patchlevel.U):
 	The subversion level of this package.
@@ -4630,11 +4766,11 @@ sysman (sysman.U):
 
 tail (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 tar (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 targetarch (Cross.U):
 	If cross-compiling, this variable contains the target architecture.
@@ -4642,11 +4778,11 @@ targetarch (Cross.U):
 
 tbl (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 tee (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 test (Loc.U):
 	This variable is used internally by Configure to determine the
@@ -4691,7 +4827,7 @@ trnl (trnl.U):
 
 troff (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 ttyname_r_proto (d_ttyname_r.U):
 	This variable encodes the prototype of ttyname_r.
@@ -4779,9 +4915,17 @@ usecrosscompile (Cross.U):
 	This variable conditionally defines the USE_CROSS_COMPILE symbol,
 	and indicates that Perl has been cross-compiled.
 
+usedevel (Devel.U):
+	This variable indicates that Perl was configured with development
+	features enabled.  This should not be done for production builds.
+
 usedl (dlsrc.U):
 	This variable indicates if the system supports dynamic
 	loading of some sort.  See also dlsrc and dlobj.
+
+usedtrace (usedtrace.U):
+	This variable indicates whether we are compiling with dtrace
+	support. See also dtrace.
 
 usefaststdio (usefaststdio.U):
 	This variable conditionally defines the USE_FAST_STDIO symbol,
@@ -4898,7 +5042,7 @@ usrinc (usrinc.U):
 
 uuname (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 uvoformat (perlxvf.U):
 	This variable contains the format string used for printing
@@ -5070,7 +5214,7 @@ versiononly (versiononly.U):
 
 vi (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 voidflags (voidflags.U):
 	This variable contains the eventual value of the VOIDFLAGS symbol,
@@ -5092,7 +5236,7 @@ yaccflags (yacc.U):
 
 zcat (Loc.U):
 	This variable is defined but not used by Configure.
-	The value is a plain '' and is not useful.
+	The value is the empty string and is not useful.
 
 zip (Loc.U):
 	This variable is used internally by Configure to determine the

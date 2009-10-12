@@ -176,6 +176,35 @@ sub initialize_globals {
 }
 sub _reset_globals { initialize_globals(); }
 
+# ugly, but quick fix
+sub import {
+    my $self = shift;
+    no strict 'refs';
+    ${ "$self\::AutoloadClass" } = 'CGI';
+
+    # This causes modules to clash.
+    undef %CGI::EXPORT;
+    undef %CGI::EXPORT;
+
+    $self->_setup_symbols(@_);
+    my ($callpack, $callfile, $callline) = caller;
+
+    # To allow overriding, search through the packages
+    # Till we find one in which the correct subroutine is defined.
+    my @packages = ($self,@{"$self\:\:ISA"});
+    foreach my $sym (keys %CGI::EXPORT) {
+	my $pck;
+	my $def = ${"$self\:\:AutoloadClass"} || $CGI::DefaultClass;
+	foreach $pck (@packages) {
+	    if (defined(&{"$pck\:\:$sym"})) {
+		$def = $pck;
+		last;
+	    }
+	}
+	*{"${callpack}::$sym"} = \&{"$def\:\:$sym"};
+    }
+}
+
 1;
 
 =head1 NAME

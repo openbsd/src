@@ -94,18 +94,9 @@ C<%main::>, or C<%::> for short.  Likewise the symbol table for the nested
 package mentioned earlier is named C<%OUTER::INNER::>.
 
 The value in each entry of the hash is what you are referring to when you
-use the C<*name> typeglob notation.  In fact, the following have the same
-effect, though the first is more efficient because it does the symbol
-table lookups at compile time:
+use the C<*name> typeglob notation.
 
     local *main::foo    = *main::bar;
-    local $main::{foo}  = $main::{bar};
-
-(Be sure to note the B<vast> difference between the second line above
-and C<local $main::foo = $main::bar>. The former is accessing the hash
-C<%main::>, which is the symbol table of package C<main>. The latter is
-simply assigning scalar C<$bar> in package C<main> to scalar C<$foo> of
-the same package.)
 
 You can use this to print out all the variables in a package, for
 instance.  The standard but antiquated F<dumpvar.pl> library and
@@ -282,11 +273,6 @@ and such from other files in time to be visible to the rest of the compile
 and run time.  Once a C<BEGIN> has run, it is immediately undefined and any
 code it used is returned to Perl's memory pool.
 
-It should be noted that C<BEGIN> and C<UNITCHECK> code blocks B<are>
-executed inside string C<eval()>'s.  The C<CHECK> and C<INIT> code
-blocks are B<not> executed inside a string eval, which e.g. can be a
-problem in a mod_perl environment.
-
 An C<END> code block is executed as late as possible, that is, after
 perl has finished running the program and just before the interpreter
 is being exited, even if it is exiting as a result of a die() function.
@@ -324,6 +310,11 @@ in the Perl compiler suite to save the compiled state of the program.
 
 C<INIT> blocks are run just before the Perl runtime begins execution, in
 "first in, first out" (FIFO) order.
+
+The C<CHECK> and C<INIT> code blocks will not be executed inside a string
+eval(), if that eval() happens after the end of the main compilation
+phase; that can be a problem in mod_perl and other persistent environments
+which use C<eval STRING> to load code at runtime.
 
 When you use the B<-n> and B<-p> switches to Perl, C<BEGIN> and
 C<END> work just as they do in B<awk>, as a degenerate case.

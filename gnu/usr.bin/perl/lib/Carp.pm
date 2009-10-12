@@ -1,6 +1,6 @@
 package Carp;
 
-our $VERSION = '1.08';
+our $VERSION = '1.11';
 # this file is an utra-lightweight stub. The first time a function is
 # called, Carp::Heavy is loaded, and the real short/longmessmess_jmp
 # subs are installed
@@ -83,7 +83,7 @@ You can also alter the way the output and logic of C<Carp> works, by
 changing some global variables in the C<Carp> namespace. See the
 section on C<GLOBAL VARIABLES> below.
 
-Here is a more complete description of how c<carp> and c<croak> work.
+Here is a more complete description of how C<carp> and C<croak> work.
 What they do is search the call-stack for a function call stack where
 they have not been told that there shouldn't be an error.  If every
 call is marked safe, they give up and give a full stack backtrace
@@ -143,7 +143,7 @@ This feature is enabled by 'importing' the non-existent symbol
 
     perl -MCarp=verbose script.pl
 
-or by including the string C<MCarp=verbose> in the PERL5OPT
+or by including the string C<-MCarp=verbose> in the PERL5OPT
 environment variable.
 
 Alternately, you can set the global variable C<$Carp::Verbose> to true.
@@ -187,7 +187,7 @@ This says what packages are internal to Perl.  C<Carp> will never
 report an error as being from a line in a package that is internal to
 Perl.  For example:
 
-    $Carp::Internal{ __PACKAGE__ }++;
+    $Carp::Internal{ (__PACKAGE__) }++;
     # time passes...
     sub foo { ... or confess("whatever") };
 
@@ -225,7 +225,7 @@ error is reported from somewhere misleading very high in the call
 stack.
 
 Therefore it is best to avoid C<$Carp::CarpLevel>.  Instead use
-C<@CARP_NOT>, C<%Carp::Internal> and %Carp::CarpInternal>.
+C<@CARP_NOT>, C<%Carp::Internal> and C<%Carp::CarpInternal>.
 
 Defaults to C<0>.
 

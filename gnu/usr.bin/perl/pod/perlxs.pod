@@ -293,7 +293,7 @@ or less equivalent:
           ST(0) = newSVpv("Hello World",0);
           sv_2mortal(ST(0));
           XSRETURN(1);
-  
+
   SV *
   beta()
       CODE:
@@ -319,7 +319,7 @@ CPAN modules) in the typemap file, the reference count of the C<AV *>
 is not properly decremented. Thus, the above XSUB would leak memory
 whenever it is being called. The same problem exists for C<HV *>.
 
-When you're returning an C<AV *> or a C<HV *>, you have make sure
+When you're returning an C<AV *> or a C<HV *>, you have to make sure
 their reference count is decremented by making the AV or HV mortal:
 
   AV *
@@ -562,7 +562,7 @@ and $type can be used as in typemaps.
 
      bool_t
      rpcb_gettime(host,timep)
-          char *host = (char *)SvPV($arg,PL_na);
+          char *host = (char *)SvPV_nolen($arg);
           time_t &timep = 0;
         OUTPUT:
           timep
@@ -589,7 +589,7 @@ Here's a truly obscure example:
      bool_t
      rpcb_gettime(host,timep)
           time_t &timep; /* \$v{timep}=@{[$v{timep}=$arg]} */
-          char *host + SvOK($v{timep}) ? SvPV($arg,PL_na) : NULL;
+          char *host + SvOK($v{timep}) ? SvPV_nolen($arg) : NULL;
         OUTPUT:
           timep
 
@@ -950,10 +950,9 @@ The XS code, with ellipsis, follows.
           time_t timep = NO_INIT
 	PREINIT:
           char *host = "localhost";
-	  STRLEN n_a;
         CODE:
 	  if( items > 1 )
-	       host = (char *)SvPV(ST(1), n_a);
+	       host = (char *)SvPV_nolen(ST(1));
 	  RETVAL = rpcb_gettime( host, &timep );
         OUTPUT:
           timep
@@ -1094,8 +1093,8 @@ return value, should the need arise.
           time_t  timep;
           bool_t x;
         CODE:
-          ST(0) = sv_newmortal();
           if( rpcb_gettime( host, &timep ) ){
+               ST(0) = sv_newmortal();
                sv_setnv( ST(0), (double)timep);
           }
           else{
@@ -1212,6 +1211,12 @@ To disable version checking:
 
     VERSIONCHECK: DISABLE
 
+Note that if the version of the PM module is an NV (a floating point
+number), it will be stringified with a possible loss of precision
+(currently chopping to nine decimal places) so that it may not match
+the version of the XS module anymore. Quoting the $VERSION declaration
+to make it a string is recommended if long version numbers are used.
+
 =head2 The PROTOTYPES: Keyword
 
 The PROTOTYPES: keyword corresponds to B<xsubpp>'s C<-prototypes> and
@@ -1242,10 +1247,9 @@ prototypes.
 	PROTOTYPE: $;$
 	PREINIT:
           char *host = "localhost";
-	  STRLEN n_a;
         CODE:
 		  if( items > 1 )
-		       host = (char *)SvPV(ST(1), n_a);
+		       host = (char *)SvPV_nolen(ST(1));
 		  RETVAL = rpcb_gettime( host, &timep );
         OUTPUT:
           timep
@@ -2007,7 +2011,7 @@ comma, i.e.  C<_aMY_CXT>, C<aMY_CXT_>, C<_pMY_CXT> and C<pMY_CXT_>.
 =item MY_CXT_CLONE
 
 By default, when a new interpreter is created as a copy of an existing one
-(eg via C<<threads->create()>>), both interpreters share the same physical
+(eg via C<< threads->create() >>), both interpreters share the same physical
 my_cxt_t structure. Calling C<MY_CXT_CLONE> (typically via the package's
 C<CLONE()> function), causes a byte-for-byte copy of the structure to be
 taken, and any future dMY_CXT will cause the copy to be accessed instead.

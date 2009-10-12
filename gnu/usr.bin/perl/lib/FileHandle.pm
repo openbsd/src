@@ -4,7 +4,7 @@ use 5.006;
 use strict;
 our($VERSION, @ISA, @EXPORT, @EXPORT_OK);
 
-$VERSION = "2.01";
+$VERSION = "2.02";
 
 require IO::File;
 @ISA = qw(IO::File);
@@ -111,25 +111,25 @@ FileHandle - supply object methods for filehandles
 
     use FileHandle;
 
-    $fh = new FileHandle;
+    $fh = FileHandle->new;
     if ($fh->open("< file")) {
         print <$fh>;
         $fh->close;
     }
 
-    $fh = new FileHandle "> FOO";
+    $fh = FileHandle->new("> FOO");
     if (defined $fh) {
         print $fh "bar\n";
         $fh->close;
     }
 
-    $fh = new FileHandle "file", "r";
+    $fh = FileHandle->new("file", "r");
     if (defined $fh) {
         print <$fh>;
         undef $fh;       # automatically closes the file
     }
 
-    $fh = new FileHandle "file", O_WRONLY|O_APPEND;
+    $fh = FileHandle->new("file", O_WRONLY|O_APPEND);
     if (defined $fh) {
         print $fh "corge\n";
         undef $fh;       # automatically closes the file

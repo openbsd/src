@@ -12,7 +12,6 @@ use CPANPLUS::Error;
 
 use CPANPLUS::Selfupdate;
 
-use CPANPLUS::Internals::Source;
 use CPANPLUS::Internals::Extract;
 use CPANPLUS::Internals::Fetch;
 use CPANPLUS::Internals::Utils;
@@ -20,9 +19,13 @@ use CPANPLUS::Internals::Constants;
 use CPANPLUS::Internals::Search;
 use CPANPLUS::Internals::Report;
 
+
+require base;
 use Cwd                         qw[cwd];
+use Module::Load                qw[load];
 use Params::Check               qw[check];
 use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
+use Module::Load::Conditional   qw[can_load];
 
 use Object::Accessor;
 
@@ -32,7 +35,6 @@ local $Params::Check::VERBOSE = 1;
 use vars qw[@ISA $VERSION];
 
 @ISA = qw[
-            CPANPLUS::Internals::Source
             CPANPLUS::Internals::Extract
             CPANPLUS::Internals::Fetch
             CPANPLUS::Internals::Utils
@@ -40,13 +42,13 @@ use vars qw[@ISA $VERSION];
             CPANPLUS::Internals::Report
         ];
 
-$VERSION = "0.84";
+$VERSION = "0.88";
 
 =pod
 
 =head1 NAME
 
-CPANPLUS::Internals - the guts of CPANPLUS
+CPANPLUS::Internals - CPANPLUS internals
 
 =head1 SYNOPSIS
 
@@ -74,21 +76,11 @@ Get/set the configure object
 
 Get/set the id
 
-=item _lib
-
-Get/set the current @INC path -- @INC is reset to this after each
-install.
-
-=item _perl5lib
-
-Get/set the current PERL5LIB environment variable -- $ENV{PERL5LIB}
-is reset to this after each install.
-
 =cut
 
 ### autogenerate accessors ###
-for my $key ( qw[_conf _id _lib _perl5lib _modules _hosts _methods _status
-                 _callbacks _selfupdate]
+for my $key ( qw[_conf _id _modules _hosts _methods _status
+                 _callbacks _selfupdate _mtree _atree]
 ) {
     no strict 'refs';
     *{__PACKAGE__."::$key"} = sub {
@@ -140,8 +132,6 @@ Returns the object on success, or dies on failure.
         _conf       => { required => 1, store => \$conf,
                             allow => IS_CONFOBJ },
         _id         => { default => '',                 no_override => 1 },
-        _lib        => { default => [ @INC ],           no_override => 1 },
-        _perl5lib   => { default => $ENV{'PERL5LIB'},   no_override => 1 },
         _authortree => { default => '',                 no_override => 1 },
         _modtree    => { default => '',                 no_override => 1 },
         _hosts      => { default => {},                 no_override => 1 },
@@ -195,13 +185,6 @@ Returns the object on success, or dies on failure.
         ### initalize it as an empty hashref ###
         $args->_status->pending_prereqs( {} );
 
-        ### allow for dirs to be added to @INC at runtime,
-        ### rather then compile time
-        push @INC, @{$conf->get_conf('lib')};
-
-        ### add any possible new dirs ###
-        $args->_lib( [@INC] );
-
         $conf->_set_build( startdir => cwd() ),
             or error( loc("couldn't locate current dir!") );
 
@@ -212,6 +195,27 @@ Returns the object on success, or dies on failure.
         unless ( $id == $args->_id ) {
             error( loc("IDs do not match: %1 != %2. Storage failed!",
                         $id, $args->_id) );
+        }
+
+        ### different source engines available now, so set them here
+        {   my $store = $conf->get_conf( 'source_engine' ) 
+                            || DEFAULT_SOURCE_ENGINE;
+
+            unless( can_load( modules => { $store => '0.0' }, verbose => 1 ) ) {
+                error( loc( "Could not load source engine '%1'", $store ) );
+            
+                if( $store ne DEFAULT_SOURCE_ENGINE ) {
+                    msg( loc("Falling back to %1", DEFAULT_SOURCE_ENGINE), 1 );
+                   
+                    load DEFAULT_SOURCE_ENGINE;
+                    
+                    base->import( DEFAULT_SOURCE_ENGINE );
+                } else {
+                    return;
+                }     
+            } else {
+                 base->import( $store );
+            }                
         }
 
         return $args;
@@ -230,6 +234,7 @@ be flushed.
 
     sub _flush {
         my $self = shift;
+        my $conf = $self->configure_object;
         my %hash = @_;
 
         my $aref;
@@ -246,14 +251,15 @@ be flushed.
 
             ### set the include paths back to their original ###
             if( $what eq 'lib' ) {
-                $ENV{PERL5LIB}  = $self->_perl5lib || '';
-                @INC            = @{$self->_lib};
+                $ENV{PERL5LIB}  = $conf->_perl5lib || '';
+                @INC            = @{$conf->_lib};
 
             ### give all modules a new status object -- this is slightly
             ### costly, but the best way to make sure all statusses are
             ### forgotten --kane
             } elsif ( $what eq 'modules' ) {
                 for my $modobj ( values %{$self->module_tree} ) {
+
                     $modobj->_flush;
                 }
 
@@ -416,13 +422,16 @@ sub _add_to_includepath {
 
     check( $tmpl, \%hash ) or return;
 
+    my $s = $Config{'path_sep'};
+    
+    ### only add if it's not added yet
     for my $lib (@$dirs) {
         push @INC, $lib unless grep { $_ eq $lib } @INC;
-    }
-
-    {   local $^W;  ### it will be complaining if $ENV{PERL5LIB]
-                    ### is not defined (yet).
-        $ENV{'PERL5LIB'} .= join '', map { $Config{'path_sep'} . $_ } @$dirs;
+        #
+        ### it will be complaining if $ENV{PERL5LIB] is not defined (yet).   
+        local $^W;  
+        $ENV{'PERL5LIB'} .= $s . $lib 
+            unless $ENV{'PERL5LIB'} =~ qr|\Q$s$lib\E|;
     }
 
     return 1;

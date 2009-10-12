@@ -6,7 +6,7 @@ If no real package is found, substitutes stubs instead of basic functions.
 =head1 SYNOPSIS
 
   use Term::ReadLine;
-  my $term = new Term::ReadLine 'Simple Perl calc';
+  my $term = Term::ReadLine->new('Simple Perl calc');
   my $prompt = "Enter your arithmetic expression: ";
   my $OUT = $term->OUT || \*STDOUT;
   while ( defined ($_ = $term->readline($prompt)) ) {
@@ -26,7 +26,7 @@ CPAN (under the C<Term::ReadLine::*> namespace).
 
 All the supported functions should be called as methods, i.e., either as 
 
-  $term = new Term::ReadLine 'name';
+  $term = Term::ReadLine->new('name');
 
 or as 
 
@@ -303,7 +303,7 @@ sub get_line {
 
 package Term::ReadLine;		# So late to allow the above code be defined?
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 my ($which) = exists $ENV{PERL_RL} ? split /\s+/, $ENV{PERL_RL} : undef;
 if ($which) {

@@ -309,51 +309,12 @@ information on obtaining the metaconfig units.
 
 =head1 How to Make a Distribution
 
-There really ought to be a 'make dist' target, but there isn't.
-The 'dist' suite of tools also contains a number of tools that I haven't
-learned how to use yet.  Some of them may make this all a bit easier.
+This section has now been expanded and moved into its own file,
+F<Porting/release_managers_guide.pod>.
 
-Here are the steps I go through to prepare a patch & distribution.
-
-Lots of it could doubtless be automated but isn't.  The Porting/makerel
-(make release) perl script does now help automate some parts of it.
-
-=head2 Announce your intentions
-
-First, you should volunteer out loud to take the patch pumpkin.  It's
-generally counter-productive to have multiple people working in secret
-on the same thing.
-
-At the same time, announce what you plan to do with the patch pumpkin,
-to allow folks a chance to object or suggest alternatives, or do it for
-you.  Naturally, the patch pumpkin holder ought to incorporate various
-bug fixes and documentation improvements that are posted while he or
-she has the pumpkin, but there might also be larger issues at stake.
-
-One of the precepts of the subversion idea is that we shouldn't give
-the patch pumpkin to anyone unless we have some idea what he or she
-is going to do with it.
-
-=head2 refresh pod/perltoc.pod
-
-Presumably, you have done a full C<make> in your working source
-directory.  Before you C<make spotless> (if you do), and if you have
-changed any documentation in any module or pod file, change to the
-F<pod> directory and run C<make toc>.
-
-=head2 run installhtml to check the validity of the pod files
-
-=head2 update patchlevel.h
-
-Don't be shy about using the subversion number, even for a relatively
-modest patch.  We've never even come close to using all 99 subversions,
-and it's better to have a distinctive number for your patch.  If you
-need feedback on your patch, go ahead and issue it and promise to
-incorporate that feedback quickly (e.g. within 1 week) and send out a
-second patch.
-
-If you update the subversion number, you may need to change the version
-number near the top of the F<Changes> file.
+I've kept some of the subsections here for now, as they don't  direclty
+eleate to building a release any more, but still contain what might be
+useful information - DAPM 7/2009.
 
 =head2 run metaconfig
 
@@ -386,57 +347,12 @@ a better place for your changes.
 
 =head2 MANIFEST
 
-Make sure the MANIFEST is up-to-date.  You can use dist's B<manicheck>
-program for this.  You can also use
-
-    perl -w -MExtUtils::Manifest=fullcheck -e fullcheck
-
-Both commands will also list extra files in the directory that are not
-listed in MANIFEST.
-
-The MANIFEST is normally sorted.
-
 If you are using metaconfig to regenerate Configure, then you should note
 that metaconfig actually uses MANIFEST.new, so you want to be sure
 MANIFEST.new is up-to-date too.  I haven't found the MANIFEST/MANIFEST.new
 distinction particularly useful, but that's probably because I still haven't
 learned how to use the full suite of tools in the dist distribution.
 
-=head2 Check permissions
-
-All the tests in the t/ directory ought to be executable.  The
-main makefile used to do a 'chmod t/*/*.t', but that resulted in
-a self-modifying distribution--something some users would strongly
-prefer to avoid.  The F<t/TEST> script will check for this
-and do the chmod if needed, but the tests still ought to be
-executable.
-
-In all, the following files should probably be executable:
-
-    Configure
-    configpm
-    configure.gnu
-    embed.pl
-    installperl
-    installman
-    keywords.pl
-    myconfig
-    opcode.pl
-    t/TEST
-    t/*/*.t
-    *.SH
-    vms/ext/Stdio/test.pl
-    vms/ext/filespec.t
-    x2p/*.SH
-
-Other things ought to be readable, at least :-).
-
-Probably, the permissions for the files could be encoded in MANIFEST
-somehow, but I'm reluctant to change MANIFEST itself because that
-could break old scripts that use MANIFEST.
-
-I seem to recall that some SVR3 systems kept some sort of file that listed
-permissions for system files; something like that might be appropriate.
 
 =head2 Run Configure
 
@@ -505,7 +421,8 @@ Note that in the old days, you had to do C<make run_byacc> instead.
 
 =head2 make regen_all
 
-This target takes care of the regen_headers, and regen_pods targets.
+This target takes care of the regen_headers target.
+(It used to also call the regen_pods target, but that has been eliminated.)
 
 =head2 make regen_headers
 
@@ -532,10 +449,6 @@ and effort by manually running C<make regen_headers> myself rather
 than answering all the questions and complaints about the failing
 command.
 
-=head2 make regen_pods
-
-Will run `make regen_pods` in the pod directory for indexing. 
-
 =head2 global.sym, interp.sym and perlio.sym
 
 Make sure these files are up-to-date.  Read the comments in these
@@ -557,7 +470,7 @@ Let's not force people to keep changing it.
 
 =head2 PPPort
 
-F<ext/Devel/PPPort/PPPort.pm> needs to be synchronized to include all
+F<ext/Devel-PPPort/PPPort.pm> needs to be synchronized to include all
 new macros added to .h files (normally perl.h and XSUB.h, but others
 as well). Since chances are that when a new macro is added the
 committer will forget to update F<PPPort.pm>, it's the best to diff for
@@ -568,30 +481,6 @@ The pumpking can delegate the synchronization responsibility to anybody
 else, but the release process is the only place where we can make sure
 that no new macros fell through the cracks.
 
-=head2 Changes
-
-Be sure to update the F<Changes> file.  Try to include both an overall
-summary as well as detailed descriptions of the changes.  Your
-audience will include other developers and users, so describe
-user-visible changes (if any) in terms they will understand, not in
-code like "initialize foo variable in bar function".
-
-There are differing opinions on whether the detailed descriptions
-ought to go in the Changes file or whether they ought to be available
-separately in the patch file (or both).  There is no disagreement that
-detailed descriptions ought to be easily available somewhere.
-
-If you update the subversion number in F<patchlevel.h>, you may need
-to change the version number near the top of the F<Changes> file.
-
-=head2 Bumping perl's version
-
-If you bump perl's version, you will need to update a few things:
-the L<perlhist> manpage for the date of release, the version number and
-perldelta reference in the top level F<README> (and maybe the copyright
-year too), the F<META.yml> file (generated via F<Porting/makemeta>, be
-sure to run it with the current bleadperl), and the meta-info about
-dual-lived modules in Module::Corelist (F<Porting/corelist.pl> does that).
 
 =head2 Todo
 
@@ -625,19 +514,6 @@ things that need to be fixed in Configure.
 The Perl revision number appears as "perl5" in configure.com.
 It is courteous to update that if necessary.
 
-=head2 Making the new distribution
-
-Suppose, for example, that you want to make version 5.004_08.  Then you can
-do something like the following
-
-	mkdir ../perl5.004_08
-	awk '{print $1}' MANIFEST | cpio -pdm ../perl5.004_08
-	cd ../
-	tar cf perl5.004_08.tar perl5.004_08
-	gzip --best perl5.004_08.tar
-
-These steps, with extra checks, are automated by the Porting/makerel
-script.
 
 =head2 Making a new patch
 
@@ -1447,10 +1323,6 @@ a nice malloc that is well-tuned for the system.)
 
 =over 4
 
-=item MacPerl
-
-Get some of the Macintosh stuff folded back into the main distribution.
-
 =item gconvert replacement
 
 Maybe include a replacement function that doesn't lose data in rare
@@ -1564,5 +1436,4 @@ All opinions expressed herein are those of the authorZ<>(s).
 
 =head1 LAST MODIFIED
 
-27-04-2007 H.Merijn Brand
-$Id: pumpkin.pod,v 1.23 2000/01/13 19:45:13 doughera Released $
+2009-07-08-01 Jesse Vincent

@@ -10,16 +10,17 @@ use Data::Dumper;
 ### disable string overloading for callbacks
 require overload;
 
-$VERSION    = '0.32';
+$VERSION    = '0.34';
 $FATAL      = 0;
 $DEBUG      = 0;
 
 use constant VALUE => 0;    # array index in the hash value
 use constant ALLOW => 1;    # array index in the hash value
+use constant ALIAS => 2;    # array index in the hash value
 
 =head1 NAME
 
-Object::Accessor - create and use per-object accessors
+Object::Accessor - interface to create per object accessors
 
 =head1 SYNOPSIS
 
@@ -32,6 +33,9 @@ Object::Accessor - create and use per-object accessors
     $bool   = $obj->mk_accessors('foo'); # create accessors
     $bool   = $obj->mk_accessors(        # create accessors with input
                {foo => ALLOW_HANDLER} ); # validation
+
+    $bool   = $obj->mk_aliases(          # create an alias to an existing
+                alias_name => 'method'); # method name
                 
     $clone  = $obj->mk_clone;            # create a clone of original
                                          # object without data
@@ -240,6 +244,42 @@ sub ls_allow {
                 : sub { 1 };
 }
 
+=head2 $bool = $self->mk_aliases( alias => method, [alias2 => method2, ...] );
+
+Creates an alias for a given method name. For all intents and purposes,
+these two accessors are now identical for this object. This is akin to
+doing the following on the symbol table level:
+
+  *alias = *method
+
+This allows you to do the following:
+
+  $self->mk_accessors('foo');
+  $self->mk_aliases( bar => 'foo' );
+  
+  $self->bar( 42 );
+  print $self->foo;     # will print 42
+
+=cut
+
+sub mk_aliases {
+    my $self    = shift;
+    my %aliases = @_;
+    
+    while( my($alias, $method) = each %aliases ) {
+
+        ### already created apparently
+        if( exists $self->{$alias} ) {
+            __PACKAGE__->___debug( "Accessor '$alias' already exists");
+            next;
+        }
+
+        $self->___alias( $alias => $method );
+    }
+
+    return 1;
+}
+
 =head2 $clone = $self->mk_clone;
 
 Makes a clone of the current object, which will have the exact same
@@ -257,11 +297,16 @@ sub mk_clone {
     
     ### split out accessors with and without allow handlers, so we
     ### don't install dummy allow handers (which makes O::A::lvalue
-    ### warn for exampel)
+    ### warn for example)
     my %hash; my @list;
     for my $acc ( $self->ls_accessors ) {
         my $allow = $self->{$acc}->[ALLOW];
         $allow ? $hash{$acc} = $allow : push @list, $acc;
+
+        ### is this an alias?
+        if( my $org = $self->{ $acc }->[ ALIAS ] ) {
+            $clone->___alias( $acc => $org );
+        }
     }
 
     ### copy the accessors from $self to $clone
@@ -436,6 +481,11 @@ sub ___autoload {
                 "'$method' from somewhere else?", 1 );
     }        
 
+    ### is this is an alias, redispatch to the original method
+    if( my $original = $self->{ $method }->[ALIAS] ) {
+        return $self->___autoload( $original, @_ );
+    }        
+
     ### assign?
     my $val = $assign ? shift(@_) : $self->___get( $method );
 
@@ -534,6 +584,25 @@ sub ___set {
     ### XXX implement rw vs ro accessors!
     $self->{$method}->[VALUE] = $val;
 
+    return 1;
+}
+
+=head2 $bool = $self->___alias( ALIAS => METHOD );
+
+Method to directly alias one accessor to another for
+this object. It circumvents all sanity checks, etc.
+
+Use only if you C<Know What You Are Doing>! 
+
+=cut
+
+sub ___alias {
+    my $self    = shift;
+    my $alias   = shift or return;
+    my $method  = shift or return;
+    
+    $self->{ $alias }->[ALIAS] = $method;
+    
     return 1;
 }
 
@@ -697,6 +766,8 @@ See C<perldoc perlsub> for details.
     }              
 }
 
+=back
+
 =head1 GLOBAL VARIABLES
 
 =head2 $Object::Accessor::FATAL
@@ -730,20 +801,18 @@ You can track the bug here:
 
     http://rt.cpan.org/Ticket/Display.html?id=1827
 
+=head1 BUG REPORTS
+
+Please report bugs or other issues to E<lt>bug-object-accessor@rt.cpan.orgE<gt>.
+
 =head1 AUTHOR
 
-This module by
-Jos Boumans E<lt>kane@cpan.orgE<gt>.
+This module by Jos Boumans E<lt>kane@cpan.orgE<gt>.
 
 =head1 COPYRIGHT
 
-This module is
-copyright (c) 2004-2005 Jos Boumans E<lt>kane@cpan.orgE<gt>.
-All rights reserved.
-
-This library is free software;
-you may redistribute and/or modify it under the same
-terms as Perl itself.
+This library is free software; you may redistribute and/or modify it 
+under the same terms as Perl itself.
 
 =cut
 

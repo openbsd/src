@@ -24,7 +24,7 @@ $VERSION = $CPANPLUS::Internals::VERSION = $CPANPLUS::Internals::VERSION;
 
 ### can't use O::A as we're using our own AUTOLOAD to get to
 ### the config options.
-for my $meth ( qw[conf]) {
+for my $meth ( qw[conf _lib _perl5lib]) {
     no strict 'refs';
     
     *$meth = sub {
@@ -39,7 +39,7 @@ for my $meth ( qw[conf]) {
 
 =head1 NAME
 
-CPANPLUS::Configure - CPANPLUS configuration file
+CPANPLUS::Configure - configuration for CPANPLUS
 
 =head1 SYNOPSIS
 
@@ -70,8 +70,10 @@ This method returns a new object. Normal users will never need to
 invoke the C<new> method, but instead retrieve the desired object via
 a method call on a C<CPANPLUS::Backend> object.
 
-The C<load_configs> parameter controls wether or not additional
-user configurations are to be loaded or not. Defaults to C<true>.
+=item load_configs
+
+Controls wether or not additional user configurations are to be loaded 
+or not. Defaults to C<true>.
 
 =cut
 
@@ -89,7 +91,7 @@ user configurations are to be loaded or not. Defaults to C<true>.
         my $tmpl    = {
             load_configs    => { default => 1, store => \$load },
         };
-        
+
         check( $tmpl, \%hash ) or (
             warn Params::Check->last_error, return
         );
@@ -97,10 +99,15 @@ user configurations are to be loaded or not. Defaults to C<true>.
         $Config     ||= CPANPLUS::Config->new;
         my $self    = bless {}, $class;
         $self->conf( $Config );
-    
+
         ### you want us to load other configs?
         ### these can override things in the default config
         $self->init if $load;
+
+        ### after processing the config files, check what 
+        ### @INC and PERL5LIB are set to.
+        $self->_lib( \@INC );
+        $self->_perl5lib( $ENV{'PERL5LIB'} );
     
         return $self;
     }
@@ -142,6 +149,11 @@ Returns true on success, false on failure.
             warn Params::Check->last_error, return
         );        
         
+        ### if the base dir is changed, we have to rescan it
+        ### for any CPANPLUS::Config::* files as well, so keep
+        ### track of it
+        my $cur_base = $self->get_conf('base');
+        
         ### warn if we find an old style config specified
         ### via environment variables
         {   my $env = ENV_CPANPLUS_CONFIG;
@@ -155,60 +167,82 @@ Returns true on success, false on failure.
             }
         }            
         
-        ### make sure that the homedir is included now
-        local @INC = ( CONFIG_USER_LIB_DIR->(), @INC );
+        {   ### make sure that the homedir is included now
+            local @INC = ( LIB_DIR->($cur_base), @INC );
         
-        ### only set it up once
-        if( !$loaded++ or $rescan ) {   
-            ### find plugins & extra configs
-            ### check $home/.cpanplus/lib as well
-            require Module::Pluggable;
+            ### only set it up once
+            if( !$loaded++ or $rescan ) {   
+                ### find plugins & extra configs
+                ### check $home/.cpanplus/lib as well
+                require Module::Pluggable;
+                
+                Module::Pluggable->import(
+                    search_path => ['CPANPLUS::Config'],
+                    search_dirs => [ LIB_DIR->($cur_base) ],
+                    except      => qr/::SUPER$/,
+                    sub_name    => 'configs'
+                );
+            }
             
-            Module::Pluggable->import(
-                search_path => ['CPANPLUS::Config'],
-                search_dirs => [ CONFIG_USER_LIB_DIR ],
-                except      => qr/::SUPER$/,
-                sub_name    => 'configs'
-            );
+            
+            ### do system config, user config, rest.. in that order
+            ### apparently, on a 2nd invocation of -->configs, a
+            ### ::ISA::CACHE package can appear.. that's bad...
+            my %confs = map  { $_ => $_ } 
+                        grep { $_ !~ /::ISA::/ } __PACKAGE__->configs;
+            my @confs = grep { defined } 
+                        map  { delete $confs{$_} } CONFIG_SYSTEM, CONFIG_USER;
+            push @confs, sort keys %confs;                    
+        
+            for my $plugin ( @confs ) {
+                msg(loc("Found config '%1'", $plugin),0);
+                
+                ### if we already did this the /last/ time around dont 
+                ### run the setup agian.
+                if( my $loc = Module::Loaded::is_loaded( $plugin ) ) {
+                    msg(loc("  Already loaded '%1' (%2)", $plugin, $loc), 0);
+                    next;
+                } else {
+                    msg(loc("  Loading config '%1'", $plugin),0);
+                
+                    if( eval { load $plugin; 1 } ) {
+                        msg(loc("  Loaded '%1' (%2)", 
+                            $plugin, Module::Loaded::is_loaded( $plugin ) ), 0);
+                    } else {
+                        error(loc("  Error loading '%1': %2", $plugin, $@));
+                    }                        
+                }                   
+                
+                if( $@ ) {
+                    error(loc("Could not load '%1': %2", $plugin, $@));
+                    next;
+                }     
+                
+                my $sub = $plugin->can('setup');
+                $sub->( $self ) if $sub;
+            }
         }
         
-        
-        ### do system config, user config, rest.. in that order
-        ### apparently, on a 2nd invocation of -->configs, a
-        ### ::ISA::CACHE package can appear.. that's bad...
-        my %confs = map  { $_ => $_ } 
-                    grep { $_ !~ /::ISA::/ } __PACKAGE__->configs;
-        my @confs = grep { defined } 
-                    map  { delete $confs{$_} } CONFIG_SYSTEM, CONFIG_USER;
-        push @confs, sort keys %confs;                    
-    
-        for my $plugin ( @confs ) {
-            msg(loc("Found config '%1'", $plugin),0);
+        ### did one of the plugins change the base dir? then we should
+        ### scan the dirs again
+        if( $cur_base ne $self->get_conf('base') ) {
+            msg(loc("Base dir changed from '%1' to '%2', rescanning",
+                    $cur_base, $self->get_conf('base')), 0);
+            $self->init( @_, rescan => 1 );
+        }      
             
-            ### if we already did this the /last/ time around dont 
-            ### run the setup agian.
-            if( my $loc = Module::Loaded::is_loaded( $plugin ) ) {
-                msg(loc("  Already loaded '%1' (%2)", $plugin, $loc), 0);
-                next;
-            } else {
-                msg(loc("  Loading config '%1'", $plugin),0);
-            
-                eval { load $plugin };
-                msg(loc("  Loaded '%1' (%2)", 
-                        $plugin, Module::Loaded::is_loaded( $plugin ) ), 0);
-            }                   
-            
-            if( $@ ) {
-                error(loc("Could not load '%1': %2", $plugin, $@));
-                next;
-            }     
-            
-            my $sub = $plugin->can('setup');
-            $sub->( $self ) if $sub;
-        }
-        
         ### clean up the paths once more, just in case
         $obj->_clean_up_paths;
+
+        ### XXX in case the 'lib' param got changed, we need to
+        ### add that now, or it's not propagating ;(
+        {   my $lib = $self->get_conf('lib');
+            my %inc = map { $_ => $_ } @INC;
+            for my $l ( @$lib ) {
+                push @INC, $l unless $inc{$l};
+            }                
+            $self->_lib( \@INC );
+        }
     
         return 1;
     }

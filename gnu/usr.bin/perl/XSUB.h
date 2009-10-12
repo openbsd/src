@@ -1,7 +1,7 @@
 /*    XSUB.h
  *
  *    Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
- *    2003, 2004, 2005, 2006, 2007 by Larry Wall and others
+ *    2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -269,7 +269,7 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 #define XST_mUV(i,v)  (ST(i) = sv_2mortal(newSVuv(v))  )
 #define XST_mNV(i,v)  (ST(i) = sv_2mortal(newSVnv(v))  )
 #define XST_mPV(i,v)  (ST(i) = sv_2mortal(newSVpv(v,0)))
-#define XST_mPVN(i,v,n)  (ST(i) = sv_2mortal(newSVpvn(v,n)))
+#define XST_mPVN(i,v,n)  (ST(i) = newSVpvn_flags(v,n, SVs_TEMP))
 #define XST_mNO(i)    (ST(i) = &PL_sv_no   )
 #define XST_mYES(i)   (ST(i) = &PL_sv_yes  )
 #define XST_mUNDEF(i) (ST(i) = &PL_sv_undef)
@@ -364,10 +364,10 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 	    SAVETMPS ;						\
 	    SAVEINT(db->filtering) ;				\
 	    db->filtering = TRUE ;				\
-	    SAVESPTR(DEFSV) ;					\
+	    SAVE_DEFSV ;					\
             if (name[7] == 's')                                 \
                 arg = newSVsv(arg);                             \
-	    DEFSV = arg ;					\
+	    DEFSV_set(arg) ;					\
 	    SvTEMP_off(arg) ;					\
 	    PUSHMARK(SP) ;					\
 	    PUTBACK ;						\
@@ -415,12 +415,6 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 #endif
 
 #include "perlapi.h"
-#ifndef PERL_MAD
-#  undef PL_madskills
-#  undef PL_xmlfp
-#  define PL_madskills 0
-#  define PL_xmlfp 0
-#endif
 
 #if defined(PERL_IMPLICIT_CONTEXT) && !defined(PERL_NO_GET_CONTEXT) && !defined(PERL_CORE)
 #  undef aTHX

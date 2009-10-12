@@ -10,19 +10,48 @@ use Carp;
 use strict;
 
 use vars qw($VERSION @ISA @EXPORT_OK 
-          $Is_MacOS $Is_VMS 
+          $Is_MacOS $Is_VMS $Is_VMS_mode $Is_VMS_lc $Is_VMS_nodot
           $Debug $Verbose $Quiet $MANIFEST $DEFAULT_MSKIP);
 
-$VERSION = '1.51_01';
+$VERSION = '1.56';
 @ISA=('Exporter');
 @EXPORT_OK = qw(mkmanifest
                 manicheck  filecheck  fullcheck  skipcheck
                 manifind   maniread   manicopy   maniadd
+                maniskip
                );
 
 $Is_MacOS = $^O eq 'MacOS';
 $Is_VMS   = $^O eq 'VMS';
-require VMS::Filespec if $Is_VMS;
+$Is_VMS_mode = 0;
+$Is_VMS_lc = 0;
+$Is_VMS_nodot = 0;  # No dots in dir names or double dots in files
+
+if ($Is_VMS) {
+    require VMS::Filespec if $Is_VMS;
+    my $vms_unix_rpt;
+    my $vms_efs;
+    my $vms_case;
+
+    $Is_VMS_mode = 1;
+    $Is_VMS_lc = 1;
+    $Is_VMS_nodot = 1;
+    if (eval { local $SIG{__DIE__}; require VMS::Feature; }) {
+        $vms_unix_rpt = VMS::Feature::current("filename_unix_report");
+        $vms_efs = VMS::Feature::current("efs_charset");
+        $vms_case = VMS::Feature::current("efs_case_preserve");
+    } else {
+        my $unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        my $efs_charset = $ENV{'DECC$EFS_CHARSET'} || '';
+        my $efs_case = $ENV{'DECC$EFS_CASE_PRESERVE'} || '';
+        $vms_unix_rpt = $unix_rpt =~ /^[ET1]/i; 
+        $vms_efs = $efs_charset =~ /^[ET1]/i;
+        $vms_case = $efs_case =~ /^[ET1]/i;
+    }
+    $Is_VMS_lc = 0 if ($vms_case);
+    $Is_VMS_mode = 0 if ($vms_unix_rpt);
+    $Is_VMS_nodot = 0 if ($vms_efs);
+}
 
 $Debug   = $ENV{PERL_MM_MANIFEST_DEBUG} || 0;
 $Verbose = defined $ENV{PERL_MM_MANIFEST_VERBOSE} ?
@@ -71,16 +100,14 @@ exported on request
     mkmanifest();
 
 Writes all files in and below the current directory to your F<MANIFEST>.
-It works similar to
+It works similar to the result of the Unix command
 
     find . > MANIFEST
 
 All files that match any regular expression in a file F<MANIFEST.SKIP>
 (if it exists) are ignored.
 
-Any existing F<MANIFEST> file will be saved as F<MANIFEST.bak>.  Lines
-from the old F<MANIFEST> file is preserved, including any comments
-that are found in the existing F<MANIFEST> file in the new one.
+Any existing F<MANIFEST> file will be saved as F<MANIFEST.bak>.
 
 =cut
 
@@ -94,14 +121,15 @@ sub mkmanifest {
     $read = {} if $manimiss;
     local *M;
     my $bakbase = $MANIFEST;
-    $bakbase =~ s/\./_/g if $Is_VMS; # avoid double dots
+    $bakbase =~ s/\./_/g if $Is_VMS_nodot; # avoid double dots
     rename $MANIFEST, "$bakbase.bak" unless $manimiss;
-    open M, ">$MANIFEST" or die "Could not open $MANIFEST: $!";
-    my $skip = _maniskip();
+    open M, "> $MANIFEST" or die "Could not open $MANIFEST: $!";
+    my $skip = maniskip();
     my $found = manifind();
     my($key,$val,$file,%all);
     %all = (%$found, %$read);
-    $all{$MANIFEST} = ($Is_VMS ? "$MANIFEST\t\t" : '') . 'This list of files'
+    $all{$MANIFEST} = ($Is_VMS_mode ? "$MANIFEST\t\t" : '') .
+                     'This list of files'
         if $manimiss; # add new MANIFEST to known file list
     foreach $file (_sort keys %all) {
 	if ($skip->($file)) {
@@ -118,6 +146,10 @@ sub mkmanifest {
 	my $tabs = (5 - (length($file)+1)/8);
 	$tabs = 1 if $tabs < 1;
 	$tabs = 0 unless $text;
+        if ($file =~ /\s/) {
+            $file =~ s/([\\'])/\\$1/g;
+            $file = "'$file'";
+        }
 	print M $file, "\t" x $tabs, $text, "\n";
     }
     close M;
@@ -150,8 +182,8 @@ sub manifind {
 	my $name = clean_up_filename($File::Find::name);
 	warn "Debug: diskfile $name\n" if $Debug;
 	return if -d $_;
-	
-        if( $Is_VMS ) {
+
+        if( $Is_VMS_lc ) {
             $name =~ s#(.*)\.$#\L$1#;
             $name = uc($name) if $name =~ /^MANIFEST(\.SKIP)?$/i;
         }
@@ -231,7 +263,7 @@ file.
 sub skipcheck {
     my($p) = @_;
     my $found = manifind();
-    my $matches = _maniskip();
+    my $matches = maniskip();
 
     my @skipped = ();
     foreach my $file (_sort keys %$found){
@@ -274,7 +306,7 @@ sub _check_manifest {
     my($p) = @_;
     my $read = maniread() || {};
     my $found = manifind($p);
-    my $skip  = _maniskip();
+    my $skip  = maniskip();
 
     my @missentry = ();
     foreach my $file (_sort keys %$found){
@@ -308,7 +340,7 @@ sub maniread {
     $mfile ||= $MANIFEST;
     my $read = {};
     local *M;
-    unless (open M, $mfile){
+    unless (open M, "< $mfile"){
         warn "Problem opening $mfile: $!";
         return $read;
     }
@@ -317,24 +349,37 @@ sub maniread {
         chomp;
         next if /^\s*#/;
 
-        my($file, $comment) = /^(\S+)\s*(.*)/;
+        my($file, $comment);
+
+        # filename may contain spaces if enclosed in ''
+        # (in which case, \\ and \' are escapes)
+        if (($file, $comment) = /^'(\\[\\']|.+)+'\s*(.*)/) {
+            $file =~ s/\\([\\'])/$1/g;
+        }
+        else {
+            ($file, $comment) = /^(\S+)\s*(.*)/;
+        }
         next unless $file;
 
         if ($Is_MacOS) {
             $file = _macify($file);
             $file =~ s/\\([0-3][0-7][0-7])/sprintf("%c", oct($1))/ge;
         }
-        elsif ($Is_VMS) {
+        elsif ($Is_VMS_mode) {
             require File::Basename;
             my($base,$dir) = File::Basename::fileparse($file);
             # Resolve illegal file specifications in the same way as tar
-            $dir =~ tr/./_/;
-            my(@pieces) = split(/\./,$base);
-            if (@pieces > 2) { $base = shift(@pieces) . '.' . join('_',@pieces); }
-            my $okfile = "$dir$base";
-            warn "Debug: Illegal name $file changed to $okfile\n" if $Debug;
-            $file = $okfile;
-            $file = lc($file) unless $file =~ /^MANIFEST(\.SKIP)?$/;
+            if ($Is_VMS_nodot) {
+                $dir =~ tr/./_/;
+                my(@pieces) = split(/\./,$base);
+                if (@pieces > 2)
+                    { $base = shift(@pieces) . '.' . join('_',@pieces); }
+                my $okfile = "$dir$base";
+                warn "Debug: Illegal name $file changed to $okfile\n" if $Debug;
+                $file = $okfile;
+            } 
+            $file = lc($file)
+                unless $Is_VMS_lc &&($file =~ /^MANIFEST(\.SKIP)?$/);
         }
 
         $read->{$file} = $comment;
@@ -343,24 +388,39 @@ sub maniread {
     $read;
 }
 
+=item maniskip
+
+    my $skipchk = maniskip();
+    my $skipchk = maniskip($manifest_skip_file);
+
+    if ($skipchk->($file)) { .. }
+
+reads a named C<MANIFEST.SKIP> file (defaults to C<MANIFEST.SKIP> in
+the current directory) and returns a CODE reference that tests whether
+a given filename should be skipped.
+
+=cut
+
 # returns an anonymous sub that decides if an argument matches
-sub _maniskip {
+sub maniskip {
     my @skip ;
-    my $mfile = "$MANIFEST.SKIP";
+    my $mfile = shift || "$MANIFEST.SKIP";
     _check_mskip_directives($mfile) if -f $mfile;
     local(*M, $_);
-    open M, $mfile or open M, $DEFAULT_MSKIP or return sub {0};
+    open M, "< $mfile" or open M, "< $DEFAULT_MSKIP" or return sub {0};
     while (<M>){
 	chomp;
 	s/\r//;
 	next if /^#/;
 	next if /^\s*$/;
+        s/^'//;
+        s/'$//;
 	push @skip, _macify($_);
     }
     close M;
     return sub {0} unless (scalar @skip > 0);
 
-    my $opts = $Is_VMS ? '(?i)' : '';
+    my $opts = $Is_VMS_mode ? '(?i)' : '';
 
     # Make sure each entry is isolated in its own parentheses, in case
     # any of them contain alternations
@@ -380,7 +440,7 @@ sub _check_mskip_directives {
     local (*M, $_);
     my @lines = ();
     my $flag = 0;
-    unless (open M, $mfile) {
+    unless (open M, "< $mfile") {
         warn "Problem opening $mfile: $!";
         return;
     }
@@ -407,10 +467,10 @@ sub _check_mskip_directives {
     close M;
     return unless $flag;
     my $bakbase = $mfile;
-    $bakbase =~ s/\./_/g if $Is_VMS;  # avoid double dots
+    $bakbase =~ s/\./_/g if $Is_VMS_nodot;  # avoid double dots
     rename $mfile, "$bakbase.bak";
     warn "Debug: Saving original $mfile as $bakbase.bak\n" if $Debug;
-    unless (open M, ">$mfile") {
+    unless (open M, "> $mfile") {
         warn "Problem opening $mfile: $!";
         return;
     }
@@ -428,7 +488,7 @@ sub _include_mskip_file {
         return;
     }
     local (*M, $_);
-    unless (open M, $mskip) {
+    unless (open M, "< $mskip") {
         warn "Problem opening $mskip: $!";
         return;
     }
@@ -468,7 +528,7 @@ sub manicopy {
     require File::Path;
     require File::Basename;
 
-    $target = VMS::Filespec::unixify($target) if $Is_VMS;
+    $target = VMS::Filespec::unixify($target) if $Is_VMS_mode;
     File::Path::mkpath([ $target ],! $Quiet,$Is_VMS ? undef : 0755);
     foreach my $file (keys %$read){
     	if ($Is_MacOS) {
@@ -479,10 +539,10 @@ sub manicopy {
 	    }
 	    cp_if_diff($file, _maccat($target, $file), $how);
 	} else {
-	    $file = VMS::Filespec::unixify($file) if $Is_VMS;
+	    $file = VMS::Filespec::unixify($file) if $Is_VMS_mode;
 	    if ($file =~ m!/!) { # Ilya, that hurts, I fear, or maybe not?
 		my $dir = File::Basename::dirname($file);
-		$dir = VMS::Filespec::unixify($dir) if $Is_VMS;
+		$dir = VMS::Filespec::unixify($dir) if $Is_VMS_mode;
 		File::Path::mkpath(["$target/$dir"],! $Quiet,$Is_VMS ? undef : 0755);
 	    }
 	    cp_if_diff($file, "$target/$file", $how);
@@ -492,7 +552,10 @@ sub manicopy {
 
 sub cp_if_diff {
     my($from, $to, $how)=@_;
-    -f $from or carp "$0: $from not found";
+    if (! -f $from) {
+        carp "$from not found";
+        return;
+    }
     my($diff) = 0;
     local(*F,*T);
     open(F,"< $from\0") or die "Can't read $from: $!\n";
@@ -531,6 +594,7 @@ sub cp {
 
 sub ln {
     my ($srcFile, $dstFile) = @_;
+    # Fix-me - VMS can support links.
     return &cp if $Is_VMS or ($^O eq 'MSWin32' and Win32::IsWin95());
     link($srcFile, $dstFile);
 
@@ -626,6 +690,10 @@ sub maniadd {
 
     foreach my $file (_sort @needed) {
         my $comment = $additions->{$file} || '';
+        if ($file =~ /\s/) {
+            $file =~ s/([\\'])/\\$1/g;
+            $file = "'$file'";
+        }
         printf MANIFEST "%-40s %s\n", $file, $comment;
     }
     close MANIFEST or die "Error closing $MANIFEST: $!";
@@ -669,11 +737,14 @@ means F<foo/bar> style not F<foo\bar>.
 
 Anything between white space and an end of line within a C<MANIFEST>
 file is considered to be a comment.  Any line beginning with # is also
-a comment.
+a comment. Beginning with ExtUtils::Manifest 1.52, a filename may
+contain whitespace characters if it is enclosed in single quotes; single
+quotes or backslashes in that filename must be backslash-escaped.
 
     # this a comment
     some/file
     some/other/file            comment about some/file
+    'some/third file'          comment
 
 
 =head2 MANIFEST.SKIP

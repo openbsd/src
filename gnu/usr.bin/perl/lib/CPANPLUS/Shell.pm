@@ -20,7 +20,7 @@ $DEFAULT    = SHELL_DEFAULT;
 
 =head1 NAME
 
-CPANPLUS::Shell - generic loading (and base class) for CPANPLUS shells
+CPANPLUS::Shell - base class for all CPANPLUS shells
 
 =head1 SYNOPSIS
 
@@ -124,6 +124,8 @@ $TMPL = {
     remote          => { default => undef },
     noninteractive  => { default => '' },
     cache           => { default => [ ] },
+    settings        => { default => { install_all_prereqs => undef },
+                         no_override => 1 },
     _old_sigpipe    => { default => '', no_override => 1 },
     _old_outfh      => { default => '', no_override => 1 },
     _signals        => { default => { INT => { } }, no_override => 1 },

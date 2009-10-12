@@ -7,7 +7,7 @@ require Tie::Hash;
 use XSLoader ();
 
 our @ISA = qw(Tie::Hash);
-our $VERSION = "1.07";
+our $VERSION = "1.08";
 
 XSLoader::load 'NDBM_File', $VERSION;
 

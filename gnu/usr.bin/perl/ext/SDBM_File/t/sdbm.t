@@ -490,7 +490,7 @@ unlink <Op_dbmx*>, $Dfile;
    $h{"fred"} = "joe" ;
    ok(76, $h{"fred"} eq "joe");
 
-   eval { grep { $h{$_} } (1, 2, 3) };
+   eval { map { $h{$_} } (1, 2, 3) };
    ok (77, ! $@);
 
 
@@ -506,7 +506,7 @@ unlink <Op_dbmx*>, $Dfile;
 
    ok(79, $db->FIRSTKEY() eq "fred") ;
    
-   eval { grep { $h{$_} } (1, 2, 3) };
+   eval { map { $h{$_} } (1, 2, 3) };
    ok (80, ! $@);
 
    undef $db ;

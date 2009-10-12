@@ -1,4 +1,3 @@
-# $Id: no_ending.t,v 1.1 2009/05/16 21:42:57 simon Exp $
 use Test::Builder;
 
 BEGIN {

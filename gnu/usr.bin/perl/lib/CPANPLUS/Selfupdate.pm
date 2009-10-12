@@ -12,7 +12,7 @@ $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Selfupdate - methods for updating CPANPLUS itself
+CPANPLUS::Selfupdate - update CPANPLUS itself
 
 =head1 SYNOPSIS
 
@@ -40,14 +40,14 @@ CPANPLUS::Selfupdate - methods for updating CPANPLUS itself
 
     my $Modules = {
         dependencies => {
-            'File::Fetch'               => '0.13_04', # win32 & VMS file://
+            'File::Fetch'               => '0.15_02', # lynx & 404 handling
             'File::Spec'                => '0.82',
             'IPC::Cmd'                  => '0.36', # 5.6.2 compat: 2-arg open
             'Locale::Maketext::Simple'  => '0.01',
             'Log::Message'              => '0.01',
             'Module::Load'              => '0.10',
-            'Module::Load::Conditional' => '0.18', # Better parsing: #23995,
-                                                   # uses version.pm for <=>
+            'Module::Load::Conditional' => '0.28', # returns dir for loaded
+                                                   # modules
             'version'                   => '0.73', # needed for M::L::C
                                                    # addresses #24630 and 
                                                    # #24675
@@ -61,10 +61,12 @@ CPANPLUS::Selfupdate - methods for updating CPANPLUS itself
             'Archive::Extract'          => '0.16', # ./Dir bug fix
             'Archive::Tar'              => '1.23',
             'IO::Zlib'                  => '1.04', # needed for Archive::Tar
-            'Object::Accessor'          => '0.32', # overloaded stringification
+            'Object::Accessor'          => '0.34', # mk_aliases support
             'Module::CoreList'          => '2.09',
             'Module::Pluggable'         => '2.4',
             'Module::Loaded'            => '0.01',
+            'Parse::CPAN::Meta'         => '0.02', # config_requires support
+            'ExtUtils::Install'         => '1.42', # uninstall outside @INC
         },
     
         features => {
@@ -77,14 +79,13 @@ CPANPLUS::Selfupdate - methods for updating CPANPLUS itself
                     my $cb = shift;
                     $cb->configure_object->get_conf('prefer_makefile') 
                         ? { }
-                        : { 'CPANPLUS::Dist::Build' => '0.04'  };
+                        : { 'CPANPLUS::Dist::Build' => '0.24'  };
                 },
                 sub { return 1 },   # always enabled
             ],            
             cpantest        => [
-                {
-                    'YAML::Tiny'     => '0.0',
-                    'Test::Reporter' => '1.34',
+                { 'Test::Reporter'  => '1.34',
+                  'YAML::Tiny'      => '0.0'
                 },
                 sub { 
                     my $cb = shift;
@@ -159,6 +160,17 @@ CPANPLUS::Selfupdate - methods for updating CPANPLUS itself
                     return $cb->configure_object->get_conf('storable');
                 },
             ],
+            sqlite_backend => [
+                {   'DBIx::Simple' => '0.0',
+                    'DBD::SQLite'  => '0.0',
+                },
+                sub {
+                    my $cb   = shift;
+                    my $conf = $cb->configure_object;
+                    return $conf->get_conf('source_engine') 
+                        eq 'CPANPLUS::Internals::Source::SQLite'
+                },                        
+            ],                    
         },
         core => {
             'CPANPLUS' => '0.0',

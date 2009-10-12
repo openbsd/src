@@ -26,9 +26,11 @@
 #include "perl.h"
 
 /*
- * "Away now, Shadowfax!  Run, greatheart, run as you have never run before!
- * Now we are come to the lands where you were foaled, and every stone you
- * know.  Run now!  Hope is in speed!"  --Gandalf
+ * 'Away now, Shadowfax!  Run, greatheart, run as you have never run before!
+ *  Now we are come to the lands where you were foaled, and every stone you
+ *  know.  Run now!  Hope is in speed!'                    --Gandalf
+ *
+ *     [p.600 of _The Lord of the Rings_, III/xi: "The Palantír"]
  */
 
 int

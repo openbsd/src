@@ -1,9 +1,9 @@
 package CPANPLUS::Dist::MM;
 
+use warnings;
 use strict;
 use vars    qw[@ISA $STATUS];
-@ISA =      qw[CPANPLUS::Dist];
-
+use base    'CPANPLUS::Dist::Base';
 
 use CPANPLUS::Internals::Constants;
 use CPANPLUS::Internals::Constants::Report;
@@ -23,14 +23,12 @@ local $Params::Check::VERBOSE = 1;
 
 =head1 NAME
 
-CPANPLUS::Dist::MM - distribution class for MakeMaker
+CPANPLUS::Dist::MM - distribution class for MakeMaker related modules
 
 =head1 SYNOPSIS
 
-    my $mm = CPANPLUS::Dist->new( 
-                                format  => 'makemaker',
-                                module  => $modobj, 
-                            );
+    $mm = CPANPLUS::Dist::MM->new( module => $modobj );
+    
     $mm->create;        # runs make && make test
     $mm->install;       # runs make install
 
@@ -219,21 +217,27 @@ sub prepare {
     }
     
     my $args;
-    my( $force, $verbose, $perl, $mmflags );
+    my( $force, $verbose, $perl, @mmflags, $prereq_target, $prereq_format,
+        $prereq_build );
     {   local $Params::Check::ALLOW_UNKNOWN = 1;
         my $tmpl = {
             perl            => {    default => $^X, store => \$perl },
             makemakerflags  => {    default =>
-                                        $conf->get_conf('makemakerflags'),
-                                    store => \$mmflags },                 
+                                        $conf->get_conf('makemakerflags') || '',
+                                    store => \$mmflags[0] },
             force           => {    default => $conf->get_conf('force'), 
                                     store   => \$force },
             verbose         => {    default => $conf->get_conf('verbose'), 
                                     store   => \$verbose },
+            prereq_target   => {    default => '', store => \$prereq_target }, 
+            prereq_format   => {    default => '',
+                                    store   => \$prereq_format },   
+            prereq_build    => {    default => 0, store => \$prereq_build },     
         };                                            
 
         $args = check( $tmpl, \%hash ) or return;
     }
+    
     
     ### maybe we already ran a create on this object? ###
     return 1 if $dist->status->prepared && !$force;
@@ -250,6 +254,39 @@ sub prepare {
     
     my $fail; 
     RUN: {
+
+        ### we resolve 'configure requires' here, so we can run the 'perl
+        ### Makefile.PL' command
+        ### XXX for tests: mock f_c_r to something that *can* resolve and
+        ### something that *doesnt* resolve. Check the error log for ok
+        ### on this step or failure
+        ### XXX make a seperate tarball to test for this scenario: simply
+        ### containing a makefile.pl/build.pl for test purposes?
+        {   my $configure_requires = $dist->find_configure_requires;     
+            my $ok = $dist->_resolve_prereqs(
+                            format          => $prereq_format,
+                            verbose         => $verbose,
+                            prereqs         => $configure_requires,
+                            target          => $prereq_target,
+                            force           => $force,
+                            prereq_build    => $prereq_build,
+                    );    
+    
+            unless( $ok ) {
+           
+                #### use $dist->flush to reset the cache ###
+                error( loc( "Unable to satisfy '%1' for '%2' " .
+                            "-- aborting install", 
+                            'configure_requires', $self->module ) );    
+                $dist->status->prepared(0);
+                $fail++; 
+                last RUN;
+            } 
+            ### end of prereq resolving ###
+        }
+        
+
+
         ### don't run 'perl makefile.pl' again if there's a makefile already 
         if( -e MAKEFILE->() && (-M MAKEFILE->() < -M $dir) && !$force ) {
             msg(loc("'%1' already exists, not running '%2 %3' again ".
@@ -325,7 +362,7 @@ sub prepare {
             # my $cmd     = "$perl $flush $makefile_pl $mmflags";
 
             my $run_perl    = $conf->get_program('perlwrapper');
-            my $cmd         = "$perl $run_perl $makefile_pl $mmflags";
+            my $cmd         = [$perl, $run_perl, $makefile_pl, @mmflags];
 
             ### set ENV var to tell underlying code this is what we're
             ### executing.
@@ -436,7 +473,7 @@ sub _find_prereqs {
     }
     
     my %p;
-    while( <$fh> ) {
+    while( local $_ = <$fh> ) {
         my ($found) = m|^[\#]\s+PREREQ_PM\s+=>\s+(.+)|;         
         
         next unless $found;
@@ -504,7 +541,7 @@ sub create {
     
     my $args;
     my( $force, $verbose, $make, $makeflags, $skiptest, $prereq_target, $perl, 
-        $mmflags, $prereq_format, $prereq_build);
+        @mmflags, $prereq_format, $prereq_build);
     {   local $Params::Check::ALLOW_UNKNOWN = 1;
         my $tmpl = {
             perl            => {    default => $^X, store => \$perl },
@@ -529,9 +566,14 @@ sub create {
         $args = check( $tmpl, \%hash ) or return;
     }
     
-    ### maybe we already ran a create on this object? ###
-    return 1 if $dist->status->created && !$force;
-        
+    ### maybe we already ran a create on this object?
+    ### make sure we add to include path again, just in case we came from
+    ### ->save_state, at which point we need to restore @INC/$PERL5LIB
+    if( $dist->status->created && !$force ) {
+        $self->add_to_includepath;
+        return 1;
+    }        
+    
     ### store the arguments, so ->install can use them in recursive loops ###
     $dist->status->_create_args( $args );
     
@@ -579,7 +621,7 @@ sub create {
         ### end of prereq resolving ###    
         
         my $captured;
-        
+
         ### 'make' section ###    
         if( -d BLIB->($dir) && (-M BLIB->($dir) < -M $dir) && !$force ) {
             msg(loc("Already ran '%1' for this module [%2] -- " .
@@ -638,7 +680,7 @@ sub create {
                 if ( NO_TESTS_DEFINED->( $captured ) ) {
                     msg( NO_TESTS_DEFINED->( $captured ), 0 )
                 } else {
-                    msg( loc( "MAKE TEST passed: %2", $captured ), $verbose );
+                    msg( loc( "MAKE TEST passed: %1", $captured ), $verbose );
                 }
             
                 $dist->status->test(1);

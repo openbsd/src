@@ -18,8 +18,8 @@ Symbol - manipulate Perl symbols and their names
     # replace *FOO{IO} handle but not $FOO, %FOO, etc.
     *FOO = geniosym;
 
-    print qualify("x"), "\n";              # "Test::x"
-    print qualify("x", "FOO"), "\n"        # "FOO::x"
+    print qualify("x"), "\n";              # "main::x"
+    print qualify("x", "FOO"), "\n";       # "FOO::x"
     print qualify("BAR::x"), "\n";         # "BAR::x"
     print qualify("BAR::x", "FOO"), "\n";  # "BAR::x"
     print qualify("STDOUT", "FOO"), "\n";  # "main::STDOUT" (global)
@@ -85,7 +85,7 @@ require Exporter;
 @EXPORT = qw(gensym ungensym qualify qualify_to_ref);
 @EXPORT_OK = qw(delete_package geniosym);
 
-$VERSION = '1.06';
+$VERSION = '1.07';
 
 my $genpkg = "Symbol::";
 my $genseq = 0;

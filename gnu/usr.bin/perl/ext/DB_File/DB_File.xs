@@ -4,11 +4,11 @@
 
  written by Paul Marquess <pmqs@cpan.org>
  last modified 4th February 2007
- version 1.815
+ version 1.818
 
  All comments/suggestions/problems are welcome
 
-     Copyright (c) 1995-2005 Paul Marquess. All rights reserved.
+     Copyright (c) 1995-2009 Paul Marquess. All rights reserved.
      This program is free software; you can redistribute it and/or
      modify it under the same terms as Perl itself.
 

@@ -9,7 +9,7 @@ use Locale::Maketext::Simple        Class => 'CPANPLUS', Style => 'gettext';
 
 =head1 NAME
 
-CPANPLUS::Shell::Default::Plugins::CustomSource - plugin to add custom sources to CPANPLUS
+CPANPLUS::Shell::Default::Plugins::CustomSource - plugin support for the CPANPLUS shell
 
 =head1 SYNOPSIS
     

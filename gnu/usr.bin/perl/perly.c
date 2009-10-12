@@ -1,6 +1,6 @@
 /*    perly.c
  *
- *    Copyright (c) 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (c) 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -193,7 +193,7 @@ static void
 S_clear_yystack(pTHX_  const yy_parser *parser)
 {
     yy_stack_frame *ps     = parser->ps;
-    int i;
+    int i = 0;
 
     if (!parser->stack || ps == parser->stack)
 	return;

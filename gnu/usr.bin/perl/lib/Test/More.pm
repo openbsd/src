@@ -17,7 +17,7 @@ sub _carp {
     return warn @_, " at $file line $line\n";
 }
 
-our $VERSION = '0.86';
+our $VERSION = '0.92';
 $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
 use Test::Builder::Module;
@@ -30,6 +30,7 @@ our @EXPORT = qw(ok use_ok require_ok
   eq_array eq_hash eq_set
   $TODO
   plan
+  done_testing
   can_ok isa_ok new_ok
   diag note explain
   BAIL_OUT
@@ -43,9 +44,9 @@ Test::More - yet another framework for writing test scripts
 
   use Test::More tests => 23;
   # or
-  use Test::More qw(no_plan);
-  # or
   use Test::More skip_all => $reason;
+  # or
+  use Test::More;   # see done_testing()
 
   BEGIN { use_ok( 'Some::Module' ); }
   require_ok( 'Some::Module' );
@@ -95,7 +96,7 @@ Test::More - yet another framework for writing test scripts
 =head1 DESCRIPTION
 
 B<STOP!> If you're just getting started writing tests, have a look at
-Test::Simple first.  This is a drop in replacement for Test::Simple
+L<Test::Simple> first.  This is a drop in replacement for Test::Simple
 which you can switch to once you get the hang of basic testing.
 
 The purpose of this module is to provide a wide range of testing
@@ -115,14 +116,19 @@ The preferred way to do this is to declare a plan when you C<use Test::More>.
 
   use Test::More tests => 23;
 
-There are rare cases when you will not know beforehand how many tests
-your script is going to run.  In this case, you can declare that you
-have no plan.  (Try to avoid using this as it weakens your test.)
+There are cases when you will not know beforehand how many tests your
+script is going to run.  In this case, you can declare your tests at
+the end.
 
-  use Test::More qw(no_plan);
+  use Test::More;
 
-B<NOTE>: using no_plan requires a Test::Harness upgrade else it will
-think everything has failed.  See L<CAVEATS and NOTES>).
+  ... run your tests ...
+
+  done_testing( $number_of_tests_run );
+
+Sometimes you really don't know how many tests were run, or it's too
+difficult to calculate.  In which case you can leave off
+$number_of_tests_run.
 
 In some cases, you'll want to completely skip an entire testing script.
 
@@ -186,6 +192,32 @@ sub import_extra {
     @$list = @other;
 
     return;
+}
+
+=over 4
+
+=item B<done_testing>
+
+    done_testing();
+    done_testing($number_of_tests);
+
+If you don't know how many tests you're going to run, you can issue
+the plan when you're done running tests.
+
+$number_of_tests is the same as plan(), it's the number of tests you
+expected to run.  You can omit this, in which case the number of tests
+you ran doesn't matter, just the fact that your tests ran to
+conclusion.
+
+This is safer than and replaces the "no_plan" plan.
+
+=back
+
+=cut
+
+sub done_testing {
+    my $tb = Test::More->builder;
+    $tb->done_testing(@_);
 }
 
 =head2 Test names
@@ -318,6 +350,17 @@ In these cases, use ok().
 
   ok( exists $brooklyn{tree},    'A tree grows in Brooklyn' );
 
+A simple call to isnt() usually does not provide a strong test but there
+are cases when you cannot say much more about a value than that it is
+different from some other value:
+
+  new_ok $obj, "Foo";
+
+  my $clone = $obj->clone;
+  isa_ok $obj, "Foo", "Foo->clone";
+
+  isnt $obj, $clone, "clone() produces a different object";
+
 For those grammatical pedants out there, there's an C<isn't()>
 function which is an alias of isnt().
 
@@ -419,6 +462,12 @@ is()'s use of C<eq> will interfere:
 
     cmp_ok( $big_hairy_number, '==', $another_big_hairy_number );
 
+It's especially useful when comparing greater-than or smaller-than 
+relation between values:
+
+    cmp_ok( $some_value, '<=', $upper_limit );
+
+
 =cut
 
 sub cmp_ok($$$;$) {
@@ -490,8 +539,9 @@ sub can_ok ($@) {
 
 =item B<isa_ok>
 
-  isa_ok($object, $class, $object_name);
-  isa_ok($ref,    $type,  $ref_name);
+  isa_ok($object,   $class, $object_name);
+  isa_ok($subclass, $class, $object_name);
+  isa_ok($ref,      $type,  $ref_name);
 
 Checks to see if the given C<< $object->isa($class) >>.  Also checks to make
 sure the object was defined in the first place.  Handy for this sort
@@ -506,6 +556,10 @@ where you'd otherwise have to write
     ok( defined $obj && $obj->isa('Some::Module') );
 
 to safeguard against your test script blowing up.
+
+You can also test a class, to make sure that it has the right ancestor:
+
+    isa_ok( 'Vole', 'Rodent' );
 
 It works on references, too:
 
@@ -522,39 +576,46 @@ sub isa_ok ($$;$) {
     my $tb = Test::More->builder;
 
     my $diag;
-    $obj_name = 'The object' unless defined $obj_name;
-    my $name = "$obj_name isa $class";
+
     if( !defined $object ) {
+        $obj_name = 'The thing' unless defined $obj_name;
         $diag = "$obj_name isn't defined";
     }
-    elsif( !ref $object ) {
-        $diag = "$obj_name isn't a reference";
-    }
     else {
+        my $whatami = ref $object ? 'object' : 'class';
         # We can't use UNIVERSAL::isa because we want to honor isa() overrides
         my( $rslt, $error ) = $tb->_try( sub { $object->isa($class) } );
         if($error) {
             if( $error =~ /^Can't call method "isa" on unblessed reference/ ) {
                 # Its an unblessed reference
+                $obj_name = 'The reference' unless defined $obj_name;
                 if( !UNIVERSAL::isa( $object, $class ) ) {
                     my $ref = ref $object;
                     $diag = "$obj_name isn't a '$class' it's a '$ref'";
                 }
             }
+            elsif( $error =~ /Can't call method "isa" without a package/ ) {
+                # It's something that can't even be a class
+                $diag = "$obj_name isn't a class or reference";
+            }
             else {
                 die <<WHOA;
-WHOA! I tried to call ->isa on your object and got some weird error.
+WHOA! I tried to call ->isa on your $whatami and got some weird error.
 Here's the error.
 $error
 WHOA
             }
         }
-        elsif( !$rslt ) {
-            my $ref = ref $object;
-            $diag = "$obj_name isn't a '$class' it's a '$ref'";
+        else {
+            $obj_name = "The $whatami" unless defined $obj_name;
+            if( !$rslt ) {
+                my $ref = ref $object;
+                $diag = "$obj_name isn't a '$class' it's a '$ref'";
+            }
         }
     }
 
+    my $name = "$obj_name isa $class";
     my $ok;
     if($diag) {
         $ok = $tb->ok( 0, $name );
@@ -828,11 +889,11 @@ is_deeply() compares the dereferenced values of references, the
 references themselves (except for their type) are ignored.  This means
 aspects such as blessing and ties are not considered "different".
 
-is_deeply() current has very limited handling of function reference
+is_deeply() currently has very limited handling of function reference
 and globs.  It merely checks if they have the same referent.  This may
 improve in the future.
 
-Test::Differences and Test::Deep provide more in-depth functionality
+L<Test::Differences> and L<Test::Deep> provide more in-depth functionality
 along these lines.
 
 =cut
@@ -1010,7 +1071,7 @@ sub note {
   my @dump = explain @diagnostic_message;
 
 Will dump the contents of any references in a human readable format.
-Usually you want to pass this into C<note> or C<dump>.
+Usually you want to pass this into C<note> or C<diag>.
 
 Handy for things like...
 
@@ -1227,6 +1288,8 @@ available such as a database connection failing.
 
 The test will exit with 255.
 
+For even better control look at L<Test::Most>.
+
 =cut
 
 sub BAIL_OUT {
@@ -1323,6 +1386,10 @@ sub _deep_check {
 
         if( defined $e1 xor defined $e2 ) {
             $ok = 0;
+        }
+        elsif( !defined $e1 and !defined $e2 ) {
+            # Shortcut if they're both defined.
+            $ok = 1;
         }
         elsif( _dne($e1) xor _dne($e2) ) {
             $ok = 0;
@@ -1450,7 +1517,7 @@ level.  The following is an example of a comparison which might not work:
 
     eq_set([\1, \2], [\2, \1]);
 
-Test::Deep contains much better set comparison functions.
+L<Test::Deep> contains much better set comparison functions.
 
 =cut
 
@@ -1534,6 +1601,24 @@ B<NOTE>  This behavior may go away in future versions.
 Test::More works with Perls as old as 5.6.0.
 
 
+=item utf8 / "Wide character in print"
+
+If you use utf8 or other non-ASCII characters with Test::More you
+might get a "Wide character in print" warning.  Using C<binmode
+STDOUT, ":utf8"> will not fix it.  Test::Builder (which powers
+Test::More) duplicates STDOUT and STDERR.  So any changes to them,
+including changing their output disciplines, will not be seem by
+Test::More.
+
+The work around is to change the filehandles used by Test::Builder
+directly.
+
+    my $builder = Test::More->builder;
+    binmode $builder->output,         ":utf8";
+    binmode $builder->failure_output, ":utf8";
+    binmode $builder->todo_output,    ":utf8";
+
+
 =item Overloaded objects
 
 String overloaded objects are compared B<as strings> (or in cmp_ok()'s
@@ -1545,7 +1630,7 @@ difference.  This is good.
 
 However, it does mean that functions like is_deeply() cannot be used to
 test the internals of string overloaded objects.  In this case I would
-suggest Test::Deep which contains more flexible testing functions for
+suggest L<Test::Deep> which contains more flexible testing functions for
 complex data structures.
 
 
@@ -1567,11 +1652,11 @@ This may cause problems:
 
 =item Test::Harness upgrade
 
-no_plan and todo depend on new Test::Harness features and fixes.  If
-you're going to distribute tests that use no_plan or todo your
-end-users will have to upgrade Test::Harness to the latest one on
-CPAN.  If you avoid no_plan and TODO tests, the stock Test::Harness
-will work fine.
+no_plan, todo and done_testing() depend on new Test::Harness features
+and fixes.  If you're going to distribute tests that use no_plan or
+todo your end-users will have to upgrade Test::Harness to the latest
+one on CPAN.  If you avoid no_plan and TODO tests, the stock
+Test::Harness will work fine.
 
 Installing Test::More should also upgrade Test::Harness.
 
@@ -1630,6 +1715,12 @@ the perl-qa gang.
 =head1 BUGS
 
 See F<http://rt.cpan.org> to report and view bugs.
+
+
+=head1 SOURCE
+
+The source code repository for Test::More can be found at
+F<http://github.com/schwern/test-more/>.
 
 
 =head1 COPYRIGHT

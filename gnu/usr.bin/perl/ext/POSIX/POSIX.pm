@@ -4,7 +4,7 @@ use warnings;
 
 our(@ISA, %EXPORT_TAGS, @EXPORT_OK, @EXPORT, $AUTOLOAD, %SIGRT) = ();
 
-our $VERSION = "1.13";
+our $VERSION = "1.17";
 
 use AutoLoader;
 
@@ -13,7 +13,10 @@ use XSLoader ();
 use Fcntl qw(FD_CLOEXEC F_DUPFD F_GETFD F_GETFL F_GETLK F_RDLCK F_SETFD
 	     F_SETFL F_SETLK F_SETLKW F_UNLCK F_WRLCK O_ACCMODE O_APPEND
 	     O_CREAT O_EXCL O_NOCTTY O_NONBLOCK O_RDONLY O_RDWR O_TRUNC
-	     O_WRONLY);
+	     O_WRONLY SEEK_CUR SEEK_END SEEK_SET
+	     S_ISBLK S_ISCHR S_ISDIR S_ISFIFO S_ISREG
+	     S_IRGRP S_IROTH S_IRUSR S_IRWXG S_IRWXO S_IRWXU S_ISGID S_ISUID
+	     S_IWGRP S_IWOTH S_IWUSR S_IXGRP S_IXOTH S_IXUSR);
 
 # Grandfather old foo_h form to new :foo_h form
 my $loaded;
@@ -32,10 +35,6 @@ sub usage;
 
 XSLoader::load 'POSIX', $VERSION;
 
-my %NON_CONSTS = (map {($_,1)}
-                  qw(S_ISBLK S_ISCHR S_ISDIR S_ISFIFO S_ISREG WEXITSTATUS
-                     WIFEXITED WIFSIGNALED WIFSTOPPED WSTOPSIG WTERMSIG));
-
 sub AUTOLOAD {
     no strict;
     no warnings 'uninitialized';
@@ -47,15 +46,9 @@ sub AUTOLOAD {
     local $! = 0;
     my $constname = $AUTOLOAD;
     $constname =~ s/.*:://;
-    if ($NON_CONSTS{$constname}) {
-        my ($val, $error) = &int_macro_int($constname, $_[0]);
-        croak $error if $error;
-        *$AUTOLOAD = sub { &int_macro_int($constname, $_[0]) };
-    } else {
-        my ($error, $val) = constant($constname);
-        croak $error if $error;
-	*$AUTOLOAD = sub { $val };
-    }
+    my ($error, $val) = constant($constname);
+    croak $error if $error;
+    *$AUTOLOAD = sub { $val };
 
     goto &$AUTOLOAD;
 }

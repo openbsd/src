@@ -63,9 +63,11 @@ corresponding built-in functions:
 
     $io->close
     $io->eof
+    $io->fcntl( FUNCTION, SCALAR )
     $io->fileno
     $io->format_write( [FORMAT_NAME] )
     $io->getc
+    $io->ioctl( FUNCTION, SCALAR )
     $io->read ( BUF, LEN, [OFFSET] )
     $io->print ( ARGS )
     $io->printf ( FMT, [ARGS] )
@@ -107,7 +109,8 @@ Furthermore, for doing normal I/O you might need these:
 
 C<fdopen> is like an ordinary C<open> except that its first parameter
 is not a filename but rather a file handle name, an IO::Handle object,
-or a file descriptor number.
+or a file descriptor number.  (For the documentation of the C<open>
+method, see L<IO::File>.)
 
 =item $io->opened
 
@@ -265,7 +268,7 @@ use IO ();	# Load the XS module
 require Exporter;
 @ISA = qw(Exporter);
 
-$VERSION = "1.27";
+$VERSION = "1.28";
 $VERSION = eval $VERSION;
 
 @EXPORT_OK = qw(
@@ -412,7 +415,8 @@ sub printf {
 sub say {
     @_ or croak 'usage: $io->say(ARGS)';
     my $this = shift;
-    print $this @_, "\n";
+    local $\ = "\n";
+    print $this @_;
 }
 
 sub getline {
@@ -587,14 +591,12 @@ sub format_write {
     }
 }
 
-# XXX undocumented
 sub fcntl {
     @_ == 3 || croak 'usage: $io->fcntl( OP, VALUE );';
     my ($io, $op) = @_;
     return fcntl($io, $op, $_[2]);
 }
 
-# XXX undocumented
 sub ioctl {
     @_ == 3 || croak 'usage: $io->ioctl( OP, VALUE );';
     my ($io, $op) = @_;

@@ -276,7 +276,7 @@ have selected map for that
 
     @newAoA = map { [ @{ $AoA[$_] } [ 7..12 ] ] } 4 .. 8;
 
-Although if your manager accused of seeking job security (or rapid
+Although if your manager accused you of seeking job security (or rapid
 insecurity) through inscrutable code, it would be hard to argue. :-)
 If I were you, I'd put that in a function:
 

@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id$
 
 # test for rt.cpan.org 20768
 #

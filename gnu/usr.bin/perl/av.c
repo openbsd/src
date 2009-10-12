@@ -1,7 +1,7 @@
 /*    av.c
  *
- *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -9,8 +9,10 @@
  */
 
 /*
- * "...for the Entwives desired order, and plenty, and peace (by which they
- * meant that things should remain where they had set them)." --Treebeard
+ * '...for the Entwives desired order, and plenty, and peace (by which they
+ *  meant that things should remain where they had set them).' --Treebeard
+ *
+ *     [p.476 of _The Lord of the Rings_, III/iv: "Treebeard"]
  */
 
 /*
@@ -27,12 +29,13 @@ Perl_av_reify(pTHX_ AV *av)
     dVAR;
     I32 key;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_REIFY;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     if (AvREAL(av))
 	return;
 #ifdef DEBUGGING
-    if (SvTIED_mg((SV*)av, PERL_MAGIC_tied) && ckWARN_d(WARN_DEBUGGING))
+    if (SvTIED_mg((const SV *)av, PERL_MAGIC_tied) && ckWARN_d(WARN_DEBUGGING))
 	Perl_warner(aTHX_ packWARN(WARN_DEBUGGING), "av_reify called on tied array");
 #endif
     key = AvMAX(av) + 1;
@@ -66,9 +69,10 @@ Perl_av_extend(pTHX_ AV *av, I32 key)
     dVAR;
     MAGIC *mg;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_EXTEND;
+    assert(SvTYPE(av) == SVt_PVAV);
 
-    mg = SvTIED_mg((SV*)av, PERL_MAGIC_tied);
+    mg = SvTIED_mg((const SV *)av, PERL_MAGIC_tied);
     if (mg) {
 	dSP;
 	ENTER;
@@ -76,8 +80,8 @@ Perl_av_extend(pTHX_ AV *av, I32 key)
 	PUSHSTACKi(PERLSI_MAGIC);
 	PUSHMARK(SP);
 	EXTEND(SP,2);
-	PUSHs(SvTIED_obj((SV*)av, mg));
-	PUSHs(sv_2mortal(newSViv(key+1)));
+	PUSHs(SvTIED_obj(MUTABLE_SV(av), mg));
+	mPUSHi(key + 1);
         PUTBACK;
 	call_method("EXTEND", G_SCALAR|G_DISCARD);
 	POPSTACK;
@@ -117,8 +121,22 @@ Perl_av_extend(pTHX_ AV *av, I32 key)
 		IV itmp;
 #endif
 
-#ifdef MYMALLOC
-		newmax = malloced_size((void*)AvALLOC(av))/sizeof(SV*) - 1;
+#ifdef Perl_safesysmalloc_size
+		/* Whilst it would be quite possible to move this logic around
+		   (as I did in the SV code), so as to set AvMAX(av) early,
+		   based on calling Perl_safesysmalloc_size() immediately after
+		   allocation, I'm not convinced that it is a great idea here.
+		   In an array we have to loop round setting everything to
+		   &PL_sv_undef, which means writing to memory, potentially lots
+		   of it, whereas for the SV buffer case we don't touch the
+		   "bonus" memory. So there there is no cost in telling the
+		   world about it, whereas here we have to do work before we can
+		   tell the world about it, and that work involves writing to
+		   memory that might never be read. So, I feel, better to keep
+		   the current lazy system of only writing to it if our caller
+		   has a need for more space. NWC  */
+		newmax = Perl_safesysmalloc_size((void*)AvALLOC(av)) /
+		    sizeof(const SV *) - 1;
 
 		if (key <= newmax) 
 		    goto resized;
@@ -129,25 +147,26 @@ Perl_av_extend(pTHX_ AV *av, I32 key)
 #if defined(STRANGE_MALLOC) || defined(MYMALLOC)
 		Renew(AvALLOC(av),newmax+1, SV*);
 #else
-		bytes = (newmax + 1) * sizeof(SV*);
+		bytes = (newmax + 1) * sizeof(const SV *);
 #define MALLOC_OVERHEAD 16
 		itmp = MALLOC_OVERHEAD;
 		while ((MEM_SIZE)(itmp - MALLOC_OVERHEAD) < bytes)
 		    itmp += itmp;
 		itmp -= MALLOC_OVERHEAD;
-		itmp /= sizeof(SV*);
+		itmp /= sizeof(const SV *);
 		assert(itmp > newmax);
 		newmax = itmp - 1;
 		assert(newmax >= AvMAX(av));
 		Newx(ary, newmax+1, SV*);
 		Copy(AvALLOC(av), ary, AvMAX(av)+1, SV*);
 		if (AvMAX(av) > 64)
-		    offer_nice_chunk(AvALLOC(av), (AvMAX(av)+1) * sizeof(SV*));
+		    offer_nice_chunk(AvALLOC(av),
+				     (AvMAX(av)+1) * sizeof(const SV *));
 		else
 		    Safefree(AvALLOC(av));
 		AvALLOC(av) = ary;
 #endif
-#ifdef MYMALLOC
+#ifdef Perl_safesysmalloc_size
 	      resized:
 #endif
 		ary = AvALLOC(av) + AvMAX(av) + 1;
@@ -195,18 +214,21 @@ Perl_av_fetch(pTHX_ register AV *av, I32 key, I32 lval)
 {
     dVAR;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_FETCH;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvRMAGICAL(av)) {
-        const MAGIC * const tied_magic = mg_find((SV*)av, PERL_MAGIC_tied);
-        if (tied_magic || mg_find((SV*)av, PERL_MAGIC_regdata)) {
+        const MAGIC * const tied_magic
+	    = mg_find((const SV *)av, PERL_MAGIC_tied);
+        if (tied_magic || mg_find((const SV *)av, PERL_MAGIC_regdata)) {
 	    SV *sv;
 	    if (key < 0) {
 		I32 adjust_index = 1;
 		if (tied_magic) {
 		    /* Handle negative array indices 20020222 MJD */
 		    SV * const * const negative_indices_glob =
-			hv_fetch(SvSTASH(SvRV(SvTIED_obj((SV *)av, tied_magic))),
+			hv_fetch(SvSTASH(SvRV(SvTIED_obj(MUTABLE_SV(av),
+							 tied_magic))),
 				NEGATIVE_INDICES_VAR, 16, 0);
 
 		    if (negative_indices_glob && SvTRUE(GvSV(*negative_indices_glob)))
@@ -222,7 +244,7 @@ Perl_av_fetch(pTHX_ register AV *av, I32 key, I32 lval)
 
             sv = sv_newmortal();
 	    sv_upgrade(sv, SVt_PVLV);
-	    mg_copy((SV*)av, sv, 0, key);
+	    mg_copy(MUTABLE_SV(av), sv, 0, key);
 	    LvTYPE(sv) = 't';
 	    LvTARG(sv) = sv; /* fake (SV**) */
 	    return &(LvTARG(sv));
@@ -278,7 +300,8 @@ Perl_av_store(pTHX_ register AV *av, I32 key, SV *val)
     dVAR;
     SV** ary;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_STORE;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     /* S_regclass relies on being able to pass in a NULL sv
        (unicode_alternate may be NULL).
@@ -288,13 +311,13 @@ Perl_av_store(pTHX_ register AV *av, I32 key, SV *val)
 	val = &PL_sv_undef;
 
     if (SvRMAGICAL(av)) {
-        const MAGIC * const tied_magic = mg_find((SV*)av, PERL_MAGIC_tied);
+        const MAGIC * const tied_magic = mg_find((const SV *)av, PERL_MAGIC_tied);
         if (tied_magic) {
             /* Handle negative array indices 20020222 MJD */
             if (key < 0) {
 		bool adjust_index = 1;
 		SV * const * const negative_indices_glob =
-                    hv_fetch(SvSTASH(SvRV(SvTIED_obj((SV *)av, 
+                    hv_fetch(SvSTASH(SvRV(SvTIED_obj(MUTABLE_SV(av), 
                                                      tied_magic))), 
                              NEGATIVE_INDICES_VAR, 16, 0);
                 if (negative_indices_glob
@@ -307,7 +330,7 @@ Perl_av_store(pTHX_ register AV *av, I32 key, SV *val)
                 }
             }
 	    if (val != &PL_sv_undef) {
-		mg_copy((SV*)av, val, 0, key);
+		mg_copy(MUTABLE_SV(av), val, 0, key);
 	    }
 	    return NULL;
         }
@@ -321,7 +344,7 @@ Perl_av_store(pTHX_ register AV *av, I32 key, SV *val)
     }
 
     if (SvREADONLY(av) && key >= AvFILL(av))
-	Perl_croak(aTHX_ PL_no_modify);
+	Perl_croak(aTHX_ "%s", PL_no_modify);
 
     if (!AvREAL(av) && AvREIFY(av))
 	av_reify(av);
@@ -344,33 +367,14 @@ Perl_av_store(pTHX_ register AV *av, I32 key, SV *val)
     if (SvSMAGICAL(av)) {
 	const MAGIC* const mg = SvMAGIC(av);
 	if (val != &PL_sv_undef) {
-	    sv_magic(val, (SV*)av, toLOWER(mg->mg_type), 0, key);
+	    sv_magic(val, MUTABLE_SV(av), toLOWER(mg->mg_type), 0, key);
 	}
 	if (PL_delaymagic && mg->mg_type == PERL_MAGIC_isa)
 	    PL_delaymagic |= DM_ARRAY;
 	else
-	   mg_set((SV*)av);
+	   mg_set(MUTABLE_SV(av));
     }
     return &ary[key];
-}
-
-/*
-=for apidoc newAV
-
-Creates a new AV.  The reference count is set to 1.
-
-=cut
-*/
-
-AV *
-Perl_newAV(pTHX)
-{
-    register AV * const av = (AV*)newSV_type(SVt_PVAV);
-    /* sv_upgrade does AvREAL_only()  */
-    AvALLOC(av) = 0;
-    AvARRAY(av) = NULL;
-    AvMAX(av) = AvFILLp(av) = -1;
-    return av;
 }
 
 /*
@@ -386,8 +390,11 @@ will have a reference count of 1.
 AV *
 Perl_av_make(pTHX_ register I32 size, register SV **strp)
 {
-    register AV * const av = (AV*)newSV_type(SVt_PVAV);
+    register AV * const av = MUTABLE_AV(newSV_type(SVt_PVAV));
     /* sv_upgrade does AvREAL_only()  */
+    PERL_ARGS_ASSERT_AV_MAKE;
+    assert(SvTYPE(av) == SVt_PVAV);
+
     if (size) {		/* "defined" was returning undef for size==0 anyway. */
         register SV** ary;
         register I32 i;
@@ -420,7 +427,9 @@ Perl_av_clear(pTHX_ register AV *av)
     dVAR;
     I32 extra;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_CLEAR;
+    assert(SvTYPE(av) == SVt_PVAV);
+
 #ifdef DEBUGGING
     if (SvREFCNT(av) == 0 && ckWARN_d(WARN_DEBUGGING)) {
 	Perl_warner(aTHX_ packWARN(WARN_DEBUGGING), "Attempt to clear deleted array");
@@ -428,15 +437,15 @@ Perl_av_clear(pTHX_ register AV *av)
 #endif
 
     if (SvREADONLY(av))
-	Perl_croak(aTHX_ PL_no_modify);
+	Perl_croak(aTHX_ "%s", PL_no_modify);
 
     /* Give any tie a chance to cleanup first */
     if (SvRMAGICAL(av)) {
 	const MAGIC* const mg = SvMAGIC(av);
-	if (PL_delaymagic && mg->mg_type == PERL_MAGIC_isa)
+	if (PL_delaymagic && mg && mg->mg_type == PERL_MAGIC_isa)
 	    PL_delaymagic |= DM_ARRAY;
         else
-	    mg_clear((SV*)av); 
+	    mg_clear(MUTABLE_SV(av)); 
     }
 
     if (AvMAX(av) < 0)
@@ -473,10 +482,11 @@ Undefines the array.  Frees the memory used by the array itself.
 void
 Perl_av_undef(pTHX_ register AV *av)
 {
-    assert(av);
+    PERL_ARGS_ASSERT_AV_UNDEF;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     /* Give any tie a chance to cleanup first */
-    if (SvTIED_mg((SV*)av, PERL_MAGIC_tied)) 
+    if (SvTIED_mg((const SV *)av, PERL_MAGIC_tied)) 
 	av_fill(av, -1);
 
     if (AvREAL(av)) {
@@ -490,7 +500,7 @@ Perl_av_undef(pTHX_ register AV *av)
     AvARRAY(av) = NULL;
     AvMAX(av) = AvFILLp(av) = -1;
 
-    if(SvRMAGICAL(av)) mg_clear((SV*)av);
+    if(SvRMAGICAL(av)) mg_clear(MUTABLE_SV(av));
 }
 
 /*
@@ -506,6 +516,8 @@ A small internal helper function to remove a commonly duplicated idiom.
 void
 Perl_av_create_and_push(pTHX_ AV **const avp, SV *const val)
 {
+    PERL_ARGS_ASSERT_AV_CREATE_AND_PUSH;
+
     if (!*avp)
 	*avp = newAV();
     av_push(*avp, val);
@@ -515,7 +527,8 @@ Perl_av_create_and_push(pTHX_ AV **const avp, SV *const val)
 =for apidoc av_push
 
 Pushes an SV onto the end of the array.  The array will grow automatically
-to accommodate the addition.
+to accommodate the addition. Like C<av_store>, this takes ownership of one
+reference count.
 
 =cut
 */
@@ -525,17 +538,19 @@ Perl_av_push(pTHX_ register AV *av, SV *val)
 {             
     dVAR;
     MAGIC *mg;
-    assert(av);
+
+    PERL_ARGS_ASSERT_AV_PUSH;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-	Perl_croak(aTHX_ PL_no_modify);
+	Perl_croak(aTHX_ "%s", PL_no_modify);
 
-    if ((mg = SvTIED_mg((SV*)av, PERL_MAGIC_tied))) {
+    if ((mg = SvTIED_mg((const SV *)av, PERL_MAGIC_tied))) {
 	dSP;
 	PUSHSTACKi(PERLSI_MAGIC);
 	PUSHMARK(SP);
 	EXTEND(SP,2);
-	PUSHs(SvTIED_obj((SV*)av, mg));
+	PUSHs(SvTIED_obj(MUTABLE_SV(av), mg));
 	PUSHs(val);
 	PUTBACK;
 	ENTER;
@@ -563,15 +578,16 @@ Perl_av_pop(pTHX_ register AV *av)
     SV *retval;
     MAGIC* mg;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_POP;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-	Perl_croak(aTHX_ PL_no_modify);
-    if ((mg = SvTIED_mg((SV*)av, PERL_MAGIC_tied))) {
+	Perl_croak(aTHX_ "%s", PL_no_modify);
+    if ((mg = SvTIED_mg((const SV*)av, PERL_MAGIC_tied))) {
 	dSP;    
 	PUSHSTACKi(PERLSI_MAGIC);
 	PUSHMARK(SP);
-	XPUSHs(SvTIED_obj((SV*)av, mg));
+	XPUSHs(SvTIED_obj(MUTABLE_SV(av), mg));
 	PUTBACK;
 	ENTER;
 	if (call_method("POP", G_SCALAR)) {
@@ -588,7 +604,7 @@ Perl_av_pop(pTHX_ register AV *av)
     retval = AvARRAY(av)[AvFILLp(av)];
     AvARRAY(av)[AvFILLp(av)--] = &PL_sv_undef;
     if (SvSMAGICAL(av))
-	mg_set((SV*)av);
+	mg_set(MUTABLE_SV(av));
     return retval;
 }
 
@@ -606,6 +622,8 @@ A small internal helper function to remove a commonly duplicated idiom.
 SV **
 Perl_av_create_and_unshift_one(pTHX_ AV **const avp, SV *const val)
 {
+    PERL_ARGS_ASSERT_AV_CREATE_AND_UNSHIFT_ONE;
+
     if (!*avp)
 	*avp = newAV();
     av_unshift(*avp, 1);
@@ -629,17 +647,18 @@ Perl_av_unshift(pTHX_ register AV *av, register I32 num)
     register I32 i;
     MAGIC* mg;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_UNSHIFT;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-	Perl_croak(aTHX_ PL_no_modify);
+	Perl_croak(aTHX_ "%s", PL_no_modify);
 
-    if ((mg = SvTIED_mg((SV*)av, PERL_MAGIC_tied))) {
+    if ((mg = SvTIED_mg((const SV *)av, PERL_MAGIC_tied))) {
 	dSP;
 	PUSHSTACKi(PERLSI_MAGIC);
 	PUSHMARK(SP);
 	EXTEND(SP,1+num);
-	PUSHs(SvTIED_obj((SV*)av, mg));
+	PUSHs(SvTIED_obj(MUTABLE_SV(av), mg));
 	while (num-- > 0) {
 	    PUSHs(&PL_sv_undef);
 	}
@@ -688,7 +707,8 @@ Perl_av_unshift(pTHX_ register AV *av, register I32 num)
 /*
 =for apidoc av_shift
 
-Shifts an SV off the beginning of the array.
+Shifts an SV off the beginning of the array. Returns C<&PL_sv_undef> if the 
+array is empty.
 
 =cut
 */
@@ -700,15 +720,16 @@ Perl_av_shift(pTHX_ register AV *av)
     SV *retval;
     MAGIC* mg;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_SHIFT;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-	Perl_croak(aTHX_ PL_no_modify);
-    if ((mg = SvTIED_mg((SV*)av, PERL_MAGIC_tied))) {
+	Perl_croak(aTHX_ "%s", PL_no_modify);
+    if ((mg = SvTIED_mg((const SV*)av, PERL_MAGIC_tied))) {
 	dSP;
 	PUSHSTACKi(PERLSI_MAGIC);
 	PUSHMARK(SP);
-	XPUSHs(SvTIED_obj((SV*)av, mg));
+	XPUSHs(SvTIED_obj(MUTABLE_SV(av), mg));
 	PUTBACK;
 	ENTER;
 	if (call_method("SHIFT", G_SCALAR)) {
@@ -729,7 +750,7 @@ Perl_av_shift(pTHX_ register AV *av)
     AvMAX(av)--;
     AvFILLp(av)--;
     if (SvSMAGICAL(av))
-	mg_set((SV*)av);
+	mg_set(MUTABLE_SV(av));
     return retval;
 }
 
@@ -745,7 +766,9 @@ array is C<av_len(av) + 1>.  Returns -1 if the array is empty.
 I32
 Perl_av_len(pTHX_ register const AV *av)
 {
-    assert(av);
+    PERL_ARGS_ASSERT_AV_LEN;
+    assert(SvTYPE(av) == SVt_PVAV);
+
     return AvFILL(av);
 }
 
@@ -769,19 +792,20 @@ Perl_av_fill(pTHX_ register AV *av, I32 fill)
     dVAR;
     MAGIC *mg;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_FILL;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     if (fill < 0)
 	fill = -1;
-    if ((mg = SvTIED_mg((SV*)av, PERL_MAGIC_tied))) {
+    if ((mg = SvTIED_mg((const SV *)av, PERL_MAGIC_tied))) {
 	dSP;            
 	ENTER;
 	SAVETMPS;
 	PUSHSTACKi(PERLSI_MAGIC);
 	PUSHMARK(SP);
 	EXTEND(SP,2);
-	PUSHs(SvTIED_obj((SV*)av, mg));
-	PUSHs(sv_2mortal(newSViv(fill+1)));
+	PUSHs(SvTIED_obj(MUTABLE_SV(av), mg));
+	mPUSHi(fill + 1);
 	PUTBACK;
 	call_method("STORESIZE", G_SCALAR|G_DISCARD);
 	POPSTACK;
@@ -806,7 +830,7 @@ Perl_av_fill(pTHX_ register AV *av, I32 fill)
 	    
 	AvFILLp(av) = fill;
 	if (SvSMAGICAL(av))
-	    mg_set((SV*)av);
+	    mg_set(MUTABLE_SV(av));
     }
     else
 	(void)av_store(av,fill,&PL_sv_undef);
@@ -827,21 +851,23 @@ Perl_av_delete(pTHX_ AV *av, I32 key, I32 flags)
     dVAR;
     SV *sv;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_DELETE;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-	Perl_croak(aTHX_ PL_no_modify);
+	Perl_croak(aTHX_ "%s", PL_no_modify);
 
     if (SvRMAGICAL(av)) {
-        const MAGIC * const tied_magic = mg_find((SV*)av, PERL_MAGIC_tied);
-        if ((tied_magic || mg_find((SV*)av, PERL_MAGIC_regdata))) {
+        const MAGIC * const tied_magic
+	    = mg_find((const SV *)av, PERL_MAGIC_tied);
+        if ((tied_magic || mg_find((const SV *)av, PERL_MAGIC_regdata))) {
             /* Handle negative array indices 20020222 MJD */
             SV **svp;
             if (key < 0) {
                 unsigned adjust_index = 1;
                 if (tied_magic) {
 		    SV * const * const negative_indices_glob =
-                        hv_fetch(SvSTASH(SvRV(SvTIED_obj((SV *)av, 
+                        hv_fetch(SvSTASH(SvRV(SvTIED_obj(MUTABLE_SV(av), 
                                                          tied_magic))), 
                                  NEGATIVE_INDICES_VAR, 16, 0);
                     if (negative_indices_glob
@@ -888,7 +914,7 @@ Perl_av_delete(pTHX_ AV *av, I32 key, I32 flags)
 	else
 	    AvARRAY(av)[key] = &PL_sv_undef;
 	if (SvSMAGICAL(av))
-	    mg_set((SV*)av);
+	    mg_set(MUTABLE_SV(av));
     }
     if (flags & G_DISCARD) {
 	SvREFCNT_dec(sv);
@@ -913,11 +939,13 @@ bool
 Perl_av_exists(pTHX_ AV *av, I32 key)
 {
     dVAR;
-    assert(av);
+    PERL_ARGS_ASSERT_AV_EXISTS;
+    assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvRMAGICAL(av)) {
-        const MAGIC * const tied_magic = mg_find((SV*)av, PERL_MAGIC_tied);
-        if (tied_magic || mg_find((SV*)av, PERL_MAGIC_regdata)) {
+        const MAGIC * const tied_magic
+	    = mg_find((const SV *)av, PERL_MAGIC_tied);
+        if (tied_magic || mg_find((const SV *)av, PERL_MAGIC_regdata)) {
 	    SV * const sv = sv_newmortal();
             MAGIC *mg;
             /* Handle negative array indices 20020222 MJD */
@@ -925,7 +953,7 @@ Perl_av_exists(pTHX_ AV *av, I32 key)
                 unsigned adjust_index = 1;
                 if (tied_magic) {
 		    SV * const * const negative_indices_glob =
-                        hv_fetch(SvSTASH(SvRV(SvTIED_obj((SV *)av, 
+                        hv_fetch(SvSTASH(SvRV(SvTIED_obj(MUTABLE_SV(av), 
                                                          tied_magic))), 
                                  NEGATIVE_INDICES_VAR, 16, 0);
                     if (negative_indices_glob
@@ -939,7 +967,7 @@ Perl_av_exists(pTHX_ AV *av, I32 key)
                 }
             }
 
-            mg_copy((SV*)av, sv, 0, key);
+            mg_copy(MUTABLE_SV(av), sv, 0, key);
             mg = mg_find(sv, PERL_MAGIC_tiedelem);
             if (mg) {
                 magic_existspack(sv, mg);
@@ -969,13 +997,14 @@ Perl_av_arylen_p(pTHX_ AV *av) {
     dVAR;
     MAGIC *mg;
 
-    assert(av);
+    PERL_ARGS_ASSERT_AV_ARYLEN_P;
+    assert(SvTYPE(av) == SVt_PVAV);
 
-    mg = mg_find((SV*)av, PERL_MAGIC_arylen_p);
+    mg = mg_find((const SV *)av, PERL_MAGIC_arylen_p);
 
     if (!mg) {
-	mg = sv_magicext((SV*)av, 0, PERL_MAGIC_arylen_p, &PL_vtbl_arylen_p,
-			 0, 0);
+	mg = sv_magicext(MUTABLE_SV(av), 0, PERL_MAGIC_arylen_p,
+			 &PL_vtbl_arylen_p, 0, 0);
 	assert(mg);
 	/* sv_magicext won't set this for us because we pass in a NULL obj  */
 	mg->mg_flags |= MGf_REFCOUNTED;

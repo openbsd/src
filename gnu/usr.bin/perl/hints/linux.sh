@@ -54,6 +54,9 @@ set `echo X "$libswanted "| sed -e 's/ bsd / /' -e 's/ net / /' -e 's/ bind / /'
 shift
 libswanted="$*"
 
+# Debian 4.0 puts ndbm in the -lgdbm_compat library.
+libswanted="$libswanted gdbm_compat"
+
 # If you have glibc, then report the version for ./myconfig bug reporting.
 # (Configure doesn't need to know the specific version since it just uses
 # gcc to load the library for all tests.)
@@ -88,13 +91,23 @@ case "`${cc:-cc} -V 2>&1`" in
     # The -mp flag is needed to pass various floating point related tests
     # The -no-gcc flag is needed otherwise, icc pretends (poorly) to be gcc
     ccflags="-we147 -mp -no-gcc $ccflags"
+    # Prevent relocation errors on 64bits arch
+    case "`uname -m`" in
+	*ia64*|*x86_64*)
+	    cccdlflags='-fPIC'
+	;;
+    esac
     # If we're using ICC, we usually want the best performance
     case "$optimize" in
     '') optimize='-O3' ;;
     esac
     ;;
-*"Sun C"*)
-    optimize='-xO2'
+*" Sun "*"C"*)
+    # Sun's C compiler, which might have a 'tag' name between
+    # 'Sun' and the 'C':  Examples:
+    # cc: Sun C 5.9 Linux_i386 Patch 124871-01 2007/07/31
+    # cc: Sun Ceres C 5.10 Linux_i386 2008/07/10
+    test "$optimize" || optimize='-xO2'
     cccdlflags='-KPIC'
     lddlflags='-G -Bdynamic'
     # Sun C doesn't support gcc attributes, but, in many cases, doesn't

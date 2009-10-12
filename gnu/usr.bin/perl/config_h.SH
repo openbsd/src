@@ -3,11 +3,12 @@
 #
 # See Porting/config_h.pl
 
+: Set up for generating config_h.SH
 case "$CONFIG_SH" in
-'') CONFIG_SH=config.sh ;;
+'') CONFIG_SH=config.sh;;
 esac
 case "$CONFIG_H" in
-'') CONFIG_H=config.h ;;
+'') CONFIG_H=config.h;;
 esac
 case $PERL_CONFIG_SH in
 '')
@@ -39,7 +40,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  * that running config_h.SH again will wipe out any changes you've made.
  * For a more permanent change edit $CONFIG_SH and rerun config_h.SH.
  *
- * \$Id: Config_h.U,v 3.0.1.5 1997/02/28 14:57:43 ram Exp $
+ * \$Id: Config_h.U 1 2006-08-24 12:32:52Z rmanfredi $
  */
 
 /*
@@ -99,6 +100,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	to truncate files.  You might need a -lx to get this routine.
  */
 #$d_chsize	HAS_CHSIZE		/**/
+
+/* HAS_CRYPT:
+ *	This symbol, if defined, indicates that the crypt routine is available
+ *	to encrypt passwords and the like.
+ */
+#$d_crypt HAS_CRYPT		/**/
 
 /* HAS_CTERMID:
  *	This symbol, if defined, indicates that the ctermid routine is
@@ -376,6 +383,13 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_pipe HAS_PIPE		/**/
 
+/* HAS_POLL:
+ *	This symbol, if defined, indicates that the poll routine is
+ *	available to poll active file descriptors.  Please check I_POLL and
+ *	I_SYS_POLL to know which header should be included as well.
+ */
+#$d_poll HAS_POLL		/**/
+
 /* HAS_READDIR:
  *	This symbol, if defined, indicates that the readdir routine is
  *	available to read directory entries. You may have to include
@@ -439,6 +453,13 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	to change the effective uid of the current program.
  */
 #$d_seteuid HAS_SETEUID		/**/
+
+/* HAS_SETGROUPS:
+ *	This symbol, if defined, indicates that the setgroups() routine is
+ *	available to set the list of process groups.  If unavailable, multiple
+ *	groups are probably not supported.
+ */
+#$d_setgrps HAS_SETGROUPS		/**/
 
 /* HAS_SETLINEBUF:
  *	This symbol, if defined, indicates that the setlinebuf routine is
@@ -634,6 +655,19 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_wctomb HAS_WCTOMB		/**/
 
+/* Groups_t:
+ *	This symbol holds the type used for the second argument to
+ *	getgroups() and setgroups().  Usually, this is the same as
+ *	gidtype (gid_t) , but sometimes it isn't.
+ *	It can be int, ushort, gid_t, etc... 
+ *	It may be necessary to include <sys/types.h> to get any 
+ *	typedef'ed information.  This is only required if you have
+ *	getgroups() or setgroups()..
+ */
+#if defined(HAS_GETGROUPS) || defined(HAS_SETGROUPS)
+#define Groups_t $groupstype	/* Type for 2nd arg to [sg]etgroups() */
+#endif
+
 /* I_ARPA_INET:
  *	This symbol, if defined, indicates to the C program that it should
  *	include <arpa/inet.h> to get inet_addr and friends declarations.
@@ -700,12 +734,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$i_memory I_MEMORY		/**/
 
-/* I_NET_ERRNO:
- *	This symbol, if defined, indicates that <net/errno.h> exists and 
- *	should be included.
- */
-#$i_neterrno I_NET_ERRNO		/**/
-
 /* I_NETINET_IN:
  *	This symbol, if defined, indicates to the C program that it should
  *	include <netinet/in.h>. Otherwise, you may try <sys/in.h>.
@@ -770,6 +798,13 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	include <sys/param.h>.
  */
 #$i_sysparam I_SYS_PARAM		/**/
+
+/* I_SYS_POLL:
+ *	This symbol, if defined, indicates that the program may include
+ *	<sys/poll.h>.  When I_POLL is also defined, it's probably safest
+ *	to only include <poll.h>.
+ */
+#$i_syspoll I_SYS_POLL	/**/
 
 /* I_SYS_RESOURCE:
  *	This symbol, if defined, indicates to the C program that it should
@@ -962,19 +997,16 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #if $cpp_stuff == 1
 #define CAT2(a,b)	a/**/b
 #define STRINGIFY(a)	"a"
-		/* If you can get stringification with catify, tell me how! */
 #endif
 #if $cpp_stuff == 42
-#define PeRl_CaTiFy(a, b)	a ## b	
+#define PeRl_CaTiFy(a, b)	a ## b
 #define PeRl_StGiFy(a)	#a
-/* the additional level of indirection enables these macros to be
- * used as arguments to other macros.  See K&R 2nd ed., page 231. */
 #define CAT2(a,b)	PeRl_CaTiFy(a,b)
 #define StGiFy(a)	PeRl_StGiFy(a)
 #define STRINGIFY(a)	PeRl_StGiFy(a)
 #endif
 #if $cpp_stuff != 1 && $cpp_stuff != 42
-#   include "Bletch: How does this C preprocessor concatenate tokens?"
+#include "Bletch: How does this C preprocessor concatenate tokens?"
 #endif
 
 /* CPPSTDIN:
@@ -1054,9 +1086,13 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 /* HASATTRIBUTE_UNUSED:
  *	Can we handle GCC attribute for unused variables and arguments
  */
+/* HASATTRIBUTE_DEPRECATED:
+ *	Can we handle GCC attribute for marking deprecated APIs
+ */
 /* HASATTRIBUTE_WARN_UNUSED_RESULT:
  *	Can we handle GCC attribute for warning on unused results
  */
+#$d_attribute_deprecated HASATTRIBUTE_DEPRECATED	/**/
 #$d_attribute_format HASATTRIBUTE_FORMAT	/**/
 #$d_printf_format_null PRINTF_FORMAT_NULL_OK	/**/
 #$d_attribute_noreturn HASATTRIBUTE_NORETURN	/**/
@@ -1076,12 +1112,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #ifndef HASCONST
 #define const
 #endif
-
-/* HAS_CRYPT:
- *	This symbol, if defined, indicates that the crypt routine is available
- *	to encrypt passwords and the like.
- */
-#$d_crypt HAS_CRYPT		/**/
 
 /* HAS_CRYPT_R:
  *	This symbol, if defined, indicates that the crypt_r routine
@@ -1132,26 +1162,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_ctime_r HAS_CTIME_R	   /**/
 #define CTIME_R_PROTO $ctime_r_proto	   /**/
-
-/* SETUID_SCRIPTS_ARE_SECURE_NOW:
- *	This symbol, if defined, indicates that the bug that prevents
- *	setuid scripts from being secure is not present in this kernel.
- */
-/* DOSUID:
- *	This symbol, if defined, indicates that the C program should
- *	check the script that it is executing for setuid/setgid bits, and
- *	attempt to emulate setuid/setgid on systems that have disabled
- *	setuid #! scripts because the kernel can't do it securely.
- *	It is up to the package designer to make sure that this emulation
- *	is done securely.  Among other things, it should do an fstat on
- *	the script it just opened to make sure it really is a setuid/setgid
- *	script, it should make sure the arguments passed correspond exactly
- *	to the argument on the #! line, and it should not trust any
- *	subprocesses to which it must pass the filename rather than the
- *	file descriptor of the script to be executed.
- */
-#$d_suidsafe SETUID_SCRIPTS_ARE_SECURE_NOW	/**/
-#$d_dosuid DOSUID		/**/
 
 /* HAS_DRAND48_R:
  *	This symbol, if defined, indicates that the drand48_r routine
@@ -1784,7 +1794,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	doubles.
  */
 /* LONG_DOUBLESIZE:
- *	This symbol contains the size of a long double, so that the 
+ *	This symbol contains the size of a long double, so that the
  *	C preprocessor can make decisions based on it.  It is only
  *	defined if the system supports long doubles.
  */
@@ -1797,7 +1807,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	This symbol will be defined if the C compiler supports long long.
  */
 /* LONGLONGSIZE:
- *	This symbol contains the size of a long long, so that the 
+ *	This symbol contains the size of a long long, so that the
  *	C preprocessor can make decisions based on it.  It is only
  *	defined if the system supports long long.
  */
@@ -1845,13 +1855,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_msg HAS_MSG		/**/
 
-/* HAS_POLL:
- *	This symbol, if defined, indicates that the poll routine is
- *	available to poll active file descriptors. You may safely
- *	include <poll.h> when both this symbol *and* I_POLL are defined.
- */
-#$d_poll HAS_POLL		/**/
-
 /* OLD_PTHREAD_CREATE_JOINABLE:
  *	This symbol, if defined, indicates how to create pthread
  *	in joinable (aka undetached) state.  NOTE: not defined
@@ -1869,7 +1872,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$d_pthread_atfork HAS_PTHREAD_ATFORK		/**/
 
 /* HAS_PTHREAD_YIELD:
- *	This symbol, if defined, indicates that the pthread_yield 
+ *	This symbol, if defined, indicates that the pthread_yield
  *	routine is available to yield the execution of the current
  *	thread.	 sched_yield is preferable to pthread_yield.
  */
@@ -1950,13 +1953,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_setgrent_r HAS_SETGRENT_R	   /**/
 #define SETGRENT_R_PROTO $setgrent_r_proto	   /**/
-
-/* HAS_SETGROUPS:
- *	This symbol, if defined, indicates that the setgroups() routine is
- *	available to set the list of process groups.  If unavailable, multiple
- *	groups are probably not supported.
- */
-#$d_setgrps HAS_SETGROUPS		/**/
 
 /* HAS_SETHOSTENT:
  *	This symbol, if defined, indicates that the sethostent() routine is
@@ -2357,19 +2353,6 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #define Gid_t $gidtype		/* Type for getgid(), etc... */
 
-/* Groups_t:
- *	This symbol holds the type used for the second argument to
- *	getgroups() and setgroups().  Usually, this is the same as
- *	gidtype (gid_t) , but sometimes it isn't.
- *	It can be int, ushort, gid_t, etc... 
- *	It may be necessary to include <sys/types.h> to get any 
- *	typedef'ed information.  This is only required if you have
- *	getgroups() or setgroups()..
- */
-#if defined(HAS_GETGROUPS) || defined(HAS_SETGROUPS)
-#define Groups_t $groupstype	/* Type for 2nd arg to [sg]etgroups() */
-#endif
-
 /* I_DIRENT:
  *	This symbol, if defined, indicates to the C program that it should
  *	include <dirent.h>. Using this symbol also triggers the definition
@@ -2411,13 +2394,52 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	This symbol, if defined, indicates that <ndbm.h> exists and should
  *	be included.
  */
+/* I_GDBMNDBM:
+ *	This symbol, if defined, indicates that <gdbm/ndbm.h> exists and should
+ *	be included.  This was the location of the ndbm.h compatibility file
+ *	in RedHat 7.1.
+ */
+/* I_GDBM_NDBM:
+ *	This symbol, if defined, indicates that <gdbm-ndbm.h> exists and should
+ *	be included.  This is the location of the ndbm.h compatibility file
+ *	in Debian 4.0.
+ */
+/* NDBM_H_USES_PROTOTYPES:
+ *	This symbol, if defined, indicates that <ndbm.h> uses real ANSI C
+ *	prototypes instead of K&R style function declarations without any
+ *	parameter information. While ANSI C prototypes are supported in C++,
+ *	K&R style function declarations will yield errors.
+ */
+/* GDBMNDBM_H_USES_PROTOTYPES:
+ *	This symbol, if defined, indicates that <gdbm/ndbm.h> uses real ANSI C
+ *	prototypes instead of K&R style function declarations without any
+ *	parameter information. While ANSI C prototypes are supported in C++,
+ *	K&R style function declarations will yield errors.
+ */
+/* GDBM_NDBM_H_USES_PROTOTYPES:
+ *	This symbol, if defined, indicates that <gdbm-ndbm.h> uses real ANSI C
+ *	prototypes instead of K&R style function declarations without any
+ *	parameter information. While ANSI C prototypes are supported in C++,
+ *	K&R style function declarations will yield errors.
+ */
 #$i_ndbm I_NDBM	/**/
+#$i_gdbmndbm I_GDBMNDBM	/**/
+#$i_gdbm_ndbm I_GDBM_NDBM	/**/
+#$d_ndbm_h_uses_prototypes NDBM_H_USES_PROTOTYPES	/**/
+#$d_gdbmndbm_h_uses_prototypes GDBMNDBM_H_USES_PROTOTYPES	/**/
+#$d_gdbm_ndbm_h_uses_prototypes GDBM_NDBM_H_USES_PROTOTYPES	/**/
 
 /* I_NETDB:
  *	This symbol, if defined, indicates that <netdb.h> exists and
  *	should be included.
  */
 #$i_netdb I_NETDB		/**/
+
+/* I_NET_ERRNO:
+ *	This symbol, if defined, indicates that <net/errno.h> exists and
+ *	should be included.
+ */
+#$i_neterrno I_NET_ERRNO		/**/
 
 /* I_PTHREAD:
  *     This symbol, if defined, indicates to the C program that it should
@@ -2551,7 +2573,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$d_mymalloc MYMALLOC			/**/
 
 /* Mode_t:
- *	This symbol holds the type used to declare file modes 
+ *	This symbol holds the type used to declare file modes
  *	for systems calls.  It is usually mode_t, but may be
  *	int or unsigned short.  It may be necessary to include <sys/types.h>
  *	to get any typedef'ed information.
@@ -2630,7 +2652,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 /* Select_fd_set_t:
  *	This symbol holds the type used for the 2nd, 3rd, and 4th
  *	arguments to select.  Usually, this is 'fd_set *', if HAS_FD_SET
- *	is defined, and 'int *' otherwise.  This is only useful if you 
+ *	is defined, and 'int *' otherwise.  This is only useful if you
  *	have select(), of course.
  */
 #define Select_fd_set_t 	$selecttype	/**/
@@ -2667,10 +2689,10 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	The signals in the list are separated with commas, and the indices
  *	within that list and the SIG_NAME list match, so it's easy to compute
  *	the signal name from a number or vice versa at the price of a small
- *	dynamic linear lookup. 
+ *	dynamic linear lookup.
  *	Duplicates are allowed, but are moved to the end of the list.
  *	The signal number corresponding to sig_name[i] is sig_number[i].
- *	if (i < NSIG) then sig_number[i] == i.  
+ *	if (i < NSIG) then sig_number[i] == i.
  *	The last element is 0, corresponding to the 0 at the end of
  *	the sig_name_init list.
  *	Note that this variable is initialized from the sig_num_init,
@@ -2887,11 +2909,11 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	On NeXT 3.2 (and greater), you can build "Fat" Multiple Architecture
  *	Binaries (MAB) on either big endian or little endian machines.
  *	The endian-ness is available at compile-time.  This only matters
- *	for perl, where the config.h can be generated and installed on 
+ *	for perl, where the config.h can be generated and installed on
  *	one system, and used by a different architecture to build an
  *	extension.  Older versions of NeXT that might not have
  *	defined either *_ENDIAN__ were all on Motorola 680x0 series,
- *	so the default case (for NeXT) is big endian to catch them. 
+ *	so the default case (for NeXT) is big endian to catch them.
  *	This might matter for NeXT 3.0.
  */
 #if defined(USE_CROSS_COMPILE) || defined(MULTIARCH)
@@ -2979,7 +3001,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$d_getpagsz HAS_GETPAGESIZE		/**/
 
 /* HAS_GNULIBC:
- *	This symbol, if defined, indicates to the C program that 
+ *	This symbol, if defined, indicates to the C program that
  *	the GNU C library is being used.  A better check is to use
  *	the __GLIBC__ and __GLIBC_MINOR__ symbols supplied with glibc.
  */
@@ -2987,8 +3009,9 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #if defined(HAS_GNULIBC) && !defined(_GNU_SOURCE)
 #   define _GNU_SOURCE
 #endif
+
 /* HAS_ISASCII:
- *	This manifest constant lets the C program know that isascii 
+ *	This manifest constant lets the C program know that isascii
  *	is available.
  */
 #$d_isascii HAS_ISASCII		/**/
@@ -3258,6 +3281,33 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$ebcdic	EBCDIC 		/**/
 
+/* SETUID_SCRIPTS_ARE_SECURE_NOW:
+ *	This symbol, if defined, indicates that the bug that prevents
+ *	setuid scripts from being secure is not present in this kernel.
+ */
+/* DOSUID:
+ *	This symbol, if defined, indicates that the C program should
+ *	check the script that it is executing for setuid/setgid bits, and
+ *	attempt to emulate setuid/setgid on systems that have disabled
+ *	setuid #! scripts because the kernel can't do it securely.
+ *	It is up to the package designer to make sure that this emulation
+ *	is done securely.  Among other things, it should do an fstat on
+ *	the script it just opened to make sure it really is a setuid/setgid
+ *	script, it should make sure the arguments passed correspond exactly
+ *	to the argument on the #! line, and it should not trust any
+ *	subprocesses to which it must pass the filename rather than the
+ *	file descriptor of the script to be executed.
+ */
+#$d_suidsafe SETUID_SCRIPTS_ARE_SECURE_NOW	/**/
+#$d_dosuid DOSUID		/**/
+
+/* PERL_USE_DEVEL:
+ *	This symbol, if defined, indicates that Perl was configured with
+ *	-Dusedevel, to enable development features.  This should not be
+ *	done for production builds.
+ */
+#$usedevel	PERL_USE_DEVEL		/**/
+
 /* HAS_ATOLF:
  *	This symbol, if defined, indicates that the atolf routine is
  *	available to convert strings into long doubles.
@@ -3524,6 +3574,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_futimes HAS_FUTIMES		/**/
 
+/* HAS_GETADDRINFO:
+ *	This symbol, if defined, indicates that the getaddrinfo() function
+ *	is available for use.
+ */
+#$d_getaddrinfo HAS_GETADDRINFO		/**/
+
 /* HAS_GETCWD:
  *	This symbol, if defined, indicates that the getcwd routine is
  *	available to get the current working directory.
@@ -3560,6 +3616,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_getmntent HAS_GETMNTENT		/**/
 
+/* HAS_GETNAMEINFO:
+ *	This symbol, if defined, indicates that the getnameinfo() function
+ *	is available for use.
+ */
+#$d_getnameinfo HAS_GETNAMEINFO		/**/
+
 /* HAS_GETPRPWNAM:
  *	This symbol, if defined, indicates that the getprpwnam system call is
  *	available to retrieve protected (shadow) password entries by name.
@@ -3583,6 +3645,18 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	available.  If scalbnl is also present we can emulate frexpl.
  */
 #$d_ilogbl HAS_ILOGBL		/**/
+
+/* HAS_INETNTOP:
+ *	This symbol, if defined, indicates that the inet_ntop() function
+ *	is available to parse IPv4 and IPv6 strings.
+ */
+#$d_inetntop HAS_INETNTOP		/**/
+
+/* HAS_INETPTON:
+ *	This symbol, if defined, indicates that the inet_pton() function
+ *	is available to parse IPv4 and IPv6 strings.
+ */
+#$d_inetpton HAS_INETPTON		/**/
 
 /* HAS_INT64_T:
  *     This symbol will defined if the C compiler supports int64_t.
@@ -3952,6 +4026,43 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_telldirproto	HAS_TELLDIR_PROTO	/**/
 
+/* HAS_CTIME64:
+ *	This symbol, if defined, indicates that the ctime64 () routine is
+ *	available to do the 64bit variant of ctime ()
+ */
+/* HAS_LOCALTIME64:
+ *	This symbol, if defined, indicates that the localtime64 () routine is
+ *	available to do the 64bit variant of localtime ()
+ */
+/* HAS_GMTIME64:
+ *	This symbol, if defined, indicates that the gmtime64 () routine is
+ *	available to do the 64bit variant of gmtime ()
+ */
+/* HAS_MKTIME64:
+ *	This symbol, if defined, indicates that the mktime64 () routine is
+ *	available to do the 64bit variant of mktime ()
+ */
+/* HAS_DIFFTIME64:
+ *	This symbol, if defined, indicates that the difftime64 () routine is
+ *	available to do the 64bit variant of difftime ()
+ */
+/* HAS_ASCTIME64:
+ *	This symbol, if defined, indicates that the asctime64 () routine is
+ *	available to do the 64bit variant of asctime ()
+ */
+#$d_ctime64	HAS_CTIME64		/**/
+#$d_localtime64	HAS_LOCALTIME64		/**/
+#$d_gmtime64	HAS_GMTIME64		/**/
+#$d_mktime64	HAS_MKTIME64		/**/
+#$d_difftime64	HAS_DIFFTIME64		/**/
+#$d_asctime64	HAS_ASCTIME64		/**/
+
+/* HAS_TIMEGM:
+ *	This symbol, if defined, indicates that the timegm routine is
+ *	available to do the opposite of gmtime ()
+ */
+#$d_timegm HAS_TIMEGM		/**/
+
 /* U32_ALIGNMENT_REQUIRED:
  *	This symbol, if defined, indicates that you must access
  *	character data through U32-aligned pointers.
@@ -4018,6 +4129,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$fflushNULL	FFLUSH_NULL 		/**/
 #$fflushall	FFLUSH_ALL 		/**/
+
+/* I_ASSERT:
+ *	This symbol, if defined, indicates that <assert.h> exists and
+ *	could be included by the C program to get the assert() macro.
+ */
+#$i_assert	I_ASSERT		/**/
 
 /* I_CRYPT:
  *	This symbol, if defined, indicates that <crypt.h> exists and
@@ -4090,6 +4207,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	should be included.
  */
 #$i_libutil	I_LIBUTIL		/**/
+
+/* I_MALLOCMALLOC:
+ *	This symbol, if defined, indicates to the C program that it should
+ *	include <malloc/malloc.h>.
+ */
+#$i_mallocmalloc I_MALLOCMALLOC		/**/
 
 /* I_MNTENT:
  *	This symbol, if defined, indicates that <mntent.h> exists and
@@ -4292,6 +4415,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	This symbol contains the number of bits a variable of type NVTYPE
  *	can preserve of a variable of type UVTYPE.
  */
+/* NV_OVERFLOWS_INTEGERS_AT:
+ *	This symbol gives the largest integer value that NVs can hold. This
+ *	value + 1.0 cannot be stored accurately. It is expressed as constant
+ *	floating point expression to reduce the chance of decimale/binary
+ *	conversion issues. If it can not be determined, the value 0 is given.
+ */
 /* NV_ZERO_IS_ALLBITS_ZERO:
  *	This symbol, if defined, indicates that a variable of type NVTYPE
  *	stores 0.0 in memory as all bits zero.
@@ -4324,6 +4453,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #define	NVSIZE		$nvsize		/**/
 #$d_nv_preserves_uv	NV_PRESERVES_UV
 #define	NV_PRESERVES_UV_BITS	$nv_preserves_uv_bits
+#define	NV_OVERFLOWS_INTEGERS_AT	$nv_overflows_integers_at
 #$d_nv_zero_is_allbits_zero	NV_ZERO_IS_ALLBITS_ZERO
 #if UVSIZE == 8
 #   ifdef BYTEORDER
@@ -4405,7 +4535,30 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	Usual values include _iob, __iob, and __sF.
  */
 #$d_stdio_stream_array	HAS_STDIO_STREAM_ARRAY	/**/
+#ifdef HAS_STDIO_STREAM_ARRAY
 #define STDIO_STREAM_ARRAY	$stdio_stream_array
+#endif
+
+/* GMTIME_MAX:
+ *	This symbol contains the maximum value for the time_t offset that
+ *	the system function gmtime () accepts, and defaults to 0
+ */
+/* GMTIME_MIN:
+ *	This symbol contains the minimum value for the time_t offset that
+ *	the system function gmtime () accepts, and defaults to 0
+ */
+/* LOCALTIME_MAX:
+ *	This symbol contains the maximum value for the time_t offset that
+ *	the system function localtime () accepts, and defaults to 0
+ */
+/* LOCALTIME_MIN:
+ *	This symbol contains the minimum value for the time_t offset that
+ *	the system function localtime () accepts, and defaults to 0
+ */
+#define GMTIME_MAX		$sGMTIME_max	/**/
+#define GMTIME_MIN		$sGMTIME_min	/**/
+#define LOCALTIME_MAX	$sLOCALTIME_max	/**/
+#define LOCALTIME_MIN	$sLOCALTIME_min	/**/
 
 /* USE_64_BIT_INT:
  *	This symbol, if defined, indicates that 64-bit integers should
@@ -4428,10 +4581,15 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #ifndef USE_64_BIT_INT
 #$use64bitint	USE_64_BIT_INT		/**/
 #endif
-
 #ifndef USE_64_BIT_ALL
 #$use64bitall	USE_64_BIT_ALL		/**/
 #endif
+
+/* USE_DTRACE:
+ *	This symbol, if defined, indicates that Perl should
+ *	be built with support for DTrace.
+ */
+#$usedtrace USE_DTRACE		/**/
 
 /* USE_FAST_STDIO:
  *	This symbol, if defined, indicates that Perl should

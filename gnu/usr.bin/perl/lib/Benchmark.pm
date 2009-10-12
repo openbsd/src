@@ -81,9 +81,9 @@ countit - see how many times a chunk of code runs in a given time
 Returns the current time.   Example:
 
     use Benchmark;
-    $t0 = new Benchmark;
+    $t0 = Benchmark->new;
     # ... your code here ...
-    $t1 = new Benchmark;
+    $t1 = Benchmark->new;
     $td = timediff($t1, $t0);
     print "the code took:",timestr($td),"\n";
 
@@ -91,9 +91,9 @@ Returns the current time.   Example:
 
 Enables or disable debugging by setting the C<$Benchmark::Debug> flag:
 
-    debug Benchmark 1;
+    Benchmark->debug(1);
     $t = timeit(10, ' 5 ** $Global ');
-    debug Benchmark 0;
+    Benchmark->debug(0);
 
 =item iters
 
@@ -219,7 +219,7 @@ outputs a chart like:
 This chart is sorted from slowest to fastest, and shows the percent speed
 difference between each pair of tests.
 
-c<cmpthese> can also be passed the data structure that timethese() returns:
+C<cmpthese> can also be passed the data structure that timethese() returns:
 
     $results = timethese( -1, { a => "++\$i", b => "\$i *= 2" } ) ;
     cmpthese( $results );
@@ -440,7 +440,7 @@ our(@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
 	      clearcache clearallcache disablecache enablecache);
 %EXPORT_TAGS=( all => [ @EXPORT, @EXPORT_OK ] ) ;
 
-$VERSION = 1.10;
+$VERSION = 1.11;
 
 # --- ':hireswallclock' special handling
 

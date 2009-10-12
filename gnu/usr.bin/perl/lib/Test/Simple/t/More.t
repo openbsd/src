@@ -1,5 +1,4 @@
 #!perl -w
-# $Id$
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -9,7 +8,7 @@ BEGIN {
 }
 
 use lib 't/lib';
-use Test::More tests => 52;
+use Test::More tests => 53;
 
 # Make sure we don't mess with $@ or $!.  Test at bottom.
 my $Err   = "this should not be touched";
@@ -48,6 +47,11 @@ can_ok(bless({}, "Test::More"), qw(require_ok use_ok ok is isnt like skip
 isa_ok(bless([], "Foo"), "Foo");
 isa_ok([], 'ARRAY');
 isa_ok(\42, 'SCALAR');
+{
+    local %Bar::;
+    local @Foo::ISA = 'Bar';
+    isa_ok( "Foo", "Bar" );
+}
 
 
 # can_ok() & isa_ok should call can() & isa() on the given object, not 

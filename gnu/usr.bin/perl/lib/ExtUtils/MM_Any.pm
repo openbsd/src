@@ -1,12 +1,12 @@
 package ExtUtils::MM_Any;
 
 use strict;
-use vars qw($VERSION @ISA);
-$VERSION = '6.42';
+our $VERSION = '6.55_02';
 
 use Carp;
 use File::Spec;
-BEGIN { @ISA = qw(File::Spec); }
+use File::Basename;
+BEGIN { our @ISA = qw(File::Spec); }
 
 # We need $Verbose
 use ExtUtils::MakeMaker qw($Verbose);
@@ -74,7 +74,7 @@ Windows, VMS, OS/2, etc...) and the rest are sub families.
 Some examples:
 
     Cygwin98       ('Unix',  'Cygwin', 'Cygwin9x')
-    Windows NT     ('Win32', 'WinNT')
+    Windows        ('Win32')
     Win98          ('Win32', 'Win9x')
     Linux          ('Unix',  'Linux')
     MacOS X        ('Unix',  'Darwin', 'MacOS', 'MacOS X')
@@ -106,6 +106,22 @@ sub os_flavor_is {
     my $self = shift;
     my %flavors = map { ($_ => 1) } $self->os_flavor;
     return (grep { $flavors{$_} } @_) ? 1 : 0;
+}
+
+
+=head3 can_load_xs
+
+    my $can_load_xs = $self->can_load_xs;
+
+Returns true if we have the ability to load XS.
+
+This is important because miniperl, used to build XS modules in the
+core, can not load XS.
+
+=cut
+
+sub can_load_xs {
+    return defined &DynaLoader::boot_DynaLoader ? 1 : 0;
 }
 
 
@@ -145,8 +161,8 @@ sub split_command {
     # newline.
     chomp $cmd;
 
-    # set aside 20% for macro expansion.
-    my $len_left = int($self->max_exec_len * 0.80);
+    # set aside 30% for macro expansion.
+    my $len_left = int($self->max_exec_len * 0.70);
     $len_left -= length $self->_expand_macros($cmd);
 
     do {
@@ -546,7 +562,7 @@ CODE
     my $make_frag = $mm->dir_target(@directories);
 
 Generates targets to create the specified directories and set its
-permission to 0755.
+permission to PERM_DIR.
 
 Because depending on a directory to just ensure it exists doesn't work
 too well (the modified time changes too often) dir_target() creates a
@@ -566,7 +582,7 @@ sub dir_target {
         $make .= sprintf <<'MAKE', ($dir) x 7;
 %s$(DFSEP).exists :: Makefile.PL
 	$(NOECHO) $(MKPATH) %s
-	$(NOECHO) $(CHMOD) 755 %s
+	$(NOECHO) $(CHMOD) $(PERM_DIR) %s
 	$(NOECHO) $(TOUCH) %s$(DFSEP).exists
 
 MAKE
@@ -701,9 +717,8 @@ END
     my @man_cmds;
     foreach my $section (qw(1 3)) {
         my $pods = $self->{"MAN${section}PODS"};
-	my $s = $section eq '3' ? '3p' : $section;
         push @man_cmds, $self->split_command(<<CMD, %$pods);
-	\$(NOECHO) \$(POD2MAN) --section=$s --perm_rw=\$(PERM_RW)
+	\$(NOECHO) \$(POD2MAN) --section=$section --perm_rw=\$(PERM_RW)
 CMD
     }
 
@@ -734,47 +749,11 @@ metafile :
 	$(NOECHO) $(NOOP)
 MAKE_FRAG
 
-    my $prereq_pm = '';
-    foreach my $mod ( sort { lc $a cmp lc $b } keys %{$self->{PREREQ_PM}} ) {
-        my $ver = $self->{PREREQ_PM}{$mod};
-        $prereq_pm .= sprintf "\n    %-30s %s", "$mod:", $ver;
-    }
-
-    my $author_value = defined $self->{AUTHOR}
-        ? "\n    - $self->{AUTHOR}"
-        : undef;
-
-    # Use a list to preserve order.
-    my @meta_to_mm = (
-        name         => $self->{DISTNAME},
-        version      => $self->{VERSION},
-        abstract     => $self->{ABSTRACT},
-        license      => $self->{LICENSE},
-        author       => $author_value,
-        generated_by => 
-                "ExtUtils::MakeMaker version $ExtUtils::MakeMaker::VERSION",
-        distribution_type => $self->{PM} ? 'module' : 'script',
+    my @metadata   = $self->metafile_data(
+        $self->{META_ADD}   || {},
+        $self->{META_MERGE} || {},
     );
-
-    my $meta = "--- #YAML:1.0\n";
-
-    while( @meta_to_mm ) {
-        my($key, $val) = splice @meta_to_mm, 0, 2;
-
-        $val = '~' unless defined $val;
-
-        $meta .= sprintf "%-20s %s\n", "$key:", $val;
-    };
-
-    $meta .= <<"YAML";
-requires:     $prereq_pm
-meta-spec:
-    url:     http://module-build.sourceforge.net/META-spec-v1.3.html
-    version: 1.3
-YAML
-
-    $meta .= $self->{EXTRA_META} if $self->{EXTRA_META};
-
+    my $meta       = $self->metafile_file(@metadata);
     my @write_meta = $self->echo($meta, 'META_new.yml');
 
     return sprintf <<'MAKE_FRAG', join("\n\t", @write_meta);
@@ -783,6 +762,297 @@ metafile : create_distdir
 	%s
 	-$(NOECHO) $(MV) META_new.yml $(DISTVNAME)/META.yml
 MAKE_FRAG
+
+}
+
+
+=begin private
+
+=head3 _sort_pairs
+
+    my @pairs = _sort_pairs($sort_sub, \%hash);
+
+Sorts the pairs of a hash based on keys ordered according 
+to C<$sort_sub>.
+
+=end private
+
+=cut
+
+sub _sort_pairs {
+    my $sort  = shift;
+    my $pairs = shift;
+    return map  { $_ => $pairs->{$_} }
+           sort $sort
+           keys %$pairs;
+}
+
+
+# Taken from Module::Build::Base
+sub _hash_merge {
+    my ($self, $h, $k, $v) = @_;
+    if (ref $h->{$k} eq 'ARRAY') {
+        push @{$h->{$k}}, ref $v ? @$v : $v;
+    } elsif (ref $h->{$k} eq 'HASH') {
+        $self->_hash_merge($h->{$k}, $_, $v->{$_}) foreach keys %$v;
+    } else {
+        $h->{$k} = $v;
+    }
+}
+
+
+=head3 metafile_data
+
+    my @metadata_pairs = $mm->metafile_data(\%meta_add, \%meta_merge);
+
+Returns the data which MakeMaker turns into the META.yml file.
+
+Values of %meta_add will overwrite any existing metadata in those
+keys.  %meta_merge will be merged with them.
+
+=cut
+
+sub metafile_data {
+    my $self = shift;
+    my($meta_add, $meta_merge) = @_;
+
+    # The order in which standard meta keys should be written.
+    my @meta_order = qw(
+        name
+        version
+        abstract
+        author
+        license
+        distribution_type
+
+        configure_requires
+        build_requires
+        requires
+
+        resources
+
+        provides
+        no_index
+
+        generated_by
+        meta-spec
+    );
+
+    # Check the original args so we can tell between the user setting it
+    # to an empty hash and it just being initialized.
+    my $configure_requires;
+    if( $self->{ARGS}{CONFIGURE_REQUIRES} ) {
+        $configure_requires = $self->{CONFIGURE_REQUIRES};
+    } else {
+        $configure_requires = {
+            'ExtUtils::MakeMaker'       => 0,
+        };
+    }
+    my $build_requires;
+    if( $self->{ARGS}{BUILD_REQUIRES} ) {
+        $build_requires = $self->{BUILD_REQUIRES};
+    } else {
+        $build_requires = {
+            'ExtUtils::MakeMaker'       => 0,
+        };
+    }
+
+    my %meta = (
+        name         => $self->{DISTNAME},
+        version      => $self->{VERSION},
+        abstract     => $self->{ABSTRACT},
+        license      => $self->{LICENSE} || 'unknown',
+        distribution_type => $self->{PM} ? 'module' : 'script',
+
+        configure_requires => $configure_requires,
+
+        build_requires => $build_requires,
+
+        no_index     => {
+            directory   => [qw(t inc)]
+        },
+
+        generated_by => "ExtUtils::MakeMaker version $ExtUtils::MakeMaker::VERSION",
+        'meta-spec'  => {
+            url         => 'http://module-build.sourceforge.net/META-spec-v1.4.html', 
+            version     => 1.4
+        },
+    );
+
+    # The author key is required and it takes a list.
+    $meta{author}   = defined $self->{AUTHOR}    ? [$self->{AUTHOR}] : [];
+
+    $meta{requires} = $self->{PREREQ_PM} if defined $self->{PREREQ_PM};
+    $meta{requires}{perl} = $self->{MIN_PERL_VERSION} if $self->{MIN_PERL_VERSION};
+
+    while( my($key, $val) = each %$meta_add ) {
+        $meta{$key} = $val;
+    }
+
+    while( my($key, $val) = each %$meta_merge ) {
+        $self->_hash_merge(\%meta, $key, $val);
+    }
+
+    my @meta_pairs;
+
+    # Put the standard keys first in the proper order.
+    for my $key (@meta_order) {
+        next unless exists $meta{$key};
+
+        push @meta_pairs, $key, delete $meta{$key};
+    }
+
+    # Then tack everything else onto the end, alpha sorted.
+    for my $key (sort {lc $a cmp lc $b} keys %meta) {
+        push @meta_pairs, $key, $meta{$key};
+    }
+
+    return @meta_pairs
+}
+
+=begin private
+
+=head3 _dump_hash
+
+    $yaml = _dump_hash(\%options, %hash);
+
+Implements a fake YAML dumper for a hash given
+as a list of pairs. No quoting/escaping is done. Keys
+are supposed to be strings. Values are undef, strings, 
+hash refs or array refs of strings.
+
+Supported options are:
+
+    delta => STR - indentation delta
+    use_header => BOOL - whether to include a YAML header
+    indent => STR - a string of spaces 
+          default: ''
+
+    max_key_length => INT - maximum key length used to align
+        keys and values of the same hash
+        default: 20
+    key_sort => CODE - a sort sub 
+            It may be undef, which means no sorting by keys
+        default: sub { lc $a cmp lc $b }
+
+    customs => HASH - special options for certain keys 
+           (whose values are hashes themselves)
+        may contain: max_key_length, key_sort, customs
+
+=end private
+
+=cut
+
+sub _dump_hash {
+    croak "first argument should be a hash ref" unless ref $_[0] eq 'HASH';
+    my $options = shift;
+    my %hash = @_;
+
+    # Use a list to preserve order.
+    my @pairs;
+
+    my $k_sort 
+        = exists $options->{key_sort} ? $options->{key_sort} 
+                                      : sub { lc $a cmp lc $b };
+    if ($k_sort) {
+        croak "'key_sort' should be a coderef" unless ref $k_sort eq 'CODE';
+        @pairs = _sort_pairs($k_sort, \%hash);
+    } else { # list of pairs, no sorting
+        @pairs = @_;
+    }
+
+    my $yaml     = $options->{use_header} ? "--- #YAML:1.0\n" : '';
+    my $indent   = $options->{indent} || '';
+    my $k_length = min(
+        ($options->{max_key_length} || 20),
+        max(map { length($_) + 1 } grep { !ref $hash{$_} } keys %hash)
+    );
+    my $customs  = $options->{customs} || {};
+
+    # printf format for key
+    my $k_format = "%-${k_length}s";
+
+    while( @pairs ) {
+        my($key, $val) = splice @pairs, 0, 2;
+        $val = '~' unless defined $val;
+        if(ref $val eq 'HASH') {
+            if ( keys %$val ) {
+                my %k_options = ( # options for recursive call
+                    delta => $options->{delta},
+                    use_header => 0,
+                    indent => $indent . $options->{delta},
+                );
+                if (exists $customs->{$key}) {
+                    my %k_custom = %{$customs->{$key}};
+                    foreach my $k qw(key_sort max_key_length customs) {
+                        $k_options{$k} = $k_custom{$k} if exists $k_custom{$k};
+                    }
+                }
+                $yaml .= $indent . "$key:\n" 
+                  . _dump_hash(\%k_options, %$val);
+            }
+            else {
+                $yaml .= $indent . "$key:  {}\n";
+            }
+        }
+        elsif (ref $val eq 'ARRAY') {
+            if( @$val ) {
+                $yaml .= $indent . "$key:\n";
+
+                for (@$val) {
+                    croak "only nested arrays of non-refs are supported" if ref $_;
+                    $yaml .= $indent . $options->{delta} . "- $_\n";
+                }
+            }
+            else {
+                $yaml .= $indent . "$key:  []\n";
+            }
+        }
+        elsif( ref $val and !blessed($val) ) {
+            croak "only nested hashes, arrays and objects are supported";
+        }
+        else {  # if it's an object, just stringify it
+            $yaml .= $indent . sprintf "$k_format  %s\n", "$key:", $val;
+        }
+    };
+
+    return $yaml;
+
+}
+
+sub blessed {
+    return eval { $_[0]->isa("UNIVERSAL"); };
+}
+
+sub max {
+    return (sort { $b <=> $a } @_)[0];
+}
+
+sub min {
+    return (sort { $a <=> $b } @_)[0];
+}
+
+=head3 metafile_file
+
+    my $meta_yml = $mm->metafile_file(@metadata_pairs);
+
+Turns the @metadata_pairs into YAML.
+
+This method does not implement a complete YAML dumper, being limited
+to dump a hash with values which are strings, undef's or nested hashes
+and arrays of strings. No quoting/escaping is done.
+
+=cut
+
+sub metafile_file {
+    my $self = shift;
+
+    my %dump_options = (
+        use_header => 1, 
+        delta      => ' ' x 4, 
+        key_sort   => undef,
+    );
+    return _dump_hash(\%dump_options, @_);
 
 }
 
@@ -1427,7 +1697,7 @@ sub init_VERSION {
 }
 
 
-=head3 init_others  I<Abstract>
+=head3 init_others
 
     $MM->init_others();
 
@@ -1458,11 +1728,162 @@ Defines at least these macros.
   TEST_F            Test for a file's existence 
   CP                Copy a file                 
   MV                Move a file                 
-  CHMOD             Change permissions on a     
-                    file
+  CHMOD             Change permissions on a file
+  FALSE             Exit with non-zero
+  TRUE              Exit with zero
 
   UMASK_NULL        Nullify umask
   DEV_NULL          Suppress all command output
+
+=cut
+
+sub init_others {
+    my $self = shift;
+
+    $self->{ECHO}     ||= $self->oneliner('print qq{@ARGV}', ['-l']);
+    $self->{ECHO_N}   ||= $self->oneliner('print qq{@ARGV}');
+
+    $self->{TOUCH}    ||= $self->oneliner('touch', ["-MExtUtils::Command"]);
+    $self->{CHMOD}    ||= $self->oneliner('chmod', ["-MExtUtils::Command"]);
+    $self->{RM_F}     ||= $self->oneliner('rm_f',  ["-MExtUtils::Command"]);
+    $self->{RM_RF}    ||= $self->oneliner('rm_rf', ["-MExtUtils::Command"]);
+    $self->{TEST_F}   ||= $self->oneliner('test_f', ["-MExtUtils::Command"]);
+    $self->{FALSE}    ||= $self->oneliner('exit 1');
+    $self->{TRUE}     ||= $self->oneliner('exit 0');
+
+    $self->{MKPATH}   ||= $self->oneliner('mkpath', ["-MExtUtils::Command"]);
+
+    $self->{CP}       ||= $self->oneliner('cp', ["-MExtUtils::Command"]);
+    $self->{MV}       ||= $self->oneliner('mv', ["-MExtUtils::Command"]);
+
+    $self->{MOD_INSTALL} ||= 
+      $self->oneliner(<<'CODE', ['-MExtUtils::Install']);
+install([ from_to => {@ARGV}, verbose => '$(VERBINST)', uninstall_shadows => '$(UNINST)', dir_mode => '$(PERM_DIR)' ]);
+CODE
+    $self->{DOC_INSTALL} ||= $self->oneliner('perllocal_install', ["-MExtUtils::Command::MM"]);
+    $self->{UNINSTALL}   ||= $self->oneliner('uninstall', ["-MExtUtils::Command::MM"]);
+    $self->{WARN_IF_OLD_PACKLIST} ||= 
+      $self->oneliner('warn_if_old_packlist', ["-MExtUtils::Command::MM"]);
+    $self->{FIXIN}       ||= $self->oneliner('MY->fixin(shift)', ["-MExtUtils::MY"]);
+    $self->{EQUALIZE_TIMESTAMP} ||= $self->oneliner('eqtime', ["-MExtUtils::Command"]);
+
+    $self->{UNINST}     ||= 0;
+    $self->{VERBINST}   ||= 0;
+
+    $self->{FIRST_MAKEFILE}     ||= $self->{MAKEFILE} || 'Makefile';
+    $self->{MAKEFILE}           ||= $self->{FIRST_MAKEFILE};
+    $self->{MAKEFILE_OLD}       ||= $self->{MAKEFILE}.'.old';
+    $self->{MAKE_APERL_FILE}    ||= $self->{MAKEFILE}.'.aperl';
+
+    # Not everybody uses -f to indicate "use this Makefile instead"
+    $self->{USEMAKEFILE}        ||= '-f';
+
+    # Some makes require a wrapper around macros passed in on the command 
+    # line.
+    $self->{MACROSTART}         ||= '';
+    $self->{MACROEND}           ||= '';
+
+    $self->{SHELL}              ||= $Config{sh};
+
+    # UMASK_NULL is not used by MakeMaker but some CPAN modules
+    # make use of it.
+    $self->{UMASK_NULL}         ||= "umask 0";
+
+    # Not the greatest default, but its something.
+    $self->{DEV_NULL}           ||= "> /dev/null 2>&1";
+
+    $self->{NOOP}               ||= '$(TRUE)';
+    $self->{NOECHO}             = '@' unless defined $self->{NOECHO};
+
+    $self->{LD_RUN_PATH} = "";
+
+    $self->{LIBS} = $self->_fix_libs($self->{LIBS});
+
+    # Compute EXTRALIBS, BSLOADLIBS and LDLOADLIBS from $self->{LIBS}
+    foreach my $libs ( @{$self->{LIBS}} ){
+        $libs =~ s/^\s*(.*\S)\s*$/$1/; # remove leading and trailing whitespace
+        my(@libs) = $self->extliblist($libs);
+        if ($libs[0] or $libs[1] or $libs[2]){
+            # LD_RUN_PATH now computed by ExtUtils::Liblist
+            ($self->{EXTRALIBS},  $self->{BSLOADLIBS}, 
+             $self->{LDLOADLIBS}, $self->{LD_RUN_PATH}) = @libs;
+            last;
+        }
+    }
+
+    if ( $self->{OBJECT} ) {
+        $self->{OBJECT} =~ s!\.o(bj)?\b!\$(OBJ_EXT)!g;
+    } else {
+        # init_dirscan should have found out, if we have C files
+        $self->{OBJECT} = "";
+        $self->{OBJECT} = '$(BASEEXT)$(OBJ_EXT)' if @{$self->{C}||[]};
+    }
+    $self->{OBJECT} =~ s/\n+/ \\\n\t/g;
+
+    $self->{BOOTDEP}  = (-f "$self->{BASEEXT}_BS") ? "$self->{BASEEXT}_BS" : "";
+    $self->{PERLMAINCC} ||= '$(CC)';
+    $self->{LDFROM} = '$(OBJECT)' unless $self->{LDFROM};
+
+    # Sanity check: don't define LINKTYPE = dynamic if we're skipping
+    # the 'dynamic' section of MM.  We don't have this problem with
+    # 'static', since we either must use it (%Config says we can't
+    # use dynamic loading) or the caller asked for it explicitly.
+    if (!$self->{LINKTYPE}) {
+       $self->{LINKTYPE} = $self->{SKIPHASH}{'dynamic'}
+                        ? 'static'
+                        : ($Config{usedl} ? 'dynamic' : 'static');
+    }
+
+    return 1;
+}
+
+
+# Lets look at $self->{LIBS} carefully: It may be an anon array, a string or
+# undefined. In any case we turn it into an anon array
+sub _fix_libs {
+    my($self, $libs) = @_;
+
+    return !defined $libs       ? ['']          : 
+           !ref $libs           ? [$libs]       :
+           !defined $libs->[0]  ? ['']          :
+                                  $libs         ;
+}
+
+
+=head3 tools_other
+
+    my $make_frag = $MM->tools_other;
+
+Returns a make fragment containing definitions for the macros init_others() 
+initializes.
+
+=cut
+
+sub tools_other {
+    my($self) = shift;
+    my @m;
+
+    # We set PM_FILTER as late as possible so it can see all the earlier
+    # on macro-order sensitive makes such as nmake.
+    for my $tool (qw{ SHELL CHMOD CP MV NOOP NOECHO RM_F RM_RF TEST_F TOUCH 
+                      UMASK_NULL DEV_NULL MKPATH EQUALIZE_TIMESTAMP
+                      FALSE TRUE
+                      ECHO ECHO_N
+                      UNINST VERBINST
+                      MOD_INSTALL DOC_INSTALL UNINSTALL
+                      WARN_IF_OLD_PACKLIST
+                      MACROSTART MACROEND
+                      USEMAKEFILE
+                      PM_FILTER
+                      FIXIN
+                    } ) 
+    {
+        next unless defined $self->{$tool};
+        push @m, "$tool = $self->{$tool}\n";
+    }
+
+    return join "", @m;
+}
 
 
 =head3 init_DIRFILESEP  I<Abstract>
@@ -1656,6 +2077,59 @@ MAKE_FRAG
 }
 
 
+=head3 arch_check
+
+    my $arch_ok = $mm->arch_check(
+        $INC{"Config.pm"},
+        File::Spec->catfile($Config{archlibexp}, "Config.pm")
+    );
+
+A sanity check that what Perl thinks the architecture is and what
+Config thinks the architecture is are the same.  If they're not it
+will return false and show a diagnostic message.
+
+When building Perl it will always return true, as nothing is installed
+yet.
+
+The interface is a bit odd because this is the result of a
+quick refactoring.  Don't rely on it.
+
+=cut
+
+sub arch_check {
+    my $self = shift;
+    my($pconfig, $cconfig) = @_;
+
+    return 1 if $self->{PERL_SRC};
+
+    my($pvol, $pthinks) = $self->splitpath($pconfig);
+    my($cvol, $cthinks) = $self->splitpath($cconfig);
+
+    $pthinks = $self->canonpath($pthinks);
+    $cthinks = $self->canonpath($cthinks);
+
+    my $ret = 1;
+    if ($pthinks ne $cthinks) {
+        print "Have $pthinks\n";
+        print "Want $cthinks\n";
+
+        $ret = 0;
+
+        my $arch = (grep length, $self->splitdir($pthinks))[-1];
+
+        print STDOUT <<END unless $self->{UNINSTALLED_PERL};
+Your perl and your Config.pm seem to have different ideas about the 
+architecture they are running on.
+Perl thinks: [$arch]
+Config says: [$Config{archname}]
+This may or may not cause problems. Please check your installation of perl 
+if you have problems building this extension.
+END
+    }
+
+    return $ret;
+}
+
 
 
 =head2 File::Spec wrappers
@@ -1768,6 +2242,81 @@ init_platform() rather than put them in constants().
 
 sub platform_constants {
     return '';
+}
+
+=begin private
+
+=head3 _PREREQ_PRINT
+
+    $self->_PREREQ_PRINT;
+
+Implements PREREQ_PRINT.
+
+Refactored out of MakeMaker->new().
+
+=end private
+
+=cut
+
+sub _PREREQ_PRINT {
+    my $self = shift;
+
+    require Data::Dumper;
+    my @what = ('PREREQ_PM');
+    push @what, 'MIN_PERL_VERSION' if $self->{MIN_PERL_VERSION};
+    push @what, 'BUILD_REQUIRES'   if $self->{BUILD_REQUIRES};
+    print Data::Dumper->Dump([@{$self}{@what}], \@what);
+    exit 0;
+}
+
+
+=begin private
+
+=head3 _PRINT_PREREQ
+
+  $mm->_PRINT_PREREQ;
+
+Implements PRINT_PREREQ, a slightly different version of PREREQ_PRINT
+added by Redhat to, I think, support generating RPMs from Perl modules.
+
+Refactored out of MakeMaker->new().
+
+=end private
+
+=cut
+
+sub _PRINT_PREREQ {
+    my $self = shift;
+
+    my $prereqs= $self->_all_prereqs;
+    my @prereq = map { [$_, $prereqs->{$_}] } keys %$prereqs;
+
+    if ( $self->{MIN_PERL_VERSION} ) {
+        push @prereq, ['perl' => $self->{MIN_PERL_VERSION}];
+    }
+
+    print join(" ", map { "perl($_->[0])>=$_->[1] " }
+                 sort { $a->[0] cmp $b->[0] } @prereq), "\n";
+    exit 0;
+}
+
+
+=begin private
+
+=head3 _all_prereqs
+
+  my $prereqs = $self->_all_prereqs;
+
+Returns a hash ref of both PREREQ_PM and BUILD_REQUIRES.
+
+=end private
+
+=cut
+
+sub _all_prereqs {
+    my $self = shift;
+
+    return { %{$self->{PREREQ_PM}}, %{$self->{BUILD_REQUIRES}} };
 }
 
 

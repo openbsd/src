@@ -7,7 +7,7 @@ our($VERSION, @ISA, @EXPORT, @EXPORT_OK, $Too_Big);
 
 require Exporter;
 
-$VERSION = '1.1005';
+$VERSION = '1.1006';
 @ISA = qw(Exporter);
 @EXPORT = qw(compare);
 @EXPORT_OK = qw(cmp compare_text);

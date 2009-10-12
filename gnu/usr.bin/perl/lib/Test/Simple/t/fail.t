@@ -1,5 +1,6 @@
 #!perl -w
-# $Id$
+
+# Simple test of what failure output looks like
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -13,45 +14,28 @@ BEGIN {
 
 use strict;
 
-require Test::Simple::Catch;
-my($out, $err) = Test::Simple::Catch::caught();
+# Normalize the output whether we're running under Test::Harness or not.
 local $ENV{HARNESS_ACTIVE} = 0;
 
+use Test::Builder;
+use Test::Builder::NoOutput;
 
-# Can't use Test.pm, that's a 5.005 thing.
-package My::Test;
+my $Test = Test::Builder->new;
 
-print "1..2\n";
+# Set up a builder to record some failing tests.
+{
+    my $tb = Test::Builder::NoOutput->create;
+    $tb->plan( tests => 5 );
 
-my $test_num = 1;
-# Utility testing functions.
-sub ok ($;$) {
-    my($test, $name) = @_;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-    $test_num++;
-}
+#line 28
+    $tb->ok( 1, 'passing' );
+    $tb->ok( 2, 'passing still' );
+    $tb->ok( 3, 'still passing' );
+    $tb->ok( 0, 'oh no!' );
+    $tb->ok( 0, 'damnit' );
+    $tb->_ending;
 
-
-package main;
-
-require Test::Simple;
-Test::Simple->import(tests => 5);
-
-#line 35
-ok( 1, 'passing' );
-ok( 2, 'passing still' );
-ok( 3, 'still passing' );
-ok( 0, 'oh no!' );
-ok( 0, 'damnit' );
-
-
-END {
-    My::Test::ok($$out eq <<OUT);
+    $Test->is_eq($tb->read('out'), <<OUT);
 1..5
 ok 1 - passing
 ok 2 - passing still
@@ -60,14 +44,13 @@ not ok 4 - oh no!
 not ok 5 - damnit
 OUT
 
-    My::Test::ok($$err eq <<ERR);
+    $Test->is_eq($tb->read('err'), <<ERR);
 #   Failed test 'oh no!'
-#   at $0 line 38.
+#   at $0 line 31.
 #   Failed test 'damnit'
-#   at $0 line 39.
+#   at $0 line 32.
 # Looks like you failed 2 tests of 5.
 ERR
 
-    # Prevent Test::Simple from exiting with non zero
-    exit 0;
+    $Test->done_testing(2);
 }

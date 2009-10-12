@@ -1,7 +1,7 @@
 /*
  * perlio.c
  * Copyright (c) 1996-2006, Nick Ing-Simmons
- * Copyright (c) 2006, 2007, Larry Wall and others
+ * Copyright (c) 2006, 2007, 2008 Larry Wall and others
  *
  * You may distribute under the terms of either the GNU General Public License
  * or the Artistic License, as specified in the README file.
@@ -10,6 +10,8 @@
 /*
  * Hour after hour for nearly three weary days he had jogged up and down,
  * over passes, and through long dales, and across many streams.
+ *
+ *     [pp.791-792 of _The Lord of the Rings_, V/iii: "The Muster of Rohan"]
  */
 
 /* This file contains the functions needed to implement PerlIO, which
@@ -805,7 +807,7 @@ PerlIO_find_layer(pTHX_ const char *name, STRLEN len, int load)
 	    SAVEINT(PL_in_load_module);
 	    if (cv) {
 		SAVEGENERICSV(PL_warnhook);
-		PL_warnhook = (SV *) (SvREFCNT_inc_simple_NN(cv));
+		PL_warnhook = MUTABLE_SV((SvREFCNT_inc_simple_NN(cv)));
 	    }
 	    PL_in_load_module++;
 	    /*
@@ -827,7 +829,7 @@ static int
 perlio_mg_set(pTHX_ SV *sv, MAGIC *mg)
 {
     if (SvROK(sv)) {
-	IO * const io = GvIOn((GV *) SvRV(sv));
+	IO * const io = GvIOn(MUTABLE_GV(SvRV(sv)));
 	PerlIO * const ifp = IoIFP(io);
 	PerlIO * const ofp = IoOFP(io);
 	Perl_warn(aTHX_ "set %" SVf " %p %p %p",
@@ -840,7 +842,7 @@ static int
 perlio_mg_get(pTHX_ SV *sv, MAGIC *mg)
 {
     if (SvROK(sv)) {
-	IO * const io = GvIOn((GV *) SvRV(sv));
+	IO * const io = GvIOn(MUTABLE_GV(SvRV(sv)));
 	PerlIO * const ifp = IoIFP(io);
 	PerlIO * const ofp = IoOFP(io);
 	Perl_warn(aTHX_ "get %" SVf " %p %p %p",
@@ -879,7 +881,7 @@ XS(XS_io_MODIFY_SCALAR_ATTRIBUTES)
     MAGIC *mg;
     int count = 0;
     int i;
-    sv_magic(sv, (SV *) av, PERL_MAGIC_ext, NULL, 0);
+    sv_magic(sv, MUTABLE_SV(av), PERL_MAGIC_ext, NULL, 0);
     SvRMAGICAL_off(sv);
     mg = mg_find(sv, PERL_MAGIC_ext);
     mg->mg_virtual = &perlio_vtab;
@@ -1290,7 +1292,7 @@ PerlIORaw_pushed(pTHX_ PerlIO *f, const char *mode, SV *arg, PerlIO_funcs *tab)
 	while (t && (l = *t)) {
 	    if (l->tab->Binmode) {
 		/* Has a handler - normal case */
-		if ((*l->tab->Binmode)(aTHX_ f) == 0) {
+		if ((*l->tab->Binmode)(aTHX_ t) == 0) {
 		    if (*t == l) {
 			/* Layer still there - move down a layer */
 			t = PerlIONext(t);
@@ -1622,18 +1624,24 @@ PerlIO_openn(pTHX_ const char *layers, const char *mode, int fd,
 SSize_t
 Perl_PerlIO_read(pTHX_ PerlIO *f, void *vbuf, Size_t count)
 {
+     PERL_ARGS_ASSERT_PERLIO_READ;
+
      Perl_PerlIO_or_Base(f, Read, read, -1, (aTHX_ f, vbuf, count));
 }
 
 SSize_t
 Perl_PerlIO_unread(pTHX_ PerlIO *f, const void *vbuf, Size_t count)
 {
+     PERL_ARGS_ASSERT_PERLIO_UNREAD;
+
      Perl_PerlIO_or_Base(f, Unread, unread, -1, (aTHX_ f, vbuf, count));
 }
 
 SSize_t
 Perl_PerlIO_write(pTHX_ PerlIO *f, const void *vbuf, Size_t count)
 {
+     PERL_ARGS_ASSERT_PERLIO_WRITE;
+
      Perl_PerlIO_or_fail(f, Write, -1, (aTHX_ f, vbuf, count));
 }
 
@@ -2413,7 +2421,7 @@ PerlIO_cleanup(pTHX)
     }
 }
 
-void PerlIO_teardown() /* Call only from PERL_SYS_TERM(). */
+void PerlIO_teardown(void) /* Call only from PERL_SYS_TERM(). */
 {
     dVAR;
 #if 0
@@ -3020,7 +3028,9 @@ PerlIOStdio_dup(pTHX_ PerlIO *f, PerlIO *o, CLONE_PARAMS *param, int flags)
     	stdio = PerlSIO_fdopen(fd, PerlIO_modestr(o,mode));
     set_this:
 	PerlIOSelf(f, PerlIOStdio)->stdio = stdio;
-	PerlIOUnix_refcnt_inc(fileno(stdio));
+        if(stdio) {
+	    PerlIOUnix_refcnt_inc(fileno(stdio));
+        }
     }
     return f;
 }
@@ -3118,8 +3128,11 @@ PerlIOStdio_close(pTHX_ PerlIO *f)
         const int fd = fileno(stdio);
 	int invalidate = 0;
 	IV result = 0;
-	int saveerr = 0;
-	int dupfd = 0;
+	int dupfd = -1;
+	dSAVEDERRNO;
+#ifdef USE_ITHREADS
+	dVAR;
+#endif
 #ifdef SOCKS5_VERSION_NAME
     	/* Socks lib overrides close() but stdio isn't linked to
 	   that library (though we are) - so we must call close()
@@ -3130,8 +3143,15 @@ PerlIOStdio_close(pTHX_ PerlIO *f)
 	if (getsockopt(fd, SOL_SOCKET, SO_TYPE, (void *) &optval, &optlen) == 0)
 	    invalidate = 1;
 #endif
-	if (PerlIOUnix_refcnt_dec(fd) > 0) /* File descriptor still in use */
+	/* Test for -1, as *BSD stdio (at least) on fclose sets the FILE* such
+	   that a subsequent fileno() on it returns -1. Don't want to croak()
+	   from within PerlIOUnix_refcnt_dec() if some buggy caller code is
+	   trying to close an already closed handle which somehow it still has
+	   a reference to. (via.xs, I'm looking at you).  */
+	if (fd != -1 && PerlIOUnix_refcnt_dec(fd) > 0) {
+	    /* File descriptor still in use */
 	    invalidate = 1;
+	}
 	if (invalidate) {
 	    /* For STD* handles, don't close stdio, since we shared the FILE *, too. */
 	    if (stdio == stdin) /* Some stdios are buggy fflush-ing inputs */
@@ -3143,26 +3163,60 @@ PerlIOStdio_close(pTHX_ PerlIO *f)
 	       fileno slot of the FILE *
 	    */
 	    result = PerlIO_flush(f);
-	    saveerr = errno;
+	    SAVE_ERRNO;
 	    invalidate = PerlIOStdio_invalidate_fileno(aTHX_ stdio);
-	    if (!invalidate)
+	    if (!invalidate) {
+#ifdef USE_ITHREADS
+		MUTEX_LOCK(&PL_perlio_mutex);
+		/* Right. We need a mutex here because for a brief while we
+		   will have the situation that fd is actually closed. Hence if
+		   a second thread were to get into this block, its dup() would
+		   likely return our fd as its dupfd. (after all, it is closed)
+		   Then if we get to the dup2() first, we blat the fd back
+		   (messing up its temporary as a side effect) only for it to
+		   then close its dupfd (== our fd) in its close(dupfd) */
+
+		/* There is, of course, a race condition, that any other thread
+		   trying to input/output/whatever on this fd will be stuffed
+		   for the duration of this little manoeuvrer. Perhaps we
+		   should hold an IO mutex for the duration of every IO
+		   operation if we know that invalidate doesn't work on this
+		   platform, but that would suck, and could kill performance.
+
+		   Except that correctness trumps speed.
+		   Advice from klortho #11912. */
+#endif
 		dupfd = PerlLIO_dup(fd);
+#ifdef USE_ITHREADS
+		if (dupfd < 0) {
+		    MUTEX_UNLOCK(&PL_perlio_mutex);
+		    /* Oh cXap. This isn't going to go well. Not sure if we can
+		       recover from here, or if closing this particular FILE *
+		       is a good idea now.  */
+		}
+#endif
+	    }
+	} else {
+	    SAVE_ERRNO;   /* This is here only to silence compiler warnings */
 	}
         result = PerlSIO_fclose(stdio);
 	/* We treat error from stdio as success if we invalidated
 	   errno may NOT be expected EBADF
 	 */
 	if (invalidate && result != 0) {
-	    errno = saveerr;
+	    RESTORE_ERRNO;
 	    result = 0;
 	}
 #ifdef SOCKS5_VERSION_NAME
 	/* in SOCKS' case, let close() determine return value */
 	result = close(fd);
 #endif
-	if (dupfd) {
+	if (dupfd >= 0) {
 	    PerlLIO_dup2(dupfd,fd);
 	    PerlLIO_close(dupfd);
+#ifdef USE_ITHREADS
+	    MUTEX_UNLOCK(&PL_perlio_mutex);
+#endif
 	}
 	return result;
     }
@@ -3312,9 +3366,9 @@ PerlIOStdio_flush(pTHX_ PerlIO *f)
 	/*
 	 * Not writeable - sync by attempting a seek
 	 */
-	const int err = errno;
+	dSAVE_ERRNO;
 	if (PerlSIO_fseek(stdio, (Off_t) 0, SEEK_CUR) != 0)
-	    errno = err;
+	    RESTORE_ERRNO;
 #endif
     }
     return 0;
@@ -3395,9 +3449,7 @@ PerlIOStdio_set_ptrcnt(pTHX_ PerlIO *f, STDCHAR * ptr, SSize_t cnt)
 #ifdef STDIO_PTR_LVALUE
 	PerlSIO_set_ptr(stdio, ptr); /* LHS STDCHAR* cast non-portable */
 #ifdef STDIO_PTR_LVAL_SETS_CNT
-	if (PerlSIO_get_cnt(stdio) != (cnt)) {
-	    assert(PerlSIO_get_cnt(stdio) == (cnt));
-	}
+	assert(PerlSIO_get_cnt(stdio) == (cnt));
 #endif
 #if (!defined(STDIO_PTR_LVAL_NOCHANGE_CNT))
 	/*
@@ -4094,13 +4146,14 @@ void
 PerlIOBuf_set_ptrcnt(pTHX_ PerlIO *f, STDCHAR * ptr, SSize_t cnt)
 {
     PerlIOBuf * const b = PerlIOSelf(f, PerlIOBuf);
+#ifndef DEBUGGING
+    PERL_UNUSED_ARG(cnt);
+#endif
     if (!b->buf)
 	PerlIO_get_base(f);
     b->ptr = ptr;
-    if (PerlIO_get_cnt(f) != cnt || b->ptr < b->buf) {
-	assert(PerlIO_get_cnt(f) == cnt);
-	assert(b->ptr >= b->buf);
-    }
+    assert(PerlIO_get_cnt(f) == cnt);
+    assert(b->ptr >= b->buf);
     PerlIOBase(f)->flags |= PERLIO_F_RDBUF;
 }
 
@@ -4586,9 +4639,7 @@ PerlIOCrlf_binmode(pTHX_ PerlIO *f)
 	PerlIOBase(f)->flags &= ~PERLIO_F_CRLF;
 #ifndef PERLIO_USING_CRLF
 	/* CRLF is unusual case - if this is just the :crlf layer pop it */
-	if (PerlIOBase(f)->tab == &PerlIO_crlf) {
-		PerlIO_pop(aTHX_ f);
-	}
+	PerlIO_pop(aTHX_ f);
 #endif
     }
     return 0;

@@ -171,7 +171,9 @@ use strict;
 use Exporter;
 use vars qw(@ISA @EXPORT @EXPORT_OK $VERSION);
 
-$VERSION = '3.2501';
+$VERSION = '3.30';
+my $xs_version = $VERSION;
+$VERSION = eval $VERSION;
 
 @ISA = qw/ Exporter /;
 @EXPORT = qw(cwd getcwd fastcwd fastgetcwd);
@@ -200,15 +202,54 @@ if ($^O eq 'os2') {
     return 1;
 }
 
+# Need to look up the feature settings on VMS.  The preferred way is to use the
+# VMS::Feature module, but that may not be available to dual life modules.
+
+my $use_vms_feature;
+BEGIN {
+    if ($^O eq 'VMS') {
+        if (eval { local $SIG{__DIE__}; require VMS::Feature; }) {
+            $use_vms_feature = 1;
+        }
+    }
+}
+
+# Need to look up the UNIX report mode.  This may become a dynamic mode
+# in the future.
+sub _vms_unix_rpt {
+    my $unix_rpt;
+    if ($use_vms_feature) {
+        $unix_rpt = VMS::Feature::current("filename_unix_report");
+    } else {
+        my $env_unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        $unix_rpt = $env_unix_rpt =~ /^[ET1]/i; 
+    }
+    return $unix_rpt;
+}
+
+# Need to look up the EFS character set mode.  This may become a dynamic
+# mode in the future.
+sub _vms_efs {
+    my $efs;
+    if ($use_vms_feature) {
+        $efs = VMS::Feature::current("efs_charset");
+    } else {
+        my $env_efs = $ENV{'DECC$EFS_CHARSET'} || '';
+        $efs = $env_efs =~ /^[ET1]/i; 
+    }
+    return $efs;
+}
+
+
 # If loading the XS stuff doesn't work, we can fall back to pure perl
 eval {
   if ( $] >= 5.006 ) {
     require XSLoader;
-    XSLoader::load( __PACKAGE__, $VERSION );
+    XSLoader::load( __PACKAGE__, $xs_version);
   } else {
     require DynaLoader;
     push @ISA, 'DynaLoader';
-    __PACKAGE__->bootstrap( $VERSION );
+    __PACKAGE__->bootstrap( $xs_version );
   }
 };
 
@@ -248,6 +289,7 @@ my %METHOD_MAP =
     abs_path		=> 'fast_abs_path',
    },
 
+   # QNX4.  QNX6 has a $os of 'nto'.
    qnx =>
    {
     cwd			=> '_qnx_cwd',
@@ -286,7 +328,6 @@ my %METHOD_MAP =
   );
 
 $METHOD_MAP{NT} = $METHOD_MAP{MSWin32};
-$METHOD_MAP{nto} = $METHOD_MAP{qnx};
 
 
 # Find the pwd command in the expected locations.  We assume these
@@ -540,8 +581,8 @@ sub _perl_abs_path
 	local *PARENT;
 	unless (opendir(PARENT, $dotdots))
 	{
-	    _carp("opendir($dotdots): $!");
-	    return '';
+	    # probably a permissions issue.  Try the native command.
+	    return File::Spec->rel2abs( $start, _backtick_pwd() );
 	}
 	unless (@cst = stat($dotdots))
 	{
@@ -646,10 +687,49 @@ sub _vms_abs_path {
     return $ENV{'DEFAULT'} unless @_;
     my $path = shift;
 
+    my $efs = _vms_efs;
+    my $unix_rpt = _vms_unix_rpt;
+
+    if (defined &VMS::Filespec::vmsrealpath) {
+        my $path_unix = 0;
+        my $path_vms = 0;
+
+        $path_unix = 1 if ($path =~ m#(?<=\^)/#);
+        $path_unix = 1 if ($path =~ /^\.\.?$/);
+        $path_vms = 1 if ($path =~ m#[\[<\]]#);
+        $path_vms = 1 if ($path =~ /^--?$/);
+
+        my $unix_mode = $path_unix;
+        if ($efs) {
+            # In case of a tie, the Unix report mode decides.
+            if ($path_vms == $path_unix) {
+                $unix_mode = $unix_rpt;
+            } else {
+                $unix_mode = 0 if $path_vms;
+            }
+        }
+
+        if ($unix_mode) {
+            # Unix format
+            return VMS::Filespec::unixrealpath($path);
+        }
+
+	# VMS format
+
+	my $new_path = VMS::Filespec::vmsrealpath($path);
+
+	# Perl expects directories to be in directory format
+	$new_path = VMS::Filespec::pathify($new_path) if -d $path;
+	return $new_path;
+    }
+
+    # Fallback to older algorithm if correct ones are not
+    # available.
+
     if (-l $path) {
         my $link_target = readlink($path);
         die "Can't resolve link $path: $!" unless defined $link_target;
-	    
+
         return _vms_abs_path($link_target);
     }
 

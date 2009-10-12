@@ -9,7 +9,7 @@ require Exporter;
 use Carp;
 use Symbol qw(gensym qualify);
 
-$VERSION	= 1.02;
+$VERSION	= 1.04;
 @ISA		= qw(Exporter);
 @EXPORT		= qw(open3);
 
@@ -23,8 +23,12 @@ IPC::Open3, open3 - open a process for reading, writing, and error handling
 		    'some cmd and args', 'optarg', ...);
 
     my($wtr, $rdr, $err);
+    use Symbol 'gensym'; $err = gensym;
     $pid = open3($wtr, $rdr, $err,
 		    'some cmd and args', 'optarg', ...);
+
+    waitpid( $pid, 0 );
+    my $child_exit_status = $? >> 8;
 
 =head1 DESCRIPTION
 
@@ -32,8 +36,9 @@ Extremely similar to open2(), open3() spawns the given $cmd and
 connects CHLD_OUT for reading from the child, CHLD_IN for writing to
 the child, and CHLD_ERR for errors.  If CHLD_ERR is false, or the
 same file descriptor as CHLD_OUT, then STDOUT and STDERR of the child
-are on the same filehandle.  The CHLD_IN will have autoflush turned
-on.
+are on the same filehandle (this means that an autovivified lexical
+cannot be used for the STDERR filehandle, see SYNOPSIS).  The CHLD_IN
+will have autoflush turned on.
 
 If CHLD_IN begins with C<< <& >>, then CHLD_IN will be closed in the
 parent, and the child will read from it directly.  If CHLD_OUT or
@@ -116,7 +121,7 @@ The order of arguments differs from that of open2().
 # allow fd numbers to be used, by Frank Tobin
 # allow '-' as command (c.f. open "-|"), by Adam Spiers <perl@adamspiers.org>
 #
-# $Id: Open3.pm,v 1.10 2008/09/29 17:36:12 millert Exp $
+# $Id: Open3.pm,v 1.11 2009/10/12 18:24:41 millert Exp $
 #
 # usage: $pid = open3('wtr', 'rdr', 'err' 'some cmd and args', 'optarg', ...);
 #

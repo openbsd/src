@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-# $Id$
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {

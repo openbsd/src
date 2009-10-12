@@ -96,7 +96,6 @@ use Carp;
 require 5.000;
 require Exporter;
 use Cwd qw(getcwd cwd abs_path);
-use Config;
 use File::Basename;
 use File::Spec;
 
@@ -104,7 +103,7 @@ use File::Spec;
 %EXPORT_TAGS = (ALL => [qw($Bin $Script $RealBin $RealScript $Dir $RealDir)]);
 @ISA = qw(Exporter);
 
-$VERSION = "1.49";
+$VERSION = "1.50";
 
 
 # needed for VMS-specific filename translation

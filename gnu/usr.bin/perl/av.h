@@ -1,7 +1,7 @@
 /*    av.h
  *
- *    Copyright (C) 1991, 1992, 1993, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2005, 2006, 2007, by Larry Wall and others
+ *    Copyright (C) 1991, 1992, 1993, 1995, 1996, 1997, 1998, 1999, 2000,
+ *    2001, 2002, 2005, 2006, 2007, 2008, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -97,7 +97,7 @@ Same as C<av_len()>.  Deprecated, use C<av_len()> instead.
 #define AvALLOC(av)	(*((SV***)&((XPVAV*)  SvANY(av))->xav_alloc))
 #define AvMAX(av)	((XPVAV*)  SvANY(av))->xav_max
 #define AvFILLp(av)	((XPVAV*)  SvANY(av))->xav_fill
-#define AvARYLEN(av)	(*Perl_av_arylen_p(aTHX_ (AV*)av))
+#define AvARYLEN(av)	(*Perl_av_arylen_p(aTHX_ MUTABLE_AV(av)))
 
 #define AvREAL(av)	(SvFLAGS(av) & SVpav_REAL)
 #define AvREAL_on(av)	(SvFLAGS(av) |= SVpav_REAL)
@@ -110,10 +110,20 @@ Same as C<av_len()>.  Deprecated, use C<av_len()> instead.
 
 #define AvREALISH(av)	(SvFLAGS(av) & (SVpav_REAL|SVpav_REIFY))
                                           
-#define AvFILL(av)	((SvRMAGICAL((SV *) (av))) \
-			  ? mg_size((SV *) av) : AvFILLp(av))
+#define AvFILL(av)	((SvRMAGICAL((const SV *) (av))) \
+			 ? mg_size(MUTABLE_SV(av)) : AvFILLp(av))
 
 #define NEGATIVE_INDICES_VAR "NEGATIVE_INDICES"
+
+/*
+=for apidoc newAV
+
+Creates a new AV.  The reference count is set to 1.
+
+=cut
+*/
+
+#define newAV()	MUTABLE_AV(newSV_type(SVt_PVAV))
 
 /*
  * Local variables:

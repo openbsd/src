@@ -3,7 +3,7 @@
 #    global.sym
 #
 #    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-#    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, by Larry Wall and others
+#    2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, by Larry Wall and others
 #
 #    You may distribute under the terms of either the GNU General Public
 #    License or the Artistic License, as specified in the README file.
@@ -60,6 +60,7 @@ Perl_cast_uv
 Perl_my_chsize
 Perl_croak
 Perl_vcroak
+Perl_croak_xs_usage
 Perl_croak_nocontext
 Perl_die_nocontext
 Perl_deb_nocontext
@@ -336,6 +337,7 @@ Perl_newSVuv
 Perl_newSVnv
 Perl_newSVpv
 Perl_newSVpvn
+Perl_newSVpvn_flags
 Perl_newSVhek
 Perl_newSVpvn_share
 Perl_newSVpvf
@@ -440,6 +442,7 @@ Perl_save_delete
 Perl_save_destructor
 Perl_save_destructor_x
 Perl_save_freesv
+Perl_save_freeop
 Perl_save_freepv
 Perl_save_generic_svref
 Perl_save_generic_pvref
@@ -458,13 +461,16 @@ Perl_save_list
 Perl_save_long
 Perl_save_mortalizesv
 Perl_save_nogv
+Perl_save_op
 Perl_save_scalar
 Perl_save_pptr
 Perl_save_vptr
 Perl_save_re_context
 Perl_save_padsv
+Perl_save_padsv_and_mortalize
 Perl_save_sptr
 Perl_save_svref
+Perl_save_pushptr
 Perl_scan_bin
 Perl_scan_hex
 Perl_scan_num
@@ -521,6 +527,7 @@ Perl_sv_gets
 Perl_sv_grow
 Perl_sv_inc
 Perl_sv_insert
+Perl_sv_insert_flags
 Perl_sv_isa
 Perl_sv_isobject
 Perl_sv_len
@@ -762,6 +769,12 @@ Perl_my_strlcpy
 Perl_signbit
 Perl_emulate_cop_io
 Perl_get_re_arg
+Perl_mro_get_private_data
+Perl_mro_set_private_data
+Perl_mro_get_from_name
+Perl_mro_register
+Perl_mro_set_mro
+Perl_mro_meta_init
 Perl_mro_get_linear_isa
 Perl_mro_method_changed_in
 Perl_sys_init

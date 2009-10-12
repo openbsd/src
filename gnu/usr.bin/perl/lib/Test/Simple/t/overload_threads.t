@@ -1,5 +1,4 @@
 #!perl -w
-# $Id: overload_threads.t,v 1.2 2009/05/16 21:42:57 simon Exp $
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {

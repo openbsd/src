@@ -2,26 +2,21 @@ package CPANPLUS::Dist;
 
 use strict;
 
-
 use CPANPLUS::Error;
 use CPANPLUS::Internals::Constants;
 
+use Cwd ();
+use Object::Accessor;
+use Parse::CPAN::Meta;
+
+use IPC::Cmd                    qw[run];
 use Params::Check               qw[check];
 use Module::Load::Conditional   qw[can_load check_install];
 use Locale::Maketext::Simple    Class => 'CPANPLUS', Style => 'gettext';
-use Object::Accessor;
+
+use base 'Object::Accessor';
 
 local $Params::Check::VERBOSE = 1;
-
-my @methods = qw[status parent];
-for my $key ( @methods ) {
-    no strict 'refs';
-    *{__PACKAGE__."::$key"} = sub {
-        my $self = shift;
-        $self->{$key} = $_[0] if @_;
-        return $self->{$key};
-    }
-}
 
 =pod
 
@@ -31,8 +26,7 @@ CPANPLUS::Dist - base class for CPANPLUS::Dist::MM and CPANPLUS::Dist::Build
 
 =head1 SYNOPSIS
 
-    my $dist = CPANPLUS::Dist->new(
-                                format  => 'build',
+    my $dist = CPANPLUS::Dist::YOUR_DIST_TYPE_HERE->new(
                                 module  => $modobj,
                             );
 
@@ -92,44 +86,39 @@ works. This will be set upon a successful create.
 
 =back
 
-=head2 $dist = CPANPLUS::Dist->new( module => MODOBJ, [format => DIST_TYPE] );
+=head2 $dist = CPANPLUS::Dist::YOUR_DIST_TYPE_HERE->new( module => MODOBJ );
 
-Create a new C<CPANPLUS::Dist> object based on the provided C<MODOBJ>.
+Create a new C<CPANPLUS::Dist::YOUR_DIST_TYPE_HERE> object based on the 
+provided C<MODOBJ>.
+
+*** DEPRECATED ***
 The optional argument C<format> is used to indicate what type of dist
-you would like to create (like C<makemaker> for a C<CPANPLUS::Dist::MM>
-object, C<build> for a C<CPANPLUS::Dist::Build> object, and so on ).
-If not provided, will default to the setting as specified by your
-config C<dist_type>.
+you would like to create (like C<CPANPLUS::Dist::MM> or 
+C<CPANPLUS::Dist::Build> and so on ).
 
-Returns a C<CPANPLUS::Dist> object on success and false on failure.
+C<< CPANPLUS::Dist->new >> is exlusively meant as a method to be
+inherited by C<CPANPLUS::Dist::MM|Build>.
+
+Returns a C<CPANPLUS::Dist::YOUR_DIST_TYPE_HERE> object on success 
+and false on failure.
 
 =cut
 
 sub new {
-    my $self = shift;
-    my %hash = @_;
-
-    local $Params::Check::ALLOW_UNKNOWN = 1;
+    my $self    = shift;
+    my $class   = ref $self || $self;
+    my %hash    = @_;
 
     ### first verify we got a module object ###
-    my $mod;
+    my( $mod, $format );
     my $tmpl = {
         module  => { required => 1, allow => IS_MODOBJ, store => \$mod },
+        ### for backwards compatibility
+        format  => { default  => $class, store => \$format, 
+                     allow    => [ __PACKAGE__->dist_types ],
+        },
     };
     check( $tmpl, \%hash ) or return;
-
-    ### get the conf object ###
-    my $conf = $mod->parent->configure_object();
-
-    ### figure out what type of dist object to create ###
-    my $format;
-    my $tmpl2 = {
-        format  => {    default => $conf->get_conf('dist_type'),
-                        allow   => [ __PACKAGE__->dist_types ],
-                        store   => \$format  },
-    };
-    check( $tmpl2, \%hash ) or return;
-
 
     unless( can_load( modules => { $format => '0.0' }, verbose => 1 ) ) {
         error(loc("'%1' not found -- you need '%2' version '%3' or higher ".
@@ -137,14 +126,13 @@ sub new {
         return;
     }
 
-    ### bless the object in the child class ###
-    my $obj = bless { parent => $mod }, $format;
+    ### get an empty o::a object for this class
+    my $obj = $format->SUPER::new;
 
-    ### check if the format is available in this environment ###
-    if( $conf->_get_build('sanity_check') and not $obj->format_available ) {
-        error( loc( "Format '%1' is not available",$format) );
-        return;
-    }
+    $obj->mk_accessors( qw[parent status] );
+    
+    ### set the parent
+    $obj->parent( $mod );
 
     ### create a status object ###
     {   my $acc = Object::Accessor->new;
@@ -153,6 +141,15 @@ sub new {
         ### add minimum supported accessors
         $acc->mk_accessors( qw[prepared created installed uninstalled 
                                distdir dist] );
+    }
+
+    ### get the conf object ###
+    my $conf = $mod->parent->configure_object();
+
+    ### check if the format is available in this environment ###
+    if( $conf->_get_build('sanity_check') and not $obj->format_available ) {
+        error( loc( "Format '%1' is not available", $format) );
+        return;
     }
 
     ### now initialize it or admit failure
@@ -184,6 +181,7 @@ Returns a list of the CPANPLUS::Dist::* classes available
     
     ### backdoor method to exclude dist types
     sub _ignore_dist_types  { my $self = shift; push @Ignore, @_ };
+    sub _reset_dist_ignore  { @Ignore = () };
 
     ### locally add the plugins dir to @INC, so we can find extra plugins
     #local @INC = @INC, File::Spec->catdir(
@@ -199,26 +197,55 @@ Returns a list of the CPANPLUS::Dist::* classes available
             require Module::Pluggable;
 
             my $only_re = __PACKAGE__ . '::\w+$';
+            my %except  = map { $_ => 1 }
+                              INSTALLER_SAMPLE,
+                              INSTALLER_BASE;
 
             Module::Pluggable->import(
                             sub_name    => '_dist_types',
                             search_path => __PACKAGE__,
                             only        => qr/$only_re/,
-                            except      => [ INSTALLER_MM, 
-                                             INSTALLER_SAMPLE,
-                                             INSTALLER_BASE,
-                                        ]
+                            require     => 1,
+                            except      => [ keys %except ]
                         );
             my %ignore = map { $_ => $_ } @Ignore;                        
                         
-            push @Dists, grep { not $ignore{$_}  } __PACKAGE__->_dist_types;
+            push @Dists, grep { not $ignore{$_} and not $except{$_} }
+                __PACKAGE__->_dist_types;
         }
 
         return @Dists;
     }
+
+=head2 $bool = CPANPLUS::Dist->rescan_dist_types;
+
+Rescans C<@INC> for available dist types. Useful if you've installed new
+C<CPANPLUS::Dist::*> classes and want to make them available to the
+current process.
+
+=cut
+    
+    sub rescan_dist_types {
+        my $dist    = shift;
+        $Loaded     = 0;    # reset the flag;
+        return $dist->dist_types;
+    }        
 }
 
-=head2 prereq_satisfied( modobj => $modobj, version => $version_spec )
+=head2 $bool = CPANPLUS::Dist->has_dist_type( $type )
+
+Returns true if distribution type C<$type> is loaded/supported.
+
+=cut
+
+sub has_dist_type {
+    my $dist = shift;
+    my $type = shift or return;
+    
+    return scalar grep { $_ eq $type } CPANPLUS::Dist->dist_types;
+}    
+
+=head2 $bool = $dist->prereq_satisfied( modobj => $modobj, version => $version_spec )
 
 Returns true if this prereq is satisfied.  Returns false if it's not.
 Also issues an error if it seems "unsatisfiable," i.e. if it can't be
@@ -255,11 +282,81 @@ sub prereq_satisfied {
     return;
 }
 
-=head2 _resolve_prereqs
+=head2 $configure_requires = $dist->find_configure_requires( [file => /path/to/META.yml] )
+
+Reads the configure_requires for this distribution from the META.yml
+file in the root directory and returns a hashref with module names
+and versions required.
+
+=cut
+
+sub find_configure_requires {
+    my $self = shift;
+    my $mod  = $self->parent;
+    my %hash = @_;
+    
+    my $meta;
+    my $tmpl = {                ### check if we have an extract path. if not, we 
+                                ### get 'undef value' warnings from file::spec
+        file    => { default => do { defined $mod->status->extract
+                                        ? META_YML->( $mod->status->extract )
+                                        : '' },
+                     store   => \$meta,
+                },
+    };                
+    
+    check( $tmpl, \%hash ) or return;
+    
+    ### default is an empty hashref
+    my $configure_requires = $mod->status->configure_requires || {};
+    
+    ### if there's a meta file, we read it;
+    if( -e $meta ) {
+
+        ### Parse::CPAN::Meta uses exceptions for errors
+        ### hash returned in list context!!!
+        my ($doc) = eval { Parse::CPAN::Meta::LoadFile( $meta ) };
+  
+        unless( $doc ) {
+            error(loc( "Could not read %1: '%2'", $meta, $@ ));
+            return $configure_requires; # Causes problems if we don't return a hashref
+        }
+
+        ### read the configure_requires key, make sure not to throw
+        ### away anything that was already added
+        $configure_requires = {
+            %$configure_requires,
+            %{ $doc->{'configure_requires'} },
+        } if $doc->{'configure_requires'};
+    }
+    
+    ### and store it in the module
+    $mod->status->configure_requires( $configure_requires );
+    
+    ### and return a copy
+    return \%{$configure_requires};
+}
+
+=head2 $bool = $dist->_resolve_prereqs( ... )
 
 Makes sure prerequisites are resolved
 
-XXX Need docs, internal use only
+    format          The dist class to use to make the prereqs
+                    (ie. CPANPLUS::Dist::MM)
+
+    prereqs         Hash of the prerequisite modules and their versions
+
+    target          What to do with the prereqs.
+                        create  => Just build them
+                        install => Install them
+                        ignore  => Ignore them
+
+    prereq_build    If true, always build the prereqs even if already
+                    resolved
+
+    verbose         Be verbose
+
+    force           Force the prereq to be built, even if already resolved
 
 =cut
 
@@ -296,6 +393,9 @@ sub _resolve_prereqs {
 
     ### so there are no prereqs? then don't even bother
     return 1 unless keys %$prereqs;
+
+    ### Make sure we wound up where we started.
+    my $original_wd = Cwd::cwd;
 
     ### so you didn't provide an explicit target.
     ### maybe your config can tell us what to do.
@@ -340,6 +440,25 @@ sub _resolve_prereqs {
     
     for my $mod ( @sorted_prereqs ) {
         my $version = $prereqs->{$mod};
+        
+        ### 'perl' is a special case, there's no mod object for it
+        if( $mod eq PERL_CORE ) {
+            
+            ### run a CLI invocation to see if the perl you specified is
+            ### uptodate
+            my $ok = run( command => "$^X -M$version -e1", verbose => 0 );
+
+            unless( $ok ) {
+                error(loc(  "Module '%1' needs perl version '%2', but you ".
+                            "only have version '%3' -- can not proceed",
+                            $self->module, $version, 
+                            $cb->_perl_version( perl => $^X ) ) );
+                return;                            
+            }
+
+            next;
+        }
+        
         my $modobj  = $cb->module_tree($mod);
 
         #### XXX we ignore the version, and just assume that the latest
@@ -453,7 +572,6 @@ sub _resolve_prereqs {
         $pending->{ $modobj->module } = $modobj;
         $cb->_status->pending_prereqs( $pending );
 
-
         ### call $modobj->install rather than doing
         ### CPANPLUS::Dist->new and the like ourselves,
         ### since ->install will take care of fetch &&
@@ -493,6 +611,9 @@ sub _resolve_prereqs {
 
     ### reset the $prereqs iterator, in case we bailed out early ###
     keys %$prereqs;
+
+    ### chdir back to where we started
+    chdir $original_wd;
 
     return 1 unless $flag;
     return;

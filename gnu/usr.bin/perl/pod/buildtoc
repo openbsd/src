@@ -1,23 +1,25 @@
 #!/usr/bin/perl -w
 
 use strict;
-use vars qw($masterpodfile %Build %Targets $Verbose $Up %Ignore
+use vars qw($masterpodfile %Build %Targets $Verbose $Quiet $Up %Ignore
 	    @Master %Readmes %Pods %Aux %Readmepods %Pragmata %Modules
-	    %Copies);
+	    %Copies %Generated);
 use File::Spec;
 use File::Find;
 use FindBin;
 use Text::Tabs;
 use Text::Wrap;
 use Getopt::Long;
+use Carp;
 
 no locale;
 
 $Up = File::Spec->updir;
-$masterpodfile = File::Spec->catdir($Up, "pod.lst");
+$masterpodfile = File::Spec->catfile($Up, "pod.lst");
 
 # Generate any/all of these files
 # --verbose gives slightly more output
+# --quiet suppresses routine warnings
 # --build-all tries to build everything
 # --build-foo updates foo as follows
 # --showfiles shows the files to be changed
@@ -27,12 +29,12 @@ $masterpodfile = File::Spec->catdir($Up, "pod.lst");
      toc => "perltoc.pod",
      manifest => File::Spec->catdir($Up, "MANIFEST"),
      perlpod => "perl.pod",
-     vms => File::Spec->catdir($Up, "vms", "descrip_mms.template"),
-     nmake => File::Spec->catdir($Up, "win32", "Makefile"),
-     dmake => File::Spec->catdir($Up, "win32", "makefile.mk"),
-     podmak => File::Spec->catdir($Up, "win32", "pod.mak"),
+     vms => File::Spec->catfile($Up, "vms", "descrip_mms.template"),
+     nmake => File::Spec->catfile($Up, "win32", "Makefile"),
+     dmake => File::Spec->catfile($Up, "win32", "makefile.mk"),
+     podmak => File::Spec->catfile($Up, "win32", "pod.mak"),
      # plan9 =>  File::Spec->catdir($Up, "plan9", "mkfile"),
-     unix => File::Spec->catdir($Up, "Makefile.SH"),
+     unix => File::Spec->catfile($Up, "Makefile.SH"),
      # TODO: add roffitall
     );
 
@@ -45,6 +47,7 @@ $0: Usage: $0 [--verbose] [--showfiles] $filesopts
 __USAGE__
   unless @ARGV
 	&& GetOptions (verbose => \$Verbose,
+		       quiet => \$Quiet,
 		       showfiles => \$showfiles,
 		       map {+"build-$_", \$Build{$_}} @files, 'all');
   # Set them all to true
@@ -115,6 +118,7 @@ foreach (<MASTER>) {
       $flags{manifest_omit} = 1;
       $delta_target = "$filename.pod";
     }
+    $Generated{"$filename.pod"}++ if $flags =~ tr/g//d;
 
     if ($flags =~ tr/r//d) {
       my $readme = $filename;
@@ -138,8 +142,7 @@ if (defined $delta_source) {
   if (defined $delta_target) {
     # This way round so that keys can act as a MANIFEST skip list
     # Targets will aways be in the pod directory. Currently we can only cope
-    # with sources being in the same directory. Fix this and do perlvms.pod
-    # with this?
+    # with sources being in the same directory.
     $Copies{$delta_target} = $delta_source;
   } else {
     die "$0: delta source defined but not target";
@@ -202,25 +205,31 @@ close MASTER;
     warn "$0: $i exists but is unknown by buildtoc\n"
       unless $our_pods{$i};
     warn "$0: $i exists but is unknown by ../MANIFEST\n"
-      if !$manipods{$i} && !$manireadmes{$i} && !$Copies{$i};
+      if !$manipods{$i} && !$manireadmes{$i} && !$Copies{$i} && !$Generated{$i};
     warn "$0: $i exists but is unknown by perl.pod\n"
 	if !$perlpods{$i} && !exists $sources{$i};
   }
+  my @BuildTargets = grep {defined} @Targets{keys %Build};
+  my %BuildFiles;
+  @BuildFiles{@BuildTargets} = @BuildTargets;
+  
   foreach my $i (sort keys %our_pods) {
     warn "$0: $i is known by buildtoc but does not exist\n"
-      unless $disk_pods{$i};
+      unless $disk_pods{$i} or $BuildFiles{$i};
   }
   foreach my $i (sort keys %manipods) {
     warn "$0: $i is known by ../MANIFEST but does not exist\n"
       unless $disk_pods{$i};
+    warn "$0: $i is known by ../MANIFEST but is marked as generated\n"
+      if $Generated{$i};
   }
   foreach my $i (sort keys %perlpods) {
     warn "$0: $i is known by perl.pod but does not exist\n"
-      unless $disk_pods{$i};
+      unless $disk_pods{$i} or $BuildFiles{$i};
   }
 }
 
-# Find all the mdoules
+# Find all the modules
 {
   my @modpods;
   find \&getpods => qw(../lib ../ext);
@@ -248,10 +257,12 @@ close MASTER;
 	  if ($line =~ /^=head1\s+NAME\b/) {
 	    push @modpods, $file;
 	    #warn "GOOD $file\n";
+	    close F;
 	    return;
 	  }
 	}
-	warn "$0: $file: cannot find =head1 NAME\n";
+	close F;
+	warn "$0: $file: cannot find =head1 NAME\n" unless $Quiet;
       }
     }
   }
@@ -366,6 +377,7 @@ EOPOD2B
   s/^\t//gm;
   output $_;
   output "\n";                    # flush $LINE
+  close OUT;
 }
 
 # Below are all the auxiliary routines for generating perltoc.pod
@@ -375,6 +387,8 @@ my ($inhead1, $inhead2, $initem);
 sub podset {
     local @ARGV = @_;
     my $pod;
+
+    return unless scalar(@ARGV);
 
     while(<>) {
 	tr/\015//d;
@@ -522,10 +536,12 @@ sub generate_manifest {
 }
 sub generate_manifest_pod {
   generate_manifest map {["pod/$_.pod", $Pods{$_}]}
-    grep {!$Copies{"$_.pod"}} sort keys %Pods;
+    sort grep {!$Copies{"$_.pod"}} grep {!$Generated{"$_.pod"}} keys %Pods;
 }
 sub generate_manifest_readme {
-  generate_manifest map {["README.$_", $Readmes{$_}]} sort keys %Readmes;
+  generate_manifest sort {$a->[0] cmp $b->[0]}
+    ["README.vms", "Notes about installing the VMS port"],
+      map {["README.$_", $Readmes{$_}]} keys %Readmes;
 }
 
 sub generate_roffitall {
@@ -549,12 +565,17 @@ sub generate_descrip_mms_1 {
 }
 
 sub generate_descrip_mms_2 {
-  map {sprintf <<'SNIP', $_, $_ eq 'perlvms' ? 'vms' : 'pod', $_}
-[.lib.pods]%s.pod : [.%s]%s.pod
-	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
-	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
+  map {<<"SNIP"}
+[.lib.pods]$_.pod : [.pod]$_.pod
+	\@ If F\$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log \$(MMS\$SOURCE) [.lib.pods]
 SNIP
    sort keys %Pods, keys %Readmepods;
+}
+
+sub generate_descrip_mms_3 {
+  map qq{\t- If F\$Search("[.pod]$_").nes."" Then Delete/NoConfirm/Log [.pod]$_;*},
+    sort keys %Generated, keys %Copies;
 }
 
 sub generate_nmake_1 {
@@ -569,8 +590,8 @@ sub generate_nmake_2 {
   # Spot the special case
   local $Text::Wrap::columns = 76;
   my $line = wrap ("\t    ", "\t    ",
-		   join " ", sort keys %Copies,
-				  map {"perl$_.pod"} "vms", keys %Readmes);
+		   join " ", sort keys %Copies, keys %Generated,
+				  map {"perl$_.pod"} keys %Readmes);
   $line =~ s/$/ \\/mg;
   $line;
 }
@@ -583,6 +604,13 @@ sub generate_pod_mak {
   # Special case
   $line =~ s/.*perltoc.html.*\n//m;
   $line;
+}
+
+sub verify_contiguous {
+  my ($name, $content, $what) = @_;
+  my $sections = () = $content =~ m/\0+/g;
+  croak("$0: $name contains no $what") if $sections < 1;
+  croak("$0: $name contains discontiguous $what") if $sections > 1;
 }
 
 sub do_manifest {
@@ -604,14 +632,12 @@ sub do_nmake {
   my $makefile = join '', @_;
   die "$0: $name contains NUL bytes" if $makefile =~ /\0/;
   $makefile =~ s/^\tcopy \.\.\\README.*\n/\0/gm;
-  my $sections = () = $makefile =~ m/\0+/g;
-  die "$0: $name contains no README copies" if $sections < 1;
-  die "$0: $name contains discontiguous README copies" if $sections > 1;
+  verify_contiguous($name, $makefile, 'README copies');
   # Now remove the other copies that follow
   1 while $makefile =~ s/\0\tcopy .*\n/\0/gm;
   $makefile =~ s/\0+/join ("", &generate_nmake_1)/se;
 
-  $makefile =~ s{(del /f [^\n]+checkpods[^\n]+).*?(pod2html)}
+  $makefile =~ s{(del /f [^\n]+podchecker[^\n]+).*?(pod2html)}
     {"$1\n" . &generate_nmake_2."\n\t    $2"}se;
   $makefile;
 }
@@ -651,10 +677,7 @@ sub do_vms {
   my $makefile = join '', @_;
   die "$0: $name contains NUL bytes" if $makefile =~ /\0/;
   $makefile =~ s/\npod\d* =[^\n]*/\0/gs;
-  my $sections = () = $makefile =~ m/\0+/g;
-  die "$0: $name contains no pod assignments" if $sections < 1;
-  die "$0: $name contains $sections discontigous pod assignments"
-    if $sections > 1;
+  verify_contiguous($name, $makefile, 'pod assignments');
   $makefile =~ s/\0+/join "\n", '', &generate_descrip_mms_1/se;
 
   die "$0: $name contains NUL bytes" if $makefile =~ /\0/;
@@ -668,11 +691,15 @@ sub do_vms {
 		 [^\n]+\n	# Another line
 		 [^\n]+\Q[.lib.pods]\E\n		# ends [.lib.pods]
 		    /\0/gsx;
-  $sections = () = $makefile =~ m/\0+/g;
-  die "$0: $name contains no copy rules" if $sections < 1;
-  die "$0: $name contains $sections discontigous copy rules"
-    if $sections > 1;
+  verify_contiguous($name, $makefile, 'copy rules');
   $makefile =~ s/\0+/join "\n", '', &generate_descrip_mms_2/se;
+
+# Looking for rules like this:
+#	- If F$Search("[.pod]perldelta.pod").nes."" Then Delete/NoConfirm/Log [.pod]perldelta.pod;*
+  $makefile =~ s!(?:\t- If F\$Search\("\[\.pod\]perl[a-z]+\Q.pod").nes."" Then Delete/NoConfirm/Log [.pod]perl\E[a-z]+\.pod;\*\n)+!\0!sg;
+  verify_contiguous($name, $makefile, 'delete rules');
+  $makefile =~ s/\0+/join "\n", &generate_descrip_mms_3, ''/se;
+
   $makefile;
 }
 
@@ -681,18 +708,27 @@ sub do_unix {
   my $makefile_SH = join '', @_;
   die "$0: $name contains NUL bytes" if $makefile_SH =~ /\0/;
 
-  $makefile_SH =~ s/\n\s+-\@test -f \S+ && cd pod && \$\(LNS\) \S+ \S+ && cd \.\. && echo "\S+" >> extra.pods \# See buildtoc\n/\0/gm;
+  $makefile_SH =~ s{^(perltoc_pod_prereqs = extra.pods).*}
+		   {join ' ', $1, map "pod/$_",
+			sort keys %Copies, grep {!/perltoc/} keys %Generated
+		    }mge;
 
-  my $sections = () = $makefile_SH =~ m/\0+/g;
+# pod/perldelta.pod: pod/perl511delta.pod
+# 	cd pod && $(LNS) perl511delta.pod perldelta.pod
 
-  die "$0: $name contains no copy rules" if $sections < 1;
-  die "$0: $name contains $sections discontigous copy rules"
-    if $sections > 1;
+  $makefile_SH =~ s!(
+pod/perl[a-z0-9_]+\.pod: pod/perl[a-z0-9_]+\.pod
+	\$\(LNS\) perl[a-z0-9_]+\.pod pod/perl[a-z0-9_]+\.pod
+)+!\0!gm;
 
-  my @copy_rules = map "\t-\@test -f pod/$Copies{$_} && cd pod && \$(LNS) $Copies{$_} $_ && cd .. && echo \"pod/$_\" >> extra.pods # See buildtoc",
-    keys %Copies;
+  verify_contiguous($name, $makefile_SH, 'copy rules');
 
-  $makefile_SH =~ s/\0+/join "\n", '', @copy_rules, ''/se;
+  my @copy_rules = map "
+pod/$_: pod/$Copies{$_}
+	\$(LNS) $Copies{$_} pod/$_
+", keys %Copies;
+
+  $makefile_SH =~ s/\0+/join '', @copy_rules/se;
   $makefile_SH;
 
 }
