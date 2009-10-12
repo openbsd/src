@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.26 2009/09/15 15:14:09 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.27 2009/10/12 11:08:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -347,6 +347,10 @@ screen_write_parsestyle(
 					bg = defgc->bg;
 			} else
 				return;
+		} else if (end > 2 && strncasecmp(tmp, "no", 2) == 0) {
+			if ((val = attributes_fromstring(tmp + 2)) == -1)
+				return;
+			attr &= ~val;
 		} else {
 			if ((val = attributes_fromstring(tmp)) == -1)
 				return;
