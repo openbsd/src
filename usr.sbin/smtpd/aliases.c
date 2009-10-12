@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.21 2009/10/12 22:34:37 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.22 2009/10/12 23:57:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -359,6 +359,15 @@ alias_parse(struct alias *alias, char *line)
 		alias_is_address,
 		alias_is_username
 	};
+	char *wsp;
+
+	/* remove ending whitespaces */
+	wsp = line + strlen(line);
+	while (wsp != line) {
+		if (*wsp != '\0' && !isspace((int)*wsp))
+			break;
+		*wsp-- = '\0';
+	}
 
 	for (i = 0; i < sizeof(f) / sizeof(void *); ++i) {
 		bzero(alias, sizeof(struct alias));
