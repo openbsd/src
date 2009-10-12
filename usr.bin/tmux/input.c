@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.15 2009/08/20 10:48:25 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.16 2009/10/12 16:59:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -646,7 +646,7 @@ input_handle_c0_control(u_char ch, struct input_ctx *ictx)
 		ictx->wp->window->flags |= WINDOW_BELL;
 		break;
 	case '\010': 	/* BS */
-		screen_write_cursorleft(&ictx->ctx, 1);
+		screen_write_backspace(&ictx->ctx);
 		break;
 	case '\011': 	/* TAB */
 		/* Don't tab beyond the end of the line. */
