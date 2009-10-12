@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.42 2009/10/12 13:01:18 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.43 2009/10/12 14:54:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -945,13 +945,15 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 		cx = tty->sx - 1;
 
 	thisx = tty->cx;
-	if (thisx > tty->sx - 1)
-		thisx = tty->sx - 1;
 	thisy = tty->cy;
 
 	/* No change. */
 	if (cx == thisx && cy == thisy)
 		return;
+
+	/* Very end of the line, just use absolute movement. */
+	if (thisx > tty->sx - 1)
+		goto absolute;
 
 	/* Move to home position (0, 0). */
 	if (cx == 0 && cy == 0 && tty_term_has(term, TTYC_HOME)) {
@@ -1043,6 +1045,7 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 		}
 	}
 
+absolute:
 	/* Absolute movement. */
 	tty_putcode2(tty, TTYC_CUP, cy, cx);
 
