@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.23 2009/03/29 21:53:52 sthen Exp $ */
+/* $OpenBSD: auixp.c,v 1.24 2009/10/12 19:43:52 jakemsr Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -92,7 +92,8 @@
 const struct pci_matchid auixp_pci_devices[] = {
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_AUDIO },
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB300_AUDIO },
-	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_AUDIO }
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_AUDIO },
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AUDIO }
 };
 
 struct cfdriver auixp_cd = {
