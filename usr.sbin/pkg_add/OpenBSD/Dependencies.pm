@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.68 2009/10/11 16:46:37 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.69 2009/10/12 10:57:27 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -291,7 +291,11 @@ sub solve_dependency
 		}
 	}
 
-	$v = find_candidate($dep->spec, installed_packages());
+	my @l = installed_packages();
+	for my $o ($self->{set}->older_names) {
+		@l = grep {$_ ne $o} @l;
+	}
+	$v = find_candidate($dep->spec, @l);
 	if ($v) {
 		return $v;
 	}
