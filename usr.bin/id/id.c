@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.17 2004/11/16 13:51:35 jmc Exp $	*/
+/*	$OpenBSD: id.c,v 1.18 2009/10/12 17:39:26 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";*/
-static char rcsid[] = "$OpenBSD: id.c,v 1.17 2004/11/16 13:51:35 jmc Exp $";
+static char rcsid[] = "$OpenBSD: id.c,v 1.18 2009/10/12 17:39:26 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -213,8 +213,8 @@ current(void)
 			(void)printf("(%s)", gr->gr_name);
 	}
 	if ((ngroups = getgroups(NGROUPS, groups))) {
-		for (fmt = " groups=%u", lastgid = (gid_t)-1, cnt = 0; cnt < ngroups;
-		    fmt = ", %u", lastgid = gid) {
+		for (fmt = " groups=%u", lastgid = (gid_t)-1, cnt = 0;
+		    cnt < ngroups; fmt = ", %u", lastgid = gid) {
 			gid = groups[cnt++];
 			if (lastgid == gid)
 				continue;
