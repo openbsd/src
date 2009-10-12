@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.136 2009/10/12 16:59:55 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.137 2009/10/12 17:19:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1666,6 +1666,7 @@ void	 screen_write_scrollregion(struct screen_write_ctx *, u_int, u_int);
 void	 screen_write_insertmode(struct screen_write_ctx *, int);
 void	 screen_write_mousemode(struct screen_write_ctx *, int);
 void	 screen_write_linefeed(struct screen_write_ctx *, int);
+void	 screen_write_linefeedscreen(struct screen_write_ctx *, int);
 void	 screen_write_carriagereturn(struct screen_write_ctx *);
 void	 screen_write_kcursormode(struct screen_write_ctx *, int);
 void	 screen_write_kkeypadmode(struct screen_write_ctx *, int);
