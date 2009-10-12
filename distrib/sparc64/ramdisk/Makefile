@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2009/04/17 15:59:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2009/10/12 17:49:14 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -42,7 +42,7 @@ STRIP?=		strip
 DISKTYPE=       rdroot
 NBLKS=          6144
 # minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -m 0 -o space -i 8192
+NEWFSARGS= -m 0 -o space -i 4096
 
 .ifndef DESTDIR
 all ${IMAGE}:
