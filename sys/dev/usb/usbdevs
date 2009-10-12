@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.451 2009/09/20 12:53:36 deraadt Exp $
+$OpenBSD: usbdevs,v 1.452 2009/10/12 21:27:01 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -527,6 +527,7 @@ vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMM3	0x19d2	Qualcomm Inc.
 vendor QUANTA		0x1a32	Quanta
 vendor WCH2		0x1a86	QinHeng Electronics
+vendor TCTMOBILE	0x1bbb  TCT Mobile
 vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor PEGATRON		0x1d4d	Pegatron
 vendor AIRTIES		0x1eda	AirTies
@@ -2939,6 +2940,10 @@ product SWEEX ZD1211		0x1809	ZD1211
 
 /* Syntech Information products */
 product SYNTECH SERIAL		0x0001	Serial
+
+/* TCT Mobile products */
+product TCTMOBILE UMSM		0x0000	Modem mode
+product TCTMOBILE UMASS		0xf000	Storage mode
 
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
