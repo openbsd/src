@@ -7,7 +7,7 @@ BEGIN {
 }
 
 require './test.pl';
-plan( tests => 136 );
+plan( tests => 139 );
 
 $x = 'foo';
 $_ = "x";
@@ -583,3 +583,11 @@ is($name, "cis", q[#22351 bug with 'e' substitution modifier]);
     is($want,$_,"RT#17542");
 }
 
+{
+    my @tests = ('ABC', "\xA3\xA4\xA5", "\x{410}\x{411}\x{412}");
+    foreach (@tests) {
+	my $id = ord $_;
+	s/./pos/ge;
+	is($_, "012", "RT#52104: $id");
+    }
+}

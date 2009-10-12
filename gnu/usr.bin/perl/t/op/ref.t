@@ -8,7 +8,7 @@ BEGIN {
 require 'test.pl';
 use strict qw(refs subs);
 
-plan(138);
+plan(189);
 
 # Test glob operations.
 
@@ -53,11 +53,6 @@ $FOO = \$BAR;
 $BAR = \$BAZ;
 $BAZ = "hit";
 is ($$$FOO, 'hit');
-
-# test that ref(vstring) makes sense
-my $vstref = \v1;
-is (ref($vstref), "VSTRING", "ref(vstr) eq VSTRING");
-like ( $vstref, qr/VSTRING\(0x[0-9a-f]+\)/, '\vstr is also VSTRING');
 
 # Test references to real arrays.
 
@@ -131,9 +126,49 @@ sub mysub2 { lc shift }
 
 # Test the ref operator.
 
-is (ref $subref, 'CODE');
-is (ref $ref, 'ARRAY');
-is (ref $refref, 'HASH');
+sub PVBM () { 'foo' }
+{ my $dummy = index 'foo', PVBM }
+
+my $pviv = 1; "$pviv";
+my $pvnv = 1.0; "$pvnv";
+my $x;
+
+# we don't test
+#   tied lvalue => SCALAR, as we haven't tested tie yet
+#   BIND, 'cos we can't create them yet
+#   REGEXP, 'cos that requires overload or Scalar::Util
+#   LVALUE ref, 'cos I can't work out how to create one :)
+
+for (
+    [ 'undef',          SCALAR  => \undef               ],
+    [ 'constant IV',    SCALAR  => \1                   ],
+    [ 'constant NV',    SCALAR  => \1.0                 ],
+    [ 'constant PV',    SCALAR  => \'f'                 ],
+    [ 'scalar',         SCALAR  => \$x                  ],
+    [ 'PVIV',           SCALAR  => \$pviv               ],
+    [ 'PVNV',           SCALAR  => \$pvnv               ],
+    [ 'PVMG',           SCALAR  => \$0                  ],
+    [ 'PVBM',           SCALAR  => \PVBM                ],
+    [ 'vstring',        VSTRING => \v1                  ],
+    [ 'ref',            REF     => \\1                  ],
+    [ 'lvalue',         LVALUE  => \substr($x, 0, 0)    ],
+    [ 'named array',    ARRAY   => \@ary                ],
+    [ 'anon array',     ARRAY   => [ 1 ]                ],
+    [ 'named hash',     HASH    => \%whatever           ],
+    [ 'anon hash',      HASH    => { a => 1 }           ],
+    [ 'named sub',      CODE    => \&mysub,             ],
+    [ 'anon sub',       CODE    => sub { 1; }           ],
+    [ 'glob',           GLOB    => \*foo                ],
+    [ 'format',         FORMAT  => *STDERR{FORMAT}      ],
+) {
+    my ($desc, $type, $ref) = @$_;
+    is (ref $ref, $type, "ref() for ref to $desc");
+    like ("$ref", qr/^$type\(0x[0-9a-f]+\)$/, "stringify for ref to $desc");
+}
+
+is (ref *STDOUT{IO}, 'IO::Handle', 'IO refs are blessed into IO::Handle');
+like (*STDOUT{IO}, qr/^IO::Handle=IO\(0x[0-9a-f]+\)$/,
+    'stringify for IO refs');
 
 # Test anonymous hash syntax.
 
@@ -535,6 +570,32 @@ is ( (sub {"bar"})[0]->(), "bar", 'code deref from list slice w/ ->' );
 
     is($ref, *{$ref}{IO}, "IO slot of the temporary glob is set correctly");
 }
+
+# these will segfault if they fail
+
+my $pvbm = PVBM;
+my $rpvbm = \$pvbm;
+
+ok (!eval { *$rpvbm }, 'PVBM ref is not a GLOB ref');
+ok (!eval { *$pvbm }, 'PVBM is not a GLOB ref');
+ok (!eval { $$pvbm }, 'PVBM is not a SCALAR ref');
+ok (!eval { @$pvbm }, 'PVBM is not an ARRAY ref');
+ok (!eval { %$pvbm }, 'PVBM is not a HASH ref');
+ok (!eval { $pvbm->() }, 'PVBM is not a CODE ref');
+ok (!eval { $rpvbm->foo }, 'PVBM is not an object');
+
+# bug 24254
+is( runperl(stderr => 1, prog => 'map eval qq(exit),1 for 1'), "");
+is( runperl(stderr => 1, prog => 'eval { for (1) { map { die } 2 } };'), "");
+is( runperl(stderr => 1, prog => 'for (125) { map { exit } (213)}'), "");
+my $hushed = $^O eq 'VMS' ? 'use vmsish qw(hushed);' : '';
+is( runperl(stderr => 1, prog => $hushed . 'map die,4 for 3'), "Died at -e line 1.\n");
+is( runperl(stderr => 1, prog => $hushed . 'grep die,4 for 3'), "Died at -e line 1.\n");
+is( runperl(stderr => 1, prog => $hushed . 'for $a (3) {@b=sort {die} 4,5}'), "Died at -e line 1.\n");
+
+# bug 57564
+is( runperl(stderr => 1, prog => 'my $i;for $i (1) { for $i (2) { } }'), "");
+
 
 # Bit of a hack to make test.pl happy. There are 3 more tests after it leaves.
 $test = curr_test();

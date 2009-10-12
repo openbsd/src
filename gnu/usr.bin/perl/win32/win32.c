@@ -129,6 +129,8 @@ static long		find_pid(int pid);
 static char *		qualified_path(const char *cmd);
 static char *		win32_get_xlib(const char *pl, const char *xlib,
 				       const char *libname);
+static LRESULT  win32_process_message(HWND hwnd, UINT msg,
+                       WPARAM wParam, LPARAM lParam);
 
 #ifdef USE_ITHREADS
 static void		remove_dead_pseudo_process(long child);
@@ -223,11 +225,23 @@ set_w32_module_name(void)
         WCHAR fullname[MAX_PATH];
         char *ansi;
 
+        DWORD (__stdcall *pfnGetLongPathNameW)(LPCWSTR, LPWSTR, DWORD) =
+            (DWORD (__stdcall *)(LPCWSTR, LPWSTR, DWORD))
+            GetProcAddress(GetModuleHandle("kernel32.dll"), "GetLongPathNameW");
+
         GetModuleFileNameW(module, modulename, sizeof(modulename)/sizeof(WCHAR));
 
         /* Make sure we get an absolute pathname in case the module was loaded
          * explicitly by LoadLibrary() with a relative path. */
         GetFullPathNameW(modulename, sizeof(fullname)/sizeof(WCHAR), fullname, NULL);
+
+        /* Make sure we start with the long path name of the module because we
+         * later scan for pathname components to match "5.xx" to locate
+         * compatible sitelib directories, and the short pathname might mangle
+         * this path segment (e.g. by removing the dot on NTFS to something
+         * like "5xx~1.yy") */
+        if (pfnGetLongPathNameW)
+            pfnGetLongPathNameW(fullname, fullname, sizeof(fullname)/sizeof(WCHAR));
 
         /* remove \\?\ prefix */
         if (memcmp(fullname, L"\\\\?\\", 4*sizeof(WCHAR)) == 0)
@@ -268,7 +282,7 @@ get_regstr_from(HKEY hkey, const char *valuename, SV **svp)
     HKEY handle;
     DWORD type;
     const char *subkey = "Software\\Perl";
-    char *str = Nullch;
+    char *str = NULL;
     long retval;
 
     retval = RegOpenKeyEx(hkey, subkey, 0, KEY_READ, &handle);
@@ -366,7 +380,7 @@ get_emd_part(SV **prev_pathp, char *trailing_path, ...)
 	return SvPVX(*prev_pathp);
     }
 
-    return Nullch;
+    return NULL;
 }
 
 char *
@@ -375,7 +389,7 @@ win32_get_privlib(const char *pl)
     dTHX;
     char *stdlib = "lib";
     char buffer[MAX_PATH+1];
-    SV *sv = Nullsv;
+    SV *sv = NULL;
 
     /* $stdlib = $HKCU{"lib-$]"} || $HKLM{"lib-$]"} || $HKCU{"lib"} || $HKLM{"lib"} || "";  */
     sprintf(buffer, "%s-%s", stdlib, pl);
@@ -383,7 +397,7 @@ win32_get_privlib(const char *pl)
 	(void)get_regstr(stdlib, &sv);
 
     /* $stdlib .= ";$EMD/../../lib" */
-    return get_emd_part(&sv, stdlib, ARCHNAME, "bin", Nullch);
+    return get_emd_part(&sv, stdlib, ARCHNAME, "bin", NULL);
 }
 
 static char *
@@ -392,8 +406,8 @@ win32_get_xlib(const char *pl, const char *xlib, const char *libname)
     dTHX;
     char regstr[40];
     char pathstr[MAX_PATH+1];
-    SV *sv1 = Nullsv;
-    SV *sv2 = Nullsv;
+    SV *sv1 = NULL;
+    SV *sv2 = NULL;
 
     /* $HKCU{"$xlib-$]"} || $HKLM{"$xlib-$]"} . ---; */
     sprintf(regstr, "%s-%s", xlib, pl);
@@ -402,7 +416,7 @@ win32_get_xlib(const char *pl, const char *xlib, const char *libname)
     /* $xlib .=
      * ";$EMD/" . ((-d $EMD/../../../$]) ? "../../.." : "../.."). "/$libname/$]/lib";  */
     sprintf(pathstr, "%s/%s/lib", libname, pl);
-    (void)get_emd_part(&sv1, pathstr, ARCHNAME, "bin", pl, Nullch);
+    (void)get_emd_part(&sv1, pathstr, ARCHNAME, "bin", pl, NULL);
 
     /* $HKCU{$xlib} || $HKLM{$xlib} . ---; */
     (void)get_regstr(xlib, &sv2);
@@ -410,10 +424,10 @@ win32_get_xlib(const char *pl, const char *xlib, const char *libname)
     /* $xlib .=
      * ";$EMD/" . ((-d $EMD/../../../$]) ? "../../.." : "../.."). "/$libname/lib";  */
     sprintf(pathstr, "%s/lib", libname);
-    (void)get_emd_part(&sv2, pathstr, ARCHNAME, "bin", pl, Nullch);
+    (void)get_emd_part(&sv2, pathstr, ARCHNAME, "bin", pl, NULL);
 
     if (!sv1 && !sv2)
-	return Nullch;
+	return NULL;
     if (!sv1)
 	return SvPVX(sv2);
     if (!sv2)
@@ -549,7 +563,7 @@ win32_getpid(void)
 static long
 tokenize(const char *str, char **dest, char ***destv)
 {
-    char *retstart = Nullch;
+    char *retstart = NULL;
     char **retvstart = 0;
     int items = -1;
     if (str) {
@@ -584,7 +598,7 @@ tokenize(const char *str, char **dest, char ***destv)
 		++items;
 	    ret++;
 	}
-	retvstart[items] = Nullch;
+	retvstart[items] = NULL;
 	*ret++ = '\0';
 	*ret = '\0';
     }
@@ -622,6 +636,8 @@ Perl_do_aspawn(pTHX_ SV *really, SV **mark, SV **sp)
     int status;
     int flag = P_WAIT;
     int index = 0;
+
+    PERL_ARGS_ASSERT_DO_ASPAWN;
 
     if (sp <= mark)
 	return -1;
@@ -661,8 +677,7 @@ Perl_do_aspawn(pTHX_ SV *really, SV **mark, SV **sp)
     }
 
     if (flag == P_NOWAIT) {
-	if (IsWin95())
-	    PL_statusvalue = -1;	/* >16bits hint for pp_system() */
+	PL_statusvalue = -1;	/* >16bits hint for pp_system() */
     }
     else {
 	if (status < 0) {
@@ -728,7 +743,7 @@ do_spawn2(pTHX_ const char *cmd, int exectype)
 	    if (*s)
 		*s++ = '\0';
 	}
-	*a = Nullch;
+	*a = NULL;
 	if (argv[0]) {
 	    switch (exectype) {
 	    case EXECF_SPAWN:
@@ -757,7 +772,7 @@ do_spawn2(pTHX_ const char *cmd, int exectype)
 	while (++i < w32_perlshell_items)
 	    argv[i] = w32_perlshell_vec[i];
 	argv[i++] = (char *)cmd;
-	argv[i] = Nullch;
+	argv[i] = NULL;
 	switch (exectype) {
 	case EXECF_SPAWN:
 	    status = win32_spawnvp(P_WAIT, argv[0],
@@ -775,8 +790,7 @@ do_spawn2(pTHX_ const char *cmd, int exectype)
 	Safefree(argv);
     }
     if (exectype == EXECF_SPAWN_NOWAIT) {
-	if (IsWin95())
-	    PL_statusvalue = -1;	/* >16bits hint for pp_system() */
+	PL_statusvalue = -1;	/* >16bits hint for pp_system() */
     }
     else {
 	if (status < 0) {
@@ -796,18 +810,24 @@ do_spawn2(pTHX_ const char *cmd, int exectype)
 int
 Perl_do_spawn(pTHX_ char *cmd)
 {
+    PERL_ARGS_ASSERT_DO_SPAWN;
+
     return do_spawn2(aTHX_ cmd, EXECF_SPAWN);
 }
 
 int
 Perl_do_spawn_nowait(pTHX_ char *cmd)
 {
+    PERL_ARGS_ASSERT_DO_SPAWN_NOWAIT;
+
     return do_spawn2(aTHX_ cmd, EXECF_SPAWN_NOWAIT);
 }
 
 bool
 Perl_do_exec(pTHX_ const char *cmd)
 {
+    PERL_ARGS_ASSERT_DO_EXEC;
+
     do_spawn2(aTHX_ cmd, EXECF_EXEC);
     return FALSE;
 }
@@ -1500,9 +1520,22 @@ win32_stat(const char *path, Stat_t *sbuf)
             errno = ENOTDIR;
             return -1;
         }
+	if (S_ISDIR(sbuf->st_mode)) {
+	    /* Ensure the "write" bit is switched off in the mode for
+	     * directories with the read-only attribute set. Borland (at least)
+	     * switches it on for directories, which is technically correct
+	     * (directories are indeed always writable unless denied by DACLs),
+	     * but we want stat() and -w to reflect the state of the read-only
+	     * attribute for symmetry with chmod(). */
+	    DWORD r = GetFileAttributesA(path);
+	    if (r != 0xffffffff && (r & FILE_ATTRIBUTE_READONLY)) {
+		sbuf->st_mode &= ~S_IWRITE;
+	    }
+	}
 #ifdef __BORLANDC__
-	if (S_ISDIR(sbuf->st_mode))
-	    sbuf->st_mode |= S_IWRITE | S_IEXEC;
+	if (S_ISDIR(sbuf->st_mode)) {
+	    sbuf->st_mode |= S_IEXEC;
+	}
 	else if (S_ISREG(sbuf->st_mode)) {
 	    int perms;
 	    if (l >= 4 && path[l-4] == '.') {
@@ -1550,7 +1583,7 @@ win32_longpath(char *path)
     char *start = path;
     char sep;
     if (!path)
-	return Nullch;
+	return NULL;
 
     /* drive prefix */
     if (isALPHA(path[0]) && path[1] == ':') {
@@ -1614,14 +1647,14 @@ win32_longpath(char *path)
 	    else {
 		FindClose(fhand);
 		errno = ERANGE;
-		return Nullch;
+		return NULL;
 	    }
 	}
 	else {
 	    /* failed a step, just return without side effects */
 	    /*PerlIO_printf(Perl_debug_log, "Failed to find %s\n", path);*/
 	    errno = EINVAL;
-	    return Nullch;
+	    return NULL;
 	}
     }
     strcpy(path,tmpbuf);
@@ -1629,7 +1662,7 @@ win32_longpath(char *path)
 }
 
 static void
-out_of_memory()
+out_of_memory(void)
 {
     if (PL_curinterp) {
         dTHX;
@@ -1698,7 +1731,7 @@ win32_getenv(const char *name)
 {
     dTHX;
     DWORD needlen;
-    SV *curitem = Nullsv;
+    SV *curitem = NULL;
 
     needlen = GetEnvironmentVariableA(name,NULL,0);
     if (needlen != 0) {
@@ -1719,7 +1752,7 @@ win32_getenv(const char *name)
     if (curitem && SvCUR(curitem))
 	return SvPVX(curitem);
 
-    return Nullch;
+    return NULL;
 }
 
 DllExport int
@@ -1739,9 +1772,11 @@ win32_putenv(const char *name)
              * Has these advantages over putenv() & co.:
              *  * enables us to store a truly empty value in the
              *    environment (like in UNIX).
-             *  * we don't have to deal with RTL globals, bugs and leaks.
+             *  * we don't have to deal with RTL globals, bugs and leaks
+             *    (specifically, see http://support.microsoft.com/kb/235601).
              *  * Much faster.
-             * Why you may want to enable USE_WIN32_RTL_ENV:
+             * Why you may want to use the RTL environment handling
+             * (previously enabled by USE_WIN32_RTL_ENV):
              *  * environ[] and RTL functions will not reflect changes,
              *    which might be an issue if extensions want to access
              *    the env. via RTL.  This cuts both ways, since RTL will
@@ -2082,68 +2117,47 @@ win32_async_check(pTHX)
     MSG msg;
     HWND hwnd = w32_message_hwnd;
 
+    /* Reset w32_poll_count before doing anything else, incase we dispatch
+     * messages that end up calling back into perl */
     w32_poll_count = 0;
 
-    if (hwnd == INVALID_HANDLE_VALUE) {
-        /* Call PeekMessage() to mark all pending messages in the queue as "old".
-         * This is necessary when we are being called by win32_msgwait() to
-         * make sure MsgWaitForMultipleObjects() stops reporting the same waiting
-         * message over and over.  An example how this can happen is when
-         * Perl is calling win32_waitpid() inside a GUI application and the GUI
-         * is generating messages before the process terminated.
-         */
-        PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE|PM_NOYIELD);
-        if (PL_sig_pending)
-            despatch_signals();
-        return 1;
-    }
+    if (hwnd != INVALID_HANDLE_VALUE) {
+        /* Passing PeekMessage -1 as HWND (2nd arg) only gets PostThreadMessage() messages
+        * and ignores window messages - should co-exist better with windows apps e.g. Tk
+        */
+        if (hwnd == NULL)
+            hwnd = (HWND)-1;
 
-    /* Passing PeekMessage -1 as HWND (2nd arg) only get PostThreadMessage() messages
-     * and ignores window messages - should co-exist better with windows apps e.g. Tk
-     */
-    if (hwnd == NULL)
-        hwnd = (HWND)-1;
-
-    while (PeekMessage(&msg, hwnd, WM_TIMER,    WM_TIMER,    PM_REMOVE|PM_NOYIELD) ||
-           PeekMessage(&msg, hwnd, WM_USER_MIN, WM_USER_MAX, PM_REMOVE|PM_NOYIELD))
-    {
-	switch (msg.message) {
-#ifdef USE_ITHREADS
-        case WM_USER_MESSAGE: {
-            int child = find_pseudo_pid(msg.wParam);
-            if (child >= 0)
-                w32_pseudo_child_message_hwnds[child] = (HWND)msg.lParam;
-            break;
-        }
-#endif
-
-	case WM_USER_KILL: {
-            /* We use WM_USER to fake kill() with other signals */
-	    int sig = msg.wParam;
-	    if (do_raise(aTHX_ sig))
-                sig_terminate(aTHX_ sig);
-	    break;
-	}
-
-	case WM_TIMER: {
-	    /* alarm() is a one-shot but SetTimer() repeats so kill it */
-	    if (w32_timerid && w32_timerid==msg.wParam) {
-	    	KillTimer(w32_message_hwnd, w32_timerid);
-	    	w32_timerid=0;
-
-                /* Now fake a call to signal handler */
-                if (do_raise(aTHX_ 14))
-                    sig_terminate(aTHX_ 14);
+        while (PeekMessage(&msg, hwnd, WM_TIMER,    WM_TIMER,    PM_REMOVE|PM_NOYIELD) ||
+               PeekMessage(&msg, hwnd, WM_USER_MIN, WM_USER_MAX, PM_REMOVE|PM_NOYIELD))
+        {
+            /* re-post a WM_QUIT message (we'll mark it as read later) */
+            if(msg.message == WM_QUIT) {
+                PostQuitMessage((int)msg.wParam);
+                break;
             }
-	    break;
-	}
-        } /* switch */
+
+            if(!CallMsgFilter(&msg, MSGF_USER))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
     }
+
+    /* Call PeekMessage() to mark all pending messages in the queue as "old".
+     * This is necessary when we are being called by win32_msgwait() to
+     * make sure MsgWaitForMultipleObjects() stops reporting the same waiting
+     * message over and over.  An example how this can happen is when
+     * Perl is calling win32_waitpid() inside a GUI application and the GUI
+     * is generating messages before the process terminated.
+     */
+    PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE|PM_NOYIELD);
 
     /* Above or other stuff may have set a signal flag */
-    if (PL_sig_pending) {
-	despatch_signals();
-    }
+    if (PL_sig_pending)
+        despatch_signals();
+    
     return 1;
 }
 
@@ -2159,7 +2173,7 @@ win32_msgwait(pTHX_ DWORD count, LPHANDLE handles, DWORD timeout, LPDWORD result
 	timeout += ticks;
     }
     while (1) {
-	DWORD result = MsgWaitForMultipleObjects(count,handles,FALSE,timeout-ticks, QS_POSTMESSAGE|QS_TIMER);
+	DWORD result = MsgWaitForMultipleObjects(count,handles,FALSE,timeout-ticks, QS_POSTMESSAGE|QS_TIMER|QS_SENDMESSAGE);
 	if (resultp)
 	   *resultp = result;
 	if (result == WAIT_TIMEOUT) {
@@ -2390,7 +2404,7 @@ win32_crypt(const char *txt, const char *salt)
     return des_fcrypt(txt, salt, w32_crypt_buffer);
 #else
     Perl_croak(aTHX_ "The crypt() function is unimplemented due to excessive paranoia.");
-    return Nullch;
+    return NULL;
 #endif
 }
 
@@ -2563,7 +2577,7 @@ win32_stdin(void)
 }
 
 DllExport FILE *
-win32_stdout()
+win32_stdout(void)
 {
     return (stdout);
 }
@@ -2945,7 +2959,7 @@ win32_fstat(int fd, Stat_t *sbufptr)
 
     if (GetFileInformationByHandle((HANDLE)_get_osfhandle(fd), &bhfi)) {
 #if defined(WIN64) || defined(USE_LARGE_FILES)    
-        sbufptr->st_size = (bhfi.nFileSizeHigh << 32) + bhfi.nFileSizeLow ;
+        sbufptr->st_size = ((__int64)bhfi.nFileSizeHigh << 32) | bhfi.nFileSizeLow ;
 #endif
         sbufptr->st_mode &= 0xFE00;
         if (bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
@@ -3269,7 +3283,7 @@ win32_rename(const char *oname, const char *newname)
 	int retval = 0;
 	char szTmpName[MAX_PATH+1];
 	char dname[MAX_PATH+1];
-	char *endname = Nullch;
+	char *endname = NULL;
 	STRLEN tmplen = 0;
 	DWORD from_attr, to_attr;
 
@@ -3328,7 +3342,7 @@ win32_rename(const char *oname, const char *newname)
 	retval = rename(szOldName, szNewName);
 
 	/* if we created a temporary file before ... */
-	if (endname != Nullch) {
+	if (endname != NULL) {
 	    /* ...and rename succeeded, delete temporary file/directory */
 	    if (retval == 0)
 		DeleteFile(szTmpName);
@@ -3910,7 +3924,7 @@ qualified_path(const char *cmd)
     int has_slash = 0;
 
     if (!cmd)
-	return Nullch;
+	return NULL;
     fullcmd = (char*)cmd;
     while (*fullcmd) {
 	if (*fullcmd == '/' || *fullcmd == '\\')
@@ -3984,7 +3998,7 @@ qualified_path(const char *cmd)
     }
 
     Safefree(fullcmd);
-    return Nullch;
+    return NULL;
 }
 
 /* The following are just place holders.
@@ -4071,7 +4085,7 @@ win32_spawnvp(int mode, const char *cmdname, const char *const *argv)
     PROCESS_INFORMATION ProcessInformation;
     DWORD create = 0;
     char *cmd;
-    char *fullcmd = Nullch;
+    char *fullcmd = NULL;
     char *cname = (char *)cmdname;
     STRLEN clen = 0;
 
@@ -4846,9 +4860,132 @@ win32_signal(int sig, Sighandler_t subcode)
     }
 }
 
-HWND
-win32_create_message_window()
+/* The PerlMessageWindowClass's WindowProc */
+LRESULT CALLBACK
+win32_message_window_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    return win32_process_message(hwnd, msg, wParam, lParam) ?
+        0 : DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+/* we use a message filter hook to process thread messages, passing any
+ * messages that we don't process on to the rest of the hook chain
+ * Anyone else writing a message loop that wants to play nicely with perl
+ * should do
+ *   CallMsgFilter(&msg, MSGF_***);
+ * between their GetMessage and DispatchMessage calls.  */
+LRESULT CALLBACK
+win32_message_filter_proc(int code, WPARAM wParam, LPARAM lParam) {
+    LPMSG pmsg = (LPMSG)lParam;
+
+    /* we'll process it if code says we're allowed, and it's a thread message */
+    if (code >= 0 && pmsg->hwnd == NULL
+            && win32_process_message(pmsg->hwnd, pmsg->message,
+                                     pmsg->wParam, pmsg->lParam))
+    {
+            return TRUE;
+    }
+
+    /* XXX: MSDN says that hhk is ignored, but we should really use the
+     * return value from SetWindowsHookEx() in win32_create_message_window().  */
+    return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
+/* The real message handler. Can be called with
+ * hwnd == NULL to process our thread messages. Returns TRUE for any messages
+ * that it processes */
+static LRESULT
+win32_process_message(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    /* BEWARE. The context retrieved using dTHX; is the context of the
+     * 'parent' thread during the CreateWindow() phase - i.e. for all messages
+     * up to and including WM_CREATE.  If it ever happens that you need the
+     * 'child' context before this, then it needs to be passed into
+     * win32_create_message_window(), and passed to the WM_NCCREATE handler
+     * from the lparam of CreateWindow().  It could then be stored/retrieved
+     * using [GS]etWindowLongPtr(... GWLP_USERDATA ...), possibly eliminating
+     * the dTHX calls here. */
+    /* XXX For now it is assumed that the overhead of the dTHX; for what
+     * are relativley infrequent code-paths, is better than the added
+     * complexity of getting the correct context passed into
+     * win32_create_message_window() */
+
+    switch(msg) {
+
+#ifdef USE_ITHREADS
+        case WM_USER_MESSAGE: {
+            long child = find_pseudo_pid((int)wParam);
+            if (child >= 0) {
+                dTHX;
+                w32_pseudo_child_message_hwnds[child] = (HWND)lParam;
+                return 1;
+            }
+            break;
+        }
+#endif
+
+        case WM_USER_KILL: {
+            dTHX;
+            /* We use WM_USER_KILL to fake kill() with other signals */
+            int sig = (int)wParam;
+            if (do_raise(aTHX_ sig))
+                sig_terminate(aTHX_ sig);
+
+            return 1;
+        }
+
+        case WM_TIMER: {
+            dTHX;
+            /* alarm() is a one-shot but SetTimer() repeats so kill it */
+            if (w32_timerid && w32_timerid==(UINT)wParam) {
+                KillTimer(w32_message_hwnd, w32_timerid);
+                w32_timerid=0;
+
+                /* Now fake a call to signal handler */
+                if (do_raise(aTHX_ 14))
+                    sig_terminate(aTHX_ 14);
+
+                return 1;
+            }
+            break;
+        }
+
+        default:
+            break;
+
+    } /* switch */
+
+    /* Above or other stuff may have set a signal flag, and we may not have
+     * been called from win32_async_check() (e.g. some other GUI's message
+     * loop.  BUT DON'T dispatch signals here: If someone has set a SIGALRM
+     * handler that die's, and the message loop that calls here is wrapped
+     * in an eval, then you may well end up with orphaned windows - signals
+     * are dispatched by win32_async_check() */
+
+    return 0;
+}
+
+void
+win32_create_message_window_class(void)
+{
+    /* create the window class for "message only" windows */
+    WNDCLASS wc;
+
+    Zero(&wc, 1, wc);
+    wc.lpfnWndProc = win32_message_window_proc;
+    wc.hInstance = (HINSTANCE)GetModuleHandle(NULL);
+    wc.lpszClassName = "PerlMessageWindowClass";
+
+    /* second and subsequent calls will fail, but class
+     * will already be registered */
+    RegisterClass(&wc);
+}
+
+HWND
+win32_create_message_window(void)
+{
+    HWND hwnd = NULL;
+
     /* "message-only" windows have been implemented in Windows 2000 and later.
      * On earlier versions we'll continue to post messages to a specific
      * thread and use hwnd==NULL.  This is brittle when either an embedding
@@ -4857,10 +4994,30 @@ win32_create_message_window()
      * "right" place with DispatchMessage() anymore, as there is no WindowProc
      * if there is no window handle.
      */
-    if (!IsWin2000())
-        return NULL;
+    /* Using HWND_MESSAGE appears to work under Win98, despite MSDN
+     * documentation to the contrary, however, there is some evidence that
+     * there may be problems with the implementation on Win98. As it is not
+     * officially supported we take the cautious route and stick with thread
+     * messages (hwnd == NULL) on platforms prior to Win2k.
+     */
+    if (IsWin2000()) {
+        win32_create_message_window_class();
 
-    return CreateWindow("Static", "", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, NULL);
+        hwnd = CreateWindow("PerlMessageWindowClass", "PerlMessageWindow",
+                0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+    }
+
+    /* If we din't create a window for any reason, then we'll use thread
+     * messages for our signalling, so we install a hook which
+     * is called by CallMsgFilter in win32_async_check(), or any other
+     * modal loop (e.g. Win32::MsgBox or any other GUI extention, or anything
+     * that use OLE, etc. */
+    if(!hwnd) {
+        SetWindowsHookEx(WH_MSGFILTER, win32_message_filter_proc,
+                NULL, GetCurrentThreadId());
+    }
+  
+    return hwnd;
 }
 
 #ifdef HAVE_INTERP_INTERN
@@ -4886,7 +5043,7 @@ Perl_sys_intern_init(pTHX)
 {
     int i;
 
-    w32_perlshell_tokens	= Nullch;
+    w32_perlshell_tokens	= NULL;
     w32_perlshell_vec		= (char**)NULL;
     w32_perlshell_items		= 0;
     w32_fdpid			= newAV();
@@ -4956,7 +5113,9 @@ Perl_sys_intern_clear(pTHX)
 void
 Perl_sys_intern_dup(pTHX_ struct interp_intern *src, struct interp_intern *dst)
 {
-    dst->perlshell_tokens	= Nullch;
+    PERL_ARGS_ASSERT_SYS_INTERN_DUP;
+
+    dst->perlshell_tokens	= NULL;
     dst->perlshell_vec		= (char**)NULL;
     dst->perlshell_items	= 0;
     dst->fdpid			= newAV();

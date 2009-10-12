@@ -1,5 +1,4 @@
 require Test::Simple;
-# $Id: death_with_handler.plx,v 1.1 2009/05/16 21:42:58 simon Exp $
 
 push @INC, 't/lib';
 require Test::Simple::Catch;
@@ -16,4 +15,6 @@ tie *STDERR, 'Dev::Null';
 
 ok(1);
 ok(1);
+
+$! = 0;
 die "This is a test";

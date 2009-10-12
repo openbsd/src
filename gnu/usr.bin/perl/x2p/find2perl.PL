@@ -42,20 +42,6 @@ use vars qw/$statdone/;
 use File::Spec::Functions 'curdir';
 my $startperl = "#! $perlpath -w";
 
-#
-# Modified September 26, 1993 to provide proper handling of years after 1999
-#   Tom Link <tml+@pitt.edu>
-#   University of Pittsburgh
-#
-# Modified April 7, 1998 with nasty hacks to implement the troublesome -follow
-#  Billy Constantine <wdconsta@cs.adelaide.edu.au> <billy@smug.adelaide.edu.au>
-#  University of Adelaide, Adelaide, South Australia
-#
-# Modified 1999-06-10, 1999-07-07 to migrate to cleaner perl5 usage
-#   Ken Pizzini <ken@halcyon.com>
-#
-# Modified 2000-01-28 to use the 'follow' option of File::Find
-
 sub tab ();
 sub n ($$);
 sub fileglob_to_re ($);
@@ -921,7 +907,7 @@ Predicates which take a numeric argument N can come in three forms:
 
 =head1 SEE ALSO
 
-find
+find, File::Find.
 
 =cut
 !NO!SUBS!

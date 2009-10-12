@@ -12,7 +12,7 @@ BEGIN {
 use warnings;
 
 require './test.pl';
-plan( tests => 161 );
+plan( tests => 178 );
 
 # type coersion on assignment
 $foo = 'foo';
@@ -377,17 +377,14 @@ is (ref $::{oonk}, 'SCALAR', "Export doesn't affect original");
 is (eval 'spritsits', "Value", "Constant has correct value");
 is (ref \$::{spritsits}, 'GLOB', "Symbol table has full typeglob");
 
-my $result;
 # Check that assignment to an existing typeglob works
 {
   my $w = '';
   local $SIG{__WARN__} = sub { $w = $_[0] };
-  $result = *{"plunk"} = \&{"oonk"};
+  *{"plunk"} = [];
+  *{"plunk"} = \&{"oonk"};
   is($w, '', "Should be no warning");
 }
-
-is (ref \$result, 'GLOB',
-    "Non void assignment should still return a typeglob");
 
 is (ref $::{oonk}, 'SCALAR', "Export doesn't affect original");
 is (eval 'plunk', "Value", "Constant has correct value");
@@ -398,13 +395,55 @@ my $gr = eval '\*plunk' or die;
 {
   my $w = '';
   local $SIG{__WARN__} = sub { $w = $_[0] };
-  $result = *{$gr} = \&{"oonk"};
+  *{$gr} = \&{"oonk"};
   is($w, '', "Redefining a constant sub to another constant sub with the same underlying value should not warn (It's just re-exporting, and that was always legal)");
 }
 
 is (ref $::{oonk}, 'SCALAR', "Export doesn't affect original");
 is (eval 'plunk', "Value", "Constant has correct value");
 is (ref \$::{plunk}, 'GLOB', "Symbol table has full typeglob");
+
+# Non-void context should defeat the optimisation, and will cause the original
+# to be promoted (what change 26482 intended)
+my $result;
+{
+  my $w = '';
+  local $SIG{__WARN__} = sub { $w = $_[0] };
+  $result = *{"awkkkkkk"} = \&{"oonk"};
+  is($w, '', "Should be no warning");
+}
+
+is (ref \$result, 'GLOB',
+    "Non void assignment should still return a typeglob");
+
+is (ref \$::{oonk}, 'GLOB', "This export does affect original");
+is (eval 'plunk', "Value", "Constant has correct value");
+is (ref \$::{plunk}, 'GLOB', "Symbol table has full typeglob");
+
+delete $::{oonk};
+$::{oonk} = \"Value";
+
+sub non_dangling {
+  my $w = '';
+  local $SIG{__WARN__} = sub { $w = $_[0] };
+  *{"zap"} = \&{"oonk"};
+  is($w, '', "Should be no warning");
+}
+
+non_dangling();
+is (ref $::{oonk}, 'SCALAR', "Export doesn't affect original");
+is (eval 'zap', "Value", "Constant has correct value");
+is (ref $::{zap}, 'SCALAR', "Exported target is also a PCS");
+
+sub dangling {
+  local $SIG{__WARN__} = sub { die $_[0] };
+  *{"biff"} = \&{"oonk"};
+}
+
+dangling();
+is (ref \$::{oonk}, 'GLOB', "This export does affect original");
+is (eval 'biff', "Value", "Constant has correct value");
+is (ref \$::{biff}, 'GLOB', "Symbol table has full typeglob");
 
 {
     use vars qw($glook $smek $foof);
@@ -494,6 +533,30 @@ foreach my $value ([1,2,3], {1=>2}, *STDOUT{IO}, \&ok, *STDOUT{FORMAT}) {
              "Assigment works when glob created midway (bug 45607)"); 1'
 	or die $@;
 }
+
+# For now these tests are here, but they would probably be better in a file for
+# tests for croaks. (And in turn, that probably deserves to be in a different
+# directory. Gerard Goossen has a point about the layout being unclear
+
+sub coerce_integer {
+    no warnings 'numeric';
+    $_[0] |= 0;
+}
+sub coerce_number {
+    no warnings 'numeric';
+    $_[0] += 0;
+}
+sub coerce_string {
+    $_[0] .= '';
+}
+
+foreach my $type (qw(integer number string)) {
+    my $prog = "coerce_$type(*STDERR)";
+    is (scalar eval "$prog; 1", undef, "$prog failed...");
+    like ($@, qr/Can't coerce GLOB to $type in/,
+	  "with the correct error message");
+}
+
 __END__
 Perl
 Rules

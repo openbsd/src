@@ -1,7 +1,7 @@
 #!./perl
 
 $ENV{PATH} ="/bin:/usr/bin:/usr/xpg4/bin:/usr/ucb" .
-    exists $ENV{PATH} ? ":$ENV{PATH}" : "";
+    exists $ENV{PATH} ? ":$ENV{PATH}" : "" unless $^O eq 'VMS';
 $ENV{LC_ALL} = "C"; # so that external utilities speak English
 $ENV{LANGUAGE} = 'C'; # GNU locale extension
 
@@ -27,7 +27,8 @@ unless (eval { getgrgid(0); 1 }) {
     exit 0;
 }
 
-quit() if (($^O eq 'MSWin32' || $^O eq 'NetWare') or $^O =~ /lynxos/i);
+quit() if (($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS')
+           or $^O =~ /lynxos/i);
 
 # We have to find a command that prints all (effective
 # and real) group names (not ids).  The known commands are:
@@ -136,7 +137,7 @@ for (split(' ', $()) {
 print "# gr = @gr\n";
 
 my %did;
-if ($^O =~ /^(?:uwin|cygwin|interix|solaris)$/) {
+if ($^O =~ /^(?:uwin|cygwin|interix|solaris|linux)$/) {
 	# Or anybody else who can have spaces in group names.
 	$gr1 = join(' ', grep(!$did{$_}++, sort split(' ', join(' ', @gr))));
 } else {

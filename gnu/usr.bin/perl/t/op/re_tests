@@ -1,3 +1,6 @@
+# This stops me getting screenfulls of syntax errors every time I accidentally
+# run this file via a shell glob
+__END__
 abc	abc	y	$&	abc
 abc	abc	y	$-[0]	0
 abc	abc	y	$+[0]	3
@@ -411,6 +414,7 @@ a[-]?c	ac	y	$&	ac
 '(abc)\1'i	ABCABC	y	$1	ABC
 '([a-c]*)\1'i	ABCABC	y	$1	ABC
 a(?!b).	abad	y	$&	ad
+(?=)a	a	y	$&	a
 a(?=d).	abad	y	$&	ad
 a(?=c|d).	abad	y	$&	ad
 a(?:b|c|d)(.)	ace	y	$1	e
@@ -614,6 +618,7 @@ $(?<=^(a))	a	y	$1	a
 ((?>[^()]+)|\([^()]*\))+	((abc(ade)ufh()()x	y	$&	abc(ade)ufh()()x
 (?<=x+)y	-	c	-	Variable length lookbehind not implemented
 a{37,17}	-	c	-	Can't do {n,m} with n > m
+a{37,0}	-	c	-	Can't do {n,m} with n > m
 \Z	a\nb\n	y	$-[0]	3
 \z	a\nb\n	y	$-[0]	4
 $	a\nb\n	y	$-[0]	3
@@ -1281,6 +1286,7 @@ a*(*F)	aaaab	n	-	-
 X(\w+)(?=\s)|X(\w+)	Xab	y	[$1-$2]	[-ab]
 
 #check that branch reset works ok.
+(?|(a))	a	y	$1-$+-$^N	a-a-a
 (?|a(.)b|d(.(o).)d|i(.)(.)j)(.)	d!o!da	y	$1-$2-$3	!o!-o-a
 (?|a(.)b|d(.(o).)d|i(.)(.)j)(.)	aabc	y	$1-$2-$3	a--c
 (?|a(.)b|d(.(o).)d|i(.)(.)j)(.)	ixyjp	y	$1-$2-$3	x-y-p
@@ -1289,6 +1295,11 @@ X(\w+)(?=\s)|X(\w+)	Xab	y	[$1-$2]	[-ab]
 (?|(?|(a)|(b))|(?|(c)|(d)))	c	y	$1	c
 (?|(?|(a)|(b))|(?|(c)|(d)))	d	y	$1	d
 (.)(?|(.)(.)x|(.)d)(.)	abcde	y	$1-$2-$3-$4-$5-	b-c--e--
+(?|(?<foo>x))	x	y	$+{foo}	x
+(?|(?<foo>x)|(?<bar>y))	x	y	$+{foo}	x
+(?|(?<bar>y)|(?<foo>x))	x	y	$+{foo}	x
+(?<bar>)(?|(?<foo>x))	x	y	$+{foo}	x
+
 #Bug #41492
 (?(DEFINE)(?<A>(?&B)+)(?<B>a))(?&A)	a	y	$&	a
 (?(DEFINE)(?<A>(?&B)+)(?<B>a))(?&A)	aa	y	$&	aa
@@ -1338,3 +1349,27 @@ foo(\h)bar	foo\tbar	y	$1	\t
 .*\z	foo\n	y	-	-
 ^(?:(\d)x)?\d$	1	y	${\(defined($1)?1:0)}	0	
 .*?(?:(\w)|(\w))x	abx	y	$1-$2	b-
+
+0{50}	000000000000000000000000000000000000000000000000000	y	-	-
+^a?(?=b)b	ab	y	$&	ab	# Bug #56690
+^a*(?=b)b	ab	y	$&	ab	# Bug #56690
+/>\d+$ \n/ix	>10\n	y	$&	>10
+/>\d+$ \n/ix	>1\n	y	$&	>1
+/\d+$ \n/ix	>10\n	y	$&	10
+/>\d\d$ \n/ix	>10\n	y	$&	>10
+/>\d+$ \n/x	>10\n	y	$&	>10
+
+# Two regressions in 5.8.x (only) introduced by change 30638
+# Simplification of the test failure in XML::LibXML::Simple:
+/^\s*i.*?o\s*$/s	io\n io	y	-	-
+# As reported in #59168 by Father Chrysostomos:
+/(.*?)a(?!(a+)b\2c)/	baaabaac	y	$&-$1	baa-ba
+# [perl #60344] Regex lookbehind failure after an (if)then|else in perl 5.10
+/\A(?(?=db2)db2|\D+)(?<!processed)\.csv\z/xms	sql_processed.csv	n	-	-
+/\N{U+0100}/	\x{100}	y	$&	\x{100}	# Bug #59328
+[\s][\S]	\x{a0}\x{a0}	nT	-	-	# TODO Unicode complements should not match same character
+
+# was generating malformed utf8
+'[\x{100}\xff]'i	\x{ff}	y	$&	\x{ff}
+
+((??{ "(?:|)" }))\s	C\x20 	y	-	-

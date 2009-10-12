@@ -3,6 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 print "1..28\n";
@@ -101,9 +102,7 @@ close(OTHER);
 # something else.  ftell() on pipes, fifos, and sockets is defined to
 # return -1.
 
-my $written = "tell_write.txt";
-
-END { 1 while unlink($written) }
+my $written = tempfile();
 
 close($TST);
 open($tst,">$written")  || die "Cannot open $written:$!";

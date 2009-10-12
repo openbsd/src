@@ -9,7 +9,7 @@ require 'test.pl';
 
 use Config;
 
-plan (45);
+plan (135);
 
 is(join(':',1..5), '1:2:3:4:5');
 
@@ -188,3 +188,219 @@ is(join(":", map "[$_]", @foo), '[]');
     @foo=(); push @foo, $_ for $1.."";
     is(join(":", map "[$_]", @foo), '');
 }
+
+# Test upper range limit
+my $MAX_INT = ~0>>1;
+
+foreach my $ii (-3 .. 3) {
+    my ($first, $last);
+    eval {
+        my $lim=0;
+        for ($MAX_INT-10 .. $MAX_INT+$ii) {
+            if (! defined($first)) {
+                $first = $_;
+            }
+            $last = $_;
+            last if ($lim++ > 100);   # Protect against integer wrap
+        }
+    };
+    if ($ii <= 0) {
+        ok(! $@, 'Upper bound accepted: ' . ($MAX_INT+$ii));
+        is($first, $MAX_INT-10, 'Lower bound okay');
+        is($last, $MAX_INT+$ii, 'Upper bound okay');
+    } else {
+        ok($@, 'Upper bound rejected: ' . ($MAX_INT+$ii));
+    }
+}
+
+foreach my $ii (-3 .. 3) {
+    my ($first, $last);
+    eval {
+        my $lim=0;
+        for ($MAX_INT+$ii .. $MAX_INT) {
+            if (! defined($first)) {
+                $first = $_;
+            }
+            $last = $_;
+            last if ($lim++ > 100);
+        }
+    };
+    if ($ii <= 0) {
+        ok(! $@, 'Lower bound accepted: ' . ($MAX_INT+$ii));
+        is($first, $MAX_INT+$ii, 'Lower bound okay');
+        is($last, $MAX_INT, 'Upper bound okay');
+    } else {
+        ok($@, 'Lower bound rejected: ' . ($MAX_INT+$ii));
+    }
+}
+
+{
+    my $first;
+    eval {
+        my $lim=0;
+        for ($MAX_INT .. $MAX_INT-1) {
+            if (! defined($first)) {
+                $first = $_;
+            }
+            $last = $_;
+            last if ($lim++ > 100);
+        }
+    };
+    ok(! $@, 'Range accepted');
+    ok(! defined($first), 'Range ineffectual');
+}
+
+foreach my $ii (~0, ~0+1, ~0+(~0>>4)) {
+    eval {
+        my $lim=0;
+        for ($MAX_INT-10 .. $ii) {
+            last if ($lim++ > 100);
+        }
+    };
+    ok($@, 'Upper bound rejected: ' . $ii);
+}
+
+# Test lower range limit
+my $MIN_INT = -1-$MAX_INT;
+
+if (! $Config{d_nv_preserves_uv}) {
+    # $MIN_INT needs adjustment when IV won't fit into an NV
+    my $NV = $MIN_INT - 1;
+    my $OFFSET = 1;
+    while (($NV + $OFFSET) == $MIN_INT) {
+        $OFFSET++
+    }
+    $MIN_INT += $OFFSET;
+}
+
+foreach my $ii (-3 .. 3) {
+    my ($first, $last);
+    eval {
+        my $lim=0;
+        for ($MIN_INT+$ii .. $MIN_INT+10) {
+            if (! defined($first)) {
+                $first = $_;
+            }
+            $last = $_;
+            last if ($lim++ > 100);
+        }
+    };
+    if ($ii >= 0) {
+        ok(! $@, 'Lower bound accepted: ' . ($MIN_INT+$ii));
+        is($first, $MIN_INT+$ii, 'Lower bound okay');
+        is($last, $MIN_INT+10, 'Upper bound okay');
+    } else {
+        ok($@, 'Lower bound rejected: ' . ($MIN_INT+$ii));
+    }
+}
+
+foreach my $ii (-3 .. 3) {
+    my ($first, $last);
+    eval {
+        my $lim=0;
+        for ($MIN_INT .. $MIN_INT+$ii) {
+            if (! defined($first)) {
+                $first = $_;
+            }
+            $last = $_;
+            last if ($lim++ > 100);
+        }
+    };
+    if ($ii >= 0) {
+        ok(! $@, 'Upper bound accepted: ' . ($MIN_INT+$ii));
+        is($first, $MIN_INT, 'Lower bound okay');
+        is($last, $MIN_INT+$ii, 'Upper bound okay');
+    } else {
+        ok($@, 'Upper bound rejected: ' . ($MIN_INT+$ii));
+    }
+}
+
+{
+    my $first;
+    eval {
+        my $lim=0;
+        for ($MIN_INT+1 .. $MIN_INT) {
+            if (! defined($first)) {
+                $first = $_;
+            }
+            $last = $_;
+            last if ($lim++ > 100);
+        }
+    };
+    ok(! $@, 'Range accepted');
+    ok(! defined($first), 'Range ineffectual');
+}
+
+foreach my $ii (~0, ~0+1, ~0+(~0>>4)) {
+    eval {
+        my $lim=0;
+        for (-$ii .. $MIN_INT+10) {
+            last if ($lim++ > 100);
+        }
+    };
+    ok($@, 'Lower bound rejected: ' . -$ii);
+}
+
+# double/tripple magic tests
+sub TIESCALAR { bless { value => $_[1], orig => $_[1] } }
+sub STORE { $_[0]{store}++; $_[0]{value} = $_[1] }
+sub FETCH { $_[0]{fetch}++; $_[0]{value} }
+sub stores { tied($_[0])->{value} = tied($_[0])->{orig};
+             delete(tied($_[0])->{store}) || 0 }
+sub fetches { delete(tied($_[0])->{fetch}) || 0 }
+    
+tie $x, "main", 6;
+
+my @foo;
+@foo = 4 .. $x;
+is(scalar @foo, 3);
+is("@foo", "4 5 6");
+{
+  local $TODO = "test for double magic with range operator";
+  is(fetches($x), 1);
+}
+is(stores($x), 0);
+
+@foo = $x .. 8;
+is(scalar @foo, 3);
+is("@foo", "6 7 8");
+{
+  local $TODO = "test for double magic with range operator";
+  is(fetches($x), 1);
+}
+is(stores($x), 0);
+
+@foo = $x .. $x + 1;
+is(scalar @foo, 2);
+is("@foo", "6 7");
+{
+  local $TODO = "test for double magic with range operator";
+  is(fetches($x), 2);
+}
+is(stores($x), 0);
+
+@foo = ();
+for (4 .. $x) {
+  push @foo, $_;
+}
+is(scalar @foo, 3);
+is("@foo", "4 5 6");
+{
+  local $TODO = "test for double magic with range operator";
+  is(fetches($x), 1);
+}
+is(stores($x), 0);
+
+@foo = ();
+for (reverse 4 .. $x) {
+  push @foo, $_;
+}
+is(scalar @foo, 3);
+is("@foo", "6 5 4");
+{
+  local $TODO = "test for double magic with range operator";
+  is(fetches($x), 1);
+}
+is(stores($x), 0);
+
+# EOF

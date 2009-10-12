@@ -1,5 +1,4 @@
 require Test::Simple;
-# $Id$
 
 push @INC, 't/lib';
 require Test::Simple::Catch;
@@ -16,4 +15,5 @@ ok(1);
 ok(1);
 ok(1);
 
+$! = 0;
 die "This is a test";

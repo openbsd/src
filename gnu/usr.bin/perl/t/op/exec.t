@@ -6,6 +6,25 @@ BEGIN {
     require './test.pl';
 }
 
+my $vms_exit_mode = 0;
+
+if ($^O eq 'VMS') {
+    if (eval 'require VMS::Feature') {
+        $vms_exit_mode = !(VMS::Feature::current("posix_exit"));
+    } else {
+        my $env_unix_rpt = $ENV{'DECC$FILENAME_UNIX_REPORT'} || '';
+        my $env_posix_ex = $ENV{'PERL_VMS_POSIX_EXIT'} || '';
+        my $unix_rpt = $env_unix_rpt =~ /^[ET1]/i; 
+        my $posix_ex = $env_posix_ex =~ /^[ET1]/i;
+        if (($unix_rpt || $posix_ex) ) {
+            $vms_exit_mode = 0;
+        } else {
+            $vms_exit_mode = 1;
+        }
+    }
+}
+
+
 # supress VMS whinging about bad execs.
 use vmsish qw(hushed);
 
@@ -85,7 +104,7 @@ is( $echo_out, "ok\n", 'piped echo emulation');
 
 is( system(qq{$Perl -e "exit 0"}), 0,     'Explicit exit of 0' );
 
-my $exit_one = $Is_VMS ? 4 << 8 : 1 << 8;
+my $exit_one = $vms_exit_mode ? 4 << 8 : 1 << 8;
 is( system(qq{$Perl "-I../lib" -e "use vmsish qw(hushed); exit 1"}), $exit_one,
     'Explicit exit of 1' );
 

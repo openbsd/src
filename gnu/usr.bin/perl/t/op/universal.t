@@ -10,7 +10,7 @@ BEGIN {
     require "./test.pl";
 }
 
-plan tests => 111;
+plan tests => 116;
 
 $a = {};
 bless $a, "Bob";
@@ -228,3 +228,20 @@ package main;
 eval { UNIVERSAL::DOES([], "foo") };
 like( $@, qr/Can't call method "DOES" on unblessed reference/,
     'DOES call error message says DOES, not isa' );
+
+# Tests for can seem to be split between here and method.t
+# Add the verbatim perl code mentioned in the comments of
+# http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2001-05/msg01710.html
+# but never actually tested.
+is(UNIVERSAL->can("NoSuchPackage::foo"), undef);
+
+@splatt::ISA = 'zlopp';
+ok (splatt->isa('zlopp'));
+ok (!splatt->isa('plop'));
+
+# This should reset the ->isa lookup cache
+@splatt::ISA = 'plop';
+# And here is the new truth.
+ok (!splatt->isa('zlopp'));
+ok (splatt->isa('plop'));
+

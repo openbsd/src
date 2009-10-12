@@ -14,7 +14,7 @@ BEGIN {
 use Config;
 require './test.pl'; # for runperl()
 
-print "1..187\n";
+print "1..188\n";
 
 my $test = 1;
 sub test (&) {
@@ -463,9 +463,8 @@ END
 	    }
 	  } else {
 	    # No fork().  Do it the hard way.
-	    my $cmdfile = "tcmd$$";  $cmdfile++ while -e $cmdfile;
-	    my $errfile = "terr$$";  $errfile++ while -e $errfile;
-	    my @tmpfiles = ($cmdfile, $errfile);
+	    my $cmdfile = tempfile();
+	    my $errfile = tempfile();
 	    open CMD, ">$cmdfile"; print CMD $code; close CMD;
 	    my $cmd = which_perl();
 	    $cmd .= " -w $cmdfile 2>$errfile";
@@ -477,18 +476,15 @@ END
 	      { local $/; $output = join '', <PERL> }
 	      close PERL;
 	    } else {
-	      my $outfile = "tout$$";  $outfile++ while -e $outfile;
-	      push @tmpfiles, $outfile;
+	      my $outfile = tempfile();
 	      system "$cmd >$outfile";
 	      { local $/; open IN, $outfile; $output = <IN>; close IN }
 	    }
 	    if ($?) {
 	      printf "not ok: exited with error code %04X\n", $?;
-	      $debugging or do { 1 while unlink @tmpfiles };
 	      exit;
 	    }
 	    { local $/; open IN, $errfile; $errors = <IN>; close IN }
-	    1 while unlink @tmpfiles;
 	  }
 	  print $output;
 	  print STDERR $errors;
@@ -688,7 +684,22 @@ __EOF__
     test { $flag == 1 };
 }
 
+# don't copy a stale lexical; crate a fresh undef one instead
 
+sub f {
+    my $x if $_[0];
+    sub { \$x }
+}
+
+{
+    f(1);
+    my $c1= f(0);
+    my $c2= f(0);
+
+    my $r1 = $c1->();
+    my $r2 = $c2->();
+    test { $r1 != $r2 };
+}
 
 
 

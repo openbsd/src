@@ -7,7 +7,11 @@ BEGIN {
 }
 
 use strict;
-plan( tests => 69 );
+plan( tests => 111 );
+
+run_tests() unless caller;
+
+sub run_tests {
 
 my $foo = 'Now is the time for all good men to come to the aid of their country.';
 
@@ -154,4 +158,44 @@ SKIP: {
 
     local ${^UTF8CACHE} = -1;
     is(index($t, 'xyz'), 4, "0xfffffffd and utf8cache");
+}
+
+
+# Tests for NUL characters.
+{
+    my @tests = (
+        ["",            -1, -1, -1],
+        ["foo",         -1, -1, -1],
+        ["\0",           0, -1, -1],
+        ["\0\0",         0,  0, -1],
+        ["\0\0\0",       0,  0,  0],
+        ["foo\0",        3, -1, -1],
+        ["foo\0foo\0\0", 3,  7, -1],
+    );
+    foreach my $l (1 .. 3) {
+        my $q = "\0" x $l;
+        my $i = 0;
+        foreach my $test (@tests) {
+            $i ++;
+            my $str = $$test [0];
+            my $res = $$test [$l];
+
+            {
+                is (index ($str, $q), $res, "Find NUL character(s)");
+            }
+
+            #
+            # Bug #53746 shows a difference between variables and literals,
+            # so test literals as well.
+            #
+            my $test_str = qq {is (index ("$str", "$q"), $res, } .
+                           qq {"Find NUL character(s)")};
+               $test_str =~ s/\0/\\0/g;
+
+            eval $test_str;
+            die $@ if $@;
+        }
+    }
+}
+
 }

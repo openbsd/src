@@ -901,6 +901,7 @@ if( @path_h ){
 
         # Remove C and C++ comments
         $src =~ s#/\*[^*]*\*+([^/*][^*]*\*+)*/|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#$2#gs;
+        $src =~ s#//.*$##gm;
 
 	while ($src =~ /\benum\s*([\w_]*)\s*\{\s([^}]+)\}/gsc) {
 	    my ($enum_name, $enum_body) = ($1, $2);
@@ -912,7 +913,7 @@ if( @path_h ){
                 my ($key, $declared_val) = $item =~ /(\w+)\s*(?:=\s*(.*))?/;
                 $val = defined($declared_val) && length($declared_val) ? $declared_val : 1 + $val;
                 $seen_define{$key} = $val;
-                $const_names{$key}++;
+                $const_names{$key} = { name => $key, macro => 1 };
             }
         } # while (...)
       } # if (!defined $opt_e or $opt_e)
@@ -1076,7 +1077,14 @@ if( ! $opt_X ){  # use XS, unless it was disabled
     }
   }
 }
-my @const_names = sort keys %const_names;
+my (@const_specs, @const_names);
+
+for (sort(keys(%const_names))) {
+    my $v = $const_names{$_};
+    
+    push(@const_specs, ref($v) ? $v : $_);
+    push(@const_names, $_);
+}
 
 -d $modpmdir || mkpath([$modpmdir], 0, 0775);
 open(PM, ">$modpmname") || die "Can't create $ext$modpname/$modpmname: $!\n";
@@ -1465,7 +1473,7 @@ if( ! $opt_c ) {
                    XS_FILE =>      $xsfallback,
                    DEFAULT_TYPE => $opt_t,
                    NAME =>         $module,
-                   NAMES =>        \@const_names,
+                   NAMES =>        \@const_specs,
                  );
   print XS "#include \"$constscfname\"\n";
 }
@@ -1950,7 +1958,7 @@ if (!$opt_c) {
                            XS_FILE =>      $constsxsfname,
                            DEFAULT_TYPE => $opt_t,
                            NAME =>         $module,
-                           NAMES =>        \@const_names,
+                           NAMES =>        \@const_specs,
                  );
   print PL <<"END";
 if  (eval {require ExtUtils::Constant; 1}) {

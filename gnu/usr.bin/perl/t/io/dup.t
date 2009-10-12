@@ -17,7 +17,9 @@ print "ok 1\n";
 open(DUPOUT,">&STDOUT");
 open(DUPERR,">&STDERR");
 
-open(STDOUT,">Io.dup")  || die "Can't open stdout";
+my $tempfile = tempfile();
+
+open(STDOUT,">$tempfile")  || die "Can't open stdout";
 open(STDERR,">&STDOUT") || die "Can't open stderr";
 
 select(STDERR); $| = 1;
@@ -36,19 +38,12 @@ $cmd = sprintf "$echo 1>&2", 5;
 $cmd = sprintf $echo, 5 if $^O eq 'MacOS';  # don't know if we can do this ...
 print `$cmd`;
 
-# KNOWN BUG system() does not honor STDOUT redirections on VMS.
-if( $^O eq 'VMS' ) {
-    print "not ok $_ # TODO system() not honoring STDOUT redirect on VMS\n"
-      for 6..7;
+system sprintf $echo, 6;
+if ($^O eq 'MacOS') {
+    system sprintf $echo, 7;
 }
 else {
-    system sprintf $echo, 6;
-    if ($^O eq 'MacOS') {
-        system sprintf $echo, 7;
-    }
-    else {
-        system sprintf "$echo 1>&2", 7;
-    }
+    system sprintf "$echo 1>&2", 7;
 }
 
 close(STDOUT) or die "Could not close: $!";
@@ -57,10 +52,10 @@ close(STDERR) or die "Could not close: $!";
 open(STDOUT,">&DUPOUT") or die "Could not open: $!";
 open(STDERR,">&DUPERR") or die "Could not open: $!";
 
-if (($^O eq 'MSWin32') || ($^O eq 'NetWare') || ($^O eq 'VMS')) { print `type Io.dup` }
-elsif ($^O eq 'MacOS') { system 'catenate Io.dup' }
-else                   { system 'cat Io.dup' }
-unlink 'Io.dup';
+if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) { print `type $tempfile` }
+elsif ($^O eq 'VMS')   { system "type $tempfile.;" } # TYPE defaults to .LIS when there is no extension
+elsif ($^O eq 'MacOS') { system "catenate $tempfile" }
+else                   { system "cat $tempfile" }
 
 print STDOUT "ok 8\n";
 
@@ -110,7 +105,7 @@ SKIP: {
     is(fileno(F), fileno(STDERR));
     close F;
 
-    open(G, ">dup$$") or die;
+    open(G, ">$tempfile") or die;
     my $g = fileno(G);
 
     ok(open(F, ">&=$g"));
@@ -126,7 +121,7 @@ SKIP: {
     close G; # flush first
     close F; # flush second
 
-    open(G, "<dup$$") or die;
+    open(G, "<$tempfile") or die;
     {
 	my $line;
 	$line = <G>; chomp $line; is($line, "ggg");
@@ -134,7 +129,7 @@ SKIP: {
     }
     close G;
 
-    open UTFOUT, '>:utf8', "dup$$" or die $!;
+    open UTFOUT, '>:utf8', $tempfile or die $!;
     open UTFDUP, '>&UTFOUT' or die $!;
     # some old greek saying.
     my $message = "\x{03A0}\x{0391}\x{039D}\x{03A4}\x{0391} \x{03A1}\x{0395}\x{0399}\n";
@@ -144,7 +139,7 @@ SKIP: {
     print UTFDUP $message;
     close UTFOUT;
     close UTFDUP;
-    open(UTFIN, "<:utf8", "dup$$") or die $!;
+    open(UTFIN, "<:utf8", $tempfile) or die $!;
     {
 	my $line;
 	$line = <UTFIN>; is($line, $message);
@@ -153,5 +148,4 @@ SKIP: {
     }
     close UTFIN;
 
-    END { 1 while unlink "dup$$" }
 }

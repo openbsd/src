@@ -1,6 +1,7 @@
 # For testing Test::Simple;
-# $Id$
 package Test::Simple::Catch;
+
+use strict;
 
 use Symbol;
 use TieOut;

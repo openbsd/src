@@ -1984,7 +1984,7 @@ short yycheck[] = {                                      41,
 #endif
 #define YYMAXTOKEN 306
 #if YYDEBUG
-char *yyname[] = {
+const char *yyname[] = {
 "end-of-file",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,"'%'",0,0,"'('","')'","'*'","'+'","','","'-'",0,"'/'",0,0,0,0,0,0,0,0,0,0,
 "':'","';'","'<'",0,"'>'","'?'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -1999,7 +1999,7 @@ char *yyname[] = {
 "DELETE","ASGNOP","OROR","ANDAND","NUMBER","VAR","SUBSTR","INDEX","MATCHOP",
 "RELOP","OR","STRING","UMINUS","NOT","INCR","DECR","FIELD","VFIELD","SVFIELD",
 };
-char *yyrule[] = {
+const char *yyrule[] = {
 "$accept : program",
 "program : junk hunks",
 "begin : BEGIN '{' maybe states '}' junk",
@@ -2193,7 +2193,7 @@ yyparse(void)
 {
     register int yym, yyn, yystate;
 #if YYDEBUG
-    register char *yys;
+    register const char *yys;
 
     if ((yys = getenv("YYDEBUG")))
     {

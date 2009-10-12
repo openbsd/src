@@ -25,6 +25,12 @@ require './test.pl';
 
 plan(334);
 
+run_tests() unless caller;
+
+my $krunch = "a";
+
+sub run_tests {
+
 $FATAL_MSG = qr/^substr outside of string/;
 
 is(substr($a,0,3), 'abc');   # P=Q R S
@@ -643,11 +649,10 @@ is($x, "\x{100}\x{200}\xFFb");
 # [perl #24200] string corruption with lvalue sub
 
 {
-    my $foo = "a";
-    sub bar: lvalue { substr $foo, 0 }
+    sub bar: lvalue { substr $krunch, 0 }
     bar = "XXX";
     is(bar, 'XXX');
-    $foo = '123456789';
+    $krunch = '123456789';
     is(bar, '123456789');
 }
 
@@ -674,4 +679,6 @@ is($x, "\x{100}\x{200}\xFFb");
     my  $a = "abcd\x{100}";
     is(substr($a,1,2), 'bc');
     is(substr($a,1,1), 'b');
+}
+
 }

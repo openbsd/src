@@ -34,7 +34,7 @@ INST_TOP	*= $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-#INST_VER	*= \5.10.0
+#INST_VER	*= \5.10.1
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -330,7 +330,7 @@ BUILDOPT	+= -DPERL_IMPLICIT_CONTEXT
 BUILDOPT	+= -DPERL_IMPLICIT_SYS
 .ENDIF
 
-.IMPORT .IGNORE : PROCESSOR_ARCHITECTURE PROCESSOR_ARCHITEW6432
+.IMPORT .IGNORE : PROCESSOR_ARCHITECTURE PROCESSOR_ARCHITEW6432 WIN64
 
 PROCESSOR_ARCHITECTURE *= x86
 
@@ -382,16 +382,13 @@ DELAYLOAD	*= -DELAYLOAD:ws2_32.dll delayimp.lib
 
 # Visual C++ 2005 and 2008 (VC++ 8.x and 9.x) create manifest files for EXEs and
 # DLLs. These either need copying everywhere with the binaries, or else need
-# embedding in them otherwise MSVCR80.dll or MSVCR90.dll won't be found. Embed
-# them for simplicity, and delete them afterwards so that they don't get
-# installed too.
-.IF "$(CCTYPE)" == "MSVC80" || "$(CCTYPE)" == "MSVC80FREE" || \
-    "$(CCTYPE)" == "MSVC90" || "$(CCTYPE)" == "MSVC90FREE"
-EMBED_EXE_MANI	= mt -nologo -manifest $@.manifest -outputresource:$@;1 && \
-		  del $@.manifest
-EMBED_DLL_MANI	= mt -nologo -manifest $@.manifest -outputresource:$@;2 && \
-		  del $@.manifest
-.ENDIF
+# embedding in them otherwise MSVCR80.dll or MSVCR90.dll won't be found. For
+# simplicity, embed them if they exist (and delete them afterwards so that they
+# don't get installed too).
+EMBED_EXE_MANI	= if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;1 && \
+		  if exist $@.manifest del $@.manifest
+EMBED_DLL_MANI	= if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;2 && \
+		  if exist $@.manifest del $@.manifest
 
 ARCHDIR		= ..\lib\$(ARCHNAME)
 COREDIR		= ..\lib\CORE
@@ -496,7 +493,10 @@ LOCDEFS		= -DPERLDLL -DPERL_CORE
 SUBSYS		= console
 CXX_FLAG	= -xc++
 
-LIBC		= -lmsvcrt
+# Current releases of MinGW 5.1.4 (as of 11-Aug-2009) will fail to link
+# correctly if -lmsvcrt is specified explicitly.
+LIBC		=
+#LIBC		= -lmsvcrt
 
 # same libs as MSVC
 LIBFILES	= $(CRYPT_LIB) $(LIBC) \
@@ -758,7 +758,6 @@ UTILS		=			\
 		..\utils\cpan2dist	\
 		..\utils\shasum		\
 		..\utils\instmodsh	\
-		..\pod\checkpods	\
 		..\pod\pod2html		\
 		..\pod\pod2latex	\
 		..\pod\pod2man		\
@@ -925,7 +924,7 @@ CORE_NOCFG_H	=		\
 		.\include\sys\socket.h	\
 		.\win32.h
 
-CORE_H		= $(CORE_NOCFG_H) .\config.h
+CORE_H		= $(CORE_NOCFG_H) .\config.h ..\git_version.h
 
 UUDMAP_H	= ..\uudmap.h
 
@@ -1026,8 +1025,8 @@ ODBCCP32_DLL = $(windir)\system\odbccp32.dll
 # Top targets
 #
 
-all : CHECKDMAKE .\config.h $(GLOBEXE) $(MINIPERL) $(MK2)		\
-	$(RIGHTMAKE) $(MINIMOD) $(CONFIGPM) $(UNIDATAFILES) MakePPPort	\
+all : CHECKDMAKE .\config.h ..\git_version.h $(GLOBEXE) $(MINIPERL) $(MK2)	\
+	$(RIGHTMAKE) $(MINIMOD) $(CONFIGPM) $(UNIDATAFILES) MakePPPort		\
 	$(PERLEXE) $(X2P) Extensions $(PERLSTATIC)
 
 ..\regcharclass.h : ..\Porting\regcharclass.pl
@@ -1039,8 +1038,8 @@ regnodes : ..\regnodes.h
 
 ..\regexec$(o) : ..\regnodes.h ..\regcharclass.h
 
-reonly : regnodes .\config.h $(GLOBEXE) $(MINIPERL) $(MK2)		\
-	$(RIGHTMAKE) $(MINIMOD) $(CONFIGPM) $(UNIDATAFILES) $(PERLEXE)	\
+reonly : regnodes .\config.h ..\git_version.h $(GLOBEXE) $(MINIPERL) $(MK2)	\
+	$(RIGHTMAKE) $(MINIMOD) $(CONFIGPM) $(UNIDATAFILES) $(PERLEXE)		\
 	$(X2P) Extensions_reonly
 
 $(DYNALOADER)$(o) : $(DYNALOADER).c $(CORE_H) $(EXTDIR)\DynaLoader\dlutils.c
@@ -1126,22 +1125,30 @@ config.w32 : $(CFGSH_TMPL)
 	-del /f config.h
 	copy $(CFGH_TMPL) config.h
 
+..\git_version.h : $(MINIPERL) ..\make_patchnum.pl
+	cd .. && miniperl -Ilib make_patchnum.pl
+
+# make sure that we recompile perl.c if the git version changes
+..\perl$(o) : ..\git_version.h
+
 ..\config.sh : config.w32 $(MINIPERL) config_sh.PL FindExt.pm
 	$(MINIPERL) -I..\lib config_sh.PL --cfgsh-option-file \
 	    $(mktmp $(CFG_VARS)) config.w32 > ..\config.sh
 
-# this target is for when changes to the main config.sh happen
-# edit config.{b,v,g}c and make this target once for each supported
-# compiler (e.g. `dmake CCTYPE=BORLAND regen_config_h`)
+# this target is for when changes to the main config.sh happen.
+# edit config.gc, then make perl using GCC in a minimal configuration (i.e.
+# with MULTI, ITHREADS, IMP_SYS, LARGE_FILES, PERLIO and CRYPT off), then make
+# this target to regenerate config_H.gc.
+# unfortunately, some further manual editing is also then required to restore all
+# the special _MSC_VER handling that is otherwise lost.
+# repeat for config.bc and config_H.bc (using BORLAND), except that there is no
+# _MSC_VER stuff in that case.
 regen_config_h:
-	perl config_sh.PL --cfgsh-option-file $(mktmp $(CFG_VARS)) \
+	$(MINIPERL) -I..\lib config_sh.PL --cfgsh-option-file $(mktmp $(CFG_VARS)) \
 	    $(CFGSH_TMPL) > ..\config.sh
-	-cd .. && del /f perl.exe
-	-cd .. && del /f perl*.dll
-	cd .. && perl configpm
+	cd .. && miniperl configpm
 	-del /f $(CFGH_TMPL)
-	-mkdir $(COREDIR)
-	-perl config_h.PL "INST_VER=$(INST_VER)"
+	-$(MINIPERL) -I..\lib config_h.PL "INST_VER=$(INST_VER)"
 	rename config.h $(CFGH_TMPL)
 
 $(CONFIGPM) : $(MINIPERL) ..\config.sh config_h.PL ..\minimod.pl
@@ -1173,7 +1180,7 @@ $(MINIDIR) :
 	if not exist "$(MINIDIR)" mkdir "$(MINIDIR)"
 
 $(MINICORE_OBJ) : $(CORE_NOCFG_H)
-	$(CC) -c $(CFLAGS) -DPERL_EXTERNAL_GLOB $(OBJOUT_FLAG)$@ ..\$(*B).c
+	$(CC) -c $(CFLAGS) -DPERL_EXTERNAL_GLOB -DPERL_IS_MINIPERL $(OBJOUT_FLAG)$@ ..\$(*B).c
 
 $(MINIWIN32_OBJ) : $(CORE_NOCFG_H)
 	$(CC) -c $(CFLAGS) $(OBJOUT_FLAG)$@ $(*B).c
@@ -1192,6 +1199,7 @@ perllib$(o)	: perllib.c .\perlhost.h .\vdir.h .\vmem.h
 
 # 1. we don't want to rebuild miniperl.exe when config.h changes
 # 2. we don't want to rebuild miniperl.exe with non-default config.h
+# 3. we can't have miniperl.exe depend on git_version.h, as miniperl creates it
 $(MINI_OBJ)	: $(CORE_NOCFG_H)
 
 $(WIN32_OBJ)	: $(CORE_H)
@@ -1202,8 +1210,8 @@ $(DLL_OBJ)	: $(CORE_H)
 
 $(X2P_OBJ)	: $(CORE_H)
 
-perldll.def : $(MINIPERL) $(CONFIGPM) ..\global.sym ..\pp.sym ..\makedef.pl
-	$(MINIPERL) -I..\lib buildext.pl --create-perllibst-h
+perldll.def : $(MINIPERL) $(CONFIGPM) ..\global.sym ..\pp.sym ..\makedef.pl create_perllibst_h.pl
+	$(MINIPERL) -I..\lib create_perllibst_h.pl
 	$(MINIPERL) -w ..\makedef.pl PLATFORM=win32 $(OPTIMIZE) $(DEFINES) \
 	$(BUILDOPT) CCTYPE=$(CCTYPE) > perldll.def
 
@@ -1379,29 +1387,24 @@ MakePPPort_clean:
 	-if exist $(MINIPERL) $(MINIPERL) -I..\lib ..\mkppport --clean
 
 #-------------------------------------------------------------------------------
-Extensions : buildext.pl $(PERLDEP) $(CONFIGPM)
+Extensions : ..\make_ext.pl $(PERLDEP) $(CONFIGPM)
 	$(XCOPY) ..\*.h $(COREDIR)\*.*
-	$(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) --dynamic
-	-if exist ext $(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) ext --dynamic
+	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --dynamic
 
-Extensions_reonly : buildext.pl $(PERLDEP) $(CONFIGPM)
+Extensions_reonly : ..\make_ext.pl $(PERLDEP) $(CONFIGPM)
 	$(XCOPY) ..\*.h $(COREDIR)\*.*
-	$(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) --dynamic +re
-	-if exist ext $(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) ext --dynamic +re
+	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --dynamic +re
 
-Extensions_static : buildext.pl $(PERLDEP) $(CONFIGPM)
+Extensions_static : ..\make_ext.pl list_static_libs.pl $(PERLDEP) $(CONFIGPM)
 	$(XCOPY) ..\*.h $(COREDIR)\*.*
-	$(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) --static
-	-if exist ext $(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) ext --static
-	$(MINIPERL) -I..\lib buildext.pl --list-static-libs > Extensions_static
+	$(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --static
+	$(MINIPERL) -I..\lib list_static_libs.pl > Extensions_static
 
 Extensions_clean :
-	-if exist $(MINIPERL) $(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) clean
-	-if exist $(MINIPERL) if exist ext $(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) ext clean
+	-if exist $(MINIPERL) $(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --all --target=clean
 
 Extensions_realclean :
-	-if exist $(MINIPERL) $(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) $(EXTDIR) realclean
-	-if exist $(MINIPERL) if exist ext $(MINIPERL) -I..\lib buildext.pl $(MAKE) $(PERLDEP) ext realclean
+	-if exist $(MINIPERL) $(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(EXTDIR) --all --target=realclean
 
 #-------------------------------------------------------------------------------
 
@@ -1415,7 +1418,6 @@ doc: $(PERLEXE)
 # so please check that script before making structural changes here
 utils: $(PERLEXE) $(X2P)
 	cd ..\utils && $(MAKE) PERL=$(MINIPERL)
-	copy ..\vms\perlvms.pod	..\pod\perlvms.pod
 	copy ..\README.aix      ..\pod\perlaix.pod
 	copy ..\README.amiga    ..\pod\perlamiga.pod
 	copy ..\README.apollo   ..\pod\perlapollo.pod
@@ -1428,6 +1430,7 @@ utils: $(PERLEXE) $(X2P)
 	copy ..\README.dos      ..\pod\perldos.pod
 	copy ..\README.epoc     ..\pod\perlepoc.pod
 	copy ..\README.freebsd  ..\pod\perlfreebsd.pod
+	copy ..\README.haiku    ..\pod\perlhaiku.pod
 	copy ..\README.hpux     ..\pod\perlhpux.pod
 	copy ..\README.hurd     ..\pod\perlhurd.pod
 	copy ..\README.irix     ..\pod\perlirix.pod
@@ -1453,13 +1456,15 @@ utils: $(PERLEXE) $(X2P)
 	copy ..\README.tw       ..\pod\perltw.pod
 	copy ..\README.uts      ..\pod\perluts.pod
 	copy ..\README.vmesa    ..\pod\perlvmesa.pod
-	copy ..\README.vms      ..\pod\perlvms.pod
 	copy ..\README.vos      ..\pod\perlvos.pod
 	copy ..\README.win32    ..\pod\perlwin32.pod
-	copy ..\pod\perl5100delta.pod ..\pod\perldelta.pod
+	copy ..\pod\perl5101delta.pod ..\pod\perldelta.pod
 	cd ..\pod && $(MAKE) -f ..\win32\pod.mak converters
 	cd ..\lib && $(PERLEXE) lib_pm.PL
 	$(PERLEXE) $(PL2BAT) $(UTILS)
+	$(PERLEXE) ..\autodoc.pl ..
+	$(PERLEXE) ..\pod\perlmodlib.pl -q
+	$(PERLEXE) ..\pod\buildtoc --build-toc -q
 
 # Note that the pod cleanup in this next section is parsed (and regenerated
 # by pod/buildtoc so please check that script before making changes here
@@ -1505,6 +1510,10 @@ distclean: realclean
 	-if exist $(LIBDIR)\Encode rmdir /s /q $(LIBDIR)\Encode
 	-if exist $(LIBDIR)\Filter\Util rmdir /s /q $(LIBDIR)\Filter\Util
 	-if exist $(LIBDIR)\Hash rmdir /s /q $(LIBDIR)\Hash
+	-if exist $(LIBDIR)\App rmdir /s /q $(LIBDIR)\App
+	-if exist $(LIBDIR)\Module\Pluggable rmdir /s /q $(LIBDIR)\Module\Pluggable
+	-if exist $(LIBDIR)\TAP rmdir /s /q $(LIBDIR)\TAP
+	-if exist $(LIBDIR)\mro rmdir /s /q $(LIBDIR)\mro
 	-if exist $(LIBDIR)\IO\Compress rmdir /s /q $(LIBDIR)\IO\Compress
 	-if exist $(LIBDIR)\IO\Socket rmdir /s /q $(LIBDIR)\IO\Socket
 	-if exist $(LIBDIR)\IO\Uncompress rmdir /s /q $(LIBDIR)\IO\Uncompress
@@ -1516,20 +1525,20 @@ distclean: realclean
 	-if exist $(LIBDIR)\threads rmdir /s /q $(LIBDIR)\threads
 	-if exist $(LIBDIR)\XS rmdir /s /q $(LIBDIR)\XS
 	-if exist $(LIBDIR)\Win32API rmdir /s /q $(LIBDIR)\Win32API
-	-cd $(PODDIR) && del /f *.html *.bat checkpods \
-	    perlaix.pod perlamiga.pod perlapollo.pod perlbeos.pod \
-	    perlbs2000.pod perlce.pod perlcn.pod perlcygwin.pod \
-	    perldelta.pod perldgux.pod perldos.pod perlepoc.pod \
-	    perlfreebsd.pod perlhpux.pod perlhurd.pod perlirix.pod \
-	    perljp.pod perlko.pod perllinux.pod perlmachten.pod \
-	    perlmacos.pod perlmacosx.pod perlmint.pod perlmpeix.pod \
-	    perlnetware.pod perlopenbsd.pod perlos2.pod perlos390.pod \
-	    perlos400.pod perlplan9.pod perlqnx.pod perlriscos.pod \
-	    perlsolaris.pod perlsymbian.pod perltru64.pod perltw.pod \
-	    perluts.pod perlvmesa.pod perlvms.pod perlvms.pod perlvos.pod \
-	    perlwin32.pod \
+	-cd $(PODDIR) && del /f *.html *.bat podchecker \
+	    perlaix.pod perlamiga.pod perlapi.pod perlapollo.pod \
+	    perlbeos.pod perlbs2000.pod perlce.pod perlcn.pod \
+	    perlcygwin.pod perldelta.pod perldgux.pod perldos.pod \
+	    perlepoc.pod perlfreebsd.pod perlhaiku.pod perlhpux.pod \
+	    perlhurd.pod perlintern.pod perlirix.pod perljp.pod perlko.pod \
+	    perllinux.pod perlmachten.pod perlmacos.pod perlmacosx.pod \
+	    perlmint.pod perlmodlib.pod perlmpeix.pod perlnetware.pod \
+	    perlopenbsd.pod perlos2.pod perlos390.pod perlos400.pod \
+	    perlplan9.pod perlqnx.pod perlriscos.pod perlsolaris.pod \
+	    perlsymbian.pod perltoc.pod perltru64.pod perltw.pod \
+	    perluts.pod perlvmesa.pod perlvos.pod perlwin32.pod \
 	    pod2html pod2latex pod2man pod2text pod2usage \
-	    podchecker podselect
+	    podselect
 	-cd ..\utils && del /f h2ph splain perlbug pl2pm c2ph pstruct h2xs \
 	    perldoc perlivp dprofpp libnetcfg enc2xs piconv cpan *.bat \
 	    xsubpp instmodsh prove ptar ptardiff cpanp-run-perl cpanp cpan2dist shasum corelist config_data
@@ -1537,6 +1546,7 @@ distclean: realclean
 	-del /f ..\config.sh ..\splittree.pl perlmain.c dlutils.c config.h.new \
 	    perlmainst.c
 	-del /f $(CONFIGPM)
+	-del /f ..\lib\Config_git.pl
 	-del /f bin\*.bat
 	-del /f perllibst.h
 	-del /f $(PERLEXE_ICO) perl.base
@@ -1547,6 +1557,7 @@ distclean: realclean
 	-if exist pod2htmd.tmp del pod2htmd.tmp
 	-if exist pod2htmi.tmp del pod2htmi.tmp
 	-if exist $(HTMLDIR) rmdir /s /q $(HTMLDIR)
+	-del /f ..\t\test_state
 
 install : all installbare installhtml
 
@@ -1635,6 +1646,7 @@ _clean :
 	-@erase perlmainst$(o)
 	-@erase config.w32
 	-@erase /f config.h
+	-@erase /f ..\git_version.h
 	-@erase $(GLOBEXE)
 	-@erase $(PERLEXE)
 	-@erase $(WPERLEXE)

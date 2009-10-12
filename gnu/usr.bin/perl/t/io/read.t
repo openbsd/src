@@ -12,7 +12,9 @@ die $@ if $@ and !$ENV{PERL_CORE_MINITEST};
 
 plan tests => 2;
 
-open(A,"+>a");
+my $tmpfile = tempfile();
+
+open(A,"+>$tmpfile");
 print A "_";
 seek(A,0,0);
 
@@ -23,11 +25,7 @@ read(A,$b,1,4);
 
 close(A);
 
-unlink("a");
-
 is($b,"\000\000\000\000_"); # otherwise probably "\000bcd_"
-
-unlink 'a';
 
 SKIP: {
     skip "no EBADF", 1 if (!exists &Errno::EBADF);

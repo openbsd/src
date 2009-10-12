@@ -183,23 +183,23 @@ is(defined(@{"unknown_package::ISA"}) ? "defined" : "undefined", "undefined");
 
 
 # test error messages if method loading fails
-is(do { eval '$e = bless {}, "E::A"; E::A->foo()';
-	  $@ =~ /^\QCan't locate object method "foo" via package "E::A" at/ ? 1 : $@}, 1);
-is(do { eval '$e = bless {}, "E::B"; $e->foo()';  
-	  $@ =~ /^\QCan't locate object method "foo" via package "E::B" at/ ? 1 : $@}, 1);
-is(do { eval 'E::C->foo()';
-	  $@ =~ /^\QCan't locate object method "foo" via package "E::C" (perhaps / ? 1 : $@}, 1);
+eval '$e = bless {}, "E::A"; E::A->foo()';
+like ($@, qr/^\QCan't locate object method "foo" via package "E::A" at/);
+eval '$e = bless {}, "E::B"; $e->foo()';  
+like ($@, qr/^\QCan't locate object method "foo" via package "E::B" at/);
+eval 'E::C->foo()';
+like ($@, qr/^\QCan't locate object method "foo" via package "E::C" (perhaps /);
 
-is(do { eval 'UNIVERSAL->E::D::foo()';
-	  $@ =~ /^\QCan't locate object method "foo" via package "E::D" (perhaps / ? 1 : $@}, 1);
-is(do { eval '$e = bless {}, "UNIVERSAL"; $e->E::E::foo()';
-	  $@ =~ /^\QCan't locate object method "foo" via package "E::E" (perhaps / ? 1 : $@}, 1);
+eval 'UNIVERSAL->E::D::foo()';
+like ($@, qr/^\QCan't locate object method "foo" via package "E::D" (perhaps /);
+eval '$e = bless {}, "UNIVERSAL"; $e->E::E::foo()';
+like ($@, qr/^\QCan't locate object method "foo" via package "E::E" (perhaps /);
 
 $e = bless {}, "E::F";  # force package to exist
-is(do { eval 'UNIVERSAL->E::F::foo()';
-	  $@ =~ /^\QCan't locate object method "foo" via package "E::F" at/ ? 1 : $@}, 1);
-is(do { eval '$e = bless {}, "UNIVERSAL"; $e->E::F::foo()';
-	  $@ =~ /^\QCan't locate object method "foo" via package "E::F" at/ ? 1 : $@}, 1);
+eval 'UNIVERSAL->E::F::foo()';
+like ($@, qr/^\QCan't locate object method "foo" via package "E::F" at/);
+eval '$e = bless {}, "UNIVERSAL"; $e->E::F::foo()';
+like ($@, qr/^\QCan't locate object method "foo" via package "E::F" at/);
 
 # TODO: we need some tests for the SUPER:: pseudoclass
 

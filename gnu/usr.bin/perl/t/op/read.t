@@ -31,9 +31,7 @@ my $has_perlio = !eval {
     !$Config::Config{useperlio}
 };
 
-my $tmpfile = 'Op_read.tmp';
-
-END { 1 while unlink $tmpfile }
+my $tmpfile = tempfile();
 
 my (@values, @buffers) = ('', '');
 
@@ -56,7 +54,6 @@ foreach my $value (@values) {
 	    skip "Needs :utf8 layer but no perlio", 2 * @offsets * @lengths
 	      if $utf8 and !$has_perlio;
 
-	    1 while unlink $tmpfile;
 	    open FH, ">$tmpfile" or die "Can't open $tmpfile: $!";
 	    binmode FH, "utf8" if $utf8;
 	    print FH $value;

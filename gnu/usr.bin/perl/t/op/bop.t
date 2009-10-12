@@ -15,7 +15,7 @@ BEGIN {
 # If you find tests are failing, please try adding names to tests to track
 # down where the failure is, and supply your new names as a patch.
 # (Just-in-time test naming)
-plan tests => 161;
+plan tests => 161 + (10*13*2) + 4;
 
 # numerics
 ok ((0xdead & 0xbeef) == 0x9ead);
@@ -428,3 +428,105 @@ SKIP: {
   my $ref = "\x{10000}\0";
   is(~~$str, $ref);
 }
+
+# ref tests
+
+my %res;
+
+for my $str ("x", "\x{100}") {
+    for my $chr (qw/S A H G X ( * F/) {
+        for my $op (qw/| & ^/) {
+            my $co = ord $chr;
+            my $so = ord $str;
+            $res{"$chr$op$str"} = eval qq/chr($co $op $so)/;
+        }
+    }
+    $res{"undef|$str"} = $str;
+    $res{"undef&$str"} = "";
+    $res{"undef^$str"} = $str;
+}
+
+sub PVBM () { "X" }
+index "foo", PVBM;
+
+my $warn = 0;
+local $^W = 1;
+local $SIG{__WARN__} = sub { $warn++ };
+
+sub is_first {
+    my ($got, $orig, $op, $str, $name) = @_;
+    is(substr($got, 0, 1), $res{"$orig$op$str"}, $name);
+}
+
+for (
+    # [object to test, first char of stringification, name]
+    [undef,             "undef",    "undef"         ],
+    [\1,                "S",        "scalar ref"    ],
+    [[],                "A",        "array ref"     ],
+    [{},                "H",        "hash ref"      ],
+    [qr/x/,             "(",        "qr//"          ],
+    [*foo,              "*",        "glob"          ],
+    [\*foo,             "G",        "glob ref"      ],
+    [PVBM,              "X",        "PVBM"          ],
+    [\PVBM,             "S",        "PVBM ref"      ],
+    [bless([], "Foo"),  "F",        "object"        ],
+) {
+    my ($val, $orig, $type) = @$_;
+
+    for (["x", "string"], ["\x{100}", "utf8"]) {
+        my ($str, $desc) = @$_;
+
+        $warn = 0;
+
+        is_first($val | $str, $orig, "|", $str, "$type | $desc");
+        is_first($val & $str, $orig, "&", $str, "$type & $desc");
+        is_first($val ^ $str, $orig, "^", $str, "$type ^ $desc");
+
+        is_first($str | $val, $orig, "|", $str, "$desc | $type");
+        is_first($str & $val, $orig, "&", $str, "$desc & $type");
+        is_first($str ^ $val, $orig, "^", $str, "$desc ^ $type");
+
+        my $new;
+        ($new = $val) |= $str;
+        is_first($new, $orig, "|", $str, "$type |= $desc");
+        ($new = $val) &= $str;
+        is_first($new, $orig, "&", $str, "$type &= $desc");
+        ($new = $val) ^= $str;
+        is_first($new, $orig, "^", $str, "$type ^= $desc");
+
+        ($new = $str) |= $val;
+        is_first($new, $orig, "|", $str, "$desc |= $type");
+        ($new = $str) &= $val;
+        is_first($new, $orig, "&", $str, "$desc &= $type");
+        ($new = $str) ^= $val;
+        is_first($new, $orig, "^", $str, "$desc ^= $type");
+
+        if ($orig eq "undef") {
+            # undef |= and undef ^= don't warn
+            is($warn, 10, "no duplicate warnings");
+        }
+        else {
+            is($warn, 0, "no warnings");
+        }
+    }
+}
+
+my $strval;
+
+{
+    package Bar;
+    use overload q/""/ => sub { $strval };
+
+    package Baz;
+    use overload q/|/ => sub { "y" };
+}
+
+ok(!eval { bless([], "Bar") | "x"; 1 },     "string overload can't use |");
+like($@, qr/no method found/,               "correct error");
+is(eval { bless([], "Baz") | "x" }, "y",    "| overload works");
+
+my $obj = bless [], "Bar";
+$strval = "x";
+eval { $obj |= "Q" };
+$strval = "z";
+is("$obj", "z", "|= doesn't break string overload");

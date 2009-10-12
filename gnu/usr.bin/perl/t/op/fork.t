@@ -11,6 +11,7 @@ BEGIN {
 	exit 0;
     }
     $ENV{PERL5LIB} = "../lib";
+    require './test.pl';
 }
 
 if ($^O eq 'mpeix') {
@@ -24,9 +25,8 @@ undef $/;
 @prgs = split "\n########\n", <DATA>;
 print "1..", scalar @prgs, "\n";
 
-$tmpfile = "forktmp000";
-1 while -f ++$tmpfile;
-END { close TEST; unlink $tmpfile if $tmpfile; }
+$tmpfile = tempfile();
+END { close TEST }
 
 $CAT = (($^O eq 'MSWin32') ? '.\perl -e "print <>"' : (($^O eq 'NetWare') ? 'perl -e "print <>"' : 'cat'));
 
@@ -54,8 +54,8 @@ for (@prgs){
     }
     $status = $?;
     $results =~ s/\n+$//;
-    $results =~ s/at\s+forktmp\d+\s+line/at - line/g;
-    $results =~ s/of\s+forktmp\d+\s+aborted/of - aborted/g;
+    $results =~ s/at\s+$::tempfile_regexp\s+line/at - line/g;
+    $results =~ s/of\s+$::tempfile_regexp\s+aborted/of - aborted/g;
 # bison says 'parse error' instead of 'syntax error',
 # various yaccs may or may not capitalize 'syntax'.
     $results =~ s/^(syntax|parse) error/syntax error/mig;
@@ -445,16 +445,14 @@ pipe(RDR,WTR) or die $!;
 my $pid = fork;
 die "fork: $!" if !defined $pid;
 if ($pid == 0) {
-    my $rand_child = rand;
     close RDR;
-    print WTR $rand_child, "\n";
+    print WTR "STRING_FROM_CHILD\n";
     close WTR;
 } else {
-    my $rand_parent = rand;
     close WTR;
-    chomp(my $rand_child  = <RDR>);
+    chomp(my $string_from_child  = <RDR>);
     close RDR;
-    print $rand_child ne $rand_parent, "\n";
+    print $string_from_child eq "STRING_FROM_CHILD", "\n";
 }
 EXPECT
 1

@@ -1,2 +1,0 @@
-use if ($^O eq 'VMS'), vmsish => 'hushed';
-exit 1;  # exit because die() can be noisy

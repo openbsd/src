@@ -205,7 +205,7 @@ is($ok, 1, 'goto in for(;;) with continuation');
 
 # bug #22299 - goto in require doesn't find label
 
-open my $f, ">goto01.pm" or die;
+open my $f, ">Op_goto01.pm" or die;
 print $f <<'EOT';
 package goto01;
 goto YYY;
@@ -215,9 +215,9 @@ YYY: print "OK\n";
 EOT
 close $f;
 
-$r = runperl(prog => 'use goto01; print qq[DONE\n]');
+$r = runperl(prog => 'use Op_goto01; print qq[DONE\n]');
 is($r, "OK\nDONE\n", "goto within use-d file"); 
-unlink "goto01.pm";
+unlink "Op_goto01.pm";
 
 # test for [perl #24108]
 $ok = 1;

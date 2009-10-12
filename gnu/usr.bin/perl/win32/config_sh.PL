@@ -43,7 +43,6 @@ while (@{$optref} && $optref->[0] =~ /^([\w_]+)=(.*)$/) {
 }
 
 FindExt::scan_ext("../ext");
-FindExt::scan_ext("ext") if -d 'ext';  # also look in win32/ext/ if it exists
 FindExt::set_static_extensions(split ' ', $opt{'static_ext'});
 
 $opt{'nonxs_ext'}        = join(' ',FindExt::nonxs_ext()) || ' ';
@@ -78,7 +77,7 @@ if (-e $patch_file) {
 $opt{VERSION} = "$opt{PERL_REVISION}.$opt{PERL_VERSION}.$opt{PERL_SUBVERSION}";
 $opt{INST_VER} =~ s|~VERSION~|$opt{VERSION}|g;
 $opt{'version_patchlevel_string'} = "version $opt{PERL_VERSION} subversion $opt{PERL_SUBVERSION}";
-$opt{'version_patchlevel_string'} .= " patchlevel $opt{PERL_PATCHLEVEL}" if exists $opt{PERL_PATCHLEVEL};
+$opt{'version_patchlevel_string'} .= " patch $opt{PERL_PATCHLEVEL}" if exists $opt{PERL_PATCHLEVEL};
 
 my $ver = `ver 2>nul`;
 if ($ver =~ /Version (\d+\.\d+)/) {
@@ -117,9 +116,29 @@ unless (defined $ENV{SYSTEMROOT}) { # SystemRoot has been introduced by WinNT
     $opt{d_link} = 'undef';
 }
 
-if ($opt{uselargefiles} ne 'define') {
-    $opt{lseeksize} = 4;
-    $opt{lseektype} = 'off_t';
+# change the lseeksize and lseektype from their canned default values (which
+# are set-up for a non-uselargefiles build) if we are building with
+# uselargefiles. don't do this for bcc32: the code contains special handling
+# for bcc32 and the lseeksize and lseektype should not be changed.
+if ($opt{uselargefiles} eq 'define' and $opt{cc} ne 'bcc32') {
+    $opt{lseeksize} = 8;
+    if ($opt{cc} eq 'cl') {
+	$opt{lseektype} = '__int64';
+    }
+    elsif ($opt{cc} eq 'gcc') {
+	$opt{lseektype} = 'long long';
+    }
+}
+
+# change the s{GM|LOCAL}TIME_{min|max} for VS2005 (aka VC 8) and
+# VS2008 (aka VC 9) or higher (presuming that later versions will have
+# at least the range of that).
+if ($opt{cc} eq 'cl' and $opt{ccversion} =~ /^(\d+)/) {
+    my $ccversion = $1;
+    if ($ccversion >= 14) {
+	$opt{sGMTIME_max} = 32535291599;
+	$opt{sLOCALTIME_max} = 32535244799;
+    }
 }
 
 if ($opt{useithreads} eq 'define' && $opt{ccflags} =~ /-DPERL_IMPLICIT_SYS\b/) {

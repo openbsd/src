@@ -4,6 +4,7 @@ print "1..42\n";
 
 chdir('op') || chdir('t/op') || die "sysio.t: cannot look for myself: $!";
 @INC = '../../lib';
+require '../test.pl';
 
 open(I, 'sysio.t') || die "sysio.t: cannot find myself: $!";
 
@@ -60,7 +61,7 @@ print "ok 9\n";
 print 'not ' unless ($a eq "#!.\0\0erl");
 print "ok 10\n";
 
-$outfile = 'sysio.out';
+$outfile = tempfile();
 
 open(O, ">$outfile") || die "sysio.t: cannot write $outfile: $!";
 

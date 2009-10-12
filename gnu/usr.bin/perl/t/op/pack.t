@@ -12,7 +12,7 @@ my $no_endianness = $] > 5.009 ? '' :
 my $no_signedness = $] > 5.009 ? '' :
   "Signed/unsigned pack modifiers not available on this perl";
 
-plan tests => 14696;
+plan tests => 14697;
 
 use strict;
 use warnings qw(FATAL all);
@@ -1979,4 +1979,9 @@ is(unpack('c'), 65, "one-arg unpack (change #18751)"); # defaulting to $_
        'Test basic utf8 @');
     is(unpack('@!4 a*', "\x{301}\x{302}\x{303}\x{304}\x{305}"),
        "\x{303}\x{304}\x{305}", 'Test basic utf8 @!');
+}
+{
+    #50256
+    my ($v) = split //, unpack ('(B)*', 'ab');
+    is($v, 0); # Doesn't SEGV :-)
 }

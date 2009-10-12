@@ -25,7 +25,7 @@ str_2ptr(register STR *str)
     register char *s;
 
     if (!str)
-	return "";
+	return (char *)"";	/* probably safe - won't be written to */
     GROWSTR(&(str->str_ptr), &(str->str_len), 24);
     s = str->str_ptr;
     if (str->str_nok) {
@@ -56,7 +56,7 @@ str_sset(STR *dstr, register STR *sstr)
 }
 
 void
-str_nset(register STR *str, register char *ptr, register int len)
+str_nset(register STR *str, register const char *ptr, register int len)
 {
     GROWSTR(&(str->str_ptr), &(str->str_len), len + 1);
     memcpy(str->str_ptr,ptr,len);
@@ -67,7 +67,7 @@ str_nset(register STR *str, register char *ptr, register int len)
 }
 
 void
-str_set(register STR *str, register char *ptr)
+str_set(register STR *str, register const char *ptr)
 {
     register int len;
 
@@ -82,7 +82,7 @@ str_set(register STR *str, register char *ptr)
 }
 
 void
-str_ncat(register STR *str, register char *ptr, register int len)
+str_ncat(register STR *str, register const char *ptr, register int len)
 {
     if (!(str->str_pok))
 	str_2ptr(str);
@@ -104,7 +104,7 @@ str_scat(STR *dstr, register STR *sstr)
 }
 
 void
-str_cat(register STR *str, register char *ptr)
+str_cat(register STR *str, register const char *ptr)
 {
     register int len;
 
@@ -185,7 +185,7 @@ str_gets(register STR *str, register FILE *fp)
      * buffer, so we getc() it back out and stuff it in the buffer.
      */
     i = getc(fp);
-    if (i == EOF) return Nullch;
+    if (i == EOF) return NULL;
     *(--((*fp)->_ptr)) = (unsigned char) i;
     (*fp)->_cnt++;
 #endif
@@ -239,18 +239,18 @@ thats_all_folks:
 
     static char buf[4192];
 
-    if (fgets(buf, sizeof buf, fp) != Nullch)
+    if (fgets(buf, sizeof buf, fp) != NULL)
 	str_set(str, buf);
     else
 	str_set(str, No);
 
 #endif /* USE_STDIO_PTR && STDIO_PTR_LVALUE && STDIO_CNT_LVALUE */
 
-    return str->str_cur ? str->str_ptr : Nullch;
+    return str->str_cur ? str->str_ptr : NULL;
 }
 
 STR *
-str_make(char *s)
+str_make(const char *s)
 {
     register STR *str = str_new(0);
 

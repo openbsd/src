@@ -8,7 +8,8 @@ BEGIN {
 
 plan(tests => 6);
 
-open(TRY,'>Comp.try') || (die "Can't open temp file.");
+my $filename = tempfile();
+open(TRY,'>',$filename) || (die "Can't open $filename: $!");
 
 $x = 'now is the time
 for all good men
@@ -28,7 +29,7 @@ is($x, $y,  'test data is sane');
 print TRY $x;
 close TRY or die "Could not close: $!";
 
-open(TRY,'Comp.try') || (die "Can't reopen temp file.");
+open(TRY,$filename) || (die "Can't reopen $filename: $!");
 $count = 0;
 $z = '';
 while (<TRY>) {
@@ -41,13 +42,13 @@ is($z, $y,  'basic multiline reading');
 is($count, 7,   '    line count');
 is($., 7,       '    $.' );
 
-$out = (($^O eq 'MSWin32') || $^O eq 'NetWare' || $^O eq 'VMS') ? `type Comp.try`
-    : ($^O eq 'MacOS') ? `catenate Comp.try`
-    : `cat Comp.try`;
+$out = (($^O eq 'MSWin32') || $^O eq 'NetWare') ? `type $filename`
+    : ($^O eq 'VMS') ? `type $filename.;0`   # otherwise .LIS is assumed
+    : ($^O eq 'MacOS') ? `catenate $filename`
+    : `cat $filename`;
 
 like($out, qr/.*\n.*\n.*\n$/);
 
-close(TRY) || (die "Can't close temp file.");
-unlink 'Comp.try' || `/bin/rm -f Comp.try`;
+close(TRY) || (die "Can't close $filename: $!");
 
 is($out, $y);

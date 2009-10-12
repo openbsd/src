@@ -9,21 +9,21 @@ BEGIN {
 $|  = 1;
 use warnings;
 use Config;
-$Is_VMS = $^O eq 'VMS';
 $Is_MacOS = $^O eq 'MacOS';
 
 plan tests => 108;
 
 my $Perl = which_perl();
 
+my $afile = tempfile();
 {
-    unlink("afile") if -f "afile";
+    unlink($afile) if -f $afile;
 
-    $! = 0;  # the -f above will set $! if 'afile' doesn't exist.
-    ok( open(my $f,"+>afile"),  'open(my $f, "+>...")' );
+    $! = 0;  # the -f above will set $! if $afile doesn't exist.
+    ok( open(my $f,"+>$afile"),  'open(my $f, "+>...")' );
 
     binmode $f;
-    ok( -f "afile",             '       its a file');
+    ok( -f $afile,              '       its a file');
     ok( (print $f "SomeData\n"),  '       we can print to it');
     is( tell($f), 9,            '       tell()' );
     ok( seek($f,0,0),           '       seek set' );
@@ -36,25 +36,25 @@ my $Perl = which_perl();
     like( $@, qr/<\$f> line 1/, '       die message correct' );
     
     ok( close($f),              '       close()' );
-    ok( unlink("afile"),        '       unlink()' );
+    ok( unlink($afile),         '       unlink()' );
 }
 
 {
-    ok( open(my $f,'>', 'afile'),       "open(my \$f, '>', 'afile')" );
+    ok( open(my $f,'>', $afile),        "open(my \$f, '>', $afile)" );
     ok( (print $f "a row\n"),           '       print');
     ok( close($f),                      '       close' );
-    ok( -s 'afile' < 10,                '       -s' );
+    ok( -s $afile < 10,                 '       -s' );
 }
 
 {
-    ok( open(my $f,'>>', 'afile'),      "open(my \$f, '>>', 'afile')" );
+    ok( open(my $f,'>>', $afile),       "open(my \$f, '>>', $afile)" );
     ok( (print $f "a row\n"),           '       print' );
     ok( close($f),                      '       close' );
-    ok( -s 'afile' > 10,                '       -s'    );
+    ok( -s $afile > 10,                 '       -s'    );
 }
 
 {
-    ok( open(my $f, '<', 'afile'),      "open(my \$f, '<', 'afile')" );
+    ok( open(my $f, '<', $afile),       "open(my \$f, '<', $afile)" );
     my @rows = <$f>;
     is( scalar @rows, 2,                '       readline, list context' );
     is( $rows[0], "a row\n",            '       first line read' );
@@ -63,22 +63,19 @@ my $Perl = which_perl();
 }
 
 {
-    ok( -s 'afile' < 20,                '-s' );
+    ok( -s $afile < 20,                 '-s' );
 
-    ok( open(my $f, '+<', 'afile'),     'open +<' );
+    ok( open(my $f, '+<', $afile),      'open +<' );
     my @rows = <$f>;
     is( scalar @rows, 2,                '       readline, list context' );
     ok( seek($f, 0, 1),                 '       seek cur' );
     ok( (print $f "yet another row\n"), '       print' );
     ok( close($f),                      '       close' );
-    ok( -s 'afile' > 20,                '       -s' );
+    ok( -s $afile > 20,                 '       -s' );
 
-    unlink("afile");
+    unlink($afile);
 }
-
-SKIP: {
-    skip "open -| busted and noisy on VMS", 3 if $Is_VMS;
-
+{
     ok( open(my $f, '-|', <<EOC),     'open -|' );
     $Perl -e "print qq(a row\\n); print qq(another row\\n)"
 EOC
@@ -87,7 +84,6 @@ EOC
     is( scalar @rows, 2,                '       readline, list context' );
     ok( close($f),                      '       close' );
 }
-
 SKIP: {
     skip "Output for |- doesn't go to shell on MacOS", 5 if $Is_MacOS;
 
@@ -109,18 +105,18 @@ EOC
 }
 
 
-ok( !eval { open my $f, '<&', 'afile'; 1; },    '<& on a non-filehandle' );
-like( $@, qr/Bad filehandle:\s+afile/,          '       right error' );
+ok( !eval { open my $f, '<&', $afile; 1; },    '<& on a non-filehandle' );
+like( $@, qr/Bad filehandle:\s+$afile/,          '       right error' );
 
 
 # local $file tests
 {
-    unlink("afile") if -f "afile";
+    unlink($afile) if -f $afile;
 
-    ok( open(local $f,"+>afile"),       'open local $f, "+>", ...' );
+    ok( open(local $f,"+>$afile"),       'open local $f, "+>", ...' );
     binmode $f;
 
-    ok( -f "afile",                     '       -f' );
+    ok( -f $afile,                      '       -f' );
     ok( (print $f "SomeData\n"),        '       print' );
     is( tell($f), 9,                    '       tell' );
     ok( seek($f,0,0),                   '       seek set' );
@@ -133,47 +129,45 @@ like( $@, qr/Bad filehandle:\s+afile/,          '       right error' );
     like( $@, qr/<\$f> line 1/,         '       proper die message' );
     ok( close($f),                      '       close' );
 
-    unlink("afile");
+    unlink($afile);
 }
 
 {
-    ok( open(local $f,'>', 'afile'),    'open local $f, ">", ...' );
+    ok( open(local $f,'>', $afile),     'open local $f, ">", ...' );
     ok( (print $f "a row\n"),           '       print');
     ok( close($f),                      '       close');
-    ok( -s 'afile' < 10,                '       -s' );
+    ok( -s $afile < 10,                 '       -s' );
 }
 
 {
-    ok( open(local $f,'>>', 'afile'),   'open local $f, ">>", ...' );
+    ok( open(local $f,'>>', $afile),    'open local $f, ">>", ...' );
     ok( (print $f "a row\n"),           '       print');
     ok( close($f),                      '       close');
-    ok( -s 'afile' > 10,                '       -s' );
+    ok( -s $afile > 10,                 '       -s' );
 }
 
 {
-    ok( open(local $f, '<', 'afile'),   'open local $f, "<", ...' );
+    ok( open(local $f, '<', $afile),    'open local $f, "<", ...' );
     my @rows = <$f>;
     is( scalar @rows, 2,                '       readline list context' );
     ok( close($f),                      '       close' );
 }
 
-ok( -s 'afile' < 20,                '       -s' );
+ok( -s $afile < 20,                     '       -s' );
 
 {
-    ok( open(local $f, '+<', 'afile'),  'open local $f, "+<", ...' );
+    ok( open(local $f, '+<', $afile),  'open local $f, "+<", ...' );
     my @rows = <$f>;
     is( scalar @rows, 2,                '       readline list context' );
     ok( seek($f, 0, 1),                 '       seek cur' );
     ok( (print $f "yet another row\n"), '       print' );
     ok( close($f),                      '       close' );
-    ok( -s 'afile' > 20,                '       -s' );
+    ok( -s $afile > 20,                 '       -s' );
 
-    unlink("afile");
+    unlink($afile);
 }
 
-SKIP: {
-    skip "open -| busted and noisy on VMS", 3 if $Is_VMS;
-
+{
     ok( open(local $f, '-|', <<EOC),  'open local $f, "-|", ...' );
     $Perl -e "print qq(a row\\n); print qq(another row\\n)"
 EOC
@@ -204,8 +198,8 @@ EOC
 }
 
 
-ok( !eval { open local $f, '<&', 'afile'; 1 },  'local <& on non-filehandle');
-like( $@, qr/Bad filehandle:\s+afile/,          '       right error' );
+ok( !eval { open local $f, '<&', $afile; 1 },  'local <& on non-filehandle');
+like( $@, qr/Bad filehandle:\s+$afile/,          '       right error' );
 
 {
     local *F;
@@ -289,19 +283,19 @@ SKIP: {
     use warnings 'layer';
     local $SIG{__WARN__} = sub { $w = shift };
 
-    eval { open(F, ">>>", "afile") };
+    eval { open(F, ">>>", $afile) };
     like($w, qr/Invalid separator character '>' in PerlIO layer spec/,
 	 "bad open (>>>) warning");
     like($@, qr/Unknown open\(\) mode '>>>'/,
 	 "bad open (>>>) failure");
 
-    eval { open(F, ">:u", "afile" ) };
+    eval { open(F, ">:u", $afile ) };
     like($w, qr/Unknown PerlIO layer "u"/,
 	 'bad layer ">:u" warning');
-    eval { open(F, "<:u", "afile" ) };
+    eval { open(F, "<:u", $afile ) };
     like($w, qr/Unknown PerlIO layer "u"/,
 	 'bad layer "<:u" warning');
-    eval { open(F, ":c", "afile" ) };
+    eval { open(F, ":c", $afile ) };
     like($@, qr/Unknown open\(\) mode ':c'/,
 	 'bad layer ":c" failure');
 }

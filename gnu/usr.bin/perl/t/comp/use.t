@@ -190,12 +190,12 @@ if ($^O eq 'MacOS') {
 {
     # Regression test for patch 14937: 
     #   Check that a .pm file with no package or VERSION doesn't core.
-    open F, ">xxx.pm" or die "Cannot open xxx.pm: $!\n";
+    open F, ">xxx$$.pm" or die "Cannot open xxx$$.pm: $!\n";
     print F "1;\n";
     close F;
-    eval "use lib '.'; use xxx 3;";
-    like ($@, qr/^xxx defines neither package nor VERSION--version check failed at/);
-    unlink 'xxx.pm';
+    eval "use lib '.'; use xxx$$ 3;";
+    like ($@, qr/^xxx$$ defines neither package nor VERSION--version check failed at/);
+    unlink "xxx$$.pm";
 }
 
 my @ver = split /\./, sprintf "%vd", $^V;

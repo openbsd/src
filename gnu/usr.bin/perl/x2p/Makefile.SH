@@ -124,6 +124,9 @@ run_byacc:	FORCE
 	    -e 's/^yynewerror://' \
 	    -e 's/^    goto yynewerror;//' \
 	    -e 's|^static char yysccsid\(.*\)|/* static char yysccsid\1 */|' \
+	    -e 's/^\(char \*yyname\[\]\)/const \1/' \
+	    -e 's/^\(char \*yyrule\[\]\)/const \1/' \
+	    -e 's/^\(    register\) \(char \*yys;\)/\1 const \2/' \
 	    < y.tab.c > a2p.c
 
 FORCE:

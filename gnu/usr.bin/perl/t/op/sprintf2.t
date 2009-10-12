@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }   
 
-plan tests => 1292;
+plan tests => 1368;
 
 is(
     sprintf("%.40g ",0.01),
@@ -134,3 +134,28 @@ for my $num (0, -1, 1) {
     }
 }
 
+# test that %f doesn't panic with +Inf, -Inf, NaN [perl #45383]
+foreach my $n (2**1e100, -2**1e100, 2**1e100/2**1e100) { # +Inf, -Inf, NaN
+    eval { my $f = sprintf("%f", $n); };
+    is $@, "", "sprintf(\"%f\", $n)";
+}
+
+SKIP: {
+    skip "placeholder for tests not merged from 53f65a9ef4", 24;
+}
+
+# Check unicode vs byte length
+for my $width (1,2,3,4,5,6,7) {
+    for my $precis (1,2,3,4,5,6,7) {
+        my $v = "\x{20ac}\x{20ac}";
+        my $format = "%" . $width . "." . $precis . "s";
+        my $chars = ($precis > 2 ? 2 : $precis);
+        my $space = ($width < 2 ? 0 : $width - $chars);
+        fresh_perl_is(
+            'my $v = "\x{20ac}\x{20ac}"; my $x = sprintf "'.$format.'", $v; $x =~ /^(\s*)(\S*)$/; print "$_" for map {length} $1, $2',
+            "$space$chars",
+            {},
+            q(sprintf ").$format.q(", "\x{20ac}\x{20ac}"),
+        );
+    }
+}

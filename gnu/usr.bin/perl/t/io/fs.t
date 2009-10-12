@@ -51,25 +51,27 @@ my $skip_mode_checks =
 
 plan tests => 51;
 
+my $tmpdir = tempfile();
+my $tmpdir1 = tempfile();
 
 if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
-    `rmdir /s /q tmp 2>nul`;
-    `mkdir tmp`;
+    `rmdir /s /q $tmpdir 2>nul`;
+    `mkdir $tmpdir`;
 }
 elsif ($^O eq 'VMS') {
-    `if f\$search("[.tmp]*.*") .nes. "" then delete/nolog/noconfirm [.tmp]*.*.*`;
-    `if f\$search("tmp.dir") .nes. "" then set file/prot=o:rwed tmp.dir;`;
-    `if f\$search("tmp.dir") .nes. "" then delete/nolog/noconfirm tmp.dir;`;
-    `create/directory [.tmp]`;
+    `if f\$search("[.$tmpdir]*.*") .nes. "" then delete/nolog/noconfirm [.$tmpdir]*.*.*`;
+    `if f\$search("$tmpdir.dir") .nes. "" then set file/prot=o:rwed $tmpdir.dir;`;
+    `if f\$search("$tmpdir.dir") .nes. "" then delete/nolog/noconfirm $tmpdir.dir;`;
+    `create/directory [.$tmpdir]`;
 }
 elsif ($Is_MacOS) {
-    rmdir "tmp"; mkdir "tmp";
+    rmdir "$tmpdir"; mkdir "$tmpdir";
 }
 else {
-    `rm -f tmp 2>/dev/null; mkdir tmp 2>/dev/null`;
+    `rm -f $tmpdir 2>/dev/null; mkdir $tmpdir 2>/dev/null`;
 }
 
-chdir catdir(curdir(), 'tmp');
+chdir catdir(curdir(), $tmpdir);
 
 `/bin/rm -rf a b c x` if -x '/bin/rm';
 
@@ -87,13 +89,15 @@ open(FH,'>a') || die "Can't create a";
 close(FH);
 
 my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks);
+    $blksize,$blocks,$a_mode);
 
 SKIP: {
     skip("no link", 4) unless $has_link;
 
     ok(link('a','b'), "link a b");
     ok(link('b','c'), "link b c");
+
+    $a_mode = (stat('a'))[2];
 
     ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
      $blksize,$blocks) = stat('c');
@@ -111,7 +115,9 @@ SKIP: {
 #      if ($^O eq 'cygwin') { # new files on cygwin get rwx instead of rw-
 #          is($mode & 0777, 0777, "mode of triply-linked file");
 #      } else {
-            is($mode & 0777, 0666, "mode of triply-linked file");
+            is(sprintf("0%o", $mode & 0777), 
+               sprintf("0%o", $a_mode & 0777), 
+               "mode of triply-linked file");
 #      }
     }
 }
@@ -275,7 +281,7 @@ sub check_utime_result {
 		is( $atime, 500000001,          'atime' );
 		is( $mtime, 500000000 + $delta, 'mtime' );
 	    }
-	    elsif ($^O eq 'beos') {
+	    elsif ($^O eq 'beos' || $^O eq 'haiku') {
             SKIP: {
 		    skip "atime not updated", 1;
 		}
@@ -326,8 +332,8 @@ SKIP: {
     unlink("TEST$$");
 }
 
-unlink "Iofs.tmp";
-open IOFSCOM, ">Iofs.tmp" or die "Could not write IOfs.tmp: $!";
+my $tmpfile = tempfile();
+open IOFSCOM, ">$tmpfile" or die "Could not write IOfs.tmp: $!";
 print IOFSCOM 'helloworld';
 close(IOFSCOM);
 
@@ -336,24 +342,24 @@ close(IOFSCOM);
 
 SKIP: {
 # Check truncating a closed file.
-    eval { truncate "Iofs.tmp", 5; };
+    eval { truncate $tmpfile, 5; };
 
     skip("no truncate - $@", 8) if $@;
 
-    is(-s "Iofs.tmp", 5, "truncation to five bytes");
+    is(-s $tmpfile, 5, "truncation to five bytes");
 
-    truncate "Iofs.tmp", 0;
+    truncate $tmpfile, 0;
 
-    ok(-z "Iofs.tmp",    "truncation to zero bytes");
+    ok(-z $tmpfile,    "truncation to zero bytes");
 
 #these steps are necessary to check if file is really truncated
 #On Win95, FH is updated, but file properties aren't
-    open(FH, ">Iofs.tmp") or die "Can't create Iofs.tmp";
+    open(FH, ">$tmpfile") or die "Can't create $tmpfile";
     print FH "x\n" x 200;
     close FH;
 
 # Check truncating an open file.
-    open(FH, ">>Iofs.tmp") or die "Can't open Iofs.tmp for appending";
+    open(FH, ">>$tmpfile") or die "Can't open $tmpfile for appending";
 
     binmode FH;
     select FH;
@@ -367,7 +373,7 @@ SKIP: {
     }
 
     if ($needs_fh_reopen) {
-	close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
+	close (FH); open (FH, ">>$tmpfile") or die "Can't reopen $tmpfile";
     }
 
     SKIP: {
@@ -375,19 +381,19 @@ SKIP: {
 	    skip ("# TODO - hit VOS bug posix-973 - cannot resize an open file below the current file pos.", 5);
 	}
 
-	is(-s "Iofs.tmp", 200, "fh resize to 200 working (filename check)");
+	is(-s $tmpfile, 200, "fh resize to 200 working (filename check)");
 
 	ok(truncate(FH, 0), "fh resize to zero");
 
 	if ($needs_fh_reopen) {
-	    close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
+	    close (FH); open (FH, ">>$tmpfile") or die "Can't reopen $tmpfile";
 	}
 
-	ok(-z "Iofs.tmp", "fh resize to zero working (filename check)");
+	ok(-z $tmpfile, "fh resize to zero working (filename check)");
 
 	close FH;
 
-	open(FH, ">>Iofs.tmp") or die "Can't open Iofs.tmp for appending";
+	open(FH, ">>$tmpfile") or die "Can't open $tmpfile for appending";
 
 	binmode FH;
 	select FH;
@@ -401,10 +407,10 @@ SKIP: {
 	}
 
 	if ($needs_fh_reopen) {
-	    close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
+	    close (FH); open (FH, ">>$tmpfile") or die "Can't reopen $tmpfile";
 	}
 
-	is(-s "Iofs.tmp", 100, "fh resize by IO slot working");
+	is(-s $tmpfile, 100, "fh resize by IO slot working");
 
 	close FH;
     }
@@ -415,7 +421,7 @@ SKIP: {
     skip "Works in Cygwin only if check_case is set to relaxed", 1
       if ($ENV{'CYGWIN'} && ($ENV{'CYGWIN'} =~ /check_case:(?:adjust|strict)/));
 
-    chdir './tmp';
+    chdir "./$tmpdir";
     open(FH,'>x') || die "Can't create x";
     close(FH);
     rename('x', 'X');
@@ -430,15 +436,15 @@ SKIP: {
 # check if rename() works on directories
 if ($^O eq 'VMS') {
     # must have delete access to rename a directory
-    `set file tmp.dir/protection=o:d`;
-    ok(rename('tmp.dir', 'tmp1.dir'), "rename on directories") ||
+    `set file $tmpdir.dir/protection=o:d`;
+    ok(rename("$tmpdir.dir", "$tmpdir1.dir"), "rename on directories") ||
       print "# errno: $!\n";
 }
 else {
-    ok(rename('tmp', 'tmp1'), "rename on directories");
+    ok(rename($tmpdir, $tmpdir1), "rename on directories");
 }
 
-ok(-d 'tmp1', "rename on directories working");
+ok(-d $tmpdir1, "rename on directories working");
 
 {
     # Change 26011: Re: A surprising segfault
@@ -451,5 +457,5 @@ ok(-d 'tmp1', "rename on directories working");
     ok(1, "extend sp in pp_chown");
 }
 
-# need to remove 'tmp' if rename() in test 28 failed!
-END { rmdir 'tmp1'; rmdir 'tmp'; 1 while unlink "Iofs.tmp"; }
+# need to remove $tmpdir if rename() in test 28 failed!
+END { rmdir $tmpdir1; rmdir $tmpdir; }

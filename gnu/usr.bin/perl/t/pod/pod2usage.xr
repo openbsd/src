@@ -33,12 +33,12 @@ OPTIONS AND ARGUMENTS
             on MSWin32 and DOS).
 
     *file*  The pathname of a file containing pod documentation to be output
-            in usage mesage format (defaults to standard input).
+            in usage message format (defaults to standard input).
 
 DESCRIPTION
     pod2usage will read the given input file looking for pod documentation
     and will print the corresponding usage message. If no input file is
-    specified than standard input is read.
+    specified then standard input is read.
 
     pod2usage invokes the pod2usage() function in the Pod::Usage module.
     Please see the pod2usage() entry in the Pod::Usage manpage.

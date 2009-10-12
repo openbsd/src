@@ -3,102 +3,116 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
-print "1..36\n";
+use strict;
 
-print defined($a) ? "not ok 1\n" : "ok 1\n";
+use vars qw(@ary %ary %hash);
+
+plan 37;
+
+ok !defined($a);
 
 $a = 1+1;
-print defined($a) ? "ok 2\n" : "not ok 2\n";
+ok defined($a);
 
 undef $a;
-print defined($a) ? "not ok 3\n" : "ok 3\n";
+ok !defined($a);
 
 $a = "hi";
-print defined($a) ? "ok 4\n" : "not ok 4\n";
+ok defined($a);
 
 $a = $b;
-print defined($a) ? "not ok 5\n" : "ok 5\n";
+ok !defined($a);
 
 @ary = ("1arg");
 $a = pop(@ary);
-print defined($a) ? "ok 6\n" : "not ok 6\n";
+ok defined($a);
 $a = pop(@ary);
-print defined($a) ? "not ok 7\n" : "ok 7\n";
+ok !defined($a);
 
 @ary = ("1arg");
 $a = shift(@ary);
-print defined($a) ? "ok 8\n" : "not ok 8\n";
+ok defined($a);
 $a = shift(@ary);
-print defined($a) ? "not ok 9\n" : "ok 9\n";
+ok !defined($a);
 
 $ary{'foo'} = 'hi';
-print defined($ary{'foo'}) ? "ok 10\n" : "not ok 10\n";
-print defined($ary{'bar'}) ? "not ok 11\n" : "ok 11\n";
+ok defined($ary{'foo'});
+ok !defined($ary{'bar'});
 undef $ary{'foo'};
-print defined($ary{'foo'}) ? "not ok 12\n" : "ok 12\n";
+ok !defined($ary{'foo'});
 
-print defined(@ary) ? "ok 13\n" : "not ok 13\n";
-print defined(%ary) ? "ok 14\n" : "not ok 14\n";
+ok defined(@ary);
+ok defined(%ary);
 undef @ary;
-print defined(@ary) ? "not ok 15\n" : "ok 15\n";
+ok !defined(@ary);
 undef %ary;
-print defined(%ary) ? "not ok 16\n" : "ok 16\n";
+ok !defined(%ary);
 @ary = (1);
-print defined @ary ? "ok 17\n" : "not ok 17\n";
+ok defined @ary;
 %ary = (1,1);
-print defined %ary ? "ok 18\n" : "not ok 18\n";
+ok defined %ary;
 
-sub foo { print "ok 19\n"; }
+sub foo { pass; 1 }
 
-&foo || print "not ok 19\n";
+&foo || fail;
 
-print defined &foo ? "ok 20\n" : "not ok 20\n";
+ok defined &foo;
 undef &foo;
-print defined(&foo) ? "not ok 21\n" : "ok 21\n";
+ok !defined(&foo);
 
 eval { undef $1 };
-print $@ =~ /^Modification of a read/ ? "ok 22\n" : "not ok 22\n";
+like $@, qr/^Modification of a read/;
 
 eval { $1 = undef };
-print $@ =~ /^Modification of a read/ ? "ok 23\n" : "not ok 23\n";
+like $@, qr/^Modification of a read/;
 
 {
     require Tie::Hash;
     tie my %foo, 'Tie::StdHash';
-    print defined %foo ? "ok 24\n" : "not ok 24\n";
+    ok defined %foo;
     %foo = ( a => 1 );
-    print defined %foo ? "ok 25\n" : "not ok 25\n";
+    ok defined %foo;
 }
 
 {
     require Tie::Array;
     tie my @foo, 'Tie::StdArray';
-    print defined @foo ? "ok 26\n" : "not ok 26\n";
+    ok defined @foo;
     @foo = ( a => 1 );
-    print defined @foo ? "ok 27\n" : "not ok 27\n";
+    ok defined @foo;
 }
 
 {
     # [perl #17753] segfault when undef'ing unquoted string constant
     eval 'undef tcp';
-    print $@ =~ /^Can't modify constant item/ ? "ok 28\n" : "not ok 28\n";
+    like $@, qr/^Can't modify constant item/;
 }
 
 # bugid 3096
 # undefing a hash may free objects with destructors that then try to
 # modify the hash. To them, the hash should appear empty.
 
-$test = 29;
 %hash = (
     key1 => bless({}, 'X'),
     key2 => bless({}, 'X'),
 );
 undef %hash;
 sub X::DESTROY {
-    print "not " if keys   %hash; print "ok $test\n"; $test++;
-    print "not " if values %hash; print "ok $test\n"; $test++;
-    print "not " if each   %hash; print "ok $test\n"; $test++;
-    print "not " if defined delete $hash{'key2'}; print "ok $test\n"; $test++;
+    is scalar keys %hash, 0;
+    is scalar values %hash, 0;
+    my @l = each %hash;
+    is @l, 0;
+    is delete $hash{'key2'}, undef;
 }
+
+# this will segfault if it fails
+
+sub PVBM () { 'foo' }
+{ my $dummy = index 'foo', PVBM }
+
+my $pvbm = PVBM;
+undef $pvbm;
+ok !defined $pvbm;

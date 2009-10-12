@@ -19,11 +19,11 @@ bool saw_FNR = FALSE;
 bool saw_argv0 = FALSE;
 bool saw_fh = FALSE;
 int maxtmp = 0;
-char *lparen;
-char *rparen;
-char *limit;
+const char *lparen;
+const char *rparen;
+const char *limit;
 STR *subs;
-STR *curargs = Nullstr;
+STR *curargs = NULL;
 
 static void addsemi ( STR *str );
 static void emit_split ( STR *str, int level );
@@ -36,7 +36,7 @@ STR * walk ( int useval, int level, int node, int *numericptr, int minprec );
 #ifdef NETWARE
 char *savestr(char *str);
 char *cpytill(register char *to, register char *from, register int delim);
-char *instr(char *big, char *little);
+char *instr(char *big, const char *little);
 #endif
 
 STR *
@@ -741,10 +741,10 @@ sub Pick {\n\
 	str_cat(curargs,",");
 	tmp2str=walk(1,level,ops[node+5].ival,&numarg,P_MIN);
 	str_free(curargs);
-	curargs = Nullstr;
+	curargs = NULL;
 	level--;
 	subretnum |= numarg;
-	s = Nullch;
+	s = NULL;
 	t = tmp2str->str_ptr;
 	while ((t = instr(t,"return ")))
 	    s = t++;
@@ -838,7 +838,9 @@ sub Pick {\n\
 	len = type >> 8;
 	type &= 255;
 	tmp3str = str_new(0);
-	if (type == OSTR) {
+	{
+	  const char *s;
+	  if (type == OSTR) {
 	    tmp2str=walk(1,level,ops[ops[node+2].ival+1].ival,&numarg,P_MIN);
 	    for (t = tmp2str->str_ptr, d=tokenbuf; *t; d++,t++) {
 		if (*t == '&')
@@ -849,18 +851,19 @@ sub Pick {\n\
 	    }
 	    *d = '\0';
 	    str_set(tmp2str,tokenbuf);
-	    s = (char *) (gsub ? "/g" : "/");
-	}
-	else {
+	    s = (gsub ? "/g" : "/");
+	  }
+	  else {
 	    tmp2str=walk(1,level,ops[node+2].ival,&numarg,P_MIN);
 	    str_set(tmp3str,"($s_ = '\"'.(");
 	    str_scat(tmp3str,tmp2str);
 	    str_cat(tmp3str,").'\"') =~ s/&/\\$&/g, ");
 	    str_set(tmp2str,"eval $s_");
-	    s = (char *) (gsub ? "/ge" : "/e");
+	    s = (gsub ? "/ge" : "/e");
 	    i++;
+	  }
+	  str_cat(tmp2str,s);
 	}
-	str_cat(tmp2str,s);
 	type = ops[ops[node+1].ival].ival;
 	len = type >> 8;
 	type &= 255;
@@ -909,8 +912,9 @@ sub Pick {\n\
 	break;
     case OSTR:
 	tmpstr = walk(1,level,ops[node+1].ival,&numarg,P_MIN);
-	s = "'";
-	for (t = tmpstr->str_ptr, d=tokenbuf; *t; d++,t++) {
+	{
+	  const char *s = "'";
+	  for (t = tmpstr->str_ptr, d=tokenbuf; *t; d++,t++) {
 	    if (*t == '\'')
 		s = "\"";
 	    else if (*t == '\\') {
@@ -924,13 +928,14 @@ sub Pick {\n\
 		}
 	    }
 	    *d = *t + 128;
+	  }
+	  *d = '\0';
+	  str = str_new(0);
+	  str_set(str,s);
+	  str_cat(str,tokenbuf);
+	  str_free(tmpstr);
+	  str_cat(str,s);
 	}
-	*d = '\0';
-	str = str_new(0);
-	str_set(str,s);
-	str_cat(str,tokenbuf);
-	str_free(tmpstr);
-	str_cat(str,s);
 	break;
     case ODEFINED:
 	prec = P_UNI;
@@ -1208,7 +1213,7 @@ sub Pick {\n\
 	}
 	tmpstr = walk(1+(type==OPRINT),level,ops[node+1].ival,&numarg,P_MIN);
 	if (!*tmpstr->str_ptr && lval_field) {
-	    t = (char*)(saw_OFS ? "$," : "' '");
+	    const char *t = (saw_OFS ? "$," : "' '");
 	    if (split_to_array) {
 		sprintf(tokenbuf,"join(%s,@Fld)",t);
 		str_cat(tmpstr,tokenbuf);
@@ -1284,7 +1289,7 @@ sub Pick {\n\
 	    tmpstr = str_new(0);
 	if (!tmpstr->str_ptr || !*tmpstr->str_ptr) {
 	    if (lval_field) {
-		t = (char*)(saw_OFS ? "$," : "' '");
+		const char *t = (saw_OFS ? "$," : "' '");
 		if (split_to_array) {
 		    sprintf(tokenbuf,"join(%s,@Fld)",t);
 		    str_cat(tmpstr,tokenbuf);
@@ -1511,7 +1516,7 @@ sub Pick {\n\
 	    }
 	}
 	else {
-	    str = Nullstr;
+	    str = NULL;
 	}
 	break;
     }

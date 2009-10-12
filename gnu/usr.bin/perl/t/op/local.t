@@ -5,7 +5,7 @@ BEGIN {
     @INC = qw(. ../lib);
     require './test.pl';
 }
-plan tests => 122;
+plan tests => 123;
 
 my $list_assignment_supported = 1;
 
@@ -450,6 +450,11 @@ sub f { ok(0 == $[); }
     ok(! exists($h{'k2'}));
     is($h{'k1'},111);
 }
+
+like( runperl(stderr => 1,
+              prog => 'use constant foo => q(a);' .
+                      'index(q(a), foo);' .
+                      'local *g=${::}{foo};print q(ok);'), "ok", "[perl #52740]");
 
 # Keep this test last, as it can SEGV
 {

@@ -6,10 +6,10 @@ $^I = $^O eq 'VMS' ? '_bak' : '.bak';
 
 plan( tests => 2 );
 
-my @tfiles     = ('.a','.b','.c');
-my @tfiles_bak = (".a$^I", ".b$^I", ".c$^I");
+my @tfiles     = (tempfile(), tempfile(), tempfile());
+my @tfiles_bak = map "$_$^I", @tfiles;
 
-END { unlink_all('.a','.b','.c',".a$^I", ".b$^I", ".c$^I"); }
+END { unlink_all(@tfiles_bak); }
 
 for my $file (@tfiles) {
     runperl( prog => 'print qq(foo\n);', 

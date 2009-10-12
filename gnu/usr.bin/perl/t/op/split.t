@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 135;
+plan tests => 136;
 
 $FS = ':';
 
@@ -357,4 +357,10 @@ ok(@ary == 3 &&
     is($s[1], "FOO");
     is($s[2]," XYZ");
     is(join(':',@s), join(':',@r));
+}
+
+{
+    use constant BANG => {};
+    () = split m/,/, "", BANG;
+    ok(1);
 }

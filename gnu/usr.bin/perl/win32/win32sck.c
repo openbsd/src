@@ -259,9 +259,8 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
 {
     int r;
 #ifdef USE_SOCKETS_AS_HANDLES
-    Perl_fd_set dummy;
     int i, fd, save_errno = errno;
-    FD_SET nrd, nwr, nex, *prd, *pwr, *pex;
+    FD_SET nrd, nwr, nex;
 
     /* winsock seems incapable of dealing with all three null fd_sets,
      * so do the (millisecond) sleep as a special case
@@ -275,45 +274,45 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
 	return 0;
     }
     StartSockets();
-    PERL_FD_ZERO(&dummy);
-    if (!rd)
-	rd = &dummy, prd = NULL;
-    else
-	prd = &nrd;
-    if (!wr)
-	wr = &dummy, pwr = NULL;
-    else
-	pwr = &nwr;
-    if (!ex)
-	ex = &dummy, pex = NULL;
-    else
-	pex = &nex;
 
     FD_ZERO(&nrd);
     FD_ZERO(&nwr);
     FD_ZERO(&nex);
     for (i = 0; i < nfds; i++) {
-	fd = TO_SOCKET(i);
-	if (PERL_FD_ISSET(i,rd))
+	if (rd && PERL_FD_ISSET(i,rd)) {
+	    fd = TO_SOCKET(i);
 	    FD_SET((unsigned)fd, &nrd);
-	if (PERL_FD_ISSET(i,wr))
+	}
+	if (wr && PERL_FD_ISSET(i,wr)) {
+	    fd = TO_SOCKET(i);
 	    FD_SET((unsigned)fd, &nwr);
-	if (PERL_FD_ISSET(i,ex))
+	}
+	if (ex && PERL_FD_ISSET(i,ex)) {
+	    fd = TO_SOCKET(i);
 	    FD_SET((unsigned)fd, &nex);
+	}
     }
 
     errno = save_errno;
-    SOCKET_TEST_ERROR(r = select(nfds, prd, pwr, pex, timeout));
+    SOCKET_TEST_ERROR(r = select(nfds, &nrd, &nwr, &nex, timeout));
     save_errno = errno;
 
     for (i = 0; i < nfds; i++) {
-	fd = TO_SOCKET(i);
-	if (PERL_FD_ISSET(i,rd) && !FD_ISSET(fd, &nrd))
-	    PERL_FD_CLR(i,rd);
-	if (PERL_FD_ISSET(i,wr) && !FD_ISSET(fd, &nwr))
-	    PERL_FD_CLR(i,wr);
-	if (PERL_FD_ISSET(i,ex) && !FD_ISSET(fd, &nex))
-	    PERL_FD_CLR(i,ex);
+	if (rd && PERL_FD_ISSET(i,rd)) {
+	    fd = TO_SOCKET(i);
+	    if (!FD_ISSET(fd, &nrd))
+		PERL_FD_CLR(i,rd);
+	}
+	if (wr && PERL_FD_ISSET(i,wr)) {
+	    fd = TO_SOCKET(i);
+	    if (!FD_ISSET(fd, &nwr))
+		PERL_FD_CLR(i,wr);
+	}
+	if (ex && PERL_FD_ISSET(i,ex)) {
+	    fd = TO_SOCKET(i);
+	    if (!FD_ISSET(fd, &nex))
+		PERL_FD_CLR(i,ex);
+	}
     }
     errno = save_errno;
 #else

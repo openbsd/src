@@ -2,7 +2,7 @@
 
 # use strict;
 
-print "1..34\n";
+print "1..38\n";
 
 my $test = 1;
 
@@ -194,3 +194,14 @@ ok ($a == 2147483647, $a);
     $x--;
     ok ($x == 0, "(void) i_postdec");
 }
+
+# these will segfault if they fail
+
+sub PVBM () { 'foo' }
+{ my $dummy = index 'foo', PVBM }
+
+ok (scalar eval { my $pvbm = PVBM; $pvbm++ });
+ok (scalar eval { my $pvbm = PVBM; $pvbm-- });
+ok (scalar eval { my $pvbm = PVBM; ++$pvbm });
+ok (scalar eval { my $pvbm = PVBM; --$pvbm });
+

@@ -20,11 +20,12 @@ if (opendir(OP, "op")) { print "ok 1\n"; } else { print "not ok 1\n"; }
 @D = grep(/^[^\.].*\.t$/i, readdir(OP));
 closedir(OP);
 
-##
-## This range will have to adjust as the number of tests expands,
-## as it's counting the number of .t files in src/t
-##
-my ($min, $max) = (150, 170);
+open $man, "<../MANIFEST" or die "Can't open ../MANIFEST: $!";
+my $expect;
+while (<$man>) {
+    ++$expect if m!^t/op/[^/]+\t!;
+}
+my ($min, $max) = ($expect - 10, $expect + 10);
 if (@D > $min && @D < $max) { print "ok 2\n"; }
 else {
     printf "not ok 2 # counting op/*.t, expect $min < %d < $max files\n",

@@ -19,8 +19,6 @@ struct string {
     char	str_nok;	/* state of str_nval */
 };
 
-#define Nullstr Null(STR*)
-
 /* the following macro updates any magic values this str is associated with */
 
 #define STABSET(x) (x->str_link.str_magic && stabset(x->str_link.str_magic,x))
@@ -29,15 +27,15 @@ EXT STR **tmps_list;
 EXT long tmps_max INIT(-1);
 
 char * str_2ptr ( STR *str );
-void str_cat ( STR *str, char *ptr );
+void str_cat ( STR *str, const char *ptr );
 void str_free ( STR *str );
 char * str_gets ( STR *str, FILE *fp );
 int str_len ( STR *str );
-STR * str_make ( char *s );
-void str_ncat ( STR *str, char *ptr, int len );
+STR * str_make ( const char *s );
+void str_ncat ( STR *str, const char *ptr, int len );
 STR * str_new ( int len );
-void str_nset ( STR *str, char *ptr, int len );
+void str_nset ( STR *str, const char *ptr, int len );
 void str_numset ( STR *str, double num );
 void str_scat ( STR *dstr, STR *sstr );
-void str_set ( STR *str, char *ptr );
+void str_set ( STR *str, const char *ptr );
 void str_sset ( STR *dstr, STR *sstr );
