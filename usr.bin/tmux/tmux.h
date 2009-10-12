@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.133 2009/10/12 09:16:59 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.134 2009/10/12 09:29:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1249,7 +1249,8 @@ void	tty_attributes(struct tty *, const struct grid_cell *);
 void	tty_reset(struct tty *);
 void	tty_region_pane(struct tty *, const struct tty_ctx *, u_int, u_int);
 void	tty_region(struct tty *, u_int, u_int);
-void	tty_cursor(struct tty *, u_int, u_int, u_int, u_int);
+void	tty_cursor_pane(struct tty *, const struct tty_ctx *, u_int, u_int);
+void	tty_cursor(struct tty *, u_int, u_int);
 void	tty_putcode(struct tty *, enum tty_code_code);
 void	tty_putcode1(struct tty *, enum tty_code_code, int);
 void	tty_putcode2(struct tty *, enum tty_code_code, int, int);
