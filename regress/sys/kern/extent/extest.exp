@@ -1,4 +1,4 @@
-# $OpenBSD: extest.exp,v 1.3 2009/09/18 19:19:15 kettenis Exp $
+# $OpenBSD: extest.exp,v 1.4 2009/10/13 20:53:40 miod Exp $
 # $NetBSD: extest.exp,v 1.9 2005/03/15 18:27:23 bouyer Exp $
 # real output must start in line 5
 
@@ -89,3 +89,6 @@ extent `test15' (0x0 - 0xffffffff), flags = 0x0
 output for test16
 extent `test16' (0x0 - 0xffffffff), flags = 0x0
      0x0 - 0x1fffffff
+output for test17
+extent `test17' (0x0 - 0xffffffffffffffff), flags = 0x0
+     0x0 - 0xffffffffffffffff

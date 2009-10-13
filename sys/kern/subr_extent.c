@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.40 2009/09/18 22:16:28 kettenis Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.41 2009/10/13 20:53:41 miod Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -523,17 +523,21 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 				 *    region.  We're done.
 				 */
 				if (rp->er_start <= start) {
-					start = rp->er_end + 1;
-					size = end - start + 1;
-					goto alloc_start;
+					if (rp->er_end < ex->ex_end) {
+						start = rp->er_end + 1;
+						size = end - start + 1;
+						goto alloc_start;
+					}
 				} else if (rp->er_end < end) {
 					LIST_REMOVE(rp, er_link);
 					extent_free_region_descriptor(ex, rp);
 					goto alloc_start;
 				} else if (rp->er_start < end) {
-					end = rp->er_start - 1;
-					size = end - start + 1;
-					goto alloc_start;
+					if (rp->er_start > ex->ex_start) {
+						end = rp->er_start - 1;
+						size = end - start + 1;
+						goto alloc_start;
+					}
 				}
 				return (0);
 			}

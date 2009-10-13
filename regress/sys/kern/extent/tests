@@ -1,4 +1,4 @@
-# $OpenBSD: tests,v 1.4 2009/09/18 19:19:15 kettenis Exp $
+# $OpenBSD: tests,v 1.5 2009/10/13 20:53:40 miod Exp $
 # $NetBSD: tests,v 1.9 2005/03/15 18:27:23 bouyer Exp $
 
 #fill up an extent, should coalesce into one allocation
@@ -129,4 +129,10 @@ extent test16 0x00000000 0xffffffff
 alloc_region 0x0 0xa0000
 alloc_region 0xf0000 0x1ff10000
 alloc_region 0xa0000 0x60000 EX_CONFLICTOK
+print
+
+# Check allocation of a conflicting region in an otherwise filled
+# extent does not trigger an infinite loop
+extent test17 0x00000000 -1L EX_FILLED
+alloc_region 0 0x4000 EX_CONFLICTOK
 print
