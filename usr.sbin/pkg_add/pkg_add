@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.344 2009/10/13 12:57:14 espie Exp $
+# $OpenBSD: pkg_add,v 1.345 2009/10/13 21:21:07 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -674,19 +674,6 @@ sub find_truelocations
 	}
 }
 
-sub reorder
-{
-	my $l = shift;
-	my $n = @$l;
-	my ($a, $i, $j);
-	for ($i = 0; $i < $n; $i++) {
-		$j = int(rand($n-$i));
-		$a = $l->[$i];
-		$l->[$i] = $l->[$n-$j-1];
-		$l->[$n-$j-1] = $a;
-	}
-}
-
 set_usage('pkg_add [-acIinqruvxz] [-A arch] [-B pkg-destdir] [-F keywords]',
 '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
 
@@ -801,25 +788,23 @@ if ($opt_l || $opt_z) {
 		my $l;
 		# first try to find us exactly
 		$state->progress->message("Looking for $_");
-		$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Exact->new($_));
+		$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Exact->new($_), $k);
 		if (@$l == 0) {
-			my @search =();
 			my $t = $_;
 			$t =~ s/\-\d([^-]*)\-?/--/;
-			push(@search, OpenBSD::Search::Stem->new($t));
 			$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Stem->new($t), $k);
 		}
 		if (@$l == 0) {
 			$state->progress->clear;
 			print "Can't find $_\n";
 		} elsif (@$l > 1) {
+			$state->progress->clear;
 			if ($state->{interactive}) {
 				my %cnd = map {($_->name, $_)} @$l;
 				my $result = OpenBSD::Interactive::choose1($_, 
 				    1, sort keys %cnd);
 				push @todo, $cnd{$result} if defined $result;
 			} else {
-				$state->progress->clear;
 				print "Ambiguous: $_\n";
 			}
 		} else {
@@ -829,17 +814,50 @@ if ($opt_l || $opt_z) {
 	}
 } elsif ($opt_u) {
 	require OpenBSD::Update;
+	require OpenBSD::PackageRepository::Installed;
 
 	if (@ARGV == 0) {
 		@ARGV = sort(installed_packages());
 		$state->{full_update} = 1;
 	}
 	my $updater = OpenBSD::Update->new;
-	$updater->process(\@ARGV, $state);
-	my @cantupdate = @{$updater->cant};
+	my $inst = OpenBSD::PackageRepository::Installed->new;
+	$state->progress->set_header("Looking for updates");
+	my @cantupdate = ();
+	for my $pkgname (@ARGV) {
+		my $l;
+
+		if (OpenBSD::PackageName::is_stem($pkgname)) {
+			$l = stem2location($inst, $pkgname, $state);
+ 		} else {
+			$l = $inst->find($pkgname, $state->{arch});
+		}
+		if (!defined $l) {
+			print "Problem finding $pkgname\n";
+		} else {
+			my $set = OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l));
+			my $problem = 0;
+			for my $l ($set->older) {
+				(defined $updater->process_handle($set, $l, $state)) or $problem = 1;
+			}
+			if ($set->newer > 0) {
+				push(@todo2, $set);
+			}
+			if ($problem) {
+				push(@cantupdate, $set);
+			}
+		}
+	}
+	$state->progress->next;
 
 	if (@cantupdate > 0) {
-			print "Cannot find updates for ", join(' ', @cantupdate), "\n";
+		print "Cannot find updates for ", join(', ', map {$_->short_print} @cantupdate[1..50]);
+		print " and more" if @cantupdate > 50;
+		print "\n";
+		if (@todo == 0) {
+			print "No updates found\n";
+			exit(1);
+		}
 		if ($state->{defines}->{alwaysupdate} ||
 		    $state->{full_update} && !$state->{interactive}) {
 			print "Proceeding anyways\n";
@@ -854,22 +872,10 @@ if ($opt_l || $opt_z) {
 		print "There are some ambiguities. Please run in interactive ".
 		    "mode again.\n";
 	}
-	@todo = @{$updater->updates};
-	if (@todo > 0 && !$bad) {
-		print "Running the equivalent of pkg_add -r ",
-		    join(' ', (map {$_->name} @todo)), "\n";
-	}
-	@todo2 = map { OpenBSD::UpdateSet->from_location($_) } @todo;
+	print "Running update ", join(',', map {$_->short_print} @todo2), "\n";
 } else {
 	find_truelocations(\@ARGV, \@todo2, $state);
 	OpenBSD::Add::tag_user_packages(@todo2);
-#	if (defined $state->{defines}->{kitchensink}) {
-#		reorder(\@todo);
-#		if (!$opt_r) {
-#			@todo = grep {s/\.tgz$//o; !is_installed($_);} @todo;
-#		}
-#		print "Adding in order:\n", (map { "\t$_\n" } @todo), "\n";
-#	}
 }
 
 if ($bad) {
