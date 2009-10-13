@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.47 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.48 2009/10/13 20:56:50 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -679,12 +679,29 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		}
 		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
-		splx(s);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
 			timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAY1);
 		} else
 			timeout_del(&sc->sc_rawrepeat_ch);
+
+		/*
+		 * Pass audio keys to wskbd_input anyway.
+		 */
+		for (i = 0; i < nkeys; i++) {
+			key = ibuf[i];
+			switch (key & CODEMASK) {
+			case 127:
+			case 128:
+			case 129:
+				wskbd_input(sc->sc_wskbddev,
+				    key & RELEASE ?  WSCONS_EVENT_KEY_UP :
+				      WSCONS_EVENT_KEY_DOWN, key & CODEMASK);
+				break;
+			}
+		}
+		splx(s);
+
 		return;
 	}
 #endif
