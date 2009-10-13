@@ -25,7 +25,6 @@ utils/cpanp-run-perl
 utils/cpanp
 utils/cpan2dist
 utils/splain
-utils/shasum
 utils/xsubpp
 x2p/a2p         # pod = x2p/a2p.pod
 x2p/find2perl
