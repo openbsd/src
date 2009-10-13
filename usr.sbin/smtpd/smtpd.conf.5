@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.21 2009/10/12 22:49:10 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.22 2009/10/13 04:53:33 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 12 2009 $
+.Dd $Mdocdate: October 13 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -210,18 +210,18 @@ so that a single rule for all sub-domains can be used, for example:
 .Bd -literal -offset indent
 accept for domain "*.example.com" deliver to mbox
 .Ed
-.It Ic for virtual map Ar map
-This rule applies to mail destined for the virtual domains specified
-in the map
-.Ar map .
-For an example of how to configure a virtual map, see
-.Xr makemap 8 .
 .It Ic for local
 This rule applies to mail destined to
 .Dq localhost
 and to the server's fully qualified domain name,
 as returned by
 .Xr hostname 1 .
+.It Ic for virtual map Ar map
+This rule applies to mail destined for the virtual domains specified
+in the map
+.Ar map .
+For an example of how to configure a virtual map, see
+.Xr makemap 8 .
 .El
 .Pp
 Finally, the method of delivery is specified:
