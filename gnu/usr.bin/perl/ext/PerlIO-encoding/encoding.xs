@@ -537,8 +537,8 @@ Off_t
 PerlIOEncode_tell(pTHX_ PerlIO * f)
 {
     PerlIOBuf *b = PerlIOSelf(f, PerlIOBuf);
-    /* Unfortunately the only way to get a postion is to (re-)translate,
-       the UTF8 we have in bufefr and then ask layer below
+    /* Unfortunately the only way to get a position is to (re-)translate,
+       the UTF8 we have in buffer and then ask layer below
      */
     PerlIO_flush(f);
     if (b->buf && b->ptr > b->buf) {
