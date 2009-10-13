@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.54 2008/11/28 02:44:18 brad Exp $ */
+/*	$OpenBSD: if_url.c,v 1.55 2009/10/13 19:33:17 pirofti Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -88,7 +88,7 @@
 int url_match(struct device *, void *, void *); 
 void url_attach(struct device *, struct device *, void *); 
 int url_detach(struct device *, int); 
-int url_activate(struct device *, enum devact); 
+int url_activate(struct device *, int); 
 
 struct cfdriver url_cd = { 
 	NULL, "url", DV_IFNET 
@@ -603,7 +603,7 @@ url_reset(struct url_softc *sc)
 }
 
 int
-url_activate(struct device *self, enum devact act)
+url_activate(struct device *self, int act)
 {
 	struct url_softc *sc = (struct url_softc *)self;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.93 2009/09/20 12:53:36 deraadt Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.94 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -179,7 +179,7 @@ const struct axe_type axe_devs[] = {
 int axe_match(struct device *, void *, void *); 
 void axe_attach(struct device *, struct device *, void *); 
 int axe_detach(struct device *, int); 
-int axe_activate(struct device *, enum devact); 
+int axe_activate(struct device *, int); 
 
 struct cfdriver axe_cd = { 
 	NULL, "axe", DV_IFNET 
@@ -810,7 +810,7 @@ axe_detach(struct device *self, int flags)
 }
 
 int
-axe_activate(struct device *self, enum devact act)
+axe_activate(struct device *self, int act)
 {
 	struct axe_softc *sc = (struct axe_softc *)self;
 

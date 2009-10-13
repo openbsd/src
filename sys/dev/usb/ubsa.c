@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.46 2009/06/02 12:32:08 deraadt Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.47 2009/10/13 19:33:17 pirofti Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -225,7 +225,7 @@ const struct usb_devno ubsa_devs[] = {
 int ubsa_match(struct device *, void *, void *); 
 void ubsa_attach(struct device *, struct device *, void *); 
 int ubsa_detach(struct device *, int); 
-int ubsa_activate(struct device *, enum devact); 
+int ubsa_activate(struct device *, int); 
 
 struct cfdriver ubsa_cd = { 
 	NULL, "ubsa", DV_DULL 
@@ -408,7 +408,7 @@ ubsa_detach(struct device *self, int flags)
 }
 
 int
-ubsa_activate(struct device *self, enum devact act)
+ubsa_activate(struct device *self, int act)
 {
 	struct ubsa_softc *sc = (struct ubsa_softc *)self;
 	int rv = 0;

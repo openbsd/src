@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.44 2008/08/22 03:12:37 deraadt Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.45 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ struct cfdriver rd_cd = {
  */
 int  rd_probe(struct device *, void *, void *);
 int  rd_detach(struct device *, int);
-int  rd_activate(struct device *, enum devact);
+int  rd_activate(struct device *, int);
 
 struct cfattach rd_ca = {
 	sizeof(struct rd_softc), rd_probe, rd_attach,
@@ -554,7 +554,7 @@ rd_detach(struct device *self, int flags)
 }
 
 int
-rd_activate(struct device *self, enum devact act)
+rd_activate(struct device *self, int act)
 {
 	return (0);
 }

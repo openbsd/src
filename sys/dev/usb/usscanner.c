@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.28 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.29 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ callback usscanner_sensedata_cb;
 int usscanner_match(struct device *, void *, void *); 
 void usscanner_attach(struct device *, struct device *, void *); 
 int usscanner_detach(struct device *, int); 
-int usscanner_activate(struct device *, enum devact); 
+int usscanner_activate(struct device *, int); 
 
 struct cfdriver usscanner_cd = { 
 	NULL, "usscanner", DV_DULL 
@@ -417,7 +417,7 @@ usscanner_cleanup(struct usscanner_softc *sc)
 }
 
 int
-usscanner_activate(struct device *self, enum devact act)
+usscanner_activate(struct device *self, int act)
 {
 	struct usscanner_softc *sc = (struct usscanner_softc *)self;
 

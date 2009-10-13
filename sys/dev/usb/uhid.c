@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.43 2009/07/19 08:16:06 blambert Exp $ */
+/*	$OpenBSD: uhid.c,v 1.44 2009/10/13 19:33:19 pirofti Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int,
 int uhid_match(struct device *, void *, void *); 
 void uhid_attach(struct device *, struct device *, void *); 
 int uhid_detach(struct device *, int); 
-int uhid_activate(struct device *, enum devact); 
+int uhid_activate(struct device *, int); 
 
 struct cfdriver uhid_cd = { 
 	NULL, "uhid", DV_DULL 
@@ -155,7 +155,7 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-uhid_activate(struct device *self, enum devact act)
+uhid_activate(struct device *self, int act)
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;
 

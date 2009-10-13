@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.66 2009/08/17 13:07:37 martynas Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.67 2009/10/13 19:33:16 pirofti Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -70,7 +70,7 @@ int cmalo_d = 1;
 int	malo_pcmcia_match(struct device *, void *, void *);
 void	malo_pcmcia_attach(struct device *, struct device *, void *);
 int	malo_pcmcia_detach(struct device *, int);
-int	malo_pcmcia_activate(struct device *, enum devact);
+int	malo_pcmcia_activate(struct device *, int);
 
 void	cmalo_attach(void *);
 int	cmalo_ioctl(struct ifnet *, u_long, caddr_t);
@@ -230,7 +230,7 @@ malo_pcmcia_detach(struct device *dev, int flags)
 }
 
 int
-malo_pcmcia_activate(struct device *dev, enum devact act)
+malo_pcmcia_activate(struct device *dev, int act)
 {
 	struct malo_pcmcia_softc *psc = (struct malo_pcmcia_softc *)dev;
 	struct malo_softc *sc = &psc->sc_malo;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.39 2009/08/03 09:33:10 blambert Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.40 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -184,12 +184,12 @@ int	uath_switch_channel(struct uath_softc *, struct ieee80211_channel *);
 int	uath_init(struct ifnet *);
 void	uath_stop(struct ifnet *, int);
 int	uath_loadfirmware(struct uath_softc *, const u_char *, int);
-int	uath_activate(struct device *, enum devact);
+int	uath_activate(struct device *, int);
 
 int uath_match(struct device *, void *, void *); 
 void uath_attach(struct device *, struct device *, void *); 
 int uath_detach(struct device *, int); 
-int uath_activate(struct device *, enum devact); 
+int uath_activate(struct device *, int); 
 
 struct cfdriver uath_cd = { 
 	NULL, "uath", DV_DULL 
@@ -2126,7 +2126,7 @@ fail1:	return error;
 }
 
 int
-uath_activate(struct device *self, enum devact act)
+uath_activate(struct device *self, int act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

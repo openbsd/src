@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.15 2006/06/19 22:42:33 miod Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.16 2009/10/13 19:33:16 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -75,7 +75,7 @@
 int	wi_obio_match(struct device *, void *, void *);
 void	wi_obio_attach(struct device *, struct device *, void *);
 int	wi_obio_detach(struct device *, int);
-int	wi_obio_activate(struct device *, enum devact);
+int	wi_obio_activate(struct device *, int);
 void	wi_obio_attach(struct device *, struct device *, void *);
 int	wi_obio_enable(struct wi_softc *sc);
 void	wi_obio_disable(struct wi_softc *sc);
@@ -161,7 +161,7 @@ wi_obio_detach(dev, flags)
 int
 wi_obio_activate(dev, act)
 	struct device *dev;
-	enum devact act;
+	int act;
 {
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;

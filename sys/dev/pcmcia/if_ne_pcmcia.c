@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.92 2008/10/04 17:30:59 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.93 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 int	ne_pcmcia_match(struct device *, void *, void *);
 void	ne_pcmcia_attach(struct device *, struct device *, void *);
 int	ne_pcmcia_detach(struct device *, int);
-int	ne_pcmcia_activate(struct device *, enum devact);
+int	ne_pcmcia_activate(struct device *, int);
 
 int	ne_pcmcia_enable(struct dp8390_softc *);
 void	ne_pcmcia_disable(struct dp8390_softc *);
@@ -860,7 +860,7 @@ ne_pcmcia_detach(dev, flags)
 int
 ne_pcmcia_activate(dev, act)
 	struct device *dev;
-	enum devact act;
+	int act;
 {
 	struct ne_pcmcia_softc *sc = (struct ne_pcmcia_softc *)dev;
 	struct dp8390_softc *esc = &sc->sc_ne2000.sc_dp8390;

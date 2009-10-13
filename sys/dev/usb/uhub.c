@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.49 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: uhub.c,v 1.50 2009/10/13 19:33:19 pirofti Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -84,7 +84,7 @@ void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
 int uhub_match(struct device *, void *, void *); 
 void uhub_attach(struct device *, struct device *, void *); 
 int uhub_detach(struct device *, int); 
-int uhub_activate(struct device *, enum devact); 
+int uhub_activate(struct device *, int); 
 
 struct cfdriver uhub_cd = { 
 	NULL, "uhub", DV_DULL 
@@ -497,7 +497,7 @@ uhub_explore(usbd_device_handle dev)
 }
 
 int
-uhub_activate(struct device *self, enum devact act)
+uhub_activate(struct device *self, int act)
 {
 	struct uhub_softc *sc = (struct uhub_softc *)self;
 	struct usbd_hub *hub = sc->sc_hub->hub;

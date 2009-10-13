@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.13 2009/08/18 19:05:16 kili Exp $	*/
+/*	$OpenBSD: flash.c,v 1.14 2009/10/13 19:33:16 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -178,7 +178,7 @@ flashdetach(struct device *self, int flags)
 }
 
 int
-flashactivate(struct device *self, enum devact act)
+flashactivate(struct device *self, int act)
 {
 	/* XXX anything to be done here? */
 	return 0;

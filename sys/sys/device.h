@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.37 2007/11/24 18:31:05 dlg Exp $	*/
+/*	$OpenBSD: device.h,v 1.38 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -62,10 +62,8 @@ enum devclass {
 /*
  * Actions for ca_activate.
  */
-enum devact {
-	DVACT_ACTIVATE,		/* activate the device */
-	DVACT_DEACTIVATE	/* deactivate the device */
-};
+#define	DVACT_ACTIVATE		0	/* activate the device */
+#define	DVACT_DEACTIVATE	1	/* deactivate the device */
 
 struct device {
 	enum	devclass dv_class;	/* this device's classification */
@@ -128,7 +126,7 @@ struct cfattach {
 	cfmatch_t ca_match;		/* returns a match level */
 	void	(*ca_attach)(struct device *, struct device *, void *);
 	int	(*ca_detach)(struct device *, int);
-	int	(*ca_activate)(struct device *, enum devact);
+	int	(*ca_activate)(struct device *, int);
 };
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -186,7 +184,7 @@ int config_detach(struct device *, int);
 int config_detach_children(struct device *, int);
 int config_activate(struct device *);
 int config_deactivate(struct device *);
-int config_activate_children(struct device *, enum devact);
+int config_activate_children(struct device *, int);
 struct device *config_make_softc(struct device *parent,
     struct cfdata *cf);
 void config_defer(struct device *, void (*)(struct device *));

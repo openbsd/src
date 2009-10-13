@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.53 2009/04/22 18:56:56 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.54 2009/10/13 19:33:17 pirofti Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ struct ucom_methods uftdi_methods = {
 int uftdi_match(struct device *, void *, void *); 
 void uftdi_attach(struct device *, struct device *, void *); 
 int uftdi_detach(struct device *, int); 
-int uftdi_activate(struct device *, enum devact); 
+int uftdi_activate(struct device *, int); 
 
 struct cfdriver uftdi_cd = { 
 	NULL, "uftdi", DV_DULL 
@@ -546,7 +546,7 @@ bad:
 }
 
 int
-uftdi_activate(struct device *self, enum devact act)
+uftdi_activate(struct device *self, int act)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
 	int rv = 0;

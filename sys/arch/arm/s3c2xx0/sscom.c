@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.10 2009/08/02 10:38:32 miod Exp $ */
+/*	$OpenBSD: sscom.c,v 1.11 2009/10/13 19:33:16 pirofti Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -541,7 +541,7 @@ sscom_detach(struct device *self, int flags)
 }
 
 int
-sscom_activate(struct device *self, enum devact act)
+sscom_activate(struct device *self, int act)
 {
 #ifdef notyet
 	struct sscom_softc *sc = (struct sscom_softc *)self;

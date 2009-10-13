@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.25 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.26 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ struct midi_hw_if umidi_hw_if = {
 int umidi_match(struct device *, void *, void *); 
 void umidi_attach(struct device *, struct device *, void *); 
 int umidi_detach(struct device *, int); 
-int umidi_activate(struct device *, enum devact); 
+int umidi_activate(struct device *, int); 
 
 struct cfdriver umidi_cd = { 
 	NULL, "umidi", DV_DULL 
@@ -232,7 +232,7 @@ error:
 }
 
 int
-umidi_activate(struct device *self, enum devact act)
+umidi_activate(struct device *self, int act)
 {
 	struct umidi_softc *sc = (struct umidi_softc *)self;
 

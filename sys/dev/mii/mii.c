@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.19 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: mii.c,v 1.20 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
@@ -148,7 +148,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 }
 
 void
-mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
+mii_activate(struct mii_data *mii, int act, int phyloc, int offloc)
 {
 	struct mii_softc *child;
 

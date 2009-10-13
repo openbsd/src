@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.20 2009/04/26 22:26:12 kettenis Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.21 2009/10/13 19:33:17 pirofti Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -80,7 +80,7 @@ struct wdc_pcmcia_softc {
 static int wdc_pcmcia_match(struct device *, void *, void *);
 static void wdc_pcmcia_attach(struct device *, struct device *, void *);
 int    wdc_pcmcia_detach(struct device *, int);
-int    wdc_pcmcia_activate(struct device *, enum devact);
+int    wdc_pcmcia_activate(struct device *, int);
 
 struct cfattach wdc_pcmcia_ca = {
 	sizeof(struct wdc_pcmcia_softc), wdc_pcmcia_match, wdc_pcmcia_attach,
@@ -435,7 +435,7 @@ wdc_pcmcia_detach(self, flags)
 int
 wdc_pcmcia_activate(self, act)
 	struct device *self;
-	enum devact act;
+	int act;
 {
 	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
 	int rv = 0, s;

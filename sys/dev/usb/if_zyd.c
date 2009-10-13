@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.79 2009/06/01 08:53:44 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.80 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -153,7 +153,7 @@ static const struct zyd_type {
 int zyd_match(struct device *, void *, void *); 
 void zyd_attach(struct device *, struct device *, void *); 
 int zyd_detach(struct device *, int); 
-int zyd_activate(struct device *, enum devact); 
+int zyd_activate(struct device *, int); 
 
 struct cfdriver zyd_cd = { 
 	NULL, "zyd", DV_IFNET 
@@ -2575,7 +2575,7 @@ zyd_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 }
 
 int
-zyd_activate(struct device *self, enum devact act)
+zyd_activate(struct device *self, int act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

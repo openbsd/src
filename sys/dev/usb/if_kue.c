@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.58 2008/11/28 02:44:18 brad Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.59 2009/10/13 19:33:17 pirofti Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -157,7 +157,7 @@ const struct usb_devno kue_devs[] = {
 int kue_match(struct device *, void *, void *); 
 void kue_attach(struct device *, struct device *, void *); 
 int kue_detach(struct device *, int); 
-int kue_activate(struct device *, enum devact); 
+int kue_activate(struct device *, int); 
 
 struct cfdriver kue_cd = { 
 	NULL, "kue", DV_IFNET 
@@ -591,7 +591,7 @@ kue_detach(struct device *self, int flags)
 }
 
 int
-kue_activate(struct device *self, enum devact act)
+kue_activate(struct device *self, int act)
 {
 	struct kue_softc *sc = (struct kue_softc *)self;
 

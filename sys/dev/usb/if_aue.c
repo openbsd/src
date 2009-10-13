@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.76 2009/08/10 20:02:19 deraadt Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.77 2009/10/13 19:33:17 pirofti Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -213,7 +213,7 @@ const struct aue_type aue_devs[] = {
 int aue_match(struct device *, void *, void *); 
 void aue_attach(struct device *, struct device *, void *); 
 int aue_detach(struct device *, int); 
-int aue_activate(struct device *, enum devact); 
+int aue_activate(struct device *, int); 
 
 struct cfdriver aue_cd = { 
 	NULL, "aue", DV_IFNET 
@@ -895,7 +895,7 @@ aue_detach(struct device *self, int flags)
 }
 
 int
-aue_activate(struct device *self, enum devact act)
+aue_activate(struct device *self, int act)
 {
 	struct aue_softc *sc = (struct aue_softc *)self;
 

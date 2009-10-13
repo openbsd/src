@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.38 2009/08/10 22:11:56 deraadt Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.39 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ int ray_cmd_is_running(struct ray_softc *, int);
 int ray_cmd_is_scheduled(struct ray_softc *, int);
 void ray_cmd_done(struct ray_softc *, int);
 int ray_detach(struct device *, int);
-int ray_activate(struct device *, enum devact);
+int ray_activate(struct device *, int);
 void ray_disable(struct ray_softc *);
 void ray_download_params(struct ray_softc *);
 int ray_enable(struct ray_softc *);
@@ -650,7 +650,7 @@ fail:
 }
 
 int
-ray_activate(struct device *dev, enum devact act)
+ray_activate(struct device *dev, int act)
 {
 	struct ray_softc *sc = (struct ray_softc *)dev;
 	struct ifnet *ifp = &sc->sc_if;

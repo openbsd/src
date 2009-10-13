@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.27 2009/08/10 20:29:54 deraadt Exp $  */
+/*      $OpenBSD: athvar.h,v 1.28 2009/10/13 19:33:16 pirofti Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -410,7 +410,7 @@ int	ath_enable(struct ath_softc *);
 void	ath_resume(struct ath_softc *, int);
 void	ath_suspend(struct ath_softc *, int);
 #ifdef __NetBSD__
-int	ath_activate(struct device *, enum devact);
+int	ath_activate(struct device *, int);
 void	ath_power(int, void *);
 #endif
 int	ath_intr(void *);

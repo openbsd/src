@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.37 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.38 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -107,7 +107,7 @@
 int	ep_pcmcia_match(struct device *, void *, void *);
 void	ep_pcmcia_attach(struct device *, struct device *, void *);
 int	ep_pcmcia_detach(struct device *, int);
-int	ep_pcmcia_activate(struct device *, enum devact);
+int	ep_pcmcia_activate(struct device *, int);
 
 int	ep_pcmcia_get_enaddr(struct pcmcia_tuple *, void *);
 #ifdef notyet
@@ -403,7 +403,7 @@ ep_pcmcia_detach(dev, flags)
 int
 ep_pcmcia_activate(dev, act)
 	struct device *dev;
-	enum devact act;
+	int act;
 {
 	struct ep_pcmcia_softc *sc = (struct ep_pcmcia_softc *)dev;
 	struct ep_softc *esc = &sc->sc_ep;

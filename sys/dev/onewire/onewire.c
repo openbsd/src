@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.10 2009/01/02 05:27:12 miod Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.11 2009/10/13 19:33:16 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -65,7 +65,7 @@ struct onewire_device {
 int	onewire_match(struct device *, void *, void *);
 void	onewire_attach(struct device *, struct device *, void *);
 int	onewire_detach(struct device *, int);
-int	onewire_activate(struct device *, enum devact);
+int	onewire_activate(struct device *, int);
 int	onewire_print(void *, const char *);
 
 void	onewire_thread(void *);
@@ -129,7 +129,7 @@ onewire_detach(struct device *self, int flags)
 }
 
 int
-onewire_activate(struct device *self, enum devact act)
+onewire_activate(struct device *self, int act)
 {
 	struct onewire_softc *sc = (struct onewire_softc *)self;
 

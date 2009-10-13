@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.13 2009/03/08 14:10:08 robert Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.14 2009/10/13 19:33:16 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -271,7 +271,7 @@ const struct wsmouse_accessops tpms_accessops = {
 int tpms_match(struct device *, void *, void *); 
 void tpms_attach(struct device *, struct device *, void *); 
 int tpms_detach(struct device *, int); 
-int tpms_activate(struct device *, enum devact); 
+int tpms_activate(struct device *, int); 
 
 struct cfdriver tpms_cd = { 
 	NULL, "tpms", DV_DULL 
@@ -403,7 +403,7 @@ tpms_detach(struct device *self, int flags)
 /* Activate the device. */
 
 int
-tpms_activate(struct device *self, enum devact act)
+tpms_activate(struct device *self, int act)
 {
 	struct tpms_softc *sc = (struct tpms_softc *)self;
 	int ret;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.51 2008/11/28 02:44:18 brad Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.52 2009/10/13 19:33:17 pirofti Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -112,7 +112,7 @@ struct usb_devno cue_devs[] = {
 int cue_match(struct device *, void *, void *); 
 void cue_attach(struct device *, struct device *, void *); 
 int cue_detach(struct device *, int); 
-int cue_activate(struct device *, enum devact); 
+int cue_activate(struct device *, int); 
 
 struct cfdriver cue_cd = { 
 	NULL, "cue", DV_IFNET 
@@ -595,7 +595,7 @@ cue_detach(struct device *self, int flags)
 }
 
 int
-cue_activate(struct device *self, enum devact act)
+cue_activate(struct device *self, int act)
 {
 	struct cue_softc *sc = (struct cue_softc *)self;
 

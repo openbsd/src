@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.56 2008/08/20 04:37:15 miod Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.57 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -746,7 +746,7 @@ config_detach_children(struct device *parent, int flags)
 }
 
 int
-config_activate_children(struct device *parent, enum devact act)
+config_activate_children(struct device *parent, int act)
 {
 	struct device *dev, *next_dev;
 	int  rv = 0;

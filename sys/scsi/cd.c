@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.149 2009/08/13 15:23:11 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.150 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ struct cd_toc {
 
 int	cdmatch(struct device *, void *, void *);
 void	cdattach(struct device *, struct device *, void *);
-int	cdactivate(struct device *, enum devact);
+int	cdactivate(struct device *, int);
 int	cddetach(struct device *, int);
 
 void	cdstart(void *);
@@ -224,7 +224,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 
 int
-cdactivate(struct device *self, enum devact act)
+cdactivate(struct device *self, int act)
 {
 	int rv = 0;
 

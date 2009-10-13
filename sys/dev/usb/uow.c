@@ -1,4 +1,4 @@
-/*	$OpenBSD: uow.c,v 1.25 2007/10/11 18:33:15 deraadt Exp $	*/
+/*	$OpenBSD: uow.c,v 1.26 2009/10/13 19:33:19 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -63,7 +63,7 @@ struct uow_softc {
 int uow_match(struct device *, void *, void *); 
 void uow_attach(struct device *, struct device *, void *); 
 int uow_detach(struct device *, int); 
-int uow_activate(struct device *, enum devact); 
+int uow_activate(struct device *, int); 
 
 struct cfdriver uow_cd = { 
 	NULL, "uow", DV_DULL 
@@ -273,7 +273,7 @@ uow_detach(struct device *self, int flags)
 }
 
 int
-uow_activate(struct device *self, enum devact act)
+uow_activate(struct device *self, int act)
 {
 	struct uow_softc *sc = (struct uow_softc *)self;
 	int rv = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.42 2008/10/03 03:13:09 brad Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.43 2009/10/13 19:33:17 pirofti Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ struct upl_type sc_devs[] = {
 int upl_match(struct device *, void *, void *); 
 void upl_attach(struct device *, struct device *, void *); 
 int upl_detach(struct device *, int); 
-int upl_activate(struct device *, enum devact); 
+int upl_activate(struct device *, int); 
 
 struct cfdriver upl_cd = { 
 	NULL, "upl", DV_IFNET 
@@ -356,7 +356,7 @@ upl_detach(struct device *self, int flags)
 }
 
 int
-upl_activate(struct device *self, enum devact act)
+upl_activate(struct device *self, int act)
 {
 	struct upl_softc *sc = (struct upl_softc *)self;
 

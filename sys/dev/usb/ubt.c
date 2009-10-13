@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubt.c,v 1.14 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: ubt.c,v 1.15 2009/10/13 19:33:17 pirofti Exp $	*/
 /*	$NetBSD: ubt.c,v 1.35 2008/07/28 14:19:26 drochner Exp $	*/
 
 /*-
@@ -254,7 +254,7 @@ void ubt_stats(struct device *, struct bt_stats *, int);
 int ubt_match(struct device *, void *, void *); 
 void ubt_attach(struct device *, struct device *, void *); 
 int ubt_detach(struct device *, int); 
-int ubt_activate(struct device *, enum devact); 
+int ubt_activate(struct device *, int); 
 
 struct cfdriver ubt_cd = { 
 	NULL, "ubt", DV_DULL 
@@ -498,7 +498,7 @@ ubt_detach(struct device *self, int flags)
 }
 
 int
-ubt_activate(struct device *self, enum devact act)
+ubt_activate(struct device *self, int act)
 {
 	struct ubt_softc *sc = (struct ubt_softc *)self;
 	int error = 0;

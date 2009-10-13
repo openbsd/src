@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.9 2009/04/26 02:20:58 cnst Exp $ */
+/*	$OpenBSD: umbg.c,v 1.10 2009/10/13 19:33:19 pirofti Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -138,7 +138,7 @@ void umbg_it_intr(void *);
 int umbg_match(struct device *, void *, void *); 
 void umbg_attach(struct device *, struct device *, void *); 
 int umbg_detach(struct device *, int); 
-int umbg_activate(struct device *, enum devact); 
+int umbg_activate(struct device *, int); 
 
 void umbg_task(void *);
 
@@ -453,7 +453,7 @@ umbg_it_intr(void *xsc)
 }
 
 int
-umbg_activate(struct device *self, enum devact act)
+umbg_activate(struct device *self, int act)
 {
 	struct umbg_softc *sc = (struct umbg_softc *)self;
 

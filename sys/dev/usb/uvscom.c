@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.19 2007/10/11 18:33:15 deraadt Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.20 2009/10/13 19:33:19 pirofti Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -210,7 +210,7 @@ static const struct usb_devno uvscom_devs [] = {
 int uvscom_match(struct device *, void *, void *); 
 void uvscom_attach(struct device *, struct device *, void *); 
 int uvscom_detach(struct device *, int); 
-int uvscom_activate(struct device *, enum devact); 
+int uvscom_activate(struct device *, int); 
 
 struct cfdriver uvscom_cd = { 
 	NULL, "uvscom", DV_DULL 
@@ -398,7 +398,7 @@ uvscom_detach(struct device *self, int flags)
 }
 
 int
-uvscom_activate(struct device *self, enum devact act)
+uvscom_activate(struct device *self, int act)
 {
 	struct uvscom_softc *sc = (struct uvscom_softc *)self;
 	int rv = 0;

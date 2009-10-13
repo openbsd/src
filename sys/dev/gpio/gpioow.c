@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioow.c,v 1.3 2008/11/24 12:12:12 mbalmer Exp $	*/
+/*	$OpenBSD: gpioow.c,v 1.4 2009/10/13 19:33:16 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -49,7 +49,7 @@ struct gpioow_softc {
 int	gpioow_match(struct device *, void *, void *);
 void	gpioow_attach(struct device *, struct device *, void *);
 int	gpioow_detach(struct device *, int);
-int	gpioow_activate(struct device *, enum devact);
+int	gpioow_activate(struct device *, int);
 
 int	gpioow_ow_reset(void *);
 int	gpioow_ow_bit(void *, int);
@@ -170,7 +170,7 @@ gpioow_detach(struct device *self, int flags)
 }
 
 int
-gpioow_activate(struct device *self, enum devact act)
+gpioow_activate(struct device *self, int act)
 {
 	struct gpioow_softc *sc = (struct gpioow_softc *)self;
 	int rv = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udcf.c,v 1.46 2009/04/26 02:20:58 cnst Exp $ */
+/*	$OpenBSD: udcf.c,v 1.47 2009/10/13 19:33:17 pirofti Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -138,7 +138,7 @@ void	udcf_ct_probe(void *);
 int udcf_match(struct device *, void *, void *); 
 void udcf_attach(struct device *, struct device *, void *); 
 int udcf_detach(struct device *, int); 
-int udcf_activate(struct device *, enum devact); 
+int udcf_activate(struct device *, int); 
 
 int udcf_nc_signal(struct udcf_softc *);
 int udcf_nc_init_hw(struct udcf_softc *);
@@ -798,7 +798,7 @@ udcf_ct_probe(void *xsc)
 }
 
 int
-udcf_activate(struct device *self, enum devact act)
+udcf_activate(struct device *self, int act)
 {
 	struct udcf_softc *sc = (struct udcf_softc *)self;
 

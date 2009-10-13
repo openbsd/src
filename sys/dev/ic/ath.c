@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.83 2009/09/13 14:42:52 krw Exp $  */
+/*      $OpenBSD: ath.c,v 1.84 2009/10/13 19:33:16 pirofti Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -166,7 +166,7 @@ struct cfdriver ath_cd = {
 
 #if 0
 int
-ath_activate(struct device *self, enum devact act)
+ath_activate(struct device *self, int act)
 {
 	struct ath_softc *sc = (struct ath_softc *)self;
 	int rv = 0, s;

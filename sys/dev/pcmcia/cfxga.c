@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfxga.c,v 1.18 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: cfxga.c,v 1.19 2009/10/13 19:33:16 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, Matthieu Herrb and Miodrag Vallat
@@ -97,7 +97,7 @@ struct cfxga_softc {
 int	cfxga_match(struct device *, void *,  void *);
 void	cfxga_attach(struct device *, struct device *, void *);
 int	cfxga_detach(struct device *, int);
-int	cfxga_activate(struct device *, enum devact);
+int	cfxga_activate(struct device *, int);
 
 struct cfattach cfxga_ca = {
 	sizeof(struct cfxga_softc), cfxga_match, cfxga_attach,
@@ -313,7 +313,7 @@ out:
 }
 
 int
-cfxga_activate(struct device *dev, enum devact act)
+cfxga_activate(struct device *dev, int act)
 {
 	struct cfxga_softc *sc = (void *)dev;
 

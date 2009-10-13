@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.28 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.29 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -78,7 +78,7 @@
 int	sm_pcmcia_match(struct device *, void *, void *);
 void	sm_pcmcia_attach(struct device *, struct device *, void *);
 int	sm_pcmcia_detach(struct device *, int);
-int	sm_pcmcia_activate(struct device *, enum devact);
+int	sm_pcmcia_activate(struct device *, int);
 
 struct sm_pcmcia_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
@@ -248,7 +248,7 @@ sm_pcmcia_detach(dev, flags)
 int
 sm_pcmcia_activate(dev, act)
 	struct device *dev;
-	enum devact act;
+	int act;
 {
 	struct sm_pcmcia_softc *sc = (struct sm_pcmcia_softc *)dev;
 	struct ifnet *ifp = &sc->sc_smc.sc_arpcom.ac_if;

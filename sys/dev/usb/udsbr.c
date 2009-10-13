@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.20 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.21 2009/10/13 19:33:17 pirofti Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ int	udsbr_status(struct udsbr_softc *sc);
 int udsbr_match(struct device *, void *, void *); 
 void udsbr_attach(struct device *, struct device *, void *); 
 int udsbr_detach(struct device *, int); 
-int udsbr_activate(struct device *, enum devact); 
+int udsbr_activate(struct device *, int); 
 
 struct cfdriver udsbr_cd = { 
 	NULL, "udsbr", DV_DULL 
@@ -169,7 +169,7 @@ udsbr_detach(struct device *self, int flags)
 }
 
 int
-udsbr_activate(struct device *self, enum devact act)
+udsbr_activate(struct device *self, int act)
 {
 	struct udsbr_softc *sc = (struct udsbr_softc *)self;
 	int rv = 0;

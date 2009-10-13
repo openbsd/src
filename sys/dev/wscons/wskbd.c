@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.60 2009/01/21 21:54:00 grange Exp $ */
+/* $OpenBSD: wskbd.c,v 1.61 2009/10/13 19:33:19 pirofti Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -205,7 +205,7 @@ keysym_t ksym_upcase(keysym_t);
 int	wskbd_match(struct device *, void *, void *);
 void	wskbd_attach(struct device *, struct device *, void *);
 int	wskbd_detach(struct device *, int);
-int	wskbd_activate(struct device *, enum devact);
+int	wskbd_activate(struct device *, int);
 
 int	wskbd_displayioctl(struct device *, u_long, caddr_t, int, struct proc *);
 
@@ -528,7 +528,7 @@ wskbd_repeat(void *v)
 #endif
 
 int
-wskbd_activate(struct device *self, enum devact act)
+wskbd_activate(struct device *self, int act)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)self;
 

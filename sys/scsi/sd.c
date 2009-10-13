@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.158 2009/09/14 00:03:28 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.159 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@
 
 int	sdmatch(struct device *, void *, void *);
 void	sdattach(struct device *, struct device *, void *);
-int	sdactivate(struct device *, enum devact);
+int	sdactivate(struct device *, int);
 int	sddetach(struct device *, int);
 
 void	sdminphys(struct buf *);
@@ -266,7 +266,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-sdactivate(struct device *self, enum devact act)
+sdactivate(struct device *self, int act)
 {
 	struct sd_softc *sd = (struct sd_softc *)self;
 	int rv = 0;

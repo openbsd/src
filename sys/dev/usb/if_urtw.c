@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.27 2009/08/02 10:38:34 miod Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.28 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -578,7 +578,7 @@ usbd_status	urtw_8225v2_b_set_txpwrlvl(struct urtw_softc *, int);
 int urtw_match(struct device *, void *, void *);
 void urtw_attach(struct device *, struct device *, void *);
 int urtw_detach(struct device *, int);
-int urtw_activate(struct device *, enum devact);
+int urtw_activate(struct device *, int);
 
 struct cfdriver urtw_cd = {
 	NULL, "urtw", DV_IFNET
@@ -794,7 +794,7 @@ urtw_detach(struct device *self, int flags)
 }
 
 int
-urtw_activate(struct device *self, enum devact act)
+urtw_activate(struct device *self, int act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

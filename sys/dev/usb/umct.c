@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.28 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: umct.c,v 1.29 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ static const struct usb_devno umct_devs[] = {
 int umct_match(struct device *, void *, void *); 
 void umct_attach(struct device *, struct device *, void *); 
 int umct_detach(struct device *, int); 
-int umct_activate(struct device *, enum devact); 
+int umct_activate(struct device *, int); 
 
 struct cfdriver umct_cd = { 
 	NULL, "umct", DV_DULL 
@@ -340,7 +340,7 @@ umct_detach(struct device *self, int flags)
 }
 
 int
-umct_activate(struct device *self, enum devact act)
+umct_activate(struct device *self, int act)
 {
 	struct umct_softc *sc = (struct umct_softc *)self;
 	int rv = 0;

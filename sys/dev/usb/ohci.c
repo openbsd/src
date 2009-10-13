@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.91 2009/06/02 23:49:33 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.92 2009/10/13 19:33:17 pirofti Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -306,7 +306,7 @@ struct usbd_pipe_methods ohci_device_isoc_methods = {
 };
 
 int
-ohci_activate(struct device *self, enum devact act)
+ohci_activate(struct device *self, int act)
 {
 	struct ohci_softc *sc = (struct ohci_softc *)self;
 	int rv = 0;

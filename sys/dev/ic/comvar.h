@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.45 2008/06/08 13:55:06 kettenis Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.46 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ int	comprobe1(bus_space_tag_t, bus_space_handle_t);
 int	comstop(struct tty *, int);
 int	comintr(void *);
 int	com_detach(struct device *, int);
-int	com_activate(struct device *, enum devact);
+int	com_activate(struct device *, int);
 
 void	comdiag(void *);
 int	comspeed(long, long);

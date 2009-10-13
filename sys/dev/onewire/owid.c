@@ -1,4 +1,4 @@
-/*	$OpenBSD: owid.c,v 1.6 2008/10/25 00:27:09 deraadt Exp $	*/
+/*	$OpenBSD: owid.c,v 1.7 2009/10/13 19:33:16 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -46,7 +46,7 @@ struct owid_softc {
 int	owid_match(struct device *, void *, void *);
 void	owid_attach(struct device *, struct device *, void *);
 int	owid_detach(struct device *, int);
-int	owid_activate(struct device *, enum devact);
+int	owid_activate(struct device *, int);
 
 struct cfattach owid_ca = {
 	sizeof(struct owid_softc),
@@ -104,7 +104,7 @@ owid_detach(struct device *self, int flags)
 }
 
 int
-owid_activate(struct device *self, enum devact act)
+owid_activate(struct device *self, int act)
 {
 	struct owid_softc *sc = (struct owid_softc *)self;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.42 2008/06/26 05:42:18 ray Exp $ */
+/*	$OpenBSD: ucom.c,v 1.43 2009/10/13 19:33:17 pirofti Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ void	ucom_unlock(struct ucom_softc *);
 int ucom_match(struct device *, void *, void *); 
 void ucom_attach(struct device *, struct device *, void *); 
 int ucom_detach(struct device *, int); 
-int ucom_activate(struct device *, enum devact); 
+int ucom_activate(struct device *, int); 
 
 struct cfdriver ucom_cd = { 
 	NULL, "ucom", DV_DULL 
@@ -266,7 +266,7 @@ ucom_detach(struct device *self, int flags)
 }
 
 int
-ucom_activate(struct device *self, enum devact act)
+ucom_activate(struct device *self, int act)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
 

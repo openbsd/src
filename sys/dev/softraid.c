@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.174 2009/09/21 16:38:13 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.175 2009/10/13 19:33:16 pirofti Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -75,7 +75,7 @@ uint32_t	sr_debug = 0
 int		sr_match(struct device *, void *, void *);
 void		sr_attach(struct device *, struct device *, void *);
 int		sr_detach(struct device *, int);
-int		sr_activate(struct device *, enum devact);
+int		sr_activate(struct device *, int);
 
 struct cfattach softraid_ca = {
 	sizeof(struct sr_softc), sr_match, sr_attach, sr_detach,
@@ -1528,7 +1528,7 @@ sr_detach(struct device *self, int flags)
 }
 
 int
-sr_activate(struct device *self, enum devact act)
+sr_activate(struct device *self, int act)
 {
 	return (1);
 }

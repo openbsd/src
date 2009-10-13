@@ -1,4 +1,4 @@
-/*	$OpenBSD: uyap.c,v 1.16 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: uyap.c,v 1.17 2009/10/13 19:33:19 pirofti Exp $ */
 /*	$NetBSD: uyap.c,v 1.6 2002/07/11 21:14:37 augustss Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct uyap_softc {
 int uyap_match(struct device *, void *, void *); 
 void uyap_attach(struct device *, struct device *, void *); 
 int uyap_detach(struct device *, int); 
-int uyap_activate(struct device *, enum devact); 
+int uyap_activate(struct device *, int); 
 
 struct cfdriver uyap_cd = { 
 	NULL, "uyap", DV_DULL 
@@ -123,7 +123,7 @@ uyap_detach(struct device *self, int flags)
 }
 
 int
-uyap_activate(struct device *self, enum devact act)
+uyap_activate(struct device *self, int act)
 {
 	return 0;
 }

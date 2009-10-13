@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.34 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: urio.c,v 1.35 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: urio.c,v 1.15 2002/10/23 09:14:02 jdolecek Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ static const struct usb_devno urio_devs[] = {
 int urio_match(struct device *, void *, void *); 
 void urio_attach(struct device *, struct device *, void *); 
 int urio_detach(struct device *, int); 
-int urio_activate(struct device *, enum devact); 
+int urio_activate(struct device *, int); 
 
 struct cfdriver urio_cd = { 
 	NULL, "urio", DV_DULL 
@@ -234,7 +234,7 @@ urio_detach(struct device *self, int flags)
 }
 
 int
-urio_activate(struct device *self, enum devact act)
+urio_activate(struct device *self, int act)
 {
 	struct urio_softc *sc = (struct urio_softc *)self;
 

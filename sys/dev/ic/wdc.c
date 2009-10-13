@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.102 2009/02/07 08:07:28 grange Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.103 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -737,7 +737,7 @@ wdcprobe(chp)
 int
 wdcactivate(self, act)
 	struct device *self;
-	enum devact act;
+	int act;
 {
 	int error = 0;
 	int s;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.104 2009/06/18 22:55:56 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.105 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ int	audioprint(void *, const char *);
 int	audioprobe(struct device *, void *, void *);
 void	audioattach(struct device *, struct device *, void *);
 int	audiodetach(struct device *, int);
-int	audioactivate(struct device *, enum devact);
+int	audioactivate(struct device *, int);
 
 struct portname {
 	char	*name;
@@ -364,7 +364,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-audioactivate(struct device *self, enum devact act)
+audioactivate(struct device *self, int act)
 {
 	struct audio_softc *sc = (struct audio_softc *)self;
 

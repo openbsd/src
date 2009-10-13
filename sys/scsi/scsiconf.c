@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.143 2009/09/14 00:03:28 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.144 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ struct scsi_device probe_switch = {
 
 int	scsibusmatch(struct device *, void *, void *);
 void	scsibusattach(struct device *, struct device *, void *);
-int	scsibusactivate(struct device *, enum devact);
+int	scsibusactivate(struct device *, int);
 int	scsibusdetach(struct device *, int);
 
 int	scsibussubmatch(struct device *, void *, void *);
@@ -197,7 +197,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-scsibusactivate(struct device *dev, enum devact act)
+scsibusactivate(struct device *dev, int act)
 {
 	return (config_activate_children(dev, act));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.92 2008/07/21 18:43:19 damien Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.93 2009/10/13 19:33:17 pirofti Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -100,7 +100,7 @@ int atudebug = 1;
 int atu_match(struct device *, void *, void *); 
 void atu_attach(struct device *, struct device *, void *); 
 int atu_detach(struct device *, int); 
-int atu_activate(struct device *, enum devact); 
+int atu_activate(struct device *, int); 
 
 struct cfdriver atu_cd = { 
 	NULL, "atu", DV_IFNET 
@@ -1511,7 +1511,7 @@ atu_detach(struct device *self, int flags)
 }
 
 int
-atu_activate(struct device *self, enum devact act)
+atu_activate(struct device *self, int act)
 {
 	struct atu_softc *sc = (struct atu_softc *)self;
 

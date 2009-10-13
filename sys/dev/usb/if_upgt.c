@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.47 2009/08/10 20:02:19 deraadt Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.48 2009/10/13 19:33:17 pirofti Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -89,7 +89,7 @@ int		upgt_match(struct device *, void *, void *);
 void		upgt_attach(struct device *, struct device *, void *);
 void		upgt_attach_hook(void *);
 int		upgt_detach(struct device *, int);
-int		upgt_activate(struct device *, enum devact);
+int		upgt_activate(struct device *, int);
 
 int		upgt_device_type(struct upgt_softc *, uint16_t, uint16_t);
 int		upgt_device_init(struct upgt_softc *);
@@ -512,7 +512,7 @@ upgt_detach(struct device *self, int flags)
 }
 
 int
-upgt_activate(struct device *self, enum devact act)
+upgt_activate(struct device *self, int act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.127 2009/09/07 19:06:43 miod Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.128 2009/10/13 19:33:19 pirofti Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -66,7 +66,7 @@ int		uvideo_match(struct device *, void *, void *);
 void		uvideo_attach(struct device *, struct device *, void *);
 void		uvideo_attach_hook(void *);
 int		uvideo_detach(struct device *, int);
-int		uvideo_activate(struct device *, enum devact);
+int		uvideo_activate(struct device *, int);
 
 usbd_status	uvideo_vc_parse_desc(struct uvideo_softc *);
 usbd_status	uvideo_vc_parse_desc_header(struct uvideo_softc *,
@@ -555,7 +555,7 @@ uvideo_detach(struct device *self, int flags)
 }
 
 int
-uvideo_activate(struct device *self, enum devact act)
+uvideo_activate(struct device *self, int act)
 {
 	struct uvideo_softc *sc = (struct uvideo_softc *) self;
 	int rv = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.24 2009/02/14 20:05:09 chl Exp $ */
+/*	$OpenBSD: uts.c,v 1.25 2009/10/13 19:33:19 pirofti Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -116,7 +116,7 @@ const struct wsmouse_accessops uts_accessops = {
 int uts_match(struct device *, void *, void *);
 void uts_attach(struct device *, struct device *, void *);
 int uts_detach(struct device *, int);
-int uts_activate(struct device *, enum devact);
+int uts_activate(struct device *, int);
 
 struct cfdriver uts_cd = {
 	NULL, "uts", DV_DULL
@@ -248,7 +248,7 @@ uts_detach(struct device *self, int flags)
 }
 
 int
-uts_activate(struct device *self, enum devact act)
+uts_activate(struct device *self, int act)
 {
 	struct uts_softc *sc = (struct uts_softc *)self;
 	int rv = 0;

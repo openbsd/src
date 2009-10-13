@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.58 2008/09/25 11:07:12 krw Exp $ */
+/*	$OpenBSD: umass.c,v 1.59 2009/10/13 19:33:19 pirofti Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ char *states[TSTATE_STATES+1] = {
 int umass_match(struct device *, void *, void *); 
 void umass_attach(struct device *, struct device *, void *); 
 int umass_detach(struct device *, int); 
-int umass_activate(struct device *, enum devact); 
+int umass_activate(struct device *, int); 
 
 struct cfdriver umass_cd = { 
 	NULL, "umass", DV_DULL 
@@ -681,7 +681,7 @@ umass_detach(struct device *self, int flags)
 }
 
 int
-umass_activate(struct device *dev, enum devact act)
+umass_activate(struct device *dev, int act)
 {
 	struct umass_softc *sc = (struct umass_softc *)dev;
 	struct umassbus_softc *scbus = sc->bus;

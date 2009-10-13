@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.61 2008/11/21 17:55:02 robert Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.62 2009/10/13 19:33:17 pirofti Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ struct audio_device uaudio_device = {
 int uaudio_match(struct device *, void *, void *); 
 void uaudio_attach(struct device *, struct device *, void *); 
 int uaudio_detach(struct device *, int); 
-int uaudio_activate(struct device *, enum devact); 
+int uaudio_activate(struct device *, int); 
 
 struct cfdriver uaudio_cd = { 
 	NULL, "uaudio", DV_DULL 
@@ -464,7 +464,7 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-uaudio_activate(struct device *self, enum devact act)
+uaudio_activate(struct device *self, int act)
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
 	int rv = 0;

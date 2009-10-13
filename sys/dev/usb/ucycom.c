@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.14 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.15 2009/10/13 19:33:17 pirofti Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ const struct usb_devno ucycom_devs[] = {
 int ucycom_match(struct device *, void *, void *); 
 void ucycom_attach(struct device *, struct device *, void *); 
 int ucycom_detach(struct device *, int); 
-int ucycom_activate(struct device *, enum devact); 
+int ucycom_activate(struct device *, int); 
 
 struct cfdriver ucycom_cd = { 
 	NULL, "ucycom", DV_DULL 
@@ -594,7 +594,7 @@ ucycom_detach(struct device *self, int flags)
 }
 
 int
-ucycom_activate(struct device *self, enum devact act)
+ucycom_activate(struct device *self, int act)
 {
 	struct ucycom_softc *sc = (struct ucycom_softc *)self;
 	int rv = 0;

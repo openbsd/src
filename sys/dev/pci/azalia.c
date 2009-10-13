@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.157 2009/10/11 06:45:46 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.158 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -185,7 +185,7 @@ uint8_t azalia_pci_read(pci_chipset_tag_t, pcitag_t, int);
 void	azalia_pci_write(pci_chipset_tag_t, pcitag_t, int, uint8_t);
 int	azalia_pci_match(struct device *, void *, void *);
 void	azalia_pci_attach(struct device *, struct device *, void *);
-int	azalia_pci_activate(struct device *, enum devact);
+int	azalia_pci_activate(struct device *, int);
 int	azalia_pci_detach(struct device *, int);
 int	azalia_intr(void *);
 void	azalia_print_codec(codec_t *);
@@ -505,7 +505,7 @@ err_exit:
 }
 
 int
-azalia_pci_activate(struct device *self, enum devact act)
+azalia_pci_activate(struct device *self, int act)
 {
 	azalia_t *sc;
 	int ret;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiodcf.c,v 1.2 2009/04/26 02:20:58 cnst Exp $ */
+/*	$OpenBSD: gpiodcf.c,v 1.3 2009/10/13 19:33:16 pirofti Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -118,7 +118,7 @@ void	gpiodcf_invalidate(void *);
 int gpiodcf_match(struct device *, void *, void *); 
 void gpiodcf_attach(struct device *, struct device *, void *); 
 int gpiodcf_detach(struct device *, int); 
-int gpiodcf_activate(struct device *, enum devact); 
+int gpiodcf_activate(struct device *, int); 
 
 int gpiodcf_signal(struct gpiodcf_softc *);
 
@@ -593,7 +593,7 @@ gpiodcf_ct_probe(void *xsc)
 }
 
 int
-gpiodcf_activate(struct device *self, enum devact act)
+gpiodcf_activate(struct device *self, int act)
 {
 	struct gpiodcf_softc *sc = (struct gpiodcf_softc *)self;
 

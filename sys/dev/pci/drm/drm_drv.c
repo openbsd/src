@@ -53,7 +53,7 @@ int	 drm_lastclose(struct drm_device *);
 void	 drm_attach(struct device *, struct device *, void *);
 int	 drm_probe(struct device *, void *, void *);
 int	 drm_detach(struct device *, int);
-int	 drm_activate(struct device *, enum devact);
+int	 drm_activate(struct device *, int);
 int	 drmprint(void *, const char *);
 
 int	 drm_getunique(struct drm_device *, void *, struct drm_file *);
@@ -218,7 +218,7 @@ drm_detach(struct device *self, int flags)
 }
 
 int
-drm_activate(struct device *self, enum devact act)
+drm_activate(struct device *self, int act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

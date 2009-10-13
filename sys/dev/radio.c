@@ -1,4 +1,4 @@
-/* $OpenBSD: radio.c,v 1.7 2006/06/23 06:27:11 miod Exp $ */
+/* $OpenBSD: radio.c,v 1.8 2009/10/13 19:33:16 pirofti Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
@@ -46,7 +46,7 @@
 int	radioprobe(struct device *, void *, void *);
 void	radioattach(struct device *, struct device *, void *);
 int	radiodetach(struct device *, int);
-int	radioactivate(struct device *, enum devact);
+int	radioactivate(struct device *, int);
 int	radioprint(void *, const char *);
 
 struct cfattach radio_ca = {
@@ -190,7 +190,7 @@ radiodetach(struct device *self, int flags)
 }
 
 int
-radioactivate(struct device *self, enum devact act)
+radioactivate(struct device *self, int act)
 {
 	struct radio_softc *sc = (struct radio_softc *)self;
 

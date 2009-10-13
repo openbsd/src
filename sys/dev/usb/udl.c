@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.54 2009/10/11 12:38:23 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.55 2009/10/13 19:33:17 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -75,7 +75,7 @@ int		udl_match(struct device *, void *, void *);
 void		udl_attach(struct device *, struct device *, void *);
 void		udl_attach_hook(void *);
 int		udl_detach(struct device *, int);
-int		udl_activate(struct device *, enum devact);
+int		udl_activate(struct device *, int);
 
 int		udl_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t		udl_mmap(void *, off_t, int);
@@ -480,7 +480,7 @@ udl_detach(struct device *self, int flags)
 }
 
 int
-udl_activate(struct device *self, enum devact act)
+udl_activate(struct device *self, int act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

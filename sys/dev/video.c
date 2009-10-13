@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.23 2008/11/11 12:37:07 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.24 2009/10/13 19:33:16 pirofti Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -43,7 +43,7 @@
 int	videoprobe(struct device *, void *, void *);
 void	videoattach(struct device *, struct device *, void *);
 int	videodetach(struct device *, int);
-int	videoactivate(struct device *, enum devact);
+int	videoactivate(struct device *, int);
 int	videoprint(void *, const char *);
 
 void	video_intr(void *);
@@ -375,7 +375,7 @@ videodetach(struct device *self, int flags)
 }
 
 int
-videoactivate(struct device *self, enum devact act)
+videoactivate(struct device *self, int act)
 {
 	struct video_softc *sc = (struct video_softc *)self;
 

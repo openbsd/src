@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.12 2009/08/16 12:57:22 jsg Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -168,7 +168,7 @@ static const struct usb_devno moscom_devs[] = {
 int moscom_match(struct device *, void *, void *); 
 void moscom_attach(struct device *, struct device *, void *); 
 int moscom_detach(struct device *, int); 
-int moscom_activate(struct device *, enum devact); 
+int moscom_activate(struct device *, int); 
 
 struct cfdriver moscom_cd = { 
 	NULL, "moscom", DV_DULL 
@@ -286,7 +286,7 @@ moscom_detach(struct device *self, int flags)
 }
 
 int
-moscom_activate(struct device *self, enum devact act)
+moscom_activate(struct device *self, int act)
 {
 	struct moscom_softc *sc = (struct moscom_softc *)self;
 	int rv = 0;

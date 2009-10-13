@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.43 2008/11/28 02:44:18 brad Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.44 2009/10/13 19:33:17 pirofti Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -116,7 +116,7 @@ const struct cdce_type cdce_devs[] = {
 int cdce_match(struct device *, void *, void *); 
 void cdce_attach(struct device *, struct device *, void *); 
 int cdce_detach(struct device *, int); 
-int cdce_activate(struct device *, enum devact); 
+int cdce_activate(struct device *, int); 
 
 struct cfdriver cdce_cd = { 
 	NULL, "cdce", DV_IFNET 
@@ -871,7 +871,7 @@ cdce_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 }
 
 int
-cdce_activate(struct device *self, enum devact act)
+cdce_activate(struct device *self, int act)
 {
 	struct cdce_softc *sc = (struct cdce_softc *)self;
 

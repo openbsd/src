@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.45 2009/02/14 20:05:09 chl Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.46 2009/10/13 19:33:17 pirofti Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -265,7 +265,7 @@ const struct wi_usb_type {
 int wi_usb_match(struct device *, void *, void *); 
 void wi_usb_attach(struct device *, struct device *, void *); 
 int wi_usb_detach(struct device *, int); 
-int wi_usb_activate(struct device *, enum devact); 
+int wi_usb_activate(struct device *, int); 
 
 struct cfdriver wi_usb_cd = { 
 	NULL, "wi_usb", DV_IFNET 
@@ -1336,7 +1336,7 @@ wi_get_fid_usb(struct wi_softc *sc, int fid)
 }
 
 int
-wi_usb_activate(struct device *self, enum devact act)
+wi_usb_activate(struct device *self, int act)
 {
 	struct wi_usb_softc *sc = (struct wi_usb_softc *)self;
 

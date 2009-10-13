@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.86 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: st.c,v 1.87 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ struct st_softc {
 
 int	stmatch(struct device *, void *, void *);
 void	stattach(struct device *, struct device *, void *);
-int	stactivate(struct device *, enum devact);
+int	stactivate(struct device *, int);
 int	stdetach(struct device *, int);
 
 void	stminphys(struct buf *);
@@ -355,7 +355,7 @@ stattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-stactivate(struct device *self, enum devact act)
+stactivate(struct device *self, int act)
 {
 	struct st_softc *st = (struct st_softc *)self;
 	int rv = 0;

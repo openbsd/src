@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.58 2009/07/19 08:16:06 blambert Exp $ */
+/*	$OpenBSD: ugen.c,v 1.59 2009/10/13 19:33:17 pirofti Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -126,7 +126,7 @@ int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
 int ugen_match(struct device *, void *, void *); 
 void ugen_attach(struct device *, struct device *, void *); 
 int ugen_detach(struct device *, int); 
-int ugen_activate(struct device *, enum devact); 
+int ugen_activate(struct device *, int); 
 
 struct cfdriver ugen_cd = { 
 	NULL, "ugen", DV_DULL 
@@ -727,7 +727,7 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-ugen_activate(struct device *self, enum devact act)
+ugen_activate(struct device *self, int act)
 {
 	struct ugen_softc *sc = (struct ugen_softc *)self;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.35 2008/10/09 01:07:02 deraadt Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.36 2009/10/13 19:33:19 pirofti Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -124,7 +124,7 @@ void ieee1284_print_id(char *);
 int ulpt_match(struct device *, void *, void *); 
 void ulpt_attach(struct device *, struct device *, void *); 
 int ulpt_detach(struct device *, int); 
-int ulpt_activate(struct device *, enum devact); 
+int ulpt_activate(struct device *, int); 
 
 struct cfdriver ulpt_cd = { 
 	NULL, "ulpt", DV_DULL 
@@ -303,7 +303,7 @@ ulpt_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ulpt_activate(struct device *self, enum devact act)
+ulpt_activate(struct device *self, int act)
 {
 	struct ulpt_softc *sc = (struct ulpt_softc *)self;
 

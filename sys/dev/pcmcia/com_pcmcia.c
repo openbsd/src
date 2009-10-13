@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.48 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.49 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ int com_pcmcia_match(struct device *, void *, void *);
 void com_pcmcia_attach(struct device *, struct device *, void *);
 int com_pcmcia_detach(struct device *, int);
 void com_pcmcia_cleanup(void *);
-int com_pcmcia_activate(struct device *, enum devact);
+int com_pcmcia_activate(struct device *, int);
 
 int com_pcmcia_enable(struct com_softc *);
 void com_pcmcia_disable(struct com_softc *);
@@ -208,7 +208,7 @@ com_pcmcia_match(parent, match, aux)
 int
 com_pcmcia_activate(dev, act)
 	struct device *dev;
-	enum devact act;
+	int act;
 {
 	struct com_pcmcia_softc *sc = (void *) dev;
 	int s;

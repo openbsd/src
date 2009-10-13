@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.31 2009/07/23 09:45:58 kettenis Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.32 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -1203,7 +1203,7 @@ smc91cxx_disable(sc)
 int
 smc91cxx_activate(self, act)
 	struct device *self;
-	enum devact act;
+	int act;
 {
 #if 0
 	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;

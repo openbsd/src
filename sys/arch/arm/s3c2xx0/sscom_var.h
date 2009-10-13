@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom_var.h,v 1.1 2008/11/26 14:39:14 drahn Exp $ */
+/*	$OpenBSD: sscom_var.h,v 1.2 2009/10/13 19:33:16 pirofti Exp $ */
 /* $NetBSD: sscom_var.h,v 1.7 2006/03/06 20:21:25 rjs Exp $ */
 
 /*
@@ -256,7 +256,7 @@ int	sscomspeed(long, long);
 void	sscom_attach_subr(struct sscom_softc *);
 
 int	sscom_detach(struct device *, int);
-int	sscom_activate(struct device *, enum devact);
+int	sscom_activate(struct device *, int);
 void	sscom_shutdown(struct sscom_softc *);
 void	sscomdiag		(void *);
 void	sscomstart(struct tty *);

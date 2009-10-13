@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.19 2006/03/10 00:27:55 jsg Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.20 2009/10/13 19:33:16 pirofti Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -56,7 +56,7 @@
 int  an_pcmcia_match(struct device *, void *, void *);
 void an_pcmcia_attach(struct device *, struct device *, void *);
 int  an_pcmcia_detach(struct device *, int);
-int  an_pcmcia_activate(struct device *, enum devact);
+int  an_pcmcia_activate(struct device *, int);
 
 struct an_pcmcia_softc {
 	struct an_softc sc_an;
@@ -170,7 +170,7 @@ an_pcmcia_detach(struct device *dev, int flags)
 }
 
 int
-an_pcmcia_activate(struct device *dev, enum devact act)
+an_pcmcia_activate(struct device *dev, int act)
 {
 	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)dev;
 	struct an_softc *sc = &psc->sc_an;

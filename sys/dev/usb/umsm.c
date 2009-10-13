@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.50 2009/10/12 21:30:08 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.51 2009/10/13 19:33:19 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -57,7 +57,7 @@ int     umsmdebug = 0;
 int umsm_match(struct device *, void *, void *); 
 void umsm_attach(struct device *, struct device *, void *); 
 int umsm_detach(struct device *, int); 
-int umsm_activate(struct device *, enum devact); 
+int umsm_activate(struct device *, int); 
 
 int umsm_open(void *, int);
 void umsm_close(void *, int);
@@ -388,7 +388,7 @@ umsm_detach(struct device *self, int flags)
 }
 
 int
-umsm_activate(struct device *self, enum devact act)
+umsm_activate(struct device *self, int act)
 {
 	struct umsm_softc *sc = (struct umsm_softc *)self;
 	int rv = 0;

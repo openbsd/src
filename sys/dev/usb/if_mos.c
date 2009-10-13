@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.6 2008/11/22 09:46:12 deraadt Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.7 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -136,7 +136,7 @@ const struct mos_type mos_devs[] = {
 int mos_match(struct device *, void *, void *);
 void mos_attach(struct device *, struct device *, void *);
 int mos_detach(struct device *, int);
-int mos_activate(struct device *, enum devact);
+int mos_activate(struct device *, int);
 
 struct cfdriver mos_cd = {
 	NULL, "mos", DV_IFNET
@@ -825,7 +825,7 @@ mos_detach(struct device *self, int flags)
 
 
 int
-mos_activate(struct device *self, enum devact act)
+mos_activate(struct device *self, int act)
 {
 	struct mos_softc *sc = (struct mos_softc *)self;
 

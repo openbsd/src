@@ -1,4 +1,4 @@
-/*	$OpenBSD: uberry.c,v 1.15 2007/10/11 18:33:14 deraadt Exp $	*/
+/*	$OpenBSD: uberry.c,v 1.16 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -58,7 +58,7 @@ struct usb_devno const uberry_devices[] = {
 int uberry_match(struct device *, void *, void *); 
 void uberry_attach(struct device *, struct device *, void *); 
 int uberry_detach(struct device *, int); 
-int uberry_activate(struct device *, enum devact); 
+int uberry_activate(struct device *, int); 
 
 void uberry_pearlmode(struct uberry_softc *);
 void uberry_charge(struct uberry_softc *);
@@ -157,7 +157,7 @@ uberry_detach(struct device *self, int flags)
 }
 
 int
-uberry_activate(struct device *self, enum devact act)
+uberry_activate(struct device *self, int act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:

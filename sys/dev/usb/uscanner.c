@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.40 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.41 2009/10/13 19:33:19 pirofti Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ void uscanner_do_close(struct uscanner_softc *);
 int uscanner_match(struct device *, void *, void *); 
 void uscanner_attach(struct device *, struct device *, void *); 
 int uscanner_detach(struct device *, int); 
-int uscanner_activate(struct device *, enum devact); 
+int uscanner_activate(struct device *, int); 
 
 struct cfdriver uscanner_cd = { 
 	NULL, "uscanner", DV_DULL 
@@ -574,7 +574,7 @@ uscannerwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-uscanner_activate(struct device *self, enum devact act)
+uscanner_activate(struct device *self, int act)
 {
 	struct uscanner_softc *sc = (struct uscanner_softc *)self;
 

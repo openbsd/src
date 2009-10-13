@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.35 2009/07/23 07:37:44 jsg Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.36 2009/10/13 19:33:19 pirofti Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ int uhidevsubmatch(struct device *parent, void *cf, void *aux);
 int uhidev_match(struct device *, void *, void *); 
 void uhidev_attach(struct device *, struct device *, void *); 
 int uhidev_detach(struct device *, int); 
-int uhidev_activate(struct device *, enum devact); 
+int uhidev_activate(struct device *, int); 
 
 struct cfdriver uhidev_cd = { 
 	NULL, "uhidev", DV_DULL 
@@ -333,7 +333,7 @@ int uhidevsubmatch(struct device *parent, void *match, void *aux)
 }
 
 int
-uhidev_activate(struct device *self, enum devact act)
+uhidev_activate(struct device *self, int act)
 {
 	struct uhidev_softc *sc = (struct uhidev_softc *)self;
 	int i, rv = 0;

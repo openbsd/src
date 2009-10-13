@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.36 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: umodem.c,v 1.37 2009/10/13 19:33:19 pirofti Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ struct ucom_methods umodem_methods = {
 int umodem_match(struct device *, void *, void *); 
 void umodem_attach(struct device *, struct device *, void *); 
 int umodem_detach(struct device *, int); 
-int umodem_activate(struct device *, enum devact); 
+int umodem_activate(struct device *, int); 
 
 struct cfdriver umodem_cd = { 
 	NULL, "umodem", DV_DULL 
@@ -717,7 +717,7 @@ umodem_set_comm_feature(struct umodem_softc *sc, int feature, int state)
 }
 
 int
-umodem_activate(struct device *self, enum devact act)
+umodem_activate(struct device *self, int act)
 {
 	struct umodem_softc *sc = (struct umodem_softc *)self;
 	int rv = 0;

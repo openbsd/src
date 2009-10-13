@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.12 2006/04/21 17:52:54 uwe Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.13 2009/10/13 19:33:16 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -115,7 +115,7 @@ struct gpr_softc {
 int	gpr_match(struct device *, void *, void *);
 void	gpr_attach(struct device *, struct device *, void *);
 int	gpr_detach(struct device *, int);
-int	gpr_activate(struct device *, enum devact);
+int	gpr_activate(struct device *, int);
 
 int	gpropen(dev_t, int, int, struct proc *);
 int	gprclose(dev_t, int, int, struct proc *);
@@ -236,7 +236,7 @@ gpr_detach(struct device *dev, int flags)
 }
 
 int
-gpr_activate(struct device *dev, enum devact act)
+gpr_activate(struct device *dev, int act)
 {
 	struct gpr_softc *sc = (struct gpr_softc *)dev;
 

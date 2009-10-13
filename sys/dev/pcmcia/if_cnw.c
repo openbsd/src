@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.19 2009/03/29 21:53:53 sthen Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.20 2009/10/13 19:33:16 pirofti Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -100,7 +100,7 @@ int cnw_skey = CNW_SCRAMBLEKEY;		/* Scramble key */
 int	cnw_match(struct device *, void *, void *);
 void	cnw_attach(struct device *, struct device *, void *);
 int	cnw_detach(struct device *, int);
-int	cnw_activate(struct device *, enum devact);
+int	cnw_activate(struct device *, int);
 
 struct cnw_softc {
 	struct device sc_dev;		    /* Device glue (must be first) */
@@ -856,7 +856,7 @@ cnw_detach(dev, flags)
 int
 cnw_activate(dev, act)
 	struct device *dev;
-	enum devact act;
+	int act;
 {
 	struct cnw_softc *sc = (struct cnw_softc *)dev;
         struct ifnet *ifp = &sc->sc_arpcom.ac_if;

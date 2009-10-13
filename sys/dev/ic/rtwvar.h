@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.27 2009/08/10 22:10:07 deraadt Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.28 2009/10/13 19:33:16 pirofti Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -452,7 +452,7 @@ int rtw_intr(void *);
 void rtw_disable(struct rtw_softc *);
 int rtw_enable(struct rtw_softc *);
 
-int rtw_activate(struct device *, enum devact);
+int rtw_activate(struct device *, int);
 void rtw_power(int, void *);
 void rtw_shutdown(void *);
 
