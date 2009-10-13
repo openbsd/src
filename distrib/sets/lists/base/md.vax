@@ -1784,8 +1784,6 @@
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/iperlsys.h
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/keywords.h
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/libperl.a
-./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/libperl.so.11.1
-./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/libperl_pic.a
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/malloc_ctl.h
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/mg.h
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/mydtrace.h

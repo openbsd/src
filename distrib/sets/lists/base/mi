@@ -402,8 +402,6 @@
 ./usr/bin/psbb
 ./usr/bin/psed
 ./usr/bin/pstruct
-./usr/bin/ptar
-./usr/bin/ptardiff
 ./usr/bin/purgestat
 ./usr/bin/quota
 ./usr/bin/radioctl
@@ -437,7 +435,6 @@
 ./usr/bin/sendbug
 ./usr/bin/sftp
 ./usr/bin/shar
-./usr/bin/shasum
 ./usr/bin/showmount
 ./usr/bin/size
 ./usr/bin/skey
