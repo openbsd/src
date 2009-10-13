@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.345 2009/10/13 21:21:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.346 2009/10/13 22:16:31 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -854,7 +854,7 @@ if ($opt_l || $opt_z) {
 		print "Cannot find updates for ", join(', ', map {$_->short_print} @cantupdate[1..50]);
 		print " and more" if @cantupdate > 50;
 		print "\n";
-		if (@todo == 0) {
+		if (@todo2 == 0) {
 			print "No updates found\n";
 			exit(1);
 		}
