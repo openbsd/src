@@ -723,12 +723,8 @@ sub install {
     $cmd .= " -m $mode" if $mode;
     $cmd .= " -s" if $strip;
     $cmd .= " $from $to";
-    $xto =~ s/^\Q$destdir\E// if $destdir;
-    print $verbose ? "  install $from $xto\n" : "  $xto\n" unless $silent;
-    unless ($nonono) {
-       system($cmd);
-       warn "Couldn't $cmd\n" if $?;
-    }
+    $xto =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
+    print $opts{verbose} ? "  install $from $xto\n" : "  $xto\n" unless $opts{silent};
     $packlist->{$xto} = { type => 'file' };
 }
 
