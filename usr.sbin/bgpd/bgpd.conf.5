@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.97 2009/10/06 09:44:13 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.98 2009/10/13 09:51:53 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 6 2009 $
+.Dd $Mdocdate: October 13 2009 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -519,13 +519,13 @@ The default is
 .Pq Ic yes Ns \&| Ns Ic no
 .Xc
 If set to
-.Ic no ,
-the graceful restart capability is not announced.
+.Ic yes ,
+the graceful restart capability is announced.
 Currently only the End-of-RIB marker is supported and announced by the
 .Ic restart
 capability.
 The default is
-.Ic yes .
+.Ic no .
 .Pp
 .It Ic demote Ar group
 Increase the

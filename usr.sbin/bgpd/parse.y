@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.237 2009/10/06 09:44:13 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.238 2009/10/13 09:51:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2600,7 +2600,7 @@ alloc_peer(void)
 	p->conf.capabilities.mp_v4 = SAFI_ALL;
 	p->conf.capabilities.mp_v6 = SAFI_ALL;
 	p->conf.capabilities.refresh = 1;
-	p->conf.capabilities.restart = 1;
+	p->conf.capabilities.restart = 0;
 	p->conf.capabilities.as4byte = 1;
 	p->conf.local_as = conf->as;
 	p->conf.local_short_as = conf->short_as;
