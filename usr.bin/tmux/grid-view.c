@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-view.c,v 1.6 2009/07/13 10:43:52 nicm Exp $ */
+/* $OpenBSD: grid-view.c,v 1.7 2009/10/13 15:38:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -92,15 +92,20 @@ grid_view_scroll_region_up(struct grid *gd, u_int rupper, u_int rlower)
 {
 	GRID_DEBUG(gd, "rupper=%u, rlower=%u", rupper, rlower);
 
-	if (gd->flags & GRID_HISTORY && rupper == 0 && rlower == gd->sy - 1) {
-		grid_scroll_line(gd);
-		return;
+	if (gd->flags & GRID_HISTORY) {
+		grid_collect_history(gd);
+		if (rupper == 0 && rlower == gd->sy - 1)
+			grid_scroll_history(gd);
+		else {
+			rupper = grid_view_y(gd, rupper);
+			rlower = grid_view_y(gd, rlower);
+			grid_scroll_history_region(gd, rupper, rlower);
+		}
+	} else {
+		rupper = grid_view_y(gd, rupper);
+		rlower = grid_view_y(gd, rlower);
+		grid_move_lines(gd, rupper, rupper + 1, rlower - rupper);
 	}
-
-	rupper = grid_view_y(gd, rupper);
-	rlower = grid_view_y(gd, rlower);
-
-	grid_move_lines(gd, rupper, rupper + 1, rlower - rupper);
 }
 
 /* Scroll region down. */
