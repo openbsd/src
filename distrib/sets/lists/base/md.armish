@@ -74,7 +74,7 @@
 ./usr/lib/libform.so.3.0
 ./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.5.0
-./usr/lib/libiberty.so.9.0
+./usr/lib/libiberty.so.10.0
 ./usr/lib/libkafs.so.17.0
 ./usr/lib/libkrb5.so.17.0
 ./usr/lib/libkvm.so.9.1
