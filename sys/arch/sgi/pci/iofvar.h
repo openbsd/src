@@ -1,4 +1,4 @@
-/*	$OpenBSD: iofvar.h,v 1.1 2009/08/18 19:34:17 miod Exp $	*/
+/*	$OpenBSD: iofvar.h,v 1.2 2009/10/13 21:17:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -25,6 +25,7 @@ struct iof_attach_args {
 
 	bus_addr_t		 iaa_base;
 	uint			 iaa_dev;
+	uint			 iaa_clock;
 };
 
 void   *iof_intr_establish(void *, uint, int, int (*)(void *), void *, char *);

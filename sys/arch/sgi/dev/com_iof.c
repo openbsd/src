@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_iof.c,v 1.3 2009/10/11 19:36:25 miod Exp $	*/
+/*	$OpenBSD: com_iof.c,v 1.4 2009/10/13 21:17:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -92,10 +92,7 @@ com_iof_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	/* XXX need to get PCI bus speed from parent */
-	sc->sc_frequency = 66666667;
-	if (0)
-		sc->sc_frequency >>= 1;
+	sc->sc_frequency = iaa->iaa_clock;
 
 	/* if it's in use as console, it's there. */
 	if (!(console && !comconsattached)) {

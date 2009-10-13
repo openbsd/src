@@ -1,4 +1,4 @@
-/*	$OpenBSD: iofreg.h,v 1.2 2009/10/07 20:39:45 miod Exp $	*/
+/*	$OpenBSD: iofreg.h,v 1.3 2009/10/13 21:17:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -48,6 +48,9 @@
 /* bits in the OTHER interrupt register */
 #define	IOC4_OIRQ_ATAPI		0x00000001	/* ATAPI passthrough */
 #define	IOC4_OIRQ_KBC		0x00000040	/* keyboard controller */
+
+/* bits in the MCR register */
+#define	IOC4_MCR_PCI_66MHZ	0x00000001
 
 #define	IOC4_ATAPI_BASE		0x00000100
 #define	IOC4_ATAPI_SIZE		0x00000100

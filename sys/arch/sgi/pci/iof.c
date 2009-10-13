@@ -1,4 +1,4 @@
-/*	$OpenBSD: iof.c,v 1.3 2009/10/07 20:39:45 miod Exp $	*/
+/*	$OpenBSD: iof.c,v 1.4 2009/10/13 21:17:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -63,6 +63,8 @@ struct iof_softc {
 	bus_space_handle_t	 sc_memh;
 	bus_dma_tag_t		 sc_dmat;
 	pci_chipset_tag_t	 sc_pc;
+
+	uint32_t		 sc_mcr;
 
 	void			*sc_ih;	
 	struct iof_intr		*sc_intr[IOC4_NDEVS];
@@ -153,6 +155,8 @@ iof_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_memt = sc->sc_mem_bus_space;
 	sc->sc_memh = memh;
 
+	sc->sc_mcr = bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC4_MCR);
+
 	/*
 	 * Acknowledge all pending interrupts, and disable them.
 	 */
@@ -211,6 +215,7 @@ iof_attach_child(struct device *iof, const char *name, bus_addr_t base,
 	iaa.iaa_dmat = sc->sc_dmat;
 	iaa.iaa_base = base;
 	iaa.iaa_dev = dev;
+	iaa.iaa_clock = sc->sc_mcr & IOC4_MCR_PCI_66MHZ ?  66666667 : 33333333;
 
 	config_found_sm(iof, &iaa, iof_print, iof_search);
 }
