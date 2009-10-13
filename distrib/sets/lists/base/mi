@@ -380,7 +380,6 @@
 ./usr/bin/perlbug
 ./usr/bin/perldoc
 ./usr/bin/perlivp
-./usr/bin/perlthanks
 ./usr/bin/pfbtops
 ./usr/bin/pgrep
 ./usr/bin/pic
