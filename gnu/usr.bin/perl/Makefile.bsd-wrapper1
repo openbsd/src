@@ -14,7 +14,6 @@ POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
 MANLOCALBUILD=	yes
 
 MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 perl5101delta.1 perldelta.1 \
-		perlbug.1 perlthanks.1 \
 		Carp.3p carp.3p Carp.3p cluck.3p Carp.3p croak.3p \
 		Carp.3p confess.3p Carp.3p shortmess.3p Carp.3p longmess.3p \
 		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \

@@ -15,7 +15,7 @@ utils/h2ph
 utils/h2xs
 utils/instmodsh
 utils/libnetcfg
-utils/perlbug	# link = utils/perlthanks
+utils/perlbug
 utils/perldoc   # pod = pod/perldoc.pod
 utils/perlivp
 utils/piconv
