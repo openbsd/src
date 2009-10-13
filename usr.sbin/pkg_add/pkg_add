@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.343 2009/10/12 05:17:33 jmc Exp $
+# $OpenBSD: pkg_add,v 1.344 2009/10/13 12:57:14 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -617,6 +617,32 @@ sub install_set
 	return ();
 }
 
+sub stem2location
+{
+	my ($repo, $name, $state) = @_;
+	my $l = $repo->match_locations(OpenBSD::Search::Stem->new($name));
+	if (@$l > 1 && !$state->{defines}->{allversions}) {
+		$l = OpenBSD::Search::FilterLocation->keep_most_recent->filter_locations($l);
+	}
+	if (@$l == 0) {
+		print "Can't resolve $name\n";
+		return undef;
+	} elsif (@$l > 1) {
+		my %h = map {($_->name, $_)} @$l;
+		if ($state->{interactive}) {
+			$h{'<None>'} = undef;
+			my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $name", $state->{interactive}, sort keys %h);
+			return $h{$result};
+		} else {
+			print "Ambiguous: $name could be ", 
+			    join(' ', keys %h), "\n";
+			return undef;
+		}
+	} elsif (@$l == 1) {
+		return $l->[0];
+	}
+}
+ 
 
 sub find_truelocations
 {
@@ -625,39 +651,20 @@ sub find_truelocations
 	my $cache = {};
 	for my $pkgname (@$old) {
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
-		    my ($h, $path, $repo);
-		    if ($pkgname =~ m/\//o) {
-			($repo, $path, $pkgname) = OpenBSD::PackageLocator::path_parse($pkgname);
-			$h = $repo;
-		    } else {
-			$h = 'OpenBSD::PackageLocator';
-			$path = "";
-		    }
-		    my $l = $h->match_locations(OpenBSD::Search::Stem->new($pkgname));
-		    if (@$l > 1 && !$state->{defines}->{allversions}) {
-			$l = OpenBSD::Search::FilterLocation->keep_most_recent->filter_locations($l);
-		    }
-		    if (@$l == 0) {
-		    	print "Can't resolve $pkgname\n";
-			$bad = 1;
-		    } elsif (@$l > 1) {
-			my %h = map {($_->name, $_)} @$l;
-		    	if ($state->{interactive}) {
-				$h{'<None>'} = undef;
-				my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $pkgname", $state->{interactive}, sort keys %h);
-				if (defined $h{$result}) {
-					push(@$new, OpenBSD::UpdateSet->from_location($h{$result}));
-				} else {
-					$bad = 1;
-				}
+			my ($h, $path, $repo);
+			if ($pkgname =~ m/\//o) {
+				($repo, $path, $pkgname) = OpenBSD::PackageLocator::path_parse($pkgname);
+				$h = $repo;
 			} else {
-				print "Ambiguous: $pkgname could be ", 
-				    join(' ', keys %h), "\n";
-				$bad = 1;
+				$h = 'OpenBSD::PackageLocator';
+				$path = "";
 			}
-		    } else {
-				push(@$new, OpenBSD::UpdateSet->from_location($l->[0]));
-		    }
+			my $l = stem2location($h, $pkgname, $state);
+			if (defined $l) {
+				push(@$new, OpenBSD::UpdateSet->from_location($l));
+ 			} else {
+ 				$bad = 1;
+			}
 		} else {
 			if (!defined $cache->{$pkgname}) {
 				$cache->{$pkgname} = OpenBSD::UpdateSet->create_new($pkgname);
