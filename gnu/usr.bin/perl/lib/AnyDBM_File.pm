@@ -19,8 +19,6 @@ die "No DBM package was successfully found or installed";
 
 AnyDBM_File - provide framework for multiple DBMs
 
-NDBM_File, DB_File, GDBM_File, SDBM_File, ODBM_File - various DBM implementations
-
 =head1 SYNOPSIS
 
     use AnyDBM_File;

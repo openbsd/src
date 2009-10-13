@@ -197,7 +197,7 @@ my $installprivlib = "$opts{destdir}$Config{installprivlib}";
 my $installarchlib = "$opts{destdir}$Config{installarchlib}";
 my $installsitelib = "$opts{destdir}$Config{installsitelib}";
 my $installsitearch = "$opts{destdir}$Config{installsitearch}";
-my $installman1dir = "$opts{destdir}$Config{installman1dir}";
+my $installman1dir = "none";
 my $man1ext = $Config{man1ext};
 my $libperl = $Config{libperl};
 # Shared library and dynamic loading suffixes.
@@ -255,9 +255,9 @@ else {
 }
 -x 'suidperl' . $exe_ext|| die "suidperl isn't executable!\n" if $d_dosuid;
 
--f 't/rantests'		|| $Is_W32
-			|| warn "WARNING: You've never run 'make test' or",
-				" some tests failed! (Installing anyway.)\n";
+#-f 't/rantests'		|| $Is_W32
+#			|| warn "WARNING: You've never run 'make test' or",
+#				" some tests failed! (Installing anyway.)\n";
 } #if (!$Is_NetWare)
 
 # This will be used to store the packlist
@@ -282,6 +282,10 @@ if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin) {
     chmod(0755, "$installbin/$perldll");
     $packlist->{"$installbin/$perldll"} = { type => 'file' };
 } # if (($Is_W32 and ! $Is_NetWare) or $Is_Cygwin)
+
+# Get the install command and flags from the environment
+my @installcmd = $ENV{"INSTALL"} || "install";
+push(@installcmd, $ENV{"INSTALL_COPY"} || "-c");
 
 # First we install the version-numbered executables.
 
@@ -316,10 +320,8 @@ elsif ($^O eq 'mpeix') {
 }
 elsif ($^O ne 'dos') {
     if (!$Is_NetWare) {
-	safe_unlink("$installbin/$perl_verbase$ver$exe_ext");
-	copy("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext");
-	strip("$installbin/$perl_verbase$ver$exe_ext");
-	chmod(0755, "$installbin/$perl_verbase$ver$exe_ext");
+	install("perl$exe_ext", "$installbin/$perl_verbase$ver$exe_ext",
+	    "0755", $dostrip);
     }
     else {
 	# If installing onto a NetWare server
@@ -343,8 +345,8 @@ else {
 
 safe_unlink("$installbin/s$perl_verbase$ver$exe_ext");
 if ($d_dosuid) {
-    copy("suidperl$exe_ext", "$installbin/s$perl_verbase$ver$exe_ext");
-    chmod(04711, "$installbin/s$perl_verbase$ver$exe_ext");
+    install("perl$exe_ext", "$installbin/s$perl_verbase$ver$exe_ext",
+	"04711", $dostrip);
 }
 
 # Install library files.
@@ -400,7 +402,9 @@ elsif ($Is_Cygwin) { # On Cygwin symlink it to CORE to make Makefile happy
     )
 } else {
     # [als] hard-coded 'libperl' name... not good!
-    @corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
+    #@corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
+    @corefiles = <*.h *.inc perl*$Config{lib_ext}>;
+    push(@corefiles,<libperl*.*>) unless defined($ENV{"NOLIBINSTALL"});
 
     # AIX needs perl.exp installed as well.
     push(@corefiles,'perl.exp') if $^O eq 'aix';
@@ -707,6 +711,23 @@ sub copy {
 	warn "Couldn't copy $from to $to: $!\n"
 	    unless -f $to and (chmod(0666, $to), unlink $to)
 		   and File::Copy::copy($from, $to);
+    }
+    $packlist->{$xto} = { type => 'file' };
+}
+
+sub install {
+    my($from,$to,$mode,$strip) = @_;
+
+    my $xto = $to;
+    my $cmd = join(' ', @installcmd);
+    $cmd .= " -m $mode" if $mode;
+    $cmd .= " -s" if $strip;
+    $cmd .= " $from $to";
+    $xto =~ s/^\Q$destdir\E// if $destdir;
+    print $verbose ? "  install $from $xto\n" : "  $xto\n" unless $silent;
+    unless ($nonono) {
+       system($cmd);
+       warn "Couldn't $cmd\n" if $?;
     }
     $packlist->{$xto} = { type => 'file' };
 }

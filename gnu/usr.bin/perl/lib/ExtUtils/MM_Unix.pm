@@ -289,7 +289,7 @@ sub const_cccmd {
     return '' unless $self->needs_linking();
     return $self->{CONST_CCCMD} =
 	q{CCCMD = $(CC) -c $(PASTHRU_INC) $(INC) \\
-	$(CCFLAGS) $(OPTIMIZE) \\
+	$(CCFLAGS) $(OPTIMIZE) $(COPTS) \\
 	$(PERLTYPE) $(MPOLLUTE) $(DEFINE_VERSION) \\
 	$(XS_DEFINE_VERSION)};
 }

@@ -21,13 +21,11 @@ utils/perlivp
 utils/piconv
 utils/pl2pm
 utils/prove
-utils/ptar
-utils/ptardiff
 utils/cpanp-run-perl
 utils/cpanp
 utils/cpan2dist
-utils/shasum
 utils/splain
+utils/shasum
 utils/xsubpp
 x2p/a2p         # pod = x2p/a2p.pod
 x2p/find2perl

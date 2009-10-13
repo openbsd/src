@@ -3008,7 +3008,7 @@ Same as for C</>, except the loop runs backwards.
 =head4 C<$rc> - Recall command
 
 Manages the commands in C<@hist> (which is created if C<Term::ReadLine> reports
-that the terminal supports history). It find the the command required, puts it
+that the terminal supports history). It find the command required, puts it
 into C<$cmd>, and redoes the loop to execute it.
 
 =cut

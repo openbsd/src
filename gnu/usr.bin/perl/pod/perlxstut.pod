@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlXStut - Tutorial for writing XSUBs
+perlxstut - Tutorial for writing XSUBs
 
 =head1 DESCRIPTION
 
@@ -252,7 +252,7 @@ Now perform the same steps as before, generating a Makefile from the
 Makefile.PL file, and running make.
 
 In order to test that our extension works, we now need to look at the
-file Mytest.t.  This file is set up to imitate the same kind of testing
+file t/Mytest.t.  This file is set up to imitate the same kind of testing
 structure that Perl itself has.  Within the test script, you perform a
 number of tests to confirm the behavior of the extension, printing "ok"
 when the test is correct, "not ok" when it is not.

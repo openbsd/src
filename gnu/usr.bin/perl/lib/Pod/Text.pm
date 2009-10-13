@@ -654,6 +654,12 @@ sub parse_from_filehandle {
     $self->parse_from_file (@_);
 }
 
+sub begin_pod {
+    my $self = shift;
+    $$self{EXCLUDE} = 0;
+    $$self{VERBATIM} = 0;
+}
+
 ##############################################################################
 # Module return value and documentation
 ##############################################################################

@@ -79,11 +79,11 @@ You can get gzip from ftp://prep.ai.mit.edu/pub/gnu/
 
 Or, you can combine this step with the next to save disk space:
 
-     gzip -dc yourmodule.tar.gz | tar -xof -
+     gzip -dc yourmodule.tar.gz | tar -xf -
 
 B. UNPACK
 
-Unpack the result with C<tar -xof yourmodule.tar>
+Unpack the result with C<tar -xf yourmodule.tar>
 
 C. BUILD
 
