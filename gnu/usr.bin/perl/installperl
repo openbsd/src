@@ -725,6 +725,8 @@ sub install {
     $cmd .= " $from $to";
     $xto =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
     print $opts{verbose} ? "  install $from $xto\n" : "  $xto\n" unless $opts{silent};
+    system($cmd);
+    warn "Couldn't $cmd\n" if $?;
     $packlist->{$xto} = { type => 'file' };
 }
 
