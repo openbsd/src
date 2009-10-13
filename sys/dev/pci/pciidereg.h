@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidereg.h,v 1.8 2009/05/31 04:42:16 jsg Exp $	*/
+/*	$OpenBSD: pciidereg.h,v 1.9 2009/10/13 22:05:13 jsg Exp $	*/
 /*	$NetBSD: pciidereg.h,v 1.6 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ struct idedma_table {
 /* Intel SCH */
 #define SCH_D0TIM	0x80
 #define SCH_D1TIM	0x84
-#define SCH_TIM_UDMA	0x30000
+#define SCH_TIM_UDMA	0x70000
 #define SCH_TIM_MDMA	0x00300
 #define SCH_TIM_PIO	0x00007
 #define SCH_TIM_SYNCDMA	(1 << 31)

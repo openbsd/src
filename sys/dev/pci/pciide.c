@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.301 2009/10/05 20:39:26 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.302 2009/10/13 22:05:13 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -8732,7 +8732,7 @@ sch_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 6;
+	sc->sc_wdcdev.UDMA_cap = 5;
 	sc->sc_wdcdev.set_modes = sch_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = 1;
