@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.47 2009/10/13 00:44:16 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.48 2009/10/13 08:37:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1004,7 +1004,7 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 	}
 
 	/* Zero on the next line. */
-	if (cx == 0 && cy == thisy + 1) {
+	if (cx == 0 && cy == thisy + 1 && thisy != tty->rlower) {
 		tty_putc(tty, '\r');
 		tty_putc(tty, '\n');
 		goto out;
