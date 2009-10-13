@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.227 2009/10/11 19:24:48 dms Exp $ */
+/* $OpenBSD: if_em.c,v 1.228 2009/10/13 23:55:20 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -160,7 +160,7 @@ void em_start(struct ifnet *);
 int  em_ioctl(struct ifnet *, u_long, caddr_t);
 void em_watchdog(struct ifnet *);
 void em_init(void *);
-void em_stop(void *);
+void em_stop(void *, int);
 void em_media_status(struct ifnet *, struct ifmediareq *);
 int  em_media_change(struct ifnet *);
 int  em_flowstatus(struct em_softc *);
@@ -574,7 +574,7 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				em_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				em_stop(sc);
+				em_stop(sc, 0);
 		}
 		break;
 
@@ -658,7 +658,7 @@ em_init(void *arg)
 
 	INIT_DEBUGOUT("em_init: begin");
 
-	em_stop(sc);
+	em_stop(sc, 0);
 
 	/*
 	 * Packet Buffer Allocation (PBA)
@@ -733,7 +733,7 @@ em_init(void *arg)
 	if (em_setup_transmit_structures(sc)) {
 		printf("%s: Could not setup transmit structures\n", 
 		       sc->sc_dv.dv_xname);
-		em_stop(sc);
+		em_stop(sc, 0);
 		splx(s);
 		return;
 	}
@@ -743,7 +743,7 @@ em_init(void *arg)
 	if (em_setup_receive_structures(sc)) {
 		printf("%s: Could not setup receive structures\n", 
 		       sc->sc_dv.dv_xname);
-		em_stop(sc);
+		em_stop(sc, 0);
 		splx(s);
 		return;
 	}
@@ -1424,20 +1424,24 @@ em_update_link_status(struct em_softc *sc)
  **********************************************************************/
 
 void
-em_stop(void *arg)
+em_stop(void *arg, int softonly)
 {
-	struct ifnet   *ifp;
 	struct em_softc *sc = arg;
-	ifp = &sc->interface_data.ac_if;
+	struct ifnet   *ifp = &sc->interface_data.ac_if;
 
 	/* Tell the stack that the interface is no longer active */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
 
 	INIT_DEBUGOUT("em_stop: begin");
-	em_disable_intr(sc);
-	em_reset_hw(&sc->hw);
+
 	timeout_del(&sc->timer_handle);
 	timeout_del(&sc->tx_fifo_timer_handle);
+
+	if (!softonly) {
+		em_disable_intr(sc);
+		em_reset_hw(&sc->hw);
+	}
 
 	em_free_transmit_structures(sc);
 	em_free_receive_structures(sc);
@@ -1759,9 +1763,17 @@ em_detach(struct device *self, int flags)
 {
 	struct em_softc *sc = (struct em_softc *)self;
 	struct ifnet *ifp = &sc->interface_data.ac_if;
+	struct pci_attach_args *pa = &sc->osdep.em_pa;
+	pci_chipset_tag_t	pc = pa->pa_pc;
 
-	timeout_del(&sc->timer_handle);
-	timeout_del(&sc->tx_fifo_timer_handle);
+	if (sc->sc_intrhand)
+		pci_intr_disestablish(pc, sc->sc_intrhand);
+	sc->sc_intrhand = 0;
+
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+
+	em_stop(sc, 1);
 
 	em_free_pci_resources(sc);
 	em_dma_free(sc, &sc->rxdma);
@@ -1769,9 +1781,6 @@ em_detach(struct device *self, int flags)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 
 	return (0);
 }
