@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-info.c,v 1.10 2009/09/07 21:01:50 nicm Exp $ */
+/* $OpenBSD: cmd-server-info.c,v 1.11 2009/10/13 13:15:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -68,9 +68,8 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 	tim = ctime(&start_time);
 	*strchr(tim, '\n') = '\0';
 	ctx->print(ctx, "pid %ld, started %s", (long) getpid(), tim);
-	ctx->print(ctx, "socket path %s, debug level %d%s%s",
-	    socket_path, debug_level, be_quiet ? ", quiet" : "",
-	    login_shell ? ", login shell" : "");
+	ctx->print(ctx, "socket path %s, debug level %d%s",
+	    socket_path, debug_level, be_quiet ? ", quiet" : "");
         if (uname(&un) == 0) {
                 ctx->print(ctx, "system is %s %s %s %s",
 		    un.sysname, un.release, un.version, un.machine);
