@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.85 2009/10/13 21:21:07 espie Exp $
+# $OpenBSD: Update.pm,v 1.86 2009/10/14 11:08:16 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -103,7 +103,6 @@ sub process_handle
 		push(@search, OpenBSD::Search::FilterLocation->keep_most_recent);
 	}
 
-
 	my $l = OpenBSD::PackageLocator->match_locations(@search);
 	if (@$l == 0) {
 		return undef;
@@ -124,25 +123,12 @@ sub process_handle
 		}
 	}
 
-	$state->progress->clear;
-	my %cnd = map {($_->name, $_)} @$l;
-	print "Candidates for updating $pkgname -> ", join(' ', keys %cnd), "\n";
+	$state->progress->print("Candidates for updating $pkgname -> ", join(' ', map {$_->name} @$l), "\n");
 		
-	if (@$l == 1) {
-		$self->add_updateset($set, $h, $l->[0]);
+	my $r = $state->choose_location($pkgname, $l);
+	if (defined $r) {
+		$self->add_updateset($set, $h, $r);
 		return 1;
-	}
-	my $result = OpenBSD::Interactive::choose1($pkgname, 
-	    $state->{interactive}, sort keys %cnd);
-	if (defined $result) {
-		if (defined $found && $found eq $result && 
-		    !$plist->uses_old_libs) {
-			print "No need to update $pkgname\n";
-			return 0;
-		} else {
-			$self->add_updateset($set, $h, $cnd{$result});
-			return 1;
-		}
 	} else {
 		$state->{issues} = 1;
 		return undef;

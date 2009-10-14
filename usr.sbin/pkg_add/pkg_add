@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.347 2009/10/14 11:06:41 espie Exp $
+# $OpenBSD: pkg_add,v 1.348 2009/10/14 11:08:16 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -626,23 +626,7 @@ sub stem2location
 	if (@$l > 1 && !$state->{defines}->{allversions}) {
 		$l = OpenBSD::Search::FilterLocation->keep_most_recent->filter_locations($l);
 	}
-	if (@$l == 0) {
-		print "Can't resolve $name\n";
-		return undef;
-	} elsif (@$l > 1) {
-		my %h = map {($_->name, $_)} @$l;
-		if ($state->{interactive}) {
-			$h{'<None>'} = undef;
-			my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $name", $state->{interactive}, sort keys %h);
-			return $h{$result};
-		} else {
-			print "Ambiguous: $name could be ", 
-			    join(' ', keys %h), "\n";
-			return undef;
-		}
-	} elsif (@$l == 1) {
-		return $l->[0];
-	}
+	return $state->choose_location($name, $l);
 }
  
 
@@ -770,7 +754,6 @@ lock_db($state->{not}) unless $state->{defines}->{nolock};
 $state->setup_progressmeter($opt_x);
 $state->check_root;
 
-my @todo = ();
 my @todo2 = ();
 
 if ($opt_l) {
@@ -796,23 +779,10 @@ if ($opt_l || $opt_z) {
 			$t =~ s/\-\d([^-]*)\-?/--/;
 			$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Stem->new($t), $k);
 		}
-		if (@$l == 0) {
-			$state->progress->clear;
-			print "Can't find $_\n";
-		} elsif (@$l > 1) {
-			$state->progress->clear;
-			if ($state->{interactive}) {
-				my %cnd = map {($_->name, $_)} @$l;
-				my $result = OpenBSD::Interactive::choose1($_, 
-				    1, sort keys %cnd);
-				push @todo, $cnd{$result} if defined $result;
-			} else {
-				print "Ambiguous: $_\n";
-			}
-		} else {
-			push(@todo, $l->[0]);
+		my $r = $state->choose_location($_, $l);
+		if (defined $r) {
+			push(@todo2, OpenBSD::UpdateSet->from_location($r));
 		}
-	@todo2 = map { OpenBSD::UpdateSet->from_location($_) } @todo;
 	}
 } elsif ($opt_u) {
 	require OpenBSD::Update;
