@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.83 2009/09/30 06:22:00 syuu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.84 2009/10/14 20:21:16 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -144,7 +144,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	vaddr_t tlb_handler, xtlb_handler;
 	extern char start[], edata[], end[];
 	extern char exception[], e_exception[];
-	extern char *hw_vendor, *hw_prod;
+	extern char *hw_vendor;
 	extern void tlb_miss;
 	extern void tlb_miss_err_r5k;
 	extern void xtlb_miss;
@@ -217,7 +217,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 #if defined(TGT_O2)
 	case SGI_O2:
 		bios_printf("Found SGI-IP32, setting up.\n");
-		hw_prod = "O2";
 		strlcpy(cpu_model, "IP32", sizeof(cpu_model));
 		ip32_setup();
 
@@ -232,7 +231,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 	case SGI_O200:
 		bios_printf("Found SGI-IP27, setting up.\n");
-		hw_prod = "Origin 200";
 		strlcpy(cpu_model, "IP27", sizeof(cpu_model));
 		ip27_setup();
 
@@ -240,7 +238,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 
 	case SGI_O300:
 		bios_printf("Found SGI-IP35, setting up.\n");
-		hw_prod = "Origin 300";
 		/* IP27 is intentional, we use the same kernel */
 		strlcpy(cpu_model, "IP27", sizeof(cpu_model));
 		ip27_setup();
@@ -251,7 +248,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 #if defined(TGT_OCTANE)
 	case SGI_OCTANE:
 		bios_printf("Found SGI-IP30, setting up.\n");
-		hw_prod = "Octane";
 		strlcpy(cpu_model, "IP30", sizeof(cpu_model));
 		ip30_setup();
 
@@ -365,7 +361,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		if (lp > fp)
 			uvm_page_physload(fp, lp, fp, lp, freelist);
 	}
-
 
 	switch (sys_config.system_type) {
 #if defined(TGT_O2) || defined(TGT_OCTANE)

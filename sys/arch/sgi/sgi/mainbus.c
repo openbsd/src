@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.1 2009/06/13 21:48:03 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.2 2009/10/14 20:21:16 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -62,7 +62,10 @@ void
 mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs nca;
+	extern char *hw_prod;
 
+	if (hw_prod != NULL)
+		printf(": %s", hw_prod);
 	printf("\n");
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.21 2009/10/07 08:35:47 syuu Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.22 2009/10/14 20:21:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -47,6 +47,8 @@
 
 #include <dev/ic/comvar.h>
 
+extern char *hw_prod;
+
 extern void (*md_halt)(int);
 
 paddr_t	ip27_widget_short(int16_t, u_int);
@@ -81,12 +83,50 @@ ip27_setup()
 	size_t gsz;
 	uint node;
 	uint32_t ctrl;
+	uint64_t synergy0_0;
+	int brick;
 	nmi_t *nmi;
 
 	uncached_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_NC);
 	io_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_IO);
 
 	ip35 = sys_config.system_type == SGI_O300;
+
+	if (ip35) {
+		/*
+		 * Get brick model type.
+		 * We need to access the Synergy registers through the remote
+		 * HUB interface, local access is protected on some models.
+		 * Synergy0 register #0 is a 16 bits identification register.
+		 */
+		synergy0_0 = IP27_RHSPEC_L(0, HSPEC_SYNERGY(0, 0));
+		brick = (synergy0_0 & 0xf000) >> 12;
+		switch (brick) {
+		case 0x02:	/* Chimera */
+			hw_prod = "Origin 350";
+			break;
+		case 0x04:	/* Asterix */
+			hw_prod = "Fuel";
+			break;
+		case 0x08:	/* Speedo2 */
+			hw_prod = "Origin 300";
+			break;
+		default:
+		    {
+			static char unknown_model[20];
+			snprintf(unknown_model, sizeof unknown_model,
+			    "Unknown IP35 type %x", brick);
+			hw_prod = unknown_model;
+		    }
+			break;
+		}
+	} else {
+		/*
+		 * XXX need to look for Sn00 type in LBOOT space to tell
+		 * XXX Origin 2000 and Origin 200 apart.
+		 */
+		hw_prod = "Origin 200";
+	}
 
 	xbow_widget_base = ip27_widget_short;
 	xbow_widget_map = ip27_widget_map;
@@ -679,7 +719,7 @@ ip27_hub_do_pending_int(int newcpl)
 	__asm__ (" .set noreorder\n");
 	ci->ci_cpl = newcpl;
 	__asm__ (" sync\n .set reorder\n");
-	if(CPU_IS_PRIMARY(ci))
+	if (CPU_IS_PRIMARY(ci))
 		hw_setintrmask(newcpl);
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_ipending & SINT_ALLMASK & ~newcpl)

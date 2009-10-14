@@ -1,4 +1,4 @@
-/*	$OpenBSD: hub.h,v 1.4 2009/07/06 22:46:43 miod Exp $	*/
+/*	$OpenBSD: hub.h,v 1.5 2009/10/14 20:21:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -40,12 +40,39 @@
 #define IP27_RHUB_PI_L(n, s, r)		*(IP27_RHUB_PI_ADDR((n), (s), (r)))
 #define	IP27_RHUB_PI_S(n, s, r, d)	*(IP27_RHUB_PI_ADDR((n), (s), (r))) = (d)
 
-/*
- * IP27 specific registers
- */
+#define	NODE_HSPEC_BASE(nasid) \
+        (IP27_NODE_HSPEC_BASE(nasid))
+
+#define	IP27_LHSPEC_ADDR(_x) \
+	((volatile uint64_t *)(NODE_HSPEC_BASE(0) + (_x)))
+#define	IP27_RHSPEC_ADDR(_n, _x) \
+	((volatile uint64_t *)(NODE_HSPEC_BASE(_n) + 0x20000000 + (_x)))
+
+#define	IP27_LHSPEC_L(r)		*(IP27_LHSPEC_ADDR(r))
+#define	IP27_LHSPEC_S(r, d)		*(IP27_LHSPEC_ADDR(r)) = (d)
+#define	IP27_RHSPEC_L(n, r)		*(IP27_RHSPEC_ADDR((n), (r)))
+#define	IP27_RHSPEC_S(n, r, d)		*(IP27_RHSPEC_ADDR((n), (r))) = (d)
 
 /*
- * HUB space (very incomplete)
+ * HUB SPECIAL space (very incomplete)
+ */
+
+#define	LBOOTBASE_IP27		0x10000000
+#define	LBOOTSIZE_IP27		0x10000000
+
+#define	LREGBASE_IP35		0x10000000
+#define	LREGSIZE_IP35		0x08000000
+#define	LBOOTBASE_IP35		0x18000000
+#define	LBOOTSIZE_IP35		0x08000000
+
+#define	HSPEC_SYNERGY0		0x04000000	/* synergy #0 base */
+#define	HSPEC_SYNERGY1		0x05000000	/* synergy #1 base */
+
+#define	HSPEC_SYNERGY(s,r) \
+	(LREGBASE_IP35 + ((s) ? HSPEC_SYNERGY1 : HSPEC_SYNERGY0) + ((r) << 3))
+
+/*
+ * HUB IO space (very incomplete)
  */
 
 /*

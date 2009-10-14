@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: xbowdevs,v 1.4 2009/10/08 19:13:00 miod Exp 
+ *	OpenBSD: xbowdevs,v 1.5 2009/10/14 20:19:23 miod Exp 
  */
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -32,7 +32,7 @@
 
 #define	XBOW_PRODUCT_SGI_XBOW	0x0000		/* XBow */
 #define	XBOW_PRODUCT_SGI_XXBOW	0xd000		/* XXBow */
-#define	XBOW_PRODUCT_SGI_BEDROCK	0xd100		/* Bedrock */
+#define	XBOW_PRODUCT_SGI_BEDROCK	0xd100		/* PXBow */
 
 #define	XBOW_PRODUCT_SGI2_ODYSSEY	0xc013		/* Odyssey */
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.9 2009/08/18 19:31:56 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.10 2009/10/14 20:21:16 miod Exp $	*/
 
 /*
- * Copyright (c) 2008 Miodrag Vallat.
+ * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,6 +43,8 @@
 
 #include <dev/ic/comvar.h>
 
+extern char *hw_prod;
+
 paddr_t	ip30_widget_short(int16_t, u_int);
 paddr_t	ip30_widget_long(int16_t, u_int);
 paddr_t	ip30_widget_map(int16_t, u_int, bus_addr_t *, bus_size_t *);
@@ -57,6 +59,7 @@ ip30_setup()
 	uint32_t memcfg;
 	uint64_t start, count;
 #endif
+	paddr_t iocbase;
 
 	/*
 	 * Although being r10k/r12k based, the uncached spaces are
@@ -100,18 +103,15 @@ ip30_setup()
 
 	/*
 	 * Initialize the early console parameters.
-	 * This assumes BRIDGE is on widget 15 and IOC3 is mapped in
-	 * memory space at address 0x500000.
-	 *
-	 * XXX And that 0x500000 should be computed from the first BAR
-	 * XXX of the IOC3 in pci configuration space. Joy. I'll get there
-	 * XXX eventually.
+	 * On Octane, the BRIDGE is always widet 15, and IOC3 is always
+	 * mapped in memory space at address 0x500000.
 	 *
 	 * Also, note that by using a direct widget bus_space, there is
 	 * no endianness conversion done on the bus addresses. Which is
 	 * exactly what we need, since the IOC3 doesn't need any. Some
 	 * may consider this an evil abuse of bus_space knowledge, though.
 	 */
+
 	xbow_build_bus_space(&sys_config.console_io, 0, 15);
 	sys_config.console_io.bus_base = ip30_widget_long(0, 15) +
 	    BRIDGE_PCI0_MEM_SPACE_BASE;
@@ -119,6 +119,16 @@ ip30_setup()
 	comconsaddr = 0x500000 + IOC3_UARTA_BASE;
 	comconsfreq = 22000000 / 3;
 	comconsiot = &sys_config.console_io;
+
+	/*
+	 * Octane and Octane2 can be told apart with a GPIO source bit
+	 * in the onboard IOC3.
+	 */
+	iocbase = ip30_widget_long(0, 15) + 0x500000;
+	if (*(volatile uint32_t *)(iocbase + IOC3_GPPR(IP30_GPIO_CLASSIC)) != 0)
+		hw_prod = "Octane";
+	else
+		hw_prod = "Octane2";
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.6 2009/05/21 16:28:12 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.7 2009/10/14 20:21:16 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -47,6 +47,8 @@
 #include <sgi/localbus/macebus.h>
 
 #include <dev/ic/comvar.h>
+
+extern char *hw_prod;
 
 void crime_configure_memory(void);
 
@@ -145,4 +147,7 @@ ip32_setup()
 	comconsaddr = MACE_ISA_SER1_OFFS;
 	comconsfreq = 1843200;
 	comconsiot = &macebus_tag;
+
+	/* not sure if there is a way to tell O2 and O2+ apart */
+	hw_prod = "O2";
 }

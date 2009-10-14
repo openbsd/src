@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: xbowdevs,v 1.4 2009/10/08 19:13:00 miod Exp 
+ *	OpenBSD: xbowdevs,v 1.5 2009/10/14 20:19:23 miod Exp 
  */
 
 /*
@@ -40,7 +40,7 @@ static const struct xbow_product xbow_products[] = {
 	},
 	{
 	    XBOW_VENDOR_SGI, XBOW_PRODUCT_SGI_BEDROCK,
-	    "Bedrock",
+	    "PXBow",
 	},
 	{
 	    XBOW_VENDOR_SGI2, XBOW_PRODUCT_SGI2_ODYSSEY,
