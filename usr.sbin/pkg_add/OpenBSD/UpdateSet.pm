@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.6 2009/10/11 10:53:39 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.7 2009/10/14 10:38:06 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -71,6 +71,31 @@ sub check_root
 	}
 }
 
+sub choose_location
+{
+	my ($state, $name, $list) = @_;
+	if (@$list == 0) {
+		$state->progress->print("Can't find $name\n");
+		return undef;
+	} elsif (@$list == 1) {
+		return $list->[0];
+	}
+
+	my %h = map {($_->name, $_)} @$list;
+	if ($state->{interactive}) {
+		require OpenBSD::Interactive;
+
+		$h{'<None>'} = undef;
+		$state->progress->clear;
+		my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $name", 1, sort keys %h);
+		return $h{$result};
+	} else {
+		$state->progress->print("Ambiguous: $name could be ", 
+		    join(' ', keys %h), "\n");
+		return undef;
+	}
+}
+
 package OpenBSD::StubProgress;
 sub clear {}
 
@@ -81,6 +106,12 @@ sub message {}
 sub next {}
 
 sub set_header {}
+
+sub print
+{
+	shift;
+	print STDERR @_;
+}
 
 # fairly non-descriptive name. Used to store various package information
 # during installs and updates.
