@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: x509.pm,v 1.1 2009/04/14 17:53:58 espie Exp $
+# $OpenBSD: x509.pm,v 1.2 2009/10/14 11:06:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -77,6 +77,20 @@ sub print_certificate_info
 	unlink $fname;
 }
 
+sub system_quiet
+{
+	my $r = fork;
+	if (!defined $r) {
+		return 1;
+	} elsif ($r == 0) {
+		open STDERR, ">/dev/null";
+		exec {$_[0]} @_ or return 1;
+	} else {
+		waitpid($r, 0);
+		return $?;
+	}
+}
+
 sub check_signature
 {
 	my ($plist, $state) = @_;
@@ -91,8 +105,8 @@ sub check_signature
 	print $fh2 decode_base64($sig->{b64sig});
 	close $fh;
 	close $fh2;
-	if (system (OpenBSD::Paths->openssl, "smime", "-verify", "-binary",
-	    "-inform", "DEM", "-in", $fname2, "-content", $fname,
+	if (system_quiet (OpenBSD::Paths->openssl, "smime", "-verify", 
+	    "-binary", "-inform", "DEM", "-in", $fname2, "-content", $fname,
 	    "-CAfile", OpenBSD::Paths->pkgca, "-out", "/dev/null") != 0) {
 	    	$state->warn("Bad signature");
 		return 0;

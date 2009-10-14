@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.346 2009/10/13 22:16:31 espie Exp $
+# $OpenBSD: pkg_add,v 1.347 2009/10/14 11:06:41 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -407,8 +407,10 @@ sub really_add
 					Fatal "fatal issues in ", $set->print;
 				}
 				$state->{check_digest} = 1;
+				$state->{packages_with_sig}++;
 			}
 		} else {
+			$state->{packages_without_sig}++;
 			$state->{check_digest} = 0;
 		}
 	}
@@ -895,6 +897,13 @@ OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
 OpenBSD::Add::manpages_index($state);
 OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 
+if ($state->{packages_with_sig}) {
+	print "Packages with signatures: ", $state->{packages_with_sig};
+	if ($state->{packages_without_sig}) {
+		print " UNSIGNED PACKAGES: ", $state->{packages_without_sig};
+	}
+	print "\n";
+}
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
