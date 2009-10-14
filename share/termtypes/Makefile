@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.16 2008/09/02 00:01:34 drahn Exp $
+#	$OpenBSD: Makefile,v 1.17 2009/10/14 19:52:23 nicm Exp $
 #
 # Take termcap/terminfo master file and generate termcap/terminfo .db files
-# master: http://www.tuxedo.org/~esr/terminfo/termtypes.master.gz
 
 MAN=	termcap.5
 CLEANFILES+= terminfo.src termcap.src terminfo.db termcap.db
@@ -18,11 +17,6 @@ terminfo.src: termtypes.master
 	    echo ${.TARGET} is zero length!  You need to update ${TIC} ;\
 	    rm -f ${.TARGET} ;\
 	    exit 1 ;\
-	else case `sed 1q ${.TARGET}` in \
-	    Usage*) echo ${.TARGET} is corrupt!  You need to update ${TIC} ;\
-		    rm -f ${.TARGET} ;\
-		    exit 1 ;;\
-	    esac ;\
 	fi
 
 terminfo.db: terminfo.src
@@ -37,11 +31,6 @@ termcap.src: termtypes.master
 	    echo ${.TARGET} is zero length!  You need to update ${TIC} ;\
 	    rm -f ${.TARGET} ;\
 	    exit 1 ;\
-	else case `sed 1q ${.TARGET}` in \
-	    Usage*) echo ${.TARGET} is corrupt!  You need to update ${TIC} ;\
-		    rm -f ${.TARGET} ;\
-		    exit 1 ;;\
-	    esac ;\
 	fi
 
 termcap.db: termcap.src
