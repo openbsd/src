@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.20 2009/10/14 17:19:47 sthen Exp $	*/
+/*	$OpenBSD: look.c,v 1.21 2009/10/14 17:23:17 sthen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -233,7 +233,7 @@ setup_builtin(const char *name, unsigned int type)
 	ndptr n;
 	char *name2;
 
-	if(prefix_builtins) {
+	if (prefix_builtins) {
 		name2 = xalloc(strlen(name)+3+1, NULL);
 		memcpy(name2, "m4_", 3);
 		memcpy(name2 + 3, name, strlen(name)+1);
