@@ -154,7 +154,7 @@ if ((-e "testcompile") && (defined($ENV{'COMPILE'}))) {
 }
 
 # Exclude nonxs extensions that are not architecture dependent
-my @nonxs = grep(!/^Errno$/, split(' ', $Config{'nonxs_ext'}));
+my @nonxs = grep(!/^(Errno|IO\/Compress)$/, split(' ', $Config{'nonxs_ext'}));
 
 find(sub {
     if (($File::Find::name =~ m{^ext\b(.*)/([^/]+)\.pm$}) &&

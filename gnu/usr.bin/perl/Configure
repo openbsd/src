@@ -23,7 +23,7 @@
 # See Porting/pumpkin.pod for more information on metaconfig.
 #
 
-# $Id: Head.U 6 2006-08-25 22:21:46Z rmanfredi $
+# $Id: Configure,v 1.20 2009/10/12 18:24:20 millert Exp $
 #
 # Generated on Tue Aug 18 19:22:01 CEST 2009 [metaconfig 3.5 PL0]
 # (with additional metaconfig patches by perlbug@perl.org)
@@ -21654,10 +21654,6 @@ nonxs_extensions=''
 
 : Function to recursively find available extensions, ignoring DynaLoader
 : NOTE: recursion limit of 10 to prevent runaway in case of symlink madness
-: In 5.10.1 and later, extensions are stored in directories
-: like File-Glob instead of the older File/Glob/.  In this scheme,
-: IO-Compress does not appear to be an XS extension, but we want
-: to install it as one.  A.D.  8/2009.
 find_extensions='
     for xxx in *; do
 	case "$xxx" in
@@ -21670,8 +21666,6 @@ find_extensions='
 		if   $contains "\.xs$" $$.tmp > /dev/null 2>&1; then
 		    known_extensions="$known_extensions $this_ext";
 		elif $contains "\.c$"  $$.tmp > /dev/null 2>&1; then
-		    known_extensions="$known_extensions $this_ext";
-		elif $test "$this_ext" = "IO/Compress"; then
 		    known_extensions="$known_extensions $this_ext";
 		elif $test -d $xxx; then
 		    nonxs_extensions="$nonxs_extensions $this_ext";
