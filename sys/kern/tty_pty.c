@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.39 2009/09/29 17:26:09 deraadt Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.40 2009/10/14 07:19:05 nicm Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -184,10 +184,6 @@ check_pty(int minor)
 		if (newnpty > maxptys)
 			newnpty = maxptys;
 		newpt = ptyarralloc(newnpty);
-
-		if (maxptys == npty) {
-			goto limit_reached;
-		}
 
 		memcpy(newpt, pt_softc, npty * sizeof(struct pt_softc *));
 		free(pt_softc, M_DEVBUF);
