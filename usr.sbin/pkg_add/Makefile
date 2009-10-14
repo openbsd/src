@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.52 2009/04/14 17:53:58 espie Exp $
+# $OpenBSD: Makefile,v 1.53 2009/10/14 22:59:34 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ PACKAGES= \
     OpenBSD/Dependencies.pm \
     OpenBSD/Error.pm \
     OpenBSD/Getopt.pm \
+    OpenBSD/Handle.pm \
     OpenBSD/IdCache.pm \
     OpenBSD/Interactive.pm \
     OpenBSD/Mtree.pm \

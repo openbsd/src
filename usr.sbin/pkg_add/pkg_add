@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.351 2009/10/14 18:22:41 espie Exp $
+# $OpenBSD: pkg_add,v 1.352 2009/10/14 22:59:34 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -34,6 +34,7 @@ use OpenBSD::Add;
 use OpenBSD::SharedLibs;
 use OpenBSD::Paths;
 use OpenBSD::UpdateSet;
+use OpenBSD::Handle;
 
 my $bad = 0;
 
@@ -64,93 +65,6 @@ sub has_new_sig
 	return $plist->{new_sig};
 }
 
-package OpenBSD::Handle;
-use OpenBSD::PackageInfo;
-
-sub get_plist
-{
-	my ($handle, $state) = @_;
-
-	my $location = $handle->{location};
-	my $pkg = $handle->{pkgname};
-
-	if ($state->{verbose}) {
-		print $state->deptree_header($pkg);
-		print "parsing $pkg\n";
-	}
-	my $plist = $location->grabPlist;
-	unless (defined $plist) {
-		print "Can't find CONTENTS from ", $location->url, "\n";
-		$location->close_with_client_error;
-		$location->wipe_info;
-		$handle->set_error(BAD_PACKAGE);
-		return;
-	}
-	if ($plist->localbase ne $state->{localbase}) {
-		print "Localbase mismatch: package has: ", $plist->localbase, " , user wants: ", $state->{localbase}, "\n";
-		$location->close_with_client_error;
-		$location->wipe_info;
-		$handle->set_error(BAD_PACKAGE);
-		return;
-	}
-	my $pkgname = $handle->{pkgname} = $plist->pkgname;
-
-	if (is_installed($pkgname) && 
-	    (!$state->{allow_replacing} ||	
-	      !$state->{defines}->{installed} &&
-	      !$plist->has_new_sig($state) && 
-	      !$plist->uses_old_libs)) {
-		$handle->{tweaked} = 
-		    OpenBSD::Add::tweak_package_status($pkgname, $state);
-		print "Not reinstalling $pkgname\n" if $state->{verbose} and
-		    !$handle->{tweaked};
-		$state->mark_installed($pkgname);
-		$location->close_now;
-		$location->wipe_info;
-		$handle->set_error(ALREADY_INSTALLED);
-		return;
-	}
-	if ($pkg ne '-') {
-		if (!defined $pkgname or 
-		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
-			print "Package name is not consistent ???\n";
-			$location->close_with_client_error;
-			$location->wipe_info;
-			$handle->set_error(BAD_PACKAGE);
-			return;
-		}
-	}
-	$handle->{plist} = $plist;
-}
-
-sub complete
-{
-	my ($handle, $state) = @_;
-
-	return if $handle->has_error;
-
-	my $pkgname = $handle->{pkgname};
-
-	if (!defined $handle->{location}) {
-		my $location = OpenBSD::PackageLocator->find($pkgname, 
-		    $state->{arch});
-		if (!$location) {
-			print $state->deptree_header($pkgname);
-			$handle->set_error(NOT_FOUND);
-			$handle->{tweaked} = 
-			    OpenBSD::Add::tweak_package_status($pkgname, 
-				$state);
-			if (!$handle->{tweaked}) {
-				print "Can't find $pkgname\n";
-			}
-			return;
-		}
-		$handle->{location} = $location;
-	}
-	if (!defined $handle->{plist}) {
-		$handle->get_plist($state);
-	}
-}
 package OpenBSD::pkg_add::State;
 our @ISA=(qw(OpenBSD::pkg_foo::State));
 

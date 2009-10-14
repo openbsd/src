@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.7 2009/10/14 10:38:06 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.8 2009/10/14 22:59:34 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -111,84 +111,6 @@ sub print
 {
 	shift;
 	print STDERR @_;
-}
-
-# fairly non-descriptive name. Used to store various package information
-# during installs and updates.
-package OpenBSD::Handle;
-
-use constant {
-	BAD_PACKAGE => 1,
-	CANT_INSTALL => 2,
-	ALREADY_INSTALLED => 3,
-	NOT_FOUND => 4
-};
-
-sub new
-{
-	my $class = shift;
-	return bless {}, $class;
-}
-
-sub set_error
-{
-	my ($self, $error) = @_;
-	$self->{error} = $error;
-}
-
-sub has_error
-{
-	my ($self, $error) = @_;
-	if (!defined $self->{error}) {
-		return undef;
-	}
-	if (defined $error) {
-		return $self->{error} eq $error;
-	}
-	return $self->{error};
-}
-
-sub create_old
-{
-
-	my ($class, $pkgname, $state) = @_;
-	my $self= $class->new;
-	$self->{pkgname} = $pkgname;
-
-	require OpenBSD::PackageRepository::Installed;
-
-	my $location = OpenBSD::PackageRepository::Installed->new->find($pkgname, $state->{arch});
-	if (!defined $location) {
-		$self->set_error(NOT_FOUND);
-    	} else {
-		$self->{location} = $location;
-		my $plist = $location->plist;
-		if (!defined $plist) {
-			$self->set_error(BAD_PACKAGE);
-		} else {
-			$self->{plist} = $plist;
-		}
-	}
-	return $self;
-}
-
-sub create_new
-{
-	my ($class, $pkg) = @_;
-	my $handle = $class->new;
-	$handle->{pkgname} = $pkg;
-	$handle->{tweaked} = 0;
-	return $handle;
-}
-
-sub from_location
-{
-	my ($class, $location) = @_;
-	my $handle = $class->new;
-	$handle->{pkgname} = $location->name;
-	$handle->{location} = $location;
-	$handle->{tweaked} = 0;
-	return $handle;
 }
 
 package OpenBSD::UpdateSet;
