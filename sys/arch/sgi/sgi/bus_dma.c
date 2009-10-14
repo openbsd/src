@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.14 2009/07/17 18:06:51 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.15 2009/10/14 21:26:54 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -316,15 +316,6 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 	nsegs = map->dm_nsegs;
 	curseg = 0;
 
-#ifdef DEBUG_BUSDMASYNC
-	printf("dmasync %p:%p:%p:", map, addr, size);
-	if (op & BUS_DMASYNC_PREWRITE) printf("PRW ");
-	if (op & BUS_DMASYNC_PREREAD) printf("PRR ");
-	if (op & BUS_DMASYNC_POSTWRITE) printf("POW ");
-	if (op & BUS_DMASYNC_POSTREAD) printf("POR ");
-	printf("\n");
-#endif
-
 	while (size && nsegs) {
 		bus_addr_t vaddr;
 		bus_size_t ssize;
@@ -351,29 +342,27 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 		}
 
 		if (ssize != 0) {
-#ifdef DEBUG_BUSDMASYNC_FRAG
-	printf(" syncing %p:%p ", vaddr, ssize);
-	if (op & BUS_DMASYNC_PREWRITE) printf("PRW ");
-	if (op & BUS_DMASYNC_PREREAD) printf("PRR ");
-	if (op & BUS_DMASYNC_POSTWRITE) printf("POW ");
-	if (op & BUS_DMASYNC_POSTREAD) printf("POR ");
-	printf("\n");
-#endif
 			/*
-			 *  If only PREWRITE is requested, writeback and
-			 *  invalidate. PREWRITE with PREREAD writebacks
-			 *  and invalidates *all* cache levels.
-			 *  Otherwise, just invalidate.
-			 *  POSTREAD and POSTWRITE are no-ops since
-			 *  we are not bouncing data.
+			 * If only PREWRITE is requested, writeback.
+			 * PREWRITE with PREREAD writebacks
+			 * and invalidates (if noncoherent) *all* cache levels.
+			 * Otherwise, just invalidate (if noncoherent).
 			 */
 			if (op & BUS_DMASYNC_PREWRITE) {
+#ifdef TGT_COHERENT
+				Mips_IOSyncDCache(vaddr, ssize, SYNC_W);
+#else
 				if (op & BUS_DMASYNC_PREREAD)
 					Mips_IOSyncDCache(vaddr, ssize, SYNC_X);
 				else
 					Mips_IOSyncDCache(vaddr, ssize, SYNC_W);
-			} else if (op & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTREAD)) {
+#endif
+			} else
+			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
+#ifdef TGT_COHERENT
+#else
 				Mips_IOSyncDCache(vaddr, ssize, SYNC_R);
+#endif
 			}
 			size -= ssize;
 		}
