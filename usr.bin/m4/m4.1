@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.55 2009/02/08 17:15:10 jmc Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.56 2009/10/14 17:19:47 sthen Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: October 14 2009 $
 .Dt M4 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd macro language processor
 .Sh SYNOPSIS
 .Nm m4
-.Op Fl gs
+.Op Fl gPs
 .Oo
 .Sm off
 .Fl D Ar name Op No = Ar value
@@ -150,6 +150,13 @@ to the include path.
 .It Fl o Ar filename
 Send trace output to
 .Ar filename .
+.It Fl P
+Prefix all built-in macros with
+.Sq m4_ .
+For example, instead of writing
+.Ic define ,
+use
+.Ic m4_define .
 .It Fl s
 Output line synchronization directives, suitable for
 .Xr cpp 1 .

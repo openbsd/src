@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.76 2008/08/16 12:21:46 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@ char rquote[MAXCCHARS+1] = {RQUOTE};	/* right quote character (')   */
 char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
 char ecommt[MAXCCHARS+1] = {ECOMMT};	/* end character for comment   */
 int  synch_lines = 0;		/* line synchronisation for C preprocessor */
+int  prefix_builtins = 0;	/* -P option to prefix builtin keywords */
 
 struct keyblk {
         char    *knam;          /* keyword name */
@@ -175,7 +176,6 @@ main(int argc, char *argv[])
 		signal(SIGINT, onintr);
 
 	init_macros();
-	initkwds();
 	initspaces();
 	STACKMAX = INITSTACKMAX;
 
@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 	outfile = NULL;
 	resizedivs(MAXOUT);
 
-	while ((c = getopt(argc, argv, "gst:d:D:U:o:I:")) != -1)
+	while ((c = getopt(argc, argv, "gst:d:D:U:o:I:P")) != -1)
 		switch(c) {
 
 		case 'D':               /* define something..*/
@@ -200,12 +200,14 @@ main(int argc, char *argv[])
 		case 'I':
 			addtoincludepath(optarg);
 			break;
+		case 'P':
+			prefix_builtins = 1;
+			break;
 		case 'U':               /* undefine...       */
 			macro_popdef(optarg);
 			break;
 		case 'g':
 			mimic_gnu = 1;
-			setup_builtin("format", FORMATTYPE);
 			break;
 		case 'd':
 			set_trace_flags(optarg);
@@ -225,6 +227,10 @@ main(int argc, char *argv[])
 
         argc -= optind;
         argv += optind;
+
+	initkwds();
+	if (mimic_gnu)
+		setup_builtin("format", FORMATTYPE);
 
 	active = stdout;		/* default active output     */
 	bbase[0] = bufbase;
