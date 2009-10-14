@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.98 2009/08/09 14:37:46 art Exp $	*/
+/*	$OpenBSD: mount.h,v 1.99 2009/10/14 17:53:30 beck Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -509,6 +509,8 @@ extern struct bcachestats bcstats;
 extern long buflowpages, bufhighpages, bufbackpages;
 #define BUFPAGES_DEFICIT (((buflowpages - bcstats.numbufpages) < 0) ? 0 \
     : buflowpages - bcstats.numbufpages)
+#define BUFPAGES_INACT (((bcstats.numcleanpages - buflowpages) < 0) ? 0 \
+    : bcstats.numcleanpages - buflowpages)
 extern int bufcachepercent;
 extern void bufadjust(int);
 extern int bufbackoff(void);
