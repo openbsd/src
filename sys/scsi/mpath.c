@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.4 2009/09/14 00:03:28 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.5 2009/10/14 01:33:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -47,7 +47,7 @@ struct mpath_path {
 TAILQ_HEAD(mpath_paths, mpath_path);
 
 struct mpath_node {
-	struct devid		 node_id;
+	struct devid		*node_id;
 	struct mpath_paths	 node_paths;
 };
 
@@ -138,8 +138,12 @@ mpath_xs_stuffup(struct scsi_xfer *xs)
 int
 mpath_probe(struct scsi_link *link)
 {
-	if (link->lun != 0 || mpath_nodes[link->target] == NULL)
+	struct mpath_node *n = mpath_nodes[link->target];
+
+	if (link->lun != 0 || n == NULL)
 		return (ENXIO);
+
+	link->id = devid_copy(n->node_id);
 
 	return (0);
 }
@@ -224,14 +228,14 @@ mpath_path_attach(struct scsi_link *link)
 		return (ENODEV);
 
 	/* XXX this is dumb. should check inq shizz */
-	if (link->id.d_type == DEVID_NONE)
+	if (ISSET(link->flags, SDEV_VIRTUAL) || link->id == NULL)
 		return (ENXIO);
 
 	for (target = 0; target < MPATH_BUSWIDTH; target++) {
 		if ((n = mpath_nodes[target]) == NULL)
 			continue;
 
-		if (DEVID_CMP(&n->node_id, &link->id))
+		if (DEVID_CMP(n->node_id, link->id))
 			break;
 
 		n = NULL;
@@ -248,13 +252,18 @@ mpath_path_attach(struct scsi_link *link)
 		n = malloc(sizeof(*n), M_DEVBUF, M_WAITOK | M_ZERO);
 		TAILQ_INIT(&n->node_paths);
 
-		n->node_id.d_type = link->id.d_type;
-		n->node_id.d_len = link->id.d_len;
-		n->node_id.d_id = malloc(n->node_id.d_len, M_DEVBUF, M_DEVBUF);
-		memcpy(n->node_id.d_id, link->id.d_id, n->node_id.d_len);
+		n->node_id = devid_copy(link->id);
 
 		mpath_nodes[target] = n;
 		probe = 1;
+	} else {
+		/*
+		 * instead of carrying identical values in different devid
+		 * instances, delete the new one and reference the old one in
+		 * the new scsi_link.
+		 */
+		devid_free(link->id);
+		link->id = devid_copy(n->node_id);
 	}
 
 	p = malloc(sizeof(*p), M_DEVBUF, M_WAITOK);
@@ -279,7 +288,7 @@ mpath_path_detach(struct scsi_link *link, int flags)
 		if ((n = mpath_nodes[target]) == NULL)
 			continue;
 
-		if (DEVID_CMP(&n->node_id, &link->id))
+		if (DEVID_CMP(n->node_id, link->id))
 			break;
 
 		n = NULL;

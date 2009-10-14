@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.101 2009/09/14 00:03:28 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.102 2009/10/14 01:33:22 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -235,19 +235,30 @@ _4ltol(u_int8_t *bytes)
 #define DEVID_T10	3
 
 struct devid {
-	int		 d_type;
-	u_int		 d_len;
-	u_int8_t	*d_id;
+	u_int8_t	d_type;
+	u_int8_t	d_flags;
+#define DEVID_F_PRINT		(1<<0)
+	u_int8_t	d_refcount;
+	u_int8_t	d_len;
+
+	/*
+	 * the devid struct is basically a header, the actual id is allocated
+	 * immediately after it.
+	 */
 };
 
-#define DEVID_CMP(_a, _b) (				\
-	(_a) != NULL &&					\
-	(_b) != NULL &&					\
-	(_a)->d_type != DEVID_NONE &&			\
-	(_a)->d_type == (_b)->d_type &&			\
-	(_a)->d_len == (_b)->d_len &&			\
-	bcmp((_a)->d_id, (_b)->d_id, (_a)->d_len) == 0	\
+#define DEVID_CMP(_a, _b) (					\
+	(_a) != NULL && (_b) != NULL &&				\
+	((_a) == (_b) ||					\
+	((_a)->d_type != DEVID_NONE &&				\
+	 (_a)->d_type == (_b)->d_type &&			\
+	 (_a)->d_len == (_b)->d_len &&				\
+	 bcmp((_a) + 1, (_b) + 1, (_a)->d_len) == 0))		\
 )
+
+struct devid *	devid_alloc(u_int8_t, u_int8_t, u_int8_t, u_int8_t *);
+struct devid *	devid_copy(struct devid *);
+void		devid_free(struct devid *);
 
 /*
  * The following documentation tries to describe the relationship between the
@@ -369,7 +380,7 @@ struct scsi_link {
 	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
 	struct	scsibus_softc *bus;	/* link to the scsibus we're on */
 	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
-	struct  devid id;
+	struct  devid *id;
 	struct	mutex mtx;
 };
 
