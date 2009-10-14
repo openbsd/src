@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.348 2009/10/14 11:08:16 espie Exp $
+# $OpenBSD: pkg_add,v 1.349 2009/10/14 11:16:15 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -410,7 +410,7 @@ sub really_add
 				$state->{packages_with_sig}++;
 			}
 		} else {
-			$state->{packages_without_sig}++;
+			$state->{packages_without_sig}{$plist->pkgname} = 1;
 			$state->{check_digest} = 0;
 		}
 	}
@@ -870,7 +870,7 @@ OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 if ($state->{packages_with_sig}) {
 	print "Packages with signatures: ", $state->{packages_with_sig};
 	if ($state->{packages_without_sig}) {
-		print " UNSIGNED PACKAGES: ", $state->{packages_without_sig};
+		print ". UNSIGNED PACKAGES: ", join(', ', keys %{$state->{packages_without_sig}});
 	}
 	print "\n";
 }
