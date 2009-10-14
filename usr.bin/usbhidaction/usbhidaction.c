@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.10 2008/06/26 05:42:21 ray Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.11 2009/10/14 20:36:56 guenther Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -261,6 +261,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				syslog(LOG_WARNING, "config file `%s', line %d"
 				    ", syntax error: %s", conf, line, buf);
 				freecommands(cmds);
+				fclose(f);
 				return (NULL);
 			} else {
 				errx(1, "config file `%s', line %d"
@@ -286,6 +287,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 					    "bad value: %s",
 					    conf, line, value);
 					freecommands(cmds);
+					fclose(f);
 					return (NULL);
 				} else {
 					errx(1, "config file `%s', line %d, "
@@ -296,8 +298,10 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		}
 
 		coll[0] = 0;
-		for (d = hid_start_parse(repd, 1 << hid_input, reportid);
-		    hid_get_item(d, &h); ) {
+		d = hid_start_parse(repd, 1 << hid_input, reportid);
+		if (d == NULL)
+			err(1, "hid_start_parse failed");
+		while (hid_get_item(d, &h)) {
 			if (verbose > 2)
 				printf("kind=%d usage=%x\n", h.kind, h.usage);
 			if (h.flags & HIO_CONST)
@@ -349,15 +353,20 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				break;
 			}
 		}
+		hid_end_parse(d);
 		if (ignore) {
 			if (verbose)
 				warnx("ignore item '%s'", name);
+			/* pop and free this ignored item */
+			cmds = cmd->next;
+			free(cmd);
 			continue;
 		}
 		if (isdemon) {
 			syslog(LOG_WARNING, "config file `%s', line %d, HID "
 			    "item not found: `%s'", conf, line, name);
 			freecommands(cmds);
+			fclose(f);
 			return (NULL);
 		} else {
 			errx(1, "config file `%s', line %d, HID item "
