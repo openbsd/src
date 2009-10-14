@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.349 2009/10/14 11:16:15 espie Exp $
+# $OpenBSD: pkg_add,v 1.350 2009/10/14 13:46:25 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -555,8 +555,7 @@ sub install_set
 		return ();
 	}
 	if ($handle->has_error) {
-		if ((!$state->{defines}->{kitchensink} ||
-		    $handle->has_error(OpenBSD::Handle::BAD_PACKAGE)) &&
+		if ($handle->has_error(OpenBSD::Handle::BAD_PACKAGE) &&
 		    !$handle->{tweaked}) {
 			$state->set_name_from_handle($handle);
 			$state->fatal("Fatal error");
@@ -754,6 +753,9 @@ lock_db($state->{not}) unless $state->{defines}->{nolock};
 $state->setup_progressmeter($opt_x);
 $state->check_root;
 
+# Here we create the list of packages to install
+# actually, an updateset list (@todo2), and we hope to do this lazily
+# later for the most part...
 my @todo2 = ();
 
 if ($opt_l) {
@@ -766,6 +768,8 @@ if ($opt_l) {
 	}
 }
 
+# three cases: 
+# 1/ match fuzzily against a list
 if ($opt_l || $opt_z) {
 	my $k = OpenBSD::Search::FilterLocation->keep_most_recent;
 	$state->progress->set_header("Looking for packages");
@@ -784,6 +788,7 @@ if ($opt_l || $opt_z) {
 			push(@todo2, OpenBSD::UpdateSet->from_location($r));
 		}
 	}
+# 2/ update existing stuff
 } elsif ($opt_u) {
 	require OpenBSD::Update;
 	require OpenBSD::PackageRepository::Installed;
@@ -846,6 +851,7 @@ if ($opt_l || $opt_z) {
 	}
 	print "Running update ", join(',', map {$_->short_print} @todo2), "\n";
 } else {
+# 3/ actual names
 	find_truelocations(\@ARGV, \@todo2, $state);
 	OpenBSD::Add::tag_user_packages(@todo2);
 }
@@ -854,19 +860,25 @@ if ($bad) {
 	exit(1);
 }
 
+
+
+# This is the actual very small loop that adds all packages
 eval {
 while (my $set = shift @todo2) {
 	unshift(@todo2, install_set($set, $state, @todo2));
 }
 };
-
+# Note how well we performed. We need to clean up BEFORE we exit anyways.
 my $dielater = $@;
 
+# cleanup various things
 $state->{recorder}->cleanup($state);
 OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
 OpenBSD::Add::manpages_index($state);
 OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 
+
+# and display delayed thingies.
 if ($state->{packages_with_sig}) {
 	print "Packages with signatures: ", $state->{packages_with_sig};
 	if ($state->{packages_without_sig}) {
@@ -883,9 +895,8 @@ if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
 	    join(' ', sort(keys %{$state->{updatedepends}})),
 	    " may remain\n";
 }
-if (defined $state->{defines}->{kitchensink}) {
-	print "Added:\n", (map { "\t$_\n" } sort $state->installed), "\n";
-}
+
+# show any error, and show why we died...
 rethrow $dielater;
 } catch {
 	print STDERR "$0: $_\n";
