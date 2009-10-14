@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2009/06/26 08:44:07 espie Exp $
+#	$OpenBSD: Makefile,v 1.27 2009/10/14 17:22:15 sthen Exp $
 
 FIBOMAX=25
 M4=m4
@@ -11,7 +11,7 @@ REGRESS_TARGETS= test-ff_after_dnl test-m4wrap test-m4wrap2 \
     test-patterns trip test-strangequotes test-redef test-quotes \
     test-weird test-args test-args2 test-esyscmd test-eval test-gnupatterns \
     test-gnupatterns2 test-comments test-synch1 test-synch1bis \
-    test-gnuformat test-includes test-dumpdef
+    test-gnuformat test-includes test-dumpdef test-gnuprefix
 
 test-ff_after_dnl: ff_after_dnl.m4
 	${M4} ff_after_dnl.m4 | diff - ${.CURDIR}/ff_after_dnl.out
@@ -94,6 +94,10 @@ test-synch1bis:
 
 test-dumpdef:
 	${M4} ${.CURDIR}/dumpdef.m4 2>/dev/null
+
+test-gnuprefix:
+	${M4} -P ${.CURDIR}/gnuprefix.m4 2>&1 | \
+		diff -u - ${.CURDIR}/gnuprefix.out
 
 .PHONY:	${REGRESS_TARGETS}
 
