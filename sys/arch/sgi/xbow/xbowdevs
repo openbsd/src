@@ -1,4 +1,4 @@
-$OpenBSD: xbowdevs,v 1.5 2009/10/14 20:19:23 miod Exp $
+$OpenBSD: xbowdevs,v 1.6 2009/10/15 23:42:43 miod Exp $
 /*
  * Copyright (c) 2008 Miodrag Vallat.
  *
@@ -22,16 +22,31 @@ vendor	SGI4		0x0036
 vendor	SGI5		0x02aa
 
 /*
- * List of known products.  Grouped by ``manufacturer''.
+ * List of known products.  Grouped by type.
+ */
+
+/*
+ * Crossbows
  */
 
 product	SGI	XBOW		0x0000	XBow
 product	SGI	XXBOW		0xd000	XXBow
-product	SGI	BEDROCK		0xd100	PXBow
+product	SGI	PXBOW		0xd100	PXBow
 
+/*
+ * Frame buffers and graphics related devices
+ */
+
+product	SGI5	IMPACT		0xc003	ImpactSR
 product	SGI2	ODYSSEY		0xc013	Odyssey
-
+product	SGI5	KONA		0xc102	Kona
 product	SGI3	TPU		0xc202	TPU
+
+/*
+ * Non-XIO bus bridges
+ */
+
+product	SGI4	BRIDGE		0xc002	Bridge
 product	SGI3	XBRIDGE		0xd002	XBridge
 /*
  * PIC is really a single chip but with two widgets headers, and 4 PCI-X
@@ -39,14 +54,27 @@ product	SGI3	XBRIDGE		0xd002	XBridge
  * The second widget register set uses 0xd112 as the product id.
  */
 product	SGI3	PIC		0xd102	PIC
-/* Supposedly a PIC-compatible chip, maybe a different revision */
-/* product	SGI3	?		0xe000	? (0xe010 for the 2nd widget) */
+/*
+ * TIO apparently is a next-generation XIO framework; TIO:CP being a TIO
+ * variant of PIC with two PCI-X buses, and TIO:CA an AGP bridge.
+ * Unlike PIC, the two heads of TIO:CP would appear as two distinct TIO
+ * widgets.
+ * TIO widgets are supposedly only found on SN2 systems onwards (i.e.
+ * ia64-based Altix systems), but in case there is a way to connect TIO
+ * nodes to XIO nodes, better identify them properly.
+ */
+product	SGI3	TIOCP0		0xe000	TIO:CP
+product	SGI3	TIOCP1		0xe010	TIO:CP
 product	SGI3	TIOCA		0xe020	TIO:CA
 
+/*
+ * Octane HEART memory and interrupt controller
+ */
 product	SGI4	HEART		0xc001	Heart
-product	SGI4	BRIDGE		0xc002	Bridge
+
+/*
+ * Miscellaneous widgets
+ */
+
 product	SGI4	HUB		0xc101	Hub
 product	SGI4	BEDROCK		0xc110	Bedrock
-
-product	SGI5	IMPACT		0xc003	ImpactSR
-product	SGI5	KONA		0xc102	Kona
