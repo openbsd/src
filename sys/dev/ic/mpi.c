@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.113 2009/10/11 02:11:34 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.114 2009/10/15 12:38:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -131,6 +131,7 @@ int			mpi_iocinit(struct mpi_softc *);
 int			mpi_iocfacts(struct mpi_softc *);
 int			mpi_portfacts(struct mpi_softc *);
 int			mpi_portenable(struct mpi_softc *);
+int			mpi_cfg_coalescing(struct mpi_softc *);
 void			mpi_get_raid(struct mpi_softc *);
 int			mpi_fwupload(struct mpi_softc *);
 
@@ -243,6 +244,11 @@ mpi_attach(struct mpi_softc *sc)
 
 	if (mpi_portfacts(sc) != 0) {
 		printf("%s: unable to get portfacts\n", DEVNAME(sc));
+		goto free_replies;
+	}
+
+	if (mpi_cfg_coalescing(sc) != 0) {
+		printf("%s: unable to configure coalescing\n", DEVNAME(sc));
 		goto free_replies;
 	}
 
@@ -2042,6 +2048,47 @@ err:
 	mpi_put_ccb(sc, ccb);
 
 	return (rv);
+}
+
+int
+mpi_cfg_coalescing(struct mpi_softc *sc)
+{
+	struct mpi_cfg_hdr		hdr;
+	struct mpi_cfg_ioc_pg1		pg;
+	u_int32_t			flags;
+
+	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_IOC, 1, 0, &hdr) != 0) {
+		DNPRINTF(MPI_D_MISC, "%s: unable to fetch IOC page 1 header\n",
+		    DEVNAME(sc));
+		return (1);
+	}
+
+	if (mpi_cfg_page(sc, 0, &hdr, 1, &pg, sizeof(pg)) != 0) {
+		DNPRINTF(MPI_D_MISC, "%s: mpi_get_raid unable to fetch IOC "
+		    "page 1\n", DEVNAME(sc));
+		return (1);
+	}
+
+	DNPRINTF(MPI_D_MISC, "%s: IOC page 1\n", DEVNAME(sc));
+	DNPRINTF(MPI_D_MISC, "%s:  flags: 0x08%x\n", DEVNAME(sc),
+	    letoh32(pg.flags));
+	DNPRINTF(MPI_D_MISC, "%s:  coalescing_timeout: %d\n", DEVNAME(sc),
+	    letoh32(pg.coalescing_timeout));
+	DNPRINTF(MPI_D_MISC, "%s:  coalescing_depth: %d pci_slot_num: %d\n",
+	    DEVNAME(sc), pg.coalescing_timeout, pg.pci_slot_num);
+
+	flags = letoh32(pg.flags);
+	if (!ISSET(flags, MPI_CFG_IOC_1_REPLY_COALESCING))
+		return (0);
+
+	CLR(pg.flags, htole32(MPI_CFG_IOC_1_REPLY_COALESCING));
+	if (mpi_cfg_page(sc, 0, &hdr, 0, &pg, sizeof(pg)) != 0) {
+		DNPRINTF(MPI_D_MISC, "%s: unable to clear coalescing\n",
+		    DEVNAME(sc));
+		return (1);
+	}
+
+	return (0);
 }
 
 int
