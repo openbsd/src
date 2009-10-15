@@ -1023,6 +1023,8 @@ struct ix86_frame
   HOST_WIDE_INT hard_frame_pointer_offset;
   HOST_WIDE_INT stack_pointer_offset;
 
+  HOST_WIDE_INT local_size;
+
   /* When save_regs_using_mov is set, emit prologue using
      move instead of push instructions.  */
   bool save_regs_using_mov;
@@ -5082,6 +5084,7 @@ ix86_compute_frame_layout (struct ix86_frame *frame)
   unsigned int preferred_alignment;
   HOST_WIDE_INT size = get_frame_size ();
 
+  frame->local_size = size;
   frame->nregs = ix86_nsaved_regs ();
   total_size = size;
 
@@ -5418,6 +5421,9 @@ ix86_expand_prologue (void)
       x = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR, x, NULL);
       REG_NOTES (insn) = x;
     }
+
+  if (warn_stack_larger_than && frame.local_size > stack_larger_than_size)
+    warning (0, "stack usage is %d bytes", frame.local_size); 
 
   /* Note: AT&T enter does NOT have reversed args.  Enter is probably
      slower on all targets.  Also sdb doesn't like it.  */
