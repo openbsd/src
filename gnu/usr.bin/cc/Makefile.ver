@@ -1,0 +1,11 @@
+# $FreeBSD: src/gnu/usr.bin/cc/Makefile.ver,v 1.1.8.1 2009/04/15 03:14:26 kensmith Exp $
+# $OpenBSD: Makefile.ver,v 1.1.1.1 2009/10/15 20:50:19 robert Exp $
+
+BASEVER!=	cat ${GCCDIR}/BASE-VER
+DATESTAMP!=	cat ${GCCDIR}/DATESTAMP
+DEVPHASE!=	cat ${GCCDIR}/DEV-PHASE
+
+version.o:	version.c
+	${CC} ${CFLAGS} -DBASEVER=\"${BASEVER}\" \
+		-DDATESTAMP=\"\ ${DATESTAMP}\" \
+		-DDEVPHASE=\"\ ${DEVPHASE}\" -c ${.IMPSRC}

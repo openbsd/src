@@ -1,0 +1,18 @@
+# $FreeBSD: src/gnu/usr.bin/cc/Makefile.tgt,v 1.11.8.1 2009/04/15 03:14:26 kensmith Exp $
+# $OpenBSD: Makefile.tgt,v 1.1.1.1 2009/10/15 20:50:19 robert Exp $
+
+TARGET_ARCH?=	${MACHINE_ARCH}
+
+.if ${TARGET_ARCH} == "arm"
+GCC_CPU=	arm
+.elif ${TARGET_ARCH} == "i386" || ${TARGET_ARCH} == "amd64"
+GCC_CPU=	i386
+.elif ${TARGET_ARCH} == "ia64"
+TARGET_CPU_DEFAULT= MASK_GNU_AS|MASK_GNU_LD
+GCC_CPU=	ia64
+.elif ${TARGET_ARCH} == "powerpc"
+GCC_CPU=	rs6000
+.elif ${TARGET_ARCH} == "sparc64"
+GCC_CPU=	sparc
+TARGET_CPU_DEFAULT= TARGET_CPU_ultrasparc
+.endif
