@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rs.1,v 1.14 2009/10/14 20:51:47 sobrado Exp $
+.\"	$OpenBSD: rs.1,v 1.15 2009/10/15 07:38:09 sobrado Exp $
 .\"	$FreeBSD: src/usr.bin/rs/rs.1,v 1.4 1999/08/28 01:05:21 peter Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)rs.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: October 14 2009 $
+.Dd $Mdocdate: October 15 2009 $
 .Dt RS 1
 .Os
 .Sh NAME
@@ -75,14 +75,14 @@ including transposition of the rows and columns.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl C Ns Ar x
+.It Fl C Ns Op Ar x
 Output columns are delimited by the single character
 .Ar x .
 A missing
 .Ar x
 is taken to be
 .Ql ^I .
-.It Fl c Ns Ar x
+.It Fl c Ns Op Ar x
 Input columns are delimited by the single character
 .Ar x .
 A missing
@@ -124,13 +124,13 @@ Do not trim excess delimiters from the ends of the output array.
 On lines having fewer entries than the first line,
 use null entries to pad out the line.
 Normally, missing entries are taken from the next line of input.
-.It Fl S Ns Ar x
+.It Fl S Ns Op Ar x
 Like
 .Fl C ,
 but padded strings of
 .Ar x
 are delimiters.
-.It Fl s Ns Ar x
+.It Fl s Ns Op Ar x
 Like
 .Fl c ,
 but maximal strings of
