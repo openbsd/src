@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.62 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.63 2009/10/15 08:47:44 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1555,21 +1555,29 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 
 	/* We can't handle endpoints that need a sync pipe yet. */
 	sync = FALSE;
-	if (dir == UE_DIR_IN && type == UE_ISO_ADAPT) {
-		sync = TRUE;
+	/* bSynchAddress set to 0 indicates sync pipe is not needed. */
+	if (ed->bSynchAddress != 0) {
+		if (dir == UE_DIR_IN && type == UE_ISO_ADAPT) {
+			sync = TRUE;
 #ifndef UAUDIO_MULTIPLE_ENDPOINTS
-		printf("%s: ignored input endpoint of type adaptive\n",
-		       sc->sc_dev.dv_xname);
-		return (USBD_NORMAL_COMPLETION);
+			printf("%s: ignored input endpoint of type adaptive\n",
+			       sc->sc_dev.dv_xname);
+			return (USBD_NORMAL_COMPLETION);
 #endif
+		}
+		if (dir != UE_DIR_IN && type == UE_ISO_ASYNC) {
+			sync = TRUE;
+#ifndef UAUDIO_MULTIPLE_ENDPOINTS
+			printf("%s: ignored output endpoint of type async\n",
+			       sc->sc_dev.dv_xname);
+			return (USBD_NORMAL_COMPLETION);
+#endif
+		}
 	}
-	if (dir != UE_DIR_IN && type == UE_ISO_ASYNC) {
-		sync = TRUE;
-#ifndef UAUDIO_MULTIPLE_ENDPOINTS
-		printf("%s: ignored output endpoint of type async\n",
+	if (sync && id->bNumEndpoints < 2) {
+		printf("%s: sync pipe needed, but no sync endpoint given\n",
 		       sc->sc_dev.dv_xname);
 		return (USBD_NORMAL_COMPLETION);
-#endif
 	}
 
 	sed = (const void *)(buf + offs);
@@ -1581,18 +1589,9 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	if (offs > size)
 		return (USBD_INVAL);
 
-	if (sync && id->bNumEndpoints <= 1) {
-		printf("%s: a sync-pipe endpoint but no other endpoint\n",
-		       sc->sc_dev.dv_xname);
-		return USBD_INVAL;
-	}
-	if (!sync && id->bNumEndpoints > 1) {
-		printf("%s: non sync-pipe endpoint but multiple endpoints\n",
-		       sc->sc_dev.dv_xname);
-		return USBD_INVAL;
-	}
 	epdesc1 = NULL;
-	if (id->bNumEndpoints > 1) {
+#ifdef UAUDIO_MULTIPLE_ENDPOINTS
+	if (sync) {
 		epdesc1 = (const void*)(buf + offs);
 		if (epdesc1->bDescriptorType != UDESC_ENDPOINT)
 			return USBD_INVAL;
@@ -1627,6 +1626,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 		}
 		/* UE_GET_ADDR(epdesc1->bEndpointAddress), and epdesc1->bRefresh */
 	}
+#endif
 
 	format = UGETW(asid->wFormatTag);
 	chan = asf1d->bNrChannels;
