@@ -1,10 +1,12 @@
 # $FreeBSD: src/gnu/usr.bin/cc/libcpp/Makefile,v 1.1.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.1.1.1 2009/10/15 20:50:20 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2009/10/15 21:08:01 robert Exp $
 
 # Use our headers in preference to ones from ../cc_tools.
 CFLAGS+=	-I${.CURDIR} -I.
 
 .include <bsd.own.mk>
+
+.include "${.CURDIR}/../Makefile.inc"
 
 .PATH: ${GCCLIB}/libcpp
 
