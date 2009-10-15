@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.1 2009/10/14 22:59:34 espie Exp $
+# $OpenBSD: Handle.pm,v 1.2 2009/10/15 10:45:47 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -35,6 +35,25 @@ sub new
 	return bless {}, $class;
 }
 
+sub pkgname
+{
+	my $self = shift;
+	if (!defined $self->{pkgname}) {
+		if (defined $self->{plist}) {
+			$self->{pkgname} = $self->{plist}->pkgname;
+		} elsif (defined $self->{location}) {
+			$self->{pkgname} = $self->{location}->name;
+		} elsif (defined $self->{name}) {
+			require OpenBSD::PackageName;
+
+			$self->{pkgname} = 
+			    OpenBSD::PackageName::url2pkgname($self->{name});
+		}
+	}
+
+	return $self->{pkgname};
+}
+
 sub set_error
 {
 	my ($self, $error) = @_;
@@ -58,7 +77,7 @@ sub create_old
 
 	my ($class, $pkgname, $state) = @_;
 	my $self= $class->new;
-	$self->{pkgname} = $pkgname;
+	$self->{name} = $pkgname;
 
 	require OpenBSD::PackageRepository::Installed;
 
@@ -74,6 +93,7 @@ sub create_old
 			$self->{plist} = $plist;
 		}
 	}
+
 	return $self;
 }
 
@@ -81,7 +101,7 @@ sub create_new
 {
 	my ($class, $pkg) = @_;
 	my $handle = $class->new;
-	$handle->{pkgname} = $pkg;
+	$handle->{name} = $pkg;
 	$handle->{tweaked} = 0;
 	return $handle;
 }
@@ -90,7 +110,6 @@ sub from_location
 {
 	my ($class, $location) = @_;
 	my $handle = $class->new;
-	$handle->{pkgname} = $location->name;
 	$handle->{location} = $location;
 	$handle->{tweaked} = 0;
 	return $handle;
@@ -101,7 +120,7 @@ sub get_plist
 	my ($handle, $state) = @_;
 
 	my $location = $handle->{location};
-	my $pkg = $handle->{pkgname};
+	my $pkg = $handle->pkgname;
 
 	if ($state->{verbose}) {
 		print $state->deptree_header($pkg);
@@ -140,8 +159,7 @@ sub get_plist
 		return;
 	}
 	if ($pkg ne '-') {
-		if (!defined $pkgname or 
-		    OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
+		if (!defined $pkgname or $pkg ne $pkgname) {
 			print "Package name is not consistent ???\n";
 			$location->close_with_client_error;
 			$location->wipe_info;
@@ -158,26 +176,29 @@ sub complete
 
 	return if $handle->has_error;
 
-	my $pkgname = $handle->{pkgname};
 
 	if (!defined $handle->{location}) {
-		my $location = OpenBSD::PackageLocator->find($pkgname, 
+		my $name = $handle->{name};
+
+		my $location = OpenBSD::PackageLocator->find($name, 
 		    $state->{arch});
 		if (!$location) {
-			print $state->deptree_header($pkgname);
+			print $state->deptree_header($name);
 			$handle->set_error(NOT_FOUND);
 			$handle->{tweaked} = 
-			    OpenBSD::Add::tweak_package_status($pkgname, 
+			    OpenBSD::Add::tweak_package_status($handle->pkgname, 
 				$state);
 			if (!$handle->{tweaked}) {
-				print "Can't find $pkgname\n";
+				print "Can't find $name\n";
 			}
 			return;
 		}
 		$handle->{location} = $location;
+		$handle->{pkgname} = $location->name;
 	}
 	if (!defined $handle->{plist}) {
 		$handle->get_plist($state);
 	}
 }
+
 1;

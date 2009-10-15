@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.352 2009/10/14 22:59:34 espie Exp $
+# $OpenBSD: pkg_add,v 1.353 2009/10/15 10:45:47 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -74,13 +74,12 @@ sub build_deptree
 	my ($state, $pkg, @deps) = @_;
 
 	my $tree = $state->{deptree};
-	$pkg = OpenBSD::PackageName::url2pkgname($pkg);
 	# flatten info
 	if (defined $tree->{$pkg}) {
 		$pkg = $tree->{$pkg};
 	}
 	for my $i (@deps) {
-		my $j = $i->handle->{pkgname};
+		my $j = $i->handle->pkgname;
 		$tree->{$j} = $pkg unless defined $tree->{$j};
 	}
 }
@@ -116,7 +115,7 @@ sub installed
 sub set_name_from_handle
 {
 	my ($state, $h) = @_;
-	$state->set_pkgname($h->{pkgname});
+	$state->set_pkgname($h->pkgname);
 }
 
 package OpenBSD::UpdateSet;
@@ -127,7 +126,7 @@ sub setup_header
 {
 	my ($set, $state) = @_;
 
-	my $pkgname = $set->handle->{pkgname};
+	my $pkgname = $set->handle->pkgname;
 
 	my $header = $state->deptree_header($pkgname).$pkgname;
 	if ($set->older) {
@@ -174,7 +173,7 @@ sub reorder_old
 
 	my $resolved;
 	my @l = ();
-	my %todo = map {($_->{pkgname}, $_)} $set->older;
+	my %todo = map {($_->pkgname, $_)} $set->older;
 	do {
 		$resolved = 0;
 BIGLOOP: 	while (my ($pkg, $h) = each %todo) {
@@ -195,7 +194,7 @@ sub can_install
 	my ($set, $state) = @_;
 	for my $handle ($set->newer) {
 		my $plist = $handle->{plist};
-		my $pkgname = $handle->{pkgname};
+		my $pkgname = $handle->pkgname;
 		my @conflicts = OpenBSD::PkgCfl::find_all($plist, $state);
 		next if @conflicts == 0;
 
@@ -363,7 +362,7 @@ sub really_add
 
 	if ($replacing) {
 		for my $handle ($set->newer) {
-			my $pkgname = $handle->{pkgname};
+			my $pkgname = $handle->pkgname;
 			$state->progress->set_header("$pkgname (extracting)");
 
 			try {
@@ -384,7 +383,7 @@ sub really_add
 
 		$set->{solver}->record_old_dependencies($state);
 		for my $o ($set->older_to_do) {
-			my $oldname = $o->{pkgname};
+			my $oldname = $o->pkgname;
 			$state->progress->set_header($oldname." (deleting)");
 			$state->set_name_from_handle($o);
 			require OpenBSD::Delete;
@@ -407,7 +406,7 @@ sub really_add
 	}
 
 	for my $handle ($set->newer) {
-		my $pkgname = $handle->{pkgname};
+		my $pkgname = $handle->pkgname;
 		my $plist = $handle->{plist};
 		$state->progress->set_header("$pkgname (installing)");
 		$state->set_name_from_handle($handle);
@@ -432,7 +431,7 @@ sub really_add
 		}
 	}
 	for my $handle ($set->newer) {
-		my $pkgname = $handle->{pkgname};
+		my $pkgname = $handle->pkgname;
 		my $plist = $handle->{plist};
 		OpenBSD::SharedLibs::add_libs_from_plist($plist);
 		OpenBSD::Add::tweak_plist_status($plist, $state);
@@ -457,7 +456,7 @@ sub install_set
 	my ($set, $state, @todo) = @_;
 
 	my $handle = $set->handle;
-	if ($state->is_installed($handle->{pkgname})) {
+	if ($state->is_installed($handle->pkgname)) {
 		if (defined $handle->{location}) {
 			$handle->{location}->close_now;
 		}
@@ -483,7 +482,7 @@ sub install_set
 
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check($state->{arch})) {
-			print "$handle->{pkgname} is not for the right architecture\n";
+			print $handle->pkgname, " is not for the right architecture\n";
 			return () unless $defines{arch};
 		}
 	}
@@ -494,7 +493,7 @@ sub install_set
 			$set->{solver}->dump;
 		}
 		if (@deps > 0) {
-			$state->build_deptree($handle->{pkgname}, @deps);
+			$state->build_deptree($handle->pkgname, @deps);
 			return (@deps, $set);
 		}
 	}
@@ -503,7 +502,7 @@ sub install_set
 	my @baddeps = $set->{solver}->check_depends;
 
 	if (@baddeps) {
-		print "Can't install $handle->{pkgname}: can't resolve ",
+		print "Can't install ", $handle->pkgname,": can't resolve ",
 		    join(',', @baddeps), "\n";
 		$location->close_now;
 		$bad++;
@@ -528,7 +527,7 @@ sub install_set
 	really_add($set, $state);
 	$location->wipe_info;
 	delete $handle->{plist};
-	$state->mark_installed($handle->{pkgname});
+	$state->mark_installed($handle->pkgname);
 	return ();
 }
 

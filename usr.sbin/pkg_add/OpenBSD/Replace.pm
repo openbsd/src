@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.50 2009/10/11 11:51:22 espie Exp $
+# $OpenBSD: Replace.pm,v 1.51 2009/10/15 10:45:47 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -432,7 +432,7 @@ sub save_old_libraries
 
 	for my $o ($set->older) {
 
-		my $oldname = $o->{pkgname};
+		my $oldname = $o->pkgname;
 		my $libs = {};
 		my $p = {};
 
