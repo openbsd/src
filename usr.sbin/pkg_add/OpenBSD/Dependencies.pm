@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.72 2009/10/15 10:45:47 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.73 2009/10/15 18:40:32 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -200,7 +200,7 @@ sub new
 {
 	my ($class, $set) = @_;
 	bless {set => $set, plist => $set->handle->{plist}, 
-	    to_install => {}, to_update => {}, deplist => [], to_register => {} }, $class;
+	    deplist => [], to_register => {} }, $class;
 }
 
 sub dependencies
@@ -217,22 +217,6 @@ sub has_dep
 {
 	my ($self, $dep) = @_;
 	return $self->{to_register}->{$dep};
-}
-
-sub add_todo
-{
-	my ($self, @extra) = @_;
-
-	require OpenBSD::PackageName;
-
-	for my $set (@extra) {
-		for my $n ($set->newer) {
-			$self->{to_install}->{$n->pkgname} = $set;
-		}
-		for my $n ($set->older) {
-			$self->{to_update}->{$n->pkgname} = $set;
-		}
-	}
 }
 
 sub find_dep_in_repositories
@@ -270,7 +254,7 @@ sub find_dep_in_stuff_to_install
 {
 	my ($self, $state, $dep) = @_;
 
-	return find_candidate($dep->spec, keys %{$self->{to_install}});
+	return find_candidate($dep->spec, keys %{$state->{tracker}->{to_install}});
 }
 
 sub solve_dependency
@@ -282,7 +266,7 @@ sub solve_dependency
 	if ($state->{allow_replacing}) {
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 		if ($v) {
-			push(@{$self->{deplist}}, $self->{to_install}->{$v});
+			push(@{$self->{deplist}}, $state->{tracker}->{to_install}->{$v});
 			return $v;
 		}
 	}
@@ -298,7 +282,7 @@ sub solve_dependency
 	if (!$state->{allow_replacing}) {
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 		if ($v) {
-			push(@{$self->{deplist}}, $self->{to_install}->{$v});
+			push(@{$self->{deplist}}, $state->{tracker}->{to_install}->{$v});
 			return $v;
 		}
 	}
@@ -319,8 +303,6 @@ sub solve_dependency
 sub solve_depends
 {
 	my ($self, $state, @extra) = @_;
-
-	$self->add_todo(@extra);
 
 	for my $package ($self->{set}->newer) {
 		for my $dep (@{$package->{plist}->{depend}}) {
