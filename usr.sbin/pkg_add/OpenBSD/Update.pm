@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.87 2009/10/14 13:46:25 espie Exp $
+# $OpenBSD: Update.pm,v 1.88 2009/10/15 10:48:27 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -42,7 +42,7 @@ sub add_updateset
 sub process_handle
 {
 	my ($self, $set, $h, $state) = @_;
-	my $pkgname = $h->{pkgname};
+	my $pkgname = $h->pkgname;
 	if (defined $h->{update}) {
 		$state->progress->clear;
 		print "Update to $pkgname already found\n";
