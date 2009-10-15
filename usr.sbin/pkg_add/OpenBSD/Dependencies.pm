@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.76 2009/10/15 22:32:13 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.77 2009/10/15 22:41:50 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -243,6 +243,15 @@ sub find_dep_in_repositories
 	}
 }
 
+sub find_dep_in_self
+{
+	my ($self, $state, $dep) = @_;
+
+	return find_candidate($dep->spec, 
+	    map {$_->pkgname} $self->{set}->newer);
+
+}
+
 sub find_dep_in_stuff_to_install
 {
 	my ($self, $state, $dep) = @_;
@@ -257,6 +266,11 @@ sub solve_dependency
 	my $v;
 
 	if ($state->{allow_replacing}) {
+		
+		$v = $self->find_dep_in_self($state, $dep);
+		if ($v) {
+			return $v;
+		}
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 		if ($v) {
 			push(@{$self->{deplist}}, $state->{tracker}->{to_install}->{$v});
