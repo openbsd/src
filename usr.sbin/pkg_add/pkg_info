@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.77 2009/10/11 20:09:48 jmc Exp $
+# $OpenBSD: pkg_info,v 1.78 2009/10/15 10:47:07 phessler Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -317,10 +317,10 @@ sub print_info
 			printfile($handle->info.DEINSTALL, \*STDOUT);
 			print "\n";
 		}
-		if ($opt_r && -f $handle->info.REQUIRE) {
+		if ($opt_r && -f $handle->info.REQUIRING) {
 			just_in_time_header($pkg, $handle ,\$done);
 			print $opt_l, "Require script:\n" unless $opt_q;
-			printfile($handle->info.REQUIRE, \*STDOUT);
+			printfile($handle->info.REQUIRING, \*STDOUT);
 			print "\n";
 		}
 		my $plist;
