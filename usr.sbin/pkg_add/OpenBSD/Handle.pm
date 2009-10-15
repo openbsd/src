@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.2 2009/10/15 10:45:47 espie Exp $
+# $OpenBSD: Handle.pm,v 1.3 2009/10/15 11:18:48 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -170,31 +170,36 @@ sub get_plist
 	$handle->{plist} = $plist;
 }
 
+sub get_location
+{
+	my ($handle, $state) = @_;
+
+	my $name = $handle->{name};
+
+	my $location = OpenBSD::PackageLocator->find($name, $state->{arch});
+	if (!$location) {
+		print $state->deptree_header($name);
+		$handle->set_error(NOT_FOUND);
+		$handle->{tweaked} = 
+		    OpenBSD::Add::tweak_package_status($handle->pkgname, 
+			$state);
+		if (!$handle->{tweaked}) {
+			print "Can't find $name\n";
+		}
+		return;
+	}
+	$handle->{location} = $location;
+	$handle->{pkgname} = $location->name;
+}
+
 sub complete
 {
 	my ($handle, $state) = @_;
 
 	return if $handle->has_error;
 
-
 	if (!defined $handle->{location}) {
-		my $name = $handle->{name};
-
-		my $location = OpenBSD::PackageLocator->find($name, 
-		    $state->{arch});
-		if (!$location) {
-			print $state->deptree_header($name);
-			$handle->set_error(NOT_FOUND);
-			$handle->{tweaked} = 
-			    OpenBSD::Add::tweak_package_status($handle->pkgname, 
-				$state);
-			if (!$handle->{tweaked}) {
-				print "Can't find $name\n";
-			}
-			return;
-		}
-		$handle->{location} = $location;
-		$handle->{pkgname} = $location->name;
+		$handle->get_location($state);
 	}
 	if (!defined $handle->{plist}) {
 		$handle->get_plist($state);
