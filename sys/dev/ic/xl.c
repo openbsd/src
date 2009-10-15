@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.86 2009/06/02 07:55:10 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.87 2009/10/15 17:54:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2407,6 +2407,9 @@ xl_stop(struct xl_softc *sc)
 {
 	struct ifnet *ifp;
 
+	/* Stop the stats updater. */
+	timeout_del(&sc->xl_stsup_tmo);
+
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_timer = 0;
 
@@ -2432,9 +2435,6 @@ xl_stop(struct xl_softc *sc)
 
 	if (sc->intr_ack)
 		(*sc->intr_ack)(sc);
-
-	/* Stop the stats updater. */
-	timeout_del(&sc->xl_stsup_tmo);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -2737,13 +2737,13 @@ xl_detach(struct xl_softc *sc)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-
 	if (sc->sc_sdhook != NULL)
 		shutdownhook_disestablish(sc->sc_sdhook);
 	if (sc->sc_pwrhook != NULL)
 		powerhook_disestablish(sc->sc_pwrhook);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
 
 	return (0);
 }

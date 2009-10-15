@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.51 2009/06/05 19:30:48 naddy Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.52 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -268,15 +268,11 @@ fxp_pci_detach(struct device *self, int flags)
 {
 	struct fxp_pci_softc *psc = (void *)self;
 	struct fxp_softc *sc = &psc->psc_softc;
-	int rv;
 
-	rv = fxp_detach(sc);
-	if (rv == 0) {
-		if (sc->sc_ih != NULL)
-			pci_intr_disestablish(psc->psc_pc, sc->sc_ih);
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(psc->psc_pc, sc->sc_ih);
+	fxp_detach(sc);
+	bus_space_unmap(sc->sc_st, sc->sc_sh, psc->psc_mapsize);
 
-		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->psc_mapsize);
-	}
-
-	return (rv);
+	return (0);
 }

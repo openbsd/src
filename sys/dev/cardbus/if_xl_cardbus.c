@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.21 2009/06/02 07:55:08 deraadt Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.22 2009/10/15 17:54:56 deraadt Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -299,31 +299,16 @@ xl_cardbus_detach(struct device *self, int arg)
 	struct xl_cardbus_softc *csc = (void *)self;
 	struct xl_softc *sc = &csc->sc_softc;
 	struct cardbus_devfunc *ct = csc->sc_ct;
-	int rv = 0;
 
-#if defined(DIAGNOSTIC)
-	if (ct == NULL) {
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
-	}
-#endif
-
-	rv = xl_detach(sc);
-	if (rv == 0) {
-		/*
-		 * Unhook the interrupt handler.
-		 */
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf,
-		    sc->xl_intrhand);
-
-		if (csc->sc_cardtype == XL_CARDBUS_CYCLONE) {
-			Cardbus_mapreg_unmap(ct, CARDBUS_BASE2_REG,
-			    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
-		}
-
-		Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->xl_btag,
-		    sc->xl_bhandle, csc->sc_mapsize);
-	}
-	return (rv);
+	cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf,
+	    sc->xl_intrhand);
+	xl_detach(sc);
+	if (csc->sc_cardtype == XL_CARDBUS_CYCLONE)
+		Cardbus_mapreg_unmap(ct, CARDBUS_BASE2_REG,
+		    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
+	Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->xl_btag,
+	    sc->xl_bhandle, csc->sc_mapsize);
+	return (0);
 }
 
 void

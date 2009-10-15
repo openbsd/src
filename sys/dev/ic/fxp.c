@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.99 2009/08/25 11:04:23 sthen Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.100 2009/10/15 17:54:54 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ void fxp_start(struct ifnet *);
 int fxp_ioctl(struct ifnet *, u_long, caddr_t);
 void fxp_init(void *);
 void fxp_load_ucode(struct fxp_softc *);
-void fxp_stop(struct fxp_softc *, int);
+void fxp_stop(struct fxp_softc *, int, int);
 void fxp_watchdog(struct ifnet *);
 int fxp_add_rfabuf(struct fxp_softc *, struct mbuf *);
 int fxp_mdi_read(struct device *, int, int);
@@ -305,7 +305,7 @@ fxp_power(int why, void *arg)
 
 	s = splnet();
 	if (why != PWR_RESUME)
-		fxp_stop(sc, 0);
+		fxp_stop(sc, 0, 0);
 	else {
 		ifp = &sc->sc_arpcom.ac_if;
 		if (ifp->if_flags & IFF_UP)
@@ -1035,13 +1035,13 @@ fxp_stats_update(void *arg)
 	timeout_add_sec(&sc->stats_update_to, 1);
 }
 
-int
+void
 fxp_detach(struct fxp_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
-	/* Unhook our tick handler. */
-	timeout_del(&sc->stats_update_to);
+	/* Get rid of our timeouts and mbufs */
+	fxp_stop(sc, 1, 1);
 
 	/* Detach any PHYs we might have. */
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
@@ -1055,8 +1055,6 @@ fxp_detach(struct fxp_softc *sc)
 
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
-
-	return (0);
 }
 
 /*
@@ -1064,10 +1062,15 @@ fxp_detach(struct fxp_softc *sc)
  * the interface.
  */
 void
-fxp_stop(struct fxp_softc *sc, int drain)
+fxp_stop(struct fxp_softc *sc, int drain, int softonly)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
+
+	/*
+	 * Cancel stats updater.
+	 */
+	timeout_del(&sc->stats_update_to);
 
 	/*
 	 * Turn down interface (done early to avoid bad interactions
@@ -1076,17 +1079,16 @@ fxp_stop(struct fxp_softc *sc, int drain)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-	/*
-	 * Cancel stats updater.
-	 */
-	timeout_del(&sc->stats_update_to);
-	mii_down(&sc->sc_mii);
+	if (!softonly)
+		mii_down(&sc->sc_mii);
 
 	/*
 	 * Issue software reset.
 	 */
-	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
-	DELAY(10);
+	if (!softonly) {
+		CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
+		DELAY(10);
+	}
 
 	/*
 	 * Release any xmit buffers.
@@ -1173,7 +1175,7 @@ fxp_init(void *xsc)
 	/*
 	 * Cancel any pending I/O
 	 */
-	fxp_stop(sc, 0);
+	fxp_stop(sc, 0, 0);
 
 	/*
 	 * Initialize base of CBL and RFA memory. Loading with zero
@@ -1660,7 +1662,7 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				fxp_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				fxp_stop(sc, 1);
+				fxp_stop(sc, 1, 0);
 		}
 		break;
 

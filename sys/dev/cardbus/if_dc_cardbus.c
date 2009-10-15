@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.29 2009/06/26 16:58:46 deraadt Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.30 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -243,20 +243,16 @@ dc_cardbus_detach(struct device *self, int flags)
 	struct dc_cardbus_softc *csc = (struct dc_cardbus_softc *)self;
 	struct dc_softc *sc = &csc->sc_dc;
 	struct cardbus_devfunc *ct = csc->sc_ct;
-	int rv = 0;
-
-	rv = dc_detach(sc);
-	if (rv)
-		return (rv);
 
 	cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+	dc_detach(sc);
 
 	/* unmap cardbus resources */
 	Cardbus_mapreg_unmap(ct,
 	    csc->sc_actype == CARDBUS_IO_ENABLE ? PCI_CBIO : PCI_CBMEM,
 	    sc->dc_btag, sc->dc_bhandle, csc->sc_mapsize);
 
-	return (rv);
+	return (0);
 }
 
 void

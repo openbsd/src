@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.15 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.16 2009/10/15 17:54:56 deraadt Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -71,15 +71,18 @@ struct hme_pci_softc {
 	struct	hme_softc	hsc_hme;	/* HME device */
 	bus_space_tag_t		hsc_memt;
 	bus_space_handle_t	hsc_memh;
+	bus_size_t		hsc_memsize;
 	void			*hsc_ih;
+	pci_chipset_tag_t	hsc_pc;
 };
 
 int	hmematch_pci(struct device *, void *, void *);
 void	hmeattach_pci(struct device *, struct device *, void *);
+int	hmedetach_pci(struct device *, int);
 int	hme_pci_enaddr(struct hme_softc *, struct pci_attach_args *);
 
 struct cfattach hme_pci_ca = {
-	sizeof(struct hme_pci_softc), hmematch_pci, hmeattach_pci
+	sizeof(struct hme_pci_softc), hmematch_pci, hmeattach_pci, hmedetach_pci
 };
 
 int
@@ -212,8 +215,9 @@ hmeattach_pci(parent, self, aux)
 	extern void myetheraddr(u_char *);
 	pcireg_t csr;
 	const char *intrstr = NULL;
-	bus_size_t size;
 	int type, gotenaddr = 0;
+
+	hsc->hsc_pc = pa->pa_pc;
 
 	/*
 	 * enable io/memory-space accesses.  this is kinda of gross; but
@@ -252,7 +256,7 @@ hmeattach_pci(parent, self, aux)
 
 #define PCI_HME_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_HME_BASEADDR, type, 0,
-	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, &size, 0) != 0) {
+	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, &hsc->hsc_memsize, 0) != 0) {
 		printf(": can't map registers\n");
 		return;
 	}
@@ -288,7 +292,7 @@ hmeattach_pci(parent, self, aux)
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(hsc->hsc_memt, hsc->hsc_memh, size);
+		bus_space_unmap(hsc->hsc_memt, hsc->hsc_memh, hsc->hsc_memsize);
 		return;
 	}	
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -299,7 +303,7 @@ hmeattach_pci(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(hsc->hsc_memt, hsc->hsc_memh, size);
+		bus_space_unmap(hsc->hsc_memt, hsc->hsc_memh, hsc->hsc_memsize);
 		return;
 	}
 
@@ -309,4 +313,18 @@ hmeattach_pci(parent, self, aux)
 	 * call the main configure
 	 */
 	hme_config(sc);
+}
+
+int
+hmedetach_pci(struct device *self, int flags)
+{
+	struct hme_pci_softc *hsc = (void *)self;
+	struct hme_softc *sc = &hsc->hsc_hme;
+
+	timeout_del(&sc->sc_tick_ch);
+	pci_intr_disestablish(hsc->hsc_pc, hsc->hsc_ih);
+
+	hme_unconfig(sc);
+	bus_space_unmap(hsc->hsc_memt, hsc->hsc_memh, hsc->hsc_memsize);
+	return (0);
 }

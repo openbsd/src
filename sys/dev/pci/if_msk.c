@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.78 2009/10/04 18:32:02 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -151,7 +151,7 @@ void msk_start(struct ifnet *);
 int msk_ioctl(struct ifnet *, u_long, caddr_t);
 void msk_init(void *);
 void msk_init_yukon(struct sk_if_softc *);
-void msk_stop(struct sk_if_softc *);
+void msk_stop(struct sk_if_softc *, int);
 void msk_watchdog(struct ifnet *);
 int msk_ifmedia_upd(struct ifnet *);
 void msk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -612,7 +612,7 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				msk_stop(sc_if);
+				msk_stop(sc_if, 0);
 		}
 		sc_if->sk_if_flags = ifp->if_flags;
 		break;
@@ -1003,7 +1003,10 @@ msk_detach(struct device *self, int flags)
 	if (sc->sk_if[sc_if->sk_port] == NULL)
 		return (0);
 
-	timeout_del(&sc_if->sk_tick_ch);
+	msk_stop(sc_if, 1);
+
+	if (sc_if->sk_sdhook != NULL)
+		shutdownhook_disestablish(sc_if->sk_sdhook);
 
 	/* Detach any PHYs we might have. */
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) != NULL)
@@ -1012,17 +1015,14 @@ msk_detach(struct device *self, int flags)
 	/* Delete any remaining media. */
 	ifmedia_delete_instance(&sc_if->sk_mii.mii_media, IFM_INST_ANY);
 
-	if (sc_if->sk_sdhook != NULL)
-		shutdownhook_disestablish(sc_if->sk_sdhook);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 	bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)sc_if->sk_rdata,
 	    sizeof(struct msk_ring_data));
 	bus_dmamem_free(sc->sc_dmatag,
 	    &sc_if->sk_ring_seg, sc_if->sk_ring_nseg);
+	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 	sc->sk_if[sc_if->sk_port] = NULL;
 
 	return (0);
@@ -1319,8 +1319,6 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
-fail_5:
-	bus_dmamap_destroy(sc->sc_dmatag, sc->sk_status_map);
 fail_4:
 	bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)sc->sk_status_ring,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
@@ -1328,6 +1326,8 @@ fail_3:
 	bus_dmamem_free(sc->sc_dmatag,
 	    &sc->sk_status_seg, sc->sk_status_nseg);
 	sc->sk_status_nseg = 0;
+fail_5:
+	bus_dmamap_destroy(sc->sc_dmatag, sc->sk_status_map);
 fail_2:
 	pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
 	sc->sk_intrhand = NULL;
@@ -1342,6 +1342,9 @@ mskc_detach(struct device *self, int flags)
 	struct sk_softc *sc = (struct sk_softc *)self;
 	int rv;
 
+	if (sc->sk_intrhand)
+		pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
+
 	rv = config_detach_children(self, flags);
 	if (rv != 0)
 		return (rv);
@@ -1353,9 +1356,6 @@ mskc_detach(struct device *self, int flags)
 		bus_dmamem_free(sc->sc_dmatag,
 		    &sc->sk_status_seg, sc->sk_status_nseg);
 	}
-
-	if (sc->sk_intrhand)
-		pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
 
 	if (sc->sk_bsize > 0)
 		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, sc->sk_bsize);
@@ -1733,6 +1733,8 @@ msk_intr(void *xsc)
 	struct msk_status_desc	*cur_st;
 
 	status = CSR_READ_4(sc, SK_Y2_ISSR2);
+	if (status == 0xffffffff)
+		return (0);
 	if (status == 0) {
 		CSR_WRITE_4(sc, SK_Y2_ICR, 2);
 		return (0);
@@ -1933,7 +1935,7 @@ msk_init(void *xsc_if)
 	s = splnet();
 
 	/* Cancel pending I/O and free all RX/TX buffers. */
-	msk_stop(sc_if);
+	msk_stop(sc_if, 0);
 
 	/* Configure I2C registers */
 
@@ -1981,7 +1983,7 @@ msk_init(void *xsc_if)
 	if (msk_init_rx_ring(sc_if) == ENOBUFS) {
 		printf("%s: initialization failed: no "
 		    "memory for rx buffers\n", sc_if->sk_dev.dv_xname);
-		msk_stop(sc_if);
+		msk_stop(sc_if, 0);
 		splx(s);
 		return;
 	}
@@ -1989,7 +1991,7 @@ msk_init(void *xsc_if)
 	if (msk_init_tx_ring(sc_if) == ENOBUFS) {
 		printf("%s: initialization failed: no "
 		    "memory for tx buffers\n", sc_if->sk_dev.dv_xname);
-		msk_stop(sc_if);
+		msk_stop(sc_if, 0);
 		splx(s);
 		return;
 	}
@@ -2035,7 +2037,7 @@ msk_init(void *xsc_if)
 }
 
 void
-msk_stop(struct sk_if_softc *sc_if)
+msk_stop(struct sk_if_softc *sc_if, int softonly)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
@@ -2052,28 +2054,30 @@ msk_stop(struct sk_if_softc *sc_if)
 
 	/* Stop transfer of Rx descriptors */
 
-	/* Turn off various components of this interface. */
-	SK_IF_WRITE_1(sc_if,0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_SET);
-	SK_IF_WRITE_1(sc_if,0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_SET);
-	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_OFFLINE);
-	SK_IF_WRITE_4(sc_if, 0, SK_RXRB1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
-	SK_IF_WRITE_4(sc_if, 1, SK_TXQA1_BMU_CSR, SK_TXBMU_OFFLINE);
-	SK_IF_WRITE_4(sc_if, 1, SK_TXRBA1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
-	SK_IF_WRITE_1(sc_if, 0, SK_TXAR1_COUNTERCTL, SK_TXARCTL_OFF);
-	SK_IF_WRITE_1(sc_if, 0, SK_RXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
-	SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL, SK_TXLEDCTL_COUNTER_STOP);
-	SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_OFF);
-	SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_LINKSYNC_OFF);
+	if (!softonly) {
+		/* Turn off various components of this interface. */
+		SK_IF_WRITE_1(sc_if,0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_SET);
+		SK_IF_WRITE_1(sc_if,0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_SET);
+		SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_OFFLINE);
+		SK_IF_WRITE_4(sc_if, 0, SK_RXRB1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
+		SK_IF_WRITE_4(sc_if, 1, SK_TXQA1_BMU_CSR, SK_TXBMU_OFFLINE);
+		SK_IF_WRITE_4(sc_if, 1, SK_TXRBA1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
+		SK_IF_WRITE_1(sc_if, 0, SK_TXAR1_COUNTERCTL, SK_TXARCTL_OFF);
+		SK_IF_WRITE_1(sc_if, 0, SK_RXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
+		SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL, SK_TXLEDCTL_COUNTER_STOP);
+		SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_OFF);
+		SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_LINKSYNC_OFF);
 
-	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_Y2_PREF_CSR, 0x00000001);
-	SK_IF_WRITE_4(sc_if, 1, SK_TXQA1_Y2_PREF_CSR, 0x00000001);
+		SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_Y2_PREF_CSR, 0x00000001);
+		SK_IF_WRITE_4(sc_if, 1, SK_TXQA1_Y2_PREF_CSR, 0x00000001);
 
-	/* Disable interrupts */
-	if (sc_if->sk_port == SK_PORT_A)
-		sc->sk_intrmask &= ~SK_Y2_INTRS1;
-	else
-		sc->sk_intrmask &= ~SK_Y2_INTRS2;
-	CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
+		/* Disable interrupts */
+		if (sc_if->sk_port == SK_PORT_A)
+			sc->sk_intrmask &= ~SK_Y2_INTRS1;
+		else
+			sc->sk_intrmask &= ~SK_Y2_INTRS2;
+		CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
+	}
 
 	/* Free RX and TX mbufs still in the queues. */
 	for (i = 0; i < MSK_RX_RING_CNT; i++) {
@@ -2082,6 +2086,10 @@ msk_stop(struct sk_if_softc *sc_if)
 			sc_if->sk_cdata.sk_rx_chain[i].sk_mbuf = NULL;
 		}
 	}
+
+	sc_if->sk_cdata.sk_rx_prod = 0;
+	sc_if->sk_cdata.sk_rx_cons = 0;
+	sc_if->sk_cdata.sk_rx_cnt = 0;
 
 	for (i = 0; i < MSK_TX_RING_CNT; i++) {
 		if (sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf != NULL) {

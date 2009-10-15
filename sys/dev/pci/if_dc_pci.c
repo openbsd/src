@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.64 2009/06/26 16:58:45 deraadt Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.65 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -564,18 +564,13 @@ dc_pci_detach(struct device *self, int flags)
 {
 	struct dc_pci_softc *psc = (void *)self;
 	struct dc_softc *sc = &psc->psc_softc;
-	int rv = 0;
-
-	rv = dc_detach(sc);
-	if (rv)
-		return (rv);
 
 	if (sc->sc_ih != NULL)
 		pci_intr_disestablish(psc->psc_pc, sc->sc_ih);	
-
+	dc_detach(sc);
 	bus_space_unmap(sc->dc_btag, sc->dc_bhandle, psc->psc_mapsize);
 
-	return (rv);
+	return (0);
 }
 
 struct cfattach dc_pci_ca = {

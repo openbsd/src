@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.14 2009/08/10 20:29:54 deraadt Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.15 2009/10/15 17:54:54 deraadt Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -93,5 +93,6 @@ struct hme_softc {
 
 
 void	hme_config(struct hme_softc *);
+void	hme_unconfig(struct hme_softc *);
 void	hme_reset(struct hme_softc *);
 int	hme_intr(void *);

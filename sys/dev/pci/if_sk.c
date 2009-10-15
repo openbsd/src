@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.154 2009/10/04 18:32:40 deraadt Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.155 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -152,7 +152,7 @@ int sk_ioctl(struct ifnet *, u_long, caddr_t);
 void sk_init(void *);
 void sk_init_xmac(struct sk_if_softc *);
 void sk_init_yukon(struct sk_if_softc *);
-void sk_stop(struct sk_if_softc *);
+void sk_stop(struct sk_if_softc *, int softonly);
 void sk_watchdog(struct ifnet *);
 int sk_ifmedia_upd(struct ifnet *);
 void sk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -490,7 +490,7 @@ allmulti:
 				case SK_GENESIS:
 					h = sk_xmac_hash(enm->enm_addrlo);
 					break;
-					
+
 				case SK_YUKON:
 				case SK_YUKON_LITE:
 				case SK_YUKON_LP:
@@ -650,7 +650,7 @@ sk_newbuf(struct sk_if_softc *sc_if, int i, struct mbuf *m,
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
 			return (ENOBUFS);
-		
+
 		/* Allocate the jumbo buffer */
 		buf = sk_jalloc(sc_if);
 		if (buf == NULL) {
@@ -892,7 +892,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				sk_stop(sc_if);
+				sk_stop(sc_if, 0);
 		}
 		sc_if->sk_if_flags = ifp->if_flags;
 		break;
@@ -1243,12 +1243,12 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTFN(2, ("sk_attach: end\n"));
 	return;
 
-fail_3:
-	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 fail_2:
 	bus_dmamem_unmap(sc->sc_dmatag, kva, sizeof(struct sk_ring_data));
 fail_1:
 	bus_dmamem_free(sc->sc_dmatag, &sc_if->sk_ring_seg, sc_if->sk_ring_nseg);
+fail_3:
+	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 fail:
 	sc->sk_if[sa->skc_port] = NULL;
 }
@@ -1263,7 +1263,7 @@ sk_detach(struct device *self, int flags)
 	if (sc->sk_if[sc_if->sk_port] == NULL)
 		return (0);
 
-	timeout_del(&sc_if->sk_tick_ch);
+	sk_stop(sc_if, 1);
 
 	/* Detach any PHYs we might have. */
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) != NULL)
@@ -1278,11 +1278,11 @@ sk_detach(struct device *self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 	bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)sc_if->sk_rdata,
 	    sizeof(struct sk_ring_data));
 	bus_dmamem_free(sc->sc_dmatag,
 	    &sc_if->sk_ring_seg, sc_if->sk_ring_nseg);
+	bus_dmamap_destroy(sc->sc_dmatag, sc_if->sk_ring_map);
 	sc->sk_if[sc_if->sk_port] = NULL;
 
 	return (0);
@@ -1532,12 +1532,12 @@ skc_detach(struct device *self, int flags)
 	struct sk_softc *sc = (struct sk_softc *)self;
 	int rv;
 
+	if (sc->sk_intrhand)
+		pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
+
 	rv = config_detach_children(self, flags);
 	if (rv != 0)
 		return (rv);
-
-	if (sc->sk_intrhand)
-		pci_intr_disestablish(sc->sk_pc, sc->sk_intrhand);
 
 	if (sc->sk_bsize > 0)
 		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, sc->sk_bsize);
@@ -2560,7 +2560,7 @@ sk_init(void *xsc_if)
 	s = splnet();
 
 	/* Cancel pending I/O and free all RX/TX buffers. */
-	sk_stop(sc_if);
+	sk_stop(sc_if, 0);
 
 	if (SK_IS_GENESIS(sc)) {
 		/* Configure LINK_SYNC LED */
@@ -2571,7 +2571,7 @@ sk_init(void *xsc_if)
 		/* Configure RX LED */
 		SK_IF_WRITE_1(sc_if, 0, SK_RXLED1_CTL,
 			      SK_RXLEDCTL_COUNTER_START);
-		
+
 		/* Configure TX LED */
 		SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL,
 			      SK_TXLEDCTL_COUNTER_START);
@@ -2616,7 +2616,7 @@ sk_init(void *xsc_if)
 		SK_IF_WRITE_4(sc_if, 0, SK_RXF1_CTL, SK_FIFO_UNRESET);
 		SK_IF_WRITE_4(sc_if, 0, SK_RXF1_END, SK_FIFO_END);
 		SK_IF_WRITE_4(sc_if, 0, SK_RXF1_CTL, SK_FIFO_ON);
-		
+
 		SK_IF_WRITE_4(sc_if, 0, SK_TXF1_CTL, SK_FIFO_UNRESET);
 		SK_IF_WRITE_4(sc_if, 0, SK_TXF1_END, SK_FIFO_END);
 		SK_IF_WRITE_4(sc_if, 0, SK_TXF1_CTL, SK_FIFO_ON);
@@ -2657,7 +2657,7 @@ sk_init(void *xsc_if)
 	if (sk_init_rx_ring(sc_if) == ENOBUFS) {
 		printf("%s: initialization failed: no "
 		    "memory for rx buffers\n", sc_if->sk_dev.dv_xname);
-		sk_stop(sc_if);
+		sk_stop(sc_if, 0);
 		splx(s);
 		return;
 	}
@@ -2665,7 +2665,7 @@ sk_init(void *xsc_if)
 	if (sk_init_tx_ring(sc_if) == ENOBUFS) {
 		printf("%s: initialization failed: no "
 		    "memory for tx buffers\n", sc_if->sk_dev.dv_xname);
-		sk_stop(sc_if);
+		sk_stop(sc_if, 0);
 		splx(s);
 		return;
 	}
@@ -2712,7 +2712,7 @@ sk_init(void *xsc_if)
 }
 
 void
-sk_stop(struct sk_if_softc *sc_if)
+sk_stop(struct sk_if_softc *sc_if, int softonly)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
@@ -2726,80 +2726,82 @@ sk_stop(struct sk_if_softc *sc_if)
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 
-	/* stop Tx descriptor polling timer */
-	SK_IF_WRITE_4(sc_if, 0, SK_DPT_TIMER_CTRL, SK_DPT_TCTL_STOP);
-	/* stop transfer of Tx descriptors */
-	CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_STOP);
-	for (i = 0; i < SK_TIMEOUT; i++) {
-		val = CSR_READ_4(sc, sc_if->sk_tx_bmu);
-		if (!(val & SK_TXBMU_TX_STOP))
-			break;
-		DELAY(1);
-	}
-	if (i == SK_TIMEOUT)
-		printf("%s: cannot stop transfer of Tx descriptors\n",
-		      sc_if->sk_dev.dv_xname);
-	/* stop transfer of Rx descriptors */
-	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_RX_STOP);
-	for (i = 0; i < SK_TIMEOUT; i++) {
-		val = SK_IF_READ_4(sc_if, 0, SK_RXQ1_BMU_CSR);
-		if (!(val & SK_RXBMU_RX_STOP))
-			break;
-		DELAY(1);
-	}
-	if (i == SK_TIMEOUT)
-		printf("%s: cannot stop transfer of Rx descriptors\n",
-		      sc_if->sk_dev.dv_xname);
-
-	if (sc_if->sk_phytype == SK_PHYTYPE_BCOM) {
-		u_int32_t		val;
-
-		/* Put PHY back into reset. */
-		val = sk_win_read_4(sc, SK_GPIO);
-		if (sc_if->sk_port == SK_PORT_A) {
-			val |= SK_GPIO_DIR0;
-			val &= ~SK_GPIO_DAT0;
-		} else {
-			val |= SK_GPIO_DIR2;
-			val &= ~SK_GPIO_DAT2;
+	if (!softonly) {
+		/* stop Tx descriptor polling timer */
+		SK_IF_WRITE_4(sc_if, 0, SK_DPT_TIMER_CTRL, SK_DPT_TCTL_STOP);
+		/* stop transfer of Tx descriptors */
+		CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_STOP);
+		for (i = 0; i < SK_TIMEOUT; i++) {
+			val = CSR_READ_4(sc, sc_if->sk_tx_bmu);
+			if (!(val & SK_TXBMU_TX_STOP))
+				break;
+			DELAY(1);
 		}
-		sk_win_write_4(sc, SK_GPIO, val);
+		if (i == SK_TIMEOUT)
+			printf("%s: cannot stop transfer of Tx descriptors\n",
+			      sc_if->sk_dev.dv_xname);
+		/* stop transfer of Rx descriptors */
+		SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_RX_STOP);
+		for (i = 0; i < SK_TIMEOUT; i++) {
+			val = SK_IF_READ_4(sc_if, 0, SK_RXQ1_BMU_CSR);
+			if (!(val & SK_RXBMU_RX_STOP))
+				break;
+			DELAY(1);
+		}
+		if (i == SK_TIMEOUT)
+			printf("%s: cannot stop transfer of Rx descriptors\n",
+			      sc_if->sk_dev.dv_xname);
+
+		if (sc_if->sk_phytype == SK_PHYTYPE_BCOM) {
+			u_int32_t		val;
+
+			/* Put PHY back into reset. */
+			val = sk_win_read_4(sc, SK_GPIO);
+			if (sc_if->sk_port == SK_PORT_A) {
+				val |= SK_GPIO_DIR0;
+				val &= ~SK_GPIO_DAT0;
+			} else {
+				val |= SK_GPIO_DIR2;
+				val &= ~SK_GPIO_DAT2;
+			}
+			sk_win_write_4(sc, SK_GPIO, val);
+		}
+
+		/* Turn off various components of this interface. */
+		SK_XM_SETBIT_2(sc_if, XM_GPIO, XM_GPIO_RESETMAC);
+		switch (sc->sk_type) {
+		case SK_GENESIS:
+			SK_IF_WRITE_2(sc_if, 0, SK_TXF1_MACCTL,
+				      SK_TXMACCTL_XMAC_RESET);
+			SK_IF_WRITE_4(sc_if, 0, SK_RXF1_CTL, SK_FIFO_RESET);
+			break;
+		case SK_YUKON:
+		case SK_YUKON_LITE:
+		case SK_YUKON_LP:
+			SK_IF_WRITE_1(sc_if,0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_SET);
+			SK_IF_WRITE_1(sc_if,0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_SET);
+			break;
+		}
+		SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_OFFLINE);
+		SK_IF_WRITE_4(sc_if, 0, SK_RXRB1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
+		SK_IF_WRITE_4(sc_if, 1, SK_TXQS1_BMU_CSR, SK_TXBMU_OFFLINE);
+		SK_IF_WRITE_4(sc_if, 1, SK_TXRBS1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
+		SK_IF_WRITE_1(sc_if, 0, SK_TXAR1_COUNTERCTL, SK_TXARCTL_OFF);
+		SK_IF_WRITE_1(sc_if, 0, SK_RXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
+		SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
+		SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_OFF);
+		SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_LINKSYNC_OFF);
+
+		/* Disable interrupts */
+		if (sc_if->sk_port == SK_PORT_A)
+			sc->sk_intrmask &= ~SK_INTRS1;
+		else
+			sc->sk_intrmask &= ~SK_INTRS2;
+		CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
+
+		SK_XM_READ_2(sc_if, XM_ISR);
+		SK_XM_WRITE_2(sc_if, XM_IMR, 0xFFFF);
 	}
-
-	/* Turn off various components of this interface. */
-	SK_XM_SETBIT_2(sc_if, XM_GPIO, XM_GPIO_RESETMAC);
-	switch (sc->sk_type) {
-	case SK_GENESIS:
-		SK_IF_WRITE_2(sc_if, 0, SK_TXF1_MACCTL,
-			      SK_TXMACCTL_XMAC_RESET);
-		SK_IF_WRITE_4(sc_if, 0, SK_RXF1_CTL, SK_FIFO_RESET);
-		break;
-	case SK_YUKON:
-	case SK_YUKON_LITE:
-	case SK_YUKON_LP:
-		SK_IF_WRITE_1(sc_if,0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_SET);
-		SK_IF_WRITE_1(sc_if,0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_SET);
-		break;
-	}
-	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_OFFLINE);
-	SK_IF_WRITE_4(sc_if, 0, SK_RXRB1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
-	SK_IF_WRITE_4(sc_if, 1, SK_TXQS1_BMU_CSR, SK_TXBMU_OFFLINE);
-	SK_IF_WRITE_4(sc_if, 1, SK_TXRBS1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
-	SK_IF_WRITE_1(sc_if, 0, SK_TXAR1_COUNTERCTL, SK_TXARCTL_OFF);
-	SK_IF_WRITE_1(sc_if, 0, SK_RXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
-	SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
-	SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_OFF);
-	SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_LINKSYNC_OFF);
-
-	/* Disable interrupts */
-	if (sc_if->sk_port == SK_PORT_A)
-		sc->sk_intrmask &= ~SK_INTRS1;
-	else
-		sc->sk_intrmask &= ~SK_INTRS2;
-	CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
-
-	SK_XM_READ_2(sc_if, XM_ISR);
-	SK_XM_WRITE_2(sc_if, XM_IMR, 0xFFFF);
 
 	/* Free RX and TX mbufs still in the queues. */
 	for (i = 0; i < SK_RX_RING_CNT; i++) {
@@ -2879,7 +2881,7 @@ sk_dump_bytes(const char *data, int len)
 			if ((j & 0xf) == 7 && j > 0)
 				printf(" ");
 		}
-		
+
 		for (; j < 16; j++)
 			printf("   ");
 		printf("  ");
@@ -2888,9 +2890,9 @@ sk_dump_bytes(const char *data, int len)
 			int ch = data[i + j] & 0xff;
 			printf("%c", ' ' <= ch && ch <= '~' ? ch : ' ');
 		}
-		
+
 		printf("\n");
-		
+
 		if (c < 16)
 			break;
 	}

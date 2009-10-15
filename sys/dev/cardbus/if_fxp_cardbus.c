@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.23 2009/06/02 16:50:20 jsg Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.24 2009/10/15 17:54:56 deraadt Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -219,28 +219,15 @@ fxp_cardbus_detach(struct device *self, int flags)
 	struct fxp_softc *sc = (struct fxp_softc *) self;
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) self;
 	struct cardbus_devfunc *ct = csc->ct;
-	int rv, reg;
+	int reg;
 
-#ifdef DIAGNOSTIC
-	if (ct == NULL)
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
-#endif
+	cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+	fxp_detach(sc);
 
-	rv = fxp_detach(sc);
-	if (rv == 0) {
-		/*
-		 * Unhook the interrupt handler.
-		 */
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
-
-		/*
-		 * release bus space and close window
-		 */
-		if (csc->base0_reg)
-			reg = CARDBUS_BASE0_REG;
-		else
-			reg = CARDBUS_BASE1_REG;
-		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, csc->size);
-	}
-	return (rv);
+	if (csc->base0_reg)
+		reg = CARDBUS_BASE0_REG;
+	else
+		reg = CARDBUS_BASE1_REG;
+	Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, csc->size);
+	return (0);
 }

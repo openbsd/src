@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.23 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.24 2009/10/15 17:54:54 deraadt Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -289,6 +289,7 @@ int	gem_mediachange(struct ifnet *);
 void	gem_mediastatus(struct ifnet *, struct ifmediareq *);
 
 void	gem_config(struct gem_softc *);
+void	gem_unconfig(struct gem_softc *);
 void	gem_reset(struct gem_softc *);
 int	gem_intr(void *);
 #endif /* _KERNEL */

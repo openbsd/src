@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.25 2009/06/02 05:29:47 jsg Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.26 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -317,15 +317,11 @@ xl_pci_detach(struct device *self, int flags)
 {
 	struct xl_pci_softc *psc = (void *)self;
 	struct xl_softc *sc = &psc->psc_softc;
-	int rv = 0;
 
-	rv = xl_detach(sc);
-	if (rv == 0) {
-		pci_intr_disestablish(psc->psc_pc, sc->xl_intrhand);
-		bus_space_unmap(sc->xl_btag, sc->xl_bhandle, psc->psc_iosize);
-	}
-
-	return (rv);
+	pci_intr_disestablish(psc->psc_pc, sc->xl_intrhand);
+	xl_detach(sc);
+	bus_space_unmap(sc->xl_btag, sc->xl_bhandle, psc->psc_iosize);
+	return (0);
 }
 
 void            
