@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.1 2009/10/15 18:17:18 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.2 2009/10/15 18:32:11 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -60,6 +60,18 @@ sub mark_installed
 	for my $n ($set->older) {
 		undef $self->{to_update}->{$n->pkgname};
 	}
+}
+
+sub is_installed
+{
+	my ($self, $pkg) = @_;
+	return $self->{installed}->{$pkg};
+}
+
+sub installed
+{
+	my $self = shift;
+	return keys %{$self->{installed}};
 }
 
 1;

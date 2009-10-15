@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.354 2009/10/15 18:17:18 espie Exp $
+# $OpenBSD: pkg_add,v 1.355 2009/10/15 18:32:11 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -92,24 +92,6 @@ sub deptree_header
 	} else {
 		return '';
 	}
-}
-
-sub mark_installed
-{
-	my ($state, $pkg) = @_;
-	$state->{installed}->{$pkg} = 1;
-}
-
-sub is_installed
-{
-	my ($state, $pkg) = @_;
-	return $state->{installed}->{$pkg};
-}
-
-sub installed
-{
-	my $state = shift;
-	return keys %{$state->{installed}};
 }
 
 sub set_name_from_handle
@@ -226,7 +208,7 @@ sub can_install
 		}
 
 		for my $toreplace (@conflicts) {
-			if ($state->is_installed($toreplace)) {
+			if ($state->{tracker}->is_installed($toreplace)) {
 				Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
 				$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 				return;
@@ -456,7 +438,7 @@ sub install_set
 	my ($set, $state, @todo) = @_;
 
 	my $handle = $set->handle;
-	if ($state->is_installed($handle->pkgname)) {
+	if ($state->{tracker}->is_installed($handle->pkgname)) {
 		if (defined $handle->{location}) {
 			$handle->{location}->close_now;
 		}
@@ -528,7 +510,6 @@ sub install_set
 	$location->wipe_info;
 	delete $handle->{plist};
 	$state->{tracker}->mark_installed($set);
-	$state->mark_installed($handle->pkgname);
 	return ();
 }
 
