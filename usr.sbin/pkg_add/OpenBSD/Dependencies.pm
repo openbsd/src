@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.73 2009/10/15 18:40:32 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.74 2009/10/15 20:51:28 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -302,7 +302,7 @@ sub solve_dependency
 
 sub solve_depends
 {
-	my ($self, $state, @extra) = @_;
+	my ($self, $state) = @_;
 
 	for my $package ($self->{set}->newer) {
 		for my $dep (@{$package->{plist}->{depend}}) {
