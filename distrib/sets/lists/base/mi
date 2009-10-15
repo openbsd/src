@@ -980,6 +980,7 @@
 ./usr/libdata/perl5/OpenBSD/SharedLibs.pm
 ./usr/libdata/perl5/OpenBSD/Subst.pm
 ./usr/libdata/perl5/OpenBSD/Temp.pm
+./usr/libdata/perl5/OpenBSD/Tracker.pm
 ./usr/libdata/perl5/OpenBSD/Update.pm
 ./usr/libdata/perl5/OpenBSD/UpdateSet.pm
 ./usr/libdata/perl5/OpenBSD/Ustar.pm
