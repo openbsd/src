@@ -58,6 +58,7 @@ extern short int __get_eh_table_version (struct exception_descriptor *);
 #define LIBGCC2_LONG_DOUBLE_TYPE_SIZE LONG_DOUBLE_TYPE_SIZE
 #endif
 
+#if __GNUC__ >= 4
 #ifndef LIBGCC2_HAS_SF_MODE
 #define LIBGCC2_HAS_SF_MODE (BITS_PER_UNIT == 8)
 #endif
@@ -78,6 +79,7 @@ extern short int __get_eh_table_version (struct exception_descriptor *);
 #define LIBGCC2_HAS_TF_MODE \
   (BITS_PER_UNIT == 8 && LIBGCC2_LONG_DOUBLE_TYPE_SIZE == 128)
 #endif
+#endif /* __GNUC__ >= 4 */
 
 #ifndef SF_SIZE
 #if LIBGCC2_HAS_SF_MODE
