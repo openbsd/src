@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.75 2009/10/15 22:21:25 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.76 2009/10/15 22:32:13 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -282,14 +282,19 @@ sub solve_dependency
 
 	$v = $self->find_dep_in_repositories($state, $dep);
 	if ($v) {
-		push(@{$self->{deplist}}, 
-		    OpenBSD::UpdateSet->from_location($v));
+		my $s = OpenBSD::UpdateSet->from_location($v);
+
+		$state->{tracker}->add_set($s);
+		
+		push(@{$self->{deplist}}, $s);
 		return $v->{name};
 	}
 
 	# resort to default if nothing else
 	$v = $dep->{def};
-	push(@{$self->{deplist}}, OpenBSD::UpdateSet->create_new($v));
+	my $s = OpenBSD::UpdateSet->create_new($v);
+	$state->{tracker}->add_set($s);
+	push(@{$self->{deplist}}, $s);
 	return $v;
 }
 
