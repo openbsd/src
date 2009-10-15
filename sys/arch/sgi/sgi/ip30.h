@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30.h,v 1.2 2009/10/14 20:21:16 miod Exp $	*/
+/*	$OpenBSD: ip30.h,v 1.3 2009/10/15 23:40:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -28,6 +28,13 @@
 #define	IP30_MEMORY_ARCBIOS_LIMIT	0x40000000
 
 /*
+ * Specific widget assignment
+ */
+
+#define	IP30_HEART_WIDGET		8
+#define	IP30_BRIDGE_WIDGET		15
+
+/*
  * On-board IOC3 specific GPIO registers wiring
  */
 
@@ -36,3 +43,11 @@
 #define	IP30_GPIO_RED_LED		1
 /* Classic Octane (1) vs Octane 2 (0), read only */
 #define	IP30_GPIO_CLASSIC		2
+
+/*
+ * Flash PROM physical address, within BRIDGE widget
+ */
+
+#define	IP30_FLASH_BASE			0xc00000
+#define	IP30_FLASH_SIZE			0x200000
+#define	IP30_FLASH_ALT			0xe00000

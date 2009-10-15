@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.51 2009/10/10 19:59:28 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.52 2009/10/15 23:40:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -60,7 +60,10 @@
 
 #include <sgi/xbow/xbridgereg.h>
 
+#ifdef TGT_OCTANE
 #include <sgi/sgi/ip30.h>
+#include <sgi/xbow/xheartreg.h>
+#endif
 
 #include "cardbus.h"
 
@@ -146,7 +149,7 @@ struct xbridge_softc {
 #define	XF_NO_DIRECT_IO		0x04	/* no direct I/O mapping */
 	int16_t		sc_nasid;
 	int		sc_widget;
-	uint		sc_devio_skew;
+	uint		sc_devio_skew;	/* upper bits of devio ARCS mappings */
 	uint		sc_nbuses;
 
 	struct mips_bus_space	sc_regt;
@@ -250,6 +253,7 @@ void	xbridge_resource_manage(struct xbridge_bus *, pcitag_t,
 
 void	xbridge_ate_setup(struct xbridge_bus *);
 void	xbridge_device_setup(struct xbridge_bus *, int, int, uint32_t);
+int	xbridge_extent_chomp(struct xbridge_bus *, struct extent *);
 void	xbridge_extent_setup(struct xbridge_bus *);
 struct extent *
 	xbridge_mapping_setup(struct xbridge_bus *, int);
@@ -354,13 +358,30 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 		SET(sc->sc_flags, XF_NO_DIRECT_IO);
 
 	/*
-	 * Figure out where the devio mappings will go.
-	 * On Octane, they are relative to the start of the widget.
-	 * On Origin, they are computed from the widget number.
+	 * Figure out where the ARCS devio mappings will go.
+	 * ARCS configures all the devio in a contiguous 16MB area
+	 * (i.e. the upper 8 bits of the DEVIO_BASE field of the
+	 * devio registers are the same).
+	 *
+	 * In order to make our life simpler, on widgets where we may
+	 * want to keep some of the ARCS mappings (because that's where
+	 * our console device lives), we will use the same 16MB area.
+	 *
+	 * Otherwise, we can use whatever values we want; to keep the
+	 * code simpler, we will nevertheless use a 16MB area as well,
+	 * making sure it does not start at zero so that pcmcia bridges
+	 * can be used.
+	 *
+	 * On Octane, the upper bits of ARCS mappings are zero, and thus
+	 * point to the start of the widget. On Origin, they match the
+	 * widget number.
 	 */
-	if (sys_config.system_type == SGI_OCTANE)
+#ifdef TGT_OCTANE
+	if (sys_config.system_type == SGI_OCTANE &&
+	    sc->sc_widget == IP30_BRIDGE_WIDGET)
 		sc->sc_devio_skew = 0;
 	else
+#endif
 		sc->sc_devio_skew = sc->sc_widget;
 
 	sc->sc_nbuses =
@@ -1021,7 +1042,12 @@ xbridge_intr_handler(void *v)
 			switch (sys_config.system_type) {
 #if defined(TGT_OCTANE)
 			case SGI_OCTANE:
-				/* XXX what to do there? */
+			    {
+				paddr_t heart;
+				heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
+				*(volatile uint64_t *)(heart + HEART_ISR_SET) =
+				    xi->xi_intrsrc;
+			    }
 				break;
 #endif
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
@@ -1248,9 +1274,11 @@ xbridge_space_map_mem(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	 * mappings, because the large mapping is always available.
 	 */
 
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 	if (sys_config.system_type != SGI_OCTANE &&
 	    (offs >> 24) == xb->xb_devio_skew)
 		return xbridge_space_map_devio(t, offs, size, flags, bshp);
+#endif
 
 #ifdef DIAGNOSTIC
 	/* check that this does not overflow the mapping */
@@ -1346,6 +1374,8 @@ xbridge_space_region_mem(bus_space_tag_t t, bus_space_handle_t bsh,
 	 * window.  Except on Octane where we never setup devio memory
 	 * mappings, because the large mapping is always available.
 	 */
+
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 	if (sys_config.system_type != SGI_OCTANE) {
 		/*
 		 * Note we can not use our own bus_base because it might not
@@ -1359,6 +1389,7 @@ xbridge_space_region_mem(bus_space_tag_t t, bus_space_handle_t bsh,
 			return xbridge_space_region_devio(t, bsh, offset, size,
 			    nbshp);
 	}
+#endif
 
 #ifdef DIAGNOSTIC
 	/* check that this does not overflow the mapping */
@@ -2335,6 +2366,43 @@ xbridge_resource_setup(struct xbridge_bus *xb)
 }
 
 /*
+ * Make the Octane flash area unavailable in the PCI space extents, so
+ * that we do not try to map devices in its area.
+ */
+int
+xbridge_extent_chomp(struct xbridge_bus *xb, struct extent *ex)
+{
+#ifdef TGT_OCTANE
+	/*
+	 * On Octane, the boot PROM is part of the onboard IOC3
+	 * device, and is accessible through the PCI memory space
+	 * (and maybe through the PCI I/O space as well.
+	 *
+	 * To avoid undebuggable surprises, make sure we never use
+	 * this space.
+	 */
+	if (sys_config.system_type == SGI_OCTANE &&
+	    xb->xb_widget == IP30_BRIDGE_WIDGET) {
+		u_long fmin, fmax;
+
+		/*
+		 * This relies upon the knowledge that both flash bases
+		 * are contiguous, to perform only one extent operation.
+		 * I don't think we need to be pedantic to the point of
+		 * doing this in two steps, really -- miod
+		 */
+		fmin = max(IP30_FLASH_BASE, ex->ex_start);
+		fmax = min(IP30_FLASH_ALT + IP30_FLASH_SIZE - 1, ex->ex_end);
+		if (fmax >= fmin)
+			return extent_alloc_region(ex, fmin, fmax + 1 - fmin,
+			    EX_NOWAIT | EX_MALLOCOK);
+	}
+#endif
+
+	return 0;
+}
+
+/*
  * Build resource extents for the MI PCI code to play with.
  * These extents cover the configured devio areas, and the large resource
  * views, if applicable.
@@ -2390,6 +2458,9 @@ xbridge_extent_setup(struct xbridge_bus *xb)
 				errors++;
 		}
 
+		if (xbridge_extent_chomp(xb, xb->xb_ioex) != 0)
+			errors++;
+
 		if (errors != 0) {
 			extent_destroy(xb->xb_ioex);
 			xb->xb_ioex = NULL;
@@ -2436,6 +2507,9 @@ xbridge_extent_setup(struct xbridge_bus *xb)
 			    xb->xb_memend + 1 - start, EX_NOWAIT) != 0)
 				errors++;
 		}
+
+		if (xbridge_extent_chomp(xb, xb->xb_memex) != 0)
+			errors++;
 
 		if (errors != 0) {
 			extent_destroy(xb->xb_memex);
@@ -2485,6 +2559,12 @@ xbridge_mapping_setup(struct xbridge_bus *xb, int io)
 			    offs == 0 ? 1 : offs, offs + len - 1,
 			    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
+			/*
+			 * Note that we do not need to invoke
+			 * xbridge_extent_chomp() here since we will
+			 * reserve the whole devio area.
+			 */
+
 			if (ex != NULL) {
 				xb->xb_io_bus_space->bus_base = base - offs;
 				xb->xb_io_bus_space->_space_map =
@@ -2528,6 +2608,12 @@ xbridge_mapping_setup(struct xbridge_bus *xb, int io)
 			ex = extent_create("xbridge_direct_mem",
 			    offs == 0 ? 1 : offs, offs + len - 1,
 			    M_DEVBUF, NULL, 0, EX_NOWAIT);
+
+			/*
+			 * Note that we do not need to invoke
+			 * xbridge_extent_chomp() here since we will
+			 * reserve the whole devio area.
+			 */
 
 			if (ex != NULL) {
 				xb->xb_mem_bus_space->bus_base = base - offs;
