@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.44 2009/08/11 20:33:04 landry Exp $
+.\"	$OpenBSD: port-modules.5,v 1.45 2009/10/15 18:14:34 steven Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2009 $
+.Dd $Mdocdate: October 15 2009 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -391,7 +391,7 @@ MODGCC4_ARCHES, then the gcc 4.2 compilers will be put at the front of
 the path.
 By default, only C language support is included by this module.
 If other languages are needed, they must be listed in MODGCC4_LANGS
-(e.g. c++, g77).
+(e.g. c++, fortran).
 .It gnu
 This module is documented in the main
 .Xr bsd.port.mk 5
