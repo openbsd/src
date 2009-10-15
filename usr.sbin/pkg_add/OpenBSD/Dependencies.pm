@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.74 2009/10/15 20:51:28 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.75 2009/10/15 22:21:25 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -24,9 +24,8 @@ package OpenBSD::lookup;
 
 sub lookup
 {
-	my ($self, $solver, $state, $obj) = @_;
+	my ($self, $solver, $dependencies, $state, $obj) = @_;
 
-	my $dependencies = $solver->{to_register};
 	my $known = $self->{known};
 	if (my $r = $self->find_in_already_done($solver, $state, $obj)) {
 		$dependencies->{$r} = 1;
@@ -199,24 +198,18 @@ sub find_candidate
 sub new
 {
 	my ($class, $set) = @_;
-	bless {set => $set, plist => $set->handle->{plist}, 
-	    deplist => [], to_register => {} }, $class;
+	bless {set => $set, 
+	    deplist => [], to_register => {}, all_dependencies => {} }, $class;
 }
 
 sub dependencies
 {
 	my $self = shift;
 	if (wantarray) {
-		return keys %{$self->{to_register}};
+		return keys %{$self->{all_dependencies}};
 	} else {
-		return scalar(%{$self->{to_register}});
+		return scalar(%{$self->{all_dependencies}});
 	}
-}
-
-sub has_dep
-{
-	my ($self, $dep) = @_;
-	return $self->{to_register}->{$dep};
 }
 
 sub find_dep_in_repositories
@@ -307,7 +300,8 @@ sub solve_depends
 	for my $package ($self->{set}->newer) {
 		for my $dep (@{$package->{plist}->{depend}}) {
 			my $v = $self->solve_dependency($state, $dep);
-			$self->{to_register}->{$v} = $dep;
+			$self->{all_dependencies}->{$v} = $dep;
+			$self->{to_register}->{$package}->{$v} = $dep;
 		}
 	}
 
@@ -344,14 +338,17 @@ sub register_dependencies
 	my ($self, $state) = @_;
 
 	require OpenBSD::RequiredBy;
-	my $pkgname = $self->{set}->handle->pkgname;
-	my @l = $self->dependencies;
+	for my $pkg ($self->{set}->newer) {
+		my $pkgname = $pkg->pkgname;
+		my @l = keys %{$self->{to_register}->{$pkg}};
 
-	OpenBSD::Requiring->new($pkgname)->add(@l);
-	for my $dep (@l) {
-		OpenBSD::RequiredBy->new($dep)->add($pkgname);
+		OpenBSD::Requiring->new($pkgname)->add(@l);
+		for my $dep (@l) {
+			OpenBSD::RequiredBy->new($dep)->add($pkgname);
+		}
 	}
 	delete $self->{toregister};
+	delete $self->{all_dependencies};
 	delete $self->{deplist};
 }
 
@@ -368,25 +365,29 @@ sub record_old_dependencies
 sub adjust_old_dependencies
 {
 	my ($self, $state) = @_;
-	my $pkgname = $self->{set}->handle->pkgname;
-	for my $o ($self->{set}->older) {
-		next unless defined $o->{wantlist};
-		require OpenBSD::Replace;
-		require OpenBSD::RequiredBy;
+	for my $pkg ($self->{set}->newer) {
+		my $pkgname = $self->{set}->handle->pkgname;
+		for my $o ($self->{set}->older) {
+			next unless defined $o->{wantlist};
+			require OpenBSD::Replace;
+			require OpenBSD::RequiredBy;
 
-		my $oldname = $o->pkgname;
+			my $oldname = $o->pkgname;
 
-		print "Adjusting dependencies for $pkgname/$oldname\n" 
-		    if $state->{beverbose};
-		my $d = OpenBSD::RequiredBy->new($pkgname);
-		for my $dep (@{$o->{wantlist}}) {
-			if (defined $self->{set}->{skipupdatedeps}->{$dep}) {
-				print "\tskipping $dep\n" if $state->{beverbose};
-				next;
+			print "Adjusting dependencies for $pkgname/$oldname\n" 
+			    if $state->{beverbose};
+			my $d = OpenBSD::RequiredBy->new($pkgname);
+			for my $dep (@{$o->{wantlist}}) {
+				if (defined $self->{set}->{skipupdatedeps}->{$dep}) {
+					print "\tskipping $dep\n" 
+					    if $state->{beverbose};
+					next;
+				}
+				print "\t$dep\n" if $state->{beverbose};
+				$d->add($dep);
+				OpenBSD::Replace::adjust_dependency($dep, 
+				    $oldname, $pkgname);
 			}
-			print "\t$dep\n" if $state->{beverbose};
-			$d->add($dep);
-			OpenBSD::Replace::adjust_dependency($dep, $oldname, $pkgname);
 		}
 	}
 }
@@ -394,11 +395,13 @@ sub adjust_old_dependencies
 sub repair_dependencies
 {
 	my ($self, $state) = @_;
-	my $pkgname = $self->{set}->handle->pkgname;
-	for my $pkg (installed_packages(1)) {
-		my $plist = OpenBSD::PackingList->from_installation($pkg, 
-		    \&OpenBSD::PackingList::DependOnly);
-	    	$plist->repair_dependency($pkg, $pkgname);
+	for my $p ($self->{set}->newer) {
+		my $pkgname = $self->{set}->handle->pkgname;
+		for my $pkg (installed_packages(1)) {
+			my $plist = OpenBSD::PackingList->from_installation(
+			    $pkg, \&OpenBSD::PackingList::DependOnly);
+			$plist->repair_dependency($pkg, $pkgname);
+		}
 	}
 }
 
@@ -441,7 +444,8 @@ sub solve_wantlibs
 	for my $h ($solver->{set}->newer) {
 		for my $lib (@{$h->{plist}->{wantlib}}) {
 			$solver->{localbase} = $h->{plist}->localbase;
-			next if $lib_finder->lookup($solver, $state, 
+			next if $lib_finder->lookup($solver, 
+			    $solver->{to_register}->{$h}, $state, 
 			    $lib->{name});
 			OpenBSD::Error::Warn "Can't install ", 
 			    $h->pkgname, ": lib not found ", 
@@ -466,7 +470,8 @@ sub solve_tags
 	my $tag_finder = OpenBSD::lookup::tag->new($solver);
 	for my $h ($solver->{set}->newer) {
 		for my $tag (keys %{$h->{plist}->{tags}}) {
-			next if $tag_finder->lookup($solver, $state, $tag);
+			next if $tag_finder->lookup($solver, 
+			    $solver->{to_register}->{$h}, $state, $tag);
 			OpenBSD::Error::Warn "Can't install ", 
 			    $h->pkgname, ": tag definition not found ", 
 			    $tag, "\n";
