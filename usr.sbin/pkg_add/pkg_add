@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.353 2009/10/15 10:45:47 espie Exp $
+# $OpenBSD: pkg_add,v 1.354 2009/10/15 18:17:18 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -527,6 +527,7 @@ sub install_set
 	really_add($set, $state);
 	$location->wipe_info;
 	delete $handle->{plist};
+	$state->{tracker}->mark_installed($set);
 	$state->mark_installed($handle->pkgname);
 	return ();
 }
@@ -777,6 +778,9 @@ if ($bad) {
 
 # This is the actual very small loop that adds all packages
 eval {
+require OpenBSD::Tracker;
+$state->{tracker} = OpenBSD::Tracker->new;
+$state->{tracker}->add_sets(@todo2);
 while (my $set = shift @todo2) {
 	unshift(@todo2, install_set($set, $state, @todo2));
 }
