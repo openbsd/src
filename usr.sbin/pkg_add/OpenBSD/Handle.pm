@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.3 2009/10/15 11:18:48 espie Exp $
+# $OpenBSD: Handle.pm,v 1.4 2009/10/15 23:22:55 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -152,7 +152,7 @@ sub get_plist
 		    OpenBSD::Add::tweak_package_status($pkgname, $state);
 		print "Not reinstalling $pkgname\n" if $state->{verbose} and
 		    !$handle->{tweaked};
-		$state->mark_installed($pkgname);
+		$state->{tracker}->{installed}->{$pkgname} = 1;
 		$location->close_now;
 		$location->wipe_info;
 		$handle->set_error(ALREADY_INSTALLED);
