@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.49 2009/09/04 22:50:11 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.50 2009/10/15 19:00:53 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -235,6 +235,8 @@ struct acpi_softc {
 	int			sc_poll;
 
 	int			sc_revision;
+
+	int			sc_pse;		/* passive cooling enabled */
 };
 
 #define GPE_NONE  0x00

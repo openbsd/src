@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.31 2009/04/26 02:20:58 cnst Exp $ */
+/* $OpenBSD: acpitz.c,v 1.32 2009/10/15 19:00:53 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -54,8 +54,12 @@ struct acpitz_softc {
 	int			sc_tc1;
 	int			sc_tc2;
 	int			sc_lasttmp;
+
 	struct ksensor		sc_sens;
 	struct ksensordev	sc_sensdev;
+
+	struct acpi_devlist_head	sc_psl;
+	struct acpi_devlist_head	sc_alx[ACPITZ_MAX_AC];
 };
 
 int	acpitz_match(struct device *, void *, void *);
@@ -75,9 +79,58 @@ int	acpitz_notify(struct aml_node *, int, void *);
 int	acpitz_gettempreading(struct acpitz_softc *, char *);
 int	acpitz_getreading(struct acpitz_softc *, char *);
 int	acpitz_setfan(struct acpitz_softc *, int, char *);
+void	acpitz_init(struct acpitz_softc *, int);
 #if 0
 int	acpitz_setcpu(struct acpitz_softc *, int);
 #endif
+
+extern void (*cpu_setperf)(int);
+extern int perflevel;
+#define PERFSTEP 10
+
+#define ACPITZ_TRIPS	(1L << 0)
+#define ACPITZ_DEVLIST	(1L << 1)
+#define ACPITZ_INIT	ACPITZ_TRIPS+ACPITZ_DEVLIST
+
+extern struct aml_node aml_root;
+
+void
+acpitz_init(struct acpitz_softc *sc, int flag)
+{
+	int i;
+	char name[5];
+	struct aml_value res;
+
+	/* Read trip points */
+	if (flag & ACPITZ_TRIPS) {
+		sc->sc_psv = acpitz_getreading(sc, "_PSV");
+		for (i=0; i<ACPITZ_MAX_AC; i++) {
+			snprintf(name, sizeof(name), "_AC%d", i);
+			sc->sc_ac[i] = acpitz_getreading(sc, name);
+			sc->sc_ac_stat[i] = -1;
+		}
+	}
+
+	/* Read device lists */
+	if (flag & ACPITZ_DEVLIST) {
+		if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSL", 
+		     0, NULL, &res)) {
+			acpi_freedevlist(&sc->sc_psl);
+			acpi_getdevlist(&sc->sc_psl, sc->sc_devnode, &res, 0);
+			aml_freevalue(&res);
+		}
+		for (i=0; i<ACPITZ_MAX_AC; i++) {
+			snprintf(name, sizeof(name), "_AL%d", i);
+			if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, name,
+			    0, NULL, &res)) {
+				acpi_freedevlist(&sc->sc_alx[i]);
+				acpi_getdevlist(&sc->sc_alx[i], 
+				    sc->sc_devnode, &res, 0);
+				aml_freevalue(&res);
+			}
+		}
+	}
+}
 
 int
 acpitz_match(struct device *parent, void *match, void *aux)
@@ -103,10 +156,13 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	struct acpitz_softc	*sc = (struct acpitz_softc *)self;
 	struct acpi_attach_args	*aa = aux;
 	int			i;
-	char			name[8];
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
+
+	TAILQ_INIT(&sc->sc_psl);
+	for (i=0; i<ACPITZ_MAX_AC; i++)
+		TAILQ_INIT(&sc->sc_alx[i]);
 
 	sc->sc_lasttmp = -1;
 	if ((sc->sc_tmp = acpitz_gettempreading(sc, "_TMP")) == -1) {
@@ -119,21 +175,16 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	else
 		printf(": critical temperature %d degC\n", KTOC(sc->sc_crt));
 
-	for (i = 0; i < ACPITZ_MAX_AC; i++) {
-		snprintf(name, sizeof name, "_AC%d", i);
-		sc->sc_ac[i] = acpitz_gettempreading(sc, name);
-		sc->sc_ac_stat[0] = -1;
-	}
-
 	sc->sc_hot = acpitz_gettempreading(sc, "_HOT");
 	sc->sc_tc1 = acpitz_getreading(sc, "_TC1");
 	sc->sc_tc2 = acpitz_getreading(sc, "_TC2");
-	sc->sc_psv = acpitz_gettempreading(sc, "_PSV");
+
+	/* get _PSL, _ALx */
+	acpitz_init(sc, ACPITZ_INIT);
+
 	dnprintf(10, "%s: _HOT: %d _TC1: %d _TC2: %d _PSV: %d _TMP: %d "
 	    "_CRT: %d\n", DEVNAME(sc), sc->sc_hot, sc->sc_tc1, sc->sc_tc2,
 	    sc->sc_psv, sc->sc_tmp, sc->sc_crt);
-
-	/* get _PSL */
 
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
@@ -182,44 +233,16 @@ int
 acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 {
 	struct aml_node		*node;
-	struct aml_value	res0, res1, *ref;
+	struct aml_value	res1, *ref;
 	char			name[8];
 	int			rv = 1, x, y;
 	int64_t			sta;
+	struct acpi_devlist    *dl;
 
 	dnprintf(20, "%s: acpitz_setfan(%d, %s)\n", DEVNAME(sc), i, method);
 
-	snprintf(name, sizeof name, "_AL%d", i);
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, name, 0, NULL, &res0)) {
-		dnprintf(20, "%s: %s failed\n", DEVNAME(sc), name);
-		goto out;
-	}
-
-	if (res0.type != AML_OBJTYPE_PACKAGE) {
-		printf("%s: %s not a package\n", DEVNAME(sc), name);
-		goto out;
-	}
-
-	for (x = 0; x < res0.length; x++) {
-		ref = res0.v_package[x];
-		if (ref->type == AML_OBJTYPE_STRING) {
-			node = aml_searchrel(sc->sc_devnode, ref->v_string);
-			if (node == NULL) {
-				printf("%s: %s[%d] not a valid device\n",
-				    DEVNAME(sc), name, x);
-				continue;
-			}
-			ref = node->value;
-		}
-		if (ref->type == AML_OBJTYPE_OBJREF) {
-			ref = ref->v_objref.ref;
-		}
-		if (ref->type != AML_OBJTYPE_DEVICE) {
-			printf("%s: %s[%d] not a valid object\n", DEVNAME(sc),
-			    name, x);
-			continue;
-		}
-		if (aml_evalname(sc->sc_acpi, ref->node, "_PR0",0 , NULL,
+	TAILQ_FOREACH(dl, &sc->sc_alx[i], dev_link) {
+		if (aml_evalname(sc->sc_acpi, dl->dev_node, "_PR0",0 , NULL,
 		    &res1)) {
 			printf("%s: %s[%d] _PR0 failed\n", DEVNAME(sc),
 			    name, x);
@@ -271,8 +294,6 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 		aml_freevalue(&res1);
 	}
 	rv = 0;
-out:
-	aml_freevalue(&res0);
 	return (rv);
 }
 
@@ -280,7 +301,7 @@ void
 acpitz_refresh(void *arg)
 {
 	struct acpitz_softc	*sc = arg;
-	int			i, perc;
+	int			i, trend, nperf;
 
 	dnprintf(30, "%s: %s: refresh\n", DEVNAME(sc),
 	    sc->sc_devnode->name);
@@ -309,18 +330,44 @@ acpitz_refresh(void *arg)
 	    	dnprintf(30, "%s: passive cooling: lasttmp: %d tc1: %d "
 		    "tc2: %d psv: %d\n", DEVNAME(sc), sc->sc_lasttmp,
 		    sc->sc_tc1, sc->sc_tc2, sc->sc_psv);
+
+		nperf = perflevel;
 		if (sc->sc_psv <= sc->sc_tmp) {
+			/* Passive cooling enabled */
+			dnprintf(1, "%s: enabling passive %d %d\n", 
+			    DEVNAME(sc), sc->sc_tmp, sc->sc_psv);
+			if (!sc->sc_pse)
+				sc->sc_acpi->sc_pse++;
 			sc->sc_pse = 1;
-			perc = sc->sc_tc1 * (sc->sc_tmp - sc->sc_lasttmp) +
+
+			trend = sc->sc_tc1 * (sc->sc_tmp - sc->sc_lasttmp) +
 			    sc->sc_tc2 * (sc->sc_tmp - sc->sc_psv);
-			perc /= 10;
-			if (perc < 0)
-				perc = 0;
-			else if (perc > 100)
-				perc = 100;
-			/* printf("_TZ perc = %d\n", perc); */
-		} else if (sc->sc_pse)
+
+			/* Depending on trend, slow down/speed up */
+			if (trend > 0)
+				nperf -= PERFSTEP;
+			else 
+				nperf += PERFSTEP;
+		}
+		else {
+			/* Passive cooling disabled, increase % */
+			dnprintf(1, "%s: disabling passive %d %d\n", 
+			    DEVNAME(sc), sc->sc_tmp, sc->sc_psv);
+			if (sc->sc_pse)
+				sc->sc_acpi->sc_pse--;
 			sc->sc_pse = 0;
+			nperf += PERFSTEP;
+		}
+		if (nperf < 0)
+			nperf = 0;
+		else if (nperf > 100)
+			nperf = 100;
+
+		/* Perform CPU setperf */
+		if (cpu_setperf && nperf != perflevel) {
+			perflevel = nperf;
+			cpu_setperf(nperf);
+		}
 	}
 	sc->sc_lasttmp = sc->sc_tmp;
 
@@ -406,7 +453,6 @@ int
 acpitz_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpitz_softc	*sc = arg;
-	int			crt;
 
 	dnprintf(10, "%s notify: %.2x %s\n", DEVNAME(sc), notify_type,
 	    sc->sc_devnode->name);
@@ -415,14 +461,10 @@ acpitz_notify(struct aml_node *node, int notify_type, void *arg)
 	case 0x80:	/* hardware notifications */
 		break;
 	case 0x81:	/* operating Points changed */
-		sc->sc_psv = acpitz_gettempreading(sc, "_PSV");
-		crt = sc->sc_crt;
-		sc->sc_crt = acpitz_gettempreading(sc, "_CRT");
-		if (crt != sc->sc_crt)
-			printf("%s: new critical temperature: %u degC",
-			    DEVNAME(sc), KTOC(sc->sc_crt));
+		acpitz_init(sc, ACPITZ_TRIPS);
 		break;
 	case 0x82:	/* re-evaluate thermal device list */
+		acpitz_init(sc, ACPITZ_DEVLIST);
 		break;
 	default:
 		break;
