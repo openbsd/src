@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.356 2009/10/15 20:51:28 espie Exp $
+# $OpenBSD: pkg_add,v 1.357 2009/10/15 23:23:35 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -73,14 +73,13 @@ sub build_deptree
 {
 	my ($state, $pkg, @deps) = @_;
 
-	my $tree = $state->{deptree};
-	# flatten info
-	if (defined $tree->{$pkg}) {
-		$pkg = $tree->{$pkg};
+	if (defined $state->{deptree}->{$pkg}) {
+		$pkg = $state->{deptree}->{$pkg};
 	}
 	for my $i (@deps) {
 		my $j = $i->handle->pkgname;
-		$tree->{$j} = $pkg unless defined $tree->{$j};
+		$state->{deptree}->{$j} = $pkg unless 
+		    defined $state->{deptree}->{$j};
 	}
 }
 
@@ -345,7 +344,8 @@ sub really_add
 	if ($replacing) {
 		for my $handle ($set->newer) {
 			my $pkgname = $handle->pkgname;
-			$state->progress->set_header("$pkgname (extracting)");
+			my $header = $state->deptree_header($pkgname).$pkgname;
+			$state->progress->set_header("$header (extracting)");
 
 			try {
 				OpenBSD::Replace::perform_extraction($handle, 
@@ -389,8 +389,13 @@ sub really_add
 
 	for my $handle ($set->newer) {
 		my $pkgname = $handle->pkgname;
+		my $header = $state->deptree_header($pkgname).$pkgname;
 		my $plist = $handle->{plist};
-		$state->progress->set_header("$pkgname (installing)");
+		if ($replacing) {
+			$state->progress->set_header("$header (installing)");
+		} else {
+			$state->progress->set_header($header);
+		}
 		$state->set_name_from_handle($handle);
 
 		try {
