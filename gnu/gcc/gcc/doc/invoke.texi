@@ -1077,7 +1077,7 @@ line options for each tool.
 @opindex version
 Display the version number and copyrights of the invoked GCC@.
 
-@include @value{srcdir}/../libiberty/at-file.texi
+@include @value{srcdir}/at-file.texi
 @end table
 
 @node Invoking G++
