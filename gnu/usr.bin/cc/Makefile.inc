@@ -1,5 +1,7 @@
 # $FreeBSD: src/gnu/usr.bin/cc/Makefile.inc,v 1.66.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile.inc,v 1.1.1.1 2009/10/15 20:50:19 robert Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2009/10/15 23:18:30 robert Exp $
+
+.include "../Makefile.inc"
 
 # Sometimes this is .include'd several times...
 .if !defined(__CC_MAKEFILE_INC__)
