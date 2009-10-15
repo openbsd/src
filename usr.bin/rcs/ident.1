@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ident.1,v 1.8 2007/05/31 19:20:14 jmc Exp $
+.\"	$OpenBSD: ident.1,v 1.9 2009/10/15 10:08:43 sobrado Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 15 2009 $
 .Dt IDENT 1
 .Os
 .Sh NAME
@@ -23,13 +23,13 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl qV
-.Ar
+.Op Ar
 .Sh DESCRIPTION
 The
 .Nm
 program searches for the pattern $keyword:...$ from the
-.Ar file
-specified as argument.
+.Ar files
+specified as argument (or standard input if none are given).
 See the
 .Sx KEYWORD SUBSTITUTION
 section of

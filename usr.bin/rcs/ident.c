@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.25 2007/09/09 17:22:34 ray Exp $	*/
+/*	$OpenBSD: ident.c,v 1.26 2009/10/15 10:08:43 sobrado Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -96,7 +96,7 @@ ident_file(const char *filename, FILE *fp)
 	if (filename != NULL)
 		printf("%s:\n", filename);
 	else
-		filename = "standard output";
+		filename = "standard input";
 
 	for (c = 0; c != EOF; c = getc(fp)) {
 		if (feof(fp) || ferror(fp))
@@ -165,5 +165,5 @@ out:
 void
 ident_usage(void)
 {
-	fprintf(stderr, "usage: ident [-qV] file ...\n");
+	fprintf(stderr, "usage: ident [-qV] [file ...]\n");
 }
