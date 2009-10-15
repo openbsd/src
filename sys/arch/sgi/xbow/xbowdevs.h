@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: xbowdevs,v 1.5 2009/10/14 20:19:23 miod Exp 
+ *	OpenBSD: xbowdevs,v 1.6 2009/10/15 23:42:43 miod Exp 
  */
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -27,16 +27,31 @@
 #define	XBOW_VENDOR_SGI5	0x02aa
 
 /*
- * List of known products.  Grouped by ``manufacturer''.
+ * List of known products.  Grouped by type.
+ */
+
+/*
+ * Crossbows
  */
 
 #define	XBOW_PRODUCT_SGI_XBOW	0x0000		/* XBow */
 #define	XBOW_PRODUCT_SGI_XXBOW	0xd000		/* XXBow */
-#define	XBOW_PRODUCT_SGI_BEDROCK	0xd100		/* PXBow */
+#define	XBOW_PRODUCT_SGI_PXBOW	0xd100		/* PXBow */
 
+/*
+ * Frame buffers and graphics related devices
+ */
+
+#define	XBOW_PRODUCT_SGI5_IMPACT	0xc003		/* ImpactSR */
 #define	XBOW_PRODUCT_SGI2_ODYSSEY	0xc013		/* Odyssey */
-
+#define	XBOW_PRODUCT_SGI5_KONA	0xc102		/* Kona */
 #define	XBOW_PRODUCT_SGI3_TPU	0xc202		/* TPU */
+
+/*
+ * Non-XIO bus bridges
+ */
+
+#define	XBOW_PRODUCT_SGI4_BRIDGE	0xc002		/* Bridge */
 #define	XBOW_PRODUCT_SGI3_XBRIDGE	0xd002		/* XBridge */
 /*
  * PIC is really a single chip but with two widgets headers, and 4 PCI-X
@@ -44,14 +59,27 @@
  * The second widget register set uses 0xd112 as the product id.
  */
 #define	XBOW_PRODUCT_SGI3_PIC	0xd102		/* PIC */
-/* Supposedly a PIC-compatible chip, maybe a different revision */
-/* product	SGI3	?		0xe000	? (0xe010 for the 2nd widget) */
+/*
+ * TIO apparently is a next-generation XIO framework; TIO:CP being a TIO
+ * variant of PIC with two PCI-X buses, and TIO:CA an AGP bridge.
+ * Unlike PIC, the two heads of TIO:CP would appear as two distinct TIO
+ * widgets.
+ * TIO widgets are supposedly only found on SN2 systems onwards (i.e.
+ * ia64-based Altix systems), but in case there is a way to connect TIO
+ * nodes to XIO nodes, better identify them properly.
+ */
+#define	XBOW_PRODUCT_SGI3_TIOCP0	0xe000		/* TIO:CP */
+#define	XBOW_PRODUCT_SGI3_TIOCP1	0xe010		/* TIO:CP */
 #define	XBOW_PRODUCT_SGI3_TIOCA	0xe020		/* TIO:CA */
 
+/*
+ * Octane HEART memory and interrupt controller
+ */
 #define	XBOW_PRODUCT_SGI4_HEART	0xc001		/* Heart */
-#define	XBOW_PRODUCT_SGI4_BRIDGE	0xc002		/* Bridge */
+
+/*
+ * Miscellaneous widgets
+ */
+
 #define	XBOW_PRODUCT_SGI4_HUB	0xc101		/* Hub */
 #define	XBOW_PRODUCT_SGI4_BEDROCK	0xc110		/* Bedrock */
-
-#define	XBOW_PRODUCT_SGI5_IMPACT	0xc003		/* ImpactSR */
-#define	XBOW_PRODUCT_SGI5_KONA	0xc102		/* Kona */
