@@ -1,5 +1,5 @@
 /* Base configuration file for all OpenBSD targets.
-   Copyright (C) 1999, 2000, 2004, 2005 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2000, 2004, 2005, 2007 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -14,9 +14,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GCC; see the file COPYING.  If not, write to
-the Free Software Foundation, 51 Franklin Street, Fifth Floor,
-Boston, MA 02110-1301, USA.  */
+along with GCC; see the file COPYING.  If not see
+<http://www.gnu.org/licenses/>.  */
 
 /* Common OpenBSD configuration. 
    All OpenBSD architectures include this file, which is intended as
@@ -70,9 +69,39 @@ Boston, MA 02110-1301, USA.  */
 
 #endif
 
-
 /* Controlling the compilation driver.  */
 /* TARGET_OS_CPP_BUILTINS() common to all OpenBSD targets.  */
+#define OPENBSD_OS_CPP_BUILTINS_COMMON()	\
+  do						\
+    {						\
+      builtin_define ("__OpenBSD__");		\
+      builtin_define ("__unix__");		\
+      builtin_define ("__ANSI_COMPAT");		\
+      builtin_assert ("system=unix");		\
+      builtin_assert ("system=bsd");		\
+      builtin_assert ("system=OpenBSD");	\
+    }						\
+  while (0)
+
+/* TARGET_OS_CPP_BUILTINS() common to all OpenBSD ELF targets.  */
+#define OPENBSD_OS_CPP_BUILTINS_ELF()		\
+  do						\
+    {						\
+      OPENBSD_OS_CPP_BUILTINS_COMMON();		\
+      builtin_define ("__ELF__");		\
+    }						\
+  while (0)
+
+/* TARGET_OS_CPP_BUILTINS() common to all LP64 OpenBSD targets.  */
+#define OPENBSD_OS_CPP_BUILTINS_LP64()		\
+  do						\
+    {						\
+      builtin_define ("_LP64");			\
+      builtin_define ("__LP64__");		\
+    }						\
+  while (0)
+
+/* XXX old stuff TARGET_OS_CPP_BUILTINS() common to all OpenBSD targets.  */
 #define OPENBSD_OS_CPP_BUILTINS()		\
   do						\
     {						\
@@ -96,15 +125,8 @@ Boston, MA 02110-1301, USA.  */
 #define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
 #endif
 
-/* LIB_SPEC appropriate for OpenBSD.  */
-#ifdef HAS_LIBC_R
-/*   -lc(_r)?(_p)?, select _r for threads, and _p for p or pg.  */
-# define OBSD_LIB_SPEC "%{!shared:-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}}"
-#else
-/* Include -lpthread if -pthread is specified on the command line. */
-# define OBSD_LIB_SPEC "%{!shared:%{pthread:-lpthread%{p:_p}%{!p:%{pg:_p}}}} %{!shared:-lc%{p:_p}%{!p:%{pg:_p}}}"
-#endif
-
+#undef LIB_SPEC
+#define LIB_SPEC OBSD_LIB_SPEC
 
 #ifndef OBSD_HAS_CORRECT_SPECS
 
@@ -138,6 +160,10 @@ Boston, MA 02110-1301, USA.  */
 #else
 #define LINK_SPEC \
   "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+#endif
+
+#if defined(HAVE_LD_EH_FRAME_HDR)
+#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
 #endif
 
 #undef LIB_SPEC
@@ -282,10 +308,6 @@ do {									 \
 /* Storage layout.  */
 
 
-/* Otherwise, since we support weak, gthr.h erroneously tries to use
-   #pragma weak.  */
-#define GTHREAD_USE_WEAK 0
-
 /* bug work around: we don't want to support #pragma weak, but the current
    code layout needs HANDLE_PRAGMA_WEAK asserted for __attribute((weak)) to
    work.  On the other hand, we don't define HANDLE_PRAGMA_WEAK directly,

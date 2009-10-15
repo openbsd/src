@@ -18,7 +18,7 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 #include "cpplib.h"
 
-#if !defined (HAVE_UCHAR) && !defined (IN_GCC)
+#if !defined (HAVE_UCHAR)
 typedef unsigned char uchar;
 #endif
 

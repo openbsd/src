@@ -1,23 +1,26 @@
-/* Configuration for an OpenBSD i386 target.
+/* Configuration for an OpenBSD x86-64 target.
    
-   Copyright (C) 2005 Free Software Foundation, Inc.
+   Copyright (C) 2003 Free Software Foundation, Inc.
 
-This file is part of GCC.
+This file is part of GNU CC.
 
-GCC is free software; you can redistribute it and/or modify
+GNU CC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
 
-GCC is distributed in the hope that it will be useful,
+GNU CC is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GCC; see the file COPYING.  If not, write to
-the Free Software Foundation, 51 Franklin Street, Fifth Floor,
-Boston, MA 02110-1301, USA.  */
+along with GNU CC; see the file COPYING.  If not, write to
+the Free Software Foundation, 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
+
+#undef TARGET_VERSION
+#define TARGET_VERSION fprintf (stderr, " (OpenBSD/x86-64 ELF)")
 
 /* This gets defined in tm.h->linux.h->svr4.h, and keeps us from using
    libraries compiled with the native cc, so undef it. */
@@ -27,20 +30,14 @@ Boston, MA 02110-1301, USA.  */
 #undef ASM_COMMENT_START
 #define ASM_COMMENT_START "#"
 
-#undef DBX_REGISTER_NUMBER
-#define DBX_REGISTER_NUMBER(n)  svr4_dbx_register_map[n]
-
-/* This goes away when the math-emulator is fixed */
-#undef TARGET_DEFAULT
-#define TARGET_DEFAULT \
-  (MASK_80387 | MASK_IEEE_FP | MASK_FLOAT_RETURNS | MASK_NO_FANCY_MATH_387)
-
 /* Run-time target specifications */
 
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
-    	OPENBSD_OS_CPP_BUILTINS();		\
+    	OPENBSD_OS_CPP_BUILTINS_ELF();		\
+	if (TARGET_64BIT)			\
+		OPENBSD_OS_CPP_BUILTINS_LP64();	\
     }						\
   while (0)
 
@@ -54,7 +51,7 @@ Boston, MA 02110-1301, USA.  */
 
 /* Layout of source language data types.  */
 
-/* This must agree with <machine/ansi.h> */
+/* This must agree with <machine/_types.h> */
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"
 
@@ -65,7 +62,7 @@ Boston, MA 02110-1301, USA.  */
 #define WCHAR_TYPE "int"
 
 #undef WCHAR_TYPE_SIZE
-#define WCHAR_TYPE_SIZE BITS_PER_WORD
+#define WCHAR_TYPE_SIZE 32
 
 /* Assembler format: overall framework.  */
 
@@ -93,14 +90,6 @@ Boston, MA 02110-1301, USA.  */
 
 /* Assembler format: alignment output.  */
 
-#ifdef HAVE_GAS_MAX_SKIP_P2ALIGN
-#define ASM_OUTPUT_MAX_SKIP_ALIGN(FILE,LOG,MAX_SKIP) \
-  if ((LOG) != 0) {\
-    if ((MAX_SKIP) == 0) fprintf ((FILE), "\t.p2align %d\n", (LOG)); \
-    else fprintf ((FILE), "\t.p2align %d,,%d\n", (LOG), (MAX_SKIP)); \
-  }
-#endif
-
 /* Stack & calling: profiling.  */
 
 /* OpenBSD's profiler recovers all information from the stack pointer.
@@ -127,3 +116,6 @@ Boston, MA 02110-1301, USA.  */
    %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
 
 #define OBSD_HAS_CORRECT_SPECS
+
+#undef JUMP_TABLES_IN_TEXT_SECTION
+#define JUMP_TABLES_IN_TEXT_SECTION (flag_pic)
