@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.48 2009/10/13 08:37:15 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.49 2009/10/16 19:09:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1057,14 +1057,14 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 		 */
 
 		/* One above. */
-		if (cy != tty->rupper && 
+		if (thisy != tty->rupper && 
 		    cy == thisy - 1 && tty_term_has(term, TTYC_CUU1)) {
 			tty_putcode(tty, TTYC_CUU1);
 			goto out;
 		}
 
 		/* One below. */
-		if (cy != tty->rlower &&
+		if (thisy != tty->rlower &&
 		    cy == thisy + 1 && tty_term_has(term, TTYC_CUD1)) {
 			tty_putcode(tty, TTYC_CUD1);
 			goto out;
