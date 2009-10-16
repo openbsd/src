@@ -1783,7 +1783,6 @@
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/intrpvar.h
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/iperlsys.h
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/keywords.h
-./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/libperl.a
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/malloc_ctl.h
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/mg.h
 ./usr/libdata/perl5/vax-openbsd/5.10.1/CORE/mydtrace.h
@@ -1988,6 +1987,7 @@
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Compress/Raw/Bzip2
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Compress/Raw/Bzip2/Bzip2.a
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Compress/Raw/Bzip2/autosplit.ix
+./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Compress/Raw/Bzip2/extralibs.ld
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Compress/Raw/Zlib
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Compress/Raw/Zlib/Zlib.a
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Compress/Raw/Zlib/autosplit.ix
@@ -1995,7 +1995,6 @@
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Compress/Zlib
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Compress/Zlib/autosplit.ix
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Cwd
-./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Cwd/Cwd.a
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Cwd/Cwd.a
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/Cwd/extralibs.ld
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/DB_File
@@ -2352,6 +2351,7 @@
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/attrs/attrs.a
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/attrs/extralibs.ld
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/mro
+./usr/libdata/perl5/vax-openbsd/5.10.1/auto/mro/extralibs.ld
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/mro/mro.a
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/re
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/re/extralibs.ld
@@ -2366,6 +2366,7 @@
 ./usr/libdata/perl5/vax-openbsd/5.10.1/auto/threads/threads.a
 ./usr/libdata/perl5/vax-openbsd/5.10.1/encoding.pm
 ./usr/libdata/perl5/vax-openbsd/5.10.1/lib.pm
+./usr/libdata/perl5/vax-openbsd/5.10.1/mro.pm
 ./usr/libdata/perl5/vax-openbsd/5.10.1/ops.pm
 ./usr/libdata/perl5/vax-openbsd/5.10.1/re.pm
 ./usr/libdata/perl5/vax-openbsd/5.10.1/threads
