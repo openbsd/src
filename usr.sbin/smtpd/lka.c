@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.67 2009/10/12 22:34:37 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.68 2009/10/16 22:26:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -996,6 +996,8 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 int
 lka_resolve_path(struct smtpd *env, struct path *path){
 	switch (path->cond->c_type) {
+	case C_ALL:
+	case C_NET:
 	case C_DOM: {
 		char username[MAXLOGNAME];
 		struct passwd *pw;
