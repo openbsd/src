@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.9 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: com_lbus.c,v 1.10 2009/10/16 14:38:13 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -84,7 +84,7 @@ com_macebus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* If it's in use as the console, then it's there. */
 	if (ca->ca_baseaddr == comconsaddr && !comconsattached) {
-		if (comcnattach(sc->sc_iot, sc->sc_iobase, TTYDEF_SPEED,
+		if (comcnattach(sc->sc_iot, sc->sc_iobase, comconsrate,
 		    sc->sc_frequency, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 			panic("failed to setup serial console!");
 		sc->sc_ioh = comconsioh;

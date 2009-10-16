@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.8 2009/10/16 00:15:49 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.9 2009/10/16 14:38:15 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -154,6 +154,9 @@ ip32_setup()
 	comconsaddr = MACE_ISA_SER1_OFFS;
 	comconsfreq = 1843200;
 	comconsiot = &macebus_tag;
+	comconsrate = bios_getenvint("dbaud");
+	if (comconsrate < 50 || comconsrate > 115200)
+		comconsrate = 9600;
 
 	/* not sure if there is a way to tell O2 and O2+ apart */
 	hw_prod = "O2";
