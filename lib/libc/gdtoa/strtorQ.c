@@ -77,6 +77,9 @@ ULtoQ(ULong *L, ULong *bits, Long exp, int k)
 		L[_0] = bits[3];
 		break;
 
+	  case STRTOG_NoMemory:
+		errno = ERANGE;
+		/* FALLTHROUGH */
 	  case STRTOG_Infinite:
 		L[_0] = 0x7fff0000;
 		L[_1] = L[_2] = L[_3] = 0;

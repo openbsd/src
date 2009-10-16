@@ -62,6 +62,8 @@ Balloc
 		x = 1 << k;
 #ifdef Omit_Private_Memory
 		rv = (Bigint *)MALLOC(sizeof(Bigint) + (x-1)*sizeof(ULong));
+		if (rv == NULL)
+			return (NULL);
 #else
 		len = (sizeof(Bigint) + (x-1)*sizeof(ULong) + sizeof(double) - 1)
 			/sizeof(double);
@@ -69,8 +71,11 @@ Balloc
 			rv = (Bigint*)pmem_next;
 			pmem_next += len;
 			}
-		else
+		else {
 			rv = (Bigint*)MALLOC(len*sizeof(double));
+			if (rv == NULL)
+				return (NULL);
+		}
 #endif
 		rv->k = k;
 		rv->maxwds = x;
@@ -195,6 +200,8 @@ multadd
 	if (carry) {
 		if (wds >= b->maxwds) {
 			b1 = Balloc(b->k+1);
+			if (b1 == NULL)
+				return (NULL);
 			Bcopy(b1, b);
 			Bfree(b);
 			b = b1;
@@ -250,6 +257,8 @@ i2b
 	Bigint *b;
 
 	b = Balloc(1);
+	if (b == NULL)
+		return (NULL);
 	b->x[0] = i;
 	b->wds = 1;
 	return b;
@@ -288,6 +297,8 @@ mult
 	if (wc > a->maxwds)
 		k++;
 	c = Balloc(k);
+	if (c == NULL)
+		return (NULL);
 	for(x = c->x, xa = x + wc; x < xa; x++)
 		*x = 0;
 	xa = a->x;
@@ -379,8 +390,11 @@ pow5mult
 	int i;
 	static int p05[3] = { 5, 25, 125 };
 
-	if ( (i = k & 3) !=0)
+	if ( (i = k & 3) !=0) {
 		b = multadd(b, p05[i-1], 0);
+		if (b == NULL)
+			return (NULL);
+	}
 
 	if (!(k >>= 2))
 		return b;
@@ -390,17 +404,23 @@ pow5mult
 		ACQUIRE_DTOA_LOCK(1);
 		if (!(p5 = p5s)) {
 			p5 = p5s = i2b(625);
+			if (p5 == NULL)
+				return (NULL);
 			p5->next = 0;
 			}
 		FREE_DTOA_LOCK(1);
 #else
 		p5 = p5s = i2b(625);
+		if (p5 == NULL)
+			return (NULL);
 		p5->next = 0;
 #endif
 		}
 	for(;;) {
 		if (k & 1) {
 			b1 = mult(b, p5);
+			if (b1 == NULL)
+				return (NULL);
 			Bfree(b);
 			b = b1;
 			}
@@ -411,11 +431,15 @@ pow5mult
 			ACQUIRE_DTOA_LOCK(1);
 			if (!(p51 = p5->next)) {
 				p51 = p5->next = mult(p5,p5);
+				if (p51 == NULL)
+					return (NULL);
 				p51->next = 0;
 				}
 			FREE_DTOA_LOCK(1);
 #else
 			p51 = p5->next = mult(p5,p5);
+			if (p51 == NULL)
+				return (NULL);
 			p51->next = 0;
 #endif
 			}
@@ -442,6 +466,8 @@ lshift
 	for(i = b->maxwds; n1 > i; i <<= 1)
 		k1++;
 	b1 = Balloc(k1);
+	if (b1 == NULL)
+		return (NULL);
 	x1 = b1->x;
 	for(i = 0; i < n; i++)
 		*x1++ = 0;
@@ -535,6 +561,8 @@ diff
 	i = cmp(a,b);
 	if (!i) {
 		c = Balloc(0);
+		if (c == NULL)
+			return (NULL);
 		c->wds = 1;
 		c->x[0] = 0;
 		return c;
@@ -548,6 +576,8 @@ diff
 	else
 		i = 0;
 	c = Balloc(a->k);
+	if (c == NULL)
+		return (NULL);
 	c->sign = i;
 	wa = a->wds;
 	xa = a->x;
@@ -703,6 +733,8 @@ d2b
 #else
 	b = Balloc(2);
 #endif
+	if (b == NULL)
+		return (NULL);
 	x = b->x;
 
 	z = d0 & Frac_mask;

@@ -64,23 +64,24 @@ typedef unsigned short UShort;
 #endif /* CONST */
 
  enum {	/* return values from strtodg */
-	STRTOG_Zero	= 0,
-	STRTOG_Normal	= 1,
-	STRTOG_Denormal	= 2,
-	STRTOG_Infinite	= 3,
-	STRTOG_NaN	= 4,
-	STRTOG_NaNbits	= 5,
-	STRTOG_NoNumber	= 6,
-	STRTOG_Retmask	= 7,
+	STRTOG_Zero	= 0x000,
+	STRTOG_Normal	= 0x001,
+	STRTOG_Denormal	= 0x002,
+	STRTOG_Infinite	= 0x003,
+	STRTOG_NaN	= 0x004,
+	STRTOG_NaNbits	= 0x005,
+	STRTOG_NoNumber	= 0x006,
+	STRTOG_NoMemory	= 0x007,
+	STRTOG_Retmask	= 0x00f,
 
 	/* The following may be or-ed into one of the above values. */
-
-	STRTOG_Neg	= 0x08, /* does not affect STRTOG_Inexlo or STRTOG_Inexhi */
-	STRTOG_Inexlo	= 0x10,	/* returned result rounded toward zero */
-	STRTOG_Inexhi	= 0x20, /* returned result rounded away from zero */
-	STRTOG_Inexact	= 0x30,
-	STRTOG_Underflow= 0x40,
-	STRTOG_Overflow	= 0x80
+	STRTOG_Inexlo	= 0x010, /* returned result rounded toward zero */
+	STRTOG_Inexhi	= 0x020, /* returned result rounded away from zero */
+	STRTOG_Inexact	= 0x030,
+	STRTOG_Underflow= 0x040,
+	STRTOG_Overflow	= 0x080,
+	STRTOG_Neg	= 0x100  /* does not affect STRTOG_Inexlo or
+				  * STRTOG_Inexhi */
 	};
 
  typedef struct

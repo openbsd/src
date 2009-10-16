@@ -47,10 +47,14 @@ s2b
 	for(k = 0, y = 1; x > y; y <<= 1, k++) ;
 #ifdef Pack_32
 	b = Balloc(k);
+	if (b == NULL)
+		return (NULL);
 	b->x[0] = y9;
 	b->wds = 1;
 #else
 	b = Balloc(k+1);
+	if (b == NULL)
+		return (NULL);
 	b->x[0] = y9 & 0xffff;
 	b->wds = (b->x[1] = y9 >> 16) ? 2 : 1;
 #endif
@@ -58,14 +62,20 @@ s2b
 	i = 9;
 	if (9 < nd0) {
 		s += 9;
-		do b = multadd(b, 10, *s++ - '0');
-			while(++i < nd0);
+		do {
+			b = multadd(b, 10, *s++ - '0');
+			if (b == NULL)
+				return (NULL);
+		} while(++i < nd0);
 		s++;
 		}
 	else
 		s += 10;
-	for(; i < nd; i++)
+	for(; i < nd; i++) {
 		b = multadd(b, 10, *s++ - '0');
+		if (b == NULL)
+			return (NULL);
+	}
 	return b;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.53 2008/10/21 17:51:17 martynas Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.54 2009/10/16 12:15:03 martynas Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -576,11 +576,19 @@ reswitch:	switch (ch) {
 				dtoaresult = cp =
 				    __hldtoa(fparg.ldbl, xdigs, prec,
 				    &expt, &signflag, &dtoaend);
+				if (dtoaresult == NULL) {
+					errno = ENOMEM;
+					goto error;
+				}
 			} else {
 				fparg.dbl = GETARG(double);
 				dtoaresult = cp =
 				    __hdtoa(fparg.dbl, xdigs, prec,
 				    &expt, &signflag, &dtoaend);
+				if (dtoaresult == NULL) {
+					errno = ENOMEM;
+					goto error;
+				}
 			}
 			if (prec < 0)
 				prec = dtoaend - cp;
@@ -614,11 +622,19 @@ fp_begin:
 				dtoaresult = cp =
 				    __ldtoa(&fparg.ldbl, expchar ? 2 : 3, prec,
 				    &expt, &signflag, &dtoaend);
+				if (dtoaresult == NULL) {
+					errno = ENOMEM;
+					goto error;
+				}
 			} else {
 				fparg.dbl = GETARG(double);
 				dtoaresult = cp =
 				    __dtoa(fparg.dbl, expchar ? 2 : 3, prec,
 				    &expt, &signflag, &dtoaend);
+				if (dtoaresult == NULL) {
+					errno = ENOMEM;
+					goto error;
+				}
 				if (expt == 9999)
 					expt = INT_MAX;
  			}

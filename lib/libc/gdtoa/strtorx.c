@@ -78,6 +78,9 @@ ULtox(UShort *L, ULong *bits, Long exp, int k)
 		L[_1] = (UShort)(bits[1] >> 16);
 		break;
 
+	  case STRTOG_NoMemory:
+		errno = ERANGE;
+		/* FALLTHROUGH */
 	  case STRTOG_Infinite:
 		L[_0] = 0x7fff;
 		L[_1] = L[_2] = L[_3] = L[_4] = 0;

@@ -50,6 +50,12 @@ rv_alloc(int i)
 		j <<= 1)
 			k++;
 	r = (int*)Balloc(k);
+	if (r == NULL)
+		return (
+#ifndef MULTIPLE_THREADS
+		    dtoa_result =
+#endif
+		    NULL);
 	*r = k;
 	return
 #ifndef MULTIPLE_THREADS
@@ -68,6 +74,8 @@ nrv_alloc(char *s, char **rve, int n)
 	char *rv, *t;
 
 	t = rv = rv_alloc(n);
+	if (t == NULL)
+		return NULL;
 	while((*t = *s++) !=0)
 		t++;
 	if (rve)

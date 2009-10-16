@@ -65,6 +65,10 @@ strtof(CONST char *s, char **sp)
 	  case STRTOG_Infinite:
 		u.L[0] = 0xffff7fff;
 		break;
+
+	  case STRTOG_NoMemory:
+		errno = ERANGE;
+		return (HUGE_VALF);
 	  }
 	if (k & STRTOG_Neg)
 		u.L[0] |= 0x00008000L;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdtoa.c,v 1.1 2008/09/07 20:36:08 martynas Exp $	*/
+/*	$OpenBSD: hdtoa.c,v 1.2 2009/10/16 12:15:03 martynas Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -162,6 +162,8 @@ __hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 	 */
 	bufsize = (sigfigs > ndigits) ? sigfigs : ndigits;
 	s0 = rv_alloc(bufsize);
+	if (s0 == NULL)
+		return (NULL);
 
 	/*
 	 * We work from right to left, first adding any requested zero
@@ -257,6 +259,8 @@ __hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 	 */
 	bufsize = (sigfigs > ndigits) ? sigfigs : ndigits;
 	s0 = rv_alloc(bufsize);
+	if (s0 == NULL)
+		return (NULL);
 
 	/*
 	 * We work from right to left, first adding any requested zero

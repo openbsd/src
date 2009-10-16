@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcvt.c,v 1.10 2006/10/29 18:45:56 deraadt Exp $	*/
+/*	$OpenBSD: gcvt.c,v 1.11 2009/10/16 12:15:03 martynas Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -42,6 +42,8 @@ gcvt(double value, int ndigit, char *buf)
 	}
 
 	digits = __dtoa(value, 2, ndigit, &decpt, &sign, NULL);
+	if (digits == NULL)
+		return (NULL);
 	if (decpt == 9999) {
 		/*
 		 * Infinity or NaN, convert to inf or nan with sign.
