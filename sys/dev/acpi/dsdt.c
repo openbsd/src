@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.154 2009/09/04 22:50:11 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.155 2009/10/16 15:49:25 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1707,7 +1707,7 @@ struct aml_scope *aml_xpushscope(struct aml_scope *, struct aml_value *,
 struct aml_scope *aml_xpopscope(struct aml_scope *);
 
 void		aml_showstack(struct aml_scope *);
-struct aml_value *aml_xconvert(struct aml_value *, int);
+struct aml_value *aml_xconvert(struct aml_value *, int, int);
 
 int		aml_xmatchtest(int64_t, int64_t, int);
 int		aml_xmatch(struct aml_value *, int, int, int, int, int);
@@ -1948,7 +1948,7 @@ aml_xmatch(struct aml_value *pkg, int index,
 	while (index < pkg->length) {
 		/* Convert package value to integer */
 		tmp = aml_xconvert(pkg->v_package[index], 
-		    AML_OBJTYPE_INTEGER);
+		    AML_OBJTYPE_INTEGER, -1);
 
 		/* Perform test */
 		flag = aml_xmatchtest(tmp->v_integer, v1, op1) && 
@@ -2073,11 +2073,13 @@ aml_hextoint(const char *str)
 }
 
 struct aml_value *
-aml_xconvert(struct aml_value *a, int ctype)
+aml_xconvert(struct aml_value *a, int ctype, int clen)
 {
 	struct aml_value *c = NULL;
 
 	/* Object is already this type */
+	if (clen == -1)
+		clen = a->length;
 	if (a->type == ctype) {
 		aml_xaddref(a, "XConvert");
 		return a;
@@ -2148,7 +2150,7 @@ aml_xcompare(struct aml_value *a1, struct aml_value *a2, int opcode)
 	int rc = 0;
 
 	/* Convert A2 to type of A1 */
-	a2 = aml_xconvert(a2, a1->type);
+	a2 = aml_xconvert(a2, a1->type, -1);
 	if (a1->type == AML_OBJTYPE_INTEGER)
 		rc = aml_evalexpr(a1->v_integer, a2->v_integer, opcode);
 	else {
@@ -2174,7 +2176,7 @@ aml_xconcat(struct aml_value *a1, struct aml_value *a2)
 	struct aml_value *c;
 
 	/* Convert arg2 to type of arg1 */
-	a2 = aml_xconvert(a2, a1->type);
+	a2 = aml_xconvert(a2, a1->type, -1);
 	switch (a1->type) {
 	case AML_OBJTYPE_INTEGER:
 		c = aml_allocvalue(AML_OBJTYPE_BUFFER, 
@@ -2347,7 +2349,7 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val, int 
 			_aml_setvalue(val, AML_OBJTYPE_BUFFER, slen, 0);
 		} else {
 			/* Write to a large field.. create or convert buffer */
-			val = aml_xconvert(val, AML_OBJTYPE_BUFFER);
+			val = aml_xconvert(val, AML_OBJTYPE_BUFFER, -1);
 		}
 		_aml_setvalue(&tmp, AML_OBJTYPE_BUFFER, slen, 0);
 		tbit = tmp.v_buffer;
@@ -2357,7 +2359,7 @@ aml_rwgas(struct aml_value *rgn, int bpos, int blen, struct aml_value *val, int 
 		_aml_setvalue(val, AML_OBJTYPE_INTEGER, 0, 0);
 	} else {
 		/* Write to a short field.. convert to integer */
-		val = aml_xconvert(val, AML_OBJTYPE_INTEGER);
+		val = aml_xconvert(val, AML_OBJTYPE_INTEGER, -1);
 	}
 
 	if (mode == ACPI_IOREAD) {
@@ -2414,7 +2416,7 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val, in
 		aml_bufcpy(&val->v_integer, 0, ref1->v_buffer, fld->v_field.bitpos, fld->v_field.bitlen);
 	} else {
 		/* bufferfield:write */
-		val = aml_xconvert(val, AML_OBJTYPE_INTEGER);
+		val = aml_xconvert(val, AML_OBJTYPE_INTEGER, -1);
 		aml_bufcpy(ref1->v_buffer, fld->v_field.bitpos, &val->v_integer, 0, fld->v_field.bitlen);
 		aml_xdelref(&val, "wrbuffld");
 	}
@@ -2489,7 +2491,7 @@ aml_xcreatefield(struct aml_value *field, int opcode,
 	{
 		printf("WARN: %s not buffer\n",
 		    aml_nodename(data->node));
-		data = aml_xconvert(data, AML_OBJTYPE_BUFFER);
+		data = aml_xconvert(data, AML_OBJTYPE_BUFFER, -1);
 	}
 	field->v_field.type = opcode;
 	field->v_field.bitpos = bpos;
@@ -2650,13 +2652,13 @@ aml_xstore(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
 	case AML_OBJTYPE_DEBUGOBJ:
 		break;
 	case AML_OBJTYPE_INTEGER:
-		rhs = aml_xconvert(rhs, lhs->type);
+		rhs = aml_xconvert(rhs, lhs->type, -1);
 		lhs->v_integer = rhs->v_integer;
 		aml_xdelref(&rhs, "store.int");
 		break;
 	case AML_OBJTYPE_BUFFER:
 	case AML_OBJTYPE_STRING:
-		rhs = aml_xconvert(rhs, lhs->type);
+		rhs = aml_xconvert(rhs, lhs->type, -1);
 		if (lhs->length < rhs->length) {
 			dnprintf(10,"Overrun! %d,%d\n", lhs->length, rhs->length);
 			aml_freevalue(lhs);
@@ -3525,8 +3527,8 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 			rv = aml_xparse(mscope, 'o', "Package");
 			if (rv != NULL) {
 				aml_xdelref(&my_ret->v_package[idx], "pkginit");
-			my_ret->v_package[idx] = rv;
-		}
+				my_ret->v_package[idx] = rv;
+			}
 		}
 		aml_xpopscope(mscope);
 		mscope = NULL;
@@ -3645,7 +3647,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		case AML_OBJTYPE_BUFFER:
 		case AML_OBJTYPE_STRING:
 		case AML_OBJTYPE_INTEGER:
-			rv = aml_xconvert(opargs[0], AML_OBJTYPE_BUFFER);
+			rv = aml_xconvert(opargs[0], AML_OBJTYPE_BUFFER, -1);
 			if (ret_type == 't' || ret_type == 'i' || ret_type == 'T') {
 				dnprintf(12,"Index.Buf Term: %d = %x\n", 
 				    idx, rv->v_buffer[idx]);
@@ -3689,27 +3691,28 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		/* Conversion */
 	case AMLOP_TOINTEGER:
 		/* Source:CData, Result => Integer */
-		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_INTEGER);
+		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_INTEGER, -1);
 		aml_xstore(scope, opargs[1], 0, my_ret);
 		break;
 	case AMLOP_TOBUFFER:
 		/* Source:CData, Result => Buffer */
-		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_BUFFER);
+		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_BUFFER, -1);
 		aml_xstore(scope, opargs[1], 0, my_ret);
 		break;
 	case AMLOP_TOHEXSTRING:
 		/* Source:CData, Result => String */
-		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_HEXSTRING);
+		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_HEXSTRING, -1);
 		aml_xstore(scope, opargs[1], 0, my_ret);
 		break;
 	case AMLOP_TODECSTRING:
 		/* Source:CData, Result => String */
-		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_DECSTRING);
+		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_DECSTRING, -1);
 		aml_xstore(scope, opargs[1], 0, my_ret);
 		break;
 	case AMLOP_TOSTRING:
 		/* Source:B, Length:I, Result => String */
-		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_STRING);
+		my_ret = aml_xconvert(opargs[0], AML_OBJTYPE_STRING, 
+		    opargs[1]->v_integer);
 		aml_xstore(scope, opargs[2], 0, my_ret);
 		break;
 	case AMLOP_CONCAT:
@@ -4038,7 +4041,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	if (ret_type == 'i' && my_ret && my_ret->type != AML_OBJTYPE_INTEGER) {
 		dnprintf(10,"quick: %.4x convert to integer %s -> %s\n", 
 		    pc, htab->mnem, stype);
-		my_ret = aml_xconvert(my_ret, AML_OBJTYPE_INTEGER);
+		my_ret = aml_xconvert(my_ret, AML_OBJTYPE_INTEGER, -1);
 	}
 	if (my_ret != NULL) {
 		/* Display result */
@@ -4120,7 +4123,7 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 	dnprintf(12,"EVALNODE: %s %d\n", aml_nodename(node), acpi_nalloc);
 
 	aml_error = 0;
-		xres = aml_xeval(NULL, node->value, 't', argc, argv);
+	xres = aml_xeval(NULL, node->value, 't', argc, argv);
 	if (xres) {
 		if (res)
 			aml_copyvalue(res, xres);
