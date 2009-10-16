@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.22 2009/10/13 04:53:33 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.23 2009/10/16 22:29:46 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 13 2009 $
+.Dd $Mdocdate: October 16 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -138,10 +138,6 @@ and
 .Xr newaliases 8 .
 .It secrets
 Map queried for remote host credentials.
-See
-.Xr makemap 8 .
-.It virtual
-Map queried for virtual domains.
 See
 .Xr makemap 8 .
 .El
