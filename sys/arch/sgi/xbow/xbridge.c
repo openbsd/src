@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.52 2009/10/15 23:40:49 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.53 2009/10/16 14:07:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1266,7 +1266,9 @@ int
 xbridge_space_map_mem(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
 {
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000) || defined(DIAGNOSTIC)
 	struct xbridge_bus *xb = (struct xbridge_bus *)t->bus_private;
+#endif
 
 	/*
 	 * Base address is either within the devio area, or our direct
@@ -1366,8 +1368,10 @@ int
 xbridge_space_region_mem(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000) || defined(DIAGNOSTIC)
 	struct xbridge_bus *xb = (struct xbridge_bus *)t->bus_private;
 	bus_addr_t bpa;
+#endif
 
 	/*
 	 * Base address is either within the devio area, or our direct
