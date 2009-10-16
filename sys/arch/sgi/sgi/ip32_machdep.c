@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.7 2009/10/14 20:21:16 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.8 2009/10/16 00:15:49 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -133,6 +133,8 @@ crime_configure_memory(void)
 void
 ip32_setup()
 {
+	u_long cpuspeed;
+
 	uncached_base = PHYS_TO_XKPHYS(0, CCA_NC);
 
 	crime_configure_memory();
@@ -143,6 +145,11 @@ ip32_setup()
 		setsr(getsr() | SR_DSD);
 		break;
 	}
+
+	cpuspeed = bios_getenvint("cpufreq");
+	if (cpuspeed < 100)
+		cpuspeed = 180;		/* reasonable default */
+	sys_config.cpu[0].clock = cpuspeed * 1000000;
 
 	comconsaddr = MACE_ISA_SER1_OFFS;
 	comconsfreq = 1843200;

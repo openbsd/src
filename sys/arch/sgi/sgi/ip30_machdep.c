@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.10 2009/10/14 20:21:16 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.11 2009/10/16 00:15:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -60,6 +60,7 @@ ip30_setup()
 	uint64_t start, count;
 #endif
 	paddr_t iocbase;
+	u_long cpuspeed;
 
 	/*
 	 * Although being r10k/r12k based, the uncached spaces are
@@ -101,6 +102,11 @@ ip30_setup()
 	xbow_widget_map = ip30_widget_map;
 	xbow_widget_id = ip30_widget_id;
 
+	cpuspeed = bios_getenvint("cpufreq");
+	if (cpuspeed < 100)
+		cpuspeed = 175;		/* reasonable default */
+	sys_config.cpu[0].clock = cpuspeed * 1000000;
+
 	/*
 	 * Initialize the early console parameters.
 	 * On Octane, the BRIDGE is always widet 15, and IOC3 is always
@@ -119,12 +125,15 @@ ip30_setup()
 	comconsaddr = 0x500000 + IOC3_UARTA_BASE;
 	comconsfreq = 22000000 / 3;
 	comconsiot = &sys_config.console_io;
+	comconsrate = bios_getenvint("dbaud");
+	if (comconsrate < 50 || comconsrate > 115200)
+		comconsrate = 9600;
 
 	/*
 	 * Octane and Octane2 can be told apart with a GPIO source bit
 	 * in the onboard IOC3.
 	 */
-	iocbase = ip30_widget_long(0, 15) + 0x500000;
+	iocbase = ip30_widget_short(0, 15) + 0x500000;
 	if (*(volatile uint32_t *)(iocbase + IOC3_GPPR(IP30_GPIO_CLASSIC)) != 0)
 		hw_prod = "Octane";
 	else

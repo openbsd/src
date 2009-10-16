@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.11 2009/07/06 22:46:43 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.12 2009/10/16 00:15:49 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -115,7 +115,7 @@ kl_scan_done()
 }
 
 /*
- * Callback routine for the initial enumration (boards).
+ * Callback routine for the initial enumeration (boards).
  */
 int
 kl_first_pass_board(lboard_t *boardinfo, void *arg)
@@ -293,14 +293,14 @@ kl_scan_board(lboard_t *boardinfo, uint type, int (*cb)(klinfo_t *, void *),
 }
 
 /*
- * Return the virtual address of the console device.
+ * Return the console device information.
  */
-vaddr_t
-kl_get_console_base()
+console_t *
+kl_get_console()
 {
 	kl_config_hdr_t *cfghdr = IP27_KLCONFIG_HDR(0);
 
-	return (vaddr_t)cfghdr->cons_info.uart_base;
+	return &cfghdr->cons_info;
 }
 
 /*

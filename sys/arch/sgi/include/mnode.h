@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.10 2009/10/08 19:11:57 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.11 2009/10/16 00:15:48 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -408,7 +408,7 @@ typedef struct gda {
  * Functions.
  */
 
-vaddr_t	kl_get_console_base(void);
+console_t *kl_get_console(void);
 void	kl_init(int);
 void	kl_scan_config(int);
 void	kl_scan_done(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.19 2009/08/06 21:06:32 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.20 2009/10/16 00:15:48 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -82,6 +82,7 @@ struct confargs {
 };
 
 void	enaddr_aton(const char *, u_int8_t *);
+u_long	bios_getenvint(const char *);
 
 struct device;
 

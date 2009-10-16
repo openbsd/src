@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.22 2009/10/14 20:21:16 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.23 2009/10/16 00:15:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -45,6 +45,7 @@
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbridgereg.h>
 
+#include <sgi/pci/iofreg.h>
 #include <dev/ic/comvar.h>
 
 extern char *hw_prod;
@@ -82,9 +83,9 @@ ip27_setup()
 {
 	size_t gsz;
 	uint node;
-	uint32_t ctrl;
 	uint64_t synergy0_0;
 	int brick;
+	console_t *cons;
 	nmi_t *nmi;
 
 	uncached_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_NC);
@@ -188,42 +189,35 @@ ip27_setup()
 	 * space.
 	 */
 
+	cons = kl_get_console();
 	xbow_build_bus_space(&sys_config.console_io, 0,
 	    8 /* whatever nonzero */);
 	/* Constrain to the correct window */
 	sys_config.console_io.bus_base =
-	    kl_get_console_base() & 0xffffffffff000000UL;
+	    cons->uart_base & 0xffffffffff000000UL;
 
-	comconsaddr = kl_get_console_base() & 0x0000000000ffffffUL;
+	comconsaddr = cons->uart_base & 0x0000000000ffffffUL;
+	comconsrate = cons->baud;
+	if (comconsrate < 50 || comconsrate > 115200)
+		comconsrate = 9600;
 	if ((comconsaddr & 0xfff) < 0x380) {
 		/* IOC3 */
 		comconsfreq = 22000000 / 3;
-		bios_printf("IOC3 style console\n");
 	} else {
 		/* IOC4 */
+		uint32_t ioc4_mcr;
+		paddr_t ioc4_base;
+
 		/*
 		 * IOC4 clocks are derived from the PCI clock, so we need to
 		 * figure out whether this is an 66MHz or a 33MHz bus.
-		 * Note that this assumes the IOC4 is connected to a Bridge
-		 * or PIC widget, and that even if this is a PIC widget,
-		 * the common widget register space can be correctly read
-		 * with non-doubleword aligned word reads.
 		 */
-		comconsfreq = 66666667;
-		bios_printf("IOC4 style console\n");
-		ctrl = *(volatile uint32_t *)
-		    ((sys_config.console_io.bus_base + WIDGET_CONTROL) | 4);
-		switch (ctrl & BRIDGE_WIDGET_CONTROL_SPEED_MASK) {
-		default:
-			bios_printf("WARNING! UNRECOGNIZED IOC4 SPEED\n"
-			    "ASSUMING 66MHZ\n");
-			break;
-		case BRIDGE_WIDGET_CONTROL_SPEED_66MHZ:
-			break;
-		case BRIDGE_WIDGET_CONTROL_SPEED_33MHZ:
-			comconsfreq >>= 1;
-			break;
-		}
+		ioc4_base = cons->uart_base & ~0xfffffUL; /* point to devio */
+		ioc4_mcr = *(volatile uint32_t *)(ioc4_base + IOC4_MCR);
+		if (ioc4_mcr & IOC4_MCR_PCI_66MHZ)
+			comconsfreq = 66666667;
+		else
+			comconsfreq = 33333333;
 	}
 	comconsiot = &sys_config.console_io;
 

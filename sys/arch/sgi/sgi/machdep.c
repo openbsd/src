@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.84 2009/10/14 20:21:16 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.85 2009/10/16 00:15:49 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -123,7 +123,6 @@ void	dumpsys(void);
 void	dumpconf(void);
 
 static void dobootopts(int, void *);
-static int atoi(const char *, int, const char **);
 
 void	arcbios_halt(int);
 void	build_trampoline(vaddr_t, vaddr_t);
@@ -219,12 +218,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		bios_printf("Found SGI-IP32, setting up.\n");
 		strlcpy(cpu_model, "IP32", sizeof(cpu_model));
 		ip32_setup();
-
-		sys_config.cpu[0].clock = 180000000;  /* Reasonable default */
-		cp = Bios_GetEnvironmentVariable("cpufreq");
-		if (cp && atoi(cp, 10, NULL) > 100)
-			sys_config.cpu[0].clock = atoi(cp, 10, NULL) * 1000000;
-
 		break;
 #endif
 
@@ -250,12 +243,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		bios_printf("Found SGI-IP30, setting up.\n");
 		strlcpy(cpu_model, "IP30", sizeof(cpu_model));
 		ip30_setup();
-
-		sys_config.cpu[0].clock = 175000000;  /* Reasonable default */
-		cp = Bios_GetEnvironmentVariable("cpufreq");
-		if (cp && atoi(cp, 10, NULL) > 100)
-			sys_config.cpu[0].clock = atoi(cp, 10, NULL) * 1000000;
-
 		break;
 #endif
 
@@ -996,90 +983,6 @@ dumpsys()
 void
 initcpu()
 {
-}
-
-/*
- * Convert "xx:xx:xx:xx:xx:xx" string to Ethernet hardware address.
- */
-void
-enaddr_aton(const char *s, u_int8_t *a)
-{
-	int i;
-
-	if (s != NULL) {
-		for(i = 0; i < 6; i++) {
-			a[i] = atoi(s, 16, &s);
-			if (*s == ':')
-				s++;
-		}
-	}
-}
-
-/*
- * Convert an ASCII string into an integer.
- */
-static int
-atoi(const char *s, int b, const char **o)
-{
-	int c;
-	unsigned base = b, d;
-	int neg = 0, val = 0;
-
-	if (s == NULL || *s == 0) {
-		if (o != NULL)
-			*o = s;
-		return 0;
-	}
-
-	/* Skip spaces if any. */
-	do {
-		c = *s++;
-	} while (c == ' ' || c == '\t');
-
-	/* Parse sign, allow more than one (compat). */
-	while (c == '-') {
-		neg = !neg;
-		c = *s++;
-	}
-
-	/* Parse base specification, if any. */
-	if (c == '0') {
-		c = *s++;
-		switch (c) {
-		case 'X':
-		case 'x':
-			base = 16;
-			c = *s++;
-			break;
-		case 'B':
-		case 'b':
-			base = 2;
-			c = *s++;
-			break;
-		default:
-			base = 8;
-		}
-	}
-
-	/* Parse number proper. */
-	for (;;) {
-		if (c >= '0' && c <= '9')
-			d = c - '0';
-		else if (c >= 'a' && c <= 'z')
-			d = c - 'a' + 10;
-		else if (c >= 'A' && c <= 'Z')
-			d = c - 'A' + 10;
-		else
-			break;
-		val *= base;
-		val += d;
-		c = *s++;
-	}
-	if (neg)
-		val = -val;
-	if (o != NULL)
-		*o = s - 1;
-	return val;
 }
 
 #ifdef	RM7K_PERFCNTR

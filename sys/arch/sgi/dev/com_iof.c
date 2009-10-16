@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_iof.c,v 1.4 2009/10/13 21:17:11 miod Exp $	*/
+/*	$OpenBSD: com_iof.c,v 1.5 2009/10/16 00:15:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -112,9 +112,8 @@ com_iof_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		sc->sc_iot = comconsiot;
 		sc->sc_iobase = comconsaddr;
-		sc->sc_frequency = comconsfreq;
 
-		if (comcnattach(sc->sc_iot, sc->sc_iobase, TTYDEF_SPEED,
+		if (comcnattach(sc->sc_iot, sc->sc_iobase, comconsrate,
 		    sc->sc_frequency, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 			panic("can't setup serial console");
 		ioh = comconsioh;

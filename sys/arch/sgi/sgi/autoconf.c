@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 2009/08/24 22:43:10 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 2009/10/16 00:15:49 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -13,6 +13,31 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
  */
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -70,6 +95,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
 #include <sgi/xbow/xbow.h>
@@ -78,6 +104,8 @@
 #include <scsi/scsiconf.h>
 
 extern void dumpconf(void);
+
+static u_long atoi(const char *, int, const char **);
 
 void	bootpath_convert(void);
 const char *bootpath_get(int *);
@@ -426,3 +454,110 @@ struct nam2blk nam2blk[] = {
 	{ "vnd",	2 },
 	{ NULL,		-1 }
 };
+
+/*
+ * Convert "xx:xx:xx:xx:xx:xx" string to Ethernet hardware address.
+ */
+void
+enaddr_aton(const char *s, u_int8_t *a)
+{
+	int i;
+
+	if (s != NULL) {
+		for (i = 0; i < 6; i++) {
+			a[i] = atoi(s, 16, &s);
+			if (*s == ':')
+				s++;
+		}
+	}
+}
+
+/*
+ * Get a numeric environment variable
+ */
+u_long
+bios_getenvint(const char *name)
+{
+	const char *envvar;
+	u_long value;
+
+	envvar = Bios_GetEnvironmentVariable(name);
+	if (envvar != NULL) {
+		value = atoi(envvar, 10, &envvar);
+		if (*envvar != '\0')
+			value = 0;
+	} else
+		value = 0;
+
+	return value;
+}
+
+/*
+ * Convert an ASCII string into an integer.
+ */
+static u_long
+atoi(const char *s, int b, const char **o)
+{
+	int c;
+	unsigned base = b, d;
+	int neg = 0;
+	u_long val = 0;
+
+	if (s == NULL || *s == 0) {
+		if (o != NULL)
+			*o = s;
+		return 0;
+	}
+
+	/* Skip spaces if any. */
+	do {
+		c = *s++;
+	} while (c == ' ' || c == '\t');
+
+	/* Parse sign, allow more than one (compat). */
+	while (c == '-') {
+		neg = !neg;
+		c = *s++;
+	}
+
+	/* Parse base specification, if any. */
+	if (c == '0') {
+		c = *s++;
+		switch (c) {
+		case 'X':
+		case 'x':
+			base = 16;
+			c = *s++;
+			break;
+		case 'B':
+		case 'b':
+			base = 2;
+			c = *s++;
+			break;
+		default:
+			base = 8;
+		}
+	}
+
+	/* Parse number proper. */
+	for (;;) {
+		if (c >= '0' && c <= '9')
+			d = c - '0';
+		else if (c >= 'a' && c <= 'z')
+			d = c - 'a' + 10;
+		else if (c >= 'A' && c <= 'Z')
+			d = c - 'A' + 10;
+		else
+			break;
+		c = *s++;
+		if (d >= base)
+			break;
+		val *= base;
+		val += d;
+	}
+	if (neg)
+		val = -val;
+	if (o != NULL)
+		*o = s - 1;
+	return val;
+}
