@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.15 2008/02/23 22:21:17 deraadt Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.16 2009/10/16 09:46:40 sobrado Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: mknetid.c,v 1.15 2008/02/23 22:21:17 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: mknetid.c,v 1.16 2009/10/16 09:46:40 sobrado Exp $";
 #endif
 
 #include <sys/param.h>
@@ -493,9 +493,9 @@ print_netid(FILE *mfile, char *fname)
 static void
 usage(void)
 {
-	fprintf(stderr,
-	    "usage: mknetid [-d domain] [-q] [-p passwdfile] [-g groupfile]\n"
-	    "               [-h hostfile] [-m netidfile]\n");
+	fprintf(stderr, "usage: mknetid [-q] [-d domain] [-g groupfile] "
+	    "[-h hostfile] [-m netidfile]\n"
+	    "               [-p passwdfile]\n");
 	exit(1);
 }
 
