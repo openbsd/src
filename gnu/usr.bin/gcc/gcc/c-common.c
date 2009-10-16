@@ -41,6 +41,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "tree-inline.h"
 
 cpp_reader *parse_in;		/* Declared in c-pragma.h.  */
+extern tree lookup_name PARAMS ((tree)); /* Declared in c-tree.h. */
 
 /* We let tm.h override the types used here, to handle trivial differences
    such as the choice of unsigned int or long unsigned int for size_t.
