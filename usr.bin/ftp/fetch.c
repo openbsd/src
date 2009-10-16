@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.96 2009/08/26 11:54:31 sthen Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.97 2009/10/16 12:28:04 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -184,7 +184,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	char * volatile proxyurl = NULL;
 	char *cookie = NULL;
 	volatile int s = -1, out;
-	volatile sig_t oldintr;
+	volatile sig_t oldintr, oldinti;
 	FILE *fin = NULL;
 	off_t hashbytes;
 	const char *errstr;
@@ -196,6 +196,8 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 #endif /* !SMALL */
 	SSL *ssl = NULL;
 	int status;
+
+	direction = "received";
 
 	newline = strdup(origline);
 	if (newline == NULL)
@@ -368,9 +370,12 @@ noslash:
 
 		/* Trap signals */
 		oldintr = NULL;
+		oldinti = NULL;
 		if (setjmp(httpabort)) {
 			if (oldintr)
 				(void)signal(SIGINT, oldintr);
+			if (oldinti)
+				(void)signal(SIGINFO, oldinti);
 			goto cleanup_url_get;
 		}
 		oldintr = signal(SIGINT, abortfile);
@@ -384,11 +389,13 @@ noslash:
 
 		/* Finally, suck down the file. */
 		i = 0;
+		oldinti = signal(SIGINFO, psummary);
 		while ((len = read(s, buf, 4096)) > 0) {
 			bytes += len;
 			for (cp = buf; len > 0; len -= i, cp += i) {
 				if ((i = write(out, cp, len)) == -1) {
 					warn("Writing %s", savefile);
+					signal(SIGINFO, oldinti);
 					goto cleanup_url_get;
 				}
 				else if (i == 0)
@@ -402,6 +409,7 @@ noslash:
 				(void)fflush(ttyout);
 			}
 		}
+		signal(SIGINFO, oldinti);
 		if (hash && !progress && bytes > 0) {
 			if (bytes < mark)
 				(void)putc('#', ttyout);
@@ -414,7 +422,7 @@ noslash:
 		}
 		progressmeter(1, NULL);
 		if (verbose)
-			fputs("Successfully retrieved file.\n", ttyout);
+			ptransfer(0);
 		(void)signal(SIGINT, oldintr);
 
 		rval = 0;
@@ -757,9 +765,12 @@ again:
 
 	/* Trap signals */
 	oldintr = NULL;
+	oldinti = NULL;
 	if (setjmp(httpabort)) {
 		if (oldintr)
 			(void)signal(SIGINT, oldintr);
+		if (oldinti)
+			(void)signal(SIGINFO, oldinti);
 		goto cleanup_url_get;
 	}
 	oldintr = signal(SIGINT, aborthttp);
@@ -775,12 +786,14 @@ again:
 		errx(1, "Can't allocate memory for transfer buffer");
 	i = 0;
 	len = 1;
+	oldinti = signal(SIGINFO, psummary);
 	while (len > 0) {
 		len = ftp_read(fin, ssl, buf, 4096);
 		bytes += len;
 		for (cp = buf, wlen = len; wlen > 0; wlen -= i, cp += i) {
 			if ((i = write(out, cp, wlen)) == -1) {
 				warn("Writing %s", savefile);
+				signal(SIGINFO, oldinti);
 				goto cleanup_url_get;
 			}
 			else if (i == 0)
@@ -794,6 +807,7 @@ again:
 			(void)fflush(ttyout);
 		}
 	}
+	signal(SIGINFO, oldinti);
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
 			(void)putc('#', ttyout);
@@ -816,7 +830,7 @@ again:
 	}
 
 	if (verbose)
-		fputs("Successfully retrieved file.\n", ttyout);
+		ptransfer(0);
 	(void)signal(SIGINT, oldintr);
 
 	rval = 0;
