@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.21 2009/10/12 18:19:46 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.22 2009/10/17 12:46:47 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -373,7 +373,7 @@ usage(void)
 	if (mode == P_NEWALIASES)
 		fprintf(stderr, "usage: %s [-f file]\n", __progname);
 	else
-		fprintf(stderr, "usage: %s [-t type] [-o dbfile] file\n",
+		fprintf(stderr, "usage: %s [-o dbfile] [-t type] file\n",
 		    __progname);
 	exit(1);
 }
