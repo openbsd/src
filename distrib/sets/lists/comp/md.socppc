@@ -203,6 +203,7 @@
 ./usr/include/socppc/disklabel.h
 ./usr/include/socppc/endian.h
 ./usr/include/socppc/exec.h
+./usr/include/socppc/fdt.h
 ./usr/include/socppc/float.h
 ./usr/include/socppc/fpu.h
 ./usr/include/socppc/frame.h

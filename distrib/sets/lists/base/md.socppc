@@ -56,6 +56,7 @@
 ./etc/firmware/zd1211
 ./etc/firmware/zd1211-license
 ./etc/firmware/zd1211b
+./sbin/kbd
 ./sbin/wsconsctl
 ./usr/bin/gccbug
 ./usr/lib/apache/modules/libproxy.so
@@ -2229,6 +2230,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/disklabel.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/exec.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/fdt.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/float.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/fpu.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/socppc/frame.ph
