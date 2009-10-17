@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.139 2009/10/13 15:38:37 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.140 2009/10/17 08:24:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -970,6 +970,11 @@ struct tty_ctx {
 
 	u_int		 orupper;
 	u_int		 orlower;
+
+	/* Saved last cell on line. */
+	struct grid_cell last_cell;
+	struct grid_utf8 last_utf8;
+	u_int		 last_width;
 };
 
 /* Mouse input. */
