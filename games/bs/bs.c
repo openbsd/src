@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.20 2003/06/11 08:47:44 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.21 2009/10/17 21:45:50 sobrado Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bs.c,v 1.20 2003/06/11 08:47:44 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: bs.c,v 1.21 2009/10/17 21:45:50 sobrado Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* ( random() ) */
@@ -1284,10 +1284,10 @@ int playagain(void)
 
 void usage()
 {
-	(void) fprintf(stderr, "Usage: bs [-s | -b] [-c]\n");
+	(void) fprintf(stderr, "usage: bs [-b | -s] [-c]\n");
 	(void) fprintf(stderr, "\tWhere the options are:\n");
-	(void) fprintf(stderr, "\t-s : play a salvo game\n");
 	(void) fprintf(stderr, "\t-b : play a blitz game\n");
+	(void) fprintf(stderr, "\t-s : play a salvo game\n");
 	(void) fprintf(stderr, "\t-c : ships may be adjacent\n");
 	exit(1);
 }
