@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.302 2009/10/13 22:05:13 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.303 2009/10/17 00:49:05 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1079,6 +1079,10 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP67_SATA4,
+	  0,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP77_SATA_1,
 	  0,
 	  sata_chip_map
 	},
