@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.52 2009/05/11 08:07:42 yuo Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.53 2009/10/17 07:10:38 jakemsr Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -105,12 +105,6 @@ const struct usbd_quirk_entry {
 
  { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
  { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1,	    0x009, { UQ_AU_NO_FRAC }},
- { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
-   						    0x100, { UQ_AU_INP_ASYNC }},
- { USB_VENDOR_AVANCELOGIC, USB_PRODUCT_AVANCELOGIC_USBAUDIO,
-   						    0x101, { UQ_AU_INP_ASYNC }},
- { USB_VENDOR_PLANTRONICS, USB_PRODUCT_PLANTRONICS_HEADSET,
-   						    0x004, { UQ_AU_INP_ASYNC }},
 
  { USB_VENDOR_TERRATEC, USB_PRODUCT_TERRATEC_AUREON,
    						    ANY, { UQ_BAD_HID }},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.63 2009/10/15 08:47:44 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.64 2009/10/17 07:10:37 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -1549,9 +1549,6 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 
 	dir = UE_GET_DIR(ed->bEndpointAddress);
 	type = UE_GET_ISO_TYPE(ed->bmAttributes);
-	if ((usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_INP_ASYNC) &&
-	    dir == UE_DIR_IN && type == UE_ISO_ADAPT)
-		type = UE_ISO_ASYNC;
 
 	/* We can't handle endpoints that need a sync pipe yet. */
 	sync = FALSE;
