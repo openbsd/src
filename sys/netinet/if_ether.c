@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.80 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.81 2009/10/17 12:20:17 mpf Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -601,6 +601,7 @@ in_arpinput(m)
 	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof(itaddr));
 	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof(isaddr));
 
+	/* First try: check target against our addresses */
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 		if (itaddr.s_addr != ia->ia_addr.sin_addr.s_addr)
 			continue;
@@ -609,11 +610,15 @@ in_arpinput(m)
 		if (ia->ia_ifp->if_type == IFT_CARP &&
 		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING))) {
-			if (ia->ia_ifp == m->m_pkthdr.rcvif &&
-			    (op == ARPOP_REPLY  ||
-			    carp_iamatch(ia, ea->arp_sha,
-			    &enaddr, &ether_shost)))
-				break;
+			if (ia->ia_ifp == m->m_pkthdr.rcvif) {
+				if (op == ARPOP_REPLY)
+					break;
+				if (carp_iamatch(ia, ea->arp_sha,
+				    &enaddr, &ether_shost))
+					break;
+				else
+					goto out;
+			}
 		} else
 #endif
 			if (ia->ia_ifp == m->m_pkthdr.rcvif)
@@ -633,22 +638,27 @@ in_arpinput(m)
 #if NCARP > 0
 			else if (ia->ia_ifp->if_carpdev != NULL &&
 			    m->m_pkthdr.rcvif->if_bridge ==
-			    ia->ia_ifp->if_carpdev->if_bridge &&
-			    carp_iamatch(ia, ea->arp_sha,
-			    &enaddr, &ether_shost))
-				bridge_ia = ia;
+			    ia->ia_ifp->if_carpdev->if_bridge) {
+				if (carp_iamatch(ia, ea->arp_sha,
+				    &enaddr, &ether_shost))
+					bridge_ia = ia;
+				else
+					goto out;
+			}
 #endif
 		}
 #endif
 	}
 
 #if NBRIDGE > 0
+	/* use bridge_ia if there was no direct match */
 	if (ia == NULL && bridge_ia != NULL) {
 		ia = bridge_ia;
 		ac = (struct arpcom *)bridge_ia->ia_ifp;
 	}
 #endif
 
+	/* Second try: check source against our addresses */
 	if (ia == NULL) {
 		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 			if (isaddr.s_addr != ia->ia_addr.sin_addr.s_addr)
@@ -658,7 +668,8 @@ in_arpinput(m)
 		}
 	}
 
-	if (ia == NULL && m->m_pkthdr.rcvif->if_type != IFT_CARP) {
+	/* Third try: not one of our addresses, just find an usable ia */
+	if (ia == NULL) {
 		struct ifaddr *ifa;
 
 		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
@@ -706,12 +717,14 @@ in_arpinput(m)
 				   ac->ac_if.if_xname);
 				goto out;
 			} else if (rt->rt_ifp != &ac->ac_if) {
-				log(LOG_WARNING,
-				   "arp: attempt to overwrite entry for %s "
-				   "on %s by %s on %s\n",
-				   inet_ntoa(isaddr), rt->rt_ifp->if_xname,
-				   ether_sprintf(ea->arp_sha),
-				   ac->ac_if.if_xname);
+				if (ac->ac_if.if_type != IFT_CARP)
+					log(LOG_WARNING,
+					   "arp: attempt to overwrite entry for"
+					   " %s on %s by %s on %s\n",
+					   inet_ntoa(isaddr),
+					   rt->rt_ifp->if_xname,
+					   ether_sprintf(ea->arp_sha),
+					   ac->ac_if.if_xname);
 				goto out;
 			} else {
 				log(LOG_INFO,
@@ -766,7 +779,7 @@ in_arpinput(m)
 	}
 reply:
 	if (op != ARPOP_REQUEST) {
-	out:
+out:
 		m_freem(m);
 		return;
 	}
