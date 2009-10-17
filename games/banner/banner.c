@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.14 2007/08/23 06:11:00 ray Exp $	*/
+/*	$OpenBSD: banner.c,v 1.15 2009/10/17 21:37:36 sobrado Exp $	*/
 /*	$NetBSD: banner.c,v 1.4 1995/04/22 11:55:15 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)banner.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: banner.c,v 1.14 2007/08/23 06:11:00 ray Exp $";
+static char rcsid[] = "$OpenBSD: banner.c,v 1.15 2009/10/17 21:37:36 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -1046,7 +1046,8 @@ main(int argc, char *argv[])
 			break;
 		case '?': case 'h':
 		default:
-			(void)fprintf(stderr, "usage: banner [-w width]\n");
+			(void)fprintf(stderr,
+			    "usage: banner [-w width] message ...\n");
 			exit(1);
 		}
 	argc -= optind;
@@ -1103,7 +1104,7 @@ main(int argc, char *argv[])
 		if ((u_char) message[i] >= NCHARS ||
 		    asc_ptr[(u_char) message[i]] == 0) {
 			warnx("The character '%c' is not in my character set",
-				message[i]);
+			    message[i]);
 			j++;
 		}
 	if (j)
