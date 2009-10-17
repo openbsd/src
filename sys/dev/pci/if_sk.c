@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.155 2009/10/15 17:54:56 deraadt Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.156 2009/10/17 21:40:43 martynas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1315,7 +1315,6 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t command, memtype;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_size_t size;
 	u_int8_t skrs;
 	char *revstr = NULL;
 
@@ -1523,7 +1522,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 fail_2:
 	pci_intr_disestablish(pc, sc->sk_intrhand);
 fail_1:
-	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, size);
+	bus_space_unmap(sc->sk_btag, sc->sk_bhandle, sc->sk_bsize);
 }
 
 int
