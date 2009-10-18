@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.15 2009/08/28 11:43:50 nicm Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.16 2009/10/18 13:51:44 nicm Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.15 2009/08/28 11:43:50 nicm Exp $";
+static const char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.16 2009/10/18 13:51:44 nicm Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -119,9 +119,9 @@ _nc_lookup_bsd_terminfo_entry(tn, filename, tp)
     TERMTYPE *const tp;
 {
     char  *pathvec[2];
-    char  *capbuf, *cptr, *infobuf, *iptr, ch;
+    char  *capbuf, *cptr, *infobuf, *iptr, *ifind, *istart, ch;
     int    error;
-    size_t len;
+    size_t len, clen, cnamelen;
 
     pathvec[0] = (char *)filename;
     pathvec[1] = NULL;
@@ -161,24 +161,79 @@ _nc_lookup_bsd_terminfo_entry(tn, filename, tp)
 	iptr = infobuf + len;
 	*iptr++ = ',';
 	*iptr++ = '\n';
+	istart = iptr;
 
-	/* Copy the rest of capbuf, converting ':' -> ',' */
+	/*
+	 * cap_mkdb(1) expands use=, but ncurses doesn't know this and uses the
+	 * last defined cap instead of the first. Step though capbuf skipping
+	 * duplicates and replacing ':' with ','.
+	 */
 	cptr++;
 	while (*cptr != '\0') {
-	    switch (ch = *cptr++) {
-	    case '^':
-	    case '\\':
-		*iptr++ = ch;
-		if (*cptr != '\0')
-		    *iptr++ = *cptr++;
-		break;
-	    case ':':
-		*iptr++ = ',';
-		break;
-	    default:
-		*iptr++ = ch;
-		break;
+	    /* Find the length of the source cap. */
+	    clen = 0;
+	    while (cptr[clen] != '\0' && cptr[clen] != ':') {
+		ch = cptr[clen++];
+		if ((ch == '^' || ch == '\\') && cptr[clen] != '\0')
+		    clen++;
 	    }
+	    if (clen == 0) {	/* ignore empty caps */
+		if (*cptr == ':')
+		    cptr++;
+		continue;
+	    }
+		
+	    /* Find the length of the cap name. */
+	    cnamelen = strcspn(cptr, "=@#");
+	    if (cnamelen > clen)
+		cnamelen = clen;
+		
+	    /* Is the cap already in the output buffer? */
+	    ifind = istart;
+	    while (iptr - ifind > cnamelen) {
+		if (memcmp(ifind, cptr, cnamelen) == 0
+		    && strchr(",=@#", ifind[cnamelen]) != NULL)
+		    break;
+			
+		/*
+		 * Move to the next cap, in the output buffer this is
+		 * terminated by an unescaped comma.
+		 */
+		while (ifind != iptr && *ifind != ',') {
+		    ch = *ifind++;
+		    if ((ch == '^' || ch == '\\') && ifind != iptr)
+		        ifind++;
+		}
+		if (ifind != iptr && *ifind == ',')
+		    ifind++;
+	    }
+	    
+	    /* Copy if it isn't already there, replacing ':' -> ','. */
+	    if (iptr - ifind <= cnamelen) {
+		while (clen-- != 0) {
+		    switch (ch = *cptr++) {
+		    case '^':
+		    case '\\':
+		        *iptr++ = ch;
+			if (clen != 0) {
+			    clen--;
+			    *iptr++ = *cptr++;
+			}
+			break;
+		    case ':':
+			*iptr++ = ',';
+			break;
+		    default:
+			*iptr++ = ch;
+			break;
+		    }
+		}
+		if (*cptr == ':')
+		    *iptr++ = ',';
+	    } else
+		cptr += clen;
+	    if (*cptr == ':')
+		cptr++;
 	}
 	*iptr++ = '\n';
 	*iptr = '\0';
