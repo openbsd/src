@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.13 2009/09/21 20:57:57 schwarze Exp $ */
+/*	$Id: term.c,v 1.14 2009/10/18 21:03:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -39,8 +39,6 @@ static	void		  do_reserved(struct termp *,
 				const char *, size_t);
 static	void		  buffer(struct termp *, char);
 static	void		  encode(struct termp *, char);
-static	int		  isopendelim(const char *);
-static	int		  isclosedelim(const char *);
 
 
 void *
@@ -109,62 +107,6 @@ term_alloc(enum termenc enc)
 	p->maxrmargin = 78;
 	p->enc = enc;
 	return(p);
-}
-
-
-static int
-isclosedelim(const char *p)
-{
-
-	if ( ! (*p && 0 == *(p + 1)))
-		return(0);
-
-	switch (*p) {
-	case('.'):
-		/* FALLTHROUGH */
-	case(','):
-		/* FALLTHROUGH */
-	case(';'):
-		/* FALLTHROUGH */
-	case(':'):
-		/* FALLTHROUGH */
-	case('?'):
-		/* FALLTHROUGH */
-	case('!'):
-		/* FALLTHROUGH */
-	case(')'):
-		/* FALLTHROUGH */
-	case(']'):
-		/* FALLTHROUGH */
-	case('}'):
-		return(1);
-	default:
-		break;
-	}
-
-	return(0);
-}
-
-
-static int
-isopendelim(const char *p)
-{
-
-	if ( ! (*p && 0 == *(p + 1)))
-		return(0);
-
-	switch (*p) {
-	case('('):
-		/* FALLTHROUGH */
-	case('['):
-		/* FALLTHROUGH */
-	case('{'):
-		return(1);
-	default:
-		break;
-	}
-
-	return(0);
 }
 
 
@@ -542,9 +484,33 @@ term_word(struct termp *p, const char *word)
 {
 	const char	 *sv;
 
-	if (isclosedelim(word))
-		if ( ! (TERMP_IGNDELIM & p->flags))
-			p->flags |= TERMP_NOSPACE;
+	sv = word;
+
+	if (word[0] && 0 == word[1])
+		switch (word[0]) {
+		case('.'):
+			/* FALLTHROUGH */
+		case(','):
+			/* FALLTHROUGH */
+		case(';'):
+			/* FALLTHROUGH */
+		case(':'):
+			/* FALLTHROUGH */
+		case('?'):
+			/* FALLTHROUGH */
+		case('!'):
+			/* FALLTHROUGH */
+		case(')'):
+			/* FALLTHROUGH */
+		case(']'):
+			/* FALLTHROUGH */
+		case('}'):
+			if ( ! (TERMP_IGNDELIM & p->flags))
+				p->flags |= TERMP_NOSPACE;
+			break;
+		default:
+			break;
+		}
 
 	if ( ! (TERMP_NOSPACE & p->flags))
 		buffer(p, ' ');
@@ -552,14 +518,24 @@ term_word(struct termp *p, const char *word)
 	if ( ! (p->flags & TERMP_NONOSPACE))
 		p->flags &= ~TERMP_NOSPACE;
 
-	for (sv = word; *word; word++)
+	for ( ; *word; word++)
 		if ('\\' != *word)
 			encode(p, *word);
 		else
 			do_escaped(p, &word);
 
-	if (isopendelim(sv))
-		p->flags |= TERMP_NOSPACE;
+	if (sv[0] && 0 == sv[1])
+		switch (sv[0]) {
+		case('('):
+			/* FALLTHROUGH */
+		case('['):
+			/* FALLTHROUGH */
+		case('{'):
+			p->flags |= TERMP_NOSPACE;
+			break;
+		default:
+			break;
+		}
 }
 
 
