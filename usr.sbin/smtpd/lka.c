@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.69 2009/10/18 19:53:49 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.70 2009/10/18 21:45:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -996,9 +996,15 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 int
 lka_resolve_path(struct smtpd *env, struct path *path){
 	switch (path->cond->c_type) {
+	case C_ALL:
+	case C_NET:
 	case C_DOM: {
 		char username[MAXLOGNAME];
 		struct passwd *pw;
+
+		/* recipient is to be relayed, no need for more processing */
+		if (IS_RELAY(*path))
+			return 1;
 
 		lowercase(username, path->user, sizeof(username));
 		if (aliases_exist(env, username)) {
@@ -1027,9 +1033,6 @@ lka_resolve_path(struct smtpd *env, struct path *path){
 		}
 		break;
 	}
-	case C_ALL:
-	case C_NET:
-		return 1;
 	default:
 		fatalx("lka_resolve_path: unexpected type");
 	}
