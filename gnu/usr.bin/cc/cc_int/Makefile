@@ -1,12 +1,12 @@
 # $FreeBSD: src/gnu/usr.bin/cc/cc_int/Makefile,v 1.52.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.1.1.1 2009/10/15 20:50:20 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2009/10/18 02:47:27 kurt Exp $
 
 .include <bsd.own.mk>
 
 .include "${.CURDIR}/../Makefile.inc"
 .include "${.CURDIR}/../Makefile.ver"
 
-.PATH: ../cc_tools ${GCCDIR} ${GCCDIR}/config/${GCC_CPU}
+.PATH: ../cc_tools ${GCCDIR} ${GCCDIR}/config ${GCCDIR}/config/${GCC_CPU}
 
 LIB=	backend
 NOPROFILE=	Yes
@@ -14,7 +14,7 @@ NOPIC=		Yes
 
 EXTRA_OBJS=
 GGC=		ggc-page.o
-host_hook_obj=	host-default.o
+host_hook_obj=	host-openbsd.o
 
 #
 # Most lists copied verbatim from GCC Makefiles.
