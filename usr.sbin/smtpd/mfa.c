@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.41 2009/10/12 22:34:37 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.42 2009/10/18 20:41:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -463,6 +463,7 @@ mfa_test_rcpt_resume(struct smtpd *env, struct submit_status *ss) {
 		return;
 	}
 
+	ss->msg.recipient = ss->u.path;
 	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
 	    ss, sizeof(*ss));
 }
