@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.15 2009/10/19 15:44:01 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.16 2009/10/19 21:00:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -557,7 +557,7 @@ args(struct mdoc *m, int line, int *pos,
 
 
 static int
-argv_a2arg(int tok, const char *argv)
+argv_a2arg(int tok, const char *p)
 {
 
 	/*
@@ -570,80 +570,80 @@ argv_a2arg(int tok, const char *argv)
 
 	switch (tok) {
 	case (MDOC_An):
-		if (0 == strcmp(argv, "split"))
+		if (0 == strcmp(p, "split"))
 			return(MDOC_Split);
-		else if (0 == strcmp(argv, "nosplit"))
+		else if (0 == strcmp(p, "nosplit"))
 			return(MDOC_Nosplit);
 		break;
 
 	case (MDOC_Bd):
-		if (0 == strcmp(argv, "ragged"))
+		if (0 == strcmp(p, "ragged"))
 			return(MDOC_Ragged);
-		else if (0 == strcmp(argv, "unfilled"))
+		else if (0 == strcmp(p, "unfilled"))
 			return(MDOC_Unfilled);
-		else if (0 == strcmp(argv, "filled"))
+		else if (0 == strcmp(p, "filled"))
 			return(MDOC_Filled);
-		else if (0 == strcmp(argv, "literal"))
+		else if (0 == strcmp(p, "literal"))
 			return(MDOC_Literal);
-		else if (0 == strcmp(argv, "file"))
+		else if (0 == strcmp(p, "file"))
 			return(MDOC_File);
-		else if (0 == strcmp(argv, "offset"))
+		else if (0 == strcmp(p, "offset"))
 			return(MDOC_Offset);
-		else if (0 == strcmp(argv, "compact"))
+		else if (0 == strcmp(p, "compact"))
 			return(MDOC_Compact);
 		break;
 
 	case (MDOC_Bf):
-		if (0 == strcmp(argv, "emphasis"))
+		if (0 == strcmp(p, "emphasis"))
 			return(MDOC_Emphasis);
-		else if (0 == strcmp(argv, "literal"))
+		else if (0 == strcmp(p, "literal"))
 			return(MDOC_Literal);
-		else if (0 == strcmp(argv, "symbolic"))
+		else if (0 == strcmp(p, "symbolic"))
 			return(MDOC_Symbolic);
 		break;
 
 	case (MDOC_Bk):
-		if (0 == strcmp(argv, "words"))
+		if (0 == strcmp(p, "words"))
 			return(MDOC_Words);
 		break;
 
 	case (MDOC_Bl):
-		if (0 == strcmp(argv, "bullet"))
+		if (0 == strcmp(p, "bullet"))
 			return(MDOC_Bullet);
-		else if (0 == strcmp(argv, "dash"))
+		else if (0 == strcmp(p, "dash"))
 			return(MDOC_Dash);
-		else if (0 == strcmp(argv, "hyphen"))
+		else if (0 == strcmp(p, "hyphen"))
 			return(MDOC_Hyphen);
-		else if (0 == strcmp(argv, "item"))
+		else if (0 == strcmp(p, "item"))
 			return(MDOC_Item);
-		else if (0 == strcmp(argv, "enum"))
+		else if (0 == strcmp(p, "enum"))
 			return(MDOC_Enum);
-		else if (0 == strcmp(argv, "tag"))
+		else if (0 == strcmp(p, "tag"))
 			return(MDOC_Tag);
-		else if (0 == strcmp(argv, "diag"))
+		else if (0 == strcmp(p, "diag"))
 			return(MDOC_Diag);
-		else if (0 == strcmp(argv, "hang"))
+		else if (0 == strcmp(p, "hang"))
 			return(MDOC_Hang);
-		else if (0 == strcmp(argv, "ohang"))
+		else if (0 == strcmp(p, "ohang"))
 			return(MDOC_Ohang);
-		else if (0 == strcmp(argv, "inset"))
+		else if (0 == strcmp(p, "inset"))
 			return(MDOC_Inset);
-		else if (0 == strcmp(argv, "column"))
+		else if (0 == strcmp(p, "column"))
 			return(MDOC_Column);
-		else if (0 == strcmp(argv, "width"))
+		else if (0 == strcmp(p, "width"))
 			return(MDOC_Width);
-		else if (0 == strcmp(argv, "offset"))
+		else if (0 == strcmp(p, "offset"))
 			return(MDOC_Offset);
-		else if (0 == strcmp(argv, "compact"))
+		else if (0 == strcmp(p, "compact"))
 			return(MDOC_Compact);
-		else if (0 == strcmp(argv, "nested"))
+		else if (0 == strcmp(p, "nested"))
 			return(MDOC_Nested);
 		break;
 	
 	case (MDOC_Rv):
 		/* FALLTHROUGH */
 	case (MDOC_Ex):
-		if (0 == strcmp(argv, "std"))
+		if (0 == strcmp(p, "std"))
 			return(MDOC_Std);
 		break;
 	default:
