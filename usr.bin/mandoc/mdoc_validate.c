@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.35 2009/08/22 22:50:17 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.36 2009/10/19 16:27:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -85,6 +85,7 @@ static	int	 post_it(POST_ARGS);
 static	int	 post_lb(POST_ARGS);
 static	int	 post_nm(POST_ARGS);
 static	int	 post_root(POST_ARGS);
+static	int	 post_rs(POST_ARGS);
 static	int	 post_sh(POST_ARGS);
 static	int	 post_sh_body(POST_ARGS);
 static	int	 post_sh_head(POST_ARGS);
@@ -121,6 +122,7 @@ static	v_post	 posts_nd[] = { berr_ge1, NULL };
 static	v_post	 posts_nm[] = { post_nm, NULL };
 static	v_post	 posts_notext[] = { eerr_eq0, NULL };
 static	v_post	 posts_pf[] = { eerr_eq1, NULL };
+static	v_post	 posts_rs[] = { berr_ge1, herr_eq0, post_rs, NULL };
 static	v_post	 posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
 static	v_post	 posts_sp[] = { post_sp, NULL };
 static	v_post	 posts_ss[] = { herr_ge1, NULL };
@@ -232,7 +234,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Qo */
 	{ NULL, posts_wline },			/* Qq */
 	{ NULL, NULL },				/* Re */
-	{ NULL, posts_wline },			/* Rs */
+	{ NULL, posts_rs },			/* Rs */
 	{ NULL, NULL },				/* Sc */
 	{ NULL, NULL },				/* So */
 	{ NULL, posts_wline },			/* Sq */
@@ -1073,9 +1075,7 @@ post_bl(POST_ARGS)
 		if (MDOC_BLOCK == n->type) 
 			if (MDOC_It == n->tok)
 				continue;
-		return(mdoc_verr(mdoc, n->line, n->pos, 
-				"bad child of parent %s",
-				mdoc_macronames[mdoc->last->tok]));
+		return(mdoc_nerr(mdoc, n, EBADCHILD));
 	}
 
 	return(1);
@@ -1160,6 +1160,50 @@ post_st(POST_ARGS)
 	if (mdoc_a2st(mdoc->last->child->string))
 		return(1);
 	return(mdoc_nerr(mdoc, mdoc->last, EBADSTAND));
+}
+
+
+static int
+post_rs(POST_ARGS)
+{
+	struct mdoc_node	*nn;
+
+	if (MDOC_BODY != mdoc->last->type)
+		return(1);
+
+	for (nn = mdoc->last->child; nn; nn = nn->next)
+		switch (nn->tok) {
+		case(MDOC__Q):
+			/* FALLTHROUGH */
+		case(MDOC__C):
+			/* FALLTHROUGH */
+		case(MDOC__A):
+			/* FALLTHROUGH */
+		case(MDOC__B):
+			/* FALLTHROUGH */
+		case(MDOC__D):
+			/* FALLTHROUGH */
+		case(MDOC__I):
+			/* FALLTHROUGH */
+		case(MDOC__J):
+			/* FALLTHROUGH */
+		case(MDOC__N):
+			/* FALLTHROUGH */
+		case(MDOC__O):
+			/* FALLTHROUGH */
+		case(MDOC__P):
+			/* FALLTHROUGH */
+		case(MDOC__R):
+			/* FALLTHROUGH */
+		case(MDOC__T):
+			/* FALLTHROUGH */
+		case(MDOC__V):
+			break;
+		default:
+			return(mdoc_nerr(mdoc, nn, EBADCHILD));
+		}
+
+	return(1);
 }
 
 

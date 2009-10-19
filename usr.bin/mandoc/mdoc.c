@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.28 2009/10/19 10:20:24 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.29 2009/10/19 16:27:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -76,7 +76,8 @@ const	char *const __mdoc_merrnames[MERRMAX] = {
 	"unclosed explicit scope", /* EOPEN */
 	"unterminated quoted phrase", /* EQUOTPHR */
 	"closure macro without prior context", /* ENOCTX */
-	"no description found for library" /* ELIB */
+	"no description found for library", /* ELIB */
+	"bad child for parent context", /* EBADCHILD */
 };
 
 const	char *const __mdoc_macronames[MDOC_MAX] = {		 

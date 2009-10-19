@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.22 2009/10/19 15:44:01 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.23 2009/10/19 16:27:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -32,6 +32,11 @@ struct	actions {
 	int	(*post)(POST_ARGS);
 };
 
+static	int	  concat(struct mdoc *, 
+			const struct mdoc_node *, 
+			char *, size_t);
+static	inline int order_rs(int);
+
 static	int	  post_ar(POST_ARGS);
 static	int	  post_at(POST_ARGS);
 static	int	  post_bl(POST_ARGS);
@@ -45,6 +50,7 @@ static	int	  post_lb(POST_ARGS);
 static	int	  post_nm(POST_ARGS);
 static	int	  post_os(POST_ARGS);
 static	int	  post_prol(POST_ARGS);
+static	int	  post_rs(POST_ARGS);
 static	int	  post_sh(POST_ARGS);
 static	int	  post_st(POST_ARGS);
 static	int	  post_std(POST_ARGS);
@@ -141,7 +147,7 @@ static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Qo */
 	{ NULL, NULL }, /* Qq */
 	{ NULL, NULL }, /* Re */
-	{ NULL, NULL }, /* Rs */
+	{ NULL, post_rs }, /* Rs */
 	{ NULL, NULL }, /* Sc */
 	{ NULL, NULL }, /* So */
 	{ NULL, NULL }, /* Sq */
@@ -178,8 +184,23 @@ static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* sp */
 };
 
-static	int	  concat(struct mdoc *, const struct mdoc_node *, 
-			char *, size_t);
+#define	RSORD_MAX 13
+
+static	const int rsord[RSORD_MAX] = {
+	MDOC__A,
+	MDOC__T,
+	MDOC__B,
+	MDOC__I,
+	MDOC__J,
+	MDOC__R,
+	MDOC__N,
+	MDOC__V,
+	MDOC__P,
+	MDOC__Q,
+	MDOC__D,
+	MDOC__O,
+	MDOC__C
+};
 
 
 int
@@ -895,3 +916,65 @@ post_display(POST_ARGS)
 }
 
 
+static inline int
+order_rs(int t)
+{
+	int		i;
+
+	for (i = 0; i < RSORD_MAX; i++)
+		if (rsord[i] == t)
+			return(i);
+
+	abort();
+	/* NOTREACHED */
+}
+
+
+/* ARGSUSED */
+static int
+post_rs(POST_ARGS)
+{
+	struct mdoc_node	*nn, *next, *prev;
+	int			 o;
+
+	if (MDOC_BLOCK != n->type)
+		return(1);
+
+	assert(n->body->child);
+	for (next = NULL, nn = n->body->child->next; nn; nn = next) {
+		o = order_rs(nn->tok);
+
+		/* Remove `nn' from the chain. */
+		next = nn->next;
+		if (next)
+			next->prev = nn->prev;
+
+		prev = nn->prev;
+		if (prev)
+			prev->next = nn->next;
+
+		nn->prev = nn->next = NULL;
+
+		/* 
+		 * Scan back until we reach a node that's ordered before
+		 * us, then set ourselves as being the next. 
+		 */
+		for ( ; prev; prev = prev->prev)
+			if (order_rs(prev->tok) <= o)
+				break;
+
+		nn->prev = prev;
+		if (prev) {
+			if (prev->next)
+				prev->next->prev = nn;
+			nn->next = prev->next;
+			prev->next = nn;
+			continue;
+		} 
+
+		n->body->child->prev = nn;
+		nn->next = n->body->child;
+		n->body->child = nn;
+	}
+	return(1);
+}
