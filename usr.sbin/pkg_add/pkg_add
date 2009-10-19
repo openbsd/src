@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.361 2009/10/19 14:07:26 espie Exp $
+# $OpenBSD: pkg_add,v 1.362 2009/10/19 14:15:40 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -453,35 +453,37 @@ sub install_set
 		return ();
 	}
 
-	my $handle = $set->handle;
-	if ($state->{tracker}->is_installed($handle->pkgname)) {
-		$handle->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
-		return ();
-	}
-
-	$set->complete($state);
-	if ($handle->has_error(OpenBSD::Handle::ALREADY_INSTALLED)) {
-		return ();
-	}
-	if ($handle->has_error) {
-		if ($handle->has_error(OpenBSD::Handle::BAD_PACKAGE) &&
-		    !$handle->{tweaked}) {
-			$state->set_name_from_handle($handle);
-			$state->fatal("Fatal error");
-		} else {
+	for my $handle ($set->newer) {
+		if ($state->{tracker}->is_installed($handle->pkgname)) {
+			$handle->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
 			return ();
 		}
 	}
 
-	my $location = $handle->location;
-	my $plist = $handle->plist;
+	$set->complete($state);
 
-	if ($plist->has('arch')) {
-		unless ($plist->{arch}->check($state->{arch})) {
-			print $handle->pkgname, " is not for the right architecture\n";
-			return () unless $defines{arch};
+	for my $handle ($set->newer) {
+		if ($handle->has_error(OpenBSD::Handle::ALREADY_INSTALLED)) {
+			return ();
+		}
+		if ($handle->has_error) {
+			if ($handle->has_error(OpenBSD::Handle::BAD_PACKAGE) &&
+			    !$handle->{tweaked}) {
+				$state->set_name_from_handle($handle);
+				$state->fatal("Fatal error");
+			} else {
+				return ();
+			}
+		}
+
+		if ($handle->plist->has('arch')) {
+			unless ($handle->plist->{arch}->check($state->{arch})) {
+				print $handle->pkgname, " is not for the right architecture\n";
+				return () unless $defines{arch};
+			}
 		}
 	}
+
 	if (!defined $set->{solver}) {
 		$set->{solver} = OpenBSD::Dependencies::Solver->new($set);
 		my @deps = $set->{solver}->solve_depends($state);
@@ -489,7 +491,9 @@ sub install_set
 			$set->{solver}->dump;
 		}
 		if (@deps > 0) {
-			$state->build_deptree($handle->pkgname, @deps);
+			for my $handle ($set->newer) {
+				$state->build_deptree($handle->pkgname, @deps);
+			}
 			return (@deps, $set);
 		}
 	}
@@ -498,16 +502,20 @@ sub install_set
 	my @baddeps = $set->{solver}->check_depends;
 
 	if (@baddeps) {
-		print "Can't install ", $handle->pkgname,": can't resolve ",
-		    join(',', @baddeps), "\n";
-		$location->close_now;
+		for my $handle ($set->newer) {
+			print "Can't install ", $handle->pkgname,
+			    ": can't resolve ", join(',', @baddeps), "\n";
+			$handle->location->close_now;
+		}
 		$bad++;
 		return ();
 	}
 
 #	print "Didn't need to process: ", join(',', @{$set->{solver}->{todo}}), "\n";
 	if (!$set->{solver}->solve_wantlibs($state)) {
-		$location->close_now;
+		for my $handle ($set->newer) {
+			$handle->location->close_now;
+		}
 		if (!$defines{libdepends}) {
 			$bad++;
 			return ();
@@ -521,7 +529,9 @@ sub install_set
 #		}
 #	}
 	really_add($set, $state);
-	$handle->cleanup;
+	for my $handle ($set->newer) {
+		$handle->cleanup;
+	}
 	$state->{tracker}->mark_installed($set);
 	return ();
 }
