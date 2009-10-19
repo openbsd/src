@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.357 2009/10/15 23:23:35 espie Exp $
+# $OpenBSD: pkg_add,v 1.358 2009/10/19 09:19:44 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -99,6 +99,19 @@ sub set_name_from_handle
 	$state->set_pkgname($h->pkgname);
 }
 
+package OpenBSD::Handle;
+
+sub setup_header
+{
+	my ($handle, $state, $info) = @_;
+	my $pkgname = $handle->pkgname;
+	my $header = $state->deptree_header($pkgname).$pkgname;
+	if (defined $info) {
+		$header.=" ($info)";
+	}
+	$state->progress->set_header($header);
+}
+
 package OpenBSD::UpdateSet;
 use OpenBSD::PackageInfo;
 use OpenBSD::Error;
@@ -106,6 +119,7 @@ use OpenBSD::Error;
 sub setup_header
 {
 	my ($set, $state) = @_;
+	
 
 	my $pkgname = $set->handle->pkgname;
 
@@ -113,13 +127,14 @@ sub setup_header
 	if ($set->older) {
 		$header.=" (replacing ". join(', ', $set->older_names). ")";
 	}
+
 	if (!$state->progress->set_header($header)) {
-	    print $state->{not} ? "Pretending to add " : "Adding ";
-	    print $header;
-	    if ($state->{do_faked}) {
-		    print " under ", $state->{destdir};
-	    }
-	    print "\n";
+		print $state->{not} ? "Pretending to add " : "Adding ";
+		print $header;
+		if ($state->{do_faked}) {
+			print " under ", $state->{destdir};
+		}
+		print "\n";
 	}
 }
 
@@ -343,9 +358,7 @@ sub really_add
 
 	if ($replacing) {
 		for my $handle ($set->newer) {
-			my $pkgname = $handle->pkgname;
-			my $header = $state->deptree_header($pkgname).$pkgname;
-			$state->progress->set_header("$header (extracting)");
+			$handle->setup_header($state, "extracting");
 
 			try {
 				OpenBSD::Replace::perform_extraction($handle, 
@@ -358,15 +371,15 @@ sub really_add
 			};
 			$state->progress->clear;
 			if ($state->{interrupted} || $errors) {
-				Fatal partial_install("Installation of $pkgname failed",
-				    $set, $state);
+				Fatal partial_install("Installation of ",
+				    $handle->pkgname, " failed", $set, $state);
 			}
 		}
 
 		$set->{solver}->record_old_dependencies($state);
 		for my $o ($set->older_to_do) {
+			$o->setup_header($state, "deleting");
 			my $oldname = $o->pkgname;
-			$state->progress->set_header($oldname." (deleting)");
 			$state->set_name_from_handle($o);
 			require OpenBSD::Delete;
 			try {
@@ -391,11 +404,8 @@ sub really_add
 		my $pkgname = $handle->pkgname;
 		my $header = $state->deptree_header($pkgname).$pkgname;
 		my $plist = $handle->{plist};
-		if ($replacing) {
-			$state->progress->set_header("$header (installing)");
-		} else {
-			$state->progress->set_header($header);
-		}
+		$handle->setup_header($state, 
+		    $replacing ? "installing" : undef);
 		$state->set_name_from_handle($handle);
 
 		try {
