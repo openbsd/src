@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2009/10/19 20:00:46 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.42 2009/10/19 20:48:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -92,12 +92,12 @@ struct mapel_list	*contents = NULL;
 
 struct listener	*host_v4(const char *, in_port_t);
 struct listener	*host_v6(const char *, in_port_t);
-int		 host_dns(const char *, const char *, struct listenerlist *,
-		    int, in_port_t, u_int8_t);
-int		 host(const char *, const char *, struct listenerlist *,
-		    int, in_port_t, u_int8_t);
-int		 interface(const char *, const char *, struct listenerlist *,
-		    int, in_port_t, u_int8_t);
+int		 host_dns(const char *, const char *, const char *,
+		    struct listenerlist *, int, in_port_t, u_int8_t);
+int		 host(const char *, const char *, const char *,
+		    struct listenerlist *, int, in_port_t, u_int8_t);
+int		 interface(const char *, const char *, const char *,
+		    struct listenerlist *, int, in_port_t, u_int8_t);
 void		 set_localaddrs(void);
 
 typedef struct {
@@ -119,7 +119,7 @@ typedef struct {
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
-%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL USER
+%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL USER TAG
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
@@ -127,7 +127,7 @@ typedef struct {
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
-%type	<v.string>	certname user
+%type	<v.string>	certname user tag on
 
 %%
 
@@ -232,15 +232,29 @@ auth		: ENABLE AUTH  			{ $$ = 1; }
 		| /* empty */			{ $$ = 0; }
 		;
 
+tag		: TAG STRING			{
+       			if (strlen($2) >= MAX_TAG_SIZE) {
+       				yyerror("tag name too long");
+				free($2);
+				YYERROR;
+			}
+
+			$$ = $2;
+		}
+		| /* empty */			{ $$ = NULL; }
+		;
+
 main		: QUEUE INTERVAL interval	{
 			conf->sc_qintval = $3;
 		}
-		| LISTEN ON STRING port ssl certname auth {
+		| LISTEN ON STRING port ssl certname auth tag {
 			char		*cert;
+			char		*tag;
 			u_int8_t	 flags;
 
 			if ($5 == F_SSL) {
 				yyerror("syntax error");
+				free($8);
 				free($6);
 				free($3);
 				YYERROR;
@@ -248,6 +262,7 @@ main		: QUEUE INTERVAL interval	{
 
 			if ($5 == 0 && ($6 != NULL || $7)) {
 				yyerror("error: must specify tls or smtps");
+				free($8);
 				free($6);
 				free($3);
 				YYERROR;
@@ -268,21 +283,28 @@ main		: QUEUE INTERVAL interval	{
 
 			if ($5 && ssl_load_certfile(conf, cert, F_SCERT) < 0) {
 				yyerror("cannot load certificate: %s", cert);
+				free($8);
 				free($6);
 				free($3);
 				YYERROR;
 			}
 
-			if (! interface($3, cert, conf->sc_listeners,
+			tag = $3;
+			if ($8 != NULL)
+				tag = $8;
+
+			if (! interface($3, tag, cert, conf->sc_listeners,
 				MAX_LISTEN, $4, flags)) {
-				if (host($3, cert, conf->sc_listeners,
+				if (host($3, tag, cert, conf->sc_listeners,
 					MAX_LISTEN, $4, flags) <= 0) {
 					yyerror("invalid virtual ip or interface: %s", $3);
+					free($8);
 					free($6);
 					free($3);
 					YYERROR;
 				}
 			}
+			free($8);
 			free($6);
 			free($3);
 		}
@@ -885,17 +907,33 @@ from		: FROM mapref			{
 		}
 		;
 
-rule		: decision from			{
+on		: ON STRING	{
+       			if (strlen($2) >= MAX_TAG_SIZE) {
+       				yyerror("interface, address or tag name too long");
+				free($2);
+				YYERROR;
+			}
+
+			$$ = $2;
+		}
+		| /* empty */	{ $$ = NULL; }
+
+rule		: decision on from			{
 			struct rule	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
 				fatal("out of memory");
 			rule = r;
-			rule->r_sources = map_find(conf, $2);
+			rule->r_sources = map_find(conf, $3);
+
+			if ($2)
+				(void)strlcpy(rule->r_tag, $2, sizeof(rule->r_tag));
+			free($2);
+
 			TAILQ_INIT(&rule->r_conditions);
 			TAILQ_INIT(&rule->r_options);
 
-		} FOR conditions action	{
+		} FOR conditions action	tag {
 			TAILQ_INSERT_TAIL(conf->sc_rules, rule, r_entry);
 		}
 		;
@@ -966,6 +1004,7 @@ lookup(char *s)
 		{ "smtps",		SMTPS },
 		{ "source",		SOURCE },
 		{ "ssl",		SSL },
+		{ "tag",		TAG },
 		{ "tls",		TLS },
 		{ "to",			TO },
 		{ "type",		TYPE },
@@ -1531,8 +1570,8 @@ host_v6(const char *s, in_port_t port)
 }
 
 int
-host_dns(const char *s, const char *cert, struct listenerlist *al, int max, in_port_t port,
-    u_int8_t flags)
+host_dns(const char *s, const char *tag, const char *cert,
+    struct listenerlist *al, int max, in_port_t port, u_int8_t flags)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error, cnt = 0;
@@ -1566,6 +1605,8 @@ host_dns(const char *s, const char *cert, struct listenerlist *al, int max, in_p
 		h->ssl_cert_name[0] = '\0';
 		if (cert != NULL)
 			(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
+		if (tag != NULL)
+			(void)strlcpy(h->tag, tag, sizeof(h->tag));
 
 		if (res->ai_family == AF_INET) {
 			sain = (struct sockaddr_in *)&h->ss;
@@ -1593,8 +1634,8 @@ host_dns(const char *s, const char *cert, struct listenerlist *al, int max, in_p
 }
 
 int
-host(const char *s, const char *cert, struct listenerlist *al, int max, in_port_t port,
-    u_int8_t flags)
+host(const char *s, const char *tag, const char *cert, struct listenerlist *al,
+    int max, in_port_t port, u_int8_t flags)
 {
 	struct listener *h;
 
@@ -1611,18 +1652,19 @@ host(const char *s, const char *cert, struct listenerlist *al, int max, in_port_
 		h->ssl_cert_name[0] = '\0';
 		if (cert != NULL)
 			(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
-
+		if (tag != NULL)
+			(void)strlcpy(h->tag, tag, sizeof(h->tag));
 
 		TAILQ_INSERT_HEAD(al, h, entry);
 		return (1);
 	}
 
-	return (host_dns(s, cert, al, max, port, flags));
+	return (host_dns(s, tag, cert, al, max, port, flags));
 }
 
 int
-interface(const char *s, const char *cert, struct listenerlist *al, int max, in_port_t port,
-    u_int8_t flags)
+interface(const char *s, const char *tag, const char *cert,
+    struct listenerlist *al, int max, in_port_t port, u_int8_t flags)
 {
 	struct ifaddrs *ifap, *p;
 	struct sockaddr_in	*sain;
@@ -1653,6 +1695,10 @@ interface(const char *s, const char *cert, struct listenerlist *al, int max, in_
 			h->ssl_cert_name[0] = '\0';
 			if (cert != NULL)
 				(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
+			if (tag != NULL)
+				(void)strlcpy(h->tag, tag, sizeof(h->tag));
+			if (tag != NULL)
+				(void)strlcpy(h->tag, tag, sizeof(h->tag));
 
 			ret = 1;
 			TAILQ_INSERT_HEAD(al, h, entry);

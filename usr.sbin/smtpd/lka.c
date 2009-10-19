@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.70 2009/10/18 21:45:47 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.71 2009/10/19 20:48:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,19 +57,19 @@ int		lka_forward_file(struct passwd *);
 size_t		lka_expand(char *, size_t, struct path *);
 int		aliases_exist(struct smtpd *, char *);
 int		aliases_get(struct smtpd *, struct aliaseslist *, char *);
-int		lka_resolve_alias(struct smtpd *, struct path *, struct alias *);
+int		lka_resolve_alias(struct smtpd *, char *tag, struct path *, struct alias *);
 int		lka_parse_include(char *);
 int		lka_check_source(struct smtpd *, struct map *, struct sockaddr_storage *);
 int		lka_match_mask(struct sockaddr_storage *, struct netaddr *);
 int		lka_resolve_path(struct smtpd *, struct path *);
 void		lka_expand_rcpt(struct smtpd *, struct aliaseslist *, struct lkasession *);
 int		lka_expand_rcpt_iteration(struct smtpd *, struct aliaseslist *, struct lkasession *);
-void		lka_rcpt_action(struct smtpd *, struct path *);
+void		lka_rcpt_action(struct smtpd *, char *, struct path *);
 void		lka_clear_aliaseslist(struct aliaseslist *);
 int		lka_encode_credentials(char *, size_t, char *);
 struct lkasession *lka_session_init(struct smtpd *, struct submit_status *);
 void		lka_request_forwardfile(struct smtpd *, struct lkasession *, char *);
-struct rule    *ruleset_match(struct smtpd *, struct path *, struct sockaddr_storage *);
+struct rule    *ruleset_match(struct smtpd *, char *, struct path *, struct sockaddr_storage *);
 void		 queue_submit_envelope(struct smtpd *, struct message *);
 void		 queue_commit_envelopes(struct smtpd *, struct message*);
 
@@ -255,7 +255,7 @@ lka_dispatch_parent(int sig, short event, void *p)
 			alias_parse(&alias, fwreq->pw_name);
 
 			/* then resolve alias and get back to expanding the aliases list */
-			lka_resolve_alias(env, &lkasession->message.recipient, &alias);
+			lka_resolve_alias(env, lkasession->message.tag, &lkasession->message.recipient, &alias);
 			lka_expand_rcpt(env, &lkasession->aliaseslist, lkasession);
 			break;
 		}
@@ -330,7 +330,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 
 			ss->code = 530;
 
-			r = ruleset_match(env, &ss->u.path, &ss->ss);
+			r = ruleset_match(env, ss->msg.tag, &ss->u.path, &ss->ss);
 			if (r != NULL) {
 				ss->code = 250;
 				ss->u.path.rule = *r;
@@ -833,7 +833,7 @@ lka_expand(char *buf, size_t len, struct path *path)
 }
 
 int
-lka_resolve_alias(struct smtpd *env, struct path *path, struct alias *alias)
+lka_resolve_alias(struct smtpd *env, char *tag, struct path *path, struct alias *alias)
 {
 	bzero(path, sizeof(struct path));
 
@@ -854,7 +854,7 @@ lka_resolve_alias(struct smtpd *env, struct path *path, struct alias *alias)
 				return 0;
 		}
 		log_debug("RESOLVED TO %s@%s", path->user, path->domain);
-		lka_rcpt_action(env, path);
+		lka_rcpt_action(env, tag, path);
 		break;
 
 	case ALIAS_FILENAME:
@@ -876,7 +876,7 @@ lka_resolve_alias(struct smtpd *env, struct path *path, struct alias *alias)
 		log_debug("ADDRESS: %s@%s", alias->u.path.user, alias->u.path.domain);
 
 		*path = alias->u.path;
-		lka_rcpt_action(env, path);
+		lka_rcpt_action(env, tag, path);
 		break;
 	case ALIAS_INCLUDE:
 		fatalx("lka_resolve_alias: unexpected type");
@@ -929,7 +929,7 @@ lka_expand_rcpt(struct smtpd *env, struct aliaseslist *aliases, struct lkasessio
 		message = lkasession->message;
 
 		while ((alias = TAILQ_FIRST(&lkasession->aliaseslist)) != NULL) {
-			lka_resolve_alias(env, &message.recipient, alias);
+			lka_resolve_alias(env, message.tag, &message.recipient, alias);
 			queue_submit_envelope(env, &message);
 
 			TAILQ_REMOVE(&lkasession->aliaseslist, alias, entry);
@@ -959,7 +959,7 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 		}
 		
 		if (alias->type == ALIAS_ADDRESS) {
-			lka_rcpt_action(env, &alias->u.path);
+			lka_rcpt_action(env, lkasession->message.tag, &alias->u.path);
 			if (aliases_virtual_get(env, alias->u.path.cond->c_match, aliases, &alias->u.path)) {
 				rmalias = alias;
 				done = 0;
@@ -1041,7 +1041,7 @@ lka_resolve_path(struct smtpd *env, struct path *path){
 }
 
 void
-lka_rcpt_action(struct smtpd *env, struct path *path)
+lka_rcpt_action(struct smtpd *env, char *tag, struct path *path)
 {
 	struct rule *r;
 
@@ -1049,7 +1049,7 @@ lka_rcpt_action(struct smtpd *env, struct path *path)
 		(void)strlcpy(path->domain, env->sc_hostname,
 		    sizeof (path->domain));
 
-	r = ruleset_match(env, path, NULL);
+	r = ruleset_match(env, tag, path, NULL);
 	if (r == NULL) {
 		path->rule.r_action = A_RELAY;
 		return;

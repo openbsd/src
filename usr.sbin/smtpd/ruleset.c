@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.4 2009/10/12 18:14:51 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.5 2009/10/19 20:48:13 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -35,20 +35,26 @@
 
 #include "smtpd.h"
 
-struct rule    *ruleset_match(struct smtpd *, struct path *, struct sockaddr_storage *);
+struct rule    *ruleset_match(struct smtpd *, char *tag, struct path *, struct sockaddr_storage *);
 int		ruleset_check_source(struct map *, struct sockaddr_storage *);
 int		ruleset_match_mask(struct sockaddr_storage *, struct netaddr *);
 
 
 struct rule *
-ruleset_match(struct smtpd *env, struct path *path, struct sockaddr_storage *ss)
+ruleset_match(struct smtpd *env, char *tag, struct path *path, struct sockaddr_storage *ss)
 {
 	struct rule *r;
 	struct cond *cond;
 	struct map *map;
 	struct mapel *me;
 
+	if (tag)
+		log_debug("tag: %s", tag);
+
 	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
+
+		if (r->r_tag[0] != '\0' && strcmp(r->r_tag, tag) != 0)
+			continue;
 
 		if (ss != NULL &&
 		    (!(path->flags & F_PATH_AUTHENTICATED) &&

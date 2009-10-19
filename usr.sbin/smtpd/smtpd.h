@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.148 2009/10/19 20:00:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.149 2009/10/19 20:48:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -41,6 +41,7 @@
 #define MAX_LOCALPART_SIZE	 65
 #define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
 #define MAX_ID_SIZE		 64
+#define MAX_TAG_SIZE		 32
 
 /* return and forward path size */
 #define MAX_PATH_SIZE		 256
@@ -321,6 +322,7 @@ enum action_type {
 
 struct rule {
 	TAILQ_ENTRY(rule)		 r_entry;
+	char				 r_tag[MAX_TAG_SIZE];
 	int				 r_accept;
 	struct map			*r_sources;
 	TAILQ_HEAD(condlist, cond)	 r_conditions;
@@ -416,6 +418,8 @@ struct message {
 	u_int64_t			 id;
 	u_int64_t			 session_id;
 	u_int64_t			 batch_id;
+
+	char				 tag[MAX_TAG_SIZE];
 
 	char				 message_id[MAX_ID_SIZE];
 	char				 message_uid[MAX_ID_SIZE];
@@ -522,6 +526,7 @@ struct listener {
 	char			 ssl_cert_name[PATH_MAX];
 	struct ssl		*ssl;
 	void			*ssl_ctx;
+	char			 tag[MAX_TAG_SIZE];
 	TAILQ_ENTRY(listener)	 entry;
 };
 
