@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.32 2009/10/11 10:04:27 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.33 2009/10/19 13:18:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -631,6 +631,9 @@ void
 window_pane_parse(struct window_pane *wp)
 {
 	size_t	new_size;
+
+	if (wp->mode != NULL)
+		return;
 
 	new_size = BUFFER_USED(wp->in) - wp->pipe_off;
 	if (wp->pipe_fd != -1 && new_size > 0)
