@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.124 2009/09/02 18:20:54 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.125 2009/10/19 22:24:18 jsg Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -208,10 +208,7 @@ nfs_cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
  * nfs null call from vfs.
  */
 int
-nfs_null(vp, cred, procp)
-	struct vnode *vp;
-	struct ucred *cred;
-	struct proc *procp;
+nfs_null(struct vnode *vp, struct ucred *cred, struct proc *procp)
 {
 	struct nfsm_info	 info;
 	int			 error = 0;
@@ -229,8 +226,7 @@ nfs_null(vp, cred, procp)
  * are changed on the server, accesses might still fail later.
  */
 int
-nfs_access(v)
-	void *v;
+nfs_access(void *v)
 {
 	struct vop_access_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -365,8 +361,7 @@ nfsmout:
  * if consistency is lost.
  */
 int
-nfs_open(v)
-	void *v;
+nfs_open(void *v)
 {
 	struct vop_open_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -460,8 +455,7 @@ nfs_open(v)
  *                     commit is necessary now.
  */
 int
-nfs_close(v)
-	void *v;
+nfs_close(void *v)
 {
 	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -489,8 +483,7 @@ nfs_close(v)
  * nfs getattr call from vfs.
  */
 int
-nfs_getattr(v)
-	void *v;
+nfs_getattr(void *v)
 {
 	struct vop_getattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -529,8 +522,7 @@ nfsmout:
  * nfs setattr call.
  */
 int
-nfs_setattr(v)
-	void *v;
+nfs_setattr(void *v)
 {
 	struct vop_setattr_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -613,11 +605,8 @@ nfs_setattr(v)
  * Do an nfs setattr rpc.
  */
 int
-nfs_setattrrpc(vp, vap, cred, procp)
-	struct vnode *vp;
-	struct vattr *vap;
-	struct ucred *cred;
-	struct proc *procp;
+nfs_setattrrpc(struct vnode *vp, struct vattr *vap, struct ucred *cred,
+    struct proc *procp)
 {
 	struct nfsv2_sattr *sp;
 	struct nfsm_info	info;
@@ -676,8 +665,7 @@ nfsmout:
  * If not found, unlock the directory nfsnode and do the rpc
  */
 int
-nfs_lookup(v)
-	void *v;
+nfs_lookup(void *v)
 {
 	struct vop_lookup_args *ap = v;
 	struct componentname *cnp = ap->a_cnp;
@@ -939,8 +927,7 @@ nfsmout:
  * Just call nfs_bioread() to do the work.
  */
 int
-nfs_read(v)
-	void *v;
+nfs_read(void *v)
 {
 	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -954,8 +941,7 @@ nfs_read(v)
  * nfs readlink call
  */
 int
-nfs_readlink(v)
-	void *v;
+nfs_readlink(void *v)
 {
 	struct vop_readlink_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -970,10 +956,7 @@ nfs_readlink(v)
  * Called by nfs_doio() from below the buffer cache.
  */
 int
-nfs_readlinkrpc(vp, uiop, cred)
-	struct vnode *vp;
-	struct uio *uiop;
-	struct ucred *cred;
+nfs_readlinkrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 {
 	struct nfsm_info	info;
 	u_int32_t *tl;
@@ -1009,9 +992,7 @@ nfsmout:
  * Ditto above
  */
 int
-nfs_readrpc(vp, uiop)
-	struct vnode *vp;
-	struct uio *uiop;
+nfs_readrpc(struct vnode *vp, struct uio *uiop)
 {
 	struct nfsm_info	info;
 	u_int32_t *tl;
@@ -1080,10 +1061,7 @@ nfsmout:
  * nfs write call
  */
 int
-nfs_writerpc(vp, uiop, iomode, must_commit)
-	struct vnode *vp;
-	struct uio *uiop;
-	int *iomode, *must_commit;
+nfs_writerpc(struct vnode *vp, struct uio *uiop, int *iomode, int *must_commit)
 {
 	struct nfsm_info	info;
 	u_int32_t *tl;
@@ -1204,11 +1182,8 @@ nfsmout:
  * mode set to specify the file type and the size field for rdev.
  */
 int
-nfs_mknodrpc(dvp, vpp, cnp, vap)
-	struct vnode *dvp;
-	struct vnode **vpp;
-	struct componentname *cnp;
-	struct vattr *vap;
+nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp,
+    struct vattr *vap)
 {
 	struct nfsv2_sattr *sp;
 	struct nfsm_info	info;
@@ -1299,8 +1274,7 @@ nfsmout:
  * just call nfs_mknodrpc() to do the work.
  */
 int
-nfs_mknod(v)
-	void *v;
+nfs_mknod(void *v)
 {
 	struct vop_mknod_args *ap = v;
 	struct vnode *newvp;
@@ -1316,8 +1290,7 @@ nfs_mknod(v)
 }
 
 int
-nfs_create(v)
-	void *v;
+nfs_create(void *v)
 {
 	struct vop_create_args *ap = v;
 	struct vnode *dvp = ap->a_dvp;
@@ -1427,8 +1400,7 @@ nfsmout:
  *	  do the remove rpc
  */
 int
-nfs_remove(v)
-	void *v;
+nfs_remove(void *v)
 {
 	struct vop_remove_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -1491,8 +1463,7 @@ nfs_remove(v)
  * nfs file remove rpc called from nfs_inactive
  */
 int
-nfs_removeit(sp)
-	struct sillyrename *sp;
+nfs_removeit(struct sillyrename *sp)
 {
 
 	return (nfs_removerpc(sp->s_dvp, sp->s_name, sp->s_namlen, sp->s_cred,
@@ -1503,12 +1474,8 @@ nfs_removeit(sp)
  * Nfs remove rpc, called from nfs_remove() and nfs_removeit().
  */
 int
-nfs_removerpc(dvp, name, namelen, cred, proc)
-	struct vnode *dvp;
-	char *name;
-	int namelen;
-	struct ucred *cred;
-	struct proc *proc;
+nfs_removerpc(struct vnode *dvp, char *name, int namelen, struct ucred *cred,
+    struct proc *proc)
 {
 	struct nfsm_info	info;
 	u_int32_t *tl;
@@ -1542,8 +1509,7 @@ nfsmout:
  * nfs file rename call
  */
 int
-nfs_rename(v)
-	void *v;
+nfs_rename(void *v)
 {
 	struct vop_rename_args  *ap = v;
 	struct vnode *fvp = ap->a_fvp;
@@ -1610,10 +1576,8 @@ out:
  * nfs file rename rpc called from nfs_remove() above
  */
 int
-nfs_renameit(sdvp, scnp, sp)
-	struct vnode *sdvp;
-	struct componentname *scnp;
-	struct sillyrename *sp;
+nfs_renameit(struct vnode *sdvp, struct componentname *scnp,
+    struct sillyrename *sp)
 {
 	return (nfs_renamerpc(sdvp, scnp->cn_nameptr, scnp->cn_namelen,
 		sdvp, sp->s_name, sp->s_namlen, scnp->cn_cred, scnp->cn_proc));
@@ -1623,15 +1587,9 @@ nfs_renameit(sdvp, scnp, sp)
  * Do an nfs rename rpc. Called from nfs_rename() and nfs_renameit().
  */
 int
-nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
-	struct vnode *fdvp;
-	char *fnameptr;
-	int fnamelen;
-	struct vnode *tdvp;
-	char *tnameptr;
-	int tnamelen;
-	struct ucred *cred;
-	struct proc *proc;
+nfs_renamerpc(struct vnode *fdvp, char *fnameptr, int fnamelen,
+    struct vnode *tdvp, char *tnameptr, int tnamelen, struct ucred *cred,
+    struct proc *proc)
 {
 	struct nfsm_info	info;
 	u_int32_t *tl;
@@ -1672,8 +1630,7 @@ nfsmout:
  * nfs hard link create call
  */
 int
-nfs_link(v)
-	void *v;
+nfs_link(void *v)
 {
 	struct vop_link_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -1736,8 +1693,7 @@ nfsmout:
  * nfs symbolic link create call
  */
 int
-nfs_symlink(v)
-	void *v;
+nfs_symlink(void *v)
 {
 	struct vop_symlink_args *ap = v;
 	struct vnode *dvp = ap->a_dvp;
@@ -1799,8 +1755,7 @@ nfsmout:
  * nfs make dir call
  */
 int
-nfs_mkdir(v)
-	void *v;
+nfs_mkdir(void *v)
 {
 	struct vop_mkdir_args *ap = v;
 	struct vnode *dvp = ap->a_dvp;
@@ -1879,8 +1834,7 @@ nfsmout:
  * nfs remove directory call
  */
 int
-nfs_rmdir(v)
-	void *v;
+nfs_rmdir(void *v)
 {
 	struct vop_rmdir_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -1959,8 +1913,7 @@ struct nfs_dirent {
  * nfs readdir call
  */
 int
-nfs_readdir(v)
-	void *v;
+nfs_readdir(void *v)
 {
 	struct vop_readdir_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -2107,9 +2060,7 @@ nfs_readdir(v)
  * Readdir rpc call.
  */
 int
-nfs_readdirrpc(struct vnode *vp, 
-    struct uio *uiop, 
-    struct ucred *cred,
+nfs_readdirrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
     int *end_of_directory)
 {
 	int len, left;
@@ -2538,9 +2489,7 @@ nfsmout:
  * nfs_rename() completes, but...
  */
 int
-nfs_sillyrename(dvp, vp, cnp)
-	struct vnode *dvp, *vp;
-	struct componentname *cnp;
+nfs_sillyrename(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 {
 	struct sillyrename *sp;
 	struct nfsnode *np;
@@ -2599,13 +2548,8 @@ bad:
  * *npp != NULL --> update the file handle in the vnode
  */
 int
-nfs_lookitup(dvp, name, len, cred, procp, npp)
-	struct vnode *dvp;
-	char *name;
-	int len;
-	struct ucred *cred;
-	struct proc *procp;
-	struct nfsnode **npp;
+nfs_lookitup(struct vnode *dvp, char *name, int len, struct ucred *cred,
+    struct proc *procp, struct nfsnode **npp)
 {
 	struct nfsm_info	info;
 	u_int32_t *tl;
@@ -2678,11 +2622,7 @@ nfsmout:
  * Nfs Version 3 commit rpc
  */
 int
-nfs_commit(vp, offset, cnt, procp)
-	struct vnode *vp;
-	u_quad_t offset;
-	int cnt;
-	struct proc *procp;
+nfs_commit(struct vnode *vp, u_quad_t offset, int cnt, struct proc *procp)
 {
 	struct nfsm_info	info;
 	u_int32_t *tl;
@@ -2732,8 +2672,7 @@ nfsmout:
  *    context of the swapper process (2).
  */
 int
-nfs_bmap(v)
-	void *v;
+nfs_bmap(void *v)
 {
 	struct vop_bmap_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -2752,8 +2691,7 @@ nfs_bmap(v)
  * request.
  */
 int
-nfs_strategy(v)
-	void *v;
+nfs_strategy(void *v)
 {
 	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
@@ -2780,8 +2718,7 @@ nfs_strategy(v)
  * fsync vnode op. Just call nfs_flush() with commit == 1.
  */
 int
-nfs_fsync(v)
-	void *v;
+nfs_fsync(void *v)
 {
 	struct vop_fsync_args *ap = v;
 
@@ -2794,12 +2731,8 @@ nfs_fsync(v)
  *	associated with the vnode.
  */
 int
-nfs_flush(vp, cred, waitfor, p, commit)
-	struct vnode *vp;
-	struct ucred *cred;
-	int waitfor;
-	struct proc *p;
-	int commit;
+nfs_flush(struct vnode *vp, struct ucred *cred, int waitfor, struct proc *p,
+    int commit)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct buf *bp;
@@ -2968,8 +2901,7 @@ loop:
  */
 /* ARGSUSED */
 int
-nfs_pathconf(v)
-	void *v;
+nfs_pathconf(void *v)
 {
 #if 0
 	struct vop_pathconf_args *ap = v;
@@ -2982,8 +2914,7 @@ nfs_pathconf(v)
  * NFS advisory byte-level locks.
  */
 int
-nfs_advlock(v)
-	void *v;
+nfs_advlock(void *v)
 {
 	struct vop_advlock_args *ap = v;
 	struct nfsnode *np = VTONFS(ap->a_vp);
@@ -2996,8 +2927,7 @@ nfs_advlock(v)
  * Print out the contents of an nfsnode.
  */
 int
-nfs_print(v)
-	void *v;
+nfs_print(void *v)
 {
 	struct vop_print_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -3017,8 +2947,7 @@ nfs_print(v)
  * Just call nfs_writebp() with the force argument set to 1.
  */
 int
-nfs_bwrite(v)
-	void *v;
+nfs_bwrite(void *v)
 {
 	struct vop_bwrite_args *ap = v;
 
@@ -3030,9 +2959,7 @@ nfs_bwrite(v)
  * the force flag is one and it also handles the B_NEEDCOMMIT flag.
  */
 int
-nfs_writebp(bp, force)
-	struct buf *bp;
-	int force;
+nfs_writebp(struct buf *bp, int force)
 {
 	int oldflags = bp->b_flags, retv = 1;
 	struct proc *p = curproc;	/* XXX */
@@ -3141,8 +3068,7 @@ nfs_writebp(bp, force)
  * local to the client.
  */
 int
-nfsspec_access(v)
-	void *v;
+nfsspec_access(void *v)
 {
 	struct vop_access_args *ap = v;
 	struct vattr va;
@@ -3174,8 +3100,7 @@ nfsspec_access(v)
 }
 
 int
-nfs_poll(v)
-        void *v;
+nfs_poll(void *v)
 {
 	struct vop_poll_args *ap = v;
 
@@ -3189,8 +3114,7 @@ nfs_poll(v)
  * Read wrapper for special devices.
  */
 int
-nfsspec_read(v)
-	void *v;
+nfsspec_read(void *v)
 {
 	struct vop_read_args *ap = v;
 	struct nfsnode *np = VTONFS(ap->a_vp);
@@ -3207,8 +3131,7 @@ nfsspec_read(v)
  * Write wrapper for special devices.
  */
 int
-nfsspec_write(v)
-	void *v;
+nfsspec_write(void *v)
 {
 	struct vop_write_args *ap = v;
 	struct nfsnode *np = VTONFS(ap->a_vp);
@@ -3227,8 +3150,7 @@ nfsspec_write(v)
  * Update the times on the nfsnode then do device close.
  */
 int
-nfsspec_close(v)
-	void *v;
+nfsspec_close(void *v)
 {
 	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -3255,8 +3177,7 @@ nfsspec_close(v)
  * Read wrapper for fifos.
  */
 int
-nfsfifo_read(v)
-	void *v;
+nfsfifo_read(void *v)
 {
 	struct vop_read_args *ap = v;
 	extern int (**fifo_vnodeop_p)(void *);
@@ -3274,8 +3195,7 @@ nfsfifo_read(v)
  * Write wrapper for fifos.
  */
 int
-nfsfifo_write(v)
-	void *v;
+nfsfifo_write(void *v)
 {
 	struct vop_write_args *ap = v;
 	extern int (**fifo_vnodeop_p)(void *);
@@ -3295,8 +3215,7 @@ nfsfifo_write(v)
  * Update the times on the nfsnode then do fifo close.
  */
 int
-nfsfifo_close(v)
-	void *v;
+nfsfifo_close(void *v)
 {
 	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;

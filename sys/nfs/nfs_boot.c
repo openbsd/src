@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.24 2008/06/11 04:52:27 blambert Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.25 2009/10/19 22:24:18 jsg Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -60,19 +60,14 @@
 #if !defined(NFSCLIENT) || (NETHER == 0 && NFDDI == 0)
 
 int
-nfs_boot_init(nd, procp)
-	struct nfs_diskless *nd;
-	struct proc *procp;
+nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 {
 	panic("nfs_boot_init: NFSCLIENT not enabled in kernel");
 }
 
 int
-nfs_boot_getfh(bpsin, key, ndmntp, retries)
-	struct sockaddr_in *bpsin;
-	char *key;
-	struct nfs_dlmount *ndmntp;
-	int retries;
+nfs_boot_getfh(struct sockaddr_in *bpsin, char *key,
+    struct nfs_dlmount *ndmntp, int retries)
 {
 	/* can not get here */
 	return (EOPNOTSUPP);
@@ -116,9 +111,7 @@ char	*nfsbootdevname;
  * Called with an empty nfs_diskless struct to be filled in.
  */
 int
-nfs_boot_init(nd, procp)
-	struct nfs_diskless *nd;
-	struct proc *procp;
+nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 {
 	struct ifreq ireq;
 	struct in_addr my_ip, gw_ip;
@@ -262,12 +255,14 @@ nfs_boot_init(nd, procp)
 	return (0);
 }
 
+/*
+ * bpsin:	bootparam server
+ * key:		root or swap
+ * ndmntp:	output
+ */
 int
-nfs_boot_getfh(bpsin, key, ndmntp, retries)
-	struct sockaddr_in *bpsin;	/* bootparam server */
-	char *key;			/* root or swap */
-	struct nfs_dlmount *ndmntp;	/* output */
-	int retries;
+nfs_boot_getfh(struct sockaddr_in *bpsin, char *key,
+    struct nfs_dlmount *ndmntp, int retries)
 {
 	char pathname[MAXPATHLEN];
 	char *sp, *dp, *endp;
@@ -334,10 +329,8 @@ nfs_boot_getfh(bpsin, key, ndmntp, retries)
  * know about us (don't want to broadcast a getport call).
  */
 static int
-bp_whoami(bpsin, my_ip, gw_ip)
-	struct sockaddr_in *bpsin;
-	struct in_addr *my_ip;
-	struct in_addr *gw_ip;
+bp_whoami(struct sockaddr_in *bpsin, struct in_addr *my_ip,
+    struct in_addr *gw_ip)
 {
 	/* RPC structures for PMAPPROC_CALLIT */
 	struct whoami_call {
@@ -442,13 +435,8 @@ out:
  *	server pathname
  */
 static int
-bp_getfile(bpsin, key, md_sin, serv_name, pathname, retries)
-	struct sockaddr_in *bpsin;
-	char *key;
-	struct sockaddr_in *md_sin;
-	char *serv_name;
-	char *pathname;
-	int retries;
+bp_getfile(struct sockaddr_in *bpsin, char *key, struct sockaddr_in *md_sin,
+    char *serv_name, char *pathname, int retries)
 {
 	struct mbuf *m;
 	struct sockaddr_in *sin;
@@ -520,12 +508,10 @@ out:
  * RPC: mountd/mount
  * Given a server pathname, get an NFS file handle.
  * Also, sets sin->sin_port to the NFS service port.
+ * mdsin:	mountd server address
  */
 static int
-md_mount(mdsin, path, fhp)
-	struct sockaddr_in *mdsin;		/* mountd server address */
-	char *path;
-	u_char *fhp;
+md_mount(struct sockaddr_in *mdsin, char *path, u_char *fhp)
 {
 	/* The RPC structures */
 	struct rdata {

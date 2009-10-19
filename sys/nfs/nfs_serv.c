@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.88 2009/08/30 15:16:19 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.89 2009/10/19 22:24:18 jsg Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -93,11 +93,8 @@ extern nfstype nfsv3_type[9];
  * nfs v3 access service
  */
 int
-nfsrv3_access(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv3_access(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct nfsm_info	info;
@@ -160,11 +157,8 @@ nfsmout:
  * nfs getattr service
  */
 int
-nfsrv_getattr(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_getattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct nfsm_info	info;
@@ -210,11 +204,8 @@ nfsmout:
  * nfs setattr service
  */
 int
-nfsrv_setattr(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_setattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct nfsm_info	info;
@@ -350,11 +341,8 @@ nfsmout:
  * nfs lookup rpc
  */
 int
-nfsrv_lookup(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -427,11 +415,8 @@ nfsmout:
  * nfs readlink service
  */
 int
-nfsrv_readlink(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_readlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -517,11 +502,8 @@ nfsmout:
  * nfs read service
  */
 int
-nfsrv_read(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -690,11 +672,8 @@ bad:
  * nfs write service
  */
 int
-nfsrv_write(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -866,11 +845,8 @@ bad:
  * now does a truncate to 0 length via. setattr if it already exists
  */
 int
-nfsrv_create(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -1118,11 +1094,8 @@ nfsmout:
  * nfs v3 mknod service
  */
 int
-nfsrv_mknod(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -1270,11 +1243,8 @@ nfsmout:
  * nfs remove service
  */
 int
-nfsrv_remove(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_remove(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -1358,11 +1328,8 @@ nfsmout:
  * nfs rename service
  */
 int
-nfsrv_rename(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -1552,11 +1519,8 @@ nfsmout:
  * nfs link service
  */
 int
-nfsrv_link(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_link(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct nfsm_info	info;
@@ -1655,11 +1619,8 @@ nfsmout:
  * nfs symbolic link service
  */
 int
-nfsrv_symlink(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -1804,11 +1765,8 @@ nfsmout:
  * nfs mkdir service
  */
 int
-nfsrv_mkdir(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -1925,11 +1883,8 @@ nfsmout:
  * nfs rmdir service
  */
 int
-nfsrv_rmdir(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_rmdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -2054,11 +2009,8 @@ struct flrep {
 };
 
 int
-nfsrv_readdir(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -2277,11 +2229,8 @@ nfsmout:
 }
 
 int
-nfsrv_readdirplus(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -2546,11 +2495,8 @@ nfsmout:
  * nfs commit service
  */
 int
-nfsrv_commit(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -2609,11 +2555,8 @@ nfsmout:
  * nfs statfs service
  */
 int
-nfsrv_statfs(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_statfs(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -2689,11 +2632,8 @@ nfsmout:
  * nfs fsinfo service
  */
 int
-nfsrv_fsinfo(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_fsinfo(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -2760,11 +2700,8 @@ nfsmout:
  * nfs pathconf service
  */
 int
-nfsrv_pathconf(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_pathconf(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct mbuf *nam = nfsd->nd_nam;
 	struct ucred *cred = &nfsd->nd_cr;
@@ -2833,11 +2770,8 @@ nfsmout:
  */
 /* ARGSUSED */
 int
-nfsrv_null(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_null(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {
 	struct nfsm_info	info;
 	int error = NFSERR_RETVOID;
@@ -2857,11 +2791,8 @@ nfsrv_null(nfsd, slp, procp, mrq)
  */
 /* ARGSUSED */
 int
-nfsrv_noop(nfsd, slp, procp, mrq)
-	struct nfsrv_descript *nfsd;
-	struct nfssvc_sock *slp;
-	struct proc *procp;
-	struct mbuf **mrq;
+nfsrv_noop(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
+    struct proc *procp, struct mbuf **mrq)
 {	
 	struct nfsm_info	info;
 	int error;
@@ -2895,13 +2826,8 @@ nfsrv_noop(nfsd, slp, procp, mrq)
  *     error.
  */
 int
-nfsrv_access(vp, flags, cred, rdonly, p, override)
-	struct vnode *vp;
-	int flags;
-	struct ucred *cred;
-	int rdonly;
-	struct proc *p;
-	int override;
+nfsrv_access(struct vnode *vp, int flags, struct ucred *cred, int rdonly,
+    struct proc *p, int override)
 {
 	struct vattr vattr;
 	int error;

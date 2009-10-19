@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.67 2009/09/02 18:20:54 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.68 2009/10/19 22:24:18 jsg Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -67,11 +67,7 @@ uint32_t nfs_bufqmax, nfs_bufqlen;
  * Any similarity to readip() is purely coincidental
  */
 int
-nfs_bioread(vp, uio, ioflag, cred)
-	struct vnode *vp;
-	struct uio *uio;
-	int ioflag;
-	struct ucred *cred;
+nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag, struct ucred *cred)
 {
 	struct nfsnode *np = VTONFS(vp);
 	int biosize, diff;
@@ -251,8 +247,7 @@ again:
  * Vnode op for write using bio
  */
 int
-nfs_write(v)
-	void *v;
+nfs_write(void *v)
 {
 	struct vop_write_args *ap = v;
 	int biosize;
@@ -431,11 +426,7 @@ again:
  * NULL.
  */
 struct buf *
-nfs_getcacheblk(vp, bn, size, p)
-	struct vnode *vp;
-	daddr64_t bn;
-	int size;
-	struct proc *p;
+nfs_getcacheblk(struct vnode *vp, daddr64_t bn, int size, struct proc *p)
 {
 	struct buf *bp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
@@ -506,8 +497,7 @@ nfs_vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
  * are all hung on a dead server.
  */
 int
-nfs_asyncio(bp)
-	struct buf *bp;
+nfs_asyncio(struct buf *bp)
 {
 	if (nfs_numasync == 0)
 		goto out;
@@ -535,9 +525,7 @@ out:
  * synchronously or from an nfsiod.
  */
 int
-nfs_doio(bp, p)
-	struct buf *bp;
-	struct proc *p;
+nfs_doio(struct buf *bp, struct proc *p)
 {
 	struct uio *uiop;
 	struct vnode *vp;

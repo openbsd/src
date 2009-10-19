@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.87 2009/09/02 18:20:54 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.88 2009/10/19 22:24:18 jsg Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -214,9 +214,7 @@ sys_nfssvc(struct proc *p, void *v, register_t *retval)
  * Adds a socket to the list for servicing by nfsds.
  */
 int
-nfssvc_addsock(fp, mynam)
-	struct file *fp;
-	struct mbuf *mynam;
+nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 {
 	struct mbuf *m;
 	int siz;
@@ -471,8 +469,7 @@ done:
  * reassigned during cleanup.
  */
 void
-nfsrv_zapsock(slp)
-	struct nfssvc_sock *slp;
+nfsrv_zapsock(struct nfssvc_sock *slp)
 {
 	struct socket *so;
 	struct file *fp;
@@ -504,8 +501,7 @@ nfsrv_zapsock(slp)
  * is no longer valid, you can throw it away.
  */
 void
-nfsrv_slpderef(slp)
-	struct nfssvc_sock *slp;
+nfsrv_slpderef(struct nfssvc_sock *slp)
 {
 	if (--(slp->ns_sref) == 0 && (slp->ns_flag & SLP_VALID) == 0) {
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
@@ -519,8 +515,7 @@ nfsrv_slpderef(slp)
  * corruption.
  */
 void
-nfsrv_init(terminating)
-	int terminating;
+nfsrv_init(int terminating)
 {
 	struct nfssvc_sock *slp, *nslp;
 
@@ -651,8 +646,7 @@ nfssvc_iod(void *arg)
 }
 
 void
-nfs_getset_niothreads(set)
-	int set;
+nfs_getset_niothreads(int set)
 {
 	struct proc *p;
 	int i, have, start;

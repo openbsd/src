@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.106 2009/09/02 18:20:54 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.107 2009/10/19 22:24:18 jsg Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -515,8 +515,7 @@ struct pool nfsreqpl;
  * (just used to decide if a cluster is a good idea)
  */
 struct mbuf *
-nfsm_reqhead(hsiz)
-	int hsiz;
+nfsm_reqhead(int hsiz)
 {
 	struct mbuf *mb;
 
@@ -638,11 +637,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type)
  * copies mbuf chain to the uio scatter/gather list
  */
 int
-nfsm_mbuftouio(mrep, uiop, siz, dpos)
-	struct mbuf **mrep;
-	struct uio *uiop;
-	int siz;
-	caddr_t *dpos;
+nfsm_mbuftouio(struct mbuf **mrep, struct uio *uiop, int siz, caddr_t *dpos)
 {
 	char *mbufcp, *uiocp;
 	int xfer, left, len;
@@ -803,12 +798,7 @@ nfsm_strtombuf(struct mbuf **mp, void *str, size_t len)
  * cases. (The macros use the vars. dpos and dpos2)
  */
 int
-nfsm_disct(mdp, dposp, siz, left, cp2)
-	struct mbuf **mdp;
-	caddr_t *dposp;
-	int siz;
-	int left;
-	caddr_t *cp2;
+nfsm_disct(struct mbuf **mdp, caddr_t *dposp, int siz, int left, caddr_t *cp2)
 {
 	struct mbuf *mp, *mp2;
 	int siz2, xfer;
@@ -866,11 +856,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
  * Advance the position in the mbuf chain.
  */
 int
-nfs_adv(mdp, dposp, offs, left)
-	struct mbuf **mdp;
-	caddr_t *dposp;
-	int offs;
-	int left;
+nfs_adv(struct mbuf **mdp, caddr_t *dposp, int offs, int left)
 {
 	struct mbuf *m;
 	int s;
@@ -893,7 +879,7 @@ nfs_adv(mdp, dposp, offs, left)
  * Called once to initialize data structures...
  */
 void
-nfs_init()
+nfs_init(void)
 {
 	rpc_vers = txdr_unsigned(RPC_VER2);
 	rpc_call = txdr_unsigned(RPC_CALL);
@@ -948,11 +934,8 @@ nfs_vfs_init(struct vfsconf *vfsp)
  *    copy the attributes to *vaper
  */
 int
-nfs_loadattrcache(vpp, mdp, dposp, vaper)
-	struct vnode **vpp;
-	struct mbuf **mdp;
-	caddr_t *dposp;
-	struct vattr *vaper;
+nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
+    struct vattr *vaper)
 {
 	struct vnode *vp = *vpp;
 	struct vattr *vap;
@@ -1126,8 +1109,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 }
 
 int
-nfs_attrtimeo(np)
-	struct nfsnode *np;
+nfs_attrtimeo(struct nfsnode *np)
 {
 	struct vnode *vp = np->n_vnode;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
@@ -1157,9 +1139,7 @@ nfs_attrtimeo(np)
  * otherwise return an error
  */
 int
-nfs_getattrcache(vp, vaper)
-	struct vnode *vp;
-	struct vattr *vaper;
+nfs_getattrcache(struct vnode *vp, struct vattr *vaper)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr *vap;
@@ -1199,16 +1179,9 @@ nfs_getattrcache(vp, vaper)
  * Set up nameidata for a lookup() call and do it
  */
 int
-nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p)
-	struct nameidata *ndp;
-	fhandle_t *fhp;
-	int len;
-	struct nfssvc_sock *slp;
-	struct mbuf *nam;
-	struct mbuf **mdp;
-	caddr_t *dposp;
-	struct vnode **retdirp;
-	struct proc *p;
+nfs_namei(struct nameidata *ndp, fhandle_t *fhp, int len,
+    struct nfssvc_sock *slp, struct mbuf *nam, struct mbuf **mdp,
+    caddr_t *dposp, struct vnode **retdirp, struct proc *p)
 {
 	int i, rem;
 	struct mbuf *md;
@@ -1314,10 +1287,7 @@ out:
  * boundary and only trims off the back end
  */
 void
-nfsm_adj(mp, len, nul)
-	struct mbuf *mp;
-	int len;
-	int nul;
+nfsm_adj(struct mbuf *mp, int len, int nul)
 {
 	struct mbuf *m;
 	int count, i;
@@ -1416,10 +1386,8 @@ nfsm_srvpostop_attr(struct nfsrv_descript *nfsd, int after_ret,
 }
 
 void
-nfsm_srvfattr(nfsd, vap, fp)
-	struct nfsrv_descript *nfsd;
-	struct vattr *vap;
-	struct nfs_fattr *fp;
+nfsm_srvfattr(struct nfsrv_descript *nfsd, struct vattr *vap,
+    struct nfs_fattr *fp)
 {
 
 	fp->fa_nlink = txdr_unsigned(vap->va_nlink);
@@ -1465,14 +1433,9 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
-	fhandle_t *fhp;
-	int lockflag;
-	struct vnode **vpp;
-	struct ucred *cred;
-	struct nfssvc_sock *slp;
-	struct mbuf *nam;
-	int *rdonlyp;
+nfsrv_fhtovp(fhandle_t *fhp, int lockflag, struct vnode **vpp,
+    struct ucred *cred, struct nfssvc_sock *slp, struct mbuf *nam,
+    int *rdonlyp)
 {
 	struct proc *p = curproc;	/* XXX */
 	struct mount *mp;
@@ -1526,10 +1489,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
  * don't need to be saved to store "struct in_addr", which is only 4 bytes.
  */
 int
-netaddr_match(family, haddr, nam)
-	int family;
-	union nethostaddr *haddr;
-	struct mbuf *nam;
+netaddr_match(int family, union nethostaddr *haddr, struct mbuf *nam)
 {
 	struct sockaddr_in *inetaddr;
 
@@ -1553,8 +1513,7 @@ netaddr_match(family, haddr, nam)
  * flag. Once done the new write verifier can be set for the mount point.
  */
 void
-nfs_clearcommit(mp)
-	struct mount *mp;
+nfs_clearcommit(struct mount *mp)
 {
 	struct vnode *vp, *nvp;
 	struct buf *bp, *nbp;
@@ -1577,8 +1536,7 @@ loop:
 }
 
 void
-nfs_merge_commit_ranges(vp)
-	struct vnode *vp;
+nfs_merge_commit_ranges(struct vnode *vp)
 {
 	struct nfsnode *np = VTONFS(vp);
 
@@ -1598,9 +1556,7 @@ nfs_merge_commit_ranges(vp)
 }
 
 int
-nfs_in_committed_range(vp, bp)
-	struct vnode *vp;
-	struct buf *bp;
+nfs_in_committed_range(struct vnode *vp, struct buf *bp)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -1614,9 +1570,7 @@ nfs_in_committed_range(vp, bp)
 }
 
 int
-nfs_in_tobecommitted_range(vp, bp)
-	struct vnode *vp;
-	struct buf *bp;
+nfs_in_tobecommitted_range(struct vnode *vp, struct buf *bp)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -1630,9 +1584,7 @@ nfs_in_tobecommitted_range(vp, bp)
 }
 
 void
-nfs_add_committed_range(vp, bp)
-	struct vnode *vp;
-	struct buf *bp;
+nfs_add_committed_range(struct vnode *vp, struct buf *bp)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -1653,9 +1605,7 @@ nfs_add_committed_range(vp, bp)
 }
 
 void
-nfs_del_committed_range(vp, bp)
-	struct vnode *vp;
-	struct buf *bp;
+nfs_del_committed_range(struct vnode *vp, struct buf *bp)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -1686,9 +1636,7 @@ nfs_del_committed_range(vp, bp)
 }
 
 void
-nfs_add_tobecommitted_range(vp, bp)
-	struct vnode *vp;
-	struct buf *bp;
+nfs_add_tobecommitted_range(struct vnode *vp, struct buf *bp)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -1709,9 +1657,7 @@ nfs_add_tobecommitted_range(vp, bp)
 }
 
 void
-nfs_del_tobecommitted_range(vp, bp)
-	struct vnode *vp;
-	struct buf *bp;
+nfs_del_tobecommitted_range(struct vnode *vp, struct buf *bp)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
@@ -1747,9 +1693,7 @@ nfs_del_tobecommitted_range(vp, bp)
  * numbers not specified for the associated procedure.
  */
 int
-nfsrv_errmap(nd, err)
-	struct nfsrv_descript *nd;
-	int err;
+nfsrv_errmap(struct nfsrv_descript *nd, int err)
 {
 	short *defaulterrp, *errp;
 
