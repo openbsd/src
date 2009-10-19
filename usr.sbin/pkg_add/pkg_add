@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.360 2009/10/19 14:00:10 espie Exp $
+# $OpenBSD: pkg_add,v 1.361 2009/10/19 14:07:26 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -448,6 +448,10 @@ sub really_add
 sub install_set
 {
 	my ($set, $state, @todo) = @_;
+
+	if ($set->{finished}) {
+		return ();
+	}
 
 	my $handle = $set->handle;
 	if ($state->{tracker}->is_installed($handle->pkgname)) {

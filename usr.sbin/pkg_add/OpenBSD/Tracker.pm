@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.3 2009/10/16 18:29:43 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.4 2009/10/19 14:07:26 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -50,16 +50,24 @@ sub add_sets
 	return $self;
 }
 
-sub mark_installed
+sub remove_set
 {
 	my ($self, $set) = @_;
 	for my $n ($set->newer) {
 		delete $self->{to_install}->{$n->pkgname};
-		$self->{installed}->{$n->pkgname} = 1;
 	}
 	for my $n ($set->older) {
 		delete $self->{to_update}->{$n->pkgname};
 	}
+}
+
+sub mark_installed
+{
+	my ($self, $set) = @_;
+	for my $n ($set->newer) {
+		$self->{installed}->{$n->pkgname} = 1;
+	}
+	$self->remove_set($set);
 }
 
 sub is_installed
