@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.42 2009/10/19 20:48:13 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.43 2009/10/19 21:09:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -663,16 +663,16 @@ condition	: NETWORK mapref		{
 			c->c_map = $2;
 			$$ = c;
 		}
-		| VIRTUAL MAP STRING		{
+		| VIRTUAL STRING		{
 			struct cond	*c;
 			struct map	*m;
 
-			if ((m = map_findbyname(conf, $3)) == NULL) {
-				yyerror("no such map: %s", $3);
-				free($3);
+			if ((m = map_findbyname(conf, $2)) == NULL) {
+				yyerror("no such map: %s", $2);
+				free($2);
 				YYERROR;
 			}
-			free($3);
+			free($2);
 			m->m_flags |= F_USED;
 
 
