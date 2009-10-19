@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.46 2009/09/24 19:51:32 miod Exp $
+#	$OpenBSD: Makefile.alpha,v 1.47 2009/10/19 19:46:56 guenther Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -114,7 +114,7 @@ mcount.o: $S/lib/libkern/mcount.c Makefile
 ioconf.o: ioconf.c
 	${NORMAL_C}
 
-newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 

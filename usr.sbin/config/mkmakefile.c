@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.31 2008/08/14 10:18:34 espie Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.32 2009/10/19 19:46:57 guenther Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -521,7 +521,7 @@ emitload(FILE *fp)
 		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o", nm, swname) < 0)
 			return (1);
 		if (first) {
-			if (fputs(" newvers", fp) < 0)
+			if (fputs(" vers.o", fp) < 0)
 				return (1);
 			first = 0;
 		}
