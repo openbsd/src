@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.362 2009/10/19 14:15:40 espie Exp $
+# $OpenBSD: pkg_add,v 1.363 2009/10/19 14:20:55 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -77,9 +77,11 @@ sub build_deptree
 		$pkg = $state->{deptree}->{$pkg};
 	}
 	for my $i (@deps) {
-		my $j = $i->handle->pkgname;
-		$state->{deptree}->{$j} = $pkg unless 
-		    defined $state->{deptree}->{$j};
+		for my $j ($i->newer) {
+			my $nj = $j->pkgname;
+			$state->{deptree}->{$nj} = $pkg unless 
+			    defined $state->{deptree}->{$nj};
+		}
 	}
 }
 
@@ -296,8 +298,8 @@ sub really_add
 	$set->validate_plists($state);
 
 	my $errors = 0;
-	$state->set_name_from_handle($set->handle);
 	for my $handle ($set->newer) {
+		$state->set_name_from_handle($handle);
 		my $plist = $handle->plist;
 		if ($plist->is_signed) {
 			if ($state->{defines}->{nosig}) {
