@@ -1,4 +1,4 @@
-/*	$Id: man.h,v 1.9 2009/09/18 22:46:14 schwarze Exp $ */
+/*	$Id: man.h,v 1.10 2009/10/19 21:08:58 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -107,7 +107,6 @@ struct	man	 *man_alloc(void *, int, const struct man_cb *);
 int		  man_reset(struct man *);
 int	 	  man_parseln(struct man *, int, char *buf);
 int		  man_endparse(struct man *);
-int		  man_valid_post(struct man *);
 
 const struct man_node *man_node(const struct man *);
 const struct man_meta *man_meta(const struct man *);
