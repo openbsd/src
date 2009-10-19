@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.359 2009/10/19 09:29:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.360 2009/10/19 14:00:10 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -153,10 +153,7 @@ sub complete
 
 	if (!$set->{installable}) {
 		for my $n ($set->newer) {
-			$n->location->close_with_client_error;
-			$n->location->wipe_info;
-			delete $n->{plist};
-			$n->set_error(OpenBSD::Handle::CANT_INSTALL);
+			$n->cleanup(OpenBSD::Handle::CANT_INSTALL);
  		}
 	}
 }
@@ -454,9 +451,7 @@ sub install_set
 
 	my $handle = $set->handle;
 	if ($state->{tracker}->is_installed($handle->pkgname)) {
-		if (defined $handle->location) {
-			$handle->location->close_now;
-		}
+		$handle->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
 		return ();
 	}
 
@@ -522,8 +517,7 @@ sub install_set
 #		}
 #	}
 	really_add($set, $state);
-	$location->wipe_info;
-	delete $handle->{plist};
+	$handle->cleanup;
 	$state->{tracker}->mark_installed($set);
 	return ();
 }
