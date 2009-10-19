@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.58 2009/10/19 16:27:52 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.59 2009/10/19 16:51:08 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1413,7 +1413,7 @@ termp_bt_pre(DECL_ARGS)
 {
 
 	term_word(p, "is currently in beta test.");
-	return(1);
+	return(0);
 }
 
 
@@ -1514,10 +1514,6 @@ static int
 termp_fn_pre(DECL_ARGS)
 {
 	const struct mdoc_node *n;
-
-	assert(node->child && MDOC_TEXT == node->child->type);
-
-	/* FIXME: can be "type funcname" "type varname"... */
 
 	p->bold++;
 	term_word(p, node->child->string);
@@ -1841,6 +1837,7 @@ termp_in_post(DECL_ARGS)
 {
 
 	p->bold++;
+	p->flags |= TERMP_NOSPACE;
 	term_word(p, ">");
 	p->bold--;
 
