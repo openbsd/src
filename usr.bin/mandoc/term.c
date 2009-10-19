@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.14 2009/10/18 21:03:31 schwarze Exp $ */
+/*	$Id: term.c,v 1.15 2009/10/19 09:16:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "chars.h"
 #include "term.h"
 #include "man.h"
 #include "mdoc.h"
@@ -56,7 +57,7 @@ terminal_man(void *arg, const struct man *man)
 
 	p = (struct termp *)arg;
 	if (NULL == p->symtab)
-		p->symtab = term_ascii2htab();
+		p->symtab = chars_init(CHARS_ASCII);
 
 	man_run(p, man);
 }
@@ -69,7 +70,7 @@ terminal_mdoc(void *arg, const struct mdoc *mdoc)
 
 	p = (struct termp *)arg;
 	if (NULL == p->symtab)
-		p->symtab = term_ascii2htab();
+		p->symtab = chars_init(CHARS_ASCII);
 
 	mdoc_run(p, mdoc);
 }
@@ -89,8 +90,8 @@ term_free(struct termp *p)
 
 	if (p->buf)
 		free(p->buf);
-	if (TERMENC_ASCII == p->enc && p->symtab)
-		term_asciifree(p->symtab);
+	if (p->symtab)
+		chars_free(p->symtab);
 
 	free(p);
 }
@@ -102,7 +103,7 @@ term_alloc(enum termenc enc)
 	struct termp *p;
 
 	if (NULL == (p = malloc(sizeof(struct termp))))
-		err(1, "malloc");
+		return(NULL);
 	bzero(p, sizeof(struct termp));
 	p->maxrmargin = 78;
 	p->enc = enc;
@@ -331,7 +332,7 @@ do_special(struct termp *p, const char *word, size_t len)
 	size_t		 sz;
 	int		 i;
 
-	rhs = term_a2ascii(p->symtab, word, len, &sz);
+	rhs = chars_a2ascii(p->symtab, word, len, &sz);
 
 	if (NULL == rhs) {
 #if 0
@@ -354,7 +355,7 @@ do_reserved(struct termp *p, const char *word, size_t len)
 	size_t		 sz;
 	int		 i;
 
-	rhs = term_a2res(p->symtab, word, len, &sz);
+	rhs = chars_a2res(p->symtab, word, len, &sz);
 
 	if (NULL == rhs) {
 #if 0
@@ -555,7 +556,7 @@ buffer(struct termp *p, char c)
 		s = p->maxcols * 2;
 		p->buf = realloc(p->buf, s);
 		if (NULL == p->buf)
-			err(1, "realloc");
+			err(1, "realloc"); /* FIXME: shouldn't be here! */
 		p->maxcols = s;
 	}
 	p->buf[(int)(p->col)++] = c;

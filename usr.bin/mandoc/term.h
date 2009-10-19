@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.10 2009/09/21 20:28:43 schwarze Exp $ */
+/*	$Id: term.h,v 1.11 2009/10/19 09:16:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -20,9 +20,7 @@
 __BEGIN_DECLS
 
 enum	termenc {
-	TERMENC_ASCII,
-	TERMENC_LATIN1,		/* Not implemented. */
-	TERMENC_UTF8		/* Not implemented. */
+	TERMENC_ASCII
 };
 
 struct	termp {
@@ -49,11 +47,6 @@ struct	termp {
 	enum termenc	  enc;		/* Type of encoding. */
 	void		 *symtab;	/* Encoded-symbol table. */
 };
-
-void		 *term_ascii2htab(void);
-const char	 *term_a2ascii(void *, const char *, size_t, size_t *);
-const char	 *term_a2res(void *, const char *, size_t, size_t *);
-void		  term_asciifree(void *);
 
 void		  term_newln(struct termp *);
 void		  term_vspace(struct termp *);
