@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.86 2009/10/07 18:19:39 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.87 2009/10/19 20:00:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -454,11 +454,15 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 				fatalx("parent_dispatch_mda: unknown action");
 
 			file = path->rule.r_value.path;
-			pw_name = path->pw_name;
+
 			if (path->rule.r_action == A_FILENAME) {
 				file = path->u.filename;
 				pw_name = SMTPD_USER;
 			}
+			else if (path->rule.r_user != NULL)
+				pw_name = path->rule.r_user;
+			else
+				pw_name = path->pw_name;
 
 			errno = 0;
 			pw = getpwnam(pw_name);
@@ -493,7 +497,6 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 			IMSG_SIZE_CHECK(batchp);
 
 			fd = parent_open_message_file(batchp);
-
 			imsg_compose_event(iev, IMSG_PARENT_MESSAGE_OPEN,
 			    0, 0, fd, batchp, sizeof(struct batch));
 
@@ -506,6 +509,7 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 			struct path	*path;
 			struct passwd	*pw;
 			int		 ret;
+			char		*pw_name;
 
 			IMSG_SIZE_CHECK(batchp);
 
@@ -514,8 +518,14 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 				path = &batchp->message.sender;
 			}
 
+
+			if (path->rule.r_user != NULL)
+				pw_name = path->rule.r_user;
+			else
+				pw_name = path->pw_name;
+
 			errno = 0;
-			pw = getpwnam(path->pw_name);
+			pw = getpwnam(pw_name);
 			if (pw == NULL) {
 				if (errno)
 					parent_mda_tempfail(env, batchp);

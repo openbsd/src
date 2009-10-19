@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.147 2009/10/12 22:34:37 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.148 2009/10/19 20:00:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -332,6 +332,8 @@ struct rule {
 		char			 command[MAXCOMMANDLEN];
 	}				 r_value;
 	TAILQ_HEAD(optlist, opt)	 r_options;
+
+	char				*r_user;
 };
 
 enum path_flags {

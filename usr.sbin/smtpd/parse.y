@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2009/10/11 17:40:49 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.41 2009/10/19 20:00:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -119,7 +119,7 @@ typedef struct {
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
-%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL
+%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL USER
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
@@ -127,7 +127,7 @@ typedef struct {
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
-%type	<v.string>	certname
+%type	<v.string>	certname user
 
 %%
 
@@ -733,14 +733,30 @@ conditions	: condition				{
 		| '{' condition_list '}'
 		;
 
-action		: DELIVER TO MAILDIR		{
+user		: USER STRING		{
+			struct passwd *pw;
+
+			pw = getpwnam($2);
+			if (pw == NULL) {
+				yyerror("user '%s' does not exist.", $2);
+				free($2);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		| /* empty */		{ $$ = NULL; }
+		;
+
+action		: DELIVER TO MAILDIR user		{
+			rule->r_user = $4;
 			rule->r_action = A_MAILDIR;
 			if (strlcpy(rule->r_value.path, "~/Maildir",
 			    sizeof(rule->r_value.path)) >=
 			    sizeof(rule->r_value.path))
 				fatal("pathname too long");
 		}
-		| DELIVER TO MAILDIR STRING	{
+		| DELIVER TO MAILDIR STRING user	{
+			rule->r_user = $5;
 			rule->r_action = A_MAILDIR;
 			if (strlcpy(rule->r_value.path, $4,
 			    sizeof(rule->r_value.path)) >=
@@ -748,14 +764,15 @@ action		: DELIVER TO MAILDIR		{
 				fatal("pathname too long");
 			free($4);
 		}
-		| DELIVER TO MBOX		{
+		| DELIVER TO MBOX			{
 			rule->r_action = A_MBOX;
 			if (strlcpy(rule->r_value.path, _PATH_MAILDIR "/%u",
 			    sizeof(rule->r_value.path))
 			    >= sizeof(rule->r_value.path))
 				fatal("pathname too long");
 		}
-		| DELIVER TO MDA STRING		{
+		| DELIVER TO MDA STRING user		{
+			rule->r_user = $5;
 			rule->r_action = A_EXT;
 			if (strlcpy(rule->r_value.command, $4,
 			    sizeof(rule->r_value.command))
@@ -952,6 +969,7 @@ lookup(char *s)
 		{ "tls",		TLS },
 		{ "to",			TO },
 		{ "type",		TYPE },
+		{ "user",		USER },
 		{ "via",		VIA },
 		{ "virtual",		VIRTUAL },
 	};
