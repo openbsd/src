@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.23 2009/10/16 22:29:46 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.24 2009/10/19 21:19:13 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 16 2009 $
+.Dd $Mdocdate: October 19 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -212,7 +212,7 @@ This rule applies to mail destined to
 and to the server's fully qualified domain name,
 as returned by
 .Xr hostname 1 .
-.It Ic for virtual map Ar map
+.It Ic for virtual Ar map
 This rule applies to mail destined for the virtual domains specified
 in the map
 .Ar map .
