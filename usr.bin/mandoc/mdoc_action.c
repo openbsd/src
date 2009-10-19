@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.21 2009/09/21 21:11:37 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.22 2009/10/19 15:44:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -51,7 +51,9 @@ static	int	  post_std(POST_ARGS);
 static	int	  post_tilde(POST_ARGS);
 
 static	int	  pre_bd(PRE_ARGS);
+static	int	  pre_bl(PRE_ARGS);
 static	int	  pre_dl(PRE_ARGS);
+static	int	  pre_offset(PRE_ARGS);
 
 static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Ap */
@@ -65,7 +67,7 @@ static	const struct actions mdoc_actions[MDOC_MAX] = {
 	{ pre_dl, post_display }, /* Dl */
 	{ pre_bd, post_display }, /* Bd */ 
 	{ NULL, NULL }, /* Ed */
-	{ NULL, post_bl }, /* Bl */ 
+	{ pre_bl, post_bl }, /* Bl */ 
 	{ NULL, NULL }, /* El */
 	{ NULL, NULL }, /* It */
 	{ NULL, NULL }, /* Ad */ 
@@ -821,28 +823,63 @@ pre_dl(PRE_ARGS)
 
 
 static int
+pre_offset(PRE_ARGS)
+{
+	int		 i;
+
+	/* 
+	 * Make sure that an empty offset produces an 8n length space as
+	 * stipulated by mdoc.samples. 
+	 */
+
+	assert(n->args);
+	for (i = 0; i < (int)n->args->argc; i++) {
+		if (MDOC_Offset != n->args->argv[i].arg) 
+			continue;
+		if (n->args->argv[i].sz)
+			break;
+		assert(1 == n->args->refcnt);
+		/* If no value set, length of <string>. */
+		n->args->argv[i].value = 
+		calloc(1, sizeof(char *));
+		if (NULL == n->args->argv[i].value)
+			return(mdoc_nerr(m, n, EMALLOC));
+		n->args->argv[i].sz++;
+		n->args->argv[i].value[0] = strdup("8n");
+		if (NULL == n->args->argv[i].value[0])
+			return(mdoc_nerr(m, n, EMALLOC));
+		break;
+	}
+
+	return(1);
+}
+
+
+static int
+pre_bl(PRE_ARGS)
+{
+
+	return(MDOC_BLOCK == n->type ? pre_offset(m, n) : 1);
+}
+
+
+static int
 pre_bd(PRE_ARGS)
 {
 	int		 i;
 
+	if (MDOC_BLOCK == n->type)
+		return(pre_offset(m, n));
 	if (MDOC_BODY != n->type)
 		return(1);
 
 	/* Enter literal context if `Bd -literal' or `-unfilled'. */
 
-	/* 
-	 * TODO: `-offset' without an argument should be the width of
-	 * the literal "<string>".
-	 */
-
 	for (n = n->parent, i = 0; i < (int)n->args->argc; i++)
 		if (MDOC_Literal == n->args->argv[i].arg)
-			break;
+			m->flags |= MDOC_LITERAL;
 		else if (MDOC_Unfilled == n->args->argv[i].arg)
-			break;
-
-	if (i < (int)n->args->argc)
-		m->flags |= MDOC_LITERAL;
+			m->flags |= MDOC_LITERAL;
 
 	return(1);
 }
