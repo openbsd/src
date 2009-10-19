@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.16 2009/09/21 20:57:57 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.17 2009/10/19 21:43:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -61,10 +61,8 @@ struct	termact {
 
 static	int		  pre_B(DECL_ARGS);
 static	int		  pre_BI(DECL_ARGS);
-static	int		  pre_BR(DECL_ARGS);
 static	int		  pre_HP(DECL_ARGS);
 static	int		  pre_I(DECL_ARGS);
-static	int		  pre_IB(DECL_ARGS);
 static	int		  pre_IP(DECL_ARGS);
 static	int		  pre_IR(DECL_ARGS);
 static	int		  pre_PP(DECL_ARGS);
@@ -91,7 +89,7 @@ static	void		  post_SS(DECL_ARGS);
 static	void		  post_TP(DECL_ARGS);
 static	void		  post_i(DECL_ARGS);
 
-static const struct termact termacts[MAN_MAX] = {
+static	const struct termact termacts[MAN_MAX] = {
 	{ pre_br, NULL }, /* br */
 	{ NULL, NULL }, /* TH */
 	{ pre_SH, post_SH }, /* SH */
@@ -105,8 +103,8 @@ static const struct termact termacts[MAN_MAX] = {
 	{ NULL, NULL }, /* SM */
 	{ pre_B, post_B }, /* SB */
 	{ pre_BI, NULL }, /* BI */
-	{ pre_IB, NULL }, /* IB */
-	{ pre_BR, NULL }, /* BR */
+	{ pre_BI, NULL }, /* IB */
+	{ pre_RB, NULL }, /* BR */
 	{ pre_RB, NULL }, /* RB */
 	{ NULL, NULL }, /* R */
 	{ pre_B, post_B }, /* B */
@@ -290,42 +288,25 @@ pre_IR(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-pre_IB(DECL_ARGS)
-{
-	const struct man_node *nn;
-	int		 i;
-
-	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		if (i % 2)
-			p->bold++;
-		else
-			p->under++;
-		if (i > 0)
-			p->flags |= TERMP_NOSPACE;
-		print_node(p, mt, nn, m);
-		if (i % 2)
-			p->bold--;
-		else
-			p->under--;
-	}
-	return(0);
-}
-
-
-/* ARGSUSED */
-static int
 pre_RB(DECL_ARGS)
 {
 	const struct man_node *nn;
 	int		 i;
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		if (i % 2)
+		if (i % 2 && MAN_RB == n->tok)
 			p->bold++;
+		else if ( ! (i % 2) && MAN_RB != n->tok)
+			p->bold++;
+
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
+
 		print_node(p, mt, nn, m);
-		if (i % 2)
+
+		if (i % 2 && MAN_RB == n->tok)
+			p->bold--;
+		else if ( ! (i % 2) && MAN_RB != n->tok)
 			p->bold--;
 	}
 	return(0);
@@ -354,43 +335,33 @@ pre_RI(DECL_ARGS)
 
 /* ARGSUSED */
 static int
-pre_BR(DECL_ARGS)
-{
-	const struct man_node *nn;
-	int		 i;
-
-	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		if ( ! (i % 2))
-			p->bold++;
-		if (i > 0)
-			p->flags |= TERMP_NOSPACE;
-		print_node(p, mt, nn, m);
-		if ( ! (i % 2))
-			p->bold--;
-	}
-	return(0);
-}
-
-
-/* ARGSUSED */
-static int
 pre_BI(DECL_ARGS)
 {
-	const struct man_node *nn;
-	int		 i;
+	const struct man_node	*nn;
+	int			 i;
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
-		if (i % 2)
+		if (i % 2 && MAN_BI == n->tok)
 			p->under++;
-		else
+		else if (i % 2)
 			p->bold++;
-		if (i > 0)
+		else if (MAN_BI == n->tok)
+			p->bold++;
+		else
+			p->under++;
+
+		if (i)
 			p->flags |= TERMP_NOSPACE;
 		print_node(p, mt, nn, m);
-		if (i % 2)
+
+		if (i % 2 && MAN_BI == n->tok)
 			p->under--;
-		else
+		else if (i % 2)
 			p->bold--;
+		else if (MAN_BI == n->tok)
+			p->bold--;
+		else
+			p->under--;
 	}
 	return(0);
 }
@@ -914,15 +885,12 @@ static void
 print_foot(struct termp *p, const struct man_meta *meta)
 {
 	struct tm	*tm;
-	char		*buf;
-
-	if (NULL == (buf = malloc(p->rmargin)))
-		err(EXIT_FAILURE, "malloc");
+	char		 buf[BUFSIZ];
 
 	tm = localtime(&meta->date);
 
 	if (0 == strftime(buf, p->rmargin, "%B %d, %Y", tm))
-		err(EXIT_FAILURE, "strftime");
+		(void)strlcpy(buf, "(invalid date)", BUFSIZ);
 
 	term_vspace(p);
 
@@ -943,8 +911,6 @@ print_foot(struct termp *p, const struct man_meta *meta)
 
 	term_word(p, buf);
 	term_flushln(p);
-
-	free(buf);
 }
 
 
