@@ -1,4 +1,4 @@
-.\"	$Id: mandoc_char.7,v 1.5 2009/08/22 16:49:11 schwarze Exp $
+.\"	$Id: mandoc_char.7,v 1.6 2009/10/19 09:48:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,14 +14,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" 
-.Dd $Mdocdate: August 22 2009 $
+.Dd $Mdocdate: October 19 2009 $
 .Dt MANDOC_CHAR 7
 .Os
-.\" SECTION
+.
+.
 .Sh NAME
 .Nm mandoc_char
 .Nd mandoc special characters
-.\" SECTION
+.
+.
 .Sh DESCRIPTION
 This documents the special characters and predefined strings accepted by 
 .Xr mandoc 1
@@ -29,12 +31,8 @@ to format
 .Xr mdoc 7
 and
 .Xr man 7
-documents.  Specific output devices of
-.Xr mandoc 1 ,
-dictated by the
-.Fl T Ns Ar output
-argument, will properly render these sequences.
-.\" PARAGRAPH
+documents.
+.
 .Pp
 Both
 .Xr mdoc 7
@@ -72,600 +70,513 @@ and
 .Sq \e*X
 as
 .Sq \e*[X] .
-.\" SECTION
+.
+.Pp
+Note that each output mode will have a different rendering of the
+characters.  It's guaranteed that each input symbol will correspond to a
+(more or less) meaningful output rendering, regardless the mode.
+.
+.
 .Sh Special Characters
 These are the preferred input symbols for producing special characters.
-.\" PARAGRAPH
+.
 .Pp
-Typographic:
-.Bl -tag -width Ds -offset indent -compact
-.It \e~
-.Pq non-breaking space
-.It \e
-.Pq space
-.It \e^
-.Pq zero-width space
-.It \e%
-.Pq zero-width space
-.It \e&
-.Pq zero-width space
-.It \e|
-.Pq zero-width space
+Spacing:
+.Bl -compact -offset indent -column 10n 20n
+.It Em Input Ta Em Description
+.It \e~      Ta non-breaking, non-collapsing space
+.It \e       Ta breaking, non-collapsing n-width space
+.It \e^      Ta zero-width space
+.It \e%      Ta zero-width space
+.It \e&      Ta zero-width space
+.It \e|      Ta zero-width space
+.It \e0      Ta breaking, non-collapsing digit-width space
 .El
-.\" PARAGRAPH
+.
 .Pp
-Grammatic:
-.Bl -tag -width Ds -offset indent -compact
-.It \e(em
-.Pq em-dash
-.It \e(en
-.Pq en-dash
-.It \e(hy
-.Pq hyphen
-.It \e\e
-.Pq back-slash
-.It \\e
-.Pq back-slash
-.It \e'
-.Pq apostrophe
-.It \e`
-.Pq back-tick
-.It \e.
-.Pq period
-.It \e(r!
-.Pq upside-down exclamation
-.It \e(r?
-.Pq upside-down question
+Lines:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(ba    Ta \(ba        Ta bar
+.It \e(br    Ta \(br        Ta box rule
+.It \e(ul    Ta \(ul        Ta underscore
+.It \e(rl    Ta \(rl        Ta overline
+.It \e(bb    Ta \(bb        Ta broken bar
+.It \e(sl    Ta \(sl        Ta forward slash
+.It \e(rs    Ta \(rs        Ta backward slash
 .El
-.\" PARAGRAPH
+.
 .Pp
-Enclosures:
-.Bl -tag -width Ds -offset indent -compact
-.It \e(lh
-.Pq left hand
-.It \e(rh
-.Pq right hand
-.It \e(Fo
-.Pq left guillemet
-.It \e(Fc
-.Pq right guillemet
-.It \e(fo
-.Pq left guilsing
-.It \e(fc
-.Pq right guilsing
-.It \e(rC
-.Pq right brace
-.It \e(lC
-.Pq left brace
-.It \e(ra
-.Pq right angle
-.It \e(la
-.Pq left angle
-.It \e(rB
-.Pq right bracket
-.It \e(lB
-.Pq left bracket
-.It \e(lq
-.Pq left double-quote
-.It \e(rq
-.Pq right double-quote
-.It \e(oq
-.Pq left single-quote
-.It \e(aq
-.Pq right single-quote
-.It \e(Bq
-.Pq right low double-quote
-.It \e(bq
-.Pq right low single-quote
+Text markers:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(ci    Ta \(ci        Ta circle
+.It \e(bu    Ta \(bu        Ta bullet
+.It \e(dd    Ta \(dd        Ta double dagger
+.It \e(dg    Ta \(dg        Ta dagger
+.It \e(lz    Ta \(lz        Ta lozenge
+.It \e(sq    Ta \(sq        Ta white square
+.It \e(ps    Ta \(ps        Ta paragraph
+.It \e(sc    Ta \(sc        Ta section
+.It \e(lh    Ta \(lh        Ta left hand
+.It \e(rh    Ta \(rh        Ta right hand
+.It \e(at    Ta \(at        Ta at
+.It \e(sh    Ta \(sh        Ta hash (pound)
+.It \e(CR    Ta \(CR        Ta carriage return
+.It \e(OK    Ta \(OK        Ta check mark
 .El
-.\" PARAGRAPH
+.
 .Pp
-Indicatives:
-.Bl -tag -width Ds -offset indent -compact
-.It \e(<-
-.Pq left arrow
-.It \e(->
-.Pq right arrow
-.It \e(ua
-.Pq up arrow
-.It \e(da
-.Pq down arrow
-.It \e(<>
-.Pq left-right arrow
-.It \e(lA
-.Pq left double-arrow
-.It \e(rA
-.Pq right double-arrow
-.It \e(uA
-.Pq up double-arrow
-.It \e(dA
-.Pq down double-arrow
-.It \e(hA
-.Pq left-right double-arrow
+Legal symbols:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(co    Ta \(co        Ta copyright
+.It \e(rg    Ta \(rg        Ta registered
+.It \e(tm    Ta \(tm        Ta trademarked
 .El
-.\" PARAGRAPH
+.
+.Pp
+Punctuation:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(em    Ta \(em        Ta em-dash
+.It \e(en    Ta \(en        Ta en-dash
+.It \e(hy    Ta \(hy        Ta hyphen
+.It \e\e     Ta \\          Ta back-slash
+.It \ee      Ta \e          Ta back-slash
+.It \e.      Ta \.          Ta period
+.It \e(r!    Ta \(r!        Ta upside-down exclamation
+.It \e(r?    Ta \(r?        Ta upside-down question
+.El
+.
+.Pp
+Quotes:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(Bq    Ta \(Bq        Ta right low double-quote
+.It \e(bq    Ta \(bq        Ta right low single-quote
+.It \e(lq    Ta \(lq        Ta left double-quote
+.It \e(rq    Ta \(rq        Ta right double-quote
+.It \e(oq    Ta \(oq        Ta left single-quote
+.It \e(cq    Ta \(cq        Ta right single-quote
+.It \e(aq    Ta \(aq        Ta apostrophe quote (text)
+.It \e(dq    Ta \(dq        Ta double quote (text)
+.It \e(Fo    Ta \(Fo        Ta left guillemet
+.It \e(Fc    Ta \(Fc        Ta right guillemet
+.It \e(fo    Ta \(fo        Ta left single guillemet
+.It \e(fc    Ta \(fc        Ta right single guillemet
+.El
+.
+.Pp
+Brackets:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(lB    Ta \(lB        Ta left bracket
+.It \e(rB    Ta \(rB        Ta right bracket
+.It \e(lC    Ta \(lC        Ta left brace
+.It \e(rC    Ta \(rC        Ta right brace
+.It \e(la    Ta \(la        Ta left angle
+.It \e(ra    Ta \(ra        Ta right angle
+.It \e(bv    Ta \(bv        Ta brace extension
+.It \e[braceex] Ta \[braceex] Ta brace extension
+.It \e[bracketlefttp] Ta \[bracketlefttp] Ta top-left hooked bracket
+.It \e[bracketleftbp] Ta \[bracketleftbp] Ta bottom-left hooked bracket
+.It \e[bracketleftex] Ta \[bracketleftex] Ta left hooked bracket extension
+.It \e[bracketrighttp] Ta \[bracketrighttp] Ta top-right hooked bracket
+.It \e[bracketrightbp] Ta \[bracketrightbp] Ta bottom-right hooked bracket
+.It \e[bracketrightex] Ta \[bracketrightex] Ta right hooked bracket extension
+.It \e(lt    Ta \(lt        Ta top-left hooked brace
+.It \e[bracelefttp] Ta \[bracelefttp] Ta top-left hooked brace
+.It \e(lk    Ta \(lk        Ta mid-left hooked brace
+.It \e[braceleftmid] Ta \[braceleftmid] Ta mid-left hooked brace
+.It \e(lb    Ta \(lb        Ta bottom-left hooked brace
+.It \e[braceleftbp] Ta \[braceleftbp] Ta bottom-left hooked brace
+.It \e[braceleftex] Ta \[braceleftex] Ta left hooked brace extension
+.It \e(rt    Ta \(rt        Ta top-left hooked brace
+.It \e[bracerighttp] Ta \[bracerighttp] Ta top-right hooked brace
+.It \e(rk    Ta \(rk        Ta mid-right hooked brace
+.It \e[bracerightmid] Ta \[bracerightmid] Ta mid-right hooked brace
+.It \e(rb    Ta \(rb        Ta bottom-right hooked brace
+.It \e[bracerightbp] Ta \[bracerightbp] Ta bottom-right hooked brace
+.It \e[bracerightex] Ta \[bracerightex] Ta right hooked brace extension
+.It \e[parenlefttp] Ta \[parenlefttp] Ta top-left hooked parenthesis
+.It \e[parenleftbp] Ta \[parenleftbp] Ta bottom-left hooked parenthesis
+.It \e[parenleftex] Ta \[parenleftex] Ta left hooked parenthesis extension
+.It \e[parenrighttp] Ta \[parenrighttp] Ta top-right hooked parenthesis
+.It \e[parenrightbp] Ta \[parenrightbp] Ta bottom-right hooked parenthesis
+.It \e[parenrightex] Ta \[parenrightex] Ta right hooked parenthesis extension
+.El
+.
+.Pp
+Arrows:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(<-    Ta \(<-        Ta left arrow
+.It \e(->    Ta \(->        Ta right arrow
+.It \e(<>    Ta \(<>        Ta left-right arrow
+.It \e(da    Ta \(da        Ta down arrow
+.It \e(ua    Ta \(ua        Ta up arrow
+.It \e(va    Ta \(va        Ta up-down arrow
+.It \e(lA    Ta \(lA        Ta left double-arrow
+.It \e(rA    Ta \(rA        Ta right double-arrow
+.It \e(hA    Ta \(hA        Ta left-right double-arrow
+.It \e(uA    Ta \(uA        Ta up double-arrow
+.It \e(dA    Ta \(dA        Ta down double-arrow
+.It \e(vA    Ta \(vA        Ta up-down double-arrow
+.El
+.
+.Pp
+Logical:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(AN    Ta \(AN        Ta logical and
+.It \e(OR    Ta \(OR        Ta logical or
+.It \e(no    Ta \(no        Ta logical not
+.It \e[tno]  Ta \[tno]      Ta logical not (text)
+.It \e(te    Ta \(te        Ta existential quantifier
+.It \e(fa    Ta \(fa        Ta universal quantifier
+.It \e(st    Ta \(st        Ta such that
+.It \e(tf    Ta \(tf        Ta therefore
+.It \e(3d    Ta \(3d        Ta therefore
+.It \e(or    Ta \(or        Ta bitwise or
+.El
+.
 .Pp
 Mathematical:
-.Bl -tag -width Ds -offset indent -compact
-.It \e(es
-.Pq empty set
-.It \e(ca
-.Pq intersection
-.It \e(cu
-.Pq union
-.It \e(gr
-.Pq gradient
-.It \e(pd
-.Pq partial differential
-.It \e(ap
-.Pq similarity
-.It \e(=)
-.Pq proper superset
-.It \e((=
-.Pq proper subset
-.It \e(eq
-.Pq equals
-.It \e(di
-.Pq division
-.It \e(mu
-.Pq multiplication
-.It \e(pl
-.Pq addition
-.It \e-
-.Pq subtraction
-.It \e(nm
-.Pq not element
-.It \e(mo
-.Pq element
-.It \e(Im
-.Pq imaginary
-.It \e(Re
-.Pq real
-.It \e(Ah
-.Pq aleph
-.It \e(te
-.Pq existential quantifier
-.It \e(fa
-.Pq universal quantifier
-.It \e(AN
-.Pq logical AND
-.It \e(OR
-.Pq logical OR
-.It \e(no
-.Pq logical NOT
-.It \e(st
-.Pq such that
-.It \e(tf
-.Pq therefore
-.It \e(~~
-.Pq approximate
-.It \e(~=
-.Pq approximately equals
-.It \e(=~
-.Pq congruent
-.It \e(<=
-.Pq less-than-equal
-.It \e(>=
-.Pq greater-than-equal
-.It \e(==
-.Pq equal
-.It \e(!=
-.Pq not equal
-.It \e(if
-.Pq infinity
-.It \e(na
-.Pq NaN, an extension
-.It \e(+-
-.Pq plus-minus
-.It \e(**
-.Pq asterisk
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(pl    Ta \(pl        Ta plus
+.It \e(mi    Ta \(mi        Ta minus
+.It \e-      Ta \-          Ta minus (text)
+.It \e(-+    Ta \(-+        Ta minus-plus
+.It \e(+-    Ta \(+-        Ta plus-minus
+.It \e[t+-]  Ta \[t+-]      Ta plus-minus (text)
+.It \e(pc    Ta \(pc        Ta centre-dot
+.It \e(mu    Ta \(mu        Ta multiply
+.It \e[tmu]  Ta \[tmu]      Ta multiply (text)
+.It \e(c*    Ta \(c*        Ta circle-multiply
+.It \e(c+    Ta \(c+        Ta circle-plus
+.It \e(di    Ta \(di        Ta divide
+.It \e[tdi]  Ta \[tdi]      Ta divide (text)
+.It \e(f/    Ta \(f/        Ta fraction
+.It \e(**    Ta \(**        Ta asterisk
+.It \e(<=    Ta \(<=        Ta less-than-equal
+.It \e(>=    Ta \(>=        Ta greater-than-equal
+.It \e(<<    Ta \(<<        Ta much less
+.It \e(>>    Ta \(>>        Ta much greater
+.It \e(eq    Ta \(eq        Ta equal
+.It \e(!=    Ta \(!=        Ta not equal
+.It \e(==    Ta \(==        Ta equivalent
+.It \e(ne    Ta \(ne        Ta not equivalent
+.It \e(=~    Ta \(=~        Ta congruent
+.It \e(-~    Ta \(-~        Ta asymptotically congruent
+.It \e(ap    Ta \(ap        Ta asymptotically similar
+.It \e(~~    Ta \(~~        Ta approximately similar
+.It \e(~=    Ta \(~=        Ta approximately equal
+.It \e(pt    Ta \(pt        Ta proportionate
+.It \e(es    Ta \(es        Ta empty set
+.It \e(mo    Ta \(mo        Ta element
+.It \e(nm    Ta \(nm        Ta not element
+.It \e(sb    Ta \(sb        Ta proper subset
+.It \e(nb    Ta \(nb        Ta not subset
+.It \e(sp    Ta \(sp        Ta proper superset
+.It \e(nc    Ta \(nc        Ta not superset
+.It \e(ib    Ta \(ib        Ta reflexive subset
+.It \e(ip    Ta \(ip        Ta reflexive superset
+.It \e(ca    Ta \(ca        Ta intersection
+.It \e(cu    Ta \(cu        Ta union
+.It \e(/_    Ta \(/_        Ta angle
+.It \e(pp    Ta \(pp        Ta perpendicular
+.It \e(is    Ta \(is        Ta integral
+.It \e[integral] Ta \[integral] Ta integral
+.It \e[sum]    Ta \[sum]   Ta summation
+.It \e[product] Ta \[product] Ta product
+.It \e[coproduct] Ta \[coproduct] Ta coproduct
+.It \e(gr    Ta \(gr        Ta gradient
+.It \e(sr    Ta \(sr        Ta square root
+.It \e[sqrt] Ta \[sqrt]     Ta square root
+.It \e(lc    Ta \(lc        Ta left-ceiling
+.It \e(rc    Ta \(rc        Ta right-ceiling
+.It \e(lf    Ta \(lf        Ta left-floor
+.It \e(rf    Ta \(rf        Ta right-floor
+.It \e(if    Ta \(if        Ta infinity
+.It \e(Ah    Ta \(Ah        Ta aleph
+.It \e(Im    Ta \(Im        Ta imaginary
+.It \e(Re    Ta \(Re        Ta real
+.It \e(pd    Ta \(pd        Ta partial differential
+.It \e(-h    Ta \(-h        Ta Planck constant over 2\(*p
 .El
-.\" PARAGRAPH
+.
 .Pp
 Ligatures:
-.Bl -tag -width Ds -offset indent -compact
-.It \e(ss
-.Pq German eszett
-.It \e(AE
-.Pq AE
-.It \e(ae
-.Pq ae
-.It \e(OE
-.Pq OE
-.It \e(oe
-.Pq oe
-.It \e(ff
-.Pq ff ligature
-.It \e(fi
-.Pq fi ligature
-.It \e(fl
-.Pq fl ligature
-.It \e(Fi
-.Pq ffi ligature
-.It \e(Fl
-.Pq ffl ligature
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(ff    Ta \(ff        Ta ff ligature
+.It \e(fi    Ta \(fi        Ta fi ligature
+.It \e(fl    Ta \(fl        Ta fl ligature
+.It \e(Fi    Ta \(Fi        Ta ffi ligature
+.It \e(Fl    Ta \(Fl        Ta ffl ligature
+.It \e(AE    Ta \(AE        Ta AE
+.It \e(ae    Ta \(ae        Ta ae
+.It \e(OE    Ta \(OE        Ta OE
+.It \e(oe    Ta \(oe        Ta oe
+.It \e(ss    Ta \(ss        Ta German eszett
+.It \e(IJ    Ta \(IJ        Ta IJ ligature
+.It \e(ij    Ta \(ij        Ta ij ligature
 .El
-.\" PARAGRAPH
+.
 .Pp
-Diacritics and accented letters:
-.Bl -tag -width Ds -offset indent -compact
-.It \e(ga
-.Pq grave accent
-.It \e(aa
-.Pq accute accent
-.It \e(a"
-.Pq umlaut accent
-.It \e(ad
-.Pq dieresis accent
-.It \e(a~
-.Pq tilde accent
-.It \e(a^
-.Pq circumflex accent
-.It \e(ac
-.Pq cedilla accent
-.It \e(ad
-.Pq dieresis accent
-.It \e(ah
-.Pq caron accent
-.It \e(ao
-.Pq ring accent
-.It \e(ho
-.Pq hook accent
-.It \e(ab
-.Pq breve accent
-.It \e(a-
-.Pq macron accent
-.It \e(-D
-.Pq Eth
-.It \e(Sd
-.Pq eth
-.It \e(TP
-.Pq Thorn
-.It \e(Tp
-.Pq thorn
-.It \e('A
-.Pq acute A
-.It \e('E
-.Pq acute E
-.It \e('I
-.Pq acute I
-.It \e('O
-.Pq acute O
-.It \e('U
-.Pq acute U
-.It \e('a
-.Pq acute a
-.It \e('e
-.Pq acute e
-.It \e('i
-.Pq acute i
-.It \e('o
-.Pq acute o
-.It \e('u
-.Pq acute u
-.It \e(`A
-.Pq grave A
-.It \e(`E
-.Pq grave E
-.It \e(`I
-.Pq grave I
-.It \e(`O
-.Pq grave O
-.It \e(`U
-.Pq grave U
-.It \e(`a
-.Pq grave a
-.It \e(`e
-.Pq grave e
-.It \e(`i
-.Pq grave i
-.It \e(`o
-.Pq grave o
-.It \e(`u
-.Pq grave u
-.It \e(~A
-.Pq tilde A
-.It \e(~N
-.Pq tilde N
-.It \e(~O
-.Pq tilde O
-.It \e(~a
-.Pq tilde a
-.It \e(~n
-.Pq tilde n
-.It \e(~o
-.Pq tilde o
-.It \e(:A
-.Pq dieresis A
-.It \e(:E
-.Pq dieresis E
-.It \e(:I
-.Pq dieresis I
-.It \e(:O
-.Pq dieresis O
-.It \e(:U
-.Pq dieresis U
-.It \e(:a
-.Pq dieresis a
-.It \e(:e
-.Pq dieresis e
-.It \e(:i
-.Pq dieresis i
-.It \e(:o
-.Pq dieresis o
-.It \e(:u
-.Pq dieresis u
-.It \e(:y
-.Pq dieresis y
-.It \e(^A
-.Pq circumflex A
-.It \e(^E
-.Pq circumflex E
-.It \e(^I
-.Pq circumflex I
-.It \e(^O
-.Pq circumflex O
-.It \e(^U
-.Pq circumflex U
-.It \e(^a
-.Pq circumflex a
-.It \e(^e
-.Pq circumflex e
-.It \e(^i
-.Pq circumflex i
-.It \e(^o
-.Pq circumflex o
-.It \e(^u
-.Pq circumflex u
-.It \e(,C
-.Pq cedilla C
-.It \e(,c
-.Pq cedilla c
-.It \e(/L
-.Pq stroke L
-.It \e(/l
-.Pq stroke l
-.It \e(/O
-.Pq stroke O
-.It \e(/o
-.Pq stroke o
-.It \e(oA
-.Pq ring A
-.It \e(oa
-.Pq ring a
+Accents:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(a"    Ta \(a"        Ta Hungarian umlaut
+.It \e(a-    Ta \(a-        Ta macron
+.It \e(a.    Ta \(a.        Ta dotted
+.It \e(a^    Ta \(a^        Ta circumflex
+.It \e(aa    Ta \(aa        Ta acute
+.It \e'      Ta \'          Ta acute
+.It \e(ga    Ta \(ga        Ta grave
+.It \e`      Ta \`          Ta grave
+.It \e(ab    Ta \(ab        Ta breve
+.It \e(ac    Ta \(ac        Ta cedilla
+.It \e(ad    Ta \(ad        Ta dieresis
+.It \e(ah    Ta \(ah        Ta caron
+.It \e(ao    Ta \(ao        Ta ring
+.It \e(a~    Ta \(a~        Ta tilde
+.It \e(ho    Ta \(ho        Ta ogonek
+.It \e(ha    Ta \(ha        Ta hat (text)
+.It \e(ti    Ta \(ti        Ta tilde (text)
 .El
-.\" PARAGRAPH
+.
 .Pp
-Monetary:
-.Bl -tag -width Ds -offset indent -compact
-.It \e(Cs
-.Pq Scandinavian
-.It \e(Do
-.Pq dollar
-.It \e(Po
-.Pq pound
-.It \e(Ye
-.Pq yen
-.It \e(Fn
-.Pq florin
-.It \e(ct
-.Pq cent
-.It \e(Eu
-.Pq Euro character glyph
-.It \e(eu
-.Pq Euro symbol
+Accented letters:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e('A    Ta \('A        Ta acute A
+.It \e('E    Ta \('E        Ta acute E
+.It \e('I    Ta \('I        Ta acute I
+.It \e('O    Ta \('O        Ta acute O
+.It \e('U    Ta \('U        Ta acute U
+.It \e('a    Ta \('a        Ta acute a
+.It \e('e    Ta \('e        Ta acute e
+.It \e('i    Ta \('i        Ta acute i
+.It \e('o    Ta \('o        Ta acute o
+.It \e('u    Ta \('u        Ta acute u
+.It \e(`A    Ta \(`A        Ta grave A
+.It \e(`E    Ta \(`E        Ta grave E
+.It \e(`I    Ta \(`I        Ta grave I
+.It \e(`O    Ta \(`O        Ta grave O
+.It \e(`U    Ta \(`U        Ta grave U
+.It \e(`a    Ta \(`a        Ta grave a
+.It \e(`e    Ta \(`e        Ta grave e
+.It \e(`i    Ta \(`i        Ta grave i
+.It \e(`o    Ta \(`i        Ta grave o
+.It \e(`u    Ta \(`u        Ta grave u
+.It \e(~A    Ta \(~A        Ta tilde A
+.It \e(~N    Ta \(~N        Ta tilde N
+.It \e(~O    Ta \(~O        Ta tilde O
+.It \e(~a    Ta \(~a        Ta tilde a
+.It \e(~n    Ta \(~n        Ta tilde n
+.It \e(~o    Ta \(~o        Ta tilde o
+.It \e(:A    Ta \(:A        Ta dieresis A
+.It \e(:E    Ta \(:E        Ta dieresis E
+.It \e(:I    Ta \(:I        Ta dieresis I
+.It \e(:O    Ta \(:O        Ta dieresis O
+.It \e(:U    Ta \(:U        Ta dieresis U
+.It \e(:a    Ta \(:a        Ta dieresis a
+.It \e(:e    Ta \(:e        Ta dieresis e
+.It \e(:i    Ta \(:i        Ta dieresis i
+.It \e(:o    Ta \(:o        Ta dieresis o
+.It \e(:u    Ta \(:u        Ta dieresis u
+.It \e(:y    Ta \(:y        Ta dieresis y
+.It \e(^A    Ta \(^A        Ta circumflex A
+.It \e(^E    Ta \(^E        Ta circumflex E
+.It \e(^I    Ta \(^I        Ta circumflex I
+.It \e(^O    Ta \(^O        Ta circumflex O
+.It \e(^U    Ta \(^U        Ta circumflex U
+.It \e(^a    Ta \(^a        Ta circumflex a
+.It \e(^e    Ta \(^e        Ta circumflex e
+.It \e(^i    Ta \(^i        Ta circumflex i
+.It \e(^o    Ta \(^o        Ta circumflex o
+.It \e(^u    Ta \(^u        Ta circumflex u
+.It \e(,C    Ta \(,C        Ta cedilla C
+.It \e(,c    Ta \(,c        Ta cedilla c
+.It \e(/L    Ta \(/L        Ta stroke L
+.It \e(/l    Ta \(/l        Ta stroke l
+.It \e(/O    Ta \(/O        Ta stroke O
+.It \e(/o    Ta \(/o        Ta stroke o
+.It \e(oA    Ta \(oA        Ta ring A
+.It \e(oa    Ta \(oa        Ta ring a
 .El
-.\" PARAGRAPH
+.
+.Pp
+Special letters:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(-D    Ta \(-D        Ta Eth
+.It \e(Sd    Ta \(Sd        Ta eth
+.It \e(TP    Ta \(TP        Ta Thorn
+.It \e(Tp    Ta \(Tp        Ta thorn
+.It \e(.i    Ta \(.i        Ta dotless i
+.It \e(.j    Ta \(.j        Ta dotless j
+.El
+.
+.Pp
+Currency:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(Do    Ta \(Do        Ta dollar
+.It \e(ct    Ta \(ct        Ta cent
+.It \e(Eu    Ta \(Eu        Ta Euro symbol
+.It \e(eu    Ta \(eu        Ta Euro symbol
+.It \e(Ye    Ta \(Ye        Ta yen
+.It \e(Po    Ta \(Po        Ta pound
+.It \e(Cs    Ta \(Cs        Ta Scandinavian
+.It \e(Fn    Ta \(Fn        Ta florin
+.El
+.
+.Pp
+Units:
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(de    Ta \(de        Ta degree
+.It \e(%0    Ta \(%0        Ta per-thousand
+.It \e(fm    Ta \(fm        Ta minute
+.It \e(sd    Ta \(sd        Ta second
+.It \e(mc    Ta \(mc        Ta micro
+.El
+.
 .Pp
 Greek letters:
-.Bl -tag -width Ds -offset indent -compact
-.It \e(*A
-.Pq Alpha
-.It \e(*B
-.Pq Beta
-.It \e(*C
-.Pq Xi
-.It \e(*D
-.Pq Delta
-.It \e(*E
-.Pq Epsilon
-.It \e(*F
-.Pq Phi
-.It \e(*G
-.Pq Gamma
-.It \e(*H
-.Pq Theta
-.It \e(*I
-.Pq Iota
-.It \e(*K
-.Pq Kappa
-.It \e(*L
-.Pq Lambda
-.It \e(*M
-.Pq Mu
-.It \e(*N
-.Pq Nu
-.It \e(*O
-.Pq Omicron
-.It \e(*P
-.Pq Pi
-.It \e(*Q
-.Pq Psi
-.It \e(*R
-.Pq Rho
-.It \e(*S
-.Pq Sigma
-.It \e(*T
-.Pq Tau
-.It \e(*U
-.Pq Upsilon
-.It \e(*W
-.Pq Omega
-.It \e(*X
-.Pq Chi
-.It \e(*Y
-.Pq Eta
-.It \e(*Z
-.Pq Zeta
-.It \e(*a
-.Pq alpha
-.It \e(*b
-.Pq beta
-.It \e(*c
-.Pq xi
-.It \e(*d
-.Pq delta
-.It \e(*e
-.Pq epsilon
-.It \e(*f
-.Pq phi
-.It \e(+f
-.Pq phi variant
-.It \e(*g
-.Pq gamma
-.It \e(*h
-.Pq theta
-.It \e(+h
-.Pq theta variant
-.It \e(*i
-.Pq iota
-.It \e(*k
-.Pq kappa
-.It \e(*l
-.Pq lambda
-.It \e(*m
-.Pq mu
-.It \e(*n
-.Pq nu
-.It \e(*o
-.Pq omicron
-.It \e(*p
-.Pq pi
-.It \e(+p
-.Pq pi variant
-.It \e(*q
-.Pq psi
-.It \e(*r
-.Pq rho
-.It \e(*s
-.Pq sigma
-.It \e(*t
-.Pq tau
-.It \e(*u
-.Pq upsilon
-.It \e(*w
-.Pq omega
-.It \e(*x
-.Pq chi
-.It \e(*y
-.Pq eta
-.It \e(*z
-.Pq zeta
-.It \e(ts
-.Pq sigma terminal
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e(*A    Ta \(*A        Ta Alpha
+.It \e(*B    Ta \(*B        Ta Beta
+.It \e(*G    Ta \(*G        Ta Gamma
+.It \e(*D    Ta \(*D        Ta Delta
+.It \e(*E    Ta \(*E        Ta Epsilon
+.It \e(*Z    Ta \(*Z        Ta Zeta
+.It \e(*Y    Ta \(*Y        Ta Eta
+.It \e(*H    Ta \(*H        Ta Theta
+.It \e(*I    Ta \(*I        Ta Iota
+.It \e(*K    Ta \(*K        Ta Kappa
+.It \e(*L    Ta \(*L        Ta Lambda
+.It \e(*M    Ta \(*M        Ta Mu
+.It \e(*N    Ta \(*N        Ta Nu
+.It \e(*C    Ta \(*C        Ta Xi
+.It \e(*O    Ta \(*O        Ta Omicron
+.It \e(*P    Ta \(*P        Ta Pi
+.It \e(*R    Ta \(*R        Ta Rho
+.It \e(*S    Ta \(*S        Ta Sigma
+.It \e(*T    Ta \(*T        Ta Tau
+.It \e(*U    Ta \(*U        Ta Upsilon
+.It \e(*F    Ta \(*F        Ta Phi
+.It \e(*X    Ta \(*X        Ta Chi
+.It \e(*Q    Ta \(*Q        Ta Psi
+.It \e(*W    Ta \(*W        Ta Omega
+.It \e(*a    Ta \(*a        Ta alpha
+.It \e(*b    Ta \(*b        Ta beta
+.It \e(*g    Ta \(*g        Ta gamma
+.It \e(*d    Ta \(*d        Ta delta
+.It \e(*e    Ta \(*e        Ta epsilon
+.It \e(*z    Ta \(*z        Ta zeta
+.It \e(*y    Ta \(*y        Ta eta
+.It \e(*h    Ta \(*h        Ta theta
+.It \e(*i    Ta \(*i        Ta iota
+.It \e(*k    Ta \(*k        Ta kappa
+.It \e(*l    Ta \(*l        Ta lambda
+.It \e(*m    Ta \(*m        Ta mu
+.It \e(*n    Ta \(*n        Ta nu
+.It \e(*c    Ta \(*c        Ta xi
+.It \e(*o    Ta \(*o        Ta omicron
+.It \e(*p    Ta \(*p        Ta pi
+.It \e(*r    Ta \(*r        Ta rho
+.It \e(*s    Ta \(*s        Ta sigma
+.It \e(*t    Ta \(*t        Ta tau
+.It \e(*u    Ta \(*u        Ta upsilon
+.It \e(*f    Ta \(*f        Ta phi
+.It \e(*x    Ta \(*x        Ta chi
+.It \e(*q    Ta \(*q        Ta psi
+.It \e(*w    Ta \(*w        Ta omega
+.It \e(+h    Ta \(+h        Ta theta variant
+.It \e(+f    Ta \(+f        Ta phi variant
+.It \e(+p    Ta \(+p        Ta pi variant
+.It \e(+e    Ta \(+e        Ta epsilon variant
+.It \e(ts    Ta \(ts        Ta sigma terminal
 .El
-.\" PARAGRAPH
-.Pp
-Special symbols:
-.Bl -tag -width Ds -offset indent -compact
-.It \e0
-.Pq white-space
-.It \e(de
-.Pq degree
-.It \e(ps
-.Pq paragraph
-.It \e(sc
-.Pq section
-.It \e(dg
-.Pq dagger
-.It \e(dd
-.Pq double dagger
-.It \e(ci
-.Pq circle
-.It \e(ba
-.Pq bar
-.It \e(bb
-.Pq broken bar
-.It \e(co
-.Pq copyright
-.It \e(rg
-.Pq registered
-.It \e(tm
-.Pq trademarked
-.It \ee
-.Pq escape
-.El 
-.\" SECTION
+.
+.
 .Sh PREDEFINED STRINGS
 These are not recommended for use, as they differ across
 implementations:
+.
 .Pp
-Mathematical:
-.Bl -tag -width Ds -offset indent -compact
-.It \e*(Ne
-.Pq not equal
-.It \e*(Ge
-.Pq greater-than-equal
-.It \e*(Le
-.Pq less-than-equal
-.It \e*(Gt
-.Pq greater-than
-.It \e*(Lt
-.Pq greater-than
-.It \e*(Pm
-.Pq plus-minus
-.It \e*(If
-.Pq infinity
-.It \e*(Pi
-.Pq pi
-.It \e*(Na
-.Pq NaN
+.Bl -compact -offset indent -column 10n 10n 10n
+.It Em Input Ta Em Rendered Ta Em Description
+.It \e*(Ba   Ta \*(Ba       Ta vertical bar
+.It \e*(Ne   Ta \*(Ne       Ta not equal
+.It \e*(Ge   Ta \*(Ge       Ta greater-than-equal
+.It \e*(Le   Ta \*(Le       Ta less-than-equal
+.It \e*(Gt   Ta \*(Gt       Ta greater-than
+.It \e*(Lt   Ta \*(Lt       Ta less-than
+.It \e*(Pm   Ta \*(Pm       Ta plus-minus
+.It \e*(If   Ta \*(If       Ta infinity
+.It \e*(Pi   Ta \*(Pi       Ta pi
+.It \e*(Na   Ta \*(Na       Ta NaN
+.It \e*(Am   Ta \*(Am       Ta ampersand
+.It \e*R     Ta \*R         Ta restricted mark
+.It \e*(Tm   Ta \*(Tm       Ta trade mark
+.It \e*q     Ta \*q         Ta double-quote
+.It \e*(Rq   Ta \*(Rq       Ta right-double-quote
+.It \e*(Lq   Ta \*(Lq       Ta left-double-quote
+.It \e*(lp   Ta \*(lp       Ta right-parenthesis
+.It \e*(rp   Ta \*(rp       Ta left-parenthesis
+.It \e*(lq   Ta \*(lq       Ta left double-quote
+.It \e*(rq   Ta \*(rq       Ta right double-quote
+.It \e*(ua   Ta \*(ua       Ta up arrow
+.It \e*(va   Ta \*(va       Ta up-down arrow
+.It \e*(<=   Ta \*(<=       Ta less-than-equal
+.It \e*(>=   Ta \*(>=       Ta greater-than-equal
+.It \e*(aa   Ta \*(aa       Ta acute
+.It \e*(ga   Ta \*(ga       Ta grave
 .El
-.\" PARAGRAPH
-.Pp
-Special symbols:
-.Bl -tag -width Ds -offset indent -compact
-.It \e*(Ba
-.Pq vertical bar
-.It \e*(Am
-.Pq ampersand
-.It \e*R
-.Pq restricted mark
-.It \e*(Tm
-.Pq trade mark
-.El
-.\" PARAGRAPH
-.Pp
-Enclosures:
-.Bl -tag -width Ds -offset indent -compact
-.It \e*q
-.Pq double-quote
-.It \e*(Rq
-.Pq right-double-quote
-.It \e*(Lq
-.Pq left-double-quote
-.It \e*(lp
-.Pq right-parenthesis
-.It \e*(rp
-.Pq left-parenthesis
-.El
-.\" SECTION
+.
+.
 .Sh COMPATIBILITY
 This section documents compatibility of
 .Nm
 with older or existing versions of
-.Xr groff 1 :
+.Xr groff 1 .
+.
 .Pp
-.Bl -tag -width Ds -offset indent -compact
-.It \e(ss
-Renders differently in
+The following render differently in
 .Fl T Ns Ar ascii
-mode.
-.El
-.\" SECTION
+output mode:
+.Bd -ragged -offset indent
+\e(ss, \e(nm, \e(nb, \e(nc, \e(ib, \e(ip, \e(pp, \e[sum], \e[product],
+\e[coproduct], \e(gr, \e(-h, \e(a.
+.Ed
+.
+.Pp
+The following render differently in
+.Fl T Ns Ar html
+output mode:
+.Bd -ragged -offset indent
+\e(~=, \e(nb, \e(nc
+.Ed
+.
+.Pp
+Finally, the following have been omitted by being poorly documented or
+having no known representation:
+.Bd -ragged -offset indent
+\e[radicalex], \e[sqrtex], \e(ru
+.Ed
+.
+.
 .Sh SEE ALSO
 .Xr mandoc 1
-.\" SECTION
+.
+.
 .Sh AUTHORS
 The
 .Nm
