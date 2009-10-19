@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.13 2009/09/21 21:11:37 schwarze Exp $ */
+/*	$Id: man.c,v 1.14 2009/10/19 10:20:24 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
