@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.358 2009/10/19 09:19:44 espie Exp $
+# $OpenBSD: pkg_add,v 1.359 2009/10/19 09:29:53 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -153,8 +153,8 @@ sub complete
 
 	if (!$set->{installable}) {
 		for my $n ($set->newer) {
-			$n->{location}->close_with_client_error;
-			$n->{location}->wipe_info;
+			$n->location->close_with_client_error;
+			$n->location->wipe_info;
 			delete $n->{plist};
 			$n->set_error(OpenBSD::Handle::CANT_INSTALL);
  		}
@@ -189,7 +189,7 @@ sub can_install
 {
 	my ($set, $state) = @_;
 	for my $handle ($set->newer) {
-		my $plist = $handle->{plist};
+		my $plist = $handle->plist;
 		my $pkgname = $handle->pkgname;
 		my @conflicts = OpenBSD::PkgCfl::find_all($plist, $state);
 		next if @conflicts == 0;
@@ -236,7 +236,7 @@ sub can_install
 				Fatal "Couldn't find packing-list for $toreplace\n";
 			}
 
-			if (!OpenBSD::Replace::can_old_package_be_replaced($old_handle->{plist}, 
+			if (!OpenBSD::Replace::can_old_package_be_replaced($old_handle->plist, 
 			    $pkgname, $state, \%conflicts)) {
 				print "Can't update $toreplace into $pkgname\n";
 				$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
@@ -244,7 +244,7 @@ sub can_install
 			}
 			$set->add_older($old_handle);
 
-			if ($old_handle->{plist}->has('manual-installation') && 
+			if ($old_handle->plist->has('manual-installation') && 
 			    !$plist->has('manual-installation')) {
 				OpenBSD::PackingElement::ManualInstallation->add($plist);
 			}
@@ -277,7 +277,7 @@ sub save_partial_set
 	my @l = ();
 	for my $h ($set->newer) {
 		next unless defined $h->{partial};
-		push(@l, OpenBSD::Add::record_partial_installation($h->{plist}, $state, $h->{partial}));
+		push(@l, OpenBSD::Add::record_partial_installation($h->plist, $state, $h->{partial}));
 	}
 	return @l;
 }
@@ -293,7 +293,7 @@ sub really_add
 	my ($set, $state) = @_;
 
 	for my $h ($set->newer) {
-		$h->{plist}->set_infodir($h->{location}->info);
+		$h->plist->set_infodir($h->location->info);
 	}
 
 	$set->validate_plists($state);
@@ -301,7 +301,7 @@ sub really_add
 	my $errors = 0;
 	$state->set_name_from_handle($set->handle);
 	for my $handle ($set->newer) {
-		my $plist = $handle->{plist};
+		my $plist = $handle->plist;
 		if ($plist->is_signed) {
 			if ($state->{defines}->{nosig}) {
 				print STDERR 
@@ -383,7 +383,7 @@ sub really_add
 			$state->set_name_from_handle($o);
 			require OpenBSD::Delete;
 			try {
-			    OpenBSD::Delete::delete_plist($o->{plist}, $state);
+			    OpenBSD::Delete::delete_plist($o->plist, $state);
 			} catchall {
 				Warn $_;
 				Fatal partial_install(
@@ -394,7 +394,7 @@ sub really_add
 			if (defined $state->{updatedepends}) {
 				delete $state->{updatedepends}->{$oldname};
 			}
-			OpenBSD::PkgCfl::unregister($o->{plist}, $state);
+			OpenBSD::PkgCfl::unregister($o->plist, $state);
 			$state->progress->clear;
 		}
 		# Here there should be code to handle old libs
@@ -403,7 +403,7 @@ sub really_add
 	for my $handle ($set->newer) {
 		my $pkgname = $handle->pkgname;
 		my $header = $state->deptree_header($pkgname).$pkgname;
-		my $plist = $handle->{plist};
+		my $plist = $handle->plist;
 		$handle->setup_header($state, 
 		    $replacing ? "installing" : undef);
 		$state->set_name_from_handle($handle);
@@ -429,7 +429,7 @@ sub really_add
 	}
 	for my $handle ($set->newer) {
 		my $pkgname = $handle->pkgname;
-		my $plist = $handle->{plist};
+		my $plist = $handle->plist;
 		OpenBSD::SharedLibs::add_libs_from_plist($plist);
 		OpenBSD::Add::tweak_plist_status($plist, $state);
 		$plist->to_cache;
@@ -454,8 +454,8 @@ sub install_set
 
 	my $handle = $set->handle;
 	if ($state->{tracker}->is_installed($handle->pkgname)) {
-		if (defined $handle->{location}) {
-			$handle->{location}->close_now;
+		if (defined $handle->location) {
+			$handle->location->close_now;
 		}
 		return ();
 	}
@@ -474,8 +474,8 @@ sub install_set
 		}
 	}
 
-	my $location = $handle->{location};
-	my $plist = $handle->{plist};
+	my $location = $handle->location;
+	my $plist = $handle->plist;
 
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check($state->{arch})) {
