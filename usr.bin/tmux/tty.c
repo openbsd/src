@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.52 2009/10/20 16:32:23 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.53 2009/10/20 17:33:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -874,14 +874,13 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 void
 tty_cmd_utf8character(struct tty *tty, const struct tty_ctx *ctx)
 {
-	u_char	*ptr = ctx->ptr;
-	size_t	 i;
+	struct window_pane	*wp = ctx->wp;
 
-	for (i = 0; i < UTF8_SIZE; i++) {
-		if (ptr[i] == 0xff)
-			break;
-		tty_putc(tty, ptr[i]);
-	}
+	/*
+	 * Cannot rely on not being a partial character, so just redraw the
+	 * whole line.
+	 */
+	tty_draw_line(tty, wp->screen, ctx->ocy, wp->xoff, wp->yoff);	
 }
 
 void

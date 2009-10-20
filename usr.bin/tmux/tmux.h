@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.141 2009/10/20 14:22:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.142 2009/10/20 17:33:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -516,7 +516,7 @@ struct grid_cell {
 } __packed;
 
 /* Grid cell UTF-8 data. Used instead of data in grid_cell for UTF-8 cells. */
-#define UTF8_SIZE 8
+#define UTF8_SIZE 9
 struct grid_utf8 {
 	u_char	width;
 	u_char	data[UTF8_SIZE];
