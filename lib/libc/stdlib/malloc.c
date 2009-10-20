@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.116 2009/06/08 19:21:08 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.117 2009/10/20 21:19:37 pirofti Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -696,7 +696,7 @@ omalloc_init(struct dir_info **dp)
 	 * randomise offset inside the page at which the dir_info
 	 * lies (subject to alignment by 1 << MALLOC_MINSHIFT)
 	 */
-	if ((p = MMAP(DIR_INFO_RSZ + (MALLOC_PAGESIZE * 2))) == NULL)
+	if ((p = MMAP(DIR_INFO_RSZ + (MALLOC_PAGESIZE * 2))) == MAP_FAILED)
 		return -1;
 	mprotect(p, MALLOC_PAGESIZE, PROT_NONE);
 	mprotect(p + MALLOC_PAGESIZE + DIR_INFO_RSZ,
