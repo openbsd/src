@@ -1,4 +1,4 @@
-.\"	$OpenBSD: revnetgroup.8,v 1.10 2007/05/31 19:20:31 jmc Exp $
+.\"	$OpenBSD: revnetgroup.8,v 1.11 2009/10/20 11:01:31 sobrado Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: revnetgroup.8,v 1.4 1997/02/22 14:22:03 peter Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 20 2009 $
 .Dt REVNETGROUP 8
 .Os
 .Sh NAME
@@ -40,8 +40,7 @@
 .Nd "generate reverse netgroup data"
 .Sh SYNOPSIS
 .Nm revnetgroup
-.Fl u
-.Fl h
+.Fl h | u
 .Op Fl f Ar netgroup_file
 .Sh DESCRIPTION
 .Nm
@@ -98,17 +97,7 @@ when rebuilding the YP netgroup maps.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl u
-Generate netgroup.byuser output; only username information in the
-original netgroup file is processed.
-.It Fl h
-Generate netgroup.byhost output; only hostname information in the
-original netgroup file is processed. (Note at least one of the
-.Fl u
-or
-.Fl h
-flags must be specified.)
-.It Op Fl f Ar netgroup_file
+.It Fl f Ar netgroup_file
 The
 .Nm
 command uses
@@ -122,6 +111,12 @@ Specifying
 as the input file causes
 .Nm
 to read from the standard input.
+.It Fl h
+Generate netgroup.byhost output; only hostname information in the
+original netgroup file is processed.
+.It Fl u
+Generate netgroup.byuser output; only username information in the
+original netgroup file is processed.
 .El
 .Sh FILES
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxxxxxx -compact
