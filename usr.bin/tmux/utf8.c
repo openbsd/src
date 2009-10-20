@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.4 2009/10/20 19:18:28 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.5 2009/10/20 22:17:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -227,7 +227,7 @@ utf8_open(struct utf8_data *utf8data, u_char ch)
 /*
  * Append character to UTF-8, closing if finished.
  *
- * Returns 1 if more UTF-8 data to come, 1 if finished.
+ * Returns 1 if more UTF-8 data to come, 0 if finished.
  */
 int
 utf8_append(struct utf8_data *utf8data, u_char ch)

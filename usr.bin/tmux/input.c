@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.18 2009/10/20 19:18:28 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.19 2009/10/20 22:17:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -590,7 +590,7 @@ input_handle_character(u_char ch, struct input_ctx *ictx)
 
 	if (ch > 0x7f && options_get_number(&wp->window->options, "utf8")) {
 		if (utf8_open(&ictx->utf8data, ch)) {
-			log_debug2("-- utf8 size %u: %zu: %hhu (%c)", 
+			log_debug2("-- utf8 size %zu: %zu: %hhu (%c)", 
 			    ictx->utf8data.size, ictx->off, ch, ch);
 			input_state(ictx, input_state_utf8);
 			return;
