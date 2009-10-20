@@ -1,4 +1,4 @@
-.\"	$Id: man.3,v 1.5 2009/08/22 20:14:37 schwarze Exp $
+.\"	$Id: man.3,v 1.6 2009/10/20 10:15:04 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2009 $
+.Dd $Mdocdate: October 20 2009 $
 .Dt MAN 3
 .Os
 .\" SECTION
@@ -29,7 +29,7 @@
 .Nd man macro compiler library
 .\" SECTION
 .Sh SYNOPSIS
-.Fd #include <man.h>
+.In man.h
 .Vt extern const char * const * man_macronames;
 .Ft "struct man *"
 .Fn man_alloc "void *data" "int pflags" "const struct man_cb *cb"
