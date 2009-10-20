@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.102 2009/10/14 01:33:22 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.103 2009/10/20 00:19:24 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -351,7 +351,6 @@ struct scsi_link {
 	u_int64_t node_wwn;		/* world wide name of node */
 	u_int16_t adapter_target;	/* what are we on the scsi bus */
 	u_int16_t adapter_buswidth;	/* 8 (regular) or 16 (wide). (0 becomes 8) */
-	u_int16_t active;		/* operations in progress */
 	u_int16_t flags;		/* flags that all devices have */
 #define	SDEV_REMOVABLE	 	0x0001	/* media is removable */
 #define	SDEV_MEDIA_LOADED 	0x0002	/* device figures are still valid */
