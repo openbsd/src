@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.21 2007/09/04 14:37:53 fgsch Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.22 2009/10/20 09:47:03 sobrado Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.21 2007/09/04 14:37:53 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.22 2009/10/20 09:47:03 sobrado Exp $";
 #endif
 
 #include <ctype.h>
@@ -132,7 +132,7 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: mkalias [-v] [-e|-E [-d] [-u]] [-n] input [output]\n");
+	    "usage: mkalias [-nv] [-E | -e [-du]] input [output]\n");
 	exit(1);
 }
 

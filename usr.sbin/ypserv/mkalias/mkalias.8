@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkalias.8,v 1.9 2007/05/31 19:20:31 jmc Exp $
+.\"	$OpenBSD: mkalias.8,v 1.10 2009/10/20 09:47:03 sobrado Exp $
 .\"
 .\" Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 20 2009 $
 .Dt MKALIAS 8
 .Os
 .Sh NAME
@@ -32,12 +32,11 @@
 .Nd a YP map conversion program
 .Sh SYNOPSIS
 .Nm mkalias
-.Op Fl v
-.Op Fl e
-.Op Fl E
-.Op Fl d
-.Op Fl u
-.Op Fl n
+.Op Fl nv
+.Oo
+.Fl E | e
+.Op Fl du
+.Oc
 .Ar input
 .Op Ar output
 .Sh DESCRIPTION
@@ -47,37 +46,37 @@ This is an inverse map of user@host (or user!host) back to alias.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl v
-Verbose mode.
-.It Fl e
-Check host to verify that it exists.
+.It Fl d
+Assume domain names are OK.
+Only useful together with
+.Fl E
+or
+.Fl e .
 .It Fl E
 Same as
 .Fl e ,
 but also check for any MX-record.
-.It Fl d
-Assume Domain names are OK.
-Only useful together with
-.Fl e
-or
-.Fl E .
+.It Fl e
+Check host to verify that it exists.
+.It Fl n
+Capitalize name. e.g., mats.o.jansson becomes Mats.O.Jansson.
 .It Fl u
 Assume UUCP names are OK.
 Only useful together with
-.Fl e
+.Fl E
 or
-.Fl E .
-.It Fl n
-Capitalize name. e.g., mats.o.jansson becomes Mats.O.Jansson.
+.Fl e .
+.It Fl v
+Verbose mode.
 .It Ar input
 Use this map as input.
 .It Ar output
 Use this map as output.
 If the output map isn't given don't create database.
 Can be useful together with
-.Fl e
+.Fl E
 or
-.Fl E .
+.Fl e .
 .El
 .Sh SEE ALSO
 .Xr yp 8 ,
