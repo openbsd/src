@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.51 2009/10/17 08:35:38 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.52 2009/10/20 16:32:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -712,6 +712,14 @@ tty_cmd_linefeed(struct tty *tty, const struct tty_ctx *ctx)
 		tty_redraw_region(tty, ctx);
 		return;
 	}
+
+	/*
+	 * If this line wrapped naturally (ctx->num is nonzero), don't do
+	 * anything - the cursor can just be moved to the last cell and wrap
+	 * naturally.
+	 */
+	if (ctx->num && !(tty->term->flags & TERM_EARLYWRAP))
+		return;
 
 	if (ctx->ocy == ctx->orlower) {
 		tty_reset(tty);
