@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.137 2009/09/12 09:34:43 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.138 2009/10/20 06:01:36 kevlo Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -138,6 +138,16 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
 		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
+		break;
+	case 0x11060398:
+	case 0x11061398:
+	case 0x11062398:
+	case 0x11063398:
+	case 0x11064398:
+	case 0x11065398:
+	case 0x11066398:
+	case 0x11067398:
+		this->name = "VIA VT1702";
 		break;
 	case 0x111d7603:
 		this->name = "IDT 92HD75B3/4";
