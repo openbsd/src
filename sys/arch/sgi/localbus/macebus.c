@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.44 2009/10/07 08:35:47 syuu Exp $ */
+/*	$OpenBSD: macebus.c,v 1.45 2009/10/21 20:48:45 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -221,8 +221,6 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map CRIME control registers\n");
 		return;
 	}
-	hwmask_addr = (void *)
-	    (PHYS_TO_XKPHYS(CRIMEBUS_BASE, CCA_NC) + CRIME_INT_MASK);
 
 	creg = bus_space_read_8(&crimebus_tag, crime_h, CRIME_REVISION);
 	printf(": crime rev %d.%d\n", (creg & 0xf0) >> 4, creg & 0xf);
@@ -725,4 +723,11 @@ macebus_aux(intrmask_t hwpend, struct trap_frame *cf)
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_MISC_REG, mask);
 
 	return 0; /* Real clock int handler registers. */
+}
+
+void
+hw_setintrmask(intrmask_t m)
+{
+	*(volatile uint64_t *)(PHYS_TO_XKPHYS(CRIMEBUS_BASE, CCA_NC) +
+	    CRIME_INT_MASK) = mace_intem & ~m;
 }
