@@ -1,4 +1,4 @@
-/*	$OpenBSD: fputwc.c,v 1.1 2005/06/17 20:40:32 espie Exp $	*/
+/*	$OpenBSD: fputwc.c,v 1.2 2009/10/21 16:04:23 guenther Exp $	*/
 /* $NetBSD: fputwc.c,v 1.3 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
@@ -80,9 +80,9 @@ fputwc(wchar_t wc, FILE *fp)
 {
 	wint_t r;
 
-	flockfile(fp);
+	FLOCKFILE(fp);
 	r = __fputwc_unlock(wc, fp);
-	funlockfile(fp);
+	FUNLOCKFILE(fp);
 
 	return (r);
 }

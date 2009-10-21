@@ -1,4 +1,4 @@
-/*	$OpenBSD: fputws.c,v 1.2 2005/08/08 08:05:36 espie Exp $	*/
+/*	$OpenBSD: fputws.c,v 1.3 2009/10/21 16:04:23 guenther Exp $	*/
 /* $NetBSD: fputws.c,v 1.1 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
@@ -40,17 +40,17 @@ fputws(ws, fp)
 	const wchar_t * __restrict ws;
 	FILE * __restrict fp;
 {
-	flockfile(fp);
+	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, 1);
 
 	while (*ws != '\0') {
 		if (__fputwc_unlock(*ws++, fp) == WEOF) {
-			funlockfile(fp);
+			FUNLOCKFILE(fp);
 			return (-1);
 		}
 	}
 
-	funlockfile(fp);
+	FUNLOCKFILE(fp);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetws.c,v 1.2 2005/08/08 08:05:36 espie Exp $	*/
+/*	$OpenBSD: fgetws.c,v 1.3 2009/10/21 16:04:23 guenther Exp $	*/
 /* $NetBSD: fgetws.c,v 1.1 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
@@ -45,7 +45,7 @@ fgetws(ws, n, fp)
 	wchar_t *wsp;
 	wint_t wc;
 
-	flockfile(fp);
+	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, 1);
 
 	if (n <= 0) {
@@ -72,11 +72,11 @@ fgetws(ws, n, fp)
 	}
 
 	*wsp++ = L'\0';
-	funlockfile(fp);
+	FUNLOCKFILE(fp);
 
 	return (ws);
 
 error:
-	funlockfile(fp);
+	FUNLOCKFILE(fp);
 	return (NULL);
 }

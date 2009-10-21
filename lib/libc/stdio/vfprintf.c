@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.54 2009/10/16 12:15:03 martynas Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.55 2009/10/21 16:04:23 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -130,8 +130,8 @@ __sbprintf(FILE *fp, const char *fmt, va_list ap)
 	fake._lbfsize = 0;	/* not actually used, but Just In Case */
 
 	/* do the work, then copy any error status */
-	ret = vfprintf(&fake, fmt, ap);
-	if (ret >= 0 && fflush(&fake))
+	ret = __vfprintf(&fake, fmt, ap);
+	if (ret >= 0 && __sflush(&fake))
 		ret = EOF;
 	if (fake._flags & __SERR)
 		fp->_flags |= __SERR;
@@ -189,6 +189,17 @@ static int exponent(char *, int, int);
 
 int
 vfprintf(FILE *fp, const char *fmt0, __va_list ap)
+{
+	int ret;
+
+	FLOCKFILE(fp);
+	ret = __vfprintf(fp, fmt0, ap);
+	FUNLOCKFILE(fp);
+	return (ret);
+}
+
+int
+__vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 {
 	char *fmt;		/* format string */
 	int ch;			/* character from fmt */

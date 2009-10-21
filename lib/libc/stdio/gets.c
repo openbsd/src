@@ -1,4 +1,4 @@
-/*	$OpenBSD: gets.c,v 1.9 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: gets.c,v 1.10 2009/10/21 16:04:23 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
  */
 
 #include <stdio.h>
+#include "local.h"
 
 __warn_references(gets,
     "warning: gets() is very unsafe; consider using fgets()");
@@ -42,14 +43,17 @@ gets(char *buf)
 	int c;
 	char *s;
 
-	for (s = buf; (c = getchar()) != '\n';)
+	FLOCKFILE(stdin);
+	for (s = buf; (c = getchar_unlocked()) != '\n';)
 		if (c == EOF)
-			if (s == buf)
+			if (s == buf) {
+				FUNLOCKFILE(stdin);
 				return (NULL);
-			else
+			} else
 				break;
 		else
 			*s++ = c;
 	*s = '\0';
+	FUNLOCKFILE(stdin);
 	return (buf);
 }

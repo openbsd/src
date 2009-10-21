@@ -1,4 +1,4 @@
-/*	$OpenBSD: ungetc.c,v 1.9 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: ungetc.c,v 1.10 2009/10/21 16:04:23 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -82,17 +82,20 @@ ungetc(int c, FILE *fp)
 		return (EOF);
 	if (!__sdidinit)
 		__sinit();
+	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, -1);
 	if ((fp->_flags & __SRD) == 0) {
 		/*
 		 * Not already reading: no good unless reading-and-writing.
 		 * Otherwise, flush any current write stuff.
 		 */
-		if ((fp->_flags & __SRW) == 0)
+		if ((fp->_flags & __SRW) == 0) {
+error:			FUNLOCKFILE(fp);
 			return (EOF);
+		}
 		if (fp->_flags & __SWR) {
 			if (__sflush(fp))
-				return (EOF);
+				goto error;
 			fp->_flags &= ~__SWR;
 			fp->_w = 0;
 			fp->_lbfsize = 0;
@@ -107,9 +110,10 @@ ungetc(int c, FILE *fp)
 	 */
 	if (HASUB(fp)) {
 		if (fp->_r >= _UB(fp)._size && __submore(fp))
-			return (EOF);
+			goto error;
 		*--fp->_p = c;
-		fp->_r++;
+inc_ret:	fp->_r++;
+		FUNLOCKFILE(fp);
 		return (c);
 	}
 	fp->_flags &= ~__SEOF;
@@ -122,8 +126,7 @@ ungetc(int c, FILE *fp)
 	if (fp->_bf._base != NULL && fp->_p > fp->_bf._base &&
 	    fp->_p[-1] == c) {
 		fp->_p--;
-		fp->_r++;
-		return (c);
+		goto inc_ret;
 	}
 
 	/*
@@ -137,5 +140,6 @@ ungetc(int c, FILE *fp)
 	fp->_ubuf[sizeof(fp->_ubuf) - 1] = c;
 	fp->_p = &fp->_ubuf[sizeof(fp->_ubuf) - 1];
 	fp->_r = 1;
+	FUNLOCKFILE(fp);
 	return (c);
 }

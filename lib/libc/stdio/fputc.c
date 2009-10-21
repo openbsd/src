@@ -1,4 +1,4 @@
-/*	$OpenBSD: fputc.c,v 1.7 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: fputc.c,v 1.8 2009/10/21 16:04:23 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,14 +33,9 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "local.h"
 
 int
 fputc(int c, FILE *fp)
 {
-	if (cantwrite(fp)) {
-		errno = EBADF;
-		return (EOF);
-	}
 	return (putc(c, fp));
 }

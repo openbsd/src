@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgets.c,v 1.11 2009/06/02 22:28:18 ray Exp $ */
+/*	$OpenBSD: fgets.c,v 1.12 2009/10/21 16:04:23 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,6 +54,7 @@ fgets(char *buf, int n, FILE *fp)
 		return (NULL);
 	}
 
+	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, -1);
 	s = buf;
 	n--;			/* leave space for NUL */
@@ -64,8 +65,10 @@ fgets(char *buf, int n, FILE *fp)
 		if (fp->_r <= 0) {
 			if (__srefill(fp)) {
 				/* EOF/error: stop with partial or no line */
-				if (s == buf)
+				if (s == buf) {
+					FUNLOCKFILE(fp);
 					return (NULL);
+				}
 				break;
 			}
 		}
@@ -87,6 +90,7 @@ fgets(char *buf, int n, FILE *fp)
 			fp->_p = t;
 			(void)memcpy((void *)s, (void *)p, len);
 			s[len] = '\0';
+			FUNLOCKFILE(fp);
 			return (buf);
 		}
 		fp->_r -= len;
@@ -96,5 +100,6 @@ fgets(char *buf, int n, FILE *fp)
 		n -= len;
 	}
 	*s = '\0';
+	FUNLOCKFILE(fp);
 	return (buf);
 }

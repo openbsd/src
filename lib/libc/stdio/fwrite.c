@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwrite.c,v 1.6 2009/07/12 18:45:21 millert Exp $ */
+/*	$OpenBSD: fwrite.c,v 1.7 2009/10/21 16:04:23 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@ fwrite(const void *buf, size_t size, size_t count, FILE *fp)
 	size_t n;
 	struct __suio uio;
 	struct __siov iov;
+	int ret;
 
 	/*
 	 * ANSI and SUSv2 require a return value of 0 if size or count are 0.
@@ -62,7 +63,10 @@ fwrite(const void *buf, size_t size, size_t count, FILE *fp)
 	 * skip the divide if this happens, since divides are
 	 * generally slow and since this occurs whenever size==0.
 	 */
-	if (__sfvwrite(fp, &uio) == 0)
+	FLOCKFILE(fp);
+	ret = __sfvwrite(fp, &uio);
+	FUNLOCKFILE(fp);
+	if (ret == 0)
 		return (count);
 	return ((n - uio.uio_resid) / size);
 }

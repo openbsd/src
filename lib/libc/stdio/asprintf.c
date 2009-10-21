@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.15 2005/10/10 12:00:52 espie Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.16 2009/10/21 16:04:23 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -40,7 +40,7 @@ asprintf(char **str, const char *fmt, ...)
 		goto err;
 	f._bf._size = f._w = 127;		/* Leave room for the NUL */
 	va_start(ap, fmt);
-	ret = vfprintf(&f, fmt, ap);
+	ret = __vfprintf(&f, fmt, ap);
 	va_end(ap);
 	if (ret == -1)
 		goto err;
