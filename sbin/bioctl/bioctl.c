@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.81 2009/07/31 16:12:10 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.82 2009/10/21 22:31:17 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -36,6 +36,8 @@
 #include <scsi/scsi_all.h>
 #include <dev/biovar.h>
 #include <dev/softraidvar.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <err.h>
@@ -85,6 +87,7 @@ int			human;
 int			verbose;
 u_int32_t		cflags = 0;
 int			rflag = 8192;
+char			*password;
 
 struct bio_locate	bl;
 
@@ -104,7 +107,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hil:qr:R:vu:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:b:C:c:dH:hil:p:qr:R:vu:")) != -1) {
 		switch (ch) {
 		case 'a': /* alarm */
 			func |= BIOC_ALARM;
@@ -148,6 +151,9 @@ main(int argc, char *argv[])
 		case 'l': /* device list */
 			func |= BIOC_DEVLIST;
 			dev_list = optarg;
+			break;
+		case 'p':
+			password = optarg;
 			break;
 		case 'r':
 			rflag = strtonum(optarg, 1000, 1<<30, &errstr);
@@ -203,7 +209,7 @@ main(int argc, char *argv[])
 		if (devh == -1)
 			err(1, "Can't open %s", sd_dev);
 	} else
-		errx(1, "need -d or -f parameter");
+		errx(1, "need device");
 
 	if (diskinq) {
 		bio_diskinq(sd_dev);
@@ -246,7 +252,7 @@ usage(void)
                 "[-C flag[,flag,...]] [-c raidlevel]\n"
                 "\t[-l special[,special,...]] "
                 "[-R device | channel:target[.lun]\n"
-                "\t[-r rounds] "
+		"\t[-p passfile] [-r rounds] "
 		"device\n", __progname, __progname);
 	
 	exit(1);
@@ -933,6 +939,9 @@ void
 derive_key_pkcs(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
     size_t saltsz, int verify)
 {
+	FILE		*f;
+	size_t		pl;
+	struct stat	sb;
 	char		 passphrase[1024], verifybuf[1024];
 
 	if (!key)
@@ -943,9 +952,33 @@ derive_key_pkcs(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
 		errx(1, "Too less rounds: %d", rounds);
 
 	/* get passphrase */
-	if (readpassphrase("Passphrase: ", passphrase, sizeof(passphrase),
-	    RPP_REQUIRE_TTY) == NULL)
-		errx(1, "unable to read passphrase");
+	if (password && verify == 0) {
+		if ((f = fopen(password, "r")) == NULL)
+			err(1, "invalid passphrase file");
+
+		if (fstat(fileno(f), &sb) == -1)
+			err(1, "can't stat passphrase file");
+		if (sb.st_uid != 0)
+			errx(1, "passphrase file must be owned by root");
+		if ((sb.st_mode & ~S_IFMT) != (S_IRUSR | S_IWUSR))
+			errx(1, "passphrase file has the wrong permissions");
+
+		if (fgets(passphrase, sizeof(passphrase), f) == NULL)
+			err(1, "can't read passphrase file");
+		pl = strlen(passphrase);
+		if (pl > 0 && passphrase[pl - 1] == '\n')
+			passphrase[pl - 1] = '\0';
+		else
+			errx(1, "invalid passphrase length");
+
+		fclose(f);
+	} else if (password == NULL && verify) {
+		if (readpassphrase("Passphrase: ", passphrase,
+		    sizeof(passphrase), RPP_REQUIRE_TTY) == NULL)
+			errx(1, "unable to read passphrase");
+	} else
+		errx(1, "can't specify passphrase file during initial "
+		    "creation of crypto volume");
 
 	if (verify) {
 		/* request user to re-type it */
