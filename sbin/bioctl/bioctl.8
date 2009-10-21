@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.73 2009/10/21 22:31:17 marco Exp $
+.\"	$OpenBSD: bioctl.8,v 1.74 2009/10/21 22:35:27 marco Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -249,6 +249,12 @@ don't get confused by the random data that appears on the new disk.
 This can be done with the following command (assuming the new disk is sd3):
 .Bd -literal -offset 3n
 # dd if=/dev/zero of=/dev/rsd3c bs=1m count=1
+.Ed
+.Pp
+Deleting a softraid volume requires the exact volume name.
+For example:
+.Bd -literal -offset 3n
+# bioctl -d sd2
 .Ed
 .Sh SEE ALSO
 .Xr bio 4 ,
