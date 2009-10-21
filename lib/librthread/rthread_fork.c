@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.1 2008/06/05 21:06:11 kurt Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.2 2009/10/21 15:32:01 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -124,6 +124,9 @@ _dofork(int is_vfork)
 		LIST_INIT(&_thread_list);
 		LIST_INSERT_HEAD(&_thread_list, &_initial_thread, threads);
 		_thread_lock = _SPINLOCK_UNLOCKED;
+
+		/* single threaded now */
+		__isthreaded = 0;
 	}
 	return newid;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.19 2008/04/04 19:30:41 kurt Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.20 2009/10/21 15:32:01 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -183,6 +183,9 @@ _dofork(int vfork)
 
 			/* Re-init the threads mutex queue: */
 			TAILQ_INIT(&curthread->mutexq);
+
+			/* single threaded now */
+			__isthreaded = 0;
 
 			/* No spinlocks yet: */
 			_spinblock_count = 0;
