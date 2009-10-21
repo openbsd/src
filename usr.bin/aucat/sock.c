@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.31 2009/10/10 13:55:37 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.32 2009/10/21 05:43:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -314,6 +314,7 @@ sock_freebuf(struct sock *f)
 	wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
 	if (wbuf)
 		abuf_hup(wbuf);
+	f->tickpending = 0;
 }
 
 /*
