@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.55 2009/10/21 09:36:53 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.56 2009/10/21 13:42:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -684,20 +684,21 @@ tty_cmd_reverseindex(struct tty *tty, const struct tty_ctx *ctx)
   	struct window_pane	*wp = ctx->wp;
 	struct screen		*s = wp->screen;
 
+	if (ctx->ocy != ctx->orupper)
+		return;
+
  	if (wp->xoff != 0 || screen_size_x(s) < tty->sx ||
 	    !tty_term_has(tty->term, TTYC_CSR)) {
 		tty_redraw_region(tty, ctx);
 		return;
 	}
 
-	if (ctx->ocy == ctx->orupper) {
-		tty_reset(tty);
-
-		tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
-		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->orupper);
-
-		tty_putcode(tty, TTYC_RI);
-	}
+	tty_reset(tty);
+	
+	tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
+	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->orupper);
+	
+	tty_putcode(tty, TTYC_RI);
 }
 
 void
@@ -705,6 +706,9 @@ tty_cmd_linefeed(struct tty *tty, const struct tty_ctx *ctx)
 {
   	struct window_pane	*wp = ctx->wp;
 	struct screen		*s = wp->screen;
+
+	if (ctx->ocy != ctx->orlower)
+		return;
 
  	if (wp->xoff != 0 || screen_size_x(s) < tty->sx ||
 	    !tty_term_has(tty->term, TTYC_CSR)) {
@@ -720,14 +724,12 @@ tty_cmd_linefeed(struct tty *tty, const struct tty_ctx *ctx)
 	if (ctx->num && !(tty->term->flags & TERM_EARLYWRAP))
 		return;
 
-	if (ctx->ocy == ctx->orlower) {
-		tty_reset(tty);
-
-		tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
-		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
-
-		tty_putc(tty, '\n');
-	}
+	tty_reset(tty);
+	
+	tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
+	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
+	
+	tty_putc(tty, '\n');
 }
 
 void
