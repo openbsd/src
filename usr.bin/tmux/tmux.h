@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.144 2009/10/21 18:20:16 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.145 2009/10/21 20:11:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1052,19 +1052,6 @@ struct client {
 };
 ARRAY_DECL(clients, struct client *);
 
-/* Client context. */
-struct client_ctx {
-	struct imsgbuf	 ibuf;
-
-	enum {
-		CCTX_DETACH,
-		CCTX_EXIT,
-		CCTX_DIED,
-		CCTX_SHUTDOWN
-	} exittype;
-	const char	*errstr;
-};
-
 /* Key/command line command. */
 struct cmd_ctx {
 	/*
@@ -1503,14 +1490,8 @@ void	cmd_buffer_free(struct cmd *);
 size_t	cmd_buffer_print(struct cmd *, char *, size_t);
 
 /* client.c */
-int	 client_init(char *, struct client_ctx *, int, int);
-int	 client_main(struct client_ctx *);
-int	 client_msg_dispatch(struct client_ctx *);
-
-/* client-fn.c */
-void	 client_write_server(struct client_ctx *, enum msgtype, void *, size_t);
-void	 client_fill_session(struct msg_command_data *);
-void	 client_suspend(void);
+struct imsgbuf *client_init(char *, int, int);
+__dead void	client_main(void);
 
 /* key-bindings.c */
 extern struct key_bindings key_bindings;
