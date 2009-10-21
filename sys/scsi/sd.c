@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.159 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: sd.c,v 1.160 2009/10/21 20:32:02 marco Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -655,7 +655,7 @@ sd_cmd_rw16(struct scsi_xfer *xs, int read, daddr64_t blkno, u_int nblks)
 	struct scsi_rw_16 *cmd = (struct scsi_rw_16 *)xs->cmd;
 
 	cmd->opcode = read ? READ_16 : WRITE_16;
-	_lto4b(blkno, cmd->addr);
+	_lto8b(blkno, cmd->addr);
 	_lto4b(nblks, cmd->length);
 
 	xs->cmdlen = sizeof(*cmd);
