@@ -1,4 +1,4 @@
-/* $OpenBSD: server-msg.c,v 1.23 2009/10/10 09:46:11 nicm Exp $ */
+/* $OpenBSD: server-msg.c,v 1.24 2009/10/21 20:16:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -101,6 +101,8 @@ server_msg_dispatch(struct client *c)
 			if (datalen != 0)
 				fatalx("bad MSG_WAKEUP size");
 
+			if (!(c->flags & CLIENT_SUSPENDED))
+				break;
 			c->flags &= ~CLIENT_SUSPENDED;
 			tty_start_tty(&c->tty);
 			server_redraw_client(c);
