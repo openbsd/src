@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.363 2009/10/19 14:20:55 espie Exp $
+# $OpenBSD: pkg_add,v 1.364 2009/10/21 10:22:58 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -370,8 +370,8 @@ sub really_add
 			};
 			$state->progress->clear;
 			if ($state->{interrupted} || $errors) {
-				Fatal partial_install("Installation of ",
-				    $handle->pkgname, " failed", $set, $state);
+				Fatal partial_install("Installation of ".
+				    $handle->pkgname." failed", $set, $state);
 			}
 		}
 
@@ -386,7 +386,7 @@ sub really_add
 			} catchall {
 				Warn $_;
 				Fatal partial_install(
-				    "Deinstallation of ".$oldname." failed", 
+				    "Deinstallation of $oldname failed", 
 				    $set, $state);
 			};
 
@@ -449,7 +449,7 @@ sub really_add
 
 sub install_set
 {
-	my ($set, $state, @todo) = @_;
+	my ($set, $state) = @_;
 
 	if ($set->{finished}) {
 		return ();
@@ -788,7 +788,7 @@ require OpenBSD::Tracker;
 $state->{tracker} = OpenBSD::Tracker->new;
 $state->{tracker}->add_sets(@todo2);
 while (my $set = shift @todo2) {
-	unshift(@todo2, install_set($set, $state, @todo2));
+	unshift(@todo2, install_set($set, $state));
 }
 };
 # Note how well we performed. We need to clean up BEFORE we exit anyways.
