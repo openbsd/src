@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.21 2009/04/21 12:43:01 kurt Exp $ */
+/*	$OpenBSD: rthread.h,v 1.22 2009/10/21 16:05:48 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -48,6 +48,8 @@ struct sem {
 	volatile int value;
 	int pad;
 };
+
+TAILQ_HEAD(pthread_queue, pthread);
 
 struct pthread_mutex {
 	struct sem sem;
@@ -119,6 +121,7 @@ struct pthread {
 	char name[32];
 	struct stack *stack;
 	LIST_ENTRY(pthread) threads;
+	TAILQ_ENTRY(pthread) waiting;
 	int sched_policy;
 	struct pthread_attr attr;
 	struct sched_param sched_param;
