@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.7 2009/10/21 07:24:23 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.8 2009/10/21 18:20:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -46,19 +46,6 @@ void
 job_tree_init(struct jobs *jobs)
 {
 	RB_INIT(jobs);
-}
-
-/* Count the number of jobs in a tree. */
-u_int
-job_tree_size(struct jobs *jobs)
-{
-	struct job	*job;
-	u_int		 n;
-
-	n = 0;
-	RB_FOREACH(job, jobs, jobs)
-		n++;
-	return (n);
 }
 
 /* Destroy a job tree. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.143 2009/10/20 19:18:28 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.144 2009/10/21 18:20:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1252,7 +1252,6 @@ int	job_cmp(struct job *, struct job *);
 RB_PROTOTYPE(jobs, job, entry, job_cmp);
 void	job_tree_init(struct jobs *);
 void	job_tree_free(struct jobs *);
-u_int	job_tree_size(struct jobs *);
 struct job *job_get(struct jobs *, const char *);
 struct job *job_add(struct jobs *, struct client *,
 	    const char *, void (*)(struct job *), void (*)(void *), void *);
