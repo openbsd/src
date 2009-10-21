@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.23 2009/10/16 00:15:49 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.24 2009/10/21 19:56:46 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -521,7 +521,7 @@ atoi(const char *s, int b, const char **o)
 	}
 
 	/* Parse base specification, if any. */
-	if (c == '0') {
+	if (base == 0 && c == '0') {
 		c = *s++;
 		switch (c) {
 		case 'X':
@@ -549,11 +549,11 @@ atoi(const char *s, int b, const char **o)
 			d = c - 'A' + 10;
 		else
 			break;
-		c = *s++;
 		if (d >= base)
 			break;
 		val *= base;
 		val += d;
+		c = *s++;
 	}
 	if (neg)
 		val = -val;
