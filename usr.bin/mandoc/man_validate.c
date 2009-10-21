@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.9 2009/09/18 22:46:14 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.10 2009/10/21 19:13:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -37,14 +37,13 @@ struct	man_valid {
 
 static	int	  check_bline(CHKARGS);
 static	int	  check_eq0(CHKARGS);
-static	int	  check_eq1(CHKARGS);
+static	int	  check_le1(CHKARGS);
 static	int	  check_ge2(CHKARGS);
 static	int	  check_le5(CHKARGS);
 static	int	  check_par(CHKARGS);
 static	int	  check_part(CHKARGS);
 static	int	  check_root(CHKARGS);
 static	int	  check_sec(CHKARGS);
-static	int	  check_sp(CHKARGS);
 static	int	  check_text(CHKARGS);
 
 static	v_check	  posts_eq0[] = { check_eq0, NULL };
@@ -52,7 +51,7 @@ static	v_check	  posts_ge2_le5[] = { check_ge2, check_le5, NULL };
 static	v_check	  posts_par[] = { check_par, NULL };
 static	v_check	  posts_part[] = { check_part, NULL };
 static	v_check	  posts_sec[] = { check_sec, NULL };
-static	v_check	  posts_sp[] = { check_sp, NULL };
+static	v_check	  posts_sp[] = { check_le1, NULL };
 static	v_check	  pres_bline[] = { check_bline, NULL };
 
 static	const struct man_valid man_valids[MAN_MAX] = {
@@ -205,39 +204,9 @@ check_##name(CHKARGS) \
 }
 
 INEQ_DEFINE(0, ==, eq0)
-INEQ_DEFINE(1, ==, eq1)
+INEQ_DEFINE(1, <=, le1)
 INEQ_DEFINE(2, >=, ge2)
 INEQ_DEFINE(5, <=, le5)
-
-
-static int
-check_sp(CHKARGS)
-{
-	long		 lval;
-	char		*ep, *buf;
-
-	if (NULL == n->child)
-		return(1);
-	else if ( ! check_eq1(m, n))
-		return(0);
-
-	assert(MAN_TEXT == n->child->type);
-	buf = n->child->string;
-	assert(buf);
-	
-	/* From OpenBSD's strtol(3). */
-
-	errno = 0;
-	lval = strtol(buf, &ep, 10);
-	if (buf[0] == '\0' || *ep != '\0')
-		return(man_nerr(m, n->child, WNUMFMT));
-
-	if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
-			(lval > INT_MAX || lval < 0))
-		return(man_nerr(m, n->child, WNUMFMT));
-
-	return(1);
-}
 
 
 static int

@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.16 2009/09/21 20:57:57 schwarze Exp $ */
+/*	$Id: main.c,v 1.17 2009/10/21 19:13:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -20,12 +20,16 @@
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "mdoc.h"
 #include "man.h"
+#include "main.h"
+
+#define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
 
 typedef	void		(*out_mdoc)(void *, const struct mdoc *);
 typedef	void		(*out_man)(void *, const struct man *);
@@ -45,6 +49,7 @@ enum	intt {
 enum	outt {
 	OUTT_ASCII = 0,
 	OUTT_TREE,
+	OUTT_HTML,
 	OUTT_LINT
 };
 
@@ -70,14 +75,8 @@ struct	curparse {
 	out_man	  	  outman;
 	out_free	  outfree;
 	void		 *outdata;
+	char		 *outopts;
 };
-
-extern	void		 *ascii_alloc(void);
-extern	void		  tree_mdoc(void *, const struct mdoc *);
-extern	void		  tree_man(void *, const struct man *);
-extern	void		  terminal_mdoc(void *, const struct mdoc *);
-extern	void		  terminal_man(void *, const struct man *);
-extern	void		  terminal_free(void *);
 
 static	int		  foptions(int *, char *);
 static	int		  toptions(enum outt *, char *);
@@ -112,7 +111,7 @@ main(int argc, char *argv[])
 	curp.outtype = OUTT_ASCII;
 
 	/* LINTED */
-	while (-1 != (c = getopt(argc, argv, "f:m:VW:T:")))
+	while (-1 != (c = getopt(argc, argv, "f:m:o:T:VW:")))
 		switch (c) {
 		case ('f'):
 			if ( ! foptions(&curp.fflags, optarg))
@@ -121,6 +120,9 @@ main(int argc, char *argv[])
 		case ('m'):
 			if ( ! moptions(&curp.inttype, optarg))
 				return(EXIT_FAILURE);
+			break;
+		case ('o'):
+			curp.outopts = optarg;
 			break;
 		case ('T'):
 			if ( ! toptions(&curp.outtype, optarg))
@@ -419,6 +421,12 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 
 	if ( ! (curp->outman && curp->outmdoc)) {
 		switch (curp->outtype) {
+		case (OUTT_HTML):
+			curp->outdata = html_alloc(curp->outopts);
+			curp->outman = html_man;
+			curp->outmdoc = html_mdoc;
+			curp->outfree = html_free;
+			break;
 		case (OUTT_TREE):
 			curp->outman = tree_man;
 			curp->outmdoc = tree_mdoc;
@@ -533,6 +541,8 @@ toptions(enum outt *tflags, char *arg)
 		*tflags = OUTT_LINT;
 	else if (0 == strcmp(arg, "tree"))
 		*tflags = OUTT_TREE;
+	else if (0 == strcmp(arg, "html"))
+		*tflags = OUTT_HTML;
 	else {
 		warnx("bad argument: -T%s", arg);
 		return(0);
@@ -546,7 +556,7 @@ static int
 foptions(int *fflags, char *arg)
 {
 	char		*v, *o;
-	char		*toks[7];
+	const char	*toks[7];
 
 	toks[0] = "ign-scope";
 	toks[1] = "no-ign-escape";
@@ -558,7 +568,7 @@ foptions(int *fflags, char *arg)
 
 	while (*arg) {
 		o = arg;
-		switch (getsubopt(&arg, toks, &v)) {
+		switch (getsubopt(&arg, UNCONST(toks), &v)) {
 		case (0):
 			*fflags |= IGN_SCOPE;
 			break;
@@ -592,7 +602,7 @@ static int
 woptions(int *wflags, char *arg)
 {
 	char		*v, *o;
-	char		*toks[3]; 
+	const char	*toks[3]; 
 
 	toks[0] = "all";
 	toks[1] = "error";
@@ -600,7 +610,7 @@ woptions(int *wflags, char *arg)
 
 	while (*arg) {
 		o = arg;
-		switch (getsubopt(&arg, toks, &v)) {
+		switch (getsubopt(&arg, UNCONST(toks), &v)) {
 		case (0):
 			*wflags |= WARN_WALL;
 			break;

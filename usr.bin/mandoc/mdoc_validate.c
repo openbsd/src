@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.36 2009/10/19 16:27:52 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.37 2009/10/21 19:13:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -70,6 +70,7 @@ static	int	 eerr_eq0(POST_ARGS);
 static	int	 eerr_eq1(POST_ARGS);
 static	int	 eerr_ge1(POST_ARGS);
 static	int	 eerr_le2(POST_ARGS);
+static	int	 eerr_le1(POST_ARGS);
 static	int	 ewarn_ge1(POST_ARGS);
 static	int	 herr_eq0(POST_ARGS);
 static	int	 herr_ge1(POST_ARGS);
@@ -89,7 +90,6 @@ static	int	 post_rs(POST_ARGS);
 static	int	 post_sh(POST_ARGS);
 static	int	 post_sh_body(POST_ARGS);
 static	int	 post_sh_head(POST_ARGS);
-static	int	 post_sp(POST_ARGS);
 static	int	 post_st(POST_ARGS);
 static	int	 pre_an(PRE_ARGS);
 static	int	 pre_bd(PRE_ARGS);
@@ -124,7 +124,7 @@ static	v_post	 posts_notext[] = { eerr_eq0, NULL };
 static	v_post	 posts_pf[] = { eerr_eq1, NULL };
 static	v_post	 posts_rs[] = { berr_ge1, herr_eq0, post_rs, NULL };
 static	v_post	 posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
-static	v_post	 posts_sp[] = { post_sp, NULL };
+static	v_post	 posts_sp[] = { eerr_le1, NULL };
 static	v_post	 posts_ss[] = { herr_ge1, NULL };
 static	v_post	 posts_st[] = { eerr_eq1, post_st, NULL };
 static	v_post	 posts_text[] = { eerr_ge1, NULL };
@@ -191,7 +191,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_text },			/* Vt */ 
 	{ NULL, posts_xr },			/* Xr */ 
 	{ NULL, posts_text },			/* %A */
-	{ NULL, posts_text },			/* %B */
+	{ NULL, posts_text },			/* %B */ /* FIXME: can be used outside Rs/Re. */
 	{ NULL, posts_text },			/* %D */
 	{ NULL, posts_text },			/* %I */
 	{ NULL, posts_text },			/* %J */
@@ -199,7 +199,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, posts_text },			/* %O */
 	{ NULL, posts_text },			/* %P */
 	{ NULL, posts_text },			/* %R */
-	{ NULL, posts_text },			/* %T */
+	{ NULL, posts_text },			/* %T */ /* FIXME: can be used outside Rs/Re. */
 	{ NULL, posts_text },			/* %V */
 	{ NULL, NULL },				/* Ac */
 	{ NULL, NULL },				/* Ao */
@@ -404,6 +404,7 @@ CHECK_BODY_DEFN(ge1, err, err_child_gt, 0)	/* berr_ge1() */
 CHECK_ELEM_DEFN(ge1, warn, warn_child_gt, 0)	/* ewarn_gt1() */
 CHECK_ELEM_DEFN(eq1, err, err_child_eq, 1)	/* eerr_eq1() */
 CHECK_ELEM_DEFN(le2, err, err_child_lt, 3)	/* eerr_le2() */
+CHECK_ELEM_DEFN(le1, err, err_child_lt, 2)	/* eerr_le1() */
 CHECK_ELEM_DEFN(eq0, err, err_child_eq, 0)	/* eerr_eq0() */
 CHECK_ELEM_DEFN(ge1, err, err_child_gt, 0)	/* eerr_ge1() */
 CHECK_HEAD_DEFN(eq0, err, err_child_eq, 0)	/* herr_eq0() */
@@ -617,25 +618,33 @@ pre_bl(PRE_ARGS)
 		case (MDOC_Inset):
 			/* FALLTHROUGH */
 		case (MDOC_Column):
-			if (-1 != type) 
+			if (type >= 0) 
 				return(mdoc_nerr(mdoc, n, EMULTILIST));
 			type = n->args->argv[pos].arg;
 			break;
+		case (MDOC_Compact):
+			if (type < 0 && ! mdoc_nwarn(mdoc, n, ENOTYPE))
+				return(0);
+			break;
 		case (MDOC_Width):
-			if (-1 != width)
+			if (width >= 0)
 				return(mdoc_nerr(mdoc, n, EARGREP));
+			if (type < 0 && ! mdoc_nwarn(mdoc, n, ENOTYPE))
+				return(0);
 			width = n->args->argv[pos].arg;
 			break;
 		case (MDOC_Offset):
-			if (-1 != offset)
+			if (offset >= 0)
 				return(mdoc_nerr(mdoc, n, EARGREP));
+			if (type < 0 && ! mdoc_nwarn(mdoc, n, ENOTYPE))
+				return(0);
 			offset = n->args->argv[pos].arg;
 			break;
 		default:
 			break;
 		}
 
-	if (-1 == type)
+	if (type < 0)
 		return(mdoc_nerr(mdoc, n, ELISTTYPE));
 
 	/* 
@@ -646,7 +655,7 @@ pre_bl(PRE_ARGS)
 
 	switch (type) {
 	case (MDOC_Tag):
-		if (-1 == width && ! mdoc_nwarn(mdoc, n, EMISSWIDTH))
+		if (width < 0 && ! mdoc_nwarn(mdoc, n, EMISSWIDTH))
 			return(0);
 		break;
 	case (MDOC_Column):
@@ -656,7 +665,7 @@ pre_bl(PRE_ARGS)
 	case (MDOC_Inset):
 		/* FALLTHROUGH */
 	case (MDOC_Item):
-		if (-1 != width && ! mdoc_nwarn(mdoc, n, ENOWIDTH))
+		if (width >= 0 && ! mdoc_nwarn(mdoc, n, ENOWIDTH))
 			return(0);
 		break;
 	default:
@@ -690,8 +699,6 @@ pre_bd(PRE_ARGS)
 		case (MDOC_Filled):
 			/* FALLTHROUGH */
 		case (MDOC_Literal):
-			/* FALLTHROUGH */
-		case (MDOC_File):
 			if (0 == type++) 
 				break;
 			return(mdoc_nerr(mdoc, n, EMULTIDISP));
@@ -1120,37 +1127,6 @@ post_root(POST_ARGS)
 
 	return(1);
 }
-
-
-static int
-post_sp(POST_ARGS)
-{
-	long		 lval;
-	char		*ep, *buf;
-
-	if (NULL == mdoc->last->child)
-		return(1);
-	else if ( ! eerr_eq1(mdoc))
-		return(0);
-
-	assert(MDOC_TEXT == mdoc->last->child->type);
-	buf = mdoc->last->child->string;
-	assert(buf);
-	
-	/* From OpenBSD's strtol(3). */
-	errno = 0;
-	lval = strtol(buf, &ep, 10);
-	if (buf[0] == '\0' || *ep != '\0')
-		return(mdoc_nerr(mdoc, mdoc->last->child, ENUMFMT));
-
-	if ((errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN)) ||
-			(lval > INT_MAX || lval < 0))
-		return(mdoc_nerr(mdoc, mdoc->last->child, ENUMFMT));
-
-	return(1);
-}
-
-
 
 
 static int

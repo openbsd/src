@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.16 2009/10/19 21:00:43 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.17 2009/10/21 19:13:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -59,7 +59,7 @@ static	int mdoc_argvflags[MDOC_ARG_MAX] = {
 	ARGV_NONE,	/* MDOC_Ragged */
 	ARGV_NONE,	/* MDOC_Unfilled */
 	ARGV_NONE,	/* MDOC_Literal */
-	ARGV_NONE,	/* MDOC_File */
+	ARGV_SINGLE,	/* MDOC_File */
 	ARGV_OPT_SINGLE, /* MDOC_Offset */
 	ARGV_NONE,	/* MDOC_Bullet */
 	ARGV_NONE,	/* MDOC_Dash */
@@ -591,6 +591,8 @@ argv_a2arg(int tok, const char *p)
 			return(MDOC_Offset);
 		else if (0 == strcmp(p, "compact"))
 			return(MDOC_Compact);
+		else if (0 == strcmp(p, "centered"))
+			return(MDOC_Centred);
 		break;
 
 	case (MDOC_Bf):

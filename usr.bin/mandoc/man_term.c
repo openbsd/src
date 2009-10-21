@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.17 2009/10/19 21:43:16 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.18 2009/10/21 19:13:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,8 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "term.h"
+#include "out.h"
 #include "man.h"
+#include "term.h"
+#include "chars.h"
+#include "main.h"
 
 #define	INDENT		  7
 #define	HALFINDENT	  3
@@ -58,6 +61,18 @@ struct	termact {
 	int		(*pre)(DECL_ARGS);
 	void		(*post)(DECL_ARGS);
 };
+
+static	int		  arg2width(const struct man_node *);
+static	int		  arg2height(const struct man_node *);
+
+static	void		  print_head(struct termp *, 
+				const struct man_meta *);
+static	void		  print_body(DECL_ARGS);
+static	void		  print_node(DECL_ARGS);
+static	void		  print_foot(struct termp *, 
+				const struct man_meta *);
+static	void		  print_bvspace(struct termp *, 
+				const struct man_node *);
 
 static	int		  pre_B(DECL_ARGS);
 static	int		  pre_BI(DECL_ARGS);
@@ -123,37 +138,74 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_ign, NULL }, /* UC */
 };
 
-static	void		  print_head(struct termp *, 
-				const struct man_meta *);
-static	void		  print_body(DECL_ARGS);
-static	void		  print_node(DECL_ARGS);
-static	void		  print_foot(struct termp *, 
-				const struct man_meta *);
-static	void		  fmt_block_vspace(struct termp *, 
-				const struct man_node *);
-static	int		  arg_width(const struct man_node *);
 
 
 void
-man_run(struct termp *p, const struct man *m)
+terminal_man(void *arg, const struct man *man)
 {
-	struct mtermp	 mt;
+	struct termp		*p;
+	const struct man_node	*n;
+	const struct man_meta	*m;
+	struct mtermp		 mt;
 
-	print_head(p, man_meta(m));
+	p = (struct termp *)arg;
+
+	if (NULL == p->symtab)
+		switch (p->enc) {
+		case (TERMENC_ASCII):
+			p->symtab = chars_init(CHARS_ASCII);
+			break;
+		default:
+			abort();
+			/* NOTREACHED */
+		}
+
+	n = man_node(man);
+	m = man_meta(man);
+
+	print_head(p, m);
 	p->flags |= TERMP_NOSPACE;
 
 	mt.fl = 0;
 	mt.lmargin = INDENT;
 	mt.offset = INDENT;
 
-	if (man_node(m)->child)
-		print_body(p, &mt, man_node(m)->child, man_meta(m));
-	print_foot(p, man_meta(m));
+	if (n->child)
+		print_body(p, &mt, n->child, m);
+	print_foot(p, m);
+}
+
+
+static int
+arg2height(const struct man_node *n)
+{
+	struct roffsu	 su;
+
+	assert(MAN_TEXT == n->type);
+	assert(n->string);
+	if ( ! a2roffsu(n->string, &su, SCALE_VS))
+		SCALE_VS_INIT(&su, strlen(n->string));
+
+	return((int)term_vspan(&su));
+}
+
+
+static int
+arg2width(const struct man_node *n)
+{
+	struct roffsu	 su;
+
+	assert(MAN_TEXT == n->type);
+	assert(n->string);
+	if ( ! a2roffsu(n->string, &su, SCALE_BU))
+		return(-1);
+
+	return((int)term_hspan(&su));
 }
 
 
 static void
-fmt_block_vspace(struct termp *p, const struct man_node *n)
+print_bvspace(struct termp *p, const struct man_node *n)
 {
 	term_newln(p);
 
@@ -166,34 +218,6 @@ fmt_block_vspace(struct termp *p, const struct man_node *n)
 		return;
 
 	term_vspace(p);
-}
-
-
-static int
-arg_width(const struct man_node *n)
-{
-	int		 i, len;
-	const char	*p;
-
-	assert(MAN_TEXT == n->type);
-	assert(n->string);
-
-	p = n->string;
-
-	if (0 == (len = (int)strlen(p)))
-		return(-1);
-
-	for (i = 0; i < len; i++) 
-		if ( ! isdigit((u_char)p[i]))
-			break;
-
-	if (i == len - 1)  {
-		if ('n' == p[len - 1] || 'm' == p[len - 1])
-			return(atoi(p));
-	} else if (i == len)
-		return(atoi(p));
-
-	return(-1);
 }
 
 
@@ -392,12 +416,8 @@ pre_sp(DECL_ARGS)
 {
 	int		 i, len;
 
-	if (NULL == n->child) {
-		term_vspace(p);
-		return(0);
-	}
+	len = n->child ? arg2height(n->child) : 1;
 
-	len = atoi(n->child->string);
 	if (0 == len)
 		term_newln(p);
 	for (i = 0; i < len; i++)
@@ -427,7 +447,7 @@ pre_HP(DECL_ARGS)
 
 	switch (n->type) {
 	case (MAN_BLOCK):
-		fmt_block_vspace(p, n);
+		print_bvspace(p, n);
 		return(1);
 	case (MAN_BODY):
 		p->flags |= TERMP_NOBREAK;
@@ -443,7 +463,7 @@ pre_HP(DECL_ARGS)
 	/* Calculate offset. */
 
 	if (NULL != (nn = n->parent->head->child))
-		if ((ival = arg_width(nn)) >= 0)
+		if ((ival = arg2width(nn)) >= 0)
 			len = (size_t)ival;
 
 	if (0 == len)
@@ -489,7 +509,7 @@ pre_PP(DECL_ARGS)
 	switch (n->type) {
 	case (MAN_BLOCK):
 		mt->lmargin = INDENT;
-		fmt_block_vspace(p, n);
+		print_bvspace(p, n);
 		break;
 	default:
 		p->offset = mt->offset;
@@ -518,7 +538,7 @@ pre_IP(DECL_ARGS)
 		p->flags |= TERMP_TWOSPACE;
 		break;
 	case (MAN_BLOCK):
-		fmt_block_vspace(p, n);
+		print_bvspace(p, n);
 		/* FALLTHROUGH */
 	default:
 		return(1);
@@ -533,7 +553,7 @@ pre_IP(DECL_ARGS)
 		if (NULL != (nn = nn->next)) {
 			for ( ; nn->next; nn = nn->next)
 				/* Do nothing. */ ;
-			if ((ival = arg_width(nn)) >= 0)
+			if ((ival = arg2width(nn)) >= 0)
 				len = (size_t)ival;
 		}
 
@@ -607,7 +627,7 @@ pre_TP(DECL_ARGS)
 		p->flags |= TERMP_NOSPACE;
 		break;
 	case (MAN_BLOCK):
-		fmt_block_vspace(p, n);
+		print_bvspace(p, n);
 		/* FALLTHROUGH */
 	default:
 		return(1);
@@ -620,7 +640,7 @@ pre_TP(DECL_ARGS)
 
 	if (NULL != (nn = n->parent->head->child))
 		if (NULL != nn->next)
-			if ((ival = arg_width(nn)) >= 0)
+			if ((ival = arg2width(nn)) >= 0)
 				len = (size_t)ival;
 
 	switch (n->type) {
@@ -798,7 +818,7 @@ pre_RS(DECL_ARGS)
 		return(1);
 	}
 
-	if ((ival = arg_width(nn)) < 0)
+	if ((ival = arg2width(nn)) < 0)
 		return(1);
 
 	mt->offset = INDENT + (size_t)ival;

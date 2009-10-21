@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.29 2009/10/19 16:27:52 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.30 2009/10/21 19:13:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -78,6 +78,7 @@ const	char *const __mdoc_merrnames[MERRMAX] = {
 	"closure macro without prior context", /* ENOCTX */
 	"no description found for library", /* ELIB */
 	"bad child for parent context", /* EBADCHILD */
+	"list arguments preceding type", /* ENOTYPE */
 };
 
 const	char *const __mdoc_macronames[MDOC_MAX] = {		 
@@ -127,7 +128,7 @@ const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {
 	"ohang",		"inset",		"column",	 
 	"width",		"compact",		"std",	 
 	"filled",		"words",		"emphasis",
-	"symbolic",		"nested"
+	"symbolic",		"nested",		"centered"
 	};
 
 const	char * const *mdoc_macronames = __mdoc_macronames;

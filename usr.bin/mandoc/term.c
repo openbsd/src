@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.15 2009/10/19 09:16:58 schwarze Exp $ */
+/*	$Id: term.c,v 1.16 2009/10/21 19:13:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -21,14 +21,14 @@
 #include <string.h>
 
 #include "chars.h"
+#include "out.h"
 #include "term.h"
 #include "man.h"
 #include "mdoc.h"
+#include "main.h"
 
-extern	void		  man_run(struct termp *, 
-				const struct man *);
-extern	void		  mdoc_run(struct termp *, 
-				const struct mdoc *);
+/* FIXME: accomodate non-breaking, non-collapsing white-space. */
+/* FIXME: accomodate non-breaking, collapsing white-space. */
 
 static	struct termp	 *term_alloc(enum termenc);
 static	void		  term_free(struct termp *);
@@ -47,32 +47,6 @@ ascii_alloc(void)
 {
 
 	return(term_alloc(TERMENC_ASCII));
-}
-
-
-void
-terminal_man(void *arg, const struct man *man)
-{
-	struct termp	*p;
-
-	p = (struct termp *)arg;
-	if (NULL == p->symtab)
-		p->symtab = chars_init(CHARS_ASCII);
-
-	man_run(p, man);
-}
-
-
-void
-terminal_mdoc(void *arg, const struct mdoc *mdoc)
-{
-	struct termp	*p;
-
-	p = (struct termp *)arg;
-	if (NULL == p->symtab)
-		p->symtab = chars_init(CHARS_ASCII);
-
-	mdoc_run(p, mdoc);
 }
 
 
@@ -156,7 +130,7 @@ void
 term_flushln(struct termp *p)
 {
 	int		 i, j;
-	size_t		 vbl, vsz, vis, maxvis, mmax, bp;
+	size_t		 vbl, vsz, vis, maxvis, mmax, bp, os;
 	static int	 overstep = 0;
 
 	/*
@@ -168,6 +142,9 @@ term_flushln(struct termp *p)
 
 	assert(p->offset < p->rmargin);
 	assert((int)(p->rmargin - p->offset) - overstep > 0);
+
+	/* Save the overstep. */
+	os = (size_t)overstep;
 
 	maxvis = /* LINTED */
 		p->rmargin - p->offset - overstep;
@@ -230,6 +207,9 @@ term_flushln(struct termp *p)
 					putchar(' ');
 				vis = 0;
 			}
+			/* Remove the overstep width. */
+			bp += os;
+			os = 0;
 		} else {
 			for (j = 0; j < (int)vbl; j++)
 				putchar(' ');
@@ -579,3 +559,80 @@ encode(struct termp *p, char c)
 	}
 	buffer(p, c);
 }
+
+
+size_t
+term_vspan(const struct roffsu *su)
+{
+	double		 r;
+
+	switch (su->unit) {
+	case (SCALE_CM):
+		r = su->scale * 2;
+		break;
+	case (SCALE_IN):
+		r = su->scale * 6;
+		break;
+	case (SCALE_PC):
+		r = su->scale;
+		break;
+	case (SCALE_PT):
+		r = su->scale / 8;
+		break;
+	case (SCALE_MM):
+		r = su->scale / 1000;
+		break;
+	case (SCALE_VS):
+		r = su->scale;
+		break;
+	default:
+		r = su->scale - 1;
+		break;
+	}
+
+	if (r < 0.0)
+		r = 0.0;
+	return(/* LINTED */(size_t)
+			r);
+}
+
+
+size_t
+term_hspan(const struct roffsu *su)
+{
+	double		 r;
+
+	/* XXX: CM, IN, and PT are approximations. */
+
+	switch (su->unit) {
+	case (SCALE_CM):
+		r = 4 * su->scale;
+		break;
+	case (SCALE_IN):
+		/* XXX: this is an approximation. */
+		r = 10 * su->scale;
+		break;
+	case (SCALE_PC):
+		r = (10 * su->scale) / 6;
+		break;
+	case (SCALE_PT):
+		r = (10 * su->scale) / 72;
+		break;
+	case (SCALE_MM):
+		r = su->scale / 1000; /* FIXME: double-check. */
+		break;
+	case (SCALE_VS):
+		r = su->scale * 2 - 1; /* FIXME: double-check. */
+		break;
+	default:
+		r = su->scale;
+		break;
+	}
+
+	if (r < 0.0)
+		r = 0.0;
+	return((size_t)/* LINTED */
+			r);
+}
+
+

@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.11 2009/09/18 22:46:14 schwarze Exp $
+.\"	$Id: man.7,v 1.12 2009/10/21 19:13:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2009 $
+.Dd $Mdocdate: October 21 2009 $
 .Dt MAN 7
 .Os
 .
@@ -119,19 +119,86 @@ from input.  These are later re-added, if applicable, by a front-end
 utility such as
 .Xr mandoc 1 .
 .
+.Ss Scaling Widths
+Many macros support scaled widths for their arguments, such as
+stipulating a two-inch paragraph indentation with the following:
+.Bd -literal -offset indent
+\&.HP 2i
+.Ed
+.
+.Pp
+The syntax for scaled widths is
+.Sq Li [+-]?[0-9]*.[0-9]*[:unit:]? ,
+where a decimal must be preceded or proceeded by at least one digit.
+Negative numbers, while accepted, are truncated to zero.  The following
+scaling units are accepted:
+.
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It c
+centimetre
+.It i
+inch
+.It P
+pica (~1/6 inch)
+.It p
+point (~1/72 inch)
+.It f
+synonym for
+.Sq u
+.It v
+default vertical span
+.It m
+width of rendered
+.Sq m
+.Pq em
+character
+.It n
+width of rendered
+.Sq n
+.Pq en
+character
+.It u
+default horizontal span
+.It M
+mini-em (~1/100 em)
+.El
+.Pp
+Using anything other than
+.Sq m ,
+.Sq n ,
+.Sq u ,
+or
+.Sq v
+is necessarily non-portable across output media.  See 
+.Sx COMPATIBILITY .
+.
+.Pp
+If a scaling unit is not provided, the numerical value is interpreted
+under the default rules of
+.Sq v
+for vertical spaces and
+.Sq u
+for horizontal ones.
+.Em Note :
+this differs from
+.Xr mdoc 7 ,
+which, if a unit is not provided, will instead interpret the string as
+literal text.
+.
 .
 .Sh MANUAL STRUCTURE
 Each
 .Nm
 document must contain contains at least the
-.Sq TH
+.Sx \&TH
 macro describing the document's section and title.  It may occur
 anywhere in the document, although conventionally, it appears as the
 first macro.
 .
 .Pp
 Beyond
-.Sq TH ,
+.Sx \&TH ,
 at least one macro or text node must appear in the document.  Documents
 are generally structured as follows:
 .Bd -literal -offset indent
@@ -177,11 +244,12 @@ Macros are one to three three characters in length and begin with a
 control character ,
 .Sq \&. ,
 at the beginning of the line.  An arbitrary amount of whitespace may
-sit between the control character and the macro name.  Thus,
-.Sq .PP
-and
-.Sq \&.\ \ \ PP
-are equivalent.
+sit between the control character and the macro name.  Thus, the
+following are equivalent:
+.Bd -literal -offset indent
+\&.PP
+\&.\ \ \ PP
+.Ed
 .
 .Pp
 The
@@ -215,42 +283,42 @@ If a next-line macro is proceded by a block macro, it is ignored.
 .Pp
 .Bl -column -compact -offset indent "MacroX" "ArgumentsX" "ScopeXXXXX"
 .It Em Macro Ta Em Arguments Ta Em Scope
-.It    B     Ta    n         Ta    next-line
-.It    BI    Ta    n         Ta    current
-.It    BR    Ta    n         Ta    current
-.It    DT    Ta    0         Ta    current
-.It    I     Ta    n         Ta    next-line
-.It    IB    Ta    n         Ta    current
-.It    IR    Ta    n         Ta    current
-.It    R     Ta    n         Ta    next-line
-.It    RB    Ta    n         Ta    current
-.It    RI    Ta    n         Ta    current
-.It    SB    Ta    n         Ta    next-line
-.It    SM    Ta    n         Ta    next-line
-.It    TH    Ta    >1, <6    Ta    current
-.It    UC    Ta    n         Ta    current
-.It    br    Ta    0         Ta    current
-.It    fi    Ta    0         Ta    current
-.It    i     Ta    n         Ta    current
-.It    na    Ta    0         Ta    current
-.It    nf    Ta    0         Ta    current
-.It    r     Ta    0         Ta    current
-.It    sp    Ta    1         Ta    current
+.It Sx \&B   Ta    n         Ta    next-line
+.It Sx \&BI  Ta    n         Ta    current
+.It Sx \&BR  Ta    n         Ta    current
+.It Sx \&DT  Ta    0         Ta    current
+.It Sx \&I   Ta    n         Ta    next-line
+.It Sx \&IB  Ta    n         Ta    current
+.It Sx \&IR  Ta    n         Ta    current
+.It Sx \&R   Ta    n         Ta    next-line
+.It Sx \&RB  Ta    n         Ta    current
+.It Sx \&RI  Ta    n         Ta    current
+.It Sx \&SB  Ta    n         Ta    next-line
+.It Sx \&SM  Ta    n         Ta    next-line
+.It Sx \&TH  Ta    >1, <6    Ta    current
+.It Sx \&UC  Ta    n         Ta    current
+.It Sx \&br  Ta    0         Ta    current
+.It Sx \&fi  Ta    0         Ta    current
+.It Sx \&i   Ta    n         Ta    current
+.It Sx \&na  Ta    0         Ta    current
+.It Sx \&nf  Ta    0         Ta    current
+.It Sx \&r   Ta    0         Ta    current
+.It Sx \&sp  Ta    1         Ta    current
 .El
 .
 .Pp
 The
-.Sq RS ,
-.Sq RE ,
-.Sq UC ,
-.Sq br ,
-.Sq fi ,
-.Sq i ,
-.Sq na ,
-.Sq nf ,
-.Sq r ,
+.Sx \&RS ,
+.Sx \&RE ,
+.Sx \&UC ,
+.Sx \&br ,
+.Sx \&fi ,
+.Sx \&i ,
+.Sx \&na ,
+.Sx \&nf ,
+.Sx \&r ,
 and
-.Sq sp
+.Sx \&sp
 macros should not be used.  They're included for compatibility.
 .
 .
@@ -268,48 +336,48 @@ subsequent block macro invocation.
 .Pp
 The closure of body scope may be to the section, where a macro is closed
 by
-.Sq SH ;
+.Sx \&SH ;
 sub-section, closed by a section or
-.Sq SS ;
+.Sx \&SS ;
 part, closed by a section, sub-section, or
-.Sq RE ;
+.Sx \&RE ;
 or paragraph, closed by a section, sub-section, part, 
-.Sq HP ,
-.Sq IP ,
-.Sq LP ,
-.Sq P ,
-.Sq PP ,
+.Sx \&HP ,
+.Sx \&IP ,
+.Sx \&LP ,
+.Sx \&P ,
+.Sx \&PP ,
 or
-.Sq TP .
+.Sx \&TP .
 No closure refers to an explicit block closing macro.
 .
 .Pp
 .Bl -column "MacroX" "ArgumentsX" "Head ScopeX" "sub-sectionX" -compact -offset indent
 .It Em Macro Ta Em Arguments Ta Em Head Scope Ta Em Body Scope
-.It   HP     Ta    <2        Ta    current    Ta    paragraph
-.It   IP     Ta    <3        Ta    current    Ta    paragraph
-.It   LP     Ta    0         Ta    current    Ta    paragraph
-.It   P      Ta    0         Ta    current    Ta    paragraph
-.It   PP     Ta    0         Ta    current    Ta    paragraph
-.It   RE     Ta    0         Ta    current    Ta    none
-.It   RS     Ta    1         Ta    current    Ta    part
-.It   SH     Ta    >0        Ta    next-line  Ta    section
-.It   SS     Ta    >0        Ta    next-line  Ta    sub-section
-.It   TP     Ta    n         Ta    next-line  Ta    paragraph
+.It Sx \&HP  Ta    <2        Ta    current    Ta    paragraph
+.It Sx \&IP  Ta    <3        Ta    current    Ta    paragraph
+.It Sx \&LP  Ta    0         Ta    current    Ta    paragraph
+.It Sx \&P   Ta    0         Ta    current    Ta    paragraph
+.It Sx \&PP  Ta    0         Ta    current    Ta    paragraph
+.It Sx \&RE  Ta    0         Ta    current    Ta    none
+.It Sx \&RS  Ta    1         Ta    current    Ta    part
+.It Sx \&SH  Ta    >0        Ta    next-line  Ta    section
+.It Sx \&SS  Ta    >0        Ta    next-line  Ta    sub-section
+.It Sx \&TP  Ta    n         Ta    next-line  Ta    paragraph
 .El
 .
 .Pp
 If a block macro is next-line scoped, it may only be followed by in-line
 macros (excluding
-.Sq DT ,
-.Sq TH ,
-.Sq UC ,
-.Sq br ,
-.Sq na ,
-.Sq sp ,
-.Sq nf ,
+.Sx \&DT ,
+.Sx \&TH ,
+.Sx \&UC ,
+.Sx \&br ,
+.Sx \&na ,
+.Sx \&sp ,
+.Sx \&nf ,
 and
-.Sq fi ) .
+.Sx \&fi ) .
 .
 .
 .Sh REFERENCE
@@ -317,32 +385,9 @@ This section is a canonical reference to all macros, arranged
 alphabetically.  For the scoping of individual macros, see
 .Sx MACRO SYNTAX .
 .
-.
-.Ss Definitions
-In this reference, a numerical width may be either a standalone natural
-number (such as 3, 4, 10, etc.) or a natural number followed by a width
-multiplier 
-.Qq n ,
-corresponding to the width of the formatted letter n, or
-.Qq m ,
-corresponding to the width of the formatted letter m.  The latter is the
-default, if unspecified.  Thus,
-.Bd -literal -offset indent
-\&.HP 12n
-.Ed
-.
-.Pp
-indicates an offset of 12 
-.Qq n
-.Ns -sized
-letters.
-.
-.
-.Ss Macro Reference
-.Bl -tag -width Ds
-.It B
+.Ss \&B
 Text is rendered in bold face.
-.It BI
+.Ss \&BI
 Text is rendered alternately in bold face and italic.  Thus, 
 .Sq .BI this word and that
 causes
@@ -354,12 +399,12 @@ to render in bold face, while
 and
 .Sq that
 render in italics.  Whitespace between arguments is omitted in output.
-.It BR
+.Ss \&BR
 Text is rendered alternately in bold face and roman (the default font).
 Whitespace between arguments is omitted in output.
-.It DT
+.Ss \&DT
 Has no effect.  Included for compatibility.
-.It HP
+.Ss \&HP
 Begin a paragraph whose initial output line is left-justified, but
 subsequent output lines are indented, with the following syntax:
 .Bd -literal -offset indent
@@ -367,16 +412,16 @@ subsequent output lines are indented, with the following syntax:
 .Ed
 .
 .Pp
-If 
+If scaling width
 .Va width
 is specified, it's saved for later paragraph left-margins; if
 unspecified, the saved or default width is used.
-.It I
+.Ss \&I
 Text is rendered in italics.
-.It IB
+.Ss \&IB
 Text is rendered alternately in italics and bold face.  Whitespace
 between arguments is omitted in output.
-.It IP
+.Ss \&IP
 Begin a paragraph with the following syntax:
 .Bd -literal -offset indent
 \&.IP [head [width]]
@@ -384,36 +429,42 @@ Begin a paragraph with the following syntax:
 .
 .Pp
 This follows the behaviour of the
-.Sq TP
+.Sx \&TP
 except for the macro syntax (all arguments on the line, instead of
 having next-line scope).  If
 .Va width
 is specified, it's saved for later paragraph left-margins; if
 unspecified, the saved or default width is used.
-.It IR
+.Ss \&IR
 Text is rendered alternately in italics and roman (the default font).
 Whitespace between arguments is omitted in output.
-.It LP, P, PP
+.Ss \&LP
 Begin an undecorated paragraph.  The scope of a paragraph is closed by a
 subsequent paragraph, sub-section, section, or end of file.  The saved
 paragraph left-margin width is re-set to the default.
-.It R
+.Ss \&P
+Synonym for
+.Sx \&LP .
+.Ss \&PP
+Synonym for
+.Sx \&LP .
+.Ss \&R
 Text is rendered in roman (the default font).
-.It RB
+.Ss \&RB
 Text is rendered alternately in roman (the default font) and bold face.
 Whitespace between arguments is omitted in output.
-.It RE
+.Ss \&RE
 Explicitly close out the scope of a prior
-.Sq RS .
-.It RI
+.Sx \&RS .
+.Ss \&RI
 Text is rendered alternately in roman (the default font) and italics.
 Whitespace between arguments is omitted in output.
-.It RS
+.Ss \&RS
 Begin a part setting the left margin.  The left margin controls the
 offset, following an initial indentation, to un-indented text such as
 that of
-.Sq PP .
-The width may be specified as following:
+.Sx \&PP .
+A scaling width may be specified as following:
 .Bd -literal -offset indent
 \&.RS [width]
 .Ed
@@ -422,21 +473,21 @@ The width may be specified as following:
 If
 .Va width
 is not specified, the saved or default width is used. 
-.It SB
+.Ss \&SB
 Text is rendered in small size (one point smaller than the default font)
 bold face.
-.It SH
+.Ss \&SH
 Begin a section.  The scope of a section is only closed by another
 section or the end of file.  The paragraph left-margin width is re-set
 to the default.
-.It SM
+.Ss \&SM
 Text is rendered in small size (one point smaller than the default
 font).
-.It SS
+.Ss \&SS
 Begin a sub-section.  The scope of a sub-section is closed by a
 subsequent sub-section, section, or end of file.  The paragraph
 left-margin width is re-set to the default.
-.It TH
+.Ss \&TH
 Sets the title of the manual page with the following syntax:
 .Bd -literal -offset indent
 \&.TH title section [date [source [volume]]]
@@ -458,48 +509,45 @@ The
 string specifies the organisation providing the utility.  The
 .Va volume
 replaces the default rendered volume as dictated by the manual section.
-.It TP
+.Ss \&TP
 Begin a paragraph where the head, if exceeding the indentation width, is
 followed by a newline; if not, the body follows on the same line after a
 buffer to the indentation width.  Subsequent output lines are indented.
 .
 .Pp
-The indentation width may be set as follows:
+The indentation scaling width may be set as follows:
 .Bd -literal -offset indent
 \&.TP [width]
 .Ed
 .
 .Pp
-Where
-.Va width
-must be a properly-formed numeric width.  If
+If
 .Va width
 is specified, it's saved for later paragraph left-margins; if
 unspecified, the saved or default width is used.
-.It UC
+.Ss \&UC
 Has no effect.  Included for compatibility.
-.It br
+.Ss \&br
 Breaks the current line.  Consecutive invocations have no further effect.
-.It fi
+.Ss \&fi
 End literal mode begun by
-.Sq nf .
-.It i
+.Sx \&nf .
+.Ss \&i
 Italicise arguments.  If no arguments are specified, all subsequent text
 is italicised.
-.It na
+.Ss \&na
 Don't align to the right margin.
-.It nf
+.Ss \&nf
 Begin literal mode: all subsequent free-form lines have their end of
 line boundaries preserved.  May be ended by
-.Sq fi .
-.It r
+.Sx \&fi .
+.Ss \&r
 Fonts and styles (bold face, italics) reset to roman (default font).
-.It sp
+.Ss \&sp
 Insert n spaces, where n is the macro's positive numeric argument.  If
 0, this is equivalent to the
-.Sq br
+.Sx \&br
 macro.
-.El
 .
 .
 .Sh COMPATIBILITY

@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.11 2009/10/19 09:16:58 schwarze Exp $ */
+/*	$Id: term.h,v 1.12 2009/10/21 19:13:51 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -52,6 +52,9 @@ void		  term_newln(struct termp *);
 void		  term_vspace(struct termp *);
 void		  term_word(struct termp *, const char *);
 void		  term_flushln(struct termp *);
+
+size_t		  term_hspan(const struct roffsu *);
+size_t		  term_vspan(const struct roffsu *);
 
 __END_DECLS
 

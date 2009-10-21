@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.16 2009/09/18 22:46:14 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.17 2009/10/21 19:13:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2009 $
+.Dd $Mdocdate: October 21 2009 $
 .Dt MANDOC 1
 .Os
 .
@@ -26,11 +26,12 @@
 .
 .Sh SYNOPSIS
 .Nm mandoc
-.Op Fl V
 .Op Fl f Ns Ar option...
 .Op Fl m Ns Ar format
-.Op Fl W Ns Ar err...
+.Op Fl o Ns Ar option...
 .Op Fl T Ns Ar output
+.Op Fl V
+.Op Fl W Ns Ar err...
 .Op Ar infile...
 .
 .
@@ -43,7 +44,7 @@ manual pages for display.  The arguments are as follows:
 .
 .Bl -tag -width Ds
 .It Fl f Ns Ar option...
-Override default compiler behaviour.  See
+Comma-separated compiler options.  See
 .Sx Compiler Options
 for details.
 .
@@ -52,6 +53,11 @@ Input format.  See
 .Sx Input Formats
 for available formats.  Defaults to
 .Fl m Ns Ar andoc .
+.
+.It Fl o Ns Ar option...
+Comma-separated output options.  See
+.Sx Output Options
+for details.
 .
 .It Fl T Ns Ar output
 Output format.  See
@@ -63,7 +69,7 @@ for available formats.  Defaults to
 Print version and exit.
 .
 .It Fl W Ns Ar err...
-Configure warning messages.  Use
+Comma-separated warning options.  Use
 .Fl W Ns Ar all
 to print warnings,
 .Fl W Ns Ar error
@@ -196,6 +202,9 @@ arguments:
 Produce 7-bit ASCII output, backspace-encoded for bold and underline
 styles.  This is the default.
 .
+.It Fl T Ns Ar html
+Produce strict HTML-4.01 output, with a sane default style.
+.
 .It Fl T Ns Ar tree
 Produce an indented parse tree.
 .
@@ -241,16 +250,42 @@ Don't halt when encountering parse errors.  Useful with
 over a large set of manuals passed on the command line.
 .El
 .
-.Pp
-As with the
-.Fl W
-flag, multiple
-.Fl f
-options may be grouped and delimited with a comma.  Using
-.Fl f Ns Ar ign-scope,no-ign-escape ,
-for example, will try to ignore scope and not ignore character-escape
-errors.
-.
+.Ss Output Options
+For the time being, only
+.Fl T Ns Ar html
+is the only mode with output options:
+.Bl -tag -width Ds
+.It Fl o Ns Ar style=style.css
+The file
+.Ar style.css
+is used for an external style-sheet.  This must be a valid absolute or
+relative URI.
+.It Fl o Ns Ar includes=fmt
+The string
+.Ar fmt ,
+for example, 
+.Ar ../src/%I.html ,
+is used as a template for linked header files (usually via the
+.Sq \&In
+macro).  Instances of
+.Sq \&%I
+are replaced with the include filename.  The default is not to present a
+hyperlink.
+.It Fl o Ns Ar man=fmt
+The string
+.Ar fmt ,
+for example, 
+.Ar ../html%S/%N.%S.html ,
+is used as a template for linked manuals (usually via the
+.Sq \&Xr
+macro).  Instances of
+.Sq \&%N
+and
+.Sq %S
+are replaced with the linked manual's name and section, respectively.
+If no section is included, section 1 is assumed.  The default is not to
+present a hyperlink.
+.El
 .
 .Sh EXAMPLES
 To page manuals to the terminal:
@@ -259,6 +294,12 @@ To page manuals to the terminal:
 .D1 % mandoc \-Wall,error \-fstrict mandoc.1 2>&1 | less
 .D1 % mandoc mandoc.1 mdoc.3 mdoc.7 | less
 .
+.Pp
+To produce HTML manuals with
+.Ar style.css
+as the style-sheet:
+.Pp
+.D1 % mandoc \-Thtml -ostyle=style.css mdoc.7 > mdoc.7.html
 .Pp
 To check over a large set of manuals:
 .
@@ -333,14 +374,43 @@ retains spaces.
 .It
 Sentences are unilaterally monospaced.
 .El
+.
+.Ss HTML output
+.Bl -bullet -compact
+.It
+The
+.Xr mdoc 7
+.Sq \&Bl \-hang
+and
+.Sq \&Bl \-tag
+list types render similarly (no break following overreached left-hand
+side) due to the expressive constraints of HTML.
+.
+.It
+The
+.Xr man 7
+.Sq IP
+and
+.Sq TP
+lists render similarly.
+.El
 .\" SECTION
 .Sh SEE ALSO
 .Xr mandoc_char 7 ,
 .Xr mdoc 7 ,
 .Xr man 7
-.\" SECTION
+.
 .Sh AUTHORS
 The
 .Nm
 utility was written by
 .An Kristaps Dzonsons Aq kristaps@kth.se .
+.
+.Sh CAVEATS
+In
+.Fl T Ns Ar html ,
+the maximum size of an element attribute is determined by
+.Dv BUFSIZ ,
+which is usually 1024 bytes.  Be aware of this when setting long link
+formats with
+.Fl o Ns Ar man=fmt .

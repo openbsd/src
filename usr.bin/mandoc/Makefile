@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.19 2009/10/19 09:16:58 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.20 2009/10/21 19:13:50 schwarze Exp $
 
 .include <bsd.own.mk>
 
-VERSION=1.9.2
+VERSION=1.9.9
 CFLAGS+=-DVERSION=\"${VERSION}\"
 CFLAGS+=-W -Wall -Wstrict-prototypes
 .if ${USE_GCC3:L} != "no"
@@ -15,6 +15,7 @@ SRCS=	mandoc.c mdoc_macro.c mdoc.c mdoc_hash.c mdoc_strings.c \
 SRCS+=	man_macro.c man.c man_hash.c man_validate.c \
 	man_action.c man_argv.c
 SRCS+=	main.c mdoc_term.c chars.c term.c tree.c man_term.c
+SRCS+=	html.c mdoc_html.c man_html.c out.c
 
 PROG=	  mandoc
 
