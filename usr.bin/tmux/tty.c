@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.57 2009/10/21 16:52:30 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.58 2009/10/21 19:27:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -851,7 +851,7 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
 	struct screen		*s = wp->screen;
-	u_int			 cx, sx;
+	u_int			 cx;
 
 	tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
 
