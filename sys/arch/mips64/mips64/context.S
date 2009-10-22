@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.26 2009/10/22 18:21:40 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.27 2009/10/22 18:23:12 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -62,8 +62,10 @@ LEAF(savectx, 0)
 	REG_S	v0, PCB_CONTEXT+11*REGSZ(a0)
 	GET_CPU_INFO(t0, t1)
 	lw	t0, CI_CPL(t0)
+#ifndef IMASK_EXTERNAL
 	cfc0	t1, COP_0_ICR
 	REG_S	t1, PCB_CONTEXT+12*REGSZ(a0)	# save status register
+#endif
 	REG_S	t0, PCB_CONTEXT+13*REGSZ(a0)
 	j	ra
 	move	v0, zero
