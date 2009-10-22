@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.43 2009/10/22 18:22:11 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.44 2009/10/22 18:46:48 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -257,7 +257,9 @@ splinit()
 	 * Update proc0 pcb to contain proper values.
 	 */
 	pcb->pcb_context.val[13] = 0;	/* IPL_NONE */
+#ifdef RM7000_ICR
 	pcb->pcb_context.val[12] = (idle_mask << 8) & IC_INT_MASK;
+#endif
 	pcb->pcb_context.val[11] = (pcb->pcb_regs.sr & ~SR_INT_MASK) |
 	    (idle_mask & SR_INT_MASK);
 

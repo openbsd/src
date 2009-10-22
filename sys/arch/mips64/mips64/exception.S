@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.24 2009/10/22 18:21:40 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.25 2009/10/22 18:46:48 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -173,7 +173,7 @@ NNON_LEAF(k_intr, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(KERN_EXC_FRAME_SIZE))
 	PTR_SUB	k0, sp, FRAMESZ(KERN_EXC_FRAME_SIZE)
 	SAVE_CPU(k0, CF_RA_OFFS)
-#if 0
+#ifdef RM7000_ICR
 	cfc0	v1, COP_0_ICR
 	SAVE_REG(v1, IC, k0, CF_RA_OFFS)
 #endif
@@ -199,7 +199,7 @@ NNON_LEAF(k_intr, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 
 	PTR_L	a0, CF_RA_OFFS + KERN_REG_SIZE(sp)
 	.set	noat
-#if 0
+#ifdef RM7000_ICR
 	RESTORE_REG(t0, IC, sp, CF_RA_OFFS)
 	ctc0	t0, COP_0_ICR
 #endif
@@ -222,7 +222,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	GET_CPU_INFO(k1, k0)
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	SAVE_CPU(k0, 0)
-#if 0
+#ifdef RM7000_ICR
 	cfc0	v1, COP_0_ICR
 	SAVE_REG(v1, IC, k0, 0)
 #endif
@@ -333,7 +333,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	sw	a3, CI_CPL(k1)
 	.set	noat
 	RESTORE_REG(a0, PC, k0, 0)
-#if 0
+#ifdef RM7000_ICR
 	RESTORE_REG(t0, IC, k0, 0)
 	ctc0	t0, COP_0_ICR
 #endif
@@ -356,7 +356,7 @@ NNON_LEAF(k_general, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(KERN_EXC_FRAME_SIZE))
 	PTR_SUB	k0, sp, FRAMESZ(KERN_EXC_FRAME_SIZE)
 	SAVE_CPU(k0, CF_RA_OFFS)
-#if 0
+#ifdef RM7000_ICR
 	cfc0	v1, COP_0_ICR
 	SAVE_REG(v1, IC, k0, CF_RA_OFFS)
 #endif
@@ -380,7 +380,7 @@ NNON_LEAF(k_general, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	ITLBNOPFIX
 
 	.set	noat
-#if 0
+#ifdef RM7000_ICR
 	RESTORE_REG(t0, IC, sp, CF_RA_OFFS)
 	ctc0	t0, COP_0_ICR
 #endif
@@ -402,7 +402,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	GET_CPU_INFO(k1, k0)
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	SAVE_CPU(k0, 0)
-#if 0
+#ifdef RM7000_ICR
 	cfc0	v1, COP_0_ICR
 	SAVE_REG(v1, IC, k0, 0)
 #endif
@@ -495,7 +495,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	.set	noat
 	RESTORE_CPU_SREG(k0, 0)
 	RESTORE_REG(a0, PC, k0, 0)
-#if 0
+#ifdef RM7000_ICR
 	RESTORE_REG(t0, IC, k0, 0)
 	ctc0	t0, COP_0_ICR
 #endif
@@ -534,7 +534,7 @@ LEAF(proc_trampoline, 0)
 	jal	s0
 	move	a0,s1			# invoke callback.
 
-#if 0
+#if 0	/* && defined(RM7000_ICR) */
 	lw	t0, cpu_is_rm7k
 	beqz	t0, 1f			# not an RM7K. Don't do IC reg.
 
@@ -572,7 +572,7 @@ LEAF(proc_trampoline, 0)
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_CPU_SREG(k0, 0)
 	RESTORE_REG(a0, PC, k0, 0)
-#if 0
+#ifdef RM7000_ICR
 	RESTORE_REG(t0, IC, k0, 0)
 	ctc0	t0, COP_0_ICR
 #endif

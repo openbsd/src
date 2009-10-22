@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.9 2009/05/22 20:37:53 miod Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.10 2009/10/22 18:46:48 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -111,7 +111,7 @@ LEAF(updateimask, 0)
 	lw	t0, idle_mask
 	not	a0, a0			# 1 means masked so invert.
 	and	a0, t0			# never upgrade to higher than max
-#ifndef IMASK_EXTERNAL
+#ifdef RM7000_ICR
 	cfc0	v0, COP_0_ICR
 	li	v1, ~IC_INT_MASK
 	and	v1, v0
