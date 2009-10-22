@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.24 2009/10/21 19:56:46 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.25 2009/10/22 19:55:45 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -313,6 +313,9 @@ device_register(struct device *dev, void *aux)
 	 * pci() matches any pci controller (macepcibr, xbridge), with the
 	 *   unit number being ignored on O2 and the widget number of the
 	 *   controller elsewhere.
+	 *   XXX I have no idea how this works when PIC devices are involved
+	 *   XXX since they provide two distinct PCI buses...
+	 *   XXX ...and our device numbering is off by one in that case.
 	 * scsi() matches any pci scsi controller, with the unit number
 	 *   being the pci device number (minus one on the O2, grr),
 	 *   or the scsibus number in dksc mode.
@@ -352,6 +355,11 @@ device_register(struct device *dev, void *aux)
 			struct xbow_attach_args *xaa = aux;
 
 			if (unit == xaa->xaa_widget)
+				goto found;
+		}
+		if (strcmp(cd->cd_name, "xbpci") == 0 &&
+		    parent == lastparent) {
+			if (1)	/* how to match the exact bus number? */
 				goto found;
 		}
 	}

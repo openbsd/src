@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xbridge.4,v 1.3 2009/10/08 20:06:38 miod Exp $
+.\"	$OpenBSD: xbridge.4,v 1.4 2009/10/22 19:55:43 miod Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2009 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt XBRIDGE 4 sgi
 .Os
 .Sh NAME
@@ -22,7 +22,8 @@
 .Nd XIO-PCI bridge
 .Sh SYNOPSIS
 .Cd "xbridge* at xbow?"
-.Cd "pci* at xbridge?"
+.Cd "xppci* at xbridge?"
+.Cd "pci* at xbpci?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -36,6 +37,9 @@ device to which the on-board devices are connected.
 .Nm
 devices support up to 8 different PCI devices, or two distinct
 buses of 4 PCI-X devices.
+Each PCI or PCI-X device is attached to a logical
+.Nm xbpci
+device.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
@@ -46,7 +50,7 @@ The
 driver first appeared in
 .Ox 4.4 .
 Support for the PCI-X bridges was added in
-.Ox 4.6 .
+.Ox 4.7 .
 .\" .Sh AUTHORS
 .\" The
 .\" .Nm

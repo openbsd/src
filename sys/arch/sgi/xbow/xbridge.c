@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.53 2009/10/16 14:07:31 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.54 2009/10/22 19:55:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -70,13 +70,29 @@
 int	xbridge_match(struct device *, void *, void *);
 void	xbridge_attach(struct device *, struct device *, void *);
 int	xbridge_print(void *, const char *);
+int	xbridge_submatch(struct device *, void *, void *);
+int	xbpci_match(struct device *, void *, void *);
+void	xbpci_attach(struct device *, struct device *, void *);
+int	xbpci_print(void *, const char *);
 
 struct xbridge_ate;
 struct xbridge_intr;
-struct xbridge_softc;
 
-struct xbridge_bus {
-	struct xbridge_softc *xb_sc;
+struct xbpci_attach_args {
+	uint	xaa_busno;
+
+	int	xaa_flags;
+	int16_t	xaa_nasid;
+	int	xaa_widget;
+	uint	xaa_devio_skew;
+
+	bus_space_tag_t	xaa_regt;
+	bus_addr_t	xaa_offset;
+};
+
+struct xbpci_softc {
+	struct device	xb_dev;
+	struct device	*xb_bow;
 
 	/*
 	 * Bridge register accessors.
@@ -92,10 +108,14 @@ struct xbridge_bus {
 	uint		xb_busno;
 	uint		xb_nslots;
 
-	int		xb_flags;	/* copy of xbridge_softc value */
-	int16_t		xb_nasid;	/* copy of xbridge_softc value */
-	int		xb_widget;	/* copy of xbridge_softc value */
-	uint		xb_devio_skew;	/* copy of xbridge_softc value */
+	int		xb_flags;
+#define	XF_XBRIDGE		0x01	/* is either PIC or XBridge */
+#define	XF_PIC			0x02	/* is PIC */
+#define	XF_NO_DIRECT_IO		0x04	/* no direct I/O mapping */
+#define	XF_PCIX			0x08	/* bus in PCIX mode */
+	int16_t		xb_nasid;
+	int		xb_widget;
+	uint		xb_devio_skew;	/* upper bits of devio ARCS mappings */
 
 	struct mips_pci_chipset xb_pc;
 
@@ -143,30 +163,28 @@ struct xbridge_bus {
 
 struct xbridge_softc {
 	struct device	sc_dev;
-	int		sc_flags;
-#define	XF_XBRIDGE		0x01	/* is either PIC or XBridge */
-#define	XF_PIC			0x02	/* is PIC */
-#define	XF_NO_DIRECT_IO		0x04	/* no direct I/O mapping */
-	int16_t		sc_nasid;
-	int		sc_widget;
-	uint		sc_devio_skew;	/* upper bits of devio ARCS mappings */
 	uint		sc_nbuses;
 
 	struct mips_bus_space	sc_regt;
-	struct xbridge_bus	sc_bus[MAX_BUSES];
 };
 
-#define	DEVNAME(xb)	((xb)->xb_sc->sc_dev.dv_xname)
+#define	DEVNAME(xb)	((xb)->xb_dev.dv_xname)
 
 const struct cfattach xbridge_ca = {
-	sizeof(struct xbridge_softc), xbridge_match, xbridge_attach,
+	sizeof(struct xbridge_softc), xbridge_match, xbridge_attach
 };
 
 struct cfdriver xbridge_cd = {
-	NULL, "xbridge", DV_DULL,
+	NULL, "xbridge", DV_DULL
 };
 
-void	xbridge_attach_bus(struct xbridge_softc *, uint, bus_space_tag_t);
+const struct cfattach xbpci_ca = {
+	sizeof(struct xbpci_softc), xbpci_match, xbpci_attach
+};
+
+struct cfdriver xbpci_cd = {
+	NULL, "xbpci", DV_DULL
+};
 
 void	xbridge_attach_hook(struct device *, struct device *,
 				struct pcibus_attach_args *);
@@ -233,33 +251,33 @@ int	xbridge_rbus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
 void	xbridge_rbus_space_unmap(bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_addr_t *);
 
-int	xbridge_address_map(struct xbridge_bus *, paddr_t, bus_addr_t *,
+int	xbridge_address_map(struct xbpci_softc *, paddr_t, bus_addr_t *,
 	    bus_addr_t *);
-void	xbridge_address_unmap(struct xbridge_bus *, bus_addr_t, bus_size_t);
-uint	xbridge_ate_add(struct xbridge_bus *, paddr_t);
-void	xbridge_ate_dump(struct xbridge_bus *);
-uint	xbridge_ate_find(struct xbridge_bus *, paddr_t);
-uint64_t xbridge_ate_read(struct xbridge_bus *, uint);
-void	xbridge_ate_unref(struct xbridge_bus *, uint, uint);
-void	xbridge_ate_write(struct xbridge_bus *, uint, uint64_t);
+void	xbridge_address_unmap(struct xbpci_softc *, bus_addr_t, bus_size_t);
+uint	xbridge_ate_add(struct xbpci_softc *, paddr_t);
+void	xbridge_ate_dump(struct xbpci_softc *);
+uint	xbridge_ate_find(struct xbpci_softc *, paddr_t);
+uint64_t xbridge_ate_read(struct xbpci_softc *, uint);
+void	xbridge_ate_unref(struct xbpci_softc *, uint, uint);
+void	xbridge_ate_write(struct xbpci_softc *, uint, uint64_t);
 
-int	xbridge_allocate_devio(struct xbridge_bus *, int, int);
-void	xbridge_set_devio(struct xbridge_bus *, int, uint32_t);
+int	xbridge_allocate_devio(struct xbpci_softc *, int, int);
+void	xbridge_set_devio(struct xbpci_softc *, int, uint32_t);
 
-int	xbridge_resource_explore(struct xbridge_bus *, pcitag_t,
+int	xbridge_resource_explore(struct xbpci_softc *, pcitag_t,
 	    struct extent *, struct extent *);
-void	xbridge_resource_manage(struct xbridge_bus *, pcitag_t,
+void	xbridge_resource_manage(struct xbpci_softc *, pcitag_t,
 	    struct extent *, struct extent *);
 
-void	xbridge_ate_setup(struct xbridge_bus *);
-void	xbridge_device_setup(struct xbridge_bus *, int, int, uint32_t);
-int	xbridge_extent_chomp(struct xbridge_bus *, struct extent *);
-void	xbridge_extent_setup(struct xbridge_bus *);
+void	xbridge_ate_setup(struct xbpci_softc *);
+void	xbridge_device_setup(struct xbpci_softc *, int, int, uint32_t);
+int	xbridge_extent_chomp(struct xbpci_softc *, struct extent *);
+void	xbridge_extent_setup(struct xbpci_softc *);
 struct extent *
-	xbridge_mapping_setup(struct xbridge_bus *, int);
-void	xbridge_resource_setup(struct xbridge_bus *);
-void	xbridge_rrb_setup(struct xbridge_bus *, int);
-void	xbridge_setup(struct xbridge_bus *);
+	xbridge_mapping_setup(struct xbpci_softc *, int);
+void	xbridge_resource_setup(struct xbpci_softc *);
+void	xbridge_rrb_setup(struct xbpci_softc *, int);
+void	xbridge_setup(struct xbpci_softc *);
 
 uint64_t bridge_read_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t);
 void	bridge_write_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
@@ -269,12 +287,12 @@ void	pic_write_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    uint64_t);
 
 static __inline__ uint64_t
-xbridge_read_reg(struct xbridge_bus *xb, bus_addr_t a)
+xbridge_read_reg(struct xbpci_softc *xb, bus_addr_t a)
 {
 	return (*xb->xb_read_reg)(xb->xb_regt, xb->xb_regh, a);
 }
 static __inline__ void
-xbridge_write_reg(struct xbridge_bus *xb, bus_addr_t a, uint64_t v)
+xbridge_write_reg(struct xbpci_softc *xb, bus_addr_t a, uint64_t v)
 {
 	(*xb->xb_write_reg)(xb->xb_regt, xb->xb_regh, a, v);
 }
@@ -336,26 +354,26 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xbridge_softc *sc = (struct xbridge_softc *)self;
 	struct xbow_attach_args *xaa = aux;
+	struct xbpci_attach_args xbpa;
+	int flags;
+	uint devio_skew;
 	uint i;
-
-	sc->sc_nasid = xaa->xaa_nasid;
-	sc->sc_widget = xaa->xaa_widget;
 
 	printf(" revision %d\n", xaa->xaa_revision);
 
 	for (i = 0; i < nitems(xbridge_devices); i++)
 		if (xaa->xaa_vendor == xbridge_devices[i].vendor &&
 		    xaa->xaa_product == xbridge_devices[i].product) {
-			sc->sc_flags = xbridge_devices[i].flags;
+			flags = xbridge_devices[i].flags;
 			break;
 		}
 
 	/* PICs are XBridges without an I/O window */
-	if (ISSET(sc->sc_flags, XF_PIC))
-		SET(sc->sc_flags, XF_XBRIDGE | XF_NO_DIRECT_IO);
+	if (ISSET(flags, XF_PIC))
+		SET(flags, XF_XBRIDGE | XF_NO_DIRECT_IO);
 	/* Bridge < D lacks an I/O window */
-	if (!ISSET(sc->sc_flags, XF_XBRIDGE) && xaa->xaa_revision < 4)
-		SET(sc->sc_flags, XF_NO_DIRECT_IO);
+	if (!ISSET(flags, XF_XBRIDGE) && xaa->xaa_revision < 4)
+		SET(flags, XF_NO_DIRECT_IO);
 
 	/*
 	 * Figure out where the ARCS devio mappings will go.
@@ -378,37 +396,80 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 #ifdef TGT_OCTANE
 	if (sys_config.system_type == SGI_OCTANE &&
-	    sc->sc_widget == IP30_BRIDGE_WIDGET)
-		sc->sc_devio_skew = 0;
+	    xaa->xaa_widget == IP30_BRIDGE_WIDGET)
+		devio_skew = 0;
 	else
 #endif
-		sc->sc_devio_skew = sc->sc_widget;
+		devio_skew = xaa->xaa_widget;
 
-	sc->sc_nbuses =
-	    ISSET(sc->sc_flags, XF_PIC) ? PIC_NBUSES : BRIDGE_NBUSES;
+	sc->sc_nbuses = ISSET(flags, XF_PIC) ? PIC_NBUSES : BRIDGE_NBUSES;
 
 	/* make a permanent copy of the on-stack bus_space_tag */
 	bcopy(xaa->xaa_iot, &sc->sc_regt, sizeof(struct mips_bus_space));
 
 	/* configure and attach PCI buses */
-	for (i = 0; i < sc->sc_nbuses; i++)
-		xbridge_attach_bus(sc, i, &sc->sc_regt);
+	for (i = 0; i < sc->sc_nbuses; i++) {
+		xbpa.xaa_busno = i;
+		xbpa.xaa_flags = flags;
+		xbpa.xaa_nasid = xaa->xaa_nasid;
+		xbpa.xaa_widget = xaa->xaa_widget;
+		xbpa.xaa_devio_skew = devio_skew;
+		xbpa.xaa_regt = &sc->sc_regt;
+		xbpa.xaa_offset = i != 0 ? BRIDGE_BUS_OFFSET : 0;
+
+		config_found_sm(&sc->sc_dev, &xbpa, xbridge_print,
+		    xbridge_submatch);
+	}
+}
+
+int
+xbridge_submatch(struct device *parent, void *vcf, void *aux)
+{
+	struct cfdata *cf = vcf;
+	struct xbpci_attach_args *xaa = aux;
+
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != xaa->xaa_busno)
+		return 0;
+
+	return (*cf->cf_attach->ca_match)(parent, vcf, aux);
+}
+
+int
+xbridge_print(void *aux, const char *pnp)
+{
+	struct xbpci_attach_args *xaa = aux;
+
+	if (pnp)
+		printf("xbpci at %s", pnp);
+	printf(" bus %d", xaa->xaa_busno);
+
+	return UNCONF;
+}
+
+int
+xbpci_match(struct device *parent, void *vcf, void *aux)
+{
+	return 1;
 }
 
 void
-xbridge_attach_bus(struct xbridge_softc *sc, uint busno, bus_space_tag_t regt)
+xbpci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct xbridge_bus *xb = &sc->sc_bus[busno];
+	struct xbpci_softc *xb = (struct xbpci_softc *)self;
+	struct xbpci_attach_args *xaa = (struct xbpci_attach_args *)aux;
 	struct pcibus_attach_args pba;
 
-	xb->xb_sc = sc;
-	xb->xb_busno = busno;
-	xb->xb_flags = sc->sc_flags;
-	xb->xb_nasid = sc->sc_nasid;
-	xb->xb_widget = sc->sc_widget;
-	xb->xb_devio_skew = sc->sc_devio_skew;
+	printf(": ");
 
-	if (ISSET(sc->sc_flags, XF_PIC)) {
+	/* xbow -> xbridge -> xbpci: xbow device is our grandfather */
+	xb->xb_bow = parent->dv_parent;
+	xb->xb_busno = xaa->xaa_busno;
+	xb->xb_flags = xaa->xaa_flags;
+	xb->xb_nasid = xaa->xaa_nasid;
+	xb->xb_widget = xaa->xaa_widget;
+	xb->xb_devio_skew = xaa->xaa_devio_skew;
+
+	if (ISSET(xb->xb_flags, XF_PIC)) {
 		xb->xb_nslots = PIC_NSLOTS;
 
 		xb->xb_read_reg = pic_read_reg;
@@ -424,11 +485,10 @@ xbridge_attach_bus(struct xbridge_softc *sc, uint busno, bus_space_tag_t regt)
 	 * Map Bridge registers.
 	 */
 
-	xb->xb_regt = regt;
-	if (bus_space_map(regt, busno != 0 ? BRIDGE_BUS_OFFSET : 0,
+	xb->xb_regt = xaa->xaa_regt;
+	if (bus_space_map(xaa->xaa_regt, xaa->xaa_offset,
 	    BRIDGE_REGISTERS_SIZE, 0, &xb->xb_regh)) {
-		printf("%s: unable to map control registers for bus %u\n",
-		    DEVNAME(xb), busno);
+		printf("unable to map control registers\n");
 		return;
 	}
 
@@ -447,7 +507,7 @@ xbridge_attach_bus(struct xbridge_softc *sc, uint busno, bus_space_tag_t regt)
 	if (xb->xb_io_bus_space == NULL)
 		goto fail2;
 
-	bcopy(regt, xb->xb_mem_bus_space, sizeof(*xb->xb_mem_bus_space));
+	bcopy(xb->xb_regt, xb->xb_mem_bus_space, sizeof(*xb->xb_mem_bus_space));
 	xb->xb_mem_bus_space->bus_private = xb;
 	xb->xb_mem_bus_space->_space_map = xbridge_space_map_devio;
 	xb->xb_mem_bus_space->_space_subregion = xbridge_space_region_devio;
@@ -462,7 +522,7 @@ xbridge_attach_bus(struct xbridge_softc *sc, uint busno, bus_space_tag_t regt)
 	xb->xb_mem_bus_space->_space_read_raw_8 = xbridge_read_raw_8;
 	xb->xb_mem_bus_space->_space_write_raw_8 = xbridge_write_raw_8;
 
-	bcopy(regt, xb->xb_io_bus_space, sizeof(*xb->xb_io_bus_space));
+	bcopy(xb->xb_regt, xb->xb_io_bus_space, sizeof(*xb->xb_io_bus_space));
 	xb->xb_io_bus_space->bus_private = xb;
 	xb->xb_io_bus_space->_space_map = xbridge_space_map_devio;
 	xb->xb_io_bus_space->_space_subregion = xbridge_space_region_devio;
@@ -512,6 +572,7 @@ xbridge_attach_bus(struct xbridge_softc *sc, uint busno, bus_space_tag_t regt)
 	 */
 
 	xbridge_setup(xb);
+	printf("\n");
 
 	/*
 	 * Attach children.
@@ -536,7 +597,7 @@ xbridge_attach_bus(struct xbridge_softc *sc, uint busno, bus_space_tag_t regt)
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 
-	config_found(&sc->sc_dev, &pba, xbridge_print);
+	config_found(self, &pba, xbpci_print);
 	return;
 
 fail3:
@@ -544,13 +605,12 @@ fail3:
 fail2:
 	free(xb->xb_mem_bus_space, M_DEVBUF);
 fail1:
-	printf("%s: not enough memory to build bus %u access structures\n",
-	    DEVNAME(xb), busno);
+	printf("not enough memory to build bus access structures\n");
 	return;
 }
 
 int
-xbridge_print(void *aux, const char *pnp)
+xbpci_print(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -592,7 +652,7 @@ xbridge_decompose_tag(void *cookie, pcitag_t tag, int *busp, int *devp,
 int
 xbridge_bus_maxdevs(void *cookie, int busno)
 {
-	struct xbridge_bus *xb = cookie;
+	struct xbpci_softc *xb = cookie;
 
 	return busno == 0 ? xb->xb_nslots : 32;
 }
@@ -600,7 +660,7 @@ xbridge_bus_maxdevs(void *cookie, int busno)
 pcireg_t
 xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 {
-	struct xbridge_bus *xb = cookie;
+	struct xbpci_softc *xb = cookie;
 	pcireg_t data;
 	int bus, dev, fn;
 	paddr_t pa;
@@ -679,7 +739,7 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 void
 xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 {
-	struct xbridge_bus *xb = cookie;
+	struct xbpci_softc *xb = cookie;
 	int bus, dev, fn;
 	paddr_t pa;
 	int skip;
@@ -769,7 +829,7 @@ struct xbridge_intrhandler {
 };
 
 struct xbridge_intr {
-	struct	xbridge_bus	*xi_bus;
+	struct	xbpci_softc	*xi_bus;
 	int	xi_intrsrc;	/* interrupt source on interrupt widget */
 	int	xi_intrbit;	/* interrupt source on BRIDGE */
 	LIST_HEAD(, xbridge_intrhandler) xi_handlers;
@@ -784,7 +844,7 @@ struct xbridge_intr {
 int
 xbridge_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	struct xbridge_bus *xb = pa->pa_pc->pc_conf_v;
+	struct xbpci_softc *xb = pa->pa_pc->pc_conf_v;
 	int bus, device, intr;
 	int pin;
 
@@ -842,7 +902,7 @@ void *
 xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, const char *name)
 {
-	struct xbridge_bus *xb = (struct xbridge_bus *)cookie;
+	struct xbpci_softc *xb = (struct xbpci_softc *)cookie;
 	struct xbridge_intr *xi;
 	struct xbridge_intrhandler *xih;
 	uint64_t int_addr;
@@ -945,7 +1005,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 void
 xbridge_intr_disestablish(void *cookie, void *vih)
 {
-	struct xbridge_bus *xb = cookie;
+	struct xbpci_softc *xb = cookie;
 	struct xbridge_intrhandler *xih = (struct xbridge_intrhandler *)vih;
 	struct xbridge_intr *xi = xih->xih_main;
 	int intrbit = xi->xi_intrbit;
@@ -984,7 +1044,7 @@ int
 xbridge_intr_handler(void *v)
 {
 	struct xbridge_intr *xi = (struct xbridge_intr *)v;
-	struct xbridge_bus *xb = xi->xi_bus;
+	struct xbpci_softc *xb = xi->xi_bus;
 	struct xbridge_intrhandler *xih;
 	int rc = 0;
 	int spurious;
@@ -1199,7 +1259,7 @@ int
 xbridge_space_map_devio(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
 {
-	struct xbridge_bus *xb = (struct xbridge_bus *)t->bus_private;
+	struct xbpci_softc *xb = (struct xbpci_softc *)t->bus_private;
 	bus_addr_t bpa;
 #ifdef DIAGNOSTIC
 	bus_addr_t start, end;
@@ -1242,7 +1302,7 @@ int
 xbridge_space_map_io(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
 {
-	struct xbridge_bus *xb = (struct xbridge_bus *)t->bus_private;
+	struct xbpci_softc *xb = (struct xbpci_softc *)t->bus_private;
 
 	/*
 	 * Base address is either within the devio area, or our direct
@@ -1267,7 +1327,7 @@ xbridge_space_map_mem(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
 {
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000) || defined(DIAGNOSTIC)
-	struct xbridge_bus *xb = (struct xbridge_bus *)t->bus_private;
+	struct xbpci_softc *xb = (struct xbpci_softc *)t->bus_private;
 #endif
 
 	/*
@@ -1297,7 +1357,7 @@ xbridge_space_region_devio(bus_space_tag_t t , bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 #ifdef DIAGNOSTIC
-	struct xbridge_bus *xb = (struct xbridge_bus *)t->bus_private;
+	struct xbpci_softc *xb = (struct xbpci_softc *)t->bus_private;
 	bus_addr_t bpa;
 	bus_addr_t start, end;
 	uint d;
@@ -1340,7 +1400,7 @@ int
 xbridge_space_region_io(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
-	struct xbridge_bus *xb = (struct xbridge_bus *)t->bus_private;
+	struct xbpci_softc *xb = (struct xbpci_softc *)t->bus_private;
 	bus_addr_t bpa;
 
 	/*
@@ -1369,7 +1429,7 @@ xbridge_space_region_mem(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000) || defined(DIAGNOSTIC)
-	struct xbridge_bus *xb = (struct xbridge_bus *)t->bus_private;
+	struct xbpci_softc *xb = (struct xbpci_softc *)t->bus_private;
 	bus_addr_t bpa;
 #endif
 
@@ -1456,7 +1516,7 @@ struct xbridge_ate {
 
 #ifdef ATE_DEBUG
 void
-xbridge_ate_dump(struct xbridge_bus *xb)
+xbridge_ate_dump(struct xbpci_softc *xb)
 {
 	struct xbridge_ate *ate;
 	uint a;
@@ -1503,7 +1563,7 @@ xbridge_ate_dump(struct xbridge_bus *xb)
 #endif
 
 void
-xbridge_ate_setup(struct xbridge_bus *xb)
+xbridge_ate_setup(struct xbpci_softc *xb)
 {
 	uint64_t ctrl;
 	uint a;
@@ -1548,7 +1608,7 @@ xbridge_ate_setup(struct xbridge_bus *xb)
 
 #ifdef unused
 uint64_t
-xbridge_ate_read(struct xbridge_bus *xb, uint a)
+xbridge_ate_read(struct xbpci_softc *xb, uint a)
 {
 	uint32_t lo, hi;
 	uint64_t ate;
@@ -1571,13 +1631,13 @@ xbridge_ate_read(struct xbridge_bus *xb, uint a)
 #endif
 
 void
-xbridge_ate_write(struct xbridge_bus *xb, uint a, uint64_t ate)
+xbridge_ate_write(struct xbpci_softc *xb, uint a, uint64_t ate)
 {
 	widget_write_8(xb->xb_regt, xb->xb_regh, BRIDGE_ATE(a), ate);
 }
 
 uint
-xbridge_ate_find(struct xbridge_bus *xb, paddr_t pa)
+xbridge_ate_find(struct xbpci_softc *xb, paddr_t pa)
 {
 	uint a;
 	struct xbridge_ate *ate;
@@ -1604,7 +1664,7 @@ xbridge_ate_find(struct xbridge_bus *xb, paddr_t pa)
 }
 
 uint
-xbridge_ate_add(struct xbridge_bus *xb, paddr_t pa)
+xbridge_ate_add(struct xbpci_softc *xb, paddr_t pa)
 {
 	uint a;
 	struct xbridge_ate *ate;
@@ -1637,7 +1697,7 @@ xbridge_ate_add(struct xbridge_bus *xb, paddr_t pa)
 }
 
 void
-xbridge_ate_unref(struct xbridge_bus *xb, uint a, uint ref)
+xbridge_ate_unref(struct xbpci_softc *xb, uint a, uint ref)
 {
 	struct xbridge_ate *ate;
 
@@ -1667,7 +1727,7 @@ xbridge_ate_unref(struct xbridge_bus *xb, uint a, uint ref)
  * using an ATE.
  */
 int
-xbridge_address_map(struct xbridge_bus *xb, paddr_t pa, bus_addr_t *mapping,
+xbridge_address_map(struct xbpci_softc *xb, paddr_t pa, bus_addr_t *mapping,
     bus_addr_t *limit)
 {
 	struct xbridge_ate *ate;
@@ -1740,7 +1800,7 @@ xbridge_address_map(struct xbridge_bus *xb, paddr_t pa, bus_addr_t *mapping,
 }
 
 void
-xbridge_address_unmap(struct xbridge_bus *xb, bus_addr_t ba, bus_size_t len)
+xbridge_address_unmap(struct xbpci_softc *xb, bus_addr_t ba, bus_size_t len)
 {
 	uint a;
 	uint refs;
@@ -1783,7 +1843,7 @@ xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
     int *segp, int first)
 {
-	struct xbridge_bus *xb = t->_cookie;
+	struct xbpci_softc *xb = t->_cookie;
 	bus_size_t sgsize;
 	bus_addr_t lastaddr, baddr, bmask;
 	bus_addr_t busaddr, endaddr;
@@ -1912,7 +1972,7 @@ fail_unmap:
 void
 xbridge_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
-	struct xbridge_bus *xb = t->_cookie;
+	struct xbpci_softc *xb = t->_cookie;
 	int seg;
 
 	for (seg = 0; seg < map->_dm_segcnt; seg++) {
@@ -1997,11 +2057,33 @@ xbridge_device_to_pa(bus_addr_t addr)
  */
 
 void
-xbridge_setup(struct xbridge_bus *xb)
+xbridge_setup(struct xbpci_softc *xb)
 {
 	paddr_t pa;
-	uint64_t ctrl, int_addr;
-	int dev;
+	uint64_t status, ctrl, int_addr;
+	int mode, speed, dev;
+
+	status = xbridge_read_reg(xb, WIDGET_STATUS);
+	ctrl = xbridge_read_reg(xb, WIDGET_CONTROL);
+
+	/*
+	 * Print bus mode and speed.
+	 */
+
+	mode = ISSET(xb->xb_flags, XF_PIC) &&
+	    ISSET(status, PIC_WIDGET_STATUS_PCIX_MODE);
+	if (mode != 0) {
+		SET(xb->xb_flags, XF_PCIX);
+		speed = (status & PIC_WIDGET_STATUS_PCIX_SPEED_MASK) >>
+		    PIC_WIDGET_STATUS_PCIX_SPEED_SHIFT;
+	} else if (ISSET(xb->xb_flags, XF_XBRIDGE)) {
+		speed = (ctrl & BRIDGE_WIDGET_CONTROL_SPEED_MASK) >>
+		    BRIDGE_WIDGET_CONTROL_SPEED_SHIFT;
+	} else
+		speed = 0;
+	/* 0 = 33 MHz, 1 = 66 MHz, 2 = 100 MHz, 3 = 133 MHz */
+	speed = (speed & 2 ? 100 : 33) + (speed & 1 ? 33 : 0);
+	printf("%d MHz %s bus", speed, mode ? "PCIX" : "PCI");
 
 	/*
 	 * Gather device identification for all slots.
@@ -2054,7 +2136,6 @@ xbridge_setup(struct xbridge_bus *xb)
 	 * but better enforce this anyway.
 	 */
 
-	ctrl = xbridge_read_reg(xb, WIDGET_CONTROL);
 	ctrl &= ~BRIDGE_WIDGET_CONTROL_IO_SWAP;
 	ctrl &= ~BRIDGE_WIDGET_CONTROL_MEM_SWAP;
 	xbridge_write_reg(xb, WIDGET_CONTROL, ctrl);
@@ -2090,7 +2171,7 @@ xbridge_setup(struct xbridge_bus *xb)
  * Build a not-so-pessimistic RRB allocation register value.
  */
 void
-xbridge_rrb_setup(struct xbridge_bus *xb, int odd)
+xbridge_rrb_setup(struct xbpci_softc *xb, int odd)
 {
 	uint rrb[MAX_SLOTS / 2];	/* tentative rrb assignment */
 	uint total;			/* rrb count */
@@ -2182,7 +2263,7 @@ xbridge_rrb_setup(struct xbridge_bus *xb, int odd)
  * Configure PCI resources for all devices.
  */
 void
-xbridge_resource_setup(struct xbridge_bus *xb)
+xbridge_resource_setup(struct xbpci_softc *xb)
 {
 	pci_chipset_tag_t pc = &xb->xb_pc;
 	int dev, nfuncs;
@@ -2254,7 +2335,7 @@ xbridge_resource_setup(struct xbridge_bus *xb)
 		    id != PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC4))
 			need_setup = 1;
 		else
-			need_setup = xb->xb_devio_skew !=
+			need_setup = xb->xb_busno != 0 || xb->xb_devio_skew !=
 			    ((devio & BRIDGE_DEVICE_BASE_MASK) >>
 			     (24 - BRIDGE_DEVICE_BASE_SHIFT));
 
@@ -2374,13 +2455,13 @@ xbridge_resource_setup(struct xbridge_bus *xb)
  * that we do not try to map devices in its area.
  */
 int
-xbridge_extent_chomp(struct xbridge_bus *xb, struct extent *ex)
+xbridge_extent_chomp(struct xbpci_softc *xb, struct extent *ex)
 {
 #ifdef TGT_OCTANE
 	/*
 	 * On Octane, the boot PROM is part of the onboard IOC3
 	 * device, and is accessible through the PCI memory space
-	 * (and maybe through the PCI I/O space as well.
+	 * (and maybe through the PCI I/O space as well).
 	 *
 	 * To avoid undebuggable surprises, make sure we never use
 	 * this space.
@@ -2412,15 +2493,15 @@ xbridge_extent_chomp(struct xbridge_bus *xb, struct extent *ex)
  * views, if applicable.
  */
 void
-xbridge_extent_setup(struct xbridge_bus *xb)
+xbridge_extent_setup(struct xbpci_softc *xb)
 {
 	int dev;
 	int errors;
 	bus_addr_t start, end;
 	uint32_t devio;
 
-	snprintf(xb->xb_ioexname, sizeof(xb->xb_ioexname), "%s_io%d",
-	    DEVNAME(xb), xb->xb_busno);
+	snprintf(xb->xb_ioexname, sizeof(xb->xb_ioexname), "%s_io",
+	    DEVNAME(xb));
 	xb->xb_ioex = extent_create(xb->xb_ioexname, 0, 0xffffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 
@@ -2471,8 +2552,8 @@ xbridge_extent_setup(struct xbridge_bus *xb)
 		}
 	}
 
-	snprintf(xb->xb_memexname, sizeof(xb->xb_memexname), "%s_mem%d",
-	    DEVNAME(xb), xb->xb_busno);
+	snprintf(xb->xb_memexname, sizeof(xb->xb_memexname), "%s_mem",
+	    DEVNAME(xb));
 	xb->xb_memex = extent_create(xb->xb_memexname, 0, 0xffffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 
@@ -2523,7 +2604,7 @@ xbridge_extent_setup(struct xbridge_bus *xb)
 }
 
 struct extent *
-xbridge_mapping_setup(struct xbridge_bus *xb, int io)
+xbridge_mapping_setup(struct xbpci_softc *xb, int io)
 {
 	bus_addr_t membase, offs;
 	bus_size_t len;
@@ -2542,7 +2623,7 @@ xbridge_mapping_setup(struct xbridge_bus *xb, int io)
 		if (!ISSET(xb->xb_flags, XF_NO_DIRECT_IO)) {
 			offs = BRIDGE_PCI_IO_SPACE_BASE;
 			len = BRIDGE_PCI_IO_SPACE_LENGTH;
-			base = xbow_widget_map_space(xb->xb_sc->sc_dev.dv_parent,
+			base = xbow_widget_map_space(xb->xb_bow,
 			    xb->xb_widget, &offs, &len);
 		} else
 			base = 0;
@@ -2590,7 +2671,7 @@ xbridge_mapping_setup(struct xbridge_bus *xb, int io)
 		    BRIDGE_PCI1_MEM_SPACE_BASE;
 		offs = membase;
 		len = BRIDGE_PCI_MEM_SPACE_LENGTH;
-		base = xbow_widget_map_space(xb->xb_sc->sc_dev.dv_parent,
+		base = xbow_widget_map_space(xb->xb_bow,
 		    xb->xb_widget, &offs, &len);
 
 		if (base != 0) {
@@ -2673,7 +2754,7 @@ xbridge_mapping_setup(struct xbridge_bus *xb, int io)
 #define	XR_MEM_OFLOW	0x20	/* can't fit memory in a large devio */
 
 int
-xbridge_resource_explore(struct xbridge_bus *xb, pcitag_t tag,
+xbridge_resource_explore(struct xbpci_softc *xb, pcitag_t tag,
     struct extent *ioex, struct extent *memex)
 {
 	pci_chipset_tag_t pc = &xb->xb_pc;
@@ -2770,7 +2851,7 @@ xbridge_resource_explore(struct xbridge_bus *xb, pcitag_t tag,
 }
 
 void
-xbridge_resource_manage(struct xbridge_bus *xb, pcitag_t tag,
+xbridge_resource_manage(struct xbpci_softc *xb, pcitag_t tag,
     struct extent *ioex, struct extent *memex)
 {
 	pci_chipset_tag_t pc = &xb->xb_pc;
@@ -2883,7 +2964,7 @@ xbridge_resource_manage(struct xbridge_bus *xb, pcitag_t tag,
 }
 
 void
-xbridge_device_setup(struct xbridge_bus *xb, int dev, int nfuncs,
+xbridge_device_setup(struct xbpci_softc *xb, int dev, int nfuncs,
     uint32_t devio)
 {
 	pci_chipset_tag_t pc = &xb->xb_pc;
@@ -3036,7 +3117,7 @@ int
 xbridge_ppb_setup(void *cookie, pcitag_t tag, bus_addr_t *iostart,
     bus_addr_t *ioend, bus_addr_t *memstart, bus_addr_t *memend)
 {
-	struct xbridge_bus *xb = cookie;
+	struct xbpci_softc *xb = cookie;
 	pci_chipset_tag_t pc = &xb->xb_pc;
 	uint32_t base, devio;
 	bus_size_t exsize;
@@ -3230,7 +3311,7 @@ xbridge_rbus_parent_io(struct pci_attach_args *pa)
 void *
 xbridge_rbus_parent_mem(struct pci_attach_args *pa)
 {
-	struct xbridge_bus *xb = pa->pa_pc->pc_conf_v;
+	struct xbpci_softc *xb = pa->pa_pc->pc_conf_v;
 	struct extent *ex = pa->pa_memex;
 	bus_addr_t start;
 	rbus_tag_t rb = NULL;
@@ -3267,7 +3348,7 @@ xbridge_rbus_parent_mem(struct pci_attach_args *pa)
 #endif	/* NCARDBUS > 0 */
 
 int
-xbridge_allocate_devio(struct xbridge_bus *xb, int dev, int wantlarge)
+xbridge_allocate_devio(struct xbpci_softc *xb, int dev, int wantlarge)
 {
 	pcireg_t id;
 
@@ -3304,7 +3385,7 @@ xbridge_allocate_devio(struct xbridge_bus *xb, int dev, int wantlarge)
 }
 
 void
-xbridge_set_devio(struct xbridge_bus *xb, int dev, uint32_t devio)
+xbridge_set_devio(struct xbpci_softc *xb, int dev, uint32_t devio)
 {
 	xbridge_write_reg(xb, BRIDGE_DEVICE(dev), devio);
 	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);

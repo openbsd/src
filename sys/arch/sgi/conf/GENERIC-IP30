@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.12 2009/10/10 19:23:05 miod Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.13 2009/10/22 19:55:45 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -46,7 +46,8 @@ xbow0		at mainbus0
 xheart*		at xbow?
 onewire*	at xheart?
 xbridge*	at xbow?
-pci*		at xbridge?
+xbpci*		at xbridge?
+pci*		at xbpci?
 
 # IOC3
 ioc*		at pci?
