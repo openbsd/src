@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.23 2009/10/16 00:15:49 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.24 2009/10/22 18:35:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -243,7 +243,14 @@ ip27_setup()
 	IP27_LHUB_S(HUBPI_CPU1_IMR1, 0);
 	(void)IP27_LHUB_L(HUBPI_IR0);
 	(void)IP27_LHUB_L(HUBPI_IR1);
-	/* XXX do the other two cpus on IP35 */
+	if (ip35) {
+		IP27_RHUB_PI_S(masternasid, 1, HUBPI_CPU0_IMR0, 0);
+		IP27_RHUB_PI_S(masternasid, 1, HUBPI_CPU0_IMR1, 0);
+		IP27_RHUB_PI_S(masternasid, 1, HUBPI_CPU1_IMR0, 0);
+		IP27_RHUB_PI_S(masternasid, 1, HUBPI_CPU1_IMR1, 0);
+		(void)IP27_RHUB_PI_L(masternasid, 1, HUBPI_IR0);
+		(void)IP27_RHUB_PI_L(masternasid, 1, HUBPI_IR1);
+	}
 
 	/*
 	 * Setup NMI handler.
@@ -259,6 +266,12 @@ ip27_setup()
 	 */
 	IP27_LHUB_S(HUBPI_REGION_PRESENT, 0xffffffffffffffff);
 	IP27_LHUB_S(HUBPI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
+	if (ip35) {
+		IP27_RHUB_PI_S(masternasid, 1,
+		    HUBPI_REGION_PRESENT, 0xffffffffffffffff);
+		IP27_RHUB_PI_S(masternasid, 1,
+		    HUBPI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
+	}
 }
 
 /*
