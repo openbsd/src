@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.39 2009/10/22 20:05:26 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.40 2009/10/22 20:59:22 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -375,7 +375,7 @@ struct cpu_info {
 	cpuid_t          ci_cpuid;              /* our CPU ID */
 	uint32_t	 ci_randseed;		/* per cpu random seed */
 	uint32_t	 ci_cpl;
-	uint32_t	 ci_ipending;
+	uint32_t	 ci_softpending;	/* pending soft interrupts */
 #ifdef MULTIPROCESSOR
 	u_long           ci_flags;		/* flags; see below */
 #endif

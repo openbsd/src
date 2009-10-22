@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.3 2009/10/22 20:05:27 miod Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.4 2009/10/22 20:59:24 miod Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ softintr_schedule(void *arg)
 	if (sih->sih_pending == 0) {
 		TAILQ_INSERT_TAIL(&siq->siq_list, sih, sih_list);
 		sih->sih_pending = 1;
-		atomic_setbits_int(&ci->ci_ipending, SINTMASK(siq->siq_si));
+		atomic_setbits_int(&ci->ci_softpending, SINTMASK(siq->siq_si));
 	}
 	mtx_leave(&siq->siq_mtx);
 }
@@ -205,8 +205,8 @@ dosoftint(uint32_t xcpl)
 	struct cpu_info *ci = curcpu();
 	int sir, q, mask;
 
-	while ((sir = (ci->ci_ipending & SINT_ALLMASK & ~xcpl)) != 0) {
-		atomic_clearbits_int(&ci->ci_ipending, sir);
+	while ((sir = (ci->ci_softpending & ~xcpl)) != 0) {
+		atomic_clearbits_int(&ci->ci_softpending, sir);
 
 		for (q = SI_NQUEUES - 1; q >= 0; q--) {
 			mask = SINTMASK(q);

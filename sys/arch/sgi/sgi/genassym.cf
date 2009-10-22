@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.15 2009/10/07 08:35:47 syuu Exp $
+#	$OpenBSD: genassym.cf,v 1.16 2009/10/22 20:59:24 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -59,7 +59,6 @@ struct	cpu_info
 member	ci_curproc
 member	ci_curprocpaddr
 member	ci_cpl
-member	ci_ipending
 
 export	VM_MIN_KERNEL_ADDRESS
 export	SIGFPE

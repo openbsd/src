@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.47 2009/10/22 20:39:16 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.48 2009/10/22 20:59:24 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -164,7 +164,7 @@ interrupt(struct trap_frame *trapframe)
 #endif
 
 	xcpl = splsoft();
-	if ((ci->ci_ipending & SINT_ALLMASK) & ~xcpl) {
+	if (ci->ci_softpending & ~xcpl) {
 		dosoftint(xcpl);
 	}
 

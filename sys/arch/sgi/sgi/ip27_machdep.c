@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.26 2009/10/22 20:39:17 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.27 2009/10/22 20:59:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -729,7 +729,7 @@ ip27_hub_splx(int newcpl)
 	if (CPU_IS_PRIMARY(ci))
 		hw_setintrmask(newcpl);
 	/* If we still have softints pending trigger processing. */
-	if (ci->ci_ipending & SINT_ALLMASK & ~newcpl)
+	if (ci->ci_softpending & ~newcpl)
 		setsoftintr0();
 }
 
@@ -762,7 +762,6 @@ ip27_hub_intr_handler(uint32_t hwpend, struct trap_frame *frame)
 	 * If interrupts are spl-masked, mark them as pending only.
 	 */
 	if ((mask = isr & frame->cpl) != 0) {
-		atomic_setbits_int(&ci->ci_ipending, mask);
 		isr &= ~mask;
 		imr &= ~mask;
 	}
@@ -771,8 +770,6 @@ ip27_hub_intr_handler(uint32_t hwpend, struct trap_frame *frame)
 	 * Now process unmasked interrupts.
 	 */
 	if (isr != 0) {
-		atomic_clearbits_int(&ci->ci_ipending, isr);
-
 		__asm__ (" .set noreorder\n");
 		icpl = ci->ci_cpl;
 		__asm__ (" sync\n .set reorder\n");

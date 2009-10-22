@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.49 2009/10/22 20:51:08 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.50 2009/10/22 20:59:24 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -604,7 +604,7 @@ macebus_splx(int newcpl)
 	__asm__ (" sync\n .set reorder\n");
 	hw_setintrmask(newcpl);
 	/* If we still have softints pending trigger processing. */
-	if (ci->ci_ipending & SINT_ALLMASK & ~newcpl)
+	if (ci->ci_softpending & ~newcpl)
 		setsoftintr0();
 }
 
@@ -632,16 +632,13 @@ macebus_iointr(uint32_t hwpend, struct trap_frame *cf)
 
 	/* Mask off masked interrupts and save them as pending. */
 	if (intstat & cf->cpl) {
-		atomic_setbits_int(&ci->ci_ipending, intstat & cf->cpl);
 		mask = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_MASK);
-		mask &= ~ci->ci_ipending;
 		bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, mask);
 		caught++;
 	}
 
 	/* Scan all unmasked. Scan the first 16 for now. */
 	pending = intstat & ~cf->cpl;
-	atomic_clearbits_int(&ci->ci_ipending, pending);
 
 	for (v = 0, vm = 1; pending != 0 && v < 16 ; v++, vm <<= 1) {
 		if (pending & vm) {
