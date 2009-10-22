@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.103 2009/10/20 00:19:24 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.104 2009/10/22 11:56:32 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -583,6 +583,9 @@ void			scsi_xs_put(struct scsi_xfer *);
  */
 int	mpath_path_attach(struct scsi_link *);
 int	mpath_path_detach(struct scsi_link *, int);
+
+int	mpath_path_activate(struct scsi_link *);
+int	mpath_path_deactivate(struct scsi_link *);
 
 #endif /* _KERNEL */
 #endif /* SCSI_SCSICONF_H */

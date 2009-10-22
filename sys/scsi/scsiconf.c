@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.145 2009/10/14 01:33:22 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.146 2009/10/22 11:56:32 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -199,35 +199,74 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 int
 scsibusactivate(struct device *dev, int act)
 {
-	return (config_activate_children(dev, act));
+	struct scsibus_softc *sc = (struct scsibus_softc *)dev;
+	struct scsi_link *link;
+	int i, j;
+	int rv, ret = 0;
+
+	for (i = 0; i < sc->sc_buswidth; i++) {
+		if (sc->sc_link[i] == NULL)
+			continue;
+
+		for (j = 0; j < sc->adapter_link->luns; j++) {
+			link = sc->sc_link[i][j];
+			if (link == NULL)
+				continue;
+			dev = link->device_softc;
+
+			switch (act) {
+			case DVACT_ACTIVATE:
+#if NMPATH > 0
+				if (dev == NULL)
+					rv = mpath_path_activate(link);
+				else
+#endif /* NMPATH */
+					rv = config_activate(dev);
+				break;
+
+			case DVACT_DEACTIVATE:
+#if NMPATH > 0
+				if (dev == NULL)
+					rv = mpath_path_deactivate(link);
+				else
+#endif /* NMPATH */
+					rv = config_deactivate(dev);
+				break;
+			default:
+#ifdef DIAGNOSTIC
+				printf("%s: unsupported act %d\n",
+				    sc->sc_dev.dv_xname, act);
+#endif
+				rv = EOPNOTSUPP;
+				break;
+
+			}
+
+			if (rv != 0)
+				ret = rv;
+		}
+	}
+
+	return (ret);
 }
 
 int
 scsibusdetach(struct device *dev, int type)
 {
 	struct scsibus_softc		*sb = (struct scsibus_softc *)dev;
-	struct scsi_link		*sc_link;
-	int				i, j, error;
+	int				i, error;
 
 #if NBIO > 0
 	bio_unregister(&sb->sc_dev);
 #endif
 
-	if ((error = config_detach_children(dev, type)) != 0)
+	error = scsi_detach_bus(sb, type);
+	if (error != 0)
 		return (error);
 
 	for (i = 0; i < sb->sc_buswidth; i++) {
-		if (sb->sc_link[i] != NULL) {
-			for (j = 0; j < sb->adapter_link->luns; j++) {
-				sc_link = sb->sc_link[i][j];
-				if (sc_link != NULL) {
-					if (sc_link->id != NULL)
-						devid_free(sc_link->id);
-					free(sc_link, M_DEVBUF);
-				}
-			}
+		if (sb->sc_link[i] != NULL)
 			free(sb->sc_link[i], M_DEVBUF);
-		}
 	}
 
 	free(sb->sc_link, M_DEVBUF);
@@ -278,6 +317,9 @@ scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	case SBIOCDETACH:
 		sdev = (struct sbioc_device *)addr;
+
+		if (sdev->sd_target == -1 && sdev->sd_lun == -1)
+			return (scsi_detach_bus(sc, 0));
 
 		if (sdev->sd_target == -1)
 			return (EINVAL);
@@ -384,12 +426,17 @@ int
 scsi_detach_bus(struct scsibus_softc *sc, int flags)
 {
 	struct scsi_link *alink = sc->adapter_link;
-	int i;
+	int i, err, rv = 0, detached;
 
-	for (i = 0; i < alink->adapter_buswidth; i++)
-		scsi_detach_target(sc, i, flags);
+	for (i = 0; i < alink->adapter_buswidth; i++) {
+		err = scsi_detach_target(sc, i, flags);
+		if (err == 0)
+			detached = 1;
+		else
+			rv = err;
+	}
 
-	return (0);
+	return (detached ? rv : ENXIO);
 }
 
 int
@@ -410,9 +457,10 @@ scsi_detach_target(struct scsibus_softc *sc, int target, int flags)
 			continue;
 
 		err = scsi_detach_lun(sc, target, i, flags);
-		if (err != 0)
+		if (err == 0)
+			detached = 1;
+		else
 			rv = err;
-		detached = 1;
 	}
 
 	return (detached ? rv : ENXIO);
