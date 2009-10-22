@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.4 2009/10/22 20:59:24 miod Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.5 2009/10/22 22:08:54 miod Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -200,12 +200,12 @@ netintr(void)
 }
 
 void
-dosoftint(uint32_t xcpl)
+dosoftint()
 {
 	struct cpu_info *ci = curcpu();
 	int sir, q, mask;
 
-	while ((sir = (ci->ci_softpending & ~xcpl)) != 0) {
+	while ((sir = ci->ci_softpending) != 0) {
 		atomic_clearbits_int(&ci->ci_softpending, sir);
 
 		for (q = SI_NQUEUES - 1; q >= 0; q--) {

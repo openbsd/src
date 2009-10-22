@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.54 2009/10/22 19:55:45 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.55 2009/10/22 22:08:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1072,11 +1072,18 @@ xbridge_intr_handler(void *v)
 		spurious = 0;
 
 	LIST_FOREACH(xih, &xi->xi_handlers, xih_nxt) {
-		splraise(imask[xih->xih_level]);
+		splraise(xih->xih_level);
 		if ((*xih->xih_func)(xih->xih_arg) != 0) {
 			xih->xih_count.ec_count++;
 			rc = 1;
 		}
+		/*
+		 * No need to lower spl here, as our caller will lower
+		 * spl upon our return.
+		 * However that splraise() is necessary so that interrupt
+		 * handler code calling splx() will not cause our interrupt
+		 * source to be unmasked.
+		 */
 	}
 	if (rc == 0 && spurious == 0)
 		printf("%s: spurious irq %d\n", DEVNAME(xb), xi->xi_intrbit);

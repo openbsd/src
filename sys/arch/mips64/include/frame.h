@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.4 2004/09/27 17:42:23 pefo Exp $ */
+/*	$OpenBSD: frame.h,v 1.5 2009/10/22 22:08:52 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -76,7 +76,7 @@ struct trap_frame {
 	register_t	cause;
 	register_t	pc;
 	register_t	ic;
-	register_t	cpl;
+	register_t	ipl;
 
 /* From here and on, only saved user processes. */
 

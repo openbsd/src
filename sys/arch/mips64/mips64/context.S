@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.29 2009/10/22 18:46:48 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.30 2009/10/22 22:08:54 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -61,7 +61,7 @@ LEAF(savectx, 0)
 	REG_S	ra, PCB_CONTEXT+10*REGSZ(a0)
 	REG_S	v0, PCB_CONTEXT+11*REGSZ(a0)
 	GET_CPU_INFO(t0, t1)
-	lw	t0, CI_CPL(t0)
+	lw	t0, CI_IPL(t0)
 #ifdef RM7000_ICR
 	cfc0	t1, COP_0_ICR
 	REG_S	t1, PCB_CONTEXT+12*REGSZ(a0)	# save status register
@@ -117,7 +117,7 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	beqz	a0, 1f
 	mfc0	v0, COP_0_STATUS_REG
 
-	lw	t0, CI_CPL(t1)
+	lw	t0, CI_IPL(t1)
 	REG_S	s0, PCB_CONTEXT+0*REGSZ(t3)	# do a 'savectx()'
 	REG_S	s1, PCB_CONTEXT+1*REGSZ(t3)
 	REG_S	s2, PCB_CONTEXT+2*REGSZ(t3)

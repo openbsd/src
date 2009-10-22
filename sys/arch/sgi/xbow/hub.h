@@ -1,4 +1,4 @@
-/*	$OpenBSD: hub.h,v 1.5 2009/10/14 20:21:16 miod Exp $	*/
+/*	$OpenBSD: hub.h,v 1.6 2009/10/22 22:08:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -107,6 +107,60 @@
  * on IP35.
  */
 #define	HUBPI_OFFSET			0x00200000
+
+/*
+ * ISR bit assignments.
+ */
+
+/** Level 1 interrupt */
+/* ?? MSC panic */
+#define	HUBPI_ISR1_MSC_ERROR		63
+/* NI interface error */
+#define	HUBPI_ISR1_NI_ERROR		62
+/* MD correctable error */
+#define	HUBPI_ISR1_MD_COR_ERROR		61
+/* cpu correctable error B */
+#define	HUBPI_ISR1_COR_ERROR_B		60
+/* cpu correctable error A */
+#define	HUBPI_ISR1_COR_ERROR_A		59
+/* clock error */
+#define	HUBPI_ISR1_CLOCK_ERROR		58
+/* IP35 NACK interrupts */
+#define	HUBPI_ISR1_NACK_B		57
+#define	HUBPI_ISR1_NACK_A		56
+/* IP35 LB error */
+#define	HUBPI_ISR1_LB			55
+/* IP35 XB error */
+#define	HUBPI_ISR1_XB			54
+/* 53-45 used by PROM */
+/* 44-43 available */
+/* 42-41 LLP errors */
+/* NI broadcast errors */
+#define	HUBPI_ISR1_NI_ERROR_B		40
+#define	HUBPI_ISR1_NI_ERROR_A		39
+/* 38-36 used by IP35 PROM */
+/* 35-0 available */
+
+/** Level 0 interrupt */
+/* 63-7 available */
+/* IPI interrupts */
+#define	HUBPI_ISR0_IPI_B		6
+#define	HUBPI_ISR0_IPI_A		5
+/* ? */
+#define	HUBPI_ISR0_UART			4
+/* page migration interrupt */
+#define	HUBPI_ISR0_PAGE_MIGRATION	3
+/* graphics->cpu interrupts */
+#define	HUBPI_ISR0_GFX_B		2
+#define	HUBPI_ISR0_GFX_A		1
+/* 0 reserved */
+
+#define	HUBPI_INTR1_WIDGET_MAX		35
+#define	HUBPI_INTR1_WIDGET_MIN		0
+#define	HUBPI_INTR0_WIDGET_MAX		63
+#define	HUBPI_INTR0_WIDGET_MIN		7
+
+#define	HUBPI_NINTS			64	/* per register */
 
 /*
  * HUB MD - Memory/Directory

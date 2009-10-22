@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.25 2009/10/22 18:46:48 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.26 2009/10/22 22:08:54 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -330,7 +330,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	GET_CPU_INFO(k1, k0)
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_REG(a3, CPL, k0, 0)
-	sw	a3, CI_CPL(k1)
+	sw	a3, CI_IPL(k1)
 	.set	noat
 	RESTORE_REG(a0, PC, k0, 0)
 #ifdef RM7000_ICR
@@ -491,7 +491,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	GET_CPU_INFO(k1, k0)
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_REG(a3, CPL, k0, 0)
-	sw	a3, CI_CPL(k1)
+	sw	a3, CI_IPL(k1)
 	.set	noat
 	RESTORE_CPU_SREG(k0, 0)
 	RESTORE_REG(a0, PC, k0, 0)

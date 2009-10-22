@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.6 2009/08/13 17:06:05 miod Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.7 2009/10/22 22:08:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -43,16 +43,15 @@ void
 mtx_init(struct mutex *mtx, int wantipl)
 {
 	mtx->mtx_lock = 0;
-	/* We can't access imask[] here, since MUTEX_INITIALIZER can't. */
 	mtx->mtx_wantipl = wantipl;
-	mtx->mtx_oldcpl = IPL_NONE;
+	mtx->mtx_oldipl = IPL_NONE;
 }
 
 void
 mtx_enter(struct mutex *mtx)
 {
 	if (mtx->mtx_wantipl != IPL_NONE)
-		mtx->mtx_oldcpl = splraise(imask[mtx->mtx_wantipl]);
+		mtx->mtx_oldipl = splraise(mtx->mtx_wantipl);
 
 	MUTEX_ASSERT_UNLOCKED(mtx);
 	mtx->mtx_lock = 1;
@@ -62,7 +61,7 @@ int
 mtx_enter_try(struct mutex *mtx)
 {
 	if (mtx->mtx_wantipl != IPL_NONE)
-		mtx->mtx_oldcpl = splraise(imask[mtx->mtx_wantipl]);
+		mtx->mtx_oldipl = splraise(mtx->mtx_wantipl);
 	MUTEX_ASSERT_UNLOCKED(mtx);
 	mtx->mtx_lock = 1;
 
@@ -75,5 +74,5 @@ mtx_leave(struct mutex *mtx)
 	MUTEX_ASSERT_LOCKED(mtx);
 	mtx->mtx_lock = 0;
 	if (mtx->mtx_wantipl != IPL_NONE)
-		splx(mtx->mtx_oldcpl);
+		splx(mtx->mtx_oldipl);
 }

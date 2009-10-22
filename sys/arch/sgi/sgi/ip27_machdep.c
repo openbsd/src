@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.27 2009/10/22 20:59:24 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.28 2009/10/22 22:08:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -70,13 +70,37 @@ int	ip27_hub_intr_register(int, int, int *);
 int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
 	    const char *);
 void	ip27_hub_intr_disestablish(int);
-uint32_t ip27_hub_intr_handler(uint32_t, struct trap_frame *);
+uint32_t hubpi_intr0(uint32_t, struct trap_frame *);
+uint32_t hubpi_intr1(uint32_t, struct trap_frame *);
 void	ip27_hub_intr_makemasks(void);
+void	ip27_hub_setintrmask(int);
 void	ip27_hub_splx(int);
 
 void	ip27_attach_node(struct device *, int16_t);
 int	ip27_print(void *, const char *);
 void	ip27_nmi(void *);
+
+/*
+ * IP27 interrupt handling declarations: 128 hw sources, plus timers and
+ * hub error sources; 5 levels.
+ */
+
+struct intrhand *hubpi_intrhand0[HUBPI_NINTS];
+struct intrhand *hubpi_intrhand1[HUBPI_NINTS];
+
+#ifdef notyet
+#define	INTPRI_XBOW_HUB		(INTPRI_CLOCK + 1)	/* HUB errors */
+#define	INTPRI_XBOW_TIMER	(INTPRI_XBOW_HUB + 1)	/* prof timer */
+#define	INTPRI_XBOW_CLOCK	(INTPRI_XBOW_TIMER + 1)	/* RTC */
+#define	INTPRI_XBOW_HW1		(INTPRI_XBOW_CLOCK + 1)	/* HW level 1 */
+#else
+#define	INTPRI_XBOW_HW1		(INTPRI_CLOCK + 1)	/* HW level 1 */
+#endif
+#define	INTPRI_XBOW_HW0		(INTPRI_XBOW_HW1 + 1)	/* HW level 0 */
+
+struct {
+	uint64_t hw[2];
+} hubpi_intem, hubpi_imask[NIPLS];
 
 void
 ip27_setup()
@@ -230,7 +254,8 @@ ip27_setup()
 	xbow_intr_widget_intr_establish = ip27_hub_intr_establish;
 	xbow_intr_widget_intr_disestablish = ip27_hub_intr_disestablish;
 
-	set_intr(INTPRI_XBOWMUX, CR_INT_0, ip27_hub_intr_handler);
+	set_intr(INTPRI_XBOW_HW1, CR_INT_1, hubpi_intr1);
+	set_intr(INTPRI_XBOW_HW0, CR_INT_0, hubpi_intr0);
 	register_splx_handler(ip27_hub_splx);
 
 	/*
@@ -560,8 +585,6 @@ ip27_halt(int howto)
  * Local HUB interrupt handling routines
  */
 
-uint64_t ip27_hub_intrmask;
-
 /*
  * Find a suitable interrupt bit for the given interrupt.
  */
@@ -571,18 +594,27 @@ ip27_hub_intr_register(int widget, int level, int *intrbit)
 	int bit;
 
 	/*
-	 * All interrupts will be serviced at hardware level 0,
-	 * so the `level' argument can be ignored.
-	 * On HUB, the low 7 bits of the level 0 interrupt register
-	 * are reserved.
+	 * Try to allocate a bit on hardware level 0 first.
 	 */
-	for (bit = SPL_CLOCK - 1; bit >= 7; bit--)
-		if ((ip27_hub_intrmask & (1 << bit)) == 0)
-			break;
+	for (bit = HUBPI_INTR0_WIDGET_MAX; bit >= HUBPI_INTR0_WIDGET_MIN; bit--)
+		if ((hubpi_intem.hw[0] & (1UL << bit)) == 0)
+			goto found;
 
-	if (bit < 7)
-		return EINVAL;
+#ifdef notyet
+	/*
+	 * If all level 0 sources are in use, try to allocate a bit on
+	 * level 1.
+	 */
+	for (bit = HUBPI_INTR1_WIDGET_MAX; bit >= HUBPI_INTR1_WIDGET_MIN; bit--)
+		if ((hubpi_intem.hw[1] & (1UL << bit)) == 0) {
+			bit += HUBPI_NINTS;
+			goto found;
+		}
+#endif
 
+	return EINVAL;
+
+found:
 	*intrbit = bit;
 	return 0;
 }
@@ -594,18 +626,27 @@ int
 ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
     int level, const char *name)
 {
-	struct intrhand *ih;
+	struct intrhand *ih, **anchor;
+	int s;
 
 #ifdef DIAGNOSTIC
-	if (intrbit < 0 || intrbit >= SPL_CLOCK)
+	if (intrbit < 0 || intrbit >= HUBPI_NINTS + HUBPI_NINTS)
 		return EINVAL;
 #endif
 
 	/*
 	 * Widget interrupts are not supposed to be shared - the interrupt
-	 * mask is large enough for all widgets.
+	 * mask is supposedly large enough for all interrupt sources.
+	 *
+	 * XXX On systems with many widgets and/or nodes, this assumption
+	 * XXX will no longer stand; we'll need to implement interrupt
+	 * XXX sharing at some point.
 	 */
-	if (intrhand[intrbit] != NULL)
+	if (intrbit >= HUBPI_NINTS)
+		anchor = &hubpi_intrhand1[intrbit % HUBPI_NINTS];
+	else
+		anchor = &hubpi_intrhand0[intrbit];
+	if (*anchor != NULL)
 		return EEXIST;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
@@ -620,15 +661,15 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, &ih->ih_level,
 		    &evcount_intr);
-	intrhand[intrbit] = ih;
 
-	ip27_hub_intrmask |= 1UL << intrbit;
+	s = splhigh();
+
+	*anchor = ih;
+
+	hubpi_intem.hw[intrbit / HUBPI_NINTS] |= 1UL << (intrbit % HUBPI_NINTS);
 	ip27_hub_intr_makemasks();
 
-	/* XXX this assumes we run on cpu0 */
-	IP27_LHUB_S(HUBPI_CPU0_IMR0,
-	    IP27_LHUB_L(HUBPI_CPU0_IMR0) | (1UL << intrbit));
-	(void)IP27_LHUB_L(HUBPI_IR0);
+	splx(s);	/* causes hw mask update */
 
 	return 0;
 }
@@ -636,34 +677,35 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 void
 ip27_hub_intr_disestablish(int intrbit)
 {
-	struct intrhand *ih;
+	struct intrhand *ih, **anchor;
 	int s;
 
 #ifdef DIAGNOSTIC
-	if (intrbit < 0 || intrbit >= SPL_CLOCK)
+	if (intrbit < 0 || intrbit >= HUBPI_NINTS + HUBPI_NINTS)
 		return;
 #endif
 
+	if (intrbit >= HUBPI_NINTS)
+		anchor = &hubpi_intrhand1[intrbit % HUBPI_NINTS];
+	else
+		anchor = &hubpi_intrhand0[intrbit];
+
 	s = splhigh();
 
-	if ((ih = intrhand[intrbit]) == NULL) {
+	if ((ih = *anchor) == NULL) {
 		splx(s);
 		return;
 	}
 
-	/* XXX this assumes we run on cpu0 */
-	IP27_LHUB_S(HUBPI_CPU0_IMR0,
-	    IP27_LHUB_L(HUBPI_CPU0_IMR0) & ~(1UL << intrbit));
-	(void)IP27_LHUB_L(HUBPI_IR0);
+	*anchor = NULL;
 
-	intrhand[intrbit] = NULL;
-
-	ip27_hub_intrmask &= ~(1UL << intrbit);
+	hubpi_intem.hw[intrbit / HUBPI_NINTS] &=
+	    ~(1UL << (intrbit % HUBPI_NINTS));
 	ip27_hub_intr_makemasks();
 
-	free(ih, M_DEVBUF);
-
 	splx(s);
+
+	free(ih, M_DEVBUF);
 }
 
 /*
@@ -672,27 +714,38 @@ ip27_hub_intr_disestablish(int intrbit)
 void
 ip27_hub_intr_makemasks()
 {
-	int irq, level;
+	int irq, level, i;
 	struct intrhand *q;
-	uint32_t intrlevel[INTMASKSIZE];
+	uint intrlevel[HUBPI_NINTS + HUBPI_NINTS];
 
 	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < INTMASKSIZE; irq++) {
-		int levels = 0;
-		for (q = intrhand[irq]; q; q = q->ih_next)
+	for (irq = 0; irq < HUBPI_NINTS; irq++) {
+		uint levels = 0;
+		for (q = hubpi_intrhand0[irq]; q; q = q->ih_next)
+			levels |= 1 << q->ih_level;
+		for (q = hubpi_intrhand1[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
 	}
 
-	/* Then figure out which IRQs use each level. */
-	for (level = IPL_NONE; level < NIPLS; level++) {
-		int irqs = 0;
-		for (irq = 0; irq < INTMASKSIZE; irq++)
+	/*
+	 * Then figure out which IRQs use each level.
+	 * Note that we make sure never to overwrite imask[IPL_HIGH], in
+	 * case an interrupt occurs during intr_disestablish() and causes
+	 * an unfortunate splx() while we are here recomputing the masks.
+	 */
+	for (level = IPL_NONE; level < IPL_HIGH; level++) {
+		uint64_t irqs = 0;
+		for (irq = 0; irq < HUBPI_NINTS; irq++)
 			if (intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
-		if (level != IPL_NONE)
-			irqs |= SINT_ALLMASK;
-		imask[level] = irqs;
+				irqs |= 1UL << irq;
+		hubpi_imask[level].hw[0] = irqs;
+
+		irqs = 0;
+		for (irq = 0; irq < HUBPI_NINTS; irq++)
+			if (intrlevel[HUBPI_NINTS + irq] & (1 << level))
+				irqs |= 1UL << irq;
+		hubpi_imask[level].hw[1] = irqs;
 	}
 
 	/*
@@ -702,119 +755,106 @@ ip27_hub_intr_makemasks()
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_TTY] |= imask[IPL_NET];
-	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCKMASK;
+	for (i = 0; i < 2; i++) {
+		hubpi_imask[IPL_NET].hw[i] |= hubpi_imask[IPL_BIO].hw[i];
+		hubpi_imask[IPL_TTY].hw[i] |= hubpi_imask[IPL_NET].hw[i];
+		hubpi_imask[IPL_VM].hw[i] |= hubpi_imask[IPL_TTY].hw[i];
+		hubpi_imask[IPL_CLOCK].hw[i] |= hubpi_imask[IPL_VM].hw[i];
 
-	/*
-	 * These are pseudo-levels.
-	 */
-	imask[IPL_NONE] = 0;
-	imask[IPL_HIGH] = -1;
-
-	if(CPU_IS_PRIMARY(curcpu()))
-		hw_setintrmask(0);
+		/*
+		 * These are pseudo-levels.
+		 */
+		hubpi_imask[IPL_NONE].hw[i] = 0;
+		hubpi_imask[IPL_HIGH].hw[i] = -1;
+	}
 }
 
 void
-ip27_hub_splx(int newcpl)
+ip27_hub_splx(int newipl)
 {
 	struct cpu_info *ci = curcpu();
 
-	/* Update masks to new cpl. Order highly important! */
-	__asm__ (" .set noreorder\n");
-	ci->ci_cpl = newcpl;
-	__asm__ (" sync\n .set reorder\n");
+	/* Update masks to new ipl. Order highly important! */
+	__asm__ (".set noreorder\n");
+	ci->ci_ipl = newipl;
+	__asm__ ("sync\n\t.set reorder\n");
 	if (CPU_IS_PRIMARY(ci))
-		hw_setintrmask(newcpl);
+		ip27_hub_setintrmask(newipl);
 	/* If we still have softints pending trigger processing. */
-	if (ci->ci_softpending & ~newcpl)
+	if (ci->ci_softpending && newipl < IPL_SOFTINT)
 		setsoftintr0();
 }
 
-uint32_t
-ip27_hub_intr_handler(uint32_t hwpend, struct trap_frame *frame)
-{
-	uint64_t imr, isr;
-	int icpl;
-	int bit;
-	uint32_t mask;
-	struct intrhand *ih;
-	int rc;
-	struct cpu_info *ci = curcpu();
+/*
+ * Level 0 and level 1 interrupt dispatchers.
+ */
 
-	/* XXX this assumes we run on cpu0 */
-	isr = IP27_LHUB_L(HUBPI_IR0);
-	imr = IP27_LHUB_L(HUBPI_CPU0_IMR0);
+#define	INTR_FUNCTIONNAME	hubpi_intr0
+#define	INTR_LOCAL_DECLS
+#define	INTR_GETMASKS \
+do { \
+	/* XXX this assumes we run on cpu0 */ \
+	isr = IP27_LHUB_L(HUBPI_IR0); \
+	imr = IP27_LHUB_L(HUBPI_CPU0_IMR0); \
+	bit = HUBPI_INTR0_WIDGET_MAX; \
+} while (0)
+#define	INTR_MASKPENDING \
+do { \
+	IP27_LHUB_S(HUBPI_CPU0_IMR0, imr & ~isr); \
+	(void)IP27_LHUB_L(HUBPI_IR0); \
+} while (0)
+#define	INTR_IMASK(ipl)		hubpi_imask[ipl].hw[0]
+#define	INTR_HANDLER(bit)	hubpi_intrhand0[bit]
+#define	INTR_SPURIOUS(bit) \
+do { \
+	printf("spurious interrupt, source %d\n", bit); \
+} while (0)
+#define	INTR_MASKRESTORE \
+do { \
+	IP27_LHUB_S(HUBPI_CPU0_IMR0, imr); \
+	(void)IP27_LHUB_L(HUBPI_IR0); \
+} while (0)
 
-	isr &= imr;
-	if (isr == 0)
-		return 0;	/* not for us */
+#include <sgi/sgi/intr_template.c>
 
-	/*
-	 * Mask all pending interrupts.
-	 */
-	IP27_LHUB_S(HUBPI_CPU0_IMR0, imr & ~isr);
-	(void)IP27_LHUB_L(HUBPI_IR0);
+#define	INTR_FUNCTIONNAME	hubpi_intr1
+#define	INTR_LOCAL_DECLS
+#define	INTR_GETMASKS \
+do { \
+	/* XXX this assumes we run on cpu0 */ \
+	isr = IP27_LHUB_L(HUBPI_IR1); \
+	imr = IP27_LHUB_L(HUBPI_CPU0_IMR1); \
+	bit = HUBPI_INTR1_WIDGET_MAX; \
+} while (0)
+#define	INTR_MASKPENDING \
+do { \
+	IP27_LHUB_S(HUBPI_CPU0_IMR1, imr & ~isr); \
+	(void)IP27_LHUB_L(HUBPI_IR1); \
+} while (0)
+#define	INTR_IMASK(ipl)		hubpi_imask[ipl].hw[1]
+#define	INTR_HANDLER(bit)	hubpi_intrhand1[bit]
+#define	INTR_SPURIOUS(bit) \
+do { \
+	printf("spurious interrupt, source %d\n", bit + HUBPI_NINTS); \
+} while (0)
+#define	INTR_MASKRESTORE \
+do { \
+	IP27_LHUB_S(HUBPI_CPU0_IMR1, imr); \
+	(void)IP27_LHUB_L(HUBPI_IR1); \
+} while (0)
 
-	/*
-	 * If interrupts are spl-masked, mark them as pending only.
-	 */
-	if ((mask = isr & frame->cpl) != 0) {
-		isr &= ~mask;
-		imr &= ~mask;
-	}
-
-	/*
-	 * Now process unmasked interrupts.
-	 */
-	if (isr != 0) {
-		__asm__ (" .set noreorder\n");
-		icpl = ci->ci_cpl;
-		__asm__ (" sync\n .set reorder\n");
-
-		/* XXX Rework this to dispatch in decreasing levels */
-		for (bit = SPL_CLOCK - 1, mask = 1 << bit; bit >= 7;
-		    bit--, mask >>= 1) {
-			if ((isr & mask) == 0)
-				continue;
-
-			rc = 0;
-			for (ih = intrhand[bit]; ih != NULL; ih = ih->ih_next) {
-				splraise(imask[ih->ih_level]);
-				ih->frame = frame;
-				if ((*ih->ih_fun)(ih->ih_arg) != 0) {
-					rc = 1;
-					ih->ih_count.ec_count++;
-				}
-			}
-			if (rc == 0)
-				printf("spurious interrupt, source %d\n", bit);
-
-			if ((isr ^= mask) == 0)
-				break;
-		}
-
-		/*
-		 * Reenable interrupts which have been serviced.
-		 */
-		IP27_LHUB_S(HUBPI_CPU0_IMR0, imr);
-		(void)IP27_LHUB_L(HUBPI_IR0);
-		
-		__asm__ (" .set noreorder\n");
-		ci->ci_cpl = icpl;
-		__asm__ (" sync\n .set reorder\n");
-	}
-
-	return CR_INT_0;
-}
+#include <sgi/sgi/intr_template.c>
 
 void
-hw_setintrmask(uint32_t m)
+ip27_hub_setintrmask(int level)
 {
-	IP27_LHUB_S(HUBPI_CPU0_IMR0, ip27_hub_intrmask & ~((uint64_t)m));
+	/* XXX this assumes we run on cpu0 */
+	IP27_LHUB_S(HUBPI_CPU0_IMR0,
+	    hubpi_intem.hw[0] & ~hubpi_imask[level].hw[0]);
 	(void)IP27_LHUB_L(HUBPI_IR0);
+	IP27_LHUB_S(HUBPI_CPU0_IMR1,
+	    hubpi_intem.hw[1] & ~hubpi_imask[level].hw[1]);
+	(void)IP27_LHUB_L(HUBPI_IR1);
 }
 
 void

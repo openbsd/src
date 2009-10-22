@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.50 2009/10/22 20:59:24 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.51 2009/10/22 22:08:54 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -57,6 +57,7 @@ void	 macebus_intr_makemasks(void);
 void	 macebus_splx(int);
 uint32_t macebus_iointr(uint32_t, struct trap_frame *);
 uint32_t macebus_aux(uint32_t, struct trap_frame *);
+void	mace_setintrmask(int);
 
 u_int8_t mace_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 u_int16_t mace_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -157,6 +158,20 @@ struct machine_bus_dma_tag mace_bus_dma_tag = {
 };
 
 /*
+ * CRIME/MACE interrupt handling declarations: 32 CRIME sources, 32 MACE
+ * sources (unmanaged); 1 level.
+ * We define another level for periodic tasks as well.
+ */
+
+struct intrhand *mace_intrhand[CRIME_NINTS];
+
+#define	INTPRI_MACEIO	(INTPRI_CLOCK + 1)
+#define	INTPRI_MACEAUX	(INTPRI_MACEIO + 1)
+
+uint64_t mace_intem;
+uint64_t mace_imask[NIPLS];
+
+/*
  * Match bus only to targets which have this bus.
  */
 int
@@ -237,12 +252,12 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	 * Map and setup MACE ISA control registers.
 	 */
 	if (bus_space_map(&macebus_tag, MACE_ISA_OFFS, 0x400, 0, &mace_h)) {
-		printf("%s: can't map MACE ISA control registers\n",
+		printf("%s: can't map MACE control registers\n",
 		    self->dv_xname);
 		return;
 	}
 
-	/* Turn on all interrupts except for MACE compare/timer. */
+	/* Turn on all MACE interrupts except for MACE compare/timer. */
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK, 
 	    0xffffffff & ~MACE_ISA_INT_TIMER);
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT, 0);
@@ -430,93 +445,56 @@ macebus_device_to_pa(bus_addr_t addr)
  * Macebus interrupt handler driver.
  */
 
-uint64_t mace_intem = 0x0;
-static uint32_t intrtype[INTMASKSIZE];
-static uint32_t intrmask[INTMASKSIZE];
-static uint32_t intrlevel[INTMASKSIZE];
-
-static int fakeintr(void *);
-static int fakeintr(void *a) {return 0;}
-
 /*
  * Establish an interrupt handler called from the dispatcher.
  * The interrupt function established should return zero if there was nothing
  * to serve (no int) and non-zero when an interrupt was serviced.
+ *
  * Interrupts are numbered from 1 and up where 1 maps to HW int 0.
+ * XXX There is no reason to keep this... except for hardcoded interrupts
+ * XXX in kernel configuration files...
  */
 void *
 macebus_intr_establish(void *icp, u_long irq, int type, int level,
     int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
 {
 	struct intrhand **p, *q, *ih;
-	static struct intrhand fakehand = {NULL, fakeintr};
-	int edge;
-	extern int cold;
-	static int initialized = 0;
+	int s;
 
-	if (!initialized) {
-		/*INIT CODE HERE*/
-		initialized = 1;
-	}
-
-	if (irq > SPL_CLOCK || irq < 1) {
+#ifdef DIAGNOSTIC
+	if (irq > CRIME_NINTS || irq < 1)
 		panic("intr_establish: illegal irq %d", irq);
-	}
+#endif
+
 	irq -= 1;	/* Adjust for 1 being first (0 is no int) */
 
-	/* No point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info");
+		return NULL;
 
-	if (type == IST_NONE || type == IST_PULSE)
-		panic("intr_establish: bogus type");
+	ih->ih_next = NULL;
+	ih->ih_fun = ih_fun;
+	ih->ih_arg = ih_arg;
+	ih->ih_level = level;
+	ih->ih_irq = irq + 1;
+	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
+	    &evcount_intr);
 
-	switch (intrtype[irq]) {
-	case IST_EDGE:
-	case IST_LEVEL:
-		if (type == intrtype[irq])
-			break;
-	}
-
-	switch (type) {
-	case IST_EDGE:
-		edge |= 1 << irq;
-		break;
-	case IST_LEVEL:
-		edge &= ~(1 << irq);
-		break;
-	}
+	s = splhigh();
 
 	/*
 	 * Figure out where to put the handler.
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * generally small.
 	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
+	for (p = &mace_intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
 		;
+	*p = ih;
 
-	/*
-	 * Actually install a fake handler momentarily, since we might be doing
-	 * this with interrupts enabled and don't want the real routine called
-	 * until masking is set up.
-	 */
-	fakehand.ih_level = level;
-	*p = &fakehand;
-
+	mace_intem |= 1UL << irq;
 	macebus_intr_makemasks();
 
-	/*
-	 * Poke the real handler in now.
-	 */
-	ih->ih_fun = ih_fun;
-	ih->ih_arg = ih_arg;
-	ih->ih_next = NULL;
-	ih->ih_level = level;
-	ih->ih_irq = irq + 1;
-	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
-	    &evcount_intr);
-	*p = ih;
+	splx(s);	/* causes hw mask update */
 
 	return (ih);
 }
@@ -536,165 +514,85 @@ macebus_intr_makemasks(void)
 {
 	int irq, level;
 	struct intrhand *q;
+	uint intrlevel[CRIME_NINTS];
 
 	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < INTMASKSIZE; irq++) {
-		int levels = 0;
-		for (q = intrhand[irq]; q; q = q->ih_next)
+	for (irq = 0; irq < CRIME_NINTS; irq++) {
+		uint levels = 0;
+		for (q = mace_intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = IPL_NONE; level < NIPLS; level++) {
-		int irqs = 0;
-		for (irq = 0; irq < INTMASKSIZE; irq++)
+	for (level = IPL_NONE; level < IPL_HIGH; level++) {
+		uint64_t irqs = 0;
+		for (irq = 0; irq < CRIME_NINTS; irq++)
 			if (intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
-		if (level != IPL_NONE)
-			irqs |= SINT_ALLMASK;
-		imask[level] = irqs;
+				irqs |= 1UL << irq;
+		mace_imask[level] = irqs;
 	}
 
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
+	 * time, so vm > (tty | net | bio).
 	 *
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_TTY] |= imask[IPL_NET];
-	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCKMASK;
+	mace_imask[IPL_NET] |= mace_imask[IPL_BIO];
+	mace_imask[IPL_TTY] |= mace_imask[IPL_NET];
+	mace_imask[IPL_VM] |= mace_imask[IPL_TTY];
+	mace_imask[IPL_CLOCK] |= mace_imask[IPL_VM];
 
 	/*
 	 * These are pseudo-levels.
 	 */
-	imask[IPL_NONE] = 0;
-	imask[IPL_HIGH] = -1;
-
-	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < INTMASKSIZE; irq++) {
-		int irqs = 1 << irq;
-		for (q = intrhand[irq]; q; q = q->ih_next)
-			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs | SINT_ALLMASK;
-	}
-
-	/* Lastly, determine which IRQs are actually in use. */
-	irq = 0;
-	for (level = 0; level < INTMASKSIZE; level++) {
-		if (intrhand[level]) {
-			irq |= 1 << level;
-		}
-	}
-	mace_intem = irq & 0x0000ffff;
-	hw_setintrmask(0);
+	mace_imask[IPL_NONE] = 0;
+	mace_imask[IPL_HIGH] = -1UL;
 }
 
 void
-macebus_splx(int newcpl)
+macebus_splx(int newipl)
 {
 	struct cpu_info *ci = curcpu();
 
-	/* Update masks to new cpl. Order highly important! */
-	__asm__ (" .set noreorder\n");
-	ci->ci_cpl = newcpl;
-	__asm__ (" sync\n .set reorder\n");
-	hw_setintrmask(newcpl);
+	/* Update masks to new ipl. Order highly important! */
+	__asm__ (".set noreorder\n");
+	ci->ci_ipl = newipl;
+	__asm__ ("sync\n\t.set reorder\n");
+	mace_setintrmask(newipl);
 	/* If we still have softints pending trigger processing. */
-	if (ci->ci_softpending & ~newcpl)
+	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
 		setsoftintr0();
 }
 
 /*
- * Process interrupts. The parameter pending has non-masked interrupts.
+ * Crime interrupt handler.
  */
-uint32_t
-macebus_iointr(uint32_t hwpend, struct trap_frame *cf)
-{
-	struct intrhand *ih;
-	uint32_t caught, vm;
-	int v;
-	uint32_t pending;
-	u_int64_t intstat, isastat, mask;
-#ifdef DIAGNOSTIC
-	static int spurious = 0;
-#endif
-	struct cpu_info *ci = curcpu();
 
-	intstat = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_STAT);
-	intstat &= 0xffff;
+#define	INTR_FUNCTIONNAME	macebus_iointr
+#define	INTR_LOCAL_DECLS
+#define	INTR_GETMASKS \
+do { \
+	isr = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_STAT); \
+	imr = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_MASK); \
+	bit = 63; \
+} while (0)
+#define	INTR_MASKPENDING \
+	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, imr & ~isr)
+#define	INTR_IMASK(ipl)		mace_imask[ipl]
+#define	INTR_HANDLER(bit)	mace_intrhand[bit]
+#define	INTR_SPURIOUS(bit) \
+do { \
+	/* XXX +1 because of -1 in intr_establish() */ \
+	if (bit != 4) \
+		printf("spurious crime interrupt %d\n", bit + 1); \
+} while (0)
+#define	INTR_MASKRESTORE \
+	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, imr)
 
-	isastat = bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT);
-	caught = 0;
-
-	/* Mask off masked interrupts and save them as pending. */
-	if (intstat & cf->cpl) {
-		mask = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_MASK);
-		bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, mask);
-		caught++;
-	}
-
-	/* Scan all unmasked. Scan the first 16 for now. */
-	pending = intstat & ~cf->cpl;
-
-	for (v = 0, vm = 1; pending != 0 && v < 16 ; v++, vm <<= 1) {
-		if (pending & vm) {
-			ih = intrhand[v];
-
-			while (ih) {
-				ih->frame = cf;
-				if ((*ih->ih_fun)(ih->ih_arg)) {
-					caught |= vm;
-					ih->ih_count.ec_count++;
-				}
-				ih = ih->ih_next;
-			}
-		}
-	}
-
-	if (caught) {
-#ifdef DIAGNOSTIC
-		spurious = 0;
-#endif
-		return CR_INT_0;
-	}
-
-#ifdef DIAGNOSTIC
-	if (pending != 0) {
-		intstat = bus_space_read_8(&crimebus_tag, crime_h,
-		    CRIME_INT_STAT) &
-		    bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_MASK);
-		isastat = bus_space_read_8(&macebus_tag, mace_h,
-		    MACE_ISA_INT_STAT) &
-		    bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK);
-
-		if (intstat != 0 || isastat != 0) {
-			printf("stray interrupt, mace mask %lx stat %lx\n"
-			    "crime mask %lx stat %lx hard %lx "
-			    "(pending %lx caught %lx)\n",
-			    bus_space_read_8(&macebus_tag, mace_h,
-			      MACE_ISA_INT_MASK),
-			    bus_space_read_8(&macebus_tag, mace_h,
-			      MACE_ISA_INT_STAT),
-			    bus_space_read_8(&crimebus_tag, crime_h,
-			      CRIME_INT_MASK),
-			    bus_space_read_8(&crimebus_tag, crime_h,
-			      CRIME_INT_STAT),
-			    bus_space_read_8(&crimebus_tag, crime_h,
-			      CRIME_INT_HARD),
-			    pending, caught);
-			if (++spurious >= 10)
-				panic("too many stray interrupts");
-		}
-	}
-#endif
-
-	return 0;  /* Not found here. */
-}
-
+#include <sgi/sgi/intr_template.c>
 
 /*
  * Macebus auxilary functions run each clock interrupt.
@@ -720,12 +618,12 @@ macebus_aux(uint32_t hwpend, struct trap_frame *cf)
 	}
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_MISC_REG, mask);
 
-	return 0; /* Real clock int handler registers. */
+	return 0;	/* Real clock int handler will claim the interrupt. */
 }
 
 void
-hw_setintrmask(uint32_t m)
+mace_setintrmask(int level)
 {
 	*(volatile uint64_t *)(PHYS_TO_XKPHYS(CRIMEBUS_BASE, CCA_NC) +
-	    CRIME_INT_MASK) = mace_intem & ~((uint64_t)m);
+	    CRIME_INT_MASK) = mace_intem & ~mace_imask[level];
 }

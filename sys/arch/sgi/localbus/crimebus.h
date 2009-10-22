@@ -1,4 +1,4 @@
-/*	$OpenBSD: crimebus.h,v 1.7 2007/10/31 13:59:53 jsing Exp $	*/
+/*	$OpenBSD: crimebus.h,v 1.8 2009/10/22 22:08:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.se).
@@ -83,6 +83,8 @@
 #define	CRIME_INT_SOFT_1	0x20000000	/* ??? */
 #define	CRIME_INT_SOFT_2	0x40000000	/* ??? */
 #define	CRIME_INT_VICE		0x80000000	/* Video Image Compression Engine */
+
+#define	CRIME_NINTS		32
 
 
 /*
