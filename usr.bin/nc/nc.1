@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.51 2009/10/22 12:35:53 sobrado Exp $
+.\"     $OpenBSD: nc.1,v 1.52 2009/10/22 15:02:12 sobrado Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -175,8 +175,8 @@ This makes it possible to use
 to script telnet sessions.
 .It Fl U
 Specifies to use
-.Ux
-domain sockets.
+.Ux Ns -domain
+sockets.
 .It Fl u
 Use UDP instead of the default option of TCP.
 .It Fl V Ar rdomain
@@ -389,8 +389,8 @@ IP for the local end of the connection:
 .Dl $ nc -s 10.1.2.3 host.example.com 42
 .Pp
 Create and listen on a
-.Ux
-domain socket:
+.Ux Ns -domain
+socket:
 .Pp
 .Dl $ nc -lU /var/tmp/dsocket
 .Pp

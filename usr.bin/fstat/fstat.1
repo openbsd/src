@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.44 2009/10/22 12:35:53 sobrado Exp $
+.\"	$OpenBSD: fstat.1,v 1.45 2009/10/22 15:02:12 sobrado Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -202,8 +202,8 @@ and the second field is the socket type (stream, dgram, etc).
 The remaining fields are protocol dependent.
 For TCP, it is the address of the tcpcb, and for UDP, the inpcb (socket pcb).
 For
-.Ux
-domain sockets, it's the address of the socket pcb and the address
+.Ux Ns -domain
+sockets, it's the address of the socket pcb and the address
 of the connected pcb (if connected).
 Otherwise the protocol number and address of the socket itself are printed.
 The attempt is to make enough information available to
@@ -213,11 +213,10 @@ permit further analysis without duplicating
 For example, the addresses mentioned above are the addresses which the
 .Ic netstat -A
 command would print for TCP, UDP, and
-.Ux
-domain.
+.Ux Ns -domain.
 A unidirectional
-.Ux
-domain socket indicates the direction of flow with
+.Ux Ns -domain
+socket indicates the direction of flow with
 an arrow
 .Pf ( Dq <-
 or

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.33 2009/10/22 12:35:53 sobrado Exp $
+.\"	$OpenBSD: apm.8,v 1.34 2009/10/22 15:02:12 sobrado Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -139,8 +139,8 @@ until the system resumes from its sleep state.
 .Bl -tag -width /var/run/apmdev -compact
 .It Pa /var/run/apmdev
 default
-.Ux
-domain socket for communicating with
+.Ux Ns -domain
+socket for communicating with
 .Xr apmd 8
 .El
 .Pp
