@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.34 2009/10/22 20:51:09 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.35 2009/10/22 20:52:39 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -94,6 +94,7 @@ int	 mace_pcibr_ppb_setup(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
 void	*mace_pcibr_rbus_parent_io(struct pci_attach_args *);
 void	*mace_pcibr_rbus_parent_mem(struct pci_attach_args *);
 
+void	*mace_pcib_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 bus_addr_t mace_pcibr_pa_to_device(paddr_t);
 paddr_t	 mace_pcibr_device_to_pa(bus_addr_t);
 
@@ -127,6 +128,7 @@ bus_space_t mace_pcibbus_mem_tag = {
 	mace_pcib_read_raw_4, mace_pcib_write_raw_4,
 	mace_pcib_read_raw_8, mace_pcib_write_raw_8,
 	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
+	mace_pcib_space_vaddr
 };
 
 bus_space_t mace_pcibbus_io_tag = {
@@ -140,6 +142,7 @@ bus_space_t mace_pcibbus_io_tag = {
 	mace_pcib_read_raw_4, mace_pcib_write_raw_4,
 	mace_pcib_read_raw_8, mace_pcib_write_raw_8,
 	mace_pcib_space_map, mace_pcib_space_unmap, mace_pcib_space_region,
+	mace_pcib_space_vaddr
 };
 
 /*
@@ -645,6 +648,12 @@ mace_pcib_space_region(bus_space_tag_t t, bus_space_handle_t bsh,
 {
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+void *
+mace_pcib_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
+{
+	return (void *)h;
 }
 
 /*
