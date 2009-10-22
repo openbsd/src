@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.8,v 1.5 2007/10/24 20:28:25 claudio Exp $
+.\"	$OpenBSD: ripd.8,v 1.6 2009/10/22 12:35:53 sobrado Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2007 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt RIPD 8
 .Os
 .Sh NAME
@@ -72,7 +72,8 @@ Default
 .Nm
 configuration file.
 .It /var/run/ripd.sock
-Unix-domain socket used for communication with
+.Ux
+domain socket used for communication with
 .Xr ripctl 8 .
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.41 2009/06/05 06:47:12 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.42 2009/10/22 12:35:53 sobrado Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: June 5 2009 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -330,13 +330,17 @@ When a remote system receives a ping packet, it can do one of three things
 with the TTL field in its response:
 .Bl -bullet
 .It
-Not change it; this is what Berkeley Unix systems did before the
+Not change it; this is what Berkeley
+.Ux
+systems did before the
 .Bx 4.3 tahoe
 release.
 In this case the TTL value in the received packet will be
 255 minus the number of routers in the round trip path.
 .It
-Set it to 255; this is what current Berkeley Unix systems do.
+Set it to 255; this is what current Berkeley
+.Ux
+systems do.
 In this case the TTL value in the received packet will be
 255 minus the number of routers in the path from the remote system
 to the pinging host.

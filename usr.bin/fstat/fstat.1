@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.43 2009/08/16 09:41:08 sobrado Exp $
+.\"	$OpenBSD: fstat.1,v 1.44 2009/10/22 12:35:53 sobrado Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -201,7 +201,9 @@ In all cases the first field is the domain name
 and the second field is the socket type (stream, dgram, etc).
 The remaining fields are protocol dependent.
 For TCP, it is the address of the tcpcb, and for UDP, the inpcb (socket pcb).
-For Unix domain sockets, it's the address of the socket pcb and the address
+For
+.Ux
+domain sockets, it's the address of the socket pcb and the address
 of the connected pcb (if connected).
 Otherwise the protocol number and address of the socket itself are printed.
 The attempt is to make enough information available to
@@ -210,8 +212,12 @@ permit further analysis without duplicating
 .Pp
 For example, the addresses mentioned above are the addresses which the
 .Ic netstat -A
-command would print for TCP, UDP, and Unix domain.
-A unidirectional Unix domain socket indicates the direction of flow with
+command would print for TCP, UDP, and
+.Ux
+domain.
+A unidirectional
+.Ux
+domain socket indicates the direction of flow with
 an arrow
 .Pf ( Dq <-
 or

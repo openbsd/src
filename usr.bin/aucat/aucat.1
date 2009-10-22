@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.59 2009/10/05 07:05:24 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.60 2009/10/22 12:35:53 sobrado Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 5 2009 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -87,7 +87,9 @@ If the option argument is
 .Sq -
 then standard input will be used.
 .It Fl l
-Listen for incoming connections on a Unix domain socket.
+Listen for incoming connections on a
+.Ux
+domain socket.
 This allows clients to use
 .Nm
 instead of the physical audio device for audio input and output

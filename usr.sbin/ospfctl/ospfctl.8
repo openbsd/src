@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.20 2009/04/08 15:58:55 jmc Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.21 2009/10/22 12:35:53 sobrado Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 8 2009 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt OSPFCTL 8
 .Os
 .Sh NAME
@@ -119,7 +119,8 @@ Show summary information.
 .Sh FILES
 .Bl -tag -width "/var/run/ospfd.sockXX" -compact
 .It /var/run/ospfd.sock
-Unix-domain socket used for communication with
+.Ux
+domain socket used for communication with
 .Xr ospfd 8 .
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.23 2009/04/07 14:57:33 reyk Exp $
+.\"	$OpenBSD: ospfd.8,v 1.24 2009/10/22 12:35:53 sobrado Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 7 2009 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt OSPFD 8
 .Os
 .Sh NAME
@@ -156,7 +156,8 @@ Default
 .Nm
 configuration file.
 .It /var/run/ospfd.sock
-Unix-domain socket used for communication with
+.Ux
+domain socket used for communication with
 .Xr ospfctl 8 .
 .El
 .Sh SEE ALSO
