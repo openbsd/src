@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.25 2009/10/07 08:35:47 syuu Exp $ */
+/*	$OpenBSD: context.S,v 1.26 2009/10/22 18:21:40 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -273,7 +273,6 @@ ctx3:
 	 * Restore registers and return.
 	 */
 
-	REG_L	a0, PCB_CONTEXT+13*REGSZ(t3)
 	REG_L	s0, PCB_CONTEXT+0*REGSZ(t3)
 	REG_L	s1, PCB_CONTEXT+1*REGSZ(t3)
 	REG_L	s2, PCB_CONTEXT+2*REGSZ(t3)
@@ -284,16 +283,12 @@ ctx3:
 	REG_L	s7, PCB_CONTEXT+7*REGSZ(t3)
 	REG_L	sp, PCB_CONTEXT+8*REGSZ(t3)
 	REG_L	s8, PCB_CONTEXT+9*REGSZ(t3)
-	GET_CPU_INFO(t1, t0)
-	sw	a0, CI_CPL(t1)
-#ifdef IMASK_EXTERNAL
-	jal	hw_setintrmask
-	nop
-#endif
+	jal	splx
+	REG_L	a0, PCB_CONTEXT+13*REGSZ(t3)
 	REG_L	ra, PCB_CONTEXT+10*REGSZ(t3)
 	REG_L	v0, PCB_CONTEXT+11*REGSZ(t3)
-	REG_L	v1, PCB_CONTEXT+12*REGSZ(t3)
 #ifndef IMASK_EXTERNAL
+	REG_L	v1, PCB_CONTEXT+12*REGSZ(t3)
 	ctc0	v1, COP_0_ICR		# XXX RM7000
 #endif
 	ori	v0, v0, SR_INT_ENAB

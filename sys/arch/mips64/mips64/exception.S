@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.23 2009/10/07 08:35:47 syuu Exp $ */
+/*	$OpenBSD: exception.S,v 1.24 2009/10/22 18:21:40 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -521,19 +521,8 @@ LEAF(proc_trampoline, 0)
 	 * start at spl0 and with interrupts enabled, and these
 	 * won't ``return to userland''.
 	 */
-	GET_CPU_INFO(t0, t1)
-	sw	zero, CI_CPL(t0)	# lower to spl0
-	lw	t0, CI_IPENDING(t0)
-	beqz	t0, 1f
-	nop
-
-	jal	setsoftintr0		# process any pending ints
-	nop
-1:
-#ifdef IMASK_EXTERNAL
-	jal	hw_setintrmask
+	jal	splx
 	xor	a0, a0
-#endif
 	jal	updateimask		# Make sure SR imask is updated
 	xor	a0, a0
 
