@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1500 2009/10/17 00:40:27 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1501 2009/10/22 21:50:46 sthen Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1372,16 +1372,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8111 AC97",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SB900_SATA,
-	    "SB900 SATA",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SATA,
+	    "Hudson-2 SATA",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SB900_SMB,
-	    "SB900 SMBus",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_SMB,
+	    "Hudson-2 SMBus",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SB900_IDE,
-	    "SB900 IDE",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_HUDSON2_IDE,
+	    "Hudson-2 IDE",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_HB,
