@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_freebsd.8,v 1.19 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: compat_freebsd.8,v 1.20 2009/10/22 09:22:46 sobrado Exp $
 .\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt COMPAT_FREEBSD 8
 .Os
 .Sh NAME
@@ -310,8 +310,9 @@ tree.
 To do this, run the
 .Fx
 version ldd on the new program, and watch its output.
-ldd (see also the manual page for ldd(1)) will print a list
-of shared libraries that the program depends on, in the
+ldd (see also the manual page for
+.Xr ldd 1 )
+will print a list of shared libraries that the program depends on, in the
 form -l<majorname> => <fullname>.
 .Pp
 If it prints "not found" instead of <fullname> it means that

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: login_token.8,v 1.10 2007/05/31 19:19:40 jmc Exp $
+.\"	$OpenBSD: login_token.8,v 1.11 2009/10/22 09:22:46 sobrado Exp $
 .\"
 .\" Copyright (c) 1995 Migration Associates Corporation. All rights reserved.
 .\"
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt LOGIN_TOKEN 8
 .Os
 .Sh NAME
@@ -91,7 +91,9 @@ data base of information for the CRYPTOCard tokens.
 data base of information for the SNK-004 tokens.
 .El
 .Sh DIAGNOSTICS
-Diagnostic messages are logged via syslog(3) with the LOG_AUTH facility.
+Diagnostic messages are logged via
+.Xr syslog 3
+with the LOG_AUTH facility.
 .Sh SEE ALSO
 .Xr syslog 3 ,
 .Xr login.conf 5 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.25 2008/12/15 11:50:10 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.26 2009/10/22 09:22:46 sobrado Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2008 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt TRUNK 4
 .Os
 .Sh NAME
@@ -96,7 +96,9 @@ The configuration can be done at runtime or by setting up a
 configuration file for
 .Xr netstart 8 .
 .Sh EXAMPLES
-Create a simple round robin trunk with two bge(4) Gigabit Ethernet
+Create a simple round robin trunk with two
+.Xr bge 4
+Gigabit Ethernet
 interfaces:
 .Bd -literal -offset indent
 # ifconfig bge0 up

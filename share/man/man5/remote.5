@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.20 2007/07/04 09:05:51 jmc Exp $
+.\"	$OpenBSD: remote.5,v 1.21 2009/10/22 09:22:46 sobrado Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)remote.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: July 4 2007 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt REMOTE 5
 .Os
 .Sh NAME
@@ -222,7 +222,9 @@ The default is
 .It Sy \&ld
 (num)
 The line discipline to use for the remote tty.
-The default is to use the termios(4) line discipline.
+The default is to use the
+.Xr termios 4
+line discipline.
 .It Sy \&nb
 (bool)
 Initialize the
