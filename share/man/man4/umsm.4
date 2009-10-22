@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.53 2009/10/12 21:37:26 jsg Exp $
+.\"	$OpenBSD: umsm.4,v 1.54 2009/10/22 14:28:10 sthen Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2009 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -70,6 +70,7 @@ driver:
 .It Li "Option GlobeTrotter GT Max" Ta Ta CardBus
 .It Li "Option GlobeTrotter HSDPA" Ta Ta USB
 .It Li "Option GlobeTrotter HSDPA ICON225" Ta Ta USB
+.It Li "Option GlobeTrotter HSUPA 380E" Ta Ta PCI Express Mini Card
 .It Li "Sierra Wireless MC8755" Ta Ta PCI Express Mini Card
 .It Li "Sierra Wireless MC8775" Ta Ta PCI Express Mini Card
 .It Li "Sierra Wireless AirCard 580" Ta Ta CardBus
@@ -120,7 +121,7 @@ for PPP connections.
 For example, the Huawei E220 has two serial ports,
 but only the first port can be used to make connections;
 the second one is for management.
-The Option GlobeTrotter HSDPA modem has three serial ports,
+The Option GlobeTrotter HSDPA/HSUPA modems have three serial ports,
 but only the last port can be used to make PPP connections.
 .Sh EXAMPLES
 An example
