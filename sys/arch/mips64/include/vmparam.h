@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.16 2008/08/22 10:41:37 kurt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.17 2009/10/22 18:20:21 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -95,7 +95,7 @@
 #define VM_PHYSSEG_NOADD
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0x0000000000000000L)
+#define VM_MIN_ADDRESS		((vaddr_t)0x0000000000001000L)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0x0000000080000000L)
 #define VM_MAX_ADDRESS		((vaddr_t)0x0000000080000000L)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xffffffffc0000000L)
