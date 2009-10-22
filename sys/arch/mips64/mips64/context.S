@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.27 2009/10/22 18:23:12 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.28 2009/10/22 18:31:51 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -128,9 +128,11 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	REG_S	s7, PCB_CONTEXT+7*REGSZ(t3)
 	REG_S	s8, PCB_CONTEXT+9*REGSZ(t3)
 	REG_S	ra, PCB_CONTEXT+10*REGSZ(t3)
-	cfc0	t1, COP_0_ICR
 	REG_S	v0, PCB_CONTEXT+11*REGSZ(t3)
+#ifndef IMASK_EXTERNAL
+	cfc0	t1, COP_0_ICR
 	REG_S	t1, PCB_CONTEXT+12*REGSZ(t3)
+#endif
 	REG_S	t0, PCB_CONTEXT+13*REGSZ(t3)
 
 1:

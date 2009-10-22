@@ -1,5 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2009/08/06 21:05:49 miod Exp $	*/
-/* tracked to 1.23 */
+/*	$OpenBSD: trap.c,v 1.45 2009/10/22 18:31:51 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,9 +42,6 @@
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
-/*
- *		THIS CODE SHOULD BE REWRITTEN!
- */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,8 +170,6 @@ ast()
 
 	uvmexp.softs++;
 
-if (p->p_md.md_astpending == 0)
-panic("unexpected ast p %p astpending %p\n", p, &p->p_md.md_astpending);
 	p->p_md.md_astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
 		ADDUPROF(p);
