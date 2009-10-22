@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.124 2009/05/09 16:29:55 schwarze Exp $
+.\"	$OpenBSD: afterboot.8,v 1.125 2009/10/22 12:44:36 schwarze Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 9 2009 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -484,26 +484,18 @@ See
 .Pa /usr/share/sendmail/README
 for more information.
 .Ss Daily, weekly, monthly scripts
-Look at and possibly edit the
-.Pa /etc/daily , /etc/weekly ,
-and
-.Pa /etc/monthly
-scripts.
-Your site specific things should go into
-.Pa /etc/daily.local , /etc/weekly.local ,
-and
-.Pa /etc/monthly.local .
-.Pp
-These scripts have been limited so as to keep the system running without
-filling up disk space from normal running processes and database updates.
-(You probably do not need to understand them.)
-.Pp
-The
-.Pa /etc/daily
-script provides a means to perform a daily backup of the root filesystem.
-See
+Review
 .Xr daily 8
-for more information.
+to understand what the periodic system maintenance scripts do and
+how to customize them:
+For example, to enable
+.Ev ROOTBACKUP
+or to disable
+.Ev VERBOSESTATUS ,
+or to add local maintenance code to
+.Pa /etc/daily.local , /etc/weekly.local ,
+or
+.Pa /etc/monthly.local .
 .Ss Tighten up security
 You might wish to tighten up security more by editing
 .Pa /etc/fbtab
@@ -532,17 +524,6 @@ as root
 and see if anything unexpected is present.
 Do you need anything else?
 Do you wish to change things?
-For example, if you do not
-like root getting standard output of the daily scripts, and want only
-the security scripts that are mailed internally, you can type
-.Ic crontab -e
-and change some of the lines to read:
-.Bd -literal -offset indent
-30  1  *  *  *   /bin/sh /etc/daily 2>&1 > /var/log/daily.out
-30  3  *  *  6   /bin/sh /etc/weekly 2>&1 > /var/log/weekly.out
-30  5  1  *  *   /bin/sh /etc/monthly 2>&1 > /var/log/monthly.out
-.Ed
-.Pp
 See
 .Xr crontab 5 .
 .Ss Next day cleanup
