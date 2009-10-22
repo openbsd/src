@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.452 2009/10/12 21:27:01 jsg Exp $
+$OpenBSD: usbdevs,v 1.453 2009/10/22 14:26:39 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3124,6 +3124,7 @@ product OPTION GT3GPLUS		0x6721	GlobeTrotter 3G PLUS
 product OPTION SCORPION		0x6901	GlobeTrotter HSDPA Modem
 product OPTION GSICON72		0x6911	GlobeSurfer Icon 7.2
 product OPTION GTHSDPA225	0x6971	GlobeTrotter HSDPA Icon 225
+product OPTION GTHSUPA380E	0x7211	GlobeTrotter HSUPA 380E
 product OPTION GTICON322	0xd033	GlobeTrotter Icon322 storage
 
 /* WCH/QinHeng Electronics */
