@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.32 2009/10/21 05:43:41 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.33 2009/10/22 21:41:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -130,13 +130,6 @@ rsock_opos(struct aproc *p, struct abuf *obuf, int delta)
 		return;
 
 	f->delta += delta;
-	/*
-	 * Negative deltas are xrun notifications for internal uses
-	 * only. Don't generate a packet for this, the client will be
-	 * notified later.
-	 */
-	if (delta < 0)
-		return;
 	f->tickpending++;
 	for (;;) {
 		if (!sock_write(f))
@@ -228,14 +221,7 @@ wsock_ipos(struct aproc *p, struct abuf *obuf, int delta)
 		return;
 
 	f->delta += delta;
-	/*
-	 * Negative deltas are xrun notifications for internal uses
-	 * only. Don't generate a packet for this, the client will be
-	 * notified later.
-	 */
-	if (delta < 0)
-		return;
-	f->tickpending++;	
+	f->tickpending++;
 	for (;;) {
 		if (!sock_write(f))
 			break;
@@ -550,21 +536,6 @@ sock_setpar(struct sock *f)
 	struct amsg_par *p = &f->rmsg.u.par;
 	unsigned min, max, rate;
 
-	if (AMSG_ISSET(p->legacy_mode)) {
-		/*
-		 * allow old clients that don't support HELLO to work
-		 * XXX: remove this.
-		 */
-		if ((p->legacy_mode & ~(AMSG_PLAY | AMSG_REC)) ||
-		    (p->legacy_mode == 0)) {
-			return 0;
-		}
-		f->mode = 0;
-		if ((p->legacy_mode & AMSG_PLAY) && dev_mix)
-			f->mode |= AMSG_PLAY;
-		if ((p->legacy_mode & AMSG_REC) && dev_sub)
-			f->mode |= AMSG_REC;
-	}
 	if (AMSG_ISSET(p->bits)) {
 		if (p->bits < BITS_MIN || p->bits > BITS_MAX) {
 			return 0;
@@ -674,9 +645,12 @@ sock_hello(struct sock *f)
 {
 	struct amsg_hello *p = &f->rmsg.u.hello;
 
-	/* XXX : set file name to p->who */
-	/* XXX : dev_midi can no longer be NULL, right ? */
-
+	if (p->version != AMSG_VERSION) {
+		return 0;
+	}
+	/*
+	 * XXX : dev_midi can no longer be NULL, right ?
+	 */
 	if (dev_midi && (p->proto & (AMSG_MIDIIN | AMSG_MIDIOUT))) {
 		if (p->proto & ~(AMSG_MIDIIN | AMSG_MIDIOUT)) {
 			return 0;
@@ -728,13 +702,6 @@ int
 sock_execmsg(struct sock *f)
 {
 	struct amsg *m = &f->rmsg;
-
-	/*
-	 * XXX: allow old clients to work without hello on the default socket
-	 */
-	if (f->pstate == SOCK_HELLO && m->cmd != AMSG_HELLO && f->opt != NULL) {
-		f->pstate = SOCK_INIT;
-	}
 
 	switch (m->cmd) {
 	case AMSG_DATA:
@@ -899,7 +866,7 @@ sock_buildmsg(struct sock *f)
 	/*
 	 * If pos changed, build a MOVE message.
 	 */
-	if (f->tickpending && f->delta >= 0) {
+	if (f->tickpending) {
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_MOVE;
 		f->wmsg.u.ts.delta = f->delta;

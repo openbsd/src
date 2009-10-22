@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.29 2009/10/17 10:55:43 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.30 2009/10/22 21:41:30 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,6 +43,9 @@ struct aucat_hdl {
 	int maxwrite;			/* latency constraint */
 	int events;			/* events the user requested */
 	unsigned curvol, reqvol;	/* current and requested volume */
+	unsigned devbufsz;		/* server side buffer size (in frames) */
+	unsigned attached;		/* stream attached to device */
+	int delta;			/* some of received deltas */
 };
 
 static void aucat_close(struct sio_hdl *);
@@ -150,8 +153,17 @@ aucat_runmsg(struct aucat_hdl *hdl)
 		hdl->rtodo = hdl->rmsg.u.data.size;
 		break;
 	case AMSG_MOVE:
-		hdl->maxwrite += hdl->rmsg.u.ts.delta * (int)hdl->wbpf;
-		sio_onmove_cb(&hdl->sio, hdl->rmsg.u.ts.delta);
+		if (!hdl->attached) {
+			DPRINTF("aucat_runmsg: attached\n");
+			hdl->maxwrite += hdl->devbufsz * hdl->wbpf;
+			hdl->attached = 1;
+		}
+		hdl->delta += hdl->rmsg.u.ts.delta;
+		if (hdl->delta >= 0) {
+			hdl->maxwrite += hdl->delta * hdl->wbpf;
+			sio_onmove_cb(&hdl->sio, hdl->delta);
+			hdl->delta = 0;
+		}
 		hdl->rstate = STATE_MSG;
 		hdl->rtodo = sizeof(struct amsg);
 		break;
@@ -303,7 +315,10 @@ aucat_start(struct sio_hdl *sh)
 		return 0;
 	hdl->wbpf = par.bps * par.pchan;
 	hdl->rbpf = par.bps * par.rchan;
-	hdl->maxwrite = hdl->wbpf * par.bufsz;
+	hdl->maxwrite = hdl->wbpf * par.appbufsz;
+	hdl->devbufsz = par.bufsz - par.appbufsz;
+	hdl->attached = 0;
+	hdl->delta = 0;
 
 	AMSG_INIT(&hdl->wmsg);
 	hdl->wmsg.cmd = AMSG_START;
