@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_thru.c,v 1.5 2009/08/21 16:48:03 ratchov Exp $	*/
+/*	$OpenBSD: mio_thru.c,v 1.6 2009/10/22 22:26:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -95,6 +95,7 @@ thru_open(const char *str, char *sock, unsigned mode, int nbio)
 	 */
 	AMSG_INIT(&msg);
 	msg.cmd = AMSG_HELLO;
+	msg.u.hello.version = AMSG_VERSION;
 	msg.u.hello.proto = 0;
 	if (mode & MIO_IN)
 		msg.u.hello.proto |= AMSG_MIDIIN;
