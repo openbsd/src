@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.65 2009/09/13 19:21:42 miod Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.66 2009/10/22 07:59:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -84,8 +84,6 @@ int		atascsi_atapi_cmd(struct scsi_xfer *);
 void		atascsi_atapi_cmd_done(struct ata_xfer *);
 
 int		atascsi_done(struct scsi_xfer *, int);
-
-int		ata_running = 0;
 
 int		ata_exec(struct atascsi *, struct ata_xfer *);
 
