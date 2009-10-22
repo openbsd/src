@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.46 2009/10/22 20:10:44 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.47 2009/10/22 20:39:16 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,6 +54,8 @@
 #include <ddb/db_sym.h>
 #endif
 
+void	dummy_splx(int);
+void	interrupt(struct trap_frame *);
 
 static struct evcount soft_count;
 static int soft_irq = 0;
@@ -68,9 +70,7 @@ struct {
 	uint32_t (*int_hand)(uint32_t, struct trap_frame *);
 } cpu_int_tab[NLOWINT];
 
-void dummy_do_pending_int(int);
-
-int_f *pending_hand = &dummy_do_pending_int;
+int_f	*splx_hand = &dummy_splx;
 
 /*
  *  Modern versions of MIPS processors have extended interrupt
@@ -85,7 +85,7 @@ int_f *pending_hand = &dummy_do_pending_int;
  *  an interrupt handler for that particular interrupt. More than one
  *  handler can register to an interrupt input and one handler may register
  *  for more than one interrupt input. A handler is only called once even
- *  if it register for more than one interrupt input.
+ *  if it registers for more than one interrupt input.
  *
  *  The interrupt mechanism in this port uses a delayed masking model
  *  where interrupts are not really masked when doing an spl(). Instead
@@ -94,38 +94,16 @@ int_f *pending_hand = &dummy_do_pending_int;
  *  register this interrupt as pending and return a new mask to this
  *  code that will turn off the interrupt hardware wise. Later when
  *  the pending interrupt is unmasked it will be processed as usual
- *  and the hardware mask will be restored.
+ *  and the regular hardware mask will be restored.
  */
-
-/*
- *  Interrupt mapping is as follows:
- *
- *  irq can be between 1 and 10. This maps to CPU IPL2..IPL11.
- *  The two software interrupts IPL0 and IPL1 are reserved for
- *  kernel functions. IPL13 is used for the performance counters
- *  in the RM7000. IPL12 extra timer is currently not used.
- *
- *  irq's maps into the software spl register to the bit corresponding
- *  to its status/mask bit in the cause/sr register shifted right eight
- *  places.
- *
- *  A well designed system uses the CPUs interrupt inputs in a way, such
- *  that masking can be done according to the IPL in the CPU status and
- *  interrupt control register. However support for an external masking
- *  register is provided but will cause a slightly higher overhead when
- *  used. When an external masking register is used, no masking in the
- *  CPU is done. Instead a fixed mask is set and used throughout.
- */
-
-void interrupt(struct trap_frame *);
 
 /*
  * Handle an interrupt. Both kernel and user mode is handled here.
  *
  * The interrupt handler is called with the CR_INT bits set that
- * was given when the handlers was registered that needs servicing.
+ * were given when the handler was registered.
  * The handler should return a similar word with a mask indicating
- * which CR_INT bits that has been served.
+ * which CR_INT bits have been handled.
  */
 
 void
@@ -144,9 +122,8 @@ interrupt(struct trap_frame *trapframe)
 	 *  enough... i don't know but better safe than sorry...
 	 *  The main effect is not the interrupts but the spl mechanism.
 	 */
-	if (!(trapframe->sr & SR_INT_ENAB)) {
+	if (!(trapframe->sr & SR_INT_ENAB))
 		return;
-	}
 
 #ifdef DEBUG_INTERRUPT
 	trapdebug_enter(trapframe, 0);
@@ -234,7 +211,7 @@ set_intr(int pri, uint32_t mask,
 struct intrhand *intrhand[INTMASKSIZE];
 
 void
-dummy_do_pending_int(int newcpl)
+dummy_splx(int newcpl)
 {
 	/* Dummy handler */
 }
@@ -285,16 +262,7 @@ splraise(int newcpl)
 void
 splx(int newcpl)
 {
-	struct cpu_info *ci = curcpu();
-
-	if (ci->ci_ipending & ~newcpl)
-		(*pending_hand)(newcpl);
-	else {
-		__asm__ (" .set noreorder\n");
-		ci->ci_cpl = newcpl;
-		__asm__ (" sync\n .set reorder\n");
-		hw_setintrmask(newcpl);
-	}
+	(*splx_hand)(newcpl);
 }
 
 int
@@ -307,4 +275,3 @@ spllower(int newcpl)
 	splx(newcpl);
 	return (oldcpl);
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.10 2009/10/22 20:05:28 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.11 2009/10/22 20:39:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -70,7 +70,7 @@ int	xheart_intr_establish(int (*)(void *), void *, int, int, const char *);
 void	xheart_intr_disestablish(int);
 uint32_t xheart_intr_handler(uint32_t, struct trap_frame *);
 void	xheart_intr_makemasks(struct xheart_softc *);
-void	xheart_do_pending_int(int);
+void	xheart_splx(int);
 
 int
 xheart_match(struct device *parent, void *match, void *aux)
@@ -132,7 +132,7 @@ xheart_attach(struct device *parent, struct device *self, void *aux)
 		*(volatile uint64_t*)(heart + HEART_IMR(3)) = 0UL;
 
 		set_intr(INTPRI_XBOWMUX, CR_INT_0, xheart_intr_handler);
-		register_pending_int_handler(xheart_do_pending_int);
+		register_splx_handler(xheart_splx);
 	}
 }
 
@@ -390,7 +390,7 @@ xheart_intr_makemasks(struct xheart_softc *sc)
 }
 
 void
-xheart_do_pending_int(int newcpl)
+xheart_splx(int newcpl)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -398,7 +398,7 @@ xheart_do_pending_int(int newcpl)
 	__asm__ (" .set noreorder\n");
 	ci->ci_cpl = newcpl;
 	__asm__ (" sync\n .set reorder\n");
-	if(CPU_IS_PRIMARY(ci))
+	if (CPU_IS_PRIMARY(ci))
 		hw_setintrmask(newcpl);
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_ipending & SINT_ALLMASK & ~newcpl)

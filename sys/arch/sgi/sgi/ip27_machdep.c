@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.25 2009/10/22 20:05:28 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.26 2009/10/22 20:39:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -72,7 +72,7 @@ int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
 void	ip27_hub_intr_disestablish(int);
 uint32_t ip27_hub_intr_handler(uint32_t, struct trap_frame *);
 void	ip27_hub_intr_makemasks(void);
-void	ip27_hub_do_pending_int(int);
+void	ip27_hub_splx(int);
 
 void	ip27_attach_node(struct device *, int16_t);
 int	ip27_print(void *, const char *);
@@ -231,7 +231,7 @@ ip27_setup()
 	xbow_intr_widget_intr_disestablish = ip27_hub_intr_disestablish;
 
 	set_intr(INTPRI_XBOWMUX, CR_INT_0, ip27_hub_intr_handler);
-	register_pending_int_handler(ip27_hub_do_pending_int);
+	register_splx_handler(ip27_hub_splx);
 
 	/*
 	 * Disable all hardware interrupts.
@@ -718,7 +718,7 @@ ip27_hub_intr_makemasks()
 }
 
 void
-ip27_hub_do_pending_int(int newcpl)
+ip27_hub_splx(int newcpl)
 {
 	struct cpu_info *ci = curcpu();
 

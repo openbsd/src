@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.47 2009/10/22 20:10:46 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.48 2009/10/22 20:39:17 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -54,7 +54,7 @@ int	 macebusprint(void *, const char *);
 int	 macebussearch(struct device *, void *, void *);
 
 void	 macebus_intr_makemasks(void);
-void	 macebus_do_pending_int(int);
+void	 macebus_splx(int);
 uint32_t macebus_iointr(uint32_t, struct trap_frame *);
 uint32_t macebus_aux(uint32_t, struct trap_frame *);
 
@@ -252,7 +252,7 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	 * handler. Register all except clock.
 	 */
 	set_intr(INTPRI_MACEIO, CR_INT_0, macebus_iointr);
-	register_pending_int_handler(macebus_do_pending_int);
+	register_splx_handler(macebus_splx);
 
 	/* Set up a handler called when clock interrupts go off. */
 	set_intr(INTPRI_MACEAUX, CR_INT_5, macebus_aux);
@@ -592,7 +592,7 @@ macebus_intr_makemasks(void)
 }
 
 void
-macebus_do_pending_int(int newcpl)
+macebus_splx(int newcpl)
 {
 	struct cpu_info *ci = curcpu();
 

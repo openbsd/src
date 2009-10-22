@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.32 2009/10/22 20:10:46 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.33 2009/10/22 20:39:17 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -146,15 +146,15 @@ void	splinit(void);
 extern uint32_t imask[NIPLS];
 
 /* Inlines */
-static __inline void register_pending_int_handler(void (*)(int));
+static __inline void register_splx_handler(void (*)(int));
 
 typedef void (int_f) (int);
-extern int_f *pending_hand;
+extern int_f *splx_hand;
 
 static __inline void
-register_pending_int_handler(void(*pending)(int))
+register_splx_handler(void(*handler)(int))
 {
-	pending_hand = pending;
+	splx_hand = handler;
 }
 
 int	splraise(int);
