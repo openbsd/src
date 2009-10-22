@@ -1,4 +1,4 @@
-.\"	$OpenBSD: midicat.1,v 1.5 2009/10/12 17:32:33 sobrado Exp $
+.\"	$OpenBSD: midicat.1,v 1.6 2009/10/22 21:14:10 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2009 $
+.Dd $Mdocdate: October 22 2009 $
 .Dt MIDICAT 1
 .Os
 .Sh NAME
@@ -58,7 +58,9 @@ If the option argument is
 .Sq -
 then standard input will be used.
 .It Fl l
-Listen for incoming connections on Unix domain sockets.
+Listen for incoming connections on
+.Ux Ns -domain
+sockets.
 This allows clients to use
 .Nm
 instead of the regular
