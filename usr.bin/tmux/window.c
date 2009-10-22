@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.33 2009/10/19 13:18:13 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.34 2009/10/22 12:30:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -610,7 +610,7 @@ window_pane_set_mode(struct window_pane *wp, const struct window_mode *mode)
 
 	if ((s = wp->mode->init(wp)) != NULL)
 		wp->screen = s;
-	server_redraw_window(wp->window);
+	wp->flags |= PANE_REDRAW;
 	return (0);
 }
 
@@ -624,7 +624,7 @@ window_pane_reset_mode(struct window_pane *wp)
 	wp->mode = NULL;
 
 	wp->screen = &wp->base;
-	server_redraw_window(wp->window);
+	wp->flags |= PANE_REDRAW;
 }
 
 void
