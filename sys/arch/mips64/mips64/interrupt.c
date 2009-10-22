@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.44 2009/10/22 18:46:48 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.45 2009/10/22 20:05:27 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,14 +58,14 @@
 static struct evcount soft_count;
 static int soft_irq = 0;
 
-intrmask_t imask[NIPLS];
+uint32_t imask[NIPLS];
 
-intrmask_t idle_mask;
+uint32_t idle_mask;
 int	last_low_int;
 
 struct {
-	intrmask_t int_mask;
-	intrmask_t (*int_hand)(intrmask_t, struct trap_frame *);
+	uint32_t int_mask;
+	uint32_t (*int_hand)(uint32_t, struct trap_frame *);
 } cpu_int_tab[NLOWINT];
 
 void dummy_do_pending_int(int);
@@ -135,7 +135,7 @@ interrupt(struct trap_frame *trapframe)
 	u_int32_t pending;
 	u_int32_t cause;
 	int i;
-	intrmask_t xcpl;
+	uint32_t xcpl;
 
 	/*
 	 *  Paranoic? Perhaps. But if we got here with the enable
@@ -171,7 +171,7 @@ interrupt(struct trap_frame *trapframe)
 #endif
 
 	for (i = 0; i <= last_low_int; i++) {
-		intrmask_t active;
+		uint32_t active;
 		active = cpu_int_tab[i].int_mask & pending;
 		if (active) {
 			cause &= ~(*cpu_int_tab[i].int_hand)(active, trapframe);
@@ -204,8 +204,8 @@ interrupt(struct trap_frame *trapframe)
  *  software ints here since they are always on.
  */
 void
-set_intr(int pri, intrmask_t mask,
-	intrmask_t (*int_hand)(intrmask_t, struct trap_frame *))
+set_intr(int pri, uint32_t mask,
+	uint32_t (*int_hand)(uint32_t, struct trap_frame *))
 {
 	if ((idle_mask & SOFT_INT_MASK) == 0)
 		evcount_attach(&soft_count, "soft", (void *)&soft_irq, &evcount_intr);

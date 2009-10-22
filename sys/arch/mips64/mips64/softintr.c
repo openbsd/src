@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.2 2009/10/07 08:35:47 syuu Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.3 2009/10/22 20:05:27 miod Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ netintr(void)
 }
 
 void
-dosoftint(intrmask_t xcpl)
+dosoftint(uint32_t xcpl)
 {
 	struct cpu_info *ci = curcpu();
 	int sir, q, mask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.9 2009/10/07 08:35:47 syuu Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.10 2009/10/22 20:05:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -68,7 +68,7 @@ int	xheart_ow_pulse(struct xheart_softc *, int, int);
 int	xheart_intr_register(int, int, int *);
 int	xheart_intr_establish(int (*)(void *), void *, int, int, const char *);
 void	xheart_intr_disestablish(int);
-intrmask_t xheart_intr_handler(intrmask_t, struct trap_frame *);
+uint32_t xheart_intr_handler(uint32_t, struct trap_frame *);
 void	xheart_intr_makemasks(struct xheart_softc *);
 void	xheart_do_pending_int(int);
 
@@ -345,7 +345,7 @@ xheart_intr_makemasks(struct xheart_softc *sc)
 {
 	int irq, level;
 	struct intrhand *q;
-	intrmask_t intrlevel[INTMASKSIZE];
+	uint32_t intrlevel[INTMASKSIZE];
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < INTMASKSIZE; irq++) {
@@ -405,15 +405,15 @@ xheart_do_pending_int(int newcpl)
 		setsoftintr0();
 }
 
-intrmask_t
-xheart_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
+uint32_t
+xheart_intr_handler(uint32_t hwpend, struct trap_frame *frame)
 {
 	struct cpu_info *ci = curcpu();
 	paddr_t heart;
 	uint64_t imr, isr;
 	int icpl;
 	int bit;
-	intrmask_t mask;
+	uint32_t mask;
 	struct intrhand *ih;
 	int rc;
 

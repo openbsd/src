@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.45 2009/10/21 20:48:45 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.46 2009/10/22 20:05:28 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -55,8 +55,8 @@ int	 macebussearch(struct device *, void *, void *);
 
 void	 macebus_intr_makemasks(void);
 void	 macebus_do_pending_int(int);
-intrmask_t macebus_iointr(intrmask_t, struct trap_frame *);
-intrmask_t macebus_aux(intrmask_t, struct trap_frame *);
+uint32_t macebus_iointr(uint32_t, struct trap_frame *);
+uint32_t macebus_aux(uint32_t, struct trap_frame *);
 
 u_int8_t mace_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 u_int16_t mace_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -430,10 +430,10 @@ macebus_device_to_pa(bus_addr_t addr)
  * Macebus interrupt handler driver.
  */
 
-intrmask_t mace_intem = 0x0;
-static intrmask_t intrtype[INTMASKSIZE];
-static intrmask_t intrmask[INTMASKSIZE];
-static intrmask_t intrlevel[INTMASKSIZE];
+uint64_t mace_intem = 0x0;
+static uint32_t intrtype[INTMASKSIZE];
+static uint32_t intrmask[INTMASKSIZE];
+static uint32_t intrlevel[INTMASKSIZE];
 
 static int fakeintr(void *);
 static int fakeintr(void *a) {return 0;}
@@ -610,13 +610,13 @@ macebus_do_pending_int(int newcpl)
 /*
  * Process interrupts. The parameter pending has non-masked interrupts.
  */
-intrmask_t
-macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
+uint32_t
+macebus_iointr(uint32_t hwpend, struct trap_frame *cf)
 {
 	struct intrhand *ih;
-	intrmask_t caught, vm;
+	uint32_t caught, vm;
 	int v;
-	intrmask_t pending;
+	uint32_t pending;
 	u_int64_t intstat, isastat, mask;
 #ifdef DIAGNOSTIC
 	static int spurious = 0;
@@ -701,8 +701,8 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 /*
  * Macebus auxilary functions run each clock interrupt.
  */
-intrmask_t
-macebus_aux(intrmask_t hwpend, struct trap_frame *cf)
+uint32_t
+macebus_aux(uint32_t hwpend, struct trap_frame *cf)
 {
 	u_int64_t mask;
 
@@ -726,8 +726,8 @@ macebus_aux(intrmask_t hwpend, struct trap_frame *cf)
 }
 
 void
-hw_setintrmask(intrmask_t m)
+hw_setintrmask(uint32_t m)
 {
 	*(volatile uint64_t *)(PHYS_TO_XKPHYS(CRIMEBUS_BASE, CCA_NC) +
-	    CRIME_INT_MASK) = mace_intem & ~m;
+	    CRIME_INT_MASK) = mace_intem & ~((uint64_t)m);
 }

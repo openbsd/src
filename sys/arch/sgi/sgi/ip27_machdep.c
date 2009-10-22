@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.24 2009/10/22 18:35:28 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.25 2009/10/22 20:05:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -70,7 +70,7 @@ int	ip27_hub_intr_register(int, int, int *);
 int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
 	    const char *);
 void	ip27_hub_intr_disestablish(int);
-intrmask_t ip27_hub_intr_handler(intrmask_t, struct trap_frame *);
+uint32_t ip27_hub_intr_handler(uint32_t, struct trap_frame *);
 void	ip27_hub_intr_makemasks(void);
 void	ip27_hub_do_pending_int(int);
 
@@ -674,7 +674,7 @@ ip27_hub_intr_makemasks()
 {
 	int irq, level;
 	struct intrhand *q;
-	intrmask_t intrlevel[INTMASKSIZE];
+	uint32_t intrlevel[INTMASKSIZE];
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < INTMASKSIZE; irq++) {
@@ -733,13 +733,13 @@ ip27_hub_do_pending_int(int newcpl)
 		setsoftintr0();
 }
 
-intrmask_t
-ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
+uint32_t
+ip27_hub_intr_handler(uint32_t hwpend, struct trap_frame *frame)
 {
 	uint64_t imr, isr;
 	int icpl;
 	int bit;
-	intrmask_t mask;
+	uint32_t mask;
 	struct intrhand *ih;
 	int rc;
 	struct cpu_info *ci = curcpu();
@@ -814,7 +814,7 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 }
 
 void
-hw_setintrmask(intrmask_t m)
+hw_setintrmask(uint32_t m)
 {
 	IP27_LHUB_S(HUBPI_CPU0_IMR0, ip27_hub_intrmask & ~((uint64_t)m));
 	(void)IP27_LHUB_L(HUBPI_IR0);

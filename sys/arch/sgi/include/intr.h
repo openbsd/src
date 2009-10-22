@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.30 2009/10/21 20:48:45 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.31 2009/10/22 20:05:28 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -151,14 +151,9 @@ void	splinit(void);
 #define	INTPRI_XBOWMUX	2	/* Origin 200/2000 I/O interrupt */
 #define	INTPRI_MACEAUX	3
 
-/*
- *   Define a type for interrupt masks. We may need 64 bits here.
- */
-typedef u_int32_t intrmask_t;		/* Type of var holding interrupt mask */
+#define	INTMASKSIZE	32
 
-#define	INTMASKSIZE	(sizeof(intrmask_t) * 8)
-
-extern intrmask_t imask[NIPLS];
+extern uint32_t imask[NIPLS];
 
 /*
  *  A note on clock interrupts. Clock interrupts are always
@@ -210,17 +205,17 @@ extern struct intrhand *intrhand[INTMASKSIZE];
 
 struct trap_frame;
 
-extern intrmask_t idle_mask;
+extern uint32_t idle_mask;
 extern int last_low_int;
 
-void set_intr(int, intrmask_t, intrmask_t(*)(intrmask_t, struct trap_frame *));
+void set_intr(int, uint32_t, uint32_t(*)(uint32_t, struct trap_frame *));
 
 #ifdef IMASK_EXTERNAL
-void hw_setintrmask(intrmask_t);
+void hw_setintrmask(uint32_t);
 #endif
 
-u_int32_t updateimask(intrmask_t);
-void	dosoftint(intrmask_t);
+u_int32_t updateimask(uint32_t);
+void	dosoftint(uint32_t);
 
 #endif /* _LOCORE */
 
