@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.48 2009/10/22 20:39:17 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.49 2009/10/22 20:51:08 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -522,8 +522,10 @@ macebus_intr_establish(void *icp, u_long irq, int type, int level,
 }
 
 void
-macebus_intr_disestablish(void *p1, void *p2)
+macebus_intr_disestablish(void *ih)
 {
+	/* XXX */
+	panic("%s not implemented", __func__);
 }
 
 /*

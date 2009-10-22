@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.13 2009/08/22 02:54:51 mk Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.14 2009/10/22 20:51:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -124,6 +124,6 @@ extern struct machine_bus_dma_tag mace_bus_dma_tag;
 
 void   *macebus_intr_establish(void *, u_long, int, int, int (*)(void *),
 	    void *, const char *);
-void	macebus_intr_disestablish(void *, void *);
+void	macebus_intr_disestablish(void *);
 
 #endif	/* _MACEBUS_H_ */

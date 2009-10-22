@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.33 2009/08/22 02:54:51 mk Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.34 2009/10/22 20:51:09 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -472,9 +472,9 @@ mace_pcibr_intr_establish(void *lcv, pci_intr_handle_t ih, int level,
 }
 
 void
-mace_pcibr_intr_disestablish(void *lcv, void *cookie)
+mace_pcibr_intr_disestablish(void *lcv, void *ih)
 {
-	macebus_intr_disestablish(lcv, cookie);
+	macebus_intr_disestablish(ih);
 }
 
 int
