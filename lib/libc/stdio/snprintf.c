@@ -1,4 +1,4 @@
-/*	$OpenBSD: snprintf.c,v 1.15 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: snprintf.c,v 1.16 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,7 @@ snprintf(char *str, size_t n, const char *fmt, ...)
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = n - 1;
 	va_start(ap, fmt);
-	ret = __vfprintf(&f, fmt, ap);
+	ret = vfprintf(&f, fmt, ap);
 	va_end(ap);
 	*f._p = '\0';
 	return (ret);

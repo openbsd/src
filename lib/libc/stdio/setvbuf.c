@@ -1,4 +1,4 @@
-/*	$OpenBSD: setvbuf.c,v 1.9 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: setvbuf.c,v 1.10 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,6 @@ setvbuf(FILE *fp, char *buf, int mode, size_t size)
 	 * malloc()ed.  We also clear any eof condition, as if this were
 	 * a seek.
 	 */
-	FLOCKFILE(fp);
 	ret = 0;
 	(void)__sflush(fp);
 	if (HASUB(fp))
@@ -108,7 +107,6 @@ nbf:
 			fp->_w = 0;
 			fp->_bf._base = fp->_p = fp->_nbuf;
 			fp->_bf._size = 1;
-			FUNLOCKFILE(fp);
 			return (ret);
 		}
 		flags |= __SMBF;
@@ -147,7 +145,6 @@ nbf:
 		/* begin/continue reading, or stay in intermediate state */
 		fp->_w = 0;
 	}
-	FUNLOCKFILE(fp);
 	__atexit_register_cleanup(_cleanup);
 
 	return (ret);

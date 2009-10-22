@@ -1,4 +1,4 @@
-/*	$OpenBSD: fvwrite.c,v 1.15 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: fvwrite.c,v 1.16 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -134,7 +134,7 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 				COPY(w);
 				/* fp->_w -= w; */ /* unneeded */
 				fp->_p += w;
-				if (__sflush(fp))
+				if (fflush(fp))
 					goto err;
 			} else if (len >= (w = fp->_bf._size)) {
 				/* write directly */
@@ -174,7 +174,7 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 				COPY(w);
 				/* fp->_w -= w; */
 				fp->_p += w;
-				if (__sflush(fp))
+				if (fflush(fp))
 					goto err;
 			} else if (s >= (w = fp->_bf._size)) {
 				w = (*fp->_write)(fp->_cookie, p, w);
@@ -188,7 +188,7 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 			}
 			if ((nldist -= w) == 0) {
 				/* copied the newline: flush and forget */
-				if (__sflush(fp))
+				if (fflush(fp))
 					goto err;
 				nlknown = 0;
 			}

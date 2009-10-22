@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetln.c,v 1.8 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: fgetln.c,v 1.9 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,18 +71,19 @@ char *
 fgetln(FILE *fp, size_t *lenp)
 {
 	unsigned char *p;
-	char *ret;
 	size_t len;
 	size_t off;
 
-	FLOCKFILE(fp);
-
 	/* make sure there is input */
-	if (fp->_r <= 0 && __srefill(fp))
-		goto error;
+	if (fp->_r <= 0 && __srefill(fp)) {
+		*lenp = 0;
+		return (NULL);
+	}
 
 	/* look for a newline in the input */
 	if ((p = memchr((void *)fp->_p, '\n', fp->_r)) != NULL) {
+		char *ret;
+
 		/*
 		 * Found one.  Flag buffer as modified to keep fseek from
 		 * `optimising' a backward seek, in case the user stomps on
@@ -94,7 +95,6 @@ fgetln(FILE *fp, size_t *lenp)
 		fp->_flags |= __SMOD;
 		fp->_r -= len;
 		fp->_p = p;
-		FUNLOCKFILE(fp);
 		return (ret);
 	}
 
@@ -139,15 +139,12 @@ fgetln(FILE *fp, size_t *lenp)
 		break;
 	}
 	*lenp = len;
-	ret = (char *)fp->_lb._base;
 #ifdef notdef
-	ret[len] = '\0';
+	fp->_lb._base[len] = '\0';
 #endif
-	FUNLOCKFILE(fp);
-	return (ret);
+	return ((char *)fp->_lb._base);
 
 error:
 	*lenp = 0;		/* ??? */
-	FUNLOCKFILE(fp);
 	return (NULL);		/* ??? */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vasprintf.c,v 1.14 2009/10/21 16:04:23 guenther Exp $	*/
+/*	$OpenBSD: vasprintf.c,v 1.15 2009/10/22 01:23:16 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -37,7 +37,7 @@ vasprintf(char **str, const char *fmt, __va_list ap)
 	if (f._bf._base == NULL)
 		goto err;
 	f._bf._size = f._w = 127;		/* Leave room for the NUL */
-	ret = __vfprintf(&f, fmt, ap);
+	ret = vfprintf(&f, fmt, ap);
 	if (ret == -1)
 		goto err;
 	*f._p = '\0';

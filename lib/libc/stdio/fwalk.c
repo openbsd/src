@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwalk.c,v 1.8 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: fwalk.c,v 1.9 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,9 +45,8 @@ _fwalk(int (*function)(FILE *))
 
 	ret = 0;
 	for (g = &__sglue; g != NULL; g = g->next)
-		for (fp = g->iobs, n = g->niobs; --n >= 0; fp++) {
-			if ((fp->_flags != 0) && ((fp->_flags & __SIGN) == 0))
+		for (fp = g->iobs, n = g->niobs; --n >= 0; fp++)
+			if (fp->_flags != 0)
 				ret |= (*function)(fp);
-		}
 	return (ret);
 }

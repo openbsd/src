@@ -1,4 +1,4 @@
-/*	$OpenBSD: putc.c,v 1.8 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: putc.c,v 1.9 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,8 +60,8 @@ putc(int c, FILE *fp)
 {
 	int ret;
 
-	FLOCKFILE(fp);
+	flockfile(fp);
 	ret = putc_unlocked(c, fp);
-	FUNLOCKFILE(fp);
+	funlockfile(fp);
 	return (ret);
 }

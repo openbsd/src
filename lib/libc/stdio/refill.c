@@ -1,4 +1,4 @@
-/*	$OpenBSD: refill.c,v 1.9 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: refill.c,v 1.10 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,8 +39,9 @@
 static int
 lflush(FILE *fp)
 {
+
 	if ((fp->_flags & (__SLBF|__SWR)) == (__SLBF|__SWR))
-		return (__sflush_locked(fp));	/* ignored... */
+		return (__sflush(fp));
 	return (0);
 }
 
@@ -102,16 +103,8 @@ __srefill(FILE *fp)
 	 * flush all line buffered output files, per the ANSI C
 	 * standard.
 	 */
-	if (fp->_flags & (__SLBF|__SNBF)) {
-		/* Ignore this file in _fwalk to avoid potential deadlock. */
-		fp->_flags |= __SIGN;
+	if (fp->_flags & (__SLBF|__SNBF))
 		(void) _fwalk(lflush);
-		fp->_flags &= ~__SIGN;
-
-		/* Now flush this file without locking it. */
-		if ((fp->_flags & (__SLBF|__SWR)) == (__SLBF|__SWR))
-			__sflush(fp);
-	}
 	fp->_p = fp->_bf._base;
 	fp->_r = (*fp->_read)(fp->_cookie, (char *)fp->_p, fp->_bf._size);
 	fp->_flags &= ~__SMOD;	/* buffer contents are again pristine */

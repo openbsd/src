@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.19 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.20 2009/10/22 01:23:16 guenther Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -123,7 +123,7 @@ _read_netid(const char *key, uid_t uid, gid_t *groups, int *ngroups,
 			*p = '\0';
 		else { /* Skip lines that are too long. */
 			int ch;
-			while ((ch = getc_unlocked(fp)) != '\n' && ch != EOF)
+			while ((ch = getc(fp)) != '\n' && ch != EOF)
 				;
 			continue;
 		}

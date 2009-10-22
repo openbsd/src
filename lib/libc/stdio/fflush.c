@@ -1,4 +1,4 @@
-/*	$OpenBSD: fflush.c,v 1.6 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: fflush.c,v 1.7 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,18 +39,14 @@
 int
 fflush(FILE *fp)
 {
-	int	r;
 
 	if (fp == NULL)
-		return (_fwalk(__sflush_locked));
-	FLOCKFILE(fp);
+		return (_fwalk(__sflush));
 	if ((fp->_flags & (__SWR | __SRW)) == 0) {
 		errno = EBADF;
-		r = EOF;
-	} else
-		r = __sflush(fp);
-	FUNLOCKFILE(fp);
-	return (r);
+		return (EOF);
+	}
+	return (__sflush(fp));
 }
 
 int
@@ -83,15 +79,4 @@ __sflush(FILE *fp)
 		}
 	}
 	return (0);
-}
-
-int
-__sflush_locked(FILE *fp)
-{
-	int	r;
-
-	FLOCKFILE(fp);
-	r = __sflush(fp);
-	FUNLOCKFILE(fp);
-	return (r);
 }

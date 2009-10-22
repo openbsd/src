@@ -1,4 +1,4 @@
-/*	$OpenBSD: freopen.c,v 1.11 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: freopen.c,v 1.12 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -59,8 +59,6 @@ freopen(const char *file, const char *mode, FILE *fp)
 
 	if (!__sdidinit)
 		__sinit();
-
-	FLOCKFILE(fp);
 
 	/*
 	 * There are actually programs that depend on being able to "freopen"
@@ -123,7 +121,6 @@ freopen(const char *file, const char *mode, FILE *fp)
 
 	if (f < 0) {			/* did not get it after all */
 		fp->_flags = 0;		/* set it free */
-		FUNLOCKFILE(fp);
 		errno = sverrno;	/* restore in case _close clobbered */
 		return (NULL);
 	}
@@ -143,7 +140,6 @@ freopen(const char *file, const char *mode, FILE *fp)
 	/* _file is only a short */
 	if (f > SHRT_MAX) {
 		fp->_flags = 0;		/* set it free */
-		FUNLOCKFILE(fp);
 		errno = EMFILE;
 		return (NULL);
 	}
@@ -166,6 +162,5 @@ freopen(const char *file, const char *mode, FILE *fp)
 	 */
 	if (oflags & O_APPEND)
 		(void) __sseek((void *)fp, (fpos_t)0, SEEK_END);
-	FUNLOCKFILE(fp);
 	return (fp);
 }

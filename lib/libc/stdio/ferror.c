@@ -1,4 +1,4 @@
-/*	$OpenBSD: ferror.c,v 1.6 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: ferror.c,v 1.7 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,6 @@
  */
 
 #include <stdio.h>
-#include "local.h"
 
 /*
  * A subroutine version of the macro ferror.
@@ -42,10 +41,5 @@
 int
 ferror(FILE *fp)
 {
-	int     ret;
-
-	FLOCKFILE(fp);
-	ret = __sferror(fp);
-	FUNLOCKFILE(fp);
-	return (ret);
+	return (__sferror(fp));
 }

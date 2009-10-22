@@ -1,4 +1,4 @@
-/*	$OpenBSD: getttyent.c,v 1.10 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: getttyent.c,v 1.11 2009/10/22 01:23:16 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,7 @@ getttyent(void)
 			return (NULL);
 		/* skip lines that are too big */
 		if (!strchr(p, '\n')) {
-			while ((c = getc_unlocked(tf)) != '\n' && c != EOF)
+			while ((c = getc(tf)) != '\n' && c != EOF)
 				;
 			continue;
 		}

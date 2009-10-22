@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetwc.c,v 1.2 2009/10/21 16:04:23 guenther Exp $	*/
+/*	$OpenBSD: fgetwc.c,v 1.3 2009/10/22 01:23:16 guenther Exp $	*/
 /* $NetBSD: fgetwc.c,v 1.3 2003/03/07 07:11:36 tshiozak Exp $ */
 
 /*-
@@ -82,9 +82,9 @@ fgetwc(FILE *fp)
 {
 	wint_t r;
 
-	FLOCKFILE(fp);
+	flockfile(fp);
 	r = __fgetwc_unlock(fp);
-	FUNLOCKFILE(fp);
+	funlockfile(fp);
 
 	return (r);
 }

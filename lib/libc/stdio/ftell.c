@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftell.c,v 1.7 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: ftell.c,v 1.8 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,22 +45,20 @@ ftello(FILE *fp)
 
 	if (fp->_seek == NULL) {
 		errno = ESPIPE;			/* historic practice */
-		pos = -1;
-		goto out;
+		return ((off_t)-1);
 	}
 
 	/*
 	 * Find offset of underlying I/O object, then
 	 * adjust for buffered bytes.
 	 */
-	FLOCKFILE(fp);
 	__sflush(fp);		/* may adjust seek offset on append stream */
 	if (fp->_flags & __SOFF)
 		pos = fp->_offset;
 	else {
 		pos = (*fp->_seek)(fp->_cookie, (fpos_t)0, SEEK_CUR);
-		if (pos == -1)
-			goto out;
+		if (pos == -1L)
+			return (pos);
 	}
 	if (fp->_flags & __SRD) {
 		/*
@@ -79,7 +77,6 @@ ftello(FILE *fp)
 		 */
 		pos += fp->_p - fp->_bf._base;
 	}
-out:	FUNLOCKFILE(fp);
 	return (pos);
 }
 

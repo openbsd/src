@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsnprintf.c,v 1.13 2009/10/21 16:04:23 guenther Exp $ */
+/*	$OpenBSD: vsnprintf.c,v 1.14 2009/10/22 01:23:16 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ vsnprintf(char *str, size_t n, const char *fmt, __va_list ap)
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = n - 1;
-	ret = __vfprintf(&f, fmt, ap);
+	ret = vfprintf(&f, fmt, ap);
 	*f._p = '\0';
 	return (ret);
 }
