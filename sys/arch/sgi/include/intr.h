@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.31 2009/10/22 20:05:28 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.32 2009/10/22 20:10:46 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -30,25 +30,15 @@
 #define _MACHINE_INTR_H_
 
 /*
- *  The interrupt mask cpl is a mask which can be used with the
- *  CPU interrupt mask register or an external HW mask register.
- *  If interrupts are masked by the CPU interrupt mask all external
- *  masks should be enabled and any routing set up so that the
- *  interrupt source is routed to the CPU interrupt corresponding
- *  to the interrupts "priority level". In this case the generic
- *  interrupt handler can be used.
+ * The interrupt mask cpl is a mask which is used with an external
+ * HW mask register.
+ * The CPU mask is never changed from the value it gets when interrupt
+ * dispatchers are registered.
  *
- *  The IMASK_EXTERNAL define is used to select whether the CPU
- *  interrupt mask should be controlled by the cpl mask value
- *  or not. If the mask is external, the CPU mask is never changed
- *  from the value it gets when interrupt dispatchers are registered.
- *  When an external masking register is used dedicated interrupt
- *  handlers must be written as well as ipending handlers.
+ * Clock interrupts are always allowed to happen but will not be serviced
+ * if logically masked.  The reason for this is that clocks usually sit on
+ * INT5 and cannot be easily masked if external HW masking is used.
  */
-#define	IMASK_EXTERNAL		/* XXX move this to config */
-
-/* This define controls whether splraise is inlined or not */
-/* #define INLINE_SPLRAISE */
 
 /* Interrupt priority `levels'; not mutually exclusive. */
 #define	IPL_NONE	0	/* nothing */
@@ -155,13 +145,6 @@ void	splinit(void);
 
 extern uint32_t imask[NIPLS];
 
-/*
- *  A note on clock interrupts. Clock interrupts are always
- *  allowed to happen but will not be serviced if masked.
- *  The reason for this is that clocks usually sit on INT5
- *  and cannot be easily masked if external HW masking is used.
- */
-
 /* Inlines */
 static __inline void register_pending_int_handler(void (*)(int));
 
@@ -191,7 +174,6 @@ struct intrhand {
 	void	*ih_arg;
 	int	ih_level;
 	int	ih_irq;
-	const char	*ih_what;
 	void	*frame;
 	struct evcount ih_count;
 };
@@ -210,10 +192,7 @@ extern int last_low_int;
 
 void set_intr(int, uint32_t, uint32_t(*)(uint32_t, struct trap_frame *));
 
-#ifdef IMASK_EXTERNAL
-void hw_setintrmask(uint32_t);
-#endif
-
+void	hw_setintrmask(uint32_t);
 u_int32_t updateimask(uint32_t);
 void	dosoftint(uint32_t);
 

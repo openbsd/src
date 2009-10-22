@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.45 2009/10/22 20:05:27 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.46 2009/10/22 20:10:44 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -293,9 +293,7 @@ splx(int newcpl)
 		__asm__ (" .set noreorder\n");
 		ci->ci_cpl = newcpl;
 		__asm__ (" sync\n .set reorder\n");
-#ifdef IMASK_EXTERNAL
 		hw_setintrmask(newcpl);
-#endif
 	}
 }
 

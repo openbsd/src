@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.46 2009/10/22 20:05:28 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.47 2009/10/22 20:10:46 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -514,7 +514,6 @@ macebus_intr_establish(void *icp, u_long irq, int type, int level,
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq + 1;
-	ih->ih_what = ih_what;
 	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
 	    &evcount_intr);
 	*p = ih;

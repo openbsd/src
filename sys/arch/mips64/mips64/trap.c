@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.45 2009/10/22 18:31:51 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.46 2009/10/22 20:10:44 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -210,9 +210,6 @@ trap(trapframe)
 	 */
 	if (trapframe->sr & SR_INT_ENAB) {
 		if (type != T_BREAK) {
-#ifndef IMASK_EXTERNAL
-			updateimask(trapframe->cpl);
-#endif
 			enableintr();
 		}
 	}
@@ -604,9 +601,6 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 #endif
 		/* Reenable interrupts if necessary */
 		if (trapframe->sr & SR_INT_ENAB) {
-#ifndef IMASK_EXTERNAL
-			updateimask(trapframe->cpl);
-#endif
 			enableintr();
 		}
 		return;
