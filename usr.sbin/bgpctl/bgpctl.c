@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.147 2009/09/15 09:45:12 sthen Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.148 2009/10/23 16:00:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -304,13 +304,13 @@ main(int argc, char *argv[])
 
 	while (!done) {
 		if ((n = imsg_read(ibuf)) == -1)
-			errx(1, "imsg_read error");
+			err(1, "imsg_read error");
 		if (n == 0)
 			errx(1, "pipe closed");
 
 		while (!done) {
 			if ((n = imsg_get(ibuf, &imsg)) == -1)
-				errx(1, "imsg_get error");
+				err(1, "imsg_get error");
 			if (n == 0)
 				break;
 
