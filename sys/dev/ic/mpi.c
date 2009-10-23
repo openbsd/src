@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.115 2009/10/23 01:02:29 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.116 2009/10/23 13:30:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -252,12 +252,12 @@ mpi_attach(struct mpi_softc *sc)
 		goto free_replies;
 	}
 
-#ifdef notyet
-	if (mpi_eventnotify(sc) != 0) {
-		printf("%s: unable to get portfacts\n", DEVNAME(sc));
-		goto free_replies;
+	if (sc->sc_porttype == MPI_PORTFACTS_PORTTYPE_SAS) {
+		if (mpi_eventnotify(sc) != 0) {
+			printf("%s: unable to enable events\n", DEVNAME(sc));
+			goto free_replies;
+		}
 	}
-#endif
 
 	if (mpi_portenable(sc) != 0) {
 		printf("%s: unable to enable port\n", DEVNAME(sc));
@@ -2157,8 +2157,8 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 		break;
 
 	default:
-		printf("%s: unhandled event 0x%02x\n", DEVNAME(sc),
-		    letoh32(enp->event));
+		DNPRINTF(MPI_D_EVT, "%s:  unhandled event 0x%02x\n",
+		    DEVNAME(sc), letoh32(enp->event));
 		break;
 	}
 
