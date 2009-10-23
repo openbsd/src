@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpireg.h,v 1.36 2009/10/15 12:38:49 dlg Exp $ */
+/*	$OpenBSD: mpireg.h,v 1.37 2009/10/23 00:52:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -633,6 +633,39 @@ struct mpi_msg_event_reply {
 struct mpi_evt_change {
 	u_int8_t		event_state;
 	u_int8_t		reserved[3];
+} __packed;
+
+struct mpi_evt_link_status_change {
+	u_int8_t		state;
+#define MPI_EVT_LINK_STATUS_CHANGE_OFFLINE		0x00
+#define MPI_EVT_LINK_STATUS_CHANGE_ACTIVE		0x01
+	u_int8_t		_reserved1[3];
+
+	u_int8_t		_reserved2[1];
+	u_int8_t		port;
+	u_int8_t		_reserved3[2];
+} __packed;
+
+struct mpi_evt_loop_status_change {
+	u_int8_t		character4;
+	u_int8_t		character3;
+	u_int8_t		type;
+#define MPI_EVT_LOOP_STATUS_CHANGE_TYPE_LIP		0x01
+#define MPI_EVT_LOOP_STATUS_CHANGE_TYPE_LPE		0x02
+#define MPI_EVT_LOOP_STATUS_CHANGE_TYPE_LPB		0x03
+	u_int8_t		_reserved1[1];
+
+	u_int8_t		_reserved2[1];
+	u_int8_t		port;
+	u_int8_t		_reserved3[2];
+} __packed;
+
+struct mpi_evt_logout {
+	u_int32_t		n_portid;
+
+	u_int8_t		alias_index;
+	u_int8_t		port;
+	u_int8_t		_reserved[2];
 } __packed;
 
 struct mpi_evt_sas_phy {
