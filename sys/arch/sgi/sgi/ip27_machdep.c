@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.28 2009/10/22 22:08:54 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.29 2009/10/23 21:19:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -600,7 +600,6 @@ ip27_hub_intr_register(int widget, int level, int *intrbit)
 		if ((hubpi_intem.hw[0] & (1UL << bit)) == 0)
 			goto found;
 
-#ifdef notyet
 	/*
 	 * If all level 0 sources are in use, try to allocate a bit on
 	 * level 1.
@@ -610,7 +609,6 @@ ip27_hub_intr_register(int widget, int level, int *intrbit)
 			bit += HUBPI_NINTS;
 			goto found;
 		}
-#endif
 
 	return EINVAL;
 
@@ -723,9 +721,12 @@ ip27_hub_intr_makemasks()
 		uint levels = 0;
 		for (q = hubpi_intrhand0[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
+		intrlevel[irq] = levels;
+
+		levels = 0;
 		for (q = hubpi_intrhand1[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
+		intrlevel[HUBPI_NINTS + irq] = levels;
 	}
 
 	/*
