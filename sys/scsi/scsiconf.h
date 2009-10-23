@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.104 2009/10/22 11:56:32 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.105 2009/10/23 01:02:29 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -571,6 +571,8 @@ int	scsi_detach_lun(struct scsibus_softc *, int, int, int);
 int	scsi_req_probe(struct scsibus_softc *, int, int);
 int	scsi_req_detach(struct scsibus_softc *, int, int, int);
 
+void	scsi_activate(struct scsibus_softc *, int, int, int);
+
 extern const u_int8_t version_to_spc[];
 #define SCSISPC(x)(version_to_spc[(x) & SID_ANSII])
 
@@ -584,8 +586,8 @@ void			scsi_xs_put(struct scsi_xfer *);
 int	mpath_path_attach(struct scsi_link *);
 int	mpath_path_detach(struct scsi_link *, int);
 
-int	mpath_path_activate(struct scsi_link *);
-int	mpath_path_deactivate(struct scsi_link *);
+void	mpath_path_activate(struct scsi_link *);
+void	mpath_path_deactivate(struct scsi_link *);
 
 #endif /* _KERNEL */
 #endif /* SCSI_SCSICONF_H */

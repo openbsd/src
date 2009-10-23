@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.146 2009/10/22 11:56:32 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.147 2009/10/23 01:02:29 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -113,6 +113,10 @@ int scsi_autoconf = SCSI_AUTOCONF;
 int scsibusprint(void *, const char *);
 void scsibus_printlink(struct scsi_link *);
 
+void scsi_activate_bus(struct scsibus_softc *, int);
+void scsi_activate_target(struct scsibus_softc *, int, int);
+void scsi_activate_lun(struct scsibus_softc *, int, int, int);
+
 const u_int8_t version_to_spc [] = {
 	0, /* 0x00: The device does not claim conformance to any standard. */
 	1, /* 0x01: (Obsolete) SCSI-1 in olden times. */
@@ -200,54 +204,79 @@ int
 scsibusactivate(struct device *dev, int act)
 {
 	struct scsibus_softc *sc = (struct scsibus_softc *)dev;
-	struct scsi_link *link;
-	int i, j;
-	int rv, ret = 0;
 
-	for (i = 0; i < sc->sc_buswidth; i++) {
-		if (sc->sc_link[i] == NULL)
-			continue;
+	scsi_activate(sc, -1, -1, act);
 
-		for (j = 0; j < sc->adapter_link->luns; j++) {
-			link = sc->sc_link[i][j];
-			if (link == NULL)
-				continue;
-			dev = link->device_softc;
+	return (0);
+}
 
-			switch (act) {
-			case DVACT_ACTIVATE:
+void
+scsi_activate(struct scsibus_softc *sc, int target, int lun, int act)
+{
+	if (target == -1 && lun == -1)
+		scsi_activate_bus(sc, act);
+
+	if (target == -1)
+		return;
+
+	if (lun == -1)
+		scsi_activate_target(sc, target, act);
+
+	scsi_activate_lun(sc, target, lun, act);
+}
+
+void
+scsi_activate_bus(struct scsibus_softc *sc, int act)
+{
+	int target;
+
+	for (target = 0; target < sc->sc_buswidth; target++)
+		scsi_activate_target(sc, target, act);
+}
+
+void
+scsi_activate_target(struct scsibus_softc *sc, int target, int act)
+{
+	int lun;
+
+	for (lun = 0; lun < sc->adapter_link->luns; lun++)
+		scsi_activate_lun(sc, target, lun, act);
+}
+
+void
+scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
+{
+	struct scsi_link *link = sc->sc_link[target][lun];
+	struct device *dev;
+
+	if (link == NULL)
+		return;
+
+	dev = link->device_softc;
+	switch (act) {
+	case DVACT_ACTIVATE:
 #if NMPATH > 0
-				if (dev == NULL)
-					rv = mpath_path_activate(link);
-				else
+		if (dev == NULL)
+			mpath_path_activate(link);
+		else
 #endif /* NMPATH */
-					rv = config_activate(dev);
-				break;
+			config_activate(dev);
+		break;
 
-			case DVACT_DEACTIVATE:
+	case DVACT_DEACTIVATE:
 #if NMPATH > 0
-				if (dev == NULL)
-					rv = mpath_path_deactivate(link);
-				else
+		if (dev == NULL)
+			mpath_path_deactivate(link);
+		else
 #endif /* NMPATH */
-					rv = config_deactivate(dev);
-				break;
-			default:
+			config_deactivate(dev);
+		break;
+	default:
 #ifdef DIAGNOSTIC
-				printf("%s: unsupported act %d\n",
-				    sc->sc_dev.dv_xname, act);
+		printf("%s: unsupported act %d\n", sc->sc_dev.dv_xname, act);
 #endif
-				rv = EOPNOTSUPP;
-				break;
-
-			}
-
-			if (rv != 0)
-				ret = rv;
-		}
+		break;
 	}
-
-	return (ret);
 }
 
 int
@@ -426,24 +455,22 @@ int
 scsi_detach_bus(struct scsibus_softc *sc, int flags)
 {
 	struct scsi_link *alink = sc->adapter_link;
-	int i, err, rv = 0, detached;
+	int i, err, rv = 0;
 
 	for (i = 0; i < alink->adapter_buswidth; i++) {
 		err = scsi_detach_target(sc, i, flags);
-		if (err == 0)
-			detached = 1;
-		else
+		if (err != 0 && err != ENXIO)
 			rv = err;
 	}
 
-	return (detached ? rv : ENXIO);
+	return (rv);
 }
 
 int
 scsi_detach_target(struct scsibus_softc *sc, int target, int flags)
 {
 	struct scsi_link *alink = sc->adapter_link;
-	int i, err, rv = 0, detached = 0;
+	int i, err, rv = 0;
 
 	if (target < 0 || target >= alink->adapter_buswidth ||
 	    target == alink->adapter_target)
@@ -457,13 +484,11 @@ scsi_detach_target(struct scsibus_softc *sc, int target, int flags)
 			continue;
 
 		err = scsi_detach_lun(sc, target, i, flags);
-		if (err == 0)
-			detached = 1;
-		else
+		if (err != 0 && err != ENXIO)
 			rv = err;
 	}
 
-	return (detached ? rv : ENXIO);
+	return (rv);
 }
 
 int

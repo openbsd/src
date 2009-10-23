@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.114 2009/10/15 12:38:49 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.115 2009/10/23 01:02:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -140,7 +140,7 @@ void			mpi_eventnotify_done(struct mpi_ccb *);
 void			mpi_eventack(struct mpi_softc *,
 			    struct mpi_msg_event_reply *);
 void			mpi_eventack_done(struct mpi_ccb *);
-void			mpi_evt_sas(void *, void *);
+void			mpi_evt_sas(struct mpi_softc *, struct mpi_rcb *);
 
 int			mpi_req_cfg_header(struct mpi_softc *, u_int8_t,
 			    u_int8_t, u_int32_t, int, void *);
@@ -2124,7 +2124,6 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 {
 	struct mpi_softc			*sc = ccb->ccb_sc;
 	struct mpi_msg_event_reply		*enp = ccb->ccb_rcb->rcb_reply;
-	int					deferred = 0;
 
 	DNPRINTF(MPI_D_EVT, "%s: mpi_eventnotify_done\n", DEVNAME(sc));
 
@@ -2154,12 +2153,7 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 		if (sc->sc_scsibus == NULL)
 			break;
 
-		if (scsi_task(mpi_evt_sas, sc, ccb->ccb_rcb, 0) != 0) {
-			printf("%s: unable to run SAS device status change\n",
-			    DEVNAME(sc));
-			break;
-		}
-		deferred = 1;
+		mpi_evt_sas(sc, ccb->ccb_rcb);
 		break;
 
 	default:
@@ -2168,27 +2162,23 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 		break;
 	}
 
-	if (!deferred) {
-		if (enp->ack_required)
-			mpi_eventack(sc, enp);
-		mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
-	}
+	if (enp->ack_required)
+		mpi_eventack(sc, enp);
+	mpi_push_reply(sc, ccb->ccb_rcb->rcb_reply_dva);
 
+#if 0
+	/* fc hbas have a bad habit of setting this without meaning it. */
 	if ((enp->msg_flags & MPI_EVENT_FLAGS_REPLY_KEPT) == 0) {
-		/* XXX this shouldnt happen till shutdown */
 		mpi_put_ccb(sc, ccb);
 	}
+#endif
 }
 
 void
-mpi_evt_sas(void *xsc, void *arg)
+mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 {
-	struct mpi_softc			*sc = xsc;
-	struct mpi_rcb				*rcb = arg;
-	struct mpi_msg_event_reply		*enp = rcb->rcb_reply;
 	struct mpi_evt_sas_change		*ch;
 	u_int8_t				*data;
-	int					s;
 
 	data = rcb->rcb_reply;
 	data += sizeof(struct mpi_msg_event_reply);
@@ -2200,11 +2190,19 @@ mpi_evt_sas(void *xsc, void *arg)
 	switch (ch->reason) {
 	case MPI_EVT_SASCH_REASON_ADDED:
 	case MPI_EVT_SASCH_REASON_NO_PERSIST_ADDED:
-		scsi_probe_target(sc->sc_scsibus, ch->target);
+		if (scsi_req_probe(sc->sc_scsibus, ch->target, -1) != 0) {
+			printf("%s: unable to request attach of %d\n",
+			    DEVNAME(sc), ch->target);
+		}
 		break;
 
 	case MPI_EVT_SASCH_REASON_NOT_RESPONDING:
-		scsi_detach_target(sc->sc_scsibus, ch->target, DETACH_FORCE);
+		scsi_activate(sc->sc_scsibus, ch->target, -1, DVACT_DEACTIVATE);
+		if (scsi_req_detach(sc->sc_scsibus, ch->target, -1,
+		    DETACH_FORCE) != 0) {
+			printf("%s: unable to request detach of %d\n",
+			    DEVNAME(sc), ch->target);
+		}
 		break;
 
 	case MPI_EVT_SASCH_REASON_SMART_DATA:
@@ -2216,12 +2214,6 @@ mpi_evt_sas(void *xsc, void *arg)
 		    "0x%02x\n", DEVNAME(sc), ch->reason);
 		break;
 	}
-
-	s = splbio();
-	mpi_push_reply(sc, rcb->rcb_reply_dva);
-	if (enp->ack_required)
-		mpi_eventack(sc, enp);
-	splx(s);
 }
 
 void

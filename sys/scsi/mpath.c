@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.6 2009/10/22 11:56:32 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.7 2009/10/23 01:02:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -308,15 +308,15 @@ mpath_path_detach(struct scsi_link *link, int flags)
 	panic("mpath: unable to locate path for detach");
 }
 
-int
+void
 mpath_path_activate(struct scsi_link *link)
 {
-	return (0);
+
 }
 
-int
+void
 mpath_path_deactivate(struct scsi_link *link)
 {
-	return (0);
+
 }
 
