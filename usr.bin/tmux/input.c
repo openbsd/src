@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.19 2009/10/20 22:17:33 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.20 2009/10/23 15:48:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1469,6 +1469,28 @@ input_handle_sequence_sgr(struct input_ctx *ictx)
 		case 49:
 			gc->flags &= ~GRID_FLAG_BG256;
 			gc->bg = 8;
+			break;
+		case 90:
+		case 91:
+		case 92:
+		case 93:
+		case 94:
+		case 95:
+		case 96:
+		case 97:
+			gc->flags |= GRID_FLAG_FG256;
+			gc->fg = m - 82;
+			break;
+		case 100:
+		case 101:
+		case 102:
+		case 103:
+		case 104:
+		case 105:
+		case 106:
+		case 107:
+			gc->flags |= GRID_FLAG_BG256;
+			gc->bg = m - 92;
 			break;
 		}
 	}
