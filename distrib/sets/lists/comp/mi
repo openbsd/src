@@ -4868,6 +4868,8 @@
 ./usr/share/man/cat3/log10f.0
 ./usr/share/man/cat3/log1p.0
 ./usr/share/man/cat3/log1pf.0
+./usr/share/man/cat3/log2.0
+./usr/share/man/cat3/log2f.0
 ./usr/share/man/cat3/logb.0
 ./usr/share/man/cat3/logbf.0
 ./usr/share/man/cat3/logbl.0
