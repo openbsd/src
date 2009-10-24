@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.151 2009/10/17 21:44:00 jsg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.152 2009/10/24 14:31:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -96,6 +96,7 @@ int ahcidebug = AHCI_D_VERBOSE;
 #define  AHCI_REG_VS_1_0		0x00010000 /* 1.0 */
 #define  AHCI_REG_VS_1_1		0x00010100 /* 1.1 */
 #define  AHCI_REG_VS_1_2		0x00010200 /* 1.2 */
+#define  AHCI_REG_VS_1_3		0x00010300 /* 1.3 */
 #define AHCI_REG_CCC_CTL	0x014 /* Coalescing Control */
 #define  AHCI_REG_CCC_CTL_INT(_r)	(((_r) & 0xf8) >> 3) /* CCC INT slot */
 #define AHCI_REG_CCC_PORTS	0x018 /* Coalescing Ports */
@@ -894,6 +895,9 @@ ahci_init(struct ahci_softc *sc)
 		break;
 	case AHCI_REG_VS_1_2:
 		revision = "1.2";
+		break;
+	case AHCI_REG_VS_1_3:
+		revision = "1.3";
 		break;
 
 	default:
