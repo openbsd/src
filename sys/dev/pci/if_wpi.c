@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.94 2009/10/24 20:17:17 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.95 2009/10/24 21:01:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1113,14 +1113,13 @@ wpi_calib_timeout(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int temp, s;
 
+	s = splnet();
 	/* Automatic rate control triggered every 500ms. */
 	if (ic->ic_fixed_rate == -1) {
-		s = splnet();
 		if (ic->ic_opmode == IEEE80211_M_STA)
 			wpi_iter_func(sc, ic->ic_bss);
 		else
 			ieee80211_iterate_nodes(ic, wpi_iter_func, sc);
-		splx(s);
 	}
 	/* Update sensor. */
 	temp = (int)WPI_READ(sc, WPI_UCODE_GP2);
@@ -1131,6 +1130,8 @@ wpi_calib_timeout(void *arg)
 		wpi_power_calibration(sc, temp);
 		sc->calib_cnt = 0;
 	}
+	splx(s);
+
 	/* Automatic rate control triggered every 500ms. */
 	timeout_add_msec(&sc->calib_to, 500);
 }
