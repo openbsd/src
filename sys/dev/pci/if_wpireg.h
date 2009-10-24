@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.25 2009/05/29 08:25:45 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.26 2009/10/24 18:21:05 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -251,7 +251,7 @@ struct wpi_rx_desc {
 
 struct wpi_tx_cmd {
 	uint8_t	code;
-#define WPI_CMD_CONFIGURE	 16
+#define WPI_CMD_RXON		 16
 #define WPI_CMD_ASSOCIATE	 17
 #define WPI_CMD_EDCA_PARAMS	 19
 #define WPI_CMD_TIMING		 20
@@ -270,7 +270,7 @@ struct wpi_tx_cmd {
 	uint8_t	data[124];
 } __packed;
 
-/* Structure for command WPI_CMD_CONFIGURE. */
+/* Structure for command WPI_CMD_RXON. */
 struct wpi_rxon {
 	uint8_t		myaddr[IEEE80211_ADDR_LEN];
 	uint16_t	reserved1;
@@ -520,13 +520,21 @@ struct wpi_cmd_txpower {
 /* Structure for command WPI_CMD_BT_COEX. */
 struct wpi_bluetooth {
 	uint8_t		flags;
-	uint8_t		lead;
-	uint8_t		kill;
-	uint8_t		reserved;
-	uint32_t	ack;
-	uint32_t	cts;
-} __packed;
+#define WPI_BT_COEX_DISABLE	0
+#define WPI_BT_COEX_MODE_2WIRE	1
+#define WPI_BT_COEX_MODE_3WIRE	2
+#define WPI_BT_COEX_MODE_4WIRE	3
 
+	uint8_t		lead_time;
+#define WPI_BT_LEAD_TIME_DEF	30
+
+	uint8_t		max_kill;
+#define WPI_BT_MAX_KILL_DEF	5
+
+	uint8_t		reserved;
+	uint32_t	kill_ack;
+	uint32_t	kill_cts;
+} __packed;
 
 /* Structures for WPI_RX_DONE notification. */
 struct wpi_rx_stat {
