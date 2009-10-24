@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.49 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: esm.c,v 1.50 2009/10/24 22:11:07 miod Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -209,8 +209,7 @@ esm_match(struct device *parent, void *match, void *aux)
 {
 	struct esm_attach_args		*eaa = aux;
 
-	if (strncmp(eaa->eaa_name, esm_cd.cd_name, sizeof(esm_cd.cd_name)) == 0 &&
-	    esm_probe(eaa))
+	if (strcmp(eaa->eaa_name, esm_cd.cd_name) == 0 && esm_probe(eaa))
 		return (1);
 
 	return (0);
