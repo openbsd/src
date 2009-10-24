@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.70 2009/07/29 18:43:28 martynas Exp $
+#  $OpenBSD: Makefile,v 1.71 2009/10/24 10:06:02 jmc Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -169,8 +169,8 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	copysign.3 ilogb.3 nextafter.3 scalbn.3
 
 MLINKS+=erf.3 erfc.3
-MLINKS+=exp.3 exp2.3 exp.3 expm1.3 exp.3 log.3 exp.3 log10.3 exp.3 log1p.3 \
-	exp.3 pow.3
+MLINKS+=exp.3 exp2.3 exp.3 expm1.3 exp.3 log.3 exp.3 log2.3 \
+	exp.3 log10.3 exp.3 log1p.3 exp.3 pow.3
 MLINKS+=hypot.3 cabs.3
 MLINKS+=scalbn.3 scalbln.3
 MLINKS+=logb.3 scalb.3
@@ -200,6 +200,7 @@ MLINKS+=exp.3 exp2f.3
 MLINKS+=exp.3 expm1f.3
 MLINKS+=exp.3 log10f.3
 MLINKS+=exp.3 log1pf.3
+MLINKS+=exp.3 log2f.3
 MLINKS+=exp.3 logf.3
 MLINKS+=exp.3 powf.3
 MLINKS+=fabs.3 fabsf.3
