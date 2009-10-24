@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.64 2009/10/24 17:51:34 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.65 2009/10/24 18:06:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1582,13 +1582,12 @@ iwn_calib_timeout(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int s;
 
+	s = splnet();
 	if (ic->ic_fixed_rate == -1) {
-		s = splnet();
 		if (ic->ic_opmode == IEEE80211_M_STA)
 			iwn_iter_func(sc, ic->ic_bss);
 		else
 			ieee80211_iterate_nodes(ic, iwn_iter_func, sc);
-		splx(s);
 	}
 	/* Force automatic TX power calibration every 60 secs. */
 	if (++sc->calib_cnt >= 120) {
@@ -1599,6 +1598,8 @@ iwn_calib_timeout(void *arg)
 		    sizeof flags, 1);
 		sc->calib_cnt = 0;
 	}
+	splx(s);
+
 	/* Automatic rate control triggered every 500ms. */
 	timeout_add_msec(&sc->calib_to, 500);
 }
