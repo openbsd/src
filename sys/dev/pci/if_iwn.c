@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.66 2009/10/24 18:14:57 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.67 2009/10/24 18:32:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1318,13 +1318,14 @@ iwn_read_eeprom(struct iwn_softc *sc)
 		return error;
 	}
 
+	/* Adapter has to be powered on for EEPROM access to work. */
+	if ((error = iwn_apm_init(sc)) != 0) {
+		printf("%s: could not power ON adapter\n",
+		    sc->sc_dev.dv_xname);
+		return error;
+	}
+
 	if (sc->sc_flags & IWN_FLAG_HAS_OTPROM) {
-		/* Adapter has to be powered on for OTPROM access to work. */
-		if ((error = iwn_apm_init(sc)) != 0) {
-			printf("%s: could not power ON adapter\n",
-			    sc->sc_dev.dv_xname);
-			return error;
-		}
 		if ((error = iwn_init_otprom(sc)) != 0) {
 			printf("%s: could not initialize OTPROM\n",
 			    sc->sc_dev.dv_xname);
@@ -1342,8 +1343,7 @@ iwn_read_eeprom(struct iwn_softc *sc)
 	/* Read adapter-specific information from EEPROM. */
 	hal->read_eeprom(sc);
 
-	if (sc->sc_flags & IWN_FLAG_HAS_OTPROM)
-		iwn_apm_stop(sc);	/* Power OFF adapter. */
+	iwn_apm_stop(sc);	/* Power OFF adapter. */
 
 	iwn_eeprom_unlock(sc);
 	return 0;
