@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.c,v 1.81 2009/05/27 06:34:36 andreas Exp $ */
+/* $OpenBSD: kex.c,v 1.82 2009/10/24 11:13:54 andreas Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -45,6 +45,7 @@
 #include "match.h"
 #include "dispatch.h"
 #include "monitor.h"
+#include "roaming.h"
 
 /* prototype */
 static void kex_kexinit_finish(Kex *);
@@ -371,6 +372,16 @@ kex_choose_conf(Kex *kex)
 	} else {
 		cprop=my;
 		sprop=peer;
+	}
+
+	/* Check whether server offers roaming */
+	if (!kex->server) {
+		char *roaming;
+		roaming = match_list(KEX_RESUME, peer[PROPOSAL_KEX_ALGS], NULL);
+		if (roaming) {
+			kex->roaming = 1;
+			xfree(roaming);
+		}
 	}
 
 	/* Algorithm Negotiation */
