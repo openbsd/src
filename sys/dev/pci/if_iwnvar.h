@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.12 2009/05/29 08:25:45 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.13 2009/10/24 18:14:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -159,7 +159,6 @@ struct iwn_hal {
 	int		(*load_firmware)(struct iwn_softc *);
 	void		(*read_eeprom)(struct iwn_softc *);
 	int		(*post_alive)(struct iwn_softc *);
-	int		(*apm_init)(struct iwn_softc *);
 	int		(*nic_config)(struct iwn_softc *);
 	void		(*update_sched)(struct iwn_softc *, int, int, uint8_t,
 			    uint16_t);
@@ -201,11 +200,13 @@ struct iwn_softc {
 	uint8_t			fixed_ridx;
 
 	bus_dma_tag_t		sc_dmat;
+	pcireg_t		sc_id;
 
 	u_int			sc_flags;
 #define IWN_FLAG_HAS_5GHZ	(1 << 0)
 #define IWN_FLAG_HAS_OTPROM	(1 << 1)
-#define IWN_FLAG_FIRST_BOOT	(1 << 2)
+#define IWN_FLAG_CALIB_DONE	(1 << 2)
+#define IWN_FLAG_USE_ICT	(1 << 3)
 
 	uint8_t 		hw_type;
 	const struct iwn_hal	*sc_hal;
@@ -221,6 +222,11 @@ struct iwn_softc {
 
 	/* Firmware DMA transfer. */
 	struct iwn_dma_info	fw_dma;
+
+	/* ICT table. */
+	struct iwn_dma_info	ict_dma;
+	uint32_t		*ict;
+	int			ict_cur;
 
 	/* TX/RX rings. */
 	struct iwn_tx_ring	txq[IWN5000_NTXQUEUES];
@@ -253,6 +259,7 @@ struct iwn_softc {
 	int			noise;
 	uint32_t		qfullmsk;
 
+	uint32_t		prom_base;
 	struct iwn4965_eeprom_band
 				bands[IWN_NBANDS];
 	uint16_t		rfcfg;
@@ -264,11 +271,13 @@ struct iwn_softc {
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 
 	uint32_t		critical_temp;
+	int32_t			temp_off;
+	uint32_t		int_mask;
 	uint8_t			ntxchains;
 	uint8_t			nrxchains;
-	uint8_t			txantmsk;
-	uint8_t			rxantmsk;
-	uint8_t			antmsk;
+	uint8_t			txchainmask;
+	uint8_t			rxchainmask;
+	uint8_t			chainmask;
 
 	int			sc_tx_timer;
 	void			*powerhook;

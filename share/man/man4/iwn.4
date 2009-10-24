@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.19 2009/09/02 07:00:24 jmc Exp $
+.\" $OpenBSD: iwn.4,v 1.20 2009/10/24 18:14:57 damien Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2009 $
+.Dd $Mdocdate: October 24 2009 $
 .Os
 .Dt IWN 4
 .Sh NAME
 .Nm iwn
-.Nd "Intel WiFi Link 4965/5100/5300 IEEE 802.11a/b/g/Draft-N wireless network devices"
+.Nd "Intel WiFi Link 4965/5000/1000/6000 IEEE 802.11a/b/g/Draft-N wireless network devices"
 .Sh SYNOPSIS
 .Cd "iwn* at pci?"
 .Sh DESCRIPTION
@@ -28,8 +28,8 @@ The
 .Nm
 driver provides support for
 .Tn Intel
-Wireless WiFi Link 4965AGN and Intel WiFi Link 5000 Series
-Mini PCI Express network adapters.
+Wireless WiFi Link 4965/5000/1000 and 6000 Series PCIe Mini Card network
+adapters.
 .Pp
 The Intel Wireless WiFi Link 4965AGN product is a PCIe Mini Card
 network adapter that operates in both the 2.4GHz and 5GHz spectrum.
@@ -44,6 +44,12 @@ The
 driver provides support for the 5100, 5150, 5300 and 5350 adapters.
 The 5100 and 5150 adapters have 1 transmit path and 2 receiver paths (1T2R).
 The 5300 and 5350 adapters have 3 transmit paths and 3 receiver paths (3T3R).
+.Pp
+The Intel WiFi Link 1000 is a wireless network adapter that
+operates in the 2.4GHz spectrum.
+It is available in both PCIe Mini Card (model code ending by MMW)
+and PCIe Half Mini Card (model code ending by HMW) form factor.
+It has 1 transmit path and 2 receiver paths (1T2R).
 .Pp
 These are the modes the
 .Nm
@@ -88,13 +94,15 @@ driver can be configured at runtime with
 or on boot with
 .Xr hostname.if 5 .
 .Sh FILES
-The driver needs at least version 5.1p0 of the following firmware files,
+The driver needs at least version 5.2 of the following firmware files,
 which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Pa /etc/firmware/iwn-4965
 .It Pa /etc/firmware/iwn-5000
 .It Pa /etc/firmware/iwn-5150
+.It Pa /etc/firmware/iwn-1000
+.It Pa /etc/firmware/iwn-6000
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
@@ -108,7 +116,7 @@ A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
 can be found at:
 .Bd -literal
-http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-5.1p0.tgz
+http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-5.2.tgz
 .Ed
 .Sh EXAMPLES
 The following
@@ -184,7 +192,7 @@ driver was written by
 The
 .Nm
 driver does not support any of the 802.11n capabilities offered by
-the 4965 and 5000 chipsets.
+the adapters.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.

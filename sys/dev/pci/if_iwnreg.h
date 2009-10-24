@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.26 2009/05/29 08:25:45 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.27 2009/10/24 18:14:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -31,6 +31,9 @@
 
 #define IWN_SRVC_DMACHNL	9
 
+#define IWN_ICT_SIZE		4096
+#define IWN_ICT_COUNT		(IWN_ICT_SIZE / sizeof (uint32_t))
+
 /* Maximum number of DMA segments for TX. */
 #define IWN_MAX_SCATTER	20
 
@@ -54,8 +57,9 @@
  */
 #define IWN_HW_IF_CONFIG	0x000
 #define IWN_INT_COALESCING	0x004
+#define IWN_INT_PERIODIC	0x005	/* XXX fixme */
 #define IWN_INT			0x008
-#define IWN_MASK		0x00c
+#define IWN_INT_MASK		0x00c
 #define IWN_FH_INT		0x010
 #define IWN_RESET		0x020
 #define IWN_GP_CNTRL		0x024
@@ -64,11 +68,15 @@
 #define IWN_EEPROM_GP		0x030
 #define IWN_OTP_GP		0x034
 #define IWN_GIO			0x03c
+#define IWN_GP_DRIVER		0x050
 #define IWN_UCODE_GP1_CLR	0x05c
 #define IWN_LED			0x094
+#define IWN_DRAM_INT_TBL	0x0a0
 #define IWN_GIO_CHICKEN		0x100
 #define IWN_ANA_PLL		0x20c
+#define IWN_HW_REV_WA		0x22c
 #define IWN_DBG_HPET_MEM	0x240
+#define IWN_DBG_LINK_PWR_MGMT	0x250
 #define IWN_MEM_RADDR		0x40c
 #define IWN_MEM_WADDR		0x410
 #define IWN_MEM_WDATA		0x418
@@ -131,10 +139,12 @@
 /*
  * NIC internal memory offsets.
  */
-#define IWN_CLOCK_CTL		0x3000
-#define IWN_APMG_CLK_CTRL	0x3004
+#define IWN_APMG_CLK_CTRL	0x3000
+#define IWN_APMG_CLK_EN		0x3004
 #define IWN_APMG_CLK_DIS	0x3008
 #define IWN_APMG_PS		0x300c
+#define IWN_APMG_DIGITAL_SVR	0x3058
+#define IWN_APMG_ANALOG_SVR	0x306c
 #define IWN_APMG_PCI_STT	0x3010
 #define IWN_BSM_WR_CTRL		0x3400
 #define IWN_BSM_WR_MEM_SRC	0x3404
@@ -146,9 +156,6 @@
 #define IWN_BSM_DRAM_DATA_SIZE	0x349c
 #define IWN_BSM_SRAM_BASE	0x3800
 
-/* Possible values for IWN_APMG_CLK_DIS. */
-#define IWN_APMG_CLK_DMA_RQT	(1 << 9)
-
 /* Possible flags for register IWN_HW_IF_CONFIG. */
 #define IWN_HW_IF_CONFIG_4965_R		(1 <<  4)
 #define IWN_HW_IF_CONFIG_MAC_SI		(1 <<  8)
@@ -158,6 +165,10 @@
 #define IWN_HW_IF_CONFIG_HAP_WAKE_L1A	(1 << 23)
 #define IWN_HW_IF_CONFIG_PREPARE_DONE	(1 << 25)
 #define IWN_HW_IF_CONFIG_PREPARE	(1 << 27)
+
+/* Possible values for register IWN_INT_PERIODIC. */
+#define IWN_INT_PERIODIC_DIS	0x00
+#define IWN_INT_PERIODIC_ENA	0xff
 
 /* Possible flags for registers IWN_PRPH_RADDR/IWN_PRPH_WADDR. */
 #define IWN_PRPH_DWORD	((sizeof (uint32_t) - 1) << 24)
@@ -171,6 +182,7 @@
 #define IWN_RESET_SW			(1 << 7)
 #define IWN_RESET_MASTER_DISABLED	(1 << 8)
 #define IWN_RESET_STOP_MASTER		(1 << 9)
+#define IWN_RESET_LINK_PWR_MGMT_DIS	(1 << 31)
 
 /* Possible flags for register IWN_GP_CNTRL. */
 #define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0)
@@ -199,6 +211,11 @@
 /* Possible flags for register IWN_GIO. */
 #define IWN_GIO_L0S_ENA		(1 << 1)
 
+/* Possible flags for register IWN_GP_DRIVER. */
+#define IWN_GP_DRIVER_RADIO_3X3_HYB	(0 << 0)
+#define IWN_GP_DRIVER_RADIO_2X2_HYB	(1 << 0)
+#define IWN_GP_DRIVER_RADIO_2X2_IPA	(2 << 0)
+
 /* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
 #define IWN_UCODE_GP1_CMD_BLOCKED	(1 << 2)
@@ -208,6 +225,10 @@
 #define IWN_LED_BSM_CTRL	(1 << 5)
 #define IWN_LED_OFF		0x00000038
 #define IWN_LED_ON		0x00000078
+
+/* Possible flags for register IWN_DRAM_INT_TBL. */
+#define IWN_DRAM_INT_TBL_WRAP_CHECK	(1 << 27)
+#define IWN_DRAM_INT_TBL_ENABLE		(1 << 31)
 
 /* Possible values for register IWN_ANA_PLL. */
 #define IWN_ANA_PLL_INIT	0x00880300
@@ -226,12 +247,14 @@
 #define IWN_INT_CT_REACHED	(1 <<  6)
 #define IWN_INT_RF_TOGGLED	(1 <<  7)
 #define IWN_INT_SW_ERR		(1 << 25)
+#define IWN_INT_SCHED		(1 << 26)
 #define IWN_INT_FH_TX		(1 << 27)
+#define IWN_INT_RX_PERIODIC	(1 << 28)
 #define IWN_INT_HW_ERR		(1 << 29)
 #define IWN_INT_FH_RX		(1 << 31)
 
 /* Shortcut. */
-#define IWN_INT_MASK							\
+#define IWN_INT_MASK_DEF						\
 	(IWN_INT_SW_ERR | IWN_INT_HW_ERR | IWN_INT_FH_TX |		\
 	 IWN_INT_FH_RX | IWN_INT_ALIVE | IWN_INT_WAKEUP |		\
 	 IWN_INT_SW_RX | IWN_INT_CT_REACHED | IWN_INT_RF_TOGGLED)
@@ -298,7 +321,7 @@
 #define IWN5000_TXQ_STATUS_INACTIVE	0x00ff0010
 #define IWN5000_TXQ_STATUS_CHGACT	(1 << 19)
 
-/* Possible flags for register IWN_APMG_CLK_CTRL. */
+/* Possible flags for registers IWN_APMG_CLK_*. */
 #define IWN_APMG_CLK_CTRL_DMA_CLK_RQT	(1 <<  9)
 #define IWN_APMG_CLK_CTRL_BSM_CLK_RQT	(1 << 11)
 
@@ -309,6 +332,13 @@
 #define IWN_APMG_PS_PWR_SRC_VAUX	2
 #define IWN_APMG_PS_PWR_SRC_MASK	IWN_APMG_PS_PWR_SRC(3)
 #define IWN_APMG_PS_RESET_REQ		(1 << 26)
+
+/* Possible flags for register IWN_APMG_DIGITAL_SVR. */
+#define IWN_APMG_DIGITAL_SVR_VOLTAGE(x)		(((x) & 0xf) << 5)
+#define IWN_APMG_DIGITAL_SVR_VOLTAGE_MASK	\
+	IWN_APMG_DIGITAL_SVR_VOLTAGE(0xf)
+#define IWN_APMG_DIGITAL_SVR_VOLTAGE_1_32	\
+	IWN_APMG_DIGITAL_SVR_VOLTAGE(3)
 
 /* Possible flags for IWN_APMG_PCI_STT. */
 #define IWN_APMG_PCI_STT_L1A_DIS	(1 << 11)
@@ -379,8 +409,8 @@ struct iwn_rx_desc {
 
 struct iwn_tx_cmd {
 	uint8_t	code;
-#define IWN_CMD_CONFIGURE		 16
-#define IWN_CMD_ASSOCIATE		 17
+#define IWN_CMD_RXON			 16
+#define IWN_CMD_RXON_ASSOC		 17
 #define IWN_CMD_EDCA_PARAMS		 19
 #define IWN_CMD_TIMING			 20
 #define IWN_CMD_ADD_NODE		 24
@@ -391,8 +421,9 @@ struct iwn_tx_cmd {
 #define IWN5000_CMD_CALIB_CONFIG	101
 #define IWN_CMD_SET_POWER_MODE		119
 #define IWN_CMD_SCAN			128
+#define IWN_CMD_TXPOWER_DBM		149
 #define IWN_CMD_TXPOWER			151
-#define IWN_CMD_TXPOWER_DBM		152
+#define IWN5000_CMD_TX_ANT_CONFIG	152
 #define IWN_CMD_BT_COEX			155
 #define IWN_CMD_GET_STATISTICS		156
 #define IWN_CMD_SET_CRITICAL_TEMP	164
@@ -412,7 +443,7 @@ struct iwn_tx_cmd {
 /* Shortcut. */
 #define IWN_ANT_ABC	(IWN_ANT_A | IWN_ANT_B | IWN_ANT_C)
 
-/* Structure for command IWN_CMD_CONFIGURE. */
+/* Structure for command IWN_CMD_RXON. */
 struct iwn_rxon {
 	uint8_t		myaddr[IEEE80211_ADDR_LEN];
 	uint16_t	reserved1;
@@ -463,7 +494,7 @@ struct iwn_rxon {
 	uint8_t		reserved4;
 	uint8_t		ht_single_mask;
 	uint8_t		ht_dual_mask;
-	/* The following fields are for 5000 Series only. */
+	/* The following fields are for >=5000 Series only. */
 	uint8_t		ht_triple_mask;
 	uint8_t		reserved5;
 	uint16_t	acquisition;
@@ -789,11 +820,20 @@ struct iwn5000_cmd_txpower {
 /* Structure for command IWN_CMD_BLUETOOTH. */
 struct iwn_bluetooth {
 	uint8_t		flags;
-	uint8_t		lead;
-	uint8_t		kill;
+#define IWN_BT_COEX_DISABLE	0
+#define IWN_BT_COEX_MODE_2WIRE	1
+#define IWN_BT_COEX_MODE_3WIRE	2
+#define IWN_BT_COEX_MODE_4WIRE	3
+
+	uint8_t		lead_time;
+#define IWN_BT_LEAD_TIME_DEF	30
+
+	uint8_t		max_kill;
+#define IWN_BT_MAX_KILL_DEF	5
+
 	uint8_t		reserved;
-	uint32_t	ack;
-	uint32_t	cts;
+	uint32_t	kill_ack;
+	uint32_t	kill_cts;
 } __packed;
 
 /* Structure for command IWN_CMD_SET_CRITICAL_TEMP. */
@@ -1185,16 +1225,6 @@ struct iwn_fw_dump {
 	uint32_t	time[2];
 } __packed;
 
-/* Firmware image file header. */
-struct iwn_firmware_hdr {
-	uint32_t	version;
-	uint32_t	main_textsz;
-	uint32_t	main_datasz;
-	uint32_t	init_textsz;
-	uint32_t	init_datasz;
-	uint32_t	boot_textsz;
-} __packed;
-
 #define IWN4965_FW_TEXT_MAXSZ	( 96 * 1024)
 #define IWN4965_FW_DATA_MAXSZ	( 40 * 1024)
 #define IWN5000_FW_TEXT_MAXSZ	(256 * 1024)
@@ -1202,6 +1232,8 @@ struct iwn_firmware_hdr {
 #define IWN_FW_BOOT_TEXT_MAXSZ	1024
 #define IWN4965_FWSZ		(IWN4965_FW_TEXT_MAXSZ + IWN4965_FW_DATA_MAXSZ)
 #define IWN5000_FWSZ		IWN5000_FW_TEXT_MAXSZ
+
+#define IWN_FW_API(x)	(((x) >> 8) & 0xff)
 
 /*
  * Offsets into EEPROM.
@@ -1230,6 +1262,7 @@ struct iwn_firmware_hdr {
 #define IWN5000_EEPROM_BAND5	0x03a
 #define IWN5000_EEPROM_BAND6	0x041
 #define IWN5000_EEPROM_BAND7	0x049
+#define IWN6000_EEPROM_ENHINFO	0x054
 #define IWN5000_EEPROM_CRYSTAL	0x128
 #define IWN5000_EEPROM_TEMP	0x12a
 #define IWN5000_EEPROM_VOLT	0x12b
@@ -1249,6 +1282,14 @@ struct iwn_eeprom_chan {
 #define IWN_EEPROM_CHAN_RADAR	(1 << 4)
 
 	int8_t	maxpwr;
+} __packed;
+
+struct iwn_eeprom_enhinfo {
+	uint16_t	reserved1;
+	int8_t		chain[3];	/* max power in half-dBm */
+	uint8_t		reserved2;
+	int8_t		mimo2;		/* max power in half-dBm */
+	int8_t		mimo3;		/* max power in half-dBm */
 } __packed;
 
 #define IWN_NSAMPLES	3
@@ -1310,6 +1351,10 @@ static const struct iwn_chan_band {
 	/* 40MHz channels (primary channels), 5GHz band. */
 	{ 11, { 36, 44, 52, 60, 100, 108, 116, 124, 132, 149, 157 } }
 };
+
+#define IWN1000_OTP_NBLOCKS	3 
+#define IWN6000_OTP_NBLOCKS	4 
+#define IWN6050_OTP_NBLOCKS	7
 
 /* HW rate indices. */
 #define IWN_RIDX_CCK1	0
