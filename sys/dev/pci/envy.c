@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.29 2009/10/11 12:59:29 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.30 2009/10/24 09:13:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -230,6 +230,13 @@ struct envy_card envy_cards[] = {
 		PCI_ID_CODE(0x1412, 0xd63b),
 		"M-Audio Delta 1010LT",
 		8, &ak4524_adc, 8, &ak4524_dac,
+		delta_init,
+		delta_codec_write,
+		NULL
+	}, {
+		PCI_ID_CODE(0x1412, 0xd634),
+		"M-Audio Audiophile 2496",
+		2, &ak4524_adc, 2, &ak4524_dac,
 		delta_init,
 		delta_codec_write,
 		NULL
