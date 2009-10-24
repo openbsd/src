@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.20 2009/10/24 18:14:57 damien Exp $
+.\" $OpenBSD: iwn.4,v 1.21 2009/10/24 21:13:02 damien Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -31,8 +31,8 @@ driver provides support for
 Wireless WiFi Link 4965/5000/1000 and 6000 Series PCIe Mini Card network
 adapters.
 .Pp
-The Intel Wireless WiFi Link 4965AGN product is a PCIe Mini Card
-network adapter that operates in both the 2.4GHz and 5GHz spectrum.
+The Intel Wireless WiFi Link 4965AGN product (codenamed Kedron) is a PCIe
+Mini Card network adapter that operates in both the 2.4GHz and 5GHz spectrum.
 The 4965AGN adapters have 2 transmit paths and 3 receiver paths (2T3R).
 .Pp
 The Intel WiFi Link 5000 series is a family of wireless network adapters
@@ -41,12 +41,14 @@ These adapters are available in both PCIe Mini Card (model code ending by MMW)
 and PCIe Half Mini Card (model code ending by HMW) form factor.
 The
 .Nm
-driver provides support for the 5100, 5150, 5300 and 5350 adapters.
+driver provides support for the 5100 (codenamed Shirley Peak 1x2),
+5150 (codenamed Echo Peak-V), 5300 (codenamed Shirley Peak 3x3) and
+5350 (codenamed Echo Peak-P) adapters.
 The 5100 and 5150 adapters have 1 transmit path and 2 receiver paths (1T2R).
 The 5300 and 5350 adapters have 3 transmit paths and 3 receiver paths (3T3R).
 .Pp
-The Intel WiFi Link 1000 is a wireless network adapter that
-operates in the 2.4GHz spectrum.
+The Intel WiFi Link 1000 (codenamed Condor Peak) is a wireless network
+adapter that operates in the 2.4GHz spectrum.
 It is available in both PCIe Mini Card (model code ending by MMW)
 and PCIe Half Mini Card (model code ending by HMW) form factor.
 It has 1 transmit path and 2 receiver paths (1T2R).
