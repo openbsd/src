@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.16 2009/10/21 19:13:51 schwarze Exp $ */
+/*	$Id: term.c,v 1.17 2009/10/24 13:13:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -130,7 +130,7 @@ void
 term_flushln(struct termp *p)
 {
 	int		 i, j;
-	size_t		 vbl, vsz, vis, maxvis, mmax, bp, os;
+	size_t		 vbl, vsz, vis, maxvis, mmax, bp;
 	static int	 overstep = 0;
 
 	/*
@@ -143,9 +143,6 @@ term_flushln(struct termp *p)
 	assert(p->offset < p->rmargin);
 	assert((int)(p->rmargin - p->offset) - overstep > 0);
 
-	/* Save the overstep. */
-	os = (size_t)overstep;
-
 	maxvis = /* LINTED */
 		p->rmargin - p->offset - overstep;
 	mmax = /* LINTED */
@@ -153,7 +150,6 @@ term_flushln(struct termp *p)
 
 	bp = TERMP_NOBREAK & p->flags ? mmax : maxvis;
 	vis = 0;
-	overstep = 0;
 
 	/*
 	 * If in the standard case (left-justified), then begin with our
@@ -208,8 +204,8 @@ term_flushln(struct termp *p)
 				vis = 0;
 			}
 			/* Remove the overstep width. */
-			bp += os;
-			os = 0;
+			bp += overstep;
+			overstep = 0;
 		} else {
 			for (j = 0; j < (int)vbl; j++)
 				putchar(' ');
@@ -233,6 +229,7 @@ term_flushln(struct termp *p)
 		return;
 	}
 
+	overstep = 0;
 	if (TERMP_HANG & p->flags) {
 		/* We need one blank after the tag. */
 		overstep = /* LINTED */
