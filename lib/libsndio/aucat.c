@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.30 2009/10/22 21:41:30 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.31 2009/10/24 09:35:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -546,8 +546,12 @@ aucat_buildmsg(struct aucat_hdl *hdl, size_t len)
 		hdl->wmsg.u.vol.ctl = hdl->reqvol;
 		hdl->curvol = hdl->reqvol;
 		return 1;
-	} else if (len > 0) {
-		sz = (len < AMSG_DATAMAX) ? len : AMSG_DATAMAX;
+	} else if (len > 0 && hdl->maxwrite > 0) {
+		sz = len;
+		if (sz > AMSG_DATAMAX)
+			sz = AMSG_DATAMAX;
+		if (sz > hdl->maxwrite)
+			sz = hdl->maxwrite;
 		sz -= sz % hdl->wbpf;
 		if (sz == 0)
 			sz = hdl->wbpf;
