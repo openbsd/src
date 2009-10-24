@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpireg.h,v 1.26 2009/10/24 18:21:05 damien Exp $	*/
+/*	$OpenBSD: if_wpireg.h,v 1.27 2009/10/24 20:17:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -831,3 +831,10 @@ static const char * const wpi_fw_errmsg[] = {
 #define WPI_CLRBITS(sc, reg, mask)					\
 	WPI_WRITE(sc, reg, WPI_READ(sc, reg) & ~(mask))
 
+#define WPI_BARRIER_WRITE(sc)						\
+	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
+	    BUS_SPACE_BARRIER_WRITE)
+
+#define WPI_BARRIER_READ_WRITE(sc)					\
+	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)

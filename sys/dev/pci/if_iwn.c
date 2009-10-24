@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.68 2009/10/24 19:00:40 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.69 2009/10/24 20:17:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -737,6 +737,7 @@ static __inline uint32_t
 iwn_prph_read(struct iwn_softc *sc, uint32_t addr)
 {
 	IWN_WRITE(sc, IWN_PRPH_RADDR, IWN_PRPH_DWORD | addr);
+	IWN_BARRIER_READ_WRITE(sc);
 	return IWN_READ(sc, IWN_PRPH_RDATA);
 }
 
@@ -744,6 +745,7 @@ static __inline void
 iwn_prph_write(struct iwn_softc *sc, uint32_t addr, uint32_t data)
 {
 	IWN_WRITE(sc, IWN_PRPH_WADDR, IWN_PRPH_DWORD | addr);
+	IWN_BARRIER_WRITE(sc);
 	IWN_WRITE(sc, IWN_PRPH_WDATA, data);
 }
 
@@ -771,6 +773,7 @@ static __inline uint32_t
 iwn_mem_read(struct iwn_softc *sc, uint32_t addr)
 {
 	IWN_WRITE(sc, IWN_MEM_RADDR, addr);
+	IWN_BARRIER_READ_WRITE(sc);
 	return IWN_READ(sc, IWN_MEM_RDATA);
 }
 
@@ -778,6 +781,7 @@ static __inline void
 iwn_mem_write(struct iwn_softc *sc, uint32_t addr, uint32_t data)
 {
 	IWN_WRITE(sc, IWN_MEM_WADDR, addr);
+	IWN_BARRIER_WRITE(sc);
 	IWN_WRITE(sc, IWN_MEM_WDATA, data);
 }
 

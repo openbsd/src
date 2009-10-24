@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.28 2009/10/24 19:00:40 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.29 2009/10/24 20:17:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1604,3 +1604,11 @@ static const char * const iwn_fw_errmsg[] = {
 
 #define IWN_CLRBITS(sc, reg, mask)					\
 	IWN_WRITE(sc, reg, IWN_READ(sc, reg) & ~(mask))
+
+#define IWN_BARRIER_WRITE(sc)						\
+	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
+	    BUS_SPACE_BARRIER_WRITE)
+
+#define IWN_BARRIER_READ_WRITE(sc)					\
+	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)

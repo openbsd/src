@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.93 2009/10/24 18:19:49 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.94 2009/10/24 20:17:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -477,6 +477,7 @@ static __inline uint32_t
 wpi_prph_read(struct wpi_softc *sc, uint32_t addr)
 {
 	WPI_WRITE(sc, WPI_PRPH_RADDR, WPI_PRPH_DWORD | addr);
+	WPI_BARRIER_READ_WRITE(sc);
 	return WPI_READ(sc, WPI_PRPH_RDATA);
 }
 
@@ -484,6 +485,7 @@ static __inline void
 wpi_prph_write(struct wpi_softc *sc, uint32_t addr, uint32_t data)
 {
 	WPI_WRITE(sc, WPI_PRPH_WADDR, WPI_PRPH_DWORD | addr);
+	WPI_BARRIER_WRITE(sc);
 	WPI_WRITE(sc, WPI_PRPH_WDATA, data);
 }
 
@@ -511,6 +513,7 @@ static __inline uint32_t
 wpi_mem_read(struct wpi_softc *sc, uint32_t addr)
 {
 	WPI_WRITE(sc, WPI_MEM_RADDR, addr);
+	WPI_BARRIER_READ_WRITE(sc);
 	return WPI_READ(sc, WPI_MEM_RDATA);
 }
 
@@ -518,6 +521,7 @@ static __inline void
 wpi_mem_write(struct wpi_softc *sc, uint32_t addr, uint32_t data)
 {
 	WPI_WRITE(sc, WPI_MEM_WADDR, addr);
+	WPI_BARRIER_WRITE(sc);
 	WPI_WRITE(sc, WPI_MEM_WDATA, data);
 }
 
