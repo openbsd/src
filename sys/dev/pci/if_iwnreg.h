@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.27 2009/10/24 18:14:57 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.28 2009/10/24 19:00:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -704,7 +704,12 @@ struct iwn_cmd_led {
 /* Structure for command IWN5000_CMD_WIMAX_COEX. */
 struct iwn5000_wimax_coex {
 	uint32_t	flags;
-	struct {
+#define IWN_WIMAX_COEX_STA_TABLE_VALID		(1 << 0)
+#define IWN_WIMAX_COEX_UNASSOC_WA_UNMASK	(1 << 2)
+#define IWN_WIMAX_COEX_ASSOC_WA_UNMASK		(1 << 3)
+#define IWN_WIMAX_COEX_ENABLE			(1 << 7)
+
+	struct iwn5000_wimax_event {
 		uint8_t	request;
 		uint8_t	window;
 		uint8_t	reserved;
@@ -1530,6 +1535,26 @@ static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
 /* Map TID to TX scheduler's FIFO. */
 static const uint8_t iwn_tid2fifo[] = {
 	1, 0, 0, 1, 2, 2, 3, 3, 7, 7, 7, 7, 7, 7, 7, 7, 3
+};
+
+/* WiFi/WiMAX coexist event priority table for 6050. */
+static const struct iwn5000_wimax_event iwn6050_wimax_events[] = {
+	{ 0x04, 0x03, 0x00, 0x00 },
+	{ 0x04, 0x03, 0x00, 0x03 },
+	{ 0x04, 0x03, 0x00, 0x03 },
+	{ 0x04, 0x03, 0x00, 0x03 },
+	{ 0x04, 0x03, 0x00, 0x00 },
+	{ 0x04, 0x03, 0x00, 0x07 },
+	{ 0x04, 0x03, 0x00, 0x00 },
+	{ 0x04, 0x03, 0x00, 0x03 },
+	{ 0x04, 0x03, 0x00, 0x03 },
+	{ 0x04, 0x03, 0x00, 0x00 },
+	{ 0x06, 0x03, 0x00, 0x07 },
+	{ 0x04, 0x03, 0x00, 0x00 },
+	{ 0x06, 0x06, 0x00, 0x03 },
+	{ 0x04, 0x03, 0x00, 0x07 },
+	{ 0x04, 0x03, 0x00, 0x00 },
+	{ 0x04, 0x03, 0x00, 0x00 }
 };
 
 /* Firmware errors. */

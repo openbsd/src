@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.67 2009/10/24 18:32:37 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.68 2009/10/24 19:00:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -228,6 +228,7 @@ void		iwn5000_ampdu_tx_stop(struct iwn_softc *,
 #endif
 int		iwn5000_query_calibration(struct iwn_softc *);
 int		iwn5000_send_calibration(struct iwn_softc *);
+int		iwn5000_send_wimax_coex(struct iwn_softc *);
 int		iwn4965_post_alive(struct iwn_softc *);
 int		iwn5000_post_alive(struct iwn_softc *);
 int		iwn4965_load_bootcode(struct iwn_softc *, const uint8_t *,
@@ -4702,6 +4703,29 @@ iwn5000_send_calibration(struct iwn_softc *sc)
 	return 0;
 }
 
+int
+iwn5000_send_wimax_coex(struct iwn_softc *sc)
+{
+	struct iwn5000_wimax_coex wimax;
+
+	if (sc->hw_type == IWN_HW_REV_TYPE_6050) {
+		/* Enable WiMAX coexistence for combo adapters. */
+		wimax.flags =
+		    IWN_WIMAX_COEX_ASSOC_WA_UNMASK |
+		    IWN_WIMAX_COEX_UNASSOC_WA_UNMASK |
+		    IWN_WIMAX_COEX_STA_TABLE_VALID |
+		    IWN_WIMAX_COEX_ENABLE;
+		memcpy(wimax.events, iwn6050_wimax_events,
+		    sizeof iwn6050_wimax_events);
+	} else {
+		/* Disable WiMAX coexistence. */
+		wimax.flags = 0;
+		memset(wimax.events, 0, sizeof wimax.events);
+	}
+	DPRINTF(("Configuring WiMAX coexistence\n"));
+	return iwn_cmd(sc, IWN5000_CMD_WIMAX_COEX, &wimax, sizeof wimax, 0);
+}
+
 /*
  * This function is called after the runtime firmware notifies us of its
  * readiness (called in a process context.)
@@ -4762,7 +4786,6 @@ iwn4965_post_alive(struct iwn_softc *sc)
 int
 iwn5000_post_alive(struct iwn_softc *sc)
 {
-	struct iwn5000_wimax_coex wimax;
 	int error, qid;
 
 	/* Switch to using ICT interrupt mode. */
@@ -4810,16 +4833,13 @@ iwn5000_post_alive(struct iwn_softc *sc)
 	}
 	iwn_nic_unlock(sc);
 
-	/* Configure WiMAX (IEEE 802.16e) coexistence. */
-	memset(&wimax, 0, sizeof wimax);
-	DPRINTF(("Configuring WiMAX coexistence\n"));
-	error = iwn_cmd(sc, IWN5000_CMD_WIMAX_COEX, &wimax, sizeof wimax, 0);
+	/* Configure WiMAX coexistence for combo adapters. */
+	error = iwn5000_send_wimax_coex(sc);
 	if (error != 0) {
 		printf("%s: could not configure WiMAX coexistence\n",
 		    sc->sc_dev.dv_xname);
 		return error;
 	}
-
 	if (sc->hw_type != IWN_HW_REV_TYPE_5150) {
 		struct iwn5000_phy_calib_crystal cmd;
 
