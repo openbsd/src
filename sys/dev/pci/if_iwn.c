@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.63 2009/09/20 20:04:07 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.64 2009/10/24 17:51:34 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4543,7 +4543,7 @@ iwn4965_post_alive(struct iwn_softc *sc)
 	/* Clear TX scheduler's state in SRAM. */
 	sc->sched_base = iwn_prph_read(sc, IWN_SCHED_SRAM_ADDR);
 	iwn_mem_set_region_4(sc, sc->sched_base + IWN4965_SCHED_CTX_OFF, 0,
-	    IWN4965_SCHED_CTX_LEN);
+	    IWN4965_SCHED_CTX_LEN / sizeof (uint32_t));
 
 	/* Set physical address of TX scheduler rings (1KB aligned.) */
 	iwn_prph_write(sc, IWN4965_SCHED_DRAM_ADDR, sc->sched_dma.paddr >> 10);
@@ -4597,15 +4597,15 @@ iwn5000_post_alive(struct iwn_softc *sc)
 	/* Clear TX scheduler's state in SRAM. */
 	sc->sched_base = iwn_prph_read(sc, IWN_SCHED_SRAM_ADDR);
 	iwn_mem_set_region_4(sc, sc->sched_base + IWN5000_SCHED_CTX_OFF, 0,
-	    IWN5000_SCHED_CTX_LEN);
+	    IWN5000_SCHED_CTX_LEN / sizeof (uint32_t));
 
 	/* Set physical address of TX scheduler rings (1KB aligned.) */
 	iwn_prph_write(sc, IWN5000_SCHED_DRAM_ADDR, sc->sched_dma.paddr >> 10);
 
 	IWN_SETBITS(sc, IWN_FH_TX_CHICKEN, IWN_FH_TX_CHICKEN_SCHED_RETRY);
 
-	/* Enable chain mode for all our 20 queues. */
-	iwn_prph_write(sc, IWN5000_SCHED_QCHAIN_SEL, 0xfffff);
+	/* Enable chain mode for all queues, except command queue. */
+	iwn_prph_write(sc, IWN5000_SCHED_QCHAIN_SEL, 0xfffef);
 	iwn_prph_write(sc, IWN5000_SCHED_AGGR_SEL, 0);
 
 	for (qid = 0; qid < IWN5000_NTXQUEUES; qid++) {
