@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.71 2009/10/19 20:48:13 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.72 2009/10/25 21:50:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -256,6 +256,7 @@ lka_dispatch_parent(int sig, short event, void *p)
 
 			/* then resolve alias and get back to expanding the aliases list */
 			lka_resolve_alias(env, lkasession->message.tag, &lkasession->message.recipient, &alias);
+			queue_submit_envelope(env, &lkasession->message);
 			lka_expand_rcpt(env, &lkasession->aliaseslist, lkasession);
 			break;
 		}
@@ -372,11 +373,13 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			else if (lkasession->path.flags & F_PATH_ALIAS) {
 				log_debug("F_PATH_ALIAS");
 				ret = aliases_get(env, &lkasession->aliaseslist, lkasession->path.user);
+				log_debug("\tALIASES RESOLVED: %d", ret);
 			}
 			else if (lkasession->path.flags & F_PATH_VIRTUAL) {
 				log_debug("F_PATH_VIRTUAL");
 				ret = aliases_virtual_get(env, lkasession->path.cond->c_match,
 				    &lkasession->aliaseslist, &lkasession->path);
+				log_debug("\tVIRTUAL RESOLVED: %d", ret);
 			}
 			else
 				fatal("lka_dispatch_mfa: path with illegal flag");
@@ -922,7 +925,6 @@ lka_expand_rcpt(struct smtpd *env, struct aliaseslist *aliases, struct lkasessio
 		    -1, &lkasession->ss, sizeof(struct submit_status));
 	}
 	else if (TAILQ_FIRST(&lkasession->aliaseslist) == NULL) {
-		queue_submit_envelope(env, &lkasession->message);
 		queue_commit_envelopes(env, &lkasession->message);
 	}
 	else {
