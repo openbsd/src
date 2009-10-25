@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.8 2009/08/08 00:16:49 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.9 2009/10/25 19:46:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -66,7 +66,7 @@ static const struct token t_main[] = {
 	{KEYWORD,	"show",		NONE,		t_show},
 	{KEYWORD,	"monitor",	MONITOR,	NULL},
 	{KEYWORD,	"pause",	NONE,      	t_pause},
-	{KEYWORD,	"reload",	RELOAD,		NULL},
+/*	{KEYWORD,	"reload",	RELOAD,		NULL},*/
 	{KEYWORD,	"resume",	NONE,      	t_resume},
 	{KEYWORD,	"stop",		SHUTDOWN,      	NULL},
 	{KEYWORD,	"schedule",    	SCHEDULE,      	t_schedule},

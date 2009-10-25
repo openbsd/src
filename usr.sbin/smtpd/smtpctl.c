@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.38 2009/09/12 12:24:51 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.39 2009/10/25 19:46:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -153,9 +153,11 @@ connected:
 	case SHUTDOWN:
 		imsg_compose(ibuf, IMSG_CTL_SHUTDOWN, 0, 0, -1, NULL, 0);
 		break;
+/*
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
 		break;
+ */
 	case PAUSE_MDA:
 		imsg_compose(ibuf, IMSG_MDA_PAUSE, 0, 0, -1, NULL, 0);
 		break;
@@ -209,7 +211,7 @@ connected:
 			if (n == 0)
 				break;
 			switch(res->action) {
-			case RELOAD:
+/*			case RELOAD:*/
 			case SHUTDOWN:
 			case SCHEDULE:
 			case PAUSE_MDA:
