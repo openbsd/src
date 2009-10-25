@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.113 2009/10/25 01:10:57 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.114 2009/10/25 21:12:15 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm tmux
 .Bk -words
-.Op Fl 28dlquv
+.Op Fl 28lquv
 .Op Fl c Ar shell-command
 .Op Fl f Ar file
 .Op Fl L Ar socket-name
@@ -111,10 +111,6 @@ If necessary, the
 server will be started to retrieve the
 .Ic default-shell
 option.
-.It Fl d
-Force
-.Nm
-to assume the terminal supports default colours.
 .It Fl f Ar file
 Specify an alternative configuration file.
 By default,
