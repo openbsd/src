@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.62 2009/09/18 00:04:26 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.63 2009/10/25 21:06:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -540,6 +540,7 @@ smtp_dispatch_control(int sig, short event, void *p)
 			s->s_env = env;
 			s->s_l = &l;
 			s->s_msg.flags |= F_MESSAGE_ENQUEUED;
+			(void)strlcpy(s->s_msg.tag, s->s_l->tag, sizeof(s->s_msg.tag));
 
 			bzero(&hints, sizeof(hints));
 			hints.ai_family = PF_UNSPEC;
