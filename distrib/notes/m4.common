@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.88 2009/05/31 18:18:39 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.89 2009/10/25 20:56:24 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -504,7 +504,8 @@ ifelse(X$1,X,,
 	After your OpenBSD MBR partition has been setup, the real
 	partition setup can follow.-:})dnl
 dnl
-dnl OpenBSDInstallPart5(mention about other OS partitions)
+dnl OpenBSDInstallPart5(mention about other OS partitions,mention about root
+dnl	partition limitations)
 dnl Describes the disklabel operation
 dnl
 define({:-OpenBSDInstallPart5-:},
@@ -525,7 +526,7 @@ define({:-OpenBSDInstallPart5-:},
 	This partition can not be modified.$1
 
 	You must create partition 'a' as a native OpenBSD partition, i.e.
-	one with "4.2BSD" as the fstype, to hold the root file system.
+	one with "4.2BSD" as the fstype, to hold the root file system.$2
 
 	In addition to partition 'a' you should create partition 'b' with
 	fstype "swap", and native OpenBSD partitions to hold separate file

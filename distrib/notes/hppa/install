@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.18 2009/05/13 18:38:29 miod Exp $
+dnl	$OpenBSD: install,v 1.19 2009/10/25 20:56:24 miod Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -122,7 +122,10 @@ OpenBSDInstallPart3(,"sd0")
 
 OpenBSDInstallPart4
 
-OpenBSDInstallPart5
+OpenBSDInstallPart5(,{:-
+	Due to prom limitations, you should make sure the whole 'a'
+	partition is CONTAINED WITHIN THE FIRST 2GB of the disk if
+	you intend to boot from it.-:})
 
 	Since the target disk will become the boot disk for your new
 	OpenBSD/MACHINE installation, the disklabel program will restrict
