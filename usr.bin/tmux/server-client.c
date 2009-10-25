@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.3 2009/10/22 21:01:52 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.4 2009/10/25 17:51:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -20,6 +20,7 @@
 
 #include <fcntl.h>
 #include <string.h>
+#include <time.h>
 #include <paths.h>
 #include <unistd.h>
 
