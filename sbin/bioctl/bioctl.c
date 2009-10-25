@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.83 2009/10/22 15:27:15 jmc Exp $       */
+/* $OpenBSD: bioctl.c,v 1.84 2009/10/25 17:53:07 marco Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -951,7 +951,10 @@ derive_key_pkcs(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
 		errx(1, "Too less rounds: %d", rounds);
 
 	/* get passphrase */
-	if (password && verify == 0) {
+	if (password && verify)
+		errx(1, "can't specify passphrase file during initial "
+		    "creation of crypto volume");
+	if (password) {
 		if ((f = fopen(password, "r")) == NULL)
 			err(1, "invalid passphrase file");
 
@@ -971,13 +974,11 @@ derive_key_pkcs(int rounds, u_int8_t *key, size_t keysz, u_int8_t *salt,
 			errx(1, "invalid passphrase length");
 
 		fclose(f);
-	} else if (password == NULL && verify) {
+	} else {
 		if (readpassphrase("Passphrase: ", passphrase,
 		    sizeof(passphrase), RPP_REQUIRE_TTY) == NULL)
 			errx(1, "unable to read passphrase");
-	} else
-		errx(1, "can't specify passphrase file during initial "
-		    "creation of crypto volume");
+	}
 
 	if (verify) {
 		/* request user to re-type it */
