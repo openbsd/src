@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.5 2009/10/25 21:11:21 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.6 2009/10/25 22:00:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -199,9 +199,10 @@ server_client_loop(void)
 			continue;
 
 		server_client_handle_data(c);
-
-		server_client_check_timers(c);
-		server_client_check_redraw(c);
+		if (c->session != NULL) {
+			server_client_check_timers(c);
+			server_client_check_redraw(c);
+		}
 	}
 
 	/*
