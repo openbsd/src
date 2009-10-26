@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.55 2009/10/22 22:08:54 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.56 2009/10/26 18:11:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -54,7 +54,6 @@
 #include <dev/cardbus/rbus.h>
 
 #include <mips64/archtype.h>
-#include <sgi/xbow/hub.h>
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbowdevs.h>
 
@@ -62,7 +61,6 @@
 
 #ifdef TGT_OCTANE
 #include <sgi/sgi/ip30.h>
-#include <sgi/xbow/xheartreg.h>
 #endif
 
 #include "cardbus.h"
@@ -1105,27 +1103,8 @@ xbridge_intr_handler(void *v)
 	if (ISSET(xb->xb_flags, XF_XBRIDGE))
 		xbridge_write_reg(xb, BRIDGE_INT_FORCE_PIN(xi->xi_intrbit), 1);
 	else {
-		if (xbridge_read_reg(xb, BRIDGE_ISR) & (1 << xi->xi_intrbit)) {
-			switch (sys_config.system_type) {
-#if defined(TGT_OCTANE)
-			case SGI_OCTANE:
-			    {
-				paddr_t heart;
-				heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
-				*(volatile uint64_t *)(heart + HEART_ISR_SET) =
-				    xi->xi_intrsrc;
-			    }
-				break;
-#endif
-#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
-			case SGI_O200:
-			case SGI_O300:
-				IP27_RHUB_PI_S(xb->xb_nasid, 0, HUBPI_IR_CHANGE,
-				    PI_IR_SET | xi->xi_intrsrc);
-				break;
-#endif
-			}
-		}
+		if (xbridge_read_reg(xb, BRIDGE_ISR) & (1 << xi->xi_intrbit))
+			xbow_intr_set(xi->xi_intrsrc);
 	}
 
 	return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.h,v 1.7 2009/08/18 19:31:59 miod Exp $	*/
+/*	$OpenBSD: xbow.h,v 1.8 2009/10/26 18:11:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -52,6 +52,9 @@ extern	int	(*xbow_intr_widget_intr_register)(int, int, int *);
 extern	int	(*xbow_intr_widget_intr_establish)(int (*)(void *), void *,
 		    int, int, const char *);
 extern	void	(*xbow_intr_widget_intr_disestablish)(int);
+
+extern	void	(*xbow_intr_widget_intr_set)(int);
+extern	void	(*xbow_intr_widget_intr_clear)(int);
 
 /*
  * Common Widget Registers.  Every widget provides them.
@@ -127,6 +130,8 @@ void	xbow_build_bus_space(struct mips_bus_space *, int, int);
 int	xbow_intr_register(int, int, int *);
 int	xbow_intr_establish(int (*)(void *), void *, int, int, const char *);
 void	xbow_intr_disestablish(int);
+void	xbow_intr_clear(int);
+void	xbow_intr_set(int);
 
 paddr_t	xbow_widget_map_space(struct device *, u_int,
 	    bus_addr_t *, bus_size_t *);

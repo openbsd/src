@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.29 2009/10/23 21:19:17 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.30 2009/10/26 18:11:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -70,6 +70,8 @@ int	ip27_hub_intr_register(int, int, int *);
 int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
 	    const char *);
 void	ip27_hub_intr_disestablish(int);
+void	ip27_hub_intr_clear(int);
+void	ip27_hub_intr_set(int);
 uint32_t hubpi_intr0(uint32_t, struct trap_frame *);
 uint32_t hubpi_intr1(uint32_t, struct trap_frame *);
 void	ip27_hub_intr_makemasks(void);
@@ -253,6 +255,8 @@ ip27_setup()
 	xbow_intr_widget_intr_register = ip27_hub_intr_register;
 	xbow_intr_widget_intr_establish = ip27_hub_intr_establish;
 	xbow_intr_widget_intr_disestablish = ip27_hub_intr_disestablish;
+	xbow_intr_widget_intr_clear = ip27_hub_intr_clear;
+	xbow_intr_widget_intr_set = ip27_hub_intr_set;
 
 	set_intr(INTPRI_XBOW_HW1, CR_INT_1, hubpi_intr1);
 	set_intr(INTPRI_XBOW_HW0, CR_INT_0, hubpi_intr0);
@@ -704,6 +708,18 @@ ip27_hub_intr_disestablish(int intrbit)
 	splx(s);
 
 	free(ih, M_DEVBUF);
+}
+
+void
+ip27_hub_intr_clear(int intrbit)
+{
+	IP27_RHUB_PI_S(masternasid, 0, HUBPI_IR_CHANGE, PI_IR_CLR | intrbit);
+}
+
+void
+ip27_hub_intr_set(int intrbit)
+{
+	IP27_RHUB_PI_S(masternasid, 0, HUBPI_IR_CHANGE, PI_IR_SET | intrbit);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.20 2009/10/08 19:14:23 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.21 2009/10/26 18:11:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -654,6 +654,9 @@ xbow_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
  *
  * Interrupt handling should be done at the Heart/Hub driver level, we only
  * act as a proxy here.
+ *
+ * Note that, for the time being, interrupt handling is implicitly done at
+ * the master nasid; other nodes do not handle interrupts.
  */
 
 int	xbow_intr_widget = 0;
@@ -662,6 +665,8 @@ int	(*xbow_intr_widget_intr_register)(int, int, int *) = NULL;
 int	(*xbow_intr_widget_intr_establish)(int (*)(void *), void *, int, int,
 	    const char *) = NULL;
 void	(*xbow_intr_widget_intr_disestablish)(int) = NULL;
+void	(*xbow_intr_widget_intr_set)(int) = NULL;
+void	(*xbow_intr_widget_intr_clear)(int) = NULL;
 
 int
 xbow_intr_register(int widget, int level, int *intrbit)
@@ -690,6 +695,24 @@ xbow_intr_disestablish(int intrbit)
 		return;
 
 	(*xbow_intr_widget_intr_disestablish)(intrbit);
+}
+
+void
+xbow_intr_clear(int intrbit)
+{
+	if (xbow_intr_widget_intr_clear == NULL)
+		return;
+
+	(*xbow_intr_widget_intr_clear)(intrbit);
+}
+
+void
+xbow_intr_set(int intrbit)
+{
+	if (xbow_intr_widget_intr_set == NULL)
+		return;
+
+	(*xbow_intr_widget_intr_set)(intrbit);
 }
 
 /*

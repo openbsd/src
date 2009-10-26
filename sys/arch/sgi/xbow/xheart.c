@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.13 2009/10/22 22:08:54 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.14 2009/10/26 18:11:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -66,6 +66,8 @@ int	xheart_ow_pulse(struct xheart_softc *, int, int);
 int	xheart_intr_register(int, int, int *);
 int	xheart_intr_establish(int (*)(void *), void *, int, int, const char *);
 void	xheart_intr_disestablish(int);
+void	xheart_intr_clear(int);
+void	xheart_intr_set(int);
 uint32_t xheart_intr_handler(uint32_t, struct trap_frame *);
 void	xheart_intr_makemasks(void);
 void	xheart_setintrmask(int);
@@ -137,6 +139,8 @@ xheart_attach(struct device *parent, struct device *self, void *aux)
 		xbow_intr_widget_intr_register = xheart_intr_register;
 		xbow_intr_widget_intr_establish = xheart_intr_establish;
 		xbow_intr_widget_intr_disestablish = xheart_intr_disestablish;
+		xbow_intr_widget_intr_clear = xheart_intr_clear;
+		xbow_intr_widget_intr_set = xheart_intr_set;
 		xheart_intem = 0;
 
 		/*
@@ -349,6 +353,20 @@ xheart_intr_disestablish(int intrbit)
 	splx(s);
 
 	free(ih, M_DEVBUF);
+}
+
+void
+xheart_intr_clear(int intrbit)
+{
+	*(volatile uint64_t *)PHYS_TO_XKPHYS(HEART_PIU_BASE + HEART_ISR_CLR,
+	    CCA_NC) = 1UL << intrbit;
+}
+
+void
+xheart_intr_set(int intrbit)
+{
+	*(volatile uint64_t *)PHYS_TO_XKPHYS(HEART_PIU_BASE + HEART_ISR_SET,
+	    CCA_NC) = 1UL << intrbit;
 }
 
 /*
