@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.29 2009/10/24 20:17:17 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.30 2009/10/26 17:55:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -440,7 +440,9 @@ struct iwn_tx_cmd {
 #define IWN_ANT_A	(1 << 0)
 #define IWN_ANT_B	(1 << 1)
 #define IWN_ANT_C	(1 << 2)
-/* Shortcut. */
+/* Shortcuts. */
+#define IWN_ANT_AB	(IWN_ANT_A | IWN_ANT_B)
+#define IWN_ANT_BC	(IWN_ANT_B | IWN_ANT_C)
 #define IWN_ANT_ABC	(IWN_ANT_A | IWN_ANT_B | IWN_ANT_C)
 
 /* Structure for command IWN_CMD_RXON. */
@@ -1510,7 +1512,7 @@ struct iwn_sensitivity_limits {
  */
 static const struct iwn_sensitivity_limits iwn4965_sensitivity_limits = {
 	105, 140,
-	170, 210,
+	220, 270,
 	 85, 120,
 	170, 210,
 	125, 200,
@@ -1530,6 +1532,30 @@ static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
 	 95,
 	 95,
 	 95
+};
+
+static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
+	105, 105,	/* min = max for performance bug in DSP. */
+	220, 220,	/* min = max for performance bug in DSP. */
+	 90, 120,
+	170, 210,
+	125, 200,
+	170, 400,
+	 95,
+	 95,
+	 95
+};
+
+static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
+	105, 145,
+	192, 232,
+	 80, 145,
+	128, 232,
+	125, 175,
+	160, 310,
+	 97,
+	 97,
+	100
 };
 
 /* Map TID to TX scheduler's FIFO. */

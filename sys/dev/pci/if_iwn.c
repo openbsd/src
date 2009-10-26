@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.69 2009/10/24 20:17:17 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.70 2009/10/26 17:55:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -76,24 +76,23 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_5300_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_5350_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_5350_2 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_1 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_2 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_3 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_4 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_5 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_6 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_7 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_1 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_3 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_4 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_3X3_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_3X3_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_2 }
 };
 
 int		iwn_match(struct device *, void *, void *);
 void		iwn_attach(struct device *, struct device *, void *);
-const struct	iwn_hal *iwn_hal_attach(struct iwn_softc *);
+const struct	iwn_hal *iwn_hal_attach(struct iwn_softc *, pci_product_id_t);
 #ifndef SMALL_KERNEL
 void		iwn_sensor_attach(struct iwn_softc *);
 #endif
@@ -276,7 +275,6 @@ static const struct iwn_hal iwn4965_hal = {
 	iwn4965_ampdu_tx_start,
 	iwn4965_ampdu_tx_stop,
 #endif
-	&iwn4965_sensitivity_limits,
 	IWN4965_NTXQUEUES,
 	IWN4965_NDMACHNLS,
 	IWN4965_ID_BROADCAST,
@@ -305,7 +303,6 @@ static const struct iwn_hal iwn5000_hal = {
 	iwn5000_ampdu_tx_start,
 	iwn5000_ampdu_tx_stop,
 #endif
-	&iwn5000_sensitivity_limits,
 	IWN5000_NTXQUEUES,
 	IWN5000_NDMACHNLS,
 	IWN5000_ID_BROADCAST,
@@ -345,7 +342,6 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t memtype, reg;
 	int i, error;
 
-	sc->sc_id = pa->pa_id;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
@@ -401,7 +397,8 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	/* Attach Hardware Abstraction Layer. */
-	if ((hal = iwn_hal_attach(sc)) == NULL)
+	hal = iwn_hal_attach(sc, PCI_PRODUCT(pa->pa_id));
+	if (hal == NULL)
 		return;
 
 	if ((error = iwn_hw_prepare(sc)) != 0) {
@@ -547,54 +544,79 @@ fail1:	iwn_free_fwmem(sc);
 }
 
 const struct iwn_hal *
-iwn_hal_attach(struct iwn_softc *sc)
+iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 {
 	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> 4) & 0xf;
 
 	switch (sc->hw_type) {
 	case IWN_HW_REV_TYPE_4965:
 		sc->sc_hal = &iwn4965_hal;
+		sc->limits = &iwn4965_sensitivity_limits;
 		sc->fwname = "iwn-4965";
-		sc->critical_temp = IWN_CTOK(110);
-		sc->txchainmask = IWN_ANT_A | IWN_ANT_B;
+		/*
+		 * The 4965 is supposed to have 3 RX chains, but the
+		 * Intel driver only activates 2.
+		 */
+		sc->txchainmask = IWN_ANT_AB;
 		sc->rxchainmask = IWN_ANT_ABC;
 		break;
 	case IWN_HW_REV_TYPE_5100:
 		sc->sc_hal = &iwn5000_hal;
+		sc->limits = &iwn5000_sensitivity_limits;
 		sc->fwname = "iwn-5000";
-		sc->critical_temp = 110;
 		sc->txchainmask = IWN_ANT_B;
-		sc->rxchainmask = IWN_ANT_A | IWN_ANT_B;
+		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	case IWN_HW_REV_TYPE_5150:
 		sc->sc_hal = &iwn5000_hal;
+		sc->limits = &iwn5150_sensitivity_limits;
 		sc->fwname = "iwn-5150";
-		/* NB: critical temperature will be read from EEPROM. */
 		sc->txchainmask = IWN_ANT_A;
-		sc->rxchainmask = IWN_ANT_A | IWN_ANT_B;
+		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	case IWN_HW_REV_TYPE_5300:
 	case IWN_HW_REV_TYPE_5350:
 		sc->sc_hal = &iwn5000_hal;
+		sc->limits = &iwn5000_sensitivity_limits;
 		sc->fwname = "iwn-5000";
-		sc->critical_temp = 110;
 		sc->txchainmask = IWN_ANT_ABC;
 		sc->rxchainmask = IWN_ANT_ABC;
 		break;
 	case IWN_HW_REV_TYPE_1000:
 		sc->sc_hal = &iwn5000_hal;
+		sc->limits = &iwn5000_sensitivity_limits;
 		sc->fwname = "iwn-1000";
-		sc->critical_temp = 110;
 		sc->txchainmask = IWN_ANT_A;
-		sc->rxchainmask = IWN_ANT_A | IWN_ANT_B;
+		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	case IWN_HW_REV_TYPE_6000:
 	case IWN_HW_REV_TYPE_6050:
 		sc->sc_hal = &iwn5000_hal;
+		sc->limits = &iwn6000_sensitivity_limits;
 		sc->fwname = "iwn-6000";
-		sc->critical_temp = 110;
-		sc->txchainmask = IWN_ANT_ABC;
-		sc->rxchainmask = IWN_ANT_ABC;
+		switch (pid) {
+		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_1:
+		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_2:
+			sc->sc_flags |= IWN_FLAG_HYBRID;
+			sc->txchainmask = IWN_ANT_AB;
+			sc->rxchainmask = IWN_ANT_AB;
+			break;
+		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1:
+		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2:
+			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
+			sc->txchainmask = IWN_ANT_BC;
+			sc->rxchainmask = IWN_ANT_BC;
+			break;
+		case PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1:
+		case PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2:
+			sc->txchainmask = IWN_ANT_AB;
+			sc->rxchainmask = IWN_ANT_AB;
+			break;
+		default:
+			sc->txchainmask = IWN_ANT_ABC;
+			sc->rxchainmask = IWN_ANT_ABC;
+			break;
+		}
 		break;
 	default:
 		printf(": adapter type %d not supported\n", sc->hw_type);
@@ -959,7 +981,7 @@ iwn_dma_contig_alloc(bus_dma_tag_t tag, struct iwn_dma_info *dma, void **kvap,
 		goto fail;
 
 	error = bus_dmamem_map(tag, &dma->seg, 1, size, &dma->vaddr,
-	    BUS_DMA_NOWAIT);
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error != 0)
 		goto fail;
 
@@ -1467,7 +1489,6 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 		iwn_read_prom_data(sc, base + IWN5000_EEPROM_VOLT, &val, 2);
 		volt = letoh16(val);
 		sc->temp_off = temp - (volt / -5);
-		sc->critical_temp = (IWN_CTOK(110) - sc->temp_off) * -5;
 		DPRINTF(("temp=%d volt=%d offset=%dK\n",
 		    temp, volt, sc->temp_off));
 	} else {
@@ -3171,7 +3192,7 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	memset(&linkq, 0, sizeof linkq);
 	linkq.id = wn->id;
 	linkq.antmsk_1stream = txant;
-	linkq.antmsk_2stream = IWN_ANT_A | IWN_ANT_B;
+	linkq.antmsk_2stream = IWN_ANT_AB;
 	linkq.ampdu_max = 31;
 	linkq.ampdu_threshold = 3;
 	linkq.ampdu_limit = htole16(4000);	/* 4ms */
@@ -3216,7 +3237,7 @@ iwn_add_broadcast_node(struct iwn_softc *sc, int async)
 	memset(&linkq, 0, sizeof linkq);
 	linkq.id = hal->broadcast_id;
 	linkq.antmsk_1stream = txant;
-	linkq.antmsk_2stream = IWN_ANT_A | IWN_ANT_B;
+	linkq.antmsk_2stream = IWN_ANT_AB;
 	linkq.ampdu_max = 64;
 	linkq.ampdu_threshold = 3;
 	linkq.ampdu_limit = htole16(4000);	/* 4ms */
@@ -3281,12 +3302,19 @@ int
 iwn_set_critical_temp(struct iwn_softc *sc)
 {
 	struct iwn_critical_temp crit;
+	int32_t temp;
 
 	IWN_WRITE(sc, IWN_UCODE_GP1_CLR, IWN_UCODE_GP1_CTEMP_STOP_RF);
 
+	if (sc->hw_type == IWN_HW_REV_TYPE_5150)
+		temp = (IWN_CTOK(110) - sc->temp_off) * -5;
+	else if (sc->hw_type == IWN_HW_REV_TYPE_4965)
+		temp = IWN_CTOK(110);
+	else
+		temp = 110;
 	memset(&crit, 0, sizeof crit);
-	crit.tempR = htole32(sc->critical_temp);
-	DPRINTF(("setting critical temperature to %u\n", sc->critical_temp));
+	crit.tempR = htole32(temp);
+	DPRINTF(("setting critical temperature to %d\n", temp));
 	return iwn_cmd(sc, IWN_CMD_SET_CRITICAL_TEMP, &crit, sizeof crit, 0);
 }
 
@@ -3609,13 +3637,13 @@ iwn_init_sensitivity(struct iwn_softc *sc)
 	calib->state = IWN_CALIB_STATE_INIT;
 	calib->cck_state = IWN_CCK_STATE_HIFA;
 	/* Set initial correlation values. */
-	calib->ofdm_x1     = hal->limits->min_ofdm_x1;
-	calib->ofdm_mrc_x1 = hal->limits->min_ofdm_mrc_x1;
+	calib->ofdm_x1     = sc->limits->min_ofdm_x1;
+	calib->ofdm_mrc_x1 = sc->limits->min_ofdm_mrc_x1;
 	calib->ofdm_x4     = 90;
-	calib->ofdm_mrc_x4 = hal->limits->min_ofdm_mrc_x4;
+	calib->ofdm_mrc_x4 = sc->limits->min_ofdm_mrc_x4;
 	calib->cck_x4      = 125;
-	calib->cck_mrc_x4  = hal->limits->min_cck_mrc_x4;
-	calib->energy_cck  = hal->limits->energy_cck;
+	calib->cck_mrc_x4  = sc->limits->min_cck_mrc_x4;
+	calib->energy_cck  = sc->limits->energy_cck;
 
 	/* Write initial sensitivity. */
 	if ((error = iwn_send_sensitivity(sc)) != 0)
@@ -3798,8 +3826,7 @@ iwn_tune_sensitivity(struct iwn_softc *sc, const struct iwn_rx_stats *stats)
 		needs_update = 1;		\
 	}
 
-	const struct iwn_hal *hal = sc->sc_hal;
-	const struct iwn_sensitivity_limits *limits = hal->limits;
+	const struct iwn_sensitivity_limits *limits = sc->limits;
 	struct iwn_calib_state *calib = &sc->calib;
 	uint32_t val, rxena, fa;
 	uint32_t energy[3], energy_min;
@@ -3928,7 +3955,6 @@ iwn_tune_sensitivity(struct iwn_softc *sc, const struct iwn_rx_stats *stats)
 int
 iwn_send_sensitivity(struct iwn_softc *sc)
 {
-	const struct iwn_hal *hal = sc->sc_hal;
 	struct iwn_calib_state *calib = &sc->calib;
 	struct iwn_sensitivity_cmd cmd;
 
@@ -3939,7 +3965,7 @@ iwn_send_sensitivity(struct iwn_softc *sc)
 	cmd.corr_ofdm_mrc_x1 = htole16(calib->ofdm_mrc_x1);
 	cmd.corr_ofdm_x4     = htole16(calib->ofdm_x4);
 	cmd.corr_ofdm_mrc_x4 = htole16(calib->ofdm_mrc_x4);
-	cmd.energy_ofdm      = htole16(hal->limits->energy_ofdm);
+	cmd.energy_ofdm      = htole16(sc->limits->energy_ofdm);
 	cmd.energy_ofdm_th   = htole16(62);
 	/* CCK modulation. */
 	cmd.corr_cck_x4      = htole16(calib->cck_x4);
@@ -4151,7 +4177,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	if ((flags & IEEE80211_CHAN_5GHZ) &&
 	    sc->hw_type == IWN_HW_REV_TYPE_4965) {
 		/* Ant A must be avoided in 5GHz because of an HW bug. */
-		rxchain |= IWN_RXCHAIN_SEL(IWN_ANT_B | IWN_ANT_C);
+		rxchain |= IWN_RXCHAIN_SEL(IWN_ANT_BC);
 	} else	/* Use all available RX antennas. */
 		rxchain |= IWN_RXCHAIN_SEL(IWN_ANT_ABC);
 	hdr->rxchain = htole16(rxchain);
@@ -5265,7 +5291,6 @@ iwn4965_nic_config(struct iwn_softc *sc)
 int
 iwn5000_nic_config(struct iwn_softc *sc)
 {
-	pci_product_id_t id;
 	uint32_t tmp;
 	int error;
 
@@ -5295,13 +5320,10 @@ iwn5000_nic_config(struct iwn_softc *sc)
 	}
 	iwn_nic_unlock(sc);
 
-	id = PCI_PRODUCT(sc->sc_id);
-	if (id == PCI_PRODUCT_INTEL_WIFI_LINK_6000_1 ||
-	    id == PCI_PRODUCT_INTEL_WIFI_LINK_6000_2 ||
-	    id == PCI_PRODUCT_INTEL_WIFI_LINK_6000_7) {
+	if (sc->sc_flags & IWN_FLAG_HYBRID) {
 		/* Use internal and external power amplifiers. */
 		IWN_WRITE(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_RADIO_2X2_HYB);
-	} else if (id == PCI_PRODUCT_INTEL_WIFI_LINK_6000_5) {
+	} else if (sc->sc_flags & IWN_FLAG_INTERNAL_PA) {
 		/* Use internal power amplifier only. */
 		IWN_WRITE(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_RADIO_2X2_IPA);
 	}
