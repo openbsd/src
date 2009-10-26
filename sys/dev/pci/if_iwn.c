@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.70 2009/10/26 17:55:29 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.71 2009/10/26 18:38:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1603,6 +1603,8 @@ iwn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	int ridx, i;
 
 	ieee80211_amrr_node_init(&sc->amrr, &wn->amn);
+	/* Start at lowest available bit-rate, AMRR will raise. */
+	ni->ni_txrate = 0;
 
 	for (i = 0; i < ni->ni_rates.rs_nrates; i++) {
 		rate = ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL;
@@ -1611,9 +1613,6 @@ iwn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 			if (iwn_rates[ridx].rate == rate)
 				break;
 		wn->ridx[i] = ridx;
-		/* Initial TX rate <= 24Mbps. */
-		if (rate <= 48)
-			ni->ni_txrate = i;
 	}
 }
 

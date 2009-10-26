@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.95 2009/10/24 21:01:18 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.96 2009/10/26 18:38:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -587,7 +587,7 @@ wpi_dma_contig_alloc(bus_dma_tag_t tag, struct wpi_dma_info *dma, void **kvap,
 		goto fail;
 
 	error = bus_dmamem_map(tag, &dma->seg, 1, size, &dma->vaddr,
-	    BUS_DMA_NOWAIT);
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error != 0)
 		goto fail;
 
@@ -1000,6 +1000,8 @@ wpi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	int ridx, i;
 
 	ieee80211_amrr_node_init(&sc->amrr, &wn->amn);
+	/* Start at lowest available bit-rate, AMRR will raise. */
+	ni->ni_txrate = 0;
 
 	for (i = 0; i < ni->ni_rates.rs_nrates; i++) {
 		rate = ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL;
@@ -1008,9 +1010,6 @@ wpi_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 			if (wpi_rates[ridx].rate == rate)
 				break;
 		wn->ridx[i] = ridx;
-		/* Initial TX rate <= 24Mbps. */
-		if (rate <= 48)
-			ni->ni_txrate = i;
 	}
 }
 
