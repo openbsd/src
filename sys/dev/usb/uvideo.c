@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.128 2009/10/13 19:33:19 pirofti Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.129 2009/10/26 15:34:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1708,7 +1708,8 @@ uvideo_vs_open(struct uvideo_softc *sc)
 	}
 
 	/* calculate optimal isoc xfer size */
-	if (strncmp(sc->sc_udev->bus->bdev.dv_xname, "ohci", 4) == 0) {
+	if (strcmp(sc->sc_udev->bus->bdev.dv_cfdata->cf_driver->cd_name,
+	    "ohci") == 0) {
 		/* ohci workaround */
 		sc->sc_nframes = 8;
 	} else {
