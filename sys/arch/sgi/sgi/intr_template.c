@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.3 2009/10/26 18:13:34 miod Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.4 2009/10/26 20:14:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -95,7 +95,6 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 						continue;
 #endif
 					splraise(ih->ih_level);
-					ih->frame = frame;
 					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
 						rc = 1;
 						ih->ih_count.ec_count++;
