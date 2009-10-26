@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.2 2009/10/26 21:10:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2004 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,13 +29,14 @@
 char *
 xstrdup(const char *s)
 {
-	void	*ptr;
+	char	*ptr;
 	size_t	 len;
 
 	len = strlen(s) + 1;
 	ptr = xmalloc(len);
 
-        return (strncpy(ptr, s, len));
+	strlcpy(ptr, s, len);
+	return (ptr);
 }
 
 void *
