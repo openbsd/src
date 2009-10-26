@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.2 2009/10/14 20:21:16 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.3 2009/10/26 18:13:34 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -107,6 +107,8 @@ mbattach(struct device *parent, struct device *self, void *aux)
 #ifdef TGT_OCTANE
 	case SGI_OCTANE:
 		nca.ca_name = "xbow";
+		config_found(self, &nca, mbprint);
+		nca.ca_name = "power";
 		config_found(self, &nca, mbprint);
 		break;
 #endif

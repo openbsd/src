@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.21 2009/08/18 19:32:47 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.22 2009/10/26 18:13:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -124,7 +124,8 @@ ioc_print(void *aux, const char *iocname)
 	if (iocname != NULL)
 		printf("%s at %s", iaa->iaa_name, iocname);
 
-	if ((int)iaa->iaa_base > 0)	/* no base for onewire */
+	/* no base for onewire, and don't display it for rtc */
+	if ((int)iaa->iaa_base > 0 && (int)iaa->iaa_base < IOC3_BYTEBUS_0)
 		printf(" base 0x%x", iaa->iaa_base);
 
 	return (UNCONF);
@@ -141,7 +142,9 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t memsize;
 	uint32_t data;
 	int dev;
-	int dual_irq, shared_handler, has_ethernet, has_ps2, has_serial;
+	int dual_irq, shared_handler;
+	int device_mask;
+	bus_addr_t rtcbase;
 	struct device *child;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
@@ -205,27 +208,33 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: ", self->dv_xname);
 
 	dual_irq = shared_handler = 0;
-	has_ethernet = has_ps2 = has_serial = 0;
+	device_mask = 0;
 	if (sc->sc_owserial != NULL) {
 		if (strncmp(sc->sc_owserial->sc_product, "030-0873-", 9) == 0) {
 			/* MENET board */
-			has_ethernet = has_serial = 1;
+			device_mask = (1 << IOCDEV_SERIAL_A) |
+			    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_EF);
 			shared_handler = 1;
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-0891-", 9) == 0) {
 			/* IP30 on-board IOC3 */
-			has_ethernet = has_ps2 = has_serial = 1;
+			device_mask = (1 << IOCDEV_SERIAL_A) |
+			    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_LPT) |
+			    (1 << IOCDEV_KBC) | (1 << IOCDEV_RTC) |
+			    (1 << IOCDEV_EF);
+			rtcbase = IOC3_BYTEBUS_1;
 			dual_irq = 1;
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-1155-", 9) == 0) {
 			/* CADDuo board */
-			has_ps2 = has_ethernet = 1;
+			device_mask = (1 << IOCDEV_KBC) | (1 << IOCDEV_EF);
 			shared_handler = 1;
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-1657-", 9) == 0 ||
 		    strncmp(sc->sc_owserial->sc_product, "030-1664-", 9) == 0) {
 			/* PCI_SIO_UFC dual serial board */
-			has_serial = 1;
+			device_mask = (1 << IOCDEV_SERIAL_A) |
+			    (1 << IOCDEV_SERIAL_B);
 		} else {
 			goto unknown;
 		}
@@ -237,7 +246,11 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (sys_config.system_type == SGI_O200 ||
 		    sys_config.system_type == SGI_O300) {
-			has_ethernet = has_ps2 = has_serial = 1;
+			device_mask = (1 << IOCDEV_SERIAL_A) |
+			    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_LPT) |
+			    (1 << IOCDEV_KBC) | (1 << IOCDEV_RTC) |
+			    (1 << IOCDEV_EF);
+			rtcbase = IOC3_BYTEBUS_0;
 			dual_irq = 1;
 			/*
 			 * XXX On IP35 class machines, there are no
@@ -370,13 +383,20 @@ establish:
 	 * Attach other sub-devices.
 	 */
 
-	if (has_serial) {
+	if (ISSET(device_mask, 1 << IOCDEV_SERIAL_A)) {
+		/*
+		 * Put serial ports in passthrough mode,
+		 * to use the MI com(4) 16550 support.
+		 */
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_UARTA_SSCR, 0);
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_UARTB_SSCR, 0);
+
 		ioc_attach_child(self, "com", IOC3_UARTA_BASE, IOCDEV_SERIAL_A);
 		ioc_attach_child(self, "com", IOC3_UARTB_BASE, IOCDEV_SERIAL_B);
 	}
-	if (has_ps2)
+	if (ISSET(device_mask, 1 << IOCDEV_KBC))
 		ioc_attach_child(self, "iockbc", IOC3_KBC_BASE, IOCDEV_KBC);
-	if (has_ethernet) {
+	if (ISSET(device_mask, 1 << IOCDEV_EF)) {
 		child = ioc_attach_child(self, "iec", IOC3_EF_BASE, IOCDEV_EF);
 		if (dual_irq != 0 && child == NULL) {
 			/*
@@ -389,8 +409,10 @@ establish:
 			pci_intr_disestablish(sc->sc_pc, sc->sc_ih1);
 		}
 	}
-	/* XXX what about the parallel port? */
-	ioc_attach_child(self, "dsrtc", 0 /* IOC3_RTC_BASE */, IOCDEV_RTC);
+	if (ISSET(device_mask, 1 << IOCDEV_LPT))
+		ioc_attach_child(self, "lpt", IOC3_LPT_BASE, IOCDEV_LPT);
+	if (ISSET(device_mask, 1 << IOCDEV_RTC))
+		ioc_attach_child(self, "dsrtc", rtcbase, IOCDEV_RTC);
 
 	return;
 

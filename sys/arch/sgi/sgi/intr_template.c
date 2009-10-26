@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.2 2009/10/26 18:00:06 miod Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.3 2009/10/26 18:13:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -82,7 +82,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 			tmpisr = isr & (INTR_IMASK(lvl) ^ INTR_IMASK(lvl - 1));
 			if (tmpisr == 0)
 				continue;
-			for (bitno = bit, mask = 1UL << bitno; tmpisr != 0;
+			for (bitno = bit, mask = 1UL << bitno; mask != 0;
 			    bitno--, mask >>= 1) {
 				if ((tmpisr & mask) == 0)
 					continue;

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.13 2009/10/22 19:55:45 miod Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.14 2009/10/26 18:13:31 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -38,6 +38,7 @@ config		bsd	swap generic
 mainbus0	at root
 cpu*		at mainbus0
 clock0		at mainbus0
+power0		at mainbus0
 
 #### Main local buses
 xbow0		at mainbus0

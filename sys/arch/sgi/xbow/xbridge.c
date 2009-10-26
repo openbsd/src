@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.56 2009/10/26 18:11:27 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.57 2009/10/26 18:13:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -2136,17 +2136,31 @@ xbridge_setup(struct xbpci_softc *xb)
 
 	/*
 	 * Setup interrupt handling.
+	 *
 	 * Note that, on PIC, the `lower address' register is a 64 bit
 	 * register and thus need to be initialized with the whole 64 bit
 	 * address; the `upper address' register is hardwired to zero and
 	 * ignores writes, so we can use the same logic on Bridge and PIC.
+	 *
+	 * Also, on Octane, we need to keep otherwise unused interrupt source
+	 * #6 enabled on the obio widget, as it controls routing of the
+	 * power button interrupt (and to make things more complicated than
+	 * necessary, this pin is wired to a particular Heart interrupt
+	 * register bit, so interrupts on this pin will never be seen at the
+	 * Bridge level.
 	 */
 
-	int_addr = ((uint64_t)xbow_intr_widget << 48) |
-	    (xbow_intr_widget_register & ((1UL << 48) - 1));
-	xbridge_write_reg(xb, BRIDGE_IER, 0);
+#ifdef TGT_OCTANE
+	if (sys_config.system_type == SGI_OCTANE &&
+	    xb->xb_widget == IP30_BRIDGE_WIDGET)
+		xbridge_write_reg(xb, BRIDGE_IER, 1 << 6);
+	else
+#endif
+		xbridge_write_reg(xb, BRIDGE_IER, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_MODE, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_DEV, 0);
+	int_addr = ((uint64_t)xbow_intr_widget << 48) |
+	    (xbow_intr_widget_register & ((1UL << 48) - 1));
 	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_LOWER, int_addr);
 	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_UPPER, int_addr >> 32);
 

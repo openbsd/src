@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.10 2009/10/26 18:00:06 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.11 2009/10/26 18:13:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -22,64 +22,106 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 
-#include <dev/ic/ds1687reg.h>
-
 #include <machine/autoconf.h>
+#include <mips64/archtype.h>
+
+#include <dev/ic/ds1687reg.h>
 #include <sgi/dev/dsrtcvar.h>
 
-#include <sgi/localbus/macebus.h>
-#include <sgi/localbus/macebusvar.h>
+#include "power.h"
 
 /*
- * Power button driver for the SGI O2.
+ * Power button driver for the SGI O2 and Octane.
  */
 
-struct power_softc {
-	struct device		sc_dev;
-	bus_space_tag_t		sc_st;
-	bus_space_handle_t	sc_sh;
-};
-
-void	power_attach(struct device *, struct device *, void *);
-int	power_match(struct device *, void *, void *);
 int	power_intr(void *);
 
 struct cfdriver power_cd = {
 	NULL, "power", DV_DULL
 };
 
+#if NPOWER_MACEBUS > 0
+
+#include <sgi/localbus/macebusvar.h>
+
+void	power_macebus_attach(struct device *, struct device *, void *);
+int	power_macebus_match(struct device *, void *, void *);
+
+struct cfattach power_macebus_ca = {
+	sizeof(struct device), power_macebus_match, power_macebus_attach
+};
+
 int
-power_match(struct device *parent, void *match, void *aux)
+power_macebus_match(struct device *parent, void *match, void *aux)
 {
 	return (1);
 }
 
-struct cfattach power_ca = {
-	sizeof(struct power_softc), power_match, power_attach
-};
-
 void
-power_attach(struct device *parent, struct device *self, void *aux)
+power_macebus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct power_softc *sc = (void *)self;
 	struct macebus_attach_args *maa = aux;
-	extern bus_space_handle_t mace_h;
 
-	sc->sc_st = maa->maa_iot;
-
-	/* Map subregion to ISA control registers. */
-	if (bus_space_subregion(sc->sc_st, mace_h, 0, 0x80, &sc->sc_sh)) {
-		printf(": failed to map ISA control registers!\n");
-		return;
-	}
- 	
 	/* Establish interrupt handler. */
 	if (macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
-	    IST_EDGE, IPL_TTY, power_intr, sc, sc->sc_dev.dv_xname))
+	    IST_EDGE, IPL_TTY, power_intr, self, self->dv_xname))
 		printf("\n");
 	else
 		printf(": unable to establish interrupt!\n");
 }
+
+#endif
+
+#if NPOWER_MAINBUS > 0
+
+#include <sgi/xbow/xbow.h>
+#include <sgi/xbow/xheartreg.h>
+
+void	power_mainbus_attach(struct device *, struct device *, void *);
+int	power_mainbus_match(struct device *, void *, void *);
+int	power_mainbus_intr(void *);
+
+struct cfattach power_mainbus_ca = {
+	sizeof(struct device), power_mainbus_match, power_mainbus_attach
+};
+
+int
+power_mainbus_match(struct device *parent, void *match, void *aux)
+{
+	struct confargs *ca = aux;
+
+	if (strcmp(ca->ca_name, power_cd.cd_name) != 0)
+		return 0;
+
+	return sys_config.system_type == SGI_OCTANE ? 1 : 0;
+}
+
+void
+power_mainbus_attach(struct device *parent, struct device *self, void *aux)
+{
+	/* Establish interrupt handler. */
+	if (xbow_intr_establish(power_mainbus_intr, self, HEART_ISR_POWER,
+	    IPL_TTY, self->dv_xname) != 0) {
+		printf(": unable to establish interrupt!\n");
+		return;
+	}
+
+	printf("\n");
+}
+
+int
+power_mainbus_intr(void *v)
+{
+	/*
+	 * Clear interrupt condition; debouncing the kickstart bit will not
+	 * suffice.
+	 */
+	xbow_intr_clear(HEART_ISR_POWER);
+
+	return power_intr(v);
+}
+
+#endif
 
 int
 power_intr(void *unused)
@@ -94,6 +136,8 @@ power_intr(void *unused)
 	val = dsrtc_register_read(DS1687_EXT_CTRL);
 	if (val == -1)
 		return 1;		/* no rtc attached */
+
+	/* debounce condition */
 	dsrtc_register_write(DS1687_EXT_CTRL, val & ~DS1687_KICKSTART);
 
 	if (kbd_reset == 1) {

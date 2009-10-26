@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.35 2009/10/26 18:00:04 miod Exp $
+#	$OpenBSD: files.sgi,v 1.36 2009/10/26 18:13:31 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -148,8 +148,11 @@ file	arch/sgi/dev/mkbc.c			mkbc	needs-flag
 
 # Power button
 device	power
-attach	power at macebus
-file 	arch/sgi/dev/power.c			power
+attach	power at macebus with power_macebus
+attach	power at mainbus with power_mainbus
+file 	arch/sgi/dev/power.c			power |
+						power_macebus | power_mainbus
+							needs-flag
 
 # Raster operations
 include	"dev/rasops/files.rasops"
