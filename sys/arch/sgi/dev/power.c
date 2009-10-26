@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.11 2009/10/26 18:13:34 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.12 2009/10/26 20:14:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -88,9 +88,9 @@ struct cfattach power_mainbus_ca = {
 int
 power_mainbus_match(struct device *parent, void *match, void *aux)
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *maa = aux;
 
-	if (strcmp(ca->ca_name, power_cd.cd_name) != 0)
+	if (strcmp(maa->maa_name, power_cd.cd_name) != 0)
 		return 0;
 
 	return sys_config.system_type == SGI_OCTANE ? 1 : 0;

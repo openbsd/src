@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.21 2009/10/26 18:11:27 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.22 2009/10/26 20:14:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -155,9 +155,9 @@ int	(*xbow_widget_id)(int16_t, u_int, uint32_t *);
 int
 xbowmatch(struct device *parent, void *match, void *aux)
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *maa = aux;
 
-	if (strcmp(ca->ca_name, xbow_cd.cd_name) != 0)
+	if (strcmp(maa->maa_name, xbow_cd.cd_name) != 0)
 		return (0);
 
 	switch (sys_config.system_type) {
@@ -266,8 +266,8 @@ void
 xbowattach(struct device *parent, struct device *self, void *aux)
 {
 	struct xbow_softc *sc = (struct xbow_softc *)self;
-	struct confargs *ca = aux;
-	int16_t nasid = ca->ca_nasid;
+	struct mainbus_attach_args *maa = aux;
+	int16_t nasid = maa->maa_nasid;
 	uint32_t wid, vendor, product;
 	const struct xbow_product *p;
 	struct xbow_config cfg;

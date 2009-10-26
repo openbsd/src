@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.30 2009/10/26 18:11:25 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.31 2009/10/26 20:14:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -310,7 +310,7 @@ ip27_setup()
 void
 ip27_autoconf(struct device *parent)
 {
-	struct confargs nca;
+	struct mainbus_attach_args maa;
 	uint node;
 
 	/*
@@ -318,12 +318,12 @@ ip27_autoconf(struct device *parent)
 	 * if any, will get attached as they are discovered.
 	 */
 
-	bzero(&nca, sizeof nca);
-	nca.ca_nasid = masternasid;
-	nca.ca_name = "cpu";
-	config_found(parent, &nca, ip27_print);
-	nca.ca_name = "clock";
-	config_found(parent, &nca, ip27_print);
+	bzero(&maa, sizeof maa);
+	maa.maa_nasid = masternasid;
+	maa.maa_name = "cpu";
+	config_found(parent, &maa, ip27_print);
+	maa.maa_name = "clock";
+	config_found(parent, &maa, ip27_print);
 
 	/*
 	 * Now attach all nodes' I/O devices.
@@ -342,20 +342,20 @@ ip27_autoconf(struct device *parent)
 void
 ip27_attach_node(struct device *parent, int16_t nasid)
 {
-	struct confargs nca;
+	struct mainbus_attach_args maa;
 
-	bzero(&nca, sizeof nca);
-	nca.ca_name = "xbow";
-	nca.ca_nasid = nasid;
-	config_found(parent, &nca, ip27_print);
+	bzero(&maa, sizeof maa);
+	maa.maa_name = "xbow";
+	maa.maa_nasid = nasid;
+	config_found(parent, &maa, ip27_print);
 }
 
 int
 ip27_print(void *aux, const char *pnp)
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *maa = aux;
 
-	printf(" nasid %d", ca->ca_nasid);
+	printf(" nasid %d", maa->maa_nasid);
 
 	return UNCONF;
 }

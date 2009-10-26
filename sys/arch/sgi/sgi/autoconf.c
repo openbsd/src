@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.25 2009/10/22 19:55:45 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.26 2009/10/26 20:14:42 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -327,9 +327,9 @@ device_register(struct device *dev, void *aux)
 	 */
 
 	if (strcmp(component, "xio") == 0) {
-		struct confargs *ca = aux;
+		struct mainbus_attach_args *maa = aux;
 
-		if (strcmp(cd->cd_name, "xbow") == 0 && unit == ca->ca_nasid)
+		if (strcmp(cd->cd_name, "xbow") == 0 && unit == maa->maa_nasid)
 			goto found_advance;
 	}
 

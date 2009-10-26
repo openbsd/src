@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.14 2009/09/15 04:54:31 syuu Exp $ */
+/*	$OpenBSD: cpu.c,v 1.15 2009/10/26 20:14:40 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -80,10 +80,10 @@ int
 cpumatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *maa = aux;
 
 	/* make sure that we're looking for a CPU. */
-	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
+	if (strcmp(maa->maa_name, cpu_cd.cd_name) != 0)
 		return 0;
 	if (cf->cf_unit >= MAX_CPUS)
 		return 0;
@@ -102,7 +102,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 #ifdef MULTIPROCESSOR
 	cpuset_add(&cpus_running, ci);
 #endif
-	if(cpuno == 0) {
+	if (cpuno == 0) {
 		ci = &cpu_info_primary;
 #ifdef MULTIPROCESSOR
 		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;

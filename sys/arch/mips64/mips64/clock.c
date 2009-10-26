@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.25 2009/10/22 22:08:54 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.26 2009/10/26 20:14:40 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -80,9 +80,9 @@ struct timecounter cp0_timecounter = {
 int
 clockmatch(struct device *parent, void *vcf, void *aux)
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *maa = aux;
 
-	if (strcmp(ca->ca_name, clock_cd.cd_name) != 0)
+	if (strcmp(maa->maa_name, clock_cd.cd_name) != 0)
 		return 0;
 
 	return 10;	/* Try to get clock early */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.9 2009/10/26 18:34:53 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.10 2009/10/26 20:14:42 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -104,9 +104,14 @@ tobcd(int x, int binary)
 int
 dsrtc_match(struct device *parent, void *match, void *aux)
 {
-	struct confargs *ca = (struct confargs *)aux;
+	/*
+	 * Depending on what dsrtc attaches to, the actual attach_args
+	 * may be a different struct, but all of them start with the
+	 * same name field.
+	 */
+	struct mainbus_attach_args *maa = aux;
 
-	return strcmp(ca->ca_name, dsrtc_cd.cd_name) == 0;
+	return strcmp(maa->maa_name, dsrtc_cd.cd_name) == 0;
 }
 
 void

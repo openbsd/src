@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.21 2009/10/26 18:00:06 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.22 2009/10/26 20:14:42 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -70,9 +70,9 @@ struct sys_rec {
 
 extern struct sys_rec sys_config;
 
-struct confargs {
-	char		*ca_name;
-	int16_t		 ca_nasid;
+struct mainbus_attach_args {
+	const char	*maa_name;
+	int16_t		 maa_nasid;
 };
 
 void	enaddr_aton(const char *, u_int8_t *);

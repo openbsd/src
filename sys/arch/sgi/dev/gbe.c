@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.9 2009/10/26 18:00:06 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.10 2009/10/26 20:14:42 miod Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -185,9 +185,9 @@ struct cfdriver gbe_cd = {
 int
 gbe_match(struct device *parent, void *cf, void *aux)
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *maa = aux;
 
-	if (strcmp(ca->ca_name, gbe_cd.cd_name) != 0)
+	if (strcmp(maa->maa_name, gbe_cd.cd_name) != 0)
 		return 0;
 
 	return 1;
