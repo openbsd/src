@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.6 2009/10/25 22:00:15 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.7 2009/10/26 20:47:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -152,6 +152,9 @@ void
 server_client_callback(int fd, int events, void *data)
 {
 	struct client	*c = data;
+
+	if (c->flags & CLIENT_DEAD)
+		return;
 
 	if (fd == c->ibuf.fd) {
 		if (events & (POLLERR|POLLNVAL|POLLHUP))
