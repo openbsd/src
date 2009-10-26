@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_6600.c,v 1.11 2009/01/17 18:30:05 miod Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.12 2009/10/26 20:17:26 deraadt Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
@@ -302,7 +302,7 @@ dec_6600_device_register(dev, aux)
 	if (!strcmp(cd->cd_name, "wd")) {
 		struct ata_atapi_attach *aa_link = aux;
 
-		if ((strncmp("pciide", parent->dv_xname, 6) != 0))
+		if ((strcmp("pciide", parent->dv_cfdata->cf_driver->cd_name) != 0))
 			return;
 		if (parent != ctrlrdev)
 			return;

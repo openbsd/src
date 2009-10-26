@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_up1000.c,v 1.9 2008/07/16 20:03:20 miod Exp $	*/
+/*	$OpenBSD: api_up1000.c,v 1.10 2009/10/26 20:17:26 deraadt Exp $	*/
 /* $NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -255,7 +255,7 @@ api_up1000_device_register(dev, aux)
 	 */
 	if ((ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
 		struct ata_atapi_attach *aa_link = aux;
-		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
+		if ((strcmp("pciide", parent->dv_cfdata->cf_driver->cd_name) != 0)) {
 			return;
 		} else {
 			if (parent != scsidev)

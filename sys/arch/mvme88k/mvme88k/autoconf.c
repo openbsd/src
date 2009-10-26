@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.44 2009/03/15 20:39:53 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.45 2009/10/26 20:17:27 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -112,8 +112,8 @@ device_register(struct device *dev, void *aux)
 	/*
 	 * scsi: sd,cd
 	 */
-	if (strncmp("cd", dev->dv_xname, 2) == 0 ||
-	    strncmp("sd", dev->dv_xname, 2) == 0) {
+	if (strcmp("cd", dev->dv_cfdata->cf_driver->cd_name) == 0 ||
+	    strcmp("sd", dev->dv_cfdata->cf_driver->cd_name) == 0) {
 		struct scsi_attach_args *sa = aux;
 		int target, bus, lun;
 
@@ -134,8 +134,8 @@ device_register(struct device *dev, void *aux)
 	/*
 	 * ethernet: ie,le
 	 */
-	else if (strncmp("ie", dev->dv_xname, 2) == 0 ||
-	    strncmp("le", dev->dv_xname, 2) == 0) {
+	else if (strcmp("ie", dev->dv_cfdata->cf_driver->cd_name) == 0 ||
+	    strcmp("le", dev->dv_cfdata->cf_driver->cd_name) == 0) {
 		struct confargs *ca = aux;
 
 		if (ca->ca_paddr == bootaddr) {

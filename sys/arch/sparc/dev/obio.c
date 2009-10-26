@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.19 2007/10/08 17:48:06 krw Exp $	*/
+/*	$OpenBSD: obio.c,v 1.20 2009/10/26 20:17:27 deraadt Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ vmesattach(parent, self, args)
 	void *args;
 {
 	if (self->dv_unit > 0 ||
-	    (CPU_ISSUN4M && strncmp(parent->dv_xname, "vme", 3) != 0)) {
+	    (CPU_ISSUN4M && strcmp(parent->dv_cfdata->cf_driver->cd_name, "vme") != 0)) {
 		printf(" unsupported\n");
 		return;
 	}
@@ -312,7 +312,7 @@ vmelattach(parent, self, args)
 	void *args;
 {
 	if (self->dv_unit > 0 ||
-	    (CPU_ISSUN4M && strncmp(parent->dv_xname, "vme", 3) != 0)) {
+	    (CPU_ISSUN4M && strcmp(parent->dv_cfdata->cf_driver->cd_name, "vme") != 0)) {
 		printf(" unsupported\n");
 		return;
 	}

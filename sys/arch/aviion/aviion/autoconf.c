@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2009/03/15 20:39:51 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2009/10/26 20:17:27 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -191,8 +191,8 @@ device_register(struct device *dev, void *aux)
 		 * Internal ethernet is le at syscon only, and we do not
 		 * care about controller and unit numbers.
 		 */
-		if (strncmp("le", dev->dv_xname, 2) == 0 &&
-		    strncmp("syscon", dev->dv_parent->dv_xname, 6) == 0)
+		if (strcmp("le", dev->dv_cfdata->cf_driver->cd_name) == 0 &&
+		    strcmp("syscon", dev->dv_parent->dv_cfdata->cf_driver->cd_name) == 0)
 			bootdv = dev;
 		break;
 	}

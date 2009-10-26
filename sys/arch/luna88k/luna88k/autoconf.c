@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2009/03/15 20:39:53 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 2009/10/26 20:17:27 deraadt Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -151,14 +151,14 @@ device_register(struct device *dev, void *aux)
         /*
          * scsi: sd,cd  XXX: Can LUNA88K boot from CD-ROM?
          */
-        if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-            strncmp("cd", dev->dv_xname, 2) == 0) {
+        if (strcmp("sd", dev->dv_cfdata->cf_driver->cd_name) == 0 ||
+            strcmp("cd", dev->dv_cfdata->cf_driver->cd_name) == 0) {
 		struct scsi_attach_args *sa = aux;
 		struct device *spcsc;
 
 		spcsc = dev->dv_parent->dv_parent;
 
-                if (strncmp(autoboot.cont, spcsc->dv_xname, 4) == 0 &&
+                if (strcmp(autoboot.cont, spcsc->dv_cfdata->cf_driver->cd_name) == 0 &&
 		    sa->sa_sc_link->target == autoboot.targ &&
 		    sa->sa_sc_link->lun == 0) {
                         bootdv = dev;

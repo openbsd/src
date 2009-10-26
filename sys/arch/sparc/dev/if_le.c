@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.29 2007/05/29 09:54:09 sobrado Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.30 2009/10/26 20:17:27 deraadt Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -429,9 +429,9 @@ leattach(parent, self, aux)
 	int pri;
 	struct bootpath *bp;
 #if defined(SUN4C) || defined(SUN4M)
-	int sbuschild = strncmp(parent->dv_xname, "sbus", 4) == 0;
-	int lebufchild = strncmp(parent->dv_xname, "lebuffer", 8) == 0;
-	int dmachild = strncmp(parent->dv_xname, "ledma", 5) == 0;
+	int sbuschild = strcmp(parent->dv_cfdata->cf_driver->cd_name, "sbus") == 0;
+	int lebufchild = strcmp(parent->dv_cfdata->cf_driver->cd_name, "lebuffer") == 0;
+	int dmachild = strcmp(parent->dv_cfdata->cf_driver->cd_name, "ledma") == 0;
 	struct lebuf_softc *lebuf;
 #endif
 

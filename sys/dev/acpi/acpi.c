@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.142 2009/10/26 19:56:01 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.143 2009/10/26 20:17:26 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -400,7 +400,7 @@ acpiide_notify(struct aml_node *node, int ntype, void *arg)
 
 	/* Walk device list looking for IDE device match */
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (strncmp(dev->dv_xname, "pciide", 6))
+		if (strcmp(dev->dv_cfdata->cf_driver->cd_name, "pciide"))
 			continue;
 
 		wsc = (struct pciide_softc *)dev;
@@ -729,12 +729,11 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	SLIST_INIT(&sc->sc_ac);
 	SLIST_INIT(&sc->sc_bat);
 	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (!strncmp(dev->dv_xname, "acpiac", strlen("acpiac"))) {
+		if (!strcmp(dev->dv_cfdata->cf_driver->cd_name, "acpiac")) {
 			ac = malloc(sizeof(*ac), M_DEVBUF, M_WAITOK | M_ZERO);
 			ac->aac_softc = (struct acpiac_softc *)dev;
 			SLIST_INSERT_HEAD(&sc->sc_ac, ac, aac_link);
-		}
-		if (!strncmp(dev->dv_xname, "acpibat", strlen("acpibat"))) {
+		} else if (!strcmp(dev->dv_cfdata->cf_driver->cd_name, "acpibat")) {
 			bat = malloc(sizeof(*bat), M_DEVBUF, M_WAITOK | M_ZERO);
 			bat->aba_softc = (struct acpibat_softc *)dev;
 			SLIST_INSERT_HEAD(&sc->sc_bat, bat, aba_link);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.82 2008/07/21 04:35:54 todd Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.83 2009/10/26 20:17:27 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1757,8 +1757,8 @@ device_register(struct device *dev, void *aux)
 	/*
 	 * scsi: sd,cd
 	 */
-	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-	    strncmp("cd", dev->dv_xname, 2) == 0) {
+	if (strcmp("sd", dev->dv_cfdata->cf_driver->cd_name) == 0 ||
+	    strcmp("cd", dev->dv_cfdata->cf_driver->cd_name) == 0) {
 		struct scsi_attach_args *sa = aux;
 		struct scsibus_softc *sbsc;
 		int target, lun;

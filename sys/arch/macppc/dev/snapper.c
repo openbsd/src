@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.34 2008/11/06 10:01:50 todd Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.35 2009/10/26 20:17:27 deraadt Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -486,8 +486,8 @@ snapper_defer(struct device *dev)
 	struct device *dv;
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list)
-		if (strncmp(dv->dv_xname, "kiic", 4) == 0 &&
-		    strncmp(dv->dv_parent->dv_xname, "macobio", 7) == 0)
+		if (strcmp(dv->dv_cfdata->cf_driver->cd_name, "kiic") == 0 &&
+		    strcmp(dv->dv_parent->dv_cfdata->cf_driver->cd_name, "macobio") == 0)
 			sc->sc_i2c = dv;
 	if (sc->sc_i2c == NULL) {
 		printf("%s: unable to find i2c\n", sc->sc_dev.dv_xname);

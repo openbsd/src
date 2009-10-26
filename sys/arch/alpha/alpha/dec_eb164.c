@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_eb164.c,v 1.16 2008/08/02 13:48:09 miod Exp $ */
+/* $OpenBSD: dec_eb164.c,v 1.17 2009/10/26 20:17:26 deraadt Exp $ */
 /* $NetBSD: dec_eb164.c,v 1.33 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -252,7 +252,7 @@ dec_eb164_device_register(dev, aux)
 		struct ata_atapi_attach *aa_link = aux;
 		int variation = hwrpb->rpb_variation & SV_ST_MASK;
 
-		if ((strncmp("pciide", parent->dv_xname, 6) != 0))
+		if ((strcmp("pciide", parent->dv_cfdata->cf_driver->cd_name) != 0))
 			return;
 		if (parent != ctrlrdev)
 			return;
