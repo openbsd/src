@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.8 2009/10/10 19:20:28 miod Exp $
+dnl	$OpenBSD: hardware,v 1.9 2009/10/26 18:38:09 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machines:
 	IP27 class machines:
 		Origin 200, Onyx 2
@@ -69,7 +69,7 @@ Supported devices {:-include-:}:
                 PS/2 keyboards (pckbd)
 	USB keyboard and mice (already listed above)
 - Miscellaneous Devices
-	``soft'' power button as available on SGI O2 (power)
+	``soft'' power button as available on SGI O2 and Octane (power)
 
 If your hardware is not listed above, there is currently no support for it
 in this release.

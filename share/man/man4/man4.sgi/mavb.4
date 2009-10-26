@@ -1,4 +1,4 @@
-.\"   $OpenBSD: mavb.4,v 1.5 2008/03/27 13:47:08 jsing Exp $
+.\"   $OpenBSD: mavb.4,v 1.6 2009/10/26 18:38:09 miod Exp $
 .\"
 .\" Copyright (c) 2005 Mark Kettenis
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2008 $
+.Dd $Mdocdate: October 26 2009 $
 .Dt MAVB 4 sgi
 .Os
 .Sh NAME
 .Nm mavb
 .Nd Moosehead A/V Board audio device
 .Sh SYNOPSIS
-.Cd "mavb0 at macebus0 base 0x00300000 irq 7"
+.Cd "mavb0 at macebus0"
 .Cd "audio* at mavb?"
 .Sh DESCRIPTION
 The
