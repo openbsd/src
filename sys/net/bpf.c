@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.73 2009/09/21 16:33:42 canacar Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.74 2009/10/26 18:22:58 claudio Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -539,6 +539,8 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 		m_freem(m);
 		return (EMSGSIZE);
 	}
+
+	m->m_pkthdr.rdomain = ifp->if_rdomain;
 
 	if (d->bd_hdrcmplt)
 		dst.ss_family = pseudo_AF_HDRCMPLT;
