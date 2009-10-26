@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.7 2009/10/26 20:47:00 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.8 2009/10/26 21:42:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -492,8 +492,8 @@ server_client_msg_dispatch(struct client *c)
 	struct msg_environ_data	 environdata;
 	ssize_t			 n, datalen;
 
-        if ((n = imsg_read(&c->ibuf)) == -1 || n == 0)
-                return (-1);
+	if ((n = imsg_read(&c->ibuf)) == -1 || n == 0)
+		return (-1);
 
 	for (;;) {
 		if ((n = imsg_get(&c->ibuf, &imsg)) == -1)

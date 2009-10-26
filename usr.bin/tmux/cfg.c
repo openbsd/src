@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.6 2009/08/23 17:29:51 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.7 2009/10/26 21:42:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -53,9 +53,9 @@ cfg_error(unused struct cmd_ctx *ctx, const char *fmt, ...)
 int
 load_cfg(const char *path, struct cmd_ctx *ctxin, char **cause)
 {
-	FILE   	        *f;
+	FILE		*f;
 	u_int		 n;
-	char	        *buf, *line, *ptr;
+	char		*buf, *line, *ptr;
 	size_t		 len;
 	struct cmd_list	*cmdlist;
 	struct cmd_ctx	 ctx;

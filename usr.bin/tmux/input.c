@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.20 2009/10/23 15:48:39 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.21 2009/10/26 21:42:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -128,7 +128,7 @@ input_sequence_cmp(const void *a, const void *b)
 void
 input_new_argument(struct input_ctx *ictx)
 {
-	struct input_arg       *arg;
+	struct input_arg	*arg;
 
 	ARRAY_EXPAND(&ictx->args, 1);
 
@@ -139,7 +139,7 @@ input_new_argument(struct input_ctx *ictx)
 int
 input_add_argument(struct input_ctx *ictx, u_char ch)
 {
-	struct input_arg       *arg;
+	struct input_arg	*arg;
 
 	if (ARRAY_LENGTH(&ictx->args) == 0)
 		return (0);
@@ -792,7 +792,7 @@ input_handle_sequence(u_char ch, struct input_ctx *ictx)
 {
 	struct input_sequence_entry	*entry, find;
 	struct screen	 		*s = ictx->ctx.s;
-	u_int			         i;
+	u_int				 i;
 	struct input_arg 		*iarg;
 
 	log_debug2("-- sq %zu: %hhu (%c): %u [sx=%u, sy=%u, cx=%u, cy=%u, "

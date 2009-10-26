@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.59 2009/10/25 21:11:21 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.60 2009/10/26 21:42:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -144,7 +144,7 @@ tty_start_tty(struct tty *tty)
 	tio.c_lflag &= ~(IEXTEN|ICANON|ECHO|ECHOE|ECHONL|ECHOCTL|
 	    ECHOPRT|ECHOKE|ECHOCTL|ISIG);
 	tio.c_cc[VMIN] = 1;
-        tio.c_cc[VTIME] = 0;
+	tio.c_cc[VTIME] = 0;
 	if (tcsetattr(tty->fd, TCSANOW, &tio) != 0)
 		fatal("tcsetattr failed");
 
