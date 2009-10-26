@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.45 2009/10/03 21:51:01 kettenis Exp $	*/
+/*	$OpenBSD: npx.c,v 1.46 2009/10/26 20:30:23 kettenis Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -605,6 +605,7 @@ x86fpflags_to_siginfo(u_int32_t flags)
 int
 npxdna_xmm(struct cpu_info *ci)
 {
+	union savefpu *addr;
 	struct proc *p;
 	int s;
 
@@ -661,8 +662,12 @@ npxdna_xmm(struct cpu_info *ci)
 	splx(s);
 	uvmexp.fpswtch++;
 
+	addr = &p->p_addr->u_pcb.pcb_savefpu;
+
 	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
+		fldcw(&addr->sv_xmm.sv_env.en_cw);
+		if (i386_has_sse || i386_has_sse2)
+			ldmxcsr(&addr->sv_xmm.sv_env.en_mxcsr);
 		p->p_md.md_flags |= MDP_USEDFPU;
 	} else {
 		static double	zero = 0.0;
@@ -673,7 +678,7 @@ npxdna_xmm(struct cpu_info *ci)
 		 */
 		fnclex();
 		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
-		fxrstor(&p->p_addr->u_pcb.pcb_savefpu.sv_xmm);
+		fxrstor(&addr->sv_xmm);
 	}
 
 	return (1);
