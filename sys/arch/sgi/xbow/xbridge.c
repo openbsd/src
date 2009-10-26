@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.57 2009/10/26 18:13:34 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.58 2009/10/26 18:37:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -125,6 +125,7 @@ struct xbpci_softc {
 	struct machine_bus_dma_tag *xb_dmat;
 
 	struct xbridge_intr	*xb_intr[BRIDGE_NINTRS];
+	char	xb_intrstr[BRIDGE_NINTRS][sizeof("irq #, xbow irq ###")];
 
 	/*
 	 * Device information.
@@ -890,10 +891,13 @@ xbridge_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 const char *
 xbridge_intr_string(void *cookie, pci_intr_handle_t ih)
 {
-	static char str[16];
+	struct xbpci_softc *xb = (struct xbpci_softc *)cookie;
+	int intrbit = XBRIDGE_INTR_BIT(ih);
 
-	snprintf(str, sizeof(str), "irq %d", XBRIDGE_INTR_BIT(ih));
-	return(str);
+	if (xb->xb_intrstr[intrbit][0] == '\0')
+		snprintf(xb->xb_intrstr[intrbit],
+		    sizeof xb->xb_intrstr[intrbit], "irq %d", ih);
+	return xb->xb_intrstr[intrbit];
 }
 
 void *
@@ -930,6 +934,9 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 
 		xi->xi_intrsrc = intrsrc;
 		xb->xb_intr[intrbit] = xi;
+		snprintf(xb->xb_intrstr[intrbit],
+		    sizeof xb->xb_intrstr[intrbit],
+		    "irq %d, xbow irq %d", intrbit, intrsrc);
 	} else
 		intrsrc = xi->xi_intrsrc;
 	
@@ -962,7 +969,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	xih->xih_arg = arg;
 	xih->xih_level = level;
 	xih->xih_device = device;
-	evcount_attach(&xih->xih_count, name, &xi->xi_intrbit, &evcount_intr);
+	evcount_attach(&xih->xih_count, name, &xi->xi_intrsrc, &evcount_intr);
 	LIST_INSERT_HEAD(&xi->xi_handlers, xih, xih_nxt);
 
 	if (new) {
@@ -1044,10 +1051,10 @@ xbridge_intr_handler(void *v)
 	struct xbridge_intr *xi = (struct xbridge_intr *)v;
 	struct xbpci_softc *xb = xi->xi_bus;
 	struct xbridge_intrhandler *xih;
-	int rc = 0;
-	int spurious;
-	uint32_t isr;
+	int rc;
+	uint64_t isr;
 
+	/* XXX shouldn't happen, and assumes interrupt is not shared */
 	if (LIST_EMPTY(&xi->xi_handlers)) {
 		printf("%s: spurious irq %d\n", DEVNAME(xb), xi->xi_intrbit);
 		return 0;
@@ -1060,31 +1067,38 @@ xbridge_intr_handler(void *v)
 		xbridge_read_reg(xb, BRIDGE_DEVICE_WBFLUSH(xih->xih_device));
 
 	isr = xbridge_read_reg(xb, BRIDGE_ISR);
-	if ((isr & (1 << xi->xi_intrbit)) == 0) {
-		spurious = 1;
+	if ((isr & (1L << xi->xi_intrbit)) == 0) {
+		/*
+		 * May be a result of the lost interrupt workaround (see
+		 * near the end of this function); don't complain in that
+		 * case.
+		 */
+		rc = -1;
 #ifdef DEBUG
 		printf("%s: irq %d but not pending in ISR %08x\n",
 		    DEVNAME(xb), xi->xi_intrbit, isr);
 #endif
-	} else
-		spurious = 0;
-
-	LIST_FOREACH(xih, &xi->xi_handlers, xih_nxt) {
-		splraise(xih->xih_level);
-		if ((*xih->xih_func)(xih->xih_arg) != 0) {
-			xih->xih_count.ec_count++;
-			rc = 1;
+	} else {
+		rc = 0;
+		LIST_FOREACH(xih, &xi->xi_handlers, xih_nxt) {
+			splraise(xih->xih_level);
+			if ((*xih->xih_func)(xih->xih_arg) != 0) {
+				xih->xih_count.ec_count++;
+				rc = 1;
+			}
+			/*
+			 * No need to lower spl here, as our caller will
+			 * lower spl upon our return.
+			 * However that splraise() is necessary so that
+			 * interrupt handler code calling splx() will not
+			 * cause our interrupt source to be unmasked.
+			 */
 		}
-		/*
-		 * No need to lower spl here, as our caller will lower
-		 * spl upon our return.
-		 * However that splraise() is necessary so that interrupt
-		 * handler code calling splx() will not cause our interrupt
-		 * source to be unmasked.
-		 */
+		/* XXX assumes interrupt is not shared */
+		if (rc == 0)
+			printf("%s: spurious irq %d\n",
+			    DEVNAME(xb), xi->xi_intrbit);
 	}
-	if (rc == 0 && spurious == 0)
-		printf("%s: spurious irq %d\n", DEVNAME(xb), xi->xi_intrbit);
 
 	/*
 	 * There is a known BRIDGE race in which, if two interrupts
@@ -1107,7 +1121,7 @@ xbridge_intr_handler(void *v)
 			xbow_intr_set(xi->xi_intrsrc);
 	}
 
-	return 1;
+	return rc;
 }
 
 /*
