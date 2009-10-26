@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.26 2009/10/21 21:11:55 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.27 2009/10/26 21:38:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -185,17 +185,20 @@ client_main(void)
 			client_write_server(MSG_EXITING, NULL, 0);
 		}
 		if (sigchld) {
-			waitpid(WAIT_ANY, NULL, WNOHANG);
 			sigchld = 0;
+			waitpid(WAIT_ANY, NULL, WNOHANG);
+			continue;
 		}
 		if (sigwinch) {
+			sigwinch = 0;
 			client_write_server(MSG_RESIZE, NULL, 0);
- 			sigwinch = 0;
+			continue;
 		}
 		if (sigcont) {
+			sigcont = 0;
 			siginit();
 			client_write_server(MSG_WAKEUP, NULL, 0);
-			sigcont = 0;
+			continue;
 		}
 
 		pfd.fd = client_ibuf.fd;
