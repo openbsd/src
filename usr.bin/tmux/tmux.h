@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.147 2009/10/25 21:11:21 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.148 2009/10/26 13:13:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -163,23 +163,23 @@ enum key_code {
 	KEYC_LEFT,
 	KEYC_RIGHT,
 
-	/* Numeric keypad. Numbered from top-left, KPY_X. */
-	KEYC_KP0_1,
-	KEYC_KP0_2,
-	KEYC_KP0_3,
-	KEYC_KP1_0,
-	KEYC_KP1_1,
-	KEYC_KP1_2,
-	KEYC_KP1_3,
-	KEYC_KP2_0,
-	KEYC_KP2_1,
-	KEYC_KP2_2,
-	KEYC_KP3_0,
-	KEYC_KP3_1,
-	KEYC_KP3_2,
-	KEYC_KP3_3,
-	KEYC_KP4_0,
-	KEYC_KP4_2,
+	/* Numeric keypad. */
+	KEYC_KP_SLASH,
+	KEYC_KP_STAR,
+	KEYC_KP_MINUS,
+	KEYC_KP_SEVEN,
+	KEYC_KP_EIGHT,
+	KEYC_KP_NINE,
+	KEYC_KP_PLUS,
+	KEYC_KP_FOUR,
+	KEYC_KP_FIVE,
+	KEYC_KP_SIX,
+	KEYC_KP_ONE,
+	KEYC_KP_TWO,
+	KEYC_KP_THREE,
+	KEYC_KP_ENTER,
+	KEYC_KP_ZERO,
+	KEYC_KP_PERIOD,
 };
 
 /* Termcap codes. */
