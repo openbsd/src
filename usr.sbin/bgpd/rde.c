@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.270 2009/10/12 15:19:30 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.271 2009/10/26 09:27:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -121,11 +121,12 @@ struct rde_dump_ctx {
 };
 
 struct rde_mrt_ctx {
-	struct mrt		 mrt;
-	struct rib_context	 ribctx;
+	struct mrt		mrt;
+	struct rib_context	ribctx;
+	LIST_ENTRY(rde_mrt_ctx)	entry;
 };
 
-struct mrt_head rde_mrts = LIST_HEAD_INITIALIZER(rde_mrts);
+LIST_HEAD(, rde_mrt_ctx) rde_mrts = LIST_HEAD_INITIALIZER(rde_mrts);
 u_int rde_mrt_cnt;
 
 void
@@ -159,7 +160,8 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	struct filter_set	*set;
 	struct nexthop		*nh;
 	struct rde_rib		*rr;
-	struct mrt		*mrt, *xmrt;
+	struct rde_mrt_ctx	*mctx, *xmctx;
+	struct mrt		*mrt;
 	void			*newp;
 	u_int			 pfd_elms = 0, i, j;
 	int			 timeout;
@@ -288,9 +290,9 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 			timeout = 0;
 
 		i = PFD_PIPE_COUNT;
-		LIST_FOREACH(mrt, &rde_mrts, entry) {
-			if (mrt->wbuf.queued) {
-				pfd[i].fd = mrt->wbuf.fd;
+		LIST_FOREACH(mctx, &rde_mrts, entry) {
+			if (mctx->mrt.wbuf.queued) {
+				pfd[i].fd = mctx->mrt.wbuf.fd;
 				pfd[i].events = POLLOUT;
 				i++;
 			}
@@ -326,20 +328,21 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		if (pfd[PFD_PIPE_SESSION_CTL].revents & POLLIN)
 			rde_dispatch_imsg_session(ibuf_se_ctl);
 
-		for (j = PFD_PIPE_COUNT, mrt = LIST_FIRST(&rde_mrts);
-		    j < i && mrt != 0; j++) {
-			xmrt = LIST_NEXT(mrt, entry);
-			if (pfd[j].fd == mrt->wbuf.fd &&
+		for (j = PFD_PIPE_COUNT, mctx = LIST_FIRST(&rde_mrts);
+		    j < i && mctx != 0; j++) {
+			xmctx = LIST_NEXT(mctx, entry);
+			if (pfd[j].fd == mctx->mrt.wbuf.fd &&
 			    pfd[j].revents & POLLOUT)
-				mrt_write(mrt);
-			if (mrt->wbuf.queued == 0 && 
-			    mrt->state == MRT_STATE_REMOVE) {
-				close(mrt->wbuf.fd);
-				LIST_REMOVE(mrt, entry);
-				free(mrt);
+				mrt_write(&mctx->mrt);
+			if (mctx->mrt.wbuf.queued == 0 && 
+			    mctx->mrt.state == MRT_STATE_REMOVE) {
+				close(mctx->mrt.wbuf.fd);
+				LIST_REMOVE(&mctx->ribctx, entry);
+				LIST_REMOVE(mctx, entry);
+				free(mctx);
 				rde_mrt_cnt--;
 			}
-			mrt = xmrt;
+			mctx = xmctx;
 		}
 
 		rde_update_queue_runner();
@@ -352,10 +355,11 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	if (debug)
 		rde_shutdown();
 
-	while ((mrt = LIST_FIRST(&rde_mrts)) != NULL) {
-		msgbuf_clear(&mrt->wbuf);
-		close(mrt->wbuf.fd);
-		LIST_REMOVE(mrt, entry);
+	while ((mctx = LIST_FIRST(&rde_mrts)) != NULL) {
+		msgbuf_clear(&mctx->mrt.wbuf);
+		close(mctx->mrt.wbuf.fd);
+		LIST_REMOVE(&mctx->ribctx, entry);
+		LIST_REMOVE(mctx, entry);
 		free(mrt);
 	}
 
@@ -2030,10 +2034,10 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 	ctx->ribctx.ctx_count = RDE_RUNNER_ROUNDS;
 	ctx->ribctx.ctx_rib = &ribs[id];
 	ctx->ribctx.ctx_upcall = mrt_dump_upcall;
-	ctx->ribctx.ctx_done = mrt_dump_done;
+	ctx->ribctx.ctx_done = mrt_done;
 	ctx->ribctx.ctx_arg = &ctx->mrt;
 	ctx->ribctx.ctx_af = AF_UNSPEC;
-	LIST_INSERT_HEAD(&rde_mrts, &ctx->mrt, entry);
+	LIST_INSERT_HEAD(&rde_mrts, ctx, entry);
 	rde_mrt_cnt++;
 	rib_dump_r(&ctx->ribctx);
 }
