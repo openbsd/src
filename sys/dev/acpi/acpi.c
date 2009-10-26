@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.141 2009/07/23 01:38:16 cnst Exp $ */
+/* $OpenBSD: acpi.c,v 1.142 2009/10/26 19:56:01 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -79,8 +79,6 @@ int	acpi_foundvideo(struct aml_node *, void *);
 int	acpi_inidev(struct aml_node *, void *);
 
 int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
-void	acpi_load_table(paddr_t, size_t, acpi_qhead_t *);
-void	acpi_load_dsdt(paddr_t, struct acpi_q **);
 
 void	acpi_init_states(struct acpi_softc *);
 void	acpi_init_gpes(struct acpi_softc *);
@@ -94,6 +92,8 @@ int acpiide_notify(struct aml_node *, int, void *);
 
 void  wdcattach(struct channel_softc *);
 int   wdcdetach(struct channel_softc *, int);
+
+struct acpi_q *acpi_maptable(paddr_t, const char *, const char *, const char *);
 
 struct idechnl
 {
@@ -585,9 +585,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * extended (64-bit) pointer if it exists
 	 */
 	if (sc->sc_fadt->hdr_revision < 3 || sc->sc_fadt->x_dsdt == 0)
-		acpi_load_dsdt(sc->sc_fadt->dsdt, &entry);
+		entry = acpi_maptable(sc->sc_fadt->dsdt, NULL, NULL, NULL);
 	else
-		acpi_load_dsdt(sc->sc_fadt->x_dsdt, &entry);
+		entry = acpi_maptable(sc->sc_fadt->x_dsdt, NULL, NULL, NULL);
 
 	if (entry == NULL)
 		printf(" !DSDT");
@@ -778,118 +778,104 @@ acpi_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+struct acpi_q *
+acpi_maptable(paddr_t addr, const char *sig, const char *oem, const char *tbl)
+{
+	static int tblid;
+	struct acpi_mem_map handle;
+	struct acpi_table_header *hdr;
+	struct acpi_q *entry;
+	size_t len;
+
+	/* Check if we can map address */
+	if (addr == 0)
+		return NULL;
+	if (acpi_map(addr, sizeof(*hdr), &handle))
+		return NULL;
+	hdr = (struct acpi_table_header *)handle.va;
+	len = hdr->length;
+	acpi_unmap(&handle);
+
+	/* Validate length/checksum */
+	if (acpi_map(addr, len, &handle))
+		return NULL;
+	hdr = (struct acpi_table_header *)handle.va;
+	if (acpi_checksum(hdr, len)) {
+		acpi_unmap(&handle);
+		return NULL;
+	}
+	if ((sig && memcmp(sig, hdr->signature, 4)) ||
+	    (oem && memcmp(oem, hdr->oemid, 6)) ||
+	    (tbl && memcmp(tbl, hdr->oemtableid, 8))) {
+		acpi_unmap(&handle);
+		return NULL;
+	}
+
+	/* Allocate copy */
+	entry = malloc(len + sizeof(*entry), M_DEVBUF, M_NOWAIT);
+	if (entry != NULL) {
+		memcpy(entry->q_data, handle.va, len);
+		entry->q_table = entry->q_data;
+		entry->q_id = ++tblid;
+	}
+	acpi_unmap(&handle);
+	return entry;
+}
+
 int
 acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 {
-	struct acpi_mem_map hrsdt, handle;
-	struct acpi_table_header *hdr;
+	struct acpi_q *entry, *sdt;
 	int i, ntables;
 	size_t len;
 
 	if (rsdp->rsdp_revision == 2 && rsdp->rsdp_xsdt) {
 		struct acpi_xsdt *xsdt;
 
-		if (acpi_map(rsdp->rsdp_xsdt, sizeof(*hdr), &handle)) {
+		sdt = acpi_maptable(rsdp->rsdp_xsdt, NULL, NULL, NULL);
+		if (sdt == NULL) {
 			printf("couldn't map rsdt\n");
 			return (ENOMEM);
 		}
 
-		hdr = (struct acpi_table_header *)handle.va;
-		len = hdr->length;
-		acpi_unmap(&handle);
-		hdr = NULL;
-
-		acpi_map(rsdp->rsdp_xsdt, len, &hrsdt);
-		xsdt = (struct acpi_xsdt *)hrsdt.va;
-
+		xsdt = (struct acpi_xsdt *)sdt->q_data;
+		len  = xsdt->hdr.length;
 		ntables = (len - sizeof(struct acpi_table_header)) /
 		    sizeof(xsdt->table_offsets[0]);
 
 		for (i = 0; i < ntables; i++) {
-			acpi_map(xsdt->table_offsets[i], sizeof(*hdr), &handle);
-			hdr = (struct acpi_table_header *)handle.va;
-			acpi_load_table(xsdt->table_offsets[i], hdr->length,
-			    &sc->sc_tables);
-			acpi_unmap(&handle);
+			entry = acpi_maptable(xsdt->table_offsets[i], NULL, NULL, 
+			    NULL);
+			if (entry != NULL)
+				SIMPLEQ_INSERT_TAIL(&sc->sc_tables, entry, 
+				    q_next);					
 		}
-		acpi_unmap(&hrsdt);
+		free(sdt, M_DEVBUF);
 	} else {
 		struct acpi_rsdt *rsdt;
 
-		if (acpi_map(rsdp->rsdp_rsdt, sizeof(*hdr), &handle)) {
+		sdt = acpi_maptable(rsdp->rsdp_rsdt, NULL, NULL, NULL);
+		if (sdt == NULL) {
 			printf("couldn't map rsdt\n");
 			return (ENOMEM);
 		}
 
-		hdr = (struct acpi_table_header *)handle.va;
-		len = hdr->length;
-		acpi_unmap(&handle);
-		hdr = NULL;
-
-		acpi_map(rsdp->rsdp_rsdt, len, &hrsdt);
-		rsdt = (struct acpi_rsdt *)hrsdt.va;
-
+		rsdt = (struct acpi_rsdt *)sdt->q_data;
+		len  = rsdt->hdr.length;
 		ntables = (len - sizeof(struct acpi_table_header)) /
 		    sizeof(rsdt->table_offsets[0]);
 
 		for (i = 0; i < ntables; i++) {
-			acpi_map(rsdt->table_offsets[i], sizeof(*hdr), &handle);
-			hdr = (struct acpi_table_header *)handle.va;
-			acpi_load_table(rsdt->table_offsets[i], hdr->length,
-			    &sc->sc_tables);
-			acpi_unmap(&handle);
+			entry = acpi_maptable(rsdt->table_offsets[i], NULL, NULL, 
+			    NULL);
+			if (entry != NULL)
+				SIMPLEQ_INSERT_TAIL(&sc->sc_tables, entry, 
+				    q_next);					
 		}
-		acpi_unmap(&hrsdt);
+		free(sdt, M_DEVBUF);
 	}
 
 	return (0);
-}
-
-void
-acpi_load_table(paddr_t pa, size_t len, acpi_qhead_t *queue)
-{
-	struct acpi_mem_map handle;
-	struct acpi_q *entry;
-
-	entry = malloc(len + sizeof(struct acpi_q), M_DEVBUF, M_NOWAIT);
-
-	if (entry != NULL) {
-		if (acpi_map(pa, len, &handle)) {
-			free(entry, M_DEVBUF);
-			return;
-		}
-		memcpy(entry->q_data, handle.va, len);
-		entry->q_table = entry->q_data;
-		acpi_unmap(&handle);
-		SIMPLEQ_INSERT_TAIL(queue, entry, q_next);
-	}
-}
-
-void
-acpi_load_dsdt(paddr_t pa, struct acpi_q **dsdt)
-{
-	struct acpi_mem_map handle;
-	struct acpi_table_header *hdr;
-	size_t len;
-
-	if (acpi_map(pa, sizeof(*hdr), &handle))
-		return;
-	hdr = (struct acpi_table_header *)handle.va;
-	len = hdr->length;
-	acpi_unmap(&handle);
-
-	*dsdt = malloc(len + sizeof(struct acpi_q), M_DEVBUF, M_NOWAIT);
-
-	if (*dsdt != NULL) {
-		if (acpi_map(pa, len, &handle)) {
-			free(*dsdt, M_DEVBUF);
-			*dsdt = NULL;
-			return;
-		}
-		memcpy((*dsdt)->q_data, handle.va, len);
-		(*dsdt)->q_table = (*dsdt)->q_data;
-		acpi_unmap(&handle);
-	}
 }
 
 int

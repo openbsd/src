@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.50 2009/10/15 19:00:53 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.51 2009/10/26 19:56:01 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -79,6 +79,7 @@ struct acpi_mem_map {
 
 struct acpi_q {
 	SIMPLEQ_ENTRY(acpi_q)	 q_next;
+	int			 q_id;
 	void			*q_table;
 	u_int8_t		 q_data[0];
 };
