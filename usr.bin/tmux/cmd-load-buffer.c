@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.6 2009/09/07 18:50:45 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.7 2009/10/26 21:25:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -56,13 +56,14 @@ cmd_load_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	if ((s = cmd_find_session(ctx, data->target)) == NULL)
 		return (-1);
 
-	if (stat(data->arg, &sb) < 0) {
+	if ((f = fopen(data->arg, "rb")) == NULL) {
 		ctx->error(ctx, "%s: %s", data->arg, strerror(errno));
 		return (-1);
 	}
 
-	if ((f = fopen(data->arg, "rb")) == NULL) {
+	if (fstat(fileno(f), &sb) < 0) {
 		ctx->error(ctx, "%s: %s", data->arg, strerror(errno));
+		fclose(f);
 		return (-1);
 	}
 
