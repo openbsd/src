@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.20 2009/10/16 00:15:48 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.21 2009/10/26 18:00:06 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -73,12 +73,6 @@ extern struct sys_rec sys_config;
 struct confargs {
 	char		*ca_name;
 	int16_t		 ca_nasid;
-	bus_space_tag_t  ca_iot;
-	bus_dma_tag_t	 ca_dmat;
-	/* XXX the following are macebus-specific */
-	bus_space_tag_t  ca_memt;
-	int32_t		 ca_intr;
-	bus_addr_t	 ca_baseaddr;
 };
 
 void	enaddr_aton(const char *, u_int8_t *);

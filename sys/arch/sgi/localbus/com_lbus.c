@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.10 2009/10/16 14:38:13 miod Exp $ */
+/*	$OpenBSD: com_lbus.c,v 1.11 2009/10/26 18:00:06 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,7 +41,7 @@
 
 #include <mips64/archtype.h>
 
-#include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 
 int	com_macebus_probe(struct device *, void *, void *);
 void	com_macebus_attach(struct device *, struct device *, void *);
@@ -53,19 +53,19 @@ struct cfattach com_macebus_ca = {
 int
 com_macebus_probe(struct device *parent, void *match, void *aux)
 {
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 	bus_space_handle_t ioh;
 	int rv;
 
 	/* If it's in use as the console, then it's there. */
-	if (ca->ca_baseaddr == comconsaddr && !comconsattached)
+	if (maa->maa_baseaddr == comconsaddr && !comconsattached)
 		return (1);
 
-	if (bus_space_map(ca->ca_iot, ca->ca_baseaddr, COM_NPORTS, 0, &ioh))
+	if (bus_space_map(maa->maa_iot, maa->maa_baseaddr, COM_NPORTS, 0, &ioh))
 		return (0);
 
-	rv = comprobe1(ca->ca_iot, ioh);
-	bus_space_unmap(ca->ca_iot, ioh, COM_NPORTS);
+	rv = comprobe1(maa->maa_iot, ioh);
+	bus_space_unmap(maa->maa_iot, ioh, COM_NPORTS);
 
 	return rv;
 }
@@ -74,22 +74,22 @@ void
 com_macebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 
-	sc->sc_iot = ca->ca_iot;
+	sc->sc_iot = maa->maa_iot;
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	sc->sc_iobase = ca->ca_baseaddr;
+	sc->sc_iobase = maa->maa_baseaddr;
 	sc->sc_frequency = 1843200;
 
 	/* If it's in use as the console, then it's there. */
-	if (ca->ca_baseaddr == comconsaddr && !comconsattached) {
+	if (maa->maa_baseaddr == comconsaddr && !comconsattached) {
 		if (comcnattach(sc->sc_iot, sc->sc_iobase, comconsrate,
 		    sc->sc_frequency, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 			panic("failed to setup serial console!");
 		sc->sc_ioh = comconsioh;
 	} else {
-		if (bus_space_map(sc->sc_iot, ca->ca_baseaddr, COM_NPORTS, 0,
+		if (bus_space_map(sc->sc_iot, maa->maa_baseaddr, COM_NPORTS, 0,
 		    &sc->sc_ioh)) {
 			printf(": can't map i/o space\n");
 			return;
@@ -98,6 +98,6 @@ com_macebus_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-	macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_TTY, comintr,
-	    (void *)sc, sc->sc_dev.dv_xname);
+	macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
+	    IST_EDGE, IPL_TTY, comintr, (void *)sc, sc->sc_dev.dv_xname);
 }

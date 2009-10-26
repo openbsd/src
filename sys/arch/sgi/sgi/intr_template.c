@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.1 2009/10/22 22:08:54 miod Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.2 2009/10/26 18:00:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -30,6 +30,9 @@
  * INTR_MASKPENDING	logic to mask `isr'
  * INTR_MASKRESTORE	logic to reset `imr'
  * INTR_SPURIOUS(bit)	print a spurious interrupt message for `bit'
+ *
+ * The following macros are optional:
+ * INTR_HANDLER_SKIP(ih)	nonzero to skip intrhand invocation
  */
 
 uint32_t
@@ -87,6 +90,10 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 				rc = 0;
 				for (ih = INTR_HANDLER(bitno); ih != NULL;
 				    ih = ih->ih_next) {
+#if defined(INTR_HANDLER_SKIP)
+					if (INTR_HANDLER_SKIP(ih) != 0)
+						continue;
+#endif
 					splraise(ih->ih_level);
 					ih->frame = frame;
 					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
@@ -118,6 +125,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 #undef	INTR_FUNCTIONNAME
 #undef	INTR_GETMASKS
 #undef	INTR_HANDLER
+#undef	INTR_HANDLER_SKIP
 #undef	INTR_IMASK
 #undef	INTR_LOCAL_DECLS
 #undef	INTR_MASKPENDING

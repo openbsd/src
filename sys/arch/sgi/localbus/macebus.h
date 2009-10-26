@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.14 2009/10/22 20:51:08 miod Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.15 2009/10/26 18:00:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -26,11 +26,6 @@
  *
  */
 
-#ifndef	_MACEBUS_H_
-#define	_MACEBUS_H_ 1
-
-#include <machine/bus.h>
-
 /*
  *  Physical address of MACEBUS.
  */
@@ -43,6 +38,7 @@
 #define	MACE_VIN1_OFFS		0x00100000
 #define	MACE_VIN2_OFFS		0x00180000
 #define	MACE_VOUT_OFFS		0x00200000
+#define	MACE_ETHERNET_OFFS	0x00280000
 #define	MACE_IO_OFFS		0x00300000
 #define	MACE_IO_SIZE		0x00050000
 #define	MACE_ISAX_OFFS		0x00380000
@@ -79,6 +75,11 @@
 #define	PERR_DATA_PARITY_ADDR_VALID	0x00020000
 #define	PERR_RETRY_ADDR_VALID		0x00010000
 
+/*
+ * MACE IO definitions.
+ */
+#define	MACE_IO_AUDIO_OFFS	(MACE_IO_OFFS+0x00000000)
+#define	MACE_IO_KBC_OFFS	(MACE_IO_OFFS+0x00020000)
 
 /*
  *  MACE ISA definitions.
@@ -118,12 +119,3 @@
 #define	MACE_ISA_SER2_OFFS	(MACE_ISAX_OFFS+0x00018000)
 #define	MACE_ISA_RTC_OFFS	(MACE_ISAX_OFFS+0x00020000)
 #define	MACE_ISA_GAME_OFFS	(MACE_ISAX_OFFS+0x00030000)
-
-extern bus_space_t macebus_tag;
-extern struct machine_bus_dma_tag mace_bus_dma_tag;
-
-void   *macebus_intr_establish(void *, u_long, int, int, int (*)(void *),
-	    void *, const char *);
-void	macebus_intr_disestablish(void *);
-
-#endif	/* _MACEBUS_H_ */

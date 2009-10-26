@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.9 2009/10/16 14:38:15 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.10 2009/10/26 18:00:06 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -45,6 +45,7 @@
 
 #include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 
 #include <dev/ic/comvar.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.9 2008/04/21 00:32:42 jakemsr Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.10 2009/10/26 18:00:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -32,6 +32,7 @@
 #include <mips64/archtype.h>
 
 #include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 #include <sgi/dev/mavbreg.h>
 
 #include <dev/ic/ad1843reg.h>
@@ -1062,15 +1063,15 @@ mavb_intr(void *arg)
 int
 mavb_match(struct device *parent, void *match, void *aux)
 {
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 	bus_space_handle_t ioh;
 	u_int64_t control;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_baseaddr, MAVB_NREGS, 0,
+	if (bus_space_map(maa->maa_iot, maa->maa_baseaddr, MAVB_NREGS, 0,
 	    &ioh) != 0)
 		return (0);
-	control = bus_space_read_8(ca->ca_iot, ioh, MAVB_CONTROL);
-	bus_space_unmap(ca->ca_iot, ioh, MAVB_NREGS);
+	control = bus_space_read_8(maa->maa_iot, ioh, MAVB_CONTROL);
+	bus_space_unmap(maa->maa_iot, ioh, MAVB_NREGS);
 
 	return ((control & MAVB_CONTROL_CODEC_PRESENT) != 0);
 }
@@ -1079,13 +1080,13 @@ void
 mavb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mavb_softc *sc = (void *)self;
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 	bus_dma_segment_t seg;
 	u_int16_t value;
 	int rseg;
 
-	sc->sc_st = ca->ca_iot;
-	if (bus_space_map(sc->sc_st, ca->ca_baseaddr, MAVB_NREGS, 0,
+	sc->sc_st = maa->maa_iot;
+	if (bus_space_map(sc->sc_st, maa->maa_baseaddr, MAVB_NREGS, 0,
 	    &sc->sc_sh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
@@ -1097,7 +1098,7 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_isash);
 
 	/* Set up DMA structures.  */
-	sc->sc_dmat = ca->ca_dmat;
+	sc->sc_dmat = maa->maa_dmat;
 	if (bus_dmamap_create(sc->sc_dmat, 4 * MAVB_ISA_RING_SIZE, 1,
 	    4 * MAVB_ISA_RING_SIZE, 0, 0, &sc->sc_dmamap)) {
 		printf(": can't create MACE ISA DMA map\n");
@@ -1128,8 +1129,8 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_dmamap->dm_segs[0].ds_addr);
 
 	/* Establish interrupt.  */
-	macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_AUDIO,
-	    mavb_intr, sc, sc->sc_dev.dv_xname);
+	macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
+	    IST_EDGE, IPL_AUDIO, mavb_intr, sc, sc->sc_dev.dv_xname);
 
 	/* 2. Assert the RESET signal.  */
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CONTROL,

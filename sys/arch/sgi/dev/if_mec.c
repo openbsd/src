@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.21 2009/08/10 23:57:40 jsing Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.22 2009/10/26 18:00:06 miod Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -106,7 +106,7 @@
 #include <mips64/arcbios.h>
 #include <sgi/dev/if_mecreg.h>
 
-#include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 
 #ifdef MEC_DEBUG
 #define MEC_DEBUG_RESET		0x01
@@ -355,22 +355,22 @@ void
 mec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mec_softc *sc = (void *)self;
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t command;
 	struct mii_softc *child;
 	bus_dma_segment_t seg;
 	int i, err, rseg;
 
-	sc->sc_st = ca->ca_iot;
-	if (bus_space_map(sc->sc_st, ca->ca_baseaddr, MEC_NREGS, 0,
+	sc->sc_st = maa->maa_iot;
+	if (bus_space_map(sc->sc_st, maa->maa_baseaddr, MEC_NREGS, 0,
 	    &sc->sc_sh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
 	/* Set up DMA structures. */
-	sc->sc_dmat = ca->ca_dmat;
+	sc->sc_dmat = maa->maa_dmat;
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -476,8 +476,8 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	/* Establish interrupt handler. */
-	macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_NET,
-	    mec_intr, sc, sc->sc_dev.dv_xname);
+	macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
+	    IST_EDGE, IPL_NET, mec_intr, sc, sc->sc_dev.dv_xname);
 
 	return;
 

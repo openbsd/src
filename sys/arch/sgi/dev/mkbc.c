@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkbc.c,v 1.8 2008/10/15 19:12:19 blambert Exp $  */
+/*	$OpenBSD: mkbc.c,v 1.9 2009/10/26 18:00:06 miod Exp $  */
 
 /*
  * Copyright (c) 2006, 2007, Joel Sing
@@ -82,7 +82,7 @@
 #include <mips64/archtype.h>
 
 #include <sgi/localbus/crimebus.h>
-#include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 
 #include <dev/ic/pckbcvar.h>
 #include <dev/pckbc/pckbdvar.h>
@@ -249,16 +249,16 @@ void
 mkbc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mkbc_softc *msc = (void*)self;
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 	struct pckbc_softc *sc = &msc->sc_pckbc;
 	struct pckbc_internal *t;
 
 	if (mkbc_console == 0) {
 
 		/* Setup bus space mapping. */
-		msc->iot = ca->ca_iot;
-		if (bus_space_map(msc->iot, ca->ca_baseaddr, MKBC_PORTSIZE * 2, 0, 
-		    &msc->ioh)) {
+		msc->iot = maa->maa_iot;
+		if (bus_space_map(msc->iot, maa->maa_baseaddr,
+		    MKBC_PORTSIZE * 2, 0, &msc->ioh)) {
 			printf(": unable to map bus space!\n");
 			return;
 		}
@@ -269,7 +269,7 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 		t->t_iot = msc->iot;
 		t->t_ioh_d = NULL;
 		t->t_ioh_c = NULL;
-		t->t_addr = ca->ca_baseaddr;
+		t->t_addr = maa->maa_baseaddr;
 		t->t_sc = (struct pckbc_softc *)msc;
 		sc->id = t;
 
@@ -287,8 +287,8 @@ mkbc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Establish interrupt handler. */
-	if (macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_TTY,
-	    mkbcintr, msc, sc->sc_dv.dv_xname))
+	if (macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
+	    IST_EDGE, IPL_TTY, mkbcintr, msc, sc->sc_dv.dv_xname))
 		printf("\n");
 	else
 		printf(": unable to establish interrupt\n");

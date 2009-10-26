@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.7 2009/10/07 20:39:45 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.8 2009/10/26 18:00:06 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -42,7 +42,7 @@
 #include <mips64/dev/clockvar.h>
 
 #include <sgi/dev/dsrtcvar.h>
-#include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 #include <sgi/pci/iocreg.h>
 #include <sgi/pci/iocvar.h>
 #include <sgi/pci/iofvar.h>
@@ -265,10 +265,10 @@ void
 dsrtc_attach_macebus(struct device *parent, struct device *self, void *aux)
 {
 	struct dsrtc_softc *sc = (void *)self;
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 
-	sc->sc_clkt = ca->ca_iot;
-	if (bus_space_map(sc->sc_clkt, MACE_ISA_RTC_OFFS, 128 * 256, 0,
+	sc->sc_clkt = maa->maa_iot;
+	if (bus_space_map(sc->sc_clkt, maa->maa_baseaddr, 128 * 256, 0,
 	    &sc->sc_clkh)) {
 		printf(": can't map registers\n");
 		return;

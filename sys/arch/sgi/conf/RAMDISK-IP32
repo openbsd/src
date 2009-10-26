@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.7 2009/07/16 21:02:54 miod Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.8 2009/10/26 18:00:04 miod Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -53,10 +53,10 @@ macebus0	at mainbus0	# MACE controller localbus.
 gbe0		at mainbus0
 
 #### Localbus devices
-mec0		at macebus0 base 0x00280000 irq 4
-mkbc0		at macebus0 base 0x00320000 irq 6
-com0		at macebus0 base 0x00390000 irq 5
-com1		at macebus0 base 0x00398000 irq 5
+mec0		at macebus0
+mkbc0		at macebus0
+com0		at macebus0 base 0x00390000
+com1		at macebus0 base 0x00398000
 dsrtc0		at macebus0
 
 #### PCI Bus

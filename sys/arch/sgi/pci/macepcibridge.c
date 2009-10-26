@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.35 2009/10/22 20:52:39 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.36 2009/10/26 18:00:06 miod Exp $ */
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -69,6 +69,7 @@
 #include <mips64/archtype.h>
 #include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 #include <sgi/pci/macepcibrvar.h>
 
 #include "cardbus.h"
@@ -195,11 +196,9 @@ static int      mace_pcibrprint(void *, const char *pnp);
 int
 mace_pcibrmatch(struct device *parent, void *match, void *aux)
 {
-	static int once = 0;
-
 	switch (sys_config.system_type) {
 	case SGI_O2:
-		return once++ == 0 ? 1 : 0;
+		return 1;
 	default:
 		return 0;
 	}
@@ -210,25 +209,26 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mace_pcibr_softc *sc = (struct mace_pcibr_softc *)self;
 	struct pcibus_attach_args pba;
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 	pcireg_t pcireg;
 
 	sc->sc_mem_bus_space = &mace_pcibbus_mem_tag;
 	sc->sc_io_bus_space = &mace_pcibbus_io_tag;
 
 	/* Map in PCI control registers */
-	sc->sc_memt = ca->ca_memt;
-	if (bus_space_map(sc->sc_memt, MACE_PCI_OFFS, 4096, 0, &sc->sc_memh)) {
+	sc->sc_memt = maa->maa_memt;
+	if (bus_space_map(sc->sc_memt, maa->maa_baseaddr, 4096, 0,
+	    &sc->sc_memh)) {
 		printf(": can't map PCI control registers\n");
 		return;
 	}
 	pcireg = bus_space_read_4(sc->sc_memt, sc->sc_memh, MACE_PCI_REVISION);
 
-	printf(": mace rev %d, host system O2\n", pcireg);
+	printf(": mace rev %d\n", pcireg);
 
 	/* Register the PCI ERROR interrupt handler */
-	macebus_intr_establish(NULL, 8, IST_LEVEL, IPL_HIGH,
-	    mace_pcibr_errintr, (void *)sc, sc->sc_dev.dv_xname);
+	macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
+	    IST_LEVEL, IPL_HIGH, mace_pcibr_errintr, sc, sc->sc_dev.dv_xname);
 
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_attach_hook = mace_pcibr_attach_hook;
@@ -356,7 +356,7 @@ mace_pcibr_decompose_tag(void *cpv, pcitag_t tag, int *busp, int *devp,
 int
 mace_pcibr_bus_maxdevs(void *cpv, int busno)
 {
-	return busno == 0 ? 4 : 32;
+	return busno == 0 ? 6 : 32;
 }
 
 pcireg_t
@@ -420,13 +420,11 @@ mace_pcibr_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int bus, dev, pin = pa->pa_rawintrpin;
 	static const signed char intrmap[][PCI_INTERRUPT_PIN_MAX] = {
 		{ -1, -1, -1, -1 },
-		{ 9, -1, -1, -1 },	/* ahc0 */
-		{ 10, -1, -1, -1 },	/* ahc1 */
-		{ 11, 14, 15, 16 },	/* slot */
-#ifdef useless
-		{ 12, 16, 14, 15 },	/* no slots... */
-		{ 13, 15, 16, 14 }	/* ... unless you solder them */
-#endif
+		{ 8, -1, -1, -1 },	/* ahc0 */
+		{ 9, -1, -1, -1 },	/* ahc1 */
+		{ 10, 13, 14, 15 },	/* slot */
+		{ 11, 15, 13, 14 },	/* no slots... */
+		{ 12, 14, 15, 13 }	/* ... unless you solder them */
 	};
 
 	*ihp = -1;
@@ -470,8 +468,7 @@ void *
 mace_pcibr_intr_establish(void *lcv, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, const char *name)
 {
-	return
-	    macebus_intr_establish(NULL, ih, IST_LEVEL, level, func, arg, name);
+	return macebus_intr_establish(ih, 0, IST_LEVEL, level, func, arg, name);
 }
 
 void

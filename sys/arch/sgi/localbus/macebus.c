@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.51 2009/10/22 22:08:54 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.52 2009/10/26 18:00:06 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -47,17 +47,19 @@
 
 #include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 
 int	 macebusmatch(struct device *, void *, void *);
 void	 macebusattach(struct device *, struct device *, void *);
 int	 macebusprint(void *, const char *);
-int	 macebussearch(struct device *, void *, void *);
+int	 macebussubmatch(struct device *, void *, void *);
 
 void	 macebus_intr_makemasks(void);
 void	 macebus_splx(int);
 uint32_t macebus_iointr(uint32_t, struct trap_frame *);
 uint32_t macebus_aux(uint32_t, struct trap_frame *);
-void	mace_setintrmask(int);
+int	 macebus_iointr_skip(struct intrhand *);
+void	 crime_setintrmask(int);
 
 u_int8_t mace_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 u_int16_t mace_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -159,17 +161,44 @@ struct machine_bus_dma_tag mace_bus_dma_tag = {
 
 /*
  * CRIME/MACE interrupt handling declarations: 32 CRIME sources, 32 MACE
- * sources (unmanaged); 1 level.
+ * sources (multiplexed by CRIME); 1 level.
  * We define another level for periodic tasks as well.
  */
 
-struct intrhand *mace_intrhand[CRIME_NINTS];
+struct crime_intrhand {
+	struct	intrhand	ih;
+	uint32_t		mace_irqmask;
+};
+struct crime_intrhand *crime_intrhand[CRIME_NINTS];
 
 #define	INTPRI_MACEIO	(INTPRI_CLOCK + 1)
 #define	INTPRI_MACEAUX	(INTPRI_MACEIO + 1)
 
-uint64_t mace_intem;
-uint64_t mace_imask[NIPLS];
+uint64_t crime_intem, mace_intem;
+uint64_t crime_imask[NIPLS];
+
+/*
+ * List of macebus child devices.
+ */
+
+#define	MACEBUSDEV(name, addr, i, i2) \
+	{ name, &macebus_tag, &macebus_tag, &mace_bus_dma_tag, addr, i, i2 }
+struct macebus_attach_args macebus_children[] = {
+	MACEBUSDEV("com", MACE_ISA_SER1_OFFS, 4, MACE_ISA_INT_SERIAL_1),
+	MACEBUSDEV("com", MACE_ISA_SER2_OFFS, 4, MACE_ISA_INT_SERIAL_2),
+	MACEBUSDEV("dsrtc", MACE_ISA_RTC_OFFS, -1, 0),
+#if 0
+	MACEBUSDEV("lpt", MACE_ISA_EPP_OFFS, 4, MACE_ISA_INT_PARALLEL),
+#endif
+	MACEBUSDEV("macepcibr", MACE_PCI_OFFS, 7, 0),
+	MACEBUSDEV("mavb", MACE_IO_AUDIO_OFFS, 6, MACE_ISA_INT_AUDIO),
+	MACEBUSDEV("mec", MACE_ETHERNET_OFFS, 3, 0),
+	MACEBUSDEV("mkbc", MACE_IO_KBC_OFFS, 5,
+	    MACE_ISA_INT_KBD | MACE_ISA_INT_KBD_POLL |
+	    MACE_ISA_INT_MOUSE | MACE_ISA_INT_MOUSE_POLL),
+	MACEBUSDEV("power", 0, 5, MACE_ISA_INT_RTC)
+};
+#undef	MACEBUSDEV
 
 /*
  * Match bus only to targets which have this bus.
@@ -185,49 +214,39 @@ macebusmatch(struct device *parent, void *match, void *aux)
 int
 macebusprint(void *aux, const char *macebus)
 {
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 
 	if (macebus != NULL)
-		printf("%s at %s", ca->ca_name, macebus);
+		printf("%s at %s", maa->maa_name, macebus);
 
-	if (ca->ca_baseaddr != 0)
-		printf(" base 0x%08x", ca->ca_baseaddr);
-	if (ca->ca_intr != 0)
-		printf(" irq %d", ca->ca_intr);
+	if (maa->maa_baseaddr != 0)
+		printf(" base 0x%08x", maa->maa_baseaddr);
+	if (maa->maa_intr >= 0)
+		printf(" irq %d", maa->maa_intr);
 
 	return (UNCONF);
 }
 
 int
-macebussearch(struct device *parent, void *child, void *args)
+macebussubmatch(struct device *parent, void *vcf, void *args)
 {
-	struct cfdata *cf = child;
-	struct confargs ca;
+	struct cfdata *cf = vcf;
+	struct macebus_attach_args *maa = args;
 
-	ca.ca_name = cf->cf_driver->cd_name;
-	ca.ca_iot = &macebus_tag;
-	ca.ca_memt = &macebus_tag;
-	ca.ca_dmat = &mace_bus_dma_tag;
-	if (cf->cf_loc[0] == -1)
-		ca.ca_baseaddr = 0;
-	else
-		ca.ca_baseaddr = cf->cf_loc[0];
-	if (cf->cf_loc[1] == -1)
-		ca.ca_intr = 0;
-	else
-		ca.ca_intr = cf->cf_loc[1];
+	if (strcmp(cf->cf_driver->cd_name, maa->maa_name) != 0)
+		return 0;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ca) == 0)
-		return (0);
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != (int)maa->maa_baseaddr)
+		return 0;
 
-	config_attach(parent, cf, &ca, macebusprint);
-	return (1);
+	return (*cf->cf_attach->ca_match)(parent, cf, maa);
 }
 
 void
 macebusattach(struct device *parent, struct device *self, void *aux)
 {
 	u_int32_t creg;
+	uint i;
 
 	/*
 	 * Map and setup CRIME control registers.
@@ -257,9 +276,7 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Turn on all MACE interrupts except for MACE compare/timer. */
-	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK, 
-	    0xffffffff & ~MACE_ISA_INT_TIMER);
+	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK, 0);
 	bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT, 0);
 
 	/*
@@ -272,7 +289,12 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	/* Set up a handler called when clock interrupts go off. */
 	set_intr(INTPRI_MACEAUX, CR_INT_5, macebus_aux);
 
-	config_search(macebussearch, self, aux);
+	/*
+	 * Attach subdevices.
+	 */
+	for (i = 0; i < nitems(macebus_children); i++)
+		config_found_sm(self, macebus_children + i,
+		    macebusprint, macebussubmatch);
 }
 
 /*
@@ -455,29 +477,28 @@ macebus_device_to_pa(bus_addr_t addr)
  * XXX in kernel configuration files...
  */
 void *
-macebus_intr_establish(void *icp, u_long irq, int type, int level,
+macebus_intr_establish(int irq, uint32_t mace_irqmask, int type, int level,
     int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
 {
-	struct intrhand **p, *q, *ih;
+	struct crime_intrhand **p, *q, *ih;
 	int s;
 
 #ifdef DIAGNOSTIC
-	if (irq > CRIME_NINTS || irq < 1)
+	if (irq >= CRIME_NINTS || irq < 0)
 		panic("intr_establish: illegal irq %d", irq);
 #endif
-
-	irq -= 1;	/* Adjust for 1 being first (0 is no int) */
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return NULL;
 
-	ih->ih_next = NULL;
-	ih->ih_fun = ih_fun;
-	ih->ih_arg = ih_arg;
-	ih->ih_level = level;
-	ih->ih_irq = irq + 1;
-	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
+	ih->ih.ih_next = NULL;
+	ih->ih.ih_fun = ih_fun;
+	ih->ih.ih_arg = ih_arg;
+	ih->ih.ih_level = level;
+	ih->ih.ih_irq = irq;
+	ih->mace_irqmask = mace_irqmask;
+	evcount_attach(&ih->ih.ih_count, ih_what, (void *)&ih->ih.ih_irq,
 	    &evcount_intr);
 
 	s = splhigh();
@@ -487,12 +508,20 @@ macebus_intr_establish(void *icp, u_long irq, int type, int level,
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * generally small.
 	 */
-	for (p = &mace_intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
+	for (p = &crime_intrhand[irq]; (q = *p) != NULL;
+	    p = (struct crime_intrhand **)&q->ih.ih_next)
 		;
 	*p = ih;
 
-	mace_intem |= 1UL << irq;
+	crime_intem |= 1UL << irq;
 	macebus_intr_makemasks();
+
+	/* enable further MACE sources if necessary */
+	if (mace_irqmask != 0) {
+		mace_intem |= mace_irqmask;
+		bus_space_write_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK,
+		    mace_intem);
+	}
 
 	splx(s);	/* causes hw mask update */
 
@@ -519,7 +548,8 @@ macebus_intr_makemasks(void)
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < CRIME_NINTS; irq++) {
 		uint levels = 0;
-		for (q = mace_intrhand[irq]; q; q = q->ih_next)
+		for (q = (struct intrhand *)crime_intrhand[irq];
+		    q != NULL; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
 	}
@@ -530,7 +560,7 @@ macebus_intr_makemasks(void)
 		for (irq = 0; irq < CRIME_NINTS; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1UL << irq;
-		mace_imask[level] = irqs;
+		crime_imask[level] = irqs;
 	}
 
 	/*
@@ -540,16 +570,16 @@ macebus_intr_makemasks(void)
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	mace_imask[IPL_NET] |= mace_imask[IPL_BIO];
-	mace_imask[IPL_TTY] |= mace_imask[IPL_NET];
-	mace_imask[IPL_VM] |= mace_imask[IPL_TTY];
-	mace_imask[IPL_CLOCK] |= mace_imask[IPL_VM];
+	crime_imask[IPL_NET] |= crime_imask[IPL_BIO];
+	crime_imask[IPL_TTY] |= crime_imask[IPL_NET];
+	crime_imask[IPL_VM] |= crime_imask[IPL_TTY];
+	crime_imask[IPL_CLOCK] |= crime_imask[IPL_VM];
 
 	/*
 	 * These are pseudo-levels.
 	 */
-	mace_imask[IPL_NONE] = 0;
-	mace_imask[IPL_HIGH] = -1UL;
+	crime_imask[IPL_NONE] = 0;
+	crime_imask[IPL_HIGH] = -1UL;
 }
 
 void
@@ -561,7 +591,7 @@ macebus_splx(int newipl)
 	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
 	__asm__ ("sync\n\t.set reorder\n");
-	mace_setintrmask(newipl);
+	crime_setintrmask(newipl);
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
 		setsoftintr0();
@@ -581,18 +611,49 @@ do { \
 } while (0)
 #define	INTR_MASKPENDING \
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, imr & ~isr)
-#define	INTR_IMASK(ipl)		mace_imask[ipl]
-#define	INTR_HANDLER(bit)	mace_intrhand[bit]
+#define	INTR_IMASK(ipl)		crime_imask[ipl]
+#define	INTR_HANDLER(bit)	(struct intrhand *)crime_intrhand[bit]
 #define	INTR_SPURIOUS(bit) \
 do { \
-	/* XXX +1 because of -1 in intr_establish() */ \
-	if (bit != 4) \
-		printf("spurious crime interrupt %d\n", bit + 1); \
+	uint64_t mace_isr, mace_imr; \
+	mace_isr = bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT); \
+	mace_imr = bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK); \
+	/* serial console processing may clear interrupt condition \
+	   before it fires */ \
+	if (bit != 4 || (mace_isr & mace_imr) != 0) \
+		printf("spurious crime interrupt %d mace isr %p imr %p\n", \
+		    bit, mace_isr, mace_imr); \
 } while (0)
 #define	INTR_MASKRESTORE \
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, imr)
 
+#define	INTR_HANDLER_SKIP(ih)	macebus_iointr_skip((void *)ih)
+
 #include <sgi/sgi/intr_template.c>
+
+int
+macebus_iointr_skip(struct intrhand *ih)
+{
+	struct crime_intrhand *mih = (struct crime_intrhand *)ih;
+	uint64_t mace_isr, mace_imr;
+
+	/* do not skip pure CRIME interrupts */
+	if (mih->mace_irqmask == 0)
+		return 0;
+
+	/*
+	 * Several CRIME interrupts (such as superio and miscellaneous) are
+	 * shared by multiple devices, so narrow the selection with the
+	 * MACE interrupt status.
+	 */
+
+	mace_isr = bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT);
+	mace_imr = bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_MASK);
+	if ((mace_isr & mace_imr & mih->mace_irqmask) != 0)
+		return 0;
+
+	return 1;
+}
 
 /*
  * Macebus auxilary functions run each clock interrupt.
@@ -612,7 +673,7 @@ macebus_aux(uint32_t hwpend, struct trap_frame *cf)
 		mask &= ~MACE_ISA_MISC_RLED_OFF;
 	} else if (curproc == NULL ||
 	    curproc == curcpu()->ci_schedstate.spc_idleproc) {
-		mask &= ~MACE_ISA_MISC_GLED_OFF;	
+		mask &= ~MACE_ISA_MISC_GLED_OFF;
 	} else {
 		mask &= ~(MACE_ISA_MISC_RLED_OFF | MACE_ISA_MISC_GLED_OFF);
 	}
@@ -622,8 +683,8 @@ macebus_aux(uint32_t hwpend, struct trap_frame *cf)
 }
 
 void
-mace_setintrmask(int level)
+crime_setintrmask(int level)
 {
 	*(volatile uint64_t *)(PHYS_TO_XKPHYS(CRIMEBUS_BASE, CCA_NC) +
-	    CRIME_INT_MASK) = mace_intem & ~mace_imask[level];
+	    CRIME_INT_MASK) = crime_intem & ~crime_imask[level];
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.9 2009/05/16 16:04:11 deraadt Exp $	*/
+/*	$OpenBSD: power.c,v 1.10 2009/10/26 18:00:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sgi/dev/dsrtcvar.h>
 
 #include <sgi/localbus/macebus.h>
+#include <sgi/localbus/macebusvar.h>
 
 /*
  * Power button driver for the SGI O2.
@@ -42,7 +43,6 @@ struct power_softc {
 void	power_attach(struct device *, struct device *, void *);
 int	power_match(struct device *, void *, void *);
 int	power_intr(void *);
-int	power_intr_macebus(void *);
 
 struct cfdriver power_cd = {
 	NULL, "power", DV_DULL
@@ -62,10 +62,10 @@ void
 power_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct power_softc *sc = (void *)self;
-	struct confargs *ca = aux;
+	struct macebus_attach_args *maa = aux;
 	extern bus_space_handle_t mace_h;
 
-	sc->sc_st = ca->ca_iot;
+	sc->sc_st = maa->maa_iot;
 
 	/* Map subregion to ISA control registers. */
 	if (bus_space_subregion(sc->sc_st, mace_h, 0, 0x80, &sc->sc_sh)) {
@@ -74,25 +74,11 @@ power_attach(struct device *parent, struct device *self, void *aux)
 	}
  	
 	/* Establish interrupt handler. */
-	if (macebus_intr_establish(NULL, ca->ca_intr, IST_EDGE, IPL_TTY,
-	    power_intr_macebus, sc, sc->sc_dev.dv_xname))
+	if (macebus_intr_establish(maa->maa_intr, maa->maa_mace_intr,
+	    IST_EDGE, IPL_TTY, power_intr, sc, sc->sc_dev.dv_xname))
 		printf("\n");
 	else
 		printf(": unable to establish interrupt!\n");
-}
-
-int
-power_intr_macebus(void *arg)
-{
-	struct power_softc *sc = (void *)arg;
-	u_int64_t val;
-
-	/* Check to see if this interrupt is for us. */
-	val = bus_space_read_8(sc->sc_st, sc->sc_sh, MACE_ISA_INT_STAT);
-	if (val & MACE_ISA_INT_RTC)
-		return power_intr(arg);
-
-	return 0;
 }
 
 int
