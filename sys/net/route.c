@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.112 2009/10/10 22:08:26 dms Exp $	*/
+/*	$OpenBSD: route.c,v 1.113 2009/10/26 17:14:24 mk Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -828,10 +828,9 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 			senderr(error);
 		ifa = info->rti_ifa;
 makeroute:
-		rt = pool_get(&rtentry_pool, PR_NOWAIT);
+		rt = pool_get(&rtentry_pool, PR_NOWAIT | PR_ZERO);
 		if (rt == NULL)
 			senderr(ENOBUFS);
-		Bzero(rt, sizeof(*rt));
 
 		rt->rt_flags = info->rti_flags;
 
@@ -1283,10 +1282,9 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
 		}
 	}
 
-	r = pool_get(&rttimer_pool, PR_NOWAIT);
+	r = pool_get(&rttimer_pool, PR_NOWAIT | PR_ZERO);
 	if (r == NULL)
 		return (ENOBUFS);
-	Bzero(r, sizeof(*r));
 
 	r->rtt_rt = rt;
 	r->rtt_time = current_time;
