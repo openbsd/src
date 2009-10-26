@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.31 2009/09/22 14:07:53 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.32 2009/10/26 09:58:19 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 22 2009 $
+.Dd $Mdocdate: October 26 2009 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -163,6 +163,11 @@ control socket
 .%R RFC 2385
 .%T "Protection of BGP Sessions via the TCP MD5 Signature Option"
 .%D August 1998
+.Re
+.Rs
+.%R RFC 2545
+.%T "Use of BGP-4 Multiprotocol Extensions for IPv6 Inter-Domain Routing"
+.%D March 1999
 .Re
 .Rs
 .%R RFC 2796
