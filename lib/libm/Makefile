@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.71 2009/10/24 10:06:02 jmc Exp $
+#  $OpenBSD: Makefile,v 1.72 2009/10/26 21:06:19 kettenis Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -163,7 +163,7 @@ SRCS+=		${LONG_SRCS}
 .endif
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
-	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 \
+	cos.3 cosh.3 erf.3 exp.3 fabs.3 fdim.3 floor.3 fmax.3 fmod.3 hypot.3 \
 	logb.3 j0.3 lgamma.3 lrint.3 lround.3 math.3 nan.3 remainder.3 \
 	rint.3 round.3 sin.3 sinh.3 sqrt.3 tan.3 tanh.3 trunc.3 \
 	copysign.3 ilogb.3 nextafter.3 scalbn.3
@@ -171,6 +171,7 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 MLINKS+=erf.3 erfc.3
 MLINKS+=exp.3 exp2.3 exp.3 expm1.3 exp.3 log.3 exp.3 log2.3 \
 	exp.3 log10.3 exp.3 log1p.3 exp.3 pow.3
+MLINKS+=fmax.3 fmin.3
 MLINKS+=hypot.3 cabs.3
 MLINKS+=scalbn.3 scalbln.3
 MLINKS+=logb.3 scalb.3
@@ -204,7 +205,10 @@ MLINKS+=exp.3 log2f.3
 MLINKS+=exp.3 logf.3
 MLINKS+=exp.3 powf.3
 MLINKS+=fabs.3 fabsf.3
+MLINKS+=fdim.3 fdimf.3
 MLINKS+=floor.3 floorf.3
+MLINKS+=fmax.3 fmaxf.3
+MLINKS+=fmax.3 fminf.3
 MLINKS+=fmod.3 fmodf.3
 MLINKS+=hypot.3 cabsf.3
 MLINKS+=hypot.3 hypotf.3
@@ -252,6 +256,9 @@ MLINKS+=atan2.3 atan2l.3
 MLINKS+=cos.3 cosl.3
 MLINKS+=exp.3 exp2l.3
 MLINKS+=fabs.3 fabsl.3
+MLINKS+=fdim.3 fdiml.3
+MLINKS+=fmax.3 fmaxl.3
+MLINKS+=fmax.3 fminl.3
 MLINKS+=copysign.3 copysignl.3
 MLINKS+=ilogb.3 ilogbl.3
 MLINKS+=scalbn.3 scalbnl.3

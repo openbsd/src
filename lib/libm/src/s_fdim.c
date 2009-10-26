@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_fdim.c,v 1.3 2008/12/10 01:08:24 martynas Exp $	*/
+/*	$OpenBSD: s_fdim.c,v 1.4 2009/10/26 21:06:19 kettenis Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -43,9 +43,4 @@ fn(type x, type y)			\
 
 DECL(double, fdim)
 DECL(float, fdimf)
-
-#if LDBL_MANT_DIG == 53
-#ifdef __weak_alias
-__weak_alias(fdiml, fdim);
-#endif /* __weak_alias */
-#endif /* LDBL_MANT_DIG == 53 */
+DECL(long double, fdiml)
