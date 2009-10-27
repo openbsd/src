@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.21 2009/10/24 10:06:02 jmc Exp $
+.\"	$OpenBSD: exp.3,v 1.22 2009/10/27 19:26:14 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)exp.3	6.12 (Berkeley) 7/31/91
 .\"
-.Dd $Mdocdate: October 24 2009 $
+.Dd $Mdocdate: October 27 2009 $
 .Dt EXP 3
 .Os
 .Sh NAME
@@ -131,16 +131,6 @@ function is a single precision version of
 .Fn log .
 .Pp
 The
-.Fn log10
-function computes the value of the logarithm of argument
-.Fa x
-to base 10.
-The
-.Fn log10f
-function is a single precision version of
-.Fn log10 .
-.Pp
-The
 .Fn log2
 function computes the value of the logarithm of argument
 .Fa x
@@ -149,6 +139,16 @@ The
 .Fn log2f
 function is a single precision version of
 .Fn log2 .
+.Pp
+The
+.Fn log10
+function computes the value of the logarithm of argument
+.Fa x
+to base 10.
+The
+.Fn log10f
+function is a single precision version of
+.Fn log10 .
 .Pp
 The
 .Fn log1p
