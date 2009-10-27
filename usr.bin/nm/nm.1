@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nm.1,v 1.21 2009/02/10 19:27:03 jmc Exp $
+.\"	$OpenBSD: nm.1,v 1.22 2009/10/27 23:51:21 deraadt Exp $
 .\"	$NetBSD: nm.1,v 1.3 1995/08/31 23:41:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)nm.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 10 2009 $
+.Dd $Mdocdate: October 27 2009 $
 .Dt NM 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd display name list (symbol table)
 .Sh SYNOPSIS
 .Nm nm
-.Op Fl aCegnoprsuVw
+.Op Fl aCegnoprsuw
 .Op Ar
 .Sh DESCRIPTION
 The symbol table (name list) of each object in
@@ -80,8 +80,6 @@ Reverse order sort.
 Show archive index.
 .It Fl u
 Display undefined symbols only.
-.It Fl V
-Show program version.
 .It Fl w
 Warn about non-object archive members.
 Normally,

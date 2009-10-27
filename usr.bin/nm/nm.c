@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.31 2007/09/02 15:19:33 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.32 2009/10/27 23:51:21 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -32,17 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#if 0
-static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.31 2007/09/02 15:19:33 deraadt Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -124,7 +113,7 @@ int	show_archive(int, const char *, FILE *);
 int	show_file(int, int, const char *, FILE *fp, off_t, union hdr *);
 void	print_symbol(const char *, struct nlist *, int);
 
-#define	OPTSTRING_NM	"aABCegnoprsuvVw"
+#define	OPTSTRING_NM	"aABCegnoprsuvw"
 const struct option longopts_nm[] = {
 	{ "debug-syms",		no_argument,		0,	'a' },
 	{ "demangle",		no_argument,		0,	'C' },
@@ -138,7 +127,6 @@ const struct option longopts_nm[] = {
 	{ "reverse-sort",	no_argument,		0,	'r' },
 /*	{ "size-sort",		no_argument,		&szval,	1 }, */
 	{ "undefined-only",	no_argument,		0,	'u' },
-	{ "version",		no_argument,		0,	'V' },
 	{ "help",		no_argument,		0,	'?' },
 	{ NULL }
 };
@@ -202,9 +190,6 @@ main(int argc, char *argv[])
 		case 'u':
 			print_only_undefined_symbols = 1;
 			break;
-		case 'V':
-			fprintf(stderr, "%s\n", rcsid);
-			exit(0);
 		case 'w':
 			non_object_warning = 1;
 			break;
@@ -1081,7 +1066,7 @@ usage(void)
 	if (issize)
 		fprintf(stderr, "usage: %s [-tw] [file ...]\n", __progname);
 	else
-		fprintf(stderr, "usage: %s [-aCegnoprsuVw] [file ...]\n",
+		fprintf(stderr, "usage: %s [-aCegnoprsuw] [file ...]\n",
 		    __progname);
 	exit(1);
 }
