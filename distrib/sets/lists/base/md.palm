@@ -61,7 +61,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.6/3.3.5/f771
 ./usr/lib/gcc-lib/arm-unknown-openbsd4.6/3.3.5/specs
 ./usr/lib/libasn1.so.17.0
-./usr/lib/libc.so.51.1
+./usr/lib/libc.so.51.2
 ./usr/lib/libcom_err.so.17.0
 ./usr/lib/libcrypto.so.18.0
 ./usr/lib/libcurses.so.10.0
@@ -76,7 +76,7 @@
 ./usr/lib/libkafs.so.17.0
 ./usr/lib/libkrb5.so.17.0
 ./usr/lib/libkvm.so.9.1
-./usr/lib/libm.so.5.1
+./usr/lib/libm.so.5.2
 ./usr/lib/libmenu.so.3.0
 ./usr/lib/libmilter.so.2.1
 ./usr/lib/libncurses.so.10.0

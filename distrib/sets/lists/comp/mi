@@ -3765,6 +3765,9 @@
 ./usr/share/man/cat3/fabsl.0
 ./usr/share/man/cat3/fclose.0
 ./usr/share/man/cat3/fcvt.0
+./usr/share/man/cat3/fdim.0
+./usr/share/man/cat3/fdimf.0
+./usr/share/man/cat3/fdiml.0
 ./usr/share/man/cat3/fdopen.0
 ./usr/share/man/cat3/feof.0
 ./usr/share/man/cat3/ferror.0
@@ -3805,6 +3808,12 @@
 ./usr/share/man/cat3/floor.0
 ./usr/share/man/cat3/floorf.0
 ./usr/share/man/cat3/flushinp.0
+./usr/share/man/cat3/fmax.0
+./usr/share/man/cat3/fmaxf.0
+./usr/share/man/cat3/fmaxl.0
+./usr/share/man/cat3/fmin.0
+./usr/share/man/cat3/fminf.0
+./usr/share/man/cat3/fminl.0
 ./usr/share/man/cat3/fmod.0
 ./usr/share/man/cat3/fmodf.0
 ./usr/share/man/cat3/fmt_scaled.0
