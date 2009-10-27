@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.136 2009/09/14 00:03:28 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.137 2009/10/27 11:38:24 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ scsi_xs_get(struct scsi_link *link, int flags)
 
 	mtx_enter(&link->mtx);
 	while (link->openings == 0) {
-		if (!ISSET(flags, SCSI_NOSLEEP)) {
+		if (ISSET(flags, SCSI_NOSLEEP)) {
 			mtx_leave(&link->mtx);
 			return (NULL);
 		}
