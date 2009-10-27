@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.71 2009/04/21 12:43:01 kurt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.72 2009/10/27 20:06:29 deraadt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -61,11 +61,6 @@
 #include <pthread_np.h>
 #include "thread_private.h"
 #include "uthread_machdep.h"
-
-/*
- * Workaround until we have ENOTSUP in errno.h
- */
-#define ENOTSUP			EOPNOTSUPP
 
 /*
  * Kernel fatal error handler macro.
