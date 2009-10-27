@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.8,v 1.1 2009/06/01 20:59:45 michele Exp $
+.\"	$OpenBSD: ldpd.8,v 1.2 2009/10/27 16:22:15 sobrado Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2009 $
+.Dd $Mdocdate: October 27 2009 $
 .Dt LDPD 8
 .Os
 .Sh NAME
@@ -72,7 +72,8 @@ Default
 .Nm
 configuration file.
 .It /var/run/ldpd.sock
-Unix-domain socket used for communication with
+.Ux Ns -domain
+socket used for communication with
 .Xr ldpctl 8 .
 .El
 .Sh SEE ALSO
