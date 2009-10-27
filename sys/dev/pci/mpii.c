@@ -1,4 +1,4 @@
-/* $OpenBSD: mpii_pci.c,v 1.1 2009/10/27 02:21:59 marco Exp $ */
+/* $OpenBSD: mpii.c,v 1.1 2009/10/27 11:19:04 dlg Exp $ */
 /*
  * Copyright (c) James Giannoules
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>

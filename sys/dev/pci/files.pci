@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.264 2009/10/27 02:21:59 marco Exp $
+#	$OpenBSD: files.pci,v 1.265 2009/10/27 11:19:04 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -225,7 +225,7 @@ file	dev/pci/mpi_pci.c		mpi_pci
 # LSI Logic Fusion-MPT Message Passing Interface 2.0
 device	mpii: scsi
 attach	mpii at pci with mpii_pci
-file	dev/pci/mpii_pci.c		mpii_pci
+file	dev/pci/mpii.c			mpii_pci
 
 # Emulex Light Pulse Fibre Channel (Service Level Interface)
 attach	sli at pci with sli_pci
