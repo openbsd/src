@@ -1,4 +1,4 @@
-/* $OpenBSD: server-job.c,v 1.1 2009/10/22 19:41:51 nicm Exp $ */
+/* $OpenBSD: server-job.c,v 1.2 2009/10/27 13:03:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -21,6 +21,19 @@
 #include <unistd.h>
 
 #include "tmux.h"
+
+/* Register jobs for poll. */
+void
+server_job_prepare(void)
+{
+	struct job	*job;
+
+	SLIST_FOREACH(job, &all_jobs, lentry) {
+		if (job->fd == -1)
+			continue;
+		server_poll_add(job->fd, POLLIN, server_job_callback, job);
+	}
+}
 
 /* Process a single job event. */
 void
