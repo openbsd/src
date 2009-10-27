@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.89 2009/10/11 18:38:06 espie Exp $
+# $OpenBSD: Add.pm,v 1.90 2009/10/27 11:45:22 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -370,9 +370,6 @@ sub prepare_for_addition
 	if ($s->{ro}) {
 		$s->report_ro($state, $fname);
 	}
-	if ($state->{defines}->{kitchensink} && $state->{not}) {
-		return;
-	}
 	if ($s->avail < 0) {
 		$s->report_overflow($state, $fname);
 	}
@@ -491,9 +488,6 @@ sub prepare_for_addition
 	return unless defined $s;
 	if ($s->{ro}) {
 		$s->report_ro($state, $fname);
-	}
-	if ($state->{defines}->{kitchensink} && $state->{not}) {
-		return;
 	}
 	if ($s->avail < 0) {
 		$s->report_overflow($state, $fname);
@@ -682,9 +676,6 @@ sub prepare_for_addition
 	}
 	if ($s->{noexec} && $self->exec_on_delete) {
 		$s->report_noexec($state, $fname);
-	}
-	if ($state->{defines}->{kitchensink} && $state->{not}) {
-		return;
 	}
 	if ($s->avail < 0) {
 		$s->report_overflow($state, $fname);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.81 2009/10/12 05:17:33 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.82 2009/10/27 11:45:22 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 12 2009 $
+.Dd $Mdocdate: October 27 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -245,9 +245,6 @@ architecture recorded in package may not match.
 force installation of package in the presence of conflicts.
 .It Ar installed
 in update mode, reinstall an existing package with the same signature.
-.It Ar kitchensink
-will install everything and the kitchen sink: randomly reorder the list
-of packages to install, and proceed after weeding out conflicts.
 .It Ar libdepends
 library specifications may not be fulfilled.
 .It Ar noclosure
