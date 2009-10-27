@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.17 2009/10/21 19:13:50 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.18 2009/10/27 21:40:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2009 $
+.Dd $Mdocdate: October 27 2009 $
 .Dt MANDOC 1
 .Os
 .
@@ -28,7 +28,7 @@
 .Nm mandoc
 .Op Fl f Ns Ar option...
 .Op Fl m Ns Ar format
-.Op Fl o Ns Ar option...
+.Op Fl O Ns Ar option...
 .Op Fl T Ns Ar output
 .Op Fl V
 .Op Fl W Ns Ar err...
@@ -54,7 +54,7 @@ Input format.  See
 for available formats.  Defaults to
 .Fl m Ns Ar andoc .
 .
-.It Fl o Ns Ar option...
+.It Fl O Ns Ar option...
 Comma-separated output options.  See
 .Sx Output Options
 for details.
@@ -255,12 +255,12 @@ For the time being, only
 .Fl T Ns Ar html
 is the only mode with output options:
 .Bl -tag -width Ds
-.It Fl o Ns Ar style=style.css
+.It Fl O Ns Ar style=style.css
 The file
 .Ar style.css
 is used for an external style-sheet.  This must be a valid absolute or
 relative URI.
-.It Fl o Ns Ar includes=fmt
+.It Fl O Ns Ar includes=fmt
 The string
 .Ar fmt ,
 for example, 
@@ -271,7 +271,7 @@ macro).  Instances of
 .Sq \&%I
 are replaced with the include filename.  The default is not to present a
 hyperlink.
-.It Fl o Ns Ar man=fmt
+.It Fl O Ns Ar man=fmt
 The string
 .Ar fmt ,
 for example, 
@@ -413,4 +413,4 @@ the maximum size of an element attribute is determined by
 .Dv BUFSIZ ,
 which is usually 1024 bytes.  Be aware of this when setting long link
 formats with
-.Fl o Ns Ar man=fmt .
+.Fl O Ns Ar man=fmt .

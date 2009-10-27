@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.14 2009/10/21 19:13:50 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.15 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -16,8 +16,6 @@
  */
 #ifndef MDOC_H
 #define MDOC_H
-
-#include <time.h>
 
 /*
  * This library implements a validating scanner/parser for ``mdoc'' roff
@@ -149,7 +147,8 @@
 #define	MDOC__Q	 	 117
 #define MDOC_br		 118
 #define MDOC_sp		 119
-#define	MDOC_MAX	 120
+#define MDOC__U		 120
+#define	MDOC_MAX	 121
 
 /* What follows is a list of ALL possible macro arguments. */
 

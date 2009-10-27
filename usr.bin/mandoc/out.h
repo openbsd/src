@@ -1,4 +1,4 @@
-/*	$Id: out.h,v 1.1 2009/10/21 19:13:51 schwarze Exp $ */
+/*	$Id: out.h,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -16,6 +16,8 @@
  */
 #ifndef OUT_H
 #define OUT_H
+
+#define	DATESIZ		24
 
 __BEGIN_DECLS
 
@@ -52,6 +54,7 @@ struct	roffsu {
 
 int		  a2roffsu(const char *, 
 			struct roffsu *, enum roffscale);
+void		  time2a(time_t, char *, size_t);
 
 __END_DECLS
 

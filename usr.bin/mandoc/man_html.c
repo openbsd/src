@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.1 2009/10/21 19:13:50 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
-#include <sys/queue.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -30,6 +29,7 @@
 #include "main.h"
 
 /* TODO: preserve ident widths. */
+/* FIXME: have PD set the default vspace width. */
 
 #define	INDENT		  5
 #define	HALFINDENT	  3
@@ -99,6 +99,7 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_RS_pre, NULL }, /* RS */
 	{ man_ign_pre, NULL }, /* DT */
 	{ man_ign_pre, NULL }, /* UC */
+	{ man_ign_pre, NULL }, /* PD */
 };
 
 
@@ -173,7 +174,7 @@ print_man_node(MAN_ARGS)
 	struct tag	*t;
 
 	child = 1;
-	t = SLIST_FIRST(&h->tags);
+	t = h->tags.head;
 
 	bufinit(h);
 
@@ -276,15 +277,11 @@ man_root_pre(MAN_ARGS)
 static void
 man_root_post(MAN_ARGS)
 {
-	struct tm	 tm;
 	struct htmlpair	 tag[2];
 	struct tag	*t, *tt;
-	char		 b[BUFSIZ];
+	char		 b[DATESIZ];
 
-	(void)localtime_r(&m->date, &tm);
-
-	if (0 == strftime(b, BUFSIZ - 1, "%B %e, %Y", &tm))
-		err(EXIT_FAILURE, "strftime");
+	time2a(m->date, b, DATESIZ);
 
 	PAIR_CLASS_INIT(&tag[0], "footer");
 	bufcat_style(h, "width", "100%");

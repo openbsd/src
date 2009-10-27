@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.18 2009/10/21 19:13:50 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.19 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -32,6 +32,8 @@
 #define	INDENT		  7
 #define	HALFINDENT	  3
 
+/* FIXME: have PD set the default vspace width. */
+
 struct	mtermp {
 	int		  fl;
 #define	MANT_LITERAL	 (1 << 0)
@@ -62,14 +64,14 @@ struct	termact {
 	void		(*post)(DECL_ARGS);
 };
 
-static	int		  arg2width(const struct man_node *);
-static	int		  arg2height(const struct man_node *);
+static	int		  a2width(const struct man_node *);
+static	int		  a2height(const struct man_node *);
 
-static	void		  print_head(struct termp *, 
+static	void		  print_man_head(struct termp *, 
 				const struct man_meta *);
-static	void		  print_body(DECL_ARGS);
-static	void		  print_node(DECL_ARGS);
-static	void		  print_foot(struct termp *, 
+static	void		  print_man_body(DECL_ARGS);
+static	void		  print_man_node(DECL_ARGS);
+static	void		  print_man_foot(struct termp *, 
 				const struct man_meta *);
 static	void		  print_bvspace(struct termp *, 
 				const struct man_node *);
@@ -136,6 +138,7 @@ static	const struct termact termacts[MAN_MAX] = {
 	{ pre_RS, post_RS }, /* RS */
 	{ pre_ign, NULL }, /* DT */
 	{ pre_ign, NULL }, /* UC */
+	{ pre_ign, NULL }, /* PD */
 };
 
 
@@ -163,7 +166,7 @@ terminal_man(void *arg, const struct man *man)
 	n = man_node(man);
 	m = man_meta(man);
 
-	print_head(p, m);
+	print_man_head(p, m);
 	p->flags |= TERMP_NOSPACE;
 
 	mt.fl = 0;
@@ -171,13 +174,13 @@ terminal_man(void *arg, const struct man *man)
 	mt.offset = INDENT;
 
 	if (n->child)
-		print_body(p, &mt, n->child, m);
-	print_foot(p, m);
+		print_man_body(p, &mt, n->child, m);
+	print_man_foot(p, m);
 }
 
 
 static int
-arg2height(const struct man_node *n)
+a2height(const struct man_node *n)
 {
 	struct roffsu	 su;
 
@@ -191,7 +194,7 @@ arg2height(const struct man_node *n)
 
 
 static int
-arg2width(const struct man_node *n)
+a2width(const struct man_node *n)
 {
 	struct roffsu	 su;
 
@@ -302,7 +305,7 @@ pre_IR(DECL_ARGS)
 			p->under++;
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
-		print_node(p, mt, nn, m);
+		print_man_node(p, mt, nn, m);
 		if ( ! (i % 2))
 			p->under--;
 	}
@@ -326,7 +329,7 @@ pre_RB(DECL_ARGS)
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
 
-		print_node(p, mt, nn, m);
+		print_man_node(p, mt, nn, m);
 
 		if (i % 2 && MAN_RB == n->tok)
 			p->bold--;
@@ -349,7 +352,7 @@ pre_RI(DECL_ARGS)
 			p->under++;
 		if (i > 0)
 			p->flags |= TERMP_NOSPACE;
-		print_node(p, mt, nn, m);
+		print_man_node(p, mt, nn, m);
 		if ( ! (i % 2))
 			p->under--;
 	}
@@ -376,7 +379,7 @@ pre_BI(DECL_ARGS)
 
 		if (i)
 			p->flags |= TERMP_NOSPACE;
-		print_node(p, mt, nn, m);
+		print_man_node(p, mt, nn, m);
 
 		if (i % 2 && MAN_BI == n->tok)
 			p->under--;
@@ -416,7 +419,7 @@ pre_sp(DECL_ARGS)
 {
 	int		 i, len;
 
-	len = n->child ? arg2height(n->child) : 1;
+	len = n->child ? a2height(n->child) : 1;
 
 	if (0 == len)
 		term_newln(p);
@@ -463,7 +466,7 @@ pre_HP(DECL_ARGS)
 	/* Calculate offset. */
 
 	if (NULL != (nn = n->parent->head->child))
-		if ((ival = arg2width(nn)) >= 0)
+		if ((ival = a2width(nn)) >= 0)
 			len = (size_t)ival;
 
 	if (0 == len)
@@ -553,7 +556,7 @@ pre_IP(DECL_ARGS)
 		if (NULL != (nn = nn->next)) {
 			for ( ; nn->next; nn = nn->next)
 				/* Do nothing. */ ;
-			if ((ival = arg2width(nn)) >= 0)
+			if ((ival = a2width(nn)) >= 0)
 				len = (size_t)ival;
 		}
 
@@ -573,7 +576,7 @@ pre_IP(DECL_ARGS)
 
 		/* Don't print the length value. */
 		for (nn = n->child; nn->next; nn = nn->next)
-			print_node(p, mt, nn, m);
+			print_man_node(p, mt, nn, m);
 		return(0);
 	case (MAN_BODY):
 		p->offset = mt->offset + len;
@@ -640,7 +643,7 @@ pre_TP(DECL_ARGS)
 
 	if (NULL != (nn = n->parent->head->child))
 		if (NULL != nn->next)
-			if ((ival = arg2width(nn)) >= 0)
+			if ((ival = a2width(nn)) >= 0)
 				len = (size_t)ival;
 
 	switch (n->type) {
@@ -655,7 +658,7 @@ pre_TP(DECL_ARGS)
 		/* Don't print same-line elements. */
 		for (nn = n->child; nn; nn = nn->next) 
 			if (nn->line > n->line)
-				print_node(p, mt, nn, m);
+				print_man_node(p, mt, nn, m);
 
 		if (ival >= 0)
 			mt->lmargin = (size_t)ival;
@@ -818,7 +821,7 @@ pre_RS(DECL_ARGS)
 		return(1);
 	}
 
-	if ((ival = arg2width(nn)) < 0)
+	if ((ival = a2width(nn)) < 0)
 		return(1);
 
 	mt->offset = INDENT + (size_t)ival;
@@ -846,7 +849,7 @@ post_RS(DECL_ARGS)
 
 
 static void
-print_node(DECL_ARGS)
+print_man_node(DECL_ARGS)
 {
 	int		 c, sz;
 
@@ -882,7 +885,7 @@ print_node(DECL_ARGS)
 	}
 
 	if (c && n->child)
-		print_body(p, mt, n->child, m);
+		print_man_body(p, mt, n->child, m);
 
 	if (MAN_TEXT != n->type)
 		if (termacts[n->tok].post)
@@ -891,26 +894,22 @@ print_node(DECL_ARGS)
 
 
 static void
-print_body(DECL_ARGS)
+print_man_body(DECL_ARGS)
 {
 
-	print_node(p, mt, n, m);
+	print_man_node(p, mt, n, m);
 	if ( ! n->next)
 		return;
-	print_body(p, mt, n->next, m);
+	print_man_body(p, mt, n->next, m);
 }
 
 
 static void
-print_foot(struct termp *p, const struct man_meta *meta)
+print_man_foot(struct termp *p, const struct man_meta *meta)
 {
-	struct tm	*tm;
-	char		 buf[BUFSIZ];
+	char		buf[DATESIZ];
 
-	tm = localtime(&meta->date);
-
-	if (0 == strftime(buf, p->rmargin, "%B %d, %Y", tm))
-		(void)strlcpy(buf, "(invalid date)", BUFSIZ);
+	time2a(meta->date, buf, DATESIZ);
 
 	term_vspace(p);
 
@@ -935,7 +934,7 @@ print_foot(struct termp *p, const struct man_meta *meta)
 
 
 static void
-print_head(struct termp *p, const struct man_meta *meta)
+print_man_head(struct termp *p, const struct man_meta *meta)
 {
 	char		*buf, *title;
 

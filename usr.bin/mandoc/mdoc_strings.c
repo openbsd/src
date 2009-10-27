@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.9 2009/08/22 22:11:24 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.10 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "libmdoc.h"
 

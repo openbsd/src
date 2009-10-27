@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.12 2009/10/21 19:13:50 schwarze Exp $
+.\"	$Id: man.7,v 1.13 2009/10/27 21:40:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2009 $
+.Dd $Mdocdate: October 27 2009 $
 .Dt MAN 7
 .Os
 .
@@ -237,6 +237,63 @@ The \efBfoo\efR utility processes files...
 \&.\e\*q .SH BUGS
 \&.\e\*q .SH SECURITY CONSIDERATIONS
 .Ed
+.Pp
+The sections in a
+.Nm
+document are conventionally ordered as they appear above.  Sections
+should be composed as follows:
+.Bl -tag -width Ds -offset Ds
+.It NAME
+The name(s) and a short description of the documented material.  The
+syntax for this is generally as follows:
+.Pp
+.D1 \efBname\efR \e(en description
+.It LIBRARY
+The name of the library containing the documented material, which is
+assumed to be a function in a section 2 or 3 manual.  For functions in
+the C library, this may be as follows:
+.Pp
+.D1 Standard C Library (libc, -lc)
+.It SYNOPSIS
+Documents the utility invocation syntax, function call syntax, or device
+configuration. 
+.Pp
+For the first, utilities (sections 1, 6, and 8), this is
+generally structured as follows:
+.Pp
+.D1 \efBname\efR [-\efBab\efR] [-\efBc\efR\efIarg\efR] \efBpath\efR...
+.Pp
+For the second, function calls (sections 2, 3, 9):
+.Pp
+.D1 \. Ns Sx \&B No char *name(char *\efIarg\efR);
+.Pp
+And for the third, configurations (section 4):
+.Pp
+.D1 \. Ns Sx \&B No name* at cardbus ? function ?
+.Pp
+Manuals not in these sections generally don't need a SYNOPSIS.
+.It DESCRIPTION
+This expands upon the brief, one-line description in NAME.  It usually
+contains a break-down of the options (if documenting a command).
+.It IMPLEMENTATION NOTES
+Implementation-specific notes should be kept here.  This is useful when
+implementing standard functions that may have side effects or notable
+algorithmic implications.
+.It EXIT STATUS
+.It RETURN VALUES
+.It ENVIRONMENT
+.It FILES
+.It EXAMPLES
+.It DIAGNOSTICS
+.It ERRORS
+.It SEE ALSO
+.It STANDARDS
+.It HISTORY
+.It AUTHORS
+.It CAVEATS
+.It BUGS
+.It SECURITY CONSIDERATIONS
+.El
 .
 .
 .Sh MACRO SYNTAX
@@ -290,6 +347,7 @@ If a next-line macro is proceded by a block macro, it is ignored.
 .It Sx \&I   Ta    n         Ta    next-line
 .It Sx \&IB  Ta    n         Ta    current
 .It Sx \&IR  Ta    n         Ta    current
+.It Sx \&PD  Ta    n         Ta    current
 .It Sx \&R   Ta    n         Ta    next-line
 .It Sx \&RB  Ta    n         Ta    current
 .It Sx \&RI  Ta    n         Ta    current
@@ -308,6 +366,7 @@ If a next-line macro is proceded by a block macro, it is ignored.
 .
 .Pp
 The
+.Sx \&PD ,
 .Sx \&RS ,
 .Sx \&RE ,
 .Sx \&UC ,
@@ -370,6 +429,7 @@ No closure refers to an explicit block closing macro.
 If a block macro is next-line scoped, it may only be followed by in-line
 macros (excluding
 .Sx \&DT ,
+.Sx \&PD ,
 .Sx \&TH ,
 .Sx \&UC ,
 .Sx \&br ,
@@ -525,6 +585,8 @@ If
 .Va width
 is specified, it's saved for later paragraph left-margins; if
 unspecified, the saved or default width is used.
+.Ss \&PD
+Has no effect.  Included for compatibility.
 .Ss \&UC
 Has no effect.  Included for compatibility.
 .Ss \&br

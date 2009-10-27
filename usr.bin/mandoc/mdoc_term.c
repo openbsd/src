@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.61 2009/10/21 19:13:50 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.62 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -47,6 +47,23 @@ struct	termact {
 	int	(*pre)(DECL_ARGS);
 	void	(*post)(DECL_ARGS);
 };
+
+static	size_t	  a2width(const struct mdoc_argv *, int);
+static	size_t	  a2height(const struct mdoc_node *);
+static	size_t	  a2offs(const struct mdoc_argv *);
+
+static	int	  arg_hasattr(int, const struct mdoc_node *);
+static	int	  arg_getattrs(const int *, int *, size_t,
+			const struct mdoc_node *);
+static	int	  arg_getattr(int, const struct mdoc_node *);
+static	int	  arg_listtype(const struct mdoc_node *);
+static	void	  print_bvspace(struct termp *,
+			const struct mdoc_node *,
+			const struct mdoc_node *);
+static	void  	  print_node(DECL_ARGS);
+static	void	  print_head(DECL_ARGS);
+static	void	  print_body(DECL_ARGS);
+static	void	  print_foot(DECL_ARGS);
 
 static	void	  termp____post(DECL_ARGS);
 static	void	  termp_an_post(DECL_ARGS);
@@ -236,24 +253,8 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, termp____post }, /* %Q */ 
 	{ termp_sp_pre, NULL }, /* br */
 	{ termp_sp_pre, NULL }, /* sp */ 
+	{ termp_under_pre, termp____post }, /* %U */ 
 };
-
-static	size_t	  arg2width(const struct mdoc_argv *, int);
-static	size_t	  arg2height(const struct mdoc_node *);
-static	size_t	  arg2offs(const struct mdoc_argv *);
-
-static	int	  arg_hasattr(int, const struct mdoc_node *);
-static	int	  arg_getattrs(const int *, int *, size_t,
-			const struct mdoc_node *);
-static	int	  arg_getattr(int, const struct mdoc_node *);
-static	int	  arg_listtype(const struct mdoc_node *);
-static	void	  print_bvspace(struct termp *,
-			const struct mdoc_node *,
-			const struct mdoc_node *);
-static	void  	  print_node(DECL_ARGS);
-static	void	  print_head(DECL_ARGS);
-static	void	  print_body(DECL_ARGS);
-static	void	  print_foot(DECL_ARGS);
 
 
 void
@@ -342,8 +343,8 @@ print_node(DECL_ARGS)
 static void
 print_foot(DECL_ARGS)
 {
-	struct tm	*tm;
-	char		*buf, *os;
+	char		 buf[DATESIZ];
+	char		*os;
 
 	/* 
 	 * Output the footer in new-groff style, that is, three columns
@@ -353,15 +354,10 @@ print_foot(DECL_ARGS)
 	 * SYSTEM                  DATE                    SYSTEM
 	 */
 
-	if (NULL == (buf = malloc(p->rmargin)))
-		err(EXIT_FAILURE, "malloc");
 	if (NULL == (os = malloc(p->rmargin)))
 		err(EXIT_FAILURE, "malloc");
 
-	tm = localtime(&m->date);
-
-	if (0 == strftime(buf, p->rmargin, "%B %e, %Y", tm))
-		err(EXIT_FAILURE, "strftime");
+	time2a(m->date, buf, DATESIZ);
 
 	(void)strlcpy(os, m->os, p->rmargin);
 
@@ -393,7 +389,6 @@ print_foot(DECL_ARGS)
 	p->rmargin = p->maxrmargin;
 	p->flags = 0;
 
-	free(buf);
 	free(os);
 }
 
@@ -469,7 +464,7 @@ print_head(DECL_ARGS)
 
 
 static size_t
-arg2height(const struct mdoc_node *n)
+a2height(const struct mdoc_node *n)
 {
 	struct roffsu	 su;
 
@@ -483,7 +478,7 @@ arg2height(const struct mdoc_node *n)
 
 
 static size_t
-arg2width(const struct mdoc_argv *arg, int pos)
+a2width(const struct mdoc_argv *arg, int pos)
 {
 	struct roffsu	 su;
 
@@ -538,7 +533,7 @@ arg_listtype(const struct mdoc_node *n)
 
 
 static size_t
-arg2offs(const struct mdoc_argv *arg)
+a2offs(const struct mdoc_argv *arg)
 {
 	struct roffsu	 su;
 
@@ -717,23 +712,23 @@ termp_it_pre(DECL_ARGS)
 		for (i = 0, nn = n->prev; nn && 
 				i < (int)bl->args->argv[vals[2]].sz; 
 				nn = nn->prev, i++)
-			offset += arg2width 
+			offset += a2width 
 				(&bl->args->argv[vals[2]], i);
 
 		/* Whether exceeds maximum column. */
 		if (i < (int)bl->args->argv[vals[2]].sz)
-			width = arg2width(&bl->args->argv[vals[2]], i);
+			width = a2width(&bl->args->argv[vals[2]], i);
 		else
 			width = 0;
 
 		if (vals[1] >= 0) 
-			offset += arg2offs(&bl->args->argv[vals[1]]);
+			offset += a2offs(&bl->args->argv[vals[1]]);
 		break;
 	default:
 		if (vals[0] >= 0) 
-			width = arg2width(&bl->args->argv[vals[0]], 0);
+			width = a2width(&bl->args->argv[vals[0]], 0);
 		if (vals[1] >= 0) 
-			offset += arg2offs(&bl->args->argv[vals[1]]);
+			offset += a2offs(&bl->args->argv[vals[1]]);
 		break;
 	}
 
@@ -1556,7 +1551,7 @@ termp_bd_pre(DECL_ARGS)
 			type = nn->args->argv[i].arg;
 			break;
 		case (MDOC_Offset):
-			p->offset += arg2offs(&nn->args->argv[i]);
+			p->offset += a2offs(&nn->args->argv[i]);
 			break;
 		default:
 			break;
@@ -1811,7 +1806,7 @@ termp_sp_pre(DECL_ARGS)
 
 	switch (n->tok) {
 	case (MDOC_sp):
-		len = n->child ? arg2height(n->child) : 1;
+		len = n->child ? a2height(n->child) : 1;
 		break;
 	case (MDOC_br):
 		len = 0;
@@ -2007,6 +2002,8 @@ static void
 termp____post(DECL_ARGS)
 {
 
+	/* TODO: %U. */
+
 	p->flags |= TERMP_NOSPACE;
 	switch (n->tok) {
 	case (MDOC__T):
@@ -2026,16 +2023,17 @@ termp_lk_pre(DECL_ARGS)
 {
 	const struct mdoc_node *nn;
 
-	if (NULL == (nn = n->child->next)) {
-		p->under++;
-		return(1);
-	}
-
 	p->under++;
+	nn = n->child;
+
+	if (NULL == nn->next)
+		return(1);
+
 	term_word(p, nn->string);
+	p->under--;
+
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, ":");
-	p->under--;
 
 	p->bold++;
 	for (nn = nn->next; nn; nn = nn->next) 

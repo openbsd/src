@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.30 2009/10/21 19:13:50 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.31 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -116,7 +116,9 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	/* LINTED */
 	"Brc",		"\%C",		"Es",		"En",
 	/* LINTED */
-	"Dx",		"\%Q",		"br",		"sp"
+	"Dx",		"\%Q",		"br",		"sp",
+	/* LINTED */
+	"\%U"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 
@@ -656,7 +658,6 @@ parsetext(struct mdoc *m, int line, char *buf)
 	m->next = MDOC_NEXT_SIBLING;
 	return(1);
 }
-
 
 
 

@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.1 2009/10/21 19:13:51 schwarze Exp $ */
+/*	$Id: out.c,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -16,12 +16,14 @@
  */
 #include <sys/types.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 #include "out.h"
-
 
 /* 
  * Convert a `scaling unit' to a consistent form, or fail.  Scaling
@@ -117,3 +119,46 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 
 	return(1);
 }
+
+
+/*
+ * Correctly writes the time in nroff form, which differs from standard
+ * form in that a space isn't printed in lieu of the extra %e field for
+ * single-digit dates.
+ */
+void
+time2a(time_t t, char *dst, size_t sz)
+{
+	struct tm	 tm;
+	char		 buf[5];
+	char		*p;
+	size_t		 nsz;
+
+	assert(sz > 1);
+	localtime_r(&t, &tm);
+
+	p = dst;
+	nsz = 0;
+
+	dst[0] = '\0';
+
+	if (0 == (nsz = strftime(p, sz, "%B ", &tm)))
+		return;
+
+	p += (int)nsz;
+	sz -= nsz;
+
+	if (0 == strftime(buf, sizeof(buf), "%e, ", &tm))
+		return;
+
+	nsz = strlcat(p, buf + (' ' == buf[0] ? 1 : 0), sz);
+
+	if (nsz >= sz)
+		return;
+
+	p += (int)nsz;
+	sz -= nsz;
+
+	(void)strftime(p, sz, "%Y", &tm);
+}
+

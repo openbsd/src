@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.17 2009/10/21 19:13:50 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.18 2009/10/27 21:40:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 21 2009 $
+.Dd $Mdocdate: October 27 2009 $
 .Dt MDOC 7
 .Os
 .
@@ -611,8 +611,10 @@ then the macro accepts an arbitrary number of arguments.
 .It Sx \&%N  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%O  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%P  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%Q  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%R  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%T  Ta    \&No     Ta    \&No     Ta    >0
+.It Sx \&%U  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&%V  Ta    \&No     Ta    \&No     Ta    >0
 .It Sx \&Ad  Ta    Yes      Ta    Yes      Ta    n
 .It Sx \&An  Ta    Yes      Ta    Yes      Ta    n
@@ -755,6 +757,9 @@ Article title of an
 .Sx \&Rs
 block.  This macro may also be used in a non-bibliographical context
 when referring to article titles.
+.
+.Ss \&%U
+URI of reference document.
 .
 .Ss \&%V
 Volume number of an
@@ -943,7 +948,7 @@ which aligns around an imagined centre axis.
 .It
 As a precalculated width for a named macro.  The most popular is the
 imaginary macro
-.Ar Ds ,
+.Ar \&Ds ,
 which resolves to
 .Ar 6n .
 .It
@@ -1446,6 +1451,19 @@ and
 .Ss \&Lb
 .Ss \&Li
 .Ss \&Lk
+Format a hyperlink.  The calling syntax is as follows:
+.Pp
+.D1 \. Ns Sx \&Lk Cm uri Op Cm name
+.Pp
+Examples:
+.Bd -literal -offset indent
+\&.Lk http://bsd.lv "The BSD.lv Project"
+\&.Lk http://bsd.lv
+.Ed
+.Pp
+See also
+.Sx \&Mt .
+.
 .Ss \&Lp
 .Ss \&Ms
 .Ss \&Mt
@@ -1547,7 +1565,7 @@ block.  Does not have any tail arguments.
 .Ss \&Rs
 Begins a bibliographic
 .Pq Dq reference
-block.  Does not have any head arguments.  The block macro and may only
+block.  Does not have any head arguments.  The block macro may only
 contain
 .Sx \&%A ,
 .Sx \&%B ,

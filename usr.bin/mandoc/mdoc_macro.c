@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.24 2009/09/21 21:11:37 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.25 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -174,6 +174,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, 0 }, /* %Q */
 	{ in_line_eoln, 0 }, /* br */
 	{ in_line_eoln, 0 }, /* sp */
+	{ in_line_eoln, 0 }, /* %U */
 };
 
 const	struct mdoc_macro * const mdoc_macros = __mdoc_macros;

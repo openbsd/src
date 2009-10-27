@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.1 2009/10/21 19:13:50 schwarze Exp $ */
+/*	$Id: html.c,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/types.h>
-#include <sys/queue.h>
 
 #include <assert.h>
 #include <err.h>
@@ -98,8 +97,8 @@ html_alloc(char *outopts)
 	if (NULL == (h = calloc(1, sizeof(struct html))))
 		return(NULL);
 
-	SLIST_INIT(&h->tags);
-	SLIST_INIT(&h->ords);
+	h->tags.head = NULL;
+	h->ords.head = NULL;
 
 	if (NULL == (h->symtab = chars_init(CHARS_HTML))) {
 		free(h);
@@ -134,15 +133,13 @@ html_free(void *p)
 
 	h = (struct html *)p;
 
-	while ( ! SLIST_EMPTY(&h->ords)) {
-		ord = SLIST_FIRST(&h->ords);
-		SLIST_REMOVE_HEAD(&h->ords, entry);
+	while ((ord = h->ords.head) != NULL) { 
+		h->ords.head = ord->next;
 		free(ord);
 	}
 
-	while ( ! SLIST_EMPTY(&h->tags)) {
-		tag = SLIST_FIRST(&h->tags);
-		SLIST_REMOVE_HEAD(&h->tags, entry);
+	while ((tag = h->tags.head) != NULL) {
+		h->tags.head = tag->next;	
 		free(tag);
 	}
 	
@@ -354,7 +351,8 @@ print_otag(struct html *h, enum htmltag tag,
 		if (NULL == (t = malloc(sizeof(struct tag))))
 			err(EXIT_FAILURE, "malloc");
 		t->tag = tag;
-		SLIST_INSERT_HEAD(&h->tags, t, entry);
+		t->next = h->tags.head;
+		h->tags.head = t;
 	} else
 		t = NULL;
 
@@ -464,10 +462,9 @@ print_tagq(struct html *h, const struct tag *until)
 {
 	struct tag	*tag;
 
-	while ( ! SLIST_EMPTY(&h->tags)) {
-		tag = SLIST_FIRST(&h->tags);
+	while ((tag = h->tags.head) != NULL) {
 		print_ctag(h, tag->tag);
-		SLIST_REMOVE_HEAD(&h->tags, entry);
+		h->tags.head = tag->next;
 		free(tag);
 		if (until && tag == until)
 			return;
@@ -480,12 +477,11 @@ print_stagq(struct html *h, const struct tag *suntil)
 {
 	struct tag	*tag;
 
-	while ( ! SLIST_EMPTY(&h->tags)) {
-		tag = SLIST_FIRST(&h->tags);
+	while ((tag = h->tags.head) != NULL) {
 		if (suntil && tag == suntil)
 			return;
 		print_ctag(h, tag->tag);
-		SLIST_REMOVE_HEAD(&h->tags, entry);
+		h->tags.head = tag->next;
 		free(tag);
 	}
 }

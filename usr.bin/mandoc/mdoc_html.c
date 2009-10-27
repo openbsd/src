@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.1 2009/10/21 19:13:50 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -16,7 +16,6 @@
  */
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/queue.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -249,6 +248,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc__x_pre, mdoc__x_post}, /* %Q */ 
 	{mdoc_sp_pre, NULL}, /* br */
 	{mdoc_sp_pre, NULL}, /* sp */ 
+	{mdoc__x_pre, mdoc__x_post}, /* %U */ 
 };
 
 
@@ -411,7 +411,7 @@ print_mdoc_node(MDOC_ARGS)
 	struct tag	*t;
 
 	child = 1;
-	t = SLIST_FIRST(&h->tags);
+	t = h->tags.head;
 
 	bufinit(h);
 	switch (n->type) {
@@ -451,21 +451,17 @@ print_mdoc_node(MDOC_ARGS)
 static void
 mdoc_root_post(MDOC_ARGS)
 {
-	struct tm	 tm;
 	struct htmlpair	 tag[2];
 	struct tag	*t, *tt;
-	char		 b[BUFSIZ];
+	char		 b[DATESIZ];
+
+	time2a(m->date, b, DATESIZ);
 
 	/*
 	 * XXX: this should use divs, but in Firefox, divs with nested
 	 * divs for some reason puke when trying to put a border line
 	 * below.  So I use tables, instead.
 	 */
-
-	(void)localtime_r(&m->date, &tm);
-
-	if (0 == strftime(b, BUFSIZ - 1, "%B %e, %Y", &tm))
-		err(EXIT_FAILURE, "strftime");
 
 	PAIR_CLASS_INIT(&tag[0], "footer");
 	bufcat_style(h, "width", "100%");
@@ -979,7 +975,7 @@ mdoc_it_head_pre(MDOC_ARGS, int type, struct roffsu *width)
 		print_otag(h, TAG_SPAN, 1, &tag);
 		break;
 	case (MDOC_Enum):
-		ord = SLIST_FIRST(&h->ords);
+		ord = h->ords.head;
 		assert(ord);
 		nbuf[BUFSIZ - 1] = 0;
 		(void)snprintf(nbuf, BUFSIZ - 1, "%d.", ord->pos++);
@@ -1114,7 +1110,8 @@ mdoc_bl_pre(MDOC_ARGS)
 		err(EXIT_FAILURE, "malloc");
 	ord->cookie = n;
 	ord->pos = 1;
-	SLIST_INSERT_HEAD(&h->ords, ord, entry);
+	ord->next = h->ords.head;
+	h->ords.head = ord;
 	return(1);
 }
 
@@ -1130,9 +1127,9 @@ mdoc_bl_post(MDOC_ARGS)
 	if (MDOC_Enum != a2list(n))
 		return;
 
-	ord = SLIST_FIRST(&h->ords);
+	ord = h->ords.head;
 	assert(ord);
-	SLIST_REMOVE_HEAD(&h->ords, entry);
+	h->ords.head = ord->next;
 	free(ord);
 }
 
@@ -1755,6 +1752,9 @@ mdoc_lk_pre(MDOC_ARGS)
 	tag[1].val = nn->string;
 	print_otag(h, TAG_A, 2, tag);
 
+	if (NULL == nn->next) 
+		return(1);
+
 	for (nn = nn->next; nn; nn = nn->next) 
 		print_text(h, nn->string);
 
@@ -2145,56 +2145,65 @@ mdoc_lb_pre(MDOC_ARGS)
 static int
 mdoc__x_pre(MDOC_ARGS)
 {
-	struct htmlpair	tag;
+	struct htmlpair	tag[2];
 
 	switch (n->tok) {
 	case(MDOC__A):
-		PAIR_CLASS_INIT(&tag, "ref-auth");
+		PAIR_CLASS_INIT(&tag[0], "ref-auth");
 		break;
 	case(MDOC__B):
-		PAIR_CLASS_INIT(&tag, "ref-book");
+		PAIR_CLASS_INIT(&tag[0], "ref-book");
 		break;
 	case(MDOC__C):
-		PAIR_CLASS_INIT(&tag, "ref-city");
+		PAIR_CLASS_INIT(&tag[0], "ref-city");
 		break;
 	case(MDOC__D):
-		PAIR_CLASS_INIT(&tag, "ref-date");
+		PAIR_CLASS_INIT(&tag[0], "ref-date");
 		break;
 	case(MDOC__I):
-		PAIR_CLASS_INIT(&tag, "ref-issue");
+		PAIR_CLASS_INIT(&tag[0], "ref-issue");
 		break;
 	case(MDOC__J):
-		PAIR_CLASS_INIT(&tag, "ref-jrnl");
+		PAIR_CLASS_INIT(&tag[0], "ref-jrnl");
 		break;
 	case(MDOC__N):
-		PAIR_CLASS_INIT(&tag, "ref-num");
+		PAIR_CLASS_INIT(&tag[0], "ref-num");
 		break;
 	case(MDOC__O):
-		PAIR_CLASS_INIT(&tag, "ref-opt");
+		PAIR_CLASS_INIT(&tag[0], "ref-opt");
 		break;
 	case(MDOC__P):
-		PAIR_CLASS_INIT(&tag, "ref-page");
+		PAIR_CLASS_INIT(&tag[0], "ref-page");
 		break;
 	case(MDOC__Q):
-		PAIR_CLASS_INIT(&tag, "ref-corp");
+		PAIR_CLASS_INIT(&tag[0], "ref-corp");
 		break;
 	case(MDOC__R):
-		PAIR_CLASS_INIT(&tag, "ref-rep");
+		PAIR_CLASS_INIT(&tag[0], "ref-rep");
 		break;
 	case(MDOC__T):
-		PAIR_CLASS_INIT(&tag, "ref-title");
+		PAIR_CLASS_INIT(&tag[0], "ref-title");
 		print_text(h, "\\(lq");
 		h->flags |= HTML_NOSPACE;
 		break;
+	case(MDOC__U):
+		PAIR_CLASS_INIT(&tag[0], "link-ref");
+		break;
 	case(MDOC__V):
-		PAIR_CLASS_INIT(&tag, "ref-vol");
+		PAIR_CLASS_INIT(&tag[0], "ref-vol");
 		break;
 	default:
 		abort();
 		/* NOTREACHED */
 	}
 
-	print_otag(h, TAG_SPAN, 1, &tag);
+	if (MDOC__U != n->tok) {
+		print_otag(h, TAG_SPAN, 1, tag);
+		return(1);
+	}
+
+	PAIR_HREF_INIT(&tag[1], n->child->string);
+	print_otag(h, TAG_A, 2, tag);
 	return(1);
 }
 
