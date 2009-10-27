@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.11 2009/10/10 12:43:09 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.12 2009/10/27 22:41:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -304,6 +304,7 @@ thru_new(char *name)
 	return p;
 }
 
+
 /*
  * broadcast a message to all output buffers on the behalf of ibuf.
  * ie. don't sent back the message to the sender
@@ -338,12 +339,11 @@ ctl_sendmsg(struct aproc *p, struct abuf *ibuf, unsigned char *msg, unsigned len
 }
 
 /*
- * allocate a new slot (ie midi channel), register the given call-back
- * to be called volume is changed by MIDI. The call-back is invoked at
- * initialization to restore the saved volume.
+ * find the best matching free slot index (ie midi channel).
+ * return -1, if there are no free slots anymore
  */
 int
-ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
+ctl_getidx(struct aproc *p, char *who)
 {
 	char *s;
 	struct ctl_slot *slot;
@@ -370,39 +370,36 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 	 * find the instance number of the control name
 	 */
 	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
-		if (slot->cb == NULL)
+		if (slot->ops == NULL)
 			continue;
 		if (strcmp(slot->name, name) == 0)
 			umap |= (1 << i);
 	} 
-	for (unit = 0; unit < CTL_NSLOT; unit++) {
+	for (unit = 0; ; unit++) {
 		if (unit == CTL_NSLOT)
 			return -1;
-		if ((umap & (1 << i)) == 0)
+		if ((umap & (1 << unit)) == 0)
 			break;
 	}
 	/*
 	 * find a free controller slot with the same name/unit
 	 */
 	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
-		if (slot->cb == NULL &&
+		if (slot->ops == NULL &&
 		    strcmp(slot->name, name) == 0 &&
 		    slot->unit == unit) {
-			slot->cb = cb;
-			slot->arg = arg;
-			slot->cb(slot->arg, slot->vol);
-			ctl_slotvol(p, i, slot->vol);
 			return i;
 		}
 	}
 
 	/*
 	 * couldn't find a matching slot, pick oldest free slot
+	 * and set its name/unit
 	 */
 	bestser = 0;
 	bestidx = CTL_NSLOT;
 	for (i = 0, slot = p->u.ctl.slot; i < CTL_NSLOT; i++, slot++) {
-		if (slot->cb != NULL)
+		if (slot->ops != NULL)
 			continue;
 		ser = p->u.ctl.serial - slot->serial;
 		if (ser > bestser) {
@@ -417,11 +414,28 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 	slot->serial = p->u.ctl.serial++;
 	slot->unit = unit;
 	slot->vol = MIDI_MAXCTL;
-	slot->cb = cb;
-	slot->arg = arg;
-	slot->cb(slot->arg, slot->vol);
-	ctl_slotvol(p, bestidx, slot->vol);
 	return bestidx;
+}
+
+/*
+ * allocate a new slot and register the given call-backs
+ */
+int
+ctl_slotnew(struct aproc *p, char *who, struct ctl_ops *ops, void *arg)
+{
+	int idx;
+	struct ctl_slot *s;
+
+	idx = ctl_getidx(p, who);
+	if (idx < 0)
+		return -1;
+
+	s = p->u.ctl.slot + idx;
+	s->ops = ops;
+	s->arg = arg;
+	s->ops->vol(s->arg, s->vol);
+	ctl_slotvol(p, idx, s->vol);
+	return idx;
 }
 
 /*
@@ -430,7 +444,7 @@ ctl_slotnew(struct aproc *p, char *who, void (*cb)(void *, unsigned), void *arg)
 void
 ctl_slotdel(struct aproc *p, int index)
 {
-	p->u.ctl.slot[index].cb = NULL;
+	p->u.ctl.slot[index].ops = NULL;
 }
 
 /*
@@ -464,10 +478,10 @@ ctl_ev(struct aproc *p, struct abuf *ibuf)
 		if (chan >= CTL_NSLOT)
 			return;
 		slot = p->u.ctl.slot + chan;
-		if (slot->cb == NULL)
+		if (slot->ops == NULL)
 			return;
 		slot->vol = ibuf->r.midi.msg[2];
-		slot->cb(slot->arg, slot->vol);
+		slot->ops->vol(slot->arg, slot->vol);
 		ctl_sendmsg(p, ibuf, ibuf->r.midi.msg, ibuf->r.midi.len);
 	}
 }
@@ -571,7 +585,7 @@ ctl_new(char *name)
 	p->u.ctl.serial = 0;
 	for (i = 0, s = p->u.ctl.slot; i < CTL_NSLOT; i++, s++) {
 		p->u.ctl.slot[i].unit = i;
-		p->u.ctl.slot[i].cb = NULL;
+		p->u.ctl.slot[i].ops = NULL;
 		p->u.ctl.slot[i].vol = MIDI_MAXCTL;
 		p->u.ctl.slot[i].serial = p->u.ctl.serial++;
 		strlcpy(p->u.ctl.slot[i].name, "unknown", CTL_NAMEMAX);

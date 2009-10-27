@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.33 2009/10/22 21:41:30 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.34 2009/10/27 22:41:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,6 +53,12 @@ struct fileops sock_ops = {
 };
 
 
+void sock_setvol(void *, unsigned);
+
+struct ctl_ops ctl_sockops = {
+	sock_setvol,
+};
+
 void
 rsock_done(struct aproc *p)
 {
@@ -63,7 +69,7 @@ rsock_done(struct aproc *p)
 	sock_reset(f);
 	f->pipe.file.rproc = NULL;
 	if (f->pipe.file.wproc) {
-		if (dev_midi && f->slot >= 0)
+		if (f->slot >= 0)
 			ctl_slotdel(dev_midi, f->slot);
 		aproc_del(f->pipe.file.wproc);
 		file_del(&f->pipe.file);
@@ -80,7 +86,7 @@ rsock_in(struct aproc *p, struct abuf *ibuf_dummy)
 	if (!sock_read(f))
 		return 0;
 	obuf = LIST_FIRST(&p->obuflist);
-	if (obuf) {
+	if (obuf && f->pstate >= SOCK_RUN) {
 		if (!abuf_flush(obuf))
 			return 0;
 	}
@@ -160,7 +166,7 @@ wsock_done(struct aproc *p)
 	sock_reset(f);
 	f->pipe.file.wproc = NULL;
 	if (f->pipe.file.rproc) {
-		if (dev_midi && f->slot >= 0)
+		if (f->slot >= 0)
 			ctl_slotdel(dev_midi, f->slot);
 		aproc_del(f->pipe.file.rproc);
 		file_del(&f->pipe.file);
@@ -685,7 +691,7 @@ sock_hello(struct sock *f)
 		f->mode |= AMSG_REC;
 	}
 	if (dev_midi) {
-		f->slot = ctl_slotnew(dev_midi, p->who, sock_setvol, f);
+		f->slot = ctl_slotnew(dev_midi, p->who, &ctl_sockops, f);
 		if (f->slot < 0) {
 			return 0;
 		}
@@ -710,6 +716,11 @@ sock_execmsg(struct sock *f)
 			return 0;
 		}
 		if (!(f->mode & AMSG_PLAY)) {
+			aproc_del(f->pipe.file.rproc);
+			return 0;
+		}
+		if (f->pstate == SOCK_START &&
+		    ABUF_FULL(LIST_FIRST(&f->pipe.file.rproc->obuflist))) {
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
@@ -805,7 +816,7 @@ sock_execmsg(struct sock *f)
 			return 0;
 		}
 		sock_setvol(f, m->u.vol.ctl);
-		if (dev_midi && f->slot >= 0)
+		if (f->slot >= 0)
 			ctl_slotvol(dev_midi, f->slot, m->u.vol.ctl);
 		f->rtodo = sizeof(struct amsg);
 		f->rstate = SOCK_RMSG;
