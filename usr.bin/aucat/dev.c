@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.34 2009/10/10 12:43:09 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.35 2009/10/27 22:24:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -238,7 +238,8 @@ dev_done(void)
 	struct file *f;
 
 	if (dev_midi) {
-		dev_midi->u.mix.flags |= THRU_AUTOQUIT;
+		if (!dev_sub && !dev_mix)
+			dev_midi->u.thru.flags |= THRU_AUTOQUIT;
  	restart_midi:
 		LIST_FOREACH(f, &file_list, entry) {
 			if (f->rproc &&
