@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.33 2009/10/12 12:04:11 dlg Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.34 2009/10/27 11:24:20 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -106,6 +106,8 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 		return (EFAULT);
 
 	xs = scsi_xs_get(link, 0);
+	if (xs == NULL)
+		return (ENOMEM);
 
 	memcpy(xs->cmd, screq->cmd, screq->cmdlen);
 	xs->cmdlen = screq->cmdlen;
