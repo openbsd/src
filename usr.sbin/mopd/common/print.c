@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.11 2006/04/20 08:52:52 maja Exp $ */
+/*	$OpenBSD: print.c,v 1.12 2009/10/27 23:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -23,11 +23,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "$OpenBSD: print.c,v 1.11 2006/04/20 08:52:52 maja Exp $";
-#endif
 
 #include <sys/types.h>
 #include <stdio.h>

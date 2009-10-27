@@ -31,10 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: subdi3.c,v 1.5 2004/11/28 07:23:41 mickey Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 #include "quad.h"
 
 /*

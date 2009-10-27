@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.16 2009/07/19 15:47:57 martynas Exp $	*/
+/*	$OpenBSD: printf.c,v 1.17 2009/10/27 23:59:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: printf.c,v 1.16 2009/07/19 15:47:57 martynas Exp $";
-#endif /* not lint */
 
 #include <ctype.h>
 #include <stdio.h>

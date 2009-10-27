@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: k_rem_pio2.c,v 1.7 1995/05/10 20:46:25 jtc Exp $";
-#endif
-
 /*
  * __kernel_rem_pio2(x,y,e0,nx,prec)
  * double x[],y[]; int e0,nx,prec;

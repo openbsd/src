@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.21 2004/11/04 20:09:18 deraadt Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.22 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -27,10 +27,6 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.21 2004/11/04 20:09:18 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>

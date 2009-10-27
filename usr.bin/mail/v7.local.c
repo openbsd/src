@@ -1,4 +1,4 @@
-/*	$OpenBSD: v7.local.c,v 1.14 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: v7.local.c,v 1.15 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: v7.local.c,v 1.8 1997/05/13 06:15:58 mikel Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: v7.local.c,v 1.14 2003/06/03 02:56:11 millert Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Mail -- a mail program

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.31 2008/12/18 16:18:49 hshoexer Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.32 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -26,11 +26,6 @@
  *         Tatu Ylonen <ylo@ssh.fi> and Timo J. Rinne <tri@ssh.fi>
  *         in co-operation with SSH Communications Security, Espoo, Finland
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-ike.c,v 1.31 2008/12/18 16:18:49 hshoexer Exp $ (XXX)";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

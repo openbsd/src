@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.14 2008/09/25 11:37:03 sobrado Exp $	*/
+/*	$OpenBSD: recover.c,v 1.15 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)recover.c	10.21 (Berkeley) 9/15/96";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>		/* XXX: param.h may not have included types.h */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_udf.c,v 1.2 2009/06/20 20:20:43 millert Exp $	*/
+/*	$OpenBSD: kvm_udf.c,v 1.3 2009/10/27 23:59:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_udf.c,v 1.2 2009/06/20 20:20:43 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/ucred.h>

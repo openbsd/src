@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.23 2008/07/09 19:41:56 sobrado Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.24 2009/10/27 23:59:54 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -38,13 +38,6 @@
  *	Time is returned as the number of seconds since
  *	midnight January 1st 1900.
  */
-#ifndef lint
-#if 0
-from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
-#else
-static const char rcsid[] = "$OpenBSD: rdate.c,v 1.23 2008/07/09 19:41:56 sobrado Exp $";
-#endif
-#endif				/* lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>

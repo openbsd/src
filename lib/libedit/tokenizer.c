@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenizer.c,v 1.10 2003/11/25 20:12:38 otto Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.11 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: tokenizer.c,v 1.13 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
@@ -34,14 +34,6 @@
  */
 
 #include "config.h"
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char rcsid[] = "$OpenBSD: tokenizer.c,v 1.10 2003/11/25 20:12:38 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
-
 /*
  * tokenize.c: Bourne shell like tokenizer
  */

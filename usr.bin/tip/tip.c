@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.34 2008/06/01 18:38:29 sobrado Exp $	*/
+/*	$OpenBSD: tip.c,v 1.35 2009/10/27 23:59:45 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.34 2008/06/01 18:38:29 sobrado Exp $";
-#endif /* not lint */
 
 /*
  * tip - UNIX link to other systems

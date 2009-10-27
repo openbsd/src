@@ -1,4 +1,4 @@
-/*	$OpenBSD: failedlogin.c,v 1.14 2003/06/17 21:56:25 millert Exp $	*/
+/*	$OpenBSD: failedlogin.c,v 1.15 2009/10/27 23:59:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: failedlogin.c,v 1.14 2003/06/17 21:56:25 millert Exp $";
-#endif /* not lint */
 
 /*
  * failedlogin.c

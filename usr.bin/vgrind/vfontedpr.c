@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfontedpr.c,v 1.11 2006/03/23 02:17:38 ray Exp $	*/
+/*	$OpenBSD: vfontedpr.c,v 1.12 2009/10/27 23:59:46 deraadt Exp $	*/
 /*	$NetBSD: vfontedpr.c,v 1.7 1998/12/19 23:41:53 christos Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.11 2006/03/23 02:17:38 ray Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

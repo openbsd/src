@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.17 2008/06/26 05:42:21 ray Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.18 2009/10/27 23:59:41 deraadt Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -29,10 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.17 2008/06/26 05:42:21 ray Exp $";
-#endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

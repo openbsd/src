@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_log1p.c,v 1.8 1995/05/10 20:47:46 jtc Exp $";
-#endif
-
 /* double log1p(double x)
  *
  * Method :                  

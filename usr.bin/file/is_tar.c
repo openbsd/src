@@ -1,4 +1,4 @@
-/*	$OpenBSD: is_tar.c,v 1.9 2009/04/24 18:54:34 chl Exp $ */
+/*	$OpenBSD: is_tar.c,v 1.10 2009/10/27 23:59:37 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -44,10 +44,6 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include "tar.h"
-
-#ifndef lint
-FILE_RCSID("@(#)$Id: is_tar.c,v 1.9 2009/04/24 18:54:34 chl Exp $")
-#endif
 
 #define	isodigit(c)	( ((c) >= '0') && ((c) <= '7') )
 

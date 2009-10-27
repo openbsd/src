@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.35 2007/02/18 23:34:57 jmc Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.36 2009/10/27 23:59:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.35 2007/02/18 23:34:57 jmc Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.14 2007/09/06 20:50:55 chl Exp $	*/
+/*	$OpenBSD: primes.c,v 1.15 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
-#else
-static char rcsid[] = "$OpenBSD: primes.c,v 1.14 2007/09/06 20:50:55 chl Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * primes - generate a table of primes between two values

@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_exch.c,v 1.6 2003/07/18 23:11:43 david Exp $	*/
+/*	$OpenBSD: api_exch.c,v 1.7 2009/10/27 23:59:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)api_exch.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: api_exch.c,v 1.6 2003/07/18 23:11:43 david Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 

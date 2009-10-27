@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.7 2005/07/05 18:27:41 jmc Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.8 2009/10/27 23:59:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -61,20 +61,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: deroff.c,v 1.7 2005/07/05 18:27:41 jmc Exp $";
-#endif
-#endif /* not lint */
 
 #include <err.h>
 #include <limits.h>

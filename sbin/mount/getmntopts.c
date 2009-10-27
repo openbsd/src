@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.10 2006/09/30 17:48:22 ray Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.11 2009/10/27 23:59:33 deraadt Exp $	*/
 /*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
-#else
-static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.10 2006/09/30 17:48:22 ray Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>

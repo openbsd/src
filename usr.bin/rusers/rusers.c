@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.29 2007/09/02 15:19:34 deraadt Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.30 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -45,10 +45,6 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.29 2007/09/02 15:19:34 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

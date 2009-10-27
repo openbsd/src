@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.8 2007/03/20 03:50:39 tedu Exp $	*/
+/*	$OpenBSD: config.c,v 1.9 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: config.c,v 1.7 1995/09/28 06:05:21 tls Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
-#else
-static char rcsid[] = "$OpenBSD: config.c,v 1.8 2007/03/20 03:50:39 tedu Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.c,v 1.8 2004/03/02 21:04:42 tedu Exp $	*/
+/*	$OpenBSD: talk.c,v 1.9 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: talk.c,v 1.3 1994/12/09 02:14:25 jtc Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)talk.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: talk.c,v 1.8 2004/03/02 21:04:42 tedu Exp $";
-#endif /* not lint */
 
 #include "talk.h"
 

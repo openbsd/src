@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.16 2005/04/13 02:33:08 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.17 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: io.c,v 1.16 2005/04/13 02:33:08 deraadt Exp $";
-#endif /* not lint */
 
 /*
  * This file contains the I/O handling and the exchange of

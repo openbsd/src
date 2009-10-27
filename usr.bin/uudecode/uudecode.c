@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.16 2008/07/29 18:25:28 sobrado Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.17 2009/10/27 23:59:46 deraadt Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
-#endif
-static const char rcsid[] = "$OpenBSD: uudecode.c,v 1.16 2008/07/29 18:25:28 sobrado Exp $";
-#endif /* not lint */
 
 /*
  * Create the specified file, decoding as you go.

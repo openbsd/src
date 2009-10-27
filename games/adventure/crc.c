@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc.c,v 1.6 2008/10/03 08:18:44 sthen Exp $	*/
+/*	$OpenBSD: crc.c,v 1.7 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: crc.c,v 1.2 1995/03/21 12:04:59 cgd Exp $	*/
 
 /*-
@@ -32,15 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
-static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
-#else
-static char rcsid[] = "$OpenBSD: crc.c,v 1.6 2008/10/03 08:18:44 sthen Exp $";
-#endif
-#endif /* not lint */
 
 #include "extern.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_5.c,v 1.3 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: dr_5.c,v 1.4 2009/10/27 23:59:27 deraadt Exp $	*/
 /*	$NetBSD: dr_5.c,v 1.3 1995/04/22 10:36:51 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)dr_5.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: dr_5.c,v 1.3 2003/06/03 03:01:41 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include "extern.h"
 

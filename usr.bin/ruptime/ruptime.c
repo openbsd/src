@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.15 2009/10/15 08:20:43 sobrado Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.16 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-const char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static const char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static const char rcsid[] = "$OpenBSD: ruptime.c,v 1.15 2009/10/15 08:20:43 sobrado Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>

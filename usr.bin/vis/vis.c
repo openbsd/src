@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.11 2007/03/15 23:17:20 jmc Exp $	*/
+/*	$OpenBSD: vis.c,v 1.12 2009/10/27 23:59:49 deraadt Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: vis.c,v 1.11 2007/03/15 23:17:20 jmc Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>

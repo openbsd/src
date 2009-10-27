@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.24 2008/07/16 14:53:41 martynas Exp $	*/
+/*	$OpenBSD: aux.c,v 1.25 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: aux.c,v 1.24 2008/07/16 14:53:41 martynas Exp $";
-#endif
-#endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"

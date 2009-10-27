@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.18 2008/05/26 06:30:36 otto Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.19 2009/10/27 23:59:52 deraadt Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -30,20 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
-#else
-static const char rcsid[] = "$OpenBSD: lpq.c,v 1.18 2008/05/26 06:30:36 otto Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Spool Queue examination program

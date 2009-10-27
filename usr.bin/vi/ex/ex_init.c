@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_init.c,v 1.8 2002/12/15 13:30:17 henning Exp $	*/
+/*	$OpenBSD: ex_init.c,v 1.9 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)ex_init.c	10.26 (Berkeley) 8/12/96";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>		/* XXX: param.h may not have included types.h */

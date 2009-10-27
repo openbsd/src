@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_mark.c,v 1.7 2006/04/22 03:09:15 ray Exp $	*/
+/*	$OpenBSD: v_mark.c,v 1.8 2009/10/27 23:59:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)v_mark.c	10.8 (Berkeley) 9/20/96";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>

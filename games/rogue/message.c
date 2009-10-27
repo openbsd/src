@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.12 2006/03/08 09:44:35 otto Exp $	*/
+/*	$OpenBSD: message.c,v 1.13 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: message.c,v 1.5 1995/04/22 10:27:43 cgd Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
-#else
-static const char rcsid[] = "$OpenBSD: message.c,v 1.12 2006/03/08 09:44:35 otto Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * message.c

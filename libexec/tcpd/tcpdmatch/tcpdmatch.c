@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdmatch.c,v 1.7 2003/06/26 07:53:27 deraadt Exp $	*/
+/*	$OpenBSD: tcpdmatch.c,v 1.8 2009/10/27 23:59:32 deraadt Exp $	*/
 
  /*
   * tcpdmatch - explain what tcpd would do in a specific case
@@ -14,14 +14,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) tcpdmatch.c 1.5 96/02/11 17:01:36";
-#else
-static char rcsid[] = "$OpenBSD: tcpdmatch.c,v 1.7 2003/06/26 07:53:27 deraadt Exp $";
-#endif
-#endif
 
 /* System libraries. */
 

@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_j1.c,v 1.8 1995/05/10 20:45:27 jtc Exp $";
-#endif
-
 /* j1(x), y1(x)
  * Bessel function of the first and second kinds of order zero.
  * Method -- j1(x):

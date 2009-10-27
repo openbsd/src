@@ -1,4 +1,4 @@
-/*	$OpenBSD: distopt.c,v 1.10 2007/02/26 20:57:18 jmc Exp $	*/
+/*	$OpenBSD: distopt.c,v 1.11 2009/10/27 23:59:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -30,22 +30,6 @@
  */
 
 #include "defs.h"
-#ifndef lint
-#if 0
-static char RCSid[] __attribute__((__unused__)) = 
-"$From: distopt.c,v 1.5 1999/08/04 15:57:33 christos Exp $";
-#else
-static char RCSid[] __attribute__((__unused__)) = 
-"$OpenBSD: distopt.c,v 1.10 2007/02/26 20:57:18 jmc Exp $";
-#endif
-
-static char sccsid[] __attribute__((__unused__)) =
-"@(#)distopt.c";
-
-static char copyright[] __attribute__((__unused__)) =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* !lint */
 
 /*
  * Dist Option functions

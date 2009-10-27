@@ -1,4 +1,4 @@
-/*	$OpenBSD: dn11.c,v 1.9 2006/03/17 19:17:13 moritz Exp $	*/
+/*	$OpenBSD: dn11.c,v 1.10 2009/10/27 23:59:45 deraadt Exp $	*/
 /*	$NetBSD: dn11.c,v 1.4 1995/10/29 00:49:53 pk Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)dn11.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: dn11.c,v 1.9 2006/03/17 19:17:13 moritz Exp $";
-#endif /* not lint */
 
 /*
  * Routines for dialing up on DN-11

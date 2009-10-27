@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.14 2007/10/31 16:29:50 jmc Exp $	*/
+/*	$OpenBSD: head.c,v 1.15 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -28,14 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1980, 1987 Regents of the University of California.\n\
- All rights reserved.\n";
-/*static char sccsid[] = "from: @(#)head.c	5.5 (Berkeley) 6/1/90";*/
-static const char rcsid[] = "$OpenBSD: head.c,v 1.14 2007/10/31 16:29:50 jmc Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2004/08/06 22:21:16 pefo Exp $
+#	$OpenBSD: Makefile,v 1.2 2009/10/27 23:59:58 deraadt Exp $
 
-#CFLAGS+=	-DLIBC_SCCS -I${.CURDIR} -mips2
-CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}
+#CFLAGS+=	-I${.CURDIR} -mips2
+CFLAGS+=	-I${.CURDIR}
 OBJS=		crt0.o gcrt0.o scrt0.o crtbegin.o crtend.o crtbeginS.o crtendS.o
 
 .PATH: ${.CURDIR}/../common_elf

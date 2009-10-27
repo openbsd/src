@@ -1,4 +1,4 @@
-/*	$OpenBSD: shell_cmd.c,v 1.2 2002/01/02 20:18:33 deraadt Exp $	*/
+/*	$OpenBSD: shell_cmd.c,v 1.3 2009/10/27 23:59:30 deraadt Exp $	*/
 
  /*
   * shell_cmd() takes a shell command after %<character> substitutions. The
@@ -9,14 +9,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) shell_cmd.c 1.5 94/12/28 17:42:44";
-#else
-static char rcsid[] = "$OpenBSD: shell_cmd.c,v 1.2 2002/01/02 20:18:33 deraadt Exp $";
-#endif
-#endif
 
 /* System libraries. */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stoc.c,v 1.7 2003/07/10 00:03:01 david Exp $	*/
+/*	$OpenBSD: stoc.c,v 1.8 2009/10/27 23:59:24 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,14 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
-#else
-static char rcsid[] = "$OpenBSD: stoc.c,v 1.7 2003/07/10 00:03:01 david Exp $";
-#endif
-#endif /* not lint */
 
 #include "gomoku.h"
 #include <stdlib.h>

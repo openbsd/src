@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.32 2004/05/10 15:25:51 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.33 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
-#else
-static const char rcsid[] = "$OpenBSD: lex.c,v 1.32 2004/05/10 15:25:51 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include "rcv.h"
 #include <errno.h>

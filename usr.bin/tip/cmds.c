@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.27 2007/05/15 19:42:05 moritz Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.28 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.27 2007/05/15 19:42:05 moritz Exp $";
-#endif /* not lint */
 
 #include "tip.h"
 #include "pathnames.h"

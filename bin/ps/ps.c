@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.46 2008/07/18 14:24:18 kevlo Exp $	*/
+/*	$OpenBSD: ps.c,v 1.47 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.46 2008/07/18 14:24:18 kevlo Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/user.h>

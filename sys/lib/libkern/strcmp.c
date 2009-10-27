@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.c,v 1.9 2004/11/28 07:23:41 mickey Exp $	*/
+/*	$OpenBSD: strcmp.c,v 1.10 2009/10/27 23:59:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,10 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strcmp.c,v 1.9 2004/11/28 07:23:41 mickey Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>

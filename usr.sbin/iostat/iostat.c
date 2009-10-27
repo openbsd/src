@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.25 2007/02/18 20:41:34 jmc Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.26 2009/10/27 23:59:51 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -61,21 +61,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1986, 1991, 1993\n\
-        The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)iostat.c    8.2 (Berkeley) 1/26/94";
-#else
-static char *rcsid = "$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $"
-;
-#endif
-#endif /* not lint */
 
 #include <sys/dkstat.h>
 #include <sys/time.h>

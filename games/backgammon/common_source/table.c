@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.7 2006/03/27 00:10:14 tedu Exp $	*/
+/*	$OpenBSD: table.c,v 1.8 2009/10/27 23:59:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -28,14 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: table.c,v 1.7 2006/03/27 00:10:14 tedu Exp $";
-#endif
-#endif /* not lint */
 
 #include <ctype.h>
 #include "back.h"

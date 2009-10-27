@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.22 2009/05/20 20:37:43 thib Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.23 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -27,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.22 2009/05/20 20:37:43 thib Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>

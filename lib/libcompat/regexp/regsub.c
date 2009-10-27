@@ -1,4 +1,4 @@
-/*	$OpenBSD: regsub.c,v 1.3 1996/12/14 07:01:29 tholo Exp $	*/
+/*	$OpenBSD: regsub.c,v 1.4 2009/10/27 23:59:28 deraadt Exp $	*/
 
 /*
  * regsub
@@ -20,10 +20,6 @@
  *	3. Altered versions must be plainly marked as such, and must not
  *		be misrepresented as being the original software.
  */
-
-#ifndef lint
-static char *rcsid = "$OpenBSD: regsub.c,v 1.3 1996/12/14 07:01:29 tholo Exp $";
-#endif /* not lint */
 
 #include <regexp.h>
 #include <stdio.h>

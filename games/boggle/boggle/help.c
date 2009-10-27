@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.4 2004/07/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: help.c,v 1.5 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: help.c,v 1.2 1995/03/21 12:14:38 cgd Exp $	*/
 
 /*-
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 6/11/93";
-#else
-static char rcsid[] = "$OpenBSD: help.c,v 1.4 2004/07/10 07:26:22 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <curses.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.18 2007/09/29 12:31:28 otto Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.19 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -32,13 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.18 2007/09/29 12:31:28 otto Exp $";
-#endif /* not lint */
 
 #include <sys/stat.h>
 

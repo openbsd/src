@@ -1,4 +1,4 @@
-/*	$OpenBSD: parseconf.c,v 1.9 2005/09/22 14:24:51 jmc Exp $	*/
+/*	$OpenBSD: parseconf.c,v 1.10 2009/10/27 23:59:54 deraadt Exp $	*/
 /*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
 
 /*
@@ -42,11 +42,6 @@
  * From: Utah Hdr: parseconf.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
-
-#ifndef lint
-/*static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: parseconf.c,v 1.9 2005/09/22 14:24:51 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

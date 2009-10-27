@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.8 2003/07/29 00:24:15 deraadt Exp $	*/
+/*	$OpenBSD: kill.c,v 1.9 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: kill.c,v 1.8 2003/07/29 00:24:15 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <ctype.h>
 #include <err.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2009/06/01 13:04:59 ray Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -41,20 +41,6 @@
  *
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: main.c,v 1.20 2009/06/01 13:04:59 ray Exp $";
-#endif
-#endif /* not lint */
 
 #include "include.h"
 #include "pathnames.h"

@@ -27,17 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.28 2007/09/14 14:29:20 chl Exp $";
-#endif /* not lint */
-
 /*
  * sliplogin.c
  * [MUST BE RUN SUID, SLOPEN DOES A SUSER()!]

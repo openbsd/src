@@ -1,4 +1,4 @@
-/*	$OpenBSD: egetopt.c,v 1.7 2003/11/09 20:13:57 otto Exp $	*/
+/*	$OpenBSD: egetopt.c,v 1.8 2009/10/27 23:59:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -32,11 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/* from: static char sccsid[] = "@(#)egetopt.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: egetopt.c,v 1.7 2003/11/09 20:13:57 otto Exp $";
-#endif /* not lint */
 
 #include <ctype.h>
 #include <stdio.h>

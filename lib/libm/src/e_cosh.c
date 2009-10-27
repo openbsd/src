@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_cosh.c,v 1.7 1995/05/10 20:44:58 jtc Exp $";
-#endif
-
 /* cosh(x)
  * Method : 
  * mathematically cosh(x) if defined to be (exp(x)+exp(-x))/2

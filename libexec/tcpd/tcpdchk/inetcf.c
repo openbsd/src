@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetcf.c,v 1.4 2003/06/26 07:53:27 deraadt Exp $	*/
+/*	$OpenBSD: inetcf.c,v 1.5 2009/10/27 23:59:32 deraadt Exp $	*/
 
  /*
   * Routines to parse an inetd.conf or tlid.conf file. This would be a great
@@ -6,14 +6,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) inetcf.c 1.7 97/02/12 02:13:23";
-#else
-static char rcsid[] = "$OpenBSD: inetcf.c,v 1.4 2003/06/26 07:53:27 deraadt Exp $";
-#endif
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>

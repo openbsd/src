@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.c,v 1.10 2006/04/01 18:08:48 deraadt Exp $	*/
+/*	$OpenBSD: pwd.c,v 1.11 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: pwd.c,v 1.7 1995/03/21 09:08:18 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
-#else
-static char rcsid[] = "$OpenBSD: pwd.c,v 1.10 2006/04/01 18:08:48 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <err.h>
 #include <stdio.h>

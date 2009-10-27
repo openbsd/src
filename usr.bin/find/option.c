@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.17 2003/07/02 21:04:10 deraadt Exp $	*/
+/*	$OpenBSD: option.c,v 1.18 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: option.c,v 1.17 2003/07/02 21:04:10 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.57 2007/10/19 21:03:51 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.58 2009/10/27 23:59:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
-#else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.57 2007/10/19 21:03:51 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

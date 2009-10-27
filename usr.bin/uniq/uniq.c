@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.17 2007/11/11 17:50:29 kili Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.18 2009/10/27 23:59:46 deraadt Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -32,19 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
-#endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.17 2007/11/11 17:50:29 kili Exp $";
-#endif /* not lint */
 
 #include <ctype.h>
 #include <err.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.18 2009/06/20 20:20:43 millert Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.19 2009/10/27 23:59:28 deraadt Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -33,14 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
-#else
-static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.18 2009/06/20 20:20:43 millert Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * m68k machine dependent routines for kvm.  Hopefully, the forthcoming

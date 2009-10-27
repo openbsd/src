@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.28 2005/08/04 10:02:44 mpf Exp $	*/
+/*	$OpenBSD: pax.c,v 1.29 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -33,20 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
-#else
-static const char rcsid[] = "$OpenBSD: pax.c,v 1.28 2005/08/04 10:02:44 mpf Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdio.h>
 #include <sys/types.h>

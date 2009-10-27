@@ -1,4 +1,4 @@
-/*	$OpenBSD: umount.c,v 1.20 2008/03/26 06:55:06 otto Exp $	*/
+/*	$OpenBSD: umount.c,v 1.21 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: umount.c,v 1.16 1996/05/11 14:13:55 mycroft Exp $	*/
 
 /*-
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)umount.c	8.3 (Berkeley) 2/20/94";
-#else
-static char rcsid[] = "$OpenBSD: umount.c,v 1.20 2008/03/26 06:55:06 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rt6.c,v 1.2 2007/05/06 09:56:45 claudio Exp $	*/
+/*	$OpenBSD: print-rt6.c,v 1.3 2009/10/27 23:59:55 deraadt Exp $	*/
 
 
 /*
@@ -21,11 +21,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
-#endif
 
 #ifdef INET6
 

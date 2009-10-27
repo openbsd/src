@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.30 2009/10/23 15:24:41 reyk Exp $	*/
+/*	$OpenBSD: compile.c,v 1.31 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -32,11 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static const char rcsid[] = "$OpenBSD: compile.c,v 1.30 2009/10/23 15:24:41 reyk Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

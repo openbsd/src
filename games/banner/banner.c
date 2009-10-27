@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.15 2009/10/17 21:37:36 sobrado Exp $	*/
+/*	$OpenBSD: banner.c,v 1.16 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: banner.c,v 1.4 1995/04/22 11:55:15 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)banner.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: banner.c,v 1.15 2009/10/17 21:37:36 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * banner - prints large signs

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.9 2005/08/23 13:43:53 espie Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.10 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -31,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static const char rcsid[] = "$OpenBSD: lprint.c,v 1.9 2005/08/23 13:43:53 espie Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/file.h>

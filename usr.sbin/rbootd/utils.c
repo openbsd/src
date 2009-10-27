@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.9 2004/05/01 00:39:22 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.10 2009/10/27 23:59:54 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -42,11 +42,6 @@
  * From: Utah Hdr: utils.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
-
-#ifndef lint
-/*static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: utils.c,v 1.9 2004/05/01 00:39:22 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 

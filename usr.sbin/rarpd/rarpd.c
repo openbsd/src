@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.48 2008/05/17 23:31:52 sobrado Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.49 2009/10/27 23:59:54 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -21,16 +21,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-#ifndef lint
-char    copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif				/* not lint */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.48 2008/05/17 23:31:52 sobrado Exp $";
-#endif
-
 
 /*
  * rarpd - Reverse ARP Daemon

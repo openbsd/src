@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.17 2007/03/20 03:56:13 tedu Exp $	*/
+/*	$OpenBSD: msg.c,v 1.18 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)msg.c	10.48 (Berkeley) 9/15/96";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>		/* XXX: param.h may not have included types.h */

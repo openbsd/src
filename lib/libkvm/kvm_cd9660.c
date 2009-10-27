@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_cd9660.c,v 1.2 2009/06/20 20:20:43 millert Exp $	*/
+/*	$OpenBSD: kvm_cd9660.c,v 1.3 2009/10/27 23:59:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_cd9660.c,v 1.2 2009/06/20 20:20:43 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/ucred.h>

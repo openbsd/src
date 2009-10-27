@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.8 2004/12/17 18:46:32 moritz Exp $	*/
+/*	$OpenBSD: sync.c,v 1.9 2009/10/27 23:59:27 deraadt Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -29,15 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: sync.c,v 1.8 2004/12/17 18:46:32 moritz Exp $";
-#endif
-#endif /* not lint */
 
 #include <fcntl.h>
 #include <errno.h>

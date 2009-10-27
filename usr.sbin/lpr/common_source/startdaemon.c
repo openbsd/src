@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.12 2007/05/01 16:32:06 stevesk Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.13 2009/10/27 23:59:51 deraadt Exp $	*/
 /*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
-#else
-static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.12 2007/05/01 16:32:06 stevesk Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>

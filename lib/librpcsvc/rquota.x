@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquota.x,v 1.3 2004/01/17 12:32:11 deraadt Exp $	*/
+/*	$OpenBSD: rquota.x,v 1.4 2009/10/27 23:59:30 deraadt Exp $	*/
 
 /*
  * Remote quota protocol
@@ -6,11 +6,6 @@
  */
 
 #ifndef RPC_HDR
-%#ifndef lint
-%/*static char sccsid[] = "from: @(#)rquota.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
-%/*static char sccsid[] = "from: @(#)rquota.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: rquota.x,v 1.3 2004/01/17 12:32:11 deraadt Exp $";
-%#endif /* not lint */
 #endif
 
 const RQ_PATHLEN = 1024;

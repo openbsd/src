@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.7 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: seq.c,v 1.8 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)seq.c	10.10 (Berkeley) 3/30/96";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

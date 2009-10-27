@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.16 2007/10/03 14:35:48 weingart Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.17 2009/10/27 23:59:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
-#endif
 
 /*
  * rpc_parse.c, Parser for the RPC protocol compiler

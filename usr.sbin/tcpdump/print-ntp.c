@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ntp.c,v 1.14 2009/03/04 16:54:42 stevesk Exp $	*/
+/*	$OpenBSD: print-ntp.c,v 1.15 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,11 +24,6 @@
  *	By Jeffrey Mogul/DECWRL
  *	loosely based on print-bootp.c
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-ntp.c,v 1.14 2009/03/04 16:54:42 stevesk Exp $ (LBL)";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

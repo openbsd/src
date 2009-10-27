@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.11 2007/09/03 14:26:54 deraadt Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.12 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -28,14 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
-#else
-static char rcsid[] = "$OpenBSD: glbl.c,v 1.11 2007/09/03 14:26:54 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/ioctl.h>
 #include <sys/wait.h>

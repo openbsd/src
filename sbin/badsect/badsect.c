@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.18 2007/08/06 19:16:05 sobrado Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.19 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1981, 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
-#else
-static const char rcsid[] = "$OpenBSD: badsect.c,v 1.18 2007/08/06 19:16:05 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * badsect

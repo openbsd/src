@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.c,v 1.5 2004/08/07 00:38:32 deraadt Exp $	*/
+/*	$OpenBSD: memset.c,v 1.6 2009/10/27 23:59:35 deraadt Exp $	*/
 /*	$NetBSD: memset.c,v 1.6 1998/03/27 05:35:47 cgd Exp $	*/
 
 /*-
@@ -32,15 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: memset.c,v 1.6 1998/03/27 05:35:47 cgd Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 

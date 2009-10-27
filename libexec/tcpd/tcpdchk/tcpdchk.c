@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.10 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.11 2009/10/27 23:59:32 deraadt Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -15,14 +15,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
-#else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.10 2008/05/17 23:31:52 sobrado Exp $";
-#endif
-#endif
 
 /* System libraries. */
 

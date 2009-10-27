@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_scalbn.c,v 1.8 1995/05/10 20:48:08 jtc Exp $";
-#endif
-
 /* 
  * scalbn (double x, int n)
  * scalbn(x,n) returns x* 2**n  computed by  exponent  

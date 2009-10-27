@@ -1,4 +1,4 @@
-/*	$OpenBSD: dayobjs.c,v 1.6 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: dayobjs.c,v 1.7 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: dayobjs.c,v 1.3 1995/03/21 15:07:22 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)dayobjs.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: dayobjs.c,v 1.6 2003/06/03 03:01:38 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include "extern.h"
 

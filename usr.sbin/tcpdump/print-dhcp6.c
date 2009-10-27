@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.6 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.7 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-dhcp6.c,v 1.6 2007/10/07 16:41:05 deraadt Exp $";
-#endif
 
 #ifdef INET6
 

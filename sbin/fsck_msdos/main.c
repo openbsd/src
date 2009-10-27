@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2006/03/30 01:16:31 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2009/10/27 23:59:33 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -33,10 +33,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 2006/03/30 01:16:31 deraadt Exp $";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>

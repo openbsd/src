@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.17 2006/11/01 05:46:20 ray Exp $	*/
+/*	$OpenBSD: args.c,v 1.18 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -33,14 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: args.c,v 1.17 2006/11/01 05:46:20 ray Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>

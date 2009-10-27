@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cdp.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-cdp.c,v 1.4 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,11 +25,6 @@
  * Reference documentation:
  *    http://www.cisco.com/univercd/cc/td/doc/product/lan/trsrb/frames.htm
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-cdp.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

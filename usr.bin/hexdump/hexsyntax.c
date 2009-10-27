@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexsyntax.c,v 1.10 2007/02/06 20:22:19 jmc Exp $	*/
+/*	$OpenBSD: hexsyntax.c,v 1.11 2009/10/27 23:59:39 deraadt Exp $	*/
 /*	$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $	*/
 
 /*-
@@ -29,11 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";*/
-static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.10 2007/02/06 20:22:19 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.13 2009/09/08 15:53:11 claudio Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.14 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-     "@(#) $Id: print-bgp.c,v 1.13 2009/09/08 15:53:11 claudio Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

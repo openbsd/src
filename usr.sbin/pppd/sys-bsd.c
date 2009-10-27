@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.25 2008/10/08 18:42:21 claudio Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.26 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -73,14 +73,6 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-#if 0
-static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
-#else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.25 2008/10/08 18:42:21 claudio Exp $";
-#endif
-#endif
 
 /*
  * TODO:

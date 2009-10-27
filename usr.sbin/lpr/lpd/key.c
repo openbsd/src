@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.6 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: key.c,v 1.7 2009/10/27 23:59:52 deraadt Exp $	*/
 /*	$NetBSD: key.c,v 1.3 1997/10/20 08:08:28 scottr Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)key.c	8.3 (Berkeley) 4/2/94";
-#else
-static const char rcsid[] = "$OpenBSD: key.c,v 1.6 2003/06/02 23:36:53 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>

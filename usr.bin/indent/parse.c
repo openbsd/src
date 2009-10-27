@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.8 2004/07/20 03:50:26 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.9 2009/10/27 23:59:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.8 2004/07/20 03:50:26 deraadt Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include "indent_globs.h"

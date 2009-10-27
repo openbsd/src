@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat.c,v 1.3 2008/10/07 22:06:29 martynas Exp $	*/
+/*	$OpenBSD: softfloat.c,v 1.4 2009/10/27 23:59:35 deraadt Exp $	*/
 /*	$NetBSD: softfloat.c,v 1.1 2001/04/26 03:10:47 ross Exp $	*/
 
 /*
@@ -50,9 +50,6 @@ this code that are retained.
 */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.1 2001/04/26 03:10:47 ross Exp $");
-#endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
 #include "softfloat-for-gcc.h"

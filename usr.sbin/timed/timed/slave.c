@@ -1,4 +1,4 @@
-/*	$OpenBSD: slave.c,v 1.11 2003/08/19 19:41:21 deraadt Exp $	*/
+/*	$OpenBSD: slave.c,v 1.12 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -28,10 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)slave.c	5.1 (Berkeley) 5/11/93";
-#endif /* not lint */
 
 #include "globals.h"
 #include <setjmp.h>

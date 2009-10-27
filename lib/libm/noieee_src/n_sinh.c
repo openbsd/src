@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_sinh.c,v 1.9 2009/04/11 20:03:21 martynas Exp $	*/
+/*	$OpenBSD: n_sinh.c,v 1.10 2009/10/27 23:59:29 deraadt Exp $	*/
 /*	$NetBSD: n_sinh.c,v 1.1 1995/10/10 23:37:05 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -28,10 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)sinh.c	8.1 (Berkeley) 6/4/93";
-#endif /* not lint */
 
 /* SINH(X)
  * RETURN THE HYPERBOLIC SINE OF X

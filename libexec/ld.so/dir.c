@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.13 2007/02/09 14:51:13 drahn Exp $	*/
+/*	$OpenBSD: dir.c,v 1.14 2009/10/27 23:59:31 deraadt Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = ": opendir.c,v 1.6 1998/08/15 08:10:14 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -88,9 +84,6 @@ _dl_opendir(const char *name)
 }
 
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$ closedir.c,v 1.3 1998/11/20 11:18:37 d Exp $";
-#endif /* LIBC_SCCS and not lint */
 /*
  * close a directory.
  */
@@ -110,9 +103,6 @@ _dl_closedir(DIR *dirp)
 }
 
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$ readdir.c,v 1.5 2001/05/17 20:20:36 rees Exp $";
-#endif /* LIBC_SCCS and not lint */
 /*
  * get next entry in a directory.
  */

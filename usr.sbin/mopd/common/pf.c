@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.14 2006/04/20 08:52:52 maja Exp $ */
+/*	$OpenBSD: pf.c,v 1.15 2009/10/27 23:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -27,11 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "$OpenBSD: pf.c,v 1.14 2006/04/20 08:52:52 maja Exp $";
-#endif
 
 #include <stdio.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.14 2007/08/01 13:30:21 millert Exp $	*/
+/*	$OpenBSD: column.c,v 1.15 2009/10/27 23:59:36 deraadt Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
-#endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.14 2007/08/01 13:30:21 millert Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/ioctl.h>

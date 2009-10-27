@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_exp.c,v 1.8 1995/05/10 20:45:03 jtc Exp $";
-#endif
-
 /* exp(x)
  * Returns the exponential of x.
  *

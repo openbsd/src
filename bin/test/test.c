@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.10 2009/03/01 20:11:06 otto Exp $	*/
+/*	$OpenBSD: test.c,v 1.11 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -10,10 +10,6 @@
  *
  * This program is in the Public Domain.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: test.c,v 1.10 2009/03/01 20:11:06 otto Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>

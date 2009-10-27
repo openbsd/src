@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.19 2008/10/03 13:00:06 deraadt Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.20 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -33,20 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
-#else
-static char rcsid[] = "$OpenBSD: quiz.c,v 1.19 2008/10/03 13:00:06 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <errno.h>

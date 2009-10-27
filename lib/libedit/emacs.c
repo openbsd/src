@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.7 2003/11/25 20:12:38 otto Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.8 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: emacs.c,v 1.16 2003/11/02 20:07:58 christos Exp $	*/
 
 /*-
@@ -34,13 +34,6 @@
  */
 
 #include "config.h"
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char rcsid[] = "$OpenBSD: emacs.c,v 1.7 2003/11/25 20:12:38 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
 
 /*
  * emacs.c: Emacs functions

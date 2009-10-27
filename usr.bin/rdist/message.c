@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.17 2007/09/14 14:29:20 chl Exp $	*/
+/*	$OpenBSD: message.c,v 1.18 2009/10/27 23:59:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -30,23 +30,6 @@
  */
 
 #include "defs.h"
-
-#ifndef lint
-#if 0
-static char RCSid[] __attribute__((__unused__)) =
-"$From: message.c,v 1.5 1999/11/01 00:21:39 christos Exp $";
-#else
-static char RCSid[] __attribute__((__unused__)) =
-"$OpenBSD: message.c,v 1.17 2007/09/14 14:29:20 chl Exp $";
-#endif
-
-static char sccsid[] __attribute__((__unused__)) =
-"@(#)common.c";
-
-static char copyright[] __attribute__((__unused__)) =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* !lint */
 
 /*
  * Message handling functions for both rdist and rdistd.

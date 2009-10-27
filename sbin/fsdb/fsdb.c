@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.22 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.23 2009/10/27 23:59:33 deraadt Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -29,10 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.22 2008/06/26 05:42:06 ray Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

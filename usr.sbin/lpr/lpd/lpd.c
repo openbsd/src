@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.49 2008/05/26 06:30:35 otto Exp $ */
+/*	$OpenBSD: lpd.c,v 1.50 2009/10/27 23:59:52 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -30,20 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
-#else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.49 2008/05/26 06:30:35 otto Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * lpd -- line printer daemon.

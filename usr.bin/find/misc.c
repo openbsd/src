@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 2003/09/26 22:22:26 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.11 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: misc.c,v 1.10 2003/09/26 22:22:26 tedu Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

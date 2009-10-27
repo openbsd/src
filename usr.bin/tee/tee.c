@@ -1,4 +1,4 @@
-/*	$OpenBSD: tee.c,v 1.6 2003/06/10 22:20:53 deraadt Exp $	*/
+/*	$OpenBSD: tee.c,v 1.7 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tee.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: tee.c,v 1.6 2003/06/10 22:20:53 deraadt Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>

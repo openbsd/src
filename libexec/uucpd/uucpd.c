@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.31 2006/04/02 00:48:55 deraadt Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.32 2009/10/27 23:59:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -31,17 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1985 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.31 2006/04/02 00:48:55 deraadt Exp $";
-#endif /* not lint */
 
 /*
  * 4.2BSD TCP/IP server for uucico

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2007/09/02 15:19:39 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.48 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -41,14 +41,6 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-#if 0
-static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
-#else
-static char rcsid[] = "$OpenBSD: main.c,v 1.47 2007/09/02 15:19:39 deraadt Exp $";
-#endif
-#endif
 
 #include <stdio.h>
 #include <ctype.h>

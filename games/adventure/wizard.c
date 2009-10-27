@@ -1,4 +1,4 @@
-/*	$OpenBSD: wizard.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: wizard.c,v 1.14 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $	*/
 
 /*-
@@ -34,14 +34,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
-#else
-static char rcsid[] = "$OpenBSD: wizard.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*	Re-coding of advent in C: privileged operations			*/
 

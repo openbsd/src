@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuencode.c,v 1.9 2008/07/29 18:25:28 sobrado Exp $	*/
+/*	$OpenBSD: uuencode.c,v 1.10 2009/10/27 23:59:46 deraadt Exp $	*/
 /*	$FreeBSD: uuencode.c,v 1.18 2004/01/22 07:23:35 grehan Exp $	*/
 
 /*-
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
-#endif
-static const char rcsid[] = "$OpenBSD: uuencode.c,v 1.9 2008/07/29 18:25:28 sobrado Exp $";
-#endif /* not lint */
 
 /*
  * Encode a file so it can be mailed to a remote system.

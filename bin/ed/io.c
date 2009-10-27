@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.12 2007/11/06 10:22:29 chl Exp $	*/
+/*	$OpenBSD: io.c,v 1.13 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -27,14 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
-#else
-static char rcsid[] = "$OpenBSD: io.c,v 1.12 2007/11/06 10:22:29 chl Exp $";
-#endif
-#endif /* not lint */
 
 #include "ed.h"
 

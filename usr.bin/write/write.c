@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.25 2008/07/06 13:42:35 sobrado Exp $	*/
+/*	$OpenBSD: write.c,v 1.26 2009/10/27 23:59:50 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -32,19 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
-#endif
-static char *rcsid = "$OpenBSD: write.c,v 1.25 2008/07/06 13:42:35 sobrado Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

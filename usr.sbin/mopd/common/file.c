@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.12 2006/05/11 05:18:38 maja Exp $ */
+/*	$OpenBSD: file.c,v 1.13 2009/10/27 23:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -23,11 +23,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "$OpenBSD: file.c,v 1.12 2006/05/11 05:18:38 maja Exp $";
-#endif
 
 #include "os.h"
 #include "common/common.h"

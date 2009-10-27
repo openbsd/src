@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdisp.c,v 1.9 2006/12/14 10:15:09 martin Exp $	*/
+/*	$OpenBSD: bdisp.c,v 1.10 2009/10/27 23:59:24 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,14 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
-#else
-static char rcsid[] = "$OpenBSD: bdisp.c,v 1.9 2006/12/14 10:15:09 martin Exp $";
-#endif
-#endif /* not lint */
 
 #include "gomoku.h"
 #include <curses.h>

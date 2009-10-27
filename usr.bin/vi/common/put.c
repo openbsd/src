@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.9 2007/05/14 12:32:29 pyr Exp $	*/
+/*	$OpenBSD: put.c,v 1.10 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)put.c	10.11 (Berkeley) 9/23/96";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>

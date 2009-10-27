@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.11 2009/05/21 12:57:31 schwarze Exp $	*/
+/*	$OpenBSD: mach.c,v 1.12 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
-#else
-static char rcsid[] = "$OpenBSD: mach.c,v 1.11 2009/05/21 12:57:31 schwarze Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Terminal interface

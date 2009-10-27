@@ -1,4 +1,4 @@
-/*	$OpenBSD: setsignal.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: setsignal.c,v 1.4 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: setsignal.c,v 1.3 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 

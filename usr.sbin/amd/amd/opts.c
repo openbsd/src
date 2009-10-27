@@ -32,11 +32,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-/*static char sccsid[] = "from: @(#)opts.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: opts.c,v 1.9 2003/06/02 23:36:51 millert Exp $";
-#endif /* not lint */
-
 #include "am.h"
 
 /*

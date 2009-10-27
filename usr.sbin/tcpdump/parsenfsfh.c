@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsenfsfh.c,v 1.9 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: parsenfsfh.c,v 1.10 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -41,11 +41,6 @@
  * Digital Equipment Corporation
  * Western Research Laboratory
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: parsenfsfh.c,v 1.9 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>

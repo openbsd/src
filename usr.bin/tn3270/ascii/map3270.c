@@ -1,4 +1,4 @@
-/*	$OpenBSD: map3270.c,v 1.9 2003/11/08 19:17:29 jmc Exp $	*/
+/*	$OpenBSD: map3270.c,v 1.10 2009/10/27 23:59:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: map3270.c,v 1.9 2003/11/08 19:17:29 jmc Exp $";
-#endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
     that describes the mapping between the current terminal's keyboard and

@@ -1,4 +1,4 @@
-/*	$OpenBSD: torped.c,v 1.7 2003/07/10 00:03:01 david Exp $	*/
+/*	$OpenBSD: torped.c,v 1.8 2009/10/27 23:59:27 deraadt Exp $	*/
 /*	$NetBSD: torped.c,v 1.3 1995/04/22 10:59:34 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)torped.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: torped.c,v 1.7 2003/07/10 00:03:01 david Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

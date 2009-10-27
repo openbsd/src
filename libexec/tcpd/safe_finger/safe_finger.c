@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe_finger.c,v 1.3 2002/02/16 21:27:31 millert Exp $	*/
+/*	$OpenBSD: safe_finger.c,v 1.4 2009/10/27 23:59:31 deraadt Exp $	*/
 
  /*
   * safe_finger - finger client wrapper that protects against nasty stuff
@@ -15,14 +15,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) safe_finger.c 1.4 94/12/28 17:42:41";
-#else
-static char rcsid[] = "$OpenBSD: safe_finger.c,v 1.3 2002/02/16 21:27:31 millert Exp $";
-#endif
-#endif
 
 /* System libraries */
 

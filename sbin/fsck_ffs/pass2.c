@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.28 2008/06/10 23:10:29 otto Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.29 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
-#else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.28 2008/06/10 23:10:29 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

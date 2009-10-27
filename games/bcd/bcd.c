@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcd.c,v 1.12 2007/09/11 15:21:05 gilles Exp $	*/
+/*	$OpenBSD: bcd.c,v 1.13 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
-#else
-static char rcsid[] = "$OpenBSD: bcd.c,v 1.12 2007/09/11 15:21:05 gilles Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * bcd --

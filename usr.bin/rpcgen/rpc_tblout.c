@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_tblout.c,v 1.11 2007/10/03 14:35:48 weingart Exp $	*/
+/*	$OpenBSD: rpc_tblout.c,v 1.12 2009/10/27 23:59:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_tblout.c,v 1.3 1995/06/24 15:00:15 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)rpc_tblout.c 1.4 89/02/22 (C) 1988 SMI";
-#endif
 
 /*
  * rpc_tblout.c, Dispatch table outputter for the RPC protocol compiler

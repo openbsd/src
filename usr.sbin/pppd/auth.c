@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.30 2003/09/26 06:01:42 pvalchev Exp $	*/
+/*	$OpenBSD: auth.c,v 1.31 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -72,14 +72,6 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-#if 0
-static char rcsid[] = "Id: auth.c,v 1.37 1998/03/26 04:46:03 paulus Exp $";
-#else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.30 2003/09/26 06:01:42 pvalchev Exp $";
-#endif
-#endif
 
 #include <stdio.h>
 #include <stddef.h>

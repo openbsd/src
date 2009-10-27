@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2008/10/09 06:48:11 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
-#else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.22 2008/10/09 06:48:11 jmc Exp $";
-#endif
-#endif /* not lint */
 
 #include "rcv.h"
 #include <fcntl.h>

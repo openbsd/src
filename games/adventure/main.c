@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -34,20 +34,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
-#else
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 2004/07/09 15:59:26 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*	Re-coding of advent in C: main program				*/
 

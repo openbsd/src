@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.17 2004/08/18 21:24:27 jmc Exp $	*/
+/*	$OpenBSD: who.c,v 1.18 2009/10/27 23:59:50 deraadt Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -32,19 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.17 2004/08/18 21:24:27 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

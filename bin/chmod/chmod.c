@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.24 2009/01/21 16:05:39 sobrado Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.25 2009/10/27 23:59:20 deraadt Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
-#else
-static const char rcsid[] = "$OpenBSD: chmod.c,v 1.24 2009/01/21 16:05:39 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

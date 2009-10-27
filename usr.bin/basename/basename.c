@@ -1,4 +1,4 @@
-/*	$OpenBSD: basename.c,v 1.8 2005/04/12 06:43:44 otto Exp $	*/
+/*	$OpenBSD: basename.c,v 1.9 2009/10/27 23:59:36 deraadt Exp $	*/
 /*	$NetBSD: basename.c,v 1.9 1995/09/02 05:29:46 jtc Exp $	*/
 
 /*-
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)basename.c	8.4 (Berkeley) 5/4/95";
-#endif
-static char rcsid[] = "$OpenBSD: basename.c,v 1.8 2005/04/12 06:43:44 otto Exp $";
-#endif /* not lint */
 
 #include <err.h>
 #include <libgen.h>

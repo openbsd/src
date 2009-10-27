@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.37 2009/05/20 20:37:43 thib Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.38 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -29,25 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
-#else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.37 2009/05/20 20:37:43 thib Exp $";
-#endif
-#endif /* not lint */
-
-/*
-@(#)portmap.c	2.3 88/08/11 4.0 RPCSRC
-static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
-*/
 
 /*
  * portmap.c, Implements the program,version to port number mapping for

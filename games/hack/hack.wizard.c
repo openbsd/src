@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.wizard.c,v 1.5 2003/05/19 09:00:54 pjanzen Exp $	*/
+/*	$OpenBSD: hack.wizard.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -60,10 +60,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.wizard.c,v 1.5 2003/05/19 09:00:54 pjanzen Exp $";
-#endif /* not lint */
 
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
 

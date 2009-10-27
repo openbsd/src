@@ -1,4 +1,4 @@
-/*	$OpenBSD: termout.c,v 1.12 2003/07/18 23:11:43 david Exp $	*/
+/*	$OpenBSD: termout.c,v 1.13 2009/10/27 23:59:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: termout.c,v 1.12 2003/07/18 23:11:43 david Exp $";
-#endif /* not lint */
 
 #if defined(unix)
 #include <signal.h>

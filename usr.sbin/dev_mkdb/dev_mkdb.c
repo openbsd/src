@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_mkdb.c,v 1.10 2005/04/04 09:03:07 deraadt Exp $	*/
+/*	$OpenBSD: dev_mkdb.c,v 1.11 2009/10/27 23:59:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: dev_mkdb.c,v 1.10 2005/04/04 09:03:07 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

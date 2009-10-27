@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.26 2009/08/08 18:36:34 jmc Exp $	*/
+/*	$OpenBSD: chat.c,v 1.27 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -78,14 +78,6 @@
  *
  *
  */
-
-#ifndef lint
-#if 0
-static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp $";
-#else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.26 2009/08/08 18:36:34 jmc Exp $";
-#endif
-#endif
 
 #include <stdio.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.23 2008/05/28 16:01:42 sobrado Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.24 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
-#else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.23 2008/05/28 16:01:42 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * RMAIL -- UUCP mail server.

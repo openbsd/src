@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file.c,v 1.15 2009/06/20 20:20:43 millert Exp $ */
+/*	$OpenBSD: kvm_file.c,v 1.16 2009/10/27 23:59:28 deraadt Exp $ */
 /*	$NetBSD: kvm_file.c,v 1.5 1996/03/18 22:33:18 thorpej Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
-#else
-static char *rcsid = "$OpenBSD: kvm_file.c,v 1.15 2009/06/20 20:20:43 millert Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * File list interface for kvm.  pstat, fstat and netstat are

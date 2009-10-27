@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.16 2004/10/05 14:46:11 jaredy Exp $	*/
+/*	$OpenBSD: tput.c,v 1.17 2009/10/27 23:59:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -43,19 +43,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
-#endif
-static char rcsid[] = "$OpenBSD: tput.c,v 1.16 2004/10/05 14:46:11 jaredy Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 

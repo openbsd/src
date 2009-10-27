@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.14 2005/02/25 16:07:10 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.15 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
-#else
-static char rcsid[] = "$OpenBSD: exec.c,v 1.14 2005/02/25 16:07:10 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

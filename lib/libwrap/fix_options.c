@@ -1,4 +1,4 @@
-/*	$OpenBSD: fix_options.c,v 1.7 2006/04/14 18:27:49 dhill Exp $	*/
+/*	$OpenBSD: fix_options.c,v 1.8 2009/10/27 23:59:30 deraadt Exp $	*/
 
  /*
   * Routine to disable IP-level socket options. This code was taken from 4.4BSD
@@ -6,14 +6,6 @@
   *
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) fix_options.c 1.4 97/02/12 02:13:22";
-#else
-static char rcsid[] = "$OpenBSD: fix_options.c,v 1.7 2006/04/14 18:27:49 dhill Exp $";
-#endif
-#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

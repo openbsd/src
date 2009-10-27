@@ -1,13 +1,9 @@
-/*	$OpenBSD: getopt.c,v 1.7 2006/06/07 07:33:23 jmc Exp $	*/
+/*	$OpenBSD: getopt.c,v 1.8 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * This material, written by Henry Spencer, was released by him
  * into the public domain and is thus not subject to any copyright.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: getopt.c,v 1.7 2006/06/07 07:33:23 jmc Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

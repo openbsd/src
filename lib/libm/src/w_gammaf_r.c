@@ -13,10 +13,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: w_gammaf_r.c,v 1.4 1995/11/20 22:06:50 jtc Exp $";
-#endif
-
 /* 
  * wrapper float gammaf_r(float x, int *signgamp)
  */

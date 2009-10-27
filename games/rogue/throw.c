@@ -1,4 +1,4 @@
-/*	$OpenBSD: throw.c,v 1.8 2006/03/08 09:44:35 otto Exp $	*/
+/*	$OpenBSD: throw.c,v 1.9 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: throw.c,v 1.3 1995/04/22 10:28:32 cgd Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
-#else
-static const char rcsid[] = "$OpenBSD: throw.c,v 1.8 2006/03/08 09:44:35 otto Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * throw.c

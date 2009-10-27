@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.52 2008/09/13 12:04:49 moritz Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.53 2009/10/27 23:59:31 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -38,15 +38,6 @@
  */
 
 %{
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
-#else
-static const char rcsid[] =
-    "$OpenBSD: ftpcmd.y,v 1.52 2008/09/13 12:04:49 moritz Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>

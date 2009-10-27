@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.69 2007/12/30 13:41:09 sobrado Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.70 2009/10/27 23:59:33 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
-#else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>

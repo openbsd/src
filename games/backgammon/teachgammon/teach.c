@@ -1,4 +1,4 @@
-/*	$OpenBSD: teach.c,v 1.13 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: teach.c,v 1.14 2009/10/27 23:59:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: teach.c,v 1.13 2003/06/03 03:01:38 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <err.h>
 #include "back.h"

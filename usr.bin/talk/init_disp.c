@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.19 2004/03/02 21:04:42 tedu Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.20 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
-#endif
-static const char rcsid[] = "$OpenBSD: init_disp.c,v 1.19 2004/03/02 21:04:42 tedu Exp $";
-#endif /* not lint */
 
 /*
  * Initialization code for the display package,

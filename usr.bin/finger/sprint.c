@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.12 2007/09/02 15:19:32 deraadt Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.13 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -31,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static const char rcsid[] = "$OpenBSD: sprint.c,v 1.12 2007/09/02 15:19:32 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>

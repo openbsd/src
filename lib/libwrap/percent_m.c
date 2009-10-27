@@ -1,18 +1,10 @@
-/*	$OpenBSD: percent_m.c,v 1.3 2004/05/31 10:39:08 otto Exp $	*/
+/*	$OpenBSD: percent_m.c,v 1.4 2009/10/27 23:59:30 deraadt Exp $	*/
 
  /*
   * Replace %m by system error message.
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) percent_m.c 1.1 94/12/28 17:42:37";
-#else
-static char rcsid[] = "$OpenBSD: percent_m.c,v 1.3 2004/05/31 10:39:08 otto Exp $";
-#endif
-#endif
 
 #include <stdio.h>
 #include <stdarg.h>

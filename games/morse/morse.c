@@ -1,4 +1,4 @@
-/*	$OpenBSD: morse.c,v 1.13 2005/11/07 19:09:33 jmc Exp $	*/
+/*	$OpenBSD: morse.c,v 1.14 2009/10/27 23:59:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: morse.c,v 1.13 2005/11/07 19:09:33 jmc Exp $";
-#endif
-#endif /* not lint */
 
 #include <ctype.h>
 #include <stdio.h>

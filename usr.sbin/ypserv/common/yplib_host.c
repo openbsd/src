@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.c,v 1.15 2006/04/03 05:01:20 deraadt Exp $ */
+/*	$OpenBSD: yplib_host.c,v 1.16 2009/10/27 23:59:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: yplib_host.c,v 1.15 2006/04/03 05:01:20 deraadt Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/types.h>

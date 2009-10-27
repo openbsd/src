@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.17 2007/09/02 15:19:23 deraadt Exp $	*/
+/*	$OpenBSD: fat.c,v 1.18 2009/10/27 23:59:33 deraadt Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -32,11 +32,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: fat.c,v 1.17 2007/09/02 15:19:23 deraadt Exp $";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>

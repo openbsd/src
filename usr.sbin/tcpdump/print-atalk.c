@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.25 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.26 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -22,11 +22,6 @@
  *
  * Format and print AppleTalk packets.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-atalk.c,v 1.25 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

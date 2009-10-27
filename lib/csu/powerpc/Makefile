@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.19 2009/01/14 19:45:20 kurt Exp $
+#	$OpenBSD: Makefile,v 1.20 2009/10/27 23:59:58 deraadt Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
 
-CFLAGS+=	-DLIBC_SCCS
 OBJS=		crt0.o gcrt0.o
 OBJS+=		crtbegin.o crtend.o
 OBJS+=		crtbeginS.o crtendS.o

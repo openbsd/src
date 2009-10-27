@@ -1,4 +1,4 @@
-/*	$OpenBSD: invite.c,v 1.13 2007/05/25 21:27:16 krw Exp $	*/
+/*	$OpenBSD: invite.c,v 1.14 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: invite.c,v 1.3 1994/12/09 02:14:18 jtc Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: invite.c,v 1.13 2007/05/25 21:27:16 krw Exp $";
-#endif /* not lint */
 
 #include "talk.h"
 #include <arpa/inet.h>

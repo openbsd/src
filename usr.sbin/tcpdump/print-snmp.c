@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.15 2008/01/17 17:33:15 reyk Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.16 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -54,11 +54,6 @@
  #	responsibility for the use of this software.
  #	@(#)snmp.awk.x	1.1 (LANL) 1/15/90
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-snmp.c,v 1.15 2008/01/17 17:33:15 reyk Exp $ (LBL)";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

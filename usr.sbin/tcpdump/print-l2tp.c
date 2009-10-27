@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-l2tp.c,v 1.4 2009/07/12 18:11:03 jsg Exp $	*/
+/*	$OpenBSD: print-l2tp.c,v 1.5 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -22,11 +22,6 @@
  *
  * L2TP support contributed by Motonori Shindo (mshindo@ascend.co.jp)
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-l2tp.c,v 1.4 2009/07/12 18:11:03 jsg Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.12 2007/04/02 15:23:48 jmc Exp $	*/
+/*	$OpenBSD: snake.c,v 1.13 2009/10/27 23:59:27 deraadt Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
-#else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.12 2007/04/02 15:23:48 jmc Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * snake - crt hack game.

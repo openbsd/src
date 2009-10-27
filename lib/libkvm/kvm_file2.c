@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.12 2009/07/21 14:37:00 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.13 2009/10/27 23:59:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -44,10 +44,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.12 2009/07/21 14:37:00 millert Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * Extended file list interface for kvm.  pstat, fstat and netstat are

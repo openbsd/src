@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.23 2007/10/03 14:52:31 weingart Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.24 2009/10/27 23:59:42 deraadt Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,12 +29,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static const char cvsid[] =
-	"$OpenBSD: rpc_main.c,v 1.23 2007/10/03 14:52:31 weingart Exp $";
-#endif
 
 /*
  * rpc_main.c, Top level of the RPC protocol compiler.

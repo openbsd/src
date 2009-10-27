@@ -13,10 +13,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_log1pf.c,v 1.4 1995/05/10 20:47:48 jtc Exp $";
-#endif
-
 #include "math.h"
 #include "math_private.h"
 

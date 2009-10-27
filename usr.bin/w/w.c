@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.46 2008/09/30 21:29:58 millert Exp $	*/
+/*	$OpenBSD: w.c,v 1.47 2009/10/27 23:59:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
-#else
-static char *rcsid = "$OpenBSD: w.c,v 1.46 2008/09/30 21:29:58 millert Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * w - print system status (who and what)

@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_asin.c,v 1.9 1995/05/12 04:57:22 jtc Exp $";
-#endif
-
 /* asin(x)
  * Method :                  
  *	Since  asin(x) = x + x^3/6 + x^5*3/40 + x^7*15/336 + ...

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.27 2008/04/13 00:22:16 djm Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.28 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1986, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.27 2008/04/13 00:22:16 djm Exp $";
-#endif
-#endif /* not lint */
 
 # include	<sys/param.h>
 # include	<sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar.c,v 1.11 2003/06/12 20:58:08 deraadt Exp $	*/
+/*	$OpenBSD: ar.c,v 1.12 2009/10/27 23:59:35 deraadt Exp $	*/
 /*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
 
 /*-
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: ar.c,v 1.11 2003/06/12 20:58:08 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 

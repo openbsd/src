@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.13 2009/02/18 01:53:06 mcbride Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.14 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -25,11 +25,6 @@
  *         Tatu Ylonen <ylo@ssh.fi> and Timo J. Rinne <tri@ssh.fi>
  *         in co-operation with SSH Communications Security, Espoo, Finland    
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-ipsec.c,v 1.13 2009/02/18 01:53:06 mcbride Exp $ (XXX)";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

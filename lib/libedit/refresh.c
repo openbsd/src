@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.9 2003/10/31 08:42:24 otto Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.10 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: refresh.c,v 1.26 2003/08/07 16:44:33 agc Exp $	*/
 
 /*-
@@ -34,13 +34,6 @@
  */
 
 #include "config.h"
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char rcsid[] = "$OpenBSD: refresh.c,v 1.9 2003/10/31 08:42:24 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
 
 /*
  * refresh.c: Lower level screen refreshing functions

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.12 2008/06/19 18:29:06 otto Exp $	*/
+/*	$OpenBSD: wc.c,v 1.13 2009/10/27 23:59:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
-#else
-static char rcsid[] = "$OpenBSD: wc.c,v 1.12 2008/06/19 18:29:06 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

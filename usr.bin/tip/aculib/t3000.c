@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.14 2006/03/17 19:17:13 moritz Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.15 2009/10/27 23:59:45 deraadt Exp $	*/
 /*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: t3000.c,v 1.14 2006/03/17 19:17:13 moritz Exp $";
-#endif /* not lint */
 
 /*
  * Routines for calling up on a Telebit T3000 modem.

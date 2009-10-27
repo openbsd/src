@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpar.c,v 1.13 2005/06/10 16:40:45 pvalchev Exp $	*/
+/*	$OpenBSD: mkpar.c,v 1.14 2009/10/27 23:59:50 deraadt Exp $	*/
 /*	$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mkpar.c	5.3 (Berkeley) 1/20/91";
-#else
-static char rcsid[] = "$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $";
-#endif
-#endif /* not lint */
 
 #include "defs.h"
 

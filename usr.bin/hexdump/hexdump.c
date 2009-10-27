@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexdump.c,v 1.12 2007/01/28 16:37:09 miod Exp $	*/
+/*	$OpenBSD: hexdump.c,v 1.13 2009/10/27 23:59:39 deraadt Exp $	*/
 /*	$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $	*/
 
 /*
@@ -29,17 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: hexdump.c,v 1.12 2007/01/28 16:37:09 miod Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <stdio.h>

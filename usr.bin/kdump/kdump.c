@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.40 2009/10/21 15:08:23 sobrado Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.41 2009/10/27 23:59:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -28,19 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
-#endif
-static const char rcsid[] = "$OpenBSD: kdump.c,v 1.40 2009/10/21 15:08:23 sobrado Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

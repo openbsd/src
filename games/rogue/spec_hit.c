@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_hit.c,v 1.7 2006/03/08 09:44:35 otto Exp $	*/
+/*	$OpenBSD: spec_hit.c,v 1.8 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: spec_hit.c,v 1.3 1995/04/22 10:28:29 cgd Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)spec_hit.c	8.1 (Berkeley) 5/31/93";
-#else
-static const char rcsid[] = "$OpenBSD: spec_hit.c,v 1.7 2006/03/08 09:44:35 otto Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * special_hit.c

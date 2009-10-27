@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.41 2009/10/04 18:11:35 ajacoutot Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.42 2009/10/27 23:59:54 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -30,20 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
-#else
-static const char rcsid[] = "$OpenBSD: pwd_mkdb.c,v 1.41 2009/10/04 18:11:35 ajacoutot Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

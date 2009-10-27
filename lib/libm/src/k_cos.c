@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: k_cos.c,v 1.8 1995/05/10 20:46:22 jtc Exp $";
-#endif
-
 /*
  * __kernel_cos( x,  y )
  * kernel cos function on [-pi/4, pi/4], pi/4 ~ 0.785398164

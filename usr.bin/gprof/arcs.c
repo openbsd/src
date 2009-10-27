@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.11 2007/11/26 09:28:34 martynas Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.12 2009/10/27 23:59:38 deraadt Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: arcs.c,v 1.11 2007/11/26 09:28:34 martynas Exp $";
-#endif
-#endif /* not lint */
 
 #include "gprof.h"
 

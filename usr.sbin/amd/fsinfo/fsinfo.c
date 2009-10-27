@@ -32,14 +32,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.c,v 1.8 2005/04/15 18:18:07 millert Exp $
+ *	$Id: fsinfo.c,v 1.9 2009/10/27 23:59:51 deraadt Exp $
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
 
 /*
  * fsinfo

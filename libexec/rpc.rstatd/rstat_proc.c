@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.26 2004/09/15 19:05:35 deraadt Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.27 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -28,11 +28,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-#ifndef lint
-/*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
-/*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.26 2004/09/15 19:05:35 deraadt Exp $";
-#endif
 
 /*
  * rstat service:  built with rstat.x and derived from rpc.rstatd.c

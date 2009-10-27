@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.ioctl.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.ioctl.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -60,10 +60,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.ioctl.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
-#endif /* not lint */
 
 /* This cannot be part of hack.tty.c (as it was earlier) since on some
    systems (e.g. MUNIX) the include files <termio.h> and <sgtty.h>

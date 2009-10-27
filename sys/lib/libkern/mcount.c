@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.8 2004/08/07 00:38:32 deraadt Exp $	*/
+/*	$OpenBSD: mcount.c,v 1.9 2009/10/27 23:59:35 deraadt Exp $	*/
 /*	$NetBSD: mcount.c,v 1.3.6.1 1996/06/12 04:23:01 cgd Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
-#if 0
-static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$OpenBSD: mcount.c,v 1.8 2004/08/07 00:38:32 deraadt Exp $";
-#endif
-#endif
 
 #include <sys/param.h>
 #include <sys/gmon.h>

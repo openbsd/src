@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostname.c,v 1.7 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: hostname.c,v 1.8 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: hostname.c,v 1.10 1995/09/07 06:28:40 jtc Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)hostname.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: hostname.c,v 1.7 2003/06/02 23:32:08 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 

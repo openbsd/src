@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.7 2005/05/22 05:45:35 otto Exp $	*/
+/*	$OpenBSD: test.c,v 1.8 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: test.c,v 1.13 2003/08/07 16:44:35 agc Exp $	*/
 
 /*-
@@ -34,18 +34,6 @@
  */
 
 #include "config.h"
-#ifndef lint
-//__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
-//	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
-
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char *rcsid = "$OpenBSD: test.c,v 1.7 2005/05/22 05:45:35 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
 
 /*
  * test.c: A little test program

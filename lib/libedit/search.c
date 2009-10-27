@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.10 2003/11/25 20:12:38 otto Exp $	*/
+/*	$OpenBSD: search.c,v 1.11 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: search.c,v 1.19 2003/10/25 06:42:41 christos Exp $	*/
 
 /*-
@@ -34,13 +34,6 @@
  */
 
 #include "config.h"
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char rcsid[] = "$OpenBSD: search.c,v 1.10 2003/11/25 20:12:38 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
 
 /*
  * search.c: History and character search functions

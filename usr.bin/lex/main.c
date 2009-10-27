@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2004/02/03 21:20:17 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2009/10/27 23:59:39 deraadt Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -33,13 +33,7 @@
  * PURPOSE.
  */
 
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.10 2004/02/03 21:20:17 espie Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/main.c,v 1.11 2009/10/27 23:59:39 deraadt Exp $ */
 
 
 #include "flexdef.h"

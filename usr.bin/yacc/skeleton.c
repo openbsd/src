@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.29 2008/07/08 15:06:50 otto Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.30 2009/10/27 23:59:50 deraadt Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -33,14 +33,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
-#else
-static char rcsid[] = "$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $";
-#endif
-#endif /* not lint */
-
 #include "defs.h"
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
@@ -57,14 +49,6 @@ static char rcsid[] = "$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $"
 
 char *banner[] =
 {
-    "#ifndef lint",
-    "/*static char yysccsid[] = \"from: @(#)yaccpar	1.9 (Berkeley) 02/21/93\";*/",
-    "static char yyrcsid[]",
-    "#if __GNUC__ >= 2",
-    "  __attribute__ ((unused))",
-    "#endif /* __GNUC__ >= 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.29 2008/07/08 15:06:50 otto Exp $\";",
-    "#endif",
     "#include <stdlib.h>",
     "#include <string.h>",
     "#define YYBYACC 1",

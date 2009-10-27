@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.32 2009/06/05 19:32:26 jasper Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.33 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -32,21 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
-static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
-#else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.32 2009/06/05 19:32:26 jasper Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>

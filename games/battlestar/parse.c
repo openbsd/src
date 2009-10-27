@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.14 2007/11/24 12:59:28 jmc Exp $	*/
+/*	$OpenBSD: parse.c,v 1.15 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.14 2007/11/24 12:59:28 jmc Exp $";
-#endif
-#endif /* not lint */
 
 #include "extern.h"
 

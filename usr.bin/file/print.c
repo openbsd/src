@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.15 2009/04/24 18:54:34 chl Exp $ */
+/*	$OpenBSD: print.c,v 1.16 2009/10/27 23:59:37 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -40,10 +40,6 @@
 #include <unistd.h>
 #endif
 #include <time.h>
-
-#ifndef lint
-FILE_RCSID("@(#)$Id: print.c,v 1.15 2009/04/24 18:54:34 chl Exp $")
-#endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
 

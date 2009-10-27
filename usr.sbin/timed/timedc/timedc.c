@@ -1,4 +1,4 @@
-/*	$OpenBSD: timedc.c,v 1.13 2004/01/23 21:07:38 deraadt Exp $	*/
+/*	$OpenBSD: timedc.c,v 1.14 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -28,16 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1985, 1993 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)timedc.c	5.1 (Berkeley) 5/11/93";
-#endif /* not lint */
 
 #include "timedc.h"
 #include <string.h>

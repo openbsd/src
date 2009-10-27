@@ -1,4 +1,4 @@
-/*	$OpenBSD: hsearchtest.c,v 1.1 2004/06/24 04:33:07 millert Exp $	*/
+/*	$OpenBSD: hsearchtest.c,v 1.2 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: hsearchtest.c,v 1.5 2003/07/26 19:38:46 salo Exp $	*/
 
 /*
@@ -38,15 +38,6 @@
 /*
  * Test program for hsearch() et al.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 2001 Christopher G. Demetriou.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: hsearchtest.c,v 1.1 2004/06/24 04:33:07 millert Exp $";
-#endif /* not lint */
 
 #include <search.h>
 #include <stdlib.h>

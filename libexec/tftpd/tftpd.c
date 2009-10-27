@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.62 2008/03/24 16:11:00 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.63 2009/10/27 23:59:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.62 2008/03/24 16:11:00 deraadt Exp $";
-#endif /* not lint */
 
 /*
  * Trivial file transfer protocol server.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppasswdd_proc.c,v 1.12 2006/04/02 01:29:29 deraadt Exp $	*/
+/*	$OpenBSD: yppasswdd_proc.c,v 1.13 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: yppasswdd_proc.c,v 1.12 2006/04/02 01:29:29 deraadt Exp $";
-#endif
 
 #include <sys/types.h>
 #include <rpc/rpc.h>

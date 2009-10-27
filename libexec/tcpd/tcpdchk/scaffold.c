@@ -1,18 +1,10 @@
-/*	$OpenBSD: scaffold.c,v 1.7 2002/07/30 22:27:20 deraadt Exp $	*/
+/*	$OpenBSD: scaffold.c,v 1.8 2009/10/27 23:59:32 deraadt Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
-#else
-static char rcsid[] = "$OpenBSD: scaffold.c,v 1.7 2002/07/30 22:27:20 deraadt Exp $";
-#endif
-#endif
 
 /* System libraries. */
 

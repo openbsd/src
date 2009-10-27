@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rip.c,v 1.11 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-rip.c,v 1.12 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1996
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-rip.c,v 1.11 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

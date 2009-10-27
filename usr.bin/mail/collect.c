@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.31 2009/07/28 16:05:04 martynas Exp $	*/
+/*	$OpenBSD: collect.c,v 1.32 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
-#else
-static const char rcsid[] = "$OpenBSD: collect.c,v 1.31 2009/07/28 16:05:04 martynas Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Mail -- a mail program

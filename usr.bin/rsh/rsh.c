@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.39 2007/03/20 15:48:10 jmc Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.40 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static const char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static const char rcsid[] = "$OpenBSD: rsh.c,v 1.39 2007/03/20 15:48:10 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>

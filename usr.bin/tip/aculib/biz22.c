@@ -1,4 +1,4 @@
-/*	$OpenBSD: biz22.c,v 1.13 2006/03/17 19:17:13 moritz Exp $	*/
+/*	$OpenBSD: biz22.c,v 1.14 2009/10/27 23:59:45 deraadt Exp $	*/
 /*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: biz22.c,v 1.13 2006/03/17 19:17:13 moritz Exp $";
-#endif /* not lint */
 
 #include "tip.h"
 

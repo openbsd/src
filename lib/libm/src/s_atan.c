@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_atan.c,v 1.8 1995/05/10 20:46:45 jtc Exp $";
-#endif
-
 /* atan(x)
  * Method
  *   1. Reduce x to positive by atan(x) = -atan(-x).

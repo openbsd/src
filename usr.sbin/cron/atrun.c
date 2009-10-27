@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.15 2006/08/13 20:44:00 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.16 2009/10/27 23:59:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -19,10 +19,6 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
-
-#if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.15 2006/08/13 20:44:00 millert Exp $";
-#endif
 
 #include "cron.h"
 #include <limits.h>

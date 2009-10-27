@@ -1,4 +1,4 @@
-/*	$OpenBSD: position.c,v 1.9 2006/11/07 18:47:46 otto Exp $	*/
+/*	$OpenBSD: position.c,v 1.10 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: position.c,v 1.4 1995/03/21 09:04:12 cgd Exp $	*/
 
 /*-
@@ -33,14 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: position.c,v 1.9 2006/11/07 18:47:46 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

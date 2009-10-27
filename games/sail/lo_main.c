@@ -1,4 +1,4 @@
-/*	$OpenBSD: lo_main.c,v 1.6 2003/07/10 00:03:01 david Exp $	*/
+/*	$OpenBSD: lo_main.c,v 1.7 2009/10/27 23:59:27 deraadt Exp $	*/
 /*	$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: lo_main.c,v 1.6 2003/07/10 00:03:01 david Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Print out the top ten SAILors

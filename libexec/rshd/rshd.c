@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.52 2008/04/08 19:16:05 deraadt Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.53 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.52 2008/04/08 19:16:05 deraadt Exp $";
-#endif /* not lint */
 
 /*
  * remote shell server:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.16 2007/03/29 11:27:33 jmc Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.17 2009/10/27 23:59:43 deraadt Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -32,19 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1995\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
-#endif
-static char rcsid[] = "$OpenBSD: showmount.c,v 1.16 2007/03/29 11:27:33 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/file.h>

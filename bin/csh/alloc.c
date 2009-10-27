@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.9 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.10 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1995/03/21 09:02:23 cgd Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: alloc.c,v 1.9 2003/06/11 21:09:50 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <unistd.h>

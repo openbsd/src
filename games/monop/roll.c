@@ -1,4 +1,4 @@
-/*	$OpenBSD: roll.c,v 1.4 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: roll.c,v 1.5 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
-#else
-static const char rcsid[] = "$OpenBSD: roll.c,v 1.4 2003/06/03 03:01:40 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdlib.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.20 2008/08/10 13:39:09 sobrado Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.21 2009/10/27 23:59:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,22 +31,6 @@
 
 #include "defs.h"
 #include "y.tab.h"
-#ifndef lint
-#if 0
-static char RCSid[] __attribute__((__unused__)) = 
-"$From: docmd.c,v 1.8 2001/03/12 18:42:23 kim Exp $";
-#else
-static char RCSid[] __attribute__((__unused__)) = 
-"$OpenBSD: docmd.c,v 1.20 2008/08/10 13:39:09 sobrado Exp $";
-#endif
-
-static char sccsid[] __attribute__((__unused__)) =
-"@(#)docmd.c	5.1 (Berkeley) 6/6/85";
-
-static char copyright[] __attribute__((__unused__)) =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
 
 /*
  * Functions for rdist that do command (cmd) related activities.

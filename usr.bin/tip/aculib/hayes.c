@@ -1,4 +1,4 @@
-/*	$OpenBSD: hayes.c,v 1.14 2007/05/16 03:14:41 ray Exp $	*/
+/*	$OpenBSD: hayes.c,v 1.15 2009/10/27 23:59:45 deraadt Exp $	*/
 /*	$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: hayes.c,v 1.14 2007/05/16 03:14:41 ray Exp $";
-#endif /* not lint */
 
 /*
  * Routines for calling up on a Hayes Modem

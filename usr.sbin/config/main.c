@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2008/10/03 13:01:26 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2009/10/27 23:59:51 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -40,12 +40,6 @@
  *
  *	from: @(#)main.c	8.1 (Berkeley) 6/6/93
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

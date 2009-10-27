@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.11 2003/11/25 20:12:38 otto Exp $	*/
+/*	$OpenBSD: read.c,v 1.12 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: read.c,v 1.30 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
@@ -34,13 +34,6 @@
  */
 
 #include "config.h"
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char rcsid[] = "$OpenBSD: read.c,v 1.11 2003/11/25 20:12:38 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
 
 /*
  * read.c: Clean this junk up! This is horrible code.

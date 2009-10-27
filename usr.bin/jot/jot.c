@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.19 2007/05/01 01:26:30 jdixon Exp $	*/
+/*	$OpenBSD: jot.c,v 1.20 2009/10/27 23:59:39 deraadt Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: jot.c,v 1.19 2007/05/01 01:26:30 jdixon Exp $";
-#endif /* not lint */
 
 /*
  * jot - print sequential or random data

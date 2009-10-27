@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.17 2007/01/28 16:36:17 miod Exp $	*/
+/*	$OpenBSD: display.c,v 1.18 2009/10/27 23:59:39 deraadt Exp $	*/
 /*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
@@ -29,11 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.17 2007/01/28 16:36:17 miod Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

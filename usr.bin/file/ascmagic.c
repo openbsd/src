@@ -1,4 +1,4 @@
-/*	$OpenBSD: ascmagic.c,v 1.10 2009/04/24 18:54:34 chl Exp $ */
+/*	$OpenBSD: ascmagic.c,v 1.11 2009/10/27 23:59:37 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -48,10 +48,6 @@
 #include <unistd.h>
 #endif
 #include "names.h"
-
-#ifndef	lint
-FILE_RCSID("@(#)$Id: ascmagic.c,v 1.10 2009/04/24 18:54:34 chl Exp $")
-#endif	/* lint */
 
 #define MAXLINELEN 300	/* longest sane line length */
 #define ISSPC(x) ((x) == ' ' || (x) == '\t' || (x) == '\r' || (x) == '\n' \

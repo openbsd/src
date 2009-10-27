@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.21 2009/08/27 11:29:30 millert Exp $	*/
+/*	$OpenBSD: du.c,v 1.22 2009/10/27 23:59:37 deraadt Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
-#else
-static const char rcsid[] = "$OpenBSD: du.c,v 1.21 2009/08/27 11:29:30 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

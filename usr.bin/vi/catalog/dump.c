@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.5 2008/03/28 17:58:20 jasper Exp $	*/
+/*	$OpenBSD: dump.c,v 1.6 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -28,16 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)dump.c	8.1 (Berkeley) 8/31/94";
-#endif /* not lint */
 
 #include <ctype.h>
 #include <stdio.h>

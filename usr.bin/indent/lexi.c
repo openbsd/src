@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.14 2007/11/27 16:22:14 martynas Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.15 2009/10/27 23:59:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: lexi.c,v 1.14 2007/11/27 16:22:14 martynas Exp $";
-#endif /* not lint */
 
 /*
  * Here we have the token scanner for indent.  It scans off one token and puts

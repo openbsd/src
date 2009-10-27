@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.222 2009/10/01 16:28:33 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.223 2009/10/27 23:59:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.222 2009/10/01 16:28:33 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

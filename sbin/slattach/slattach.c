@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.15 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.16 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
-#else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.15 2003/06/02 20:06:17 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>

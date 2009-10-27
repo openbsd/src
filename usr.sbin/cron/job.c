@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.7 2004/06/17 22:11:55 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.8 2009/10/27 23:59:51 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -20,10 +20,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: job.c,v 1.7 2004/06/17 22:11:55 millert Exp $";
-#endif
 
 #include "cron.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.24 2008/09/19 08:52:16 mpf Exp $	*/
+/*	$OpenBSD: util.c,v 1.25 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: util.c,v 1.24 2008/09/19 08:52:16 mpf Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>

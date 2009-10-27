@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_yank.c,v 1.5 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: v_yank.c,v 1.6 2009/10/27 23:59:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)v_yank.c	10.9 (Berkeley) 5/19/96";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>

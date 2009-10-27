@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipx.c,v 1.11 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-ipx.c,v 1.12 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -23,11 +23,6 @@
  * Format and print Novell IPX packets.
  * Contributed by Brad Parker (brad@fcr.com).
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-ipx.c,v 1.11 2007/10/07 16:41:05 deraadt Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

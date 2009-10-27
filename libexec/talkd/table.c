@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.13 2005/10/14 15:39:19 otto Exp $	*/
+/*	$OpenBSD: table.c,v 1.14 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.13 2005/10/14 15:39:19 otto Exp $";
-#endif /* not lint */
 
 /*
  * Routines to handle insertion, deletion, etc on the table

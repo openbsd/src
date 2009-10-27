@@ -1,4 +1,4 @@
-/*	$OpenBSD: pesach.c,v 1.2 2004/12/10 20:50:45 mickey Exp $	*/
+/*	$OpenBSD: pesach.c,v 1.3 2009/10/27 23:59:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -16,10 +16,6 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: pesach.c,v 1.2 2004/12/10 20:50:45 mickey Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <tzfile.h>

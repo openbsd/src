@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.6 2006/04/03 05:01:23 deraadt Exp $ */
+/* $OpenBSD: hash.c,v 1.7 2009/10/27 23:59:58 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -38,10 +38,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include "hash.h"
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: hash.c,v 1.6 2006/04/03 05:01:23 deraadt Exp $";
-#endif
 
 /*
  * This hash function is stolen directly from the

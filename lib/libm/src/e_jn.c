@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_jn.c,v 1.9 1995/05/10 20:45:34 jtc Exp $";
-#endif
-
 /*
  * jn(n, x), yn(n, x)
  * floating point Bessel's function of the 1st and 2nd kind

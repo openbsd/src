@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmpproto.c,v 1.9 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: rmpproto.c,v 1.10 2009/10/27 23:59:54 deraadt Exp $	*/
 /*	$NetBSD: rmpproto.c,v 1.5.2.1 1995/11/14 08:45:44 thorpej Exp $	*/
 
 /*
@@ -42,11 +42,6 @@
  * From: Utah Hdr: rmpproto.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
-
-#ifndef lint
-/*static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rmpproto.c,v 1.9 2003/06/02 23:36:54 millert Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

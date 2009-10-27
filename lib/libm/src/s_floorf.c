@@ -13,10 +13,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_floorf.c,v 1.4 1995/05/10 20:47:22 jtc Exp $";
-#endif
-
 /*
  * floorf(x)
  * Return x rounded toward -inf to integral value

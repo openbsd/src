@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.28 2008/03/13 16:16:42 thib Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.29 2009/10/27 23:59:33 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
-#else
-static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.28 2008/03/13 16:16:42 thib Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

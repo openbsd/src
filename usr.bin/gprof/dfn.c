@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfn.c,v 1.6 2006/03/25 19:06:35 espie Exp $	*/
+/*	$OpenBSD: dfn.c,v 1.7 2009/10/27 23:59:38 deraadt Exp $	*/
 /*	$NetBSD: dfn.c,v 1.5 1995/04/19 07:15:56 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)dfn.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: dfn.c,v 1.6 2006/03/25 19:06:35 espie Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdio.h>
 #include "gprof.h"

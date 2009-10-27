@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.3 2004/07/03 23:40:44 djm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.4 2009/10/27 23:59:54 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
-#endif
-static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.3 2004/07/03 23:40:44 djm Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/uio.h>

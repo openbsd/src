@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.21 2009/10/17 21:45:50 sobrado Exp $	*/
+/*	$OpenBSD: bs.c,v 1.22 2009/10/27 23:59:24 deraadt Exp $	*/
 /*
  * Copyright (c) 1986, Bruce Holloway
  * All rights reserved.
@@ -38,10 +38,6 @@
  * v2.1 with ncurses mouse support, September 1995
  * v2.2 with bugfixes and strategical improvements, March 1998.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: bs.c,v 1.21 2009/10/17 21:45:50 sobrado Exp $";
-#endif
 
 /* #define _POSIX_SOURCE  */  /* ( random() ) */
 

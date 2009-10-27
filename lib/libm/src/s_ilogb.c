@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_ilogb.c,v 1.9 1995/05/10 20:47:28 jtc Exp $";
-#endif
-
 /* ilogb(double x)
  * return the binary exponent of non-zero x
  * ilogb(0) = 0x80000001

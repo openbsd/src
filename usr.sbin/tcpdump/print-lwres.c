@@ -27,11 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-lwres.c,v 1.4 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
-#endif
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

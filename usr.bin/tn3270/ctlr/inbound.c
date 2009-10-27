@@ -1,4 +1,4 @@
-/*	$OpenBSD: inbound.c,v 1.6 2003/06/03 02:56:19 millert Exp $	*/
+/*	$OpenBSD: inbound.c,v 1.7 2009/10/27 23:59:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)inbound.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: inbound.c,v 1.6 2003/06/03 02:56:19 millert Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 

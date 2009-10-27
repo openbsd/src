@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.17 2006/04/11 15:06:48 ray Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.18 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -28,13 +28,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-
-/*
- * This was unceremoniously ripped out of usr.sbin/dump/dumprmt.c:
- *
- * static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
- *
  */
 
 #include <sys/param.h>

@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.18 2008/11/11 23:49:46 kurt Exp $
+#	$OpenBSD: Makefile,v 1.19 2009/10/27 23:59:58 deraadt Exp $
 #	$NetBSD: Makefile,v 1.6 1996/10/18 05:27:38 thorpej Exp $
 
-CFLAGS+=	-DLIBC_SCCS -DELFSIZE=64
+CFLAGS+=	-DELFSIZE=64
 OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o crtbeginS.o crtendS.o
 SRCS=		crt0.c crtbegin.c crtbeginS.c crtend.c crtendS.c
 

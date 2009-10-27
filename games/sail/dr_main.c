@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_main.c,v 1.4 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: dr_main.c,v 1.5 2009/10/27 23:59:27 deraadt Exp $	*/
 /*	$NetBSD: dr_main.c,v 1.4 1995/04/22 10:36:52 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)dr_main.c	8.2 (Berkeley) 4/16/94";
-#else
-static char rcsid[] = "$OpenBSD: dr_main.c,v 1.4 2003/06/03 03:01:41 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include "driver.h"
 #include <stdlib.h>

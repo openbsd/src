@@ -32,14 +32,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.15 2009/08/12 13:21:17 deraadt Exp $
+ *	$Id: amd.c,v 1.16 2009/10/27 23:59:50 deraadt Exp $
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
 
 /*
  * Automounter

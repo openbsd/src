@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.8 2003/06/10 22:20:44 deraadt Exp $	*/
+/*	$OpenBSD: banner.c,v 1.9 2009/10/27 23:59:35 deraadt Exp $	*/
 /*	$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $	*/
 
 /*
@@ -48,16 +48,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#if 0
-static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
-#else
-static const char rcsid[] = "$OpenBSD: banner.c,v 1.8 2003/06/10 22:20:44 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdio.h>
 #include <unistd.h>

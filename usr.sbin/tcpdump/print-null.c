@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.18 2008/12/29 10:02:55 michele Exp $	*/
+/*	$OpenBSD: print-null.c,v 1.19 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-null.c,v 1.18 2008/12/29 10:02:55 michele Exp $ (LBL)";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

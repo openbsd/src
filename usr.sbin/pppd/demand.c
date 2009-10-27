@@ -1,4 +1,4 @@
-/*	$OpenBSD: demand.c,v 1.8 2002/09/13 00:12:10 deraadt Exp $	*/
+/*	$OpenBSD: demand.c,v 1.9 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -34,14 +34,6 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-#if 0
-static char rcsid[] = "Id: demand.c,v 1.7 1997/11/27 06:08:26 paulus Exp $";
-#else
-static char rcsid[] = "$OpenBSD: demand.c,v 1.8 2002/09/13 00:12:10 deraadt Exp $";
-#endif
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.21 2007/08/21 20:29:25 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.22 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.21 2007/08/21 20:29:25 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include "sort.h"
 #include "fsort.h"

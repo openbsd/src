@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.c,v 1.3 2003/06/26 07:53:26 deraadt Exp $	*/
+/*	$OpenBSD: tcpd.c,v 1.4 2009/10/27 23:59:31 deraadt Exp $	*/
 
  /*
   * General front end for stream and datagram IP services. This program logs
@@ -11,14 +11,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) tcpd.c 1.10 96/02/11 17:01:32";
-#else
-static char rcsid[] = "$OpenBSD: tcpd.c,v 1.3 2003/06/26 07:53:26 deraadt Exp $";
-#endif
-#endif
 
 /* System libraries. */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.8 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: move.c,v 1.9 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: move.c,v 1.8 2004/11/29 08:52:28 jsg Exp $";
-#endif
-#endif /* not lint */
 
 #include "robots.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.16 2008/11/13 18:33:03 landry Exp $	*/
+/*	$OpenBSD: tail.c,v 1.17 2009/10/27 23:59:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,19 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: tail.c,v 1.16 2008/11/13 18:33:03 landry Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

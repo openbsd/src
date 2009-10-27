@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.21 2007/05/11 01:47:48 ray Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.22 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] =
-    "$OpenBSD: tftp.c,v 1.21 2007/05/11 01:47:48 ray Exp $";
-#endif /* not lint */
 
 /*
  * TFTP User Program -- Protocol Machines

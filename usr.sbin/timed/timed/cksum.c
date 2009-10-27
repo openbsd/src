@@ -1,4 +1,4 @@
-/*	$OpenBSD: cksum.c,v 1.5 2003/06/02 23:36:55 millert Exp $	*/
+/*	$OpenBSD: cksum.c,v 1.6 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -28,10 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)cksum.c	5.2 (Berkeley) 5/11/93";
-#endif /* not lint */
 
 #include <sys/types.h>
 

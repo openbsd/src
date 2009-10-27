@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_modf.c,v 1.8 1995/05/10 20:47:55 jtc Exp $";
-#endif
-
 /*
  * modf(double x, double *iptr) 
  * return fraction part of x, and return x's integral part in *iptr.

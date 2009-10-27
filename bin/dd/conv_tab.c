@@ -1,4 +1,4 @@
-/*	$OpenBSD: conv_tab.c,v 1.4 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: conv_tab.c,v 1.5 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: conv_tab.c,v 1.7 1996/02/20 19:29:03 jtc Exp $	*/
 
 /*-
@@ -33,14 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)conv_tab.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: conv_tab.c,v 1.4 2003/06/02 23:32:07 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.12 2004/02/03 20:22:37 drahn Exp $	*/
+/*	$OpenBSD: globals.c,v 1.13 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: globals.c,v 1.12 2004/02/03 20:22:37 drahn Exp $";
-#endif
-#endif /* not lint */
 
 #include "extern.h"
 

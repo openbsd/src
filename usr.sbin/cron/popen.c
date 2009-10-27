@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.20 2006/04/03 01:31:11 djm Exp $	*/
+/*	$OpenBSD: popen.c,v 1.21 2009/10/27 23:59:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -36,14 +36,6 @@
 /* this came out of the ftpd sources; it's been modified to avoid the
  * globbing stuff since we don't need it.  also execvp instead of execv.
  */
-
-#ifndef lint
-#if 0
-static const sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
-#else
-static const char rcsid[] = "$OpenBSD: popen.c,v 1.20 2006/04/03 01:31:11 djm Exp $";
-#endif
-#endif /* not lint */
 
 #include "cron.h"
 

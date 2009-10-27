@@ -1,4 +1,4 @@
-/*	$OpenBSD: append.c,v 1.9 2004/07/20 03:50:27 deraadt Exp $	*/
+/*	$OpenBSD: append.c,v 1.10 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)append.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: append.c,v 1.9 2004/07/20 03:50:27 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include "sort.h"
 

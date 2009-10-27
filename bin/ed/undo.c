@@ -1,4 +1,4 @@
-/*	$OpenBSD: undo.c,v 1.9 2007/09/02 15:19:07 deraadt Exp $	*/
+/*	$OpenBSD: undo.c,v 1.10 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
@@ -27,14 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
-#else
-static char rcsid[] = "$OpenBSD: undo.c,v 1.9 2007/09/02 15:19:07 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include "ed.h"
 

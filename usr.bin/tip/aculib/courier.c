@@ -1,4 +1,4 @@
-/*	$OpenBSD: courier.c,v 1.15 2006/03/17 19:17:13 moritz Exp $	*/
+/*	$OpenBSD: courier.c,v 1.16 2009/10/27 23:59:45 deraadt Exp $	*/
 /*	$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: courier.c,v 1.15 2006/03/17 19:17:13 moritz Exp $";
-#endif /* not lint */
 
 /*
  * Routines for calling up on a Courier modem.

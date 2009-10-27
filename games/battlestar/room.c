@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: room.c,v 1.9 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: room.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include "extern.h"
 

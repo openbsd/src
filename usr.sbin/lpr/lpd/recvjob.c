@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.24 2008/09/02 00:14:23 deraadt Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.25 2009/10/27 23:59:52 deraadt Exp $	*/
 /*	$NetBSD: recvjob.c,v 1.14 2001/12/04 22:52:44 christos Exp $	*/
 
 /*
@@ -30,20 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
-#else
-static const char rcsid[] = "$OpenBSD: recvjob.c,v 1.24 2008/09/02 00:14:23 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Receive printer jobs from the network, queue them and

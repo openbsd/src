@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.25 2007/09/25 09:51:48 chl Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.26 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
-#else
-static const char rcsid[] = "$OpenBSD: interactive.c,v 1.25 2007/09/25 09:51:48 chl Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

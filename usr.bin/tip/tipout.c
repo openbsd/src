@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.18 2006/05/31 07:03:08 jason Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.19 2009/10/27 23:59:45 deraadt Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: tipout.c,v 1.18 2006/05/31 07:03:08 jason Exp $";
-#endif /* not lint */
 
 #include "tip.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.18 2008/03/17 09:17:56 sobrado Exp $	*/
+/*	$OpenBSD: factor.c,v 1.19 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
-#else
-static char rcsid[] = "$OpenBSD: factor.c,v 1.18 2008/03/17 09:17:56 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * factor - factor a number into primes

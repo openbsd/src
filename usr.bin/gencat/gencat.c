@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.12 2009/01/04 18:42:32 sobrado Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.13 2009/10/27 23:59:38 deraadt Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -31,10 +31,6 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-static const char rcsid[] =
-    "$OpenBSD: gencat.c,v 1.12 2009/01/04 18:42:32 sobrado Exp $";
-#endif /* not lint */
 
 /***********************************************************
 Copyright 1990, by Alfalfa Software Incorporated, Cambridge, Massachusetts.

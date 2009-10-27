@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_dump.c,v 1.7 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: bpf_dump.c,v 1.8 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -20,10 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: bpf_dump.c,v 1.7 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>

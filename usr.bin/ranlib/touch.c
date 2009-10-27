@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.6 2003/06/12 20:58:10 deraadt Exp $	*/
+/*	$OpenBSD: touch.c,v 1.7 2009/10/27 23:59:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)touch.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: touch.c,v 1.6 2003/06/12 20:58:10 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <fcntl.h>

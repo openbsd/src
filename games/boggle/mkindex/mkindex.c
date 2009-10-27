@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkindex.c,v 1.7 2004/07/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: mkindex.c,v 1.8 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: mkindex.c,v 1.2 1995/03/21 12:14:52 cgd Exp $	*/
 
 /*-
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
-#else
-static char rcsid[] = "$OpenBSD: mkindex.c,v 1.7 2004/07/10 07:26:22 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

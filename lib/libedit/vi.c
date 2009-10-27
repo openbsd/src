@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.7 2003/10/31 08:42:24 otto Exp $	*/
+/*	$OpenBSD: vi.c,v 1.8 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: vi.c,v 1.19 2003/08/07 16:44:35 agc Exp $	*/
 
 /*-
@@ -37,14 +37,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char rcsid[] = "$OpenBSD: vi.c,v 1.7 2003/10/31 08:42:24 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
 
 /*
  * vi.c: Vi mode commands.

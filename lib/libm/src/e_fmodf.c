@@ -13,10 +13,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_fmodf.c,v 1.4 1995/05/10 20:45:10 jtc Exp $";
-#endif
-
 /* 
  * fmodf(x,y)
  * Return x mod y in exact arithmetic

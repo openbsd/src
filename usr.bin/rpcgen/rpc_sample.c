@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_sample.c,v 1.15 2007/10/03 14:35:48 weingart Exp $	*/
+/*	$OpenBSD: rpc_sample.c,v 1.16 2009/10/27 23:59:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_sample.c,v 1.2 1995/06/11 21:50:01 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
-#endif
 
 /*
  * rpc_sample.c, Sample client-server code outputter for the RPC protocol compiler

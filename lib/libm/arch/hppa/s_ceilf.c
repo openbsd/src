@@ -2,10 +2,6 @@
  * Written by Michael Shalayeff. Public Domain
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: s_ceilf.c,v 1.3 2003/01/16 19:17:33 mickey Exp $";
-#endif
-
 #include <sys/types.h>
 #include <machine/ieeefp.h>
 #include "math.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: const.c,v 1.5 2003/06/02 23:32:06 millert Exp $	*/
+/*	$OpenBSD: const.c,v 1.6 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: const.c,v 1.6 1995/03/21 09:02:31 cgd Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)const.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: const.c,v 1.5 2003/06/02 23:32:06 millert Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * tc.const.c: String constants for csh.

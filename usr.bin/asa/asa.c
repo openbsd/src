@@ -1,4 +1,4 @@
-/*	$OpenBSD: asa.c,v 1.8 2007/05/19 16:11:59 moritz Exp $	*/
+/*	$OpenBSD: asa.c,v 1.9 2009/10/27 23:59:35 deraadt Exp $	*/
 /*	$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $	*/
 
 /*
@@ -30,10 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: asa.c,v 1.8 2007/05/19 16:11:59 moritz Exp $";
-#endif
 
 #include <err.h>
 #include <stdio.h>

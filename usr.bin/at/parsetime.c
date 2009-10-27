@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.16 2007/05/23 19:50:28 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.17 2009/10/27 23:59:35 deraadt Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -139,10 +139,6 @@ static char *sc_token;	/* scanner - token buffer */
 static size_t sc_len;   /* scanner - length of token buffer */
 static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.16 2007/05/23 19:50:28 millert Exp $";
-#endif
 
 /*
  * parse a token, checking if it's something special to us

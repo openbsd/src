@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.23 2007/10/17 20:10:44 chl Exp $	*/
+/*	$OpenBSD: options.c,v 1.24 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -41,14 +41,6 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-#if 0
-static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp $";
-#else
-static char rcsid[] = "$OpenBSD: options.c,v 1.23 2007/10/17 20:10:44 chl Exp $";
-#endif
-#endif
 
 #include <ctype.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.10 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: move.c,v 1.11 2009/10/27 23:59:25 deraadt Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/03/24 05:01:57 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: move.c,v 1.10 2003/06/03 03:01:40 millert Exp $";
-#endif
-#endif /* not lint */
 
 #ifdef DEBUG
 #include <sys/param.h>

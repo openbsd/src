@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.26 2008/08/19 09:41:12 pedro Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.27 2009/10/27 23:59:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -37,20 +37,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
-#else
-static const char rcsid[] = "$OpenBSD: dumpfs.c,v 1.26 2008/08/19 09:41:12 pedro Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

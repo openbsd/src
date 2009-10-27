@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkastods.c,v 1.3 2003/06/03 02:56:19 millert Exp $	*/
+/*	$OpenBSD: mkastods.c,v 1.4 2009/10/27 23:59:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)mkastods.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: mkastods.c,v 1.3 2003/06/03 02:56:19 millert Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #if	defined(unix)

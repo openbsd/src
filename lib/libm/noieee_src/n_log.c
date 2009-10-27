@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log.c,v 1.7 2008/07/16 15:25:51 martynas Exp $	*/
+/*	$OpenBSD: n_log.c,v 1.8 2009/10/27 23:59:29 deraadt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
-#endif /* not lint */
 
 #include <math.h>
 #include <errno.h>

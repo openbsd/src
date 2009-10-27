@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.15 2006/03/30 20:56:54 deraadt Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.16 2009/10/27 23:59:30 deraadt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,10 +29,6 @@
  *
  *
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <dirent.h>

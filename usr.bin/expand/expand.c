@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.10 2005/12/27 19:19:55 moritz Exp $	*/
+/*	$OpenBSD: expand.c,v 1.11 2009/10/27 23:59:37 deraadt Exp $	*/
 /*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
-#endif
-static const char rcsid[] = "$OpenBSD: expand.c,v 1.10 2005/12/27 19:19:55 moritz Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

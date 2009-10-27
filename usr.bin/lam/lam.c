@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.13 2007/06/26 05:14:52 ray Exp $	*/
+/*	$OpenBSD: lam.c,v 1.14 2009/10/27 23:59:39 deraadt Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: lam.c,v 1.13 2007/06/26 05:14:52 ray Exp $";
-#endif /* not lint */
 
 /*
  *	lam - laminate files

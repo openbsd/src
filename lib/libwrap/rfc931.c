@@ -1,13 +1,9 @@
-/*	$OpenBSD: rfc931.c,v 1.11 2006/04/14 18:27:49 dhill Exp $	*/
+/*	$OpenBSD: rfc931.c,v 1.12 2009/10/27 23:59:30 deraadt Exp $	*/
 
 /* rfc1413 does an attempt at an ident query to a client. Originally written
  * by Wietse Venema, rewritten by Bob Beck <beck@openbsd.org> to avoid 
  * potential longjmp problems and get rid of stdio usage on sockets. 
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: rfc931.c,v 1.11 2006/04/14 18:27:49 dhill Exp $";
-#endif
 
 #include <stdio.h>
 #include <sys/types.h>

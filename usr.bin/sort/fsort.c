@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.20 2008/11/20 12:14:16 otto Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.21 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.20 2008/11/20 12:14:16 otto Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Read in the next bin.  If it fits in one segment sort it;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clean_exit.c,v 1.2 2003/07/18 23:05:13 david Exp $	*/
+/*	$OpenBSD: clean_exit.c,v 1.3 2009/10/27 23:59:30 deraadt Exp $	*/
 
 /*
   * clean_exit() cleans up and terminates the program. It should be called
@@ -9,14 +9,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) clean_exit.c 1.4 94/12/28 17:42:19";
-#else
-static char rcsid[] = "$OpenBSD: clean_exit.c,v 1.2 2003/07/18 23:05:13 david Exp $";
-#endif
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: partab.c,v 1.5 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: partab.c,v 1.6 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: partab.c,v 1.4 1996/12/29 10:38:21 cgd Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)partab.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: partab.c,v 1.5 2003/06/03 02:56:18 millert Exp $";
-#endif /* not lint */
 
 /*
  * Even parity table for 0-0177

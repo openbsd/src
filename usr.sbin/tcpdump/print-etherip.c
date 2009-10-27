@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-etherip.c,v 1.5 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-etherip.c,v 1.6 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -29,11 +29,6 @@
 /*
  * Format and print etherip packets
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-etherip.c,v 1.5 2007/10/07 16:41:05 deraadt Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

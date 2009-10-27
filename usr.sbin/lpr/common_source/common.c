@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.32 2007/09/02 15:19:38 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.33 2009/10/27 23:59:51 deraadt Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -34,14 +34,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
-#else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.32 2007/09/02 15:19:38 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

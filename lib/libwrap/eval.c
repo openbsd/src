@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.3 2002/06/07 00:03:34 itojun Exp $	*/
+/*	$OpenBSD: eval.c,v 1.4 2009/10/27 23:59:30 deraadt Exp $	*/
 
  /*
   * Routines for controlled evaluation of host names, user names, and so on.
@@ -19,14 +19,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) eval.c 1.3 95/01/30 19:51:45";
-#else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.3 2002/06/07 00:03:34 itojun Exp $";
-#endif
-#endif
 
 /* System libraries. */
 

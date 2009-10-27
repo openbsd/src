@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.10 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.11 2009/10/27 23:59:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -30,23 +30,6 @@
  */
 
 #include "defs.h"
-
-#ifndef lint
-#if 0
-static char RCSid[] __attribute__((__unused__)) = 
-"$From: filesys.c,v 1.2 1999/08/04 15:57:33 christos Exp $";
-#else
-static char RCSid[] __attribute__((__unused__)) = 
-"$OpenBSD: filesys.c,v 1.10 2003/06/03 02:56:15 millert Exp $";
-#endif
-
-static char sccsid[] __attribute__((__unused__)) =
-"@(#)filesys.c";
-
-static char copyright[] __attribute__((__unused__)) =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
 
 /*
  * This file contains functions dealing with getting info

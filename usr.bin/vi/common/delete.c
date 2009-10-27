@@ -1,4 +1,4 @@
-/*	$OpenBSD: delete.c,v 1.7 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: delete.c,v 1.8 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)delete.c	10.12 (Berkeley) 10/23/96";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>

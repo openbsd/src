@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.12 2005/06/10 16:40:45 pvalchev Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.13 2009/10/27 23:59:50 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
-#else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.12 2005/06/10 16:40:45 pvalchev Exp $";
-#endif
-#endif /* not lint */
 
 #include "defs.h"
 

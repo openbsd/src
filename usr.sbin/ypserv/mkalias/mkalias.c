@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.22 2009/10/20 09:47:03 sobrado Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.23 2009/10/27 23:59:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: mkalias.c,v 1.22 2009/10/20 09:47:03 sobrado Exp $";
-#endif
 
 #include <ctype.h>
 #include <fcntl.h>

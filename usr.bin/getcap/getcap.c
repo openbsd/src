@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.2 2006/01/28 22:35:54 millert Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.3 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: getcap.c,v 1.2 2006/01/28 22:35:54 millert Exp $";
-#endif /* not lint */
 
 #include <err.h>
 #include <stdio.h>

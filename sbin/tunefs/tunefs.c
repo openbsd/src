@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.29 2009/06/21 00:38:22 martynas Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.30 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.33 2005/01/19 20:46:16 xtraeme Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
-#else
-static const char rcsid[] = "$OpenBSD: tunefs.c,v 1.29 2009/06/21 00:38:22 martynas Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * tunefs: change layout parameters to an existing file system.

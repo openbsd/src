@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.30 2009/03/03 04:42:48 stevesk Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.31 2009/10/27 23:59:51 deraadt Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
-#else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.30 2009/03/03 04:42:48 stevesk Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>

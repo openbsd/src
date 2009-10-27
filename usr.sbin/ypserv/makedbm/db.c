@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.7 2006/04/03 05:01:22 deraadt Exp $ */
+/*	$OpenBSD: db.c,v 1.8 2009/10/27 23:59:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: db.c,v 1.7 2006/04/03 05:01:22 deraadt Exp $";
-#endif
 
 #include <sys/types.h>
 #include <db.h>

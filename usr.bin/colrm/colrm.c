@@ -1,4 +1,4 @@
-/*	$OpenBSD: colrm.c,v 1.8 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: colrm.c,v 1.9 2009/10/27 23:59:36 deraadt Exp $	*/
 /*	$NetBSD: colrm.c,v 1.4 1995/09/02 05:51:37 jtc Exp $	*/
 
 /*-
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)colrm.c	8.2 (Berkeley) 5/4/95";
-#endif
-static char rcsid[] = "$OpenBSD: colrm.c,v 1.8 2003/06/10 22:20:45 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 

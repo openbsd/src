@@ -1,4 +1,4 @@
-/*	$OpenBSD: strnsubst.c,v 1.4 2005/12/01 05:52:20 cloder Exp $	*/
+/*	$OpenBSD: strnsubst.c,v 1.5 2009/10/27 23:59:50 deraadt Exp $	*/
 /*	$FreeBSD: strnsubst.c,v 1.6 2002/06/22 12:58:42 jmallett Exp $	*/
 
 /*
@@ -8,10 +8,6 @@
  * with the following statement:
  * 	For the man who taught me vi, and who got too old, too young.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: strnsubst.c,v 1.4 2005/12/01 05:52:20 cloder Exp $";
-#endif /* not lint */
 
 #include <err.h>
 #include <stdio.h>

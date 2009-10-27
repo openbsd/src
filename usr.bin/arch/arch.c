@@ -23,10 +23,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef lint
-static char rcsid[] = "$OpenBSD: arch.c,v 1.11 2004/05/09 03:20:45 deraadt Exp $";
-#endif /* not lint */
-
 #include <sys/param.h>
 
 #include <err.h>

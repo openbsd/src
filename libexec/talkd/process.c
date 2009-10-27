@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.18 2006/10/18 21:23:11 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.19 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.18 2006/10/18 21:23:11 deraadt Exp $";
-#endif /* not lint */
 
 /*
  * process.c handles the requests, which can be of three types:

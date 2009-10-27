@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.9 2006/01/08 21:08:27 miod Exp $	*/
+/*	$OpenBSD: key.c,v 1.10 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)key.c	10.33 (Berkeley) 9/24/96";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.24 2007/12/16 21:22:53 otto Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.25 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
-#else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.24 2007/12/16 21:22:53 otto Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Fix up / report on disk quotas & usage

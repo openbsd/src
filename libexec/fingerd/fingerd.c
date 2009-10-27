@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.34 2008/08/11 17:17:53 tobias Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.35 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.34 2008/08/11 17:17:53 tobias Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>

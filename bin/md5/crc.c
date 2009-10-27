@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc.c,v 1.2 2004/05/10 19:48:07 deraadt Exp $	*/
+/*	$OpenBSD: crc.c,v 1.3 2009/10/27 23:59:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: crc.c,v 1.2 2004/05/10 19:48:07 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 

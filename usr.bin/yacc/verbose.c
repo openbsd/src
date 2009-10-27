@@ -1,4 +1,4 @@
-/*	$OpenBSD: verbose.c,v 1.9 2005/06/10 16:40:45 pvalchev Exp $	*/
+/*	$OpenBSD: verbose.c,v 1.10 2009/10/27 23:59:50 deraadt Exp $	*/
 /*	$NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
-#else
-static char rcsid[] = "$OpenBSD: verbose.c,v 1.9 2005/06/10 16:40:45 pvalchev Exp $";
-#endif
-#endif /* not lint */
 
 #include "defs.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.74 2009/05/31 17:33:39 ckuethe Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.75 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -63,16 +63,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
-#endif /* not lint */
 
 /*
  * Using the InterNet Control Message Protocol (ICMP) "ECHO" facility,

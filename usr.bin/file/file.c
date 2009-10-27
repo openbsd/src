@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.21 2009/10/26 21:03:55 ajacoutot Exp $ */
+/*	$OpenBSD: file.c,v 1.22 2009/10/27 23:59:37 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -70,10 +70,6 @@ int getopt_long(int argc, char * const *argv, const char *optstring, const struc
 #include <netinet/in.h>		/* for byte swapping */
 
 #include "patchlevel.h"
-
-#ifndef	lint
-FILE_RCSID("@(#)$Id: file.c,v 1.21 2009/10/26 21:03:55 ajacoutot Exp $")
-#endif	/* lint */
 
 
 #ifdef S_IFLNK

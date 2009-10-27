@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.23 2008/06/10 23:10:29 otto Exp $	*/
+/*	$OpenBSD: dir.c,v 1.24 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
-#else
-static const char rcsid[] = "$OpenBSD: dir.c,v 1.23 2008/06/10 23:10:29 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

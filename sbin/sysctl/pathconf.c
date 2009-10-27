@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathconf.c,v 1.8 2004/01/11 21:54:27 deraadt Exp $	*/
+/*	$OpenBSD: pathconf.c,v 1.9 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: pathconf.c,v 1.2 1995/09/30 07:12:47 thorpej Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pathconf.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: pathconf.c,v 1.8 2004/01/11 21:54:27 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.10 2005/06/08 03:18:59 pvalchev Exp $	*/
+/*	$OpenBSD: error.c,v 1.11 2009/10/27 23:59:50 deraadt Exp $	*/
 /*	$NetBSD: error.c,v 1.4 1996/03/19 03:21:32 jtc Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)error.c	5.3 (Berkeley) 6/1/90";
-#else
-static char rcsid[] = "$OpenBSD: error.c,v 1.10 2005/06/08 03:18:59 pvalchev Exp $";
-#endif
-#endif /* not lint */
 
 /* routines for printing error messages  */
 

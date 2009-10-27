@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.5 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: subr.c,v 1.6 2009/10/27 23:59:39 deraadt Exp $	*/
 /*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
 
 /*-
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)subr.c	8.2 (Berkeley) 4/28/95";
-#endif
-static char *rcsid = "$OpenBSD: subr.c,v 1.5 2003/06/03 02:56:09 millert Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>

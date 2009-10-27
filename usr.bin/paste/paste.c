@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.16 2007/08/06 19:16:06 sobrado Exp $	*/
+/*	$OpenBSD: paste.c,v 1.17 2009/10/27 23:59:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -31,17 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.16 2007/08/06 19:16:06 sobrado Exp $";
-#endif /* not lint */
 
 #include <sys/queue.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.10 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: set.c,v 1.11 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -29,21 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: set.c,v 1.10 2003/06/11 21:09:50 deraadt Exp $";
-#endif
-#endif /* not lint */
-
-#include <sys/types.h>
-#include <stdlib.h>
-#ifndef SHORT_STRINGS
-#include <string.h>
-#endif /* SHORT_STRINGS */
-#include <stdarg.h>
 
 #include "csh.h"
 #include "extern.h"

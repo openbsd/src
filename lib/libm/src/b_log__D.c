@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_log__D.c,v 1.3 2008/07/16 15:25:51 martynas Exp $	*/
+/*	$OpenBSD: b_log__D.c,v 1.4 2009/10/27 23:59:29 deraadt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
-#endif /* not lint */
 
 #include "math.h"
 #include "math_private.h"

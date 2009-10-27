@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.5 2006/08/17 06:31:10 miod Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.6 2009/10/27 23:59:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -30,20 +30,6 @@
  *
  *	@(#)mkboot.c	8.1 (Berkeley) 7/15/93
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
-static char rcsid[] = "$NetBSD: mkboot.c,v 1.5 1994/10/26 07:27:45 cgd Exp $";
-#endif
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.5 2006/08/17 06:31:10 miod Exp $";
-#endif /* not lint */
 
 #include <unistd.h>
 #include <string.h>

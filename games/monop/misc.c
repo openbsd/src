@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2006/03/27 00:10:15 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/23 08:34:47 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
-#else
-static const char rcsid[] = "$OpenBSD: misc.c,v 1.9 2006/03/27 00:10:15 tedu Exp $";
-#endif
-#endif /* not lint */
 
 #include	"monop.ext"
 #include	<ctype.h>

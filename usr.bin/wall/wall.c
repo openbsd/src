@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.24 2009/08/03 20:30:03 bluhm Exp $	*/
+/*	$OpenBSD: wall.c,v 1.25 2009/10/27 23:59:49 deraadt Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1988, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
-#endif
-static const char rcsid[] = "$OpenBSD: wall.c,v 1.24 2009/08/03 20:30:03 bluhm Exp $";
-#endif /* not lint */
 
 /*
  * This program is not related to David Wall, whose Stanford Ph.D. thesis

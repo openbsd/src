@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.60 2009/09/05 14:04:38 tobias Exp $	*/
+/*	$OpenBSD: login.c,v 1.61 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -62,19 +62,6 @@
  *
  *	BSDI $From: login.c,v 2.28 1999/09/08 22:35:36 prb Exp $
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
-#endif
-static const char rcsid[] = "$OpenBSD: login.c,v 1.60 2009/09/05 14:04:38 tobias Exp $";
-#endif /* not lint */
 
 /*
  * login [ name ]

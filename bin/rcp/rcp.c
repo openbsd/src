@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.48 2009/03/01 13:47:02 sobrado Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.49 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
-#else
-static const char rcsid[] = "$OpenBSD: rcp.c,v 1.48 2009/03/01 13:47:02 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

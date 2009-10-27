@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.48 2009/05/12 23:25:08 thib Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.49 2009/10/27 23:59:33 deraadt Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
-#else
-static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>

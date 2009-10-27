@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.72 2009/06/07 08:39:13 ray Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.73 2009/10/27 23:59:37 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -63,10 +63,6 @@
  *
  *	@(#)diffreg.c   8.1 (Berkeley) 6/6/93
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.72 2009/06/07 08:39:13 ray Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.71 2009/08/14 14:41:55 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.72 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
-#endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.71 2009/08/14 14:41:55 deraadt Exp $";
-#endif /* not lint */
 
 /*
  * Cursed vmstat -- from Robert Elz.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: percent_x.c,v 1.2 2003/07/18 23:05:13 david Exp $	*/
+/*	$OpenBSD: percent_x.c,v 1.3 2009/10/27 23:59:30 deraadt Exp $	*/
 
  /*
   * percent_x() takes a string and performs %<char> expansions. It aborts the
@@ -11,14 +11,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) percent_x.c 1.4 94/12/28 17:42:37";
-#else
-static char rcsid[] = "$OpenBSD: percent_x.c,v 1.2 2003/07/18 23:05:13 david Exp $";
-#endif
-#endif
 
 /* System libraries. */
 

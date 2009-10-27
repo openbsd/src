@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.18 2009/01/09 19:55:27 stsp Exp $	*/
+/*	$OpenBSD: verify.c,v 1.19 2009/10/27 23:59:53 deraadt Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: verify.c,v 1.18 2009/01/09 19:55:27 stsp Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

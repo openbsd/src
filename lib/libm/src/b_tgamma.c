@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_tgamma.c,v 1.2 2008/06/12 22:15:36 martynas Exp $	*/
+/*	$OpenBSD: b_tgamma.c,v 1.3 2009/10/27 23:59:29 deraadt Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)gamma.c	8.1 (Berkeley) 6/4/93";
-#endif /* not lint */
 
 /*
  * This code by P. McIlroy, Oct 1992;

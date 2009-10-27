@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.45 2008/03/24 16:11:06 deraadt Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.46 2009/10/27 23:59:57 deraadt Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -61,16 +61,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
 
 /*
  * traceroute host  - trace the route ip packets follow going to "host".

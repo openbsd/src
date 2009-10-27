@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.22 2007/03/20 03:45:54 tedu Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.23 2009/10/27 23:59:33 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -30,10 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: mount_msdos.c,v 1.22 2007/03/20 03:45:54 tedu Exp $";
-#endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <sys/param.h>

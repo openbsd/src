@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.18 2008/01/01 16:22:44 tobias Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.19 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -33,14 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
-#else
-static const char rcsid[] = "$OpenBSD: cpio.c,v 1.18 2008/01/01 16:22:44 tobias Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: retest.c,v 1.5 2003/06/03 02:56:21 millert Exp $	*/
+/*	$OpenBSD: retest.c,v 1.6 2009/10/27 23:59:47 deraadt Exp $	*/
 /*	$NetBSD: retest.c,v 1.2 1994/11/17 08:28:18 jtc Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)retest.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: retest.c,v 1.5 2003/06/03 02:56:21 millert Exp $";
-#endif /* not lint */
 
 #include <ctype.h>
 

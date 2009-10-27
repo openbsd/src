@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.11 2005/02/25 16:07:10 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.12 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: time.c,v 1.11 2005/02/25 16:07:10 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <stdarg.h>

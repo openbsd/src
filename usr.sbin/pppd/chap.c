@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.12 2003/04/04 20:25:07 deraadt Exp $	*/
+/*	$OpenBSD: chap.c,v 1.13 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -50,14 +50,6 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-#if 0
-static char rcsid[] = "Id: chap.c,v 1.15 1997/11/27 06:07:48 paulus Exp $";
-#else
-static char rcsid[] = "$OpenBSD: chap.c,v 1.12 2003/04/04 20:25:07 deraadt Exp $";
-#endif
-#endif
 
 /*
  * TODO:

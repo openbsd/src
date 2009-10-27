@@ -1,4 +1,4 @@
-/*	$OpenBSD: nova.c,v 1.4 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: nova.c,v 1.5 2009/10/27 23:59:27 deraadt Exp $	*/
 /*	$NetBSD: nova.c,v 1.3 1995/04/22 10:59:14 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)nova.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: nova.c,v 1.4 2003/06/03 03:01:41 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdio.h>
 #include "trek.h"

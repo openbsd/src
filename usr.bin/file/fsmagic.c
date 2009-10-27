@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsmagic.c,v 1.13 2009/04/24 18:54:34 chl Exp $ */
+/*	$OpenBSD: fsmagic.c,v 1.14 2009/10/27 23:59:37 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -56,10 +56,6 @@
 # define minor(dev)  ((dev) & 0xff)
 #endif
 #undef HAVE_MAJOR
-
-#ifndef	lint
-FILE_RCSID("@(#)$Id: fsmagic.c,v 1.13 2009/04/24 18:54:34 chl Exp $")
-#endif	/* lint */
 
 private int
 bad_link(struct magic_set *ms, int err, char *buf)

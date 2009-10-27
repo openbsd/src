@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.27 2007/08/02 03:23:37 david Exp $	*/
+/*	$OpenBSD: more.c,v 1.28 2009/10/27 23:59:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -47,20 +47,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1980 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
-#else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.27 2007/08/02 03:23:37 david Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * more.c - General purpose tty output filter and file perusal program

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.34 2007/10/17 20:10:44 chl Exp $	*/
+/*	$OpenBSD: io.c,v 1.35 2009/10/27 23:59:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
-#else
-static const char rcsid[] = "$OpenBSD: io.c,v 1.34 2007/10/17 20:10:44 chl Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

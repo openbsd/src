@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.24 2007/09/08 18:42:36 cloder Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.25 2009/10/27 23:59:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static const char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.24 2007/09/08 18:42:36 cloder Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

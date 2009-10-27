@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.30 2007/06/03 20:16:08 millert Exp $	*/
+/*	$OpenBSD: optr.c,v 1.31 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
-#else
-static const char rcsid[] = "$OpenBSD: optr.c,v 1.30 2007/06/03 20:16:08 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/wait.h>

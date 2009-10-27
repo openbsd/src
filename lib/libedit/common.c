@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.6 2003/10/31 08:42:24 otto Exp $	*/
+/*	$OpenBSD: common.c,v 1.7 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: common.c,v 1.16 2003/08/07 16:44:30 agc Exp $	*/
 
 /*-
@@ -34,13 +34,6 @@
  */
 
 #include "config.h"
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.6 2003/10/31 08:42:24 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
 
 /*
  * common.c: Common Editor functions

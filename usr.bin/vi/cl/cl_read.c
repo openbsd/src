@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.17 2009/06/10 14:03:18 millert Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.18 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)cl_read.c	10.15 (Berkeley) 9/24/96";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax.c,v 1.7 2006/03/25 19:06:36 espie Exp $	*/
+/*	$OpenBSD: vax.c,v 1.8 2009/10/27 23:59:38 deraadt Exp $	*/
 /*	$NetBSD: vax.c,v 1.6 1996/04/20 14:56:37 ragge Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)vax.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: vax.c,v 1.7 2006/03/25 19:06:36 espie Exp $";
-#endif
-#endif /* not lint */
 
 #include	"gprof.h"
 

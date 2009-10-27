@@ -1,4 +1,4 @@
-/*	$OpenBSD: grammar.y,v 1.5 2007/09/04 22:39:31 hshoexer Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.6 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: grammar.y,v 1.3 1995/03/21 15:03:59 cgd Exp $	*/
 
 /*-
@@ -59,14 +59,6 @@
 
 %{
 #include "include.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: grammar.y,v 1.5 2007/09/04 22:39:31 hshoexer Exp $";
-#endif
-#endif /* not lint */
 
 int	errors = 0;
 int	line = 1;

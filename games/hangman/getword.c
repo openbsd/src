@@ -1,4 +1,4 @@
-/*	$OpenBSD: getword.c,v 1.6 2006/10/24 17:20:41 moritz Exp $	*/
+/*	$OpenBSD: getword.c,v 1.7 2009/10/27 23:59:25 deraadt Exp $	*/
 /*	$NetBSD: getword.c,v 1.4 1995/03/23 08:32:45 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)getword.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: getword.c,v 1.6 2006/10/24 17:20:41 moritz Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdlib.h>
 #include "hangman.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.16 2007/11/06 10:22:29 chl Exp $	*/
+/*	$OpenBSD: log.c,v 1.17 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -41,14 +41,6 @@
  *
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: log.c,v 1.16 2007/11/06 10:22:29 chl Exp $";
-#endif
-#endif /* not lint */
 
 #include "include.h"
 #include "pathnames.h"

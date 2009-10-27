@@ -117,8 +117,6 @@ static int _nc_nfcmp(const char *, char *);
  * SUCH DAMAGE.
  */
 
-/* static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94"; */
-
 #define	BFRAG		1024
 #define	BSIZE		1024
 #define	ESC		('[' & 037)	/* ASCII ESC */
@@ -677,8 +675,6 @@ _nc_nfcmp(const char *nf, char *rec)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93" */
 
 #define	PBUFSIZ		512	/* max length of filename path */
 #define	PVECSIZ		32	/* max number of names in path */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_df.c,v 1.12 2007/04/30 18:40:24 otto Exp $	*/
+/*	$OpenBSD: ffs_df.c,v 1.13 2009/10/27 23:59:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -33,12 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>

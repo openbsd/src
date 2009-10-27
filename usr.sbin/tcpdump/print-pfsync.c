@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.35 2009/03/31 01:21:29 dlg Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.36 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -25,11 +25,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-pfsync.c,v 1.35 2009/03/31 01:21:29 dlg Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

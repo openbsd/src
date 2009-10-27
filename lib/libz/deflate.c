@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.c,v 1.10 2005/07/20 15:56:41 millert Exp $	*/
+/*	$OpenBSD: deflate.c,v 1.11 2009/10/27 23:59:31 deraadt Exp $	*/
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2005 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -51,8 +51,6 @@
 
 #include "deflate.h"
 
-const char deflate_copyright[] =
-   " deflate 1.2.3 Copyright 1995-2005 Jean-loup Gailly ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot

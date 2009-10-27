@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.85 2009/09/10 13:03:35 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.86 2009/10/27 23:59:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -70,10 +70,6 @@
  *              keeping the specified number of backup files around.
  *
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.85 2009/09/10 13:03:35 millert Exp $";
-#endif /* not lint */
 
 #ifndef CONF
 #define CONF "/etc/newsyslog.conf" /* Configuration file */

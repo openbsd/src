@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.18 2008/07/16 14:49:09 martynas Exp $	*/
+/*	$OpenBSD: edit.c,v 1.19 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: edit.c,v 1.18 2008/07/16 14:49:09 martynas Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/wait.h>

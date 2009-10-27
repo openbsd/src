@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.13 2006/03/17 19:39:46 deraadt Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.14 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: hunt.c,v 1.13 2006/03/17 19:39:46 deraadt Exp $";
-#endif /* not lint */
 
 #include "tip.h"
 

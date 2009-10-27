@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.17 2007/02/16 13:34:58 jmc Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.18 2009/10/27 23:59:52 deraadt Exp $	*/
 /*	$$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
@@ -30,20 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: lprm.c,v 1.17 2007/02/16 13:34:58 jmc Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * lprm - remove the current user's spool entry

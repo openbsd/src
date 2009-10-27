@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.18 2009/04/06 12:06:39 henning Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.19 2009/10/27 23:59:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -22,10 +22,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  */
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.18 2009/04/06 12:06:39 henning Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>

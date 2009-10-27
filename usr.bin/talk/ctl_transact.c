@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctl_transact.c,v 1.10 2004/03/02 21:04:42 tedu Exp $	*/
+/*	$OpenBSD: ctl_transact.c,v 1.11 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: ctl_transact.c,v 1.3 1994/12/09 02:14:12 jtc Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)ctl_transact.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: ctl_transact.c,v 1.10 2004/03/02 21:04:42 tedu Exp $";
-#endif /* not lint */
 
 #include "talk.h"
 #include <sys/time.h>

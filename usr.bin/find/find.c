@@ -1,4 +1,4 @@
-/*	$OpenBSD: find.c,v 1.13 2007/05/10 09:00:18 jmc Exp $	*/
+/*	$OpenBSD: find.c,v 1.14 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -31,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: find.c,v 1.13 2007/05/10 09:00:18 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

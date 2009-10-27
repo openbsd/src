@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.14 2008/05/26 09:22:30 sobrado Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.15 2009/10/27 23:59:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint                                                              
-static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.14 2008/05/26 09:22:30 sobrado Exp $";
-#endif /* not lint */                                                        
 
 #include <paths.h>
 #include <stdio.h>

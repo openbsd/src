@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.20 2008/06/11 15:02:21 dtucker Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.21 2009/10/27 23:59:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -21,11 +21,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.20 2008/06/11 15:02:21 dtucker Exp $ (LBL)";
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>

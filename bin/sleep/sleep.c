@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.18 2009/02/13 20:39:58 deraadt Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.19 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.18 2009/02/13 20:39:58 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <ctype.h>
 #include <errno.h>

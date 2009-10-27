@@ -1,4 +1,4 @@
-/*	$OpenBSD: unexpand.c,v 1.9 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: unexpand.c,v 1.10 2009/10/27 23:59:46 deraadt Exp $	*/
 /*	$NetBSD: unexpand.c,v 1.5 1994/12/24 17:08:05 cgd Exp $	*/
 
 /*-
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: unexpand.c,v 1.9 2003/07/10 00:06:51 david Exp $";
-#endif /* not lint */
 
 /*
  * unexpand - put tabs into a file replacing blanks

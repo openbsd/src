@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udpencap.c,v 1.4 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-udpencap.c,v 1.5 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -23,11 +23,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-udpencap.c,v 1.4 2007/10/07 16:41:05 deraadt Exp $ (XXX)";
-#endif
 
 #include <sys/types.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.34 2006/10/18 21:58:55 cloder Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.35 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
-#else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.34 2006/10/18 21:58:55 cloder Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/resource.h>

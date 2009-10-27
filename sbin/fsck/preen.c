@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.16 2005/10/28 07:30:35 otto Exp $	*/
+/*	$OpenBSD: preen.c,v 1.17 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
-#else
-static const char rcsid[] = "$OpenBSD: preen.c,v 1.16 2005/10/28 07:30:35 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.20 2005/04/04 09:03:08 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.21 2009/10/27 23:59:54 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -34,10 +34,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.20 2005/04/04 09:03:08 deraadt Exp $";
-#endif
 
 #define INET
 

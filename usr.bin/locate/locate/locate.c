@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.23 2009/06/04 07:19:45 espie Exp $
+ *	$OpenBSD: locate.c,v 1.24 2009/10/27 23:59:39 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,23 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.23 2009/06/04 07:19:45 espie Exp $
+ *      $Id: locate.c,v 1.24 2009/10/27 23:59:39 deraadt Exp $
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1995-1996 Wolfram Schneider, Berlin.\n\
-@(#) Copyright (c) 1989, 1993\n\
-        The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)locate.c    8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.23 2009/06/04 07:19:45 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Ref: Usenix ;login:, Vol 8, No 1, February/March, 1983, p. 8.

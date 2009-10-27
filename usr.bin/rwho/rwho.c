@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.15 2003/06/03 02:56:15 millert Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.16 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";
-#else
-static const char rcsid[] = "$OpenBSD: rwho.c,v 1.15 2003/06/03 02:56:15 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

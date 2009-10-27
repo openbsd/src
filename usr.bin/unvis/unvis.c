@@ -1,4 +1,4 @@
-/*	$OpenBSD: unvis.c,v 1.8 2008/07/06 13:49:35 sobrado Exp $	*/
+/*	$OpenBSD: unvis.c,v 1.9 2009/10/27 23:59:46 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -28,19 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: unvis.c,v 1.8 2008/07/06 13:49:35 sobrado Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

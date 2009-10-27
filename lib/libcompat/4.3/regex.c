@@ -1,4 +1,4 @@
-/*	$OpenBSD: regex.c,v 1.6 2003/06/26 23:19:32 deraadt Exp $	*/
+/*	$OpenBSD: regex.c,v 1.7 2009/10/27 23:59:28 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 The Regents of the University of California.
@@ -38,11 +38,6 @@
  * rely on dark corners of re_comp/re_exec and won't work with this version,
  * but most programs should be fine.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
-static char rcsid[] = "$OpenBSD: regex.c,v 1.6 2003/06/26 23:19:32 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <stddef.h>

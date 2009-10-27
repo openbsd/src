@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam_prot.x,v 1.7 2005/12/21 01:40:23 millert Exp $	*/
+/*	$OpenBSD: bootparam_prot.x,v 1.8 2009/10/27 23:59:30 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -45,12 +45,6 @@
 %#include <sys/time.h>
 %#include <sys/ucred.h>
 %#include <errno.h>
-#else
-%#ifndef lint
-%/*static char sccsid[] = "from: @(#)bootparam_prot.x 1.2 87/06/24 Copyr 1987 Sun Micro";*/
-%/*static char sccsid[] = "from: @(#)bootparam_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$OpenBSD: bootparam_prot.x,v 1.7 2005/12/21 01:40:23 millert Exp $";
-%#endif /* not lint */
 #endif
 
 const MAX_MACHINE_NAME  = 255;

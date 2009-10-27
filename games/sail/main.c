@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2009/10/27 23:59:27 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/22 10:37:01 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 2003/06/03 03:01:41 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include "extern.h"
 #include <fcntl.h>

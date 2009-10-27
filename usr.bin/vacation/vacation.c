@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.31 2009/10/11 15:50:34 sobrado Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.32 2009/10/27 23:59:46 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
-#endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.31 2009/10/11 15:50:34 sobrado Exp $";
-#endif /* not lint */
 
 /*
 **  Vacation

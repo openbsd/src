@@ -1,4 +1,4 @@
-/*	$OpenBSD: chset.c,v 1.4 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: chset.c,v 1.5 2009/10/27 23:59:35 deraadt Exp $	*/
 /*	$NetBSD: chset.c,v 1.2 1995/04/09 06:00:26 cgd Exp $	*/
 
 /*
@@ -47,14 +47,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: chset.c,v 1.4 2003/06/03 02:56:06 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include "banner.h"
 

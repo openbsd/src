@@ -1,4 +1,4 @@
-/*	$OpenBSD: disp_asc.c,v 1.3 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: disp_asc.c,v 1.4 2009/10/27 23:59:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)disp_asc.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: disp_asc.c,v 1.3 2003/06/03 02:56:18 millert Exp $";
-#endif /* not lint */
 
 /*
  * There isn't much excuse for this file, but here it is.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loop.c,v 1.7 2006/04/17 16:23:01 deraadt Exp $ */
+/*	$OpenBSD: loop.c,v 1.8 2009/10/27 23:59:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -23,10 +23,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: loop.c,v 1.7 2006/04/17 16:23:01 deraadt Exp $";
-#endif
 
 #include "os.h"
 #include "common/common.h"

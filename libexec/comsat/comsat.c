@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.35 2006/08/17 23:52:06 ray Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.36 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.35 2006/08/17 23:52:06 ray Exp $";
-#endif /* not lint */
 
 #include <sys/limits.h>
 #include <sys/param.h>

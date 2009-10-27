@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.17 2006/10/18 21:18:59 deraadt Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.18 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
-#else
-static const char rcsid[] = "$OpenBSD: symtab.c,v 1.17 2006/10/18 21:18:59 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * These routines maintain the symbol table which tracks the state

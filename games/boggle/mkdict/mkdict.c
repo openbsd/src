@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdict.c,v 1.10 2006/04/11 09:17:55 deraadt Exp $	*/
+/*	$OpenBSD: mkdict.c,v 1.11 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $	*/
 
 /*-
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
-#else
-static char rcsid[] = "$OpenBSD: mkdict.c,v 1.10 2006/04/11 09:17:55 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Filter out words that:

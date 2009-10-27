@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2007/05/15 19:42:05 moritz Exp $	*/
+/*	$OpenBSD: log.c,v 1.10 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: log.c,v 1.4 1994/12/24 17:56:28 cgd Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: log.c,v 1.9 2007/05/15 19:42:05 moritz Exp $";
-#endif /* not lint */
 
 #include "tip.h"
 

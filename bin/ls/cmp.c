@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmp.c,v 1.5 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: cmp.c,v 1.6 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: cmp.c,v 1.10 1996/07/08 10:32:01 mycroft Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)cmp.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: cmp.c,v 1.5 2003/06/11 23:42:12 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

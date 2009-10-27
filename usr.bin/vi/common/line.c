@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.8 2007/05/14 12:32:29 pyr Exp $	*/
+/*	$OpenBSD: line.c,v 1.9 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)line.c	10.21 (Berkeley) 9/15/96";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>

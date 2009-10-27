@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.47 2009/06/07 03:09:34 millert Exp $ */
+/*	$OpenBSD: kvm.c,v 1.48 2009/10/27 23:59:28 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -33,14 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
-#else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.47 2009/06/07 03:09:34 millert Exp $";
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/user.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.11 2005/05/01 02:43:12 djm Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.12 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: canfield.c,v 1.11 2005/05/01 02:43:12 djm Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * The canfield program

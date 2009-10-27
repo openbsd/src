@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.c,v 1.17 2009/10/17 22:03:44 sobrado Exp $	*/
+/*	$OpenBSD: mille.c,v 1.18 2009/10/27 23:59:25 deraadt Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1982, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: mille.c,v 1.17 2009/10/17 22:03:44 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 # include	"mille.h"
 # include	<signal.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extract.c,v 1.7 2004/09/07 09:41:43 miod Exp $	*/
+/*	$OpenBSD: extract.c,v 1.8 2009/10/27 23:59:35 deraadt Exp $	*/
 /*	$NetBSD: extract.c,v 1.5 1995/03/26 03:27:53 glass Exp $	*/
 
 /*-
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)extract.c	8.3 (Berkeley) 4/2/94";
-#else 
-static char rcsid[] = "$OpenBSD: extract.c,v 1.7 2004/09/07 09:41:43 miod Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

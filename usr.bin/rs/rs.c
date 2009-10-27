@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.19 2009/10/14 20:51:47 sobrado Exp $	*/
+/*	$OpenBSD: rs.c,v 1.20 2009/10/27 23:59:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: rs.c,v 1.19 2009/10/14 20:51:47 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 /*
  *	rs - reshape a data array

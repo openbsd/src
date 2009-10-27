@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.9 2008/03/26 20:12:59 millert Exp $	*/
+/*	$OpenBSD: timer.c,v 1.10 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: timer.c,v 1.3 1995/04/24 12:22:45 cgd Exp $	*/
 
 /*-
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
-#else
-static char rcsid[] = "$OpenBSD: timer.c,v 1.9 2008/03/26 20:12:59 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

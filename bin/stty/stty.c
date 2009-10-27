@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.12 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: stty.c,v 1.13 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: stty.c,v 1.12 2008/05/17 23:31:52 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 

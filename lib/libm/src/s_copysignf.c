@@ -13,10 +13,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_copysignf.c,v 1.4 1995/05/10 20:46:59 jtc Exp $";
-#endif
-
 /*
  * copysignf(float x, float y)
  * copysignf(x,y) returns a value with the magnitude of x and

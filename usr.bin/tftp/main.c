@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2007/05/11 01:47:48 ray Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] =
-    "$OpenBSD: main.c,v 1.29 2007/05/11 01:47:48 ray Exp $";
-#endif /* not lint */
 
 /*
  * TFTP User Program -- Command Interface

@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.7 2007/07/07 08:22:55 millert Exp $	*/
+/*	$OpenBSD: debug.c,v 1.8 2009/10/27 23:59:33 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -40,11 +40,6 @@
  * $FreeBSD: src/sbin/growfs/debug.c,v 1.10 2006/10/31 22:02:24 pjd Exp $
  *
  */
-
-#ifndef lint
-static const char rcsid[] =
-  "$OpenBSD: debug.c,v 1.7 2007/07/07 08:22:55 millert Exp $";
-#endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
 #include <sys/param.h>

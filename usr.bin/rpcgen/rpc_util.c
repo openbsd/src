@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.c,v 1.13 2007/10/03 14:35:48 weingart Exp $	*/
+/*	$OpenBSD: rpc_util.c,v 1.14 2009/10/27 23:59:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
-#endif
 
 /*
  * rpc_util.c, Utility routines for the RPC protocol compiler

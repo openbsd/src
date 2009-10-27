@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.11 2007/05/21 18:13:11 millert Exp $	*/
+/*	$OpenBSD: clri.c,v 1.12 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: clri.c,v 1.19 2005/01/20 15:50:47 xtraeme Exp $	*/
 
 /*
@@ -32,18 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if 0
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)clri.c	8.2 (Berkeley) 9/23/93";
-#endif /* not lint */
-#endif
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftime.c,v 1.5 2003/06/03 21:09:00 deraadt Exp $	*/
+/*	$OpenBSD: ftime.c,v 1.6 2009/10/27 23:59:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -54,10 +54,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: ftime.c,v 1.5 2003/06/03 21:09:00 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>

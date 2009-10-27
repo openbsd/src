@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_exp.c,v 1.9 2009/04/11 20:03:21 martynas Exp $	*/
+/*	$OpenBSD: n_exp.c,v 1.10 2009/10/27 23:59:29 deraadt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
-#endif /* not lint */
 
 /* EXP(X)
  * RETURN THE EXPONENTIAL OF X

@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.13 2009/03/01 17:02:25 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.14 2009/10/27 23:59:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$OpenBSD: env.c,v 1.13 2009/03/01 17:02:25 millert Exp $";
-#endif /* not lint */
 
 #include <err.h>
 #include <errno.h>

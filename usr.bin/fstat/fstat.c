@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.69 2009/07/12 21:33:30 nicm Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.70 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -44,17 +44,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static const char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static const char rcsid[] = "$OpenBSD: fstat.c,v 1.69 2009/07/12 21:33:30 nicm Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

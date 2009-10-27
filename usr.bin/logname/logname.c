@@ -1,4 +1,4 @@
-/*	$OpenBSD: logname.c,v 1.6 2003/06/10 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: logname.c,v 1.7 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: logname.c,v 1.6 1994/12/22 06:39:32 jtc Exp $	*/
 
 /*-
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)logname.c	8.2 (Berkeley) 4/3/94";
-#endif
-static char rcsid[] = "$OpenBSD: logname.c,v 1.6 2003/06/10 22:20:47 deraadt Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

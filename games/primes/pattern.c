@@ -1,4 +1,4 @@
-/*	$OpenBSD: pattern.c,v 1.4 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: pattern.c,v 1.5 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: pattern.c,v 1.3 1995/03/23 08:35:47 cgd Exp $	*/
 
 /*
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pattern.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: pattern.c,v 1.4 2003/06/03 03:01:40 millert Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * pattern - the Eratosthenes sieve on odd numbers for 3,5,7,11 and 13

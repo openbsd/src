@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2009/01/28 22:17:30 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char *copyright =
-"@(#) Copyright (c) 1993 Andrew Moore, Talke Studio. \n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
-#else
-static char rcsid[] = "$OpenBSD: main.c,v 1.32 2009/01/28 22:17:30 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * CREDITS

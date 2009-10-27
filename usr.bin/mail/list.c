@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.17 2008/07/15 19:23:26 martynas Exp $	*/
+/*	$OpenBSD: list.c,v 1.18 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
-#else
-static const char rcsid[] = "$OpenBSD: list.c,v 1.17 2008/07/15 19:23:26 martynas Exp $";
-#endif
-#endif /* not lint */
 
 #include "rcv.h"
 #include <ctype.h>

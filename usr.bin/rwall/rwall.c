@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwall.c,v 1.11 2008/07/09 19:41:56 sobrado Exp $	*/
+/*	$OpenBSD: rwall.c,v 1.12 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -29,17 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$OpenBSD: rwall.c,v 1.11 2008/07/09 19:41:56 sobrado Exp $";
-#endif /* not lint */
 
 /*
  * This program is not related to David Wall, whose Stanford Ph.D. thesis

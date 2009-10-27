@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_procfs.c,v 1.15 2005/04/08 20:09:37 jaredy Exp $	*/
+/*	$OpenBSD: mount_procfs.c,v 1.16 2009/10/27 23:59:33 deraadt Exp $	*/
 /*	$NetBSD: mount_procfs.c,v 1.7 1996/04/13 01:31:59 jtc Exp $	*/
 
 /*
@@ -33,20 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";
-#else
-static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.15 2005/04/08 20:09:37 jaredy Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>

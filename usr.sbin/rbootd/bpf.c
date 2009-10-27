@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.16 2004/05/10 20:50:21 canacar Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.17 2009/10/27 23:59:54 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -42,11 +42,6 @@
  * From: Utah Hdr: bpf.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
-
-#ifndef lint
-/*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.16 2004/05/10 20:50:21 canacar Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

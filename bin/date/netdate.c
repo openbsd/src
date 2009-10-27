@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdate.c,v 1.17 2008/10/01 08:46:58 otto Exp $	*/
+/*	$OpenBSD: netdate.c,v 1.18 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: netdate.c,v 1.10 1995/09/07 06:21:06 jtc Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
-#else
-static char rcsid[] = "$OpenBSD: netdate.c,v 1.17 2008/10/01 08:46:58 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

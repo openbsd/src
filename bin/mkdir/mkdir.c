@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.23 2008/09/30 23:25:31 millert Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.24 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
-#else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.23 2008/09/30 23:25:31 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

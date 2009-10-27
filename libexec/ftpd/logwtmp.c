@@ -1,4 +1,4 @@
-/*	$OpenBSD: logwtmp.c,v 1.10 2008/06/30 12:03:51 ragge Exp $	*/
+/*	$OpenBSD: logwtmp.c,v 1.11 2009/10/27 23:59:31 deraadt Exp $	*/
 /*	$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $	*/
 
 /*
@@ -30,15 +30,6 @@
  * SUCH DAMAGE.
  *
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char rcsid[] =
-    "$OpenBSD: logwtmp.c,v 1.10 2008/06/30 12:03:51 ragge Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>

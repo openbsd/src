@@ -1,4 +1,4 @@
-/*	$OpenBSD: lptest.c,v 1.7 2003/06/02 23:36:53 millert Exp $ */
+/*	$OpenBSD: lptest.c,v 1.8 2009/10/27 23:59:52 deraadt Exp $ */
 /*	$NetBSD: lptest.c,v 1.6 1996/12/09 09:57:50 mrg Exp $	*/
 
 /*
@@ -30,20 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)lptest.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: lptest.c,v 1.7 2003/06/02 23:36:53 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <stdio.h>

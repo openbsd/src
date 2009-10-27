@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64.c,v 1.2 2006/03/25 19:06:36 espie Exp $	*/
+/*	$OpenBSD: mips64.c,v 1.3 2009/10/27 23:59:38 deraadt Exp $	*/
 /*	$NetBSD: mips.c,v 1.4 1995/04/19 07:16:11 cgd Exp $	*/
 
 /*
@@ -35,14 +35,6 @@
  *
  * From: sparc.c 5.1 (Berkeley) 7/7/92
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: mips64.c,v 1.2 2006/03/25 19:06:36 espie Exp $";
-#endif
-#endif /* not lint */
 
 #include	"gprof.h"
 

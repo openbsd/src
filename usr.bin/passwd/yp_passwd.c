@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.31 2008/11/06 05:35:56 djm Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.32 2009/10/27 23:59:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -28,10 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef lint
-/*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.31 2008/11/06 05:35:56 djm Exp $";
-#endif /* not lint */
 
 #ifdef	YP
 

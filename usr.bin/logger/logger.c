@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.10 2007/04/09 13:54:12 jmc Exp $	*/
+/*	$OpenBSD: logger.c,v 1.11 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: logger.c,v 1.10 2007/04/09 13:54:12 jmc Exp $";
-#endif /* not lint */
 
 #include <errno.h>
 #include <unistd.h>

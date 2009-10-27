@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_jn.c,v 1.6 2008/06/25 17:49:31 martynas Exp $	*/
+/*	$OpenBSD: n_jn.c,v 1.7 2009/10/27 23:59:29 deraadt Exp $	*/
 /*	$NetBSD: n_jn.c,v 1.1 1995/10/10 23:36:54 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -28,10 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)jn.c	8.2 (Berkeley) 11/30/93";
-#endif /* not lint */
 
 /*
  * 16 December 1992

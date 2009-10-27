@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.9 2003/09/26 17:00:27 deraadt Exp $ */
+/*	$OpenBSD: exec_ecoff.c,v 1.10 2009/10/27 23:59:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -23,10 +23,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.9 2003/09/26 17:00:27 deraadt Exp $";
-#endif
 
 #include <err.h>
 #include <errno.h>

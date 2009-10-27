@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2001/03/24 18:40:20 tholo Exp $
+#	$OpenBSD: Makefile,v 1.6 2009/10/27 23:59:58 deraadt Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
-CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
+CFLAGS+=	-I${.CURDIR}/..
 OBJS=		crt0.o gcrt0.o scrt0.o
 SRCS=		crt0.c
 

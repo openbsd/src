@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.16 2007/09/04 22:39:31 hshoexer Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.17 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: strfile.c,v 1.16 2007/09/04 22:39:31 hshoexer Exp $";
-#endif
-#endif /* not lint */
 
 #include	<sys/param.h>
 #include	<ctype.h>

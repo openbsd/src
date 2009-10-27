@@ -1,4 +1,4 @@
-/*	$OpenBSD: unifdef.c,v 1.13 2007/06/25 15:57:28 jmc Exp $	*/
+/*	$OpenBSD: unifdef.c,v 1.14 2009/10/27 23:59:46 deraadt Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Tony Finch <dot@dotat.at>
  * Copyright (c) 1985, 1993
@@ -31,17 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1985, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-
-#if 0
-static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: unifdef.c,v 1.13 2007/06/25 15:57:28 jmc Exp $";
-#endif
 
 /*
  * unifdef - remove ifdef'ed lines

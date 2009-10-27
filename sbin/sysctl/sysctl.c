@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.165 2009/10/04 16:08:37 michele Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.166 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
-#else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.165 2009/10/04 16:08:37 michele Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/gmon.h>

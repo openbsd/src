@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.67 2009/06/05 00:10:01 claudio Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.68 2009/10/27 23:59:57 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
-#else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.67 2009/06/05 00:10:01 claudio Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * traceroute host  - trace the route ip packets follow going to "host".

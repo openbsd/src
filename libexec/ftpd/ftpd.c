@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.186 2009/04/20 21:04:25 schwarze Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.187 2009/10/27 23:59:31 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -58,21 +58,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
-#else
-static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.186 2009/04/20 21:04:25 schwarze Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * FTP server.

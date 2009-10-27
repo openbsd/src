@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.18 2007/09/02 15:19:39 deraadt Exp $ */
+/*	$OpenBSD: pac.c,v 1.19 2009/10/27 23:59:52 deraadt Exp $ */
 /*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
@@ -30,20 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: pac.c,v 1.18 2007/09/02 15:19:39 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Do Printer accounting summary.

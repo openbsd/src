@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 2007/09/27 17:08:58 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 2009/10/27 23:59:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.20 2007/09/27 17:08:58 sobrado Exp $";
-#endif /* not lint */
 
 #include <stdarg.h>
 #include <libgen.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.23 2007/06/15 21:07:17 otto Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.24 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
-#else
-static const char rcsid[] = "$OpenBSD: traverse.c,v 1.23 2007/06/15 21:07:17 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

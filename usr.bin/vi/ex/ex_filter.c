@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_filter.c,v 1.9 2006/12/21 21:38:17 otto Exp $	*/
+/*	$OpenBSD: ex_filter.c,v 1.10 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)ex_filter.c	10.34 (Berkeley) 10/23/96";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

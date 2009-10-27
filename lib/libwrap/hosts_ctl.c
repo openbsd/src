@@ -1,4 +1,4 @@
-/*	$OpenBSD: hosts_ctl.c,v 1.1 1997/02/26 03:06:53 downsj Exp $	*/
+/*	$OpenBSD: hosts_ctl.c,v 1.2 2009/10/27 23:59:30 deraadt Exp $	*/
 
  /*
   * hosts_ctl() combines common applications of the host access control
@@ -12,14 +12,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) hosts_ctl.c 1.4 94/12/28 17:42:27";
-#else
-static char rcsid[] = "$OpenBSD: hosts_ctl.c,v 1.1 1997/02/26 03:06:53 downsj Exp $";
-#endif
-#endif
 
 #include <stdio.h>
 

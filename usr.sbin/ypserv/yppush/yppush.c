@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.26 2008/06/01 21:45:08 sobrado Exp $ */
+/*	$OpenBSD: yppush.c,v 1.27 2009/10/27 23:59:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: yppush.c,v 1.26 2008/06/01 21:45:08 sobrado Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

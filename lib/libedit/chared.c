@@ -1,4 +1,4 @@
-/*	$OpenBSD: chared.c,v 1.8 2003/11/25 20:12:38 otto Exp $	*/
+/*	$OpenBSD: chared.c,v 1.9 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: chared.c,v 1.21 2003/11/02 20:08:41 christos Exp $	*/
 
 /*-
@@ -34,13 +34,6 @@
  */
 
 #include "config.h"
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
-#else
-static const char rcsid[] = "$OpenBSD: chared.c,v 1.8 2003/11/25 20:12:38 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
 
 /*
  * chared.c: Character editor utilities

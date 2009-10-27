@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.21 2004/08/08 19:32:45 deraadt Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.22 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -28,17 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.21 2004/08/08 19:32:45 deraadt Exp $";
-#endif /* not lint */
 
 /*
  * The top level of the daemon, the format is heavily borrowed

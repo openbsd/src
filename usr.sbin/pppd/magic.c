@@ -1,4 +1,4 @@
-/*	$OpenBSD: magic.c,v 1.8 2002/07/01 19:31:37 deraadt Exp $	*/
+/*	$OpenBSD: magic.c,v 1.9 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*
  * magic.c - PPP Magic Number routines.
@@ -41,14 +41,6 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-#if 0
-static char rcsid[] = "Id: magic.c,v 1.7 1998/03/25 03:07:49 paulus Exp $";
-#else
-static char rcsid[] = "$OpenBSD: magic.c,v 1.8 2002/07/01 19:31:37 deraadt Exp $";
-#endif
-#endif
 
 #include <stdio.h>
 #include <unistd.h>

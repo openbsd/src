@@ -1,4 +1,4 @@
-/*	$OpenBSD: leave.c,v 1.11 2004/02/02 09:36:12 otto Exp $	*/
+/*	$OpenBSD: leave.c,v 1.12 2009/10/27 23:59:39 deraadt Exp $	*/
 /*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1980, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: leave.c,v 1.11 2004/02/02 09:36:12 otto Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

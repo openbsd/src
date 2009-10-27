@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_clntout.c,v 1.13 2007/10/03 14:35:48 weingart Exp $	*/
+/*	$OpenBSD: rpc_clntout.c,v 1.14 2009/10/27 23:59:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_clntout.c,v 1.4 1995/06/11 21:49:52 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
-#endif
 
 /*
  * rpc_clntout.c, Client-stub outputter for the RPC protocol compiler

@@ -1,4 +1,4 @@
-/*	$OpenBSD: prdata.c,v 1.5 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: prdata.c,v 1.6 2009/10/27 23:59:25 deraadt Exp $	*/
 /*	$NetBSD: prdata.c,v 1.3 1995/03/23 08:32:54 cgd Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)prdata.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: prdata.c,v 1.5 2004/11/29 08:52:28 jsg Exp $";
-#endif
-#endif /* not lint */
 
 #include	"hangman.h"
 

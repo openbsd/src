@@ -1,4 +1,4 @@
-/*	$OpenBSD: unstr.c,v 1.9 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: unstr.c,v 1.10 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: unstr.c,v 1.3 1995/03/23 08:29:00 cgd Exp $	*/
 
 /*-
@@ -32,16 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
-#endif /* not lint */
 
 /*
  *	This program un-does what "strfile" makes, thereby obtaining the

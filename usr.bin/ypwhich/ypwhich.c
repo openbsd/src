@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.19 2007/04/02 15:34:39 jmc Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.20 2009/10/27 23:59:50 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -26,10 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$Id: ypwhich.c,v 1.19 2007/04/02 15:34:39 jmc Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.83 2009/06/05 00:11:26 claudio Exp $	*/
+/*	$OpenBSD: ping.c,v 1.84 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
-#else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.83 2009/06/05 00:11:26 claudio Exp $";
-#endif
-#endif /* not lint */
 
 /*
  *			P I N G . C

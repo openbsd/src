@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.18 2008/02/12 07:57:29 otto Exp $	*/
+/*	$OpenBSD: buf.c,v 1.19 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
@@ -28,14 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
-#else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.18 2008/02/12 07:57:29 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/file.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc_compare.c,v 1.10 2005/04/11 07:04:47 deraadt Exp $	*/
+/*	$OpenBSD: proc_compare.c,v 1.11 2009/10/27 23:59:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -28,14 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
-#else
-static char *rcsid = "$OpenBSD: proc_compare.c,v 1.10 2005/04/11 07:04:47 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgrindefs.c,v 1.9 2005/04/13 02:05:18 deraadt Exp $	*/
+/*	$OpenBSD: vgrindefs.c,v 1.10 2009/10/27 23:59:47 deraadt Exp $	*/
 /*	$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.9 2005/04/13 02:05:18 deraadt Exp $";
-#endif /* not lint */
 
 #define	BUFSIZ	1024
 #define MAXHOP	32	/* max number of tc= indirections */

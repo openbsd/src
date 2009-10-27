@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.32 2008/12/29 18:06:10 otto Exp $	*/
+/*	$OpenBSD: inode.c,v 1.33 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
-#else
-static const char rcsid[] = "$OpenBSD: inode.c,v 1.32 2008/12/29 18:06:10 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

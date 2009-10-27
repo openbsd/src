@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.76 2009/05/31 19:31:23 thib Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.77 2009/10/27 23:59:53 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
-#else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.76 2009/05/31 19:31:23 thib Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.58 2008/08/02 04:13:37 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.59 2009/10/27 23:59:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.58 2008/08/02 04:13:37 deraadt Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.10 2006/03/27 00:10:14 tedu Exp $	*/
+/*	$OpenBSD: init.c,v 1.11 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1996/05/21 21:53:05 mrg Exp $	*/
 
 /*-
@@ -34,14 +34,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
-#else
-static char rcsid[] = "$OpenBSD: init.c,v 1.10 2006/03/27 00:10:14 tedu Exp $";
-#endif
-#endif /* not lint */
 
 /*	Re-coding of advent in C: data initialization	*/
 

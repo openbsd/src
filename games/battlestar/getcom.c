@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcom.c,v 1.13 2006/10/10 21:38:16 cloder Exp $	*/
+/*	$OpenBSD: getcom.c,v 1.14 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: getcom.c,v 1.13 2006/10/10 21:38:16 cloder Exp $";
-#endif
-#endif /* not lint */
 
 #include "extern.h"
 

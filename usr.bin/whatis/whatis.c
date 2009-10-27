@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.12 2007/03/20 03:56:13 tedu Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.13 2009/10/27 23:59:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -28,16 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 11/26/93";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

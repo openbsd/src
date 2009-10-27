@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.21 2008/07/16 15:14:33 martynas Exp $	*/
+/*	$OpenBSD: send.c,v 1.22 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: send.c,v 1.21 2008/07/16 15:14:33 martynas Exp $";
-#endif
-#endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"

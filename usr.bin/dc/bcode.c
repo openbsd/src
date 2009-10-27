@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.39 2009/09/06 13:33:33 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.40 2009/10/27 23:59:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.39 2009/09/06 13:33:33 otto Exp $";
-#endif /* not lint */
 
 #include <ssl/ssl.h>
 #include <err.h>

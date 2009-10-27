@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyflags.c,v 1.11 2005/04/20 13:05:51 jmc Exp $	*/
+/*	$OpenBSD: ttyflags.c,v 1.12 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -31,16 +31,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
-	All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.11 2005/04/20 13:05:51 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/cdefs.h>

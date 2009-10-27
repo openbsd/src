@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.31 2008/07/16 14:49:09 martynas Exp $	*/
+/*	$OpenBSD: fio.c,v 1.32 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
-#else
-static const char rcsid[] = "$OpenBSD: fio.c,v 1.31 2008/07/16 14:49:09 martynas Exp $";
-#endif
-#endif /* not lint */
 
 #include "rcv.h"
 #include <sys/file.h>

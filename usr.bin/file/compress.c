@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.13 2009/04/24 18:54:34 chl Exp $ */
+/*	$OpenBSD: compress.c,v 1.14 2009/10/27 23:59:37 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -55,10 +55,6 @@
 #include <zlib.h>
 #endif
 
-
-#ifndef lint
-FILE_RCSID("@(#)$Id: compress.c,v 1.13 2009/04/24 18:54:34 chl Exp $")
-#endif
 
 private const struct {
 	const char magic[8];

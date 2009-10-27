@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.5 2002/05/26 09:29:02 deraadt Exp $	*/
+/*	$OpenBSD: update.c,v 1.6 2009/10/27 23:59:30 deraadt Exp $	*/
 
  /*
   * Routines for controlled update/initialization of request structures.
@@ -14,14 +14,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) update.c 1.1 94/12/28 17:42:56";
-#else
-static char rcsid[] = "$OpenBSD: update.c,v 1.5 2002/05/26 09:29:02 deraadt Exp $";
-#endif
-#endif
 
 /* System libraries */
 

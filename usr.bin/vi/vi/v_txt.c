@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.21 2006/04/22 03:09:15 ray Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.22 2009/10/27 23:59:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)v_txt.c	10.87 (Berkeley) 10/13/96";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

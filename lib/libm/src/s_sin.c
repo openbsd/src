@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_sin.c,v 1.7 1995/05/10 20:48:15 jtc Exp $";
-#endif
-
 /* sin(x)
  * Return sine function of x.
  *

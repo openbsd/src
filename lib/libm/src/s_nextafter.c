@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_nextafter.c,v 1.8 1995/05/10 20:47:58 jtc Exp $";
-#endif
-
 /* IEEE functions
  *	nextafter(x,y)
  *	return the next machine floating-point number of x in the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.37 2008/12/30 13:14:41 jmc Exp $	*/
+/*	$OpenBSD: man.c,v 1.38 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
-#else
-static char rcsid[] = "$OpenBSD: man.c,v 1.37 2008/12/30 13:14:41 jmc Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

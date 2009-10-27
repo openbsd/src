@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.30 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.31 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-udp.c,v 1.30 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

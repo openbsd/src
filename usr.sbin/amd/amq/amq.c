@@ -32,25 +32,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.12 2007/02/18 08:34:38 jmc Exp $
+ *	$Id: amq.c,v 1.13 2009/10/27 23:59:50 deraadt Exp $
  */
 
 /*
  * Automounter query tool
  */
-
-#ifndef lint
-char copyright[] = "\
-@(#)Copyright (c) 1990 Jan-Simon Pendry\n\
-@(#)Copyright (c) 1990 Imperial College of Science, Technology & Medicine\n\
-@(#)Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.12 2007/02/18 08:34:38 jmc Exp $";
-static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
-#endif /* not lint */
 
 #include "am.h"
 #include "amq.h"

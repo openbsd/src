@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.36 2008/06/01 21:45:08 sobrado Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.37 2009/10/27 23:59:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.36 2008/06/01 21:45:08 sobrado Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>

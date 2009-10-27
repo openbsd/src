@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.8 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: gram.y,v 1.9 2009/10/27 23:59:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -32,24 +32,6 @@
  */
 
 #include "defs.h"
-
-#ifndef lint
-#if 0
-static char RCSid[] __attribute__((__unused__)) = 
-"$From: gram.y,v 1.3 1999/08/04 15:57:33 christos Exp $";
-#else
-static char RCSid[] __attribute__((__unused__)) = 
-"$OpenBSD: gram.y,v 1.8 2003/06/03 02:56:14 millert Exp $";
-#endif
-
-static	char *sccsid __attribute__((__unused__)) =
-"@(#)gram.y	5.2 (Berkeley) 85/06/21";
-
-static char copyright[] __attribute__((__unused__)) =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
 
 static struct namelist *addnl __P((struct namelist *, struct namelist *));
 static struct namelist *subnl __P((struct namelist *, struct namelist *));

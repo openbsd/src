@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386.c,v 1.9 2006/03/25 19:06:36 espie Exp $	*/
+/*	$OpenBSD: i386.c,v 1.10 2009/10/27 23:59:38 deraadt Exp $	*/
 /*	$NetBSD: i386.c,v 1.5 1995/04/19 07:16:04 cgd Exp $	*/
 
 /*-
@@ -25,10 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: i386.c,v 1.9 2006/03/25 19:06:36 espie Exp $";
-#endif /* not lint */
 
 #include "gprof.h"
 

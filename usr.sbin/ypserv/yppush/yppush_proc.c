@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush_proc.c,v 1.8 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: yppush_proc.c,v 1.9 2009/10/27 23:59:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: yppush_proc.c,v 1.8 2003/07/15 06:10:46 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <rpcsvc/yp.h>

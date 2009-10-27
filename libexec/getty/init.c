@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.7 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: init.c,v 1.6 2003/06/02 19:38:24 millert Exp $";
-#endif /* not lint */
 
 /*
  * Getty table initializations.

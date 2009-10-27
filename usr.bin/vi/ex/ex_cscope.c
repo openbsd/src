@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.15 2008/08/29 13:07:13 oga Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.16 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)ex_cscope.c	10.13 (Berkeley) 9/15/96";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>		/* XXX: param.h may not have included types.h */

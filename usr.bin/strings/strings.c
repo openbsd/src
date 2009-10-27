@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.14 2008/06/01 21:42:30 sobrado Exp $	*/
+/*	$OpenBSD: strings.c,v 1.15 2009/10/27 23:59:43 deraadt Exp $	*/
 /*	$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
-#endif
-static char rcsid[] = "$OpenBSD: strings.c,v 1.14 2008/06/01 21:42:30 sobrado Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 

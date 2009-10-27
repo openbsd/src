@@ -1,4 +1,4 @@
-/*	$OpenBSD: getguess.c,v 1.8 2008/04/01 21:05:50 miod Exp $	*/
+/*	$OpenBSD: getguess.c,v 1.9 2009/10/27 23:59:25 deraadt Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)getguess.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: getguess.c,v 1.8 2008/04/01 21:05:50 miod Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/ttydefaults.h>
 #include "hangman.h"

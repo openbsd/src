@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.15 2007/09/02 15:19:31 deraadt Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.16 2009/10/27 23:59:36 deraadt Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -36,20 +36,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.15 2007/09/02 15:19:31 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * BDES -- DES encryption package for Berkeley Software Distribution 4.4

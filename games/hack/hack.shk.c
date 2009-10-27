@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.shk.c,v 1.10 2003/07/06 02:07:45 avsm Exp $	*/
+/*	$OpenBSD: hack.shk.c,v 1.11 2009/10/27 23:59:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -60,10 +60,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.shk.c,v 1.10 2003/07/06 02:07:45 avsm Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

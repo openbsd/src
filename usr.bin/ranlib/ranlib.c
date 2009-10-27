@@ -1,4 +1,4 @@
-/*	$OpenBSD: ranlib.c,v 1.7 2007/08/06 19:16:06 sobrado Exp $	*/
+/*	$OpenBSD: ranlib.c,v 1.8 2009/10/27 23:59:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,17 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)ranlib.c	5.6 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: ranlib.c,v 1.7 2007/08/06 19:16:06 sobrado Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <dirent.h>

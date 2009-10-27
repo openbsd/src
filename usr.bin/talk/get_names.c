@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_names.c,v 1.17 2008/05/31 21:10:36 sobrado Exp $	*/
+/*	$OpenBSD: get_names.c,v 1.18 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: get_names.c,v 1.4 1994/12/09 02:14:16 jtc Exp $	*/
 
 /*
@@ -29,13 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] = "$OpenBSD: get_names.c,v 1.17 2008/05/31 21:10:36 sobrado Exp $";
-#endif /* not lint */
 
 #include "talk.h"
 #include <sys/param.h>

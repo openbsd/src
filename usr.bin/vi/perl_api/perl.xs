@@ -1,4 +1,4 @@
-/*	$OpenBSD: perl.xs,v 1.3 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: perl.xs,v 1.4 2009/10/27 23:59:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -14,10 +14,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)perl.xs	8.27 (Berkeley) 10/16/96";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

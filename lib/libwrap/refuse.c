@@ -1,4 +1,4 @@
-/*	$OpenBSD: refuse.c,v 1.1 1997/02/26 03:06:55 downsj Exp $	*/
+/*	$OpenBSD: refuse.c,v 1.2 2009/10/27 23:59:30 deraadt Exp $	*/
 
  /*
   * refuse() reports a refused connection, and takes the consequences: in
@@ -8,14 +8,6 @@
   * 
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#) refuse.c 1.5 94/12/28 17:42:39";
-#else
-static char rcsid[] = "$OpenBSD: refuse.c,v 1.1 1997/02/26 03:06:55 downsj Exp $";
-#endif
-#endif
 
 /* System libraries. */
 

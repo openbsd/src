@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.24 2004/08/08 12:55:28 millert Exp $       */
+/*    $OpenBSD: func.c,v 1.25 2009/10/27 23:59:21 deraadt Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: func.c,v 1.24 2004/08/08 12:55:28 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

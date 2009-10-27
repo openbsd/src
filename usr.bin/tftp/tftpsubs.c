@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpsubs.c,v 1.13 2007/09/10 14:29:53 tobias Exp $	*/
+/*	$OpenBSD: tftpsubs.c,v 1.14 2009/10/27 23:59:44 deraadt Exp $	*/
 /*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
-#endif
-static const char rcsid[] =
-    "$OpenBSD: tftpsubs.c,v 1.13 2007/09/10 14:29:53 tobias Exp $";
-#endif /* not lint */
 
 /*
  * Simple minded read-ahead/write-behind subroutines for tftp user and

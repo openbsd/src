@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.16 2008/02/10 16:56:13 kettenis Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.17 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.16 2008/02/10 16:56:13 kettenis Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

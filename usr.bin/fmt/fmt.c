@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.26 2007/03/20 03:50:39 tedu Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.27 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -167,13 +167,6 @@
  * Revision 1.1  1997/09/30 11:29:57  gjm11
  * Initial revision
  */
-
-#ifndef lint
-static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.26 2007/03/20 03:50:39 tedu Exp $";
-static const char copyright[] =
-  "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
-#endif /* not lint */
 
 #include <ctype.h>
 #include <err.h>

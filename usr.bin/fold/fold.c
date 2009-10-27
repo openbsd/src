@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.11 2007/04/07 23:20:18 tedu Exp $	*/
+/*	$OpenBSD: fold.c,v 1.12 2009/10/27 23:59:38 deraadt Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -32,19 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
-#endif
-static char rcsid[] = "$OpenBSD: fold.c,v 1.11 2007/04/07 23:20:18 tedu Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

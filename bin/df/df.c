@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.49 2008/03/16 20:04:35 otto Exp $	*/
+/*	$OpenBSD: df.c,v 1.50 2009/10/27 23:59:21 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -34,20 +34,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: df.c,v 1.49 2008/03/16 20:04:35 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

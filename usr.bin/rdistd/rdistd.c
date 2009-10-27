@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdistd.c,v 1.7 2007/02/26 15:44:57 jmc Exp $	*/
+/*	$OpenBSD: rdistd.c,v 1.8 2009/10/27 23:59:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -30,23 +30,6 @@
  */
 
 #include "defs.h"
-
-#ifndef lint
-#if 0
-static char RCSid[] __attribute__((__unused__)) =
-"$From: rdistd.c,v 1.2 1999/08/04 15:57:33 christos Exp $";
-#else
-static char RCSid[] __attribute__((__unused__)) =
-"$OpenBSD: rdistd.c,v 1.7 2007/02/26 15:44:57 jmc Exp $";
-#endif
-
-static char sccsid[] __attribute__((__unused__)) =
-"@(#)rdistd.c";
-
-static char copyright[] __attribute__((__unused__)) =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
 
 int main(int, char **, char **);
 static void usage(void);

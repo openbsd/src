@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.16 2006/03/27 00:10:14 tedu Exp $	*/
+/*	$OpenBSD: io.c,v 1.17 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -34,14 +34,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: io.c,v 1.16 2006/03/27 00:10:14 tedu Exp $";
-#endif
-#endif /* not lint */
 
 /*	Re-coding of advent in C: file i/o and user i/o			*/
 

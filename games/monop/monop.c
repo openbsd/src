@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.c,v 1.9 2007/09/11 15:21:05 gilles Exp $	*/
+/*	$OpenBSD: monop.c,v 1.10 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
-#else
-static const char rcsid[] = "$OpenBSD: monop.c,v 1.9 2007/09/11 15:21:05 gilles Exp $";
-#endif
-#endif /* not lint */
 
 #include	<err.h>
 #include	<stdlib.h>

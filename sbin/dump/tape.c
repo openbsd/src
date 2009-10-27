@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.30 2008/01/11 07:04:22 otto Exp $	*/
+/*	$OpenBSD: tape.c,v 1.31 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
-#else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.30 2008/01/11 07:04:22 otto Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>

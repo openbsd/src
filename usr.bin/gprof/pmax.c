@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmax.c,v 1.6 2006/03/25 19:06:36 espie Exp $	*/
+/*	$OpenBSD: pmax.c,v 1.7 2009/10/27 23:59:38 deraadt Exp $	*/
 /*	$NetBSD: pmax.c,v 1.3 1995/04/19 07:16:18 cgd Exp $	*/
 
 /*
@@ -35,14 +35,6 @@
  *
  * From: sparc.c 5.1 (Berkeley) 7/7/92
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: pmax.c,v 1.6 2006/03/25 19:06:36 espie Exp $";
-#endif
-#endif /* not lint */
 
 #include	"gprof.h"
 

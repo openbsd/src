@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.14 2007/11/17 16:09:29 millert Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.15 2009/10/27 23:59:57 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -28,16 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
-#endif /* not lint */
 
 #include <sys/time.h>
 #include <sys/stat.h>

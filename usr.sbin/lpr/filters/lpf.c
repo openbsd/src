@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpf.c,v 1.11 2004/04/14 20:52:20 millert Exp $	*/
+/*	$OpenBSD: lpf.c,v 1.12 2009/10/27 23:59:52 deraadt Exp $	*/
 /*	$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: lpf.c,v 1.11 2004/04/14 20:52:20 millert Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * 	filter which reads the output of nroff and converts lines

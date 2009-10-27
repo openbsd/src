@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.8 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.9 2009/10/27 23:59:23 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $	*/
 
 /*-
@@ -32,20 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.8 2004/07/09 15:59:26 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Setup: keep the structure of the original Adventure port, but use an

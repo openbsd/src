@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.20 2007/05/29 18:29:26 jmc Exp $	*/
+/* $OpenBSD: join.c,v 1.21 2009/10/27 23:59:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,17 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95"; */
-static const char rcsid[] = "$OpenBSD: join.c,v 1.20 2007/05/29 18:29:26 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 

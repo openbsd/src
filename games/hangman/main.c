@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2008/04/01 21:05:50 miod Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2009/10/27 23:59:25 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 2008/04/01 21:05:50 miod Exp $";
-#endif
-#endif /* not lint */
 
 # include	"hangman.h"
 #include <paths.h>

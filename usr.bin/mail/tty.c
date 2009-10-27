@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.18 2005/07/11 14:08:23 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.19 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
-#else
-static const char rcsid[] = "$OpenBSD: tty.c,v 1.18 2005/07/11 14:08:23 millert Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * Mail -- a mail program

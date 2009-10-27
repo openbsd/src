@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_relative.c,v 1.7 2008/03/08 12:34:09 otto Exp $	*/
+/*	$OpenBSD: vs_relative.c,v 1.8 2009/10/27 23:59:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -10,10 +10,6 @@
  */
 
 #include "config.h"
-
-#ifndef lint
-static const char sccsid[] = "@(#)vs_relative.c	10.11 (Berkeley) 5/13/96";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/queue.h>

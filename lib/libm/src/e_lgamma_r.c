@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_lgamma_r.c,v 1.7 1995/05/10 20:45:42 jtc Exp $";
-#endif
-
 /* lgamma_r(x, signgamp)
  * Reentrant version of the logarithm of the Gamma function 
  * with user provide pointer for the sign of Gamma(x). 

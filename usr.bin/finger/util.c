@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.22 2005/08/23 13:43:53 espie Exp $	*/
+/*	$OpenBSD: util.c,v 1.23 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -32,11 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static const char rcsid[] = "$OpenBSD: util.c,v 1.22 2005/08/23 13:43:53 espie Exp $";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/uio.h>

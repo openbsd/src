@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.11 2007/03/15 22:41:17 jmc Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.12 2009/10/27 23:59:37 deraadt Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -29,19 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
-#endif
-static char rcsid[] = "$OpenBSD: ctags.c,v 1.11 2007/03/15 22:41:17 jmc Exp $";
-#endif /* not lint */
 
 #include <err.h>
 #include <limits.h>

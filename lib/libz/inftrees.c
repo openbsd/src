@@ -1,4 +1,4 @@
-/*	$OpenBSD: inftrees.c,v 1.8 2005/07/20 15:56:41 millert Exp $	*/
+/*	$OpenBSD: inftrees.c,v 1.9 2009/10/27 23:59:31 deraadt Exp $	*/
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-2005 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -9,8 +9,6 @@
 
 #define MAXBITS 15
 
-const char inflate_copyright[] =
-   " inflate 1.2.3 Copyright 1995-2005 Mark Adler ";
 /*
   If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot

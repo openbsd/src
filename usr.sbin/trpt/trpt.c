@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.24 2008/06/26 05:42:21 ray Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.25 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,16 +58,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/queue.h>

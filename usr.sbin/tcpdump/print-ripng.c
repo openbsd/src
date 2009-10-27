@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ripng.c,v 1.1 2000/04/26 21:35:42 jakob Exp $	*/
+/*	$OpenBSD: print-ripng.c,v 1.2 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) /master/usr.sbin/tcpdump/tcpdump/print-rip.c,v 2.1 1995/02/03 18:15:05 polk Exp (LBL)";
-#endif
 
 #ifdef INET6
 

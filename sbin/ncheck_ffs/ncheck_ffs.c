@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.34 2009/06/02 22:37:05 ray Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.35 2009/10/27 23:59:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -53,10 +53,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.34 2009/06/02 22:37:05 ray Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

@@ -27,12 +27,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-/* from: static char sccsid[] = "@(#)getent.c	8.2 (Berkeley) 12/15/93"; */
-/* from: static char *rcsid = "$NetBSD: getent.c,v 1.5 1996/02/24 01:15:22 jtk Exp $"; */
-static char *rcsid = "$OpenBSD: getent.c,v 1.2 2003/06/03 02:56:18 millert Exp $";
-#endif /* not lint */
-
 #include <stdlib.h>
 #include "misc-proto.h"
 

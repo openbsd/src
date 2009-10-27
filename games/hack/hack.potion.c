@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.potion.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.potion.c,v 1.5 2009/10/27 23:59:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -60,10 +60,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.potion.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $";
-#endif /* not lint */
 
 #include "hack.h"
 extern char *nomovemsg;

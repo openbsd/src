@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nfs.c,v 1.15 2007/06/29 11:39:25 thib Exp $	*/
+/*	$OpenBSD: print-nfs.c,v 1.16 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) Header: print-nfs.c,v 1.64 97/06/30 13:51:16 leres Exp $ (LBL)";
-#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

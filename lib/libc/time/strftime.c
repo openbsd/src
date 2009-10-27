@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.19 2008/10/31 14:12:17 millert Exp $ */
+/*	$OpenBSD: strftime.c,v 1.20 2009/10/27 23:59:59 deraadt Exp $ */
 #include "private.h"
 
 /*
@@ -32,14 +32,6 @@
 ** OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 ** SUCH DAMAGE.
 */
-
-#if 0
-#ifndef LIBC_SCCS
-#ifndef lint
-static const char	sccsid[] = "@(#)strftime.c	5.4 (Berkeley) 3/14/89";
-#endif /* !defined lint */
-#endif /* !defined LIBC_SCCS */
-#endif
 
 #include "tzfile.h"
 #include "fcntl.h"

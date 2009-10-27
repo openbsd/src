@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.24 2007/10/03 15:12:13 weingart Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.25 2009/10/27 23:59:42 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#ifndef lint
-static const char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
-#endif
 
 /*
  * rpc_svcout.c, Server-skeleton outputter for the RPC protocol compiler

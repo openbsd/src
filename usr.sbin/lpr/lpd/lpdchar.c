@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpdchar.c,v 1.5 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: lpdchar.c,v 1.6 2009/10/27 23:59:52 deraadt Exp $	*/
 /*	$NetBSD: lpdchar.c,v 1.5 1997/07/17 05:44:32 mikel Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)lpdchar.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: lpdchar.c,v 1.5 2003/06/02 23:36:53 millert Exp $";
-#endif
-#endif /* not lint */
 
 /*
  *	Character set for line printer daemon

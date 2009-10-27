@@ -1,4 +1,4 @@
-/*	$OpenBSD: archive.c,v 1.10 2003/06/12 20:58:08 deraadt Exp $	*/
+/*	$OpenBSD: archive.c,v 1.11 2009/10/27 23:59:35 deraadt Exp $	*/
 /*	$NetBSD: archive.c,v 1.7 1995/03/26 03:27:46 glass Exp $	*/
 
 /*-
@@ -32,14 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)archive.c	8.3 (Berkeley) 4/2/94";
-#else
-static char rcsid[] = "$OpenBSD: archive.c,v 1.10 2003/06/12 20:58:08 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

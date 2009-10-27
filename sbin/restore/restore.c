@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.c,v 1.15 2007/05/13 19:07:32 millert Exp $	*/
+/*	$OpenBSD: restore.c,v 1.16 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
-#else
-static const char rcsid[] = "$OpenBSD: restore.c,v 1.15 2007/05/13 19:07:32 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>

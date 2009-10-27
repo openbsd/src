@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.23 2008/07/09 19:41:56 sobrado Exp $	*/
+/*	$OpenBSD: rup.c,v 1.24 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -27,10 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.23 2008/07/09 19:41:56 sobrado Exp $";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>

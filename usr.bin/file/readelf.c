@@ -1,4 +1,4 @@
-/*	$OpenBSD: readelf.c,v 1.10 2009/04/24 18:54:34 chl Exp $ */
+/*	$OpenBSD: readelf.c,v 1.11 2009/10/27 23:59:38 deraadt Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -37,10 +37,6 @@
 
 #include "readelf.h"
 #include "magic.h"
-
-#ifndef lint
-FILE_RCSID("@(#)$Id: readelf.c,v 1.10 2009/04/24 18:54:34 chl Exp $")
-#endif
 
 #ifdef	ELFCORE
 private int dophn_core(struct magic_set *, int, int, int, off_t, int, size_t,

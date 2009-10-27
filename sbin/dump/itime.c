@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.16 2007/09/10 14:29:53 tobias Exp $	*/
+/*	$OpenBSD: itime.c,v 1.17 2009/10/27 23:59:32 deraadt Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
-#else
-static const char rcsid[] = "$OpenBSD: itime.c,v 1.16 2007/09/10 14:29:53 tobias Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

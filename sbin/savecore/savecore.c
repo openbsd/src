@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.47 2009/06/20 00:15:14 millert Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.48 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1986, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
-#else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.47 2009/06/20 00:15:14 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

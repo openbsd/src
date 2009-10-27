@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.18 2009/07/27 18:11:07 halex Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.19 2009/10/27 23:59:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -26,11 +26,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-  "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.9 1999/08/28 00:13:52 peter Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

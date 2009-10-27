@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.5 2007/09/02 15:19:34 deraadt Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.6 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -63,20 +63,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)spell.c	8.1 (Berkeley) 6/6/93";
-#else
-#endif
-static const char rcsid[] = "$OpenBSD: spellprog.c,v 1.5 2007/09/02 15:19:34 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mman.h>

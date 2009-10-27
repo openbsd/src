@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.11 2007/06/19 05:47:41 ray Exp $	*/
+/*	$OpenBSD: vars.c,v 1.12 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: vars.c,v 1.4 1996/06/08 19:48:45 christos Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: vars.c,v 1.11 2007/06/19 05:47:41 ray Exp $";
-#endif
-#endif /* not lint */
 
 #include "rcv.h"
 #include "extern.h"

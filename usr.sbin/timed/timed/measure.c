@@ -1,4 +1,4 @@
-/*	$OpenBSD: measure.c,v 1.13 2003/11/19 20:14:58 millert Exp $	*/
+/*	$OpenBSD: measure.c,v 1.14 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -28,10 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)measure.c	5.1 (Berkeley) 5/11/93";
-#endif /* not lint */
 
 #include "globals.h"
 #include <netinet/in_systm.h>

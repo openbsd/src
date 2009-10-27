@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.31 2008/05/26 09:22:03 sobrado Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.32 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -30,20 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";
-#else
-static char rcsid[] = "$OpenBSD: mail.local.c,v 1.31 2008/05/26 09:22:03 sobrado Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

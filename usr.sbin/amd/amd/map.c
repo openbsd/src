@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.9 2007/11/27 16:22:14 martynas Exp $	*/
+/*	$OpenBSD: map.c,v 1.10 2009/10/27 23:59:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -33,11 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)map.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: map.c,v 1.9 2007/11/27 16:22:14 martynas Exp $";
-#endif /* not lint */
 
 #include "am.h"
 

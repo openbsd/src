@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.29 2007/05/11 01:53:07 tedu Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.30 2009/10/27 23:59:34 deraadt Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1986, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
-#else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.29 2007/05/11 01:53:07 tedu Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/reboot.h>

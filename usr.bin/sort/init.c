@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.11 2007/09/01 18:13:58 kili Exp $	*/
+/*	$OpenBSD: init.c,v 1.12 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: init.c,v 1.11 2007/09/01 18:13:58 kili Exp $";
-#endif
-#endif /* not lint */
 
 #include "sort.h"
 

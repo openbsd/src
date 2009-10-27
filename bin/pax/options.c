@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.70 2008/06/11 00:49:08 pvalchev Exp $	*/
+/*	$OpenBSD: options.c,v 1.71 2009/10/27 23:59:22 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -33,14 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
-#else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.70 2008/06/11 00:49:08 pvalchev Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>

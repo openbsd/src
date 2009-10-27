@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.11 2003/10/31 08:42:24 otto Exp $	*/
+/*	$OpenBSD: term.c,v 1.12 2009/10/27 23:59:28 deraadt Exp $	*/
 /*	$NetBSD: term.c,v 1.38 2003/09/14 21:48:55 christos Exp $	*/
 
 /*-
@@ -34,13 +34,6 @@
  */
 
 #include "config.h"
-#if !defined(lint) && !defined(SCCSID)
-#if 0
-static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
-#else
-static const char rcsid[] = "$OpenBSD: term.c,v 1.11 2003/10/31 08:42:24 otto Exp $";
-#endif
-#endif /* not lint && not SCCSID */
 
 /*
  * term.c: Editor/termcap-curses interface

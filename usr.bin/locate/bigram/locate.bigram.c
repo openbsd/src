@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.bigram.c,v 1.11 2007/03/18 20:13:49 otto Exp $
+ *	$OpenBSD: locate.bigram.c,v 1.12 2009/10/27 23:59:39 deraadt Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -32,22 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.bigram.c,v 1.11 2007/03/18 20:13:49 otto Exp $
+ * 	$Id: locate.bigram.c,v 1.12 2009/10/27 23:59:39 deraadt Exp $
  */
-
-#ifndef lint
-#if 0
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#else
-static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.11 2007/03/18 20:13:49 otto Exp $";
-#endif
-#endif /* not lint */
-
-#ifndef lint
-static char sccsid[] = "@(#)locate.bigram.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
 
 /*
  *  bigram < sorted_file_names | sort -nr |

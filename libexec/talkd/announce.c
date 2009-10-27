@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.20 2004/03/10 04:32:45 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.21 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.20 2004/03/10 04:32:45 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>

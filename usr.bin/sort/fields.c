@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.13 2008/02/22 01:24:58 millert Exp $	*/
+/*	$OpenBSD: fields.c,v 1.14 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.13 2008/02/22 01:24:58 millert Exp $";
-#endif
-#endif /* not lint */
 
 /* Subroutines to generate sort keys. */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.7 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: save.c,v 1.8 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: save.c,v 1.7 2003/06/03 03:01:40 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <time.h>
 #include "mille.h"

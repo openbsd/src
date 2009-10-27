@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.5 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.6 2009/10/27 23:59:52 deraadt Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.4 1995/11/15 22:27:34 pk Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
-#else
-static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.5 2003/06/02 23:36:53 millert Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/cdefs.h>
 

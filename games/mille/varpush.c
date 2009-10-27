@@ -1,4 +1,4 @@
-/*	$OpenBSD: varpush.c,v 1.6 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: varpush.c,v 1.7 2009/10/27 23:59:26 deraadt Exp $	*/
 /*	$NetBSD: varpush.c,v 1.4 1995/03/24 05:02:35 cgd Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)varpush.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: varpush.c,v 1.6 2003/06/03 03:01:40 millert Exp $";
-#endif
-#endif /* not lint */
 
 # include	<paths.h>
 # include	"mille.h"

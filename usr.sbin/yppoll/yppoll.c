@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppoll.c,v 1.11 2007/02/18 23:32:02 jmc Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.12 2009/10/27 23:59:57 deraadt Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
@@ -30,10 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$Id: yppoll.c,v 1.11 2007/02/18 23:32:02 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/types.h>

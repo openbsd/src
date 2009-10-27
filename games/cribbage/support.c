@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.c,v 1.10 2006/03/27 00:10:15 tedu Exp $	*/
+/*	$OpenBSD: support.c,v 1.11 2009/10/27 23:59:24 deraadt Exp $	*/
 /*	$NetBSD: support.c,v 1.3 1995/03/21 15:08:59 cgd Exp $	*/
 
 /*-
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: support.c,v 1.10 2006/03/27 00:10:15 tedu Exp $";
-#endif
-#endif /* not lint */
 
 #include <curses.h>
 #include <string.h>

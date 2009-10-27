@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.18 2008/06/25 15:09:32 deraadt Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.19 2009/10/27 23:59:38 deraadt Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -29,20 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: gprof.c,v 1.18 2008/06/25 15:09:32 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 #include "gprof.h"
 

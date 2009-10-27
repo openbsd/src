@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.159 2009/09/15 21:51:51 fgsch Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.160 2009/10/27 23:59:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -31,16 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.159 2009/09/15 21:51:51 fgsch Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

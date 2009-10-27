@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.12 2003/07/06 22:35:59 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.13 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -28,11 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: ls.c,v 1.12 2003/07/06 22:35:59 deraadt Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>

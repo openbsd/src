@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.yppasswdd.c,v 1.20 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: rpc.yppasswdd.c,v 1.21 2009/10/27 23:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.20 2008/05/17 23:31:52 sobrado Exp $";
-#endif
 
 #include <sys/types.h>
 #include <sys/wait.h>

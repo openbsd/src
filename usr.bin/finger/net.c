@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.11 2006/01/23 17:29:22 millert Exp $	*/
+/*	$OpenBSD: net.c,v 1.12 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -31,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static const char rcsid[] = "$OpenBSD: net.c,v 1.11 2006/01/23 17:29:22 millert Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.22 2005/09/22 14:24:51 jmc Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.23 2009/10/27 23:59:54 deraadt Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -42,17 +42,6 @@
  * From: Utah Hdr: rbootd.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.22 2005/09/22 14:24:51 jmc Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

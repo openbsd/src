@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmp.c,v 1.8 2008/03/19 19:25:49 kili Exp $	*/
+/*	$OpenBSD: tmp.c,v 1.9 2009/10/27 23:59:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)tmp.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: tmp.c,v 1.8 2008/03/19 19:25:49 kili Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 

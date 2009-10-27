@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.13 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.14 2009/10/27 23:59:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -20,11 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-sl.c,v 1.13 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
-#endif
 
 #ifdef HAVE_NET_SLIP_H
 #include <sys/param.h>

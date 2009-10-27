@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.c,v 1.7 2006/03/08 09:44:35 otto Exp $	*/
+/*	$OpenBSD: ring.c,v 1.8 2009/10/27 23:59:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -31,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)ring.c	8.1 (Berkeley) 5/31/93";
-#else
-static const char rcsid[] = "$OpenBSD: ring.c,v 1.7 2006/03/08 09:44:35 otto Exp $";
-#endif
-#endif /* not lint */
 
 /*
  * ring.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.18 2007/09/02 15:19:09 deraadt Exp $	*/
+/*	$OpenBSD: worms.c,v 1.19 2009/10/27 23:59:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -28,20 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
-#else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.18 2007/09/02 15:19:09 deraadt Exp $";
-#endif
-#endif /* not lint */
 
 /*
  *

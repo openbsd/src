@@ -29,10 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char *rcsid = "$Id: util.c,v 1.4 2005/05/16 03:12:59 deraadt Exp $";
-#endif
-
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>

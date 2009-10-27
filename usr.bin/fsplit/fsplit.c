@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.17 2008/11/01 22:39:04 sobrado Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.18 2009/10/27 23:59:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,17 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif				/* not lint */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: fsplit.c,v 1.17 2008/11/01 22:39:04 sobrado Exp $";
-#endif				/* not lint */
 
 #include <ctype.h>
 #include <stdio.h>

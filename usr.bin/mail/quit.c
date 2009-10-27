@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.19 2007/09/10 14:29:53 tobias Exp $	*/
+/*	$OpenBSD: quit.c,v 1.20 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
-#else
-static const char rcsid[] = "$OpenBSD: quit.c,v 1.19 2007/09/10 14:29:53 tobias Exp $";
-#endif
-#endif /* not lint */
 
 #include "rcv.h"
 #include <fcntl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comm.c,v 1.7 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: comm.c,v 1.8 2009/10/27 23:59:37 deraadt Exp $	*/
 /*	$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $	*/
 
 /*
@@ -32,19 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
-#endif
-static char rcsid[] = "$OpenBSD: comm.c,v 1.7 2003/06/10 22:20:45 deraadt Exp $";
-#endif /* not lint */
 
 #include <err.h>
 #include <limits.h>

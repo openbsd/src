@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppstats.c,v 1.9 2007/02/18 21:20:08 jmc Exp $	*/
+/*	$OpenBSD: pppstats.c,v 1.10 2009/10/27 23:59:53 deraadt Exp $	*/
 
 /*
  * print PPP statistics:
@@ -46,14 +46,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char rcsid[] = "Id: pppstats.c,v 1.22 1998/03/31 23:48:03 paulus Exp $";
-#else
-static char rcsid[] = "$OpenBSD: pppstats.c,v 1.9 2007/02/18 21:20:08 jmc Exp $";
-#endif
-#endif
 
 #include <stdio.h>
 #include <stddef.h>

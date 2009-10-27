@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.61 2009/02/14 11:18:56 sthen Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.62 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,14 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char copyright[] =
-    "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
-The Regents of the University of California.  All rights reserved.\n";
-static const char rcsid[] =
-    "@(#) $Id: tcpdump.c,v 1.61 2009/02/14 11:18:56 sthen Exp $ (LBL)";
-#endif
 
 /*
  * tcpdump - monitor tcp/ip traffic on an ethernet.

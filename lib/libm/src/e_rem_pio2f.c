@@ -13,10 +13,6 @@
  * ====================================================
  */
 
-#if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_rem_pio2f.c,v 1.5 1995/05/10 20:46:03 jtc Exp $";
-#endif
-
 /* __ieee754_rem_pio2f(x,y)
  * 
  * return the remainder of x rem pi/2 in y[0]+y[1] 

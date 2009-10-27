@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.21 2009/08/27 16:26:43 deraadt Exp $ */
+/*	$OpenBSD: file.h,v 1.22 2009/10/27 23:59:37 deraadt Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -28,7 +28,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$Id: file.h,v 1.21 2009/08/27 16:26:43 deraadt Exp $
+ * @(#)$Id: file.h,v 1.22 2009/10/27 23:59:37 deraadt Exp $
  */
 
 #ifndef __file_h__
@@ -381,13 +381,5 @@ int asprintf(char **ptr, const char *format_string, ...);
 #ifndef O_BINARY
 #define O_BINARY	0
 #endif
-
-#if defined(__GNUC__) && (__GNUC__ >= 3)
-static const char *rcsid(const char *) __attribute__((__used__));
-#endif
-#define FILE_RCSID(id) \
-static const char *rcsid(const char *p) { \
-	return rcsid(p = id); \
-}
 
 #endif /* __file_h__ */

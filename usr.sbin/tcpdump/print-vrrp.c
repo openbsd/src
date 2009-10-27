@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-vrrp.c,v 1.2 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-vrrp.c,v 1.3 2009/10/27 23:59:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 William C. Fenner.
@@ -27,11 +27,6 @@
  * from tcpdump.org:
  * Header: /tcpdump/master/tcpdump/print-vrrp.c,v 1.3 2000/10/10 05:05:08 guy Exp
  */
-
-#ifndef lint
-static const char rcsid[] =
-    "@(#) $Id: print-vrrp.c,v 1.2 2007/10/07 16:41:05 deraadt Exp $";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

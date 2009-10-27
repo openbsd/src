@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.12 2009/06/17 10:42:08 sobrado Exp $	*/
+/*	$OpenBSD: look.c,v 1.13 2009/10/27 23:59:40 deraadt Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -32,19 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)look.c	8.2 (Berkeley) 5/4/95";
-#endif
-static char rcsid[] = "$OpenBSD: look.c,v 1.12 2009/06/17 10:42:08 sobrado Exp $";
-#endif /* not lint */
 
 /*
  * look -- find lines in a sorted list.

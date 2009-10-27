@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2005/05/04 09:02:54 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2009/10/27 23:59:54 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -28,14 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef LINT
-static char copright[] =
-"@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
- All rights reserved.\n";
-
-static char rcsid[] = "$Id: main.c,v 1.10 2005/05/04 09:02:54 jmc Exp $";
-#endif
 
 /*
  * sa:	system accounting

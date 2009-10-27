@@ -1,4 +1,4 @@
-/* $OpenBSD: funcs.c,v 1.6 2009/04/24 18:54:34 chl Exp $ */
+/* $OpenBSD: funcs.c,v 1.7 2009/10/27 23:59:37 deraadt Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -37,10 +37,6 @@
 #if defined(HAVE_WCTYPE_H)
 #include <wctype.h>
 #endif
-
-#ifndef	lint
-FILE_RCSID("@(#)$Id: funcs.c,v 1.6 2009/04/24 18:54:34 chl Exp $")
-#endif	/* lint */
 
 /*
  * Like printf, only we append to a buffer.
