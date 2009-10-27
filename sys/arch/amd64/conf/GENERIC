@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.273 2009/08/25 16:15:07 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.274 2009/10/27 02:21:59 marco Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -342,6 +342,8 @@ arc*	at pci?				# Areca RAID Controller
 scsibus* at arc?
 mpi*	at pci?				# LSI Logic Message Passing Interface
 scsibus* at mpi?
+#mpii*	at pci?				# LSI Logic Message Passing Interface II
+#scsibus* at mpii?
 gdt*	at pci?				# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
 twe*	at pci?				# 3ware Escalade RAID controllers
