@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.158 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.159 2009/10/27 12:30:11 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2767,9 +2767,10 @@ int
 azalia_widget_label_widgets(codec_t *codec)
 {
 	widget_t *w;
+	convgroup_t *group;
 	int types[16];
 	int pins[16];
-	int colors_used, use_colors;
+	int colors_used, use_colors, schan;
 	int i, j;
 
 	bzero(&pins, sizeof(pins));
@@ -2817,63 +2818,56 @@ azalia_widget_label_widgets(codec_t *codec)
 		case COP_AWTYPE_AUDIO_OUTPUT:
 			if (codec->dacs.ngroups < 1)
 				break;
-			for (j = 0; j < codec->dacs.groups[0].nconv; j++) {
-				if (w->nid == codec->dacs.groups[0].conv[j]) {
-					if (j > 0)
-						snprintf(w->name,
-						    sizeof(w->name), "%s%d",
-						    wtypes[w->type], j + 1);
-					else
-						snprintf(w->name,
-						    sizeof(w->name), "%s",
-						    wtypes[w->type]);
-					break;
+			group = &codec->dacs.groups[0];
+			schan = 0;
+			for (j = 0; j < group->nconv; j++) {
+				if (w->nid == group->conv[j]) {
+					snprintf(w->name, sizeof(w->name),
+					    "%s-%d:%d", wtypes[w->type], schan,
+					    schan + WIDGET_CHANNELS(w) - 1);
 				}
+				schan += WIDGET_CHANNELS(w);
 			}
 			if (codec->dacs.ngroups < 2)
 				break;
-			for (j = 0; j < codec->dacs.groups[1].nconv; j++) {
-				if (w->nid == codec->dacs.groups[1].conv[j]) {
-					if (j > 0)
-						snprintf(w->name,
-						    sizeof(w->name), "dig-%s%d",
-						    wtypes[w->type], j + 1);
-					else
-						snprintf(w->name,
-						    sizeof(w->name), "dig-%s",
-						    wtypes[w->type]);
+			group = &codec->dacs.groups[1];
+			schan = 0;
+			for (j = 0; j < group->nconv; j++) {
+				if (w->nid == group->conv[j]) {
+					snprintf(w->name, sizeof(w->name),
+					    "dig-%s-%d:%d", wtypes[w->type],
+					    schan,
+					    schan + WIDGET_CHANNELS(w) - 1);
 				}
+				schan += WIDGET_CHANNELS(w);
 			}
 			break;
 		case COP_AWTYPE_AUDIO_INPUT:
+			w->mixer_class = AZ_CLASS_RECORD;
 			if (codec->adcs.ngroups < 1)
 				break;
-			w->mixer_class = AZ_CLASS_RECORD;
-			for (j = 0; j < codec->adcs.groups[0].nconv; j++) {
-				if (w->nid == codec->adcs.groups[0].conv[j]) {
-					if (j > 0)
-						snprintf(w->name,
-						    sizeof(w->name), "%s%d",
-						    wtypes[w->type], j + 1);
-					else
-						snprintf(w->name,
-						    sizeof(w->name), "%s",
-						    wtypes[w->type]);
+			group = &codec->adcs.groups[0];
+			schan = 0;
+			for (j = 0; j < group->nconv; j++) {
+				if (w->nid == group->conv[j]) {
+					snprintf(w->name, sizeof(w->name),
+					    "%s-%d:%d", wtypes[w->type], schan,
+					    schan + WIDGET_CHANNELS(w) - 1);
 				}
+				schan += WIDGET_CHANNELS(w);
 			}
 			if (codec->adcs.ngroups < 2)
 				break;
-			for (j = 0; j < codec->adcs.groups[1].nconv; j++) {
-				if (w->nid == codec->adcs.groups[1].conv[j]) {
-					if (j > 0)
-						snprintf(w->name,
-						    sizeof(w->name), "dig-%s%d",
-						    wtypes[w->type], j + 1);
-					else
-						snprintf(w->name,
-						    sizeof(w->name), "dig-%s",
-						    wtypes[w->type]);
+			group = &codec->adcs.groups[1];
+			schan = 0;
+			for (j = 0; j < group->nconv; j++) {
+				if (w->nid == group->conv[j]) {
+					snprintf(w->name, sizeof(w->name),
+					    "dig-%s-%d:%d", wtypes[w->type],
+					    schan,
+					    schan + WIDGET_CHANNELS(w) - 1);
 				}
+				schan += WIDGET_CHANNELS(w);
 			}
 			break;
 		default:

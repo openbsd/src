@@ -1,4 +1,4 @@
-.\"	$OpenBSD: azalia.4,v 1.22 2009/10/20 06:31:26 jakemsr Exp $
+.\"	$OpenBSD: azalia.4,v 1.23 2009/10/27 12:30:11 jakemsr Exp $
 .\"	$NetBSD: azalia.4,v 1.2 2005/06/22 04:19:09 kent Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 20 2009 $
+.Dd $Mdocdate: October 27 2009 $
 .Dt AZALIA 4
 .Os
 .Sh NAME
@@ -106,8 +106,7 @@ The widget type enumerator is used to distinguish different widgets
 of the same type.
 The enumeration starts at 2: the first widget of each type is not
 enumerated.
-Except for dac and adc widget types, the enumeration order is
-meaningless.
+The enumeration order is meaningless.
 The property is optional.
 Generally, if there is no property, the mixer item is an amplifier gain
 control.
@@ -117,22 +116,45 @@ The following are the widget type names used in mixer control names:
 .Bl -tag -width "SPDIF-in"
 .It Cm dac
 Digital to analog converter, usually used for playback.
-These widgets are enumerated according to the channels they convert.
-For example, if a codec has 3 stereo dacs, they would convert the
-following channels: dac channels 0 and 1, dac2 channels 2 and 3,
-dac3 channels 4 and 5.
+The audio stream channels these widgets will convert are encoded into
+their name in the form of <start channel>:<end channel>.
+For example,
+.Cm dac-0:1
+converts channels 0 and 1 (stereo).
+However, a dac that is connected to built-in speakers or front
+panel headphone jacks by default will convert audio stream channels
+starting at 0 if the dac would otherwise not be converting any channels.
+For example, if
+.Cm dac-2:3
+is the default dac for the built-in speakers in a laptop,
+.Cm dac-2:3
+will convert channels 0 and 1 when a stereo audio stream is being played.
+This is to allow simultaneous stereo playback on both the built-in speakers
+and a line or headphone jack.
 .Pp
 .It Cm dig-dac
 Digital output converter, usually an S/PDIF transmitter.
+The audio stream channels these widgets will convert are encoded into
+their name in the form of <start channel>:<end channel>.
+For example,
+.Cm dig-dac-0:1
+converts channels 0 and 1 (stereo).
 .Pp
 .It Cm adc
 Analog to digital converter, usually used for recording.
-These widgets are enumerated according to the channels they convert.
-For example, if a codec has 2 stereo adcs, they would convert the
-following channels: adc channels 0 and 1, adc2 channels 2 and 3.
+The audio stream channels these widgets will convert are encoded into
+their name in the form of <start channel>:<end channel>.
+For example,
+.Cm adc-0:1
+converts channels 0 and 1 (stereo).
 .Pp
 .It Cm dig-adc
 Digital input converter, usually an S/PDIF receiver.
+The audio stream channels these widgets will convert are encoded into
+their name in the form of <start channel>:<end channel>.
+For example,
+.Cm dig-adc-0:1
+converts channels 0 and 1 (stereo).
 .Pp
 .It Cm mix
 Sums multiple audio sources into a single stream, but
