@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.80 2009/07/19 08:16:06 blambert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.81 2009/10/28 16:56:46 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -875,6 +875,13 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 				ttyflush(tp, FREAD);
 		}
 		if (!ISSET(t->c_cflag, CIGNORE)) {
+			/*
+			 * Some minor validation is neccessary.
+			 */
+			if (t->c_ispeed < 0 || t->c_ospeed < 0) {
+				splx(s);
+				return (EINVAL);
+			}
 			/*
 			 * Set device hardware.
 			 */
