@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.12 2009/05/06 18:21:23 stevesk Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.13 2009/10/28 05:14:00 ckuethe Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -70,16 +70,16 @@ relay(int device, int pty)
 	char buf[128];
 
 	pfd[0].fd = device;
-	pfd[0].events = POLLRDNORM;
 	pfd[1].fd = pty;
-	pfd[1].events = POLLRDNORM;
 
 	while (!dying) {
+		pfd[0].events = POLLRDNORM;
+		pfd[1].events = POLLRDNORM;
 		nfds = poll(pfd, 2, INFTIM);
 		if (nfds == -1) {
 			syslog(LOG_ERR, "polling error");
 			exit(1);
-		} 
+		}
 		if (nfds == 0)	/* should not happen */
 			continue;
 
