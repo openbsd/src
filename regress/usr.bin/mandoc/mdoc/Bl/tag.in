@@ -1,0 +1,39 @@
+.Dd $Mdocdate: October 28 2009 $
+.Dt BL-TAG 1
+.Os
+.Sh NAME
+.Nm Bl-tag
+.Nd tagged lists
+.Sh DESCRIPTION
+.Bl -tag -width 5n
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 5n
+.It four
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 5n
+.It quint
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 5n
+.It indent
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 5n
+.It septime
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 5n
+.It achtacht
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 5n
+.It neun neun
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -tag -width 5n
+.It zehn_ zehn
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El

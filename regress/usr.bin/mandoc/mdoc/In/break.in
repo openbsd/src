@@ -1,0 +1,13 @@
+.Dd $Mdocdate: October 28 2009 $
+.Dt IN-BREAK 2
+.Os
+.Sh NAME
+.Nm In-break
+.Nd line break before header include file
+.Sh SYNOPSIS
+.In fcntl.h
+.Ft int
+.Fn open "const char *path" "int flags" "mode_t mode"
+.In unistd.h
+.Ft ssize_t
+.Fn write "int d" "const void *buf" "size_t nbytes"

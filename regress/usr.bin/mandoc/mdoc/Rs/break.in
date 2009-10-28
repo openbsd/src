@@ -1,0 +1,20 @@
+.Dd $Mdocdate: October 28 2009 $
+.Dt RS-BREAK 1
+.Os
+.Sh NAME
+.Nm Rs-break
+.Nd line break before reference start
+.Sh DESCRIPTION
+reference on the same line:
+.Rs
+.%A author
+.%J journal
+.%N 42
+.Re
+.Sh SEE ALSO
+reference after a blank line:
+.Rs
+.%A author
+.%J journal
+.%N 42
+.Re

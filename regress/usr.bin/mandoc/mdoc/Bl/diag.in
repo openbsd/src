@@ -1,0 +1,39 @@
+.Dd $Mdocdate: October 28 2009 $
+.Dt BL-DIAG 1
+.Os
+.Sh NAME
+.Nm Bl-diag
+.Nd section 4 diagnostic lists
+.Sh DESCRIPTION
+.Bl -diag
+.It tag
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -diag
+.It four
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -diag
+.It quint
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -diag
+.It indent
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -diag
+.It septime
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -diag
+.It achtacht
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -diag
+.It neun_neun
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
+.Bl -diag
+.It zehn__zehn
+x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x x
+.El
