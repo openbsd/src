@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.12 2009/10/12 09:29:58 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.13 2009/10/28 08:52:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -257,6 +257,7 @@ screen_redraw_draw_number(struct client *c, struct window_pane *wp)
 	if (wp->sx < len * 6 || wp->sy < 5) {
 		tty_cursor(tty, xoff + px - len / 2, yoff + py);
 		memcpy(&gc, &grid_default_cell, sizeof gc);
+		gc.data = '_'; /* not space */
 		colour_set_fg(&gc, colour);
 		tty_attributes(tty, &gc);
 		tty_puts(tty, buf);
@@ -267,6 +268,7 @@ screen_redraw_draw_number(struct client *c, struct window_pane *wp)
 	py -= 2;
 
 	memcpy(&gc, &grid_default_cell, sizeof gc);
+	gc.data = '_'; /* not space */
 	colour_set_bg(&gc, colour);
 	tty_attributes(tty, &gc);
 	for (ptr = buf; *ptr != '\0'; ptr++) {
