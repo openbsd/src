@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.99 2009/10/22 21:12:47 sobrado Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.100 2009/10/28 09:16:49 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: October 28 2009 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1061,6 +1061,12 @@ matches a rule which has the
 .Ic quick
 option set, this rule is considered the last matching rule, and evaluation
 of subsequent rules is skipped.
+.Pp
+.It Ic rib Ar name
+Apply rule only to the specified RIB.
+This only applies for recieved updates, so not for rules using the
+.Ar to Ar peer
+parameter.
 .Pp
 .It Ic set Ar attribute ...
 All matching rules can set the
