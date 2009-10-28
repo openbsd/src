@@ -1,4 +1,4 @@
-/*	$OpenBSD: break.c,v 1.8 2003/08/02 20:38:38 mickey Exp $	*/
+/*	$OpenBSD: break.c,v 1.9 2009/10/28 09:24:45 sobrado Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -84,7 +84,8 @@ bkpt_enable(struct pstate *ps, struct breakpoint *bkpt)
 		return (-1);
 	}
 	if (process_write(ps, pc, &bkpt_insn, BREAKPOINT_LEN) < 0) {
-		warn("Can't write breakpoint at 0x%lx, attempting backout.", pc);
+		warn("Can't write breakpoint at 0x%lx, attempting backout.",
+		    pc);
 		if (process_write(ps, pc, &bkpt->bkpt_old, BREAKPOINT_LEN) < 0)
 			warn("Backout failed, process unstable");
 		return (-1);
