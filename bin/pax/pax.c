@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.29 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: pax.c,v 1.30 2009/10/28 20:30:41 guenther Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -385,27 +385,27 @@ gen_init(void)
 	n_hand.sa_flags = 0;
 	n_hand.sa_handler = sig_cleanup;
 
-	if ((sigaction(SIGHUP, &n_hand, &o_hand) < 0) &&
+	if ((sigaction(SIGHUP, &n_hand, &o_hand) < 0) ||
 	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGHUP, &o_hand, &o_hand) < 0))
 		goto out;
 
-	if ((sigaction(SIGTERM, &n_hand, &o_hand) < 0) &&
+	if ((sigaction(SIGTERM, &n_hand, &o_hand) < 0) ||
 	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGTERM, &o_hand, &o_hand) < 0))
 		goto out;
 
-	if ((sigaction(SIGINT, &n_hand, &o_hand) < 0) &&
+	if ((sigaction(SIGINT, &n_hand, &o_hand) < 0) ||
 	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGINT, &o_hand, &o_hand) < 0))
 		goto out;
 
-	if ((sigaction(SIGQUIT, &n_hand, &o_hand) < 0) &&
+	if ((sigaction(SIGQUIT, &n_hand, &o_hand) < 0) ||
 	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGQUIT, &o_hand, &o_hand) < 0))
 		goto out;
 
-	if ((sigaction(SIGXCPU, &n_hand, &o_hand) < 0) &&
+	if ((sigaction(SIGXCPU, &n_hand, &o_hand) < 0) ||
 	    (o_hand.sa_handler == SIG_IGN) &&
 	    (sigaction(SIGXCPU, &o_hand, &o_hand) < 0))
 		goto out;
