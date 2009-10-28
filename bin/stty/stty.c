@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.13 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: stty.c,v 1.14 2009/10/28 20:58:38 deraadt Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -111,9 +112,12 @@ args:	argc -= optind;
 			continue;
 
 		if (isdigit(**argv)) {
+			const char *error;
 			int speed;
 
-			speed = atoi(*argv);
+			speed = strtonum(*argv, 0, INT_MAX, &error);
+			if (error)
+				err(1, "%s", *argv);
 			cfsetospeed(&i.t, speed);
 			cfsetispeed(&i.t, speed);
 			i.set = 1;
