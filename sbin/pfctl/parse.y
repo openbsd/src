@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.571 2009/10/28 12:41:16 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.572 2009/10/28 12:53:11 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3699,6 +3699,7 @@ route_host	: STRING			{
 			if ($$ == NULL)
 				err(1, "route_host: calloc");
 			$$->ifname = $1;
+			$$->addr.type = PF_ADDR_DYNIFTL;
 			set_ipmask($$, 128);
 			$$->next = NULL;
 			$$->tail = $$;
