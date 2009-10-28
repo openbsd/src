@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.3 2009/07/13 19:04:26 michele Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.4 2009/10/28 09:15:58 sobrado Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -119,7 +119,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-cdnv] [-D macro=value] [-f file]\n",
+	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] [-f file]\n",
 	    __progname);
 	exit(1);
 }
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 
 	log_init(1);	/* log to stderr until daemonized */
 
-	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "dD:f:nv")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
