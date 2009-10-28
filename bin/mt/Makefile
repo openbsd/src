@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 2005/11/25 20:37:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2009/10/28 05:17:19 deraadt Exp $
 
+COPTS+=	-DRMT
 PROG=	mt
 SRCS=	mt.c mtrmt.c
 DPADD=	${LIBUTIL}

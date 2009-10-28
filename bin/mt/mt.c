@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.30 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.31 2009/10/28 05:17:19 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -85,6 +85,49 @@ void usage(void);
 
 char	*host = NULL;	/* remote host (if any) */
 
+int
+_rmtopendev(char *path, int oflags, int dflags, char **realpath)
+{
+#ifdef RMT
+	if (host)
+		return rmtopen(path, oflags);
+#endif
+	return opendev(path, oflags, dflags, realpath);
+}
+
+int
+_rmtioctl(int fd, long req, struct mtop *com)
+{
+#ifdef RMT
+	if (host)
+		return rmtioctl(com->mt_op, com->mt_count);
+#endif
+	return ioctl(fd, MTIOCTOP, &com);
+}
+
+struct mtget *
+_rmtstatus(int fd)
+{
+	static struct mtget mt_status;
+
+#ifdef RMT
+	if (host)
+		return rmtstatus();
+#endif
+	if (ioctl(fd, MTIOCGET, &mt_status) < 0)
+		err(2, "ioctl MTIOCGET");
+	return &mt_status;
+}
+
+void
+_rmtclose(void)
+{
+#ifdef RMT
+	if (host)
+		rmtclose();
+#endif
+}
+
 char	*progname;
 int	eject = 0;
 
@@ -92,7 +135,6 @@ int
 main(int argc, char *argv[])
 {
 	struct commands *comp;
-	struct mtget mt_status;
 	struct mtop mt_com;
 	int ch, len, mtfd, flags, insert = 0;
 	char *p, *tape, *realtape, *opts;
@@ -141,11 +183,15 @@ main(int argc, char *argv[])
 		usage();
 
 	if (strchr(tape, ':')) {
+#ifdef RMT
 		host = tape;
 		tape = strchr(host, ':');
 		*tape++ = '\0';
 		if (rmthost(host) == 0)
 			exit(X_ABORT);
+#else
+		err(1, "no remote support");
+#endif
 	}
 
 	if (eject) {
@@ -164,8 +210,7 @@ main(int argc, char *argv[])
 	}
 
 	flags = comp->c_ronly ? O_RDONLY : O_WRONLY | O_CREAT;
-	if ((mtfd = host ? rmtopen(tape, flags) : opendev(tape, flags,
-	    OPENDEV_PART, &realtape)) < 0) {
+	if ((mtfd = _rmtopendev(tape, flags, OPENDEV_PART, &realtape)) < 0) {
 		if (errno != 0)
 			warn("%s", host ? tape : realtape);
 		exit(2);
@@ -179,25 +224,17 @@ main(int argc, char *argv[])
 		}
 		else
 			mt_com.mt_count = 1;
-		if ((host ? rmtioctl(mt_com.mt_op, mt_com.mt_count) :
-		    ioctl(mtfd, MTIOCTOP, &mt_com)) < 0) {
+		if (_rmtioctl(mtfd, MTIOCTOP, &mt_com) < 0) {
 			if (eject)
 				err(2, "%s", tape);
 			else
 				err(2, "%s: %s", tape, comp->c_name);
 		}
 	} else {
-		if (host)
-			status(rmtstatus());
-		else {
-			if (ioctl(mtfd, MTIOCGET, &mt_status) < 0)
-				err(2, "ioctl MTIOCGET");
-			status(&mt_status);
-		}
+		status(_rmtstatus(mtfd));
 	}
 
-	if (host)
-		rmtclose();
+	_rmtclose();
 
 	exit(X_FINOK);
 	/* NOTREACHED */
