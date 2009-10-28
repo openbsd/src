@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.271 2009/10/26 09:27:58 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.272 2009/10/28 15:54:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -360,7 +360,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		close(mctx->mrt.wbuf.fd);
 		LIST_REMOVE(&mctx->ribctx, entry);
 		LIST_REMOVE(mctx, entry);
-		free(mrt);
+		free(mctx);
 	}
 
 	msgbuf_clear(&ibuf_se->w);
