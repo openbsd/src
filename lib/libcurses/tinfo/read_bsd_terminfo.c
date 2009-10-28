@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.16 2009/10/18 13:51:44 nicm Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.17 2009/10/28 23:22:45 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.16 2009/10/18 13:51:44 nicm Exp $";
-#endif
 
 #include <curses.priv.h>
 #include <tic.h>

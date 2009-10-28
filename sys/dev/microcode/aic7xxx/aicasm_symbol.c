@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm_symbol.c,v 1.9 2003/12/24 23:27:55 krw Exp $ */
+/* $OpenBSD: aicasm_symbol.c,v 1.10 2009/10/28 23:22:45 schwarze Exp $ */
 /*	$NetBSD: aicasm_symbol.c,v 1.4 2003/07/14 15:42:40 lukem Exp $	*/
 
 /*
@@ -44,8 +44,6 @@
  */
 
 #include <sys/cdefs.h>
-/* __RCSID("$NetBSD: aicasm_symbol.c,v 1.4 2003/07/14 15:42:40 lukem Exp $"); */
-
 #include <sys/types.h>
 
 #ifdef __linux__

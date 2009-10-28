@@ -1,9 +1,5 @@
-/*	$OpenBSD: pubeval.c,v 1.1 2002/07/30 18:11:52 pjanzen Exp $	*/
+/*	$OpenBSD: pubeval.c,v 1.2 2009/10/28 23:22:45 schwarze Exp $	*/
 /* Public domain, Gerry Tesauro. */
-
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: pubeval.c,v 1.1 2002/07/30 18:11:52 pjanzen Exp $";
-#endif
 
 /* Backgammon move-selection evaluation function for benchmark comparisons.
  * Computes a linear evaluation function:  Score = W * X, where X is an

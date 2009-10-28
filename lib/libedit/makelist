@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: makelist,v 1.7 2007/01/08 19:39:25 deraadt Exp $
+#	$OpenBSD: makelist,v 1.8 2009/10/28 23:22:45 schwarze Exp $
 #	$NetBSD: makelist,v 1.8 2003/03/10 21:21:10 christos Exp $
 #
 # Copyright (c) 1992, 1993
@@ -198,7 +198,6 @@ case $FLAG in
 	BEGIN {
 	    printf("/* Automatically generated file, do not edit */\n");
 	    printf("#define protected static\n");
-	    printf("#define SCCSID\n");
 	}
 	{
 	    printf("#include \"%s\"\n", $1);
