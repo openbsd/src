@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.14 2009/10/28 05:06:17 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.15 2009/10/28 15:40:47 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -206,7 +206,7 @@ write_stream(FILE *fp, int n, int m)
 }
 
 #ifdef DES
-#define DESPUTCHAR(c, fp) (des ? put_des_char(c, (fp)) : fputc((c), (fp)))
+#define DESPUTCHAR(c, fp) (des ? put_des_char((c), (fp)) : fputc((c), (fp)))
 #else
 #define DESPUTCHAR(c, fp) (fputc((c), (fp)))
 #endif
