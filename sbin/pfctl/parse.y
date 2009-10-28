@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.570 2009/10/04 16:08:37 michele Exp $	*/
+/*	$OpenBSD: parse.y,v 1.571 2009/10/28 12:41:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4521,12 +4521,12 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 	TAILQ_INIT(&rpool->list);
 	for (h = rs->rdr->host; h != NULL; h = h->next) {
 		if ((pa = calloc(1, sizeof(struct pf_pooladdr))) == NULL)
-			err(1, "expand_rule: calloc");
+			err(1, "apply_redirspec: calloc");
 		pa->addr = h->addr;
 		if (h->ifname != NULL) {
 			if (strlcpy(pa->ifname, h->ifname, sizeof pa->ifname) >=
 			    sizeof(pa->ifname))
-				errx(1, "expand_rule: strlcpy");
+				errx(1, "apply_redirspec: strlcpy");
 		} else
 			pa->ifname[0] = 0;
 		TAILQ_INSERT_TAIL(&rpool->list, pa, entries);
