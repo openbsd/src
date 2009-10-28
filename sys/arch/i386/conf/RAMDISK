@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.167 2009/01/13 13:53:50 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.168 2009/10/28 04:12:29 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -59,7 +59,7 @@ isa0	at amdpcib?
 isa0	at ichpcib?
 isa0	at gscpcib?
 isa0	at glxpcib?
-eisa0	at mainbus0
+#eisa0	at mainbus0
 pci*	at mainbus0
 
 option		PCIVERBOSE
@@ -134,10 +134,10 @@ aha0	at isa? port 0x330	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334	# Adaptec 154[02] SCSI controllers
 #aha*	at isapnp?
 scsibus* at aha?
-ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
-scsibus* at ahb?
+#ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
+#scsibus* at ahb?
 #ahc0	at isa?			# Adaptec 284x SCSI controllers
-ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
+#ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 #ahd*	at pci?			# Adaptec 79?? SCSI controllers
@@ -212,8 +212,8 @@ ep*	at isa?				# 3C509 ethernet cards
 #ie1	at isa? port 0x300 irq 10	# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6	# IsoLan, NE2100, and DEPCA
 #ex0	at isa? port 0x320 irq 5	# Intel EtherExpress PRO/10
-ep0	at eisa?
-ep*	at eisa?			# 3C579 ethernet cards
+#ep0	at eisa?
+#ep*	at eisa?			# 3C579 ethernet cards
 #fea*	at eisa?			# DEC DEFEA FDDI cards
 ep*	at isapnp?			# 3C509 PnP ethernet cards
 le*	at isapnp?
