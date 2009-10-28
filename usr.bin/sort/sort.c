@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.37 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: sort.c,v 1.38 2009/10/28 20:41:39 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -259,7 +259,7 @@ main(int argc, char *argv[])
 		outfile = outpath = toutpath;
 	} else if (!(ch = access(outpath, 0)) &&
 	    strncmp(_PATH_DEV, outpath, 5)) {
-		struct sigaction act;
+		struct sigaction oact, act;
 		int sigtable[] = {SIGHUP, SIGINT, SIGPIPE, SIGXCPU, SIGXFSZ,
 		    SIGVTALRM, SIGPROF, 0};
 		int outfd;
@@ -284,7 +284,10 @@ main(int argc, char *argv[])
 		act.sa_flags = SA_RESTART;
 		act.sa_handler = onsig;
 		for (i = 0; sigtable[i]; ++i)	/* always unlink toutpath */
-			sigaction(sigtable[i], &act, 0);
+			if (sigaction(sigtable[i], NULL, &oact) < 0 ||
+			    oact.sa_handler != SIG_IGN &&
+			    sigaction(sigtable[i], &act, NULL) < 0)
+				err(2, "sigaction");
 	} else
 		outfile = outpath;
 	if (outfp == NULL && (outfp = fopen(outfile, "w")) == NULL)
