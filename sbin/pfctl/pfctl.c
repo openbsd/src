@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.288 2009/09/29 12:54:14 jmc Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.289 2009/10/28 20:11:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -847,6 +847,9 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		if (pfctl_get_pool(dev, &pr.rule.nat,
 		    nr, pr.ticket, PF_PASS, path, PF_NAT) != 0)
 			goto error;
+		if (pfctl_get_pool(dev, &pr.rule.route,
+		    nr, pr.ticket, PF_PASS, path, PF_RT) != 0)
+			goto error;
 
 		switch (format) {
 		case PFCTL_SHOW_LABELS:
@@ -902,6 +905,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		}
 		pfctl_clear_pool(&pr.rule.rdr);
 		pfctl_clear_pool(&pr.rule.nat);
+		pfctl_clear_pool(&pr.rule.route);
 	}
 	path[len] = '\0';
 	return (0);
@@ -1127,6 +1131,8 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 	pfctl_move_pool(&r->rdr, &rule->rdr);
 	TAILQ_INIT(&rule->nat.list);
 	pfctl_move_pool(&r->nat, &rule->nat);
+	TAILQ_INIT(&rule->route.list);
+	pfctl_move_pool(&r->route, &rule->route);
 
 	TAILQ_INSERT_TAIL(rs->rules[rs_num].active.ptr, rule, entries);
 	return (0);
@@ -1250,6 +1256,8 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 		if (pfctl_add_pool(pf, &r->rdr, r->af, PF_RDR))
 			return (1);
 		if (pfctl_add_pool(pf, &r->nat, r->af, PF_NAT))
+			return (1);
+		if (pfctl_add_pool(pf, &r->route, r->af, PF_RT))
 			return (1);
 		pr.pool_ticket = pf->paddr.ticket;
 		memcpy(&pr.rule, r, sizeof(pr.rule));

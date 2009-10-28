@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.664 2009/10/06 21:21:48 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.665 2009/10/28 20:11:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -104,7 +104,7 @@
 struct pf_state_tree	 pf_statetbl;
 
 struct pf_altqqueue	 pf_altqs[2];
-struct pf_palist	 pf_pabuf[2];
+struct pf_palist	 pf_pabuf[3];
 struct pf_altqqueue	*pf_altqs_active;
 struct pf_altqqueue	*pf_altqs_inactive;
 struct pf_status	 pf_status;
@@ -2602,15 +2602,16 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 	switch (s->key[PF_SK_WIRE]->af) {
 #ifdef INET
 	case AF_INET:
-		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, &sn, &r->rdr);
-		s->rt_kif = r->rdr.cur->kif;
+		pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, &sn,
+		    &r->route);
+		s->rt_kif = r->route.cur->kif;
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, &sn,
 		    &r->rdr);
-		s->rt_kif = r->rdr.cur->kif;
+		s->rt_kif = r->route.cur->kif;
 		break;
 #endif /* INET6 */
 	}
@@ -4988,18 +4989,18 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = satosin(ro->ro_rt->rt_gateway);
 	} else {
-		if (TAILQ_EMPTY(&r->rdr.list)) {
+		if (TAILQ_EMPTY(&r->route.list)) {
 			DPFPRINTF(PF_DEBUG_URGENT,
-			    ("pf_route: TAILQ_EMPTY(&r->rdr.list)\n"));
+			    ("pf_route: TAILQ_EMPTY(&r->route.list)\n"));
 			goto bad;
 		}
 		if (s == NULL) {
 			pf_map_addr(AF_INET, r, (struct pf_addr *)&ip->ip_src,
-			    &naddr, NULL, &sn, &r->rdr);
+			    &naddr, NULL, &sn, &r->route);
 			if (!PF_AZERO(&naddr, AF_INET))
 				dst->sin_addr.s_addr = naddr.v4.s_addr;
-			ifp = r->rdr.cur->kif ?
-			    r->rdr.cur->kif->pfik_ifp : NULL;
+			ifp = r->route.cur->kif ?
+			    r->route.cur->kif->pfik_ifp : NULL;
 		} else {
 			if (!PF_AZERO(&s->rt_addr, AF_INET))
 				dst->sin_addr.s_addr =
@@ -5170,18 +5171,18 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		return;
 	}
 
-	if (TAILQ_EMPTY(&r->rdr.list)) {
+	if (TAILQ_EMPTY(&r->route.list)) {
 		DPFPRINTF(PF_DEBUG_URGENT,
-		    ("pf_route6: TAILQ_EMPTY(&r->rdr.list)\n"));
+		    ("pf_route6: TAILQ_EMPTY(&r->route.list)\n"));
 		goto bad;
 	}
 	if (s == NULL) {
 		pf_map_addr(AF_INET6, r, (struct pf_addr *)&ip6->ip6_src,
-		    &naddr, NULL, &sn, &r->rdr);
+		    &naddr, NULL, &sn, &r->route);
 		if (!PF_AZERO(&naddr, AF_INET6))
 			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
 			    &naddr, AF_INET6);
-		ifp = r->rdr.cur->kif ? r->rdr.cur->kif->pfik_ifp : NULL;
+		ifp = r->route.cur->kif ? r->route.cur->kif->pfik_ifp : NULL;
 	} else {
 		if (!PF_AZERO(&s->rt_addr, AF_INET6))
 			PF_ACPY((struct pf_addr *)&dst->sin6_addr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.19 2009/09/01 13:42:00 henning Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.20 2009/10/28 20:11:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -137,6 +137,7 @@ struct pf_rule_field {
     PF_RULE_FIELD(rdr,			BREAK),
     PF_RULE_FIELD(nat,			BREAK),
     PF_RULE_FIELD(logif,		BREAK),
+    PF_RULE_FIELD(route,		BREAK),
 
     /*
      * Any fields not listed in this structure act as BREAK fields
@@ -300,6 +301,12 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 		} else
 			bzero(&por->por_rule.nat,
 			    sizeof(por->por_rule.nat));
+		if (TAILQ_FIRST(&r->route.list) != NULL) {
+			TAILQ_INIT(&por->por_rule.route.list);
+			pfctl_move_pool(&r->route, &por->por_rule.route);
+		} else
+			bzero(&por->por_rule.route,
+			    sizeof(por->por_rule.route));
 
 
 		TAILQ_INSERT_TAIL(&opt_queue, por, por_entry);
@@ -331,8 +338,10 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 			memcpy(r, &por->por_rule, sizeof(*r));
 			TAILQ_INIT(&r->rdr.list);
 			TAILQ_INIT(&r->nat.list);
+			TAILQ_INIT(&r->route.list);
 			pfctl_move_pool(&por->por_rule.rdr, &r->rdr);
 			pfctl_move_pool(&por->por_rule.nat, &r->nat);
+			pfctl_move_pool(&por->por_rule.route, &r->route);
 			TAILQ_INSERT_TAIL(
 			    rs->rules[PF_RULESET_FILTER].active.ptr,
 			    r, entries);
@@ -923,6 +932,9 @@ load_feedback_profile(struct pfctl *pf, struct superblocks *superblocks)
 		if (TAILQ_EMPTY(&por->por_rule.nat.list))
 			memset(&por->por_rule.nat, 0,
 			    sizeof(por->por_rule.nat));
+		if (TAILQ_EMPTY(&por->por_rule.route.list))
+			memset(&por->por_rule.route, 0,
+			    sizeof(por->por_rule.route));
 		TAILQ_INSERT_TAIL(&queue, por, por_entry);
 
 		/* XXX pfctl_get_pool(pf->dev, &pr.rule.rpool, nr, pr.ticket,

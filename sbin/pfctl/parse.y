@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.572 2009/10/28 12:53:11 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.573 2009/10/28 20:11:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -269,6 +269,7 @@ struct filter_opts {
 	}			 divert, divert_packet;
 	struct redirspec	 nat;
 	struct redirspec	 rdr;
+	struct redirspec	 rroute;
 
 	/* scrub opts */
 	int			 nodf;
@@ -344,7 +345,8 @@ void		 expand_label(char *, size_t, const char *, u_int8_t,
 int		 apply_redirspec(struct pf_pool *, struct pf_rule *,
 		    struct redirspec *, int, struct node_port *);
 void		 expand_rule(struct pf_rule *, int, struct node_if *,
-		    struct redirspec *, struct redirspec *, struct node_proto *,
+		    struct redirspec *, struct redirspec *, struct redirspec *,
+		    struct node_proto *,
 		    struct node_os *, struct node_host *, struct node_port *,
 		    struct node_host *, struct node_port *, struct node_uid *,
 		    struct node_gid *, struct node_icmp *, const char *);
@@ -902,7 +904,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 			decide_address_family($8.src.host, &r.af);
 			decide_address_family($8.dst.host, &r.af);
 
-			expand_rule(&r, 0, $5, NULL, NULL, $7, $8.src_os,
+			expand_rule(&r, 0, $5, NULL, NULL, NULL, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
 			    $9.uid, $9.gid, $9.icmpspec,
 			    pf->astack[pf->asd + 1] ? pf->alast->name : $2);
@@ -1072,8 +1074,8 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 
 				if (h != NULL)
 					expand_rule(&r, 0, j, NULL, NULL, NULL,
-					    NULL, h, NULL, NULL, NULL, NULL,
-					    NULL, NULL, "");
+					    NULL, NULL, h, NULL, NULL, NULL,
+					    NULL, NULL, NULL, "");
 
 				if ((i->ifa_flags & IFF_LOOPBACK) == 0) {
 					bzero(&r, sizeof(r));
@@ -1093,9 +1095,9 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 						h = ifa_lookup(i->ifname, 0);
 					if (h != NULL)
 						expand_rule(&r, 0, NULL, NULL,
-						    NULL, NULL, NULL, h, NULL,
+						    NULL, NULL, NULL, NULL, h,
 						    NULL, NULL, NULL, NULL,
-						    NULL, "");
+						    NULL, NULL, "");
 				} else
 					free(hh);
 			}
@@ -2047,10 +2049,10 @@ pfrule		: action dir logquick interface af proto fromto
 					}
 				}
 				/* fake redirspec */
-				if (($8.rdr.rdr = calloc(1,
-				    sizeof(*$8.rdr.rdr))) == NULL)
-					err(1, "$8.rdr.rdr");
-				$8.rdr.rdr->host = $8.route.host;	
+				if (($8.rroute.rdr = calloc(1,
+				    sizeof(*$8.rroute.rdr))) == NULL)
+					err(1, "$8.rroute.rdr");
+				$8.rroute.rdr->host = $8.route.host;	
 			}
 			if ($8.queues.qname != NULL) {
 				if (strlcpy(r.qname, $8.queues.qname,
@@ -2096,7 +2098,8 @@ pfrule		: action dir logquick interface af proto fromto
 			}	
 			r.divert_packet.port = $8.divert_packet.port;
 
-			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, $6, $7.src_os,
+			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, &$8.rroute, $6,
+			    $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
 			    $8.uid, $8.gid, $8.icmpspec, "");
 		}
@@ -4539,7 +4542,7 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 
 void
 expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
-    struct redirspec *nat, struct redirspec *rdr,
+    struct redirspec *nat, struct redirspec *rdr, struct redirspec *rroute,
     struct node_proto *protos, struct node_os *src_oses,
     struct node_host *src_hosts, struct node_port *src_ports,
     struct node_host *dst_hosts, struct node_port *dst_ports,
@@ -4712,6 +4715,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 
 		error += apply_redirspec(&r->nat, r, nat, 0, dst_port);
 		error += apply_redirspec(&r->rdr, r, rdr, 1, dst_port);
+		error += apply_redirspec(&r->route, r, rroute, 2, dst_port);
 
 		if (rule_consistent(r, anchor_call[0]) < 0 || error)
 			yyerror("skipping rule due to errors");
@@ -4752,7 +4756,8 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 			binat.pool_opts.staticport = 0;
 			binat.rdr->host = srch;
 
-			expand_rule(&rb, 1, interface, NULL, &binat, proto,
+			expand_rule(&rb, 1, interface, NULL, &binat, NULL,
+			    proto,
 			    src_os, dst_host, dst_port, dsth, src_port,
 			    uid, gid, icmp_type, anchor_call);
 		}

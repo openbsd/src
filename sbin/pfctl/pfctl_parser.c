@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.249 2009/10/04 16:08:37 michele Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.250 2009/10/28 20:11:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1038,7 +1038,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			printf(" fastroute");
 		if (r->rt != PF_FASTROUTE) {
 			printf(" ");
-			print_pool(&r->rdr, 0, 0, r->af, PF_PASS);
+			print_pool(&r->route, 0, 0, r->af, PF_PASS);
 		}
 	}
 }

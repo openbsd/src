@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.295 2009/10/06 21:21:48 claudio Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.296 2009/10/28 20:11:01 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,7 +60,7 @@ struct ip6_hdr;
 enum	{ PF_INOUT, PF_IN, PF_OUT };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP, PF_DEFER,
-	  PF_MATCH, PF_DIVERT };
+	  PF_MATCH, PF_DIVERT, PF_RT };
 enum	{ PF_RULESET_FILTER, PF_RULESET_NAT, PF_RULESET_BINAT,
 	  PF_RULESET_RDR, PF_RULESET_MAX };
 enum	{ PF_OP_NONE, PF_OP_IRG, PF_OP_EQ, PF_OP_NE, PF_OP_LT,
@@ -543,6 +543,7 @@ struct pf_rule {
 	TAILQ_ENTRY(pf_rule)	 entries;
 	struct pf_pool		 nat;
 	struct pf_pool		 rdr;
+	struct pf_pool		 route;
 
 	u_int64_t		 evaluations;
 	u_int64_t		 packets[2];
@@ -1629,10 +1630,9 @@ extern struct pf_state_tree_id tree_id;
 extern struct pf_state_queue state_list;
 
 TAILQ_HEAD(pf_poolqueue, pf_pool);
-extern struct pf_poolqueue		  pf_pools[2];
 TAILQ_HEAD(pf_altqqueue, pf_altq);
 extern struct pf_altqqueue		  pf_altqs[2];
-extern struct pf_palist			  pf_pabuf[2];
+extern struct pf_palist			  pf_pabuf[3];
 
 extern u_int32_t		 ticket_altqs_active;
 extern u_int32_t		 ticket_altqs_inactive;
