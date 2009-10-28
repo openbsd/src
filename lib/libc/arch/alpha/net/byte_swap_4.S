@@ -1,4 +1,4 @@
-/*	$OpenBSD: byte_swap_4.S,v 1.3 1996/11/13 22:05:03 niklas Exp $	*/
+/*	$OpenBSD: byte_swap_4.S,v 1.4 2009/10/28 06:49:54 deraadt Exp $	*/
 /*	$NetBSD: byte_swap_4.S,v 1.2 1996/10/17 03:08:09 cgd Exp $	*/
 
 /*
@@ -29,11 +29,6 @@
  */
 
 #include <machine/asm.h>
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: byte_swap_4.S,v 1.3 1996/11/13 22:05:03 niklas Exp $"
-#endif
 
 #ifndef NAME
 #define	NAME byte_swap_4

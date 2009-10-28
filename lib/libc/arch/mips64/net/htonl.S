@@ -32,11 +32,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS) 
-	.text
-	.asciz "$OpenBSD: htonl.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
-#endif /* LIBC_SCCS */
-
 /*
  * netorder = htonl(hostorder)
  * hostorder = ntohl(netorder)

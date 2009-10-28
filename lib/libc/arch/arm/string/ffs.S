@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.3 2009/10/28 06:49:54 deraadt Exp $	*/
 /*	$NetBSD: ffs.S,v 1.5 2003/04/05 23:08:52 bjh21 Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -30,8 +30,6 @@
  */
 
 #include <machine/asm.h>
-
-RCSID("$NetBSD: ffs.S,v 1.5 2003/04/05 23:08:52 bjh21 Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set

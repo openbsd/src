@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntohs.S,v 1.2 2003/06/02 20:18:32 millert Exp $	*/
+/*	$OpenBSD: ntohs.S,v 1.3 2009/10/28 06:49:55 deraadt Exp $	*/
 /*	$NetBSD: ntohs.S,v 1.1 1998/09/11 04:56:31 eeh Exp $	*/
 
 /*
@@ -37,13 +37,6 @@
  */
 
 #include <machine/asm.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-	.asciz "@(#)ntohs.s	8.1 (Berkeley) 6/4/93"
-#else
-	RCSID("$NetBSD: ntohs.S,v 1.1 1998/09/11 04:56:31 eeh Exp $")
-#endif
-#endif /* LIBC_SCCS and not lint */
 
 /* hostorder = ntohs(netorder) */
 

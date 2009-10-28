@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntohs.S,v 1.3 1996/11/13 22:05:05 niklas Exp $	*/
+/*	$OpenBSD: ntohs.S,v 1.4 2009/10/28 06:49:54 deraadt Exp $	*/
 /*	$NetBSD: ntohs.S,v 1.1 1996/04/17 22:37:02 cgd Exp $	*/
 
 /*
@@ -27,11 +27,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: ntohs.S,v 1.3 1996/11/13 22:05:05 niklas Exp $"
-#endif
 
 #define	NAME	ntohs
 

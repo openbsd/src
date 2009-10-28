@@ -31,11 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: ntohs.S,v 1.3 2003/06/02 20:18:31 millert Exp $"
-#endif /* LIBC_SCCS */
-
 /* hostorder = ntohs(netorder) */
 
 #include "DEFS.h"

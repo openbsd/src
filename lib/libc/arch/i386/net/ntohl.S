@@ -32,11 +32,6 @@
 
 #include <machine/asm.h>
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: ntohl.S,v 1.3 2003/06/02 20:18:30 millert Exp $"
-#endif
-
 /* hostorder = ntohl(netorder) */
 ENTRY(ntohl)
 	movl	4(%esp),%eax

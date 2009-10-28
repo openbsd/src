@@ -1,4 +1,4 @@
-/*	$OpenBSD: divrem.m4,v 1.5 2003/06/02 20:18:32 millert Exp $	*/
+/*	$OpenBSD: divrem.m4,v 1.6 2009/10/28 06:49:55 deraadt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,10 +38,6 @@
  * Division and remainder, from Appendix E of the Sparc Version 8
  * Architecture Manual, with fixes from Gordon Irlam.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-	.asciz "@(#)divrem.m4	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * Input: dividend and divisor in %o0 and %o1 respectively.
