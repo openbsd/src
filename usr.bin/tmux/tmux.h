@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.151 2009/10/27 13:03:33 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.152 2009/10/28 22:53:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -64,6 +64,9 @@ extern char   **environ;
 
 /* Maximum poll timeout (when attached). */
 #define POLL_TIMEOUT 50
+
+/* Maximum data to buffer for output before suspending reading from panes. */
+#define BACKOFF_THRESHOLD 1024
 
 /*
  * Maximum sizes of strings in message data. Don't forget to bump
