@@ -1,8 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2001/06/22 23:24:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2009/10/28 07:36:49 deraadt Exp $
 
 PROG=	dmesg
-MAN=
-COPTS+=-Os
 CFLAGS+=-DNOKVM
 .PATH:  ${.CURDIR}/../../../sbin/dmesg
 

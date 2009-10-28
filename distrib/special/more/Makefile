@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.9 2009/04/19 17:07:04 martynas Exp $
+#	$OpenBSD: Makefile,v 1.10 2009/10/28 07:36:49 deraadt Exp $
 
 PROG=	more
-MAN=
-CFLAGS+= -D_USE_OLD_CURSES_ -I. -Os
+CFLAGS+= -D_USE_OLD_CURSES_ -I.
 DPADD=	${LIBOCURSES}
 LDADD=	-locurses
 CLEANFILES+=morehelp.h

@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2009/10/28 05:07:24 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2009/10/28 07:36:49 deraadt Exp $
 
-COPTS+=-Os
 PROG=	restore
 SRCS=	main.c interactive.c restore.c dirs.c symtab.c tape.c utilities.c
-MAN=
 
 .PATH:	${.CURDIR}/../../../sbin/restore
 
