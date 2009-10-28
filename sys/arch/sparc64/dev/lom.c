@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.15 2009/09/27 18:08:42 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.16 2009/10/28 22:53:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -403,7 +403,7 @@ lom1_write(struct lom_softc *sc, uint8_t reg, uint8_t val)
 	lc.lc_data = val;
 	lom1_queue_cmd(sc, &lc);
 
-	error = tsleep(&lc, PZERO, "lomwr", hz);
+	error = tsleep(&lc, PZERO, "lomwr", 2 * hz);
 	if (error)
 		lom1_dequeue_cmd(sc, &lc);
 
@@ -520,13 +520,26 @@ lom1_process_queue_locked(struct lom_softc *sc)
 	uint8_t str;
 
 	lc = TAILQ_FIRST(&sc->sc_queue);
-	KASSERT(lc != NULL);
+	if (lc == NULL) {
+		sc->sc_state = LOM_STATE_IDLE;
+		return;
+	}
 
 	str = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LOM1_STATUS);
 	if (str & LOM1_STATUS_BUSY) {
-		if (sc->sc_retry++ > 30)
+		if (sc->sc_retry++ < 30) {
+			timeout_add_msec(&sc->sc_state_to, 1);
 			return;
-		timeout_add_msec(&sc->sc_state_to, 1);
+		}
+
+		/*
+		 * Looks like the microcontroller got wedged.  Unwedge
+		 * it by writing this magic value.  Give it some time
+		 * to recover.
+		 */
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LOM1_DATA, 0xac);
+		timeout_add_msec(&sc->sc_state_to, 1000);
+		sc->sc_state = LOM_STATE_CMD;
 		return;
 	}
 
