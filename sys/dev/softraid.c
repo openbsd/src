@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.175 2009/10/13 19:33:16 pirofti Exp $ */
+/* $OpenBSD: softraid.c,v 1.176 2009/10/28 15:22:23 marco Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -886,13 +886,13 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 	if (error) {
 		DNPRINTF(SR_D_META, "%s: sr_meta_native_bootprobe ioctl "
 		    "failed\n", DEVNAME(sc));
-		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, 0);
+		VOP_CLOSE(vn, FREAD, NOCRED, 0);
 		vput(vn);
 		goto done;
 	}
 
 	/* we are done, close device */
-	error = VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, 0);
+	error = VOP_CLOSE(vn, FREAD, NOCRED, 0);
 	if (error) {
 		DNPRINTF(SR_D_META, "%s: sr_meta_native_bootprobe close "
 		    "failed\n", DEVNAME(sc));
