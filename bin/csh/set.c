@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.11 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: set.c,v 1.12 2009/10/28 02:03:47 schwarze Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -29,6 +29,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/types.h>
+#include <stdlib.h>
+#ifndef SHORT_STRINGS
+#include <string.h>
+#endif /* SHORT_STRINGS */
+#include <stdarg.h>
 
 #include "csh.h"
 #include "extern.h"
