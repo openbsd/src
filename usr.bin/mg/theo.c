@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.111 2009/08/12 22:15:53 henning Exp $	*/
+/*	$OpenBSD: theo.c,v 1.112 2009/10/28 08:37:19 claudio Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -154,7 +154,8 @@ static const char *talk[] = {
 	"Have I ever been subtle? If my approach ever becomes subtle, shoot me.",
 	"the acpi stabs you in the back.  the acpi stabs you in the back. you die ...",
 	"My cats are more observant than you.",
-	"our kernels have no bugs"
+	"our kernels have no bugs",
+	"style(9) has all these fascist rules, and i have a problem with some of them because i didn't come up with them"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
