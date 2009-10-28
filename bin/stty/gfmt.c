@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfmt.c,v 1.7 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: gfmt.c,v 1.8 2009/10/28 07:12:59 guenther Exp $	*/
 /*	$NetBSD: gfmt.c,v 1.10 1996/05/07 18:20:08 jtc Exp $	*/
 
 /*-
@@ -107,8 +107,6 @@ gread(struct termios *tp, char *s)
 		}
 		for (cp = cchars1; cp->name != NULL; ++cp)
 			if (CHK(cp->name)) {
-				if (cp->sub == VMIN || cp->sub == VTIME)
-					(void)sscanf(ep, "%ld", &tmp);
 				tp->c_cc[cp->sub] = tmp;
 				break;
 			}
