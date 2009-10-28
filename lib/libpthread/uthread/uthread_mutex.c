@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.21 2007/06/05 18:11:49 kurt Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.22 2009/10/28 13:49:10 kurt Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -46,6 +46,11 @@
 	(m)->m_qe.tqe_prev = NULL;			\
 	(m)->m_qe.tqe_next = NULL;			\
 } while (0)
+#define _MUTEX_REMOVE_IF_OWNED(m)	do {		\
+	if ((m)->m_qe.tqe_prev != NULL)			\
+		TAILQ_REMOVE(&(m)->m_owner->mutexq,	\
+				    (m), m_qe);		\
+} while (0)
 #define _MUTEX_ASSERT_IS_OWNED(m)	do {		\
 	if ((m)->m_qe.tqe_prev == NULL)			\
 		PANIC("mutex is not on list");		\
@@ -57,6 +62,7 @@
 } while (0)
 #else
 #define _MUTEX_INIT_LINK(m)
+#define _MUTEX_REMOVE_IF_OWNED(m)
 #define _MUTEX_ASSERT_IS_OWNED(m)
 #define _MUTEX_ASSERT_NOT_OWNED(m)
 #endif
@@ -90,6 +96,8 @@ _mutex_reinit(pthread_mutex_t * mutex)
 		/*
 		 * Initialize the mutex structure:
 		 */
+		_MUTEX_REMOVE_IF_OWNED(*mutex);
+		_MUTEX_INIT_LINK(*mutex);
 		(*mutex)->m_type = PTHREAD_MUTEX_DEFAULT;
 		(*mutex)->m_protocol = PTHREAD_PRIO_NONE;
 		TAILQ_INIT(&(*mutex)->m_queue);
@@ -100,7 +108,6 @@ _mutex_reinit(pthread_mutex_t * mutex)
 		(*mutex)->m_refcount = 0;
 		(*mutex)->m_prio = 0;
 		(*mutex)->m_saved_prio = 0;
-		_MUTEX_INIT_LINK(*mutex);
 		_SPINLOCK_INIT(&(*mutex)->lock);
 	}
 	return (ret);
