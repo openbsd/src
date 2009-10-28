@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_errno.c,v 1.5 2007/10/27 22:42:10 miod Exp $	*/
+/*	$OpenBSD: ibcs2_errno.c,v 1.6 2009/10/28 16:38:43 jsg Exp $	*/
 /*	$NetBSD: ibcs2_errno.c,v 1.2 1996/05/03 17:05:16 christos Exp $	*/
 
 /*
@@ -126,5 +126,6 @@ int bsd2ibcs_errno[1 + ELAST] = {
 	IBCS2_ENOSYS,		/* 87 unavailable? */
 	IBCS2_ENOSYS,		/* 88 unavailable? */
 	IBCS2_EIDRM,		/* 89 */
-	IBCS2_ENOMSG		/* 90 */
+	IBCS2_ENOMSG,		/* 90 */
+	IBCS2_ENOSYS		/* 91 unavailable? */
 };

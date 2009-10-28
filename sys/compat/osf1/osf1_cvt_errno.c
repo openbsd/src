@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_cvt_errno.c,v 1.2 2007/10/27 22:42:11 miod Exp $ */
+/* $OpenBSD: osf1_cvt_errno.c,v 1.3 2009/10/28 16:38:43 jsg Exp $ */
 /* $NetBSD: osf1_cvt_errno.c,v 1.4 1999/05/01 02:16:01 cgd Exp $ */
 
 /*
@@ -133,5 +133,6 @@ const int osf1_errno_rxlist[1 + ELAST] = {
     OSF1_EOVERFLOW,		/* EOVERFLOW (87) -> 103 */
     OSF1_ECANCELED,		/* ECANCELED (88) -> 94 */
     OSF1_EIDRM,			/* EIDRM (89) -> 81 */
-    OSF1_ENOMSG			/* ENOMSG (90) -> 80 */
+    OSF1_ENOMSG,		/* ENOMSG (90) -> 80 */
+    OSF1_ENOTSUP		/* ENOTSUP (91) -> 99 */
 };

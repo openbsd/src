@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_errno.c,v 1.4 2007/10/27 22:42:11 miod Exp $	*/
+/*	$OpenBSD: svr4_errno.c,v 1.5 2009/10/28 16:38:43 jsg Exp $	*/
 /*	$NetBSD: svr4_errno.c,v 1.7 1998/10/23 04:06:00 erh Exp $	*/
 
 /*
@@ -127,5 +127,6 @@ int native_to_svr4_errno[1 + ELAST] = {
 	SVR4_EOVERFLOW,
 	SVR4_ENOSYS,			/* ECANCELED */
 	SVR4_EIDRM,
-	SVR4_ENOMSG
+	SVR4_ENOMSG,
+	SVR4_ENOSYS			/* ENOTSUP */
 };
