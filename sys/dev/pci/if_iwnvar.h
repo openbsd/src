@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.14 2009/10/26 17:55:29 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.15 2009/10/28 18:42:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -199,7 +199,6 @@ struct iwn_softc {
 	uint8_t			fixed_ridx;
 
 	bus_dma_tag_t		sc_dmat;
-	pcireg_t		sc_id;
 
 	u_int			sc_flags;
 #define IWN_FLAG_HAS_5GHZ	(1 << 0)
@@ -272,6 +271,7 @@ struct iwn_softc {
 	int8_t			maxpwr2GHz;
 	int8_t			maxpwr5GHz;
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
+	int8_t			enh_maxpwr[35];
 
 	int32_t			temp_off;
 	uint32_t		int_mask;

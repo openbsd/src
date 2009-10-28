@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.30 2009/10/26 17:55:29 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.31 2009/10/28 18:42:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -57,7 +57,7 @@
  */
 #define IWN_HW_IF_CONFIG	0x000
 #define IWN_INT_COALESCING	0x004
-#define IWN_INT_PERIODIC	0x005	/* XXX fixme */
+#define IWN_INT_PERIODIC	0x005	/* use IWN_WRITE_1 */
 #define IWN_INT			0x008
 #define IWN_INT_MASK		0x00c
 #define IWN_FH_INT		0x010
@@ -1624,6 +1624,9 @@ static const char * const iwn_fw_errmsg[] = {
 
 #define IWN_WRITE(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+
+#define IWN_WRITE_1(sc, reg, val)					\
+	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 #define IWN_SETBITS(sc, reg, mask)					\
 	IWN_WRITE(sc, reg, IWN_READ(sc, reg) | (mask))

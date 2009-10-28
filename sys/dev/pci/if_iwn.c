@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.71 2009/10/26 18:38:32 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.72 2009/10/28 18:42:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -76,6 +76,8 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_5300_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_5350_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_5350_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_1 },
@@ -85,9 +87,7 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_3X3_1 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_3X3_2 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_1 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_2 }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_3X3_2 }
 };
 
 int		iwn_match(struct device *, void *, void *);
@@ -1483,7 +1483,7 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 	iwn_read_prom_data(sc, IWN5000_EEPROM_CAL, &val, 2);
 	base = letoh16(val);
 	if (sc->hw_type == IWN_HW_REV_TYPE_5150) {
-		/* Compute critical temperature (in Kelvin.) */
+		/* Compute temperature offset. */
 		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
 		temp = letoh16(val);
 		iwn_read_prom_data(sc, base + IWN5000_EEPROM_VOLT, &val, 2);
@@ -1584,7 +1584,7 @@ iwn_read_eeprom_enhinfo(struct iwn_softc *sc)
 		maxpwr /= 2;	/* Convert half-dBm to dBm. */
 
 		DPRINTF(("enhinfo %d, maxpwr=%d\n", i, maxpwr));
-		/* XXX apply to sc->maxpwr[] */
+		sc->enh_maxpwr[i] = maxpwr;
 	}
 }
 
@@ -2531,10 +2531,11 @@ iwn_intr(void *arg)
 		if (sc->sc_flags & IWN_FLAG_USE_ICT) {
 			if (r1 & (IWN_INT_FH_RX | IWN_INT_SW_RX))
 				IWN_WRITE(sc, IWN_FH_INT, IWN_FH_INT_RX);
-			IWN_WRITE(sc, IWN_INT_PERIODIC, IWN_INT_PERIODIC_DIS);
+			IWN_WRITE_1(sc, IWN_INT_PERIODIC,
+			    IWN_INT_PERIODIC_DIS);
 			iwn_notif_intr(sc);
 			if (r1 & (IWN_INT_FH_RX | IWN_INT_SW_RX)) {
-				IWN_WRITE(sc, IWN_INT_PERIODIC,
+				IWN_WRITE_1(sc, IWN_INT_PERIODIC,
 				    IWN_INT_PERIODIC_ENA);
 			}
 		} else
