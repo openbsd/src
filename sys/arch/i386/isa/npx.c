@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.46 2009/10/26 20:30:23 kettenis Exp $	*/
+/*	$OpenBSD: npx.c,v 1.47 2009/10/28 21:12:18 deraadt Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -596,11 +596,6 @@ x86fpflags_to_siginfo(u_int32_t flags)
  * If we were the last process to use the FPU, we can simply return.
  * Otherwise, we save the previous state, if necessary, and restore our last
  * saved state.
- */
-
-/*
- * XXX It is unclear if the code below is correct in the multiprocessor
- * XXX case.  Check the NetBSD sources once again to be sure.
  */
 int
 npxdna_xmm(struct cpu_info *ci)
