@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.31 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: entry.c,v 1.32 2009/10/29 18:56:47 markus Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -341,7 +341,8 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 
 	/* If the first character of the command is '-' it is a cron option.
 	 */
-	while ((ch = get_char(file)) == '-') {
+	ch = get_char(file);
+	while (ch == '-') {
 		switch (ch = get_char(file)) {
 		case 'q':
 			e->flags |= DONT_LOG;
