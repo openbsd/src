@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.665 2009/10/28 20:11:01 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.666 2009/10/29 10:28:27 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2610,7 +2610,7 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 #ifdef INET6
 	case AF_INET6:
 		pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, &sn,
-		    &r->rdr);
+		    &r->route);
 		s->rt_kif = r->route.cur->kif;
 		break;
 #endif /* INET6 */
