@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.20 2009/10/27 23:59:52 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.21 2009/10/29 20:11:09 sobrado Exp $	*/
 /*	$NetBSD: cmds.c,v 1.12 1997/10/05 15:12:06 mrg Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ doabort(int argc, char **argv)
 	char prbuf[100];
 
 	if (argc == 1) {
-		printf("Usage: abort {all | printer ...}\n");
+		printf("usage: abort {all | printer ...}\n");
 		return;
 	}
 	if (argc == 2 && strcmp(argv[1], "all") == 0) {
@@ -219,7 +219,7 @@ clean(int argc, char **argv)
 	char prbuf[100];
 
 	if (argc == 1) {
-		printf("Usage: clean {all | printer ...}\n");
+		printf("usage: clean {all | printer ...}\n");
 		return;
 	}
 	if (argc == 2 && strcmp(argv[1], "all") == 0) {
@@ -375,7 +375,7 @@ enable(int argc, char **argv)
 	char prbuf[100];
 
 	if (argc == 1) {
-		printf("Usage: enable {all | printer ...}\n");
+		printf("usage: enable {all | printer ...}\n");
 		return;
 	}
 	if (argc == 2 && strcmp(argv[1], "all") == 0) {
@@ -443,7 +443,7 @@ disable(int argc, char **argv)
 	char prbuf[100];
 
 	if (argc == 1) {
-		printf("Usage: disable {all | printer ...}\n");
+		printf("usage: disable {all | printer ...}\n");
 		return;
 	}
 	if (argc == 2 && strcmp(argv[1], "all") == 0) {
@@ -521,7 +521,7 @@ down(int argc, char **argv)
 	char prbuf[100];
 
 	if (argc == 1) {
-		printf("Usage: down {all | printer} [message ...]\n");
+		printf("usage: down {all | printer} [message ...]\n");
 		return;
 	}
 	if (strcmp(argv[1], "all") == 0) {
@@ -640,7 +640,7 @@ restart(int argc, char **argv)
 	char prbuf[100];
 
 	if (argc == 1) {
-		printf("Usage: restart {all | printer ...}\n");
+		printf("usage: restart {all | printer ...}\n");
 		return;
 	}
 	if (argc == 2 && strcmp(argv[1], "all") == 0) {
@@ -684,7 +684,7 @@ startcmd(int argc, char **argv)
 	char prbuf[100];
 
 	if (argc == 1) {
-		printf("Usage: start {all | printer ...}\n");
+		printf("usage: start {all | printer ...}\n");
 		return;
 	}
 	if (argc == 2 && strcmp(argv[1], "all") == 0) {
@@ -873,7 +873,7 @@ stop(int argc, char **argv)
 	char prbuf[100];
 
 	if (argc == 1) {
-		printf("Usage: stop {all | printer ...}\n");
+		printf("usage: stop {all | printer ...}\n");
 		return;
 	}
 	if (argc == 2 && strcmp(argv[1], "all") == 0) {
@@ -958,7 +958,7 @@ topq(int argc, char **argv)
 	int status, changed;
 
 	if (argc < 3) {
-		printf("Usage: topq printer [jobnum ...] [user ...]\n");
+		printf("usage: topq printer [jobnum ...] [user ...]\n");
 		return;
 	}
 
@@ -1123,7 +1123,7 @@ up(int argc, char **argv)
 	char prbuf[100];
 
 	if (argc == 1) {
-		printf("Usage: up {all | printer ...}\n");
+		printf("usage: up {all | printer ...}\n");
 		return;
 	}
 	if (argc == 2 && strcmp(argv[1], "all") == 0) {
