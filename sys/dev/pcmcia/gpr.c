@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.13 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.14 2009/10/29 08:03:16 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -38,9 +38,10 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/ioctl.h>
 #include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
 
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>
@@ -295,6 +296,17 @@ gprioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	switch (cmd) {
 	case GPR_RESET:
+	case GPR_SELECT:
+	case GPR_POWER:
+	case GPR_CLOSE:
+		if ((flags & FWRITE) == 0)
+			return (EACCES);
+	default:
+		break;
+	}
+
+	switch (cmd) {
+	case GPR_RESET:
 		/*
 		 * To reset and power up the reader, set bit 0 in the
 		 * HAP register for at least 5us and wait for 20ms.
@@ -332,7 +344,8 @@ gprioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			struct gpr400_ram r;
 
 			bus_space_read_region_1(sc->sc_memt, sc->sc_memh,
-		    	    sc->sc_offset, &r, sizeof(struct gpr400_ram));
+		    	    sc->sc_offset, (u_int8_t *)&r,
+			    sizeof(struct gpr400_ram));
 			error = copyout(&r, addr, sizeof(struct gpr400_ram));
 		}
 		break;
