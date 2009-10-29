@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.176 2009/10/28 15:22:23 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.177 2009/10/29 15:21:31 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1010,10 +1010,9 @@ sr_boot_assembly(struct sr_softc *sc)
 		if (dv->dv_class != DV_DISK)
 			continue;
 
-		/* XXX is there  a better way of excluding some devices? */
-		if (!strncmp(dv->dv_xname, "fd", 2) ||
-		    !strncmp(dv->dv_xname, "cd", 2) ||
-		    !strncmp(dv->dv_xname, "rx", 2))
+		/* Only check sd(4) and wd(4) devices. */
+		if (strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") &&
+		    strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd"))
 			continue;
 
 		/* native softraid uses partitions */
