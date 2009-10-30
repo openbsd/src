@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.81 2009/10/28 16:56:46 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.82 2009/10/30 16:41:10 nicm Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1246,6 +1246,7 @@ ttyflush(struct tty *tp, int rw)
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	splx(s);
 }

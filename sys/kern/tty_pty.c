@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.40 2009/10/14 07:19:05 nicm Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.41 2009/10/30 16:41:10 nicm Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -510,6 +510,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	if (bufcc)
 		bzero(buf, bufcc);
