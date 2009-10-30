@@ -298,17 +298,14 @@ ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
 int
 ip6_mrouter_get(int cmd, struct socket *so, struct mbuf **m)
 {
-	struct mbuf *mb;
-
 	if (so != ip6_mrouter) return EACCES;
 
-	*m = mb = m_get(M_WAIT, MT_SOOPTS);
+	*m = m_get(M_WAIT, MT_SOOPTS);
 
 	switch (cmd) {
 	case MRT6_PIM:
-		return get_pim6(mb);
+		return get_pim6(*m);
 	default:
-		m_free(mb);
 		return EOPNOTSUPP;
 	}
 }
