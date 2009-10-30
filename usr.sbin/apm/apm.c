@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.23 2006/06/11 17:45:54 sturm Exp $	*/
+/*	$OpenBSD: apm.c,v 1.24 2009/10/30 19:41:10 sobrado Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -220,7 +220,10 @@ main(int argc, char *argv[])
 			action = GETSTATUS;
 			break;
 		default:
-			usage();
+			if (!strcmp(__progname, "zzz"))
+				zzusage();
+			else
+				usage();
 		}
 	}
 
