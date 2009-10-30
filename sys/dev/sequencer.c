@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.16 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.17 2009/10/30 18:12:31 deraadt Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -266,6 +266,7 @@ seq_timeout(void *addr)
 	if (SEQ_QLEN(&sc->outq) < sc->lowat) {
 		seq_wakeup(&sc->wchan);
 		selwakeup(&sc->wsel);
+		KNOTE(&sc->wsel.si_note, 0);
 		if (sc->async)
 			psignal(sc->async, SIGIO);
 	}
@@ -323,6 +324,7 @@ seq_input_event(struct sequencer_softc *sc, seq_event_rec *cmd)
 	SEQ_QPUT(q, *cmd);
 	seq_wakeup(&sc->rchan);
 	selwakeup(&sc->rsel);
+	KNOTE(&sc->rsel.si_note, 0);
 	if (sc->async)
 		psignal(sc->async, SIGIO);
 	return (0);

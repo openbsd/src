@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.18 2009/08/17 10:27:42 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.19 2009/10/30 18:12:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -106,6 +106,7 @@ midi_iintr(void *addr, int data)
 			wakeup(&sc->rchan);
 		}	
 		selwakeup(&sc->rsel);
+		KNOTE(&sc->rsel.si_note, 0);
 		if (sc->async)
 			psignal(sc->async, SIGIO);
 	}
@@ -206,6 +207,7 @@ midi_out_stop(struct midi_softc *sc)
 		wakeup(&sc->wchan);
 	}
 	selwakeup(&sc->wsel);
+	KNOTE(&sc->wsel.si_note, 0);
 	if (sc->async)
 		psignal(sc->async, SIGIO);
 }
