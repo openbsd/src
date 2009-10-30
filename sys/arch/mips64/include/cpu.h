@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.41 2009/10/22 22:08:52 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.42 2009/10/30 08:13:57 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -403,6 +403,8 @@ extern struct cpuset cpus_running;
 extern struct cpu_info *cpu_info[];
 void cpu_unidle(struct cpu_info *);
 void cpu_boot_secondary_processors(void);
+#define cpu_boot_secondary(ci)          hw_cpu_boot_secondary(ci)
+#define cpu_hatch(ci)                   hw_cpu_hatch(ci)
 
 #include <sys/mplock.h>
 #else

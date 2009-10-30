@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.15 2009/10/26 20:14:40 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.16 2009/10/30 08:13:57 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -99,13 +99,11 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	int isr16k = 0;
 	int displayver;
 
-#ifdef MULTIPROCESSOR
-	cpuset_add(&cpus_running, ci);
-#endif
 	if (cpuno == 0) {
 		ci = &cpu_info_primary;
 #ifdef MULTIPROCESSOR
 		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;
+		cpuset_add(&cpus_running, ci);
 #endif
 		bcopy(dev, &ci->ci_dev, sizeof *dev);
 	}
@@ -315,6 +313,19 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 void
 cpu_boot_secondary_processors(void)
 {
+       struct cpu_info *ci;
+       u_long i;
+
+       for (i = 0; i < MAXCPUS; i++) {
+               ci = cpu_info[i];
+               if (ci == NULL)
+                       continue;
+               if ((ci->ci_flags & CPUF_PRESENT) == 0)
+                       continue;
+               if (ci->ci_flags & CPUF_PRIMARY)
+                       continue;
+               cpu_boot_secondary(ci);
+       }
 }
 
 void

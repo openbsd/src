@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 2009/05/22 20:37:54 miod Exp $ */
+/*	$OpenBSD: locore.S,v 1.10 2009/10/30 08:13:57 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -61,3 +61,17 @@ start:
 	jal	main				# main(regs)
 	move	a0, zero
 	PANIC("Startup failed!")
+
+#if defined(MULTIPROCESSOR)
+LEAF(hw_cpu_spinup_trampoline, 0)
+       mfc0    v0, COP_0_STATUS_REG
+       li      v1, ~SR_INT_ENAB
+       and     v0, v1
+       ori     v0, SR_KX | SR_UX
+       mtc0    v0, COP_0_STATUS_REG    # disable all interrupts
+       mtc0    zero, COP_0_CAUSE_REG   # Clear soft interrupts
+       LA      gp, _gp
+       jal     hw_cpu_hatch
+       nop
+END(hw_cpu_spinup_trampoline)
+#endif /* MULTIPROCESSOR */

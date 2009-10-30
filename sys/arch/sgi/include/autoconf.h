@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.22 2009/10/26 20:14:42 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.23 2009/10/30 08:13:57 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -83,6 +83,7 @@ struct device;
 void	ip27_setup(void);
 void	ip27_autoconf(struct device *);
 void	ip30_setup(void);
+void	ip30_autoconf(struct device *);
 void	ip32_setup(void);
 
 extern char osloadpartition[256];

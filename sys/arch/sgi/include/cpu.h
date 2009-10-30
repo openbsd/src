@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 2009/09/30 06:22:00 syuu Exp $ */
+/*	$OpenBSD: cpu.h,v 1.4 2009/10/30 08:13:57 syuu Exp $ */
 
 /* Use Mips generic include file */
 
@@ -16,3 +16,9 @@
 #endif/* _KERNEL */
 
 #include <mips64/cpu.h>
+
+#if defined(_KERNEL) && defined(MULTIPROCESSOR) && !defined(_LOCORE)
+void hw_cpu_boot_secondary(struct cpu_info *);
+void hw_cpu_hatch(struct cpu_info *);
+void hw_cpu_spinup_trampoline(struct cpu_info *);
+#endif/* _KERNEL && MULTIPROCESSOR && !_LOCORE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.4 2009/10/26 20:14:42 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.5 2009/10/30 08:13:57 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -79,6 +79,11 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		ip27_autoconf(self);
 		return;
 #endif
+#ifdef TGT_OCTANE
+	case SGI_OCTANE:
+		ip30_autoconf(self);
+		return;
+#endif
 	default:
 		break;
 	}
@@ -101,14 +106,6 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		maa.maa_name = "macebus";
 		config_found(self, &maa, mbprint);
 		maa.maa_name = "gbe";
-		config_found(self, &maa, mbprint);
-		break;
-#endif
-#ifdef TGT_OCTANE
-	case SGI_OCTANE:
-		maa.maa_name = "xbow";
-		config_found(self, &maa, mbprint);
-		maa.maa_name = "power";
 		config_found(self, &maa, mbprint);
 		break;
 #endif
