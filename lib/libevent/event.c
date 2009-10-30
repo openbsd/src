@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.19 2008/05/02 18:26:42 brad Exp $	*/
+/*	$OpenBSD: event.c,v 1.20 2009/10/30 13:51:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -89,9 +89,6 @@ const struct eventop *eventops[] = {
 #ifdef HAVE_EVENT_PORTS
 	&evportops,
 #endif
-#ifdef HAVE_WORKING_KQUEUE
-	&kqops,
-#endif
 #ifdef HAVE_EPOLL
 	&epollops,
 #endif
@@ -106,6 +103,9 @@ const struct eventop *eventops[] = {
 #endif
 #ifdef HAVE_SELECT
 	&selectops,
+#endif
+#ifdef HAVE_WORKING_KQUEUE
+	&kqops,
 #endif
 #ifdef WIN32
 	&win32ops,
