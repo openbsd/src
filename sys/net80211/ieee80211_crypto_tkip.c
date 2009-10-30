@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.16 2009/09/24 16:03:10 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.17 2009/10/30 20:32:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -510,7 +510,7 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 	if (ic->ic_flags & IEEE80211_F_COUNTERM)
 		return;	/* countermeasures already active */
 
-	log(LOG_WARNING, "%s: Michael MIC failure", ic->ic_if.if_xname);
+	log(LOG_WARNING, "%s: Michael MIC failure\n", ic->ic_if.if_xname);
 
 	/*
 	 * NB. do not send Michael MIC Failure reports as recommended since
