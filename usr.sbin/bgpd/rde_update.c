@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.69 2009/08/06 08:53:11 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.70 2009/10/30 15:11:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -661,9 +661,11 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	/*
 	 * The old MED from other peers MUST not be announced to others
 	 * unless the MED is originating from us or the peer is an IBGP one.
+	 * Only exception are routers with "transparent-as yes" set.
 	 */
 	if (a->flags & F_ATTR_MED && (peer->conf.ebgp == 0 ||
-	    a->flags & F_ATTR_MED_ANNOUNCE)) {
+	    a->flags & F_ATTR_MED_ANNOUNCE ||
+	    peer->conf.flags & PEERFLAG_TRANS_AS)) {
 		tmp32 = htonl(a->med);
 		if ((r = attr_write(up_attr_buf + wlen, len, ATTR_OPTIONAL,
 		    ATTR_MED, &tmp32, 4)) == -1)
