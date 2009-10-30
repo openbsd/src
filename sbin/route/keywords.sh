@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.22 2008/05/07 06:06:25 claudio Exp $
+# $OpenBSD: keywords.sh,v 1.23 2009/10/30 17:32:34 jsg Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -39,6 +39,7 @@ lockrest
 monitor
 mpath
 mpls
+mplslabel
 mtu
 net
 netmask
