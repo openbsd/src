@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.17 2009/10/31 19:13:37 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.18 2009/10/31 20:26:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -212,6 +212,8 @@ void	lom2_write_hostname(struct lom_softc *);
 void	lom_wdog_pat(void *);
 int	lom_wdog_cb(void *, int);
 
+void	lom_shutdown(void *);
+
 int
 lom_match(struct device *parent, void *match, void *aux)
 {
@@ -340,6 +342,8 @@ lom_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s rev %d.%d\n",
 	    sc->sc_type < LOM_LOMLITE2 ? "LOMlite" : "LOMlite2",
 	    fw_rev >> 4, fw_rev & 0x0f);
+
+	shutdownhook_establish(lom_shutdown, sc);
 }
 
 int
@@ -918,4 +922,13 @@ lom_wdog_cb(void *arg, int period)
 	sc->sc_wdog_period = period;
 
 	return (period);
+}
+
+void
+lom_shutdown(void *arg)
+{
+	struct lom_softc *sc = arg;
+
+	sc->sc_wdog_ctl &= ~LOM_WDOG_ENABLE;
+	lom_write(sc, LOM_IDX_WDOG_CTL, sc->sc_wdog_ctl);
 }
