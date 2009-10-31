@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.283 2009/10/29 23:17:50 sobrado Exp $
+.\"	$OpenBSD: pci.4,v 1.284 2009/10/31 11:29:52 sobrado Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 29 2009 $
+.Dd $Mdocdate: October 31 2009 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -150,9 +150,8 @@ DPT EATA SCSI RAID controller
 ICP-Vortex and Intel GDT SATA/SCSI RAID controller
 .It Xr iop 4
 .Tn I2O
-specification
 .Tn RAID
-controllers
+controller
 .It Xr ips 4
 IBM SATA/SCSI ServeRAID controller
 .It Xr mfi 4
@@ -216,8 +215,8 @@ Level 1 LXT1001 NetCellerator PCI Gigabit Ethernet device
 Attansic L2 10/100 Ethernet device
 .It Xr lmc 4
 Lan Media Corporation
-.Tn SSI/DS1/HSSI/DS3
-interfaces
+.Tn SSI/T1/DS1/HSSI/DS3
+card device
 .It Xr msk 4
 Marvell Yukon-2 10/100/Gigabit Ethernet device
 .It Xr mtd 4
@@ -323,7 +322,7 @@ Broadcom and BlueSteel uBsec 5x0x crypto accelerator
 .It Xr cy 4
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications devices
 .It Xr cz 4
-Cyclades-Z series multi-port serial adapter device driver
+Cyclades-Z series multi-port serial adapter device
 .It Xr puc 4
 PCI ``universal'' communications card driver
 .El
