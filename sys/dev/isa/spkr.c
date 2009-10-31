@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.10 2006/03/09 22:35:23 miod Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.11 2009/10/31 01:13:00 fgsch Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
+#include <sys/file.h>
 
 #include <dev/isa/pcppivar.h>
 
@@ -498,6 +499,15 @@ spkrioctl(dev, cmd, data, flag, p)
 
 	if (minor(dev) != 0)
 		return (ENXIO);
+
+	switch (cmd) {
+	case SPKRTONE:
+	case SPKRTUNE:
+		if ((flag & FWRITE) == 0)
+			return (EACCES);
+	default:
+		break;
+	}
 
 	switch (cmd) {
 	case SPKRTONE:
