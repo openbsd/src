@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.33 2009/09/04 22:13:51 dms Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.34 2009/10/31 12:26:36 sobrado Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -1549,7 +1549,7 @@ struct em_hw {
 #define E1000_STATUS_DOCK_CI    0x00000800      /* Change in Dock/Undock state. Clear on write '0'. */
 #define E1000_STATUS_GIO_MASTER_ENABLE 0x00080000 /* Status of Master requests. */
 #define E1000_STATUS_MTXCKOK    0x00000400      /* MTX clock running OK */
-#define E1000_STATUS_PCI66      0x00000800      /* In 66Mhz slot */
+#define E1000_STATUS_PCI66      0x00000800      /* In 66MHz slot */
 #define E1000_STATUS_BUS64      0x00001000      /* In 64 bit slot */
 #define E1000_STATUS_PCIX_MODE  0x00002000      /* PCI-X mode */
 #define E1000_STATUS_PCIX_SPEED 0x0000C000      /* PCI-X bus speed */

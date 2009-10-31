@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.12 2009/10/16 00:15:49 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.13 2009/10/31 12:26:36 sobrado Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -150,7 +150,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 	switch (comp->struct_type) {
 	case KLSTRUCT_CPU:
 		cpucomp = (klcpu_t *)comp;
-		DB_PRF(("\tcpu type %x/%x %dMhz cache %dMB speed %dMhz\n",
+		DB_PRF(("\tcpu type %x/%x %dMHz cache %dMB speed %dMHz\n",
 		    cpucomp->cpu_prid, cpucomp->cpu_fpirr, cpucomp->cpu_speed,
 		    cpucomp->cpu_scachesz, cpucomp->cpu_scachespeed));
 

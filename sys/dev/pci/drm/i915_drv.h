@@ -751,9 +751,9 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
  * dummy bytes in the datastream at an increased clock rate, with both sides of
  * the link knowing how many bytes are fill.
  *
- * So, for a mode with a dotclock of 65Mhz, we would want to double the clock
- * rate to 130Mhz to get a bus rate of 1.30Ghz.  The DPLL clock rate would be
- * set to 130Mhz, and the SDVO multiplier set to 2x in this register and
+ * So, for a mode with a dotclock of 65MHz, we would want to double the clock
+ * rate to 130MHz to get a bus rate of 1.30Ghz.  The DPLL clock rate would be
+ * set to 130MHz, and the SDVO multiplier set to 2x in this register and
  * through an SDVO command.
  *
  * This register field has values of multiplication factor minus 1, with
