@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.3 2008/04/20 11:53:11 kettenis Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.4 2009/10/31 06:40:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -335,6 +335,7 @@ pdcstart(tp)
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.21 2009/04/10 20:53:51 miod Exp $	*/
+/*	$OpenBSD: magma.c,v 1.22 2009/10/31 06:40:16 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -1208,6 +1208,7 @@ mtty_start(tp)
 			}
 
 			selwakeup(&tp->t_wsel);
+			KNOTE(&tp->t_wsel.si_note, 0);
 		}
 
 		/*

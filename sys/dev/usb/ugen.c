@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.59 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: ugen.c,v 1.60 2009/10/31 06:40:17 deraadt Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -822,6 +822,7 @@ ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		wakeup(sce);
 	}
 	selwakeup(&sce->rsel);
+	KNOTE(&sce->rsel.si_note, 0);
 }
 
 void
@@ -881,6 +882,7 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		wakeup(sce);
 	}
 	selwakeup(&sce->rsel);
+	KNOTE(&sce->rsel.si_note, 0);
 }
 
 usbd_status

@@ -1,4 +1,4 @@
-/* $OpenBSD: scc.c,v 1.22 2008/08/09 16:42:29 miod Exp $ */
+/* $OpenBSD: scc.c,v 1.23 2009/10/31 06:40:16 deraadt Exp $ */
 /* $NetBSD: scc.c,v 1.58 2002/03/17 19:40:27 atatat Exp $ */
 
 /*
@@ -927,6 +927,7 @@ sccstart(tp)
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	if (tp->t_outq.c_cc == 0)
 		goto out;
@@ -946,6 +947,7 @@ sccstart(tp)
 				wakeup((caddr_t)&tp->t_outq);
 			}
 			selwakeup(&tp->t_wsel);
+			KNOTE(&tp->t_wsel.si_note, 0);
 		}
 		goto out;
 	}

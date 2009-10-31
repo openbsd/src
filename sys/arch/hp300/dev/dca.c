@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.34 2009/01/25 13:49:49 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.35 2009/10/31 06:40:16 deraadt Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -869,6 +869,7 @@ dcastart(tp)
 		if (tp->t_outq.c_cc == 0)
 			goto out;
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	if (dca->dca_lsr & LSR_TXRDY) {
 		tp->t_state |= TS_BUSY;

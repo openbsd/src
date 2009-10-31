@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.11 2009/10/13 19:33:16 pirofti Exp $ */
+/*	$OpenBSD: sscom.c,v 1.12 2009/10/31 06:40:16 deraadt Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -1378,6 +1378,7 @@ sscomstart(struct tty *tp)
 		if (tp->t_outq.c_cc == 0)
 			goto out;
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 
 	SET(tp->t_state, TS_BUSY);

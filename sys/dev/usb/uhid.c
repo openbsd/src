@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.44 2009/10/13 19:33:19 pirofti Exp $ */
+/*	$OpenBSD: uhid.c,v 1.45 2009/10/31 06:40:17 deraadt Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -234,6 +234,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 		wakeup(&sc->sc_q);
 	}
 	selwakeup(&sc->sc_rsel);
+	KNOTE(&sc->sc_rsel.si_note, 0);
 	if (sc->sc_async != NULL) {
 		DPRINTFN(3, ("uhid_intr: sending SIGIO %p\n", sc->sc_async));
 		psignal(sc->sc_async, SIGIO);

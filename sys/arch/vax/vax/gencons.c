@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencons.c,v 1.18 2008/01/23 16:37:57 jsing Exp $	*/
+/*	$OpenBSD: gencons.c,v 1.19 2009/10/31 06:40:16 deraadt Exp $	*/
 /*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
 
 /*
@@ -192,6 +192,7 @@ gencnstart(struct tty *tp)
 			wakeup((caddr_t)cl);
 		}
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 
 out:	splx(s);

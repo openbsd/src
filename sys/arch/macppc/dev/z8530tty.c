@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.8 2009/01/11 16:54:59 blambert Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.9 2009/10/31 06:40:16 deraadt Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*-
@@ -787,6 +787,7 @@ zsstart(struct tty *tp)
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 		if (tp->t_outq.c_cc == 0)
 			goto out;
 	}

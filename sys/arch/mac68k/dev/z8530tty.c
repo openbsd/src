@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.18 2009/03/15 20:40:25 miod Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.19 2009/10/31 06:40:16 deraadt Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.14 1996/12/17 20:42:43 gwr Exp $	*/
 
 /*
@@ -645,6 +645,7 @@ zsstart(tp)
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 
 	nch = ndqb(&tp->t_outq, 0);	/* XXX */

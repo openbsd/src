@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.13 2006/03/04 13:00:55 miod Exp $	*/
+/*	$OpenBSD: spif.c,v 1.14 2009/10/31 06:40:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -746,6 +746,7 @@ stty_start(tp)
 				wakeup(&tp->t_outq);
 			}
 			selwakeup(&tp->t_wsel);
+			KNOTE(&tp->t_wsel.si_note, 0);
 		}
 		if (tp->t_outq.c_cc) {
 			sp->sp_txc = ndqb(&tp->t_outq, 0);

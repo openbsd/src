@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.7 2008/06/26 05:42:11 ray Exp $ */
+/* $OpenBSD: siotty.c,v 1.8 2009/10/31 06:40:16 deraadt Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -205,6 +205,7 @@ siostart(tp)
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
+		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	if (tp->t_outq.c_cc == 0)
 		goto out;

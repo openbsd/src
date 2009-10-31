@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.25 2005/11/21 18:16:39 millert Exp $	*/
+/*	$OpenBSD: cy.c,v 1.26 2009/10/31 06:40:17 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -629,6 +629,7 @@ cystart(tp)
 			}
 
 			selwakeup(&tp->t_wsel);
+			KNOTE(&tp->t_wsel.si_note, 0);
 
 			if (tp->t_outq.c_cc == 0)
 				goto out;

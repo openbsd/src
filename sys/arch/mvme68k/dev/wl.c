@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.18 2005/11/24 22:43:16 miod Exp $ */
+/*	$OpenBSD: wl.c,v 1.19 2009/10/31 06:40:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1218,6 +1218,7 @@ cl_txintr(sc)
 					wakeup((caddr_t) &tp->t_outq);
 				}
 				selwakeup(&tp->t_wsel);
+				KNOTE(&tp->t_wsel.si_note, 0);
 			}
 			sc->cl_reg->cl_ier = sc->cl_reg->cl_ier & ~(IER_TXMPTY|IER_TXD);
 		}
