@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.16 2009/10/28 22:53:26 kettenis Exp $	*/
+/*	$OpenBSD: lom.c,v 1.17 2009/10/31 19:13:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -191,6 +191,7 @@ struct cfdriver lom_cd = {
 int	lom_read(struct lom_softc *, uint8_t, uint8_t *);
 int	lom_write(struct lom_softc *, uint8_t, uint8_t);
 void	lom_queue_cmd(struct lom_softc *, struct lom_cmd *);
+void	lom_dequeue_cmd(struct lom_softc *, struct lom_cmd *);
 int	lom1_read(struct lom_softc *, uint8_t, uint8_t *);
 int	lom1_write(struct lom_softc *, uint8_t, uint8_t);
 int	lom1_read_polled(struct lom_softc *, uint8_t, uint8_t *);
@@ -366,6 +367,13 @@ lom_queue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
 		return lom1_queue_cmd(sc, lc);
 	else
 		return lom2_queue_cmd(sc, lc);
+}
+
+void
+lom_dequeue_cmd(struct lom_softc *sc, struct lom_cmd *lc)
+{
+	if (sc->sc_type < LOM_LOMLITE2)
+		return lom1_dequeue_cmd(sc, lc);
 }
 
 int
@@ -901,6 +909,7 @@ lom_wdog_cb(void *arg, int period)
 			timeout_del(&sc->sc_wdog_to);
 		} else {
 			/* Pat the dog. */
+			lom_dequeue_cmd(sc, &sc->sc_wdog_pat);
 			sc->sc_wdog_pat.lc_cmd = LOM_IDX_WDOG_CTL | LOM_IDX_WRITE;
 			sc->sc_wdog_pat.lc_data = sc->sc_wdog_ctl;
 			lom_queue_cmd(sc, &sc->sc_wdog_pat);
