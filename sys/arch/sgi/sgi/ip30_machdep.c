@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.14 2009/10/30 08:13:57 syuu Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.15 2009/10/31 00:20:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -47,10 +47,13 @@ extern char *hw_prod;
 
 extern int	mbprint(void *, const char *);
 
+uint32_t ip30_lights_frob(uint32_t, struct trap_frame *);
 paddr_t	ip30_widget_short(int16_t, u_int);
 paddr_t	ip30_widget_long(int16_t, u_int);
 paddr_t	ip30_widget_map(int16_t, u_int, bus_addr_t *, bus_size_t *);
 int	ip30_widget_id(int16_t, u_int, uint32_t *);
+
+static	paddr_t ip30_iocbase;
 
 #ifdef MULTIPROCESSOR
 static const paddr_t mpconf =
@@ -68,7 +71,6 @@ ip30_setup()
 	uint32_t memcfg;
 	uint64_t start, count;
 #endif
-	paddr_t iocbase;
 	u_long cpuspeed;
 
 	/*
@@ -142,8 +144,9 @@ ip30_setup()
 	 * Octane and Octane2 can be told apart with a GPIO source bit
 	 * in the onboard IOC3.
 	 */
-	iocbase = ip30_widget_short(0, 15) + 0x500000;
-	if (*(volatile uint32_t *)(iocbase + IOC3_GPPR(IP30_GPIO_CLASSIC)) != 0)
+	ip30_iocbase = sys_config.console_io.bus_base + 0x500000;
+	if (*(volatile uint32_t *)
+	    (ip30_iocbase + IOC3_GPPR(IP30_GPIO_CLASSIC)) != 0)
 		hw_prod = "Octane";
 	else
 		hw_prod = "Octane2";
@@ -233,6 +236,35 @@ ip30_widget_id(int16_t nasid, u_int widget, uint32_t *wid)
 		*wid = *(uint32_t *)(wpa + (WIDGET_ID | 4));
 
 	return 0;
+}
+
+/*
+ * Fun with the lightbar
+ */
+uint32_t
+ip30_lights_frob(uint32_t hwpend, struct trap_frame *cf)
+{
+	uint32_t gpioold, gpio;
+
+	/* Light bar status: idle - white, user - red, system - both */
+
+	gpio = gpioold = *(volatile uint32_t *)(ip30_iocbase + IOC3_GPDR);
+	gpio &= ~((1 << IP30_GPIO_WHITE_LED) | (1 << IP30_GPIO_RED_LED));
+
+	if (cf->sr & SR_KSU_USER)
+		gpio |= (1 << IP30_GPIO_RED_LED);
+	else {
+		gpio |= (1 << IP30_GPIO_WHITE_LED);
+
+		/* XXX SMP check other CPU is unidle */
+		if (curproc != curcpu()->ci_schedstate.spc_idleproc)
+			gpio |= (1 << IP30_GPIO_RED_LED);
+	}
+
+	if (gpio != gpioold)
+		*(volatile uint32_t *)(ip30_iocbase + IOC3_GPDR) = gpio;
+
+	return 0;	/* Real clock int handler will claim the interrupt. */
 }
 
 #ifdef MULTIPROCESSOR

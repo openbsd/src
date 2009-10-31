@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.14 2009/10/26 18:11:27 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.15 2009/10/31 00:20:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -73,6 +73,8 @@ void	xheart_intr_makemasks(void);
 void	xheart_setintrmask(int);
 void	xheart_splx(int);
 
+extern uint32_t ip30_lights_frob(uint32_t, struct trap_frame *);
+
 /*
  * HEART interrupt handling declarations: 64 sources; 5 levels.
  */
@@ -89,6 +91,7 @@ struct intrhand *xheart_intrhand[HEART_NINTS];
 #define	INTPRI_HEART_2	(INTPRI_CLOCK + 1)
 #define	INTPRI_HEART_0	(INTPRI_HEART_2 + 1)
 #endif
+#define	INTPRI_HEART_LEDS	(INTPRI_HEART_0 + 1)
 
 uint64_t xheart_intem;
 uint64_t xheart_imask[NIPLS];
@@ -163,6 +166,9 @@ xheart_attach(struct device *parent, struct device *self, void *aux)
 		set_intr(INTPRI_HEART_1, CR_INT_1, xheart_intr_handler);
 #endif
 		set_intr(INTPRI_HEART_0, CR_INT_0, xheart_intr_handler);
+
+		set_intr(INTPRI_HEART_LEDS, CR_INT_5, ip30_lights_frob);
+
 		register_splx_handler(xheart_splx);
 	}
 }

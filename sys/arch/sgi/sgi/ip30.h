@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30.h,v 1.4 2009/10/30 08:13:57 syuu Exp $	*/
+/*	$OpenBSD: ip30.h,v 1.5 2009/10/31 00:20:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -38,8 +38,8 @@
  * On-board IOC3 specific GPIO registers wiring
  */
 
-/* LED bar control: 0 to dim, 1 to lit */
-#define	IP30_GPIO_WHITE_LED		0
+/* Light bar control: 0 to dim, 1 to lit */
+#define	IP30_GPIO_WHITE_LED		0	/* actually lightbulbs */
 #define	IP30_GPIO_RED_LED		1
 /* Classic Octane (1) vs Octane 2 (0), read only */
 #define	IP30_GPIO_CLASSIC		2
