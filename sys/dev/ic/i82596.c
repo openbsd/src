@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.32 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.33 2009/10/31 14:31:11 deraadt Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -774,6 +774,7 @@ i82596_tint(sc, scbstatus)
 		 * Check SQE and DEFERRED?
 		 * What if more than one bit is set?
 		 */
+#ifdef I82596_DEBUG
 		if (status & IE_STAT_ABORT)
 			printf("%s: send aborted\n", sc->sc_dev.dv_xname);
 		else if (status & IE_XS_NOCARRIER)
@@ -782,9 +783,13 @@ i82596_tint(sc, scbstatus)
 			printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
 		else if (status & IE_XS_UNDERRUN)
 			printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
-		else if (status & IE_XS_EXCMAX) {
+		else
+#endif /* I82596_DEBUG */
+		if (status & IE_XS_EXCMAX) {
+#ifdef I82596_DEBUG
 			printf("%s: too many collisions\n",
 				sc->sc_dev.dv_xname);
+#endif /* I82596_DEBUG */
 			sc->sc_arpcom.ac_if.if_collisions += 16;
 		}
 	}
@@ -1444,9 +1449,11 @@ ie_run_tdr(sc, cmd)
 	clocks = result & IE_TDR_TIME;
 	if (result & 0x10000)
 		printf("%s: TDR command failed\n", sc->sc_dev.dv_xname);
-	else if (result & IE_TDR_XCVR)
+	else if (result & IE_TDR_XCVR) {
+#ifdef I82596_DEBUG
 		printf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
-	else if (result & IE_TDR_OPEN)
+#endif
+	} else if (result & IE_TDR_OPEN)
 		printf("%s: TDR detected an open %d clock%s away\n",
 		    sc->sc_dev.dv_xname, clocks, clocks == 1? "":"s");
 	else if (result & IE_TDR_SHORT)

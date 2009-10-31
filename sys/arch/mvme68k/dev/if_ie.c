@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.38 2009/03/01 21:37:41 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.39 2009/10/31 14:31:11 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr. 
@@ -692,19 +692,14 @@ ietint(sc)
 		sc->sc_arpcom.ac_if.if_opackets++;
 		sc->sc_arpcom.ac_if.if_collisions += status & IE_XS_MAXCOLL;
 	} else if (status & IE_STAT_ABORT) {
-		printf("%s: send aborted\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	} else if (status & IE_XS_NOCARRIER) {
-		printf("%s: no carrier\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	} else if (status & IE_XS_LOSTCTS) {
-		printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	} else if (status & IE_XS_UNDERRUN) {
-		printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	} else if (status & IE_XS_EXCMAX) {
-		printf("%s: too many collisions\n", sc->sc_dev.dv_xname);
 		sc->sc_arpcom.ac_if.if_collisions += 16;
 		sc->sc_arpcom.ac_if.if_oerrors++;
 	}
@@ -1496,9 +1491,11 @@ run_tdr(sc, cmd)
 
 	if (result & 0x10000)
 		printf("%s: TDR command failed\n", sc->sc_dev.dv_xname);
-	else if (result & IE_TDR_XCVR)
+	else if (result & IE_TDR_XCVR) {
+#ifdef IEDEBUG
 		printf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
-	else if (result & IE_TDR_OPEN)
+#endif
+	} else if (result & IE_TDR_OPEN)
 		printf("%s: TDR detected an open %d clocks away\n",
 		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
 	else if (result & IE_TDR_SHORT)
