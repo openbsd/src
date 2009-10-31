@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.96 2009/10/26 18:38:32 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.97 2009/10/31 11:52:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -388,18 +388,16 @@ wpi_detach(struct device *self, int flags)
 {
 	struct wpi_softc *sc = (struct wpi_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int s, qid;
+	int qid;
 
-	s = splnet();
 	timeout_del(&sc->calib_to);
 
 	/* Uninstall interrupt handler. */
 	if (sc->sc_ih != NULL)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 
-	ieee80211_ifdetach(ifp);
- 	if_detach(ifp);
-	splx(s);
+	if (sc->powerhook != NULL)
+		powerhook_disestablish(sc->powerhook);
 
 	/* Free DMA resources. */
 	wpi_free_rx_ring(sc, &sc->rxq);
@@ -408,16 +406,16 @@ wpi_detach(struct device *self, int flags)
 	wpi_free_shared(sc);
 	wpi_free_fwmem(sc);
 
+	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
+
 #ifndef SMALL_KERNEL
 	/* Detach the thermal sensor. */
 	sensor_detach(&sc->sensordev, &sc->sensor);
 	sensordev_deinstall(&sc->sensordev);
 #endif
 
-	if (sc->powerhook != NULL)
-		powerhook_disestablish(sc->powerhook);
-
-	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
+	ieee80211_ifdetach(ifp);
+	if_detach(ifp);
 
 	return 0;
 }

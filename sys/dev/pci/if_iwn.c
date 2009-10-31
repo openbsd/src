@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.72 2009/10/28 18:42:47 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.73 2009/10/31 11:52:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -667,18 +667,16 @@ iwn_detach(struct device *self, int flags)
 {
 	struct iwn_softc *sc = (struct iwn_softc *)self;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	int s, qid;
+	int qid;
 
-	s = splnet();
 	timeout_del(&sc->calib_to);
 
 	/* Uninstall interrupt handler. */
 	if (sc->sc_ih != NULL)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 
-	ieee80211_ifdetach(ifp);
- 	if_detach(ifp);
-	splx(s);
+	if (sc->powerhook != NULL)
+		powerhook_disestablish(sc->powerhook);
 
 	/* Free DMA resources. */
 	iwn_free_rx_ring(sc, &sc->rxq);
@@ -690,16 +688,16 @@ iwn_detach(struct device *self, int flags)
 		iwn_free_ict(sc);
 	iwn_free_fwmem(sc);
 
+	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
+
 #ifndef SMALL_KERNEL
 	/* Detach the thermal sensor. */
 	sensor_detach(&sc->sensordev, &sc->sensor);
 	sensordev_deinstall(&sc->sensordev);
 #endif
 
-	if (sc->powerhook != NULL)
-		powerhook_disestablish(sc->powerhook);
-
-	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
+	ieee80211_ifdetach(ifp);
+	if_detach(ifp);
 
 	return 0;
 }
