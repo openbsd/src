@@ -1,4 +1,4 @@
-/* $OpenBSD: ap_md5c.c,v 1.10 2005/03/28 21:03:33 niallo Exp $ */
+/* $OpenBSD: ap_md5c.c,v 1.11 2009/10/31 13:29:07 sobrado Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -250,7 +250,7 @@ ap_MD5Encode(const unsigned char *pw, const unsigned char *salt, char *result,
 
 	/*
 	* And now, just to make sure things don't run too fast..
-	* On a 60 Mhz Pentium this takes 34 msec, so you would
+	* On a 60 MHz Pentium this takes 34 msec, so you would
 	* need 30 seconds to build a 1000 entry dictionary...
 	*/
 	for (i = 0; i < 1000; i++) {
