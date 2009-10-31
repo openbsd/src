@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.18 2009/10/31 06:40:17 deraadt Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.19 2009/10/31 12:00:08 fgsch Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*
@@ -348,7 +348,7 @@ zsopen(dev, flags, mode, p)
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
 	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (p->p_ucred->cr_uid != 0) )
+	    && (suser(p, 0) != 0) )
 	{
 		return (EBUSY);
 	}

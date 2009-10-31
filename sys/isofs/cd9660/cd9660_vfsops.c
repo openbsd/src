@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.50 2009/07/09 22:29:55 thib Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.51 2009/10/31 12:00:08 fgsch Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -178,7 +178,7 @@ cd9660_mount(mp, path, data, ndp, p)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (suser(p, 0) != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
 		if (error) {

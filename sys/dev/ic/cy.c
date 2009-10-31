@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.26 2009/10/31 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: cy.c,v 1.27 2009/10/31 12:00:07 fgsch Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -377,7 +377,7 @@ cyopen(dev, flag, mode, p)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0) {
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0) {
 		return (EBUSY);
 	} else {
 		s = spltty();

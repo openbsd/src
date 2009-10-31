@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.94 2009/09/14 04:10:42 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.95 2009/10/31 12:00:08 fgsch Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -849,7 +849,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct proc *p)
 			wsdisplayparam(tp, &tp->t_termios);
 			ttsetwater(tp);
 		} else if ((tp->t_state & TS_XCLUDE) != 0 &&
-			   p->p_ucred->cr_uid != 0)
+			   suser(p, 0) != 0)
 			return (EBUSY);
 		tp->t_state |= TS_CARR_ON;
 

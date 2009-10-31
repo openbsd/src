@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencons.c,v 1.19 2009/10/31 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: gencons.c,v 1.20 2009/10/31 12:00:07 fgsch Exp $	*/
 /*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ gencnopen(dev, flag, mode, p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		gencnparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state & TS_XCLUDE && suser(p, 0) != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	if (unit == 0)

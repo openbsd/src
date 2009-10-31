@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.41 2009/10/30 16:41:10 nicm Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.42 2009/10/31 12:00:08 fgsch Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ ptsopen(dev_t dev, int flag, int devtype, struct proc *p)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state&TS_XCLUDE && suser(p, 0) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		tp->t_state |= TS_CARR_ON;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.39 2008/09/23 04:44:31 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.40 2009/10/31 12:00:07 fgsch Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -463,7 +463,7 @@ vxopen(dev_t dev, int flag, int mode, struct proc *p)
 		(void)vx_mctl(dev, TIOCM_DTR | TIOCM_RTS, DMSET);
 
 		tp->t_state |= TS_CARR_ON;
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state & TS_XCLUDE && suser(p, 0) != 0) {
 		splx(s);
 		return (EBUSY);
 	}

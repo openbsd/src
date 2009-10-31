@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.8 2009/10/31 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: scif.c,v 1.9 2009/10/31 12:00:07 fgsch Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -698,7 +698,7 @@ scifopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p, 0) != 0)
 		return (EBUSY);
 
 	s = spltty();

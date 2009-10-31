@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.22 2009/10/31 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: magma.c,v 1.23 2009/10/31 12:00:07 fgsch Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -953,7 +953,7 @@ mttyopen(dev, flags, mode, p)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0) {
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && suser(p, 0) != 0) {
 		return (EBUSY);	/* superuser can break exclusive access */
 	} else {
 		s = spltty();

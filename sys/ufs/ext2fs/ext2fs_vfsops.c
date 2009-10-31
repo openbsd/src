@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.53 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.54 2009/10/31 12:00:08 fgsch Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.
 			 */
-			if (p->p_ucred->cr_uid != 0) {
+			if (suser(p, 0) != 0) {
 				devvp = ump->um_devvp;
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
@@ -267,7 +267,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (suser(p, 0) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhu.c,v 1.13 2009/10/31 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: dhu.c,v 1.14 2009/10/31 12:00:07 fgsch Exp $	*/
 /*	$NetBSD: dhu.c,v 1.19 2000/06/04 06:17:01 matt Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
@@ -438,7 +438,7 @@ dhuopen(dev, flag, mode, p)
 		}
 		(void) dhuparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) && suser(curproc, 0) != 0)
 		return (EBUSY);
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dhumctl(sc, line, DML_DTR|DML_RTS, DMBIS) & DML_DCD)

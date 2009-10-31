@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.55 2009/10/31 06:40:16 deraadt Exp $ */
+/*	$OpenBSD: cl.c,v 1.56 2009/10/31 12:00:07 fgsch Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -600,7 +600,7 @@ clopen(dev, flag, mode, p)
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh, CL_CAR,
 			    save);
 		}
-	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state & TS_XCLUDE && suser(p, 0) != 0) {
 		splx(s);
 		return EBUSY;
 	}

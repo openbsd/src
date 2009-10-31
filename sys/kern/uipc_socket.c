@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.78 2009/08/10 16:49:38 thib Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.79 2009/10/31 12:00:08 fgsch Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
 	so->so_type = type;
-	if (p->p_ucred->cr_uid == 0)
+	if (suser(p, 0) == 0)
 		so->so_state = SS_PRIV;
 	so->so_ruid = p->p_cred->p_ruid;
 	so->so_euid = p->p_ucred->cr_uid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.54 2009/08/30 15:31:24 thib Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.55 2009/10/31 12:00:08 fgsch Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -130,7 +130,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 			 * If upgrade to read-write by non-root, then verify
 			 * that user has necessary permissions on the device.
 			 */
-			if (p->p_ucred->cr_uid != 0) {
+			if (suser(p, 0) != 0) {
 				devvp = pmp->pm_devvp;
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
@@ -180,7 +180,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (suser(p, 0) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;

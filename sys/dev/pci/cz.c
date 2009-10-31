@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.12 2009/10/31 06:40:17 deraadt Exp $ */
+/*	$OpenBSD: cz.c,v 1.13 2009/10/31 12:00:08 fgsch Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -964,7 +964,7 @@ czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    suser(p, 0) != 0)
 		return (EBUSY);
 
 	s = spltty();

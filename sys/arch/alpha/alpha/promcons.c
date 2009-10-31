@@ -1,4 +1,4 @@
-/*	$OpenBSD: promcons.c,v 1.10 2009/10/31 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: promcons.c,v 1.11 2009/10/31 12:00:05 fgsch Exp $	*/
 /*	$NetBSD: promcons.c,v 1.5 1996/11/13 22:20:55 cgd Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ promopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+	} else if (tp->t_state&TS_XCLUDE && suser(p, 0) != 0) {
 		splx(s);
 		return EBUSY;
 	}

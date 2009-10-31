@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.8 2009/10/31 06:40:16 deraadt Exp $ */
+/* $OpenBSD: siotty.c,v 1.9 2009/10/31 12:00:05 fgsch Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -363,7 +363,7 @@ sioopen(dev, flag, mode, p)
 		tp = sc->sc_tty = ttymalloc();
 	}		
 	else if ((tp->t_state & TS_ISOPEN) && (tp->t_state & TS_XCLUDE)
-	    && p->p_ucred->cr_uid != 0)
+	    && suser(p, 0) != 0)
 		return EBUSY;
 
 	tp->t_oproc = siostart;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl.c,v 1.7 2009/10/31 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: dl.c,v 1.8 2009/10/31 12:00:07 fgsch Exp $	*/
 /*	$NetBSD: dl.c,v 1.11 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -309,7 +309,7 @@ dlopen(dev, flag, mode, p)
 		dlparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 		
-	} else if ((tp->t_state & TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if ((tp->t_state & TS_XCLUDE) && suser(p, 0) != 0)
 		return EBUSY;
 
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
