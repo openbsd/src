@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.16 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.17 2009/11/01 23:16:39 nicm Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -283,6 +283,16 @@ db_build(char **ifiles)
 			if (p > t && (*p == (info ? ',' : ':') || *p == '|')) {
 				key.size = p - t;
 				key.data = t;
+
+				/*
+				 * If this is the last entry and contains any
+				 * spaces, it is a description rather than an
+				 * alias, so skip it and break.
+				 */
+				if (*p != '|' && 
+				    memchr(key.data, ' ', key.size) != NULL)
+					break;
+				
 				switch(capdbp->put(capdbp,
 				    &key, &data, R_NOOVERWRITE)) {
 				case -1:
