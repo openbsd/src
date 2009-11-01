@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.22 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.23 2009/11/01 23:06:03 fgsch Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -743,10 +743,6 @@ mesh_status(struct mesh_softc *sc, struct mesh_scb *scb)
 
 	sc->sc_nextstate = MESH_MSGIN;
 }
-
-#define IS1BYTEMSG(m) (((m) != 1 && (m) < 0x20) || (m) & 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 1)
 
 void
 mesh_msgin(struct mesh_softc *sc, struct mesh_scb *scb)

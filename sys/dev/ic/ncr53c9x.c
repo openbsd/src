@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.40 2008/11/24 00:31:35 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.41 2009/11/01 23:06:03 fgsch Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -1412,10 +1412,6 @@ abort:
 	ncr53c9x_sched_msgout(SEND_ABORT);
 	return (1);
 }
-
-#define IS1BYTEMSG(m) (((m) != 1 && (m) < 0x20) || (m) & 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 1)
 
 static inline int
 __verify_msg_format(u_char *p, int len)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380sbc.c,v 1.21 2008/11/24 00:31:35 krw Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.22 2009/11/01 23:06:03 fgsch Exp $	*/
 /*	$NetBSD: ncr5380sbc.c,v 1.13 1996/10/13 01:37:25 christos Exp $	*/
 
 /*
@@ -1529,10 +1529,6 @@ success:
  * SYNCHRONOUS DATA TRANSFER REQUEST	if appropriate
  * NOOP				if nothing else fits the bill ...
  */
-
-#define IS1BYTEMSG(m) (((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 0x01)
 
 /*
  * Precondition:

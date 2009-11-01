@@ -1,4 +1,8 @@
-/*	$OpenBSD: scsi_message.h,v 1.8 2006/05/11 00:45:59 krw Exp $	*/
+/*	$OpenBSD: scsi_message.h,v 1.9 2009/11/01 23:06:03 fgsch Exp $	*/
+
+#define IS1BYTEMSG(m)	(((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
+#define IS2BYTEMSG(m)	(((m) & 0xf0) == 0x20)
+#define ISEXTMSG(m)	((m) == 0x01)
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */

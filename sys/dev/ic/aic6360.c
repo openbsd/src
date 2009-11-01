@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.19 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.20 2009/11/01 23:06:03 fgsch Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -889,10 +889,6 @@ aic_dequeue(struct aic_softc *sc, struct aic_acb *acb)
 /*
  * INTERRUPT/PROTOCOL ENGINE
  */
-
-#define IS1BYTEMSG(m) (((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 0x01)
 
 /*
  * Precondition:

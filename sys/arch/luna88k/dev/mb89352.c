@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.9 2009/09/18 19:17:00 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.10 2009/11/01 23:06:03 fgsch Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -850,10 +850,6 @@ spc_dequeue(sc, acb)
 /*
  * INTERRUPT/PROTOCOL ENGINE
  */
-
-#define IS1BYTEMSG(m) (((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 0x01)
 
 /*
  * Precondition:
