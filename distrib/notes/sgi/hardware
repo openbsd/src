@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.9 2009/10/26 18:38:09 miod Exp $
+dnl	$OpenBSD: hardware,v 1.10 2009/11/01 19:17:54 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machines:
 	IP27 class machines:
 		Origin 200, Onyx 2
@@ -20,6 +20,7 @@ OpenBSD/MACHINE OSREV runs on the following machines:
 Supported devices {:-include-:}:
 - Ethernet Adapters
         built-in O2 Mace Ethernet Controller (mec)
+	IOC3 Ethernet Controller (built-in on IP27, IP30 and some IP35) (iec)
 	Broadcom BCM570x (a.k.a. Tigon3) based PCI adapters (bge) including:
 		3Com 3c996-SX
 		3Com 3c996B-T

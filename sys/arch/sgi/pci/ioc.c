@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.22 2009/10/26 18:13:34 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.23 2009/11/01 19:17:56 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -145,7 +145,6 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	int dual_irq, shared_handler;
 	int device_mask;
 	bus_addr_t rtcbase;
-	struct device *child;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
 	    &memt, &memh, NULL, &memsize, 0)) {
@@ -199,6 +198,9 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	 * board.
 	 */
 
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_GPCR_S,
+	    IOC3_GPCR_MLAN);
+	(void)bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC3_GPCR_S);
 	config_search(ioc_search_onewire, self, aux);
 
 	/*
@@ -378,6 +380,8 @@ establish:
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IES, 0x0);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR,
 	    bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR));
+	if (ISSET(device_mask, 1 << IOCDEV_EF))
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_ENET_IER, 0);
 
 	/*
 	 * Attach other sub-devices.
@@ -395,22 +399,11 @@ establish:
 		ioc_attach_child(self, "com", IOC3_UARTB_BASE, IOCDEV_SERIAL_B);
 	}
 	if (ISSET(device_mask, 1 << IOCDEV_KBC))
-		ioc_attach_child(self, "iockbc", IOC3_KBC_BASE, IOCDEV_KBC);
-	if (ISSET(device_mask, 1 << IOCDEV_EF)) {
-		child = ioc_attach_child(self, "iec", IOC3_EF_BASE, IOCDEV_EF);
-		if (dual_irq != 0 && child == NULL) {
-			/*
-			 * If we did not attach an ethernet driver and
-			 * this is the dual interrupt design, unhook the
-			 * network interrupt, because ARCS might have left
-			 * interrupt conditions pending, which will not be
-			 * acknowledged at the IOC3 driver level.
-			 */
-			pci_intr_disestablish(sc->sc_pc, sc->sc_ih1);
-		}
-	}
+		ioc_attach_child(self, "iockbc", 0, IOCDEV_KBC);
+	if (ISSET(device_mask, 1 << IOCDEV_EF))
+		ioc_attach_child(self, "iec", 0, IOCDEV_EF);
 	if (ISSET(device_mask, 1 << IOCDEV_LPT))
-		ioc_attach_child(self, "lpt", IOC3_LPT_BASE, IOCDEV_LPT);
+		ioc_attach_child(self, "lpt", 0, IOCDEV_LPT);
 	if (ISSET(device_mask, 1 << IOCDEV_RTC))
 		ioc_attach_child(self, "dsrtc", rtcbase, IOCDEV_RTC);
 

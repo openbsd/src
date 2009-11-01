@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.14 2009/10/26 18:13:31 miod Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.15 2009/11/01 19:17:56 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -56,6 +56,7 @@ com0		at ioc? base 0x00020178
 com1		at ioc? base 0x00020170
 com*		at ioc?
 dsrtc0		at ioc?
+iec*		at ioc?
 
 onewire*	at ioc?
 option ONEWIREVERBOSE
