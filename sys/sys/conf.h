@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.94 2009/06/03 14:45:55 jj Exp $	*/
+/*	$OpenBSD: conf.h,v 1.95 2009/11/01 20:14:12 nicm Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -355,12 +355,12 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	dev_init(c,n,mmap), 0, D_KQFILTER, dev_init(c,n,kqfilter) }
 
-/* open, close, read, write, ioctl, poll, nokqfilter */
+/* open, close, read, write, ioctl, poll, kqfilter */
 #define cdev_midi_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
+	(dev_type_mmap((*))) enodev, 0, D_KQFILTER, dev_init(c,n,kqfilter) }
 
 #define	cdev_svr4_net_init(c,n) { \
 	dev_init(c,n,open), (dev_type_close((*))) enodev, \
