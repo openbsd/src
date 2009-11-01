@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch_cache.c,v 1.14 2009/06/06 18:28:09 schwarze Exp $ */
+/*	$OpenBSD: ypmatch_cache.c,v 1.15 2009/11/01 00:08:54 schwarze Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -200,9 +200,8 @@ again:
 		(*outval)[*outvallen] = '\0';
 #ifdef YPMATCHCACHE
 		if (strcmp(_yp_domain, indomain) == 0)
-			if (!ypmatch_add(inmap, inkey, inkeylen,
-			    *outval, *outvallen))
-				r = YPERR_RESRC;
+			(void)ypmatch_add(inmap, inkey, inkeylen,
+			    *outval, *outvallen);
 #endif
 	}
 out:
@@ -253,16 +252,14 @@ again:
 	}
 	if (!(r = ypprot_err(yprkv.stat))) {
 		*outkeylen = yprkv.key.keydat_len;
-		if ((*outkey = malloc(*outkeylen + 1)) == NULL)
+		*outvallen = yprkv.val.valdat_len;
+		if ((*outkey = malloc(*outkeylen + 1)) == NULL ||
+		    (*outval = malloc(*outvallen + 1)) == NULL) {
+			free(*outkey);
 			r = YPERR_RESRC;
-		else {
+		} else {
 			(void)memcpy(*outkey, yprkv.key.keydat_val, *outkeylen);
 			(*outkey)[*outkeylen] = '\0';
-		}
-		*outvallen = yprkv.val.valdat_len;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
-			r = YPERR_RESRC;
-		else {
 			(void)memcpy(*outval, yprkv.val.valdat_val, *outvallen);
 			(*outval)[*outvallen] = '\0';
 		}
