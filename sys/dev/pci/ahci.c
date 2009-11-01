@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.152 2009/10/24 14:31:49 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.153 2009/11/01 01:50:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -422,12 +422,19 @@ const struct ahci_device *ahci_lookup_device(struct pci_attach_args *);
 int			ahci_no_match(struct pci_attach_args *);
 int			ahci_vt8251_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
+void			ahci_ati_sb_idetoahci(struct ahci_softc *,
+			    struct pci_attach_args *pa);
 int			ahci_ati_sb600_attach(struct ahci_softc *,
+			    struct pci_attach_args *);
+int			ahci_amd_hudson2_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 int			ahci_nvidia_mcp_attach(struct ahci_softc *,
 			    struct pci_attach_args *);
 
 static const struct ahci_device ahci_devices[] = {
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_HUDSON2_SATA,
+	    NULL,		ahci_amd_hudson2_attach },
+
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SB600_SATA,
 	    NULL,		ahci_ati_sb600_attach },
 	{ PCI_VENDOR_ATI,	PCI_PRODUCT_ATI_SBX00_SATA_1,
@@ -578,8 +585,8 @@ ahci_vt8251_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 	return (0);
 }
 
-int
-ahci_ati_sb600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+void
+ahci_ati_sb_idetoahci(struct ahci_softc *sc, struct pci_attach_args *pa)
 {
 	pcireg_t			magic;
 
@@ -599,8 +606,22 @@ ahci_ati_sb600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
 		pci_conf_write(pa->pa_pc, pa->pa_tag,
 		    AHCI_PCI_ATI_SB600_MAGIC, magic);
 	}
+}
+
+int
+ahci_ati_sb600_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
+	ahci_ati_sb_idetoahci(sc, pa);
 
 	sc->sc_flags |= AHCI_F_IGN_FR;
+
+	return (0);
+}
+
+int
+ahci_amd_hudson2_attach(struct ahci_softc *sc, struct pci_attach_args *pa)
+{
+	ahci_ati_sb_idetoahci(sc, pa);
 
 	return (0);
 }
