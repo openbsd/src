@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.38 2009/10/10 15:03:01 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.39 2009/11/01 23:20:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -476,8 +476,8 @@ status_job(struct client *c, char **iptr)
 
 	job = job_get(&c->status_jobs, cmd);
 	if (job == NULL) {
-		job = job_add(
-		    &c->status_jobs, c, cmd, status_job_callback, xfree, NULL);
+		job = job_add(&c->status_jobs,
+		    JOB_PERSIST, c, cmd, status_job_callback, xfree, NULL);
 		job_run(job);
 	}
 	if (job->data == NULL)

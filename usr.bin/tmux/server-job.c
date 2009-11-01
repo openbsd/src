@@ -1,4 +1,4 @@
-/* $OpenBSD: server-job.c,v 1.2 2009/10/27 13:03:33 nicm Exp $ */
+/* $OpenBSD: server-job.c,v 1.3 2009/11/01 23:20:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -64,7 +64,10 @@ restart:
 
 		if (job->callbackfn != NULL) {
 			job->callbackfn(job);
-			goto restart;	/* could be freed by callback */
+			if ((!job->flags & JOB_PERSIST)) {
+				job_free(job);
+				goto restart;
+			}
 		}
 	}
 }
