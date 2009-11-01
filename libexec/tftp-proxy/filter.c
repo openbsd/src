@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.4 2009/09/01 13:45:13 sthen Exp $ */
+/*	$OpenBSD: filter.c,v 1.5 2009/11/01 19:28:09 chl Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -160,7 +160,6 @@ int
 prepare_commit(u_int32_t id)
 {
 	char an[PF_ANCHOR_NAME_SIZE];
-	int i;
 
 	memset(&pft, 0, sizeof pft);
 	memset(&pfte, 0, sizeof pfte);
