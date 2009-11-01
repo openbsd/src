@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.31 2009/10/28 18:42:47 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.32 2009/11/01 12:01:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -461,10 +461,10 @@ struct iwn_rxon {
 
 	uint8_t		air;
 	uint16_t	rxchain;
-#define IWN_RXCHAIN_FORCE		(1 << 0)
-#define IWN_RXCHAIN_VALID(x)		((x) <<  1)
-#define IWN_RXCHAIN_SEL(x)		((x) <<  4)
-#define IWN_RXCHAIN_MIMO(x)		((x) <<  7)
+#define IWN_RXCHAIN_DRIVER_FORCE	(1 << 0)
+#define IWN_RXCHAIN_VALID(x)		(((x) & IWN_ANT_ABC) << 1)
+#define IWN_RXCHAIN_FORCE_SEL(x)	(((x) & IWN_ANT_ABC) << 4)
+#define IWN_RXCHAIN_FORCE_MIMO_SEL(x)	(((x) & IWN_ANT_ABC) << 7)
 #define IWN_RXCHAIN_IDLE_COUNT(x)	((x) << 10)
 #define IWN_RXCHAIN_MIMO_COUNT(x)	((x) << 12)
 #define IWN_RXCHAIN_MIMO_FORCE		(1 << 14)
