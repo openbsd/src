@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
+/*	$OpenBSD: packet.c,v 1.3 2009/11/01 11:09:58 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -270,7 +270,8 @@ session_recv_packet(int fd, short event, void *bula)
 	struct ldpd_conf	*xconf = bula;
 	struct iface		*iface;
 	struct nbr		*nbr = NULL;
-	int			 newfd, len;
+	int			 newfd;
+	socklen_t		 len = sizeof(src);
 
 	if (event != EV_READ)
 		return;
