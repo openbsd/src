@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.35 2009/08/10 17:47:23 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.36 2009/11/01 12:08:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -338,11 +338,11 @@ rt2860_detach(void *xsc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int qid;
 
-	ieee80211_ifdetach(ifp);	/* free all nodes */
-	if_detach(ifp);
-
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
+
+	ieee80211_ifdetach(ifp);	/* free all nodes */
+	if_detach(ifp);
 
 	for (qid = 0; qid < 6; qid++)
 		rt2860_free_tx_ring(sc, &sc->txq[qid]);

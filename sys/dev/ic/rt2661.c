@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.50 2009/08/10 17:47:23 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.51 2009/11/01 12:08:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -354,11 +354,11 @@ rt2661_detach(void *xsc)
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->amrr_to);
 
-	ieee80211_ifdetach(ifp);	/* free all nodes */
-	if_detach(ifp);
-
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
+
+	ieee80211_ifdetach(ifp);	/* free all nodes */
+	if_detach(ifp);
 
 	for (ac = 0; ac < 4; ac++)
 		rt2661_free_tx_ring(sc, &sc->txq[ac]);
