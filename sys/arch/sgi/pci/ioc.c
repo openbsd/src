@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.23 2009/11/01 19:17:56 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.24 2009/11/02 17:20:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -439,7 +439,7 @@ ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 		 * XXX queried by sending the appropriate L1 command
 		 * XXX to the L1 UART. This L1 code is not written yet.
 		 */
-		bzero(iaa.iaa_enaddr, 6);
+		memset(iaa.iaa_enaddr, 0xff, 6);
 	}
 
 	return config_found_sm(ioc, &iaa, ioc_print, ioc_search_mundane);
