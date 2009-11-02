@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.10 2009/10/11 12:59:29 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.11 2009/11/02 05:54:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -197,6 +197,18 @@
  */
 #define AK4358_ATT(chan)	((chan) <= 5 ? 0x4 + (chan) : 0xb - 6 + (chan))
 #define   AK4358_ATT_EN		0x80
+
+/*
+ * AK5365 control registers
+ */
+#define AK5365_RST		0x00
+#define   AK5365_RST_NORM	0x01
+#define AK5365_SRC		0x01
+#define   AK5365_SRC_MASK	0x07
+#define AK5365_CTRL		0x02
+#define   AK5365_CTRL_MUTE	0x01
+#define   AK5365_CTRL_I2S	0x08
+#define AK5365_ATT(chan)	(0x4 + (chan))
 
 /*
  * default formats
