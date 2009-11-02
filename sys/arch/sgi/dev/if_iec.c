@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.2 2009/11/02 17:51:21 miod Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.3 2009/11/02 22:16:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -639,8 +639,8 @@ iec_init(struct ifnet *ifp)
 	bus_space_write_4(st, sh, IOC3_ENET_RPIR,
 	    (IEC_NRXDESC * sizeof(uint64_t)) | IOC3_ENET_PIR_SET);
 
-	/* Do not set up low water RX threshold. */
-	bus_space_write_4(st, sh, IOC3_ENET_RCSR, 0);
+	/* Interrupt as soon as available RX desc reach this limit */
+	bus_space_write_4(st, sh, IOC3_ENET_RCSR, IEC_NRXDESC - 1);
 	/* Set up RX timer to interrupt immediately upon reception. */
 	bus_space_write_4(st, sh, IOC3_ENET_RTR, 0);
 
@@ -658,7 +658,8 @@ iec_init(struct ifnet *ifp)
 	bus_space_write_4(st, sh, IOC3_ENET_MCR, IOC3_ENET_MCR_TX_DMA |
 	    IOC3_ENET_MCR_TX | IOC3_ENET_MCR_RX_DMA | IOC3_ENET_MCR_RX |
 	    ((IEC_RXD_BUFOFFSET >> 1) << IOC3_ENET_MCR_RXOFF_SHIFT));
-	bus_space_write_4(st, sh, IOC3_ENET_IER, IOC3_ENET_ISR_RX_TIMER |
+	bus_space_write_4(st, sh, IOC3_ENET_IER,
+	    IOC3_ENET_ISR_RX_TIMER | IOC3_ENET_ISR_RX_THRESHOLD |
 	    (IOC3_ENET_ISR_TX_ALL & ~IOC3_ENET_ISR_TX_EMPTY));
 	(void)bus_space_read_4(st, sh, IOC3_ENET_IER);
 
@@ -1197,12 +1198,13 @@ iec_intr(void *arg)
 
 		handled = 1;
 
-		if (statack & IOC3_ENET_ISR_RX_TIMER) {
+		if (statack &
+		    (IOC3_ENET_ISR_RX_TIMER | IOC3_ENET_ISR_RX_THRESHOLD)) {
 			iec_rxintr(sc, statreg);
 		}
 
 		if (statack & IOC3_ENET_ISR_TX_ALL) {
-			iec_txintr(sc, statreg);
+			iec_txintr(sc, statreg & IOC3_ENET_ISR_TX_ALL);
 			sent = 1;
 		}
 	}
@@ -1331,6 +1333,8 @@ iec_txintr(struct iec_softc *sc, uint32_t stat)
 	    i = IEC_NEXTTX(i), sc->sc_txpending--) {
 
 		if ((stat & IOC3_ENET_ISR_TX_EXPLICIT) == 0) {
+			if (stat == IOC3_ENET_ISR_TX_EMPTY)
+				continue;
 			if (once == 0) {
 				printf("%s: TX error: txstat = %08x\n",
 				    DEVNAME(sc), stat);
