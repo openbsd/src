@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.28 2009/11/02 13:41:25 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.29 2009/11/02 13:42:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -46,7 +46,6 @@ struct imsgbuf *
 client_init(char *path, int cmdflags, int flags)
 {
 	struct sockaddr_un	sa;
-	struct stat		sb;
 	size_t			size;
 	int			fd, mode;
 	char		      	rpathbuf[MAXPATHLEN];
