@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.83 2009/06/06 18:31:42 pyr Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.84 2009/11/02 20:20:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -90,6 +90,7 @@ enum imsg_type {
 	IMSG_CTL_KROUTE_ADDR,
 	IMSG_CTL_IFINFO,
 	IMSG_CTL_END,
+	IMSG_CTL_LOG_VERBOSE,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
 	IMSG_IFINFO,

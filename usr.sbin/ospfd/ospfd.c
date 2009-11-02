@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.70 2009/06/06 07:31:26 eric Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.71 2009/11/02 20:20:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -166,8 +166,8 @@ main(int argc, char *argv[])
 			if (opts & OSPFD_OPT_VERBOSE)
 				opts |= OSPFD_OPT_VERBOSE2;
 			opts |= OSPFD_OPT_VERBOSE;
+			log_verbose(1);
 			break;
-
 		default:
 			usage();
 			/* NOTREACHED */
@@ -367,7 +367,7 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct demote_msg	 dmsg;
 	ssize_t			 n;
-	int			 shut = 0;
+	int			 shut = 0, verbose;
 
 	ibuf = &iev->ibuf;
 
@@ -419,6 +419,11 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 				fatalx("invalid size of OE request");
 			memcpy(&dmsg, imsg.data, sizeof(dmsg));
 			carp_demote_set(dmsg.demote_group, dmsg.level);
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by ospfe */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("main_dispatch_ospfe: error handling imsg %d",

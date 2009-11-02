@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.82 2009/10/05 08:20:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.83 2009/11/02 20:20:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -240,7 +240,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	char			*buf;
 	ssize_t			 n;
 	time_t			 now;
-	int			 r, state, self, error, shut = 0;
+	int			 r, state, self, error, shut = 0, verbose;
 	u_int16_t		 l;
 
 	ibuf = &iev->ibuf;
@@ -561,6 +561,11 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				rde_send_summary_area(area, imsg.hdr.pid);
 			imsg_compose_event(iev_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
 			    -1, NULL, 0);
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by ospfe */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("rde_dispatch_imsg: unexpected imsg %d",
