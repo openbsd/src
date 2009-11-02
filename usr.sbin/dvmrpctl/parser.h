@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.1 2006/06/01 14:21:28 norby Exp $ */
+/*	$OpenBSD: parser.h,v 1.2 2009/11/02 20:32:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -37,6 +37,8 @@ enum actions {
 	SHOW_RIB_DTAIL,
 	SHOW_MFC,
 	SHOW_MFC_DTAIL,
+	LOG_VERBOSE,
+	LOG_BRIEF,
 	RELOAD
 };
 

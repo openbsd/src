@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpctl.c,v 1.5 2009/09/14 11:49:25 claudio Exp $
+/*	$OpenBSD: ldpctl.c,v 1.6 2009/11/02 20:35:20 claudio Exp $
  *
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	unsigned int		 ifidx = 0;
 	int			 ctl_sock;
-	int			 done = 0;
+	int			 done = 0, verbose = 0;
 	int			 n;
 
 	/* parse options */
@@ -151,6 +151,15 @@ main(int argc, char *argv[])
 		printf("decouple request sent.\n");
 		done = 1;
 		break;
+	case LOG_VERBOSE:
+		verbose = 1;
+		/* FALLTHROUGH */
+	case LOG_BRIEF:
+		imsg_compose(ibuf, IMSG_CTL_LOG_VERBOSE, 0, 0, -1,
+		    &verbose, sizeof(verbose));
+		printf("logging request sent.\n");
+		done = 1;
+		break;
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
 		printf("reload request sent.\n");
@@ -194,6 +203,8 @@ main(int argc, char *argv[])
 			case LFIB:
 			case LFIB_COUPLE:
 			case LFIB_DECOUPLE:
+			case LOG_VERBOSE:
+			case LOG_BRIEF:
 			case RELOAD:
 				break;
 			}

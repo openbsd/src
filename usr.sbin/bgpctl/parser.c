@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.56 2009/09/08 16:11:36 sthen Exp $ */
+/*	$OpenBSD: parser.c,v 1.57 2009/11/02 20:38:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -97,6 +97,7 @@ static const struct token t_prepself[];
 static const struct token t_weight[];
 static const struct token t_irrfilter[];
 static const struct token t_irrfilter_opts[];
+static const struct token t_log[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"reload",	RELOAD,		NULL},
@@ -105,6 +106,7 @@ static const struct token t_main[] = {
 	{ KEYWORD,	"neighbor",	NEIGHBOR,	t_neighbor},
 	{ KEYWORD,	"network",	NONE,		t_network},
 	{ KEYWORD,	"irrfilter",	IRRFILTER,	t_irrfilter},
+	{ KEYWORD,	"log",		NONE,		t_log},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -309,6 +311,12 @@ static const struct token t_irrfilter_opts[] = {
 	{ NOTOKEN,	"",		NONE,			NULL},
 	{ FLAG,		"importonly",	F_IMPORTONLY,		t_irrfilter_opts},
 	{ ENDTOKEN,	"",		NONE,			NULL}
+};
+
+static const struct token t_log[] = {
+	{ KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
+	{ KEYWORD,	"brief",	LOG_BRIEF,	NULL},
+	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static struct parse_result	res;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvmrpctl.8,v 1.6 2009/10/22 15:02:12 sobrado Exp $
+.\"	$OpenBSD: dvmrpctl.8,v 1.7 2009/11/02 20:32:17 claudio Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: November 2 2009 $
 .Dt DVMRPCTL 8
 .Os
 .Sh NAME
@@ -33,6 +33,10 @@ daemon.
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
+.It Cm log verbose
+Enable verbose debug logging.
+.It Cm log brief
+Disable verbose debug logging.
 .It Cm show igmp
 Show IGMP status for all interfaces.
 .It Cm show interfaces Op Ar interface

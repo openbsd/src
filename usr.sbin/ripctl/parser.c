@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2007/01/26 10:04:56 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.3 2009/11/02 20:29:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -59,11 +59,13 @@ static const struct token t_show_area[];
 static const struct token t_show_nbr[];
 static const struct token t_show_rib[];
 static const struct token t_show_fib[];
+static const struct token t_log[];
 
 static const struct token t_main[] = {
 /*	{KEYWORD,	"reload",	RELOAD,		NULL}, */
 	{KEYWORD,	"fib",		FIB,		t_fib},
 	{KEYWORD,	"show",		SHOW,		t_show},
+	{KEYWORD,	"log",		NONE,		t_log},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -104,6 +106,12 @@ static const struct token t_show_fib[] = {
 	{FLAG,		"static",	F_STATIC,		t_show_fib},
 	{FLAG,		"rip",		F_RIPD_INSERTED,	t_show_fib},
 	{ADDRESS,	"",		NONE,			NULL},
+	{ENDTOKEN,	"",		NONE,			NULL}
+};
+
+static const struct token t_log[] = {
+	{KEYWORD,	"verbose",	LOG_VERBOSE,		NULL},
+	{KEYWORD,	"brief",	LOG_BRIEF,		NULL},
 	{ENDTOKEN,	"",		NONE,			NULL}
 };
 

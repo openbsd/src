@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2007/01/26 09:55:02 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.3 2009/11/02 20:32:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -55,10 +55,12 @@ static const struct token t_show_nbr[];
 static const struct token t_show_mfc[];
 static const struct token t_show_rib[];
 static const struct token t_show_fib[];
+static const struct token t_log[];
 
 static const struct token t_main[] = {
 /*	{KEYWORD,	"reload",	RELOAD,		NULL}, */
 	{KEYWORD,	"show",		SHOW,		t_show},
+	{KEYWORD,	"log",		NONE,		t_log},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -97,6 +99,13 @@ static const struct token t_show_rib[] = {
 	{KEYWORD,	"detail",	SHOW_RIB_DTAIL,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
+
+static const struct token t_log[] = {
+	{KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
+	{KEYWORD,	"brief",	LOG_BRIEF,	NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
 
 static struct parse_result	res;
 

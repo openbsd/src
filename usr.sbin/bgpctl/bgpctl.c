@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.148 2009/10/23 16:00:28 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.149 2009/11/02 20:38:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -98,7 +98,7 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_un	 sun;
-	int			 fd, n, done, ch, nodescr = 0;
+	int			 fd, n, done, ch, nodescr = 0, verbose = 0;
 	struct imsg		 imsg;
 	struct network_config	 net;
 	struct parse_result	*res;
@@ -296,6 +296,15 @@ main(int argc, char *argv[])
 		    &ribreq, sizeof(ribreq));
 		show_network_head();
 		break;
+	case LOG_VERBOSE:
+		verbose = 1;
+		/* FALLTHROUGH */
+	case LOG_BRIEF:
+		imsg_compose(ibuf, IMSG_CTL_LOG_VERBOSE, 0, 0, -1,
+		    &verbose, sizeof(verbose));
+		printf("logging request sent.\n");
+		done = 1;
+		break;
 	}
 
 	while (ibuf->w.queued)
@@ -373,6 +382,8 @@ main(int argc, char *argv[])
 			case NETWORK_REMOVE:
 			case NETWORK_FLUSH:
 			case IRRFILTER:
+			case LOG_VERBOSE:
+			case LOG_BRIEF:
 				break;
 			}
 			imsg_free(&imsg);

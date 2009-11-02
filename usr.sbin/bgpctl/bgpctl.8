@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.50 2009/09/08 16:11:36 sthen Exp $
+.\" $OpenBSD: bgpctl.8,v 1.51 2009/11/02 20:38:45 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 8 2009 $
+.Dd $Mdocdate: November 2 2009 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -84,6 +84,10 @@ Fetch only IPv4 prefixes from the registry.
 .It Fl 6
 Fetch only IPv6 prefixes from the registry.
 .El
+.It Cm log verbose
+Enable verbose debug logging.
+.It Cm log brief
+Disable verbose debug logging.
 .It Cm neighbor Ar peer Cm up
 Take the BGP session to the specified neighbor up.
 .Ar peer
