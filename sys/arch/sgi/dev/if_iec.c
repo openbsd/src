@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.1 2009/11/01 19:34:02 miod Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.2 2009/11/02 17:51:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -162,7 +162,7 @@ struct iec_txsoft {
 /*
  * Receive descriptor list size.
  */
-#define	IEC_NRXDESC		64
+#define	IEC_NRXDESC		128
 
 /*
  * In addition to the receive descriptor themselves, we'll need an array
@@ -198,7 +198,7 @@ struct iec_control_data {
  * - each rxdesc should be 128 byte aligned (this is enforced by
  *   struct iec_rxdesc layout).
  */
-#define IEC_CONTROL_DATA_ALIGN	(16 * 1024)
+#define	IEC_DMA_BOUNDARY	0x4000
 
 #define IEC_CDOFF(x)	offsetof(struct iec_control_data, x)
 #define IEC_CDTXOFF(x)	IEC_CDOFF(icd_txdesc[(x)])
@@ -329,7 +329,7 @@ iec_attach(struct device *parent, struct device *self, void *aux)
 	 * by the device.
 	 */
 	rc = iec_alloc_physical(sc, &sc->sc_rxarrmap, &seg1,
-	    (vaddr_t *)&sc->sc_rxarr, IEC_CONTROL_DATA_ALIGN,
+	    (vaddr_t *)&sc->sc_rxarr, IEC_DMA_BOUNDARY,
 	    IEC_NRXDESC_MAX * sizeof(uint64_t), "rxdesc pointer array");
 	if (rc != 0)
 		return;
@@ -338,7 +338,7 @@ iec_attach(struct device *parent, struct device *self, void *aux)
 	 * Allocate the RX and TX descriptors.
 	 */
 	rc = iec_alloc_physical(sc, &sc->sc_cddmamap, &seg2,
-	    (vaddr_t *)&sc->sc_control_data, IEC_CONTROL_DATA_ALIGN,
+	    (vaddr_t *)&sc->sc_control_data, IEC_DMA_BOUNDARY,
 	    sizeof(struct iec_control_data), "rx and tx descriptors");
 	if (rc != 0)
 		goto fail_1;
@@ -640,7 +640,7 @@ iec_init(struct ifnet *ifp)
 	    (IEC_NRXDESC * sizeof(uint64_t)) | IOC3_ENET_PIR_SET);
 
 	/* Do not set up low water RX threshold. */
-	bus_space_write_4(st, sh, IOC3_ENET_RCSR, IEC_NRXDESC);
+	bus_space_write_4(st, sh, IOC3_ENET_RCSR, 0);
 	/* Set up RX timer to interrupt immediately upon reception. */
 	bus_space_write_4(st, sh, IOC3_ENET_RTR, 0);
 
@@ -724,8 +724,8 @@ iec_start(struct ifnet *ifp)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	uint64_t txdaddr;
-	int error, firsttx, nexttx, opending;
-	int len, txdlen;
+	int error, firstdirty, nexttx, opending;
+	int len;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -734,18 +734,18 @@ iec_start(struct ifnet *ifp)
 	 * Remember the previous txpending and the first transmit descriptor.
 	 */
 	opending = sc->sc_txpending;
-	firsttx = IEC_NEXTTX(sc->sc_txlast);
+	firstdirty = IEC_NEXTTX(sc->sc_txlast);
 
-	DPRINTF(IEC_DEBUG_START,
-	    ("iec_start: opending = %d, firsttx = %d\n", opending, firsttx));
+	DPRINTF(IEC_DEBUG_START, ("iec_start: opending = %d, firstdirty = %d\n",
+	    opending, firstdirty));
 
 	for (;;) {
-		if (sc->sc_txpending == IEC_NTXDESC)
-			break;
-
 		/* Grab a packet off the queue. */
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
+			break;
+
+		if (sc->sc_txpending == IEC_NTXDESC)
 			break;
 
 		/*
@@ -761,7 +761,7 @@ iec_start(struct ifnet *ifp)
 		    ("iec_start: len = %d, nexttx = %d\n", len, nexttx));
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		if (len < ETHER_PAD_LEN) {
+		if (len <= IEC_TXD_BUFSIZE) {
 			/*
 			 * If the packet is small enough,
 			 * just copy it to the buffer in txdesc and
@@ -770,12 +770,15 @@ iec_start(struct ifnet *ifp)
 			DPRINTF(IEC_DEBUG_START, ("iec_start: short packet\n"));
 
 			m_copydata(m0, 0, m0->m_pkthdr.len, txd->txd_buf);
-			/*
-			 * XXX would IOC3_ENET_MCR_PADEN in MCR do this
-			 * XXX for us?
-			 */
-			memset(txd->txd_buf + len, 0, ETHER_PAD_LEN - len);
-			len = ETHER_PAD_LEN;
+			if (len < ETHER_PAD_LEN) {
+				/*
+				 * XXX would IOC3_ENET_MCR_PADEN in MCR do this
+				 * XXX for us?
+				 */
+				memset(txd->txd_buf + len, 0,
+				    ETHER_PAD_LEN - len);
+				len = ETHER_PAD_LEN;
+			}
 
 			txs->txs_flags = IEC_TXCMD_BUF_V;
 		} else {
@@ -838,11 +841,10 @@ iec_start(struct ifnet *ifp)
 			DPRINTF(IEC_DEBUG_START,
 			    ("iec_start: ds_addr = %p\n",
 			    dmamap->dm_segs[0].ds_addr));
-			txdlen = len;
 
 			DPRINTF(IEC_DEBUG_START,
-			    ("iec_start: txdaddr = %p, txdlen = %d\n",
-			    txdaddr, txdlen));
+			    ("iec_start: txdaddr = %p, len = %d\n",
+			    txdaddr, len));
 
 			/*
 			 * Sync the DMA map for TX mbuf.
@@ -881,7 +883,6 @@ iec_start(struct ifnet *ifp)
 			 * The chip DMA engine can not cross 16KB boundaries.
 			 * If our mbuf doesn't fit, use the second pointer.
 			 */
-#define	IEC_DMA_BOUNDARY	0x4000
 
 			r1 = IEC_DMA_BOUNDARY -
 			    (txdaddr & (IEC_DMA_BOUNDARY - 1));
@@ -896,7 +897,8 @@ iec_start(struct ifnet *ifp)
 			if (r2 != 0) {
 				txs->txs_flags |= IEC_TXCMD_PTR1_V;
 				txd->txd_ptr[1] = txdaddr + r1;
-			}
+			} else
+				txd->txd_ptr[1] = 0;
 			txd->txd_len = (r1 << IECTX_BUF1_LEN_SHIFT) |
 			    (r2 << IECTX_BUF2_LEN_SHIFT);
 
@@ -946,7 +948,7 @@ iec_start(struct ifnet *ifp)
 		 * reset the txdirty pointer and re-enable TX interrupt.
 		 */
 		if (opending == 0) {
-			sc->sc_txdirty = firsttx;
+			sc->sc_txdirty = firstdirty;
 			bus_space_write_4(st, sh, IOC3_ENET_IER,
 			    bus_space_read_4(st, sh, IOC3_ENET_IER) |
 			    IOC3_ENET_ISR_TX_EMPTY);
