@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iec.4,v 1.1 2009/11/01 19:17:56 miod Exp $
+.\"	$OpenBSD: iec.4,v 1.2 2009/11/02 18:48:10 miod Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 1 2009 $
+.Dd $Mdocdate: November 2 2009 $
 .Dt IEC 4 sgi
 .Os
 .Sh NAME
@@ -22,6 +22,9 @@
 .Nd IOC3 Ethernet interface
 .Sh SYNOPSIS
 .Cd "iec* at ioc?"
+.Cd "icsphy* at mii?"
+.Cd "nsphy* at mii?"
+.Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -31,9 +34,13 @@ found on
 devices.
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr icsphy 4 ,
+.Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr ioc 4 ,
 .Xr netintro 4 ,
+.Xr nsphy 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The

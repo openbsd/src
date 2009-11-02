@@ -1,8 +1,8 @@
-.\"	$OpenBSD: mec.4,v 1.8 2009/10/26 18:38:09 miod Exp $
+.\"	$OpenBSD: mec.4,v 1.9 2009/11/02 18:48:10 miod Exp $
 .\"
 .\"	Written by Michael Shalayeff, 2004. Public Domain.
 .\"
-.Dd $Mdocdate: October 26 2009 $
+.Dd $Mdocdate: November 2 2009 $
 .Dt MEC 4 sgi
 .Os
 .Sh NAME
@@ -10,6 +10,9 @@
 .Nd MAC-110 10/100 Ethernet device
 .Sh SYNOPSIS
 .Cd "mec0 at macebus0"
+.Cd "icsphy* at mii?"
+.Cd "nsphy* at mii?"
+.Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -19,9 +22,13 @@ found on
 machines.
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr icsphy 4 ,
+.Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr macebus 4 ,
 .Xr netintro 4 ,
+.Xr nsphy 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
