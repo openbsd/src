@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.13 2009/10/31 12:00:08 fgsch Exp $ */
+/*	$OpenBSD: cz.c,v 1.14 2009/11/02 00:58:22 fgsch Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -1124,7 +1124,7 @@ czttywrite(dev_t dev, struct uio *uio, int flags)
  *	Poll a Cyclades-Z serial port.
  */
 int
-czttypoll(dev_t dev, int events, struct proc p)
+czttypoll(dev_t dev, int events, struct proc *p)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
