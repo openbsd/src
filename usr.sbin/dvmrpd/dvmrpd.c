@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.10 2009/06/06 07:52:04 pyr Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.11 2009/11/02 20:31:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -145,6 +145,7 @@ main(int argc, char *argv[])
 			if (opts & DVMRPD_OPT_VERBOSE)
 				opts |= DVMRPD_OPT_VERBOSE2;
 			opts |= DVMRPD_OPT_VERBOSE;
+			log_verbose(1);
 			break;
 		default:
 			usage();
@@ -354,6 +355,7 @@ main_dispatch_dvmrpe(int fd, short event, void *bula)
 	struct imsgbuf  *ibuf = &iev->ibuf;
 	struct imsg	 imsg;
 	ssize_t		 n;
+	int		 verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -383,6 +385,11 @@ main_dispatch_dvmrpe(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_MFC_DECOUPLE:
 			kmr_mfc_decouple();
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by dvmrpe */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("main_dispatch_dvmrpe: error handling "

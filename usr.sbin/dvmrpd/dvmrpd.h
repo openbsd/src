@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.19 2009/06/06 18:31:42 pyr Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.20 2009/11/02 20:31:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -75,6 +75,7 @@ enum imsg_type {
 	IMSG_CTL_IFINFO,
 	IMSG_CTL_SHOW_SUM,
 	IMSG_CTL_END,
+	IMSG_CTL_LOG_VERBOSE,
 	IMSG_IFINFO,
 	IMSG_ROUTE_REPORT,
 	IMSG_FULL_ROUTE_REPORT,

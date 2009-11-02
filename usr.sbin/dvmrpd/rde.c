@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.21 2009/09/06 09:52:14 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.22 2009/11/02 20:31:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -198,7 +198,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct route_report	 rr;
 	struct nbr_msg		 nm;
-	int			 i, connected = 0;
+	int			 i, connected = 0, verbose;
 	ssize_t			 n;
 	struct iface		*iface;
 
@@ -312,6 +312,11 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			memcpy(&p, imsg.data, sizeof(p));
 
 			mfc_recv_prune(&p);
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by dvmrpe */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("rde_dispatch_msg: unexpected imsg %d",
