@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.138 2009/09/14 11:45:48 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.139 2009/11/02 17:57:06 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -340,6 +340,7 @@ set_metric(char *value, int key)
 {
 	int flag = 0;
 	u_int noval, *valp = &noval;
+	const char *errstr;
 
 	switch (key) {
 	case K_MTU:
@@ -366,7 +367,9 @@ set_metric(char *value, int key)
 		rt_metrics.rmx_locks |= flag;
 	if (locking)
 		locking = 0;
-	*valp = atoi(value);
+	*valp = strtonum(value, 0, UINT_MAX, &errstr);
+	if (errstr)
+		errx(1, "set_metric: %s is %s", value, errstr);
 }
 
 int
@@ -576,28 +579,8 @@ newroute(int argc, char **argv)
 			} else if ((rtm_addrs & RTA_GATEWAY) == 0) {
 				gateway = *argv;
 				getaddr(RTA_GATEWAY, *argv, &hp);
-			} else {
-				int hops = atoi(*argv);
-
-				if (hops == 0) {
-				    if (!qflag && strcmp(*argv, "0") == 0)
-					printf("%s,%s",
-					    "old usage of trailing 0",
-					    "assuming route to if\n");
-				    else
-					usage(NULL);
-				    iflag = 1;
-				    continue;
-				} else if (hops > 0 && hops < 10) {
-				    if (!qflag) {
-					printf("old usage of trailing digit, ");
-					printf("assuming route via gateway\n");
-				    }
-				    iflag = 0;
-				    continue;
-				}
-				getaddr(RTA_NETMASK, *argv, NULL);
-			}
+			} else
+				usage(NULL);
 		}
 	}
 	if (forcehost)
@@ -938,7 +921,8 @@ getmplslabel(char *s, int in)
 int
 prefixlen(char *s)
 {
-	int len = atoi(s), q, r;
+	const char *errstr;
+	int len, q, r;
 	int max;
 
 	switch (af) {
@@ -954,8 +938,9 @@ prefixlen(char *s)
 	}
 
 	rtm_addrs |= RTA_NETMASK;
-	if (len < 0 || len > max)
-		errx(1, "%s: bad value", s);
+	len = strtonum(s, 0, max, &errstr);
+	if (errstr)
+		errx(1, "prefixlen %s is %s", s, errstr);
 
 	q = len >> 3;
 	r = len & 7;
