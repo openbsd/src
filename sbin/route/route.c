@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.139 2009/11/02 17:57:06 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.140 2009/11/02 21:08:44 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1266,6 +1266,16 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		    rtm->rtm_tableid, (long)rtm->rtm_pid, rtm->rtm_seq,
 		    rtm->rtm_errno);
 		bprintf(stdout, rtm->rtm_flags, routeflags);
+		if (verbose) {
+#define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
+			if (rtm->rtm_rmx.rmx_expire)
+				rtm->rtm_rmx.rmx_expire -= time(NULL);
+			printf("\nuse: %8llu   mtu: %8u%c   expire: %8d%c",
+			    rtm->rtm_rmx.rmx_pksent,
+			    rtm->rtm_rmx.rmx_mtu, lock(MTU),
+			    rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
+#undef lock
+		}
 		pmsg_common(rtm);
 	}
 }
@@ -1375,8 +1385,6 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		printf("      label: %s\n", sa_rl->sr_label);
 
 #define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
-#define msec(u)	(((u) + 500) / 1000)		/* usec to msec */
-
 	printf("%s\n", "     use       mtu    expire");
 	printf("%8llu  ", rtm->rtm_rmx.rmx_pksent);
 	printf("%8u%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
@@ -1384,7 +1392,6 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		rtm->rtm_rmx.rmx_expire -= time(NULL);
 	printf("%8d%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
 #undef lock
-#undef msec
 #define	RTA_IGN	(RTA_DST|RTA_GATEWAY|RTA_NETMASK|RTA_IFP|RTA_IFA|RTA_BRD)
 	if (verbose)
 		pmsg_common(rtm);
