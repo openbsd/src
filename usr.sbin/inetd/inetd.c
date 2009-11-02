@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.131 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.132 2009/11/02 20:03:01 otto Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -1977,8 +1977,7 @@ spawn(struct servtab *sep, int ctrl)
 			dup2(STDIN_FILENO, STDOUT_FILENO);
 			dup2(STDIN_FILENO, STDERR_FILENO);
 			closelog();
-			for (tmpint = rlim_nofile_cur-1; --tmpint > 2; )
-				(void)close(tmpint);
+			closefrom(3);
 			sigaction(SIGPIPE, &sapipe, NULL);
 			execv(sep->se_server, sep->se_argv);
 			if (sep->se_socktype != SOCK_STREAM)
