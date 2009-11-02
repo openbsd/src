@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.6 2009/09/28 09:48:46 michele Exp $ */
+/*	$OpenBSD: lde.c,v 1.7 2009/11/02 20:34:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -201,7 +201,7 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	struct in_addr		 addr;
 	ssize_t			 n;
 	time_t			 now;
-	int			 state, shut = 0;
+	int			 state, shut = 0, verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -326,6 +326,11 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 
 			imsg_compose_event(iev_ldpe, IMSG_CTL_END, 0,
 			    imsg.hdr.pid, -1, NULL, 0);
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by ldpe */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("lde_dispatch_imsg: unexpected imsg %d",

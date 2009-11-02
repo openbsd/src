@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.7 2009/09/28 09:48:46 michele Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.8 2009/11/02 20:34:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -77,6 +77,7 @@ enum imsg_type {
 	IMSG_CTL_KROUTE_ADDR,
 	IMSG_CTL_IFINFO,
 	IMSG_CTL_END,
+	IMSG_CTL_LOG_VERBOSE,
 	IMSG_KLABEL_INSERT,
 	IMSG_KLABEL_CHANGE,
 	IMSG_KLABEL_DELETE,
