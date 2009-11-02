@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.18 2009/09/26 18:24:58 michele Exp $ */
+/*	$OpenBSD: ripd.c,v 1.19 2009/11/02 20:28:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -342,7 +342,7 @@ main_dispatch_ripe(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct demote_msg	 dmsg;
 	ssize_t			 n;
-	int			 shut = 0;
+	int			 shut = 0, verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -389,6 +389,11 @@ main_dispatch_ripe(int fd, short event, void *bula)
 				fatalx("invalid size of OE request");
 			memcpy(&dmsg, imsg.data, sizeof(dmsg));
 			carp_demote_set(dmsg.demote_group, dmsg.level);
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by ripe */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("main_dispatch_ripe: error handling imsg %d",

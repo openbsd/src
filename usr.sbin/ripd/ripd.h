@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.20 2009/09/26 18:24:58 michele Exp $ */
+/*	$OpenBSD: ripd.h,v 1.21 2009/11/02 20:28:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -78,6 +78,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_IFACE,
 	IMSG_CTL_SHOW_NBR,
 	IMSG_CTL_SHOW_RIB,
+	IMSG_CTL_LOG_VERBOSE,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
 	IMSG_NETWORK_ADD,

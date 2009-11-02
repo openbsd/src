@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.13 2009/09/18 16:17:02 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.14 2009/11/02 20:28:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -189,7 +189,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct rip_route	 rr;
 	struct imsg		 imsg;
 	ssize_t			 n;
-	int			 shut = 0;
+	int			 shut = 0, verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
@@ -257,6 +257,11 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			imsg_compose_event(iev_ripe, IMSG_CTL_END, 0,
 			    imsg.hdr.pid, -1, NULL, 0);
 
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by ripe */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("rde_dispatch_msg: unexpected imsg %d",
