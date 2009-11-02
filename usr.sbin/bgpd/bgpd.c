@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.149 2009/07/20 15:00:13 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.150 2009/11/02 20:38:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,6 +158,7 @@ main(int argc, char *argv[])
 			if (conf.opts & BGPD_OPT_VERBOSE)
 				conf.opts |= BGPD_OPT_VERBOSE2;
 			conf.opts |= BGPD_OPT_VERBOSE;
+			log_verbose(1);
 			break;
 		case 'r':
 			conf.rcsock = optarg;
@@ -554,8 +555,8 @@ int
 dispatch_imsg(struct imsgbuf *ibuf, int idx)
 {
 	struct imsg		 imsg;
-	int			 n;
-	int			 rv;
+	ssize_t			 n;
+	int			 rv, verbose;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		return (-1);
@@ -695,6 +696,11 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				msg = imsg.data;
 				carp_demote_set(msg->demote_group, msg->level);
 			}
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by SE */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			break;

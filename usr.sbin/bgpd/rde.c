@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.272 2009/10/28 15:54:13 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.273 2009/11/02 20:38:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -389,7 +389,8 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct ctl_show_rib_request	req;
 	struct filter_set	*s;
 	struct nexthop		*nh;
-	int			 n;
+	ssize_t			 n;
+	int			 verbose;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg_session: imsg_read error");
@@ -548,6 +549,11 @@ badnet:
 		case IMSG_CTL_SHOW_RIB_MEM:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
 			    imsg.hdr.pid, -1, &rdemem, sizeof(rdemem));
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by SE */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			break;

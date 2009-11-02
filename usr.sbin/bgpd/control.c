@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.62 2009/09/02 08:06:42 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.63 2009/11/02 20:38:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -191,7 +191,8 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 {
 	struct imsg		 imsg;
 	struct ctl_conn		*c;
-	int			 n;
+	ssize_t			 n;
+	int			 verbose;
 	struct peer		*p;
 	struct ctl_neighbor	*neighbor;
 	struct ctl_show_rib_request	*ribreq;
@@ -424,6 +425,20 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_FILTER_SET:
 			imsg_compose_rde(imsg.hdr.type, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(verbose))
+				break;
+
+			/* forward to other porcesses */
+			imsg_compose_parent(imsg.hdr.type, imsg.hdr.pid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			imsg_compose_rde(imsg.hdr.type, 0,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			break;
