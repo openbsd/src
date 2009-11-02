@@ -1,4 +1,4 @@
-/* $OpenBSD: elf_hide.c,v 1.3 2008/11/24 17:23:26 drahn Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.4 2009/11/02 23:59:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn.
@@ -327,15 +327,14 @@ hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
 				psymtab->st_info = info;
 			} else {
 				/*
-				 * XXX This is a small ugly hack to be able to
+				 * XXX This is a big ugly hack to be able to
 				 * XXX use chrunchide with MIPS.
 				 * XXX Because MIPS needs global symbols to stay
 				 * XXX global (has to do with GOT), we mess
 				 * XXX around with the symbol names instead.
 				 * XXX For most uses this will be no problem,
-				 * XXX symbols are stripped anyway.
-				 * XXX However, if many one character
-				 * XXX symbols exist, names may clash.
+				 * XXX symbols are stripped anyway.  However
+				 * XXX symbol names will randomly clash.
 				 */
 				char *p;
 				u_int32_t n, z;
