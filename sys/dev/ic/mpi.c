@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.116 2009/10/23 13:30:54 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.117 2009/11/02 23:20:41 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -341,8 +341,8 @@ done:
 	return (0);
 
 free_replies:
-	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_replies),
-	    0, PAGE_SIZE, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_replies), 0,
+	    sc->sc_repq * MPI_REPLY_SIZE, BUS_DMASYNC_POSTREAD);
 	mpi_dmamem_free(sc, sc->sc_replies);
 free_ccbs:
 	while ((ccb = mpi_get_ccb(sc)) != NULL)
@@ -844,8 +844,8 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 
 	if (reg & MPI_REPLY_QUEUE_ADDRESS) {
 		bus_dmamap_sync(sc->sc_dmat,
-		    MPI_DMA_MAP(sc->sc_replies), 0, PAGE_SIZE,
-		    BUS_DMASYNC_POSTREAD);
+		    MPI_DMA_MAP(sc->sc_replies), 0, sc->sc_repq *
+		    MPI_REPLY_SIZE, BUS_DMASYNC_POSTREAD);
 
 		reply_dva = (reg & MPI_REPLY_QUEUE_ADDRESS_MASK) << 1;
 
@@ -857,8 +857,8 @@ mpi_reply(struct mpi_softc *sc, u_int32_t reg)
 		id = letoh32(reply->msg_context);
 
 		bus_dmamap_sync(sc->sc_dmat,
-		    MPI_DMA_MAP(sc->sc_replies), 0, PAGE_SIZE,
-		    BUS_DMASYNC_PREREAD);
+		    MPI_DMA_MAP(sc->sc_replies), 0, sc->sc_repq *
+		    MPI_REPLY_SIZE, BUS_DMASYNC_PREREAD);
 	} else {
 		switch (reg & MPI_REPLY_QUEUE_TYPE_MASK) {
 		case MPI_REPLY_QUEUE_TYPE_INIT:
@@ -1050,12 +1050,12 @@ mpi_alloc_replies(struct mpi_softc *sc)
 {
 	DNPRINTF(MPI_D_MISC, "%s: mpi_alloc_replies\n", DEVNAME(sc));
 
-	sc->sc_rcbs = malloc(MPI_REPLY_COUNT * sizeof(struct mpi_rcb),
-	    M_DEVBUF, M_WAITOK|M_CANFAIL);
+	sc->sc_rcbs = malloc(sc->sc_repq * sizeof(struct mpi_rcb), M_DEVBUF,
+	    M_WAITOK|M_CANFAIL);
 	if (sc->sc_rcbs == NULL)
 		return (1);
 
-	sc->sc_replies = mpi_dmamem_alloc(sc, PAGE_SIZE);
+	sc->sc_replies = mpi_dmamem_alloc(sc, sc->sc_repq * MPI_REPLY_SIZE);
 	if (sc->sc_replies == NULL) {
 		free(sc->sc_rcbs, M_DEVBUF);
 		return (1);
@@ -1071,10 +1071,10 @@ mpi_push_replies(struct mpi_softc *sc)
 	char				*kva = MPI_DMA_KVA(sc->sc_replies);
 	int				i;
 
-	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_replies),
-	    0, PAGE_SIZE, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, MPI_DMA_MAP(sc->sc_replies), 0,
+	    sc->sc_repq * MPI_REPLY_SIZE, BUS_DMASYNC_PREREAD);
 
-	for (i = 0; i < MPI_REPLY_COUNT; i++) {
+	for (i = 0; i < sc->sc_repq; i++) {
 		rcb = &sc->sc_rcbs[i];
 
 		rcb->rcb_reply = kva + MPI_REPLY_SIZE * i;
@@ -1886,6 +1886,8 @@ mpi_iocfacts(struct mpi_softc *sc)
 	if (ifp.flags & MPI_IOCFACTS_FLAGS_FW_DOWNLOAD_BOOT)
 		sc->sc_fw_len = letoh32(ifp.fw_image_size);
 
+	sc->sc_repq = MIN(MPI_REPLYQ_DEPTH, letoh16(ifp.reply_queue_depth));
+
 	/*
 	 * you can fit sg elements on the end of the io cmd if they fit in the
 	 * request frame size.
@@ -1938,9 +1940,6 @@ mpi_iocinit(struct mpi_softc *sc)
 	hi_addr = (u_int32_t)((u_int64_t)MPI_DMA_DVA(sc->sc_requests) >> 32);
 	iiq.host_mfa_hi_addr = htole32(hi_addr);
 	iiq.sense_buffer_hi_addr = htole32(hi_addr);
-
-	hi_addr = (u_int32_t)((u_int64_t)MPI_DMA_DVA(sc->sc_replies) >> 32);
-	iiq.reply_fifo_host_signalling_addr = htole32(hi_addr);
 
 	iiq.msg_version_maj = 0x01;
 	iiq.msg_version_min = 0x02;
