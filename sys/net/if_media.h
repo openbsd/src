@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.29 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.30 2009/11/02 22:31:50 sobrado Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -221,10 +221,10 @@ u_int64_t	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_TURBO	0x2000	/* Operate in Turbo mode */
 
 /* operating mode for multi-mode devices */
-#define IFM_IEEE80211_11A	0x00010000	/* 5Ghz, OFDM mode */
+#define IFM_IEEE80211_11A	0x00010000	/* 5GHz, OFDM mode */
 #define IFM_IEEE80211_11B	0x00020000	/* Direct Sequence mode */
-#define IFM_IEEE80211_11G	0x00030000	/* 2Ghz, CCK mode */
-#define IFM_IEEE80211_FH	0x00040000	/* 2Ghz, GFSK mode */
+#define IFM_IEEE80211_11G	0x00030000	/* 2GHz, CCK mode */
+#define IFM_IEEE80211_FH	0x00040000	/* 2GHz, GFSK mode */
 
 /*
  * Digitally multiplexed "Carrier" Serial Interfaces

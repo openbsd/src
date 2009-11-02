@@ -745,14 +745,14 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 /*
  * SDVO/UDI pixel multiplier.
  *
- * SDVO requires that the bus clock rate be between 1 and 2 Ghz, and the bus
+ * SDVO requires that the bus clock rate be between 1 and 2 GHz, and the bus
  * clock rate is 10 times the DPLL clock.  At low resolution/refresh rate
  * modes, the bus rate would be below the limits, so SDVO allows for stuffing
  * dummy bytes in the datastream at an increased clock rate, with both sides of
  * the link knowing how many bytes are fill.
  *
  * So, for a mode with a dotclock of 65MHz, we would want to double the clock
- * rate to 130MHz to get a bus rate of 1.30Ghz.  The DPLL clock rate would be
+ * rate to 130MHz to get a bus rate of 1.30GHz.  The DPLL clock rate would be
  * set to 130MHz, and the SDVO multiplier set to 2x in this register and
  * through an SDVO command.
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scfio.h,v 1.2 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: scfio.h,v 1.3 2009/11/02 22:31:50 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -41,9 +41,9 @@
 #define	SCF_LED_COLOR_YELLOW	0x03	/* yellow led */
 #define	SCF_LED_BLINK_MASK	0x0c	/* blink bits */
 #define	SCF_LED_BLINK_NONE	0x00	/* steady led */
-#define	SCF_LED_BLINK_HALF	0x04	/* blink 1/2 hz */
-#define	SCF_LED_BLINK_ONE	0x08	/* blink 1 hz */
-#define	SCF_LED_BLINK_TWO	0x0c	/* blink 2 hz */
+#define	SCF_LED_BLINK_HALF	0x04	/* blink 1/2 Hz */
+#define	SCF_LED_BLINK_ONE	0x08	/* blink 1 Hz */
+#define	SCF_LED_BLINK_TWO	0x0c	/* blink 2 Hz */
 
 /* 7 segment led */
 #define	SCF_7LED_A		0x01	/* Layout:	*/
