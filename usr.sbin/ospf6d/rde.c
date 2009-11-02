@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.33 2009/07/28 19:16:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.34 2009/11/02 20:24:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -256,7 +256,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	char			*buf;
 	ssize_t			 n;
 	time_t			 now;
-	int			 r, state, self, shut = 0;
+	int			 r, state, self, shut = 0, verbose;
 	u_int16_t		 l;
 
 	if (event & EV_READ) {
@@ -596,6 +596,11 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					fatalx("interface lost area");
 				orig_intra_area_prefix_lsas(area);
 			}
+			break;
+		case IMSG_CTL_LOG_VERBOSE:
+			/* already checked by ospfe */
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_verbose(verbose);
 			break;
 		default:
 			log_debug("rde_dispatch_imsg: unexpected imsg %d",
