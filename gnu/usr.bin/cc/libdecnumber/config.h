@@ -76,3 +76,5 @@
 
 /* Define to `long' if <sys/types.h> does not define. */
 /* #undef off_t */
+
+#include <size-host.h>

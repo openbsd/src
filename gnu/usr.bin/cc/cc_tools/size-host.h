@@ -1,5 +1,5 @@
 /* $FreeBSD: src/gnu/usr.bin/cc/cc_tools/size-host.h,v 1.1.8.1 2009/04/15 03:14:26 kensmith Exp $ */
-/* $OpenBSD: size-host.h,v 1.1.1.1 2009/10/15 20:50:21 robert Exp $ */
+/* $OpenBSD: size-host.h,v 1.2 2009/11/02 09:50:39 jsg Exp $ */
 
 #ifdef	SIZEOF_INT
 # undef	SIZEOF_INT
@@ -21,10 +21,6 @@
 # undef	SIZEOF_LONG_LONG
 #endif
 
-#ifdef  HOST_WIDE_INT
-# undef	HOST_WIDE_INT
-#endif
-
 #define SIZEOF_INT		4
 #define SIZEOF_SHORT		2
 #define	SIZEOF_LONG_LONG	8
@@ -32,11 +28,9 @@
 #if __LP64__
 #define	SIZEOF_LONG		8
 #define	SIZEOF_VOID_P		8
-#define	HOST_WIDE_INT		long
 #else
 #define	SIZEOF_LONG		4
 #define	SIZEOF_VOID_P		4
-#define	HOST_WIDE_INT		long long
 #endif
 
 #ifdef WORDS_BIGENDIAN
