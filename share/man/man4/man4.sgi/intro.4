@@ -1,5 +1,18 @@
-.\"	$OpenBSD: intro.4,v 1.21 2009/08/18 19:34:47 miod Exp $
-.\"     $NetBSD: intro.4,v 1.8 2004/02/10 16:54:19 wiz Exp $
+.\"	$OpenBSD: intro.4,v 1.22 2009/11/02 18:48:45 miod Exp $
+.\"
+.\" Copyright (c) 2009 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +38,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 18 2009 $
+.Dd $Mdocdate: November 2 2009 $
 .Dt INTRO 4 sgi
 .Os
 .Sh NAME
@@ -84,19 +97,22 @@ A list of the supported devices is given below.
 .Sh HARDWARE
 The following systems are supported:
 .Pp
-.Bl -column "Family" "Model"
-.It Li Family Ta Model
+.Bl -column "Hardware" "Family" "Kernel" "Model"
+.It Li Hardware Ta Family Ta Kernel Ta Model
 .It Li " " " "
-.It Li IP27 Ta Origin 200
-.It Li IP27 Ta Origin 2000, Onyx 2
-.It Li IP30 Ta "Octane, Octane 2 (Speedracer)"
-.It Li IP32 Ta "O2, O2+ (Moosehead)"
-.It Li IP35 Ta Fuel
-.It Li IP35 Ta Origin 300, Onyx 300
-.It Li IP35 Ta Origin 350, Onyx 350
-.It Li IP35 Ta Origin 3000, Onyx 3000
-.It Li IP35 Ta Onyx 4
-.It Li IP35 Ta Tezro
+.It Li IP27 Ta IP27 Ta IP27 Ta "Origin 2x00, Onyx 2"
+.It Li IP29 Ta IP27 Ta IP27 Ta "Origin 200"
+.It Li IP30 Ta IP30 Ta IP30 Ta "Octane, Octane 2 (Speedracer)"
+.It Li IP31 Ta IP27 Ta IP27 Ta "Origin 200/2x00, Onyx 2 (250+\ MHz)"
+.It Li IP32 Ta IP32 Ta IP32 Ta "O2, O2+ (Moosehead)"
+.It Li IP34 Ta IP35 Ta IP27 Ta "Fuel (Asterix)"
+.It Li IP35 Ta IP35 Ta IP27 Ta "Origin 3x00, Onyx 3x000, Onyx 3"
+.\" unconfirmed
+.\" .It Li IP39 Ta IP35 Ta IP27 Ta "Onyx 4"
+.It Li IP45 Ta IP35 Ta IP27 Ta "Origin 300, Onyx 300"
+.It Li IP53 Ta IP35 Ta IP27 Ta "Origin 350, Onyx 350, Tezro"
+.\" IP59 are the 1GHz IP53 designs
+.It Li IP59 Ta IP35 Ta IP27 Ta "Origin 350, Onyx 350, Tezro (1GHz)"
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the
@@ -105,10 +121,6 @@ system.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width 10n -offset 3n -compact
-.It Xr ahc 4
-Adaptec VL/EISA/PCI SCSI interface
-.It Xr com 4
-serial communications interface
 .It Xr gbe 4
 SGI Graphics Back End (GBE) frame buffer
 .It Xr ioc 4
@@ -125,8 +137,6 @@ Moosehead A/V Board audio device
 MAC-110 10/100 Ethernet device
 .It Xr power 4
 power button
-.It Xr xbow 4
-Octane and Origin family XIO bus
 .El
 .Pp
 A further list of available devices is contained within the pages
@@ -141,6 +151,8 @@ The following buses and controllers list these devices:
 introduction to PCI bus support
 .It Xr usb 4
 introduction to Universal Serial Bus support
+.It Xr xbow 4
+Octane and Origin family XIO bus
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
