@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.65 2009/11/03 07:57:24 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.66 2009/11/03 08:04:38 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -312,6 +312,7 @@ int	uaudio_mixer_set_port(void *, mixer_ctrl_t *);
 int	uaudio_mixer_get_port(void *, mixer_ctrl_t *);
 int	uaudio_query_devinfo(void *, mixer_devinfo_t *);
 int	uaudio_get_props(void *);
+void	uaudio_get_default_params(void *, int, struct audio_params *);
 
 struct audio_hw_if uaudio_hw_if = {
 	uaudio_open,
@@ -340,7 +341,7 @@ struct audio_hw_if uaudio_hw_if = {
 	uaudio_get_props,
 	uaudio_trigger_output,
 	uaudio_trigger_input,
-	NULL
+	uaudio_get_default_params
 };
 
 struct audio_device uaudio_device = {
@@ -2178,6 +2179,46 @@ uaudio_get_props(void *addr)
 {
 	return (AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT);
 
+}
+
+void
+uaudio_get_default_params(void *addr, int mode, struct audio_params *p)
+{
+	struct uaudio_softc *sc = addr;
+	int flags;
+
+	/* try aucat(1) defaults: 44100 Hz stereo s16le */
+	p->sample_rate = 44100;
+	p->encoding = AUDIO_ENCODING_SLINEAR_LE;
+	p->precision = 16;
+	p->channels = 2;
+	p->sw_code = NULL;
+	p->factor = 1;
+
+	/* If the device doesn't support the current mode, there's no
+	 * need to find better parameters.
+	 */
+	if (!(sc->sc_mode & mode))
+		return;
+
+	flags = sc->sc_altflags;
+	if (flags & HAS_16)
+		;
+	else if (flags & HAS_24)
+		p->precision = 24;
+	else {
+		p->precision = 8;
+		if (flags & HAS_8)
+			;
+		else if (flags & HAS_8U)
+			p->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		else if (flags & HAS_MULAW)
+			p->encoding = AUDIO_ENCODING_ULAW;
+		else if (flags & HAS_ALAW)
+			p->encoding = AUDIO_ENCODING_ALAW;
+	}
+
+	uaudio_match_alt(sc, p, mode, p->encoding, p->precision);
 }
 
 int
