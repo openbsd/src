@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.69 2009/11/01 22:15:27 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.70 2009/11/03 11:10:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -747,10 +747,8 @@ runner_batch_dispatch(struct smtpd *env, struct batch *batchp, time_t curtime)
 	log_debug("in batch dispatch");
 	if (batchp->type == T_BOUNCE_BATCH) {
 		while ((messagep = TAILQ_FIRST(&batchp->messages))) {
-			log_debug("starting");
 			bounce_process(env, messagep);
 			TAILQ_REMOVE(&batchp->messages, messagep, entry);
-			log_debug("ending");
 			bzero(messagep, sizeof(*messagep));
 			free(messagep);
 		}

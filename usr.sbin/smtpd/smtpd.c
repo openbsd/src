@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.87 2009/10/19 20:00:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.88 2009/11/03 11:10:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -467,10 +467,17 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 			errno = 0;
 			pw = getpwnam(pw_name);
 			if (pw == NULL) {
-				if (errno)
+				if (errno) {
+					log_warn("%s: getpwnam: %s",
+					    batchp->message.message_id,
+					    pw_name);
 					parent_mda_tempfail(env, batchp);
-				else
+				} else {
+					log_warnx("%s: getpwnam: %s: user does not exist",
+					    batchp->message.message_id,
+					    pw_name);
 					parent_mda_permfail(env, batchp);
+				}
 				break;
 			}
 
@@ -482,9 +489,11 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 			if (setegid(0) || seteuid(0))
 				fatal("privraise failed");
 
-			if (fd == -1)
+			if (fd == -1) {
+				log_warnx("%s: could not init delivery for %s",
+				     batchp->message.message_id, pw_name);
 				parent_mda_tempfail(env, batchp);
-			else
+			} else
 				imsg_compose_event(iev,
 				    IMSG_PARENT_MAILBOX_OPEN, 0, 0, fd, batchp,
 				    sizeof(*batchp));
@@ -518,7 +527,6 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 				path = &batchp->message.sender;
 			}
 
-
 			if (path->rule.r_user != NULL)
 				pw_name = path->rule.r_user;
 			else
@@ -527,10 +535,17 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 			errno = 0;
 			pw = getpwnam(pw_name);
 			if (pw == NULL) {
-				if (errno)
+				if (errno) {
+					log_warn("%s: getpwnam: %s",
+					    batchp->message.message_id,
+					    pw_name);
 					parent_mda_tempfail(env, batchp);
-				else
+				} else {
+					log_warnx("%s: getpwnam: %s: user does not exist",
+					    batchp->message.message_id,
+					    pw_name);
 					parent_mda_permfail(env, batchp);
+				}
 				break;
 			}
 
@@ -544,17 +559,20 @@ parent_dispatch_mda(int imsgfd, short event, void *p)
 			if (seteuid(pw->pw_uid) == -1)
 				fatal("privdrop failed");
 
-			if (imsg.hdr.type == IMSG_PARENT_MAILDIR_FAIL)
-				ret = -1;
-			else
+			if (imsg.hdr.type == IMSG_PARENT_MAILDIR_FAIL) {
+				unlink(tmp);
+				ret = 0;
+			} else
 				ret = rename(tmp, new);
 
 			if (seteuid(0) == -1)
 				fatal("privraise failed");
 
 			if (ret < 0) {
-				unlink(tmp);
+				log_warn("%s: %s: cannot rename to the 'new' directory",
+				    batchp->message.message_id, tmp);
 				parent_mda_tempfail(env, batchp);
+				unlink(tmp);
 			} else
 				parent_mda_success(env, batchp);
 			break;

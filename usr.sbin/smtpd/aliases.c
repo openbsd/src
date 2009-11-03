@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.22 2009/10/12 23:57:44 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.23 2009/11/03 11:10:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -57,7 +57,7 @@ aliases_exist(struct smtpd *env, char *username)
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL) {
-		log_warn("aliases_exist: dbopen");
+		log_warn("aliases_exist: dbopen: %s", map->m_config);
 		return 0;
 	}
 
@@ -94,7 +94,7 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL) {
-		log_warn("aliases_get: dbopen");
+		log_warn("aliases_get: dbopen: %s", map->m_config);
 		return 0;
 	}
 
@@ -149,7 +149,7 @@ aliases_vdomain_exists(struct smtpd *env, struct map *map, char *hostname)
 
 	vtable = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (vtable == NULL) {
-		log_warn("aliases_vdomain_exists: dbopen");
+		log_warn("aliases_vdomain_exists: dbopen: %s", map->m_config);
 		return 0;
 	}
 
@@ -185,7 +185,7 @@ aliases_virtual_exist(struct smtpd *env, struct map *map, struct path *path)
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL) {
-		log_warn("aliases_virtual_exist: dbopen");
+		log_warn("aliases_virtual_exist: dbopen: %s", map->m_config);
 		return 0;
 	}
 
@@ -242,7 +242,7 @@ aliases_virtual_get(struct smtpd *env, struct map *map,
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
 	if (aliasesdb == NULL) {
-		log_warn("aliases_virtual_get: dbopen");
+		log_warn("aliases_virtual_get: dbopen: %s", map->m_config);
 		return 0;
 	}
 
