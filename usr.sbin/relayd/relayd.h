@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.131 2009/08/17 11:36:01 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.132 2009/11/03 21:33:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -592,10 +592,10 @@ struct netroute_config {
 };
 
 struct netroute {
+	struct netroute_config	 nr_conf;
+
 	TAILQ_ENTRY(netroute)	 nr_entry;
 	TAILQ_ENTRY(netroute)	 nr_route;
-
-	struct netroute_config	 nr_conf;
 
 	struct router		*nr_router;
 };
@@ -613,13 +613,13 @@ struct router_config {
 };
 
 struct router {
-	TAILQ_ENTRY(router)	 rt_entry;
 	struct router_config	 rt_conf;
+	int			 rt_af;
 
 	struct table		*rt_gwtable;
 	struct netroutelist	 rt_netroutes;
 
-	int			 rt_af;
+	TAILQ_ENTRY(router)	 rt_entry;
 };
 TAILQ_HEAD(routerlist, router);
 
