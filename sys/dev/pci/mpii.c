@@ -1,4 +1,4 @@
-/* $OpenBSD: mpii.c,v 1.1 2009/10/27 11:19:04 dlg Exp $ */
+/* $OpenBSD: mpii.c,v 1.2 2009/11/03 06:00:40 marco Exp $ */
 /*
  * Copyright (c) James Giannoules
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -2094,41 +2094,16 @@ int
 mpii_intr(void *arg)
 {
 	struct mpii_softc	*sc = arg;
-	int			rv = 0, count = 0;
-	int			max_processed_replies = 0;
 
-#ifdef MPII_DEBUG
-	int			disable_interrupt = 0;
-	u_int32_t		db;
-
-	if (disable_interrupt)
+	if (mpii_reply(sc) < 0)
 		return (0);
 
-	db = mpii_read_db(sc);
-	if ((db & MPII_DOORBELL_STATE) != MPII_DOORBELL_STATE_OPER) {
-		printf("db not operational\n");
-		disable_interrupt = 1;
-		return (0);
-	}
-#endif
-	while (mpii_reply(sc) >= 0) {
-		rv = 1;
-		if (count++ == 100) {
-		/* disable interrupts */
-			mpii_write(sc, MPII_INTR_MASK, 
-			    MPII_INTR_MASK_RESET | MPII_INTR_MASK_REPLY 
-			    | MPII_INTR_MASK_DOORBELL);
-			mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
-			return (0);
-		}
-	}
+	while (mpii_reply(sc) >= 0)
+		;
 	
 	mpii_write_reply_post(sc, sc->sc_reply_post_host_index);
 
-	if (count > max_processed_replies)
-		max_processed_replies = count;
-
-	return (rv);
+	return (1);
 }
 
 void
