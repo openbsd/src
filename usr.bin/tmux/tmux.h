@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.157 2009/11/03 20:59:22 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.158 2009/11/03 22:40:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1064,6 +1064,7 @@ struct client {
 	struct imsgbuf	 ibuf;
 
 	struct timeval	 creation_time;
+	struct timeval	 activity_time;
 
 	struct environ	 environ;
 
