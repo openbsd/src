@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.196 2009/10/28 18:02:00 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.197 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1422,7 +1422,8 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 			}
 			rtid = *mtod(m, u_int *);
-			if (!rtable_exists(rtid)) {
+			/* table must exist and be a domain */
+			if (!rtable_exists(rtid) || rtid != rtable_l2(rtid)) {
 				error = EINVAL;
 				break;
 			}

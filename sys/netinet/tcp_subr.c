@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.107 2009/08/10 10:13:43 claudio Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.108 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -832,8 +832,7 @@ tcp_ctlinput(cmd, sa, v)
 				 * route (traditional PMTUD).
 				 */
 				tp->t_flags &= ~TF_PMTUD_PEND;
-				/* XXX inherit rdomain from PCB */
-				icmp_mtudisc(icp, 0);
+				icmp_mtudisc(icp, inp->inp_rdomain);
 			} else {
 				/*
 				 * Record the information got in the ICMP

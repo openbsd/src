@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.77 2009/07/27 11:40:59 blambert Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.78 2009/11/03 10:59:04 claudio Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -699,12 +699,11 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	u_int16_t protocol;
 
 #ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != m->m_pkthdr.rdomain) {
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
 		printf("%s: trying to send packet on wrong domain. "
-		    "%d vs. %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
-		    m->m_pkthdr.rdomain, dst->sa_family);
-		m_freem (m);
-		return (ENETDOWN);
+		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    dst->sa_family);
 	}
 #endif
 

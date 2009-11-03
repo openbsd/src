@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.28 2009/07/08 15:01:50 claudio Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.29 2009/11/03 10:59:04 claudio Exp $       */
 
 /*
  *
@@ -146,11 +146,11 @@ atm_output(ifp, m0, dst, rt0)
 		senderr(ENETDOWN);
 
 #ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != m->m_pkthdr.rdomain) {
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
 		printf("%s: trying to send packet on wrong domain. "
-		    "%d vs. %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
-		    m->m_pkthdr.rdomain, dst->sa_family);
-		senderr(ENETDOWN);
+		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    dst->sa_family);
 	}
 #endif
 

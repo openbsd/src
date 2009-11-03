@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.130 2009/06/08 23:07:08 sthen Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.131 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ udp_input(struct mbuf *m, ...)
 			if (!ip6 && (inp->inp_flags & INP_IPV6))
 				continue;
 #endif
-			if (inp->inp_rdomain != m->m_pkthdr.rdomain)
+			if (inp->inp_rdomain != rtable_l2(m->m_pkthdr.rdomain))
 				continue;
 			if (inp->inp_lport != uh->uh_dport)
 				continue;

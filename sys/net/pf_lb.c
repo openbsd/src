@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.7 2009/09/07 08:27:45 sthen Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.8 2009/11/03 10:59:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -104,7 +104,7 @@ void			 pf_hash(struct pf_addr *, struct pf_addr *,
 int			 pf_get_sport(sa_family_t, u_int8_t, struct pf_rule *,
 			    struct pf_addr *, struct pf_addr *, u_int16_t,
 			    struct pf_addr *, u_int16_t *, u_int16_t, u_int16_t,
-			    struct pf_src_node **);
+			    struct pf_src_node **, int);
 
 #define mix(a,b,c) \
 	do {					\
@@ -167,7 +167,7 @@ int
 pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
     struct pf_addr *saddr, struct pf_addr *daddr, u_int16_t dport,
     struct pf_addr *naddr, u_int16_t *nport, u_int16_t low, u_int16_t high,
-    struct pf_src_node **sn)
+    struct pf_src_node **sn, int rdomain)
 {
 	struct pf_state_key_cmp	key;
 	struct pf_addr		init_addr;
@@ -189,6 +189,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 	do {
 		key.af = af;
 		key.proto = proto;
+		key.rdomain = rdomain;
 		PF_ACPY(&key.addr[1], daddr, key.af);
 		PF_ACPY(&key.addr[0], naddr, key.af);
 		key.port[1] = dport;
@@ -450,9 +451,11 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
 	struct pf_src_node srcnode, *sn = &srcnode;
 
 	if (!TAILQ_EMPTY(&r->nat.list)) {
+		/* XXX is this right? what if rtable is changed at the same
+		 * XXX time? where do I need to figure out the sport? */
 		if (pf_get_sport(pd->af, pd->proto, r, saddr,
 		    daddr, *dport, &naddr, &nport, r->nat.proxy_port[0],
-		    r->nat.proxy_port[1], &sn)) {
+		    r->nat.proxy_port[1], &sn, pd->rdomain)) {
 			DPFPRINTF(PF_DEBUG_MISC,
 			    ("pf: NAT proxy port allocation "
 			    "(%u-%u) failed\n",

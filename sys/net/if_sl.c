@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.38 2009/07/19 08:16:06 blambert Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.39 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -426,12 +426,11 @@ sloutput(ifp, m, dst, rtp)
 	}
 
 #ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != m->m_pkthdr.rdomain) {
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
 		printf("%s: trying to send packet on wrong domain. "
-		    "%d vs. %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
-		    m->m_pkthdr.rdomain, dst->sa_family);
-		m_freem(m);
-		return (ENETDOWN);
+		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    dst->sa_family);
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.296 2009/10/28 20:11:01 jsg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.297 2009/11/03 10:59:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -722,9 +722,9 @@ TAILQ_HEAD(pf_state_queue, pf_state);
 struct pf_state_key_cmp {
 	struct pf_addr	 addr[2];
 	u_int16_t	 port[2];
+	u_int16_t	 rdomain;
 	sa_family_t	 af;
 	u_int8_t	 proto;
-	u_int8_t	 pad[2];
 };
 
 struct pf_state_item {
@@ -737,9 +737,9 @@ TAILQ_HEAD(pf_statelisthead, pf_state_item);
 struct pf_state_key {
 	struct pf_addr	 addr[2];
 	u_int16_t	 port[2];
+	u_int16_t	 rdomain;
 	sa_family_t	 af;
 	u_int8_t	 proto;
-	u_int8_t	 pad[2];
 
 	RB_ENTRY(pf_state_key)	 entry;
 	struct pf_statelisthead	 states;
@@ -801,7 +801,7 @@ struct pf_state {
 	/* XXX */
 	u_int8_t		 sync_updates;
 
-	int			 rtableid;
+	int			 rtableid[2];	/* rtables stack and wire */
 	u_int8_t		 min_ttl;
 	u_int8_t		 set_tos;
 	u_int16_t		 max_mss;
@@ -834,6 +834,8 @@ struct pfsync_state_peer {
 struct pfsync_state_key {
 	struct pf_addr	 addr[2];
 	u_int16_t	 port[2];
+	u_int16_t	 rdomain;
+	u_int8_t	 pad[2];
 };
 
 struct pfsync_state {
@@ -851,6 +853,8 @@ struct pfsync_state {
 	u_int32_t	 packets[2][2];
 	u_int32_t	 bytes[2][2];
 	u_int32_t	 creatorid;
+	int32_t		 rtableid[2];
+	u_int16_t	 max_mss;
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
@@ -859,6 +863,9 @@ struct pfsync_state {
 	u_int8_t	 timeout;
 	u_int8_t	 sync_flags;
 	u_int8_t	 updates;
+	u_int8_t	 min_ttl;
+	u_int8_t	 set_tos;
+	u_int8_t	 pad[4];
 } __packed;
 
 #define PFSYNC_FLAG_SRCNODE	0x04
@@ -1139,6 +1146,7 @@ struct pf_pdesc {
 	u_int16_t	 odport;
 
 	u_int32_t	 p_len;		/* total length of payload */
+	u_int		 rdomain;	/* original routing domain */
 
 	u_int16_t	*ip_sum;
 	u_int16_t	*proto_sum;
@@ -1406,6 +1414,7 @@ struct pfioc_natlook {
 	struct pf_addr	 daddr;
 	struct pf_addr	 rsaddr;
 	struct pf_addr	 rdaddr;
+	int		 rdomain;
 	u_int16_t	 sport;
 	u_int16_t	 dport;
 	u_int16_t	 rsport;
@@ -1435,6 +1444,7 @@ struct pfioc_state_kill {
 	char			psk_ifname[IFNAMSIZ];
 	char			psk_label[PF_RULE_LABEL_SIZE];
 	u_int			psk_killed;
+	int			psk_rdomain;
 };
 
 struct pfioc_states {
@@ -1878,7 +1888,7 @@ int			 pf_map_addr(sa_family_t, struct pf_rule *,
 int			 pf_state_key_setup(struct pf_pdesc *,
 			    struct pf_state_key **, struct pf_state_key **,
 			    struct pf_addr **, struct pf_addr **,
-			    u_int16_t *, u_int16_t *);
+			    u_int16_t *, u_int16_t *, int);
 #endif /* _KERNEL */
 
 

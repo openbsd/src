@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.47 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.48 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ rip_input(struct mbuf *m, ...)
 		if (inp->inp_flags & INP_IPV6)
 			continue;
 #endif
-		if (inp->inp_rdomain != m->m_pkthdr.rdomain)
+		if (inp->inp_rdomain != rtable_l2(m->m_pkthdr.rdomain))
 			continue;
 
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)

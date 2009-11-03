@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.222 2009/10/28 20:11:01 jsg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.223 2009/11/03 10:59:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1591,7 +1591,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			if ((!psk->psk_af || sk->af == psk->psk_af)
 			    && (!psk->psk_proto || psk->psk_proto ==
-			    sk->proto) &&
+			    sk->proto) && psk->psk_rdomain == sk->rdomain &&
 			    PF_MATCHA(psk->psk_src.neg,
 			    &psk->psk_src.addr.v.a.addr,
 			    &psk->psk_src.addr.v.a.mask,
@@ -1638,6 +1638,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state		*s;
 		struct pf_state_cmp	 id_key;
 
+		bzero(&id_key, sizeof(id_key));
 		bcopy(ps->state.id, &id_key.id, sizeof(id_key.id));
 		id_key.creatorid = ps->state.creatorid;
 
@@ -1736,11 +1737,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    PF_AZERO(&pnl->daddr, pnl->af) ||
 		    ((pnl->proto == IPPROTO_TCP ||
 		    pnl->proto == IPPROTO_UDP) &&
-		    (!pnl->dport || !pnl->sport)))
+		    (!pnl->dport || !pnl->sport)) ||
+		    pnl->rdomain < 0 || pnl->rdomain > RT_TABLEID_MAX)
 			error = EINVAL;
 		else {
 			key.af = pnl->af;
 			key.proto = pnl->proto;
+			key.rdomain = pnl->rdomain;
 			PF_ACPY(&key.addr[sidx], &pnl->saddr, pnl->af);
 			key.port[sidx] = pnl->sport;
 			PF_ACPY(&key.addr[didx], &pnl->daddr, pnl->af);

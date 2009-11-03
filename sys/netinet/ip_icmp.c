@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.84 2009/06/09 11:52:54 sthen Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.85 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -589,7 +589,6 @@ reflect:
 			goto freeit;
 #endif
 		rt = NULL;
-		/* XXX rdomain vs. rtable */
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
 		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
 		    sintosa(&icmpgw), (struct rtentry **)&rt,
@@ -663,7 +662,7 @@ icmp_reflect(struct mbuf *m)
 	 * the address which corresponds to the incoming interface.
 	 */
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
-		if (ia->ia_ifp->if_rdomain != m->m_pkthdr.rdomain)
+		if (ia->ia_ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain))
 			continue;
 		if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
 			break;
@@ -686,7 +685,7 @@ icmp_reflect(struct mbuf *m)
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = ip->ip_src;
 
-		/* keep packet in the original VRF instance */
+		/* keep packet in the original virtual instance */
 		ro.ro_rt = rtalloc1(&ro.ro_dst, 1,
 		     m->m_pkthdr.rdomain);
 		if (ro.ro_rt == 0) {

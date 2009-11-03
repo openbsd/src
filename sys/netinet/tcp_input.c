@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.228 2009/08/20 13:25:42 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.229 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3579,7 +3579,7 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
 			continue;
 		if (!bcmp(&sc->sc_src, src, src->sa_len) &&
 		    !bcmp(&sc->sc_dst, dst, dst->sa_len) &&
-		    rdomain == sc->sc_rdomain) {
+		    rtable_l2(rdomain) == rtable_l2(sc->sc_rdomain)) {
 			splx(s);
 			return (sc);
 		}
@@ -3625,7 +3625,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 	s = splsoftnet();
 	if ((sc = syn_cache_lookup(src, dst, &scp,
-	    m->m_pkthdr.rdomain)) == NULL) {
+	    sotoinpcb(so)->inp_rdomain)) == NULL) {
 		splx(s);
 		return (NULL);
 	}
@@ -4001,8 +4001,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * If we do, resend the SYN,ACK.  We do not count this
 	 * as a retransmission (XXX though maybe we should).
 	 */
-	if ((sc = syn_cache_lookup(src, dst, &scp, m->m_pkthdr.rdomain)) !=
-	    NULL) {
+	if ((sc = syn_cache_lookup(src, dst, &scp, sotoinpcb(so)->inp_rdomain))
+	    != NULL) {
 		tcpstat.tcps_sc_dupesyn++;
 		if (ipopts) {
 			/*
@@ -4036,7 +4036,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	bzero(&sc->sc_timer, sizeof(sc->sc_timer));
 	bcopy(src, &sc->sc_src, src->sa_len);
 	bcopy(dst, &sc->sc_dst, dst->sa_len);
-	sc->sc_rdomain = m->m_pkthdr.rdomain;
+	sc->sc_rdomain = sotoinpcb(so)->inp_rdomain;
 	sc->sc_flags = 0;
 	sc->sc_ipopts = ipopts;
 	sc->sc_irs = th->th_seq;

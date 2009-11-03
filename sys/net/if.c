@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.199 2009/08/12 15:58:20 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.200 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -887,6 +887,8 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rdomain)
 #define	equal(a1, a2)	\
 	(bcmp((caddr_t)(a1), (caddr_t)(a2),	\
 	((struct sockaddr *)(a1))->sa_len) == 0)
+
+	rdomain = rtable_l2(rdomain);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 	    if (ifp->if_rdomain != rdomain)
 		continue;
@@ -914,6 +916,7 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
+	rdomain = rtable_l2(rdomain);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
@@ -942,6 +945,7 @@ ifa_ifwithnet(struct sockaddr *addr, u_int rdomain)
 	u_int af = addr->sa_family;
 	char *addr_data = addr->sa_data, *cplim;
 
+	rdomain = rtable_l2(rdomain);
 	if (af == AF_LINK) {
 		struct sockaddr_dl *sdl = (struct sockaddr_dl *)addr;
 		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
@@ -984,6 +988,7 @@ ifa_ifwithaf(int af, u_int rdomain)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
+	rdomain = rtable_l2(rdomain);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
@@ -1489,6 +1494,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if (!rtable_exists(ifr->ifr_rdomainid)) {
 			if (rtable_add(ifr->ifr_rdomainid) == -1)
 				panic("rtinit: rtable_add");
+		}
+		if (ifr->ifr_rdomainid != rtable_l2(ifr->ifr_rdomainid)) {
+			/* XXX we should probably flush the table */
+			rtable_l2set(ifr->ifr_rdomainid, ifr->ifr_rdomainid);
 		}
 
 		ifp->if_rdomain = ifr->ifr_rdomainid;

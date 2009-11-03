@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.81 2009/10/17 12:20:17 mpf Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.82 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -704,7 +704,7 @@ in_arpinput(m)
 		goto reply;
 	}
 	la = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0,
-	    m->m_pkthdr.rdomain);
+	    rtable_l2(m->m_pkthdr.rdomain));
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen) {
 		    if (bcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
@@ -789,7 +789,7 @@ out:
 		bcopy(enaddr, ea->arp_sha, sizeof(ea->arp_sha));
 	} else {
 		la = arplookup(itaddr.s_addr, 0, SIN_PROXY,
-		    m->m_pkthdr.rdomain);
+		    rtable_l2(m->m_pkthdr.rdomain));
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;

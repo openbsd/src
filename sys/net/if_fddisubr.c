@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.56 2009/07/08 15:01:50 claudio Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.57 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -149,11 +149,11 @@ fddi_output(ifp0, m0, dst, rt0)
 	struct ifnet *ifp = ifp0;
 
 #ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != m->m_pkthdr.rdomain) {
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
 		printf("%s: trying to send packet on wrong domain. "
-		    "%d vs. %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
-		    m->m_pkthdr.rdomain, dst->sa_family);
-		senderr(ENETDOWN);
+		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    dst->sa_family);
 	}
 #endif
 

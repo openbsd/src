@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.135 2009/08/12 20:02:42 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.136 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -231,11 +231,11 @@ ether_output(ifp0, m0, dst, rt0)
 	struct ifnet *ifp = ifp0;
 
 #ifdef DIAGNOSTIC
-	if (ifp->if_rdomain != m->m_pkthdr.rdomain) {
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
 		printf("%s: trying to send packet on wrong domain. "
-		    "%d vs. %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
-		    m->m_pkthdr.rdomain, dst->sa_family);
-		senderr(ENETDOWN);
+		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    dst->sa_family);
 	}
 #endif
 
@@ -250,7 +250,6 @@ ether_output(ifp0, m0, dst, rt0)
 
 		/* loop back if this is going to the carp interface */
 		if (dst != NULL && LINK_STATE_IS_UP(ifp0->if_link_state) &&
-		    /* XXX why ifa_ifwithaddr() and not ifaof_ifpforaddr() */
 		    (ifa = ifa_ifwithaddr(dst, ifp->if_rdomain)) != NULL &&
 		    ifa->ifa_ifp == ifp0)
 			return (looutput(ifp0, m, dst, rt0));
@@ -269,7 +268,7 @@ ether_output(ifp0, m0, dst, rt0)
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1(dst, 1,
-			    m->m_pkthdr.pf.rtableid)) != NULL)
+			    m->m_pkthdr.rdomain)) != NULL)
 				rt->rt_refcnt--;
 			else
 				senderr(EHOSTUNREACH);

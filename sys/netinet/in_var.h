@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.12 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.13 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ do {									\
 	struct in_ifaddr *ia;						\
 									\
 	for (ia = TAILQ_FIRST(&in_ifaddr); ia != TAILQ_END(&in_ifaddr) && \
-	    (ia->ia_ifp->if_rdomain != rdomain || 			\
+	    (ia->ia_ifp->if_rdomain != rtable_l2(rdomain) || 		\
 	    ia->ia_addr.sin_addr.s_addr != (addr).s_addr);		\
 	    ia = TAILQ_NEXT(ia, ia_list))				\
 		 continue;						\

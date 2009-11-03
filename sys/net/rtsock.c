@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.94 2009/09/17 13:27:24 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.95 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -612,22 +612,21 @@ report:
 			 * flags may also be different; ifp may be specified
 			 * by ll sockaddr when protocol address is ambiguous
 			 */
-			if ((error = rt_getifa(&info,
-			    /* XXX wrong, only rdomain */ tableid)) != 0)
+			if ((error = rt_getifa(&info, tableid)) != 0)
 				goto flush;
 			if (gate && rt_setgate(rt, rt_key(rt), gate, tableid)) {
 				error = EDQUOT;
 				goto flush;
 			}
-			if (ifpaddr && (ifa = ifa_ifwithnet(ifpaddr,
-			    /* XXX again rtable vs. rdomain */ tableid)) &&
+			if (ifpaddr &&
+			    (ifa = ifa_ifwithnet(ifpaddr, tableid)) &&
 			    (ifp = ifa->ifa_ifp) && (ifaaddr || gate))
 				ifa = ifaof_ifpforaddr(ifaaddr ? ifaaddr : gate,
 				    ifp);
-			else if ((ifaaddr && (ifa = ifa_ifwithaddr(ifaaddr,
-			    /* XXX one more time */ tableid))) ||
+			else if ((ifaaddr &&
+			    (ifa = ifa_ifwithaddr(ifaaddr, tableid))) ||
 			    (gate && (ifa = ifa_ifwithroute(rt->rt_flags,
-			    rt_key(rt), gate, /* XXX again */ tableid))))
+			    rt_key(rt), gate, tableid))))
 				ifp = ifa->ifa_ifp;
 			if (ifa) {
 				struct ifaddr *oifa = rt->rt_ifa;

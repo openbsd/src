@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.54 2009/07/08 15:01:50 claudio Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.55 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -728,12 +728,10 @@ pppoutput(ifp, m0, dst, rtp)
     }
 
 #ifdef DIAGNOSTIC
-    if (ifp->if_rdomain != m0->m_pkthdr.rdomain) {
+    if (ifp->if_rdomain != rtable_l2(m0->m_pkthdr.rdomain)) {
 	printf("%s: trying to send packet on wrong domain. "
-	    "%d vs. %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
-	    m0->m_pkthdr.rdomain, dst->sa_family);
-	error = ENETDOWN;
-	goto bad;
+	    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname, ifp->if_rdomain,
+	    rtable_l2(m0->m_pkthdr.rdomain), dst->sa_family);
     }
 #endif
 

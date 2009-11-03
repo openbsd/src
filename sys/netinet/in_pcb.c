@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.106 2009/07/26 12:59:16 thib Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.107 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -200,10 +200,11 @@ in_pcballoc(so, v)
 	inp->inp_seclevel[SL_IPCOMP] = ipsec_ipcomp_default_level;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
-	LIST_INSERT_HEAD(INPCBLHASH(table, inp->inp_lport, inp->inp_rdomain),
-	    inp, inp_lhash);
+	LIST_INSERT_HEAD(INPCBLHASH(table, inp->inp_lport,
+	    inp->inp_rdomain), inp, inp_lhash);
 	LIST_INSERT_HEAD(INPCBHASH(table, &inp->inp_faddr, inp->inp_fport,
-	    &inp->inp_laddr, inp->inp_lport, inp->inp_rdomain), inp, inp_hash);
+	    &inp->inp_laddr, inp->inp_lport, inp->inp_rdomain),
+	    inp, inp_hash);
 	splx(s);
 	so->so_pcb = inp;
 	inp->inp_hops = -1;
@@ -677,6 +678,7 @@ in_pcblookup(struct inpcbtable *table, void *faddrp, u_int fport_arg, void *ladd
 	struct in_addr faddr = *(struct in_addr *)faddrp;
 	struct in_addr laddr = *(struct in_addr *)laddrp;
 
+	rdomain = rtable_l2(rdomain);
 	for (inp = LIST_FIRST(INPCBLHASH(table, lport, rdomain)); inp;
 	    inp = LIST_NEXT(inp, inp_lhash)) {
 		if (inp->inp_rdomain != rdomain)
@@ -924,6 +926,7 @@ in_pcbhashlookup(struct inpcbtable *table, struct in_addr faddr,
 	struct inpcb *inp;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 
+	rdomain = rtable_l2(rdomain);
 	head = INPCBHASH(table, &faddr, fport, &laddr, lport, rdomain);
 	LIST_FOREACH(inp, head, inp_hash) {
 #ifdef INET6
@@ -1012,6 +1015,7 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 	struct inpcb *inp;
 	u_int16_t lport = lport_arg;
 
+	rdomain = rtable_l2(rdomain);
 #if NPF > 0
 	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.113 2009/10/26 17:14:24 mk Exp $	*/
+/*	$OpenBSD: route.c,v 1.114 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ struct	radix_node_head	***rt_tables;
 u_int8_t		   af2rtafidx[AF_MAX+1];
 u_int8_t		   rtafidx_max;
 u_int			   rtbl_id_max = 0;
+u_int			  *rt_tab2dom;	/* rt table to domain lookup table */
 
 int			rttrash;	/* routes not in table but not freed */
 
@@ -218,28 +219,52 @@ route_init()
 int
 rtable_add(u_int id)	/* must be called at splsoftnet */
 {
-	void	*p;
+	void	*p, *q;
 
 	if (id > RT_TABLEID_MAX)
 		return (-1);
 
 	if (id == 0 || id > rtbl_id_max) {
 		size_t	newlen = sizeof(void *) * (id+1);
+		size_t	newlen2 = sizeof(u_int) * (id+1);
 
 		if ((p = malloc(newlen, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
 			return (-1);
+		if ((q = malloc(newlen2, M_RTABLE, M_NOWAIT|M_ZERO)) == NULL) {
+			free(p, M_RTABLE);
+			return (-1);
+		}
 		if (rt_tables) {
 			bcopy(rt_tables, p, sizeof(void *) * (rtbl_id_max+1));
+			bcopy(rt_tab2dom, q, sizeof(u_int) * (rtbl_id_max+1));
 			free(rt_tables, M_RTABLE);
 		}
 		rt_tables = p;
+		rt_tab2dom = q;
 		rtbl_id_max = id;
 	}
 
 	if (rt_tables[id] != NULL)	/* already exists */
 		return (-1);
 
+	rt_tab2dom[id] = 0;	/* use main table/domain by default */
 	return (rtable_init(&rt_tables[id]));
+}
+
+u_int
+rtable_l2(u_int id)
+{
+	if (id > rtbl_id_max)
+		return (0);
+	return (rt_tab2dom[id]);
+}
+
+void
+rtable_l2set(u_int id, u_int parent)
+{
+	if (!rtable_exists(id) || !rtable_exists(parent))
+		return;
+	rt_tab2dom[id] = parent;
 }
 
 int
@@ -616,7 +641,7 @@ rtioctl(u_long req, caddr_t data, struct proc *p)
 
 struct ifaddr *
 ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
-    u_int rdomain)
+    u_int rtableid)
 {
 	struct ifaddr	*ifa;
 
@@ -641,21 +666,21 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 		 */
 		ifa = NULL;
 		if (flags & RTF_HOST)
-			ifa = ifa_ifwithdstaddr(dst, rdomain);
+			ifa = ifa_ifwithdstaddr(dst, rtableid);
 		if (ifa == NULL)
-			ifa = ifa_ifwithaddr(gateway, rdomain);
+			ifa = ifa_ifwithaddr(gateway, rtableid);
 	} else {
 		/*
 		 * If we are adding a route to a remote net
 		 * or host, the gateway may still be on the
 		 * other end of a pt to pt link.
 		 */
-		ifa = ifa_ifwithdstaddr(gateway, rdomain);
+		ifa = ifa_ifwithdstaddr(gateway, rtableid);
 	}
 	if (ifa == NULL)
-		ifa = ifa_ifwithnet(gateway, rdomain);
+		ifa = ifa_ifwithnet(gateway, rtableid);
 	if (ifa == NULL) {
-		struct rtentry	*rt = rtalloc1(gateway, 0, rdomain);
+		struct rtentry	*rt = rtalloc1(gateway, 0, rtable_l2(rtableid));
 		if (rt == NULL)
 			return (NULL);
 		rt->rt_refcnt--;
@@ -678,7 +703,7 @@ ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway,
 #define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 int
-rt_getifa(struct rt_addrinfo *info, u_int rdom)
+rt_getifa(struct rt_addrinfo *info, u_int rtid)
 {
 	struct ifaddr	*ifa;
 	int		 error = 0;
@@ -690,11 +715,11 @@ rt_getifa(struct rt_addrinfo *info, u_int rdom)
 	if (info->rti_ifp == NULL && info->rti_info[RTAX_IFP] != NULL
 	    && info->rti_info[RTAX_IFP]->sa_family == AF_LINK &&
 	    (ifa = ifa_ifwithnet((struct sockaddr *)info->rti_info[RTAX_IFP],
-	    rdom)) != NULL)
+	    rtid)) != NULL)
 		info->rti_ifp = ifa->ifa_ifp;
 
 	if (info->rti_ifa == NULL && info->rti_info[RTAX_IFA] != NULL)
-		info->rti_ifa = ifa_ifwithaddr(info->rti_info[RTAX_IFA], rdom);
+		info->rti_ifa = ifa_ifwithaddr(info->rti_info[RTAX_IFA], rtid);
 
 	if (info->rti_ifa == NULL) {
 		struct sockaddr	*sa;
@@ -710,10 +735,10 @@ rt_getifa(struct rt_addrinfo *info, u_int rdom)
 			info->rti_ifa = ifa_ifwithroute(info->rti_flags,
 			    info->rti_info[RTAX_DST],
 			    info->rti_info[RTAX_GATEWAY],
-			    rdom);
+			    rtid);
 		else if (sa != NULL)
 			info->rti_ifa = ifa_ifwithroute(info->rti_flags,
-			    sa, sa, rdom);
+			    sa, sa, rtid);
 	}
 	if ((ifa = info->rti_ifa) != NULL) {
 		if (info->rti_ifp == NULL)
@@ -823,8 +848,7 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 		goto makeroute;
 
 	case RTM_ADD:
-		if (info->rti_ifa == 0 && (error = rt_getifa(info,
-		    /* XXX wrong because only rdomains allowed */ tableid)))
+		if (info->rti_ifa == 0 && (error = rt_getifa(info, tableid)))
 			senderr(error);
 		ifa = info->rti_ifa;
 makeroute:
@@ -1009,7 +1033,8 @@ rt_setgate(struct rtentry *rt0, struct sockaddr *dst, struct sockaddr *gate,
 		rt->rt_gwroute = NULL;
 	}
 	if (rt->rt_flags & RTF_GATEWAY) {
-		rt->rt_gwroute = rtalloc1(gate, 1, tableid);
+		/* XXX is this actually valid to cross tables here? */
+		rt->rt_gwroute = rtalloc1(gate, 1, rtable_l2(tableid));
 		/*
 		 * If we switched gateways, grab the MTU from the new
 		 * gateway route if the current MTU is 0 or greater

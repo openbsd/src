@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.44 2009/10/06 21:21:48 claudio Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.45 2009/11/03 10:59:04 claudio Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ reroute:
 #endif /* IPSEC */
 
 #if NPF > 0
-	rtableid = m->m_pkthdr.pf.rtableid;
+	rtableid = m->m_pkthdr.rdomain;
 #endif
 
 	/*

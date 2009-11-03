@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.7 2009/02/16 00:31:25 dlg Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.8 2009/11/03 10:59:04 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -129,8 +129,12 @@ print_name(struct pf_addr *addr, sa_family_t af)
 }
 
 void
-print_host(struct pf_addr *addr, u_int16_t port, sa_family_t af, int opts)
+print_host(struct pf_addr *addr, u_int16_t port, sa_family_t af, int rdom,
+    int opts)
 {
+	if (rdom)
+		printf("(%d) ", rdom);
+
 	if (opts & PF_OPT_USEDNS)
 		print_name(addr, af);
 	else {
@@ -191,22 +195,22 @@ print_state(struct pfsync_state *s, int opts)
 	printf("%s ", s->ifname);
 	printf("%s ", ipproto_string(s->proto));
 
-	print_host(&nk->addr[1], nk->port[1], s->af, opts);
+	print_host(&nk->addr[1], nk->port[1], s->af, nk->rdomain, opts);
 	if (PF_ANEQ(&nk->addr[1], &sk->addr[1], s->af) ||
 	    nk->port[1] != sk->port[1]) {
 		printf(" (");
-		print_host(&sk->addr[1], sk->port[1], s->af, opts);
+		print_host(&sk->addr[1], sk->port[1], s->af, sk->rdomain, opts);
 		printf(")");
 	}
 	if (s->direction == PF_OUT)
 		printf(" -> ");
 	else
 		printf(" <- ");
-	print_host(&nk->addr[0], nk->port[0], s->af, opts);
+	print_host(&nk->addr[0], nk->port[0], s->af, nk->rdomain, opts);
 	if (PF_ANEQ(&nk->addr[0], &sk->addr[0], s->af) ||
 	    nk->port[0] != sk->port[0]) {
 		printf(" (");
-		print_host(&sk->addr[0], sk->port[0], s->af, opts);
+		print_host(&sk->addr[0], sk->port[0], s->af, sk->rdomain, opts);
 		printf(")");
 	}
 
