@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.24 2009/10/10 11:27:39 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.25 2009/11/03 06:41:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -618,9 +618,9 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 		return 0;
 	}
 	ibpf = (hdl->sio.mode & SIO_REC) ?
-	    aui.record.channels * aui.record.precision / 8 : 1;
+	    aui.record.channels * SIO_BPS(aui.record.precision) : 1;
 	obpf = (hdl->sio.mode & SIO_PLAY) ?
-	    aui.play.channels * aui.play.precision / 8 : 1;
+	    aui.play.channels * SIO_BPS(aui.play.precision) : 1;
 
 	DPRINTF("sun_setpar: bpf = (%u, %u)\n", ibpf, obpf);
 
