@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.67 2009/11/03 08:07:27 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.68 2009/11/03 08:31:44 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -2148,7 +2148,8 @@ uaudio_round_blocksize(void *addr, int blk)
 	DPRINTF(("uaudio_round_blocksize: p.bpf=%d r.bpf=%d\n",
 		 sc->sc_playchan.bytes_per_frame,
 		 sc->sc_recchan.bytes_per_frame));
-	if (sc->sc_playchan.bytes_per_frame > sc->sc_recchan.bytes_per_frame) {
+	if ((sc->sc_mode & AUMODE_PLAY) &&
+	    sc->sc_playchan.bytes_per_frame > sc->sc_recchan.bytes_per_frame) {
 		bpf = sc->sc_playchan.bytes_per_frame
 		    + sc->sc_playchan.sample_size;
 	} else {
