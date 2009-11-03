@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.113 2008/03/08 12:07:45 espie Exp $
+# $OpenBSD: pkg_delete,v 1.114 2009/11/03 09:57:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -157,6 +157,13 @@ if (@todo > @realnames) {
 if ($bad) {
 	exit(1);
 }
+
+my $handler = sub { my $sig = shift; die "Caught SIG$sig"; };
+local $SIG{'INT'} = $handler;
+local $SIG{'QUIT'} = $handler;
+local $SIG{'HUP'} = $handler;
+local $SIG{'KILL'} = $handler;
+local $SIG{'TERM'} = $handler;
 
 eval {
 # and finally, handle the removal
