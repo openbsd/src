@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.74 2009/11/03 19:13:34 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.75 2009/11/03 20:55:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -369,7 +369,10 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			}
 			else if (lkasession->path.flags & F_PATH_ALIAS) {
 				log_debug("F_PATH_ALIAS");
-				ret = aliases_get(env, &lkasession->aliaseslist, lkasession->path.user);
+				ret = aliases_get(env,
+				    lkasession->path.rule.r_amap,
+				    &lkasession->aliaseslist,
+				    lkasession->path.user);
 				log_debug("\tALIASES RESOLVED: %d", ret);
 			}
 			else if (lkasession->path.flags & F_PATH_VIRTUAL) {
@@ -946,7 +949,8 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 	u_int8_t done = 1;
 	struct alias *rmalias = NULL;
 	struct alias *alias;
-	struct path *lkasessionpath;
+	struct path *lkasessionpath = NULL;
+	struct path *respath = NULL;
 
 	lkasessionpath = &lkasession->path;
 	rmalias = NULL;
@@ -958,21 +962,37 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 		}
 		
 		if (alias->type == ALIAS_ADDRESS) {
-			lka_rcpt_action(env, lkasession->message.tag, &alias->u.path);
-			lka_resolve_path(env, &alias->u.path);
-			if (aliases_virtual_get(env, alias->u.path.cond->c_map, aliases, &alias->u.path)) {
-				rmalias = alias;
-				done = 0;
+			respath = &alias->u.path;
+			lka_rcpt_action(env, lkasession->message.tag, respath);
+			lka_resolve_path(env, respath);
+
+			if (alias->u.path.flags & F_PATH_VIRTUAL) {
+				if (aliases_virtual_get(env,
+					respath->cond->c_map,
+					aliases, respath)) {
+					rmalias = alias;
+					done = 0;
+				}
+			}
+
+			if (alias->u.path.flags & F_PATH_ALIAS) {
+				if (aliases_get(env, lkasessionpath->rule.r_amap,
+					aliases, alias->u.username)) {
+					done = 0;
+					rmalias = alias;
+				}
 			}
 		}
 		
 		else if (alias->type == ALIAS_USERNAME) {
-			if (aliases_get(env, aliases, alias->u.username)) {
+			if (aliases_get(env, lkasessionpath->rule.r_amap,
+				aliases, alias->u.username)) {
 				done = 0;
 				rmalias = alias;
 			}
 			else {
-				lka_request_forwardfile(env, lkasession, alias->u.username);
+				lka_request_forwardfile(env, lkasession,
+				    alias->u.username);
 				done = 0;
 				rmalias = alias;
 			}
@@ -1007,7 +1027,7 @@ lka_resolve_path(struct smtpd *env, struct path *path){
 			return 1;
 
 		lowercase(username, path->user, sizeof(username));
-		if (aliases_exist(env, username)) {
+		if (aliases_exist(env, path->rule.r_amap, username)) {
 			path->flags |= F_PATH_ALIAS;
 			return 1;
 		}

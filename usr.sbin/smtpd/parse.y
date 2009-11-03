@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2009/10/19 21:09:55 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.44 2009/11/03 20:55:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -119,7 +119,7 @@ typedef struct {
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
-%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL USER TAG
+%token	ARROW ENABLE AUTH TLS LOCAL VIRTUAL USER TAG ALIAS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
@@ -127,7 +127,7 @@ typedef struct {
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
-%type	<v.string>	certname user tag on
+%type	<v.string>	certname user tag on alias
 
 %%
 
@@ -385,15 +385,6 @@ map		: MAP STRING			{
 				map = NULL;
 				YYERROR;
 			}
-			if (strcmp(map->m_name, "aliases") == 0 ||
-			    strcmp(map->m_name, "virtual") == 0) {
-				if (map->m_src != S_DB) {
-					yyerror("map source must be db");
-					free(map);
-					map = NULL;
-					YYERROR;
-				}
-			}
 			TAILQ_INSERT_TAIL(conf->sc_maps, map, m_entry);
 			map = NULL;
 		}
@@ -645,6 +636,10 @@ decision	: ACCEPT			{ $$ = 1; }
 		| REJECT			{ $$ = 0; }
 		;
 
+alias		: ALIAS STRING			{ $$ = $2; }
+		| /* empty */			{ $$ = NULL; }
+		;
+
 condition	: NETWORK mapref		{
 			struct cond	*c;
 
@@ -654,8 +649,18 @@ condition	: NETWORK mapref		{
 			c->c_map = $2;
 			$$ = c;
 		}
-		| DOMAIN mapref			{
+		| DOMAIN mapref	alias		{
 			struct cond	*c;
+			struct map	*m;
+
+			if ($3) {
+				if ((m = map_findbyname(conf, $3)) == NULL) {
+					yyerror("no such map: %s", $3);
+					free($3);
+					YYERROR;
+				}
+				rule->r_amap = m->m_id;
+			}
 
 			if ((c = calloc(1, sizeof *c)) == NULL)
 				fatal("out of memory");
@@ -675,17 +680,25 @@ condition	: NETWORK mapref		{
 			free($2);
 			m->m_flags |= F_USED;
 
-
 			if ((c = calloc(1, sizeof *c)) == NULL)
 				fatal("out of memory");
 			c->c_type = C_VDOM;
 			c->c_map = m->m_id;
 			$$ = c;
 		}
-		| LOCAL {
+		| LOCAL alias {
 			struct cond	*c;
 			struct map	*m;
 			struct mapel	*me;
+
+			if ($2) {
+				if ((m = map_findbyname(conf, $2)) == NULL) {
+					yyerror("no such map: %s", $2);
+					free($2);
+					YYERROR;
+				}
+				rule->r_amap = m->m_id;
+			}
 
 			if ((m = calloc(1, sizeof(*m))) == NULL)
 				fatal("out of memory");
@@ -970,6 +983,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "accept",		ACCEPT },
+		{ "alias",		ALIAS },
 		{ "all",		ALL },
 		{ "auth",		AUTH },
 		{ "certificate",	CERTIFICATE },
