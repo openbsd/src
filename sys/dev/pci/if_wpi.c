@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.97 2009/10/31 11:52:07 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.98 2009/11/03 18:55:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -693,7 +693,7 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
 		    mtod(data->m, void *), WPI_RBUF_SIZE, NULL,
-		    BUS_DMA_NOWAIT);
+		    BUS_DMA_NOWAIT | BUS_DMA_READ);
 		if (error != 0) {
 			printf("%s: can't map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
@@ -1236,14 +1236,14 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	bus_dmamap_unload(sc->sc_dmat, data->map);
 
 	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(m1, void *),
-	    WPI_RBUF_SIZE, NULL, BUS_DMA_NOWAIT);
+	    WPI_RBUF_SIZE, NULL, BUS_DMA_NOWAIT | BUS_DMA_READ);
 	if (error != 0) {
 		m_freem(m1);
 
 		/* Try to reload the old mbuf. */
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
 		    mtod(data->m, void *), WPI_RBUF_SIZE, NULL,
-		    BUS_DMA_NOWAIT);
+		    BUS_DMA_NOWAIT | BUS_DMA_READ);
 		if (error != 0) {
 			panic("%s: could not load old RX mbuf",
 			    sc->sc_dev.dv_xname);
@@ -1838,7 +1838,7 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	tx->flags = htole32(flags);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-	    BUS_DMA_NOWAIT);
+	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (error != 0 && error != EFBIG) {
 		printf("%s: can't map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1866,7 +1866,7 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		m = m1;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-		    BUS_DMA_NOWAIT);
+		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
 			printf("%s: can't map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
@@ -2096,7 +2096,7 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 		}
 		cmd = mtod(m, struct wpi_tx_cmd *);
 		error = bus_dmamap_load(sc->sc_dmat, data->map, cmd, totlen,
-		    NULL, BUS_DMA_NOWAIT);
+		    NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
 			m_freem(m);
 			return error;

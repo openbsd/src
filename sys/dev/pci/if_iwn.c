@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.74 2009/11/01 12:01:16 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.75 2009/11/03 18:55:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1121,7 +1121,7 @@ iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
 
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
 		    mtod(data->m, void *), IWN_RBUF_SIZE, NULL,
-		    BUS_DMA_NOWAIT);
+		    BUS_DMA_NOWAIT | BUS_DMA_READ);
 		if (error != 0) {
 			printf("%s: can't not map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
@@ -1877,14 +1877,14 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	bus_dmamap_unload(sc->sc_dmat, data->map);
 
 	error = bus_dmamap_load(sc->sc_dmat, data->map, mtod(m1, void *),
-	    IWN_RBUF_SIZE, NULL, BUS_DMA_NOWAIT);
+	    IWN_RBUF_SIZE, NULL, BUS_DMA_NOWAIT | BUS_DMA_READ);
 	if (error != 0) {
 		m_freem(m1);
 
 		/* Try to reload the old mbuf. */
 		error = bus_dmamap_load(sc->sc_dmat, data->map,
 		    mtod(data->m, void *), IWN_RBUF_SIZE, NULL,
-		    BUS_DMA_NOWAIT);
+		    BUS_DMA_NOWAIT | BUS_DMA_READ);
 		if (error != 0) {
 			panic("%s: could not load old RX mbuf",
 			    sc->sc_dev.dv_xname);
@@ -2837,7 +2837,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	tx->flags = htole32(flags);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-	    BUS_DMA_NOWAIT);
+	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (error != 0 && error != EFBIG) {
 		printf("%s: can't map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
@@ -2865,7 +2865,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		m = m1;
 
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-		    BUS_DMA_NOWAIT);
+		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
 			printf("%s: can't map mbuf (error %d)\n",
 			    sc->sc_dev.dv_xname, error);
@@ -3099,7 +3099,7 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 		}
 		cmd = mtod(m, struct iwn_tx_cmd *);
 		error = bus_dmamap_load(sc->sc_dmat, data->map, cmd, totlen,
-		    NULL, BUS_DMA_NOWAIT);
+		    NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
 			m_freem(m);
 			return error;
