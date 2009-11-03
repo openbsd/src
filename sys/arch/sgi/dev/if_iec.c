@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.4 2009/11/03 18:48:38 miod Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.5 2009/11/03 21:41:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -194,9 +194,9 @@ struct iec_control_data {
  *   16KB boundaries (note layout of struct iec_control_data makes sure
  *   the rx desc array starts 16KB after the tx desc array).
  * - each txdesc should be 128 byte aligned (this is also enforced by
- *   struct iec_control_data layout)
- * - each rxdesc should be 128 byte aligned (this is enforced by
- *   struct iec_rxdesc layout).
+ *   struct iec_control_data layout).
+ * - each rxdesc should be aligned on a 4KB boundary (this is enforced by
+ *   struct iec_control_data and struct icd_rxdesc layouts).
  */
 #define	IEC_DMA_BOUNDARY	0x4000
 
