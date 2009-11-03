@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.90 2009/07/03 17:02:02 naddy Exp $
+# $OpenBSD: PackingList.pm,v 1.91 2009/11/03 11:03:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -232,6 +232,13 @@ sub UpdateInfoOnly
 			}
 			return;
 		}
+		# if alwaysupdate, all info is sig
+		if (m/^\@option\s+always-update\b/o) {
+		    &$cont($_);
+		    while (<$fh>) {
+			    &$cont($_);
+		    }
+		}
 		next unless m/^\@(?:name\b|depend\b|wantlib\b|pkgpath\b|comment\s+subdir\=|arch\b)/o;
 		&$cont($_);
 	}
@@ -418,7 +425,7 @@ sub match_pkgpath
 }
 
 our @unique_categories =
-    (qw(name digital-signature no-default-conflict manual-installation extrainfo localbase arch));
+    (qw(name digital-signature no-default-conflict manual-installation always-update extrainfo localbase arch));
 
 our @list_categories =
     (qw(conflict pkgpath incompatibility updateset depend 
@@ -512,9 +519,17 @@ sub to_installation
 sub signature
 {
 	my $self = shift;
-	my $k = {};
-	$self->visit('signature', $k);
-	return join(',', $self->pkgname, sort keys %$k);
+	if ($self->has('always-update')) {
+		my $s;
+		open my $fh, '>', \$s;
+		$self->write_no_sig($fh);
+		close $fh;
+		return $s;
+	} else {
+		my $k = {};
+		$self->visit('signature', $k);
+		return join(',', $self->pkgname, sort keys %$k);
+	}
 }
 
 sub forget

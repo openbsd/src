@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.156 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.157 2009/11/03 11:03:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -770,6 +770,8 @@ sub new
 		return OpenBSD::PackingElement::ManualInstallation->new;
 	} elsif ($args eq 'system-package') {
 		return OpenBSD::PackingElement::SystemPackage->new;
+	} elsif ($args eq 'always-update') {
+		return OpenBSD::PackingElement::AlwaysUpdate->new;
 	} else {
 		die "Unknown option: $args";
 	}
@@ -809,6 +811,14 @@ package OpenBSD::PackingElement::SystemPackage;
 our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
 
 sub category() { 'system-package' }
+
+package OpenBSD::PackingElement::AlwaysUpdate;
+our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
+
+sub category()
+{
+	'always-update';
+}
 
 # The special elements that don't end in the right place
 package OpenBSD::PackingElement::ExtraInfo;
