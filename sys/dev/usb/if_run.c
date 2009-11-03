@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.32 2009/09/16 15:44:59 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.33 2009/11/03 17:36:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1515,6 +1515,11 @@ run_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct run_softc *sc = ic->ic_softc;
 	struct run_cmd_key cmd;
 
+	/* defer setting of WEP keys until interface is brought up */
+	if ((ic->ic_if.if_flags & (IFF_UP | IFF_RUNNING)) !=
+	    (IFF_UP | IFF_RUNNING))
+		return 0;
+
 	/* do it in a process context */
 	cmd.key = *k;
 	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
@@ -3013,12 +3018,6 @@ run_init(struct ifnet *ifp)
 	/* turn radio LED on */
 	run_set_leds(sc, RT2860_LED_RADIO);
 
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
-		/* install WEP keys */
-		for (i = 0; i < IEEE80211_WEP_NKID; i++)
-			(void)run_set_key(ic, NULL, &ic->ic_nw_keys[i]);
-	}
-
 	for (i = 0; i < RUN_RX_RING_COUNT; i++) {
 		struct run_rx_data *data = &sc->rxq.data[i];
 
@@ -3035,6 +3034,12 @@ run_init(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+
+	if (ic->ic_flags & IEEE80211_F_WEPON) {
+		/* install WEP keys */
+		for (i = 0; i < IEEE80211_WEP_NKID; i++)
+			(void)run_set_key(ic, NULL, &ic->ic_nw_keys[i]);
+	}
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);

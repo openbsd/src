@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.36 2009/11/01 12:08:36 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.37 2009/11/03 17:36:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2177,6 +2177,11 @@ rt2860_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	uint32_t attr;
 	uint8_t mode, wcid, iv[8];
 
+	/* defer setting of WEP keys until interface is brought up */
+	if ((ic->ic_if.if_flags & (IFF_UP | IFF_RUNNING)) !=
+	    (IFF_UP | IFF_RUNNING))
+		return 0;
+
 	/* map net80211 cipher to RT2860 security mode */
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
@@ -2891,12 +2896,6 @@ rt2860_init(struct ifnet *ifp)
 	/* turn radio LED on */
 	rt2860_set_leds(sc, RT2860_LED_RADIO);
 
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
-		/* install WEP keys */
-		for (i = 0; i < IEEE80211_WEP_NKID; i++)
-			(void)rt2860_set_key(ic, NULL, &ic->ic_nw_keys[i]);
-	}
-
 	/* enable Tx/Rx DMA engine */
 	if ((error = rt2860_txrx_enable(sc)) != 0) {
 		rt2860_stop(ifp, 1);
@@ -2913,6 +2912,12 @@ rt2860_init(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+
+	if (ic->ic_flags & IEEE80211_F_WEPON) {
+		/* install WEP keys */
+		for (i = 0; i < IEEE80211_WEP_NKID; i++)
+			(void)rt2860_set_key(ic, NULL, &ic->ic_nw_keys[i]);
+	}
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);

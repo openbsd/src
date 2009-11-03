@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.12 2009/09/15 18:44:55 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.13 2009/11/03 17:36:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2046,6 +2046,11 @@ otus_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct otus_softc *sc = ic->ic_softc;
 	struct otus_cmd_key cmd;
+
+	/* Defer setting of WEP keys until interface is brought up. */
+	if ((ic->ic_if.if_flags & (IFF_UP | IFF_RUNNING)) !=
+	    (IFF_UP | IFF_RUNNING))
+		return 0;
 
 	/* Do it in a process context. */
 	cmd.key = *k;
