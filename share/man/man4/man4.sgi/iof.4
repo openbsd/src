@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iof.4,v 1.3 2009/10/08 20:06:38 miod Exp $
+.\"	$OpenBSD: iof.4,v 1.4 2009/11/03 16:38:45 deraadt Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2009 $
+.Dd $Mdocdate: November 3 2009 $
 .Dt IOF 4 sgi
 .Os
 .Sh NAME
@@ -33,21 +33,16 @@ driver provides support for the SGI IOC4-based basic I/O device on Origin 350
 and Tezro systems.
 .Pp
 The IOC4 chip provides:
-.Bl -bullet -compact -offset indent
-.It
-Four
-.Xr com 4
-serial ports.
-.It
-A
-.Xr dsrtc 4
-time-of-day chip.
-.It
-A PS/2 keyboard and mouse interface.
-.It
-A
-.Xr pciide 4
-ATAPI interface.
+.Pp
+.Bl -tag -width 10n -offset ind -compact
+.It Xr com 4
+Four serial ports.
+.It Xr dsrtc 4
+Time-of-day chip.
+.\" .It Xr iockbc 4
+.\" PS/2 keyboard and mouse interface.
+.It Xr pciide 4
+PCI IDE controller driver.
 .El
 .Sh SEE ALSO
 .Xr com 4 ,
