@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iecreg.h,v 1.1 2009/11/01 19:34:02 miod Exp $	*/
+/*	$OpenBSD: if_iecreg.h,v 1.2 2009/11/03 18:46:00 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -27,7 +27,7 @@
 #define	IEC_NRXDESC_MAX		512
 
 #define IEC_RXDESCSIZE		(13 * 128)	/* should be 128byte aligned. */
-#define IEC_RXD_BUFOFFSET	(64)
+#define IEC_RXD_BUFOFFSET	(64 + 2)	/* to align Ethernet header */
 #define IEC_RXD_NRXPAD		(IEC_RXD_BUFOFFSET - 2 * sizeof(uint32_t))
 #define IEC_RXD_BUFSIZE		(IEC_RXDESCSIZE - IEC_RXD_BUFOFFSET)
 
