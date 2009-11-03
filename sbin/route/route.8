@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.59 2009/06/25 10:22:54 michele Exp $
+.\"	$OpenBSD: route.8,v 1.60 2009/11/03 22:37:59 claudio Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: June 25 2009 $
+.Dd $Mdocdate: November 3 2009 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -193,18 +193,13 @@ The other commands have the syntax:
 .Nm route Op Fl dnqtv
 .Ar command
 .Op Ar modifiers
-.Ar destination gateway Op Ar netmask
+.Ar destination gateway
 .Ed
 .Pp
 .Ar destination
 is the destination host or network,
 .Ar gateway
-is the next-hop intermediary via which packets should be routed,
-and
-.Ar netmask
-behaves the same as the argument to the
-.Fl netmask
-modifier and is described below.
+is the next-hop intermediary via which packets should be routed.
 Routes to a particular host may be distinguished from those to
 a network by interpreting the Internet address specified as the
 .Ar destination
