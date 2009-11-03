@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.223 2009/11/03 10:59:04 claudio Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.224 2009/11/03 17:41:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1738,7 +1738,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    ((pnl->proto == IPPROTO_TCP ||
 		    pnl->proto == IPPROTO_UDP) &&
 		    (!pnl->dport || !pnl->sport)) ||
-		    pnl->rdomain < 0 || pnl->rdomain > RT_TABLEID_MAX)
+		    pnl->rdomain > RT_TABLEID_MAX)
 			error = EINVAL;
 		else {
 			key.af = pnl->af;

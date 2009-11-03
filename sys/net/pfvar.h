@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.297 2009/11/03 10:59:04 claudio Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.298 2009/11/03 17:41:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1146,10 +1146,11 @@ struct pf_pdesc {
 	u_int16_t	 odport;
 
 	u_int32_t	 p_len;		/* total length of payload */
-	u_int		 rdomain;	/* original routing domain */
 
 	u_int16_t	*ip_sum;
 	u_int16_t	*proto_sum;
+
+	u_int16_t	 rdomain;	/* original routing domain */
 	u_int16_t	 flags;
 #define PFDESC_IP_REAS	0x0002		/* IP frags would've been reassembled */
 	sa_family_t	 af;
@@ -1414,7 +1415,7 @@ struct pfioc_natlook {
 	struct pf_addr	 daddr;
 	struct pf_addr	 rsaddr;
 	struct pf_addr	 rdaddr;
-	int		 rdomain;
+	u_int16_t	 rdomain;
 	u_int16_t	 sport;
 	u_int16_t	 dport;
 	u_int16_t	 rsport;
@@ -1444,7 +1445,7 @@ struct pfioc_state_kill {
 	char			psk_ifname[IFNAMSIZ];
 	char			psk_label[PF_RULE_LABEL_SIZE];
 	u_int			psk_killed;
-	int			psk_rdomain;
+	u_int16_t		psk_rdomain;
 };
 
 struct pfioc_states {
