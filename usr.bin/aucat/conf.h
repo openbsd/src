@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.10 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.11 2009/11/03 21:31:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -42,5 +42,10 @@
  * MIDI buffer size
  */
 #define MIDI_BUFSZ		3125	/* 1 second at 31.25kbit/s */
+
+/*
+ * units used for MTC clock.
+ */
+#define MTC_SEC			2400	/* 1 second is 2400 ticks */
 
 #endif /* !defined(CONF_H) */

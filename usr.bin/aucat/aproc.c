@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.37 2009/10/10 09:54:05 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.38 2009/11/03 21:31:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,6 +43,7 @@
 #include "aproc.h"
 #include "conf.h"
 #include "file.h"
+#include "midi.h"
 
 
 struct aproc *
@@ -58,7 +59,7 @@ aproc_new(struct aproc_ops *ops, char *name)
 	p->name = name;
 	p->ops = ops;
 	p->refs = 0;
-	p->zomb = 0;
+	p->flags = 0;
 	return p;
 }
 
@@ -67,7 +68,7 @@ aproc_del(struct aproc *p)
 {
 	struct abuf *i;
 
-	if (!p->zomb) {
+	if (!(p->flags & APROC_ZOMB)) {
 		if (p->ops->done) {
 			p->ops->done(p);
 		}
@@ -79,7 +80,7 @@ aproc_del(struct aproc *p)
 			i = LIST_FIRST(&p->obuflist);
 			abuf_eof(i);
 		}
-		p->zomb = 1;
+		p->flags |= APROC_ZOMB;
 	}
 	if (p->refs > 0) {
 		return;
@@ -483,7 +484,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 		if (!abuf_fill(i))
 			continue; /* eof */
 		if (!ABUF_ROK(i)) {
-			if (p->u.mix.flags & MIX_DROP) {
+			if (p->flags & APROC_DROP) {
 				if (!mix_xrun(i, obuf))
 					continue;
 			}
@@ -493,11 +494,11 @@ mix_out(struct aproc *p, struct abuf *obuf)
 			odone = i->r.mix.done;
 	}
 	if (LIST_EMPTY(&p->ibuflist)) {
-		if (p->u.mix.flags & MIX_AUTOQUIT) {
+		if (p->flags & APROC_QUIT) {
 			aproc_del(p);
 			return 0;
 		}
-		if (!(p->u.mix.flags & MIX_DROP))
+		if (!(p->flags & APROC_DROP))
 			return 0;
 		mix_bzero(obuf, obuf->len);
 		odone = obuf->w.mix.todo;
@@ -570,6 +571,8 @@ void
 mix_opos(struct aproc *p, struct abuf *obuf, int delta)
 {
 	p->u.mix.lat -= delta;
+	if (p->u.mix.ctl)
+		ctl_ontick(p->u.mix.ctl, delta);
 	aproc_opos(p, obuf, delta);
 }
 
@@ -587,15 +590,15 @@ struct aproc_ops mix_ops = {
 };
 
 struct aproc *
-mix_new(char *name, int maxlat)
+mix_new(char *name, int maxlat, struct aproc *ctl)
 {
 	struct aproc *p;
 
 	p = aproc_new(&mix_ops, name);
-	p->u.mix.flags = 0;
 	p->u.mix.idle = 0;
 	p->u.mix.lat = 0;
 	p->u.mix.maxlat = maxlat;
+	p->u.mix.ctl = ctl;
 	return p;
 }
 
@@ -705,7 +708,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
 		if (!ABUF_WOK(i)) {
-			if (p->u.sub.flags & SUB_DROP) {
+			if (p->flags & APROC_DROP) {
 				if (!sub_xrun(ibuf, i))
 					continue;
 			}
@@ -717,11 +720,11 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 			continue;
 	}
 	if (LIST_EMPTY(&p->obuflist)) {
-		if (p->u.sub.flags & SUB_AUTOQUIT) {
+		if (p->flags & APROC_QUIT) {
 			aproc_del(p);
 			return 0;
 		}
-		if (!(p->u.sub.flags & SUB_DROP))
+		if (!(p->flags & APROC_DROP))
 			return 0;
 		idone = ibuf->used;
 		p->u.sub.idle += idone / ibuf->bpf;
@@ -811,6 +814,8 @@ void
 sub_ipos(struct aproc *p, struct abuf *ibuf, int delta)
 {
 	p->u.sub.lat += delta;
+	if (p->u.sub.ctl)
+		ctl_ontick(p->u.sub.ctl, delta);
 	aproc_ipos(p, ibuf, delta);
 }
 
@@ -828,15 +833,15 @@ struct aproc_ops sub_ops = {
 };
 
 struct aproc *
-sub_new(char *name, int maxlat)
+sub_new(char *name, int maxlat, struct aproc *ctl)
 {
 	struct aproc *p;
 
 	p = aproc_new(&sub_ops, name);
-	p->u.sub.flags = 0;
 	p->u.sub.idle = 0;
 	p->u.sub.lat = 0;
 	p->u.sub.maxlat = maxlat;
+	p->u.sub.ctl = ctl;
 	return p;
 }
 

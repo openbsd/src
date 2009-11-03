@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.35 2009/10/27 22:24:27 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.36 2009/11/03 21:31:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -83,15 +83,15 @@ dev_loopinit(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 	dev_play = NULL;
 
 	buf = abuf_new(dev_bufsz, &par);
-	dev_mix = mix_new("mix", dev_bufsz);
+	dev_mix = mix_new("mix", dev_bufsz, NULL);
 	dev_mix->refs++;
-	dev_sub = sub_new("sub", dev_bufsz);
+	dev_sub = sub_new("sub", dev_bufsz, NULL);
 	dev_sub->refs++;
 	aproc_setout(dev_mix, buf);
 	aproc_setin(dev_sub, buf);
 
-	dev_mix->u.mix.flags |= MIX_AUTOQUIT;
-	dev_sub->u.sub.flags |= SUB_AUTOQUIT;
+	dev_mix->flags |= APROC_QUIT;
+	dev_sub->flags |= APROC_QUIT;
 
 	*dipar = dev_ipar;
 	*dopar = dev_opar;
@@ -110,7 +110,7 @@ dev_roundof(unsigned newrate)
  */
 int
 dev_init(char *devpath,
-    struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
+    struct aparams *dipar, struct aparams *dopar, unsigned bufsz, unsigned round)
 {
 	struct file *f;
 	struct aparams ipar, opar;
@@ -118,12 +118,16 @@ dev_init(char *devpath,
 	struct abuf *buf;
 	unsigned nfr, ibufsz, obufsz;
 
+	dev_midi = ctl_new("ctl");
+	dev_midi->refs++;
+
 	/*
 	 * Ask for 1/4 of the buffer for the kernel ring and
 	 * limit the block size to 1/4 of the requested buffer.
 	 */
-	dev_bufsz = (bufsz + 3) / 4;
-	dev_round = (bufsz + 3) / 4;
+	dev_round = round;
+	dev_bufsz = (bufsz + 3) / 4 + (dev_round - 1);
+	dev_bufsz -= dev_bufsz % dev_round;
 	f = (struct file *)safile_new(&safile_ops, devpath,
 	    dipar, dopar, &dev_bufsz, &dev_round);
 	if (f == NULL)
@@ -176,8 +180,9 @@ dev_init(char *devpath,
 
 		/*
 		 * Append a "sub" to which clients will connect.
+		 * Link it to the controller only in record-only mode
 		 */
-		dev_sub = sub_new("rec", nfr);
+		dev_sub = sub_new("rec", nfr, dopar ? NULL : dev_midi);
 		dev_sub->refs++;
 		aproc_setin(dev_sub, buf);
 	} else {
@@ -214,7 +219,7 @@ dev_init(char *devpath,
 		/*
 		 * Append a "mix" to which clients will connect.
 		 */
-		dev_mix = mix_new("play", nfr);
+		dev_mix = mix_new("play", nfr, dev_midi);
 		dev_mix->refs++;
 		aproc_setout(dev_mix, buf);
 	} else {
@@ -222,8 +227,6 @@ dev_init(char *devpath,
 		dev_mix = NULL;
 	}
 	dev_bufsz = (dopar) ? obufsz : ibufsz;
-	dev_midi = ctl_new("ctl");
-	dev_midi->refs++;
 	dev_start();
 	return 1;
 }
@@ -237,18 +240,6 @@ dev_done(void)
 {
 	struct file *f;
 
-	if (dev_midi) {
-		if (!dev_sub && !dev_mix)
-			dev_midi->u.thru.flags |= THRU_AUTOQUIT;
- 	restart_midi:
-		LIST_FOREACH(f, &file_list, entry) {
-			if (f->rproc &&
-			    aproc_depend(dev_midi, f->rproc)) {
-				file_eof(f);
-				goto restart_midi;
-			}
-		}
-	}
 	if (dev_mix) {
 		/*
 		 * Put the mixer in ``autoquit'' state and generate
@@ -260,7 +251,7 @@ dev_done(void)
 		 * reorder the file_list, we have to restart the loop
 		 * after each call to file_eof().
 		 */
-		dev_mix->u.mix.flags |= MIX_AUTOQUIT;
+		dev_mix->flags |= APROC_QUIT;
 	restart_mix:
 		LIST_FOREACH(f, &file_list, entry) {
 			if (f->rproc != NULL &&
@@ -284,33 +275,44 @@ dev_done(void)
 			}
 		}
 	}
+	if (dev_midi) {
+		dev_midi->flags |= APROC_QUIT;
+ 	restart_midi:
+		LIST_FOREACH(f, &file_list, entry) {
+			if (f->rproc &&
+			    aproc_depend(dev_midi, f->rproc)) {
+				file_eof(f);
+				goto restart_midi;
+			}
+		}
+	}
 	if (dev_mix) {
 		dev_mix->refs--;
-		if (dev_mix->zomb)
+		if (dev_mix->flags & APROC_ZOMB)
 			aproc_del(dev_mix);
 		dev_mix = NULL;
 	}
 	if (dev_play) {
 		dev_play->refs--;
-		if (dev_play->zomb)
+		if (dev_play->flags & APROC_ZOMB)
 			aproc_del(dev_play);
 		dev_play = NULL;
 	}
 	if (dev_sub) {
 		dev_sub->refs--;
-		if (dev_sub->zomb)
+		if (dev_sub->flags & APROC_ZOMB)
 			aproc_del(dev_sub);
 		dev_sub = NULL;
 	}
 	if (dev_rec) {
 		dev_rec->refs--;
-		if (dev_rec->zomb)
+		if (dev_rec->flags & APROC_ZOMB)
 			aproc_del(dev_rec);
 		dev_rec = NULL;
 	}
 	if (dev_midi) {
 		dev_midi->refs--;
-		if (dev_midi->zomb)
+		if (dev_midi->flags & APROC_ZOMB)
 			aproc_del(dev_midi);
 		dev_midi = NULL;
 	}
@@ -329,9 +331,9 @@ dev_start(void)
 	struct file *f;
 
 	if (dev_mix)
-		dev_mix->u.mix.flags |= MIX_DROP;
+		dev_mix->flags |= APROC_DROP;
 	if (dev_sub)
-		dev_sub->u.sub.flags |= SUB_DROP;
+		dev_sub->flags |= APROC_DROP;
 	if (dev_play && dev_play->u.io.file) {
 		f = dev_play->u.io.file;
 		f->ops->start(f);
@@ -357,9 +359,9 @@ dev_stop(void)
 		f->ops->stop(f);
 	}
 	if (dev_mix)
-		dev_mix->u.mix.flags &= ~MIX_DROP;
+		dev_mix->flags &= ~APROC_DROP;
 	if (dev_sub)
-		dev_sub->u.sub.flags &= ~SUB_DROP;
+		dev_sub->flags &= ~APROC_DROP;
 }
 
 /*
@@ -442,6 +444,42 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
 		ibuf->silence += -delta * ibuf->bpf;
 		abuf_opos(ibuf, delta);
 	}
+}
+
+/*
+ * return the current latency (in frames), ie the latency that
+ * a stream would have if dev_attach() is called on it.
+ */
+int
+dev_getpos(void)
+{
+	struct abuf *pbuf = NULL, *rbuf = NULL;
+	int plat = 0, rlat = 0;
+	int delta;
+
+	if (dev_mix) {
+		pbuf = LIST_FIRST(&dev_mix->obuflist);
+		if (!pbuf)
+			return 0;
+		plat = -dev_mix->u.mix.lat;
+	}
+	if (dev_sub) {
+		rbuf = LIST_FIRST(&dev_sub->ibuflist);
+		if (!rbuf)
+			return 0;
+		rlat = -dev_sub->u.sub.lat;
+	}
+	if (dev_mix && dev_sub) {
+		delta =
+		    rbuf->bpf * (pbuf->abspos + pbuf->used) -
+		    pbuf->bpf *  rbuf->abspos;
+		delta /= pbuf->bpf * rbuf->bpf;
+		if (delta > 0)
+			rlat -= delta;
+		else if (delta < 0)
+			plat += delta;
+	}
+	return dev_mix ? plat : rlat;
 }
 
 /*

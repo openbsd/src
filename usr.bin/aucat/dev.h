@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.14 2009/10/10 13:55:37 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.15 2009/11/03 21:31:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,13 +29,14 @@ void dev_thruinit(void);
 void dev_midiattach(struct abuf *, struct abuf *);
 unsigned dev_roundof(unsigned);
 void dev_loopinit(struct aparams *, struct aparams *, unsigned);
-int  dev_init(char *, struct aparams *, struct aparams *, unsigned);
+int  dev_init(char *, struct aparams *, struct aparams *, unsigned, unsigned);
 void dev_start(void);
 void dev_stop(void);
 void dev_run(int);
 void dev_done(void);
 int  dev_getep(struct abuf **, struct abuf **);
 void dev_sync(struct abuf *, struct abuf *);
+int dev_getpos(void);
 void dev_attach(char *,
     struct abuf *, struct aparams *, unsigned,
     struct abuf *, struct aparams *, unsigned, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.26 2009/10/27 22:41:03 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.27 2009/11/03 21:31:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -123,26 +123,25 @@ struct aproc {
 	LIST_HEAD(, abuf) ibuflist;		/* list of inputs */
 	LIST_HEAD(, abuf) obuflist;		/* list of outputs */
 	unsigned refs;				/* extern references */
-	unsigned zomb;				/* destroyed but not freed */
+#define APROC_ZOMB	1			/* destroyed but not freed */
+#define APROC_QUIT	2			/* try to terminate if unused */
+#define APROC_DROP	4			/* xrun if capable */
+	unsigned flags;					
 	union {					/* follow type-specific data */
 		struct {			/* file/device io */
 			struct file *file;	/* file to read/write */
 		} io;
 		struct {
-#define MIX_DROP	1
-#define MIX_AUTOQUIT	2
-			unsigned flags;		/* bit mask of above */
 			unsigned idle;		/* frames since idleing */
 			int lat;		/* current latency */
-			int maxlat;		/* max latency allowed*/
+			int maxlat;		/* max latency allowed */
+			struct aproc *ctl;
 		} mix;
 		struct {
-#define SUB_DROP	1
-#define SUB_AUTOQUIT	2
 			unsigned idle;		/* frames since idleing */
-			unsigned flags;		/* bit mask of above */
 			int lat;		/* current latency */
-			int maxlat;		/* max latency allowed*/
+			int maxlat;		/* max latency allowed */
+			struct aproc *ctl;
 		} sub;
 		struct {
 #define RESAMP_NCTX	2
@@ -166,22 +165,39 @@ struct aproc {
 		struct {
 			struct abuf *owner;	/* current input stream */
 			struct timo timo;	/* timout for throtteling */
-#define THRU_AUTOQUIT	1
-			unsigned flags;		/* bit mask of above */
 		} thru;
 		struct {
 #define CTL_NSLOT	8
 #define CTL_NAMEMAX	8
 			unsigned serial;
+#define CTL_OFF		0			/* ignore MMC messages */
+#define CTL_STOP	1			/* stopped, can't start */
+#define CTL_START	2			/* attempting to start */
+#define CTL_RUN		3			/* started */
+			unsigned tstate;
+			unsigned origin;	/* MTC start time */
+			unsigned fps;		/* MTC frames per second */
+#define MTC_FPS_24	0
+#define MTC_FPS_25	1
+#define MTC_FPS_30	3
+			unsigned fps_id;	/* one of above */
+			unsigned hr;		/* MTC hours */
+			unsigned min;		/* MTC minutes */
+			unsigned sec;		/* MTC seconds */
+			unsigned fr;		/* MTC frames */
+			unsigned qfr;		/* MTC quarter frames */
+			int delta;		/* rel. to the last MTC tick */
 			struct ctl_slot {
 				struct ctl_ops {
 					void (*vol)(void *, unsigned);
+					void (*start)(void *);
 				} *ops;
 				void *arg;
 				unsigned unit;
 				char name[CTL_NAMEMAX];
 				unsigned serial;
 				unsigned vol;
+				unsigned tstate;
 			} slot[CTL_NSLOT];
 		} ctl;
 	} u;
@@ -208,8 +224,8 @@ int wpipe_out(struct aproc *, struct abuf *);
 void wpipe_eof(struct aproc *, struct abuf *);
 void wpipe_hup(struct aproc *, struct abuf *);
 
-struct aproc *mix_new(char *, int);
-struct aproc *sub_new(char *, int);
+struct aproc *mix_new(char *, int, struct aproc *);
+struct aproc *sub_new(char *, int, struct aproc *);
 struct aproc *resamp_new(char *, unsigned, unsigned);
 struct aproc *cmap_new(char *, struct aparams *, struct aparams *);
 struct aproc *enc_new(char *, struct aparams *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.1 2009/07/25 08:44:27 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.2 2009/11/03 21:31:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,11 +27,12 @@ struct opt {
 	int maxweight;		/* max dynamic range for clients */
 	struct aparams wpar;	/* template for clients write params */
 	struct aparams rpar;	/* template for clients read params */
+	int mmc;		/* true if MMC control enabled */
 };
 
 SLIST_HEAD(optlist,opt);
 
-void opt_new(char *, struct aparams *, struct aparams *, int);
+void opt_new(char *, struct aparams *, struct aparams *, int, int);
 struct opt *opt_byname(char *);
 
 #endif /* !defined(OPT_H) */

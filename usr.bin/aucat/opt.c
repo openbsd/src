@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.2 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.3 2009/11/03 21:31:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,7 +24,8 @@
 struct optlist opt_list = SLIST_HEAD_INITIALIZER(&opt_list);
 
 void
-opt_new(char *name, struct aparams *wpar, struct aparams *rpar, int maxweight)
+opt_new(char *name,
+    struct aparams *wpar, struct aparams *rpar, int maxweight, int mmc)
 {
 	struct opt *o;
 	unsigned len;
@@ -53,6 +54,7 @@ opt_new(char *name, struct aparams *wpar, struct aparams *rpar, int maxweight)
 	o->wpar = *wpar;
 	o->rpar = *rpar;
 	o->maxweight = maxweight;
+	o->mmc = mmc;
 	SLIST_INSERT_HEAD(&opt_list, o, entry);
 }
 

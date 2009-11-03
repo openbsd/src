@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.34 2009/10/27 22:41:03 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.35 2009/11/03 21:31:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -54,9 +54,11 @@ struct fileops sock_ops = {
 
 
 void sock_setvol(void *, unsigned);
+void sock_startreq(void *);
 
 struct ctl_ops ctl_sockops = {
 	sock_setvol,
+	sock_startreq
 };
 
 void
@@ -300,10 +302,12 @@ sock_freebuf(struct sock *f)
 	struct abuf *rbuf, *wbuf;
 
 	f->pstate = SOCK_INIT;
+	wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
+	if (rbuf || wbuf)
+		ctl_slotstop(dev_midi, f->slot);
 	if (rbuf)
 		abuf_eof(rbuf);
-	wbuf = LIST_FIRST(&f->pipe.file.wproc->ibuflist);
 	if (wbuf)
 		abuf_hup(wbuf);
 	f->tickpending = 0;
@@ -328,7 +332,7 @@ sock_allocbuf(struct sock *f)
 	f->delta = 0;
 	f->tickpending = 0;
 	f->pstate = SOCK_START;
-	if (!(f->mode & AMSG_PLAY))
+	if (!(f->mode & AMSG_PLAY) && ctl_slotstart(dev_midi, f->slot))
 		(void)sock_attach(f, 0);
 }
 
@@ -347,6 +351,17 @@ sock_setvol(void *arg, unsigned vol)
 		return;
 	}
 	dev_setvol(rbuf, MIDI_TO_ADATA(vol));
+}
+
+/*
+ * Attach the stream. Callback invoked when MMC start
+ */
+void
+sock_startreq(void *arg)
+{
+	struct sock *f = (struct sock *)arg;
+
+	(void)sock_attach(f, 0);
 }
 
 /*
@@ -394,8 +409,10 @@ sock_reset(struct sock *f)
 {
 	switch (f->pstate) {
 	case SOCK_START:
-		(void)sock_attach(f, 1);
-		f->pstate = SOCK_RUN;
+		if (ctl_slotstart(dev_midi, f->slot)) {
+			(void)sock_attach(f, 1);
+			f->pstate = SOCK_RUN;
+		}
 		/* PASSTHROUGH */
 	case SOCK_RUN:
 		sock_freebuf(f);
@@ -599,6 +616,8 @@ sock_setpar(struct sock *f)
 			return 0;
 		}
 		f->xrun = p->xrun;
+		if (f->opt->mmc && f->xrun == AMSG_IGNORE)
+			f->xrun = AMSG_SYNC;
 	}
 	if (AMSG_ISSET(p->bufsz)) {
 		/*
@@ -673,6 +692,8 @@ sock_hello(struct sock *f)
 		f->wpar = f->opt->wpar;
 	if (dev_mix)
 		f->rpar = f->opt->rpar;
+	if (f->opt->mmc)
+		f->xrun = AMSG_SYNC;
 	if ((p->proto & ~(AMSG_PLAY | AMSG_REC)) != 0 ||
 	    (p->proto &  (AMSG_PLAY | AMSG_REC)) == 0) {
 		return 0;
@@ -691,7 +712,9 @@ sock_hello(struct sock *f)
 		f->mode |= AMSG_REC;
 	}
 	if (dev_midi) {
-		f->slot = ctl_slotnew(dev_midi, p->who, &ctl_sockops, f);
+		f->slot = ctl_slotnew(dev_midi,
+		     p->who, &ctl_sockops, f,
+		     f->opt->mmc);
 		if (f->slot < 0) {
 			return 0;
 		}
@@ -745,7 +768,8 @@ sock_execmsg(struct sock *f)
 			aproc_del(f->pipe.file.rproc);
 			return 0;
 		}
-		if (f->pstate == SOCK_START)
+		if (f->pstate == SOCK_START &&
+		    ctl_slotstart(dev_midi, f->slot))
 			(void)sock_attach(f, 1);
 		sock_freebuf(f);
 		AMSG_INIT(m);
@@ -943,7 +967,10 @@ sock_read(struct sock *f)
 			f->rstate = SOCK_RMSG;
 			f->rtodo = sizeof(struct amsg);
 		}
-		if (f->pstate == SOCK_START)
+		/*
+		 * XXX: have to way that the buffer is full before starting
+		 */
+		if (f->pstate == SOCK_START && ctl_slotstart(dev_midi, f->slot))
 			(void)sock_attach(f, 0);
 		break;
 	case SOCK_RRET:

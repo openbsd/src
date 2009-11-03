@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.73 2009/10/27 22:21:37 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.74 2009/11/03 21:31:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -110,6 +110,16 @@ opt_hdr(void)
 }
 
 int
+opt_mmc(void)
+{
+	if (strcmp("off", optarg) == 0)
+		return 0;
+	if (strcmp("slave", optarg) == 0)
+		return 1;
+	errx(1, "%s: bad MMC mode", optarg);
+}
+
+int
 opt_xrun(void)
 {
 	if (strcmp("ignore", optarg) == 0)
@@ -144,6 +154,7 @@ struct farg {
 	char *name;		/* optarg pointer (no need to copy it */
 	int hdr;		/* header format */
 	int xrun;		/* overrun/underrun policy */
+	int mmc;		/* MMC mode */
 };
 
 SLIST_HEAD(farglist, farg);
@@ -155,7 +166,7 @@ SLIST_HEAD(farglist, farg);
 void
 farg_add(struct farglist *list,
     struct aparams *ipar, struct aparams *opar, unsigned vol,
-    int hdr, int xrun, char *optarg)
+    int hdr, int xrun, int mmc, char *optarg)
 {
 	struct farg *fa;
 	size_t namelen;
@@ -179,6 +190,7 @@ farg_add(struct farglist *list,
 	fa->opar = *opar;
 	fa->vol = vol;
 	fa->name = optarg;
+	fa->mmc = mmc;
 	SLIST_INSERT_HEAD(list, fa, entry);
 }
 
@@ -347,7 +359,7 @@ aucat_usage(void)
 	(void)fputs("usage: " PROG_AUCAT " [-dlnu] [-b nframes] "
 	    "[-C min:max] [-c min:max] [-e enc] [-f device]\n"
 	    "\t[-h fmt] [-i file] [-m mode] [-o file] [-r rate] [-s name]\n"
-	    "\t[-U unit] [-v volume] [-x policy]\n",
+	    "\t[-t mode] [-U unit] [-v volume] [-x policy] [-z nframes]\n",
 	    stderr);
 }
 
@@ -359,9 +371,10 @@ aucat_main(int argc, char **argv)
 	struct farglist ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
 	char base[PATH_MAX], path[PATH_MAX];
-	unsigned bufsz, mode;
+	unsigned bufsz, round, mode;
 	char *devpath;
 	unsigned volctl;
+	int mmc;
 
 	aparams_init(&ipar, 0, 1, 44100);
 	aparams_init(&opar, 0, 1, 44100);
@@ -370,6 +383,7 @@ aucat_main(int argc, char **argv)
 	l_flag = 0;
 	n_flag = 0;
 	unit = -1;
+	mmc = 0;
 	devpath = NULL;
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
@@ -377,10 +391,11 @@ aucat_main(int argc, char **argv)
 	hdr = HDR_AUTO;
 	xrun = XRUN_IGNORE;
 	volctl = MIDI_MAXCTL;
-	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
 	mode = 0;
+	bufsz = 0;
+	round = 0;
 
-	while ((c = getopt(argc, argv, "dnb:c:C:e:r:h:x:v:i:o:f:m:lus:U:")) != -1) {
+	while ((c = getopt(argc, argv, "dnb:c:C:e:r:h:x:v:i:o:f:m:lus:U:t:z:")) != -1) {
 		switch (c) {
 		case 'd':
 			d_flag = 1;
@@ -396,6 +411,9 @@ aucat_main(int argc, char **argv)
 			break;
 		case 'x':
 			xrun = opt_xrun();
+			break;
+		case 't':
+			mmc = opt_mmc();
 			break;
 		case 'c':
 			opt_ch(&ipar);
@@ -416,15 +434,15 @@ aucat_main(int argc, char **argv)
 			break;
 		case 'i':
 			farg_add(&ifiles, &ipar, &opar, volctl,
-			    hdr, xrun, optarg);
+			    hdr, xrun, 0, optarg);
 			break;
 		case 'o':
 			farg_add(&ofiles, &ipar, &opar, volctl,
-			    hdr, xrun, optarg);
+			    hdr, xrun, 0, optarg);
 			break;
 		case 's':
 			farg_add(&sfiles, &ipar, &opar, volctl,
-			    hdr, xrun, optarg);
+			    hdr, xrun, mmc, optarg);
 			break;
 		case 'f':
 			if (devpath)
@@ -451,6 +469,13 @@ aucat_main(int argc, char **argv)
 				exit(1);
 			}
 			break;
+		case 'z':
+			if (sscanf(optarg, "%u", &round) != 1 || round == 0) {
+				fprintf(stderr, "%s: bad block size\n", optarg);
+				exit(1);
+			}
+			break;
+			
 		default:
 			aucat_usage();
 			exit(1);
@@ -507,7 +532,7 @@ aucat_main(int argc, char **argv)
 	 */
 	if (l_flag && SLIST_EMPTY(&sfiles)) {
 		farg_add(&sfiles, &dopar, &dipar,
-		    volctl, HDR_RAW, XRUN_IGNORE, DEFAULT_OPT);
+		    volctl, HDR_RAW, XRUN_IGNORE, mmc, DEFAULT_OPT);
 	}
 
 	if (!u_flag) {
@@ -529,6 +554,10 @@ aucat_main(int argc, char **argv)
 			aparams_grow(&dipar, &fa->opar);
 		}
 	}
+	if (!round)
+		round = ((mode & MODE_REC) ? dipar.rate : dopar.rate) / 15;
+	if (!bufsz)
+		bufsz = ((mode & MODE_REC) ? dipar.rate : dopar.rate) * 4 / 15;
 
 	if (l_flag) {
 		getbasepath(base, sizeof(base));
@@ -548,7 +577,7 @@ aucat_main(int argc, char **argv)
 		if (!dev_init(devpath,
 			(mode & MODE_REC) ? &dipar : NULL,
 			(mode & MODE_PLAY) ? &dopar : NULL,
-			bufsz)) {
+			bufsz, round)) {
 			errx(1, "%s: can't open device", 
 			    devpath ? devpath : "<default>");
 		}
@@ -572,7 +601,8 @@ aucat_main(int argc, char **argv)
 	while (!SLIST_EMPTY(&sfiles)) {
 		fa = SLIST_FIRST(&sfiles);
 		SLIST_REMOVE_HEAD(&sfiles, entry);
-		opt_new(fa->name, &fa->opar, &fa->ipar, MIDI_TO_ADATA(fa->vol));
+		opt_new(fa->name, &fa->opar, &fa->ipar,
+		    MIDI_TO_ADATA(fa->vol), fa->mmc);
 		free(fa);
 	}
 	if (l_flag) {
@@ -598,7 +628,8 @@ aucat_main(int argc, char **argv)
 		if (!file_poll())
 			break;
 		if ((!dev_mix || dev_mix->u.mix.idle > 2 * dev_bufsz) &&
-		    (!dev_sub || dev_sub->u.sub.idle > 2 * dev_bufsz)) {
+		    (!dev_sub || dev_sub->u.sub.idle > 2 * dev_bufsz) &&
+		    ((dev_mix || dev_sub) && dev_midi->u.ctl.tstate != CTL_RUN)) {
 			if (!l_flag)
 				break;
 			if (!suspend) {
@@ -608,7 +639,8 @@ aucat_main(int argc, char **argv)
 			}
 		}
 		if ((dev_mix && dev_mix->u.mix.idle == 0) ||
-		    (dev_sub && dev_sub->u.sub.idle == 0)) {
+		    (dev_sub && dev_sub->u.sub.idle == 0) ||
+		    ((dev_mix || dev_sub) && dev_midi->u.ctl.tstate == CTL_RUN)) {
 			if (suspend) {
 				suspend = 0;
 				dev_start();
@@ -662,15 +694,15 @@ midicat_main(int argc, char **argv)
 			break;
 		case 'i':
 			farg_add(&ifiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, optarg);
+			    0, HDR_RAW, 0, 0, optarg);
 			break;
 		case 'o':
 			farg_add(&ofiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, optarg);
+			    0, HDR_RAW, 0, 0, optarg);
 			break;
 		case 'f':
 			farg_add(&dfiles, &aparams_none, &aparams_none,
-			    0, HDR_RAW, 0, optarg);
+			    0, HDR_RAW, 0, 0, optarg);
 			break;
 		case 'l':
 			l_flag = 1;
@@ -708,11 +740,11 @@ midicat_main(int argc, char **argv)
 
 	dev_thruinit();
 	if (!l_flag)
-		dev_midi->u.thru.flags |= THRU_AUTOQUIT;
+		dev_midi->flags |= APROC_QUIT;
 	if ((!SLIST_EMPTY(&ifiles) || !SLIST_EMPTY(&ofiles)) && 
 	    SLIST_EMPTY(&dfiles)) {
 		farg_add(&dfiles, &aparams_none, &aparams_none,
-		    0, HDR_RAW, 0, NULL);
+		    0, HDR_RAW, 0, 0, NULL);
 	}
 	while (!SLIST_EMPTY(&dfiles)) {
 		fa = SLIST_FIRST(&dfiles);

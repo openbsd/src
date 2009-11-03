@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.61 2009/10/22 15:02:12 sobrado Exp $
+.\"	$OpenBSD: aucat.1,v 1.62 2009/11/03 21:31:37 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: November 3 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -35,9 +35,11 @@
 .Op Fl o Ar file
 .Op Fl r Ar rate
 .Op Fl s Ar name
+.Op Fl t Ar mode
 .Op Fl U Ar unit
 .Op Fl v Ar volume
 .Op Fl x Ar policy
+.Op Fl z Ar nframes
 .Ek
 .Sh DESCRIPTION
 The
@@ -134,11 +136,22 @@ Defining multiple sub-devices allows splitting a physical audio device
 into logical devices having different properties (eg. channel ranges).
 The given
 .Ar name
-correponds to the
+corresponds to the
 .Dq option
 part of the
 .Xr sndio 7
 device name string.
+.It Fl t Ar mode
+Select the way sub-devices are controlled by MMC (MIDI Machine Control) messages.
+If the mode is
+.Va off
+(the default), then streams are not affected by MMC messages.
+If the mode is
+.Va slave ,
+then streams are started synchronously by MMC start messages;
+additionally, the server clock is exposed as MTC (MIDI Time Code)
+messages allowing MTC-capable software or hardware to be synchronized
+to audio streams.
 .It Fl U Ar unit
 Unit number to use when running in server mode.
 Each
@@ -185,6 +198,21 @@ once the stream is unblocked.
 If the policy is
 .Dq error
 then the stream is closed permanently.
+.Pp
+If a sub-device is created with
+.Fl t Ar slave ,
+then, to ensure proper synchronization, the
+.Dq ignore
+action is disabled for any stream connected to it.
+.It Fl z Ar nframes
+The audio block size in frames.
+This is the number of frames between audio clock ticks, i.e. the clock resolution.
+If a sub-device is created with
+.Fl t Ar slave, 
+and MTC (Midi Time Code) is used for synchronization, the clock
+resolution must be 96, 100 or 120 ticks per second for maximum
+accuracy.  For instance, 120 ticks per second at 48000Hz corresponds
+to 400 frame block size.
 .El
 .Pp
 If
@@ -365,14 +393,86 @@ While running in server mode
 .Nm
 exposes a MIDI device with the same name as the default audio
 device.
-It allows MIDI hardware or software to be used to control
-the volume of played streams.
+It allows MIDI hardware or software to control programs
+using
+.Nm
+or to synchronize to them.
+.Pp
 A MIDI channel is assigned to each stream, and the volume
 is changed using the standard volume controller (number 7).
 Similarly, when the audio application changes its volume,
 the same MIDI controller message is sent out; it can be used
 for instance for monitoring or as feedback for motorized
 faders.
+.Pp
+Clients connected to sub-devices created with
+.Fl t Ar slave ,
+are controlled by the following MMC (MIDI Machine Control) messages:
+.Bl -tag -width relocateXXX -offset -indent
+.It stop
+Put the sub-device in stopped mode (the default).
+In this mode, any stream attempting to start playback or recording
+is paused.
+Streams that are already started are not affected until they stop
+and try to start again.
+.It relocate
+Gives
+.Nm
+the time, relative to the beginning of the stream, at which playback
+and recording must start.
+It is not interpreted by
+.Nm
+itself.
+The given time position, is sent to MIDI clients as an MTC
+.Dq "full frame"
+message forcing all MTC-slaves to relocate to the given
+position (see below).
+.It start
+Put the sub-device in starting mode.
+In this mode, the sub-device waits for all streams to become ready
+to start, and then starts them synchronously.
+Once started, new streams can be created, but they will be blocked
+until the next stop-to-start transition.
+.El
+.Pp
+Sub-devices created with
+.Fl t Ar slave ,
+will export the server clock using MTC (MIDI Time Code), allowing non-audio
+software or hardware to be synchronized to the audio stream.
+The following sample rates
+.Pq Fl r
+and block sizes
+.Pq Fl z
+are recommended for maximum accuracy:
+.Pp
+.Bl -bullet -offset -indent -compact
+.It
+44100Hz, 441 frames
+.It
+48000Hz, 400 frames
+.It
+48000Hz, 480 frames
+.It
+48000Hz, 500 frames
+.El
+.Pp
+For instance, the following command will create two devices:
+the default
+.Va aucat:0
+and a MIDI-controlled one
+.Va aucat:0.mmc .
+.Bd -literal -offset indent
+$ aucat -l -r 48000 -z 400 -s default -t slave -s mmc
+.Ed
+.Pp
+Streams connected to
+.Va aucat:0
+behave normally, while streams connected to
+.Va aucat:0.mmc
+wait for the MMC start signal and start synchronously.
+Regardless to which device a stream is connected, its playback volume
+knob is exposed.
+.Pp
 .Sh LEGACY MODE
 If neither
 .Fl i
