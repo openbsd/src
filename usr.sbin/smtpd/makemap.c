@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.22 2009/10/17 12:46:47 sobrado Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.23 2009/11/03 22:57:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -45,6 +45,8 @@ extern char *__progname;
 __dead void	usage(void);
 int		parse_map(char *);
 int		parse_entry(char *, size_t, size_t);
+int		parse_mapentry(char *, size_t, size_t);
+int		parse_setentry(char *, size_t, size_t);
 int		make_plain(DBT *, char *);
 int		make_aliases(DBT *, char *);
 
@@ -62,7 +64,8 @@ enum program {
 
 enum output_type {
 	T_PLAIN,
-	T_ALIASES
+	T_ALIASES,
+	T_SET
 } type;
 
 /*
@@ -109,6 +112,8 @@ main(int argc, char *argv[])
 		case 't':
 			if (strcmp(optarg, "aliases") == 0)
 				type = T_ALIASES;
+			else if (strcmp(optarg, "set") == 0)
+				type = T_SET;
 			else
 				errx(1, "unsupported type '%s'", optarg);
 			break;
@@ -219,6 +224,19 @@ parse_map(char *filename)
 int
 parse_entry(char *line, size_t len, size_t lineno)
 {
+	switch (type) {
+	case T_PLAIN:
+	case T_ALIASES:
+		return parse_mapentry(line, len, lineno);
+	case T_SET:
+		return parse_setentry(line, len, lineno);
+	}
+	return 0;
+}
+
+int
+parse_mapentry(char *line, size_t len, size_t lineno)
+{
 	DBT	 key;
 	DBT	 val;
 	DBT	 domkey;
@@ -246,16 +264,14 @@ parse_entry(char *line, size_t len, size_t lineno)
 		return 0;
 	}
 
-	switch (type) {
-	case T_PLAIN:
+	if (type == T_PLAIN) {
 		if (! make_plain(&val, valp))
 			goto bad;
-		break;
-	case T_ALIASES:
+	}
+	else if (type == T_ALIASES) {
 		lowercase(key.data, key.data, strlen(key.data) + 1);
 		if (! make_aliases(&val, valp))
 			goto bad;
-		break;
 	}
 
 	if (db->put(db, &key, &val, 0) == -1) {
@@ -287,6 +303,40 @@ parse_entry(char *line, size_t len, size_t lineno)
 bad:
 	warnx("%s:%zd: invalid entry", source, lineno);
 	return 0;
+}
+
+int
+parse_setentry(char *line, size_t len, size_t lineno)
+{
+	DBT	 key;
+	DBT	 val;
+	char	*keyp;
+
+	keyp = line;
+	while (isspace((int)*keyp))
+		keyp++;
+	if (*keyp == '\0' || *keyp == '#')
+		return 1;
+
+	val.data  = "<set>";
+	val.size = strlen(val.data) + 1;
+
+	/* Check for dups. */
+	key.data = keyp;
+	key.size = strlen(keyp) + 1;
+	if (db->get(db, &key, &val, 0) == 0) {
+		warnx("%s:%zd: duplicate entry for %s", source, lineno, keyp);
+		return 0;
+	}
+
+	if (db->put(db, &key, &val, 0) == -1) {
+		warn("dbput");
+		return 0;
+	}	
+
+	dbputs++;
+
+	return 1;
 }
 
 int

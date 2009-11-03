@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.75 2009/11/03 20:55:23 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.76 2009/11/03 22:57:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -448,7 +448,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(query);
 
-			secret = map_dblookup(env, map, query->host);
+			secret = map_dblookupbyname(env, map, query->host);
 
 			log_debug("secret for %s %s", query->host,
 			    secret ? "found" : "not found");
@@ -838,6 +838,8 @@ lka_expand(char *buf, size_t len, struct path *path)
 int
 lka_resolve_alias(struct smtpd *env, char *tag, struct path *path, struct alias *alias)
 {
+	struct path psave = *path;
+
 	bzero(path, sizeof(struct path));
 
 	switch (alias->type) {
@@ -846,16 +848,21 @@ lka_resolve_alias(struct smtpd *env, char *tag, struct path *path, struct alias 
 		if (strlcpy(path->pw_name, alias->u.username,
 			sizeof(path->pw_name)) >= sizeof(path->pw_name))
 			return 0;
-		if (path->user[0] == '\0') {
-			if (strlcpy(path->user, alias->u.username,
-				sizeof(path->user)) >= sizeof(path->user))
-				return 0;
-		}
-		if (path->domain[0] == '\0') {
+
+		if (strlcpy(path->user, alias->u.username,
+			sizeof(path->user)) >= sizeof(path->user))
+			return 0;
+
+		if (psave.domain[0] == '\0') {
 			if (strlcpy(path->domain, env->sc_hostname,
 				sizeof(path->domain)) >= sizeof(path->domain))
 				return 0;
 		}
+		else {
+			strlcpy(path->domain, psave.domain,
+			    sizeof(psave.domain));
+		}
+
 		log_debug("RESOLVED TO %s@%s", path->user, path->domain);
 		lka_rcpt_action(env, tag, path);
 		break;
@@ -1015,6 +1022,10 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 
 int
 lka_resolve_path(struct smtpd *env, struct path *path){
+
+	if (path->cond == NULL)
+		return 1;
+
 	switch (path->cond->c_type) {
 	case C_ALL:
 	case C_NET:

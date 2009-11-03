@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.7 2009/11/03 19:13:34 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.8 2009/11/03 22:57:41 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -69,11 +69,24 @@ ruleset_match(struct smtpd *env, char *tag, struct path *path, struct sockaddr_s
 				if (map == NULL)
 					fatal("failed to lookup map.");
 
-				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-					if (hostname_match(path->domain, me->me_key.med_string)) {
+				switch (map->m_src) {
+				case S_NONE:
+					TAILQ_FOREACH(me, &map->m_contents, me_entry) {
+						if (hostname_match(path->domain, me->me_key.med_string)) {
+							path->cond = cond;
+							return r;
+						}
+					}
+					break;
+				case S_DB:
+					if (map_dblookup(env, map->m_id, path->domain) != NULL) {
 						path->cond = cond;
 						return r;
 					}
+					break;
+				default:
+					log_info("unsupported map source for domain map");
+					continue;
 				}
 			}
 
