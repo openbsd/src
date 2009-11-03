@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.72 2009/10/25 21:50:46 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.73 2009/11/03 10:56:51 nicm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -32,7 +32,6 @@
 #include <event.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <regex.h>
 #include <resolv.h>
 #include <signal.h>
 #include <stdio.h>
@@ -55,8 +54,6 @@ void		lka_disable_events(struct smtpd *);
 int		lka_verify_mail(struct smtpd *, struct path *);
 int		lka_forward_file(struct passwd *);
 size_t		lka_expand(char *, size_t, struct path *);
-int		aliases_exist(struct smtpd *, char *);
-int		aliases_get(struct smtpd *, struct aliaseslist *, char *);
 int		lka_resolve_alias(struct smtpd *, char *tag, struct path *, struct alias *);
 int		lka_parse_include(char *);
 int		lka_check_source(struct smtpd *, struct map *, struct sockaddr_storage *);
