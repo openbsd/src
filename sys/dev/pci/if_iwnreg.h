@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.32 2009/11/01 12:01:16 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.33 2009/11/03 18:57:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -882,7 +882,7 @@ struct iwn_phy_calib {
 #define IWN5000_PHY_CALIB_TX_IQ			11
 #define IWN5000_PHY_CALIB_CRYSTAL		15
 #define IWN5000_PHY_CALIB_BASE_BAND		16
-#define IWN5000_PHY_CALIB_TX_IQ_PERD		17
+#define IWN5000_PHY_CALIB_TX_IQ_PERIODIC	17
 #define IWN5000_PHY_CALIB_RESET_NOISE_GAIN	18
 #define IWN5000_PHY_CALIB_NOISE_GAIN		19
 

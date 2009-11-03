@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.75 2009/11/03 18:55:23 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.76 2009/11/03 18:57:18 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2032,7 +2032,7 @@ iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	case IWN5000_PHY_CALIB_TX_IQ:
 		idx = 2;
 		break;
-	case IWN5000_PHY_CALIB_TX_IQ_PERD:
+	case IWN5000_PHY_CALIB_TX_IQ_PERIODIC:
 		if (sc->hw_type < IWN_HW_REV_TYPE_6000 &&
 		    sc->hw_type != IWN_HW_REV_TYPE_5150)
 			idx = 3;
