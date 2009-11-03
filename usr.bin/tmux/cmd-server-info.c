@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-info.c,v 1.13 2009/11/01 23:20:37 nicm Exp $ */
+/* $OpenBSD: cmd-server-info.c,v 1.14 2009/11/03 20:29:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -105,7 +105,7 @@ cmd_server_info_exec(unused struct cmd *self, struct cmd_ctx *ctx)
 		if (s == NULL)
 			continue;
 
-		t = s->tv.tv_sec;
+		t = s->creation_time.tv_sec;
 		tim = ctime(&t);
 		*strchr(tim, '\n') = '\0';
 
