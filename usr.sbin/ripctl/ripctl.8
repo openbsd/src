@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripctl.8,v 1.8 2009/11/02 20:29:17 claudio Exp $
+.\"	$OpenBSD: ripctl.8,v 1.9 2009/11/03 08:09:15 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2009 $
+.Dd $Mdocdate: November 3 2009 $
 .Dt RIPCTL 8
 .Os
 .Sh NAME
@@ -42,10 +42,10 @@ Remove the learned routes from the Forward Information Base a.k.a. the kernel
 routing table.
 Decoupling the FIB from an RIP router may create routing loops and could cause
 major routing issues.
-.It Cm log verbose
-Enable verbose debug logging.
 .It Cm log brief
 Disable verbose debug logging.
+.It Cm log verbose
+Enable verbose debug logging.
 .It Cm show fib Op Ar destination | filter
 Show the Forwarding Information Base.
 .Ar destination
