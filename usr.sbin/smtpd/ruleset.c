@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruleset.c,v 1.5 2009/10/19 20:48:13 gilles Exp $ */
+/*	$OpenBSD: ruleset.c,v 1.6 2009/11/03 17:50:13 gilles Exp $ */
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -47,9 +47,6 @@ ruleset_match(struct smtpd *env, char *tag, struct path *path, struct sockaddr_s
 	struct cond *cond;
 	struct map *map;
 	struct mapel *me;
-
-	if (tag)
-		log_debug("tag: %s", tag);
 
 	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
 
