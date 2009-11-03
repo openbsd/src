@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.154 2009/11/02 20:18:22 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.155 2009/11/03 17:17:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -893,7 +893,6 @@ struct layout_cell {
 struct paste_buffer {
      	char		*data;
 	size_t		 size;
-	struct timeval	 tv;
 };
 ARRAY_DECL(paste_stack, struct paste_buffer *);
 
