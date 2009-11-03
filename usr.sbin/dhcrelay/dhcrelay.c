@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.32 2009/09/03 11:56:49 reyk Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.33 2009/11/03 10:14:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -40,12 +40,14 @@
  */
 
 #include "dhcpd.h"
+#include <sys/ioctl.h>
 
 void	 usage(void);
 void	 relay(struct interface_info *, struct dhcp_packet *, int,
 	    unsigned int, struct iaddr, struct hardware *);
 char	*print_hw_addr(int, int, unsigned char *);
 void	 got_response(struct protocol *);
+int	 get_rdomain(char *);
 
 ssize_t	 relay_agentinfo(struct interface_info *, struct dhcp_packet *,
 	    size_t, struct in_addr *, struct in_addr *);
@@ -70,7 +72,7 @@ struct server_list {
 int
 main(int argc, char *argv[])
 {
-	int			 ch, no_daemon = 0, opt;
+	int			 ch, no_daemon = 0, opt, rdomain;
 	extern char		*__progname;
 	struct server_list	*sp = NULL;
 	struct passwd		*pw;
@@ -151,6 +153,8 @@ main(int argc, char *argv[])
 
 	discover_interfaces(interfaces);
 
+	rdomain = get_rdomain(interfaces->name);
+
 	/* Enable the relay agent option by default for enc0 */
 	if (interfaces->hw_address.htype == HTYPE_IPSEC_TUNNEL)
 		oflag++;
@@ -172,6 +176,9 @@ main(int argc, char *argv[])
 		if (setsockopt(sp->fd, SOL_SOCKET, SO_REUSEPORT,
 		    &opt, sizeof(opt)) == -1)
 			error("setsockopt: %m");
+		if (setsockopt(sp->fd, IPPROTO_IP, SO_RDOMAIN, &rdomain,
+		    sizeof(rdomain)) == -1)
+			error("setsockopt: %m");
 		if (bind(sp->fd, (struct sockaddr *)&laddr, sizeof laddr) == -1)
 			error("bind: %m");
 		if (connect(sp->fd, (struct sockaddr *)&sp->to,
@@ -180,7 +187,7 @@ main(int argc, char *argv[])
 		add_protocol("server", sp->fd, got_response, sp);
 	}
 
-	/* Socket used to forward packets to the DHCP server */
+	/* Socket used to forward packets to the DHCP client */
 	if (interfaces->hw_address.htype == HTYPE_IPSEC_TUNNEL) {
 		laddr.sin_addr.s_addr = INADDR_ANY;
 		server_fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -189,6 +196,9 @@ main(int argc, char *argv[])
 		opt = 1;
 		if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT,
 		    &opt, sizeof(opt)) == -1)
+			error("setsockopt: %m");
+		if (setsockopt(server_fd, IPPROTO_IP, SO_RDOMAIN, &rdomain,
+		    sizeof(rdomain)) == -1)
 			error("setsockopt: %m");
 		if (bind(server_fd, (struct sockaddr *)&laddr,
 		    sizeof(laddr)) == -1)
@@ -478,4 +488,22 @@ relay_agentinfo(struct interface_info *info, struct dhcp_packet *packet,
 	}
 
 	return (length);
+}
+
+int
+get_rdomain(char *name)
+{
+	int rv = 0, s;
+	struct  ifreq ifr;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+		error("get_rdomain socket: %m");
+
+	bzero(&ifr, sizeof(ifr));
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFRTABLEID, (caddr_t)&ifr) != -1)
+		rv = ifr.ifr_rdomainid;
+
+	close(s);
+	return rv;
 }
