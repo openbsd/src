@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.23 2009/11/03 11:10:43 jacekm Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.24 2009/11/03 19:13:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -136,14 +136,16 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 }
 
 int
-aliases_vdomain_exists(struct smtpd *env, struct map *map, char *hostname)
+aliases_vdomain_exists(struct smtpd *env, objid_t mapid, char *hostname)
 {
 	int	ret;
 	DBT	key;
 	DBT	val;
 	DB     *vtable;
+	struct map *map;
 	char	strkey[MAX_LINE_SIZE];
 
+	map = map_find(env, mapid);
 	if (map == NULL)
 		return 0;
 
@@ -172,14 +174,16 @@ aliases_vdomain_exists(struct smtpd *env, struct map *map, char *hostname)
 }
 
 int
-aliases_virtual_exist(struct smtpd *env, struct map *map, struct path *path)
+aliases_virtual_exist(struct smtpd *env, objid_t mapid, struct path *path)
 {
 	int ret;
 	DBT key;
 	DBT val;
 	DB *aliasesdb;
+	struct map *map;
 	char	strkey[MAX_LINE_SIZE];
 
+	map = map_find(env, mapid);
 	if (map == NULL)
 		return 0;
 
@@ -224,7 +228,7 @@ aliases_virtual_exist(struct smtpd *env, struct map *map, struct path *path)
 }
 
 int
-aliases_virtual_get(struct smtpd *env, struct map *map,
+aliases_virtual_get(struct smtpd *env, objid_t mapid,
     struct aliaseslist *aliases, struct path *path)
 {
 	int ret;
@@ -235,8 +239,10 @@ aliases_virtual_get(struct smtpd *env, struct map *map,
 	struct alias alias;
 	struct alias *aliasp;
 	struct alias *nextalias;
+	struct map *map;
 	char	strkey[MAX_LINE_SIZE];
 
+	map = map_find(env, mapid);
 	if (map == NULL)
 		return 0;
 

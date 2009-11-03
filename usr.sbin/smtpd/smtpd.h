@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.149 2009/10/19 20:48:13 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.150 2009/11/03 19:13:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -293,7 +293,6 @@ struct cond {
 	TAILQ_ENTRY(cond)		 c_entry;
 	objid_t				 c_map;
 	enum cond_type			 c_type;
-	struct map			*c_match;
 };
 
 enum opt_type {
@@ -775,9 +774,9 @@ struct mta_session {
 /* aliases.c */
 int aliases_exist(struct smtpd *, char *);
 int aliases_get(struct smtpd *, struct aliaseslist *, char *);
-int aliases_vdomain_exists(struct smtpd *, struct map *, char *);
-int aliases_virtual_exist(struct smtpd *, struct map *, struct path *);
-int aliases_virtual_get(struct smtpd *, struct map *, struct aliaseslist *, struct path *);
+int aliases_vdomain_exists(struct smtpd *, objid_t, char *);
+int aliases_virtual_exist(struct smtpd *, objid_t, struct path *);
+int aliases_virtual_get(struct smtpd *, objid_t, struct aliaseslist *, struct path *);
 int alias_parse(struct alias *, char *);
 
 /* authenticate.c */

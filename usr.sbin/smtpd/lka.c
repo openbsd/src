@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.73 2009/11/03 10:56:51 nicm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.74 2009/11/03 19:13:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -374,7 +374,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			}
 			else if (lkasession->path.flags & F_PATH_VIRTUAL) {
 				log_debug("F_PATH_VIRTUAL");
-				ret = aliases_virtual_get(env, lkasession->path.cond->c_match,
+				ret = aliases_virtual_get(env, lkasession->path.cond->c_map,
 				    &lkasession->aliaseslist, &lkasession->path);
 				log_debug("\tVIRTUAL RESOLVED: %d", ret);
 			}
@@ -959,7 +959,8 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 		
 		if (alias->type == ALIAS_ADDRESS) {
 			lka_rcpt_action(env, lkasession->message.tag, &alias->u.path);
-			if (aliases_virtual_get(env, alias->u.path.cond->c_match, aliases, &alias->u.path)) {
+			lka_resolve_path(env, &alias->u.path);
+			if (aliases_virtual_get(env, alias->u.path.cond->c_map, aliases, &alias->u.path)) {
 				rmalias = alias;
 				done = 0;
 			}
@@ -1026,7 +1027,7 @@ lka_resolve_path(struct smtpd *env, struct path *path){
 		return 1;
 	}
 	case C_VDOM: {
-		if (aliases_virtual_exist(env, path->cond->c_match, path)) {
+		if (aliases_virtual_exist(env, path->cond->c_map, path)) {
 			path->flags |= F_PATH_VIRTUAL;
 			return 1;
 		}
