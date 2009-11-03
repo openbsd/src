@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.3 2009/11/02 22:16:00 miod Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.4 2009/11/03 18:48:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -560,13 +560,18 @@ iec_statchg(struct device *self)
 	struct iec_softc *sc = (void *)self;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	uint32_t tcsr;
+	uint32_t tcsr, emcr;
 
-	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
+	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0) {
 		tcsr = IOC3_ENET_TCSR_FULL_DUPLEX;
-	else
+		emcr = IOC3_ENET_MCR_DUPLEX;
+	} else {
 		tcsr = IOC3_ENET_TCSR_HALF_DUPLEX;
+		emcr = 0;
+	}
 
+	bus_space_write_4(st, sh, IOC3_ENET_MCR, emcr |
+	    (bus_space_read_4(st, sh, IOC3_ENET_MCR) & ~IOC3_ENET_MCR_DUPLEX));
 	bus_space_write_4(st, sh, IOC3_ENET_TCSR, tcsr);
 }
 
@@ -635,12 +640,16 @@ iec_init(struct ifnet *ifp)
 	bus_space_write_4(st, sh, IOC3_ENET_RBR_H, sc->sc_rxptrdma >> 32);
 	bus_space_write_4(st, sh, IOC3_ENET_RBR_L, (uint32_t)sc->sc_rxptrdma);
 
-	bus_space_write_4(st, sh, IOC3_ENET_RCIR, 0);
+	sc->sc_rxci = 0;
+	sc->sc_rxpi = IEC_NRXDESC + 1;
+	bus_space_write_4(st, sh, IOC3_ENET_RCIR,
+	    sc->sc_rxci * sizeof(uint64_t));
 	bus_space_write_4(st, sh, IOC3_ENET_RPIR,
-	    (IEC_NRXDESC * sizeof(uint64_t)) | IOC3_ENET_PIR_SET);
+	    (sc->sc_rxpi * sizeof(uint64_t)) | IOC3_ENET_PIR_SET);
 
 	/* Interrupt as soon as available RX desc reach this limit */
-	bus_space_write_4(st, sh, IOC3_ENET_RCSR, IEC_NRXDESC - 1);
+	bus_space_write_4(st, sh, IOC3_ENET_RCSR,
+	    sc->sc_rxpi - sc->sc_rxci - 1);
 	/* Set up RX timer to interrupt immediately upon reception. */
 	bus_space_write_4(st, sh, IOC3_ENET_RTR, 0);
 
@@ -651,8 +660,6 @@ iec_init(struct ifnet *ifp)
 		IEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
 		IEC_RXBUFSYNC(sc, i, ETHER_MAX_LEN, BUS_DMASYNC_PREREAD);
 	}
-	sc->sc_rxci = 0;
-	sc->sc_rxpi = IEC_NRXDESC;
 
 	/* Enable DMA, and RX and TX interrupts */
 	bus_space_write_4(st, sh, IOC3_ENET_MCR, IOC3_ENET_MCR_TX_DMA |
@@ -1319,12 +1326,13 @@ iec_txintr(struct iec_softc *sc, uint32_t stat)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct iec_txsoft *txs;
 	bus_dmamap_t dmamap;
+	uint32_t tcir;
 	int i, once, last;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	last = (bus_space_read_4(st, sh, IOC3_ENET_TCIR) / IEC_TXDESCSIZE) %
-	    IEC_NTXDESC_MAX;
+	tcir = bus_space_read_4(st, sh, IOC3_ENET_TCIR) & ~IOC3_ENET_TCIR_IDLE;
+	last = (tcir / IEC_TXDESCSIZE) % IEC_NTXDESC_MAX;
 
 	DPRINTF(IEC_DEBUG_TXINTR, ("iec_txintr: dirty %d last %d\n",
 	    sc->sc_txdirty, last));
