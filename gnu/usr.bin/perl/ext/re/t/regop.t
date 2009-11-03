@@ -233,12 +233,12 @@ anchored "ABC" at 0
 #Freeing REx: "(\\.COM|\\.EXE|\\.BAT|\\.CMD|\\.VBS|\\.VBE|\\.JS|\\.JSE|\\."......
 %MATCHED%
 floating ""$ at 3..4 (checking floating)
-1:1[1] 3:2[1] 5:2[64] 45:83[1] 47:84[1] 48:85[0]
-stclass EXACTF <.> minlen 3
-Found floating substr ""$ at offset 30...
-Does not contradict STCLASS...
-Guessed: match at offset 26
-Matching stclass EXACTF <.> against ".exe"
+#1:1[1] 3:2[1] 5:2[64] 45:83[1] 47:84[1] 48:85[0]
+#stclass EXACTF <.> minlen 3
+#Found floating substr ""$ at offset 30...
+#Does not contradict STCLASS...
+#Guessed: match at offset 26
+#Matching stclass EXACTF <.> against ".exe"
 ---
 #Compiling REx "[q]"
 #size 12 nodes Got 100 bytes for offset annotations.

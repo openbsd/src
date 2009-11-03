@@ -2820,13 +2820,18 @@ S_study_chunk(pTHX_ RExC_state_t *pRExC_state, regnode **scanp,
                                 }
                             } else {
 /* 
-    Currently we assume that the trie can handle unicode and ascii
-    matches fold cased matches. If this proves true then the following
-    define will prevent tries in this situation. 
-    
-    #define TRIE_TYPE_IS_SAFE (UTF || optype==EXACT)
-*/
+    Currently we do not believe that the trie logic can
+    handle case insensitive matching properly when the
+    pattern is not unicode (thus forcing unicode semantics).
+
+    If/when this is fixed the following define can be swapped
+    in below to fully enable trie logic.
+
 #define TRIE_TYPE_IS_SAFE 1
+
+*/
+#define TRIE_TYPE_IS_SAFE (UTF || optype==EXACT)
+
                                 if ( last && TRIE_TYPE_IS_SAFE ) {
                                     make_trie( pRExC_state, 
                                             startbranch, first, cur, tail, count, 
