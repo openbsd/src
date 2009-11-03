@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.66 2009/11/03 08:04:38 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.67 2009/11/03 08:07:27 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -2177,8 +2177,15 @@ uaudio_round_blocksize(void *addr, int blk)
 int
 uaudio_get_props(void *addr)
 {
-	return (AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT);
+	struct uaudio_softc *sc = addr;
+	int props;
 
+	props = AUDIO_PROP_INDEPENDENT;
+	if ((sc->sc_mode & (AUMODE_PLAY | AUMODE_RECORD)) ==
+	    (AUMODE_PLAY | AUMODE_RECORD))
+		props |= AUDIO_PROP_FULLDUPLEX;
+
+	return props;
 }
 
 void
