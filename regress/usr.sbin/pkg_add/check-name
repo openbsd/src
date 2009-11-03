@@ -1,9 +1,9 @@
 #! /usr/bin/perl
-# $OpenBSD: check-name,v 1.6 2008/07/15 10:48:14 espie Exp $
+# $OpenBSD: check-name,v 1.7 2009/11/03 11:14:49 sthen Exp $
 # Written by Marc Espie
 # Public domain
 
-use Test::Simple tests => 11;
+use Test::Simple tests => 13;
 use OpenBSD::Search;
 use OpenBSD::PackageName;
 
@@ -44,6 +44,12 @@ ok(check_list([qw(foo-1.0 foo-1.0p0)],
 ok(check_list([qw(foo-1.0 foo-1.0p0 foo-1.0p25)],
     check_pkgspec('foo-1.0', @list)),
 	'any 1.0p* matches 1.0');
+ok(check_list([qw(foo-1.0rc2)], 
+    check_pkgspec('foo-<1.0', @list)),
+	'before 1.0 came 1.0rc2');
+ok(check_list([qw(foo-1.0)], 
+    check_pkgspec('foo-<1.0pl1', @list)),
+	'before 1.0pl1 came 1.0');
 
 my @pkglist=qw(foo-1.0 bar-2.0 foo-2.5 foobar-2.3-pouet hugs-noversion baz-0.0 
 	baz-1.1 baz-25.3 pouet-1.0 pouet-zoinx-1.0 pouet-0.0-foo);
