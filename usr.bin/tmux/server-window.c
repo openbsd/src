@@ -1,4 +1,4 @@
-/* $OpenBSD: server-window.c,v 1.3 2009/10/28 22:53:14 nicm Exp $ */
+/* $OpenBSD: server-window.c,v 1.4 2009/11/04 08:35:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -77,6 +77,8 @@ server_window_backoff(struct window_pane *wp)
 	for (i = 0; i < ARRAY_LENGTH(&clients); i++) {
 		c = ARRAY_ITEM(&clients, i);
 		if (c == NULL || c->session == NULL)
+			continue;
+		if ((c->flags & (CLIENT_SUSPENDED|CLIENT_DEAD)) != 0)
 			continue;
 		if (c->session->curw->window != wp->window)
 			continue;
