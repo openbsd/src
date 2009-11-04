@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.161 2009/11/04 21:47:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.162 2009/11/04 22:02:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -805,8 +805,7 @@ struct window_pane {
 	struct input_ctx ictx;
 
 	int		 pipe_fd;
-	struct event	 pipe_event;
-	struct buffer	*pipe_buf;
+	struct bufferevent *pipe_event;
 	size_t		 pipe_off;
 
 	struct screen	*screen;
