@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.62 2009/11/03 21:31:37 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.63 2009/11/04 08:24:58 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2009 $
+.Dd $Mdocdate: November 4 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -133,7 +133,7 @@ Add
 .Ar name
 to the list of sub-devices to expose in server mode.
 Defining multiple sub-devices allows splitting a physical audio device
-into logical devices having different properties (eg. channel ranges).
+into logical devices having different properties (e.g. channel ranges).
 The given
 .Ar name
 corresponds to the
@@ -200,19 +200,22 @@ If the policy is
 then the stream is closed permanently.
 .Pp
 If a sub-device is created with
-.Fl t Ar slave ,
-then, to ensure proper synchronization, the
+.Fl t ,
+the
 .Dq ignore
-action is disabled for any stream connected to it.
+action is disabled for any stream connected to it
+to ensure proper synchronization.
 .It Fl z Ar nframes
 The audio block size in frames.
-This is the number of frames between audio clock ticks, i.e. the clock resolution.
+This is the number of frames between audio clock ticks,
+i.e. the clock resolution.
 If a sub-device is created with
-.Fl t Ar slave, 
+.Fl t ,
 and MTC (Midi Time Code) is used for synchronization, the clock
 resolution must be 96, 100 or 120 ticks per second for maximum
-accuracy.  For instance, 120 ticks per second at 48000Hz corresponds
-to 400 frame block size.
+accuracy.
+For instance, 120 ticks per second at 48000Hz corresponds
+to a 400 frame block size.
 .El
 .Pp
 If
@@ -406,7 +409,7 @@ for instance for monitoring or as feedback for motorized
 faders.
 .Pp
 Clients connected to sub-devices created with
-.Fl t Ar slave ,
+.Fl t
 are controlled by the following MMC (MIDI Machine Control) messages:
 .Bl -tag -width relocateXXX -offset -indent
 .It stop
@@ -423,7 +426,7 @@ and recording must start.
 It is not interpreted by
 .Nm
 itself.
-The given time position, is sent to MIDI clients as an MTC
+The given time position is sent to MIDI clients as an MTC
 .Dq "full frame"
 message forcing all MTC-slaves to relocate to the given
 position (see below).
@@ -436,7 +439,7 @@ until the next stop-to-start transition.
 .El
 .Pp
 Sub-devices created with
-.Fl t Ar slave ,
+.Fl t
 will export the server clock using MTC (MIDI Time Code), allowing non-audio
 software or hardware to be synchronized to the audio stream.
 The following sample rates
@@ -459,8 +462,8 @@ are recommended for maximum accuracy:
 For instance, the following command will create two devices:
 the default
 .Va aucat:0
-and a MIDI-controlled one
-.Va aucat:0.mmc .
+and a MIDI-controlled
+.Va aucat:0.mmc :
 .Bd -literal -offset indent
 $ aucat -l -r 48000 -z 400 -s default -t slave -s mmc
 .Ed
@@ -470,9 +473,8 @@ Streams connected to
 behave normally, while streams connected to
 .Va aucat:0.mmc
 wait for the MMC start signal and start synchronously.
-Regardless to which device a stream is connected, its playback volume
-knob is exposed.
-.Pp
+Regardless of which device a stream is connected to,
+its playback volume knob is exposed.
 .Sh LEGACY MODE
 If neither
 .Fl i
