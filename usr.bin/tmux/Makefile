@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2009/10/26 17:46:33 nicm Exp $
+# $OpenBSD: Makefile,v 1.26 2009/11/04 20:50:11 nicm Exp $
 
 PROG=	tmux
 SRCS=	attributes.c buffer-poll.c buffer.c cfg.c \
@@ -45,7 +45,7 @@ CDIAGFLAGS+= -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations
 CDIAGFLAGS+= -Wwrite-strings -Wshadow -Wpointer-arith -Wsign-compare
 CDIAGFLAGS+= -Wundef -Wbad-function-cast -Winline -Wcast-align
 
-LDADD=  -lutil -lcurses
+LDADD=  -lutil -lcurses -levent
 DPADD=  ${LIBUTIL}
 
 .include <bsd.prog.mk>

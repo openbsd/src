@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-server.c,v 1.3 2009/07/26 12:58:44 nicm Exp $ */
+/* $OpenBSD: cmd-kill-server.c,v 1.4 2009/11/04 20:50:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_kill_server_entry = {
 int
 cmd_kill_server_exec(unused struct cmd *self, unused struct cmd_ctx *ctx)
 {
-	sigterm = 1;
+	kill(getpid(), SIGTERM);
 
 	return (0);
 }
