@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.55 2009/11/04 20:50:11 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.56 2009/11/04 20:59:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -503,7 +503,6 @@ main(int argc, char **argv)
 
 	client_main();	/* doesn't return */
 }
-
 
 void
 main_set_signals(void)
