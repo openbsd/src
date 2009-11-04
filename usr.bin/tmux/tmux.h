@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.160 2009/11/04 21:04:43 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.161 2009/11/04 21:47:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1000,9 +1000,7 @@ struct tty {
 	struct tty_term	*term;
 
 	int		 fd;
-	struct event	 event;
-	struct buffer	*in;
-	struct buffer	*out;
+	struct bufferevent *event;
 
 	int		 log_fd;
 
