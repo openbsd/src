@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.69 2009/11/04 22:43:11 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.70 2009/11/04 22:47:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -193,6 +193,7 @@ error:
 	c = ARRAY_FIRST(&clients);
 
 	server_write_error(c, cause);
+	server_write_client(c, MSG_EXIT, NULL, 0);
 	xfree(cause);
 
 	server_shutdown = 1;
