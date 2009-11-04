@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.31 2009/10/27 23:59:57 deraadt Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.32 2009/11/04 07:37:55 jsing Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -337,33 +337,33 @@ static int udp_cksum(register const struct ip *ip,
 
 
 /* XXX probably should use getservbyname() and cache answers */
-#define TFTP_PORT 69		/*XXX*/
-#define KERBEROS_PORT 88	/*XXX*/
-#define SUNRPC_PORT 111		/*XXX*/
-#define SNMP_PORT 161		/*XXX*/
-#define NTP_PORT 123		/*XXX*/
-#define SNMPTRAP_PORT 162	/*XXX*/
-#define RIP_PORT 520		/*XXX*/
-#define KERBEROS_SEC_PORT 750	/*XXX*/
-#define L2TP_PORT 1701		/*XXX*/
-#define ISAKMP_PORT   500	/*XXX*/
-#define UDPENCAP_PORT  4500	/*XXX*/
-#define TIMED_PORT 525		/*XXX*/
-#define NETBIOS_NS_PORT    137	/*XXX*/
-#define NETBIOS_DGRAM_PORT 138	/*XXX*/
-#define OLD_RADIUS_AUTH_PORT 1645
-#define OLD_RADIUS_ACCT_PORT 1646
-#define RADIUS_AUTH_PORT     1812
-#define RADIUS_ACCT_PORT     1813
-#define HSRP_PORT 1985		/*XXX*/
-#define VQP_PORT 1589
-#define LWRES_PORT 921
-#define MULTICASTDNS_PORT 5353
+#define TFTP_PORT		69		/*XXX*/
+#define KERBEROS_PORT		88		/*XXX*/
+#define SUNRPC_PORT		111		/*XXX*/
+#define NTP_PORT		123		/*XXX*/
+#define NETBIOS_NS_PORT		137		/*XXX*/
+#define NETBIOS_DGRAM_PORT	138		/*XXX*/
+#define SNMP_PORT		161		/*XXX*/
+#define SNMPTRAP_PORT		162		/*XXX*/
+#define ISAKMP_PORT		500		/*XXX*/
+#define RIP_PORT		520		/*XXX*/
+#define TIMED_PORT		525		/*XXX*/
+#define KERBEROS_SEC_PORT	750		/*XXX*/
+#define LWRES_PORT		921
+#define VQP_PORT		1589
+#define OLD_RADIUS_AUTH_PORT	1645
+#define OLD_RADIUS_ACCT_PORT	1646
+#define L2TP_PORT		1701		/*XXX*/
+#define RADIUS_AUTH_PORT	1812
+#define RADIUS_ACCT_PORT	1813
+#define HSRP_PORT		1985		/*XXX*/
+#define UDPENCAP_PORT		4500		/*XXX*/
+#define MULTICASTDNS_PORT	5353
 
 #ifdef INET6
-#define RIPNG_PORT 521		/*XXX*/
-#define DHCP6_PORT1 546		/*XXX*/
-#define DHCP6_PORT2 547		/*XXX*/
+#define RIPNG_PORT		521		/*XXX*/
+#define DHCP6_PORT1		546		/*XXX*/
+#define DHCP6_PORT2		547		/*XXX*/
 #endif
 
 void
