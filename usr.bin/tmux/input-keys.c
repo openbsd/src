@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.14 2009/11/04 22:43:11 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.15 2009/11/04 23:00:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -173,9 +173,8 @@ input_key(struct window_pane *wp, int key)
 	 */
 	if (key != KEYC_NONE && (key & ~KEYC_ESCAPE) < 0x100) {
 		if (key & KEYC_ESCAPE)
-			ch = '\033';
-		else
-			ch = key & ~KEYC_ESCAPE;
+			bufferevent_write(wp->event, "\033", 1);
+		ch = key & ~KEYC_ESCAPE;
 		bufferevent_write(wp->event, &ch, 1);
 		return;
 	}
