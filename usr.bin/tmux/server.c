@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.70 2009/11/04 22:47:34 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.71 2009/11/04 23:12:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -160,10 +160,10 @@ server_start(char *path)
 	log_debug("socket path %s", socket_path);
 	setproctitle("server (%s)", rpathbuf);
 
+	event_init();
+
 	server_fd = server_create_socket();
 	server_client_create(pair[1]);
-
-	event_init();
 
 	if (access(SYSTEM_CFG, R_OK) == 0) {
 		if (load_cfg(SYSTEM_CFG, NULL, &cause) != 0)
@@ -214,8 +214,6 @@ server_loop(void)
 
 	while (!server_should_shutdown()) {
 		server_update_socket();
-
-		server_client_prepare();
 
 		event_loopexit(&tv);
 		event_loop(EVLOOP_ONCE);
