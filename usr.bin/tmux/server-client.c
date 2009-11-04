@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.14 2009/11/04 23:12:43 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.15 2009/11/04 23:29:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -120,8 +120,11 @@ server_client_lost(struct client *c)
 	if (c->title != NULL)
 		xfree(c->title);
 
+	evtimer_del(&c->identify_timer);
+
 	if (c->message_string != NULL)
 		xfree(c->message_string);
+	evtimer_del(&c->message_timer);
 
 	if (c->prompt_string != NULL)
 		xfree(c->prompt_string);
@@ -447,12 +450,6 @@ server_client_check_timers(struct client *c)
 
 	if (gettimeofday(&tv, NULL) != 0)
 		fatal("gettimeofday failed");
-
-	if (c->flags & CLIENT_IDENTIFY && timercmp(&tv, &c->identify_timer, >))
-		server_clear_identify(c);
-
-	if (c->message_string != NULL && timercmp(&tv, &c->message_timer, >))
-		status_message_clear(c);
 
 	if (c->message_string != NULL || c->prompt_string != NULL) {
 		/*

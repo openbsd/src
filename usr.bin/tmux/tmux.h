@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.165 2009/11/04 23:12:43 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.166 2009/11/04 23:29:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1074,10 +1074,10 @@ struct client {
 #define CLIENT_DEAD 0x200
 	int		 flags;
 
-	struct timeval	 identify_timer;
+	struct event	 identify_timer;
 
 	char		*message_string;
-	struct timeval	 message_timer;
+	struct event	 message_timer;
 
 	char		*prompt_string;
 	char		*prompt_buffer;
