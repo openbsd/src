@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.11 2009/11/04 21:04:43 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.12 2009/11/04 21:10:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -127,7 +127,6 @@ job_free(struct job *job)
 
 	if (job->fd != -1)
 		close(job->fd);
-
 	if (job->event != NULL)
 		bufferevent_free(job->event);
 
@@ -202,8 +201,12 @@ job_callback(unused struct bufferevent *bufev, unused short events, void *data)
 	close(job->fd);
 	job->fd = -1;
 
-	if (job->pid == -1 && job->callbackfn != NULL)
-		job->callbackfn(job);
+	if (job->pid == -1) {
+		if (job->callbackfn != NULL)
+			job->callbackfn(job);
+		if ((!job->flags & JOB_PERSIST))
+			job_free(job);
+	}
 }
 
 /* Job died (waitpid() returned its pid). */
@@ -213,8 +216,12 @@ job_died(struct job *job, int status)
 	job->status = status;
 	job->pid = -1;
 	
-	if (job->fd == -1 && job->callbackfn != NULL)
-		job->callbackfn(job);
+	if (job->fd == -1) {
+		if (job->callbackfn != NULL)
+			job->callbackfn(job);
+		if ((!job->flags & JOB_PERSIST))
+			job_free(job);
+	}
 }
 
 /* Kill a job. */
