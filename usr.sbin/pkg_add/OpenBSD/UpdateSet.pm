@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.10 2009/10/19 14:07:26 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.11 2009/11/04 16:50:02 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -194,12 +194,18 @@ sub short_print
 	my $self = shift;
 	my @l = ();
 	if ($self->older > 0) {
-		push(@l, join(' ',$self->older_names));
+		push(@l, join('+',$self->older_names));
 	}
 	if ($self->newer > 0) {
-		push(@l, join(' ', $self->newer_names));
+		push(@l, join('+', $self->newer_names));
 	}
-	return join(' -> ', @l);
+	return join('->', @l);
+}
+
+sub shorter_print
+{
+	my $self = shift;
+	return join('+', $self->newer_names);
 }
 
 sub validate_plists
