@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.76 2009/11/03 18:57:18 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.77 2009/11/04 17:46:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -80,8 +80,6 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_1000_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_1 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1 },
@@ -591,12 +589,6 @@ iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		sc->limits = &iwn6000_sensitivity_limits;
 		sc->fwname = "iwn-6000";
 		switch (pid) {
-		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_1:
-		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_2:
-			sc->sc_flags |= IWN_FLAG_HYBRID;
-			sc->txchainmask = IWN_ANT_AB;
-			sc->rxchainmask = IWN_ANT_AB;
-			break;
 		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1:
 		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2:
 			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
@@ -5317,10 +5309,7 @@ iwn5000_nic_config(struct iwn_softc *sc)
 	}
 	iwn_nic_unlock(sc);
 
-	if (sc->sc_flags & IWN_FLAG_HYBRID) {
-		/* Use internal and external power amplifiers. */
-		IWN_WRITE(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_RADIO_2X2_HYB);
-	} else if (sc->sc_flags & IWN_FLAG_INTERNAL_PA) {
+	if (sc->sc_flags & IWN_FLAG_INTERNAL_PA) {
 		/* Use internal power amplifier only. */
 		IWN_WRITE(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_RADIO_2X2_IPA);
 	}
