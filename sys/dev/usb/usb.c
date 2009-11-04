@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.60 2009/10/31 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: usb.c,v 1.61 2009/11/04 19:14:10 kettenis Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -192,7 +192,6 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 	ue.u.ue_ctrlr.ue_bus = sc->sc_dev.dv_unit;
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, &ue);
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	/* XXX we should have our own level */
 	sc->sc_bus->soft = softintr_establish(IPL_SOFTNET,
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
@@ -201,7 +200,6 @@ usb_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dying = 1;
 		return;
 	}
-#endif
 
 	err = usbd_new_device(&sc->sc_dev, sc->sc_bus, 0, speed, 0,
 		  &sc->sc_port);
@@ -780,15 +778,12 @@ void
 usb_schedsoftintr(usbd_bus_handle bus)
 {
 	DPRINTFN(10,("usb_schedsoftintr: polling=%d\n", bus->use_polling));
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
 	} else {
 		softintr_schedule(bus->soft);
 	}
-#else
-	bus->methods->soft_intr(bus);
-#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 }
 
 int
@@ -839,12 +834,10 @@ usb_detach(struct device *self, int flags)
 
 	usbd_finish();
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_bus->soft != NULL) {
 		softintr_disestablish(sc->sc_bus->soft);
 		sc->sc_bus->soft = NULL;
 	}
-#endif
 
 	ue.u.ue_ctrlr.ue_bus = sc->sc_dev.dv_unit;
 	usb_add_event(USB_EVENT_CTRLR_DETACH, &ue);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.135 2009/11/01 20:29:00 nicm Exp $	*/
+/*	$OpenBSD: com.c,v 1.136 2009/11/04 19:14:10 kettenis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -224,11 +224,7 @@ com_detach(struct device *self, int flags)
 
 	timeout_del(&sc->sc_dtr_tmo);
 	timeout_del(&sc->sc_diag_tmo);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_disestablish(sc->sc_si);
-#else
-	timeout_del(&sc->sc_comsoft_tmo);
-#endif
 
 	return (0);
 }
@@ -327,10 +323,6 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_initialize = 1;
 		comparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-		timeout_add(&sc->sc_comsoft_tmo, 1);
-#endif
 
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
 		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
@@ -508,9 +500,6 @@ comclose(dev_t dev, int flag, int mode, struct proc *p)
 		compwroff(sc);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-	timeout_del(&sc->sc_comsoft_tmo);
-#endif
 	sc->sc_cua = 0;
 	splx(s);
 	ttyclose(tp);
@@ -1010,7 +999,7 @@ comsoft(void *arg)
 	};
 
 	if (sc == NULL || sc->sc_ibufp == sc->sc_ibuf)
-		goto out;
+		return;
 
 	tp = sc->sc_tty;
 
@@ -1021,7 +1010,7 @@ comsoft(void *arg)
 
 	if (ibufp == ibufend) {
 		splx(s);
-		goto out;
+		return;
 	}
 
 	sc->sc_ibufp = sc->sc_ibuf = (ibufp == sc->sc_ibufs[0]) ?
@@ -1031,7 +1020,7 @@ comsoft(void *arg)
 
 	if (tp == NULL || !ISSET(tp->t_state, TS_ISOPEN)) {
 		splx(s);
-		goto out;
+		return;
 	}
 
 	if (ISSET(tp->t_cflag, CRTSCTS) &&
@@ -1055,13 +1044,6 @@ comsoft(void *arg)
 		c |= lsrmap[(*ibufp++ & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
 		(*linesw[tp->t_line].l_rint)(c, tp);
 	}
-
-out:
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-	timeout_add(&sc->sc_comsoft_tmo, 1);
-#else
-	;
-#endif
 }
 
 #ifdef KGDB
@@ -1142,9 +1124,7 @@ comintr(void *arg)
 		if (ISSET(lsr, LSR_RXRDY)) {
 			u_char *p = sc->sc_ibufp;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			softintr_schedule(sc->sc_si);
-#endif
 			do {
 				data = bus_space_read_1(iot, ioh, com_data);
 				if (ISSET(lsr, LSR_BI)) {
@@ -1732,14 +1712,10 @@ com_attach_subr(sc)
 
 	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
 	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softintr_establish(IPL_TTY, comsoft, sc);
 	if (sc->sc_si == NULL)
 		panic("%s: can't establish soft interrupt",
 		    sc->sc_dev.dv_xname);
-#else
-	timeout_set(&sc->sc_comsoft_tmo, comsoft, sc);
-#endif
 
 	/*
 	 * If there are no enable/disable functions, assume the device

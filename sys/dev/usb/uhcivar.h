@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.21 2009/10/13 19:33:19 pirofti Exp $ */
+/*	$OpenBSD: uhcivar.h,v 1.22 2009/11/04 19:14:10 kettenis Exp $ */
 /*	$NetBSD: uhcivar.h,v 1.36 2002/12/31 00:39:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
@@ -155,9 +155,7 @@ typedef struct uhci_softc {
 	u_int8_t sc_saved_sof;
 	u_int16_t sc_saved_frnum;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	char sc_softwake;
-#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 	char sc_isreset;
 	char sc_suspend;

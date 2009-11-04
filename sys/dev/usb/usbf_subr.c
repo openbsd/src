@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbf_subr.c,v 1.14 2008/12/01 16:58:48 deraadt Exp $	*/
+/*	$OpenBSD: usbf_subr.c,v 1.15 2009/11/04 19:14:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -1066,23 +1066,19 @@ usbf_transfer_complete(usbf_xfer_handle xfer)
 usbf_status
 usbf_softintr_establish(struct usbf_bus *bus)
 {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	KASSERT(bus->soft == NULL);
+
 	/* XXX we should have our own level */
 	bus->soft = softintr_establish(IPL_SOFTNET,
 	    bus->methods->soft_intr, bus);
 	if (bus->soft == NULL)
 		return USBF_INVAL;
-#endif
+
 	return USBF_NORMAL_COMPLETION;
 }
 
 void
 usbf_schedsoftintr(struct usbf_bus *bus)
 {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(bus->soft);
-#else
-	bus->methods->soft_intr(bus);
-#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 }

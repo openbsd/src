@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.10 2008/07/21 20:50:54 martynas Exp $	*/
+/*	$OpenBSD: _types.h,v 1.11 2009/11/04 19:14:09 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -121,7 +121,6 @@ typedef	void *			__wctrans_t;
 typedef	void *			__wctype_t;
 
 /* Feature test macros */
-#define __HAVE_GENERIC_SOFT_INTERRUPTS
 #define __HAVE_TIMECOUNTER
 
 #endif	/* _ALPHA__TYPES_H_ */

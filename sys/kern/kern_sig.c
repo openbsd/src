@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.105 2009/06/06 21:25:19 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.106 2009/11/04 19:14:10 kettenis Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1203,9 +1203,8 @@ keep:
 void
 proc_stop(struct proc *p, int sw)
 {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	extern void *softclock_si;
-#endif
+
 #ifdef MULTIPROCESSOR
 	SCHED_ASSERT_LOCKED();
 #endif
@@ -1219,11 +1218,7 @@ proc_stop(struct proc *p, int sw)
 		 * We need this soft interrupt to be handled fast.
 		 * Extra calls to softclock don't hurt.
 		 */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
                 softintr_schedule(softclock_si);
-#else
-                setsoftclock();
-#endif
 	}
 	if (sw)
 		mi_switch();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.13 2009/11/01 20:29:00 nicm Exp $ */
+/*	$OpenBSD: sscom.c,v 1.14 2009/11/04 19:14:09 kettenis Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -515,14 +515,10 @@ sscom_attach_subr(struct sscom_softc *sc)
 	/* if there are no enable/disable functions, assume the device
 	   is always enabled */
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softintr_establish(IPL_TTY, sscomsoft, sc);
 	if (sc->sc_si == NULL)
 		panic("%s: can't establish soft interrupt",
 		    sc->sc_dev.dv_xname);
-#else           
-	timeout_set(&sc->sc_comsoft_tmo, comsoft, sc);
-#endif
 
 	SET(sc->sc_hwflags, SSCOM_HW_DEV_OK);
 
@@ -963,9 +959,7 @@ sscom_schedrx(struct sscom_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#endif
 }
 
 void
@@ -1610,12 +1604,6 @@ sscomsoft(void *arg)
 			sscom_stsoft(sc, tp);
 		}
 	}
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-        timeout_add(&sc->sc_comsoft_tmo, 1);
-#else 
-        ;
-#endif
-
 }
 
 
@@ -1807,10 +1795,7 @@ next:
 	SSCOM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#endif
-
 
 
 #if NRND > 0 && defined(RND_COM)

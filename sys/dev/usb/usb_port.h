@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.98 2009/10/13 19:33:19 pirofti Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.99 2009/11/04 19:14:10 kettenis Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -39,12 +39,6 @@
  * Macros to ease the import of USB drivers from other operating systems, e.g.
  * NetBSD or FreeBSD.
  */
-
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-#define USB_USE_SOFTINTR
-#else
-#undef USB_USE_SOFTINTR
-#endif
 
 #define Static
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.6 2009/03/20 18:41:06 miod Exp $	*/
+/*	$OpenBSD: _types.h,v 1.7 2009/11/04 19:14:10 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -134,7 +134,6 @@ typedef struct label_t {
 #define __SWAP_BROKEN
 
 /* Feature test macros */
-#define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define __HAVE_TIMECOUNTER
 
 #endif	/* _MIPS64__TYPES_H_ */
