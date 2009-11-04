@@ -1,4 +1,4 @@
-/* $OpenBSD: server-window.c,v 1.9 2009/11/04 22:43:11 nicm Exp $ */
+/* $OpenBSD: server-window.c,v 1.10 2009/11/04 23:54:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -91,8 +91,6 @@ server_window_loop(void)
 
 		server_window_check_alive(w);
 	}
-
-	set_window_names();
 }
 
 /* Check for bell in window. */
