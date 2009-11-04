@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.66 2009/11/04 20:50:11 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.67 2009/11/04 21:04:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -214,14 +214,12 @@ server_loop(void)
 	while (!server_should_shutdown()) {
 		server_update_socket();
 
-		server_job_prepare();
 		server_window_prepare();
 		server_client_prepare();
 
 		event_loopexit(&tv);
 		event_loop(EVLOOP_ONCE);
 
-		server_job_loop();
 		server_window_loop();
 		server_client_loop();
 
@@ -470,8 +468,8 @@ server_child_exited(pid_t pid, int status)
 
 	SLIST_FOREACH(job, &all_jobs, lentry) {
 		if (pid == job->pid) {
-			job->pid = -1;
-			job->status = status;
+			job_died(job, status);	/* might free job */
+			break;
 		}
 	}
 }
