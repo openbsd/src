@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1504 2009/10/26 20:05:18 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1505 2009/11/04 17:46:52 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2167,8 +2167,6 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1	0x0087		/* WiFi Link 6050 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_3X3_2	0x0088		/* WiFi Link 6050 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2	0x0089		/* WiFi Link 6050 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_1	0x008d		/* WiFi Link 6000 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_HYB_2	0x008e		/* WiFi Link 6000 */
 #define	PCI_PRODUCT_INTEL_80303	0x0309		/* 80303 IOP */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion */
 #define	PCI_PRODUCT_INTEL_IOXAPIC_A	0x0326		/* IOxAPIC */
