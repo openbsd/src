@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.166 2009/11/04 23:29:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.167 2009/11/04 23:42:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1565,6 +1565,7 @@ void	 server_signal_clear(void);
 void	 server_client_create(int);
 void	 server_client_lost(struct client *);
 void	 server_client_callback(int, short, void *);
+void	 server_client_status_timer(void);
 void	 server_client_loop(void);
 
 /* server-window.c */

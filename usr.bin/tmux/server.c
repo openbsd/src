@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.71 2009/11/04 23:12:43 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.72 2009/11/04 23:42:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -519,6 +519,8 @@ server_second_callback(unused int fd, unused short events, unused void *arg)
 				wp->mode->timer(wp);
 		}
 	}
+
+	server_client_status_timer();
 
 	evtimer_del(&server_ev_second);
 	memset(&tv, 0, sizeof tv);
