@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.32 2009/11/04 07:37:55 jsing Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.33 2009/11/04 09:43:11 jsing Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -357,6 +357,9 @@ static int udp_cksum(register const struct ip *ip,
 #define RADIUS_AUTH_PORT	1812
 #define RADIUS_ACCT_PORT	1813
 #define HSRP_PORT		1985		/*XXX*/
+#define GTP_C_PORT		2123
+#define GTP_U_PORT		2152
+#define GTP_PRIME_PORT		3386
 #define UDPENCAP_PORT		4500		/*XXX*/
 #define MULTICASTDNS_PORT	5353
 
@@ -615,6 +618,10 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 				sport, dport);
 		}
 #endif /*INET6*/
+		else if (ISPORT(GTP_C_PORT) || ISPORT(GTP_U_PORT) ||
+		    ISPORT(GTP_PRIME_PORT))
+			gtp_print((const u_char *)(up + 1), length,
+			    sport, dport);
 		/*
 		 * Kludge in test for whiteboard packets.
 		 */
