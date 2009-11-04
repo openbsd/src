@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.11 2009/08/17 14:23:09 jsing Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.12 2009/11/04 12:03:57 jsing Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -77,19 +77,16 @@ filename(char *str, char *ppart)
 		*cp = 0;
 		/* ...look whether there is a device with this name */
 		dhandle = OF_finddevice(str);
-#ifdef NOTDEF_DEBUG
-		printf("filename: OF_finddevice(%s) says %x\n",
-		       str, dhandle);
-#endif
+		DNPRINTF(BOOT_D_OFDEV, "filename: OF_finddevice(%s) says %x\n",
+		    str, dhandle);
 		*cp = savec;
 		if (dhandle == -1) {
 			/* if not, lp is the delimiter between device and path */
 			/* if the last component was a block device... */
 			if (!strcmp(devtype, "block")) {
 				/* search for arguments */
-#ifdef NOTDEF_DEBUG
-				printf("filename: hunting for arguments in %s\n", str);
-#endif
+				DNPRINTF(BOOT_D_OFDEV, "filename: hunting for "
+				    "arguments in %s\n", str);
 				for (cp = lp;
 				     --cp >= str && *cp != '/' && *cp != '-';);
 				if (cp >= str && *cp == '-') {
@@ -100,16 +97,12 @@ filename(char *str, char *ppart)
 						*ppart = *cp;
 				}
 			}
-#ifdef NOTDEF_DEBUG
-			printf("filename: found %s\n",lp);
-#endif
+			DNPRINTF(BOOT_D_OFDEV, "filename: found %s\n", lp);
 			return lp;
 		} else if (OF_getprop(dhandle, "device_type", devtype, sizeof devtype) < 0)
 			devtype[0] = 0;
 	}
-#ifdef NOTDEF_DEBUG
-	printf("filename: not found\n",lp);
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "filename: not found\n", lp);
 	return 0;
 }
 
@@ -126,23 +119,18 @@ strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 	if (dev->type != OFDEV_DISK)
 		panic("strategy");
 	
-#ifdef NON_DEBUG
-	printf("strategy: block %lx, partition offset %lx, blksz %lx\n", 
-	       (long)blk, (long)dev->partoff, (long)dev->bsize);
-	printf("strategy: seek position should be: %lx\n", 
-	       (long)((blk + dev->partoff) * dev->bsize));
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "strategy: block %lx, partition offset %lx, "
+	    "blksz %lx\n", (long)blk, (long)dev->partoff, (long)dev->bsize);
+	DNPRINTF(BOOT_D_OFDEV, "strategy: seek position should be: %lx\n", 
+	    (long)((blk + dev->partoff) * dev->bsize));
 	pos = (u_quad_t)(blk + dev->partoff) * dev->bsize;
 	
 	for (;;) {
-#ifdef NON_DEBUG
-		printf("strategy: seeking to %lx\n", (long)pos);
-#endif
+		DNPRINTF(BOOT_D_OFDEV, "strategy: seeking to %lx\n", (long)pos);
 		if (OF_seek(dev->handle, pos) < 0)
 			break;
-#ifdef NON_DEBUG
-		printf("strategy: reading %lx at %p\n", (long)size, buf);
-#endif
+		DNPRINTF(BOOT_D_OFDEV, "strategy: reading %lx at %p\n",
+		    (long)size, buf);
 		n = OF_read(dev->handle, buf, size);
 		if (n == -2)
 			continue;
@@ -209,6 +197,7 @@ get_long(const void *p)
 	
 	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
 }
+
 /************************************************************************
  *
  * The rest of this was taken from arch/sparc64/scsi/sun_disklabel.c
@@ -284,9 +273,8 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 		npp = &lp->d_partitions[i];
 		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
 		npp->p_size = spp->sdkp_nsectors;
-#ifdef NOTDEF_DEBUG
-		printf("partition %d start %x size %x\n", i, (int)npp->p_offset, (int)npp->p_size);
-#endif
+		DNPRINTF(BOOT_D_OFDEV, "partition %d start %x size %x\n",
+		    i, (int)npp->p_offset, (int)npp->p_size);
 		if (npp->p_size == 0) {
 			npp->p_fstype = FS_UNUSED;
 		} else {
@@ -305,9 +293,7 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-#ifdef NOTDEF_DEBUG
-	printf("disklabel_sun_to_bsd: success!\n");
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "disklabel_sun_to_bsd: success!\n");
 	return (NULL);
 }
 
@@ -345,9 +331,7 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 		if (dkcksum(dlp))
 			return ("NetBSD disk label corrupted");
 		*lp = *dlp;
-#ifdef NOTDEF_DEBUG
-		printf("search_label: found NetBSD label\n");
-#endif
+		DNPRINTF(BOOT_D_OFDEV, "search_label: found NetBSD label\n");
 		return (NULL);
 	}
 
@@ -378,9 +362,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		panic("devopen");
 	if (of->f_flags != F_READ)
 		return EPERM;
-#ifdef NOTDEF_DEBUG
-	printf("devopen: you want %s\n", name);
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "devopen: you want %s\n", name);
 	strlcpy(fname, name, sizeof fname);
 	cp = filename(fname, &partition);
 	if (cp) {
@@ -402,51 +384,37 @@ devopen(struct open_file *of, const char *name, char **file)
 		strlcat(opened_name, "/", sizeof opened_name);
 	strlcat(opened_name, buf, sizeof opened_name);
 	*file = opened_name + strlen(fname) + 1;
-#ifdef NOTDEF_DEBUG
-	printf("devopen: trying %s\n", fname);
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "devopen: trying %s\n", fname);
 	if ((handle = OF_finddevice(fname)) == -1)
 		return ENOENT;
-#ifdef NOTDEF_DEBUG
-	printf("devopen: found %s\n", fname);
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "devopen: found %s\n", fname);
 	if (OF_getprop(handle, "name", buf, sizeof buf) < 0)
 		return ENXIO;
-#ifdef NOTDEF_DEBUG
-	printf("devopen: %s is called %s\n", fname, buf);
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "devopen: %s is called %s\n", fname, buf);
 	if (OF_getprop(handle, "device_type", buf, sizeof buf) < 0)
 		return ENXIO;
-#ifdef NOTDEF_DEBUG
-	printf("devopen: %s is a %s device\n", fname, buf);
-#endif
-#ifdef NOTDEF_DEBUG
-	printf("devopen: opening %s\n", fname);
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "devopen: %s is a %s device\n", fname, buf);
+	DNPRINTF(BOOT_D_OFDEV, "devopen: opening %s\n", fname);
 	if ((handle = OF_open(fname)) == -1) {
-#ifdef NOTDEF_DEBUG
-		printf("devopen: open of %s failed\n", fname);
-#endif
+		DNPRINTF(BOOT_D_OFDEV, "devopen: open of %s failed\n", fname);
 		return ENXIO;
 	}
-#ifdef NOTDEF_DEBUG
-	printf("devopen: %s is now open\n", fname);
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "devopen: %s is now open\n", fname);
 	bzero(&ofdev, sizeof ofdev);
 	ofdev.handle = handle;
 	if (!strcmp(buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
 		/* First try to find a disklabel without MBR partitions */
-#ifdef NOTDEF_DEBUG
-		printf("devopen: trying to read disklabel\n");
-#endif
+		DNPRINTF(BOOT_D_OFDEV, "devopen: trying to read disklabel\n");
 		if (strategy(&ofdev, F_READ,
 			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
 		    || read != DEV_BSIZE
 		    || (errmsg = getdisklabel(buf, &label))) {
-#ifdef NOTDEF_DEBUG
-			if (errmsg) printf("devopen: getdisklabel says %s\n", errmsg);
+#ifdef BOOT_DEBUG
+			if (errmsg)
+				DNPRINTF(BOOT_D_OFDEV,
+				    "devopen: getdisklabel says %s\n", errmsg);
 #endif
 			/* Else try MBR partitions */
 			errmsg = search_label(&ofdev, 0, buf, &label, 0);
@@ -467,10 +435,8 @@ devopen(struct open_file *of, const char *name, char **file)
 		} else {
 			part = partition ? partition - 'a' : 0;
 			ofdev.partoff = label.d_partitions[part].p_offset;
-#ifdef NOTDEF_DEBUG
-			printf("devopen: setting partition %d offset %x\n",
-			       part, ofdev.partoff);
-#endif
+			DNPRINTF(BOOT_D_OFDEV, "devopen: setting partition %d "
+			    "offset %x\n", part, ofdev.partoff);
 		}
 		
 		of->f_dev = devsw;
@@ -482,9 +448,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		bcopy(&file_system_cd9660, &file_system[nfsys++],
 		    sizeof file_system[0]);
 #endif
-#ifdef NOTDEF_DEBUG
-		printf("devopen: return 0\n");
-#endif
+		DNPRINTF(BOOT_D_OFDEV, "devopen: return 0\n");
 		return 0;
 	}
 #ifdef NETBOOT
@@ -501,9 +465,8 @@ devopen(struct open_file *of, const char *name, char **file)
 #endif
 	error = EFTYPE;
 bad:
-#ifdef NOTDEF_DEBUG
-	printf("devopen: error %d, cannot open device\n", error);
-#endif
+	DNPRINTF(BOOT_D_OFDEV, "devopen: error %d, cannot open device\n",
+	    error);
 	OF_close(handle);
 	ofdev.handle = -1;
 	return error;

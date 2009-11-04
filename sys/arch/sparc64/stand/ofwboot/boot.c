@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.15 2009/08/17 14:23:09 jsing Exp $	*/
+/*	$OpenBSD: boot.c,v 1.16 2009/11/04 12:03:57 jsing Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -58,6 +58,13 @@
 
 #include "ofdev.h"
 #include "openfirm.h"
+
+#ifdef BOOT_DEBUG
+uint32_t	boot_debug = 0
+		    /* | BOOT_D_OFDEV */
+		    /* | BOOT_D_OFNET */
+		;
+#endif
 
 #define	MEG	(1024*1024)
 
