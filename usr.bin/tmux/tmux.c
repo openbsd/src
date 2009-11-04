@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.53 2009/10/26 21:42:04 deraadt Exp $ */
+/* $OpenBSD: tmux.c,v 1.54 2009/11/04 12:41:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@
 #include "tmux.h"
 
 #ifdef DEBUG
-const char	*malloc_options = "AFGJPX";
+extern char	*malloc_options;
 #endif
 
 volatile sig_atomic_t sigwinch;
@@ -298,6 +298,10 @@ main(int argc, char **argv)
 	void			*buf;
 	size_t			 len;
 	int	 		 nfds, retcode, opt, flags, cmdflags = 0;
+
+#ifdef DEBUG
+	malloc_options = (char *) "AFGJPX";
+#endif
 
 	flags = 0;
 	shellcmd = label = path = NULL;
