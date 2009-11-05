@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.18 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.19 2009/11/05 08:36:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -143,7 +143,9 @@ safile_new(struct fileops *ops, char *path,
 	}
 	*bufsz = par.bufsz;
 	*round = par.round;
-	f = (struct safile *)file_new(ops, "hdl", sio_nfds(hdl));
+	if (path == NULL)
+		path = "default";
+	f = (struct safile *)file_new(ops, path, sio_nfds(hdl));
 	if (f == NULL)
 		goto bad_close;
 	f->hdl = hdl;

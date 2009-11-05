@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.38 2009/11/03 21:31:37 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.39 2009/11/05 08:36:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -199,9 +199,17 @@ void
 rpipe_done(struct aproc *p)
 {
 	struct file *f = p->u.io.file;
+	struct abuf *obuf;
 
 	if (f == NULL)
 		return;
+	/*
+	 * all buffers must be detached before deleting f->wproc,
+	 * because otherwise it could trigger this code again
+	 */
+	obuf = LIST_FIRST(&p->obuflist);
+	if (obuf)
+		abuf_eof(obuf);
 	if (f->wproc) {
 		f->rproc = NULL;
 		aproc_del(f->wproc);
@@ -250,9 +258,17 @@ void
 wpipe_done(struct aproc *p)
 {
 	struct file *f = p->u.io.file;
+	struct abuf *ibuf;
 
 	if (f == NULL)
 		return;
+	/*
+	 * all buffers must be detached before deleting f->rproc,
+	 * because otherwise it could trigger this code again
+	 */
+	ibuf = LIST_FIRST(&p->ibuflist);
+	if (ibuf)
+		abuf_hup(ibuf);
 	if (f->rproc) {
 		f->wproc = NULL;
 		aproc_del(f->rproc);
