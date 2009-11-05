@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.122 2009/10/19 20:48:13 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.123 2009/11/05 23:30:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -74,6 +74,7 @@ void		 session_respond_delayed(int, short, void *);
 int		 session_set_path(struct path *, char *);
 void		 session_imsg(struct session *, enum smtp_proc_type,
 		     enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
+char		*evbuffer_readln_crlf(struct evbuffer *);
 
 struct session_cmd {
 	char	 *name;
@@ -996,7 +997,7 @@ session_readline(struct session *s)
 	size_t	 nr;
 
 	nr = EVBUFFER_LENGTH(s->s_bev->input);
-	line = evbuffer_readline(s->s_bev->input);
+	line = evbuffer_readln_crlf(s->s_bev->input);
 	if (line == NULL) {
 		if (EVBUFFER_LENGTH(s->s_bev->input) > SMTP_LINE_MAX) {
 			session_respond(s, "500 Line too long");
@@ -1018,7 +1019,7 @@ session_readline(struct session *s)
 	}
 	
 	if ((s->s_state != S_DATACONTENT || strcmp(line, ".") == 0) &&
-	    (line2 = evbuffer_readline(s->s_bev->input)) != NULL) {
+	    (line2 = evbuffer_readln_crlf(s->s_bev->input)) != NULL) {
 		session_respond(s, "500 Pipelining unsupported");
 		s->s_env->stats->smtp.toofast++;
 		s->s_flags |= F_QUIT;
@@ -1164,5 +1165,38 @@ session_imsg(struct session *s, enum smtp_proc_type proc, enum imsg_type type,
 	imsg_compose_event(s->s_env->sc_ievs[proc], type, peerid, pid, fd, data,
 	    datalen);
 }
+
+char *
+evbuffer_readln_crlf(struct evbuffer *buffer)
+{
+        u_char *data = EVBUFFER_DATA(buffer);
+        size_t len = EVBUFFER_LENGTH(buffer);
+        char *line;
+        unsigned int i, j;
+
+        for (i = 0; i < len; ++i) {
+                if (data[i] == '\n')
+                        break;
+        }
+
+        if (i == len)
+                return NULL;
+
+        j = i;
+        if (i != 0 && data[i - 1] == '\r')
+                --j;
+
+        line = calloc(j + 1, 1);
+        if (line == NULL)
+                fatal("calloc");
+
+        if (j != 0)
+                memcpy(line, data, j);
+
+	evbuffer_drain(buffer, i + 1);
+
+        return (line);
+}
+
 
 SPLAY_GENERATE(sessiontree, session, s_nodes, session_cmp);
