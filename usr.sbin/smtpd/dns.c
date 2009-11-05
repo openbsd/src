@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.16 2009/09/03 08:19:13 jacekm Exp $	*/
+/*	$OpenBSD: dns.c,v 1.17 2009/11/05 12:05:47 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>

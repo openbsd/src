@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.72 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.73 2009/11/05 12:05:47 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -659,7 +659,8 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		/* set envelope recipients */
 		TAILQ_FOREACH(m, &s->recipients, entry) {
 			if (m->session_errorline[0] == '2' ||
-			    m->session_errorline[0] == '5')
+			    m->session_errorline[0] == '5' ||
+			    m->session_errorline[0] == '6')
 				continue;
 			if (client_rcpt(s->smtp_state, "%s@%s", m->recipient.user,
 			    m->recipient.domain) < 0)
@@ -683,6 +684,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		/* update queue status */
 		while ((m = TAILQ_FIRST(&s->recipients))) {
 			switch (m->session_errorline[0]) {
+			case '6':
 			case '5':
 				m->status = S_MESSAGE_PERMFAILURE;
 				break;
@@ -902,7 +904,8 @@ mta_todo(struct mta_session *s)
 
 	TAILQ_FOREACH(m, &s->recipients, entry)
 		if (m->session_errorline[0] != '2' &&
-		    m->session_errorline[0] != '5')
+		    m->session_errorline[0] != '5' &&
+		    m->session_errorline[0] != '6')
 			n++;
 	return (n);
 }
