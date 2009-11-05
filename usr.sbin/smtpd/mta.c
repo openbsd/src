@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.73 2009/11/05 12:05:47 jsing Exp $	*/
+/*	$OpenBSD: mta.c,v 1.74 2009/11/05 12:11:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -752,8 +752,17 @@ mta_pickup(struct mta_session *s, void *p)
 	case MTA_MX:
 		/* LKA responded to DNS lookup. */
 		error = *(int *)p;
-		if (error) {
-			mta_status(s, "100 MX lookup failed");
+		if (error == EAI_AGAIN) {
+			/* Temporary failure. */
+			mta_status(s, "100 MX lookup failed temporarily");
+			mta_enter_state(s, MTA_DONE, NULL);
+		} else if (error == EAI_NONAME) {
+			/* No such domain. */
+			mta_status(s, "600 Domain does not exist");
+			mta_enter_state(s, MTA_DONE, NULL);
+		} else if (error) {
+			/* Permanent failure. */
+			mta_status(s, "600 Unable to resolve DNS for domain");
 			mta_enter_state(s, MTA_DONE, NULL);
 		} else
 			mta_enter_state(s, MTA_DATA, NULL);

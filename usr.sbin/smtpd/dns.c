@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.17 2009/11/05 12:05:47 jsing Exp $	*/
+/*	$OpenBSD: dns.c,v 1.18 2009/11/05 12:11:53 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -367,9 +367,10 @@ again:
 		switch (h_errno) {
 		case TRY_AGAIN:
 			return (EAI_AGAIN);
+		case HOST_NOT_FOUND:
+			return (EAI_NONAME);
 		case NO_RECOVERY:
 			return (EAI_FAIL);
-		case HOST_NOT_FOUND:
 		case NO_DATA:
 			*res = NULL;
 			return (0);
