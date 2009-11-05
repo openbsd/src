@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.10 2009/11/05 12:05:47 jsing Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.11 2009/11/05 12:08:41 jsing Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -78,10 +78,12 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 		reason += 4;
 	
 	/* create message header */
+	/* XXX - The Date: header should be added during SMTP pickup. */
 	if (client_data_printf(cc->sp,
 	    "Subject: Delivery status notification\n"
 	    "From: Mailer Daemon <MAILER-DAEMON@%s>\n"
 	    "To: %s@%s\n"
+	    "Date: %s\n"
 	    "\n"
 	    "Hi !\n"
 	    "\n"
@@ -96,6 +98,7 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 	    "\n",
 	    env->sc_hostname,
 	    messagep->sender.user, messagep->sender.domain,
+	    time_to_text(time(NULL)),
 	    messagep->recipient.user, messagep->recipient.domain,
 	    reason) < 0)
 		goto fail;
