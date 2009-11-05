@@ -1,4 +1,4 @@
-/* $OpenBSD: mpii.c,v 1.2 2009/11/03 06:00:40 marco Exp $ */
+/* $OpenBSD: mpii.c,v 1.3 2009/11/05 03:43:18 marco Exp $ */
 /*
  * Copyright (c) James Giannoules
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -3674,7 +3674,7 @@ mpii_alloc_queues(struct mpii_softc *sc)
 	    DEVNAME(sc));
 	kva64 = (u_int64_t *)MPII_DMA_KVA(sc->sc_reply_postq);
 	for (i = 0; i < sc->sc_reply_post_qdepth; i++) {
-		kva64[i] = 0xffffffffffffffff;
+		kva64[i] = 0xffffffffffffffffllu;
 		DNPRINTF(MPII_D_MISC, "%s:    %d:  0x%08x = 0x%lx\n", 
 		    DEVNAME(sc), i, &kva64[i], kva64[i]); 
 	}
