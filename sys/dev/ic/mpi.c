@@ -1,8 +1,8 @@
-/*	$OpenBSD: mpi.c,v 1.118 2009/11/05 03:33:52 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.119 2009/11/05 03:55:59 marco Exp $ */
 
 /*
- * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
- * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
+ * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2005, 2008, 2009 Marco Peereboom <marco@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
