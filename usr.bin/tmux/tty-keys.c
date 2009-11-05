@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.16 2009/11/05 19:29:41 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.17 2009/11/05 19:32:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -350,7 +350,7 @@ tty_keys_next(struct tty *tty)
 	struct tty_key		*tk;
 	struct timeval		 tv;
 	struct mouse_event	 mouse;
-	char			*buf, *ptr;
+	char			*buf;
 	size_t			 len, size;
 	cc_t			 bspace;
 	int			 key;
