@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.67 2009/11/05 08:45:08 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.68 2009/11/05 22:35:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -784,7 +784,7 @@ tty_cmd_clearendofscreen(struct tty *tty, const struct tty_ctx *ctx)
 	} else {
 		for (i = ctx->ocx; i < screen_size_x(s); i++)
 			tty_putc(tty, ' ');
-		for (j = ctx->ocy; j < screen_size_y(s); j++) {
+		for (j = ctx->ocy + 1; j < screen_size_y(s); j++) {
 			tty_cursor_pane(tty, ctx, 0, j);
 			for (i = 0; i < screen_size_x(s); i++)
 				tty_putc(tty, ' ');
