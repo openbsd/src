@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.19 2009/06/07 21:48:16 sobrado Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.20 2009/11/05 20:32:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -42,6 +42,7 @@ const char *str2busdevfunc(const char *, int *, int *, int *);
 int pci_nfuncs(int, int);
 int pci_read(int, int, int, u_int32_t, u_int32_t *);
 void dump_caplist(int, int, int, u_int8_t);
+int dump_rom(int, int, int);
 
 __dead void
 usage(void)
@@ -49,12 +50,13 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-v] [-x | -xx] [-d pcidev] [bus:dev:func]\n",
+	    "usage: %s [-v] [-x | -xx] [-d pcidev] [-r file] [bus:dev:func]\n",
 	    __progname);
 	exit(1);
 }
 
 int pcifd;
+int romfd;
 int verbose = 0;
 int hex = 0;
 
@@ -86,13 +88,18 @@ main(int argc, char *argv[])
 	int nfuncs;
 	int bus, dev, func;
 	char pcidev[MAXPATHLEN] = PCIDEV;
+	char *romfile = NULL;
 	const char *errstr;
 	int c, error = 0, dumpall = 1, domid = 0;
 
-	while ((c = getopt(argc, argv, "d:vx")) != -1) {
+	while ((c = getopt(argc, argv, "d:r:vx")) != -1) {
 		switch (c) {
 		case 'd':
 			strlcpy(pcidev, optarg, sizeof(pcidev));
+			dumpall = 0;
+			break;
+		case 'r':
+			romfile = optarg;
 			dumpall = 0;
 			break;
 		case 'v':
@@ -108,8 +115,14 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1)
+	if (argc > 1 || (romfile && argc != 1))
 		usage();
+
+	if (romfile) {
+		romfd = open(romfile, O_WRONLY|O_CREAT|O_TRUNC, 0777);
+		if (romfd == -1)
+			err(1, "%s", romfile);
+	}
 
 	if (argc == 1)
 		dumpall = 0;
@@ -118,7 +131,6 @@ main(int argc, char *argv[])
 		pcifd = open(pcidev, O_RDONLY, 0777);
 		if (pcifd == -1)
 			err(1, "%s", pcidev);
-		printf("Domain %s:\n", pcidev);
 	} else {
 		for (;;) {
 			snprintf(pcidev, 16, "/dev/pci%d", domid++);
@@ -144,12 +156,15 @@ main(int argc, char *argv[])
 		nfuncs = pci_nfuncs(bus, dev);
 		if (nfuncs == -1 || func > nfuncs)
 			error = ENXIO;
+		else if (romfile)
+			error = dump_rom(bus, dev, func);
 		else
 			error = probe(bus, dev, func);
 
 		if (error != 0)
 			errx(1, "\"%s\": %s", argv[0], strerror(error));
 	} else {
+		printf("Domain %s:\n", pcidev);
 		scanpcidomain();
 	}
 
@@ -587,6 +602,31 @@ pci_read(int bus, int dev, int func, u_int32_t reg, u_int32_t *val)
 		return (rv);
 
 	*val = io.pi_data;
+
+	return (0);
+}
+
+int
+dump_rom(int bus, int dev, int func)
+{
+	struct pci_rom rom;
+
+	bzero(&rom, sizeof(rom));
+	rom.pr_sel.pc_bus = bus;
+	rom.pr_sel.pc_dev = dev;
+	rom.pr_sel.pc_func = func;
+	if (ioctl(pcifd, PCIOCGETROMLEN, &rom))
+		return (errno);
+
+	rom.pr_rom = malloc(rom.pr_romlen);
+	if (rom.pr_rom == NULL)
+		return (ENOMEM);
+
+	if (ioctl(pcifd, PCIOCGETROM, &rom))
+		return (errno);
+
+	if (write(romfd, rom.pr_rom, rom.pr_romlen) == -1)
+		return (errno);
 
 	return (0);
 }
