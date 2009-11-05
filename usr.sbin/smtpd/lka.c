@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.79 2009/11/05 12:06:41 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.80 2009/11/05 12:26:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -860,7 +860,8 @@ lka_resolve_alias(struct smtpd *env, char *tag, struct path *path, struct alias 
 			    sizeof(psave.domain));
 		}
 
-		log_debug("RESOLVED TO %s@%s", path->user, path->domain);
+		log_debug("lka_resolve_alias: resolved to address: %s@%s",
+		    path->user, path->domain);
 		lka_rcpt_action(env, tag, path);
 		break;
 
