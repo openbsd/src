@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.479 2009/10/08 20:35:44 matthieu Exp $
+#	$OpenBSD: files,v 1.480 2009/11/05 20:50:14 michele Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1009,6 +1009,7 @@ file netinet/in_gif.c			gif & inet
 file netinet6/in6_gif.c			gif & inet6
 file netinet6/in6_pcb.c			inet6
 file netinet6/in6.c			inet6
+file netinet6/ip6_divert.c		inet6 & pf
 file netinet6/in6_ifattach.c		inet6
 file netinet6/in6_cksum.c		inet6
 file netinet6/in6_src.c			inet6

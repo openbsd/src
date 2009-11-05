@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.80 2009/10/04 16:08:37 michele Exp $	*/
+/*	$OpenBSD: main.c,v 1.81 2009/11/05 20:50:14 michele Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -89,6 +89,8 @@ struct nlist nl[] = {
 	{ "_rawin6pcbtable" },
 #define N_DIVBTABLE	15
 	{ "_divbtable" },
+#define N_DIVB6TABLE	16
+	{ "_divb6table" },
 
 	{ ""}
 };
@@ -122,6 +124,7 @@ struct protox ip6protox[] = {
 	{ N_TCBTABLE,	ip6protopr,	NULL,		tcp_dump,	"tcp" },
 	{ N_UDBTABLE,	ip6protopr,	NULL,		NULL,		"udp" },
 	{ N_RAWIP6TABLE,ip6protopr,	ip6_stats,	NULL,		"ip6" },
+	{ N_DIVB6TABLE,	ip6protopr,	div6_stats,	NULL,		"divert6" },
 	{ -1,		NULL,		icmp6_stats,	NULL,		"icmp6" },
 	{ -1,		NULL,		pim6_stats,	NULL,		"pim6" },
 	{ -1,		NULL,		rip6_stats,	NULL,		"rip6" },

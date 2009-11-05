@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.57 2008/11/25 12:11:45 markus Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.58 2009/11/05 20:50:14 michele Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -113,6 +113,11 @@
 #include <netinet/ip_carp.h>
 #endif
 
+#include "pf.h"
+#if NPF > 0
+#include <netinet6/ip6_divert.h>
+#endif
+
 /*
  * TCP/IP protocol family: IP6, ICMP6, UDP, TCP.
  */
@@ -224,15 +229,22 @@ struct ip6protosw inet6sw[] = {
 #endif
 #if NCARP > 0
 { SOCK_RAW,	&inet6domain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
-  carp6_proto_input,	rip6_output,	0,		rip6_ctloutput,
+  carp6_proto_input,	rip6_output,	0,	rip6_ctloutput,
   rip6_usrreq,
   0,		0,		0,		0,		carp_sysctl
 },
 #endif /* NCARP */
+#if NPF > 0
+{ SOCK_RAW,	&inet6domain,	IPPROTO_DIVERT,	PR_ATOMIC|PR_ADDR,
+  divert6_input,	0,		0,	rip6_ctloutput,
+  divert6_usrreq,
+  divert6_init,	0,		0,		0,		divert6_sysctl
+},
+#endif /* NPF > 0 */
 /* raw wildcard */
 { SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,
-  rip6_usrreq, rip6_init,
+  rip6_usrreq,	rip6_init,
   0,		0,		0,
 },
 };

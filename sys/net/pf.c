@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.667 2009/11/03 10:59:04 claudio Exp $ */
+/*	$OpenBSD: pf.c,v 1.668 2009/11/05 20:50:14 michele Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -91,6 +91,7 @@
 #include <netinet/in_pcb.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
+#include <netinet6/ip6_divert.h>
 #endif /* INET6 */
 
 
@@ -5830,6 +5831,9 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (m->m_pkthdr.pf.flags & PF_TAG_GENERATED)
 		return (PF_PASS);
 
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED_PACKET)
+		return (PF_PASS);
+
 	/* packet reassembly */
 	if (pf_normalize_ip6(m0, dir, kif, &reason, &pd) != PF_PASS) {
 		action = PF_DROP;
@@ -6129,6 +6133,15 @@ done:
 		}
 	}
 
+	if (action == PF_PASS && r->divert_packet.port) {
+		struct pf_divert *divert;
+
+		if ((divert = pf_get_divert(m)))
+			divert->port = r->divert_packet.port;
+
+		action = PF_DIVERT;
+	}
+
 	if (log) {
 		struct pf_rule *lr;
 
@@ -6191,6 +6204,11 @@ done:
 	case PF_SYNPROXY_DROP:
 		m_freem(*m0);
 	case PF_DEFER:
+		*m0 = NULL;
+		action = PF_PASS;
+		break;
+	case PF_DIVERT:
+		divert6_packet(m, dir);
 		*m0 = NULL;
 		action = PF_PASS;
 		break;

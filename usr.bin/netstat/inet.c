@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.111 2009/10/04 16:08:37 michele Exp $	*/
+/*	$OpenBSD: inet.c,v 1.112 2009/11/05 20:50:14 michele Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -174,12 +174,12 @@ protopr0(u_long off, char *name, int af)
 				printf(" (including servers)");
 			putchar('\n');
 			if (Aflag)
-				printf("%-*.*s %-6.6s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n",
+				printf("%-*.*s %-7.7s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n",
 				    PLEN, PLEN, "PCB", "Proto", "Recv-Q",
 				    "Send-Q", "Local Address",
 				    "Foreign Address", "(state)");
 			else
-				printf("%-6.6s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+				printf("%-7.7s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
 				    "Proto", "Recv-Q", "Send-Q",
 				    "Local Address", "Foreign Address",
 				    "(state)");
@@ -197,7 +197,7 @@ protopr0(u_long off, char *name, int af)
 			name = namebuf;
 		} else
 			name = name0;
-		printf("%-6.6s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
+		printf("%-7.7s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 		    sockb.so_snd.sb_cc);
 		if (inpcb.inp_flags & INP_IPV6) {
 			inet6print(&inpcb.inp_laddr6, (int)inpcb.inp_lport,
