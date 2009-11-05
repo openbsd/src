@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.78 2008/10/28 03:57:42 jakemsr Exp $	*/
+/*	$OpenBSD: auich.c,v 1.79 2009/11/05 01:29:06 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -150,10 +150,6 @@ struct auich_dmalist {
 };
 
 #define	AUICH_FIXED_RATE 48000
-
-#ifndef BUS_DMA_NOCACHE
-#define BUS_DMA_NOCACHE 0
-#endif
 
 struct auich_dma {
 	bus_dmamap_t map;
