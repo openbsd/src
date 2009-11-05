@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.152 2009/11/03 22:57:41 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.153 2009/11/05 10:27:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -837,6 +837,8 @@ u_int64_t	 queue_generate_id(void);
 int		 queue_load_envelope(struct message *, char *);
 int		 queue_update_envelope(struct message *);
 int		 queue_remove_envelope(struct message *);
+void		 queue_submit_envelope(struct smtpd *, struct message *);
+void		 queue_commit_envelopes(struct smtpd *, struct message*);
 int		 batch_cmp(struct batch *, struct batch *);
 struct batch    *batch_by_id(struct smtpd *, u_int64_t);
 u_int16_t	 queue_hash(char *);
