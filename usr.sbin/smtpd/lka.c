@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.77 2009/11/05 10:27:24 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.78 2009/11/05 12:02:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -63,6 +63,7 @@ int		lka_encode_credentials(char *, size_t, char *);
 size_t		lka_expand(char *, size_t, struct path *);
 void		lka_rcpt_action(struct smtpd *, char *, struct path *);
 int		lka_expand_rcpt_iteration(struct smtpd *, struct aliaseslist *, struct lkasession *);
+void		lka_session_destroy(struct smtpd *, struct lkasession *);
 
 void
 lka_sig_handler(int sig, short event, void *p)
@@ -383,6 +384,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 				ss->code = 530;
 				imsg_compose_event(iev, IMSG_LKA_RCPT, 0, 0,
 				    -1, ss, sizeof(*ss));
+				lka_session_destroy(env, lkasession);
 				break;
 			}
 
@@ -940,8 +942,8 @@ lka_expand_rcpt(struct smtpd *env, struct aliaseslist *aliases, struct lkasessio
 		}
 		queue_commit_envelopes(env, &message);
 	}
-	SPLAY_REMOVE(lkatree, &env->lka_sessions, lkasession);
-	free(lkasession);
+
+	lka_session_destroy(env, lkasession);
 }
 
 int
@@ -1149,6 +1151,13 @@ lka_session_init(struct smtpd *env, struct submit_status *ss)
 	SPLAY_INSERT(lkatree, &env->lka_sessions, lkasession);
 
 	return lkasession;
+}
+
+void
+lka_session_destroy(struct smtpd *env, struct lkasession *lkasession)
+{
+	SPLAY_REMOVE(lkatree, &env->lka_sessions, lkasession);
+	free(lkasession);
 }
 
 void
