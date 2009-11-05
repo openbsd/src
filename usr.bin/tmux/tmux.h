@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.168 2009/11/04 23:54:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.169 2009/11/05 00:05:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1056,7 +1056,7 @@ struct client {
 	char		*cwd;
 
 	struct tty 	 tty;
-	struct timeval	 repeat_timer;
+	struct event	 repeat_timer;
 
 	struct timeval	 status_timer;
 	struct jobs	 status_jobs;
