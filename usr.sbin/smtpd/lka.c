@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.78 2009/11/05 12:02:22 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.79 2009/11/05 12:06:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -358,26 +358,26 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			ss->code = 250;
 			lkasession = lka_session_init(env, ss);
 			if (lkasession->path.flags & F_PATH_ACCOUNT) {
-				log_debug("F_PATH_ACCOUNT");
+				log_debug("lka_dispatch_mfa: path is not expandable");
 				lka_request_forwardfile(env, lkasession, lkasession->path.user);
 				break;
 			}
 			else if (lkasession->path.flags & F_PATH_ALIAS) {
-				log_debug("F_PATH_ALIAS");
+				log_debug("lka_dispatch_mfa: path is aliases-expandable");
 				ret = aliases_get(env,
 				    lkasession->path.rule.r_amap,
 				    &lkasession->aliaseslist,
 				    lkasession->path.user);
-				log_debug("\tALIASES RESOLVED: %d", ret);
 			}
 			else if (lkasession->path.flags & F_PATH_VIRTUAL) {
-				log_debug("F_PATH_VIRTUAL");
+				log_debug("lka_dispatch_mfa: path is virtual-expandable");
 				ret = aliases_virtual_get(env, lkasession->path.cond->c_map,
 				    &lkasession->aliaseslist, &lkasession->path);
-				log_debug("\tVIRTUAL RESOLVED: %d", ret);
 			}
 			else
 				fatal("lka_dispatch_mfa: path with illegal flag");
+
+			log_debug("lka_dispatch_mfa: expanded to %d envelopes", ret);
 
 			if (ret == 0) {
 				/* No aliases ... */
@@ -840,7 +840,8 @@ lka_resolve_alias(struct smtpd *env, char *tag, struct path *path, struct alias 
 
 	switch (alias->type) {
 	case ALIAS_USERNAME:
-		log_debug("USERNAME: %s", alias->u.username);
+		log_debug("lka_resolve_alias: alias is local username: %s",
+		    alias->u.username);
 		if (strlcpy(path->pw_name, alias->u.username,
 			sizeof(path->pw_name)) >= sizeof(path->pw_name))
 			return 0;
@@ -864,14 +865,16 @@ lka_resolve_alias(struct smtpd *env, char *tag, struct path *path, struct alias 
 		break;
 
 	case ALIAS_FILENAME:
-		log_debug("FILENAME: %s", alias->u.filename);
+		log_debug("lka_resolve_alias: alias is filename: %s",
+		    alias->u.filename);
 		path->rule.r_action = A_FILENAME;
 		strlcpy(path->u.filename, alias->u.filename,
 		    sizeof(path->u.filename));
 		break;
 
 	case ALIAS_FILTER:
-		log_debug("FILTER: %s", alias->u.filter);
+		log_debug("lka_resolve_alias: alias is filter: %s",
+		    alias->u.filter);
 		path->rule.r_action = A_EXT;
 		strlcpy(path->rule.r_value.command, alias->u.filter + 2,
 		    sizeof(path->rule.r_value.command));
@@ -879,7 +882,8 @@ lka_resolve_alias(struct smtpd *env, char *tag, struct path *path, struct alias 
 		break;
 
 	case ALIAS_ADDRESS:
-		log_debug("ADDRESS: %s@%s", alias->u.path.user, alias->u.path.domain);
+		log_debug("lka_resolve_alias: alias is address: %s@%s",
+		    alias->u.path.user, alias->u.path.domain);
 
 		*path = alias->u.path;
 		lka_rcpt_action(env, tag, path);
