@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.42 2007/01/01 20:11:17 jmc Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.43 2009/11/05 20:30:55 todd Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -848,6 +848,8 @@ bridge_add(int s, char *brdg, char *ifn)
 	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(s, SIOCBRDGADD, &req) < 0) {
+		if (errno == EEXIST)
+			return (0);
 		warn("%s: %s", brdg, ifn);
 		if (errno == EPERM)
 			return (EX_NOPERM);
