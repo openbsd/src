@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.73 2009/11/05 08:48:15 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.74 2009/11/05 08:50:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -210,7 +210,6 @@ server_loop(void)
 	while (!server_should_shutdown()) {
 		server_update_socket();
 
-		event_loopexit(NULL);
 		event_loop(EVLOOP_ONCE);
 
 		server_window_loop();
