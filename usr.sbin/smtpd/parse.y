@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.45 2009/11/03 22:57:41 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.46 2009/11/05 12:24:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -85,7 +85,7 @@ char		*symget(const char *);
 struct smtpd		*conf = NULL;
 static int		 errors = 0;
 
-objid_t			 last_map_id = 0;
+objid_t			 last_map_id = 1;
 struct map		*map = NULL;
 struct rule		*rule = NULL;
 struct mapel_list	*contents = NULL;
@@ -1389,7 +1389,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	}
 
 	errors = 0;
-	last_map_id = 0;
+	last_map_id = 1;
 
 	map = NULL;
 	rule = NULL;
