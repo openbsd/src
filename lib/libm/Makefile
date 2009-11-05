@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.72 2009/10/26 21:06:19 kettenis Exp $
+#  $OpenBSD: Makefile,v 1.73 2009/11/05 20:14:32 kettenis Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -26,6 +26,7 @@ ARCH_SRCS = s_copysign.S s_copysignf.S
 .PATH:	${.CURDIR}/arch/i387
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    e_remainder.S e_remainderf.S e_scalb.S e_sqrt.S e_sqrtf.S \
+	    e_sqrtl.S \
 	    invtrig.c \
 	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
 	    s_cos.S s_cosf.S s_floor.S s_floorf.S \
