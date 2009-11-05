@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.67 2009/07/26 13:21:18 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.68 2009/11/05 20:30:47 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -800,6 +800,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (!(flag & FWRITE))
 			return EPERM;
 		break;
+	case PCIOCGETROMLEN:
 	case PCIOCGETROM:
 		break;
 	default:
@@ -857,6 +858,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		break;
 
+	case PCIOCGETROMLEN:
 	case PCIOCGETROM:
 	{
 		pcireg_t addr, mask, bhlc;
@@ -864,6 +866,8 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		bus_size_t len, off;
 		char buf[256];
 		int s;
+
+		rom = (struct pci_rom *)data;
 
 		bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
 		if (PCI_HDRTYPE_TYPE(bhlc) != 0)
@@ -888,7 +892,12 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		     PCI_ROM_SIZE(mask) % sizeof(buf)) != 0)
 			return (ENODEV);
 
-		rom = (struct pci_rom *)data;
+		/* If we're just after the size, skip reading the ROM. */
+		if (cmd == PCIOCGETROMLEN) {
+			error = 0;
+			goto fail;
+		}
+
 		if (rom->pr_romlen < PCI_ROM_SIZE(mask)) {
 			error = ENOMEM;
 			goto fail;

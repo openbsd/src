@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciio.h,v 1.4 2009/07/26 13:21:18 kettenis Exp $	*/
+/*	$OpenBSD: pciio.h,v 1.5 2009/11/05 20:30:47 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1997, Stefan Esser <se@FreeBSD.ORG>
@@ -57,6 +57,7 @@ struct pci_rom {
 
 #define	PCIOCREAD	_IOWR('p', 2, struct pci_io)
 #define	PCIOCWRITE	_IOWR('p', 3, struct pci_io)
+#define	PCIOCGETROMLEN	_IOWR('p', 4, struct pci_rom)
 #define	PCIOCGETROM	_IOWR('p', 5, struct pci_rom)
 
 #endif /* !_SYS_PCIIO_H_ */
