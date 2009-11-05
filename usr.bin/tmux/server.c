@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.72 2009/11/04 23:42:51 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.73 2009/11/05 08:48:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -207,15 +207,10 @@ error:
 void
 server_loop(void)
 {
-	struct timeval	tv;
-
-	memset(&tv, 0, sizeof tv);
-	tv.tv_usec = POLL_TIMEOUT * 1000;
-
 	while (!server_should_shutdown()) {
 		server_update_socket();
 
-		event_loopexit(&tv);
+		event_loopexit(NULL);
 		event_loop(EVLOOP_ONCE);
 
 		server_window_loop();

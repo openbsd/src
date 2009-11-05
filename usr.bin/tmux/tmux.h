@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.170 2009/11/05 08:45:08 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.171 2009/11/05 08:48:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -61,9 +61,6 @@ extern char   **environ;
 
 /* Escape timer period, in milliseconds. */
 #define ESCAPE_PERIOD 500
-
-/* Maximum poll timeout (when attached). */
-#define POLL_TIMEOUT 50
 
 /* Maximum data to buffer for output before suspending reading from panes. */
 #define BACKOFF_THRESHOLD 1024
