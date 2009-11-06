@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.31 2009/10/26 20:14:42 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.32 2009/11/06 07:37:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -539,7 +539,7 @@ ip27_halt(int howto)
 	} else
 		promop = GDA_PROMOP_REBOOT;
 
-	promop |= GDA_PROMOP_MAGIC | GDA_PROMOP_NO_DIAGS |
+	promop |= GDA_PROMOP_MAGIC | /* GDA_PROMOP_NO_DIAGS | */
 	    GDA_PROMOP_NO_MEMINIT;
 
 #if 0
