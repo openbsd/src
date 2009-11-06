@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.20 2009/11/05 20:32:49 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.21 2009/11/06 23:59:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -50,8 +50,9 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-v] [-x | -xx] [-d pcidev] [-r file] [bus:dev:func]\n",
-	    __progname);
+	    "usage: %s [-v] [-x | -xx] [-d pcidev] [bus:dev:func]\n"
+	    "       %s -r file [-d pcidev] bus:dev:func\n",
+	    __progname, __progname);
 	exit(1);
 }
 
