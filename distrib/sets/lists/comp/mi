@@ -1193,6 +1193,7 @@
 ./usr/include/netinet6/in6_gif.h
 ./usr/include/netinet6/in6_ifattach.h
 ./usr/include/netinet6/in6_var.h
+./usr/include/netinet6/ip6_divert.h
 ./usr/include/netinet6/ip6_mroute.h
 ./usr/include/netinet6/ip6_var.h
 ./usr/include/netinet6/ip6protosw.h

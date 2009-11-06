@@ -1796,6 +1796,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/in6_gif.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/in6_ifattach.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/in6_var.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_divert.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_mroute.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6protosw.ph
