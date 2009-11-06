@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.53 2009/01/26 19:09:41 damien Exp $  */
+/*	$OpenBSD: pgt.c,v 1.54 2009/11/06 09:02:42 fgsch Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -131,7 +131,7 @@ int	 pgt_load_tx_desc_frag(struct pgt_softc *, enum pgt_queue,
 void	 pgt_unload_tx_desc_frag(struct pgt_softc *, struct pgt_desc *);
 int	 pgt_load_firmware(struct pgt_softc *);
 void	 pgt_cleanup_queue(struct pgt_softc *, enum pgt_queue,
-	     struct pgt_frag []);
+	     struct pgt_frag *);
 int	 pgt_reset(struct pgt_softc *);
 void	 pgt_stop(struct pgt_softc *, unsigned int);
 void	 pgt_reboot(struct pgt_softc *);
@@ -377,7 +377,7 @@ pgt_load_firmware(struct pgt_softc *sc)
 
 void
 pgt_cleanup_queue(struct pgt_softc *sc, enum pgt_queue pq,
-    struct pgt_frag pqfrags[])
+    struct pgt_frag *pqfrags)
 {
 	struct pgt_desc *pd;
 	unsigned int i;
