@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.59 2009/11/07 14:49:02 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.60 2009/11/07 18:56:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1326,7 +1326,7 @@ int
 xbridge_space_map_mem(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
 {
-#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000) || defined(DIAGNOSTIC)
+#if defined(TGT_ORIGIN) || defined(DIAGNOSTIC)
 	struct xbpci_softc *xb = (struct xbpci_softc *)t->bus_private;
 #endif
 
@@ -1336,7 +1336,7 @@ xbridge_space_map_mem(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	 * mappings, because the large mapping is always available.
 	 */
 
-#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+#ifdef TGT_ORIGIN
 	if (sys_config.system_type != SGI_OCTANE &&
 	    (offs >> 24) == xb->xb_devio_skew)
 		return xbridge_space_map_devio(t, offs, size, flags, bshp);
@@ -1428,7 +1428,7 @@ int
 xbridge_space_region_mem(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
 {
-#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000) || defined(DIAGNOSTIC)
+#if defined(TGT_ORIGIN) || defined(DIAGNOSTIC)
 	struct xbpci_softc *xb = (struct xbpci_softc *)t->bus_private;
 	bus_addr_t bpa;
 #endif
@@ -1439,7 +1439,7 @@ xbridge_space_region_mem(bus_space_tag_t t, bus_space_handle_t bsh,
 	 * mappings, because the large mapping is always available.
 	 */
 
-#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+#ifdef TGT_ORIGIN
 	if (sys_config.system_type != SGI_OCTANE) {
 		/*
 		 * Note we can not use our own bus_base because it might not
@@ -2002,13 +2002,13 @@ xbridge_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 */
 	switch (sys_config.system_type) {
 	default:
-#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+#ifdef TGT_ORIGIN
 	case SGI_IP27:
 	case SGI_IP35:
 		low = 0;
 		break;
 #endif
-#if defined(TGT_OCTANE)
+#ifdef TGT_OCTANE
 	case SGI_OCTANE:
 		low = IP30_MEMORY_BASE;
 		break;

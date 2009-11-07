@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.13 2009/11/01 19:17:56 miod Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.14 2009/11/07 18:56:55 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -34,8 +34,7 @@ option		MINIROOTSIZE=8192
 option		RAMDISK_HOOKS
 
 # Define what targets to support
-option		TGT_ORIGIN200	# Origin 200/300, Onyx 2/3, Fuel
-option		TGT_ORIGIN2000	# Origin 2000/3000, Tezro
+option		TGT_ORIGIN	# IP27/IP35
 option		TGT_COHERENT
 
 # Specify storage configuration using ramdisk

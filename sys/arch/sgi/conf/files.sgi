@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.37 2009/11/01 19:17:56 miod Exp $
+#	$OpenBSD: files.sgi,v 1.38 2009/11/07 18:56:55 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -13,13 +13,13 @@ file	arch/sgi/sgi/autoconf.c
 file	arch/sgi/sgi/bus_dma.c
 file	arch/sgi/sgi/conf.c
 file	arch/sgi/sgi/disksubr.c			disk
-file	arch/sgi/sgi/ip27_machdep.c		tgt_origin200 | tgt_origin2000
+file	arch/sgi/sgi/ip27_machdep.c		tgt_origin
 file	arch/sgi/sgi/ip30_machdep.c		tgt_octane
 file	arch/sgi/sgi/ip32_machdep.c		tgt_o2
 file	arch/sgi/sgi/machdep.c
 file	arch/sgi/sgi/mainbus.c
 file	arch/sgi/sgi/mutex.c
-file	arch/sgi/sgi/sginode.c			tgt_origin200 | tgt_origin2000
+file	arch/sgi/sgi/sginode.c			tgt_origin
 file	arch/sgi/sgi/wscons_machdep.c		wsdisplay
 
 # RAM disk for boot
