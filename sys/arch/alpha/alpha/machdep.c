@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.120 2009/08/11 19:17:14 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.121 2009/11/07 23:01:36 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -113,6 +113,14 @@
 #include <ddb/db_extern.h>
 #endif
 
+#include "ioasic.h"
+
+#if NIOASIC > 0
+#include <machine/tc_machdep.h>
+#include <dev/tc/tcreg.h>
+#include <dev/tc/ioasicvar.h>
+#endif
+
 int	cpu_dump(void);
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
@@ -182,6 +190,9 @@ int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 1;	/* SIGBUS on fixed-up accesses */
 #ifndef NO_IEEE
 int	alpha_fp_sync_complete = 0;	/* fp fixup if sync even without /s */
+#endif
+#if NIOASIC > 0
+int	alpha_led_blink = 0;
 #endif
 
 /* used by hw_sysctl */
@@ -1615,6 +1626,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	dev_t consdev;
+#if NIOASIC > 0
+	int oldval, ret;
+#endif
 
 	if (name[0] != CPU_CHIPSET && namelen != 1)
 		return (ENOTDIR);		/* overloaded */
@@ -1668,6 +1682,14 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
                             &allowaperture));
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
+#if NIOASIC > 0
+	case CPU_LED_BLINK:
+		oldval = alpha_led_blink;
+		ret = sysctl_int(oldp, oldlenp, newp, newlen, &alpha_led_blink);
+		if (oldval != alpha_led_blink)
+			ioasic_led_blink(NULL);
+		return (ret);
 #endif
 	default:
 		return (EOPNOTSUPP);

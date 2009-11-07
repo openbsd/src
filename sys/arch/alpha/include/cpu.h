@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.38 2009/03/26 17:24:32 oga Exp $ */
+/* $OpenBSD: cpu.h,v 1.39 2009/11/07 23:01:38 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -344,8 +344,9 @@ do {									\
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
 #define CPU_CHIPSET		8	/* chipset information */
 #define CPU_ALLOWAPERTURE	9
+#define	CPU_LED_BLINK		10	/* int: blink leds on DEC 3000 */
 
-#define	CPU_MAXID		10	/* valid machdep IDs */
+#define	CPU_MAXID		11	/* valid machdep IDs */
 
 #define CPU_CHIPSET_MEM		1	/* PCI memory address */
 #define CPU_CHIPSET_BWX		2	/* PCI supports BWX */
@@ -366,6 +367,7 @@ do {									\
 	{ "fp_sync_complete", CTLTYPE_INT }, \
 	{ "chipset", CTLTYPE_NODE }, \
 	{ "allowaperture", CTLTYPE_INT }, \
+	{ "led_blink", CTLTYPE_INT } \
 }
 
 #define CTL_CHIPSET_NAMES { \

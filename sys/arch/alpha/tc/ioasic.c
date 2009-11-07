@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasic.c,v 1.15 2008/08/09 16:42:29 miod Exp $ */
+/* $OpenBSD: ioasic.c,v 1.16 2009/11/07 23:01:38 miod Exp $ */
 /* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
 
 /*-
@@ -63,6 +63,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -72,6 +73,9 @@
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
+#ifdef DEC_3000_300
+#include <alpha/tc/tc_3000_300.h>
+#endif
 
 /* Definition of the driver for autoconfig. */
 int	ioasicmatch(struct device *, void *, void *);
@@ -88,7 +92,8 @@ struct cfdriver ioasic_cd = {
 int	ioasic_intr(void *);
 int	ioasic_intrnull(void *);
 
-#define	C(x)	((void *)(x))
+#define	C(x)	((void *)(u_long)(x))
+#define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
 
 #define	IOASIC_DEV_LANCE	0
 #define	IOASIC_DEV_SCC0		1
@@ -181,7 +186,7 @@ ioasicattach(parent, self, aux)
 
 	/*
 	 * Turn off all device interrupt bits.
-	 * (This does _not_ include 3000/300 TC option slot bits.
+	 * (This does _not_ include 3000/300 TC option slot bits).
 	 */
 	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
 	for (i = 0; i < ioasic_ndevs; i++)
@@ -324,4 +329,100 @@ ioasic_intr(val)
 	} while (ifound);
 
 	return (gifound);
+}
+
+/*
+ * Blink leds
+ */
+
+struct {
+	int		patpos;
+	struct timeout	tmo;
+} led_blink_state;
+
+static const uint8_t led_pattern8[] = {
+	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+	0x40, 0x20, 0x10, 0x08, 0x04, 0x02
+};
+
+void
+ioasic_led_blink(void *unused)
+{
+	extern int alpha_led_blink;
+	vaddr_t rw_csr;
+	u_int32_t pattern;
+	int display_loadavg;
+
+	if (alpha_led_blink == 0) {
+		pattern = 0;	/* all clear */
+		led_blink_state.patpos = 0;
+	} else {
+#ifdef DEC_3000_300
+		if (cputype == ST_DEC_3000_300)
+			display_loadavg = 0;
+		else
+#endif
+		switch (hwrpb->rpb_variation & SV_ST_MASK) {
+		case SV_ST_FLAMINGO:
+		case SV_ST_HOTPINK:
+		case SV_ST_FLAMINGOPLUS:
+		case SV_ST_ULTRA:
+		case SV_ST_FLAMINGO45:
+			/* 500/800/900, 2 7-segment display, display loadavg */
+			display_loadavg = 1;
+			break;
+		case SV_ST_SANDPIPER:
+		case SV_ST_SANDPLUS:
+		case SV_ST_SANDPIPER45:
+		default:
+			/* 400/600/700, 8 leds, display moving pattern */
+			display_loadavg = 0;
+			break;
+		}
+
+		if (display_loadavg)
+			pattern = averunnable.ldavg[0] >> FSHIFT;
+		else {
+			pattern = led_pattern8[led_blink_state.patpos];
+			led_blink_state.patpos = 
+			    (led_blink_state.patpos + 1) % sizeof(led_pattern8);
+		}
+	}
+
+	/*
+	 * The low 8 bits, controlling the leds, are read-only in the
+	 * CSR register, but read-write in its image at CSR + 4.
+	 *
+	 * On model 300, however, the internal 8 leds are at a different
+	 * address, but the (better visible) power supply led is actually
+	 * bit 5 in CSR (active low).
+	 */
+#ifdef DEC_3000_300
+	if (cputype == ST_DEC_3000_300) {
+		rw_csr = KV(0x1a0000000 + IOASIC_CSR + 4);
+
+		*(volatile uint32_t *)TC_3000_300_LED =
+		    (*(volatile uint32_t *)TC_3000_300_LED & ~(0xff << 16)) |
+		     (pattern << 16);
+		/*
+		 * Blink the power supply led 8x slower.  This relies
+		 * on led_pattern8[] being a < 16 element array.
+		 */
+		*(volatile uint32_t *)rw_csr =
+		    (*(volatile uint32_t *)rw_csr & ~(1 << 5)) ^
+		    ((led_blink_state.patpos >> 3) << 5);
+	} else
+#endif
+	{
+		rw_csr = KV(0x1e0000000 + IOASIC_CSR + 4);
+
+		*(volatile uint32_t *)rw_csr =
+		    (*(volatile uint32_t *)rw_csr & ~0xff) | pattern;
+	}
+
+	if (alpha_led_blink != 0) {
+		timeout_set(&led_blink_state.tmo, ioasic_led_blink, NULL);
+		timeout_add(&led_blink_state.tmo,
+		    (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 3)));
+	}
 }

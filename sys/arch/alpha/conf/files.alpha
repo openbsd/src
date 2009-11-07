@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.88 2008/11/09 15:11:18 oga Exp $
+#	$OpenBSD: files.alpha,v 1.89 2009/11/07 23:01:38 miod Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -97,7 +97,7 @@ file	arch/alpha/tc/tc_3000_300.c		tcasic & dec_3000_300
 
 # the TURBOchannel IOCTL ASIC
 # IOASIC device and attachment defined in sys/dev/tc/files.tc
-file	arch/alpha/tc/ioasic.c			ioasic
+file	arch/alpha/tc/ioasic.c			ioasic needs-flag
 
 # PMAG-B CX
 device	cfb: wsemuldisplaydev
