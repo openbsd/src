@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP30,v 1.11 2009/11/01 19:17:56 miod Exp $
+#	$OpenBSD: RAMDISK-IP30,v 1.12 2009/11/07 21:42:07 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 
@@ -131,6 +131,9 @@ ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
 #### NICs
+pcn*		at pci?		# AMD PCnet-PCI Ethernet
+epic*		at pci?		# SMC EPIC/100 ethernet
+de*		at pci?		# DC21X4X-based ethernet
 dc*		at pci?		# 21143, "tulip" clone ethernet
 em*		at pci?		# Intel Pro/1000 ethernet
 ep*		at pci?		# 3Com 3c59x

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP27,v 1.14 2009/11/07 18:56:55 miod Exp $
+#	$OpenBSD: RAMDISK-IP27,v 1.15 2009/11/07 21:42:07 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 
@@ -137,6 +137,9 @@ ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
 #### NICs
+pcn*		at pci?		# AMD PCnet-PCI Ethernet
+epic*		at pci?		# SMC EPIC/100 ethernet
+de*		at pci?		# DC21X4X-based ethernet
 dc*		at pci?		# 21143, "tulip" clone ethernet
 em*		at pci?		# Intel Pro/1000 ethernet
 ep*		at pci?		# 3Com 3c59x
