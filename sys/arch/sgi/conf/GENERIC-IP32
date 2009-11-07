@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.10 2009/10/26 18:00:04 miod Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.11 2009/11/07 18:57:37 miod Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -185,9 +185,21 @@ ukphy*		at mii?		# "unknown" PHYs
 wi*		at pci?
 
 #### Audio
-audio*		at mavb?
-emu*		at pci?
+cmpci*		at pci?		# C-Media CMI8338/8738
+eap*		at pci?		# Ensoniq AudioPCI S5016
+emu*		at pci?		# SB Live!
+
+audio*		at cmpci?
+audio*		at eap?
 audio*		at emu?
+audio*		at mavb?
+
+# OPL[23] FM synthesizers
+opl*		at cmpci?
+
+# MIDI support
+midi*		at opl?
+midi*		at eap?
 
 #### WS Console
 wsdisplay*	at gbe?

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.15 2009/11/01 19:17:56 miod Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.16 2009/11/07 18:57:37 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -190,8 +190,20 @@ ukphy*		at mii?		# "unknown" PHYs
 wi*		at pci?
 
 #### Audio
-emu*		at pci?
+cmpci*		at pci?		# C-Media CMI8338/8738
+eap*		at pci?		# Ensoniq AudioPCI S5016
+emu*		at pci?		# SB Live!
+
+audio*		at cmpci?
+audio*		at eap?
 audio*		at emu?
+
+# OPL[23] FM synthesizers
+opl*		at cmpci?
+
+# MIDI support
+midi*		at opl?
+midi*		at eap?
 
 #### SCSI Bus devices
 sd*		at scsibus?
