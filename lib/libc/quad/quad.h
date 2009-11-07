@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: quad.h,v 1.6 2004/11/28 07:09:13 mickey Exp $
+ *	$OpenBSD: quad.h,v 1.7 2009/11/07 23:09:35 jsg Exp $
  */
 
 /*
@@ -95,17 +95,7 @@ union uu {
 #define	LHALF(x)	((u_int)(x) & (((int)1 << HALF_BITS) - 1))
 #define	LHUP(x)		((u_int)(x) << HALF_BITS)
 
-/*
- * XXX
- * Compensate for gcc 1 vs gcc 2.  Gcc 1 defines ?sh?di3's second argument
- * as u_quad_t, while gcc 2 correctly uses int.  Unfortunately, we still use
- * both compilers.
- */
-#if __GNUC_PREREQ__(2, 0) || defined(lint)
 typedef unsigned int	qshift_t;
-#else
-typedef u_quad_t	qshift_t;
-#endif
 
 quad_t __adddi3(quad_t, quad_t);
 quad_t __anddi3(quad_t, quad_t);
