@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.21 2009/11/07 21:42:07 miod Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.22 2009/11/07 23:05:27 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -148,7 +148,6 @@ pcn*		at pci?		# AMD PCnet-PCI Ethernet
 epic*		at pci?		# SMC EPIC/100 ethernet
 de*		at pci?		# DC21X4X-based ethernet
 dc*		at pci?		# 21143, "tulip" clone ethernet
-bnx*		at pci?		# Broadcom BCM5706/5708 GigE
 em*		at pci?		# Intel Pro/1000 ethernet
 ep*		at pci?		# 3Com 3c59x
 fxp*		at pci?		# EtherExpress 10/100B ethernet
