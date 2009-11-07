@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.24 2009/11/07 14:49:01 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.25 2009/11/07 22:48:36 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -89,5 +89,6 @@ void	ip32_setup(void);
 
 extern char osloadpartition[256];
 extern int16_t masternasid;
+extern int16_t currentnasid;
 
 #endif /* _MACHINE_AUTOCONF_H_ */

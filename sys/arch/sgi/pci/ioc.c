@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.25 2009/11/07 14:49:01 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.26 2009/11/07 22:48:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -30,6 +30,8 @@
 #include <mips64/archtype.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+
+#include <sgi/sgi/ip27.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -103,6 +105,15 @@ int	iocow_send_bit(void *, int);
 int	iocow_read_byte(void *);
 int	iocow_triplet(void *, int);
 int	iocow_pulse(struct ioc_softc *, int, int);
+
+/*
+ * A mask of nodes on which an ioc driver has attached.
+ * We use this to prevent attaching a pci IOC3 card which NIC has failed,
+ * as the onboard IOC3.
+ *
+ * XXX This obviously will not work in N mode...
+ */
+static	uint64_t ioc_nodemask = 0;
 
 int
 ioc_match(struct device *parent, void *match, void *aux)
@@ -244,14 +255,29 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * If no owserial device has been found, then it is
 		 * very likely that we are the on-board IOC3 found
-		 * on IP27 and IP35 systems.
+		 * on IP27 and IP35 systems, unless we have already
+		 * found an on-board IOC3 on this node.
 		 */
-		if (sys_config.system_type == SGI_IP27 ||
-		    sys_config.system_type == SGI_IP35) {
+		if ((sys_config.system_type == SGI_IP27 ||
+		    sys_config.system_type == SGI_IP35) &&
+		    !ISSET(ioc_nodemask, 1UL << currentnasid)) {
+			SET(currentnasid, 1UL << currentnasid);
+
 			device_mask = (1 << IOCDEV_SERIAL_A) |
 			    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_LPT) |
 			    (1 << IOCDEV_KBC) | (1 << IOCDEV_RTC) |
 			    (1 << IOCDEV_EF);
+			/*
+			 * Origin 300 onboard IOC3 do not have PS/2 ports;
+			 * since they can only be connected to other 300 or
+			 * 350 bricks (the latter using IOC4 devices),
+			 * it is safe to do this regardless of the current
+			 * nasid.
+			 */
+			if (sys_config.system_type == SGI_IP35 &&
+			    sys_config.system_subtype == IP35_O300)
+				device_mask &= ~(1 << IOCDEV_KBC);
+
 			rtcbase = IOC3_BYTEBUS_0;
 			dual_irq = 1;
 			/*

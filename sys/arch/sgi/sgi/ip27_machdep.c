@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.33 2009/11/07 14:49:01 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.34 2009/11/07 22:48:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -318,7 +318,7 @@ ip27_autoconf(struct device *parent)
 	 */
 
 	bzero(&maa, sizeof maa);
-	maa.maa_nasid = masternasid;
+	maa.maa_nasid = currentnasid = masternasid;
 	maa.maa_name = "cpu";
 	config_found(parent, &maa, ip27_print);
 	maa.maa_name = "clock";
@@ -345,7 +345,7 @@ ip27_attach_node(struct device *parent, int16_t nasid)
 
 	bzero(&maa, sizeof maa);
 	maa.maa_name = "xbow";
-	maa.maa_nasid = nasid;
+	maa.maa_nasid = currentnasid = nasid;
 	config_found(parent, &maa, ip27_print);
 }
 
