@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.58 2009/10/26 18:37:13 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.59 2009/11/07 14:49:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -2003,8 +2003,8 @@ xbridge_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	switch (sys_config.system_type) {
 	default:
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
-	case SGI_O200:
-	case SGI_O300:
+	case SGI_IP27:
+	case SGI_IP35:
 		low = 0;
 		break;
 #endif

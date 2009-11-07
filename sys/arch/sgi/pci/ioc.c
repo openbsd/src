@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.24 2009/11/02 17:20:47 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.25 2009/11/07 14:49:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -246,8 +246,8 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 		 * very likely that we are the on-board IOC3 found
 		 * on IP27 and IP35 systems.
 		 */
-		if (sys_config.system_type == SGI_O200 ||
-		    sys_config.system_type == SGI_O300) {
+		if (sys_config.system_type == SGI_IP27 ||
+		    sys_config.system_type == SGI_IP35) {
 			device_mask = (1 << IOCDEV_SERIAL_A) |
 			    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_LPT) |
 			    (1 << IOCDEV_KBC) | (1 << IOCDEV_RTC) |
@@ -369,7 +369,7 @@ establish:
 		    self->dv_xname, dual_irq ? "ethernet " : "");
 		goto unregister;
 	}
-	printf("%s%s\n", dual_irq ? ", ethernet " : "",
+	printf("%s%s\n", dual_irq ? "; ethernet " : "",
 	    pci_intr_string(sc->sc_pc, ih1));
 
 	/*

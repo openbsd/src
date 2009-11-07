@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.52 2009/08/09 09:55:03 kettenis Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.53 2009/11/07 14:49:02 miod Exp $	*/
 /* $FreeBSD: src/sys/dev/isp/isp_pci.c,v 1.148 2007/06/26 23:08:57 mjacob Exp $*/
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
@@ -501,8 +501,8 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX other isp...
 	 */
 	if (sys_config.system_type == SGI_OCTANE ||
-	    sys_config.system_type == SGI_O200 ||
-	    sys_config.system_type == SGI_O300)
+	    sys_config.system_type == SGI_IP27 ||
+	    sys_config.system_type == SGI_IP35)
 		DEFAULT_IID(isp) = 0;
 #endif
 

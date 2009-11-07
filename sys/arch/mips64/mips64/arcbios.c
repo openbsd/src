@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.22 2009/07/15 20:34:57 martynas Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.23 2009/11/07 14:49:01 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -248,9 +248,7 @@ bios_configure_memory()
 #endif
 
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
-			if ((sys_config.system_type == SGI_O200 ||
-			     sys_config.system_type == SGI_O300)) {
-
+			if (sys_config.system_type == SGI_IP27) {
 				/*
 				 * For the lack of a better way to tell
 				 * IP27 apart from IP35, look at the
@@ -264,7 +262,7 @@ bios_configure_memory()
 					seen_free = 1;
 					if (start >= 0x20)	/* IP35 */
 						sys_config.system_type =
-						    SGI_O300;
+						    SGI_IP35;
 				}
 
 				/*
@@ -287,7 +285,7 @@ bios_configure_memory()
 				if (type == FirmwarePermanent) {
 					descr = NULL; /* abort loop */
 					count = ((sys_config.system_type ==
-					    SGI_O200 ?  32 : 64) << (20 - 12)) -
+					    SGI_IP27 ?  32 : 64) << (20 - 12)) -
 					    start;
 				}
 			}
@@ -429,7 +427,7 @@ bios_get_system_type()
 			 * If we find a kldir assume IP27 for now.
 			 * We'll decide whether this is IP27 or IP35 later.
 			 */
-			return SGI_O200;
+			return SGI_IP27;
 		}
 #endif
 	}

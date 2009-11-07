@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.13 2009/10/31 12:26:36 sobrado Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.14 2009/11/07 14:49:01 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -198,7 +198,7 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 		}
 #endif
 
-		if (sys_config.system_type == SGI_O200)
+		if (sys_config.system_type == SGI_IP27)
 			kl_add_memory_ip27(comp->nasid, memcomp_m->membnk_bnksz,
 			    kl_n_mode ? MD_MEM_BANKS_N : MD_MEM_BANKS_M);
 		else

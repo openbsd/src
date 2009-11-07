@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.85 2009/10/16 00:15:49 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.86 2009/11/07 14:49:01 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -222,14 +222,14 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 #endif
 
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
-	case SGI_O200:
+	case SGI_IP27:
 		bios_printf("Found SGI-IP27, setting up.\n");
 		strlcpy(cpu_model, "IP27", sizeof(cpu_model));
 		ip27_setup();
 
 		break;
 
-	case SGI_O300:
+	case SGI_IP35:
 		bios_printf("Found SGI-IP35, setting up.\n");
 		/* IP27 is intentional, we use the same kernel */
 		strlcpy(cpu_model, "IP27", sizeof(cpu_model));
@@ -416,8 +416,8 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 			break;
 		default:
 		case SGI_OCTANE:
-		case SGI_O200:
-		case SGI_O300:
+		case SGI_IP27:
+		case SGI_IP35:
 			cputype = MIPS_R10000;
 			break;
 		}

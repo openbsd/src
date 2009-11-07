@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.10 2009/10/26 20:14:42 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.11 2009/11/07 14:49:01 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -173,7 +173,7 @@ dsrtc_attach_ioc(struct device *parent, struct device *self, void *aux)
 		 * For some reason, the base year differs between IP27
 		 * and IP35.
 		 */
-		sc->sc_yrbase = sys_config.system_type == SGI_O300 ?
+		sc->sc_yrbase = sys_config.system_type == SGI_IP35 ?
 		    POSIX_BASE_YEAR - 2 : POSIX_BASE_YEAR;
 		/* mips64 clock code expects year relative to 1900 */
 		sc->sc_yrbase -= 1900;
@@ -214,7 +214,7 @@ dsrtc_attach_iof(struct device *parent, struct device *self, void *aux)
 	 * For some reason, the base year differs between IP27
 	 * and IP35.
 	 */
-	sc->sc_yrbase = sys_config.system_type == SGI_O300 ?
+	sc->sc_yrbase = sys_config.system_type == SGI_IP35 ?
 	    POSIX_BASE_YEAR - 2 : POSIX_BASE_YEAR;
 	/* mips64 clock code expects year relative to 1900 */
 	sc->sc_yrbase -= 1900;
