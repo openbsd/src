@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.31 2009/10/28 05:17:19 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.32 2009/11/07 01:31:38 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ _rmtioctl(int fd, long req, struct mtop *com)
 	if (host)
 		return rmtioctl(com->mt_op, com->mt_count);
 #endif
-	return ioctl(fd, MTIOCTOP, &com);
+	return ioctl(fd, MTIOCTOP, com);
 }
 
 struct mtget *
