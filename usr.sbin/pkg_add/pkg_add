@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.372 2009/11/08 11:18:41 espie Exp $
+# $OpenBSD: pkg_add,v 1.373 2009/11/08 12:16:23 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -476,12 +476,11 @@ sub install_set
 			return ();
 		}
 		if ($handle->has_error) {
-			if (!$handle->{tweaked}) {
-				$state->set_name_from_handle($handle);
-				$state->fatal("Fatal error");
-			} else {
-				return ();
-			}
+			$state->set_name_from_handle($handle);
+			$state->print("Can't install ", $handle->pkgname, ":",
+				$handle->error_message, "\n"); 
+			$bad++;
+			return ();
 		}
 
 		if ($handle->plist->has('arch')) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.8 2009/11/08 11:31:37 espie Exp $
+# $OpenBSD: Handle.pm,v 1.9 2009/11/08 12:16:23 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -95,6 +95,23 @@ sub has_error
 		return $self->{error} eq $error;
 	}
 	return $self->{error};
+}
+
+sub error_message
+{
+	my $self = shift;
+	my $error = $self->{error};
+	if ($error == BAD_PACKAGE) {
+		return "bad package";
+	} elsif ($error == CANT_INSTALL) {
+		return "can't install";
+	} elsif ($error == NOT_FOUND) {
+		return "not found";
+	} elsif ($error == ALREADY_INSTALLED) {
+		return "already installed";
+	} else {
+		return "no error";
+	}
 }
 
 sub create_old
