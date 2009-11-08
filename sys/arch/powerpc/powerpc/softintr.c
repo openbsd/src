@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.1 2009/10/01 20:19:19 kettenis Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.2 2009/11/08 21:05:18 kettenis Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -100,7 +100,9 @@ softintr_dispatch(int si)
 
 		mtx_leave(&siq->siq_mtx);
 
+		KERNEL_LOCK();
 		(*sih->sih_func)(sih->sih_arg);
+		KERNEL_UNLOCK();
 	}
 }
 

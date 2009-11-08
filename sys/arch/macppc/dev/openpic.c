@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.58 2009/10/01 20:19:18 kettenis Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.59 2009/11/08 21:05:18 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -536,9 +536,7 @@ openpic_do_pending_softint(int pcpl)
 			ci->ci_ipending &= ~SINT_CLOCK;
 			ci->ci_cpl = SINT_CLOCK|SINT_NET|SINT_TTY;
 			ppc_intr_enable(1);
-			KERNEL_LOCK();
 			softintr_dispatch(SI_SOFTCLOCK);
-			KERNEL_UNLOCK();
 			ppc_intr_disable();
 			continue;
 		}
@@ -546,9 +544,7 @@ openpic_do_pending_softint(int pcpl)
 			ci->ci_ipending &= ~SINT_NET;
 			ci->ci_cpl = SINT_NET|SINT_TTY;
 			ppc_intr_enable(1);
-			KERNEL_LOCK();
 			softintr_dispatch(SI_SOFTNET);
-			KERNEL_UNLOCK();
 			ppc_intr_disable();
 			continue;
 		}
@@ -556,9 +552,7 @@ openpic_do_pending_softint(int pcpl)
 			ci->ci_ipending &= ~SINT_TTY;
 			ci->ci_cpl = SINT_TTY;
 			ppc_intr_enable(1);
-			KERNEL_LOCK();
 			softintr_dispatch(SI_SOFTTTY);
-			KERNEL_UNLOCK();
 			ppc_intr_disable();
 			continue;
 		}
