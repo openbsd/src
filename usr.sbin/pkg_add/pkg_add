@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.369 2009/11/04 16:50:02 espie Exp $
+# $OpenBSD: pkg_add,v 1.370 2009/11/08 09:39:21 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -662,6 +662,9 @@ $state->check_root;
 # later for the most part...
 my @todo2 = ();
 
+require OpenBSD::Tracker;
+$state->{tracker} = OpenBSD::Tracker->new;
+
 if ($opt_l) {
 	open my $f, '<', $opt_l or die "$!: bad list $opt_l";
 	my $_;
@@ -704,7 +707,6 @@ if ($opt_l || $opt_z) {
 	my $updater = OpenBSD::Update->new;
 	my $inst = OpenBSD::PackageRepository::Installed->new;
 	$state->progress->set_header("Looking for updates");
-	my @cantupdate = ();
 	for my $pkgname (@ARGV) {
 		my $l;
 
@@ -723,14 +725,17 @@ if ($opt_l || $opt_z) {
 			}
 			if ($set->newer > 0) {
 				push(@todo2, $set);
+			} else {
+				$state->{tracker}->mark_uptodate($set);
 			}
 			if ($problem) {
-				push(@cantupdate, $set);
+				$state->{tracker}->mark_cant_update($set);
 			}
 		}
 	}
 	$state->progress->next;
 
+	my @cantupdate = $state->{tracker}->cant_update;
 	if (@cantupdate > 0) {
 		print "Cannot find updates for ", join(', ', map {$_->short_print} (@cantupdate > 50 ? @cantupdate[1..50] : @cantupdate));
 		print " and more" if @cantupdate > 50;
@@ -774,8 +779,6 @@ local $SIG{'TERM'} = $handler;
 
 # This is the actual very small loop that adds all packages
 eval {
-require OpenBSD::Tracker;
-$state->{tracker} = OpenBSD::Tracker->new;
 $state->{tracker}->add_sets(@todo2);
 while (my $set = shift @todo2) {
 	unshift(@todo2, install_set($set, $state));
