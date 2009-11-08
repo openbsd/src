@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.7 2009/11/08 11:18:41 espie Exp $
+# $OpenBSD: Handle.pm,v 1.8 2009/11/08 11:31:37 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -226,6 +226,7 @@ sub complete
 	if (!defined $handle->{location}) {
 		$handle->get_location($state);
 	}
+	return if $handle->has_error;
 	if (!defined $handle->{plist}) {
 		$handle->get_plist($state);
 	}
