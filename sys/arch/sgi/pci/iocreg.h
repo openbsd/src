@@ -1,4 +1,4 @@
-/*	$OpenBSD: iocreg.h,v 1.6 2009/11/03 18:48:39 miod Exp $	*/
+/*	$OpenBSD: iocreg.h,v 1.7 2009/11/08 13:11:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -184,6 +184,17 @@
 
 #define	IOC3_UARTA_BASE		0x00020178
 #define	IOC3_UARTB_BASE		0x00020170
+
+/*
+ * Ethernet SSRAM.
+ */
+
+#define	IOC3_SSRAM_BASE		0x00040000
+#define	IOC3_SSRAM_SMALL_SIZE	0x00020000
+#define	IOC3_SSRAM_LARGE_SIZE	0x00040000
+
+#define	IOC3_SSRAM_PARITY_BIT		0x00010000
+#define	IOC3_SSRAM_DATA_MASK		0x0000ffff
 
 /*
  * Offsets of devices connected to the four IOC3 `bytebus'.

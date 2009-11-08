@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.5 2009/11/03 21:41:42 miod Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.6 2009/11/08 13:11:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -160,9 +160,10 @@ struct iec_txsoft {
  */
 
 /*
- * Receive descriptor list size.
+ * Receive descriptor list sizes (these depend on the size of the SSRAM).
  */
-#define	IEC_NRXDESC		128
+#define	IEC_NRXDESC_SMALL	64
+#define	IEC_NRXDESC_LARGE	128
 
 /*
  * In addition to the receive descriptor themselves, we'll need an array
@@ -182,7 +183,7 @@ struct iec_control_data {
 	/*
 	 * RX descriptors and buffers.
 	 */
-	struct iec_rxdesc icd_rxdesc[IEC_NRXDESC];
+	struct iec_rxdesc icd_rxdesc[1];
 };
 
 /*
@@ -238,8 +239,11 @@ struct iec_softc {
 	int sc_txdirty;			/* First dirty TX descriptor. */
 	int sc_txlast;			/* Last used TX descriptor. */
 
-	uint32_t sc_rxci;			/* Saved RX consumer index. */
-	uint32_t sc_rxpi;			/* Saved RX producer index. */
+	uint32_t sc_rxci;		/* Saved RX consumer index. */
+	uint32_t sc_rxpi;		/* Saved RX producer index. */
+	uint32_t sc_nrxdesc;		/* Amount of RX descriptors. */
+
+	uint32_t sc_mcr;		/* Current MCR value. */
 };
 
 #define IEC_CDTXADDR(sc, x)	((sc)->sc_cddma + IEC_CDTXOFF(x))
@@ -293,6 +297,7 @@ int	iec_intr(void *arg);
 int	iec_ioctl(struct ifnet *, u_long, caddr_t);
 void	iec_reset(struct iec_softc *);
 void	iec_rxintr(struct iec_softc *, uint32_t);
+int	iec_ssram_probe(struct iec_softc *);
 void	iec_start(struct ifnet *);
 void	iec_stop(struct ifnet *);
 void	iec_tick(void *);
@@ -318,11 +323,19 @@ iec_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *child;
 	bus_dma_segment_t seg1;
 	bus_dma_segment_t seg2;
+	bus_size_t control_size;
 	int i, rc, rseg;
 
 	sc->sc_st = iaa->iaa_memt;
 	sc->sc_sh = iaa->iaa_memh;
 	sc->sc_dmat = iaa->iaa_dmat;
+
+	/*
+	 * Try and figure out how much SSRAM is available, and decide
+	 * how many RX buffers to use.
+	 */
+	i = iec_ssram_probe(sc);
+	printf(": %dKB SSRAM", i);
 
 	/*
 	 * Allocate a page for RX descriptor pointers, suitable for use
@@ -337,9 +350,11 @@ iec_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate the RX and TX descriptors.
 	 */
+	control_size = IEC_NTXDESC_MAX * sizeof(struct iec_txdesc) +
+	    sc->sc_nrxdesc * sizeof(struct iec_rxdesc);
 	rc = iec_alloc_physical(sc, &sc->sc_cddmamap, &seg2,
 	    (vaddr_t *)&sc->sc_control_data, IEC_DMA_BOUNDARY,
-	    sizeof(struct iec_control_data), "rx and tx descriptors");
+	    control_size, "rx and tx descriptors");
 	if (rc != 0)
 		goto fail_1;
 
@@ -348,7 +363,7 @@ iec_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	for (i = 0; i < IEC_NRXDESC_MAX; i++)
-		sc->sc_rxarr[i] = IEC_CDRXADDR(sc, i % IEC_NRXDESC);
+		sc->sc_rxarr[i] = IEC_CDRXADDR(sc, i & (sc->sc_nrxdesc - 1));
 
 	/* Create TX buffer DMA maps. */
 	for (i = 0; i < IEC_NTXDESC; i++) {
@@ -364,7 +379,7 @@ iec_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_tick, iec_tick, sc);
 
 	bcopy(iaa->iaa_enaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
-	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	/* Reset device. */
 	iec_reset(sc);
@@ -425,7 +440,7 @@ fail_4:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
-	    sizeof(struct iec_control_data));
+	    control_size);
 	bus_dmamem_free(sc->sc_dmat, &seg2, rseg);
 fail_1:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_rxarrmap);
@@ -560,18 +575,17 @@ iec_statchg(struct device *self)
 	struct iec_softc *sc = (void *)self;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	uint32_t tcsr, emcr;
+	uint32_t tcsr;
 
 	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0) {
 		tcsr = IOC3_ENET_TCSR_FULL_DUPLEX;
-		emcr = IOC3_ENET_MCR_DUPLEX;
+		sc->sc_mcr |= IOC3_ENET_MCR_DUPLEX;
 	} else {
 		tcsr = IOC3_ENET_TCSR_HALF_DUPLEX;
-		emcr = 0;
+		sc->sc_mcr &= ~IOC3_ENET_MCR_DUPLEX;
 	}
 
-	bus_space_write_4(st, sh, IOC3_ENET_MCR, emcr |
-	    (bus_space_read_4(st, sh, IOC3_ENET_MCR) & ~IOC3_ENET_MCR_DUPLEX));
+	bus_space_write_4(st, sh, IOC3_ENET_MCR, sc->sc_mcr);
 	bus_space_write_4(st, sh, IOC3_ENET_TCSR, tcsr);
 }
 
@@ -641,7 +655,7 @@ iec_init(struct ifnet *ifp)
 	bus_space_write_4(st, sh, IOC3_ENET_RBR_L, (uint32_t)sc->sc_rxptrdma);
 
 	sc->sc_rxci = 0;
-	sc->sc_rxpi = IEC_NRXDESC + 1;
+	sc->sc_rxpi = sc->sc_nrxdesc + 1;
 	bus_space_write_4(st, sh, IOC3_ENET_RCIR,
 	    sc->sc_rxci * sizeof(uint64_t));
 	bus_space_write_4(st, sh, IOC3_ENET_RPIR,
@@ -654,7 +668,7 @@ iec_init(struct ifnet *ifp)
 	bus_space_write_4(st, sh, IOC3_ENET_RTR, 0);
 
 	/* Initialize RX buffers. */
-	for (i = 0; i < IEC_NRXDESC; i++) {
+	for (i = 0; i < sc->sc_nrxdesc; i++) {
 		rxd = &sc->sc_rxdesc[i];
 		rxd->rxd_stat = 0;
 		IEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
@@ -662,9 +676,12 @@ iec_init(struct ifnet *ifp)
 	}
 
 	/* Enable DMA, and RX and TX interrupts */
-	bus_space_write_4(st, sh, IOC3_ENET_MCR, IOC3_ENET_MCR_TX_DMA |
-	    IOC3_ENET_MCR_TX | IOC3_ENET_MCR_RX_DMA | IOC3_ENET_MCR_RX |
-	    ((IEC_RXD_BUFOFFSET >> 1) << IOC3_ENET_MCR_RXOFF_SHIFT));
+	sc->sc_mcr &= IOC3_ENET_MCR_LARGE_SSRAM | IOC3_ENET_MCR_PARITY_ENABLE |
+	    IOC3_ENET_MCR_PADEN;
+	sc->sc_mcr |= IOC3_ENET_MCR_TX_DMA | IOC3_ENET_MCR_TX |
+	    IOC3_ENET_MCR_RX_DMA | IOC3_ENET_MCR_RX |
+	    ((IEC_RXD_BUFOFFSET >> 1) << IOC3_ENET_MCR_RXOFF_SHIFT);
+	bus_space_write_4(st, sh, IOC3_ENET_MCR, sc->sc_mcr);
 	bus_space_write_4(st, sh, IOC3_ENET_IER,
 	    IOC3_ENET_ISR_RX_TIMER | IOC3_ENET_ISR_RX_THRESHOLD |
 	    (IOC3_ENET_ISR_TX_ALL & ~IOC3_ENET_ISR_TX_EMPTY));
@@ -984,9 +1001,8 @@ iec_stop(struct ifnet *ifp)
 	mii_down(&sc->sc_mii);
 
 	/* Disable DMA and interrupts. */
-	bus_space_write_4(sc->sc_st, sc->sc_sh, IOC3_ENET_MCR,
-	    bus_space_read_4(sc->sc_st, sc->sc_sh, IOC3_ENET_MCR) &
-	    ~(IOC3_ENET_MCR_TX_DMA | IOC3_ENET_MCR_RX_DMA));
+	sc->sc_mcr &= ~(IOC3_ENET_MCR_TX_DMA | IOC3_ENET_MCR_RX_DMA);
+	bus_space_write_4(sc->sc_st, sc->sc_sh, IOC3_ENET_MCR, sc->sc_mcr);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, IOC3_ENET_IER, 0);
 	(void)bus_space_read_4(sc->sc_st, sc->sc_sh, IOC3_ENET_IER);
 
@@ -1091,17 +1107,16 @@ iec_iff(struct iec_softc *sc)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	uint64_t mchash = 0;
-	uint32_t mcr, hash;
+	uint32_t hash;
 	int mcnt = 0;
 
-	mcr = bus_space_read_4(st, sh, IOC3_ENET_MCR);
-	mcr &= ~IOC3_ENET_MCR_PROMISC;
+	sc->sc_mcr &= ~IOC3_ENET_MCR_PROMISC;
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
-			mcr |= IOC3_ENET_MCR_PROMISC;
+			sc->sc_mcr |= IOC3_ENET_MCR_PROMISC;
 		mchash = 0xffffffffffffffffULL;
 	} else {
 		ETHER_FIRST_MULTI(step, ac, enm);
@@ -1116,7 +1131,7 @@ iec_iff(struct iec_softc *sc)
 
 	bus_space_write_4(st, sh, IOC3_ENET_HAR_H, mchash >> 32);
 	bus_space_write_4(st, sh, IOC3_ENET_HAR_L, (uint32_t)mchash);
-	bus_space_write_4(st, sh, IOC3_ENET_MCR, mcr);
+	bus_space_write_4(st, sh, IOC3_ENET_MCR, sc->sc_mcr);
 }
 
 struct mbuf *
@@ -1246,7 +1261,7 @@ iec_rxintr(struct iec_softc *sc, uint32_t stat)
 
 	DPRINTF(IEC_DEBUG_RXINTR, ("iec_rxintr: rx %d-%d\n", sc->sc_rxci, ci));
 	while (packets-- != 0) {
-		i = (sc->sc_rxci++) % IEC_NRXDESC;
+		i = (sc->sc_rxci++) & (sc->sc_nrxdesc - 1);
 
 		IEC_RXSTATSYNC(sc, i, BUS_DMASYNC_POSTREAD);
 		rxd = &sc->sc_rxdesc[i];
@@ -1382,5 +1397,35 @@ iec_txintr(struct iec_softc *sc, uint32_t stat)
 		    bus_space_read_4(st, sh, IOC3_ENET_IER) &
 		      ~IOC3_ENET_ISR_TX_EMPTY);
 		(void)bus_space_read_4(st, sh, IOC3_ENET_IER);
+	}
+}
+
+int
+iec_ssram_probe(struct iec_softc *sc)
+{
+	/*
+	 * Depending on the hardware, there is either 64KB or 128KB of
+	 * 16-bit SSRAM, which is used as internal RX buffers by the chip.
+	 */
+
+	/* default to large size */
+	sc->sc_mcr = IOC3_ENET_MCR_PARITY_ENABLE | IOC3_ENET_MCR_LARGE_SSRAM;
+	bus_space_write_4(sc->sc_st, sc->sc_sh, IOC3_ENET_MCR, sc->sc_mcr);
+
+	bus_space_write_4(sc->sc_st, sc->sc_sh,
+	    IOC3_SSRAM_BASE, 0x55aa);
+	bus_space_write_4(sc->sc_st, sc->sc_sh,
+	    IOC3_SSRAM_BASE + IOC3_SSRAM_SMALL_SIZE, 0xffff ^ 0x55aa);
+
+	if ((bus_space_read_4(sc->sc_st, sc->sc_sh, IOC3_SSRAM_BASE) &
+	     IOC3_SSRAM_DATA_MASK) != 0x55aa ||
+	    (bus_space_read_4(sc->sc_st, sc->sc_sh,
+	     IOC3_SSRAM_BASE + IOC3_SSRAM_SMALL_SIZE) != (0xffff ^ 0x55aa))) {
+		sc->sc_mcr &= ~IOC3_ENET_MCR_LARGE_SSRAM;
+		sc->sc_nrxdesc = IEC_NRXDESC_SMALL;
+		return IOC3_SSRAM_SMALL_SIZE / 2 / 1024;
+	} else {
+		sc->sc_nrxdesc = IEC_NRXDESC_LARGE;
+		return IOC3_SSRAM_LARGE_SIZE / 2 / 1024;
 	}
 }
