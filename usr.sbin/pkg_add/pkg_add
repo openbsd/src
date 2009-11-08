@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.371 2009/11/08 10:46:11 espie Exp $
+# $OpenBSD: pkg_add,v 1.372 2009/11/08 11:18:41 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -96,6 +96,26 @@ sub set_name_from_handle
 {
 	my ($state, $h) = @_;
 	$state->set_pkgname($h->pkgname);
+}
+
+sub updater
+{
+	my $state = shift;
+	if (!defined $state->{updater}) {
+		require OpenBSD::Update;
+		$state->{updater} = OpenBSD::Update->new;
+	}
+	return $state->{updater};
+}
+
+sub tracker
+{
+	my $state = shift;
+	if (!defined $state->{tracker}) {
+		require OpenBSD::Tracker;
+		$state->{tracker} = OpenBSD::Tracker->new;
+	}
+	return $state->{tracker};
 }
 
 package OpenBSD::UpdateSet;
@@ -208,7 +228,7 @@ sub can_install
 		}
 
 		for my $toreplace (@conflicts) {
-			if ($state->{tracker}->is_installed($toreplace)) {
+			if ($state->tracker->is_installed($toreplace)) {
 				Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
 				$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 				return;
@@ -443,7 +463,7 @@ sub install_set
 	}
 
 	for my $handle ($set->newer) {
-		if ($state->{tracker}->is_installed($handle->pkgname)) {
+		if ($state->tracker->is_installed($handle->pkgname)) {
 			$handle->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
 			return ();
 		}
@@ -518,7 +538,7 @@ sub install_set
 	for my $handle ($set->newer) {
 		$handle->cleanup;
 	}
-	$state->{tracker}->mark_installed($set);
+	$state->tracker->mark_installed($set);
 	return ();
 }
 
@@ -662,9 +682,6 @@ $state->check_root;
 # later for the most part...
 my @todo2 = ();
 
-require OpenBSD::Tracker;
-$state->{tracker} = OpenBSD::Tracker->new;
-
 if ($opt_l) {
 	open my $f, '<', $opt_l or die "$!: bad list $opt_l";
 	my $_;
@@ -678,26 +695,22 @@ if ($opt_l) {
 # three cases: 
 # 1/ match fuzzily against a list
 if ($opt_l || $opt_z) {
-	require OpenBSD::Update;
-	my $updater = OpenBSD::Update->new;
 
 	$state->progress->set_header("Looking for packages");
 	for my $_ (@ARGV) {
 		my $set = OpenBSD::UpdateSet->new->add_hints($_);
-		if ($updater->process_hint($set, $_, $state)) {
+		if ($state->updater->process_hint($set, $_, $state)) {
 			push(@todo2, $set);
 		}
 	}
 # 2/ update existing stuff
 } elsif ($opt_u) {
-	require OpenBSD::Update;
 	require OpenBSD::PackageRepository::Installed;
 
 	if (@ARGV == 0) {
 		@ARGV = sort(installed_packages());
 		$state->{full_update} = 1;
 	}
-	my $updater = OpenBSD::Update->new;
 	my $inst = OpenBSD::PackageRepository::Installed->new;
 	$state->progress->set_header("Looking for updates");
 	for my $pkgname (@ARGV) {
@@ -714,21 +727,21 @@ if ($opt_l || $opt_z) {
 			my $set = OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l));
 			my $problem = 0;
 			for my $l ($set->older) {
-				(defined $updater->process_handle($set, $l, $state)) or $problem = 1;
+				(defined $state->updater->process_handle($set, $l, $state)) or $problem = 1;
 			}
 			if ($set->newer > 0) {
 				push(@todo2, $set);
 			} else {
-				$state->{tracker}->mark_uptodate($set);
+				$state->tracker->mark_uptodate($set);
 			}
 			if ($problem) {
-				$state->{tracker}->mark_cant_update($set);
+				$state->tracker->mark_cant_update($set);
 			}
 		}
 	}
 	$state->progress->next;
 
-	my @cantupdate = $state->{tracker}->cant_update;
+	my @cantupdate = $state->tracker->cant_update;
 	if (@cantupdate > 0) {
 		print "Cannot find updates for ", join(', ', map {$_->short_print} (@cantupdate > 50 ? @cantupdate[1..50] : @cantupdate));
 		print " and more" if @cantupdate > 50;
@@ -772,7 +785,7 @@ local $SIG{'TERM'} = $handler;
 
 # This is the actual very small loop that adds all packages
 eval {
-$state->{tracker}->add_sets(@todo2);
+$state->tracker->add_sets(@todo2);
 while (my $set = shift @todo2) {
 	unshift(@todo2, install_set($set, $state));
 }

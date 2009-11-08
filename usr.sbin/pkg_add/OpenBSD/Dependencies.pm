@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.78 2009/10/19 14:20:55 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.79 2009/11/08 11:18:41 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -256,7 +256,7 @@ sub find_dep_in_stuff_to_install
 {
 	my ($self, $state, $dep) = @_;
 
-	return find_candidate($dep->spec, keys %{$state->{tracker}->{to_install}});
+	return find_candidate($dep->spec, keys %{$state->tracker->{to_install}});
 }
 
 sub solve_dependency
@@ -273,7 +273,7 @@ sub solve_dependency
 		}
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 		if ($v) {
-			push(@{$self->{deplist}}, $state->{tracker}->{to_install}->{$v});
+			push(@{$self->{deplist}}, $state->tracker->{to_install}->{$v});
 			return $v;
 		}
 	}
@@ -289,7 +289,7 @@ sub solve_dependency
 	if (!$state->{allow_replacing}) {
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
 		if ($v) {
-			push(@{$self->{deplist}}, $state->{tracker}->{to_install}->{$v});
+			push(@{$self->{deplist}}, $state->tracker->{to_install}->{$v});
 			return $v;
 		}
 	}
@@ -298,7 +298,7 @@ sub solve_dependency
 	if ($v) {
 		my $s = OpenBSD::UpdateSet->from_location($v);
 
-		$state->{tracker}->add_set($s);
+		$state->tracker->add_set($s);
 		
 		push(@{$self->{deplist}}, $s);
 		return $v->{name};
@@ -307,7 +307,7 @@ sub solve_dependency
 	# resort to default if nothing else
 	$v = $dep->{def};
 	my $s = OpenBSD::UpdateSet->create_new($v);
-	$state->{tracker}->add_set($s);
+	$state->tracker->add_set($s);
 	push(@{$self->{deplist}}, $s);
 	return $v;
 }
