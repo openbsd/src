@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.77 2009/11/04 17:46:52 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.78 2009/11/08 11:54:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -83,9 +83,7 @@ static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_3X3_1 },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_3X3_2 }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2 }
 };
 
 int		iwn_match(struct device *, void *, void *);
@@ -141,6 +139,10 @@ void		iwn_rx_phy(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *);
 void		iwn_rx_done(struct iwn_softc *, struct iwn_rx_desc *,
 		    struct iwn_rx_data *);
+#ifndef IEEE80211_NO_HT
+void		iwn_rx_compressed_ba(struct iwn_softc *, struct iwn_rx_desc *,
+		    struct iwn_rx_data *);
+#endif
 void		iwn5000_rx_calib_results(struct iwn_softc *,
 		    struct iwn_rx_desc *, struct iwn_rx_data *);
 void		iwn_rx_statistics(struct iwn_softc *, struct iwn_rx_desc *,
@@ -477,13 +479,35 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_PMGT;		/* power saving supported */
 
-	/* Set supported rates. */
+#ifndef IEEE80211_NO_HT
+	/* Set HT capabilities. */
+	ic->ic_htcaps =
+#if IWN_RBUF_SIZE == 8192
+	    IEEE80211_HTCAP_AMSDU7935 |
+#endif
+	    IEEE80211_HTCAP_SMPS_DIS |
+	    IEEE80211_HTCAP_CBW20_40 |
+	    IEEE80211_HTCAP_SGI20 |
+	    IEEE80211_HTCAP_SGI40;
+	if (sc->hw_type != IWN_HW_REV_TYPE_4965)
+		ic->ic_htcaps |= IEEE80211_HTCAP_GF;
+#endif	/* !IEEE80211_NO_HT */
+
+	/* Set supported legacy rates. */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 	if (sc->sc_flags & IWN_FLAG_HAS_5GHZ) {
 		ic->ic_sup_rates[IEEE80211_MODE_11A] =
 		    ieee80211_std_rateset_11a;
 	}
+#ifndef IEEE80211_NO_HT
+	/* Set supported HT rates. */
+	ic->ic_sup_mcs[0] = 0xff;
+	if (sc->nrxchains > 1)
+		ic->ic_sup_mcs[1] = 0xff;
+	if (sc->nrxchains > 2)
+		ic->ic_sup_mcs[2] = 0xff;
+#endif
 
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
@@ -584,7 +608,6 @@ iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	case IWN_HW_REV_TYPE_6000:
-	case IWN_HW_REV_TYPE_6050:
 		sc->sc_hal = &iwn5000_hal;
 		sc->limits = &iwn6000_sensitivity_limits;
 		sc->fwname = "iwn-6000";
@@ -595,16 +618,18 @@ iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 			sc->txchainmask = IWN_ANT_BC;
 			sc->rxchainmask = IWN_ANT_BC;
 			break;
-		case PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1:
-		case PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2:
-			sc->txchainmask = IWN_ANT_AB;
-			sc->rxchainmask = IWN_ANT_AB;
-			break;
 		default:
 			sc->txchainmask = IWN_ANT_ABC;
 			sc->rxchainmask = IWN_ANT_ABC;
 			break;
 		}
+		break;
+	case IWN_HW_REV_TYPE_6050:
+		sc->sc_hal = &iwn5000_hal;
+		sc->limits = &iwn6000_sensitivity_limits;
+		sc->fwname = "iwn-6000";
+		sc->txchainmask = IWN_ANT_AB;
+		sc->rxchainmask = IWN_ANT_AB;
 		break;
 	default:
 		printf(": adapter type %d not supported\n", sc->hw_type);
@@ -1321,6 +1346,13 @@ iwn_read_eeprom(struct iwn_softc *sc)
 	DPRINTF(("%s found\n", (sc->sc_flags & IWN_FLAG_HAS_OTPROM) ?
 	    "OTPROM" : "EEPROM"));
 
+	/* Adapter has to be powered on for EEPROM access to work. */
+	if ((error = iwn_apm_init(sc)) != 0) {
+		printf("%s: could not power ON adapter\n",
+		    sc->sc_dev.dv_xname);
+		return error;
+	}
+
 	if ((IWN_READ(sc, IWN_EEPROM_GP) & 0x7) == 0) {
 		printf("%s: bad ROM signature\n", sc->sc_dev.dv_xname);
 		return EIO;
@@ -1330,14 +1362,6 @@ iwn_read_eeprom(struct iwn_softc *sc)
 		    sc->sc_dev.dv_xname, error);
 		return error;
 	}
-
-	/* Adapter has to be powered on for EEPROM access to work. */
-	if ((error = iwn_apm_init(sc)) != 0) {
-		printf("%s: could not power ON adapter\n",
-		    sc->sc_dev.dv_xname);
-		return error;
-	}
-
 	if (sc->sc_flags & IWN_FLAG_HAS_OTPROM) {
 		if ((error = iwn_init_otprom(sc)) != 0) {
 			printf("%s: could not initialize OTPROM\n",
@@ -1555,7 +1579,11 @@ iwn_read_eeprom_enhinfo(struct iwn_softc *sc)
 	iwn_read_prom_data(sc, base + IWN6000_EEPROM_ENHINFO,
 	    enhinfo, sizeof enhinfo);
 
+	memset(sc->enh_maxpwr, 0, sizeof sc->enh_maxpwr);
 	for (i = 0; i < nitems(enhinfo); i++) {
+		if (enhinfo[i].chan == 0 || enhinfo[i].reserved != 0)
+			continue;	/* Skip invalid entries. */
+
 		maxpwr = 0;
 		if (sc->txchainmask & IWN_ANT_A)
 			maxpwr = MAX(maxpwr, enhinfo[i].chain[0]);
@@ -1994,6 +2022,23 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	ieee80211_release_node(ic, ni);
 }
 
+#ifndef IEEE80211_NO_HT
+/* Process an incoming Compressed BlockAck. */
+void
+iwn_rx_compressed_ba(struct iwn_softc *sc, struct iwn_rx_desc *desc,
+    struct iwn_rx_data *data)
+{
+	struct iwn_compressed_ba *ba = (struct iwn_compressed_ba *)(desc + 1);
+	struct iwn_tx_ring *txq;
+
+	bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (*desc), sizeof (*ba),
+	    BUS_DMASYNC_POSTREAD);
+
+	txq = &sc->txq[letoh16(ba->qid)];
+	/* XXX TBD */
+}
+#endif
+
 /*
  * Process a CALIBRATION_RESULT notification sent by the initialization
  * firmware on response to a CMD_CALIB_CONFIG command (5000 only.)
@@ -2120,7 +2165,7 @@ iwn4965_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (*desc),
 	    sizeof (*stat), BUS_DMASYNC_POSTREAD);
-	iwn_tx_done(sc, desc, stat->retrycnt, letoh32(stat->status) & 0xff);
+	iwn_tx_done(sc, desc, stat->ackfailcnt, letoh32(stat->status) & 0xff);
 }
 
 void
@@ -2136,14 +2181,14 @@ iwn5000_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (*desc),
 	    sizeof (*stat), BUS_DMASYNC_POSTREAD);
-	iwn_tx_done(sc, desc, stat->retrycnt, letoh16(stat->status) & 0xff);
+	iwn_tx_done(sc, desc, stat->ackfailcnt, letoh16(stat->status) & 0xff);
 }
 
 /*
  * Adapter-independent backend for TX_DONE firmware notifications.
  */
 void
-iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int retrycnt,
+iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
     uint8_t status)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2154,7 +2199,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int retrycnt,
 
 	/* Update rate control statistics. */
 	wn->amn.amn_txcnt++;
-	if (retrycnt > 0)
+	if (ackfailcnt > 0)
 		wn->amn.amn_retrycnt++;
 
 	if (status != 1 && status != 2)
@@ -2245,7 +2290,12 @@ iwn_notif_intr(struct iwn_softc *sc)
 			/* An 802.11 frame has been received. */
 			iwn_rx_done(sc, desc, data);
 			break;
-
+#ifndef IEEE80211_NO_HT
+		case IWN_RX_COMPRESSED_BA:
+			/* A Compressed BlockAck has been received. */
+			iwn_rx_compressed_ba(sc, desc, data);
+			break;
+#endif
 		case IWN_TX_DONE:
 			/* An 802.11 frame has been transmitted. */
 			sc->sc_hal->tx_done(sc, desc, data);
@@ -2830,13 +2880,13 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
-	if (error != 0 && error != EFBIG) {
-		printf("%s: can't map mbuf (error %d)\n",
-		    sc->sc_dev.dv_xname, error);
-		m_freem(m);
-		return error;
-	}
 	if (error != 0) {
+		if (error != EFBIG) {
+			printf("%s: can't map mbuf (error %d)\n",
+			    sc->sc_dev.dv_xname, error);
+			m_freem(m);
+			return error;
+		}
 		/* Too many DMA segments, linearize mbuf. */
 		MGETHDR(m1, M_DONTWAIT, MT_DATA);
 		if (m1 == NULL) {
@@ -3438,6 +3488,7 @@ iwn4965_set_txpower(struct iwn_softc *sc, int async)
 		    "EEPROM=%d)\n", tdiff, sc->temp, temp));
 
 		for (ridx = 0; ridx <= IWN_RIDX_MAX; ridx++) {
+			/* Convert dBm to half-dBm. */
 			maxchpwr = sc->maxpwr[chan] * 2;
 			if ((ridx / 8) & 1)
 				maxchpwr -= 6;	/* MIMO 2T: -3dB */
@@ -4565,11 +4616,11 @@ iwn4965_ampdu_tx_start(struct iwn_softc *sc, struct ieee80211_node *ni,
 	iwn_mem_write_2(sc, sc->sched_base + IWN4965_SCHED_TRANS_TBL(qid),
 	    wn->id << 4 | tid);
 
-	/* Enable chain mode for the queue. */
+	/* Enable chain-building mode for the queue. */
 	iwn_prph_setbits(sc, IWN4965_SCHED_QCHAIN_SEL, 1 << qid);
 
 	/* Set starting sequence number from the ADDBA request. */
-	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, ssn);
+	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, qid << 8 | (ssn & 0xff));
 	iwn_prph_write(sc, IWN4965_SCHED_QUEUE_RDPTR(qid), ssn);
 
 	/* Set scheduler window size. */
@@ -4598,7 +4649,7 @@ iwn4965_ampdu_tx_stop(struct iwn_softc *sc, uint8_t tid, uint16_t ssn)
 	    IWN4965_TXQ_STATUS_CHGACT);
 
 	/* Set starting sequence number from the ADDBA request. */
-	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, ssn);
+	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, qid << 8 | (ssn & 0xff));
 	iwn_prph_write(sc, IWN4965_SCHED_QUEUE_RDPTR(qid), ssn);
 
 	/* Disable interrupts for the queue. */
@@ -4624,14 +4675,14 @@ iwn5000_ampdu_tx_start(struct iwn_softc *sc, struct ieee80211_node *ni,
 	iwn_mem_write_2(sc, sc->sched_base + IWN5000_SCHED_TRANS_TBL(qid),
 	    wn->id << 4 | tid);
 
-	/* Enable chain mode for the queue. */
+	/* Enable chain-building mode for the queue. */
 	iwn_prph_setbits(sc, IWN5000_SCHED_QCHAIN_SEL, 1 << qid);
 
 	/* Enable aggregation for the queue. */
 	iwn_prph_setbits(sc, IWN5000_SCHED_AGGR_SEL, 1 << qid);
 
 	/* Set starting sequence number from the ADDBA request. */
-	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, ssn);
+	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, qid << 8 | (ssn & 0xff));
 	iwn_prph_write(sc, IWN5000_SCHED_QUEUE_RDPTR(qid), ssn);
 
 	/* Set scheduler window size and frame limit. */
@@ -4659,7 +4710,7 @@ iwn5000_ampdu_tx_stop(struct iwn_softc *sc, uint8_t tid, uint16_t ssn)
 	iwn_prph_clrbits(sc, IWN5000_SCHED_AGGR_SEL, 1 << qid);
 
 	/* Set starting sequence number from the ADDBA request. */
-	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, ssn);
+	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, qid << 8 | (ssn & 0xff));
 	iwn_prph_write(sc, IWN5000_SCHED_QUEUE_RDPTR(qid), ssn);
 
 	/* Disable interrupts for the queue. */
@@ -4727,6 +4778,7 @@ iwn5000_send_wimax_coex(struct iwn_softc *sc)
 {
 	struct iwn5000_wimax_coex wimax;
 
+#ifdef notyet
 	if (sc->hw_type == IWN_HW_REV_TYPE_6050) {
 		/* Enable WiMAX coexistence for combo adapters. */
 		wimax.flags =
@@ -4736,7 +4788,9 @@ iwn5000_send_wimax_coex(struct iwn_softc *sc)
 		    IWN_WIMAX_COEX_ENABLE;
 		memcpy(wimax.events, iwn6050_wimax_events,
 		    sizeof iwn6050_wimax_events);
-	} else {
+	} else
+#endif
+	{
 		/* Disable WiMAX coexistence. */
 		wimax.flags = 0;
 		memset(wimax.events, 0, sizeof wimax.events);

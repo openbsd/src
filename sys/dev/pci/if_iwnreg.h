@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.33 2009/11/03 18:57:18 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.34 2009/11/08 11:54:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -389,6 +389,7 @@ struct iwn_rx_desc {
 #define IWN_RX_PHY			192
 #define IWN_MPDU_RX_DONE		193
 #define IWN_RX_DONE			195
+#define IWN_RX_COMPRESSED_BA		197
 
 	uint8_t		flags;
 	uint8_t		idx;
@@ -970,9 +971,9 @@ struct iwn_ucode_info {
 /* Structures for IWN_TX_DONE notification. */
 struct iwn4965_tx_stat {
 	uint8_t		nframes;
-	uint8_t		killcnt;
-	uint8_t		rtscnt;
-	uint8_t		retrycnt;
+	uint8_t		btkillcnt;
+	uint8_t		rtsfailcnt;
+	uint8_t		ackfailcnt;
 	uint8_t		rate;
 	uint8_t		rflags;
 	uint16_t	xrflags;
@@ -984,9 +985,9 @@ struct iwn4965_tx_stat {
 
 struct iwn5000_tx_stat {
 	uint8_t		nframes;
-	uint8_t		killcnt;
-	uint8_t		rtscnt;
-	uint8_t		retrycnt;
+	uint8_t		btkillcnt;
+	uint8_t		rtsfailcnt;
+	uint8_t		ackfailcnt;
 	uint8_t		rate;
 	uint8_t		rflags;
 	uint16_t	xrflags;
@@ -996,7 +997,9 @@ struct iwn5000_tx_stat {
 	uint32_t	info;
 	uint16_t	seq;
 	uint16_t	len;
-	uint32_t	tlc;
+	uint8_t		tlc;
+	uint8_t		ratid;
+	uint8_t		fc[2];
 	uint16_t	status;
 	uint16_t	sequence;
 } __packed;
@@ -1051,6 +1054,18 @@ struct iwn_rx_stat {
 
 #define IWN_RSSI_TO_DBM	44
 
+/* Structure for IWN_RX_COMPRESSED_BA notification. */
+struct iwn_compressed_ba {
+	uint8_t		macaddr[IEEE80211_ADDR_LEN];
+	uint16_t	reserved;
+	uint8_t		id;
+	uint8_t		tid;
+	uint16_t	seq;
+	uint64_t	bitmap;
+	uint16_t	qid;
+	uint16_t	ssn;
+} __packed;
+
 /* Structure for IWN_START_SCAN notification. */
 struct iwn_start_scan {
 	uint64_t	tstamp;
@@ -1102,7 +1117,7 @@ struct iwn_spectrum_notif {
 #define IWN_MEASUREMENT_FAILED		8
 } __packed;
 
-/* Structure for IWN_{RX,BEACON}_STATISTICS notification. */
+/* Structures for IWN_{RX,BEACON}_STATISTICS notification. */
 struct iwn_rx_phy_stats {
 	uint32_t	ina;
 	uint32_t	fina;
@@ -1292,9 +1307,9 @@ struct iwn_eeprom_chan {
 } __packed;
 
 struct iwn_eeprom_enhinfo {
-	uint16_t	reserved1;
+	uint16_t	chan;
 	int8_t		chain[3];	/* max power in half-dBm */
-	uint8_t		reserved2;
+	uint8_t		reserved;
 	int8_t		mimo2;		/* max power in half-dBm */
 	int8_t		mimo3;		/* max power in half-dBm */
 } __packed;
