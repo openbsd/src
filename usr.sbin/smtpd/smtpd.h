@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.153 2009/11/05 10:27:24 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.154 2009/11/08 19:38:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -346,6 +346,7 @@ enum path_flags {
 	F_PATH_FORWARDED = 0x10,
 	F_PATH_ACCOUNT = 0x20,
 	F_PATH_AUTHENTICATED = 0x40,
+	F_PATH_RELAY = 0x80,
 };
 
 struct path {
@@ -362,6 +363,7 @@ struct path {
 		char filter[MAXPATHLEN];
 	}				 u;
 };
+TAILQ_HEAD(deliverylist, path);
 
 enum alias_type {
 	ALIAS_USERNAME,
@@ -725,6 +727,7 @@ struct lkasession {
 
 	struct path			 path;
 	struct aliaseslist		 aliaseslist;
+	struct deliverylist    		 deliverylist;
 	u_int8_t			 iterations;
 	u_int32_t			 pending;
 	enum lkasession_flags		 flags;
@@ -980,3 +983,4 @@ void		 lowercase(char *, char *, size_t);
 void		 message_set_errormsg(struct message *, char *, ...);
 char		*message_get_errormsg(struct message *);
 void		 sa_set_port(struct sockaddr *, int);
+struct path	*path_dup(struct path *);

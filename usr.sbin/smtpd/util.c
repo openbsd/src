@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.27 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.28 2009/11/08 19:38:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -417,4 +417,18 @@ sa_set_port(struct sockaddr *sa, int port)
 
 	memcpy(sa, res->ai_addr, res->ai_addrlen);
 	freeaddrinfo(res);
+}
+
+struct path *
+path_dup(struct path *path)
+{
+	struct path *pathp;
+
+	pathp = calloc(sizeof(struct path), 1);
+	if (pathp == NULL)
+		fatal("calloc");
+
+	*pathp = *path;
+
+	return pathp;
 }
