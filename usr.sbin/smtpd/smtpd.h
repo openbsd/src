@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.154 2009/11/08 19:38:26 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.155 2009/11/08 21:40:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -374,7 +374,8 @@ enum alias_type {
 };
 
 struct alias {
-	TAILQ_ENTRY(alias)		entry;
+	RB_ENTRY(alias)			entry;
+	u_int64_t			 id;
 	enum alias_type			 type;
 	union alias_data {
 		char username[MAXLOGNAME];
@@ -383,7 +384,6 @@ struct alias {
 		struct path path;
 	}                                   u;
 };
-TAILQ_HEAD(aliaseslist, alias);
 
 enum message_type {
 	T_MDA_MESSAGE		= 0x1,
@@ -726,8 +726,10 @@ struct lkasession {
 	u_int64_t			 id;
 
 	struct path			 path;
-	struct aliaseslist		 aliaseslist;
 	struct deliverylist    		 deliverylist;
+
+	RB_HEAD(aliasestree, alias)	 aliasestree;
+
 	u_int8_t			 iterations;
 	u_int32_t			 pending;
 	enum lkasession_flags		 flags;
@@ -777,11 +779,16 @@ struct mta_session {
 
 /* aliases.c */
 int aliases_exist(struct smtpd *, objid_t, char *);
-int aliases_get(struct smtpd *, objid_t, struct aliaseslist *, char *);
+int aliases_get(struct smtpd *, objid_t, struct aliasestree *, char *);
 int aliases_vdomain_exists(struct smtpd *, objid_t, char *);
 int aliases_virtual_exist(struct smtpd *, objid_t, struct path *);
-int aliases_virtual_get(struct smtpd *, objid_t, struct aliaseslist *, struct path *);
+int aliases_virtual_get(struct smtpd *, objid_t, struct aliasestree *, struct path *);
 int alias_parse(struct alias *, char *);
+int alias_cmp(struct alias *, struct alias *);
+void aliasestree_insert(struct aliasestree *, struct alias *);
+void aliasestree_remove(struct aliasestree *, struct alias *);
+struct alias *aliasestree_lookup(struct aliasestree *, struct alias *);
+RB_PROTOTYPE(aliasestree, alias, entry, alias_cmp);
 
 /* authenticate.c */
 int authenticate_user(char *, char *);
@@ -816,7 +823,7 @@ void		 dns_async(struct smtpd *, struct imsgev *, int,
 
 
 /* forward.c */
-int forwards_get(int, struct aliaseslist *);
+int forwards_get(int, struct aliasestree *);
 
 /* smtpd.c */
 int	 child_cmp(struct child *, struct child *);
@@ -836,7 +843,6 @@ int		 msg_cmp(struct message *, struct message *);
 
 /* queue.c */
 pid_t		 queue(struct smtpd *);
-u_int64_t	 queue_generate_id(void);
 int		 queue_load_envelope(struct message *, char *);
 int		 queue_update_envelope(struct message *);
 int		 queue_remove_envelope(struct message *);
@@ -984,3 +990,4 @@ void		 message_set_errormsg(struct message *, char *, ...);
 char		*message_get_errormsg(struct message *);
 void		 sa_set_port(struct sockaddr *, int);
 struct path	*path_dup(struct path *);
+u_int64_t	 generate_uid(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.24 2009/09/21 20:35:26 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.25 2009/11/08 21:40:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -233,7 +233,7 @@ enqueue(int argc, char *argv[])
 	if (!msg.saw_msgid)
 		if (client_data_printf(sp,
 		    "Message-Id: <%llu.enqueue@%s>\n",
-		    queue_generate_id(), host) < 0)
+			generate_uid(), host) < 0)
 			err(1, "client_data_printf failed");
 
 	/* add separating newline */

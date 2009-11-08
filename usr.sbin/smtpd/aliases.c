@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.25 2009/11/03 20:55:23 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.26 2009/11/08 21:40:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,7 +34,7 @@
 
 #include "smtpd.h"
 
-int aliases_expand_include(struct aliaseslist *, char *);
+int aliases_expand_include(struct aliasestree *, char *);
 int alias_is_filter(struct alias *, char *, size_t);
 int alias_is_username(struct alias *, char *, size_t);
 int alias_is_address(struct alias *, char *, size_t);
@@ -75,7 +75,7 @@ aliases_exist(struct smtpd *env, objid_t mapid, char *username)
 }
 
 int
-aliases_get(struct smtpd *env, objid_t mapid, struct aliaseslist *aliases, char *username)
+aliases_get(struct smtpd *env, objid_t mapid, struct aliasestree *aliases, char *username)
 {
 	char buf[MAXLOGNAME];
 	int ret;
@@ -128,7 +128,7 @@ aliases_get(struct smtpd *env, objid_t mapid, struct aliaseslist *aliases, char 
 			if (aliasp == NULL)
 				fatal("aliases_get: calloc");
 			*aliasp = alias;
-			TAILQ_INSERT_HEAD(aliases, aliasp, entry);
+			aliasestree_insert(aliases, aliasp);
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
@@ -229,7 +229,7 @@ aliases_virtual_exist(struct smtpd *env, objid_t mapid, struct path *path)
 
 int
 aliases_virtual_get(struct smtpd *env, objid_t mapid,
-    struct aliaseslist *aliases, struct path *path)
+    struct aliasestree *aliases, struct path *path)
 {
 	int ret;
 	DBT key;
@@ -303,7 +303,7 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 			if (aliasp == NULL)
 				fatal("aliases_virtual_get: calloc");
 			*aliasp = alias;
-			TAILQ_INSERT_HEAD(aliases, aliasp, entry);
+			aliasestree_insert(aliases, aliasp);
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
@@ -311,7 +311,7 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 }
 
 int
-aliases_expand_include(struct aliaseslist *aliases, char *filename)
+aliases_expand_include(struct aliasestree *aliases, char *filename)
 {
 	FILE *fp;
 	char *line;
@@ -344,7 +344,7 @@ aliases_expand_include(struct aliaseslist *aliases, char *filename)
 			if (aliasp == NULL)
 				fatal("aliases_expand_include: calloc");
 			*aliasp = alias;
-			TAILQ_INSERT_TAIL(aliases, aliasp, entry);
+			aliasestree_insert(aliases, aliasp);
 		}
 
 		free(line);
@@ -485,3 +485,47 @@ alias_is_include(struct alias *alias, char *line, size_t len)
 	alias->type = ALIAS_INCLUDE;
 	return 1;
 }
+
+int
+alias_cmp(struct alias *a1, struct alias *a2)
+{
+	/*
+	 * do not return u_int64_t's
+	 */
+	if (a1->id < a2->id)
+		return (-1);
+
+	if (a1->id > a2->id)
+		return (1);
+
+	return (0);
+}
+
+struct alias *
+aliasestree_lookup(struct aliasestree *aliasestree, struct alias *alias)
+{
+	struct alias key;
+
+	key = *alias;
+	return RB_FIND(aliasestree, aliasestree, &key);
+}
+
+void
+aliasestree_insert(struct aliasestree *aliasestree, struct alias *alias)
+{
+	alias->id = generate_uid();
+	RB_INSERT(aliasestree, aliasestree, alias);
+}
+
+void
+aliasestree_remove(struct aliasestree *aliasestree, struct alias *alias)
+{
+	struct alias *node;
+
+	node = aliasestree_lookup(aliasestree, alias);
+	if (node == NULL)
+		fatalx("aliasestree_remove: node doesn't exist.");
+	RB_REMOVE(aliasestree, aliasestree, alias);
+}
+
+RB_GENERATE(aliasestree, alias, entry, alias_cmp);

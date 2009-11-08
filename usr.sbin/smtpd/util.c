@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.28 2009/11/08 19:38:26 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.29 2009/11/08 21:40:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -431,4 +431,21 @@ path_dup(struct path *path)
 	*pathp = *path;
 
 	return pathp;
+}
+
+u_int64_t
+generate_uid(void)
+{
+	u_int64_t	id;
+	struct timeval	tp;
+
+	if (gettimeofday(&tp, NULL) == -1)
+		fatal("generate_uid: time");
+
+	id = (u_int32_t)tp.tv_sec;
+	id <<= 32;
+	id |= (u_int32_t)tp.tv_usec;
+	usleep(1);
+
+	return (id);
 }

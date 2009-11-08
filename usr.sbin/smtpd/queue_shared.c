@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.25 2009/09/15 16:50:06 jacekm Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.26 2009/11/08 21:40:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -568,23 +568,6 @@ queue_load_envelope(struct message *messagep, char *evpid)
 	fclose(fp);
 
 	return 1;
-}
-
-u_int64_t
-queue_generate_id(void)
-{
-	u_int64_t	id;
-	struct timeval	tp;
-
-	if (gettimeofday(&tp, NULL) == -1)
-		fatal("queue_generate_id: time");
-
-	id = (u_int32_t)tp.tv_sec;
-	id <<= 32;
-	id |= (u_int32_t)tp.tv_usec;
-	usleep(1);
-
-	return (id);
 }
 
 u_int16_t

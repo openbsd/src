@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.15 2009/11/08 19:38:26 gilles Exp $	*/
+/*	$OpenBSD: forward.c,v 1.16 2009/11/08 21:40:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -35,7 +35,7 @@
 #include "smtpd.h"
 
 int
-forwards_get(int fd, struct aliaseslist *aliases)
+forwards_get(int fd, struct aliasestree *aliases)
 {
 	FILE *fp;
 	struct alias alias;
@@ -99,7 +99,7 @@ forwards_get(int fd, struct aliaseslist *aliases)
 			if (aliasp == NULL)
 				fatal("calloc");
 			*aliasp = alias;
-			TAILQ_INSERT_HEAD(aliases, aliasp, entry);
+			aliasestree_insert(aliases, aliasp);
 			nbaliases++;
 		} while (*cp != '\0');
 	}

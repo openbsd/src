@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.63 2009/10/25 21:06:06 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.64 2009/11/08 21:40:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -535,7 +535,7 @@ smtp_dispatch_control(int sig, short event, void *p)
 			if ((s = calloc(1, sizeof(*s))) == NULL)
 				fatal(NULL);
 
-			s->s_id = queue_generate_id();
+			s->s_id = generate_uid();
 			s->s_fd = fd[0];
 			s->s_env = env;
 			s->s_l = &l;
@@ -643,7 +643,7 @@ smtp_dispatch_runner(int sig, short event, void *p)
 			if ((s = calloc(1, sizeof(*s))) == NULL)
 				fatal(NULL);
 
-			s->s_id = queue_generate_id();
+			s->s_id = generate_uid();
 			s->s_fd = fd[0];
 			s->s_env = env;
 			s->s_l = &l;
@@ -841,7 +841,7 @@ smtp_accept(int fd, short event, void *p)
 		fatal(NULL);
 	len = sizeof(s->s_ss);
 
-	s->s_id = queue_generate_id();
+	s->s_id = generate_uid();
 	s->s_fd = s_fd;
 	s->s_env = l->env;
 	s->s_l = l;
