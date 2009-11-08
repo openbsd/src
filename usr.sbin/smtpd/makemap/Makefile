@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2009/03/23 15:14:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2009/11/08 23:15:03 gilles Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -16,7 +16,7 @@ CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare -Wbounded
 
-SRCS=	parse.y makemap.c aliases.c map.c log.c util.c
+SRCS=	parse.y makemap.c aliases.c expand.c map.c log.c util.c
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 .include <bsd.prog.mk>

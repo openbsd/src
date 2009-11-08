@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.27 2009/11/08 23:08:56 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.28 2009/11/08 23:15:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -488,44 +488,3 @@ alias_is_include(struct alias *alias, char *line, size_t len)
 	alias->type = EXPAND_INCLUDE;
 	return 1;
 }
-
-struct expand_node *
-expandtree_lookup(struct expandtree *expandtree, struct expand_node *node)
-{
-	struct expand_node key;
-
-	key = *node;
-	return RB_FIND(expandtree, expandtree, &key);
-}
-
-void
-expandtree_insert(struct expandtree *expandtree, struct expand_node *node)
-{
-	node->id = generate_uid();
-	RB_INSERT(expandtree, expandtree, node);
-}
-
-void
-expandtree_remove(struct expandtree *expandtree, struct expand_node *node)
-{
-	struct expand_node *p;
-
-	p = expandtree_lookup(expandtree, node);
-	if (p == NULL)
-		fatalx("expandtree_remove: node doesn't exist.");
-	RB_REMOVE(expandtree, expandtree, node);
-}
-
-int
-expand_cmp(struct expand_node *e1, struct expand_node *e2)
-{
-	if (e1->id < e2->id)
-		return -1;
-
-	if (e1->id > e2->id)
-		return 1;
-
-	return 0;
-}
-
-RB_GENERATE(expandtree, expand_node, entry, expand_cmp);
