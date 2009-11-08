@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.23 2009/11/03 22:57:41 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.24 2009/11/08 23:08:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -354,9 +354,9 @@ make_plain(DBT *val, char *text)
 int
 make_aliases(DBT *val, char *text)
 {
-	struct alias	 a;
-	char		*subrcpt;
-	char		*endp;
+	struct alias	a;
+	char	       	*subrcpt;
+	char	       	*endp;
 
 	val->data = NULL;
 	val->size = 0;

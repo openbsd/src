@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.26 2009/11/08 21:40:05 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.27 2009/11/08 23:08:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,7 +34,7 @@
 
 #include "smtpd.h"
 
-int aliases_expand_include(struct aliasestree *, char *);
+int aliases_expand_include(struct expandtree *, char *);
 int alias_is_filter(struct alias *, char *, size_t);
 int alias_is_username(struct alias *, char *, size_t);
 int alias_is_address(struct alias *, char *, size_t);
@@ -75,7 +75,7 @@ aliases_exist(struct smtpd *env, objid_t mapid, char *username)
 }
 
 int
-aliases_get(struct smtpd *env, objid_t mapid, struct aliasestree *aliases, char *username)
+aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, char *username)
 {
 	char buf[MAXLOGNAME];
 	int ret;
@@ -84,9 +84,9 @@ aliases_get(struct smtpd *env, objid_t mapid, struct aliasestree *aliases, char 
 	DB *aliasesdb;
 	size_t nbaliases, nbsave;
 	struct alias alias;
-	struct alias *aliasp;
 	struct alias *nextalias;
 	struct map *map;
+	struct expand_node *expnode;
 
 	map = map_find(env, mapid);
 	if (map == NULL)
@@ -120,15 +120,16 @@ aliases_get(struct smtpd *env, objid_t mapid, struct aliasestree *aliases, char 
 	do {
 		alias = *nextalias;
 		++nextalias;
-		if (alias.type == ALIAS_INCLUDE) {
-			aliases_expand_include(aliases, alias.u.filename);
+		if (alias.type == EXPAND_INCLUDE) {
+			aliases_expand_include(expandtree, alias.u.filename);
 		}
 		else {
-			aliasp = calloc(1, sizeof(struct alias));
-			if (aliasp == NULL)
+			expnode = calloc(sizeof(struct expand_node), 1);
+			if (expnode == NULL)
 				fatal("aliases_get: calloc");
-			*aliasp = alias;
-			aliasestree_insert(aliases, aliasp);
+			expnode->type = alias.type;
+			expnode->u = alias.u;
+			expandtree_insert(expandtree, expnode);
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
@@ -229,7 +230,7 @@ aliases_virtual_exist(struct smtpd *env, objid_t mapid, struct path *path)
 
 int
 aliases_virtual_get(struct smtpd *env, objid_t mapid,
-    struct aliasestree *aliases, struct path *path)
+    struct expandtree *expandtree, struct path *path)
 {
 	int ret;
 	DBT key;
@@ -237,10 +238,10 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 	DB *aliasesdb;
 	size_t nbaliases, nbsave;
 	struct alias alias;
-	struct alias *aliasp;
 	struct alias *nextalias;
 	struct map *map;
 	char	strkey[MAX_LINE_SIZE];
+	struct expand_node *expnode;
 
 	map = map_find(env, mapid);
 	if (map == NULL)
@@ -295,15 +296,16 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 	do {
 		alias = *nextalias;
 		++nextalias;
-		if (alias.type == ALIAS_INCLUDE) {
-			aliases_expand_include(aliases, alias.u.filename);
+		if (alias.type == EXPAND_INCLUDE) {
+			aliases_expand_include(expandtree, alias.u.filename);
 		}
 		else {
-			aliasp = calloc(1, sizeof(struct alias));
-			if (aliasp == NULL)
+			expnode = calloc(sizeof(struct expand_node), 1);
+			if (expnode== NULL)
 				fatal("aliases_virtual_get: calloc");
-			*aliasp = alias;
-			aliasestree_insert(aliases, aliasp);
+			expnode->type = alias.type;
+			expnode->u = alias.u;
+			expandtree_insert(expandtree, expnode);
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
@@ -311,7 +313,7 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 }
 
 int
-aliases_expand_include(struct aliasestree *aliases, char *filename)
+aliases_expand_include(struct expandtree *expandtree, char *filename)
 {
 	FILE *fp;
 	char *line;
@@ -319,7 +321,7 @@ aliases_expand_include(struct aliasestree *aliases, char *filename)
 	size_t lineno = 0;
 	char delim[] = { '\\', '#' };
 	struct alias alias;
-	struct alias *aliasp;
+	struct expand_node *expnode;
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
@@ -336,15 +338,16 @@ aliases_expand_include(struct aliasestree *aliases, char *filename)
 			log_warnx("could not parse include entry \"%s\".", line);
 		}
 
-		if (alias.type == ALIAS_INCLUDE) {
+		if (alias.type == EXPAND_INCLUDE) {
 			log_warnx("nested inclusion is not supported.");
 		}
 		else {
-			aliasp = calloc(1, sizeof(struct alias));
-			if (aliasp == NULL)
-				fatal("aliases_expand_include: calloc");
-			*aliasp = alias;
-			aliasestree_insert(aliases, aliasp);
+			expnode = calloc(sizeof(struct expand_node), 1);
+			if (expnode== NULL)
+				fatal("aliases_virtual_get: calloc");
+			expnode->type = alias.type;
+			expnode->u = alias.u;
+			expandtree_insert(expandtree, expnode);
 		}
 
 		free(line);
@@ -395,7 +398,7 @@ alias_is_filter(struct alias *alias, char *line, size_t len)
 		if (strlcpy(alias->u.filter, line, sizeof(alias->u.filter)) >=
 		    sizeof(alias->u.filter))
 			return 0;
-		alias->type = ALIAS_FILTER;
+		alias->type = EXPAND_FILTER;
 		return 1;
 	}
 	return 0;
@@ -415,7 +418,7 @@ alias_is_username(struct alias *alias, char *line, size_t len)
 		++line;
 	}
 
-	alias->type = ALIAS_USERNAME;
+	alias->type = EXPAND_USERNAME;
 	return 1;
 }
 
@@ -437,8 +440,8 @@ alias_is_address(struct alias *alias, char *line, size_t len)
 
 	/* scan pre @ for disallowed chars */
 	*domain++ = '\0';
-	strlcpy(alias->u.path.user, line, sizeof(alias->u.path.user));
-	strlcpy(alias->u.path.domain, domain, sizeof(alias->u.path.domain));
+	strlcpy(alias->u.mailaddr.user, line, sizeof(alias->u.mailaddr.user));
+	strlcpy(alias->u.mailaddr.domain, domain, sizeof(alias->u.mailaddr.domain));
 
 	while (*line) {
 		char allowedset[] = "!#$%*/?|^{}`~&'+-=_.";
@@ -456,7 +459,7 @@ alias_is_address(struct alias *alias, char *line, size_t len)
 		++domain;
 	}
 
-	alias->type = ALIAS_ADDRESS;
+	alias->type = EXPAND_ADDRESS;
 	return 1;
 }
 
@@ -469,7 +472,7 @@ alias_is_filename(struct alias *alias, char *line, size_t len)
 	if (strlcpy(alias->u.filename, line,
 	    sizeof(alias->u.filename)) >= sizeof(alias->u.filename))
 		return 0;
-	alias->type = ALIAS_FILENAME;
+	alias->type = EXPAND_FILENAME;
 	return 1;
 }
 
@@ -482,50 +485,47 @@ alias_is_include(struct alias *alias, char *line, size_t len)
 	if (! alias_is_filename(alias, line + 9, len - 9))
 		return 0;
 
-	alias->type = ALIAS_INCLUDE;
+	alias->type = EXPAND_INCLUDE;
 	return 1;
 }
 
+struct expand_node *
+expandtree_lookup(struct expandtree *expandtree, struct expand_node *node)
+{
+	struct expand_node key;
+
+	key = *node;
+	return RB_FIND(expandtree, expandtree, &key);
+}
+
+void
+expandtree_insert(struct expandtree *expandtree, struct expand_node *node)
+{
+	node->id = generate_uid();
+	RB_INSERT(expandtree, expandtree, node);
+}
+
+void
+expandtree_remove(struct expandtree *expandtree, struct expand_node *node)
+{
+	struct expand_node *p;
+
+	p = expandtree_lookup(expandtree, node);
+	if (p == NULL)
+		fatalx("expandtree_remove: node doesn't exist.");
+	RB_REMOVE(expandtree, expandtree, node);
+}
+
 int
-alias_cmp(struct alias *a1, struct alias *a2)
+expand_cmp(struct expand_node *e1, struct expand_node *e2)
 {
-	/*
-	 * do not return u_int64_t's
-	 */
-	if (a1->id < a2->id)
-		return (-1);
+	if (e1->id < e2->id)
+		return -1;
 
-	if (a1->id > a2->id)
-		return (1);
+	if (e1->id > e2->id)
+		return 1;
 
-	return (0);
+	return 0;
 }
 
-struct alias *
-aliasestree_lookup(struct aliasestree *aliasestree, struct alias *alias)
-{
-	struct alias key;
-
-	key = *alias;
-	return RB_FIND(aliasestree, aliasestree, &key);
-}
-
-void
-aliasestree_insert(struct aliasestree *aliasestree, struct alias *alias)
-{
-	alias->id = generate_uid();
-	RB_INSERT(aliasestree, aliasestree, alias);
-}
-
-void
-aliasestree_remove(struct aliasestree *aliasestree, struct alias *alias)
-{
-	struct alias *node;
-
-	node = aliasestree_lookup(aliasestree, alias);
-	if (node == NULL)
-		fatalx("aliasestree_remove: node doesn't exist.");
-	RB_REMOVE(aliasestree, aliasestree, alias);
-}
-
-RB_GENERATE(aliasestree, alias, entry, alias_cmp);
+RB_GENERATE(expandtree, expand_node, entry, expand_cmp);

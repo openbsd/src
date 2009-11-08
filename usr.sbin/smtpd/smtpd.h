@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.155 2009/11/08 21:40:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.156 2009/11/08 23:08:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -349,6 +349,18 @@ enum path_flags {
 	F_PATH_RELAY = 0x80,
 };
 
+struct mailaddr {
+	char	user[MAX_LOCALPART_SIZE];
+	char	domain[MAX_DOMAINPART_SIZE];
+};
+
+union path_data {
+	char username[MAXLOGNAME];
+	char filename[MAXPATHLEN];
+	char filter[MAXPATHLEN];
+	struct mailaddr mailaddr;
+};
+
 struct path {
 	TAILQ_ENTRY(path)		 entry;
 	struct rule			 rule;
@@ -358,31 +370,28 @@ struct path {
 	char				 user[MAX_LOCALPART_SIZE];
 	char				 domain[MAX_DOMAINPART_SIZE];
 	char				 pw_name[MAXLOGNAME];
-	union path_data {
-		char filename[MAXPATHLEN];
-		char filter[MAXPATHLEN];
-	}				 u;
+	union path_data			 u;
 };
 TAILQ_HEAD(deliverylist, path);
 
-enum alias_type {
-	ALIAS_USERNAME,
-	ALIAS_FILENAME,
-	ALIAS_FILTER,
-	ALIAS_INCLUDE,
-	ALIAS_ADDRESS
+enum expand_type {
+	EXPAND_USERNAME,
+	EXPAND_FILENAME,
+	EXPAND_FILTER,
+	EXPAND_INCLUDE,
+	EXPAND_ADDRESS
+};
+
+struct expand_node {
+	RB_ENTRY(expand_node)	entry;
+	u_int64_t	        id;
+	enum expand_type       	type;
+	union path_data		u;
 };
 
 struct alias {
-	RB_ENTRY(alias)			entry;
-	u_int64_t			 id;
-	enum alias_type			 type;
-	union alias_data {
-		char username[MAXLOGNAME];
-		char filename[MAXPATHLEN];
-		char filter[MAXPATHLEN];
-		struct path path;
-	}                                   u;
+	enum expand_type type;
+	union path_data		u;
 };
 
 enum message_type {
@@ -728,7 +737,7 @@ struct lkasession {
 	struct path			 path;
 	struct deliverylist    		 deliverylist;
 
-	RB_HEAD(aliasestree, alias)	 aliasestree;
+	RB_HEAD(expandtree, expand_node)	expandtree;
 
 	u_int8_t			 iterations;
 	u_int32_t			 pending;
@@ -779,16 +788,16 @@ struct mta_session {
 
 /* aliases.c */
 int aliases_exist(struct smtpd *, objid_t, char *);
-int aliases_get(struct smtpd *, objid_t, struct aliasestree *, char *);
+int aliases_get(struct smtpd *, objid_t, struct expandtree *, char *);
 int aliases_vdomain_exists(struct smtpd *, objid_t, char *);
 int aliases_virtual_exist(struct smtpd *, objid_t, struct path *);
-int aliases_virtual_get(struct smtpd *, objid_t, struct aliasestree *, struct path *);
+int aliases_virtual_get(struct smtpd *, objid_t, struct expandtree *, struct path *);
 int alias_parse(struct alias *, char *);
-int alias_cmp(struct alias *, struct alias *);
-void aliasestree_insert(struct aliasestree *, struct alias *);
-void aliasestree_remove(struct aliasestree *, struct alias *);
-struct alias *aliasestree_lookup(struct aliasestree *, struct alias *);
-RB_PROTOTYPE(aliasestree, alias, entry, alias_cmp);
+int expand_cmp(struct expand_node *, struct expand_node *);
+void expandtree_insert(struct expandtree *, struct expand_node *);
+void expandtree_remove(struct expandtree *, struct expand_node *);
+struct expand_node *expandtree_lookup(struct expandtree *, struct expand_node *);
+RB_PROTOTYPE(expandtree, expand_node, nodes, expand_cmp);
 
 /* authenticate.c */
 int authenticate_user(char *, char *);
@@ -823,7 +832,7 @@ void		 dns_async(struct smtpd *, struct imsgev *, int,
 
 
 /* forward.c */
-int forwards_get(int, struct aliasestree *);
+int forwards_get(int, struct expandtree *);
 
 /* smtpd.c */
 int	 child_cmp(struct child *, struct child *);

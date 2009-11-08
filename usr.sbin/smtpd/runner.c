@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.71 2009/11/08 21:40:05 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.72 2009/11/08 23:08:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -799,6 +799,8 @@ runner_message_schedule(struct message *messagep, time_t tm)
 		return 1;
 
 	delay = SMTPD_QUEUE_MAXINTERVAL;
+
+	// recompute path
 
 	if (messagep->type == T_MDA_MESSAGE ||
 		messagep->type == T_BOUNCE_MESSAGE) {
