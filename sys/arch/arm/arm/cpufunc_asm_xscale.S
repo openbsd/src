@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.2 2005/01/02 19:57:57 drahn Exp $ */
+/*	$OpenBSD: cpufunc_asm_xscale.S,v 1.3 2009/11/08 13:50:14 miod Exp $ */
 /*	$NetBSD: cpufunc_asm_xscale.S,v 1.16 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -76,9 +76,9 @@
 #include <machine/asm.h>
 
 /*
- * Size of the XScale core D-cache.
+ * Size of the XScale core caches.
  */
-#define	DCACHE_SIZE		0x00008000
+#define	CACHE_SIZE		0x8000
 
 #ifndef CACHE_CLEAN_BLOCK_INTR
 .Lblock_userspace_access:
@@ -236,7 +236,7 @@ _C_LABEL(xscale_cache_clean_addr):
 
 	.global	_C_LABEL(xscale_cache_clean_size)
 _C_LABEL(xscale_cache_clean_size):
-	.word	DCACHE_SIZE
+	.word	CACHE_SIZE
 
 #	.global	_C_LABEL(xscale_minidata_clean_addr)
 #_C_LABEL(xscale_minidata_clean_addr):
@@ -292,7 +292,7 @@ _C_LABEL(xscale_cache_clean_size):
 	 * alternate between them whenever this is done.  No one knows	\
 	 * why the work-around works (mmm!).				\
 	 */								\
-	eor	r0, r0, #(DCACHE_SIZE)				;	\
+	eor	r0, r0, #(CACHE_SIZE)				;	\
 	str	r0, [r2]					;	\
 	add	r0, r0, r1
 
@@ -442,6 +442,9 @@ ENTRY(xscale_cache_syncI_rng)
 	CPWAIT_AND_RETURN(r0)
 
 ENTRY(xscale_cache_flushD_rng)
+	cmp	r1, #(CACHE_SIZE)
+	movcs	r1, #(CACHE_SIZE)
+
 	and	r2, r0, #0x1f
 	add	r1, r1, r2
 	bic	r0, r0, #0x1f
