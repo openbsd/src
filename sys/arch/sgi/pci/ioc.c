@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.27 2009/11/08 13:10:03 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.28 2009/11/08 22:44:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -31,7 +31,10 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
+#ifdef TGT_ORIGIN
 #include <sgi/sgi/ip27.h>
+#include <sgi/sgi/l1.h>
+#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -106,6 +109,7 @@ int	iocow_read_byte(void *);
 int	iocow_triplet(void *, int);
 int	iocow_pulse(struct ioc_softc *, int, int);
 
+#ifdef TGT_ORIGIN
 /*
  * A mask of nodes on which an ioc driver has attached.
  * We use this to prevent attaching a pci IOC3 card which NIC has failed,
@@ -114,6 +118,7 @@ int	iocow_pulse(struct ioc_softc *, int, int);
  * XXX This obviously will not work in N mode...
  */
 static	uint64_t ioc_nodemask = 0;
+#endif
 
 int
 ioc_match(struct device *parent, void *match, void *aux)
@@ -258,6 +263,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 			goto unknown;
 		}
 	} else {
+#ifdef TGT_ORIGIN
 		/*
 		 * If no owserial device has been found, then it is
 		 * very likely that we are the on-board IOC3 found
@@ -267,7 +273,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 		if ((sys_config.system_type == SGI_IP27 ||
 		    sys_config.system_type == SGI_IP35) &&
 		    !ISSET(ioc_nodemask, 1UL << currentnasid)) {
-			SET(currentnasid, 1UL << currentnasid);
+			SET(ioc_nodemask, 1UL << currentnasid);
 
 			device_mask = (1 << IOCDEV_SERIAL_A) |
 			    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_LPT) |
@@ -286,13 +292,9 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 
 			rtcbase = IOC3_BYTEBUS_0;
 			dual_irq = 1;
-			/*
-			 * XXX On IP35 class machines, there are no
-			 * XXX Number-In-a-Can chips to tell us the
-			 * XXX Ethernet address, we need to query
-			 * XXX the L1 controller.
-			 */
-		} else {
+		} else
+#endif
+		{
 unknown:
 			/*
 			 * Well, we don't really know what kind of device
@@ -464,6 +466,8 @@ ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 	struct ioc_softc *sc = (struct ioc_softc *)ioc;
 	struct ioc_attach_args iaa;
 
+	memset(&iaa, 0, sizeof iaa);
+
 	iaa.iaa_name = name;
 	iaa.iaa_memt = sc->sc_memt;
 	iaa.iaa_memh = sc->sc_memh;
@@ -471,17 +475,23 @@ ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 	iaa.iaa_base = base;
 	iaa.iaa_dev = dev;
 
-	if (sc->sc_owmac != NULL)
-		memcpy(iaa.iaa_enaddr, sc->sc_owmac->sc_enaddr, 6);
-	else {
-		/*
-		 * XXX On IP35, there is no Number-In-a-Can attached to
-		 * XXX the onboard IOC3; instead, the Ethernet address
-		 * XXX is stored in the machine eeprom and can be
-		 * XXX queried by sending the appropriate L1 command
-		 * XXX to the L1 UART. This L1 code is not written yet.
-		 */
-		memset(iaa.iaa_enaddr, 0xff, 6);
+	if (dev == IOCDEV_EF) {
+		if (sc->sc_owmac != NULL)
+			memcpy(iaa.iaa_enaddr, sc->sc_owmac->sc_enaddr, 6);
+		else {
+#ifdef TGT_ORIGIN
+			/*
+			 * On IP35 class machines, there are no
+			 * Number-In-a-Can attached to the onboard
+			 * IOC3; instead, the Ethernet address is
+			 * stored in the Brick EEPROM, and can be
+			 * retrieved with an L1 controller query.
+			 */
+			if (l1_get_brick_ethernet_address(currentnasid,
+			    iaa.iaa_enaddr) != 0)
+#endif
+				memset(iaa.iaa_enaddr, 0xff, 6);
+		}
 	}
 
 	return config_found_sm(ioc, &iaa, ioc_print, ioc_search_mundane);

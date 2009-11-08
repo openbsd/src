@@ -1,4 +1,4 @@
-/*	$OpenBSD: hub.h,v 1.6 2009/10/22 22:08:54 miod Exp $	*/
+/*	$OpenBSD: hub.h,v 1.7 2009/11/08 22:44:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -65,9 +65,12 @@
 #define	LBOOTBASE_IP35		0x18000000
 #define	LBOOTSIZE_IP35		0x08000000
 
+#define	HSPEC_L1_UARTBASE	0x00000080
 #define	HSPEC_SYNERGY0		0x04000000	/* synergy #0 base */
 #define	HSPEC_SYNERGY1		0x05000000	/* synergy #1 base */
 
+#define	HSPEC_L1_UART(r) \
+	(LREGBASE_IP35 + HSPEC_L1_UARTBASE + ((r) << 3))
 #define	HSPEC_SYNERGY(s,r) \
 	(LREGBASE_IP35 + ((s) ? HSPEC_SYNERGY1 : HSPEC_SYNERGY0) + ((r) << 3))
 
