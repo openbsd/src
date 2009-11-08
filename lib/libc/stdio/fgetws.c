@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetws.c,v 1.4 2009/10/22 01:23:16 guenther Exp $	*/
+/*	$OpenBSD: fgetws.c,v 1.5 2009/11/08 16:55:17 stsp Exp $	*/
 /* $NetBSD: fgetws.c,v 1.1 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
@@ -37,10 +37,7 @@
 #include "local.h"
 
 wchar_t *
-fgetws(ws, n, fp)
-	wchar_t * __restrict ws;
-	int n;
-	FILE * __restrict fp;
+fgetws(wchar_t * __restrict ws, int n, FILE * __restrict fp)
 {
 	wchar_t *wsp;
 	wint_t wc;
