@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.156 2009/11/08 23:08:56 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.157 2009/11/08 23:20:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -793,11 +793,7 @@ int aliases_vdomain_exists(struct smtpd *, objid_t, char *);
 int aliases_virtual_exist(struct smtpd *, objid_t, struct path *);
 int aliases_virtual_get(struct smtpd *, objid_t, struct expandtree *, struct path *);
 int alias_parse(struct alias *, char *);
-int expand_cmp(struct expand_node *, struct expand_node *);
-void expandtree_insert(struct expandtree *, struct expand_node *);
-void expandtree_remove(struct expandtree *, struct expand_node *);
-struct expand_node *expandtree_lookup(struct expandtree *, struct expand_node *);
-RB_PROTOTYPE(expandtree, expand_node, nodes, expand_cmp);
+void alias_to_expand_node(struct expand_node *, struct alias *);
 
 /* authenticate.c */
 int authenticate_user(char *, char *);
@@ -829,7 +825,12 @@ void		 dns_query_ptr(struct smtpd *, struct sockaddr_storage *,
 		     u_int64_t);
 void		 dns_async(struct smtpd *, struct imsgev *, int,
 		     struct dns *);
-
+/* expand.c */
+int expand_cmp(struct expand_node *, struct expand_node *);
+void expandtree_insert(struct expandtree *, struct expand_node *);
+void expandtree_remove(struct expandtree *, struct expand_node *);
+struct expand_node *expandtree_lookup(struct expandtree *, struct expand_node *);
+RB_PROTOTYPE(expandtree, expand_node, nodes, expand_cmp);
 
 /* forward.c */
 int forwards_get(int, struct expandtree *);

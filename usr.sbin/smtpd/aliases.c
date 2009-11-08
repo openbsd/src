@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.28 2009/11/08 23:15:03 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.29 2009/11/08 23:20:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -127,8 +127,7 @@ aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, cha
 			expnode = calloc(sizeof(struct expand_node), 1);
 			if (expnode == NULL)
 				fatal("aliases_get: calloc");
-			expnode->type = alias.type;
-			expnode->u = alias.u;
+			alias_to_expand_node(expnode, &alias);
 			expandtree_insert(expandtree, expnode);
 		}
 	} while (--nbaliases);
@@ -303,8 +302,7 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 			expnode = calloc(sizeof(struct expand_node), 1);
 			if (expnode== NULL)
 				fatal("aliases_virtual_get: calloc");
-			expnode->type = alias.type;
-			expnode->u = alias.u;
+			alias_to_expand_node(expnode, &alias);
 			expandtree_insert(expandtree, expnode);
 		}
 	} while (--nbaliases);
@@ -345,8 +343,7 @@ aliases_expand_include(struct expandtree *expandtree, char *filename)
 			expnode = calloc(sizeof(struct expand_node), 1);
 			if (expnode== NULL)
 				fatal("aliases_virtual_get: calloc");
-			expnode->type = alias.type;
-			expnode->u = alias.u;
+			alias_to_expand_node(expnode, &alias);
 			expandtree_insert(expandtree, expnode);
 		}
 
@@ -487,4 +484,11 @@ alias_is_include(struct alias *alias, char *line, size_t len)
 
 	alias->type = EXPAND_INCLUDE;
 	return 1;
+}
+
+void
+alias_to_expand_node(struct expand_node *expnode, struct alias *alias)
+{
+	expnode->type = alias->type;
+	expnode->u = alias->u;
 }
