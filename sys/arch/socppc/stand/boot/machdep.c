@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2009/10/05 22:05:28 dms Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2009/11/08 22:00:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -21,6 +21,14 @@
 #include "libsa.h"
 #include "wdvar.h"
 #include "fdt.h"
+
+/*
+ * RouterBOOT firmware puts its FDT at an address that is low enough
+ * to conflict with bsd.rd.  So we need to relocate the FDT.  As long
+ * as we have at least 32MB of memory, the 16MB boundary should be
+ * fine, and leave us plenty of room for future kernel growth.
+ */
+#define FDTADDRSTART	0x01000000
 
 #define RPR	0xe0000918
 #define  RPR_RSTE	0x52535445
@@ -109,13 +117,22 @@ int
 main(void)
 {
 	extern char __bss_start[], _end[];
-	bzero(__bss_start, _end-__bss_start);
+	extern int fdtaddrsave;
+
+	bzero(__bss_start, _end - __bss_start);
 
 	/* initialize FDT if the blob is available */
-	extern int fdtaddrsave;
 	if (fdtaddrsave) {
 		if (fdt_init((void *)fdtaddrsave) == 0)
 			fdtaddrsave = 0; /* no usable blob there */
+	}
+
+	/* relocate FDT */
+	if (fdtaddrsave && fdtaddrsave < FDTADDRSTART) {
+		struct fdt_head *fh = (void *)fdtaddrsave;
+
+		bcopy((void *)fdtaddrsave, (void *)FDTADDRSTART, fh->fh_size);
+		fdtaddrsave = FDTADDRSTART;
 	}
 
 	boot(0);
