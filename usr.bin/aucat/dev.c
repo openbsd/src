@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.36 2009/11/03 21:31:37 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.37 2009/11/08 00:08:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -372,7 +372,7 @@ dev_getep(struct abuf **sibuf, struct abuf **sobuf)
 {
 	struct abuf *ibuf, *obuf;
 
-	if (sibuf) {
+	if (sibuf && *sibuf) {
 		ibuf = *sibuf;
 		for (;;) {
 			if (!ibuf || !ibuf->rproc) {
@@ -384,7 +384,7 @@ dev_getep(struct abuf **sibuf, struct abuf **sobuf)
 		}
 		*sibuf = ibuf;
 	}
-	if (sobuf) {
+	if (sobuf && *sobuf) {
 		obuf = *sobuf;
 		for (;;) {
 			if (!obuf || !obuf->wproc) {
@@ -431,18 +431,22 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
 	delta /= pbuf->bpf * rbuf->bpf;
 	if (delta > 0) {
 		/*
-		 * If the play chain is ahead (most cases) drop some of
+		 * The play chain is ahead (most cases) drop some of
 		 * the recorded input, to get both in sync.
 		 */
-		obuf->drop += delta * obuf->bpf;
-		abuf_ipos(obuf, -delta);
+		if (obuf) {
+			obuf->drop += delta * obuf->bpf;
+			abuf_ipos(obuf, -delta);
+		}
 	} else if (delta < 0) {
 		/*
-		 * If record chain is ahead (should never happen,
+		 * The record chain is ahead (should never happen,
 		 * right?) then insert silence to play.
 		 */
-		ibuf->silence += -delta * ibuf->bpf;
-		abuf_opos(ibuf, delta);
+		 if (ibuf) {
+			ibuf->silence += -delta * ibuf->bpf;
+			abuf_opos(ibuf, delta);
+		}
 	}
 }
 
@@ -579,8 +583,8 @@ dev_attach(char *name,
 	if (ibuf && obuf) {
 		ibuf->duplex = obuf;
 		obuf->duplex = ibuf;
-		dev_sync(ibuf, obuf);
 	}
+	dev_sync(ibuf, obuf);
 }
 
 /*
