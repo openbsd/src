@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.26 2009/11/07 22:48:37 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.27 2009/11/08 13:10:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -224,9 +224,15 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	device_mask = 0;
 	if (sc->sc_owserial != NULL) {
 		if (strncmp(sc->sc_owserial->sc_product, "030-0873-", 9) == 0) {
-			/* MENET board */
-			device_mask = (1 << IOCDEV_SERIAL_A) |
-			    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_EF);
+			/*
+			 * MENET board; these attach as four ioc devices
+			 * behind an xbridge. However the fourth one lacks
+			 * the superio chip.
+			 */
+			device_mask = (1 << IOCDEV_EF);
+			if (pa->pa_device != 3)
+				device_mask = (1 << IOCDEV_SERIAL_A) |
+				    (1 << IOCDEV_SERIAL_B);
 			shared_handler = 1;
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-0891-", 9) == 0) {
@@ -400,14 +406,19 @@ establish:
 
 	/*
 	 * Acknowledge all pending interrupts, and disable them.
+	 * Be careful not all registers may be wired depending on what
+	 * devices are actually present.
 	 */
 
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IEC, ~0x0);
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IES, 0x0);
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR,
-	    bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR));
-	if (ISSET(device_mask, 1 << IOCDEV_EF))
+	if ((device_mask & ~(1 << IOCDEV_EF)) != 0) {
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IEC, ~0x0);
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IES, 0x0);
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR,
+		    bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR));
+	}
+	if ((device_mask & (1 << IOCDEV_EF)) != 0) {
 		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_ENET_IER, 0);
+	}
 
 	/*
 	 * Attach other sub-devices.
@@ -420,6 +431,11 @@ establish:
 		 */
 		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_UARTA_SSCR, 0);
 		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_UARTB_SSCR, 0);
+
+		bus_space_write_4(sc->sc_memt, sc->sc_memh,
+		    IOC3_UARTA_SHADOW, 0);
+		bus_space_write_4(sc->sc_memt, sc->sc_memh,
+		    IOC3_UARTB_SHADOW, 0);
 
 		ioc_attach_child(self, "com", IOC3_UARTA_BASE, IOCDEV_SERIAL_A);
 		ioc_attach_child(self, "com", IOC3_UARTB_BASE, IOCDEV_SERIAL_B);
