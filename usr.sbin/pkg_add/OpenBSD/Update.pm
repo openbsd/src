@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.88 2009/10/15 10:48:27 espie Exp $
+# $OpenBSD: Update.pm,v 1.89 2009/11/08 10:46:11 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -132,6 +132,30 @@ sub process_handle
 	} else {
 		$state->{issues} = 1;
 		return undef;
+	}
+}
+
+sub process_hint
+{
+	my ($self, $set, $hint, $state) = @_;
+
+	my $l;
+	my $k = OpenBSD::Search::FilterLocation->keep_most_recent;
+	# first try to find us exactly
+
+	$state->progress->message("Looking for $hint");
+	$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Exact->new($hint), $k);
+	if (@$l == 0) {
+		my $t = $hint;
+		$t =~ s/\-\d([^-]*)\-?/--/;
+		$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Stem->new($t), $k);
+	}
+	my $r = $state->choose_location($hint, $l);
+	if (defined $r) {
+		$self->add_updateset($set, undef, $r);
+		return 1;
+	} else {
+		return 0;
 	}
 }
 
