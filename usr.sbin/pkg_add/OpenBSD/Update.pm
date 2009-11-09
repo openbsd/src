@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.89 2009/11/08 10:46:11 espie Exp $
+# $OpenBSD: Update.pm,v 1.90 2009/11/09 17:50:24 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -59,6 +59,9 @@ sub process_handle
 	my $found;
 	my $plist;
 
+	if (!$state->{defines}->{downgrade}) {
+		push(@search, OpenBSD::Search::FilterLocation->more_recent_than($pkgname));
+	}
 	push(@search, OpenBSD::Search::FilterLocation->new(
 	    sub {
 		my $l = shift;
