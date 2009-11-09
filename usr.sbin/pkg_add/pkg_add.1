@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.82 2009/10/27 11:45:22 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.83 2009/11/09 17:52:19 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 27 2009 $
+.Dd $Mdocdate: November 9 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -243,6 +243,8 @@ can't find new packages for all installed packages.
 architecture recorded in package may not match.
 .It Ar conflicts
 force installation of package in the presence of conflicts.
+.It Ar downgrades
+don't filter out package versions older than what's currently installed.
 .It Ar installed
 in update mode, reinstall an existing package with the same signature.
 .It Ar libdepends
