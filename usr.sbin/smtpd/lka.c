@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.83 2009/11/08 23:08:56 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.84 2009/11/09 22:28:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1014,9 +1014,14 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 	case C_NET:
 	case C_DOM: {
 		char username[MAXLOGNAME];
+		char *sep;
 		struct passwd *pw;
 
 		lowercase(username, path->user, sizeof(username));
+
+		sep = strchr(username, '+');
+		if (sep != NULL)
+			*sep = '\0';
 
 		if (aliases_exist(env, path->rule.r_amap, username)) {
 			path->flags |= F_PATH_ALIAS;
