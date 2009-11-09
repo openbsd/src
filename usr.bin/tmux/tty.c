@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.68 2009/11/05 22:35:28 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.69 2009/11/09 22:50:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -138,7 +138,6 @@ void
 tty_error_callback(
     unused struct bufferevent *bufev, unused short what, unused void *data)
 {
-	fatalx("lost terminal");
 }
 
 void
