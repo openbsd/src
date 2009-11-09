@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.c,v 1.1 2009/11/08 22:44:16 miod Exp $	*/
+/*	$OpenBSD: l1.c,v 1.2 2009/11/09 16:58:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -211,8 +211,11 @@ l1_serial_ppp_read(int16_t nasid, int unescape)
 		return data;
 
 	/* unescape data if necessary */
-	if (unescape && data == PPP_ESCAPE)
-		data = l1_serial_getc(nasid) ^ PPP_TRANS;
+	if (unescape && data == PPP_ESCAPE) {
+		if ((data = l1_serial_getc(nasid)) < 0)
+			return data;
+		data ^= PPP_TRANS;
+	}
 
 	return data;
 }
@@ -243,7 +246,7 @@ l1_packet_put(int16_t nasid, u_char *packet, size_t len)
 		return EWOULDBLOCK;
 
 	/* send final packet byte flag */
-	if (l1_serial_ppp_write(nasid, &crc, PPP_FLAG, 0) != 0)
+	if (l1_serial_ppp_write(nasid, NULL, PPP_FLAG, 0) != 0)
 		return EWOULDBLOCK;
 
 	return 0;
@@ -463,7 +466,7 @@ l1_command_build(u_char *buf, size_t buflen, uint32_t address, uint16_t request,
 		argtype = va_arg(ap, int);
 		switch (argtype) {
 		case L1_ARG_INT:
-			data = (uint32_t)va_arg(ap, int);
+			data = va_arg(ap, uint32_t);
 			if (buflen >= 5) {
 				*buf++ = L1_ARG_INT;
 				l1_packet_put_be32(buf, data);
@@ -548,8 +551,10 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 	pktlen = l1_command_build(pkt, sizeof pkt,
 	    L1_ADDRESS(L1_TYPE_L1, L1_ADDRESS_LOCAL | L1_TASK_GENERAL),
 	    L1_REQ_EEPROM, 4,
-	    L1_ARG_INT, L1_EEP_LOGIC, L1_ARG_INT, L1_EEP_BOARD,
-	    L1_ARG_INT, 0 /* offset */, L1_ARG_INT, 0 /* size */);
+	    L1_ARG_INT, (uint32_t)L1_EEP_LOGIC,
+	    L1_ARG_INT, (uint32_t)L1_EEP_BOARD,
+	    L1_ARG_INT, (uint32_t)0,	/* offset */
+	    L1_ARG_INT, (uint32_t)0);	/* size */
 	if (pktlen > sizeof pkt) {
 #ifdef DIAGNOSTIC
 		panic("L1 command packet too large (%zu) for buffer", pktlen);
@@ -630,8 +635,10 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 		pktlen = l1_command_build(pkt, sizeof pkt,
 		    L1_ADDRESS(L1_TYPE_L1, L1_ADDRESS_LOCAL | L1_TASK_GENERAL),
 		    L1_REQ_EEPROM, 4,
-		    L1_ARG_INT, L1_EEP_LOGIC, L1_ARG_INT, L1_EEP_BOARD,
-		    L1_ARG_INT, iapos, L1_ARG_INT, EEPROM_CHUNK);
+		    L1_ARG_INT, (uint32_t)L1_EEP_LOGIC,
+		    L1_ARG_INT, (uint32_t)L1_EEP_BOARD,
+		    L1_ARG_INT, (uint32_t)iapos,
+		    L1_ARG_INT, (uint32_t)EEPROM_CHUNK);
 		/* no need to check size again, it's the same size as earlier */
 
 		if (l1_packet_put(nasid, pkt, pktlen) != 0) {
@@ -756,7 +763,7 @@ fail:
  *  #B part number
  *   B FRU file id
  *   B type/length of board rev (always 0xC2)
- *  2B board reviison
+ *  2B board revision
  *   B type/length of eeprom size field (0x01)
  *  1B size code for eeprom (02)
  *   B type/length of temp waiver field (0xC2)
@@ -811,9 +818,9 @@ ia_skip(u_char *ia, size_t iapos)
 int
 l1_get_brick_ethernet_address(int16_t nasid, uint8_t *enaddr)
 {
-	u_char *ia, *mac;
+	u_char *ia;
 	size_t iapos, ialen;
-	char hexaddr[18];
+	char hexaddr[18], *d, *s;
 	int rc;
 
 	/* read the Board IA of this node */
@@ -853,10 +860,14 @@ l1_get_brick_ethernet_address(int16_t nasid, uint8_t *enaddr)
 	}
 
 	iapos++;
-	mac = ia + iapos;
-	snprintf(hexaddr, sizeof hexaddr, "%c%c:%c%c:%c%c:%c%c:%c%c:%c%c",
-	    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
-	    mac[6], mac[7], mac[8], mac[9], mac[10], mac[11]);
+	s = (char *)ia + iapos;
+	d = hexaddr;
+	*d++ = *s++; *d++ = *s++; *d++ = ':';
+	*d++ = *s++; *d++ = *s++; *d++ = ':';
+	*d++ = *s++; *d++ = *s++; *d++ = ':';
+	*d++ = *s++; *d++ = *s++; *d++ = ':';
+	*d++ = *s++; *d++ = *s++; *d++ = ':';
+	*d++ = *s++; *d++ = *s++; *d++ = '\0';
 	enaddr_aton(hexaddr, enaddr);
 
 out:
