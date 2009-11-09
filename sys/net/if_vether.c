@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.1 2009/11/09 03:16:05 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.2 2009/11/09 20:38:33 mpf Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -47,7 +47,7 @@
 #include <net/bpf.h>
 #endif
 
-#ifdef MPLS_DEBUG
+#ifdef VETHER_DEBUG
 #define DPRINTF(x)    do { if (vetherdebug) printf x ; } while (0)
 #else
 #define DPRINTF(x)
