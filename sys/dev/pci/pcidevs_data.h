@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1506 2009/11/08 11:54:48 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1507 2009/11/09 14:04:32 sthen Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8900,6 +8900,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "G45 Video",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G45_PCIE_1,
+	    "G45 PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G41_HB,
 	    "G41 Host",
 	},
@@ -8986,6 +8990,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82X58_PCIE_10,
 	    "X58 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82X58_QP0_PHY,
+	    "5520/X58 QuickPath",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5520_QP1_PHY,
+	    "5520 QuickPath",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82X58_GPIO,
@@ -9456,6 +9468,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801JD LAN",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_P55_LPC,
+	    "P55 LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_LPC,
 	    "3400 LPC",
 	},
@@ -9517,11 +9533,43 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_EHCI_1,
-	    "3400 EHCI",
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_1,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_2,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_3,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_4,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_5,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_6,
+	    "3400 USB",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_EHCI_2,
-	    "3400 EHCI",
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_7,
+	    "3400 USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_UHCI_8,
+	    "3400 USB",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_PCIE_1,
@@ -10128,30 +10176,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core DMI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_2,
-	    "Core DMI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_3,
-	    "Core DMI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_4,
-	    "Core DMI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_5,
-	    "Core DMI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_6,
-	    "Core DMI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_7,
-	    "Core DMI",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_PCIE_1,
 	    "Core PCIE",
 	},
@@ -10174,6 +10198,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_QPI_R,
 	    "Core QPI Routing",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_2,
+	    "Core DMI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_3,
+	    "Core DMI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_DMI_4,
+	    "Core DMI",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE_MANAGEMENT,
