@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.30 2009/11/09 23:49:34 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.31 2009/11/09 23:54:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -86,7 +86,7 @@ aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, cha
 	struct alias alias;
 	struct alias *nextalias;
 	struct map *map;
-	struct expand_node *expnode;
+	struct expand_node expnode;
 
 	map = map_find(env, mapid);
 	if (map == NULL)
@@ -124,11 +124,9 @@ aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, cha
 			aliases_expand_include(expandtree, alias.u.filename);
 		}
 		else {
-			expnode = calloc(sizeof(struct expand_node), 1);
-			if (expnode == NULL)
-				fatal("aliases_get: calloc");
-			alias_to_expand_node(expnode, &alias);
-			expandtree_increment_node(expandtree, expnode);
+			bzero(&expnode, sizeof(struct expand_node));
+			alias_to_expand_node(&expnode, &alias);
+			expandtree_increment_node(expandtree, &expnode);
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
@@ -240,7 +238,7 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 	struct alias *nextalias;
 	struct map *map;
 	char	strkey[MAX_LINE_SIZE];
-	struct expand_node *expnode;
+	struct expand_node expnode;
 
 	map = map_find(env, mapid);
 	if (map == NULL)
@@ -299,11 +297,9 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 			aliases_expand_include(expandtree, alias.u.filename);
 		}
 		else {
-			expnode = calloc(sizeof(struct expand_node), 1);
-			if (expnode== NULL)
-				fatal("aliases_virtual_get: calloc");
-			alias_to_expand_node(expnode, &alias);
-			expandtree_increment_node(expandtree, expnode);
+			bzero(&expnode, sizeof(struct expand_node));
+			alias_to_expand_node(&expnode, &alias);
+			expandtree_increment_node(expandtree, &expnode);
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
@@ -319,7 +315,7 @@ aliases_expand_include(struct expandtree *expandtree, char *filename)
 	size_t lineno = 0;
 	char delim[] = { '\\', '#' };
 	struct alias alias;
-	struct expand_node *expnode;
+	struct expand_node expnode;
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
@@ -340,11 +336,9 @@ aliases_expand_include(struct expandtree *expandtree, char *filename)
 			log_warnx("nested inclusion is not supported.");
 		}
 		else {
-			expnode = calloc(sizeof(struct expand_node), 1);
-			if (expnode== NULL)
-				fatal("aliases_virtual_get: calloc");
-			alias_to_expand_node(expnode, &alias);
-			expandtree_increment_node(expandtree, expnode);
+			bzero(&expnode, sizeof(struct expand_node));
+			alias_to_expand_node(&expnode, &alias);
+			expandtree_increment_node(expandtree, &expnode);
 		}
 
 		free(line);

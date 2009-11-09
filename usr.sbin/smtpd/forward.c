@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.19 2009/11/09 23:49:34 gilles Exp $	*/
+/*	$OpenBSD: forward.c,v 1.20 2009/11/09 23:54:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -43,7 +43,7 @@ forwards_get(int fd, struct expandtree *expandtree)
 	size_t len;
 	size_t nbaliases = 0;
 	int quoted;
-	struct expand_node *expnode;
+	struct expand_node expnode;
 
 	fp = fdopen(fd, "r");
 	if (fp == NULL)
@@ -95,11 +95,9 @@ forwards_get(int fd, struct expandtree *expandtree)
 				continue;
 			}
 
-			expnode = calloc(sizeof(struct expand_node), 1);
-			if (expnode == NULL)
-				fatal("calloc");
-			alias_to_expand_node(expnode, &alias);
-			expandtree_increment_node(expandtree, expnode);
+			bzero(&expnode, sizeof(struct expand_node));
+			alias_to_expand_node(&expnode, &alias);
+			expandtree_increment_node(expandtree, &expnode);
 			nbaliases++;
 		} while (*cp != '\0');
 	}
