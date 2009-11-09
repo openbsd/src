@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.36 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.37 2009/11/09 09:54:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -121,9 +121,9 @@ int	pfsync_print_eof(int, const void *);
 
 struct pfsync_actions actions[] = {
 	{ sizeof(struct pfsync_clr),		pfsync_print_clr },
-	{ sizeof(struct pfsync_state),		pfsync_print_state },
+	{ 0,					NULL },
 	{ sizeof(struct pfsync_ins_ack),	pfsync_print_ins_ack },
-	{ sizeof(struct pfsync_state),		pfsync_print_state },
+	{ 0,					NULL },
 	{ sizeof(struct pfsync_upd_c),		pfsync_print_upd_c },
 	{ sizeof(struct pfsync_upd_req),	pfsync_print_upd_req },
 	{ sizeof(struct pfsync_state),		pfsync_print_state },
@@ -132,7 +132,9 @@ struct pfsync_actions actions[] = {
 	{ 0,					NULL },
 	{ sizeof(struct pfsync_bus),		pfsync_print_bus },
 	{ sizeof(struct pfsync_tdb),		pfsync_print_tdb },
-	{ 0,					pfsync_print_eof }
+	{ 0,					pfsync_print_eof },
+	{ sizeof(struct pfsync_state),		pfsync_print_state },
+	{ sizeof(struct pfsync_state),		pfsync_print_state }
 };
 
 void
