@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.84 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3460,6 +3460,7 @@ bnx_blockinit(struct bnx_softc *sc)
 
 	/* Set up link change interrupt generation. */
 	REG_WR(sc, BNX_EMAC_ATTENTION_ENA, BNX_EMAC_ATTENTION_ENA_LINK);
+	REG_WR(sc, BNX_HC_ATTN_BITS_ENABLE, STATUS_ATTN_BITS_LINK_STATE);
 
 	/* Program the physical address of the status block. */
 	REG_WR(sc, BNX_HC_STATUS_ADDR_L, (u_int32_t)(sc->status_block_paddr));
