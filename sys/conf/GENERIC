@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.149 2009/08/26 00:37:17 thib Exp $
+#	$OpenBSD: GENERIC,v 1.150 2009/11/09 03:16:07 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -105,6 +105,7 @@ pseudo-device	sl		# CSLIP
 pseudo-device	tun		# network tunneling over tty
 pseudo-device	vlan 		# IEEE 802.1Q VLAN 
 pseudo-device	trunk		# Trunking support
+pseudo-device	vether		# Virtual ethernet
 
 # for IPv6
 #pseudo-device	faith	1	# IPv[46] tcp relay translation i/f

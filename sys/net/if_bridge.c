@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.174 2009/01/06 21:23:18 claudio Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.175 2009/11/09 03:16:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2766,12 +2766,20 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 int
 bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 {
+#if VETHER > 0
+	extern void vetherstart(struct ifnet *);
+#endif
 	int error, len;
 	short mflags;
 
 #if NGIF > 0
 	/* Packet needs etherip encapsulation. */
 	if (ifp->if_type == IFT_GIF)
+		m->m_flags |= M_PROTO1;
+#endif
+#if VETHER > 0
+	/* Indicate packets which are outbound */
+	if (ifp->if_start == vetherstart)
 		m->m_flags |= M_PROTO1;
 #endif
 #if NVLAN > 0
