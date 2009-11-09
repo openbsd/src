@@ -1,4 +1,4 @@
-/*	$OpenBSD: fclose.c,v 1.8 2009/10/22 01:23:16 guenther Exp $ */
+/*	$OpenBSD: fclose.c,v 1.9 2009/11/09 00:18:27 kurt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@ fclose(FILE *fp)
 		errno = EBADF;
 		return (EOF);
 	}
+	FLOCKFILE(fp);
 	WCIO_FREE(fp);
 	r = fp->_flags & __SWR ? __sflush(fp) : 0;
 	if (fp->_close != NULL && (*fp->_close)(fp->_cookie) < 0)
@@ -55,7 +56,8 @@ fclose(FILE *fp)
 		FREEUB(fp);
 	if (HASLB(fp))
 		FREELB(fp);
-	fp->_flags = 0;		/* Release this FILE for reuse. */
 	fp->_r = fp->_w = 0;	/* Mess up if reaccessed. */
+	fp->_flags = 0;		/* Release this FILE for reuse. */
+	FUNLOCKFILE(fp);
 	return (r);
 }

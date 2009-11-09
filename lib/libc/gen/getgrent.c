@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.34 2009/10/22 01:23:16 guenther Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.35 2009/11/09 00:18:27 kurt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -319,7 +319,8 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 		if (!strchr(line, '\n')) {
 			int ch;
 
-			while ((ch = getc(_gr_fp)) != '\n' && ch != EOF)
+			while ((ch = getc_unlocked(_gr_fp)) != '\n' &&
+			    ch != EOF)
 				;
 			continue;
 		}

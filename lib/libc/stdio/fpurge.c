@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpurge.c,v 1.8 2009/10/22 01:23:16 guenther Exp $ */
+/*	$OpenBSD: fpurge.c,v 1.9 2009/11/09 00:18:27 kurt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,9 @@
 int
 fpurge(FILE *fp)
 {
+	FLOCKFILE(fp);
 	if (!fp->_flags) {
+		FUNLOCKFILE(fp);
 		errno = EBADF;
 		return(EOF);
 	}
@@ -54,5 +56,6 @@ fpurge(FILE *fp)
 	fp->_p = fp->_bf._base;
 	fp->_r = 0;
 	fp->_w = fp->_flags & (__SLBF|__SNBF) ? 0 : fp->_bf._size;
+	FUNLOCKFILE(fp);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.14 2009/10/22 01:23:16 guenther Exp $	*/
+/*	$OpenBSD: local.h,v 1.15 2009/11/09 00:18:27 kurt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,6 +42,7 @@
 #include "fileext.h"
 
 int	__sflush(FILE *);
+int	__sflush_locked(FILE *);
 FILE	*__sfp(void);
 int	__srefill(FILE *);
 int	__sread(void *, char *, int);
@@ -56,6 +57,7 @@ int	_fwalk(int (*)(FILE *));
 int	__swsetup(FILE *);
 int	__sflags(const char *, int *);
 wint_t __fgetwc_unlock(FILE *);
+int	__vfprintf(FILE *, const char *, __va_list);
 
 extern void __atexit_register_cleanup(void (*)(void));
 extern int __sdidinit;
@@ -86,3 +88,6 @@ extern int __sdidinit;
 	free((char *)(fp)->_lb._base); \
 	(fp)->_lb._base = NULL; \
 }
+
+#define FLOCKFILE(fp)	do { if (__isthreaded) flockfile(fp); } while (0)
+#define FUNLOCKFILE(fp)	do { if (__isthreaded) funlockfile(fp); } while (0)

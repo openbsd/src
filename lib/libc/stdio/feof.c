@@ -1,4 +1,4 @@
-/*	$OpenBSD: feof.c,v 1.7 2009/10/22 01:23:16 guenther Exp $ */
+/*	$OpenBSD: feof.c,v 1.8 2009/11/09 00:18:27 kurt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
  */
 
 #include <stdio.h>
+#include "local.h"
 
 /*
  * A subroutine version of the macro feof.
@@ -41,5 +42,10 @@
 int
 feof(FILE *fp)
 {
-	return (__sfeof(fp));
+	int	ret;
+
+	FLOCKFILE(fp);
+	ret = __sfeof(fp);
+	FUNLOCKFILE(fp);
+	return (ret);
 }

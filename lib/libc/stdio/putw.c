@@ -1,4 +1,4 @@
-/*	$OpenBSD: putw.c,v 1.8 2009/10/22 01:23:16 guenther Exp $ */
+/*	$OpenBSD: putw.c,v 1.9 2009/11/09 00:18:27 kurt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
  */
 
 #include <stdio.h>
+#include "local.h"
 #include "fvwrite.h"
 
 int
@@ -39,10 +40,14 @@ putw(int w, FILE *fp)
 {
 	struct __suio uio;
 	struct __siov iov;
+	int ret;
 
 	iov.iov_base = &w;
 	iov.iov_len = uio.uio_resid = sizeof(w);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	return (__sfvwrite(fp, &uio));
+	FLOCKFILE(fp);
+	ret = __sfvwrite(fp, &uio);
+	FUNLOCKFILE(fp);
+	return (ret);
 }

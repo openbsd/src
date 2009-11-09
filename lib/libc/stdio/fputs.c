@@ -1,4 +1,4 @@
-/*	$OpenBSD: fputs.c,v 1.9 2009/10/22 01:23:16 guenther Exp $ */
+/*	$OpenBSD: fputs.c,v 1.10 2009/11/09 00:18:27 kurt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,11 +44,15 @@ fputs(const char *s, FILE *fp)
 {
 	struct __suio uio;
 	struct __siov iov;
+	int ret;
 
 	iov.iov_base = (void *)s;
 	iov.iov_len = uio.uio_resid = strlen(s);
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
+	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, -1);
-	return (__sfvwrite(fp, &uio));
+	ret = __sfvwrite(fp, &uio);
+	FUNLOCKFILE(fp);
+	return (ret);
 }
