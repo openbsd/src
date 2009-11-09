@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.12 2009/11/09 17:50:24 espie Exp $
+# $OpenBSD: Search.pm,v 1.13 2009/11/09 17:54:55 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -201,7 +201,7 @@ sub {
 	my $l = shift;
 	my $r = [];
 	for my $e (@$l) {
-		if ($f->{version}->compare($e->pkgname->{version}) < 0) {
+		if ($f->{version}->compare($e->pkgname->{version}) <= 0) {
 			push(@$r, $e);
 		}
 	}
