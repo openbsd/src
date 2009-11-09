@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.573 2009/10/28 20:11:01 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.574 2009/11/09 14:31:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2009,9 +2009,9 @@ pfrule		: action dir logquick interface af proto fromto
 					YYERROR;
 				}
 				r.rt = $8.route.rt;
-				r.rdr.opts = $8.route.pool_opts;
+				r.route.opts = $8.route.pool_opts;
 				if ($8.route.key != NULL)
-					memcpy(&r.rdr.key, $8.route.key,
+					memcpy(&r.route.key, $8.route.key,
 					    sizeof(struct pf_poolhashkey));
 			}
 			if (r.rt && r.rt != PF_FASTROUTE) {
@@ -2022,18 +2022,18 @@ pfrule		: action dir logquick interface af proto fromto
 					    "matching address family found.");
 					YYERROR;
 				}
-				if ((r.rdr.opts & PF_POOL_TYPEMASK) ==
+				if ((r.route.opts & PF_POOL_TYPEMASK) ==
 				    PF_POOL_NONE && ($8.route.host->next != NULL ||
 				    $8.route.host->addr.type == PF_ADDR_TABLE ||
 				    DYNIF_MULTIADDR($8.route.host->addr)))
-					r.rdr.opts |= PF_POOL_ROUNDROBIN;
-				if ((r.rdr.opts & PF_POOL_TYPEMASK) !=
+					r.route.opts |= PF_POOL_ROUNDROBIN;
+				if ((r.route.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
 				    disallow_table($8.route.host,
 				    "tables are only "
 				    "supported in round-robin routing pools"))
 					YYERROR;
-				if ((r.rdr.opts & PF_POOL_TYPEMASK) !=
+				if ((r.route.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
 				    disallow_alias($8.route.host,
 				    "interface (%s) "
@@ -2041,9 +2041,9 @@ pfrule		: action dir logquick interface af proto fromto
 				    "routing pools"))
 					YYERROR;
 				if ($8.route.host->next != NULL) {
-					if ((r.rdr.opts & PF_POOL_TYPEMASK) !=
+					if ((r.route.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) {
-						yyerror("r.rpool.opts must "
+						yyerror("r.route.opts must "
 						    "be PF_POOL_ROUNDROBIN");
 						YYERROR;
 					}
