@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.157 2009/11/08 23:20:07 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.158 2009/11/09 23:49:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -375,6 +375,7 @@ struct path {
 TAILQ_HEAD(deliverylist, path);
 
 enum expand_type {
+	EXPAND_INVALID,
 	EXPAND_USERNAME,
 	EXPAND_FILENAME,
 	EXPAND_FILTER,
@@ -382,9 +383,15 @@ enum expand_type {
 	EXPAND_ADDRESS
 };
 
+enum expand_flags {
+	F_EXPAND_NONE,
+	F_EXPAND_DONE
+};
+
 struct expand_node {
 	RB_ENTRY(expand_node)	entry;
-	u_int64_t	        id;
+	size_t			refcnt;
+	enum expand_flags      	flags;
 	enum expand_type       	type;
 	union path_data		u;
 };
@@ -827,8 +834,9 @@ void		 dns_async(struct smtpd *, struct imsgev *, int,
 		     struct dns *);
 /* expand.c */
 int expand_cmp(struct expand_node *, struct expand_node *);
-void expandtree_insert(struct expandtree *, struct expand_node *);
-void expandtree_remove(struct expandtree *, struct expand_node *);
+void expandtree_increment_node(struct expandtree *, struct expand_node *);
+void expandtree_decrement_node(struct expandtree *, struct expand_node *);
+void expandtree_remove_node(struct expandtree *, struct expand_node *);
 struct expand_node *expandtree_lookup(struct expandtree *, struct expand_node *);
 RB_PROTOTYPE(expandtree, expand_node, nodes, expand_cmp);
 

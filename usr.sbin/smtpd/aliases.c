@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.29 2009/11/08 23:20:07 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.30 2009/11/09 23:49:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -128,7 +128,7 @@ aliases_get(struct smtpd *env, objid_t mapid, struct expandtree *expandtree, cha
 			if (expnode == NULL)
 				fatal("aliases_get: calloc");
 			alias_to_expand_node(expnode, &alias);
-			expandtree_insert(expandtree, expnode);
+			expandtree_increment_node(expandtree, expnode);
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
@@ -303,7 +303,7 @@ aliases_virtual_get(struct smtpd *env, objid_t mapid,
 			if (expnode== NULL)
 				fatal("aliases_virtual_get: calloc");
 			alias_to_expand_node(expnode, &alias);
-			expandtree_insert(expandtree, expnode);
+			expandtree_increment_node(expandtree, expnode);
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
@@ -344,7 +344,7 @@ aliases_expand_include(struct expandtree *expandtree, char *filename)
 			if (expnode== NULL)
 				fatal("aliases_virtual_get: calloc");
 			alias_to_expand_node(expnode, &alias);
-			expandtree_insert(expandtree, expnode);
+			expandtree_increment_node(expandtree, expnode);
 		}
 
 		free(line);

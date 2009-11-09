@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.84 2009/11/09 22:28:08 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.85 2009/11/09 23:49:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -897,6 +897,7 @@ lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expand_
 
 		lka_rcpt_action(env, tag, path);
 		break;
+	case EXPAND_INVALID:
 	case EXPAND_INCLUDE:
 		fatalx("lka_resolve_node: unexpected type");
 		break;
@@ -946,15 +947,18 @@ lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
 
 	lkasessionpath = &lkasession->path;
 	rmnode = NULL;
-	
+
+	log_debug("expand iteration: %d", lkasession->iterations);
 	RB_FOREACH(expnode, expandtree, &lkasession->expandtree) {
 		struct path path;
 
-		if (rmnode) {
-			expandtree_remove(&lkasession->expandtree, rmnode);
-			free(rmnode);
-			rmnode = NULL;
-		}
+		if (rmnode)
+			expandtree_decrement_node(&lkasession->expandtree, rmnode);
+
+		if (expnode->flags & F_EXPAND_DONE)
+			continue;
+		done = 0;
+
 		rmnode = expnode;
 
 		if (! lka_resolve_node(env, lkasession->message.tag, &path, expnode))
@@ -970,32 +974,31 @@ lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
 				TAILQ_INSERT_TAIL(&lkasession->deliverylist, respath, entry);
 			else
 				lka_request_forwardfile(env, lkasession, respath->pw_name);
+			expnode->flags |= F_EXPAND_DONE;
 		}
 
 		else if (respath->flags & F_PATH_ALIAS) {
-			if (aliases_get(env, lkasessionpath->rule.r_amap,
-				&lkasession->expandtree, respath->user))
-				done = 0;
+			aliases_get(env, lkasessionpath->rule.r_amap,
+			    &lkasession->expandtree, respath->user);
+			expnode->flags |= F_EXPAND_DONE;
 		}
 
 		else if (respath->flags & F_PATH_VIRTUAL) {
-			if (aliases_virtual_get(env, lkasessionpath->cond->c_map,
-				&lkasession->expandtree, respath))
-				done = 0;
+			aliases_virtual_get(env, lkasessionpath->cond->c_map,
+			    &lkasession->expandtree, respath);
+			expnode->flags |= F_EXPAND_DONE;
 		}
 
 	}
 
-	if (rmnode) {
-		expandtree_remove(&lkasession->expandtree, rmnode);
-		free(rmnode);
-	}
+	if (rmnode)
+		expandtree_decrement_node(&lkasession->expandtree, rmnode);
 
 	if (!done && lkasession->iterations == 5) {
 		return -1;
 	}
 
-	if (RB_ROOT(&lkasession->expandtree) == NULL)
+	if (RB_ROOT(&lkasession->expandtree) == NULL || done)
 		return 0;
 
 	return 1;
@@ -1004,7 +1007,7 @@ lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
 int
 lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *path)
 {
-	if (IS_RELAY(*path)) {
+	if (IS_RELAY(*path) || path->cond == NULL) {
 		path->flags |= F_PATH_RELAY;
 		return 1;
 	}
@@ -1095,7 +1098,7 @@ lka_clear_expandtree(struct expandtree *expandtree)
 	struct expand_node *expnode;
 
 	while ((expnode = RB_ROOT(expandtree)) != NULL) {
-		expandtree_remove(expandtree, expnode);
+		expandtree_remove_node(expandtree, expnode);
 		free(expnode);
 	}
 }
