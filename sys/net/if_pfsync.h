@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.39 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.40 2009/11/09 23:46:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -45,7 +45,7 @@
 #ifndef _NET_IF_PFSYNC_H_
 #define _NET_IF_PFSYNC_H_
 
-#define PFSYNC_VERSION		5
+#define PFSYNC_VERSION		6
 #define PFSYNC_DFLTTL		255
 
 #define PFSYNC_ACT_CLR		0	/* clear all states */
