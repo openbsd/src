@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.28 2009/11/08 22:44:16 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.29 2009/11/09 16:57:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -487,8 +487,9 @@ ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 			 * stored in the Brick EEPROM, and can be
 			 * retrieved with an L1 controller query.
 			 */
-			if (l1_get_brick_ethernet_address(currentnasid,
-			    iaa.iaa_enaddr) != 0)
+			if (sys_config.system_type != SGI_IP35 ||
+			    l1_get_brick_ethernet_address(currentnasid,
+			      iaa.iaa_enaddr) != 0)
 #endif
 				memset(iaa.iaa_enaddr, 0xff, 6);
 		}
