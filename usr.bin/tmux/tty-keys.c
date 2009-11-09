@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.18 2009/11/09 11:45:10 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.19 2009/11/09 14:40:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -364,7 +364,7 @@ tty_keys_next(struct tty *tty)
 
 	/* If a normal key, return it. */
 	if (*buf != '\033') {
-		key = *buf;
+		key = (u_char) *buf;
 		evbuffer_drain(tty->event->input, 1);
 
 		/*
