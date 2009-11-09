@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.27 2009/10/31 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.28 2009/11/09 17:53:39 nicm Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -653,12 +653,11 @@ common_bktr_intr( void *arg )
 		/* If someone has a select() on /dev/vbi, inform them */
 #ifndef __OpenBSD__
 		if (bktr->vbi_select.si_pid) {
-#else
-		if (bktr->vbi_select.si_selpid) {
-#endif
 			selwakeup(&bktr->vbi_select);
-			KNOTE(&bktr->vbi_select.si_note, 0);
 		}
+#else
+		selwakeup(&bktr->vbi_select);
+#endif
 	}
 
 

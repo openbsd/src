@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.15 2009/10/31 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: qd.c,v 1.16 2009/11/09 17:53:39 nicm Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -2065,7 +2065,6 @@ qddint(arg)
 
 		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
 			selwakeup(&qdrsel[dv->dv_unit]);
-			KNOTE(&qdrsel[dv->dv_unit].si_note, 0);
 			qdrsel[dv->dv_unit].si_pid = 0;
 			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
 		}
@@ -2085,7 +2084,6 @@ qddint(arg)
 	if (DMA_ISFULL(header)) {
 		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
 			selwakeup(&qdrsel[dv->dv_unit]);
-			KNOTE(&qdrsel[dv->dv_unit].si_note, 0);
 			qdrsel[dv->dv_unit].si_pid = 0;  
 			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
 		}
@@ -2106,7 +2104,6 @@ qddint(arg)
 	if (DMA_ISEMPTY(header)) {
 		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
 			selwakeup(&qdrsel[dv->dv_unit]);
-			KNOTE(&qdrsel[dv->dv_unit].si_note, 0);
 			qdrsel[dv->dv_unit].si_pid = 0;
 			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
 		}
@@ -2740,7 +2737,6 @@ GET_TBUTTON:
 		*/
 		if (qdrsel[dv->dv_unit].si_pid && do_wakeup && qdflags[dv->dv_unit].selmask & SEL_READ) {
 			selwakeup(&qdrsel[dv->dv_unit]);
-			KNOTE(&qdrsel[dv->dv_unit].si_note, 0);
 			qdrsel[dv->dv_unit].si_pid = 0;
 			qdflags[dv->dv_unit].selmask &= ~SEL_READ;
 			do_wakeup = 0;

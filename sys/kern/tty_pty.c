@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.42 2009/10/31 12:00:08 fgsch Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.43 2009/11/09 17:53:39 nicm Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -395,12 +395,10 @@ ptcwakeup(struct tty *tp, int flag)
 	if (flag & FREAD) {
 		selwakeup(&pti->pt_selr);
 		wakeup(&tp->t_outq.c_cf);
-		KNOTE(&pti->pt_selr.si_note, 0);
 	}
 	if (flag & FWRITE) {
 		selwakeup(&pti->pt_selw);
 		wakeup(&tp->t_rawq.c_cf);
-		KNOTE(&pti->pt_selw.si_note, 0);
 	}
 }
 
@@ -510,7 +508,6 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
-		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	if (bufcc)
 		bzero(buf, bufcc);

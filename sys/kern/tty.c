@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.82 2009/10/30 16:41:10 nicm Exp $	*/
+/*	$OpenBSD: tty.c,v 1.83 2009/11/09 17:53:39 nicm Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1246,7 +1246,6 @@ ttyflush(struct tty *tp, int rw)
 		FLUSHQ(&tp->t_outq);
 		wakeup((caddr_t)&tp->t_outq);
 		selwakeup(&tp->t_wsel);
-		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	splx(s);
 }
@@ -2021,7 +2020,6 @@ ttwakeup(struct tty *tp)
 	if (ISSET(tp->t_state, TS_ASYNC))
 		pgsignal(tp->t_pgrp, SIGIO, 1);
 	wakeup((caddr_t)&tp->t_rawq);
-	KNOTE(&tp->t_rsel.si_note, 0);
 }
 
 /*

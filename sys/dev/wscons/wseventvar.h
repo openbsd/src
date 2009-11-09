@@ -1,4 +1,4 @@
-/* $OpenBSD: wseventvar.h,v 1.5 2009/10/31 14:13:57 deraadt Exp $ */
+/* $OpenBSD: wseventvar.h,v 1.6 2009/11/09 17:53:39 nicm Exp $ */
 /* $NetBSD: wseventvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
 
 /*
@@ -94,7 +94,6 @@ struct wseventvar {
 
 #define	WSEVENT_WAKEUP(ev) { \
 	selwakeup(&(ev)->sel); \
-	KNOTE(&(ev)->sel.si_note, 0); \
 	if ((ev)->wanted) { \
 		(ev)->wanted = 0; \
 		wakeup((caddr_t)(ev)); \

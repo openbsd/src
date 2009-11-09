@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.56 2009/10/30 18:03:34 deraadt Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.57 2009/11/09 17:53:39 nicm Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -255,10 +255,10 @@ pipeselwakeup(struct pipe *cpipe)
 	if (cpipe->pipe_state & PIPE_SEL) {
 		cpipe->pipe_state &= ~PIPE_SEL;
 		selwakeup(&cpipe->pipe_sel);
-	}
+	} else
+		KNOTE(&cpipe->pipe_sel.si_note, 0);
 	if ((cpipe->pipe_state & PIPE_ASYNC) && cpipe->pipe_pgid != NO_PID)
 		gsignal(cpipe->pipe_pgid, SIGIO);
-	KNOTE(&cpipe->pipe_sel.si_note, 0);
 }
 
 /* ARGSUSED */

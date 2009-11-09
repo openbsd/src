@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.29 2009/10/31 12:00:07 fgsch Exp $ */
+/*	$OpenBSD: zs.c,v 1.30 2009/11/09 17:53:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -564,7 +564,6 @@ zsstop(tp, flag)
 				wakeup((caddr_t) & tp->t_outq);
 			}
 			selwakeup(&tp->t_wsel);
-			KNOTE(&tp->t_wsel.si_note, 0);
 		}
 	}
 	splx(s);
@@ -913,7 +912,6 @@ zs_softint(arg)
 					wakeup((caddr_t) & tp->t_outq);
 				}
 				selwakeup(&tp->t_wsel);
-				KNOTE(&tp->t_wsel.si_note, 0);
 			}
 			if (tp->t_line != 0)
 				(*linesw[tp->t_line].l_start) (tp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.14 2009/11/02 00:58:22 fgsch Exp $ */
+/*	$OpenBSD: cz.c,v 1.15 2009/11/09 17:53:39 nicm Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -1486,7 +1486,6 @@ czttystart(struct tty *tp)
 			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
-		KNOTE(&tp->t_wsel.si_note, 0);
 		if (tp->t_outq.c_cc == 0)
 			goto out;
 	}

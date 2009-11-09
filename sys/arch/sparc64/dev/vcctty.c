@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcctty.c,v 1.2 2009/10/31 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: vcctty.c,v 1.3 2009/11/09 17:53:39 nicm Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -440,7 +440,6 @@ vccttystart(struct tty *tp)
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
-		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)

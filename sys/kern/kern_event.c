@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.34 2009/06/02 11:04:55 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.35 2009/11/09 17:53:39 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -865,8 +865,8 @@ kqueue_wakeup(struct kqueue *kq)
 	if (kq->kq_state & KQ_SEL) {
 		kq->kq_state &= ~KQ_SEL;
 		selwakeup(&kq->kq_sel);
-	}
-	KNOTE(&kq->kq_sel.si_note, 0);
+	} else
+		KNOTE(&kq->kq_sel.si_note, 0);
 }
 
 /*

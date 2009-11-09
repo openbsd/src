@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.45 2009/10/31 12:00:08 fgsch Exp $ */
+/*	$OpenBSD: ucom.c,v 1.46 2009/11/09 17:53:39 nicm Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -949,7 +949,6 @@ ucomstart(struct tty *tp)
 			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
-		KNOTE(&tp->t_wsel.si_note, 0);
 		if (tp->t_outq.c_cc == 0)
 			goto out;
 	}

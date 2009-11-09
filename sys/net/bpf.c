@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.74 2009/10/26 18:22:58 claudio Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.75 2009/11/09 17:53:39 nicm Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -506,7 +506,6 @@ bpf_wakeup(struct bpf_d *d)
 	selwakeup(&d->bd_sel);
 	/* XXX */
 	d->bd_sel.si_selpid = 0;
-	KNOTE(&d->bd_sel.si_note, 0);
 }
 
 int

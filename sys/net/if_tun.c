@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.99 2009/08/09 10:09:12 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.100 2009/11/09 17:53:39 nicm Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -412,7 +412,6 @@ tunclose(dev_t dev, int flag, int mode, struct proc *p)
 	else {
 		tp->tun_pgid = 0;
 		selwakeup(&tp->tun_rsel);
-		KNOTE(&tp->tun_rsel.si_note, 0);
 	}
 
 	return (0);
@@ -642,7 +641,6 @@ tun_wakeup(struct tun_softc *tp)
 		csignal(tp->tun_pgid, SIGIO,
 		    tp->tun_siguid, tp->tun_sigeuid);
 	selwakeup(&tp->tun_rsel);
-	KNOTE(&tp->tun_rsel.si_note, 0);
 }
 
 /*

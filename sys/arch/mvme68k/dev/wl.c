@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.20 2009/10/31 12:00:07 fgsch Exp $ */
+/*	$OpenBSD: wl.c,v 1.21 2009/11/09 17:53:39 nicm Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1218,7 +1218,6 @@ cl_txintr(sc)
 					wakeup((caddr_t) &tp->t_outq);
 				}
 				selwakeup(&tp->t_wsel);
-				KNOTE(&tp->t_wsel.si_note, 0);
 			}
 			sc->cl_reg->cl_ier = sc->cl_reg->cl_ier & ~(IER_TXMPTY|IER_TXD);
 		}

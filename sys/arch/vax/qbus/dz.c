@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.19 2009/10/31 12:00:07 fgsch Exp $	*/
+/*	$OpenBSD: dz.c,v 1.20 2009/11/09 17:53:39 nicm Exp $	*/
 /*	$NetBSD: dz.c,v 1.23 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -480,7 +480,6 @@ dzstart(struct tty *tp)
 			wakeup((caddr_t)cl);
 		}
 		selwakeup(&tp->t_wsel);
-		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	if (cl->c_cc == 0) {
 		splx(s);

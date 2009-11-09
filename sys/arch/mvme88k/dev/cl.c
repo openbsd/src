@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.56 2009/10/31 12:00:07 fgsch Exp $ */
+/*	$OpenBSD: cl.c,v 1.57 2009/11/09 17:53:39 nicm Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1426,7 +1426,6 @@ cl_txintr(arg)
 						wakeup((caddr_t) &tp->t_outq);
 					}
 					selwakeup(&tp->t_wsel);
-					KNOTE(&tp->t_wsel.si_note, 0);
 				}
 				bus_space_write_1(iot, ioh, CL_IER,
 				    bus_space_read_1(iot, ioh, CL_IER) & ~0x03);
@@ -1458,7 +1457,6 @@ cl_txintr(arg)
 					wakeup((caddr_t) &tp->t_outq);
 				}
 				selwakeup(&tp->t_wsel);
-				KNOTE(&tp->t_wsel.si_note, 0);
 			}
 			bus_space_write_1(iot, ioh, CL_IER,
 			    bus_space_read_1(iot, ioh, CL_IER) & ~0x03);

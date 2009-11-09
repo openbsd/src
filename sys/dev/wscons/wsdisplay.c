@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.96 2009/10/31 14:13:57 deraadt Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.97 2009/11/09 17:53:39 nicm Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1487,7 +1487,6 @@ low:
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
-		KNOTE(&tp->t_wsel.si_note, 0);
 	}
 	splx(s);
 }

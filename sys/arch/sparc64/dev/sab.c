@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.26 2009/10/31 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: sab.c,v 1.27 2009/11/09 17:53:39 nicm Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -1099,7 +1099,6 @@ sabtty_start(tp)
 				wakeup(&tp->t_outq);
 			}
 			selwakeup(&tp->t_wsel);
-			KNOTE(&tp->t_wsel.si_note, 0);
 		}
 		if (tp->t_outq.c_cc) {
 			sc->sc_txc = ndqb(&tp->t_outq, 0);
