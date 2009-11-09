@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.32 2009/11/07 01:31:38 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.33 2009/11/09 06:42:59 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ _rmtopendev(char *path, int oflags, int dflags, char **realpath)
 }
 
 int
-_rmtioctl(int fd, long req, struct mtop *com)
+_rmtmtioctop(int fd, struct mtop *com)
 {
 #ifdef RMT
 	if (host)
@@ -136,8 +136,9 @@ main(int argc, char *argv[])
 {
 	struct commands *comp;
 	struct mtop mt_com;
-	int ch, len, mtfd, flags, insert = 0;
+	int ch, mtfd, flags, insert = 0;
 	char *p, *tape, *realtape, *opts;
+	size_t len;
 
 	if ((progname = strrchr(argv[0], '/')))
 		progname++;
@@ -224,7 +225,7 @@ main(int argc, char *argv[])
 		}
 		else
 			mt_com.mt_count = 1;
-		if (_rmtioctl(mtfd, MTIOCTOP, &mt_com) < 0) {
+		if (_rmtmtioctop(mtfd, &mt_com) < 0) {
 			if (eject)
 				err(2, "%s", tape);
 			else
