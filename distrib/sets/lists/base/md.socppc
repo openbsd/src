@@ -118,7 +118,7 @@
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libsndio.so.3.3
-./usr/lib/libssl.so.15.0
+./usr/lib/libssl.so.15.1
 ./usr/lib/libstdc++.so.49.0
 ./usr/lib/libtermcap.so.10.0
 ./usr/lib/libtermlib.so.10.0
