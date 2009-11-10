@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.90 2009/11/10 01:09:24 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.91 2009/11/10 09:53:40 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -959,7 +959,7 @@ lka_expansion_done(struct smtpd *env, struct lkasession *lkasession)
 	struct path *path;
 
 	/* delivery list is empty OR expansion led to an error, reject */
-	if (TAILQ_FIRST(&lkasession->deliverylist) ||
+	if (TAILQ_FIRST(&lkasession->deliverylist) == NULL ||
 	    lkasession->flags & F_ERROR) {
 		imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT, 0, 0,
 		    -1, &lkasession->ss, sizeof(struct submit_status));
