@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.92 2009/11/10 10:25:11 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.93 2009/11/10 14:46:18 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -983,6 +983,7 @@ int
 lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *path)
 {
 	if (IS_RELAY(*path) || path->cond == NULL) {
+		path = path_dup(path);
 		path->flags |= F_PATH_RELAY;
 		TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);
 		return 1;
