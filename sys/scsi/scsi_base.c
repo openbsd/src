@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.139 2009/11/10 10:13:08 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.140 2009/11/10 10:18:59 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -717,25 +717,64 @@ scsi_xs_exec(struct scsi_xfer *xs)
 	xs->resid = xs->datalen;
 	xs->status = 0;
 
+	/*
+	 * scsi_xs_exec() guarantees that scsi_done() will be called on the xs
+	 * it was given. The adapter is responsible for calling scsi_done()
+	 * except if its scsi_cmd() routine returns NO_CCB or TRY_AGAIN_LATER.
+	 * In those cases we must call scsi_done().
+	 */
+
+retry:
 	rv = xs->sc_link->adapter->scsi_cmd(xs);
 	switch (rv) {
 	case NO_CCB:
-		if (!ISSET(xs->flags, SCSI_POLL) && xs->retries-- > 0) {
-			timeout_set(&xs->stimeout,
-			    (void (*)(void *))scsi_xs_exec, xs);
-			timeout_add(&xs->stimeout, 1);
-			break;
-		}
-		/* FALLTHROUGH */
-	case TRY_AGAIN_LATER:
-		/* hahaha, sif... */
+		/*
+		 * Give the xs back to the device driver to retry on its own.
+		 * Setting retries to 0 prevents the midlayer retrying for us.
+		 */
 
-		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
-		scsi_done(xs);
-		splx(s);
+		xs->error = XS_NO_CCB;
 		break;
+
+	case TRY_AGAIN_LATER:
+		/*
+		 * We delay or sleep a bit and then try to shove the xs onto
+		 * the adapter again.
+		 *
+		 * This must be done here because scsi_xs_exec() guarantees
+		 * that scsi_done() will be called.
+		 */
+
+		if (xs->retries-- > 0) {
+			switch (xs->flags & (SCSI_POLL | SCSI_NOSLEEP)) {
+			case SCSI_POLL:
+				delay(1000000);
+				/* FALLTHROUGH */
+			case SCSI_NOSLEEP:
+				/* We can't sleep, try again immediately */
+				goto retry;
+			case (SCSI_POLL | SCSI_NOSLEEP):
+				panic("POLL and NOSLEEP specific on an xs");
+			}
+			if (tsleep(&lbolt, PRIBIO|PCATCH, "scbusy", 0) == 0) {
+				/* if we waited, retry */
+				goto retry;
+			}
+		}
+		xs->error = XS_BUSY;
+		break;
+
+	default:
+		/*
+		 * The adapter has already called scsi_done(), nothing to do.
+		 */
+
+		return;
 	}
+
+	s = splbio();
+	scsi_done(xs);
+	splx(s);
 }
 
 /*
@@ -796,29 +835,31 @@ scsi_scsi_cmd(struct scsi_link *link, struct scsi_generic *scsi_cmd,
 		error = sc_err1(xs);
 	} while (error == ERESTART);
 
-	if (bp != NULL) {
-		if (error) {
-			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-		} else {  
-			bp->b_error = 0;
-			bp->b_resid = xs->resid;
+	if (error != EAGAIN) {
+		if (bp != NULL) {
+			if (error) {
+				bp->b_error = error;
+				bp->b_flags |= B_ERROR;
+				bp->b_resid = bp->b_bcount;
+			} else {  
+				bp->b_error = 0;
+				bp->b_resid = xs->resid;
+			}
+	
+			s = splbio();
+			biodone(bp);
+			splx(s);
 		}
 
-		s = splbio();
-		biodone(bp);
-		splx(s);
-	}
-
-	if (link->device->done) {
-		/*
-		 * Tell the device the operation is actually complete.
-		 * No more will happen with this xfer.  This for
-		 * notification of the upper-level driver only; they
-		 * won't be returning any meaningful information to us.
-		 */
-		link->device->done(xs);
+		if (link->device->done) {
+			/*
+			 * Tell the device the operation is actually complete.
+			 * No more will happen with this xfer.  This for
+			 * notification of the upper-level driver only; they
+			 * won't be returning any meaningful information to us.
+			 */
+			link->device->done(xs);
+		}
 	}
 
 	scsi_xs_put(xs);
@@ -891,6 +932,10 @@ sc_err1(struct scsi_xfer *xs)
 			goto retry;
 		}
 		error = EIO;
+		break;
+
+	case XS_NO_CCB:
+		error = EAGAIN;
 		break;
 
 	default:

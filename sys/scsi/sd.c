@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.162 2009/11/10 10:13:08 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.163 2009/11/10 10:18:59 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -691,7 +691,9 @@ sdstart(void *v)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart\n"));
 
-	while ((bp = sd_buf_dequeue(sc)) != NULL) {
+	CLR(sc->flags, SDF_WAITING);
+	while (!ISSET(sc->flags, SDF_WAITING) &&
+	    (bp = sd_buf_dequeue(sc)) != NULL) {
 		/*
 		 * If the device has become invalid, abort all the
 		 * reads and writes until all files have been closed and
@@ -755,27 +757,36 @@ sd_buf_done(struct scsi_xfer *xs)
 {
 	struct sd_softc *sc = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
-	int s;
 
-	disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid,
+	splassert(IPL_BIO);
+
+	disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
 	    bp->b_flags & B_READ);
 
-	if (xs->error == XS_NOERROR) {
+	switch (xs->error) {
+	case XS_NOERROR:
 		bp->b_error = 0;
 		bp->b_resid = xs->resid;
-	} else {
+		break;
+
+	case XS_NO_CCB:
+		/* The hardware is busy, requeue the buf and try it later. */
+		sd_buf_requeue(sc, bp);
+		scsi_xs_put(xs);
+		SET(sc->flags, SDF_WAITING); /* break out of sdstart loop */
+		timeout_add(&sc->sc_timeout, 1);
+		return;
+
+	default:
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
+		break;
 	}
 
-	s = splbio();
 	biodone(bp);
-	splx(s);
-
 	scsi_xs_put(xs);
-
-	sdstart(sc); /* XXX */
+	sdstart(sc); /* restart io */
 }
 
 void
@@ -1456,11 +1467,13 @@ sd_flush(struct sd_softc *sc, int flags)
 
 	xs->done = sd_flush_done;
 
-	scsi_xs_exec(xs);
-	if (!ISSET(xs->flags, SCSI_POLL)) {
-		while (!ISSET(xs->flags, ITSDONE))
-			tsleep(xs, PRIBIO, "sdflush", 0);
-	}
+	do {
+		scsi_xs_exec(xs);
+		if (!ISSET(xs->flags, SCSI_POLL)) {
+			while (!ISSET(xs->flags, ITSDONE))
+				tsleep(xs, PRIBIO, "sdflush", 0);
+		}
+	} while (xs->status == XS_NO_CCB);
 
 	if (xs->error != XS_NOERROR)
 		SC_DEBUG(sc_link, SDEV_DB1, ("cache sync failed\n"));

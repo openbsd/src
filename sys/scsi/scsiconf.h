@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.107 2009/11/10 10:13:08 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.108 2009/11/10 10:18:59 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -500,6 +500,7 @@ struct scsi_xfer {
 #define XS_BUSY		5	/* The device busy, try again later?	  */
 #define XS_SHORTSENSE   6	/* Check the ATAPI sense for the error */
 #define XS_RESET	8	/* bus was reset; possible retry command  */
+#define XS_NO_CCB	9	/* device should requeue io and retry */
 
 /*
  * Possible retries for scsi_test_unit_ready()
