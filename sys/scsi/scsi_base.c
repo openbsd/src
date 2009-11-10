@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.140 2009/11/10 10:18:59 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.141 2009/11/10 10:51:03 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -730,7 +730,6 @@ retry:
 	case NO_CCB:
 		/*
 		 * Give the xs back to the device driver to retry on its own.
-		 * Setting retries to 0 prevents the midlayer retrying for us.
 		 */
 
 		xs->error = XS_NO_CCB;
