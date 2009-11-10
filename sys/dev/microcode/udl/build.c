@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.5 2009/08/26 12:32:27 mglocker Exp $ */
+/*	$OpenBSD: build.c,v 1.6 2009/11/10 23:55:12 mpf Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <err.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "udl_huffman.h"
@@ -29,24 +30,24 @@
 int
 main(void)
 {
-	int fd, i;
+	int i;
+	FILE *file;
 	uint32_t bit_count;
 	uint32_t bit_pattern;
 
-	fd = open(FILENAME, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (fd == -1)
-		err(1, "%s", FILENAME);
+	if ((file = fopen(FILENAME, "w")) == NULL)
+		err(1, "fopen %s", FILENAME);
 
 	for (i = 0; i < UDL_HUFFMAN_RECORDS; i++) {
 		bit_count = udl_huffman[i].bit_count;
 		bit_pattern = htobe32(udl_huffman[i].bit_pattern);
-		if (write(fd, &bit_count, sizeof(bit_count)) == -1)
-			err(1, "write");
-		if (write(fd, &bit_pattern, sizeof(bit_pattern)) == -1)
-			err(1, "write");
+		if (fwrite(&bit_count, sizeof(bit_count), 1, file) != 1)
+			err(1, "fwrite");
+		if (fwrite(&bit_pattern, sizeof(bit_pattern), 1, file) != 1)
+			err(1, "fwrite");
 	}
 
-	close(fd);
+	fclose(file);
 
 	return (0);
 }
