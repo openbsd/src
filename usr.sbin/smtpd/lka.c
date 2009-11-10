@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.85 2009/11/09 23:49:34 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.86 2009/11/10 00:13:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -66,6 +66,7 @@ size_t		lka_expand(char *, size_t, struct path *);
 void		lka_rcpt_action(struct smtpd *, char *, struct path *);
 void		lka_session_destroy(struct smtpd *, struct lkasession *);
 void		lka_expansion_done(struct smtpd *, struct lkasession *);
+void		lka_session_fail(struct smtpd *, struct lkasession *, struct submit_status *);
 
 void
 lka_sig_handler(int sig, short event, void *p)
@@ -351,10 +352,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 
 			lkasession = lka_session_init(env, ss);
 			if (! lka_resolve_path(env, lkasession, path)) {
-				ss->code = 530;
-				imsg_compose_event(iev, IMSG_LKA_RCPT, 0, 0, -1,
-				    ss, sizeof(*ss));
-				lka_session_destroy(env, lkasession);
+				lka_session_fail(env, lkasession, ss);
 				break;
 			}
 
@@ -371,10 +369,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			if (path->flags & F_PATH_ALIAS) {
 				if (! aliases_get(env, ss->u.path.rule.r_amap,
 					&lkasession->expandtree, ss->u.path.user)) {
-					ss->code = 530;
-					imsg_compose_event(iev, IMSG_LKA_RCPT, 0, 0, -1,
-					    ss, sizeof(*ss));
-					lka_session_destroy(env, lkasession);
+					lka_session_fail(env, lkasession, ss);
 					break;
 				}
 			}
@@ -382,10 +377,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			if (path->flags & F_PATH_VIRTUAL) {
 				if (! aliases_virtual_get(env, ss->u.path.cond->c_map,
 					&lkasession->expandtree, &ss->u.path)) {
-					ss->code = 530;
-					imsg_compose_event(iev, IMSG_LKA_RCPT, 0, 0, -1,
-					    ss, sizeof(*ss));
-					lka_session_destroy(env, lkasession);
+					lka_session_fail(env, lkasession, ss);
 					break;
 				}
 			}
@@ -1155,6 +1147,15 @@ lka_session_init(struct smtpd *env, struct submit_status *ss)
 	SPLAY_INSERT(lkatree, &env->lka_sessions, lkasession);
 
 	return lkasession;
+}
+
+void
+lka_session_fail(struct smtpd *env, struct lkasession *lkasession, struct submit_status *ss)
+{
+	ss->code = 530;
+	imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT, 0, 0, -1,
+	    ss, sizeof(*ss));
+	lka_session_destroy(env, lkasession);
 }
 
 void
