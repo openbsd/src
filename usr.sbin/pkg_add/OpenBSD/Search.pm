@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.14 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: Search.pm,v 1.15 2009/11/10 14:32:31 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -48,12 +48,6 @@ sub match_ref
 {
 	my ($self, $r) = @_;
 	return $self->{spec}->match_ref($r);
-}
-
-sub match
-{
-	my ($self, $o) = @_;
-	return $self->match_ref($o->list);
 }
 
 sub match_locations
@@ -159,22 +153,6 @@ sub _keep
 	my ($self, $stem) = @_;
 	my $partial = $self->{stem};
 	return $stem =~ /\Q$partial\E/;
-}
-
-package OpenBSD::Search::Filter;
-our @ISA=(qw(OpenBSD::Search));
-
-sub new
-{
-	my ($class, $code) = @_;
-
-	return bless {code => $code}, $class;
-}
-
-sub filter
-{
-	my ($self, @l) = @_;
-	return &{$self->{code}}(@l);
 }
 
 package OpenBSD::Search::FilterLocation;

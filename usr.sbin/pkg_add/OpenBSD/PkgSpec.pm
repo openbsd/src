@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.21 2009/10/11 18:04:41 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.22 2009/11/10 14:32:31 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -26,7 +26,6 @@ sub new
 	$spec =~ s/^-//o;
 
 	bless \$spec, $class;
-
 }
 
 sub check_1flavor
