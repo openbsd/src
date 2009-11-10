@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.89 2009/11/10 00:42:55 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.90 2009/11/10 01:09:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -883,6 +883,10 @@ lka_expand_pickup(struct smtpd *env, struct lkasession *lkasession)
 {
 	int	ret;
 
+	/* we want to do five iterations of lka_expand_resume() but
+	 * we need to be interruptible in case lka_expand_resume()
+	 * has sent an imsg and expects an answer.
+	 */
 	ret = 0;
 	while (! (lkasession->flags & F_ERROR) &&
 	    ! lkasession->pending && lkasession->iterations < 5) {
@@ -907,49 +911,76 @@ int
 lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
 {
 	u_int8_t done = 1;
-	struct expand_node *expnode, *rmnode = NULL;
+	struct expand_node *expnode = NULL;
 	struct path *lkasessionpath = NULL;
-	struct path *respath = NULL;
+	struct path path, *pathp = NULL;
 
 	lkasessionpath = &lkasession->path;
-	rmnode = NULL;
-
-	log_debug("expand iteration: %d", lkasession->iterations);
 	RB_FOREACH(expnode, expandtree, &lkasession->expandtree) {
-		struct path path;
 
-		if (rmnode)
-			expandtree_decrement_node(&lkasession->expandtree, rmnode);
-
+		/* this node has already been expanded, skip*/
 		if (expnode->flags & F_EXPAND_DONE)
 			continue;
 		done = 0;
 
-		rmnode = expnode;
-
+		/* convert node to path, then inherit flags from lkasession */
 		if (! lka_resolve_node(env, lkasession->message.tag, &path, expnode))
 			return -1;
 		path.flags = lkasessionpath->flags;
 
-		respath = path_dup(&path);
-
-		if (! lka_resolve_path(env, lkasession, respath))
+		/* resolve path, eventually populating expandtree.
+		 * we need to dup because path may be added to the deliverylist.
+		 */
+		pathp = path_dup(&path);
+		if (! lka_resolve_path(env, lkasession, pathp))
 			return -1;
 
+		/* decrement refcount on this node and flag it as processed */
+		expandtree_decrement_node(&lkasession->expandtree, expnode);
 		expnode->flags |= F_EXPAND_DONE;
 	}
 
-	if (rmnode)
-		expandtree_decrement_node(&lkasession->expandtree, rmnode);
-
+	/* still not done after 5 iterations ? loop detected ... reject */
 	if (!done && lkasession->iterations == 5) {
 		return -1;
 	}
 
+	/* we're done expanding, no need for another iteration */
 	if (RB_ROOT(&lkasession->expandtree) == NULL || done)
 		return 0;
 
 	return 1;
+}
+
+void
+lka_expansion_done(struct smtpd *env, struct lkasession *lkasession)
+{
+	struct message message;
+	struct path *path;
+
+	/* delivery list is empty OR expansion led to an error, reject */
+	if (TAILQ_FIRST(&lkasession->deliverylist) ||
+	    lkasession->flags & F_ERROR) {
+		imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT, 0, 0,
+		    -1, &lkasession->ss, sizeof(struct submit_status));
+		goto done;
+	}
+
+	/* process the delivery list and submit envelopes to queue */
+	message = lkasession->message;
+	while ((path = TAILQ_FIRST(&lkasession->deliverylist)) != NULL) {
+		message.recipient = *path;
+		queue_submit_envelope(env, &message);
+		
+		TAILQ_REMOVE(&lkasession->deliverylist, path, entry);
+		free(path);
+	}
+	queue_commit_envelopes(env, &message);
+
+done:
+	lka_clear_expandtree(&lkasession->expandtree);
+	lka_clear_deliverylist(&lkasession->deliverylist);
+	lka_session_destroy(env, lkasession);
 }
 
 int
@@ -1143,37 +1174,6 @@ lka_request_forwardfile(struct smtpd *env, struct lkasession *lkasession, char *
 	imsg_compose_event(env->sc_ievs[PROC_PARENT], IMSG_PARENT_FORWARD_OPEN, 0, 0, -1,
 	    &fwreq, sizeof(fwreq));
 	++lkasession->pending;
-}
-
-void
-lka_expansion_done(struct smtpd *env, struct lkasession *lkasession)
-{
-	struct message message;
-	struct path *path;
-
-	if (lkasession->flags & F_ERROR) {
-		lka_clear_expandtree(&lkasession->expandtree);
-		lka_clear_deliverylist(&lkasession->deliverylist);
-		imsg_compose_event(env->sc_ievs[PROC_MFA], IMSG_LKA_RCPT, 0, 0,
-		    -1, &lkasession->ss, sizeof(struct submit_status));
-	}
-	else if (TAILQ_FIRST(&lkasession->deliverylist) == NULL) {
-		queue_commit_envelopes(env, &lkasession->message);
-	}
-	else {
-		message = lkasession->message;
-
-		while ((path = TAILQ_FIRST(&lkasession->deliverylist)) != NULL) {
-			message.recipient = *path;
-			queue_submit_envelope(env, &message);
-
-			TAILQ_REMOVE(&lkasession->deliverylist, path, entry);
-			free(path);
-		}
-		queue_commit_envelopes(env, &message);
-	}
-
-	lka_session_destroy(env, lkasession);
 }
 
 SPLAY_GENERATE(lkatree, lkasession, nodes, lkasession_cmp);
