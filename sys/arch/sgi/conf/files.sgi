@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.39 2009/11/08 22:44:14 miod Exp $
+#	$OpenBSD: files.sgi,v 1.40 2009/11/10 15:50:09 jsing Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -119,6 +119,11 @@ file	arch/sgi/dev/com_iof.c			com_iof
 device	iec: ether, ifnet, ifmedia, mii
 attach	iec at ioc
 file	arch/sgi/dev/if_iec.c			iec
+
+# IOC3 PS/2 controller
+device	iockbc: pckbcslot
+attach	iockbc at ioc
+file	arch/sgi/dev/iockbc.c			iockbc	needs-flag
 
 # DS1687 Time-Of-Day calendar device
 device	dsrtc

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ioc.4,v 1.5 2009/11/03 16:38:45 deraadt Exp $
+.\"	$OpenBSD: ioc.4,v 1.6 2009/11/10 15:50:10 jsing Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2009 $
+.Dd $Mdocdate: November 10 2009 $
 .Dt IOC 4 sgi
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 .Cd "dsrtc0 at ioc?"
 .Cd "iec* at ioc?"
 .Cd "onewire* at ioc?"
-.\" .Cd "iockbc* at ioc?"
+.Cd "iockbc* at ioc?"
 .\" .Cd "pciide* at ioc?"
 .Sh DESCRIPTION
 The
@@ -44,8 +44,8 @@ Two serial ports.
 Time-of-day chip.
 .It Xr iec 4
 10/100 Mbit/s Ethernet interface.
-.\" .It Xr iockbc 4
-.\" PS/2 keyboard and mouse interface.
+.It Xr iockbc 4
+PS/2 keyboard and mouse interface.
 .\" .It Xr pciide 4
 .\" PCI IDE controller driver.
 .El
@@ -64,7 +64,7 @@ interfaces.
 .Xr dsrtc 4 ,
 .Xr iec 4 ,
 .Xr intro 4 ,
-.\" .Xr iockbc 4 ,
+.Xr iockbc 4 ,
 .Xr onewire 4 ,
 .Xr owmac 4 ,
 .Xr owserial 4 ,

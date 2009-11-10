@@ -1,4 +1,4 @@
-/*	$OpenBSD: iocreg.h,v 1.7 2009/11/08 13:11:19 miod Exp $	*/
+/*	$OpenBSD: iocreg.h,v 1.8 2009/11/10 15:50:10 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -42,6 +42,13 @@
 #define	IOC3_GPDR		0x0000003c	/* GPIO data */
 #define	IOC3_GPPR_BASE		0x00000040	/* 9 GPIO pin registers */
 #define	IOC3_GPPR(x)		(IOC3_GPPR_BASE + (x) * 4)
+
+/* Keyboard controller registers. */
+#define	IOC3_KBC_CTRL_STATUS	0x0000009c
+#define	IOC3_KBC_KBD_RX		0x000000a0
+#define	IOC3_KBC_AUX_RX		0x000000a4
+#define	IOC3_KBC_KBD_TX		0x000000a8
+#define	IOC3_KBC_AUX_TX		0x000000ac
 
 /* Non-16550 mode UART registers */
 #define	IOC3_UARTA_SSCR		0x000000b8	/* control register */
@@ -100,6 +107,24 @@
 
 /* bits in SSCR */
 #define	IOC3_SSCR_RESET		0x80000000
+
+/* bits in KBC_CTRL_STATUS */
+#define	IOC3_KBC_STATUS_KBD_WRITE_PENDING	0x00000001
+#define	IOC3_KBC_STATUS_AUX_WRITE_PENDING	0x00000002
+
+/* bits in KBC_*_RX */
+#define	IOC3_KBC_DATA_0_VALID		0x80000000
+#define	IOC3_KBC_DATA_1_VALID		0x40000000
+#define	IOC3_KBC_DATA_2_VALID		0x20000000
+#define	IOC3_KBC_DATA_VALID		(IOC3_KBC_DATA_0_VALID | \
+					 IOC3_KBC_DATA_1_VALID | \
+					 IOC3_KBC_DATA_2_VALID)
+#define	IOC3_KBC_DATA_0_MASK		0x00ff0000
+#define	IOC3_KBC_DATA_0_SHIFT			16
+#define	IOC3_KBC_DATA_1_MASK		0x0000ff00
+#define	IOC3_KBC_DATA_1_SHIFT			8
+#define	IOC3_KBC_DATA_2_MASK		0x000000ff
+#define	IOC3_KBC_DATA_2_SHIFT			0
 
 /* bits in ENET_MCR */
 #define	IOC3_ENET_MCR_DUPLEX		0x00000001

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.18 2009/11/10 14:48:56 jsing Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.19 2009/11/10 15:50:09 jsing Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -57,6 +57,7 @@ com1		at ioc? base 0x00020170
 com*		at ioc?
 dsrtc0		at ioc?
 iec*		at ioc?
+iockbc*		at ioc?
 
 onewire*	at ioc?
 option		ONEWIREVERBOSE
@@ -207,6 +208,12 @@ opl*		at cmpci?
 # MIDI support
 midi*		at opl?
 midi*		at eap?
+
+#### Keyboard and Mouse
+pckbd*		at iockbc?
+pms*		at iockbc?
+wskbd*		at pckbd? mux 1
+wsmouse*	at pms? mux 0
 
 #### SCSI Bus devices
 sd*		at scsibus?
