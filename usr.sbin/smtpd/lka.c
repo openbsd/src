@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.86 2009/11/10 00:13:33 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.87 2009/11/10 00:21:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -344,6 +344,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			struct submit_status	*ss = imsg.data;
 			struct lkasession	*lkasession;
 			struct path		*path;
+			int			 err = 0;
 
 			IMSG_SIZE_CHECK(ss);
 
@@ -352,34 +353,33 @@ lka_dispatch_mfa(int sig, short event, void *p)
 
 			lkasession = lka_session_init(env, ss);
 			if (! lka_resolve_path(env, lkasession, path)) {
-				lka_session_fail(env, lkasession, ss);
-				break;
+				err = 1;
 			}
 
-			if (path->flags & F_PATH_ACCOUNT) {
+			else if (path->flags & F_PATH_ACCOUNT) {
 				lka_request_forwardfile(env, lkasession, path->pw_name);
-				break;
 			}
 
-			if (path->flags & F_PATH_RELAY) {
+			else if (path->flags & F_PATH_RELAY) {
 				path = path_dup(&ss->u.path);
 				TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);
 			}
 
-			if (path->flags & F_PATH_ALIAS) {
+			else if (path->flags & F_PATH_ALIAS) {
 				if (! aliases_get(env, ss->u.path.rule.r_amap,
-					&lkasession->expandtree, ss->u.path.user)) {
-					lka_session_fail(env, lkasession, ss);
-					break;
-				}
+					&lkasession->expandtree, ss->u.path.user))
+					err = 1;
 			}
 
-			if (path->flags & F_PATH_VIRTUAL) {
+			else if (path->flags & F_PATH_VIRTUAL) {
 				if (! aliases_virtual_get(env, ss->u.path.cond->c_map,
-					&lkasession->expandtree, &ss->u.path)) {
-					lka_session_fail(env, lkasession, ss);
-					break;
-				}
+					&lkasession->expandtree, &ss->u.path))
+					err = 1;
+			}
+
+			if (err) {
+				lka_session_fail(env, lkasession, ss);
+				break;
 			}
 
 			lka_expand_pickup(env, lkasession);
