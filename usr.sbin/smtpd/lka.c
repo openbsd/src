@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.91 2009/11/10 09:53:40 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.92 2009/11/10 10:25:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -869,12 +869,6 @@ lka_resolve_node(struct smtpd *env, char *tag, struct path *path, struct expand_
 		break;
 	}
 
-	if (lka_expand(path->rule.r_value.path, sizeof(struct path), path) >=
-		sizeof(struct path)) {
-		log_debug("expansion failed...");
-		return 0;
-	}
-
 	return 1;
 }
 
@@ -969,6 +963,8 @@ lka_expansion_done(struct smtpd *env, struct lkasession *lkasession)
 	/* process the delivery list and submit envelopes to queue */
 	message = lkasession->message;
 	while ((path = TAILQ_FIRST(&lkasession->deliverylist)) != NULL) {
+		lka_expand(path->rule.r_value.path,
+			sizeof(path->rule.r_value.path), path);
 		message.recipient = *path;
 		queue_submit_envelope(env, &message);
 		
@@ -1021,10 +1017,6 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 
 		(void)strlcpy(path->pw_name, pw->pw_name,
 		    sizeof(path->pw_name));
-		if (lka_expand(path->rule.r_value.path,
-			sizeof(path->rule.r_value.path), path) >=
-		    sizeof(path->rule.r_value.path))
-			break;
 
 		if (path->flags & F_PATH_FORWARDED)
 			TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);
