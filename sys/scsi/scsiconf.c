@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.149 2009/11/10 10:13:08 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.150 2009/11/10 10:34:07 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -927,7 +927,8 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 		;
 	else if (sc_link->flags & SDEV_UMASS)
 		;
-	else if (!DEVID_CMP(scsi->sc_link[target][0]->id, sc_link->id))
+	else if (sc_link->id != NULL &&
+	    !DEVID_CMP(scsi->sc_link[target][0]->id, sc_link->id))
 		;
 	else if (memcmp(inqbuf, &scsi->sc_link[target][0]->inqdata,
 	    sizeof(*inqbuf)) == 0) {
