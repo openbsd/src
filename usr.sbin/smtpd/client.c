@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.10 2009/11/10 00:24:53 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.11 2009/11/10 14:54:13 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -19,6 +19,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
@@ -26,6 +27,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,7 +68,20 @@ client_init(int fd, char *ehlo)
 
 	if ((sp = calloc(1, sizeof(*sp))) == NULL)
 		goto done;
-	if ((sp->ehlo = strdup(ehlo)) == NULL)
+	if (ehlo == NULL || *ehlo == '\0') {
+		char			 buf[NI_MAXHOST];
+		struct sockaddr_storage	 sa;
+		socklen_t		 len;
+
+		len = sizeof(sa);
+		if (getsockname(fd, (struct sockaddr *)&sa, &len))
+			goto done;
+		if (getnameinfo((struct sockaddr *)&sa, len, buf, sizeof(buf),
+		    NULL, 0, NI_NUMERICHOST))
+			goto done;
+		if (asprintf(&sp->ehlo, "[%s]", buf) == -1)
+			goto done;
+	} else if ((sp->ehlo = strdup(ehlo)) == NULL)
 		goto done;
 	if ((sp->sender = strdup("")) == NULL)
 		goto done;
