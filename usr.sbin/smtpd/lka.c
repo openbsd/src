@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.88 2009/11/10 00:36:29 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.89 2009/11/10 00:42:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -960,15 +960,6 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 		TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);
 		return 1;
 	}
-
-	/*
-			else if (path->flags & F_PATH_VIRTUAL) {
-				if (! aliases_virtual_get(env, ss->u.path.cond->c_map,
-					&lkasession->expandtree, &ss->u.path))
-					err = 1;
-			}
-	 */
-
 
 	switch (path->cond->c_type) {
 	case C_ALL:
