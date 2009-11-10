@@ -3367,6 +3367,7 @@
 ./usr/share/zoneinfo/Asia/Manila
 ./usr/share/zoneinfo/Asia/Muscat
 ./usr/share/zoneinfo/Asia/Nicosia
+./usr/share/zoneinfo/Asia/Novokuznetsk
 ./usr/share/zoneinfo/Asia/Novosibirsk
 ./usr/share/zoneinfo/Asia/Omsk
 ./usr/share/zoneinfo/Asia/Oral
@@ -3955,6 +3956,7 @@
 ./usr/share/zoneinfo/posix/Asia/Manila
 ./usr/share/zoneinfo/posix/Asia/Muscat
 ./usr/share/zoneinfo/posix/Asia/Nicosia
+./usr/share/zoneinfo/posix/Asia/Novokuznetsk
 ./usr/share/zoneinfo/posix/Asia/Novosibirsk
 ./usr/share/zoneinfo/posix/Asia/Omsk
 ./usr/share/zoneinfo/posix/Asia/Oral
@@ -4544,6 +4546,7 @@
 ./usr/share/zoneinfo/right/Asia/Manila
 ./usr/share/zoneinfo/right/Asia/Muscat
 ./usr/share/zoneinfo/right/Asia/Nicosia
+./usr/share/zoneinfo/right/Asia/Novokuznetsk
 ./usr/share/zoneinfo/right/Asia/Novosibirsk
 ./usr/share/zoneinfo/right/Asia/Omsk
 ./usr/share/zoneinfo/right/Asia/Oral
