@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.87 2009/11/10 00:21:46 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.88 2009/11/10 00:36:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -344,7 +344,6 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			struct submit_status	*ss = imsg.data;
 			struct lkasession	*lkasession;
 			struct path		*path;
-			int			 err = 0;
 
 			IMSG_SIZE_CHECK(ss);
 
@@ -352,37 +351,12 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			path = &ss->u.path;
 
 			lkasession = lka_session_init(env, ss);
-			if (! lka_resolve_path(env, lkasession, path)) {
-				err = 1;
-			}
 
-			else if (path->flags & F_PATH_ACCOUNT) {
-				lka_request_forwardfile(env, lkasession, path->pw_name);
-			}
-
-			else if (path->flags & F_PATH_RELAY) {
-				path = path_dup(&ss->u.path);
-				TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);
-			}
-
-			else if (path->flags & F_PATH_ALIAS) {
-				if (! aliases_get(env, ss->u.path.rule.r_amap,
-					&lkasession->expandtree, ss->u.path.user))
-					err = 1;
-			}
-
-			else if (path->flags & F_PATH_VIRTUAL) {
-				if (! aliases_virtual_get(env, ss->u.path.cond->c_map,
-					&lkasession->expandtree, &ss->u.path))
-					err = 1;
-			}
-
-			if (err) {
+			if (! lka_resolve_path(env, lkasession, path))
 				lka_session_fail(env, lkasession, ss);
-				break;
-			}
+			else
+				lka_expand_pickup(env, lkasession);
 
-			lka_expand_pickup(env, lkasession);
 			break;
 		}
 		default:
@@ -958,29 +932,11 @@ lka_expand_resume(struct smtpd *env, struct lkasession *lkasession)
 		path.flags = lkasessionpath->flags;
 
 		respath = path_dup(&path);
+
 		if (! lka_resolve_path(env, lkasession, respath))
 			return -1;
 
-		if (respath->flags & F_PATH_ACCOUNT) {
-			if (respath->flags & F_PATH_FORWARDED)
-				TAILQ_INSERT_TAIL(&lkasession->deliverylist, respath, entry);
-			else
-				lka_request_forwardfile(env, lkasession, respath->pw_name);
-			expnode->flags |= F_EXPAND_DONE;
-		}
-
-		else if (respath->flags & F_PATH_ALIAS) {
-			aliases_get(env, lkasessionpath->rule.r_amap,
-			    &lkasession->expandtree, respath->user);
-			expnode->flags |= F_EXPAND_DONE;
-		}
-
-		else if (respath->flags & F_PATH_VIRTUAL) {
-			aliases_virtual_get(env, lkasessionpath->cond->c_map,
-			    &lkasession->expandtree, respath);
-			expnode->flags |= F_EXPAND_DONE;
-		}
-
+		expnode->flags |= F_EXPAND_DONE;
 	}
 
 	if (rmnode)
@@ -1001,8 +957,18 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 {
 	if (IS_RELAY(*path) || path->cond == NULL) {
 		path->flags |= F_PATH_RELAY;
+		TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);
 		return 1;
 	}
+
+	/*
+			else if (path->flags & F_PATH_VIRTUAL) {
+				if (! aliases_virtual_get(env, ss->u.path.cond->c_map,
+					&lkasession->expandtree, &ss->u.path))
+					err = 1;
+			}
+	 */
+
 
 	switch (path->cond->c_type) {
 	case C_ALL:
@@ -1020,6 +986,9 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 
 		if (aliases_exist(env, path->rule.r_amap, username)) {
 			path->flags |= F_PATH_ALIAS;
+			if (! aliases_get(env, path->rule.r_amap,
+				&lkasession->expandtree, path->user))
+				return 0;
 			return 1;
 		}
 
@@ -1035,11 +1004,19 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 		    sizeof(path->rule.r_value.path))
 			break;
 
+		if (path->flags & F_PATH_FORWARDED)
+			TAILQ_INSERT_TAIL(&lkasession->deliverylist, path, entry);
+		else
+			lka_request_forwardfile(env, lkasession, path->pw_name);
+
 		return 1;
 	}
 	case C_VDOM: {
 		if (aliases_virtual_exist(env, path->cond->c_map, path)) {
 			path->flags |= F_PATH_VIRTUAL;
+			if (! aliases_virtual_get(env, path->cond->c_map,
+				&lkasession->expandtree, path))
+				return 9;
 			return 1;
 		}
 		break;
