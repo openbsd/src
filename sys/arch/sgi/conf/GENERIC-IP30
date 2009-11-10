@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.17 2009/11/07 21:42:07 miod Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.18 2009/11/10 14:48:56 jsing Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -59,7 +59,7 @@ dsrtc0		at ioc?
 iec*		at ioc?
 
 onewire*	at ioc?
-option ONEWIREVERBOSE
+option		ONEWIREVERBOSE
 owmac*		at onewire?
 owserial*	at onewire?
 
@@ -93,7 +93,7 @@ uvscom*		at uhub?	# SUNTAC Slipper U VS-10U serial
 ucom*		at uvscom?
 ubsa*		at uhub?	# Belkin serial adapter
 ucom*		at ubsa?
-uaudio*	at uhub?	# USB Audio
+uaudio*		at uhub?	# USB Audio
 audio*		at uaudio?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
