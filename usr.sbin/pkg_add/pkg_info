@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.78 2009/10/15 10:47:07 phessler Exp $
+# $OpenBSD: pkg_info,v 1.79 2009/11/10 10:50:34 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -162,7 +162,9 @@ sub find_by_spec
 	require OpenBSD::Search;
 	require OpenBSD::PackageRepository::Installed;
 
-	return sort(OpenBSD::PackageRepository::Installed->new->match(OpenBSD::Search::PkgSpec->new($pat)));
+	my $r = OpenBSD::PackageRepository::Installed->new->match_locations(OpenBSD::Search::PkgSpec->new($pat));
+
+	return sort (map {$_->name} @$r);
 }
 
 sub filter_files
