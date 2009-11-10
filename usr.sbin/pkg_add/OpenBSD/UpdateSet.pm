@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.13 2009/11/10 10:28:12 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.14 2009/11/10 10:35:56 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -280,18 +280,6 @@ sub compute_size
 	}
 }
 
-# temporary shortcut
-sub handle
-{
-	my $self = shift;
-	if (defined $self->{newer}) {
-		return $self->{newer}[0];
-	} else {
-		return undef;
-	}
-}
-
-# temporary creator
 sub create_new
 {
 	my ($class, $pkgname) = @_;
