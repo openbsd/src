@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.11 2009/11/10 14:54:13 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.12 2009/11/10 14:57:03 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -630,7 +630,7 @@ client_write(struct smtp_client *sp)
 		if (sp->rcptsent == NULL)
 			goto done;
 
-		if (client_putln(sp, "RCPT TO: <%s>", sp->rcptsent->mbox) < 0)
+		if (client_putln(sp, "RCPT TO:<%s>", sp->rcptsent->mbox) < 0)
 			goto done;
 		break;
 
