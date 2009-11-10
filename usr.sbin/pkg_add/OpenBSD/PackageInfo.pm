@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.40 2009/11/10 11:10:52 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.41 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+
 package OpenBSD::PackageInfo;
 our @ISA=qw(Exporter);
 our @EXPORT=qw(installed_packages installed_info installed_name info_names is_info_name installed_stems

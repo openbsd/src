@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.9 2009/11/08 12:16:23 espie Exp $
+# $OpenBSD: Handle.pm,v 1.10 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -15,9 +15,12 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-
 # fairly non-descriptive name. Used to store various package information
 # during installs and updates.
+
+use strict;
+use warnings;
+
 package OpenBSD::Handle;
 
 use OpenBSD::PackageInfo;
@@ -34,9 +37,11 @@ sub cleanup
 	my ($self, $error) = @_;
 	$self->{error} //= $error;
 	if (defined $self->location) {
-		if ($self->{error} == ALREADY_INSTALLED) {
+		if (defined $self->{error} &&
+		    $self->{error} == ALREADY_INSTALLED) {
 			$self->location->close_now;
-		} elsif ($self->{error} == CANT_INSTALL) {
+		} elsif (defined $self->{error} &&
+		    $self->{error} == CANT_INSTALL) {
 			$self->location->close_with_client_error;
 		}
 		$self->location->wipe_info;

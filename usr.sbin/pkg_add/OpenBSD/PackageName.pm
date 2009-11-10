@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.35 2009/06/10 14:40:03 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.36 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+
 package OpenBSD::PackageName;
 
 sub url2pkgname($)

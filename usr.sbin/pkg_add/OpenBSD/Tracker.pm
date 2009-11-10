@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.7 2009/11/10 10:28:12 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.8 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -13,10 +13,6 @@
 # ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-#
-
-use strict;
-use warnings;
 
 # In order to deal with dependencies, we have to know what's actually installed,
 # and what can actually be updated.
@@ -31,6 +27,9 @@ use warnings;
 
 # the Tracker object does maintain that information globally so that 
 # Update/Dependencies can do its job.
+
+use strict;
+use warnings;
 
 package OpenBSD::Tracker;
 sub new

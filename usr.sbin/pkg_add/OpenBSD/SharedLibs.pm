@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.32 2008/10/20 10:25:16 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.33 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+
 use OpenBSD::Paths;
 package OpenBSD::PackingElement;
 

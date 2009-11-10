@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.14 2009/11/10 10:35:56 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.15 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,9 @@
 
 # these things don't really live here, they're just stuff that's shared
 # between pkg_add and pkg_delete, so to avoid yes another header...
+
+use strict;
+use warnings;
 
 package OpenBSD::SharedItemsRecorder;
 sub new

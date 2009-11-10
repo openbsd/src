@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.13 2009/11/09 17:54:55 espie Exp $
+# $OpenBSD: Search.pm,v 1.14 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -14,6 +14,9 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+use strict;
+use warnings;
 
 package OpenBSD::Search;
 sub match_locations
@@ -62,7 +65,7 @@ sub match_locations
 sub filter_locations
 {
 	my ($self, $l) = @_;
-	return $self->{$spec}->match_locations($l);
+	return $self->{spec}->match_locations($l);
 }
 
 sub filter
@@ -135,7 +138,7 @@ sub filter
 	my @result = ();
 	require OpenBSD::PackageName;
 	for my $pkg (@l) {
-		if ($self->_keep(OpenBSD::PackageName::splitstem($pkgname))) {
+		if ($self->_keep(OpenBSD::PackageName::splitstem($pkg))) {
 			push(@result, $pkg); 
 		}
 	}

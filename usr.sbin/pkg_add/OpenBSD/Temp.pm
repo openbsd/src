@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.14 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: Temp.pm,v 1.15 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+
 package OpenBSD::Temp;
 
 use File::Temp;

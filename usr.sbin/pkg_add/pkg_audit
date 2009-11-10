@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_audit,v 1.6 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: pkg_audit,v 1.7 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,7 @@
 
 use strict;
 use warnings;
+
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 use File::Find;

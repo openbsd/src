@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.13 2007/06/20 13:44:40 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.14 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+
 package OpenBSD::SharedItems;
 
 use OpenBSD::Error;

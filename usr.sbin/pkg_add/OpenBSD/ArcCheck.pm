@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.12 2009/04/22 20:46:21 naddy Exp $
+# $OpenBSD: ArcCheck.pm,v 1.13 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,11 @@
 # convention,  the names LongName\d+ and LongLink\d correspond to names
 # too long to fit. The actual names reside in the PLIST, but the archive
 # is still a valid archive.
-#
+
+use strict;
+use warnings;
+
+use OpenBSD::Ustar;
 
 package OpenBSD::Ustar::Object;
 
@@ -101,7 +105,8 @@ sub copy_long
 	if ($self->name =~ m/^LongName(\d+)$/o) {
 		$wrarc->{name_index} = $1 + 1;
 	}
-	if (length($self->name) > MAXFILENAME+MAXPREFIX+1) {
+	if (length($self->name) > 
+	    OpenBSD::Ustar::MAXFILENAME + OpenBSD::Ustar::MAXPREFIX + 1) {
 		$wrarc->{name_index} = 0 if !defined $wrarc->{name_index};
 		$self->set_name('LongName'.$wrarc->{name_index}++);
 	}

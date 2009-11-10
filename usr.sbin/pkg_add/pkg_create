@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.122 2009/06/10 15:44:05 espie Exp $
+# $OpenBSD: pkg_create,v 1.123 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,7 @@
 
 use strict;
 use warnings;
+
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 use OpenBSD::Getopt;

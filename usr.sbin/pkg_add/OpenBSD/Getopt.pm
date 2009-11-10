@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Getopt.pm,v 1.5 2008/03/08 11:32:38 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.6 2009/11/10 11:36:56 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -17,11 +17,12 @@
 #
 # This is inspired by Getopt::Std, except for the ability to invoke subs
 # on options.
-#
-package OpenBSD::Getopt;
-require Exporter;
+
 use strict;
 use warnings;
+
+package OpenBSD::Getopt;
+require Exporter;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(getopts);
