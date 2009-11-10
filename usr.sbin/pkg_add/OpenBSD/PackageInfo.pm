@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.39 2009/06/04 18:59:28 wcmaier Exp $
+# $OpenBSD: PackageInfo.pm,v 1.40 2009/11/10 11:10:52 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -233,19 +233,19 @@ sub solve_installed_names
 		    require OpenBSD::PackageRepository::Installed;
 		    require OpenBSD::Search;
 
-		    my @l = OpenBSD::PackageRepository::Installed->new->match(OpenBSD::Search::Stem->new($pkgname));
-		    if (@l == 0) {
+		    my $r = OpenBSD::PackageRepository::Installed->new->match_locations(OpenBSD::Search::Stem->new($pkgname));
+		    if (@$r == 0) {
 			print "Can't resolve $pkgname to an installed package name\n";
 			$bad = 1;
-		    } elsif (@l == 1) {
-			if (!$seen->{$l[0]}) {
-			    $seen->{$l[0]} = 1;
-			    push(@$new, $l[0]);
+		    } elsif (@$r == 1) {
+			if (!$seen->{$r->[0]}) {
+			    $seen->{$r->[0]} = 1;
+			    push(@$new, $r->[0]->name);
 			}
-		    } elsif (@l != 0) {
+		    } else {
 		    	# try to see if we already solved the ambiguity
 			my $found = 0;
-			for my $p (@l) {
+			for my $p (@$r) {
 			    if ($seen->{$p}) {
 				$found = 1;
 				last;
@@ -253,18 +253,18 @@ sub solve_installed_names
 			}
 			next if $found;
 
-			print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
 			if ($state->{defines}->{ambiguous}) {
+			    my @l = map {$_->name} @$r;
+			    $state->progress->print("Ambiguous: $pkgname could be ", join(' ', @l),"\n");
 			    print "$msg\n";
 			    push(@$new, @l);
-			    for my $p (@l) {
+			    for my $p (@$r) {
 			    	$seen->{$p} = 1;
 			    }
 			} else {
-			    if ($state->{interactive}) {
-			    	require OpenBSD::Interactive;
-				my $result = OpenBSD::Interactive::ask_list('Choose one package', 1, ("<None>", sort @l));
-				push(@$new, $result) if $result ne '<None>';
+			    my $result = $state->choose_location($pkgname, $r);
+			    if (defined $result) {
+			    	push(@$new, $result->name);
 				$seen->{$result} = 1;
 			    } else {
 				$bad = 1;
