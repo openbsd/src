@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.79 2009/11/08 11:18:41 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.80 2009/11/10 10:58:32 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -445,7 +445,9 @@ sub find_old_lib
 	require OpenBSD::Search;
 	require OpenBSD::PackageRepository::Installed;
 
-	for my $try (OpenBSD::PackageRepository::Installed->new->match(OpenBSD::Search::PkgSpec->new(".libs-".$pattern))) {
+
+	my $r = OpenBSD::PackageRepository::Installed->new->match_locations(OpenBSD::Search::PkgSpec->new(".libs-".$pattern));
+	for my $try (map {$_->name} @$r) {
 		OpenBSD::SharedLibs::add_libs_from_installed_package($try);
 		if ($self->check_lib_spec($base, $lib, {$try => 1})) {
 			return $try;
