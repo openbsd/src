@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.9 2009/10/25 20:43:29 chl Exp $	*/
+/*	$OpenBSD: client.c,v 1.10 2009/11/10 00:24:53 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -875,17 +875,22 @@ client_getln(struct smtp_client *sp)
 		if (sp->verbose)
 			fprintf(sp->verbose, "<<< %s\n", ln);
 
-		if (strlen(ln) == 3 || ln[3] == ' ')
+		if (strlen(ln) == 3)
 			break;
-		else if (ln[3] != '-') {
-			cause = "150 garbled multiline reply";
+		else if (strlen(ln) < 4 || (ln[3] != ' ' && ln[3] != '-')) {
+			cause = "150 garbled smtp reply";
 			goto done;
 		}
 
-		if (strcmp(ln + 4, "STARTTLS") == 0)
-			sp->exts[CLIENT_EXT_STARTTLS].have = 1;
-		if (strncmp(ln + 4, "AUTH", 4) == 0)
-			sp->exts[CLIENT_EXT_AUTH].have = 1;
+		if (sp->state == CLIENT_EHLO) {
+			if (strcmp(ln + 4, "STARTTLS") == 0)
+				sp->exts[CLIENT_EXT_STARTTLS].have = 1;
+			else if (strncmp(ln + 4, "AUTH", 4) == 0)
+				sp->exts[CLIENT_EXT_AUTH].have = 1;
+		}
+
+		if (ln[3] == ' ')
+			break;
 	}
 
 	/* validate reply code */
