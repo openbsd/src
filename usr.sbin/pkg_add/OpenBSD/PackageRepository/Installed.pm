@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.14 2009/04/19 15:18:23 espie Exp $
+# $OpenBSD: Installed.pm,v 1.15 2009/11/10 14:37:20 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -25,17 +25,6 @@ use warnings;
 # of PackageRepository::Installed to have full access...
 
 package OpenBSD::PackageRepositoryBase;
-
-sub match
-{
-	my ($self, $search, @filters) = @_;
-	my @l = $search->match($self);
-	while (my $filter = (shift @filters)) {
-		last if @l == 0; # don't bother filtering empty list
-		@l = $filter->filter(@l);
-	}
-	return @l;
-}
 
 sub match_locations
 {

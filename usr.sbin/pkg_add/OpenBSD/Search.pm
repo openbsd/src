@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.15 2009/11/10 14:32:31 espie Exp $
+# $OpenBSD: Search.pm,v 1.16 2009/11/10 14:37:20 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -28,26 +28,13 @@ sub match_locations
 	return \@l;
 }
 
-# XXX this is not efficient
-sub filter_locations
-{
-	my ($self, $l) = @_;
-	my $r = [];
-	for my $loc (@$l) {
-		if ($self->filter($loc->{name})) {
-			push(@$r, $loc);
-		}
-	}
-	return $r;
-}
-
 package OpenBSD::Search::PkgSpec;
 our @ISA=(qw(OpenBSD::Search));
 
-sub match_ref
+sub filter
 {
-	my ($self, $r) = @_;
-	return $self->{spec}->match_ref($r);
+	my ($self, @list) = @_;
+	return $self->{spec}->match_ref(\@list);
 }
 
 sub match_locations
@@ -60,12 +47,6 @@ sub filter_locations
 {
 	my ($self, $l) = @_;
 	return $self->{spec}->match_locations($l);
-}
-
-sub filter
-{
-	my ($self, @list) = @_;
-	return $self->match_ref(\@list);
 }
 
 sub new
