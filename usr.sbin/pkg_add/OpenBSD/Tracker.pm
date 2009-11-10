@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.6 2009/11/08 10:46:11 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.7 2009/11/10 10:28:12 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -18,9 +18,19 @@
 use strict;
 use warnings;
 
-# the tracker class is used to track what's going on during a complicated
-# install. Specifically: what packages are installed, what's left to do,
-# etc
+# In order to deal with dependencies, we have to know what's actually installed,
+# and what can actually be updated.
+# Specifically, to solve a dependency:
+# - look at packages to_install
+# - look at installed packages
+#   - if it's marked to_update, then we must process the update first
+#   - if it's marked as installed, or as cant_update, or uptodate, then
+#   we can use the installed packages.
+#   - otherwise, in update mode, put a request to update the package (e.g.,
+#   create a new UpdateSet.
+
+# the Tracker object does maintain that information globally so that 
+# Update/Dependencies can do its job.
 
 package OpenBSD::Tracker;
 sub new

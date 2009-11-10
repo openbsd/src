@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.12 2009/11/08 10:46:11 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.13 2009/11/10 10:28:12 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -14,6 +14,10 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+# these things don't really live here, they're just stuff that's shared
+# between pkg_add and pkg_delete, so to avoid yes another header...
 
 package OpenBSD::SharedItemsRecorder;
 sub new
@@ -48,6 +52,7 @@ sub progress
 	return $self->{progressmeter};
 }
 
+# we always have a progressmeter we can print to...
 sub setup_progressmeter
 {
 	my ($self, $opt_x) = @_;
@@ -96,6 +101,7 @@ sub choose_location
 	}
 }
 
+# stub class when no actual progressmeter that still prints out.
 package OpenBSD::StubProgress;
 sub clear {}
 
@@ -113,6 +119,22 @@ sub print
 	print STDERR @_;
 }
 
+# an UpdateSet is a list of packages to remove/install.
+# it contains three things:
+# -> a list of older packages to remove (installed locations)
+# -> a list of newer packages to add (might be very simple locations)
+# -> a list of "hints", as package names to install
+# every add/remove operations manipulate UpdateSet.
+#
+# Since older packages are always installed, they're organized as a hash.
+#
+# XXX: an UpdateSet succeeds or fails "together".
+# if several packages should be removed/added, then not being able
+# to do stuff on ONE of them is enough to invalidate the whole set.
+#
+# Normal UpdateSets contain one newer package at most.
+# Bigger UpdateSets can be created through the merge operation, which
+# will be used only when necessary.
 package OpenBSD::UpdateSet;
 sub new
 {
