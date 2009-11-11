@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.174 2009/11/10 17:41:35 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.175 2009/11/11 08:00:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1557,6 +1557,7 @@ extern struct clients dead_clients;
 int	 server_start(char *);
 void	 server_signal_set(void);
 void	 server_signal_clear(void);
+void	 server_update_socket(void);
 
 /* server-client.c */
 void	 server_client_create(int);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.21 2009/10/10 10:02:48 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.22 2009/11/11 08:00:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -277,6 +277,7 @@ cmd_new_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 		}
 	}
 	recalculate_sizes();
+	server_update_socket();
 
 	return (!detached);	/* 1 means don't tell command client to exit */
 }
