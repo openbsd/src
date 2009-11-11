@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.12 2008/03/24 16:11:05 deraadt Exp $	*/
+/*	$OpenBSD: probe.c,v 1.13 2009/11/11 17:23:16 deraadt Exp $	*/
 /*	$KAME: probe.c,v 1.16 2002/06/10 20:00:36 itojun Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ defrouter_probe(struct ifinfo *ifinfo)
 		goto closeandend;
 	}
 
-	for (i = 0; dr.defrouter[i].if_index && i < PRLSTSIZ; i++) {
+	for (i = 0; i < DRLSTSIZ && dr.defrouter[i].if_index; i++) {
 		if (ifindex && dr.defrouter[i].if_index == ifindex) {
 			/* sanity check */
 			if (!IN6_IS_ADDR_LINKLOCAL(&dr.defrouter[i].rtaddr)) {
