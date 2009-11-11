@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.91 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: Add.pm,v 1.92 2009/11/11 11:13:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -547,7 +547,7 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	$state->print("You may wish to add ", $self->fullname, " to /etc/man.conf\n");
+	$state->log("You may wish to add ", $self->fullname, " to /etc/man.conf\n");
 }
 
 package OpenBSD::PackingElement::Manpage;

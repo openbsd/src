@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.375 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: pkg_add,v 1.376 2009/11/11 11:13:16 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -95,7 +95,7 @@ sub deptree_header
 sub set_name_from_handle
 {
 	my ($state, $h) = @_;
-	$state->set_pkgname($h->pkgname);
+	$state->log->set_context($h->pkgname);
 }
 
 sub updater
@@ -477,7 +477,7 @@ sub install_set
 		}
 		if ($handle->has_error) {
 			$state->set_name_from_handle($handle);
-			$state->print("Can't install ", $handle->pkgname, ":",
+			$state->log("Can't install ", $handle->pkgname, ":",
 				$handle->error_message, "\n"); 
 			$bad++;
 			return ();
@@ -810,7 +810,7 @@ if ($state->{packages_with_sig}) {
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
-$state->delayed_output;
+$state->log->dump;
 if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
 	print "Forced updates, bogus dependencies for ", 
 	    join(' ', sort(keys %{$state->{updatedepends}})),

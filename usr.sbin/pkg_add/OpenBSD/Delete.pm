@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.83 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: Delete.pm,v 1.84 2009/11/11 11:13:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -158,7 +158,7 @@ sub delete_plist
 	return if $state->{not};
 	if ($state->{baddelete}) {
 	    my $borked = keep_old_files($state, $plist);
-	    $state->print("Files kept as $borked package\n");
+	    $state->log("Files kept as $borked package\n");
 	    delete $state->{baddelete};
 	}
 			
@@ -407,7 +407,7 @@ sub delete
 					print "Problem: ", $self->fullname,
 					    " does not have a checksum\n";
 					print "NOT deleting: $realname\n";
-					$state->print("Couldn't delete $realname (no checksum)\n");
+					$state->log("Couldn't delete $realname (no checksum)\n");
 					return;
 				}
 				my $d = $self->compute_digest($realname, 
@@ -416,7 +416,7 @@ sub delete
 					print "Problem: checksum doesn't match for ",
 						$self->fullname, "\n";
 					print "NOT deleting: $realname\n";
-					$state->print("Couldn't delete $realname (bad checksum)\n");
+					$state->log("Couldn't delete $realname (bad checksum)\n");
 					$self->do_not_delete($state);
 					return;
 				}
@@ -429,7 +429,7 @@ sub delete
 	return if $state->{not};
 	if (!unlink $realname) {
 		print "Problem deleting $realname\n";
-		$state->print("deleting $realname failed: $!\n");
+		$state->log("deleting $realname failed: $!\n");
 	}
 }
 
@@ -510,23 +510,23 @@ sub delete
 	my $action = $state->{replacing} ? "check" : "remove";
 	my $origname = $orig->realname($state);
 	if (! -e $realname) {
-		$state->print("File $realname does not exist\n");
+		$state->log("File $realname does not exist\n");
 		return;
 	}
 	if (! -f $realname) {
-		$state->print("File $realname is not a file\n");
+		$state->log("File $realname is not a file\n");
 		return;
 	}
 
 	if (!defined $orig->{d}) {
-		$state->print("Couldn't delete $realname (no checksum)\n");
+		$state->log("Couldn't delete $realname (no checksum)\n");
 		return;
 	}
 
 	if ($state->{quick} && $state->{quick} >= 2) {
 		unless ($state->{extra}) {
 			$self->mark_dir($state);
-			$state->print("You should also $action $realname\n");
+			$state->log("You should also $action $realname\n");
 			return;
 		}
 	} else {
@@ -536,7 +536,7 @@ sub delete
 		} else {
 			unless ($state->{extra}) {
 				$self->mark_dir($state);
-				$state->print("You should also $action $realname (which was modified)\n");
+				$state->log("You should also $action $realname (which was modified)\n");
 				return;
 			}
 		}
@@ -545,7 +545,7 @@ sub delete
 	print "deleting $realname\n" if $state->{verbose};
 	if (!unlink $realname) {
 		print "Problem deleting $realname\n";
-		$state->print("deleting $realname failed: $!\n");
+		$state->log("deleting $realname failed: $!\n");
 	}
 }
 		
@@ -606,13 +606,13 @@ sub delete
 	return if $state->{not};
 	return unless -e $realname or -l $realname;
 	if ($state->{replacing}) {
-		$state->print("Remember to update $realname\n");
+		$state->log("Remember to update $realname\n");
 		$self->mark_dir($state);
 	} elsif ($state->{extra}) {
 		unlink($realname) or 
 		    print "problem deleting extra file $realname\n";
 	} else {
-		$state->print("You should also remove $realname\n");
+		$state->log("You should also remove $realname\n");
 		$self->mark_dir($state);
 	}
 }
@@ -628,7 +628,7 @@ sub delete
 	if ($state->{extra}) {
 		$self->SUPER::delete($state);
 	} else {
-		$state->print("You should also remove the directory $realname\n");
+		$state->log("You should also remove the directory $realname\n");
 		$self->mark_dir($state);
 	}
 }
@@ -641,7 +641,7 @@ sub delete
 	if ($state->{extra}) {
 		$self->run($state);
 	} else {
-		$state->print("You should also run ", $self->{expanded}, "\n");
+		$state->log("You should also run ", $self->{expanded}, "\n");
 	}
 }
 

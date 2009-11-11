@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.116 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: pkg_delete,v 1.117 2009/11/11 11:13:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -197,7 +197,7 @@ eval {
 			print $opt_n ? "Pretending to delete " : "Deleting ", 
 			    "$pkgname\n";
 		}
-		$state->set_pkgname($pkgname);
+		$state->log->set_context($pkgname);
 		OpenBSD::Delete::delete_package($pkgname, $state);
 		$done{$pkgname} = 1;
 		$removed++;
@@ -213,7 +213,7 @@ OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
-$state->delayed_output;
+$state->log->dump;
 rethrow $dielater;
 } catch {
 	print STDERR "$0: $_\n";

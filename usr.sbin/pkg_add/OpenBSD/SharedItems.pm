@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.14 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.15 2009/11/11 11:13:16 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -67,16 +67,16 @@ sub cleanup
 			my $realname = $state->{destdir}.$d;
 			if ($remaining->{dirs}->{$realname}) {
 				for my $i (@{$h->{$d}}) {
-					$state->set_pkgname($i->{pkgname});
+					$state->log->set_context($i->{pkgname});
 					$i->reload($state);
 				}
 			} else {
 				for my $i (@{$h->{$d}}) {
-					$state->set_pkgname($i->{pkgname});
+					$state->log->set_context($i->{pkgname});
 					$i->cleanup($state);
 				}
 				if (!rmdir $realname) {
-					$state->print("Error deleting directory $realname: $!\n")
+					$state->log("Error deleting directory $realname: $!\n")
 					    unless $state->{dirs_okay}->{$d};
 				}
 			}
@@ -90,8 +90,8 @@ sub cleanup
 			if ($state->{extra}) {
 				System(OpenBSD::Paths->userdel, $user);
 			} else {
-				$state->set_pkgname($pkgname);
-				$state->print("You should also run /usr/sbin/userdel $user\n");
+				$state->log->set_context($pkgname);
+				$state->log("You should also run /usr/sbin/userdel $user\n");
 			}
 			$done++;
 		}
@@ -103,8 +103,8 @@ sub cleanup
 			if ($state->{extra}) {
 				System(OpenBSD::Paths->groupdel, $group);
 			} else {
-				$state->set_pkgname($pkgname);
-				$state->print("You should also run /usr/sbin/groupdel $group\n");
+				$state->log->set_context($pkgname);
+				$state->log("You should also run /usr/sbin/groupdel $group\n");
 			}
 			$done++;
 		}
@@ -126,7 +126,7 @@ sub cleanup
 {
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
-	$state->print("You may wish to remove ", $fullname, " from man.conf\n");
+	$state->log("You may wish to remove ", $fullname, " from man.conf\n");
 	for my $f (OpenBSD::Paths->man_cruft) {
 		unlink("$fullname/$f");
 	}
@@ -137,7 +137,7 @@ sub cleanup
 {
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
-	$state->print("You may wish to remove ", $fullname, " from your font path\n");
+	$state->log("You may wish to remove ", $fullname, " from your font path\n");
 	for my $f (OpenBSD::Paths->font_cruft) {
 		unlink("$fullname/$f");
 	}
