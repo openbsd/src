@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.15 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.16 2009/11/11 11:01:55 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -47,7 +47,62 @@ sub cleanup
 
 package OpenBSD::pkg_foo::State;
 use OpenBSD::Error;
-our @ISA=(qw(OpenBSD::Error));
+
+sub new
+{
+	my $class = shift;
+	my $o = bless {}, $class;
+	$o->init(@_);
+	return $o;
+}
+
+sub init
+{
+	my $self = shift;
+	$self->{l} = OpenBSD::Error->new;
+}
+
+sub log
+{
+	my $self = shift;
+	return $self->{l};
+}
+
+sub set_pkgname
+{
+	my $self = shift;
+	$self->log->set_pkgname(@_);
+}
+
+sub print
+{
+	my $self = shift;
+	$self->log->print(@_);
+}
+
+sub warn
+{
+	my $self = shift;
+	$self->log->warn(@_);
+}
+
+sub fatal
+{
+	my $self = shift;
+	$self->log->fatal(@_);
+}
+
+sub delayed_output
+{
+	my $self = shift;
+	$self->log->delayed_output(@_);
+}
+
+sub system
+{
+	my $self = shift;
+	$self->log->system(@_);
+}
 
 sub progress
 {
