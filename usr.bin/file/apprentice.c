@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.28 2009/10/27 23:59:37 deraadt Exp $ */
+/*	$OpenBSD: apprentice.c,v 1.29 2009/11/11 16:21:51 jsg Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -2084,7 +2084,7 @@ swap4(uint32_t sv)
 private uint64_t
 swap8(uint64_t sv)
 {
-	uint32_t rv;
+	uint64_t rv;
 	uint8_t *s = (uint8_t *)(void *)&sv; 
 	uint8_t *d = (uint8_t *)(void *)&rv; 
 #if 0
