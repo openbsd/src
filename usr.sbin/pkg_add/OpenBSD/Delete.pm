@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.86 2009/11/11 12:21:20 espie Exp $
+# $OpenBSD: Delete.pm,v 1.87 2009/11/11 13:00:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -559,8 +559,7 @@ sub delete
 	my ($self, $state) = @_;
 	unless ($state->{not}) {
 	    my $fullname = $state->{destdir}.$self->fullname;
-	    VSystem($state->{very_verbose}, 
-		OpenBSD::Paths->install_info, 
+	    $state->vsystem(OpenBSD::Paths->install_info, 
 		"--delete", "--info-dir=".dirname($fullname), $fullname);
 	}
 	$self->SUPER::delete($state);

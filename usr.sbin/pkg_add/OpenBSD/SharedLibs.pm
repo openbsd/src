@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.33 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.34 2009/11/11 13:00:40 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -80,8 +80,7 @@ sub mark_ldconfig_directory
 sub ensure_ldconfig
 {
 	my $state = shift;
-	VSystem($state->{very_verbose}, 
-	    @ldconfig, "-R") unless $state->{not};
+	$state->vsystem(@ldconfig, "-R") unless $state->{not};
 	$OpenBSD::PackingElement::Lib::todo = 0;
 }
 

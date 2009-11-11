@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.162 2009/11/11 12:47:13 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.163 2009/11/11 13:00:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1363,7 +1363,7 @@ sub run_if_exists
 	require OpenBSD::Error;
 
 	if (-x $cmd) {
-		OpenBSD::Error::VSystem($state->{very_verbose}, $cmd, @l);
+		$state->vsystem($cmd, @l);
 	} else {
 		$state->errsay("$cmd not found");
 	}

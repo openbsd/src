@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.21 2009/11/11 12:04:19 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.22 2009/11/11 13:00:40 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -65,7 +65,7 @@ sub collision_report($$)
 	if ($state->{defines}->{removecollisions}) {
 		require OpenBSD::Error;
 		for my $f (@$list) {
-			OpenBSD::Error::Unlink(1, $f->fullname);
+			$state->unlink(1, $f->fullname);
 		}
 		return;
 	}
@@ -132,10 +132,9 @@ sub collision_report($$)
 		}
 	}
 	if ($dorepair == 1) {
-		require OpenBSD::Error;
 		for my $f (@$list) {
 
-			if (OpenBSD::Error::Unlink($state->{verbose}, 
+			if ($state->unlink($state->{verbose}, 
 			    $f->fullname)) {
 				$state->{problems}--;
 			} else {

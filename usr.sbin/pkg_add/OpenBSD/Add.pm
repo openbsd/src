@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.95 2009/11/11 12:32:03 espie Exp $
+# $OpenBSD: Add.pm,v 1.96 2009/11/11 13:00:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -285,7 +285,7 @@ sub install
 	my $l=[];
 	push(@$l, "-v") if $state->{very_verbose};
 	$self->build_args($l);
-	VSystem($state->{very_verbose}, $self->command,, @$l, $auth);
+	$state->vsystem($self->command,, @$l, $auth);
 }
 
 package OpenBSD::PackingElement::NewUser;
@@ -338,9 +338,7 @@ sub install
 		$state->say("sysctl -w $name != ".  $self->{value});
 		return;
 	}
-	VSystem($state->{very_verbose}, 
-	    OpenBSD::Paths->sysctl, 
-	    $name.'='.$self->{value});
+	$state->vsystem(OpenBSD::Paths->sysctl, $name.'='.$self->{value});
 }
 			
 package OpenBSD::PackingElement::DirBase;
@@ -569,8 +567,7 @@ sub install
 	$self->SUPER::install($state);
 	return if $state->{not};
 	my $fullname = $state->{destdir}.$self->fullname;
-	VSystem($state->{very_verbose}, 
-	    OpenBSD::Paths->install_info,
+	$state->vsystem(OpenBSD::Paths->install_info,
 	    "--info-dir=".dirname($fullname), $fullname);
 }
 

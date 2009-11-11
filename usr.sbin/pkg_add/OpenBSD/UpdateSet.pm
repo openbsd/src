@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.22 2009/11/11 12:47:13 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.23 2009/11/11 13:00:40 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -116,6 +116,27 @@ sub progress
 {
 	my $self = shift;
 	return $self->{progressmeter};
+}
+
+sub vsystem
+{
+	my $self = shift;
+	$self->progress->clear;
+	OpenBSD::Error::VSystem($self->{very_verbose}, @_);
+}
+
+sub system
+{
+	my $self = shift;
+	$self->progress->clear;
+	OpenBSD::Error::System(@_);
+}
+
+sub unlink
+{
+	my $self = shift;
+	$self->progress->clear;
+	OpenBSD::Error::Unlink(@_);
 }
 
 # we always have a progressmeter we can print to...
