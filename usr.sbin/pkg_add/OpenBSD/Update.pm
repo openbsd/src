@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.91 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: Update.pm,v 1.92 2009/11/11 11:18:24 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -126,7 +126,7 @@ sub process_handle
 		}
 	}
 
-	$state->progress->print("Candidates for updating $pkgname -> ", join(' ', map {$_->name} @$l), "\n");
+	$state->print("Candidates for updating $pkgname -> ", join(' ', map {$_->name} @$l), "\n");
 		
 	my $r = $state->choose_location($pkgname, $l);
 	if (defined $r) {
