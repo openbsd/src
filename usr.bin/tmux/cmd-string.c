@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.7 2009/10/26 21:42:04 deraadt Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.8 2009/11/11 18:56:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -134,17 +134,15 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 
 			if (ch != EOF)
 				break;
-			if (argc == 0)
-				goto out;
 
-			for (i = 0; i < argc; i++) {
-				equals = strchr(argv[i], '=');
-				whitespace = argv[i] + strcspn(argv[i], " \t");
+			while (argc != 0) {
+				equals = strchr(argv[0], '=');
+				whitespace = argv[0] + strcspn(argv[0], " \t");
 				if (equals == NULL || equals > whitespace)
 					break;
-				environ_put(&global_environ, argv[i]);
-				memmove(&argv[i], &argv[i + 1], argc - i - 1);
+				environ_put(&global_environ, argv[0]);
 				argc--;
+				memmove(argv, argv + 1, argc * (sizeof *argv));
 			}
 			if (argc == 0)
 				goto out;
@@ -189,10 +187,11 @@ out:
 	if (buf != NULL)
 		xfree(buf);
 
-	while (--argc >= 0)
-		xfree(argv[argc]);
-	if (argv != NULL)
+	if (argv != NULL) {
+		for (i = 0; i < argc; i++)
+			xfree(argv[argc]);
 		xfree(argv);
+	}
 
 	return (rval);
 }
