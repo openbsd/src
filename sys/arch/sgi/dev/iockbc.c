@@ -1,4 +1,4 @@
-/*	$OpenBSD: iockbc.c,v 1.1 2009/11/10 15:50:09 jsing Exp $	*/
+/*	$OpenBSD: iockbc.c,v 1.2 2009/11/11 15:54:24 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2009 Joel Sing <jsing@openbsd.org>
  *
@@ -228,6 +228,7 @@ iockbc_attach(struct device *parent, struct device *self, void *aux)
 	struct ioc_attach_args *iaa = aux;
 	struct pckbc_softc *sc = &isc->sc_pckbc;
 	struct pckbc_internal *t;
+	uint32_t csr;
 
 	/*
 	 * For some reason keyboard and mouse ports are inverted on
@@ -269,6 +270,19 @@ iockbc_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 	else
 		printf(": unable to establish interrupt\n");
+
+	/*
+	 * Setup up controller: do not force pull clock and data lines low,
+	 * clamp clocks after three bytes received.
+	 */
+	csr = bus_space_read_4(isc->iot, isc->ioh, IOC3_KBC_CTRL_STATUS);
+	csr &= ~(IOC3_KBC_CTRL_KBD_PULL_DATA_LOW |
+	    IOC3_KBC_CTRL_KBD_PULL_CLOCK_LOW |
+	    IOC3_KBC_CTRL_AUX_PULL_DATA_LOW |
+	    IOC3_KBC_CTRL_AUX_PULL_CLOCK_LOW |
+	    IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1);
+	csr |= IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3;
+	bus_space_write_4(isc->iot, isc->ioh, IOC3_KBC_CTRL_STATUS, csr);
 
 	/*
 	 * Attach "slots". 
@@ -401,6 +415,7 @@ iockbc_poll_write(struct pckbc_internal *t, pckbc_slot_t slot, int val)
 		delay(50);
 	}
 
+	DPRINTF("iockbc_poll_write: timeout, sts %08x\n", stat);
 	return -1;
 }
 
@@ -423,6 +438,10 @@ iockbc_poll_read(struct pckbc_internal *t, pckbc_slot_t slot)
                 	break;
                 delay(50);
         }
+	if ((val & IOC3_KBC_DATA_VALID) == 0) {
+		DPRINTF("iockbc_poll_read: timeout, wx %08x\n", val);
+		return -1;
+	}
 
 	/* Process received data. */
 	if (val & IOC3_KBC_DATA_2_VALID)
