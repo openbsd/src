@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.83 2009/11/02 20:20:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.84 2009/11/11 07:59:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -438,9 +438,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				if (self)
 					free(lsa);
 			} else if (r < 0) {
-				/* lsa no longer needed */
-				free(lsa);
-
 				/*
 				 * point 6 of "The Flooding Procedure"
 				 * We are violating the RFC here because
@@ -452,8 +449,12 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				if (rde_req_list_exists(nbr, &lsa->hdr)) {
 					imsg_compose_event(iev_ospfe, IMSG_LS_BADREQ,
 					    imsg.hdr.peerid, 0, -1, NULL, 0);
+					free(lsa);
 					break;
 				}
+
+				/* lsa no longer needed */
+				free(lsa);
 
 				/* new LSA older than DB */
 				if (ntohl(db_hdr->seq_num) == MAX_SEQ_NUM &&
