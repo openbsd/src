@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.20 2009/11/11 12:21:20 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.21 2009/11/11 12:32:03 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -139,7 +139,7 @@ sub check_root
 	my $state = shift;
 	if ($< && !$state->{defines}->{nonroot}) {
 		if ($state->{not}) {
-			Warn "$0 should be run as root\n";
+			$state->errsay("$0 should be run as root");
 		} else {
 			Fatal "$0 must be run as root";
 		}

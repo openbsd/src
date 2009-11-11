@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.94 2009/11/11 12:21:20 espie Exp $
+# $OpenBSD: Add.pm,v 1.95 2009/11/11 12:32:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -232,11 +232,11 @@ sub prepare_for_addition
 	my ($self, $state, $pkgname) = @_;
 
 	if ($state->{cdrom_only} && $self->{cdrom} ne 'yes') {
-	    Warn "Package $pkgname is not for cdrom.\n";
+	    $state->errsay("Package $pkgname is not for cdrom.");
 	    $state->{problems}++;
 	}
 	if ($state->{ftp_only} && $self->{ftp} ne 'yes') {
-	    Warn "Package $pkgname is not for ftp.\n";
+	    $state->errsay("Package $pkgname is not for ftp.");
 	    $state->{problems}++;
 	}
 }
@@ -266,8 +266,8 @@ sub prepare_for_addition
 	my $ok = $self->check;
 	if (defined $ok) {
 		if ($ok == 0) {
-			Warn $self->type, " ",  $self->name, 
-			    " does not match\n";
+			$state->errsay($self->type, " ",  $self->name, 
+			    " does not match");
 			$state->{problems}++;
 		}
 	}
@@ -524,7 +524,7 @@ sub install
 			$state->say("The file $filename would be installed from $origname");
 		} else {
 			if (!copy($origname, $filename)) {
-				Warn "File $filename could not be installed:\n\t$!\n";
+				$state->errsay("File $filename could not be installed:\n\t$!");
 			}
 			$self->set_modes($filename);
 			if ($state->{verbose}) {

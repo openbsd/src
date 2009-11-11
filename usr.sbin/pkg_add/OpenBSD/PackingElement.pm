@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.160 2009/11/11 12:04:19 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.161 2009/11/11 12:32:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1365,7 +1365,7 @@ sub run_if_exists
 	if (-x $cmd) {
 		OpenBSD::Error::VSystem($state->{very_verbose}, $cmd, @l);
 	} else {
-		OpenBSD::Error::Warn("$cmd not found\n");
+		$state->errsay("$cmd not found");
 	}
 }
 
@@ -1562,7 +1562,7 @@ sub prepare
 			$state->log($_);
 		} 
 	} else {
-		Warn "Can't open $fname: $!\n";
+		$state->errsay("Can't open $fname: $!");
     	}
 }
 

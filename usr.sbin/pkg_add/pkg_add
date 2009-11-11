@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.378 2009/11/11 12:21:20 espie Exp $
+# $OpenBSD: pkg_add,v 1.379 2009/11/11 12:32:03 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -229,7 +229,7 @@ sub can_install
 
 		for my $toreplace (@conflicts) {
 			if ($state->tracker->is_installed($toreplace)) {
-				Warn "Cannot replace $toreplace with $pkgname: just got installed\n";
+				$state->errsay("Cannot replace $toreplace with $pkgname: just got installed");
 				$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 				return;
 			}
@@ -370,7 +370,7 @@ sub really_add
 				    $state);
 			} catchall {
 				unless ($state->{interrupted}) {
-					Warn $_;
+					$state->errprint($_);
 					$errors++;
 				}
 			};
@@ -390,7 +390,7 @@ sub really_add
 			try {
 			    OpenBSD::Delete::delete_plist($o->plist, $state);
 			} catchall {
-				Warn $_;
+				$state->errprint($_);
 				Fatal partial_install(
 				    "Deinstallation of $oldname failed", 
 				    $set, $state);
@@ -420,7 +420,7 @@ sub really_add
 			}
 		} catchall {
 			unless ($state->{interrupted}) {
-				Warn $_;
+				$state->errprint($_);
 				$errors++;
 			}
 		};

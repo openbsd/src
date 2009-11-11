@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.53 2009/11/11 12:04:19 espie Exp $
+# $OpenBSD: Replace.pm,v 1.54 2009/11/11 12:32:03 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -234,7 +234,7 @@ sub validate_depend
 	return if $self->spec->filter($replacement);
 
 	if ($state->{defines}->{updatedepends}) {
-	    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
+	    $state->errsay("Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it");
 	    $state->{forcedupdates} = {} unless defined $state->{forcedupdates};
 	    $state->{forcedupdates}->{$wanting} = 1;
 	} elsif ($state->{interactive}) {
@@ -247,7 +247,7 @@ sub validate_depend
 	    }
 	} else {
 	    $state->{okay} = 0;
-	    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match (use -F updatedepends to force it)\n";
+	    $state->errsay("Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match (use -F updatedepends to force it)");
 	}
 }
 
@@ -316,13 +316,13 @@ sub can_old_package_be_replaced
 	$state->{journal} = [];
 	$old_plist->can_update(0, $state);
 	if ($state->{okay} == 0) {
-		Warn "Old package ", $old_plist->pkgname, 
-		    " contains potentially unsafe operations\n";
+		$state->errsay("Old package ", $old_plist->pkgname, 
+		    " contains potentially unsafe operations");
 		for my $i (@{$state->{journal}}) {
-			Warn "\t$i\n";
+			$state->errsay("\t", $i);
 		}
 		if ($state->{defines}->{update}) {
-			Warn "(forcing update)\n";
+			$state->errsay("(forcing update)");
 			$state->{okay} = 1;
 		} elsif ($state->{interactive}) {
 
@@ -343,7 +343,7 @@ sub can_old_package_be_replaced
 			my $p2 = OpenBSD::PackingList->from_installation(
 			    $wanting, \&OpenBSD::PackingList::DependOnly);
 			if (!defined $p2) {
-				Warn "Error: $wanting missing from installation\n"
+				$state->errsay("Error: $wanting missing from installation");
 			} else {
 				$p2->validate_depend($state, $wanting, 
 				    $old_plist->pkgname, $new_pkgname);
@@ -360,13 +360,13 @@ sub is_new_package_safe
 	$state->{journal} = [];
 	$plist->can_update(1, $state);
 	if ($state->{okay} == 0) {
-		Warn "New package ", $plist->pkgname, 
-		    " contains potentially unsafe operations\n";
+		$state->errsay("New package ", $plist->pkgname, 
+		    " contains potentially unsafe operations");
 		for my $i (@{$state->{journal}}) {
-			Warn "\t$i\n";
+			$state->errsay("\t", $i);
 		}
 		if ($state->{defines}->{update}) {
-			Warn "(forcing update)\n";
+			$state->errsay("(forcing update)");
 			$state->{okay} = 1;
 		} elsif ($state->{interactive}) {
 			if (OpenBSD::Interactive::confirm("proceed with update anyways", 1, 0, 'update')) {
