@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.74 2009/11/05 12:11:53 jsing Exp $	*/
+/*	$OpenBSD: mta.c,v 1.75 2009/11/11 10:04:05 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"
