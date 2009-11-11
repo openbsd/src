@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.17 2009/11/11 11:13:16 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.18 2009/11/11 11:17:11 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -75,6 +75,7 @@ sub init
 {
 	my $self = shift;
 	$self->{l} = OpenBSD::Log->new;
+	$self->{progressmeter} = bless {}, "OpenBSD::StubProgress";
 }
 
 sub log
@@ -85,6 +86,12 @@ sub log
 	} else {
 		$self->{l}->print(@_);
 	}
+}
+
+sub print
+{
+	my $self = shift;
+	$self->progress->print(@_);
 }
 
 sub system
@@ -106,8 +113,6 @@ sub setup_progressmeter
 	if (!$opt_x && !$self->{beverbose}) {
 		require OpenBSD::ProgressMeter;
 		$self->{progressmeter} = OpenBSD::ProgressMeter->new;
-	} else {
-		$self->{progressmeter} = bless {}, "OpenBSD::StubProgress";
 	}
 }
 
@@ -127,7 +132,7 @@ sub choose_location
 {
 	my ($state, $name, $list) = @_;
 	if (@$list == 0) {
-		$state->progress->print("Can't find $name\n");
+		$state->print("Can't find $name\n");
 		return undef;
 	} elsif (@$list == 1) {
 		return $list->[0];
@@ -142,7 +147,7 @@ sub choose_location
 		my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $name", 1, sort keys %h);
 		return $h{$result};
 	} else {
-		$state->progress->print("Ambiguous: $name could be ", 
+		$state->print("Ambiguous: $name could be ", 
 		    join(' ', keys %h), "\n");
 		return undef;
 	}
