@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.159 2009/11/11 11:13:16 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.160 2009/11/11 12:04:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -410,7 +410,7 @@ sub check_digest
 		    " does not match");
 	}
 	if ($state->{very_verbose}) {
-		print "Checksum match for ", $self->fullname, "\n";
+		$state->say("Checksum match for ", $self->fullname);
 	}
 }
 
@@ -1195,7 +1195,8 @@ sub run
 	my ($self, $state) = @_;
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
-	print $self->keyword, " ", $self->{expanded}, "\n" if $state->{beverbose};
+	$state->say($self->keyword, " ", $self->{expanded}) 
+	    if $state->{beverbose};
 	$state->system(OpenBSD::Paths->sh, '-c', $self->{expanded}) 
 	    unless $state->{not};
 }
@@ -1376,7 +1377,8 @@ sub finish_fontdirs
 		require OpenBSD::Error;
 
 		map { update_fontalias($_) } @l unless $state->{not};
-		print "You may wish to update your font path for ", join(' ', @l), "\n";
+		$state->say("You may wish to update your font path for ", 
+		    join(' ', @l));
 		return if $state->{not};
 		run_if_exists($state, OpenBSD::Paths->mkfontscale, @l);
 		run_if_exists($state, OpenBSD::Paths->mkfontdir, @l);
@@ -1508,7 +1510,8 @@ sub run
 	return if $state->{dont_run_scripts};
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
-	print $self->beautify, " script: $name $pkgname ", join(' ', @args), "\n" if $state->{beverbose};
+	$state->say($self->beautify, " script: $name $pkgname ", 
+	    join(' ', @args)) if $state->{beverbose};
 	return if $not;
 	chmod 0755, $name;
 	return if $state->system($name, $pkgname, @args) == 0;

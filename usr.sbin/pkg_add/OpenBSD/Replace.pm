@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.52 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: Replace.pm,v 1.53 2009/11/11 12:04:19 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -116,7 +116,8 @@ sub extract
 		$d = dirname($d);
 	}
 	if ($state->{not}) {
-		print "extracting tempfile under $d\n" if $state->{very_verbose};
+		$state->say("extracting tempfile under $d") 
+		    if $state->{very_verbose};
 		$state->{archive}->skip;
 	} else {
 		if (!-e _) {
@@ -124,7 +125,7 @@ sub extract
 		}
 		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
 
-		print "extracting $tempname\n" if $state->{very_verbose};
+		$state->say("extracting $tempname") if $state->{very_verbose};
 		$self->{tempname} = $tempname;
 
 		# XXX don't apply destdir twice
@@ -144,7 +145,8 @@ sub extract
 
 	return if -e $destdir.$fullname;
 	$self->SUPER::extract($state);
-	print "new directory ", $destdir, $fullname, "\n" if $state->{very_verbose};
+	$state->say("new directory ", $destdir, $fullname) 
+	    if $state->{very_verbose};
 	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
 }
@@ -335,8 +337,8 @@ sub can_old_package_be_replaced
 		push(@r, $wanting) if !defined $ignore->{$wanting};
 	}
 	if (@r) {
-		print "Verifying dependencies still match for ", 
-		    join(', ', @r), "\n" if $state->{verbose};
+		$state->say("Verifying dependencies still match for ", 
+		    join(', ', @r)) if $state->{verbose};
 		for my $wanting (@wantlist) {
 			my $p2 = OpenBSD::PackingList->from_installation(
 			    $wanting, \&OpenBSD::PackingList::DependOnly);
@@ -413,12 +415,12 @@ sub adjust_depends_closure
 {
 	my ($oldname, $plist, $state) = @_;
 
-	print "Packages that depend on those shared libraries:\n" 
+	$state->say("Packages that depend on those shared libraries:") 
 	    if $state->{beverbose};
 
 	my $write = OpenBSD::RequiredBy->new($plist->pkgname);
 	for my $pkg (OpenBSD::RequiredBy->compute_closure($oldname)) {
-		print "\t$pkg\n" if $state->{beverbose};
+		$state->say("\t", $pkg) if $state->{beverbose};
 		$write->add($pkg);
 		OpenBSD::Requiring->new($pkg)->add($plist->pkgname);
 	}
@@ -435,7 +437,7 @@ sub save_old_libraries
 		my $libs = {};
 		my $p = {};
 
-		print "Looking for changes in shared libraries\n" 
+		$state->say("Looking for changes in shared libraries") 
 		    if $state->{beverbose};
 		$o->{plist}->mark_lib($libs, $p);
 		for my $n ($set->newer) {
@@ -443,12 +445,14 @@ sub save_old_libraries
 		}
 
 		if (%$libs) {
-			print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
+			$state->say("Libraries to keep: ", 
+			    join(",", sort(keys %$libs))) 
 			    if $state->{verbose};
 			($o->{plist}, my $stub_list) = split_libs($o->{plist}, $libs);
 			my $stub_name = $stub_list->pkgname;
 			my $dest = installed_info($stub_name);
-			print "Keeping them in $stub_name\n" if $state->{verbose};
+			$state->say("Keeping them in $stub_name") 
+			    if $state->{verbose};
 			if ($state->{not}) {
 				$stub_list->to_cache;
 				$o->{plist}->to_cache;
@@ -470,7 +474,8 @@ sub save_old_libraries
 
 			adjust_depends_closure($oldname, $stub_list, $state);
 		} else {
-			print "No libraries to keep\n" if $state->{verbose};
+			$state->say("No libraries to keep") 
+			    if $state->{verbose};
 		}
 	}
 }

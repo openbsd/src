@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.18 2009/11/11 11:17:11 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.19 2009/11/11 12:04:19 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -94,6 +94,12 @@ sub print
 	$self->progress->print(@_);
 }
 
+sub say
+{
+	my $self = shift;
+	$self->progress->print(@_, "\n");
+}
+
 sub system
 {
 	my $self = shift;
@@ -132,7 +138,7 @@ sub choose_location
 {
 	my ($state, $name, $list) = @_;
 	if (@$list == 0) {
-		$state->print("Can't find $name\n");
+		$state->say("Can't find $name");
 		return undef;
 	} elsif (@$list == 1) {
 		return $list->[0];
@@ -147,8 +153,7 @@ sub choose_location
 		my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $name", 1, sort keys %h);
 		return $h{$result};
 	} else {
-		$state->print("Ambiguous: $name could be ", 
-		    join(' ', keys %h), "\n");
+		$state->say("Ambiguous: $name could be ", join(' ', keys %h));
 		return undef;
 	}
 }
@@ -168,7 +173,7 @@ sub set_header {}
 sub print
 {
 	shift;
-	print STDERR @_;
+	print @_;
 }
 
 # an UpdateSet is a list of packages to remove/install.

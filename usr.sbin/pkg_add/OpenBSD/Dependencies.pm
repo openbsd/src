@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.81 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.82 2009/11/11 12:04:19 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -86,7 +86,8 @@ sub find_in_already_done
 	my $r = $solver->check_lib_spec($solver->{localbase}, $obj, 
 	    $self->{known});
 	if ($r) {
-		print "found libspec $obj in package $r\n" if $state->{verbose};
+		$state->say("found libspec $obj in package $r") 
+		    if $state->{verbose};
 		return $r;
 	} else {
 		return undef;
@@ -101,7 +102,8 @@ sub find_in_extra_sources
 	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir});
 	for my $dir (OpenBSD::SharedLibs::system_dirs()) {
 		if ($solver->check_lib_spec($dir, $obj, {system => 1})) {
-			print "found libspec $obj in $dir/lib\n" if $state->{verbose};
+			$state->say("found libspec $obj in $dir/lib")
+			    if $state->{verbose};
 			return 'system';
 		}
 	}
@@ -114,7 +116,8 @@ sub find_in_new_source
 	OpenBSD::SharedLibs::add_libs_from_installed_package($dep);
 	if ($solver->check_lib_spec($solver->{localbase}, $obj, 
 	    {$dep => 1})) {
-		print "found libspec $obj in package $dep\n" if $state->{verbose};
+		$state->say("found libspec $obj in package $dep") 
+		    if $state->{verbose};
 		return $dep;
 	} 
 	return undef;
@@ -129,7 +132,8 @@ sub find_elsewhere
 			my $r = $solver->find_old_lib($state, 
 			    $solver->{localbase}, $dep->{pattern}, $obj);
 			if ($r) {
-				print "found libspec $obj in old package $r\n" if $state->{verbose};
+				$state->say("found libspec $obj in old package $r")
+				    if $state->{verbose};
 				return $r;
 			}
 		}
@@ -152,7 +156,7 @@ sub find_in_already_done
 	my ($self, $solver, $state, $obj) = @_;
 	my $r = $self->{known_tags}->{$obj};
 	if (defined $r) {
-		print "Found tag $obj in $r\n" if $state->{verbose};
+		$state->say("Found tag $obj in $r") if $state->{verbose};
 	}
 	return $r;
 }
@@ -392,16 +396,17 @@ sub adjust_old_dependencies
 
 			my $oldname = $o->pkgname;
 
-			print "Adjusting dependencies for $pkgname/$oldname\n" 
-			    if $state->{beverbose};
+			$state->say("Adjusting dependencies for ",
+			    "$pkgname/$oldname") if $state->{beverbose};
 			my $d = OpenBSD::RequiredBy->new($pkgname);
 			for my $dep (@{$o->{wantlist}}) {
 				if (defined $self->{set}->{skipupdatedeps}->{$dep}) {
-					print "\tskipping $dep\n" 
+					$state->say("\tskipping $dep") 
 					    if $state->{beverbose};
 					next;
 				}
-				print "\t$dep\n" if $state->{beverbose};
+				$state->say("\t$dep") 
+				    if $state->{beverbose};
 				$d->add($dep);
 				OpenBSD::Replace::adjust_dependency($dep, 
 				    $oldname, $pkgname);

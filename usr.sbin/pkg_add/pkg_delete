@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.117 2009/11/11 11:13:16 espie Exp $
+# $OpenBSD: pkg_delete,v 1.118 2009/11/11 12:04:18 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -124,8 +124,9 @@ if (@todo > @realnames) {
 	my $details = $state->{very_verbose} || $defines{verbosedeps};
 	my $show    = sub {
 		my ($p, $d) = @_;
-		print "Can't remove ".join(' ', @$p)." without also removing:\n"
-		    .join(' ', @$d)."\n";
+		$state->say("Can't remove ", join(' ', @$p), 
+		    " without also removing:\n",
+		    join(' ', @$d));
 	};
 	if ($state->{interactive} || !$details) {
 		my %deps = map {($_, 1)} @todo;
@@ -150,7 +151,7 @@ if (@todo > @realnames) {
 	my $them = @todo > 1 ? 'them' : 'it';
 	if ($defines{dependencies} or 
 	    OpenBSD::Interactive::confirm("Do you want to remove $them as well", $state->{interactive}, 0)) {
-		print "(removing $them as well)\n";
+		$state->say("(removing $them as well)");
 	} else {
 		$bad = 1;
 	}
@@ -174,7 +175,7 @@ eval {
 	DELETE: for my $pkgname (@todo) {
 		next if $done{$pkgname};
 		unless (is_installed($pkgname)) {
-			print "$pkgname was not installed\n";
+			$state->say("$pkgname was not installed");
 			$done{$pkgname} = 1;
 			$removed++;
 			next;

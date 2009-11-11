@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.376 2009/11/11 11:13:16 espie Exp $
+# $OpenBSD: pkg_add,v 1.377 2009/11/11 12:04:18 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -58,7 +58,7 @@ sub has_new_sig
 	if (!defined $plist->{new_sig}) {
 		my $n = OpenBSD::PackingList->from_installation($plist->pkgname)->signature;
 		my $o = $plist->signature;
-		print "Comparing full signature for ", $plist->pkgname, " \"$o\" vs. \"$n\": ", $n eq $o ? "equal\n" : "different\n" 
+		$state->say("Comparing full signature for ", $plist->pkgname, " \"$o\" vs. \"$n\": ", $n eq $o ? "equal" : "different") 
 		    if $state->{very_verbose};
 		$plist->{new_sig} = $n ne $o;
 	}
@@ -205,16 +205,16 @@ sub can_install
 
 		if (!$state->{allow_replacing}) {
 			if ($state->{defines}->{conflicts}) {
-				print "Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts), ")\n";
+				$state->say("Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts), ")");
 				return 1;
 			}
-			print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
+			$state->say("Can't install $pkgname because of conflicts (",join(',', @conflicts), ")");
 			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
 
 		if (@conflicts >  5) {
-			print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
+			$state->say("Can't install $pkgname because of conflicts (",join(',', @conflicts), ")");
 			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
@@ -222,7 +222,7 @@ sub can_install
 		require OpenBSD::Replace;
 
 		if (!OpenBSD::Replace::is_new_package_safe($plist, $state)) {
-			print "Can't safely update to $pkgname (use -F update to force it)\n";
+			$state->say("Can't safely update to $pkgname (use -F update to force it)");
 			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
@@ -244,7 +244,7 @@ sub can_install
 
 			if (!OpenBSD::Replace::can_old_package_be_replaced($old_handle->plist, 
 			    $pkgname, $state, \%conflicts)) {
-				print "Can't update $toreplace into $pkgname\n";
+				$state->say("Can't update $toreplace into $pkgname");
 				$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 				return;
 			}
@@ -485,7 +485,7 @@ sub install_set
 
 		if ($handle->plist->has('arch')) {
 			unless ($handle->plist->{arch}->check($state->{arch})) {
-				print $handle->pkgname, " is not for the right architecture\n";
+				$state->say($handle->pkgname, " is not for the right architecture");
 				return () unless $defines{arch};
 			}
 		}
@@ -508,8 +508,8 @@ sub install_set
 
 	if (@baddeps) {
 		for my $handle ($set->newer) {
-			print "Can't install ", $handle->pkgname,
-			    ": can't resolve ", join(',', @baddeps), "\n";
+			$state->say("Can't install ", $handle->pkgname,
+			    ": can't resolve ", join(',', @baddeps));
 			$handle->location->close_now;
 		}
 		$bad++;
@@ -721,7 +721,7 @@ if ($opt_l || $opt_z) {
 			$l = $inst->find($pkgname, $state->{arch});
 		}
 		if (!defined $l) {
-			print "Problem finding $pkgname\n";
+			$state->say("Problem finding $pkgname");
 		} else {
 			my $set = OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l));
 			my $problem = 0;
@@ -742,7 +742,7 @@ if ($opt_l || $opt_z) {
 
 	my @cantupdate = $state->tracker->cant_update;
 	if (@cantupdate > 0) {
-		print "Cannot find updates for ", join(', ', (@cantupdate > 50 ? @cantupdate[1..50] : @cantupdate));
+		$state->print("Cannot find updates for ", join(', ', (@cantupdate > 50 ? @cantupdate[1..50] : @cantupdate)));
 		print " and more" if @cantupdate > 50;
 		print "\n";
 		if (@todo2 == 0) {
@@ -760,10 +760,11 @@ if ($opt_l || $opt_z) {
 	    	}
 	}
 	if (defined $state->{issues}) {
-		print "There are some ambiguities. Please run in interactive ".
-		    "mode again.\n";
+		$state->say("There are some ambiguities. ",
+		    "Please run in interactive mode again.");
 	}
-	print "Running update ", join(',', map {$_->short_print} @todo2), "\n";
+	$state->say("Running update ", 
+	    join(',', map {$_->short_print} @todo2));
 } else {
 # 3/ actual names
 	find_truelocations(\@ARGV, \@todo2, $state);
@@ -801,7 +802,7 @@ OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 
 # and display delayed thingies.
 if ($state->{packages_with_sig}) {
-	print "Packages with signatures: ", $state->{packages_with_sig};
+	$state->print("Packages with signatures: ", $state->{packages_with_sig});
 	if ($state->{packages_without_sig}) {
 		print ". UNSIGNED PACKAGES: ", join(', ', keys %{$state->{packages_without_sig}});
 	}

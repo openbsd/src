@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.13 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.14 2009/11/11 12:04:19 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -34,7 +34,12 @@ our %sizeof;
 sub new
 {
 	my $class = shift;
-	$isatty = -t STDERR;
+	$isatty = -t STDOUT;
+	if ($isatty) {
+		my $oldfh = select(STDOUT);
+		$| = 1;
+		select($oldfh);
+	}
 	return bless {}, $class;
 }
 
@@ -47,7 +52,7 @@ sub find_window_size
 	$sizeof{'struct winsize'} = 8;
 	require 'sys/ttycom.ph';
 	$width = 80;
-	if (ioctl(STDERR, &TIOCGWINSZ, $r)) {
+	if (ioctl(STDOUT, &TIOCGWINSZ, $r)) {
 		my ($rows, $cols, $xpix, $ypix) = 
 		    unpack($wsz_format, $r);
 		$width = $cols;
@@ -100,7 +105,7 @@ sub message
 	return if $d eq $lastdisplay && !$continued;
 	$lastdisplay=$d;
 	$continued = 0;
-	print STDERR $d, "\r";
+	print $d, "\r";
 }
 
 sub show
@@ -119,20 +124,20 @@ sub show
 	}
 	return if $d eq $lastdisplay;
         $lastdisplay=$d;
-        print STDERR $d, "\r";
+        print $d, "\r";
 }
 
 sub clear
 {
 	my $self = shift;
 	return unless $isatty;
-	print STDERR ' 'x length($lastdisplay), "\r";
+	print ' 'x length($lastdisplay), "\r";
 }
 
 sub print
 {
 	shift->clear;
-	print STDERR @_;
+	print @_;
 }
 
 sub next
@@ -140,7 +145,7 @@ sub next
 	my $self = shift;
 	return unless $isatty;
 	$self->clear;
-	print STDERR"$header: complete\n";
+	print "$header: complete\n";
 }
 
 1;

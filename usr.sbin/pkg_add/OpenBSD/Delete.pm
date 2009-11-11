@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.84 2009/11/11 11:13:16 espie Exp $
+# $OpenBSD: Delete.pm,v 1.85 2009/11/11 12:04:19 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -50,7 +50,7 @@ sub manpages_unindex
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
 		if ($state->{not}) {
-			print "Removing manpages in $destdir$k: ", join(@l), "\n" if $state->{verbose};
+			$state->say("Removing manpages in $destdir$k: ", join(@l)) if $state->{verbose};
 		} else {
 			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l); };
 			if ($@) {
@@ -126,7 +126,7 @@ sub unregister_dependencies
 	my $pkgname = $plist->pkgname;
 
 	for my $name (OpenBSD::Requiring->new($pkgname)->list) {
-		print "remove dependency on $name\n" 
+		$state->say("remove dependency on $name") 
 		    if $state->{very_verbose} or $state->{not};
 		local $@;
 		try { 
@@ -278,7 +278,7 @@ sub delete
 	my ($self, $state) = @_;
 
 	if ($state->{beverbose}) {
-		print "rmuser: ", $self->name, "\n";
+		$state->say("rmuser: ", $self->name);
 	}
 
 	$self->record_shared($state->{recorder}, $state->{pkgname});
@@ -296,7 +296,7 @@ sub delete
 	my ($self, $state) = @_;
 
 	if ($state->{beverbose}) {
-		print "rmgroup: ", $self->name, "\n";
+		$state->say("rmgroup: ", $self->name);
 	}
 
 	$self->record_shared($state->{recorder}, $state->{pkgname});
@@ -321,7 +321,7 @@ sub delete
 	my ($self, $state) = @_;
 
 	if ($state->{very_verbose}) {
-		print "rmdir: ", $self->fullname, "\n";
+		$state->say("rmdir: ", $self->fullname);
 	}
 
 	$self->record_shared($state->{recorder}, $state->{pkgname});
@@ -384,38 +384,39 @@ sub delete
 		if (-l $realname) {
 			my $contents = readlink $realname;
 			if ($contents ne $self->{symlink}) {
-				print "Symlink does not match: $realname ($contents vs. ", $self->{symlink},")\n";
+				$state->say("Symlink does not match: $realname ($contents vs. ", $self->{symlink},")");
 				$self->do_not_delete($state);
 				return;
 			}
 		} else  {
-			print "Bogus symlink: $realname\n";
+			$state->say("Bogus symlink: $realname");
 			$self->do_not_delete($state);
 			return;
 		}
 	} else {
 		if (-l $realname) {
-				print "Unexpected symlink: $realname\n";
+				$state->say("Unexpected symlink: $realname");
 				$self->do_not_delete($state);
 		} else {
 			if (! -f $realname) {
-				print "File $realname does not exist\n";
+				$state->say("File $realname does not exist");
 				return;
 			}
 			unless (defined($self->{link}) or $self->{nochecksum} or $state->{quick}) {
 				if (!defined $self->{d}) {
-					print "Problem: ", $self->fullname,
-					    " does not have a checksum\n";
-					print "NOT deleting: $realname\n";
+					$state->say("Problem: ", 
+					    $self->fullname,
+					    " does not have a checksum\n",
+					    "NOT deleting: $realname");
 					$state->log("Couldn't delete $realname (no checksum)\n");
 					return;
 				}
 				my $d = $self->compute_digest($realname, 
 				    $self->{d});
 				if (!$d->equals($self->{d})) {
-					print "Problem: checksum doesn't match for ",
-						$self->fullname, "\n";
-					print "NOT deleting: $realname\n";
+					$state->say("Problem: checksum doesn't match for ",
+					    $self->fullname, "\n",
+					    "NOT deleting: $realname");
 					$state->log("Couldn't delete $realname (bad checksum)\n");
 					$self->do_not_delete($state);
 					return;
@@ -424,11 +425,11 @@ sub delete
 		}
 	}
 	if ($state->{very_verbose}) {
-		print "deleting: $realname\n";
+		$state->say("deleting: $realname");
 	}
 	return if $state->{not};
 	if (!unlink $realname) {
-		print "Problem deleting $realname\n";
+		$state->say("Problem deleting $realname");
 		$state->log("deleting $realname failed: $!\n");
 	}
 }
@@ -532,7 +533,7 @@ sub delete
 	} else {
 		my $d = $self->compute_digest($realname, $orig->{d});
 		if ($d->equals($orig->{d})) {
-			print "File $realname identical to sample\n" if $state->{not} or $state->{verbose};
+			$state->say("File $realname identical to sample") if $state->{not} or $state->{verbose};
 		} else {
 			unless ($state->{extra}) {
 				$self->mark_dir($state);
@@ -542,9 +543,9 @@ sub delete
 		}
 	}
 	return if $state->{not};
-	print "deleting $realname\n" if $state->{verbose};
+	$state->say("deleting $realname") if $state->{verbose};
 	if (!unlink $realname) {
-		print "Problem deleting $realname\n";
+		$state->say("Problem deleting $realname");
 		$state->log("deleting $realname failed: $!\n");
 	}
 }
@@ -586,8 +587,8 @@ sub delete
 			open(my $shells2, '>', $destdir.OpenBSD::Paths->shells);
 			print $shells2 @l;
 			close $shells2;
-			print "Shell $fullname removed from $destdir",
-			    OpenBSD::Paths->shells, "\n";
+			$state->say("Shell $fullname removed from $destdir",
+			    OpenBSD::Paths->shells);
 		}
 	}
 	$self->SUPER::delete($state);
@@ -601,7 +602,7 @@ sub delete
 	my ($self, $state) = @_;
 	my $realname = $self->realname($state);
 	if ($state->{beverbose} && $state->{extra}) {
-		print "deleting extra file: $realname\n";
+		$state->say("deleting extra file: $realname");
 	}
 	return if $state->{not};
 	return unless -e $realname or -l $realname;
@@ -610,7 +611,7 @@ sub delete
 		$self->mark_dir($state);
 	} elsif ($state->{extra}) {
 		unlink($realname) or 
-		    print "problem deleting extra file $realname\n";
+		    $state->say("problem deleting extra file $realname");
 	} else {
 		$state->log("You should also remove $realname\n");
 		$self->mark_dir($state);
