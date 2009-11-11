@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.29 2009/11/09 16:57:47 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.30 2009/11/11 15:29:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -79,8 +79,8 @@ struct ioc_softc {
 	bus_dma_tag_t		 sc_dmat;
 	pci_chipset_tag_t	 sc_pc;
 
-	void			*sc_ih1;	/* Ethernet interrupt */
-	void			*sc_ih2;	/* SuperIO interrupt */
+	void			*sc_ih_enet;	/* Ethernet interrupt */
+	void			*sc_ih_superio;	/* SuperIO interrupt */
 	struct ioc_intr		*sc_intr[IOC_NDEVS];
 
 	struct onewire_bus	 sc_bus;
@@ -152,14 +152,13 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioc_softc *sc = (struct ioc_softc *)self;
 	struct pci_attach_args *pa = aux;
-	pci_intr_handle_t ih1, ih2;
+	pci_intr_handle_t ih_enet, ih_superio;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	bus_size_t memsize;
-	uint32_t data;
-	int dev;
-	int dual_irq, shared_handler;
-	int device_mask;
+	pcireg_t data;
+	int has_superio, has_enet, is_obio;
+	int subdevice_mask;
 	bus_addr_t rtcbase;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
@@ -223,10 +222,9 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	 * Now figure out what our configuration is.
 	 */
 
-	printf("%s: ", self->dv_xname);
-
-	dual_irq = shared_handler = 0;
-	device_mask = 0;
+	has_superio = has_enet = 0;
+	is_obio = 0;
+	subdevice_mask = 0;
 	if (sc->sc_owserial != NULL) {
 		if (strncmp(sc->sc_owserial->sc_product, "030-0873-", 9) == 0) {
 			/*
@@ -234,34 +232,37 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 			 * behind an xbridge. However the fourth one lacks
 			 * the superio chip.
 			 */
-			device_mask = (1 << IOCDEV_EF);
-			if (pa->pa_device != 3)
-				device_mask = (1 << IOCDEV_SERIAL_A) |
+			subdevice_mask = (1 << IOCDEV_EF);
+			has_enet = 1;
+			if (pa->pa_device != 3) {
+				subdevice_mask = (1 << IOCDEV_SERIAL_A) |
 				    (1 << IOCDEV_SERIAL_B);
-			shared_handler = 1;
+				has_superio = 1;
+			}
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-0891-", 9) == 0) {
 			/* IP30 on-board IOC3 */
-			device_mask = (1 << IOCDEV_SERIAL_A) |
+			subdevice_mask = (1 << IOCDEV_SERIAL_A) |
 			    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_LPT) |
 			    (1 << IOCDEV_KBC) | (1 << IOCDEV_RTC) |
 			    (1 << IOCDEV_EF);
 			rtcbase = IOC3_BYTEBUS_1;
-			dual_irq = 1;
+			has_superio = has_enet = 1;
+			is_obio = 1;
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-1155-", 9) == 0) {
 			/* CADDuo board */
-			device_mask = (1 << IOCDEV_KBC) | (1 << IOCDEV_EF);
-			shared_handler = 1;
+			subdevice_mask = (1 << IOCDEV_KBC) | (1 << IOCDEV_EF);
+			has_superio = has_enet = 1;
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-1657-", 9) == 0 ||
 		    strncmp(sc->sc_owserial->sc_product, "030-1664-", 9) == 0) {
 			/* PCI_SIO_UFC dual serial board */
-			device_mask = (1 << IOCDEV_SERIAL_A) |
+			subdevice_mask = (1 << IOCDEV_SERIAL_A) |
 			    (1 << IOCDEV_SERIAL_B);
-		} else {
+			has_superio = 1;
+		} else
 			goto unknown;
-		}
 	} else {
 #ifdef TGT_ORIGIN
 		/*
@@ -275,7 +276,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 		    !ISSET(ioc_nodemask, 1UL << currentnasid)) {
 			SET(ioc_nodemask, 1UL << currentnasid);
 
-			device_mask = (1 << IOCDEV_SERIAL_A) |
+			subdevice_mask = (1 << IOCDEV_SERIAL_A) |
 			    (1 << IOCDEV_SERIAL_B) | (1 << IOCDEV_LPT) |
 			    (1 << IOCDEV_KBC) | (1 << IOCDEV_RTC) |
 			    (1 << IOCDEV_EF);
@@ -288,10 +289,11 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 			 */
 			if (sys_config.system_type == SGI_IP35 &&
 			    sys_config.system_subtype == IP35_O300)
-				device_mask &= ~(1 << IOCDEV_KBC);
+				subdevice_mask &= ~(1 << IOCDEV_KBC);
 
 			rtcbase = IOC3_BYTEBUS_0;
-			dual_irq = 1;
+			has_superio = has_enet = 1;
+			is_obio = 1;
 		} else
 #endif
 		{
@@ -302,9 +304,25 @@ unknown:
 			 * to figure out, but for now we'll just
 			 * chicken out.
 			 */
-			printf("unknown flavour\n");
+			printf("%s: unknown flavour\n", self->dv_xname);
 			return;
 		}
+	}
+
+	/*
+	 * Acknowledge all pending interrupts, and disable them.
+	 * Be careful not all registers may be wired depending on what
+	 * devices are actually present.
+	 */
+
+	if (has_superio) {
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IEC, ~0x0);
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IES, 0x0);
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR,
+		    bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR));
+	}
+	if (has_enet) {
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_ENET_IER, 0);
 	}
 
 	/*
@@ -313,120 +331,72 @@ unknown:
 	 * it actually needs to use two interrupts, one for the superio
 	 * chip, and the other for the Ethernet chip.
 	 *
-	 * Since our pci layer doesn't handle this, we have to compute
-	 * the superio interrupt cookie ourselves, with the help of the
-	 * pci bridge driver.
+	 * This would not be a problem if the device advertized itself
+	 * as a multifunction device. But it doesn't...
 	 *
-	 * (What the above means is that you should wear peril-sensitive
-	 * sunglasses from now on).
-	 *
-	 * To make things ever worse, some IOC3 boards (real boards, not
-	 * on-board components) lack the Ethernet component. We should
-	 * eventually handle them there, but it's not worth doing yet...
-	 * (and we'll need to parse the ownum serial numbers to know
-	 * this anyway)
+	 * Fortunately, the interrupt used are simply interrupt pins A
+	 * and B; so with the help of the PCI bridge driver, we can
+	 * register the two interrupts and almost pretend things are
+	 * as normal as they could be.
 	 */
 
-	if (pci_intr_map(pa, &ih1) != 0) {
-		printf("failed to map interrupt!\n");
-		goto unmap;
-	}
-
-	/*
-	 * The second vector source seems to be the first unused PCI
-	 * slot.
-	 */
-	if (dual_irq) {
-		for (dev = 0;
-		    dev < pci_bus_maxdevs(pa->pa_pc, pa->pa_bus); dev++) {
-			pcitag_t tag;
-			int line, rc;
-
-			if (dev == pa->pa_device)
-				continue;
-
-			tag = pci_make_tag(pa->pa_pc, pa->pa_bus, dev, 0);
-			if (pci_conf_read(pa->pa_pc, tag, PCI_ID_REG) !=
-			    0xffffffff)
-				continue;	/* slot in use... */
-
-			line = pa->pa_intrline;
-			pa->pa_intrline = dev;
-			rc = pci_intr_map(pa, &ih2);
-			pa->pa_intrline = line;
-
-			if (rc != 0) {
-				printf(": failed to map superio interrupt!\n");
-				goto unmap;
-			}
-
-			goto establish;
-		}
-
-		/*
-		 * There are no empty slots, thus we can't steal an
-		 * interrupt. I don't know how IOC3 behaves in this
-		 * situation, but it's probably safe to revert to
-		 * a shared, single interrupt.
-		 */
-		shared_handler = 1;
-		dual_irq = 0;
-	}
-
-	if (dual_irq) {
-establish:
-		/*
-		 * Register the second (superio) interrupt.
-		 */
-
-		sc->sc_ih2 = pci_intr_establish(sc->sc_pc, ih2, IPL_TTY,
-		    ioc_intr_superio, sc, self->dv_xname);
-		if (sc->sc_ih2 == NULL) {
-			printf("failed to establish superio interrupt at %s\n",
-			    pci_intr_string(sc->sc_pc, ih2));
+	if (has_enet) {
+		pa->pa_intrpin = PCI_INTERRUPT_PIN_A;
+		if (pci_intr_map(pa, &ih_enet) != 0) {
+			printf("%s: failed to map ethernet interrupt\n",
+			    self->dv_xname);
 			goto unmap;
 		}
-
-		printf("superio %s", pci_intr_string(sc->sc_pc, ih2));
 	}
 
-	/*
-	 * Register the main (Ethernet if available, superio otherwise)
-	 * interrupt.
-	 */
+	if (has_superio) {
+		if (has_enet)
+			pa->pa_intrpin =
+			    is_obio ? PCI_INTERRUPT_PIN_D : PCI_INTERRUPT_PIN_B;
+		else
+			pa->pa_intrpin = PCI_INTERRUPT_PIN_A;
 
-	sc->sc_ih1 = pci_intr_establish(sc->sc_pc, ih1, IPL_NET,
-	    shared_handler ? ioc_intr_shared : ioc_intr_ethernet,
-	    sc, self->dv_xname);
-	if (sc->sc_ih1 == NULL) {
-		printf("\n%s: failed to establish %sinterrupt!\n",
-		    self->dv_xname, dual_irq ? "ethernet " : "");
-		goto unregister;
+		if (pci_intr_map(pa, &ih_superio) != 0) {
+			printf("%s: failed to map superio interrupt\n",
+			    self->dv_xname);
+			goto unmap;
+		}
 	}
-	printf("%s%s\n", dual_irq ? "; ethernet " : "",
-	    pci_intr_string(sc->sc_pc, ih1));
 
-	/*
-	 * Acknowledge all pending interrupts, and disable them.
-	 * Be careful not all registers may be wired depending on what
-	 * devices are actually present.
-	 */
+	if (has_enet) {
+		sc->sc_ih_enet = pci_intr_establish(sc->sc_pc, ih_enet,
+		    IPL_NET, ioc_intr_ethernet, sc, self->dv_xname);
+		if (sc->sc_ih_enet == NULL) {
+			printf("%s: failed to establish ethernet interrupt "
+			    "at %s\n", self->dv_xname,
+			    pci_intr_string(sc->sc_pc, ih_enet));
+			goto unmap;
+		}
+	}
 
-	if ((device_mask & ~(1 << IOCDEV_EF)) != 0) {
-		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IEC, ~0x0);
-		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IES, 0x0);
-		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR,
-		    bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR));
+	if (has_superio) {
+		sc->sc_ih_superio = pci_intr_establish(sc->sc_pc, ih_superio,
+		    IPL_TTY, ioc_intr_superio, sc, self->dv_xname);
+		if (sc->sc_ih_superio == NULL) {
+			printf("%s: failed to establish superio interrupt "
+			    "at %s\n", self->dv_xname,
+			    pci_intr_string(sc->sc_pc, ih_superio));
+			goto unregister;
+		}
 	}
-	if ((device_mask & (1 << IOCDEV_EF)) != 0) {
-		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_ENET_IER, 0);
-	}
+
+	if (has_enet)
+		printf("%s: ethernet %s\n",
+		    self->dv_xname, pci_intr_string(sc->sc_pc, ih_enet));
+	if (has_superio)
+		printf("%s: superio %s\n",
+		    self->dv_xname, pci_intr_string(sc->sc_pc, ih_superio));
 
 	/*
 	 * Attach other sub-devices.
 	 */
 
-	if (ISSET(device_mask, 1 << IOCDEV_SERIAL_A)) {
+	if (ISSET(subdevice_mask, 1 << IOCDEV_SERIAL_A)) {
 		/*
 		 * Put serial ports in passthrough mode,
 		 * to use the MI com(4) 16550 support.
@@ -442,20 +412,20 @@ establish:
 		ioc_attach_child(self, "com", IOC3_UARTA_BASE, IOCDEV_SERIAL_A);
 		ioc_attach_child(self, "com", IOC3_UARTB_BASE, IOCDEV_SERIAL_B);
 	}
-	if (ISSET(device_mask, 1 << IOCDEV_KBC))
+	if (ISSET(subdevice_mask, 1 << IOCDEV_KBC))
 		ioc_attach_child(self, "iockbc", 0, IOCDEV_KBC);
-	if (ISSET(device_mask, 1 << IOCDEV_EF))
+	if (ISSET(subdevice_mask, 1 << IOCDEV_EF))
 		ioc_attach_child(self, "iec", 0, IOCDEV_EF);
-	if (ISSET(device_mask, 1 << IOCDEV_LPT))
+	if (ISSET(subdevice_mask, 1 << IOCDEV_LPT))
 		ioc_attach_child(self, "lpt", 0, IOCDEV_LPT);
-	if (ISSET(device_mask, 1 << IOCDEV_RTC))
+	if (ISSET(subdevice_mask, 1 << IOCDEV_RTC))
 		ioc_attach_child(self, "dsrtc", rtcbase, IOCDEV_RTC);
 
 	return;
 
 unregister:
-	if (dual_irq)
-		pci_intr_disestablish(sc->sc_pc, sc->sc_ih2);
+	if (has_enet)
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih_enet);
 unmap:
 	bus_space_unmap(memt, memh, memsize);
 }

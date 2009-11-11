@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.60 2009/11/07 18:56:55 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.61 2009/11/11 15:29:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -168,6 +168,11 @@ struct xbridge_softc {
 };
 
 #define	DEVNAME(xb)	((xb)->xb_dev.dv_xname)
+
+#define	PCI_ID_EMPTY		PCI_ID_CODE(PCI_VENDOR_INVALID, 0xffff);
+#define	SLOT_EMPTY(xb,dev) \
+	(PCI_VENDOR((xb)->xb_devices[dev].id) == PCI_VENDOR_INVALID || \
+	 PCI_VENDOR((xb)->xb_devices[dev].id) == 0)
 
 const struct cfattach xbridge_ca = {
 	sizeof(struct xbridge_softc), xbridge_match, xbridge_attach
@@ -781,7 +786,7 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 		switch (offset) {
 		case PCI_COMMAND_STATUS_REG:
 			/*
-			 * Some IOC models do not support having this bit
+			 * Some IOC3 models do not support having this bit
 			 * cleared (which is what pci_mapreg_probe() will
 			 * do), so we set it unconditionnaly.
 			 */
@@ -870,12 +875,38 @@ xbridge_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		intr = XBRIDGE_INTR_BIT(pa->pa_bridgeih[pin - 1]);
 	} else {
 		/*
-		 * For IOC devices, the real information is in pa_intrline.
+		 * For IOC3 devices, pin A is always the regular PCI interrupt,
+		 * but wiring of interrupt pin B may vary.
+		 * We rely upon ioc(4) being able to figure out whether it's
+		 * an onboard chip or not, and to require interrupt pin D
+		 * instead of B in the former case.
 		 */
+		intr = -1;
 		if (xb->xb_devices[device].id ==
 		    PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3)) {
-			intr = pa->pa_intrline;
-		} else {
+
+			switch (pa->pa_intrpin) {
+			case PCI_INTERRUPT_PIN_A:
+			case PCI_INTERRUPT_PIN_B:
+				break;
+			case PCI_INTERRUPT_PIN_D:
+				/*
+				 * If this device is an onboard IOC3,
+				 * interrupt pin B is wired as pin A of
+				 * the first empty PCI slot...
+				 */
+				for (intr = 0; intr < MAX_SLOTS; intr++)
+					if (SLOT_EMPTY(xb, intr))
+						break;
+				/* should not happen, but fallback anyway */
+				if (intr >= MAX_SLOTS)
+					intr = -1;
+				break;
+			default:
+				return 1;
+			}
+		}
+		if (intr < 0) {
 			if (pa->pa_intrpin & 1)
 				intr = device;
 			else
@@ -2099,8 +2130,7 @@ xbridge_setup(struct xbpci_softc *xb)
 			pa = xb->xb_regh + BRIDGE_PCI_CFG_SPACE +
 			    (dev << 12) + PCI_ID_REG;
 		if (guarded_read_4(pa, &xb->xb_devices[dev].id) != 0)
-			xb->xb_devices[dev].id =
-			    PCI_ID_CODE(PCI_VENDOR_INVALID, 0xffff);
+			xb->xb_devices[dev].id = PCI_ID_EMPTY;
 	}
 
 	/*
@@ -2199,8 +2229,7 @@ xbridge_rrb_setup(struct xbpci_softc *xb, int odd)
 	total = 0;
 	for (i = 0; i < nitems(rrb); i++) {
 		dev = (i << 1) + !!odd;
-		if (dev >= xb->xb_nslots ||
-		    PCI_VENDOR(xb->xb_devices[dev].id) == PCI_VENDOR_INVALID)
+		if (dev >= xb->xb_nslots || SLOT_EMPTY(xb, dev))
 			rrb[i] = 0;
 		else
 			rrb[i] = 4;	/* optimistic value */
@@ -2311,9 +2340,7 @@ xbridge_resource_setup(struct xbpci_softc *xb)
 #endif
 	nppb = npccbb = 0;
 	for (dev = 0; dev < xb->xb_nslots; dev++) {
-		id = xb->xb_devices[dev].id;
-
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID || PCI_VENDOR(id) == 0)
+		if (SLOT_EMPTY(xb, dev))
 			continue;
 
 		/*
@@ -2344,6 +2371,7 @@ xbridge_resource_setup(struct xbpci_softc *xb)
 		 * we'll need to perform proper PCI resource allocation.
 		 */
 
+		id = xb->xb_devices[dev].id;
 		devio = xbridge_read_reg(xb, BRIDGE_DEVICE(dev));
 		if (id != PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3) &&
 		    id != PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC4))
@@ -2428,9 +2456,7 @@ xbridge_resource_setup(struct xbpci_softc *xb)
 	secondary = 1;
 	ppbstride = nppb == 0 ? 0 : (255 - npccbb) / nppb;
 	for (dev = 0; dev < xb->xb_nslots; dev++) {
-		id = xb->xb_devices[dev].id;
-
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID || PCI_VENDOR(id) == 0)
+		if (SLOT_EMPTY(xb, dev))
 			continue;
 
 		tag = pci_make_tag(pc, 0, dev, 0);
@@ -3364,8 +3390,6 @@ xbridge_rbus_parent_mem(struct pci_attach_args *pa)
 int
 xbridge_allocate_devio(struct xbpci_softc *xb, int dev, int wantlarge)
 {
-	pcireg_t id;
-
 	/*
 	 * If the preferred slot is available and matches the size requested,
 	 * use it.
@@ -3386,8 +3410,7 @@ xbridge_allocate_devio(struct xbpci_softc *xb, int dev, int wantlarge)
 		if (xb->xb_devices[dev].devio != 0)
 			continue;	/* devio in use */
 
-		id = xb->xb_devices[dev].id;
-		if (PCI_VENDOR(id) != PCI_VENDOR_INVALID && PCI_VENDOR(id) != 0)
+		if (!SLOT_EMPTY(xb, dev))
 			continue;	/* devio to be used soon */
 
 		if (BRIDGE_DEVIO_SIZE(dev) >=
