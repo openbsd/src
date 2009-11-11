@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.30 2009/11/11 15:29:29 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.31 2009/11/11 15:56:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -53,11 +53,6 @@
 
 int	ioc_match(struct device *, void *, void *);
 void	ioc_attach(struct device *, struct device *, void *);
-struct device *
-	ioc_attach_child(struct device *, const char *, bus_addr_t, int);
-int	ioc_search_onewire(struct device *, void *, void *);
-int	ioc_search_mundane(struct device *, void *, void *);
-int	ioc_print(void *, const char *);
 
 struct ioc_intr {
 	struct ioc_softc	*ii_ioc;
@@ -87,6 +82,8 @@ struct ioc_softc {
 
 	struct owmac_softc	*sc_owmac;
 	struct owserial_softc	*sc_owserial;
+
+	int			 sc_attach_flags;
 };
 
 struct cfattach ioc_ca = {
@@ -96,6 +93,11 @@ struct cfattach ioc_ca = {
 struct cfdriver ioc_cd = {
 	NULL, "ioc", DV_DULL,
 };
+
+void	ioc_attach_child(struct ioc_softc *, const char *, bus_addr_t, int);
+int	ioc_search_onewire(struct device *, void *, void *);
+int	ioc_search_mundane(struct device *, void *, void *);
+int	ioc_print(void *, const char *);
 
 int	ioc_intr_dispatch(struct ioc_softc *, int);
 int	ioc_intr_ethernet(void *);
@@ -396,6 +398,8 @@ unknown:
 	 * Attach other sub-devices.
 	 */
 
+	sc->sc_attach_flags = is_obio ? IOC_FLAGS_OBIO : 0;
+
 	if (ISSET(subdevice_mask, 1 << IOCDEV_SERIAL_A)) {
 		/*
 		 * Put serial ports in passthrough mode,
@@ -409,17 +413,17 @@ unknown:
 		bus_space_write_4(sc->sc_memt, sc->sc_memh,
 		    IOC3_UARTB_SHADOW, 0);
 
-		ioc_attach_child(self, "com", IOC3_UARTA_BASE, IOCDEV_SERIAL_A);
-		ioc_attach_child(self, "com", IOC3_UARTB_BASE, IOCDEV_SERIAL_B);
+		ioc_attach_child(sc, "com", IOC3_UARTA_BASE, IOCDEV_SERIAL_A);
+		ioc_attach_child(sc, "com", IOC3_UARTB_BASE, IOCDEV_SERIAL_B);
 	}
 	if (ISSET(subdevice_mask, 1 << IOCDEV_KBC))
-		ioc_attach_child(self, "iockbc", 0, IOCDEV_KBC);
+		ioc_attach_child(sc, "iockbc", 0, IOCDEV_KBC);
 	if (ISSET(subdevice_mask, 1 << IOCDEV_EF))
-		ioc_attach_child(self, "iec", 0, IOCDEV_EF);
+		ioc_attach_child(sc, "iec", 0, IOCDEV_EF);
 	if (ISSET(subdevice_mask, 1 << IOCDEV_LPT))
-		ioc_attach_child(self, "lpt", 0, IOCDEV_LPT);
+		ioc_attach_child(sc, "lpt", 0, IOCDEV_LPT);
 	if (ISSET(subdevice_mask, 1 << IOCDEV_RTC))
-		ioc_attach_child(self, "dsrtc", rtcbase, IOCDEV_RTC);
+		ioc_attach_child(sc, "dsrtc", rtcbase, IOCDEV_RTC);
 
 	return;
 
@@ -430,10 +434,10 @@ unmap:
 	bus_space_unmap(memt, memh, memsize);
 }
 
-struct device *
-ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
+void
+ioc_attach_child(struct ioc_softc *sc, const char *name, bus_addr_t base,
+    int dev)
 {
-	struct ioc_softc *sc = (struct ioc_softc *)ioc;
 	struct ioc_attach_args iaa;
 
 	memset(&iaa, 0, sizeof iaa);
@@ -444,6 +448,7 @@ ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 	iaa.iaa_dmat = sc->sc_dmat;
 	iaa.iaa_base = base;
 	iaa.iaa_dev = dev;
+	iaa.iaa_flags = sc->sc_attach_flags;
 
 	if (dev == IOCDEV_EF) {
 		if (sc->sc_owmac != NULL)
@@ -465,7 +470,7 @@ ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 		}
 	}
 
-	return config_found_sm(ioc, &iaa, ioc_print, ioc_search_mundane);
+	config_found_sm(&sc->sc_dev, &iaa, ioc_print, ioc_search_mundane);
 }
 
 int

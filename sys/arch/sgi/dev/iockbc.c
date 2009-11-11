@@ -1,4 +1,4 @@
-/*	$OpenBSD: iockbc.c,v 1.2 2009/11/11 15:54:24 miod Exp $	*/
+/*	$OpenBSD: iockbc.c,v 1.3 2009/11/11 15:56:41 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2009 Joel Sing <jsing@openbsd.org>
  *
@@ -231,11 +231,11 @@ iockbc_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t csr;
 
 	/*
-	 * For some reason keyboard and mouse ports are inverted on
-	 * Fuel (and probably Origin 300 as well).
+	 * For some reason keyboard and mouse ports are inverted on Fuel.
 	 */
 
-	if (sys_config.system_type == SGI_IP35) {
+	if (ISSET(iaa->iaa_flags, IOC_FLAGS_OBIO) &&
+	    sys_config.system_type == SGI_IP35) {
 		isc->rx[PCKBC_KBD_SLOT] = IOC3_KBC_AUX_RX;
 		isc->rx[PCKBC_AUX_SLOT] = IOC3_KBC_KBD_RX;
 		isc->tx[PCKBC_KBD_SLOT] = IOC3_KBC_AUX_TX;
