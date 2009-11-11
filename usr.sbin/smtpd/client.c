@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.13 2009/11/11 10:27:41 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.14 2009/11/11 11:25:17 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -1033,30 +1033,30 @@ client_data_add(struct smtp_client *sp, char *buf, size_t len)
 char *
 buf_getln(struct buf_read *r)
 {
-	char	*line;
-	size_t	 i;
+	char	*buf = r->buf, *line;
+	size_t	 bufsz = r->wpos, i;
 
 	/* look for terminating newline */
-	for (i = 0; i < r->wpos; i++)
-		if (r->buf[i] == '\r' || r->buf[i] == '\n')
+	for (i = 0; i < bufsz; i++)
+		if (buf[i] == '\r' || buf[i] == '\n')
 			break;
-	if (i == r->wpos)
+	if (i == bufsz)
 		return (NULL);
 
 	/* make a copy of the line */
         if ((line = malloc(i + 1)) == NULL)
 		return (NULL);
-        memcpy(line, r->buf, i);
+        memcpy(line, buf, i);
         line[i] = '\0';
 
 	/* drain the buffer */
-	if (i < r->wpos - 1) {
-		char fch = r->buf[i], sch = r->buf[i + 1];
+	if (i < bufsz - 1) {
+		char fch = buf[i], sch = buf[i + 1];
 
 		if ((sch == '\r' || sch == '\n') && sch != fch)
 			i += 1;
 	}
-	memmove(r->buf, r->buf + i + 1, r->wpos - i - 1);
+	memmove(buf, buf + i + 1, bufsz - i - 1);
 	r->wpos -= i + 1;
 
 	return (line);
