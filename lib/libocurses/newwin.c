@@ -1,4 +1,4 @@
-/*	$OpenBSD: newwin.c,v 1.4 2005/08/14 17:15:19 espie Exp $ */
+/*	$OpenBSD: newwin.c,v 1.5 2009/11/11 18:22:05 deraadt Exp $ */
 /*
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -170,8 +170,8 @@ __makenew(nl, nc, by, bx, sub)
 		return NULL;
 	}
 	if ((win->lspace = malloc (nl * sizeof(__LINE))) == NULL) {
-		free (win);
 		free (win->lines);
+		free (win);
 		return NULL;
 	}
 
