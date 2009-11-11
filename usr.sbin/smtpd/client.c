@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.12 2009/11/10 14:57:03 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.13 2009/11/11 10:27:41 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -890,9 +890,20 @@ client_getln(struct smtp_client *sp)
 		if (sp->verbose)
 			fprintf(sp->verbose, "<<< %s\n", ln);
 
-		if (strlen(ln) == 3)
-			break;
-		else if (strlen(ln) < 4 || (ln[3] != ' ' && ln[3] != '-')) {
+		/* 3-char replies are invalid on their own, append space */
+		if (strlen(ln) == 3) {
+			char buf[5];
+
+			strlcpy(buf, ln, sizeof(buf));
+			strlcat(buf, " ", sizeof(buf));
+			free(ln);
+			if ((ln = strdup(buf)) == NULL) {
+				cause = "150 strdup error";
+				goto done;
+			}
+		}
+
+		if (strlen(ln) < 4 || (ln[3] != ' ' && ln[3] != '-')) {
 			cause = "150 garbled smtp reply";
 			goto done;
 		}
