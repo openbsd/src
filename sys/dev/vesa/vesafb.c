@@ -1,4 +1,4 @@
-/* $OpenBSD: vesafb.c,v 1.6 2008/04/28 19:28:37 miod Exp $ */
+/*	$OpenBSD: vesafb.c,v 1.7 2009/11/11 00:01:34 fgsch Exp $	*/
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -81,7 +81,7 @@
 void vesafb_set_mode(struct vga_pci_softc *, int);
 int vesafb_get_mode(struct vga_pci_softc *);
 void vesafb_get_mode_info(struct vga_pci_softc *, int, struct modeinfoblock *);
-void vesafb_set_palette(struct vga_pci_softc *, int, struct paletteentry);
+void vesafb_set_palette(struct vga_pci_softc *, int, struct paletteentry *);
 int vesafb_putcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
 int vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
 int vesafb_get_ddc_version(struct vga_pci_softc *);
@@ -184,7 +184,7 @@ vesafb_get_mode_info(struct vga_pci_softc *sc, int mode,
 }
 
 void
-vesafb_set_palette(struct vga_pci_softc *sc, int reg, struct paletteentry pe)
+vesafb_set_palette(struct vga_pci_softc *sc, int reg, struct paletteentry *pe)
 {
 	struct trapframe tf;
 	int res;
@@ -195,15 +195,17 @@ vesafb_set_palette(struct vga_pci_softc *sc, int reg, struct paletteentry pe)
 		       sc->sc_dev.dv_xname);
 		return;
 	}
+
+	memcpy(buf, pe, sizeof(struct paletteentry));
+
 	/*
 	 * this function takes 8 bit per palette as input, but we're
 	 * working in 6 bit mode here
 	 */
-	pe.Red >>= 2;
-	pe.Green >>= 2;
-	pe.Blue >>= 2;
-
-	memcpy(buf, &pe, sizeof(struct paletteentry));
+	pe = (struct paletteentry *)buf; 
+	pe->Red >>= 2;
+	pe->Green >>= 2;
+	pe->Blue >>= 2;
 
 	/* set palette */
 	memset(&tf, 0, sizeof(struct trapframe));
@@ -310,7 +312,7 @@ vesafb_putcmap(struct vga_pci_softc *sc, struct wsdisplay_cmap *cm)
 		pe.Green = *gp;
 		pe.Red = *rp;
 		pe.Alignment = 0;
-		vesafb_set_palette(sc, idx, pe);
+		vesafb_set_palette(sc, idx, &pe);
 		idx++;
 		rp++, gp++, bp++;
 	}
