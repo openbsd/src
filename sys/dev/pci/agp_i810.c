@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.57 2009/06/06 11:11:10 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.58 2009/11/11 19:35:34 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -620,11 +620,14 @@ agp_i810_alloc_memory(void *softc, int type, vsize_t size)
 		 * get their physical address.
 		 */
 		if ((mem->am_dmaseg = malloc(sizeof (*mem->am_dmaseg), M_AGP,
-		    M_WAITOK | M_CANFAIL)) == NULL)
+		    M_WAITOK | M_CANFAIL)) == NULL) {
+			free(mem, M_AGP);
 			return (NULL);
+		}
 
 		if ((error = agp_alloc_dmamem(sc->sc_dmat, size,
 		    &mem->am_dmamap, &mem->am_physical, mem->am_dmaseg)) != 0) {
+			free(mem->am_dmaseg, M_AGP);
 			free(mem, M_AGP);
 			printf("agp: agp_alloc_dmamem(%d)\n", error);
 			return (NULL);
