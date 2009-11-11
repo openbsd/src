@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.224 2009/11/03 17:41:02 claudio Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.225 2009/11/11 10:31:44 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2720,6 +2720,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		for (i = 0; i < PF_LIMIT_MAX; i++) {
 			if (((struct pool *)pf_pool_limits[i].pp)->pr_nout >
 			    pf_pool_limits[i].limit_new) {
+				free(table, M_TEMP);
+				free(ioe, M_TEMP);
 				error = EBUSY;
 				goto fail;
 			}
@@ -2768,6 +2770,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    pf_pool_limits[i].limit &&
 			    pool_sethardlimit(pf_pool_limits[i].pp,
 			    pf_pool_limits[i].limit_new, NULL, 0) != 0) {
+				free(table, M_TEMP);
+				free(ioe, M_TEMP);
 				error = EBUSY;
 				goto fail; /* really bad */
 			}
