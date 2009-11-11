@@ -1776,6 +1776,7 @@
 ./usr/share/man/cat4/sgi/iec.0
 ./usr/share/man/cat4/sgi/intro.0
 ./usr/share/man/cat4/sgi/ioc.0
+./usr/share/man/cat4/sgi/iockbc.0
 ./usr/share/man/cat4/sgi/iof.0
 ./usr/share/man/cat4/sgi/macebus.0
 ./usr/share/man/cat4/sgi/macepcibr.0
