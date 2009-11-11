@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.13 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.14 2009/11/11 12:59:34 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -132,7 +132,8 @@ sub prepare_long
 		$self->{name_index} = 0 if !defined $self->{name_index};
 		$entry->set_name('LongName'.$self->{name_index}++);
 	}
-	if (length($entry->{linkname}) > MAXLINKNAME) {
+	if ((defined $entry->{linkname}) && 
+	    length($entry->{linkname}) > MAXLINKNAME) {
 		$self->{linkname_index} = 0 if !defined $self->{linkname_index};
 		$entry->{linkname} = 'LongLink'.$self->{linkname_index}++;
 	}
