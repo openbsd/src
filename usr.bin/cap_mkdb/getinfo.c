@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.15 2009/10/27 23:59:36 deraadt Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.16 2009/11/11 23:49:01 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -303,8 +303,10 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 			break;
 	}
 
-	if (!foundit)
+	if (!foundit) {
+		free(record);
 		return (-1);
+	}
 
 	/*
 	 * Got the capability record, but now we have to expand all use=name

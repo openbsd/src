@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.33 2009/05/06 21:07:01 sobrado Exp $	*/
+/*	$OpenBSD: tset.c,v 1.34 2009/11/11 23:49:01 nicm Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -417,6 +417,7 @@ add_mapping(const char *port, char *arg)
 	  badmopt:err("illegal -m option format: %s", copy);
 	mapp->porttype = port;
     }
+    free(copy);
 #ifdef MAPDEBUG
     (void) printf("port: %s\n", mapp->porttype ? mapp->porttype : "ANY");
     (void) printf("type: %s\n", mapp->type);
