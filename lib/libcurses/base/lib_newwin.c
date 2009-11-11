@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newwin.c,v 1.4 2001/01/22 18:01:42 millert Exp $	*/
+/*	$OpenBSD: lib_newwin.c,v 1.5 2009/11/11 18:34:10 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -205,10 +205,13 @@ _nc_makenew
     if ((wp = typeCalloc(WINDOWLIST, 1)) == 0)
 	return 0;
 
-    if ((win = typeCalloc(WINDOW, 1)) == 0)
+    if ((win = typeCalloc(WINDOW, 1)) == 0) {
+	  free(wp);
 	  return 0;
+    }
 
     if ((win->_line = typeCalloc(struct ldat, ((unsigned) num_lines))) == 0) {
+	free(wp);
 	free(win);
 	return 0;
     }
