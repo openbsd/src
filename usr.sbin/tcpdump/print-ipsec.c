@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.14 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.15 2009/11/11 13:23:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -104,8 +104,10 @@ esp_init (char *espspec)
 		s[0] = espkey[2*i];
 		s[1] = espkey[2*i + 1];
 		s[2] = 0;
-		if (!isxdigit(s[0]) || !isxdigit(s[1]))
+		if (!isxdigit(s[0]) || !isxdigit(s[1])) {
+			free(key);
 			error("espkey must be specified in hex");
+		}
 		key[i] = strtoul(s, NULL, 16);
 	}
 	EVP_CIPHER_CTX_init(&ctx);
