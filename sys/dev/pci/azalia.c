@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.159 2009/10/27 12:30:11 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.160 2009/11/11 23:12:39 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1874,6 +1874,7 @@ azalia_codec_select_dacs(codec_t *this)
 	if (convs == NULL)
 		return(ENOMEM);
 
+	err = 0;
 	nconv = 0;
 	for (i = 0; i < this->nopins; i++) {
 		isfhp = 0;
@@ -1894,7 +1895,7 @@ azalia_codec_select_dacs(codec_t *this)
 			if (isfhp)
 				this->fhp_dac = conv;
 			if (nconv >= this->na_dacs) {
-				return(0);
+				break;
 			}
 		} else {
 			/* find a different dac */
@@ -1918,21 +1919,20 @@ azalia_codec_select_dacs(codec_t *this)
 				err = azalia_comresp(this, w->nid,
 				    CORB_SET_CONNECTION_SELECT_CONTROL, j, 0);
 				if (err)
-					return(err);
+					break;
 				w->selected = j;
 				this->opins[i].conv = conv;
 				if (isfhp)
 					this->fhp_dac = conv;
 				convs[nconv++] = conv;
 				if (nconv >= this->na_dacs)
-					return(0);
+					break;
 			}
 		}
 	}
 
 	free(convs, M_DEVBUF);
-
-	return(0);
+	return(err);
 }
 
 /* Connect the speaker to a DAC that no other output pin is connected
