@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.238 2009/10/13 09:51:53 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.239 2009/11/11 13:48:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -372,6 +372,7 @@ conf_main	: AS as4number		{
 				in6->sin6_port = htons(BGP_PORT);
 				break;
 			default:
+				free(la);
 				yyerror("king bula does not like family %u",
 				    $3.af);
 				YYERROR;
