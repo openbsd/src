@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.377 2009/11/11 12:04:18 espie Exp $
+# $OpenBSD: pkg_add,v 1.378 2009/11/11 12:21:20 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -310,9 +310,8 @@ sub really_add
 		my $plist = $handle->plist;
 		if ($plist->is_signed) {
 			if ($state->{defines}->{nosig}) {
-				print STDERR 
-				    "NOT CHECKING DIGITAL SIGNATURE FOR ",
-				    $plist->pkgname, "\n";
+				$state->errsay("NOT CHECKING DIGITAL SIGNATURE FOR ",
+				    $plist->pkgname);
 				$state->{check_digest} = 0;
 			} else {
 				require OpenBSD::x509;
@@ -811,6 +810,7 @@ if ($state->{packages_with_sig}) {
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
 }
+$state->progress->clear;
 $state->log->dump;
 if (defined $state->{updatedepends} && %{$state->{updatedepends}}) {
 	print "Forced updates, bogus dependencies for ", 

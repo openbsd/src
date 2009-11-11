@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.19 2009/11/11 12:04:19 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.20 2009/11/11 12:21:20 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -100,6 +100,18 @@ sub say
 	$self->progress->print(@_, "\n");
 }
 
+sub errprint
+{
+	my $self = shift;
+	$self->progress->errprint(@_);
+}
+
+sub errsay
+{
+	my $self = shift;
+	$self->progress->errprint(@_, "\n");
+}
+
 sub system
 {
 	my $self = shift;
@@ -174,6 +186,12 @@ sub print
 {
 	shift;
 	print @_;
+}
+
+sub errprint
+{
+	shift;
+	print STDERR @_;
 }
 
 # an UpdateSet is a list of packages to remove/install.

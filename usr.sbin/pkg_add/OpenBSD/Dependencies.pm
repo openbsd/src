@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.82 2009/11/11 12:04:19 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.83 2009/11/11 12:21:20 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -177,7 +177,7 @@ sub find_in_new_source
 	my $plist = OpenBSD::PackingList->from_installation($dep,
 	    \&OpenBSD::PackingList::DependOnly);
 	if (!defined $plist) {
-		print STDERR "Can't read plist for $dep\n";
+		$state->errsay("Can't read plist for $dep");
 	}
 	$self->find_in_plist($plist, $dep);
 	return $self->find_in_already_done($solver, $state, $obj);

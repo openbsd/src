@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.43 2007/06/30 11:38:38 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.44 2009/11/11 12:21:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -205,10 +205,10 @@ sub report_ro
 	my ($s, $state, $fname) = @_;
 
 	if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-		print STDERR "Error: ", $s->{dev}, 
-		    " is read-only ($fname)\n";
+		$state->errsay("Error: ", $s->{dev}, 
+		    " is read-only ($fname)");
 	} elsif ($s->{problems} == 4) {
-		print STDERR "Error: ... more files on ", $s->{dev}, "\n";
+		$state->errsay("Error: ... more files on ", $s->{dev});
 	}
 	$state->{problems}++;
 }
@@ -218,11 +218,11 @@ sub report_overflow
 	my ($s, $state, $fname) = @_;
 
 	if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-		print STDERR "Error: ", $s->{dev}, 
-		    " is not large enough ($fname)\n";
+		$state->errsay("Error: ", $s->{dev}, 
+		    " is not large enough ($fname)");
 	} elsif ($s->{problems} == 4) {
-		print STDERR "Error: ... more files do not fit on ", 
-		    $s->{dev}, "\n";
+		$state->errsay("Error: ... more files do not fit on ", 
+		    $s->{dev});
 	}
 	$state->{problems}++;
 	$state->{overflow} = 1;
@@ -231,7 +231,7 @@ sub report_overflow
 sub report_noexec
 {
 	my ($s, $state, $fname) = @_;
-	print STDERR "Error: ", $s->{dev}, " is noexec ($fname)\n";
+	$state->errsay("Error: ", $s->{dev}, " is noexec ($fname)");
 	$state->{problems}++;
 }
 

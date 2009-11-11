@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.85 2009/11/11 12:04:19 espie Exp $
+# $OpenBSD: Delete.pm,v 1.86 2009/11/11 12:21:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -54,7 +54,7 @@ sub manpages_unindex
 		} else {
 			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l); };
 			if ($@) {
-				print STDERR "Error in makewhatis: $@\n";
+				$state->errsay("Error in makewhatis: $@");
 			}
 		}
 	}
@@ -67,7 +67,7 @@ sub validate_plist
 
 	if ($plist->has('system-package')) {
 		$state->{problems}++;
-		print STDERR "Error: can't delete system packages\n";
+		$state->errsay("Error: can't delete system packages");
 		return;
 	}
 	$plist->prepare_for_deletion($state, $plist->pkgname);
@@ -132,7 +132,7 @@ sub unregister_dependencies
 		try { 
 			OpenBSD::RequiredBy->new($name)->delete($pkgname);
 		} catchall {
-			print STDERR "$_\n";
+			$state->errsay($_);
 		};
 	}
 }
