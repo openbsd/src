@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.21 2009/11/11 12:32:03 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.22 2009/11/11 12:47:13 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -110,12 +110,6 @@ sub errsay
 {
 	my $self = shift;
 	$self->progress->errprint(@_, "\n");
-}
-
-sub system
-{
-	my $self = shift;
-	$self->log->system(@_);
 }
 
 sub progress
