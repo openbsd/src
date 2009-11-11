@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.21 2007/09/17 07:07:23 moritz Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.22 2009/11/11 18:41:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -89,8 +89,10 @@ _ng_sl_init(void)
 	sl->sl_cur = 0;
 	sl->sl_max = 20;
 	sl->sl_str = calloc(sl->sl_max, sizeof(char *));
-	if (sl->sl_str == NULL)
+	if (sl->sl_str == NULL) {
+		free(sl);
 		return NULL;
+	}
 	return sl;
 }
 
@@ -711,8 +713,10 @@ innetgr(const char *grp, const char *host, const char *user, const char *domain)
 
 	/* Too bad need the slow recursive way */
 	sl = _ng_sl_init();
-	if (sl == NULL)
+	if (sl == NULL) {
+		free(grpdup);
 		return 0;
+	}
 	found = in_find(ypdom, sl, grpdup, host, user, domain);
 	_ng_sl_free(sl, 1);
 
