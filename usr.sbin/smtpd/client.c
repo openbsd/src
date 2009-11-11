@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.15 2009/11/11 11:41:05 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.16 2009/11/11 15:36:10 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -437,9 +437,14 @@ client_read(struct smtp_client *sp)
 	if (0) {
 #endif
 	} else {
+		errno = 0;
 		if (buf_read(sp->w.fd, &sp->r) == -1) {
-			strlcpy(sp->ebuf, "130 buf_read error",
-			    sizeof(sp->ebuf));
+			if (errno)
+				snprintf(sp->ebuf, sizeof(sp->ebuf),
+				    "130 buf_read: %s", strerror(errno));
+			else
+				snprintf(sp->ebuf, sizeof(sp->ebuf),
+				    "130 buf_read: connection closed");
 			return (CLIENT_ERROR);
 		}
 	}
@@ -879,8 +884,6 @@ client_getln(struct smtp_client *sp)
 		if ((ln = buf_getln(&sp->r)) == NULL) {
 			if (errno)
 				cause = "150 buf_getln error";
-			else if (sp->r.wpos >= sizeof(sp->r.buf))
-				cause = "150 reply too big";
 			else
 				rv = 0;
 			goto done;
@@ -1066,19 +1069,21 @@ buf_getln(struct buf_read *r)
 int
 buf_read(int fd, struct buf_read *r)
 {
+	char		*buf = r->buf + r->wpos;
+	size_t		 bufsz = sizeof(r->buf) - r->wpos;
 	ssize_t		 n;
 
-	n = read(fd, r->buf + r->wpos, sizeof(r->buf) - r->wpos);
-	if (n == -1) {
+	if (bufsz == 0) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
+
+	if ((n = read(fd, buf, bufsz)) == -1) {
 		if (errno == EAGAIN || errno == EINTR)
 			return (-2);
 		return (-1);
-	}
-
-	if (n == 0) {
-		errno = 0;
+	} else if (n == 0)
 		return (-1);
-	}
 
 	r->wpos += n;
 

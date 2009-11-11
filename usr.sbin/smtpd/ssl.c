@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.22 2009/10/03 07:59:55 jacekm Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.23 2009/11/11 15:36:10 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -656,11 +656,16 @@ ssl_session_destroy(struct session *s)
 int
 ssl_buf_read(SSL *s, struct buf_read *r)
 {
+	char	*buf = r->buf + r->wpos;
+	ssize_t	 bufsz = sizeof(r->buf) - r->wpos;
 	int	 ret;
 
-	ret = SSL_read(s, r->buf + r->wpos, sizeof(r->buf) - r->wpos);
+	if (bufsz == 0) {
+		errno = EMSGSIZE;
+		return (SSL_ERROR_SYSCALL);
+	}
 
-	if (ret > 0)
+	if ((ret = SSL_read(s, buf, bufsz)) > 0)
 		r->wpos += ret;
 
 	return SSL_get_error(s, ret);
