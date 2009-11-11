@@ -1,0 +1,13 @@
+B ?=
+.if ${B:C/[0-9]//}
+A=0
+.elif ${B} == 0
+A=1
+.elif ${B} > 1
+A=2
+.else
+A=3
+.endif
+
+all:
+	@echo ${A}

@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.28 2008/11/24 16:22:38 espie Exp $
+# $OpenBSD: Makefile,v 1.29 2009/11/11 00:16:47 fgsch Exp $
 
 # We don't pass t7, t13, t14, t17, t19, t20 t21 t26
 # and t16 yields piss poor performance
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 t25 t26 t27 t28 t29 t30 t31
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20 t21 t22 t23 t24 t25 t26 t27 t28 t29 t30 t31 t32 t33 t34 t35
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out
@@ -128,6 +128,18 @@ t30:
 
 t31:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk28 all
+
+t32:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} B="A" ${MAKE} -r -f mk32 all | diff - t32.out
+
+t33:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} B=0 ${MAKE} -r -f mk32 all | diff - t33.out
+
+t34:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} B=1 ${MAKE} -r -f mk32 all | diff - t34.out
+
+t35:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} B=2 ${MAKE} -r -f mk32 all | diff - t35.out
 
 z.a:
 	touch $@
