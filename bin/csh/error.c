@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.9 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: error.c,v 1.10 2009/11/11 16:15:06 deraadt Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -323,7 +323,7 @@ stderror(int id, ...)
     if ((flags & ERR_OLD) && seterr == NULL)
 	return;
 
-    if (id < 0 || id > sizeof(errorlist) / sizeof(errorlist[0]))
+    if (id < 0 || id >= sizeof(errorlist) / sizeof(errorlist[0]))
 	id = ERR_INVALID;
 
     (void) fflush(cshout);
