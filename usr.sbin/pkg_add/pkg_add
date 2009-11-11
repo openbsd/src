@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.379 2009/11/11 12:32:03 espie Exp $
+# $OpenBSD: pkg_add,v 1.380 2009/11/11 12:42:17 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -125,7 +125,7 @@ use OpenBSD::Error;
 sub setup_header
 {
 	my ($set, $state, $handle, $info) = @_;
-	
+
 	my $header = $state->deptree_header($set);
 	if (defined $handle) {
 		$header .= $handle->pkgname;
@@ -137,7 +137,14 @@ sub setup_header
 	}
 
 	if (!$state->progress->set_header($header)) {
-		$info //= 'add';
+		if (!defined $info) {
+			$header = "Adding $header";
+		}
+		if (defined $state->{lastheader} && 
+		    $header eq $state->{lastheader}) {
+			return;
+		}
+		$state->{lastheader} = $header;
 		print $header;
 		print "(pretending) " if $state->{not};
 		if ($state->{do_faked}) {
