@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.38 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.39 2009/11/11 16:44:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -122,6 +122,7 @@ __aout_knlist(int fd, DB *db, int ksyms)
 		errx(1, "cannot allocate %d bytes for string table", strsize);
 	if ((nr = read(fd, strtab, strsize)) != strsize) {
 		fmterr = "corrupted symbol table";
+		free(strtab);
 		return (-1);
 	}
 
@@ -129,6 +130,7 @@ __aout_knlist(int fd, DB *db, int ksyms)
 	if (!(fp = fdopen(fd, "r")))
 		err(1, "%s", kfile);
 	if (fseek(fp, N_SYMOFF(ebuf), SEEK_SET) == -1) {
+		free(strtab);
 		warn("fseek %s", kfile);
 		return (-1);
 	}
@@ -147,6 +149,7 @@ __aout_knlist(int fd, DB *db, int ksyms)
 				fmterr = "corrupted symbol table";
 			else
 				warn("%s", kfile);
+			free(strtab);
 			return (-1);
 		}
 		if (!nbuf._strx || (nbuf.n_type & N_STAB))
@@ -204,6 +207,7 @@ __aout_knlist(int fd, DB *db, int ksyms)
 				cur_off = ftell(fp);
 				if (fseek(fp, voff, SEEK_SET) == -1) {
 					fmterr = "corrupted string table";
+					free(strtab);
 					return (-1);
 				}
 
@@ -214,6 +218,7 @@ __aout_knlist(int fd, DB *db, int ksyms)
 				 */
 				if (fgets(buf, sizeof(buf), fp) == NULL) {
 					fmterr = "corrupted string table";
+					free(strtab);
 					return (-1);
 				}
 			} else {
@@ -246,6 +251,7 @@ __aout_knlist(int fd, DB *db, int ksyms)
 			data.size = sizeof(NLIST);
 			if (!ksyms && fseek(fp, cur_off, SEEK_SET) == -1) {
 				fmterr = "corrupted string table";
+				free(strtab);
 				return (-1);
 			}
 		}
@@ -287,11 +293,11 @@ get_kerntext(char *name, u_int magic)
 int
 __elf_knlist(int fd, DB *db, int ksyms)
 {
-	caddr_t strtab;
+	caddr_t strtab = NULL;
 	off_t symstroff, symoff;
 	u_long symsize, symstrsize;
 	u_long kernvma, kernoffs;
-	int i, j;
+	int i, j, error = 0;
 	Elf_Sym sbuf;
 	char buf[1024];
 	Elf_Ehdr eh;
@@ -316,14 +322,15 @@ __elf_knlist(int fd, DB *db, int ksyms)
 
 	if (fseek (fp, eh.e_shoff, SEEK_SET) < 0) {
 		fmterr = "no exec header";
-		return (-1);
+		error = -1;
+		goto done;
 	}
 
 	if (fread(sh, sizeof(Elf_Shdr) * eh.e_shnum, 1, fp) != 1) {
 		fmterr = "no exec header";
-		return (-1);
+		error = -1;
+		goto done;
 	}
-
 
 	symstrsize = symsize = kernvma = 0;
 	for (i = 0; i < eh.e_shnum; i++) {
@@ -346,7 +353,8 @@ __elf_knlist(int fd, DB *db, int ksyms)
 
 	if (!symstrsize || !symsize || !kernvma) {
 		fmterr = "corrupt file";
-		return (-1);
+		error = -1;
+		goto done;
 	}
 
 	/*
@@ -364,23 +372,25 @@ __elf_knlist(int fd, DB *db, int ksyms)
 		usemalloc = 1;
 		if ((strtab = malloc(symstrsize)) == NULL) {
 			fmterr = "out of memory";
-			return (-1);
+			error = -1;
+			goto done;
 		}
 		if (fseek(fp, symstroff, SEEK_SET) == -1) {
-			free(strtab);
 			fmterr = "corrupt file";
-			return (-1);
+			error = -1;
+			goto done;
 		}
 		if (fread(strtab, symstrsize, 1, fp) != 1) {
-			free(strtab);
 			fmterr = "corrupt file";
-			return (-1);
+			error = -1;
+			goto done;
 		}
 	}
 
 	if (fseek(fp, symoff, SEEK_SET) == -1) {
 		fmterr = "corrupt file";
-		return (-1);
+		error = -1;
+		goto done;
 	}
 
 	data.data = (u_char *)&nbuf;
@@ -394,7 +404,8 @@ __elf_knlist(int fd, DB *db, int ksyms)
 				fmterr = "corrupted symbol table";
 			else
 				warn("%s", kfile);
-			return (-1);
+			error = -1;
+			goto done;
 		}
 		if (!sbuf.st_name)
 			continue;
@@ -453,7 +464,8 @@ __elf_knlist(int fd, DB *db, int ksyms)
 				cur_off = ftell(fp);
 				if (fseek(fp, voff, SEEK_SET) == -1) {
 					fmterr = "corrupted string table";
-					return (-1);
+					error = -1;
+					goto done;
 				}
 
 				/*
@@ -463,7 +475,8 @@ __elf_knlist(int fd, DB *db, int ksyms)
 				 */
 				if (fgets(buf, sizeof(buf), fp) == NULL) {
 					fmterr = "corrupted string table";
-					return (-1);
+					error = -1;
+					goto done;
 				}
 			} else {
 				/*
@@ -498,16 +511,22 @@ __elf_knlist(int fd, DB *db, int ksyms)
 			data.size = sizeof(NLIST);
 			if (!ksyms && fseek(fp, cur_off, SEEK_SET) == -1) {
 				fmterr = "corrupted string table";
-				return (-1);
+				error = -1;
+				goto done;
 			}
 		}
 	}
-	if (usemalloc)
-		free(strtab);
-	else
-		munmap(strtab, symstrsize);
+done:
+	if (strtab) {
+		if (usemalloc)
+			free(strtab);
+		else
+			munmap(strtab, symstrsize);
+	}
 	(void)fclose(fp);
-	return (0);
+	if (sh)
+		free(sh);
+	return (error);
 }
 #endif /* _NLIST_DO_ELF */
 
