@@ -1,8 +1,7 @@
-/*	$OpenBSD: client.c,v 1.14 2009/11/11 11:25:17 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.15 2009/11/11 11:41:05 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
- * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1038,24 +1037,21 @@ buf_getln(struct buf_read *r)
 
 	/* look for terminating newline */
 	for (i = 0; i < bufsz; i++)
-		if (buf[i] == '\r' || buf[i] == '\n')
+		if (buf[i] == '\n')
 			break;
 	if (i == bufsz)
 		return (NULL);
 
 	/* make a copy of the line */
-        if ((line = malloc(i + 1)) == NULL)
+	if ((line = calloc(i + 1, 1)) == NULL)
 		return (NULL);
-        memcpy(line, buf, i);
-        line[i] = '\0';
+	memcpy(line, buf, i);
+
+	/* handle CRLF */
+	if (i != 0 && line[i - 1] == '\r')
+		line[i - 1] = '\0';
 
 	/* drain the buffer */
-	if (i < bufsz - 1) {
-		char fch = buf[i], sch = buf[i + 1];
-
-		if ((sch == '\r' || sch == '\n') && sch != fch)
-			i += 1;
-	}
 	memmove(buf, buf + i + 1, bufsz - i - 1);
 	r->wpos -= i + 1;
 
