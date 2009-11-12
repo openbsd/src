@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.19 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.20 2009/11/12 20:17:03 deraadt Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -385,6 +385,7 @@ trng_add(char *str)
 			default:
 				paxwarn(1, "Bad option %c with time range %s",
 				    *flgpt, str);
+				(void)free((char *)pt);
 				goto out;
 			}
 			++flgpt;
