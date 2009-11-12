@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-lldp.c,v 1.5 2007/10/26 18:18:13 moritz Exp $	*/
+/*	$OpenBSD: print-lldp.c,v 1.6 2009/11/12 00:02:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -264,7 +264,7 @@ lldp_print(const u_char *p, u_int len)
 			_ptrinc(sizeof(u_int8_t));
 			v = *ptr;
 			_ptrinc(sizeof(u_int8_t));
-			if (v <= AFNUM_MAX)
+			if (v < AFNUM_MAX)
 				printf(" %s", afnumber[v]);
 			else
 				printf(" type %d", v);
