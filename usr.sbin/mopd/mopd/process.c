@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.18 2009/10/27 23:59:52 deraadt Exp $ */
+/*	$OpenBSD: process.c,v 1.19 2009/11/12 16:52:22 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -164,19 +164,17 @@ mopStartLoad(u_char *dst, u_char *src, struct dllist *dl_rpr, int trans)
 	slot = -1;
 
 	/* Look if we have a non terminated load, if so, use it's slot */
-	for (i = 0; i < MAXDL; i++)
+	for (i = 0; i < MAXDL && slot == -1; i++)
 		if (dllist[i].status != DL_STATUS_FREE)
 			if (mopCmpEAddr(dllist[i].eaddr, dst) == 0)
 				slot = i;
 
 	/* If no slot yet, then find first free */
-	if (slot == -1)
-		for (i = 0; i < MAXDL; i++)
-			if (dllist[i].status == DL_STATUS_FREE)
-				if (slot == -1) {
-					slot = i;
-					bcopy(dst,  dllist[i].eaddr, 6);
-				}
+	for (i = 0; slot == -1 && i < MAXDL; i++)
+		if (dllist[i].status == DL_STATUS_FREE) {
+			slot = i;
+			bcopy(dst,  dllist[i].eaddr, 6);
+		}
 
 	/* If no slot yet, then return. No slot is free */	
 	if (slot == -1)
@@ -248,7 +246,7 @@ mopNextLoad(u_char *dst, u_char *src, u_char new_count, int trans)
 
 	slot = -1;
 
-	for (i = 0; i < MAXDL; i++)
+	for (i = 0; i < MAXDL && slot == -1; i++)
 		if (dllist[i].status != DL_STATUS_FREE) {
 			if (mopCmpEAddr(dst, dllist[i].eaddr) == 0)
 				slot = i;
