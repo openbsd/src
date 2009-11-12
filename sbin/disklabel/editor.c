@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.223 2009/10/27 23:59:32 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.224 2009/11/12 16:21:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -156,13 +156,13 @@ int
 editor(struct disklabel *lp, int f)
 {
 	struct disklabel origlabel, lastlabel, tmplabel, label = *lp;
-	struct disklabel *disk_geop;
+	struct disklabel *disk_geop = NULL;
 	struct partition *pp;
 	FILE *fp;
 	char buf[BUFSIZ], *cmd, *arg;
 	char **omountpoints = NULL;
 	char **origmountpoints = NULL, **tmpmountpoints = NULL;
-	int i;
+	int i, error = 0;
 
 	/* Alloc and init mount point info */
 	if (!(omountpoints = calloc(MAXPARTITIONS, sizeof(char *))) ||
@@ -335,7 +335,7 @@ editor(struct disklabel *lp, int f)
 		case 'q':
 			if (donothing) {
 				puts("In no change mode, not writing label.");
-				return(0);
+				goto done;
 			}
 			/* Save mountpoint info if there is any. */
 			mpsave(&label);
@@ -350,7 +350,7 @@ editor(struct disklabel *lp, int f)
 			if (!dflag && !aflag &&
 			    memcmp(lp, &label, sizeof(label)) == 0) {
 				puts("No label changes.");
-				return(0);
+				goto done;
 			}
 			do {
 				arg = getstring("Write new label?",
@@ -360,11 +360,12 @@ editor(struct disklabel *lp, int f)
 			if (arg && tolower(*arg) == 'y') {
 				if (writelabel(f, bootarea, &label) == 0) {
 					*lp = label;
-					return(0);
+					goto done;
 				}
 				warnx("unable to write label");
 			}
-			return(1);
+			error = 1;
+			goto done;
 			/* NOTREACHED */
 			break;
 
@@ -449,7 +450,7 @@ editor(struct disklabel *lp, int f)
 			break;
 
 		case 'x':
-			return(0);
+			goto done;
 			break;
 
 		case 'z':
@@ -474,6 +475,13 @@ editor(struct disklabel *lp, int f)
 			mpcopy(omountpoints, tmpmountpoints);
 		}
 	}
+done:
+	free(omountpoints);
+	free(origmountpoints);
+	free(tmpmountpoints);
+	if (disk_geop)
+		free(disk_geop);
+	return(error);
 }
 
 int64_t
