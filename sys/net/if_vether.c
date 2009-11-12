@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.2 2009/11/09 20:38:33 mpf Exp $ */
+/* $OpenBSD: if_vether.c,v 1.3 2009/11/12 06:37:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -180,10 +180,14 @@ vetherstart(struct ifnet *ifp)
 			bpf_mtap_ether(ifp->if_bpf, m, inout);
 #endif
 
-		if (inout == BPF_DIRECTION_IN)
+		if (inout == BPF_DIRECTION_IN) {
 			ether_input_mbuf(ifp, m);
-		else
+			ifp->if_ipackets++;
+		} else {
+			ifp->if_opackets++;
+			ifp->if_obytes += m->m_pkthdr.len;
 			m_freem(m);
+		}
 	}
 }
 
