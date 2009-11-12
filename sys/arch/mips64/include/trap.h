@@ -1,4 +1,4 @@
-/*      $OpenBSD: trap.h,v 1.10 2009/10/22 22:08:52 miod Exp $	*/
+/*      $OpenBSD: trap.h,v 1.11 2009/11/12 19:45:53 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,7 +72,7 @@
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
 
 /*
- *  Defines for trap handler catching kernel accessng memory.
+ *  Defines for trap handler catching kernel accessing memory.
  */
 #define	KT_COPYERR	1		/* User space copy error */
 #define	KT_KCOPYERR	2		/* Kernel space copy error */
