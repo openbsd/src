@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.71 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.72 2009/11/12 20:10:48 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -761,14 +761,20 @@ tar_options(int argc, char **argv)
 			break;
 		case 'I':
 			if (++nincfiles > incfiles_max) {
-				incfiles_max = nincfiles + 3;
-				incfiles = realloc(incfiles,
-				    sizeof(*incfiles) * incfiles_max);
-				if (incfiles == NULL) {
+				size_t n = nincfiles + 3;
+				struct incfile *p;
+
+				p = realloc(incfiles,
+				    sizeof(*incfiles) * n);
+				if (p == NULL) {
+					free(incfiles);
+					incfiles = NULL;
 					paxwarn(0, "Unable to allocate space "
 					    "for option list");
 					exit(1);
 				}
+				incfiles = p;
+				incfiles_max = n;
 			}
 			incfiles[nincfiles - 1].file = optarg;
 			incfiles[nincfiles - 1].dir = chdname;
