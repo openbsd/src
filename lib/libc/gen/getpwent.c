@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.40 2009/06/03 16:02:44 schwarze Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.41 2009/11/12 18:00:18 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -445,7 +445,7 @@ static int
 __has_yppw(void)
 {
 	DBT key, data, pkey, pdata;
-	char bf[1 + _PW_NAME_LEN];
+	char bf[2];
 	int len;
 
 	key.data = (u_char *)_PW_YPTOKEN;
@@ -453,10 +453,9 @@ __has_yppw(void)
 
 	/* Pre-token database support. */
 	bf[0] = _PW_KEYBYNAME;
-	len = strlen("+");
-	bcopy("+", &bf[1], MIN(len, _PW_NAME_LEN));
+	bf[1] = '+';
 	pkey.data = (u_char *)bf;
-	pkey.size = 1 + MIN(len, _PW_NAME_LEN);
+	pkey.size = sizeof(bf);
 
 	if ((_pw_db->get)(_pw_db, &key, &data, 0) &&
 	    (_pw_db->get)(_pw_db, &pkey, &pdata, 0))
