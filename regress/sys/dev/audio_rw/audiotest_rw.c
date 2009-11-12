@@ -1,4 +1,4 @@
-/*	$OpenBSD: audiotest_rw.c,v 1.9 2007/10/20 02:34:54 jakemsr Exp $	*/
+/*	$OpenBSD: audiotest_rw.c,v 1.10 2009/11/12 05:20:11 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2007 Jacob Meuser <jakemsr@sdf.lonestar.org>
@@ -35,7 +35,7 @@ extern char *__progname;
 
 void useage(void);
 int audio_set_duplex(int, char *, int);
-int audio_set_info(int, u_int, u_int, u_int, u_int, u_int);
+int audio_set_info(int, u_int, u_int, u_int, u_int, size_t *);
 int audio_trigger_record(int);
 int audio_wait_frame(int, size_t, u_int, int, int, int);
 int audio_do_frame(int, size_t , char *, char *, u_int, int, int, int);
@@ -88,7 +88,7 @@ int i, has_duplex;
 
 int
 audio_set_info(int audio_fd, u_int mode, u_int encoding, u_int sample_rate,
-    u_int channels, u_int buffer_size)
+    u_int channels, size_t *buffer_size)
 {
 audio_info_t audio_if;
 audio_encoding_t audio_enc;
@@ -114,19 +114,20 @@ u_int precision;
 	AUDIO_INITINFO(&audio_if);
 
 	audio_if.mode = mode;
-	audio_if.blocksize = buffer_size;
 
 	if (mode & AUMODE_RECORD) {
 		audio_if.record.precision = precision;
 		audio_if.record.channels = channels;
 		audio_if.record.sample_rate = sample_rate;
 		audio_if.record.encoding = encoding;
+		audio_if.record.block_size = *buffer_size;
 	}
 	if (mode & AUMODE_PLAY) {
 		audio_if.play.precision = precision;
 		audio_if.play.channels = channels;
 		audio_if.play.sample_rate = sample_rate;
 		audio_if.play.encoding = encoding;
+		audio_if.play.block_size = *buffer_size;
 	}
 
 	if (ioctl(audio_fd, AUDIO_SETINFO, &audio_if) < 0) {
@@ -160,6 +161,7 @@ u_int precision;
 			    encoding, audio_if.record.encoding);
 			return 1;
 		}
+		*buffer_size = audio_if.record.block_size;
 	}
 
 	if (mode & AUMODE_PLAY) {
@@ -183,6 +185,7 @@ u_int precision;
 			    encoding, audio_if.play.encoding);
 			return 1;
 		}
+		*buffer_size = audio_if.play.block_size;
 	}
 
 	return 0;
@@ -610,7 +613,7 @@ extern int optind;
 		errx(1, "could not set duplex mode");
 
 	if (audio_set_info(audio_fd, mode, encoding, sample_rate, channels,
-	    (u_int)buffer_size))
+	    &buffer_size))
 		errx(1, "could not initialize audio device");
 
 	if (verbose) {
