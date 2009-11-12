@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.380 2009/11/11 12:42:17 espie Exp $
+# $OpenBSD: pkg_add,v 1.381 2009/11/12 14:44:00 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -513,9 +513,9 @@ sub install_set
 	my @baddeps = $set->{solver}->check_depends;
 
 	if (@baddeps) {
+		$state->errsay("Can't install ", $set->short_print,
+		    ": can't resolve ", join(',', @baddeps));
 		for my $handle ($set->newer) {
-			$state->say("Can't install ", $handle->pkgname,
-			    ": can't resolve ", join(',', @baddeps));
 			$handle->location->close_now;
 		}
 		$bad++;
