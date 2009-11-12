@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.54 2009/11/06 09:02:42 fgsch Exp $  */
+/*	$OpenBSD: pgt.c,v 1.55 2009/11/12 15:27:49 deraadt Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2377,6 +2377,7 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 		if (nr)
 			free(nr, M_DEVBUF);
 		free(pob, M_DEVBUF);
+		free(wreq, M_DEVBUF);
 		break;
 	}
 	case SIOCSIFADDR:
