@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.32 2009/10/27 23:59:55 deraadt Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.33 2009/11/12 16:07:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -855,7 +855,9 @@ ike_pl_print (u_int8_t type, u_int8_t *buf, u_int8_t doi)
 		    plprivtypes[type - PAYLOAD_PRIVATE_MIN], this_len);
 
 	if ((type < PAYLOAD_RESERVED_MIN &&
-	    this_len < min_payload_lengths[type]) || this_len == 0)
+	    (type < sizeof(min_payload_lengths)/sizeof(min_payload_lengths[0]) &&
+	    this_len < min_payload_lengths[type])) ||
+	    this_len == 0)
 		goto pltrunc;
 
 	if ((type > PAYLOAD_PRIVATE_MIN && type < PAYLOAD_PRIVATE_MAX &&
