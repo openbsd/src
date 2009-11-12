@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.48 2009/06/05 18:02:06 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.49 2009/11/12 16:37:14 millert Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -423,19 +423,20 @@ ldelete(RSIZE n, int kflag)
 	int		 doto;
 	char		*cp1, *cp2;
 	size_t		 len;
-	char		*sv;
+	char		*sv = NULL;
 	int		 end;
 	int		 s;
+	int		 rval = FALSE;
 
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");
-		return (FALSE);
+		goto out;
 	}
 	len = n;
 	if ((sv = calloc(1, len + 1)) == NULL)
-		return (FALSE);
+		goto out;
 	end = 0;
 
 	undo_add_delete(curwp->w_dotp, curwp->w_doto, n, (kflag & KREG));
@@ -445,7 +446,7 @@ ldelete(RSIZE n, int kflag)
 		doto = curwp->w_doto;
 		/* Hit the end of the buffer */
 		if (dotp == curbp->b_headp)
-			return (FALSE);
+			goto out;
 		/* Size of the chunk */
 		chunk = dotp->l_used - doto;
 
@@ -454,10 +455,10 @@ ldelete(RSIZE n, int kflag)
 		/* End of line, merge */
 		if (chunk == 0) {
 			if (dotp == blastlp(curbp))
-				return (FALSE);
+				goto out;
 			lchange(WFFULL);
 			if (ldelnewline() == FALSE)
-				return (FALSE);
+				goto out;
 			end = strlcat(sv, "\n", len + 1);
 			--n;
 			continue;
@@ -489,9 +490,11 @@ ldelete(RSIZE n, int kflag)
 		n -= chunk;
 	}
 	if (kchunk(sv, (RSIZE)len, kflag) != TRUE)
-		return (FALSE);
+		goto out;
+	rval = TRUE;
+out:
 	free(sv);
-	return (TRUE);
+	return (rval);
 }
 
 /*
