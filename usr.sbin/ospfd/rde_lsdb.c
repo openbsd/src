@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.42 2009/01/07 21:16:36 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.43 2009/11/12 22:29:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -260,6 +260,10 @@ lsa_router_check(struct lsa *lsa, u_int16_t len)
 	}
 
 	nlinks = ntohs(lsa->data.rtr.nlinks);
+	if (nlinks == 0) {
+		log_warnx("lsa_check: invalid LSA router packet");
+		return (0);
+	}
 	for (i = 0; i < nlinks; i++) {
 		rtr_link = (struct lsa_rtr_link *)(buf + off);
 		off += sizeof(struct lsa_rtr_link);
