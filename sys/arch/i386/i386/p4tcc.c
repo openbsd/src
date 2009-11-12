@@ -1,4 +1,4 @@
->/*	$OpenBSD: p4tcc.c,v 1.15 2009/11/12 01:40:36 deraadt Exp $ */
+/*	$OpenBSD: p4tcc.c,v 1.16 2009/11/12 04:13:15 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * All rights reserved.
