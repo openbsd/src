@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.28 2008/06/26 05:42:21 ray Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.29 2009/11/12 07:27:31 ratchov Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -49,8 +49,8 @@
 struct field *findfield(char *);
 void adjlevel(char **, u_char *, int);
 void catstr(char *, char *, char *);
-void prfield(struct field *, char *, int);
-void rdfield(int, struct field *, char *, int);
+void prfield(struct field *, char *, int, mixer_ctrl_t *);
+void rdfield(int, struct field *, char *, int, char *);
 __dead void usage(void);
 
 #define FIELD_NAME_MAX	64
@@ -87,14 +87,12 @@ findfield(char *name)
 #define s_member_name	un.s.member[i].label.name
 
 void
-prfield(struct field *p, char *sep, int prvalset)
+prfield(struct field *p, char *sep, int prvalset, mixer_ctrl_t *m)
 {
-	mixer_ctrl_t *m;
 	int i, n;
 
 	if (sep)
 		printf("%s%s", p->name, sep);
-	m = p->valp;
 	switch (m->type) {
 	case AUDIO_MIXER_ENUM:
 		for (i = 0; i < p->infp->un.e.num_mem; i++)
@@ -163,7 +161,7 @@ adjlevel(char **p, u_char *olevel, int more)
 }
 
 void
-rdfield(int fd, struct field *p, char *q, int quiet)
+rdfield(int fd, struct field *p, char *q, int quiet, char *sep)
 {
 	mixer_ctrl_t *m, oldval;
 	int i, mask;
@@ -227,13 +225,14 @@ rdfield(int fd, struct field *p, char *q, int quiet)
 	if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0) {
 		warn("AUDIO_MIXER_WRITE");
 	} else if (!quiet) {
-		*p->valp = oldval;
-		prfield(p, ": ", 0);
 		if (ioctl(fd, AUDIO_MIXER_READ, p->valp) < 0) {
 			warn("AUDIO_MIXER_READ");
 		} else {
-			printf(" -> ");
-			prfield(p, NULL, 0);
+			if (sep) {
+				prfield(p, ": ", 0, &oldval);
+				printf(" -> ");
+			}
+			prfield(p, NULL, 0, p->valp);
 			printf("\n");
 		}
 	}
@@ -355,7 +354,7 @@ main(int argc, char **argv)
 
 	if (!argc && aflag) {
 		for (i = 0; fields[i].name[0] != '\0'; i++) {
-			prfield(&fields[i], sep, vflag);
+			prfield(&fields[i], sep, vflag, fields[i].valp);
 			printf("\n");
 		}
 	} else if (argc > 0 && !aflag) {
@@ -375,9 +374,9 @@ main(int argc, char **argv)
 			} else if (ch || tflag) {
 				if (tflag && q == NULL)
 					q = "toggle";
-				rdfield(fd, p, q, qflag);
+				rdfield(fd, p, q, qflag, sep);
 			} else {
-				prfield(p, sep, vflag);
+				prfield(p, sep, vflag, p->valp);
 				printf("\n");
 			}
 
