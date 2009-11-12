@@ -1,4 +1,4 @@
-/*	$OpenBSD: snscore.c,v 1.7 2009/10/27 23:59:27 deraadt Exp $	*/
+/*	$OpenBSD: snscore.c,v 1.8 2009/11/12 23:53:24 jsg Exp $	*/
 /*	$NetBSD: snscore.c,v 1.5 1995/04/24 12:25:43 cgd Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ snscore(int fd, int topn)
 	if ((topn > 0) && (topn < noplayers))
 		noplayers = topn;
 	j = 1;
-	for (i = 0; i < noplayers; i++) {
+	for (i = 0; i < noplayers - 1; i++) {
 		printf("%d:\t$%d\t%s\n", j, players[i].scores, players[i].name);
 		if (players[i].scores > players[i + 1].scores)
 			j = i + 2;
