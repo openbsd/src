@@ -1,4 +1,4 @@
-/*	$OpenBSD: monster.c,v 1.9 2009/10/27 23:59:26 deraadt Exp $	*/
+/*	$OpenBSD: monster.c,v 1.10 2009/11/12 21:57:46 dms Exp $	*/
 /*	$NetBSD: monster.c,v 1.3 1995/04/22 10:27:45 cgd Exp $	*/
 
 /*
@@ -672,7 +672,7 @@ create_monster(void)
 
 	for (i = 0; i < 9; i++) {
 		rand_around(i, &row, &col);
-		if (((row == rogue.row) && (col = rogue.col)) ||
+		if (((row == rogue.row) && (col == rogue.col)) ||
 				(row < MIN_ROW) || (row > (DROWS-2)) ||
 				(col < 0) || (col > (DCOLS-1))) {
 			continue;
