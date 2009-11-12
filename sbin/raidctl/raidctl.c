@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.29 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.30 2009/11/12 15:29:24 deraadt Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -1054,6 +1054,7 @@ do_meter(fdidpair *fds, int nfd, u_long option)
 		if (gettimeofday(&current_time, NULL))
 			err(1, "gettimeofday");
 	}
+	free(progressInfo);
 	printf("\n");
 }
 
