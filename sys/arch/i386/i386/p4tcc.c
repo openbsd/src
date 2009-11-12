@@ -1,4 +1,4 @@
-/*	$OpenBSD: p4tcc.c,v 1.14 2007/08/03 20:36:02 deraadt Exp $ */
+>/*	$OpenBSD: p4tcc.c,v 1.15 2009/11/12 01:40:36 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * All rights reserved.
@@ -117,6 +117,8 @@ p4tcc_setperf(int level)
 		if (level >= tcc[i].level)
 			break;
 	}
+	if (i == TCC_LEVELS)
+		i = TCC_LEVELS - 1;
 
 	msreg = rdmsr(MSR_THERM_CONTROL);
 	msreg &= ~0x1e; /* bit 0 reserved */
