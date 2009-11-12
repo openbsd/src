@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.36 2009/11/04 19:14:10 kettenis Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.37 2009/11/12 20:16:37 deraadt Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -88,7 +88,7 @@ struct usbd_hub {
 	usbd_status	      (*explore)(usbd_device_handle hub);
 	void		       *hubsoftc;
 	usb_hub_descriptor_t	hubdesc;
-	struct usbd_port        ports[1];
+	struct usbd_port        *ports;
 };
 
 struct usb_softc;
