@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.19 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.20 2009/11/12 07:32:26 ratchov Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -65,11 +65,11 @@ struct field {
 	const char *name;
 	void *valp;
 	int format;
+	u_int oldval;
 #define STRING 1
 #define INT 2
 #define UINT 3
 #define P_R 4
-#define ULONG 5
 #define UCHAR 6
 #define ENC 7
 #define PROPS 8
@@ -183,35 +183,30 @@ findfield(char *name)
 }
 
 void
-prfield(struct field *p, const char *sep)
+prval(u_int format, void *valp)
 {
 	u_int v;
 	const char *cm;
 	int i;
 
-	if (sep)
-		fprintf(out, "%s%s", p->name, sep);
-	switch (p->format) {
+	switch (format) {
 	case STRING:
-		fprintf(out, "%s", (char*)p->valp);
+		fprintf(out, "%s", (char *)valp);
 		break;
 	case INT:
-		fprintf(out, "%d", *(int*)p->valp);
+		fprintf(out, "%d", *(int *)valp);
 		break;
 	case UINT:
-		fprintf(out, "%u", *(u_int*)p->valp);
+		fprintf(out, "%u", *(u_int *)valp);
 		break;
 	case XINT:
-		fprintf(out, "0x%x", *(u_int*)p->valp);
+		fprintf(out, "0x%x", *(u_int *)valp);
 		break;
 	case UCHAR:
-		fprintf(out, "%u", *(u_char*)p->valp);
-		break;
-	case ULONG:
-		fprintf(out, "%lu", *(u_long*)p->valp);
+		fprintf(out, "%u", *(u_char *)valp);
 		break;
 	case P_R:
-		v = *(u_int*)p->valp;
+		v = *(u_int *)valp;
 		cm = "";
 		if (v & AUMODE_PLAY) {
 			if (v & AUMODE_PLAY_ALL)
@@ -224,7 +219,7 @@ prfield(struct field *p, const char *sep)
 			fprintf(out, "%srecord", cm);
 		break;
 	case ENC:
-		v = *(u_int*)p->valp;
+		v = *(u_int *)valp;
 		for (i = 0; encs[i].ename; i++)
 			if (encs[i].eno == v)
 				break;
@@ -234,7 +229,7 @@ prfield(struct field *p, const char *sep)
 			fprintf(out, "%u", v);
 		break;
 	case PROPS:
-		v = *(u_int*)p->valp;
+		v = *(u_int *)valp;
 		for (cm = "", i = 0; props[i].name; i++) {
 			if (v & props[i].prop) {
 				fprintf(out, "%s%s", cm, props[i].name);
@@ -248,6 +243,22 @@ prfield(struct field *p, const char *sep)
 }
 
 void
+prfield(struct field *p, const char *sep)
+{
+	if (sep) {
+		fprintf(out, "%s", p->name);
+		if (p->flags & SET) {
+			fprintf(out, "%s", ": ");
+			prval(p->format, &p->oldval);
+			fprintf(out, " -> ");
+		} else
+			fprintf(out, "%s", sep);
+	}
+	prval(p->format, p->valp);
+	fprintf(out, "\n");
+}
+
+void
 rdfield(struct field *p, char *q)
 {
 	int i;
@@ -255,28 +266,39 @@ rdfield(struct field *p, char *q)
 
 	switch (p->format) {
 	case UINT:
-		if (sscanf(q, "%u", (unsigned int *)p->valp) != 1)
+		p->oldval = *(u_int *)p->valp;
+		if (sscanf(q, "%u", (unsigned int *)p->valp) != 1) {
 			warnx("Bad number %s", q);
+			return;
+		}
 		break;
 	case UCHAR:
-		if (sscanf(q, "%u", &u) != 1)
+		*(char *)&p->oldval = *(u_char *)p->valp;
+		if (sscanf(q, "%u", &u) != 1) {
 			warnx("Bad number %s", q);
-		else
-			*(u_char *)p->valp = u;
+			return;
+		}
+		*(u_char *)p->valp = u;
 		break;
 	case XINT:
+		p->oldval = *(u_int *)p->valp;
 		if (sscanf(q, "0x%x", (unsigned int *)p->valp) != 1 &&
-		    sscanf(q, "%x", (unsigned int *)p->valp) != 1)
+		    sscanf(q, "%x", (unsigned int *)p->valp) != 1) {
 			warnx("Bad number %s", q);
+			return;
+		}
 		break;
 	case ENC:
+		p->oldval = *(u_int *)p->valp;
 		for (i = 0; encs[i].ename; i++)
 			if (strcmp(encs[i].ename, q) == 0)
 				break;
 		if (encs[i].ename)
 			*(u_int*)p->valp = encs[i].eno;
-		else
+		else {
 			warnx("Unknown encoding: %s", q);
+			return;
+		}
 		break;
 	default:
 		errx(1, "Invalid read format.");
@@ -393,7 +415,6 @@ main(int argc, char **argv)
 		for (i = 0; fields[i].name; i++) {
 			if (!(fields[i].flags & ALIAS)) {
 				prfield(&fields[i], sep);
-				fprintf(out, "\n");
 			}
 		}
 	} else {
@@ -426,21 +447,16 @@ main(int argc, char **argv)
 					warnx("field %s does not exist", *argv);
 				else {
 					prfield(p, sep);
-					fprintf(out, "\n");
 				}
 			}
 			argv++;
 		}
 		if (writeinfo && ioctl(fd, AUDIO_SETINFO, &info) < 0)
 			err(1, "set failed");
-		if (sep) {
-			getinfo(fd);
-			for (i = 0; fields[i].name; i++) {
-				if (fields[i].flags & SET) {
-					fprintf(out, "%s: -> ", fields[i].name);
-					prfield(&fields[i], 0);
-					fprintf(out, "\n");
-				}
+		getinfo(fd);
+		for (i = 0; fields[i].name; i++) {
+			if (fields[i].flags & SET) {
+				prfield(&fields[i], sep);
 			}
 		}
 	}
