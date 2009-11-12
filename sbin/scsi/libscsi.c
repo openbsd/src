@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.c,v 1.6 2008/01/13 20:23:34 chl Exp $	*/
+/*	$OpenBSD: libscsi.c,v 1.7 2009/11/12 16:08:17 deraadt Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -197,7 +197,7 @@ do_buff_decode(u_char *databuf, size_t len,
 				int i = 0;
 				fmt++;	/* Skip '{' */
 				while (*fmt && (*fmt != '}')) {
-					if (i < sizeof(field_name))
+					if (i < sizeof(field_name)-1)
 						field_name[i++] = *fmt;
 
 					fmt++;
