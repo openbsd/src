@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2009/11/05 12:24:13 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.47 2009/11/12 12:35:03 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1359,25 +1359,25 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	bzero(conf, sizeof(*conf));
 	if ((conf->sc_maps = calloc(1, sizeof(*conf->sc_maps))) == NULL) {
 		log_warn("cannot allocate memory");
-		return 0;
+		return (-1);
 	}
 	if ((conf->sc_rules = calloc(1, sizeof(*conf->sc_rules))) == NULL) {
 		log_warn("cannot allocate memory");
 		free(conf->sc_maps);
-		return 0;
+		return (-1);
 	}
 	if ((conf->sc_listeners = calloc(1, sizeof(*conf->sc_listeners))) == NULL) {
 		log_warn("cannot allocate memory");
 		free(conf->sc_maps);
 		free(conf->sc_rules);
-		return 0;
+		return (-1);
 	}
 	if ((conf->sc_ssl = calloc(1, sizeof(*conf->sc_ssl))) == NULL) {
 		log_warn("cannot allocate memory");
 		free(conf->sc_maps);
 		free(conf->sc_rules);
 		free(conf->sc_listeners);
-		return 0;
+		return (-1);
 	}
 	if ((m = calloc(1, sizeof(*m))) == NULL) {
 		log_warn("cannot allocate memory");
@@ -1385,7 +1385,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 		free(conf->sc_rules);
 		free(conf->sc_listeners);
 		free(conf->sc_ssl);
-		return 0;
+		return (-1);
 	}
 
 	errors = 0;
@@ -1406,6 +1406,7 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 
 	if ((file = pushfile(filename, 0)) == NULL) {
 		purge_config(conf, PURGE_EVERYTHING);
+		free(m);
 		return (-1);
 	}
 	topfile = file;

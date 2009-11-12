@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.8 2009/06/06 04:14:21 pyr Exp $	*/
+/*	$OpenBSD: config.c,v 1.9 2009/11/12 12:35:03 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -61,6 +61,7 @@ purge_config(struct smtpd *env, u_int8_t what)
 	struct cond	*c;
 	struct opt	*o;
 	struct ssl	*s;
+	struct mapel	*me;
 
 	if (what & PURGE_LISTENERS) {
 		while ((l = TAILQ_FIRST(env->sc_listeners)) != NULL) {
@@ -73,6 +74,10 @@ purge_config(struct smtpd *env, u_int8_t what)
 	if (what & PURGE_MAPS) {
 		while ((m = TAILQ_FIRST(env->sc_maps)) != NULL) {
 			TAILQ_REMOVE(env->sc_maps, m, m_entry);
+			while ((me = TAILQ_FIRST(&m->m_contents))) {
+				TAILQ_REMOVE(&m->m_contents, me, me_entry);
+				free(me);
+			}
 			free(m);
 		}
 		free(env->sc_maps);
@@ -91,6 +96,7 @@ purge_config(struct smtpd *env, u_int8_t what)
 			}
 			free(r);
 		}
+		free(env->sc_rules);
 		env->sc_rules = NULL;
 	}
 	if (what & PURGE_SSL) {
