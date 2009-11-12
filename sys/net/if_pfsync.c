@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.130 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.131 2009/11/12 06:53:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -698,7 +698,8 @@ pfsync_input(struct mbuf *m, ...)
 		m_copydata(m, offset, sizeof(subh), (caddr_t)&subh);
 		offset += sizeof(subh);
 
-		if (subh.action >= PFSYNC_ACT_MAX) {
+		if (subh.action >= PFSYNC_ACT_MAX ||
+		    subh.action >= nitems(pfsync_acts)) {
 			pfsyncstats.pfsyncs_badact++;
 			goto done;
 		}
