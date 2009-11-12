@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.17 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: finger.c,v 1.18 2009/11/12 15:33:21 nicm Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -245,6 +245,7 @@ net:	for (pn = nethead; pn; pn = pn->next) {
 			putchar('\n');
 	}
 
+	free(used);
 	if (entries == 0)
 		return;
 
