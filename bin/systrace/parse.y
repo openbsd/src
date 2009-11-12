@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2006/03/18 19:03:23 robert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2009/11/12 19:46:31 deraadt Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -411,11 +411,14 @@ symbol		: STRING typeoff MATCH CMDSTRING
 			REG_EXTENDED | REG_NOSUB) != 0) {
 			yyerror("Invalid regular expression: %s",
 			    node->filterdata);
+			free(re);
 			break;
 		}
 		node->filterarg = re;
-	} else
+	} else {
+		free(re);
 		node->filterarg = NULL;
+	}
 
 	node->filter_match = filter_regex;
 	$$ = node;
