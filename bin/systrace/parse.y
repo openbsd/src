@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2009/11/12 19:46:31 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2009/11/12 20:07:46 millert Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -393,32 +393,28 @@ symbol		: STRING typeoff MATCH CMDSTRING
 		| STRING typeoff RE CMDSTRING
 {
 	struct logic *node;
-	regex_t *re;
+	regex_t re;
 
 	if ((node = parse_newsymbol($1, $2, $4)) == NULL)
 		break;
-
-	if ((re = calloc(1, sizeof (regex_t))) == NULL) {
-		yyerror("calloc");
-		break;
-	}
 
 	/* Precompute regexp here, otherwise we need to compute it
 	 * on the fly which is fairly expensive.
 	 */
 	if (!(node->flags & LOGIC_NEEDEXPAND)) {
-		if (regcomp(re, node->filterdata,
+		if (regcomp(&re, node->filterdata,
 			REG_EXTENDED | REG_NOSUB) != 0) {
 			yyerror("Invalid regular expression: %s",
 			    node->filterdata);
-			free(re);
 			break;
 		}
-		node->filterarg = re;
-	} else {
-		free(re);
+		if ((node->filterarg = malloc(sizeof(re))) == NULL) {
+			yyerror("malloc");
+			break;
+		}
+		memcpy(node->filterarg, &re, sizeof(re));
+	} else
 		node->filterarg = NULL;
-	}
 
 	node->filter_match = filter_regex;
 	$$ = node;
