@@ -109,7 +109,7 @@ edid_findproduct(const char *vendor, uint16_t product)
 #ifdef	EDIDVERBOSE
 	int	n;
 
-	for (n = 0; n < edid_nvendors; n++)
+	for (n = 0; n < edid_nproducts; n++)
 		if ((edid_products[n].product == product) &&
 		    (memcmp(edid_products[n].vendor, vendor, 3) == 0))
 			return (edid_products[n].name);
