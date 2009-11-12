@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.4 2009/10/26 20:14:15 miod Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.5 2009/11/12 17:13:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -23,18 +23,74 @@
  * macros and #include <sgi/sgi/intr_template.c>:
  *
  * INTR_FUNCTIONNAME	interrupt handler function name
+ * MASK_FUNCTIONNAME	interrupt mask computation function name
  * INTR_GETMASKS	logic to get `imr', `isr', and initialize `bit'
  * INTR_HANDLER(bit)	logic to access intrhand array head for `bit'
  * INTR_IMASK(ipl)	logic to access imask array for `ipl'
  * INTR_LOCAL_DECLS	local declarations (may be empty)
  * INTR_MASKPENDING	logic to mask `isr'
  * INTR_MASKRESTORE	logic to reset `imr'
+ * INTR_MASKSIZE	size of interrupt mask in bits
  * INTR_SPURIOUS(bit)	print a spurious interrupt message for `bit'
  *
  * The following macros are optional:
  * INTR_HANDLER_SKIP(ih)	nonzero to skip intrhand invocation
  */
 
+/*
+ * Recompute interrupt masks.
+ */
+void
+MASK_FUNCTIONNAME()
+{
+	int irq, level;
+	struct intrhand *q;
+	uint intrlevel[INTR_MASKSIZE];
+
+	/* First, figure out which levels each IRQ uses. */
+	for (irq = 0; irq < INTR_MASKSIZE; irq++) {
+		uint levels = 0;
+		for (q = INTR_HANDLER(irq); q != NULL; q = q->ih_next)
+			levels |= 1 << q->ih_level;
+		intrlevel[irq] = levels;
+	}
+
+	/*
+	 * Then figure out which IRQs use each level.
+	 * Note that we make sure never to overwrite imask[IPL_HIGH], in
+	 * case an interrupt occurs during intr_disestablish() and causes
+	 * an unfortunate splx() while we are here recomputing the masks.
+	 */
+	for (level = IPL_NONE; level < IPL_HIGH; level++) {
+		uint64_t irqs = 0;
+		for (irq = 0; irq < INTR_MASKSIZE; irq++)
+			if (intrlevel[irq] & (1 << level))
+				irqs |= 1UL << irq;
+		INTR_IMASK(level) = irqs;
+	}
+
+	/*
+	 * There are tty, network and disk drivers that use free() at interrupt
+	 * time, so vm > (tty | net | bio).
+	 *
+	 * Enforce a hierarchy that gives slow devices a better chance at not
+	 * dropping data.
+	 */
+	INTR_IMASK(IPL_NET) |= INTR_IMASK(IPL_BIO);
+	INTR_IMASK(IPL_TTY) |= INTR_IMASK(IPL_NET);
+	INTR_IMASK(IPL_VM) |= INTR_IMASK(IPL_TTY);
+	INTR_IMASK(IPL_CLOCK) |= INTR_IMASK(IPL_VM);
+
+	/*
+	 * These are pseudo-levels.
+	 */
+	INTR_IMASK(IPL_NONE) = 0;
+	INTR_IMASK(IPL_HIGH) = -1UL;
+}
+
+/*
+ * Interrupt dispatcher.
+ */
 uint32_t
 INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 {
@@ -122,6 +178,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 }
 
 #undef	INTR_FUNCTIONNAME
+#undef	MASK_FUNCTIONNAME
 #undef	INTR_GETMASKS
 #undef	INTR_HANDLER
 #undef	INTR_HANDLER_SKIP

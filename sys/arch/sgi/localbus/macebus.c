@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.52 2009/10/26 18:00:06 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.53 2009/11/12 17:13:31 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -535,53 +535,6 @@ macebus_intr_disestablish(void *ih)
 	panic("%s not implemented", __func__);
 }
 
-/*
- * Regenerate interrupt masks to reflect reality.
- */
-void
-macebus_intr_makemasks(void)
-{
-	int irq, level;
-	struct intrhand *q;
-	uint intrlevel[CRIME_NINTS];
-
-	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < CRIME_NINTS; irq++) {
-		uint levels = 0;
-		for (q = (struct intrhand *)crime_intrhand[irq];
-		    q != NULL; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
-	}
-
-	/* Then figure out which IRQs use each level. */
-	for (level = IPL_NONE; level < IPL_HIGH; level++) {
-		uint64_t irqs = 0;
-		for (irq = 0; irq < CRIME_NINTS; irq++)
-			if (intrlevel[irq] & (1 << level))
-				irqs |= 1UL << irq;
-		crime_imask[level] = irqs;
-	}
-
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so vm > (tty | net | bio).
-	 *
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	crime_imask[IPL_NET] |= crime_imask[IPL_BIO];
-	crime_imask[IPL_TTY] |= crime_imask[IPL_NET];
-	crime_imask[IPL_VM] |= crime_imask[IPL_TTY];
-	crime_imask[IPL_CLOCK] |= crime_imask[IPL_VM];
-
-	/*
-	 * These are pseudo-levels.
-	 */
-	crime_imask[IPL_NONE] = 0;
-	crime_imask[IPL_HIGH] = -1UL;
-}
-
 void
 macebus_splx(int newipl)
 {
@@ -602,6 +555,8 @@ macebus_splx(int newipl)
  */
 
 #define	INTR_FUNCTIONNAME	macebus_iointr
+#define	MASK_FUNCTIONNAME	macebus_intr_makemasks
+
 #define	INTR_LOCAL_DECLS
 #define	INTR_GETMASKS \
 do { \
@@ -626,6 +581,7 @@ do { \
 } while (0)
 #define	INTR_MASKRESTORE \
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, imr)
+#define	INTR_MASKSIZE		CRIME_NINTS
 
 #define	INTR_HANDLER_SKIP(ih)	macebus_iointr_skip((void *)ih)
 

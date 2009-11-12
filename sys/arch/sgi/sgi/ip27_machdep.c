@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.34 2009/11/07 22:48:37 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.35 2009/11/12 17:13:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -74,7 +74,8 @@ void	ip27_hub_intr_clear(int);
 void	ip27_hub_intr_set(int);
 uint32_t hubpi_intr0(uint32_t, struct trap_frame *);
 uint32_t hubpi_intr1(uint32_t, struct trap_frame *);
-void	ip27_hub_intr_makemasks(void);
+void	ip27_hub_intr_makemasks0(void);
+void	ip27_hub_intr_makemasks1(void);
 void	ip27_hub_setintrmask(int);
 void	ip27_hub_splx(int);
 
@@ -668,7 +669,10 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	*anchor = ih;
 
 	hubpi_intem.hw[intrbit / HUBPI_NINTS] |= 1UL << (intrbit % HUBPI_NINTS);
-	ip27_hub_intr_makemasks();
+	if (intrbit / HUBPI_NINTS != 0)
+		ip27_hub_intr_makemasks1();
+	else
+		ip27_hub_intr_makemasks0();
 
 	splx(s);	/* causes hw mask update */
 
@@ -702,7 +706,10 @@ ip27_hub_intr_disestablish(int intrbit)
 
 	hubpi_intem.hw[intrbit / HUBPI_NINTS] &=
 	    ~(1UL << (intrbit % HUBPI_NINTS));
-	ip27_hub_intr_makemasks();
+	if (intrbit / HUBPI_NINTS != 0)
+		ip27_hub_intr_makemasks1();
+	else
+		ip27_hub_intr_makemasks0();
 
 	splx(s);
 
@@ -719,70 +726,6 @@ void
 ip27_hub_intr_set(int intrbit)
 {
 	IP27_RHUB_PI_S(masternasid, 0, HUBPI_IR_CHANGE, PI_IR_SET | intrbit);
-}
-
-/*
- * Recompute interrupt masks.
- */
-void
-ip27_hub_intr_makemasks()
-{
-	int irq, level, i;
-	struct intrhand *q;
-	uint intrlevel[HUBPI_NINTS + HUBPI_NINTS];
-
-	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < HUBPI_NINTS; irq++) {
-		uint levels = 0;
-		for (q = hubpi_intrhand0[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
-
-		levels = 0;
-		for (q = hubpi_intrhand1[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		intrlevel[HUBPI_NINTS + irq] = levels;
-	}
-
-	/*
-	 * Then figure out which IRQs use each level.
-	 * Note that we make sure never to overwrite imask[IPL_HIGH], in
-	 * case an interrupt occurs during intr_disestablish() and causes
-	 * an unfortunate splx() while we are here recomputing the masks.
-	 */
-	for (level = IPL_NONE; level < IPL_HIGH; level++) {
-		uint64_t irqs = 0;
-		for (irq = 0; irq < HUBPI_NINTS; irq++)
-			if (intrlevel[irq] & (1 << level))
-				irqs |= 1UL << irq;
-		hubpi_imask[level].hw[0] = irqs;
-
-		irqs = 0;
-		for (irq = 0; irq < HUBPI_NINTS; irq++)
-			if (intrlevel[HUBPI_NINTS + irq] & (1 << level))
-				irqs |= 1UL << irq;
-		hubpi_imask[level].hw[1] = irqs;
-	}
-
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so vm > (tty | net | bio).
-	 *
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	for (i = 0; i < 2; i++) {
-		hubpi_imask[IPL_NET].hw[i] |= hubpi_imask[IPL_BIO].hw[i];
-		hubpi_imask[IPL_TTY].hw[i] |= hubpi_imask[IPL_NET].hw[i];
-		hubpi_imask[IPL_VM].hw[i] |= hubpi_imask[IPL_TTY].hw[i];
-		hubpi_imask[IPL_CLOCK].hw[i] |= hubpi_imask[IPL_VM].hw[i];
-
-		/*
-		 * These are pseudo-levels.
-		 */
-		hubpi_imask[IPL_NONE].hw[i] = 0;
-		hubpi_imask[IPL_HIGH].hw[i] = -1;
-	}
 }
 
 void
@@ -806,6 +749,7 @@ ip27_hub_splx(int newipl)
  */
 
 #define	INTR_FUNCTIONNAME	hubpi_intr0
+#define	MASK_FUNCTIONNAME	ip27_hub_intr_makemasks0
 #define	INTR_LOCAL_DECLS
 #define	INTR_GETMASKS \
 do { \
@@ -830,10 +774,12 @@ do { \
 	IP27_LHUB_S(HUBPI_CPU0_IMR0, imr); \
 	(void)IP27_LHUB_L(HUBPI_IR0); \
 } while (0)
+#define	INTR_MASKSIZE	HUBPI_NINTS
 
 #include <sgi/sgi/intr_template.c>
 
 #define	INTR_FUNCTIONNAME	hubpi_intr1
+#define	MASK_FUNCTIONNAME	ip27_hub_intr_makemasks1
 #define	INTR_LOCAL_DECLS
 #define	INTR_GETMASKS \
 do { \
@@ -858,6 +804,7 @@ do { \
 	IP27_LHUB_S(HUBPI_CPU0_IMR1, imr); \
 	(void)IP27_LHUB_L(HUBPI_IR1); \
 } while (0)
+#define	INTR_MASKSIZE	HUBPI_NINTS
 
 #include <sgi/sgi/intr_template.c>
 

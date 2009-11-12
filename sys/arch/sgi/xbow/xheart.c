@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.15 2009/10/31 00:20:47 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.16 2009/11/12 17:13:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -375,57 +375,6 @@ xheart_intr_set(int intrbit)
 	    CCA_NC) = 1UL << intrbit;
 }
 
-/*
- * Recompute interrupt masks.
- */
-void
-xheart_intr_makemasks()
-{
-	int irq, level;
-	struct intrhand *q;
-	uint intrlevel[HEART_NINTS];
-
-	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < HEART_NINTS; irq++) {
-		uint levels = 0;
-		for (q = xheart_intrhand[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
-	}
-
-	/*
-	 * Then figure out which IRQs use each level.
-	 * Note that we make sure never to overwrite imask[IPL_HIGH], in
-	 * case an interrupt occurs during intr_disestablish() and causes
-	 * an unfortunate splx() while we are here recomputing the masks.
-	 */
-	for (level = IPL_NONE; level < IPL_HIGH; level++) {
-		uint64_t irqs = 0;
-		for (irq = 0; irq < HEART_NINTS; irq++)
-			if (intrlevel[irq] & (1 << level))
-				irqs |= 1UL << irq;
-		xheart_imask[level] = irqs;
-	}
-
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so vm > (tty | net | bio).
-	 *
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	xheart_imask[IPL_NET] |= xheart_imask[IPL_BIO];
-	xheart_imask[IPL_TTY] |= xheart_imask[IPL_NET];
-	xheart_imask[IPL_VM] |= xheart_imask[IPL_TTY];
-	xheart_imask[IPL_CLOCK] |= xheart_imask[IPL_VM];
-
-	/*
-	 * These are pseudo-levels.
-	 */
-	xheart_imask[IPL_NONE] = 0;
-	xheart_imask[IPL_HIGH] = -1UL;
-}
-
 void
 xheart_splx(int newipl)
 {
@@ -447,6 +396,7 @@ xheart_splx(int newipl)
  */
 
 #define	INTR_FUNCTIONNAME	xheart_intr_handler
+#define	MASK_FUNCTIONNAME	xheart_intr_makemasks
 #define	INTR_LOCAL_DECLS \
 	paddr_t heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
 #define	INTR_GETMASKS \
@@ -488,6 +438,7 @@ do { \
 } while (0)
 #define	INTR_MASKRESTORE \
 	*(volatile uint64_t *)(heart + HEART_IMR(0)) = imr
+#define	INTR_MASKSIZE	HEART_NINTS
 
 #include <sgi/sgi/intr_template.c>
 
