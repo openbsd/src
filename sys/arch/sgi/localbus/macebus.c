@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.54 2009/11/12 18:10:42 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.55 2009/11/12 19:38:53 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -585,7 +585,7 @@ do { \
 			printf("spurious crime interrupt %d" \
 			    " mace isr %p imr %p\n", bit, mace_isr, mace_imr); \
 	} else \
-		printf("suprious crime interrupt %d\n", bit); \
+		printf("spurious crime interrupt %d\n", bit); \
 } while (0)
 #define	INTR_MASKRESTORE \
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, imr)
