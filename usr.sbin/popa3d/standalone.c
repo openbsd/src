@@ -1,4 +1,4 @@
-/* $OpenBSD: standalone.c,v 1.13 2009/11/11 18:11:24 deraadt Exp $ */
+/* $OpenBSD: standalone.c,v 1.14 2009/11/12 11:03:37 jsg Exp $ */
 
 /*
  * Standalone POP server: accepts connections, checks the anti-flood limits,
@@ -234,7 +234,7 @@ handle(int sock)
 	pid_t pid;
 	struct tms buf;
 	int error;
-	int j, n, i;
+	int j, n, i, s;
 
 	log = 0;
 	new = 0;
@@ -267,7 +267,9 @@ handle(int sock)
 
 	j = -1;
 	n = 0;
+	s = 0;
 	for (i = 0; i < MAX_SESSIONS; i++) {
+		s = i;
 		if (sessions[i].start > now)
 			sessions[i].start = 0;
 		if (sessions[i].pid ||
@@ -281,13 +283,13 @@ handle(int sock)
 	}
 
 	if (n >= MAX_SESSIONS_PER_SOURCE) {
-		if (!sessions[i].log ||
-		    now < sessions[i].log ||
-		    now - sessions[i].log >= MIN_DELAY * CLK_TCK) {
+		if (!sessions[s].log ||
+		    now < sessions[s].log ||
+		    now - sessions[s].log >= MIN_DELAY * CLK_TCK) {
 			syslog(SYSLOG_PRI_HI,
 				"%s: per source limit reached",
 				hbuf);
-			sessions[i].log = now;
+			sessions[s].log = now;
 		}
 		close(new);
 		return -1;
