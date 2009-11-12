@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.150 2009/11/10 10:34:07 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.151 2009/11/12 06:20:27 dlg Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -113,10 +113,6 @@ int scsi_autoconf = SCSI_AUTOCONF;
 int scsibusprint(void *, const char *);
 void scsibus_printlink(struct scsi_link *);
 
-void scsi_activate_bus(struct scsibus_softc *, int);
-void scsi_activate_target(struct scsibus_softc *, int, int);
-void scsi_activate_lun(struct scsibus_softc *, int, int, int);
-
 const u_int8_t version_to_spc [] = {
 	0, /* 0x00: The device does not claim conformance to any standard. */
 	1, /* 0x01: (Obsolete) SCSI-1 in olden times. */
@@ -203,99 +199,30 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 int
 scsibusactivate(struct device *dev, int act)
 {
-	struct scsibus_softc *sc = (struct scsibus_softc *)dev;
-
-	scsi_activate(sc, -1, -1, act);
-
-	return (0);
-}
-
-void
-scsi_activate(struct scsibus_softc *sc, int target, int lun, int act)
-{
-	if (target == -1 && lun == -1)
-		scsi_activate_bus(sc, act);
-
-	if (target == -1)
-		return;
-
-	if (lun == -1)
-		scsi_activate_target(sc, target, act);
-
-	scsi_activate_lun(sc, target, lun, act);
-}
-
-void
-scsi_activate_bus(struct scsibus_softc *sc, int act)
-{
-	int target;
-
-	for (target = 0; target < sc->sc_buswidth; target++)
-		scsi_activate_target(sc, target, act);
-}
-
-void
-scsi_activate_target(struct scsibus_softc *sc, int target, int act)
-{
-	int lun;
-
-	for (lun = 0; lun < sc->adapter_link->luns; lun++)
-		scsi_activate_lun(sc, target, lun, act);
-}
-
-void
-scsi_activate_lun(struct scsibus_softc *sc, int target, int lun, int act)
-{
-	struct scsi_link *link = sc->sc_link[target][lun];
-	struct device *dev;
-
-	if (link == NULL)
-		return;
-
-	dev = link->device_softc;
-	switch (act) {
-	case DVACT_ACTIVATE:
-#if NMPATH > 0
-		if (dev == NULL)
-			mpath_path_activate(link);
-		else
-#endif /* NMPATH */
-			config_activate(dev);
-		break;
-
-	case DVACT_DEACTIVATE:
-#if NMPATH > 0
-		if (dev == NULL)
-			mpath_path_deactivate(link);
-		else
-#endif /* NMPATH */
-			config_deactivate(dev);
-		break;
-	default:
-#ifdef DIAGNOSTIC
-		printf("%s: unsupported act %d\n", sc->sc_dev.dv_xname, act);
-#endif
-		break;
-	}
+	return (config_activate_children(dev, act));
 }
 
 int
 scsibusdetach(struct device *dev, int type)
 {
 	struct scsibus_softc		*sb = (struct scsibus_softc *)dev;
-	int				i, error;
+	int				i, j, error;
 
 #if NBIO > 0
 	bio_unregister(&sb->sc_dev);
 #endif
 
-	error = scsi_detach_bus(sb, type);
-	if (error != 0)
+	if ((error = config_detach_children(dev, type)) != 0)
 		return (error);
 
 	for (i = 0; i < sb->sc_buswidth; i++) {
-		if (sb->sc_link[i] != NULL)
+		if (sb->sc_link[i] != NULL) {
+			for (j = 0; j < sb->adapter_link->luns; j++) {
+				if (sb->sc_link[i][j] != NULL)
+					free(sb->sc_link[i][j], M_DEVBUF);
+			}
 			free(sb->sc_link[i], M_DEVBUF);
+		}
 	}
 
 	free(sb->sc_link, M_DEVBUF);
@@ -346,9 +273,6 @@ scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	case SBIOCDETACH:
 		sdev = (struct sbioc_device *)addr;
-
-		if (sdev->sd_target == -1 && sdev->sd_lun == -1)
-			return (scsi_detach_bus(sc, 0));
 
 		if (sdev->sd_target == -1)
 			return (EINVAL);
@@ -455,22 +379,19 @@ int
 scsi_detach_bus(struct scsibus_softc *sc, int flags)
 {
 	struct scsi_link *alink = sc->adapter_link;
-	int i, err, rv = 0;
+	int i;
 
-	for (i = 0; i < alink->adapter_buswidth; i++) {
-		err = scsi_detach_target(sc, i, flags);
-		if (err != 0 && err != ENXIO)
-			rv = err;
-	}
+	for (i = 0; i < alink->adapter_buswidth; i++)
+		scsi_detach_target(sc, i, flags);
 
-	return (rv);
+	return (0);
 }
 
 int
 scsi_detach_target(struct scsibus_softc *sc, int target, int flags)
 {
 	struct scsi_link *alink = sc->adapter_link;
-	int i, err, rv = 0;
+	int i, err, rv = 0, detached = 0;
 
 	if (target < 0 || target >= alink->adapter_buswidth ||
 	    target == alink->adapter_target)
@@ -484,11 +405,12 @@ scsi_detach_target(struct scsibus_softc *sc, int target, int flags)
 			continue;
 
 		err = scsi_detach_lun(sc, target, i, flags);
-		if (err != 0 && err != ENXIO)
+		if (err != 0)
 			rv = err;
+		detached = 1;
 	}
 
-	return (rv);
+	return (detached ? rv : ENXIO);
 }
 
 int
@@ -531,8 +453,6 @@ scsi_detach_lun(struct scsibus_softc *sc, int target, int lun, int flags)
 		alink->adapter->dev_free(link);
 
 	/* 3. free up its state in the midlayer */
-	if (link->id != NULL)
-		devid_free(link->id);
 	free(link, M_DEVBUF);
 	sc->sc_link[target][lun] = NULL;
 
@@ -765,42 +685,6 @@ scsibus_printlink(struct scsi_link *link)
 		printf("SCSI%d", SCSISPC(inqbuf->version));
 	printf(" %d/%s %s%s", type, dtype, removable ? "removable" : "fixed",
 	    qtype);
-
-#if NMPATH > 0
-	if (link->id != NULL && link->id->d_type != DEVID_NONE) {
-		u_int8_t *id = (u_int8_t *)(link->id + 1);
-		int i;
-
-		switch (link->id->d_type) {
-		case DEVID_NAA:   
-			printf(" naa.");
-			break;
-		case DEVID_EUI:
-			printf(" eui.");
-			break;
-		case DEVID_T10:
-			printf(" t10.");
-			break;
-		}
-
-		if (ISSET(link->id->d_flags, DEVID_F_PRINT)) {
-			for (i = 0; i < link->id->d_len; i++) {
-				if (id[i] == '\0' || id[i] == ' ')
-					printf("_");
-				else if (id[i] < 0x20 || id[i] >= 0x80) {
-					/* non-printable characters */
-					printf("~");
-				} else {
-					/* normal characters */
-					printf("%c", id[i]);
-				}
-			}
-		} else {
-			for (i = 0; i < link->id->d_len; i++)
-				printf("%02x", id[i]);
-		}
-	}
-#endif /* NMPATH > 0 */
 }
 
 /*
@@ -854,7 +738,6 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	sc_link->target = target;
 	sc_link->lun = lun;
 	sc_link->device = &probe_switch;
-	mtx_init(&sc_link->mtx, IPL_BIO);
 	inqbuf = &sc_link->inqdata;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_link created.\n"));
@@ -927,15 +810,15 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 		;
 	else if (sc_link->flags & SDEV_UMASS)
 		;
-	else if (sc_link->id != NULL &&
-	    !DEVID_CMP(scsi->sc_link[target][0]->id, sc_link->id))
+	else if (sc_link->id.d_type != DEVID_NONE &&
+	    !DEVID_CMP(&scsi->sc_link[target][0]->id, &sc_link->id))
 		;
 	else if (memcmp(inqbuf, &scsi->sc_link[target][0]->inqdata,
 	    sizeof(*inqbuf)) == 0) {
 		/* The device doesn't distinguish between LUNs. */
 		SC_DEBUG(sc_link, SDEV_DB1, ("IDENTIFY not supported.\n"));
 		rslt = EINVAL;
-		goto free_devid;
+		goto bad;
 	}
 
 #if NMPATH > 0
@@ -989,7 +872,7 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	    &sa)) == 0) {
 		scsibusprint(&sa, scsi->sc_dev.dv_xname);
 		printf(" not configured\n");
-		goto free_devid;
+		goto bad;
 	}
 
 	/*
@@ -1026,9 +909,6 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 
 	return (0);
 
-free_devid:
-	if (sc_link->id)
-		devid_free(sc_link->id);
 bad:
 	if (scsi->adapter_link->adapter->dev_free != NULL)
 		scsi->adapter_link->adapter->dev_free(sc_link);
@@ -1099,9 +979,6 @@ scsi_devid(struct scsi_link *link)
 	} __packed pg;
 	int pg80 = 0, pg83 = 0, i;
 
-	if (link->id != NULL)
-		return;
-
 	if (SCSISPC(link->inqdata.version) >= 2) {
 		if (scsi_inquire_vpd(link, &pg, sizeof(pg), SI_PG_SUPPORTED,
 		    scsi_autoconf) != 0)
@@ -1131,10 +1008,9 @@ int
 scsi_devid_pg83(struct scsi_link *link)
 {
 	struct scsi_vpd_hdr hdr;
-	struct scsi_vpd_devid_hdr dhdr, chdr;
+	struct scsi_vpd_devid_hdr dhdr;
 	u_int8_t *pg, *id;
-	int type, idtype = 0;
-	u_char idflags;
+	int type, idtype = 0, idlen;
 	int len, pos;
 	int rv;
 
@@ -1172,8 +1048,7 @@ scsi_devid_pg83(struct scsi_link *link)
 			case VPD_DEVID_TYPE_T10:
 				if (type >= idtype) {
 					idtype = type;
-
-					chdr = dhdr;
+					idlen = dhdr.len;
 					id = &pg[pos];
 				}
 				break;
@@ -1188,27 +1063,21 @@ scsi_devid_pg83(struct scsi_link *link)
 	} while (idtype != VPD_DEVID_TYPE_NAA && len != pos);
 
 	if (idtype > 0) {
-		switch (VPD_DEVID_TYPE(chdr.flags)) {
+		link->id.d_id = malloc(idlen, M_DEVBUF, M_WAITOK);
+
+		switch (idtype) {
 		case VPD_DEVID_TYPE_NAA:
-			idtype = DEVID_NAA;
+			link->id.d_type = DEVID_NAA;
 			break;
 		case VPD_DEVID_TYPE_EUI64:
-			idtype = DEVID_EUI;
+			link->id.d_type = DEVID_EUI;
 			break;
 		case VPD_DEVID_TYPE_T10:
-			idtype = DEVID_T10;
+			link->id.d_type = DEVID_T10;
 			break;
 		}
-		switch (VPD_DEVID_CODE(chdr.pi_code)) {
-		case VPD_DEVID_CODE_ASCII:
-		case VPD_DEVID_CODE_UTF8:
-			idflags = DEVID_F_PRINT;
-			break;
-		default:
-			idflags = 0;
-			break;
-		}
-		link->id = devid_alloc(idtype, idflags, chdr.len, id);
+		link->id.d_len = idlen;
+		memcpy(link->id.d_id, id, idlen);
 	} else
 		rv = ENODEV;
 
@@ -1225,36 +1094,4 @@ void
 scsi_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	minphys(bp);
-}
-
-struct devid *
-devid_alloc(u_int8_t type, u_int8_t flags, u_int8_t len, u_int8_t *id)
-{
-	struct devid *d;
-
-	d = malloc(sizeof(*d) + len, M_DEVBUF, M_WAITOK|M_CANFAIL);
-	if (d == NULL)
-		return (NULL);
-
-	d->d_type = type;
-	d->d_flags = flags;
-	d->d_len = len;
-	d->d_refcount = 1;
-	memcpy(d + 1, id, len);
-
-	return (d);
-}
-
-struct devid *
-devid_copy(struct devid *d)
-{
-	d->d_refcount++;
-	return (d);
-}
-
-void
-devid_free(struct devid *d)
-{
-	if (--d->d_refcount == 0)
-		free(d, M_DEVBUF);
 }
