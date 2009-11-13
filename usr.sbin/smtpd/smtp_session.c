@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.123 2009/11/05 23:30:01 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.124 2009/11/13 11:37:27 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -655,7 +655,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 				s->s_state = S_MAIL;
 			else
 				s->s_state = S_RCPT;
-			session_respond(s, "%d Recipient rejected", ss->code);
+			session_respond(s, "%d Recipient rejected: %s@%s", ss->code,
+			    s->s_msg.session_rcpt.user, s->s_msg.session_rcpt.domain);
 			return;
 		}
 
