@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.197 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.198 2009/11/13 14:14:56 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -875,8 +875,9 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_data += max_linkhdr;
 		mhip = mtod(m, struct ip *);
 		*mhip = *ip;
-		/* we must inherit MCAST and BCAST flags */
+		/* we must inherit MCAST and BCAST flags and rdomain */
 		m->m_flags |= m0->m_flags & (M_MCAST|M_BCAST);
+		m->m_pkthdr.rdomain = m0->m_pkthdr.rdomain;
 		if (hlen > sizeof (struct ip)) {
 			mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
 			mhip->ip_hl = mhlen >> 2;
