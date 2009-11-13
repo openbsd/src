@@ -36,7 +36,6 @@
 ./usr/games/rot13
 ./usr/games/sail
 ./usr/games/snake
-./usr/games/snscore
 ./usr/games/teachgammon
 ./usr/games/tetris
 ./usr/games/trek
@@ -156,7 +155,6 @@
 ./usr/share/man/cat6/rot13.0
 ./usr/share/man/cat6/sail.0
 ./usr/share/man/cat6/snake.0
-./usr/share/man/cat6/snscore.0
 ./usr/share/man/cat6/tetris.0
 ./usr/share/man/cat6/trek.0
 ./usr/share/man/cat6/worm.0
