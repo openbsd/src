@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-break-pane.c,v 1.7 2009/10/10 10:02:48 nicm Exp $ */
+/* $OpenBSD: cmd-break-pane.c,v 1.8 2009/11/13 19:53:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@ int	cmd_break_pane_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_break_pane_entry = {
 	"break-pane", "breakp",
 	CMD_TARGET_PANE_USAGE " [-d]",
-	0, CMD_CHFLAG('d'),
+	0, "d",
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_break_pane_exec,
@@ -74,7 +74,7 @@ cmd_break_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	base_idx = options_get_number(&s->options, "base-index");
  	wl = session_attach(s, w, -1 - base_idx, &cause); /* can't fail */
- 	if (!(data->chflags & CMD_CHFLAG('d')))
+ 	if (!cmd_check_flag(data->chflags, 'd'))
  		session_select(s, wl->idx);
 
 	server_redraw_session(s);

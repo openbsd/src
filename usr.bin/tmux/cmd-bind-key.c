@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.5 2009/07/28 17:05:10 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.6 2009/11/13 19:53:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -46,7 +46,7 @@ struct cmd_bind_key_data {
 const struct cmd_entry cmd_bind_key_entry = {
 	"bind-key", "bind",
 	"[-cnr] [-t key-table] key command [arguments]",
-	0, 0,
+	0, "",
 	NULL,
 	cmd_bind_key_parse,
 	cmd_bind_key_exec,

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.10 2009/11/13 17:33:07 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.11 2009/11/13 19:53:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@ int	cmd_respawn_window_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_respawn_window_entry = {
 	"respawn-window", "respawnw",
 	"[-k] " CMD_TARGET_WINDOW_USAGE " [command]",
-	CMD_ARG01, CMD_CHFLAG('k'),
+	CMD_ARG01, "k",
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_respawn_window_exec,
@@ -54,7 +54,7 @@ cmd_respawn_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (-1);
 	w = wl->window;
 
-	if (!(data->chflags & CMD_CHFLAG('k'))) {
+	if (!cmd_check_flag(data->chflags, 'k')) {
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			if (wp->fd == -1)
 				continue;

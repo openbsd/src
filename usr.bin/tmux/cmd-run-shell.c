@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.5 2009/11/04 21:04:43 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.6 2009/11/13 19:53:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -36,7 +36,7 @@ void	cmd_run_shell_free(void *);
 const struct cmd_entry cmd_run_shell_entry = {
 	"run-shell", "run",
 	"command",
-	CMD_ARG1, 0,
+	CMD_ARG1, "",
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_run_shell_exec,

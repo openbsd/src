@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.2 2009/10/15 07:05:38 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.3 2009/11/13 19:53:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -31,7 +31,7 @@ int	cmd_list_panes_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_list_panes_entry = {
 	"list-panes", "lsp",
 	CMD_TARGET_WINDOW_USAGE,
-	0, 0,
+	0, "",
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_list_panes_exec,

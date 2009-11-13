@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-environment.c,v 1.1 2009/08/08 21:52:43 nicm Exp $ */
+/* $OpenBSD: cmd-show-environment.c,v 1.2 2009/11/13 19:53:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -32,7 +32,7 @@ int	cmd_show_environment_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_show_environment_entry = {
 	"show-environment", "showenv",
 	"[-g] " CMD_TARGET_SESSION_USAGE,
-	0, CMD_CHFLAG('g'),
+	0, "g",
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_show_environment_exec,
@@ -48,7 +48,7 @@ cmd_show_environment_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct environ			*env;
 	struct environ_entry		*envent;
 
-	if (data->chflags & CMD_CHFLAG('g'))
+	if (cmd_check_flag(data->chflags, 'g'))
 		env = &global_environ;
 	else {
 		if ((s = cmd_find_session(ctx, data->target)) == NULL)

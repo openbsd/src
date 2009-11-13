@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.177 2009/11/13 17:33:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.178 2009/11/13 19:53:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1150,10 +1150,7 @@ struct cmd_entry {
 #define CMD_ARG12 0x40
 	int		 flags;
 
-#define CMD_CHFLAG(flag) \
-	((flag) >= 'a' && (flag) <= 'z' ? 1ULL << ((flag) - 'a') :	\
-	(flag) >= 'A' && (flag) <= 'Z' ? 1ULL << (26 + (flag) - 'A') : 0)
-	uint64_t	 chflags;
+	const char	*chflags;
 
 	void		 (*init)(struct cmd *, int);
 	int		 (*parse)(struct cmd *, int, char **, char **);
@@ -1502,6 +1499,8 @@ int	cmd_string_parse(const char *, struct cmd_list **, char **);
 
 /* cmd-generic.c */
 size_t  cmd_prarg(char *, size_t, const char *, char *);
+int	cmd_check_flag(uint64_t, int);
+void	cmd_set_flag(uint64_t *, int);
 #define CMD_TARGET_PANE_USAGE "[-t target-pane]"
 #define CMD_TARGET_WINDOW_USAGE "[-t target-window]"
 #define CMD_TARGET_SESSION_USAGE "[-t target-session]"

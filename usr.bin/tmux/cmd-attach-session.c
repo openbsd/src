@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.9 2009/11/11 08:00:42 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.10 2009/11/13 19:53:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,7 +29,7 @@ int	cmd_attach_session_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_attach_session_entry = {
 	"attach-session", "attach",
 	"[-d] " CMD_TARGET_SESSION_USAGE,
-       	CMD_CANTNEST|CMD_STARTSERVER|CMD_SENDENVIRON, CMD_CHFLAG('d'),
+       	CMD_CANTNEST|CMD_STARTSERVER|CMD_SENDENVIRON, "d",
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_attach_session_exec,
@@ -58,7 +58,7 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 		return (0);
 
 	if (ctx->cmdclient == NULL) {
-		if (data->chflags & CMD_CHFLAG('d')) {
+		if (cmd_check_flag(data->chflags, 'd')) {
 			/* 
 			 * Can't use server_write_session in case attaching to
 			 * the same session as currently attached to.
@@ -89,7 +89,7 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 			return (-1);
 		}
 
-		if (data->chflags & CMD_CHFLAG('d'))
+		if (cmd_check_flag(data->chflags, 'd'))
 			server_write_session(s, MSG_DETACH, NULL, 0);
 
 		ctx->cmdclient->session = s;

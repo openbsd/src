@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-session.c,v 1.4 2009/10/10 10:02:48 nicm Exp $ */
+/* $OpenBSD: cmd-kill-session.c,v 1.5 2009/11/13 19:53:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -32,7 +32,7 @@ int	cmd_kill_session_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_kill_session_entry = {
 	"kill-session", NULL,
 	CMD_TARGET_SESSION_USAGE,
-	0, 0,
+	0, "",
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_kill_session_exec,

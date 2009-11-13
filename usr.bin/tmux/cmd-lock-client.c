@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-lock-client.c,v 1.1 2009/09/24 14:17:09 nicm Exp $ */
+/* $OpenBSD: cmd-lock-client.c,v 1.2 2009/11/13 19:53:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,7 +29,7 @@ int	cmd_lock_client_exec(struct cmd *, struct cmd_ctx *);
 const struct cmd_entry cmd_lock_client_entry = {
 	"lock-client", "lockc",
 	CMD_TARGET_CLIENT_USAGE,
-	0, 0,
+	0, "",
 	cmd_target_init,
 	cmd_target_parse,
 	cmd_lock_client_exec,
