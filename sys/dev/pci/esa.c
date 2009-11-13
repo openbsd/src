@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.17 2009/06/02 18:06:31 deraadt Exp $	*/
+/*	$OpenBSD: esa.c,v 1.18 2009/11/13 02:22:19 deraadt Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -688,7 +688,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	    ESA_DMAC_BLOCKF_SELECTOR);
 
 	/* Set an armload of static initializers */
-	for (i = 0; i < (sizeof(esa_playvals) / sizeof(esa_playvals[0])); i++)
+	for (i = 0; i < nitems(esa_playvals); i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 		    esa_playvals[i].addr, esa_playvals[i].val);
 
@@ -821,7 +821,7 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 	    ESA_DMAC_PAGE3_SELECTOR + ESA_DMAC_BLOCKF_SELECTOR);
 
 	/* Set an armload of static initializers */
-	for (i = 0; i < (sizeof(esa_recvals) / sizeof(esa_recvals[0])); i++)
+	for (i = 0; i < nitems(esa_recvals); i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
 		    esa_recvals[i].addr, esa_recvals[i].val);
 
@@ -1332,18 +1332,18 @@ esa_init(struct esa_softc *sc)
 	    ESA_KDATA_DMA_XFER0);
 
 	/* Write kernel code into memory */
-	size = sizeof(esa_assp_kernel_image);
+	size = nitems(esa_assp_kernel_image);
 	for (i = 0; i < size; i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE,
 		    ESA_REV_B_CODE_MEMORY_BEGIN + i, esa_assp_kernel_image[i]);
 
-	size = sizeof(esa_assp_minisrc_image);
+	size = nitems(esa_assp_minisrc_image);
 	for (i = 0; i < size; i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE, 0x400 + i,
 		    esa_assp_minisrc_image[i]);
 
 	/* Write the coefficients for the low pass filter */
-	size = sizeof(esa_minisrc_lpf_image);
+	size = nitems(esa_minisrc_lpf_image);
 	for (i = 0; i < size; i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE,
 		    0x400 + ESA_MINISRC_COEF_LOC + i, esa_minisrc_lpf_image[i]);
