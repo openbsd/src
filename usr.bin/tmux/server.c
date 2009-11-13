@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.76 2009/11/11 13:24:42 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.77 2009/11/13 17:33:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -335,7 +335,6 @@ server_accept_callback(int fd, short events, unused void *data)
 		return;
 	}
 	server_client_create(newfd);
-
 }
 
 /* Set up server signal handling. */
@@ -449,9 +448,8 @@ server_child_exited(pid_t pid, int status)
 			continue;
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			if (wp->pid == pid) {
-				close(wp->fd);
-				bufferevent_free(wp->event);
-				wp->fd = -1;
+				server_destroy_pane(wp);
+				break;
 			}
 		}
 	}		

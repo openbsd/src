@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.38 2009/11/04 23:54:57 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.39 2009/11/13 17:33:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -594,9 +594,7 @@ window_pane_error_callback(
 {
 	struct window_pane *wp = data;
 
-	close(wp->fd);
-	bufferevent_free(wp->event);
-	wp->fd = -1;
+	server_destroy_pane(wp);
 }
 
 void

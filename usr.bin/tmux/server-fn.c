@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.28 2009/11/04 23:29:42 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.29 2009/11/13 17:33:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -314,6 +314,27 @@ server_unlink_window(struct session *s, struct winlink *wl)
 		server_destroy_session_group(s);
 	else
 		server_redraw_session_group(s);
+}
+
+void
+server_destroy_pane(struct window_pane *wp)
+{
+	struct window	*w = wp->window;
+
+	close(wp->fd);
+	bufferevent_free(wp->event);
+	wp->fd = -1;
+
+	if (options_get_number(&w->options, "remain-on-exit"))
+		return;
+
+	layout_close_pane(wp);
+	window_remove_pane(w, wp);
+
+	if (TAILQ_EMPTY(&w->panes))
+		server_kill_window(w);
+	else
+		server_redraw_window(w);
 }
 
 void
