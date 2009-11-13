@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyscall.c,v 1.3 2008/08/03 21:31:53 kettenis Exp $	*/
+/*	$OpenBSD: newsyscall.c,v 1.4 2009/11/13 22:10:09 deraadt Exp $	*/
 /*
  * Makefile for newsyscall
  *
@@ -105,7 +105,7 @@ struct lkm_table	*lkmtp;
 int			cmd;
 int			ver;
 {
-	DISPATCH(lkmtp,cmd,ver,newsyscall_load,lkm_nofunc,lkm_nofunc)
+	DISPATCH(lkmtp,cmd,ver,newsyscall_load,lkm_nofunc,lkm_nofunc);
 }
 
 

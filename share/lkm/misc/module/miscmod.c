@@ -1,4 +1,4 @@
-/*	$OpenBSD: miscmod.c,v 1.4 2008/08/03 21:31:53 kettenis Exp $	*/
+/*	$OpenBSD: miscmod.c,v 1.5 2009/11/13 22:10:06 deraadt Exp $	*/
 /*
  * Makefile for miscmod
  *
@@ -179,7 +179,7 @@ struct lkm_table	*lkmtp;
 int			cmd;
 int			ver;
 {
-	DISPATCH(lkmtp,cmd,ver,miscmod_handle,miscmod_handle,lkm_nofunc)
+	DISPATCH(lkmtp,cmd,ver,miscmod_handle,miscmod_handle,lkm_nofunc);
 }
 
 
