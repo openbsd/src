@@ -71,7 +71,8 @@ OpenBSD continues.
 
 If you wish to ensure that OpenBSD runs better on your machines, please do us
 a favor (after you have your mail system configured!) and type something like:
- # dmesg | mail -s "Sony VAIO 505R laptop, apm works OK" dmesg@openbsd.org
+ # (dmesg; sysctl hw.sensors) | \
+	mail -s "Sony VAIO 505R laptop, apm works OK" dmesg@openbsd.org
 so that we can see what kinds of configurations people are running.  As shown,
 including a bit of information about your machine in the subject or the body
 can help us even further.  We will use this information to improve device driver
