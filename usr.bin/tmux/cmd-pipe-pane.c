@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.5 2009/11/04 22:43:11 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.6 2009/11/13 18:59:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -127,8 +127,6 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 			fatal("fcntl failed");	
 		return (0);
 	}
-
-	return (0);
 }
 
 void
