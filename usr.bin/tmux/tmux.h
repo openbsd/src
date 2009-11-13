@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.178 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.179 2009/11/13 19:58:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1162,23 +1162,29 @@ struct cmd_entry {
 /* Generic command data. */
 struct cmd_target_data {
 	uint64_t chflags;
+
 	char	*target;
+
 	char	*arg;
 	char	*arg2;
 };
 
 struct cmd_srcdst_data {
 	uint64_t chflags;
+
 	char	*src;
 	char	*dst;
+
 	char	*arg;
 	char	*arg2;
 };
 
 struct cmd_buffer_data {
 	uint64_t chflags;
+
 	char	*target;
 	int	 buffer;
+
 	char	*arg;
 	char	*arg2;
 };

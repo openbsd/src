@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-generic.c,v 1.8 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-generic.c,v 1.9 2009/11/13 19:58:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -85,7 +85,7 @@ cmd_parse_flags(int opt, const char *chflagstr, uint64_t *chflags)
 	return (0);
 }
 
-/* Print the flags supported in chflags. */
+/* Print the flags present in chflags. */
 size_t
 cmd_print_flags(char *buf, size_t len, size_t off, uint64_t chflags)
 {
