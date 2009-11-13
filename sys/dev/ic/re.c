@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.114 2009/08/09 11:40:58 deraadt Exp $	*/
+/*	$OpenBSD: re.c,v 1.115 2009/11/13 23:50:30 sthen Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1800,12 +1800,9 @@ re_encap(struct rl_softc *sc, struct mbuf *m, int *idx)
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	if (pad) {
-		bus_addr_t paddaddr;
-
 		d = &sc->rl_ldata.rl_tx_list[curidx];
 		d->rl_vlanctl = htole32(vlanctl);
-		paddaddr = RL_TXPADDADDR(sc);
-		re_set_bufaddr(d, paddaddr);
+		re_set_bufaddr(d, RL_TXPADDADDR(sc));
 		cmdstat = csum_flags |
 		    RL_TDESC_CMD_OWN | RL_TDESC_CMD_EOF |
 		    (RL_IP4CSUMTX_PADLEN + 1 - m->m_pkthdr.len);
