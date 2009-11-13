@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.25 2008/08/19 10:37:12 markus Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.26 2009/11/13 20:09:54 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -57,8 +57,8 @@ static void	print_cred(struct sadb_ext *, struct sadb_msg *);
 static void	print_udpenc(struct sadb_ext *, struct sadb_msg *);
 static void	print_tag(struct sadb_ext *, struct sadb_msg *);
 
-static struct idname *lookup(struct idname [], u_int8_t);
-static char    *lookup_name(struct idname [], u_int8_t);
+static struct idname *lookup(struct idname *, u_int8_t);
+static char    *lookup_name(struct idname *, u_int8_t);
 static void	print_ext(struct sadb_ext *, struct sadb_msg *);
 
 void		pfkey_print_raw(u_int8_t *, ssize_t);
@@ -224,7 +224,7 @@ struct idname states[] = {
 };
 
 static struct idname *
-lookup(struct idname tab[], u_int8_t id)
+lookup(struct idname *tab, u_int8_t id)
 {
 	struct idname *entry;
 
@@ -235,7 +235,7 @@ lookup(struct idname tab[], u_int8_t id)
 }
 
 static char *
-lookup_name(struct idname tab[], u_int8_t id)
+lookup_name(struct idname *tab, u_int8_t id)
 {
 	struct idname *entry;
 
