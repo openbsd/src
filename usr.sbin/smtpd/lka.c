@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.93 2009/11/10 14:46:18 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.94 2009/11/13 11:27:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -433,8 +433,8 @@ lka_dispatch_mta(int sig, short event, void *p)
 			break;
 		}
 
-		case IMSG_DNS_A:
-		case IMSG_DNS_MX: {
+		case IMSG_DNS_MX:
+		case IMSG_DNS_PTR: {
 			struct dns	*query = imsg.data;
 
 			IMSG_SIZE_CHECK(query);

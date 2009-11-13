@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.75 2009/11/11 10:04:05 chl Exp $	*/
+/*	$OpenBSD: mta.c,v 1.76 2009/11/13 11:27:52 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -356,6 +356,23 @@ mta_dispatch_lka(int sig, short event, void *p)
 			break;
 		}
 
+		case IMSG_DNS_PTR: {
+			struct dns		*reply = imsg.data;
+			struct mta_session	*s;
+			struct mta_relay	*r;
+
+			IMSG_SIZE_CHECK(reply);
+
+			s = mta_lookup(env, reply->id);
+			r = TAILQ_FIRST(&s->relays);
+			if (reply->error)
+				strlcpy(r->fqdn, "<unknown>", sizeof(r->fqdn));
+			else
+				strlcpy(r->fqdn, reply->host, sizeof(r->fqdn));
+			mta_pickup(s, NULL);
+			break;
+		}
+
 		default:
 			log_warnx("mta_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
@@ -519,7 +536,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 	struct mta_relay	*relay;
 	struct sockaddr		*sa;
 	struct message		*m;
-	int			 fd, max_reuse;
+	int			 max_reuse;
 
 	s->state = newstate;
 
@@ -580,19 +597,20 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			else
 				sa_set_port(sa, 25);
 
-			if ((fd = socket(sa->sa_family, SOCK_STREAM, 0)) == -1)
+			s->fd = socket(sa->sa_family, SOCK_STREAM, 0);
+			if (s->fd == -1)
 				fatal("mta cannot create socket");
-			session_socket_blockmode(fd, BM_NONBLOCK);
-			session_socket_no_linger(fd);
+			session_socket_blockmode(s->fd, BM_NONBLOCK);
+			session_socket_no_linger(s->fd);
 
-			if (connect(fd, sa, sa->sa_len) == -1) {
+			if (connect(s->fd, sa, sa->sa_len) == -1) {
 				if (errno != EINPROGRESS) {
 					mta_status(s, "110 connect error: %s", strerror(errno));
-					close(fd);
+					close(s->fd);
 					continue;
 				}
 			}
-			event_once(fd, EV_WRITE, mta_connect_done, s, NULL);
+			event_once(s->fd, EV_WRITE, mta_connect_done, s, NULL);
 			break;
 		}
 
@@ -601,15 +619,22 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			mta_enter_state(s, MTA_DONE, NULL);
 		break;
 
+	case MTA_PTR:
+		/*
+		 * Lookup PTR record of the connected host.
+		 */
+		relay = TAILQ_FIRST(&s->relays);
+		dns_query_ptr(s->env, &relay->sa, s->id);
+		break;
+
 	case MTA_PROTOCOL:
 		/*
 		 * Start protocol engine.
 		 */
 		log_debug("mta: entering smtp phase");
 
-		fd = *(int *)p;
-
-		if ((s->smtp_state = client_init(fd, s->env->sc_hostname)) == NULL)
+		s->smtp_state = client_init(s->fd, s->env->sc_hostname);
+		if (s->smtp_state == NULL)
 			fatal("mta: client_init failed");
 		client_verbose(s->smtp_state, stderr);
 
@@ -673,7 +698,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		if (client_data_fd(s->smtp_state, s->datafd) < 0)
 			fatal("mta: client_data_fd failed");
 
-		event_set(&s->ev, fd, EV_WRITE, mta_event, s);
+		event_set(&s->ev, s->fd, EV_WRITE, mta_event, s);
 		event_add(&s->ev, client_timeout(s->smtp_state));
 		break;
 
@@ -691,10 +716,6 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 				break;
 			case '2':
 				m->status = S_MESSAGE_ACCEPTED;
-				log_info("%s: to=<%s@%s>, delay=%d, stat=Sent (%s)",
-				    m->message_uid, m->recipient.user,
-				    m->recipient.domain, time(NULL) - m->creation,
-				    m->session_errorline + 4);
 				break;
 			default:
 				m->status = S_MESSAGE_TEMPFAILURE;
@@ -728,7 +749,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 void
 mta_pickup(struct mta_session *s, void *p)
 {
-	int	 fd, error;
+	int	 error;
 
 	switch (s->state) {
 	case MTA_INIT:
@@ -754,15 +775,12 @@ mta_pickup(struct mta_session *s, void *p)
 		/* LKA responded to DNS lookup. */
 		error = *(int *)p;
 		if (error == EAI_AGAIN) {
-			/* Temporary failure. */
 			mta_status(s, "100 MX lookup failed temporarily");
 			mta_enter_state(s, MTA_DONE, NULL);
 		} else if (error == EAI_NONAME) {
-			/* No such domain. */
 			mta_status(s, "600 Domain does not exist");
 			mta_enter_state(s, MTA_DONE, NULL);
 		} else if (error) {
-			/* Permanent failure. */
 			mta_status(s, "600 Unable to resolve DNS for domain");
 			mta_enter_state(s, MTA_DONE, NULL);
 		} else
@@ -780,14 +798,17 @@ mta_pickup(struct mta_session *s, void *p)
 
 	case MTA_CONNECT:
 		/* Remote accepted/rejected connection. */
-		fd = *(int *)p;
-		error = session_socket_error(fd);
+		error = session_socket_error(s->fd);
 		if (error) {
 			mta_status(s, "110 connect error");
-			close(fd);
+			close(s->fd);
 			mta_enter_state(s, MTA_CONNECT, NULL);
 		} else
-			mta_enter_state(s, MTA_PROTOCOL, &fd);
+			mta_enter_state(s, MTA_PTR, NULL);
+		break;
+
+	case MTA_PTR:
+		mta_enter_state(s, MTA_PROTOCOL, NULL);
 		break;
 
 	default:
@@ -855,17 +876,36 @@ mta_event(int fd, short event, void *p)
 void
 mta_status(struct mta_session *s, const char *fmt, ...)
 {
-	char		*status;
-	struct message	*m;
-	va_list		 ap;
+	char			*status;
+	struct message		*m;
+	struct mta_relay	*relay;
+	va_list			 ap;
 
 	va_start(ap, fmt);
 	if (vasprintf(&status, fmt, ap) == -1)
 		fatal("vasprintf");
 	va_end(ap);
 
-	TAILQ_FOREACH(m, &s->recipients, entry)
+	TAILQ_FOREACH(m, &s->recipients, entry) {
+		if (m->session_errorline[0] == '2' ||
+		    m->session_errorline[0] == '5' ||
+		    m->session_errorline[0] == '6')
+			continue;
+
+		/* save new status */
 		mta_status_message(m, status);
+
+		relay = TAILQ_FIRST(&s->relays);
+
+		/* log successes/failures quickly */
+		if (*status == '2' || *status == '5')
+			log_info("%s: to=<%s@%s>, delay=%d, relay=%s [%s], stat=%s (%s)",
+			    m->message_id, m->recipient.user,
+			    m->recipient.domain, time(NULL) - m->creation,
+			    relay->fqdn, ss_to_text(&relay->sa),
+			    *status == '2' ? "Sent" : "RemoteError",
+			    m->session_errorline + 4);
+	}
 
 	free(status);
 }
@@ -890,7 +930,7 @@ mta_status_message(struct message *m, char *status)
 void
 mta_connect_done(int fd, short event, void *p)
 {
-	mta_pickup(p, &fd);
+	mta_pickup(p, NULL);
 }
 
 void
