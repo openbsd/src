@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.13 2008/06/08 19:10:33 claudio Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.14 2009/11/13 15:07:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -113,7 +113,7 @@ at_control( cmd, data, ifp, p )
     struct at_aliasreq	*ifra = (struct at_aliasreq *)data;
     struct at_ifaddr	*aa0;
     struct at_ifaddr	*aa = 0;
-    struct ifaddr	*ifa, *ifa0;
+    struct ifaddr	*ifa0;
 
     if ( ifp ) {
 	for ( aa = at_ifaddr; aa; aa = aa->aa_next ) {
@@ -190,14 +190,7 @@ at_control( cmd, data, ifp, p )
 
 	    aa = aa0;
 
-	    if (( ifa = ifp->if_addrlist.tqh_first ) != NULL ) {
-	        for ( ; ifa->ifa_list.tqe_next; ifa = ifa->ifa_list.tqe_next )
-		    ;
-	    	ifa->ifa_list.tqe_next = (struct ifaddr *)aa;
-	    } else {
-		ifp->if_addrlist.tqh_first = (struct ifaddr *)aa;
-	    }
-
+	    TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)aa, ifa_list);
 	    /* FreeBSD found this. Whew */
 	    aa->aa_ifa.ifa_refcnt++;
 
@@ -265,19 +258,7 @@ at_control( cmd, data, ifp, p )
     case SIOCDIFADDR:
 	at_scrub( ifp, aa );
 	ifa0 = (struct ifaddr *)aa;
-	if (( ifa = ifp->if_addrlist.tqh_first ) == ifa0 ) {
-	    ifp->if_addrlist.tqh_first = ifa->ifa_list.tqe_next;
-	} else {
-	    while ( ifa->ifa_list.tqe_next &&
-	    		( ifa->ifa_list.tqe_next != ifa0 )) {
-	    	ifa = ifa->ifa_list.tqe_next;
-	    }
-	    if ( ifa->ifa_list.tqe_next ) {
-	    	ifa->ifa_list.tqe_next = ifa0->ifa_list.tqe_next;
-	    } else {
-	    	panic( "at_control" );
-	    }
-	}
+	TAILQ_REMOVE(&ifp->if_addrlist, ifa0, ifa_list);
 
 	/* FreeBSD */
 	IFAFREE(ifa0);

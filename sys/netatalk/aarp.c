@@ -1,4 +1,4 @@
-/*	$OpenBSD: aarp.c,v 1.8 2008/10/15 19:12:18 blambert Exp $	*/
+/*	$OpenBSD: aarp.c,v 1.9 2009/11/13 15:07:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -166,7 +166,7 @@ at_ifawithnet( sat, ifa )
     struct sockaddr_at  *sat2;
     struct netrange     *nr;
 
-    for (; ifa; ifa = ifa->ifa_list.tqe_next ) {
+    for (; ifa; ifa = TAILQ_NEXT(ifa, ifa_list)) {
 	if ( ifa->ifa_addr->sa_family != AF_APPLETALK ) {
 	    continue;
 	}
@@ -222,7 +222,7 @@ aarpwhohas( ac, sat )
      * net is phase 2, generate an 802.2 and SNAP header.
      */
     if (( aa = (struct at_ifaddr *)
-    	    at_ifawithnet( sat, ac->ac_if.if_addrlist.tqh_first )) == NULL ) {
+    	    at_ifawithnet( sat, TAILQ_FIRST(&ac->ac_if.if_addrlist))) == NULL ) {
 	m_freem( m );
 	return;
     }
@@ -277,7 +277,7 @@ aarpresolve( ac, m, destsat, desten )
 
     if ( at_broadcast( destsat )) {
 	if (( aa = (struct at_ifaddr *)at_ifawithnet( destsat,
-		((struct ifnet *)ac)->if_addrlist.tqh_first )) == NULL ) {
+		TAILQ_FIRST(&((struct ifnet *)ac)->if_addrlist))) == NULL ) {
 	    m_freem( m );
 	    return( 0 );
 	}
@@ -404,7 +404,7 @@ at_aarpinput( ac, m )
 	sat.sat_family = AF_APPLETALK;
 	sat.sat_addr.s_net = net;
 	if (( aa = (struct at_ifaddr *)at_ifawithnet( &sat,
-		ac->ac_if.if_addrlist.tqh_first )) == NULL ) {
+		TAILQ_FIRST(&ac->ac_if.if_addrlist))) == NULL ) {
 	    m_freem( m );
 	    return;
 	}
@@ -415,8 +415,8 @@ at_aarpinput( ac, m )
 	 * Since we don't know the net, we just look for the first
 	 * phase 1 address on the interface.
 	 */
-	for ( aa = (struct at_ifaddr *)ac->ac_if.if_addrlist.tqh_first; aa;
-		aa = (struct at_ifaddr *)aa->aa_ifa.ifa_list.tqe_next ) {
+	for ( aa = (struct at_ifaddr *)TAILQ_FIRST(&ac->ac_if.if_addrlist); aa;
+		aa = (struct at_ifaddr *)TAILQ_NEXT(&aa->aa_ifa, ifa_list)) {
 	    if ( AA_SAT( aa )->sat_family == AF_APPLETALK &&
 		    ( aa->aa_flags & AFA_PHASE2 ) == 0 ) {
 		break;
@@ -617,8 +617,8 @@ aarpprobe( arg )
      * interface with the same address as we're looking for. If the
      * net is phase 2, generate an 802.2 and SNAP header.
      */
-    for ( aa = (struct at_ifaddr *)ac->ac_if.if_addrlist.tqh_first; aa;
-	    aa = (struct at_ifaddr *)aa->aa_ifa.ifa_list.tqe_next) {
+    for ( aa = (struct at_ifaddr *)TAILQ_FIRST(&ac->ac_if.if_addrlist); aa;
+	    aa = (struct at_ifaddr *)TAILQ_NEXT(&aa->aa_ifa, ifa_list)) {
 	if ( AA_SAT( aa )->sat_family == AF_APPLETALK &&
 		( aa->aa_flags & AFA_PROBING )) {
 	    break;
