@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.12 2009/10/06 07:19:32 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.13 2009/11/13 07:00:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -184,20 +184,6 @@ key_bindings_init(void)
 
 		key_bindings_add(
 		    table[i].key | KEYC_PREFIX, table[i].can_repeat, cmdlist);
-	}
-}
-
-void
-key_bindings_free(void)
-{
-	struct key_binding	*bd;
-
-	key_bindings_clean();
-	while (!SPLAY_EMPTY(&key_bindings)) {
-		bd = SPLAY_ROOT(&key_bindings);
-		SPLAY_REMOVE(key_bindings, &key_bindings, bd);
-		cmd_list_free(bd->cmdlist);
-		xfree(bd);
 	}
 }
 

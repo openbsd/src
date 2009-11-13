@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.175 2009/11/11 08:00:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.176 2009/11/13 07:00:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1249,7 +1249,6 @@ const char *mode_key_tostring(struct mode_key_cmdstr *r, enum mode_key_cmd);
 enum mode_key_cmd mode_key_fromstring(struct mode_key_cmdstr *, const char *);
 const struct mode_key_table *mode_key_findtable(const char *);
 void	mode_key_init_trees(void);
-void	mode_key_free_trees(void);
 void	mode_key_init(struct mode_key_data *, struct mode_key_tree *);
 enum mode_key_cmd mode_key_lookup(struct mode_key_data *, int);
 
@@ -1541,7 +1540,6 @@ void	 key_bindings_add(int, int, struct cmd_list *);
 void	 key_bindings_remove(int);
 void	 key_bindings_clean(void);
 void	 key_bindings_init(void);
-void	 key_bindings_free(void);
 void	 key_bindings_dispatch(struct key_binding *, struct client *);
 void printflike2 key_bindings_error(struct cmd_ctx *, const char *, ...);
 void printflike2 key_bindings_print(struct cmd_ctx *, const char *, ...);
