@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.32 2009/11/10 15:47:48 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.33 2009/11/13 18:07:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -253,7 +253,7 @@ client_signal(int sig, unused short events, unused void *data)
 void
 client_callback(unused int fd, short events, unused void *data)
 {
-	int	n;
+	ssize_t	n;
 
 	if (events & EV_READ) {
 		if ((n = imsg_read(&client_ibuf)) == -1 || n == 0)
