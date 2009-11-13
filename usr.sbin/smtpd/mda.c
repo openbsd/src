@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.31 2009/11/11 10:04:05 chl Exp $	*/
+/*	$OpenBSD: mda.c,v 1.32 2009/11/13 12:01:54 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -498,16 +498,14 @@ mda_done(struct smtpd *env, struct batch *b)
 		    &b->message, sizeof(b->message));
 
 		/* log status */
-		if (b->message.status & S_MESSAGE_PERMFAILURE)
-			log_debug("mda: permanent failure");
-		else if (b->message.status & S_MESSAGE_TEMPFAILURE)
-			log_debug("mda: temporary failure");
-		else
-			log_info("%s: to=<%s@%s>, delay=%d, stat=Sent",
-			    b->message.message_uid,
-			    b->message.recipient.user,
-			    b->message.recipient.domain,
-			    time(NULL) - b->message.creation);
+		log_info("%s: to=<%s@%s>, delay=%d, stat=%s",
+		    b->message.message_id,
+		    b->message.recipient.user,
+		    b->message.recipient.domain,
+		    time(NULL) - b->message.creation,
+		    b->message.status & S_MESSAGE_PERMFAILURE ? "MdaPermError" :
+		    b->message.status & S_MESSAGE_TEMPFAILURE ? "MdaTempError" :
+		    "Sent");
 
 		/* deallocate resources */
 		SPLAY_REMOVE(batchtree, &env->batch_queue, b);
