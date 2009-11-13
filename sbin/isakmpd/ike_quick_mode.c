@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.102 2008/11/11 15:11:28 hshoexer Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.103 2009/11/13 22:07:59 deraadt Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -743,6 +743,7 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 			if (doi->proto_size) {
 				proto->data = calloc(1, doi->proto_size);
 				if (!proto->data) {
+					free(proto);
 					log_error(
 					    "initiator_send_HASH_SA_NONCE: "
 					    "calloc (1, %lu) failed",
@@ -758,11 +759,18 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 			for (xf_no = 0; xf_no < proto->xf_cnt; xf_no++) {
 				pa = (struct proto_attr *)calloc(1,
 				    sizeof *pa);
-				if (!pa)
+				if (!pa) {
+					if (proto->data)
+						free(proto->data);
+					free(proto);
 					goto bail_out;
+				}
 				pa->len = transform_len[prop_no][xf_no];
 				pa->attrs = (u_int8_t *)malloc(pa->len);
 				if (!pa->attrs) {
+					if (proto->data)
+						free(proto->data);
+					free(proto);
 					free(pa);
 					goto bail_out;
 				}
