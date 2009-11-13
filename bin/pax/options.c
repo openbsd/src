@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.72 2009/11/12 20:10:48 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.73 2009/11/13 17:22:13 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -1413,6 +1413,7 @@ opt_add(const char *str)
 			free(dstr);
 			return(-1);
 		}
+		dstr = NULL;	/* parts of string going onto the OPLIST */
 		*pt++ = '\0';
 		opt->name = frpt;
 		opt->value = pt;
@@ -1428,6 +1429,7 @@ opt_add(const char *str)
 		optail->fow = opt;
 		optail = opt;
 	}
+	free(dstr);
 	return(0);
 }
 
