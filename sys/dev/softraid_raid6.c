@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.6 2009/08/26 20:14:44 jordan Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.7 2009/11/13 23:34:24 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -78,6 +78,41 @@ int	gf_premul(uint8_t);
 #define SR_FAILY		(1L << 1)
 #define SR_FAILP		(1L << 2)
 #define SR_FAILQ		(1L << 3)
+
+#define M_FAIL 0x00
+
+#define M_RX   0x01
+#define M_RXP  0x02
+#define M_RXQ  0x03
+#define M_RXY  0x04
+#define M_RFLG 0x0F
+
+#define M_WXPQ 0x10
+#define M_WXY  0x20
+#define M_WPQ  0x30
+#define M_WFLG 0xF0
+
+/* Mapping of Failure Flags to Read/Write state */
+uint8_t sr_rwmode[16] = {
+	[SR_FAILX+SR_FAILY+SR_FAILP] = M_FAIL,
+	[SR_FAILX+SR_FAILY+SR_FAILQ] = M_FAIL,
+	[SR_FAILX+SR_FAILP+SR_FAILQ] = M_FAIL,
+	[SR_FAILY+SR_FAILP+SR_FAILQ] = M_FAIL,
+	[SR_FAILX+SR_FAILY+SR_FAILP+SR_FAILQ] = M_FAIL,
+
+	[SR_NOFAIL]         = M_RX | M_WXPQ,
+	[SR_FAILY]          = M_RX | M_WXPQ,
+	[SR_FAILP]          = M_RX | M_WXPQ,
+	[SR_FAILQ]          = M_RX | M_WXPQ,
+	[SR_FAILY+SR_FAILP] = M_RX | M_WXPQ,
+	[SR_FAILY+SR_FAILQ] = M_RX | M_WXPQ,
+	[SR_FAILP+SR_FAILQ] = M_RX | M_WXPQ,
+
+	[SR_FAILX]          = M_RXQ | M_WPQ,
+	[SR_FAILX+SR_FAILQ] = M_RXQ | M_WPQ,
+	[SR_FAILX+SR_FAILP] = M_RXP | M_WPQ,
+	[SR_FAILX+SR_FAILY] = M_RXY | M_WXY,
+};
 
 struct sr_raid6_opaque {
 	int      gn;
@@ -379,7 +414,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_chunk		*scp;
-	int			s, fail, i;
+	int			s, fail, i, rwmode;
 	daddr64_t		blk, lbaoffs, strip_no, chunk, qchunk, pchunk, fchunk;
 	daddr64_t		strip_size, no_chunk, lba, chunk_offs, phys_offs;
 	daddr64_t		strip_bits, length, strip_offs, datalen;
@@ -397,6 +432,7 @@ sr_raid6_rw(struct sr_workunit *wu)
 	datalen = xs->datalen;
 	lbaoffs	= blk << DEV_BSHIFT;
 
+	rwmode = (xs->flags & SCSI_DATA_IN) ? M_RFLG : M_WFLG;
 	if (xs->flags & SCSI_DATA_OUT)
 		/* create write workunit */
 		if ((wu_w = sr_wu_get(sd, 0)) == NULL) {
