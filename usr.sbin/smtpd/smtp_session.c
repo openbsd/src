@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.124 2009/11/13 11:37:27 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.125 2009/11/13 11:40:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1089,8 +1089,10 @@ session_respond(struct session *s, char *fmt, ...)
 	switch (EVBUFFER_DATA(EVBUFFER_OUTPUT(s->s_bev))[n]) {
 	case '5':
 	case '4':
-		log_debug("session error: %s: \"%.*s\"",
-		    ss_to_text(&s->s_ss),
+		log_info("%s: from=<%s@%s>, relay=%s [%s], stat=LocalError (%.*s)",
+		    s->s_msg.message_id[0] ? s->s_msg.message_id : "(none)",
+		    s->s_msg.sender.user, s->s_msg.sender.domain,
+		    s->s_hostname, ss_to_text(&s->s_ss),
 		    (int)EVBUFFER_LENGTH(EVBUFFER_OUTPUT(s->s_bev)) - n - 2,
 		    EVBUFFER_DATA(EVBUFFER_OUTPUT(s->s_bev)));
 		break;
