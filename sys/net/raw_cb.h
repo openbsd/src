@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_cb.h,v 1.7 2008/05/23 15:51:12 thib Exp $	*/
+/*	$OpenBSD: raw_cb.h,v 1.8 2009/11/13 20:54:05 claudio Exp $	*/
 /*	$NetBSD: raw_cb.h,v 1.9 1996/02/13 22:00:41 christos Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ struct rawcb {
 extern LIST_HEAD(rawcbhead, rawcb) rawcb;		/* head of list */
 
 int	 raw_attach(struct socket *, int);
-void	 *raw_ctlinput(int, struct sockaddr *, void *);
+void	 *raw_ctlinput(int, struct sockaddr *, u_int, void *);
 void	 raw_detach(struct rawcb *);
 void	 raw_disconnect(struct rawcb *);
 void	 raw_init(void);

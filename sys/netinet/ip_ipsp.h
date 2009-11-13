@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.138 2009/06/02 21:28:36 blambert Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.139 2009/11/13 20:54:05 claudio Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -562,8 +562,8 @@ extern int ah_massage_headers(struct mbuf **, int, int, int, int);
 #ifdef INET
 extern void ah4_input(struct mbuf *, ...);
 extern int ah4_input_cb(struct mbuf *, ...);
-extern void *ah4_ctlinput(int, struct sockaddr *, void *);
-extern void *udpencap_ctlinput(int, struct sockaddr *, void *);
+extern void *ah4_ctlinput(int, struct sockaddr *, u_int, void *);
+extern void *udpencap_ctlinput(int, struct sockaddr *, u_int, void *);
 #endif /* INET */
 
 #ifdef INET6
@@ -584,7 +584,7 @@ extern int esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 #ifdef INET
 extern void esp4_input(struct mbuf *, ...);
 extern int esp4_input_cb(struct mbuf *, ...);
-extern void *esp4_ctlinput(int, struct sockaddr *, void *);
+extern void *esp4_ctlinput(int, struct sockaddr *, u_int, void *);
 #endif /* INET */
 
 #ifdef INET6

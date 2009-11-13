@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.85 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.86 2009/11/13 20:54:05 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ icmp_input(struct mbuf *m, ...)
 	int icmplen;
 	int i;
 	struct in_ifaddr *ia;
-	void *(*ctlfunc)(int, struct sockaddr *, void *);
+	void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
 	int code;
 	extern u_char ip_protox[];
 	int hlen;
@@ -469,7 +469,8 @@ icmp_input(struct mbuf *m, ...)
 		 */
 		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
 		if (ctlfunc)
-			(*ctlfunc)(code, sintosa(&icmpsrc), &icp->icmp_ip);
+			(*ctlfunc)(code, sintosa(&icmpsrc), m->m_pkthdr.rdomain,
+			    &icp->icmp_ip);
 		break;
 
 	badcode:
@@ -980,7 +981,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		panic("icmp_mtudisc_timeout:  bad route to timeout");
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
-		void *(*ctlfunc)(int, struct sockaddr *, void *);
+		void *(*ctlfunc)(int, struct sockaddr *, u_int, void *);
 		extern u_char ip_protox[];
 		struct sockaddr_in sa;
 		struct rt_addrinfo info;
@@ -997,7 +998,7 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		/* Notify TCP layer of increased Path MTU estimate */
 		ctlfunc = inetsw[ip_protox[IPPROTO_TCP]].pr_ctlinput;
 		if (ctlfunc)
-			(*ctlfunc)(PRC_MTUINC,(struct sockaddr *)&sa, NULL);
+			(*ctlfunc)(PRC_MTUINC,(struct sockaddr *)&sa, 0, NULL);
 	} else
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
 			rt->rt_rmx.rmx_mtu = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.107 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.108 2009/11/13 20:54:05 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -570,9 +570,10 @@ in_setpeeraddr(inp, nam)
  * Must be called at splsoftnet.
  */
 void
-in_pcbnotifyall(table, dst, errno, notify)
+in_pcbnotifyall(table, dst, rdomain, errno, notify)
 	struct inpcbtable *table;
 	struct sockaddr *dst;
+	u_int rdomain;
 	int errno;
 	void (*notify)(struct inpcb *, int);
 {
@@ -604,6 +605,7 @@ in_pcbnotifyall(table, dst, errno, notify)
 		}
 #endif
 		if (inp->inp_faddr.s_addr != faddr.s_addr ||
+		    inp->inp_rdomain != rdomain ||
 		    inp->inp_socket == 0) {
 			inp = CIRCLEQ_NEXT(inp, inp_queue);
 			continue;
@@ -788,7 +790,8 @@ in_pcbrtentry(inp)
 			ro->ro_dst.sa_family = AF_INET;
 			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
-			rtalloc_mpath(ro, &inp->inp_laddr.s_addr, 0);
+			rtalloc_mpath(ro, &inp->inp_laddr.s_addr,
+			    inp->inp_rdomain);
 			break;
 		}
 	}

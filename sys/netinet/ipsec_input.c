@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.92 2009/08/09 12:47:50 henning Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.93 2009/11/13 20:54:05 claudio Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -746,8 +746,9 @@ ah4_input_cb(struct mbuf *m, ...)
 }
 
 
+/* XXX rdomain */
 void *
-ah4_ctlinput(int cmd, struct sockaddr *sa, void *v)
+ah4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
 	if (sa->sa_family != AF_INET ||
 	    sa->sa_len != sizeof(struct sockaddr_in))
@@ -907,8 +908,9 @@ ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
 	return (NULL);
 }
 
+/* XXX rdomain */
 void *
-udpencap_ctlinput(int cmd, struct sockaddr *sa, void *v)
+udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
 	struct ip *ip = v;
 	struct tdb *tdbp;
@@ -965,8 +967,9 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, void *v)
 	return (NULL);
 }
 
+/* XXX rdomain */
 void *
-esp4_ctlinput(int cmd, struct sockaddr *sa, void *v)
+esp4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
 	if (sa->sa_family != AF_INET ||
 	    sa->sa_len != sizeof(struct sockaddr_in))

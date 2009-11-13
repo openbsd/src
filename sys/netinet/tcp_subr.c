@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.108 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.109 2009/11/13 20:54:05 claudio Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -318,12 +318,13 @@ tcp_template(tp)
 /* This function looks hairy, because it was so IPv4-dependent. */
 #endif /* INET6 */
 void
-tcp_respond(tp, template, th0, ack, seq, flags)
+tcp_respond(tp, template, th0, ack, seq, flags, rdomain)
 	struct tcpcb *tp;
 	caddr_t template;
 	struct tcphdr *th0;
 	tcp_seq ack, seq;
 	int flags;
+	u_int rdomain;
 {
 	int tlen;
 	int win = 0;
@@ -408,6 +409,12 @@ tcp_respond(tp, template, th0, ack, seq, flags)
 		win = TCP_MAXWIN;
 	th->th_win = htons((u_int16_t)win);
 	th->th_urp = 0;
+
+	/* force routing domain */
+	if (tp)
+		m->m_pkthdr.rdomain = tp->t_inpcb->inp_rdomain;
+	else
+		m->m_pkthdr.rdomain = rdomain;
 
 	switch (af) {
 #ifdef INET6
@@ -768,9 +775,10 @@ tcp6_ctlinput(cmd, sa, d)
 #endif
 
 void *
-tcp_ctlinput(cmd, sa, v)
+tcp_ctlinput(cmd, sa, rdomain, v)
 	int cmd;
 	struct sockaddr *sa;
+	u_int rdomain;
 	void *v;
 {
 	struct ip *ip = v;
@@ -810,7 +818,7 @@ tcp_ctlinput(cmd, sa, v)
 		seq = ntohl(th->th_seq);
 		inp = in_pcbhashlookup(&tcbtable,
 		    ip->ip_dst, th->th_dport, ip->ip_src, th->th_sport,
-		    /* XXX */ 0);
+		    rdomain);
 		if (inp && (tp = intotcpcb(inp)) &&
 		    SEQ_GEQ(seq, tp->snd_una) &&
 		    SEQ_LT(seq, tp->snd_max)) {
@@ -868,7 +876,7 @@ tcp_ctlinput(cmd, sa, v)
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		inp = in_pcbhashlookup(&tcbtable,
 		    ip->ip_dst, th->th_dport, ip->ip_src, th->th_sport,
-		    /* XXX */ 0);
+		    rdomain);
 		if (inp) {
 			seq = ntohl(th->th_seq);
 			if (inp->inp_socket &&
@@ -888,10 +896,10 @@ tcp_ctlinput(cmd, sa, v)
 			sin.sin_port = th->th_sport;
 			sin.sin_addr = ip->ip_src;
 			syn_cache_unreach((struct sockaddr *)&sin,
-			    sa, th, /* XXX */ 0);
+			    sa, th, rdomain);
 		}
 	} else
-		in_pcbnotifyall(&tcbtable, sa, errno, notify);
+		in_pcbnotifyall(&tcbtable, sa, rdomain, errno, notify);
 
 	return NULL;
 }

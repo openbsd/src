@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.131 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.132 2009/11/13 20:54:05 claudio Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -864,7 +864,7 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 #endif
 
 void *
-udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
+udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 {
 	struct ip *ip = v;
 	struct udphdr *uhp;
@@ -899,17 +899,17 @@ udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 		/* PMTU discovery for udpencap */
 		if (cmd == PRC_MSGSIZE && ip_mtudisc && udpencap_enable &&
 		    udpencap_port && uhp->uh_sport == htons(udpencap_port)) {
-			udpencap_ctlinput(cmd, sa, v);
+			udpencap_ctlinput(cmd, sa, rdomain, v);
 			return (NULL);
 		}
 #endif
 		inp = in_pcbhashlookup(&udbtable,
 		    ip->ip_dst, uhp->uh_dport, ip->ip_src, uhp->uh_sport,
-		    /* XXX */ 0);
+		    rdomain);
 		if (inp && inp->inp_socket != NULL)
 			notify(inp, errno);
 	} else
-		in_pcbnotifyall(&udbtable, sa, errno, notify);
+		in_pcbnotifyall(&udbtable, sa, rdomain, errno, notify);
 	return (NULL);
 }
 

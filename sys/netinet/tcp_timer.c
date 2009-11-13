@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.43 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.44 2009/11/13 20:54:05 claudio Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -219,8 +219,8 @@ tcp_timer_rexmt(void *arg)
 		 * Notify all connections to the same peer about
 		 * new mss and trigger retransmit.
 		 */
-		in_pcbnotifyall(&tcbtable, sintosa(&icmpsrc), EMSGSIZE,
-		    tcp_mtudisc);
+		in_pcbnotifyall(&tcbtable, sintosa(&icmpsrc),
+		    tp->t_inpcb->inp_rdomain, EMSGSIZE, tcp_mtudisc);
 		splx(s);
 		return;
 	}
@@ -454,7 +454,7 @@ tcp_timer_keep(void *arg)
 		 */
 		tcpstat.tcps_keepprobe++;
 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
-		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0);
+		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0, 0);
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
