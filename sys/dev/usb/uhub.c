@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.51 2009/11/12 20:16:37 deraadt Exp $ */
+/*	$OpenBSD: uhub.c,v 1.52 2009/11/13 18:06:57 deraadt Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -191,8 +191,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	hub = malloc(sizeof(*hub) + (nports-1) * sizeof(struct usbd_port),
-		     M_USBDEV, M_NOWAIT);
+	hub = malloc(sizeof(*hub), M_USBDEV, M_NOWAIT);
 	if (hub == NULL)
 		return;
 	hub->ports = malloc(sizeof(struct usbd_port) * nports,
