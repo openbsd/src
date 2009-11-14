@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.119 2009/11/11 12:21:20 espie Exp $
+# $OpenBSD: pkg_delete,v 1.120 2009/11/14 10:47:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -168,43 +168,49 @@ local $SIG{'HUP'} = $handler;
 local $SIG{'KILL'} = $handler;
 local $SIG{'TERM'} = $handler;
 
-eval {
-# and finally, handle the removal
-{ do {
-	$removed = 0;
-	DELETE: for my $pkgname (@todo) {
-		next if $done{$pkgname};
-		unless (is_installed($pkgname)) {
-			$state->say("$pkgname was not installed");
-			$done{$pkgname} = 1;
-			$removed++;
-			next;
-		}
-		my $r = OpenBSD::RequiredBy->new($pkgname);
-		if ($r->list > 0) {
-			if ($defines{baddepend}) {
-				for my $p ($r->list) {
-					if ($done{$p}) {
-						$r->delete($p);
-					} else {
-						next DELETE;
-					}
-				}
-			} else {
+my $code = sub {
+	# and finally, handle the removal
+	do {
+		$removed = 0;
+		DELETE: for my $pkgname (@todo) {
+			next if $done{$pkgname};
+			unless (is_installed($pkgname)) {
+				$state->say("$pkgname was not installed");
+				$done{$pkgname} = 1;
+				$removed++;
 				next;
 			}
+			my $r = OpenBSD::RequiredBy->new($pkgname);
+			if ($r->list > 0) {
+				if ($defines{baddepend}) {
+					for my $p ($r->list) {
+						if ($done{$p}) {
+							$r->delete($p);
+						} else {
+							next DELETE;
+						}
+					}
+				} else {
+					next;
+				}
+			}
+			if (!$state->progress->set_header($pkgname)) {
+				print $opt_n ? "Pretending to delete " : 
+				    "Deleting ", 
+				    "$pkgname\n";
+			}
+			$state->log->set_context($pkgname);
+			OpenBSD::Delete::delete_package($pkgname, $state);
+			$done{$pkgname} = 1;
+			$removed++;
 		}
-		if (!$state->progress->set_header($pkgname)) {
-			print $opt_n ? "Pretending to delete " : "Deleting ", 
-			    "$pkgname\n";
-		}
-		$state->log->set_context($pkgname);
-		OpenBSD::Delete::delete_package($pkgname, $state);
-		$done{$pkgname} = 1;
-		$removed++;
-	}
-} while ($removed); } };
-
+	} while ($removed);
+};
+if ($state->{defines}->{debug}) {
+	&$code;
+} else { 
+	eval { &$code; };
+}
 my $dielater = $@;
 
 $state->{recorder}->cleanup($state);

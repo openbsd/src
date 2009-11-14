@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.381 2009/11/12 14:44:00 espie Exp $
+# $OpenBSD: pkg_add,v 1.382 2009/11/14 10:47:16 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -789,14 +789,19 @@ local $SIG{'HUP'} = $handler;
 local $SIG{'KILL'} = $handler;
 local $SIG{'TERM'} = $handler;
 
-# This is the actual very small loop that adds all packages
-eval {
-$state->tracker->add_sets(@todo2);
-while (my $set = shift @todo2) {
-	unshift(@todo2, install_set($set, $state));
-}
+my $code = sub {
+	# This is the actual very small loop that adds all packages
+	$state->tracker->add_sets(@todo2);
+	while (my $set = shift @todo2) {
+		unshift(@todo2, install_set($set, $state));
+	}
 };
-# Note how well we performed. We need to clean up BEFORE we exit anyways.
+
+if ($state->{defines}->{debug}) {
+	&$code;
+} else { 
+	eval { &$code; };
+}
 my $dielater = $@;
 
 # cleanup various things
