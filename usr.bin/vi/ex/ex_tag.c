@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.14 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.15 2009/11/14 17:44:53 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -695,8 +695,10 @@ tagf_copy(sp, otfp, tfpp)
 	*tfp = *otfp;
 
 	/* XXX: Allocate as part of the TAGF structure!!! */
-	if ((tfp->name = strdup(otfp->name)) == NULL)
+	if ((tfp->name = strdup(otfp->name)) == NULL) {
+		free(tfp);
 		return (1);
+	}
 
 	*tfpp = tfp;
 	return (0);

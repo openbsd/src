@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ex.c,v 1.9 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: v_ex.c,v 1.10 2009/11/14 17:44:53 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -206,8 +206,10 @@ v_switch(sp, vp)
 	}
 
 	/* If autowrite is set, write out the file. */
-	if (file_m1(sp, 0, FS_ALL))
+	if (file_m1(sp, 0, FS_ALL)) {
+		free(name);
 		return (1);
+	}
 
 	ex_cinit(&cmd, C_EDIT, 0, OOBLNO, OOBLNO, 0, ap);
 	ex_cadd(&cmd, &a, name, strlen(name));
