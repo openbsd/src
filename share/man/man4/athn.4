@@ -1,0 +1,214 @@
+.\" $OpenBSD: athn.4,v 1.1 2009/11/14 16:55:11 damien Exp $
+.\"
+.\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 14 2009 $
+.Os
+.Dt ATHN 4
+.Sh NAME
+.Nm athn
+.Nd Atheros IEEE 802.11a/g/n wireless network devices
+.Sh SYNOPSIS
+.Cd "athn* at cardbus?"
+.Cd "athn* at pci?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for a wide variety of
+.Tn Atheros
+802.11n devices, ranging from the AR5008 up to the AR9287.
+.Pp
+The AR5008 (codenamed Owl) is the first generation of
+.Tn Atheros
+802.11n solutions.
+It consists of two chips, a MAC/Baseband Processor and a Radio-on-a-Chip.
+The MAC/Baseband Processor can be an AR5416 (PCI and CardBus form factors)
+or an AR5418 (PCIe Mini Card form factor).
+The radio can be an AR2122, AR2133, AR5122 or an AR5133 chip.
+The AR2122 chip operates in the 2GHz spectrum and supports up to 2
+transmit paths and 2 receiver paths (2T2R).
+The AR2133 chip operates in the 2GHz spectrum and supports up to 3
+transmit paths and 3 receiver paths (3T3R).
+The AR5122 chip operates in the 2GHz and 5GHz spectra and supports
+up to 2 transmit paths and 2 receiver paths (2T2R).
+The AR5133 chip operates in the 2GHz and 5GHz spectra and supports
+up to 3 transmit paths and 3 receiver paths (3T3R).
+.Pp
+The AR9001 (codenamed Sowl) is a Mini-PCI 802.11n solution.
+It consists of two chips, an AR9160 MAC/Baseband Processor and an
+AR9103 or AR9106 Radio-on-a-Chip.
+The AR9103 chip operates in the 2GHz spectrum and supports up to 3
+transmit paths and 3 receiver paths (3T3R).
+The AR9106 chip operates in the 2GHz and 5GHz spectra and supports
+up to 3 transmit paths and 3 receiver paths (3T3R).
+.Pp
+The AR9220, AR9223 and AR9280 (codenamed Merlin) are the
+first generation of
+.Tn Atheros
+single-chip 802.11n solutions.
+The AR9220 and AR9223 exist in PCI and Mini-PCI form factors.
+The AR9280 exists in PCIe Mini Card (XB92) and half Mini Card (HB92)
+form factors.
+The AR9220 and AR9280 operate in the 2GHz and 5GHz spectra and
+support 2 transmit paths and 2 receiver paths (2T2R).
+The AR9223 operates in the 2GHz spectrum and supports 2
+transmit paths and 2 receiver paths (2T2R).
+.Pp
+The AR9281 is a single-chip PCIe 802.11n solution.
+It exists in PCIe Mini Card (XB91) and half Mini Card (HB91) form
+factors.
+It operates in the 2GHz spectrum and supports 1 transmit path and
+2 receiver paths (1T2R).
+.Pp
+The AR9285 (codenamed Kite) is a single-chip PCIe 802.11n solution that
+targets the value PC market.
+It exists in PCIe half Mini Card (HB95) form factor only.
+It operates in the 2GHz spectrum and supports a single stream (1T1R).
+It can be combined with the AR3011 chip to form a combo WiFi/Bluetooth
+device (WB195).
+.Pp
+The AR9227 and AR9287 are single-chip 802.11n solutions that
+target mid-tier PCs.
+The AR9227 exists in PCI and Mini-PCI form factors.
+The AR9287 exists in PCIe half Mini Card (HB97) form factor only.
+They operate in the 2GHz spectrum and support 2 transmit paths and 2
+receiver paths (2T2R).
+.Pp
+The following table summarizes the supported chips and their capabilities.
+.Pp
+.Bl -column -compact "AR9001-3NX2 (AR9160+AR9106)" "2GHz/5GHz" "3x3" "PCI/CardBus" -offset 4n
+.Em "Chipset	Spectrum	Tx/Rx	Bus"
+AR5008-2NG (AR5416+AR2122)	2GHz	2x2	PCI/CardBus
+AR5008-3NG (AR5416+AR2133)	2GHz	3x3	PCI/CardBus
+AR5008-2NX (AR5416+AR5122)	2GHz/5GHz	2x2	PCI/CardBus
+AR5008-3NX (AR5416+AR5133)	2GHz/5GHz	3x3	PCI/CardBus
+AR5008E-2NG (AR5418+AR2122)	2GHz	2x2	PCIe
+AR5008E-3NG (AR5418+AR2133)	2GHz	3x3	PCIe
+AR5008E-2NX (AR5418+AR5122)	2GHz/5GHz	2x2	PCIe
+AR5008E-3NX (AR5418+AR5133)	2GHz/5GHz	3x3	PCIe
+AR9001-2NG (AR9160+AR9103)	2GHz	2x2	PCI
+AR9001-3NG (AR9160+AR9103)	2GHz	3x3	PCI
+AR9001-3NX2 (AR9160+AR9106)	2GHz/5GHz	3x3	PCI
+AR9220	2GHz/5GHz	2x2	PCI
+AR9223	2GHz	2x2	PCI
+AR9280	2GHz/5GHz	2x2	PCIe
+AR9281	2GHz	1x2	PCIe
+AR9285	2GHz	1x1	PCIe
+AR9227	2GHz	2x2	PCI
+AR9287	2GHz	2x2	PCIe
+.El
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
+.El
+.Pp
+The
+.Nm
+driver can be configured to use
+Wired Equivalent Privacy (WEP) or
+Wi-Fi Protected Access (WPA-PSK and WPA2-PSK).
+WPA is the de facto encryption standard for wireless networks.
+It is strongly recommended that WEP
+not be used as the sole mechanism
+to secure wireless communication,
+due to serious weaknesses in it.
+The
+.Nm
+driver offloads encryption and decryption to the hardware for the WEP40,
+WEP104, TKIP(+MIC) and CCMP ciphers.
+.Pp
+The transmit speed is user-selectable or can be adapted automatically by the
+driver depending on the number of hardware transmission retries.
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures athn0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+Configure athn0 to join network
+.Dq my_net
+using WPA-PSK with passphrase
+.Dq my_passphrase :
+.Bd -literal -offset indent
+# ifconfig iwn0 nwid my_net wpa wpapsk \e
+	`wpa-psk my_net my_passphrase`
+.Ed
+.Pp
+Return athn0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig iwn0 -bssid -chan media autoselect \e
+	nwid "" -nwkey -wpa -wpapsk
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig athn0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "athn%d: device timeout"
+A frame dispatched to the hardware for transmission did not complete in time.
+The driver will reset the hardware.
+This should not happen.
+.It "athn%d: radio is disabled by hardware switch"
+The radio transmitter is off and thus no packet can go out.
+The driver will reset the hardware.
+Make sure the laptop radio switch is on.
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr cardbus 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr wpa-psk 8
+.Pp
+Atheros Communications Bulletins:
+.Pa http://www.atheros.com/pt/bulletins/
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.7 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Damien Bergamini Aq damien@openbsd.org
+based on source code licensed under the ISC released in 2008 by
+.Tn Atheros Communications
+for Linux.

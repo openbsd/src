@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.265 2009/10/27 11:19:04 dlg Exp $
+#	$OpenBSD: files.pci,v 1.266 2009/11/14 16:55:11 damien Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -668,6 +668,10 @@ file	dev/pci/if_bce.c		bce
 # Atheros AR5k (802.11a/b/g) PCI/Mini-PCI
 attach	ath at pci with ath_pci
 file	dev/pci/if_ath_pci.c		ath_pci
+
+# Atheros AR9k (802.11a/g/n)
+attach	athn at pci with athn_pci
+file	dev/pci/if_athn_pci.c		athn_pci
 
 # ADMtek ADM8211 PCI/Mini-PCI
 attach	atw at pci with atw_pci
