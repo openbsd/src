@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.2 2009/11/14 17:58:55 jmc Exp $
+.\" $OpenBSD: athn.4,v 1.3 2009/11/14 18:48:36 damien Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -158,13 +158,13 @@ Configure athn0 to join network
 using WPA-PSK with passphrase
 .Dq my_passphrase :
 .Bd -literal -offset indent
-# ifconfig iwn0 nwid my_net wpa wpapsk \e
+# ifconfig athn0 nwid my_net wpa wpapsk \e
 	`wpa-psk my_net my_passphrase`
 .Ed
 .Pp
 Return athn0 to its default settings:
 .Bd -literal -offset indent
-# ifconfig iwn0 -bssid -chan media autoselect \e
+# ifconfig athn0 -bssid -chan media autoselect \e
 	nwid "" -nwkey -wpa -wpapsk
 .Ed
 .Pp
