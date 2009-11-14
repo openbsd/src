@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.22 2009/11/11 13:00:40 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.23 2009/11/14 08:11:05 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -25,7 +25,8 @@ use OpenBSD::Vstat;
 
 sub find_collisions
 {
-	my ($todo, $verbose) = @_;
+	my ($todo, $state) = @_;
+	my $verbose = $state->{verbose};
 	my $bypkg = {};
 	for my $name (keys %$todo) {
 		my $p = OpenBSD::Vstat::vexists $name;
@@ -76,7 +77,7 @@ sub collision_report($$)
 	
 	$state->say("Collision: the following files already exist");
 	if (!$state->{defines}->{dontfindcollisions}) {
-		my $bypkg = find_collisions(\%todo, $state->{verbose});
+		my $bypkg = find_collisions(\%todo, $state);
 		for my $pkg (sort keys %$bypkg) {
 		    for my $item (sort @{$bypkg->{$pkg}}) {
 		    	$found++;
