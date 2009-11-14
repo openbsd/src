@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.1 2009/11/14 16:55:11 damien Exp $
+.\" $OpenBSD: athn.4,v 1.2 2009/11/14 17:58:55 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -19,7 +19,7 @@
 .Dt ATHN 4
 .Sh NAME
 .Nm athn
-.Nd Atheros IEEE 802.11a/g/n wireless network devices
+.Nd Atheros IEEE 802.11a/g/n wireless network device
 .Sh SYNOPSIS
 .Cd "athn* at cardbus?"
 .Cd "athn* at pci?"
@@ -27,12 +27,10 @@
 The
 .Nm
 driver provides support for a wide variety of
-.Tn Atheros
-802.11n devices, ranging from the AR5008 up to the AR9287.
+Atheros 802.11n devices, ranging from the AR5008 up to the AR9287.
 .Pp
 The AR5008 (codenamed Owl) is the first generation of
-.Tn Atheros
-802.11n solutions.
+Atheros 802.11n solutions.
 It consists of two chips, a MAC/Baseband Processor and a Radio-on-a-Chip.
 The MAC/Baseband Processor can be an AR5416 (PCI and CardBus form factors)
 or an AR5418 (PCIe Mini Card form factor).
@@ -56,8 +54,7 @@ up to 3 transmit paths and 3 receiver paths (3T3R).
 .Pp
 The AR9220, AR9223 and AR9280 (codenamed Merlin) are the
 first generation of
-.Tn Atheros
-single-chip 802.11n solutions.
+Atheros single-chip 802.11n solutions.
 The AR9220 and AR9223 exist in PCI and Mini-PCI form factors.
 The AR9280 exists in PCIe Mini Card (XB92) and half Mini Card (HB92)
 form factors.
@@ -175,6 +172,7 @@ Join an existing BSS network,
 .Dq my_net :
 .Bd -literal -offset indent
 # ifconfig athn0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "athn%d: device timeout"
@@ -210,5 +208,4 @@ The
 driver was written by
 .An Damien Bergamini Aq damien@openbsd.org
 based on source code licensed under the ISC released in 2008 by
-.Tn Atheros Communications
-for Linux.
+Atheros Communications for Linux.
