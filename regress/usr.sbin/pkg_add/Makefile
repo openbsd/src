@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2009/11/14 20:48:14 espie Exp $
+# $OpenBSD: Makefile,v 1.9 2009/11/14 21:04:24 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames
 
@@ -55,6 +55,12 @@ collision-check4: new/d-0.0.tgz new/e-0.0.tgz
 	ROOT=${D6} ${PKG_ADD} new/d-0.0.tgz
 	-rm -rf ${D6}/pkgdb/d-0.0
 	ROOT=${D6} ${PKG_ADD} -F repair new/e-0.0.tgz
+
+collision-check5: new/d-0.0.tgz new/e-0.0.tgz
+	-rm -rf ${D7}
+	ROOT=${D7} ${PKG_ADD} new/d-0.0.tgz
+	-rm -rf ${D7}/pkgdb/d-0.0
+	ROOT=${D7} ${PKG_ADD} -F removecollisions new/d-0.0.tgz
 
 old/a-0.0.tgz:
 	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
@@ -116,7 +122,8 @@ new/e-0.0.tgz: plist3
 	${PKG_CREATE} -B ${.OBJDIR}/src3 -f ${.OBJDIR}/plist3 $@
 
 .PHONY: pkgnames depends-check longnames \
-	collision-check1 collision-check2 collision-check3
+	collision-check1 collision-check2 collision-check3 \
+	collision-check4 collision-check5
 
 clean:
 	-rm -rf old new dest* plist* src*
