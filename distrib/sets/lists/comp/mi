@@ -207,7 +207,13 @@
 ./usr/include/dev/ic/ar5211var.h
 ./usr/include/dev/ic/ar5212reg.h
 ./usr/include/dev/ic/ar5212var.h
+./usr/include/dev/ic/ar5416reg.h
 ./usr/include/dev/ic/ar5xxx.h
+./usr/include/dev/ic/ar9280reg.h
+./usr/include/dev/ic/ar9285reg.h
+./usr/include/dev/ic/ar9287reg.h
+./usr/include/dev/ic/athnreg.h
+./usr/include/dev/ic/athnvar.h
 ./usr/include/dev/ic/athvar.h
 ./usr/include/dev/ic/atwreg.h
 ./usr/include/dev/ic/atwvar.h

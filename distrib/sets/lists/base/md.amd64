@@ -955,7 +955,13 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ar5211var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ar5212reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ar5212var.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ar5416reg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ar5xxx.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ar9280reg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ar9285reg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/ar9287reg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/athnreg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/athnvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/athvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/atwreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/ic/atwvar.ph
