@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.1 2009/11/14 16:55:11 damien Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.2 2009/11/14 20:18:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -509,10 +509,13 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	const struct ar5416_eeprom *eep = sc->eep;
 	const struct ar5416_modal_eep_header *modal;
 	uint8_t tpow_cck[4], tpow_ofdm[4];
+#ifndef IEEE80211_NO_HT
 	uint8_t tpow_cck_ext[4], tpow_ofdm_ext[4];
 	uint8_t tpow_ht20[8], tpow_ht40[8];
+	uint8_t ht40inc;
+#endif
 	int16_t pwr, pwroff, max_ant_gain, power[ATHN_POWER_COUNT];
-	uint8_t cckinc, ht40inc;
+	uint8_t cckinc;
 	int i;
 
 	ar5416_set_power_calib(sc, c);
