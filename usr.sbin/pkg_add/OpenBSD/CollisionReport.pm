@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.24 2009/11/14 10:56:19 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.25 2009/11/14 21:04:02 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -62,10 +62,12 @@ sub collision_report($$)
 {
 	my ($list, $state) = @_;
 
+	my $destdir = $state->{destdir};
+
 	if ($state->{defines}->{removecollisions}) {
 		require OpenBSD::Error;
 		for my $f (@$list) {
-			$state->unlink(1, $f->fullname);
+			$state->unlink(1, $destdir.$f->fullname);
 		}
 		return;
 	}
@@ -91,7 +93,6 @@ sub collision_report($$)
 		}
 	}
 	if (%todo) {
-		my $destdir = $state->{destdir};
 
 		for my $item (sort keys %todo) {
 		    if (defined $todo{$item}) {
@@ -135,7 +136,7 @@ sub collision_report($$)
 		for my $f (@$list) {
 
 			if ($state->unlink($state->{verbose}, 
-			    $f->fullname)) {
+			    $destdir.$f->fullname)) {
 				$state->{problems}--;
 			} else {
 				return;
