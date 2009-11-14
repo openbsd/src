@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.1 2009/11/14 16:55:11 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.2 2009/11/14 20:54:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1186,7 +1186,7 @@
 #define AR_DIAG_CORR_FCS		0x00000080
 #define AR_DIAG_CHAN_INFO		0x00000100
 #define AR_DIAG_SCRAM_SEED_M		0x0001fe00
-#define AR_DIAG_SCRAM_SEED_S		8		/* XXX zarb devrait etre 9? */
+#define AR_DIAG_SCRAM_SEED_S		8	/* XXX should be 9? */
 #define AR_DIAG_FRAME_NV0		0x00020000
 #define AR_DIAG_OBS_PT_SEL1_M		0x000c0000
 #define AR_DIAG_OBS_PT_SEL1_S		18
@@ -2108,7 +2108,7 @@ struct ar_rx_desc {
 #define AR_RXS3_GI			0x00000001
 #define AR_RXS3_2040			0x00000002
 #define AR_RXS3_PARALLEL_40		0x00000004
-#define AR_RXS3_ANTENNA_M		0xffffff00	/* XXX pas bon? */
+#define AR_RXS3_ANTENNA_M		0xffffff00
 #define AR_RXS3_ANTENNA_S		8
 #define AR_RXS3_RATE_M			0x000003fc
 #define AR_RXS3_RATE_S			2
