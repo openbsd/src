@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2009/11/14 10:25:53 espie Exp $
+# $OpenBSD: Makefile,v 1.8 2009/11/14 20:48:14 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames
 
@@ -10,22 +10,51 @@ LONG3=iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewa
 LONG4=iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 
 .for i in 1 2 3 4 5 6 7 8 9
-SRC$i ?= ${.OBJDIR}/src$i/usr/local
-DEST$i ?= ${.OBJDIR}/dest$i/usr/local
+S$i ?= ${.OBJDIR}/src$i
+SRC$i ?= ${S$i}/usr/local
+D$i ?= ${.OBJDIR}/dest$i
+DEST$i ?= ${D$i}/usr/local
 .endfor
 
 pkgnames:
 	perl ${.CURDIR}/check-name
 
 depends-check: old/a-0.0.tgz old/b-0.0.tgz new/a-1.0.tgz new/b-1.0.tgz
-	-rm -rf ${.OBJDIR}/dest1
-	ROOT=${.OBJDIR}/dest1 ${PKG_ADD} old/a-0.0.tgz old/b-0.0.tgz
-	ROOT=${.OBJDIR}/dest1 PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u a b
-	ROOT=${.OBJDIR}/dest1 PKG_PATH=${.OBJDIR}/old ${PKG_ADD} -F downgrade -u a b
+	-rm -rf ${D1}
+	ROOT=${D1} ${PKG_ADD} old/a-0.0.tgz old/b-0.0.tgz
+	ROOT=${D1} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u a b
+	ROOT=${D1} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} -F downgrade -u a b
 
-collision-check: new/d-0.0.tgz new/e-0.0.tgz
-	ROOT=${.OBJDIR}/dest3 ${PKG_ADD} new/d-0.0.tgz
-	ROOT=${.OBJDIR}/dest3 ${PKG_ADD} new/e-0.0.tgz
+longnames: new/c-0.0.tgz
+	-rm -rf ${D2}
+	ROOT=${D2} ${PKG_ADD} new/c-0.0.tgz
+	@test -f ${DEST2}/${LONG1}
+	@test -f ${DEST2}/${LONG2}
+	@cd ${DEST2} && test -h ${LONG3} && test `readlink ${LONG3}` = ${LONG2}
+	@cd ${DEST2} && test `stat -f '%i' ${LONG1}` = `stat -f '%i' ${LONG4}`
+
+collision-check1: new/d-0.0.tgz new/e-0.0.tgz
+	-rm -rf ${D3}
+	ROOT=${D3} ${PKG_ADD} new/d-0.0.tgz
+	ROOT=${D3} ${PKG_ADD} new/e-0.0.tgz
+
+collision-check2: new/d-0.0.tgz new/e-0.0.tgz
+	-rm -rf ${D4}
+	ROOT=${D4} ${PKG_ADD} new/d-0.0.tgz
+	-rm -rf ${D4}/pkgdb/d-0.0
+	ROOT=${D4} ${PKG_ADD} new/e-0.0.tgz
+
+collision-check3: new/d-0.0.tgz new/e-0.0.tgz
+	-rm -rf ${D5}
+	ROOT=${D5} ${PKG_ADD} new/d-0.0.tgz
+	-rm -rf ${D5}/pkgdb/d-0.0
+	ROOT=${D5} ${PKG_ADD} -F repair new/d-0.0.tgz
+
+collision-check4: new/d-0.0.tgz new/e-0.0.tgz
+	-rm -rf ${D6}
+	ROOT=${D6} ${PKG_ADD} new/d-0.0.tgz
+	-rm -rf ${D6}/pkgdb/d-0.0
+	ROOT=${D6} ${PKG_ADD} -F repair new/e-0.0.tgz
 
 old/a-0.0.tgz:
 	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
@@ -40,13 +69,6 @@ new/b-1.0.tgz:
 	${PKG_CREATE} -P'test/a:a-*:a-1.0' -f ${.CURDIR}/empty $@
 
 
-longnames: new/c-0.0.tgz
-	-rm -rf ${.OBJDIR}/dest2
-	ROOT=${.OBJDIR}/dest2 ${PKG_ADD} new/c-0.0.tgz
-	@test -f ${DEST2}/${LONG1}
-	@test -f ${DEST2}/${LONG2}
-	@cd ${DEST2} && test -h ${LONG3} && test `readlink ${LONG3}` = ${LONG2}
-	@cd ${DEST2} && test `stat -f '%i' ${LONG1}` = `stat -f '%i' ${LONG4}`
 
 plist1:
 	@echo "@owner "`whoami` >$@
@@ -93,7 +115,8 @@ new/e-0.0.tgz: plist3
 	echo "coucou" >${SRC3}/g
 	${PKG_CREATE} -B ${.OBJDIR}/src3 -f ${.OBJDIR}/plist3 $@
 
-.PHONY: pkgnames depends-check longnames
+.PHONY: pkgnames depends-check longnames \
+	collision-check1 collision-check2 collision-check3
 
 clean:
 	-rm -rf old new dest* plist* src*
