@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.88 2009/11/03 11:10:43 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.89 2009/11/14 18:48:05 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,7 +34,6 @@
 #include <event.h>
 #include <fcntl.h>
 #include <login_cap.h>
-#include <paths.h>
 #include <paths.h>
 #include <pwd.h>
 #include <regex.h>
