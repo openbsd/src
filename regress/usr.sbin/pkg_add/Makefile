@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2009/11/14 10:09:24 espie Exp $
+# $OpenBSD: Makefile,v 1.6 2009/11/14 10:13:32 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames
 
@@ -8,6 +8,9 @@ LONG1=iamareallongfilenamethatcantberepresentedcorrectlyinatararchivebutwewantit
 LONG2=iamanotherreallygfilenamethatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 LONG3=iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 LONG4=iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
+
+SRC1=${.OBJDIR}/src1/usr/local
+DEST2=${.OBJDIR}/dest2/usr/local
 
 pkgnames:
 	perl ${.CURDIR}/check-name
@@ -34,10 +37,10 @@ new/b-1.0.tgz:
 longnames: new/c-0.0.tgz
 	-rm -rf ${.OBJDIR}/dest2
 	ROOT=${.OBJDIR}/dest2 ${PKG_ADD} new/c-0.0.tgz
-	@test -f ${.OBJDIR}/dest2/usr/local/${LONG1}
-	@test -f ${.OBJDIR}/dest2/usr/local/${LONG2}
-	@cd ${.OBJDIR}/dest2/usr/local && test -h ${LONG3} && test `readlink ${LONG3}` = ${LONG2}
-	@cd ${.OBJDIR}/dest2/usr/local && test `stat -f '%i' ${LONG1}` = `stat -f '%i' ${LONG4}`
+	@test -f ${DEST2}/${LONG1}
+	@test -f ${DEST2}/${LONG2}
+	@cd ${DEST2} && test -h ${LONG3} && test `readlink ${LONG3}` = ${LONG2}
+	@cd ${DEST2} && test `stat -f '%i' ${LONG1}` = `stat -f '%i' ${LONG4}`
 
 plist1:
 	@echo "@owner "`whoami` >$@
@@ -47,11 +50,11 @@ plist1:
 	@echo ${LONG4} >>$@
 
 new/c-0.0.tgz: plist1
-	mkdir -p ${.OBJDIR}/src1/usr/local
-	@touch ${.OBJDIR}/src1/usr/local/${LONG1}
-	@touch ${.OBJDIR}/src1/usr/local/${LONG2}
-	@cd ${.OBJDIR}/src1/usr/local && ln -sf ${LONG2} ${LONG3}
-	@cd ${.OBJDIR}/src1/usr/local && ln -f ${LONG1} ${LONG4}
+	mkdir -p ${SRC1}
+	@touch ${SRC1}/${LONG1}
+	@touch ${SRC1}/${LONG2}
+	@cd ${SRC1} && ln -sf ${LONG2} ${LONG3}
+	@cd ${SRC1} && ln -f ${LONG1} ${LONG4}
 	${PKG_CREATE} -B ${.OBJDIR}/src1 -f plist1 $@
 
 .PHONY: pkgnames depends-check longnames
