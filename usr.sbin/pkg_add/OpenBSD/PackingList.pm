@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.91 2009/11/03 11:03:19 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.92 2009/11/15 08:46:36 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -238,6 +238,7 @@ sub UpdateInfoOnly
 		    while (<$fh>) {
 			    &$cont($_);
 		    }
+		    return;
 		}
 		next unless m/^\@(?:name\b|depend\b|wantlib\b|pkgpath\b|comment\s+subdir\=|arch\b)/o;
 		&$cont($_);
