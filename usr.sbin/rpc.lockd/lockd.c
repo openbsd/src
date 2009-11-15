@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd.c,v 1.11 2008/06/15 04:48:03 sturm Exp $	*/
+/*	$OpenBSD: lockd.c,v 1.12 2009/11/15 09:07:56 chl Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -44,8 +44,11 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <err.h>
 #include <errno.h>
+#include <signal.h>
 #include <string.h>
+#include <unistd.h>
 #include <netdb.h>
 
 #include "lockd.h"
