@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.83 2009/08/14 17:05:36 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.84 2009/11/15 09:05:09 jmc Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: August 14 2009 $
+.Dd $Mdocdate: November 15 2009 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -180,7 +180,7 @@ Reverse the selected ordering if supported by the view.
 .It Ic ^A \*(Ba Aq Ic Home
 Jump to the beginning of the current view.
 .It Ic ^B \*(Ba Aq Ic right arrow
-Select previous view.
+Select the previous view.
 .It Ic ^E \*(Ba Aq Ic End
 Jump to the end of the current view.
 .It Ic ^F \*(Ba Aq Ic left arrow
@@ -340,11 +340,11 @@ with each shown symbolically, when possible.
 .\".El
 .It Ic nfsclient
 Display statistics about NFS client activity.
-Output ressembles
+Output resembles
 .Cm nfsstat Fl c .
 .It Ic nfsserver
 Display statistics about NFS server activity.
-Output ressembles
+Output resembles
 .Cm nfsstat Fl s .
 .It Ic pf
 Display filter information about
@@ -416,7 +416,7 @@ Areas known to the kernel but not in use are shown as not available.
 .It Ic vmstat
 Take over the entire display and show a (rather crowded) compendium
 of statistics related to virtual memory usage, process scheduling,
-device interrupts, system name translation caching, disk I/O etc.
+device interrupts, system name translation caching, disk I/O, etc.
 This view is the default.
 .Pp
 The upper left quadrant of the screen shows the number
