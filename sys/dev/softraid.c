@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.177 2009/10/29 15:21:31 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.178 2009/11/15 13:32:04 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -852,8 +852,8 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 {
 	struct vnode		*vn;
 	struct disklabel	label;
-	struct sr_metadata	*md;
-	struct sr_discipline	*fake_sd;
+	struct sr_metadata	*md = NULL;
+	struct sr_discipline	*fake_sd = NULL;
 	struct sr_metadata_list *mle;
 	char			devname[32];
 	dev_t			dev, devr;
@@ -913,7 +913,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 	if (fake_sd == NULL) {
 		printf("%s: not enough memory for fake discipline\n",
 		    DEVNAME(sc));
-		goto nosd;
+		goto done;
 	}
 	fake_sd->sd_sc = sc;
 	fake_sd->sd_meta_type = SR_META_F_NATIVE;
@@ -976,10 +976,12 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 		vput(vn);
 	}
 
-	free(fake_sd, M_DEVBUF);
-nosd:
-	free(md, M_DEVBUF);
 done:
+	if (fake_sd)
+		free(fake_sd, M_DEVBUF);
+	if (md)
+		free(md, M_DEVBUF);
+
 	return (rv);
 }
 
