@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.11 2009/11/15 08:46:07 espie Exp $
+# $OpenBSD: Makefile,v 1.12 2009/11/15 08:50:59 espie Exp $
 
-REGRESS_TARGETS=pkgnames depends-check longnames always-update
+REGRESS_TARGETS=pkgnames depends-check longnames always-update \
+	collision-check3
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -67,6 +68,7 @@ always-update: old/g-0.0.tgz new/g-0.0.tgz
 	-rm -rf ${D8}
 	ROOT=${D8} ${PKG_ADD} old/g-0.0.tgz
 	ROOT=${D8} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u
+	PKG_DBDIR=${D8}/pkgdb pkg_info -qf g|fgrep -q comment2
 
 old/a-0.0.tgz:
 	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
