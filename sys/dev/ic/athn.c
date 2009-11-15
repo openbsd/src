@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.2 2009/11/15 10:25:27 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.3 2009/11/15 14:04:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -317,10 +317,10 @@ athn_attach(struct athn_softc *sc)
 		athn_btcoex_init(sc);
 #endif
 
-	athn_gpio_config_output(sc, AR_GPIO_LED_PIN,
+	athn_gpio_config_output(sc, sc->led_pin,
 	    AR_GPIO_OUTPUT_MUX_AS_OUTPUT);
 	/* LED off, active low. */
-	athn_gpio_write(sc, AR_GPIO_LED_PIN, 1);
+	athn_gpio_write(sc, sc->led_pin, 1);
 
 	if (AR_SINGLE_CHIP(sc)) {
 		printf("%s: %s rev %d (%dT%dR), ROM rev %d\n",
@@ -4322,6 +4322,8 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 
 	timeout_del(&sc->calib_to);
+	if (ic->ic_state == IEEE80211_S_RUN)
+		athn_gpio_write(sc, sc->led_pin, 1);
 
 	switch (nstate) {
 	case IEEE80211_S_INIT:
@@ -4340,6 +4342,8 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_ASSOC:
 		break;
 	case IEEE80211_S_RUN:
+		athn_gpio_write(sc, sc->led_pin, 0);
+
 		if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			break;
 

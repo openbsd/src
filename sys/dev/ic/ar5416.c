@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.2 2009/11/14 20:18:25 deraadt Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.3 2009/11/15 14:04:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -96,6 +96,7 @@ ar5416_attach(struct athn_softc *sc)
 	sc->eep_size = sizeof (struct ar5416_eeprom);
 	sc->def_nf = AR5416_PHY_CCA_MAX_GOOD_VALUE;
 	sc->ngpiopins = 14;
+	sc->led_pin = 1;
 	sc->workaround = AR5416_WA_DEFAULT;
 	sc->ops.setup = ar5416_setup;
 	sc->ops.swap_rom = ar5416_swap_rom;

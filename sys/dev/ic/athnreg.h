@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.2 2009/11/14 20:54:57 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.3 2009/11/15 14:04:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2141,7 +2141,6 @@ struct ar_rx_desc {
 #define AR_KEYTABLE_SIZE	128
 
 /* GPIO pins. */
-#define AR_GPIO_LED_PIN		1
 #define AR_GPIO_WLANACTIVE_PIN	5
 #define AR_GPIO_BTACTIVE_PIN	6
 #define AR_GPIO_BTPRIORITY_PIN	7
