@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.39 2009/11/05 08:36:48 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.40 2009/11/15 21:44:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -625,18 +625,33 @@ void
 mix_setmaster(struct aproc *p)
 {
 	unsigned n;
-	struct abuf *buf;
+	struct abuf *i, *j;
 	int weight;
 
+	/*
+	 * count the number of inputs. If a set of inputs
+	 * uses channels that have no intersection, they are 
+	 * counted only once because they don't need to 
+	 * share their volume
+	 */
 	n = 0;
-	LIST_FOREACH(buf, &p->ibuflist, ient) {
-		n++;
+	LIST_FOREACH(i, &p->ibuflist, ient) {
+		j = LIST_NEXT(i, ient);
+		for (;;) {
+			if (j == NULL) {
+				n++;
+				break;
+			}
+			if (i->cmin > j->cmax || i->cmax < j->cmin)
+				break;
+			j = LIST_NEXT(j, ient);
+		}
 	}
-	LIST_FOREACH(buf, &p->ibuflist, ient) {
+	LIST_FOREACH(i, &p->ibuflist, ient) {
 		weight = ADATA_UNIT / n;
-		if (weight > buf->r.mix.maxweight)
-			weight = buf->r.mix.maxweight;
-		buf->r.mix.weight = weight;
+		if (weight > i->r.mix.maxweight)
+			weight = i->r.mix.maxweight;
+		i->r.mix.weight = weight;
 	}
 }
 
