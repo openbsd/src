@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.171 2009/08/08 11:14:01 kevlo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.172 2009/11/15 01:36:10 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -382,6 +382,8 @@ acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
 acx*	at cardbus?			# TI ACX100/ACX111 (802.11b/g)
 ath*	at pci?				# Atheros AR5k (802.11a/b/g)
 ath*	at cardbus?			# Atheros AR5k (802.11a/b/g)
+athn*	at pci?				# Atheros AR9k (802.11a/g/n)
+athn*	at cardbus?			# Atheros AR9k (802.11a/g/n)
 atw*	at pci?				# ADMtek ADM8211 (802.11)
 atw*	at cardbus?			# ADMtek ADM8211 (802.11)
 bwi*	at pci?				# Broadcom AirForce (802.11b/g)
