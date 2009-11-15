@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.16 2009/11/11 12:32:03 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.17 2009/11/15 08:59:32 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -88,24 +88,29 @@ sub set_header
 	return $isatty;
 }
 
+sub _show
+{
+	my ($self, $d) = @_;
+
+	return if $d eq $lastdisplay && !$continued;
+	$lastdisplay=$d;
+	$continued = 0;
+	print $d, "\r";
+}
+
 sub message
 {
 	my $self = shift;
 	return unless $isatty;
 	my $message = shift;
-	my $d;
 	if ($playfield > length($message)) {
 		$message .= ' 'x($playfield - length($message));
 	}
 	if ($playfield) {
-		$d = "$header|".substr($message, 0, $playfield);
+		$self->_show("$header|".substr($message, 0, $playfield));
 	} else {
-		$d = $header;
+		$self->_show($header);
 	}
-	return if $d eq $lastdisplay && !$continued;
-	$lastdisplay=$d;
-	$continued = 0;
-	print $d, "\r";
 }
 
 sub show
@@ -113,18 +118,14 @@ sub show
 	my $self = shift;
 	return unless $isatty;
 	my ($current, $total) = @_;
-	my $d;
 
 	if ($playfield) {
-	    my $stars = int (($current * $playfield) / $total + 0.5);
-	    my $percent = int (($current * 100)/$total + 0.5);
-	    $d = "$header|".'*'x$stars.' 'x($playfield-$stars)."| ".$percent."\%";
+		my $stars = int (($current * $playfield) / $total + 0.5);
+		my $percent = int (($current * 100)/$total + 0.5);
+		$self->_show("$header|".'*'x$stars.' 'x($playfield-$stars)."| ".$percent."\%");
 	} else {
-	    $d = $header;
+	    $self->_show( $header);
 	}
-	return if $d eq $lastdisplay;
-        $lastdisplay=$d;
-        print $d, "\r";
 }
 
 sub clear
