@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.10 2009/11/15 08:38:19 espie Exp $
+# $OpenBSD: Makefile,v 1.11 2009/11/15 08:46:07 espie Exp $
 
-REGRESS_TARGETS=pkgnames depends-check longnames
+REGRESS_TARGETS=pkgnames depends-check longnames always-update
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -63,6 +63,11 @@ collision-check5: new/d-0.0.tgz new/e-0.0.tgz
 	-rm -rf ${D7}/pkgdb/d-0.0
 	ROOT=${D7} ${PKG_ADD} -F removecollisions new/d-0.0.tgz
 
+always-update: old/g-0.0.tgz new/g-0.0.tgz
+	-rm -rf ${D8}
+	ROOT=${D8} ${PKG_ADD} old/g-0.0.tgz
+	ROOT=${D8} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u
+
 old/a-0.0.tgz:
 	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
 
@@ -100,30 +105,44 @@ plist3:
 	@echo f >>$@
 	@echo g >>$@
 
+plist4:
+	@echo "@option always-update" >$@
+	@echo "@comment comment1" >>$@
+
+plist5:
+	@echo "@option always-update" >$@
+	@echo "@comment comment2" >>$@
+
 new/c-0.0.tgz: plist1
 	mkdir -p ${SRC1}
 	@touch ${SRC1}/${LONG1}
 	@touch ${SRC1}/${LONG2}
 	@cd ${SRC1} && ln -sf ${LONG2} ${LONG3}
 	@cd ${SRC1} && ln -f ${LONG1} ${LONG4}
-	${PKG_CREATE} -B ${.OBJDIR}/src1 -f plist1 $@
+	${PKG_CREATE} -B src1 -f plist1 $@
 
 new/d-0.0.tgz: plist2
 	mkdir -p ${SRC2}
 	touch ${SRC2}/a ${SRC2}/b ${SRC2}/c
 	echo "coucou" >${SRC2}/f
 	echo "not coucou" >${SRC2}/g
-	${PKG_CREATE} -B ${.OBJDIR}/src2 -f ${.OBJDIR}/plist2 $@
+	${PKG_CREATE} -B src2 -f plist2 $@
 
 new/e-0.0.tgz: plist3
 	mkdir -p ${SRC3}
 	touch ${SRC3}/a ${SRC3}/c ${SRC3}/d
 	echo "coucou" >${SRC3}/f
 	echo "coucou" >${SRC3}/g
-	${PKG_CREATE} -B ${.OBJDIR}/src3 -f ${.OBJDIR}/plist3 $@
+	${PKG_CREATE} -B src3 -f plist3 $@
 
 new/f-0.0.tgz:
 	${PKG_CREATE} -P'test/d:d-*:d-0.0' -f ${.CURDIR}/empty $@
+
+old/g-0.0.tgz: plist4
+	${PKG_CREATE} -f plist4 $@
+
+new/g-0.0.tgz: plist5
+	${PKG_CREATE} -f plist5 $@
 
 .PHONY: pkgnames depends-check longnames \
 	collision-check1 collision-check2 collision-check3 \
