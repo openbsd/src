@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.18 2009/11/11 11:13:16 espie Exp $
+# $OpenBSD: Error.pm,v 1.19 2009/11/15 09:53:52 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,7 @@ use strict;
 use warnings;
 
 package OpenBSD::Error;
+require Exporter;
 our @ISA=qw(Exporter);
 our @EXPORT=qw(System VSystem Copy Unlink Fatal Warn Usage set_usage 
     try throw catch catchall rethrow);
