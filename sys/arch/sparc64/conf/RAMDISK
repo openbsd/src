@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.95 2009/09/01 19:49:59 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.96 2009/11/15 17:24:06 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -77,7 +77,10 @@ pcmcia*	at cardslot?
 cbb*	at pci?
 cardslot* at cbb?
 
+ath*	at pci?			# Atheros AR5k (802.11a/b/g)
 ath*	at cardbus?		# Atheros AR5k (802.11a/b/g)
+athn*	at pci?			# Atheros AR9k (802.11a/g/n)
+athn*	at cardbus?		# Atheros AR9k (802.11a/g/n)
 ral*	at pci?			# Ralink RT2500/RT2501/RT2600
 ral*	at cardbus?		# Ralink RT2500/RT2501/RT2600
 com*	at pcmcia?		# PCMCIA modems/serial ports

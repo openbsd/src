@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.245 2009/10/03 19:56:14 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.246 2009/11/15 17:24:06 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -96,6 +96,8 @@ jme*	at pci?			# JMicron JMC250/JMC260 Ethernet
 
 ath*	at pci?			# Atheros AR5k (802.11a/b/g)
 ath*	at cardbus?		# Atheros AR5k (802.11a/b/g)
+athn*	at pci?				# Atheros AR9k (802.11a/g/n)
+athn*	at cardbus?			# Atheros AR9k (802.11a/g/n)
 pgt*	at pci?			# Prism54 (only full-mac varients)
 acx*	at pci?			# TI ACX100/ACX111 (802.11b/g)
 acx*	at cardbus?		# TI ACX100/ACX111 (802.11b/g)
