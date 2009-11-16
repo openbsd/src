@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.73 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.74 2009/11/16 13:41:49 jsg Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ struct ep_media {
  * (i.e., EPMEDIA_ constants)  forcing order of entries. 
  *  Note that 3 is reserved.
  */
-const struct ep_media ep_vortex_media[8] = {
+const struct ep_media ep_vortex_media[] = {
   { EP_PCI_UTP,        EPC_UTP, "utp",	    IFM_ETHER|IFM_10_T,
        EPMEDIA_10BASE_T },
   { EP_PCI_AUI,        EPC_AUI, "aui",	    IFM_ETHER|IFM_10_5,
@@ -117,14 +117,14 @@ const struct ep_media ep_vortex_media[8] = {
  * map from media-present bits in register CNFG_CNTRL
  * (window 0, offset ?) to  ifmedia "media words" and printable names.
  */
-struct ep_media ep_isa_media[3] = {
+struct ep_media ep_isa_media[] = {
   { EP_W0_CC_UTP,  EPC_UTP, "utp",   IFM_ETHER|IFM_10_T, EPMEDIA_10BASE_T },
   { EP_W0_CC_AUI,  EPC_AUI, "aui",   IFM_ETHER|IFM_10_5, EPMEDIA_AUI },
   { EP_W0_CC_BNC,  EPC_BNC, "bnc",   IFM_ETHER|IFM_10_2, EPMEDIA_10BASE_2 },
 };
 
 /* Map vortex reset_options bits to if_media codes. */
-const u_int ep_default_to_media[8] = {
+const u_int ep_default_to_media[] = {
 	IFM_ETHER | IFM_10_T,
 	IFM_ETHER | IFM_10_5,
 	0, 			/* reserved by 3Com */
@@ -480,7 +480,7 @@ ep_isa_probemedia(sc)
 	conn = 0;
 	GO_WINDOW(0);
 	ep_w0_config = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < nitems(ep_isa_media); i++) {
 		struct ep_media * epm = ep_isa_media + i;
 
 		if ((ep_w0_config & epm->epm_eeprom_data) != 0) {
@@ -544,7 +544,7 @@ ep_vortex_probemedia(sc)
 
 	/* set available media options */
 	conn = 0;
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < nitems(ep_vortex_media); i++) {
 		const struct ep_media *epm = ep_vortex_media + i;
 
 		if ((reset_options & epm->epm_eeprom_data) != 0) {
@@ -559,7 +559,7 @@ ep_vortex_probemedia(sc)
 	sc->ep_connectors = conn;
 
 	/* Show  eeprom's idea of default media.  */
-	medium_name = (default_media > 8)
+	medium_name = (default_media > nitems(ep_vortex_media) - 1)
 		? "(unknown/impossible media)"
 		: ep_vortex_media[default_media].epm_name;
 	printf(" default %s%s",
