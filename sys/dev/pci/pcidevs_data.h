@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1507 2009/11/09 14:04:32 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1508 2009/11/16 18:45:04 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4437,7 +4437,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX,
-	    "Nitrox XL",
+	    "NITROX XL",
+	},
+	{
+	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX_LITE,
+	    "NITROX Lite",
+	},
+	{
+	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX_PX,
+	    "NITROX PX",
 	},
 	{
 	    PCI_VENDOR_CCUBE, PCI_PRODUCT_CCUBE_CINEMASTER,

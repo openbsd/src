@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1507 2009/11/09 14:04:32 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1508 2009/11/16 18:45:04 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1553,7 +1553,9 @@
 #define	PCI_PRODUCT_C4T_GPPCI	0x6773		/* GPPCI */
 
 /* Cavium products */
-#define	PCI_PRODUCT_CAVIUM_NITROX	0x0001		/* Nitrox XL */
+#define	PCI_PRODUCT_CAVIUM_NITROX	0x0001		/* NITROX XL */
+#define	PCI_PRODUCT_CAVIUM_NITROX_LITE	0x0003		/* NITROX Lite */
+#define	PCI_PRODUCT_CAVIUM_NITROX_PX	0x0010		/* NITROX PX */
 
 /* CCUBE products */
 #define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster */
