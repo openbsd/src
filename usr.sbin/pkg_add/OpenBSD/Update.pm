@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.93 2009/11/11 12:04:19 espie Exp $
+# $OpenBSD: Update.pm,v 1.94 2009/11/16 14:47:05 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -36,6 +36,7 @@ sub add_updateset
 	my ($self, $set, $handle, $location) = @_;
 
 	my $n = OpenBSD::Handle->from_location($location);
+	$handle->{done} = $n;
 	$set->add_newer($n);
 }
 
@@ -141,19 +142,20 @@ sub process_hint
 	my ($self, $set, $hint, $state) = @_;
 
 	my $l;
+	my $hint_name = $hint->pkgname;
 	my $k = OpenBSD::Search::FilterLocation->keep_most_recent;
 	# first try to find us exactly
 
 	$state->progress->message("Looking for $hint");
-	$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Exact->new($hint), $k);
+	$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Exact->new($hint_name), $k);
 	if (@$l == 0) {
-		my $t = $hint;
+		my $t = $hint_name;
 		$t =~ s/\-\d([^-]*)\-?/--/;
 		$l = OpenBSD::PackageLocator->match_locations(OpenBSD::Search::Stem->new($t), $k);
 	}
-	my $r = $state->choose_location($hint, $l);
+	my $r = $state->choose_location($hint_name, $l);
 	if (defined $r) {
-		$self->add_updateset($set, undef, $r);
+		$self->add_updateset($set, $hint, $r);
 		return 1;
 	} else {
 		return 0;
