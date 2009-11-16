@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.8 2009/11/11 18:56:07 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.9 2009/11/16 11:15:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -151,10 +151,6 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 			if (*cmdlist == NULL)
 				goto out;
 
-			do
-				xfree(argv[argc - 1]);
-			while (--argc > 0);
-
 			rval = 0;
 			goto out;
 		case '~':
@@ -189,7 +185,7 @@ out:
 
 	if (argv != NULL) {
 		for (i = 0; i < argc; i++)
-			xfree(argv[argc]);
+			xfree(argv[i]);
 		xfree(argv);
 	}
 
