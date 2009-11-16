@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.2 2009/11/16 12:53:27 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.3 2009/11/16 14:42:18 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -22,10 +22,6 @@ our $state;
 
 our ($opt_n, $opt_x, $opt_v, $opt_B, $opt_L, $opt_i, $opt_q, $opt_c, $opt_I);
 $opt_v = 0;
-
-sub setup_state
-{
-}
 
 sub handle_options
 {
@@ -100,7 +96,7 @@ sub framework
 		OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 		OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
 		if ($state->{beverbose}) {
-			OpenBSD::Vstat::tally();
+			$state->vstat->tally;
 		}
 		$state->progress->clear;
 		$state->log->dump;
@@ -144,6 +140,50 @@ sub cleanup
 	OpenBSD::SharedItems::cleanup($self, $state);
 }
 
+package OpenBSD::MyStat;
+use OpenBSD::Vstat;
+sub new
+{
+	my $class = shift;
+	bless {}, $class
+}
+
+sub add
+{
+	shift;
+	&OpenBSD::Vstat::add;
+}
+
+sub remove
+{
+	shift;
+	&OpenBSD::Vstat::remove;
+}
+
+sub exists
+{
+	shift;
+	&OpenBSD::Vstat::vexists;
+}
+
+sub stat
+{
+	shift;
+	&OpenBSD::Vstat::filestat;
+}
+
+sub tally
+{
+	shift;
+	&OpenBSD::Vstat::tally;
+}
+
+sub synchronize
+{
+	shift;
+	&OpenBSD::Vstat::synchronize;
+}
+
 package OpenBSD::Log;
 use OpenBSD::Error;
 our @ISA = qw(OpenBSD::Error);
@@ -174,7 +214,13 @@ sub init
 {
 	my $self = shift;
 	$self->{l} = OpenBSD::Log->new;
+	$self->{vstat} = OpenBSD::MyStat->new;
 	$self->{progressmeter} = bless {}, "OpenBSD::StubProgress";
+}
+
+sub vstat
+{
+	return shift->{vstat};
 }
 
 sub log

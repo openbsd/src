@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.87 2009/11/11 13:00:40 espie Exp $
+# $OpenBSD: Delete.pm,v 1.88 2009/11/16 14:42:18 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,6 @@ use warnings;
 
 package OpenBSD::Delete;
 use OpenBSD::Error;
-use OpenBSD::Vstat;
 use OpenBSD::PackageInfo;
 use OpenBSD::RequiredBy;
 use OpenBSD::Paths;
@@ -113,7 +112,7 @@ sub delete_package
 	$plist->compute_size;
 	Fatal "fatal issues in deinstalling $pkgname"
 	    if $state->{problems};
-	OpenBSD::Vstat::synchronize();
+	$state->vstat->synchronize;
 
 	delete_plist($plist, $state);
 	$state->progress->next;
@@ -361,14 +360,13 @@ sub should_run
 
 package OpenBSD::PackingElement::FileBase;
 use OpenBSD::Error;
-use OpenBSD::Vstat;
 
 sub prepare_for_deletion
 {
 	my ($self, $state, $pkgname) = @_;
 
 	my $fname = $state->{destdir}.$self->fullname;
-	my $s = OpenBSD::Vstat::remove($fname, $self->{size});
+	my $s = $state->vstat->remove($fname, $self->{size});
 	return unless defined $s;
 	if ($s->{ro}) {
 		$s->report_ro($state, $fname);
@@ -459,7 +457,7 @@ sub prepare_for_deletetion
 	if (!defined $size) {
 		$size = (stat $fname)[7];
 	}
-	my $s = OpenBSD::Vstat::remove($fname, $self->{size});
+	my $s = $state->vstat->remove($fname, $self->{size});
 	return unless defined $s;
 	if ($s->{ro}) {
 		$s->report_ro($state, $fname);

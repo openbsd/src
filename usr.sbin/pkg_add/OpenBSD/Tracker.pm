@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.8 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.9 2009/11/16 14:42:18 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -44,11 +44,8 @@ sub add_set
 	for my $n ($set->newer) {
 		$self->{to_install}->{$n->pkgname} = $set;
 	}
-	for my $n ($set->older) {
+	for my $n ($set->older, $set->hints) {
 		$self->{to_update}->{$n->pkgname} = $set;
-	}
-	for my $n ($set->hints) {
-		$self->{to_update}->{$n} = $set;
 	}
 	return $self;
 }

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.26 2009/11/15 09:01:55 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.27 2009/11/16 14:42:18 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -21,7 +21,6 @@ use warnings;
 package OpenBSD::CollisionReport;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
-use OpenBSD::Vstat;
 
 sub find_collisions
 {
@@ -29,7 +28,7 @@ sub find_collisions
 	my $verbose = $state->{verbose};
 	my $bypkg = {};
 	for my $name (keys %$todo) {
-		my $p = OpenBSD::Vstat::vexists $name;
+		my $p = $state->vstat->exists($name);
 		if (ref $p) {
 			my $pkg = $$p;
 			push(@{$bypkg->{$pkg}}, $name);

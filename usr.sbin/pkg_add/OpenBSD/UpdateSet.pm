@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.24 2009/11/16 12:20:32 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.25 2009/11/16 14:42:18 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,6 +35,19 @@
 use strict;
 use warnings;
 
+# hints should behave like locations
+package OpenBSD::hint;
+sub new
+{
+	my ($class, $name) = @_;
+	bless {name => $name}, $class;
+}
+
+sub pkgname
+{
+	return shift->{name};
+}
+
 package OpenBSD::UpdateSet;
 sub new
 {
@@ -52,7 +65,9 @@ sub add_newer
 sub add_hints
 {
 	my ($self, @hints) = @_;
-	push(@{$self->{hints}}, @hints);
+	for my $h (@hints) {
+		push(@{$self->{hints}}, OpenBSD::hint->new($h));
+	}
 	return $self;
 }
 
@@ -81,6 +96,11 @@ sub hints
 {
 	my $self =shift;
 	return @{$self->{hints}};
+}
+sub hint_names
+{
+	my $self =shift;
+	return map {$_->pkgname} $self->hints;
 }
 
 sub older_names
@@ -163,13 +183,13 @@ sub validate_plists
 		OpenBSD::CollisionReport::collision_report($state->{colliding}, $state);
 	}
 	if (defined $state->{overflow}) {
-		OpenBSD::Vstat::tally();
+		$state->vstat->tally;
 	}
 	if ($state->{problems}) {
 		require OpenBSD::Error;
 		OpenBSD::Error::Fatal "fatal issues in ", $self->print;
 	}
-	OpenBSD::Vstat::synchronize();
+	$state->vstat->synchronize;
 }
 
 sub compute_size
