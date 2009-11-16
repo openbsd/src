@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.1 2009/11/16 12:20:32 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.2 2009/11/16 12:53:27 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -25,14 +25,14 @@ $opt_v = 0;
 
 sub setup_state
 {
-	lock_db($opt_n) unless $state->{defines}->{nolock};
-	$state->setup_progressmeter($opt_x);
-	$state->check_root;
 }
 
 sub handle_options
 {
-	my ($opt_string, $hash) = @_;
+	my ($opt_string, $hash, @usage) = @_;
+
+	set_usage(@usage);
+	$state = OpenBSD::State->new;
 	$hash->{h} = sub { Usage(); };
 	$hash->{f} = $hash->{F} = sub { 
 		for my $o (split /\,/o, shift) { 
@@ -83,17 +83,43 @@ sub do_the_main_work
 		eval { &$code; };
 	}
 	my $dielater = $@;
-	# cleanup various things
-	$state->{recorder}->cleanup($state);
-	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
-	OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
-	if ($state->{beverbose}) {
-		OpenBSD::Vstat::tally();
-	}
-	$state->progress->clear;
-	$state->log->dump;
 	return $dielater;
 }
+
+sub framework
+{
+	my $code = shift;
+	try {
+		lock_db($opt_n) unless $state->{defines}->{nolock};
+		$state->setup_progressmeter($opt_x);
+		$state->check_root;
+		process_parameters();
+		my $dielater = do_the_main_work($code);
+		# cleanup various things
+		$state->{recorder}->cleanup($state);
+		OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
+		OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
+		if ($state->{beverbose}) {
+			OpenBSD::Vstat::tally();
+		}
+		$state->progress->clear;
+		$state->log->dump;
+		finish_display();
+		# show any error, and show why we died...
+		rethrow $dielater;
+	} catch {
+		print STDERR "$0: $_\n";
+		if ($_ =~ m/^Caught SIG(\w+)/o) {
+			kill $1, $$;
+		}
+		exit(1);
+	};
+
+	if ($bad) {
+		exit(1);
+	}
+}
+
 
 package OpenBSD::SharedItemsRecorder;
 sub new

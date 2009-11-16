@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.122 2009/11/16 12:32:16 espie Exp $
+# $OpenBSD: pkg_delete,v 1.123 2009/11/16 12:53:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -21,7 +21,7 @@ use warnings;
 
 use OpenBSD::AddDelete;
 
-package OpenBSD::pkg_delete::State;
+package OpenBSD::State;
 our @ISA=(qw(OpenBSD::UI));
 
 package OpenBSD::AddDelete;
@@ -35,11 +35,10 @@ use OpenBSD::PackageInfo;
 use OpenBSD::Vstat;
 use OpenBSD::UpdateSet;
 
-set_usage('pkg_delete [-cIinqvx] [-B pkg-destdir] [-F keywords] pkg-name [...]');
-$state = OpenBSD::pkg_delete::State->new;
 our ($opt_d, $opt_p, $opt_i);
 
-handle_options('chixDdnqpS:');
+handle_options('chixDdnqpS:', {},
+    'pkg_delete [-cIinqvx] [-B pkg-destdir] [-F keywords] pkg-name [...]');
 
 $opt_B = $ENV{'PKG_DESTDIR'} unless defined $opt_B;
 $opt_B = '' unless defined $opt_B;
@@ -55,9 +54,6 @@ if (defined $opt_d) {
 	Usage "Option d is obsolete";
 }
 
-my %done;
-my $removed;
-
 $state->{destdir} = $opt_B;
 if ($opt_B eq '') {
     $state->{destdirname} = '';
@@ -67,56 +63,64 @@ if ($opt_B eq '') {
 
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
 
-try {
-setup_state();
 
-# First, resolve pkg names
+my %done;
+my $removed;
 
+# Resolve pkg names
 my @realnames;
+my @todo;
 
-OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames, 
-    "(removing them all)", $state);
+sub process_parameters
+{
+	OpenBSD::PackageInfo::solve_installed_names(\@ARGV, \@realnames, 
+	    "(removing them all)", $state);
 
-my @todo = OpenBSD::RequiredBy->compute_closure(@realnames);
+	@todo = OpenBSD::RequiredBy->compute_closure(@realnames);
 
-if (@todo > @realnames) {
-	my $details = $state->{very_verbose} || $defines{verbosedeps};
-	my $show    = sub {
-		my ($p, $d) = @_;
-		$state->say("Can't remove ", join(' ', @$p), 
-		    " without also removing:\n",
-		    join(' ', @$d));
-	};
-	if ($state->{interactive} || !$details) {
-		my %deps = map {($_, 1)} @todo;
-		for my $p (@realnames) {
-			delete $deps{$p};
+	if (@todo > @realnames) {
+		my $details = $state->{very_verbose} || $defines{verbosedeps};
+		my $show    = sub {
+			my ($p, $d) = @_;
+			$state->say("Can't remove ", join(' ', @$p), 
+			    " without also removing:\n",
+			    join(' ', @$d));
+		};
+		if ($state->{interactive} || !$details) {
+			my %deps = map {($_, 1)} @todo;
+			for my $p (@realnames) {
+				delete $deps{$p};
+			}
+			&$show([@realnames], [keys %deps]);
+			if (@realnames > 1 && (keys %deps) > 1 && 
+			    OpenBSD::Interactive::confirm(
+			    "Do you want details", $state->{interactive}, 1)) {
+				$details = 1;
+			}
 		}
-		&$show([@realnames], [keys %deps]);
-		if (@realnames > 1 && (keys %deps) > 1 && 
-		    OpenBSD::Interactive::confirm(
-		    "Do you want details", $state->{interactive}, 1)) {
-			$details = 1;
+		if ($details) {
+			for my $pkg (@realnames) {
+				my @deps = OpenBSD::RequiredBy->compute_closure($pkg);
+				next unless @deps > 1;
+				@deps = grep {$_ ne $pkg} @deps;
+				&$show([$pkg], [@deps]);
+			}
 		}
-	}
-	if ($details) {
-		for my $pkg (@realnames) {
-			my @deps = OpenBSD::RequiredBy->compute_closure($pkg);
-			next unless @deps > 1;
-			@deps = grep {$_ ne $pkg} @deps;
-			&$show([$pkg], [@deps]);
+		my $them = @todo > 1 ? 'them' : 'it';
+		if ($defines{dependencies} or 
+		    OpenBSD::Interactive::confirm("Do you want to remove $them as well", $state->{interactive}, 0)) {
+			$state->say("(removing $them as well)");
+		} else {
+			$bad = 1;
 		}
-	}
-	my $them = @todo > 1 ? 'them' : 'it';
-	if ($defines{dependencies} or 
-	    OpenBSD::Interactive::confirm("Do you want to remove $them as well", $state->{interactive}, 0)) {
-		$state->say("(removing $them as well)");
-	} else {
-		$bad = 1;
 	}
 }
 
-my $dielater = do_the_main_work(
+sub finish_display
+{
+}
+
+framework(
 sub {
 	# and finally, handle the removal
 	do {
@@ -155,17 +159,3 @@ sub {
 		}
 	} while ($removed);
 });
-
-rethrow $dielater;
-} catch {
-	print STDERR "$0: $_\n";
-	if ($_ =~ m/^Caught SIG(\w+)/o) {
-		kill $1, $$;
-	}
-	exit(1);
-};
-
-if ($bad) {
-	exit(1);
-}
-
