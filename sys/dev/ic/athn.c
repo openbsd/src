@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.4 2009/11/16 17:08:14 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.5 2009/11/16 17:09:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4546,7 +4546,7 @@ athn_init(struct ifnet *ifp)
 	struct athn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_channel *c, *extc;
-	int i, error;
+	int error;
 
 	c = ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	extc = NULL;
