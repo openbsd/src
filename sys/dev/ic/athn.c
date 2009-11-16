@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.3 2009/11/15 14:04:02 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.4 2009/11/16 17:08:14 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4594,12 +4594,13 @@ athn_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
 
+#ifdef notyet
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		/* Configure WEP keys. */
 		for (i = 0; i < IEEE80211_WEP_NKID; i++)
 			(void)athn_set_key(ic, NULL, &ic->ic_nw_keys[i]);
 	}
-
+#endif
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 	else
