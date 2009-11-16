@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.54 2009/10/15 18:17:18 espie Exp $
+# $OpenBSD: Makefile,v 1.55 2009/11/16 12:20:32 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ POD2MAN=/usr/bin/pod2man
 
 PACKAGES= \
     OpenBSD/Add.pm \
+    OpenBSD/AddDelete.pm \
     OpenBSD/ArcCheck.pm \
     OpenBSD/CollisionReport.pm \
     OpenBSD/Delete.pm \
