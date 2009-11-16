@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.17 2009/11/15 08:59:32 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.18 2009/11/16 23:02:57 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -63,7 +63,7 @@ sub compute_playfield
 {
 	return unless $isatty;
 	# compute playfield
-	$playfield = $width - length($header) - 10;
+	$playfield = $width - length($header) - 7;
 	if ($playfield < 5) {
 		$playfield = 0;
 	}
