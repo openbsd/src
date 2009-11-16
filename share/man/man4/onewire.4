@@ -1,4 +1,4 @@
-.\"	$OpenBSD: onewire.4,v 1.7 2008/03/04 21:43:58 martin Exp $
+.\"	$OpenBSD: onewire.4,v 1.8 2009/11/16 20:13:12 miod Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 4 2008 $
+.Dd $Mdocdate: November 16 2009 $
 .Dt ONEWIRE 4
 .Os
 .Sh NAME
@@ -23,6 +23,8 @@
 .Sh SYNOPSIS
 .Cd "onewire* at gpioow?"
 .Cd "onewire* at uow?"
+.Cd "onewire* at ioc?      " Pq sgi
+.Cd "onewire* at xheart?   " Pq sgi
 .Pp
 .Cd "option ONEWIREVERBOSE"
 .Sh DESCRIPTION
@@ -43,18 +45,26 @@ bus.
 .Pp
 The driver supports plugging and unplugging slave devices on the fly.
 .Sh SUPPORTED MASTERS
-.Bl -tag -width 10n -offset ind -compact
+.Bl -tag -width 11n -offset ind -compact
 .It Xr gpioow 4
 1-Wire bus bit-banging through GPIO pin
+.It Xr ioc 4
+IOC3 generic workstation I/O device
 .It Xr uow 4
 Maxim/Dallas DS2490 USB 1-Wire adapter
+.It Xr xheart 4
+Octane core system widget
 .El
 .Sh SUPPORTED SLAVES
-.Bl -tag -width 10n -offset ind -compact
+.Bl -tag -width 11n -offset ind -compact
 .It Xr owid 4
 1-Wire ID device
+.It Xr owmac 4
+1-Wire Ethernet address
 .It Xr owsbm 4
 1-Wire smart battery monitor device
+.It Xr owserial 4
+1-Wire serial number
 .It Xr owtemp 4
 1-Wire temperature device
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ioc.4,v 1.6 2009/11/10 15:50:10 jsing Exp $
+.\"	$OpenBSD: ioc.4,v 1.7 2009/11/16 20:13:13 miod Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2009 $
+.Dd $Mdocdate: November 16 2009 $
 .Dt IOC 4 sgi
 .Os
 .Sh NAME
@@ -26,9 +26,8 @@
 .Cd "com1 at ioc? base 0x20170"
 .Cd "dsrtc0 at ioc?"
 .Cd "iec* at ioc?"
-.Cd "onewire* at ioc?"
 .Cd "iockbc* at ioc?"
-.\" .Cd "pciide* at ioc?"
+.Cd "onewire* at ioc?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -46,8 +45,6 @@ Time-of-day chip.
 10/100 Mbit/s Ethernet interface.
 .It Xr iockbc 4
 PS/2 keyboard and mouse interface.
-.\" .It Xr pciide 4
-.\" PCI IDE controller driver.
 .El
 .Pp
 In order to tell these configurations apart, all IOC3 boards, except those

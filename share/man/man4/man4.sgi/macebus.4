@@ -1,4 +1,4 @@
-.\"	$OpenBSD: macebus.4,v 1.10 2009/10/26 18:38:09 miod Exp $
+.\"	$OpenBSD: macebus.4,v 1.11 2009/11/16 20:13:13 miod Exp $
 .\"	$NetBSD: mace.4,v 1.4 2004/02/10 16:54:02 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 26 2009 $
+.Dd $Mdocdate: November 16 2009 $
 .Dt MACEBUS 4 sgi
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Cd "clock0 at macebus0"
 .Cd "com0 at macebus0 base 0x00390000"
 .Cd "com1 at macebus0 base 0x00398000"
+.Cd "dsrtc0 at macebus0"
 .Cd "mavb0 at macebus0"
 .Cd "mec0 at macebus0"
 .Cd "mkbc0 at macebus0"
@@ -56,6 +57,7 @@ also provides a
 bridge.
 .Sh SEE ALSO
 .Xr com 4 ,
+.Xr dsrtc 4 ,
 .Xr intro 4 ,
 .Xr mainbus 4 ,
 .Xr mavb 4 ,
