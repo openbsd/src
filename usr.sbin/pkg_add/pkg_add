@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.386 2009/11/16 14:47:05 espie Exp $
+# $OpenBSD: pkg_add,v 1.387 2009/11/16 15:01:30 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -646,6 +646,36 @@ if ($opt_l && @ARGV != 0) {
 # later for the most part...
 my @todo2 = ();
 
+sub inform_user_of_pending_update
+{
+	my $state = shift;
+	my @cantupdate = $state->tracker->cant_update;
+	if (@cantupdate > 0) {
+		$state->print("Cannot find updates for ", join(', ', (@cantupdate > 50 ? @cantupdate[1..50] : @cantupdate)));
+		print " and more" if @cantupdate > 50;
+		print "\n";
+		if (@todo2 == 0) {
+			print "No updates found\n";
+			exit(1);
+		}
+		if ($state->{defines}->{alwaysupdate} ||
+		    $state->{full_update} && !$state->{interactive}) {
+			print "Proceeding anyways\n";
+		} else {
+			if (!OpenBSD::Interactive::confirm("Proceed", 
+			    $state->{interactive}, 0)) {
+				exit(1);
+			}
+		}
+	}
+	if (defined $state->{issues}) {
+		$state->say("There are some ambiguities. ",
+		    "Please run in interactive mode again.");
+	}
+	$state->say("Running update ", 
+	    join(',', map {$_->short_print} @todo2));
+}
+
 sub process_parameters
 {
 	if ($opt_l) {
@@ -665,13 +695,11 @@ sub process_parameters
 		$state->progress->set_header("Looking for packages");
 		for my $_ (@ARGV) {
 			my $set = OpenBSD::UpdateSet->new->add_hints($_);
-			for my $hint ($set->hints) {
-				if ($state->updater->process_hint($set, 
-				    $hint, $state)) {
-					push(@todo2, $set);
-				}
+			if ($state->updater->process_set($set, $state)) {
+				push(@todo2, $set);
 			}
 		}
+		inform_user_of_pending_update($state);
 	# 2/ update existing stuff
 	} elsif ($opt_u) {
 		require OpenBSD::PackageRepository::Installed;
@@ -694,47 +722,15 @@ sub process_parameters
 				$state->say("Problem finding $pkgname");
 			} else {
 				my $set = OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l));
-				my $problem = 0;
-				for my $l ($set->older) {
-					(defined $state->updater->process_handle($set, $l, $state)) or $problem = 1;
-				}
-				if ($set->newer > 0) {
+				if ($state->updater->process_set($set, $state)) {
 					push(@todo2, $set);
-				} else {
-					$state->tracker->mark_uptodate($set);
-				}
-				if ($problem) {
-					$state->tracker->mark_cant_update($set);
 				}
 			}
 		}
 		$state->progress->next;
 
-		my @cantupdate = $state->tracker->cant_update;
-		if (@cantupdate > 0) {
-			$state->print("Cannot find updates for ", join(', ', (@cantupdate > 50 ? @cantupdate[1..50] : @cantupdate)));
-			print " and more" if @cantupdate > 50;
-			print "\n";
-			if (@todo2 == 0) {
-				print "No updates found\n";
-				exit(1);
-			}
-			if ($state->{defines}->{alwaysupdate} ||
-			    $state->{full_update} && !$state->{interactive}) {
-				print "Proceeding anyways\n";
-			} else {
-				if (!OpenBSD::Interactive::confirm("Proceed", 
-				    $state->{interactive}, 0)) {
-					exit(1);
-				}
-			}
-		}
-		if (defined $state->{issues}) {
-			$state->say("There are some ambiguities. ",
-			    "Please run in interactive mode again.");
-		}
-		$state->say("Running update ", 
-		    join(',', map {$_->short_print} @todo2));
+		inform_user_of_pending_update($state);
+
 	} else {
 	# 3/ actual names
 		find_truelocations(\@ARGV, \@todo2, $state);

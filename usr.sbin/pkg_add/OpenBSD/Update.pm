@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.94 2009/11/16 14:47:05 espie Exp $
+# $OpenBSD: Update.pm,v 1.95 2009/11/16 15:01:30 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -160,6 +160,41 @@ sub process_hint
 	} else {
 		return 0;
 	}
+}
+
+sub process_set
+{
+	my ($self, $set, $state) = @_;
+	my $problem;
+	my $need_update;
+	for my $h ($set->older) {
+		next if $h->{done};
+		my $r = $self->process_handle($set, $h, $state);
+		if (!defined $r) {
+			$problem = 1;
+		}
+		if ($r) {
+			$need_update = 1;
+		}
+	}
+	for my $h ($set->hints) {
+		next if $h->{done};
+		my $r = $self->process_hint($set, $h, $state);
+		if (!defined $r) {
+			$problem = 1;
+		}
+		if ($r) {
+			$need_update = 1;
+		}
+	}
+	if ($problem) {
+		$state->tracker->mark_cantupdate($set);
+		return 0;
+	} elsif (!$need_update) {
+		$state->tracker->mark_uptoupdate($set);
+		return 0;
+	} 
+	return 1;
 }
 
 1;
