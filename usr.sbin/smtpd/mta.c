@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.76 2009/11/13 11:27:52 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.77 2009/11/16 09:40:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -55,7 +55,8 @@ void			 mta_pickup(struct mta_session *, void *);
 void			 mta_event(int, short, void *);
 
 void			 mta_status(struct mta_session *, const char *, ...);
-void			 mta_status_message(struct message *, char *);
+void			 mta_message_status(struct message *, char *);
+void			 mta_message_done(struct mta_session *, struct message *);
 void			 mta_connect_done(int, short, void *);
 void			 mta_request_datafd(struct mta_session *);
 size_t			 mta_todo(struct mta_session *);
@@ -684,10 +685,6 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			
 		/* set envelope recipients */
 		TAILQ_FOREACH(m, &s->recipients, entry) {
-			if (m->session_errorline[0] == '2' ||
-			    m->session_errorline[0] == '5' ||
-			    m->session_errorline[0] == '6')
-				continue;
 			if (client_rcpt(s->smtp_state, "%s@%s", m->recipient.user,
 			    m->recipient.domain) < 0)
 				fatal("mta: client_rcpt failed");
@@ -704,28 +701,12 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 
 	case MTA_DONE:
 		/*
-		 * Update runner.
+		 * Kill mta session.
 		 */
 
 		/* update queue status */
-		while ((m = TAILQ_FIRST(&s->recipients))) {
-			switch (m->session_errorline[0]) {
-			case '6':
-			case '5':
-				m->status = S_MESSAGE_PERMFAILURE;
-				break;
-			case '2':
-				m->status = S_MESSAGE_ACCEPTED;
-				break;
-			default:
-				m->status = S_MESSAGE_TEMPFAILURE;
-				break;
-			}
-			imsg_compose_event(s->env->sc_ievs[PROC_QUEUE],
-			    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, m, sizeof(*m));
-			TAILQ_REMOVE(&s->recipients, m, entry);
-			free(m);
-		}
+		while ((m = TAILQ_FIRST(&s->recipients)))
+			mta_message_done(s, m);
 
 		/* deallocate resources */
 		SPLAY_REMOVE(mtatree, &s->env->mta_sessions, s);
@@ -841,7 +822,7 @@ mta_event(int fd, short event, void *p)
 
 	switch (iofunc(s->smtp_state)) {
 	case CLIENT_RCPT_FAIL:
-		mta_status_message(client_udata_get(s->smtp_state),
+		mta_message_status(client_udata_get(s->smtp_state),
 		    client_reply(s->smtp_state));
 	case CLIENT_WANT_WRITE:
 		event_set(&s->ev, fd, EV_WRITE, mta_event, s);
@@ -877,7 +858,7 @@ void
 mta_status(struct mta_session *s, const char *fmt, ...)
 {
 	char			*status;
-	struct message		*m;
+	struct message		*m, *next;
 	struct mta_relay	*relay;
 	va_list			 ap;
 
@@ -886,32 +867,32 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 		fatal("vasprintf");
 	va_end(ap);
 
-	TAILQ_FOREACH(m, &s->recipients, entry) {
-		if (m->session_errorline[0] == '2' ||
-		    m->session_errorline[0] == '5' ||
-		    m->session_errorline[0] == '6')
-			continue;
+	for (m = TAILQ_FIRST(&s->recipients); m; m = next) {
+		next = TAILQ_NEXT(m, entry);
 
 		/* save new status */
-		mta_status_message(m, status);
+		mta_message_status(m, status);
 
 		relay = TAILQ_FIRST(&s->relays);
 
-		/* log successes/failures quickly */
-		if (*status == '2' || *status == '5')
+		/* remove queue entry */
+		if (*status == '2' || *status == '5' || *status == '6') {
 			log_info("%s: to=<%s@%s>, delay=%d, relay=%s [%s], stat=%s (%s)",
 			    m->message_id, m->recipient.user,
 			    m->recipient.domain, time(NULL) - m->creation,
 			    relay->fqdn, ss_to_text(&relay->sa),
-			    *status == '2' ? "Sent" : "RemoteError",
+			    *status == '2' ? "Sent" :
+			    *status == '5' ?  "RemoteError" : "LocalError",
 			    m->session_errorline + 4);
+			mta_message_done(s, m);
+		}
 	}
 
 	free(status);
 }
 
 void
-mta_status_message(struct message *m, char *status)
+mta_message_status(struct message *m, char *status)
 {
 	/*
 	 * Previous delivery attempts might have assigned an errorline of
@@ -925,6 +906,27 @@ mta_status_message(struct message *m, char *status)
 	log_debug("mta: new status for %s@%s: %s", m->recipient.user,
 	    m->recipient.domain, status);
 	strlcpy(m->session_errorline, status, sizeof(m->session_errorline));
+}
+
+void
+mta_message_done(struct mta_session *s, struct message *m)
+{
+	switch (m->session_errorline[0]) {
+	case '6':
+	case '5':
+		m->status = S_MESSAGE_PERMFAILURE;
+		break;
+	case '2':
+		m->status = S_MESSAGE_ACCEPTED;
+		break;
+	default:
+		m->status = S_MESSAGE_TEMPFAILURE;
+		break;
+	}
+	imsg_compose_event(s->env->sc_ievs[PROC_QUEUE],
+	    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, m, sizeof(*m));
+	TAILQ_REMOVE(&s->recipients, m, entry);
+	free(m);
 }
 
 void
@@ -953,10 +955,7 @@ mta_todo(struct mta_session *s)
 	size_t		 n = 0;
 
 	TAILQ_FOREACH(m, &s->recipients, entry)
-		if (m->session_errorline[0] != '2' &&
-		    m->session_errorline[0] != '5' &&
-		    m->session_errorline[0] != '6')
-			n++;
+		n++;
 	return (n);
 }
 
