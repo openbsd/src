@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.383 2009/11/16 12:20:32 espie Exp $
+# $OpenBSD: pkg_add,v 1.384 2009/11/16 12:32:16 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -643,7 +643,6 @@ if (@ARGV == 0 && !$opt_u && !$opt_l) {
 if ($opt_l && @ARGV != 0) {
 	Usage "No pkgnames after -l";
 }
-
 
 setup_state();
 

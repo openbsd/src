@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.121 2009/11/16 12:20:32 espie Exp $
+# $OpenBSD: pkg_delete,v 1.122 2009/11/16 12:32:16 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -159,5 +159,13 @@ sub {
 rethrow $dielater;
 } catch {
 	print STDERR "$0: $_\n";
+	if ($_ =~ m/^Caught SIG(\w+)/o) {
+		kill $1, $$;
+	}
 	exit(1);
 };
+
+if ($bad) {
+	exit(1);
+}
+
