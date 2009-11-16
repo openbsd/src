@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.37 2009/11/11 18:53:21 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.38 2009/11/16 13:40:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -427,8 +427,8 @@ screen_write_initctx(
 		return;
 
 	/* Save the last cell on the screen. */
-	gc = NULL;
-	for (xx = 1; xx < screen_size_x(s); xx++) {
+	gc = &grid_default_cell;
+	for (xx = 1; xx <= screen_size_x(s); xx++) {
 		gc = grid_view_peek_cell(gd, screen_size_x(s) - xx, s->cy);
 		if (!(gc->flags & GRID_FLAG_PADDING))
 			break;
