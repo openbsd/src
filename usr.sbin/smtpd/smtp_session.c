@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.125 2009/11/13 11:40:06 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.126 2009/11/16 10:38:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -966,24 +966,15 @@ session_destroy(struct session *s)
 	if (s->s_fd != -1 && close(s->s_fd) == -1)
 		fatal("session_destroy: close");
 
-	switch (smtpd_process) {
-	case PROC_MTA:
-		s->s_env->stats->mta.sessions_active--;
-		break;
-	case PROC_SMTP:
-		s->s_env->stats->smtp.sessions_active--;
-		if (s->s_env->stats->smtp.sessions_active < s->s_env->sc_maxconn &&
-		    !(s->s_msg.flags & F_MESSAGE_ENQUEUED)) {
-			/*
-			 * if our session_destroy occurs because of a configuration
-			 * reload, our listener no longer exist and s->s_l is NULL.
-			 */
-			if (s->s_l != NULL)
-				event_add(&s->s_l->ev, NULL);
-		}
-		break;
-	default:
-		fatalx("session_destroy: cannot be called from this process");
+	s->s_env->stats->smtp.sessions_active--;
+	if (s->s_env->stats->smtp.sessions_active < s->s_env->sc_maxconn &&
+	    !(s->s_msg.flags & F_MESSAGE_ENQUEUED)) {
+		/*
+		 * if our session_destroy occurs because of a configuration
+		 * reload, our listener no longer exist and s->s_l is NULL.
+		 */
+		if (s->s_l != NULL)
+			event_add(&s->s_l->ev, NULL);
 	}
 
 	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);
@@ -1074,11 +1065,6 @@ session_respond(struct session *s, char *fmt, ...)
 	    evbuffer_add_printf(EVBUFFER_OUTPUT(s->s_bev), "\r\n") == -1)
 		fatal("session_respond: evbuffer_add_vprintf failed");
 	va_end(ap);
-
-	if (smtpd_process == PROC_MTA) {
-		bufferevent_enable(s->s_bev, EV_WRITE);
-		return;
-	}
 
 	bufferevent_disable(s->s_bev, EV_READ);
 
