@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.387 2009/11/16 15:01:30 espie Exp $
+# $OpenBSD: pkg_add,v 1.388 2009/11/16 23:02:36 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,6 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackageLocator;
 use OpenBSD::PackageName;
 use OpenBSD::PkgCfl;
-use OpenBSD::Vstat;
 use OpenBSD::Interactive;
 use OpenBSD::Add;
 use OpenBSD::SharedLibs;
