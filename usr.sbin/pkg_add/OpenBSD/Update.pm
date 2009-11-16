@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.97 2009/11/16 16:32:55 espie Exp $
+# $OpenBSD: Update.pm,v 1.98 2009/11/16 17:30:43 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -188,7 +188,7 @@ sub process_set
 		}
 	}
 	if ($problem) {
-		$state->tracker->mark_cantupdate($set);
+		$state->tracker->mark_cant_update($set);
 		return 0;
 	} elsif (!$need_update) {
 		$state->tracker->mark_uptodate($set);
