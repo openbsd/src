@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.7 2009/11/17 18:21:07 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.8 2009/11/17 18:46:35 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4511,9 +4511,10 @@ athn_set_multi(struct athn_softc *sc)
 		addr = enm->enm_addrlo;
 		/* Calculate the XOR value of all eight 6-bit words. */
 		val = addr[0] | addr[1] << 8 | addr[2] << 16;
-		bit  = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ (val & 0x3f);
+		bit  = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
 		val = addr[3] | addr[4] << 8 | addr[5] << 16;
-		bit ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ (val & 0x3f);
+		bit ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
+		bit &= 0x3f;
 		if (bit < 32)
 			lo |= 1 << bit;
 		else
