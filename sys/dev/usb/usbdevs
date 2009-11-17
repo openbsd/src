@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.453 2009/10/22 14:26:39 sthen Exp $
+$OpenBSD: usbdevs,v 1.454 2009/11/17 18:07:09 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1221,6 +1221,7 @@ product DLINK DSB650TX2		0x4102	10/100 ethernet
 product DLINK DSB650		0xabc1	10/100 ethernet
 
 /* D-Link(2) products */
+product DLINK2 DWA160A2		0x3a09	DWA-160 A2
 product DLINK2 DWA130D1		0x3a0f	DWA-130 rev D1
 product DLINK2 DWLG122C1	0x3c03	DWL-G122 rev C1
 product DLINK2 WUA1340		0x3c04	WUA-1340
@@ -1231,7 +1232,7 @@ product DLINK2 RT3072		0x3c0a	RT3072
 product DLINK2 RT3070_1		0x3c0d	RT3070
 product DLINK2 RT3070_2		0x3c0e	RT3070
 product DLINK2 RT3070_3		0x3c0f	RT3070
-product DLINK2 DWA160A		0x3c10	DWA-160A
+product DLINK2 DWA160A1		0x3c10	DWA-160 A1
 product DLINK2 RT2870_2		0x3c11	RT2870
 product DLINK2 DWA130		0x3c13	DWA-130
 
