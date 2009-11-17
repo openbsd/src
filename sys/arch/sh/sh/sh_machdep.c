@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.26 2009/08/11 19:17:17 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.27 2009/11/17 17:06:44 kettenis Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -106,6 +106,7 @@
 
 #include <sh/cache.h>
 #include <sh/clock.h>
+#include <sh/fpu.h>
 #include <sh/locore.h>
 #include <sh/mmu.h>
 #include <sh/trap.h>
@@ -655,6 +656,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 		 * Clear floating point registers.
 		 */
 		bzero(&pcb->pcb_fp, sizeof(pcb->pcb_fp));
+		pcb->pcb_fp.fpr_fpscr = FPSCR_PR;
 		fpu_restore(&pcb->pcb_fp);
 	}
 #endif
