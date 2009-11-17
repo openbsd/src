@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.124 2009/11/16 23:02:36 espie Exp $
+# $OpenBSD: pkg_delete,v 1.125 2009/11/17 10:17:21 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,6 @@ our ($state, %defines, $bad, $opt_B);
 
 use OpenBSD::PackingList;
 use OpenBSD::RequiredBy;
-use OpenBSD::Interactive;
 use OpenBSD::Delete;
 use OpenBSD::PackageInfo;
 use OpenBSD::UpdateSet;
@@ -92,8 +91,7 @@ sub process_parameters
 			}
 			&$show([@realnames], [keys %deps]);
 			if (@realnames > 1 && (keys %deps) > 1 && 
-			    OpenBSD::Interactive::confirm(
-			    "Do you want details", $state->{interactive}, 1)) {
+			    $state->confirm("Do you want details", 1)) {
 				$details = 1;
 			}
 		}
@@ -107,7 +105,7 @@ sub process_parameters
 		}
 		my $them = @todo > 1 ? 'them' : 'it';
 		if ($defines{dependencies} or 
-		    OpenBSD::Interactive::confirm("Do you want to remove $them as well", $state->{interactive}, 0)) {
+		    $state->confirm("Do you want to remove $them as well", 0)) {
 			$state->say("(removing $them as well)");
 		} else {
 			$bad = 1;

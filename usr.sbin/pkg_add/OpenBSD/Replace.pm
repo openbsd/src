@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.54 2009/11/11 12:32:03 espie Exp $
+# $OpenBSD: Replace.pm,v 1.55 2009/11/17 10:17:21 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -18,7 +18,6 @@ use strict;
 use warnings;
 
 use OpenBSD::Delete;
-use OpenBSD::Interactive;
 
 package OpenBSD::PackingElement;
 sub can_update
@@ -239,7 +238,7 @@ sub validate_depend
 	    $state->{forcedupdates}->{$wanting} = 1;
 	} elsif ($state->{interactive}) {
 
-	    if (OpenBSD::Interactive::confirm("Forward dependency of $wanting on $toreplace doesn't match $replacement, proceed with update anyways", 1, 0, 'updatedepends')) {
+	    if ($state->confirm("Forward dependency of $wanting on $toreplace doesn't match $replacement, proceed with update anyways", 0)) {
 		$state->{forcedupdates} = {} unless defined $state->{forcedupdates};
 		$state->{forcedupdates}->{$wanting} = 1;
 	    } else {
@@ -293,7 +292,6 @@ use OpenBSD::RequiredBy;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 use OpenBSD::Error;
-use OpenBSD::Interactive;
 
 sub perform_extraction
 {
@@ -326,7 +324,7 @@ sub can_old_package_be_replaced
 			$state->{okay} = 1;
 		} elsif ($state->{interactive}) {
 
-			if (OpenBSD::Interactive::confirm("proceed with update anyways", 1, 0, 'update')) {
+			if ($state->confirm("proceed with update anyways", 0)) {
 			    $state->{okay} = 1;
 			}
 		}
@@ -369,7 +367,7 @@ sub is_new_package_safe
 			$state->errsay("(forcing update)");
 			$state->{okay} = 1;
 		} elsif ($state->{interactive}) {
-			if (OpenBSD::Interactive::confirm("proceed with update anyways", 1, 0, 'update')) {
+			if ($state->confirm("proceed with update anyways", 0)) {
 			    $state->{okay} = 1;
 			}
 		}

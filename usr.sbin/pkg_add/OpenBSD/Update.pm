@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.98 2009/11/16 17:30:43 espie Exp $
+# $OpenBSD: Update.pm,v 1.99 2009/11/17 10:17:21 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -18,7 +18,6 @@ use strict;
 use warnings;
 
 package OpenBSD::Update;
-use OpenBSD::Interactive;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageLocator;
 use OpenBSD::PackageName;

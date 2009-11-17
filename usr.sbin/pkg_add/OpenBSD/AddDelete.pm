@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.3 2009/11/16 14:42:18 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.4 2009/11/17 10:17:21 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -328,6 +328,15 @@ sub choose_location
 		$state->say("Ambiguous: $name could be ", join(' ', keys %h));
 		return undef;
 	}
+}
+
+sub confirm
+{
+	my ($state, $prompt, $default) = @_;
+
+	return 0 if !$state->{interactive};
+	require OpenBSD::Interactive;
+	return OpenBSD::Interactive::confirm($prompt, $default);
 }
 
 # stub class when no actual progressmeter that still prints out.

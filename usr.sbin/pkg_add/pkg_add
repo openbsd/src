@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.388 2009/11/16 23:02:36 espie Exp $
+# $OpenBSD: pkg_add,v 1.389 2009/11/17 10:17:21 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -29,7 +29,6 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackageLocator;
 use OpenBSD::PackageName;
 use OpenBSD::PkgCfl;
-use OpenBSD::Interactive;
 use OpenBSD::Add;
 use OpenBSD::SharedLibs;
 use OpenBSD::UpdateSet;
@@ -661,8 +660,7 @@ sub inform_user_of_pending_update
 		    $state->{full_update} && !$state->{interactive}) {
 			print "Proceeding anyways\n";
 		} else {
-			if (!OpenBSD::Interactive::confirm("Proceed", 
-			    $state->{interactive}, 0)) {
+			if (!$state->confirm("Proceed", 0)) {
 				exit(1);
 			}
 		}

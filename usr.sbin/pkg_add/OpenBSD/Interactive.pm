@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.10 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.11 2009/11/17 10:17:21 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -57,20 +57,19 @@ LOOP:
 	}
 }
 
-my $always = {};
+my $always = 0;
 
 sub confirm
 {
-	my ($prompt, $interactive, $default, $key) = @_;
-	if (!$interactive || !-t STDIN) {
+	my ($prompt, $default) = @_;
+	if (!-t STDIN) {
 		return 0;
 	}
-	if (defined $key && $always->{$key}) {
+	if ($always) {
 		return 1;
 	}
 LOOP2:
-	my $a = defined $key ? '/a' : '';
-	print STDERR $prompt, $default ? "? [Y/n$a] " : "? [y/N$a] ";
+	print STDERR $prompt, $default ? "? [Y/n/a] " : "? [y/N/a] ";
 
 	my $result = <STDIN>;
 	unless(defined $result) {
@@ -86,8 +85,8 @@ LOOP2:
 	if ($result eq 'no' or $result eq 'n') {
 		return 0;
 	}
-	if (defined $key && $result eq 'a') {
-		$always->{$key} = 1;
+	if ($result eq 'a') {
+		$always = 1;
 		return 1;
 	}
 	if ($result eq '') {
@@ -95,26 +94,6 @@ LOOP2:
 	}
 	print STDERR "Ambiguous answer\n";
 	goto LOOP2;
-}
-
-sub choose1
-{
-	my ($pkgname, $interactive, @l) = @_;
-	if (@l == 0) {
-	    print "Can't resolve $pkgname\n";
-	} elsif (@l == 1) {
-		return $l[0];
-	} elsif (@l != 0) {
-		if ($interactive) {
-		    my $result = ask_list("Ambiguous: choose package for $pkgname", 1, ("<None>", @l));
-		    if ($result ne '<None>') {
-			return $result;
-		    }
-		} else {
-		    print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
-		}
-	}
-	return;
 }
 
 1;
