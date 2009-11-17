@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.27 2009/07/23 19:35:32 kettenis Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.28 2009/11/17 20:47:42 kettenis Exp $	*/
 
 /*
  *
@@ -125,7 +125,7 @@ int		cas_disable_rx(struct cas_softc *);
 int		cas_disable_tx(struct cas_softc *);
 void		cas_rxdrain(struct cas_softc *);
 int		cas_add_rxbuf(struct cas_softc *, int idx);
-void		cas_setladrf(struct cas_softc *);
+void		cas_iff(struct cas_softc *);
 int		cas_encap(struct cas_softc *, struct mbuf *, u_int32_t *);
 
 /* MII methods & callbacks */
@@ -982,7 +982,7 @@ cas_init(struct ifnet *ifp)
 	bus_space_write_4(t, h, CAS_MAC_MAC_MAX_FRAME, v);
 
 	/* step 5. RX MAC registers & counters */
-	cas_setladrf(sc);
+	cas_iff(sc);
 
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
 	KASSERT((CAS_CDTXADDR(sc, 0) & 0x1fff) == 0);
@@ -1718,7 +1718,7 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			cas_setladrf(sc);
+			cas_iff(sc);
 		error = 0;
 	}
 
@@ -1736,93 +1736,68 @@ cas_shutdown(void *arg)
 	cas_stop(ifp, 1);
 }
 
-/*
- * Set up the logical address filter.
- */
 void
-cas_setladrf(struct cas_softc *sc)
+cas_iff(struct cas_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct arpcom *ac = &sc->sc_arpcom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	struct arpcom *ac = &sc->sc_arpcom;
 	bus_space_tag_t t = sc->sc_memt;
 	bus_space_handle_t h = sc->sc_memh;
-	u_int32_t crc, hash[16], v;
+	u_int32_t crc, hash[16], rxcfg;
 	int i;
 
-	/* Get current RX configuration */
-	v = bus_space_read_4(t, h, CAS_MAC_RX_CONFIG);
-
-
-	/*
-	 * Turn off promiscuous mode, promiscuous group mode (all multicast),
-	 * and hash filter.  Depending on the case, the right bit will be
-	 * enabled.
-	 */
-	v &= ~(CAS_MAC_RX_PROMISCUOUS|CAS_MAC_RX_HASH_FILTER|
+	rxcfg = bus_space_read_4(t, h, CAS_MAC_RX_CONFIG);
+	rxcfg &= ~(CAS_MAC_RX_HASH_FILTER | CAS_MAC_RX_PROMISCUOUS |
 	    CAS_MAC_RX_PROMISC_GRP);
-
-	if ((ifp->if_flags & IFF_PROMISC) != 0) {
-		/* Turn on promiscuous mode */
-		v |= CAS_MAC_RX_PROMISCUOUS;
-		ifp->if_flags |= IFF_ALLMULTI;
-		goto chipit;
-	}
-
-	/*
-	 * Set up multicast address filter by passing all multicast addresses
-	 * through a crc generator, and then using the high order 8 bits as an
-	 * index into the 256 bit logical address filter.  The high order 4
-	 * bits selects the word, while the other 4 bits select the bit within
-	 * the word (where bit 0 is the MSB).
-	 */
-
-	/* Clear hash table */
-	for (i = 0; i < 16; i++)
-		hash[i] = 0;
-
-
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/*
-			 * We must listen to a range of multicast addresses.
-			 * For now, just accept all multicasts, rather than
-			 * trying to set only those filter bits needed to match
-			 * the range.  (At this time, the only use of address
-			 * ranges is for IP multicast routing, for which the
-			 * range is big enough to require all bits set.)
-			 * XXX use the addr filter for this
-			 */
-			ifp->if_flags |= IFF_ALLMULTI;
-			v |= CAS_MAC_RX_PROMISC_GRP;
-			goto chipit;
-		}
-
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
-		/* Just want the 8 most significant bits. */
-		crc >>= 24;
-
-		/* Set the corresponding bit in the filter. */
-		hash[crc >> 4] |= 1 << (15 - (crc & 15));
-
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	v |= CAS_MAC_RX_HASH_FILTER;
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	/* Now load the hash table into the chip (if we are using it) */
-	for (i = 0; i < 16; i++) {
-		bus_space_write_4(t, h,
-		    CAS_MAC_HASH0 + i * (CAS_MAC_HASH1-CAS_MAC_HASH0),
-		    hash[i]);
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			rxcfg |= CAS_MAC_RX_PROMISCUOUS;
+		else
+			rxcfg |= CAS_MAC_RX_PROMISC_GRP;
+        } else {
+		/*
+		 * Set up multicast address filter by passing all multicast
+		 * addresses through a crc generator, and then using the
+		 * high order 8 bits as an index into the 256 bit logical
+		 * address filter.  The high order 4 bits selects the word,
+		 * while the other 4 bits select the bit within the word
+		 * (where bit 0 is the MSB).
+		 */
+
+		rxcfg |= CAS_MAC_RX_HASH_FILTER;
+
+		/* Clear hash table */
+		for (i = 0; i < 16; i++)
+			hash[i] = 0;
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+                        crc = ether_crc32_le(enm->enm_addrlo,
+                            ETHER_ADDR_LEN);
+
+                        /* Just want the 8 most significant bits. */
+                        crc >>= 24;
+
+                        /* Set the corresponding bit in the filter. */
+                        hash[crc >> 4] |= 1 << (15 - (crc & 15));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+
+		/* Now load the hash table into the chip (if we are using it) */
+		for (i = 0; i < 16; i++) {
+			bus_space_write_4(t, h,
+			    CAS_MAC_HASH0 + i * (CAS_MAC_HASH1 - CAS_MAC_HASH0),
+			    hash[i]);
+		}
 	}
 
-chipit:
-	bus_space_write_4(t, h, CAS_MAC_RX_CONFIG, v);
+	bus_space_write_4(t, h, CAS_MAC_RX_CONFIG, rxcfg);
 }
 
 int
