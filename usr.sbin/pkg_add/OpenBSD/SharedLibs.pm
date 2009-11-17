@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.35 2009/11/17 10:38:27 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.36 2009/11/17 10:48:14 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -209,7 +209,6 @@ sub report_problem
 	return unless defined $stem;
 	return unless defined $registered_libs->{$stem};
 
-	print "library $name not found\n";
 	my $r = "";
 	while (my ($d, $v) = each %{$registered_libs->{$stem}}) {
 		my @l = ();
@@ -227,6 +226,7 @@ sub report_problem
 	}
 	if (!defined $printed->{$name} || $printed->{$name} ne $r) {
 		$printed->{$name} = $r;
+		print "library $name not found\n";
 		print $r;
 	}
 }
