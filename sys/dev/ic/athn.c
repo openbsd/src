@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.5 2009/11/16 17:09:31 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.6 2009/11/17 18:01:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1372,6 +1372,8 @@ athn_set_phy(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	AR_WRITE(sc, AR_GTXTO, SM(AR_GTXTO_TIMEOUT_LIMIT, 25));
 	AR_WRITE(sc, AR_CST, SM(AR_CST_TIMEOUT_LIMIT, 15));
+	/* Set Short Interframe Space. */
+	sc->sifs = IEEE80211_IS_CHAN_5GHZ(c) ? 16 : 10;
 }
 
 int
@@ -3481,7 +3483,7 @@ athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		/* Compute duration for each series. */
 		for (i = 0; i < 4; i++) {
 			series[i].dur = athn_txtime(sc, IEEE80211_ACK_LEN,
-			    ridx[i], ic->ic_flags);
+			    ridx[i], ic->ic_flags) + sc->sifs;
 		}
 	}
 

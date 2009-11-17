@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.2 2009/11/15 14:04:02 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.3 2009/11/17 18:01:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -428,6 +428,7 @@ struct athn_softc {
 	struct athn_ops			ops;
 
 	int				fixed_ridx;
+	int				sifs;
 
 	int16_t				def_nf;
 	struct {
