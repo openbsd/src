@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.3 2009/11/15 14:04:02 damien Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.4 2009/11/17 19:32:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -207,7 +207,7 @@ ar5416_set_synth(struct athn_softc *sc, struct ieee80211_channel *c,
 	}
 	chansel = athn_reverse_bits(chansel, 8);
 	phy |= chansel << 8 | 1 << 5 | 1;
-	DPRINTF(("AR_PHY(0x37)=0x%08x\n", phy));
+	DPRINTFN(4, ("AR_PHY(0x37)=0x%08x\n", phy));
 	AR_WRITE(sc, AR_PHY(0x37), phy);
 	return (0);
 }
@@ -682,7 +682,7 @@ ar5416_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 	}
 	if (i == AR_EEPROM_MODAL_SPURS)
 		return; /* XXX disable if it was enabled! */
-	DPRINTF(("enabling spur mitigation\n"));
+	DPRINTFN(2, ("enabling spur mitigation\n"));
 
 	AR_SETBITS(sc, AR_PHY_TIMING_CTRL4_0,
 	    AR_PHY_TIMING_CTRL4_ENABLE_SPUR_RSSI |
@@ -889,7 +889,7 @@ ar9160_rw_addac(struct athn_softc *sc, struct ieee80211_channel *c,
 		bias = modal->xpaBiasLvl & 0x3;
 
 	bias = athn_reverse_bits(bias, 2);	/* Put in host bit-order. */
-	DPRINTF(("bias level=%d\n", bias));
+	DPRINTFN(4, ("bias level=%d\n", bias));
 	if (IEEE80211_IS_CHAN_2GHZ(c))
 		ar5416_rw_rfbits(addac, 0, 60, bias, 2);
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.3 2009/11/15 14:04:02 damien Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.4 2009/11/17 19:32:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -546,7 +546,7 @@ ar9287_olpc_temp_compensation(struct athn_softc *sc)
 
 	reg = AR_READ(sc, AR_PHY_TX_PWRCTRL4);
 	pdadc = MS(reg, AR_PHY_TX_PWRCTRL_PD_AVG_OUT);
-	DPRINTF(("PD Avg Out=%d\n", pdadc));
+	DPRINTFN(3, ("PD Avg Out=%d\n", pdadc));
 
 	if (sc->pdadc == 0 || pdadc == 0)
 		return;	/* No frames transmitted yet. */
@@ -560,7 +560,7 @@ ar9287_olpc_temp_compensation(struct athn_softc *sc)
 		tcomp = ((pdadc - sc->pdadc) * 4) / slope;
 	else
 		tcomp = 0;
-	DPRINTF(("OLPC temp compensation=%d\n", tcomp));
+	DPRINTFN(3, ("OLPC temp compensation=%d\n", tcomp));
 
 	/* Write compensation value for both Tx chains. */
 	reg = AR_READ(sc, AR_PHY_CH0_TX_PWRCTRL11);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.2 2009/11/15 14:04:02 damien Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.3 2009/11/17 19:32:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -201,7 +201,7 @@ ar9280_set_synth(struct athn_softc *sc, struct ieee80211_channel *c,
 			AR_WRITE(sc, AR_AN_SYNTH9, reg);
 		}
 	}
-	DPRINTF(("AR9280_PHY_SYNTH_CONTROL=0x%08x\n", phy));
+	DPRINTFN(4, ("AR9280_PHY_SYNTH_CONTROL=0x%08x\n", phy));
 	AR_WRITE(sc, AR9280_PHY_SYNTH_CONTROL, phy);
 	return (0);
 }
@@ -454,7 +454,7 @@ ar9280_spur_mitigate(struct athn_softc *sc, struct ieee80211_channel *c,
 	}
 	if (i == AR_EEPROM_MODAL_SPURS)
 		return;	/* XXX disable if it was enabled! */
-	DPRINTF(("enabling spur mitigation\n"));
+	DPRINTFN(2, ("enabling spur mitigation\n"));
 
 	AR_SETBITS(sc, AR_PHY_TIMING_CTRL4_0,
 	    AR_PHY_TIMING_CTRL4_ENABLE_SPUR_RSSI |
@@ -555,7 +555,7 @@ ar9280_2_0_olpc_temp_compensation(struct athn_softc *sc)
 
 	reg = AR_READ(sc, AR_PHY_TX_PWRCTRL4);
 	pdadc = MS(reg, AR_PHY_TX_PWRCTRL_PD_AVG_OUT);
-	DPRINTF(("PD Avg Out=%d\n", pdadc));
+	DPRINTFN(3, ("PD Avg Out=%d\n", pdadc));
 
 	if (sc->pdadc == 0 || pdadc == 0)
 		return;	/* No frames transmitted yet. */
@@ -566,7 +566,7 @@ ar9280_2_0_olpc_temp_compensation(struct athn_softc *sc)
 		tcomp = (pdadc - sc->pdadc + 4) / 8;
 	else
 		tcomp = (pdadc - sc->pdadc + 5) / 10;
-	DPRINTF(("OLPC temp compensation=%d\n", tcomp));
+	DPRINTFN(3, ("OLPC temp compensation=%d\n", tcomp));
 
 	if (tcomp == sc->tcomp)
 		return;	/* Don't rewrite the same values. */

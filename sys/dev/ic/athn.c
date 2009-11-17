@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.8 2009/11/17 18:46:35 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.9 2009/11/17 19:32:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -64,7 +64,7 @@
 #include <dev/ic/athnvar.h>
 
 #ifdef ATHN_DEBUG
-int athn_debug = 4;
+int athn_debug = 1;
 #endif
 
 void		athn_radiotap_attach(struct athn_softc *);
@@ -1280,7 +1280,7 @@ athn_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	/* If band or bandwidth changes, we need to do a full reset. */
 	if (c->ic_flags != ic->ic_bss->ni_chan->ic_flags) {
-		DPRINTF(("channel band switch\n"));
+		DPRINTFN(2, ("channel band switch\n"));
 		goto reset;
 	}
 	error = athn_set_power_awake(sc);
@@ -1290,7 +1290,7 @@ athn_switch_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 	error = athn_set_chan(sc, c, extc);
 	if (error != 0) {
  reset:		/* Error found, try a full reset. */
-		DPRINTF(("needs a full reset\n"));
+		DPRINTFN(3, ("needs a full reset\n"));
 		error = athn_hw_reset(sc, c, extc);
 		if (error != 0)	/* Hopeless case. */
 			return (error);
@@ -1698,8 +1698,8 @@ athn_rfsilent_init(struct athn_softc *sc)
 	/* Get polarity of hardware radio switch. */
 	if (base->rfSilent & AR_EEP_RFSILENT_POLARITY)
 		sc->flags |= ATHN_FLAG_RFSILENT_REVERSED;
-	printf("%s: Found RF switch connected to GPIO pin %d\n",
-	    sc->sc_dev.dv_xname, sc->rfsilent_pin);
+	DPRINTFN(2, ("%s: Found RF switch connected to GPIO pin %d\n",
+	    sc->rfsilent_pin));
 
 	/* Configure hardware radio switch. */
 	AR_SETBITS(sc, AR_GPIO_INPUT_EN_VAL, AR_GPIO_INPUT_EN_VAL_RFSILENT_BB);
@@ -1825,7 +1825,7 @@ athn_calib_iq(struct athn_softc *sc)
 		else if (q_coff <= -16)
 			q_coff = 16;
 
-		DPRINTF(("IQ calibration for chain %d\n", i));
+		DPRINTFN(2, ("IQ calibration for chain %d\n", i));
 		reg = AR_READ(sc, AR_PHY_TIMING_CTRL4(i));
 		reg = RW(reg, AR_PHY_TIMING_CTRL4_IQCORR_Q_I_COFF, i_coff);
 		reg = RW(reg, AR_PHY_TIMING_CTRL4_IQCORR_Q_Q_COFF, q_coff);
@@ -1869,7 +1869,7 @@ athn_calib_adc_gain(struct athn_softc *sc)
 		gain_mismatch_q =
 		    (cal->pwr_meas_odd_q * 32) / cal->pwr_meas_even_q;
 
-		DPRINTF(("ADC gain calibration for chain %d\n", i));
+		DPRINTFN(2, ("ADC gain calibration for chain %d\n", i));
 		reg = AR_READ(sc, AR_PHY_NEW_ADC_DC_GAIN_CORR(i));
 		reg = RW(reg, AR_PHY_NEW_ADC_DC_GAIN_IGAIN, gain_mismatch_i);
 		reg = RW(reg, AR_PHY_NEW_ADC_DC_GAIN_QGAIN, gain_mismatch_q);
@@ -1913,7 +1913,7 @@ athn_calib_adc_dc_off(struct athn_softc *sc)
 		dc_offset_mismatch_q =
 		    (cal->pwr_meas_odd_q - cal->pwr_meas_even_q * 2) / count;
 
-		DPRINTF(("ADC DC offset calibration for chain %d\n", i));
+		DPRINTFN(2, ("ADC DC offset calibration for chain %d\n", i));
 		reg = AR_READ(sc, AR_PHY_NEW_ADC_DC_GAIN_CORR(i));
 		reg = RW(reg, AR_PHY_NEW_ADC_DC_GAIN_QDC,
 		    dc_offset_mismatch_q);
@@ -3949,7 +3949,7 @@ athn_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 		else
 			pvals = ini->vals_5g20;
 	}
-	DPRINTF(("writing per-mode init vals\n"));
+	DPRINTFN(4, ("writing per-mode init vals\n"));
 	for (i = 0; i < ini->nregs; i++) {
 		AR_WRITE(sc, ini->regs[i], pvals[i]);
 		if (AR_IS_ANALOG_REG(ini->regs[i]))
@@ -3965,7 +3965,7 @@ athn_hw_init(struct athn_softc *sc, struct ieee80211_channel *c,
 		ar9280_reset_tx_gain(sc, c);
 
 	/* Second initialization step (common to all channels). */
-	DPRINTF(("writing common init vals\n"));
+	DPRINTFN(4, ("writing common init vals\n"));
 	for (i = 0; i < ini->ncmregs; i++) {
 		AR_WRITE(sc, ini->cmregs[i], ini->cmvals[i]);
 		if (AR_IS_ANALOG_REG(ini->cmregs[i]))
