@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpivar.h,v 1.19 2009/05/12 19:10:57 damien Exp $	*/
+/*	$OpenBSD: if_wpivar.h,v 1.20 2009/11/17 20:35:53 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -162,8 +162,6 @@ struct wpi_softc {
 	bus_size_t		sc_sz;
 	int			sc_cap_off;	/* PCIe Capabilities. */
 
-	struct ksensordev	sensordev;
-	struct ksensor		sensor;
 	struct timeout		calib_to;
 	int			calib_cnt;
 
