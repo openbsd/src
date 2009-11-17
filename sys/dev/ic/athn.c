@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.6 2009/11/17 18:01:40 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.7 2009/11/17 18:21:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -160,6 +160,7 @@ void		athn_updateedca(struct ieee80211com *);
 void		athn_updateslot(struct ieee80211com *);
 void		athn_start(struct ifnet *);
 void		athn_watchdog(struct ifnet *);
+void		athn_set_multi(struct athn_softc *);
 int		athn_ioctl(struct ifnet *, u_long, caddr_t);
 int		athn_init(struct ifnet *);
 void		athn_stop(struct ifnet *, int);
@@ -4484,6 +4485,46 @@ athn_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
+void
+athn_set_multi(struct athn_softc *sc)
+{
+	struct arpcom *ac = &sc->sc_ic.ic_ac;
+	struct ifnet *ifp = &ac->ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	const uint8_t *addr;
+	uint32_t val, lo, hi;
+	uint8_t bit;
+
+	if ((ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+		lo = hi = 0xffffffff;
+		goto done;
+	}
+	lo = hi = 0;
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			lo = hi = 0xffffffff;
+			goto done;
+		}
+		addr = enm->enm_addrlo;
+		/* Calculate the XOR value of all eight 6-bit words. */
+		val = addr[0] | addr[1] << 8 | addr[2] << 16;
+		bit  = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ (val & 0x3f);
+		val = addr[3] | addr[4] << 8 | addr[5] << 16;
+		bit ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ (val & 0x3f);
+		if (bit < 32)
+			lo |= 1 << bit;
+		else
+			hi |= 1 << (bit - 32);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+ done:
+	AR_WRITE(sc, AR_MCAST_FIL0, lo);
+	AR_WRITE(sc, AR_MCAST_FIL1, hi);
+}
+
 int
 athn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -4506,12 +4547,17 @@ athn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
+			if ((ifp->if_flags & IFF_RUNNING) &&
+			    ((ifp->if_flags ^ sc->sc_if_flags) &
+			     (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+				athn_set_multi(sc);
+			} else if (!(ifp->if_flags & IFF_RUNNING))
 				error = athn_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				athn_stop(ifp, 1);
 		}
+		sc->sc_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCADDMULTI:
