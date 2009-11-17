@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.9 2009/11/17 19:32:22 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.10 2009/11/17 20:38:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1698,7 +1698,7 @@ athn_rfsilent_init(struct athn_softc *sc)
 	/* Get polarity of hardware radio switch. */
 	if (base->rfSilent & AR_EEP_RFSILENT_POLARITY)
 		sc->flags |= ATHN_FLAG_RFSILENT_REVERSED;
-	DPRINTFN(2, ("%s: Found RF switch connected to GPIO pin %d\n",
+	DPRINTFN(2, ("Found RF switch connected to GPIO pin %d\n",
 	    sc->rfsilent_pin));
 
 	/* Configure hardware radio switch. */
