@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.34 2009/11/11 13:00:40 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.35 2009/11/17 10:38:27 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -179,8 +179,8 @@ sub lookup_libspec
 
 sub entry_string
 {
-	my ($d, $M, $m) = @_;
-	return "partial match in $d: major=$M, minor=$m";
+	my ($stem, $M, $m) = @_;
+	return "lib$stem.so.$M.$m";
 }
 
 sub why_is_this_bad
@@ -198,6 +198,8 @@ sub why_is_this_bad
 	return "$pkgname not reachable";
 }
 
+my $printed = {};
+
 sub report_problem
 {
 	my $base = $_[0];
@@ -207,18 +209,25 @@ sub report_problem
 	return unless defined $stem;
 	return unless defined $registered_libs->{$stem};
 
+	print "library $name not found\n";
+	my $r = "";
 	while (my ($d, $v) = each %{$registered_libs->{$stem}}) {
+		my @l = ();
 		while (my ($M, $w) = each %$v) {
 			for my $e (@$w) {
-				print "$name: ", 
-				    entry_string($d, $M, $e->[0]),
-				    " (", 
-				    why_is_this_bad($base, $name, $dir, 
-				    	$d, $major, $M, $minor, 
-					$e->[0], $e->[1]),
-				    ")\n";
+				push(@l, entry_string($stem, $M, $e->[0]).
+				    " (".why_is_this_bad($base, $name, $dir, 
+				    $d, $major, $M, $minor, $e->[0], $e->[1]).
+				    ")");
 			}
 		}
+		if (@l > 0) {
+			$r .= " in $d: ". join(", ", sort @l). "\n";
+		}
+	}
+	if (!defined $printed->{$name} || $printed->{$name} ne $r) {
+		$printed->{$name} = $r;
+		print $r;
 	}
 }
 
