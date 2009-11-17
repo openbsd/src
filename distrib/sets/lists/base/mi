@@ -939,6 +939,7 @@
 ./usr/libdata/perl5/Object/Accessor.pm
 ./usr/libdata/perl5/OpenBSD
 ./usr/libdata/perl5/OpenBSD/Add.pm
+./usr/libdata/perl5/OpenBSD/AddDelete.pm
 ./usr/libdata/perl5/OpenBSD/ArcCheck.pm
 ./usr/libdata/perl5/OpenBSD/CollisionReport.pm
 ./usr/libdata/perl5/OpenBSD/Delete.pm
