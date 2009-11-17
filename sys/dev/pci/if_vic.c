@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.74 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.75 2009/11/17 03:21:36 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -944,43 +944,40 @@ vic_iff(struct vic_softc *sc)
 	struct ether_multistep step;
 	u_int32_t crc;
 	u_int16_t *mcastfil = (u_int16_t *)sc->sc_data->vd_mcastfil;
-	u_int flags = 0;
+	u_int flags;
 
-	bzero(&sc->sc_data->vd_mcastfil, sizeof(sc->sc_data->vd_mcastfil));
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		goto domulti;
-	if (ifp->if_flags & IFF_PROMISC)
-		goto allmulti;
+	/* Always accept broadcast frames. */
+	flags = VIC_CMD_IFF_BROADCAST;
 
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
-			goto allmulti;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			flags |= VIC_CMD_IFF_PROMISC;
+		else
+			flags |= VIC_CMD_IFF_MULTICAST;
+		memset(&sc->sc_data->vd_mcastfil, 0xff,
+		    sizeof(sc->sc_data->vd_mcastfil));
+	} else {
+		flags |= VIC_CMD_IFF_MULTICAST;
 
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-		crc >>= 26;
-		mcastfil[crc >> 4] |= htole16(1 << (crc & 0xf));
+		bzero(&sc->sc_data->vd_mcastfil,
+		    sizeof(sc->sc_data->vd_mcastfil));
 
-		ETHER_NEXT_MULTI(step, enm);
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+			crc >>= 26;
+
+			mcastfil[crc >> 4] |= htole16(1 << (crc & 0xf));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
-	goto domulti;
-
- allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
-	memset(&sc->sc_data->vd_mcastfil, 0xff,
-	    sizeof(sc->sc_data->vd_mcastfil));
-
- domulti:
 	vic_write(sc, VIC_CMD, VIC_CMD_MCASTFIL);
-
-	if (ifp->if_flags & IFF_RUNNING) {
-		flags = (ifp->if_flags & IFF_PROMISC) ?
-		    VIC_CMD_IFF_PROMISC :
-		    (VIC_CMD_IFF_BROADCAST | VIC_CMD_IFF_MULTICAST);
-	}
 	sc->sc_data->vd_iff = flags;
 	vic_write(sc, VIC_CMD, VIC_CMD_IFF);
 }
@@ -1225,7 +1222,7 @@ vic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
-				vic_iff(sc);
+				error = ENETRESET;
 			else
 				vic_init(ifp);
 		} else {
@@ -1318,7 +1315,9 @@ vic_stop(struct ifnet *ifp)
 
 	vic_write(sc, VIC_CMD, VIC_CMD_INTR_DISABLE);
 
-	vic_iff(sc);
+	sc->sc_data->vd_iff = 0;
+	vic_write(sc, VIC_CMD, VIC_CMD_IFF);
+
 	vic_write(sc, VIC_DATA_ADDR, 0);
 
 	vic_uninit_data(sc);
