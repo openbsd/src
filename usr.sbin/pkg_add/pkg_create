@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.123 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: pkg_create,v 1.124 2009/11/17 10:16:41 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -376,8 +376,7 @@ sub read_fragments
 		while(my $file = pop @$stack) {
 			GETLINE:
 			while ($_ = $file->readline) {
-				if (m/^(\!)?\%\%(.*)\%\%$/o) {
-					my ($not, $frag) = ($1, $2);
+				if (my ($not, $frag) = m/^(\!)?\%\%(.*)\%\%$/) {
 					my $def = $frag;
 					if ($frag eq 'SHARED') {
 						$def = 'SHARED_LIBS';
