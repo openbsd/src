@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libgcc/Makefile,v 1.58.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.1.1.1 2009/10/15 20:50:19 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2009/11/17 18:53:43 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -120,12 +120,6 @@ LIB2FUNCS_EXTRA = floatunsidf.c floatunsisf.c
 #	from config/rs6000/t-ppccomm
 LIB2FUNCS_EXTRA = tramp.asm darwin-ldouble.c
 LIB2FUNCS_STATIC_EXTRA = eabi.asm
-.endif
-
-.if ${TARGET_ARCH} == "sparc64"
-#	from config/sparc/t-elf
-LIB1ASMSRC =   lb1spc.asm
-LIB1ASMFUNCS = _mulsi3 _divsi3 _modsi3
 .endif
 
 #-----------------------------------------------------------------------
