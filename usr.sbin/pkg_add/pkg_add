@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.389 2009/11/17 10:17:21 espie Exp $
+# $OpenBSD: pkg_add,v 1.390 2009/11/17 10:54:27 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -589,7 +589,6 @@ handle_options('aqchruzl:A:P:Q:', {},
     'pkg_add [-acIinqruvxz] [-A arch] [-B pkg-destdir] [-F keywords]',
     '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
 
-$state->{cache} = {};
 $state->{do_faked} = 0;
 $state->{arch} = $opt_A;
 
