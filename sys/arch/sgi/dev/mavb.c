@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.10 2009/10/26 18:00:06 miod Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.11 2009/11/18 21:13:17 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -54,6 +54,12 @@ int mavb_debug = ~MAVB_DEBUG_INTR;
 /* XXX We need access to some of the MACE ISA registers.  */
 #define MAVB_ISA_NREGS				0x20
 
+#define MAVB_ISA_RING_SIZE	0x4000 /* Mace ISA DMA ring size. */
+#define MAVB_CHAN_RING_SIZE	0x1000 /* DMA buffer size per channel. */
+#define MAVB_CHAN_INTR_SIZE	0x0800 /* Interrupt on 50% buffer transfer. */
+#define MAVB_CHAN_CHUNK_SIZE	0x0400 /* Move data in 25% buffer chunks. */
+
+
 /*
  * AD1843 Mixer.
  */
@@ -62,6 +68,7 @@ enum {
 	AD1843_RECORD_CLASS,
 	AD1843_ADC_SOURCE,	/* ADC Source Select */
 	AD1843_ADC_GAIN,	/* ADC Input Gain */
+	AD1843_ADC_MIC_GAIN,	/* ADC Mic Input Gain */
 
 	AD1843_INPUT_CLASS,
 	AD1843_DAC1_GAIN,	/* DAC1 Analog/Digital Gain/Attenuation */
@@ -107,6 +114,18 @@ const char *ad1843_input[] = {
 	AudioNmono		/* AD1843_MISC_SETTINGS */
 };
 
+struct mavb_chan {
+	caddr_t hw_start;
+	caddr_t sw_start;
+	caddr_t sw_end;
+	caddr_t sw_cur;
+	void (*intr)(void *);
+	void *intrarg;
+	u_long rate;
+	u_int format;
+	int blksize;
+};
+
 struct mavb_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_st;
@@ -117,19 +136,10 @@ struct mavb_softc {
 	/* XXX We need access to some of the MACE ISA registers.  */
 	bus_space_handle_t sc_isash;
 
-#define MAVB_ISA_RING_SIZE		0x1000
 	caddr_t sc_ring;
 
-	caddr_t sc_start, sc_end;
-	int sc_blksize;
-	void (*sc_intr)(void *);
-	void *sc_intrarg;
-
-	caddr_t sc_get;
-	int sc_count;
-
-	u_long sc_play_rate;
-	u_int sc_play_format;
+	struct mavb_chan play;
+	struct mavb_chan rec;
 
 	struct timeout sc_volume_button_to;
 };
@@ -168,6 +178,7 @@ int mavb_trigger_output(void *, void *, void *, int, void (*)(void *),
 			void *, struct audio_params *);
 int mavb_trigger_input(void *, void *, void *, int, void (*)(void *),
 		       void *, struct audio_params *);
+void mavb_get_default_params(void *, int, struct audio_params *);
 
 struct audio_hw_if mavb_sa_hw_if = {
 	mavb_open,
@@ -196,7 +207,7 @@ struct audio_hw_if mavb_sa_hw_if = {
 	mavb_get_props,
 	mavb_trigger_output,
 	mavb_trigger_input,
-	0
+	mavb_get_default_params
 };
 
 struct audio_device mavb_device = {
@@ -357,15 +368,64 @@ ulinear8_to_ulinear24_be_mts(void *hdl, u_char *p, int cc)
 	}
 }
 
+void
+mavb_get_default_params(void *hdl, int mode, struct audio_params *p)
+{
+	p->sample_rate = 48000;
+	p->encoding = AUDIO_ENCODING_SLINEAR_BE;
+	p->precision = 16;
+	p->channels = 2;
+	p->factor = 2;
+	if (mode == AUMODE_PLAY)
+		p->sw_code = linear16_to_linear24_be;
+	else
+		p->sw_code = linear24_to_linear16_be;
+}
+
 static int
 mavb_set_play_rate(struct mavb_softc *sc, u_long sample_rate)
 {
 	if (sample_rate < 4000 || sample_rate > 48000)
 		return (EINVAL);
 
-	if (sc->sc_play_rate != sample_rate) {
+	if (sc->play.rate != sample_rate) {
 		ad1843_reg_write(sc, AD1843_CLOCK2_SAMPLE_RATE, sample_rate);
-		sc->sc_play_rate = sample_rate;
+		sc->play.rate = sample_rate;
+	}
+	return (0);
+}
+
+static int
+mavb_set_rec_rate(struct mavb_softc *sc, u_long sample_rate)
+{
+	if (sample_rate < 4000 || sample_rate > 48000)
+		return (EINVAL);
+
+	if (sc->rec.rate != sample_rate) {
+		ad1843_reg_write(sc, AD1843_CLOCK1_SAMPLE_RATE, sample_rate);
+		sc->rec.rate = sample_rate;
+	}
+	return (0);
+}
+
+static int
+mavb_get_format(u_int encoding, u_int *format)
+{
+	switch(encoding) {
+	case AUDIO_ENCODING_ULINEAR_BE:
+		*format = AD1843_PCM8;
+		break;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		*format = AD1843_PCM16;
+		break;
+	case AUDIO_ENCODING_ULAW:
+		*format = AD1843_ULAW;
+		break;
+	case AUDIO_ENCODING_ALAW:
+		*format = AD1843_ALAW;
+		break;
+	default:
+		return (EINVAL);
 	}
 	return (0);
 }
@@ -375,30 +435,40 @@ mavb_set_play_format(struct mavb_softc *sc, u_int encoding)
 {
 	u_int16_t value;
 	u_int format;
+	int err;
 
-	switch(encoding) {
-	case AUDIO_ENCODING_ULINEAR_BE:
-		format = AD1843_PCM8;
-		break;
-	case AUDIO_ENCODING_SLINEAR_BE:
-		format = AD1843_PCM16;
-		break;
-	case AUDIO_ENCODING_ULAW:
-		format = AD1843_ULAW;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		format = AD1843_ALAW;
-		break;
-	default:
-		return (EINVAL);
-	}
+	err = mavb_get_format(encoding, &format);
+	if (err)
+		return (err);
 
-	if (sc->sc_play_format != format) {
+	if (sc->play.format != format) {
 		value = ad1843_reg_read(sc, AD1843_SERIAL_INTERFACE);
 		value &= ~AD1843_DA1F_MASK;
 		value |= (format << AD1843_DA1F_SHIFT);
 		ad1843_reg_write(sc, AD1843_SERIAL_INTERFACE, value);
-		sc->sc_play_format = format;
+		sc->play.format = format;
+	}
+	return (0);
+}
+
+static int
+mavb_set_rec_format(struct mavb_softc *sc, u_int encoding)
+{
+	u_int16_t value;
+	u_int format;
+	int err;
+
+	err = mavb_get_format(encoding, &format);
+	if (err)
+		return (err);
+
+	if (sc->rec.format != format) {
+		value = ad1843_reg_read(sc, AD1843_SERIAL_INTERFACE);
+		value &= ~(AD1843_ADRF_MASK | AD1843_ADLF_MASK);
+		value |= (format << AD1843_ADRF_SHIFT) |
+		    (format << AD1843_ADLF_SHIFT);
+		ad1843_reg_write(sc, AD1843_SERIAL_INTERFACE, value);
+		sc->rec.format = format;
 	}
 	return (0);
 }
@@ -488,6 +558,17 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 		default:
 			return (EINVAL);
 		}
+
+		/* stereo to mono conversions not yet implemented */
+		rec->channels = 2;
+
+		error = mavb_set_rec_rate(sc, rec->sample_rate);
+		if (error)
+			return (error);
+
+		error = mavb_set_rec_format(sc, rec->encoding);
+		if (error)
+			return (error);
 	}
 
 	return (0);
@@ -496,8 +577,12 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 int
 mavb_round_blocksize(void *hdl, int bs)
 {
-	/* Block size should be a multiple of 32.  */
-	return (bs + 0x1f) & ~0x1f;
+	if (bs == 0)
+		bs = MAVB_CHAN_INTR_SIZE;
+	else
+		bs = (bs + MAVB_CHAN_INTR_SIZE - 1) &
+		    ~(MAVB_CHAN_INTR_SIZE - 1);
+	return (bs);
 }
 
 int
@@ -514,6 +599,11 @@ mavb_halt_output(void *hdl)
 int
 mavb_halt_input(void *hdl)
 {
+	struct mavb_softc *sc = (struct mavb_softc *)hdl;
+
+	DPRINTF(1, ("%s: mavb_halt_input called\n", sc->sc_dev.dv_xname));
+
+	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL1_CONTROL, 0);
 	return (0);
 }
 
@@ -550,6 +640,14 @@ mavb_set_port(void *hdl, struct mixer_ctrl *mc)
 		value &= ~(AD1843_LIG_MASK | AD1843_RIG_MASK);
 		value |= ((left >> 4) << AD1843_LIG_SHIFT);
 		value |= ((right >> 4) << AD1843_RIG_SHIFT);
+		ad1843_reg_write(sc, AD1843_ADC_SOURCE_GAIN, value);
+		break;
+	case AD1843_ADC_MIC_GAIN:
+		value = ad1843_reg_read(sc, AD1843_ADC_SOURCE_GAIN);
+		if (mc->un.ord == 0)
+			value &= ~(AD1843_LMGE | AD1843_RMGE);
+		else
+			value |= (AD1843_LMGE | AD1843_RMGE);
 		ad1843_reg_write(sc, AD1843_ADC_SOURCE_GAIN, value);
 		break;
 
@@ -670,7 +768,11 @@ mavb_get_port(void *hdl, struct mixer_ctrl *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
 		    (left << 4) | left;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-		    (right << 2) | right;
+		    (right << 4) | right;
+		break;
+	case AD1843_ADC_MIC_GAIN:
+		value = ad1843_reg_read(sc, AD1843_ADC_SOURCE_GAIN);
+		mc->un.ord = (value & AD1843_LMGE) ? 1 : 0;
 		break;
 
 	case AD1843_DAC1_GAIN:
@@ -779,6 +881,19 @@ mavb_query_devinfo(void *hdl, struct mixer_devinfo *di)
 		di->un.v.num_channels = 2;
 		strlcpy(di->un.v.units.name, AudioNvolume,
 		    sizeof di->un.v.units.name);
+		break;
+	case AD1843_ADC_MIC_GAIN:
+		di->type = AUDIO_MIXER_ENUM;
+		di->mixer_class = AD1843_RECORD_CLASS;
+		strlcpy(di->label.name, AudioNmicrophone "." AudioNpreamp,
+		    sizeof di->label.name);
+		di->un.e.num_mem = 2;
+		strlcpy(di->un.e.member[0].label.name, AudioNoff,
+		    sizeof di->un.e.member[0].label.name);
+		di->un.e.member[0].ord = 0;
+		strlcpy(di->un.e.member[1].label.name, AudioNon,
+		    sizeof di->un.e.member[1].label.name);
+		di->un.e.member[1].ord = 1;
 		break;
 
 	case AD1843_INPUT_CLASS:
@@ -915,39 +1030,91 @@ mavb_dma_output(struct mavb_softc *sc)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	u_int64_t write_ptr;
-	u_int64_t depth;
-	caddr_t src, dst;
+	caddr_t src, dst, end;
 	int count;
 
 	write_ptr = bus_space_read_8(st, sh, MAVB_CHANNEL2_WRITE_PTR);
-	depth = bus_space_read_8(st, sh, MAVB_CHANNEL2_DEPTH);
 
-	dst = sc->sc_ring + write_ptr;
-	src = sc->sc_get;
+	end = sc->play.hw_start + MAVB_CHAN_RING_SIZE;
+	dst = sc->play.hw_start + write_ptr;
+	src = sc->play.sw_cur;
 
-	count = (MAVB_ISA_RING_SIZE - depth - 32);
-	while (--count >= 0) {
-		*dst++ = *src++;
-		if (dst >= sc->sc_ring + MAVB_ISA_RING_SIZE)
-			dst = sc->sc_ring;
-		if (src >= sc->sc_end)
-			src = sc->sc_start;
-		if (++sc->sc_count >= sc->sc_blksize) {
-			if (sc->sc_intr)
-				sc->sc_intr(sc->sc_intrarg);
-			sc->sc_count = 0;
-		}
+	if (write_ptr % MAVB_CHAN_CHUNK_SIZE) {
+		printf("%s: write_ptr=%d\n", sc->sc_dev.dv_xname, write_ptr);
+		return;
+	}
+	if ((src - sc->play.sw_start) % MAVB_CHAN_CHUNK_SIZE) {
+		printf("%s: src=%d\n", sc->sc_dev.dv_xname,
+		    src - sc->play.sw_start);
+		return;
 	}
 
-	write_ptr = dst - sc->sc_ring;
+	count = MAVB_CHAN_INTR_SIZE / MAVB_CHAN_CHUNK_SIZE;
+	while (--count >= 0) {
+		memcpy(dst, src, MAVB_CHAN_CHUNK_SIZE);
+		dst += MAVB_CHAN_CHUNK_SIZE;
+		src += MAVB_CHAN_CHUNK_SIZE;
+		if (dst >= end)
+			dst = sc->play.hw_start;
+		if (src >= sc->play.sw_end)
+			src = sc->play.sw_start;
+		if (!((src - sc->play.sw_start) % sc->play.blksize)) {
+			if (sc->play.intr)
+				sc->play.intr(sc->play.intrarg);
+		}
+	}
+	write_ptr = dst - sc->play.hw_start;
 	bus_space_write_8(st, sh, MAVB_CHANNEL2_WRITE_PTR, write_ptr);
-	sc->sc_get = src;
+	sc->play.sw_cur = src;
+}
+
+static void
+mavb_dma_input(struct mavb_softc *sc)
+{
+	bus_space_tag_t st = sc->sc_st;
+	bus_space_handle_t sh = sc->sc_sh;
+	u_int64_t read_ptr;
+	caddr_t src, dst, end;
+	int count;
+
+	read_ptr = bus_space_read_8(st, sh, MAVB_CHANNEL1_READ_PTR);
+
+	end = sc->rec.hw_start + MAVB_CHAN_RING_SIZE;
+	src = sc->rec.hw_start + read_ptr;
+	dst = sc->rec.sw_cur;
+
+	if (read_ptr % MAVB_CHAN_CHUNK_SIZE) {
+		printf("%s: read_ptr=%d\n", sc->sc_dev.dv_xname, read_ptr);
+		return;
+	}
+	if ((dst - sc->rec.sw_start) % MAVB_CHAN_CHUNK_SIZE) {
+		printf("%s: dst=%d\n", sc->sc_dev.dv_xname,
+		    dst - sc->rec.sw_start);
+		return;
+	}
+
+	count = MAVB_CHAN_INTR_SIZE / MAVB_CHAN_CHUNK_SIZE;
+	while (--count >= 0) {
+		memcpy(dst, src, MAVB_CHAN_CHUNK_SIZE);
+		dst += MAVB_CHAN_CHUNK_SIZE;
+		src += MAVB_CHAN_CHUNK_SIZE;
+		if (src >= end)
+			src = sc->rec.hw_start;
+		if (dst >= sc->rec.sw_end)
+			dst = sc->rec.sw_start;
+		if (!((dst - sc->rec.sw_start) % sc->rec.blksize)) {
+			if (sc->rec.intr)
+				sc->rec.intr(sc->rec.intrarg);
+		}
+	}
+	read_ptr = src - sc->rec.hw_start;
+	bus_space_write_8(st, sh, MAVB_CHANNEL1_READ_PTR, read_ptr);
+	sc->rec.sw_cur = dst;
 }
 
 int
 mavb_trigger_output(void *hdl, void *start, void *end, int blksize,
-		    void (*intr)(void *), void *intrarg,
-		    struct audio_params *param)
+    void (*intr)(void *), void *intrarg, struct audio_params *param)
 {
 	struct mavb_softc *sc = (struct mavb_softc *)hdl;
 
@@ -955,32 +1122,59 @@ mavb_trigger_output(void *hdl, void *start, void *end, int blksize,
 	    "blksize=%d intr=%p(%p)\n", sc->sc_dev.dv_xname,
 	    start, end, blksize, intr, intrarg));
 
-	sc->sc_blksize = blksize;
-	sc->sc_intr = intr;
-	sc->sc_intrarg = intrarg;
+	sc->play.blksize = blksize;
+	sc->play.intr = intr;
+	sc->play.intrarg = intrarg;
 
-	sc->sc_start = sc->sc_get = start;
-	sc->sc_end = end;
-
-	sc->sc_count = 0;
+	sc->play.sw_start = sc->play.sw_cur = start;
+	sc->play.sw_end = end;
 
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL2_CONTROL,
 	    MAVB_CHANNEL_RESET);
 	delay(1000);
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL2_CONTROL, 0);
 
+	/* Fill first 25% of buffer with silence. */
+	bzero(sc->play.hw_start, MAVB_CHAN_CHUNK_SIZE);
+	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL2_WRITE_PTR,
+	    MAVB_CHAN_CHUNK_SIZE);
+
+	/* Fill next 50% of buffer with audio data. */
 	mavb_dma_output(sc);
 
+	/* The buffer is now 75% full.  Start DMA and get interrupts
+	 * when the buffer is 25% full.  The interrupt handler fills
+	 * in 50% of the buffer size, putting it back to 75% full.
+	 */
 	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL2_CONTROL,
-	    MAVB_CHANNEL_DMA_ENABLE | MAVB_CHANNEL_INT_50);
+	    MAVB_CHANNEL_DMA_ENABLE | MAVB_CHANNEL_INT_25);
 	return (0);
 }
 
 int
 mavb_trigger_input(void *hdl, void *start, void *end, int blksize,
-		   void (*intr)(void *), void *intrarg,
-		   struct audio_params *param)
+    void (*intr)(void *), void *intrarg, struct audio_params *param)
 {
+	struct mavb_softc *sc = (struct mavb_softc *)hdl;
+
+	DPRINTF(1, ("%s: mavb_trigger_output: start=%p end=%p "
+	    "blksize=%d intr=%p(%p)\n", sc->sc_dev.dv_xname,
+	    start, end, blksize, intr, intrarg));
+
+	sc->rec.blksize = blksize;
+	sc->rec.intr = intr;
+	sc->rec.intrarg = intrarg;
+
+	sc->rec.sw_start = sc->rec.sw_cur = start;
+	sc->rec.sw_end = end;
+
+	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL1_CONTROL,
+	    MAVB_CHANNEL_RESET);
+	delay(1000);
+	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL1_CONTROL, 0);
+
+	bus_space_write_8(sc->sc_st, sc->sc_sh, MAVB_CHANNEL1_CONTROL,
+	    MAVB_CHANNEL_DMA_ENABLE | MAVB_CHANNEL_INT_50);
 	return (0);
 }
 
@@ -1054,6 +1248,9 @@ mavb_intr(void *arg)
 		    (hz * MAVB_VOLUME_BUTTON_REPEAT_DEL1) / 1000);
 	}
 
+	if (intstat & MACE_ISA_INT_AUDIO_DMA1)
+		mavb_dma_input(sc);
+
 	if (intstat & MACE_ISA_INT_AUDIO_DMA2)
 		mavb_dma_output(sc);
 
@@ -1099,31 +1296,32 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set up DMA structures.  */
 	sc->sc_dmat = maa->maa_dmat;
-	if (bus_dmamap_create(sc->sc_dmat, 4 * MAVB_ISA_RING_SIZE, 1,
-	    4 * MAVB_ISA_RING_SIZE, 0, 0, &sc->sc_dmamap)) {
+	if (bus_dmamap_create(sc->sc_dmat, MAVB_ISA_RING_SIZE, 1,
+	    MAVB_ISA_RING_SIZE, 0, 0, &sc->sc_dmamap)) {
 		printf(": can't create MACE ISA DMA map\n");
 		return;
 	}
 
-	if (bus_dmamem_alloc(sc->sc_dmat, 4 * MAVB_ISA_RING_SIZE,
+	if (bus_dmamem_alloc(sc->sc_dmat, MAVB_ISA_RING_SIZE,
 	    MACE_ISA_RING_ALIGN, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf(": can't allocate ring buffer\n");
 		return;
 	}
 
-	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, 4 * MAVB_ISA_RING_SIZE,
+	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, MAVB_ISA_RING_SIZE,
 	    &sc->sc_ring, BUS_DMA_COHERENT)) {
 		printf(": can't map ring buffer\n");
 		return;
 	}
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_ring,
-	    4 * MAVB_ISA_RING_SIZE, NULL, BUS_DMA_NOWAIT)) {
+	    MAVB_ISA_RING_SIZE, NULL, BUS_DMA_NOWAIT)) {
 		printf(": can't load MACE ISA DMA map\n");
 		return;
 	}
 
-	sc->sc_ring += MAVB_ISA_RING_SIZE; /* XXX */
+	sc->rec.hw_start = sc->sc_ring;
+	sc->play.hw_start = sc->sc_ring + MAVB_CHAN_RING_SIZE;
 
 	bus_space_write_8(sc->sc_st, sc->sc_isash, MACE_ISA_RING_BASE,
 	    sc->sc_dmamap->dm_segs[0].ds_addr);
@@ -1159,17 +1357,22 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 
 	/* 5. Power up the clock generators and enable clock output pins.  */
 	value = ad1843_reg_read(sc, AD1843_FUNDAMENTAL_SETTINGS);
-	ad1843_reg_write(sc, AD1843_FUNDAMENTAL_SETTINGS, value | AD1843_C2EN);
+	ad1843_reg_write(sc, AD1843_FUNDAMENTAL_SETTINGS,
+	    value | AD1843_C1EN | AD1843_C2EN);
 
 	/* 6. Configure conversion resources while they are in standby.  */
+	value = ad1843_reg_read(sc, AD1843_SERIAL_INTERFACE);
+	ad1843_reg_write(sc, AD1843_SERIAL_INTERFACE, value | AD1843_ADTLK);
 	value = ad1843_reg_read(sc, AD1843_CHANNEL_SAMPLE_RATE);
 	ad1843_reg_write(sc, AD1843_CHANNEL_SAMPLE_RATE,
-	     value | (2 << AD1843_DA1C_SHIFT));
+	    value | (2 << AD1843_DA1C_SHIFT) |
+	    (1 << AD1843_ADRC_SHIFT) | (1 << AD1843_ADLC_SHIFT));
 
 	/* 7. Enable conversion resources.  */
 	value = ad1843_reg_read(sc, AD1843_CHANNEL_POWER_DOWN);
 	ad1843_reg_write(sc, AD1843_CHANNEL_POWER_DOWN,
-	     value | (AD1843_DA1EN | AD1843_AAMEN));
+	    value | (AD1843_DA1EN | AD1843_ANAEN | AD1843_AAMEN |
+	    AD1843_ADREN | AD1843_ADLEN));
 
 	/* 8. Configure conversion resources while they are enabled.  */
 	value = ad1843_reg_read(sc, AD1843_DAC1_ANALOG_GAIN);
@@ -1185,8 +1388,8 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	value = ad1843_reg_read(sc, AD1843_CODEC_STATUS);
 	printf(": AD1843 rev %d\n", (u_int)value & AD1843_REVISION_MASK);
 
-	sc->sc_play_rate = 48000;
-	sc->sc_play_format = AD1843_PCM8;
+	sc->play.rate = sc->rec.rate = 48000;
+	sc->play.format = sc->rec.format = AD1843_PCM8;
 
 	timeout_set(&sc->sc_volume_button_to, mavb_button_repeat, sc);
 

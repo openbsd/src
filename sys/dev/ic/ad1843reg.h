@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1843reg.h,v 1.1 2005/01/02 19:25:41 kettenis Exp $	*/
+/*	$OpenBSD: ad1843reg.h,v 1.2 2009/11/18 21:13:17 jakemsr Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -71,6 +71,8 @@
 
 #define AD1843_CHANNEL_SAMPLE_RATE	15
 #define  AD1843_DA1C_SHIFT		8
+#define  AD1843_ADRC_SHIFT		2
+#define  AD1843_ADLC_SHIFT		0
 
 #define AD1843_CLOCK1_SAMPLE_RATE	17
 #define AD1843_CLOCK2_SAMPLE_RATE	20
@@ -81,6 +83,11 @@
 #define  AD1843_DA2F_SHIFT		10
 #define  AD1843_DA1F_MASK		0x0300
 #define  AD1843_DA1F_SHIFT		8
+#define  AD1843_ADTLK			0x0010
+#define  AD1843_ADRF_MASK		0x000c
+#define  AD1843_ADRF_SHIFT		2
+#define  AD1843_ADLF_MASK		0x0003
+#define  AD1843_ADLF_SHIFT		0
 #define  AD1843_PCM8			0
 #define  AD1843_PCM16			1
 #define  AD1843_ULAW			2
