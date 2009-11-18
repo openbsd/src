@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1508 2009/11/16 18:45:04 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1509 2009/11/18 18:19:15 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9804,6 +9804,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "EP80579 ASU",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_RESERVED1,
+	    "EP80579 Reserved",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LPC,
 	    "EP80579 LPC",
 	},
@@ -9838,6 +9842,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_1588,
 	    "EP80579 1588",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LEB,
+	    "EP80579 LEB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_GCU,
+	    "EP80579 GCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_RESERVED2,
+	    "EP80579 Reserved",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_1,
@@ -11474,6 +11490,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91CX42,
 	    "Universe VME",
+	},
+	{
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_TSI381,
+	    "Tsi381 PCIE-PCI",
 	},
 	{
 	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1000,
