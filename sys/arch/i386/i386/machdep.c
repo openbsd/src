@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.463 2009/10/07 07:26:36 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.464 2009/11/18 18:16:46 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1968,6 +1968,8 @@ p3_get_bus_clock(struct cpu_info *ci)
 			    ci->ci_dev.dv_xname, bus);
 			goto print_msr;
 		}
+		break;
+	case 0x15:	/* EP80579 no FSB */
 		break;
 	case 0xe: /* Core Duo/Solo */
 	case 0xf: /* Core Xeon */
