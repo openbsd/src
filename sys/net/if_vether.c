@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.3 2009/11/12 06:37:39 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.4 2009/11/18 02:10:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -118,11 +118,14 @@ vether_clone_create(struct if_clone *ifc, int unit)
 	ifp = &sc->sc_ac.ac_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "vether%d", unit);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+
 	ifp->if_softc = sc;
 	ifp->if_ioctl = vetherioctl;
 	ifp->if_start = vetherstart;
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	ifmedia_init(&sc->sc_media, 0, vether_media_change,
 	    vether_media_status);
