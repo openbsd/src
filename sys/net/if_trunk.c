@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.69 2009/09/17 13:13:56 claudio Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.70 2009/11/18 02:09:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -187,13 +187,10 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	ifmedia_set(&tr->tr_media, IFM_ETHER | IFM_AUTO);
 
 	ifp = &tr->tr_ac.ac_if;
-	ifp->if_carp = NULL;
-	ifp->if_type = IFT_ETHER;
 	ifp->if_softc = tr;
 	ifp->if_start = trunk_start;
 	ifp->if_watchdog = trunk_watchdog;
 	ifp->if_ioctl = trunk_ioctl;
-	ifp->if_output = ether_output;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_capabilities = trunk_capabilities(tr);
 
@@ -921,9 +918,9 @@ trunk_start(struct ifnet *ifp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
 	struct mbuf *m;
-	int error = 0;
+	int error;
 
-	for (;; error = 0) {
+	for (;;) {
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
