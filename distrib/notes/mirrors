@@ -1,4 +1,4 @@
-dnl	$OpenBSD: mirrors,v 1.72 2009/11/01 21:40:07 sthen Exp $
+dnl	$OpenBSD: mirrors,v 1.73 2009/11/18 21:21:35 sthen Exp $
 This is a list of currently known FTP servers at the time of the OSREV release.
 For a more recent list, please refer to
 
@@ -155,6 +155,7 @@ USA:
     ftp://filedump.se.rit.edu/pub/OpenBSD (Rochester, NY)
     ftp://mirror.rit.edu/pub/OpenBSD (Rochester, NY)
     ftp://openbsd.mirror.frontiernet.net/pub/OpenBSD (Rochester, NY)
+    ftp://ftp.lambdaserver.com/pub/OpenBSD (Chicago, Illinois)
 
 
 Additionally, the file ftp://ftp.OpenBSD.org/pub/OpenBSD/ftplist
