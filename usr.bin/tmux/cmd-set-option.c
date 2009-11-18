@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.25 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.26 2009/11/18 13:16:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -67,6 +67,7 @@ const struct set_option_entry set_option_table[] = {
 	{ "message-attr", SET_OPTION_ATTRIBUTES, 0, 0, NULL },
 	{ "message-bg", SET_OPTION_COLOUR, 0, 0, NULL },
 	{ "message-fg", SET_OPTION_COLOUR, 0, 0, NULL },
+	{ "message-limit", SET_OPTION_NUMBER, 0, INT_MAX, NULL },
 	{ "mouse-select-pane", SET_OPTION_FLAG, 0, 0, NULL },
 	{ "prefix", SET_OPTION_KEYS, 0, 0, NULL },
 	{ "repeat-time", SET_OPTION_NUMBER, 0, SHRT_MAX, NULL },
