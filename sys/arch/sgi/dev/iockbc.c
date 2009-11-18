@@ -1,4 +1,4 @@
-/*	$OpenBSD: iockbc.c,v 1.3 2009/11/11 15:56:41 miod Exp $	*/
+/*	$OpenBSD: iockbc.c,v 1.4 2009/11/18 19:03:27 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, 2009 Joel Sing <jsing@openbsd.org>
  *
@@ -45,7 +45,7 @@
  */
 
 /*
- * Driver for IOC3 PS/2 Controllers (iockbc)
+ * Driver for IOC3 and IOC4 PS/2 Controllers (iockbc)
  */
 
 #include <sys/param.h>
@@ -65,13 +65,17 @@
 
 #include <mips64/archtype.h>
 
-#include <sgi/localbus/crimebus.h>
-#include <sgi/localbus/macebus.h>
+#include <sgi/dev/iockbcreg.h>
+
 #include <sgi/pci/iocreg.h>
 #include <sgi/pci/iocvar.h>
+#include <sgi/pci/iofreg.h>
+#include <sgi/pci/iofvar.h>
 
 #include <dev/ic/pckbcvar.h>
 #include <dev/pckbc/pckbdvar.h>
+
+#include "iockbc.h"
 
 const char *iockbc_slot_names[] = { "kbd", "mouse" };
 
@@ -91,14 +95,23 @@ struct iockbc_softc {
 	bus_space_handle_t ioh;
 	bus_addr_t rx[PCKBC_NSLOTS];
 	bus_addr_t tx[PCKBC_NSLOTS];
+	bus_addr_t cs;
 };
 
 int	iockbc_match(struct device *, void *, void *);
-void	iockbc_attach(struct device *, struct device *, void *);
+void	iockbc_ioc_attach(struct device *, struct device *, void *);
+void	iockbc_iof_attach(struct device *, struct device *, void *);
 
-struct cfattach iockbc_ca = {
-	sizeof(struct iockbc_softc), iockbc_match, iockbc_attach
+#if NIOCKBC_IOC > 0
+struct cfattach iockbc_ioc_ca = {
+	sizeof(struct iockbc_softc), iockbc_match, iockbc_ioc_attach
 };
+#endif
+#if NIOCKBC_IOF > 0
+struct cfattach iockbc_iof_ca = {
+	sizeof(struct iockbc_softc), iockbc_match, iockbc_iof_attach
+};
+#endif
 
 struct cfdriver iockbc_cd = {
 	NULL, "iockbc", DV_DULL
@@ -131,6 +144,7 @@ struct pckbc_slotdata {
 
 static int iockbc_console;
 
+void	iockbc_attach_common(struct iockbc_softc *, bus_addr_t);
 void	iockbc_start(struct pckbc_internal *, pckbc_slot_t);
 int	iockbc_attach_slot(struct iockbc_softc *, pckbc_slot_t);
 void	iockbc_init_slotdata(struct pckbc_slotdata *);
@@ -151,10 +165,78 @@ int
 iockbc_match(struct device *parent, void *cf, void *aux)
 {
 	/*
-	 * We expect ioc NOT to attach us on if there are no PS/2 ports.
+	 * We expect ioc and iof NOT to attach us on if there are no PS/2 ports.
 	 */
 	return 1;
 }
+
+#if NIOCKBC_IOC > 0
+void
+iockbc_ioc_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct iockbc_softc *isc = (void*)self;
+	struct ioc_attach_args *iaa = aux;
+
+	/*
+	 * For some reason keyboard and mouse ports are inverted on Fuel.
+	 */
+
+	if (ISSET(iaa->iaa_flags, IOC_FLAGS_OBIO) &&
+	    sys_config.system_type == SGI_IP35) {
+		isc->rx[PCKBC_KBD_SLOT] = IOC3_KBC_AUX_RX;
+		isc->rx[PCKBC_AUX_SLOT] = IOC3_KBC_KBD_RX;
+		isc->tx[PCKBC_KBD_SLOT] = IOC3_KBC_AUX_TX;
+		isc->tx[PCKBC_AUX_SLOT] = IOC3_KBC_KBD_TX;
+	} else {
+		isc->rx[PCKBC_KBD_SLOT] = IOC3_KBC_KBD_RX;
+		isc->rx[PCKBC_AUX_SLOT] = IOC3_KBC_AUX_RX;
+		isc->tx[PCKBC_KBD_SLOT] = IOC3_KBC_KBD_TX;
+		isc->tx[PCKBC_AUX_SLOT] = IOC3_KBC_AUX_TX;
+	}
+	isc->cs = IOC3_KBC_CTRL_STATUS;
+
+	/* Setup bus space mapping. */
+	isc->iot = iaa->iaa_memt;
+	isc->ioh = iaa->iaa_memh;
+
+	/* Establish interrupt handler. */
+	if (ioc_intr_establish(parent, iaa->iaa_dev, IPL_TTY, iockbcintr,
+	    (void *)isc, self->dv_xname))
+		printf("\n");
+	else
+		printf(": unable to establish interrupt\n");
+
+	iockbc_attach_common(isc, iaa->iaa_base);
+}
+#endif
+
+#if NIOCKBC_IOF > 0
+void
+iockbc_iof_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct iockbc_softc *isc = (void*)self;
+	struct iof_attach_args *iaa = aux;
+
+	isc->rx[PCKBC_KBD_SLOT] = IOC4_KBC_KBD_RX;
+	isc->rx[PCKBC_AUX_SLOT] = IOC4_KBC_AUX_RX;
+	isc->tx[PCKBC_KBD_SLOT] = IOC4_KBC_KBD_TX;
+	isc->tx[PCKBC_AUX_SLOT] = IOC4_KBC_AUX_TX;
+	isc->cs = IOC4_KBC_CTRL_STATUS;
+
+	/* Setup bus space mapping. */
+	isc->iot = iaa->iaa_memt;
+	isc->ioh = iaa->iaa_memh;
+
+	/* Establish interrupt handler. */
+	if (iof_intr_establish(parent, iaa->iaa_dev, IPL_TTY, iockbcintr,
+	    (void *)isc, self->dv_xname))
+		printf("\n");
+	else
+		printf(": unable to establish interrupt\n");
+
+	iockbc_attach_common(isc, iaa->iaa_base);
+}
+#endif
 
 void
 iockbc_init_slotdata(struct pckbc_slotdata *q)
@@ -222,34 +304,24 @@ iockbc_attach_slot(struct iockbc_softc *sc, pckbc_slot_t slot)
 }
 
 void
-iockbc_attach(struct device *parent, struct device *self, void *aux)
+iockbc_attach_common(struct iockbc_softc *isc, bus_addr_t addr)
 {
-	struct iockbc_softc *isc = (void*)self;
-	struct ioc_attach_args *iaa = aux;
 	struct pckbc_softc *sc = &isc->sc_pckbc;
 	struct pckbc_internal *t;
 	uint32_t csr;
 
 	/*
-	 * For some reason keyboard and mouse ports are inverted on Fuel.
+	 * Setup up controller: do not force pull clock and data lines low,
+	 * clamp clocks after three bytes received.
 	 */
-
-	if (ISSET(iaa->iaa_flags, IOC_FLAGS_OBIO) &&
-	    sys_config.system_type == SGI_IP35) {
-		isc->rx[PCKBC_KBD_SLOT] = IOC3_KBC_AUX_RX;
-		isc->rx[PCKBC_AUX_SLOT] = IOC3_KBC_KBD_RX;
-		isc->tx[PCKBC_KBD_SLOT] = IOC3_KBC_AUX_TX;
-		isc->tx[PCKBC_AUX_SLOT] = IOC3_KBC_KBD_TX;
-	} else {
-		isc->rx[PCKBC_KBD_SLOT] = IOC3_KBC_KBD_RX;
-		isc->rx[PCKBC_AUX_SLOT] = IOC3_KBC_AUX_RX;
-		isc->tx[PCKBC_KBD_SLOT] = IOC3_KBC_KBD_TX;
-		isc->tx[PCKBC_AUX_SLOT] = IOC3_KBC_AUX_TX;
-	}
-
-	/* Setup bus space mapping. */
-	isc->iot = iaa->iaa_memt;
-	isc->ioh = iaa->iaa_memh;
+	csr = bus_space_read_4(isc->iot, isc->ioh, isc->cs);
+	csr &= ~(IOC3_KBC_CTRL_KBD_PULL_DATA_LOW |
+	    IOC3_KBC_CTRL_KBD_PULL_CLOCK_LOW |
+	    IOC3_KBC_CTRL_AUX_PULL_DATA_LOW |
+	    IOC3_KBC_CTRL_AUX_PULL_CLOCK_LOW |
+	    IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1);
+	csr |= IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3;
+	bus_space_write_4(isc->iot, isc->ioh, isc->cs, csr);
 
 	/* Setup pckbc_internal structure. */
 	t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
@@ -257,32 +329,12 @@ iockbc_attach(struct device *parent, struct device *self, void *aux)
 	t->t_iot = isc->iot;
 	t->t_ioh_d = isc->ioh;
 	t->t_ioh_c = isc->ioh;
-	t->t_addr = iaa->iaa_base;
-	t->t_sc = (struct pckbc_softc *)sc;
+	t->t_addr = addr;
+	t->t_sc = sc;
 	sc->id = t;
 
 	timeout_set(&t->t_cleanup, iockbc_cleanup, t);
 	timeout_set(&t->t_poll, iockbc_poll, t);
-
-	/* Establish interrupt handler. */
-	if (ioc_intr_establish(parent, iaa->iaa_dev, IPL_TTY, iockbcintr,
-	    (void *)isc, sc->sc_dv.dv_xname))
-		printf("\n");
-	else
-		printf(": unable to establish interrupt\n");
-
-	/*
-	 * Setup up controller: do not force pull clock and data lines low,
-	 * clamp clocks after three bytes received.
-	 */
-	csr = bus_space_read_4(isc->iot, isc->ioh, IOC3_KBC_CTRL_STATUS);
-	csr &= ~(IOC3_KBC_CTRL_KBD_PULL_DATA_LOW |
-	    IOC3_KBC_CTRL_KBD_PULL_CLOCK_LOW |
-	    IOC3_KBC_CTRL_AUX_PULL_DATA_LOW |
-	    IOC3_KBC_CTRL_AUX_PULL_CLOCK_LOW |
-	    IOC3_KBC_CTRL_KBD_CLAMP_1 | IOC3_KBC_CTRL_AUX_CLAMP_1);
-	csr |= IOC3_KBC_CTRL_KBD_CLAMP_3 | IOC3_KBC_CTRL_AUX_CLAMP_3;
-	bus_space_write_4(isc->iot, isc->ioh, IOC3_KBC_CTRL_STATUS, csr);
 
 	/*
 	 * Attach "slots". 
@@ -407,7 +459,7 @@ iockbc_poll_write(struct pckbc_internal *t, pckbc_slot_t slot, int val)
 
 	/* Attempt to write a value to the controller. */
 	while (timeout--) {
-		stat = bus_space_read_4(iot, ioh, IOC3_KBC_CTRL_STATUS);
+		stat = bus_space_read_4(iot, ioh, isc->cs);
 		if ((stat & busy) == 0) {
 			bus_space_write_4(iot, ioh, offset, val & 0xff);
 			return 0;

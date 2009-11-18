@@ -1,4 +1,4 @@
-/*	$OpenBSD: iofreg.h,v 1.3 2009/10/13 21:17:13 miod Exp $	*/
+/*	$OpenBSD: iofreg.h,v 1.4 2009/11/18 19:03:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -30,6 +30,7 @@
 #define IOC4DEV_ATAPI		6
 #define IOC4DEV_RTC		7
 
+/* Interrupt control registers */
 #define IOC4_SIO_IR		0x00000008
 #define	IOC4_OTHER_IR		0x0000000c
 #define IOC4_SIO_IES		0x00000010
@@ -38,6 +39,13 @@
 #define IOC4_OTHER_IEC		0x0000001c
 #define IOC4_SIO_CR		0x00000020
 #define	IOC4_MCR		0x00000024
+
+/* Keyboard controller registers */
+#define	IOC4_KBC_CTRL_STATUS	0x00000200
+#define	IOC4_KBC_KBD_RX		0x00000204
+#define	IOC4_KBC_AUX_RX		0x00000208
+#define	IOC4_KBC_KBD_TX		0x0000020c
+#define	IOC4_KBC_AUX_TX		0x00000210
 
 /* bits in the SIO interrupt register */
 #define	IOC4_SIRQ_UARTA		0x00000040	/* UART A passthrough */
