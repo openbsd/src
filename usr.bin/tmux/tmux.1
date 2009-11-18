@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.118 2009/11/10 18:53:11 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.119 2009/11/18 10:18:25 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2009 $
+.Dd $Mdocdate: November 18 2009 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1114,7 +1114,8 @@ are printed.
 Keys bound without the prefix key (see
 .Ic bind-key
 .Fl n )
-are enclosed in square brackets.
+are marked with
+.Ql (no prefix) .
 .Pp
 With
 .Fl t ,

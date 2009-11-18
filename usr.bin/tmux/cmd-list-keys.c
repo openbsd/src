@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.9 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.10 2009/11/18 10:18:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -71,13 +71,15 @@ cmd_list_keys_exec(struct cmd *self, struct cmd_ctx *ctx)
 		key = key_string_lookup_key(bd->key & ~KEYC_PREFIX);
 		if (key == NULL)
 			continue;
-		if (!(bd->key & KEYC_PREFIX))
-			used = xsnprintf(tmp, sizeof tmp, "[%s]: ", key);
-		else
-			used = xsnprintf(tmp, sizeof tmp, "%*s: ", width, key);
+		used = xsnprintf(tmp, sizeof tmp, "%*s: ", width, key);
 		if (used >= sizeof tmp)
 			continue;
 
+ 		if (!(bd->key & KEYC_PREFIX)) {
+			used = strlcat(tmp, "(no prefix) ", sizeof tmp);
+			if (used >= sizeof tmp)
+				continue;
+		}
 		cmd_list_print(bd->cmdlist, tmp + used, (sizeof tmp) - used);
 		ctx->print(ctx, "%s", tmp);
 	}
