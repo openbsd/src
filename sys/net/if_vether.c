@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.4 2009/11/18 02:10:45 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.5 2009/11/18 02:11:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -15,7 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include "vether.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +44,6 @@
 
 #include <dev/rndvar.h>
 
-#include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
@@ -178,15 +179,18 @@ vetherstart(struct ifnet *ifp)
 		    BPF_DIRECTION_IN : BPF_DIRECTION_OUT;
 		m->m_flags &= ~M_PROTO1;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap_ether(ifp->if_bpf, m, inout);
-#endif
-
 		if (inout == BPF_DIRECTION_IN) {
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m, inout);
+#endif
 			ether_input_mbuf(ifp, m);
 			ifp->if_ipackets++;
 		} else {
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap_ether(ifp->if_bpf, m, inout);
+#endif
 			ifp->if_opackets++;
 			ifp->if_obytes += m->m_pkthdr.len;
 			m_freem(m);
