@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.455 2009/11/17 20:13:42 damien Exp $
+$OpenBSD: usbdevs,v 1.456 2009/11/18 23:13:01 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -490,6 +490,7 @@ vendor HUAWEI3COM	0x1472	Huawei 3Com
 vendor ABOCOM2		0x1482	AboCom Systems
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x148f	Ralink Technology
+vendor STARTECH		0x14b0	StarTech.com
 vendor CONCEPTRONIC2	0x14b2	Conceptronic
 vendor PLANEX3		0x14ea	Planex Communications
 vendor SILICONPORTALS	0x1527	Silicon Portals
@@ -2927,6 +2928,9 @@ product SPEEDDRAGON MS3303H	0x110b	MS3303H Serial
 /* Sphairon Access Systems GmbH products */
 product SPHAIRON UB801R		0x0110	UB801R
 product SPHAIRON RTL8187	0x0150	RTL8187
+
+/* StarTech.com products */
+product	STARTECH ICUSB232X	0x3410	ICUSB2321X/2X/4X
 
 /* STMicroelectronics products */
 product STMICRO BIOMETRIC_COPR	0x2016	Biometric Coprocessor
