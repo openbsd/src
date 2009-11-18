@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.7 2008/04/07 22:30:05 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.8 2009/11/18 20:58:50 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,23 +58,24 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 
 #endif /* _LOCORE */
 
+/* entryhi values */
+#define	PG_SVPN		0xfffffffffffff000	/* Software page no mask */
+#define	PG_HVPN		0xffffffffffffe000	/* Hardware page no mask */
+#define	PG_ODDPG	0x0000000000001000	/* Odd even pte entry */
+#define	PG_ASID		0x00000000000000ff	/* Address space ID */
+/* entrylo values */
 #define PG_RO		0x40000000	/* SW */
-
-#define	PG_SVPN		0xfffff000	/* Software page no mask */
-#define	PG_HVPN		0xffffe000	/* Hardware page no mask */
-#define	PG_ODDPG	0x00001000	/* Odd even pte entry */
-#define	PG_ASID		0x000000ff	/* Address space ID */
 #define	PG_G		0x00000001	/* HW */
 #define	PG_V		0x00000002
 #define	PG_NV		0x00000000
 #define	PG_M		0x00000004
-#define	PG_ATTR		0x0000003f
 #define	PG_UNCACHED	(CCA_NC << 3)
 #define	PG_CACHED_NC	(CCA_NONCOHERENT << 3)
 #define	PG_CACHED_CE	(CCA_COHERENT_EXCL << 3)
 #define	PG_CACHED_CEW	(CCA_COHERENT_EXCLWRITE << 3)
-#define	PG_CACHEMODE	0x00000038
 #define	PG_CACHED	(CCA_CACHED << 3)
+#define	PG_CACHEMODE	0x00000038
+#define	PG_ATTR		0x0000003f
 #define	PG_ROPAGE	(PG_V | PG_RO | PG_CACHED) /* Write protected */
 #define	PG_RWPAGE	(PG_V | PG_M | PG_CACHED)  /* Not w-prot not clean */
 #define	PG_CWPAGE	(PG_V | PG_CACHED)	   /* Not w-prot but clean */
@@ -82,10 +83,8 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	PG_FRAME	0x3fffffc0
 #define PG_SHIFT	6
 
-#define	pfn_to_pad(x)	(((vaddr_t)(x) & PG_FRAME) << PG_SHIFT)
-#define vad_to_pfn(x)	(((vaddr_t)(x) >> PG_SHIFT) & PG_FRAME)
-/* User virtual to pte page entry */
-#define uvtopte(adr)	(((adr) >> PGSHIFT) & (NPTEPG -1))
+#define	pfn_to_pad(pa)	(((pa) & PG_FRAME) << PG_SHIFT)
+#define vad_to_pfn(va)	(((va) >> PG_SHIFT) & PG_FRAME)
 
 #define	PG_SIZE_4K	0x00000000
 #define	PG_SIZE_16K	0x00006000
@@ -97,11 +96,11 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
-/*
- * Kernel virtual address to page table entry and visa versa.
- */
+/* Kernel virtual address to page table entry */
 #define	kvtopte(va) \
 	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
+/* User virtual address to pte page entry */
+#define uvtopte(adr)	(((adr) >> PGSHIFT) & (NPTEPG -1))
 
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
 extern	u_int Sysmapsize;		/* number of pte's in Sysmap */

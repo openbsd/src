@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.37 2009/07/23 19:24:55 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.38 2009/11/18 20:58:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -58,8 +58,8 @@ struct pool pmap_pv_pool;
 #endif
 int	pmap_pv_lowat = PMAP_PV_LOWAT;
 
-int	pmap_alloc_tlbpid(struct proc *);
-int	pmap_enter_pv(pmap_t, vaddr_t, vm_page_t, u_int *);
+uint	pmap_alloc_tlbpid(struct proc *);
+int	pmap_enter_pv(pmap_t, vaddr_t, vm_page_t, pt_entry_t *);
 int	pmap_page_alloc(vaddr_t *);
 void	pmap_page_free(vaddr_t);
 void	pmap_page_cache(vm_page_t, int);
@@ -127,7 +127,7 @@ vaddr_t	virtual_start;  /* VA of first avail page (after kernel bss)*/
 vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
 u_int		tlbpid_gen = 1;		/* TLB PID generation count */
-int		tlbpid_cnt = 2;		/* next available TLB PID */
+u_int		tlbpid_cnt = 2;		/* next available TLB PID */
 
 pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
@@ -184,7 +184,7 @@ vaddr_t
 pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	int i, j;
-	int npg;
+	uint npg;
 	vaddr_t va;
 	paddr_t pa;
 
@@ -228,11 +228,10 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		 * If we are running with a 32 bit ARCBios (i.e. kernel
 		 * linked in KSEG0), return a KSEG0 address whenever possible.
 		 */
-		if ((vaddr_t)&pmap_steal_memory - KSEG0_BASE < KSEG_SIZE &&
-		    pa + size < KSEG_SIZE)
-			va = PHYS_TO_KSEG0(pa);
-		else
+		if (IS_XKPHYS((vaddr_t)&pmap_steal_memory))
 			va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
+		else
+			va = PHYS_TO_KSEG0(pa);
 
 		bzero((void *)va, size);
 		return (va);
@@ -471,8 +470,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			 * Flush the TLB for the given address.
 			 */
 			if (pmap->pm_tlbgen == tlbpid_gen) {
-				tlb_flush_addr(sva | (pmap->pm_tlbpid <<
-					VMTLB_PID_SHIFT));
+				tlb_flush_addr(sva |
+				    (pmap->pm_tlbpid << VMTLB_PID_SHIFT));
 				stat_count(remove_stats.flushes);
 			}
 		}
@@ -615,8 +614,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			entry = (entry & ~(PG_M | PG_RO)) | p;
 			*pte = entry;
 			if (pmap->pm_tlbgen == tlbpid_gen)
-				tlb_update(sva | (pmap->pm_tlbpid <<
-					VMTLB_PID_SHIFT), entry);
+				tlb_update(sva |
+				    (pmap->pm_tlbpid << VMTLB_PID_SHIFT),
+				    entry);
 		}
 	}
 }
@@ -752,7 +752,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	npte |= vad_to_pfn(pa);
 	if (pmap->pm_tlbgen == tlbpid_gen) {
-		DPRINTF(PDB_ENTER, ("pmap_enter: new pte %x tlbpid %d\n",
+		DPRINTF(PDB_ENTER, ("pmap_enter: new pte 0x%08x tlbpid %u\n",
 			npte, pmap->pm_tlbpid));
 	} else {
 		DPRINTF(PDB_ENTER, ("pmap_enter: new pte 0x%08x\n", npte));
@@ -960,12 +960,12 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	pv = pg_to_pvh(srcpg);
 	if ((srcpg->pg_flags & PV_CACHED) &&
-	    (sf = ((pv->pv_va ^ (long)s) & CpuCacheAliasMask) != 0)) {
+	    (sf = ((pv->pv_va ^ s) & CpuCacheAliasMask) != 0)) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
 	pv = pg_to_pvh(dstpg);
 	if ((dstpg->pg_flags & PV_CACHED) &&
-	    (df = ((pv->pv_va ^ (long)d) & CpuCacheAliasMask) != 0)) {
+	    (df = ((pv->pv_va ^ d) & CpuCacheAliasMask) != 0)) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
 
@@ -1020,8 +1020,9 @@ pmap_clear_modify(struct vm_page *pg)
 				entry &= ~PG_M;
 				*pte = entry;
 				if (pv->pv_pmap->pm_tlbgen == tlbpid_gen)
-					tlb_update(pv->pv_va | (pv->pv_pmap->pm_tlbpid <<
-						VMTLB_PID_SHIFT), entry);
+					tlb_update(pv->pv_va |
+					    (pv->pv_pmap->pm_tlbpid <<
+					      VMTLB_PID_SHIFT), entry);
 			}
 		}
 	}
@@ -1085,7 +1086,7 @@ pmap_is_modified(struct vm_page *pg)
  *	Return RO protection of page.
  */
 int
-pmap_is_page_ro(pmap_t pmap, vaddr_t va, int entry)
+pmap_is_page_ro(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 {
 	return (entry & PG_RO);
 }
@@ -1100,7 +1101,7 @@ pmap_page_cache(vm_page_t pg, int mode)
 {
 	pv_entry_t pv;
 	pt_entry_t *pte, entry;
-	u_int newmode;
+	pt_entry_t newmode;
 	int s;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_page_uncache(%p)\n", pg));
@@ -1126,8 +1127,9 @@ pmap_page_cache(vm_page_t pg, int mode)
 					entry = (entry & ~PG_CACHEMODE) | newmode;
 					*pte = entry;
 					if (pv->pv_pmap->pm_tlbgen == tlbpid_gen)
-						tlb_update(pv->pv_va | (pv->pv_pmap->pm_tlbpid <<
-							VMTLB_PID_SHIFT), entry);
+						tlb_update(pv->pv_va |
+						    (pv->pv_pmap->pm_tlbpid <<
+						     VMTLB_PID_SHIFT), entry);
 				}
 			}
 		}
@@ -1174,11 +1176,11 @@ pmap_page_free(vaddr_t va)
  * and start over. PID zero is reserved for kernel use.
  * This is called only by switch().
  */
-int
+uint
 pmap_alloc_tlbpid(struct proc *p)
 {
 	pmap_t pmap;
-	int id;
+	uint id;
 
 	pmap = p->p_vmspace->vm_map.pmap;
 	if (pmap->pm_tlbgen != tlbpid_gen) {
@@ -1205,7 +1207,7 @@ pmap_alloc_tlbpid(struct proc *p)
 		DPRINTF(PDB_FOLLOW|PDB_TLBPID, 
 			("pmap_alloc_tlbpid: curproc <none> "));
 	}
-	DPRINTF(PDB_FOLLOW|PDB_TLBPID, ("segtab %p tlbpid %d pid %d '%s'\n",
+	DPRINTF(PDB_FOLLOW|PDB_TLBPID, ("segtab %p tlbpid %u pid %d '%s'\n",
 			pmap->pm_segtab, id, p->p_pid, p->p_comm));
 
 	return (id);
@@ -1215,7 +1217,7 @@ pmap_alloc_tlbpid(struct proc *p)
  * Enter the pmap and virtual address into the physical to virtual map table.
  */
 int
-pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
+pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 {
 	pv_entry_t pv, npv;
 	int s;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.14 2007/10/18 04:32:09 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.15 2009/11/18 20:58:50 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -81,7 +81,7 @@ typedef struct pmap {
 	int			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	int			pm_tlbpid;	/* address space tag */
+	u_int			pm_tlbpid;	/* address space tag */
 	u_int			pm_tlbgen;	/* TLB PID generation number */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 } *pmap_t;
@@ -108,7 +108,7 @@ extern	struct pmap kernel_pmap_store;
 #define	pmap_update(x)			do { /* nothing */ } while (0)
 
 void	pmap_bootstrap(void);
-int	pmap_is_page_ro( pmap_t, vaddr_t, int);
+int	pmap_is_page_ro( pmap_t, vaddr_t, pt_entry_t);
 void	pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cache);
 void	pmap_prefer(vaddr_t, vaddr_t *);
 void	pmap_set_modify(vm_page_t);

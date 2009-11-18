@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.46 2009/10/22 20:10:44 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.47 2009/11/18 20:58:52 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -423,7 +423,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 
 		/* compute next PC after syscall instruction */
 		tpc = trapframe->pc; /* Remember if restart */
-		if ((int)trapframe->cause & CR_BR_DELAY) {
+		if (trapframe->cause & CR_BR_DELAY) {
 			locr0->pc = MipsEmulateBranch(locr0, trapframe->pc, 0, 0);
 		}
 		else {
@@ -613,7 +613,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 
 		/* compute address of break instruction */
 		va = (caddr_t)trapframe->pc;
-		if ((int)trapframe->cause & CR_BR_DELAY)
+		if (trapframe->cause & CR_BR_DELAY)
 			va += 4;
 
 		/* read break instruction */
@@ -630,7 +630,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			i = SIGFPE;
 			typ = FPE_FLTSUB;
 			/* skip instruction */
-			if ((int)trapframe->cause & CR_BR_DELAY)
+			if (trapframe->cause & CR_BR_DELAY)
 				locr0->pc = MipsEmulateBranch(locr0,
 				    trapframe->pc, 0, 0);
 			else
@@ -640,7 +640,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			i = SIGFPE;
 			typ = FPE_FLTDIV;	/* XXX FPE_INTDIV ? */
 			/* skip instruction */
-			if ((int)trapframe->cause & CR_BR_DELAY)
+			if (trapframe->cause & CR_BR_DELAY)
 				locr0->pc = MipsEmulateBranch(locr0,
 				    trapframe->pc, 0, 0);
 			else
@@ -697,7 +697,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		caddr_t va;
 		/* compute address of trapped instruction */
 		va = (caddr_t)trapframe->pc;
-		if ((int)trapframe->cause & CR_BR_DELAY)
+		if (trapframe->cause & CR_BR_DELAY)
 			va += 4;
 		printf("watch exception @ %p\n", va);
 #ifdef RM7K_PERFCNTR
@@ -719,12 +719,12 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 
 		/* compute address of trap instruction */
 		va = (caddr_t)trapframe->pc;
-		if ((int)trapframe->cause & CR_BR_DELAY)
+		if (trapframe->cause & CR_BR_DELAY)
 			va += 4;
 		/* read break instruction */
 		copyin(va, &instr, sizeof(int32_t));
 
-		if ((int)trapframe->cause & CR_BR_DELAY) {
+		if (trapframe->cause & CR_BR_DELAY) {
 			locr0->pc = MipsEmulateBranch(locr0, trapframe->pc, 0, 0);
 		} else {
 			locr0->pc += 4;
