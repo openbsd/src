@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.29 2009/11/18 13:16:33 nicm Exp $
+# $OpenBSD: Makefile,v 1.30 2009/11/18 17:02:17 nicm Exp $
 
 PROG=	tmux
 SRCS=	attributes.c cfg.c client.c clock.c \
@@ -30,7 +30,7 @@ SRCS=	attributes.c cfg.c client.c clock.c \
 	cmd-set-environment.c cmd-show-environment.c cmd-choose-client.c \
 	cmd-up-pane.c cmd-display-message.c cmd-display-panes.c \
 	cmd-pipe-pane.c cmd.c \
-	colour.c environ.c grid-view.c grid.c input-keys.c \
+	colour.c environ.c grid-view.c grid-utf8.c grid.c input-keys.c \
 	imsg.c imsg-buffer.c input.c key-bindings.c key-string.c \
 	layout-set.c layout.c log.c job.c \
 	mode-key.c names.c options-cmd.c options.c paste.c procname.c \
