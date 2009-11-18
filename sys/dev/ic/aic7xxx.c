@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.82 2008/07/29 21:18:53 miod Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.83 2009/11/18 19:57:09 halex Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.82 2008/07/29 21:18:53 miod Exp $
+ * $Id: aic7xxx.c,v 1.83 2009/11/18 19:57:09 halex Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -441,6 +441,8 @@ ahc_handle_brkadrint(struct ahc_softc *ahc)
 	error = ahc_inb(ahc, ERROR);
 	for (i = 0; error != 1 && i < num_errors; i++)
 		error >>= 1;
+	if (i >= num_errors)
+		panic("invalid error code");
 	printf("%s: brkadrint, %s at seqaddr = 0x%x\n",
 	       ahc_name(ahc), ahc_hard_errors[i].errmesg,
 	       ahc_inb(ahc, SEQADDR0) |
