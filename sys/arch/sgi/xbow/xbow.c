@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.24 2009/11/07 18:56:55 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.25 2009/11/18 19:05:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -69,7 +69,9 @@
 #include <machine/mnode.h>
 
 #include <sgi/xbow/hub.h>
+#include <sgi/xbow/widget.h>
 #include <sgi/xbow/xbow.h>
+
 #include <sgi/xbow/xbowdevs.h>
 #include <sgi/xbow/xbowdevs_data.h>
 
@@ -140,7 +142,7 @@ static const bus_space_t xbowbus_tag = {
 };
 
 /*
- * Function pointers to hide widget window mapping differences accross
+ * Function pointers to hide widget discovery and mapping differences accross
  * systems.
  */
 paddr_t	(*xbow_widget_base)(int16_t, u_int);
@@ -248,7 +250,7 @@ const uint8_t xbow_probe_xbrick[] =
 	{ 0x08, 0x09, 0x0c, 0x0d, 0x0a, 0x0b, 0x0e, 0x0f, 0 };
 
 /*
- * Structures used to carry information between KL and atatchment code.
+ * Structures used to carry information between KL and attachment code.
  */
 
 struct xbow_config {

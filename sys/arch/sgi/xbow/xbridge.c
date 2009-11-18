@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.61 2009/11/11 15:29:31 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.62 2009/11/18 19:05:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -57,6 +57,7 @@
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbowdevs.h>
 
+#include <sgi/xbow/widget.h>
 #include <sgi/xbow/xbridgereg.h>
 
 #ifdef TGT_OCTANE

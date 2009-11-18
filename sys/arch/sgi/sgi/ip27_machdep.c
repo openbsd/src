@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.35 2009/11/12 17:13:33 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.36 2009/11/18 19:05:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -29,7 +29,6 @@
 #include <sys/reboot.h>
 #include <sys/tty.h>
 
-#include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 
 #include <machine/autoconf.h>
@@ -42,8 +41,8 @@
 
 #include <sgi/sgi/ip27.h>
 #include <sgi/xbow/hub.h>
+#include <sgi/xbow/widget.h>
 #include <sgi/xbow/xbow.h>
-#include <sgi/xbow/xbridgereg.h>
 
 #include <sgi/pci/iofreg.h>
 #include <dev/ic/comvar.h>
