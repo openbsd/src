@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2009/10/28 07:36:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2009/11/18 07:43:22 guenther Exp $
 
 .include <bsd.own.mk>
 LIB=    stubs
@@ -8,7 +8,8 @@ NOPIC=	Yes
 NOPROFILE=Yes
 NOMAN=	1
 
-CFLAGS+=-D__DBINTERFACE_PRIVATE -DSHA256_ONLY -UYP -I${LIBCSRCDIR}/include
+CFLAGS+=-D__DBINTERFACE_PRIVATE -DSHA256_ONLY -UYP -I${LIBCSRCDIR}/include \
+	-DNO_LOG_BAD_DNS_RESPONSES
 
 LIBCSRCDIR=${.CURDIR}/../../../lib/libc
 

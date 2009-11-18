@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.45 2009/08/13 19:54:58 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.46 2009/11/18 07:43:22 guenther Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -13,7 +13,7 @@ SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
 	inet_lnaof.c inet_makeaddr.c inet_neta.c inet_netof.c inet_network.c \
 	inet_net_ntop.c inet_net_pton.c inet_ntoa.c inet_ntop.c inet_pton.c \
 	linkaddr.c net_addrcmp.c nsap_addr.c \
-	rcmd.c rresvport.c recv.c res_comp.c res_data.c res_debug.c \
+	rcmd.c ruserok.c rresvport.c recv.c res_comp.c res_data.c res_debug.c \
 	res_debug_syms.c \
 	res_init.c res_mkquery.c res_query.c res_random.c res_send.c send.c \
 	sethostent.c ethers.c rcmdsh.c

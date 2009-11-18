@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.70 2009/09/02 19:07:12 fgsch Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.71 2009/11/18 07:43:22 guenther Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1062,6 +1062,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				continue;
 			}
 		} else if (type != qtype) {
+#ifndef NO_LOG_BAD_DNS_RESPONSES
 			if (type != T_KEY && type != T_SIG) {
 				struct syslog_data sdata = SYSLOG_DATA_INIT;
 
@@ -1070,6 +1071,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 				       qname, p_class(C_IN), p_type(qtype),
 				       p_type(type));
 			}
+#endif /* NO_LOG_BAD_DNS_RESPONSES */
 			cp += n;
 			continue;		/* XXX - had_error++ ? */
 		}

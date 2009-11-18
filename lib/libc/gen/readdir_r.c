@@ -1,6 +1,6 @@
-/*	$OpenBSD: syslog.c,v 1.30 2009/11/18 07:43:22 guenther Exp $ */
+/*	$OpenBSD: readdir_r.c,v 1.1 2009/11/18 07:43:22 guenther Exp $ */
 /*
- * Copyright (c) 1983, 1988, 1993
+ * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,84 +28,29 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/syslog.h>
-#include <sys/uio.h>
-#include <sys/un.h>
-#include <netdb.h>
-
-#include <errno.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <stdio.h>
+#include <sys/param.h>
+#include <dirent.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdarg.h>
+#include <errno.h>
+#include "thread_private.h"
 
-static struct syslog_data sdata = SYSLOG_DATA_INIT;
-
-void	__vsyslog_r(int pri, struct syslog_data *, size_t (*)(char *, size_t),
-    const char *, va_list);
-
-static size_t
-gettime(char *buf, size_t maxsize)
-{
-	time_t	now;
-
-	(void)time(&now);
-	return (strftime(buf, maxsize, "%h %e %T ", localtime(&now)));
-}
-
-
-/*
- * syslog, vsyslog --
- *	print message on log file; output is intended for syslogd(8).
- */
-void
-syslog(int pri, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vsyslog(pri, fmt, ap);
-	va_end(ap);
-}
-
-void
-vsyslog(int pri, const char *fmt, va_list ap)
-{
-	__vsyslog_r(pri, &sdata, &gettime, fmt, ap);
-}
-
-void
-openlog(const char *ident, int logstat, int logfac)
-{
-	openlog_r(ident, logstat, logfac, &sdata);
-}
-
-void
-closelog(void)
-{
-	closelog_r(&sdata);
-}
-
-/* setlogmask -- set the log mask level */
 int
-setlogmask(int pmask)
+readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 {
-	return setlogmask_r(pmask, &sdata);
-}
+	struct dirent *dp;
 
-/* setlogmask -- set the log mask level */
-int
-setlogmask_r(int pmask, struct syslog_data *data)
-{
-	int omask;
-
-	omask = data->log_mask;
-	if (pmask != 0)
-		data->log_mask = pmask;
-	return (omask);
+	_MUTEX_LOCK(&dirp->dd_lock);
+	if (_readdir_unlocked(dirp, &dp, 1) != 0) {
+		_MUTEX_UNLOCK(&dirp->dd_lock);
+		return errno;
+	}
+	if (dp != NULL)
+		memcpy(entry, dp,
+		    sizeof (struct dirent) - MAXNAMLEN + dp->d_namlen);
+	_MUTEX_UNLOCK(&dirp->dd_lock);
+	if (dp != NULL)
+		*result = entry;
+	else
+		*result = NULL;
+	return 0;
 }

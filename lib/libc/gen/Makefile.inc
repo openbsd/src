@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.48 2009/06/02 05:09:16 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.49 2009/11/18 07:43:22 guenther Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -14,11 +14,13 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         isatty.c isctype.c isfdtype.c isfinite.c isinf.c isnan.c \
         isnormal.c signbit.c lockf.c login_cap.c nice.c \
         nlist.c nftw.c opendir.c pause.c popen.c psignal.c pw_dup.c \
-        pwcache.c raise.c readdir.c readpassphrase.c rewinddir.c scandir.c \
+        pwcache.c raise.c readdir.c readdir_r.c readpassphrase.c \
+        rewinddir.c scandir.c \
         seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
         setproctitle.c siginterrupt.c siglist.c signal.c signame.c \
         sigsetops.c sleep.c statvfs.c strtofflags.c sysconf.c sysctl.c \
-        syslog.c telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
+        syslog.c syslog_r.c telldir.c time.c times.c timezone.c \
+        tolower_.c ttyname.c \
         ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c \
         utime.c valloc.c vis.c wait.c wait3.c waitpid.c warn.c \
         warnx.c vwarn.c vwarnx.c verr.c verrx.c

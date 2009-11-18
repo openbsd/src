@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr.c,v 1.72 2007/10/11 18:36:41 jakob Exp $ */
+/*	$OpenBSD: gethostnamadr.c,v 1.73 2009/11/18 07:43:22 guenther Exp $ */
 /*-
  * Copyright (c) 1985, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -294,10 +294,12 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype)
 			continue;
 		}
 		if (type != qtype) {
+#ifndef NO_LOG_BAD_DNS_RESPONSES
 			syslog(LOG_NOTICE|LOG_AUTH,
 	       "gethostby*.getanswer: asked for \"%s %s %s\", got type \"%s\"",
 			       qname, p_class(C_IN), p_type(qtype),
 			       p_type(type));
+#endif /* NO_LOG_BAD_DNS_RESPONSES */
 			cp += n;
 			continue;		/* XXX - had_error++ ? */
 		}
