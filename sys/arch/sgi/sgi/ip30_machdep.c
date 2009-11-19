@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.16 2009/11/18 19:05:51 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.17 2009/11/19 06:06:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -66,12 +66,10 @@ static int ip30_cpu_exists(int);
 void
 ip30_setup()
 {
-#if 0
 	paddr_t heart;
 	int bank;
 	uint32_t memcfg;
-	uint64_t start, count;
-#endif
+	uint64_t start, count, end;
 	u_long cpuspeed;
 
 	/*
@@ -80,17 +78,17 @@ ip30_setup()
 	 */
 	uncached_base = PHYS_TO_XKPHYS(0, CCA_NC);
 
-#if 0
 	/*
-	 * Scan for memory. ARCBios reports at least up to 2GB; if
-	 * memory above 2GB isn't reported, we'll need to re-enable this
-	 * code and add the unseen areas.
+	 * Scan for memory. ARCBios reports up to 1GB of memory as available,
+	 * and anything after is reported as reserved.
 	 */
 	heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
 	for (bank = 0; bank < 8; bank++) {
-		memcfg = *(uint32_t *)
+		memcfg = *(volatile uint32_t *)
 		    (heart + HEART_MEMORY_STATUS + bank * sizeof(uint32_t));
+#ifdef DEBUG
 		bios_printf("memory bank %d: %08x\n", bank, memcfg);
+#endif
 
 		if (!ISSET(memcfg, HEART_MEMORY_VALID))
 			continue;
@@ -105,10 +103,33 @@ ip30_setup()
 
 		/* Physical memory starts at 512MB */
 		start += IP30_MEMORY_BASE;
+		end = start + count;
+#ifdef DEBUG
 		bios_printf("memory from %p to %p\n",
-		    ptoa(start), ptoa(start + count));
-	}
+		    start, end);
 #endif
+
+		/*
+		 * Add memory not obtained through ARCBios.
+		 */
+		if (start >= IP30_MEMORY_BASE + IP30_MEMORY_ARCBIOS_LIMIT) {
+			/*
+			 * XXX Temporary until there is a way to cope with
+			 * XXX xbridge ATE shortage.
+			 */
+			if (end > (2UL << 30)) {
+#if 0
+				physmem += atop(end - (2UL << 30));
+#endif
+				end = 2UL << 30;
+			}
+			if (end <= start)
+				continue;
+
+			memrange_register(start, count, 0, VM_FREELIST_DEFAULT);
+		}
+	}
+
 
 	xbow_widget_base = ip30_widget_short;
 	xbow_widget_map = ip30_widget_map;

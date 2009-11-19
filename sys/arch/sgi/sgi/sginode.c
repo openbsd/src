@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.14 2009/11/07 14:49:01 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.15 2009/11/19 06:06:51 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -313,9 +313,8 @@ void
 kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 {
 	paddr_t basepa;
-	uint32_t fp, lp, np;
-	unsigned int seg, descno, nmeg;
-	struct phys_mem_desc *md;
+	uint64_t fp, lp, np;
+	unsigned int seg, nmeg;
 
 	/*
 	 * On IP27, access to each DIMM is interleaved, which cause it to
@@ -325,13 +324,6 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 	 */
 	basepa = (paddr_t)nasid << kl_n_shift;
 	while (cnt-- != 0) {
-		/*
-		 * XXX Temporary until there is a way to cope with
-		 * XXX xbridge ATE shortage.
-		 */
-		if (basepa >= (2UL << 30))
-			return;
-
 		nmeg = *sizes++;
 		for (seg = 0; seg < 4; basepa += (1 << 27), seg++) {
 			if (nmeg <= 128)
@@ -361,63 +353,27 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			}
 
 			/*
-			 * Walk the existing segment list to find if we
-			 * are adjacent to an existing segment, or the
-			 * next free segment to use if not (unless doing
-			 * this would cross the 2GB boundary we need for
-			 * 32 bit DMA memory).
-			 *
-			 * Note that since we do not know in which order
-			 * we'll find our nodes, we have to check for
-			 * both boundaries, despite adding a given node's
-			 * memory in increasing pa order.
+			 * XXX Temporary until there is a way to cope with
+			 * XXX xbridge ATE shortage.
 			 */
-			for (descno = 0, md = mem_layout; descno < MAXMEMSEGS;
-			    descno++, md++) {
-				if (md->mem_first_page == 0)
-					break;
-
-				/*
-				 * Do not try to merge segments if they are
-				 * not covering the same node.
-				 */
-				if ((ptoa(md->mem_first_page) >> kl_n_shift) !=
-				    nasid)
-					continue;
-
-				if (md->mem_first_page == lp &&
-				    lp != atop(2UL << 30)) {
-					md->mem_first_page = fp;
-					physmem += np;
-					md = NULL;
-					break;
-				}
-
-				if (md->mem_last_page == fp &&
-				    fp != atop(2UL << 30)) {
-					md->mem_last_page = lp;
-					physmem += np;
-					md = NULL;
-					break;
-				}
-			}
-			if (descno != MAXMEMSEGS && md != NULL) {
-				md->mem_first_page = fp;
-				md->mem_last_page = lp;
-				md->mem_freelist = lp <= atop(2UL << 30) ?
-				    VM_FREELIST_DMA32 : VM_FREELIST_DEFAULT;
-				physmem += np;
-				md = NULL;
+			if (fp >= atop(2UL << 30)) {
+#if 0
+				physmem += lp - fp;
+#endif
+				continue;
 			}
 
-			if (md != NULL) {
+			if (memrange_register(fp, lp,
+			    ~(atop(1UL << kl_n_shift) - 1),
+			    lp <= atop(2UL << 30) ?
+			      VM_FREELIST_DEFAULT : VM_FREELIST_DMA32) != 0) {
 				/*
 				 * We could hijack the smallest segment here.
 				 * But is it really worth doing?
 				 */
 				bios_printf("%u MB of memory could not be "
 				    "managed, increase MAXMEMSEGS\n",
-				    atop(np) >> 20);
+				    ptoa(np) >> 20);
 			}
 		}
 	}
@@ -428,8 +384,6 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 {
 	paddr_t basepa;
 	uint32_t fp, lp, np;
-	unsigned int descno;
-	struct phys_mem_desc *md;
 
 	/*
 	 * On IP35, the smallest memory DIMMs are 256MB, and the
@@ -438,13 +392,6 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 
 	basepa = (paddr_t)nasid << kl_n_shift;
 	while (cnt-- != 0) {
-		/*
-		 * XXX Temporary until there is a way to cope with
-		 * XXX xbridge ATE shortage.
-		 */
-		if (basepa >= (2UL << 30))
-			return;
-
 		np = *sizes++;
 		if (np != 0) {
 			DB_PRF(("IP35 memory from %p to %p (%u MB)\n",
@@ -467,63 +414,27 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			}
 
 			/*
-			 * Walk the existing segment list to find if we
-			 * are adjacent to an existing segment, or the
-			 * next free segment to use if not (unless doing
-			 * this would cross the 2GB boundary we need for
-			 * 32 bit DMA memory).
-			 *
-			 * Note that since we do not know in which order
-			 * we'll find our nodes, we have to check for
-			 * both boundaries, despite adding a given node's
-			 * memory in increasing pa order.
+			 * XXX Temporary until there is a way to cope with
+			 * XXX xbridge ATE shortage.
 			 */
-			for (descno = 0, md = mem_layout; descno < MAXMEMSEGS;
-			    descno++, md++) {
-				if (md->mem_first_page == 0)
-					break;
-
-				/*
-				 * Do not try to merge segments if they are
-				 * not covering the same node.
-				 */
-				if ((ptoa(md->mem_first_page) >> kl_n_shift) !=
-				    nasid)
-					continue;
-
-				if (md->mem_first_page == lp &&
-				    lp != atop(2UL << 30)) {
-					md->mem_first_page = fp;
-					physmem += np;
-					md = NULL;
-					break;
-				}
-
-				if (md->mem_last_page == fp &&
-				    fp != atop(2UL << 30)) {
-					md->mem_last_page = lp;
-					physmem += np;
-					md = NULL;
-					break;
-				}
-			}
-			if (descno != MAXMEMSEGS && md != NULL) {
-				md->mem_first_page = fp;
-				md->mem_last_page = lp;
-				md->mem_freelist = lp <= atop(2UL << 30) ?
-				    VM_FREELIST_DMA32 : VM_FREELIST_DEFAULT;
-				physmem += np;
-				md = NULL;
+			if (fp >= atop(2UL << 30)) {
+#if 0
+				physmem += lp - fp;
+#endif
+				continue;
 			}
 
-			if (md != NULL) {
+			if (memrange_register(fp, lp,
+			    ~(atop(1UL << kl_n_shift) - 1),
+			    lp <= atop(2UL << 30) ?
+			      VM_FREELIST_DEFAULT : VM_FREELIST_DMA32) != 0) {
 				/*
 				 * We could hijack the smallest segment here.
 				 * But is it really worth doing?
 				 */
 				bios_printf("%u MB of memory could not be "
 				    "managed, increase MAXMEMSEGS\n",
-				    atop(np) >> 20);
+				    ptoa(np) >> 20);
 			}
 		}
 		basepa += 1UL << 30;	/* 1 GB */

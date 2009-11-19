@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 2009/11/07 22:48:37 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.29 2009/11/19 06:06:51 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -95,8 +95,12 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/memconf.h>
+
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <sgi/xbow/xbow.h>
 #include <dev/pci/pcivar.h>
@@ -152,6 +156,69 @@ diskconf(void)
 
 	setroot(bootdv, 0, RB_USERREQ);
 	dumpconf();
+}
+
+/*
+ * Register a memory region.
+ */
+int
+memrange_register(uint64_t startpfn, uint64_t endpfn, uint64_t bmask,
+    unsigned int freelist)
+{
+	struct phys_mem_desc *cur, *m = NULL;
+	int i;
+
+#ifdef DEBUG
+{
+	extern int console_ok;
+
+	if (console_ok)
+		printf("%s: memory from %p to %p\n",
+		    __func__, ptoa(startpfn), ptoa(endpfn));
+	else
+		bios_printf("%s: memory from %p to %p\n",
+		     __func__, ptoa(startpfn), ptoa(endpfn));
+}
+#endif
+	physmem += endpfn - startpfn;
+
+	/*
+	 * Prevent use of memory above 16GB physical, until pmap can support
+	 * this.
+	 */
+	if (startpfn >= atop(16UL * 1024 * 1024 * 1024))
+		return 0;
+	if (endpfn >= atop(16UL * 1024 * 1024 * 1024))
+		endpfn = atop(16UL * 1024 * 1024 * 1024);
+	
+	for (i = 0, cur = mem_layout; i < MAXMEMSEGS; i++, cur++) {
+		if (cur->mem_last_page == 0) {
+			if (m == NULL)
+				m = cur;	/* first free segment */
+			continue;
+		}
+		/* merge contiguous areas if on the same freelist */
+		if (cur->mem_freelist == freelist) {
+			if (cur->mem_first_page == endpfn &&
+			    ((cur->mem_last_page ^ startpfn) & bmask) == 0) {
+				cur->mem_first_page = startpfn;
+				return 0;
+			}
+			if (cur->mem_last_page == startpfn &&
+			    ((cur->mem_first_page ^ endpfn) & bmask) == 0) {
+				cur->mem_last_page = endpfn;
+				return 0;
+			}
+		}
+	}
+
+	if (m == NULL)
+		return ENOMEM;
+	
+	m->mem_first_page = startpfn;
+	m->mem_last_page = endpfn;
+	m->mem_freelist = freelist;
+	return 0;
 }
 
 static char bootpath_store[sizeof osloadpartition];

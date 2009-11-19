@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.10 2009/10/26 18:00:06 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.11 2009/11/19 06:06:51 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -56,15 +56,18 @@ void crime_configure_memory(void);
 void
 crime_configure_memory(void)
 {
-	struct phys_mem_desc *m;
 	volatile u_int64_t *bank_ctrl;
 	paddr_t addr;
 	psize_t size;
 	u_int64_t ctrl0, ctrl;
-	u_int32_t first_page, last_page;
-	int bank, i;
+	u_int64_t first_page, last_page;
+	int bank;
+#ifdef DEBUG
+	int i;
+#endif
 
-	bank_ctrl = (void *)PHYS_TO_KSEG1(CRIMEBUS_BASE + CRIME_MEM_BANK0_CONTROL);
+	bank_ctrl =
+	    (void *)PHYS_TO_KSEG1(CRIMEBUS_BASE + CRIME_MEM_BANK0_CONTROL);
 	for (bank = 0; bank < CRIME_MAX_BANKS; bank++) {
 		ctrl = bank_ctrl[bank];
 		addr = (ctrl & CRIME_MEM_BANK_ADDR) << 25;
@@ -95,39 +98,16 @@ crime_configure_memory(void)
 		first_page = atop(addr);
 		last_page = atop(addr + size);
 
-		/*
-		 * Try to coalesce with other memory segments if banks are 
-		 * contiguous.
-		 */
-		m = NULL;
-		for (i = 0; i < MAXMEMSEGS; i++) {
-			if (mem_layout[i].mem_last_page == 0) {
-				if (m == NULL)
-					m = &mem_layout[i];
-			} else if (last_page == mem_layout[i].mem_first_page) {
-				m = &mem_layout[i];
-				m->mem_first_page = first_page;
-			} else if (mem_layout[i].mem_last_page == first_page) {
-				m = &mem_layout[i];
-				m->mem_last_page = last_page;
-			}
-		}
-		if (m != NULL) {
-			if (m->mem_last_page == 0) {
-				m->mem_first_page = first_page;
-				m->mem_last_page = last_page;
-			}
-			m->mem_freelist = VM_FREELIST_DEFAULT;
-			physmem += atop(size);
-		}
+		memrange_register(first_page, last_page, 0,
+		    VM_FREELIST_DEFAULT);
 	}
 
 #ifdef DEBUG
 	for (i = 0; i < MAXMEMSEGS; i++)
-		if (mem_layout[i].mem_first_page)
-			bios_printf("MEM %d, 0x%x to  0x%x\n",i,
-				ptoa(mem_layout[i].mem_first_page),
-				ptoa(mem_layout[i].mem_last_page));
+		if (mem_layout[i].mem_last_page != 0)
+			bios_printf("MEM %d, %p to %p\n", i,
+			    ptoa(mem_layout[i].mem_first_page),
+			    ptoa(mem_layout[i].mem_last_page));
 #endif
 }
 

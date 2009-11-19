@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.24 2009/11/07 18:56:54 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.25 2009/11/19 06:06:51 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -36,6 +36,8 @@
 
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef TGT_ORIGIN
 #include <machine/mnode.h>
@@ -215,14 +217,15 @@ void
 bios_configure_memory()
 {
 	arc_mem_t *descr = NULL;
-	struct phys_mem_desc *m;
 	uint64_t start, count;
 	MEMORYTYPE type;
-	vaddr_t seg_start, seg_end;
+	uint64_t seg_start, seg_end;
 #ifdef TGT_ORIGIN
 	int seen_free = 0;
 #endif
+#ifdef DEBUG
 	int i;
+#endif
 
 	descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	while (descr != NULL) {
@@ -240,11 +243,13 @@ bios_configure_memory()
 			 * Memory above 1GB physical (address 1.5GB)
 			 * gets reported as reserved on Octane, while
 			 * it isn't.
+			 * Abort scan at this point, platform dependent
+			 * code will add the remaining memory, if any.
 			 */
 			if (sys_config.system_type == SGI_OCTANE &&
 			    type == FirmwarePermanent &&
 			    start >= 0x60000)
-				type = FreeMemory;
+				break;
 #endif
 
 #ifdef TGT_ORIGIN
@@ -292,13 +297,14 @@ bios_configure_memory()
 #endif	/* O200 || O300 */
 		}
 
-		seg_start = start;
+		/* convert from ARCBios page size to kernel page size */
+		seg_start = atop(start * 4096);
+		count = atop(count * 4096);
 		seg_end = seg_start + count;
 
 		switch (type) {
-		case BadMemory:		/* Have no use for these */
+		case BadMemory:		/* have no use for these */
 			break;
-
 		case LoadedProgram:
 			/*
 			 * LoadedProgram areas are either the boot loader,
@@ -311,29 +317,9 @@ bios_configure_memory()
 			/* FALLTHROUGH */
 		case FreeMemory:
 		case FreeContigous:
-			physmem += count;
-			m = NULL;
-			for (i = 0; i < MAXMEMSEGS; i++) {
-				if (mem_layout[i].mem_last_page == 0) {
-					if (m == NULL)
-						m = &mem_layout[i]; /* free */
-				}
-				else if (seg_end == mem_layout[i].mem_first_page) {
-					m = &mem_layout[i];
-					m->mem_first_page = seg_start;
-				}
-				else if (mem_layout[i].mem_last_page == seg_start) {
-					m = &mem_layout[i];
-					m->mem_last_page = seg_end;
-				}
-			}
-			if (m && m->mem_first_page == 0) {
-				m->mem_first_page = seg_start;
-				m->mem_last_page = seg_end;
-				m->mem_freelist = VM_FREELIST_DEFAULT;
-			}
+			memrange_register(seg_start, seg_end, 0,
+			    VM_FREELIST_DEFAULT);
 			break;
-
 		case ExceptionBlock:
 		case SystemParameterBlock:
 		case FirmwareTemporary:
@@ -341,7 +327,6 @@ bios_configure_memory()
 			rsvdmem += count;
 			physmem += count;
 			break;
-
 		default:		/* Unknown type, leave it alone... */
 			break;
 		}
@@ -352,12 +337,12 @@ bios_configure_memory()
 		descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	}
 
-#ifdef DEBUG_MEM_LAYOUT
+#ifdef DEBUG
 	for (i = 0; i < MAXMEMSEGS; i++) {
-		if (mem_layout[i].mem_first_page) {
-			bios_printf("MEM %d, 0x%x to  0x%x\n",i,
-				mem_layout[i].mem_first_page * 4096,
-				mem_layout[i].mem_last_page * 4096);
+		if (mem_layout[i].mem_last_page) {
+			bios_printf("MEM %d, %p to  %p\n", i,
+			    ptoa(mem_layout[i].mem_first_page),
+			    ptoa(mem_layout[i].mem_last_page));
 	    }
 	}
 #endif

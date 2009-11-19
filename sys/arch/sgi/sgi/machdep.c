@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 2009/11/07 18:56:55 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.88 2009/11/19 06:06:51 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -305,9 +305,9 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 
-	for (i = 0; i < MAXMEMSEGS && mem_layout[i].mem_first_page != 0; i++) {
-		u_int32_t fp, lp;
-		u_int32_t firstkernpage, lastkernpage;
+	for (i = 0; i < MAXMEMSEGS && mem_layout[i].mem_last_page != 0; i++) {
+		uint64_t fp, lp;
+		uint64_t firstkernpage, lastkernpage;
 		unsigned int freelist;
 		paddr_t firstkernpa, lastkernpa;
 
@@ -341,12 +341,13 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		else if (lp < lastkernpage)
 			lp = firstkernpage;
 		else { /* Need to split! */
-			u_int32_t xp = firstkernpage;
+			uint64_t xp = firstkernpage;
 			uvm_page_physload(fp, xp, fp, xp, freelist);
 			fp = lastkernpage;
 		}
-		if (lp > fp)
+		if (lp > fp) {
 			uvm_page_physload(fp, lp, fp, lp, freelist);
+		}
 	}
 
 	switch (sys_config.system_type) {
@@ -1042,7 +1043,9 @@ rm7k_perfintr(trapframe)
 {
 	struct proc *p = curproc;
 
+#ifdef DEBUG
 	printf("perfintr proc %p!\n", p);
+#endif
 	cp0_setperfcount(cp0_getperfcount() & 0x7fffffff);
 	if (p != NULL) {
 		p->p_md.md_pc_spill++;
