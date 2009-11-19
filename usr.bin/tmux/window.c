@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.39 2009/11/13 17:33:07 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.40 2009/11/19 19:47:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -149,6 +149,8 @@ winlink_remove(struct winlinks *wwl, struct winlink *wl)
 	struct window	*w = wl->window;
 
 	RB_REMOVE(winlinks, wwl, wl);
+	if (wl->status_text != NULL)
+		xfree(wl->status_text);
 	xfree(wl);
 
 	if (w->references == 0)
