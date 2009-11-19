@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.3 2009/11/15 14:04:02 damien Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.4 2009/11/19 17:44:03 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -219,7 +219,7 @@ ar9285_init_from_rom(struct athn_softc *sc, struct ieee80211_channel *c,
 		reg = RW(reg, AR9285_PHY_ANT_DIV_ALT_LNACONF,
 		    (modal->db1_234 >> 12) & 0x3);
 		reg = RW(reg, AR9285_PHY_ANT_DIV_MAIN_LNACONF,
-		    (modal->db1_234 >> 14) & 0x1);
+		    (modal->db1_234 >> 14) & 0x3);
 		reg = RW(reg, AR9285_PHY_ANT_DIV_ALT_GAINTB,
 		    (modal->ob_234  >> 13) & 0x1);
 		reg = RW(reg, AR9285_PHY_ANT_DIV_MAIN_GAINTB,
