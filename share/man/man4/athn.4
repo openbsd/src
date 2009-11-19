@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.4 2009/11/14 19:45:18 damien Exp $
+.\" $OpenBSD: athn.4,v 1.5 2009/11/19 19:22:46 damien Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 14 2009 $
+.Dd $Mdocdate: November 19 2009 $
 .Os
 .Dt ATHN 4
 .Sh NAME
@@ -183,6 +183,9 @@ This should not happen.
 The radio transmitter is off and thus no packet can go out.
 The driver will reset the hardware.
 Make sure the laptop radio switch is on.
+.It "athn%d: radio switch turned off"
+The radio switch has been turned off while the interface was up and running.
+The driver will turn the interface down.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
