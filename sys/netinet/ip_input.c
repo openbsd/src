@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.172 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.173 2009/11/19 22:07:17 otto Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -199,7 +199,8 @@ ip_init()
 	for (pr = inetdomain.dom_protosw;
 	    pr < inetdomain.dom_protoswNPROTOSW; pr++)
 		if (pr->pr_domain->dom_family == PF_INET &&
-		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
+		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW &&
+		    pr->pr_protocol < IPPROTO_MAX)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
 	ipintrq.ifq_maxlen = ipqmaxlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.92 2009/11/03 10:59:04 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.93 2009/11/19 22:07:17 otto Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -157,7 +157,8 @@ ip6_init()
 	for (pr = (struct ip6protosw *)inet6domain.dom_protosw;
 	    pr < (struct ip6protosw *)inet6domain.dom_protoswNPROTOSW; pr++)
 		if (pr->pr_domain->dom_family == PF_INET6 &&
-		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW)
+		    pr->pr_protocol && pr->pr_protocol != IPPROTO_RAW &&
+		    pr->pr_protocol < IPPROTO_MAX)
 			ip6_protox[pr->pr_protocol] = pr - inet6sw;
 	ip6intrq.ifq_maxlen = ip6qmaxlen;
 	ip6_randomid_init();
