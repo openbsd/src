@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.22 2009/11/19 10:22:06 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.23 2009/11/19 16:22:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -489,7 +489,7 @@ server_client_set_title(struct client *c)
 
 	template = options_get_string(&s->options, "set-titles-string");
 	
-	title = status_replace(c, template, time(NULL), 1);
+	title = status_replace(c, NULL, template, time(NULL), 1);
 	if (c->title == NULL || strcmp(title, c->title) != 0) {
 		if (c->title != NULL)
 			xfree(c->title);
