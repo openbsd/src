@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_svr4.8,v 1.17 2009/11/19 02:36:27 guenther Exp $
+.\"	$OpenBSD: compat_svr4.8,v 1.18 2009/11/19 07:23:53 jmc Exp $
 .\"	$NetBSD: compat_svr4.8,v 1.1 1996/07/06 17:14:50 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
@@ -46,14 +46,12 @@ Most programs should work, but not ones that use or depend on:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It kernel internal data structures
-.It the
-.Pa /proc
-filesystem
+.It the /proc filesystem
 .It the ticotsord loopback rpc mechanism (NIS uses this)
 .It sound and video interfaces
 .It threads (ttsession uses threads)
 .It the streams administrative driver
-.It mapping of page zero to the executable for Dell SVR4 binaries
+.It "mapping of page zero to the executable for Dell SVR4 binaries"
 .El
 .Pp
 The SVR4 compatibility feature is active
