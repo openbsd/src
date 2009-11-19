@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.1 2004/10/18 19:05:36 grange Exp $	*/
+/*	$OpenBSD: exec.h,v 1.2 2009/11/19 20:13:51 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
@@ -62,9 +62,6 @@
 
 #if defined(_LP64)
 #define _KERN_DO_ELF64
-#if defined(COMPAT_O32)
-#define _KERN_DO_ELF
-#endif
 #else
 #define _KERN_DO_ELF
 #endif

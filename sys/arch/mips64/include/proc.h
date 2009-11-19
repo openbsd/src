@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.3 2009/06/10 18:05:30 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.4 2009/11/19 20:13:51 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,8 +57,6 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_FPUSED	0x00000001	/* floating point coprocessor used */
-#define	MDP_O32		0x00000002	/* Uses 32 bit syscall interface */
-#define	MDP_64		0x00000004	/* Uses new 64 bit syscall interface */
 #define	MDP_PERF	0x00010000	/* Performance counter used */
 #define	MDP_WATCH1	0x00020000	/* Watch register 1 used */
 #define	MDP_WATCH2	0x00040000	/* Watch register 1 used */

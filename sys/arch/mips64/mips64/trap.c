@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.47 2009/11/18 20:58:52 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.48 2009/11/19 20:13:52 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -447,24 +447,12 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			args.i[1] = locr0->a2;
 			args.i[2] = locr0->a3;
 			if (i > 3) {
-				if (p->p_md.md_flags & MDP_O32) {
-					int32_t p[5];
-
-					i = copyin((int32_t *)locr0->sp + 4,
-						p, 5 * sizeof(int32_t));
-					args.i[3] = p[0];
-					args.i[4] = p[1];
-					args.i[5] = p[2];
-					args.i[6] = p[3];
-					args.i[7] = p[4];
-				} else {
-					args.i[3] = locr0->a4;
-					args.i[4] = locr0->a5;
-					args.i[5] = locr0->a6;
-					args.i[6] = locr0->a7;
-					i = copyin((void *)locr0->sp,
-					    &args.i[7], sizeof(register_t));
-				}
+				args.i[3] = locr0->a4;
+				args.i[4] = locr0->a5;
+				args.i[5] = locr0->a6;
+				args.i[6] = locr0->a7;
+				i = copyin((void *)locr0->sp,
+				    &args.i[7], sizeof(register_t));
 			}
 			break;
 
@@ -473,38 +461,17 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			 * Like syscall, but code is a quad, so as to maintain
 			 * quad alignment for the rest of the arguments.
 			 */
-			if (p->p_md.md_flags & MDP_O32) {
-				if (_QUAD_LOWWORD == 0) {
-					code = locr0->a0;
-				} else {
-					code = locr0->a1;
-				}
-				args.i[0] = locr0->a2;
-				args.i[1] = locr0->a3;
-			} else {
-				code = locr0->a0;
-				args.i[0] = locr0->a1;
-				args.i[1] = locr0->a2;
-				args.i[2] = locr0->a3;
-			}
+			code = locr0->a0;
+			args.i[0] = locr0->a1;
+			args.i[1] = locr0->a2;
+			args.i[2] = locr0->a3;
 
 			if (code >= numsys)
 				callp += p->p_emul->e_nosys; /* (illegal) */
 			else
 				callp += code;
 			i = callp->sy_argsize / sizeof(int);
-			if (i > 2 && p->p_md.md_flags & MDP_O32) {
-					int32_t p[6];
-
-					i = copyin((int32_t *)locr0->sp + 4,
-						p, 6 * sizeof(int32_t));
-					args.i[2] = p[0];
-					args.i[3] = p[1];
-					args.i[4] = p[2];
-					args.i[5] = p[3];
-					args.i[6] = p[4];
-					args.i[7] = p[5];
-			} else if (i > 3) {
+			if (i > 3) {
 				args.i[3] = locr0->a4;
 				args.i[4] = locr0->a5;
 				args.i[5] = locr0->a6;
@@ -526,21 +493,10 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			args.i[2] = locr0->a2;
 			args.i[3] = locr0->a3;
 			if (i > 4) {
-				if (p->p_md.md_flags & MDP_O32) {
-					int32_t p[4];
-
-					i = copyin((int32_t *)locr0->sp + 4,
-						p, 4 * sizeof(int32_t));
-					args.i[4] = p[0];
-					args.i[5] = p[1];
-					args.i[6] = p[2];
-					args.i[7] = p[3];
-				} else {
-					args.i[4] = locr0->a4;
-					args.i[5] = locr0->a5;
-					args.i[6] = locr0->a6;
-					args.i[7] = locr0->a7;
-				}
+				args.i[4] = locr0->a4;
+				args.i[5] = locr0->a5;
+				args.i[6] = locr0->a6;
+				args.i[7] = locr0->a7;
 			}
 		}
 #ifdef SYSCALL_DEBUG

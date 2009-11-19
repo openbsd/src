@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 2009/11/19 06:06:51 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.89 2009/11/19 20:13:54 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -776,36 +776,16 @@ setregs(p, pack, stack, retval)
 	register_t *retval;
 {
 	extern struct proc *machFPCurProcPtr;
-#if 0
-/* XXX should check validity of header and perhaps be 32/64 indep. */
-	Elf64_Ehdr *eh = pack->ep_hdr;
-
-	if ((((eh->e_flags & EF_MIPS_ABI) != E_MIPS_ABI_NONE) &&
-	    ((eh->e_flags & EF_MIPS_ABI) != E_MIPS_ABI_O32)) ||
-	    ((eh->e_flags & EF_MIPS_ARCH) >= E_MIPS_ARCH_3) ||
-	    (eh->e_ident[EI_CLASS] != ELFCLASS32)) {
-		p->p_md.md_flags |= MDP_O32;
-	}
-#endif
-
-#if !defined(__LP64__)
-	p->p_md.md_flags |= MDP_O32;
-#else
-	p->p_md.md_flags &= ~MDP_O32;
-#endif
 
 	bzero((caddr_t)p->p_md.md_regs, sizeof(struct trap_frame));
 	p->p_md.md_regs->sp = stack;
 	p->p_md.md_regs->pc = pack->ep_entry & ~3;
 	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
-#if defined(__LP64__)
 	p->p_md.md_regs->sr = SR_FR_32 | SR_XX | SR_KSU_USER | SR_KX | SR_UX |
 	    SR_EXL | SR_INT_ENAB;
-	if (sys_config.cpu[0].type == MIPS_R12000 &&
-	    sys_config.system_type == SGI_O2)
+#if !defined(TGT_COHERENT)
+	if (sys_config.cpu[0].type == MIPS_R12000)
 		p->p_md.md_regs->sr |= SR_DSD;
-#else
-	p->p_md.md_regs->sr = SR_KSU_USER|SR_XX|SR_EXL|SR_INT_ENAB;
 #endif
 	p->p_md.md_regs->sr |= idle_mask & SR_INT_MASK;
 	p->p_md.md_regs->ic = (idle_mask << 8) & IC_INT_MASK;
