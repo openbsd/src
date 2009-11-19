@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.48 2009/11/19 19:47:28 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.49 2009/11/19 21:30:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -121,7 +121,7 @@ status_redraw(struct client *c)
 	size_t			llen, rlen;
 	int			larrow, rarrow, utf8flag;
 
-	/* No status line?*/
+	/* No status line? */
 	if (c->tty.sy == 0 || !options_get_number(&s->options, "status"))
 		return (1);
 	left = right = NULL;
@@ -419,7 +419,7 @@ status_replace1(struct client *c,struct winlink *wl,
 		ch = ']';
 		goto skip_to;
 	case '#':
-		*(*optr++) = '#';
+		*(*optr)++ = '#';
 		break;
 	}
 
