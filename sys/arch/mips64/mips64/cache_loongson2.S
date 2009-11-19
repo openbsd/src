@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_loongson2.S,v 1.1 2009/08/06 21:11:39 miod Exp $	*/
+/*	$OpenBSD: cache_loongson2.S,v 1.2 2009/11/19 20:16:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -127,7 +127,7 @@
 LEAF(Loongson2_ConfigCache, 0)
 	.set	noreorder
 	LA	v0, 1f
-	LA	v1, KSEG1_BASE
+	LA	v1, CKSEG1_BASE
 	or	v0, v1
 	jr	v0				# Switch to uncached.
 	nop

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.11 2009/11/19 06:06:51 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.12 2009/11/19 20:16:27 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -67,7 +67,7 @@ crime_configure_memory(void)
 #endif
 
 	bank_ctrl =
-	    (void *)PHYS_TO_KSEG1(CRIMEBUS_BASE + CRIME_MEM_BANK0_CONTROL);
+	    (void *)PHYS_TO_CKSEG1(CRIMEBUS_BASE + CRIME_MEM_BANK0_CONTROL);
 	for (bank = 0; bank < CRIME_MAX_BANKS; bank++) {
 		ctrl = bank_ctrl[bank];
 		addr = (ctrl & CRIME_MEM_BANK_ADDR) << 25;

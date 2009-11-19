@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.18 2009/07/22 21:15:42 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.19 2009/11/19 20:16:27 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -198,7 +198,7 @@ db_write_bytes(addr, size, data)
 	}
 	if (addr < VM_MAXUSER_ADDRESS) {
 		Mips_HitSyncDCache(addr, size);
-		Mips_InvalidateICache(PHYS_TO_KSEG0(addr & 0xffff), size);
+		Mips_InvalidateICache(PHYS_TO_CKSEG0(addr & 0xffff), size);
 	}
 }
 
@@ -245,7 +245,7 @@ loop:
 	stksize = 0;
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || (!IS_XKPHYS(sp) && sp < KSEG0_BASE)) {
+	if (sp & 3 || (!IS_XKPHYS(sp) && sp < CKSEG0_BASE)) {
 		(*pr)("SP %p: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
@@ -272,7 +272,7 @@ loop:
 
 
 	/* check for bad PC */
-	if (pc & 3 || (!IS_XKPHYS(pc) && pc < KSEG0_BASE) ||
+	if (pc & 3 || (!IS_XKPHYS(pc) && pc < CKSEG0_BASE) ||
 	    pc >= (vaddr_t)edata) {
 		(*pr)("PC %p: not in kernel\n", pc);
 		ra = 0;

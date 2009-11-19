@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.30 2009/10/22 22:08:54 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.31 2009/11/19 20:16:27 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -184,7 +184,7 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	mfc0	t0, COP_0_TLB_INDEX
 	nop
 	bltz	t0, ctx1			# not in tlb
-	LA	t2, KSEG0_BASE		# NOTE: if > 1 ins, does not matter
+	LA	t2, CKSEG0_BASE		# NOTE: if > 1 ins, does not matter
 
 	dmtc0	t2, COP_0_TLB_HI		# invalidate it.
 	dmtc0	zero, COP_0_TLB_LO0

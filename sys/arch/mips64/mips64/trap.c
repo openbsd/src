@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2009/11/19 20:13:52 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2009/11/19 20:16:27 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1118,7 +1118,7 @@ loop:
 	}
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || (!IS_XKPHYS(sp) && sp < KSEG0_BASE)) {
+	if (sp & 3 || (!IS_XKPHYS(sp) && sp < CKSEG0_BASE)) {
 		(*printfn)("SP %p: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
@@ -1150,7 +1150,7 @@ loop:
 		Between((vaddr_t)a, pc, (vaddr_t)b)
 
 	/* check for bad PC */
-	if (pc & 3 || (!IS_XKPHYS(pc) && pc < KSEG0_BASE) ||
+	if (pc & 3 || (!IS_XKPHYS(pc) && pc < CKSEG0_BASE) ||
 	    pc >= (vaddr_t)edata) {
 		(*printfn)("PC %p: not in kernel\n", pc);
 		ra = 0;

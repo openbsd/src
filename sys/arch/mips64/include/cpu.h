@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.42 2009/10/30 08:13:57 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.43 2009/11/19 20:16:26 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,28 +45,27 @@
 #ifndef _MIPS_CPU_H_
 #define	_MIPS_CPU_H_
 
+#ifndef _LOCORE
+
 /*
  * MIPS32-style segment definitions.
  * They only cover the first 512MB of physical addresses.
  */
-#define	KSEG0_BASE	0xffffffff80000000
-#define	KSEG1_BASE	0xffffffffa0000000
-#define	KSSEG_BASE	0xffffffffc0000000
-#define	KSEG3_BASE	0xffffffffe0000000
-#define	KSEG_SIZE	0x0000000020000000
+#define	CKSEG0_BASE		0xffffffff80000000UL
+#define	CKSEG1_BASE		0xffffffffa0000000UL
+#define	CKSSEG_BASE		0xffffffffc0000000UL
+#define	CKSEG3_BASE		0xffffffffe0000000UL
+#define	CKSEG_SIZE		0x0000000020000000UL
 
-#define	KSEG0_TO_PHYS(x)	((u_long)(x) & (KSEG_SIZE - 1))
-#define	KSEG1_TO_PHYS(x)	((u_long)(x) & (KSEG_SIZE - 1))
-#define	PHYS_TO_KSEG0(x)	((u_long)(x) | KSEG0_BASE)
-#define	PHYS_TO_KSEG1(x)	((u_long)(x) | KSEG1_BASE)
-#define	PHYS_TO_KSEG3(x)	((u_long)(x) | KSEG3_BASE)
+#define	CKSEG0_TO_PHYS(x)	((u_long)(x) & (CKSEG_SIZE - 1))
+#define	CKSEG1_TO_PHYS(x)	((u_long)(x) & (CKSEG_SIZE - 1))
+#define	PHYS_TO_CKSEG0(x)	((u_long)(x) | CKSEG0_BASE)
+#define	PHYS_TO_CKSEG1(x)	((u_long)(x) | CKSEG1_BASE)
 
 /*
  * MIPS64-style segment definitions.
  * These allow for 36 bits of addressable physical memory, thus 64GB.
  */
-
-#ifndef _LOCORE
 
 /*
  * Cache Coherency Attributes.
@@ -103,9 +102,10 @@
 
 extern vaddr_t uncached_base;
 
-#endif	/* _LOCORE */
-
+#define	XKSSSEG_BASE		0x4000000000000000UL
 #define	XKPHYS_BASE		0x8000000000000000UL
+#define	XKSSEG_BASE		0xc000000000000000UL
+
 #define	XKPHYS_TO_PHYS(x)	((paddr_t)(x) & 0x0000000fffffffffUL)
 #define	PHYS_TO_XKPHYS(x,c)	((paddr_t)(x) | XKPHYS_BASE | ((c) << 59))
 #define	PHYS_TO_XKPHYS_UNCACHED(x,s) \
@@ -114,6 +114,8 @@ extern vaddr_t uncached_base;
 #define	IS_XKPHYS(va)		(((va) >> 62) == 2)
 #define	XKPHYS_TO_CCA(x)	(((x) >> 59) & 0x07)
 #define	XKPHYS_TO_SP(x)		(((x) >> 57) & 0x03)
+
+#endif	/* _LOCORE */
 
 #ifdef _KERNEL
 
@@ -210,11 +212,11 @@ extern vaddr_t uncached_base;
 /*
  * Location of exception vectors.
  */
-#define	RESET_EXC_VEC		(KSEG0_BASE + 0x3fc00000)
-#define	TLB_MISS_EXC_VEC	(KSEG0_BASE + 0x00000000)
-#define	XTLB_MISS_EXC_VEC	(KSEG0_BASE + 0x00000080)
-#define	CACHE_ERR_EXC_VEC	(KSEG0_BASE + 0x00000100)
-#define	GEN_EXC_VEC		(KSEG0_BASE + 0x00000180)
+#define	RESET_EXC_VEC		(CKSEG0_BASE + 0x3fc00000)
+#define	TLB_MISS_EXC_VEC	(CKSEG0_BASE + 0x00000000)
+#define	XTLB_MISS_EXC_VEC	(CKSEG0_BASE + 0x00000080)
+#define	CACHE_ERR_EXC_VEC	(CKSEG0_BASE + 0x00000100)
+#define	GEN_EXC_VEC		(CKSEG0_BASE + 0x00000180)
 
 /*
  * Coprocessor 0 registers:

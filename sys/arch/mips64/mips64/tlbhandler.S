@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.21 2009/11/18 20:58:52 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.22 2009/11/19 20:16:27 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -448,7 +448,7 @@ LEAF(tlb_flush, 0)
 	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
 	ITLBNOPFIX
 	mfc0	ta1, COP_0_TLB_WIRED
-	LA	v0, KSEG0_BASE		# invalid address
+	LA	v0, CKSEG0_BASE		# invalid address
 	dmfc0	ta0, COP_0_TLB_HI	# Save the PID
 
 	dmtc0	v0, COP_0_TLB_HI	# Mark entry high as invalid
@@ -511,7 +511,7 @@ LEAF(tlb_flush_addr, 0)
 	nop
 	nop				# Delay for effect
 	nop
-	LA	ta1, KSEG0_BASE		# Load invalid entry.
+	LA	ta1, CKSEG0_BASE	# Load invalid entry.
 	mfc0	v0, COP_0_TLB_INDEX	# See what we got
 	bltz	v0, 1f			# index < 0 => !found
 	nop

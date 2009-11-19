@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.89 2009/11/19 20:13:54 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.90 2009/11/19 20:16:27 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -158,7 +158,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 
 #ifdef notyet
 	/*
-	 * Make sure KSEG0 cacheability match what we intend to use.
+	 * Make sure CKSEG0 cacheability match what we intend to use.
 	 *
 	 * XXX This does not work as expected on IP30. Does ARCBios
 	 * XXX depend on this?
@@ -314,11 +314,11 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		if (IS_XKPHYS((vaddr_t)start))
 			firstkernpa = XKPHYS_TO_PHYS((vaddr_t)start);
 		else
-			firstkernpa = KSEG0_TO_PHYS((vaddr_t)start);
+			firstkernpa = CKSEG0_TO_PHYS((vaddr_t)start);
 		if (IS_XKPHYS((vaddr_t)ekern))
 			lastkernpa = XKPHYS_TO_PHYS((vaddr_t)ekern);
 		else
-			lastkernpa = KSEG0_TO_PHYS((vaddr_t)ekern);
+			lastkernpa = CKSEG0_TO_PHYS((vaddr_t)ekern);
 
 		firstkernpage = atop(trunc_page(firstkernpa));
 		lastkernpage = atop(round_page(lastkernpa));

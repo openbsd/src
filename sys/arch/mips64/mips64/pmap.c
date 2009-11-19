@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 2009/11/18 20:58:51 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.39 2009/11/19 20:16:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -226,12 +226,12 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 		/*
 		 * If we are running with a 32 bit ARCBios (i.e. kernel
-		 * linked in KSEG0), return a KSEG0 address whenever possible.
+		 * linked in CKSEG0), return a CKSEG0 address whenever possible.
 		 */
 		if (IS_XKPHYS((vaddr_t)&pmap_steal_memory))
 			va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
 		else
-			va = PHYS_TO_KSEG0(pa);
+			va = PHYS_TO_CKSEG0(pa);
 
 		bzero((void *)va, size);
 		return (va);
@@ -845,12 +845,12 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (pmap == pmap_kernel()) {
 		if (IS_XKPHYS(va))
 			pa = XKPHYS_TO_PHYS(va);
-		else if (va >= (vaddr_t)KSEG0_BASE &&
-		    va < (vaddr_t)KSEG0_BASE + KSEG_SIZE)
-			pa = KSEG0_TO_PHYS(va);
-		else if (va >= (vaddr_t)KSEG1_BASE &&
-		    va < (vaddr_t)KSEG1_BASE + KSEG_SIZE)
-			pa = KSEG1_TO_PHYS(va);
+		else if (va >= (vaddr_t)CKSEG0_BASE &&
+		    va < (vaddr_t)CKSEG0_BASE + CKSEG_SIZE)
+			pa = CKSEG0_TO_PHYS(va);
+		else if (va >= (vaddr_t)CKSEG1_BASE &&
+		    va < (vaddr_t)CKSEG1_BASE + CKSEG_SIZE)
+			pa = CKSEG1_TO_PHYS(va);
 		else {
 #ifdef DIAGNOSTIC
 			if (va < VM_MIN_KERNEL_ADDRESS ||

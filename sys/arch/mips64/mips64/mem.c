@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.12 2008/05/04 09:57:47 martin Exp $	*/
+/*	$OpenBSD: mem.c,v 1.13 2009/11/19 20:16:27 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -128,17 +128,17 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			if (IS_XKPHYS(v) && IS_XKPHYS(v + (vsize_t)c) &&
 			    XKPHYS_TO_PHYS(v + (vsize_t)c) <= ptoa(physmem))
 				allowed = TRUE;
-			/* ...or through KSEG0... */
-			else if (v >= KSEG0_BASE &&
-			    v + (vsize_t)c < KSEG0_BASE + KSEG_SIZE &&
-			    (physmem >= atop(KSEG_SIZE) ||
-			     v + (vsize_t)c <= KSEG0_BASE + ptoa(physmem)))
+			/* ...or through CKSEG0... */
+			else if (v >= CKSEG0_BASE &&
+			    v + (vsize_t)c < CKSEG0_BASE + CKSEG_SIZE &&
+			    (physmem >= atop(CKSEG_SIZE) ||
+			     v + (vsize_t)c <= CKSEG0_BASE + ptoa(physmem)))
 				allowed = TRUE;
-			/* ...or through KSEG1... */
-			else if (v >= KSEG1_BASE &&
-			    v + (vsize_t)c < KSEG1_BASE + KSEG_SIZE &&
-			    (physmem >= atop(KSEG_SIZE) ||
-			     v + c <= KSEG1_BASE + ptoa(physmem)))
+			/* ...or through CKSEG1... */
+			else if (v >= CKSEG1_BASE &&
+			    v + (vsize_t)c < CKSEG1_BASE + CKSEG_SIZE &&
+			    (physmem >= atop(CKSEG_SIZE) ||
+			     v + c <= CKSEG1_BASE + ptoa(physmem)))
 				allowed = TRUE;
 			/* ...otherwise, check it's within kernel kvm limits. */
 			else
