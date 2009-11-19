@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.20 2008/10/13 05:42:46 kevlo Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.21 2009/11/19 03:31:36 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -584,13 +584,12 @@ pthread_rwlock_wrlock(pthread_rwlock_t *lockp)
 
 	lock = *lockp;
 
-again:
 	_spinlock(&lock->lock);
 	lock->writer++;
-	if (lock->readers) {
+	while (lock->readers) {
 		_spinunlock(&lock->lock);
 		_sem_wait(&lock->sem, 0, 0);
-		goto again;
+		_spinlock(&lock->lock);
 	}
 	lock->readers = -pthread_self()->tid;
 	_spinunlock(&lock->lock);
