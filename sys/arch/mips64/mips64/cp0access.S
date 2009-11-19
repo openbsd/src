@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.10 2009/10/22 18:46:48 miod Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.11 2009/11/19 20:15:04 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -126,6 +126,9 @@ LEAF(updateimask, 0)
 	and	v1, v0
 	and	v0, a0, SR_INT_MASK
 	or	v1, v0
+	mtc0	v1, COP_0_STATUS_REG
+	ITLBNOPFIX
+	ori	v1, SR_INT_ENAB		# enable interrupts
 	mtc0	v1, COP_0_STATUS_REG
 	ITLBNOPFIX
 	jr	ra

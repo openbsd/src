@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.26 2009/10/22 22:08:54 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.27 2009/11/19 20:15:04 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -524,12 +524,7 @@ LEAF(proc_trampoline, 0)
 	jal	splx
 	xor	a0, a0
 	jal	updateimask		# Make sure SR imask is updated
-	xor	a0, a0
-
-	mfc0	t0, COP_0_STATUS_REG	# enable interrupts
-	ori	t0, SR_INT_ENAB
-	mtc0	t0, COP_0_STATUS_REG
-	ITLBNOPFIX
+	xor	a0, a0			# and interrupts enabled
 
 	jal	s0
 	move	a0,s1			# invoke callback.

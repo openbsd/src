@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.49 2009/10/22 22:08:54 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.50 2009/11/19 20:15:04 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -200,7 +200,6 @@ splinit()
 {
 	struct proc *p = curproc;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	u_int32_t sr;
 
 	/*
 	 * Update proc0 pcb to contain proper values.
@@ -213,9 +212,7 @@ splinit()
 	    (idle_mask & SR_INT_MASK);
 
 	spl0();
-	sr = updateimask(0);
-	sr |= SR_INT_ENAB;
-	setsr(sr);
+	(void)updateimask(0);
 }
 
 int
