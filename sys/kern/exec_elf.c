@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.70 2009/06/06 21:25:19 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.71 2009/11/19 02:36:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -752,15 +752,6 @@ native:
 		epp->ep_emul_arg = ap;
 		epp->ep_interp_pos = pos;
 	}
-
-#if defined(COMPAT_SVR4) && defined(i386) && 0	/* nothing sets OOS_DELL... */
-#ifndef ELF_MAP_PAGE_ZERO
-	/* Dell SVR4 maps page zero, yeuch! */
-	if (p->p_os == OOS_DELL)
-#endif
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, PAGE_SIZE, 0,
-		    epp->ep_vp, 0, VM_PROT_READ);
-#endif
 
 	free(ph, M_TEMP);
 	vn_marktext(epp->ep_vp);
