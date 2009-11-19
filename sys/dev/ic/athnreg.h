@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.3 2009/11/15 14:04:02 damien Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.4 2009/11/19 19:19:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -613,16 +613,10 @@
 #define AR_IMR_TXINTM	0x40000000
 #define AR_IMR_RXINTM	0x80000000
 
-#ifndef ATHN_INTR_MITIGATION
-#define AR_IMR_DEFAULT	\
-	(AR_IMR_TXERR | AR_IMR_TXURN | AR_IMR_RXERR |	\
-	 AR_IMR_RXORN | AR_IMR_BCNMISC | AR_IMR_RXOK | AR_IMR_TXOK)
-#else
 #define AR_IMR_DEFAULT	\
 	(AR_IMR_TXERR | AR_IMR_TXURN | AR_IMR_RXERR |	\
 	 AR_IMR_RXORN | AR_IMR_BCNMISC | AR_IMR_RXINTM |	\
 	 AR_IMR_RXMINTR | AR_IMR_TXOK)
-#endif
 #define AR_IMR_HOSTAP	(AR_IMR_DEFAULT | AR_IMR_MIB)
 
 /* Bits for AR_IMR_S0. */
@@ -941,6 +935,7 @@
 #define AR_INTR_SYNC_MAC_ASLEEP			0x00010000
 #define AR_INTR_SYNC_MAC_SLEEP_ACCESS		0x00020000
 #define AR_INTR_SYNC_ALL			0x0003ffff
+#define AR_INTR_SYNC_GPIO_PIN(i)		(1 << (18 + (i)))
 
 #define AR_INTR_SYNC_DEFAULT			\
 	(AR_INTR_SYNC_HOST1_FATAL |		\
@@ -953,29 +948,14 @@
 	 AR_INTR_SYNC_LOCAL_TIMEOUT |		\
 	 AR_INTR_SYNC_MAC_SLEEP_ACCESS)
 
-/* Bits for AR_INTR_SYNC_ENABLE. */
-#define AR_INTR_SYNC_ENABLE_GPIO_M	0xfffc0000
-#define AR_INTR_SYNC_ENABLE_GPIO_S	18
-
-/* Bits for AR_INTR_ASYNC_MASK. */
-#define AR_INTR_ASYNC_MASK_GPIO_M	0xfffc0000
-#define AR_INTR_ASYNC_MASK_GPIO_S	18
-
-/* Bits for AR_INTR_SYNC_MASK. */
-#define AR_INTR_SYNC_MASK_GPIO_M	0xfffc0000
-#define AR_INTR_SYNC_MASK_GPIO_S	18
-
 /* Bits for AR_INTR_ASYNC_CAUSE. */
 #define AR_INTR_RTC_IRQ		0x00000001
 #define AR_INTR_MAC_IRQ		0x00000002
 #define AR_INTR_EEP_PROT_ACCESS	0x00000004
 #define AR_INTR_MAC_AWAKE	0x00020000
 #define AR_INTR_MAC_ASLEEP	0x00040000
+#define AR_INTR_GPIO_PIN(i)	(1 << (18 + (i)))
 #define AR_INTR_SPURIOUS	0xffffffff
-
-/* Bits for AR_INTR_ASYNC_ENABLE. */
-#define AR_INTR_ASYNC_ENABLE_GPIO_M	0xfffc0000
-#define AR_INTR_ASYNC_ENABLE_GPIO_S	18
 
 /* Bits for AR_GPIO_OE_OUT. */
 #define AR_GPIO_OE_OUT_DRV_M	0x00000003
@@ -984,6 +964,9 @@
 #define AR_GPIO_OE_OUT_DRV_LOW	1
 #define AR_GPIO_OE_OUT_DRV_HI	2
 #define AR_GPIO_OE_OUT_DRV_ALL	3
+
+/* Bits for AR_GPIO_INTR_POL. */
+#define AR_GPIO_INTR_POL_PIN(i)		(1 << (i))
 
 /* Bits for AR_GPIO_INPUT_EN_VAL. */
 #define AR_GPIO_INPUT_EN_VAL_BT_PRIORITY_DEF	0x00000004

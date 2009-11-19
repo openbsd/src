@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.4 2009/11/17 18:21:07 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.5 2009/11/19 19:19:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -17,7 +17,6 @@
  */
 
 #define ATHN_DEBUG		1
-#define ATHN_INTR_MITIGATION	1
 #define ATHN_BT_COEXISTENCE	1
 
 #ifdef ATHN_DEBUG
@@ -376,6 +375,8 @@ struct athn_softc {
 	uint8_t				ngpiopins;
 	int				led_pin;
 	int				rfsilent_pin;
+	uint32_t			isync;
+	uint32_t			imask;
 
 	uint16_t			mac_ver;
 	uint8_t				mac_rev;
@@ -424,7 +425,6 @@ struct athn_softc {
 	const struct athn_addac		*addac;
 	const uint32_t			*serdes;
 	uint32_t			workaround;
-
 
 	struct athn_ops			ops;
 

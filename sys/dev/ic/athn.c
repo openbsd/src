@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.10 2009/11/17 20:38:29 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.11 2009/11/19 19:19:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -791,19 +791,18 @@ athn_intr(void *xsc)
 
 	/* Get pending interrupts. */
 	intr = AR_READ(sc, AR_INTR_ASYNC_CAUSE);
-	if ((intr & AR_INTR_MAC_IRQ) == 0 || intr == AR_INTR_SPURIOUS) {
+	if (!(intr & AR_INTR_MAC_IRQ) || intr == AR_INTR_SPURIOUS) {
 		intr = AR_READ(sc, AR_INTR_SYNC_CAUSE);
-		if (intr == AR_INTR_SPURIOUS ||
-		    (intr & AR_INTR_SYNC_DEFAULT) == 0)
+		if (intr == AR_INTR_SPURIOUS || (intr & sc->isync) == 0)
 			return (1);	/* Not for us. */
 	}
 
-	if ((AR_READ(sc, AR_INTR_ASYNC_CAUSE) & AR_INTR_MAC_IRQ) != 0 &&
+	if ((AR_READ(sc, AR_INTR_ASYNC_CAUSE) & AR_INTR_MAC_IRQ) &&
 	    (AR_READ(sc, AR_RTC_STATUS) & AR_RTC_STATUS_M) == AR_RTC_STATUS_ON)
 		intr = AR_READ(sc, AR_ISR);
 	else
 		intr = 0;
-	sync = AR_READ(sc, AR_INTR_SYNC_CAUSE) & AR_INTR_SYNC_DEFAULT;
+	sync = AR_READ(sc, AR_INTR_SYNC_CAUSE) & sc->isync;
 	if (intr == 0 && sync == 0)
 		return (1);	/* Not for us. */
 
@@ -849,6 +848,16 @@ athn_intr(void *xsc)
 		if (sync & AR_INTR_SYNC_RADM_CPL_TIMEOUT) {
 			AR_WRITE(sc, AR_RC, AR_RC_HOSTIF);
 			AR_WRITE(sc, AR_RC, 0);
+		}
+
+		if ((sc->flags & ATHN_FLAG_RFSILENT) &&
+		    (sync & AR_INTR_SYNC_GPIO_PIN(sc->rfsilent_pin))) {
+			printf("%s: radio switch turned off\n",
+			    sc->sc_dev.dv_xname);
+			/* Turn the interface down. */
+			ifp->if_flags &= ~IFF_UP;
+			athn_stop(ifp, 1);
+			return (0);
 		}
 
 		AR_WRITE(sc, AR_INTR_SYNC_CAUSE, sync);
@@ -1708,6 +1717,10 @@ athn_rfsilent_init(struct athn_softc *sc)
 	AR_WRITE(sc, AR_GPIO_INPUT_MUX2, reg);
 	athn_gpio_config_input(sc, sc->rfsilent_pin);
 	AR_SETBITS(sc, AR_PHY_TEST, AR_PHY_TEST_RFSILENT_BB);
+	if (!(sc->flags & ATHN_FLAG_RFSILENT_REVERSED)) {
+		AR_SETBITS(sc, AR_GPIO_INTR_POL,
+		    AR_GPIO_INTR_POL_PIN(sc->rfsilent_pin));
+	}
 }
 
 void
@@ -3180,7 +3193,7 @@ athn_tx_process(struct athn_softc *sc, int qid)
 	if (failcnt > 0)
 		an->amn.amn_retrycnt++;
 
-	DPRINTFN(6, ("Tx done qid=%d status1=%d fail count=%d\n",
+	DPRINTFN(5, ("Tx done qid=%d status1=%d fail count=%d\n",
 	    qid, ds->ds_status1, failcnt));
 
 	bus_dmamap_sync(sc->sc_dmat, bf->bf_map, 0, bf->bf_map->dm_mapsize,
@@ -3214,7 +3227,7 @@ athn_tx_intr(struct athn_softc *sc)
 	mask |= MS(reg, AR_ISR_S1_QCU_TXERR);
 	mask |= MS(reg, AR_ISR_S1_QCU_TXEOL);
 
-	DPRINTFN(5, ("Tx interrupt mask=0x%x\n", mask));
+	DPRINTFN(4, ("Tx interrupt mask=0x%x\n", mask));
 	for (qid = 0; mask != 0; mask >>= 1, qid++) {
 		if (mask & 1)
 			while (athn_tx_process(sc, qid) == 0);
@@ -3568,7 +3581,7 @@ athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	txq->lastds = lastds;
 	SIMPLEQ_INSERT_TAIL(&txq->head, bf, bf_list);
 
-	DPRINTFN(4, ("Tx qid=%d nsegs=%d ctl0=0x%x ctl1=0x%x ctl3=0x%x\n",
+	DPRINTFN(6, ("Tx qid=%d nsegs=%d ctl0=0x%x ctl1=0x%x ctl3=0x%x\n",
 	    qid, bf->bf_map->dm_nsegs, bf->bf_descs[0].ds_ctl0,
 	    bf->bf_descs[0].ds_ctl1, bf->bf_descs[0].ds_ctl3));
 
@@ -3870,18 +3883,13 @@ athn_enable_interrupts(struct athn_softc *sc)
 	athn_disable_interrupts(sc);	/* XXX */
 
 	mask = AR_IMR_TXDESC | AR_IMR_TXEOL | AR_IMR_RXERR | AR_IMR_RXEOL |
-	    AR_IMR_RXORN | AR_IMR_GENTMR | AR_IMR_BCNMISC;
-#ifndef ATHN_INTR_MITIGATION
-	mask |= AR_IMR_RXOK | AR_IMR_RXDESC;
-#else
-	mask |= AR_IMR_RXMINTR | AR_IMR_RXINTM;
-#endif
+	    AR_IMR_RXORN | AR_IMR_GENTMR | AR_IMR_BCNMISC | AR_IMR_RXMINTR |
+	    AR_IMR_RXINTM;
 	AR_WRITE(sc, AR_IMR, mask);
 
 	mask2 = AR_READ(sc, AR_IMR_S2);
 	mask2 &= ~(AR_IMR_S2_TIM | AR_IMR_S2_DTIM | AR_IMR_S2_DTIMSYNC |
-	    AR_IMR_S2_CABEND | AR_IMR_S2_CABTO | AR_IMR_S2_TSFOOR |
-	    AR_IMR_S2_GTT | AR_IMR_S2_CST);
+	    AR_IMR_S2_CABEND | AR_IMR_S2_CABTO | AR_IMR_S2_TSFOOR);
 	mask2 |= AR_IMR_S2_GTT | AR_IMR_S2_CST;
 	AR_WRITE(sc, AR_IMR_S2, mask2);
 
@@ -3892,8 +3900,8 @@ athn_enable_interrupts(struct athn_softc *sc)
 	AR_WRITE(sc, AR_INTR_ASYNC_ENABLE, AR_INTR_MAC_IRQ);
 	AR_WRITE(sc, AR_INTR_ASYNC_MASK, AR_INTR_MAC_IRQ);
 
-	AR_WRITE(sc, AR_INTR_SYNC_ENABLE, AR_INTR_SYNC_DEFAULT);
-	AR_WRITE(sc, AR_INTR_SYNC_MASK, AR_INTR_SYNC_DEFAULT);
+	AR_WRITE(sc, AR_INTR_SYNC_ENABLE, sc->isync);
+	AR_WRITE(sc, AR_INTR_SYNC_MASK, sc->isync);
 }
 
 void
@@ -4167,15 +4175,18 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 	athn_init_tx_queues(sc);
 
 	/* Initialize interrupt mask. */
+	sc->imask = AR_IMR_DEFAULT;
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-		AR_WRITE(sc, AR_IMR, AR_IMR_HOSTAP);
-	else
+		sc->imask |= AR_IMR_MIB;
 #endif
-		AR_WRITE(sc, AR_IMR, AR_IMR_DEFAULT);
+	AR_WRITE(sc, AR_IMR, sc->imask);
 	AR_SETBITS(sc, AR_IMR_S2, AR_IMR_S2_GTT);
 	AR_WRITE(sc, AR_INTR_SYNC_CAUSE, 0xffffffff);
-	AR_WRITE(sc, AR_INTR_SYNC_ENABLE, AR_INTR_SYNC_DEFAULT);
+	sc->isync = AR_INTR_SYNC_DEFAULT;
+	if (sc->flags & ATHN_FLAG_RFSILENT)
+		sc->isync |= AR_INTR_SYNC_GPIO_PIN(sc->rfsilent_pin);
+	AR_WRITE(sc, AR_INTR_SYNC_ENABLE, sc->isync);
 	AR_WRITE(sc, AR_INTR_SYNC_MASK, 0);
 
 	athn_init_qos(sc);
@@ -4194,10 +4205,8 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 	/* Program OBS bus to see MAC interrupts. */
 	AR_WRITE(sc, AR_OBS, 8);
 
-#ifdef ATHN_INTR_MITIGATION
 	/* Setup interrupt mitigation. */
 	AR_WRITE(sc, AR_RIMT, SM(AR_RIMT_FIRST, 2000) | SM(AR_RIMT_LAST, 500));
-#endif
 
 	athn_init_baseband(sc);
 
