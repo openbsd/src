@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.58 2009/11/18 13:16:33 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.59 2009/11/19 14:06:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -391,7 +391,7 @@ main(int argc, char **argv)
 	options_set_number(wo, "window-status-current-bg", 8);
 	options_set_number(wo, "window-status-current-fg", 8);
 	options_set_number(wo, "window-status-fg", 8);
-	options_set_number(wo, "xterm-keys", 1);
+	options_set_number(wo, "xterm-keys", 0);
  	options_set_number(wo, "remain-on-exit", 0);
 	options_set_number(wo, "synchronize-panes", 0);
 
