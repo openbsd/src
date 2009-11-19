@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.62 2009/11/18 19:05:53 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.63 2009/11/19 06:07:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1762,20 +1762,17 @@ int
 xbridge_address_map(struct xbpci_softc *xb, paddr_t pa, bus_addr_t *mapping,
     bus_addr_t *limit)
 {
+#if 0
 	struct xbridge_ate *ate;
-	bus_addr_t ba;
 	uint a;
+#endif
+	bus_addr_t ba;
 
 	/*
 	 * Try the direct DMA window first.
 	 */
 
-#ifdef TGT_OCTANE
-	if (sys_config.system_type == SGI_OCTANE)
-		ba = (bus_addr_t)pa - IP30_MEMORY_BASE;
-	else
-#endif
-		ba = (bus_addr_t)pa;
+	ba = (bus_addr_t)pa;
 
 	if (ba < BRIDGE_DMA_DIRECT_LENGTH) {
 		*mapping = ba + BRIDGE_DMA_DIRECT_BASE;
@@ -1783,6 +1780,7 @@ xbridge_address_map(struct xbpci_softc *xb, paddr_t pa, bus_addr_t *mapping,
 		return 0;
 	}
 
+#if 0
 	/*
 	 * Did not fit, so now we need to use an ATE.
 	 * Check if an existing ATE would do the job; if not, try and
@@ -1822,6 +1820,7 @@ xbridge_address_map(struct xbpci_softc *xb, paddr_t pa, bus_addr_t *mapping,
 #endif
 
 	mtx_leave(&xb->xb_atemtx);
+#endif
 
 	/*
 	 * We could try allocating a bounce buffer here.
@@ -1834,8 +1833,10 @@ xbridge_address_map(struct xbpci_softc *xb, paddr_t pa, bus_addr_t *mapping,
 void
 xbridge_address_unmap(struct xbpci_softc *xb, bus_addr_t ba, bus_size_t len)
 {
+#if 0
 	uint a;
 	uint refs;
+#endif
 
 	/*
 	 * If this address matches an ATE, unref it, and make it
@@ -1844,6 +1845,7 @@ xbridge_address_unmap(struct xbpci_softc *xb, bus_addr_t ba, bus_size_t len)
 	if (ba < BRIDGE_DMA_TRANSLATED_BASE || ba >= BRIDGE_DMA_DIRECT_BASE)
 		return;
 
+#if 0
 	if (ba & XBRIDGE_DMA_TRANSLATED_SWAP)
 		ba &= ~XBRIDGE_DMA_TRANSLATED_SWAP;
 
@@ -1865,6 +1867,7 @@ xbridge_address_unmap(struct xbpci_softc *xb, bus_addr_t ba, bus_size_t len)
 	mtx_enter(&xb->xb_atemtx);
 	xbridge_ate_unref(xb, a, refs);
 	mtx_leave(&xb->xb_atemtx);
+#endif
 }
 
 /*
@@ -2032,20 +2035,7 @@ xbridge_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 * XXX which do not need to restrict themselves to 32 bit DMA
 	 * XXX addresses.
 	 */
-	switch (sys_config.system_type) {
-	default:
-#ifdef TGT_ORIGIN
-	case SGI_IP27:
-	case SGI_IP35:
-		low = 0;
-		break;
-#endif
-#ifdef TGT_OCTANE
-	case SGI_OCTANE:
-		low = IP30_MEMORY_BASE;
-		break;
-#endif
-	}
+	low = 0;
 	high = low + BRIDGE_DMA_DIRECT_LENGTH - 1;
 
 	return _dmamem_alloc_range(t, size, alignment, boundary,
@@ -2063,25 +2053,13 @@ xbridge_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 bus_addr_t
 xbridge_pa_to_device(paddr_t pa)
 {
-#ifdef TGT_OCTANE
-	if (sys_config.system_type == SGI_OCTANE)
-		pa -= IP30_MEMORY_BASE;
-#endif
-
 	return pa + BRIDGE_DMA_DIRECT_BASE;
 }
 
 paddr_t
 xbridge_device_to_pa(bus_addr_t addr)
 {
-	paddr_t pa = addr - BRIDGE_DMA_DIRECT_BASE;
-
-#ifdef TGT_OCTANE
-	if (sys_config.system_type == SGI_OCTANE)
-		pa += IP30_MEMORY_BASE;
-#endif
-
-	return pa;
+	return addr - BRIDGE_DMA_DIRECT_BASE;
 }
 
 /*
@@ -2139,12 +2117,8 @@ xbridge_setup(struct xbpci_softc *xb)
 	 * XXX assumes masternasid is 0
 	 */
 
-	if (sys_config.system_type == SGI_OCTANE)
-		xbridge_write_reg(xb, BRIDGE_DIR_MAP, BRIDGE_DIRMAP_ADD_512MB |
-		    (xbow_intr_widget << BRIDGE_DIRMAP_WIDGET_SHIFT));
-	else
-		xbridge_write_reg(xb, BRIDGE_DIR_MAP,
-		    xbow_intr_widget << BRIDGE_DIRMAP_WIDGET_SHIFT);
+	xbridge_write_reg(xb, BRIDGE_DIR_MAP,
+	    xbow_intr_widget << BRIDGE_DIRMAP_WIDGET_SHIFT);
 
 	/*
 	 * Figure out how many ATE we can use for non-direct DMA, and
