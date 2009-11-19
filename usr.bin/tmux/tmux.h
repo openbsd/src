@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.181 2009/11/18 17:02:17 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.182 2009/11/19 10:22:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1617,7 +1617,7 @@ void	 server_update_event(struct client *);
 
 /* status.c */
 int	 status_redraw(struct client *);
-char	*status_replace(struct client *, const char *, time_t);
+char	*status_replace(struct client *, const char *, time_t, int);
 void printflike2 status_message_set(struct client *, const char *, ...);
 void	 status_message_clear(struct client *);
 int	 status_message_redraw(struct client *);
