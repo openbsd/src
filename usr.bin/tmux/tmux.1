@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.123 2009/11/19 14:06:33 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.124 2009/11/19 15:00:32 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -1994,7 +1994,8 @@ This command works only from inside
 .D1 (alias: Ic display )
 Display a message in the status line.
 The format of
-.Ar message is as for
+.Ar message
+is as for
 .Ic status-left ,
 with the exception that #() are not handled.
 .It Ic select-prompt Op Fl t Ar target-client
