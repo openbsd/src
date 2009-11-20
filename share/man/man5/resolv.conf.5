@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.32 2009/06/05 06:56:51 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.33 2009/11/20 14:43:43 ajacoutot Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: June 5 2009 $
+.Dd $Mdocdate: November 20 2009 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -58,7 +58,8 @@ A resolv.conf file is not required for some setups, so this file is optional.
 It can be created manually, and is also created as part of the
 .Ox
 install process
-if use of the DHCP protocol is specified for any interface.
+if use of the DHCP protocol is specified for any interface
+or if any DNS nameservers are configured.
 .Pp
 If
 .Xr dhclient 8
