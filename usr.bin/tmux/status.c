@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.49 2009/11/19 21:30:53 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.50 2009/11/20 06:33:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -650,10 +650,13 @@ status_message_set(struct client *c, const char *fmt, ...)
 		limit = 0;
 	else
 		limit = options_get_number(&s->options, "message-limit");
-	for (i = ARRAY_LENGTH(&c->message_log); i > limit; i--) {
-		msg = &ARRAY_ITEM(&c->message_log, i - 1);
-		xfree(msg->msg);
-		ARRAY_REMOVE(&c->message_log, i - 1);
+	if (ARRAY_LENGTH(&c->message_log) > limit) {
+		limit = ARRAY_LENGTH(&c->message_log) - limit;
+		for (i = 0; i < limit; i++) {
+			msg = &ARRAY_FIRST(&c->message_log);
+			xfree(msg->msg);
+			ARRAY_REMOVE(&c->message_log, 0);
+		}
 	}
 
 	delay = options_get_number(&c->session->options, "display-time");
