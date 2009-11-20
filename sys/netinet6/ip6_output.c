@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.108 2009/10/28 21:03:17 deraadt Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.109 2009/11/20 09:02:21 guenther Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1283,7 +1283,6 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 	struct inpcb *inp = sotoinpcb(so);
 	struct mbuf *m = *mp;
 	int error, optval;
-	int optlen;
 #ifdef IPSEC
 	struct proc *p = curproc; /* XXX */
 	struct tdb *tdb;
@@ -1291,7 +1290,6 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 	int s;
 #endif
 
-	optlen = m ? m->m_len : 0;
 	error = optval = 0;
 
 	privileged = (inp->inp_socket->so_state & SS_PRIV);
@@ -1340,7 +1338,7 @@ ip6_ctloutput(int op, struct socket *so, int level, int optname,
 			case IPV6_RECVTCLASS:
 			case IPV6_V6ONLY:
 			case IPV6_AUTOFLOWLABEL:
-				if (optlen != sizeof(int)) {
+				if (m == NULL || m->m_len != sizeof(int)) {
 					error = EINVAL;
 					break;
 				}
@@ -1494,7 +1492,7 @@ do { \
 			case IPV6_TCLASS:
 			case IPV6_DONTFRAG:
 			case IPV6_USE_MIN_MTU:
-				if (optlen != sizeof(optval)) {
+				if (m == NULL || m->m_len != sizeof(optval)) {
 					error = EINVAL;
 					break;
 				}
@@ -1516,7 +1514,7 @@ do { \
 			case IPV6_2292DSTOPTS:
 			case IPV6_2292RTHDR:
 				/* RFC 2292 */
-				if (optlen != sizeof(int)) {
+				if (m == NULL || m->m_len != sizeof(int)) {
 					error = EINVAL;
 					break;
 				}
@@ -1595,6 +1593,10 @@ do { \
 				break;
 
 			case IPV6_PORTRANGE:
+				if (m == NULL || m->m_len != sizeof(int)) {
+					error = EINVAL;
+					break;
+				}
 				optval = *mtod(m, int *);
 
 				switch (optval) {
@@ -1961,12 +1963,10 @@ int
 ip6_raw_ctloutput(int op, struct socket *so, int level, int optname, 
 	struct mbuf **mp)
 {
-	int error = 0, optval, optlen;
+	int error = 0, optval;
 	const int icmp6off = offsetof(struct icmp6_hdr, icmp6_cksum);
 	struct inpcb *inp = sotoinpcb(so);
 	struct mbuf *m = *mp;
-
-	optlen = m ? m->m_len : 0;
 
 	if (level != IPPROTO_IPV6) {
 		if (op == PRCO_SETOPT && *mp)
@@ -1986,7 +1986,7 @@ ip6_raw_ctloutput(int op, struct socket *so, int level, int optname,
 		 */
 		switch (op) {
 		case PRCO_SETOPT:
-			if (optlen != sizeof(int)) {
+			if (m == NULL || m->m_len != sizeof(int)) {
 				error = EINVAL;
 				break;
 			}

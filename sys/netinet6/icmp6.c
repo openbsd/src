@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.107 2009/09/13 14:42:52 krw Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.108 2009/11/20 09:02:21 guenther Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2647,11 +2647,8 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 	struct mbuf **mp)
 {
 	int error = 0;
-	int optlen;
 	struct in6pcb *in6p = sotoin6pcb(so);
 	struct mbuf *m = *mp;
-
-	optlen = m ? m->m_len : 0;
 
 	if (level != IPPROTO_ICMPV6) {
 		if (op == PRCO_SETOPT && m)
@@ -2666,7 +2663,7 @@ icmp6_ctloutput(int op, struct socket *so, int level, int optname,
 		    {
 			struct icmp6_filter *p;
 
-			if (optlen != sizeof(*p)) {
+			if (m == NULL || m->m_len != sizeof(*p)) {
 				error = EMSGSIZE;
 				break;
 			}
