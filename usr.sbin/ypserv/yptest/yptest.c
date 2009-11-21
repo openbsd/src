@@ -1,4 +1,4 @@
-/*	$OpenBSD: yptest.c,v 1.17 2009/10/27 23:59:58 deraadt Exp $ */
+/*	$OpenBSD: yptest.c,v 1.18 2009/11/21 19:31:40 ian Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -51,7 +51,7 @@ int
 main(int argc, char *argv[])
 {
 	char *Domain, *Value, *Key2;
-	char *Map = "passwd.byname", *Key = "root";
+	char *Map = "hosts.byname", *Key = "localhost";
 	int ValLen, Status, Order, KeyLen;
 	struct ypall_callback Callback;
 	struct ypmaplist *ypml, *y;
@@ -60,7 +60,7 @@ main(int argc, char *argv[])
 	if (Status)
 		printf("yp error: %s\n", yperr_string(Status));
 
-	printf("Test 1: yp_match\n");
+	printf("Test 1: yp_match %s %s\n", Key, Map);
 	KeyLen = strlen(Key);
 	Status = yp_match(Domain, Map, Key, KeyLen, &Value, &ValLen);
 	if (Status)
