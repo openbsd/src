@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.h,v 1.11 2008/06/26 05:42:20 ray Exp $ */
+/*      $OpenBSD: if_gre.h,v 1.12 2009/11/21 14:08:14 claudio Exp $ */
 /*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
@@ -36,12 +36,13 @@
 struct gre_softc {
 	struct ifnet sc_if;
 	LIST_ENTRY(gre_softc) sc_list;
-	int gre_unit;
-	int gre_flags;
 	struct    in_addr g_src;  /* source address of gre packets */
 	struct    in_addr g_dst;  /* destination address of gre packets */
 	struct route route;	/* routing entry that determines, where a
                                    encapsulated packet should go */
+	int gre_unit;
+	int gre_flags;
+	u_int  g_rtableid;	/* routing table used for the tunnel */
 	u_char g_proto;		/* protocol of encapsulator */
 };	
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.45 2009/06/02 17:10:23 henning Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.46 2009/11/21 14:08:14 claudio Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -207,6 +207,15 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		goto end;
 	}
 
+#ifdef DIAGNOSTIC
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
+		printf("%s: trying to send packet on wrong domain. "
+		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain),
+		    dst->sa_family);
+	}
+#endif
+
 	/* Try to limit infinite recursion through misconfiguration. */
 	for (mtag = m_tag_find(m, PACKET_TAG_GRE, NULL); mtag;
 	     mtag = m_tag_find(m, PACKET_TAG_GRE, mtag)) {
@@ -410,6 +419,9 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 
+
+	m->m_pkthdr.rdomain = sc->g_rtableid;
+
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
@@ -514,7 +526,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->g_src = (satosin(sa))->sin_addr;
 		if (cmd == GRESADDRD )
 			sc->g_dst = (satosin(sa))->sin_addr;
-	recompute:
+recompute:
 		if ((sc->g_src.s_addr != INADDR_ANY) &&
 		    (sc->g_dst.s_addr != INADDR_ANY)) {
 			if (sc->route.ro_rt != 0) {
@@ -579,6 +591,20 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		si.sin_addr.s_addr = sc->g_dst.s_addr;
 		memcpy(&lifr->dstaddr, &si, sizeof(si));
 		break;
+	case SIOCSLIFPHYRTABLEID:
+		if ((error = suser(prc, 0)) != 0)
+			break;
+		if (ifr->ifr_rdomainid < 0 ||
+		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
+		    !rtable_exists(ifr->ifr_rdomainid)) {
+			error = EINVAL;
+			break;
+		}
+		sc->g_rtableid = ifr->ifr_rdomainid;
+		goto recompute;
+	case SIOCGLIFPHYRTABLEID:
+		ifr->ifr_rdomainid = sc->g_rtableid;
+		break;
 	default:
 		error = ENOTTY;
 	}
@@ -627,8 +653,8 @@ gre_compute_route(struct gre_softc *sc)
 		((struct sockaddr_in *) &ro->ro_dst)->sin_addr.s_addr = htonl(a);
 	}
 
-	rtalloc(ro);
-	if (ro->ro_rt == 0)
+	ro->ro_rt = rtalloc1(&ro->ro_dst, 1, sc->g_rtableid);
+	if (ro->ro_rt == NULL)
 		return;
 
 	/*
@@ -638,7 +664,7 @@ gre_compute_route(struct gre_softc *sc)
 	 */
 	if (ro->ro_rt->rt_ifp == &sc->sc_if) {
 		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *) 0;
+		ro->ro_rt = NULL;
 		return;
 	}
 

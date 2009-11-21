@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.36 2009/06/02 17:01:20 blambert Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.37 2009/11/21 14:08:14 claudio Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -77,6 +77,14 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		return EAFNOSUPPORT;
 	}
 
+#ifdef DIAGNOSTIC
+	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.rdomain)) {
+		printf("%s: trying to send packet on wrong domain. "
+		    "if %d vs. mbuf %d, AF %d\n", ifp->if_xname,
+		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.rdomain));
+	}
+#endif
+
 	/* setup dummy tdb.  it highly depends on ipipoutput() code. */
 	bzero(&tdb, sizeof(tdb));
 	bzero(&xfs, sizeof(xfs));
@@ -124,6 +132,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 
 	m = mp;
 
+	m->m_pkthdr.rdomain = sc->gif_rtableid;
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
@@ -156,7 +165,9 @@ in_gif_input(struct mbuf *m, ...)
 	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if (sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
 		    sc->gif_psrc->sa_family != AF_INET ||
-		    sc->gif_pdst->sa_family != AF_INET) {
+		    sc->gif_pdst->sa_family != AF_INET ||
+		    rtable_l2(sc->gif_rtableid) !=
+		    rtable_l2(m->m_pkthdr.rdomain)) {
 			continue;
 		}
 
@@ -164,8 +175,7 @@ in_gif_input(struct mbuf *m, ...)
 			continue;
 
 		if (in_hosteq(satosin(sc->gif_psrc)->sin_addr, ip->ip_dst) &&
-		    in_hosteq(satosin(sc->gif_pdst)->sin_addr, ip->ip_src))
-		{
+		    in_hosteq(satosin(sc->gif_pdst)->sin_addr, ip->ip_src)) {
 			gifp = &sc->gif_if;
 			break;
 		}
@@ -173,6 +183,7 @@ in_gif_input(struct mbuf *m, ...)
 
 	if (gifp) {
 		m->m_pkthdr.rcvif = gifp;
+		m->m_pkthdr.rdomain = gifp->if_rdomain;
 		gifp->if_ipackets++;
 		gifp->if_ibytes += m->m_pkthdr.len;
 		ipip_input(m, off, gifp); /* We have a configured GIF */

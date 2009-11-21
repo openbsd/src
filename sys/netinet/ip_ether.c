@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.51 2007/12/14 18:33:41 deraadt Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.52 2009/11/21 14:08:14 claudio Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -253,6 +253,7 @@ etherip_input(struct mbuf *m, ...)
 	 * bridge_input() returns non-NULL when an error occurs.
 	 */
 	m->m_pkthdr.rcvif = &sc->gif_if;
+	m->m_pkthdr.rdomain = sc->gif_if.if_rdomain;
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		sc->gif_if.if_imcasts++;
 
