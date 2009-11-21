@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.19 2009/11/19 20:16:27 miod Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.20 2009/11/21 23:56:56 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -202,6 +202,10 @@ db_write_bytes(addr, size, data)
 	}
 }
 
+#define	VALID_ADDRESS(va) \
+	(((va) >= VM_MIN_KERNEL_ADDRESS && (va) < VM_MAX_KERNEL_ADDRESS) || \
+	 IS_XKPHYS(va) || ((va) >= CKSEG0_BASE && (va) < CKSSEG_BASE))
+
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;
@@ -219,7 +223,6 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	unsigned instr, mask;
 	InstFmt i;
 	int more, stksize;
-	extern char edata[];
 	extern char k_intr[];
 	extern char k_general[];
 	struct trap_frame *regs = &ddb_regs;
@@ -240,42 +243,23 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 /* Jump here when done with a frame, to start a new one */
 loop:
-
-/* Jump here after a nonstandard (interrupt handler) frame */
+	symname = NULL;
+	ra = 0;
+	subr = 0;
 	stksize = 0;
 
+	if (count-- == 0)
+		goto end;
+
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || (!IS_XKPHYS(sp) && sp < CKSEG0_BASE)) {
+	if (sp & 3 || !VALID_ADDRESS(sp)) {
 		(*pr)("SP %p: not in kernel\n", sp);
-		ra = 0;
-		subr = 0;
 		goto done;
 	}
 
-#if 0
-	/* Backtraces should contine through interrupts from kernel mode */
-	if (pc >= (vaddr_t)MipsKernIntr && pc < (vaddr_t)MipsUserIntr) {
-		(*pr)("MipsKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc - (vaddr_t)MipsKernIntr, a0, a1, a2);
-		regs = (struct trap_frame *)(sp + STAND_ARG_SIZE);
-		a0 = kdbpeek(&regs->a0);
-		a1 = kdbpeek(&regs->a1);
-		a2 = kdbpeek(&regs->a2);
-		a3 = kdbpeek(&regs->a3);
-
-		pc = kdbpeek(&regs->pc); /* exc_pc - pc at time of exception */
-		ra = kdbpeek(&regs->ra); /* ra at time of exception */
-		sp = kdbpeek(&regs->sp);
-		goto specialframe;
-	}
-#endif
-
-
 	/* check for bad PC */
-	if (pc & 3 || (!IS_XKPHYS(pc) && pc < CKSEG0_BASE) ||
-	    pc >= (vaddr_t)edata) {
+	if (pc & 3 || !VALID_ADDRESS(pc)) {
 		(*pr)("PC %p: not in kernel\n", pc);
-		ra = 0;
 		goto done;
 	}
 
@@ -418,6 +402,7 @@ done:
 		goto loop;
 	}
 
+end:
 	if (ra) {
 		if (pc == ra && stksize == 0)
 			(*pr)("stacktrace: loop!\n");
@@ -434,6 +419,8 @@ done:
 			(*pr)("User-level: curproc NULL\n");
 	}
 }
+
+#undef	VALID_ADDRESS
 
 /*
  *	To do a single step ddb needs to know the next address
