@@ -1,4 +1,4 @@
-/*	$OpenBSD: fread.c,v 1.10 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: fread.c,v 1.11 2009/11/21 09:53:44 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,6 +49,7 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 	if ((resid = count * size) == 0)
 		return (0);
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 	if (fp->_r < 0)
 		fp->_r = 0;
 	total = resid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: putw.c,v 1.9 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: putw.c,v 1.10 2009/11/21 09:53:44 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,6 +47,7 @@ putw(int w, FILE *fp)
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 	ret = __sfvwrite(fp, &uio);
 	FUNLOCKFILE(fp);
 	return (ret);

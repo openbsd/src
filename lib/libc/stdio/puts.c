@@ -1,4 +1,4 @@
-/*	$OpenBSD: puts.c,v 1.10 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: puts.c,v 1.11 2009/11/21 09:53:44 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,6 +55,7 @@ puts(const char *s)
 	uio.uio_iov = &iov[0];
 	uio.uio_iovcnt = 2;
 	FLOCKFILE(stdout);
+	_SET_ORIENTATION(stdout, -1);
 	ret = __sfvwrite(stdout, &uio);
 	FUNLOCKFILE(stdout);
 	return (ret ? EOF : '\n');

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetln.c,v 1.10 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: fgetln.c,v 1.11 2009/11/21 09:53:44 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -76,6 +76,7 @@ fgetln(FILE *fp, size_t *lenp)
 	size_t off;
 
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 
 	/* make sure there is input */
 	if (fp->_r <= 0 && __srefill(fp))

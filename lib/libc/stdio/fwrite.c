@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwrite.c,v 1.9 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: fwrite.c,v 1.10 2009/11/21 09:53:44 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -64,6 +64,7 @@ fwrite(const void *buf, size_t size, size_t count, FILE *fp)
 	 * generally slow and since this occurs whenever size==0.
 	 */
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 	ret = __sfvwrite(fp, &uio);
 	FUNLOCKFILE(fp);
 	if (ret == 0)
