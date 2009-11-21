@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.9 2009/09/01 13:46:14 claudio Exp $ */
+/*	$OpenBSD: filter.c,v 1.10 2009/11/21 13:59:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -236,7 +236,10 @@ prepare_rule(u_int32_t id, int rs_num, struct sockaddr *src,
 	 *     from $src to $dst port = $d_port flags S/SA keep state
 	 *     (max 1) [queue qname] [tag tagname]
 	 */
-	pfr.rule.action = PF_PASS;
+	if (tagname != NULL)
+		pfr.rule.action = PF_MATCH;
+	else
+		pfr.rule.action = PF_PASS;
 	pfr.rule.quick = 1;
 	pfr.rule.log = rule_log;
 	pfr.rule.keep_state = 1;

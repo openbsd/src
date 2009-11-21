@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.13 2009/09/07 09:41:02 jmc Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.14 2009/11/21 13:59:31 claudio Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 7 2009 $
+.Dd $Mdocdate: November 21 2009 $
 .Dt FTP-PROXY 8
 .Os
 .Sh NAME
@@ -136,7 +136,7 @@ on this RFC property.
 .It Fl T Ar tag
 The filter rules will add tag
 .Ar tag
-to data connections, and not match quick.
+to data connections, and will use match rules instead of pass ones.
 This way alternative rules that use the
 .Ar tagged
 keyword can be implemented following the
@@ -147,6 +147,9 @@ These rules can use special
 features like route-to, reply-to, label, rtable, overload, etc. that
 .Nm
 does not implement itself.
+There must be a matching pass rule after the
+.Nm
+anchor or the data connections will be blocked.
 .It Fl t Ar timeout
 Number of seconds that the control connection can be idle, before the
 proxy will disconnect.
