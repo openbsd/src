@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.75 2009/11/21 10:24:13 deraadt Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.76 2009/11/21 14:21:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -66,25 +66,27 @@ sigint(int s)
 void
 opt_ch(struct aparams *par)
 {
-	if (sscanf(optarg, "%u:%u", &par->cmin, &par->cmax) != 2 ||
-	    par->cmax < par->cmin || par->cmax > NCHAN_MAX - 1)
-		errx(1, "%s: bad channel range", optarg);
-}
+	char *next, *end;
+	long cmin, cmax;
 
-void
-opt_rate(struct aparams *par)
-{
-	if (sscanf(optarg, "%u", &par->rate) != 1 ||
-	    par->rate < RATE_MIN || par->rate > RATE_MAX)
-		errx(1, "%s: bad sample rate", optarg);
-}
-
-void
-opt_vol(unsigned *vol)
-{
-	if (sscanf(optarg, "%u", vol) != 1 ||
-	    *vol > MIDI_MAXCTL)
-		errx(1, "%s: bad volume", optarg);
+	errno = 0;
+	cmin = strtol(optarg, &next, 10);
+	if (next == optarg || *next != ':')
+		goto failed;
+	if (errno == ERANGE && (cmin == LONG_MIN || cmin == LONG_MAX))
+		goto failed;
+	cmax = strtol(++next, &end, 10);
+	if (end == next || *end != '\0')
+		goto failed;
+	if (errno == ERANGE && (cmax == LONG_MIN || cmax == LONG_MAX))
+		goto failed;
+	if (cmin < 0 || cmax < cmin || cmax > NCHAN_MAX)
+		goto failed;
+	par->cmin = cmin;
+	par->cmax = cmax;
+	return;
+failed:
+	errx(1, "%s: bad channel range", optarg);
 }
 
 void
@@ -373,6 +375,7 @@ aucat_main(int argc, char **argv)
 	char base[PATH_MAX], path[PATH_MAX];
 	unsigned bufsz, round, mode;
 	char *devpath;
+	const char *str;
 	unsigned volctl;
 	int mmc;
 
@@ -426,11 +429,15 @@ aucat_main(int argc, char **argv)
 			aparams_copyenc(&opar, &ipar);
 			break;
 		case 'r':
-			opt_rate(&ipar);
+			ipar.rate = strtonum(optarg, RATE_MIN, RATE_MAX, &str);
+			if (str)
+				errx(1, "%s: rate is %s", optarg, str);
 			opar.rate = ipar.rate;
 			break;
 		case 'v':
-			opt_vol(&volctl);
+			volctl = strtonum(optarg, 0, MIDI_MAXCTL, &str);
+			if (str)
+				errx(1, "%s: volume is %s", optarg, str);
 			break;
 		case 'i':
 			farg_add(&ifiles, &ipar, &opar, volctl,
@@ -458,24 +465,20 @@ aucat_main(int argc, char **argv)
 			u_flag = 1;
 			break;
 		case 'b':
-			if (sscanf(optarg, "%u", &bufsz) != 1 || bufsz == 0) {
-				fprintf(stderr, "%s: bad buf size\n", optarg);
-				exit(1);
-			}
+			bufsz = strtonum(optarg, 1, RATE_MAX * 5, &str);
+			if (str)
+				errx(1, "%s: buffer size is %s", optarg, str);
 			break;
 		case 'U':
-			if (sscanf(optarg, "%u", &unit) != 1) {
-				fprintf(stderr, "%s: bad device number\n", optarg);
-				exit(1);
-			}
+			unit = strtonum(optarg, 0, MIDI_MAXCTL, &str);
+			if (str)
+				errx(1, "%s: device number is %s", optarg, str);
 			break;
 		case 'z':
-			if (sscanf(optarg, "%u", &round) != 1 || round == 0) {
-				fprintf(stderr, "%s: bad block size\n", optarg);
-				exit(1);
-			}
+			round = strtonum(optarg, 1, SHRT_MAX, &str);
+			if (str)
+				errx(1, "%s: block size is %s", optarg, str);
 			break;
-			
 		default:
 			aucat_usage();
 			exit(1);
@@ -679,6 +682,7 @@ midicat_main(int argc, char **argv)
 	struct file *stdx;
 	struct aproc *p;
 	struct abuf *buf;
+	const char *str;
 
 	d_flag = 0;
 	l_flag = 0;
@@ -708,10 +712,9 @@ midicat_main(int argc, char **argv)
 			l_flag = 1;
 			break;
 		case 'U':
-			if (sscanf(optarg, "%u", &unit) != 1) {
-				fprintf(stderr, "%s: bad device number\n", optarg);
-				exit(1);
-			}
+			unit = strtonum(optarg, 0, MIDI_MAXCTL, &str);
+			if (str)
+				errx(1, "%s: device number is %s", optarg, str);
 			break;
 		default:
 			midicat_usage();
