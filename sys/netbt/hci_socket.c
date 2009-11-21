@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_socket.c,v 1.7 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: hci_socket.c,v 1.8 2009/11/21 13:05:32 guenther Exp $	*/
 /*	$NetBSD: hci_socket.c,v 1.17 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -755,10 +755,11 @@ hci_ctloutput(int req, struct socket *so, int level,
 	if (pcb == NULL)
 		return EINVAL;
 
-	if (level != BTPROTO_HCI)
-		return ENOPROTOOPT;
-
-	switch(req) {
+	if (level != BTPROTO_HCI) {
+		err = EINVAL;
+		if (req == PRCO_SETOPT && *opt)
+			m_free(*opt);
+	} else switch(req) {
 	case PRCO_GETOPT:
 		m = m_get(M_WAIT, MT_SOOPTS);
 		switch (optname) {
@@ -793,20 +794,36 @@ hci_ctloutput(int req, struct socket *so, int level,
 		m = *opt;
 		if (m) switch (optname) {
 		case SO_HCI_EVT_FILTER:	/* set event filter */
-			m->m_len = min(m->m_len, sizeof(struct hci_filter));
-			memcpy(&pcb->hp_efilter, mtod(m, void *), m->m_len);
+			if (m == NULL || m->m_len > sizeof(struct hci_filter))
+				err = EINVAL;
+			else {
+				memcpy(&pcb->hp_efilter, mtod(m, void *),
+				    m->m_len);
+				memset((char *)&pcb->hp_efilter + m->m_len,
+				    0, sizeof(struct hci_filter) - m->m_len);
+			}
 			break;
 
 		case SO_HCI_PKT_FILTER:	/* set packet filter */
-			m->m_len = min(m->m_len, sizeof(struct hci_filter));
-			memcpy(&pcb->hp_pfilter, mtod(m, void *), m->m_len);
+			if (m == NULL || m->m_len > sizeof(struct hci_filter))
+				err = EINVAL;
+			else {
+				memcpy(&pcb->hp_pfilter, mtod(m, void *),
+				    m->m_len);
+				memset((char *)&pcb->hp_pfilter + m->m_len,
+				    0, sizeof(struct hci_filter) - m->m_len);
+			}
 			break;
 
 		case SO_HCI_DIRECTION:	/* request direction ctl messages */
-			if (*mtod(m, int *))
-				pcb->hp_flags |= HCI_DIRECTION;
-			else
-				pcb->hp_flags &= ~HCI_DIRECTION;
+			if (m == NULL || m->m_len != sizeof(int))
+				err = EINVAL;
+			else {
+				if (*mtod(m, int *))
+					pcb->hp_flags |= HCI_DIRECTION;
+				else
+					pcb->hp_flags &= ~HCI_DIRECTION;
+			}
 			break;
 
 		default:

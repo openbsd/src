@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfcomm_socket.c,v 1.4 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: rfcomm_socket.c,v 1.5 2009/11/21 13:05:32 guenther Exp $	*/
 /*	$NetBSD: rfcomm_socket.c,v 1.10 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -277,10 +277,11 @@ rfcomm_ctloutput(int req, struct socket *so, int level,
 	if (pcb == NULL)
 		return EINVAL;
 
-	if (level != BTPROTO_RFCOMM)
-		return ENOPROTOOPT;
-
-	switch(req) {
+	if (level != BTPROTO_RFCOMM) {
+		err = EINVAL;
+		if (req == PRCO_SETOPT && *opt)
+			m_free(*opt);
+	} else switch(req) {
 	case PRCO_GETOPT:
 		m = m_get(M_WAIT, MT_SOOPTS);
 		m->m_len = rfcomm_getopt(pcb, optname, mtod(m, void *));
@@ -294,8 +295,7 @@ rfcomm_ctloutput(int req, struct socket *so, int level,
 
 	case PRCO_SETOPT:
 		m = *opt;
-		KASSERT(m != NULL);
-		err = rfcomm_setopt(pcb, optname, mtod(m, void *));
+		err = rfcomm_setopt(pcb, optname, m);
 		m_freem(m);
 		break;
 

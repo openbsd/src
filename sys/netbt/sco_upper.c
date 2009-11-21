@@ -1,4 +1,4 @@
-/*	$OpenBSD: sco_upper.c,v 1.3 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: sco_upper.c,v 1.4 2009/11/21 13:05:32 guenther Exp $	*/
 /*	$NetBSD: sco_upper.c,v 1.8 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -310,12 +310,12 @@ sco_send(struct sco_pcb *pcb, struct mbuf *m)
 }
 
 /*
- * sco_setopt(pcb, option, addr)
+ * sco_setopt(pcb, option, m)
  *
  *	Set SCO pcb options
  */
 int
-sco_setopt(struct sco_pcb *pcb, int opt, void *addr)
+sco_setopt(struct sco_pcb *pcb, int opt, struct mbuf *m)
 {
 	int err = 0;
 

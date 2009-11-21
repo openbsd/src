@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_upper.c,v 1.3 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: l2cap_upper.c,v 1.4 2009/11/21 13:05:32 guenther Exp $	*/
 /*	$NetBSD: l2cap_upper.c,v 1.9 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -403,6 +403,26 @@ l2cap_send(struct l2cap_channel *chan, struct mbuf *m)
 	return 0;
 }
 
+int
+l2cap_setlinkmode(struct l2cap_channel *chan, int mode)
+{
+	int err = 0;
+
+	mode &= (L2CAP_LM_SECURE | L2CAP_LM_ENCRYPT | L2CAP_LM_AUTH);
+
+	if (mode & L2CAP_LM_SECURE)
+		mode |= L2CAP_LM_ENCRYPT;
+
+	if (mode & L2CAP_LM_ENCRYPT)
+		mode |= L2CAP_LM_AUTH;
+
+	chan->lc_mode = mode;
+
+	if (chan->lc_state == L2CAP_OPEN)
+		err = l2cap_setmode(chan);
+	return (err);
+}
+
 /*
  * l2cap_setopt(l2cap_channel, opt, addr)
  *
@@ -417,37 +437,33 @@ l2cap_send(struct l2cap_channel *chan, struct mbuf *m)
  *	will be made when the change is complete.
  */
 int
-l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
+l2cap_setopt(struct l2cap_channel *chan, int opt, struct mbuf *m)
 {
-	int mode, err = 0;
+	int err = 0;
 	uint16_t mtu;
 
 	switch (opt) {
 	case SO_L2CAP_IMTU:	/* set Incoming MTU */
-		mtu = *(uint16_t *)addr;
-		if (mtu < L2CAP_MTU_MINIMUM)
+		if (m == NULL || m->m_len != sizeof(uint16_t))
 			err = EINVAL;
-		else if (chan->lc_state == L2CAP_CLOSED)
-			chan->lc_imtu = mtu;
-		else
-			err = EBUSY;
+		else {
+			mtu = *mtod(m, uint16_t *);
+			if (mtu < L2CAP_MTU_MINIMUM)
+				err = EINVAL;
+			else if (chan->lc_state == L2CAP_CLOSED)
+				chan->lc_imtu = mtu;
+			else
+				err = EBUSY;
+		}
 
 		break;
 
 	case SO_L2CAP_LM:	/* set link mode */
-		mode = *(int *)addr;
-		mode &= (L2CAP_LM_SECURE | L2CAP_LM_ENCRYPT | L2CAP_LM_AUTH);
-
-		if (mode & L2CAP_LM_SECURE)
-			mode |= L2CAP_LM_ENCRYPT;
-
-		if (mode & L2CAP_LM_ENCRYPT)
-			mode |= L2CAP_LM_AUTH;
-
-		chan->lc_mode = mode;
-
-		if (chan->lc_state == L2CAP_OPEN)
-			err = l2cap_setmode(chan);
+		if (m == NULL || m->m_len != sizeof(int))
+			err = EINVAL;
+		else {
+			err = l2cap_setlinkmode(chan, *mtod(m, int *));
+		}
 
 		break;
 

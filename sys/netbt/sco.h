@@ -1,4 +1,4 @@
-/*	$OpenBSD: sco.h,v 1.4 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: sco.h,v 1.5 2009/11/21 13:05:32 guenther Exp $	*/
 /*	$NetBSD: sco.h,v 1.3 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ int sco_disconnect(struct sco_pcb *, int);
 int sco_detach(struct sco_pcb **);
 int sco_listen(struct sco_pcb *);
 int sco_send(struct sco_pcb *, struct mbuf *);
-int sco_setopt(struct sco_pcb *, int, void *);
+int sco_setopt(struct sco_pcb *, int, struct mbuf *);
 int sco_getopt(struct sco_pcb *, int, void *);
 
 #endif	/* _KERNEL */

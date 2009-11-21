@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfcomm_upper.c,v 1.6 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: rfcomm_upper.c,v 1.7 2009/11/21 13:05:32 guenther Exp $	*/
 /*	$NetBSD: rfcomm_upper.c,v 1.11 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -429,42 +429,51 @@ rfcomm_rcvd(struct rfcomm_dlc *dlc, size_t space)
 }
 
 /*
- * rfcomm_setopt(dlc, option, addr)
+ * rfcomm_setopt(dlc, option, m)
  *
  * set DLC options
  */
 int
-rfcomm_setopt(struct rfcomm_dlc *dlc, int opt, void *addr)
+rfcomm_setopt(struct rfcomm_dlc *dlc, int opt, struct mbuf *m)
 {
 	int mode, err = 0;
 	uint16_t mtu;
 
 	switch (opt) {
 	case SO_RFCOMM_MTU:
-		mtu = *(uint16_t *)addr;
-		if (mtu < RFCOMM_MTU_MIN || mtu > RFCOMM_MTU_MAX)
+		if (m == NULL || m->m_len != sizeof(uint16_t))
 			err = EINVAL;
-		else if (dlc->rd_state == RFCOMM_DLC_CLOSED)
-			dlc->rd_mtu = mtu;
-		else
-			err = EBUSY;
+		else {
+			mtu = *mtod(m, uint16_t *);
+			if (mtu < RFCOMM_MTU_MIN || mtu > RFCOMM_MTU_MAX)
+				err = EINVAL;
+			else if (dlc->rd_state == RFCOMM_DLC_CLOSED)
+				dlc->rd_mtu = mtu;
+			else
+				err = EBUSY;
+		}
 
 		break;
 
 	case SO_RFCOMM_LM:
-		mode = *(int *)addr;
-		mode &= (RFCOMM_LM_SECURE | RFCOMM_LM_ENCRYPT | RFCOMM_LM_AUTH);
+		if (m == NULL || m->m_len != sizeof(int))
+			err = EINVAL;
+		else {
+			mode = *mtod(m, int *);
+			mode &= (RFCOMM_LM_SECURE | RFCOMM_LM_ENCRYPT |
+			    RFCOMM_LM_AUTH);
 
-		if (mode & RFCOMM_LM_SECURE)
-			mode |= RFCOMM_LM_ENCRYPT;
+			if (mode & RFCOMM_LM_SECURE)
+				mode |= RFCOMM_LM_ENCRYPT;
 
-		if (mode & RFCOMM_LM_ENCRYPT)
-			mode |= RFCOMM_LM_AUTH;
+			if (mode & RFCOMM_LM_ENCRYPT)
+				mode |= RFCOMM_LM_AUTH;
 
-		dlc->rd_mode = mode;
+			dlc->rd_mode = mode;
 
-		if (dlc->rd_state == RFCOMM_DLC_OPEN)
-			err = rfcomm_dlc_setmode(dlc);
+			if (dlc->rd_state == RFCOMM_DLC_OPEN)
+				err = rfcomm_dlc_setmode(dlc);
+		}
 
 		break;
 

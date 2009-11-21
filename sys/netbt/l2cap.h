@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap.h,v 1.7 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: l2cap.h,v 1.8 2009/11/21 13:05:32 guenther Exp $	*/
 /*	$NetBSD: l2cap.h,v 1.8 2008/09/08 23:36:55 gmcgarry Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.7 2008/11/22 04:42:58 uwe Exp $
+ * $Id: l2cap.h,v 1.8 2009/11/21 13:05:32 guenther Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -481,7 +481,8 @@ int l2cap_disconnect(struct l2cap_channel *, int);
 int l2cap_detach(struct l2cap_channel **);
 int l2cap_listen(struct l2cap_channel *);
 int l2cap_send(struct l2cap_channel *, struct mbuf *);
-int l2cap_setopt(struct l2cap_channel *, int, void *);
+int l2cap_setlinkmode(struct l2cap_channel *, int);
+int l2cap_setopt(struct l2cap_channel *, int, struct mbuf *);
 int l2cap_getopt(struct l2cap_channel *, int, void *);
 
 #endif	/* _KERNEL */

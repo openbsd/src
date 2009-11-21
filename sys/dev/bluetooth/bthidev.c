@@ -1,4 +1,4 @@
-/*	$OpenBSD: bthidev.c,v 1.5 2008/11/24 08:49:22 uwe Exp $	*/
+/*	$OpenBSD: bthidev.c,v 1.6 2009/11/21 13:05:32 guenther Exp $	*/
 /*	$NetBSD: bthidev.c,v 1.16 2008/08/06 15:01:23 plunky Exp $	*/
 
 /*-
@@ -451,7 +451,7 @@ bthidev_listen(struct bthidev_softc *sc)
 	if (err)
 		return err;
 
-	err = l2cap_setopt(sc->sc_ctl_l, SO_L2CAP_LM, &sc->sc_mode);
+	err = l2cap_setlinkmode(sc->sc_ctl_l, sc->sc_mode);
 	if (err)
 		return err;
 
@@ -471,7 +471,7 @@ bthidev_listen(struct bthidev_softc *sc)
 	if (err)
 		return err;
 
-	err = l2cap_setopt(sc->sc_int_l, SO_L2CAP_LM, &sc->sc_mode);
+	err = l2cap_setlinkmode(sc->sc_int_l, sc->sc_mode);
 	if (err)
 		return err;
 
@@ -512,7 +512,7 @@ bthidev_connect(struct bthidev_softc *sc)
 		return err;
 	}
 
-	err = l2cap_setopt(sc->sc_ctl, SO_L2CAP_LM, &sc->sc_mode);
+	err = l2cap_setlinkmode(sc->sc_ctl, sc->sc_mode);
 	if (err)
 		return err;
 
@@ -570,7 +570,7 @@ bthidev_ctl_connected(void *arg)
 		if (err)
 			goto fail;
 
-		err = l2cap_setopt(sc->sc_int, SO_L2CAP_LM, &sc->sc_mode);
+		err = l2cap_setlinkmode(sc->sc_int, sc->sc_mode);
 		if (err)
 			goto fail;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_socket.c,v 1.3 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: l2cap_socket.c,v 1.4 2009/11/21 13:05:32 guenther Exp $	*/
 /*	$NetBSD: l2cap_socket.c,v 1.9 2008/08/06 15:01:24 plunky Exp $	*/
 
 /*-
@@ -278,10 +278,11 @@ l2cap_ctloutput(int req, struct socket *so, int level,
 	if (pcb == NULL)
 		return EINVAL;
 
-	if (level != BTPROTO_L2CAP)
-		return ENOPROTOOPT;
-
-	switch(req) {
+	if (level != BTPROTO_L2CAP) {
+		err = EINVAL;
+		if (req == PRCO_SETOPT && *opt)
+			m_free(*opt);
+	} else switch(req) {
 	case PRCO_GETOPT:
 		m = m_get(M_WAIT, MT_SOOPTS);
 		m->m_len = l2cap_getopt(pcb, optname, mtod(m, void *));
@@ -295,8 +296,7 @@ l2cap_ctloutput(int req, struct socket *so, int level,
 
 	case PRCO_SETOPT:
 		m = *opt;
-		KASSERT(m != NULL);
-		err = l2cap_setopt(pcb, optname, mtod(m, void *));
+		err = l2cap_setopt(pcb, optname, m);
 		m_freem(m);
 		break;
 
