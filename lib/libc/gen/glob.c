@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.28 2009/02/18 15:50:27 millert Exp $ */
+/*	$OpenBSD: glob.c,v 1.29 2009/11/21 16:42:05 chl Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -714,8 +714,7 @@ globextend(const Char *path, glob_t *pglob, size_t *limitp)
 	const Char *p;
 
 	newsize = sizeof(*pathv) * (2 + pglob->gl_pathc + pglob->gl_offs);
-	pathv = pglob->gl_pathv ? realloc((char *)pglob->gl_pathv, newsize) :
-	    malloc(newsize);
+	pathv = realloc((char *)pglob->gl_pathv, newsize);
 	if (pathv == NULL) {
 		if (pglob->gl_pathv) {
 			free(pglob->gl_pathv);
