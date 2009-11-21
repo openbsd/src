@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.37 2009/11/02 22:31:50 sobrado Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.38 2009/11/21 18:09:31 damien Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -547,7 +547,10 @@ ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 
 	imr->ifm_status = IFM_AVALID;
 	imr->ifm_active = IFM_IEEE80211;
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    (ic->ic_opmode != IEEE80211_M_STA ||
+	     !(ic->ic_flags & IEEE80211_F_RSNON) ||
+	     ic->ic_bss->ni_port_valid))
 		imr->ifm_status |= IFM_ACTIVE;
 	imr->ifm_active |= IFM_AUTO;
 	switch (ic->ic_opmode) {

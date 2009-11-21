@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.38 2009/01/28 18:55:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.39 2009/11/21 18:09:31 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ extern	void ieee80211_proto_detach(struct ifnet *);
 struct ieee80211_node;
 struct ieee80211_rxinfo;
 struct ieee80211_rsnparams;
+extern	void ieee80211_set_link_state(struct ieee80211com *, int);
 extern	u_int ieee80211_get_hdrlen(const struct ieee80211_frame *);
 extern	void ieee80211_input(struct ifnet *, struct mbuf *,
 		struct ieee80211_node *, struct ieee80211_rxinfo *);
