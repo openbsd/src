@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.17 2009/11/19 06:06:51 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.18 2009/11/21 19:39:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -126,7 +126,8 @@ ip30_setup()
 			if (end <= start)
 				continue;
 
-			memrange_register(start, count, 0, VM_FREELIST_DEFAULT);
+			memrange_register(atop(start), atop(count),
+			    0, VM_FREELIST_DEFAULT);
 		}
 	}
 
