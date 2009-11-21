@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2009/11/19 20:16:27 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2009/11/21 23:28:15 syuu Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -172,7 +172,9 @@ ast()
 
 	p->p_md.md_astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
+		KERNEL_PROC_LOCK(p);
 		ADDUPROF(p);
+		KERNEL_PROC_UNLOCK(p);
 	}
 	if (ci->ci_want_resched)
 		preempt(NULL);
@@ -293,7 +295,9 @@ trap(trapframe)
 			va = trunc_page((vaddr_t)trapframe->badvaddr);
 			onfault = p->p_addr->u_pcb.pcb_onfault;
 			p->p_addr->u_pcb.pcb_onfault = 0;
+			KERNEL_LOCK();
 			rv = uvm_fault(kernel_map, trunc_page(va), 0, ftype);
+			KERNEL_UNLOCK();
 			p->p_addr->u_pcb.pcb_onfault = onfault;
 			if (rv == 0)
 				return;
@@ -349,6 +353,11 @@ fault_common:
 
 		onfault = p->p_addr->u_pcb.pcb_onfault;
 		p->p_addr->u_pcb.pcb_onfault = 0;
+		if (USERMODE(trapframe->sr))
+			KERNEL_PROC_LOCK(p);
+		else
+			KERNEL_LOCK();
+
 		rv = uvm_fault(map, trunc_page(va), 0, ftype);
 		p->p_addr->u_pcb.pcb_onfault = onfault;
 
@@ -365,6 +374,10 @@ fault_common:
 			else if (rv == EACCES)
 				rv = EFAULT;
 		}
+		if (USERMODE(trapframe->sr))
+			KERNEL_PROC_UNLOCK(p);
+		else
+			KERNEL_UNLOCK();
 		if (rv == 0) {
 			if (!USERMODE(trapframe->sr))
 				return;
@@ -500,11 +513,16 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			}
 		}
 #ifdef SYSCALL_DEBUG
+		KERNEL_PROC_LOCK(p);
 		scdebug_call(p, code, args.i);
+		KERNEL_PROC_UNLOCK(p);
 #endif
 #ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
+		if (KTRPOINT(p, KTR_SYSCALL)) {
+			KERNEL_PROC_LOCK(p);
 			ktrsyscall(p, code, callp->sy_argsize, args.i);
+			KERNEL_PROC_UNLOCK(p);
+		}
 #endif
 		rval[0] = 0;
 		rval[1] = locr0->v1;
@@ -514,13 +532,22 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		else
 			trp[-1].code = code;
 #endif
-#if NSYSTRACE > 0
-		if (ISSET(p->p_flag, P_SYSTRACE))
-			i = systrace_redirect(code, p, args.i, rval);
-		else
-#endif
-			i = (*callp->sy_call)(p, &args, rval);
 
+#if NSYSTRACE > 0
+		if (ISSET(p->p_flag, P_SYSTRACE)) {
+			KERNEL_PROC_LOCK(p);
+			i = systrace_redirect(code, p, args.i, rval);
+			KERNEL_PROC_UNLOCK(p);
+		} else
+#endif
+		{
+			int nolock = (callp->sy_flags & SY_NOLOCK);
+			if(!nolock)
+				KERNEL_PROC_LOCK(p);
+			i = (*callp->sy_call)(p, &args, rval);
+			if(!nolock)
+				KERNEL_PROC_UNLOCK(p);
+		}
 		switch (i) {
 		case 0:
 			locr0->v0 = rval[0];
@@ -542,11 +569,16 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		if (code == SYS_ptrace)
 			Mips_SyncCache();
 #ifdef SYSCALL_DEBUG
+		KERNEL_PROC_LOCK(p);
 		scdebug_ret(p, code, i, rval);
+		KERNEL_PROC_UNLOCK(p);
 #endif
 #ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSRET))
+		if (KTRPOINT(p, KTR_SYSRET)) {
+			KERNEL_PROC_LOCK(p);
 			ktrsysret(p, code, i, rval[0]);
+			KERNEL_PROC_UNLOCK(p);
+		}
 #endif
 		goto out;
 	    }
@@ -769,7 +801,9 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 	p->p_md.md_regs->cause = trapframe->cause;
 	p->p_md.md_regs->badvaddr = trapframe->badvaddr;
 	sv.sival_ptr = (void *)trapframe->badvaddr;
+	KERNEL_PROC_LOCK(p);
 	trapsignal(p, i, ucode, typ, sv);
+	KERNEL_PROC_UNLOCK(p);
 out:
 	/*
 	 * Note: we should only get here if returning to user mode.
@@ -789,12 +823,17 @@ child_return(arg)
 	trapframe->v1 = 1;
 	trapframe->a3 = 0;
 
+	KERNEL_PROC_UNLOCK(p);
+
 	userret(p);
 
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p,
 		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 

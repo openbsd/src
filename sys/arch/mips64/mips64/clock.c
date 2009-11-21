@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.26 2009/10/26 20:14:40 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.27 2009/11/21 23:28:14 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -161,12 +161,15 @@ clock_int5(uint32_t mask, struct trap_frame *tf)
 	/*
 	 * Process clock interrupt unless it is currently masked.
 	 */
-	if (tf->ipl < IPL_CLOCK)
+	if (tf->ipl < IPL_CLOCK) {
+		KERNEL_LOCK();
 		while (pendingticks) {
 			clk_count.ec_count++;
 			hardclock(tf);
 			pendingticks--;
 		}
+		KERNEL_UNLOCK();
+	}
 
 	return CR_INT_5;	/* Clock is always on 5 */
 }
