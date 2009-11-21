@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.11 2009/11/19 19:19:59 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.12 2009/11/21 15:17:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -64,7 +64,7 @@
 #include <dev/ic/athnvar.h>
 
 #ifdef ATHN_DEBUG
-int athn_debug = 1;
+int athn_debug = 0;
 #endif
 
 void		athn_radiotap_attach(struct athn_softc *);
