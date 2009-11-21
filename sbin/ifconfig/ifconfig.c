@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.220 2009/06/19 14:05:32 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.221 2009/11/21 14:09:41 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -171,6 +171,7 @@ void	setatrange(const char *, int);
 void	setatphase(const char *, int);
 void	settunnel(const char *, const char *);
 void	deletetunnel(const char *, int);
+void	settunnelinst(const char *, int);
 #ifdef INET6
 void	setia6flags(const char *, int);
 void	setia6pltime(const char *, int);
@@ -368,6 +369,7 @@ const struct	cmd {
 	{ "giftunnel",  NEXTARG2,	0,		NULL, settunnel } ,
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel } ,
 	{ "deletetunnel",  0,		0,		deletetunnel } ,
+	{ "tunneldomain", NEXTARG,	0,		settunnelinst } ,
 	{ "pppoedev",	NEXTARG,	0,		setpppoe_dev },
 	{ "pppoesvc",	NEXTARG,	0,		setpppoe_svc },
 	{ "-pppoesvc",	1,		0,		setpppoe_svc },
@@ -2601,8 +2603,13 @@ phys_status(int force)
 	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag) != 0)
 		strlcpy(pdstaddr, "<error>", sizeof(pdstaddr));
 
-	printf("\tphysical address inet%s %s --> %s\n", ver,
+	printf("\tphysical address inet%s %s --> %s", ver,
 	    psrcaddr, pdstaddr);
+
+	if (ioctl(s, SIOCGLIFPHYRTABLEID, (caddr_t)&ifr) == 0 &&
+	    (rdomainid != 0 || ifr.ifr_rdomainid != 0))
+		printf(" rdomain %d", ifr.ifr_rdomainid);
+	printf("\n");
 }
 
 const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
@@ -3010,6 +3017,22 @@ deletetunnel(const char *ignored, int alsoignored)
 {
 	if (ioctl(s, SIOCDIFPHYADDR, &ifr) < 0)
 		warn("SIOCDIFPHYADDR");
+}
+
+void
+settunnelinst(const char *id, int param)
+{
+	const char *errmsg = NULL;
+	int rdomainid;
+
+	rdomainid = strtonum(id, 0, 128, &errmsg);
+	if (errmsg)
+		errx(1, "rdomain %s: %s", id, errmsg);
+
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_rdomainid = rdomainid;
+	if (ioctl(s, SIOCSLIFPHYRTABLEID, (caddr_t)&ifr) < 0)
+		warn("SIOCSLIFPHYRTABLEID");
 }
 
 void
