@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.41 2009/11/12 18:00:18 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.42 2009/11/21 10:24:59 chl Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -446,7 +446,6 @@ __has_yppw(void)
 {
 	DBT key, data, pkey, pdata;
 	char bf[2];
-	int len;
 
 	key.data = (u_char *)_PW_YPTOKEN;
 	key.size = strlen(_PW_YPTOKEN);
