@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog_r.c,v 1.1 2009/11/18 07:43:22 guenther Exp $ */
+/*	$OpenBSD: syslog_r.c,v 1.2 2009/11/21 10:23:31 chl Exp $ */
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -89,7 +89,6 @@ __vsyslog_r(int pri, struct syslog_data *data,
 {
 	int cnt;
 	char ch, *p, *t;
-	time_t now;
 	int fd, saved_errno, error;
 #define	TBUF_LEN	2048
 #define	FMT_LEN		1024
