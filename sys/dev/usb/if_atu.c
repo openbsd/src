@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.93 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.94 2009/11/21 14:18:34 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1496,15 +1496,16 @@ atu_detach(struct device *self, int flags)
 
 	if (sc->sc_state != ATU_S_UNCONFIG) {
 		atu_stop(ifp, 1);
-		ieee80211_ifdetach(ifp);
-		if_detach(ifp);
+
+		usb_rem_task(sc->atu_udev, &sc->sc_task);
 
 		if (sc->atu_ep[ATU_ENDPT_TX] != NULL)
 			usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
 		if (sc->atu_ep[ATU_ENDPT_RX] != NULL)
 			usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
 
-		usb_rem_task(sc->atu_udev, &sc->sc_task);
+		ieee80211_ifdetach(ifp);
+		if_detach(ifp);
 	}
 
 	return(0);
