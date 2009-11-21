@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.187 2009/11/21 14:09:40 claudio Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.188 2009/11/21 15:36:49 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -1147,12 +1147,14 @@ Packets routed to this interface will be encapsulated in
 IPv4 or IPv6, depending on the source and destination address families.
 Both addresses must be of the same family.
 .It Cm tunneldomain Ar route-id
-Use specified routing table id to use instead of the default table. 
+Use routing table
+.Ar route-id
+instead of the default table.
 The tunnel does not need to terminate in the same routing domain as the
 interface itself.
 .Ar route-id
-can be set to any valid routing table id, the corresponding routing domain
-is derived from this table.
+can be set to any valid routing table ID;
+the corresponding routing domain is derived from this table.
 .El
 .\" VLAN
 .Sh VLAN
