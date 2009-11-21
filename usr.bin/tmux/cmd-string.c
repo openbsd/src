@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.9 2009/11/16 11:15:44 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.10 2009/11/21 17:52:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -332,7 +332,7 @@ cmd_string_expand_tilde(const char *s, size_t *p)
 
 	home = NULL;
 	if (cmd_string_getc(s, p) == '/') {
-		if ((home = getenv("HOME")) == NULL) {
+		if ((home = getenv("HOME")) == NULL || *home == '\0') {
 			if ((pw = getpwuid(getuid())) != NULL)
 				home = pw->pw_dir;
 		}

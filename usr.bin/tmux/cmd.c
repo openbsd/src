@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.32 2009/11/18 13:16:33 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.33 2009/11/21 17:52:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -278,9 +278,8 @@ cmd_free(struct cmd *cmd)
 size_t
 cmd_print(struct cmd *cmd, char *buf, size_t len)
 {
-	if (cmd->entry->print == NULL) {
+	if (cmd->entry->print == NULL)
 		return (xsnprintf(buf, len, "%s", cmd->entry->name));
-	}
 	return (cmd->entry->print(cmd, buf, len));
 }
 
