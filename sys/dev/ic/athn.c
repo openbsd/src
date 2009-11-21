@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.12 2009/11/21 15:17:46 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.13 2009/11/21 16:36:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4334,13 +4334,16 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 
 	timeout_del(&sc->calib_to);
-	if (ic->ic_state == IEEE80211_S_RUN)
+	if (ic->ic_state != IEEE80211_S_SCAN)
 		athn_gpio_write(sc, sc->led_pin, 1);
 
 	switch (nstate) {
 	case IEEE80211_S_INIT:
 		break;
 	case IEEE80211_S_SCAN:
+		/* Make the LED blink while scanning. */
+		athn_gpio_write(sc, sc->led_pin,
+		    !athn_gpio_read(sc, sc->led_pin));
 		error = athn_switch_chan(sc, ic->ic_bss->ni_chan, NULL);
 		if (error != 0)
 			return (error);
