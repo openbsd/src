@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.668 2009/11/05 20:50:14 michele Exp $ */
+/*	$OpenBSD: pf.c,v 1.669 2009/11/21 20:54:27 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -176,7 +176,7 @@ static __inline int	 pf_create_state(struct pf_rule *, struct pf_rule *,
 			    struct pf_state **, int, u_int16_t, u_int16_t,
 			    int, struct pf_rule_slist *,
 			    struct pf_rule_actions *);
-void			pf_translate(struct pf_pdesc *, struct pf_addr *,
+void			 pf_translate(struct pf_pdesc *, struct pf_addr *,
 			    u_int16_t, struct pf_addr *, u_int16_t, u_int16_t,
 			    int, struct mbuf *, int);
 int			 pf_test_fragment(struct pf_rule **, int,
@@ -187,7 +187,7 @@ int			 pf_tcp_track_full(struct pf_state_peer *,
 			    struct pf_state_peer *, struct pf_state **,
 			    struct pfi_kif *, struct mbuf *, int,
 			    struct pf_pdesc *, u_short *, int *);
-int			pf_tcp_track_sloppy(struct pf_state_peer *,
+int			 pf_tcp_track_sloppy(struct pf_state_peer *,
 			    struct pf_state_peer *, struct pf_state **,
 			    struct pf_pdesc *, u_short *);
 int			 pf_test_state_tcp(struct pf_state **, int,
