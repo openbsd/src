@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.10 2009/10/13 19:33:19 pirofti Exp $ */
+/*	$OpenBSD: umbg.c,v 1.11 2009/11/21 14:30:35 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -301,6 +301,8 @@ umbg_detach(struct device *self, int flags)
 	timeout_del(&sc->sc_to);
 	timeout_del(&sc->sc_it_to);
 
+	usb_rem_task(sc->sc_udev, &sc->sc_task);
+
 	if (sc->sc_bulkin_pipe != NULL) {
 		err = usbd_abort_pipe(sc->sc_bulkin_pipe);
 		if (err)
@@ -323,8 +325,6 @@ umbg_detach(struct device *self, int flags)
 			    sc->sc_dev.dv_xname, usbd_errstr(err));
 		sc->sc_bulkout_pipe = NULL;
 	}
-
-	usb_rem_task(sc->sc_udev, &sc->sc_task);
 
 	/* Unregister the clock with the kernel */
 	sensordev_deinstall(&sc->sc_sensordev);
