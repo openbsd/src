@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.8,v 1.20 2009/10/22 15:02:12 sobrado Exp $
+.\"	$OpenBSD: relayd.8,v 1.21 2009/11/22 16:02:44 tobias Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: November 22 2009 $
 .Dt RELAYD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@ The daemon is able to monitor groups of hosts for availability, which
 is determined by checking for a specific service common to a host
 group.
 When availability is confirmed,
-Layer 3 and/or layer 7 forwarding services are set up by
+layer 3 and/or layer 7 forwarding services are set up by
 .Nm .
 .Pp
 Layer 3 redirection happens at the packet level; to configure
