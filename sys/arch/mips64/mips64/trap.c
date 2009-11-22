@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2009/11/21 23:28:15 syuu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.51 2009/11/22 00:07:04 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1122,6 +1122,10 @@ stacktrace(regs)
 	stacktrace_subr(regs, printf);
 }
 
+#define	VALID_ADDRESS(va) \
+	(((va) >= VM_MIN_KERNEL_ADDRESS && (va) < VM_MAX_KERNEL_ADDRESS) || \
+	 IS_XKPHYS(va) || ((va) >= CKSEG0_BASE && (va) < CKSSEG_BASE))
+
 void
 stacktrace_subr(regs, printfn)
 	struct trap_frame *regs;
@@ -1132,7 +1136,6 @@ stacktrace_subr(regs, printfn)
 	unsigned instr, mask;
 	InstFmt i;
 	int more, stksize;
-	extern char edata[];
 	unsigned int frames =  0;
 
 	/* get initial values from the exception frame */
@@ -1157,7 +1160,7 @@ loop:
 	}
 
 	/* check for bad SP: could foul up next frame */
-	if (sp & 3 || (!IS_XKPHYS(sp) && sp < CKSEG0_BASE)) {
+	if (sp & 3 || !VALID_ADDRESS(sp)) {
 		(*printfn)("SP %p: not in kernel\n", sp);
 		ra = 0;
 		subr = 0;
@@ -1189,8 +1192,7 @@ loop:
 		Between((vaddr_t)a, pc, (vaddr_t)b)
 
 	/* check for bad PC */
-	if (pc & 3 || (!IS_XKPHYS(pc) && pc < CKSEG0_BASE) ||
-	    pc >= (vaddr_t)edata) {
+	if (pc & 3 || !VALID_ADDRESS(pc)) {
 		(*printfn)("PC %p: not in kernel\n", pc);
 		ra = 0;
 		goto done;
@@ -1335,6 +1337,8 @@ done:
 			(*printfn)("User-level: curproc NULL\n");
 	}
 }
+
+#undef	VALID_ADDRESS
 
 #if !defined(DDB)
 /*

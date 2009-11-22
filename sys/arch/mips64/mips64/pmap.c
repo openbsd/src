@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.39 2009/11/19 20:16:27 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.40 2009/11/22 00:07:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -131,6 +131,7 @@ u_int		tlbpid_cnt = 2;		/* next available TLB PID */
 
 pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
+const vaddr_t	Sysmapbase = VM_MIN_KERNEL_ADDRESS;	/* for libkvm */
 
 
 /*

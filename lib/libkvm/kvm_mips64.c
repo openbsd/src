@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.9 2009/10/27 23:59:28 deraadt Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.10 2009/11/22 00:07:02 miod Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -60,6 +60,7 @@
 struct vmstate {
 	pt_entry_t	*Sysmap;
 	u_int		Sysmapsize;
+	vaddr_t		Sysmapbase;
 };
 
 void
@@ -96,6 +97,17 @@ _kvm_initvtop(kvm_t *kd)
 		_kvm_err(kd, kd->program, "cannot read Sysmapsize");
 		return (-1);
 	}
+
+	/*
+	 * Older kernels might not have this symbol; in which case
+	 * we use the value of VM_MIN_KERNEL_ADDRESS they must have.
+	 */
+	nlist[0].n_name = "Sysmapbase";
+	nlist[1].n_name = 0;
+	if (kvm_nlist(kd, nlist) != 0 ||
+	    KREAD(kd, (u_long)nlist[0].n_value, &vm->Sysmapbase))
+		vm->Sysmapbase = (vaddr_t)KSSEG_BASE;
+
 	return (0);
 }
 
@@ -134,9 +146,9 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		*pa = KSEG0_TO_PHYS(va);
 		return (int)(PAGE_SIZE - offset);
 	}
-	if (va < VM_MIN_KERNEL_ADDRESS)
+	if (va < vm->Sysmapbase)
 		goto invalid;
-	idx = (va - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT;
+	idx = (va - vm->Sysmapbase) >> PGSHIFT;
 	if (idx >= vm->Sysmapsize)
 		goto invalid;
 	addr = (u_long)(vm->Sysmap + idx);
