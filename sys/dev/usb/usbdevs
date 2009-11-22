@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.457 2009/11/22 08:59:13 kevlo Exp $
+$OpenBSD: usbdevs,v 1.458 2009/11/22 22:09:34 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -307,6 +307,7 @@ vendor APTIO		0x07d2	Aptio Products
 vendor ARASAN		0x07da	Arasan Chip Systems
 vendor ALLIEDCABLE	0x07e6	Allied Cable
 vendor STSN		0x07ef	STSN
+vendor BEWAN		0x07fa	Bewan
 vendor ZOOM		0x0803	Zoom Telephonics
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
@@ -433,6 +434,7 @@ vendor NOVATECH		0x0eb0	Nova Tech
 vendor EGALAX		0x0eef	eGalax
 vendor ITEGNO		0x0eba	iTegno
 vendor AIRPRIME		0x0f3d	Airprime
+vendor UNKNOWN4		0x0fe6	Unknown Vendor
 vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications
 vendor RIM		0x0fca	Research In Motion
@@ -651,6 +653,8 @@ product ACCTON RT3070_2		0xa702	RT3070
 product ACCTON RT2870_1		0xb522	RT2870
 product ACCTON RT3070_3		0xc522	RT3070
 product ACCTON ZD1211B		0xe501	ZD1211B
+product ACCTON WN4501H_LF_IR	0xe503	WN4501H-LF-IR
+product ACCTON WUS201		0xe506	WUS-201
 product ACCTON WN7512		0xf522	WN7512
 
 /* Aceeca products */
@@ -834,9 +838,9 @@ product ASKEY VOYAGER1010	0x0821	Voyager 1010
 
 /* ASIX Electronics products */
 product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
-product ASIX AX88772A		0x772a	AX88772a
 product ASIX AX88178		0x1780	AX88178
 product ASIX AX88772		0x7720	AX88772
+product ASIX AX88772A		0x772a	AX88772a
 
 /* ASUS products */
 product ASUS2 USBN11		0x0b05	USB-N11
@@ -972,6 +976,9 @@ product BELKIN F6D4050V1	0x935a	F6D4050 ver 1
 
 /* Belkin(2) products */
 product BELKIN2 F5U002		0x0002	F5U002 Parallel
+
+/* Bewan products */
+product BEWAN BWIFI_USB54AR	0x1196	BWIFI-USB54AR
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 Ethernet
@@ -2101,6 +2108,7 @@ product MSI RT2573_3		0xa861	RT2573
 product MSI RT3070_6		0x870a	RT3070
 product MSI RT3070_7		0x899a	RT3070
 product MSI RT2573_4		0xa874	RT2573
+product MSI AX88772A		0xa877	AX88772A
 product MSI BLUETOOTH_2		0xa970	Bluetooth
 product MSI BLUETOOTH_3		0xa97a	Bluetooth
 
@@ -2412,6 +2420,7 @@ product PHEENET GWU513		0x4025	GWU513
 /* Philips products */
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
+product PHILIPS SNU5630NS05	0x1237	SNU5630NS/05
 product PHILIPS HUB		0x0201	hub
 product PHILIPS PCA645VC	0x0302	PCA645VC
 product PHILIPS PCA646VC	0x0303	PCA646VC
@@ -2912,6 +2921,7 @@ product SONY CLIE_41_MS		0x0099	Clie v4.1 Memory Stick
 product SONY CLIE_41		0x009a	Clie v4.1
 product SONY CLIE_NX60		0x00da	Clie nx60
 product SONY CLIE_TJ25		0x0169	Clie tj25
+product SONY IFU_WLM2		0x0257	IFU-WLM2
 product SONY CXD9192		0x0279	1seg TV tuner
 
 /* SOURCENEXT products */
@@ -3111,9 +3121,13 @@ product UNKNOWN1 ZD1211B_2	0x5301	ZD1211B
 
 /* Unknown vendor 2 */
 product UNKNOWN2 ZD1211B	0x0105	ZD1211B
+product UNKNOWN2 NW3100		0x145f	NW-3100
 
 /* Unknown vendor 3 */
 product UNKNOWN3 ZD1211B	0x1233 ZD1211B
+
+/* Unknown vendor 4 */
+product UNKNOWN4 DM9601		0x8101 DM9601
 
 /* U.S. Robotics products */
 product USR USR1120		0x00eb	USR1120 WLAN
@@ -3246,6 +3260,8 @@ product ZYDAS ZD1201		0x1201	ZD1201
 product ZYDAS ZD1211		0x1211	ZD1211
 product ZYDAS ZD1211B		0x1215	ZD1211B
 product ZYDAS ZD1221		0x1221	ZD1221
+product ZYDAS ALL0298		0xa211	ALL0298
+product ZYDAS ZD1211B_2		0xb215	ZD1211B
 
 /* ZyXEL Communication Co. products */
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
