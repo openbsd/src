@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.3 2009/02/19 21:02:05 marco Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.4 2009/11/22 22:00:51 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -128,7 +128,7 @@ _C_LABEL(acpi_real_mode_resume):
 	 * laptops), we might not restore the proper VGA mode
 	 * on resume. Caveat emptor.
 	 */
-	jmp	nobiosreset	/* XXX make this a tunable */
+	/* jmp	nobiosreset */ 	/* XXX make this a tunable */
 	lcall	$0xc000,$3
 
 	/*
@@ -280,6 +280,26 @@ _C_LABEL(acpi_long_mode_resume):
 	movw	%ax, %gs
 
 	/* Restore registers - start with the MSRs */
+	movl	$MSR_STAR, %ecx
+	movl	acpi_saved_star, %eax
+	movl	acpi_saved_star+4, %edx
+	wrmsr
+
+	movl	$MSR_LSTAR, %ecx
+	movl	acpi_saved_lstar, %eax
+	movl	acpi_saved_lstar+4, %edx
+	wrmsr
+
+	movl	$MSR_CSTAR, %ecx
+	movl	acpi_saved_cstar, %eax
+	movl	acpi_saved_cstar+4, %edx
+	wrmsr
+
+	movl	$MSR_SFMASK, %ecx
+	movl	acpi_saved_sfmask, %eax
+	movl	acpi_saved_sfmask+4, %edx
+	wrmsr
+
 	movl	$MSR_FSBASE, %ecx
 	movl	acpi_saved_fsbase, %eax
 	movl	acpi_saved_fsbase+4, %edx
@@ -481,6 +501,14 @@ _ACPI_TRMP_LABEL(acpi_saved_gsbase)
 	.quad 0
 _ACPI_TRMP_LABEL(acpi_saved_kgs)
 	.quad 0
+_ACPI_TRMP_LABEL(acpi_saved_star)
+	.quad 0
+_ACPI_TRMP_LABEL(acpi_saved_lstar)
+	.quad 0
+_ACPI_TRMP_LABEL(acpi_saved_cstar)
+	.quad 0
+_ACPI_TRMP_LABEL(acpi_saved_sfmask)
+	.quad 0
 
 	.align 4
 _ACPI_TRMP_LABEL(acpi_pdirpa)
@@ -533,6 +561,26 @@ NENTRY(acpi_savecpu)
 	
 	pushq	%rcx
 	pushq	%rdx
+	movl	$MSR_STAR, %ecx
+	rdmsr
+	movl	%eax, acpi_saved_star
+	movl	%edx, acpi_saved_star+4
+
+	movl	$MSR_CSTAR, %ecx
+	rdmsr
+	movl	%eax, acpi_saved_cstar
+	movl	%edx, acpi_saved_cstar+4
+
+	movl	$MSR_LSTAR, %ecx
+	rdmsr
+	movl	%eax, acpi_saved_lstar
+	movl	%edx, acpi_saved_lstar+4
+
+	movl	$MSR_SFMASK, %ecx
+	rdmsr
+	movl	%eax, acpi_saved_sfmask
+	movl	%edx, acpi_saved_sfmask+4
+
 	movl	$MSR_FSBASE, %ecx
 	rdmsr
 	movl	%eax, acpi_saved_fsbase
