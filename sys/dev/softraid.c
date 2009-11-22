@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.179 2009/11/22 16:56:06 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.180 2009/11/22 17:01:18 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -103,6 +103,7 @@ int			sr_ioctl_createraid(struct sr_softc *,
 			    struct bioc_createraid *, int);
 int			sr_ioctl_deleteraid(struct sr_softc *,
 			    struct bioc_deleteraid *);
+int			sr_ioctl_discipline(struct sr_softc *, u_long, caddr_t);
 void			sr_chunks_unwind(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_discipline_free(struct sr_discipline *);
@@ -3101,6 +3102,34 @@ sr_ioctl_deleteraid(struct sr_softc *sc, struct bioc_deleteraid *dr)
 
 	rv = 0;
 bad:
+	return (rv);
+}
+
+int
+sr_ioctl_discipline(struct sr_softc *sc, u_long cmd, caddr_t addr)
+{
+	struct sr_discipline	*sd = NULL;
+	struct bio_device	*bc = (struct bio_device *)addr;
+	int			i, rv = 1;
+
+	/* Dispatch a discipline specific ioctl. */
+
+	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_discipline %s\n", DEVNAME(sc),
+	    dr->bd_dev);
+
+	for (i = 0; i < SR_MAXSCSIBUS; i++)
+		if (sc->sc_dis[i]) {
+			if (!strncmp(sc->sc_dis[i]->sd_meta->ssd_devname,
+			    bc->dev,
+			    sizeof(sc->sc_dis[i]->sd_meta->ssd_devname))) {
+				sd = sc->sc_dis[i];
+				break;
+			}
+		}
+
+	if (sd && sd->sd_ioctl_handler)
+		rv = sd->sd_ioctl_handler(sd, cmd, addr);
+
 	return (rv);
 }
 

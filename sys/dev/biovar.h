@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.34 2008/08/22 02:00:12 marco Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.35 2009/11/22 17:01:18 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -36,6 +36,11 @@
 
 struct bio_common {
 	void		*bc_cookie;
+};
+
+struct bio_device {
+	void		*cookie;
+	char		dev[16];
 };
 
 /* convert name to a cookie */
