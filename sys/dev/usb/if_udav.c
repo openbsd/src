@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.44 2009/10/13 19:33:17 pirofti Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.45 2009/11/22 22:13:51 jsg Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -167,7 +167,8 @@ static const struct udav_type {
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_DM9601 }, 0 },
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ST268 }, 0 },
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ZT6688 }, 0 },
-	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ADM8515 }, 0 }
+	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ADM8515 }, 0 },
+	{{ USB_VENDOR_UNKNOWN4, USB_PRODUCT_UNKNOWN4_DM9601 }, 0 }
 };
 #define udav_lookup(v, p) ((struct udav_type *)usb_lookup(udav_devs, v, p))
 
