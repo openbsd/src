@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.76 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.77 2009/11/22 14:14:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -434,7 +434,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 		if (cb->cb_xs != NULL) {
 			printf("%s: master command not idle\n",
 			    sc->sc_dev.dv_xname);
-			return (TRY_AGAIN_LATER);
+			return (NO_CCB);
 		}
 #endif
 		s = splbio();
@@ -447,7 +447,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 			printf("%s: queue for target %d is busy\n",
 			    sc->sc_dev.dv_xname, slp->target);
 #endif
-			return (TRY_AGAIN_LATER);
+			return (NO_CCB);
 		}
 		if (vs_getcqe(sc, &cqep, &iopb)) {
 			/* XXX shouldn't happen since our queue is ready */
@@ -455,7 +455,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 #ifdef VS_DEBUG
 			printf("%s: no free CQEs\n", sc->sc_dev.dv_xname);
 #endif
-			return (TRY_AGAIN_LATER);
+			return (NO_CCB);
 		}
 	}
 

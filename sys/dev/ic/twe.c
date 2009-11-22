@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.31 2009/09/03 10:58:38 dlg Exp $	*/
+/*	$OpenBSD: twe.c,v 1.32 2009/11/22 14:14:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -635,7 +635,7 @@ twe_start(ccb, wait)
 		printf("%s: twe_start(%d) timed out\n",
 		    sc->sc_dev.dv_xname, cmd->cmd_index);
 
-		return 1;
+		return EPERM;
 	}
 }
 
@@ -901,12 +901,8 @@ twe_scsi_cmd(xs)
 		default:		op = TWE_CMD_NOP;	break;
 		}
 
-		if ((ccb = twe_get_ccb(sc)) == NULL) {
-			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-			TWE_UNLOCK(sc, lock);
-			return (COMPLETE);
-		}
+		if ((ccb = twe_get_ccb(sc)) == NULL)
+			return (NO_CCB);
 
 		ccb->ccb_xs = xs;
 		ccb->ccb_data = xs->data;
@@ -926,15 +922,10 @@ twe_scsi_cmd(xs)
 		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), wait))) {
 
 			TWE_DPRINTF(TWE_D_CMD, ("failed %p ", xs));
-			if (xs->flags & SCSI_POLL) {
-				TWE_UNLOCK(sc, lock);
-				return (TRY_AGAIN_LATER);
-			} else {
-				xs->error = XS_DRIVER_STUFFUP;
-				scsi_done(xs);
-				TWE_UNLOCK(sc, lock);
-				return (COMPLETE);
-			}
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
+			TWE_UNLOCK(sc, lock);
+			return (COMPLETE);
 		}
 
 		TWE_UNLOCK(sc, lock);

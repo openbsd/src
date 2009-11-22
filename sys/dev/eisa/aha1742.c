@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.34 2009/09/05 11:28:54 dlg Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.35 2009/11/22 14:14:10 krw Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -971,7 +971,7 @@ ahb_scsi_cmd(xs)
 	if (flags & SCSI_RESET) {
 		ecb->flags |= ECB_IMMED;
 		if (sc->immed_ecb)
-			return TRY_AGAIN_LATER;
+			return NO_CCB;
 		sc->immed_ecb = ecb;
 
 		s = splbio();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.53 2009/01/18 05:09:43 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.54 2009/11/22 14:14:10 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1386,7 +1386,7 @@ siop_scsicmd(xs)
 			    "target %d\n", sc->sc_c.sc_dev.dv_xname,
 			    target);
 			splx(s);
-			return(TRY_AGAIN_LATER);
+			return(NO_CCB);
 		}
 		siop_target =
 		    (struct siop_target*)sc->sc_c.targets[target];
@@ -1403,7 +1403,7 @@ siop_scsicmd(xs)
 			printf("%s: can't alloc lunsw for target %d\n",
 			    sc->sc_c.sc_dev.dv_xname, target);
 			splx(s);
-			return(TRY_AGAIN_LATER);
+			return(NO_CCB);
 		}
 		for (i=0; i < 8; i++)
 			siop_target->siop_lun[i] = NULL;
@@ -1418,7 +1418,7 @@ siop_scsicmd(xs)
 			    "target %d lun %d\n",
 			    sc->sc_c.sc_dev.dv_xname, target, lun);
 			splx(s);
-			return(TRY_AGAIN_LATER);
+			return(NO_CCB);
 		}
 	}
 
@@ -1461,7 +1461,7 @@ siop_scsicmd(xs)
 			siop_cmd->cmd_c.status = CMDST_FREE;
 			TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 			splx(s);
-			return(TRY_AGAIN_LATER);
+			return(NO_CCB);
 		}
 		bus_dmamap_sync(sc->sc_c.sc_dmat,
 		    siop_cmd->cmd_c.dmamap_data, 0,

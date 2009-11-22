@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.32 2009/09/30 19:16:23 miod Exp $	*/
+/*	$OpenBSD: cac.c,v 1.33 2009/11/22 14:14:10 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -718,12 +718,9 @@ cac_scsi_cmd(xs)
 		if ((error = cac_cmd(sc, op, xs->data, blockcnt * DEV_BSIZE,
 		    target, blockno, flags, xs))) {
 
-			if (error == ENOMEM) {
+			if (error == ENOMEM || error == EBUSY) {
 				splx(s);
 				return (NO_CCB);
-			} else if (poll) {
-				splx(s);
-				return (TRY_AGAIN_LATER);
 			} else {
 				xs->error = XS_DRIVER_STUFFUP;
 				scsi_done(xs);

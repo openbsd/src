@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.45 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.46 2009/11/22 14:14:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -763,7 +763,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 					printf("%s: command %d timed out\n",
 					    DEVNAME(sc),
 					    ccb->gc_cmd_index);
-					return (TRY_AGAIN_LATER);
+					return (NO_CCB);
 				}
 				xs->flags |= ITSDONE;
 				scsi_done(xs);

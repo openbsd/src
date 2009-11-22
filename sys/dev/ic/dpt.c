@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.21 2009/09/04 04:57:14 miod Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.22 2009/11/22 14:14:10 krw Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -1062,7 +1062,7 @@ dpt_scsi_cmd(xs)
 	if (dpt_cmd(sc, &ccb->ccb_eata_cp, ccb->ccb_ccbpa, CP_DMA_CMD, 0)) {
 		printf("%s: dpt_cmd failed\n", sc->sc_dv.dv_xname);
 		dpt_free_ccb(sc, ccb);
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 
 	if ((xs->flags & SCSI_POLL) == 0)

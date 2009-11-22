@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.64 2009/08/26 22:29:09 jasper Exp $	*/
+/*	$OpenBSD: aha.c,v 1.65 2009/11/22 14:14:11 krw Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1287,8 +1287,7 @@ aha_scsi_cmd(xs)
 		if (bus_dmamap_load(sc->sc_dmat, ccb->dmam, xs->data,
 		    xs->datalen, NULL, BUS_DMA_NOWAIT) != 0) {
 			aha_free_ccb(sc, ccb);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (TRY_AGAIN_LATER);
+			return (NO_CCB);
 		}
 		for (seg = 0; seg < ccb->dmam->dm_nsegs; seg++) {
 			ltophys(ccb->dmam->dm_segs[seg].ds_addr,

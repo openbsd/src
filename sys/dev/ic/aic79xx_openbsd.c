@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.32 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.33 2009/11/22 14:14:10 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -574,7 +574,7 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 			ahd_lock(ahd, &s);
 			ahd_free_scb(ahd, scb);
 			ahd_unlock(ahd, &s);
-			return (TRY_AGAIN_LATER);       /* XXX fvdl */
+			return (NO_CCB);       /* XXX fvdl */
 		}
 		error = ahd_execute_scb(scb, scb->dmamap->dm_segs,
 		    scb->dmamap->dm_nsegs);
