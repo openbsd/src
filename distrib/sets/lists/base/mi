@@ -91,7 +91,6 @@
 ./sbin/atactl
 ./sbin/badsect
 ./sbin/bioctl
-./sbin/brconfig
 ./sbin/ccdconfig
 ./sbin/chown
 ./sbin/clri
