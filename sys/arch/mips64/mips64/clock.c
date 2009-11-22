@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.28 2009/11/22 18:33:48 syuu Exp $ */
+/*	$OpenBSD: clock.c,v 1.29 2009/11/22 22:15:25 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -158,19 +158,11 @@ clock_int5(uint32_t mask, struct trap_frame *tf)
 	 * Process clock interrupt unless it is currently masked.
 	 */
 	if (tf->ipl < IPL_CLOCK) {
-#ifdef MULTIPROCESSOR
-		if (ci->ci_ipl < IPL_SCHED)
-			__mp_lock(&kernel_lock);
-#endif
 		while (ci->ci_pendingticks) {
 			clk_count.ec_count++;
 			hardclock(tf);
 			ci->ci_pendingticks--;
 		}
-#ifdef MULTIPROCESSOR
-		if (ci->ci_ipl < IPL_SCHED)
-			__mp_unlock(&kernel_lock);
-#endif
 	}
 
 	return CR_INT_5;	/* Clock is always on 5 */
