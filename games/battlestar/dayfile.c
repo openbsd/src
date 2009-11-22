@@ -1,4 +1,4 @@
-/*	$OpenBSD: dayfile.c,v 1.11 2009/10/27 23:59:24 deraadt Exp $	*/
+/*	$OpenBSD: dayfile.c,v 1.12 2009/11/22 09:16:02 tobias Exp $	*/
 /*	$NetBSD: dayfile.c,v 1.3 1995/03/21 15:07:18 cgd Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ The hallway is +.\n", {0} },
 "The floor is carpeted with a soft animal fur and the great wooden furniture\n\
 is inlaid with strips of platinum and gold.  Electronic equipment built\n\
 into the walls and ceiling is flashing wildly.  The floor shudders and\n\
-the sounds of dull explosions rumble though the room.  From a window in\n\
+the sounds of dull explosions rumble through the room.  From a window in\n\
 the wall + comes a view of darkest space.  There is a small adjoining\n\
 room +, and a doorway +.*\n", {0} },
 	/* 23 */
