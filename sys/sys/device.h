@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.39 2009/11/22 18:40:13 pirofti Exp $	*/
+/*	$OpenBSD: device.h,v 1.40 2009/11/22 21:36:06 pirofti Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -187,6 +187,8 @@ int config_detach(struct device *, int);
 int config_detach_children(struct device *, int);
 int config_activate(struct device *);
 int config_deactivate(struct device *);
+int config_suspend(struct device *);
+int config_resume(struct device *);
 int config_activate_children(struct device *, int);
 struct device *config_make_softc(struct device *parent,
     struct cfdata *cf);
