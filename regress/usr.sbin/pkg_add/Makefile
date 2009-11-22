@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.13 2009/11/16 15:15:15 espie Exp $
+# $OpenBSD: Makefile,v 1.14 2009/11/22 11:32:17 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
-	collision-check3
+	collision-check3 partial-update-test
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -10,7 +10,7 @@ LONG2=iamanotherreallygfilenamethatcantberepresentedcorrectlyinatararchivebutwew
 LONG3=iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 LONG4=iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 
-.for i in 1 2 3 4 5 6 7 8 9
+.for i in 1 2 3 4 5 6 7 8 9 10
 S$i ?= ${.OBJDIR}/src$i
 SRC$i ?= ${S$i}/usr/local
 D$i ?= ${.OBJDIR}/dest$i
@@ -70,24 +70,19 @@ always-update: old/g-0.0.tgz new/g-0.0.tgz
 	ROOT=${D8} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u
 	PKG_DBDIR=${D8}/pkgdb pkg_info -qf g|fgrep -q comment2
 
+
 list-check: new/a-1.0.tgz new/b-1.0.tgz new/c-0.0.tgz new/d-0.0.tgz \
 	new/e-0.0.tgz new/f-0.0.tgz new/g-0.0.tgz
 	-rm -rf ${D9}
 	ROOT=${D9} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -l ${.CURDIR}/list
 	PKG_DBDIR=${D9}/pkgdb pkg_info -q|diff - ${.CURDIR}/list.out
 
-old/a-0.0.tgz:
-	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
-
-new/a-1.0.tgz:
-	${PKG_CREATE} -f ${.CURDIR}/empty $@
-
-old/b-0.0.tgz:
-	${PKG_CREATE} -f ${.CURDIR}/empty $@
-
-new/b-1.0.tgz:
-	${PKG_CREATE} -P'test/a:a-*:a-1.0' -f ${.CURDIR}/empty $@
-
+partial-update-test: old/h-0.0.tgz old/i-0.0.tgz old/j-0.0.tgz \
+	new/h-1.0.tgz new/i-1.0.tgz new/j-1.0.tgz
+	-rm -rf ${D10}
+	ROOT=${D10} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} h j
+	ROOT=${D10} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u h
+	PKG_DBDIR=${D10}/pkgdb pkg_info -q|diff - ${.CURDIR}/list2.out
 
 
 plist1:
@@ -121,6 +116,15 @@ plist5:
 	@echo "@option always-update" >$@
 	@echo "@comment comment2" >>$@
 
+old/a-0.0.tgz:
+	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
+
+new/a-1.0.tgz old/b-0.0.tgz old/i-0.0.tgz old/j-0.0.tgz new/j-1.0.tgz new/i-1.0.tgz:
+	${PKG_CREATE} -f ${.CURDIR}/empty $@
+
+new/b-1.0.tgz:
+	${PKG_CREATE} -P'test/a:a-*:a-1.0' -f ${.CURDIR}/empty $@
+
 new/c-0.0.tgz: plist1
 	mkdir -p ${SRC1}
 	@touch ${SRC1}/${LONG1}
@@ -152,9 +156,16 @@ old/g-0.0.tgz: plist4
 new/g-0.0.tgz: plist5
 	${PKG_CREATE} -f plist5 $@
 
+old/h-0.0.tgz:
+	${PKG_CREATE} -P'test/i:i-*:i-0.0' -f ${.CURDIR}/empty $@
+
+new/h-1.0.tgz:
+	${PKG_CREATE} -P'test/j:j->=1:j-1.0' -f ${.CURDIR}/empty $@
+
+
 .PHONY: pkgnames depends-check longnames \
 	collision-check1 collision-check2 collision-check3 \
-	collision-check4 collision-check5
+	collision-check4 collision-check5 partial-update-test
 
 clean:
 	-rm -rf old new dest* plist* src*
