@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.26 2009/10/27 23:59:51 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.27 2009/11/22 22:22:14 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -198,6 +198,10 @@ static void
 header(void)
 {
 	int i;
+	static int printedheader = 0;
+
+	if (printedheader && !isatty(STDOUT_FILENO))
+		return;
 
 	/* Main Headers. */
 	if (ISSET(todo, SHOW_TTY))

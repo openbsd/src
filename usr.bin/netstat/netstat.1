@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.56 2009/06/27 11:35:57 michele Exp $
+.\"	$OpenBSD: netstat.1,v 1.57 2009/11/22 22:22:14 tedu Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: June 27 2009 $
+.Dd $Mdocdate: November 22 2009 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -52,6 +52,7 @@
 .Ek
 .Nm netstat
 .Op Fl bdn
+.Op Fl c Ar count
 .Op Fl I Ar interface
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -119,6 +120,13 @@ With the interface display (options
 or
 .Fl i ) ,
 show bytes in and out, instead of packet statistics.
+.It Fl c Ar count
+Display
+.Ar count
+updates, then exit.
+This option has no effect unless
+.Fl w
+is specified as well.
 .It Fl d
 With either the interface display (options
 .Fl I

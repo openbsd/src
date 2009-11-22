@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.61 2009/08/04 03:45:47 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.62 2009/11/22 22:22:14 tedu Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #include "netstat.h"
 
 static void print_addr(struct sockaddr *, struct sockaddr **, struct if_data *);
-static void sidewaysintpr(u_int);
+static void sidewaysintpr(u_int, int);
 static void catchalarm(int);
 static void get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 static void fetchifs(void);
@@ -67,7 +67,7 @@ static void fetchifs(void);
  * which is a TAILQ_HEAD.
  */
 void
-intpr(int interval)
+intpr(int interval, int repeatcount)
 {
 	struct if_msghdr ifm;
 	int mib[6] = { CTL_NET, AF_ROUTE, 0, 0, NET_RT_IFLIST, 0 };
@@ -82,7 +82,7 @@ intpr(int interval)
 	size_t len;
 
 	if (interval) {
-		sidewaysintpr((unsigned)interval);
+		sidewaysintpr((unsigned)interval, repeatcount);
 		return;
 	}
 
@@ -350,7 +350,7 @@ volatile sig_atomic_t signalled;	/* set if alarm goes off "early" */
  * First line printed at top of screen is always cumulative.
  */
 static void
-sidewaysintpr(unsigned int interval)
+sidewaysintpr(unsigned int interval, int repeatcount)
 {
 	sigset_t emptyset;
 	int line;
@@ -449,16 +449,17 @@ loop:
 
 	putchar('\n');
 	fflush(stdout);
+	if (repeatcount && --repeatcount == 0)
+		return;
 	line++;
 	sigemptyset(&emptyset);
 	if (!signalled)
 		sigsuspend(&emptyset);
 	signalled = 0;
 	(void)alarm(interval);
-	if (line == 21)
+	if (line == 21 && isatty(STDOUT_FILENO))
 		goto banner;
 	goto loop;
-	/*NOTREACHED*/
 }
 
 /*

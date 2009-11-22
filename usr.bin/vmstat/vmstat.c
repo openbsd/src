@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.113 2009/10/27 23:59:49 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.114 2009/11/22 22:22:14 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -390,11 +390,11 @@ dovmstat(u_int interval, int reps)
 			warn("could not read vm.vmmeter");
 			bzero(&total, sizeof(total));
 		}
-		(void)printf("%2u%2u%2u",
+		(void)printf(" %u %u %u ",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
 #define	rate(x)	((((unsigned)x) + halfuptime) / uptime)	/* round */
 #define pgtok(a) ((a) * ((unsigned int)uvmexp.pagesize >> 10))
-		(void)printf("%7u %7u ",
+		(void)printf("%6u %7u ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
 		(void)printf("%4u ", rate(uvmexp.faults - ouvmexp.faults));
 		(void)printf("%3u ", rate(uvmexp.pdreact - ouvmexp.pdreact));
@@ -427,6 +427,10 @@ void
 printhdr(void)
 {
 	int i;
+	static int printedhdr;
+
+	if (printedhdr && !isatty(STDOUT_FILENO))
+		return;
 
 	(void)printf(" procs    memory       page%*s", 20, "");
 	if (ndrives > 0)
@@ -445,6 +449,7 @@ printhdr(void)
 			    dr_name[i][strlen(dr_name[i]) - 1]);
 	(void)printf(" int   sys   cs us sy id\n");
 	hdrcnt = winlines - 2;
+	printedhdr = 1;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.81 2009/11/05 20:50:14 michele Exp $	*/
+/*	$OpenBSD: main.c,v 1.82 2009/11/22 22:22:14 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -161,10 +161,11 @@ main(int argc, char *argv[])
 	gid_t gid;
 	u_long pcbaddr = 0;
 	u_int tableid = 0;
+	int repeatcount = 0;
 
 	af = AF_UNSPEC;
 
-	while ((ch = getopt(argc, argv, "AabdFf:gI:ilM:mN:np:P:qrsT:tuvW:w:")) != -1)
+	while ((ch = getopt(argc, argv, "Aabc:dFf:gI:ilM:mN:np:P:qrsT:tuvW:w:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -174,6 +175,9 @@ main(int argc, char *argv[])
 			break;
 		case 'b':
 			bflag = 1;
+			break;
+		case 'c':
+			repeatcount = strtonum(optarg, 1, INT_MAX, &errstr);
 			break;
 		case 'd':
 			dflag = 1;
@@ -375,7 +379,7 @@ main(int argc, char *argv[])
 	setnetent(1);
 
 	if (iflag) {
-		intpr(interval);
+		intpr(interval, repeatcount);
 		exit(0);
 	}
 	if (rflag) {
@@ -534,7 +538,7 @@ usage(void)
 	    "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n"
 	    "       %s [-bdFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
 	    "               [-T tableid]\n"
-	    "       %s [-bdn] [-I interface] [-M core] [-N system] [-w wait]\n"
+	    "       %s [-bdn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
 	    "       %s [-M core] [-N system] -P pcbaddr\n"
 	    "       %s [-s] [-M core] [-N system] [-p protocol]\n"
 	    "       %s [-a] [-f address_family] [-i | -I interface]\n"
