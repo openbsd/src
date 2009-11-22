@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.16 2009/10/30 08:13:57 syuu Exp $ */
+/*	$OpenBSD: cpu.c,v 1.17 2009/11/22 19:41:41 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -114,7 +114,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		ci->ci_flags |= CPUF_PRESENT;
 	}
 	cpu_info[cpuno] = ci;
-	ncpus++;
 #endif
 	ci->ci_self = ci;
 	ci->ci_cpuid = cpuno;
