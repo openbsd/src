@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.221 2009/11/21 14:09:41 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.222 2009/11/22 18:45:19 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -515,7 +515,8 @@ main(int argc, char *argv[])
 
 	/* If no args at all, print all interfaces.  */
 	if (argc < 2) {
-		printif(NULL, ifaliases);
+		aflag = 1;
+		printif(NULL, 0);
 		exit(0);
 	}
 	argc--, argv++;
@@ -660,7 +661,7 @@ nextarg:
 	}
 
 	if (argc == 0 && actions == 0 && !noprint) {
-		printif(ifr.ifr_name, 1);
+		printif(ifr.ifr_name, aflag ? ifaliases : 1);
 		exit(0);
 	}
 
