@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.178 2009/11/15 13:32:04 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.179 2009/11/22 16:56:06 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2684,6 +2684,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	struct sr_chunk		*ch_entry;
 	struct device		*dev, *dev2;
 	struct scsibus_attach_args saa;
+	char			devname[32];
 
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_createraid(%d)\n",
 	    DEVNAME(sc), user);
@@ -2705,6 +2706,16 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	no_chunk = bc->bc_dev_list_len / sizeof(dev_t);
 	cl = &sd->sd_vol.sv_chunk_list;
 	SLIST_INIT(cl);
+
+	/* Ensure that chunks are not already in use. */
+	for (i = 0; i < no_chunk; i++) {
+		if (sr_chunk_in_use(sc, dt[i]) != BIOC_SDINVALID) {
+			sr_meta_getdevname(sc, dt[i], devname, sizeof(devname));
+			printf("%s: chunk %s already in use\n",
+			    DEVNAME(sc), devname);
+			goto unwind;
+		}
+	}
 
 	sd->sd_meta_type = sr_meta_probe(sd, dt, no_chunk);
 	if (sd->sd_meta_type == SR_META_F_INVALID) {
