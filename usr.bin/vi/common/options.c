@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.14 2009/10/27 23:59:47 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.15 2009/11/22 17:12:40 nicm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -77,7 +77,7 @@ OPTLIST const optlist[] = {
 /* O_FILEC	  4.4BSD */
 	{"filec",	NULL,		OPT_STR,	0},
 /* O_FLASH	    HPUX */
-	{"flash",	NULL,		OPT_1BOOL,	0},
+	{"flash",	NULL,		OPT_0BOOL,	0},
 /* O_HARDTABS	    4BSD */
 	{"hardtabs",	NULL,		OPT_NUM,	0},
 /* O_ICLOWER	  4.4BSD */
