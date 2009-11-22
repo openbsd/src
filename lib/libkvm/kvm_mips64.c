@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.10 2009/11/22 00:07:02 miod Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.11 2009/11/22 18:20:49 miod Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ _kvm_initvtop(kvm_t *kd)
 	nlist[1].n_name = 0;
 	if (kvm_nlist(kd, nlist) != 0 ||
 	    KREAD(kd, (u_long)nlist[0].n_value, &vm->Sysmapbase))
-		vm->Sysmapbase = (vaddr_t)KSSEG_BASE;
+		vm->Sysmapbase = (vaddr_t)CKSSEG_BASE;
 
 	return (0);
 }
@@ -142,8 +142,8 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		*pa = XKPHYS_TO_PHYS(va);
 		return (int)(PAGE_SIZE - offset);
 	}
-	if (va >= (vaddr_t)KSEG0_BASE && va < (vaddr_t)KSSEG_BASE) {
-		*pa = KSEG0_TO_PHYS(va);
+	if (va >= (vaddr_t)CKSEG0_BASE && va < (vaddr_t)CKSSEG_BASE) {
+		*pa = CKSEG0_TO_PHYS(va);
 		return (int)(PAGE_SIZE - offset);
 	}
 	if (va < vm->Sysmapbase)
