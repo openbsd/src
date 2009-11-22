@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.126 2009/09/17 08:22:22 simon Exp $
+#	$OpenBSD: netstart,v 1.127 2009/11/22 23:09:50 deraadt Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -80,9 +80,6 @@ ifstart() {
 			;;
 		"!"*) # parse commands
 			cmd="${af#*!} ${name} ${mask} ${bcaddr} ${ext1} ${ext2}"
-			;;
-		"bridge")
-			cmd="echo /etc/hostname.$if: bridges now supported via bridgename.* files"
 			;;
 		"dhcp")
 			[ "$name" = "NONE" ] && name=
@@ -174,39 +171,6 @@ ifmstart() {
 	done
 }
 
-# Start the $1 bridge
-bridgestart() {
-	# Interface names must be alphanumeric only.  We check to avoid
-	# configuring backup or temp files, and to catch the "*" case.
-	if ! isalphanumeric "$1"; then
-		return
-	fi
-	brconfig $1 > /dev/null 2>&1
-	if [ "$?" != "0" ]; then
-		# Try to create interface if it does not exist
-		ifconfig $1 create > /dev/null 2>&1
-		if [ "$?" != "0" ]; then
-			return
-		fi
-	fi
-
-	# Now parse the bridgename.* file
-	# All lines are run as brconfig(8) commands.
-	while read line ; do
-		line=${line%%#*}		# strip comments
-		test -z "$line" && continue
-		case "$line" in
-		"!"*)
-			cmd="${line#*!}"
-			;;
-		*)
-			cmd="brconfig $1 $line"
-			;;
-		esac
-		eval "$cmd"
-	done < /etc/bridgename.$1
-}
-
 # Re-read /etc/rc.conf
 . /etc/rc.conf
 
@@ -217,11 +181,7 @@ if [ $1x = autobootx ]; then
 fi
 if [ $# -gt 0 ]; then
 	while [ $# -gt 0 ]; do
-		if [ -f /etc/bridgename.$1 ]; then
-			bridgestart $1
-		else
-			ifstart $1
-		fi
+		ifstart $1
 		shift
 	done
 	return
@@ -299,9 +259,8 @@ fi
 
 
 # Configure all the non-loopback interfaces which we know about, but
-# do not start interfaces which must be delayed.
-# Refer to hostname.if(5) and bridgename.if(5)
-ifmstart "" "trunk vlan carp gif gre pfsync pppoe tun"
+# do not start interfaces which must be delayed. Refer to hostname.if(5)
+ifmstart "" "trunk vlan carp gif gre pfsync pppoe tun bridge"
 
 # The trunk interfaces need to come up first in this list.
 # The vlan interfaces need to come up after trunk.
@@ -375,19 +334,10 @@ esac
 # Configure PPPoE, GIF, GRE and TUN interfaces, delayed because they require
 # routes to be set.  TUN might depend on PPPoE, and GIF or GRE may depend on
 # either of them.
-ifmstart "pppoe tun gif gre"
+ifmstart "pppoe tun gif gre bridge"
 
 # reject 127/8 other than 127.0.0.1
 route -qn add -net 127 127.0.0.1 -reject > /dev/null
-
-# Configure all the bridges.
-for bn in /etc/bridgename.*; do
-	# Strip off /etc/bridgename. prefix
-	if=${bn#/etc/bridgename.}
-	test "$if" = "*" && continue
-
-	bridgestart $if
-done
 
 if [ "$ip6kernel" = "YES" ]; then
 	# this is to make sure DAD is completed before going further.
