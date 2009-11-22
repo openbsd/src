@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.391 2009/11/22 09:18:55 espie Exp $
+# $OpenBSD: pkg_add,v 1.392 2009/11/22 14:08:21 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -298,7 +298,7 @@ sub partial_install
 
 sub really_add
 {
-	my ($set, $state) = @_;
+	my ($set, $state, $todo) = @_;
 
 	for my $h ($set->newer) {
 		$h->plist->set_infodir($h->location->info);
@@ -407,9 +407,13 @@ sub really_add
 		# Here there should be code to handle old libs
 	}
 
+	my $first = 1;
 	for my $handle ($set->newer) {
+		if (!$first) {
+			$state->progress->next;
+			$first = 0;
+		}
 		my $pkgname = $handle->pkgname;
-		my $header = $state->deptree_header($set).$pkgname;
 		my $plist = $handle->plist;
 		$set->setup_header($state, $handle,
 		    $replacing ? "installing" : undef);
@@ -426,7 +430,6 @@ sub really_add
 				$errors++;
 			}
 		};
-		$state->progress->next;
 
 		unlink($plist->infodir.CONTENTS);
 		if ($state->{interrupted} || $errors) {
@@ -434,6 +437,8 @@ sub really_add
 			    $set, $state);
 		}
 	}
+	$set->setup_header($state, undef, $replacing ? "installing" : undef);
+	$state->progress->next($todo);
 	for my $handle ($set->newer) {
 		my $pkgname = $handle->pkgname;
 		my $plist = $handle->plist;
@@ -457,7 +462,7 @@ sub really_add
 
 sub install_set
 {
-	my ($set, $state) = @_;
+	my ($set, $state, $todo) = @_;
 
 	if ($set->{finished}) {
 		return ();
@@ -534,7 +539,7 @@ sub install_set
 #			return ();
 #		}
 #	}
-	really_add($set, $state);
+	really_add($set, $state, $todo);
 	for my $handle ($set->newer) {
 		$handle->cleanup;
 	}
@@ -723,7 +728,7 @@ sub {
 	inform_user_of_pending_update($state);
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
-		unshift(@todo2, install_set($set, $state));
+		unshift(@todo2, install_set($set, $state, scalar @todo2));
 	}
 });
 
