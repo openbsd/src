@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.100 2009/11/22 09:18:55 espie Exp $
+# $OpenBSD: Update.pm,v 1.101 2009/11/22 09:38:10 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -69,12 +69,20 @@ sub add_location
 	    OpenBSD::Handle->from_location($location));
 }
 
+my $first = 1;
 sub process_handle
 {
 	my ($self, $set, $h, $state) = @_;
 	my $pkgname = $h->pkgname;
 
-	if ($pkgname =~ m/^(?:\.libs\d*|partial)\-/o) {
+	if ($pkgname =~ m/^\.libs\d*\-/o) {
+		if ($first) {
+			$state->say("Not updating .libs*, remember to clean them");
+			$first = 0;
+		}
+		return 0;
+	}
+	if ($pkgname =~ m/^partial\-/o) {
 		$state->say("Not updating $pkgname, remember to clean it");
 		return 0;
 	}
