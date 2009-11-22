@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.101 2009/11/22 09:38:10 espie Exp $
+# $OpenBSD: Update.pm,v 1.102 2009/11/22 11:26:43 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -212,7 +212,7 @@ sub process_hint2
 		}
 		my $l = $state->updater->stem2location($h, $pkgname, $state);
 		if (defined $l) {
-			$self->add_ulocation($set, $hint, $l);
+			$self->add_location($set, $hint, $l);
 		} else {
 			return undef;
 		}
