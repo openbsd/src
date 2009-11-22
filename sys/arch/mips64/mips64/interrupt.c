@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.51 2009/11/21 23:28:14 syuu Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.52 2009/11/22 00:19:49 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -115,8 +115,9 @@ interrupt(struct trap_frame *trapframe)
 	trapdebug_enter(trapframe, 0);
 #endif
 
-	if(ci->ci_ipl < IPL_SCHED)
+	if (ci->ci_ipl < IPL_SCHED)
 		__mp_lock(&kernel_lock);
+
 	uvmexp.intrs++;
 
 	/* Mask out interrupts from cause that are unmasked */
@@ -149,7 +150,8 @@ interrupt(struct trap_frame *trapframe)
 		ci->ci_ipl = s;	/* no-overhead splx */
 		__asm__ ("sync\n\t.set reorder\n");
 	}
-	if(ci->ci_ipl < IPL_SCHED)
+
+	if (ci->ci_ipl < IPL_SCHED)
 		__mp_unlock(&kernel_lock);
 }
 

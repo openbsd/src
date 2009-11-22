@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2009/11/22 00:07:04 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2009/11/22 00:19:49 syuu Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -542,10 +542,10 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 #endif
 		{
 			int nolock = (callp->sy_flags & SY_NOLOCK);
-			if(!nolock)
+			if (!nolock)
 				KERNEL_PROC_LOCK(p);
 			i = (*callp->sy_call)(p, &args, rval);
-			if(!nolock)
+			if (!nolock)
 				KERNEL_PROC_UNLOCK(p);
 		}
 		switch (i) {
