@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.456 2009/11/18 23:13:01 jasper Exp $
+$OpenBSD: usbdevs,v 1.457 2009/11/22 08:59:13 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -528,6 +528,7 @@ vendor LINKSYS3		0x1915	Linksys
 vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMM3	0x19d2	Qualcomm Inc.
 vendor QUANTA		0x1a32	Quanta
+vendor TERMINUS		0x1a40	Terminus Technology
 vendor WCH2		0x1a86	QinHeng Electronics
 vendor TCTMOBILE	0x1bbb  TCT Mobile
 vendor LONGCHEER	0x1c9e	Longcheer Technology
