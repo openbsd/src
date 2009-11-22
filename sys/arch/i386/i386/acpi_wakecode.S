@@ -124,7 +124,7 @@ _C_LABEL(acpi_real_mode_resume):
 	 * laptops), we might not restore the proper VGA mode
 	 * on resume. Caveat emptor.
 	 */
-	jmp	nobiosreset	/* XXX make this a tunable */
+ 	/* jmp	nobiosreset */  	/* XXX make this a tunable */ 
 	lcall	$0xc000,$3
 
 	/*
@@ -304,7 +304,6 @@ _C_LABEL(acpi_protected_mode_resume):
 	movl	acpi_saved_esp, %esp
 	push	acpi_saved_fl
 	popfl
-	cli
 
 	/*
 	 * Return to the OS. We've previously saved the resume
