@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.392 2009/11/22 14:08:21 espie Exp $
+# $OpenBSD: pkg_add,v 1.393 2009/11/22 16:52:00 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -437,7 +437,7 @@ sub really_add
 			    $set, $state);
 		}
 	}
-	$set->setup_header($state, undef, $replacing ? "installing" : undef);
+	$set->setup_header($state);
 	$state->progress->next($todo);
 	for my $handle ($set->newer) {
 		my $pkgname = $handle->pkgname;
