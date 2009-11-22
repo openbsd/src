@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.27 2009/11/21 23:28:14 syuu Exp $ */
+/*	$OpenBSD: clock.c,v 1.28 2009/11/22 18:33:48 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -53,11 +53,6 @@ struct cfattach clock_ca = {
 };
 
 uint32_t clock_int5(uint32_t, struct trap_frame *);
-
-int	clock_started;
-u_int32_t cpu_counter_last;
-u_int32_t cpu_counter_interval;
-u_int32_t pendingticks;
 
 u_int cp0_get_timecount(struct timecounter *);
 
@@ -123,13 +118,14 @@ uint32_t
 clock_int5(uint32_t mask, struct trap_frame *tf)
 {
 	u_int32_t clkdiff;
+	struct cpu_info *ci = curcpu();
 
 	/*
 	 * If we got an interrupt before we got ready to process it,
 	 * retrigger it as far as possible. cpu_initclocks() will
 	 * take care of retriggering it correctly.
 	 */
-	if (clock_started == 0) {
+	if (ci->ci_clock_started == 0) {
 		cp0_set_compare(cp0_get_count() - 1);
 		return CR_INT_5;
 	}
@@ -137,38 +133,44 @@ clock_int5(uint32_t mask, struct trap_frame *tf)
 	/*
 	 * Count how many ticks have passed since the last clock interrupt...
 	 */
-	clkdiff = cp0_get_count() - cpu_counter_last;
-	while (clkdiff >= cpu_counter_interval) {
-		cpu_counter_last += cpu_counter_interval;
-		clkdiff = cp0_get_count() - cpu_counter_last;
-		pendingticks++;
+	clkdiff = cp0_get_count() - ci->ci_cpu_counter_last;
+	while (clkdiff >= ci->ci_cpu_counter_interval) {
+		ci->ci_cpu_counter_last += ci->ci_cpu_counter_interval;
+		clkdiff = cp0_get_count() - ci->ci_cpu_counter_last;
+		ci->ci_pendingticks++;
 	}
-	pendingticks++;
-	cpu_counter_last += cpu_counter_interval;
+	ci->ci_pendingticks++;
+	ci->ci_cpu_counter_last += ci->ci_cpu_counter_interval;
 
 	/*
 	 * Set up next tick, and check if it has just been hit; in this
 	 * case count it and schedule one tick ahead.
 	 */
-	cp0_set_compare(cpu_counter_last);
-	clkdiff = cp0_get_count() - cpu_counter_last;
+	cp0_set_compare(ci->ci_cpu_counter_last);
+	clkdiff = cp0_get_count() - ci->ci_cpu_counter_last;
 	if ((int)clkdiff >= 0) {
-		cpu_counter_last += cpu_counter_interval;
-		pendingticks++;
-		cp0_set_compare(cpu_counter_last);
+		ci->ci_cpu_counter_last += ci->ci_cpu_counter_interval;
+		ci->ci_pendingticks++;
+		cp0_set_compare(ci->ci_cpu_counter_last);
 	}
 
 	/*
 	 * Process clock interrupt unless it is currently masked.
 	 */
 	if (tf->ipl < IPL_CLOCK) {
-		KERNEL_LOCK();
-		while (pendingticks) {
+#ifdef MULTIPROCESSOR
+		if (ci->ci_ipl < IPL_SCHED)
+			__mp_lock(&kernel_lock);
+#endif
+		while (ci->ci_pendingticks) {
 			clk_count.ec_count++;
 			hardclock(tf);
-			pendingticks--;
+			ci->ci_pendingticks--;
 		}
-		KERNEL_UNLOCK();
+#ifdef MULTIPROCESSOR
+		if (ci->ci_ipl < IPL_SCHED)
+			__mp_unlock(&kernel_lock);
+#endif
 	}
 
 	return CR_INT_5;	/* Clock is always on 5 */
@@ -209,7 +211,7 @@ cpu_initclocks()
 	struct tod_time ct;
 	u_int first_cp0, second_cp0, cycles_per_sec;
 	int first_sec;
-	int s;
+	struct cpu_info *ci = curcpu();
 
 	hz = 100;
 	profhz = 100;
@@ -243,13 +245,29 @@ cpu_initclocks()
 
 	cp0_timecounter.tc_frequency = sys_config.cpu[0].clock / 2;
 	tc_init(&cp0_timecounter);
+	cpu_startclock(ci);
+}
+
+void
+cpu_startclock(struct cpu_info *ci)
+{
+	int s;
+
+	if (!CPU_IS_PRIMARY(ci)) {
+		s = splhigh();
+		microuptime(&ci->ci_schedstate.spc_runtime);
+		splx(s);
+
+		/* try to avoid getting clock interrupts early */
+		cp0_set_compare(cp0_get_count() - 1);
+	}
 
 	/* Start the clock. */
 	s = splclock();
-	cpu_counter_interval = cp0_timecounter.tc_frequency / hz;
-	cpu_counter_last = cp0_get_count() + cpu_counter_interval;
-	cp0_set_compare(cpu_counter_last);
-	clock_started++;
+	ci->ci_cpu_counter_interval = cp0_timecounter.tc_frequency / hz;
+	ci->ci_cpu_counter_last = cp0_get_count() + ci->ci_cpu_counter_interval;
+	cp0_set_compare(ci->ci_cpu_counter_last);
+	ci->ci_clock_started++;
 	splx(s);
 }
 

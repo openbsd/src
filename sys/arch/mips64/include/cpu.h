@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.43 2009/11/19 20:16:26 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.44 2009/11/22 18:33:48 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -378,6 +378,10 @@ struct cpu_info {
 	uint32_t	 ci_randseed;		/* per cpu random seed */
 	int		 ci_ipl;		/* software IPL */
 	uint32_t	 ci_softpending;	/* pending soft interrupts */
+	int	         ci_clock_started;
+	u_int32_t        ci_cpu_counter_last;
+	u_int32_t        ci_cpu_counter_interval;
+	u_int32_t        ci_pendingticks;
 #ifdef MULTIPROCESSOR
 	u_long           ci_flags;		/* flags; see below */
 #endif
@@ -416,6 +420,8 @@ void cpu_boot_secondary_processors(void);
 #define cpu_number()			0
 #define cpu_unidle(ci)
 #endif
+
+void cpu_startclock(struct cpu_info *);
 
 #include <machine/frame.h>
 

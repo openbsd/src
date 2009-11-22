@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.19 2009/11/21 20:55:44 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.20 2009/11/22 18:33:48 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -403,7 +403,16 @@ hw_cpu_hatch(struct cpu_info *ci)
 
        cpuset_add(&cpus_running, ci);
 
-       for (;;)
-               ;
+       cpu_startclock(ci);
+
+       spl0();
+       (void)updateimask(0);
+#ifdef notyet
+       SCHED_LOCK(s);
+       cpu_switchto(NULL, sched_chooseproc());
+#else
+       for(;;)
+	       ;
+#endif
 }
 #endif
