@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.c,v 1.5 2007/05/03 18:51:08 grange Exp $	*/
+/*	$OpenBSD: i8259.c,v 1.6 2009/11/22 21:41:37 pirofti Exp $	*/
 /*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
@@ -208,13 +208,6 @@ i8259_setup(struct pic *pic, struct cpu_info *ci, int pin, int idtvec, int type)
 {
 	if (CPU_IS_PRIMARY(ci))
 		i8259_reinit_irqs();
-}
-
-void
-i8259_reinit(void)
-{
-	i8259_default_setup();
-	i8259_reinit_irqs();
 }
 
 unsigned

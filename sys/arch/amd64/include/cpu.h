@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.49 2009/07/22 20:33:13 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.50 2009/11/22 21:41:37 pirofti Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -294,6 +294,9 @@ void	i8254_delay(int);
 void	i8254_initclocks(void);
 void	i8254_inittimecounter(void);
 void	i8254_inittimecounter_simple(void);
+
+/* i8259.c */
+void	i8259_default_setup(void);
 
 
 void cpu_init_msrs(struct cpu_info *);
