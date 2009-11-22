@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.57 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.58 2009/11/22 18:40:13 pirofti Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -641,6 +641,42 @@ config_deactivate(struct device *dev)
 	return (rv);
 }
 
+int
+config_suspend(struct device *dev)
+{
+	struct cfattach *ca = dev->dv_cfdata->cf_attach;
+	int rv = 0, oflags = dev->dv_flags;
+
+	if (ca->ca_activate == NULL)
+		return (EOPNOTSUPP);
+
+	if ((dev->dv_flags & DVF_SUSPEND) == 0) {
+		dev->dv_flags |= DVF_SUSPEND;
+		rv = (*ca->ca_activate)(dev, DVACT_SUSPEND);
+		if (rv)
+			dev->dv_flags = oflags;
+	}
+	return (rv);
+}
+
+int
+config_resume(struct device *dev)
+{
+	struct cfattach *ca = dev->dv_cfdata->cf_attach;
+	int rv = 0, oflags = dev->dv_flags;
+
+	if (ca->ca_activate == NULL)
+		return (EOPNOTSUPP);
+
+	if (dev->dv_flags & DVF_SUSPEND) {
+		dev->dv_flags &= ~DVF_SUSPEND;
+		rv = (*ca->ca_activate)(dev, DVACT_RESUME);
+		if (rv)
+			dev->dv_flags = oflags;
+	}
+	return (rv);
+}
+
 /*
  * Defer the configuration of the specified device until all
  * of its parent's devices have been attached.
@@ -767,6 +803,12 @@ config_activate_children(struct device *parent, int act)
 				break;
 			case DVACT_DEACTIVATE:
 				rv = config_deactivate(dev);
+				break;
+			case DVACT_SUSPEND:
+				rv = config_suspend(dev);
+				break;
+			case DVACT_RESUME:
+				rv = config_resume(dev);
 				break;
 			default:
 #ifdef DIAGNOSTIC
