@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.5 2009/11/19 19:19:59 damien Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.6 2009/11/22 08:52:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -108,46 +108,47 @@ struct athn_rxq {
 
 /* Software rate indexes. */
 #define ATHN_RIDX_CCK1	0
+#define ATHN_RIDX_CCK2	1
 #define ATHN_RIDX_OFDM6	4
 #define ATHN_RIDX_MCS0	12
 #define ATHN_RIDX_MCS15	27
 #define ATHN_RIDX_MAX	27
-#define ATHN_IS_OFDM_RIDX(ridx)	(athn_rates[ridx].phy == IEEE80211_T_OFDM)
 #define ATHN_IS_HT_RIDX(ridx)	((ridx) >= ATHN_RIDX_MCS0)
 
 static const struct athn_rate {
 	uint8_t	rate;		/* Rate in 500Kbps unit or MCS if 0x80. */
 	uint8_t	hwrate;		/* HW representation. */
+	uint8_t	rspridx;	/* Control Response Frame rate index. */
 	enum	ieee80211_phytype phy;
 } athn_rates[] = {
-	{    2, 0x1b, IEEE80211_T_DS },
-	{    4, 0x1a, IEEE80211_T_DS },
-	{   11, 0x19, IEEE80211_T_DS },
-	{   22, 0x18, IEEE80211_T_DS },
-	{   12, 0x0b, IEEE80211_T_OFDM },
-	{   18, 0x0f, IEEE80211_T_OFDM },
-	{   24, 0x0a, IEEE80211_T_OFDM },
-	{   36, 0x0e, IEEE80211_T_OFDM },
-	{   48, 0x09, IEEE80211_T_OFDM },
-	{   72, 0x0d, IEEE80211_T_OFDM },
-	{   96, 0x08, IEEE80211_T_OFDM },
-	{  108, 0x0c, IEEE80211_T_OFDM },
-	{ 0x80, 0x80, IEEE80211_T_OFDM },
-	{ 0x81, 0x81, IEEE80211_T_OFDM },
-	{ 0x82, 0x82, IEEE80211_T_OFDM },
-	{ 0x83, 0x83, IEEE80211_T_OFDM },
-	{ 0x84, 0x84, IEEE80211_T_OFDM },
-	{ 0x85, 0x85, IEEE80211_T_OFDM },
-	{ 0x86, 0x86, IEEE80211_T_OFDM },
-	{ 0x87, 0x87, IEEE80211_T_OFDM },
-	{ 0x88, 0x88, IEEE80211_T_OFDM },
-	{ 0x89, 0x89, IEEE80211_T_OFDM },
-	{ 0x8a, 0x8a, IEEE80211_T_OFDM },
-	{ 0x8b, 0x8b, IEEE80211_T_OFDM },
-	{ 0x8c, 0x8c, IEEE80211_T_OFDM },
-	{ 0x8d, 0x8d, IEEE80211_T_OFDM },
-	{ 0x8e, 0x8e, IEEE80211_T_OFDM },
-	{ 0x8f, 0x8f, IEEE80211_T_OFDM }
+	{    2, 0x1b, 0, IEEE80211_T_DS },
+	{    4, 0x1a, 1, IEEE80211_T_DS },
+	{   11, 0x19, 1, IEEE80211_T_DS },
+	{   22, 0x18, 1, IEEE80211_T_DS },
+	{   12, 0x0b, 4, IEEE80211_T_OFDM },
+	{   18, 0x0f, 4, IEEE80211_T_OFDM },
+	{   24, 0x0a, 6, IEEE80211_T_OFDM },
+	{   36, 0x0e, 6, IEEE80211_T_OFDM },
+	{   48, 0x09, 8, IEEE80211_T_OFDM },
+	{   72, 0x0d, 8, IEEE80211_T_OFDM },
+	{   96, 0x08, 8, IEEE80211_T_OFDM },
+	{  108, 0x0c, 8, IEEE80211_T_OFDM },
+	{ 0x80, 0x80, 8, IEEE80211_T_OFDM },
+	{ 0x81, 0x81, 8, IEEE80211_T_OFDM },
+	{ 0x82, 0x82, 8, IEEE80211_T_OFDM },
+	{ 0x83, 0x83, 8, IEEE80211_T_OFDM },
+	{ 0x84, 0x84, 8, IEEE80211_T_OFDM },
+	{ 0x85, 0x85, 8, IEEE80211_T_OFDM },
+	{ 0x86, 0x86, 8, IEEE80211_T_OFDM },
+	{ 0x87, 0x87, 8, IEEE80211_T_OFDM },
+	{ 0x88, 0x88, 8, IEEE80211_T_OFDM },
+	{ 0x89, 0x89, 8, IEEE80211_T_OFDM },
+	{ 0x8a, 0x8a, 8, IEEE80211_T_OFDM },
+	{ 0x8b, 0x8b, 8, IEEE80211_T_OFDM },
+	{ 0x8c, 0x8c, 8, IEEE80211_T_OFDM },
+	{ 0x8d, 0x8d, 8, IEEE80211_T_OFDM },
+	{ 0x8e, 0x8e, 8, IEEE80211_T_OFDM },
+	{ 0x8f, 0x8f, 8, IEEE80211_T_OFDM }
 };
 
 struct athn_series {
@@ -429,7 +430,6 @@ struct athn_softc {
 	struct athn_ops			ops;
 
 	int				fixed_ridx;
-	int				sifs;
 
 	int16_t				def_nf;
 	struct {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.13 2009/11/21 16:36:59 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.14 2009/11/22 08:52:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1382,8 +1382,6 @@ athn_set_phy(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	AR_WRITE(sc, AR_GTXTO, SM(AR_GTXTO_TIMEOUT_LIMIT, 25));
 	AR_WRITE(sc, AR_CST, SM(AR_CST_TIMEOUT_LIMIT, 15));
-	/* Set Short Interframe Space. */
-	sc->sifs = IEEE80211_IS_CHAN_5GHZ(c) ? 16 : 10;
 }
 
 int
@@ -3247,17 +3245,21 @@ athn_txtime(struct athn_softc *sc, int len, int ridx, u_int flags)
 	/* XXX HT. */
 	if (athn_rates[ridx].phy == IEEE80211_T_OFDM) {
 		txtime = divround(8 + 4 * len + 3, athn_rates[ridx].rate);
-		txtime = 16 + 4 + 4 * txtime + 6;
+		/* SIFS is 10us for 11g but Signal Extension adds 6us. */
+		txtime = 16 + 4 + 4 * txtime + 16;
 	} else {
 		txtime = divround(16 * len, athn_rates[ridx].rate);
 		if (ridx != ATHN_RIDX_CCK1 && (flags & IEEE80211_F_SHPREAMBLE))
 			txtime +=  72 + 24;
 		else
 			txtime += 144 + 48;
+		txtime += 10;	/* 10us SIFS. */
 	}
 	return (txtime);
 #undef divround
 }
+
+int athn_prot = 0;
 
 int
 athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
@@ -3475,14 +3477,17 @@ athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		if (totlen > ic->ic_rtsthreshold) {
 			ds->ds_ctl0 |= AR_TXC0_RTS_ENABLE;
 		} else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
-		    ATHN_IS_OFDM_RIDX(ridx[0])) {
+		    athn_rates[ridx[0]].phy == IEEE80211_T_OFDM) {
 			if (ic->ic_protmode == IEEE80211_PROT_RTSCTS)
 				ds->ds_ctl0 |= AR_TXC0_RTS_ENABLE;
 			else if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
 				ds->ds_ctl0 |= AR_TXC0_CTS_ENABLE;
 		}
 	}
-
+	if (ds->ds_ctl0 & (AR_TXC0_RTS_ENABLE | AR_TXC0_CTS_ENABLE)) {
+		/* Disable multi-rate retries when protection is used. */
+		ridx[1] = ridx[2] = ridx[3] = ridx[0];
+	}
 	/* Setup multi-rate retries. */
 	for (i = 0; i < 4; i++) {
 		series[i].tries = 1;	/* XXX more for last. */
@@ -3497,7 +3502,7 @@ athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		/* Compute duration for each series. */
 		for (i = 0; i < 4; i++) {
 			series[i].dur = athn_txtime(sc, IEEE80211_ACK_LEN,
-			    ridx[i], ic->ic_flags) + sc->sifs;
+			    athn_rates[ridx[i]].rspridx, ic->ic_flags);
 		}
 	}
 
@@ -3545,16 +3550,35 @@ athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #endif
 
 	if (ds->ds_ctl0 & (AR_TXC0_RTS_ENABLE | AR_TXC0_CTS_ENABLE)) {
+		uint8_t protridx, hwrate;
+		uint16_t dur = 0;
+
 		/* Use the same protection mode for all tries. */
 		if (ds->ds_ctl0 & AR_TXC0_RTS_ENABLE) {
 			ds->ds_ctl4 |= AR_TXC4_RTSCTS_QUAL01;
 			ds->ds_ctl5 |= AR_TXC5_RTSCTS_QUAL23;
 		}
+		/* Select protection rate (suboptimal but ok.) */
+		protridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+		    ATHN_RIDX_OFDM6 : ATHN_RIDX_CCK2;
+		if (ds->ds_ctl0 & AR_TXC0_RTS_ENABLE) {
+			/* Account for CTS duration. */
+			dur += athn_txtime(sc, IEEE80211_ACK_LEN,
+			    athn_rates[protridx].rspridx, ic->ic_flags);
+		}
+		dur += athn_txtime(sc, totlen, ridx[0], ic->ic_flags);
+		if (!(ds->ds_ctl1 & AR_TXC1_NO_ACK)) {
+			/* Account for ACK duration. */
+			dur += athn_txtime(sc, IEEE80211_ACK_LEN,
+			    athn_rates[ridx[0]].rspridx, ic->ic_flags);
+		}
 		/* Write protection frame duration and rate. */
-		ds->ds_ctl2 |= SM(AR_TXC2_BURST_DUR, 0 /* XXX */);
-		ds->ds_ctl7 |= SM(AR_TXC7_RTSCTS_RATE,
-		    athn_rates[0].hwrate /* XXX */);
-		/* XXX short preamble. */
+		ds->ds_ctl2 |= SM(AR_TXC2_BURST_DUR, dur);
+		hwrate = athn_rates[protridx].hwrate;
+		if (protridx == ATHN_RIDX_CCK2 &&
+		    (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
+			hwrate |= 0x04;
+		ds->ds_ctl7 |= SM(AR_TXC7_RTSCTS_RATE, hwrate);
 	}
 
 	/* Finalize first Tx descriptor and fill others (if any.) */
@@ -4259,6 +4283,7 @@ athn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 			if (athn_rates[ridx].rate == rate)
 				break;
 		an->ridx[i] = ridx;
+		DPRINTFN(2, ("rate %d index %d\n", rate, ridx));
 
 		/* Compute fallback rate for retries. */
 		an->fallback[i] = i;
@@ -4269,18 +4294,7 @@ athn_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 				break;
 			}
 		}
-#if 0
-		/* Compute rate for protection frames. */
-		an->ctlridx[i] = athn_rates[ridx].ctlridx;
-		for (j = i; j >= 0; j--) {
-			if ((rs->rs_rates[j] & IEEE80211_RATE_BASIC) &&
-			    athn_rates[an->ridx[j]].phy ==
-			    athn_rates[an->ridx[i]].phy) {
-				an->ctlridx[i] = an->ridx[j];
-				break;
-			}
-		}
-#endif
+		DPRINTFN(2, ("%d fallbacks to %d\n", i, an->fallback[i]));
 	}
 }
 
