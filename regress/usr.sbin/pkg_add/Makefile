@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.15 2009/11/22 12:44:06 espie Exp $
+# $OpenBSD: Makefile,v 1.16 2009/11/22 12:57:35 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
-	collision-check3 partial-update-test conflict-update
+	collision-check3 partial-update-test conflict-update \
+	merge-update
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -10,7 +11,7 @@ LONG2=iamanotherreallygfilenamethatcantberepresentedcorrectlyinatararchivebutwew
 LONG3=iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 LONG4=iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 
-.for i in 1 2 3 4 5 6 7 8 9 10 11
+.for i in 1 2 3 4 5 6 7 8 9 10 11 12
 S$i ?= ${.OBJDIR}/src$i
 SRC$i ?= ${S$i}/usr/local
 D$i ?= ${.OBJDIR}/dest$i
@@ -89,6 +90,12 @@ conflict-update: old/k-0.0.tgz old/l-0.0.tgz new/k-1.0.tgz new/l-1.0.tgz
 	ROOT=${D11} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u k
 	PKG_DBDIR=${D11}/pkgdb pkg_info -q|diff - ${.CURDIR}/list3.out
 
+merge-update: old/m-0.0.tgz old/n-0.0.tgz new/m-1.0.tgz new/n-1.0.tgz
+	-rm -rf ${D12}
+	ROOT=${D12} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} m n
+	ROOT=${D12} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u n
+	PKG_DBDIR=${D12}/pkgdb pkg_info -q|diff - ${.CURDIR}/list4.out
+
 plist1:
 	@echo "@owner "`whoami` >$@
 	@echo ${LONG1} >>$@
@@ -123,10 +130,16 @@ plist5:
 plist6:
 	@echo "@conflict l-<1.0" >$@
 
+plist7:
+	@echo "@conflict m-<1.0" >$@
+	@echo "@pkgpath test/m" >>$@
+
 old/a-0.0.tgz:
 	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
 
-new/a-1.0.tgz old/b-0.0.tgz old/i-0.0.tgz old/j-0.0.tgz new/j-1.0.tgz new/i-1.0.tgz old/k-0.0.tgz old/l-0.0.tgz new/l-1.0.tgz:
+new/a-1.0.tgz old/b-0.0.tgz old/i-0.0.tgz old/j-0.0.tgz new/j-1.0.tgz \
+new/i-1.0.tgz old/k-0.0.tgz old/l-0.0.tgz new/l-1.0.tgz old/m-0.0.tgz \
+old/n-0.0.tgz new/m-1.0.tgz:
 	${PKG_CREATE} -f ${.CURDIR}/empty $@
 
 new/b-1.0.tgz:
@@ -142,6 +155,9 @@ new/c-0.0.tgz: plist1
 
 new/k-1.0.tgz: plist6
 	${PKG_CREATE} -f plist6 $@
+
+new/n-1.0.tgz: plist7
+	${PKG_CREATE} -f plist7 $@
 
 new/d-0.0.tgz: plist2
 	mkdir -p ${SRC2}
