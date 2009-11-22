@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.10 2009/11/21 13:59:31 claudio Exp $ */
+/*	$OpenBSD: filter.c,v 1.11 2009/11/22 23:30:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -40,7 +40,7 @@
 #define satosin6(sa)	((struct sockaddr_in6 *)(sa))
 
 int add_addr(struct sockaddr *, int);
-int prepare_rule(u_int32_t, int, struct sockaddr *, struct sockaddr *,
+int prepare_rule(u_int32_t, struct sockaddr *, struct sockaddr *,
     u_int16_t);
 int server_lookup4(struct sockaddr_in *, struct sockaddr_in *,
     struct sockaddr_in *);
@@ -83,7 +83,7 @@ add_nat(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
 		return (-1);
 	}
 
-	if (prepare_rule(id, PF_RULESET_FILTER, src, dst, d_port) == -1)
+	if (prepare_rule(id, src, dst, d_port) == -1)
 		return (-1);
 
 	if (add_addr(nat, PF_NAT) == -1)
@@ -108,7 +108,7 @@ add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
 		return (-1);
 	}
 
-	if (prepare_rule(id, PF_RULESET_FILTER, src, dst, d_port) == -1)
+	if (prepare_rule(id, src, dst, d_port) == -1)
 		return (-1);
 
 	if (add_addr(rdr, PF_RDR) == -1)
@@ -176,7 +176,7 @@ prepare_commit(u_int32_t id)
 	    getpid(), id);
 	memset(&pfte, 0, sizeof pfte);
 	strlcpy(pfte.anchor, an, PF_ANCHOR_NAME_SIZE);
-	pfte.rs_num = PF_RULESET_FILTER;
+	pfte.type = PF_TRANS_RULESET;
 
 	if (ioctl(dev, DIOCXBEGIN, &pft) == -1)
 		return (-1);
@@ -185,7 +185,7 @@ prepare_commit(u_int32_t id)
 }
 	
 int
-prepare_rule(u_int32_t id, int rs_num, struct sockaddr *src,
+prepare_rule(u_int32_t id, struct sockaddr *src,
     struct sockaddr *dst, u_int16_t d_port)
 {
 	char an[PF_ANCHOR_NAME_SIZE];
