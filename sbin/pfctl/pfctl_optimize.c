@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.20 2009/10/28 20:11:01 jsg Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.21 2009/11/22 22:34:50 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -273,19 +273,16 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 	skip_init();
 	TAILQ_INIT(&opt_queue);
 
-	old_rules = rs->rules[PF_RULESET_FILTER].active.ptr;
-	rs->rules[PF_RULESET_FILTER].active.ptr =
-	    rs->rules[PF_RULESET_FILTER].inactive.ptr;
-	rs->rules[PF_RULESET_FILTER].inactive.ptr = old_rules;
+	old_rules = rs->rules.active.ptr;
+	rs->rules.active.ptr = rs->rules.inactive.ptr;
+	rs->rules.inactive.ptr = old_rules;
 
 	/*
 	 * XXX expanding the pf_opt_rule format throughout pfctl might allow
 	 * us to avoid all this copying.
 	 */
-	while ((r = TAILQ_FIRST(rs->rules[PF_RULESET_FILTER].inactive.ptr))
-	    != NULL) {
-		TAILQ_REMOVE(rs->rules[PF_RULESET_FILTER].inactive.ptr, r,
-		    entries);
+	while ((r = TAILQ_FIRST(rs->rules.inactive.ptr)) != NULL) {
+		TAILQ_REMOVE(rs->rules.inactive.ptr, r, entries);
 		if ((por = calloc(1, sizeof(*por))) == NULL)
 			err(1, "calloc");
 		memcpy(&por->por_rule, r, sizeof(*r));
@@ -307,7 +304,6 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 		} else
 			bzero(&por->por_rule.route,
 			    sizeof(por->por_rule.route));
-
 
 		TAILQ_INSERT_TAIL(&opt_queue, por, por_entry);
 	}
@@ -342,9 +338,7 @@ pfctl_optimize_ruleset(struct pfctl *pf, struct pf_ruleset *rs)
 			pfctl_move_pool(&por->por_rule.rdr, &r->rdr);
 			pfctl_move_pool(&por->por_rule.nat, &r->nat);
 			pfctl_move_pool(&por->por_rule.route, &r->route);
-			TAILQ_INSERT_TAIL(
-			    rs->rules[PF_RULESET_FILTER].active.ptr,
-			    r, entries);
+			TAILQ_INSERT_TAIL(rs->rules.active.ptr, r, entries);
 			free(por);
 		}
 		free(block);

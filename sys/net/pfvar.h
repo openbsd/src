@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.298 2009/11/03 17:41:02 claudio Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.299 2009/11/22 22:34:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,8 +61,7 @@ enum	{ PF_INOUT, PF_IN, PF_OUT };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP, PF_DEFER,
 	  PF_MATCH, PF_DIVERT, PF_RT };
-enum	{ PF_RULESET_FILTER, PF_RULESET_NAT, PF_RULESET_BINAT,
-	  PF_RULESET_RDR, PF_RULESET_MAX };
+enum	{ PF_TRANS_RULESET, PF_TRANS_ALTQ, PF_TRANS_TABLE };
 enum	{ PF_OP_NONE, PF_OP_IRG, PF_OP_EQ, PF_OP_NE, PF_OP_LT,
 	  PF_OP_LE, PF_OP_GT, PF_OP_GE, PF_OP_XRG, PF_OP_RRG };
 enum	{ PF_DEBUG_NONE, PF_DEBUG_URGENT, PF_DEBUG_MISC, PF_DEBUG_NOISY };
@@ -935,7 +934,7 @@ struct pf_ruleset {
 			u_int32_t		 ticket;
 			int			 open;
 		}			 active, inactive;
-	}			 rules[PF_RULESET_MAX];
+	}			 rules;
 	struct pf_anchor	*anchor;
 	u_int32_t		 tticket;
 	int			 tables;
@@ -1503,13 +1502,11 @@ struct pfioc_ruleset {
 	char		 name[PF_ANCHOR_NAME_SIZE];
 };
 
-#define PF_RULESET_ALTQ		(PF_RULESET_MAX)
-#define PF_RULESET_TABLE	(PF_RULESET_MAX+1)
 struct pfioc_trans {
 	int		 size;	/* number of elements */
 	int		 esize; /* size of each element in bytes */
 	struct pfioc_trans_e {
-		int		rs_num;
+		int		type;
 		char		anchor[MAXPATHLEN];
 		u_int32_t	ticket;
 	}		*array;
@@ -1743,6 +1740,7 @@ int	pf_socket_lookup(int, struct pf_pdesc *);
 struct pf_state_key *pf_alloc_state_key(int);
 void	pf_pkt_addr_changed(struct mbuf *);
 int	pf_state_key_attach(struct pf_state_key *, struct pf_state *, int);
+
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
@@ -1831,7 +1829,6 @@ extern struct pf_anchor        pf_main_anchor;
 #define pf_main_ruleset	pf_main_anchor.ruleset
 
 /* these ruleset functions can be linked into userland programs (pfctl) */
-int			 pf_get_ruleset_number(u_int8_t);
 void			 pf_init_ruleset(struct pf_ruleset *);
 int			 pf_anchor_setup(struct pf_rule *,
 			    const struct pf_ruleset *, const char *);
@@ -1871,10 +1868,10 @@ struct pf_os_fingerprint *
 #ifdef _KERNEL
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
 
-void			 pf_step_into_anchor(int *, struct pf_ruleset **, int,
+void			 pf_step_into_anchor(int *, struct pf_ruleset **,
 			    struct pf_rule **, struct pf_rule **, int *);
 int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
-			     int, struct pf_rule **, struct pf_rule **,
+			     struct pf_rule **, struct pf_rule **,
 			     int *);
 
 int			 pf_get_transaddr(struct pf_rule *, struct pf_pdesc *,

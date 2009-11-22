@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.289 2009/10/28 20:11:01 jsg Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.290 2009/11/22 22:34:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -91,8 +91,7 @@ void	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_test_altqsupport(int, int);
 int	 pfctl_show_anchors(int, int, char *);
 int	 pfctl_ruleset_trans(struct pfctl *, char *, struct pf_anchor *);
-int	 pfctl_load_ruleset(struct pfctl *, char *,
-		struct pf_ruleset *, int, int);
+int	 pfctl_load_ruleset(struct pfctl *, char *, struct pf_ruleset *, int);
 int	 pfctl_load_rule(struct pfctl *, char *, struct pf_rule *, int);
 const char	*pfctl_lookup_option(char *, const char **);
 void	pfctl_state_store(int, const char *);
@@ -312,7 +311,7 @@ pfctl_clear_rules(int dev, int opts, char *anchorname)
 
 	memset(&t, 0, sizeof(t));
 	t.pfrb_type = PFRB_TRANS;
-	if (pfctl_add_trans(&t, PF_RULESET_FILTER, anchorname) ||
+	if (pfctl_add_trans(&t, PF_TRANS_RULESET, anchorname) ||
 	    pfctl_trans(dev, &t, DIOCXBEGIN, 0) ||
 	    pfctl_trans(dev, &t, DIOCXCOMMIT, 0))
 		err(1, "pfctl_clear_rules");
@@ -330,7 +329,7 @@ pfctl_clear_altq(int dev, int opts)
 		return (-1);
 	memset(&t, 0, sizeof(t));
 	t.pfrb_type = PFRB_TRANS;
-	if (pfctl_add_trans(&t, PF_RULESET_ALTQ, "") ||
+	if (pfctl_add_trans(&t, PF_TRANS_ALTQ, "") ||
 	    pfctl_trans(dev, &t, DIOCXBEGIN, 0) ||
 	    pfctl_trans(dev, &t, DIOCXCOMMIT, 0))
 		err(1, "pfctl_clear_altq");
@@ -1089,18 +1088,11 @@ pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af, int which)
 int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 {
-	u_int8_t		rs_num;
 	struct pf_rule		*rule;
 	struct pf_ruleset	*rs;
 	char 			*p;
 
-	rs_num = pf_get_ruleset_number(r->action == PF_MATCH ? PF_PASS :
-	    r->action);
-	if (rs_num == PF_RULESET_MAX)
-		errx(1, "Invalid rule type %d", r->action);
-
 	rs = &pf->anchor->ruleset;
-
 	if (anchor_call[0] && r->anchor == NULL) {
 		/* 
 		 * Don't make non-brace anchors part of the main anchor pool.
@@ -1134,7 +1126,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
 	TAILQ_INIT(&rule->route.list);
 	pfctl_move_pool(&r->route, &rule->route);
 
-	TAILQ_INSERT_TAIL(rs->rules[rs_num].active.ptr, rule, entries);
+	TAILQ_INSERT_TAIL(rs->rules.active.ptr, rule, entries);
 	return (0);
 }
 
@@ -1145,15 +1137,15 @@ pfctl_ruleset_trans(struct pfctl *pf, char *path, struct pf_anchor *a)
 
 	if (a == pf->astack[0] && ((altqsupport &&
 	     (pf->loadopt & PFCTL_FLAG_ALTQ) != 0))) {
-		if (pfctl_add_trans(pf->trans, PF_RULESET_ALTQ, path))
+		if (pfctl_add_trans(pf->trans, PF_TRANS_ALTQ, path))
 			return (2);
 	}
 	if ((pf->loadopt & PFCTL_FLAG_FILTER) != 0) {
-		if (pfctl_add_trans(pf->trans, PF_RULESET_FILTER, path))
+		if (pfctl_add_trans(pf->trans, PF_TRANS_RULESET, path))
 			return (3);
 	}
 	if (pf->loadopt & PFCTL_FLAG_TABLE)
-		if (pfctl_add_trans(pf->trans, PF_RULESET_TABLE, path))
+		if (pfctl_add_trans(pf->trans, PF_TRANS_TABLE, path))
 			return (4);
 	if (pfctl_trans(pf->dev, pf->trans, DIOCXBEGIN, osize))
 		return (5);
@@ -1163,7 +1155,7 @@ pfctl_ruleset_trans(struct pfctl *pf, char *path, struct pf_anchor *a)
 
 int
 pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
-    int rs_num, int depth)
+    int depth)
 {
 	struct pf_rule *r;
 	int		error, len = strlen(path);
@@ -1177,7 +1169,7 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 		snprintf(&path[len], MAXPATHLEN - len, "%s", pf->anchor->name);
 
 	if (depth) {
-		if (TAILQ_FIRST(rs->rules[rs_num].active.ptr) != NULL) {
+		if (TAILQ_FIRST(rs->rules.active.ptr) != NULL) {
 			brace++;
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf(" {\n");
@@ -1193,16 +1185,16 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 
 	}
 
-	if (pf->optimize && rs_num == PF_RULESET_FILTER)
+	if (pf->optimize)
 		pfctl_optimize_ruleset(pf, rs);
 
-	while ((r = TAILQ_FIRST(rs->rules[rs_num].active.ptr)) != NULL) {
-		TAILQ_REMOVE(rs->rules[rs_num].active.ptr, r, entries);
+	while ((r = TAILQ_FIRST(rs->rules.active.ptr)) != NULL) {
+		TAILQ_REMOVE(rs->rules.active.ptr, r, entries);
 		if ((error = pfctl_load_rule(pf, path, r, depth)))
 			goto error;
 		if (r->anchor) {
 			if ((error = pfctl_load_ruleset(pf, path,
-			    &r->anchor->ruleset, rs_num, depth + 1)))
+			    &r->anchor->ruleset, depth + 1)))
 				goto error;
 		} else if (pf->opts & PF_OPT_VERBOSE)
 			printf("\n");
@@ -1224,7 +1216,6 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 int
 pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 {
-	u_int8_t		rs_num = pf_get_ruleset_number(r->action);
 	char			*name;
 	struct pfioc_rule	pr;
 	int			len = strlen(path);
@@ -1232,7 +1223,7 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 	bzero(&pr, sizeof(pr));
 	/* set up anchor before adding to path for anchor_call */
 	if ((pf->opts & PF_OPT_NOACTION) == 0)
-		pr.ticket = pfctl_get_ticket(pf->trans, rs_num, path);
+		pr.ticket = pfctl_get_ticket(pf->trans, PF_TRANS_RULESET, path);
 	if (strlcpy(pr.anchor, path, sizeof(pr.anchor)) >= sizeof(pr.anchor))
 		errx(1, "pfctl_load_rule: strlcpy");
 
@@ -1375,10 +1366,10 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 			ERRX("pfctl_rules");
 		if (altqsupport && (pf.loadopt & PFCTL_FLAG_ALTQ))
 			pa.ticket =
-			    pfctl_get_ticket(t, PF_RULESET_ALTQ, anchorname);
+			    pfctl_get_ticket(t, PF_TRANS_ALTQ, anchorname);
 		if (pf.loadopt & PFCTL_FLAG_TABLE)
 			pf.astack[0]->ruleset.tticket =
-			    pfctl_get_ticket(t, PF_RULESET_TABLE, anchorname);
+			    pfctl_get_ticket(t, PF_TRANS_TABLE, anchorname);
 	}
 
 	if (parse_config(filename, &pf) < 0) {
@@ -1390,7 +1381,7 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	}
 
 	if ((pf.loadopt & PFCTL_FLAG_FILTER &&
-	    pfctl_load_ruleset(&pf, path, rs, PF_RULESET_FILTER, 0))) {
+	    pfctl_load_ruleset(&pf, path, rs, 0))) {
 		if ((opts & PF_OPT_NOACTION) == 0)
 			ERRX("Unable to load rules into kernel");
 		else

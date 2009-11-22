@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.574 2009/11/09 14:31:58 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.575 2009/11/22 22:34:50 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -5425,23 +5425,17 @@ symget(const char *nam)
 void
 mv_rules(struct pf_ruleset *src, struct pf_ruleset *dst)
 {
-	int i;
 	struct pf_rule *r;
 
-	for (i = 0; i < PF_RULESET_MAX; ++i) {
-		while ((r = TAILQ_FIRST(src->rules[i].active.ptr))
-		    != NULL) {
-			TAILQ_REMOVE(src->rules[i].active.ptr, r, entries);
-			TAILQ_INSERT_TAIL(dst->rules[i].active.ptr, r, entries);
-			dst->anchor->match++;
-		}
-		src->anchor->match = 0;
-		while ((r = TAILQ_FIRST(src->rules[i].inactive.ptr))
-		    != NULL) {
-			TAILQ_REMOVE(src->rules[i].inactive.ptr, r, entries);
-			TAILQ_INSERT_TAIL(dst->rules[i].inactive.ptr,
-				r, entries);
-		}
+	while ((r = TAILQ_FIRST(src->rules.active.ptr)) != NULL) {
+		TAILQ_REMOVE(src->rules.active.ptr, r, entries);
+		TAILQ_INSERT_TAIL(dst->rules.active.ptr, r, entries);
+		dst->anchor->match++;
+	}
+	src->anchor->match = 0;
+	while ((r = TAILQ_FIRST(src->rules.inactive.ptr)) != NULL) {
+		TAILQ_REMOVE(src->rules.inactive.ptr, r, entries);
+		TAILQ_INSERT_TAIL(dst->rules.inactive.ptr, r, entries);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.4 2009/04/06 12:05:55 henning Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.5 2009/11/22 22:34:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -98,45 +98,14 @@ pf_anchor_compare(struct pf_anchor *a, struct pf_anchor *b)
 	return (c ? (c < 0 ? -1 : 1) : 0);
 }
 
-int
-pf_get_ruleset_number(u_int8_t action)
-{
-	switch (action) {
-	case PF_PASS:
-	case PF_MATCH:
-	case PF_DROP:
-		return (PF_RULESET_FILTER);
-		break;
-	case PF_NAT:
-	case PF_NONAT:
-		return (PF_RULESET_NAT);
-		break;
-	case PF_BINAT:
-	case PF_NOBINAT:
-		return (PF_RULESET_BINAT);
-		break;
-	case PF_RDR:
-	case PF_NORDR:
-		return (PF_RULESET_RDR);
-		break;
-	default:
-		return (PF_RULESET_MAX);
-		break;
-	}
-}
-
 void
 pf_init_ruleset(struct pf_ruleset *ruleset)
 {
-	int	i;
-
 	memset(ruleset, 0, sizeof(struct pf_ruleset));
-	for (i = 0; i < PF_RULESET_MAX; i++) {
-		TAILQ_INIT(&ruleset->rules[i].queues[0]);
-		TAILQ_INIT(&ruleset->rules[i].queues[1]);
-		ruleset->rules[i].active.ptr = &ruleset->rules[i].queues[0];
-		ruleset->rules[i].inactive.ptr = &ruleset->rules[i].queues[1];
-	}
+	TAILQ_INIT(&ruleset->rules.queues[0]);
+	TAILQ_INIT(&ruleset->rules.queues[1]);
+	ruleset->rules.active.ptr = &ruleset->rules.queues[0];
+	ruleset->rules.inactive.ptr = &ruleset->rules.queues[1];
 }
 
 struct pf_anchor *
@@ -265,7 +234,6 @@ void
 pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 {
 	struct pf_anchor	*parent;
-	int			 i;
 
 	while (ruleset != NULL) {
 		if (ruleset == &pf_main_ruleset || ruleset->anchor == NULL ||
@@ -273,11 +241,10 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 		    ruleset->anchor->refcnt > 0 || ruleset->tables > 0 ||
 		    ruleset->topen)
 			return;
-		for (i = 0; i < PF_RULESET_MAX; ++i)
-			if (!TAILQ_EMPTY(ruleset->rules[i].active.ptr) ||
-			    !TAILQ_EMPTY(ruleset->rules[i].inactive.ptr) ||
-			    ruleset->rules[i].inactive.open)
-				return;
+		if (!TAILQ_EMPTY(ruleset->rules.active.ptr) ||
+		    !TAILQ_EMPTY(ruleset->rules.inactive.ptr) ||
+		    ruleset->rules.inactive.open)
+			return;
 		RB_REMOVE(pf_anchor_global, &pf_anchors, ruleset->anchor);
 		if ((parent = ruleset->anchor->parent) != NULL)
 			RB_REMOVE(pf_anchor_node, &parent->children,

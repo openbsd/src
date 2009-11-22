@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.225 2009/11/11 10:31:44 jsg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.226 2009/11/22 22:34:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -104,12 +104,12 @@ int			 pf_commit_altq(u_int32_t);
 int			 pf_enable_altq(struct pf_altq *);
 int			 pf_disable_altq(struct pf_altq *);
 #endif /* ALTQ */
-int			 pf_begin_rules(u_int32_t *, int, const char *);
-int			 pf_rollback_rules(u_int32_t, int, char *);
+int			 pf_begin_rules(u_int32_t *, const char *);
+int			 pf_rollback_rules(u_int32_t, char *);
 int			 pf_setup_pfsync_matching(struct pf_ruleset *);
 void			 pf_hash_rule(MD5_CTX *, struct pf_rule *);
 void			 pf_hash_rule_addr(MD5_CTX *, struct pf_rule_addr *);
-int			 pf_commit_rules(u_int32_t, int, char *);
+int			 pf_commit_rules(u_int32_t, char *);
 int			 pf_addr_setup(struct pf_ruleset *,
 			    struct pf_addr_wrap *, sa_family_t);
 void			 pf_addr_copyout(struct pf_addr_wrap *);
@@ -264,32 +264,26 @@ pf_get_pool(char *anchor, u_int32_t ticket, u_int8_t rule_action,
 {
 	struct pf_ruleset	*ruleset;
 	struct pf_rule		*rule;
-	int			 rs_num;
 
 	ruleset = pf_find_ruleset(anchor);
 	if (ruleset == NULL)
 		return (NULL);
-	rs_num = pf_get_ruleset_number(rule_action);
-	if (rs_num >= PF_RULESET_MAX)
-		return (NULL);
 	if (active) {
-		if (check_ticket && ticket !=
-		    ruleset->rules[rs_num].active.ticket)
+		if (check_ticket && ticket != ruleset->rules.active.ticket)
 			return (NULL);
 		if (r_last)
-			rule = TAILQ_LAST(ruleset->rules[rs_num].active.ptr,
+			rule = TAILQ_LAST(ruleset->rules.active.ptr,
 			    pf_rulequeue);
 		else
-			rule = TAILQ_FIRST(ruleset->rules[rs_num].active.ptr);
+			rule = TAILQ_FIRST(ruleset->rules.active.ptr);
 	} else {
-		if (check_ticket && ticket !=
-		    ruleset->rules[rs_num].inactive.ticket)
+		if (check_ticket && ticket != ruleset->rules.inactive.ticket)
 			return (NULL);
 		if (r_last)
-			rule = TAILQ_LAST(ruleset->rules[rs_num].inactive.ptr,
+			rule = TAILQ_LAST(ruleset->rules.inactive.ptr,
 			    pf_rulequeue);
 		else
-			rule = TAILQ_FIRST(ruleset->rules[rs_num].inactive.ptr);
+			rule = TAILQ_FIRST(ruleset->rules.inactive.ptr);
 	}
 	if (!r_last) {
 		while ((rule != NULL) && (rule->nr != rule_number))
@@ -689,42 +683,37 @@ pf_disable_altq(struct pf_altq *altq)
 #endif /* ALTQ */
 
 int
-pf_begin_rules(u_int32_t *ticket, int rs_num, const char *anchor)
+pf_begin_rules(u_int32_t *ticket, const char *anchor)
 {
 	struct pf_ruleset	*rs;
 	struct pf_rule		*rule;
 
-	if (rs_num < 0 || rs_num >= PF_RULESET_MAX)
+	if ((rs = pf_find_or_create_ruleset(anchor)) == NULL)
 		return (EINVAL);
-	rs = pf_find_or_create_ruleset(anchor);
-	if (rs == NULL)
-		return (EINVAL);
-	while ((rule = TAILQ_FIRST(rs->rules[rs_num].inactive.ptr)) != NULL) {
-		pf_rm_rule(rs->rules[rs_num].inactive.ptr, rule);
-		rs->rules[rs_num].inactive.rcount--;
+	while ((rule = TAILQ_FIRST(rs->rules.inactive.ptr)) != NULL) {
+		pf_rm_rule(rs->rules.inactive.ptr, rule);
+		rs->rules.inactive.rcount--;
 	}
-	*ticket = ++rs->rules[rs_num].inactive.ticket;
-	rs->rules[rs_num].inactive.open = 1;
+	*ticket = ++rs->rules.inactive.ticket;
+	rs->rules.inactive.open = 1;
 	return (0);
 }
 
 int
-pf_rollback_rules(u_int32_t ticket, int rs_num, char *anchor)
+pf_rollback_rules(u_int32_t ticket, char *anchor)
 {
 	struct pf_ruleset	*rs;
 	struct pf_rule		*rule;
 
-	if (rs_num < 0 || rs_num >= PF_RULESET_MAX)
-		return (EINVAL);
 	rs = pf_find_ruleset(anchor);
-	if (rs == NULL || !rs->rules[rs_num].inactive.open ||
-	    rs->rules[rs_num].inactive.ticket != ticket)
+	if (rs == NULL || !rs->rules.inactive.open ||
+	    rs->rules.inactive.ticket != ticket)
 		return (0);
-	while ((rule = TAILQ_FIRST(rs->rules[rs_num].inactive.ptr)) != NULL) {
-		pf_rm_rule(rs->rules[rs_num].inactive.ptr, rule);
-		rs->rules[rs_num].inactive.rcount--;
+	while ((rule = TAILQ_FIRST(rs->rules.inactive.ptr)) != NULL) {
+		pf_rm_rule(rs->rules.inactive.ptr, rule);
+		rs->rules.inactive.rcount--;
 	}
-	rs->rules[rs_num].inactive.open = 0;
+	rs->rules.inactive.open = 0;
 	return (0);
 }
 
@@ -812,7 +801,7 @@ pf_hash_rule(MD5_CTX *ctx, struct pf_rule *rule)
 }
 
 int
-pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
+pf_commit_rules(u_int32_t ticket, char *anchor)
 {
 	struct pf_ruleset	*rs;
 	struct pf_rule		*rule, **old_array;
@@ -820,11 +809,9 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 	int			 s, error;
 	u_int32_t		 old_rcount;
 
-	if (rs_num < 0 || rs_num >= PF_RULESET_MAX)
-		return (EINVAL);
 	rs = pf_find_ruleset(anchor);
-	if (rs == NULL || !rs->rules[rs_num].inactive.open ||
-	    ticket != rs->rules[rs_num].inactive.ticket)
+	if (rs == NULL || !rs->rules.inactive.open ||
+	    ticket != rs->rules.inactive.ticket)
 		return (EBUSY);
 
 	/* Calculate checksum for the main ruleset */
@@ -836,33 +823,29 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 
 	/* Swap rules, keep the old. */
 	s = splsoftnet();
-	old_rules = rs->rules[rs_num].active.ptr;
-	old_rcount = rs->rules[rs_num].active.rcount;
-	old_array = rs->rules[rs_num].active.ptr_array;
+	old_rules = rs->rules.active.ptr;
+	old_rcount = rs->rules.active.rcount;
+	old_array = rs->rules.active.ptr_array;
 
-	rs->rules[rs_num].active.ptr =
-	    rs->rules[rs_num].inactive.ptr;
-	rs->rules[rs_num].active.ptr_array =
-	    rs->rules[rs_num].inactive.ptr_array;
-	rs->rules[rs_num].active.rcount =
-	    rs->rules[rs_num].inactive.rcount;
-	rs->rules[rs_num].inactive.ptr = old_rules;
-	rs->rules[rs_num].inactive.ptr_array = old_array;
-	rs->rules[rs_num].inactive.rcount = old_rcount;
+	rs->rules.active.ptr = rs->rules.inactive.ptr;
+	rs->rules.active.ptr_array = rs->rules.inactive.ptr_array;
+	rs->rules.active.rcount = rs->rules.inactive.rcount;
+	rs->rules.inactive.ptr = old_rules;
+	rs->rules.inactive.ptr_array = old_array;
+	rs->rules.inactive.rcount = old_rcount;
 
-	rs->rules[rs_num].active.ticket =
-	    rs->rules[rs_num].inactive.ticket;
-	pf_calc_skip_steps(rs->rules[rs_num].active.ptr);
+	rs->rules.active.ticket = rs->rules.inactive.ticket;
+	pf_calc_skip_steps(rs->rules.active.ptr);
 
 
 	/* Purge the old rule list. */
 	while ((rule = TAILQ_FIRST(old_rules)) != NULL)
 		pf_rm_rule(old_rules, rule);
-	if (rs->rules[rs_num].inactive.ptr_array)
-		free(rs->rules[rs_num].inactive.ptr_array, M_TEMP);
-	rs->rules[rs_num].inactive.ptr_array = NULL;
-	rs->rules[rs_num].inactive.rcount = 0;
-	rs->rules[rs_num].inactive.open = 0;
+	if (rs->rules.inactive.ptr_array)
+		free(rs->rules.inactive.ptr_array, M_TEMP);
+	rs->rules.inactive.ptr_array = NULL;
+	rs->rules.inactive.rcount = 0;
+	rs->rules.inactive.open = 0;
 	pf_remove_if_empty_ruleset(rs);
 	splx(s);
 	return (0);
@@ -873,30 +856,24 @@ pf_setup_pfsync_matching(struct pf_ruleset *rs)
 {
 	MD5_CTX			 ctx;
 	struct pf_rule		*rule;
-	int			 rs_cnt;
 	u_int8_t		 digest[PF_MD5_DIGEST_LENGTH];
 
 	MD5Init(&ctx);
-	for (rs_cnt = 0; rs_cnt < PF_RULESET_MAX; rs_cnt++) {
-		if (rs->rules[rs_cnt].inactive.ptr_array)
-			free(rs->rules[rs_cnt].inactive.ptr_array, M_TEMP);
-		rs->rules[rs_cnt].inactive.ptr_array = NULL;
+	if (rs->rules.inactive.ptr_array)
+		free(rs->rules.inactive.ptr_array, M_TEMP);
+	rs->rules.inactive.ptr_array = NULL;
 
-		if (rs->rules[rs_cnt].inactive.rcount) {
-			rs->rules[rs_cnt].inactive.ptr_array =
-			    malloc(sizeof(caddr_t) *
-			    rs->rules[rs_cnt].inactive.rcount,
-			    M_TEMP, M_NOWAIT);
+	if (rs->rules.inactive.rcount) {
+		rs->rules.inactive.ptr_array = malloc(sizeof(caddr_t) *
+		    rs->rules.inactive.rcount,  M_TEMP, M_NOWAIT);
 
-			if (!rs->rules[rs_cnt].inactive.ptr_array)
-				return (ENOMEM);
-		}
+		if (!rs->rules.inactive.ptr_array)
+			return (ENOMEM);
+	}
 
-		TAILQ_FOREACH(rule, rs->rules[rs_cnt].inactive.ptr,
-		    entries) {
-			pf_hash_rule(&ctx, rule);
-			(rs->rules[rs_cnt].inactive.ptr_array)[rule->nr] = rule;
-		}
+	TAILQ_FOREACH(rule, rs->rules.inactive.ptr, entries) {
+		pf_hash_rule(&ctx, rule);
+		(rs->rules.inactive.ptr_array)[rule->nr] = rule;
 	}
 
 	MD5Final(digest, &ctx);
@@ -1069,7 +1046,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_ruleset	*ruleset;
 		struct pf_rule		*rule, *tail;
 		struct pf_pooladdr	*pa;
-		int			 rs_num;
 
 		pr->anchor[sizeof(pr->anchor) - 1] = 0;
 		ruleset = pf_find_ruleset(pr->anchor);
@@ -1077,16 +1053,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		rs_num = pf_get_ruleset_number(pr->rule.action);
-		if (rs_num >= PF_RULESET_MAX) {
-			error = EINVAL;
-			break;
-		}
 		if (pr->rule.return_icmp >> 8 > ICMP_MAXTYPE) {
 			error = EINVAL;
 			break;
 		}
-		if (pr->ticket != ruleset->rules[rs_num].inactive.ticket) {
+		if (pr->ticket != ruleset->rules.inactive.ticket) {
 			error = EBUSY;
 			break;
 		}
@@ -1128,8 +1099,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EAFNOSUPPORT;
 			goto fail;
 		}
-
-		tail = TAILQ_LAST(ruleset->rules[rs_num].inactive.ptr,
+		tail = TAILQ_LAST(ruleset->rules.inactive.ptr,
 		    pf_rulequeue);
 		if (tail)
 			rule->nr = tail->nr + 1;
@@ -1221,9 +1191,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		rule->route.cur = TAILQ_FIRST(&rule->route.list);
 		rule->evaluations = rule->packets[0] = rule->packets[1] =
 		    rule->bytes[0] = rule->bytes[1] = 0;
-		TAILQ_INSERT_TAIL(ruleset->rules[rs_num].inactive.ptr,
+		TAILQ_INSERT_TAIL(ruleset->rules.inactive.ptr,
 		    rule, entries);
-		ruleset->rules[rs_num].inactive.rcount++;
+		ruleset->rules.inactive.rcount++;
 		break;
 	}
 
@@ -1231,7 +1201,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
 		struct pf_ruleset	*ruleset;
 		struct pf_rule		*tail;
-		int			 rs_num;
 
 		pr->anchor[sizeof(pr->anchor) - 1] = 0;
 		ruleset = pf_find_ruleset(pr->anchor);
@@ -1239,18 +1208,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		rs_num = pf_get_ruleset_number(pr->rule.action);
-		if (rs_num >= PF_RULESET_MAX) {
-			error = EINVAL;
-			break;
-		}
-		tail = TAILQ_LAST(ruleset->rules[rs_num].active.ptr,
-		    pf_rulequeue);
+		tail = TAILQ_LAST(ruleset->rules.active.ptr, pf_rulequeue);
 		if (tail)
 			pr->nr = tail->nr + 1;
 		else
 			pr->nr = 0;
-		pr->ticket = ruleset->rules[rs_num].active.ticket;
+		pr->ticket = ruleset->rules.active.ticket;
 		break;
 	}
 
@@ -1258,7 +1221,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
 		struct pf_ruleset	*ruleset;
 		struct pf_rule		*rule;
-		int			 rs_num, i;
+		int			 i;
 
 		pr->anchor[sizeof(pr->anchor) - 1] = 0;
 		ruleset = pf_find_ruleset(pr->anchor);
@@ -1266,16 +1229,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		rs_num = pf_get_ruleset_number(pr->rule.action);
-		if (rs_num >= PF_RULESET_MAX) {
-			error = EINVAL;
-			break;
-		}
-		if (pr->ticket != ruleset->rules[rs_num].active.ticket) {
+		if (pr->ticket != ruleset->rules.active.ticket) {
 			error = EBUSY;
 			break;
 		}
-		rule = TAILQ_FIRST(ruleset->rules[rs_num].active.ptr);
+		rule = TAILQ_FIRST(ruleset->rules.active.ptr);
 		while ((rule != NULL) && (rule->nr != pr->nr))
 			rule = TAILQ_NEXT(rule, entries);
 		if (rule == NULL) {
@@ -1310,7 +1268,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_ruleset	*ruleset;
 		struct pf_rule		*oldrule = NULL, *newrule = NULL;
 		u_int32_t		 nr = 0;
-		int			 rs_num;
 
 		if (!(pcr->action == PF_CHANGE_REMOVE ||
 		    pcr->action == PF_CHANGE_GET_TICKET) &&
@@ -1329,18 +1286,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		rs_num = pf_get_ruleset_number(pcr->rule.action);
-		if (rs_num >= PF_RULESET_MAX) {
-			error = EINVAL;
-			break;
-		}
 
 		if (pcr->action == PF_CHANGE_GET_TICKET) {
-			pcr->ticket = ++ruleset->rules[rs_num].active.ticket;
+			pcr->ticket = ++ruleset->rules.active.ticket;
 			break;
 		} else {
 			if (pcr->ticket !=
-			    ruleset->rules[rs_num].active.ticket) {
+			    ruleset->rules.active.ticket) {
 				error = EINVAL;
 				break;
 			}
@@ -1481,14 +1433,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_empty_pool(&pf_pabuf[2]);
 
 		if (pcr->action == PF_CHANGE_ADD_HEAD)
-			oldrule = TAILQ_FIRST(
-			    ruleset->rules[rs_num].active.ptr);
+			oldrule = TAILQ_FIRST(ruleset->rules.active.ptr);
 		else if (pcr->action == PF_CHANGE_ADD_TAIL)
-			oldrule = TAILQ_LAST(
-			    ruleset->rules[rs_num].active.ptr, pf_rulequeue);
+			oldrule = TAILQ_LAST(ruleset->rules.active.ptr,
+			    pf_rulequeue);
 		else {
-			oldrule = TAILQ_FIRST(
-			    ruleset->rules[rs_num].active.ptr);
+			oldrule = TAILQ_FIRST(ruleset->rules.active.ptr);
 			while ((oldrule != NULL) && (oldrule->nr != pcr->nr))
 				oldrule = TAILQ_NEXT(oldrule, entries);
 			if (oldrule == NULL) {
@@ -1500,31 +1450,30 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		if (pcr->action == PF_CHANGE_REMOVE) {
-			pf_rm_rule(ruleset->rules[rs_num].active.ptr, oldrule);
-			ruleset->rules[rs_num].active.rcount--;
+			pf_rm_rule(ruleset->rules.active.ptr, oldrule);
+			ruleset->rules.active.rcount--;
 		} else {
 			if (oldrule == NULL)
 				TAILQ_INSERT_TAIL(
-				    ruleset->rules[rs_num].active.ptr,
+				    ruleset->rules.active.ptr,
 				    newrule, entries);
 			else if (pcr->action == PF_CHANGE_ADD_HEAD ||
 			    pcr->action == PF_CHANGE_ADD_BEFORE)
 				TAILQ_INSERT_BEFORE(oldrule, newrule, entries);
 			else
 				TAILQ_INSERT_AFTER(
-				    ruleset->rules[rs_num].active.ptr,
+				    ruleset->rules.active.ptr,
 				    oldrule, newrule, entries);
-			ruleset->rules[rs_num].active.rcount++;
+			ruleset->rules.active.rcount++;
 		}
 
 		nr = 0;
-		TAILQ_FOREACH(oldrule,
-		    ruleset->rules[rs_num].active.ptr, entries)
+		TAILQ_FOREACH(oldrule, ruleset->rules.active.ptr, entries)
 			oldrule->nr = nr++;
 
-		ruleset->rules[rs_num].active.ticket++;
+		ruleset->rules.active.ticket++;
 
-		pf_calc_skip_steps(ruleset->rules[rs_num].active.ptr);
+		pf_calc_skip_steps(ruleset->rules.active.ptr);
 		pf_remove_if_empty_ruleset(ruleset);
 
 		break;
@@ -1834,7 +1783,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rule		*rule;
 
 		TAILQ_FOREACH(rule,
-		    ruleset->rules[PF_RULESET_FILTER].active.ptr, entries) {
+		    ruleset->rules.active.ptr, entries) {
 			rule->evaluations = 0;
 			rule->packets[0] = rule->packets[1] = 0;
 			rule->bytes[0] = rule->bytes[1] = 0;
@@ -2534,9 +2483,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EFAULT;
 				goto fail;
 			}
-			switch (ioe->rs_num) {
+			switch (ioe->type) {
 #ifdef ALTQ
-			case PF_RULESET_ALTQ:
+			case PF_TRANS_ALTQ:
 				if (ioe->anchor[0]) {
 					free(table, M_TEMP);
 					free(ioe, M_TEMP);
@@ -2550,7 +2499,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 				break;
 #endif /* ALTQ */
-			case PF_RULESET_TABLE:
+			case PF_TRANS_TABLE:
 				bzero(table, sizeof(*table));
 				strlcpy(table->pfrt_anchor, ioe->anchor,
 				    sizeof(table->pfrt_anchor));
@@ -2563,7 +2512,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			default:
 				if ((error = pf_begin_rules(&ioe->ticket,
-				    ioe->rs_num, ioe->anchor))) {
+				    ioe->anchor))) {
 					free(table, M_TEMP);
 					free(ioe, M_TEMP);
 					goto fail;
@@ -2601,9 +2550,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EFAULT;
 				goto fail;
 			}
-			switch (ioe->rs_num) {
+			switch (ioe->type) {
 #ifdef ALTQ
-			case PF_RULESET_ALTQ:
+			case PF_TRANS_ALTQ:
 				if (ioe->anchor[0]) {
 					free(table, M_TEMP);
 					free(ioe, M_TEMP);
@@ -2617,7 +2566,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 				break;
 #endif /* ALTQ */
-			case PF_RULESET_TABLE:
+			case PF_TRANS_TABLE:
 				bzero(table, sizeof(*table));
 				strlcpy(table->pfrt_anchor, ioe->anchor,
 				    sizeof(table->pfrt_anchor));
@@ -2630,7 +2579,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			default:
 				if ((error = pf_rollback_rules(ioe->ticket,
-				    ioe->rs_num, ioe->anchor))) {
+				    ioe->anchor))) {
 					free(table, M_TEMP);
 					free(ioe, M_TEMP);
 					goto fail; /* really bad */
@@ -2664,9 +2613,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EFAULT;
 				goto fail;
 			}
-			switch (ioe->rs_num) {
+			switch (ioe->type) {
 #ifdef ALTQ
-			case PF_RULESET_ALTQ:
+			case PF_TRANS_ALTQ:
 				if (ioe->anchor[0]) {
 					free(table, M_TEMP);
 					free(ioe, M_TEMP);
@@ -2682,7 +2631,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 				break;
 #endif /* ALTQ */
-			case PF_RULESET_TABLE:
+			case PF_TRANS_TABLE:
 				rs = pf_find_ruleset(ioe->anchor);
 				if (rs == NULL || !rs->topen || ioe->ticket !=
 				     rs->tticket) {
@@ -2693,17 +2642,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 				break;
 			default:
-				if (ioe->rs_num < 0 || ioe->rs_num >=
-				    PF_RULESET_MAX) {
-					free(table, M_TEMP);
-					free(ioe, M_TEMP);
-					error = EINVAL;
-					goto fail;
-				}
 				rs = pf_find_ruleset(ioe->anchor);
 				if (rs == NULL ||
-				    !rs->rules[ioe->rs_num].inactive.open ||
-				    rs->rules[ioe->rs_num].inactive.ticket !=
+				    !rs->rules.inactive.open ||
+				    rs->rules.inactive.ticket !=
 				    ioe->ticket) {
 					free(table, M_TEMP);
 					free(ioe, M_TEMP);
@@ -2734,9 +2676,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EFAULT;
 				goto fail;
 			}
-			switch (ioe->rs_num) {
+			switch (ioe->type) {
 #ifdef ALTQ
-			case PF_RULESET_ALTQ:
+			case PF_TRANS_ALTQ:
 				if ((error = pf_commit_altq(ioe->ticket))) {
 					free(table, M_TEMP);
 					free(ioe, M_TEMP);
@@ -2744,7 +2686,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 				break;
 #endif /* ALTQ */
-			case PF_RULESET_TABLE:
+			case PF_TRANS_TABLE:
 				bzero(table, sizeof(*table));
 				strlcpy(table->pfrt_anchor, ioe->anchor,
 				    sizeof(table->pfrt_anchor));
@@ -2757,7 +2699,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			default:
 				if ((error = pf_commit_rules(ioe->ticket,
-				    ioe->rs_num, ioe->anchor))) {
+				    ioe->anchor))) {
 					free(table, M_TEMP);
 					free(ioe, M_TEMP);
 					goto fail; /* really bad */

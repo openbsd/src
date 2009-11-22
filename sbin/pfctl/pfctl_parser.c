@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.250 2009/10/28 20:11:01 jsg Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.251 2009/11/22 22:34:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1712,12 +1712,12 @@ append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 }
 
 int
-pfctl_add_trans(struct pfr_buffer *buf, int rs_num, const char *anchor)
+pfctl_add_trans(struct pfr_buffer *buf, int type, const char *anchor)
 {
 	struct pfioc_trans_e trans;
 
 	bzero(&trans, sizeof(trans));
-	trans.rs_num = rs_num;
+	trans.type = type;
 	if (strlcpy(trans.anchor, anchor,
 	    sizeof(trans.anchor)) >= sizeof(trans.anchor))
 		errx(1, "pfctl_add_trans: strlcpy");
@@ -1726,12 +1726,12 @@ pfctl_add_trans(struct pfr_buffer *buf, int rs_num, const char *anchor)
 }
 
 u_int32_t
-pfctl_get_ticket(struct pfr_buffer *buf, int rs_num, const char *anchor)
+pfctl_get_ticket(struct pfr_buffer *buf, int type, const char *anchor)
 {
 	struct pfioc_trans_e *p;
 
 	PFRB_FOREACH(p, buf)
-		if (rs_num == p->rs_num && !strcmp(anchor, p->anchor))
+		if (type == p->type && !strcmp(anchor, p->anchor))
 			return (p->ticket);
 	errx(1, "pfctl_get_ticket: assertion failed");
 }

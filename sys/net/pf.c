@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.669 2009/11/21 20:54:27 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.670 2009/11/22 22:34:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2251,7 +2251,7 @@ pf_tag_packet(struct mbuf *m, int tag, int rtableid)
 }
 
 void
-pf_step_into_anchor(int *depth, struct pf_ruleset **rs, int n,
+pf_step_into_anchor(int *depth, struct pf_ruleset **rs,
     struct pf_rule **r, struct pf_rule **a, int *match)
 {
 	struct pf_anchor_stackframe	*f;
@@ -2282,11 +2282,11 @@ pf_step_into_anchor(int *depth, struct pf_ruleset **rs, int n,
 		f->child = NULL;
 		*rs = &(*r)->anchor->ruleset;
 	}
-	*r = TAILQ_FIRST((*rs)->rules[n].active.ptr);
+	*r = TAILQ_FIRST((*rs)->rules.active.ptr);
 }
 
 int
-pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs, int n,
+pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs,
     struct pf_rule **r, struct pf_rule **a, int *match)
 {
 	struct pf_anchor_stackframe	*f;
@@ -2305,7 +2305,7 @@ pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs, int n,
 			f->child = RB_NEXT(pf_anchor_node, f->parent, f->child);
 			if (f->child != NULL) {
 				*rs = &f->child->ruleset;
-				*r = TAILQ_FIRST((*rs)->rules[n].active.ptr);
+				*r = TAILQ_FIRST((*rs)->rules.active.ptr);
 				if (*r == NULL)
 					continue;
 				else
@@ -2763,7 +2763,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	pd->osport = sport;
 	pd->odport = dport;
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
+	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
 		if (pfi_kif_match(r->kif, kif) == r->ifnot)
@@ -2853,10 +2853,10 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 				r = TAILQ_NEXT(r, entries);
 			} else
 				pf_step_into_anchor(&asd, &ruleset,
-				    PF_RULESET_FILTER, &r, &a, &match);
+				    &r, &a, &match);
 		}
 		if (r == NULL && pf_step_out_of_anchor(&asd, &ruleset,
-		    PF_RULESET_FILTER, &r, &a, &match))
+		    &r, &a, &match))
 			break;
 	}
 	r = *rm;
@@ -3300,7 +3300,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 	int			 asd = 0;
 	int			 match = 0;
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
+	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
 		if (pfi_kif_match(r->kif, kif) == r->ifnot)
@@ -3347,10 +3347,10 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 				r = TAILQ_NEXT(r, entries);
 			} else
 				pf_step_into_anchor(&asd, &ruleset,
-				    PF_RULESET_FILTER, &r, &a, &match);
+				    &r, &a, &match);
 		}
 		if (r == NULL && pf_step_out_of_anchor(&asd, &ruleset,
-		    PF_RULESET_FILTER, &r, &a, &match))
+		    &r, &a, &match))
 			break;
 	}
 	r = *rm;

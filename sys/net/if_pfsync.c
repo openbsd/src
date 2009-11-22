@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.131 2009/11/12 06:53:24 deraadt Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.132 2009/11/22 22:34:50 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -492,9 +492,8 @@ pfsync_state_import(struct pfsync_state *sp, u_int8_t flags)
 	 */
 	if (sp->rule != htonl(-1) && sp->anchor == htonl(-1) &&
 	    (flags & (PFSYNC_SI_IOCTL | PFSYNC_SI_CKSUM)) && ntohl(sp->rule) <
-	    pf_main_ruleset.rules[PF_RULESET_FILTER].active.rcount)
-		r = pf_main_ruleset.rules[
-		    PF_RULESET_FILTER].active.ptr_array[ntohl(sp->rule)];
+	    pf_main_ruleset.rules.active.rcount)
+		r = pf_main_ruleset.rules.active.ptr_array[ntohl(sp->rule)];
 	else
 		r = &pf_default_rule;
 
