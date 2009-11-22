@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.103 2009/10/13 19:33:16 pirofti Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.104 2009/11/22 12:51:09 jsg Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1244,21 +1244,6 @@ wdc_probe_caps(drvp, params)
 	struct wdc_softc *wdc = chp->wdc;
 	int i, valid_mode_found;
 	int cf_flags = drvp->cf_flags;
-
-	if ((wdc->cap & WDC_CAPABILITY_SATA) != 0 &&
-	    (params->atap_sata_caps != 0x0000 &&
-	    params->atap_sata_caps != 0xffff)) {
-		WDCDEBUG_PRINT(("%s: atap_sata_caps=0x%x\n", __func__,
-		    params->atap_sata_caps), DEBUG_PROBE);
-
-		/* Skip ATA modes detection for native SATA drives */
-		drvp->PIO_mode = drvp->PIO_cap = 4;
-		drvp->DMA_mode = drvp->DMA_cap = 2;
-		drvp->UDMA_mode = drvp->UDMA_cap = 5;
-		drvp->drive_flags |= DRIVE_SATA | DRIVE_MODE | DRIVE_UDMA;
-		drvp->ata_vers = 4;
-		return;
-	}
 
 	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
