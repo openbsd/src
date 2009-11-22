@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.25 2009/11/16 14:42:18 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.26 2009/11/22 09:18:55 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -48,6 +48,9 @@ sub pkgname
 	return shift->{name};
 }
 
+package OpenBSD::hint2;
+our @ISA = qw(OpenBSD::hint);
+
 package OpenBSD::UpdateSet;
 sub new
 {
@@ -67,6 +70,15 @@ sub add_hints
 	my ($self, @hints) = @_;
 	for my $h (@hints) {
 		push(@{$self->{hints}}, OpenBSD::hint->new($h));
+	}
+	return $self;
+}
+
+sub add_hints2
+{
+	my ($self, @hints) = @_;
+	for my $h (@hints) {
+		push(@{$self->{hints}}, OpenBSD::hint2->new($h));
 	}
 	return $self;
 }
