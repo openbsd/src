@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.18 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: gif.4,v 1.19 2009/11/22 22:01:55 deraadt Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 22 2009 $
 .Dt GIF 4
 .Os
 .Sh NAME
@@ -104,6 +104,125 @@ interface whose "physical" addresses match the source/destination
 addresses of the packet (the source address of the packet must match
 the destination "physical" address, and vice versa).
 .\"
+.Sh IPSEC BRIDGE
+The bridge can also be used to tunnel Ethernet frames over IPv4 or
+IPv6 by using the
+.Xr gif 4
+interface.
+In addition to adding Ethernet interfaces,
+one or more
+.Xr gif 4 ,
+interfaces are added as members of the bridge.
+Ethernet frames sent
+through the
+.Xr gif 4
+interfaces are encapsulated inside
+.Xr ip 4
+datagrams and sent across the network to another bridge, which
+decapsulates the datagram and then processes the resulting Ethernet
+frame as if it had originated on a normal Ethernet interface.
+This effectively allows a layer-2 network to be extended from one point to
+another, possibly through the Internet.
+This mechanism may be used in
+conjunction with IPsec by specifying the appropriate IPsec flows
+between the two bridges.
+To only protect the bridge traffic between
+the two bridges, the transport protocol 97 (etherip) selector may be
+used in
+.Xr ipsec.conf 5
+or
+.Xr isakmpd 8 .
+Otherwise, the Ethernet frames will be sent in the clear between the
+two bridges.
+.Pp
+For example, given two physically separate Ethernet networks, the bridge can
+be used as follows to make them appear as the same local area network.
+If bridge1 on network1 has the external IP address 1.2.3.4 on fxp0,
+bridge2 on network2 has the external IP address 4.3.2.1 on fxp0, and
+both bridges have fxp1 on their internal network (network1 and network2,
+respectively), the following configuration can be used to bridge
+network1 and network2.
+.Pp
+First create the bridge interface,
+then add the encapsulation interface and internal Ethernet interface
+to the bridge interface:
+.Bd -literal -offset indent
+# ifconfig bridge0 add gif0 add fxp1
+.Ed
+.Pp
+Create and configure the gif0 interface:
+.Bd -literal -offset indent
+(on bridge 1) # ifconfig gif0 tunnel 1.2.3.4 4.3.2.1
+(on bridge 2) # ifconfig gif0 tunnel 4.3.2.1 1.2.3.4
+.Ed
+.Pp
+Create Security Associations (SAs) between the external IP address of each
+bridge and matching ingress flows by using the following
+.Xr ipsec.conf 5
+file on bridge1:
+.Bd -literal -offset indent
+esp from 1.2.3.4 to 4.3.2.1 spi 0x4242:0x4243 \e
+        authkey file "auth1:auth2" enckey file "enc1:enc2"
+flow esp proto etherip from 1.2.3.4 to 4.3.2.1
+.Ed
+.Pp
+Now load these rules into the kernel by issuing the
+.Xr ipsecctl 8
+command:
+.Bd -literal -offset indent
+        # ipsecctl -f ipsec.conf
+.Ed
+.Pp
+Appropriate
+.Xr ipsec.conf 5
+for bridge2:
+.Bd -literal -offset indent
+esp from 4.3.2.1 to 1.2.3.4 spi 0x4243:0x4242 \e
+        authkey file "auth2:auth1" enckey file "enc2:enc1"
+flow esp proto etherip from 4.3.2.1 to 1.2.3.4
+.Ed
+.Pp
+And load them:
+.Bd -literal -offset indent
+        # ipsecctl -f ipsec.conf
+.Ed
+.Pp
+To use
+.Xr isakmpd 8
+use this
+.Xr ipsec.conf 5
+on bridge1:
+.Bd -literal -offset indent
+ike esp proto etherip from 1.2.3.4 to 4.3.2.1
+.Ed
+.Pp
+And that one on bridge2:
+.Bd -literal -offset indent
+ike esp proto etherip from 4.3.2.1 to 1.2.3.4
+.Ed
+.Pp
+Bring up the internal interface (if not already up) and encapsulation
+interface:
+.Bd -literal -offset indent
+# ifconfig fxp1 up
+# ifconfig gif0 up
+.Ed
+.Pp
+Finally, bring the bridge interface up and allow it to start processing
+frames:
+.Pp
+.Dl # ifconfig bridge0 up link2
+.Pp
+The internal interface on each bridge need not have an IP
+address: the bridge can function without it.
+.Pp
+Note:  It is possible to put the above commands in the
+.Xr hostname.if 5
+and
+.Xr bridgename.if 5
+files, using the
+.Sq !\&
+operator.
 .Sh SEE ALSO
 .Xr sysctl 3 ,
 .Xr bridge 4 ,

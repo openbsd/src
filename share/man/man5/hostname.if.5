@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.52 2008/01/31 20:00:08 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.53 2009/11/22 22:01:55 deraadt Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,23 +30,20 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 31 2008 $
+.Dd $Mdocdate: November 22 2009 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
-.Nm hostname.if ,
-.Nm bridgename.if
+.Nm hostname.if
 .Nd interface-specific configuration files
 .Sh DESCRIPTION
 The
 .Nm hostname.*\&
-and
-.Nm bridgename.*\&
 files contain information regarding the configuration of each network interface.
 One file should exist for each interface that is to be configured, such as
 .Pa hostname.fxp0
 or
-.Pa bridgename.bridge0 .
+.Pa hostname.bridge0 .
 However, a configuration file is not needed for lo0.
 .Pp
 Arguments containing either whitespace or single quote
@@ -296,17 +293,10 @@ Valid options for a particular interface type can be found in
 .Xr ifconfig 8 .
 .El
 .Sh BRIDGE INTERFACE CONFIGURATION
-The final file format only applies to
-.Nm bridgename.bridge*
-files.
-A bridge interface setup consists of
-.Bd -ragged -offset indent
-.Va brconfig-arguments
-.br
-.Va brconfig-arguments
-.br
-\&...
-.Ed
+If the network interface is a bridge, the options described in
+the bridge section of the
+.Xr ifconfig 8
+manual page apply.
 .Pp
 For example:
 .Bd -literal -offset indent
@@ -319,22 +309,8 @@ add ep1
 static fxp0 8:0:20:1e:2f:2b
 up    # and finally enable it
 .Ed
-.Pp
-The options are as follows:
-.Bl -tag -width indent -offset indent
-.It Va brconfig-arguments
-.Xr brconfig 8
-is called for each successive line.
-Comments starting with
-.Ql #
-and commands to be executed
-prefixed by
-.Ql \&!
-are permitted.
-.El
 .Sh SEE ALSO
 .Xr hosts 5 ,
-.Xr brconfig 8 ,
 .Xr dhcp 8 ,
 .Xr ifconfig 8 ,
 .Xr lmccontrol 8 ,

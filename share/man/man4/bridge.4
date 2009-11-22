@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.67 2009/11/09 03:16:07 deraadt Exp $
+.\"	$OpenBSD: bridge.4,v 1.68 2009/11/22 22:01:55 deraadt Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 9 2009 $
+.Dd $Mdocdate: November 22 2009 $
 .Dt BRIDGE 4
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ A
 interface can be created at runtime using the
 .Ic ifconfig bridge Ns Ar N Ic create
 command or by setting up a
-.Xr bridgename.if 5
+.Xr hostname.if 5
 configuration file for
 .Xr netstart 8 .
 .Pp
@@ -79,7 +79,7 @@ an IP firewall without changing the topology of the network.
 The algorithm works as follows by default, but can be modified via
 .Xr ioctl 2
 or the utility
-.Xr brconfig 8 .
+.Xr ifconfig 8 .
 When a frame comes in, the origin segment and the source address are
 recorded.
 If the bridge has no knowledge about where the destination is to be found,
@@ -99,6 +99,41 @@ pf interface so that it can be filtered.
 See the
 .Sx NOTES
 section for details.
+.Sh SPANNING TREE
+The bridge has support for 802.1D-2004 Spanning Tree Protocol (STP),
+which can be used to detect and remove loops in a network topology.
+Using the
+.Cm stp
+or
+.Cm -stp
+commands
+to
+.Nm ,
+STP can be enabled or disabled on each port.
+.Pp
+The bridge will use the Rapid Spanning Tree Protocol (RSTP) by default
+to allow rapid transitions to the forwarding state.
+The
+.Cm proto
+command to
+.Nm
+can be used to force operation in the common Spanning Tree Protocol
+without rapid state transitions.
+Note that RSTP will be compatible with remote bridges running common STP.
+.Pp
+STP will not work on
+.Xr gif 4
+members because they lack a hardware MAC address.
+.Sh SPAN PORTS
+The bridge can have interfaces added to it as span ports.
+Span ports transmit a copy of every frame received by the bridge.
+This is most useful for snooping a bridged network passively on
+another host connected to one of the span ports of the bridge.
+Span ports cannot be bridge members; instead, the
+.Cm addspan
+and
+.Cm delspan
+commands are used to add and delete span ports to and from a bridge.
 .Sh IOCTLS
 A
 .Nm
@@ -623,24 +658,36 @@ and certificates, to impersonate the protected host(s)).
 .Xr netintro 4 ,
 .Xr pf 4 ,
 .Xr vether 4 ,
-.Xr bridgename.if 5 ,
-.Xr brconfig 8 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
 .Xr ipsecctl 8 ,
 .Xr isakmpd 8 ,
 .Xr netstart 8
 .Sh HISTORY
 The
-.Xr brconfig 8
-command and the
 .Nm
 kernel interface first appeared in
 .Ox 2.5 .
 .Sh AUTHORS
 The
-.Xr brconfig 8
-command and the
 .Nm
-kernel interface were written by
+kernel interface was written by
 .An Jason L. Wright Aq jason@thought.net
 as part of an undergraduate independent study at the
 University of North Carolina at Greensboro.
+.Pp
+Support for rapid spanning tree reconfigurations (RSTP) was added by
+.An Andrew Thompson Aq thompsa@freebsd.org
+and ported to
+.Ox
+by
+.An Reyk Floeter Aq reyk@openbsd.org .
+.Sh BUGS
+There are some rather special network interface chipsets which will
+not work in a bridge configuration.
+Some chipsets have serious flaws when running in promiscuous mode, like the
+TI ThunderLAN (see
+.Xr tl 4 ) ,
+which receives its own transmissions (this renders the address learning
+cache useless).
+Most other chipsets work fine though.

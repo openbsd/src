@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.188 2009/11/21 15:36:49 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.189 2009/11/22 22:01:55 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 21 2009 $
+.Dd $Mdocdate: November 22 2009 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -61,9 +61,6 @@ of each interface present on a machine;
 is used at
 a later time to redefine an interface's address
 or other operating parameters.
-To configure a bridge interface, use the
-.Xr brconfig 8
-program instead.
 .Pp
 .Nm
 displays the current configuration for a network interface
@@ -436,6 +433,8 @@ described in the following sections:
 .Pp
 .Bl -dash -offset indent -compact
 .It
+.Xr bridge 4
+.It
 .Xr carp 4
 .It
 IEEE 802.11 (wireless devices)
@@ -463,6 +462,276 @@ and
 .Xr gre 4 )
 .It
 .Xr vlan 4
+.El
+.\" BRIDGE
+.Sh BRIDGE
+.Nm ifconfig
+.Bk -words
+.Ar bridge-interface Cm rule No {
+.Cm block | pass No } {
+.Cm in | out | in/out No } Cm on
+.Ar interface
+.Op Cm src Ar address
+.Op Cm dst Ar address
+.Op Cm tag Ar tagname
+.Ek
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Cm add Ar interface
+Add
+.Ar interface
+as a member of the bridge.
+The interface is put into promiscuous mode so
+that it can receive every packet sent on the
+network.
+An interface can be a member of at most one bridge.
+.It Cm addr
+Display the addresses that have been learned by the bridge.
+.It Cm addspan Ar interface
+Add
+.Ar interface
+as a span port on the bridge.
+See
+.Xr bridge 4
+for more details.
+.It Cm autoedge Ar interface
+Automatically detect the spanning tree edge port status on
+.Ar interface .
+This is the default for interfaces added to the bridge.
+.It Cm -autoedge Ar interface
+Disable automatic spanning tree edge port detection on
+.Ar interface .
+.It Cm autoptp Ar interface
+Automatically detect the point-to-point status on
+.Ar interface
+by checking the full duplex link status.
+This is the default for interfaces added to the bridge.
+.It Cm -autoptp Ar interface
+Disable automatic point-to-point link detection on
+.Ar interface .
+.It Cm blocknonip Ar interface
+Mark
+.Ar interface
+so that no non-IPv4, IPv6, ARP, or Reverse
+ARP packets are accepted from it or forwarded to it from other
+bridge member interfaces.
+.It Cm -blocknonip Ar interface
+Allow non-IPv4, IPv6, ARP, or Reverse ARP packets through
+.Ar interface .
+.It Cm del Ar interface
+Alias for
+.Cm delete .
+.It Cm deladdr Ar address
+Delete
+.Ar address
+from the cache.
+.It Cm delete Ar interface
+Remove
+.Ar interface
+from the bridge.
+Promiscuous mode is turned off for the interface when it is
+removed from the bridge.
+.It Cm delspan Ar interface
+Delete
+.Ar interface
+from the list of span ports of the bridge.
+.It Cm discover Ar interface
+Mark
+.Ar interface
+so that packets are sent out of the interface
+if the destination port of the packet is unknown.
+If the bridge has no address cache entry for the destination of
+a packet, meaning that there is no static entry and no dynamically learned
+entry for the destination, the bridge will forward the packet to all member
+interfaces that have this flag set.
+This is the default for interfaces added to the bridge.
+.It Cm -discover Ar interface
+Mark
+.Ar interface
+so that packets are not sent out of the interface
+if the destination port of the packet is unknown.
+Turning this flag
+off means that the bridge will not send packets out of this interface
+unless the packet is a broadcast packet, multicast packet, or a
+packet with a destination address found on the interface's segment.
+This, in combination with static address cache entries,
+prevents potentially sensitive packets from being sent on
+segments that have no need to see the packet.
+.It Cm down
+Stop the bridge from forwarding packets.
+.It Cm edge Ar interface
+Set
+.Ar interface
+as a spanning tree edge port.
+An edge port is a single connection to the network and cannot create
+bridge loops.
+This allows a straight transition to forwarding.
+.It Cm -edge Ar interface
+Disable edge port status on
+.Ar interface .
+.It Cm flush
+Remove all dynamically learned addresses from the cache.
+.It Cm flushall
+Remove all addresses from the cache including static addresses.
+.It Cm flushrule Ar interface
+Remove all Ethernet MAC filtering rules from
+.Ar interface .
+.It Cm fwddelay Ar time
+Set the time (in seconds) before an interface begins forwarding packets.
+Defaults to 15 seconds, minimum of 4, maximum of 30.
+.It Cm hellotime Ar time
+Set the time (in seconds) between broadcasting spanning tree protocol
+configuration packets.
+Defaults to 2 seconds, minimum of 1, maximum of 2.
+This option is only supported in STP mode with rapid transitions disabled;
+see the
+.Cm proto
+command for setting the protocol version.
+.It Cm holdcnt Ar time
+Set the transmit hold count, which is the number of spanning tree protocol
+packets transmitted before being rate limited.
+Defaults to 6, minimum of 1, maximum of 10.
+.It Cm ifcost Ar interface Ar num
+Set the spanning tree path cost of
+.Ar interface
+to
+.Ar num .
+Defaults to 55, minimum of 1, maximum of 200000000 in RSTP mode,
+and maximum of 65535 in STP mode.
+.It Cm -ifcost Ar interface
+Automatically calculate the spanning tree priority of
+.Ar interface
+based on the current link speed, interface status, and spanning tree mode.
+This is the default for interfaces added to the bridge.
+.It Cm ifpriority Ar interface Ar num
+Set the spanning tree priority of
+.Ar interface
+to
+.Ar num .
+Defaults to 128, minimum of 0, maximum of 240.
+.It Cm learn Ar interface
+Mark
+.Ar interface
+so that the source address of packets received from
+the interface
+are entered into the address cache.
+This is the default for interfaces added to the bridge.
+.It Cm -learn Ar interface
+Mark
+.Ar interface
+so that the source address of packets received from interface
+are not entered into the address cache.
+.It Cm link0
+Setting this flag stops all IP multicast packets from
+being forwarded by the bridge.
+.It Cm -link0
+Clear the
+.Cm link0
+flag on the bridge interface.
+.It Cm link1
+Setting this flag stops all non-IP multicast packets from
+being forwarded by the bridge.
+.It Cm -link1
+Clear the
+.Cm link1
+flag on the bridge interface.
+.It Cm link2
+Setting this flag causes all packets to be passed on to
+.Xr ipsec 4
+for processing, based on the policies established by the administrator
+using the
+.Xr ipsecctl 8
+command and
+.Xr ipsec.conf 5 .
+If appropriate security associations (SAs) exist, they will be used to
+encrypt or decrypt the packets.
+Otherwise, any key management daemons such as
+.Xr isakmpd 8
+that are running on the bridge will be invoked to establish the
+necessary SAs.
+These daemons have to be configured as if they were running on the
+host whose traffic they are protecting (i.e. they need to have the
+appropriate authentication and authorization material, such as keys
+and certificates, to impersonate the protected host(s)).
+.It Cm -link2
+Clear the
+.Cm link2
+flag on the bridge interface.
+.It Cm maxaddr Ar size
+Set the address cache size to
+.Ar size .
+The default is 100 entries.
+.It Cm maxage Ar time
+Set the time (in seconds) that a spanning tree protocol configuration is valid.
+Defaults to 20 seconds, minimum of 6, maximum of 40.
+.It Cm priority Ar num
+Set the spanning priority of this bridge to
+.Ar num .
+Defaults to 32768, minimum of 0, maximum of 61440.
+.It Cm proto Ar value
+Force the spanning tree protocol version.
+The available values are
+.Ar rstp
+to operate in the default Rapid Spanning Tree (RSTP) mode
+or
+.Ar stp
+to force operation in Spanning Tree (STP) mode with rapid transitions disabled.
+.It Cm ptp Ar interface
+Set
+.Ar interface
+as a point-to-point link.
+This is required for straight transitions to forwarding and
+should be enabled for a full duplex link or a
+.Xr trunk 4
+with at least two physical links to the same network segment.
+.It Cm -ptp Ar interface
+Disable point-to-point link status on
+.Ar interface .
+This should be disabled for a half duplex link and for an interface
+connected to a shared network segment,
+like a hub or a wireless network.
+.It Cm rule Op Ar rulespec
+Add a filtering rule to an interface.
+Rules have a similar syntax to those in
+.Xr pf.conf 5 .
+Rules can be used to selectively block or pass frames based on Ethernet
+MAC addresses.
+They can also tag packets for
+.Xr pf 4
+to filter on.
+Rules are processed in the order in which they were added
+to the interface, and the first rule matched takes the action (block or pass)
+and, if given, the tag of the rule.
+If no source or destination address is specified, the
+rule will match all frames (good for creating a catchall policy).
+.It Cm rulefile Ar filename
+Load a set of rules from the file
+.Ar filename .
+.It Cm rules Ar interface
+Display the active filtering rules in use on
+.Ar interface .
+.It Cm static Ar interface address
+Add a static entry into the address cache pointing to
+.Ar interface .
+Static entries are never aged out of the cache or replaced, even if the address
+is seen on a different interface.
+.It Cm stp Ar interface
+Enable spanning tree protocol on
+.Ar interface .
+.It Cm -stp Ar interface
+Disable spanning tree protocol on
+.Ar interface .
+This is the default for interfaces added to the bridge.
+.It Cm timeout Ar time
+Set the timeout, in seconds, for addresses in the cache to
+.Ar time .
+The default is 240 seconds.
+If
+.Ar time
+is set to zero, then entries will not be expired.
+.It Cm up
+Start the bridge forwarding packets.
 .El
 .\" CARP
 .Sh CARP
