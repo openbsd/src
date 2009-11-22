@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.109 2009/11/12 06:20:27 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.110 2009/11/22 20:09:53 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -304,7 +304,6 @@ struct scsi_adapter {
  * return values for scsi_cmd()
  */
 #define SUCCESSFULLY_QUEUED	0
-#define TRY_AGAIN_LATER		1
 #define	COMPLETE		2
 #define	ESCAPE_NOT_SUPPORTED	3
 #define NO_CCB			4

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.142 2009/11/12 06:20:27 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.143 2009/11/22 20:09:53 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -811,9 +811,6 @@ retry:
 		case SUCCESSFULLY_QUEUED:
 			return;
 
-		case TRY_AGAIN_LATER:
-			xs->error = XS_BUSY;
-			/* FALLTHROUGH */
 		case COMPLETE:
 			goto retry;
 		}
@@ -857,12 +854,10 @@ scsi_execute_xs(struct scsi_xfer *xs)
 
 	/*
 	 * Do the transfer. If we are polling we will return:
-	 * COMPLETE,  Was poll, and scsi_done has been called
-	 * TRY_AGAIN_LATER, Adapter short resources, try again
+	 * COMPLETE.
 	 *
 	 * if under full steam (interrupts) it will return:
-	 * SUCCESSFULLY_QUEUED, will do a wakeup when complete
-	 * TRY_AGAIN_LATER, (as for polling)
+	 * SUCCESSFULLY_QUEUED, will do a wakeup when complete.
 	 * After the wakeup, we must still check if it succeeded
 	 *
 	 * If we have a SCSI_NOSLEEP (typically because we have a buf)
@@ -913,15 +908,10 @@ retry:
 			return (EJUSTRETURN);
 		if (xs->bp)
 			return (EJUSTRETURN);
-	doit:
 		SC_DEBUG(xs->sc_link, SDEV_DB3, ("back in cmd()\n"));
 		if ((error = sc_err1(xs)) != ERESTART)
 			return (error);
 		goto retry;
-
-	case TRY_AGAIN_LATER:	/* adapter resource shortage */
-		xs->error = XS_BUSY;
-		goto doit;
 
 	case NO_CCB:
 		return (EAGAIN);
