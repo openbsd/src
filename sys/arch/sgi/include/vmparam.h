@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 2009/11/22 00:07:04 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.6 2009/11/22 10:05:02 miod Exp $ */
 /* public domain */
 #ifndef _SGI_VMPARAM_H_
 #define _SGI_VMPARAM_H_
@@ -8,7 +8,7 @@
 /*
  * On Origin and Octane families, DMA to 32-bit PCI devices is restricted.
  *
- * Systems with physical memory after the 2GB boundary needs to ensure
+ * Systems with physical memory after the 2GB boundary need to ensure
  * memory which may used for DMA transfers is allocated from the low
  * memory range.
  *
@@ -20,7 +20,7 @@
 #define	VM_FREELIST_DMA32	1	/* memory suitable for 32-bit DMA */
 
 /*
- * On systems with may use R5000 processors, we limit the kernel virtual
+ * On systems which may use R5000 processors, we limit the kernel virtual
  * address space to KSSEG and KSEG3.
  * On systems with R10000 family processors, we use the XKSEG which allows
  * for a much larger virtual memory size.
