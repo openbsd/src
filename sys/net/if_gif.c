@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.52 2009/11/21 14:08:14 claudio Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.53 2009/11/22 12:33:25 deraadt Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -233,7 +233,6 @@ gif_start(struct ifnet *ifp)
 			bpf_mtap_af(ifp->if_bpf, family, m, BPF_DIRECTION_OUT);
 #endif
 		ifp->if_opackets++;
-		ifp->if_obytes += m->m_pkthdr.len;
 
 		switch (sc->gif_psrc->sa_family) {
 #ifdef INET
@@ -294,6 +293,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		splx(s);
 		return (error);
 	}
+	ifp->if_obytes += m->m_pkthdr.len;
 	if_start(ifp);
 	splx(s);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.175 2009/11/09 03:16:05 deraadt Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.176 2009/11/22 12:33:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1040,6 +1040,13 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		goto sendunicast;
 	}
 
+#if NBPFILTER > 0
+	if (sc->sc_if.if_bpf)
+		bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+	ifp->if_opackets++;
+	ifp->if_obytes += m->m_pkthdr.len;
+
 	/*
 	 * If the packet is a broadcast or we don't know a better way to
 	 * get there, send to all interfaces.
@@ -1206,11 +1213,6 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 	}
 
 	src_if = m->m_pkthdr.rcvif;
-
-#if NBPFILTER > 0
-	if (sc->sc_if.if_bpf)
-		bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_IN);
-#endif
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -1410,6 +1412,12 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 	if (ifl == LIST_END(&sc->sc_iflist))
 		return (m);
 
+#if NBPFILTER > 0
+	if (sc->sc_if.if_bpf)
+		bpf_mtap_hdr(sc->sc_if.if_bpf, (caddr_t)eh,
+		    ETHER_HDR_LEN, m, BPF_DIRECTION_IN);
+#endif
+
 	bridge_span(sc, eh, m);
 
 	if (m->m_flags & (M_BCAST | M_MCAST)) {
@@ -1454,9 +1462,15 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 					break;
 			}
 			if (ifl != LIST_END(&sc->sc_iflist)) {
-				m->m_flags |= M_PROTO1;
 				m->m_pkthdr.rcvif = ifl->ifp;
+#if NBPFILTER > 0
+				if (ifl->ifp->if_bpf)
+					bpf_mtap(ifl->ifp->if_bpf, m,
+					    BPF_DIRECTION_IN);
+#endif
+				m->m_flags |= M_PROTO1;
 				ether_input(ifl->ifp, eh, m);
+				ifl->ifp->if_ipackets++;
 				m = NULL;
 			}
 		}
@@ -1493,6 +1507,23 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 				m_freem(m);
 				return (NULL);
 			}
+
+			/* Make sure the real incoming interface
+			 * is aware */
+#if NBPFILTER > 0
+			if (ifl->ifp->if_bpf)
+				bpf_mtap_hdr(ifl->ifp->if_bpf,
+				    (caddr_t)eh,
+				    ETHER_HDR_LEN, m,
+				    BPF_DIRECTION_IN);
+#endif
+			/* Count for the interface we are going to */
+			ifl->ifp->if_ipackets++;
+
+			/* Count for the bridge */
+			sc->sc_if.if_ipackets++;
+			sc->sc_if.if_ibytes += ETHER_HDR_LEN + m->m_pkthdr.len;
+
 			m->m_pkthdr.rcvif = ifl->ifp;
 			if (ifp->if_type == IFT_GIF) {
 				m->m_flags |= M_PROTO1;
@@ -1669,9 +1700,15 @@ bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
 	m_adj(m1, ETHER_HDR_LEN);
 
 	/* fixup header a bit */
-	m1->m_flags |= M_PROTO1;
 	m1->m_pkthdr.rcvif = ifp;
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m,
+		    BPF_DIRECTION_IN);
+#endif
+	m1->m_flags |= M_PROTO1;
 	ether_input(ifp, eh, m1);
+	ifp->if_ipackets++;
 }
 
 void
@@ -2766,21 +2803,18 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 int
 bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 {
-#if VETHER > 0
-	extern void vetherstart(struct ifnet *);
-#endif
 	int error, len;
 	short mflags;
 
 #if NGIF > 0
 	/* Packet needs etherip encapsulation. */
-	if (ifp->if_type == IFT_GIF)
+	if (ifp->if_type == IFT_GIF) {
 		m->m_flags |= M_PROTO1;
-#endif
-#if VETHER > 0
-	/* Indicate packets which are outbound */
-	if (ifp->if_start == vetherstart)
-		m->m_flags |= M_PROTO1;
+
+		/* Count packets input into the gif from outside */
+		ifp->if_ipackets++;
+		ifp->if_ibytes += m->m_pkthdr.len;
+	}
 #endif
 #if NVLAN > 0
 	/*

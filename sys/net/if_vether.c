@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.5 2009/11/18 02:11:53 deraadt Exp $ */
+/* $OpenBSD: if_vether.c,v 1.6 2009/11/22 12:33:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -159,13 +159,14 @@ vether_clone_destroy(struct ifnet *ifp)
 }
 
 /*
- * Start output on the vether interface.
+ * The bridge has magically already done all the work for us,
+ * and we only need to discard the packets.
  */
 void
 vetherstart(struct ifnet *ifp)
 {
 	struct mbuf 		*m;
-	int			 s, inout;
+	int			 s;
 
 	for (;;) {
 		s = splnet();
@@ -174,27 +175,8 @@ vetherstart(struct ifnet *ifp)
 
 		if (m == NULL)
 			return;
-
-		inout = (m->m_flags & M_PROTO1) ?
-		    BPF_DIRECTION_IN : BPF_DIRECTION_OUT;
-		m->m_flags &= ~M_PROTO1;
-
-		if (inout == BPF_DIRECTION_IN) {
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m, inout);
-#endif
-			ether_input_mbuf(ifp, m);
-			ifp->if_ipackets++;
-		} else {
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap_ether(ifp->if_bpf, m, inout);
-#endif
-			ifp->if_opackets++;
-			ifp->if_obytes += m->m_pkthdr.len;
-			m_freem(m);
-		}
+		ifp->if_opackets++;
+		m_freem(m);
 	}
 }
 
