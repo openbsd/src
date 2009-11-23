@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.143 2009/10/26 20:17:26 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.144 2009/11/23 15:04:41 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -55,6 +55,7 @@ int acpi_enabled;
 int acpi_poll_enabled;
 int acpi_hasprocfvs;
 int acpi_thinkpad_enabled;
+int acpi_saved_spl;
 
 #define ACPIEN_RETRIES 15
 
@@ -84,9 +85,6 @@ void	acpi_init_states(struct acpi_softc *);
 void	acpi_init_gpes(struct acpi_softc *);
 void	acpi_init_pm(struct acpi_softc *);
 
-void	acpi_dev_sort(void);
-void	acpi_dev_free(void);
-
 int acpi_foundide(struct aml_node *node, void *arg);
 int acpiide_notify(struct aml_node *, int, void *);
 
@@ -107,9 +105,10 @@ int is_ejectable_bay(struct aml_node *node);
 int is_ata(struct aml_node *node);
 int is_ejectable(struct aml_node *node);
 
-#ifdef ACPI_SLEEP_ENABLED
-void acpi_sleep_walk(struct acpi_softc *, int);
-#endif /* ACPI_SLEEP_ENABLED */
+#ifndef SMALL_KERNEL
+void	acpi_resume(struct acpi_softc *, int);
+void	acpi_susp_resume_gpewalk(struct acpi_softc *, int, int);
+#endif /* SMALL_KERNEL */
 
 #ifndef SMALL_KERNEL
 int acpi_add_device(struct aml_node *node, void *arg);
@@ -1775,14 +1774,17 @@ acpi_init_pm(struct acpi_softc *sc)
 	sc->sc_wak = aml_searchname(&aml_root, "_WAK");
 	sc->sc_bfs = aml_searchname(&aml_root, "_BFS");
 	sc->sc_gts = aml_searchname(&aml_root, "_GTS");
+	sc->sc_sst = aml_searchname(&aml_root, "_SST");
 }
 
 #ifndef SMALL_KERNEL
 void
-acpi_sleep_walk(struct acpi_softc *sc, int state)
+acpi_susp_resume_gpewalk(struct acpi_softc *sc, int state,
+    int wake_gpe_state)
 {
 	struct acpi_wakeq *wentry;
 	int idx;
+	u_int32_t gpe;
 
 	/* Clear GPE status */
 	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
@@ -1795,8 +1797,18 @@ acpi_sleep_walk(struct acpi_softc *sc, int state)
 		    wentry->q_state,
 		    wentry->q_gpe);
 
-	if (state <= wentry->q_state)
-		acpi_enable_onegpe(sc, wentry->q_gpe, 1);
+		if (state <= wentry->q_state)
+			acpi_enable_onegpe(sc, wentry->q_gpe, 
+			    wake_gpe_state);
+	}
+
+	/* If we are resuming (disabling wake GPEs), enable other GPEs */
+	
+	if (wake_gpe_state == 0) {
+		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
+			if (sc->gpe_table[gpe].handler)
+				acpi_enable_onegpe(sc, gpe, 1);
+		}
 	}
 }
 #endif /* ! SMALL_KERNEL */
@@ -1821,8 +1833,6 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 			return (EOPNOTSUPP);
 	}
 
-	acpi_sleep_walk(sc, state);
-
 	if ((ret = acpi_prepare_sleep_state(sc, state)) != 0)
 		return (ret);
 
@@ -1831,9 +1841,10 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	else
 		ret = acpi_enter_sleep_state(sc, state);
 
-#ifndef SMALL_KERNEL
-	acpi_resume(sc);
-#endif /* ! SMALL_KERNEL */
+#ifdef ACPI_SLEEP_ENABLED
+	if (state == ACPI_STATE_S3)
+		acpi_resume(sc, state);
+#endif /* ACPI_SLEEP_ENABLED */
 	return (ret);
 }
 
@@ -1871,6 +1882,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 
 	acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, 0, rega);
 	acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, 0, regb);
+
 	/* Loop on WAK_STS */
 	for (retries = 1000; retries > 0; retries--) {
 		rega = acpi_read_pmreg(sc, ACPIREG_PM1A_STS, 0);
@@ -1886,7 +1898,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 
 #ifndef SMALL_KERNEL
 void
-acpi_resume(struct acpi_softc *sc)
+acpi_resume(struct acpi_softc *sc, int state)
 {
 	struct aml_value env;
 
@@ -1900,8 +1912,13 @@ acpi_resume(struct acpi_softc *sc)
 			    DEVNAME(sc));
 		}
 
-	dopowerhooks(PWR_RESUME);
-	inittodr(0);
+	/* Disable wake GPEs */
+	acpi_susp_resume_gpewalk(sc, state, 0); 
+	
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME); 
+
+	enable_intr();
+	splx(acpi_saved_spl);
 
 	if (sc->sc_wak)
 		if (aml_evalnode(sc, sc->sc_wak, 1, &env, NULL) != 0) {
@@ -1946,17 +1963,12 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 			return (ENXIO);
 		}
 
-	switch (state) {
-	case ACPI_STATE_S1:
-	case ACPI_STATE_S2:
-		resettodr();
-		dopowerhooks(PWR_SUSPEND);
-		break;
-	case ACPI_STATE_S3:
-		resettodr();
-		dopowerhooks(PWR_STANDBY);
-		break;
-	}
+	acpi_saved_spl = splhigh();
+	disable_intr();
+#ifndef SMALL_KERNEL
+	if (state == ACPI_STATE_S3)
+ 		config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
+#endif /* ! SMALL_KERNEL */
 
 	/* _PTS(state) */
 	if (sc->sc_pts)
@@ -1975,9 +1987,11 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 			return (ENXIO);
 		}
 
-	disable_intr();
-	aml_evalname(sc, &aml_root, "\\_SST", 1, &env, NULL);
-	sc->sc_state = state;
+	if (sc->sc_sst)
+		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
+
+	/* Enable wake GPEs */
+	acpi_susp_resume_gpewalk(sc, state, 1);
 
 	return (0);
 }
@@ -1991,7 +2005,7 @@ acpi_powerdown(void)
 	 * In case acpi_prepare_sleep fails, we shouldn't try to enter
 	 * the sleep state. It might cost us the battery.
 	 */
-	acpi_sleep_walk(acpi_softc, ACPI_STATE_S5);
+	acpi_susp_resume_gpewalk(acpi_softc, ACPI_STATE_S5, 1);
 	if (acpi_prepare_sleep_state(acpi_softc, ACPI_STATE_S5) == 0)
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 }
@@ -2276,50 +2290,5 @@ acpi_foundvideo(struct aml_node *node, void *arg)
 	config_found(self, &aaa, acpi_print);
 
 	return (0);
-}
-
-TAILQ_HEAD(acpi_dv_hn, acpi_dev_rank) acpi_dv_h;
-void
-acpi_dev_sort(void)
-{
-	struct device		*dev, *idev;
-	struct acpi_dev_rank	*rentry, *ientry;
-	int			rank;
-
-	TAILQ_INIT(&acpi_dv_h);
-
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		for (rank = -1, idev = dev; idev != NULL;
-		    idev = idev->dv_parent, rank++)
-			;	/* nothing */
-
-		rentry = malloc(sizeof(*rentry), M_DEVBUF, M_WAITOK | M_ZERO);
-		rentry->rank = rank;
-		rentry->dev = dev;
-
-		if (TAILQ_FIRST(&acpi_dv_h) == NULL)
-			TAILQ_INSERT_HEAD(&acpi_dv_h, rentry, link);
-		TAILQ_FOREACH_REVERSE(ientry, &acpi_dv_h, acpi_dv_hn, link) {
-			if (rentry->rank > ientry->rank) {
-				TAILQ_INSERT_AFTER(&acpi_dv_h, ientry, rentry, 
-				    link);
-				break;
-			}
-		}
-	}
-}
-
-void
-acpi_dev_free(void)
-{
-	struct acpi_dev_rank	*dvr;
-
-	while ((dvr = TAILQ_FIRST(&acpi_dv_h)) != NULL) {
-		TAILQ_REMOVE(&acpi_dv_h, dvr, link);
-		if (dvr != NULL) {
-			free(dvr, M_DEVBUF);
-			dvr = NULL;
-		}
-	}
 }
 #endif /* SMALL_KERNEL */
