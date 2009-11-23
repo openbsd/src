@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.30 2009/09/18 20:17:17 kettenis Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.31 2009/11/23 15:33:37 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -114,7 +114,8 @@ int	pchbmatch(struct device *, void *, void *);
 void	pchbattach(struct device *, struct device *, void *);
 
 struct cfattach pchb_ca = {
-	sizeof(struct pchb_softc), pchbmatch, pchbattach
+	sizeof(struct pchb_softc), pchbmatch, pchbattach, NULL,
+	config_activate_children
 };
 
 struct cfdriver pchb_cd = {
