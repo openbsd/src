@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.112 2009/01/10 19:08:53 miod Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.113 2009/11/23 00:47:56 claudio Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -668,24 +668,20 @@ recursive_ruleset_purge(char *an, char *rs)
 	struct pfioc_trans_e     *t_e = NULL;
 	struct pfioc_trans	 *t = NULL;
 	struct pfioc_ruleset	 *prs = NULL;
-	int			  i;
-
 
 	/* purge rules */
 	errno = 0;
 	if ((t = calloc(1, sizeof(struct pfioc_trans))) == NULL)
 		goto no_mem;
-	if ((t_e = calloc(PF_RULESET_MAX+1,
-	    sizeof(struct pfioc_trans_e))) == NULL)
+	if ((t_e = calloc(2, sizeof(struct pfioc_trans_e))) == NULL)
 		goto no_mem;
-	t->size = PF_RULESET_MAX+1;
+	t->size = 2;
 	t->esize = sizeof(struct pfioc_trans_e);
 	t->array = t_e;
-	for (i = 0; i < PF_RULESET_MAX+1; ++i) {
-		t_e[i].rs_num = i;
-		snprintf(t_e[i].anchor, sizeof(t_e[i].anchor), "%s/%s", an, rs);
-	}
-	t_e[PF_RULESET_MAX].rs_num = PF_RULESET_TABLE;
+	t_e[0].type = PF_TRANS_RULESET;
+	snprintf(t_e[0].anchor, sizeof(t_e[0].anchor), "%s/%s", an, rs);
+	t_e[1].type = PF_TRANS_TABLE;
+
 	if ((ioctl(dev, DIOCXBEGIN, t) ||
 	    ioctl(dev, DIOCXCOMMIT, t)) &&
 	    errno != EINVAL)
