@@ -59,7 +59,8 @@ i915_init_phys_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
  * Frees the hardware status page, whether it's a physical address of a virtual
  * address set up by the X Server.
  */
-void i915_free_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
+void
+i915_free_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
 {
 	if (dev_priv->hws_dmamem) {
 		drm_dmamem_free(dmat, dev_priv->hws_dmamem);
@@ -77,7 +78,8 @@ void i915_free_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
 	dev_priv->hw_status_page = NULL;
 }
 
-int i915_dma_cleanup(struct drm_device *dev)
+int
+i915_dma_cleanup(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
@@ -629,4 +631,3 @@ int i915_set_status_page(struct drm_device *dev, void *data,
 	DRM_DEBUG("load hws at %p\n", dev_priv->hw_status_page);
 	return 0;
 }
-
