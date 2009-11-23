@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1509 2009/11/18 18:19:15 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1510 2009/11/23 10:58:53 yuo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11376,6 +11376,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCIE-PCIX",
 	},
 	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_uPD720200,
+	    "PCIE-XHCI",
+	},
+	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSAMAESTRO,
 	    "Versa Maestro",
 	},
@@ -11454,6 +11458,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845,
 	    "Nm9845",
+	},
+	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901,
+	    "Nm9901",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,

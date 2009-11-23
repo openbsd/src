@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1509 2009/11/18 18:19:15 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1510 2009/11/23 10:58:53 yuo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3509,6 +3509,7 @@
 #define	PCI_PRODUCT_NEC_uPD72874	0x00f2		/* Firewire */
 #define	PCI_PRODUCT_NEC_USB2	0x00e0		/* USB */
 #define	PCI_PRODUCT_NEC_uPD720400	0x0125		/* PCIE-PCIX */
+#define	PCI_PRODUCT_NEC_uPD720200	0x0194		/* PCIE-XHCI */
 #define	PCI_PRODUCT_NEC_VERSAMAESTRO	0x8058		/* Versa Maestro */
 #define	PCI_PRODUCT_NEC_VERSAPRONXVA26D	0x803c		/* Versa Va26D Maestro */
 
@@ -3537,6 +3538,7 @@
 #define	PCI_PRODUCT_NETMOS_NM9805	0x9805		/* Nm9805 */
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Nm9835 */
 #define	PCI_PRODUCT_NETMOS_NM9845	0x9845		/* Nm9845 */
+#define	PCI_PRODUCT_NETMOS_NM9901	0x9901		/* Nm9901 */
 
 /* Network Security Technologies */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
