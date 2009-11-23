@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.37 2009/11/23 16:53:55 deraadt Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.38 2009/11/23 22:49:58 deraadt Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -319,12 +319,12 @@ ppbactivate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		/* XXX should power down the ppb */
 		break;
 	case DVACT_RESUME:
 		/* XXX should power up the ppb */
-		config_activate_children(self, act);
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);
