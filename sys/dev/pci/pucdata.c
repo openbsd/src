@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.65 2009/08/11 20:03:56 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.66 2009/11/23 02:06:38 yuo Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1285,6 +1285,24 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCIe Peripheral Controller :UART part */
+	{   /* "NetMos NM9901 UART" */
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901, 0xa000, 0x1000 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCIe Peripheral Controller :parallel part */
+	{   /* "NetMos NM9901 UART" */
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901, 0xa000, 0x2000 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00 },
 	    },
 	},
 
