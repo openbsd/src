@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.672 2009/11/23 17:18:05 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.673 2009/11/23 17:22:11 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3342,7 +3342,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset,
 		    pd);
 
-	if (r->action != PF_PASS)	/* XXX wrong */
+	if (r->action == PF_DROP)
 		return (PF_DROP);
 
 	if (pf_tag_packet(m, tag, -1)) {
