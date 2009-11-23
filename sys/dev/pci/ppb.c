@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.36 2009/11/19 20:46:16 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.37 2009/11/23 16:53:55 deraadt Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -64,9 +64,10 @@ struct ppb_softc {
 int	ppbmatch(struct device *, void *, void *);
 void	ppbattach(struct device *, struct device *, void *);
 int	ppbdetach(struct device *self, int flags);
+int	ppbactivate(struct device *self, int act);
 
 struct cfattach ppb_ca = {
-	sizeof(struct ppb_softc), ppbmatch, ppbattach, ppbdetach
+	sizeof(struct ppb_softc), ppbmatch, ppbattach, ppbdetach, ppbactivate
 };
 
 struct cfdriver ppb_cd = {
@@ -308,6 +309,24 @@ ppbdetach(struct device *self, int flags)
 		free(name, M_DEVBUF);
 	}
 
+	return (rv);
+}
+
+int
+ppbactivate(struct device *self, int act)
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		config_activate_children(self, act);
+		/* XXX should power down the ppb */
+		break;
+	case DVACT_RESUME:
+		/* XXX should power up the ppb */
+		config_activate_children(self, act);
+		break;
+	}
 	return (rv);
 }
 
