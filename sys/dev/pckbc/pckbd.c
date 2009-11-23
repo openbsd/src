@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.23 2009/11/23 15:21:41 deraadt Exp $ */
+/* $OpenBSD: pckbd.c,v 1.24 2009/11/23 23:22:38 deraadt Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -417,15 +417,17 @@ pckbdattach(parent, self, aux)
 int
 pckbd_activate(struct device *self, int act)
 {
+	int rv = 0;
+
 	switch (act) {
 	case DVACT_SUSPEND:
-		pckbd_enable(self, 0);
+		rv = pckbd_enable(self, 0);
 		break;
 	case DVACT_RESUME:
-		pckbd_enable(self, 1);
+		rv = pckbd_enable(self, 1);
 		break;
 	}
-	return (0);
+	return (rv);
 }
 
 int
