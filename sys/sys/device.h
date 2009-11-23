@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.40 2009/11/22 21:36:06 pirofti Exp $	*/
+/*	$OpenBSD: device.h,v 1.41 2009/11/23 14:12:10 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ struct device {
 
 /* dv_flags */
 #define	DVF_ACTIVE	0x0001		/* device is activated */
-#define	DVF_SUSPEND	0x0002		/* device is suspended */
 
 TAILQ_HEAD(devicelist, device);
 
@@ -187,8 +186,7 @@ int config_detach(struct device *, int);
 int config_detach_children(struct device *, int);
 int config_activate(struct device *);
 int config_deactivate(struct device *);
-int config_suspend(struct device *);
-int config_resume(struct device *);
+int config_suspend(struct device *, int);
 int config_activate_children(struct device *, int);
 struct device *config_make_softc(struct device *parent,
     struct cfdata *cf);
