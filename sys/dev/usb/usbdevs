@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.458 2009/11/22 22:09:34 jsg Exp $
+$OpenBSD: usbdevs,v 1.459 2009/11/23 12:37:34 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1713,6 +1713,7 @@ product HTC SMARTPHONE		0x0a51	SmartPhone
 /* HUAWEI products */
 product HUAWEI E618		0x1001	HUAWEI Mobile E618
 product HUAWEI E220		0x1003	HUAWEI Mobile Modem
+product HUAWEI Mobile		0x1008	HUAWEI Mobile Modem
 product HUAWEI E510		0x1411	HUAWEI Mobile E510
 
 /* HUMAX products */
@@ -2798,6 +2799,7 @@ product SIERRA AC881E		0x6853	881E
 product SIERRA AC880U		0x6855	880U
 product SIERRA AC881U		0x6856	881U
 product SIERRA AC885U		0x6880	885U
+product SIERRA C01SW		0x6890	C01SW
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
