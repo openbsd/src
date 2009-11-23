@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.191 2009/11/23 10:32:00 deraadt Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.192 2009/11/23 19:58:10 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -678,7 +678,15 @@ Disable point-to-point link status on
 This should be disabled for a half duplex link and for an interface
 connected to a shared network segment,
 like a hub or a wireless network.
-.It Cm rule Ar "{ block|pass } { in|out| } on interface [src address] [dst address] [tag tagname]"
+.It Xo
+.Cm rule
+.Cm block Ns \*(Ba Ns Cm pass
+.Op Cm in \*(Ba out
+.Cm on Ar interface
+.Op Cm src Ar address
+.Op Cm dst Ar address
+.Op Cm tag Ar tagname
+.Xc
 Add a filtering rule to an interface.
 Rules have a similar syntax to those in
 .Xr pf.conf 5 .
