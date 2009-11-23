@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.39 2009/10/25 19:46:31 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.40 2009/11/23 12:03:46 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -111,10 +111,14 @@ control(struct smtpd *env)
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		fatal("control: socket");
 
+	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	if (strlcpy(sun.sun_path, SMTPD_SOCKET,
 	    sizeof(sun.sun_path)) >= sizeof(sun.sun_path))
 		fatal("control: socket name too long");
+
+	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == 0)
+		fatalx("control socket already listening");
 
 	if (unlink(SMTPD_SOCKET) == -1)
 		if (errno != ENOENT)
