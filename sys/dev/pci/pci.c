@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.69 2009/11/23 01:28:11 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.70 2009/11/23 15:24:01 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -182,11 +182,13 @@ pciactivate(struct device *self, int act)
 	int rv = 0;
 
 	switch (act) {
+	case DVACT_SUSPEND:
+		config_activate_children(self, act);
+		pcipower(PWR_SUSPEND, self);	
+		break;
 	case DVACT_RESUME:
 		pcipower(PWR_RESUME, self);
-		break;
-	case DVACT_SUSPEND:
-		pcipower(PWR_SUSPEND, self);	
+		config_activate_children(self, act);
 		break;
 	}
 	return (rv);
