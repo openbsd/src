@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.459 2009/11/23 12:37:34 yuo Exp $
+$OpenBSD: usbdevs,v 1.460 2009/11/23 15:03:09 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -433,6 +433,7 @@ vendor PILOTECH		0x0eaf  Pilotech
 vendor NOVATECH		0x0eb0	Nova Tech
 vendor EGALAX		0x0eef	eGalax
 vendor ITEGNO		0x0eba	iTegno
+vendor NORITAKE		0x0eda	Noritake itron Corp
 vendor AIRPRIME		0x0f3d	Airprime
 vendor UNKNOWN4		0x0fe6	Unknown Vendor
 vendor VTECH		0x0f88	VTech
@@ -445,6 +446,7 @@ vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor HYUNDAI		0x106c	Hyundai
+vendor GCTSEMICON	0x1076	GCT Semiconductor
 vendor SILABS2		0x10a6	SILABS2
 vendor USI		0x10ab	USI
 vendor PLX		0x10b5	PLX
@@ -533,8 +535,10 @@ vendor QUANTA		0x1a32	Quanta
 vendor TERMINUS		0x1a40	Terminus Technology
 vendor WCH2		0x1a86	QinHeng Electronics
 vendor TCTMOBILE	0x1bbb  TCT Mobile
+vendor MDS		0x1bc8	MDS
 vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor PEGATRON		0x1d4d	Pegatron
+vendor MODACOM		0x1eb8	Modacom
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -1565,6 +1569,9 @@ product	GMATE YP3X00		0x1001	YP3X00 PDA
 product GARMIN GPSMAP60CSX	0x0003	GPSmap 60Csx
 product GARMIN IQUE3600		0x0004	Ique 3600
 
+/* GCT Semiconductor products */
+product GCTSEMICON INSTALL	0x7f40	GDM720x MASS storage mode	
+
 /* GEMPLUS products */
 product GEMPLUS PROXPU		0x5501	Prox-PU/CU
 
@@ -2051,6 +2058,9 @@ product MCT USB232		0x0210	RS232
 product MCT SITECOM_USB232	0x0230	Sitecom RS232
 product MCT ML_4500		0x0302	ML-4500
 
+/* MDS products */
+product MDS ISDBT		0x0001	MDS ISDB-T tuner
+
 /* Meinberg Funkuhren products */
 product MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
 
@@ -2091,6 +2101,9 @@ product METRICOM RICOCHET_GS	0x0001	Ricochet GS
 /* MGE UPS Systems products */
 product MGE UPS1		0x0001	Protection Center 1 UPS
 product MGE UPS2		0xffff	Protection Center 2 UPS
+
+/* Modacom products */
+product MODACOM MWIMAX		0x1240	MODACOM Mobile wimax adaptor
 
 /* Micro Star International products */
 product MSI WLAN		0x1020	WLAN
@@ -2278,6 +2291,9 @@ product NHJ CAM2		0x9120	Camera
 
 /* Nokia products */
 product NOKIA CA42		0x1234	CA-42 Serial
+
+/* Noritake itron corp products */
+product NORITAKE COMEMO		0x11c0	Noritake COMEMO
 
 /* Nova Tech products */
 product NOVATECH NV902W		0x9020	NV-902W
@@ -3035,6 +3051,7 @@ product TENDA TWL541U		0x1fab	TWL541U WLAN
 
 /* Ten X Technology, Inc. */
 product TENX MISSILE		0x0202	Missile Launcher
+product TENX TEMPER		0x660c	TEMPer sensor
 
 /* TerraTec Electronic GmbH */
 product	TERRATEC AUREON		0x0077	Aureon Dual USB
