@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.16 2009/08/13 23:45:35 deraadt Exp $ */
+/*	$OpenBSD: if.c,v 1.17 2009/11/23 01:51:41 canacar Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -39,6 +39,7 @@ struct ifstat {
 	struct ifcount	ifs_cur;
 	struct ifcount	ifs_old;
 	struct ifcount	ifs_now;
+	char		ifs_flag;
 } *ifstats;
 
 static	int nifs = 0;
@@ -187,7 +188,7 @@ fetchifstat(void)
 	struct sockaddr_dl *sdl;
 	char *buf, *next, *lim;
 	static int s = -1;
-	int mib[6];
+	int mib[6], i;
 	size_t need;
 
 	mib[0] = CTL_NET;
@@ -270,7 +271,18 @@ fetchifstat(void)
 		UPDATE(ifc_co, ifm_data.ifi_collisions);
 		ifs->ifs_cur.ifc_flags = ifm.ifm_flags;
 		ifs->ifs_cur.ifc_state = ifm.ifm_data.ifi_link_state;
+		ifs->ifs_flag++;
 	}
+
+	/* remove unreferenced interfaces */
+	for (i = 0; i < nifs; i++) {
+		ifs = &ifstats[i];
+		if (ifs->ifs_flag)
+			ifs->ifs_flag = 0;
+		else
+			ifs->ifs_name[0] = '\0';
+	}
+
 	free(buf);
 }
 
