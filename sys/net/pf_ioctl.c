@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.226 2009/11/22 22:34:50 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.227 2009/11/23 16:03:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2793,10 +2793,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_src_node	*n;
 		struct pf_state		*state;
 
-		RB_FOREACH(state, pf_state_tree_id, &tree_id) {
+		RB_FOREACH(state, pf_state_tree_id, &tree_id)
 			state->src_node = NULL;
-			state->nat_src_node = NULL;
-		}
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
 			n->expire = 1;
 			n->states = 0;
@@ -2825,12 +2823,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				/* Handle state to src_node linkage */
 				if (sn->states != 0) {
 					RB_FOREACH(s, pf_state_tree_id,
-					    &tree_id) {
+					    &tree_id)
 						if (s->src_node == sn)
 							s->src_node = NULL;
-						if (s->nat_src_node == sn)
-							s->nat_src_node = NULL;
-					}
 					sn->states = 0;
 				}
 				sn->expire = 1;

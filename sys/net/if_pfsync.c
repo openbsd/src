@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.132 2009/11/22 22:34:50 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.133 2009/11/23 16:03:10 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -430,8 +430,6 @@ pfsync_state_export(struct pfsync_state *sp, struct pf_state *st)
 	sp->state_flags = st->state_flags;
 	if (st->src_node)
 		sp->sync_flags |= PFSYNC_FLAG_SRCNODE;
-	if (st->nat_src_node)
-		sp->sync_flags |= PFSYNC_FLAG_NATSRCNODE;
 
 	bcopy(&st->id, &sp->id, sizeof(sp->id));
 	sp->creatorid = st->creatorid;
@@ -446,10 +444,7 @@ pfsync_state_export(struct pfsync_state *sp, struct pf_state *st)
 		sp->anchor = htonl(-1);
 	else
 		sp->anchor = htonl(st->anchor.ptr->nr);
-	if (st->nat_rule.ptr == NULL)
-		sp->nat_rule = htonl(-1);
-	else
-		sp->nat_rule = htonl(st->nat_rule.ptr->nr);
+	sp->nat_rule = htonl(-1);	/* left for compat, nat_rule is gone */
 
 	pf_state_counter_hton(st->packets[0], sp->packets[0]);
 	pf_state_counter_hton(st->packets[1], sp->packets[1]);
@@ -572,14 +567,13 @@ pfsync_state_import(struct pfsync_state *sp, u_int8_t flags)
 	pf_state_peer_ntoh(&sp->dst, &st->dst);
 
 	st->rule.ptr = r;
-	st->nat_rule.ptr = NULL;
 	st->anchor.ptr = NULL;
 	st->rt_kif = NULL;
 
 	st->pfsync_time = time_uptime;
 	st->sync_state = PFSYNC_S_NONE;
 
-	/* XXX when we have nat_rule/anchors, use STATE_INC_COUNTERS */
+	/* XXX when we have anchors, use STATE_INC_COUNTERS */
 	r->states_cur++;
 	r->states_tot++;
 
@@ -587,7 +581,7 @@ pfsync_state_import(struct pfsync_state *sp, u_int8_t flags)
 		SET(st->state_flags, PFSTATE_NOSYNC);
 
 	if (pf_state_insert(kif, skw, sks, st) != 0) {
-		/* XXX when we have nat_rule/anchors, use STATE_DEC_COUNTERS */
+		/* XXX when we have anchors, use STATE_DEC_COUNTERS */
 		r->states_cur--;
 		error = EEXIST;
 		goto cleanup_state;

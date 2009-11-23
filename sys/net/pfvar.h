@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.299 2009/11/22 22:34:50 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.300 2009/11/23 16:03:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -344,7 +344,6 @@ struct pfi_dynaddr {
 		(neg)							\
 	)
 
-
 struct pf_rule_uid {
 	uid_t		 uid[2];
 	u_int8_t	 op;
@@ -392,7 +391,6 @@ struct pf_pool {
 	u_int8_t		 port_op;
 	u_int8_t		 opts;
 };
-
 
 /* A packed Operating System description for fingerprinting */
 typedef u_int32_t pf_osfp_t;
@@ -768,13 +766,11 @@ struct pf_state {
 	struct pf_rule_slist	 match_rules;
 	union pf_rule_ptr	 rule;
 	union pf_rule_ptr	 anchor;
-	union pf_rule_ptr	 nat_rule;
 	struct pf_addr		 rt_addr;
 	struct pf_state_key	*key[2];	/* addresses stack and wire  */
 	struct pfi_kif		*kif;
 	struct pfi_kif		*rt_kif;
 	struct pf_src_node	*src_node;
-	struct pf_src_node	*nat_src_node;
 	u_int64_t		 packets[2];
 	u_int64_t		 bytes[2];
 	u_int32_t		 creation;
@@ -1134,7 +1130,6 @@ struct pf_pdesc {
 		void			*any;
 	} hdr;
 
-	struct pf_rule	*nat_rule;	/* nat/rdr rule applied to packet */
 	struct ether_header
 			*eh;
 	struct pf_addr	*src;		/* src address */
