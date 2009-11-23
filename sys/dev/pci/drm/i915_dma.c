@@ -77,7 +77,7 @@ void i915_free_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
 	dev_priv->hw_status_page = NULL;
 }
 
-static int i915_dma_cleanup(struct drm_device * dev)
+int i915_dma_cleanup(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 
@@ -630,14 +630,3 @@ int i915_set_status_page(struct drm_device *dev, void *data,
 	return 0;
 }
 
-void i915_driver_lastclose(struct drm_device * dev)
-{
-	drm_i915_private_t *dev_priv = dev->dev_private;
-
-	if (dev_priv == NULL)
-		return;
-
-	dev_priv->sarea_priv = NULL;
-
-	i915_dma_cleanup(dev);
-}

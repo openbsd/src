@@ -231,15 +231,10 @@ void		inteldrm_update_ring(struct drm_i915_private *);
 int		inteldrm_pipe_enabled(struct drm_i915_private *, int);
 
 				/* i915_dma.c */
-extern void i915_driver_lastclose(struct drm_device * dev);
-extern void i915_driver_close(struct drm_device *dev,
-				 struct drm_file *file_priv);
-extern long i915_compat_ioctl(struct file *filp, unsigned int cmd,
-			      unsigned long arg);
 extern void i915_emit_breadcrumb(struct drm_device *dev);
-extern int i915_driver_firstopen(struct drm_device *dev);
 extern int i915_dispatch_batchbuffer(struct drm_device * dev,
 				     drm_i915_batchbuffer_t * batch);
+int	i915_dma_cleanup(struct drm_device *);
 
 int	i915_init_phys_hws(drm_i915_private_t *, bus_dma_tag_t);
 void	i915_free_hws(drm_i915_private_t *, bus_dma_tag_t);

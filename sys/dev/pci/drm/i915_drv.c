@@ -40,6 +40,7 @@ void	inteldrm_attach(struct device *, struct device *, void *);
 int	inteldrm_detach(struct device *, int);
 int	inteldrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 int	inteldrm_activate(struct device *, int);
+void	inteldrm_lastclose(struct drm_device *);
 
 void	inteldrm_wrap_ring(struct drm_i915_private *);
 
@@ -116,7 +117,7 @@ const static struct drm_pcidev inteldrm_pciidlist[] = {
 static const struct drm_driver_info inteldrm_driver = {
 	.buf_priv_size		= 1,	/* No dev_priv */
 	.ioctl			= inteldrm_ioctl,
-	.lastclose		= i915_driver_lastclose,
+	.lastclose		= inteldrm_lastclose,
 	.vblank_pipes		= 2,
 	.get_vblank_counter	= i915_get_vblank_counter,
 	.enable_vblank		= i915_enable_vblank,
@@ -408,6 +409,16 @@ inteldrm_update_ring(struct drm_i915_private *dev_priv)
 		ring->space += ring->size;
 	INTELDRM_VPRINTF("%s: head: %x tail: %x space: %x\n", __func__,
 		ring->head, ring->tail, ring->space);
+}
+
+void
+inteldrm_lastclose(struct drm_device *dev)
+{
+	drm_i915_private_t *dev_priv = dev->dev_private;
+
+	dev_priv->sarea_priv = NULL;
+
+	i915_dma_cleanup(dev);
 }
 
 /**
