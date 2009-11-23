@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.25 2009/11/23 21:30:14 henning Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.26 2009/11/23 21:44:33 henning Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -59,7 +59,6 @@ field_def fields_mbuf[] = {
 	{"IFACE", 8, 16, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 	{"RXDELAY", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"TXDELAY", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
-	{"CURTX", 3, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"LIVELOCKS", 5, 10, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"SIZE", 3, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"ALIVE", 3, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
@@ -74,13 +73,12 @@ field_def fields_mbuf[] = {
 #define FLD_MB_IFACE	FIELD_ADDR(0)
 #define FLD_MB_RXDELAY	FIELD_ADDR(1)
 #define FLD_MB_TXDELAY	FIELD_ADDR(2)
-#define FLD_MB_CURTX	FIELD_ADDR(3)
-#define FLD_MB_LLOCKS	FIELD_ADDR(4)
-#define FLD_MB_MSIZE	FIELD_ADDR(5)
-#define FLD_MB_MALIVE	FIELD_ADDR(6)
-#define FLD_MB_MLWM	FIELD_ADDR(7)
-#define FLD_MB_MHWM	FIELD_ADDR(8)
-#define FLD_MB_MCWM	FIELD_ADDR(9)
+#define FLD_MB_LLOCKS	FIELD_ADDR(3)
+#define FLD_MB_MSIZE	FIELD_ADDR(4)
+#define FLD_MB_MALIVE	FIELD_ADDR(5)
+#define FLD_MB_MLWM	FIELD_ADDR(6)
+#define FLD_MB_MHWM	FIELD_ADDR(7)
+#define FLD_MB_MCWM	FIELD_ADDR(8)
 
 
 /* Define views */
@@ -89,8 +87,8 @@ field_def *view_mbuf[] = {
 #if NOTYET
 	FLD_MB_RXDELAY, FLD_MB_TXDELAY,
 #endif
-	FLD_MB_CURTX, FLD_MB_LLOCKS, FLD_MB_MSIZE, FLD_MB_MALIVE, FLD_MB_MLWM,
-	FLD_MB_MHWM, FLD_MB_MCWM, NULL
+	FLD_MB_LLOCKS, FLD_MB_MSIZE, FLD_MB_MALIVE, FLD_MB_MLWM, FLD_MB_MHWM,
+	FLD_MB_MCWM, NULL
 };
 
 /* Define view managers */
@@ -346,8 +344,6 @@ showmbuf(struct if_info *ifi, int p, int showif)
 		print_fld_size(FLD_MB_MALIVE, mbpool.pr_nget - mbpool.pr_nput);
 		print_fld_size(FLD_MB_MHWM, mbpool.pr_hiwat);
 	}
-	if (showif && p != -1)
-		print_fld_uint(FLD_MB_CURTX, ifi->data.ifi_maxtx);
 
 #if NOTYET
 	print_fld_uint(FLD_MB_RXDELAY, ifi->data.ifi_rxdelay);
