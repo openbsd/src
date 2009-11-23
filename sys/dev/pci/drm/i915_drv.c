@@ -41,6 +41,8 @@ int	inteldrm_detach(struct device *, int);
 int	inteldrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 int	inteldrm_activate(struct device *, int);
 
+void	inteldrm_wrap_ring(struct drm_i915_private *);
+
 /* For reset and suspend */
 int	inteldrm_save_state(struct drm_i915_private *);
 int	inteldrm_restore_state(struct drm_i915_private *);
@@ -342,13 +344,35 @@ inteldrm_wait_ring(struct drm_i915_private *dev_priv, int n)
 }
 
 void
+inteldrm_wrap_ring(struct drm_i915_private *dev_priv)
+{
+	u_int32_t	rem;;
+
+	rem = dev_priv->ring.size - dev_priv->ring.tail;
+	if (dev_priv->ring.space < rem &&
+	    inteldrm_wait_ring(dev_priv, rem) != 0)
+			return; /* XXX */
+
+	bus_space_set_region_4(dev_priv->bst, dev_priv->ring.bsh,
+	    dev_priv->ring.woffset, MI_NOOP, rem / 4);
+
+	dev_priv->ring.tail = 0;
+}
+
+void
 inteldrm_begin_ring(struct drm_i915_private *dev_priv, int ncmd)
 {
+	int	bytes = 4 * ncmd;
+
 	INTELDRM_VPRINTF("%s: %d\n", __func__, ncmd);
-	if (dev_priv->ring.space < ncmd * 4)
-		inteldrm_wait_ring(dev_priv, ncmd * 4);
-	dev_priv->ring.wspace = 0;
+	if (dev_priv->ring.tail + bytes > dev_priv->ring.size)
+		inteldrm_wrap_ring(dev_priv);
+	if (dev_priv->ring.space < bytes)
+		inteldrm_wait_ring(dev_priv, bytes);
 	dev_priv->ring.woffset = dev_priv->ring.tail;
+	dev_priv->ring.tail += bytes;
+	dev_priv->ring.tail &= dev_priv->ring.size - 1;
+	dev_priv->ring.space -= bytes;
 }
 
 void
@@ -357,10 +381,11 @@ inteldrm_out_ring(struct drm_i915_private *dev_priv, u_int32_t cmd)
 	INTELDRM_VPRINTF("%s: %x\n", __func__, cmd);
 	bus_space_write_4(dev_priv->bst, dev_priv->ring.bsh,
 	    dev_priv->ring.woffset, cmd);
-	dev_priv->ring.wspace++;
-	/* deal with ring wrapping */
+	/*
+	 * don't need to deal with wrap here because we padded
+	 * the ring out if we would wrap
+	 */
 	dev_priv->ring.woffset += 4;
-	dev_priv->ring.woffset &= dev_priv->ring.tail_mask;
 }
 
 void
@@ -368,8 +393,6 @@ inteldrm_advance_ring(struct drm_i915_private *dev_priv)
 {
 	INTELDRM_VPRINTF("%s: %x, %x\n", __func__, dev_priv->ring.wspace,
 	    dev_priv->ring.woffset);
-	dev_priv->ring.tail = dev_priv->ring.woffset;
-	dev_priv->ring.space -= dev_priv->ring.wspace * 4;
 	I915_WRITE(PRB0_TAIL, dev_priv->ring.woffset);
 }
 

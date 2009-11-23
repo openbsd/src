@@ -117,7 +117,6 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 	}
 
 	dev_priv->ring.size = init->ring_size;
-	dev_priv->ring.tail_mask = dev_priv->ring.size - 1;
 
 	if ((ret = bus_space_map(dev_priv->bst, init->ring_start,
 	    init->ring_size, 0, &dev_priv->ring.bsh)) != 0) {

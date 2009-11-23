@@ -59,15 +59,12 @@ enum pipe {
 #define DRIVER_PATCHLEVEL	0
 
 struct inteldrm_ring {
-	u_int32_t		*kva;
 	bus_space_handle_t	 bsh;
 	bus_size_t		 size;
 	u_int32_t		 head;
 	u_int32_t		 space;
 	u_int32_t		 tail;
-	u_int32_t		 tail_mask;
 	u_int32_t		 woffset;
-	u_int32_t		 wspace;
 };
 
 typedef struct drm_i915_private {
