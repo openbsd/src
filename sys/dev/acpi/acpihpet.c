@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.10 2009/11/23 01:33:08 pirofti Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.11 2009/11/23 15:17:45 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -70,7 +70,7 @@ acpihpet_activate(struct device *self, int act)
 {
 	struct acpihpet_softc *sc = (struct acpihpet_softc *) self;
 
-	switch(act) {
+	switch (act) {
 	case DVACT_RESUME:
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    HPET_CONFIGURATION, 1);
