@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.16 2009/11/23 18:42:50 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.17 2009/11/23 19:11:06 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -76,6 +76,7 @@ void		athn_tx_free(struct athn_softc *);
 int		athn_rx_alloc(struct athn_softc *);
 void		athn_rx_free(struct athn_softc *);
 void		athn_rx_start(struct athn_softc *);
+void		athn_led_init(struct athn_softc *);
 void		athn_btcoex_init(struct athn_softc *);
 void		athn_btcoex_enable(struct athn_softc *);
 void		athn_btcoex_disable(struct athn_softc *);
@@ -200,7 +201,7 @@ athn_attach(struct athn_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	struct ar_base_eep_header *base;
 	uint8_t eep_ver, kc_entries_exp;
-	int i, error;
+	int error;
 
 	if ((error = athn_reset_power_on(sc)) != 0) {
 		printf(": could not reset chip\n");
@@ -241,6 +242,9 @@ athn_attach(struct athn_softc *sc)
 	}
 	base = sc->eep;
 
+	/* We can put the chip in sleep state now. */
+	athn_set_power_sleep(sc);
+
 	eep_ver = (base->version >> 12) & 0xf;
 	sc->eep_rev = (base->version & 0xfff);
 	if (eep_ver != AR_EEP_VER || sc->eep_rev == 0) {
@@ -254,8 +258,18 @@ athn_attach(struct athn_softc *sc)
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, base->macAddr);
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
-	if (base->rfSilent & AR_EEP_RFSILENT_ENABLED)
+	/* Check if we have a hardware radio switch. */
+	if (base->rfSilent & AR_EEP_RFSILENT_ENABLED) {
 		sc->flags |= ATHN_FLAG_RFSILENT;
+		/* Get GPIO pin used by hardware radio switch. */
+		sc->rfsilent_pin = MS(base->rfSilent,
+		    AR_EEP_RFSILENT_GPIO_SEL);
+		/* Get polarity of hardware radio switch. */
+		if (base->rfSilent & AR_EEP_RFSILENT_POLARITY)
+			sc->flags |= ATHN_FLAG_RFSILENT_REVERSED;
+		DPRINTFN(2, ("Found RF switch connected to GPIO pin %d\n",
+		    sc->rfsilent_pin));
+	}
 
 	/* Get the number of HW key cache entries. */
 	kc_entries_exp = MS(base->deviceCap, AR_EEP_DEVCAP_KC_ENTRIES);
@@ -304,25 +318,6 @@ athn_attach(struct athn_softc *sc)
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
-
-	/* Reset HW key cache entries (XXX not here.) */
-	for (i = 0; i < sc->kc_entries; i++)
-		athn_reset_key(sc, i);
-
-	/* XXX not here. */
-	AR_SETBITS(sc, AR_PHY_CCK_DETECT,
-	    AR_PHY_CCK_DETECT_BB_ENABLE_ANT_FAST_DIV);
-
-#ifdef ATHN_BT_COEXISTENCE
-	/* Initialize bluetooth coexistence for combo chips. */
-	if (sc->flags & ATHN_FLAG_BTCOEX)
-		athn_btcoex_init(sc);
-#endif
-
-	athn_gpio_config_output(sc, sc->led_pin,
-	    AR_GPIO_OUTPUT_MUX_AS_OUTPUT);
-	/* LED off, active low. */
-	athn_gpio_write(sc, sc->led_pin, 1);
 
 	if (AR_SINGLE_CHIP(sc)) {
 		printf("%s: %s rev %d (%dT%dR), ROM rev %d\n",
@@ -1605,6 +1600,14 @@ athn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 }
 
+void
+athn_led_init(struct athn_softc *sc)
+{
+	athn_gpio_config_output(sc, sc->led_pin, AR_GPIO_OUTPUT_MUX_AS_OUTPUT);
+	/* LED off, active low. */
+	athn_gpio_write(sc, sc->led_pin, 1);
+}
+
 #ifdef ATHN_BT_COEXISTENCE
 void
 athn_btcoex_init(struct athn_softc *sc)
@@ -1706,16 +1709,7 @@ athn_btcoex_disable(struct athn_softc *sc)
 void
 athn_rfsilent_init(struct athn_softc *sc)
 {
-	struct ar_base_eep_header *base = sc->eep;
 	uint32_t reg;
-
-	/* Get GPIO pin used by hardware radio switch. */
-	sc->rfsilent_pin = MS(base->rfSilent, AR_EEP_RFSILENT_GPIO_SEL);
-	/* Get polarity of hardware radio switch. */
-	if (base->rfSilent & AR_EEP_RFSILENT_POLARITY)
-		sc->flags |= ATHN_FLAG_RFSILENT_REVERSED;
-	DPRINTFN(2, ("Found RF switch connected to GPIO pin %d\n",
-	    sc->rfsilent_pin));
 
 	/* Configure hardware radio switch. */
 	AR_SETBITS(sc, AR_GPIO_INPUT_EN_VAL, AR_GPIO_INPUT_EN_VAL_RFSILENT_BB);
@@ -4115,10 +4109,6 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 	athn_init_pll(sc, c);
 	athn_set_rf_mode(sc, c);
 
-	/* XXX move to attach? */
-	if (sc->flags & ATHN_FLAG_RFSILENT)
-		athn_rfsilent_init(sc);
-
 	if (sc->flags & ATHN_FLAG_RFSILENT) {
 		/* Check that the radio is not disabled by hardware switch. */
 		reg = athn_gpio_read(sc, sc->rfsilent_pin);
@@ -4628,7 +4618,7 @@ athn_init(struct ifnet *ifp)
 	struct athn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_channel *c, *extc;
-	int error;
+	int i, error;
 
 	c = ic->ic_bss->ni_chan = ic->ic_ibss_chan;
 	extc = NULL;
@@ -4636,7 +4626,6 @@ athn_init(struct ifnet *ifp)
 	/* In case a new MAC address has been configured. */
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 
-#ifdef notyet
 	/* For CardBus, power on the socket. */
 	if (sc->sc_enable != NULL) {
 		if ((error = sc->sc_enable(sc)) != 0) {
@@ -4650,10 +4639,30 @@ athn_init(struct ifnet *ifp)
 			goto fail;
 		}
 	}
+	if (!(sc->flags & ATHN_FLAG_PCIE))
+		athn_config_nonpcie(sc);
+	else
+		athn_config_pcie(sc);
+
+	/* Reset HW key cache entries. */
+	for (i = 0; i < sc->kc_entries; i++)
+		athn_reset_key(sc, i);
+
+	AR_SETBITS(sc, AR_PHY_CCK_DETECT,
+	    AR_PHY_CCK_DETECT_BB_ENABLE_ANT_FAST_DIV);
+
+#ifdef ATHN_BT_COEXISTENCE
+	/* Configure bluetooth coexistence for combo chips. */
+	if (sc->flags & ATHN_FLAG_BTCOEX)
+		athn_btcoex_init(sc);
 #endif
 
-	if (sc->flags & ATHN_FLAG_PCIE)
-		athn_config_pcie(sc);
+	/* Configure LED. */
+	athn_led_init(sc);
+
+	/* Configure hardware radio switch. */
+	if (sc->flags & ATHN_FLAG_RFSILENT)
+		athn_rfsilent_init(sc);
 
 	if ((error = athn_hw_reset(sc, c, extc)) != 0) {
 		printf("%s: unable to reset hardware; reset status %d\n",
@@ -4742,9 +4751,7 @@ athn_stop(struct ifnet *ifp, int disable)
 
 	athn_set_power_sleep(sc);
 
-#ifdef notyet
 	/* For CardBus, power down the socket. */
 	if (disable && sc->sc_disable != NULL)
 		sc->sc_disable(sc);
-#endif
 }

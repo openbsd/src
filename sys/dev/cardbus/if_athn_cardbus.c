@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_cardbus.c,v 1.1 2009/11/14 16:55:11 damien Exp $	*/
+/*	$OpenBSD: if_athn_cardbus.c,v 1.2 2009/11/23 19:11:06 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -131,17 +131,12 @@ athn_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	csc->sc_bar_val = base | CARDBUS_MAPREG_TYPE_MEM;
 
 	/* Set up the PCI configuration registers. */
-#ifdef notyet
 	athn_cardbus_setup(csc);
-#else
-	athn_cardbus_enable(sc);
-#endif
+
 	printf(": irq %d", csc->sc_intrline);
 
 	athn_attach(sc);
-#ifdef notyet
 	Cardbus_function_disable(ct);
-#endif
 }
 
 int
