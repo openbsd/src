@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vgevar.h,v 1.3 2006/05/28 00:20:21 brad Exp $	*/
+/*	$OpenBSD: if_vgevar.h,v 1.4 2009/11/23 23:18:16 kettenis Exp $	*/
 /*	$FreeBSD: if_vgevar.h,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -78,8 +78,10 @@ struct vge_softc {
 	struct arpcom		arpcom;		/* interface info */
 	bus_space_handle_t	vge_bhandle;	/* bus space handle */
 	bus_space_tag_t		vge_btag;	/* bus space tag */
+	bus_size_t		vge_bsize;
 	void			*vge_intrhand;
 	bus_dma_tag_t		sc_dmat;
+	pci_chipset_tag_t	sc_pc;
 	struct mii_data		sc_mii;
 	int			vge_if_flags;
 	int			vge_rx_consumed;

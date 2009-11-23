@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.45 2009/09/04 21:43:00 kettenis Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.46 2009/11/23 23:18:16 kettenis Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -128,10 +128,12 @@
 
 int vge_probe		(struct device *, void *, void *);
 void vge_attach		(struct device *, struct device *, void *);
+int vge_detach		(struct device *, int);
 
 int vge_encap		(struct vge_softc *, struct mbuf *, int);
 
 int vge_allocmem		(struct vge_softc *);
+void vge_freemem	(struct vge_softc *);
 int vge_newbuf		(struct vge_softc *, int, struct mbuf *);
 int vge_rx_list_init	(struct vge_softc *);
 int vge_tx_list_init	(struct vge_softc *);
@@ -164,7 +166,7 @@ void vge_setmulti	(struct vge_softc *);
 void vge_reset		(struct vge_softc *);
 
 struct cfattach vge_ca = {
-	sizeof(struct vge_softc), vge_probe, vge_attach
+	sizeof(struct vge_softc), vge_probe, vge_attach, vge_detach
 };
 
 struct cfdriver vge_cd = {
@@ -693,6 +695,32 @@ vge_allocmem(struct vge_softc *sc)
 	return (0);
 }
 
+void
+vge_freemem(struct vge_softc *sc)
+{
+	int i;
+
+	for (i = 0; i < VGE_RX_DESC_CNT; i++)
+		bus_dmamap_destroy(sc->sc_dmat,
+		    sc->vge_ldata.vge_rx_dmamap[i]);
+
+	bus_dmamap_unload(sc->sc_dmat, sc->vge_ldata.vge_rx_list_map);
+	bus_dmamap_destroy(sc->sc_dmat, sc->vge_ldata.vge_rx_list_map);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->vge_ldata.vge_rx_list,
+	    VGE_RX_LIST_SZ);
+	bus_dmamem_free(sc->sc_dmat, &sc->vge_ldata.vge_rx_listseg, 1);
+
+	for (i = 0; i < VGE_TX_DESC_CNT; i++)
+		bus_dmamap_destroy(sc->sc_dmat,
+		    sc->vge_ldata.vge_tx_dmamap[i]);
+
+	bus_dmamap_unload(sc->sc_dmat, sc->vge_ldata.vge_tx_list_map);
+	bus_dmamap_destroy(sc->sc_dmat, sc->vge_ldata.vge_tx_list_map);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->vge_ldata.vge_tx_list,
+	    VGE_TX_LIST_SZ);
+	bus_dmamem_free(sc->sc_dmat, &sc->vge_ldata.vge_tx_listseg, 1);
+}
+
 /*
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
@@ -708,15 +736,14 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	const char		*intrstr = NULL;
 	struct ifnet		*ifp;
 	int			error = 0;
-	bus_size_t		iosize;
 
 	/*
 	 * Map control/status registers.
 	 */
 	if (pci_mapreg_map(pa, VGE_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->vge_btag, &sc->vge_bhandle, NULL, &iosize, 0)) {
+	    &sc->vge_btag, &sc->vge_bhandle, NULL, &sc->vge_bsize, 0)) {
 		if (pci_mapreg_map(pa, VGE_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->vge_btag, &sc->vge_bhandle, NULL, &iosize, 0)) {
+		    &sc->vge_btag, &sc->vge_bhandle, NULL, &sc->vge_bsize, 0)) {
 			printf(": can't map mem or i/o space\n");
 			return;
 		}
@@ -739,6 +766,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_pc = pa->pa_pc;
 
 	/* Reset the adapter. */
 	vge_reset(sc);
@@ -806,6 +834,31 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+}
+
+int
+vge_detach(struct device *self, int flags)
+{
+	struct vge_softc *sc = (void *)self;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+
+	pci_intr_disestablish(sc->sc_pc, sc->vge_intrhand);
+
+	vge_stop(sc);
+
+	/* Detach all PHYs */
+	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete any remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	vge_freemem(sc);
+
+	bus_space_unmap(sc->vge_btag, sc->vge_bhandle, sc->vge_bsize);
+	return (0);
 }
 
 int
