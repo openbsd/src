@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.147 2009/11/23 18:01:56 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.148 2009/11/23 22:34:23 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -66,6 +66,7 @@ int	acpi_match(struct device *, void *, void *);
 void	acpi_attach(struct device *, struct device *, void *);
 int	acpi_submatch(struct device *, void *, void *);
 int	acpi_print(void *, const char *);
+void	acpi_handle_suspend_failure(struct acpi_softc *);
 
 void	acpi_map_pmregs(struct acpi_softc *);
 
@@ -1936,6 +1937,29 @@ acpi_resume(struct acpi_softc *sc, int state)
 }
 #endif /* ! SMALL_KERNEL */
 
+void
+acpi_handle_suspend_failure(struct acpi_softc *sc)
+{
+	struct aml_value env;
+
+	/* Undo a partial suspend. Devices will have already been resumed */
+	enable_intr();
+	splx(acpi_saved_spl);
+
+
+	/* Tell ACPI to go back to S0 */
+	memset(&env, 0, sizeof(env));
+	env.type = AML_OBJTYPE_INTEGER;
+	sc->sc_state = ACPI_STATE_S0;
+	if (sc->sc_tts) {
+		env.v_integer = sc->sc_state;
+		if (aml_evalnode(sc, sc->sc_tts, 1, &env, NULL) != 0) {
+			dnprintf(10, "%s evaluating method _TTS failed.\n",
+			    DEVNAME(sc));
+		}
+	}
+}
+
 int
 acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 {
@@ -1966,7 +1990,10 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 	disable_intr();
 #ifndef SMALL_KERNEL
 	if (state == ACPI_STATE_S3)
- 		config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND);
+		if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0) {
+			acpi_handle_suspend_failure(sc);
+			return (1);
+		}
 #endif /* ! SMALL_KERNEL */
 
 	/* _PTS(state) */
