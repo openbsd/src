@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.101 2009/08/11 19:17:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.102 2009/11/23 16:21:54 pirofti Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1142,7 +1142,7 @@ cpu_init_extents(void)
 }
 
 #if defined(MULTIPROCESSOR) || \
-    (NACPI > 0 && defined(ACPI_SLEEP_ENABLED) && !defined(SMALL_KERNEL))
+    (NACPI > 0 && !defined(SMALL_KERNEL))
 void
 map_tramps(void) {
 	struct pmap *kmp = pmap_kernel();
@@ -1167,11 +1167,9 @@ map_tramps(void) {
 #endif /* MULTIPROCESSOR */
 
 
-#ifdef ACPI_SLEEP_ENABLED
 	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE, /* virtual */
 	    (paddr_t)ACPI_TRAMPOLINE,	/* physical */
 	    VM_PROT_ALL);		/* protection */
-#endif /* ACPI_SLEEP_ENABLED */
 }
 #endif
 
@@ -1266,10 +1264,10 @@ init_x86_64(paddr_t first_avail)
 		avail_start = MP_TRAMPOLINE + PAGE_SIZE;
 #endif
 
-#ifdef ACPI_SLEEP_ENABLED
+#ifndef SMALL_KERNEL
 	if (avail_start < ACPI_TRAMPOLINE + PAGE_SIZE)
 		avail_start = ACPI_TRAMPOLINE + PAGE_SIZE;
-#endif /* ACPI_SLEEP_ENABLED */
+#endif /* !SMALL_KERNEL */
 
 	/* Let us know if we're supporting > 4GB ram load */
 	if (bigmem)
@@ -1463,7 +1461,7 @@ init_x86_64(paddr_t first_avail)
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 #if defined(MULTIPROCESSOR) || \
-    (NACPI > 0 && defined(ACPI_SLEEP_ENABLED) && !defined(SMALL_KERNEL))
+    (NACPI > 0 && !defined(SMALL_KERNEL))
 	map_tramps();
 #endif
 

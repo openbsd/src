@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.53 2009/11/23 15:08:02 mlarkin Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.54 2009/11/23 16:21:54 pirofti Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -35,8 +35,6 @@ extern int acpi_debug;
 #define dprintf(x...)
 #define dnprintf(n,x...)
 #endif
-
-/* #define ACPI_SLEEP_ENABLED */
 
 extern int acpi_hasprocfvs;
 

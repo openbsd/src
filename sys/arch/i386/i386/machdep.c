@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.464 2009/11/18 18:16:46 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.465 2009/11/23 16:21:54 pirofti Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3097,7 +3097,7 @@ init386(paddr_t first_avail)
 #endif
 
 #if defined(MULTIPROCESSOR) || \
-    (NACPI > 0 && defined(ACPI_SLEEP_ENABLED) && !defined(SMALL_KERNEL))
+    (NACPI > 0 && !defined(SMALL_KERNEL))
 	/* install the lowmem ptp after boot args for 1:1 mappings */
 	pmap_prealloc_lowmem_ptp(PTP0_PA);
 #endif
@@ -3108,7 +3108,7 @@ init386(paddr_t first_avail)
 	    VM_PROT_ALL);                       /* protection */
 #endif
 
-#if NACPI > 0 && defined(ACPI_SLEEP_ENABLED) && !defined(SMALL_KERNEL)
+#if NACPI > 0 && !defined(SMALL_KERNEL)
 	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,/* virtual */
 	    (paddr_t)ACPI_TRAMPOLINE,           /* physical */
 	    VM_PROT_ALL);                       /* protection */

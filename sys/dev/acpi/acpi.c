@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.145 2009/11/23 15:18:05 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.146 2009/11/23 16:21:54 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -954,7 +954,6 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	ACPI_LOCK(sc);
 	/* fake APM */
 	switch (cmd) {
-#ifdef ACPI_SLEEP_ENABLED
 	case APM_IOC_STANDBY_REQ:
 	case APM_IOC_SUSPEND_REQ:
 	case APM_IOC_SUSPEND:
@@ -962,7 +961,6 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		workq_add_task(NULL, 0, (workq_fn)acpi_sleep_state,
 		    acpi_softc, (void *)ACPI_STATE_S3);
 		break;
-#endif /* ACPI_SLEEP_ENABLED */
 	case APM_IOC_GETPOWER:
 		/* A/C */
 		pi->ac_state = APM_AC_UNKNOWN;
@@ -1841,10 +1839,10 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 	else
 		ret = acpi_enter_sleep_state(sc, state);
 
-#ifdef ACPI_SLEEP_ENABLED
+#ifndef SMALL_KERNEL
 	if (state == ACPI_STATE_S3)
 		acpi_resume(sc, state);
-#endif /* ACPI_SLEEP_ENABLED */
+#endif /* !SMALL_KERNEL */
 	return (ret);
 }
 

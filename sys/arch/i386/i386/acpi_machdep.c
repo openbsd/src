@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.23 2009/08/13 15:33:20 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.24 2009/11/23 16:21:54 pirofti Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -191,7 +191,6 @@ acpi_attach_machdep(struct acpi_softc *sc)
 	acpiapm_kqfilter = acpikqfilter;
 	cpuresetfn = acpi_reset;
 
-#ifdef ACPI_SLEEP_ENABLED
 	/*
 	 * Sanity check before setting up trampoline.
 	 * Ensure the trampoline size is < PAGE_SIZE
@@ -200,7 +199,6 @@ acpi_attach_machdep(struct acpi_softc *sc)
 
 	bcopy(acpi_real_mode_resume, (caddr_t)ACPI_TRAMPOLINE,
 	    acpi_resume_end - acpi_real_mode_resume);
-#endif /* ACPI_SLEEP_ENABLED */
 }
 
 void
@@ -216,7 +214,6 @@ acpi_cpu_flush(struct acpi_softc *sc, int state)
 int
 acpi_sleep_machdep(struct acpi_softc *sc, int state)
 {
-#ifdef ACPI_SLEEP_ENABLED
 	if (sc->sc_facs == NULL) {
 		printf("%s: acpi_sleep_machdep: no FACS\n", DEVNAME(sc));
 		return (ENXIO);
@@ -278,7 +275,6 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 #endif
 	initrtclock();
 	inittodr(time_second);
-#endif /* ACPI_SLEEP_ENABLED */
 
 	return (0);
 }
