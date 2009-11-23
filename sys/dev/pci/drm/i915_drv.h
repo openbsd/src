@@ -264,20 +264,6 @@ extern u32 i915_get_vblank_counter(struct drm_device *dev, int crtc);
 extern void i915_user_irq_get(struct drm_device *dev);
 extern void i915_user_irq_put(struct drm_device *dev);
 
-/* i915_mem.c */
-extern int i915_mem_alloc(struct drm_device *dev, void *data,
-			  struct drm_file *file_priv);
-extern int i915_mem_free(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv);
-extern int i915_mem_init_heap(struct drm_device *dev, void *data,
-			      struct drm_file *file_priv);
-extern int i915_mem_destroy_heap(struct drm_device *dev, void *data,
-				 struct drm_file *file_priv);
-extern void i915_mem_takedown(struct drm_heap *heap);
-extern void i915_mem_release(struct drm_device * dev,
-			     struct drm_file *file_priv,
-			     struct drm_heap *heap);
-
 /* ioctls */
 extern int i915_dma_init(struct drm_device *, void *, struct drm_file *);
 extern int i915_flush_ioctl(struct drm_device *, void *, struct drm_file *);
