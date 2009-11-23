@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.39 2009/09/01 13:43:36 reyk Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.40 2009/11/23 00:45:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -337,7 +337,7 @@ transaction_init(struct relayd *env, const char *anchor)
 	bzero(&env->sc_pf->pfte, sizeof(env->sc_pf->pfte));
 	(void)strlcpy(env->sc_pf->pfte.anchor,
 	    anchor, PF_ANCHOR_NAME_SIZE);
-	env->sc_pf->pfte.rs_num = 0;
+	env->sc_pf->pfte.type = PF_TRANS_RULESET;
 
 	if (ioctl(env->sc_pf->dev, DIOCXBEGIN,
 	    &env->sc_pf->pft) == -1)
