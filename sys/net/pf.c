@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.671 2009/11/23 16:03:10 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.672 2009/11/23 17:18:05 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -660,8 +660,7 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 	struct pf_state_key     *cur;
 	struct pf_state		*olds = NULL;
 
-	KASSERT(s->key[idx] == NULL);	/* XXX handle this? */
-
+	KASSERT(s->key[idx] == NULL);
 	if ((cur = RB_INSERT(pf_state_tree, &pf_statetbl, sk)) != NULL) {
 		/* key exists. check for same kif, if none, add to key */
 		TAILQ_FOREACH(si, &cur->states, entry)
@@ -1107,7 +1106,6 @@ pf_unlink_state(struct pf_state *cur)
 	splsoftassert(IPL_SOFTNET);
 
 	if (cur->src.state == PF_TCPS_PROXY_DST) {
-		/* XXX wire key the right one? */
 		pf_send_tcp(cur->rule.ptr, cur->key[PF_SK_WIRE]->af,
 		    &cur->key[PF_SK_WIRE]->addr[1],
 		    &cur->key[PF_SK_WIRE]->addr[0],
@@ -3034,7 +3032,7 @@ pf_create_state(struct pf_rule *r, struct pf_rule *a, struct pf_pdesc *pd,
 	s->qid = act->qid;
 	s->pqid = act->pqid;
 	s->rtableid[pd->didx] = act->rtableid;
-	s->rtableid[pd->sidx] = -1;	/* return traffic is routed normaly */
+	s->rtableid[pd->sidx] = -1;	/* return traffic is routed normally */
 	s->min_ttl = act->min_ttl;
 	s->set_tos = act->set_tos;
 	s->max_mss = act->max_mss;
@@ -3344,7 +3342,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 		PFLOG_PACKET(kif, h, m, af, direction, reason, r, a, ruleset,
 		    pd);
 
-	if (r->action != PF_PASS)
+	if (r->action != PF_PASS)	/* XXX wrong */
 		return (PF_DROP);
 
 	if (pf_tag_packet(m, tag, -1)) {
