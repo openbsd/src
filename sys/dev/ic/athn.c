@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.15 2009/11/23 17:14:50 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.16 2009/11/23 18:42:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -265,8 +265,9 @@ athn_attach(struct athn_softc *sc)
 	/*
 	 * In HostAP mode, the number of STAs that we can handle is
 	 * limited by the number of entries in the HW key cache.
+	 * XXX TKIP MMIC
 	 */
-	ic->ic_max_nnodes = sc->kc_entries;	/* XXX MIC. */
+	ic->ic_max_nnodes = sc->kc_entries - IEEE80211_GROUP_NKID;
 
 	DPRINTF(("using %s loop power control\n",
 	    (sc->flags & ATHN_FLAG_OLPC) ? "open" : "closed"));
@@ -1501,7 +1502,7 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct athn_softc *sc = ic->ic_softc;
 	uint32_t type, lo, hi;
-	uint32_t keybuf[4], micbuf[4];
+	uint16_t keybuf[8], micbuf[8];
 	const uint8_t *addr;
 	uintptr_t entry, micentry;
 
@@ -1526,10 +1527,10 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	memset(keybuf, 0, sizeof keybuf);
 	memcpy(keybuf, k->k_key, MIN(k->k_len, 16));
 
-	if (k->k_flags & IEEE80211_KEY_GROUP)
-		entry = k->k_id;
+	if (!(k->k_flags & IEEE80211_KEY_GROUP))
+		entry = IEEE80211_GROUP_NKID + IEEE80211_AID(ni->ni_associd);
 	else
-		entry = IEEE80211_AID(ni->ni_associd);	/* XXX +offset. */
+		entry = k->k_id;
 	k->k_priv = (void *)entry;
 
 	/* NB: See note about key cache registers access above. */
@@ -1537,26 +1538,32 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 		micentry = entry + 64;
 
 		/* XXX Split MIC. */
-		AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry), micbuf[0]);
-		AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry), micbuf[1]);
+		AR_WRITE(sc, AR_KEYTABLE_KEY0(micentry),
+		    micbuf[0] | micbuf[1] << 16);
+		AR_WRITE(sc, AR_KEYTABLE_KEY1(micentry), micbuf[2]);
 
-		AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry), micbuf[2]);
-		AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), micbuf[3]);
+		AR_WRITE(sc, AR_KEYTABLE_KEY2(micentry),
+		    micbuf[3] | micbuf[4] << 16);
+		AR_WRITE(sc, AR_KEYTABLE_KEY3(micentry), micbuf[5]);
 
-		AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry), micbuf[4]);
+		AR_WRITE(sc, AR_KEYTABLE_KEY4(micentry),
+		    micbuf[6] | micbuf[7] << 16);
 		AR_WRITE(sc, AR_KEYTABLE_TYPE(micentry), AR_KEYTABLE_TYPE_CLR);
 
 		/* MAC address registers are reserved for the MIC entry. */
 		AR_WRITE(sc, AR_KEYTABLE_MAC0(micentry), 0);
 		AR_WRITE(sc, AR_KEYTABLE_MAC1(micentry), 0);
 	} else {
-		AR_WRITE(sc, AR_KEYTABLE_KEY0(entry), keybuf[0]);
-		AR_WRITE(sc, AR_KEYTABLE_KEY1(entry), keybuf[1]);
+		AR_WRITE(sc, AR_KEYTABLE_KEY0(entry),
+		    keybuf[0] | keybuf[1] << 16);
+		AR_WRITE(sc, AR_KEYTABLE_KEY1(entry), keybuf[2]);
 
-		AR_WRITE(sc, AR_KEYTABLE_KEY2(entry), keybuf[2]);
-		AR_WRITE(sc, AR_KEYTABLE_KEY3(entry), keybuf[3]);
+		AR_WRITE(sc, AR_KEYTABLE_KEY2(entry),
+		    keybuf[3] | keybuf[4] << 16);
+		AR_WRITE(sc, AR_KEYTABLE_KEY3(entry), keybuf[5]);
 
-		AR_WRITE(sc, AR_KEYTABLE_KEY4(entry), keybuf[4]);
+		AR_WRITE(sc, AR_KEYTABLE_KEY4(entry),
+		    keybuf[6] | keybuf[7] << 16);
 		AR_WRITE(sc, AR_KEYTABLE_TYPE(entry), type);
 	}
 
@@ -1564,12 +1571,14 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	memset(keybuf, 0, sizeof keybuf);
 	memset(micbuf, 0, sizeof micbuf);
 
-	/* XXX Group keys? */
-	addr = ni->ni_macaddr;
-	lo = addr[0] | addr[1] << 8 | addr[2] << 16 | addr[3] << 24;
-	hi = addr[4] | addr[5] << 8;
-	lo = lo >> 1 | hi << 31;
-	hi = hi >> 1;
+	if (!(k->k_flags & IEEE80211_KEY_GROUP)) {
+		addr = ni->ni_macaddr;
+		lo = addr[0] | addr[1] << 8 | addr[2] << 16 | addr[3] << 24;
+		hi = addr[4] | addr[5] << 8;
+		lo = lo >> 1 | hi << 31;
+		hi = hi >> 1;
+	} else
+		lo = hi = 0;
 	AR_WRITE(sc, AR_KEYTABLE_MAC0(entry), lo);
 	AR_WRITE(sc, AR_KEYTABLE_MAC1(entry), hi | AR_KEYTABLE_VALID);
 	return (0);
