@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.68 2009/11/05 20:30:47 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.69 2009/11/23 01:28:11 mlarkin Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -49,6 +49,7 @@ int pcimatch(struct device *, void *, void *);
 void pciattach(struct device *, struct device *, void *);
 int pcidetach(struct device *, int);
 void pcipower(int, void *);
+int pciactivate(struct device *, int);
 
 #define NMAPREG			((PCI_MAPREG_END - PCI_MAPREG_START) / \
 				    sizeof(pcireg_t))
@@ -67,7 +68,7 @@ extern int allowaperture;
 #endif
 
 struct cfattach pci_ca = {
-	sizeof(struct pci_softc), pcimatch, pciattach, pcidetach
+	sizeof(struct pci_softc), pcimatch, pciattach, pcidetach, pciactivate
 };
 
 struct cfdriver pci_cd = {
@@ -173,6 +174,22 @@ int
 pcidetach(struct device *self, int flags)
 {
 	return pci_detach_devices((struct pci_softc *)self, flags);
+}
+
+int
+pciactivate(struct device *self, int act)
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_RESUME:
+		pcipower(PWR_RESUME, self);
+		break;
+	case DVACT_SUSPEND:
+		pcipower(PWR_SUSPEND, self);	
+		break;
+	}
+	return (rv);
 }
 
 /* save and restore the pci config space */
