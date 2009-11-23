@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.21 2009/10/13 19:33:16 pirofti Exp $ */
+/* $OpenBSD: pckbd.c,v 1.22 2009/11/23 01:33:08 pirofti Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -418,13 +418,11 @@ int
 pckbd_activate(struct device *self, int act)
 {
 	switch (act) {
-	case DVACT_ACTIVATE:
-		if (!cold)
-			pckbd_enable(self, 1);
+	case DVACT_RESUME:
+		pckbd_enable(self, 1);
 		break;
-	case DVACT_DEACTIVATE:
-		if (!cold)
-			pckbd_enable(self, 0);
+	case DVACT_SUSPEND:
+		pckbd_enable(self, 0);
 		break;
 	}
 	return (0);
