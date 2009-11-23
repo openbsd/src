@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.67 2009/08/10 20:29:54 deraadt Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.68 2009/11/23 23:49:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1415,6 +1415,9 @@ rl_detach(struct rl_softc *sc)
 	/* Unhook our tick handler. */
 	timeout_del(&sc->sc_tick_tmo);
 
+	if (sc->sc_pwrhook != NULL)
+		powerhook_disestablish(sc->sc_pwrhook);
+
 	/* Detach any PHYs we might have. */
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
@@ -1424,9 +1427,6 @@ rl_detach(struct rl_softc *sc)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-
-	if (sc->sc_pwrhook != NULL)
-		powerhook_disestablish(sc->sc_pwrhook);
 
 	return (0);
 }
