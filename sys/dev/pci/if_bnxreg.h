@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.34 2009/11/23 10:54:43 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -717,8 +717,13 @@ struct tx_bd {
 	u_int32_t tx_bd_haddr_hi;
 	u_int32_t tx_bd_haddr_lo;
 	u_int32_t tx_bd_mss_nbytes;
+#if BYTE_ORDER == BIG_ENDIAN
+	u_int16_t tx_bd_vlan_tag;
+	u_int16_t tx_bd_flags;
+#else
 	u_int16_t tx_bd_flags;
 	u_int16_t tx_bd_vlan_tag;
+#endif
 		#define TX_BD_FLAGS_CONN_FAULT		(1<<0)
 		#define TX_BD_FLAGS_TCP_UDP_CKSUM	(1<<1)
 		#define TX_BD_FLAGS_IP_CKSUM		(1<<2)
@@ -4586,7 +4591,6 @@ struct l2_fhdr {
 #define DMA_WRITE_CHANS	3
 
 /* Use the natural page size of the host CPU. */
-/* XXX: This has only been tested on amd64/i386 systems using 4KB pages. */
 #define BCM_PAGE_BITS	PAGE_SHIFT	
 #define BCM_PAGE_SIZE	PAGE_SIZE
 
@@ -4610,7 +4614,7 @@ struct l2_fhdr {
 
 #define TX_CHAIN_IDX(x) ((x) & MAX_TX_BD)
 
-#define TX_PAGE(x) (((x) & ~USABLE_TX_BD_PER_PAGE) >> 8)
+#define TX_PAGE(x) (((x) & ~USABLE_TX_BD_PER_PAGE) >> (BCM_PAGE_BITS - 4))
 #define TX_IDX(x) ((x) & USABLE_TX_BD_PER_PAGE)
 
 #define NEXT_RX_BD(x) (((x) & USABLE_RX_BD_PER_PAGE) ==	\
@@ -4619,7 +4623,7 @@ struct l2_fhdr {
 
 #define RX_CHAIN_IDX(x) ((x) & MAX_RX_BD)
 
-#define RX_PAGE(x) (((x) & ~USABLE_RX_BD_PER_PAGE) >> 8)
+#define RX_PAGE(x) (((x) & ~USABLE_RX_BD_PER_PAGE) >> (BCM_PAGE_BITS - 4))
 #define RX_IDX(x) ((x) & USABLE_RX_BD_PER_PAGE)
 
 /* Context size. */

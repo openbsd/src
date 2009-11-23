@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.86 2009/11/23 10:54:43 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3626,12 +3626,12 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 	/* Setup the rx_bd for the first segment. */
 	rxbd = &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
 
-	addr = (u_int32_t)(map->dm_segs[0].ds_addr);
-	rxbd->rx_bd_haddr_lo = htole32(addr);
+	addr = (u_int32_t)map->dm_segs[0].ds_addr;
+	rxbd->rx_bd_haddr_lo = addr;
 	addr = (u_int32_t)((u_int64_t)map->dm_segs[0].ds_addr >> 32);
-	rxbd->rx_bd_haddr_hi = htole32(addr);
-	rxbd->rx_bd_len = htole32(map->dm_segs[0].ds_len);
-	rxbd->rx_bd_flags = htole32(RX_BD_FLAGS_START);
+	rxbd->rx_bd_haddr_hi = addr;
+	rxbd->rx_bd_len = map->dm_segs[0].ds_len;
+	rxbd->rx_bd_flags = RX_BD_FLAGS_START;
 	*prod_bseq += map->dm_segs[0].ds_len;
 
 	for (i = 1; i < map->dm_nsegs; i++) {
@@ -3641,16 +3641,16 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 		rxbd =
 		    &sc->rx_bd_chain[RX_PAGE(*chain_prod)][RX_IDX(*chain_prod)];
 
-		addr = (u_int32_t)(map->dm_segs[i].ds_addr);
-		rxbd->rx_bd_haddr_lo = htole32(addr);
+		addr = (u_int32_t)map->dm_segs[i].ds_addr;
+		rxbd->rx_bd_haddr_lo = addr;
 		addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
-		rxbd->rx_bd_haddr_hi = htole32(addr);
-		rxbd->rx_bd_len = htole32(map->dm_segs[i].ds_len);
+		rxbd->rx_bd_haddr_hi = addr;
+		rxbd->rx_bd_len = map->dm_segs[i].ds_len;
 		rxbd->rx_bd_flags = 0;
 		*prod_bseq += map->dm_segs[i].ds_len;
 	}
 
-	rxbd->rx_bd_flags |= htole32(RX_BD_FLAGS_END);
+	rxbd->rx_bd_flags |= RX_BD_FLAGS_END;
 
 	/*
 	 * Save the mbuf, adjust the map pointer (swap map for first and
@@ -3804,10 +3804,10 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 		else
 			j = i + 1;
 
-		addr = (u_int32_t)(sc->tx_bd_chain_paddr[j]);
-		txbd->tx_bd_haddr_lo = htole32(addr);
+		addr = (u_int32_t)sc->tx_bd_chain_paddr[j];
+		txbd->tx_bd_haddr_lo = addr;
 		addr = (u_int32_t)((u_int64_t)sc->tx_bd_chain_paddr[j] >> 32);
-		txbd->tx_bd_haddr_hi = htole32(addr);
+		txbd->tx_bd_haddr_hi = addr;
 	}
 
 	/*
@@ -4016,9 +4016,9 @@ bnx_init_rx_chain(struct bnx_softc *sc)
 
 		/* Setup the chain page pointers. */
 		addr = (u_int32_t)((u_int64_t)sc->rx_bd_chain_paddr[j] >> 32);
-		rxbd->rx_bd_haddr_hi = htole32(addr);
-		addr = (u_int32_t)(sc->rx_bd_chain_paddr[j]);
-		rxbd->rx_bd_haddr_lo = htole32(addr);
+		rxbd->rx_bd_haddr_hi = addr;
+		addr = (u_int32_t)sc->rx_bd_chain_paddr[j];
+		rxbd->rx_bd_haddr_lo = addr;
 	}
 
 	/* Fill up the RX chain. */
@@ -4841,21 +4841,21 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 		chain_prod = TX_CHAIN_IDX(prod);
 		txbd = &sc->tx_bd_chain[TX_PAGE(chain_prod)][TX_IDX(chain_prod)];
 
-		addr = (u_int32_t)(map->dm_segs[i].ds_addr);
-		txbd->tx_bd_haddr_lo = htole32(addr);
+		addr = (u_int32_t)map->dm_segs[i].ds_addr;
+		txbd->tx_bd_haddr_lo = addr;
 		addr = (u_int32_t)((u_int64_t)map->dm_segs[i].ds_addr >> 32);
-		txbd->tx_bd_haddr_hi = htole32(addr);
-		txbd->tx_bd_mss_nbytes = htole16(map->dm_segs[i].ds_len);
-		txbd->tx_bd_vlan_tag = htole16(vlan_tag);
-		txbd->tx_bd_flags = htole16(flags);
+		txbd->tx_bd_haddr_hi = addr;
+		txbd->tx_bd_mss_nbytes = map->dm_segs[i].ds_len;
+		txbd->tx_bd_vlan_tag = vlan_tag;
+		txbd->tx_bd_flags = flags;
 		prod_bseq += map->dm_segs[i].ds_len;
 		if (i == 0)
-			txbd->tx_bd_flags |= htole16(TX_BD_FLAGS_START);
+			txbd->tx_bd_flags |= TX_BD_FLAGS_START;
 		prod = NEXT_TX_BD(prod);
  	}
 
 	/* Set the END flag on the last TX buffer descriptor. */
-	txbd->tx_bd_flags |= htole16(TX_BD_FLAGS_END);
+	txbd->tx_bd_flags |= TX_BD_FLAGS_END;
 
 	DBRUN(BNX_INFO_SEND, bnx_dump_tx_chain(sc, debug_prod,
 	    map->dm_nsegs));
