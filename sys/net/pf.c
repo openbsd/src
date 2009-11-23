@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.675 2009/11/23 18:10:43 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.676 2009/11/23 18:41:21 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2663,7 +2663,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_rule_slist	 rules;
 	struct pf_rule_item	*ri;
 	struct tcphdr		*th = pd->hdr.tcp;
-	struct pf_state_key	*skw = NULL, *sks = NULL;
+	struct pf_state_key	*skw, *sks;
 	struct pf_rule_actions	 act;
 	u_short			 reason;
 	int			 rewrite = 0, hdrlen = 0;
@@ -2942,10 +2942,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			rewrite = 1;
 		}
 	} else {
-		if (sks != NULL)
-			pool_put(&pf_state_key_pl, sks);
-		if (skw != NULL)
-			pool_put(&pf_state_key_pl, skw);
 		while ((ri = SLIST_FIRST(&rules))) {
 			SLIST_REMOVE_HEAD(&rules, entry);
 			pool_put(&pf_rule_item_pl, ri);
@@ -2973,10 +2969,6 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	return (PF_PASS);
 
 cleanup:
-	if (sks != NULL)
-		pool_put(&pf_state_key_pl, sks);
-	if (skw != NULL)
-		pool_put(&pf_state_key_pl, skw);
 	while ((ri = SLIST_FIRST(&rules))) {
 		SLIST_REMOVE_HEAD(&rules, entry);
 		pool_put(&pf_rule_item_pl, ri);
