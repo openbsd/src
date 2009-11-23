@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.74 2009/11/16 13:41:49 jsg Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.75 2009/11/23 16:36:22 claudio Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1372,36 +1372,30 @@ epget(sc, totlen)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mbuf *top, **mp, *m;
+	struct mbuf *m;
 	int len, pad, sh, rxreg;
+
+	splassert(IPL_NET);
 
 	m = sc->mb[sc->next_mb];
 	sc->mb[sc->next_mb] = NULL;
 	if (m == NULL) {
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL)
-			return (NULL);
-	} else {
+		m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
 		/* If the queue is no longer full, refill. */
-		if (sc->last_mb == sc->next_mb)
+		if (!timeout_pending(&sc->sc_epmbuffill_tmo))
 			timeout_add(&sc->sc_epmbuffill_tmo, 1);
-		/* Convert one of our saved mbuf's. */
-		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
-		m = m_inithdr(m);
 	}
+	if (!m)
+		return (NULL);
+
+	sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
+
+	len = MCLBYTES;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
-	len = MHLEN;
-	if (totlen >= MINCLSIZE) {
-		MCLGET(m, M_DONTWAIT);
-		if (m->m_flags & M_EXT)
-			len = MCLBYTES;
-	}
 	m->m_data += pad;
 	len -= pad;
-	top = 0;
-	mp = &top;
 
 	/*
 	 * We read the packet at splhigh() so that an interrupt from another
@@ -1412,56 +1406,31 @@ epget(sc, totlen)
 
 	rxreg = ep_w1_reg(sc, EP_W1_RX_PIO_RD_1);
 
-	while (totlen > 0) {
-		if (top) {
-			m = sc->mb[sc->next_mb];
-			sc->mb[sc->next_mb] = NULL;
-			if (m == NULL) {
-				MGET(m, M_DONTWAIT, MT_DATA);
-				if (m == NULL) {
-					splx(sh);
-					m_freem(top);
-					return (NULL);
-				}
-			} else
-				sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
-
-			len = MLEN;
-		}
-		if (top && totlen >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
-		}
-		len = min(totlen, len);
-		if (EP_IS_BUS_32(sc->bustype)) {
-			if (len > 3) {
-				len &= ~3;
-				bus_space_read_raw_multi_4(iot, ioh, rxreg,
-				    mtod(m, u_int8_t *), len);
-			} else
-				bus_space_read_multi_1(iot, ioh, rxreg,
-				    mtod(m, u_int8_t *), len);
-		} else {
-			if (len > 1) {
-				len &= ~1;
-				bus_space_read_raw_multi_2(iot, ioh, rxreg,
-				    mtod(m, u_int8_t *), len);
-			} else
-				*(mtod(m, u_int8_t *)) =
-				    bus_space_read_1(iot, ioh, rxreg);
-		}
-		m->m_len = len;
-		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
+	len = min(totlen, len);
+	if (EP_IS_BUS_32(sc->bustype)) {
+		if (len > 3) {
+			len &= ~3;
+			bus_space_read_raw_multi_4(iot, ioh, rxreg,
+			    mtod(m, u_int8_t *), len);
+		} else
+			bus_space_read_multi_1(iot, ioh, rxreg,
+			    mtod(m, u_int8_t *), len);
+	} else {
+		if (len > 1) {
+			len &= ~1;
+			bus_space_read_raw_multi_2(iot, ioh, rxreg,
+			    mtod(m, u_int8_t *), len);
+		} else
+			*(mtod(m, u_int8_t *)) =
+			    bus_space_read_1(iot, ioh, rxreg);
 	}
+	m->m_len = len;
 
 	ep_discard_rxtop(iot, ioh);
 
 	splx(sh);
 
-	return top;
+	return m;
 }
 
 int
@@ -1693,17 +1662,15 @@ epmbuffill(v)
 	int s, i;
 
 	s = splnet();
-	i = sc->last_mb;
-	do {
-		if (sc->mb[i] == NULL)
-			MGET(sc->mb[i], M_DONTWAIT, MT_DATA);
-		if (sc->mb[i] == NULL)
-			break;
-		i = (i + 1) % MAX_MBS;
-	} while (i != sc->next_mb);
-	sc->last_mb = i;
+	for (i = 0; i < MAX_MBS; i++) {
+		if (sc->mb[i] == NULL) {
+			sc->mb[i] = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+			if (sc->mb[i] == NULL)
+				break;
+		}
+	}
 	/* If the queue was not filled, try again. */
-	if (sc->last_mb != sc->next_mb)
+	if (i < MAX_MBS)
 		timeout_add(&sc->sc_epmbuffill_tmo, 1);
 	splx(s);
 }
@@ -1721,7 +1688,7 @@ epmbufempty(sc)
 			sc->mb[i] = NULL;
 		}
 	}
-	sc->last_mb = sc->next_mb = 0;
+	sc->next_mb = 0;
 	timeout_del(&sc->sc_epmbuffill_tmo);
 	splx(s);
 }

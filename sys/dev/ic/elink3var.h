@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3var.h,v 1.18 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: elink3var.h,v 1.19 2009/11/23 16:36:22 claudio Exp $	*/
 /*	$NetBSD: elink3var.h,v 1.12 1997/03/30 22:47:11 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,6 @@ struct ep_softc {
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
 	int	next_mb;		/* Which mbuf to use next. 	*/
-	int	last_mb;		/* Last mbuf.			*/
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
 	int	tx_succ_ok;		/* # packets sent in sequence   */
 					/* w/o underrun			*/
