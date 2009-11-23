@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.14 2009/11/22 08:52:45 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.15 2009/11/23 17:14:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -3258,8 +3258,6 @@ athn_txtime(struct athn_softc *sc, int len, int ridx, u_int flags)
 	return (txtime);
 #undef divround
 }
-
-int athn_prot = 0;
 
 int
 athn_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
