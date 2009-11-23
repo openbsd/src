@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.36 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.37 2009/11/23 19:26:54 yuo Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -279,8 +279,8 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
 					 repid, dev));
 				if (dev->sc_intr == NULL) {
-					printf("%s: sc_intr == NULL\n",
-					       sc->sc_dev.dv_xname);
+					DPRINTF(("%s: sc_intr == NULL\n",
+					       sc->sc_dev.dv_xname));
 					return;
 				}
 #endif
