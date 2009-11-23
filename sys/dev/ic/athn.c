@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.17 2009/11/23 19:11:06 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.18 2009/11/23 19:54:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4727,6 +4727,9 @@ athn_stop(struct ifnet *ifp, int disable)
 
 	/* Disable interrupts. */
 	athn_disable_interrupts(sc);
+	/* Acknowledge interrupts (avoids interrupt storms.) */
+	AR_WRITE(sc, AR_INTR_SYNC_CAUSE, 0xffffffff);
+	AR_WRITE(sc, AR_INTR_SYNC_MASK, 0);
 
 	for (qid = 0; qid < ATHN_QID_COUNT; qid++)
 		athn_stop_tx_dma(sc, qid);
