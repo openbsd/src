@@ -1,0 +1,23 @@
+OUTPUT_FORMAT("elf64-tradlittlemips")
+OUTPUT_ARCH(mips)
+ENTRY(__start)
+
+SECTIONS
+{
+	.text :		{ *(.text .text.* .gnu.linkonce.t.*) }
+	PROVIDE (etext = .);
+	.rodata :	{ *(.rodata .rodata.* .gnu.linkonce.r.*) }
+	_gp = ALIGN(16) + 0x7ff0;
+	.data :		{ *(.data .data.* .gnu.linkonce.d.*) }
+	PROVIDE (edata = .);
+	.sbss :		{ *(.sbss .sbss.* .gnu.linkonce.sb.* .scommon) }
+	.bss :		{ *(.bss .bss.* .gnu.linkonce.b.* COMMON) }
+	PROVIDE (_end = .);
+	PROVIDE (end = .);
+	/DISCARD/ :
+	{
+		*(.pdr)
+		*(.mdebug.abi64)
+		*(.MIPS.options)
+	}
+}
