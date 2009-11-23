@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.332 2009/08/12 13:21:15 deraadt Exp $
+#	$OpenBSD: rc,v 1.333 2009/11/23 12:14:25 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -371,6 +371,19 @@ if [ X"${named_flags}" != X"NO" ]; then
 	echo 'starting named';		named $named_flags
 fi
 
+if [ ! -f /etc/isakmpd/private/local.key ]; then
+	echo -n "openssl: generating new isakmpd RSA key... "
+	if /usr/sbin/openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
+	    > /dev/null 2>&1; then
+		chmod 600 /etc/isakmpd/private/local.key
+		openssl rsa -out /etc/isakmpd/local.pub \
+		    -in /etc/isakmpd/private/local.key -pubout > /dev/null 2>&1
+		echo done.
+	else
+		echo failed.
+	fi
+fi
+
 if [ X"${isakmpd_flags}" != X"NO" ]; then
 	if [ X"${sasyncd_flags}" != X"NO" ]; then
 		isakmpd_flags="-S ${isakmpd_flags}"
@@ -596,20 +609,11 @@ if [ ! -f /etc/ssh/ssh_host_key ]; then
 	fi
 fi
 
-if [ ! -f /etc/isakmpd/private/local.key ]; then
-	echo -n "openssl: generating new isakmpd RSA key... "
-	if /usr/sbin/openssl genrsa -out /etc/isakmpd/private/local.key 2048 \
-	    > /dev/null 2>&1; then
-		chmod 600 /etc/isakmpd/private/local.key
-		openssl rsa -out /etc/isakmpd/local.pub \
-		    -in /etc/isakmpd/private/local.key -pubout > /dev/null 2>&1
-		echo done.
-	else
-		echo failed.
-	fi
-fi
-
 echo -n starting network daemons:
+
+if [ X"${sshd_flags}" != X"NO" ]; then
+	echo -n ' sshd';		/usr/sbin/sshd ${sshd_flags};
+fi
 
 if [ X"${snmpd_flags}" != X"NO" ]; then
 	echo -n ' snmpd';		/usr/sbin/snmpd $snmpd_flags
@@ -726,10 +730,6 @@ fi
 
 if [ X"${inetd}" = X"YES" -a -e /etc/inetd.conf ]; then
 	echo -n ' inetd';		inetd
-fi
-
-if [ X"${sshd_flags}" != X"NO" ]; then
-	echo -n ' sshd';		/usr/sbin/sshd ${sshd_flags};
 fi
 
 if [ X"${spamd_flags}" != X"NO" ]; then
