@@ -32,7 +32,6 @@
 #include "i915_drv.h"
 
 int	inteldrm_intr(void *);
-int	i915_pipe_enabled(struct drm_device *, int);
 void	i915_enable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_disable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_enable_pipestat(drm_i915_private_t *, int, u_int32_t);
@@ -103,24 +102,6 @@ i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u_int32_t mask)
 	}
 }
 
-/**
- * i915_pipe_enabled - check if a pipe is enabled
- * @dev: DRM device
- * @pipe: pipe to check
- *
- * Reading certain registers when the pipe is disabled can hang the chip.
- * Use this routine to make sure the PLL is running and the pipe is active
- * before reading such registers if unsure.
- */
-int
-i915_pipe_enabled(struct drm_device *dev, int pipe)
-{
-	drm_i915_private_t	*dev_priv = dev->dev_private;
-	bus_size_t		 pipeconf = pipe ? PIPEBCONF : PIPEACONF;
-
-	return ((I915_READ(pipeconf) & PIPEACONF_ENABLE) == PIPEACONF_ENABLE);
-}
-
 u_int32_t
 i915_get_vblank_counter(struct drm_device *dev, int pipe)
 {
@@ -131,7 +112,7 @@ i915_get_vblank_counter(struct drm_device *dev, int pipe)
 	high_frame = pipe ? PIPEBFRAMEHIGH : PIPEAFRAMEHIGH;
 	low_frame = pipe ? PIPEBFRAMEPIXEL : PIPEAFRAMEPIXEL;
 
-	if (i915_pipe_enabled(dev, pipe) == 0) {
+	if (inteldrm_pipe_enabled(dev_priv, pipe) == 0) {
 		DRM_DEBUG("trying to get vblank count for disabled pipe %d\n",
 		    pipe);
 		return (0);
@@ -314,7 +295,7 @@ i915_enable_vblank(struct drm_device *dev, int pipe)
 {
 	drm_i915_private_t	*dev_priv = dev->dev_private;
 
-	if (i915_pipe_enabled(dev, pipe) == 0)
+	if (inteldrm_pipe_enabled(dev_priv, pipe) == 0)
 		return (EINVAL);
 
 	mtx_enter(&dev_priv->user_irq_lock);

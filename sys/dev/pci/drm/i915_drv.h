@@ -80,6 +80,7 @@ typedef struct drm_i915_private {
 	u_int16_t		 pci_device;
 
 	pci_chipset_tag_t	 pc;
+	pcitag_t		 tag;
 	pci_intr_handle_t	 ih;
 	void			*irqh;
 
@@ -110,6 +111,8 @@ typedef struct drm_i915_private {
 	u32 saveDSPACNTR;
 	u32 saveDSPBCNTR;
 	u32 saveDSPARB;
+	u32 saveRENDERSTANDBY;
+	u32 saveHWS;
 	u32 savePIPEACONF;
 	u32 savePIPEBCONF;
 	u32 savePIPEASRC;
@@ -180,6 +183,7 @@ typedef struct drm_i915_private {
 	u32 saveIMR;
 	u32 saveCACHE_MODE_0;
 	u32 saveD_STATE;
+	u32 saveDSPCLK_GATE_D;
 	u32 saveCG_2D_DIS;
 	u32 saveMI_ARB_STATE;
 	u32 saveSWF0[16];
@@ -193,6 +197,14 @@ typedef struct drm_i915_private {
 	u8 saveDACMASK;
 	u8 saveDACDATA[256*3]; /* 256 3-byte colors */
 	u8 saveCR[37];
+	uint64_t saveFENCE[16];
+	u32 saveCURACNTR;
+	u32 saveCURAPOS;
+	u32 saveCURABASE;
+	u32 saveCURBCNTR;
+	u32 saveCURBPOS;
+	u32 saveCURBBASE;
+	u32 saveCURSIZE;
 } drm_i915_private_t;
 
 /* chip type flags */
@@ -219,6 +231,7 @@ void		inteldrm_begin_ring(struct drm_i915_private *, int);
 void		inteldrm_out_ring(struct drm_i915_private *, u_int32_t);
 void		inteldrm_advance_ring(struct drm_i915_private *);
 void		inteldrm_update_ring(struct drm_i915_private *);
+int		inteldrm_pipe_enabled(struct drm_i915_private *, int);
 
 				/* i915_dma.c */
 extern void i915_driver_lastclose(struct drm_device * dev);
@@ -265,10 +278,6 @@ extern void i915_mem_release(struct drm_device * dev,
 			     struct drm_file *file_priv,
 			     struct drm_heap *heap);
 
-/* i915_suspend.c */
-extern int i915_save_state(struct drm_device *dev);
-extern int i915_restore_state(struct drm_device *dev);
-
 /* ioctls */
 extern int i915_dma_init(struct drm_device *, void *, struct drm_file *);
 extern int i915_flush_ioctl(struct drm_device *, void *, struct drm_file *);
@@ -277,6 +286,33 @@ extern int i915_getparam(struct drm_device *, void *, struct drm_file *);
 extern int i915_setparam(struct drm_device *, void *, struct drm_file *);
 extern int i915_cmdbuffer(struct drm_device *, void *, struct drm_file *);
 extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
+
+/* XXX need bus_space_write_8, this evaluated arguments twice */
+static __inline void
+write64(struct drm_i915_private *dev_priv, bus_size_t off, u_int64_t reg)
+{
+	bus_space_write_4(dev_priv->regs->bst, dev_priv->regs->bsh,
+	    off, (u_int32_t)reg);
+	bus_space_write_4(dev_priv->regs->bst, dev_priv->regs->bsh,
+	    off + 4, upper_32_bits(reg));
+}
+
+static __inline u_int64_t
+read64(struct drm_i915_private *dev_priv, bus_size_t off)
+{
+	u_int32_t low, high;
+
+	low = bus_space_read_4(dev_priv->regs->bst,
+	    dev_priv->regs->bsh, off);
+	high = bus_space_read_4(dev_priv->regs->bst,
+	    dev_priv->regs->bsh, off + 4);
+
+	return ((u_int64_t)low | ((u_int64_t)high << 32));
+}
+
+#define I915_READ64(off)	read64(dev_priv, off)
+
+#define I915_WRITE64(off, reg)	write64(dev_priv, off, reg)
 
 #define I915_READ(reg)		bus_space_read_4(dev_priv->regs->bst,	\
 				    dev_priv->regs->bsh, (reg))
@@ -301,6 +337,10 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define BEGIN_LP_RING(n) inteldrm_begin_ring(dev_priv, n)
 #define OUT_RING(n) inteldrm_out_ring(dev_priv, n)
 #define ADVANCE_LP_RING() inteldrm_advance_ring(dev_priv)
+
+/* MCH IFP BARs */
+#define	I915_IFPADDR	0x60
+#define I965_IFPADDR	0x70
 
 /*
  * The Bridge device's PCI config space has information about the
@@ -337,6 +377,11 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define   GC_DISPLAY_CLOCK_333_MHZ	(4 << 4)
 #define   GC_DISPLAY_CLOCK_MASK		(7 << 4)
 #define LBB	0xf4
+/* reset register, 965+. this is byte-sized */
+#define GDRST	0xc0
+#define GDRST_FULL	(0<<2)
+#define GDRST_RENDER	(1<<2)
+#define GDRST_MEDIA	(3<<2)
 
 /* VGA stuff */
 
@@ -454,6 +499,7 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define GFX_OP_STIPPLE           ((0x3<<29)|(0x1d<<24)|(0x83<<16))
 #define GFX_OP_MAP_INFO          ((0x3<<29)|(0x1d<<24)|0x4)
 #define GFX_OP_DESTBUFFER_VARS   ((0x3<<29)|(0x1d<<24)|(0x85<<16)|0x0)
+#define GFX_OP_DESTBUFFER_INFO	 ((0x3<<29)|(0x1d<<24)|(0x8e<<16)|1)
 #define GFX_OP_DRAWRECT_INFO     ((0x3<<29)|(0x1d<<24)|(0x80<<16)|(0x3))
 #define GFX_OP_DRAWRECT_INFO_I965  ((0x7900<<16)|0x2)
 #define SRC_COPY_BLT_CMD                ((2<<29)|(0x43<<22)|4)
@@ -474,9 +520,33 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define   DISPLAY_PLANE_B           (1<<20)
 
 /*
+ * Fence registers
+ */
+#define FENCE_REG_830_0			0x2000
+#define FENCE_REG_945_8			0x3000
+#define   I830_FENCE_START_MASK		0x07f80000
+#define   I830_FENCE_TILING_Y_SHIFT	12
+#define   I830_FENCE_SIZE_BITS(size)	((ffs((size) >> 19) - 1) << 8)
+#define   I830_FENCE_PITCH_SHIFT	4
+#define   I830_FENCE_REG_VALID		(1<<0)
+#define   I915_FENCE_MAX_PITCH_VAL	0x10
+#define   I830_FENCE_MAX_PITCH_VAL	6
+#define   I830_FENCE_MAX_SIZE_VAL	(1<<8)
+
+#define   I915_FENCE_START_MASK		0x0ff00000
+#define   I915_FENCE_SIZE_BITS(size)	((ffs((size) >> 20) - 1) << 8)
+
+#define FENCE_REG_965_0			0x03000
+#define   I965_FENCE_PITCH_SHIFT	2
+#define   I965_FENCE_TILING_Y_SHIFT	1
+#define   I965_FENCE_REG_VALID		(1<<0)
+#define   I965_FENCE_MAX_PITCH_VAL	0x0400
+
+/*
  * Instruction and interrupt control regs
  */
 
+#define PGTBL_ER	0x02024
 #define PRB0_TAIL	0x02030
 #define PRB0_HEAD	0x02034
 #define PRB0_START	0x02038
@@ -497,9 +567,18 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define PRB1_HEAD	0x02044 /* 915+ only */
 #define PRB1_START	0x02048 /* 915+ only */
 #define PRB1_CTL	0x0204c /* 915+ only */
+#define IPEIR_I965	0x02064
+#define IPEHR_I965	0x02068
+#define INSTDONE_I965	0x0206c
+#define INSTPS		0x02070 /* 965+ only */
+#define INSTDONE1	0x0207c /* 965+ only */
 #define ACTHD_I965	0x02074
 #define HWS_PGA		0x02080
+#define HWS_ADDRESS_MASK	0xfffff000
+#define HWS_START_ADDRESS_SHIFT	4
 #define IPEIR		0x02088
+#define IPEHR		0x0208c
+#define INSTDONE	0x02090
 #define NOPID		0x02094
 #define HWSTAM		0x02098
 #define SCPD0		0x0209c /* 915+ only */
@@ -527,8 +606,14 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define EIR		0x020b0
 #define EMR		0x020b4
 #define ESR		0x020b8
+#define   GM45_ERROR_PAGE_TABLE				(1<<5)
+#define   GM45_ERROR_MEM_PRIV				(1<<4)
+#define   I915_ERROR_PAGE_TABLE				(1<<4)
+#define   GM45_ERROR_CP_PRIV				(1<<3)
+#define   I915_ERROR_MEMORY_REFRESH			(1<<1)
+#define   I915_ERROR_INSTRUCTION			(1<<0)
 #define INSTPM	        0x020c0
-#define ACTHD		0x020c8
+#define ACTHD	        0x020c8
 #define FW_BLC		0x020d8
 #define FW_BLC_SELF	0x020e0 /* 915+ only */
 #define MI_ARB_STATE	0x020e4 /* 915+ only */
@@ -578,7 +663,6 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 /*
  * GPIO regs
  */
-
 #define GPIOA			0x5010
 #define GPIOB			0x5014
 #define GPIOC			0x5018
@@ -708,6 +792,7 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
  */
 #define   DPLL_FPA01_P1_POST_DIV_MASK_I830_LVDS	0x003f0000
 #define   DPLL_FPA01_P1_POST_DIV_SHIFT	16
+#define   DPLL_FPA01_P1_POST_DIV_SHIFT_IGD 15
 /* i830, required in DVO non-gang */
 #define   PLL_P2_DIVIDE_BY_4		(1 << 23)
 #define   PLL_P1_DIVIDE_BY_TWO		(1 << 21) /* i830 */
@@ -717,6 +802,13 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define   PLLB_REF_INPUT_SPREADSPECTRUMIN (3 << 13)
 #define   PLL_REF_INPUT_MASK		(3 << 13)
 #define   PLL_LOAD_PULSE_PHASE_SHIFT		9
+/* IGDNG */
+# define PLL_REF_SDVO_HDMI_MULTIPLIER_SHIFT     9
+# define PLL_REF_SDVO_HDMI_MULTIPLIER_MASK      (7 << 9)
+# define PLL_REF_SDVO_HDMI_MULTIPLIER(x)	(((x)-1) << 9)
+# define DPLL_FPA1_P1_POST_DIV_SHIFT            0
+# define DPLL_FPA1_P1_POST_DIV_MASK             0xff
+
 /*
  * Parallel to Serial Load Pulse phase selection.
  * Selects the phase for the 10X DPLL clock for the PCIe
@@ -774,10 +866,12 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define FPB0	0x06048
 #define FPB1	0x0604c
 #define   FP_N_DIV_MASK		0x003f0000
+#define   FP_N_IGD_DIV_MASK	0x00ff0000
 #define   FP_N_DIV_SHIFT		16
 #define   FP_M1_DIV_MASK	0x00003f00
 #define   FP_M1_DIV_SHIFT		 8
 #define   FP_M2_DIV_MASK	0x0000003f
+#define   FP_M2_IGD_DIV_MASK	0x000000ff
 #define   FP_M2_DIV_SHIFT		 0
 #define DPLL_TEST	0x606c
 #define   DPLLB_TEST_SDVO_DIV_1		(0 << 22)
@@ -791,8 +885,118 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define   DPLLA_TEST_M_BYPASS		(1 << 2)
 #define   DPLLA_INPUT_BUFFER_ENABLE	(1 << 0)
 #define D_STATE		0x6104
-#define CG_2D_DIS	0x6200
-#define CG_3D_DIS	0x6204
+#define  DSTATE_PLL_D3_OFF			(1<<3)
+#define  DSTATE_GFX_CLOCK_GATING		(1<<1)
+#define  DSTATE_DOT_CLOCK_GATING		(1<<0)
+#define DSPCLK_GATE_D		0x6200
+# define DPUNIT_B_CLOCK_GATE_DISABLE		(1 << 30) /* 965 */
+# define VSUNIT_CLOCK_GATE_DISABLE		(1 << 29) /* 965 */
+# define VRHUNIT_CLOCK_GATE_DISABLE		(1 << 28) /* 965 */
+# define VRDUNIT_CLOCK_GATE_DISABLE		(1 << 27) /* 965 */
+# define AUDUNIT_CLOCK_GATE_DISABLE		(1 << 26) /* 965 */
+# define DPUNIT_A_CLOCK_GATE_DISABLE		(1 << 25) /* 965 */
+# define DPCUNIT_CLOCK_GATE_DISABLE		(1 << 24) /* 965 */
+# define TVRUNIT_CLOCK_GATE_DISABLE		(1 << 23) /* 915-945 */
+# define TVCUNIT_CLOCK_GATE_DISABLE		(1 << 22) /* 915-945 */
+# define TVFUNIT_CLOCK_GATE_DISABLE		(1 << 21) /* 915-945 */
+# define TVEUNIT_CLOCK_GATE_DISABLE		(1 << 20) /* 915-945 */
+# define DVSUNIT_CLOCK_GATE_DISABLE		(1 << 19) /* 915-945 */
+# define DSSUNIT_CLOCK_GATE_DISABLE		(1 << 18) /* 915-945 */
+# define DDBUNIT_CLOCK_GATE_DISABLE		(1 << 17) /* 915-945 */
+# define DPRUNIT_CLOCK_GATE_DISABLE		(1 << 16) /* 915-945 */
+# define DPFUNIT_CLOCK_GATE_DISABLE		(1 << 15) /* 915-945 */
+# define DPBMUNIT_CLOCK_GATE_DISABLE		(1 << 14) /* 915-945 */
+# define DPLSUNIT_CLOCK_GATE_DISABLE		(1 << 13) /* 915-945 */
+# define DPLUNIT_CLOCK_GATE_DISABLE		(1 << 12) /* 915-945 */
+# define DPOUNIT_CLOCK_GATE_DISABLE		(1 << 11)
+# define DPBUNIT_CLOCK_GATE_DISABLE		(1 << 10)
+# define DCUNIT_CLOCK_GATE_DISABLE		(1 << 9)
+# define DPUNIT_CLOCK_GATE_DISABLE		(1 << 8)
+# define VRUNIT_CLOCK_GATE_DISABLE		(1 << 7) /* 915+: reserved */
+# define OVHUNIT_CLOCK_GATE_DISABLE		(1 << 6) /* 830-865 */
+# define DPIOUNIT_CLOCK_GATE_DISABLE		(1 << 6) /* 915-945 */
+# define OVFUNIT_CLOCK_GATE_DISABLE		(1 << 5)
+# define OVBUNIT_CLOCK_GATE_DISABLE		(1 << 4)
+/**
+ * This bit must be set on the 830 to prevent hangs when turning off the
+ * overlay scaler.
+ */
+# define OVRUNIT_CLOCK_GATE_DISABLE		(1 << 3)
+# define OVCUNIT_CLOCK_GATE_DISABLE		(1 << 2)
+# define OVUUNIT_CLOCK_GATE_DISABLE		(1 << 1)
+# define ZVUNIT_CLOCK_GATE_DISABLE		(1 << 0) /* 830 */
+# define OVLUNIT_CLOCK_GATE_DISABLE		(1 << 0) /* 845,865 */
+
+#define RENCLK_GATE_D1		0x6204
+# define BLITTER_CLOCK_GATE_DISABLE		(1 << 13) /* 945GM only */
+# define MPEG_CLOCK_GATE_DISABLE		(1 << 12) /* 945GM only */
+# define PC_FE_CLOCK_GATE_DISABLE		(1 << 11)
+# define PC_BE_CLOCK_GATE_DISABLE		(1 << 10)
+# define WINDOWER_CLOCK_GATE_DISABLE		(1 << 9)
+# define INTERPOLATOR_CLOCK_GATE_DISABLE	(1 << 8)
+# define COLOR_CALCULATOR_CLOCK_GATE_DISABLE	(1 << 7)
+# define MOTION_COMP_CLOCK_GATE_DISABLE		(1 << 6)
+# define MAG_CLOCK_GATE_DISABLE			(1 << 5)
+/** This bit must be unset on 855,865 */
+# define MECI_CLOCK_GATE_DISABLE		(1 << 4)
+# define DCMP_CLOCK_GATE_DISABLE		(1 << 3)
+# define MEC_CLOCK_GATE_DISABLE			(1 << 2)
+# define MECO_CLOCK_GATE_DISABLE		(1 << 1)
+/** This bit must be set on 855,865. */
+# define SV_CLOCK_GATE_DISABLE			(1 << 0)
+# define I915_MPEG_CLOCK_GATE_DISABLE		(1 << 16)
+# define I915_VLD_IP_PR_CLOCK_GATE_DISABLE	(1 << 15)
+# define I915_MOTION_COMP_CLOCK_GATE_DISABLE	(1 << 14)
+# define I915_BD_BF_CLOCK_GATE_DISABLE		(1 << 13)
+# define I915_SF_SE_CLOCK_GATE_DISABLE		(1 << 12)
+# define I915_WM_CLOCK_GATE_DISABLE		(1 << 11)
+# define I915_IZ_CLOCK_GATE_DISABLE		(1 << 10)
+# define I915_PI_CLOCK_GATE_DISABLE		(1 << 9)
+# define I915_DI_CLOCK_GATE_DISABLE		(1 << 8)
+# define I915_SH_SV_CLOCK_GATE_DISABLE		(1 << 7)
+# define I915_PL_DG_QC_FT_CLOCK_GATE_DISABLE	(1 << 6)
+# define I915_SC_CLOCK_GATE_DISABLE		(1 << 5)
+# define I915_FL_CLOCK_GATE_DISABLE		(1 << 4)
+# define I915_DM_CLOCK_GATE_DISABLE		(1 << 3)
+# define I915_PS_CLOCK_GATE_DISABLE		(1 << 2)
+# define I915_CC_CLOCK_GATE_DISABLE		(1 << 1)
+# define I915_BY_CLOCK_GATE_DISABLE		(1 << 0)
+
+# define I965_RCZ_CLOCK_GATE_DISABLE		(1 << 30)
+/** This bit must always be set on 965G/965GM */
+# define I965_RCC_CLOCK_GATE_DISABLE		(1 << 29)
+# define I965_RCPB_CLOCK_GATE_DISABLE		(1 << 28)
+# define I965_DAP_CLOCK_GATE_DISABLE		(1 << 27)
+# define I965_ROC_CLOCK_GATE_DISABLE		(1 << 26)
+# define I965_GW_CLOCK_GATE_DISABLE		(1 << 25)
+# define I965_TD_CLOCK_GATE_DISABLE		(1 << 24)
+/** This bit must always be set on 965G */
+# define I965_ISC_CLOCK_GATE_DISABLE		(1 << 23)
+# define I965_IC_CLOCK_GATE_DISABLE		(1 << 22)
+# define I965_EU_CLOCK_GATE_DISABLE		(1 << 21)
+# define I965_IF_CLOCK_GATE_DISABLE		(1 << 20)
+# define I965_TC_CLOCK_GATE_DISABLE		(1 << 19)
+# define I965_SO_CLOCK_GATE_DISABLE		(1 << 17)
+# define I965_FBC_CLOCK_GATE_DISABLE		(1 << 16)
+# define I965_MARI_CLOCK_GATE_DISABLE		(1 << 15)
+# define I965_MASF_CLOCK_GATE_DISABLE		(1 << 14)
+# define I965_MAWB_CLOCK_GATE_DISABLE		(1 << 13)
+# define I965_EM_CLOCK_GATE_DISABLE		(1 << 12)
+# define I965_UC_CLOCK_GATE_DISABLE		(1 << 11)
+# define I965_SI_CLOCK_GATE_DISABLE		(1 << 6)
+# define I965_MT_CLOCK_GATE_DISABLE		(1 << 5)
+# define I965_PL_CLOCK_GATE_DISABLE		(1 << 4)
+# define I965_DG_CLOCK_GATE_DISABLE		(1 << 3)
+# define I965_QC_CLOCK_GATE_DISABLE		(1 << 2)
+# define I965_FT_CLOCK_GATE_DISABLE		(1 << 1)
+# define I965_DM_CLOCK_GATE_DISABLE		(1 << 0)
+
+#define RENCLK_GATE_D2		0x6208
+#define VF_UNIT_CLOCK_GATE_DISABLE		(1 << 9)
+#define GS_UNIT_CLOCK_GATE_DISABLE		(1 << 7)
+#define CL_UNIT_CLOCK_GATE_DISABLE		(1 << 6)
+#define RAMCLK_GATE_D		0x6210		/* CRL only */
+#define DEUC			0x6214          /* CRL only */
 
 /*
  * Palette regs
@@ -800,6 +1004,53 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 
 #define PALETTE_A		0x0a000
 #define PALETTE_B		0x0a800
+
+/* MCH MMIO space */
+
+/*
+ * MCHBAR mirror.
+ *
+ * This mirrors the MCHBAR MMIO space whose location is determined by
+ * device 0 function 0's pci config register 0x44 or 0x48 and matches it in
+ * every way.  It is not accessible from the CP register read instructions.
+ *
+ */
+#define MCHBAR_MIRROR_BASE	0x10000
+
+/** 915-945 and GM965 MCH register controlling DRAM channel access */
+#define DCC			0x10200
+#define DCC_ADDRESSING_MODE_SINGLE_CHANNEL		(0 << 0)
+#define DCC_ADDRESSING_MODE_DUAL_CHANNEL_ASYMMETRIC	(1 << 0)
+#define DCC_ADDRESSING_MODE_DUAL_CHANNEL_INTERLEAVED	(2 << 0)
+#define DCC_ADDRESSING_MODE_MASK			(3 << 0)
+#define DCC_CHANNEL_XOR_DISABLE				(1 << 10)
+#define DCC_CHANNEL_XOR_BIT_17				(1 << 9)
+
+/** 965 MCH register controlling DRAM channel configuration */
+#define C0DRB3			0x10206
+#define C1DRB3			0x10606
+
+/* Clocking configuration register */
+#define CLKCFG			0x10c00
+#define CLKCFG_FSB_400					(5 << 0)	/* hrawclk 100 */
+#define CLKCFG_FSB_533					(1 << 0)	/* hrawclk 133 */
+#define CLKCFG_FSB_667					(3 << 0)	/* hrawclk 166 */
+#define CLKCFG_FSB_800					(2 << 0)	/* hrawclk 200 */
+#define CLKCFG_FSB_1067					(6 << 0)	/* hrawclk 266 */
+#define CLKCFG_FSB_1333					(7 << 0)	/* hrawclk 333 */
+/* Note, below two are guess */
+#define CLKCFG_FSB_1600					(4 << 0)	/* hrawclk 400 */
+#define CLKCFG_FSB_1600_ALT				(0 << 0)	/* hrawclk 400 */
+#define CLKCFG_FSB_MASK					(7 << 0)
+#define CLKCFG_MEM_533					(1 << 4)
+#define CLKCFG_MEM_667					(2 << 4)
+#define CLKCFG_MEM_800					(3 << 4)
+#define CLKCFG_MEM_MASK					(7 << 4)
+
+/** GM965 GM45 render standby register */
+#define MCHBAR_RENDER_STANDBY	0x111B8
+
+#define PEG_BAND_GAP_DATA	0x14d68
 
 /*
  * Overlay regs
@@ -1522,6 +1773,180 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define TV_V_CHROMA_0		0x68400
 #define TV_V_CHROMA_42		0x684a8
 
+/* Display Port */
+#define DP_A				0x64000 /* eDP */
+#define DP_B				0x64100
+#define DP_C				0x64200
+#define DP_D				0x64300
+
+#define   DP_PORT_EN			(1 << 31)
+#define   DP_PIPEB_SELECT		(1 << 30)
+
+/* Link training mode - select a suitable mode for each stage */
+#define   DP_LINK_TRAIN_PAT_1		(0 << 28)
+#define   DP_LINK_TRAIN_PAT_2		(1 << 28)
+#define   DP_LINK_TRAIN_PAT_IDLE	(2 << 28)
+#define   DP_LINK_TRAIN_OFF		(3 << 28)
+#define   DP_LINK_TRAIN_MASK		(3 << 28)
+#define   DP_LINK_TRAIN_SHIFT		28
+
+/* Signal voltages. These are mostly controlled by the other end */
+#define   DP_VOLTAGE_0_4		(0 << 25)
+#define   DP_VOLTAGE_0_6		(1 << 25)
+#define   DP_VOLTAGE_0_8		(2 << 25)
+#define   DP_VOLTAGE_1_2		(3 << 25)
+#define   DP_VOLTAGE_MASK		(7 << 25)
+#define   DP_VOLTAGE_SHIFT		25
+
+/* Signal pre-emphasis levels, like voltages, the other end tells us what
+ * they want
+ */
+#define   DP_PRE_EMPHASIS_0		(0 << 22)
+#define   DP_PRE_EMPHASIS_3_5		(1 << 22)
+#define   DP_PRE_EMPHASIS_6		(2 << 22)
+#define   DP_PRE_EMPHASIS_9_5		(3 << 22)
+#define   DP_PRE_EMPHASIS_MASK		(7 << 22)
+#define   DP_PRE_EMPHASIS_SHIFT		22
+
+/* How many wires to use. I guess 3 was too hard */
+#define   DP_PORT_WIDTH_1		(0 << 19)
+#define   DP_PORT_WIDTH_2		(1 << 19)
+#define   DP_PORT_WIDTH_4		(3 << 19)
+#define   DP_PORT_WIDTH_MASK		(7 << 19)
+
+/* Mystic DPCD version 1.1 special mode */
+#define   DP_ENHANCED_FRAMING		(1 << 18)
+
+/* eDP */
+#define   DP_PLL_FREQ_270MHZ		(0 << 16)
+#define   DP_PLL_FREQ_160MHZ		(1 << 16)
+#define   DP_PLL_FREQ_MASK		(3 << 16)
+
+/** locked once port is enabled */
+#define   DP_PORT_REVERSAL		(1 << 15)
+
+/* eDP */
+#define   DP_PLL_ENABLE			(1 << 14)
+
+/** sends the clock on lane 15 of the PEG for debug */
+#define   DP_CLOCK_OUTPUT_ENABLE	(1 << 13)
+
+#define   DP_SCRAMBLING_DISABLE		(1 << 12)
+#define   DP_SCRAMBLING_DISABLE_IGDNG	(1 << 7)
+
+/** limit RGB values to avoid confusing TVs */
+#define   DP_COLOR_RANGE_16_235		(1 << 8)
+
+/** Turn on the audio link */
+#define   DP_AUDIO_OUTPUT_ENABLE	(1 << 6)
+
+/** vs and hs sync polarity */
+#define   DP_SYNC_VS_HIGH		(1 << 4)
+#define   DP_SYNC_HS_HIGH		(1 << 3)
+
+/** A fantasy */
+#define   DP_DETECTED			(1 << 2)
+
+/** The aux channel provides a way to talk to the
+ * signal sink for DDC etc. Max packet size supported
+ * is 20 bytes in each direction, hence the 5 fixed
+ * data registers
+ */
+#define DPA_AUX_CH_CTL			0x64010
+#define DPA_AUX_CH_DATA1		0x64014
+#define DPA_AUX_CH_DATA2		0x64018
+#define DPA_AUX_CH_DATA3		0x6401c
+#define DPA_AUX_CH_DATA4		0x64020
+#define DPA_AUX_CH_DATA5		0x64024
+
+#define DPB_AUX_CH_CTL			0x64110
+#define DPB_AUX_CH_DATA1		0x64114
+#define DPB_AUX_CH_DATA2		0x64118
+#define DPB_AUX_CH_DATA3		0x6411c
+#define DPB_AUX_CH_DATA4		0x64120
+#define DPB_AUX_CH_DATA5		0x64124
+
+#define DPC_AUX_CH_CTL			0x64210
+#define DPC_AUX_CH_DATA1		0x64214
+#define DPC_AUX_CH_DATA2		0x64218
+#define DPC_AUX_CH_DATA3		0x6421c
+#define DPC_AUX_CH_DATA4		0x64220
+#define DPC_AUX_CH_DATA5		0x64224
+
+#define DPD_AUX_CH_CTL			0x64310
+#define DPD_AUX_CH_DATA1		0x64314
+#define DPD_AUX_CH_DATA2		0x64318
+#define DPD_AUX_CH_DATA3		0x6431c
+#define DPD_AUX_CH_DATA4		0x64320
+#define DPD_AUX_CH_DATA5		0x64324
+
+#define   DP_AUX_CH_CTL_SEND_BUSY	    (1 << 31)
+#define   DP_AUX_CH_CTL_DONE		    (1 << 30)
+#define   DP_AUX_CH_CTL_INTERRUPT	    (1 << 29)
+#define   DP_AUX_CH_CTL_TIME_OUT_ERROR	    (1 << 28)
+#define   DP_AUX_CH_CTL_TIME_OUT_400us	    (0 << 26)
+#define   DP_AUX_CH_CTL_TIME_OUT_600us	    (1 << 26)
+#define   DP_AUX_CH_CTL_TIME_OUT_800us	    (2 << 26)
+#define   DP_AUX_CH_CTL_TIME_OUT_1600us	    (3 << 26)
+#define   DP_AUX_CH_CTL_TIME_OUT_MASK	    (3 << 26)
+#define   DP_AUX_CH_CTL_RECEIVE_ERROR	    (1 << 25)
+#define   DP_AUX_CH_CTL_MESSAGE_SIZE_MASK    (0x1f << 20)
+#define   DP_AUX_CH_CTL_MESSAGE_SIZE_SHIFT   20
+#define   DP_AUX_CH_CTL_PRECHARGE_2US_MASK   (0xf << 16)
+#define   DP_AUX_CH_CTL_PRECHARGE_2US_SHIFT  16
+#define   DP_AUX_CH_CTL_AUX_AKSV_SELECT	    (1 << 15)
+#define   DP_AUX_CH_CTL_MANCHESTER_TEST	    (1 << 14)
+#define   DP_AUX_CH_CTL_SYNC_TEST	    (1 << 13)
+#define   DP_AUX_CH_CTL_DEGLITCH_TEST	    (1 << 12)
+#define   DP_AUX_CH_CTL_PRECHARGE_TEST	    (1 << 11)
+#define   DP_AUX_CH_CTL_BIT_CLOCK_2X_MASK    (0x7ff)
+#define   DP_AUX_CH_CTL_BIT_CLOCK_2X_SHIFT   0
+
+/*
+ * Computing GMCH M and N values for the Display Port link
+ *
+ * GMCH M/N = dot clock * bytes per pixel / ls_clk * # of lanes
+ *
+ * ls_clk (we assume) is the DP link clock (1.62 or 2.7 GHz)
+ *
+ * The GMCH value is used internally
+ *
+ * bytes_per_pixel is the number of bytes coming out of the plane,
+ * which is after the LUTs, so we want the bytes for our color format.
+ * For our current usage, this is always 3, one byte for R, G and B.
+ */
+#define PIPEA_GMCH_DATA_M			0x70050
+#define PIPEB_GMCH_DATA_M			0x71050
+
+/* Transfer unit size for display port - 1, default is 0x3f (for TU size 64) */
+#define   PIPE_GMCH_DATA_M_TU_SIZE_MASK		(0x3f << 25)
+#define   PIPE_GMCH_DATA_M_TU_SIZE_SHIFT	25
+
+#define   PIPE_GMCH_DATA_M_MASK			(0xffffff)
+
+#define PIPEA_GMCH_DATA_N			0x70054
+#define PIPEB_GMCH_DATA_N			0x71054
+#define   PIPE_GMCH_DATA_N_MASK			(0xffffff)
+
+/*
+ * Computing Link M and N values for the Display Port link
+ *
+ * Link M / N = pixel_clock / ls_clk
+ *
+ * (the DP spec calls pixel_clock the 'strm_clk')
+ *
+ * The Link value is transmitted in the Main Stream
+ * Attributes and VB-ID.
+ */
+
+#define PIPEA_DP_LINK_M				0x70060
+#define PIPEB_DP_LINK_M				0x71060
+#define   PIPEA_DP_LINK_M_MASK			(0xffffff)
+
+#define PIPEA_DP_LINK_N				0x70064
+#define PIPEB_DP_LINK_N				0x71064
+#define   PIPEA_DP_LINK_N_MASK			(0xffffff)
+
 /* Display & cursor control */
 
 /* Pipe A */
@@ -1615,6 +2040,7 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define   CURSOR_POS_SIGN       0x8000
 #define   CURSOR_X_SHIFT        0
 #define   CURSOR_Y_SHIFT        16
+#define CURSIZE			0x700a0
 #define CURBCNTR		0x700c0
 #define CURBBASE		0x700c4
 #define CURBPOS			0x700c8
@@ -1701,7 +2127,7 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 
 #define IS_I915G(dev_priv) ((dev_priv)->flags & CHIP_I915G)
 #define IS_I915GM(dev_priv) ((dev_priv)->flags & CHIP_I915GM)
-#define IS_I945G(dev_priv) ((dev)->flags & CHIP_I945G)
+#define IS_I945G(dev_priv) ((dev_priv)->flags & CHIP_I945G)
 #define IS_I945GM(dev_priv) ((dev_priv)->flags & CHIP_I945GM)
 #define IS_I965G(dev_priv) ((dev_priv)->flags & CHIP_I965)
 #define IS_I965GM(dev_priv) ((dev_priv)->flags & CHIP_I965GM)
