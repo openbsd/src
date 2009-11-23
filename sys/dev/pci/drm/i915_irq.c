@@ -356,6 +356,8 @@ i915_driver_irq_install(struct drm_device *dev)
 		return (ENOENT);
 
 	dev->vblank->vb_max = 0xffffff; /* only 24 bits of frame count */
+	if (IS_G4X(dev_priv))
+		dev->vblank->vb_max = 0xffffffff;
 
 	/* Unmask the interrupts that we always want on. */
 	dev_priv->irq_mask_reg = ~I915_INTERRUPT_ENABLE_FIX;
