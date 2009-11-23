@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.13 2009/07/14 17:58:14 jsg Exp $	 */
+/* $Id: pftop.c,v 1.14 2009/11/23 21:30:14 henning Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1335,9 +1335,6 @@ print_rule(struct pf_rule *pr)
 	/* print info field */
 
 	tb_start();
-
-	if (pr->natpass)
-		tbprintf("pass ");
 
 	if (pr->action == PF_DROP) {
 		if (pr->rule_flag & PFRULE_RETURNRST)
