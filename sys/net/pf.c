@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.674 2009/11/23 18:04:10 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.675 2009/11/23 18:10:43 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5811,6 +5811,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (htons(h->ip6_plen) == 0) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_NORM);	/*XXX*/
+		log |= PF_LOG_FORCE;
 		goto done;
 	}
 #endif
