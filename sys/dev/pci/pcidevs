@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1509 2009/11/18 18:19:15 jsg Exp $
+$OpenBSD: pcidevs,v 1.1510 2009/11/23 10:58:53 yuo Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3504,6 +3504,7 @@ product NEC PKUG		0x007d	I/O
 product NEC uPD72874		0x00f2	Firewire
 product NEC USB2		0x00e0	USB
 product NEC uPD720400		0x0125	PCIE-PCIX
+product NEC uPD720200		0x0194	PCIE-XHCI
 product NEC VERSAMAESTRO	0x8058	Versa Maestro
 product NEC VERSAPRONXVA26D	0x803c	Versa Va26D Maestro
 
@@ -3532,6 +3533,7 @@ product NETGEAR GA620T		0x630a	GA620T
 product NETMOS NM9805		0x9805	Nm9805
 product NETMOS NM9835		0x9835	Nm9835
 product NETMOS NM9845		0x9845	Nm9845
+product NETMOS NM9901		0x9901	Nm9901
 
 /* Network Security Technologies */
 product NETSEC 7751		0x7751	7751
