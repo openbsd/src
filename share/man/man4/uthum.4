@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uthum.4,v 1.2 2009/11/23 19:49:56 deraadt Exp $
+.\"	$OpenBSD: uthum.4,v 1.3 2009/11/23 20:53:18 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Yojiro UO <yuo@nui.org>
 .\"
@@ -30,20 +30,20 @@ The sensor possesses a collection of sensor values which are
 made available through the
 .Xr sysctl 8
 interface.
-The humidity data unit is "%RH" and the temperature data unit 
+The humidity data unit is "%RH" and the temperature data unit
 is "degC".
 .Sh SEE ALSO
-.Xr uhidev 4 ,
 .Xr intro 4 ,
+.Xr uhidev 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
-.Sh BUGS
-The TEMperHUM has various versions which have the same VID/PID and
-they need different data processing. Currently only one type
-is supported.
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
 driver was written by
 .An Yojiro UO Aq yuo@nui.org .
+.Sh BUGS
+The TEMperHUM has various versions which have the same VID/PID and
+they need different data processing.
+Currently only one type is supported.
