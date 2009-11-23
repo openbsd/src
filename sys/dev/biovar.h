@@ -1,4 +1,4 @@
-/*	$OpenBSD: biovar.h,v 1.35 2009/11/22 17:01:18 jsing Exp $	*/
+/*	$OpenBSD: biovar.h,v 1.36 2009/11/23 16:33:59 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -36,11 +36,6 @@
 
 struct bio_common {
 	void		*bc_cookie;
-};
-
-struct bio_device {
-	void		*cookie;
-	char		dev[16];
 };
 
 /* convert name to a cookie */
@@ -207,6 +202,15 @@ struct bioc_deleteraid {
 	char		bd_dev[16];	/* device */
 };
 
+#define BIOCDISCIPLINE _IOWR('B', 40, struct bioc_discipline)
+struct bioc_discipline {
+	void		*bd_cookie;
+	char		bd_dev[16];
+	u_int32_t	bd_cmd;
+	u_int32_t	bd_size;
+	void		*bd_data;
+};
+
 /* kernel and userspace defines */
 #define BIOC_INQ		0x0001
 #define BIOC_DISK		0x0002
@@ -216,6 +220,7 @@ struct bioc_deleteraid {
 #define BIOC_SETSTATE		0x0020
 #define BIOC_CREATERAID		0x0040
 #define BIOC_DELETERAID		0x0080
+#define BIOC_DISCIPLINE		0x0100
 
 /* user space defines */
 #define BIOC_DEVLIST		0x10000
