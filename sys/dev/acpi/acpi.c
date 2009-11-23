@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.144 2009/11/23 15:04:41 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.145 2009/11/23 15:18:05 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -313,7 +313,7 @@ acpi_inidev(struct aml_node *node, void *arg)
 		aml_evalnode(sc, node, 0, NULL, NULL);
 
 	/* If we are functioning, we walk/search our children */
-	if(st & STA_DEV_OK)
+	if (st & STA_DEV_OK)
 		return 0;
 
 	/* If we are not enabled, or not present, terminate search */
@@ -349,7 +349,7 @@ acpi_foundprt(struct aml_node *node, void *arg)
 	}
 
 	/* If we are functioning, we walk/search our children */
-	if(st & STA_DEV_OK)
+	if (st & STA_DEV_OK)
 		return 0;
 
 	/* If we are not enabled, or not present, terminate search */
@@ -394,7 +394,7 @@ acpiide_notify(struct aml_node *node, int ntype, void *arg)
 	if (aml_evalinteger(sc, node, "_STA", 0, NULL, &sta) != 0)
 		return (0);
 
-	dnprintf(10, "IDE notify! %s %d status:%llx\n", aml_nodename(node), 
+	dnprintf(10, "IDE notify! %s %d status:%llx\n", aml_nodename(node),
 	    ntype, sta);
 
 	/* Walk device list looking for IDE device match */
@@ -448,17 +448,17 @@ acpi_foundide(struct aml_node *node, void *arg)
 
 	/* Get PCI address and channel */
 	if (lvl == 3) {
-		aml_evalinteger(sc, node->parent, "_ADR", 0, NULL, 
+		aml_evalinteger(sc, node->parent, "_ADR", 0, NULL,
 		    &ide->chnl);
 		aml_rdpciaddr(node->parent->parent, &pi);
 		ide->addr = pi.addr;
 	} else if (lvl == 4) {
-		aml_evalinteger(sc, node->parent->parent, "_ADR", 0, NULL, 
+		aml_evalinteger(sc, node->parent->parent, "_ADR", 0, NULL,
 		    &ide->chnl);
 		aml_rdpciaddr(node->parent->parent->parent, &pi);
 		ide->addr = pi.addr;
 	}
-	dnprintf(10, "%s %llx channel:%llx\n", 
+	dnprintf(10, "%s %llx channel:%llx\n",
 	    aml_nodename(node), ide->addr, ide->chnl);
 
 	aml_evalinteger(sc, node, "_STA", 0, NULL, &ide->sta);
@@ -842,11 +842,11 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 		    sizeof(xsdt->table_offsets[0]);
 
 		for (i = 0; i < ntables; i++) {
-			entry = acpi_maptable(xsdt->table_offsets[i], NULL, NULL, 
+			entry = acpi_maptable(xsdt->table_offsets[i], NULL, NULL,
 			    NULL);
 			if (entry != NULL)
-				SIMPLEQ_INSERT_TAIL(&sc->sc_tables, entry, 
-				    q_next);					
+				SIMPLEQ_INSERT_TAIL(&sc->sc_tables, entry,
+				    q_next);
 		}
 		free(sdt, M_DEVBUF);
 	} else {
@@ -864,11 +864,11 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 		    sizeof(rsdt->table_offsets[0]);
 
 		for (i = 0; i < ntables; i++) {
-			entry = acpi_maptable(rsdt->table_offsets[i], NULL, NULL, 
+			entry = acpi_maptable(rsdt->table_offsets[i], NULL, NULL,
 			    NULL);
 			if (entry != NULL)
-				SIMPLEQ_INSERT_TAIL(&sc->sc_tables, entry, 
-				    q_next);					
+				SIMPLEQ_INSERT_TAIL(&sc->sc_tables, entry,
+				    q_next);
 		}
 		free(sdt, M_DEVBUF);
 	}
@@ -1379,7 +1379,7 @@ acpi_interrupt(void *arg)
 
 #if 0
 	acpi_add_gpeblock(sc, sc->sc_fadt->gpe0_blk, sc->sc_fadt->gpe0_blk_len>>1, 0);
-	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1, 
+	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1,
 	    sc->sc_fadt->gpe1_base);
 #endif
 
@@ -1613,7 +1613,7 @@ acpi_init_gpeblock(struct acpi_softc *sc, int reg, int len, int base)
 
 	if (!reg || !len)
 		return;
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		pgpe = acpi_os_malloc(sizeof(gpeblock));
 		if (pgpe == NULL)
 			return;
@@ -1630,7 +1630,7 @@ acpi_init_gpeblock(struct acpi_softc *sc, int reg, int len, int base)
 	}
 
 	/* Search for GPE handlers */
-	for (i=0; i<len*8; i++) {
+	for (i = 0; i < len*8; i++) {
 		char gpestr[32];
 		struct aml_node *h;
 
@@ -1651,14 +1651,14 @@ acpi_handle_gpes(struct acpi_softc *sc)
 	uint8_t en, sts;
 	int processed, i;
 
-	processed=0;
+	processed = 0;
 	SIMPLEQ_FOREACH(pgpe, &sc->sc_gpes, gpe_link) {
 		sts = bus_space_read_1(sc->sc_iot, pgpe->sts_ioh, 0);
 		en = bus_space_read_1(sc->sc_iot, pgpe->en_ioh, 0);
-		for (i=0; i<8; i++) {
+		for (i = 0; i< 8 ; i++) {
 			if (en & sts & (1L << i)) {
 				pgpe->table[i].active = 1;
-				processed=1;
+				processed = 1;
 			}
 		}
 	}
@@ -1675,12 +1675,12 @@ acpi_add_gpeblock(struct acpi_softc *sc, int reg, int len, int gpe)
 
 	if (!reg || !len)
 		return;
-	for (idx=0; idx<len; idx++) {
+	for (idx = 0; idx < len; idx++) {
 		sts = inb(reg + idx);
 		en  = inb(reg + len + idx);
 		printf("-- gpe %.2x-%.2x : en:%.2x sts:%.2x  %.2x\n",
 		    gpe+idx*8, gpe+idx*8+7, en, sts, en&sts);
-		for (jdx=0; jdx<8; jdx++) {
+		for (jdx = 0; jdx < 8; jdx++) {
 			char gpestr[32];
 			struct aml_node *l, *e;
 
@@ -1705,7 +1705,7 @@ acpi_init_gpes(struct acpi_softc *sc)
 
 #if 0
 	acpi_add_gpeblock(sc, sc->sc_fadt->gpe0_blk, sc->sc_fadt->gpe0_blk_len>>1, 0);
-	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1, 
+	acpi_add_gpeblock(sc, sc->sc_fadt->gpe1_blk, sc->sc_fadt->gpe1_blk_len>>1,
 	    sc->sc_fadt->gpe1_base);
 #endif
 
@@ -1798,12 +1798,12 @@ acpi_susp_resume_gpewalk(struct acpi_softc *sc, int state,
 		    wentry->q_gpe);
 
 		if (state <= wentry->q_state)
-			acpi_enable_onegpe(sc, wentry->q_gpe, 
+			acpi_enable_onegpe(sc, wentry->q_gpe,
 			    wake_gpe_state);
 	}
 
 	/* If we are resuming (disabling wake GPEs), enable other GPEs */
-	
+
 	if (wake_gpe_state == 0) {
 		for (gpe = 0; gpe < sc->sc_lastgpe; gpe++) {
 			if (sc->gpe_table[gpe].handler)
@@ -1913,9 +1913,9 @@ acpi_resume(struct acpi_softc *sc, int state)
 		}
 
 	/* Disable wake GPEs */
-	acpi_susp_resume_gpewalk(sc, state, 0); 
-	
-	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME); 
+	acpi_susp_resume_gpewalk(sc, state, 0);
+
+	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
 
 	enable_intr();
 	splx(acpi_saved_spl);
