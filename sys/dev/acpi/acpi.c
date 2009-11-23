@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.146 2009/11/23 16:21:54 pirofti Exp $ */
+/* $OpenBSD: acpi.c,v 1.147 2009/11/23 18:01:56 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -135,7 +135,8 @@ struct filterops acpiread_filtops = {
 };
 
 struct cfattach acpi_ca = {
-	sizeof(struct acpi_softc), acpi_match, acpi_attach
+	sizeof(struct acpi_softc), acpi_match, acpi_attach, NULL,
+	config_activate_children
 };
 
 struct cfdriver acpi_cd = {
