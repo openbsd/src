@@ -131,8 +131,6 @@ drm_ati_pcigart_init(struct drm_device *dev,
 		gart_info->bus_addr =
 		    gart_info->tbl.dma.mem->map->dm_segs[0].ds_addr;
 	} else {
-		DRM_DEBUG("PCI: Gart Table: VRAM %08X mapped at %08lX\n",
-			  (unsigned int)bus_address, (unsigned long)address);
 		bus_space_set_region_1(gart_info->tbl.fb.bst,
 		    gart_info->tbl.fb.bsh, 0, 0, gart_info->table_size);
 	}
