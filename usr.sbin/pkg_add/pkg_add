@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.394 2009/11/24 10:32:33 espie Exp $
+# $OpenBSD: pkg_add,v 1.395 2009/11/24 10:39:35 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -605,34 +605,26 @@ if ($opt_l && @ARGV != 0) {
 # later for the most part...
 my @todo2 = ();
 
-sub inform_user_of_pending_update
+sub inform_user_of_problems
 {
 	my $state = shift;
 	my @cantupdate = $state->tracker->cant_update;
 	if (@cantupdate > 0) {
-		$state->print("Cannot find updates for ", join(', ', (@cantupdate > 50 ? @cantupdate[1..50] : @cantupdate)));
-		print " and more" if @cantupdate > 50;
-		print "\n";
-		if (@todo2 == 0) {
-			print "No updates found\n";
-			exit(1);
-		}
-		if ($state->{defines}->{alwaysupdate} ||
-		    $state->{full_update} && !$state->{interactive}) {
-			print "Proceeding anyways\n";
-		} else {
-			if (!$state->confirm("Proceed", 0)) {
-				exit(1);
-			}
-		}
+		$state->print("Couldn't find updates for ", join(', ', @cantupdate), "\n");
 	}
 	if (defined $state->{issues}) {
-		$state->say("There are some ambiguities. ",
+		$state->say("There were some ambiguities. ",
 		    "Please run in interactive mode again.");
 	}
+}
+
+sub inform_user_of_pending_install
+{
+	my $state = shift;
+
 	my @t = grep { !$_->{finished} } @todo2;
 	if (@t > 0) {
-		$state->say("Running install ", 
+		$state->say("Installing ", 
 		    join(',', map {$_->short_print} @t));
 	}
 }
@@ -709,6 +701,7 @@ sub finish_display
 		    join(' ', sort(keys %{$state->{updatedepends}})),
 		    " may remain\n";
 	}
+	inform_user_of_problems($state);
 }
 
 
@@ -721,7 +714,7 @@ sub {
 		}
 	}
 	$state->progress->next;
-	inform_user_of_pending_update($state);
+	inform_user_of_pending_install($state);
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
 		unshift(@todo2, install_set($set, $state, scalar @todo2));
