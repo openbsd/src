@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.27 2009/11/24 10:28:31 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.28 2009/11/24 10:50:18 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -168,6 +168,8 @@ sub short_print
 	}
 	if ($self->newer > 0) {
 		push(@l, join('+', $self->newer_names));
+	} elsif ($self->hints > 0) {
+		push(@l, join('+', $self->hint_names));
 	}
 	return join('->', @l);
 }
