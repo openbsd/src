@@ -305,6 +305,10 @@ _C_LABEL(acpi_protected_mode_resume):
 	push	acpi_saved_fl
 	popfl
 
+	/* Poke CR3 one more time. Might not be necessary */
+	movl	acpi_saved_cr3,%eax
+	movl	%eax,%cr3
+
 	/*
 	 * Return to the OS. We've previously saved the resume
 	 * address in acpi_saved_ret (via a call to acpi_savecpu

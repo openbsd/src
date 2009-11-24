@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.4 2009/11/22 22:00:51 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.5 2009/11/24 17:00:01 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -366,6 +366,10 @@ _C_LABEL(acpi_long_mode_resume):
 	movq    acpi_saved_r13, %r13
 	movq    acpi_saved_r14, %r14
 	movq    acpi_saved_r15, %r15
+
+	/* Poke CR3 one more time. Might not be necessary */	
+	movq	acpi_saved_cr3, %rax
+	movq	%rax, %cr3
 
 	xorq	%rax, %rax	
 	jmp   	*acpi_saved_ret
