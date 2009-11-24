@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.26 2009/11/22 09:18:55 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.27 2009/11/24 10:28:31 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -55,30 +55,14 @@ package OpenBSD::UpdateSet;
 sub new
 {
 	my $class = shift;
-	return bless {newer => [], older => {}, hints => []}, $class;
+	return bless {newer => {}, older => {}, hints => []}, $class;
 }
 
 sub add_newer
 {
-	my ($self, @handles) = @_;
-	push(@{$self->{newer}}, @handles);
-	return $self;
-}
-
-sub add_hints
-{
-	my ($self, @hints) = @_;
-	for my $h (@hints) {
-		push(@{$self->{hints}}, OpenBSD::hint->new($h));
-	}
-	return $self;
-}
-
-sub add_hints2
-{
-	my ($self, @hints) = @_;
-	for my $h (@hints) {
-		push(@{$self->{hints}}, OpenBSD::hint2->new($h));
+	my $self = shift;
+	for my $h (@_) {
+		$self->{newer}->{$h->pkgname} = $h;
 	}
 	return $self;
 }
@@ -92,10 +76,28 @@ sub add_older
 	return $self;
 }
 
+sub add_hints
+{
+	my $self = shift;
+	for my $h (@_) {
+		push(@{$self->{hints}}, OpenBSD::hint->new($h));
+	}
+	return $self;
+}
+
+sub add_hints2
+{
+	my $self = shift;
+	for my $h (@_) {
+		push(@{$self->{hints}}, OpenBSD::hint2->new($h));
+	}
+	return $self;
+}
+
 sub newer
 {
 	my $self =shift;
-	return @{$self->{newer}};
+	return values %{$self->{newer}};
 }
 
 sub older
@@ -109,11 +111,6 @@ sub hints
 	my $self =shift;
 	return @{$self->{hints}};
 }
-sub hint_names
-{
-	my $self =shift;
-	return map {$_->pkgname} $self->hints;
-}
 
 sub older_names
 {
@@ -124,7 +121,13 @@ sub older_names
 sub newer_names
 {
 	my $self =shift;
-	return map {$_->pkgname} $self->newer;
+	return keys %{$self->{newer}};
+}
+
+sub hint_names
+{
+	my $self =shift;
+	return map {$_->pkgname} $self->hints;
 }
 
 sub older_to_do
@@ -234,12 +237,8 @@ sub merge
 	my ($self, $tracker, @sets) = @_;
 	# Apparently simple, just add the missing parts
 	for my $set (@sets) {
-		for my $p ($set->newer) {
-			$self->add_newer($p);
-		}
-		for my $p ($set->older) {
-			$self->add_older($p);
-		}
+		$self->add_newer($set->newer);
+		$self->add_older($set->older);
 		# BUT XXX tell the tracker we killed the set
 		$tracker->remove_set($set);
 		# ... and mark it as already done
