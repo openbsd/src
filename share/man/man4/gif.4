@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.22 2009/11/24 18:06:22 deraadt Exp $
+.\"	$OpenBSD: gif.4,v 1.23 2009/11/24 18:34:43 jmc Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@ This can be done by using
 command (which uses the
 .Dv SIOCSIFPHYADDR
 ioctl).
-
+.Pp
 For the IPv[46] over IPv[46] modes the addresses of the inner
 header must be configured by using
 .Xr ifconfig 8
@@ -77,8 +77,8 @@ will be automatically configured whenever possible.
 One may need to remove any IPv6 link-local address manually using
 .Xr ifconfig 8 ,
 to disable the use of IPv6 as inner header, for example when
-a pure IPv4-over-IPv6 tunnel is required .
-The routing table can used be to direct packets toward the
+a pure IPv4-over-IPv6 tunnel is required.
+The routing table can be used to direct packets toward the
 .Nm
 interface.
 .Pp
@@ -111,7 +111,7 @@ or
 .Xr isakmpd 8 .
 Otherwise, the Ethernet frames will be sent in the clear between the
 two bridges.
-.Sh EXAMPLE
+.Sh EXAMPLES
 Given two physically separate Ethernet networks, a bridge can
 be used as follows to make them appear as the same local area network.
 If bridge1 on network1 has the external IP address 1.2.3.4 on fxp0,
@@ -121,7 +121,7 @@ respectively), the following configuration can be used to bridge
 network1 and network2.
 .Pp
 First create the bridge interface,
-then add the encapsulation interface and internal Ethernet interface
+adding the encapsulation interface and internal Ethernet interface
 to the bridge interface:
 .Bd -literal -offset indent
 # ifconfig bridge0 add gif0 add fxp1
@@ -147,7 +147,7 @@ Now load these rules into the kernel by issuing the
 .Xr ipsecctl 8
 command:
 .Bd -literal -offset indent
-        # ipsecctl -f ipsec.conf
+# ipsecctl -f ipsec.conf
 .Ed
 .Pp
 Appropriate
@@ -161,7 +161,7 @@ flow esp proto etherip from 4.3.2.1 to 1.2.3.4
 .Pp
 And load them:
 .Bd -literal -offset indent
-        # ipsecctl -f ipsec.conf
+# ipsecctl -f ipsec.conf
 .Ed
 .Pp
 To use
@@ -173,7 +173,7 @@ on bridge1:
 ike esp proto etherip from 1.2.3.4 to 4.3.2.1
 .Ed
 .Pp
-And that one on bridge2:
+And on bridge2:
 .Bd -literal -offset indent
 ike esp proto etherip from 4.3.2.1 to 1.2.3.4
 .Ed
@@ -216,6 +216,14 @@ operator.
 .%O ftp://ftp.isi.edu/in-notes/rfc1933.txt
 .Re
 .Rs
+.%A R. Housley
+.%A S. Hollenbeck
+.%B RFC 3378
+.%T EtherIP: Tunneling Ethernet Frames in IP Datagrams
+.%D September 2002
+.%O ftp://ftp.isi.edu/in-notes/rfc3378.txt
+.Re
+.Rs
 .%A Sally Floyd
 .%A David L. Black
 .%A K. K. Ramakrishnan
@@ -251,8 +259,9 @@ and your node will generate packets with a spoofed source address.
 If the outer protocol is IPv6, path MTU discovery for encapsulated packet
 may affect communication over the interface.
 .Pp
-When used in conjunction with the
-.Xr bridge 4 ,
+When used in conjunction with a
+.Xr bridge 4
+interface,
 only one bridge tunnel may be operational for every pair of
 source/destination addresses.
 If more than one
