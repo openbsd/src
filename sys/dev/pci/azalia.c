@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.161 2009/11/23 22:33:21 pirofti Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.162 2009/11/24 10:00:39 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -119,9 +119,11 @@ typedef struct {
 	azalia_dma_t buffer;
 	void (*intr)(void*);
 	void *intr_arg;
-	void *start, *end;
+	int active;
+	int bufsize;
 	uint16_t fmt;
 	int blk;
+	int lpib;
 } stream_t;
 #define STR_READ_1(s, r)	\
 	bus_space_read_1((s)->az->iot, (s)->az->ioh, (s)->regbase + HDA_SD_##r)
@@ -170,6 +172,7 @@ typedef struct azalia_t {
 	int nistreams, nostreams, nbstreams;
 	stream_t pstream;
 	stream_t rstream;
+	struct pci_attach_args *saved_pa;
 } azalia_t;
 #define XNAME(sc)		((sc)->dev.dv_xname)
 #define AZ_READ_1(z, r)		bus_space_read_1((z)->iot, (z)->ioh, HDA_##r)
@@ -191,15 +194,15 @@ int	azalia_intr(void *);
 void	azalia_print_codec(codec_t *);
 int	azalia_reset(azalia_t *);
 int	azalia_get_ctrlr_caps(azalia_t *);
-int	azalia_init(azalia_t *);
+int	azalia_init(azalia_t *, int);
 int	azalia_init_codecs(azalia_t *);
 int	azalia_init_streams(azalia_t *);
 void	azalia_shutdown(void *);
 int	azalia_halt_corb(azalia_t *);
-int	azalia_init_corb(azalia_t *);
+int	azalia_init_corb(azalia_t *, int);
 int	azalia_delete_corb(azalia_t *);
 int	azalia_halt_rirb(azalia_t *);
-int	azalia_init_rirb(azalia_t *);
+int	azalia_init_rirb(azalia_t *, int);
 int	azalia_delete_rirb(azalia_t *);
 int	azalia_set_command(azalia_t *, nid_t, int, uint32_t, uint32_t);
 int	azalia_get_response(azalia_t *, uint32_t *);
@@ -272,6 +275,12 @@ int	azalia_create_encodings(codec_t *);
 int	azalia_match_format(codec_t *, int, audio_params_t *);
 int	azalia_set_params_sub(codec_t *, int, audio_params_t *);
 
+void	azalia_save_mixer(codec_t *);
+void	azalia_restore_mixer(codec_t *);
+
+int	azalia_suspend(azalia_t *);
+int	azalia_resume(azalia_t *);
+int	azalia_resume_codec(codec_t *);
 
 /* variables */
 struct cfattach azalia_ca = {
@@ -382,6 +391,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc = (azalia_t*)self;
 	pa = aux;
+	sc->saved_pa = pa;
 
 	sc->dmat = pa->pa_dmat;
 
@@ -484,7 +494,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->pciid = pa->pa_id;
 	sc->subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
-	if (azalia_init(sc))
+	if (azalia_init(sc, 0))
 		goto err_exit;
 
 	if (azalia_init_codecs(sc))
@@ -520,10 +530,10 @@ azalia_pci_activate(struct device *self, int act)
 			ret = config_deactivate(sc->audiodev);
 		return ret;
 	case DVACT_SUSPEND:
-		/* XXX should power down azalia */
+		ret = azalia_suspend(sc);
 		return ret;
 	case DVACT_RESUME:
-		/* XXX should power up azalia */
+		ret = azalia_resume(sc);
 		return ret;
 	}
 	return EOPNOTSUPP;
@@ -767,7 +777,7 @@ azalia_get_ctrlr_caps(azalia_t *az)
 }
 
 int
-azalia_init(azalia_t *az)
+azalia_init(azalia_t *az, int resuming)
 {
 	int err;
 	uint32_t gctl;
@@ -776,9 +786,11 @@ azalia_init(azalia_t *az)
 	if (err)
 		return(err);
 
-	err = azalia_get_ctrlr_caps(az);
-	if (err)
-		return(err);
+	if (!resuming) {
+		err = azalia_get_ctrlr_caps(az);
+		if (err)
+			return(err);
+	}
 
 	/* clear interrupt status */
 	AZ_WRITE_2(az, STATESTS, HDA_STATESTS_SDIWAKE);
@@ -788,12 +800,12 @@ azalia_init(azalia_t *az)
 	AZ_WRITE_4(az, DPUBASE, 0);
 
 	/* 4.4.1 Command Outbound Ring Buffer */
-	err = azalia_init_corb(az);
+	err = azalia_init_corb(az, resuming);
 	if (err)
 		return(err);
 
 	/* 4.4.2 Response Inbound Ring Buffer */
-	err = azalia_init_rirb(az);
+	err = azalia_init_rirb(az, resuming);
 	if (err)
 		return(err);
 
@@ -915,7 +927,7 @@ azalia_halt_corb(azalia_t *az)
 }
 
 int
-azalia_init_corb(azalia_t *az)
+azalia_init_corb(azalia_t *az, int resuming)
 {
 	int err, i;
 	uint16_t corbrp, corbwp;
@@ -925,19 +937,21 @@ azalia_init_corb(azalia_t *az)
 	if (err)
 		return(err);
 
-	err = azalia_alloc_dmamem(az,
-	    az->corb_entries * sizeof(corb_entry_t), 128,
-	    &az->corb_dma);
-	if (err) {
-		printf("%s: can't allocate CORB buffer\n", XNAME(az));
-		return err;
+	if (!resuming) {
+		err = azalia_alloc_dmamem(az,
+		    az->corb_entries * sizeof(corb_entry_t), 128,
+		    &az->corb_dma);
+		if (err) {
+			printf("%s: can't allocate CORB buffer\n", XNAME(az));
+			return(err);
+		}
+		DPRINTF(("%s: CORB allocation succeeded.\n", __func__));
 	}
+
 	AZ_WRITE_4(az, CORBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->corb_dma));
 	AZ_WRITE_4(az, CORBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->corb_dma)));
 	AZ_WRITE_1(az, CORBSIZE, az->corbsize);
  
-	DPRINTF(("%s: CORB allocation succeeded.\n", __func__));
-
 	/* reset CORBRP */
 	corbrp = AZ_READ_2(az, CORBRP);
 	AZ_WRITE_2(az, CORBRP, corbrp | HDA_CORBRP_CORBRPRST);
@@ -1010,7 +1024,7 @@ azalia_halt_rirb(azalia_t *az)
 }
 
 int
-azalia_init_rirb(azalia_t *az)
+azalia_init_rirb(azalia_t *az, int resuming)
 {
 	int err;
 	uint16_t rirbwp;
@@ -1020,31 +1034,29 @@ azalia_init_rirb(azalia_t *az)
 	if (err)
 		return(err);
 
-	err = azalia_alloc_dmamem(az,
-	    az->rirb_entries * sizeof(rirb_entry_t), 128,
-	    &az->rirb_dma);
-	if (err) {
-		printf("%s: can't allocate RIRB buffer\n", XNAME(az));
-		return err;
+	if (!resuming) {
+		err = azalia_alloc_dmamem(az,
+		    az->rirb_entries * sizeof(rirb_entry_t), 128,
+		    &az->rirb_dma);
+		if (err) {
+			printf("%s: can't allocate RIRB buffer\n", XNAME(az));
+			return err;
+		}
+		DPRINTF(("%s: RIRB allocation succeeded.\n", __func__));
+
+		/* setup the unsolicited response queue */
+		az->unsolq = malloc(sizeof(rirb_entry_t) * UNSOLQ_SIZE,
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (az->unsolq == NULL) {
+			DPRINTF(("%s: can't allocate unsolicited response queue.\n",
+			    XNAME(az)));
+			azalia_free_dmamem(az, &az->rirb_dma);
+			return ENOMEM;
+		}
 	}
 	AZ_WRITE_4(az, RIRBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->rirb_dma));
 	AZ_WRITE_4(az, RIRBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->rirb_dma)));
 	AZ_WRITE_1(az, RIRBSIZE, az->rirbsize);
-
-	DPRINTF(("%s: RIRB allocation succeeded.\n", __func__));
-
-	/* setup the unsolicited response queue */
-	az->unsolq_rp = 0;
-	az->unsolq_wp = 0;
-	az->unsolq_kick = FALSE;
-	az->unsolq = malloc(sizeof(rirb_entry_t) * UNSOLQ_SIZE,
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (az->unsolq == NULL) {
-		DPRINTF(("%s: can't allocate unsolicited response queue.\n",
-		    XNAME(az)));
-		azalia_free_dmamem(az, &az->rirb_dma);
-		return ENOMEM;
-	}
 
 	/* reset the write pointer */
 	rirbwp = AZ_READ_2(az, RIRBWP);
@@ -1054,6 +1066,10 @@ azalia_init_rirb(azalia_t *az)
 	az->rirb_rp = AZ_READ_2(az, RIRBWP) & HDA_RIRBWP_RIRBWP;
 	DPRINTF(("%s: RIRBRP=%d, size=%d\n", __func__, az->rirb_rp,
 	    az->rirb_entries));
+
+	az->unsolq_rp = 0;
+	az->unsolq_wp = 0;
+	az->unsolq_kick = FALSE;
 
 	AZ_WRITE_2(az, RINTCNT, 1);
 
@@ -1281,6 +1297,223 @@ azalia_free_dmamem(const azalia_t *az, azalia_dma_t* d)
 	bus_dmamem_free(az->dmat, d->segments, 1);
 	d->addr = NULL;
 	return 0;
+}
+
+int
+azalia_suspend(azalia_t *az)
+{
+	int err;
+
+	/* disable unsolicited responses */
+	AZ_WRITE_4(az, GCTL, AZ_READ_4(az, GCTL) & ~HDA_GCTL_UNSOL);
+
+	azalia_save_mixer(&az->codecs[az->codecno]);
+
+	/* azalia_stream_halt() always returns 0.
+	 * Set 'active' field back to 1 after halting, so azalia_resume()
+	 * knows to start it back up.
+	 */
+	if (az->rstream.active) {
+		azalia_stream_halt(&az->rstream);
+		az->rstream.active = 1;
+	}
+	if (az->pstream.active) {
+		azalia_stream_halt(&az->pstream);
+		az->pstream.active = 1;
+	}
+
+	/* azalia_halt_{corb,rirb}() only fail if the {CORB,RIRB} can't
+	 * be stopped and azalia_init_{corb,rirb}(), which starts the
+	 * {CORB,RIRB}, first calls azalia_halt_{corb,rirb}().  If halt
+	 * fails, don't try to restart.
+	 */
+	err = azalia_halt_corb(az);
+	if (err)
+		goto corb_fail;
+
+	err = azalia_halt_rirb(az);
+	if (err)
+		goto rirb_fail;
+
+	/* stop interrupts and clear status registers */
+	AZ_WRITE_4(az, INTCTL, 0);
+	AZ_WRITE_4(az, INTSTS, HDA_INTSTS_CIS | HDA_INTSTS_GIS);
+	AZ_WRITE_2(az, STATESTS, HDA_STATESTS_SDIWAKE);
+	AZ_WRITE_1(az, RIRBSTS, HDA_RIRBSTS_RINTFL | HDA_RIRBSTS_RIRBOIS);
+
+	return 0;
+
+rirb_fail:
+	azalia_init_corb(az, 1);
+corb_fail:
+	if (az->pstream.active)
+		azalia_stream_start(&az->pstream);
+	if (az->rstream.active)
+		azalia_stream_start(&az->rstream);
+
+	AZ_WRITE_4(az, GCTL, AZ_READ_4(az, GCTL) | HDA_GCTL_UNSOL);
+
+	return err;
+}
+
+int
+azalia_resume_codec(codec_t *this)
+{
+	widget_t *w;
+	uint32_t result;
+	int i, err;
+
+	err = azalia_comresp(this, this->audiofunc, CORB_SET_POWER_STATE,
+ 	    CORB_PS_D0, &result);
+	if (err) {
+		printf("%s: power audio func error: result=0x%8.8x\n",
+		    __func__, result);
+	}
+	DELAY(100);
+
+	FOR_EACH_WIDGET(this, i) {
+		w = &this->w[i];
+		if (w->widgetcap & COP_AWCAP_POWER) {
+			azalia_comresp(this, w->nid, CORB_SET_POWER_STATE,
+			    CORB_PS_D0, &result);
+			DELAY(100);
+		}
+		if ((w->type == COP_AWTYPE_PIN_COMPLEX) &&
+		    (w->d.pin.cap & COP_PINCAP_EAPD)) {
+			err = azalia_comresp(this, w->nid,
+			    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+			if (err)
+				return err;
+			result &= 0xff;
+			result |= CORB_EAPD_EAPD;
+			err = azalia_comresp(this, w->nid,
+			    CORB_SET_EAPD_BTL_ENABLE, result, &result);
+			if (err)
+				return err;
+		}
+	}
+
+	if (this->qrks & AZ_QRK_GPIO_MASK) {
+		err = azalia_codec_gpio_quirks(this);
+		if (err)
+			return err;
+	}
+
+	azalia_restore_mixer(this);
+
+	err = azalia_codec_enable_unsol(this);
+	if (err)
+		return err;
+
+	return(0);
+}
+
+int
+azalia_resume(azalia_t *az)
+{
+	struct pci_attach_args *pa;
+	pcireg_t v;
+	int err;
+
+	pa = az->saved_pa;
+
+	/* enable back-to-back */
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    v | PCI_COMMAND_BACKTOBACK_ENABLE);
+
+	/* traffic class select */
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_PCI_HDTCSEL,
+	    v & ~(ICH_PCI_HDTCSEL_MASK));
+
+	/* is this necessary? */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG, az->subid);
+
+	err = azalia_init(az, 1);
+	if (err)
+		return err;
+
+	err = azalia_resume_codec(&az->codecs[az->codecno]);
+	if (err)
+		return err;
+
+	if (az->pstream.active) {
+		err = azalia_stream_start(&az->pstream);
+		if (err)
+			return err;
+	}
+	if (az->rstream.active) {
+		err = azalia_stream_start(&az->rstream);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
+void
+azalia_save_mixer(codec_t *this)
+{
+	mixer_item_t *m;
+	mixer_ctrl_t mc;
+	int i;
+
+	for (i = 0; i < this->nmixers; i++) {
+		m = &this->mixers[i];
+		mc.dev = i;
+		mc.type = m->devinfo.type;
+		azalia_mixer_get(this, m->nid, m->target, &mc);
+		switch (mc.type) {
+		case AUDIO_MIXER_ENUM:
+			m->saved.ord = mc.un.ord;
+			break;
+		case AUDIO_MIXER_SET:
+			m->saved.mask = mc.un.mask;
+			break;
+		case AUDIO_MIXER_VALUE:
+			m->saved.value = mc.un.value;
+			break;
+		case AUDIO_MIXER_CLASS:
+			break;
+		default:
+			printf("%s: invalid mixer type in mixer %d\n",
+			    __func__, mc.dev);
+			break;
+		}
+	}
+}
+
+void
+azalia_restore_mixer(codec_t *this)
+{
+	mixer_item_t *m;
+	mixer_ctrl_t mc;
+	int i;
+
+	for (i = 0; i < this->nmixers; i++) {
+		m = &this->mixers[i];
+		mc.dev = i;
+		mc.type = m->devinfo.type;
+		switch (mc.type) {
+		case AUDIO_MIXER_ENUM:
+			mc.un.ord = m->saved.ord;
+			break;
+		case AUDIO_MIXER_SET:
+			mc.un.mask = m->saved.mask; 
+			break;
+		case AUDIO_MIXER_VALUE:
+			mc.un.value = m->saved.value;
+			break;
+		case AUDIO_MIXER_CLASS:
+			break;
+		default:
+			printf("%s: invalid mixer type in mixer %d\n",
+			    __func__, mc.dev);
+			continue;
+		}
+		azalia_mixer_set(this, m->nid, m->target, &mc);
+	}
 }
 
 /* ================================================================
@@ -3347,6 +3580,7 @@ azalia_stream_init(stream_t *this, azalia_t *az, int regindex, int strnum, int d
 	this->intr_bit = 1 << regindex;
 	this->number = strnum;
 	this->dir = dir;
+	this->active = 0;
 
 	/* setup BDL buffers */
 	err = azalia_alloc_dmamem(az, sizeof(bdlist_entry_t) * HDA_BDL_MAX,
@@ -3375,7 +3609,7 @@ azalia_stream_delete(stream_t *this, azalia_t *az)
 int
 azalia_stream_reset(stream_t *this)
 {
-	int i;
+	int i, skip;
 	uint16_t ctl;
 	uint8_t sts;
 
@@ -3416,6 +3650,22 @@ azalia_stream_reset(stream_t *this)
 	sts |= HDA_SD_STS_DESE | HDA_SD_STS_FIFOE | HDA_SD_STS_BCIS;
 	STR_WRITE_1(this, STS, sts);
 
+	/* The hardware position pointer has been reset to the start
+	 * of the buffer.  Call our interrupt handler enough times
+	 * to advance the software position pointer to wrap to the
+	 * start of the buffer.
+	 */
+	if (this->active) {
+		skip = (this->bufsize - this->lpib) / this->blk + 1;
+		DPRINTF(("%s: dir=%d bufsize=%d blk=%d lpib=%d skip=%d\n",
+		    __func__, this->dir, this->bufsize, this->blk, this->lpib,
+		    skip));
+		for (i = 0; i < skip; i++)
+			this->intr(this->intr_arg);
+	}
+	this->active = 0;
+	this->lpib = 0;
+
 	return (0);
 }
 
@@ -3439,7 +3689,7 @@ azalia_stream_start(stream_t *this)
 
 	/* setup BDL */
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->buffer);
-	dmaend = dmaaddr + ((caddr_t)this->end - (caddr_t)this->start);
+	dmaend = dmaaddr + this->bufsize;
 	bdlist = (bdlist_entry_t*)this->bdlist.addr;
 	for (index = 0; index < HDA_BDL_MAX; index++) {
 		bdlist[index].low = htole32(dmaaddr);
@@ -3453,8 +3703,8 @@ azalia_stream_start(stream_t *this)
 		}
 	}
 
-	DPRINTFN(1, ("%s: start=%p end=%p fmt=0x%4.4x index=%d\n",
-	    __func__, this->start, this->end, this->fmt, index));
+	DPRINTFN(1, ("%s: size=%d fmt=0x%4.4x index=%d\n",
+	    __func__, this->bufsize, this->fmt, index));
 
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->bdlist);
 	STR_WRITE_4(this, BDPL, dmaaddr);
@@ -3463,7 +3713,7 @@ azalia_stream_start(stream_t *this)
 	ctl2 = STR_READ_1(this, CTL2);
 	STR_WRITE_1(this, CTL2,
 	    (ctl2 & ~HDA_SD_CTL2_STRM) | (this->number << HDA_SD_CTL2_STRM_SHIFT));
-	STR_WRITE_4(this, CBL, ((caddr_t)this->end - (caddr_t)this->start));
+	STR_WRITE_4(this, CBL, this->bufsize);
 	STR_WRITE_2(this, FMT, this->fmt);
 
 	err = azalia_codec_connect_stream(this);
@@ -3477,6 +3727,8 @@ azalia_stream_start(stream_t *this)
 	STR_WRITE_1(this, CTL, STR_READ_1(this, CTL) |
 	    HDA_SD_CTL_DEIE | HDA_SD_CTL_FEIE | HDA_SD_CTL_IOCE |
 	    HDA_SD_CTL_RUN);
+
+	this->active = 1;
 
 	return (0);
 }
@@ -3492,6 +3744,8 @@ azalia_stream_halt(stream_t *this)
 	AZ_WRITE_4(this->az, INTCTL,
 	    AZ_READ_4(this->az, INTCTL) & ~this->intr_bit);
 	azalia_codec_disconnect_stream(this);
+	this->lpib = STR_READ_4(this, LPIB);
+	this->active = 0;
 	return (0);
 }
 
@@ -3919,8 +4173,7 @@ azalia_trigger_output(void *v, void *start, void *end, int blk,
 	if (err)
 		return(EINVAL);
 
-	az->pstream.start = start;
-	az->pstream.end = end;
+	az->pstream.bufsize = (caddr_t)end - (caddr_t)start;
 	az->pstream.blk = blk;
 	az->pstream.fmt = fmt;
 	az->pstream.intr = intr;
@@ -3952,8 +4205,7 @@ azalia_trigger_input(void *v, void *start, void *end, int blk,
 	if (err)
 		return(EINVAL);
 
-	az->rstream.start = start;
-	az->rstream.end = end;
+	az->rstream.bufsize = (caddr_t)end - (caddr_t)start;
 	az->rstream.blk = blk;
 	az->rstream.fmt = fmt;
 	az->rstream.intr = intr;
