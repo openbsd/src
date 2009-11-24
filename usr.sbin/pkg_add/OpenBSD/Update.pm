@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.103 2009/11/24 10:22:26 espie Exp $
+# $OpenBSD: Update.pm,v 1.104 2009/11/24 11:36:06 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -100,9 +100,6 @@ sub process_handle
 		if (@$l == 0) {
 			return $l;
 		}
-		if (@$l == 1 && $state->{defines}->{pkgpath}) {
-			return $l;
-		}
 		my @l2 = ();
 		$plist = OpenBSD::PackingList->from_installation($pkgname, \&OpenBSD::PackingList::UpdateInfoOnly);
 		if (!defined $plist) {
@@ -147,6 +144,9 @@ sub process_handle
 		    !$plist->uses_old_libs && !$state->{defines}->{installed}) {
 			$h->{update_found} = $h;
 			my $msg = "No need to update $pkgname";
+			if ($state->{todo} > 0) {
+				$msg .= " ($state->{todo} to go)";
+			}
 			$state->progress->message($msg);
 			$state->say($msg) if $state->{beverbose};
 			return 0;
