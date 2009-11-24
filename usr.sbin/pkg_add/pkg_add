@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.395 2009/11/24 10:39:35 espie Exp $
+# $OpenBSD: pkg_add,v 1.396 2009/11/24 11:41:56 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -294,7 +294,7 @@ sub partial_install
 
 sub really_add
 {
-	my ($set, $state, $todo) = @_;
+	my ($set, $state) = @_;
 
 	for my $h ($set->newer) {
 		$h->plist->set_infodir($h->location->info);
@@ -434,7 +434,7 @@ sub really_add
 		}
 	}
 	$set->setup_header($state);
-	$state->progress->next($todo);
+	$state->progress->next($state->{todo});
 	for my $handle ($set->newer) {
 		my $pkgname = $handle->pkgname;
 		my $plist = $handle->plist;
@@ -458,7 +458,7 @@ sub really_add
 
 sub install_set
 {
-	my ($set, $state, $todo) = @_;
+	my ($set, $state) = @_;
 
 	if ($set->{finished}) {
 		return ();
@@ -535,7 +535,7 @@ sub install_set
 #			return ();
 #		}
 #	}
-	really_add($set, $state, $todo);
+	really_add($set, $state);
 	for my $handle ($set->newer) {
 		$handle->cleanup;
 	}
@@ -708,16 +708,19 @@ sub finish_display
 framework(
 sub {
 	$state->progress->set_header("Looking for packages");
+	$state->{todo} = scalar @todo2;
 	for my $set (@todo2) {
 		if (!$state->updater->process_set($set, $state)) {
 			$set->{finished} = 1;
 		}
+		$state->{todo}--;
 	}
 	$state->progress->next;
 	inform_user_of_pending_install($state);
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
-		unshift(@todo2, install_set($set, $state, scalar @todo2));
+		$state->{todo} = scalar @todo2;
+		unshift(@todo2, install_set($set, $state));
 	}
 });
 
