@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.9 2009/11/16 14:42:18 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.10 2009/11/24 11:35:18 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -91,10 +91,13 @@ sub mark_cant_update
 sub mark_installed
 {
 	my ($self, $set) = @_;
+
+	$self->remove_set($set);
+
 	for my $n ($set->newer) {
+		$self->{uptodate}->{$n->pkgname} = 1;
 		$self->{installed}->{$n->pkgname} = 1;
 	}
-	$self->remove_set($set);
 }
 
 sub is_installed
