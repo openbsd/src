@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.671 2009/11/14 16:55:11 damien Exp $
+#	$OpenBSD: GENERIC,v 1.672 2009/11/24 08:19:27 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -298,17 +298,16 @@ urtw*	at uhub?		# RealTek 8187
 #ueagle* at uhub?		# Analog Devices Eagle ADSL
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 umbg*	at uhub?		# Meinberg Funkuhren USB5131
+uthum*	at uhidev?		# TEMPerHUM sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
+uvideo* at uhub?		# USB video
+video*  at uvideo?
+udl*	at uhub?		# DisplayLink USB displays
+wsdisplay* at udl?
+
 puc*	at pci?			# PCI "universal" communication device
 #puc*	at cardbus?
-
-# USB Video
-uvideo* at uhub?
-video*  at uvideo?
-
-udl*		at uhub?
-wsdisplay*	at udl?
 
 sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
@@ -319,7 +318,6 @@ sbt*	at sdmmc?		# SDIO Bluetooth
 bthub*	at sbt?
 ubt*	at uhub?		# USB Bluetooth
 bthub*	at ubt?
-
 bthidev* at bthub?		# Bluetooth HID support
 btkbd*	at bthidev?
 btms*	at bthidev?

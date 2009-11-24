@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.277 2009/11/14 16:55:11 damien Exp $
+#	$OpenBSD: GENERIC,v 1.278 2009/11/24 08:19:27 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -235,15 +235,13 @@ zyd*	at uhub?		# Zydas ZD1211
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 urtw*	at uhub?		# RealTek 8187
 udcf*	at uhub?		# Gude Expert mouseCLOCK
+uthum*	at uhidev?		# TEMPerHUM sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
-
-# USB Video
-uvideo*	at uhub?
+uvideo*	at uhub?		# USB Video
 video*	at uvideo?
-
-udl*		at uhub?
-wsdisplay*	at udl?
+udl*	at uhub?		# DisplayLink USB displays
+wsdisplay* at udl?
 
 puc*	at pci?			# PCI "universal" communication device
 #puc*	at cardbus?
