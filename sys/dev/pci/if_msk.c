@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.80 2009/11/24 14:18:21 claudio Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.81 2009/11/24 14:21:26 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -982,6 +982,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+	m_clsetwms(ifp, sc_if->sk_pktlen, 2, MSK_RX_RING_CNT);
 
 	sc_if->sk_sdhook = shutdownhook_establish(mskc_shutdown, sc);
 
@@ -1740,7 +1741,7 @@ msk_intr(void *xsc)
 	struct sk_if_softc	*sc_if0 = sc->sk_if[SK_PORT_A];
 	struct sk_if_softc	*sc_if1 = sc->sk_if[SK_PORT_B];
 	struct ifnet		*ifp0 = NULL, *ifp1 = NULL;
-	int			claimed = 0;
+	int			claimed = 0, rx[2] = {0, 0};
 	u_int32_t		status;
 	struct msk_status_desc	*cur_st;
 
@@ -1778,11 +1779,9 @@ msk_intr(void *xsc)
 		switch (cur_st->sk_opcode) {
 		case SK_Y2_STOPC_RXSTAT:
 			sc_if = sc->sk_if[cur_st->sk_link & 0x01];
+			rx[cur_st->sk_link & 0x01] = 1;
 			msk_rxeof(sc_if, letoh16(cur_st->sk_len),
 			    letoh32(cur_st->sk_status));
-			msk_fill_rx_ring(sc_if);
-			SK_IF_WRITE_2(sc_if, 0,  SK_RXQ1_Y2_PREF_PUTIDX,
-			    sc_if->sk_cdata.sk_rx_prod);
 			break;
 		case SK_Y2_STOPC_TXSTAT:
 			if (sc_if0)
@@ -1807,6 +1806,17 @@ msk_intr(void *xsc)
 	}
 
 	CSR_WRITE_4(sc, SK_Y2_ICR, 2);
+
+	if (rx[0]) {
+		msk_fill_rx_ring(sc_if0);
+		SK_IF_WRITE_2(sc_if0, 0,  SK_RXQ1_Y2_PREF_PUTIDX,
+		    sc_if0->sk_cdata.sk_rx_prod);
+	}
+	if (rx[1]) {
+		msk_fill_rx_ring(sc_if1);
+		SK_IF_WRITE_2(sc_if1, 0,  SK_RXQ1_Y2_PREF_PUTIDX,
+		    sc_if1->sk_cdata.sk_rx_prod);
+	}
 
 	if (ifp0 != NULL && !IFQ_IS_EMPTY(&ifp0->if_snd))
 		msk_start(ifp0);
