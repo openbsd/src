@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.85 2009/11/24 02:19:35 jsing Exp $       */
+/* $OpenBSD: bioctl.c,v 1.86 2009/11/24 06:06:06 jmc Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -257,7 +257,7 @@ usage(void)
 		"[-R device | channel:target[.lun]\n"
 		"\t[-u channel:target[.lun]] "
 		"device\n"
-                "       %s [-Pdhiqv] "
+                "       %s [-dhiPqv] "
                 "[-C flag[,flag,...]] [-c raidlevel]\n"
                 "\t[-l special[,special,...]] [-p passfile]\n"
                 "\t[-R device | channel:target[.lun] [-r rounds] "
