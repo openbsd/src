@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.300 2009/11/23 16:03:10 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.301 2009/11/24 13:23:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -578,6 +578,7 @@ struct pf_rule {
 	u_int16_t		 max_mss;
 	u_int16_t		 tag;
 	u_int16_t		 match_tag;
+	u_int16_t		 scrub_flags;
 
 	struct pf_rule_uid	 uid;
 	struct pf_rule_gid	 gid;
@@ -590,7 +591,6 @@ struct pf_rule {
 	u_int8_t		 quick;
 	u_int8_t		 ifnot;
 	u_int8_t		 match_tag_not;
-	u_int8_t		 natpass;
 
 #define PF_STATE_NORMAL		0x1
 #define PF_STATE_MODULATE	0x2
@@ -614,8 +614,7 @@ struct pf_rule {
 #define PF_FLUSH		0x01
 #define PF_FLUSH_GLOBAL		0x02
 	u_int8_t		 flush;
-	u_int16_t		 scrub_flags;
-	u_int8_t		 pad2[2];
+	u_int8_t		 pad2[3];
 
 	struct {
 		struct pf_addr		addr;

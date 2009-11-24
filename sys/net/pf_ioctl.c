@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.227 2009/11/23 16:03:10 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.228 2009/11/24 13:23:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -788,7 +788,6 @@ pf_hash_rule(MD5_CTX *ctx, struct pf_rule *rule)
 	PF_MD5_UPD(rule, quick);
 	PF_MD5_UPD(rule, ifnot);
 	PF_MD5_UPD(rule, match_tag_not);
-	PF_MD5_UPD(rule, natpass);
 	PF_MD5_UPD(rule, keep_state);
 	PF_MD5_UPD(rule, proto);
 	PF_MD5_UPD(rule, type);
