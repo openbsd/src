@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.48 2009/06/04 05:19:38 kettenis Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.49 2009/11/24 15:54:07 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -56,20 +56,22 @@
 
 #include <dev/mii/eephyreg.h>
 
-int	eephy_service(struct mii_softc *, struct mii_data *, int);
-void	eephy_status(struct mii_softc *);
-int	eephymatch(struct device *, void *, void *);
-void	eephyattach(struct device *, struct device *, void *);
+int	eephy_match(struct device *, void *, void *);
+void	eephy_attach(struct device *, struct device *, void *);
+int	eephy_activate(struct device *, int);
 
 struct cfattach eephy_ca = {
-	sizeof (struct mii_softc), eephymatch, eephyattach,
-	mii_phy_detach, mii_phy_activate
+	sizeof (struct mii_softc), eephy_match, eephy_attach,
+	mii_phy_detach, eephy_activate
 };
 
 struct cfdriver eephy_cd = {
 	NULL, "eephy", DV_DULL
 };
 
+void	eephy_init(struct mii_softc *);
+int	eephy_service(struct mii_softc *, struct mii_data *, int);
+void	eephy_status(struct mii_softc *);
 void	eephy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs eephy_funcs = {
@@ -119,7 +121,7 @@ static const struct mii_phydesc eephys[] = {
 };
 
 int
-eephymatch(struct device *parent, void *match, void *aux)
+eephy_match(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -130,7 +132,7 @@ eephymatch(struct device *parent, void *match, void *aux)
 }
 
 void
-eephyattach(struct device *parent, struct device *self, void *aux)
+eephy_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -193,6 +195,30 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 		sc->mii_extcapabilities = PHY_READ(sc, E1000_ESR);
 
 	mii_phy_add_media(sc);
+
+	eephy_init(sc);
+}
+
+int
+eephy_activate(struct device *self, int act)
+{
+	struct mii_softc *sc = (void *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		eephy_init(sc);
+		break;
+	}
+
+	return (0);
+}
+
+void
+eephy_init(struct mii_softc *sc)
+{
+	int reg;
 
 	/*
 	 * Initialize PHY Specific Control Register.
