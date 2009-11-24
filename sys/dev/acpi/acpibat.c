@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.54 2009/03/11 21:54:15 jordan Exp $ */
+/* $OpenBSD: acpibat.c,v 1.55 2009/11/24 21:37:42 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -406,16 +406,10 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 	/* Check if installed state of battery has changed */
 	if (aml_evalinteger(sc->sc_acpi, node, "_STA", 0, NULL, &sta) == 0) {
  		present = sta & STA_BATTERY;
-		if (!sc->sc_bat_present && present) {
-			printf("%s: %s inserted\n", DEVNAME(sc),
-			    sc->sc_devnode->name);
+		if (!sc->sc_bat_present && present)
 			sc->sc_bat_present = 1;
-		}
-		else if (sc->sc_bat_present && !present) {
-			printf("%s: %s removed\n", DEVNAME(sc),
-			    sc->sc_devnode->name);
+		else if (sc->sc_bat_present && !present)
 			sc->sc_bat_present = 0;
-		}
 	}
 	switch (notify_type) {
 	case 0x80:	/* _BST changed */
