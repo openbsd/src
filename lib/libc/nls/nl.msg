@@ -157,6 +157,30 @@ $ ENOSYS
 78 Systeemfunctie niet geimplementeerd
 $ EFTYPE
 79 Bestandstype of -indeling ongeldig
+$ EAUTH
+80 Authenticatie fout
+$ ENEEDAUTH
+81 Authenticatie procedure benodigd
+$ EIPSEC
+82 IPsec verwerkingsfout
+$ ENOATTR
+83 Attribuut niet gevonden
+$ EILSEQ
+84 Ongeldige coderings reeks
+$ ENOMEDIUM
+85 Medium niet gevonden
+$ EMEDIUMTYPE
+86 Verkeerd medium type
+$ EOVERFLOW
+87 Waarde te groot om te bewaren in data type
+$ ECANCELED
+88 Bewerking afgebroken
+$ EIDRM
+89 Identificeerder verwijderd
+$ ENOMSG
+90 Geen boodschap van het gewenste type
+$ ENOTSUP
+91 Niet ondersteund
 $set 2
 $ SIGHUP
 1 Opgehangen
