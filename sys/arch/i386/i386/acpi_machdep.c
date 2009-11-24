@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.24 2009/11/23 16:21:54 pirofti Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.25 2009/11/24 17:39:59 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -243,6 +243,7 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 
 	/* Copy the current cpu registers into a safe place for resume. */
 	if (acpi_savecpu()) {
+		npxsave_cpu(curcpu(), 1);
 		wbinvd();
 		acpi_enter_sleep_state(sc, state);
 		panic("%s: acpi_enter_sleep_state failed", DEVNAME(sc));
