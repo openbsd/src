@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.393 2009/11/22 16:52:00 espie Exp $
+# $OpenBSD: pkg_add,v 1.394 2009/11/24 10:32:33 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -206,10 +206,6 @@ sub can_install
 		@conflicts = keys %conflicts;
 
 		if (!$state->{allow_replacing}) {
-			if ($state->{defines}->{conflicts}) {
-				$state->say("Forcing install of $pkgname in the presence of conflicts (",join(',', @conflicts), ")");
-				return 1;
-			}
 			$state->say("Can't install $pkgname because of conflicts (",join(',', @conflicts), ")");
 			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 			return;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.83 2009/11/09 17:52:19 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.84 2009/11/24 10:32:33 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: November 9 2009 $
+.Dd $Mdocdate: November 24 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -235,33 +235,19 @@ These include:
 .Bl -tag -width "updatedependsXX" -compact
 .It Ar allversions
 do not trim older p* variants of packages for updates.
-.It Ar alwaysupdate
-proceed with an update even if
-.Nm
-can't find new packages for all installed packages.
 .It Ar arch
 architecture recorded in package may not match.
-.It Ar conflicts
-force installation of package in the presence of conflicts.
 .It Ar downgrades
 don't filter out package versions older than what's currently installed.
 .It Ar installed
 in update mode, reinstall an existing package with the same signature.
 .It Ar libdepends
 library specifications may not be fulfilled.
-.It Ar noclosure
-do not compute the closure of dependencies to figure out which packages to
-update when using
-.Fl u .
 .It Ar nonroot
 install even if not running as root.
 .It Ar nosig
 do not check digital signatures.
 Still displays a very prominent message if a signature is found.
-.It Ar pkgpath
-with
-.Fl u ,
-do not check the pkgpath matches if only one candidate is found.
 .It Ar repair
 attempt to repair installed packages with missing registration data.
 .It Ar scripts
