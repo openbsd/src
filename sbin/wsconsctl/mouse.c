@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.8 2009/07/15 20:32:28 martynas Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.9 2009/11/24 16:28:50 matthieu Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -42,7 +42,7 @@ static int resolution;
 static int samplerate;
 static int rawmode;
 
-struct wsmouse_calibcoords wmcoords; 
+struct wsmouse_calibcoords wmcoords, wmcoords_save; 
 
 struct field mouse_field_tab[] = {
     { "resolution",		&resolution,	FMT_UINT,	FLG_WRONLY },
@@ -109,6 +109,13 @@ mouse_put_values(const char *pre, int fd)
 		}
 	}
 	if (field_by_value(mouse_field_tab, &wmcoords)->flags & FLG_SET) {
+		if (ioctl(fd, WSMOUSEIO_GCALIBCOORDS, &wmcoords_save) < 0) 
+			if (errno == ENOTTY)
+				field_by_value(mouse_field_tab,
+				    &wmcoords)->flags |= FLG_DEAD;
+			else
+				warn("WSMOUSEIO_GCALIBCOORDS");
+		wmcoords.samplelen = wmcoords_save.samplelen;
 		if (ioctl(fd, WSMOUSEIO_SCALIBCOORDS, &wmcoords) < 0) {
 			if (errno == ENOTTY) {
 				field_by_value(mouse_field_tab,
