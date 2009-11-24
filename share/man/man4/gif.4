@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.21 2009/11/24 14:43:36 jmc Exp $
+.\"	$OpenBSD: gif.4,v 1.22 2009/11/24 18:06:22 deraadt Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,11 +40,12 @@
 The
 .Nm
 interface is a generic tunnelling pseudo-device for IPv4 and IPv6.
-It can tunnel IPv[46] traffic over IPv[46], for a total of four
-possible combinations.
-The behavior of
-.Nm
-is mainly based on RFC 1933 IPv6-over-IPv4 configured tunnel.
+It can tunnel IPv[46] over IPv[46] with behavior mainly based on
+RFC 1933 IPv6-over-IPv4, for a total of four possible combinations.
+When instead used as a member in a
+.Xr bridge 4 ,
+it will tunnel Ethernet packets over IPv[46] using RFC 3378 Etherip
+encapsulation (version 3), providing two more combinations.
 .Pp
 A
 .Nm
@@ -55,53 +56,49 @@ command or by setting up a
 configuration file for
 .Xr netstart 8 .
 .Pp
-To use
-.Nm gif ,
-the administrator needs to configure the addresses used for the outer header.
+For all six modes the
+.Nm
+interface must be configured with the
+addresses used for the outer header.
 This can be done by using
-.Xr ifconfig 8 ,
-or through the
+.Xr ifconfig 8 's
+.Ic tunnel
+command (which uses the
 .Dv SIOCSIFPHYADDR
-ioctl.
-The administrator needs to also configure the addresses used for the
-inner header, by using
-.Xr ifconfig 8 .
+ioctl).
+
+For the IPv[46] over IPv[46] modes the addresses of the inner
+header must be configured by using
+.Xr ifconfig 8
+in the normal way.
 Note that IPv6 link-local address
 .Pq those start with Li fe80::
 will be automatically configured whenever possible.
 One may need to remove any IPv6 link-local address manually using
 .Xr ifconfig 8 ,
-to disable the use of IPv6 as inner header
-.Pq e.g., when a pure IPv4-over-IPv6 tunnel is required .
-Also, the routing table may be used to route the packets toward the
+to disable the use of IPv6 as inner header, for example when
+a pure IPv4-over-IPv6 tunnel is required .
+The routing table can used be to direct packets toward the
 .Nm
 interface.
 .Pp
-If plain Ethernet-over-IP is being used,
-the
+For the Ethernet-over-IP modes the
+.Nm
+interface must be made a member of a
+.Xr bridge 4 .
+The
 .Xr sysctl 3
 variable
 .Dv net.inet.etherip.allow
-must be set to 1.
-This is not necessary in cases where Ethernet-over-IP is being
-protected using
-.Xr ipsec 4 .
-.Pp
-The
-.Nm
-interface may also be used as a
-.Xr bridge 4
-member.
-Ethernet frames sent through
-.Nm
-interfaces are encapsulated inside
-.Xr ip 4
-or
-.Xr ip6 4
-datagrams and sent across the network to another bridge, which
-decapsulates the datagram and then processes the resulting Ethernet
+must be set to 1, unless
+.Xr ipsec 4
+is being used to protect the traffic.
+Ethernet frames are then encapsulated and sent across the network
+to another
+.Xr bridge 4 ,
+which decapsulates the datagram and processes the resulting Ethernet
 frame as if it had originated on a normal Ethernet interface.
-This effectively allows a layer-2 network to be extended from one point to
+This effectively allows a layer 2 network to be extended from one point to
 another, possibly through the Internet.
 This mechanism may be used in
 conjunction with IPsec by specifying the appropriate IPsec flows
@@ -114,8 +111,8 @@ or
 .Xr isakmpd 8 .
 Otherwise, the Ethernet frames will be sent in the clear between the
 two bridges.
-.Pp
-For example, given two physically separate Ethernet networks, the bridge can
+.Sh EXAMPLE
+Given two physically separate Ethernet networks, a bridge can
 be used as follows to make them appear as the same local area network.
 If bridge1 on network1 has the external IP address 1.2.3.4 on fxp0,
 bridge2 on network2 has the external IP address 4.3.2.1 on fxp0, and
