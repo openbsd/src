@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.23 2009/04/12 15:16:07 jsing Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.24 2009/11/24 02:29:11 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -1097,29 +1097,29 @@ lii_iff(struct lii_softc *sc)
 	struct arpcom *ac = &sc->sc_ac;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	uint32_t hashes[2] = { 0, 0 };
+	uint32_t hashes[2];
 	uint32_t crc, val;
 
 	val = LII_READ_4(sc, LII_MACC);
-	val &= ~(MACC_PROMISC_EN | MACC_ALLMULTI_EN);
+	val &= ~(MACC_ALLMULTI_EN | MACC_PROMISC_EN);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
-		val |= MACC_PROMISC_EN;
-	} else if (ac->ac_multirangecnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		val |= MACC_ALLMULTI_EN;
+		if (ifp->if_flags & IFF_PROMISC)
+			val |= MACC_PROMISC_EN;
+		else
+			val |= MACC_ALLMULTI_EN;
+		hashes[0] = hashes[1] = 0xFFFFFFFF;
 	} else {
-		/* Clear multicast hash table. */
-		LII_WRITE_4(sc, LII_MHT, 0);
-		LII_WRITE_4(sc, LII_MHT + 4, 0);
+		/* Program new filter. */
+		bzero(hashes, sizeof(hashes));
 
-		/* Calculate multicast hashes. */
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
 			crc = ether_crc32_be(enm->enm_addrlo,
 			    ETHER_ADDR_LEN);
+
 			hashes[((crc >> 31) & 0x1)] |=
 			    (1 << ((crc >> 26) & 0x1f));
 
@@ -1127,10 +1127,8 @@ lii_iff(struct lii_softc *sc)
 		}
 	}
 
-	/* Write new hashes to multicast hash table. */
 	LII_WRITE_4(sc, LII_MHT, hashes[0]);
 	LII_WRITE_4(sc, LII_MHT + 4, hashes[1]);
-
 	LII_WRITE_4(sc, LII_MACC, val);
 }
 
