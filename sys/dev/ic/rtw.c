@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.77 2009/08/16 18:21:57 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.78 2009/11/24 00:28:22 deraadt Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -4151,11 +4151,12 @@ rtw_detach(struct rtw_softc *sc)
 {
 	sc->sc_flags |= RTW_F_INVALID;
 
-	rtw_stop(&sc->sc_if, 1);
-
 	rtw_disestablish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname,
 	    (void*)sc);
 	timeout_del(&sc->sc_scan_to);
+
+	rtw_stop(&sc->sc_if, 1);
+
 	ieee80211_ifdetach(&sc->sc_if);
 	if_detach(&sc->sc_if);
 
