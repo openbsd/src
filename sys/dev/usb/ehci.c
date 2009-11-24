@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.104 2009/11/04 19:14:10 kettenis Exp $ */
+/*	$OpenBSD: ehci.c,v 1.105 2009/11/24 00:31:13 jakemsr Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -3684,7 +3684,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	 * the entire frame table. To within 4 frames, to allow some leeway
 	 * on either side of where the hc currently is.
 	 */
-	if ((1 << (epipe->pipe.endpoint->edesc->bInterval)) *
+	if ((1 << (epipe->pipe.endpoint->edesc->bInterval - 1)) *
 	    xfer->nframes >= (sc->sc_flsize - 4) * 8) {
 		printf("ehci: isoc descriptor requested that spans the entire "
 		    "frametable, too many frames\n");
@@ -3854,7 +3854,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		frindex &= (sc->sc_flsize - 1);
 
 	/* Whats the frame interval? */
-	i = (1 << epipe->pipe.endpoint->edesc->bInterval);
+	i = (1 << (epipe->pipe.endpoint->edesc->bInterval - 1));
 	if (i / 8 == 0)
 		i = 1;
 	else
