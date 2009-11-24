@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.81 2009/11/24 14:21:26 claudio Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.82 2009/11/24 15:56:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -134,11 +134,13 @@
 int mskc_probe(struct device *, void *, void *);
 void mskc_attach(struct device *, struct device *self, void *aux);
 int mskc_detach(struct device *, int);
+int mskc_activate(struct device *, int);
 void mskc_reset(struct sk_softc *);
 void mskc_shutdown(void *);
 int msk_probe(struct device *, void *, void *);
 void msk_attach(struct device *, struct device *self, void *aux);
 int msk_detach(struct device *, int);
+int msk_activate(struct device *, int);
 void msk_reset(struct sk_if_softc *);
 int mskcprint(void *, const char *);
 int msk_intr(void *);
@@ -1042,6 +1044,26 @@ msk_detach(struct device *self, int flags)
 }
 
 int
+msk_activate(struct device *self, int act)
+{
+	struct sk_if_softc *sc_if = (void *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		msk_reset(sc_if);
+		rv = config_activate_children(self, act);
+		msk_init(sc_if);
+		break;
+	}
+
+	return (rv);
+}
+
+int
 mskcprint(void *aux, const char *pnp)
 {
 	struct skc_attach_args *sa = aux;
@@ -1374,6 +1396,25 @@ mskc_detach(struct device *self, int flags)
 		bus_space_unmap(sc->sk_btag, sc->sk_bhandle, sc->sk_bsize);
 
 	return(0);
+}
+
+int
+mskc_activate(struct device *self, int act)
+{
+	struct sk_softc *sc = (void *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		mskc_reset(sc);
+		rv = config_activate_children(self, act);
+		break;
+	}
+
+	return (rv);
 }
 
 int
@@ -2131,7 +2172,8 @@ msk_stop(struct sk_if_softc *sc_if, int softonly)
 }
 
 struct cfattach mskc_ca = {
-	sizeof(struct sk_softc), mskc_probe, mskc_attach, mskc_detach
+	sizeof(struct sk_softc), mskc_probe, mskc_attach, mskc_detach,
+	mskc_activate
 };
 
 struct cfdriver mskc_cd = {
@@ -2139,7 +2181,8 @@ struct cfdriver mskc_cd = {
 };
 
 struct cfattach msk_ca = {
-	sizeof(struct sk_if_softc), msk_probe, msk_attach, msk_detach
+	sizeof(struct sk_if_softc), msk_probe, msk_attach, msk_detach,
+	msk_activate
 };
 
 struct cfdriver msk_cd = {
