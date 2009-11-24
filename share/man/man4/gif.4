@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.20 2009/11/23 06:10:12 jmc Exp $
+.\"	$OpenBSD: gif.4,v 1.21 2009/11/24 14:43:36 jmc Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2009 $
+.Dd $Mdocdate: November 24 2009 $
 .Dt GIF 4
 .Os
 .Sh NAME
@@ -87,36 +87,17 @@ This is not necessary in cases where Ethernet-over-IP is being
 protected using
 .Xr ipsec 4 .
 .Pp
-Finally, the
+The
 .Nm
-interface may be used as a
+interface may also be used as a
 .Xr bridge 4
 member.
-Ethernet frames forwarded by the bridge to the
-.Nm
-interface are encapsulated inside an IPv4 or IPv6 header (depending on
-how the interface is configured), with transport protocol number 97
-(etherip).
-IPv4 or IPv6 packets carrying transport protocol 97 are delivered to
-the
-.Nm
-interface whose "physical" addresses match the source/destination
-addresses of the packet (the source address of the packet must match
-the destination "physical" address, and vice versa).
-.\"
-.Sh IPSEC BRIDGE
-The bridge can also be used to tunnel Ethernet frames over IPv4 or
-IPv6 by using the
-.Nm
-interface.
-In addition to adding Ethernet interfaces,
-one or more
-.Nm
-interfaces are added as members of the bridge.
 Ethernet frames sent through
 .Nm
 interfaces are encapsulated inside
 .Xr ip 4
+or
+.Xr ip6 4
 datagrams and sent across the network to another bridge, which
 decapsulates the datagram and then processes the resulting Ethernet
 frame as if it had originated on a normal Ethernet interface.
