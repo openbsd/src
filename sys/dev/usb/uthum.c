@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.1 2009/11/23 19:35:54 yuo Exp $   */
+/*	$OpenBSD: uthum.c,v 1.2 2009/11/24 08:28:53 deraadt Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -182,17 +182,20 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 		sizeof(sc->sc_sensordev.xname));
 
-	switch (sc->sc_sensortype){
+	switch (sc->sc_sensortype) {
 	case UTHUM_TYPE_SHT1x:
 		strlcpy(sc->sc_sensor[UTHUM_TEMP].desc, "temp",
 			sizeof(sc->sc_sensor[UTHUM_TEMP].desc));
 		sc->sc_sensor[UTHUM_TEMP].type = SENSOR_TEMP;
+		sc->sc_sensor[UTHUM_TEMP].status = SENSOR_S_UNKNOWN;
+		sc->sc_sensor[UTHUM_TEMP].flags = SENSOR_FINVALID;
 
 		strlcpy(sc->sc_sensor[UTHUM_HUMIDITY].desc, "humidity",
 			sizeof(sc->sc_sensor[UTHUM_HUMIDITY].desc));
 		sc->sc_sensor[UTHUM_HUMIDITY].type = SENSOR_PERCENT;
 		sc->sc_sensor[UTHUM_HUMIDITY].value = 0;
 		sc->sc_sensor[UTHUM_HUMIDITY].status = SENSOR_S_UNKNOWN;
+		sc->sc_sensor[UTHUM_HUMIDITY].flags = SENSOR_FINVALID;
 
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[UTHUM_TEMP]);
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[UTHUM_HUMIDITY]);
@@ -360,10 +363,12 @@ uthum_refresh(void *arg)
 		DPRINTF(("uthum: data read fail\n"));
 		sc->sc_sensor[UTHUM_TEMP].status = SENSOR_S_UNKNOWN;
 		sc->sc_sensor[UTHUM_HUMIDITY].status = SENSOR_S_UNKNOWN;
+		sc->sc_sensor[UTHUM_TEMP].flags |= SENSOR_FINVALID;
+		sc->sc_sensor[UTHUM_HUMIDITY].flags |= SENSOR_FINVALID;
 		return;
 	}
 
-	switch (sc->sc_sensortype){
+	switch (sc->sc_sensortype) {
 	case UTHUM_TYPE_SHT1x:
 		temp_tick = (buf[0] * 256 + buf[1]) & 0x3fff;
 		humidity_tick = (buf[2] * 256 + buf[3]) & 0x0fff;
@@ -373,13 +378,15 @@ uthum_refresh(void *arg)
 		break;
 	default:
 		/* do nothing */
-		break;
+		return;
 	}
 
 	sc->sc_sensor[UTHUM_TEMP].value = (temp * 10000) + 273150000;
 	sc->sc_sensor[UTHUM_TEMP].status = SENSOR_S_OK;
+	sc->sc_sensor[UTHUM_TEMP].flags &= ~SENSOR_FINVALID;
 	sc->sc_sensor[UTHUM_HUMIDITY].value = rh;
 	sc->sc_sensor[UTHUM_HUMIDITY].status = SENSOR_S_OK;
+	sc->sc_sensor[UTHUM_HUMIDITY].flags &= ~SENSOR_FINVALID;
 }
 
 /* return C-degree * 100 value */
