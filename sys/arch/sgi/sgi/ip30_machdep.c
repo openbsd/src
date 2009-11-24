@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.22 2009/11/22 22:44:58 syuu Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.23 2009/11/24 22:46:59 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -188,7 +188,7 @@ ip30_autoconf(struct device *parent)
 	config_found(parent, &maa, mbprint);
 
 	int cpuid;
-	for(cpuid = 1; cpuid < MAX_CPUS; cpuid++)
+	for(cpuid = 1; cpuid < MAXCPUS; cpuid++)
 		if (ip30_cpu_exists(cpuid) == 0) {
 			ncpusfound++;
 #ifdef MULTIPROCESSOR
@@ -307,9 +307,6 @@ void
 hw_cpu_boot_secondary(struct cpu_info *ci)
 {
        int cpuid =  ci->ci_cpuid;
-       struct pglist mlist;
-       struct vm_page *m;
-       int error;
        vaddr_t kstack;
 
 #ifdef DEBUG
@@ -345,15 +342,9 @@ hw_cpu_boot_secondary(struct cpu_info *ci)
            scachesz, fanloads, launch, rndvz,
            stackaddr, lparam, rparam, idleflag);
 #endif
-
-       TAILQ_INIT(&mlist);
-       error = uvm_pglistalloc(USPACE, 0, -1L, 0, 0,
-           &mlist, 1, UVM_PLA_WAITOK);
-       if (error)
+       kstack = smp_malloc(USPACE);
+       if (kstack == NULL)
 	       panic("unable to allocate idle stack\n");
-
-       m = TAILQ_FIRST(&mlist);
-       kstack = (vaddr_t)PHYS_TO_XKPHYS(VM_PAGE_TO_PHYS(m), CCA_CACHED);
        bzero((char *)kstack, USPACE);
 
        *(volatile uint64_t *)(mpconf + MPCONF_STACKADDR(cpuid)) =

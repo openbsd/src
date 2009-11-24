@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.44 2009/11/22 18:33:48 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.45 2009/11/24 22:46:59 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -365,7 +365,7 @@ extern vaddr_t uncached_base;
 #include <machine/intr.h>
 
 struct cpu_info {
-	struct device   ci_dev;		/* our device */
+	struct device   *ci_dev;	/* our device */
 	struct cpu_info *ci_self;	/* pointer to this structure */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct proc	*ci_curproc;
@@ -397,7 +397,7 @@ extern struct cpu_info *cpu_info_list;
 #define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
 
-#define CPU_INFO_UNIT(ci)		((ci)->ci_dev.dv_unit)
+#define CPU_INFO_UNIT(ci)               ((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 
 #ifdef MULTIPROCESSOR
 #define MAXCPUS				4
@@ -411,6 +411,8 @@ void cpu_unidle(struct cpu_info *);
 void cpu_boot_secondary_processors(void);
 #define cpu_boot_secondary(ci)          hw_cpu_boot_secondary(ci)
 #define cpu_hatch(ci)                   hw_cpu_hatch(ci)
+
+vaddr_t smp_malloc(size_t);
 
 #include <sys/mplock.h>
 #else
