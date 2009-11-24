@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.39 2009/06/17 22:19:12 kettenis Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.40 2009/11/24 10:35:56 otto Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -73,15 +73,15 @@ sys_obreak(struct proc *p, void *v, register_t *retval)
 		syscallarg(char *) nsize;
 	} */ *uap = v;
 	struct vmspace *vm = p->p_vmspace;
-	vaddr_t new, old;
+	vaddr_t new, old, base;
 	int error;
 
-	old = (vaddr_t)vm->vm_daddr;
+	base = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
-	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+	if (new < base || (new - base) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return (ENOMEM);
 
-	old = round_page(old + ptoa(vm->vm_dsize));
+	old = round_page(base + ptoa(vm->vm_dsize));
 
 	if (new == old)
 		return (0);
