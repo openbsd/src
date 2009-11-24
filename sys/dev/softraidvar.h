@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.83 2009/11/23 16:33:59 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.84 2009/11/24 02:19:35 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -179,6 +179,16 @@ struct sr_crypto_kdfinfo {
 	}		_kdfhint;
 #define genkdf		_kdfhint.generic
 #define pbkdf2		_kdfhint.pbkdf2
+};
+
+#define SR_IOCTL_GET_KDFHINT		0x01	/* Get KDF hint. */
+#define SR_IOCTL_CHANGE_PASSPHRASE	0x02	/* Change passphase. */
+
+struct sr_crypto_kdfpair {
+	void		*kdfinfo1;
+	u_int32_t	kdfsize1;
+	void		*kdfinfo2;
+	u_int32_t	kdfsize2;
 };
 
 #ifdef _KERNEL
@@ -532,6 +542,9 @@ void			sr_wu_put(struct sr_workunit *);
 /* misc functions */
 int32_t			sr_validate_stripsize(u_int32_t);
 void			sr_meta_save_callback(void *, void *);
+int			sr_meta_save(struct sr_discipline *, u_int32_t);
+void			sr_checksum(struct sr_softc *, void *, void *,
+			    u_int32_t);
 int			sr_validate_io(struct sr_workunit *, daddr64_t *,
 			    char *);
 int			sr_check_io_collision(struct sr_workunit *);
