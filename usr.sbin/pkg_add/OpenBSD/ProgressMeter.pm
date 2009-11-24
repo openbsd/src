@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.21 2009/11/22 16:51:14 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.22 2009/11/24 10:29:25 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -156,7 +156,7 @@ sub next
 	$self->clear;
 
 	$todo //= 0;
-	print "$header: done ", $todo ? "($todo to go)" : "", "\n";
+	print "$header: ok", $todo ? " ($todo to go)" : "", "\n";
 
 }
 
