@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.75 2009/11/23 16:36:22 claudio Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.76 2009/11/24 18:12:39 claudio Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -352,6 +352,8 @@ epconfig(sc, chipset, enaddr)
 	ifp->if_watchdog = epwatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	/* 64 packets are around 100ms on 10Mbps */
+	IFQ_SET_MAXLEN(&ifp->if_snd, 64);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
@@ -1373,7 +1375,7 @@ epget(sc, totlen)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	int len, pad, sh, rxreg;
+	int len, pad, off, sh, rxreg;
 
 	splassert(IPL_NET);
 
@@ -1393,6 +1395,7 @@ epget(sc, totlen)
 	len = MCLBYTES;
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
+	m->m_len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;
 	len -= pad;
@@ -1406,25 +1409,35 @@ epget(sc, totlen)
 
 	rxreg = ep_w1_reg(sc, EP_W1_RX_PIO_RD_1);
 
-	len = min(totlen, len);
-	if (EP_IS_BUS_32(sc->bustype)) {
-		if (len > 3) {
+	off = 0;
+	while (totlen) {
+		len = min(totlen, M_TRAILINGSPACE(m));
+		if (len == 0)
+			panic("ep_get: packet does not fit in MCLBYTES");
+
+		if (EP_IS_BUS_32(sc->bustype))
+			pad = (u_long)(mtod(m, u_int8_t *) + off) & 0x3;
+		else
+			pad = (u_long)(mtod(m, u_int8_t *) + off) & 0x1;
+
+		if (pad) {
+			bus_space_read_multi_1(iot, ioh, rxreg,
+			    mtod(m, u_int8_t *) + off, pad);
+		} else if (EP_IS_BUS_32(sc->bustype) && len > 3) {
 			len &= ~3;
 			bus_space_read_raw_multi_4(iot, ioh, rxreg,
-			    mtod(m, u_int8_t *), len);
-		} else
-			bus_space_read_multi_1(iot, ioh, rxreg,
-			    mtod(m, u_int8_t *), len);
-	} else {
-		if (len > 1) {
+			    mtod(m, u_int8_t *) + off, len);
+		} else if (len > 1) {
 			len &= ~1;
 			bus_space_read_raw_multi_2(iot, ioh, rxreg,
-			    mtod(m, u_int8_t *), len);
-		} else
-			*(mtod(m, u_int8_t *)) =
-			    bus_space_read_1(iot, ioh, rxreg);
+			    mtod(m, u_int8_t *) + off, len);
+		} else {
+			bus_space_read_multi_1(iot, ioh, rxreg,
+			    mtod(m, u_int8_t *) + off, len);
+		}
+		off += len;
+		totlen -= len;
 	}
-	m->m_len = len;
 
 	ep_discard_rxtop(iot, ioh);
 
