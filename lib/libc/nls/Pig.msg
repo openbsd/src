@@ -157,6 +157,30 @@ $ ENOSYS
 78 Unctionfay otnay implementedway
 $ EFTYPE
 79 Inappropriateway ilefay ypetay orway ormatfay
+$ EAUTH
+80 Authenticationway errorway
+$ ENEEDAUTH
+81 Eednay authenticatorway
+$ EIPSEC
+82 IPsecway ocessingpray ailurefay
+$ ENOATTR
+83 Attributeway otnay oundfay
+$ EILSEQ
+84 Illegalway ytebay equencesay
+$ ENOMEDIUM
+85 Onay ediummay oundfay
+$ EMEDIUMTYPE
+86 Ongwray ediummay ypetay
+$ EOVERFLOW
+87 Aluebay ootay argelay otay ebay oredstay inway ataday ypetay
+$ ECANCELED
+88 Operationway anceledcay
+$ EIDRM
+89 Identifierway emovedray
+$ ENOMSG
+90 Onay essagemay ofway esiredday ypetay
+$ ENOTSUP
+91 Otnay upportedsay
 $set 2
 $ SIGHUP
 1 Anguphay

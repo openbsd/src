@@ -157,6 +157,30 @@ $ ENOSYS
 78 Function not implemented
 $ EFTYPE
 79 Inappropriate file type or format
+$ EAUTH
+80 Authentication error
+$ ENEEDAUTH
+81 Need authenticator
+$ EIPSEC
+82 IPsec processing failure
+$ ENOATTR
+83 Attribute not found
+$ EILSEQ
+84 Illegal byte sequence
+$ ENOMEDIUM
+85 No medium found
+$ EMEDIUMTYPE
+86 Wrong medium type
+$ EOVERFLOW
+87 Value too large to be stored in data type
+$ ECANCELED
+88 Operation canceled
+$ EIDRM
+89 Identifier removed
+$ ENOMSG
+90 No message of desired type
+$ ENOTSUP
+91 Not supported
 $set 2
 $ SIGHUP
 1 Hangup

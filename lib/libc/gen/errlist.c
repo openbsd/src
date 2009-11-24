@@ -1,4 +1,4 @@
-/*	$OpenBSD: errlist.c,v 1.13 2009/10/26 21:09:33 jasper Exp $ */
+/*	$OpenBSD: errlist.c,v 1.14 2009/11/24 09:22:22 guenther Exp $ */
 /*
  * Copyright (c) 1982, 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -144,6 +144,6 @@ const char *const
 	"Operation canceled",			/* 88 - ECANCELED */
 	"Identifier removed",			/* 89 - EIDRM */
 	"No message of desired type",		/* 90 - ENOMSG */
-	"Operation not supported",		/* 91 - ENOTSUP */
+	"Not supported",			/* 91 - ENOTSUP */
 };
 int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };
