@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2009/10/27 23:59:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.28 2009/11/24 20:11:08 mk Exp $
 #
 # The NLS (message catalog) functions are always in libc.  To choose that
 # strerror(), perror(), strsignal(), psignal(), etc. actually call the NLS
@@ -18,7 +18,7 @@ CLEANFILES+=tags
 LIBCSRCDIR=${.CURDIR}
 .include "${LIBCSRCDIR}/Makefile.inc"
 
-NLS=	C.msg Pig.msg de.msg es.msg fi.msg fr.msg nl.msg no.msg ru.msg sv.msg it.msg
+NLS=	C.msg Pig.msg da.msg de.msg es.msg fi.msg fr.msg nl.msg no.msg ru.msg sv.msg it.msg
 
 copy-to-libkern:	copy-to-libkern-machind copy-to-libkern-machdep
 
