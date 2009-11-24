@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.25 2009/08/10 20:29:52 deraadt Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.26 2009/11/24 17:40:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -81,6 +81,7 @@ const struct pci_matchid re_pci_devices[] = {
 int	re_pci_probe(struct device *, void *, void *);
 void	re_pci_attach(struct device *, struct device *, void *);
 int	re_pci_detach(struct device *, int);
+int	re_pci_activate(struct device *, int);
 
 /*
  * PCI autoconfig definitions
@@ -89,7 +90,8 @@ struct cfattach re_pci_ca = {
 	sizeof(struct re_pci_softc),
 	re_pci_probe,
 	re_pci_attach,
-	re_pci_detach
+	re_pci_detach,
+	re_pci_activate
 };
 
 /*
@@ -234,6 +236,25 @@ re_pci_detach(struct device *self, int flags)
 
 	/* Free pci resources */
 	bus_space_unmap(sc->rl_btag, sc->rl_bhandle, psc->sc_iosize);
+
+	return (0);
+}
+
+int
+re_pci_activate(struct device *self, int act)
+{
+	struct re_pci_softc	*psc = (struct re_pci_softc *)self;
+	struct rl_softc		*sc = &psc->sc_rl;
+	struct ifnet 		*ifp = &sc->sc_arpcom.ac_if;
+
+	switch(act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		re_reset(sc);
+		re_init(ifp);
+		break;
+	}
 
 	return (0);
 }

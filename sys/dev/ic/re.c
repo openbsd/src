@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.115 2009/11/13 23:50:30 sthen Exp $	*/
+/*	$OpenBSD: re.c,v 1.116 2009/11/24 17:40:43 kettenis Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -187,7 +187,6 @@ void	re_miibus_writereg(struct device *, int, int, int);
 void	re_miibus_statchg(struct device *);
 
 void	re_iff(struct rl_softc *);
-void	re_reset(struct rl_softc *);
 
 void	re_setup_hw_im(struct rl_softc *);
 void	re_setup_sim_im(struct rl_softc *);
