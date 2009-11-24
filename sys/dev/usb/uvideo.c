@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.129 2009/10/26 15:34:16 deraadt Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.130 2009/11/24 19:08:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -395,6 +395,9 @@ uvideo_close(void *addr)
 
 	DPRINTF(1, "%s: uvideo_close: sc=%p\n", DEVNAME(sc), sc);
 
+#ifdef UVIDEO_DUMP
+	usb_rem_task(sc->sc_udev, &sc->sc_task_write);
+#endif
 	/* close video stream pipe */
 	uvideo_vs_close(sc);
 
@@ -406,9 +409,6 @@ uvideo_close(void *addr)
 
 	/* free video stream frame buffer */
 	uvideo_vs_free_frame(sc);
-#ifdef UVIDEO_DUMP
-	usb_rem_task(sc->sc_udev, &sc->sc_task_write);
-#endif
 	return (0);
 }
 
