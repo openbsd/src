@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.38 2009/11/23 22:49:58 deraadt Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.39 2009/11/24 00:52:07 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -59,6 +59,12 @@ struct ppb_softc {
 	bus_addr_t sc_iobase, sc_iolimit;
 	bus_addr_t sc_membase, sc_memlimit;
 	bus_addr_t sc_pmembase, sc_pmemlimit;
+
+	pcireg_t sc_csr;
+	pcireg_t sc_bhlcr;
+	pcireg_t sc_bir;
+	pcireg_t sc_bcr;
+	pcireg_t sc_int;
 };
 
 int	ppbmatch(struct device *, void *, void *);
@@ -315,15 +321,62 @@ ppbdetach(struct device *self, int flags)
 int
 ppbactivate(struct device *self, int act)
 {
+	struct ppb_softc *sc = (void *)self;
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_tag;
+	pcireg_t blr;
 	int rv = 0;
 
 	switch (act) {
 	case DVACT_SUSPEND:
 		rv = config_activate_children(self, act);
-		/* XXX should power down the ppb */
+
+		/* Save registers that may get lost. */
+		sc->sc_csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		sc->sc_bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		sc->sc_bir = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+		sc->sc_bcr = pci_conf_read(pc, tag, PPB_REG_BRIDGECONTROL);
+		sc->sc_int = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 		break;
 	case DVACT_RESUME:
-		/* XXX should power up the ppb */
+		/* Restore the registers saved above. */
+		pci_conf_write(pc, tag, PCI_BHLC_REG, sc->sc_bhlcr);
+		pci_conf_write(pc, tag, PPB_REG_BUSINFO, sc->sc_bir);
+		pci_conf_write(pc, tag, PPB_REG_BRIDGECONTROL, sc->sc_bcr);
+		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, sc->sc_int);
+
+		/* Restore I/O window. */
+		blr = pci_conf_read(pc, tag, PPB_REG_IOSTATUS);
+		blr &= 0xffff0000;
+		blr |= sc->sc_iolimit & PPB_IO_MASK;
+		blr |= (sc->sc_iobase >> PPB_IO_SHIFT);
+		pci_conf_write(pc, tag, PPB_REG_IOSTATUS, blr);
+		blr = (sc->sc_iobase & 0xffff0000) >> 16;
+		blr |= sc->sc_iolimit & 0xffff0000;
+		pci_conf_write(pc, tag, PPB_REG_IO_HI, blr);
+
+		/* Restore memory mapped I/O window. */
+		blr = sc->sc_memlimit & PPB_MEM_MASK;
+		blr |= (sc->sc_membase >> PPB_MEM_SHIFT);
+		pci_conf_write(pc, tag, PPB_REG_MEM, blr);
+
+		/* Restore prefetchable MMI/O window. */
+		blr = sc->sc_pmemlimit & PPB_MEM_MASK;
+		blr |= (sc->sc_pmembase >> PPB_MEM_SHIFT);
+		pci_conf_write(pc, tag, PPB_REG_PREFMEM, blr);
+#ifdef __LP64__
+		pci_conf_write(pc, tag, PPB_REG_PREFBASE_HI32,
+		    sc->sc_pmembase >> 32);
+		pci_conf_write(pc, tag, PPB_REG_PREFLIM_HI32,
+		    sc->sc_pmemlimit >> 32);
+#endif
+
+		/*
+		 * Restore command register last to avoid exposing
+		 * uninitialised windows.
+		 */
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, sc->sc_csr);
+
 		rv = config_activate_children(self, act);
 		break;
 	}
