@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.23 2009/11/24 18:34:43 jmc Exp $
+.\"	$OpenBSD: gif.4,v 1.24 2009/11/24 19:13:07 jmc Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -44,7 +44,7 @@ It can tunnel IPv[46] over IPv[46] with behavior mainly based on
 RFC 1933 IPv6-over-IPv4, for a total of four possible combinations.
 When instead used as a member in a
 .Xr bridge 4 ,
-it will tunnel Ethernet packets over IPv[46] using RFC 3378 Etherip
+it will tunnel Ethernet packets over IPv[46] using RFC 3378 EtherIP
 encapsulation (version 3), providing two more combinations.
 .Pp
 A
@@ -106,9 +106,7 @@ between the two bridges.
 To only protect the bridge traffic between
 the two bridges, the transport protocol 97 (etherip) selector may be
 used in
-.Xr ipsec.conf 5
-or
-.Xr isakmpd 8 .
+.Xr ipsec.conf 5 .
 Otherwise, the Ethernet frames will be sent in the clear between the
 two bridges.
 .Sh EXAMPLES
@@ -164,8 +162,7 @@ And load them:
 # ipsecctl -f ipsec.conf
 .Ed
 .Pp
-To use
-.Xr isakmpd 8
+To use dynamic (as opposed to static) keying,
 use this
 .Xr ipsec.conf 5
 on bridge1:
@@ -213,7 +210,6 @@ operator.
 .%B RFC 1933
 .%T Transition Mechanisms for IPv6 Hosts and Routers
 .%D April 1996
-.%O ftp://ftp.isi.edu/in-notes/rfc1933.txt
 .Re
 .Rs
 .%A R. Housley
@@ -221,22 +217,11 @@ operator.
 .%B RFC 3378
 .%T EtherIP: Tunneling Ethernet Frames in IP Datagrams
 .%D September 2002
-.%O ftp://ftp.isi.edu/in-notes/rfc3378.txt
 .Re
-.Rs
-.%A Sally Floyd
-.%A David L. Black
-.%A K. K. Ramakrishnan
-.%T IPsec Interactions with ECN
-.%D December 1999
-.%O draft-ietf-ipsec-ecn-02.txt
-.Re
-.\"
 .Sh HISTORY
 The
 .Nm
 device first appeared in WIDE hydrangea IPv6 kit.
-.\"
 .Sh BUGS
 There are many tunnelling protocol specifications,
 defined differently from each other.
