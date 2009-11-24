@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.13 2009/05/30 03:59:27 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.14 2009/11/24 13:31:41 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -95,9 +95,9 @@ main(int argc, char *argv[])
 #ifdef __LP64__
 		esym = (u_int64_t *)marks[MARK_END];
 #else
-#undef  KSEG0_BASE
-#define KSEG0_BASE	0xffffffff80000000ULL
-		esym = (u_int64_t *)PHYS_TO_KSEG0(marks[MARK_END]);
+#undef  CKSEG0_BASE
+#define CKSEG0_BASE	0xffffffff80000000ULL
+		esym = (u_int64_t *)PHYS_TO_CKSEG0(marks[MARK_END]);
 #endif
 
 		if (entry != NULL)
