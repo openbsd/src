@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.80 2009/11/24 14:18:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -501,7 +501,7 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	struct mbuf		*m;
 	bus_dmamap_t		dmamap;
 	int			error;
-	int			opcode, i;
+	int			i, head;
 
 	m = MCLGETI(NULL, M_DONTWAIT, &sc_if->arpcom.ac_if, sc_if->sk_pktlen);
 	if (!m)
@@ -528,26 +528,38 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	    dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	c = &sc_if->sk_cdata.sk_rx_chain[sc_if->sk_cdata.sk_rx_prod];
+	head = sc_if->sk_cdata.sk_rx_prod;
 	r = c->sk_le;
 	c->sk_mbuf = m;
 
-	opcode = SK_Y2_RXOPC_PACKET;
-	for (i = 0; i < dmamap->dm_nsegs; i++) {
-		r->sk_addr = htole32(dmamap->dm_segs[i].ds_addr);
-		r->sk_len = htole16(dmamap->dm_segs[i].ds_len);
-		r->sk_ctl = 0;
-		r->sk_opcode = opcode | SK_Y2_RXOPC_OWN;
-		opcode = SK_Y2_RXOPC_BUFFER;
+	r->sk_addr = htole32(dmamap->dm_segs[0].ds_addr);
+	r->sk_len = htole16(dmamap->dm_segs[0].ds_len);
+	r->sk_ctl = 0;
 
-		SK_INC(sc_if->sk_cdata.sk_rx_prod, MSK_RX_RING_CNT);
-		sc_if->sk_cdata.sk_rx_cnt++;
+	SK_INC(sc_if->sk_cdata.sk_rx_prod, MSK_RX_RING_CNT);
+	sc_if->sk_cdata.sk_rx_cnt++;
 
+	for (i = 1; i < dmamap->dm_nsegs; i++) {
 		c = &sc_if->sk_cdata.sk_rx_chain[sc_if->sk_cdata.sk_rx_prod];
 		r = c->sk_le;
 		c->sk_mbuf = NULL;
+
+		r->sk_addr = htole32(dmamap->dm_segs[i].ds_addr);
+		r->sk_len = htole16(dmamap->dm_segs[i].ds_len);
+		r->sk_ctl = 0;
+		r->sk_opcode = SK_Y2_RXOPC_BUFFER | SK_Y2_RXOPC_OWN;
+		MSK_CDRXSYNC(sc_if, sc_if->sk_cdata.sk_rx_prod,
+		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+
+		SK_INC(sc_if->sk_cdata.sk_rx_prod, MSK_RX_RING_CNT);
+		sc_if->sk_cdata.sk_rx_cnt++;
 	}
 
-	MSK_CDRXSYNC(sc_if, i, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	c = &sc_if->sk_cdata.sk_rx_chain[head];
+	r = c->sk_le;
+	r->sk_opcode = SK_Y2_RXOPC_PACKET | SK_Y2_RXOPC_OWN;
+
+	MSK_CDRXSYNC(sc_if, head, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	return (0);
 }
