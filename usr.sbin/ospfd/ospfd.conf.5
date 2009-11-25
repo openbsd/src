@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.38 2009/09/19 13:31:35 sthen Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.39 2009/11/25 12:58:47 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 19 2009 $
+.Dd $Mdocdate: November 25 2009 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -44,6 +44,13 @@ A number of global settings can be overruled in specific areas or interfaces.
 An OSPF router must be a member of at least one area.
 Areas are used to group interfaces, simplifying configuration.
 .El
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/ospfd.sub.conf"
+.Ed
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits,
