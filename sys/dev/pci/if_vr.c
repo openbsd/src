@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.103 2009/11/25 12:45:02 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.104 2009/11/25 13:14:47 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1497,12 +1497,10 @@ vr_stop(struct vr_softc *sc)
 	 * Free data in the RX lists.
 	 */
 	for (i = 0; i < VR_RX_LIST_CNT; i++) {
-
 		if (sc->vr_cdata.vr_rx_chain[i].vr_mbuf != NULL) {
 			m_freem(sc->vr_cdata.vr_rx_chain[i].vr_mbuf);
 			sc->vr_cdata.vr_rx_chain[i].vr_mbuf = NULL;
 		}
-
 		map = sc->vr_cdata.vr_rx_chain[i].vr_map;
 		if (map != NULL) {
 			if (map->dm_nsegs > 0)
@@ -1518,8 +1516,6 @@ vr_stop(struct vr_softc *sc)
 	 * Free the TX list buffers.
 	 */
 	for (i = 0; i < VR_TX_LIST_CNT; i++) {
-		bus_dmamap_t map;
-
 		if (sc->vr_cdata.vr_tx_chain[i].vr_mbuf != NULL) {
 			m_freem(sc->vr_cdata.vr_tx_chain[i].vr_mbuf);
 			sc->vr_cdata.vr_tx_chain[i].vr_mbuf = NULL;
@@ -1533,7 +1529,6 @@ vr_stop(struct vr_softc *sc)
 			sc->vr_cdata.vr_tx_chain[i].vr_map = NULL;
 		}
 	}
-
 	bzero((char *)&sc->vr_ldata->vr_tx_list,
 		sizeof(sc->vr_ldata->vr_tx_list));
 }
