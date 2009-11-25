@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.102 2009/11/25 12:43:28 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.103 2009/11/25 12:45:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1523,6 +1523,7 @@ vr_stop(struct vr_softc *sc)
 		if (sc->vr_cdata.vr_tx_chain[i].vr_mbuf != NULL) {
 			m_freem(sc->vr_cdata.vr_tx_chain[i].vr_mbuf);
 			sc->vr_cdata.vr_tx_chain[i].vr_mbuf = NULL;
+			ifp->if_oerrors++;
 		}
 		map = sc->vr_cdata.vr_tx_chain[i].vr_map;
 		if (map != NULL) {
