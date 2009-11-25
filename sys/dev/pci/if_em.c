@@ -31,10 +31,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.228 2009/10/13 23:55:20 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.229 2009/11/25 13:28:13 dms Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
+#include <dev/pci/if_em_soc.h>
 
 #ifdef EM_DEBUG
 /*********************************************************************
@@ -145,7 +146,10 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_D_BM_LM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_R_BM_LF },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_R_BM_LM },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_R_BM_V }
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_R_BM_V },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_3 }
 };
 
 /*********************************************************************
@@ -153,6 +157,7 @@ const struct pci_matchid em_devices[] = {
  *********************************************************************/
 int  em_probe(struct device *, void *, void *);
 void em_attach(struct device *, struct device *, void *);
+void em_defer_attach(struct device*);
 int  em_detach(struct device *, int);
 int  em_intr(void *);
 void em_power(int, void *);
@@ -248,6 +253,45 @@ em_probe(struct device *parent, void *match, void *aux)
 	    sizeof(em_devices)/sizeof(em_devices[0])));
 }
 
+void
+em_defer_attach(struct device *self)
+{
+	struct em_softc *sc = (struct em_softc *)self;
+	struct pci_attach_args *pa = &sc->osdep.em_pa;
+	pci_chipset_tag_t	pc = pa->pa_pc;
+	void *gcu;
+
+	if ((gcu = em_lookup_gcu(self)) == 0) {
+		printf("%s: No GCU found, defered attachment failed\n",
+		    sc->sc_dv.dv_xname);
+
+		if (sc->sc_intrhand)
+			pci_intr_disestablish(pc, sc->sc_intrhand);
+		sc->sc_intrhand = 0;
+
+		if (sc->sc_powerhook != NULL)
+			powerhook_disestablish(sc->sc_powerhook);
+
+		em_stop(sc, 1);
+
+		em_free_pci_resources(sc);
+		em_dma_free(sc, &sc->rxdma);
+		em_dma_free(sc, &sc->txdma);
+
+		return;
+	}
+	
+	sc->hw.gcu = gcu;
+	
+	em_attach_miibus(self);			
+
+	em_setup_interface(sc);			
+
+	em_update_link_status(sc);		
+
+	em_setup_link(&sc->hw);			
+}
+
 /*********************************************************************
  *  Device initialization routine
  *
@@ -262,8 +306,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct em_softc *sc;
-	int		tsize, rsize;
-
+	int tsize, rsize;
+	int defer = 0;
+    
 	INIT_DEBUGOUT("em_attach: begin");
 
 	sc = (struct em_softc *)self;
@@ -393,10 +438,14 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->rx_desc_base = (struct em_rx_desc *) sc->rxdma.dma_vaddr;
 
 	/* Initialize the hardware */
-	if (em_hardware_init(sc)) {
-		printf("%s: Unable to initialize the hardware\n",
-		       sc->sc_dv.dv_xname);
-		goto err_hw_init;
+	if ((defer = em_hardware_init(sc))) {
+		if (defer == EAGAIN)
+			config_defer(self, em_defer_attach);
+		else {
+			printf("%s: Unable to initialize the hardware\n",
+			    sc->sc_dv.dv_xname);
+			goto err_hw_init;
+		}
 	}
 
 	/* Copy the permanent MAC address out of the EEPROM */
@@ -412,16 +461,18 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	bcopy(sc->hw.mac_addr, sc->interface_data.ac_enaddr,
-	      ETHER_ADDR_LEN);
+	    ETHER_ADDR_LEN);
 
 	/* Setup OS specific network interface */
-	em_setup_interface(sc);
+	if (!defer)
+		em_setup_interface(sc);
 
 	/* Initialize statistics */
 	em_clear_hw_cntrs(&sc->hw);
 	em_update_stats_counters(sc);
 	sc->hw.get_link_status = 1;
-	em_update_link_status(sc);
+	if (!defer)
+		em_update_link_status(sc);
 
 	printf(", address %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
 
@@ -437,6 +488,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		sc->pcix_82544 = TRUE;
         else
 		sc->pcix_82544 = FALSE;
+
+	sc->hw.icp_xxxx_is_link_up = FALSE;
+
 	INIT_DEBUGOUT("em_attach: end");
 	sc->sc_powerhook = powerhook_establish(em_power, sc);
 	return;
@@ -628,7 +682,6 @@ em_watchdog(struct ifnet *ifp)
 		ifp->if_timer = EM_TX_TIMEOUT;
 		return;
 	}
-
 	printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
 
 	em_init(sc);
@@ -1552,6 +1605,7 @@ em_allocate_pci_resources(struct em_softc *sc)
 		return (ENXIO);
 	}
 
+	sc->osdep.dev = (struct device *)sc;
 	sc->hw.back = &sc->osdep;
 
 	intrstr = pci_intr_string(pc, ih);
@@ -1566,6 +1620,27 @@ em_allocate_pci_resources(struct em_softc *sc)
 	}
 	printf(": %s", intrstr);
 
+	/*
+	 * the ICP_xxxx device has multiple, duplicate register sets for
+	 * use when it is being used as a network processor. Disable those
+	 * registers here, as they are not necessary in this context and
+	 * can confuse the system
+	 */
+	if(sc->hw.mac_type == em_icp_xxxx) {
+		uint8_t offset;
+		pcireg_t val;
+		
+		if (!pci_get_capability(sc->osdep.em_pa.pa_pc, 
+		    sc->osdep.em_pa.pa_tag, PCI_CAP_ID_ST, (int*) &offset, 
+		    &val)) {
+			return (0);
+		}
+		offset += PCI_ST_SMIA_OFFSET;
+		pci_conf_write(sc->osdep.em_pa.pa_pc, sc->osdep.em_pa.pa_tag,
+		    offset, 0x06);
+		E1000_WRITE_REG(&sc->hw, IMC1, ~0x0);
+		E1000_WRITE_REG(&sc->hw, IMC2, ~0x0);
+	}
 	return (0);
 }
 
@@ -1606,6 +1681,7 @@ em_free_pci_resources(struct em_softc *sc)
 int
 em_hardware_init(struct em_softc *sc)
 {
+	uint32_t ret_val;
 	u_int16_t rx_buffer_size;
 
 	INIT_DEBUGOUT("em_hardware_init: begin");
@@ -1674,7 +1750,11 @@ em_hardware_init(struct em_softc *sc)
 	sc->hw.fc_send_xon = TRUE;
 	sc->hw.fc = E1000_FC_FULL;
 
-	if (em_init_hw(&sc->hw) < 0) {
+	if ((ret_val = em_init_hw(&sc->hw)) != 0) {
+		if (ret_val == E1000_DEFER_INIT) {
+			INIT_DEBUGOUT("\nHardware Initialization Deferred ");
+			return (EAGAIN);
+		}
 		printf("%s: Hardware Initialization Failed",
 		       sc->sc_dv.dv_xname);
 		return (EIO);

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.266 2009/11/14 16:55:11 damien Exp $
+#	$OpenBSD: files.pci,v 1.267 2009/11/25 13:28:13 dms Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -351,6 +351,7 @@ device	em: ether, ifnet, ifmedia
 attach	em at pci
 file	dev/pci/if_em.c			em
 file	dev/pci/if_em_hw.c		em
+file	dev/pci/if_em_soc.c		em
 
 # Intel Pro/10GbE
 device	ixgb: ether, ifnet, ifmedia
@@ -788,3 +789,9 @@ file	dev/pci/kate.c			kate
 device	km
 attach	km at pci
 file	dev/pci/km.c			km
+
+# Intel SOC GCU
+device	gcu
+attach	gcu at pci
+file	dev/pci/gcu.c			gcu
+

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.41 2009/10/11 23:54:49 dms Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.42 2009/11/25 13:28:13 dms Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -70,6 +70,7 @@ __FBSDID("$FreeBSD: if_em_hw.c,v 1.16 2005/05/26 23:32:02 tackerman Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_em_hw.h>
+#include <dev/pci/if_em_soc.h>
 
 #define STATIC
 
@@ -220,6 +221,9 @@ em_set_phy_type(struct em_hw *hw)
     case IFE_PLUS_E_PHY_ID:
     case IFE_C_E_PHY_ID:
         hw->phy_type = em_phy_ife;
+        break;
+    case M88E1141_E_PHY_ID:
+        hw->phy_type = em_phy_oem;
         break;
     case BME1000_E_PHY_ID:
         if (hw->phy_revision == 1) {
@@ -494,6 +498,18 @@ em_set_mac_type(struct em_hw *hw)
     case E1000_DEV_ID_ICH10_D_BM_LM:
         hw->mac_type = em_ich10lan;
         break;
+    case E1000_DEV_ID_EP80579_LAN_1:
+        hw->mac_type = em_icp_xxxx;
+        hw->icp_xxxx_port_num = 0;
+        break; 
+    case E1000_DEV_ID_EP80579_LAN_2:
+        hw->mac_type = em_icp_xxxx;
+        hw->icp_xxxx_port_num = 1;
+        break; 
+    case E1000_DEV_ID_EP80579_LAN_3:
+        hw->mac_type = em_icp_xxxx;
+        hw->icp_xxxx_port_num = 2;
+        break; 
     default:
         /* Should never have loaded on this device */
         return -E1000_ERR_MAC_TYPE;
@@ -555,6 +571,11 @@ em_set_media_type(struct em_hw *hw)
     case E1000_DEV_ID_80003ES2LAN_SERDES_DPT:
         hw->media_type = em_media_type_internal_serdes;
         break;
+    case E1000_DEV_ID_EP80579_LAN_1:
+    case E1000_DEV_ID_EP80579_LAN_2:
+    case E1000_DEV_ID_EP80579_LAN_3:
+        hw->media_type = em_media_type_oem;
+        break; 
     default:
         switch (hw->mac_type) {
         case em_82542_rev2_0:
@@ -756,16 +777,21 @@ em_reset_hw(struct em_hw *hw)
                 E1000_WRITE_FLUSH(hw);
             }
             /* FALLTHROUGH */
-        default:
+
             /* Auto read done will delay 5ms or poll based on mac type */
             ret_val = em_get_auto_rd_done(hw);
             if (ret_val)
                 return ret_val;
             break;
+        default:
+            /* Wait for EEPROM reload (it happens automatically) */
+            msec_delay(5);
+            break;
     }
 
     /* Disable HW ARPs on ASF enabled adapters */
-    if (hw->mac_type >= em_82540 && hw->mac_type <= em_82547_rev_2) {
+    if (hw->mac_type >= em_82540 && hw->mac_type <= em_82547_rev_2 &&
+    	 hw->mac_type != em_icp_xxxx) {
         manc = E1000_READ_REG(hw, MANC);
         manc &= ~(E1000_MANC_ARP_EN);
         E1000_WRITE_REG(hw, MANC, manc);
@@ -1193,8 +1219,14 @@ em_setup_link(struct em_hw *hw)
     uint32_t ctrl_ext;
     int32_t ret_val;
     uint16_t eeprom_data;
+    uint16_t eeprom_control2_reg_offset;
 
     DEBUGFUNC("em_setup_link");
+
+    eeprom_control2_reg_offset = 
+        (hw->mac_type != em_icp_xxxx)   
+        ? EEPROM_INIT_CONTROL2_REG
+        : EEPROM_INIT_CONTROL3_ICP_xxxx(hw->icp_xxxx_port_num);
 
     /* In the case of the phy reset being blocked, we already have a link.
      * We do not have to set it up again. */
@@ -1219,7 +1251,7 @@ em_setup_link(struct em_hw *hw)
             hw->fc = E1000_FC_FULL;
             break;
         default:
-            ret_val = em_read_eeprom(hw, EEPROM_INIT_CONTROL2_REG,
+            ret_val = em_read_eeprom(hw, eeprom_control2_reg_offset,
                                         1, &eeprom_data);
             if (ret_val) {
                 DEBUGOUT("EEPROM Read Error\n");
@@ -1273,14 +1305,23 @@ em_setup_link(struct em_hw *hw)
     ret_val = em_detect_gig_phy(hw);
     if (ret_val) {
         DEBUGOUT("Error, did not detect valid phy.\n");
-        return ret_val;
+        if (hw->mac_type == em_icp_xxxx)
+            return E1000_DEFER_INIT;
+        else
+            return ret_val;
     }
     DEBUGOUT1("Phy ID = %x \n", hw->phy_id);
 
     /* Call the necessary subroutine to configure the link. */
-    ret_val = (hw->media_type == em_media_type_copper) ?
-              em_setup_copper_link(hw) :
-              em_setup_fiber_serdes_link(hw);
+    switch (hw->media_type) {
+    case em_media_type_copper:
+    case em_media_type_oem:
+        ret_val = em_setup_copper_link(hw);
+        break;
+    default:
+        ret_val = em_setup_fiber_serdes_link(hw);
+        break;
+    }
 
     /* Initialize the flow control address, type, and PAUSE timer
      * registers to their default values.  This is done even if flow
@@ -1849,10 +1890,23 @@ em_copper_link_mgp_setup(struct em_hw *hw)
     if (ret_val)
         return ret_val;
 
+    if (hw->phy_id == M88E1141_E_PHY_ID) {
+        phy_data |= 0x00000008;
+        ret_val = em_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
+        if (ret_val)
+            return ret_val;
+            
+        ret_val = em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
+        if (ret_val)
+            return ret_val;
+    	            
+        phy_data &= ~M88E1000_PSCR_ASSERT_CRS_ON_TX;
+
+    } 
     /* For BM PHY this bit is downshift enable */
-    if (hw->phy_type != em_phy_bm)
+    else if (hw->phy_type != em_phy_bm)
         phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
-                                
+
     /* Options:
      *   MDI/MDI-X = 0 (default)
      *   0 - Auto for all speeds
@@ -1896,9 +1950,11 @@ em_copper_link_mgp_setup(struct em_hw *hw)
     if (ret_val)
         return ret_val;
 
-    if ((hw->phy_type == em_phy_m88) &&
+    if (((hw->phy_type == em_phy_m88) &&
         (hw->phy_revision < M88E1011_I_REV_4) &&
-        (hw->phy_id != BME1000_E_PHY_ID)) {
+        (hw->phy_id != BME1000_E_PHY_ID)) ||
+        (hw->phy_type == em_phy_oem)) {
+
         /* Force TX_CLK in the Extended PHY Specific Control Register
          * to 25MHz clock.
          */
@@ -1906,6 +1962,11 @@ em_copper_link_mgp_setup(struct em_hw *hw)
         if (ret_val)
             return ret_val;
 
+        if (hw->phy_type == em_phy_oem) {
+            phy_data |= M88E1000_EPSCR_TX_TIME_CTRL;
+            phy_data |= M88E1000_EPSCR_RX_TIME_CTRL;
+        }
+	
         phy_data |= M88E1000_EPSCR_TX_CLK_25;
 
         if ((hw->phy_revision == E1000_REVISION_2) &&
@@ -1962,7 +2023,7 @@ em_copper_link_mgp_setup(struct em_hw *hw)
 *
 * hw - Struct containing variables accessed by shared code
 *********************************************************************/
-static int32_t
+int32_t
 em_copper_link_autoneg(struct em_hw *hw)
 {
     int32_t ret_val;
@@ -2033,13 +2094,14 @@ em_copper_link_autoneg(struct em_hw *hw)
 *
 * hw - Struct containing variables accessed by shared code
 ******************************************************************************/
-static int32_t
+int32_t
 em_copper_link_postconfig(struct em_hw *hw)
 {
     int32_t ret_val;
     DEBUGFUNC("em_copper_link_postconfig");
 
-    if (hw->mac_type >= em_82544) {
+    if (hw->mac_type >= em_82544 &&
+	hw->mac_type != em_icp_xxxx) {
         em_config_collision_dist(hw);
     } else {
         ret_val = em_config_mac_to_phy(hw);
@@ -2129,7 +2191,8 @@ em_setup_copper_link(struct em_hw *hw)
         if (ret_val)
             return ret_val;
     } else if (hw->phy_type == em_phy_m88 ||
-               hw->phy_type == em_phy_bm) {
+               hw->phy_type == em_phy_bm ||
+               hw->phy_type == em_phy_oem) {
         ret_val = em_copper_link_mgp_setup(hw);
         if (ret_val)
             return ret_val;
@@ -2167,6 +2230,8 @@ em_setup_copper_link(struct em_hw *hw)
         if (ret_val)
             return ret_val;
 
+        hw->icp_xxxx_is_link_up = (phy_data & MII_SR_LINK_STATUS) != 0;
+         
         if (phy_data & MII_SR_LINK_STATUS) {
             /* Config the MAC and PHY after link is up */
             ret_val = em_copper_link_postconfig(hw);
@@ -2487,7 +2552,8 @@ em_phy_force_speed_duplex(struct em_hw *hw)
 
     if ((hw->phy_type == em_phy_m88) ||
         (hw->phy_type == em_phy_gg82563) ||
-        (hw->phy_type == em_phy_bm)) {
+        (hw->phy_type == em_phy_bm) ||
+        (hw->phy_type == em_phy_oem)) {
         ret_val = em_read_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, &phy_data);
         if (ret_val)
             return ret_val;
@@ -2504,8 +2570,11 @@ em_phy_force_speed_duplex(struct em_hw *hw)
 
         /* Need to reset the PHY or these changes will be ignored */
         mii_ctrl_reg |= MII_CR_RESET;
+
+    }
+
     /* Disable MDI-X support for 10/100 */
-    } else if (hw->phy_type == em_phy_ife) {
+    else if (hw->phy_type == em_phy_ife) {
         ret_val = em_read_phy_reg(hw, IFE_PHY_MDIX_CONTROL, &phy_data);
         if (ret_val)
             return ret_val;
@@ -2578,6 +2647,7 @@ em_phy_force_speed_duplex(struct em_hw *hw)
                 return ret_val;
             }
         }
+
         /* This loop will early-out if the link condition has been met.  */
         for (i = PHY_FORCE_TIME; i > 0; i--) {
             if (mii_status_reg & MII_SR_LINK_STATUS) break;
@@ -2596,7 +2666,8 @@ em_phy_force_speed_duplex(struct em_hw *hw)
     }
 
     if (hw->phy_type == em_phy_m88 ||
-        hw->phy_type == em_phy_bm) {
+        hw->phy_type == em_phy_bm ||
+        hw->phy_type == em_phy_oem) {
         /* Because we reset the PHY above, we need to re-force TX_CLK in the
          * Extended PHY Specific Control Register to 25MHz clock.  This value
          * defaults back to a 2.5MHz clock when the PHY is reset.
@@ -2617,7 +2688,11 @@ em_phy_force_speed_duplex(struct em_hw *hw)
         if (ret_val)
             return ret_val;
 
-        phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
+        if ( hw->phy_id == M88E1141_E_PHY_ID)
+            phy_data &= ~M88E1000_PSCR_ASSERT_CRS_ON_TX;
+        else
+            phy_data |= M88E1000_PSCR_ASSERT_CRS_ON_TX;
+
         ret_val = em_write_phy_reg(hw, M88E1000_PHY_SPEC_CTRL, phy_data);
         if (ret_val)
             return ret_val;
@@ -2703,7 +2778,8 @@ em_config_mac_to_phy(struct em_hw *hw)
 
     /* 82544 or newer MAC, Auto Speed Detection takes care of
     * MAC speed/duplex configuration.*/
-    if (hw->mac_type >= em_82544)
+    if (hw->mac_type >= em_82544
+	&& hw->mac_type != em_icp_xxxx)
         return E1000_SUCCESS;
 
     /* Read the Device Control Register and set the bits to Force Speed
@@ -2837,7 +2913,9 @@ em_config_fc_after_link_up(struct em_hw *hw)
     if (((hw->media_type == em_media_type_fiber) && (hw->autoneg_failed)) ||
         ((hw->media_type == em_media_type_internal_serdes) &&
          (hw->autoneg_failed)) ||
-        ((hw->media_type == em_media_type_copper) && (!hw->autoneg))) {
+        ((hw->media_type == em_media_type_copper) && (!hw->autoneg)) ||
+        ((hw->media_type == em_media_type_oem) && (!hw->autoneg))
+	) {
         ret_val = em_force_mac_fc(hw);
         if (ret_val) {
             DEBUGOUT("Error forcing flow control settings\n");
@@ -2850,7 +2928,9 @@ em_config_fc_after_link_up(struct em_hw *hw)
      * has completed, and if so, how the PHY and link partner has
      * flow control configured.
      */
-    if ((hw->media_type == em_media_type_copper) && hw->autoneg) {
+    if ((hw->media_type == em_media_type_copper || 
+        (hw->media_type == em_media_type_oem)) && 
+        hw->autoneg) {
         /* Read the MII Status Register and check to see if AutoNeg
          * has completed.  We read this twice because this reg has
          * some "sticky" (latched) bits.
@@ -3061,7 +3141,9 @@ em_check_for_link(struct em_hw *hw)
      * receive a Link Status Change interrupt or we have Rx Sequence
      * Errors.
      */
-    if ((hw->media_type == em_media_type_copper) && hw->get_link_status) {
+    if ((hw->media_type == em_media_type_copper || 
+    	(hw->media_type == em_media_type_oem)) && 
+    	hw->get_link_status) {
         /* First we want to see if the MII Status Register reports
          * link.  If so, then we want to get the current speed/duplex
          * of the PHY.
@@ -3073,6 +3155,8 @@ em_check_for_link(struct em_hw *hw)
         ret_val = em_read_phy_reg(hw, PHY_STATUS, &phy_data);
         if (ret_val)
             return ret_val;
+
+        hw->icp_xxxx_is_link_up = (phy_data & MII_SR_LINK_STATUS) != 0;
 
         if (phy_data & MII_SR_LINK_STATUS) {
             hw->get_link_status = FALSE;
@@ -3121,7 +3205,7 @@ em_check_for_link(struct em_hw *hw)
          * speed/duplex on the MAC to the current PHY speed/duplex
          * settings.
          */
-        if (hw->mac_type >= em_82544)
+        if (hw->mac_type >= em_82544 && hw->mac_type != em_icp_xxxx)
             em_config_collision_dist(hw);
         else {
             ret_val = em_config_mac_to_phy(hw);
@@ -3672,6 +3756,12 @@ em_read_phy_reg_ex(struct em_hw *hw, uint32_t reg_addr,
         return -E1000_ERR_PARAM;
     }
 
+    if(hw->mac_type == em_icp_xxxx) {
+        *phy_data = gcu_miibus_readreg(hw, hw->icp_xxxx_port_num, 
+            reg_addr);
+  	return E1000_SUCCESS;
+    }
+
     if (hw->mac_type > em_82543) {
         /* Set up Op-code, Phy Address, and register address in the MDI
          * Control register.  The MAC will take care of interfacing with the
@@ -3816,6 +3906,11 @@ em_write_phy_reg_ex(struct em_hw *hw, uint32_t reg_addr,
         return -E1000_ERR_PARAM;
     }
 
+    if(hw->mac_type == em_icp_xxxx) {
+        gcu_miibus_writereg(hw, hw->icp_xxxx_port_num, 
+            reg_addr, phy_data);
+        return E1000_SUCCESS;
+    }
     if (hw->mac_type > em_82543) {
         /* Set up Op-code, Phy Address, register address, and data intended
          * for the PHY register in the MDI Control register.  The MAC will take
@@ -3946,7 +4041,7 @@ em_phy_hw_reset(struct em_hw *hw)
 
     DEBUGOUT("Resetting Phy...\n");
 
-    if (hw->mac_type > em_82543) {
+    if (hw->mac_type > em_82543 && hw->mac_type != em_icp_xxxx ) {
         if ((hw->mac_type == em_80003es2lan) &&
             (E1000_READ_REG(hw, STATUS) & E1000_STATUS_FUNC_1)) {
             swfw = E1000_SWFW_PHY1_SM;
@@ -3978,6 +4073,7 @@ em_phy_hw_reset(struct em_hw *hw)
         if (hw->mac_type >= em_82571)
             msec_delay_irq(10);
         em_swfw_sync_release(hw, swfw);
+    /* the M88E1141_E_PHY_ID might need reset here, but nothing proves it */
     } else {
         /* Read the Extended Device Control Register, assert the PHY_RESET_DIR
          * bit to put the PHY into reset. Then, take it out of reset.
@@ -4191,6 +4287,9 @@ em_match_gig_phy(struct em_hw *hw)
             if (hw->phy_id == IFE_C_E_PHY_ID) match = TRUE;
             if (hw->phy_id == BME1000_E_PHY_ID) match = TRUE;
             break;
+    case em_icp_xxxx:
+	    if (hw->phy_id == M88E1141_E_PHY_ID) match = TRUE;
+	    break;
     default:
             DEBUGOUT1("Invalid MAC type %d\n", hw->mac_type);
             return -E1000_ERR_CONFIG;
@@ -4221,7 +4320,7 @@ em_detect_gig_phy(struct em_hw *hw)
         return E1000_SUCCESS;
 
     /* default phy address, most phys reside here, but not all (ICH10) */
-    hw->phy_addr = 1;
+    hw->phy_addr = 0;
 
     /* The 82571 firmware may still be configuring the PHY.  In this
      * case, we cannot access the PHY until the configuration is done.  So
@@ -4332,6 +4431,7 @@ em_init_eeprom_params(struct em_hw *hw)
     case em_82540:
     case em_82545:
     case em_82545_rev_3:
+    case em_icp_xxxx:
     case em_82546:
     case em_82546_rev_3:
         eeprom->type = em_eeprom_microwire;
@@ -5086,8 +5186,13 @@ em_validate_eeprom_checksum(struct em_hw *hw)
 {
     uint16_t checksum = 0;
     uint16_t i, eeprom_data;
+    uint16_t checksum_reg;
 
     DEBUGFUNC("em_validate_eeprom_checksum");
+
+    checksum_reg = hw->mac_type != em_icp_xxxx
+                   ? EEPROM_CHECKSUM_REG
+                   : EEPROM_CHECKSUM_REG_ICP_xxxx;
 
     if (((hw->mac_type == em_82573) || (hw->mac_type == em_82574)) &&
         (em_is_onboard_nvm_eeprom(hw) == FALSE)) {
@@ -5124,7 +5229,7 @@ em_validate_eeprom_checksum(struct em_hw *hw)
         }
     }
 
-    for (i = 0; i < (EEPROM_CHECKSUM_REG + 1); i++) {
+    for (i = 0; i < (checksum_reg + 1); i++) {
         if (em_read_eeprom(hw, i, 1, &eeprom_data) < 0) {
             DEBUGOUT("EEPROM Read Error\n");
             return -E1000_ERR_EEPROM;
@@ -5607,12 +5712,18 @@ em_read_mac_addr(struct em_hw * hw)
 {
     uint16_t offset;
     uint16_t eeprom_data, i;
+    uint16_t ia_base_addr = 0;
 
     DEBUGFUNC("em_read_mac_addr");
 
+    if(hw->mac_type == em_icp_xxxx) {
+        ia_base_addr = (uint16_t) 
+            EEPROM_IA_START_ICP_xxxx(hw->icp_xxxx_port_num);
+    }
+
     for (i = 0; i < NODE_ADDRESS_SIZE; i += 2) {
         offset = i >> 1;
-        if (em_read_eeprom(hw, offset, 1, &eeprom_data) < 0) {
+        if (em_read_eeprom(hw, offset + ia_base_addr, 1, &eeprom_data) < 0) {
             DEBUGOUT("EEPROM Read Error\n");
             return -E1000_ERR_EEPROM;
         }
@@ -6019,7 +6130,7 @@ em_id_led_init(struct em_hw * hw)
 
     DEBUGFUNC("em_id_led_init");
 
-    if (hw->mac_type < em_82540) {
+    if (hw->mac_type < em_82540 || hw->mac_type == em_icp_xxxx) {
         /* Nothing to do */
         return E1000_SUCCESS;
     }
@@ -6168,7 +6279,8 @@ em_clear_hw_cntrs(struct em_hw *hw)
     temp = E1000_READ_REG(hw, TSCTC);
     temp = E1000_READ_REG(hw, TSCTFC);
 
-    if (hw->mac_type <= em_82544) return;
+    if (hw->mac_type <= em_82544
+	|| hw->mac_type == em_icp_xxxx) return;
 
     temp = E1000_READ_REG(hw, MGTPRC);
     temp = E1000_READ_REG(hw, MGTPDC);
@@ -6292,6 +6404,11 @@ em_get_bus_info(struct em_hw *hw)
         hw->bus_speed = em_bus_speed_unknown;
         hw->bus_width = em_bus_width_unknown;
         break;
+    case em_icp_xxxx:
+        hw->bus_type = em_bus_type_cpp;
+        hw->bus_speed = em_bus_speed_unknown;
+        hw->bus_width = em_bus_width_unknown;
+        break;
     case em_82571:
     case em_82572:
     case em_82573:
@@ -6399,7 +6516,8 @@ em_get_cable_length(struct em_hw *hw,
     *min_length = *max_length = 0;
 
     /* Use old method for Phy older than IGP */
-    if (hw->phy_type == em_phy_m88) {
+    if (hw->phy_type == em_phy_m88 ||
+	hw->phy_type == em_phy_oem) {
 
         ret_val = em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS,
                                      &phy_data);
@@ -6592,7 +6710,8 @@ em_check_downshift(struct em_hw *hw)
 
         hw->speed_downgraded = (phy_data & IGP01E1000_PLHR_SS_DOWNGRADE) ? 1 : 0;
     } else if ((hw->phy_type == em_phy_m88) ||
-               (hw->phy_type == em_phy_gg82563)) {
+               (hw->phy_type == em_phy_gg82563) ||
+               (hw->phy_type == em_phy_oem)) {
         ret_val = em_read_phy_reg(hw, M88E1000_PHY_SPEC_STATUS,
                                      &phy_data);
         if (ret_val)

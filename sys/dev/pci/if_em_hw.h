@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.34 2009/10/31 12:26:36 sobrado Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.35 2009/11/25 13:28:13 dms Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -58,6 +58,7 @@ typedef enum {
     em_82540,
     em_82545,
     em_82545_rev_3,
+    em_icp_xxxx,
     em_82546,
     em_82546_rev_3,
     em_82541,
@@ -91,6 +92,7 @@ typedef enum {
     em_media_type_copper = 0,
     em_media_type_fiber = 1,
     em_media_type_internal_serdes = 2,
+    em_media_type_oem = 3,
     em_num_media_types
 } em_media_type;
 
@@ -112,6 +114,7 @@ typedef enum {
     em_bus_type_pci,
     em_bus_type_pcix,
     em_bus_type_pci_express,
+    em_bus_type_cpp,
     em_bus_type_reserved
 } em_bus_type;
 
@@ -231,6 +234,7 @@ typedef enum {
     em_phy_igp_3,
     em_phy_ife,
     em_phy_bm,		/* phy used in i82574L, ICH10 and some ICH9 */
+    em_phy_oem,
     em_phy_undefined = 0xFF
 } em_phy_type;
 
@@ -304,6 +308,7 @@ typedef enum {
 #define E1000_BLK_PHY_RESET   12
 #define E1000_ERR_SWFW_SYNC 13
 #define E1000_NOT_IMPLEMENTED 14
+#define E1000_DEFER_INIT 15
 
 #define E1000_BYTE_SWAP_WORD(_value) ((((_value) & 0x00ff) << 8) | \
                                      (((_value) & 0xff00) >> 8))
@@ -322,6 +327,8 @@ void em_config_collision_dist(struct em_hw *hw);
 int32_t em_check_for_link(struct em_hw *hw);
 int32_t em_get_speed_and_duplex(struct em_hw *hw, uint16_t *speed, uint16_t *duplex);
 int32_t em_force_mac_fc(struct em_hw *hw);
+int32_t em_copper_link_autoneg(struct em_hw *hw);
+int32_t em_copper_link_postconfig(struct em_hw *hw);
 
 /* PHY */
 int32_t em_read_phy_reg(struct em_hw *hw, uint32_t reg_addr, uint16_t *phy_data);
@@ -522,6 +529,9 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_82576_QUAD_COPPER	 0x10E8
 #define E1000_DEV_ID_82576_NS		 0x150A
 #define E1000_DEV_ID_82574L		 0x10D3
+#define E1000_DEV_ID_EP80579_LAN_1	 0x5040          /* EP80579 LAN */
+#define E1000_DEV_ID_EP80579_LAN_2	 0x5044          /* EP80579 LAN */
+#define E1000_DEV_ID_EP80579_LAN_3	 0x5048          /* EP80579 LAN */
 
 #define NODE_ADDRESS_SIZE 6
 #define ETH_LENGTH_OF_ADDRESS 6
@@ -1481,6 +1491,9 @@ struct em_hw {
     boolean_t mng_reg_access_disabled;
     boolean_t leave_av_bit_off;
     boolean_t kmrn_lock_loss_workaround_disabled;
+    boolean_t icp_xxxx_is_link_up;
+    uint32_t  icp_xxxx_port_num;
+    struct gcu_softc * gcu;
 };
 
 #define E1000_EEPROM_SWDPIN0   0x0001   /* SWDPIN 0 EEPROM Value */
@@ -2954,6 +2967,10 @@ struct em_host_command_info {
 #define M88EC018_EPSCR_DOWNSHIFT_COUNTER_7X    0x0C00
 #define M88EC018_EPSCR_DOWNSHIFT_COUNTER_8X    0x0E00
 
+/* M88E1141 specific */
+#define M88E1000_EPSCR_TX_TIME_CTRL       0x0002 /* Add Delay */
+#define M88E1000_EPSCR_RX_TIME_CTRL       0x0080 /* Add Delay */
+
 /* IGP01E1000 Specific Port Config Register - R/W */
 #define IGP01E1000_PSCFR_AUTO_MDIX_PAR_DETECT  0x0010
 #define IGP01E1000_PSCFR_PRE_EN                0x0020
@@ -3180,6 +3197,7 @@ struct em_host_command_info {
 #define L1LXT971A_PHY_ID   0x001378E0
 #define GG82563_E_PHY_ID   0x01410CA0
 #define BME1000_E_PHY_ID   0x01410CB0
+#define M88E1141_E_PHY_ID  0x01410CD0
 
 /* Bits...
  * 15-5: page
@@ -3398,5 +3416,20 @@ union ich8_hws_flash_regacc {
 #define AUTONEG_ADVERTISE_SPEED_DEFAULT 0x002F  /* Everything but 1000-Half */
 #define AUTONEG_ADVERTISE_10_100_ALL    0x000F /* All 10/100 speeds*/
 #define AUTONEG_ADVERTISE_10_ALL        0x0003 /* 10Mbps Full & Half speeds*/
+
+/* ICP PCI Dev ID xxxx macros to calculate word offsets for IA, IPv4 and IPv6 */
+#define EEPROM_MGMT_CONTROL_ICP_xxxx(device_num)  (((device_num) + 1) << 4)
+#define EEPROM_INIT_CONTROL3_ICP_xxxx(device_num) ((((device_num) + 1) << 4) + 1)
+#define EEPROM_IA_START_ICP_xxxx(device_num)      ((((device_num) + 1) << 4) + 2)
+#define EEPROM_IPV4_START_ICP_xxxx(device_num)    ((((device_num) + 1) << 4) + 5)
+#define EEPROM_IPV6_START_ICP_xxxx(device_num)    ((((device_num) + 1) << 4) + 7)
+#define EEPROM_CHECKSUM_REG_ICP_xxxx                EEPROM_CHECKSUM_REG
+#define PCI_CAP_ID_ST      0x09
+#define PCI_ST_SMIA_OFFSET 0x04
+
+#define E1000_IMC1     0x008D8  /* Interrupt Mask Clear 1 - RW */
+#define E1000_IMC2     0x008F8  /* Interrupt Mask Clear 2 - RW */ 
+#define E1000_82542_IMC1     E1000_IMC1
+#define E1000_82542_IMC2     E1000_IMC2
 
 #endif /* _EM_HW_H_ */
