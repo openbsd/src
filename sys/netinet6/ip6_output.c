@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.109 2009/11/20 09:02:21 guenther Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.110 2009/11/25 07:37:29 mpf Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1625,18 +1625,19 @@ do { \
 #ifndef IPSEC
 				error = EINVAL;
 #else
-				s = spltdb();
-				if (m == 0 || m->m_len != sizeof(struct tdb_ident)) {
+				if (m == NULL ||
+				    m->m_len != sizeof(struct tdb_ident)) {
 					error = EINVAL;
-				} else {
-					tdbip = mtod(m, struct tdb_ident *);
-					tdb = gettdb(tdbip->spi, &tdbip->dst,
-					    tdbip->proto);
-					if (tdb == NULL)
-						error = ESRCH;
-					else
-						tdb_add_inp(tdb, inp, 0);
+					break;
 				}
+				tdbip = mtod(m, struct tdb_ident *);
+				s = spltdb();
+				tdb = gettdb(tdbip->spi, &tdbip->dst,
+				    tdbip->proto);
+				if (tdb == NULL)
+					error = ESRCH;
+				else
+					tdb_add_inp(tdb, inp, 0);
 				splx(s);
 #endif
 				break;
