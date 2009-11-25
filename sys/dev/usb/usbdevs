@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.460 2009/11/23 15:03:09 yuo Exp $
+$OpenBSD: usbdevs,v 1.461 2009/11/25 14:57:05 jasper Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2235,9 +2235,10 @@ product NATIONAL BEARPAW1200	0x1000	BearPaw 1200
 product NATIONAL BEARPAW2400	0x1001	BearPaw 2400
 
 /* NEC products */
+product NEC HUB			0x005a	hub
 product NEC USB2EXTEND		0x0409	Repeater
-product NEC HUB			0x55aa	hub
-product NEC HUB_B		0x55ab	hub
+product NEC HUB_B		0x55aa	hub
+product NEC HUB_C		0x55ab	hub
 product NEC PICTY760		0xbef4	Picty760
 product NEC PICTY900		0xefbe	Picty900
 product NEC PICTY920		0xf0be	Picty920
