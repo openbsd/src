@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.672 2009/11/24 08:19:27 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.673 2009/11/25 16:24:16 dms Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -631,6 +631,8 @@ alc*	at pci?				# Attansic L1C/L2C Ethernet
 ale*	at pci?				# Attansic L1E Ethernet
 lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
+
+gcu*	at pci?				# Intel EP80579 auxlliary mii device
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)

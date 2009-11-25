@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.172 2009/11/15 01:36:10 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.173 2009/11/25 16:24:16 dms Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -376,6 +376,8 @@ alc*	at pci?				# Attansic L1C/L2C Ethernet
 ale*	at pci?				# Attansic L1E Ethernet
 lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
+
+gcu*    at pci?                         # Intel EP80579 auxlliary mii device
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
