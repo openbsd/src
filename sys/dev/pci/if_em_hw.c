@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.42 2009/11/25 13:28:13 dms Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.43 2009/11/25 18:47:36 dms Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -4320,7 +4320,10 @@ em_detect_gig_phy(struct em_hw *hw)
         return E1000_SUCCESS;
 
     /* default phy address, most phys reside here, but not all (ICH10) */
-    hw->phy_addr = 0;
+    if (hw->mac_type != em_icp_xxxx)
+        hw->phy_addr = 1;
+    else
+        hw->phy_addr = 0; /* There is a phy at phy_addr 0 on EP80579 */
 
     /* The 82571 firmware may still be configuring the PHY.  In this
      * case, we cannot access the PHY until the configuration is done.  So
