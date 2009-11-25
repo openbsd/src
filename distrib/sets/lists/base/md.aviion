@@ -1063,6 +1063,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/fmsreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/fmsvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/gcu.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/gcu_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/hifn7751var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/i82365_pcivar.ph
@@ -1080,6 +1082,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_em.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_em_hw.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_em_osdep.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_em_soc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_etreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ipwreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ipwvar.ph

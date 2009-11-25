@@ -551,6 +551,8 @@
 ./usr/include/dev/pci/esovar.h
 ./usr/include/dev/pci/fmsreg.h
 ./usr/include/dev/pci/fmsvar.h
+./usr/include/dev/pci/gcu.h
+./usr/include/dev/pci/gcu_reg.h
 ./usr/include/dev/pci/hifn7751reg.h
 ./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/i82365_pcivar.h
@@ -568,6 +570,7 @@
 ./usr/include/dev/pci/if_em.h
 ./usr/include/dev/pci/if_em_hw.h
 ./usr/include/dev/pci/if_em_osdep.h
+./usr/include/dev/pci/if_em_soc.h
 ./usr/include/dev/pci/if_etreg.h
 ./usr/include/dev/pci/if_ipwreg.h
 ./usr/include/dev/pci/if_ipwvar.h
