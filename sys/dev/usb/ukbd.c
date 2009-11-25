@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.48 2009/10/13 20:56:50 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.49 2009/11/25 11:39:45 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -192,7 +192,7 @@ struct ukbd_softc {
 	int sc_console_keyboard;	/* we are the console keyboard */
 
 	char sc_debounce;		/* for quirk handling */
-	struct timeout sc_delay;		/* for quirk handling */
+	struct timeout sc_delay;	/* for quirk handling */
 	struct ukbd_data sc_data;	/* for quirk handling */
 
 	struct hid_location sc_numloc;
@@ -528,6 +528,10 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 			ud->modifiers |= sc->sc_mods[i].mask;
 	memcpy(ud->keycode, (char *)ibuf + sc->sc_keycodeloc.pos / 8,
 	       sc->sc_nkeycode);
+
+	/* ignore duplicate data */
+	if (memcmp(ud, &sc->sc_odata, sizeof *ud) == 0)
+		return;
 
 	if (sc->sc_debounce && !sc->sc_polling) {
 		/*
