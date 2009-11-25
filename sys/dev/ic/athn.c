@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.19 2009/11/25 17:54:37 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.20 2009/11/25 19:53:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2804,7 +2804,7 @@ athn_inc_tx_trigger_level(struct athn_softc *sc)
 	 * NB: The AR9285 and all single-stream parts have an issue that
 	 * limits the size of the PCU Tx FIFO to 2KB instead of 4KB.
 	 */
-	if (ftrig == AR_SREV_9285(sc) ? 0x1f : 0x3f)
+	if (ftrig == (AR_SREV_9285(sc) ? 0x1f : 0x3f))
 		return;		/* Already at max. */
 	reg = RW(reg, AR_TXCFG_FTRIG, ftrig + 1);
 	AR_WRITE(sc, AR_TXCFG, reg);
