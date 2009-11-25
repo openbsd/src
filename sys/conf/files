@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.482 2009/11/14 16:55:11 damien Exp $
+#	$OpenBSD: files,v 1.483 2009/11/25 19:07:52 oga Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -999,6 +999,7 @@ file uvm/uvm_km.c
 file uvm/uvm_map.c
 file uvm/uvm_meter.c
 file uvm/uvm_mmap.c
+file uvm/uvm_object.c			!small_kernel
 file uvm/uvm_page.c
 file uvm/uvm_pager.c
 file uvm/uvm_pdaemon.c
