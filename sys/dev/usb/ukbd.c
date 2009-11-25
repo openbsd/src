@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.49 2009/11/25 11:39:45 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.50 2009/11/25 13:36:53 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -529,10 +529,6 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 	memcpy(ud->keycode, (char *)ibuf + sc->sc_keycodeloc.pos / 8,
 	       sc->sc_nkeycode);
 
-	/* ignore duplicate data */
-	if (memcmp(ud, &sc->sc_odata, sizeof *ud) == 0)
-		return;
-
 	if (sc->sc_debounce && !sc->sc_polling) {
 		/*
 		 * Some keyboards have a peculiar quirk.  They sometimes
@@ -550,8 +546,10 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		 * polling from inside the interrupt routine and that
 		 * loses bigtime.
 		 */
-		sc->sc_data = *ud;
-		timeout_add(&sc->sc_delay, 1);
+		if (!timeout_pending(&sc->sc_delay)) {
+			sc->sc_data = *ud;
+			timeout_add(&sc->sc_delay, 1);
+		}
 #endif
 	} else {
 		ukbd_decode(sc, ud);
