@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.43 2009/11/25 16:18:04 dms Exp $
+.\" $OpenBSD: em.4,v 1.44 2009/11/25 22:07:38 jmc Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -52,6 +52,8 @@ The 82562V Ethernet controller chip only supports 10/100 media types.
 This includes the following models:
 .Pp
 .Bl -item -offset indent -compact
+.It
+Axiomtek NA-200 EP80579 based board
 .It
 HP ProLiant NC110T PCI Express Gigabit NIC
 .It
@@ -150,8 +152,6 @@ Sun x8 PCI-E Quad Gigabit Ethernet ExpressModule
 Supermicro AOC-SG-i2 Dual Port Server Adapter
 .It
 Supermicro AOC-PG-I2+ Dual Port Server Adapter
-.It
-Axiomtek NA-200 EP80579 based board
 .El
 .Pp
 The
@@ -179,11 +179,11 @@ For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr gcu 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
-.Xr gcu 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
