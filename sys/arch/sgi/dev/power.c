@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.12 2009/10/26 20:14:42 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.13 2009/11/25 11:23:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -101,7 +101,7 @@ power_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	/* Establish interrupt handler. */
 	if (xbow_intr_establish(power_mainbus_intr, self, HEART_ISR_POWER,
-	    IPL_TTY, self->dv_xname) != 0) {
+	    IPL_TTY, self->dv_xname, NULL) != 0) {
 		printf(": unable to establish interrupt!\n");
 		return;
 	}

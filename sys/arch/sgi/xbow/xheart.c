@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.16 2009/11/12 17:13:35 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.17 2009/11/25 11:23:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -64,7 +64,8 @@ int	xheart_ow_triplet(void *, int);
 int	xheart_ow_pulse(struct xheart_softc *, int, int);
 
 int	xheart_intr_register(int, int, int *);
-int	xheart_intr_establish(int (*)(void *), void *, int, int, const char *);
+int	xheart_intr_establish(int (*)(void *), void *, int, int, const char *,
+	    struct intrhand *);
 void	xheart_intr_disestablish(int);
 void	xheart_intr_clear(int);
 void	xheart_intr_set(int);
@@ -291,7 +292,7 @@ found:
  */
 int
 xheart_intr_establish(int (*func)(void *), void *arg, int intrbit,
-    int level, const char *name)
+    int level, const char *name, struct intrhand *ihstore)
 {
 	struct intrhand *ih;
 	int s;
@@ -308,9 +309,15 @@ xheart_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	if (xheart_intrhand[intrbit] != NULL)
 		return EEXIST;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return ENOMEM;
+	if (ihstore == NULL) {
+		ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
+		if (ih == NULL)
+			return ENOMEM;
+		ih->ih_flags = IH_ALLOCATED;
+	} else {
+		ih = ihstore;
+		ih->ih_flags = 0;
+	}
 
 	ih->ih_next = NULL;
 	ih->ih_fun = func;
@@ -358,7 +365,8 @@ xheart_intr_disestablish(int intrbit)
 
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	if (ISSET(ih->ih_flags, IH_ALLOCATED))
+		free(ih, M_DEVBUF);
 }
 
 void

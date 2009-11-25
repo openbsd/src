@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.h,v 1.9 2009/11/18 19:05:53 miod Exp $	*/
+/*	$OpenBSD: xbow.h,v 1.10 2009/11/25 11:23:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -50,7 +50,7 @@ extern	paddr_t	xbow_intr_widget_register;
 
 extern	int	(*xbow_intr_widget_intr_register)(int, int, int *);
 extern	int	(*xbow_intr_widget_intr_establish)(int (*)(void *), void *,
-		    int, int, const char *);
+		    int, int, const char *, struct intrhand *);
 extern	void	(*xbow_intr_widget_intr_disestablish)(int);
 
 extern	void	(*xbow_intr_widget_intr_set)(int);
@@ -80,7 +80,8 @@ struct xbow_attach_args {
 
 void	xbow_build_bus_space(struct mips_bus_space *, int, int);
 int	xbow_intr_register(int, int, int *);
-int	xbow_intr_establish(int (*)(void *), void *, int, int, const char *);
+int	xbow_intr_establish(int (*)(void *), void *, int, int, const char *,
+	    struct intrhand *);
 void	xbow_intr_disestablish(int);
 void	xbow_intr_clear(int);
 void	xbow_intr_set(int);

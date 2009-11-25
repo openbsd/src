@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.36 2009/11/18 19:05:51 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.37 2009/11/25 11:23:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -67,7 +67,7 @@ static uint maxnodes;
 
 int	ip27_hub_intr_register(int, int, int *);
 int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
-	    const char *);
+	    const char *, struct intrhand *);
 void	ip27_hub_intr_disestablish(int);
 void	ip27_hub_intr_clear(int);
 void	ip27_hub_intr_set(int);
@@ -625,7 +625,7 @@ found:
  */
 int
 ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
-    int level, const char *name)
+    int level, const char *name, struct intrhand *ihstore)
 {
 	struct intrhand *ih, **anchor;
 	int s;
@@ -650,9 +650,15 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	if (*anchor != NULL)
 		return EEXIST;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return ENOMEM;
+	if (ihstore == NULL) {
+		ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
+		if (ih == NULL)
+			return ENOMEM;
+		ih->ih_flags = IH_ALLOCATED;
+	} else {
+		ih = ihstore;
+		ih->ih_flags = 0;
+	}
 
 	ih->ih_next = NULL;
 	ih->ih_fun = func;
@@ -712,7 +718,8 @@ ip27_hub_intr_disestablish(int intrbit)
 
 	splx(s);
 
-	free(ih, M_DEVBUF);
+	if (ISSET(ih->ih_flags, IH_ALLOCATED))
+		free(ih, M_DEVBUF);
 }
 
 void

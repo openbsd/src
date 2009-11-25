@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.63 2009/11/19 06:07:05 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.64 2009/11/25 11:23:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -984,7 +984,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		 * XXX between devices of different levels.
 		 */
 		if (xbow_intr_establish(xbridge_intr_handler, xi, intrsrc,
-		    IPL_BIO, NULL)) {
+		    IPL_BIO, NULL, NULL)) {
 			printf("%s: unable to register interrupt handler\n",
 			    DEVNAME(xb));
 			return NULL;

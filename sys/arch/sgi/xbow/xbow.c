@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.25 2009/11/18 19:05:53 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.26 2009/11/25 11:23:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -665,7 +665,7 @@ int	xbow_intr_widget = 0;
 paddr_t	xbow_intr_widget_register;
 int	(*xbow_intr_widget_intr_register)(int, int, int *) = NULL;
 int	(*xbow_intr_widget_intr_establish)(int (*)(void *), void *, int, int,
-	    const char *) = NULL;
+	    const char *, struct intrhand *) = NULL;
 void	(*xbow_intr_widget_intr_disestablish)(int) = NULL;
 void	(*xbow_intr_widget_intr_set)(int) = NULL;
 void	(*xbow_intr_widget_intr_clear)(int) = NULL;
@@ -681,13 +681,13 @@ xbow_intr_register(int widget, int level, int *intrbit)
 
 int
 xbow_intr_establish(int (*func)(void *), void *arg, int intrbit, int level,
-    const char *name)
+    const char *name, struct intrhand *ihstore)
 {
 	if (xbow_intr_widget_intr_establish == NULL)
 		return EINVAL;
 
 	return (*xbow_intr_widget_intr_establish)(func, arg, intrbit, level,
-	    name);
+	    name, ihstore);
 }
 
 void
