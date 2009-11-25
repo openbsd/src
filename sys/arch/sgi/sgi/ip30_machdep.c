@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.23 2009/11/24 22:46:59 syuu Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.24 2009/11/25 17:39:51 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -44,9 +44,21 @@
 
 #include <dev/ic/comvar.h>
 
+#ifdef MULTIPROCESSOR
+#include <sgi/xbow/xheartreg.h>
+#endif
+
 extern char *hw_prod;
 
 extern int	mbprint(void *, const char *);
+
+#ifdef MULTIPROCESSOR
+extern int      xheart_intr_establish(int (*)(void *), void *, int, int, 
+    const char *, struct intrhand *);
+extern void     xheart_intr_set(int);
+extern void     xheart_intr_clear(int);
+extern void	xheart_setintrmask(int);
+#endif
 
 uint32_t ip30_lights_frob(uint32_t, struct trap_frame *);
 paddr_t	ip30_widget_short(int16_t, u_int);
@@ -406,8 +418,12 @@ hw_cpu_hatch(struct cpu_info *ci)
 
        cpu_startclock(ci);
 
+       mips64_ipi_init();
+       xheart_setintrmask(0);
+
        spl0();
        (void)updateimask(0);
+
 #ifdef notyet
        SCHED_LOCK(s);
        cpu_switchto(NULL, sched_chooseproc());
@@ -416,4 +432,21 @@ hw_cpu_hatch(struct cpu_info *ci)
 	       ;
 #endif
 }
+
+int hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
+{
+	return xheart_intr_establish(func, (void *)cpuid, HEART_ISR_IPI(cpuid), 
+	    IPL_IPI, NULL, curcpu()->ci_ipiih);
+};
+
+void hw_ipi_intr_set(u_long cpuid)
+{
+	xheart_intr_set(HEART_ISR_IPI(cpuid));
+}
+
+void hw_ipi_intr_clear(u_long cpuid)
+{
+	xheart_intr_clear(HEART_ISR_IPI(cpuid));
+}
+
 #endif

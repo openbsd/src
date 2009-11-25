@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mips64,v 1.12 2009/08/06 21:11:37 miod Exp $
+#	$OpenBSD: files.mips64,v 1.13 2009/11/25 17:39:51 syuu Exp $
 
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c
@@ -27,6 +27,8 @@ file	arch/mips64/mips64/tlbhandler.S
 file	arch/mips64/mips64/db_disasm.c		ddb
 file	arch/mips64/mips64/db_machdep.c		ddb
 file	arch/mips64/mips64/lcore_ddb.S		ddb|debug
+
+file	arch/mips64/mips64/ipifuncs.c           multiprocessor
 
 file	netinet/in_cksum.c			inet
 file	netinet/in4_cksum.c			inet

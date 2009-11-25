@@ -1,6 +1,7 @@
-/*	$OpenBSD: cpu.h,v 1.4 2009/10/30 08:13:57 syuu Exp $ */
+/*	$OpenBSD: cpu.h,v 1.5 2009/11/25 17:39:51 syuu Exp $ */
 
-/* Use Mips generic include file */
+#ifndef _SGI_CPU_H_
+#define _SGI_CPU_H_
 
 #ifdef _KERNEL
 #ifdef MULTIPROCESSOR
@@ -21,4 +22,8 @@
 void hw_cpu_boot_secondary(struct cpu_info *);
 void hw_cpu_hatch(struct cpu_info *);
 void hw_cpu_spinup_trampoline(struct cpu_info *);
+int  hw_ipi_intr_establish(int (*)(void *), u_long);
+void hw_ipi_intr_set(u_long);
+void hw_ipi_intr_clear(u_long);
 #endif/* _KERNEL && MULTIPROCESSOR && !_LOCORE */
+#endif /* !_SGI_CPU_H_ */

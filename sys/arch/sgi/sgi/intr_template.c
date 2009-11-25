@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.5 2009/11/12 17:13:33 miod Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.6 2009/11/25 17:39:51 syuu Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -28,6 +28,7 @@
  * INTR_HANDLER(bit)	logic to access intrhand array head for `bit'
  * INTR_IMASK(ipl)	logic to access imask array for `ipl'
  * INTR_LOCAL_DECLS	local declarations (may be empty)
+ * MASK_LOCAL_DECLS	local declarations (may be empty)
  * INTR_MASKPENDING	logic to mask `isr'
  * INTR_MASKRESTORE	logic to reset `imr'
  * INTR_MASKSIZE	size of interrupt mask in bits
@@ -46,6 +47,8 @@ MASK_FUNCTIONNAME()
 	int irq, level;
 	struct intrhand *q;
 	uint intrlevel[INTR_MASKSIZE];
+
+	MASK_LOCAL_DECLS
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < INTR_MASKSIZE; irq++) {
@@ -184,6 +187,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 #undef	INTR_HANDLER_SKIP
 #undef	INTR_IMASK
 #undef	INTR_LOCAL_DECLS
+#undef	MASK_LOCAL_DECLS
 #undef	INTR_MASKPENDING
 #undef	INTR_MASKRESTORE
 #undef	INTR_SPURIOUS

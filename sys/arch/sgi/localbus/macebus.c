@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.55 2009/11/12 19:38:53 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.56 2009/11/25 17:39:51 syuu Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -559,6 +559,7 @@ macebus_splx(int newipl)
 
 #define	INTR_LOCAL_DECLS \
 	uint64_t mace_isr, mace_imr;
+#define	MASK_LOCAL_DECLS
 #define	INTR_GETMASKS \
 do { \
 	isr = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_STAT); \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.45 2009/11/24 22:46:59 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.46 2009/11/25 17:39:51 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -384,6 +384,7 @@ struct cpu_info {
 	u_int32_t        ci_pendingticks;
 #ifdef MULTIPROCESSOR
 	u_long           ci_flags;		/* flags; see below */
+	struct intrhand  *ci_ipiih;
 #endif
 };
 
@@ -413,6 +414,14 @@ void cpu_boot_secondary_processors(void);
 #define cpu_hatch(ci)                   hw_cpu_hatch(ci)
 
 vaddr_t smp_malloc(size_t);
+
+#define MIPS64_IPI_NOP		0x00000001
+#define MIPS64_NIPIS		1	/* must not exceed 32 */
+
+void    mips64_ipi_init(void);
+void    mips64_send_ipi(unsigned int, unsigned int);
+void    mips64_broadcast_ipi(unsigned int);
+void    mips64_multicast_ipi(unsigned int, unsigned int);
 
 #include <sys/mplock.h>
 #else

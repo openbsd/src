@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.17 2009/11/25 11:23:30 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.18 2009/11/25 17:39:51 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -94,8 +94,8 @@ struct intrhand *xheart_intrhand[HEART_NINTS];
 #endif
 #define	INTPRI_HEART_LEDS	(INTPRI_HEART_0 + 1)
 
-uint64_t xheart_intem;
-uint64_t xheart_imask[NIPLS];
+uint64_t xheart_intem[MAXCPUS];
+uint64_t xheart_imask[MAXCPUS][NIPLS];
 
 int
 xheart_match(struct device *parent, void *match, void *aux)
@@ -145,7 +145,6 @@ xheart_attach(struct device *parent, struct device *self, void *aux)
 		xbow_intr_widget_intr_disestablish = xheart_intr_disestablish;
 		xbow_intr_widget_intr_clear = xheart_intr_clear;
 		xbow_intr_widget_intr_set = xheart_intr_set;
-		xheart_intem = 0;
 
 		/*
 		 * Acknowledge and disable all interrupts.
@@ -271,13 +270,14 @@ int
 xheart_intr_register(int widget, int level, int *intrbit)
 {
 	int bit;
+	u_long cpuid = cpu_number();
 
 	/*
 	 * All interrupts will be serviced at hardware level 0,
 	 * so the `level' argument can be ignored.
 	 */
 	for (bit = HEART_INTR_WIDGET_MAX; bit >= HEART_INTR_WIDGET_MIN; bit--)
-		if ((xheart_intem & (1UL << bit)) == 0)
+		if ((xheart_intem[cpuid] & (1UL << bit)) == 0)
 			goto found;
 
 	return EINVAL;
@@ -296,6 +296,7 @@ xheart_intr_establish(int (*func)(void *), void *arg, int intrbit,
 {
 	struct intrhand *ih;
 	int s;
+	u_long cpuid = cpu_number();
 
 #ifdef DIAGNOSTIC
 	if (intrbit < 0 || intrbit >= HEART_NINTS)
@@ -332,7 +333,7 @@ xheart_intr_establish(int (*func)(void *), void *arg, int intrbit,
 
 	xheart_intrhand[intrbit] = ih;
 
-	xheart_intem |= 1UL << intrbit;
+	xheart_intem[cpuid] |= 1UL << intrbit;
 	xheart_intr_makemasks();
 
 	splx(s);	/* causes hw mask update */
@@ -345,6 +346,7 @@ xheart_intr_disestablish(int intrbit)
 {
 	struct intrhand *ih;
 	int s;
+	u_long cpuid = cpu_number();
 
 #ifdef DIAGNOSTIC
 	if (intrbit < 0 || intrbit >= HEART_NINTS)
@@ -360,7 +362,7 @@ xheart_intr_disestablish(int intrbit)
 
 	xheart_intrhand[intrbit] = NULL;
 
-	xheart_intem &= ~(1UL << intrbit);
+	xheart_intem[cpuid] &= ~(1UL << intrbit);
 	xheart_intr_makemasks();
 
 	splx(s);
@@ -392,8 +394,10 @@ xheart_splx(int newipl)
 	__asm__ (".set noreorder\n");
 	ci->ci_ipl = newipl;
 	__asm__ ("sync\n\t.set reorder\n");
+
 	if (CPU_IS_PRIMARY(ci))
 		xheart_setintrmask(newipl);
+
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
 		setsoftintr0();
@@ -406,11 +410,14 @@ xheart_splx(int newipl)
 #define	INTR_FUNCTIONNAME	xheart_intr_handler
 #define	MASK_FUNCTIONNAME	xheart_intr_makemasks
 #define	INTR_LOCAL_DECLS \
-	paddr_t heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
+	paddr_t heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC); \
+	u_long cpuid = cpu_number();
+#define	MASK_LOCAL_DECLS \
+	u_long cpuid = cpu_number();
 #define	INTR_GETMASKS \
 do { \
 	isr = *(volatile uint64_t *)(heart + HEART_ISR); \
-	imr = *(volatile uint64_t *)(heart + HEART_IMR(0)); \
+	imr = *(volatile uint64_t *)(heart + HEART_IMR(cpuid));	\
 	switch (hwpend) { \
 	case CR_INT_0: \
 		isr &= HEART_ISR_LVL0_MASK; \
@@ -437,15 +444,15 @@ do { \
 	} \
 } while (0)
 #define	INTR_MASKPENDING \
-	*(volatile uint64_t *)(heart + HEART_IMR(0)) &= ~isr
-#define	INTR_IMASK(ipl)		xheart_imask[ipl]
+	*(volatile uint64_t *)(heart + HEART_IMR(cpuid)) &= ~isr
+#define	INTR_IMASK(ipl)		xheart_imask[cpuid][ipl]
 #define	INTR_HANDLER(bit)	xheart_intrhand[bit]
 #define	INTR_SPURIOUS(bit) \
 do { \
 	printf("spurious xheart interrupt %d\n", bit); \
 } while (0)
 #define	INTR_MASKRESTORE \
-	*(volatile uint64_t *)(heart + HEART_IMR(0)) = imr
+	*(volatile uint64_t *)(heart + HEART_IMR(cpuid)) = imr
 #define	INTR_MASKSIZE	HEART_NINTS
 
 #include <sgi/sgi/intr_template.c>
@@ -454,6 +461,8 @@ void
 xheart_setintrmask(int level)
 {
 	paddr_t heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
-	*(volatile uint64_t *)(heart + HEART_IMR(0)) =
-	    xheart_intem & ~xheart_imask[level];
+	u_long cpuid = cpu_number();
+
+	*(volatile uint64_t *)(heart + HEART_IMR(cpuid)) =
+		xheart_intem[cpuid] & ~xheart_imask[cpuid][level];
 }
