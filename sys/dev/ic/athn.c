@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.18 2009/11/23 19:54:54 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.19 2009/11/25 17:54:37 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -267,7 +267,7 @@ athn_attach(struct athn_softc *sc)
 		/* Get polarity of hardware radio switch. */
 		if (base->rfSilent & AR_EEP_RFSILENT_POLARITY)
 			sc->flags |= ATHN_FLAG_RFSILENT_REVERSED;
-		DPRINTFN(2, ("Found RF switch connected to GPIO pin %d\n",
+		DPRINTF(("Found RF switch connected to GPIO pin %d\n",
 		    sc->rfsilent_pin));
 	}
 
@@ -2796,13 +2796,17 @@ athn_init_dma(struct athn_softc *sc)
 void
 athn_inc_tx_trigger_level(struct athn_softc *sc)
 {
-	uint32_t reg;
+	uint32_t reg, ftrig;
 
-	/* XXX Disable interrupts? */
 	reg = AR_READ(sc, AR_TXCFG);
-	if ((reg & 0x3f0) == 0x3f0)	/* Already at max. */
-		return;
-	reg += 0x10;	/* Increment Tx trigger level by 1. */
+	ftrig = MS(reg, AR_TXCFG_FTRIG);
+	/*
+	 * NB: The AR9285 and all single-stream parts have an issue that
+	 * limits the size of the PCU Tx FIFO to 2KB instead of 4KB.
+	 */
+	if (ftrig == AR_SREV_9285(sc) ? 0x1f : 0x3f)
+		return;		/* Already at max. */
+	reg = RW(reg, AR_TXCFG_FTRIG, ftrig + 1);
 	AR_WRITE(sc, AR_TXCFG, reg);
 }
 
@@ -4345,7 +4349,7 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 
 	timeout_del(&sc->calib_to);
-	if (ic->ic_state != IEEE80211_S_SCAN)
+	if (nstate != IEEE80211_S_SCAN)
 		athn_gpio_write(sc, sc->led_pin, 1);
 
 	switch (nstate) {
