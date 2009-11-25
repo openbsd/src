@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.100 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.101 2009/11/25 12:42:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1019,8 +1019,6 @@ vr_tick(void *xsc)
 	s = splnet();
 	if (sc->vr_flags & VR_F_RESTART) {
 		printf("%s: restarting\n", sc->sc_dev.dv_xname);
-		vr_stop(sc);
-		vr_reset(sc);
 		vr_init(sc);
 		sc->vr_flags &= ~VR_F_RESTART;
 	}
@@ -1467,9 +1465,6 @@ vr_watchdog(struct ifnet *ifp)
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
-
-	vr_stop(sc);
-	vr_reset(sc);
 	vr_init(sc);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
