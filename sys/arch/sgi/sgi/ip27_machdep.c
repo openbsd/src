@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.38 2009/11/25 17:39:51 syuu Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.39 2009/11/25 22:25:37 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -788,6 +788,7 @@ do { \
 #define	INTR_FUNCTIONNAME	hubpi_intr1
 #define	MASK_FUNCTIONNAME	ip27_hub_intr_makemasks1
 #define	INTR_LOCAL_DECLS
+#define	MASK_LOCAL_DECLS
 #define	INTR_GETMASKS \
 do { \
 	/* XXX this assumes we run on cpu0 */ \
