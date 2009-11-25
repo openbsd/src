@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.184 2009/11/19 19:47:28 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.185 2009/11/25 12:24:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -527,7 +527,7 @@ struct mode_key_table {
 #define MODE_CURSOR 0x1
 #define MODE_INSERT 0x2
 #define MODE_KCURSOR 0x4
-#define MODE_KKEYPAD 0x8
+#define MODE_KKEYPAD 0x8	/* set = application, clear = number */
 #define MODE_MOUSE 0x10
 
 /*
