@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.21 2009/09/14 23:19:59 fgsch Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.22 2009/11/25 18:57:02 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -280,10 +280,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 			break;
 		case THINKPAD_BUTTON_SUSPEND:
 			handled = 1;
-			/*
-			acpi_enter_sleep_state(sc->sc_acpi,
-			    ACPI_STATE_S3);
-			*/
+			acpi_sleep_state(sc->sc_acpi, ACPI_STATE_S3);
 			break;
 		case THINKPAD_BUTTON_HIBERNATE:
 		case THINKPAD_BUTTON_FN_F1:
