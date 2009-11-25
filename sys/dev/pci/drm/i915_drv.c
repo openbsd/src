@@ -354,6 +354,8 @@ inteldrm_wrap_ring(struct drm_i915_private *dev_priv)
 	    inteldrm_wait_ring(dev_priv, rem) != 0)
 			return; /* XXX */
 
+	dev_priv->ring.space -= rem;
+
 	bus_space_set_region_4(dev_priv->bst, dev_priv->ring.bsh,
 	    dev_priv->ring.woffset, MI_NOOP, rem / 4);
 
@@ -394,7 +396,7 @@ inteldrm_advance_ring(struct drm_i915_private *dev_priv)
 {
 	INTELDRM_VPRINTF("%s: %x, %x\n", __func__, dev_priv->ring.wspace,
 	    dev_priv->ring.woffset);
-	I915_WRITE(PRB0_TAIL, dev_priv->ring.woffset);
+	I915_WRITE(PRB0_TAIL, dev_priv->ring.tail);
 }
 
 void
