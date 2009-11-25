@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.101 2009/11/25 12:42:28 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.102 2009/11/25 12:43:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1084,14 +1084,12 @@ vr_intr(void *arg)
 		}
 
 		if ((status & VR_ISR_BUSERR) || (status & VR_ISR_TX_UNDERRUN)) {
-#ifdef VR_DEBUG
 			if (status & VR_ISR_BUSERR)
 				printf("%s: PCI bus error\n",
 				    sc->sc_dev.dv_xname);
 			if (status & VR_ISR_TX_UNDERRUN)
 				printf("%s: transmit underrun\n",
 				    sc->sc_dev.dv_xname);
-#endif
 			vr_reset(sc);
 			vr_init(sc);
 			break;
