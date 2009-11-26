@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.53 2009/08/10 14:40:27 jsg Exp $
+#	$OpenBSD: files.amd64,v 1.54 2009/11/26 21:15:48 deraadt Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -222,7 +222,7 @@ include "dev/gpio/files.gpio"
 #
 include "../../../dev/acpi/files.acpi"
 file	arch/amd64/amd64/acpi_machdep.c		acpi
-file	arch/amd64/amd64/acpi_wakecode.S	acpi
+file	arch/amd64/amd64/acpi_wakecode.S	acpi & !small_kernel
 
 #
 # Machine-independent SD/MMC drivers

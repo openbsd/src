@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.193 2009/06/06 05:31:01 oga Exp $
+#	$OpenBSD: files.i386,v 1.194 2009/11/26 21:15:48 deraadt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -436,7 +436,7 @@ include "dev/bluetooth/files.bluetooth"
 
 include "../../../dev/acpi/files.acpi"
 file	arch/i386/i386/acpi_machdep.c		acpi
-file	arch/i386/i386/acpi_wakecode.S		acpi
+file	arch/i386/i386/acpi_wakecode.S		acpi & !small_kernel
 
 #
 # IPMI
