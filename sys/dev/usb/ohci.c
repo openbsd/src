@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.93 2009/11/04 19:14:10 kettenis Exp $ */
+/*	$OpenBSD: ohci.c,v 1.94 2009/11/26 12:27:48 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -319,6 +319,12 @@ ohci_activate(struct device *self, int act)
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
 		sc->sc_dying = 1;
+		break;
+	case DVACT_SUSPEND:
+		ohci_power(PWR_SUSPEND, sc);
+		break;
+	case DVACT_RESUME:
+		ohci_power(PWR_RESUME, sc);
 		break;
 	}
 	return (rv);

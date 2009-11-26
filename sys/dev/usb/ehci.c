@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.105 2009/11/24 00:31:13 jakemsr Exp $ */
+/*	$OpenBSD: ehci.c,v 1.106 2009/11/26 12:27:48 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1039,6 +1039,13 @@ ehci_activate(struct device *self, int act)
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
 		sc->sc_dying = 1;
+		break;
+	case DVACT_SUSPEND:
+		ehci_power(PWR_SUSPEND, sc);
+		break;
+	case DVACT_RESUME:
+		ehci_power(PWR_RESUME, sc);
+		rv = config_activate_children(self, act);
 		break;
 	}
 	return (rv);
