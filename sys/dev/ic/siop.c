@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.54 2009/11/22 14:14:10 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.55 2009/11/26 21:26:09 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1652,13 +1652,7 @@ again:
 				    sc->sc_c.sc_dev.dv_xname, target, lun, tag,
 				    msgcount);
 #endif
-			if (siop_cmd->cmd_c.xs->bp != NULL &&
-			    (siop_cmd->cmd_c.xs->bp->b_flags & B_ASYNC))
-				siop_cmd->cmd_tables->msg_out[1] =
-				    MSG_SIMPLE_Q_TAG;
-			else
-				siop_cmd->cmd_tables->msg_out[1] =
-				    MSG_ORDERED_Q_TAG;
+			siop_cmd->cmd_tables->msg_out[1] = MSG_SIMPLE_Q_TAG;
 			siop_cmd->cmd_tables->msg_out[2] = tag;
 			siop_cmd->cmd_tables->t_msgout.count =
 			    siop_htoc32(&sc->sc_c, 3);
