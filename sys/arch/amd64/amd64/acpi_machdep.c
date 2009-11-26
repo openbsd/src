@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.30 2009/11/26 11:49:49 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.31 2009/11/26 22:08:30 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -231,6 +231,11 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 		if (acpi_enter_sleep_state(sc, state) != 0)
 			panic("%s: acpi_enter_sleep_state failed", DEVNAME(sc));
 	}
+#if 0
+	/* Temporarily disabled for debugging purposes */
+	/* Reset the wakeup vector to avoid resuming on reboot */
+	sc->sc_facs->wakeup_vector = 0;
+#endif
 
 #if NISA > 0
 	i8259_default_setup();

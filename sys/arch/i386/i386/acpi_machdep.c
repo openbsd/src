@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.25 2009/11/24 17:39:59 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.26 2009/11/26 22:08:30 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -258,6 +258,12 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	 * last call instruction - after the call to acpi_savecpu.
 	 */
 	
+#if 0
+        /* Temporarily disabled for debugging purposes */
+        /* Reset the wakeup vector to avoid resuming on reboot */
+        sc->sc_facs->wakeup_vector = 0;
+#endif	
+
 #if NISA > 0
 	isa_defaultirq();
 #endif
