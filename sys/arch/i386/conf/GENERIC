@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.674 2009/11/25 23:12:29 ian Exp $
+#	$OpenBSD: GENERIC,v 1.675 2009/11/26 21:15:13 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -604,6 +604,7 @@ sk*	at skc?				#  each port of above
 mskc*	at pci?				# Marvell Yukon-2
 msk*	at mskc?			#  each port of above
 em*	at pci?				# Intel Pro/1000 ethernet
+gcu*	at pci?				# Intel Pro/1000 ethernet GCU
 ixgb*	at pci?				# Intel Pro/10Gb ethernet
 ix*	at pci?				# Intel 82598EB 10Gb ethernet
 txp*	at pci?				# 3com 3CR990
@@ -631,8 +632,6 @@ alc*	at pci?				# Attansic L1C/L2C Ethernet
 ale*	at pci?				# Attansic L1E Ethernet
 lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
-
-gcu*	at pci?				# Intel EP80579 auxlliary mii device
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
