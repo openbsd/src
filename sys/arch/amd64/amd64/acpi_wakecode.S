@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.6 2009/11/25 15:41:43 pirofti Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.7 2009/11/26 00:14:11 mlarkin Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -586,6 +586,7 @@ NENTRY(acpi_savecpu)
 	movq	%rsi, acpi_saved_rsi
 	movq	%rdi, acpi_saved_rdi
 	movq	%rsp, acpi_saved_rsp
+	addq	$0x8, acpi_saved_rsp
 
 	movq	%r8, acpi_saved_r8
 	movq	%r9, acpi_saved_r9
