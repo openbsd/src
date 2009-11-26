@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.229 2009/11/25 13:28:13 dms Exp $ */
+/* $OpenBSD: if_em.c,v 1.230 2009/11/26 13:42:33 dms Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -159,6 +159,7 @@ int  em_probe(struct device *, void *, void *);
 void em_attach(struct device *, struct device *, void *);
 void em_defer_attach(struct device*);
 int  em_detach(struct device *, int);
+int  em_activate(struct device *, int);
 int  em_intr(void *);
 void em_power(int, void *);
 void em_start(struct ifnet *);
@@ -226,7 +227,8 @@ u_int32_t em_fill_descriptors(u_int64_t address, u_int32_t length,
  *********************************************************************/
 
 struct cfattach em_ca = {
-	sizeof(struct em_softc), em_probe, em_attach, em_detach
+	sizeof(struct em_softc), em_probe, em_attach, em_detach,
+	em_activate
 };
 
 struct cfdriver em_cd = {
@@ -1865,6 +1867,26 @@ em_detach(struct device *self, int flags)
 	return (0);
 }
 
+int
+em_activate(struct device *self, int act)
+{
+	struct em_softc *sc = (struct em_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		/* We have no children atm, but we will soon */
+		rv = config_activate_children(self, act);
+		break;
+	case DVACT_RESUME:
+		em_stop(sc, 0);
+		rv = config_activate_children(self, act);
+		if (ifp->if_flags & IFF_RUNNING)
+			em_init(sc);
+		break;
+	}
+	return rv;
+}
 
 /*********************************************************************
  *
