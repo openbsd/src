@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.676 2009/11/23 18:41:21 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.677 2009/11/26 14:34:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2663,7 +2663,7 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_rule_slist	 rules;
 	struct pf_rule_item	*ri;
 	struct tcphdr		*th = pd->hdr.tcp;
-	struct pf_state_key	*skw, *sks;
+	struct pf_state_key	*skw = NULL, *sks = NULL;
 	struct pf_rule_actions	 act;
 	u_short			 reason;
 	int			 rewrite = 0, hdrlen = 0;
