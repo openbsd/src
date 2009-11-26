@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.54 2009/11/23 16:21:54 pirofti Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.55 2009/11/26 23:44:38 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -114,6 +114,13 @@ typedef SIMPLEQ_HEAD(, acpi_wakeq) acpi_wakeqhead_t;
 #define ACPIREG_PM1_CNT		0x10
 #define ACPIREG_GPE_STS		0x11
 #define ACPIREG_GPE_EN		0x12
+
+/* System status (_SST) codes */
+#define ACPI_SST_INDICATOR_OFF	0
+#define ACPI_SST_WORKING	1
+#define ACPI_SST_WAKING		2
+#define ACPI_SST_SLEEPING	3
+#define ACPI_SST_SLEEP_CONTEXT	4
 
 struct acpi_parsestate {
 	u_int8_t		*start;

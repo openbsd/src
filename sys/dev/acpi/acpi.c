@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.151 2009/11/26 13:20:39 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.152 2009/11/26 23:44:38 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1779,7 +1779,7 @@ acpi_init_pm(struct acpi_softc *sc)
 	sc->sc_wak = aml_searchname(&aml_root, "_WAK");
 	sc->sc_bfs = aml_searchname(&aml_root, "_BFS");
 	sc->sc_gts = aml_searchname(&aml_root, "_GTS");
-	sc->sc_sst = aml_searchname(&aml_root, "_SST");
+	sc->sc_sst = aml_searchname(&aml_root, "_SI_._SST");
 }
 
 #ifndef SMALL_KERNEL
@@ -1927,6 +1927,12 @@ acpi_resume(struct acpi_softc *sc, int state)
 			    DEVNAME(sc));
 		}
 
+	/* Reset the indicator lights to "waking" */
+	if (sc->sc_sst) {
+		env.v_integer = ACPI_SST_WAKING;
+		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
+	}
+
 	/* Disable wake GPEs */
 	acpi_susp_resume_gpewalk(sc, state, 0);
 
@@ -1943,6 +1949,12 @@ acpi_resume(struct acpi_softc *sc, int state)
 			dnprintf(10, "%s evaluating method _TTS failed.\n",
 			    DEVNAME(sc));
 		}
+	}
+
+	/* Reset the indicator lights to "working" */
+	if (sc->sc_sst) {
+		env.v_integer = ACPI_SST_WORKING;
+		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
 	}
 }
 #endif /* ! SMALL_KERNEL */
@@ -1968,6 +1980,12 @@ acpi_handle_suspend_failure(struct acpi_softc *sc)
 			dnprintf(10, "%s evaluating method _TTS failed.\n",
 			    DEVNAME(sc));
 		}
+	}
+
+	/* Reset the indicator lights to "working" */
+	if (sc->sc_sst) {
+		env.v_integer = ACPI_SST_WORKING;
+		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
 	}
 }
 
@@ -2024,9 +2042,6 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 			    DEVNAME(sc));
 			return (ENXIO);
 		}
-
-	if (sc->sc_sst)
-		aml_evalnode(sc, sc->sc_sst, 1, &env, NULL);
 
 	/* Enable wake GPEs */
 	acpi_susp_resume_gpewalk(sc, state, 1);
