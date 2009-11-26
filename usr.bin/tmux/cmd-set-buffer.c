@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.5 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.6 2009/11/26 22:28:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -45,7 +45,7 @@ cmd_set_buffer_exec(struct cmd *self, struct cmd_ctx *ctx)
 	struct cmd_buffer_data	*data = self->data;
 	struct session		*s;
 	u_int			 limit;
-	u_char			*pdata;
+	char			*pdata;
 	size_t			 psize;
 
 	if ((s = cmd_find_session(ctx, data->target)) == NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.6 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.7 2009/11/26 22:28:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -64,7 +64,7 @@ cmd_list_buffers_exec(struct cmd *self, struct cmd_ctx *ctx)
 		strvisx(tmp, pb->data, len, VIS_OCTAL|VIS_TAB|VIS_NL);
 
 		/*
-		 * If the first 50 characterswere encoded as a longer string,
+		 * If the first 50 characters were encoded as a longer string,
 		 * or there is definitely more data, add "...".
 		 */
 		if (size > 50 || strlen(tmp) > 50) {
