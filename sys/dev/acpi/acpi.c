@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.150 2009/11/24 23:01:41 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.151 2009/11/26 13:20:39 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -960,6 +960,11 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case APM_IOC_SUSPEND_REQ:
 	case APM_IOC_SUSPEND:
 	case APM_IOC_STANDBY:
+		/*
+		 * Must use a workq to get out of this process's address
+		 * space and into a kernel thread which has the kernel
+		 * address space (with the ACPI trampoline way low).
+		 */
 		workq_add_task(NULL, 0, (workq_fn)acpi_sleep_state,
 		    acpi_softc, (void *)ACPI_STATE_S3);
 		break;
@@ -1927,6 +1932,7 @@ acpi_resume(struct acpi_softc *sc, int state)
 
 	config_suspend(TAILQ_FIRST(&alldevs), DVACT_RESUME);
 
+	cold = 0;
 	enable_intr();
 	splx(acpi_saved_spl);
 
@@ -1947,6 +1953,7 @@ acpi_handle_suspend_failure(struct acpi_softc *sc)
 	struct aml_value env;
 
 	/* Undo a partial suspend. Devices will have already been resumed */
+	cold = 0;
 	enable_intr();
 	splx(acpi_saved_spl);
 
@@ -1992,6 +1999,7 @@ acpi_prepare_sleep_state(struct acpi_softc *sc, int state)
 
 	acpi_saved_spl = splhigh();
 	disable_intr();
+	cold = 1;
 #ifndef SMALL_KERNEL
 	if (state == ACPI_STATE_S3)
 		if (config_suspend(TAILQ_FIRST(&alldevs), DVACT_SUSPEND) != 0) {
