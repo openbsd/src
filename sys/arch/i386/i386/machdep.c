@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.465 2009/11/23 16:21:54 pirofti Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.466 2009/11/26 08:45:12 nicm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1081,13 +1081,15 @@ cyrix3_cpu_setup(struct cpu_info *ci)
 	case 13: /* C7-M Type D */
 	case 15: /* Nano */
 #if !defined(SMALL_KERNEL)
-		/* Setup the sensors structures */
-		strlcpy(ci->ci_sensordev.xname, ci->ci_dev.dv_xname,
-		    sizeof(ci->ci_sensordev.xname));
-		ci->ci_sensor.type = SENSOR_TEMP;
-		sensor_task_register(ci, via_update_sensor, 5);
-		sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
-		sensordev_install(&ci->ci_sensordev);
+		if (model == 10 || model == 13 || model == 15) {
+			/* Setup the sensors structures */
+			strlcpy(ci->ci_sensordev.xname, ci->ci_dev.dv_xname,
+			    sizeof(ci->ci_sensordev.xname));
+			ci->ci_sensor.type = SENSOR_TEMP;
+			sensor_task_register(ci, via_update_sensor, 5);
+			sensor_attach(&ci->ci_sensordev, &ci->ci_sensor);
+			sensordev_install(&ci->ci_sensordev);
+		}
 #endif
 
 	default:
