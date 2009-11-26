@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.7 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.8 2009/11/26 21:37:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -129,6 +129,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	}
 }
 
+/* ARGSUSED */
 void
 cmd_pipe_pane_error_callback(
     unused struct bufferevent *bufev, unused short what, void *data)

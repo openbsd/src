@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.23 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.24 2009/11/26 21:37:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -52,6 +52,7 @@ const struct cmd_entry cmd_new_session_entry = {
 	cmd_new_session_print
 };
 
+/* ARGSUSED */
 void
 cmd_new_session_init(struct cmd *self, unused int arg)
 {

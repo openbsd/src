@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.33 2009/11/13 18:07:52 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.34 2009/11/26 21:37:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -222,6 +222,7 @@ out:
 	exit(client_exitval);
 }
 
+/* ARGSUSED */
 void
 client_signal(int sig, unused short events, unused void *data)
 {
@@ -250,6 +251,7 @@ client_signal(int sig, unused short events, unused void *data)
 	client_update_event();
 }
 
+/* ARGSUSED */
 void
 client_callback(unused int fd, short events, unused void *data)
 {

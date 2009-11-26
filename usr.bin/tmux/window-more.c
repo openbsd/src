@@ -1,4 +1,4 @@
-/* $OpenBSD: window-more.c,v 1.9 2009/09/10 17:16:24 nicm Exp $ */
+/* $OpenBSD: window-more.c,v 1.10 2009/11/26 21:37:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -123,6 +123,7 @@ window_more_resize(struct window_pane *wp, u_int sx, u_int sy)
 	window_more_redraw_screen(wp);
 }
 
+/* ARGSUSED */
 void
 window_more_key(struct window_pane *wp, unused struct client *c, int key)
 {

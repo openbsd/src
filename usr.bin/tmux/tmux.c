@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.60 2009/11/19 16:22:10 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.61 2009/11/26 21:37:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -554,6 +554,7 @@ main_clear_signals(void)
 	event_del(&main_ev_sigterm);
 }
 
+/* ARGSUSED */
 void
 main_signal(int sig, unused short events, unused void *data)
 {
@@ -563,6 +564,7 @@ main_signal(int sig, unused short events, unused void *data)
 	}
 }
 
+/* ARGSUSED */
 void
 main_callback(unused int fd, short events, void *data)
 {

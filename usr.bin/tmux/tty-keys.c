@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.22 2009/11/26 15:14:03 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.23 2009/11/26 21:37:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -555,6 +555,7 @@ handle_key:
 }
 
 /* Key timer callback. */
+/* ARGSUSED */
 void
 tty_keys_callback(unused int fd, unused short events, void *data)
 {

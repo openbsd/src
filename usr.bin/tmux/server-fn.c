@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.29 2009/11/13 17:33:07 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.30 2009/11/26 21:37:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -396,6 +396,7 @@ server_clear_identify(struct client *c)
 	}
 }
 
+/* ARGSUSED */
 void
 server_callback_identify(unused int fd, unused short events, void *data)
 {
