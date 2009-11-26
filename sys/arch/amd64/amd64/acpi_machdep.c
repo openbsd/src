@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.28 2009/11/26 11:49:07 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.29 2009/11/26 11:49:33 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -243,6 +243,9 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	lapic_initclocks();
 	lapic_set_lvt();
 #endif
+
+	fpuinit(&cpu_info_primary);
+
 #if NIOAPIC > 0
 	ioapic_enable();
 #endif
