@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.230 2009/11/26 13:42:33 dms Exp $ */
+/* $OpenBSD: if_em.c,v 1.231 2009/11/26 13:47:02 dms Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1871,6 +1871,7 @@ int
 em_activate(struct device *self, int act)
 {
 	struct em_softc *sc = (struct em_softc *)self;
+	struct ifnet *ifp = &sc->interface_data.ac_if;
 	int rv = 0;
 
 	switch (act) {
