@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.187 2009/11/26 22:28:24 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.188 2009/11/26 23:13:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1408,7 +1408,7 @@ int		 paste_replace(struct paste_stack *, u_int, char *, size_t);
 
 /* clock.c */
 extern const char clock_table[14][5][5];
-void		 clock_draw(struct screen_write_ctx *, u_int, int);
+void		 clock_draw(struct screen_write_ctx *, int, int);
 
 /* cmd.c */
 int		 cmd_pack_argv(int, char **, char *, size_t);
