@@ -219,6 +219,7 @@
 ./usr/include/sgi/memconf.h
 ./usr/include/sgi/mips_opcode.h
 ./usr/include/sgi/mnode.h
+./usr/include/sgi/mplock.h
 ./usr/include/sgi/mutex.h
 ./usr/include/sgi/param.h
 ./usr/include/sgi/pcb.h
