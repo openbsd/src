@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.29 2009/11/26 11:49:33 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.30 2009/11/26 11:49:49 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -235,7 +235,6 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 #if NISA > 0
 	i8259_default_setup();
 #endif
-
 	intr_calculatemasks(curcpu());
 
 #if NLAPIC > 0
