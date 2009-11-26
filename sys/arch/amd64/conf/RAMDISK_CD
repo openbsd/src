@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.107 2009/11/15 01:36:11 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.108 2009/11/26 13:35:52 jsg Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -229,6 +229,8 @@ cd*	at scsibus?		# SCSI CD-ROM drives
 # IDE controllers
 pciide* at pci? flags 0x0000
 
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
 wdc*	at pcmcia?
 
 # IDE hard drives
