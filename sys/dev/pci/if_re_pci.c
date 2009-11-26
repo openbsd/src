@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.26 2009/11/24 17:40:43 kettenis Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.27 2009/11/26 00:12:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -252,7 +252,8 @@ re_pci_activate(struct device *self, int act)
 		break;
 	case DVACT_RESUME:
 		re_reset(sc);
-		re_init(ifp);
+		if (ifp->if_flags & IFF_RUNNING)
+			re_init(ifp);
 		break;
 	}
 
