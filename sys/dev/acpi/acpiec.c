@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.28 2009/03/11 20:37:46 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.29 2009/11/26 18:15:24 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -40,6 +40,7 @@ u_int8_t	acpiec_read_data(struct acpiec_softc *);
 void		acpiec_write_cmd(struct acpiec_softc *, u_int8_t);
 void		acpiec_write_data(struct acpiec_softc *, u_int8_t);
 void		acpiec_burst_enable(struct acpiec_softc *sc);
+void		acpiec_burst_disable(struct acpiec_softc *sc);
 
 u_int8_t	acpiec_read_1(struct acpiec_softc *, u_int8_t);
 void		acpiec_write_1(struct acpiec_softc *, u_int8_t, u_int8_t);
@@ -102,7 +103,7 @@ acpiec_wait(struct acpiec_softc *sc, u_int8_t mask, u_int8_t val)
 	while (((stat = acpiec_status(sc)) & mask) != val) {
 		if (stat & EC_STAT_SCI_EVT)
 			sc->sc_gotsci = 1;
-		if (cold)
+		if (cold || (stat & EC_STAT_BURST))
 			delay(1);
 		else
 			tsleep(sc, PWAIT, "ecwait", 1);
@@ -201,6 +202,13 @@ acpiec_burst_enable(struct acpiec_softc *sc)
 }
 
 void
+acpiec_burst_disable(struct acpiec_softc *sc)
+{
+	if ((acpiec_status(sc) & EC_STAT_BURST) == EC_STAT_BURST)
+		acpiec_write_cmd(sc, EC_CMD_BD);
+}
+
+void
 acpiec_read(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 {
 	int			reg;
@@ -210,11 +218,11 @@ acpiec_read(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 	 * at some point add a lock to deal with concurrency so that a
 	 * transaction does not get interrupted.
 	 */
-	acpiec_burst_enable(sc);
 	dnprintf(20, "%s: read %d, %d\n", DEVNAME(sc), (int)addr, len);
-
+	acpiec_burst_enable(sc);
 	for (reg = 0; reg < len; reg++)
 		buffer[reg] = acpiec_read_1(sc, addr + reg);
+	acpiec_burst_disable(sc);
 }
 
 void
@@ -227,10 +235,11 @@ acpiec_write(struct acpiec_softc *sc, u_int8_t addr, int len, u_int8_t *buffer)
 	 * at some point add a lock to deal with concurrency so that a
 	 * transaction does not get interrupted.
 	 */
-	acpiec_burst_enable(sc);
 	dnprintf(20, "%s: write %d, %d\n", DEVNAME(sc), (int)addr, len);
+	acpiec_burst_enable(sc);
 	for (reg = 0; reg < len; reg++)
 		acpiec_write_1(sc, addr + reg, buffer[reg]);
+	acpiec_burst_disable(sc);
 }
 
 int
