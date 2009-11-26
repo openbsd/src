@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.239 2009/11/11 13:48:34 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.240 2009/11/26 13:40:43 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -173,7 +173,7 @@ typedef struct {
 %token	CONNECTED STATIC
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS PEERAS COMMUNITY DELETE
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
-%token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL
+%token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN
 %token	ERROR INCLUDE
 %token	IPSEC ESP AH SPI IKE
 %token	IPV4 IPV6
@@ -181,7 +181,7 @@ typedef struct {
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number optnumber yesno inout
-%type	<v.number>		espah family restart
+%type	<v.number>		espah family restart origincode
 %type	<v.string>		string filter_rib
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -1846,7 +1846,28 @@ filter_set_opt	: LOCALPREF NUMBER		{
 				}
 			}
 		}
+		| ORIGIN origincode {
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_ORIGIN;
+			$$->action.origin = $2;
+		}
 		;
+
+origincode	: string {
+			if (!strcmp($1, "egp"))
+				$$ = ORIGIN_EGP;
+			else if (!strcmp($1, "igp"))
+				$$ = ORIGIN_IGP;
+			else if (!strcmp($1, "incomplete"))
+				$$ = ORIGIN_INCOMPLETE;
+			else {
+				yyerror("unknown origin \"%s\"", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		};
 
 comma		: ","
 		| /* empty */
@@ -1951,6 +1972,7 @@ lookup(char *s)
 		{ "nexthop",		NEXTHOP},
 		{ "no-modify",		NOMODIFY},
 		{ "on",			ON},
+		{ "origin",		ORIGIN},
 		{ "out",		OUT},
 		{ "passive",		PASSIVE},
 		{ "password",		PASSWORD},

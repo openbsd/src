@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.72 2009/10/13 11:41:32 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.73 2009/11/26 13:40:43 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,7 @@
 
 void		 print_op(enum comp_ops);
 void		 print_community(int, int);
+void		 print_origin(u_int8_t);
 void		 print_set(struct filter_set_head *);
 void		 print_mainconf(struct bgpd_config *);
 void		 print_network(struct network_config *);
@@ -91,6 +92,19 @@ print_community(int as, int type)
 		printf("neighbor-as ");
 	else
 		printf("%d ", type);
+}
+
+void
+print_origin(u_int8_t o)
+{
+	if (o == ORIGIN_IGP)
+		printf("igp ");
+	else if (o == ORIGIN_EGP)
+		printf("egp ");
+	else if (o == ORIGIN_INCOMPLETE)
+		printf("incomplete ");
+	else
+		printf("%u ", o);
 }
 
 void
@@ -160,6 +174,10 @@ print_set(struct filter_set_head *set)
 			break;
 		case ACTION_RTLABEL:
 			printf("rtlabel %s ", s->action.rtlabel);
+			break;
+		case ACTION_SET_ORIGIN:
+			printf("origin ");
+			print_origin(s->action.origin);
 			break;
 		case ACTION_RTLABEL_ID:
 		case ACTION_PFTABLE_ID:

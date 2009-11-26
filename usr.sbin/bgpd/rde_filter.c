@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.57 2009/08/06 08:53:11 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.58 2009/11/26 13:40:43 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -249,6 +249,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			rtlabel_unref(asp->rtlabelid);
 			asp->rtlabelid = set->action.id;
 			rtlabel_ref(asp->rtlabelid);
+			break;
+		case ACTION_SET_ORIGIN:
+			asp->origin = set->action.origin;
 			break;
 		}
 	}
@@ -581,6 +584,11 @@ filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
 			if (strcmp(as, bs) == 0)
 				continue;
 			break;
+		case ACTION_SET_ORIGIN:
+			if (a->type == b->type &&
+			    a->action.origin == b->action.origin)
+				continue;
+			break;
 		}
 		/* compare failed */
 		return (0);
@@ -623,6 +631,8 @@ filterset_name(enum action_types type)
 	case ACTION_RTLABEL:
 	case ACTION_RTLABEL_ID:
 		return ("rtlabel");
+	case ACTION_SET_ORIGIN:
+		return ("origin");
 	}
 
 	fatalx("filterset_name: got lost");

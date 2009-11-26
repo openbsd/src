@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.101 2009/10/28 21:38:03 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.102 2009/11/26 13:40:43 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2009 $
+.Dd $Mdocdate: November 26 2009 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1146,6 +1146,20 @@ will be adjusted by adding or subtracting
 .Ar number ;
 otherwise it will be set to
 .Ar number .
+.Pp
+.It Xo
+.Ic origin
+.Sm off
+.Po Ic igp \*(Ba
+.Ic egp \*(Ba
+.Ic incomplete Pc
+.Sm on
+.Xc
+Set the
+.Em ORIGIN
+AS path attribute to mark the source of this
+route as being injected from an igp protocol, an egp protocol
+or being an aggregated route.
 .Pp
 .It Xo
 .Ic nexthop
