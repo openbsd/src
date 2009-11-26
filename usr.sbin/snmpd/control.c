@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.10 2009/06/06 05:52:01 pyr Exp $	*/
+/*	$OpenBSD: control.c,v 1.11 2009/11/26 17:32:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -240,6 +240,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			case IMSG_SNMP_TRAP:
 			case IMSG_SNMP_ELEMENT:
 			case IMSG_SNMP_END:
+			case IMSG_SNMP_LOCK:
 				break;
 			default:
 				log_debug("control_dispatch_imsg: "

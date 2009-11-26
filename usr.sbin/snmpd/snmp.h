@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.7 2008/02/07 11:33:26 reyk Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.8 2009/11/26 17:32:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -52,10 +52,11 @@ enum snmp_imsg_ctl {
 };
 
 struct snmp_imsg_hdr {
-	u_int16_t	 imsg_type;
+	u_int32_t	 imsg_type;
 	u_int16_t	 imsg_len;
+	u_int16_t	 imsg_flags;
 	u_int32_t	 imsg_peerid;
-	pid_t		 imsg_pid;
+	u_int32_t	 imsg_pid;
 };
 
 struct snmp_imsg {
