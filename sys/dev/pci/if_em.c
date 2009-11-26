@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.232 2009/11/26 15:53:15 dms Exp $ */
+/* $OpenBSD: if_em.c,v 1.233 2009/11/26 16:01:00 dms Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2602,6 +2602,13 @@ em_initialize_receive_unit(struct em_softc *sc)
 		reg_rxcsum |= (E1000_RXCSUM_IPOFL | E1000_RXCSUM_TUOFL);
 		E1000_WRITE_REG(&sc->hw, RXCSUM, reg_rxcsum);
 	}
+
+	/*                                                                                                                                                                           
+	 * XXX TEMPORARY WORKAROUND: on some systems with 82573                                                                                                                      
+	 * long latencies are observed, like Lenovo X60.                                                                                                                             
+	 */                                                                                                                                                                          
+	if (sc->hw.mac_type == em_82573)                                                                                                                                             
+		E1000_WRITE_REG(&sc->hw, RDTR, 0x20);                                                                                                                                
 
 	/* Enable Receives */
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
