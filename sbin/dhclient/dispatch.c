@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.44 2009/06/06 04:02:42 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.45 2009/11/26 23:14:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -209,11 +209,8 @@ got_one(void)
 		if ((!interface_status(ifi->name)) ||
 		    (ifi->noifmedia && ifi->errors > 20)) {
 			/* our interface has gone away. */
-			warning("Interface %s no longer appears valid.",
+			error("Interface %s no longer appears valid.",
 			    ifi->name);
-			interfaces_invalidated = 1;
-			close(ifi->rfdesc);
-			ifi->rfdesc = -1;
 		}
 		return;
 	}
@@ -296,8 +293,7 @@ interface_status(char *ifname)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCGIFFLAGS, &ifr) < 0) {
-		warning("ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
-		goto inactive;
+		error("ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.16 2009/06/06 04:02:42 krw Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.17 2009/11/26 23:14:29 krw Exp $	*/
 
 /* Errors and warnings... */
 
@@ -78,9 +78,7 @@ error(char *fmt, ...)
 		write(STDERR_FILENO, "\n", 1);
 	}
 
-	syslog(LOG_CRIT, "exiting.");
 	if (log_perror) {
-		fprintf(stderr, "exiting.\n");
 		fflush(stderr);
 	}
 	exit(1);
