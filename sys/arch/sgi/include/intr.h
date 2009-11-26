@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.37 2009/11/25 17:39:51 syuu Exp $ */
+/*	$OpenBSD: intr.h,v 1.38 2009/11/26 23:32:46 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -172,7 +172,8 @@ struct intrhand {
  */
 
 /* Schedule priorities for base interrupts (CPU) */
-#define	INTPRI_CLOCK	0
+#define	INTPRI_IPI	0
+#define	INTPRI_CLOCK	1
 /* other values are system-specific */
 
 #define NLOWINT	16		/* Number of low level registrations possible */

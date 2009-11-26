@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.29 2009/11/22 22:15:25 syuu Exp $ */
+/*	$OpenBSD: clock.c,v 1.30 2009/11/26 23:32:46 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -117,8 +117,12 @@ clockattach(struct device *parent, struct device *self, void *aux)
 uint32_t
 clock_int5(uint32_t mask, struct trap_frame *tf)
 {
-	u_int32_t clkdiff;
+	u_int32_t clkdiff, sr;
 	struct cpu_info *ci = curcpu();
+
+	/* Enable interrupts at this (hardware) level again */
+	sr = getsr();
+	updateimask(mask);
 
 	/*
 	 * If we got an interrupt before we got ready to process it,
@@ -127,6 +131,7 @@ clock_int5(uint32_t mask, struct trap_frame *tf)
 	 */
 	if (ci->ci_clock_started == 0) {
 		cp0_set_compare(cp0_get_count() - 1);
+		setsr(sr);
 		return CR_INT_5;
 	}
 
@@ -158,12 +163,19 @@ clock_int5(uint32_t mask, struct trap_frame *tf)
 	 * Process clock interrupt unless it is currently masked.
 	 */
 	if (tf->ipl < IPL_CLOCK) {
+#ifdef MULTIPROCESSOR
+		__mp_lock(&kernel_lock);
+#endif
 		while (ci->ci_pendingticks) {
 			clk_count.ec_count++;
 			hardclock(tf);
 			ci->ci_pendingticks--;
 		}
+#ifdef MULTIPROCESSOR
+		__mp_unlock(&kernel_lock);
+#endif
 	}
+	setsr(sr);
 
 	return CR_INT_5;	/* Clock is always on 5 */
 }

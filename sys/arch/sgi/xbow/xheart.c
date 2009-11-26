@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.18 2009/11/25 17:39:51 syuu Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.19 2009/11/26 23:32:46 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -89,8 +89,8 @@ struct intrhand *xheart_intrhand[HEART_NINTS];
 #define	INTPRI_HEART_1	(INTPRI_HEART_2 + 1)
 #define	INTPRI_HEART_0	(INTPRI_HEART_1 + 1)
 #else
-#define	INTPRI_HEART_2	(INTPRI_CLOCK + 1)
-#define	INTPRI_HEART_0	(INTPRI_HEART_2 + 1)
+#define	INTPRI_HEART_2	(INTPRI_IPI)
+#define	INTPRI_HEART_0	(INTPRI_CLOCK + 1)
 #endif
 #define	INTPRI_HEART_LEDS	(INTPRI_HEART_0 + 1)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.53 2009/11/22 00:31:03 syuu Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.54 2009/11/26 23:32:46 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -114,12 +114,6 @@ interrupt(struct trap_frame *trapframe)
 #ifdef DEBUG_INTERRUPT
 	trapdebug_enter(trapframe, 0);
 #endif
-
-#ifdef MULTIPROCESSOR
-	if (ci->ci_ipl < IPL_SCHED)
-		__mp_lock(&kernel_lock);
-#endif
-
 	uvmexp.intrs++;
 
 	/* Mask out interrupts from cause that are unmasked */
@@ -152,11 +146,6 @@ interrupt(struct trap_frame *trapframe)
 		ci->ci_ipl = s;	/* no-overhead splx */
 		__asm__ ("sync\n\t.set reorder\n");
 	}
-
-#ifdef MULTIPROCESSOR
-	if (ci->ci_ipl < IPL_SCHED)
-		__mp_unlock(&kernel_lock);
-#endif
 }
 
 
