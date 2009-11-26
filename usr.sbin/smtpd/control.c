@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.40 2009/11/23 12:03:46 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.41 2009/11/26 22:21:20 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -440,7 +440,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 				break;
 			}
 			env->sc_flags &= ~SMTPD_MDA_PAUSED;
-			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_MTA_RESUME,
+			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_MDA_RESUME,
 			    0, 0, -1, NULL, 0);
 			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
