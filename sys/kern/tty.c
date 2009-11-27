@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.83 2009/11/09 17:53:39 nicm Exp $	*/
+/*	$OpenBSD: tty.c,v 1.84 2009/11/27 09:18:01 sobrado Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -876,7 +876,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		if (!ISSET(t->c_cflag, CIGNORE)) {
 			/*
-			 * Some minor validation is neccessary.
+			 * Some minor validation is necessary.
 			 */
 			if (t->c_ispeed < 0 || t->c_ospeed < 0) {
 				splx(s);

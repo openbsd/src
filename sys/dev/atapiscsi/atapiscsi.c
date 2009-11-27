@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.83 2009/09/05 11:20:24 dlg Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.84 2009/11/27 09:18:01 sobrado Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -824,7 +824,7 @@ wdc_atapi_send_packet(chp, xfer, timeout, ret)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
 	/*
-	 * Even with WDCS_ERR, the device should accept a command packet
+	 * Even with WDCS_ERR, the device should accept a command packet.
 	 * Limit length to what can be stuffed into the cylinder register
 	 * (16 bits).  Some CD-ROMs seem to interpret '0' as 65536,
 	 * but not all devices do that and it's not obvious from the
