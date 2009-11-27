@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.22 2009/11/04 22:43:11 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.23 2009/11/27 09:41:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -266,6 +266,7 @@ input_parse(struct window_pane *wp)
 
 	ictx->wp = wp;
 
+	/* If there is a mode set, don't want to update the screen. */
 	if (wp->mode == NULL)
 		screen_write_start(&ictx->ctx, wp, &wp->base);
 	else

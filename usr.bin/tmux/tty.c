@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.74 2009/11/26 22:47:14 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.75 2009/11/27 09:41:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -529,6 +529,7 @@ tty_write(void (*cmdfn)(
 	struct client		*c;
 	u_int		 	 i;
 
+	/* wp can be NULL if updating the screen but not the terminal. */
 	if (wp == NULL)
 		return;
 
