@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.26 2009/08/27 16:19:27 millert Exp $
+.\"	$OpenBSD: fts.3,v 1.27 2009/11/27 20:12:34 otto Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fts.3	8.5 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: August 27 2009 $
+.Dd $Mdocdate: November 27 2009 $
 .Dt FTS 3
 .Os
 .Sh NAME
@@ -78,8 +78,11 @@ of their descendants have been visited).
 Files are visited once.
 It is possible to walk the hierarchy
 .Dq logically
-(ignoring symbolic links)
-or physically (visiting symbolic links), order the walk of the hierarchy, or
+(following symbolic links)
+or
+.Dq physically
+(not following symbolic links),
+order the walk of the hierarchy, or
 prune and/or re-visit portions of the hierarchy.
 .Pp
 Two structures are defined (and typedef'd) in the include file
