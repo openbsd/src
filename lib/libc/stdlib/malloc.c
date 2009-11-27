@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.118 2009/11/02 19:26:17 todd Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.119 2009/11/27 19:59:49 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -715,7 +715,6 @@ omalloc_init(struct dir_info **dp)
 		return 1;
 	}
 	malloc_used += regioninfo_size;
-	memset(d->r, 0, regioninfo_size);
 	d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
 	d->canary2 = ~d->canary1;
 
