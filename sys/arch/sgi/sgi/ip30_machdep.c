@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.24 2009/11/25 17:39:51 syuu Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.25 2009/11/27 10:22:09 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -58,6 +58,8 @@ extern int      xheart_intr_establish(int (*)(void *), void *, int, int,
 extern void     xheart_intr_set(int);
 extern void     xheart_intr_clear(int);
 extern void	xheart_setintrmask(int);
+
+extern struct	user *proc0paddr;
 #endif
 
 uint32_t ip30_lights_frob(uint32_t, struct trap_frame *);
@@ -395,6 +397,8 @@ hw_cpu_hatch(struct cpu_info *ci)
        sys_config.cpu[cpuid].tlbsize = 64;
 
        Mips10k_ConfigCache();
+
+       ci->ci_curprocpaddr = proc0paddr;
 
        sys_config.cpu[cpuid].tlbwired = UPAGES / 2;
        tlb_set_wired(0);
