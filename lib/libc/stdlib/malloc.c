@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.120 2009/11/27 20:05:03 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.121 2009/11/27 20:11:01 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
 #include <errno.h>
@@ -93,6 +94,8 @@ struct region_info {
 	uintptr_t size;		/* size for pages, or chunk_info pointer */
 };
 
+LIST_HEAD(chunk_head, chunk_info);
+
 struct dir_info {
 	u_int32_t canary1;
 	struct region_info *r;		/* region slots */
@@ -100,9 +103,9 @@ struct dir_info {
 	size_t regions_bits;		/* log2 of total */
 	size_t regions_free;		/* number of free slots */
 					/* list of free chunk info structs */
-	struct chunk_info *chunk_info_list;
+	struct chunk_head chunk_info_list;
 					/* lists of chunks with free slots */
-	struct chunk_info *chunk_dir[MALLOC_MAXSHIFT];
+	struct chunk_head chunk_dir[MALLOC_MAXSHIFT];
 	size_t free_regions_size;	/* free pages cached */
 					/* free pages cache */
 	struct region_info free_regions[MALLOC_MAXCACHE];
@@ -135,7 +138,7 @@ struct dir_info {
  */
 #define MALLOC_BITS		(NBBY * sizeof(u_long))
 struct chunk_info {
-	struct chunk_info *next;	/* next on the free list */
+	LIST_ENTRY(chunk_info) entries;
 	void *page;			/* pointer to the page */
 	u_int32_t canary;
 	u_short size;			/* size of this page's chunks */
@@ -217,13 +220,13 @@ dump_chunk(int fd, struct chunk_info *p, int fromfreelist)
 {
 	char buf[64];
 
-	while (p) {
+	while (p != NULL) {
 		snprintf(buf, sizeof(buf), "chunk %d %d/%d %p\n", p->size,
 		    p->free, p->total, p->page);
 		write(fd, buf, strlen(buf));
 		if (!fromfreelist)
 			break;
-		p = p->next;
+		p = LIST_NEXT(p, entries);
 		if (p != NULL) {
 			snprintf(buf, sizeof(buf), "    ");
 			write(fd, buf, strlen(buf));
@@ -240,7 +243,7 @@ dump_free_chunk_info(int fd, struct dir_info *d)
 	snprintf(buf, sizeof(buf), "Free chunk structs:\n");
 	write(fd, buf, strlen(buf));
 	for (i = 0; i < MALLOC_MAXSHIFT; i++) {
-		struct chunk_info *p = d->chunk_dir[i];
+		struct chunk_info *p = LIST_FIRST(&d->chunk_dir[i]);
 		if (p != NULL) {
 			snprintf(buf, sizeof(buf), "%2d) ", i);
 			write(fd, buf, strlen(buf));
@@ -716,6 +719,9 @@ omalloc_init(struct dir_info **dp)
 		d->regions_total = 0;
 		return 1;
 	}
+	LIST_INIT(&d->chunk_info_list);
+	for (i = 0; i < MALLOC_MAXSHIFT; i++)
+		LIST_INIT(&d->chunk_dir[i]);
 	malloc_used += regioninfo_size;
 	d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
 	d->canary2 = ~d->canary1;
@@ -788,30 +794,20 @@ alloc_chunk_info(struct dir_info *d)
 	struct chunk_info *p;
 	int i;
 	
-	if (d->chunk_info_list == NULL) {
+	if (LIST_EMPTY(&d->chunk_info_list)) {
 		p = MMAP(MALLOC_PAGESIZE);
 		if (p == MAP_FAILED)
 			return NULL;
 		malloc_used += MALLOC_PAGESIZE;
-		for (i = 0; i < MALLOC_PAGESIZE / sizeof(*p); i++) {
-			p[i].next = d->chunk_info_list;
-			d->chunk_info_list = &p[i];
-		}
+		for (i = 0; i < MALLOC_PAGESIZE / sizeof(*p); i++)
+			LIST_INSERT_HEAD(&d->chunk_info_list, &p[i], entries);
 	}
-	p = d->chunk_info_list;
-	d->chunk_info_list = p->next;
+	p = LIST_FIRST(&d->chunk_info_list);
+	LIST_REMOVE(p, entries);
 	memset(p, 0, sizeof *p);
 	p->canary = d->canary1;
 	return p;
 }
-
-
-static void
-put_chunk_info(struct dir_info *d, struct chunk_info *p)
-{
-	p->next = d->chunk_info_list;
-	d->chunk_info_list = p;
-}  
 
 static int
 insert(struct dir_info *d, void *p, size_t sz)
@@ -930,7 +926,7 @@ omalloc_make_chunks(struct dir_info *d, int bits)
 		k = mprotect(pp, MALLOC_PAGESIZE, PROT_NONE);
 		if (k < 0) {
 			unmap(d, pp, MALLOC_PAGESIZE);
-			put_chunk_info(d, bp);
+			LIST_INSERT_HEAD(&d->chunk_info_list, bp, entries);
 			return NULL;
 		}
 	} else {
@@ -951,8 +947,7 @@ omalloc_make_chunks(struct dir_info *d, int bits)
 	for (; i < k; i++)
 		bp->bits[i / MALLOC_BITS] |= 1UL << (i % MALLOC_BITS);
 
-	bp->next = d->chunk_dir[bits];
-	d->chunk_dir[bits] = bp;
+	LIST_INSERT_HEAD(&d->chunk_dir[bits], bp, entries);
 
 	bits++;
 	if ((uintptr_t)pp & bits)
@@ -993,9 +988,12 @@ malloc_bytes(struct dir_info *d, size_t size)
 	}
 
 	/* If it's empty, make a page more of that size chunks */
-	bp = d->chunk_dir[j];
-	if (bp == NULL && (bp = omalloc_make_chunks(d, j)) == NULL)
-		return NULL;
+	if (LIST_EMPTY(&d->chunk_dir[j])) {
+		bp = omalloc_make_chunks(d, j);
+		if (bp == NULL)
+			return NULL;
+	} else
+		bp = LIST_FIRST(&d->chunk_dir[j]);
 
 	if (bp->canary != d->canary1)
 		wrterror("chunk info corrupted");
@@ -1033,10 +1031,9 @@ malloc_bytes(struct dir_info *d, size_t size)
 	*lp ^= u;
 
 	/* If there are no more free, remove from free-list */
-	if (!--bp->free) {
-		d->chunk_dir[j] = bp->next;
-		bp->next = NULL;
-	}
+	if (!--bp->free)
+		LIST_REMOVE(bp, entries);
+
 	/* Adjust to the real offset of that chunk */
 	k += (lp - bp->bits) * MALLOC_BITS;
 	k <<= bp->shift;
@@ -1053,7 +1050,8 @@ malloc_bytes(struct dir_info *d, size_t size)
 static void
 free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 {
-	struct chunk_info *info, **mp;
+	struct chunk_head *mp;
+	struct chunk_info *info;
 	long i;
 
 	info = (struct chunk_info *)r->size;
@@ -1082,35 +1080,20 @@ free_bytes(struct dir_info *d, struct region_info *r, void *ptr)
 
 	if (info->free == 1) {
 		/* Page became non-full */
-
-		/* Insert in address order */
-		while (*mp != NULL && (*mp)->next != NULL &&
-		    (*mp)->next->page < info->page)
-			mp = &(*mp)->next;
-		info->next = *mp;
-		*mp = info;
+		LIST_INSERT_HEAD(mp, info, entries);
 		return;
 	}
 	if (info->free != info->total)
 		return;
 
-	/* Find & remove this page in the queue */
-	while (*mp != info) {
-		mp = &((*mp)->next);
-		if (!*mp) {
-			wrterror("not on queue");
-			errno = EFAULT;
-			return;
-		}
-	}
-	*mp = info->next;
+	LIST_REMOVE(info, entries);
 
 	if (info->size == 0 && !mopts.malloc_freeprot)
 		mprotect(info->page, MALLOC_PAGESIZE, PROT_READ | PROT_WRITE);
 	unmap(d, info->page, MALLOC_PAGESIZE);
 
 	delete(d, r);
-	put_chunk_info(d, info);
+	LIST_INSERT_HEAD(&d->chunk_info_list, info, entries);
 }
 
 
