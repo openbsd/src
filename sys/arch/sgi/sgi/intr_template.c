@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.6 2009/11/25 17:39:51 syuu Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.7 2009/11/27 00:08:27 syuu Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -156,7 +156,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 					splraise(ih->ih_level);
 					if ((*ih->ih_fun)(ih->ih_arg) != 0) {
 						rc = 1;
-						ih->ih_count.ec_count++;
+						atomic_add_uint64(&ih->ih_count.ec_count, 1);
 					}
 					__asm__ (".set noreorder\n");
 					ci->ci_ipl = ipl;
