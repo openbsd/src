@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.94 2009/11/27 19:42:24 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.95 2009/11/27 19:43:55 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -600,7 +600,8 @@
 300	STD		{ int sys_thrsleep(void *ident, int timeout, void *lock); }
 301	STD		{ int sys_thrwakeup(void *ident, int n); }
 302	STD		{ void sys_threxit(pid_t *notdead); }
-303	STD		{ int sys_thrsigdivert(sigset_t sigmask); }
+303	STD		{ int sys_thrsigdivert(sigset_t sigmask, \
+			    siginfo_t *info, const struct timespec *timeout); }
 #else
 299	UNIMPL
 300	UNIMPL

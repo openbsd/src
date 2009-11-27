@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.106 2009/11/04 19:14:10 kettenis Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.107 2009/11/27 19:43:55 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1557,9 +1557,12 @@ sys_thrsigdivert(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_thrsigdivert_args /* {
 		syscallarg(sigset_t) sigmask;
+		syscallarg(siginfo_t *) info;
+		syscallarg(const struct timespec *) timeout;
 	} */ *uap = v;
 	sigset_t mask;
 	sigset_t *m;
+	long long to_ticks = 0;
 	int error;
 
 	m = NULL;
@@ -1577,21 +1580,44 @@ sys_thrsigdivert(struct proc *p, void *v, register_t *retval)
 		return (0);
 	}
 
+	if (SCARG(uap, timeout) != NULL) {
+		struct timespec ts;
+		if ((error = copyin(SCARG(uap, timeout), &ts, sizeof(ts))) != 0)
+			return (error);
+		to_ticks = (long long)hz * ts.tv_sec +
+		    ts.tv_nsec / (tick * 1000);
+		if (to_ticks > INT_MAX)
+			to_ticks = INT_MAX;
+	}
+
 	p->p_sigwait = 0;
 	atomic_setbits_int(&p->p_sigdivert, mask);
-	error = tsleep(&p->p_sigdivert, PPAUSE|PCATCH, "sigwait", 0);
+	error = tsleep(&p->p_sigdivert, PPAUSE|PCATCH, "sigwait",
+	    (int)to_ticks);
 	if (p->p_sigdivert) {
 		/* interrupted */
 		KASSERT(error != 0);
 		atomic_clearbits_int(&p->p_sigdivert, ~0);
 		if (error == EINTR)
 			error = ERESTART;
+		else if (error == ETIMEDOUT)
+			error = EAGAIN;
 		return (error);
 
 	}
 	KASSERT(p->p_sigwait != 0);
 	*retval = p->p_sigwait;
-	return (0);
+
+	if (SCARG(uap, info) == NULL) {
+		error = 0;
+	} else {
+		siginfo_t si;
+
+		bzero(&si, sizeof si);
+		si.si_signo = p->p_sigwait;
+		error = copyout(&si, SCARG(uap, info), sizeof(si));
+	}
+	return (error);
 }
 #endif
 

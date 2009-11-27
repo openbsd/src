@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.7 2009/02/20 02:38:57 guenther Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.8 2009/11/27 19:43:55 guenther Exp $ */
 /*
  * Copyright (c) 2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -47,9 +47,10 @@ sigwait(const sigset_t *set, int *sig)
 {
 	int ret;
 
-	ret = thrsigdivert(*set);
+	ret = thrsigdivert(*set, NULL, NULL);
 	if (ret == -1)
 		return errno;
 	*sig = ret;
 	return 0;
 }
+
