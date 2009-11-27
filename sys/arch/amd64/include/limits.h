@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.4 2006/01/06 22:48:46 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.5 2009/11/27 19:54:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,8 +35,6 @@
 #define	_MACHINE_LIMITS_H_
 
 #include <sys/cdefs.h>
-
-#define	MB_LEN_MAX	1		/* no multibyte characters */
 
 #if __POSIX_VISIBLE || __XPG_VISIBLE
 #ifndef	SIZE_MAX

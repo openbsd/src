@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.15 2006/01/06 22:48:47 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.16 2009/11/27 19:54:35 guenther Exp $	*/
 /*	$NetBSD: limits.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -36,8 +36,6 @@
 #define _POWERPC_LIMITS_H_
 
 #include <sys/cdefs.h>
-
-#define	MB_LEN_MAX	1		/* no multibyte characters	*/
 
 #if __POSIX_VISIBLE || __XPG_VISIBLE
 #ifndef	SIZE_MAX

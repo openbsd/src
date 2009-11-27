@@ -1,4 +1,4 @@
-/* $OpenBSD: limits.h,v 1.7 2007/05/07 15:29:44 millert Exp $ */
+/* $OpenBSD: limits.h,v 1.8 2009/11/27 19:54:35 guenther Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -58,6 +58,8 @@
 # define CHAR_MAX	0x7f
 # define CHAR_MIN	(-0x7f-1)
 #endif
+
+#define	MB_LEN_MAX	4		/* Allow UTF-8 (RFC 3629) */
 
 #define	USHRT_MAX	0xffff		/* max value for an unsigned short */
 #define	SHRT_MAX	0x7fff		/* max value for a short */

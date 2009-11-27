@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.5 2007/05/07 20:51:07 kettenis Exp $	*/
+/*	$OpenBSD: limits.h,v 1.6 2009/11/27 19:54:35 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,8 +35,6 @@
 #define _MIPS_LIMITS_H_
 
 #include <sys/cdefs.h>
-
-#define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
 
 #if __POSIX_VISIBLE || __XPG_VISIBLE
 #ifndef	SIZE_MAX

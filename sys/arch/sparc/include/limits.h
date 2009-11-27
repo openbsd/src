@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.11 2006/01/06 22:48:47 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.12 2009/11/27 19:54:35 guenther Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1996/01/05 18:10:57 pk Exp $ */
 
 /*
@@ -31,8 +31,6 @@
  *
  *	@(#)limits.h	8.3 (Berkeley) 1/4/94
  */
-
-#define	MB_LEN_MAX	1		/* no multibyte characters */
 
 #include <sys/cdefs.h>
 
