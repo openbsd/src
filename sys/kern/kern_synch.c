@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.91 2009/06/04 04:26:54 beck Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.92 2009/11/27 19:45:53 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -407,24 +407,47 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 int
 sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 {
-	struct sys_thrsleep_args *uap = v;
+	struct sys_thrsleep_args /* {
+		syscallarg(void *) ident;
+		syscallarg(clockid_t) clock_id;
+		syscallarg(struct timespec *) tp;
+		syscallarg(void *) lock;
+	} */ *uap = v;
 	long ident = (long)SCARG(uap, ident);
-	int timo = SCARG(uap, timeout);
 	_spinlock_lock_t *lock = SCARG(uap, lock);
-	_spinlock_lock_t unlocked = _SPINLOCK_UNLOCKED;
+	static _spinlock_lock_t unlocked = _SPINLOCK_UNLOCKED;
+	long long to_ticks = 0;
 	int error;
+
+	if (SCARG(uap, tp) != NULL) {
+		struct timespec now, ats;
+
+		if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0 ||
+		    (error = clock_gettime(p, SCARG(uap, clock_id), &now)) != 0)
+			return (error);
+
+		if (timespeccmp(&ats, &now, <)) {
+			/* already passed: still do the unlock */
+			if (lock)
+				copyout(&unlocked, lock, sizeof(unlocked));
+			return (ETIMEDOUT);
+		}
+
+		timespecsub(&ats, &now, &ats);
+		to_ticks = (long long)hz * ats.tv_sec +
+		    ats.tv_nsec / (tick * 1000);
+		if (to_ticks > INT_MAX)
+			to_ticks = INT_MAX;
+		if (to_ticks == 0)
+			to_ticks = 1;
+	}
 
 	p->p_thrslpid = ident;
 
 	if (lock)
 		copyout(&unlocked, lock, sizeof(unlocked));
-	if (hz > 1000)
-		timo = timo * (hz / 1000);
-	else
-		timo = timo / (1000 / hz);
-	if (timo < 0)
-		timo = 0;
-	error = tsleep(&p->p_thrslpid, PUSER | PCATCH, "thrsleep", timo);
+	error = tsleep(&p->p_thrslpid, PUSER | PCATCH, "thrsleep",
+	    (int)to_ticks);
 
 	if (error == ERESTART)
 		error = EINTR;
@@ -436,7 +459,10 @@ sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 int
 sys_thrwakeup(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_thrwakeup_args *uap = v;
+	struct sys_thrwakeup_args /* {
+		syscallarg(void *) ident;
+		syscallarg(int) n;
+	} */ *uap = v;
 	long ident = (long)SCARG(uap, ident);
 	int n = SCARG(uap, n);
 	struct proc *q;

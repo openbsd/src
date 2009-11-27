@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.67 2009/10/16 19:29:41 martynas Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.68 2009/11/27 19:45:53 guenther Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -156,6 +156,26 @@ settime(struct timespec *ts)
 }
 #endif
 
+int
+clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
+{
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+		nanotime(tp);
+		break;
+	case CLOCK_MONOTONIC:
+		nanouptime(tp);
+		break;
+	case CLOCK_PROF:
+		tp->tv_sec = p->p_rtime.tv_sec;
+		tp->tv_nsec = p->p_rtime.tv_usec * 1000;
+		break;
+	default:
+		return (EINVAL);
+	}
+	return (0);
+}
+
 /* ARGSUSED */
 int
 sys_clock_gettime(struct proc *p, void *v, register_t *retval)
@@ -164,24 +184,11 @@ sys_clock_gettime(struct proc *p, void *v, register_t *retval)
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 	} */ *uap = v;
-	clockid_t clock_id;
 	struct timespec ats;
+	int error;
 
-	clock_id = SCARG(uap, clock_id);
-	switch (clock_id) {
-	case CLOCK_REALTIME:
-		nanotime(&ats);
-		break;
-	case CLOCK_MONOTONIC:
-		nanouptime(&ats);
-		break;
-	case CLOCK_PROF:
-		ats.tv_sec = p->p_rtime.tv_sec;
-		ats.tv_nsec = p->p_rtime.tv_usec * 1000;
-		break;
-	default:
-		return (EINVAL);
-	}
+	if ((error = clock_gettime(p, SCARG(uap, clock_id), &ats)) != 0)
+		return (error);
 
 	return copyout(&ats, SCARG(uap, tp), sizeof(ats));
 }
@@ -685,6 +692,18 @@ realitexpire(void *arg)
 			return;
 		}
 	}
+}
+
+/*
+ * Check that a timespec value is legit
+ */
+int
+timespecfix(struct timespec *ts)
+{
+	if (ts->tv_sec < 0 || ts->tv_sec > 100000000 ||
+	    ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
+		return (EINVAL);
+	return (0);
 }
 
 /*

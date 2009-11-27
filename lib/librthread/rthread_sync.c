@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.21 2009/11/19 03:31:36 guenther Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.22 2009/11/27 19:45:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -43,15 +43,16 @@ static _spinlock_lock_t static_init_lock = _SPINLOCK_UNLOCKED;
  * Internal implementation of semaphores
  */
 int
-_sem_wait(sem_t sem, int tryonly, int timo)
+_sem_wait(sem_t sem, int tryonly)
 {
 
 	_spinlock(&sem->lock);
-	return (_sem_waitl(sem, tryonly, timo));
+	return (_sem_waitl(sem, tryonly, 0, NULL));
 }
 
 int
-_sem_waitl(sem_t sem, int tryonly, int timo)
+_sem_waitl(sem_t sem, int tryonly, clockid_t clock_id,
+    const struct timespec *abstime)
 {
 	int do_sleep;
 
@@ -69,7 +70,7 @@ again:
 	}
 
 	if (do_sleep) {
-		if (thrsleep(sem, timo, &sem->lock) == -1 &&
+		if (thrsleep(sem, clock_id, abstime, &sem->lock) == -1 &&
 		    errno == EWOULDBLOCK)
 			return (0);
 		_spinlock(&sem->lock);
@@ -193,7 +194,7 @@ sem_wait(sem_t *semp)
 {
 	sem_t sem = *semp;
 
-	_sem_wait(sem, 0, 0);
+	_sem_wait(sem, 0);
 
 	return (0);
 }
@@ -204,7 +205,7 @@ sem_trywait(sem_t *semp)
 	sem_t sem = *semp;
 	int rv;
 
-	rv = _sem_wait(sem, 1, 0);
+	rv = _sem_wait(sem, 1);
 
 	if (!rv) {
 		errno = EAGAIN;
@@ -278,7 +279,7 @@ _rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
 		if (mutex->type == PTHREAD_MUTEX_ERRORCHECK)
 			return (EDEADLK);
 	}
-	if (!_sem_wait((void *)&mutex->sem, trywait, 0))
+	if (!_sem_wait((void *)&mutex->sem, trywait))
 		return (EBUSY);
 	mutex->owner = thread;
 	mutex->count = 1;
@@ -391,29 +392,14 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 {
 	int error;
 	int rv;
-	int timo = 0;
-	struct timeval timenow;
-	struct timespec tmspec;
 
 	if (!*condp)
 		if ((error = pthread_cond_init(condp, NULL)))
 			return (error);
 
-	if (abstime && gettimeofday(&timenow, NULL) == 0) {
-		TIMEVAL_TO_TIMESPEC(&timenow, &tmspec);
-		if (timespeccmp(abstime, &tmspec, <)) {
-			pthread_mutex_unlock(mutexp);
-			error = pthread_mutex_lock(mutexp);
-			return (error ? error : ETIMEDOUT);
-		}
-		timespecsub(abstime, &tmspec, &tmspec);
-		timo = tmspec.tv_sec * 1000 + tmspec.tv_nsec / 1000000;
-	}
-
-
 	_spinlock(&(*condp)->sem.lock);
 	pthread_mutex_unlock(mutexp);
-	rv = _sem_waitl(&(*condp)->sem, 0, timo);
+	rv = _sem_waitl(&(*condp)->sem, 0, CLOCK_REALTIME, abstime);
 	error = pthread_mutex_lock(mutexp);
 
 	return (error ? error : rv ? 0 : ETIMEDOUT);
@@ -542,7 +528,7 @@ again:
 	_spinlock(&lock->lock);
 	if (lock->writer) {
 		_spinunlock(&lock->lock);
-		_sem_wait(&lock->sem, 0, 0);
+		_sem_wait(&lock->sem, 0);
 		goto again;
 	}
 	lock->readers++;
@@ -588,7 +574,7 @@ pthread_rwlock_wrlock(pthread_rwlock_t *lockp)
 	lock->writer++;
 	while (lock->readers) {
 		_spinunlock(&lock->lock);
-		_sem_wait(&lock->sem, 0, 0);
+		_sem_wait(&lock->sem, 0);
 		_spinlock(&lock->lock);
 	}
 	lock->readers = -pthread_self()->tid;

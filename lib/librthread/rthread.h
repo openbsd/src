@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.24 2009/11/27 19:43:55 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.25 2009/11/27 19:45:54 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -141,8 +141,8 @@ extern _spinlock_lock_t _thread_lock;
 
 void	_spinlock(_spinlock_lock_t *);
 void	_spinunlock(_spinlock_lock_t *);
-int	_sem_wait(sem_t, int, int);
-int	_sem_waitl(sem_t, int, int);
+int	_sem_wait(sem_t, int);
+int	_sem_waitl(sem_t, int, clockid_t, const struct timespec *);
 int	_sem_post(sem_t);
 int	_sem_wakeup(sem_t);
 int	_sem_wakeall(sem_t);
@@ -166,7 +166,8 @@ int	_atomic_lock(register volatile _spinlock_lock_t *);
 /* syscalls */
 int getthrid(void);
 void threxit(pid_t *);
-int thrsleep(void *, int, void *);
+int thrsleep(const volatile void *, clockid_t, const struct timespec *,
+    volatile void *);
 int thrwakeup(void *, int n);
 int sched_yield(void);
 int thrsigdivert(sigset_t, siginfo_t *, const struct timespec *);
