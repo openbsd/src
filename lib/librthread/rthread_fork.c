@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_fork.c,v 1.2 2009/10/21 15:32:01 guenther Exp $ */
+/*	$OpenBSD: rthread_fork.c,v 1.3 2009/11/27 19:42:24 guenther Exp $ */
 
 /*
  * Copyright (c) 2008 Kurt Miller <kurt@openbsd.org>
@@ -108,9 +108,6 @@ _dofork(int is_vfork)
 #endif
 
 	if (newid == 0) {
-		if (_rthread_open_kqueue())
-			_exit(126);	/* XXX */
-
 		/* update this thread's structure */
 		me->tid = getthrid();
 		me->donesem.lock = _SPINLOCK_UNLOCKED;

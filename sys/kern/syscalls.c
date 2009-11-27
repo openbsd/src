@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.108 2009/06/15 17:31:49 deraadt Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.109 2009/11/27 19:42:24 guenther Exp $	*/
 
 /*
  * System call names.

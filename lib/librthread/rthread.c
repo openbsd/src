@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.40 2009/02/20 01:24:05 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.41 2009/11/27 19:42:24 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -47,6 +47,9 @@ static int concurrency_level;	/* not used */
 int _threads_ready;
 struct listhead _thread_list = LIST_HEAD_INITIALIZER(_thread_list);
 _spinlock_lock_t _thread_lock = _SPINLOCK_UNLOCKED;
+static struct pthread_queue _thread_gc_list
+    = TAILQ_HEAD_INITIALIZER(_thread_gc_list);
+static _spinlock_lock_t _thread_gc_lock = _SPINLOCK_UNLOCKED;
 struct pthread _initial_thread;
 
 int rfork_thread(int, void *, void (*)(void *), void *);
@@ -96,16 +99,6 @@ _rthread_start(void *v)
 	pthread_exit(retval);
 }
 
-int
-_rthread_open_kqueue(void)
-{
-	_rthread_kq = kqueue();
-	if (_rthread_kq == -1)
-		return 1;
-	fcntl(_rthread_kq, F_SETFD, FD_CLOEXEC);
-	return 0;
-}
-
 static int
 _rthread_init(void)
 {
@@ -118,8 +111,6 @@ _rthread_init(void)
 	thread->flags_lock = _SPINLOCK_UNLOCKED;
 	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
-	if (_rthread_open_kqueue())
-		return (errno);
 	_rthread_debug_init();
 	_rthread_debug(1, "rthread init\n");
 	_threads_ready = 1;
@@ -146,10 +137,18 @@ static void
 _rthread_free(pthread_t thread)
 {
 	/* catch wrongdoers for the moment */
+	/* initial_thread.tid must remain valid */
 	if (thread != &_initial_thread) {
-		/* initial_thread.tid must remain valid */
+		struct stack *stack = thread->stack;
+		pid_t tid = thread->tid;
+
+		/* catch wrongdoers for the moment */
 		memset(thread, 0xd0, sizeof(*thread));
-		free(thread);
+		thread->stack = stack;
+		thread->tid = tid;
+		_spinlock(&_thread_gc_lock);
+		TAILQ_INSERT_TAIL(&_thread_gc_list, thread, waiting);
+		_spinunlock(&_thread_gc_lock);
 	}
 }
 
@@ -188,6 +187,26 @@ pthread_self(void)
 	return (thread);
 }
 
+static void
+_rthread_reaper(void)
+{
+	pthread_t thread;
+
+restart:_spinlock(&_thread_gc_lock);
+	TAILQ_FOREACH(thread, &_thread_gc_list, waiting) {
+		if (thread->tid != 0)
+			continue;
+		TAILQ_REMOVE(&_thread_gc_list, thread, waiting);
+		_spinunlock(&_thread_gc_lock);
+		_rthread_debug(3, "rthread reaping %p stack %p\n",
+		    (void *)thread, (void *)thread->stack);
+		_rthread_free_stack(thread->stack);
+		free(thread);
+		goto restart;
+	}
+	_spinunlock(&_thread_gc_lock);
+}
+
 void
 pthread_exit(void *retval)
 {
@@ -197,7 +216,7 @@ pthread_exit(void *retval)
 	pthread_t thread = pthread_self();
 
 	thread->retval = retval;
-	
+
 	for (clfn = thread->cleanup_fns; clfn; ) {
 		struct rthread_cleanup_fn *oclfn = clfn;
 		clfn = clfn->next;
@@ -218,12 +237,7 @@ pthread_exit(void *retval)
 		_sem_post(&thread->donesem);
 	}
 
-	/* reap before adding self, we don't want to disappear too soon */
-	_rthread_reaper();
-	if (tid != _initial_thread.tid)
-		_rthread_add_to_reaper(tid, stack);
-
-	threxit(0);
+	threxit(&thread->tid);
 	for(;;);
 }
 
@@ -285,6 +299,8 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	if (!_threads_ready)
 		if ((rc = _rthread_init()))
 		    return (rc);
+
+	_rthread_reaper();
 
 	thread = calloc(1, sizeof(*thread));
 	if (!thread)
