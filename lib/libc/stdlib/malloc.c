@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.119 2009/11/27 19:59:49 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.120 2009/11/27 20:05:03 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -520,6 +520,8 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		d->free_regions_size -= psz;
 		if (zero_fill)
 			memset(p, 0, sz);
+		else if (mopts.malloc_junk && mopts.malloc_freeprot)
+			memset(p, SOME_FREEJUNK, sz);
 		return p;
 	}
 	p = MMAP(sz);
