@@ -1,0 +1,62 @@
+.\" $OpenBSD: getrdomain.2,v 1.1 2009/11/27 20:05:50 guenther Exp $
+.\"
+.\" Copyright (c) 2009 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 27 2009 $
+.Dt GETRDOMAIN 2
+.Os
+.Sh NAME
+.Nm getrdomain ,
+.Nm setrdomain
+.Nd get and set the default routing domain of the current process
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/socket.h>
+.Ft int
+.Fn getrdomain "void"
+.Ft int
+.Fn setrdomain "int rdomain"
+.Sh DESCRIPTION
+.Fn getrdomain
+and
+.Fn setrdomain
+manipulate the routing domain associated with the current process.
+.Pp
+Only the superuser is allowed to change the process routing domain if
+it is already set to a non-zero value.
+.Sh RETURN VALUES
+A 0 is returned if the call succeeds, \-1 if it fails.
+.Sh ERRORS
+The call succeeds unless:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value of the
+.Fa rdomain
+argument is not a valid routing domain.
+.It Bq Er EPERM
+The user is not the superuser and the routing domain of the
+calling process is already set to a non-zero value.
+.El
+.Sh SEE ALSO
+.Xr getsockopt 2 ,
+.Xr setsockopt 2 ,
+.Xr route 8
+.Sh HISTORY
+The
+.Fn getrdomain
+and
+.Fn setrdomain
+system calls appeared in
+.Ox 4.7 .

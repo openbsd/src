@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.96 2009/11/27 19:45:53 guenther Exp $
+;	$OpenBSD: syscalls.master,v 1.97 2009/11/27 20:05:50 guenther Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -620,3 +620,5 @@
 308	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
 309	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs *buf); }
+310	STD		{ int sys_setrdomain(int rdomain); }
+311	STD		{ int sys_getrdomain(void); }

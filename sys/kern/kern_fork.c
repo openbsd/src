@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.104 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.105 2009/11/27 20:05:50 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -266,6 +266,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 * The p_stats and p_sigacts substructs are set in vm_fork.
 	 */
 	p2->p_emul = p1->p_emul;
+	p2->p_rdomain = p1->p_rdomain;
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 	atomic_setbits_int(&p2->p_flag, p1->p_flag & (P_SUGID | P_SUGIDEXEC));

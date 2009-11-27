@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.199 2009/11/20 09:02:21 guenther Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.200 2009/11/27 20:05:50 guenther Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1061,8 +1061,8 @@ ip_ctloutput(op, so, level, optname, mp)
 	struct inpcb *inp = sotoinpcb(so);
 	struct mbuf *m = *mp;
 	int optval = 0;
-#ifdef IPSEC
 	struct proc *p = curproc; /* XXX */
+#ifdef IPSEC
 	struct ipsec_ref *ipr;
 	u_int16_t opt16val;
 #endif
@@ -1423,6 +1423,11 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 			}
 			rtid = *mtod(m, u_int *);
+			if (p->p_rdomain != 0 && p->p_rdomain != rtid &&
+			    (error = suser(p, 0)) != 0) {
+				error = EACCES;
+				break;
+			}
 			/* table must exist and be a domain */
 			if (!rtable_exists(rtid) || rtid != rtable_l2(rtid)) {
 				error = EINVAL;
