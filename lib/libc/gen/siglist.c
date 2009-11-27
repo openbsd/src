@@ -1,4 +1,4 @@
-/*	$OpenBSD: siglist.c,v 1.4 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: siglist.c,v 1.5 2009/11/27 19:47:45 guenther Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -63,5 +63,6 @@ const char *const _sys_siglist[NSIG] = {
 	"Window size changes",		/* SIGWINCH */
 	"Information request",		/* SIGINFO */
 	"User defined signal 1",	/* SIGUSR1 */
-	"User defined signal 2"		/* SIGUSR2 */
+	"User defined signal 2",	/* SIGUSR2 */
+	"Thread AST",			/* SIGTHR */
 };

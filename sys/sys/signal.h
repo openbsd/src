@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.19 2006/01/08 14:20:16 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.20 2009/11/27 19:47:45 guenther Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 #include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
 
-#define _NSIG	32		/* counting 0; could be 33 (mask is 1-32) */
+#define _NSIG	33		/* counting 0 (mask is 1-32) */
 
 #if __BSD_VISIBLE
 #define NSIG _NSIG
@@ -87,6 +87,9 @@
 #endif
 #define SIGUSR1 30	/* user defined signal 1 */
 #define SIGUSR2 31	/* user defined signal 2 */
+#if __BSD_VISIBLE
+#define SIGTHR  32	/* thread library AST */
+#endif
 
 /*
  * Language spec says we must list exactly one parameter, even though we
