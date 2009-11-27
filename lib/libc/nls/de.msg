@@ -157,6 +157,30 @@ $ ENOSYS
 78 Funktion nicht implementiert
 $ EFTYPE
 79 Ungültiger Dateityp oder Dateiformat
+$ EAUTH
+80 Authentikationsfehler
+$ ENEEDAUTH
+81 Authentikator benötigt
+$ EIPSEC
+82 IPsec Verarbeitungsfehler
+$ ENOATTR
+83 Attribut nicht gefunden
+$ EILSEQ
+84 Illegale Byte-Sequenz
+$ ENOMEDIUM
+85 Kein Medium gefunden
+$ EMEDIUMTYPE
+86 Falscher Medientyp
+$ EOVERFLOW
+87 Wert zu groß, um in Datentyp zu speichern 
+$ ECANCELED
+88 Operation abgebrochen
+$ EIDRM
+89 Identifizierung entfernt
+$ ENOMSG
+90 Keine Nachricht vom gewünschten Typ
+$ ENOTSUP
+91 Nicht unterstützt
 $set 2
 $ SIGHUP
 1 Verbindungsende
