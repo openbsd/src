@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.11 2009/11/17 10:17:21 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.12 2009/11/28 09:41:14 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -19,16 +19,18 @@ use warnings;
 
 package OpenBSD::Interactive;
 
+my $always = 0;
+
 sub ask_list
 {
 	my ($prompt, $interactive, @values) = @_;
-	if (!$interactive || !-t STDIN) {
+	if (!$interactive || !-t STDIN || $always) {
 		return $values[0];
 	}
 	print STDERR $prompt, "\n";
 	my $i = 0;
 	for my $v (@values) {
-		printf STDERR "\t%2d: %s\n", $i, $v;
+		printf STDERR "%s\t%2d: %s\n", $i == 0 ? " a" : "" , $i, $v;
 		$i++;
 	}
 LOOP:
@@ -40,6 +42,10 @@ LOOP:
 	}
 	chomp $result;
 	if ($result eq '') {
+		return $values[0];
+	}
+	if ($result eq 'a') {
+		$always = 1;
 		return $values[0];
 	}
 	if ($result =~ m/^\d+$/o) {
@@ -56,8 +62,6 @@ LOOP:
 		goto LOOP;
 	}
 }
-
-my $always = 0;
 
 sub confirm
 {
