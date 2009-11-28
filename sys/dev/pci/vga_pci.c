@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.45 2009/11/28 22:15:59 kettenis Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.46 2009/11/28 22:43:22 kettenis Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -218,7 +218,6 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 int
 vga_pci_activate(struct device *self, int act)
 {
-	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 	int rv = 0;
 
 	switch (act) {
