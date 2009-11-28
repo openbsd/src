@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.11 2009/11/11 12:04:19 espie Exp $
+# $OpenBSD: Handle.pm,v 1.12 2009/11/28 12:50:25 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -119,6 +119,23 @@ sub error_message
 	}
 }
 
+sub complete_old
+{
+	my $self = shift;
+	my $location = $self->{location};
+
+	if (!defined $location) {
+		$self->set_error(NOT_FOUND);
+    	} else {
+		my $plist = $location->plist;
+		if (!defined $plist) {
+			$self->set_error(BAD_PACKAGE);
+		} else {
+			$self->{plist} = $plist;
+		}
+	}
+}
+
 sub create_old
 {
 
@@ -129,17 +146,10 @@ sub create_old
 	require OpenBSD::PackageRepository::Installed;
 
 	my $location = OpenBSD::PackageRepository::Installed->new->find($pkgname, $state->{arch});
-	if (!defined $location) {
-		$self->set_error(NOT_FOUND);
-    	} else {
+	if (defined $location) {
 		$self->{location} = $location;
-		my $plist = $location->plist;
-		if (!defined $plist) {
-			$self->set_error(BAD_PACKAGE);
-		} else {
-			$self->{plist} = $plist;
-		}
 	}
+	$self->complete_old;
 
 	return $self;
 }

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.397 2009/11/28 10:27:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.398 2009/11/28 12:50:25 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -232,7 +232,10 @@ sub can_install
 				return;
 			}
 
-			my $old_handle = OpenBSD::Handle->create_old($toreplace, $state);
+			my $old_handle = $set->{older}->{$toreplace};
+			$old_handle //= OpenBSD::Handle->create_old($toreplace, $state);
+			$old_handle->complete_old;
+			
 			if ($old_handle->has_error(OpenBSD::Handle::NOT_FOUND)) {
 				Fatal "Can't find $toreplace as an installed package\n";
 			}
@@ -246,7 +249,8 @@ sub can_install
 				$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
 				return;
 			}
-			$set->add_older($old_handle);
+			$set->add_older($old_handle) 
+			    if !defined $set->{older}->{$toreplace};
 
 			if ($old_handle->plist->has('manual-installation') && 
 			    !$plist->has('manual-installation')) {
