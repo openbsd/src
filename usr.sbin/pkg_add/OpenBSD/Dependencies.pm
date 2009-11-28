@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.84 2009/11/11 12:32:03 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.85 2009/11/28 10:25:34 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -472,17 +472,18 @@ sub solve_wantlibs
 			next if $lib_finder->lookup($solver, 
 			    $solver->{to_register}->{$h}, $state, 
 			    $lib->{name});
-			$state->errsay("Can't install ", 
-			    $h->pkgname, ": lib not found ", 
-			    $lib->{name});
 			if ($okay) {
-				$solver->dump;
-				$lib_finder->dump;
-				$okay = 0;
+				$state->errsay("Can't install ", 
+				    $h->pkgname, ":");
 			}
+			$okay = 0;
 			OpenBSD::SharedLibs::report_problem(
 			    $state->{localbase}, $lib->{name});
 		}
+	}
+	if (!$okay) {
+		$solver->dump;
+		$lib_finder->dump;
 	}
 	return $okay;
 }
