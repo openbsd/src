@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.44 2007/05/31 19:20:13 jmc Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.45 2009/11/28 14:42:04 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -41,12 +41,12 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: November 28 2009 $
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
 .Nm newsyslog
-.Nd trim log files to manageable sizes
+.Nd rotate log files
 .Sh SYNOPSIS
 .Nm newsyslog
 .Op Fl Fmnrv
@@ -54,23 +54,21 @@
 .Op Fl f Ar config_file
 .Op Ar log ...
 .Sh DESCRIPTION
+The
 .Nm
-is a program that should be scheduled to run periodically by
-.Xr cron 8 .
-When it is executed it archives log files if necessary.
-If a log file is determined to require archiving,
-.Nm
-rearranges the files so that
-.Pa logfile
-is empty,
-.Pa logfile.0
-has
-the last period's logs in it,
-.Pa logfile.1
-has the next to last
-period's logs in it, and so on, up to a user-specified number of
-archived logs.
-The archived logs may be optionally compressed to save space.
+utility rotates log files when they exceed a configurable size or age.
+The
+.Ar log
+file is renamed to
+.Pa log.0
+and an empty file is created in its place.
+An archive of older logs may be kept:
+in order of increasing age, these files are named
+.Pa log.1 ,
+.Pa log.2 ,
+and so on.
+When their number exceeds a given limit, the oldest is removed.
+The archived logs may also be compressed.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -137,10 +135,15 @@ In this mode it will print out each log and its
 reasons for either trimming that log or skipping it.
 .El
 .Pp
+In the default system configuration,
+.Nm
+is run by
+.Xr cron 8 ,
+but it may also be run manually.
 If one or more
 .Ar log
-files are specified on the command line, only the specified logs will
-be rotated.
+files are specified on the command line, only the specified files are
+rotated.
 Note that each
 .Ar log
 specified must have an entry in
