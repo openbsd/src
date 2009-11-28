@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.396 2009/11/24 11:41:56 espie Exp $
+# $OpenBSD: pkg_add,v 1.397 2009/11/28 10:27:07 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -501,6 +501,9 @@ sub install_set
 		}
 		if (@deps > 0) {
 			$state->build_deptree($set, @deps);
+			if ($set->{solver}->{not_ready}) {
+				delete($set->{solver});
+			}
 			return (@deps, $set);
 		}
 	}
@@ -540,6 +543,7 @@ sub install_set
 		$handle->cleanup;
 	}
 	$state->tracker->mark_installed($set);
+	$set->{finished} = 1;
 	return ();
 }
 
@@ -595,11 +599,6 @@ if (@ARGV == 0 && !$opt_u && !$opt_l) {
 	Usage "Missing pkgname";
 }
 
-if ($opt_l && @ARGV != 0) {
-	Usage "No pkgnames after -l";
-}
-
-
 # Here we create the list of packages to install
 # actually, an updateset list (@todo2), and we hope to do this lazily
 # later for the most part...
@@ -618,38 +617,21 @@ sub inform_user_of_problems
 	}
 }
 
-sub inform_user_of_pending_install
-{
-	my $state = shift;
-
-	my @t = grep { !$_->{finished} } @todo2;
-	if (@t > 0) {
-		$state->say("Installing ", 
-		    join(',', map {$_->short_print} @t));
-	}
-}
-
 sub process_parameters
 {
+	# match fuzzily against a list
 	if ($opt_l) {
 		open my $f, '<', $opt_l or die "$!: bad list $opt_l";
 		my $_;
 		while (<$f>) {
 			chomp;
 			s/\s.*//;
-			push(@ARGV, $_);
+			push(@todo2, OpenBSD::UpdateSet->new->add_hints($_));
 		}
 	}
 
-	# three cases: 
-	# 1/ match fuzzily against a list
-	if ($opt_l || $opt_z) {
-
-		for my $_ (@ARGV) {
-			push(@todo2, OpenBSD::UpdateSet->new->add_hints($_));
-		}
-	# 2/ update existing stuff
-	} elsif ($opt_u) {
+	# update existing stuff
+	if ($opt_u) {
 		require OpenBSD::PackageRepository::Installed;
 
 		if (@ARGV == 0) {
@@ -674,9 +656,10 @@ sub process_parameters
 
 
 	} else {
-	# 3/ actual names
+	# actual names
+		my $m = $opt_z ? "add_hints" : "add_hints2";
 		for my $pkgname (@ARGV) {
-			push(@todo2, OpenBSD::UpdateSet->new->add_hints2($pkgname));
+			push(@todo2, OpenBSD::UpdateSet->new->$m($_));
 		}
 	}
 }
@@ -716,7 +699,6 @@ sub {
 		$state->{todo}--;
 	}
 	$state->progress->next;
-	inform_user_of_pending_install($state);
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
 		$state->{todo} = scalar @todo2;
