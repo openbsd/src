@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.127 2009/11/28 10:01:50 espie Exp $
+# $OpenBSD: pkg_delete,v 1.128 2009/11/28 10:05:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -122,8 +122,8 @@ sub {
 	# and finally, handle the removal
 	do {
 		$removed = 0;
-		DELETE: while (my $pkgname = shift @todo) {
-			$state->{todo} = scalar @todo;
+		DELETE: for my $pkgname (@todo) {
+			$state->{todo} = scalar @todo - scalar keys %done;
 			next if $done{$pkgname};
 			unless (is_installed($pkgname)) {
 				$state->say("$pkgname was not installed");
@@ -133,7 +133,6 @@ sub {
 			}
 			my $r = OpenBSD::RequiredBy->new($pkgname);
 			if ($r->list > 0) {
-				push(@todo, $pkgname);
 				if ($defines{baddepend}) {
 					for my $p ($r->list) {
 						if ($done{$p}) {
