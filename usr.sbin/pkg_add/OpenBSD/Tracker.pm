@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.10 2009/11/24 11:35:18 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.11 2009/11/28 16:46:20 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -100,10 +100,28 @@ sub mark_installed
 	}
 }
 
+sub is
+{
+	my ($self, $k, $pkg) = @_;
+
+	my $set = $self->{$k}->{$pkg};
+	if (ref $set) {
+		return $set->real_set;
+	} else {
+		return $set;
+	}
+}
+
 sub is_installed
 {
 	my ($self, $pkg) = @_;
-	return $self->{installed}->{$pkg};
+	return $self->is('installed', $pkg);
+}
+
+sub is_to_update
+{
+	my ($self, $pkg) = @_;
+	return $self->is('to_update', $pkg);
 }
 
 sub installed
