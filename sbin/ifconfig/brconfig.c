@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.1 2009/11/22 22:00:24 claudio Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.2 2009/11/28 20:07:18 chl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -575,8 +575,6 @@ void
 bridge_noifcost(const char *ifname, int d)
 {
 	struct ifbreq breq;
-	unsigned long v;
-	char *endptr;
 
 	strlcpy(breq.ifbr_name, name, sizeof(breq.ifbr_name));
 	strlcpy(breq.ifbr_ifsname, ifname, sizeof(breq.ifbr_ifsname));
@@ -691,7 +689,6 @@ bridge_status(void)
 {
 	struct ifreq ifr;
 	struct ifbrparam bp1, bp2;
-	int err;
 
 	if (!is_bridge(name))
 		return;
