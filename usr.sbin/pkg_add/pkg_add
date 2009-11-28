@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.398 2009/11/28 12:50:25 espie Exp $
+# $OpenBSD: pkg_add,v 1.399 2009/11/28 17:16:59 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -663,7 +663,7 @@ sub process_parameters
 	# actual names
 		my $m = $opt_z ? "add_hints" : "add_hints2";
 		for my $pkgname (@ARGV) {
-			push(@todo2, OpenBSD::UpdateSet->new->$m($_));
+			push(@todo2, OpenBSD::UpdateSet->new->$m($pkgname));
 		}
 	}
 }
