@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.403 2009/11/29 13:19:29 espie Exp $
+# $OpenBSD: pkg_add,v 1.404 2009/11/29 14:07:07 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -757,17 +757,10 @@ sub finish_display
 
 framework(
 sub {
-	$state->progress->set_header("Looking for packages");
-	$state->{todo} = scalar @todo2;
-	for my $set (@todo2) {
-		if (!$state->updater->process_set($set, $state)) {
-			$set->{finished} = 1;
-		}
-		$state->{todo}--;
-	}
-	$state->progress->next;
+	$state->tracker->add_sets(@todo2);
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
+		$state->progress->set_header("Looking for packages");
 		$state->{todo} = scalar @todo2;
 		unshift(@todo2, install_set($set, $state));
 	}
