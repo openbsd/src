@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl.c,v 1.9 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: opl.c,v 1.10 2009/11/29 19:51:21 ratchov Exp $	*/
 /*	$NetBSD: opl.c,v 1.7 1998/12/08 14:26:56 augustss Exp $	*/
 
 /*
@@ -220,7 +220,6 @@ opl_find(oaa)
 	u_int8_t status1, status2;
 	int model;
 
-	DPRINTFN(2,("opl_find: ioh=0x%x\n", (int)oaa->ioh));
 	model = OPL_2;	/* worst case assumption */
 
 	/* Reset timers 1 and 2 */
@@ -264,8 +263,6 @@ opl_find(oaa)
 		return 0;
 	}
 
-	DPRINTFN(2,("opl_find: OPL%d at 0x%x detected\n", 
-	    model, (int)oaa->ioh));
 	return (model);
 }
 
