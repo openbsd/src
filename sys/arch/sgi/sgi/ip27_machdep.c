@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.39 2009/11/25 22:25:37 jsing Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.40 2009/11/29 17:03:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -40,12 +40,15 @@
 #include <uvm/uvm_extern.h>
 
 #include <sgi/sgi/ip27.h>
+#include <sgi/sgi/l1.h>
 #include <sgi/xbow/hub.h>
 #include <sgi/xbow/widget.h>
 #include <sgi/xbow/xbow.h>
 
 #include <sgi/pci/iofreg.h>
 #include <dev/ic/comvar.h>
+
+#include <dev/cons.h>
 
 extern char *hw_prod;
 
@@ -529,11 +532,23 @@ ip27_halt(int howto)
 		else
 			promop = GDA_PROMOP_EIM;
 #else
-		if (howto & RB_POWERDOWN)
-			printf("Software powerdown not supported, "
-			    "please switch off power manually.\n");
-		for (;;) ;
-		/* NOTREACHED */
+		if (howto & RB_POWERDOWN) {
+			if (ip35) {
+				l1_exec_command(masternasid, "pwr d");
+				delay(1000000);
+				printf("Powerdown failed, "
+				    "please switch off power manually.\n");
+			} else {
+				printf("Software powerdown not supported, "
+				    "please switch off power manually.\n");
+			}
+			for (;;) ;
+		} else {
+			printf("System halted.\n"
+			    "Press any key to restart\n");
+			cngetc();
+			promop = GDA_PROMOP_REBOOT;
+		}
 #endif
 	} else
 		promop = GDA_PROMOP_REBOOT;

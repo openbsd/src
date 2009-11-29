@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.c,v 1.2 2009/11/09 16:58:55 miod Exp $	*/
+/*	$OpenBSD: l1.c,v 1.3 2009/11/29 17:03:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -557,7 +557,8 @@ l1_read_board_ia(int16_t nasid, u_char **ria, size_t *rialen)
 	    L1_ARG_INT, (uint32_t)0);	/* size */
 	if (pktlen > sizeof pkt) {
 #ifdef DIAGNOSTIC
-		panic("L1 command packet too large (%zu) for buffer", pktlen);
+		panic("%s: L1 command packet too large (%zu) for buffer",
+		    __func__, pktlen);
 #endif
 		return ENOMEM;
 	}
@@ -873,4 +874,66 @@ l1_get_brick_ethernet_address(int16_t nasid, uint8_t *enaddr)
 out:
 	free(ia, M_DEVBUF);
 	return rc;
+}
+
+int
+l1_exec_command(int16_t nasid, const char *cmd)
+{
+	u_char pkt[64 + 64];	/* command and response packet buffer */
+	size_t pktlen;
+	uint32_t data;
+
+	/*
+	 * Build the command packet.
+	 */
+	pktlen = l1_command_build(pkt, sizeof pkt,
+	    L1_ADDRESS(L1_TYPE_L1, L1_ADDRESS_LOCAL | L1_TASK_COMMAND),
+	    L1_REQ_EXEC_CMD, 1,
+	    L1_ARG_ASCII, cmd);
+	if (pktlen > sizeof pkt) {
+#ifdef DIAGNOSTIC
+		panic("%s: L1 command packet too large (%zu) for buffer",
+		    __func__, pktlen);
+#endif
+		return ENOMEM;
+	}
+
+	if (l1_packet_put(nasid, pkt, pktlen) != 0)
+		return EWOULDBLOCK;
+
+	pktlen = sizeof pkt;
+	if (l1_receive_response(nasid, pkt, &pktlen) != 0)
+		return EWOULDBLOCK;
+
+	if (pktlen <= 6) {
+#ifdef L1_DEBUG
+		printf("truncated response (length %d)\n", pktlen);
+#endif
+		return ENXIO;
+	}
+
+	/*
+	 * Check the response code.
+	 */
+
+	data = l1_packet_get_be32(&pkt[1]);
+	if (data != L1_RESP_OK) {
+#ifdef L1_DEBUG
+		printf("unexpected L1 response code: %08x\n", data);
+#endif
+		return ENXIO;
+	}
+
+	/*
+	 * We do not expect anything in return.
+	 */
+
+	if (pkt[5] != 0) {
+#ifdef L1_DEBUG
+		printf("unexpected L1 response: %d values\n", pkt[5]);
+#endif
+		return ENXIO;
+	}
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: l1.h,v 1.1 2009/11/08 22:44:16 miod Exp $	*/
+/*	$OpenBSD: l1.h,v 1.2 2009/11/29 17:03:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -71,3 +71,4 @@
 
 int	l1_read_board_ia(int16_t, u_char **, size_t *);
 int	l1_get_brick_ethernet_address(int16_t, uint8_t *);
+int	l1_exec_command(int16_t, const char *);
