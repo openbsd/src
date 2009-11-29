@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.38 2009/11/28 10:25:34 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.39 2009/11/29 07:06:17 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -202,8 +202,9 @@ my $printed = {};
 
 sub report_problem
 {
-	my $base = $_[0];
-	my ($dir, $name) = normalize_dir_and_spec(@_);
+	my ($state, $p) = @_;
+	my $base = $state->{localbase};
+	my ($dir, $name) = normalize_dir_and_spec($base, $p);
 	my ($stem, $major, $minor) = parse_spec($name);
 
 	return unless defined $stem;
@@ -226,8 +227,8 @@ sub report_problem
 	}
 	if (!defined $printed->{$name} || $printed->{$name} ne $r) {
 		$printed->{$name} = $r;
-		print "library $name not found\n";
-		print $r;
+		$state->errsay("library $name not found");
+		$state->print($r);
 	}
 }
 

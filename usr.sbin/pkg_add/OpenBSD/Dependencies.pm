@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.85 2009/11/28 10:25:34 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.86 2009/11/29 07:06:17 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -477,8 +477,8 @@ sub solve_wantlibs
 				    $h->pkgname, ":");
 			}
 			$okay = 0;
-			OpenBSD::SharedLibs::report_problem(
-			    $state->{localbase}, $lib->{name});
+			OpenBSD::SharedLibs::report_problem($state, 
+			    $lib->{name});
 		}
 	}
 	if (!$okay) {
