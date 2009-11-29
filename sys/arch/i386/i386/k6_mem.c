@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.9 2009/08/15 00:34:44 jsg Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.10 2009/11/29 17:11:30 kettenis Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -67,6 +67,7 @@ static __inline int k6_mrmake(struct mem_range_desc *, u_int32_t *);
 struct mem_range_ops k6_mrops = {
 	k6_mrinit,
 	k6_mrset,
+	NULL,
 	NULL
 };
 

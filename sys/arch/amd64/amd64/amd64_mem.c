@@ -1,4 +1,4 @@
-/* $OpenBSD: amd64_mem.c,v 1.1 2008/06/11 09:22:38 phessler Exp $ */
+/* $OpenBSD: amd64_mem.c,v 1.2 2009/11/29 17:11:30 kettenis Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/memrange.h>
 
 #include <machine/cpufunc.h>
+#include <machine/intr.h>
 #include <machine/specialreg.h>
 
 /*
@@ -62,36 +63,35 @@ char *mem_owner_bios = "BIOS";
 
 void	amd64_mrinit(struct mem_range_softc *sc);
 int	amd64_mrset(struct mem_range_softc *sc,
-			   struct mem_range_desc *mrd,
-			   int *arg);
+	    struct mem_range_desc *mrd, int *arg);
 void	amd64_mrAPinit(struct mem_range_softc *sc);
+void	amd64_mrreload(struct mem_range_softc *sc);
 
 struct mem_range_ops amd64_mrops = {
 	amd64_mrinit,
 	amd64_mrset,
-	amd64_mrAPinit
+	amd64_mrAPinit,
+	amd64_mrreload
 };
 
 /* XXX for AP startup hook */
 u_int64_t	mtrrcap, mtrrdef;
 
 struct mem_range_desc	*mem_range_match(struct mem_range_softc *sc,
-						      struct mem_range_desc *mrd);
+			     struct mem_range_desc *mrd);
 void			 amd64_mrfetch(struct mem_range_softc *sc);
 int			 amd64_mtrrtype(u_int64_t flags);
 int			 amd64_mrt2mtrr(u_int64_t flags, int oldval);
 int			 amd64_mtrr2mrt(int val);
 int			 amd64_mtrrconflict(u_int64_t flag1, u_int64_t flag2);
 void			 amd64_mrstore(struct mem_range_softc *sc);
-void			 amd64_mrstoreone(void *arg);
+void			 amd64_mrstoreone(struct mem_range_softc *sc);
 struct mem_range_desc	*amd64_mtrrfixsearch(struct mem_range_softc *sc,
-						    u_int64_t addr);
+			     u_int64_t addr);
 int			 amd64_mrsetlow(struct mem_range_softc *sc,
-					      struct mem_range_desc *mrd,
-					      int *arg);
+			     struct mem_range_desc *mrd, int *arg);
 int			 amd64_mrsetvariable(struct mem_range_softc *sc,
-						   struct mem_range_desc *mrd,
-						   int *arg);
+			     struct mem_range_desc *mrd, int *arg);
 
 /* AMD64 MTRR type to memory range type conversion */
 int amd64_mtrrtomrt[] = {
@@ -264,7 +264,10 @@ void
 amd64_mrstore(struct mem_range_softc *sc)
 {
 	disable_intr();				/* disable interrupts */
-	amd64_mrstoreone((void *)sc);
+#ifdef MULTIPROCESSOR
+	x86_broadcast_ipi(X86_IPI_MTRR);
+#endif
+	amd64_mrstoreone(sc);
 	enable_intr();
 }
 
@@ -274,9 +277,8 @@ amd64_mrstore(struct mem_range_softc *sc)
  * just stuffing one entry; this is simpler (but slower, of course).
  */
 void
-amd64_mrstoreone(void *arg)
+amd64_mrstoreone(struct mem_range_softc *sc)
 {
-	struct mem_range_softc 	*sc = (struct mem_range_softc *)arg;
 	struct mem_range_desc	*mrd;
 	u_int64_t		 omsrv, msrv;
 	int			 i, j, msr;
@@ -595,7 +597,15 @@ amd64_mrinit(struct mem_range_softc *sc)
 void
 amd64_mrAPinit(struct mem_range_softc *sc)
 {
-	amd64_mrstoreone((void *)sc); /* set MTRRs to match BSP */
+	amd64_mrstoreone(sc); /* set MTRRs to match BSP */
 	wrmsr(MSR_MTRRdefType, mtrrdef); /* set MTRR behaviour to match BSP */
+}
+
+void
+amd64_mrreload(struct mem_range_softc *sc)
+{
+	disable_intr();				/* disable interrupts */
+	amd64_mrstoreone(sc); /* set MTRRs to match BSP */
+	enable_intr();
 }
 

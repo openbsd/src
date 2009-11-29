@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.10 2007/09/07 15:00:19 art Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.11 2009/11/29 17:11:30 kettenis Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/memrange.h>
 
 #include <machine/cpufunc.h>
+#include <machine/intr.h>
 #include <machine/specialreg.h>
 
 /*
@@ -62,36 +63,35 @@ char *mem_owner_bios = "BIOS";
 
 void	i686_mrinit(struct mem_range_softc *sc);
 int	i686_mrset(struct mem_range_softc *sc,
-			   struct mem_range_desc *mrd,
-			   int *arg);
+	    struct mem_range_desc *mrd, int *arg);
 void	i686_mrAPinit(struct mem_range_softc *sc);
+void	i686_mrreload(struct mem_range_softc *sc);
 
 struct mem_range_ops i686_mrops = {
 	i686_mrinit,
 	i686_mrset,
-	i686_mrAPinit
+	i686_mrAPinit,
+	i686_mrreload
 };
 
 /* XXX for AP startup hook */
 u_int64_t	mtrrcap, mtrrdef;
 
 struct mem_range_desc	*mem_range_match(struct mem_range_softc *sc,
-						      struct mem_range_desc *mrd);
+			     struct mem_range_desc *mrd);
 void			 i686_mrfetch(struct mem_range_softc *sc);
 int			 i686_mtrrtype(int flags);
 int			 i686_mrt2mtrr(int flags, int oldval);
 int			 i686_mtrr2mrt(int val);
 int			 i686_mtrrconflict(int flag1, int flag2);
 void			 i686_mrstore(struct mem_range_softc *sc);
-void			 i686_mrstoreone(void *arg);
+void			 i686_mrstoreone(struct mem_range_softc *sc);
 struct mem_range_desc	*i686_mtrrfixsearch(struct mem_range_softc *sc,
-						    u_int64_t addr);
+			     u_int64_t addr);
 int			 i686_mrsetlow(struct mem_range_softc *sc,
-					      struct mem_range_desc *mrd,
-					      int *arg);
+			     struct mem_range_desc *mrd, int *arg);
 int			 i686_mrsetvariable(struct mem_range_softc *sc,
-						   struct mem_range_desc *mrd,
-						   int *arg);
+			     struct mem_range_desc *mrd, int *arg);
 
 /* i686 MTRR type to memory range type conversion */
 int i686_mtrrtomrt[] = {
@@ -264,7 +264,10 @@ void
 i686_mrstore(struct mem_range_softc *sc)
 {
 	disable_intr();				/* disable interrupts */
-	i686_mrstoreone((void *)sc);
+#ifdef MULTIPROCESSOR
+	i386_broadcast_ipi(I386_IPI_MTRR);
+#endif
+	i686_mrstoreone(sc);
 	enable_intr();
 }
 
@@ -274,9 +277,8 @@ i686_mrstore(struct mem_range_softc *sc)
  * just stuffing one entry; this is simpler (but slower, of course).
  */
 void
-i686_mrstoreone(void *arg)
+i686_mrstoreone(struct mem_range_softc *sc)
 {
-	struct mem_range_softc 	*sc = (struct mem_range_softc *)arg;
 	struct mem_range_desc	*mrd;
 	u_int64_t		 omsrv, msrv;
 	int			 i, j, msr;
@@ -595,7 +597,14 @@ i686_mrinit(struct mem_range_softc *sc)
 void
 i686_mrAPinit(struct mem_range_softc *sc)
 {
-	i686_mrstoreone((void *)sc); /* set MTRRs to match BSP */
+	i686_mrstoreone(sc); /* set MTRRs to match BSP */
 	wrmsr(MSR_MTRRdefType, mtrrdef); /* set MTRR behaviour to match BSP */
 }
 
+void
+i686_mrreload(struct mem_range_softc *sc)
+{
+	disable_intr();				/* disable interrupts */
+	i686_mrstoreone(sc); /* set MTRRs to match BSP */
+	enable_intr();
+}

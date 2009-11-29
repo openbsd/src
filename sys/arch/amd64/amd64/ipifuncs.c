@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.9 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.10 2009/11/29 17:11:30 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -38,8 +38,11 @@
  * Interprocessor interrupt handlers.
  */
 
+#include "mtrr.h"
+
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/memrange.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -57,17 +60,16 @@
 #include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 
+void x86_64_ipi_nop(struct cpu_info *);
 void x86_64_ipi_halt(struct cpu_info *);
 
 void x86_64_ipi_synch_fpu(struct cpu_info *);
 void x86_64_ipi_flush_fpu(struct cpu_info *);
 
-void x86_64_ipi_nop(struct cpu_info *);
-
-#ifdef MTRR
-void x86_64_reload_mtrr(struct cpu_info *);
+#if NMTRR > 0
+void x86_64_ipi_reload_mtrr(struct cpu_info *);
 #else
-#define x86_64_reload_mtrr NULL
+#define x86_64_ipi_reload_mtrr NULL
 #endif
 
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
@@ -77,7 +79,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	x86_64_ipi_flush_fpu,
 	x86_64_ipi_synch_fpu,
 	NULL,
-	x86_64_reload_mtrr,
+	x86_64_ipi_reload_mtrr,
 	gdt_reload_cpu,
 #ifdef DDB
 	x86_ipi_db,
@@ -115,17 +117,11 @@ x86_64_ipi_synch_fpu(struct cpu_info *ci)
 	fpusave_cpu(ci, 1);
 }
 
-#ifdef MTRR
-
-/*
- * mtrr_reload_cpu() is a macro in mtrr.h which picks the appropriate
- * function to use..
- */
-
+#if NMTRR > 0
 void
-x86_64_reload_mtrr(struct cpu_info *ci)
+x86_64_ipi_reload_mtrr(struct cpu_info *ci)
 {
-	if (mtrr_funcs != NULL)
-		mtrr_reload_cpu(ci);
+	if (mem_range_softc.mr_op != NULL)
+		mem_range_softc.mr_op->reload(&mem_range_softc);
 }
 #endif

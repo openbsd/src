@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.13 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.14 2009/11/29 17:11:30 kettenis Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -32,18 +32,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 /*
  * Interprocessor interrupt handlers.
  */
 
+#include "mtrr.h"
 #include "npx.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/memrange.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -52,19 +55,22 @@
 #include <machine/i82093var.h>
 #include <machine/db_machdep.h>
 
-#include <uvm/uvm_extern.h>
-
+void i386_ipi_nop(struct cpu_info *);
 void i386_ipi_halt(struct cpu_info *);
 
 #if NNPX > 0
 void i386_ipi_synch_fpu(struct cpu_info *);
 void i386_ipi_flush_fpu(struct cpu_info *);
 #else
-#define i386_ipi_synch_fpu 0
-#define i386_ipi_flush_fpu 0
+#define i386_ipi_synch_fpu NULL
+#define i386_ipi_flush_fpu NULL
 #endif
 
-void i386_ipi_nop(struct cpu_info *);
+#if NMTRR > 0
+void i386_ipi_reload_mtrr(struct cpu_info *);
+#else
+#define i386_ipi_reload_mtrr 0
+#endif
 
 void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 {
@@ -72,17 +78,16 @@ void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 	i386_ipi_nop,
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
+	i386_ipi_reload_mtrr,
 #if 0
-	i386_reload_mtrr,
 	gdt_reload_cpu,
 #else
-	0,
-	0,
+	NULL,
 #endif
 #ifdef DDB
 	i386_ipi_db,
 #else
-	0,
+	NULL,
 #endif
 	i386_setperf_ipi,
 };
@@ -114,6 +119,15 @@ void
 i386_ipi_synch_fpu(struct cpu_info *ci)
 {
 	npxsave_cpu(ci, 1);
+}
+#endif
+
+#if NMTRR > 0
+void
+i386_ipi_reload_mtrr(struct cpu_info *ci)
+{
+	if (mem_range_softc.mr_op != NULL)
+		mem_range_softc.mr_op->reload(&mem_range_softc);
 }
 #endif
 
