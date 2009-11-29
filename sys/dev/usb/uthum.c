@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.2 2009/11/24 08:28:53 deraadt Exp $   */
+/*	$OpenBSD: uthum.c,v 1.3 2009/11/29 17:32:06 deraadt Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -187,14 +187,14 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 		strlcpy(sc->sc_sensor[UTHUM_TEMP].desc, "temp",
 			sizeof(sc->sc_sensor[UTHUM_TEMP].desc));
 		sc->sc_sensor[UTHUM_TEMP].type = SENSOR_TEMP;
-		sc->sc_sensor[UTHUM_TEMP].status = SENSOR_S_UNKNOWN;
+		sc->sc_sensor[UTHUM_TEMP].status = SENSOR_S_UNSPEC;
 		sc->sc_sensor[UTHUM_TEMP].flags = SENSOR_FINVALID;
 
 		strlcpy(sc->sc_sensor[UTHUM_HUMIDITY].desc, "humidity",
 			sizeof(sc->sc_sensor[UTHUM_HUMIDITY].desc));
 		sc->sc_sensor[UTHUM_HUMIDITY].type = SENSOR_PERCENT;
 		sc->sc_sensor[UTHUM_HUMIDITY].value = 0;
-		sc->sc_sensor[UTHUM_HUMIDITY].status = SENSOR_S_UNKNOWN;
+		sc->sc_sensor[UTHUM_HUMIDITY].status = SENSOR_S_UNSPEC;
 		sc->sc_sensor[UTHUM_HUMIDITY].flags = SENSOR_FINVALID;
 
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[UTHUM_TEMP]);
@@ -361,8 +361,6 @@ uthum_refresh(void *arg)
 
 	if (uthum_read_data(sc, CMD_GETDATA, buf, sizeof(buf), 1000) != 0) {
 		DPRINTF(("uthum: data read fail\n"));
-		sc->sc_sensor[UTHUM_TEMP].status = SENSOR_S_UNKNOWN;
-		sc->sc_sensor[UTHUM_HUMIDITY].status = SENSOR_S_UNKNOWN;
 		sc->sc_sensor[UTHUM_TEMP].flags |= SENSOR_FINVALID;
 		sc->sc_sensor[UTHUM_HUMIDITY].flags |= SENSOR_FINVALID;
 		return;
@@ -382,10 +380,8 @@ uthum_refresh(void *arg)
 	}
 
 	sc->sc_sensor[UTHUM_TEMP].value = (temp * 10000) + 273150000;
-	sc->sc_sensor[UTHUM_TEMP].status = SENSOR_S_OK;
 	sc->sc_sensor[UTHUM_TEMP].flags &= ~SENSOR_FINVALID;
 	sc->sc_sensor[UTHUM_HUMIDITY].value = rh;
-	sc->sc_sensor[UTHUM_HUMIDITY].status = SENSOR_S_OK;
 	sc->sc_sensor[UTHUM_HUMIDITY].flags &= ~SENSOR_FINVALID;
 }
 
