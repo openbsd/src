@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.23 2009/11/25 11:01:14 kettenis Exp $	*/
+/*	$OpenBSD: sched.h,v 1.24 2009/11/29 23:12:30 kettenis Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -122,8 +122,6 @@ struct schedstate_percpu {
 #define SPCF_SEENRR             0x0001  /* process has seen roundrobin() */
 #define SPCF_SHOULDYIELD        0x0002  /* process should yield the CPU */
 #define SPCF_SWITCHCLEAR        (SPCF_SEENRR|SPCF_SHOULDYIELD)
-#define SPCF_SHOULDHALT		0x0004	/* CPU should be vacated */
-#define SPCF_HALTED		0x0008	/* CPU has been halted */
 
 #define	SCHED_PPQ	(128 / SCHED_NQS)	/* priorities per queue */
 #define NICE_WEIGHT 2			/* priorities per nice level */
