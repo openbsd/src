@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.55 2009/11/17 10:17:21 espie Exp $
+# $OpenBSD: Replace.pm,v 1.56 2009/11/29 06:51:12 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -225,20 +225,20 @@ use OpenBSD::Error;
 
 sub validate_depend
 {
-	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
+	my ($self, $state, $wanting, $toreplace, @replacement) = @_;
 
 	# nothing to validate if old dependency doesn't concern us.
 	return unless $self->spec->filter($toreplace);
 	# nothing to do if new dependency just matches
-	return if $self->spec->filter($replacement);
+	return if $self->spec->filter(@replacement);
 
 	if ($state->{defines}->{updatedepends}) {
-	    $state->errsay("Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it");
+	    $state->errsay("Forward dependency of $wanting on $toreplace doesn't match @replacement, forcing it");
 	    $state->{forcedupdates} = {} unless defined $state->{forcedupdates};
 	    $state->{forcedupdates}->{$wanting} = 1;
 	} elsif ($state->{interactive}) {
 
-	    if ($state->confirm("Forward dependency of $wanting on $toreplace doesn't match $replacement, proceed with update anyways", 0)) {
+	    if ($state->confirm("Forward dependency of $wanting on $toreplace doesn't match @replacement, proceed with update anyways", 0)) {
 		$state->{forcedupdates} = {} unless defined $state->{forcedupdates};
 		$state->{forcedupdates}->{$wanting} = 1;
 	    } else {
@@ -246,7 +246,7 @@ sub validate_depend
 	    }
 	} else {
 	    $state->{okay} = 0;
-	    $state->errsay("Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match (use -F updatedepends to force it)");
+	    $state->errsay("Can't update forward dependency of $wanting on $toreplace: @replacement doesn't match (use -F updatedepends to force it)");
 	}
 }
 
@@ -308,7 +308,7 @@ sub perform_extraction
 
 sub can_old_package_be_replaced
 {
-	my ($old_plist, $new_pkgname, $state, $ignore) = @_;
+	my ($old_plist, $set, $state, $ignore) = @_;
 
 	$state->{okay} = 1;
 	$state->{journal} = [];
@@ -344,7 +344,7 @@ sub can_old_package_be_replaced
 				$state->errsay("Error: $wanting missing from installation");
 			} else {
 				$p2->validate_depend($state, $wanting, 
-				    $old_plist->pkgname, $new_pkgname);
+				    $old_plist->pkgname, $set->newer_names);
 			}
 		}
 	}
