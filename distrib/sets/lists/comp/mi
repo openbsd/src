@@ -2001,6 +2001,7 @@
 ./usr/share/man/cat2/getpid.0
 ./usr/share/man/cat2/getppid.0
 ./usr/share/man/cat2/getpriority.0
+./usr/share/man/cat2/getrdomain.0
 ./usr/share/man/cat2/getresgid.0
 ./usr/share/man/cat2/getresuid.0
 ./usr/share/man/cat2/getrlimit.0
@@ -2089,6 +2090,7 @@
 ./usr/share/man/cat2/setpgid.0
 ./usr/share/man/cat2/setpgrp.0
 ./usr/share/man/cat2/setpriority.0
+./usr/share/man/cat2/setrdomain.0
 ./usr/share/man/cat2/setregid.0
 ./usr/share/man/cat2/setresgid.0
 ./usr/share/man/cat2/setresuid.0

@@ -96,7 +96,7 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.6/3.3.5/include
 ./usr/lib/gcc-lib/i386-unknown-openbsd4.6/3.3.5/specs
 ./usr/lib/libasn1.so.17.0
-./usr/lib/libc.so.52.0
+./usr/lib/libc.so.53.0
 ./usr/lib/libcom_err.so.17.0
 ./usr/lib/libcrypto.so.18.0
 ./usr/lib/libcurses.so.10.0
