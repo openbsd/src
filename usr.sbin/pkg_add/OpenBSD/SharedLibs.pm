@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.39 2009/11/29 07:06:17 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.40 2009/11/29 10:32:58 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -222,12 +222,12 @@ sub report_problem
 			}
 		}
 		if (@l > 0) {
-			$r .= " in $d: ". join(", ", sort @l). "\n";
+			$r .= "| in $d: ". join(", ", sort @l). "\n";
 		}
 	}
 	if (!defined $printed->{$name} || $printed->{$name} ne $r) {
 		$printed->{$name} = $r;
-		$state->errsay("library $name not found");
+		$state->errsay("|library $name not found");
 		$state->print($r);
 	}
 }
