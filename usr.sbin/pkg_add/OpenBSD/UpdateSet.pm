@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.29 2009/11/28 16:46:20 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.30 2009/11/29 07:54:18 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -59,12 +59,18 @@ sub new
 	return bless {newer => {}, older => {}, hints => []}, $class;
 }
 
-sub set_error
+sub cleanup
 {
 	my ($self, $error) = @_;
-	for my $h ($self->older) {
-		$h->set_error($error);
+	for my $h ($self->older, $self->newer) {
+		$h->cleanup($error);
 	}
+	$self->{error} //= $error;
+}
+
+sub has_error
+{
+	&OpenBSD::Handle::has_error;
 }
 
 sub add_newer

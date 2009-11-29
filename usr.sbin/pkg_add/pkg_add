@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.400 2009/11/29 06:51:12 espie Exp $
+# $OpenBSD: pkg_add,v 1.401 2009/11/29 07:54:18 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -165,9 +165,7 @@ sub complete
 	$set->{installable} = $r;
 
 	if (!$set->{installable}) {
-		for my $n ($set->newer) {
-			$n->cleanup(OpenBSD::Handle::CANT_INSTALL);
- 		}
+		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 	}
 	return 1;
 }
@@ -213,7 +211,7 @@ sub can_install
 	return 1 if @conflicts == 0;
 	if (!$state->{allow_replacing}) {
 		$state->say("Can't install ", $set->short_print, " because of conflicts (",join(',', @conflicts), ")");
-		$set->set_error(OpenBSD::Handle::CANT_INSTALL);
+		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 		return;
 	}
 
@@ -225,7 +223,7 @@ sub can_install
 		if (!OpenBSD::Replace::is_new_package_safe($plist, $state)) {
 			$state->say("Can't safely update to ", 
 			    $handle->pkgname," (use -F update to force it)");
-			$handle->set_error(OpenBSD::Handle::CANT_INSTALL);
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
 	}
@@ -234,7 +232,7 @@ sub can_install
 	for my $toreplace (@conflicts) {
 		if ($state->tracker->is_installed($toreplace)) {
 			$state->errsay("Cannot replace $toreplace in ", $set->short_print, ": just got installed");
-			$set->set_error(OpenBSD::Handle::CANT_INSTALL);
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
 
@@ -261,7 +259,7 @@ sub can_install
 		if (!OpenBSD::Replace::can_old_package_be_replaced($old_handle->plist, 
 		    $set, $state, \%conflicts)) {
 			$state->say("Can't update $toreplace into ", $set->short_print);
-			$set->set_error(OpenBSD::Handle::CANT_INSTALL);
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 			return;
 		}
 		$set->add_older($old_handle) 
@@ -493,7 +491,7 @@ sub install_set
 
 	for my $handle ($set->newer) {
 		if ($state->tracker->is_installed($handle->pkgname)) {
-			$handle->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
+			$set->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
 			return ();
 		}
 	}
@@ -504,6 +502,7 @@ sub install_set
 
 	for my $handle ($set->newer) {
 		if ($handle->has_error(OpenBSD::Handle::ALREADY_INSTALLED)) {
+			$set->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
 			return ();
 		}
 		if ($handle->has_error) {
@@ -511,13 +510,17 @@ sub install_set
 			$state->log("Can't install ", $handle->pkgname, ":",
 				$handle->error_message, "\n"); 
 			$bad++;
+			$set->cleanup($handle->has_error);
 			return ();
 		}
 
 		if ($handle->plist->has('arch')) {
 			unless ($handle->plist->{arch}->check($state->{arch})) {
-				$state->say($handle->pkgname, " is not for the right architecture");
-				return () unless $defines{arch};
+				$state->log($handle->pkgname, " is not for the right architecture");
+				if (!$defines{arch}) {
+					$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+					return ();
+				}
 			}
 		}
 	}
