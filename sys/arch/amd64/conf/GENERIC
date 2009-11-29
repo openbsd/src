@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.279 2009/11/26 13:35:52 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.280 2009/11/29 21:24:26 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -391,8 +391,8 @@ fd*	at fdc? flags 0x00
 # IDE controllers
 pciide* at pci? flags 0x0000
 
-wdc0	at isa? port 0x1f0 irq 14 flags 0x00
-wdc1	at isa? port 0x170 irq 15 flags 0x00
+wdc0	at isa? disable port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? disable port 0x170 irq 15 flags 0x00
 wdc*	at pcmcia?
 
 # IDE hard drives
