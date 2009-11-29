@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.56 2009/11/29 06:51:12 espie Exp $
+# $OpenBSD: Replace.pm,v 1.57 2009/11/29 11:22:25 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -308,7 +308,7 @@ sub perform_extraction
 
 sub can_old_package_be_replaced
 {
-	my ($old_plist, $set, $state, $ignore) = @_;
+	my ($old_plist, $set, $state) = @_;
 
 	$state->{okay} = 1;
 	$state->{journal} = [];
@@ -332,7 +332,7 @@ sub can_old_package_be_replaced
 	my @wantlist = OpenBSD::RequiredBy->new($old_plist->pkgname)->list;
 	my @r = ();
 	for my $wanting (@wantlist) {
-		push(@r, $wanting) if !defined $ignore->{$wanting};
+		push(@r, $wanting) if !defined $set->{older}->{$wanting};
 	}
 	if (@r) {
 		$state->say("Verifying dependencies still match for ", 

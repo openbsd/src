@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.86 2009/11/29 07:06:17 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.87 2009/11/29 11:22:25 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -384,34 +384,42 @@ sub record_old_dependencies
 	}
 }
 
+sub adjust_old_dependency_on
+{
+	my ($self, $pkgname, $state) = @_;
+
+	my $set = $self->{set};
+	
+	for my $o ($set->older) {
+		next unless defined $o->{wantlist};
+		require OpenBSD::Replace;
+		require OpenBSD::RequiredBy;
+
+		my $oldname = $o->pkgname;
+
+		$state->say("Adjusting dependencies for ",
+		    "$pkgname/$oldname") if $state->{beverbose};
+		my $d = OpenBSD::RequiredBy->new($pkgname);
+		for my $dep (@{$o->{wantlist}}) {
+			if (defined $set->{older}->{$dep}) {
+				$state->say("\tskipping $dep")
+				    if $state->{beverbose};
+				next;
+			}
+			$state->say("\t$dep") if $state->{beverbose};
+			$d->add($dep);
+			OpenBSD::Replace::adjust_dependency($dep, 
+			    $oldname, $pkgname);
+		}
+	}
+}
+
 sub adjust_old_dependencies
 {
 	my ($self, $state) = @_;
+	
 	for my $pkg ($self->{set}->newer) {
-		my $pkgname = $pkg->pkgname;
-		for my $o ($self->{set}->older) {
-			next unless defined $o->{wantlist};
-			require OpenBSD::Replace;
-			require OpenBSD::RequiredBy;
-
-			my $oldname = $o->pkgname;
-
-			$state->say("Adjusting dependencies for ",
-			    "$pkgname/$oldname") if $state->{beverbose};
-			my $d = OpenBSD::RequiredBy->new($pkgname);
-			for my $dep (@{$o->{wantlist}}) {
-				if (defined $self->{set}->{skipupdatedeps}->{$dep}) {
-					$state->say("\tskipping $dep") 
-					    if $state->{beverbose};
-					next;
-				}
-				$state->say("\t$dep") 
-				    if $state->{beverbose};
-				$d->add($dep);
-				OpenBSD::Replace::adjust_dependency($dep, 
-				    $oldname, $pkgname);
-			}
-		}
+		$self->adjust_old_dependency_on($pkg->pkgname, $state);
 	}
 }
 
