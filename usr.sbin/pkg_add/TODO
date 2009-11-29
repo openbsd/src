@@ -3,18 +3,22 @@ packages as conflicts. Then save_old_libraries can split stuff off old
 sets to keep libraries that are not in the new packages. There's only
 one slightly tricky part, which concerns moving stuff that's not really
 needed out of $set->{older}.
-- make sure solved dependencies are adjusted along with stuff that actually
-get installed or replaced... this would make some stuff ways less brittle.
-- handle n-to-1 updates: mostly need to allow for a list of replaced packages.
-The tricky part is that the replaced packages will often have 
-inter-dependencies, and we must ignore those inter-dependencies.
-- clean up the interface of the dependencies module, to be able to use it in
-n-to-1 updates.
 - in interactive mode, make it ask questions whenever the user could get
 frustrated.
 - finish pulling the pkg_add code into Add.pm/Update.pm.
 - figure out when to continue after some errors, which should not stop a
-full update, for instance... or ignore already installed packages.
+full update, for instance... or ignore already installed packages (mostly
+done).
 - make sure all user-interface is done through a few functions, so that it's
-easy to plug another interface in.
-- add needed annotations to handle updates correctly.
+easy to plug another interface in (mostly done)
+- add needed annotations to handle updates correctly (to revisit)
+- compare full package signatures during updates, to ignore stuff that's
+different but older.
+- mark that some older packages were found, cant_update should be different
+from uptodate.
+- if looking at replacements with a different name (based on the pkgpath),
+stuff should still @conflict.
+- finally add the quirks package, to handle renames and similar stuff.
+- don't close Location unconditionally while looking for updates. In most
+cases, we're going to install this package right away, so we should try to
+keep it open to avoid spurious ftp disconnects.
