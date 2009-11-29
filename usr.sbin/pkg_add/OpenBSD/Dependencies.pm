@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.87 2009/11/29 11:22:25 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.88 2009/11/29 11:49:01 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -398,7 +398,7 @@ sub adjust_old_dependency_on
 		my $oldname = $o->pkgname;
 
 		$state->say("Adjusting dependencies for ",
-		    "$pkgname/$oldname") if $state->{beverbose};
+		    "$oldname->$pkgname") if $state->{beverbose};
 		my $d = OpenBSD::RequiredBy->new($pkgname);
 		for my $dep (@{$o->{wantlist}}) {
 			if (defined $set->{older}->{$dep}) {
@@ -409,7 +409,7 @@ sub adjust_old_dependency_on
 			$state->say("\t$dep") if $state->{beverbose};
 			$d->add($dep);
 			OpenBSD::Replace::adjust_dependency($dep, 
-			    $oldname, $pkgname);
+			    $oldname, $pkgname) if $oldname ne $pkgname;
 		}
 	}
 }
