@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.3 2008/06/26 05:42:12 ray Exp $ */
+/*	$OpenBSD: loadfile_machdep.h,v 1.4 2009/11/30 05:19:18 miod Exp $ */
 /*	$NetBSD: loadfile_machdep.h,v 1.2 2001/10/31 17:20:49 thorpej Exp $	 */
 
 /*-
@@ -47,4 +47,6 @@
 #define PROGRESS(a)		(void) printf a
 #define ALLOC(a)		alloc(a)
 #define FREE(a, b)		free(a, b)
-#define OKMAGIC(a)		((a) == OMAGIC)
+
+extern int check_phdr(void *);
+#define	CHECK_PHDR(sz,phdr)	check_phdr(phdr)
