@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.464 2009/11/10 09:10:11 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.465 2009/11/30 18:51:57 sthen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2009 $
+.Dd $Mdocdate: November 30 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -638,11 +638,6 @@ is not the last matching rule.
 Further matching rules can replace the tag with a
 new one but will not remove a previously applied tag.
 A packet is only ever assigned one tag at a time.
-Packet tagging can be done during
-.Ar nat-to
-or
-.Ar rdr-to
-in addition to filter rules.
 Tags take the same macros as labels (see above).
 .Pp
 .It Ar tagged Aq Ar string
