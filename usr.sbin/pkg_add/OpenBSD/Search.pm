@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.16 2009/11/10 14:37:20 espie Exp $
+# $OpenBSD: Search.pm,v 1.17 2009/11/30 18:45:14 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -153,7 +153,7 @@ sub filter_locations
 
 sub more_recent_than
 {
-	my ($class, $name) = @_;
+	my ($class, $name, $rfound) = @_;
 	require OpenBSD::PackageName;
 
 	my $f = OpenBSD::PackageName->from_string($name);
@@ -165,6 +165,9 @@ sub {
 	for my $e (@$l) {
 		if ($f->{version}->compare($e->pkgname->{version}) <= 0) {
 			push(@$r, $e);
+		}
+		if (ref $rfound) {
+			$$rfound = 1;
 		}
 	}
 	return $r;
