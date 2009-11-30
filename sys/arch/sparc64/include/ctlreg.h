@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.22 2009/01/20 14:48:32 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.23 2009/11/30 22:59:29 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -583,6 +583,7 @@ sparc_rdpr_ ## name()							\
 }
 
 GEN_RD(asi);
+GEN_RD(fprs);
 GEN_RD(asr22);
 GEN_RD(sys_tick);
 GEN_RD(sys_tick_cmpr);
