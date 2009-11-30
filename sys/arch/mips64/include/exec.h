@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.2 2009/11/19 20:13:51 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.3 2009/11/30 18:41:13 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
@@ -29,7 +29,7 @@
 #ifndef _MIPS64_EXEC_H_
 #define _MIPS64_EXEC_H_
 
-#define	__LDPGSZ	4096
+#define	__LDPGSZ	16384
 
 /*
  *  Define what exec "formats" we should handle.
