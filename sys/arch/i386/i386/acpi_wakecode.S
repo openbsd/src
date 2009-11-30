@@ -79,7 +79,7 @@
 
 	.text
 	.code16
-	.align 4,0
+	.align 4
 	.global _C_LABEL(acpi_real_mode_resume)
 	.global _C_LABEL(acpi_protected_mode_resume)
 	.global _C_LABEL(acpi_resume_end)
@@ -347,7 +347,7 @@ _ACPI_TRMP_OFFSET(tmp_gdt)
 	.word	tmp_gdt_end - tmp_gdtable
 	.long	tmp_gdtable
 
-	.align 8,0
+	.align 8
 _ACPI_TRMP_LABEL(tmp_gdtable)
 	/*
 	 * null
@@ -387,7 +387,7 @@ _ACPI_TRMP_LABEL(tmp_gdtable)
 	.byte	0, 0x93, 0xcf, 0
 _ACPI_TRMP_LABEL(tmp_gdt_end)
 
-	.align 8, 0
+	.align 8
 _ACPI_TRMP_OFFSET(clean_idt)
 	.word	0xffff
 	.long	0
@@ -397,7 +397,7 @@ _ACPI_TRMP_OFFSET(clean_gdt)
 	.word	clean_gdt_end - clean_gdtable
 	.long	clean_gdtable
 
-	.align 8, 0
+	.align 8
 _ACPI_TRMP_LABEL(clean_gdtable)
 	.word	0, 0
 	.byte	0, 0, 0, 0

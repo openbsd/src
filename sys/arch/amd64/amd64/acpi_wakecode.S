@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.7 2009/11/26 00:14:11 mlarkin Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.8 2009/11/30 16:41:04 pirofti Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -81,7 +81,7 @@
 
 	.text
 	.code16
-	.align 4,0
+	.align 4
 	.global _C_LABEL(acpi_real_mode_resume)
 	.global _C_LABEL(acpi_protected_mode_resume)
 	.global _C_LABEL(acpi_long_mode_resume)
@@ -404,7 +404,7 @@ _ACPI_TRMP_OFFSET(tmp_gdt)
 	.word	tmp_gdt_end - tmp_gdtable
 	.long	tmp_gdtable
 
-	.align 8,0
+	.align 8
 _ACPI_TRMP_LABEL(tmp_gdtable)
 	/*
 	 * null
@@ -444,7 +444,7 @@ _ACPI_TRMP_LABEL(tmp_gdtable)
 	.byte	0, 0x93, 0xcf, 0
 _ACPI_TRMP_LABEL(tmp_gdt_end)
 
-	.align 8, 0
+	.align 8
 _ACPI_TRMP_OFFSET(clean_idt)
 	.word	0xffff
 	.long	0
@@ -454,7 +454,7 @@ _ACPI_TRMP_OFFSET(clean_gdt)
 	.word	clean_gdt_end - clean_gdtable
 	.long	clean_gdtable
 
-	.align 8, 0
+	.align 8
 _ACPI_TRMP_LABEL(clean_gdtable)
 	.word	0, 0
 	.byte	0, 0, 0, 0
@@ -471,7 +471,7 @@ _ACPI_TRMP_LABEL(tmp_gdt64)
 	.word 	tmp_gdt64_end - tmp_gdtable64
 	.long	tmp_gdtable64
 
-	.align 8,0
+	.align 8
 _ACPI_TRMP_LABEL(tmp_gdtable64)
 	.quad	0x0000000000000000
 	.quad	0x00af9a000000ffff
