@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.30 2009/11/29 07:54:18 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.31 2009/11/30 16:15:13 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -66,6 +66,7 @@ sub cleanup
 		$h->cleanup($error);
 	}
 	$self->{error} //= $error;
+	$self->{finished} = 1;
 }
 
 sub has_error

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.405 2009/11/30 15:49:52 espie Exp $
+# $OpenBSD: pkg_add,v 1.406 2009/11/30 16:15:13 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -165,7 +165,7 @@ sub complete
 
 	if (!$set->{installable}) {
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
-		$set->{finished} = 1;
+		$state->tracker->mark_cant_update($set);
 	}
 	return 1;
 }
@@ -542,6 +542,7 @@ sub install_set
 				$handle->error_message, "\n"); 
 			$bad++;
 			$set->cleanup($handle->has_error);
+			$state->tracker->mark_cant_update($set);
 			return ();
 		}
 
@@ -550,6 +551,7 @@ sub install_set
 				$state->log($handle->pkgname, " is not for the right architecture");
 				if (!$defines{arch}) {
 					$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+					$state->tracker->mark_cant_update($set);
 					return ();
 				}
 			}
@@ -602,11 +604,8 @@ sub install_set
 #		}
 #	}
 	really_add($set, $state);
-	for my $handle ($set->newer) {
-		$handle->cleanup;
-	}
+	$set->cleanup;
 	$state->tracker->mark_installed($set);
-	$set->{finished} = 1;
 	return ();
 }
 
