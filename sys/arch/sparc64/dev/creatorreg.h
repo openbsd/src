@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorreg.h,v 1.8 2003/06/20 19:54:37 miod Exp $	*/
+/*	$OpenBSD: creatorreg.h,v 1.9 2009/11/30 23:32:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -242,6 +242,13 @@
 #define	FFB_FBC_UCSR		0x900	/* User Control & Status */
 #define	FFB_FBC_MER		0x980
 
+#define	FFB_FBC_FEM		0x1540
+#define	FFB_FBC_SRAMAR		0x1550
+
+#define	FFB_FBC_ASCR		0x10800
+#define	FFB_FBC_KCSR		0x10900
+#define	FFB_FBC_SRAM36		0x114c0
+
 #define	FFB_FBC_WB_A		0x20000000
 #define	FFB_FBC_WM_COMBINED	0x00080000
 #define	FFB_FBC_RB_A		0x00004000
@@ -287,6 +294,9 @@
 #define	FBC_UCSR_RP_BUSY	0x02000000
 #define	FBC_UCSR_READ_ERR	0x40000000
 #define	FBC_UCSR_FIFO_OVFL	0x80000000
+
+#define	FBC_ASCR_STOP		0x00020000
+#define	FBC_ASCR_RESTART	0x00040000
 
 #define	FBC_DRAWOP_DOT		0x00
 #define	FBC_DRAWOP_AADOT	0x01

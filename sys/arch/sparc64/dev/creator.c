@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.42 2009/09/05 14:09:35 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.43 2009/11/30 23:32:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -32,7 +32,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/timeout.h>
+#include <sys/malloc.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -50,6 +50,7 @@ int	creator_match(struct device *, void *, void *);
 void	creator_attach(struct device *, struct device *, void *);
 int	creator_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t creator_mmap(void *, off_t, int);
+
 void	creator_ras_fifo_wait(struct creator_softc *, int);
 void	creator_ras_wait(struct creator_softc *);
 void	creator_ras_init(struct creator_softc *);
@@ -58,9 +59,13 @@ int	creator_ras_erasecols(void *, int, int, int, long int);
 int	creator_ras_eraserows(void *, int, int, long int);
 void	creator_ras_fill(struct creator_softc *);
 void	creator_ras_setfg(struct creator_softc *, int32_t);
+
 int	creator_setcursor(struct creator_softc *, struct wsdisplay_cursor *);
 int	creator_updatecursor(struct creator_softc *, u_int);
 void	creator_curs_enable(struct creator_softc *, u_int);
+
+void	creator_load_firmware(void *);
+void	creator_load_sram(struct creator_softc *, u_int32_t *, u_int32_t);
 
 struct wsdisplay_accessops creator_accessops = {
 	creator_ioctl,
@@ -190,6 +195,15 @@ creator_attach(parent, self, aux)
 		sc->sc_sunfb.sf_ro.ri_ops.erasecols = creator_ras_erasecols;
 		sc->sc_sunfb.sf_ro.ri_ops.copyrows = creator_ras_copyrows;
 		creator_ras_init(sc);
+
+		/*
+		 * Elite3D cards need a firmware for accelerated X to
+		 * work.  Console framebuffer acceleration will work
+		 * without it though, so doing this late should be
+		 * fine.
+		 */
+		if (sc->sc_type == FFB_AFB) 
+			mountroothook_establish(creator_load_firmware, sc);
 	}
 
 	if (sc->sc_console)
@@ -717,5 +731,129 @@ creator_ras_setfg(sc, fg)
 		return;
 	sc->sc_fg_cache = fg;
 	FBC_WRITE(sc, FFB_FBC_FG, fg);
+	creator_ras_wait(sc);
+}
+
+struct creator_firmware {
+	char		fw_ident[8];
+	u_int32_t	fw_size;
+	u_int32_t	fw_reserved[2];
+	u_int32_t	fw_ucode[0];
+};
+
+#define CREATOR_FIRMWARE_REV	0x101
+
+void
+creator_load_firmware(void *vsc)
+{
+	struct creator_softc *sc = vsc;
+	struct creator_firmware *fw;
+	u_int32_t ascr;
+	size_t buflen;
+	u_char *buf;
+	int error;
+
+	error = loadfirmware("afb", &buf, &buflen);
+	if (error) {
+		printf("%s: error %d, could not read firmware %s\n",
+		       sc->sc_sunfb.sf_dev.dv_xname, error, "afb");
+		return;
+	}
+
+	fw = (struct creator_firmware *)buf;
+	if (sizeof(*fw) > buflen ||
+	    fw->fw_size * sizeof(u_int32_t) > (buflen - sizeof(*fw))) {
+		printf("%s: corrupt firmware\n", sc->sc_sunfb.sf_dev.dv_xname);
+		free(buf, M_DEVBUF);
+		return;
+	}
+
+	printf("%s: firmware rev %d.%d.%d\n", sc->sc_sunfb.sf_dev.dv_xname,
+	       (fw->fw_ucode[CREATOR_FIRMWARE_REV] >> 16) & 0xff,
+	       (fw->fw_ucode[CREATOR_FIRMWARE_REV] >> 8) & 0xff,
+	       fw->fw_ucode[CREATOR_FIRMWARE_REV] & 0xff);
+
+	ascr = FBC_READ(sc, FFB_FBC_ASCR);
+
+	/* Stop all floats. */
+	FBC_WRITE(sc, FFB_FBC_FEM, ascr & 0x3f);
+	FBC_WRITE(sc, FFB_FBC_ASCR, FBC_ASCR_STOP);
+
+	creator_ras_wait(sc);
+
+	/* Load firmware into all secondary floats. */
+	if (ascr & 0x3e) {
+		FBC_WRITE(sc, FFB_FBC_FEM, ascr & 0x3e);
+		creator_load_sram(sc, fw->fw_ucode, fw->fw_size);
+	}
+
+	/* Load firmware into primary float. */
+	FBC_WRITE(sc, FFB_FBC_FEM, ascr & 0x01);
+	creator_load_sram(sc, fw->fw_ucode, fw->fw_size);
+
+	/* Restart all floats. */
+	FBC_WRITE(sc, FFB_FBC_FEM, ascr & 0x3f);
+	FBC_WRITE(sc, FFB_FBC_ASCR, FBC_ASCR_RESTART);
+
+	creator_ras_wait(sc);
+
+	free(buf, M_DEVBUF);
+}
+
+void
+creator_load_sram(struct creator_softc *sc, u_int32_t *ucode, u_int32_t size)
+{
+	uint64_t pstate, fprs;
+	caddr_t sram;
+
+	sram = bus_space_vaddr(sc->sc_bt, sc->sc_fbc_h) + FFB_FBC_SRAM36;
+
+	/*
+	 * Apparently, loading the firmware into SRAM needs to be done
+	 * using block copies.  And block copies use the
+	 * floating-point registers.  Generally, using the FPU in the
+	 * kernel is verboten.  But since we load the firmware before
+	 * userland processes are started, thrashing the
+	 * floating-point registers is fine.  We do need to enable the
+	 * FPU before we access them though, otherwise we'll trap.
+	 */
+	pstate = sparc_rdpr(pstate);
+	sparc_wrpr(pstate, pstate | PSTATE_PEF, 0);
+	fprs = sparc_rd(fprs);
+	sparc_wr(fprs, FPRS_FEF, 0);
+
+	FBC_WRITE(sc, FFB_FBC_SRAMAR, 0);
+
+	while (size > 0) {
+		creator_ras_fifo_wait(sc, 16);
+
+		__asm__ __volatile__("ld	[%0 + 0x00], %%f1\n\t"
+				     "ld	[%0 + 0x04], %%f0\n\t"
+				     "ld	[%0 + 0x08], %%f3\n\t"
+				     "ld	[%0 + 0x0c], %%f2\n\t"
+				     "ld	[%0 + 0x10], %%f5\n\t"
+				     "ld	[%0 + 0x14], %%f4\n\t"
+				     "ld	[%0 + 0x18], %%f7\n\t"
+				     "ld	[%0 + 0x1c], %%f6\n\t"
+				     "ld	[%0 + 0x20], %%f9\n\t"
+				     "ld	[%0 + 0x24], %%f8\n\t"
+				     "ld	[%0 + 0x28], %%f11\n\t"
+				     "ld	[%0 + 0x2c], %%f10\n\t"
+				     "ld	[%0 + 0x30], %%f13\n\t"
+				     "ld	[%0 + 0x34], %%f12\n\t"
+				     "ld	[%0 + 0x38], %%f15\n\t"
+				     "ld	[%0 + 0x3c], %%f14\n\t"
+				     "membar	#Sync\n\t"
+				     "stda	%%f0, [%1] 240\n\t"
+				     "membar	#Sync"
+				     : : "r" (ucode), "r" (sram));
+
+		ucode += 16;
+		size -= 16;
+	}
+
+	sparc_wr(fprs, fprs, 0);
+	sparc_wrpr(pstate, pstate, 0);
+
 	creator_ras_wait(sc);
 }
