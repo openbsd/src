@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.188 2009/11/26 23:13:47 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.189 2009/11/30 16:44:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1647,7 +1647,7 @@ void	 input_mouse(struct window_pane *, struct mouse_event *);
 
 /* xterm-keys.c */
 char 	*xterm_keys_lookup(int);
-int	 xterm_keys_find(const char *, size_t, size_t *);
+int	 xterm_keys_find(const char *, size_t, size_t *, int *);
 
 /* colour.c */
 void	 colour_set_fg(struct grid_cell *, int);
