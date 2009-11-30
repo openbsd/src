@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.286 2009/10/11 16:53:13 sthen Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.287 2009/11/30 19:08:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -127,9 +127,10 @@
 const struct bge_revision * bge_lookup_rev(u_int32_t);
 int bge_probe(struct device *, void *, void *);
 void bge_attach(struct device *, struct device *, void *);
+int bge_activate(struct device *, int);
 
 struct cfattach bge_ca = {
-	sizeof(struct bge_softc), bge_probe, bge_attach
+	sizeof(struct bge_softc), bge_probe, bge_attach, NULL, bge_activate
 };
 
 struct cfdriver bge_cd = {
@@ -2257,6 +2258,20 @@ fail_2:
 
 fail_1:
 	bus_space_unmap(sc->bge_btag, sc->bge_bhandle, size);
+}
+
+int
+bge_activate(struct device *self, int act)
+{
+	switch(act) {
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		bge_power(PWR_RESUME, self);
+		break;
+	}
+
+	return (0);
 }
 
 void
