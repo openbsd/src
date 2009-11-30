@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.5 2006/09/18 21:15:33 mpf Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.6 2009/11/30 16:33:20 canacar Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -285,7 +285,7 @@ badprobe(bios_memmap_t *mp)
 	return ++mp;
 }
 
-bios_memmap_t bios_memmap[32];	/* This is easier */
+bios_memmap_t bios_memmap[64];	/* This is easier */
 #ifndef _TEST
 void
 memprobe(void)
