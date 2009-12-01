@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.37 2009/04/21 15:25:52 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.38 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,22 +81,16 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	/* we need clean sockaddr... no ports set */
 	bzero(&ssrc, sizeof(ssrc));
 	bzero(&smask, sizeof(smask));
-	switch (src->af) {
-	case AF_INET:
-		((struct sockaddr_in *)&ssrc)->sin_addr = src->v4;
-		ssrc.ss_len = sizeof(struct sockaddr_in);
-		ssrc.ss_family = AF_INET;
+	memcpy(addr2sa(src, 0), &ssrc, sizeof(ssrc));
+	switch (src->aid) {
+	case AID_INET:
 		memset(&((struct sockaddr_in *)&smask)->sin_addr, 0xff, 32/8);
 		break;
-	case AF_INET6:
-		memcpy(&((struct sockaddr_in6 *)&ssrc)->sin6_addr,
-		    &src->v6, sizeof(struct in6_addr));
-		ssrc.ss_len = sizeof(struct sockaddr_in6);
-		ssrc.ss_family = AF_INET6;
+	case AID_INET6:
 		memset(&((struct sockaddr_in6 *)&smask)->sin6_addr, 0xff,
 		    128/8);
 		break;
-	case 0:
+	case AID_UNSPEC:
 		ssrc.ss_len = sizeof(struct sockaddr);
 		break;
 	default:
@@ -107,22 +101,16 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 
 	bzero(&sdst, sizeof(sdst));
 	bzero(&dmask, sizeof(dmask));
-	switch (dst->af) {
-	case AF_INET:
-		((struct sockaddr_in *)&sdst)->sin_addr = dst->v4;
-		sdst.ss_len = sizeof(struct sockaddr_in);
-		sdst.ss_family = AF_INET;
+	memcpy(addr2sa(dst, 0), &sdst, sizeof(sdst));
+	switch (dst->aid) {
+	case AID_INET:
 		memset(&((struct sockaddr_in *)&dmask)->sin_addr, 0xff, 32/8);
 		break;
-	case AF_INET6:
-		memcpy(&((struct sockaddr_in6 *)&sdst)->sin6_addr,
-		    &dst->v6, sizeof(struct in6_addr));
-		sdst.ss_len = sizeof(struct sockaddr_in6);
-		sdst.ss_family = AF_INET6;
+	case AID_INET6:
 		memset(&((struct sockaddr_in6 *)&dmask)->sin6_addr, 0xff,
 		    128/8);
 		break;
-	case 0:
+	case AID_UNSPEC:
 		sdst.ss_len = sizeof(struct sockaddr);
 		break;
 	default:
@@ -220,8 +208,8 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		sa_dst.sadb_address_exttype = SADB_X_EXT_DST_FLOW;
 
 		bzero(&smask, sizeof(smask));
-		switch (src->af) {
-		case AF_INET:
+		switch (src->aid) {
+		case AID_INET:
 			smask.ss_len = sizeof(struct sockaddr_in);
 			smask.ss_family = AF_INET;
 			memset(&((struct sockaddr_in *)&smask)->sin_addr,
@@ -233,7 +221,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 				    htons(0xffff);
 			}
 			break;
-		case AF_INET6:
+		case AID_INET6:
 			smask.ss_len = sizeof(struct sockaddr_in6);
 			smask.ss_family = AF_INET6;
 			memset(&((struct sockaddr_in6 *)&smask)->sin6_addr,
@@ -247,8 +235,8 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 			break;
 		}
 		bzero(&dmask, sizeof(dmask));
-		switch (dst->af) {
-		case AF_INET:
+		switch (dst->aid) {
+		case AID_INET:
 			dmask.ss_len = sizeof(struct sockaddr_in);
 			dmask.ss_family = AF_INET;
 			memset(&((struct sockaddr_in *)&dmask)->sin_addr,
@@ -260,7 +248,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 				    htons(0xffff);
 			}
 			break;
-		case AF_INET6:
+		case AID_INET6:
 			dmask.ss_len = sizeof(struct sockaddr_in6);
 			dmask.ss_family = AF_INET6;
 			memset(&((struct sockaddr_in6 *)&dmask)->sin6_addr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.58 2009/11/26 13:40:43 henning Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.59 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -66,7 +66,7 @@ rde_filter(u_int16_t ribid, struct rde_aspath **new, struct filter_head *rules,
 					/* ... and use the copy from now on */
 					asp = *new;
 				}
-				rde_apply_set(asp, &f->set, prefix->af,
+				rde_apply_set(asp, &f->set, prefix->aid,
 				    from, peer);
 			}
 			if (f->action != ACTION_NONE)
@@ -80,7 +80,7 @@ rde_filter(u_int16_t ribid, struct rde_aspath **new, struct filter_head *rules,
 
 void
 rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
-    sa_family_t af, struct rde_peer *from, struct rde_peer *peer)
+    u_int8_t aid, struct rde_peer *from, struct rde_peer *peer)
 {
 	struct filter_set	*set;
 	u_char			*np;
@@ -174,7 +174,7 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 		case ACTION_SET_NEXTHOP_NOMODIFY:
 		case ACTION_SET_NEXTHOP_SELF:
 			nexthop_modify(asp, &set->action.nexthop, set->type,
-			    af);
+			    aid);
 			break;
 		case ACTION_SET_COMMUNITY:
 			switch (set->action.community.as) {
@@ -295,8 +295,8 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 			return (0);
 	}
 
-	if (f->match.prefix.addr.af != 0) {
-		if (f->match.prefix.addr.af != prefix->af)
+	if (f->match.prefix.addr.aid != 0) {
+		if (f->match.prefix.addr.aid != prefix->aid)
 			/* don't use IPv4 rules for IPv6 and vice versa */
 			return (0);
 
@@ -332,7 +332,7 @@ rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
 	} else if (f->match.prefixlen.op != OP_NONE) {
 		/* only prefixlen without a prefix */
 
-		if (f->match.prefixlen.af != prefix->af)
+		if (f->match.prefixlen.aid != prefix->aid)
 			/* don't use IPv4 rules for IPv6 and vice versa */
 			return (0);
 
@@ -493,7 +493,7 @@ filterset_cmp(struct filter_set *a, struct filter_set *b)
 		 * reject it at the same time. Allow one IPv4 and one IPv6
 		 * per filter set or only one of the other nexthop modifiers.
 		 */
-		return (a->action.nexthop.af - b->action.nexthop.af);
+		return (a->action.nexthop.aid - b->action.nexthop.aid);
 	}
 
 	/* equal */

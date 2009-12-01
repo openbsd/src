@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.70 2009/10/30 15:11:00 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.71 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -27,9 +27,9 @@
 
 in_addr_t	up_get_nexthop(struct rde_peer *, struct rde_aspath *);
 int		up_generate_mp_reach(struct rde_peer *, struct update_attr *,
-		    struct rde_aspath *, sa_family_t);
+		    struct rde_aspath *, u_int8_t);
 int		up_generate_attr(struct rde_peer *, struct update_attr *,
-		    struct rde_aspath *, sa_family_t);
+		    struct rde_aspath *, u_int8_t);
 
 /* update stuff. */
 struct update_prefix {
@@ -120,19 +120,19 @@ up_prefix_cmp(struct update_prefix *a, struct update_prefix *b)
 {
 	int	i;
 
-	if (a->prefix.af < b->prefix.af)
+	if (a->prefix.aid < b->prefix.aid)
 		return (-1);
-	if (a->prefix.af > b->prefix.af)
+	if (a->prefix.aid > b->prefix.aid)
 		return (1);
 
-	switch (a->prefix.af) {
-	case AF_INET:
+	switch (a->prefix.aid) {
+	case AID_INET:
 		if (ntohl(a->prefix.v4.s_addr) < ntohl(b->prefix.v4.s_addr))
 			return (-1);
 		if (ntohl(a->prefix.v4.s_addr) > ntohl(b->prefix.v4.s_addr))
 			return (1);
 		break;
-	case AF_INET6:
+	case AID_INET6:
 		i = memcmp(&a->prefix.v6, &b->prefix.v6,
 		    sizeof(struct in6_addr));
 		if (i > 0)
@@ -174,12 +174,12 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 	struct uplist_attr	*upl = NULL;
 	struct uplist_prefix	*wdl = NULL;
 
-	switch (p->prefix.af) {
-	case AF_INET:
+	switch (p->prefix.aid) {
+	case AID_INET:
 		upl = &peer->updates;
 		wdl = &peer->withdraws;
 		break;
-	case AF_INET6:
+	case AID_INET6:
 		upl = &peer->updates6;
 		wdl = &peer->withdraws6;
 		break;
@@ -276,13 +276,14 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		fatalx("try to send out a looped path");
 
 	pt_getaddr(p->prefix, &addr);
-	switch (addr.af) {
-	case AF_INET:
+	switch (addr.aid) {
+	case AID_INET:
+		/* XXX is this correct? */
 		if (peer->capa_announced.mp_v4 == SAFI_NONE &&
 		    peer->capa_received.mp_v6 != SAFI_NONE)
 			return (-1);
 		break;
-	case AF_INET6:
+	case AID_INET6:
 		if (peer->capa_announced.mp_v6 == SAFI_NONE)
 			return (-1);
 		break;
@@ -364,7 +365,7 @@ up_generate(struct rde_peer *peer, struct rde_aspath *asp,
 		if (ua == NULL)
 			fatal("up_generate");
 
-		if (up_generate_attr(peer, ua, asp, addr->af) == -1) {
+		if (up_generate_attr(peer, ua, asp, addr->aid) == -1) {
 			log_warnx("generation of bgp path attributes failed");
 			free(ua);
 			return (-1);
@@ -473,7 +474,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 
 	/* filter as usual */
 	bzero(&addr, sizeof(addr));
-	addr.af = af;
+	af2aid(af, 0, &addr.aid);
 
 	if (rde_filter(peer->ribid, &fasp, rules, peer, asp, &addr, 0, NULL,
 	    DIR_OUT) == ACTION_DENY) {
@@ -553,12 +554,12 @@ up_get_nexthop(struct rde_peer *peer, struct rde_aspath *a)
 
 int
 up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
-    struct rde_aspath *a, sa_family_t af)
+    struct rde_aspath *a, u_int8_t aid)
 {
 	u_int16_t	tmp;
 
-	switch (af) {
-	case AF_INET6:
+	switch (aid) {
+	case AID_INET6:
 		upa->mpattr_len = 21; /* AFI + SAFI + NH LEN + NH + Reserved */
 		upa->mpattr = malloc(upa->mpattr_len);
 		if (upa->mpattr == NULL)
@@ -573,7 +574,7 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 		if (peer->conf.ebgp == 0) {
 			/* ibgp */
 			if (a->nexthop == NULL ||
-			    (a->nexthop->exit_nexthop.af == AF_INET6 &&
+			    (a->nexthop->exit_nexthop.aid == AID_INET6 &&
 			    memcmp(&a->nexthop->exit_nexthop.v6,
 			    &peer->remote_addr.v6, sizeof(struct in6_addr))))
 				memcpy(&upa->mpattr[4], &peer->local_v6_addr.v6,
@@ -613,7 +614,7 @@ up_generate_mp_reach(struct rde_peer *peer, struct update_attr *upa,
 
 int
 up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
-    struct rde_aspath *a, sa_family_t af)
+    struct rde_aspath *a, u_int8_t aid)
 {
 	struct attr	*oa, *newaggr = NULL;
 	u_char		*pdata;
@@ -645,8 +646,8 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	wlen += r; len -= r;
 	free(pdata);
 
-	switch (af) {
-	case AF_INET:
+	switch (aid) {
+	case AID_INET:
 		nexthop = up_get_nexthop(peer, a);
 		if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
 		    ATTR_NEXTHOP, &nexthop, 4)) == -1)
@@ -1052,4 +1053,3 @@ up_dump_mp_reach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	*len = datalen + 4;
 	return (buf + wpos);
 }
-

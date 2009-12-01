@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.150 2009/11/02 20:38:15 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.151 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -717,7 +717,7 @@ send_nexthop_update(struct kroute_nexthop *msg)
 {
 	char	*gw = NULL;
 
-	if (msg->gateway.af)
+	if (msg->gateway.aid)
 		if (asprintf(&gw, ": via %s",
 		    log_addr(&msg->gateway)) == -1) {
 			log_warn("send_nexthop_update");
@@ -727,7 +727,7 @@ send_nexthop_update(struct kroute_nexthop *msg)
 	log_info("nexthop %s now %s%s%s", log_addr(&msg->nexthop),
 	    msg->valid ? "valid" : "invalid",
 	    msg->connected ? ": directly connected" : "",
-	    msg->gateway.af ? gw : "");
+	    msg->gateway.aid ? gw : "");
 
 	free(gw);
 
@@ -768,12 +768,12 @@ bgpd_redistribute(int type, struct kroute *kr, struct kroute6 *kr6)
 		fatalx("bgpd_redistribute: unable to redistribute v4 and v6"
 		    "together");
 	if (kr != NULL) {
-		net.prefix.af = AF_INET;
+		net.prefix.aid = AID_INET;
 		net.prefix.v4.s_addr = kr->prefix.s_addr;
 		net.prefixlen = kr->prefixlen;
 	}
 	if (kr6 != NULL) {
-		net.prefix.af = AF_INET6;
+		net.prefix.aid = AID_INET6;
 		memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
 		net.prefixlen = kr6->prefixlen;
 	}

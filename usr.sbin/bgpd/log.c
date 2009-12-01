@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.51 2009/11/02 20:38:15 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.52 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,8 +43,9 @@ log_fmt_peer(const struct peer_config *peer)
 	char		*pfmt, *p;
 
 	ip = log_addr(&peer->remote_addr);
-	if ((peer->remote_addr.af == AF_INET && peer->remote_masklen != 32) ||
-	    (peer->remote_addr.af == AF_INET6 && peer->remote_masklen != 128)) {
+	if ((peer->remote_addr.aid == AID_INET && peer->remote_masklen != 32) ||
+	    (peer->remote_addr.aid == AID_INET6 &&
+	    peer->remote_masklen != 128)) {
 		if (asprintf(&p, "%s/%u", ip, peer->remote_masklen) == -1)
 			fatal(NULL);
 	} else {

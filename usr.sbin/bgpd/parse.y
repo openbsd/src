@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.240 2009/11/26 13:40:43 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.241 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -105,7 +105,7 @@ struct filter_match_l {
 	struct filter_match	 m;
 	struct filter_prefix_l	*prefix_l;
 	struct filter_as_l	*as_l;
-	sa_family_t		 af;
+	u_int8_t		 aid;
 } fmopts;
 
 struct peer	*alloc_peer(void);
@@ -324,7 +324,7 @@ conf_main	: AS as4number		{
 			conf->short_as = $3;
 		}
 		| ROUTERID address		{
-			if ($2.af != AF_INET) {
+			if ($2.aid != AID_INET) {
 				yyerror("router-id must be an IPv4 address");
 				YYERROR;
 			}
@@ -348,36 +348,13 @@ conf_main	: AS as4number		{
 		}
 		| LISTEN ON address	{
 			struct listen_addr	*la;
-			struct sockaddr_in	*in;
-			struct sockaddr_in6	*in6;
 
 			if ((la = calloc(1, sizeof(struct listen_addr))) ==
 			    NULL)
 				fatal("parse conf_main listen on calloc");
 
 			la->fd = -1;
-			la->sa.ss_family = $3.af;
-			switch ($3.af) {
-			case AF_INET:
-				la->sa.ss_len = sizeof(struct sockaddr_in);
-				in = (struct sockaddr_in *)&la->sa;
-				in->sin_addr.s_addr = $3.v4.s_addr;
-				in->sin_port = htons(BGP_PORT);
-				break;
-			case AF_INET6:
-				la->sa.ss_len = sizeof(struct sockaddr_in6);
-				in6 = (struct sockaddr_in6 *)&la->sa;
-				memcpy(&in6->sin6_addr, &$3.v6,
-				    sizeof(in6->sin6_addr));
-				in6->sin6_port = htons(BGP_PORT);
-				break;
-			default:
-				free(la);
-				yyerror("king bula does not like family %u",
-				    $3.af);
-				YYERROR;
-			}
-
+			memcpy(addr2sa(&$3, BGP_PORT), &la->sa, sizeof(la->sa));
 			TAILQ_INSERT_TAIL(listen_addrs, la, entry);
 		}
 		| FIBUPDATE yesno		{
@@ -642,11 +619,11 @@ address		: STRING		{
 			}
 			free($1);
 
-			if (($$.af == AF_INET && len != 32) ||
-			    ($$.af == AF_INET6 && len != 128)) {
+			if (($$.aid == AID_INET && len != 32) ||
+			    ($$.aid == AID_INET6 && len != 128)) {
 				/* unreachable */
 				yyerror("got prefixlen %u, expected %u",
-				    len, $$.af == AF_INET ? 32 : 128);
+				    len, $$.aid == AID_INET ? 32 : 128);
 				YYERROR;
 			}
 		}
@@ -693,7 +670,7 @@ prefix		: STRING '/' NUMBER	{
 
 addrspec	: address	{
 			memcpy(&$$.prefix, &$1, sizeof(struct bgpd_addr));
-			if ($$.prefix.af == AF_INET)
+			if ($$.prefix.aid == AID_INET)
 				$$.len = 32;
 			else
 				$$.len = 128;
@@ -717,17 +694,17 @@ neighbor	: {	curpeer = new_peer(); }
 			memcpy(&curpeer->conf.remote_addr, &$3.prefix,
 			    sizeof(curpeer->conf.remote_addr));
 			curpeer->conf.remote_masklen = $3.len;
-			if (($3.prefix.af == AF_INET && $3.len != 32) ||
-			    ($3.prefix.af == AF_INET6 && $3.len != 128))
+			if (($3.prefix.aid == AID_INET && $3.len != 32) ||
+			    ($3.prefix.aid == AID_INET6 && $3.len != 128))
 				curpeer->conf.template = 1;
-			switch (curpeer->conf.remote_addr.af) {
-			case AF_INET:
+			switch (curpeer->conf.remote_addr.aid) {
+			case AID_INET:
 				if (curpeer->conf.capabilities.mp_v4 !=
 				    SAFI_ALL)
 					break;
 				curpeer->conf.capabilities.mp_v4 = SAFI_UNICAST;
 				break;
-			case AF_INET6:
+			case AID_INET6:
 				if (curpeer->conf.capabilities.mp_v6 !=
 				    SAFI_ALL)
 					break;
@@ -1115,7 +1092,7 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.reflector_client = 1;
 		}
 		| REFLECTOR address	{
-			if ($2.af != AF_INET) {
+			if ($2.aid != AID_INET) {
 				yyerror("route reflector cluster-id must be "
 				    "an IPv4 address");
 				YYERROR;
@@ -1368,12 +1345,12 @@ filter_prefix_l	: filter_prefix				{ $$ = $1; }
 		;
 
 filter_prefix	: prefix				{
-			if (fmopts.af && fmopts.af != $1.prefix.af) {
+			if (fmopts.aid && fmopts.aid != $1.prefix.aid) {
 				yyerror("rules with mixed address families "
 				    "are not allowed");
 				YYERROR;
 			} else
-				fmopts.af = $1.prefix.af;
+				fmopts.aid = $1.prefix.aid;
 			if (($$ = calloc(1, sizeof(struct filter_prefix_l))) ==
 			    NULL)
 				fatal(NULL);
@@ -1469,18 +1446,18 @@ filter_elm	: filter_prefix_h	{
 			fmopts.prefix_l = $1;
 		}
 		| PREFIXLEN prefixlenop		{
-			if (fmopts.af == 0) {
+			if (fmopts.aid == 0) {
 				yyerror("address family needs to be specified "
 				    "before \"prefixlen\"");
 				YYERROR;
 			}
-			if (fmopts.m.prefixlen.af) {
+			if (fmopts.m.prefixlen.aid) {
 				yyerror("\"prefixlen\" already specified");
 				YYERROR;
 			}
 			memcpy(&fmopts.m.prefixlen, &$2,
 			    sizeof(fmopts.m.prefixlen));
-			fmopts.m.prefixlen.af = fmopts.af;
+			fmopts.m.prefixlen.aid = fmopts.aid;
 		}
 		| filter_as_h		{
 			if (fmopts.as_l != NULL) {
@@ -1503,18 +1480,18 @@ filter_elm	: filter_prefix_h	{
 			free($2);
 		}
 		| IPV4			{
-			if (fmopts.af) {
+			if (fmopts.aid) {
 				yyerror("address family already specified");
 				YYERROR;
 			}
-			fmopts.af = AF_INET;
+			fmopts.aid = AID_INET;
 		}
 		| IPV6			{
-			if (fmopts.af) {
+			if (fmopts.aid) {
 				yyerror("address family already specified");
 				YYERROR;
 			}
-			fmopts.af = AF_INET6;
+			fmopts.aid = AID_INET6;
 		}
 		;
 
@@ -2771,7 +2748,7 @@ get_id(struct peer *newpeer)
 	struct peer	*p;
 
 	for (p = peer_l_old; p != NULL; p = p->next)
-		if (newpeer->conf.remote_addr.af) {
+		if (newpeer->conf.remote_addr.aid) {
 			if (!memcmp(&p->conf.remote_addr,
 			    &newpeer->conf.remote_addr,
 			    sizeof(p->conf.remote_addr))) {
@@ -2913,8 +2890,8 @@ int
 neighbor_consistent(struct peer *p)
 {
 	/* local-address and peer's address: same address family */
-	if (p->conf.local_addr.af &&
-	    p->conf.local_addr.af != p->conf.remote_addr.af) {
+	if (p->conf.local_addr.aid &&
+	    p->conf.local_addr.aid != p->conf.remote_addr.aid) {
 		yyerror("local-address and neighbor address "
 		    "must be of the same address family");
 		return (-1);
@@ -2925,7 +2902,7 @@ neighbor_consistent(struct peer *p)
 	    p->conf.auth.method == AUTH_IPSEC_IKE_AH ||
 	    p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP ||
 	    p->conf.auth.method == AUTH_IPSEC_MANUAL_AH) &&
-	    !p->conf.local_addr.af) {
+	    !p->conf.local_addr.aid) {
 		yyerror("neighbors with any form of IPsec configured "
 		    "need local-address to be specified");
 		return (-1);
@@ -3012,8 +2989,8 @@ merge_filterset(struct filter_set_head *sh, struct filter_set *s)
 				}
 				break;
 			case ACTION_SET_NEXTHOP:
-				if (s->action.nexthop.af <
-				    t->action.nexthop.af) {
+				if (s->action.nexthop.aid <
+				    t->action.nexthop.aid) {
 					TAILQ_INSERT_BEFORE(t, s, entry);
 					return (0);
 				}

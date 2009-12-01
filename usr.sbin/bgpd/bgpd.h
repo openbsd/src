@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.247 2009/11/26 13:40:43 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.248 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -108,7 +108,7 @@ enum reconf_action {
 };
 
 struct bgpd_addr {
-	sa_family_t	af;
+	u_int8_t	aid;
 	union {
 		struct in_addr		v4;
 		struct in6_addr		v6;
@@ -598,7 +598,7 @@ struct filter_prefix {
 
 struct filter_prefixlen {
 	enum comp_ops		op;
-	sa_family_t		af;
+	u_int8_t		aid;
 	u_int8_t		len_min;
 	u_int8_t		len_max;
 };
@@ -667,22 +667,6 @@ struct rrefresh {
 	u_int8_t	safi;
 };
 
-struct rde_memstats {
-	int64_t		path_cnt;
-	int64_t		prefix_cnt;
-	int64_t		rib_cnt;
-	int64_t		pt4_cnt;
-	int64_t		pt6_cnt;
-	int64_t		nexthop_cnt;
-	int64_t		aspath_cnt;
-	int64_t		aspath_size;
-	int64_t		aspath_refs;
-	int64_t		attr_cnt;
-	int64_t		attr_refs;
-	int64_t		attr_data;
-	int64_t		attr_dcnt;
-};
-
 struct rde_rib {
 	SIMPLEQ_ENTRY(rde_rib)	entry;
 	char			name[PEER_DESCR_LEN];
@@ -693,6 +677,7 @@ SIMPLEQ_HEAD(rib_names, rde_rib);
 extern struct rib_names ribnames;
 
 /* Address Family Numbers as per RFC 1700 */
+#define	AFI_UNSPEC	0
 #define	AFI_IPv4	1
 #define	AFI_IPv6	2
 #define	AFI_ALL		0xffff
@@ -704,8 +689,50 @@ extern struct rib_names ribnames;
 #define	SAFI_MPLS	0x04
 #define	SAFI_ALL	0xff
 
+struct aid {
+	u_int16_t	 afi;
+	sa_family_t	 af;
+	u_int8_t	 safi;
+	char		*name;
+};
+
+extern const struct aid aid_vals[];
+
+#define	AID_UNSPEC	0
+#define	AID_INET	1
+#define	AID_INET6	2
+#define	AID_MAX		3
+
+#define AID_VALS	{				\
+	/* afi, af, safii, name */			\
+	{ AFI_UNSPEC, AF_UNSPEC, SAFI_NONE, "unspec"},	\
+	{ AFI_IPv4, AF_INET, SAFI_UNICAST, "IPv4" },	\
+	{ AFI_IPv6, AF_INET6, SAFI_UNICAST, "IPv6" }	\
+}
+
+#define AID_PTSIZE	{				\
+	0,						\
+	sizeof(struct pt_entry4), 			\
+	sizeof(struct pt_entry6)			\
+}
+
 /* 4-byte magic AS number */
 #define AS_TRANS	23456
+
+struct rde_memstats {
+	int64_t		path_cnt;
+	int64_t		prefix_cnt;
+	int64_t		rib_cnt;
+	int64_t		pt_cnt[AID_MAX];
+	int64_t		nexthop_cnt;
+	int64_t		aspath_cnt;
+	int64_t		aspath_size;
+	int64_t		aspath_refs;
+	int64_t		attr_cnt;
+	int64_t		attr_refs;
+	int64_t		attr_data;
+	int64_t		attr_dcnt;
+};
 
 /* prototypes */
 /* bgpd.c */
@@ -793,5 +820,11 @@ size_t		 aspath_strlen(void *, u_int16_t);
 in_addr_t	 prefixlen2mask(u_int8_t);
 void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
 		    int);
+int		 aid2afi(u_int8_t, u_int16_t *, u_int8_t *);
+int		 afi2aid(u_int16_t, u_int8_t, u_int8_t *);
+sa_family_t	 aid2af(u_int8_t);
+int		 af2aid(sa_family_t, u_int8_t, u_int8_t *);
+struct sockaddr	*addr2sa(struct bgpd_addr *, u_int16_t);
+void		 sa2addr(struct sockaddr *, struct bgpd_addr *);
 
 #endif /* __BGPD_H__ */

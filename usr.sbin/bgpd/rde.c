@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.274 2009/11/11 13:48:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.275 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -452,13 +452,13 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			session_set = NULL;
-			switch (netconf_s.prefix.af) {
-			case AF_INET:
+			switch (netconf_s.prefix.aid) {
+			case AID_INET:
 				if (netconf_s.prefixlen > 32)
 					goto badnet;
 				network_add(&netconf_s, 0);
 				break;
-			case AF_INET6:
+				case AID_INET6:
 				if (netconf_s.prefixlen > 128)
 					goto badnet;
 				network_add(&netconf_s, 0);
@@ -1269,7 +1269,7 @@ bad_flags:
 		a->flags |= F_ATTR_NEXTHOP;
 
 		bzero(&nexthop, sizeof(nexthop));
-		nexthop.af = AF_INET;
+		nexthop.aid = AID_INET;
 		UPD_READ(&nexthop.v4.s_addr, p, plen, 4);
 		/*
 		 * Check if the nexthop is a valid IP address. We consider
@@ -1525,7 +1525,7 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
 			log_warnx("bad multiprotocol nexthop, bad size");
 			return (-1);
 		}
-		nexthop.af = AF_INET6;
+		nexthop.aid = AID_INET6;
 		memcpy(&nexthop.v6.s6_addr, data, 16);
 		asp->nexthop = nexthop_get(&nexthop);
 		/*
@@ -1577,7 +1577,7 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 			plen++;
 		}
 	}
-	prefix->af = AF_INET;
+	prefix->aid = AID_INET;
 	prefix->v4.s_addr = addr.a32.s_addr;
 	*prefixlen = pfxlen;
 
@@ -1608,7 +1608,7 @@ rde_update_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 			plen++;
 		}
 	}
-	prefix->af = AF_INET6;
+	prefix->aid = AID_INET6;
 	*prefixlen = pfxlen;
 
 	return (plen);
@@ -1814,8 +1814,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		/* announced network may have a NULL nexthop */
 		bzero(&rib.true_nexthop, sizeof(rib.true_nexthop));
 		bzero(&rib.exit_nexthop, sizeof(rib.exit_nexthop));
-		rib.true_nexthop.af = p->prefix->af;
-		rib.exit_nexthop.af = p->prefix->af;
+		rib.true_nexthop.aid = p->prefix->aid;
+		rib.exit_nexthop.aid = p->prefix->aid;
 	}
 	pt_getaddr(p->prefix, &rib.prefix);
 	rib.prefixlen = p->prefix->prefixlen;
@@ -1938,7 +1938,7 @@ rde_dump_prefix_upcall(struct rib_entry *re, void *ptr)
 
 	pt = re->prefix;
 	pt_getaddr(pt, &addr);
-	if (addr.af != ctx->req.prefix.af)
+	if (addr.aid != ctx->req.prefix.aid)
 		return;
 	if (ctx->req.prefixlen > pt->prefixlen)
 		return;
@@ -2078,8 +2078,8 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	}
 
 	pt_getaddr(p->prefix, &addr);
-	switch (addr.af) {
-	case AF_INET:
+	switch (addr.aid) {
+	case AID_INET:
 		bzero(&kl, sizeof(kl));
 		kl.kr.prefix.s_addr = addr.v4.s_addr;
 		kl.kr.prefixlen = p->prefix->prefixlen;
@@ -2096,7 +2096,7 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 		    sizeof(kl)) == -1)
 			fatal("imsg_compose error");
 		break;
-	case AF_INET6:
+	case AID_INET6:
 		bzero(&kl6, sizeof(kl6));
 		memcpy(&kl6.kr.prefix, &addr.v6, sizeof(struct in6_addr));
 		kl6.kr.prefixlen = p->prefix->prefixlen;
@@ -2636,16 +2636,9 @@ peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 			if (ifa->ifa_addr->sa_family ==
 			    match->ifa_addr->sa_family)
 				ifa = match;
-			peer->local_v4_addr.af = AF_INET;
-			peer->local_v4_addr.v4.s_addr =
-			    ((struct sockaddr_in *)ifa->ifa_addr)->
-			    sin_addr.s_addr;
+			sa2addr(ifa->ifa_addr, &peer->local_v4_addr);
 			break;
-		}
-	}
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family == AF_INET6 &&
+		} else if (ifa->ifa_addr->sa_family == AF_INET6 &&
 		    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
 			/*
 			 * only accept global scope addresses except explicitly
@@ -2661,13 +2654,7 @@ peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 			    &((struct sockaddr_in6 *)ifa->
 			    ifa_addr)->sin6_addr))
 				continue;
-			peer->local_v6_addr.af = AF_INET6;
-			memcpy(&peer->local_v6_addr.v6,
-			    &((struct sockaddr_in6 *)ifa->ifa_addr)->
-			    sin6_addr, sizeof(struct in6_addr));
-			peer->local_v6_addr.scope_id =
-			    ((struct sockaddr_in6 *)ifa->ifa_addr)->
-			    sin6_scope_id;
+			sa2addr(ifa->ifa_addr, &peer->local_v6_addr);
 			break;
 		}
 	}
@@ -2767,9 +2754,7 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 				peer_send_eor(peer, AFI_IPv4, SAFI_UNICAST);
 		}
 	if (afi == AFI_ALL || afi == AFI_IPv6)
-		if ((safi == SAFI_ALL || safi == SAFI_UNICAST) &&
-		    peer->capa_announced.mp_v6 != SAFI_NONE &&
-		    peer->capa_received.mp_v6 != SAFI_NONE) {
+		if ((safi == SAFI_ALL || safi == SAFI_UNICAST)) {
 			if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(rules_l, peer, AF_INET6);
 			else
@@ -2845,7 +2830,7 @@ network_add(struct network_config *nc, int flagstatic)
 	if (!flagstatic)
 		asp->flags |= F_ANN_DYNAMIC;
 
-	rde_apply_set(asp, &nc->attrset, nc->prefix.af, peerself, peerself);
+	rde_apply_set(asp, &nc->attrset, aid2af(nc->prefix.aid), peerself, peerself);
 	for (i = 1; i < rib_size; i++)
 		path_update(&ribs[i], peerself, asp, &nc->prefix,
 		    nc->prefixlen);
@@ -2880,9 +2865,10 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 	LIST_FOREACH(p, &re->prefix_h, rib_l) {
 		if (!(p->aspath->flags & F_PREFIX_ANNOUNCED))
 			continue;
-		if (p->prefix->af == AF_INET) {
+		pt_getaddr(p->prefix, &addr);
+		switch (addr.aid) {
+		case AID_INET:
 			bzero(&k, sizeof(k));
-			pt_getaddr(p->prefix, &addr);
 			k.prefix.s_addr = addr.v4.s_addr;
 			k.prefixlen = p->prefix->prefixlen;
 			if (p->aspath->peer == peerself)
@@ -2891,10 +2877,9 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 			    ctx->req.pid, -1, &k, sizeof(k)) == -1)
 				log_warnx("network_dump_upcall: "
 				    "imsg_compose error");
-		}
-		if (p->prefix->af == AF_INET6) {
+			break;
+		case AID_INET6:
 			bzero(&k6, sizeof(k6));
-			pt_getaddr(p->prefix, &addr);
 			memcpy(&k6.prefix, &addr.v6, sizeof(k6.prefix));
 			k6.prefixlen = p->prefix->prefixlen;
 			if (p->aspath->peer == peerself)
@@ -2903,6 +2888,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 			    ctx->req.pid, -1, &k6, sizeof(k6)) == -1)
 				log_warnx("network_dump_upcall: "
 				    "imsg_compose error");
+			break;
 		}
 	}
 }
@@ -2949,10 +2935,10 @@ sa_cmp(struct bgpd_addr *a, struct sockaddr *b)
 	struct sockaddr_in	*in_b;
 	struct sockaddr_in6	*in6_b;
 
-	if (a->af != b->sa_family)
+	if (aid2af(a->aid) != b->sa_family)
 		return (1);
 
-	switch (a->af) {
+	switch (b->sa_family) {
 	case AF_INET:
 		in_b = (struct sockaddr_in *)b;
 		if (a->v4.s_addr != in_b->sin_addr.s_addr)

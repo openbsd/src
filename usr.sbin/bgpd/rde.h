@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.122 2009/10/05 12:03:45 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.123 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -221,14 +221,14 @@ struct nexthop {
 /* generic entry without address specific part */
 struct pt_entry {
 	RB_ENTRY(pt_entry)		 pt_e;
-	sa_family_t			 af;
+	u_int8_t			 aid;
 	u_int8_t			 prefixlen;
 	u_int16_t			 refcnt;
 };
 
 struct pt_entry4 {
 	RB_ENTRY(pt_entry)		 pt_e;
-	sa_family_t			 af;
+	u_int8_t			 aid;
 	u_int8_t			 prefixlen;
 	u_int16_t			 refcnt;
 	struct in_addr			 prefix4;
@@ -236,7 +236,7 @@ struct pt_entry4 {
 
 struct pt_entry6 {
 	RB_ENTRY(pt_entry)		 pt_e;
-	sa_family_t			 af;
+	u_int8_t			 aid;
 	u_int8_t			 prefixlen;
 	u_int16_t			 refcnt;
 	struct in6_addr			 prefix6;
@@ -397,7 +397,7 @@ void		 prefix_network_clean(struct rde_peer *, time_t, u_int32_t);
 void		 nexthop_init(u_int32_t);
 void		 nexthop_shutdown(void);
 void		 nexthop_modify(struct rde_aspath *, struct bgpd_addr *,
-		     enum action_types, sa_family_t);
+		     enum action_types, u_int8_t);
 void		 nexthop_link(struct rde_aspath *);
 void		 nexthop_unlink(struct rde_aspath *);
 int		 nexthop_delete(struct nexthop *);
@@ -454,7 +454,7 @@ enum filter_actions rde_filter(u_int16_t, struct rde_aspath **,
 		     struct rde_aspath *, struct bgpd_addr *, u_int8_t,
 		     struct rde_peer *, enum directions);
 void		 rde_apply_set(struct rde_aspath *, struct filter_set_head *,
-		     sa_family_t, struct rde_peer *, struct rde_peer *);
+		     u_int8_t, struct rde_peer *, struct rde_peer *);
 int		 rde_filter_community(struct rde_aspath *, int, int);
 int		 rde_filter_equal(struct filter_head *, struct filter_head *,
 		     struct rde_peer *, enum directions);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.299 2009/10/26 09:27:58 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.300 2009/12/01 14:28:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -87,11 +87,10 @@ void	session_up(struct peer *);
 void	session_down(struct peer *);
 void	session_demote(struct peer *, int);
 
-int			 la_cmp(struct listen_addr *, struct listen_addr *);
-struct peer		*getpeerbyip(struct sockaddr *);
-int			 session_match_mask(struct peer *, struct sockaddr *);
-struct peer		*getpeerbyid(u_int32_t);
-static struct sockaddr	*addr2sa(struct bgpd_addr *, u_int16_t);
+int		 la_cmp(struct listen_addr *, struct listen_addr *);
+struct peer	*getpeerbyip(struct sockaddr *);
+int		 session_match_mask(struct peer *, struct bgpd_addr *);
+struct peer	*getpeerbyid(u_int32_t);
 
 struct bgpd_config	*conf, *nconf = NULL;
 struct bgpd_sysdep	 sysdep;
@@ -1073,7 +1072,7 @@ session_connect(struct peer *peer)
 	if (peer->fd != -1)
 		return (-1);
 
-	if ((peer->fd = socket(peer->conf.remote_addr.af, SOCK_STREAM,
+	if ((peer->fd = socket(aid2af(peer->conf.remote_addr.aid), SOCK_STREAM,
 	    IPPROTO_TCP)) == -1) {
 		log_peer_warn(&peer->conf, "session_connect socket");
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
@@ -1104,8 +1103,7 @@ session_connect(struct peer *peer)
 	peer->wbuf.fd = peer->fd;
 
 	/* if update source is set we need to bind() */
-	if (peer->conf.local_addr.af) {
-		sa = addr2sa(&peer->conf.local_addr, 0);
+	if ((sa = addr2sa(&peer->conf.local_addr, 0)) != NULL) {
 		if (bind(peer->fd, sa, sa->sa_len) == -1) {
 			log_peer_warn(&peer->conf, "session_connect bind");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
@@ -1143,42 +1141,50 @@ session_setup_socket(struct peer *p)
 	int	nodelay = 1;
 	int	bsize;
 
-	if (p->conf.ebgp && p->conf.remote_addr.af == AF_INET) {
-		/* set TTL to foreign router's distance - 1=direct n=multihop
-		   with ttlsec, we always use 255 */
-		if (p->conf.ttlsec) {
-			ttl = 256 - p->conf.distance;
-			if (setsockopt(p->fd, IPPROTO_IP, IP_MINTTL, &ttl,
+	switch (p->conf.remote_addr.aid) {
+	case AID_INET:
+		/* set precedence, see RFC 1771 appendix 5 */
+		if (setsockopt(p->fd, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) ==
+		    -1) {
+			log_peer_warn(&p->conf,
+			    "session_setup_socket setsockopt TOS");
+			return (-1);
+		}
+
+		if (p->conf.ebgp) {
+			/* set TTL to foreign router's distance
+			   1=direct n=multihop with ttlsec, we always use 255 */
+			if (p->conf.ttlsec) {
+				ttl = 256 - p->conf.distance;
+				if (setsockopt(p->fd, IPPROTO_IP, IP_MINTTL,
+				    &ttl, sizeof(ttl)) == -1) {
+					log_peer_warn(&p->conf,
+					    "session_setup_socket: "
+					    "setsockopt MINTTL");
+					return (-1);
+				}
+				ttl = 255;
+			}
+
+			if (setsockopt(p->fd, IPPROTO_IP, IP_TTL, &ttl,
 			    sizeof(ttl)) == -1) {
 				log_peer_warn(&p->conf,
-				    "session_setup_socket setsockopt MINTTL");
+				    "session_setup_socket setsockopt TTL");
 				return (-1);
 			}
-			ttl = 255;
 		}
-
-		if (setsockopt(p->fd, IPPROTO_IP, IP_TTL, &ttl,
-		    sizeof(ttl)) == -1) {
-			log_peer_warn(&p->conf,
-			    "session_setup_socket setsockopt TTL");
-			return (-1);
+		break;
+	case AID_INET6:
+		if (p->conf.ebgp) {
+			/* set hoplimit to foreign router's distance */
+			if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
+			    &ttl, sizeof(ttl)) == -1) {
+				log_peer_warn(&p->conf,
+				    "session_setup_socket setsockopt hoplimit");
+				return (-1);
+			}
 		}
-	}
-
-	if (p->conf.ebgp && p->conf.remote_addr.af == AF_INET6)
-		/* set hoplimit to foreign router's distance */
-		if (setsockopt(p->fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ttl,
-		    sizeof(ttl)) == -1) {
-			log_peer_warn(&p->conf,
-			    "session_setup_socket setsockopt hoplimit");
-			return (-1);
-		}
-
-	/* if ttlsec is in use, set minttl */
-	if (p->conf.ttlsec) {
-		ttl = 256 - p->conf.distance;
-		setsockopt(p->fd, IPPROTO_IP, IP_MINTTL, &ttl, sizeof(ttl));
-
+		break;
 	}
 
 	/* set TCP_NODELAY */
@@ -1186,14 +1192,6 @@ session_setup_socket(struct peer *p)
 	    sizeof(nodelay)) == -1) {
 		log_peer_warn(&p->conf,
 		    "session_setup_socket setsockopt TCP_NODELAY");
-		return (-1);
-	}
-
-	/* set precedence, see RFC 1771 appendix 5 */
-	if (p->conf.remote_addr.af == AF_INET &&
-	    setsockopt(p->fd, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) == -1) {
-		log_peer_warn(&p->conf,
-		    "session_setup_socket setsockopt TOS");
 		return (-1);
 	}
 
@@ -2619,29 +2617,23 @@ getpeerbydesc(const char *descr)
 struct peer *
 getpeerbyip(struct sockaddr *ip)
 {
+	struct bgpd_addr addr;
 	struct peer	*p, *newpeer, *loose = NULL;
 	u_int32_t	 id;
+
+	sa2addr(ip, &addr);
 
 	/* we might want a more effective way to find peers by IP */
 	for (p = peers; p != NULL; p = p->next)
 		if (!p->conf.template &&
-		    p->conf.remote_addr.af == ip->sa_family) {
-			if (p->conf.remote_addr.af == AF_INET &&
-			    p->conf.remote_addr.v4.s_addr ==
-			    ((struct sockaddr_in *)ip)->sin_addr.s_addr)
-				return (p);
-			if (p->conf.remote_addr.af == AF_INET6 &&
-			    !bcmp(&p->conf.remote_addr.v6,
-			    &((struct sockaddr_in6 *)ip)->sin6_addr,
-			    sizeof(p->conf.remote_addr.v6)))
-				return (p);
-		}
+		    !memcmp(&addr, &p->conf.remote_addr, sizeof(addr)))
+			return (p);
 
 	/* try template matching */
 	for (p = peers; p != NULL; p = p->next)
 		if (p->conf.template &&
-		    p->conf.remote_addr.af == ip->sa_family &&
-		    session_match_mask(p, ip))
+		    p->conf.remote_addr.aid == addr.aid &&
+		    session_match_mask(p, &addr))
 			if (loose == NULL || loose->conf.remote_masklen <
 			    p->conf.remote_masklen)
 				loose = p;
@@ -2660,16 +2652,14 @@ getpeerbyip(struct sockaddr *ip)
 				break;
 			}
 		}
-		if (newpeer->conf.remote_addr.af == AF_INET) {
-			newpeer->conf.remote_addr.v4.s_addr =
-			    ((struct sockaddr_in *)ip)->sin_addr.s_addr;
+		sa2addr(ip, &newpeer->conf.remote_addr);
+		switch (ip->sa_family) {
+		case AF_INET:
 			newpeer->conf.remote_masklen = 32;
-		}
-		if (newpeer->conf.remote_addr.af == AF_INET6) {
-			memcpy(&newpeer->conf.remote_addr.v6,
-			    &((struct sockaddr_in6 *)ip)->sin6_addr,
-			    sizeof(newpeer->conf.remote_addr.v6));
+			break;
+		case AF_INET6:
 			newpeer->conf.remote_masklen = 128;
+			break;
 		}
 		newpeer->conf.template = 0;
 		newpeer->conf.cloned = 1;
@@ -2687,40 +2677,24 @@ getpeerbyip(struct sockaddr *ip)
 }
 
 int
-session_match_mask(struct peer *p, struct sockaddr *ip)
+session_match_mask(struct peer *p, struct bgpd_addr *a)
 {
-	int		 i;
 	in_addr_t	 v4mask;
-	struct in6_addr	*in;
-	struct in6_addr	 mask;
+	struct in6_addr	 masked;
 
-	if (p->conf.remote_addr.af == AF_INET) {
+	switch (p->conf.remote_addr.aid) {
+	case AID_INET:
 		v4mask = htonl(prefixlen2mask(p->conf.remote_masklen));
-		if (p->conf.remote_addr.v4.s_addr ==
-		    ((((struct sockaddr_in *)ip)->sin_addr.s_addr) & v4mask))
+		if (p->conf.remote_addr.v4.s_addr == (a->v4.s_addr & v4mask))
 			return (1);
-		else
-			return (0);
+		return (0);
+	case AID_INET6:
+		inet6applymask(&masked, &a->v6, p->conf.remote_masklen);
+
+		if (!memcmp(&masked, &p->conf.remote_addr.v6, sizeof(masked)))
+			return (1);
+		return (0);
 	}
-
-	if (p->conf.remote_addr.af == AF_INET6) {
-		bzero(&mask, sizeof(mask));
-		for (i = 0; i < p->conf.remote_masklen / 8; i++)
-			mask.s6_addr[i] = 0xff;
-		i = p->conf.remote_masklen % 8;
-		if (i)
-			mask.s6_addr[p->conf.remote_masklen / 8] = 0xff00 >> i;
-
-		in = &((struct sockaddr_in6 *)ip)->sin6_addr;
-
-		for (i = 0; i < 16; i++)
-			if ((in->s6_addr[i] & mask.s6_addr[i]) !=
-			    p->conf.remote_addr.addr8[i])
-				return (0);
-
-		return (1);
-	}
-
 	return (0);
 }
 
@@ -2755,30 +2729,8 @@ session_up(struct peer *p)
 	    &p->conf, sizeof(p->conf)) == -1)
 		fatalx("imsg_compose error");
 
-	switch (p->sa_local.ss_family) {
-	case AF_INET:
-		sup.local_addr.af = AF_INET;
-		memcpy(&sup.local_addr.v4,
-		    &((struct sockaddr_in *)&p->sa_local)->sin_addr,
-		    sizeof(sup.local_addr.v4));
-		sup.remote_addr.af = AF_INET;
-		memcpy(&sup.remote_addr.v4,
-		    &((struct sockaddr_in *)&p->sa_remote)->sin_addr,
-		    sizeof(sup.remote_addr.v4));
-		break;
-	case AF_INET6:
-		sup.local_addr.af = AF_INET6;
-		memcpy(&sup.local_addr.v6,
-		    &((struct sockaddr_in6 *)&p->sa_local)->sin6_addr,
-		    sizeof(sup.local_addr.v6));
-		sup.remote_addr.af = AF_INET6;
-		memcpy(&sup.remote_addr.v6,
-		    &((struct sockaddr_in6 *)&p->sa_remote)->sin6_addr,
-		    sizeof(sup.remote_addr.v6));
-		break;
-	default:
-		fatalx("session_up: unsupported address family");
-	}
+	sa2addr((struct sockaddr *)&p->sa_local, &sup.local_addr);
+	sa2addr((struct sockaddr *)&p->sa_remote, &sup.remote_addr);
 
 	sup.remote_bgpid = p->remote_bgpid;
 	sup.short_as = p->short_as;
@@ -2800,34 +2752,6 @@ int
 imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
 	return (imsg_compose(ibuf_rde, type, 0, pid, -1, data, datalen));
-}
-
-static struct sockaddr *
-addr2sa(struct bgpd_addr *addr, u_int16_t port)
-{
-	static struct sockaddr_storage	 ss;
-	struct sockaddr_in		*sa_in = (struct sockaddr_in *)&ss;
-	struct sockaddr_in6		*sa_in6 = (struct sockaddr_in6 *)&ss;
-
-	bzero(&ss, sizeof(ss));
-	switch (addr->af) {
-	case AF_INET:
-		sa_in->sin_family = AF_INET;
-		sa_in->sin_len = sizeof(struct sockaddr_in);
-		sa_in->sin_addr.s_addr = addr->v4.s_addr;
-		sa_in->sin_port = htons(port);
-		break;
-	case AF_INET6:
-		sa_in6->sin6_family = AF_INET6;
-		sa_in6->sin6_len = sizeof(struct sockaddr_in6);
-		memcpy(&sa_in6->sin6_addr, &addr->v6,
-		    sizeof(sa_in6->sin6_addr));
-		sa_in6->sin6_port = htons(port);
-		sa_in6->sin6_scope_id = addr->scope_id;
-		break;
-	}
-
-	return ((struct sockaddr *)&ss);
 }
 
 void
