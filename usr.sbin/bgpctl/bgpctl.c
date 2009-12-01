@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.149 2009/11/02 20:38:45 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.150 2009/12/01 14:29:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_TERSE, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_FIB:
-		if (!res->addr.af) {
+		if (!res->addr.aid) {
 			struct buf	*msg;
 
 			if ((msg = imsg_create(ibuf, IMSG_CTL_KROUTE, 0, 0,
@@ -192,7 +192,7 @@ main(int argc, char *argv[])
 	case SHOW_NEIGHBOR_TIMERS:
 	case SHOW_NEIGHBOR_TERSE:
 		neighbor.show_timers = (res->action == SHOW_NEIGHBOR_TIMERS);
-		if (res->peeraddr.af || res->peerdesc[0])
+		if (res->peeraddr.aid || res->peerdesc[0])
 			imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
 			    &neighbor, sizeof(neighbor));
 		else
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 			memcpy(&ribreq.as, &res->as, sizeof(res->as));
 			type = IMSG_CTL_SHOW_RIB_AS;
 		}
-		if (res->addr.af) {
+		if (res->addr.aid) {
 			memcpy(&ribreq.prefix, &res->addr, sizeof(res->addr));
 			ribreq.prefixlen = res->prefixlen;
 			type = IMSG_CTL_SHOW_RIB_PREFIX;
@@ -409,8 +409,8 @@ fmt_peer(const char *descr, const struct bgpd_addr *remote_addr,
 	}
 
 	ip = log_addr(remote_addr);
-	if (masklen != -1 && ((remote_addr->af == AF_INET && masklen != 32) ||
-	    (remote_addr->af == AF_INET6 && masklen != 128))) {
+	if (masklen != -1 && ((remote_addr->aid == AID_INET && masklen != 32) ||
+	    (remote_addr->aid == AID_INET6 && masklen != 128))) {
 		if (asprintf(&p, "%s/%u", ip, masklen) == -1)
 			err(1, NULL);
 	} else {
@@ -536,9 +536,9 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		if ((p->conf.remote_addr.af == AF_INET &&
+		if ((p->conf.remote_addr.aid == AID_INET &&
 		    p->conf.remote_masklen != 32) ||
-		    (p->conf.remote_addr.af == AF_INET6 &&
+		    (p->conf.remote_addr.aid == AID_INET6 &&
 		    p->conf.remote_masklen != 128)) {
 			if (asprintf(&s, "%s/%u",
 			    log_addr(&p->conf.remote_addr),
@@ -884,8 +884,8 @@ show_nexthop_msg(struct imsg *imsg)
 			printf("\n");
 			return (0);
 		}
-		switch (p->addr.af) {
-		case AF_INET:
+		switch (p->addr.aid) {
+		case AID_INET:
 			k = &p->kr.kr4;
 			if (asprintf(&s, "%s/%u", inet_ntoa(k->prefix),
 			    k->prefixlen) == -1)
@@ -896,7 +896,7 @@ show_nexthop_msg(struct imsg *imsg)
 			    k->flags & F_CONNECTED ? "connected" :
 			    inet_ntoa(k->nexthop));
 			break;
-		case AF_INET6:
+		case AID_INET6:
 			k6 = &p->kr.kr6;
 			if (asprintf(&s, "%s/%u", log_in6addr(&k6->prefix),
 			    k6->prefixlen) == -1)
@@ -908,7 +908,7 @@ show_nexthop_msg(struct imsg *imsg)
 			    log_in6addr(&k6->nexthop));
 			break;
 		default:
-			printf("unknown address familiy %d\n", p->addr.af);
+			printf("unknown address family\n");
 			return (0);
 		}
 		if (p->kif.ifname[0]) {
@@ -1280,22 +1280,27 @@ fmt_mem(int64_t num)
 	return (buf);
 }
 
+size_t  pt_sizes[AID_MAX] = AID_PTSIZE;
+
 int
 show_rib_memory_msg(struct imsg *imsg)
 {
 	struct rde_memstats	stats;
+	size_t			pts = 0;
+	int			i;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_RIB_MEM:
 		memcpy(&stats, imsg->data, sizeof(stats));
 		printf("RDE memory statistics\n");
-		printf("%10lld IPv4 network entries using %s of memory\n",
-		    (long long)stats.pt4_cnt, fmt_mem(stats.pt4_cnt *
-		    sizeof(struct pt_entry4)));
-		if (stats.pt6_cnt != 0)
-			printf("%10lld IPv6 network entries using "
-			    "%s of memory\n", (long long)stats.pt6_cnt,
-			    fmt_mem(stats.pt6_cnt * sizeof(struct pt_entry6)));
+		for (i = 0; i < AID_MAX; i++) {
+			if (stats.pt_cnt[i] == 0)
+				continue;
+			pts += stats.pt_cnt[i] * pt_sizes[i];
+			printf("%10lld %s network entries using %s of memory\n",
+			    (long long)stats.pt_cnt[i], aid_vals[i].name,
+			    fmt_mem(stats.pt_cnt[i] * pt_sizes[i]));
+		}
 		printf("%10lld rib entries using %s of memory\n",
 		    (long long)stats.rib_cnt, fmt_mem(stats.rib_cnt *
 		    sizeof(struct rib_entry)));
@@ -1316,9 +1321,7 @@ show_rib_memory_msg(struct imsg *imsg)
 		    (long long)stats.attr_refs);
 		printf("%10lld BGP attributes using %s of memory\n",
 		    (long long)stats.attr_dcnt, fmt_mem(stats.attr_data));
-		printf("RIB using %s of memory\n", fmt_mem(
-		    stats.pt4_cnt * sizeof(struct pt_entry4) +
-		    stats.pt6_cnt * sizeof(struct pt_entry6) +
+		printf("RIB using %s of memory\n", fmt_mem(pts +
 		    stats.prefix_cnt * sizeof(struct prefix) +
 		    stats.rib_cnt * sizeof(struct rib_entry) +
 		    stats.path_cnt * sizeof(struct rde_aspath) +

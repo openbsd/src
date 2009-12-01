@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.57 2009/11/02 20:38:45 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.58 2009/12/01 14:29:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -617,7 +617,7 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 	bzero(&ina, sizeof(ina));
 
 	if (inet_net_pton(AF_INET, word, &ina, sizeof(ina)) != -1) {
-		addr->af = AF_INET;
+		addr->aid = AID_INET;
 		addr->v4 = ina;
 		return (1);
 	}
@@ -627,13 +627,7 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(word, "0", &hints, &r) == 0) {
-		addr->af = AF_INET6;
-		memcpy(&addr->v6,
-		    &((struct sockaddr_in6 *)r->ai_addr)->sin6_addr,
-		    sizeof(addr->v6));
-		addr->scope_id =
-		    ((struct sockaddr_in6 *)r->ai_addr)->sin6_scope_id;
-
+		sa2addr(r->ai_addr, addr);
 		freeaddrinfo(r);
 		return (1);
 	}
@@ -672,15 +666,15 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 		if (parse_addr(word, addr) == 0)
 			return (0);
 
-	switch (addr->af) {
-	case AF_INET:
+	switch (addr->aid) {
+	case AID_INET:
 		if (mask == -1)
 			mask = 32;
 		if (mask > 32)
 			errx(1, "invalid netmask: too large");
 		addr->v4.s_addr = addr->v4.s_addr & htonl(prefixlen2mask(mask));
 		break;
-	case AF_INET6:
+	case AID_INET6:
 		if (mask == -1)
 			mask = 128;
 		inet6applymask(&addr->v6, &addr->v6, mask);
