@@ -1,4 +1,4 @@
-/* $OpenBSD: mpii.c,v 1.4 2009/11/24 21:29:16 marco Exp $ */
+/* $OpenBSD: mpii.c,v 1.5 2009/12/01 00:09:03 bluhm Exp $ */
 /*
  * Copyright (c) James Giannoules
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -3884,7 +3884,7 @@ mpii_get_dpm_pg0(struct mpii_softc *sc, struct mpii_cfg_dpm_pg0 *dpm_page)
 	struct mpii_dpm_entry	*dpm_entry;
 	struct mpii_ecfg_hdr	ehdr;
 	struct mpii_dmamem	*dmapage;
-	bus_addr_t		dva;
+	u_int64_t		dva;
 	char			*kva;
 	size_t			pagelen;
 	u_int32_t		address;
