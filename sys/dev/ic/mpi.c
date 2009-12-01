@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.121 2009/11/12 06:20:27 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.122 2009/12/01 01:40:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2176,7 +2176,6 @@ mpi_eventnotify_done(struct mpi_ccb *ccb)
 void
 mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 {
-#if 0
 	struct mpi_evt_sas_change		*ch;
 	u_int8_t				*data;
 
@@ -2214,7 +2213,6 @@ mpi_evt_sas(struct mpi_softc *sc, struct mpi_rcb *rcb)
 		    "0x%02x\n", DEVNAME(sc), ch->reason);
 		break;
 	}
-#endif
 }
 
 void

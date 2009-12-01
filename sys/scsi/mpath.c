@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.10 2009/11/12 06:20:27 dlg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.11 2009/12/01 01:40:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -47,7 +47,7 @@ struct mpath_path {
 TAILQ_HEAD(mpath_paths, mpath_path);
 
 struct mpath_node {
-	struct devid		 node_id;
+	struct devid		*node_id;
 	struct mpath_paths	 node_paths;
 };
 
@@ -77,6 +77,8 @@ struct cfdriver mpath_cd = {
 int		mpath_cmd(struct scsi_xfer *);
 void		mpath_minphys(struct buf *, struct scsi_link *);
 int		mpath_probe(struct scsi_link *);
+
+void		mpath_done(struct scsi_xfer *);
 
 struct scsi_adapter mpath_switch = {
 	mpath_cmd,
@@ -136,8 +138,12 @@ mpath_xs_stuffup(struct scsi_xfer *xs)
 int
 mpath_probe(struct scsi_link *link)
 {
-	if (link->lun != 0 || mpath_nodes[link->target] == NULL)
+	struct mpath_node *n = mpath_nodes[link->target];
+
+	if (link->lun != 0 || n == NULL)
 		return (ENXIO);
+
+	link->id = devid_copy(n->node_id);
 
 	return (0);
 }
@@ -148,36 +154,53 @@ mpath_cmd(struct scsi_xfer *xs)
 	struct scsi_link *link = xs->sc_link;
 	struct mpath_node *n = mpath_nodes[link->target];
 	struct mpath_path *p = TAILQ_FIRST(&n->node_paths);
-	int rv;
-	int s;
+	struct scsi_xfer *mxs;
 
 	if (n == NULL || p == NULL) {
 		mpath_xs_stuffup(xs);
 		return (COMPLETE);
 	}
 
-	rv = scsi_scsi_cmd(p->path_link, xs->cmd, xs->cmdlen,
-	    xs->data, xs->datalen,
-	    2, xs->timeout, NULL, SCSI_POLL |
-	    (xs->flags & (SCSI_DATA_IN|SCSI_DATA_OUT)));
-
-
-	xs->flags |= ITSDONE;
-	if (rv == 0) {
-		xs->error = XS_NOERROR;
-		xs->status = SCSI_OK;
-		xs->resid = 0;
-	} else {
-		printf("%s: t%dl%d rv %d cmd %x\n", DEVNAME(mpath),
-		    link->target, link->lun, rv, xs->cmd->opcode);
-		xs->error = XS_DRIVER_STUFFUP;
+	mxs = scsi_xs_get(p->path_link, xs->flags);
+	if (mxs == NULL) {
+		mpath_xs_stuffup(xs);
+		return (COMPLETE);
 	}
+
+	memcpy(mxs->cmd, xs->cmd, xs->cmdlen);
+	mxs->cmdlen = xs->cmdlen;
+	mxs->data = xs->data;
+	mxs->datalen = xs->datalen;
+	mxs->retries = xs->retries;
+	mxs->timeout = xs->timeout;
+	mxs->req_sense_length = xs->req_sense_length;
+
+	mxs->cookie = xs;
+	mxs->done = mpath_done;
+
+	scsi_xs_exec(mxs);
+
+	return (COMPLETE); /* doesnt matter anymore */
+}
+
+void
+mpath_done(struct scsi_xfer *mxs)
+{
+	struct scsi_xfer *xs = mxs->cookie;
+	int s;
+
+	xs->error = mxs->error;
+	xs->status = mxs->status;
+	xs->flags = mxs->flags;
+	xs->resid = mxs->resid;
+
+	memcpy(&xs->sense, &mxs->sense, sizeof(xs->sense));
+
+	scsi_xs_put(mxs);
 
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-
-	return (COMPLETE);
 }
 
 void
@@ -205,14 +228,14 @@ mpath_path_attach(struct scsi_link *link)
 		return (ENODEV);
 
 	/* XXX this is dumb. should check inq shizz */
-	if (link->id.d_type == DEVID_NONE)
+	if (ISSET(link->flags, SDEV_VIRTUAL) || link->id == NULL)
 		return (ENXIO);
 
 	for (target = 0; target < MPATH_BUSWIDTH; target++) {
 		if ((n = mpath_nodes[target]) == NULL)
 			continue;
 
-		if (DEVID_CMP(&n->node_id, &link->id))
+		if (DEVID_CMP(n->node_id, link->id))
 			break;
 
 		n = NULL;
@@ -229,13 +252,18 @@ mpath_path_attach(struct scsi_link *link)
 		n = malloc(sizeof(*n), M_DEVBUF, M_WAITOK | M_ZERO);
 		TAILQ_INIT(&n->node_paths);
 
-		n->node_id.d_type = link->id.d_type;
-		n->node_id.d_len = link->id.d_len;
-		n->node_id.d_id = malloc(n->node_id.d_len, M_DEVBUF, M_DEVBUF);
-		memcpy(n->node_id.d_id, link->id.d_id, n->node_id.d_len);
+		n->node_id = devid_copy(link->id);
 
 		mpath_nodes[target] = n;
 		probe = 1;
+	} else {
+		/*
+		 * instead of carrying identical values in different devid
+		 * instances, delete the new one and reference the old one in
+		 * the new scsi_link.
+		 */
+		devid_free(link->id);
+		link->id = devid_copy(n->node_id);
 	}
 
 	p = malloc(sizeof(*p), M_DEVBUF, M_WAITOK);
@@ -260,7 +288,7 @@ mpath_path_detach(struct scsi_link *link, int flags)
 		if ((n = mpath_nodes[target]) == NULL)
 			continue;
 
-		if (DEVID_CMP(&n->node_id, &link->id))
+		if (DEVID_CMP(n->node_id, link->id))
 			break;
 
 		n = NULL;
@@ -279,3 +307,16 @@ mpath_path_detach(struct scsi_link *link, int flags)
 
 	panic("mpath: unable to locate path for detach");
 }
+
+void
+mpath_path_activate(struct scsi_link *link)
+{
+
+}
+
+void
+mpath_path_deactivate(struct scsi_link *link)
+{
+
+}
+
