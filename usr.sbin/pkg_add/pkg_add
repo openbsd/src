@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.407 2009/12/01 08:13:23 espie Exp $
+# $OpenBSD: pkg_add,v 1.408 2009/12/01 09:53:09 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -593,10 +593,10 @@ sub install_set
 		for my $handle ($set->newer) {
 			$handle->location->close_now;
 		}
-		if (!$defines{libdepends}) {
-			$bad++;
-			return ();
-		}
+		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+		$state->tracker->mark_cant_update($set);
+		$bad++;
+		return ();
 	}
 #	if (!$set->{solver}->solve_tags($state)) {
 #		$location->close_now;
