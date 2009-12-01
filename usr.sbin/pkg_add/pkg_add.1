@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.84 2009/11/24 10:32:33 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.85 2009/12/01 11:21:30 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: November 24 2009 $
+.Dd $Mdocdate: December 1 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -389,7 +389,19 @@ will try active mode FTP if the server refuses a passive mode
 connection.
 .Ss Technical details
 .Nm
-extracts each package's
+deals with
+.Sq updatesets
+internally.
+An updateset is a collection of old package(s) to delete, and new package(s)
+to install, as an atomic operation.
+Under normal circumstances, an updateset contains at most one old package
+and one new package, but some situations may require
+.Nm
+to perform several installation/suppression at once.
+.Pp
+For each new package in an updateset,
+.Nm
+extracts the package's
 .Dq packing information
 (the packing list, description, and installation/deinstallation scripts)
 into a special staging directory in
@@ -405,14 +417,14 @@ of the package:
 .It
 A check is made to determine if the package is already recorded as installed.
 If it is,
-installation is terminated.
+the installation is terminated.
 .It
 A check is made to determine if the package conflicts (from
 .Cm @conflict
 directives; see
 .Xr pkg_create 1 )
 with a package already recorded as installed.
-If it is, installation is terminated.
+In non-replacement mode, its installation is terminated.
 .It
 For packages tagged with architecture constraints,
 .Nm
@@ -427,7 +439,8 @@ directives; see
 are read from the packing list.
 If any of these dependencies are not currently fulfilled,
 an attempt is made to find a package that meets them and install it,
-looking first in the list of packages to install passed to
+looking first in the current updateset, then in the list of packages 
+to install passed to
 .Nm ;
 if no adequate package can be found and installed,
 the installation is terminated.
@@ -503,39 +516,49 @@ A check is made to determine if a similar package is already installed.
 If its signature is identical to that of the new package, no replacement
 is performed (unless -F installed is specified).
 .It
-A check is made to determine what old package the new package should replace,
-using conflicts.
+A check is made to determine what old package(s) the new package(s) should 
+replace, using conflicts.
+.Nm
+will attempt to update those packages.
+If they update to the new package(s), nothing needs to be done.
+If they're part of the replacement list, the corresponding updatesets will
+be merged.
+Otherwise,
+.Nm
+will add them to the current updateset, and rerun update to find suitable
+update packages.
 .It
-A check is made to determine whether the old package will be deleted without
-issue, and whether the new package will install correctly.
+A check is made to determine whether the old packages will be deleted without
+issue, and whether the new packages will install correctly.
 This includes refusing to run any code (unless -F update), and verifying
 that the new package still matches dependencies (unless -F updatedepends).
 .It
 Shared libraries deserve special treatment: each shared library from the old
-package that does no longer exist in the new package, but that is required
+packages that does no longer exist in the new packages, but that is required
 from a wantlib of another package is kept along in a stub package named
 .Pa \&.libs-<pkgname> .
 .It
-The new package is extracted to the filesystem, using temporary filenames
+The new packages are extracted to the filesystem, using temporary filenames
 of the form
 .Pa pkg.XXXXXXX
-since the old package is still there.
+since the old packages are still there.
 The packing-list is amended to record these names as @temp annotations,
 in cases the installation fails.
 .It
-The old package is deleted as usual, except that some packages may still depend
-on it.
+The old package are deleted as usual, except that some packages may still 
+depend on them.
 Note also that
 .Cm @unexec-delete
 commands are not executed.
 .It
-The new package is installed as usual, except that the files are already present
-and only need to be renamed.
+The new package are installed as usual, except that the files are already 
+present and only need to be renamed.
 Note also that
 .Cm @exec-add
 commands are not executed.
 .It
-Dependencies from the old package are adjusted to point to the new package.
+Dependencies from the old packages are adjusted to point to the correct new 
+packages.
 .El
 .Pp
 To update packages in -u mode,
@@ -543,20 +566,22 @@ To update packages in -u mode,
 performs the following steps.
 .Bl -enum
 .It
-Packages to update are checked for dependencies, and their dependencies are
-marked for update as well, unless -F noclosure.
-.It
 Each package name is reduced to its stem, and every package name with matching
 stem available through
 .Ev PKG_PATH
 is considered as an update candidate.
 .It
-Some minimal version matching occurs: out of all p* variations of a given
-package, only the most recent package is kept (unless -F allversions
-is given).
+.Nm
+searches for a
+.Sq quirks
+package first, which may contain exceptions to these rules.
+This special package contains global information, such as packages that
+can be deleted because they're now part of base, or stem changes.
+.It
+Version matching occurs: unless -F downgrade, only packages with newer
+versions will be considered as update candidates.
 Note that
-.Nm pkg_add
-does not try to compare versions in a smarter way, thus
+version matching  is cosly, thus
 .Ev PKG_PATH
 should point to a snapshot of packages for a given version of
 .Ox ,
@@ -574,13 +599,13 @@ If several candidates are left,
 will ask the user in interactive mode, and not perform the update in
 non-interactive mode.
 .It
-Once a suitable update candidate has been found for every package,
+Once a suitable update candidate has been found,
 .Nm
-proceeds to print out the list of new packages, and then performs the update.
-.It
-If some updates can't be solved,
+checks the package dependencies.
+If necessary, it will install or update them first.
+Once all dependencies are uptodate,
 .Nm
-stops before the update, unless -F alwaysupdate.
+will update the package.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
