@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.32 2009/06/08 23:18:05 gwk Exp $ */
+/*	$OpenBSD: est.c,v 1.33 2009/12/01 18:31:36 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -1060,6 +1060,12 @@ est_init(const char *cpu_device, int vendor)
 
 	if ((cpu_ecxfeature & CPUIDECX_EST) == 0)
 		return;
+
+	if (bus_clock == 0) {
+		printf("%s: EST: PSS not yet available for this processor\n",
+		    cpu_device);
+		return;
+	}
 
 	msr = rdmsr(MSR_PERF_STATUS);
 	idhi = (msr >> 32) & 0xffff;
