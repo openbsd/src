@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1512 2009/12/01 12:03:14 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1513 2009/12/01 17:07:59 jasper Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -114,6 +114,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7135,
 	    "OZ711EZ1 CardBus",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7136,
+	    "OZ711SP1 CardBus",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7223,
@@ -2980,6 +2984,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "FireGL V3100 Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREMV_2200_S,
+	    "FireMV 2200 Sec",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_M,
 	    "Radeon Mobility 9200",
 	},
@@ -3556,6 +3564,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 4850",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4670,
+	    "Radeon HD 4670",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4650,
 	    "Radeon HD 4650",
 	},
@@ -3574,6 +3586,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3870,
 	    "Radeon HD 3870",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4550,
+	    "Radeon HD 4550",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4350,
@@ -3642,6 +3658,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3300,
 	    "Radeon HD 3300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4200_HDA,
+	    "Radeon HD 4200 HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4200,
@@ -5630,6 +5650,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG423GE,
 	    "Endace Dag4.23GE",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_FLASH,
+	    "Flash memory",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_MEMSTICK,
@@ -12324,6 +12348,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 6800 GT",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE5300PCX,
+	    "GeForce 5300 PCX",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADROFX330,
 	    "Quadro FX 330",
 	},
@@ -12336,7 +12364,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce256 DDR",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADOR,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO,
 	    "Quadro",
 	},
 	{
@@ -13044,6 +13072,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 7300 GT",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE7900GO,
+	    "GeForce 7600 Go",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C55_HB_1,
 	    "C55 Host",
 	},
@@ -13568,6 +13600,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Quadro NVS 150m",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRONVS160,
+	    "Quadro NVS 160m",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_MEM2,
 	    "MCP77 Memory",
 	},
@@ -13820,6 +13856,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MCP73 USB",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_8200_G,
+	    "GeForce 8200m G",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_9100,
+	    "GeForce 9100",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_8200,
 	    "GeForce 8200",
 	},
@@ -13832,8 +13876,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 9400",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_9400_2,
+	    "GeForce 9400m",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_9300,
 	    "GeForce 9300",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ION_VGA,
+	    "ION VGA",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE210,
+	    "GeForce 210",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_HB_1,
