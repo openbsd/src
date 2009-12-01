@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.144 2009/12/01 01:40:02 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.145 2009/12/01 01:50:35 dlg Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 static __inline void asc2ascii(u_int8_t, u_int8_t ascq, char *result,
     size_t len);
 int	sc_err1(struct scsi_xfer *);
-int	scsi_interpret_sense(struct scsi_xfer *);
 char   *scsi_decode_sense(struct scsi_sense_data *, int);
 
 void	scsi_xs_done(struct scsi_xfer *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.165 2009/12/01 01:40:02 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.166 2009/12/01 01:50:35 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -770,13 +770,27 @@ sd_buf_done(struct scsi_xfer *xs)
 		break;
 
 	case XS_NO_CCB:
-		/* The hardware is busy, requeue the buf and try it later. */
+		/* The adapter is busy, requeue the buf and try it later. */
 		sd_buf_requeue(sc, bp);
 		scsi_xs_put(xs);
 		SET(sc->flags, SDF_WAITING); /* break out of sdstart loop */
 		timeout_add(&sc->sc_timeout, 1);
 		return;
 
+	case XS_SENSE:
+	case XS_SHORTSENSE:
+		if (scsi_interpret_sense(xs) != ERESTART)
+			xs->retries = 0;
+
+		/* FALLTHROUGH */
+	case XS_BUSY:
+	case XS_TIMEOUT:
+		if (xs->retries--) {
+			scsi_xs_exec(xs);
+			return;
+		}
+
+		/* FALLTHROUGH */
 	default:
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
