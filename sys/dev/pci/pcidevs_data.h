@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1511 2009/11/30 14:05:36 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1512 2009/12/01 12:03:14 jasper Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -13564,6 +13564,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 9300M GS",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRONVS150,
+	    "Quadro NVS 150m",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_MEM2,
 	    "MCP77 Memory",
 	},
@@ -14325,6 +14329,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_PCTEL, PCI_PRODUCT_PCTEL_MICROMODEM56,
+	    "HSP MicroModem 56",
+	},
+	{
+	    PCI_VENDOR_PCTEL, PCI_PRODUCT_PCTEL_MICROMODEM56_1,
 	    "HSP MicroModem 56",
 	},
 	{

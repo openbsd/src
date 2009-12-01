@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1511 2009/11/30 14:05:36 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1512 2009/12/01 12:03:14 jasper Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4096,6 +4096,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9300_GE_1	0x06e0		/* GeForce 9300 GE */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9600_GT	0x0622		/* GeForce 9600 GT */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE9300M_GS	0x06e9		/* GeForce 9300M GS */
+#define	PCI_PRODUCT_NVIDIA_QUADRONVS150	0x06ea		/* Quadro NVS 150m */
 #define	PCI_PRODUCT_NVIDIA_MCP77_MEM2	0x0751		/* MCP77 Memory */
 #define	PCI_PRODUCT_NVIDIA_MCP77_SMB	0x0752		/* MCP77 SMBus */
 #define	PCI_PRODUCT_NVIDIA_MCP77_COPROC	0x0753		/* MCP77 Co-processor */
@@ -4309,6 +4310,7 @@
 
 /* PCTEL */
 #define	PCI_PRODUCT_PCTEL_MICROMODEM56	0x7879		/* HSP MicroModem 56 */
+#define	PCI_PRODUCT_PCTEL_MICROMODEM56_1	0x7892		/* HSP MicroModem 56 */
 
 /* Qumranet products */
 #define	PCI_PRODUCT_QUMRANET_VIO_NET	0x1000		/* Virtio Network */
