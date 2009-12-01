@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.166 2009/12/01 01:50:35 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.167 2009/12/01 03:43:17 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -748,6 +748,11 @@ sdstart(void *v)
 
 		/* Instrumentation. */
 		disk_busy(&sc->sc_dk);
+
+		/* Mark disk as dirty. */
+		if ((bp->b_flags & B_READ) == 0)
+			sc->flags |= SDF_DIRTY;
+
 		scsi_xs_exec(xs);
 	}
 }
