@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.61 2009/11/04 08:27:21 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.62 2009/12/01 16:21:46 reyk Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: November 4 2009 $
+.Dd $Mdocdate: December 1 2009 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -106,6 +106,8 @@ Add a route.
 Change aspects of a route (such as its gateway).
 .It Cm delete
 Delete a specific route.
+.It Cm exec
+Execute a command in the specified routing domain.
 .It Cm flush
 Remove all routes.
 .It Cm get
@@ -154,6 +156,24 @@ by using the
 or
 .Fl priority
 modifiers.
+.Pp
+The
+.Cm exec
+command has the syntax:
+.Bd -filled -offset indent
+.Nm route Op Fl T Ar tableid
+.Cm exec
+.Op Ar command ...
+.Ed
+.Pp
+If the
+.Cm exec
+command is specified,
+.Nm
+will execute a command forcing the process and its children into the
+routing domain as specified with the
+.Fl T Ar tableid
+option.
 .Pp
 The
 .Cm monitor

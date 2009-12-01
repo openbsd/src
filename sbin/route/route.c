@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.140 2009/11/02 21:08:44 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.141 2009/12/01 16:21:46 reyk Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -109,7 +109,8 @@ void	 set_metric(char *, int);
 void	 inet_makenetandmask(u_int32_t, struct sockaddr_in *, int);
 void	 interfaces(void);
 void	 getlabel(char *);
-void	 gettable(const char *);
+int	 gettable(const char *);
+int	 rdomain(int, int, char **);
 
 __dead void
 usage(char *cp)
@@ -122,7 +123,7 @@ usage(char *cp)
 	    "usage: %s [-dnqtv] [-T tableid] command [[modifiers] args]\n",
 	    __progname);
 	fprintf(stderr,
-	    "commands: add, change, delete, flush, get, monitor, show\n");
+	    "commands: add, change, delete, exec, flush, get, monitor, show\n");
 	exit(1);
 }
 
@@ -135,6 +136,8 @@ main(int argc, char **argv)
 {
 	int ch;
 	int rval = 0;
+	int rtableid = 1;
+	int kw;
 
 	if (argc < 2)
 		usage(NULL);
@@ -154,7 +157,7 @@ main(int argc, char **argv)
 			tflag = 1;
 			break;
 		case 'T':
-			gettable(optarg);
+			rtableid = gettable(optarg);
 			break;
 		case 'd':
 			debugonly = 1;
@@ -170,16 +173,27 @@ main(int argc, char **argv)
 	uid = geteuid();
 	if (*argv == NULL)
 		usage(NULL);
-	if (keyword(*argv) == K_MONITOR)
-		monitor(argc, argv);
 
-	if (tflag)
-		s = open(_PATH_DEVNULL, O_WRONLY);
-	else
-		s = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (s == -1)
-		err(1, "socket");
-	switch (keyword(*argv)) {
+	kw = keyword(*argv);
+	switch (kw) {
+	case K_EXEC:
+		break;
+	case K_MONITOR:
+		monitor(argc, argv);
+		break;
+	default:
+		if (tflag)
+			s = open(_PATH_DEVNULL, O_WRONLY);
+		else
+			s = socket(PF_ROUTE, SOCK_RAW, 0);
+		if (s == -1)
+			err(1, "socket");
+		break;
+	}
+	switch (kw) {
+	case K_EXEC:
+		rval = rdomain(rtableid, argc - 1, argv + 1);
+		break;
 	case K_GET:
 		uid = 0;
 		/* FALLTHROUGH */
@@ -1579,7 +1593,7 @@ getlabel(char *name)
 	rtm_addrs |= RTA_LABEL;
 }
 
-void
+int
 gettable(const char *s)
 {
 	const char	*errstr;
@@ -1587,4 +1601,16 @@ gettable(const char *s)
 	tableid = strtonum(s, 0, RT_TABLEID_MAX, &errstr);
 	if (errstr)
 		errx(1, "invalid table id: %s", errstr);
+	return (tableid);
+}
+
+int
+rdomain(int rtableid, int argc, char **argv)
+{
+	if (!argc)
+		usage(NULL);
+	if (setrdomain(rtableid) == -1)
+		err(1, "setrdomain");
+	execvp(*argv, argv);
+	return (errno == ENOENT ? 127 : 126);
 }
