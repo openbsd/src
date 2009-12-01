@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.36 2009/08/30 05:42:14 jmc Exp $
+.\"	$OpenBSD: ti.4,v 1.37 2009/12/01 09:05:21 sthen Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man4/ti.4,v 1.11 2000/08/10 19:47:32 billf Exp $
 .\"
-.Dd $Mdocdate: August 30 2009 $
+.Dd $Mdocdate: December 1 2009 $
 .Dt TI 4
 .Os
 .Sh NAME
@@ -44,8 +44,33 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for PCI Gigabit Ethernet adapters based on
-the Alteon Networks Tigon Gigabit Ethernet controller chip.
+driver provides support for Gigabit Ethernet adapters based on the
+Alteon Networks Tigon Gigabit Ethernet controller chip, including
+the following:
+.Pp
+.Bl -bullet -compact -offset indent
+.It
+3Com 3C985-SX Gigabit Ethernet (1000baseSX)
+.It
+3Com 3C985B-SX Gigabit Ethernet (1000baseSX)
+.It
+Alteon AceNIC V Gigabit Ethernet (1000baseSX)
+.It
+Alteon AceNIC V Gigabit Ethernet (1000baseT)
+.It
+Digital EtherWORKS 1000SX PCI Gigabit Ethernet (1000baseSX)
+.It
+Farallon PN9000SX Gigabit Ethernet (1000baseSX)
+.It
+Netgear GA620 Gigabit Ethernet (1000baseSX)
+.It
+Netgear GA620T Gigabit Ethernet (1000baseT)
+.It
+Silicon Graphics PCI Gigabit Ethernet (1000baseSX)
+.It
+Sun Vector Gigabit Ethernet (1000baseSX)
+.El
+.Pp
 The Tigon contains an embedded R4000 CPU, Gigabit MAC, dual DMA channels and
 a PCI interface unit.
 The Tigon II contains two R4000 CPUs and other refinements.
@@ -56,42 +81,6 @@ SBus cards are also available and use a special bridge chip.
 The Tigon I and II support hardware multicast address filtering,
 VLAN tag insertion and stripping, and Jumbo frame sizes up to
 9000 bytes.
-Note that the Tigon I chipset is no longer in active production: all new
-adapters should come equipped with Tigon II chipsets.
-.Pp
-There are several PCI boards available from both Alteon and other
-vendors that use the Tigon chipset under OEM contract.
-The
-.Nm
-driver has been tested with the following Tigon-based adapters:
-.Pp
-.Bl -bullet -compact -offset indent
-.It
-3Com 3C985-SX Gigabit Ethernet (Tigon 1)
-.It
-3Com 3C985B-SX Gigabit Ethernet (Tigon 2)
-.It
-Alteon AceNIC V Gigabit Ethernet (1000baseSX)
-.It
-Alteon AceNIC V Gigabit Ethernet (1000baseT)
-.It
-Digital EtherWORKS 1000SX PCI Gigabit Ethernet (1000baseSX)
-.It
-Netgear GA620 Gigabit Ethernet (1000baseSX)
-.It
-Netgear GA620T Gigabit Ethernet (1000baseT)
-.It
-Sun Vector Gigabit Ethernet (1000baseSX)
-.El
-.Pp
-The following should also be supported but have not yet been tested:
-.Pp
-.Bl -bullet -compact -offset indent
-.It
-Farallon PN9000SX Gigabit Ethernet
-.It
-Silicon Graphics PCI Gigabit Ethernet
-.El
 .Pp
 While the Tigon chipset supports 10, 100 and 1000Mbps speeds, support for
 10 and 100Mbps speeds is only available on boards with the proper
