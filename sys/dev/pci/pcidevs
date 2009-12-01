@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1511 2009/11/30 14:05:36 jasper Exp $
+$OpenBSD: pcidevs,v 1.1512 2009/12/01 12:03:14 jasper Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4091,6 +4091,7 @@ product NVIDIA GEFORCE_9800_GTX	0x0605	GeForce 9800 GTX
 product NVIDIA GEFORCE_9300_GE_1	0x06e0	GeForce 9300 GE
 product NVIDIA GEFORCE_9600_GT	0x0622	GeForce 9600 GT
 product NVIDIA GEFORCE9300M_GS	0x06e9	GeForce 9300M GS
+product NVIDIA QUADRONVS150	0x06ea	Quadro NVS 150m
 product NVIDIA MCP77_MEM2	0x0751	MCP77 Memory
 product NVIDIA MCP77_SMB	0x0752	MCP77 SMBus
 product NVIDIA MCP77_COPROC	0x0753	MCP77 Co-processor
@@ -4304,6 +4305,7 @@ product PCTECH RZ1000		0x1000	RZ1000
 
 /* PCTEL */
 product PCTEL MICROMODEM56	0x7879	HSP MicroModem 56
+product PCTEL MICROMODEM56_1	0x7892	HSP MicroModem 56
 
 /* Qumranet products */
 product QUMRANET VIO_NET	0x1000	Virtio Network
