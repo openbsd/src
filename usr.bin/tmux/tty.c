@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.75 2009/11/27 09:41:03 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.76 2009/12/02 22:13:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -180,7 +180,7 @@ tty_start_tty(struct tty *tty)
 	tty_putcode(tty, TTYC_SGR0);
 	memcpy(&tty->cell, &grid_default_cell, sizeof tty->cell);
 
-	tty_putcode(tty, TTYC_SMKX);
+	tty_putcode(tty, TTYC_RMKX);
 	tty_putcode(tty, TTYC_ENACS);
 	tty_putcode(tty, TTYC_CLEAR);
 
@@ -409,6 +409,12 @@ tty_update_mode(struct tty *tty, int mode)
 			tty_puts(tty, "\033[?1000h");
 		else
 			tty_puts(tty, "\033[?1000l");
+	}
+	if (changed & MODE_KKEYPAD) {
+		if (mode & MODE_KKEYPAD)
+			tty_putcode(tty, TTYC_SMKX);
+		else
+			tty_putcode(tty, TTYC_RMKX);
 	}
 	tty->mode = mode;
 }
