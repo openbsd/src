@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.43 2009/11/30 23:32:57 kettenis Exp $	*/
+/*	$OpenBSD: creator.c,v 1.44 2009/12/02 20:11:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -64,7 +64,9 @@ int	creator_setcursor(struct creator_softc *, struct wsdisplay_cursor *);
 int	creator_updatecursor(struct creator_softc *, u_int);
 void	creator_curs_enable(struct creator_softc *, u_int);
 
+#ifndef SMALL_KERNEL
 void	creator_load_firmware(void *);
+#endif /* SMALL_KERNEL */
 void	creator_load_sram(struct creator_softc *, u_int32_t *, u_int32_t);
 
 struct wsdisplay_accessops creator_accessops = {
@@ -196,6 +198,7 @@ creator_attach(parent, self, aux)
 		sc->sc_sunfb.sf_ro.ri_ops.copyrows = creator_ras_copyrows;
 		creator_ras_init(sc);
 
+#ifndef SMALL_KERNEL
 		/*
 		 * Elite3D cards need a firmware for accelerated X to
 		 * work.  Console framebuffer acceleration will work
@@ -204,6 +207,7 @@ creator_attach(parent, self, aux)
 		 */
 		if (sc->sc_type == FFB_AFB) 
 			mountroothook_establish(creator_load_firmware, sc);
+#endif /* SMALL_KERNEL */
 	}
 
 	if (sc->sc_console)
@@ -734,6 +738,7 @@ creator_ras_setfg(sc, fg)
 	creator_ras_wait(sc);
 }
 
+#ifndef SMALL_KERNEL
 struct creator_firmware {
 	char		fw_ident[8];
 	u_int32_t	fw_size;
@@ -799,6 +804,7 @@ creator_load_firmware(void *vsc)
 
 	free(buf, M_DEVBUF);
 }
+#endif /* SMALL_KERNEL */
 
 void
 creator_load_sram(struct creator_softc *sc, u_int32_t *ucode, u_int32_t size)
