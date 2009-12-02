@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.38 2009/11/26 23:32:46 syuu Exp $ */
+/*	$OpenBSD: intr.h,v 1.39 2009/12/02 01:52:28 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,8 +54,8 @@
 #define	IPL_TTY		4	/* terminal */
 #define	IPL_VM		5	/* memory allocation */
 #define	IPL_CLOCK	6	/* clock */
-#define	IPL_IPI         7       /* ipi */
-#define	IPL_HIGH	8	/* everything */
+#define	IPL_HIGH	7	/* everything */
+#define	IPL_IPI         8       /* interprocessor interrupt */
 #define	NIPLS		9	/* Number of levels */
 
 /* Interrupt sharing types. */

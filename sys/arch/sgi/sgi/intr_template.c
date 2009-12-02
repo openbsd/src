@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr_template.c,v 1.7 2009/11/27 00:08:27 syuu Exp $	*/
+/*	$OpenBSD: intr_template.c,v 1.8 2009/12/02 01:52:28 syuu Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -64,7 +64,7 @@ MASK_FUNCTIONNAME()
 	 * case an interrupt occurs during intr_disestablish() and causes
 	 * an unfortunate splx() while we are here recomputing the masks.
 	 */
-	for (level = IPL_NONE; level < IPL_HIGH; level++) {
+	for (level = IPL_NONE; level < NIPLS; level++) {
 		uint64_t irqs = 0;
 		for (irq = 0; irq < INTR_MASKSIZE; irq++)
 			if (intrlevel[irq] & (1 << level))
@@ -83,12 +83,13 @@ MASK_FUNCTIONNAME()
 	INTR_IMASK(IPL_TTY) |= INTR_IMASK(IPL_NET);
 	INTR_IMASK(IPL_VM) |= INTR_IMASK(IPL_TTY);
 	INTR_IMASK(IPL_CLOCK) |= INTR_IMASK(IPL_VM);
+	INTR_IMASK(IPL_HIGH) |= INTR_IMASK(IPL_CLOCK);
+	INTR_IMASK(IPL_IPI) |= INTR_IMASK(IPL_HIGH);
 
 	/*
 	 * These are pseudo-levels.
 	 */
 	INTR_IMASK(IPL_NONE) = 0;
-	INTR_IMASK(IPL_HIGH) = -1UL;
 }
 
 /*
@@ -137,7 +138,7 @@ INTR_FUNCTIONNAME(uint32_t hwpend, struct trap_frame *frame)
 		__asm__ ("sync\n\t.set reorder\n");
 
 		/* Service higher level interrupts first */
-		for (lvl = IPL_HIGH - 1; lvl != IPL_NONE; lvl--) {
+		for (lvl = NIPLS - 1; lvl != IPL_NONE; lvl--) {
 			tmpisr = isr & (INTR_IMASK(lvl) ^ INTR_IMASK(lvl - 1));
 			if (tmpisr == 0)
 				continue;
