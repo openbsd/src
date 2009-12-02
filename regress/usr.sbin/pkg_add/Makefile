@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.17 2009/12/02 11:21:42 espie Exp $
+# $OpenBSD: Makefile,v 1.18 2009/12/02 11:40:12 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
 	collision-check3 partial-update-test conflict-update \
-	merge-update
+	merge-update split-update
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -100,6 +100,7 @@ split-update: old/o-0.0.tgz new/o-1.0.tgz new/p-0.0.tgz
 	-rm -rf ${D13}
 	ROOT=${D13} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} o
 	ROOT=${D13} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u o
+	PKG_DBDIR=${D13}/pkgdb pkg_info -q |diff - ${.CURDIR}/list5.out
 
 plist1:
 	@echo "@owner "`whoami` >$@
