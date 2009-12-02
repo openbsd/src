@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.31 2009/11/30 16:15:13 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.32 2009/12/02 11:36:27 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -266,6 +266,7 @@ sub merge
 	}
 	# then regen tracker info for $self
 	$tracker->add_set($self);
+	delete $self->{solver};
 	return $self;
 }
 

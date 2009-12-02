@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.89 2009/11/29 13:19:29 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.90 2009/12/02 11:36:27 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -250,9 +250,7 @@ sub find_dep_in_self
 {
 	my ($self, $state, $dep) = @_;
 
-	return find_candidate($dep->spec, 
-	    map {$_->pkgname} $self->{set}->newer);
-
+	return find_candidate($dep->spec, $self->{set}->newer_names);
 }
 
 sub find_dep_in_stuff_to_install
@@ -350,7 +348,8 @@ sub check_depends
 	my @bad = ();
 
 	for my $dep ($self->dependencies) {
-		push(@bad, $dep) unless is_installed($dep);
+		push(@bad, $dep) 
+		    unless is_installed($dep) or $self->{set}->{newer}->{$dep};
 	}
 	return @bad;
 }

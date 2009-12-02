@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.408 2009/12/01 09:53:09 espie Exp $
+# $OpenBSD: pkg_add,v 1.409 2009/12/02 11:36:27 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -491,13 +491,15 @@ sub really_add
 		OpenBSD::Add::tweak_plist_status($plist, $state);
 		$plist->to_cache;
 		OpenBSD::Add::register_installation($plist);
-		$set->{solver}->register_dependencies($state);
 		add_installed($pkgname);
 		delete $handle->{partial};
 		OpenBSD::PkgCfl::register($plist, $state);
 		if ($plist->has(DISPLAY)) {
 			$plist->get(DISPLAY)->prepare($state);
 		}
+	}
+	for my $handle ($set->newer) {
+		$set->{solver}->register_dependencies($state);
 	}
 	$set->{solver}->adjust_old_dependencies($state);
 	if ($state->{repairdependencies}) {
