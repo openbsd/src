@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.25 2009/11/03 06:41:19 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.26 2009/12/02 08:19:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -885,7 +885,7 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		}
 		hdl->odelta += (ao.samples - hdl->obytes) / hdl->obpf;
 		hdl->obytes = ao.samples;
-		if (hdl->odelta != 0) {
+		if (hdl->odelta > 0) {
 			sio_onmove_cb(&hdl->sio, hdl->odelta);
 			hdl->odelta = 0;
 		}
@@ -898,7 +898,7 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		}
 		hdl->idelta += (ao.samples - hdl->ibytes) / hdl->ibpf;
 		hdl->ibytes = ao.samples;
-		if (hdl->idelta != 0) {
+		if (hdl->idelta > 0) {
 			sio_onmove_cb(&hdl->sio, hdl->idelta);
 			hdl->idelta = 0;
 		}
