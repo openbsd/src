@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.64 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.65 2009/12/02 19:10:02 mk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -53,7 +53,7 @@ control_init(int restricted, char *path)
 
 	if (unlink(path) == -1)
 		if (errno != ENOENT) {
-			log_warn("unlink %s", path);
+			log_warn("control_init: unlink %s", path);
 			close(fd);
 			return (-1);
 		}
@@ -123,14 +123,14 @@ control_accept(int listenfd, int restricted)
 	if ((connfd = accept(listenfd,
 	    (struct sockaddr *)&sun, &len)) == -1) {
 		if (errno != EWOULDBLOCK && errno != EINTR)
-			log_warn("session_control_accept");
+			log_warn("control_accept: accept");
 		return (0);
 	}
 
 	session_socket_blockmode(connfd, BM_NONBLOCK);
 
 	if ((ctl_conn = malloc(sizeof(struct ctl_conn))) == NULL) {
-		log_warn("session_control_accept");
+		log_warn("control_accept");
 		close(connfd);
 		return (0);
 	}
