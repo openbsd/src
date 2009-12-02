@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.25 2009/11/27 10:22:09 syuu Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.26 2009/12/02 01:42:14 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -360,6 +360,7 @@ hw_cpu_boot_secondary(struct cpu_info *ci)
        if (kstack == NULL)
 	       panic("unable to allocate idle stack\n");
        bzero((char *)kstack, USPACE);
+       ci->ci_curprocpaddr = (void *)kstack;
 
        *(volatile uint64_t *)(mpconf + MPCONF_STACKADDR(cpuid)) =
            (uint64_t)(kstack + USPACE);
@@ -397,8 +398,6 @@ hw_cpu_hatch(struct cpu_info *ci)
        sys_config.cpu[cpuid].tlbsize = 64;
 
        Mips10k_ConfigCache();
-
-       ci->ci_curprocpaddr = proc0paddr;
 
        sys_config.cpu[cpuid].tlbwired = UPAGES / 2;
        tlb_set_wired(0);

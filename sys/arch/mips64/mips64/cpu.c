@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.20 2009/11/26 14:14:08 syuu Exp $ */
+/*	$OpenBSD: cpu.c,v 1.21 2009/12/02 01:42:14 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -332,6 +332,9 @@ cpu_boot_secondary_processors(void)
                        continue;
                if (ci->ci_flags & CPUF_PRIMARY)
                        continue;
+
+               sched_init_cpu(ci);
+               ci->ci_randseed = random();
                cpu_boot_secondary(ci);
        }
 
