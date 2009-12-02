@@ -244,6 +244,7 @@ static void parse_menu(const char *arg GCC_UNUSED,
     END(HTML_H1);
     PUTC('\n');
     START(HTML_PRE);
+    PUTC('\n');
     while ((ich = NEXT_CHAR) != EOF) {
 
 	if (interrupted_in_htgetcharacter) {
