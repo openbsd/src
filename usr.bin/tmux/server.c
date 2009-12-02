@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.78 2009/11/26 21:37:13 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.79 2009/12/02 15:06:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -431,7 +431,7 @@ server_child_signal(void)
 		}
 		if (WIFSTOPPED(status))
 			server_child_stopped(pid, status);
-		else if (WIFEXITED(status))
+		else if (WIFEXITED(status) || WIFSIGNALED(status))
 			server_child_exited(pid, status);
 	}
 }
