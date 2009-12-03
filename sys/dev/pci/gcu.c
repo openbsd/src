@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcu.c,v 1.1 2009/11/25 13:28:13 dms Exp $	*/
+/*	$OpenBSD: gcu.c,v 1.2 2009/12/03 11:07:46 dms Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -60,7 +60,7 @@ gcu_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	int val;
 
-	val = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x10);
+	val = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
 		printf(": mmba is not mem space\n");
 		return;
