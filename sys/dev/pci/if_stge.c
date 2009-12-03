@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.50 2009/08/13 14:24:47 jasper Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.51 2009/12/03 12:42:53 jasper Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -1183,9 +1183,18 @@ stge_init(struct ifnet *ifp)
 	STGE_RXCHAIN_RESET(sc);
 
 	/* Set the station address. */
-	for (i = 0; i < 6; i++)
-		CSR_WRITE_1(sc, STGE_StationAddress0 + i,
-		    sc->sc_arpcom.ac_enaddr[i]);
+	if (sc->sc_stge1023) {
+		CSR_WRITE_2(sc, STGE_StationAddress0,
+		    sc->sc_arpcom.ac_enaddr[0] | sc->sc_arpcom.ac_enaddr[1] << 8);
+		CSR_WRITE_2(sc, STGE_StationAddress1,
+		    sc->sc_arpcom.ac_enaddr[2] | sc->sc_arpcom.ac_enaddr[3] << 8);
+		CSR_WRITE_2(sc, STGE_StationAddress2,
+		    sc->sc_arpcom.ac_enaddr[4] | sc->sc_arpcom.ac_enaddr[5] << 8);
+	} else {
+		for (i = 0; i < 6; i++)
+			CSR_WRITE_1(sc, STGE_StationAddress0 + i,
+			    sc->sc_arpcom.ac_enaddr[i]);
+	}
 
 	/*
 	 * Set the statistics masks.  Disable all the RMON stats,
@@ -1516,10 +1525,6 @@ stge_iff(struct stge_softc *sc)
 	 * Always accept frames destined to our station address.
 	 */
 	sc->sc_ReceiveMode = RM_ReceiveBroadcast | RM_ReceiveUnicast;
-
-	/* XXX: ST1023 only works in promiscuous mode */
-	if (sc->sc_stge1023)
-		ifp->if_flags |= IFF_PROMISC;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
