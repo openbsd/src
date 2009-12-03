@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.90 2009/11/19 20:16:27 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.91 2009/12/03 06:02:38 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -155,16 +155,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 * from kernel mode unless SR_UX is set.
 	 */
 	setsr(getsr() | SR_KX | SR_UX);
-
-#ifdef notyet
-	/*
-	 * Make sure CKSEG0 cacheability match what we intend to use.
-	 *
-	 * XXX This does not work as expected on IP30. Does ARCBios
-	 * XXX depend on this?
-	 */
-	cp0_setcfg((cp0_getcfg() & ~0x07) | CCA_CACHED);
-#endif
 
 	/*
 	 * Clear the compiled BSS segment in OpenBSD code.
@@ -366,11 +356,46 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		 */
 		switch(sys_config.cpu[0].type) {
 		case MIPS_RM7000:
-			/* Rev A (version >= 2) CPU's have 64 TLB entries. */
-			if (sys_config.cpu[0].vers_maj < 2) {
-				sys_config.cpu[0].tlbsize = 48;
-			} else {
-				sys_config.cpu[0].tlbsize = 64;
+			/*
+			 * Rev A (version >= 2) CPU's have 64 TLB entries.
+			 *
+			 * However, the last 16 are only enabled if one
+			 * particular configuration bit (mode bit #24)
+			 * is set on cpu reset, so check whether the
+			 * extra TLB are really usable.
+			 *
+			 * If they are disabled, they are nevertheless
+			 * writable, but random TLB insert operations
+			 * will never use any of them. This can be
+			 * checked by inserting dummy entries and check
+			 * if any of the last 16 entries have been used.
+			 *
+			 * Of course, due to the way the random replacement
+			 * works (hashing various parts of the TLB data,
+			 * such as address bits and ASID), not all the
+			 * available TLB will be used; we simply check
+			 * the highest valid TLB entry we can find and
+			 * see if it is in the upper 16 entries or not.
+			 */
+			sys_config.cpu[0].tlbsize = 48;
+			if (sys_config.cpu[0].vers_maj >= 2) {
+				struct tlb_entry te;
+				int e, lastvalid;
+
+				tlb_set_wired(0);
+				tlb_flush(64);
+				for (e = 0; e < 64 * 8; e++)
+					tlb_update(XKSSEG_BASE + ptoa(2 * e),
+					    pfn_to_pad(0) | PG_ROPAGE);
+				lastvalid = 0;
+				for (e = 0; e < 64; e++) {
+					tlb_read(e, &te);
+					if ((te.tlb_lo0 & PG_V) != 0)
+						lastvalid = e;
+				}
+				tlb_flush(64);
+				if (lastvalid >= 48)
+					sys_config.cpu[0].tlbsize = 64;
 			}
 			break;
 
