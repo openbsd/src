@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.24 2009/12/01 01:40:02 dlg Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.25 2009/12/03 14:31:03 dlg Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -61,6 +61,7 @@ struct sd_softc {
 #define	SDF_DIRTY	0x20		/* disk is dirty; needs cache flush */
 #define	SDF_DYING	0x40		/* dying, when deactivated */
 #define SDF_WAITING	0x80		/* bus is busy, try again later */
+#define SDF_STARTING	0x100		/* sdstart is already running */
 	struct scsi_link	*sc_link; /* contains our targ, lun, etc. */
 	struct disk_parms {
 		u_long	heads;		/* number of heads */
@@ -71,6 +72,7 @@ struct sd_softc {
 		daddr64_t	disksize;	/* total number sectors */
 	} params;
 	struct mutex sc_buf_mtx;
+	struct mutex sc_start_mtx;
 	struct buf sc_buf_queue;
 	void *sc_sdhook;		/* our shutdown hook */
 	struct timeout sc_timeout;

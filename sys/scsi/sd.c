@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.168 2009/12/03 06:09:30 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.169 2009/12/03 14:31:03 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -171,6 +171,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdattach:\n"));
 
 	mtx_init(&sd->sc_buf_mtx, IPL_BIO);
+	mtx_init(&sd->sc_start_mtx, IPL_BIO);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -691,6 +692,15 @@ sdstart(void *v)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart\n"));
 
+	mtx_enter(&sc->sc_start_mtx);
+	if (ISSET(sc->flags, SDF_STARTING)) {
+		mtx_leave(&sc->sc_start_mtx);
+		return;
+	}
+
+	SET(sc->flags, SDF_STARTING);
+	mtx_leave(&sc->sc_start_mtx);
+
 	CLR(sc->flags, SDF_WAITING);
 	while (!ISSET(sc->flags, SDF_WAITING) &&
 	    (bp = sd_buf_dequeue(sc)) != NULL) {
@@ -710,7 +720,7 @@ sdstart(void *v)
 		xs = scsi_xs_get(link, SCSI_NOSLEEP);
 		if (xs == NULL) {
 			sd_buf_requeue(sc, bp);
-			return;
+			break;
 		}
 
 		blkno =
@@ -755,6 +765,10 @@ sdstart(void *v)
 
 		scsi_xs_exec(xs);
 	}
+
+	mtx_enter(&sc->sc_start_mtx);
+	CLR(sc->flags, SDF_STARTING);
+	mtx_leave(&sc->sc_start_mtx);
 }
 
 void
