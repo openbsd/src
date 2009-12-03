@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.65 2009/12/02 19:10:02 mk Exp $ */
+/*	$OpenBSD: control.c,v 1.66 2009/12/03 19:22:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -333,9 +333,15 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_CLEAR:
-					session_stop(p, ERR_CEASE_ADMIN_RESET);
-					timer_set(p, Timer_IdleHold,
-					    SESSION_CLEAR_DELAY);
+					if (!p->conf.down) {
+						session_stop(p,
+						    ERR_CEASE_ADMIN_RESET);
+						timer_set(p, Timer_IdleHold,
+						    SESSION_CLEAR_DELAY);
+					} else {
+						session_stop(p,
+						    ERR_CEASE_ADMIN_DOWN);
+					}
 					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_RREFRESH:
