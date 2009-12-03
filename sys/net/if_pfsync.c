@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.133 2009/11/23 16:03:10 henning Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.134 2009/12/03 12:23:52 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -233,6 +233,7 @@ void	pfsync_deferred(struct pf_state *, int);
 void	pfsync_undefer(struct pfsync_deferral *, int);
 void	pfsync_defer_tmo(void *);
 
+void	pfsync_request_full_update(struct pfsync_softc *);
 void	pfsync_request_update(u_int32_t, u_int64_t);
 void	pfsync_update_state_req(struct pf_state *);
 
@@ -1357,9 +1358,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 	case SIOCSIFFLAGS:
 		s = splnet();
-		if (ifp->if_flags & IFF_UP)
+		if (ifp->if_flags & IFF_UP) {
 			ifp->if_flags |= IFF_RUNNING;
-		else {
+			pfsync_request_full_update(sc);
+		} else {
 			ifp->if_flags &= ~IFF_RUNNING;
 
 			/* drop everything */
@@ -1481,22 +1483,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ip->ip_src.s_addr = INADDR_ANY;
 		ip->ip_dst.s_addr = sc->sc_sync_peer.s_addr;
 
-		if (sc->sc_sync_if) {
-			/* Request a full state table update. */
-			sc->sc_ureq_sent = time_uptime;
-#if NCARP > 0
-			if (pfsync_sync_ok)
-				carp_group_demote_adj(&sc->sc_if, 1);
-#endif
-			pfsync_sync_ok = 0;
-			if (pf_status.debug >= PF_DEBUG_MISC)
-				printf("pfsync: requesting bulk update\n");
-			timeout_add(&sc->sc_bulkfail_tmo, 4 * hz +
-			    pf_pool_limits[PF_LIMIT_STATES].limit /
-			    ((sc->sc_if.if_mtu - PFSYNC_MINPKT) /
-			    sizeof(struct pfsync_state)));
-			pfsync_request_update(0, 0);
-		}
+		pfsync_request_full_update(sc);
 		splx(s);
 
 		break;
@@ -1939,6 +1926,27 @@ pfsync_update_state(struct pf_state *st)
 	if (sync || (time_uptime - st->pfsync_time) < 2) {
 		pfsync_upds++;
 		schednetisr(NETISR_PFSYNC);
+	}
+}
+
+void
+pfsync_request_full_update(struct pfsync_softc *sc)
+{
+	if (sc->sc_sync_if && ISSET(sc->sc_if.if_flags, IFF_RUNNING)) {
+		/* Request a full state table update. */
+		sc->sc_ureq_sent = time_uptime;
+#if NCARP > 0
+		if (pfsync_sync_ok)
+			carp_group_demote_adj(&sc->sc_if, 1);
+#endif
+		pfsync_sync_ok = 0;
+		if (pf_status.debug >= PF_DEBUG_MISC)
+			printf("pfsync: requesting bulk update\n");
+		timeout_add(&sc->sc_bulkfail_tmo, 4 * hz +
+		    pf_pool_limits[PF_LIMIT_STATES].limit /
+		    ((sc->sc_if.if_mtu - PFSYNC_MINPKT) /
+		    sizeof(struct pfsync_state)));
+		pfsync_request_update(0, 0);
 	}
 }
 
