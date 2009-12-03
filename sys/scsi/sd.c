@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.167 2009/12/01 03:43:17 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.168 2009/12/03 06:09:30 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1482,6 +1482,7 @@ sd_flush(struct sd_softc *sc, int flags)
 	cmd = (struct scsi_synchronize_cache *)xs->cmd;
 	cmd->opcode = SYNCHRONIZE_CACHE;
 
+	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = 100000;
 
 	xs->done = sd_flush_done;
