@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.85 2009/12/01 11:21:30 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.86 2009/12/03 18:55:43 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: December 1 2009 $
+.Dd $Mdocdate: December 3 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -397,7 +397,7 @@ to install, as an atomic operation.
 Under normal circumstances, an updateset contains at most one old package
 and one new package, but some situations may require
 .Nm
-to perform several installation/suppression at once.
+to perform several installations/deletions at once.
 .Pp
 For each new package in an updateset,
 .Nm
@@ -439,7 +439,7 @@ directives; see
 are read from the packing list.
 If any of these dependencies are not currently fulfilled,
 an attempt is made to find a package that meets them and install it,
-looking first in the current updateset, then in the list of packages 
+looking first in the current updateset, then in the list of packages
 to install passed to
 .Nm ;
 if no adequate package can be found and installed,
@@ -516,17 +516,17 @@ A check is made to determine if a similar package is already installed.
 If its signature is identical to that of the new package, no replacement
 is performed (unless -F installed is specified).
 .It
-A check is made to determine what old package(s) the new package(s) should 
+A check is made to determine what old package(s) the new package(s) should
 replace, using conflicts.
 .Nm
 will attempt to update those packages.
 If they update to the new package(s), nothing needs to be done.
-If they're part of the replacement list, the corresponding updatesets will
-be merged.
+If they're part of the list of updatesets to install, the corresponding
+updatesets will be merged.
 Otherwise,
 .Nm
 will add them to the current updateset, and rerun update to find suitable
-update packages.
+update to those packages.
 .It
 A check is made to determine whether the old packages will be deleted without
 issue, and whether the new packages will install correctly.
@@ -545,20 +545,20 @@ since the old packages are still there.
 The packing-list is amended to record these names as @temp annotations,
 in cases the installation fails.
 .It
-The old package are deleted as usual, except that some packages may still 
+The old packages are deleted as usual, except that some packages may still
 depend on them.
 Note also that
 .Cm @unexec-delete
 commands are not executed.
 .It
-The new package are installed as usual, except that the files are already 
+The new packages are installed as usual, except that the files are already
 present and only need to be renamed.
 Note also that
 .Cm @exec-add
 commands are not executed.
 .It
-Dependencies from the old packages are adjusted to point to the correct new 
-packages.
+Dependencies from the old packages are adjusted to point to the correct new
+package.
 .El
 .Pp
 To update packages in -u mode,
@@ -580,8 +580,7 @@ can be deleted because they're now part of base, or stem changes.
 .It
 Version matching occurs: unless -F downgrade, only packages with newer
 versions will be considered as update candidates.
-Note that
-version matching  is cosly, thus
+Note that version matching is costly, thus
 .Ev PKG_PATH
 should point to a snapshot of packages for a given version of
 .Ox ,
@@ -603,7 +602,7 @@ Once a suitable update candidate has been found,
 .Nm
 checks the package dependencies.
 If necessary, it will install or update them first.
-Once all dependencies are uptodate,
+Once all dependencies are up-to-date,
 .Nm
 will update the package.
 .El
