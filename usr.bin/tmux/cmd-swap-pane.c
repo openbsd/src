@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.10 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.11 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -110,7 +110,7 @@ cmd_swap_pane_exec(struct cmd *self, struct cmd_ctx *ctx)
 	dst_wp->layout_cell = src_lc;
 	dst_lc->wp = src_wp;
 	src_wp->layout_cell = dst_lc;
-	
+
 	src_wp->window = dst_w;
 	dst_wp->window = src_w;
 

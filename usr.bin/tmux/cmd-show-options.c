@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.8 2009/12/03 17:44:02 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.9 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_show_options_entry = {
 int
 cmd_show_options_exec(struct cmd *self, struct cmd_ctx *ctx)
 {
-	struct cmd_target_data		*data = self->data;	
+	struct cmd_target_data		*data = self->data;
 	const struct set_option_entry	*table;
 	struct session			*s;
 	struct winlink			*wl;

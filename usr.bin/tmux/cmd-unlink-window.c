@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-unlink-window.c,v 1.8 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-unlink-window.c,v 1.9 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -63,7 +63,7 @@ cmd_unlink_window_exec(struct cmd *self, struct cmd_ctx *ctx)
 		ctx->error(ctx, "window is only linked to one session");
 		return (-1);
 	}
-	
+
 	server_unlink_window(s, wl);
 	recalculate_sizes();
 

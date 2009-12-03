@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.15 2009/11/20 19:12:39 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.16 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -70,7 +70,7 @@ cmd_split_window_init(struct cmd *self, int key)
 	switch (key) {
 	case '%':
 		data->flag_horizontal = 1;
-		break;		
+		break;
 	case '"':
 		data->flag_horizontal = 0;
 		break;

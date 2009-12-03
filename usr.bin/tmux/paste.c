@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.7 2009/11/26 22:28:24 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.8 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -106,7 +106,7 @@ paste_free_index(struct paste_stack *ps, u_int idx)
 	return (0);
 }
 
-/* 
+/*
  * Add an item onto the top of the stack, freeing the bottom if at limit. Note
  * that the caller is responsible for allocating data.
  */
@@ -133,7 +133,7 @@ paste_add(struct paste_stack *ps, char *data, size_t size, u_int limit)
 }
 
 
-/* 
+/*
  * Replace an item on the stack. Note that the caller is responsible for
  * allocating data.
  */

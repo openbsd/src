@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.17 2009/11/25 12:24:31 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.18 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -81,7 +81,7 @@ struct input_key_ent input_keys[] = {
 	{ KEYC_DOWN|KEYC_CTRL,	"\033[B",	INPUTKEY_CURSOR },
 	{ KEYC_RIGHT|KEYC_CTRL,	"\033[C",	INPUTKEY_CURSOR },
 	{ KEYC_LEFT|KEYC_CTRL,	"\033[D",	INPUTKEY_CURSOR },
-	
+
 	{ KEYC_UP,		"\033OA",	INPUTKEY_CURSOR },
 	{ KEYC_DOWN,		"\033OB",	INPUTKEY_CURSOR },
 	{ KEYC_RIGHT,		"\033OC",	INPUTKEY_CURSOR },
@@ -122,7 +122,7 @@ struct input_key_ent input_keys[] = {
 	{ KEYC_KP_EIGHT,	"8",		0 },
 	{ KEYC_KP_NINE,		"9",		0 },
 	{ KEYC_KP_PLUS,		"+",		0 },
-	{ KEYC_KP_FOUR,		"4",		0 },	
+	{ KEYC_KP_FOUR,		"4",		0 },
 	{ KEYC_KP_FIVE,		"5",		0 },
 	{ KEYC_KP_SIX,		"6",		0 },
 	{ KEYC_KP_ONE,		"1",		0 },
@@ -157,7 +157,7 @@ input_key(struct window_pane *wp, int key)
 		return;
 	}
 
-	/* 
+	/*
 	 * Then try to look this up as an xterm key, if the flag to output them
 	 * is set.
 	 */

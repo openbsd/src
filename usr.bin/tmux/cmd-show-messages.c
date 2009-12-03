@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-messages.c,v 1.1 2009/11/18 13:16:33 nicm Exp $ */
+/* $OpenBSD: cmd-show-messages.c,v 1.2 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -57,7 +57,7 @@ cmd_show_messages_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 		tim = ctime(&msg->msg_time);
 		*strchr(tim, '\n') = '\0';
-		
+
 		ctx->print(ctx, "%s %s", tim, msg->msg);
 	}
 

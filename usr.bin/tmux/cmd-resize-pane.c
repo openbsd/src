@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.7 2009/11/13 19:53:29 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.8 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -56,7 +56,7 @@ cmd_resize_pane_init(struct cmd *self, int key)
 		cmd_set_flag(&data->chflags, 'L');
 	if (key == (KEYC_RIGHT | KEYC_CTRL))
 		cmd_set_flag(&data->chflags, 'R');
-	
+
 	if (key == (KEYC_UP | KEYC_ESCAPE)) {
 		cmd_set_flag(&data->chflags, 'U');
 		data->arg = xstrdup("5");

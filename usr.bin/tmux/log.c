@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.3 2009/07/21 18:40:30 nicm Exp $ */
+/* $OpenBSD: log.c,v 1.4 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -183,7 +183,7 @@ log_vfatal(const char *msg, va_list ap)
 		log_vwrite(LOG_CRIT, fmt, ap);
 	} else {
 		if (asprintf(&fmt, "fatal: %s", msg) == -1)
-       			exit(1);
+			exit(1);
 		log_vwrite(LOG_CRIT, fmt, ap);
 	}
 	free(fmt);

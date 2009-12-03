@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-bind-key.c,v 1.6 2009/11/13 19:53:28 nicm Exp $ */
+/* $OpenBSD: cmd-bind-key.c,v 1.7 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -152,7 +152,7 @@ cmd_bind_key_table(struct cmd *self, struct cmd_ctx *ctx)
 		ctx->error(ctx, "unknown command: %s", data->modecmd);
 		return (-1);
 	}
-	
+
 	mtmp.key = data->key & ~KEYC_PREFIX;
 	mtmp.mode = data->command_key ? 1 : 0;
 	if ((mbind = SPLAY_FIND(mode_key_tree, mtab->tree, &mtmp)) != NULL) {

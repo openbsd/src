@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-buffers.c,v 1.7 2009/11/26 22:28:24 nicm Exp $ */
+/* $OpenBSD: cmd-list-buffers.c,v 1.8 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -71,7 +71,7 @@ cmd_list_buffers_exec(struct cmd *self, struct cmd_ctx *ctx)
 			tmp[50 - 3] = '\0';
 			strlcat(tmp, "...", sizeof tmp);
 		}
-		
+
 		ctx->print(ctx, "%u: %zu bytes: \"%s\"", idx - 1, size, tmp);
 	}
 

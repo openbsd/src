@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.11 2009/11/26 22:56:59 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.12 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -136,7 +136,7 @@ key_string_lookup_string(const char *string)
 			key = (u_char) ptr[0];
 		}
 
-		/* 
+		/*
 		 * Figure out if the single character in key is a valid ctrl
 		 * key.
 		 */
@@ -150,7 +150,7 @@ key_string_lookup_string(const char *string)
 			return (key - 96);
 		return (KEYC_NONE);
 	}
-	
+
 	if ((string[0] == 'M' || string[0] == 'm') && string[1] == '-') {
 		ptr = string + 2;
 		if (ptr[0] == '\0')

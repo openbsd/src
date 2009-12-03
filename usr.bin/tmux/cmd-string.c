@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.11 2009/11/26 21:14:30 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.12 2009/12/03 22:50:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -121,7 +121,7 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 		case EOF:
 		case ' ':
 		case '\t':
- 			if (have_arg) {
+			if (have_arg) {
 				buf = xrealloc(buf, 1, len + 1);
 				buf[len] = '\0';
 
