@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.300 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.301 2009/12/03 19:27:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -926,6 +926,7 @@ change_state(struct peer *peer, enum session_state state,
 		timer_stop(peer, Timer_ConnectRetry);
 		timer_stop(peer, Timer_Keepalive);
 		timer_stop(peer, Timer_Hold);
+		timer_stop(peer, Timer_IdleHold);
 		timer_stop(peer, Timer_IdleHoldReset);
 		session_close_connection(peer);
 		msgbuf_clear(&peer->wbuf);
