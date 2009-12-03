@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.68 2009/02/14 14:45:31 sthen Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.69 2009/12/03 12:45:05 sthen Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: February 14 2009 $
+.Dd $Mdocdate: December 3 2009 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -712,11 +712,19 @@ The known codes are:
 .Ar match ,
 .Ar bad-offset ,
 .Ar fragment ,
-.Ar bad-timestamp ,
 .Ar short ,
 .Ar normalize ,
+.Ar memory ,
+.Ar bad-timestamp ,
+.Ar congestion ,
+.Ar ip-option ,
+.Ar proto-cksum ,
+.Ar state-mismatch ,
+.Ar state-insert ,
+.Ar state-limit ,
+.Ar src-limit ,
 and
-.Ar memory
+.Ar synproxy
 (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm rset Ar name
@@ -740,11 +748,8 @@ True if PF took the specified action when the packet was logged.
 Valid actions are:
 .Ar pass ,
 .Ar block ,
-.Ar nat ,
-.Ar rdr ,
-.Ar binat
 and
-.Ar scrub
+.Ar match
 (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm wlan addr1 Ar ehost
