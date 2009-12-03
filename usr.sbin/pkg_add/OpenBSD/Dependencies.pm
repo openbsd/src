@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.90 2009/12/02 11:36:27 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.91 2009/12/03 18:43:46 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -489,6 +489,9 @@ sub solve_wantlibs
 
 	my $lib_finder = OpenBSD::lookup::library->new($solver);
 	for my $h ($solver->{set}->newer) {
+		OpenBSD::SharedLibs::add_libs_from_plist($h->plist);
+	}
+	for my $h ($solver->{set}->newer) {
 		for my $lib (@{$h->{plist}->{wantlib}}) {
 			$solver->{localbase} = $h->{plist}->localbase;
 			next if $lib_finder->lookup($solver, 
@@ -496,7 +499,7 @@ sub solve_wantlibs
 			    $lib->{name});
 			if ($okay) {
 				$state->errsay("Can't install ", 
-				    $h->pkgname, ":");
+				    $h->pkgname, ":", $lib->{name});
 			}
 			$okay = 0;
 			OpenBSD::SharedLibs::report_problem($state, 
