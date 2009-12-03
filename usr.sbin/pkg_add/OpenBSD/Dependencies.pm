@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.91 2009/12/03 18:43:46 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.92 2009/12/03 18:49:59 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -499,7 +499,7 @@ sub solve_wantlibs
 			    $lib->{name});
 			if ($okay) {
 				$state->errsay("Can't install ", 
-				    $h->pkgname, ":", $lib->{name});
+				    $h->pkgname, ":");
 			}
 			$okay = 0;
 			OpenBSD::SharedLibs::report_problem($state, 
