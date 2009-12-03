@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.52 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.53 2009/12/03 19:20:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -327,6 +327,9 @@ log_conn_attempt(const struct peer *peer, struct sockaddr *sa)
 		b = log_sockaddr(sa);
 		logit(LOG_INFO, "connection from non-peer %s refused", b);
 	} else {
+		/* only log if there is a chance that the session may come up */
+		if (peer->conf.down && peer->state == STATE_IDLE)
+			return;
 		p = log_fmt_peer(&peer->conf);
 		logit(LOG_INFO, "Connection attempt from %s while session is "
 		    "in state %s", p, statenames[peer->state]);
