@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.40 2009/11/29 17:03:53 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.41 2009/12/04 22:48:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -534,7 +534,7 @@ ip27_halt(int howto)
 #else
 		if (howto & RB_POWERDOWN) {
 			if (ip35) {
-				l1_exec_command(masternasid, "pwr d");
+				l1_exec_command(masternasid, "* pwr d");
 				delay(1000000);
 				printf("Powerdown failed, "
 				    "please switch off power manually.\n");
