@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.11 2009/11/28 16:46:20 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.12 2009/12/04 10:43:02 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -110,6 +110,17 @@ sub is
 	} else {
 		return $set;
 	}
+}
+
+sub is_known
+{
+	my ($self, $pkg) = @_;
+	my $r;
+	for my $k qw(installed uptodate cant_update to_update) {
+		$r = $self->is($k, $pkg);
+	    	return $r if defined $r;
+	}
+	return $r;
 }
 
 sub is_installed
