@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.77 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.78 2009/12/04 11:01:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1006,10 +1006,8 @@ tty_region(struct tty *tty, u_int rupper, u_int rlower)
 	if (tty->cx >= tty->sx)
 		tty_cursor(tty, 0, tty->cy);
 
-	tty->cx = 0;
-	tty->cy = 0;
-
 	tty_putcode2(tty, TTYC_CSR, tty->rupper, tty->rlower);
+	tty_cursor(tty, 0, 0);
 }
 
 /* Move cursor inside pane. */
