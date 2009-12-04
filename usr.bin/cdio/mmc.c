@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmc.c,v 1.26 2008/08/30 10:41:38 fgsch Exp $	*/
+/*	$OpenBSD: mmc.c,v 1.27 2009/12/04 07:43:26 claudio Exp $	*/
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -80,7 +80,7 @@ get_media_capabilities(int *cap, int rt)
 	scsireq_t scr;
 	u_char buf[4096];
 	u_int32_t i, dlen;
-	u_int16_t feature;
+	u_int16_t feature, tmp;
 	u_int8_t feature_len;
 	int error;
 
@@ -90,7 +90,8 @@ get_media_capabilities(int *cap, int rt)
 
 	scr.cmd[0] = SCSI_GET_CONFIGURATION;
 	scr.cmd[1] = rt;
-	*(u_int16_t *)(scr.cmd + 7) = htobe16(sizeof(buf));
+	tmp = htobe16(sizeof(buf));
+	memcpy(scr.cmd + 7, &tmp, sizeof(u_int16_t));
 
 	scr.flags = SCCMD_ESCAPE | SCCMD_READ;
 	scr.databuf = buf;
