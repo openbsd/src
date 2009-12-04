@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.72 2009/12/04 20:38:43 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.73 2009/12/04 20:50:59 jakemsr Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -2954,15 +2954,11 @@ uaudio_chan_set_param(struct chan *ch, u_char *start, u_char *end, int blksize)
 
 	/*
 	 * Recompute nframes based on blksize, but make sure nframes
-	 * is not longer in time duration than blksize.  Rounding helps.
+	 * is not longer in time duration than blksize.
 	 */
-	if (ch->maxpktsize) {
-		ch->nframes = ch->blksize / ch->maxpktsize;
-	} else {
-		ch->nframes = (ch->blksize / ch->sample_size) *
-		    ch->usb_fps / ch->sample_rate;
-	}
-	ch->nframes = ch->blksize / ch->bytes_per_frame;
+	ch->nframes = ch->blksize * ch->usb_fps /
+	    (ch->bytes_per_frame * ch->usb_fps +
+	    ch->sample_size * ch->fraction);
 	if (ch->nframes > UAUDIO_MAX_FRAMES)
 		ch->nframes = UAUDIO_MAX_FRAMES;
 	else if (ch->nframes < 1)
