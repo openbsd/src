@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.32 2009/10/15 19:00:53 jordan Exp $ */
+/* $OpenBSD: acpitz.c,v 1.33 2009/12/04 23:49:29 sthen Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -104,7 +104,7 @@ acpitz_init(struct acpitz_softc *sc, int flag)
 	/* Read trip points */
 	if (flag & ACPITZ_TRIPS) {
 		sc->sc_psv = acpitz_getreading(sc, "_PSV");
-		for (i=0; i<ACPITZ_MAX_AC; i++) {
+		for (i = 0; i < ACPITZ_MAX_AC; i++) {
 			snprintf(name, sizeof(name), "_AC%d", i);
 			sc->sc_ac[i] = acpitz_getreading(sc, name);
 			sc->sc_ac_stat[i] = -1;
@@ -119,7 +119,7 @@ acpitz_init(struct acpitz_softc *sc, int flag)
 			acpi_getdevlist(&sc->sc_psl, sc->sc_devnode, &res, 0);
 			aml_freevalue(&res);
 		}
-		for (i=0; i<ACPITZ_MAX_AC; i++) {
+		for (i = 0; i < ACPITZ_MAX_AC; i++) {
 			snprintf(name, sizeof(name), "_AL%d", i);
 			if (!aml_evalname(sc->sc_acpi, sc->sc_devnode, name,
 			    0, NULL, &res)) {
@@ -161,7 +161,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devnode = aa->aaa_node;
 
 	TAILQ_INIT(&sc->sc_psl);
-	for (i=0; i<ACPITZ_MAX_AC; i++)
+	for (i = 0; i < ACPITZ_MAX_AC; i++)
 		TAILQ_INIT(&sc->sc_alx[i]);
 
 	sc->sc_lasttmp = -1;
