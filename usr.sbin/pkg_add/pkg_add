@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.409 2009/12/02 11:36:27 espie Exp $
+# $OpenBSD: pkg_add,v 1.410 2009/12/04 10:48:14 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -111,6 +111,13 @@ sub tracker
 		$state->{tracker} = OpenBSD::Tracker->new;
 	}
 	return $state->{tracker};
+}
+
+sub quirks
+{
+	my $state = shift;
+
+	return $state->{quirks};
 }
 
 package OpenBSD::UpdateSet;
@@ -610,6 +617,13 @@ sub install_set
 	really_add($set, $state);
 	$set->cleanup;
 	$state->tracker->mark_installed($set);
+	# if we have a quirks object, we try to create the object that goes
+	# with it.
+	if ($set->{quirks}) {
+		require OpenBSD::Quirks;
+		# interface version number.
+		$state->{quirks} = OpenBSD::Quirks->new(0);
+	}
 	return ();
 }
 
@@ -683,6 +697,23 @@ sub inform_user_of_problems
 	}
 }
 
+# if we already have quirks, we update it. If not, we try to install it.
+sub quirk_set
+{
+	require OpenBSD::PackageRepository::Installed;
+	require OpenBSD::Search;
+
+	my $set = OpenBSD::UpdateSet->new;
+	$set->{quirks} = 1;
+	my $l = OpenBSD::PackageRepository::Installed->new->match_locations(OpenBSD::Search::Stem->new('quirks'));
+	if (@$l > 0) {
+		$set->add_older(@$l);
+	} else {
+		$set->add_hints2('quirks');
+	}
+	return $set;
+}
+
 sub process_parameters
 {
 	# match fuzzily against a list
@@ -728,6 +759,9 @@ sub process_parameters
 			push(@todo2, OpenBSD::UpdateSet->new->$m($pkgname));
 		}
 	}
+	if ($state->{allow_replacing}) {
+#		unshift(@todo2, quirk_set());
+	}
 }
 
 sub finish_display
@@ -762,6 +796,9 @@ sub {
 		$state->progress->set_header("Looking for packages");
 		$state->{todo} = scalar @todo2;
 		unshift(@todo2, install_set($set, $state));
+		if ($state->quirks) {
+			$state->quirks->tweak_list(\@todo2);
+		}
 	}
 });
 

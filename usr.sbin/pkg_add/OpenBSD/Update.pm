@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.107 2009/11/30 18:45:14 espie Exp $
+# $OpenBSD: Update.pm,v 1.108 2009/12/04 10:48:14 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -87,15 +87,28 @@ sub process_handle
 		return 0;
 	}
 
+	if ($state->quirks) {
+		if ($state->quirks->is_base_system($h)) {
+			$h->{update_found} = 1;
+			return 1;
+		}
+	}
 	my $plist = OpenBSD::PackingList->from_installation($pkgname, 
 	    \&OpenBSD::PackingList::UpdateInfoOnly);
 	if (!defined $plist) {
 		Fatal("Can't locate $pkgname");
 	}
 
-
 	my @search = ();
-	push(@search, OpenBSD::Search::Stem->split($pkgname));
+	my $s;
+	if ($state->quirks) {
+		$s = $state->quirks->search_object($h);
+	}
+	if (!$s) {
+		$s = OpenBSD::Search::Stem->split($pkgname);
+	}
+	push(@search, $s);
+
 	my $found;
 	my $oldfound = 0;
 
