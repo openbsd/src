@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.5 2009/10/07 13:55:38 fkr Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.6 2009/12/04 04:59:48 drahn Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -218,7 +218,7 @@ usage(void)
 	    "usage: crunchgen [-EfMq] [-c c-file-name] [-D src-root] [-e exec-file-name]\n"
 	    "\t[-L lib-dir] [-m makefile-name] [-O objdir-name] conf-file\n");
 	fprintf(stderr,
-	    "       crunchgen -h [-f keep-list-file] [-k keep-symbol] object-file ...\n");
+	    "       crunchgen -h [-M] [-f keep-list-file] [-k keep-symbol] object-file ...\n");
 	exit(1);
 }
 
@@ -944,7 +944,7 @@ prog_makefile_rules(FILE * outmk, prog_t * p)
 	    p->name, p->name, p->ident);
 	fprintf(outmk, "\t$(LINK) -o $@ %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->ident);
-	fprintf(outmk, "\tcrunchgen %s -h -k %s_crunched_%s_stub $@\n",
+	fprintf(outmk, "\tcrunchgen -h %s -k %s_crunched_%s_stub $@\n",
 	    elf_mangle ? "-M" : "",
 	    elf_names ? "" : "_", p->ident);
 }

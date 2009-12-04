@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchide.c,v 1.3 2009/07/21 17:19:13 deraadt Exp $	 */
+/* $OpenBSD: crunchide.c,v 1.4 2009/12/04 04:59:48 drahn Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -71,6 +71,7 @@
 #endif
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include "mangle.h"
 
 /*
  * if __ELF__ is defined, do not bother supporting AOUT.
@@ -93,14 +94,18 @@ void            elf_hide(int, char *);
 #endif
 
 extern char	*__progname;
+extern int elf_mangle;
 
 int 
 crunchide_main(int argc, char *argv[])
 {
 	int             ch;
 
-	while ((ch = getopt(argc, argv, "hk:f:")) != -1)
+	while ((ch = getopt(argc, argv, "Mhk:f:")) != -1)
 		switch (ch) {
+		case 'M':
+			elf_mangle = 1;
+			break;
 		case 'h':
 			break;
 		case 'k':
@@ -119,11 +124,16 @@ crunchide_main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
+	if (elf_mangle)
+		init_mangle_state();
+
 	while (argc) {
 		hide_syms(*argv);
 		argc--;
 		argv++;
 	}
+	if (elf_mangle)
+		fini_mangle_state();
 
 	return 0;
 }
