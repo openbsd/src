@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.70 2009/11/26 15:45:25 jakemsr Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.71 2009/12/04 08:17:39 ratchov Exp $ */
 /*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
@@ -490,6 +490,12 @@ uaudio_detach(struct device *self, int flags)
 	struct chan *pchan = &sc->sc_playchan;
 	struct chan *rchan = &sc->sc_recchan;
 	int ms, rv = 0;
+
+	/*
+	 * sc_alts may be NULL if uaudio_identify_as() failed
+	 */
+	if (sc->sc_alts == NULL)
+		return rv;
 
 	/* Wait for outstanding requests to complete. */
 	ms = max(sc->sc_alts[pchan->altidx].sc_busy ? pchan->reqms : 0,
