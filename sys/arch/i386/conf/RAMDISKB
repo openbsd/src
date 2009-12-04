@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.111 2009/01/06 23:03:16 jasper Exp $
+#	$OpenBSD: RAMDISKB,v 1.112 2009/12/04 17:51:03 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -135,10 +135,10 @@ com2	at isa? port 0x3e8 irq 5
 #scsibus* at aha?
 #ahb*	at eisa?		# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
-#ahc0	at isa?			# Adaptec 284x SCSI controllers
+ahc0	at isa?			# Adaptec 284x SCSI controllers
 #ahc*	at eisa?		# Adaptec 274x, aic7770 SCSI controllers
-#ahc*	at pci?			# Adaptec 2940 SCSI controllers
-#scsibus* at ahc?
+ahc*	at pci?			# Adaptec 2940 SCSI controllers
+scsibus* at ahc?
 ahd*	at pci?			# Adaptec 79?? SCSI controllers
 scsibus* at ahd?
 mpi*	at pci?			# LSI Logic Fusion-MPT Message Passing Interface
