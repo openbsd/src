@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.333 2009/11/23 12:14:25 deraadt Exp $
+#	$OpenBSD: rc,v 1.334 2009/12/04 21:58:41 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -292,7 +292,7 @@ sysctl_conf
 echo 'starting network'
 ifconfig -g carp carpdemote 128
 if [ -f /etc/resolv.conf.save ]; then
-	mv /etc/resolv.conf.save /etc/resolv.conf
+	mv -f /etc/resolv.conf.save /etc/resolv.conf
 	touch /etc/resolv.conf
 fi
 . /etc/netstart
