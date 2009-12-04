@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.11 2009/10/31 01:13:00 fgsch Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.12 2009/12/04 09:49:21 jasper Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -183,8 +183,7 @@ playinit()
 
 /* play tone of proper duration for current rhythm signature */
 static void
-playtone(pitch, value, sustain)
-	int pitch, value, sustain;
+playtone(int pitch, int value, int sustain)
 {
 	int sound, silence, snum = 1, sdenom = 1;
 
@@ -216,9 +215,7 @@ playtone(pitch, value, sustain)
 
 /* interpret and play an item from a notation string */
 static void
-playstring(cp, slen)
-	char *cp;
-	int slen;
+playstring(char *cp, int slen)
 {
 	int pitch, lastpitch = OCTAVE_NOTES * DFLT_OCTAVE;
 
@@ -395,19 +392,13 @@ static void *spkr_inbuf;
 static int spkr_attached = 0;
 
 int
-spkrprobe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+spkrprobe(struct device *parent, void *match, void *aux)
 {
 	return (!spkr_attached);
 }
 
 void
-spkrattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+spkrattach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
@@ -415,11 +406,7 @@ spkrattach(parent, self, aux)
 }
 
 int
-spkropen(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+spkropen(dev_t dev, int flags, int mode, struct proc *p)
 {
 #ifdef SPKRDEBUG
 	printf("spkropen: entering with dev = %x\n", dev);
@@ -438,10 +425,7 @@ spkropen(dev, flags, mode, p)
 }
 
 int
-spkrwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+spkrwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int n;
 	int error;
@@ -462,11 +446,7 @@ spkrwrite(dev, uio, flags)
 }
 
 int
-spkrclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+spkrclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 #ifdef SPKRDEBUG
 	printf("spkrclose: entering with dev = %x\n", dev);
@@ -483,12 +463,7 @@ spkrclose(dev, flags, mode, p)
 }
 
 int
-spkrioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+spkrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	tone_t *tp, ttp;
 	int error;
