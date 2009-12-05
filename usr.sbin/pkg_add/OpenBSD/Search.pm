@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.17 2009/11/30 18:45:14 espie Exp $
+# $OpenBSD: Search.pm,v 1.18 2009/12/05 10:53:04 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -84,7 +84,7 @@ sub new
 		# XXX
 		return OpenBSD::Search::Exact->new("$1-*-$2");
     	}
-	return bless {stem => $stem}, $class;
+	return bless {"$stem" => 1}, $class;
 }
 
 sub split
@@ -95,16 +95,28 @@ sub split
 	return $class->new(OpenBSD::PackageName::splitstem($pkgname));
 }
 
+sub add_stem
+{
+	my ($self, $extra) = @_;
+	$self->{$extra} = 1;
+
+}
+
 sub match
 {
 	my ($self, $o) = @_;
-	return $o->stemlist->find($self->{stem});
+
+	my @r = ();
+	for my $k (keys %$self) {
+		push(@r, $o->stemlist->find($k));
+	}
+	return @r;
 }
 
 sub _keep
 {
 	my ($self, $stem) = @_;
-	return $self->{stem} eq $stem;
+	return defined $self->{$stem};
 }
 
 sub filter
