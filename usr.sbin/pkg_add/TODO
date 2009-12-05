@@ -18,7 +18,6 @@ different but older.
 from uptodate.
 - if looking at replacements with a different name (based on the pkgpath),
 stuff should still @conflict.
-- finally add the quirks package, to handle renames and similar stuff.
 - don't close Location unconditionally while looking for updates. In most
 cases, we're going to install this package right away, so we should try to
 keep it open to avoid spurious ftp disconnects.
