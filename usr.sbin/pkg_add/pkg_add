@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.415 2009/12/05 11:19:43 espie Exp $
+# $OpenBSD: pkg_add,v 1.416 2009/12/05 14:41:03 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -719,7 +719,7 @@ sub do_quirks
 		require OpenBSD::Quirks;
 		# interface version number.
 		$state->{quirks} = OpenBSD::Quirks->new(1);
-	}
+	};
 }
 sub process_parameters
 {
@@ -763,6 +763,7 @@ sub process_parameters
 	# actual names
 		my $m = $opt_z ? "add_hints" : "add_hints2";
 		for my $pkgname (@ARGV) {
+			next if $pkgname =~ m/^quirks\-\d/;
 			push(@todo2, OpenBSD::UpdateSet->new->$m($pkgname));
 		}
 	}
@@ -805,9 +806,9 @@ sub {
 		$state->progress->set_header("Looking for packages");
 		$state->{todo} = scalar @todo2;
 		unshift(@todo2, install_set($set, $state));
-		if ($state->quirks) {
+		eval {
 			$state->quirks->tweak_list(\@todo2, $state);
-		}
+		};
 	}
 });
 
