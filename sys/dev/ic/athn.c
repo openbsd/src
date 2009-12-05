@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.20 2009/11/25 19:53:37 damien Exp $	*/
+/*	$OpenBSD: athn.c,v 1.21 2009/12/05 23:10:33 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -4427,9 +4427,9 @@ athn_updateslot(struct ieee80211com *ic)
 	struct athn_softc *sc = ic->ic_softc;
 	uint32_t clks;
 
-	if (ic->ic_opmode == IEEE80211_MODE_11B)
+	if (ic->ic_curmode == IEEE80211_MODE_11B)
 		clks = AR_CLOCK_RATE_CCK;
-	else if (ic->ic_opmode == IEEE80211_MODE_11A)
+	else if (ic->ic_curmode == IEEE80211_MODE_11A)
 		clks = AR_CLOCK_RATE_5GHZ_OFDM;
 	else
 		clks = AR_CLOCK_RATE_2GHZ_OFDM;
