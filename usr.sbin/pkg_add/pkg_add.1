@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.86 2009/12/03 18:55:43 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.87 2009/12/05 23:13:01 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: December 3 2009 $
+.Dd $Mdocdate: December 5 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Bk -words
-.Op Fl acIinqruvxz
+.Op Fl acIinqruUvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl F Ar keywords
@@ -354,6 +354,8 @@ will update all installed packages.
 This relies on
 .Ev PKG_PATH
 to figure out the new package names.
+.It Fl U
+Update dependencies if required before installing the new package(s).
 .It Fl v
 Turn on verbose output.
 Several

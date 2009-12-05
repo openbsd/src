@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.10 2009/04/11 23:07:07 schwarze Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.11 2009/12/05 23:13:01 espie Exp $
 
 =head1 NAME
 
@@ -120,10 +120,9 @@ for performance and simplicity reasons.)
 
 =item update sets
 
-This is a new notion (introduced around OpenBSD 4.1) which is not yet fully
-used throughout the package tools.  Each operation (installation, removal,
-or replacement of packages) is cut up into small atomic operations, in order
-to guarantee maximal stability of the installed system. The package tools
+Each operation (installation, removal, or replacement of packages) 
+is cut up into small atomic operations, in order to guarantee maximal 
+stability of the installed system. The package tools
 will try really hard to only deal with one or two packages at a time,
 in order to minimize combinatorial complexity, and to have a maximal number
 of safe points, where an update operation can stop without hosing the
@@ -137,7 +136,22 @@ under construction.  We have already met with update situations where
 dependencies between packages invert (A-1.0 depends on B-1.0, but B-0.0
 depends on A-0.0), or where files move between packages, which in
 theory will require update-sets with two new packages that replace two
-old packages.  Currently, we cheat.
+old packages.  We still cheat in a few cases, but in most cases, pkg_add
+will recognize those situations, and merge updatesets as required.
+
+=item updater and tracker
+
+Updatesets contain some initial information, such as a package name to
+install, or a package location to update.
+
+This information will be completed incrementally by a 
+C<OpenBSD::Update> updater object, which is responsible for figuring out 
+how to update each element of an updateset, if it is an older package, or
+to resolve a hint to a package name to a full package location.
+
+In order to avoid loops, a C<OpenBSD::Tracker> tracker
+object keeps track of all the package name statuses: what's queued for 
+update, what is uptodate, or what can't be updated.
 
 =item dependency information
 
@@ -283,10 +297,15 @@ old shared libraries are kept around in a stub .lib-* package, so that
 software that depends on them keeps running. (Thus, it is vital that porters
 pay attention to shared library version numbers during an update.)
 
-An update operation starts by figuring out which packages to update (walking
-the selected packages dependency trees). 
+An update operation starts with update sets that contain only old packages.
+There is some specific code (the C<OpenBSD::Update> module) which is used 
+to figure out the new package name from the old one.
 
-Then it looks for new packages to replace the old ones.
+In every update or replacement, pkg_add will first try to install or update
+the quirks package, which contains a global list of exceptions, such as
+extra stems to search for (allowing for package renames), or packages to
+remove as they've become part of base OpenBSD.
+
 This search relies on stem names first (e.g., to update package
 foo-1.0, pkg_add -u will look for foo-* in the PKG_PATH), then it trims
 the search results by looking more closely inside the package candidates. 
@@ -296,10 +315,11 @@ that comes from category/someport/snapshot will never replace a package
 that comes from category/someport/stable. Likewise for flavors.
 
 Finally, pkg_add -u decides whether the update is needed by comparing
-the package signatures: a package signature is composed of
+the package version and the package signatures: a package will not be
+downgraded to an older version. A package signature is composed of
 the name of a package, together with relevant dependency information: 
 all wantlib versions, and all run dependencies versions. 
-If anything is different, it means the new package must replace the old one.
+pkg_add only replaces packages with different signatures.
 
 Currently, pkg_add -u stops at the first entry in the PKG_PATH from which
 suitable candidates are found.
@@ -312,19 +332,13 @@ There are a few desireable changes that will happen in the future:
 
 =item *
 
-pkg_add -u should be able to find updates with a stem change.
-This requires an extra mechanism that would say `oh, this package changed
-name', as we cannot afford to look into every single package.
+some complicated update scenarios are not fully handled through updatesets.
 
 =item *
 
-more complicated update scenarios could happen, once UpdateSets are fully
-functional.
-
-=item *
-
-pkg_add has no real notion of version number. Thus, updates work only
-in so far as you direct your PKG_PATH to a more recent repository.
+Version number handling does not yet extends to package signatures. 
+Thus, some spurious downgrades may happen if the packagename itself does not
+change.
 
 =item *
 
@@ -468,15 +482,19 @@ and related algorithms.
 safe creation of temporary files as a light-weight module that also
 deals with signal issues.
 
+=item OpenBSD::Tracker
+
+tracks all package names through update operations, in order to avoid
+loops while doing incremental updates.
+
 =item OpenBSD::Update
 
-computes lists of package replacements required by an update.
+incremental computation of package replacements required by an update or
+installation.
 
 =item OpenBSD::UpdateSet
 
 common operations to all package tools that manipulate update sets.
-Lots of things to do.
-
 
 =item OpenBSD::Ustar
 
