@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.413 2009/12/05 10:10:40 espie Exp $
+# $OpenBSD: pkg_add,v 1.414 2009/12/05 10:54:11 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -710,6 +710,17 @@ sub quirk_set
 	return $set;
 }
 
+sub do_quirks
+{
+	my $state = shift;
+
+	install_set(quirk_set(), $state);
+	eval {
+		require OpenBSD::Quirks;
+		# interface version number.
+		$state->{quirks} = OpenBSD::Quirks->new(1);
+	}
+}
 sub process_parameters
 {
 	# match fuzzily against a list
@@ -786,12 +797,7 @@ sub {
 	$state->tracker->add_sets(@todo2);
 	if ($state->{allow_replacing}) {
 		$state->{todo} = (scalar @todo2) + 1;
-		install_set(quirk_set(), $state);
-		eval {
-			require OpenBSD::Quirks;
-			# interface version number.
-			$state->{quirks} = OpenBSD::Quirks->new(0);
-		}
+		do_quirks($state);
 	}
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.110 2009/12/05 10:43:49 espie Exp $
+# $OpenBSD: Update.pm,v 1.111 2009/12/05 10:54:11 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -102,15 +102,11 @@ sub process_handle
 	}
 
 	my @search = ();
-	my $s;
-	if ($state->quirks) {
-		$s = $state->quirks->search_object($h, $state);
-	}
-	if (!$s) {
-		$s = OpenBSD::Search::Stem->split($pkgname);
-	}
-	push(@search, $s);
+	push(@search, OpenBSD::Search::Stem->split($pkgname));
 
+	if ($state->quirks) {
+		$state->quirks->tweak_search(\@search, $h, $state);
+	}
 	my $found;
 	my $oldfound = 0;
 
