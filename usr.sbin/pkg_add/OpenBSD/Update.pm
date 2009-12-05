@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.108 2009/12/04 10:48:14 espie Exp $
+# $OpenBSD: Update.pm,v 1.109 2009/12/05 10:08:58 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -87,12 +87,14 @@ sub process_handle
 		return 0;
 	}
 
+
 	if ($state->quirks) {
-		if ($state->quirks->is_base_system($h)) {
+		if ($state->quirks->is_base_system($h, $state)) {
 			$h->{update_found} = 1;
 			return 1;
 		}
 	}
+
 	my $plist = OpenBSD::PackingList->from_installation($pkgname, 
 	    \&OpenBSD::PackingList::UpdateInfoOnly);
 	if (!defined $plist) {
@@ -102,7 +104,7 @@ sub process_handle
 	my @search = ();
 	my $s;
 	if ($state->quirks) {
-		$s = $state->quirks->search_object($h);
+		$s = $state->quirks->search_object($h, $state);
 	}
 	if (!$s) {
 		$s = OpenBSD::Search::Stem->split($pkgname);
@@ -242,7 +244,8 @@ sub process_hint2
 			$h = 'OpenBSD::PackageLocator';
 			$path = "";
 		}
-		my $l = $state->updater->stem2location($h, $pkgname, $state);
+		my $l = $state->updater->stem2location($h, $pkgname, $state, 
+		    $set->{quirks});
 		if (defined $l) {
 			$self->add_location($set, $hint, $l);
 		} else {
@@ -264,14 +267,18 @@ sub process_set
 	my $problem;
 	for my $h ($set->older, $set->hints) {
 		next if $h->{update_found};
-		if (!defined $h->update($self, $set, $state)) {
+		my $r = $h->update($self, $set, $state);
+
+		if (!defined $r) {
 			$problem = 1;
+		} else {
+			$set->{updates} += $r;
 		}
 	}
 	if ($problem) {
-		$state->tracker->mark_cant_update($set);
+		$state->tracker->mark_cant_update($set) if !$set->{quirks};
 		return 0;
-	} elsif ($set->newer == 0) {
+	} elsif ($set->{updates} == 0) {
 		$state->tracker->mark_uptodate($set);
 		return 0;
 	} 
@@ -281,12 +288,12 @@ sub process_set
 
 sub stem2location
 {
-	my ($self, $repo, $name, $state) = @_;
+	my ($self, $repo, $name, $state, $is_quirks) = @_;
 	my $l = $repo->match_locations(OpenBSD::Search::Stem->new($name));
 	if (@$l > 1 && !$state->{defines}->{allversions}) {
 		$l = OpenBSD::Search::FilterLocation->keep_most_recent->filter_locations($l);
 	}
-	return $state->choose_location($name, $l);
+	return $state->choose_location($name, $l, $is_quirks);
 }
  
 1;

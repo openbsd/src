@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.4 2009/11/17 10:17:21 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.5 2009/12/05 10:08:58 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -308,9 +308,9 @@ sub check_root
 
 sub choose_location
 {
-	my ($state, $name, $list) = @_;
+	my ($state, $name, $list, $is_quirks) = @_;
 	if (@$list == 0) {
-		$state->say("Can't find $name");
+		$state->say("Can't find $name") unless $is_quirks;
 		return undef;
 	} elsif (@$list == 1) {
 		return $list->[0];

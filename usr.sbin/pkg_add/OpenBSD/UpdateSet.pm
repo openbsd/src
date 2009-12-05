@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.32 2009/12/02 11:36:27 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.33 2009/12/05 10:08:58 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -56,7 +56,8 @@ package OpenBSD::UpdateSet;
 sub new
 {
 	my $class = shift;
-	return bless {newer => {}, older => {}, hints => []}, $class;
+	return bless {newer => {}, older => {}, hints => [], updates => 0}, 
+	    $class;
 }
 
 sub cleanup
@@ -263,6 +264,7 @@ sub merge
 		$set->{finished} = 1;
 		# XXX and mark it as merged, for eventual updates
 		$set->{merged} = $self;
+		$self->{updates} += $set->{updates};
 	}
 	# then regen tracker info for $self
 	$tracker->add_set($self);
