@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.47 2009/11/12 12:35:03 jacekm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.48 2009/12/05 18:42:31 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1695,53 +1695,39 @@ interface(const char *s, const char *tag, const char *cert,
 		if (strcmp(s, p->ifa_name) != 0)
 			continue;
 
+		if ((h = calloc(1, sizeof(*h))) == NULL)
+			fatal(NULL);
+
 		switch (p->ifa_addr->sa_family) {
 		case AF_INET:
-			if ((h = calloc(1, sizeof(*h))) == NULL)
-				fatal(NULL);
 			sain = (struct sockaddr_in *)&h->ss;
 			*sain = *(struct sockaddr_in *)p->ifa_addr;
 			sain->sin_len = sizeof(struct sockaddr_in);
 			sain->sin_port = port;
 
-			h->fd = -1;
-			h->port = port;
-			h->flags = flags;
-			h->ssl = NULL;
-			h->ssl_cert_name[0] = '\0';
-			if (cert != NULL)
-				(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
-			if (tag != NULL)
-				(void)strlcpy(h->tag, tag, sizeof(h->tag));
-			if (tag != NULL)
-				(void)strlcpy(h->tag, tag, sizeof(h->tag));
-
-			ret = 1;
-			TAILQ_INSERT_HEAD(al, h, entry);
-
 			break;
 
 		case AF_INET6:
-			if ((h = calloc(1, sizeof(*h))) == NULL)
-				fatal(NULL);
 			sin6 = (struct sockaddr_in6 *)&h->ss;
 			*sin6 = *(struct sockaddr_in6 *)p->ifa_addr;
 			sin6->sin6_len = sizeof(struct sockaddr_in6);
 			sin6->sin6_port = port;
 
-			h->fd = -1;
-			h->port = port;
-			h->flags = flags;
-			h->ssl = NULL;
-			h->ssl_cert_name[0] = '\0';
-			if (cert != NULL)
-				(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
-
-			ret = 1;
-			TAILQ_INSERT_HEAD(al, h, entry);
-
 			break;
 		}
+
+		h->fd = -1;
+		h->port = port;
+		h->flags = flags;
+		h->ssl = NULL;
+		h->ssl_cert_name[0] = '\0';
+		if (cert != NULL)
+			(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
+		if (tag != NULL)
+			(void)strlcpy(h->tag, tag, sizeof(h->tag));
+
+		ret = 1;
+		TAILQ_INSERT_HEAD(al, h, entry);
 	}
 
 	freeifaddrs(ifap);
