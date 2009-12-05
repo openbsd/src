@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.24 2009/11/25 19:41:16 kettenis Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.25 2009/12/05 04:20:58 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -134,8 +134,10 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
 		    "_LID", 0, NULL, &lid))
 			return (0);
+#if 0
 		if (lid == 0)
 			acpi_sleep_state(sc->sc_acpi, ACPI_STATE_S3);
+#endif
 		break;
 #endif /* SMALL_KERNEL */
 	case ACPIBTN_SLEEP:
