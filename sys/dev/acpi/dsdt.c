@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.156 2009/11/13 11:39:56 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.157 2009/12/05 02:38:11 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -46,6 +46,11 @@
 #define AML_REVISION		0x01
 #define AML_INTSTRLEN		16
 #define AML_NAMESEG_LEN		4
+
+struct acpi_q 		*acpi_maptable(paddr_t, const char *, const char *, 
+    			    const char *);
+struct aml_scope 	*aml_load(struct acpi_softc *, struct aml_scope *,
+    			    struct aml_value *, struct aml_value *);
 
 void			aml_copyvalue(struct aml_value *, struct aml_value *);
 
@@ -2253,7 +2258,6 @@ aml_xmid(struct aml_value *src, int index, int length)
 /*
  * Field I/O utility functions 
  */
-void aml_xgasio(int, uint64_t, int, void *, int, int, const char *);
 void aml_xcreatefield(struct aml_value *, int, struct aml_value *, int, int,
     struct aml_value *, int, int);
 void aml_xparsefieldlist(struct aml_scope *, int, int,
@@ -2421,33 +2425,6 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val, in
 		aml_xdelref(&val, "wrbuffld");
 	}
 	aml_unlockfield(NULL, fld);
-}
-
-/* Perform IO to address space
- *    type = GAS_XXXX
- *    base = base address
- *    rlen = length in bytes to read/write
- *    buf  = buffer
- *    mode = ACPI_IOREAD/ACPI_IOWRITE
- *    sz   = access_size (bits)
- */
-void
-aml_xgasio(int type, uint64_t base, int rlen, void *buf, int mode, int sz,
-    const char *lbl)
-{
-	sz >>= 3;
-	acpi_gasio(dsdt_softc, mode, type, base, sz, rlen, buf);
-#ifdef ACPI_DEBUG
-	{
-		int idx;
-		printf("%sio: [%s]  ty:%x bs=%.8llx sz=%.4x rlen=%.4x ",
-		    mode == ACPI_IOREAD ? "rd" : "wr", lbl,
-		    type, base, sz, rlen);
-		for (idx=0; idx<rlen; idx++)
-			printf("%.2x ", ((uint8_t *)buf)[idx]);
-	}
-	printf("\n");
-#endif
 }
 
 /* Create Field Object          data		index
@@ -3324,6 +3301,48 @@ aml_seterror(struct aml_scope *scope, const char *fmt, ...)
 	return aml_allocvalue(AML_OBJTYPE_INTEGER, 0, 0);
 }
 
+/* Load new SSDT scope from memory address */
+struct aml_scope *
+aml_load(struct acpi_softc *sc, struct aml_scope *scope,
+    struct aml_value *rgn, struct aml_value *ddb)
+{
+	struct acpi_q *entry;
+	struct acpi_dsdt *p_ssdt;
+	struct aml_value tmp;
+
+	ddb->type = AML_OBJTYPE_DDBHANDLE;
+	ddb->v_integer = 0;
+
+	memset(&tmp, 0, sizeof(tmp));
+	if (rgn->type != AML_OBJTYPE_OPREGION ||
+	    rgn->v_opregion.iospace != GAS_SYSTEM_MEMORY)
+		goto fail;
+
+	/* Load SSDT from memory */
+	entry = acpi_maptable(rgn->v_opregion.iobase, "SSDT", NULL, NULL);
+	if (entry == NULL)
+		goto fail;
+
+	dnprintf(10, "%s: loaded SSDT %s @ %llx\n", sc->sc_dev.dv_xname,
+	    aml_nodename(rgn->node), rgn->v_opregion.iobase);
+ 
+	/* Add SSDT to parent list */
+	SIMPLEQ_INSERT_TAIL(&sc->sc_tables, entry,
+	    q_next);
+	ddb->v_integer = entry->q_id;
+
+	p_ssdt = entry->q_table;
+	tmp.v_buffer = p_ssdt->aml;
+	tmp.length   = p_ssdt->hdr_length - sizeof(p_ssdt->hdr);
+
+	return aml_xpushscope(scope, &tmp, scope->node,
+	    AMLOP_LOAD);
+fail:
+	printf("%s: unable to load %s\n", sc->sc_dev.dv_xname,
+	    aml_nodename(rgn->node));
+	return NULL;
+}
+
 struct aml_value *
 aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 {
@@ -3958,29 +3977,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		break;
 	case AMLOP_LOAD:
 		/* Load(Object:NameString, DDBHandle:SuperName) */
-		rv = opargs[0];
-		if (rv->type != AML_OBJTYPE_OPREGION || 
-		    rv->v_opregion.iospace != GAS_SYSTEM_MEMORY) {
-			aml_die("LOAD: not a memory region!\n");
-		}
-
-		/* Create buffer and read from memory */
-		_aml_setvalue(opargs[1], AML_OBJTYPE_BUFFER,
-		    rv->v_opregion.iolen, NULL);
-		aml_xgasio(rv->v_opregion.iospace, rv->v_opregion.iobase, 
-		    rv->v_opregion.iolen, 
-		    opargs[1]->v_buffer, ACPI_IOREAD, 8, "");
-		
-		/* Validate that this is a SSDT */
-		if (!valid_acpihdr(opargs[1]->v_buffer, opargs[1]->length, 
-			"SSDT")) {
-			aml_die("LOAD: Not a SSDT!\n");
-		}
-
-		/* Parse block: set header bytes to NOP */
-		memset(opargs[1]->v_buffer, AMLOP_NOP, sizeof(struct acpi_table_header));
-		mscope = aml_xpushscope(scope, opargs[1], scope->node, 
-		    AMLOP_SCOPE);
+		mscope = aml_load(dsdt_softc, scope, opargs[0], opargs[1]);
 		break;
 	case AMLOP_UNLOAD:
 		/* DDBHandle */
