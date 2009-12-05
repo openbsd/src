@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.412 2009/12/05 09:26:41 espie Exp $
+# $OpenBSD: pkg_add,v 1.413 2009/12/05 10:10:40 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -164,6 +164,9 @@ sub complete
 		$n->complete($state);
 		return 1 if $n->has_error;
 	}
+	for my $o ($set->older) {
+		$o->complete_old($state);
+	}
 
 	return 1 if defined $set->{installable};
 
@@ -289,7 +292,6 @@ sub can_install
 
 	for my $old ($set->older) {
 		my $name = $old->pkgname;
-		$old->complete_old;
 		
 		if ($old->has_error(OpenBSD::Handle::NOT_FOUND)) {
 			Fatal "Can't find $name as an installed package\n";
@@ -617,13 +619,6 @@ sub install_set
 	really_add($set, $state);
 	$set->cleanup;
 	$state->tracker->mark_installed($set);
-	# if we have a quirks object, we try to create the object that goes
-	# with it.
-	if ($set->{quirks}) {
-		require OpenBSD::Quirks;
-		# interface version number.
-		$state->{quirks} = OpenBSD::Quirks->new(0);
-	}
 	return ();
 }
 
@@ -708,7 +703,7 @@ sub quirk_set
 	$set->{quirks} = 1;
 	my $l = OpenBSD::PackageRepository::Installed->new->match_locations(OpenBSD::Search::Stem->new('quirks'));
 	if (@$l > 0) {
-		$set->add_older(@$l);
+		$set->add_older(map {OpenBSD::Handle->from_location($_)} @$l);
 	} else {
 		$set->add_hints2('quirks');
 	}
@@ -760,9 +755,6 @@ sub process_parameters
 			push(@todo2, OpenBSD::UpdateSet->new->$m($pkgname));
 		}
 	}
-	if ($state->{allow_replacing}) {
-#		unshift(@todo2, quirk_set());
-	}
 }
 
 sub finish_display
@@ -792,13 +784,22 @@ sub finish_display
 framework(
 sub {
 	$state->tracker->add_sets(@todo2);
+	if ($state->{allow_replacing}) {
+		$state->{todo} = (scalar @todo2) + 1;
+		install_set(quirk_set(), $state);
+		eval {
+			require OpenBSD::Quirks;
+			# interface version number.
+			$state->{quirks} = OpenBSD::Quirks->new(0);
+		}
+	}
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
 		$state->progress->set_header("Looking for packages");
 		$state->{todo} = scalar @todo2;
 		unshift(@todo2, install_set($set, $state));
 		if ($state->quirks) {
-			$state->quirks->tweak_list(\@todo2);
+			$state->quirks->tweak_list(\@todo2, $state);
 		}
 	}
 });
