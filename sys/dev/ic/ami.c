@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.197 2009/08/12 14:15:05 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.198 2009/12/06 12:31:10 chl Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2535,7 +2535,7 @@ ami_create_sensors(struct ami_softc *sc)
 		return (1);
 
 	sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_nunits,
-	    M_DEVBUF, M_WAITOK|M_ZERO);
+	    M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
 	if (sc->sc_sensors == NULL)
 		return (1);
 
@@ -2557,7 +2557,7 @@ ami_create_sensors(struct ami_softc *sc)
 		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
 	}
 
-	sc->sc_bd = malloc(sizeof(*sc->sc_bd), M_DEVBUF, M_WAITOK);
+	sc->sc_bd = malloc(sizeof(*sc->sc_bd), M_DEVBUF, M_WAITOK|M_CANFAIL);
 	if (sc->sc_bd == NULL)
 		goto bad;
 
