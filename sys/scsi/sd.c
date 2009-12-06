@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.169 2009/12/03 14:31:03 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.170 2009/12/06 03:35:27 dlg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -686,6 +686,7 @@ sdstart(void *v)
 	int nblks;
 	int read;
 	struct partition *p;
+	int s;
 
 	if (sc->flags & SDF_DYING)
 		return;
@@ -713,7 +714,9 @@ sdstart(void *v)
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
+			s = splbio();
 			biodone(bp);
+			splx(s);
 			continue;
 		}
 
@@ -1531,10 +1534,13 @@ void
 sd_kill_buffers(struct sd_softc *sd)
 {
 	struct buf *bp;
+	int s;
 
 	while ((bp = sd_buf_dequeue(sd)) != NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
+		s = splbio();
 		biodone(bp);
+		splx(s);
 	}
 }
