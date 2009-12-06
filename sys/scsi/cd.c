@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.152 2009/12/06 01:11:44 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.153 2009/12/06 01:12:52 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -171,9 +171,9 @@ cdmatch(struct device *parent, void *match, void *aux)
 	struct scsi_attach_args *sa = aux;
 	int priority;
 
-	scsi_inqmatch(sa->sa_inqbuf, cd_patterns,
-	    sizeof(cd_patterns)/sizeof(cd_patterns[0]), sizeof(cd_patterns[0]),
-	    &priority);
+	scsi_inqmatch(sa->sa_inqbuf, cd_patterns, nitems(cd_patterns),
+	    sizeof(cd_patterns[0]), &priority);
+
 	return (priority);
 }
 
