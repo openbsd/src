@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.4 2009/10/04 20:02:36 jmc Exp $
+.\"     $OpenBSD: divert.4,v 1.5 2009/12/06 15:39:24 michele Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2009 $
+.Dd $Mdocdate: December 6 2009 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -26,48 +26,57 @@
 .Fd #include <netinet/in.h>
 .Ft int
 .Fn socket AF_INET SOCK_RAW IPPROTO_DIVERT
+.Ft int
+.Fn socket AF_INET6 SOCK_RAW IPPROTO_DIVERT
 .Sh DESCRIPTION
-Divert sockets can be bound through
-.Xr bind 2
-to a divert port and they will receive every packet
-diverted to that port by
-.Xr pf 4 .
-Divert ports have their own number space, completely
-separated from
+Divert sockets are part of a mechanism completely integrated with
+.Xr pf 4
+that queues raw packets from the kernel stack to userspace applications,
+and vice versa.
+.Pp
+A divert socket must be bound to a divert port through
+.Xr bind 2 ,
+which only the superuser can do.
+Divert ports have their own number space, completely separated from
 .Xr tcp 4
 and
-.Xr udp 4
-ones.
-Consult
-.Xr pf.conf 5
-for the correct syntax.
-Packets can also be reinjected into the divert socket, in which case they
-re-enter kernel packet processing skipping
+.Xr udp 4 .
+When
 .Xr pf 4
-filters, avoiding loops.
+processes a packet that matches a divert rule (see
+.Xr pf.conf 5
+for details) it is immediately sent to the divert socket listening on the
+port specified in the rule.
+.Xr pf 4
+reassembles TCP streams by default (if IP reassembly is not disabled)
+before sending them to the divert sockets.
+If there are no divert sockets listening, the packets are dropped.
 .Pp
-Diverted packets can be read via
+Packets can be read via
 .Xr read 2 ,
 .Xr recv 2 ,
 or
 .Xr recvfrom 2
 from the divert socket.
-.Xr pf 4
-will reassemble the IP packets by default before sending them to the divert
-socket.
-In addition, TCP reassembling is enabled for packet divert rules; see
-.Xr pf.conf 5
-for details.
+The application that is processing the packets can then reinject them into the
+kernel.
+After being reinjected, inbound and outbound packets are treated differently.
+Inbound packets are added to the relevant input queue and a soft interrupt is
+scheduled to signal that a new packet is ready to be processed; outbound ones
+are processed directly by the relevant IP/IPv6 output function.
+The packets' checksums are recalculated upon reinjection.
+.Pp
 Writing to a divert socket can be achieved using
 .Xr sendto 2
 and it will skip
 .Xr pf 4
 filters to avoid loops.
+A diverted packet that is not reinjected into the kernel stack is lost.
 .Pp
-If
-.Xr pf 4
-diverts packets but there are no divert sockets listening,
-the packets are dropped.
+Receive and send divert socket buffer space can be tuned through
+.Xr sysctl 8 .
+.Xr netstat 1
+shows information relevant to divert sockets.
 .Sh SEE ALSO
 .Xr socket 2 ,
 .Xr ip 4 ,
