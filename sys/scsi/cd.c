@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.150 2009/10/13 19:33:19 pirofti Exp $	*/
+/*	$OpenBSD: cd.c,v 1.151 2009/12/06 01:05:14 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1715,9 +1715,7 @@ dvd_auth(struct cd_softc *cd, union dvd_authinfo *a)
 }
 
 int
-dvd_read_physical(cd, s)
-	struct cd_softc *cd;
-	union dvd_struct *s;
+dvd_read_physical(struct cd_softc *cd, union dvd_struct *s)
 {
 	struct scsi_generic cmd;
 	u_int8_t buf[4 + 4 * 20], *bufp;
@@ -1757,9 +1755,7 @@ dvd_read_physical(cd, s)
 }
 
 int
-dvd_read_copyright(cd, s)
-	struct cd_softc *cd;
-	union dvd_struct *s;
+dvd_read_copyright(struct cd_softc *cd, union dvd_struct *s)
 {
 	struct scsi_generic cmd;
 	u_int8_t buf[8];
@@ -1782,9 +1778,7 @@ dvd_read_copyright(cd, s)
 }
 
 int
-dvd_read_disckey(cd, s)
-	struct cd_softc *cd;
-	union dvd_struct *s;
+dvd_read_disckey(struct cd_softc *cd, union dvd_struct *s)
 {
 	struct scsi_read_dvd_structure cmd;
 	struct scsi_read_dvd_structure_data *buf;
@@ -1811,9 +1805,7 @@ dvd_read_disckey(cd, s)
 }
 
 int
-dvd_read_bca(cd, s)
-	struct cd_softc *cd;
-	union dvd_struct *s;
+dvd_read_bca(struct cd_softc *cd, union dvd_struct *s)
 {
 	struct scsi_generic cmd;
 	u_int8_t buf[4 + 188];
@@ -1837,9 +1829,7 @@ dvd_read_bca(cd, s)
 }
 
 int
-dvd_read_manufact(cd, s)
-	struct cd_softc *cd;
-	union dvd_struct *s;
+dvd_read_manufact(struct cd_softc *cd, union dvd_struct *s)
 {
 	struct scsi_read_dvd_structure cmd;
 	struct scsi_read_dvd_structure_data *buf;
@@ -1870,9 +1860,7 @@ dvd_read_manufact(cd, s)
 }
 
 int
-dvd_read_struct(cd, s)
-	struct cd_softc *cd;
-	union dvd_struct *s;
+dvd_read_struct(struct cd_softc *cd, union dvd_struct *s)
 {
 
 	switch (s->type) {
