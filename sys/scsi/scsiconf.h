@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.113 2009/12/01 01:50:35 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.114 2009/12/06 09:35:16 dlg Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -464,7 +464,6 @@ struct scsi_xfer {
 #define	SCSI_NOSLEEP	0x00001	/* don't sleep */
 #define	SCSI_POLL	0x00002	/* poll for completion */
 #define	SCSI_AUTOCONF	0x00003	/* shorthand for SCSI_POLL | SCSI_NOSLEEP */
-#define	SCSI_USER	0x00004	/* Is a user cmd, call scsi_user_done	*/
 #define	ITSDONE		0x00008	/* the transfer is as done as it gets	*/
 #define	SCSI_SILENT	0x00020	/* don't announce NOT READY or MEDIA CHANGE */
 #define	SCSI_IGNORE_NOT_READY		0x00040	/* ignore NOT READY */
