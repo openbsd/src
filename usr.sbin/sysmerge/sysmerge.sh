@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.52 2009/10/02 11:53:45 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.53 2009/12/06 16:21:36 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -190,7 +190,14 @@ do_populate() {
 	done
 
 	# files we don't want/need to deal with
-	IGNORE_FILES="/etc/*.db /etc/mail/*.db /etc/passwd /etc/motd /etc/myname /var/mail/root"
+	IGNORE_FILES="/etc/*.db
+		      /etc/mail/*.db
+		      /etc/passwd
+		      /etc/motd
+		      /etc/myname
+		      /var/db/locate.database
+		      /var/games/tetris.scores
+		      /var/mail/root"
 	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
 	for cf in ${CF_FILES}; do
 		CF_DIFF=`diff -q -I "##### " ${TEMPROOT}/${cf} ${DESTDIR}/${cf} 2> /dev/null`
