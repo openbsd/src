@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.241 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.242 2009/12/06 11:42:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -354,7 +354,7 @@ conf_main	: AS as4number		{
 				fatal("parse conf_main listen on calloc");
 
 			la->fd = -1;
-			memcpy(addr2sa(&$3, BGP_PORT), &la->sa, sizeof(la->sa));
+			memcpy(&la->sa, addr2sa(&$3, BGP_PORT), sizeof(la->sa));
 			TAILQ_INSERT_TAIL(listen_addrs, la, entry);
 		}
 		| FIBUPDATE yesno		{
