@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.43 2008/12/18 09:30:32 guenther Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.44 2009/12/06 17:54:59 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -365,6 +365,11 @@ _thread_init(void)
 	_thread_fd_table = calloc((size_t)_thread_max_fdtsize,
 				  sizeof(struct fd_table_entry *));
 	if (_thread_fd_table == NULL) {
+		_thread_max_fdtsize = 0;
+		PANIC("Cannot allocate memory for file descriptor table");
+	}
+
+	if (_thread_fd_init_mem()) {
 		_thread_max_fdtsize = 0;
 		PANIC("Cannot allocate memory for file descriptor table");
 	}

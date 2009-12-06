@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_dup2.c,v 1.12 2008/02/02 21:44:59 kurt Exp $ */
+/* $OpenBSD: uthread_dup2.c,v 1.13 2009/12/06 17:54:59 kurt Exp $ */
 /* PUBLIC DOMAIN <marc@snafu.org> */
 
 #include <errno.h>
@@ -66,12 +66,12 @@ dup2(int fd, int newfd)
 				 */
 				if (ret == -1) {
 					saved_errno = errno;
-					_SPINLOCK(&_thread_fd_table[newfd]->lock);
+					_thread_kern_sig_defer();
 
 					_thread_fd_entry_close(newfd);
 					_thread_sys_close(newfd);
 					
-					_SPINUNLOCK(&_thread_fd_table[newfd]->lock);
+					_thread_kern_sig_undefer();
 					errno = saved_errno ;
 				}
 				_FD_UNLOCK(newfd, FD_RDWR_CLOSE);

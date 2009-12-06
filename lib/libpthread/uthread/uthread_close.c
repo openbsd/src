@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_close.c,v 1.14 2007/04/27 12:59:24 kurt Exp $	*/
+/*	$OpenBSD: uthread_close.c,v 1.15 2009/12/06 17:54:59 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -57,14 +57,14 @@ close(int fd)
 		 * _thread_sys_close() to stop races caused by the
 		 * fd state transition.
 		 */
-		_SPINLOCK(&_thread_fd_table[fd]->lock);
+		_thread_kern_sig_defer();
 
 		_thread_fd_entry_close(fd);
 
 		/* Close the file descriptor: */
 		ret = _thread_sys_close(fd);
 
-		_SPINUNLOCK(&_thread_fd_table[fd]->lock);
+		_thread_kern_sig_undefer();
 
 		_FD_UNLOCK(fd, FD_RDWR_CLOSE);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.72 2009/10/27 20:06:29 deraadt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.73 2009/12/06 17:54:59 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -505,9 +505,9 @@ enum pthread_state {
  * File status flags struture - shared for dup'ed fd's
  */
 struct fs_flags {
-	spinlock_t		lock;
 	int			flags;
 	int			refcnt;
+	SLIST_ENTRY(fs_flags)	fe;     /* free list entry. */
 };
 
 /*
@@ -534,13 +534,6 @@ enum fd_entry_mode {
  * File descriptor table structure.
  */
 struct fd_table_entry {
-	/*
-	 * Lock for accesses to this file descriptor table
-	 * entry. This is passed to _spinlock() to provide atomic
-	 * access to this structure. It does *not* represent the
-	 * state of the lock on the file descriptor.
-	 */
-	spinlock_t		lock;
 	_thread_list_t		r_queue;	/* Read queue.                */
 	_thread_list_t		w_queue;	/* Write queue.               */
 	struct pthread		*r_owner;	/* thread owning read lock.   */
@@ -554,6 +547,7 @@ struct fd_table_entry {
 	struct fs_flags		*status_flags;	/* Shared file status flags.  */
 	enum fd_entry_state	state;		/* Open, closing, or closed.  */
 	enum fd_entry_mode	init_mode;	/* The mode used for init.    */
+	SLIST_ENTRY(fd_table_entry) fe;		/* Free list entry.           */
 };
 
 struct pthread_poll_data {
@@ -1176,6 +1170,7 @@ void    _thread_start(void);
 void    _thread_start_sig_handler(void);
 void	_thread_seterrno(pthread_t,int);
 void	_thread_fs_flags_replace(int, struct fs_flags *);
+int	_thread_fd_init_mem(void);
 void	_thread_fd_init(void);
 int     _thread_fd_table_init(int, enum fd_entry_mode, struct fs_flags *);
 void	_thread_fd_entry_close(int);

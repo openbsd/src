@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_shutdown.c,v 1.5 2006/10/17 20:57:28 kurt Exp $	*/
+/*	$OpenBSD: uthread_shutdown.c,v 1.6 2009/12/06 17:54:59 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -49,14 +49,14 @@ shutdown(int fd, int how)
 	if (ret == 0) {
 		entry = _thread_fd_table[fd];
 		 
-		_SPINLOCK(&entry->lock);
+		_thread_kern_sig_defer();
 		if (entry->state == FD_ENTRY_OPEN) {
 			ret = _thread_sys_shutdown(fd, how);
 		} else {
 			ret = -1;
 			errno = EBADF;
 		}
-		_SPINUNLOCK(&entry->lock);
+		_thread_kern_sig_undefer();
 	}
 
 	return (ret);
