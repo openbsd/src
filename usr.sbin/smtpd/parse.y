@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2009/12/05 18:42:31 chl Exp $	*/
+/*	$OpenBSD: parse.y,v 1.49 2009/12/06 00:27:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1704,7 +1704,6 @@ interface(const char *s, const char *tag, const char *cert,
 			*sain = *(struct sockaddr_in *)p->ifa_addr;
 			sain->sin_len = sizeof(struct sockaddr_in);
 			sain->sin_port = port;
-
 			break;
 
 		case AF_INET6:
@@ -1712,8 +1711,11 @@ interface(const char *s, const char *tag, const char *cert,
 			*sin6 = *(struct sockaddr_in6 *)p->ifa_addr;
 			sin6->sin6_len = sizeof(struct sockaddr_in6);
 			sin6->sin6_port = port;
-
 			break;
+
+		default:
+			free(h);
+			continue;
 		}
 
 		h->fd = -1;
