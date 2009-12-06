@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.3 2009/08/01 12:47:02 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.4 2009/12/06 16:12:47 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -160,8 +160,8 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		break;
 	case NBR_ACT_INIT_SEND:
 		/* XXX */
-		send_keepalive(nbr);
-		ret = send_init(nbr);
+		send_init(nbr);
+		ret = send_keepalive(nbr);
 		break;
 	case NBR_ACT_KEEPALIVE_SEND:
 		/* XXX */
