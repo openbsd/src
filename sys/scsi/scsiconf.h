@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.114 2009/12/06 09:35:16 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.115 2009/12/06 17:24:28 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -474,7 +474,6 @@ struct scsi_xfer {
 #define	SCSI_DATA_OUT	0x01000	/* expect data to flow OUT of memory	*/
 #define	SCSI_TARGET	0x02000	/* This defines a TARGET mode op.	*/
 #define	SCSI_ESCAPE	0x04000	/* Escape operation			*/
-#define SCSI_URGENT	0x08000	/* Urgent operation (e.g., HTAG)	*/
 #define	SCSI_PRIVATE	0xf0000	/* private to each HBA flags */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.42 2009/11/22 14:14:10 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.43 2009/12/06 17:24:28 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -942,8 +942,6 @@ ncr53c9x_sched(sc)
 			tag = 0;
 		else if ((ecb->flags & ECB_SENSE) != 0)
 			tag = 0;
-		else if (ecb->xs->flags & SCSI_URGENT)
-			tag = MSG_HEAD_OF_Q_TAG;
 		else
 			tag = MSG_SIMPLE_Q_TAG;
 #if 0

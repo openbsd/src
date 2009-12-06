@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.171 2009/12/06 07:26:35 dlg Exp $	*/
+/*	$OpenBSD: sd.c,v 1.172 2009/12/06 17:24:28 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1153,7 +1153,7 @@ sd_interpret_sense(struct scsi_xfer *xs)
 	case SENSE_NOT_READY_INIT_REQUIRED:
 		SC_DEBUG(sc_link, SDEV_DB1, ("spinning up\n"));
 		retval = scsi_start(sc->sc_link, SSS_START,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_URGENT | SCSI_NOSLEEP);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_NOSLEEP);
 		if (retval == 0)
 			retval = ERESTART;
 		else
