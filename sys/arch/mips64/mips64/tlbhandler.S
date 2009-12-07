@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.22 2009/11/19 20:16:27 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.23 2009/12/07 18:54:46 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -206,7 +206,7 @@ NLEAF(k_tlb_inv, 0)
 	nop
 
 	mfc0	k0, COP_0_TLB_INDEX
-	blez	k0, sys_stk_chk			# probe fail or index 0!
+	bltz	k0, sys_stk_chk			# probe fail
 	lw	k0, 0(k1)			# get PTE entry
 
 	dsll	k0, k0, 34			# get rid of "wired" bit
@@ -245,7 +245,7 @@ NLEAF(k_tlb_inv, 0)
 
 k_tlb_inv_odd:
 	mfc0	k0, COP_0_TLB_INDEX
-	blez	k0, sys_stk_chk			# probe fail or index 0!
+	bltz	k0, sys_stk_chk			# probe fail
 	lw	k0, 0(k1)			# get PTE entry
 
 	dsll	k0, k0, 34			# get rid of wired bit
