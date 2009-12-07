@@ -56,7 +56,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo_edit.c,v 1.37 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_edit.c,v 1.39 2009/09/30 13:50:58 millert Exp $";
 #endif /* lint */
 
 extern sigaction_t saved_sa_int, saved_sa_quit, saved_sa_tstp;
@@ -171,21 +171,23 @@ sudo_edit(argc, argv, envp)
 	    }
 	    close(ofd);
 	}
-#ifdef HAVE_FSTAT
 	/*
-	 * If we are unable to set the mtime on the temp file to the value
-	 * of the original file just make the stashed mtime match the temp
-	 * file's mtime.  It is better than nothing and we only use the info
+	 * We always update the stashed mtime because the time
+	 * resolution of the filesystem the temporary file is on may
+	 * not match that of the filesystem where the file to be edited
+	 * resides.  It is OK if touch() fails since we only use the info
 	 * to determine whether or not a file has been modified.
 	 */
-	if (touch(tfd, NULL, &tf[i].omtim) == -1) {
-	    if (fstat(tfd, &sb) == 0) {
-		tf[i].omtim.tv_sec = mtim_getsec(sb);
-		tf[i].omtim.tv_nsec = mtim_getnsec(sb);
-	    }
-	    /* XXX - else error? */
-	}
+	(void) touch(tfd, NULL, &tf[i].omtim);
+#ifdef HAVE_FSTAT
+	error = fstat(tfd, &sb);
+#else
+	error = stat(tf[i].tfile, &sb);
 #endif
+	if (!error) {
+	    tf[i].omtim.tv_sec = mtim_getsec(sb);
+	    tf[i].omtim.tv_nsec = mtim_getnsec(sb);
+	}
 	close(tfd);
     }
     if (argc == 1)
@@ -233,7 +235,7 @@ sudo_edit(argc, argv, envp)
 	(void) sigaction(SIGINT, &saved_sa_int, NULL);
 	(void) sigaction(SIGQUIT, &saved_sa_quit, NULL);
 	set_perms(PERM_FULL_USER);
-	closefrom(def_closefrom + 1);
+	closefrom(def_closefrom);
 	execvp(nargv[0], nargv);
 	warning("unable to execute %s", nargv[0]);
 	_exit(127);

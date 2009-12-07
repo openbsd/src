@@ -1,3 +1,92 @@
+2009-11-23 10:56  millert
+
+	* match.c: cmnd_matches() already deals with negation so
+	  _cmndlist_matches() does not need to do so itself.  Fixes a bug
+	  with negated entries in a Cmnd_List.
+
+2009-11-22 11:12  millert
+
+	* sudo.c: Don't exit() from open_sudoers, just return NULL for all
+	  errors.
+
+2009-11-22 09:54  millert
+
+	* toke.c, toke.l: Add missing extern def for parse_error
+
+2009-11-20 19:11  millert
+
+	* toke.c, toke.l: Avoid a parse error when #includedir doesn't find
+	  any files.  Closes bug #375
+
+2009-11-20 19:03  millert
+
+	* Makefile.in: Include sudo.man.pl and sudoers.man.pl in the
+	  distribution tarball.
+
+2009-11-04 09:42  millert
+
+	* configure, configure.in: Fix a few typos in the descriptions;
+	  from Jeff Makey Only do the check for
+	  krb5_get_init_creds_opt_free() taking two arguments if we find
+	  krb5_get_init_creds_opt_alloc().  Otherwise we will get a false
+	  positive when using our own krb5_get_init_creds_opt_free which
+	  takes only a single argument.
+
+2009-11-03 09:58  millert
+
+	* configure, configure.in: Remove a spurious comma in the kerb5
+	  bits.
+
+2009-11-03 09:51  millert
+
+	* auth/kerb5.c: Call krb5_get_init_creds_opt_init() in our emulated
+	  krb5_get_init_creds_opt_alloc() for MIT kerberos.
+
+2009-09-30 09:50  millert
+
+	* sudo_edit.c: Always update the stashed mtime of the temp file
+	  instead of using what we have for the original because the time
+	  resolution of the filesystem the temporary is on may not match
+	  that of the filesystem that holds the original.  Should fix bz
+	  #371 found by Philippe Levan.
+
+2009-09-24 21:11  millert
+
+	* configure, configure.in, sudoers.man.pl, sudoers.pod: Substitute
+	  in default value for secure_path
+
+2009-09-24 20:31  millert
+
+	* sudo.pod: Mention that the password must be followed by a newline
+	  with the -S option.
+
+2009-08-07 10:21  millert
+
+	* auth/pam.c: Set PAM_RUSER and PAM_RHOST early so they can be used
+	  during authentication.  Based on a patch from Jamie Beverly.
+
+2009-08-07 09:25  millert
+
+	* match.c: Close dir before returning if strlcpy() reports
+	  overflow.  From Martynas Venckus.
+
+2009-07-18 09:55  millert
+
+	* toke.c, toke.l: Fix expansion of %h in #include names.  Fixes
+	  bugzilla 363
+
+2009-07-12 17:17  millert
+
+	* mkdefaults: If no arg assume def_data.in
+
+2009-07-11 21:27  millert
+
+	* README, WHATSNEW: Update for 1.7.2
+
+2009-07-11 21:12  millert
+
+	* ChangeLog: sync
+
 2009-06-30 08:41  millert
 
 	* sudoers.cat, sudoers.man.in, sudoers.pod: Add missing single

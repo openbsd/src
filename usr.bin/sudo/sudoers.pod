@@ -1166,7 +1166,7 @@ people running B<sudo> to have a sane C<PATH> environment variable you may
 want to use this.  Another use is if you want to have the "root path"
 be separate from the "user path."  Users in the group specified by the
 I<exempt_group> option are not affected by I<secure_path>.
-This is not set by default.
+This option is @secure_path@ by default.
 
 =item syslog
 

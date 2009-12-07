@@ -54,7 +54,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: kerb5.c,v 1.36 2008/11/09 14:13:13 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: kerb5.c,v 1.37 2009/11/03 14:51:20 millert Exp $";
 #endif /* lint */
 
 #ifdef HAVE_HEIMDAL
@@ -81,6 +81,7 @@ krb5_get_init_creds_opt_alloc(context, opts)
     krb5_get_init_creds_opt   **opts;
 {
     *opts = emalloc(sizeof(krb5_get_init_creds_opt));
+    krb5_get_init_creds_opt_init(*opts);
     return 0;
 }
 

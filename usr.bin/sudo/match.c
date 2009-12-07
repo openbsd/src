@@ -94,7 +94,7 @@
 #endif /* USING_NONUNIX_GROUPS */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: match.c,v 1.46 2009/05/27 00:49:07 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: match.c,v 1.48 2009/11/23 15:56:14 millert Exp $";
 #endif /* lint */
 
 static struct member_list empty;
@@ -318,14 +318,12 @@ _cmndlist_matches(list)
     struct member_list *list;
 {
     struct member *m;
-    int rval, matched = UNSPEC;
+    int matched = UNSPEC;
 
     tq_foreach_rev(list, m) {
-	rval = cmnd_matches(m);
-	if (rval != UNSPEC) {
-	    matched = m->negated ? !rval : rval;
+	matched = cmnd_matches(m);
+	if (matched != UNSPEC)
 	    break;
-	}
     }
     return(matched);
 }
@@ -580,8 +578,10 @@ command_matches_dir(sudoers_dir, dlen)
     if (dirp == NULL)
 	return(FALSE);
 
-    if (strlcpy(buf, sudoers_dir, sizeof(buf)) >= sizeof(buf))
+    if (strlcpy(buf, sudoers_dir, sizeof(buf)) >= sizeof(buf)) {
+	closedir(dirp);
 	return(FALSE);
+    }
     while ((dent = readdir(dirp)) != NULL) {
 	/* ignore paths > PATH_MAX (XXX - log) */
 	buf[dlen] = '\0';

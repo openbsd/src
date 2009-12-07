@@ -16,9 +16,9 @@ if ($#ARGV > 0 && $ARGV[0] eq "-o") {
     $header .= '.h';
     $cfile .= '.c';
 }
-die "usage: $0 input_file\n" unless $#ARGV == 0;
+die "usage: $0 [input_file]\n" unless $#ARGV == -1 || $#ARGV == 0;
 
-$infile = $ARGV[0];
+$infile = $ARGV[0] || "def_data.in";
 if (!defined($header)) {
     $header = $infile;
     $header =~ s/(\.in)?$/.h/;

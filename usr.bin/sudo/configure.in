@@ -4,7 +4,7 @@ dnl $Sudo: configure.in,v 1.549 2009/06/13 20:52:50 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2009 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT([sudo], [1.7.2], [http://www.sudo.ws/bugs/], [sudo])
+AC_INIT([sudo], [1.7.2p2], [http://www.sudo.ws/bugs/], [sudo])
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT
@@ -85,6 +85,7 @@ AC_SUBST(ldap_conf)
 AC_SUBST(ldap_secret)
 AC_SUBST(nsswitch_conf)
 AC_SUBST(netsvc_conf)
+AC_SUBST(secure_path)
 dnl
 dnl Initial values for above
 dnl
@@ -113,6 +114,7 @@ tty_tickets=off
 insults=off
 root_sudo=on
 path_info=on
+secure_path="not set"
 INSTALL_NOEXEC=
 devdir='$(srcdir)'
 dnl
@@ -988,13 +990,16 @@ fi
 AC_MSG_CHECKING(whether to override the user's path)
 AC_ARG_WITH(secure-path, [AS_HELP_STRING([--with-secure-path], [override the user's path with a built-in one])],
 [case $with_secure_path in
-    yes)	AC_DEFINE_UNQUOTED(SECURE_PATH, "/bin:/usr/ucb:/usr/bin:/usr/sbin:/sbin:/usr/etc:/etc")
-		AC_MSG_RESULT([:/usr/ucb:/usr/bin:/usr/sbin:/sbin:/usr/etc:/etc])
+    yes)	with_secure_path="/bin:/usr/ucb:/usr/bin:/usr/sbin:/sbin:/usr/etc:/etc"
+		AC_DEFINE_UNQUOTED(SECURE_PATH, "$with_secure_path")
+		AC_MSG_RESULT([$with_secure_path])
+		secure_path="set to $with_secure_path"
 		;;
     no)		AC_MSG_RESULT(no)
 		;;
     *)		AC_DEFINE_UNQUOTED(SECURE_PATH, "$with_secure_path")
 		AC_MSG_RESULT([$with_secure_path])
+		secure_path="set to F<$with_secure_path>"
 		;;
 esac], AC_MSG_RESULT(no))
 
@@ -2234,25 +2239,23 @@ if test ${with_kerb5-'no'} != "no" -a -z "$KRB5CONFIG"; then
 	], [
 	    AC_MSG_RESULT(no)
 	    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -lk5crypto -lcom_err"
-	    AC_CHECK_LIB(krb5support, main, [SUDO_LIBS="${SUDO_LIBS} -lkrb5support,"])
+	    AC_CHECK_LIB(krb5support, main, [SUDO_LIBS="${SUDO_LIBS} -lkrb5support"])
     ])
     AUTH_OBJS="$AUTH_OBJS kerb5.o"
     _LIBS="$LIBS"
     LIBS="${LIBS} ${SUDO_LIBS}"
-    AC_CHECK_FUNCS(krb5_verify_user krb5_init_secure_context krb5_get_init_creds_opt_alloc)
-    AC_CACHE_CHECK(whether krb5_get_init_creds_opt_free takes a two argument2,
-	sudo_cv_krb5_get_init_creds_opt_free_two_args, [
-	    AC_TRY_COMPILE([#include <krb5.h>],
-		[
-		    krb5_context context = NULL;
-		    krb5_get_init_creds_opt *opts = NULL;
-		    krb5_get_init_creds_opt_free(context, opts);
-		],
-		[sudo_cv_krb5_get_init_creds_opt_free_two_args=yes],
-		[sudo_cv_krb5_get_init_creds_opt_free_two_args=no]
-	    )
-	]
-    )
+    AC_CHECK_FUNCS(krb5_verify_user krb5_init_secure_context)
+    AC_CHECK_FUNCS(krb5_get_init_creds_opt_alloc, [
+	AC_CACHE_CHECK([whether krb5_get_init_creds_opt_free takes a context],
+	    sudo_cv_krb5_get_init_creds_opt_free_two_args, [
+		AC_TRY_COMPILE([#include <krb5.h>],
+		    [krb5_get_init_creds_opt_free(NULL, NULL);],
+		    [sudo_cv_krb5_get_init_creds_opt_free_two_args=yes],
+		    [sudo_cv_krb5_get_init_creds_opt_free_two_args=no]
+		)
+	    ]
+	)
+    ])
     if test X"$sudo_cv_krb5_get_init_creds_opt_free_two_args" = X"yes"; then
   	AC_DEFINE(HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_TWO_ARGS)
     fi
@@ -2663,7 +2666,7 @@ AH_TEMPLATE(HAVE_ISSECURE, [Define to 1 if you have the `issecure' function. (Su
 AH_TEMPLATE(HAVE_KERB4, [Define to 1 if you use Kerberos IV.])
 AH_TEMPLATE(HAVE_KERB5, [Define to 1 if you use Kerberos V.])
 AH_TEMPLATE(HAVE_KRB5_GET_INIT_CREDS_OPT_ALLOC, [Define to 1 if you have the `krb5_get_init_creds_opt_alloc' function.])
-AH_TEMPLATE(HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_TWO_ARGS, [Define to 1 if your `krb5_get_init_creds_opt_alloc' function takes two arguments.])
+AH_TEMPLATE(HAVE_KRB5_GET_INIT_CREDS_OPT_FREE_TWO_ARGS, [Define to 1 if your `krb5_get_init_creds_opt_free' function takes two arguments.])
 AH_TEMPLATE(HAVE_KRB5_INIT_SECURE_CONTEXT, [Define to 1 if you have the `krb5_init_secure_context' function.])
 AH_TEMPLATE(HAVE_KRB5_VERIFY_USER, [Define to 1 if you have the `krb5_verify_user' function.])
 AH_TEMPLATE(HAVE_LBER_H, [Define to 1 if your LDAP needs <lber.h>. (OpenLDAP does not)])

@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudo.pod,v 1.124 2009/06/15 21:19:47 millert Exp $
+$Sudo: sudo.pod,v 1.125 2009/09/25 00:31:35 millert Exp $
 =pod
 
 =head1 NAME
@@ -331,7 +331,8 @@ I<passprompt_override> flag is disabled in I<sudoers>.
 =item -S
 
 The B<-S> (I<stdin>) option causes B<sudo> to read the password from
-the standard input instead of the terminal device.
+the standard input instead of the terminal device.  The password must
+be followed by a newline character.
 
 =item -s [command]
 
