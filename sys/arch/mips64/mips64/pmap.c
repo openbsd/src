@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 2009/11/22 00:07:04 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.41 2009/12/07 18:58:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -49,6 +49,7 @@ extern void mem_zero_page(vaddr_t);
 
 struct pool pmap_pmap_pool;
 struct pool pmap_pv_pool;
+struct pool pmap_pg_pool;
 
 #define pmap_pv_alloc()		(pv_entry_t)pool_get(&pmap_pv_pool, PR_NOWAIT)
 #define pmap_pv_free(pv)	pool_put(&pmap_pv_pool, (pv))
@@ -58,12 +59,16 @@ struct pool pmap_pv_pool;
 #endif
 int	pmap_pv_lowat = PMAP_PV_LOWAT;
 
-uint	pmap_alloc_tlbpid(struct proc *);
-int	pmap_enter_pv(pmap_t, vaddr_t, vm_page_t, pt_entry_t *);
-int	pmap_page_alloc(vaddr_t *);
-void	pmap_page_free(vaddr_t);
-void	pmap_page_cache(vm_page_t, int);
-void	pmap_remove_pv(pmap_t, vaddr_t, paddr_t);
+uint	 pmap_alloc_tlbpid(struct proc *);
+int	 pmap_enter_pv(pmap_t, vaddr_t, vm_page_t, pt_entry_t *);
+void	 pmap_page_cache(vm_page_t, int);
+void	 pmap_remove_pv(pmap_t, vaddr_t, paddr_t);
+void	*pmap_pg_alloc(struct pool *, int, int *);
+void	 pmap_pg_free(struct pool *, void *);
+
+struct pool_allocator pmap_pg_allocator = {
+	pmap_pg_alloc, pmap_pg_free
+};
 
 #ifdef PMAPDEBUG
 struct {
@@ -162,6 +167,8 @@ pmap_bootstrap()
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0,"pmappl", NULL);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0,"pvpl", NULL);
+	pool_init(&pmap_pg_pool, PMAP_L2SIZE, PMAP_L2SIZE, 0, 0, "pmappgpl",
+	    &pmap_pg_allocator);
 
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	pmap_kernel()->pm_count = 1;
@@ -174,7 +181,7 @@ pmap_bootstrap()
 	 * Entry HI G bits are ANDed together they will produce
 	 * a global bit to store in the tlb.
 	 */
-	for (i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
+	for (i = Sysmapsize, spte = Sysmap; i != 0; i--, spte++)
 		*spte = PG_G;
 }
 
@@ -225,14 +232,19 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		if (vendp)
 			*vendp = virtual_end;
 
+#ifdef __sgi__
 		/*
 		 * If we are running with a 32 bit ARCBios (i.e. kernel
 		 * linked in CKSEG0), return a CKSEG0 address whenever possible.
 		 */
-		if (IS_XKPHYS((vaddr_t)&pmap_steal_memory))
+		if (IS_XKPHYS((vaddr_t)&pmap_steal_memory) ||
+		    pa + size >= CKSEG_SIZE)
 			va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
 		else
 			va = PHYS_TO_CKSEG0(pa);
+#else
+			va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
+#endif
 
 		bzero((void *)va, size);
 		return (va);
@@ -271,7 +283,6 @@ pmap_t
 pmap_create()
 {
 	pmap_t pmap;
-	vaddr_t va;
 	int s;
 
 extern struct vmspace vmspace0;
@@ -286,12 +297,8 @@ extern struct user *proc0paddr;
 	simple_lock_init(&pmap->pm_lock);
 	pmap->pm_count = 1;
 
-	while (pmap_page_alloc(&va) != 0) {
-		/* XXX What else can we do?  Deadlocks?  */
-		uvm_wait("pmap_create");
-	}
-
-	pmap->pm_segtab = (struct segtab *)va;
+	pmap->pm_segtab = (struct segtab *)pool_get(&pmap_pg_pool,
+	    PR_WAITOK | PR_ZERO);
 
 	if (pmap == vmspace0.vm_map.pmap) {
 		/*
@@ -345,12 +352,12 @@ pmap_destroy(pmap_t pmap)
 					panic("pmap_destroy: segmap not empty");
 			}
 #endif
-			pmap_page_free((vaddr_t)pte);
+			pool_put(&pmap_pg_pool, pte);
 #ifdef PARANOIA
 			pmap->pm_segtab->seg_tab[i] = NULL;
 #endif
 		}
-		pmap_page_free((vaddr_t)pmap->pm_segtab);
+		pool_put(&pmap_pg_pool, pmap->pm_segtab);
 #ifdef PARANOIA
 		pmap->pm_segtab = NULL;
 #endif
@@ -420,8 +427,9 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	if (pmap == pmap_kernel()) {
 		/* remove entries from kernel pmap */
 #ifdef DIAGNOSTIC
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva < sva)
-			panic("pmap_remove: kva not in range");
+		if (sva < VM_MIN_KERNEL_ADDRESS ||
+		    eva >= VM_MAX_KERNEL_ADDRESS || eva < sva)
+			panic("pmap_remove(%p, %p): not in range", sva, eva);
 #endif
 		pte = kvtopte(sva);
 		for(; sva < eva; sva += NBPG, pte++) {
@@ -564,8 +572,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 * read-only.
 		 */
 #ifdef DIAGNOSTIC
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva < sva)
-			panic("pmap_protect: kva not in range");
+		if (sva < VM_MIN_KERNEL_ADDRESS ||
+		    eva >= VM_MAX_KERNEL_ADDRESS || eva < sva)
+			panic("pmap_protect(%p, %p): not in range", sva, eva);
 #endif
 		pte = kvtopte(sva);
 		for (; sva < eva; sva += NBPG, pte++) {
@@ -643,7 +652,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #ifdef DIAGNOSTIC
 	if (pmap == pmap_kernel()) {
 		stat_count(enter_stats.kernel);
-		if (va < VM_MIN_KERNEL_ADDRESS)
+		if (va < VM_MIN_KERNEL_ADDRESS ||
+		    va >= VM_MAX_KERNEL_ADDRESS)
 			panic("pmap_enter: kva %p", va);
 	} else {
 		stat_count(enter_stats.user);
@@ -725,15 +735,17 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 *  User space mapping. Do table build.
 	 */
 	if (!(pte = pmap_segmap(pmap, va))) {
-		vaddr_t nva;
+		pt_entry_t *ptepg;
+		unsigned int wflags = PR_WAITOK | PR_ZERO;
 
-		while (pmap_page_alloc(&nva) != 0) {
-			if (flags & PMAP_CANFAIL)
-				return ENOMEM;
-			uvm_wait("pmap_enter");
-		}
+		if (flags & PMAP_CANFAIL)
+			wflags |= PR_LIMITFAIL;
+	
+		ptepg = (pt_entry_t *)pool_get(&pmap_pg_pool, wflags);
+		if (ptepg == NULL)
+			return ENOMEM;	/* can only happen if PMAP_CANFAIL */
 
-		pmap_segmap(pmap, va) = pte = (pt_entry_t *)nva;
+		pmap_segmap(pmap, va) = pte = ptepg;
 	}
 
 	if (pg != NULL) {
@@ -789,6 +801,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
 		("pmap_kenter_pa(%p, %p, 0x%x)\n", va, pa, prot));
 
+#ifdef DIAGNOSTIC
+	if (va < VM_MIN_KERNEL_ADDRESS ||
+	    va >= VM_MAX_KERNEL_ADDRESS)
+		panic("pmap_kenter_pa: kva %p", va);
+#endif
+
 	npte = vad_to_pfn(pa) | PG_G;
 	if (prot & VM_PROT_WRITE)
 		npte |= PG_RWPAGE;
@@ -812,8 +830,13 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_kremove(%p, %p)\n", va, len));
 
-	pte = kvtopte(va);
 	eva = va + len;
+#ifdef DIAGNOSTIC
+	if (va < VM_MIN_KERNEL_ADDRESS ||
+	    eva >= VM_MAX_KERNEL_ADDRESS || eva < va)
+		panic("pmap_kremove: va %p len %p", va, len);
+#endif
+	pte = kvtopte(va);
 	for (; va < eva; va += PAGE_SIZE, pte++) {
 		entry = *pte;
 		if (!(entry & PG_V))
@@ -887,11 +910,13 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 void
 pmap_prefer(paddr_t foff, vaddr_t *vap)
 {
+	if (CpuCacheAliasMask != 0) {
 #if 1
 	*vap += (foff - *vap) & (CpuCacheAliasMask | PAGE_MASK);
 #else
 	*vap += (*vap ^ foff) & CpuCacheAliasMask;
 #endif
+	}
 }
 
 /*
@@ -1003,6 +1028,11 @@ pmap_clear_modify(struct vm_page *pg)
 
 	for (; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap == pmap_kernel()) {
+#ifdef DIAGNOSTIC
+			if (pv->pv_va < VM_MIN_KERNEL_ADDRESS ||
+			    pv->pv_va >= VM_MAX_KERNEL_ADDRESS)
+				panic("pmap_clear_modify(%p)", pv->pv_va);
+#endif
 			pte = kvtopte(pv->pv_va);
 			entry = *pte;
 			if ((entry & PG_V) != 0 && (entry & PG_M) != 0) {
@@ -1113,6 +1143,11 @@ pmap_page_cache(vm_page_t pg, int mode)
 	s = splvm();
 	for (; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap == pmap_kernel()) {
+#ifdef DIAGNOSTIC
+			if (pv->pv_va < VM_MIN_KERNEL_ADDRESS ||
+			    pv->pv_va >= VM_MAX_KERNEL_ADDRESS)
+				panic("pmap_page_cache(%p)", pv->pv_va);
+#endif
 			pte = kvtopte(pv->pv_va);
 			entry = *pte;
 			if (entry & PG_V) {
@@ -1138,34 +1173,6 @@ pmap_page_cache(vm_page_t pg, int mode)
 	atomic_clearbits_int(&pg->pg_flags, PV_CACHED | PV_UNCACHED);
 	atomic_setbits_int(&pg->pg_flags, mode);
 	splx(s);
-}
-
-/*
- *  Use this function to allocate pages for the mapping tables.
- *  Mapping tables are walked by the TLB miss code and are mapped in
- *  XKPHYS to avoid additional page faults when servicing a TLB miss.
- */
-int
-pmap_page_alloc(vaddr_t *ret)
-{
-	vm_page_t pg;
-
-	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE | UVM_PGA_ZERO);
-	if (pg == NULL)
-		return ENOMEM;
-
-	*ret = PHYS_TO_XKPHYS(VM_PAGE_TO_PHYS(pg), CCA_CACHED);
-	return 0;
-}
-
-void
-pmap_page_free(vaddr_t va)
-{
-	vm_page_t pg;
-
-	Mips_HitInvalidateDCache(va, PAGE_SIZE);
-	pg = PHYS_TO_VM_PAGE(XKPHYS_TO_PHYS(va));
-	uvm_pagefree(pg);
 }
 
 /*
@@ -1365,4 +1372,46 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		}
 	}
 	splx(s);
+}
+
+/*
+ * Allocator for smaller-than-a-page structures pool (pm_segtab, and
+ * second level page tables).  Pages backing this poll are mapped in
+ * XKPHYS to avoid additional page faults when servicing a TLB miss.
+ */
+
+void *
+pmap_pg_alloc(struct pool *pp, int flags, int *slowdown)
+{
+	vm_page_t pg;
+
+	*slowdown = 0;
+	for (;;) {
+		pg = uvm_pagealloc(NULL, 0, NULL,
+		    UVM_PGA_USERESERVE | UVM_PGA_ZERO);
+		if (pg != NULL)
+			break;
+
+		*slowdown = 1;
+		if (flags & PR_WAITOK)
+			uvm_wait(__func__);
+		else
+			break;
+	}
+
+	if (pg != NULL)
+		return (void *)PHYS_TO_XKPHYS(VM_PAGE_TO_PHYS(pg), CCA_CACHED);
+	else
+		return NULL;
+}
+
+void
+pmap_pg_free(struct pool *pp, void *item)
+{
+	vaddr_t va = (vaddr_t)item;
+	vm_page_t pg;
+
+	Mips_HitInvalidateDCache(va, PAGE_SIZE);
+	pg = PHYS_TO_VM_PAGE(XKPHYS_TO_PHYS(va));
+	uvm_pagefree(pg);
 }

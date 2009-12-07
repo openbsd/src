@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.8 2009/11/18 20:58:50 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.9 2009/12/07 18:58:32 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,7 @@ struct tlb_entry {
 };
 
 typedef u_int32_t pt_entry_t;	/* Mips page table entry */
+#define	NPTEPG		(PMAP_L2SIZE / sizeof(pt_entry_t))
 
 #endif /* _LOCORE */
 

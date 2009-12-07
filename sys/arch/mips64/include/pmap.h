@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.15 2009/11/18 20:58:50 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.16 2009/12/07 18:58:32 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -64,11 +64,28 @@
  * dynamically allocated at boot time.
  */
 
+/*
+ * Size of second level page structs (page tables, and segment table) used
+ * by this pmap.
+ */
+
+#define	PMAP_L2SHIFT		12
+#define	PMAP_L2SIZE		(1UL << PMAP_L2SHIFT)
+
+/*
+ * Segment sizes
+ */
+
+/* -2 below is for log2(sizeof pt_entry_t) */
+#define	SEGSHIFT		(PAGE_SHIFT + PMAP_L2SHIFT - 2)
+#define NBSEG			(1UL << SEGSHIFT)
+#define	SEGOFSET		(NBSEG - 1)
+
 #define mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 #define pmap_segmap(m, v)	((m)->pm_segtab->seg_tab[((v) >> SEGSHIFT)])
 
-#define PMAP_SEGTABSIZE		512
+#define PMAP_SEGTABSIZE		(PMAP_L2SIZE / sizeof(void *))
 
 struct segtab {
 	pt_entry_t	*seg_tab[PMAP_SEGTABSIZE];
