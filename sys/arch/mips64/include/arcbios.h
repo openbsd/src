@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.12 2009/05/09 18:08:57 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.13 2009/12/07 18:56:27 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -398,6 +398,8 @@ typedef struct arc_param_blk_64
 #define ArcBiosBase64	((arc_param_blk_64_t *) 0x80001000)
 #endif
 #define ArcBios (ArcBiosBase->firmware_vect)
+
+#define	ARCBIOS_PAGE_SIZE	4096
 
 extern int bios_is_32bit;
 extern char bios_enaddr[20];

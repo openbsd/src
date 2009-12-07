@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.26 2009/12/07 18:51:24 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.27 2009/12/07 18:56:29 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -247,8 +247,8 @@ void
 bios_configure_memory()
 {
 	arc_mem_t *descr = NULL;
-	uint64_t start, count;
-	MEMORYTYPE type;
+	uint64_t start, count, prevend = 0;
+	MEMORYTYPE type, prevtype = BadMemory;
 	uint64_t seg_start, seg_end;
 #ifdef TGT_ORIGIN
 	int seen_free = 0;
@@ -327,11 +327,6 @@ bios_configure_memory()
 #endif	/* O200 || O300 */
 		}
 
-		/* convert from ARCBios page size to kernel page size */
-		seg_start = atop(start * 4096);
-		count = atop(count * 4096);
-		seg_end = seg_start + count;
-
 		switch (type) {
 		case BadMemory:		/* have no use for these */
 			break;
@@ -347,6 +342,26 @@ bios_configure_memory()
 			/* FALLTHROUGH */
 		case FreeMemory:
 		case FreeContigous:
+			/*
+			 * Convert from ARCBios page size to kernel page size.
+			 * As this can yield a smaller range due to possible
+			 * different page size, we try to force coalescing
+			 * with the previous range if this is safe.
+			 */
+			seg_start = atop(round_page(start * ARCBIOS_PAGE_SIZE));
+			seg_end = atop(trunc_page((start + count) *
+			    ARCBIOS_PAGE_SIZE));
+			if (start == prevend)
+				switch (prevtype) {
+				case LoadedProgram:
+				case FreeMemory:
+				case FreeContigous:
+					seg_start = atop(trunc_page(start *
+					    ARCBIOS_PAGE_SIZE));
+					break;
+				default:
+					break;
+				}
 			memrange_register(seg_start, seg_end, 0,
 			    VM_FREELIST_DEFAULT);
 			break;
@@ -355,17 +370,22 @@ bios_configure_memory()
 		case FirmwareTemporary:
 		case FirmwarePermanent:
 			rsvdmem += count;
-			physmem += count;
 			break;
 		default:		/* Unknown type, leave it alone... */
 			break;
 		}
+		prevtype = type;
+		prevend = start + count;
 #ifdef TGT_ORIGIN
 		if (descr == NULL)
 			break;
 #endif
 		descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	}
+
+	/* convert rsvdmem to kernel pages, and count it in physmem */
+	rsvdmem = atop(round_page(rsvdmem * ARCBIOS_PAGE_SIZE));
+	physmem += rsvdmem;
 
 #ifdef DEBUG
 	for (i = 0; i < MAXMEMSEGS; i++) {
