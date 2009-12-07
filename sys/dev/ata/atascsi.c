@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.67 2009/12/07 09:37:34 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.68 2009/12/07 12:36:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -209,6 +209,7 @@ atascsi_probe(struct scsi_link *link)
 	xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
 	xa->timeout = 1000;
 	xa->complete = ata_polled_complete;
+	ata_exec(as, xa);
 	rv = ata_polled(xa);
 	if (rv != 0)
 		goto error;
@@ -231,6 +232,7 @@ atascsi_probe(struct scsi_link *link)
 		xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
 		xa->timeout = 1000;
 		xa->complete = ata_polled_complete;
+		ata_exec(as, xa);
 		ata_polled(xa); /* we dont care if it doesnt work */
 	}
 
@@ -245,6 +247,7 @@ atascsi_probe(struct scsi_link *link)
 		xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
 		xa->timeout = 1000;
 		xa->complete = ata_polled_complete;
+		ata_exec(as, xa);
 		ata_polled(xa); /* we dont care if it doesnt work */
 	}
 
@@ -263,6 +266,7 @@ atascsi_probe(struct scsi_link *link)
 	xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
 	xa->timeout = 1000;
 	xa->complete = ata_polled_complete;
+	ata_exec(as, xa);
 	ata_polled(xa); /* we dont care if it doesnt work */
 
 	return (0);
