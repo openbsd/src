@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.153 2009/11/01 01:50:15 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.154 2009/12/07 09:37:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -541,7 +541,7 @@ int			ahci_ata_probe(void *, int);
 void			ahci_ata_free(void *, int);
 struct ata_xfer *	ahci_ata_get_xfer(void *, int);
 void			ahci_ata_put_xfer(struct ata_xfer *);
-int			ahci_ata_cmd(struct ata_xfer *);
+void			ahci_ata_cmd(struct ata_xfer *);
 
 struct atascsi_methods ahci_atascsi_methods = {
 	ahci_ata_probe,
@@ -2326,7 +2326,7 @@ ahci_ata_put_xfer(struct ata_xfer *xa)
 	ahci_put_ccb(ccb);
 }
 
-int
+void
 ahci_ata_cmd(struct ata_xfer *xa)
 {
 	struct ahci_ccb			*ccb = (struct ahci_ccb *)xa;
@@ -2356,24 +2356,23 @@ ahci_ata_cmd(struct ata_xfer *xa)
 
 	xa->state = ATA_S_PENDING;
 
-	if (xa->flags & ATA_F_POLL) {
+	if (xa->flags & ATA_F_POLL)
 		ahci_poll(ccb, xa->timeout, ahci_ata_cmd_timeout);
-		return (ATA_COMPLETE);
+	else {
+		timeout_add_msec(&xa->stimeout, xa->timeout);
+
+		s = splbio();
+		ahci_start(ccb);
+		splx(s);
 	}
 
-	timeout_add_msec(&xa->stimeout, xa->timeout);
-
-	s = splbio();
-	ahci_start(ccb);
-	splx(s);
-	return (ATA_QUEUED);
+	return;
 
 failcmd:
 	s = splbio();
 	xa->state = ATA_S_ERROR;
-	xa->complete(xa);
+	ata_complete(xa);
 	splx(s);
-	return (ATA_ERROR);
 }
 
 void
@@ -2398,7 +2397,7 @@ ahci_ata_cmd_done(struct ahci_ccb *ccb)
 		    ccb->ccb_slot);
 #endif
 	if (xa->state != ATA_S_TIMEOUT)
-		xa->complete(xa);
+		ata_complete(xa);
 }
 
 void
@@ -2483,7 +2482,7 @@ ahci_ata_cmd_timeout(void *arg)
 
 	/* Complete the timed out ata_xfer I/O (may generate new I/O). */
 	DPRINTF(AHCI_D_TIMEOUT, "%s: run completion (2)\n", PORTNAME(ap));
-	xa->complete(xa);
+	ata_complete(xa);
 
 	DPRINTF(AHCI_D_TIMEOUT, "%s: splx\n", PORTNAME(ap));
 ret:

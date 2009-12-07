@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.33 2009/02/16 21:19:06 miod Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.34 2009/12/07 09:37:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -283,9 +283,10 @@ struct ata_xfer {
 #define ATA_F_PIO			(1<<4)
 #define ATA_F_PACKET			(1<<5)
 #define ATA_F_NCQ			(1<<6)
-#define ATA_FMT_FLAGS			"\020" "\007NCQ" "\006PACKET" \
-					"\005PIO" "\004POLL" "\003NOWAIT" \
-					"\002WRITE" "\001READ"
+#define ATA_F_DONE			(1<<7)
+#define ATA_FMT_FLAGS			"\020" "\007DONE" "\007NCQ" \
+					"\006PACKET" "\005PIO" "\004POLL" \
+					"\003NOWAIT" "\002WRITE" "\001READ"
 
 	volatile int		state;
 #define ATA_S_SETUP			0
@@ -295,15 +296,12 @@ struct ata_xfer {
 #define ATA_S_TIMEOUT			4
 #define ATA_S_ONCHIP			5
 #define ATA_S_PUT			6
+#define ATA_S_DONE			7
 
 	void			*atascsi_private;
 
 	void			(*ata_put_xfer)(struct ata_xfer *);
 };
-
-#define ATA_QUEUED		0
-#define ATA_COMPLETE		1
-#define ATA_ERROR		2
 
 /*
  * atascsi
@@ -313,7 +311,7 @@ struct atascsi_methods {
 	int			(*probe)(void *, int);
 	void			(*free)(void *, int);
 	struct ata_xfer *	(*ata_get_xfer)(void *, int );
-	int			(*ata_cmd)(struct ata_xfer *);
+	void			(*ata_cmd)(struct ata_xfer *);
 };
 
 struct atascsi_attach_args {
@@ -334,3 +332,5 @@ int		atascsi_detach(struct atascsi *, int);
 
 int		atascsi_probe_dev(struct atascsi *, int);
 int		atascsi_detach_dev(struct atascsi *, int, int);
+
+void		ata_complete(struct ata_xfer *);
