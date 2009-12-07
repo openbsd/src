@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.51 2009/12/03 12:42:53 jasper Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.52 2009/12/07 15:31:07 sthen Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -338,7 +338,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_stge1023 = 0;
 	} else {
 		uint16_t myaddr[ETHER_ADDR_LEN / 2];
-		for (i = 0; i <ETHER_ADDR_LEN / 2; i++) {
+		for (i = 0; i < ETHER_ADDR_LEN / 2; i++) {
 			stge_read_eeprom(sc, STGE_EEPROM_StationAddress0 + i, 
 			    &myaddr[i]);
 			myaddr[i] = letoh16(myaddr[i]);
@@ -1191,7 +1191,7 @@ stge_init(struct ifnet *ifp)
 		CSR_WRITE_2(sc, STGE_StationAddress2,
 		    sc->sc_arpcom.ac_enaddr[4] | sc->sc_arpcom.ac_enaddr[5] << 8);
 	} else {
-		for (i = 0; i < 6; i++)
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
 			CSR_WRITE_1(sc, STGE_StationAddress0 + i,
 			    sc->sc_arpcom.ac_enaddr[i]);
 	}
