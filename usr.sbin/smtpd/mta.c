@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.77 2009/11/16 09:40:43 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.78 2009/12/07 15:33:42 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -877,10 +877,12 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 
 		/* remove queue entry */
 		if (*status == '2' || *status == '5' || *status == '6') {
-			log_info("%s: to=<%s@%s>, delay=%d, relay=%s [%s], stat=%s (%s)",
+			log_info("%s: to=<%s@%s>, delay=%d, relay=%s [%s],"
+			    " stat=%s (%s)",
 			    m->message_id, m->recipient.user,
 			    m->recipient.domain, time(NULL) - m->creation,
-			    relay->fqdn, ss_to_text(&relay->sa),
+			    relay ? relay->fqdn : "(none)",
+			    relay ? ss_to_text(&relay->sa) : "",
 			    *status == '2' ? "Sent" :
 			    *status == '5' ?  "RemoteError" : "LocalError",
 			    m->session_errorline + 4);
