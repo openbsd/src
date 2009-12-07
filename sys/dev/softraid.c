@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.183 2009/12/07 14:27:12 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.184 2009/12/07 14:33:38 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3246,15 +3246,12 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 		sr_raid1_discipline_init(sd);
 		break;
 	case 4:
+		sr_raidp_discipline_init(sd, SR_MD_RAID4);
+		break;
 	case 5:
-		if (level == 4)
-			sd->sd_type = SR_MD_RAID4;
-		else
-			sd->sd_type = SR_MD_RAID5;
-		sr_raidp_discipline_init(sd);
+		sr_raidp_discipline_init(sd, SR_MD_RAID5);
 		break;
 	case 6:
-		sd->sd_type = SR_MD_RAID6;
 		sr_raid6_discipline_init(sd);
 		break;
 #ifdef AOE

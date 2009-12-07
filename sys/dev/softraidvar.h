@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.85 2009/12/07 14:27:12 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.86 2009/12/07 14:33:38 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -567,7 +567,8 @@ void			sr_raid_startwu(struct sr_workunit *);
 /* Discipline specific initialisation. */
 void			sr_raid0_discipline_init(struct sr_discipline *);
 void			sr_raid1_discipline_init(struct sr_discipline *);
-void			sr_raidp_discipline_init(struct sr_discipline *);
+void			sr_raidp_discipline_init(struct sr_discipline *,
+			    u_int8_t);
 void			sr_raid6_discipline_init(struct sr_discipline *);
 void			sr_crypto_discipline_init(struct sr_discipline *);
 void			sr_aoe_discipline_init(struct sr_discipline *);
