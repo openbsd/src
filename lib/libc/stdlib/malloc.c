@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.121 2009/11/27 20:11:01 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.122 2009/12/07 18:47:38 miod Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -53,6 +53,8 @@
 
 #if defined(__sparc__) && !defined(__sparcv9__)
 #define MALLOC_PAGESHIFT	(13U)
+#elif defined(__mips64__)
+#define MALLOC_PAGESHIFT	(14U)
 #else
 #define MALLOC_PAGESHIFT	(PGSHIFT)
 #endif
