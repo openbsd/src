@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.34 2009/12/07 13:41:02 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.35 2009/12/07 15:09:08 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -221,7 +221,7 @@ sub validate_plists
 	}
 	if ($state->{problems}) {
 		require OpenBSD::Error;
-		OpenBSD::Error::Fatal "fatal issues in ", $self->print;
+		OpenBSD::Error::Fatal "fatal issues in ", $self->short_print;
 	}
 	$state->vstat->synchronize;
 }
