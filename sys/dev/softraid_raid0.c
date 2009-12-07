@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.16 2009/08/09 14:12:25 marco Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.17 2009/12/07 14:27:12 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -58,6 +58,7 @@ sr_raid0_discipline_init(struct sr_discipline *sd)
 
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_RAID0;
+	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
 	sd->sd_max_ccb_per_wu =
 	    (MAXPHYS / sd->sd_meta->ssdi.ssd_strip_size + 1) *
 	    SR_RAID0_NOWU * sd->sd_meta->ssdi.ssd_chunk_no;

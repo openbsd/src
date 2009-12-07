@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.182 2009/11/24 02:19:35 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.183 2009/12/07 14:27:12 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2519,7 +2519,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev)
 	 * Attempt to initiate a rebuild onto the specified device.
 	 */
 
-	if (!sd->sd_rebuild) {
+	if (!(sd->sd_capabilities & SR_CAP_REBUILD)) {
 		printf("%s: discipline does not support rebuild\n",
 		    DEVNAME(sc));
 		goto done;
@@ -2680,7 +2680,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 {
 	dev_t			*dt;
 	int			i, s, no_chunk, rv = EINVAL, vol;
-	int			no_meta, updatemeta = 0, disk = 1;
+	int			no_meta, updatemeta = 0;
 	u_int64_t		vol_size;
 	int32_t			strip_size = 0;
 	struct sr_chunk_head	*cl;
@@ -2962,7 +2962,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	if ((rv = sd->sd_alloc_resources(sd)))
 		goto unwind;
 
-	if (disk) {
+	if (sd->sd_capabilities & SR_CAP_SYSTEM_DISK) {
 		/* set volume status */
 		sd->sd_set_vol_state(sd);
 		if (sd->sd_vol_status == BIOC_SVOFFLINE) {

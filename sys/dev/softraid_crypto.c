@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.42 2009/11/24 02:19:35 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.43 2009/12/07 14:27:12 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -86,8 +86,10 @@ void		 sr_crypto_dumpkeys(struct sr_discipline *);
 void
 sr_crypto_discipline_init(struct sr_discipline *sd)
 {
+
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_CRYPTO;
+	sd->sd_capabilities = SR_CAP_SYSTEM_DISK;
 	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
 	sd->sd_max_wu = SR_CRYPTO_NOWU;
 
