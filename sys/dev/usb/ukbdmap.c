@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.34 2009/01/11 16:55:07 miod Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.35 2009/12/07 19:23:17 oga Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -1101,6 +1101,7 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	ukbd_keydesc_us_dvorak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_IOPENER,	KB_US,	ukbd_keydesc_iopener),
+	KBD_MAP(KB_UK | KB_SWAPCTRLCAPS, KB_UK,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_FR | KB_APPLE | KB_SWAPCTRLCAPS,	KB_FR | KB_APPLE,
