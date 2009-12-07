@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.418 2009/12/06 07:53:07 jmc Exp $
+# $OpenBSD: pkg_add,v 1.419 2009/12/07 13:41:02 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -175,33 +175,9 @@ sub complete
 
 	if (!$set->{installable}) {
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
-		$state->tracker->mark_cant_update($set);
+		$state->tracker->cant($set);
 	}
 	return 1;
-}
-
-sub reorder_old
-{
-	my ($set, $state) = @_;
-	# no need to sort things if there is one package to replace
-	# return if $set->older <= 1;
-
-	my $resolved;
-	my @l = ();
-	my %todo = map {($_->pkgname, $_)} $set->older;
-	do {
-		$resolved = 0;
-BIGLOOP: 	while (my ($pkg, $h) = each %todo) {
-			for my $name (OpenBSD::RequiredBy->new($pkg)->list) {
-				next BIGLOOP if defined $todo{$name};
-			}
-			push(@l, $h);
-			delete $todo{$pkg};
-			$resolved++;
-		}
-	} while ($resolved);
-	push(@l, values %todo);
-	$set->{older} = \@l;
 }
 
 sub find_conflicts
@@ -553,7 +529,7 @@ sub install_set
 				$handle->error_message, "\n"); 
 			$bad++;
 			$set->cleanup($handle->has_error);
-			$state->tracker->mark_cant_update($set);
+			$state->tracker->cant($set);
 			return ();
 		}
 
@@ -562,7 +538,7 @@ sub install_set
 				$state->log($handle->pkgname, " is not for the right architecture");
 				if (!$defines{arch}) {
 					$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
-					$state->tracker->mark_cant_update($set);
+					$state->tracker->cant($set);
 					return ();
 				}
 			}
@@ -595,7 +571,7 @@ sub install_set
 		}
 		$bad++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
-		$state->tracker->mark_cant_update($set);
+		$state->tracker->cant($set);
 		return ();
 	}
 
@@ -605,7 +581,7 @@ sub install_set
 			$handle->location->close_now;
 		}
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
-		$state->tracker->mark_cant_update($set);
+		$state->tracker->cant($set);
 		$bad++;
 		return ();
 	}
@@ -618,7 +594,7 @@ sub install_set
 #	}
 	really_add($set, $state);
 	$set->cleanup;
-	$state->tracker->mark_installed($set);
+	$state->tracker->done($set);
 	return ();
 }
 
@@ -683,7 +659,7 @@ my @todo2 = ();
 sub inform_user_of_problems
 {
 	my $state = shift;
-	my @cantupdate = $state->tracker->cant_update;
+	my @cantupdate = $state->tracker->cant_list;
 	if (@cantupdate > 0) {
 		$state->print("Couldn't find updates for ", join(', ', @cantupdate), "\n");
 	}
@@ -795,12 +771,13 @@ sub finish_display
 
 framework(
 sub {
-	$state->tracker->add_sets(@todo2);
 	if ($state->{allow_replacing}) {
 		$state->progress->set_header("Looking for packages");
 		$state->{todo} = (scalar @todo2) + 1;
 		do_quirks($state);
 	}
+
+	$state->tracker->todo(@todo2);
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
 		$state->progress->set_header("Looking for packages");

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.12 2009/12/04 10:43:02 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.13 2009/12/07 13:41:02 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -38,6 +38,14 @@ sub new
 	return bless {}, $class;
 }
 
+sub known
+{
+	my ($self, $set) = @_;
+	for my $n ($set->newer, $set->older, $set->hints) {
+		$self->{known}->{$n->pkgname} = 1;
+	}
+}
+
 sub add_set
 {
 	my ($self, $set) = @_;
@@ -47,10 +55,11 @@ sub add_set
 	for my $n ($set->older, $set->hints) {
 		$self->{to_update}->{$n->pkgname} = $set;
 	}
+	$self->known($set);
 	return $self;
 }
 
-sub add_sets
+sub todo
 {
 	my ($self, @sets) = @_;
 	for my $set (@sets) {
@@ -70,29 +79,30 @@ sub remove_set
 	}
 }
 
-sub mark_uptodate
+sub uptodate
 {
 	my ($self, $set) = @_;
+	$self->remove_set($set);
 	for my $n ($set->older) {
-		delete $self->{to_update}->{$n->pkgname};
 		$self->{uptodate}->{$n->pkgname} = 1;
 	}
 }
 
-sub mark_cant_update
+sub cant
 {
 	my ($self, $set) = @_;
+	$self->remove_set($set);
 	for my $n ($set->older) {
-		delete $self->{to_update}->{$n->pkgname};
 		$self->{cant_update}->{$n->pkgname} = 1;
 	}
 }
 
-sub mark_installed
+sub done
 {
 	my ($self, $set) = @_;
 
 	$self->remove_set($set);
+	$self->known($set);
 
 	for my $n ($set->newer) {
 		$self->{uptodate}->{$n->pkgname} = 1;
@@ -115,12 +125,7 @@ sub is
 sub is_known
 {
 	my ($self, $pkg) = @_;
-	my $r;
-	for my $k qw(installed uptodate cant_update to_update) {
-		$r = $self->is($k, $pkg);
-	    	return $r if defined $r;
-	}
-	return $r;
+	return $self->is('known', $pkg);
 }
 
 sub is_installed
@@ -135,13 +140,7 @@ sub is_to_update
 	return $self->is('to_update', $pkg);
 }
 
-sub installed
-{
-	my $self = shift;
-	return keys %{$self->{installed}};
-}
-
-sub cant_update
+sub cant_list
 {
 	my $self = shift;
 	return keys %{$self->{cant_update}};

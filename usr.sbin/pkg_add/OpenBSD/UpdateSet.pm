@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.33 2009/12/05 10:08:58 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.34 2009/12/07 13:41:02 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -258,8 +258,6 @@ sub merge
 	for my $set (@sets) {
 		$self->add_newer($set->newer);
 		$self->add_older($set->older);
-		# BUT XXX tell the tracker we killed the set
-		$tracker->remove_set($set);
 		# ... and mark it as already done
 		$set->{finished} = 1;
 		# XXX and mark it as merged, for eventual updates
@@ -267,7 +265,7 @@ sub merge
 		$self->{updates} += $set->{updates};
 	}
 	# then regen tracker info for $self
-	$tracker->add_set($self);
+	$tracker->todo($self);
 	delete $self->{solver};
 	return $self;
 }
