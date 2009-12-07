@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.39 2008/08/09 16:31:08 miod Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.40 2009/12/07 19:22:38 oga Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -1053,6 +1053,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	pckbd_keydesc_us_dvorak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_IOPENER,	KB_US,	pckbd_keydesc_iopener),
+	KBD_MAP(KB_UK | KB_SWAPCTRLCAPS, KB_UK,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_FR | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_FR | KB_DVORAK,
