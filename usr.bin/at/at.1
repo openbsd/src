@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.38 2009/02/08 17:15:09 jmc Exp $
+.\" $OpenBSD: at.1,v 1.39 2009/12/07 08:14:58 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: December 7 2009 $
 .Dt AT 1
 .Os
 .Sh NAME
@@ -333,6 +333,11 @@ and the
 flags
 .Op Fl fmq
 are extensions to that specification.
+.Pp
+Behaviour for the
+.Fl l
+flag differs between this implementation and
+.St -p1003.1-2008 .
 .Sh AUTHORS
 .An -nosplit
 .Nm at
