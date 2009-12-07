@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.172 2009/12/06 17:24:28 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.173 2009/12/07 00:09:27 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -691,7 +691,7 @@ sdstart(void *v)
 	if (sc->flags & SDF_DYING)
 		return;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("sdstart\n"));
+	SC_DEBUG(link, SDEV_DB2, ("sdstart\n"));
 
 	mtx_enter(&sc->sc_start_mtx);
 	if (ISSET(sc->flags, SDF_STARTING)) {
@@ -1492,7 +1492,7 @@ sd_flush(struct sd_softc *sc, int flags)
 
 	xs = scsi_xs_get(link, flags);
 	if (xs == NULL) {
-		SC_DEBUG(sc_link, SDEV_DB1, ("cache sync failed to get xs\n"));
+		SC_DEBUG(link, SDEV_DB1, ("cache sync failed to get xs\n"));
 		return;
 	}
 
@@ -1512,10 +1512,10 @@ sd_flush(struct sd_softc *sc, int flags)
 		}
 	} while (xs->status == XS_NO_CCB);
 
-	if (xs->error != XS_NOERROR)
-		SC_DEBUG(sc_link, SDEV_DB1, ("cache sync failed\n"));
-	else
+	if (xs->error == XS_NOERROR)
 		sc->flags &= ~SDF_DIRTY;
+	else
+		SC_DEBUG(link, SDEV_DB1, ("cache sync failed\n"));
 
 	scsi_xs_put(xs);
 }

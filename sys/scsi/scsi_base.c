@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.145 2009/12/01 01:50:35 dlg Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.146 2009/12/07 00:09:27 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -716,6 +716,14 @@ scsi_xs_exec(struct scsi_xfer *xs)
 	xs->resid = xs->datalen;
 	xs->status = 0;
 
+#ifdef SCSIDEBUG
+	if (xs->sc_link->flags & SDEV_DB1) {
+		show_scsi_xs(xs);
+		if (xs->datalen && (xs->flags & SCSI_DATA_OUT))
+			show_mem(xs->data, min(64, xs->datalen));
+	}
+#endif /* SCSIDEBUG */
+
 	/*
 	 * scsi_xs_exec() guarantees that scsi_done() will be called on the xs
 	 * it was given. The adapter is responsible for calling scsi_done()
@@ -749,6 +757,15 @@ scsi_done(struct scsi_xfer *xs)
 	splassert(IPL_BIO);
 
 	xs->flags |= ITSDONE;
+
+#ifdef SCSIDEBUG
+	if (xs->sc_link->flags & SDEV_DB1) {
+		if (xs->datalen && (xs->flags & SCSI_DATA_IN))
+			show_mem(xs->data, min(64, xs->datalen));
+		if (xs->status == XS_SENSE || xs->status == XS_SHORTSENSE)
+			show_mem((u_char *)&xs->sense, sizeof(xs->sense));
+	}
+#endif /* SCSIDEBUG */
 
 	xs->done(xs);
 }
@@ -1852,3 +1869,58 @@ scsi_decode_sense(struct scsi_sense_data *sense, int flag)
 
 	return (rqsbuf);
 }
+
+#ifdef SCSIDEBUG
+/*
+ * Given a scsi_xfer, dump the request, in all its glory
+ */
+void
+show_scsi_xs(struct scsi_xfer *xs)
+{
+	u_char *b = (u_char *)xs->cmd;
+	int i = 0;
+
+	sc_print_addr(xs->sc_link);
+
+	printf("xs(%p): ", xs);
+
+	printf("flg(0x%x)", xs->flags);
+	printf("sc_link(%p)", xs->sc_link);
+	printf("retr(0x%x)", xs->retries);
+	printf("timo(0x%x)", xs->timeout);
+	printf("cmd(%p)", xs->cmd);
+	printf("len(0x%x)", xs->cmdlen);
+	printf("data(%p)", xs->data);
+	printf("len(0x%x)", xs->datalen);
+	printf("res(0x%x)", xs->resid);
+	printf("err(0x%x)", xs->error);
+	printf("bp(%p)\n", xs->bp);
+
+	printf("command: ");
+
+	if ((xs->flags & SCSI_RESET) == 0) {
+		while (i < xs->cmdlen) {
+			if (i)
+				printf(",");
+			printf("%x", b[i++]);
+		}
+		printf("-[%d bytes]\n", xs->datalen);
+	} else
+		printf("-RESET-\n");
+}
+
+void
+show_mem(u_char *address, int num)
+{
+	int x;
+
+	printf("------------------------------");
+	for (x = 0; x < num; x++) {
+		if ((x % 16) == 0)
+			printf("\n%03d: ", x);
+		printf("%02x ", *address++);
+	}
+	printf("\n------------------------------\n");
+}
+#endif /* SCSIDEBUG */
+
