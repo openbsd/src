@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.23 2009/12/07 18:54:46 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.24 2009/12/07 19:05:59 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -387,10 +387,10 @@ END(k_tlb_miss)
  *	Write the given entry into the TLB at the given index.
  */
 LEAF(tlb_write_indexed, 0)
-	mfc0	v1, COP_0_STATUS_REG	# Save the status register.
+	mfc0	v1, COP_0_STATUS_REG		# Save the status register.
 	ori	v0, v1, SR_INT_ENAB
 	xori	v0, v0, SR_INT_ENAB
-	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
+	mtc0	v0, COP_0_STATUS_REG		# Disable interrupts
 	ITLBNOPFIX
 	ld	a2, 16(a1)
 	ld	a3, 24(a1)
@@ -400,8 +400,8 @@ LEAF(tlb_write_indexed, 0)
 	dmtc0	a3, COP_0_TLB_LO1		# Set up entry low1.
 	ld	a2, 0(a1)
 	ld	a3, 8(a1)
-	mtc0	a0, COP_0_TLB_INDEX	# Set the index.
-	dmtc0	a2, COP_0_TLB_PG_MASK	# Set up entry mask.
+	mtc0	a0, COP_0_TLB_INDEX		# Set the index.
+	mtc0	a2, COP_0_TLB_PG_MASK		# Set up entry mask.
 	dmtc0	a3, COP_0_TLB_HI		# Set up entry high.
 	nop
 	nop
@@ -428,8 +428,9 @@ LEAF(tlb_write_indexed, 0)
 
 	dmtc0	ta0, COP_0_TLB_HI		# Restore the PID.
 	nop
-	dmtc0	zero, COP_0_TLB_PG_MASK	# Default mask value.
-	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
+	li	a0, TLB_PAGE_MASK
+	mtc0	a0, COP_0_TLB_PG_MASK		# Restore default mask value.
+	mtc0	v1, COP_0_STATUS_REG		# Restore the status register
 	ITLBNOPFIX
 	j	ra
 	nop
@@ -484,6 +485,8 @@ LEAF(tlb_flush, 0)
 #endif
 
 	dmtc0	ta0, COP_0_TLB_HI	# Restore the PID
+	li	a0, TLB_PAGE_MASK
+	mtc0	a0, COP_0_TLB_PG_MASK	# Restore default mask value.
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
 	ITLBNOPFIX
 	j	ra
@@ -565,6 +568,7 @@ LEAF(tlb_update, 0)
 	dmfc0	ta0, COP_0_TLB_HI	# Save current PID
 	dmtc0	a0, COP_0_TLB_HI	# Init high reg
 	and	a2, a1, PG_G		# Copy global bit
+	li	a3, TLB_PAGE_MASK
 	nop
 	nop
 	nop
@@ -590,7 +594,7 @@ LEAF(tlb_update, 0)
 	b	4f
 	li	v0, 1
 1:
-	mtc0	zero, COP_0_TLB_PG_MASK	# init mask.
+	mtc0	a3, COP_0_TLB_PG_MASK	# init mask.
 	dmtc0	a0, COP_0_TLB_HI	# init high reg.
 	dmtc0	a1, COP_0_TLB_LO0	# init low reg0.
 	dmtc0	a2, COP_0_TLB_LO1	# init low reg1.
@@ -620,7 +624,7 @@ LEAF(tlb_update, 0)
 	b	4f
 	li	v0, 1
 3:
-	mtc0	zero, COP_0_TLB_PG_MASK	# init mask.
+	mtc0	a3, COP_0_TLB_PG_MASK	# init mask.
 	dmtc0	a0, COP_0_TLB_HI	# init high reg.
 	dmtc0	a2, COP_0_TLB_LO0	# init low reg0.
 	dmtc0	a1, COP_0_TLB_LO1	# init low reg1.
@@ -684,6 +688,8 @@ LEAF(tlb_read, 0)
 	nop
 	nop
 	nop				# wait for PID active
+	li	a0, TLB_PAGE_MASK
+	mtc0	a0, COP_0_TLB_PG_MASK	# Restore default mask value.
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
 	ITLBNOPFIX
 	sd	ta0, 0(a1)
@@ -729,3 +735,12 @@ LEAF(tlb_set_wired, 0)
 	j	ra
 	nop
 END(tlb_set_wired)
+
+/*
+ *	Initialize the TLB page mask.
+ */
+LEAF(tlb_set_page_mask, 0)
+	mtc0	a0, COP_0_TLB_PG_MASK
+	j	ra
+	nop
+END(tlb_set_page_mask)

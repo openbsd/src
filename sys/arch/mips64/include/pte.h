@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.9 2009/12/07 18:58:32 miod Exp $	*/
+/*	$OpenBSD: pte.h,v 1.10 2009/12/07 19:05:57 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,9 +60,15 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #endif /* _LOCORE */
 
 /* entryhi values */
+#if PAGE_SHIFT == 12
 #define	PG_SVPN		0xfffffffffffff000	/* Software page no mask */
 #define	PG_HVPN		0xffffffffffffe000	/* Hardware page no mask */
 #define	PG_ODDPG	0x0000000000001000	/* Odd even pte entry */
+#elif PAGE_SHIFT == 14
+#define	PG_SVPN		0xffffffffffffc000	/* Software page no mask */
+#define	PG_HVPN		0xffffffffffff8000	/* Hardware page no mask */
+#define	PG_ODDPG	0x0000000000004000	/* Odd even pte entry */
+#endif
 #define	PG_ASID		0x00000000000000ff	/* Address space ID */
 /* entrylo values */
 #define PG_RO		0x40000000	/* SW */
@@ -94,6 +100,12 @@ typedef u_int32_t pt_entry_t;	/* Mips page table entry */
 #define	PG_SIZE_1M	0x001fe000
 #define	PG_SIZE_4M	0x007fe000
 #define	PG_SIZE_16M	0x01ffe000
+
+#if PAGE_SHIFT == 12
+#define	TLB_PAGE_MASK	PG_SIZE_4K
+#elif PAGE_SHIFT == 14
+#define	TLB_PAGE_MASK	PG_SIZE_16K
+#endif
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 

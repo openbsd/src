@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 2004/08/10 21:11:42 pefo Exp $ */
+/*	$OpenBSD: param.h,v 1.4 2009/12/07 19:05:59 miod Exp $ */
 
 /*
  * Copyright (c) 2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,6 +38,8 @@
 #define _MACHINE_ARCH	mips64
 
 #define MID_MACHINE	MID_MIPS64	/* None but has to be defined */
+
+#define	PAGE_SHIFT	12
 
 #include <mips64/param.h>
 

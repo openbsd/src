@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.26 2009/12/02 01:42:14 syuu Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.27 2009/12/07 19:05:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -400,6 +400,7 @@ hw_cpu_hatch(struct cpu_info *ci)
        Mips10k_ConfigCache();
 
        sys_config.cpu[cpuid].tlbwired = UPAGES / 2;
+	tlb_set_page_mask(TLB_PAGE_MASK);
        tlb_set_wired(0);
        tlb_flush(sys_config.cpu[cpuid].tlbsize);
        tlb_set_wired(sys_config.cpu[cpuid].tlbwired);

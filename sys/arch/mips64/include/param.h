@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.21 2009/12/07 18:58:32 miod Exp $ */
+/*      $OpenBSD: param.h,v 1.22 2009/12/07 19:05:57 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,34 +53,30 @@
 #define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 #define ALIGNED_POINTER(p, t)  ((((u_long)(p)) & (sizeof (t) - 1)) == 0)
 
-#define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-
-#define PAGE_SHIFT	12
+#ifndef	PAGE_SHIFT
+#error	PAGE_SHIFT is not defined
+#endif
 #define PAGE_SIZE	(1 << PAGE_SHIFT)
 #define PAGE_MASK	(PAGE_SIZE - 1)
 
+#define	NBPG		PAGE_SIZE
+#define	PGOFSET		PAGE_MASK
+#define	PGSHIFT		PAGE_SHIFT
 
-#ifdef __LP64__
 #define	KERNBASE	0xffffffff80000000L	/* start of kernel virtual */
-#else
-#define	KERNBASE	0x80000000	/* start of kernel virtual */
-#endif
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#ifdef __LP64__
-#define	UPAGES		4		/* pages of u-area */
+#define USPACE		(16384)
+#define	UPAGES		(USPACE >> PAGE_SHIFT)
+#if PAGE_SHIFT > 12
+#define	USPACE_ALIGN	0
 #else
-#define	UPAGES		2		/* pages of u-area */
+#define	USPACE_ALIGN	(2 * PAGE_SIZE)	/* align to an even TLB boundary */
 #endif
-
-#define USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
-#define	USPACE_ALIGN	(2*NBPG)	/* u-area alignment 0-none */
 
 /*
  * Constants related to network buffer management.

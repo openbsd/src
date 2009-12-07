@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.92 2009/12/07 18:51:26 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.93 2009/12/07 19:05:59 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -478,6 +478,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	delay(20*1000);		/* Let any UART FIFO drain... */
 
 	sys_config.cpu[0].tlbwired = UPAGES / 2;
+	tlb_set_page_mask(TLB_PAGE_MASK);
 	tlb_set_wired(0);
 	tlb_flush(sys_config.cpu[0].tlbsize);
 	tlb_set_wired(sys_config.cpu[0].tlbwired);
@@ -524,10 +525,8 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		 * of the processor need it, but there is evidence
 		 * later versions also need it.
 		 *
-		 * This is also necessary on RM52x0; we test on the `rounded'
-		 * cputype value instead of sys_config.cpu[0].type; this
-		 * causes RM7k and RM9k to be included, just to be on the
-		 * safe side.
+		 * This is also necessary on RM52x0 and most RM7k/RM9k,
+		 * and is a documented errata for these chips.
 		 */
 		tlb_handler = (vaddr_t)&tlb_miss_err_r5k;
 		xtlb_handler = (vaddr_t)&xtlb_miss_err_r5k;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.46 2009/11/25 17:39:51 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.47 2009/12/07 19:05:57 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -554,12 +554,13 @@ extern u_int	CpuOnboardCacheOn;	/* RM7K */
 struct tlb_entry;
 struct user;
 
-void	tlb_set_wired(int);
-void	tlb_set_pid(int);
-u_int	cp0_get_prid(void);
-u_int	cp1_get_prid(void);
 u_int	cp0_get_count(void);
+u_int	cp0_get_prid(void);
 void	cp0_set_compare(u_int);
+u_int	cp1_get_prid(void);
+void	tlb_set_page_mask(uint32_t);
+void	tlb_set_pid(int);
+void	tlb_set_wired(int);
 
 /*
  * Define soft selected cache functions.
