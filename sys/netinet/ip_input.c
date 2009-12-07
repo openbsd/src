@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.173 2009/11/19 22:07:17 otto Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.174 2009/12/07 08:19:37 gollo Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1435,7 +1435,7 @@ ip_forward(m, srcrt)
 		printf("forward: src %x dst %x ttl %x\n", ip->ip_src.s_addr,
 		    ip->ip_dst.s_addr, ip->ip_ttl);
 #endif
-	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
+	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
 		m_freem(m);
 		return;
