@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 2009/12/03 06:02:38 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.92 2009/12/07 18:51:26 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -897,6 +897,15 @@ haltsys:
 void
 arcbios_halt(int howto)
 {
+	uint32_t sr;
+
+	sr = disableintr();
+
+#if 0
+	/* restore ARCBios page size... */
+	tlb_set_page_mask(PG_SIZE_4K);
+#endif
+
 	if (howto & RB_HALT) {
 		if (howto & RB_POWERDOWN)
 			Bios_PowerDown();
@@ -904,6 +913,8 @@ arcbios_halt(int howto)
 			Bios_EnterInteractiveMode();
 	} else
 		Bios_Reboot();
+
+	setsr(sr);
 }
 
 u_long	dumpmag = 0x8fca0101;	/* Magic number for savecore. */

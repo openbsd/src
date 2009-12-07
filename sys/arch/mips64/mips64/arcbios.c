@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.25 2009/11/19 06:06:51 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.26 2009/12/07 18:51:24 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -87,8 +87,9 @@ static struct systypes {
 /*
  *	ARC Bios trampoline code.
  */
+
 #define ARC_Call(Name,Offset)	\
-__asm__("\n"			\
+__asm__("\n"	\
 "	.text\n"		\
 "	.ent	" #Name "\n"	\
 "	.align	3\n"		\
@@ -107,16 +108,45 @@ __asm__("\n"			\
 "	ld	$2, 2*" #Offset "($2)\n"\
 "	jr	$2\n"		\
 "	nop\n"			\
-"	.end	" #Name "\n"	);
+"	.end	" #Name "\n");
+
+/*
+ * Same, which also forces the stack to be in CKSEG0, used for
+ * restart functions, which aren't supposed to return.
+ */
+#define ARC_Call2(Name,Offset)	\
+__asm__("\n"	\
+"	.text\n"		\
+"	.ent	" #Name "\n"	\
+"	.align	3\n"		\
+"	.set	noreorder\n"	\
+"	.globl	" #Name "\n"	\
+#Name":\n"			\
+"	lw	$2, bios_is_32bit\n"\
+"	beqz	$2, 1f\n"	\
+"	nop\n"			\
+"	ld	$2, proc0paddr\n" \
+"	addi	$29, $2, 16384 - 64\n" \
+"2:\n"				\
+"       lw      $2, 0xffffffff80001020\n"\
+"       lw      $2," #Offset "($2)\n"\
+"	jr	$2\n"		\
+"	nop\n"			\
+"1:\n"				\
+"       ld      $2, 0xffffffff80001040\n"\
+"	ld	$2, 2*" #Offset "($2)\n"\
+"	jr	$2\n"		\
+"	nop\n"			\
+"	.end	" #Name "\n");
 
 ARC_Call(Bios_Load,			0x00);
 ARC_Call(Bios_Invoke,			0x04);
 ARC_Call(Bios_Execute,			0x08);
-ARC_Call(Bios_Halt,			0x0c);
-ARC_Call(Bios_PowerDown,		0x10);
-ARC_Call(Bios_Restart,			0x14);
-ARC_Call(Bios_Reboot,			0x18);
-ARC_Call(Bios_EnterInteractiveMode,	0x1c);
+ARC_Call2(Bios_Halt,			0x0c);
+ARC_Call2(Bios_PowerDown,		0x10);
+ARC_Call2(Bios_Restart,			0x14);
+ARC_Call2(Bios_Reboot,			0x18);
+ARC_Call2(Bios_EnterInteractiveMode,	0x1c);
 ARC_Call(Bios_Unused1,			0x20);
 ARC_Call(Bios_GetPeer,			0x24);
 ARC_Call(Bios_GetChild,			0x28);
