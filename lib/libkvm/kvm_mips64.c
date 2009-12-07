@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.11 2009/11/22 18:20:49 miod Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.12 2009/12/07 18:49:14 miod Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -57,10 +57,15 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
+#include <uvm/uvm_extern.h>
+
 struct vmstate {
 	pt_entry_t	*Sysmap;
 	u_int		Sysmapsize;
 	vaddr_t		Sysmapbase;
+	int		pagesize;
+	int		pagemask;
+	int		pageshift;
 };
 
 void
@@ -74,38 +79,54 @@ int
 _kvm_initvtop(kvm_t *kd)
 {
 	struct vmstate *vm;
-	struct nlist nlist[3];
+	struct nlist nl[4];
+	struct uvmexp uvmexp;
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
 	if (vm == 0)
 		return (-1);
 	kd->vmst = vm;
 
-	nlist[0].n_name = "Sysmap";
-	nlist[1].n_name = "Sysmapsize";
-	nlist[2].n_name = 0;
+	nl[0].n_name = "Sysmap";
+	nl[1].n_name = "Sysmapsize";
+	nl[2].n_name = "uvmexp";
+	nl[3].n_name = 0;
 
-	if (kvm_nlist(kd, nlist) != 0) {
+	if (kvm_nlist(kd, nl) != 0) {
 		_kvm_err(kd, kd->program, "bad namelist");
 		return (-1);
 	}
-	if (KREAD(kd, (u_long)nlist[0].n_value, &vm->Sysmap)) {
+	if (KREAD(kd, (u_long)nl[0].n_value, &vm->Sysmap)) {
 		_kvm_err(kd, kd->program, "cannot read Sysmap");
 		return (-1);
 	}
-	if (KREAD(kd, (u_long)nlist[1].n_value, &vm->Sysmapsize)) {
+	if (KREAD(kd, (u_long)nl[1].n_value, &vm->Sysmapsize)) {
 		_kvm_err(kd, kd->program, "cannot read Sysmapsize");
 		return (-1);
 	}
+	/*
+	 * We are only interested in the first three fields of struct
+	 * uvmexp, so do not try to read more than necessary (especially
+	 * in case the layout changes).
+	 */
+	if (kvm_read(kd, (u_long)nl[2].n_value, &uvmexp,
+	    3 * sizeof(int)) != 3 * sizeof(int)) {
+		_kvm_err(kd, kd->program, "cannot read uvmexp");
+		return (-1);
+	}
+	vm->pagesize = uvmexp.pagesize;
+	vm->pagemask = uvmexp.pagemask;
+	vm->pageshift = uvmexp.pageshift;
 
 	/*
 	 * Older kernels might not have this symbol; in which case
-	 * we use the value of VM_MIN_KERNEL_ADDRESS they must have.
+	 * we use the value of VM_MIN_KERNE_ADDRESS they must have.
 	 */
-	nlist[0].n_name = "Sysmapbase";
-	nlist[1].n_name = 0;
-	if (kvm_nlist(kd, nlist) != 0 ||
-	    KREAD(kd, (u_long)nlist[0].n_value, &vm->Sysmapbase))
+
+	nl[0].n_name = "Sysmapbase";
+	nl[1].n_name = 0;
+	if (kvm_nlist(kd, nl) != 0 ||
+	    KREAD(kd, (u_long)nl[0].n_value, &vm->Sysmapbase))
 		vm->Sysmapbase = (vaddr_t)CKSSEG_BASE;
 
 	return (0);
@@ -119,39 +140,40 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	struct vmstate *vm;
 	pt_entry_t pte;
-	u_long idx, addr, offset;
+	u_long idx, addr;
+	int offset;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
 		return((off_t)0);
 	}
 	vm = kd->vmst;
-	offset = va & PAGE_MASK;
+	offset = (int)va & vm->pagemask;
 	/*
 	 * If we are initializing (kernel segment table pointer not yet set)
 	 * then return pa == va to avoid infinite recursion.
 	 */
 	if (vm->Sysmap == 0) {
 		*pa = va;
-		return (int)(PAGE_SIZE - offset);
+		return vm->pagesize - offset;
 	}
 	/*
 	 * Check for direct-mapped segments
 	 */
 	if (IS_XKPHYS(va)) {
 		*pa = XKPHYS_TO_PHYS(va);
-		return (int)(PAGE_SIZE - offset);
+		return vm->pagesize - offset;
 	}
 	if (va >= (vaddr_t)CKSEG0_BASE && va < (vaddr_t)CKSSEG_BASE) {
 		*pa = CKSEG0_TO_PHYS(va);
-		return (int)(PAGE_SIZE - offset);
+		return vm->pagesize - offset;
 	}
 	if (va < vm->Sysmapbase)
 		goto invalid;
-	idx = (va - vm->Sysmapbase) >> PGSHIFT;
+	idx = (va - vm->Sysmapbase) >> vm->pageshift;
 	if (idx >= vm->Sysmapsize)
 		goto invalid;
-	addr = (u_long)(vm->Sysmap + idx);
+	addr = (u_long)vm->Sysmap + idx;
 	/*
 	 * Can't use KREAD to read kernel segment table entries.
 	 * Fortunately it is 1-to-1 mapped so we don't have to.
@@ -161,8 +183,8 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		goto invalid;
 	if (!(pte & PG_V))
 		goto invalid;
-	*pa = (pte & PG_FRAME) | offset;
-	return (int)(PAGE_SIZE - offset);
+	*pa = (pte & PG_FRAME) | (paddr_t)offset;
+	return vm->pagesize - offset;
 
 invalid:
 	_kvm_err(kd, 0, "invalid address (%lx)", va);
