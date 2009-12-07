@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2009/10/30 08:13:57 syuu Exp $ */
+/*	$OpenBSD: locore.S,v 1.11 2009/12/07 18:53:33 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -42,16 +42,26 @@
 	.globl	kernel_text
 kernel_text = start
 start:
-	mfc0    v0, COP_0_STATUS_REG
+	/*
+	 * On at least the O2, when netbooting the bsd.rd kernel, the
+	 * kernel image gets loaded in CKSEG1, which causes the kernel
+	 * text to be uncached.  Just to be on the safe side, jump to
+	 * our intended execution address.
+	 */
+	LA	v0, 1f
+	jr	v0
+	nop
+1:
+
+	mfc0	v0, COP_0_STATUS_REG
 	li	v1, ~SR_INT_ENAB
 	and	v0, v1
-	mtc0    v0, COP_0_STATUS_REG    # disable all interrupts
+	mtc0	v0, COP_0_STATUS_REG		# disable all interrupts
+	mtc0	zero, COP_0_CAUSE_REG		# Clear soft interrupts
 
-	mtc0	zero, COP_0_CAUSE_REG	# Clear soft interrupts
-
-/*
- * Initialize stack and call machine startup.
- */
+	/*
+	 * Initialize stack and call machine startup.
+	 */
 	LA	sp, start - FRAMESZ(CF_SZ)
 	LA	gp, _gp
 	jal	mips_init			# mips_init(argc, argv, envp)
@@ -64,14 +74,14 @@ start:
 
 #if defined(MULTIPROCESSOR)
 LEAF(hw_cpu_spinup_trampoline, 0)
-       mfc0    v0, COP_0_STATUS_REG
-       li      v1, ~SR_INT_ENAB
-       and     v0, v1
-       ori     v0, SR_KX | SR_UX
-       mtc0    v0, COP_0_STATUS_REG    # disable all interrupts
-       mtc0    zero, COP_0_CAUSE_REG   # Clear soft interrupts
-       LA      gp, _gp
-       jal     hw_cpu_hatch
-       nop
+	mfc0	v0, COP_0_STATUS_REG
+	li	v1, ~SR_INT_ENAB
+	and	v0, v1
+	ori	v0, SR_KX | SR_UX
+	mtc0	v0, COP_0_STATUS_REG		# disable all interrupts
+	mtc0	zero, COP_0_CAUSE_REG		# Clear soft interrupts
+	LA	gp, _gp
+	jal	hw_cpu_hatch
+	nop
 END(hw_cpu_spinup_trampoline)
 #endif /* MULTIPROCESSOR */
