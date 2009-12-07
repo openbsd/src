@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.4 2009/11/19 20:13:51 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.5 2009/12/07 19:01:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,7 @@ struct mdproc {
 	int	md_flags;		/* machine-dependent flags */
 	long	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
+	vaddr_t	md_uarea;		/* allocated uarea virtual addr */
 /* The following is RM7000 dependent, but kept in for compatibility */
 	int	md_pc_ctrl;		/* performance counter control */
 	int	md_pc_count;		/* performance counter */

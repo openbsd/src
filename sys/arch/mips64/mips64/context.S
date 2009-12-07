@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.31 2009/11/19 20:16:27 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.32 2009/12/07 19:01:06 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -159,13 +159,6 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	li	t1, SONPROC
 	sb	t1, P_STAT(s0)			# set to onproc.
 
-	/*
-	 * We need to wire the process kernel stack mapping so there
-	 * will be no tlb misses in exception handlers. This is done
-	 * by invalidating any tlb entries mapping the U-area and
-	 * put valid mappings in tlb entries 0 and 1.
-	 */
-
 	/* get process ASID */
 	PTR_L	t0, P_VMSPACE(s0)		# p->p_vmspace
 	PTR_L	t1, VMSPACE_PMAP(t0)		# ->vm_map.pmap
@@ -173,6 +166,15 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 
 	or	v0, t3
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
+
+#if UPAGES > 1
+	/*
+	 * We need to wire the process kernel stack mapping so there
+	 * will be no tlb misses in exception handlers. This is done
+	 * by invalidating any tlb entries mapping the U-area and
+	 * put valid mappings in tlb entries 0 and 1.
+	 */
+
 	LA	t1, (VM_MIN_KERNEL_ADDRESS)
 	PTR_SUBU t2, t3, t1
 	bltz	t2, ctx3			# not mapped.
@@ -215,7 +217,7 @@ ctx1:
 	nop
 	tlbwi
 
-#if (UPAGES != 2)
+#if UPAGES > 2
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
 	lw	ta0, 8(t1)
 	lw	ta1, 12(t1)
@@ -252,11 +254,12 @@ ctx2:
 	nop
 	nop
 	tlbwi
-#endif
+#endif	/* UPAGES > 2 */
 	nop
 	nop
 	nop
 	nop
+#endif	/* UPAGES > 1 */
 
 ctx3:
 

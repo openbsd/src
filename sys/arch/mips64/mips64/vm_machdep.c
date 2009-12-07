@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.20 2009/10/22 22:08:54 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.21 2009/12/07 19:01:06 miod Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -68,8 +68,19 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void (*func)(void *);
 	void *arg;
 {
-	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct pcb *pcb;
+#if UPAGES == 1
+	paddr_t pa;
+#endif
 	extern struct proc *machFPCurProcPtr;
+
+#if UPAGES == 1
+	/* replace p_addr with a direct translation address */
+	p2->p_md.md_uarea = (vaddr_t)p2->p_addr;
+	pmap_extract(pmap_kernel(), p2->p_md.md_uarea, &pa);
+	p2->p_addr = (void *)PHYS_TO_XKPHYS(pa, CCA_CACHED);
+#endif
+	pcb = &p2->p_addr->u_pcb;
 
 	/*
 	 * If we own the FPU, save its state before copying the PCB.
@@ -135,6 +146,10 @@ cpu_exit(p)
 		machFPCurProcPtr = (struct proc *)0;
 
 	pmap_deactivate(p);
+#if UPAGES == 1
+	/* restore p_addr for proper deallocation */
+	p->p_addr = (void *)p->p_md.md_uarea;
+#endif
 	sched_exit(p);
 }
 
