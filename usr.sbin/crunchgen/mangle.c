@@ -1,4 +1,4 @@
-/* $OpenBSD: mangle.c,v 1.1 2009/12/04 04:59:48 drahn Exp $ */
+/* $OpenBSD: mangle.c,v 1.2 2009/12/08 21:10:24 drahn Exp $ */
 /*
  * Copyright (c) 2009 Dale Rahn.
  * All rights reserved.
@@ -130,10 +130,13 @@ mangle_str(char *str)
 	int keyval;
 
 	len = strlen(str);
-	if (len > MAX_KEY_STR_LEN)
-		len = MAX_KEY_STR_LEN-1;
+	if (len == 0)
+		return; /* nothing to mangle */
 
-	keyval = key[len]++;
+	if (len > MAX_KEY_STR_LEN)
+		len = MAX_KEY_STR_LEN;
+
+	keyval = key[len-1]++;
 	
 	for (i = 0; i < len; i++) {
 		int idx = keyval % NUM_KEYS;
