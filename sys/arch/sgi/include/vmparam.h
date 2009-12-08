@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2009/11/22 10:05:02 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.7 2009/12/08 22:15:48 miod Exp $ */
 /* public domain */
 #ifndef _SGI_VMPARAM_H_
 #define _SGI_VMPARAM_H_
@@ -18,24 +18,6 @@
 
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DMA32	1	/* memory suitable for 32-bit DMA */
-
-/*
- * On systems which may use R5000 processors, we limit the kernel virtual
- * address space to KSSEG and KSEG3.
- * On systems with R10000 family processors, we use the XKSEG which allows
- * for a much larger virtual memory size.
- *
- * All Octane and Origin class systems are R10000 family based only,
- * so TGT_COHERENT is safe to use so far.
- */
-
-#ifdef TGT_COHERENT
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc000000000000000L)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xc000000040000000L)
-#else
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xffffffffc0000000L)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xfffffffffffff000L)
-#endif
 
 #include <mips64/vmparam.h>
 

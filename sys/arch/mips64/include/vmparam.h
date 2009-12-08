@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.19 2009/12/07 19:23:52 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.20 2009/12/08 22:15:47 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  * is the top (end) of the user stack.
  */
 #define	USRTEXT		0x0000000000400000L
-#define	USRSTACK	0x0000000080000000L	/* Start of user stack */
+#define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -97,15 +97,13 @@
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0x0000000000004000L)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0x0000000080000000L)
-#define VM_MAX_ADDRESS		((vaddr_t)0x0000000080000000L)
-#ifndef	VM_MIN_KERNEL_ADDRESS
-#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xffffffffc0000000L)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xfffffffffffff000L)
-#endif
+#define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc000000000000000L)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xc000000040000000L)
 
 /* map PIE below 256MB (non-pie link address) to avoid mmap pressure */
 #define VM_PIE_MIN_ADDR		PAGE_SIZE
-#define VM_PIE_MAX_ADDR		0x10000000UL
+#define VM_PIE_MAX_ADDR		(0x10000000UL)
 
 #ifndef VM_NFREELIST
 #define	VM_NFREELIST		1
