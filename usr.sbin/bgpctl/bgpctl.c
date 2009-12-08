@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.151 2009/12/08 14:04:54 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.152 2009/12/08 15:10:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -50,6 +50,7 @@ int		 show_summary_msg(struct imsg *, int);
 int		 show_summary_terse_msg(struct imsg *, int);
 int		 show_neighbor_terse(struct imsg *);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
+void		 print_neighbor_capa_mp(struct peer *);
 void		 print_neighbor_msgstats(struct peer *);
 void		 print_timer(const char *, time_t);
 static char	*fmt_timeframe(time_t t);
@@ -531,7 +532,7 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 	struct ctl_timer	*t;
 	struct in_addr		 ina;
 	char			 buf[NI_MAXHOST], pbuf[NI_MAXSERV], *s;
-	int			 comma, hascapamp = 0;
+	int			 hascapamp = 0;
 	u_int8_t		 i;
 
 	switch (imsg->hdr.type) {
@@ -585,17 +586,11 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		if (hascapamp || p->capa.peer.refresh ||
 		    p->capa.peer.restart || p->capa.peer.as4byte) {
 			printf("  Neighbor capabilities:\n");
-			if (hascapamp)
+			if (hascapamp) {
 				printf("    Multiprotocol extensions: ");
-			for (i = 0, comma = 0; i < AID_MAX; i++) {
-				if (p->capa.peer.mp[i]) {
-					printf("%s%s", comma ? ", " : "",
-					    aid2str(i));
-					comma = 1;
-				}
-			}
-			if (hascapamp)
+				print_neighbor_capa_mp(p);
 				printf("\n");
+			}
 			if (p->capa.peer.refresh)
 				printf("    Route Refresh\n");
 			if (p->capa.peer.restart)
@@ -651,6 +646,19 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 	}
 
 	return (0);
+}
+
+void
+print_neighbor_capa_mp(struct peer *p)
+{
+	int		comma;
+	u_int8_t	i;
+
+	for (i = 0, comma = 0; i < AID_MAX; i++)
+		if (p->capa.peer.mp[i]) {
+			printf("%s%s", comma ? ", " : "", aid2str(i));
+			comma = 1;
+		}
 }
 
 void
