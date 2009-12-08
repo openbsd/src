@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.68 2009/12/07 12:36:23 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.69 2009/12/08 08:07:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -204,7 +204,8 @@ atascsi_probe(struct scsi_link *link)
 	xa->data = &ap->ap_identify;
 	xa->datalen = sizeof(ap->ap_identify);
 	xa->fis->flags = ATA_H2D_FLAGS_CMD;
-	xa->fis->command = ATA_C_IDENTIFY;
+	xa->fis->command = (type == ATA_PORT_T_DISK) ?
+	    ATA_C_IDENTIFY : ATA_C_IDENTIFY_PACKET;
 	xa->fis->device = 0;
 	xa->flags = ATA_F_READ | ATA_F_PIO | ATA_F_POLL;
 	xa->timeout = 1000;
