@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.69 2009/12/08 08:07:51 dlg Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.70 2009/12/08 10:18:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -66,7 +66,7 @@ struct scsi_device atascsi_device = {
 	NULL, NULL, NULL, NULL
 };
 
-void		ata_fix_identify(struct ata_identify *);
+void		ata_swapcopy(void *, void *, size_t);
 
 void		atascsi_disk_cmd(struct scsi_xfer *);
 void		atascsi_disk_cmd_done(struct ata_xfer *);
@@ -215,8 +215,6 @@ atascsi_probe(struct scsi_link *link)
 	if (rv != 0)
 		goto error;
 
-	ata_fix_identify(&ap->ap_identify);
-
 	as->as_ports[port] = ap;
 
 	if (type != ATA_PORT_T_DISK)
@@ -300,25 +298,6 @@ atascsi_free(struct scsi_link *link)
 	as->as_ports[port] = NULL;
 
 	as->as_methods->free(as->as_cookie, port);
-}
-
-void
-ata_fix_identify(struct ata_identify *id)
-{
-	u_int16_t		*swap;
-	int			i;
-
-	swap = (u_int16_t *)id->serial;
-	for (i = 0; i < sizeof(id->serial) / sizeof(u_int16_t); i++)
-		swap[i] = swap16(swap[i]);
-
-	swap = (u_int16_t *)id->firmware;
-	for (i = 0; i < sizeof(id->firmware) / sizeof(u_int16_t); i++)
-		swap[i] = swap16(swap[i]);
-
-	swap = (u_int16_t *)id->model;
-	for (i = 0; i < sizeof(id->model) / sizeof(u_int16_t); i++)
-		swap[i] = swap16(swap[i]);
 }
 
 int
@@ -531,8 +510,10 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 	inq.response_format = 2;
 	inq.additional_length = 32;
 	bcopy("ATA     ", inq.vendor, sizeof(inq.vendor));
-	bcopy(ap->ap_identify.model, inq.product, sizeof(inq.product));
-	bcopy(ap->ap_identify.firmware, inq.revision, sizeof(inq.revision));
+	ata_swapcopy(ap->ap_identify.model, inq.product,
+	    sizeof(inq.product));
+	ata_swapcopy(ap->ap_identify.firmware, inq.revision,
+	    sizeof(inq.revision));
 
 	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
 
@@ -611,7 +592,7 @@ atascsi_disk_vpd_serial(struct scsi_xfer *xs)
 	pg.hdr.device = T_DIRECT;
 	pg.hdr.page_code = SI_PG_SERIAL;
 	pg.hdr.page_length = sizeof(ap->ap_identify.serial);
-	bcopy(ap->ap_identify.serial, pg.serial,
+	ata_swapcopy(ap->ap_identify.serial, pg.serial,
 	    sizeof(ap->ap_identify.serial));
 
 	bcopy(&pg, xs->data, MIN(sizeof(pg), xs->datalen));
@@ -634,14 +615,13 @@ atascsi_disk_vpd_ident(struct scsi_xfer *xs)
 	size_t			pg_len;
 
 	bzero(&pg, sizeof(pg));
-	if (ap->ap_identify.features87 & ATA_ID_F87_WWN) {
+	if (letoh16(ap->ap_identify.features87) & ATA_ID_F87_WWN) {
 		pg_len = 8;
 
 		pg.devid_hdr.pi_code = VPD_DEVID_CODE_BINARY;
 		pg.devid_hdr.flags = VPD_DEVID_ASSOC_LU | VPD_DEVID_TYPE_NAA;
 
-		/* XXX ata_identify field(s) should be renamed */
-		bcopy(&ap->ap_identify.naa_ieee_oui, pg.devid, pg_len);
+		ata_swapcopy(&ap->ap_identify.naa_ieee_oui, pg.devid, pg_len);
 	} else {
 		pg_len = 68;
 
@@ -651,10 +631,10 @@ atascsi_disk_vpd_ident(struct scsi_xfer *xs)
 		p = pg.devid;
 		bcopy("ATA     ", p, 8);
 		p += 8;
-		bcopy(ap->ap_identify.model, p,
+		ata_swapcopy(ap->ap_identify.model, p,
 		    sizeof(ap->ap_identify.model));
 		p += sizeof(ap->ap_identify.model);
-		bcopy(ap->ap_identify.serial, p,
+		ata_swapcopy(ap->ap_identify.serial, p,
 		    sizeof(ap->ap_identify.serial));
 	}
 
@@ -1033,3 +1013,16 @@ ata_complete(struct ata_xfer *xa)
 	SET(xa->flags, ATA_F_DONE);
 	xa->complete(xa);
 }
+
+void
+ata_swapcopy(void *src, void *dst, size_t len)
+{
+	u_int16_t *s = src, *d = dst;
+	int i;
+
+	len /= 2;
+
+	for (i = 0; i < len; i++)
+		d[i] = swap16(s[i]);
+}
+
