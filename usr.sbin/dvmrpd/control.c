@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.10 2009/12/02 19:10:02 mk Exp $ */
+/*	$OpenBSD: control.c,v 1.11 2009/12/08 15:54:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -261,7 +261,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			    sizeof(verbose))
 				break;
 
-			/* forward to other porcesses */
+			/* forward to other processes */
 			dvmrpe_imsg_compose_parent(imsg.hdr.type, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			dvmrpe_imsg_compose_rde(imsg.hdr.type, 0, imsg.hdr.pid,
