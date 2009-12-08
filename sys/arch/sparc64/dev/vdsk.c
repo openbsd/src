@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.12 2009/05/12 20:20:35 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.13 2009/12/08 20:37:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -141,6 +141,9 @@ struct vdsk_softc {
 #define VIO_SND_RDX		0x0040
 #define VIO_ACK_RDX		0x0080
 #define VIO_ESTABLISHED		0x00ff
+
+	uint16_t	sc_major;
+	uint16_t	sc_minor;
 
 	uint32_t	sc_local_sid;
 	uint64_t	sc_dring_ident;
@@ -530,6 +533,8 @@ vdsk_rx_vio_ver_info(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 			ldc_reset(&sc->sc_lc);
 			break;
 		}
+		sc->sc_major = vi->major;
+		sc->sc_minor = vi->minor;
 		sc->sc_vio_state |= VIO_ACK_VER_INFO;
 		break;
 
@@ -1040,7 +1045,9 @@ vdsk_scsi_inq(struct scsi_xfer *xs)
 int
 vdsk_scsi_inquiry(struct scsi_xfer *xs)
 {
+	struct vdsk_softc *sc = xs->sc_link->adapter_softc;
 	struct scsi_inquiry_data inq;
+	char buf[5];
 
 	bzero(&inq, sizeof(inq));
 
@@ -1050,7 +1057,8 @@ vdsk_scsi_inquiry(struct scsi_xfer *xs)
 	inq.additional_length = 32;
 	bcopy("SUN     ", inq.vendor, sizeof(inq.vendor));
 	bcopy("Virtual Disk    ", inq.product, sizeof(inq.product));
-	bcopy("1.0 ", inq.revision, sizeof(inq.revision));
+	snprintf(buf, sizeof(buf), "%u.%u ", sc->sc_major, sc->sc_minor);
+	bcopy(buf, inq.revision, sizeof(inq.revision));
 
 	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
 
