@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.22 2009/12/07 19:05:57 miod Exp $ */
+/*      $OpenBSD: param.h,v 1.23 2009/12/08 22:13:20 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,7 +83,11 @@
  */
 #define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
 
+#if PAGE_SHIFT > 12
+#define	MSGBUFSIZE	PAGE_SIZE
+#else
 #define	MSGBUFSIZE	8192
+#endif
 
 /* Default malloc arena size */
 #define	NKMEMPAGES_MIN_DEFAULT  ((8 * 1024 * 1024) >> PAGE_SHIFT)
