@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.30 2009/08/09 10:40:17 blambert Exp $	*/
+/*	$OpenBSD: param.c,v 1.31 2009/12/08 22:12:06 miod Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -103,8 +103,6 @@ int	mcllowat = MCLLOWAT;
 
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 
-int	shmseg = 8;
-int	shmmaxpgs = SHMMAXPGS;
 /*
  * Values in support of System V compatible shared memory.	XXX
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.21 2007/05/29 10:44:28 sturm Exp $	*/
+/*	$OpenBSD: shm.h,v 1.22 2009/12/08 22:12:07 miod Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -160,10 +160,6 @@ struct shm_sysctl_info {
 #ifdef _KERNEL
 extern struct shminfo shminfo;
 extern struct shmid_ds **shmsegs;
-
-/* initial values for machdep.c */
-extern int shmseg;
-extern int shmmaxpgs;
 
 struct proc;
 struct vmspace;
