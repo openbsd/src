@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.301 2009/12/03 19:27:20 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.302 2009/12/08 14:03:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -66,7 +66,7 @@ int	session_connect(struct peer *);
 void	session_tcp_established(struct peer *);
 void	session_capa_ann_none(struct peer *);
 int	session_capa_add(struct buf *, u_int8_t, u_int8_t);
-int	session_capa_add_mp(struct buf *, u_int16_t, u_int8_t);
+int	session_capa_add_mp(struct buf *, u_int8_t);
 struct bgp_msg	*session_newmsg(enum msg_type, u_int16_t);
 int	session_sendmsg(struct bgp_msg *, struct peer *);
 void	session_open(struct peer *);
@@ -74,7 +74,7 @@ void	session_keepalive(struct peer *);
 void	session_update(u_int32_t, void *, size_t);
 void	session_notification(struct peer *, u_int8_t, u_int8_t, void *,
 	    ssize_t);
-void	session_rrefresh(struct peer *, u_int16_t, u_int8_t);
+void	session_rrefresh(struct peer *, u_int8_t);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
 int	parse_header(struct peer *, u_char *, u_int16_t *, u_int8_t *);
 int	parse_open(struct peer *);
@@ -82,6 +82,7 @@ int	parse_update(struct peer *);
 int	parse_refresh(struct peer *);
 int	parse_notification(struct peer *);
 int	parse_capabilities(struct peer *, u_char *, u_int16_t, u_int32_t *);
+int	capa_neg_calc(struct peer *);
 void	session_dispatch_imsg(struct imsgbuf *, int, u_int *);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
@@ -1247,11 +1248,7 @@ session_tcp_established(struct peer *peer)
 void
 session_capa_ann_none(struct peer *peer)
 {
-	peer->capa.ann.mp_v4 = SAFI_NONE;
-	peer->capa.ann.mp_v4 = SAFI_NONE;
-	peer->capa.ann.refresh = 0;
-	peer->capa.ann.restart = 0;
-	peer->capa.ann.as4byte = 0;
+	bzero(&peer->capa.ann, sizeof(peer->capa.ann));
 }
 
 int
@@ -1265,11 +1262,14 @@ session_capa_add(struct buf *opb, u_int8_t capa_code, u_int8_t capa_len)
 }
 
 int
-session_capa_add_mp(struct buf *buf, u_int16_t afi, u_int8_t safi)
+session_capa_add_mp(struct buf *buf, u_int8_t aid)
 {
-	u_int8_t		 pad = 0;
+	u_int8_t		 safi, pad = 0;
+	u_int16_t		 afi;
 	int			 errs = 0;
 
+	if (aid2afi(aid, &afi, &safi) == -1)
+		fatalx("session_capa_add_mp: bad afi/safi pair");
 	afi = htons(afi);
 	errs += buf_add(buf, &afi, sizeof(afi));
 	errs += buf_add(buf, &pad, sizeof(pad));
@@ -1337,7 +1337,7 @@ session_open(struct peer *p)
 	struct buf		*opb;
 	struct msg_open		 msg;
 	u_int16_t		 len;
-	u_int8_t		 op_type, optparamlen = 0;
+	u_int8_t		 i, op_type, optparamlen = 0;
 	u_int			 errs = 0;
 
 
@@ -1348,14 +1348,11 @@ session_open(struct peer *p)
 	}
 
 	/* multiprotocol extensions, RFC 4760 */
-	if (p->capa.ann.mp_v4) {	/* 4 bytes data */
-		errs += session_capa_add(opb, CAPA_MP, 4);
-		errs += session_capa_add_mp(opb, AFI_IPv4, p->capa.ann.mp_v4);
-	}
-	if (p->capa.ann.mp_v6) {	/* 4 bytes data */
-		errs += session_capa_add(opb, CAPA_MP, 4);
-		errs += session_capa_add_mp(opb, AFI_IPv6, p->capa.ann.mp_v6);
-	}
+	for (i = 0; i < AID_MAX; i++)
+		if (p->capa.ann.mp[i]) {	/* 4 bytes data */
+			errs += session_capa_add(opb, CAPA_MP, 4);
+			errs += session_capa_add_mp(opb, i);
+		}
 
 	/* route refresh, RFC 2918 */
 	if (p->capa.ann.refresh)	/* no data */
@@ -1523,23 +1520,29 @@ session_notification(struct peer *p, u_int8_t errcode, u_int8_t subcode,
 int
 session_neighbor_rrefresh(struct peer *p)
 {
+	u_int8_t	i;
+
 	if (!p->capa.peer.refresh)
 		return (-1);
 
-	if (p->capa.peer.mp_v4 != SAFI_NONE)
-		session_rrefresh(p, AFI_IPv4, p->capa.peer.mp_v4);
-	if (p->capa.peer.mp_v6 != SAFI_NONE)
-		session_rrefresh(p, AFI_IPv6, p->capa.peer.mp_v6);
+	for (i = 0; i < AID_MAX; i++) {
+		if (p->capa.peer.mp[i] != 0)
+			session_rrefresh(p, i);
+	}
 
 	return (0);
 }
 
 void
-session_rrefresh(struct peer *p, u_int16_t afi, u_int8_t safi)
+session_rrefresh(struct peer *p, u_int8_t aid)
 {
 	struct bgp_msg		*buf;
 	int			 errs = 0;
-	u_int8_t		 null8 = 0;
+	u_int16_t		 afi;
+	u_int8_t		 safi, null8 = 0;
+
+	if (aid2afi(aid, &afi, &safi) == -1)
+		fatalx("session_rrefresh: bad afi/safi pair");
 
 	if ((buf = session_newmsg(RREFRESH, MSGSIZE_RREFRESH)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
@@ -1979,6 +1982,14 @@ parse_open(struct peer *peer)
 		return (-1);
 	}
 
+	if (capa_neg_calc(peer) == -1) {
+		log_peer_warnx(&peer->conf,
+		    "capabilitiy negotiation calculation failed");
+		session_notification(peer, ERR_OPEN, 0, NULL, 0);
+		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
+		return (-1);
+	}
+
 	return (0);
 }
 
@@ -2013,24 +2024,35 @@ int
 parse_refresh(struct peer *peer)
 {
 	u_char		*p;
-	struct rrefresh	 r;
+	u_int16_t	 afi;
+	u_int8_t	 aid, safi;
 
 	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER;	/* header is already checked */
 
+	/*
+	 * We could check if we actually announced the capability but
+	 * as long as the message is correctly encoded we don't care.
+	 */
+
 	/* afi, 2 byte */
-	memcpy(&r.afi, p, sizeof(r.afi));
-	r.afi = ntohs(r.afi);
+	memcpy(&afi, p, sizeof(afi));
+	afi = ntohs(afi);
 	p += 2;
 	/* reserved, 1 byte */
 	p += 1;
 	/* safi, 1 byte */
-	memcpy(&r.safi, p, sizeof(r.safi));
+	memcpy(&safi, p, sizeof(safi));
 
 	/* afi/safi unchecked -	unrecognized values will be ignored anyway */
+	if (afi2aid(afi, safi, &aid) == -1) {
+		log_peer_warnx(&peer->conf, "peer sent bad refresh, "
+		    "invalid afi/safi pair");
+		return (0);
+	}
 
-	if (imsg_compose(ibuf_rde, IMSG_REFRESH, peer->conf.id, 0, -1, &r,
-	    sizeof(r)) == -1)
+	if (imsg_compose(ibuf_rde, IMSG_REFRESH, peer->conf.id, 0, -1, &aid,
+	    sizeof(aid)) == -1)
 		return (-1);
 
 	return (0);
@@ -2040,11 +2062,12 @@ int
 parse_notification(struct peer *peer)
 {
 	u_char		*p;
+	u_int16_t	 datalen;
 	u_int8_t	 errcode;
 	u_int8_t	 subcode;
-	u_int16_t	 datalen;
 	u_int8_t	 capa_code;
 	u_int8_t	 capa_len;
+	u_int8_t	 i;
 
 	/* just log */
 	p = peer->rbuf->rptr;
@@ -2099,8 +2122,8 @@ parse_notification(struct peer *peer)
 			datalen -= capa_len;
 			switch (capa_code) {
 			case CAPA_MP:
-				peer->capa.ann.mp_v4 = SAFI_NONE;
-				peer->capa.ann.mp_v6 = SAFI_NONE;
+				for (i = 0; i < AID_MAX; i++)
+					peer->capa.ann.mp[i] = 0;
 				log_peer_warnx(&peer->conf,
 				    "disabling multiprotocol capability");
 				break;
@@ -2144,13 +2167,14 @@ parse_notification(struct peer *peer)
 int
 parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 {
+	u_char		*capa_val;
+	u_int32_t	 remote_as;
 	u_int16_t	 len;
+	u_int16_t	 afi;
+	u_int8_t	 safi;
+	u_int8_t	 aid;
 	u_int8_t	 capa_code;
 	u_int8_t	 capa_len;
-	u_char		*capa_val;
-	u_int16_t	 mp_afi;
-	u_int8_t	 mp_safi;
-	u_int32_t	 remote_as;
 
 	len = dlen;
 	while (len > 0) {
@@ -2187,29 +2211,16 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 				    "expect len 4, len is %u", capa_len);
 				return (-1);
 			}
-			memcpy(&mp_afi, capa_val, sizeof(mp_afi));
-			mp_afi = ntohs(mp_afi);
-			memcpy(&mp_safi, capa_val + 3, sizeof(mp_safi));
-			switch (mp_afi) {
-			case AFI_IPv4:
-				if (mp_safi < 1 || mp_safi > 3)
-					log_peer_warnx(&peer->conf,
-					    "parse_capabilities: AFI IPv4, "
-					    "mp_safi %u unknown", mp_safi);
-				else
-					peer->capa.peer.mp_v4 = mp_safi;
-				break;
-			case AFI_IPv6:
-				if (mp_safi < 1 || mp_safi > 3)
-					log_peer_warnx(&peer->conf,
-					    "parse_capabilities: AFI IPv6, "
-					    "mp_safi %u unknown", mp_safi);
-				else
-					peer->capa.peer.mp_v6 = mp_safi;
-				break;
-			default:			/* ignore */
-				break;
+			memcpy(&afi, capa_val, sizeof(afi));
+			afi = ntohs(afi);
+			memcpy(&safi, capa_val + 3, sizeof(safi));
+			if (afi2aid(afi, safi, &aid) == -1) {
+				log_peer_warnx(&peer->conf,
+				    "parse_capabilities: AFI %u, "
+				    "safi %u unknown", afi, safi);
+				return (-1);
 			}
+			peer->capa.peer.mp[aid] = 1;
 			break;
 		case CAPA_REFRESH:
 			peer->capa.peer.refresh = 1;
@@ -2233,6 +2244,37 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 			break;
 		}
 	}
+
+	return (0);
+}
+
+int
+capa_neg_calc(struct peer *p)
+{
+	u_int8_t	i, hasmp = 0;
+
+	/* refresh: does not realy matter here, use peer setting */
+	p->capa.neg.refresh = p->capa.peer.refresh;
+
+	/* as4byte: both side must announce capability */
+	if (p->capa.ann.as4byte && p->capa.peer.as4byte)
+		p->capa.neg.as4byte = 1;
+	else
+		p->capa.neg.as4byte = 0;
+
+	/* MP: both side must announce capability */
+	for (i = 0; i < AID_MAX; i++) {
+		if (p->capa.ann.mp[i] && p->capa.peer.mp[i]) {
+			p->capa.neg.mp[i] = 1;
+			hasmp = 1;
+		} else
+			p->capa.neg.mp[i] = 0;
+	}
+	/* if no MP capability present for default IPv4 unicast mode */
+	if (!hasmp)
+		p->capa.neg.mp[AID_INET] = 1;
+
+	p->capa.neg.restart = p->capa.peer.restart;
 
 	return (0);
 }
@@ -2715,6 +2757,7 @@ getpeerbyid(u_int32_t peerid)
 void
 session_down(struct peer *peer)
 {
+	bzero(&peer->capa.neg, sizeof(peer->capa.neg));
 	peer->stats.last_updown = time(NULL);
 	if (imsg_compose(ibuf_rde, IMSG_SESSION_DOWN, peer->conf.id, 0, -1,
 	    NULL, 0) == -1)
@@ -2735,8 +2778,7 @@ session_up(struct peer *p)
 
 	sup.remote_bgpid = p->remote_bgpid;
 	sup.short_as = p->short_as;
-	memcpy(&sup.capa_announced, &p->capa.ann, sizeof(sup.capa_announced));
-	memcpy(&sup.capa_received, &p->capa.peer, sizeof(sup.capa_received));
+	memcpy(&sup.capa, &p->capa.neg, sizeof(sup.capa));
 	p->stats.last_updown = time(NULL);
 	if (imsg_compose(ibuf_rde, IMSG_SESSION_UP, p->conf.id, 0, -1,
 	    &sup, sizeof(sup)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.72 2009/12/04 13:28:34 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.73 2009/12/08 14:03:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -276,18 +276,8 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 		fatalx("try to send out a looped path");
 
 	pt_getaddr(p->prefix, &addr);
-	switch (addr.aid) {
-	case AID_INET:
-		/* XXX is this correct? */
-		if (peer->capa_announced.mp_v4 == SAFI_NONE &&
-		    peer->capa_received.mp_v6 != SAFI_NONE)
-			return (-1);
-		break;
-	case AID_INET6:
-		if (peer->capa_announced.mp_v6 == SAFI_NONE)
-			return (-1);
-		break;
-	}
+	if (peer->capa.mp[addr.aid] == 0)
+		return (-1);
 
 	if (p->aspath->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
 		/*
@@ -447,18 +437,12 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 /* send a default route to the specified peer */
 void
 up_generate_default(struct filter_head *rules, struct rde_peer *peer,
-    sa_family_t af)
+    u_int8_t aid)
 {
 	struct rde_aspath	*asp, *fasp;
 	struct bgpd_addr	 addr;
 
-	if (peer->capa_received.mp_v4 == SAFI_NONE &&
-	    peer->capa_received.mp_v6 != SAFI_NONE &&
-	    af == AF_INET)
-		return;
-
-	if (peer->capa_received.mp_v6 == SAFI_NONE &&
-	    af == AF_INET6)
+	if (peer->capa.mp[aid] == 0)
 		return;
 
 	asp = path_get();
@@ -474,7 +458,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 
 	/* filter as usual */
 	bzero(&addr, sizeof(addr));
-	af2aid(af, 0, &addr.aid);
+	addr.aid = aid;
 
 	if (rde_filter(peer->ribid, &fasp, rules, peer, asp, &addr, 0, NULL,
 	    DIR_OUT) == ACTION_DENY) {

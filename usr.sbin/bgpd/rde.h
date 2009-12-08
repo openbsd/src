@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.123 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.124 2009/12/08 14:03:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -60,8 +60,7 @@ struct rde_peer {
 	struct uplist_prefix		 withdraws;
 	struct uplist_attr		 updates6;
 	struct uplist_prefix		 withdraws6;
-	struct capabilities		 capa_announced;
-	struct capabilities		 capa_received;
+	struct capabilities		 capa;
 	u_int64_t			 prefix_rcvd_update;
 	u_int64_t			 prefix_rcvd_withdraw;
 	u_int64_t			 prefix_sent_update;
@@ -417,7 +416,7 @@ int		 up_generate(struct rde_peer *, struct rde_aspath *,
 void		 up_generate_updates(struct filter_head *, struct rde_peer *,
 		     struct prefix *, struct prefix *);
 void		 up_generate_default(struct filter_head *, struct rde_peer *,
-		     sa_family_t);
+		     u_int8_t);
 int		 up_dump_prefix(u_char *, int, struct uplist_prefix *,
 		     struct rde_peer *);
 int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);

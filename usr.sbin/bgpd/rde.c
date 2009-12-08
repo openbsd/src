@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.275 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.276 2009/12/08 14:03:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,8 +92,8 @@ struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 struct rde_peer	*peer_get(u_int32_t);
 void		 peer_up(u_int32_t, struct session_up *);
 void		 peer_down(u_int32_t);
-void		 peer_dump(u_int32_t, u_int16_t, u_int8_t);
-void		 peer_send_eor(struct rde_peer *, u_int16_t, u_int16_t);
+void		 peer_dump(u_int32_t, u_int8_t);
+void		 peer_send_eor(struct rde_peer *, u_int8_t);
 
 void		 network_init(struct network_head *);
 void		 network_add(struct network_config *, int);
@@ -383,7 +383,6 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct imsg		 imsg;
 	struct peer		 p;
 	struct peer_config	 pconf;
-	struct rrefresh		 r;
 	struct rde_peer		*peer;
 	struct session_up	 sup;
 	struct ctl_show_rib_request	req;
@@ -391,6 +390,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct nexthop		*nh;
 	ssize_t			 n;
 	int			 verbose;
+	u_int8_t		 aid;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg_session: imsg_read error");
@@ -429,12 +429,14 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			peer_down(imsg.hdr.peerid);
 			break;
 		case IMSG_REFRESH:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(r)) {
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&r, imsg.data, sizeof(r));
-			peer_dump(imsg.hdr.peerid, r.afi, r.safi);
+			memcpy(&aid, imsg.data, sizeof(aid));
+			if (aid >= AID_MAX)
+				fatalx("IMSG_REFRESH: bad AID");
+			peer_dump(imsg.hdr.peerid, aid);
 			break;
 		case IMSG_NETWORK_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -763,6 +765,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 int
 rde_update_dispatch(struct imsg *imsg)
 {
+	struct bgpd_addr	 prefix;
+	struct mpattr		 mpa;
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp = NULL;
 	u_char			*p, *mpp = NULL;
@@ -771,9 +775,7 @@ rde_update_dispatch(struct imsg *imsg)
 	u_int16_t		 withdrawn_len;
 	u_int16_t		 attrpath_len;
 	u_int16_t		 nlri_len;
-	u_int8_t		 prefixlen, safi, subtype;
-	struct bgpd_addr	 prefix;
-	struct mpattr		 mpa;
+	u_int8_t		 aid, prefixlen, safi, subtype;
 
 	peer = peer_get(imsg->hdr.peerid);
 	if (peer == NULL)	/* unknown peer, cannot happen */
@@ -872,9 +874,9 @@ rde_update_dispatch(struct imsg *imsg)
 		p += pos;
 		len -= pos;
 
-		if (peer->capa_received.mp_v4 == SAFI_NONE &&
-		    peer->capa_received.mp_v6 != SAFI_NONE) {
-			log_peer_warnx(&peer->conf, "bad AFI, IPv4 disabled");
+		if (peer->capa.mp[AID_INET] == 0) {
+			log_peer_warnx(&peer->conf,
+			    "bad withdraw, %s disabled", aid2str(AID_INET));
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    NULL, 0);
 			goto done;
@@ -904,15 +906,25 @@ rde_update_dispatch(struct imsg *imsg)
 		afi = ntohs(afi);
 		safi = *mpp++;
 		mplen--;
-		switch (afi) {
-		case AFI_IPv6:
-			if (peer->capa_received.mp_v6 == SAFI_NONE) {
-				log_peer_warnx(&peer->conf, "bad AFI, "
-				    "IPv6 disabled");
-				rde_update_err(peer, ERR_UPDATE,
-				    ERR_UPD_OPTATTR, NULL, 0);
-				goto done;
-			}
+
+		if (afi2aid(afi, safi, &aid) == -1) {
+			log_peer_warnx(&peer->conf,
+			    "bad AFI/SAFI pair in withdraw");
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    NULL, 0);
+			goto done;
+		}
+
+		if (peer->capa.mp[aid] == 0) {
+			log_peer_warnx(&peer->conf,
+			    "bad withdraw, %s disabled", aid2str(aid));
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    NULL, 0);
+			goto done;
+		}
+
+		switch (aid) {
+		case AID_INET6:
 			while (mplen > 0) {
 				if ((pos = rde_update_get_prefix6(mpp, mplen,
 				    &prefix, &prefixlen)) == -1) {
@@ -975,9 +987,9 @@ rde_update_dispatch(struct imsg *imsg)
 		p += pos;
 		nlri_len -= pos;
 
-		if (peer->capa_received.mp_v4 == SAFI_NONE &&
-		    peer->capa_received.mp_v6 != SAFI_NONE) {
-			log_peer_warnx(&peer->conf, "bad AFI, IPv4 disabled");
+		if (peer->capa.mp[AID_INET] == 0) {
+			log_peer_warnx(&peer->conf,
+			    "bad update, %s disabled", aid2str(AID_INET));
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    NULL, 0);
 			goto done;
@@ -1007,6 +1019,22 @@ rde_update_dispatch(struct imsg *imsg)
 		safi = *mpp++;
 		mplen--;
 
+		if (afi2aid(afi, safi, &aid) == -1) {
+			log_peer_warnx(&peer->conf,
+			    "bad AFI/SAFI pair in update");
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    NULL, 0);
+			goto done;
+		}
+
+		if (peer->capa.mp[aid] == 0) {
+			log_peer_warnx(&peer->conf,
+			    "bad update, %s disabled", aid2str(aid));
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
+			    NULL, 0);
+			goto done;
+		}
+
 		/*
 		 * this works because asp is not linked.
 		 * But first unlock the previously locked nexthop.
@@ -1025,16 +1053,8 @@ rde_update_dispatch(struct imsg *imsg)
 		mpp += pos;
 		mplen -= pos;
 
-		switch (afi) {
-		case AFI_IPv6:
-			if (peer->capa_received.mp_v6 == SAFI_NONE) {
-				log_peer_warnx(&peer->conf, "bad AFI, "
-				    "IPv6 disabled");
-				rde_update_err(peer, ERR_UPDATE,
-				    ERR_UPD_OPTATTR, NULL, 0);
-				goto done;
-			}
-
+		switch (aid) {
+		case AID_INET6:
 			while (mplen > 0) {
 				if ((pos = rde_update_get_prefix6(mpp, mplen,
 				    &prefix, &prefixlen)) == -1) {
@@ -2513,7 +2533,7 @@ rde_decisionflags(void)
 int
 rde_as4byte(struct rde_peer *peer)
 {
-	return (peer->capa_announced.as4byte && peer->capa_received.as4byte);
+	return (peer->capa.as4byte);
 }
 
 /*
@@ -2666,6 +2686,7 @@ void
 peer_up(u_int32_t id, struct session_up *sup)
 {
 	struct rde_peer	*peer;
+	u_int8_t	 i;
 
 	peer = peer_get(id);
 	if (peer == NULL) {
@@ -2679,10 +2700,7 @@ peer_up(u_int32_t id, struct session_up *sup)
 	peer->short_as = sup->short_as;
 	memcpy(&peer->remote_addr, &sup->remote_addr,
 	    sizeof(peer->remote_addr));
-	memcpy(&peer->capa_announced, &sup->capa_announced,
-	    sizeof(peer->capa_announced));
-	memcpy(&peer->capa_received, &sup->capa_received,
-	    sizeof(peer->capa_received));
+	memcpy(&peer->capa, &sup->capa, sizeof(peer->capa));
 
 	peer_localaddrs(peer, &sup->local_addr);
 
@@ -2696,7 +2714,10 @@ peer_up(u_int32_t id, struct session_up *sup)
 		 */
 		return;
 
-	peer_dump(id, AFI_ALL, SAFI_ALL);
+	for (i = 0; i < AID_MAX; i++) {
+		if (peer->capa.mp[i] == 1)
+			peer_dump(id, i);
+	}
 }
 
 void
@@ -2731,9 +2752,10 @@ peer_down(u_int32_t id)
 }
 
 void
-peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
+peer_dump(u_int32_t id, u_int8_t aid)
 {
 	struct rde_peer		*peer;
+	sa_family_t		 af;	/* XXX needs to be replaced with aid */
 
 	peer = peer_get(id);
 	if (peer == NULL) {
@@ -2741,36 +2763,24 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 		return;
 	}
 
-	if (afi == AFI_ALL || afi == AFI_IPv4)
-		if ((safi == SAFI_ALL || safi == SAFI_UNICAST) &&
-		    peer->conf.capabilities.mp_v4 != SAFI_NONE) {
-			if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
-				up_generate_default(rules_l, peer, AF_INET);
-			else
-				rib_dump(&ribs[peer->ribid], rde_up_dump_upcall,
-				    peer, AF_INET);
-			if (peer->capa_received.restart &&
-			    peer->capa_announced.restart)
-				peer_send_eor(peer, AFI_IPv4, SAFI_UNICAST);
-		}
-	if (afi == AFI_ALL || afi == AFI_IPv6)
-		if ((safi == SAFI_ALL || safi == SAFI_UNICAST)) {
-			if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
-				up_generate_default(rules_l, peer, AF_INET6);
-			else
-				rib_dump(&ribs[peer->ribid], rde_up_dump_upcall,
-				    peer, AF_INET6);
-			if (peer->capa_received.restart &&
-			    peer->capa_announced.restart)
-				peer_send_eor(peer, AFI_IPv6, SAFI_UNICAST);
-		}
+	af = aid2af(aid);
+
+	if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
+		up_generate_default(rules_l, peer, aid);
+	else
+		rib_dump(&ribs[peer->ribid], rde_up_dump_upcall, peer, af);
+	if (peer->capa.restart)
+		peer_send_eor(peer, aid);
 }
 
 /* End-of-RIB marker, RFC 4724 */
 void
-peer_send_eor(struct rde_peer *peer, u_int16_t afi, u_int16_t safi)
+peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 {
-	if (afi == AFI_IPv4 && safi == SAFI_UNICAST) {
+	u_int16_t	afi;
+	u_int8_t	safi;
+
+	if (aid == AID_INET) {
 		u_char null[4];
 
 		bzero(&null, 4);
@@ -2780,6 +2790,9 @@ peer_send_eor(struct rde_peer *peer, u_int16_t afi, u_int16_t safi)
 	} else {
 		u_int16_t	i;
 		u_char		buf[10];
+
+		if (aid2afi(aid, &afi, &safi) == -1)
+			fatalx("peer_send_eor: bad AID");
 
 		i = 0;	/* v4 withdrawn len */
 		bcopy(&i, &buf[0], sizeof(i));

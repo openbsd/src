@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.248 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.249 2009/12/08 14:03:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -107,6 +107,44 @@ enum reconf_action {
 	RECONF_DELETE
 };
 
+/* Address Family Numbers as per RFC 1700 */
+#define	AFI_UNSPEC	0
+#define	AFI_IPv4	1
+#define	AFI_IPv6	2
+
+/* Subsequent Address Family Identifier as per RFC 4760 */
+#define	SAFI_NONE	0x00
+#define	SAFI_UNICAST	0x01
+#define	SAFI_MULTICAST	0x02
+#define	SAFI_MPLS	0x04
+
+struct aid {
+	u_int16_t	 afi;
+	sa_family_t	 af;
+	u_int8_t	 safi;
+	char		*name;
+};
+
+extern const struct aid aid_vals[];
+
+#define	AID_UNSPEC	0
+#define	AID_INET	1
+#define	AID_INET6	2
+#define	AID_MAX		3
+
+#define AID_VALS	{					\
+	/* afi, af, safii, name */				\
+	{ AFI_UNSPEC, AF_UNSPEC, SAFI_NONE, "unspec"},		\
+	{ AFI_IPv4, AF_INET, SAFI_UNICAST, "IPv4 unicast" },	\
+	{ AFI_IPv6, AF_INET6, SAFI_UNICAST, "IPv6 unicast" }	\
+}
+
+#define AID_PTSIZE	{				\
+	0,						\
+	sizeof(struct pt_entry4), 			\
+	sizeof(struct pt_entry6)			\
+}
+
 struct bgpd_addr {
 	u_int8_t	aid;
 	union {
@@ -203,11 +241,10 @@ struct peer_auth {
 };
 
 struct capabilities {
-	u_int8_t	mp_v4;		/* multiprotocol extensions, RFC 4760 */
-	u_int8_t	mp_v6;
-	u_int8_t	refresh;	/* route refresh, RFC 2918 */
-	u_int8_t	restart;	/* graceful restart, RFC 4724 */
-	u_int8_t	as4byte;	/* draft-ietf-idr-as4bytes-13 */
+	int8_t	mp[AID_MAX];	/* multiprotocol extensions, RFC 4760 */
+	int8_t	refresh;	/* route refresh, RFC 2918 */
+	int8_t	restart;	/* graceful restart, RFC 4724 */
+	int8_t	as4byte;	/* draft-ietf-idr-as4bytes-13 */
 };
 
 struct peer_config {
@@ -422,8 +459,7 @@ struct kif {
 struct session_up {
 	struct bgpd_addr	local_addr;
 	struct bgpd_addr	remote_addr;
-	struct capabilities	capa_announced;
-	struct capabilities	capa_received;
+	struct capabilities	capa;
 	u_int32_t		remote_bgpid;
 	u_int16_t		short_as;
 };
@@ -676,46 +712,6 @@ struct rde_rib {
 SIMPLEQ_HEAD(rib_names, rde_rib);
 extern struct rib_names ribnames;
 
-/* Address Family Numbers as per RFC 1700 */
-#define	AFI_UNSPEC	0
-#define	AFI_IPv4	1
-#define	AFI_IPv6	2
-#define	AFI_ALL		0xffff
-
-/* Subsequent Address Family Identifier as per RFC 4760 */
-#define	SAFI_NONE	0x00
-#define	SAFI_UNICAST	0x01
-#define	SAFI_MULTICAST	0x02
-#define	SAFI_MPLS	0x04
-#define	SAFI_ALL	0xff
-
-struct aid {
-	u_int16_t	 afi;
-	sa_family_t	 af;
-	u_int8_t	 safi;
-	char		*name;
-};
-
-extern const struct aid aid_vals[];
-
-#define	AID_UNSPEC	0
-#define	AID_INET	1
-#define	AID_INET6	2
-#define	AID_MAX		3
-
-#define AID_VALS	{				\
-	/* afi, af, safii, name */			\
-	{ AFI_UNSPEC, AF_UNSPEC, SAFI_NONE, "unspec"},	\
-	{ AFI_IPv4, AF_INET, SAFI_UNICAST, "IPv4" },	\
-	{ AFI_IPv6, AF_INET6, SAFI_UNICAST, "IPv6" }	\
-}
-
-#define AID_PTSIZE	{				\
-	0,						\
-	sizeof(struct pt_entry4), 			\
-	sizeof(struct pt_entry6)			\
-}
-
 /* 4-byte magic AS number */
 #define AS_TRANS	23456
 
@@ -820,6 +816,7 @@ size_t		 aspath_strlen(void *, u_int16_t);
 in_addr_t	 prefixlen2mask(u_int8_t);
 void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
 		    int);
+const char	*aid2str(u_int8_t);
 int		 aid2afi(u_int8_t, u_int16_t *, u_int8_t *);
 int		 afi2aid(u_int16_t, u_int8_t, u_int8_t *);
 sa_family_t	 aid2af(u_int8_t);

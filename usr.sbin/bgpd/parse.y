@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.242 2009/12/06 11:42:22 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.243 2009/12/08 14:03:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -697,20 +697,10 @@ neighbor	: {	curpeer = new_peer(); }
 			if (($3.prefix.aid == AID_INET && $3.len != 32) ||
 			    ($3.prefix.aid == AID_INET6 && $3.len != 128))
 				curpeer->conf.template = 1;
-			switch (curpeer->conf.remote_addr.aid) {
-			case AID_INET:
-				if (curpeer->conf.capabilities.mp_v4 !=
-				    SAFI_ALL)
-					break;
-				curpeer->conf.capabilities.mp_v4 = SAFI_UNICAST;
-				break;
-			case AID_INET6:
-				if (curpeer->conf.capabilities.mp_v6 !=
-				    SAFI_ALL)
-					break;
-				curpeer->conf.capabilities.mp_v6 = SAFI_UNICAST;
-				break;
-			}
+			if (curpeer->conf.capabilities.mp[
+			    curpeer->conf.remote_addr.aid] == -1)
+				curpeer->conf.capabilities.mp[
+				    curpeer->conf.remote_addr.aid] = 1;
 			if (get_id(curpeer)) {
 				yyerror("get_id failed");
 				YYERROR;
@@ -850,11 +840,13 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.min_holdtime = $3;
 		}
 		| ANNOUNCE family STRING {
-			u_int8_t	safi;
+			u_int8_t	aid, safi;
+			int8_t		val = 1;
 
-			if (!strcmp($3, "none"))
-				safi = SAFI_NONE;
-			else if (!strcmp($3, "unicast"))
+			if (!strcmp($3, "none")) {
+				safi = SAFI_UNICAST;
+				val = 0;
+			} else if (!strcmp($3, "unicast"))
 				safi = SAFI_UNICAST;
 			else {
 				yyerror("unknown/unsupported SAFI \"%s\"",
@@ -864,16 +856,11 @@ peeropts	: REMOTEAS as4number	{
 			}
 			free($3);
 
-			switch ($2) {
-			case AFI_IPv4:
-				curpeer->conf.capabilities.mp_v4 = safi;
-				break;
-			case AFI_IPv6:
-				curpeer->conf.capabilities.mp_v6 = safi;
-				break;
-			default:
-				fatal("king bula sees borked AFI");
+			if (afi2aid($2, safi, &aid) == -1) {
+				yyerror("unknown AFI/SAFI pair");
+				YYERROR;
 			}
+			curpeer->conf.capabilities.mp[aid] = val;
 		}
 		| ANNOUNCE CAPABILITIES yesno {
 			curpeer->conf.announce_capa = $3;
@@ -2587,6 +2574,7 @@ struct peer *
 alloc_peer(void)
 {
 	struct peer	*p;
+	u_int8_t	 i;
 
 	if ((p = calloc(1, sizeof(struct peer))) == NULL)
 		fatal("new_peer");
@@ -2597,8 +2585,8 @@ alloc_peer(void)
 	p->conf.distance = 1;
 	p->conf.announce_type = ANNOUNCE_UNDEF;
 	p->conf.announce_capa = 1;
-	p->conf.capabilities.mp_v4 = SAFI_ALL;
-	p->conf.capabilities.mp_v6 = SAFI_ALL;
+	for (i = 0; i < AID_MAX; i++)
+		p->conf.capabilities.mp[i] = -1;
 	p->conf.capabilities.refresh = 1;
 	p->conf.capabilities.restart = 0;
 	p->conf.capabilities.as4byte = 1;
@@ -2889,6 +2877,8 @@ str2key(char *s, char *dest, size_t max_len)
 int
 neighbor_consistent(struct peer *p)
 {
+	u_int8_t	i;
+
 	/* local-address and peer's address: same address family */
 	if (p->conf.local_addr.aid &&
 	    p->conf.local_addr.aid != p->conf.remote_addr.aid) {
@@ -2939,10 +2929,9 @@ neighbor_consistent(struct peer *p)
 	}
 
 	/* the default MP capability is NONE */
-	if (p->conf.capabilities.mp_v4 == SAFI_ALL)
-		p->conf.capabilities.mp_v4 = SAFI_NONE;
-	if (p->conf.capabilities.mp_v6 == SAFI_ALL)
-		p->conf.capabilities.mp_v6 = SAFI_NONE;
+	for (i = 0; i < AID_MAX; i++)
+		if (p->conf.capabilities.mp[i] == -1)
+			p->conf.capabilities.mp[i] = 0;
 
 	return (0);
 }

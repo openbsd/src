@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.74 2009/12/01 14:28:05 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.75 2009/12/08 14:03:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,7 +35,7 @@ void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
 const char	*print_auth_alg(u_int8_t);
 const char	*print_enc_alg(u_int8_t);
-const char	*print_safi(u_int8_t);
+void		 print_announce(struct peer_config *, const char *);
 void		 print_rule(struct peer *, struct filter_rule *);
 const char *	 mrt_type(enum mrt_type);
 void		 print_mrt(u_int32_t, u_int32_t, const char *, const char *);
@@ -378,8 +378,7 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 	if (p->ttlsec)
 		printf("%s\tttl-security yes\n", c);
 
-	printf("%s\tannounce IPv4 %s\n", c, print_safi(p->capabilities.mp_v4));
-	printf("%s\tannounce IPv6 %s\n", c, print_safi(p->capabilities.mp_v6));
+	print_announce(p, c);
 
 	if (p->softreconfig_in == 1)
 		printf("%s\tsoftreconfig in yes\n", c);
@@ -423,17 +422,14 @@ print_enc_alg(u_int8_t alg)
 	}
 }
 
-const char *
-print_safi(u_int8_t safi)
+void
+print_announce(struct peer_config *p, const char *c)
 {
-	switch (safi) {
-	case SAFI_NONE:
-		return ("none");
-	case SAFI_UNICAST:
-		return ("unicast");
-	default:
-		return ("?");
-	}
+	u_int8_t	aid;
+
+	for (aid = 0; aid < AID_MAX; aid++)
+		if (p->capabilities.mp[aid])
+			printf("%s\tannounce %s\n", c, aid2str(aid));
 }
 
 void
