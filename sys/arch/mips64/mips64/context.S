@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.32 2009/12/07 19:01:06 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.33 2009/12/08 22:14:43 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -164,10 +164,10 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	PTR_L	t1, VMSPACE_PMAP(t0)		# ->vm_map.pmap
 	lw	v0, PM_TLBPID(t1)		# ->pm_tlbpid
 
+#if UPAGES > 1
 	or	v0, t3
 	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
 
-#if UPAGES > 1
 	/*
 	 * We need to wire the process kernel stack mapping so there
 	 * will be no tlb misses in exception handlers. This is done
@@ -175,7 +175,10 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	 * put valid mappings in tlb entries 0 and 1.
 	 */
 
-	LA	t1, (VM_MIN_KERNEL_ADDRESS)
+	LA	t1, CKSEG0_BASE
+	PTR_SUBU t2, t3, t1
+	bgez	t2, ctx3			# in CKSEG0
+	LA	t1, VM_MIN_KERNEL_ADDRESS	# safe if expands to > 1 insn
 	PTR_SUBU t2, t3, t1
 	bltz	t2, ctx3			# not mapped.
 	PTR_SRL	t2, PGSHIFT+1
@@ -186,7 +189,7 @@ NON_LEAF(cpu_switchto, FRAMESZ(CF_SZ), ra)
 	mfc0	t0, COP_0_TLB_INDEX
 	nop
 	bltz	t0, ctx1			# not in tlb
-	LA	t2, CKSEG0_BASE		# NOTE: if > 1 ins, does not matter
+	LA	t2, CKSEG0_BASE			# safe if expands to > 1 insn
 
 	dmtc0	t2, COP_0_TLB_HI		# invalidate it.
 	dmtc0	zero, COP_0_TLB_LO0
@@ -259,6 +262,8 @@ ctx2:
 	nop
 	nop
 	nop
+#else	/* UPAGES > 1 */
+	dmtc0	v0, COP_0_TLB_HI		# init high entry (tlbid)
 #endif	/* UPAGES > 1 */
 
 ctx3:
