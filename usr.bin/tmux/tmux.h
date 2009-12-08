@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.192 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.193 2009/12/08 07:49:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1843,6 +1843,9 @@ u_int		 layout_set_select(struct window *, u_int);
 u_int		 layout_set_next(struct window *);
 u_int		 layout_set_previous(struct window *);
 void		 layout_set_active_changed(struct window *);
+
+/* layout-string.c */
+struct layout_cell *layout_find_string(struct window *, const char *);
 
 /* window-clock.c */
 extern const struct window_mode window_clock_mode;
