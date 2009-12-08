@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.677 2009/11/26 14:34:49 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.678 2009/12/08 08:26:33 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -817,7 +817,7 @@ pf_state_key_setup(struct pf_pdesc *pd,
 		*skw = sk2;
 	}
 
-	if (pf_status.debug >= PF_DEBUG_MISC) {
+	if (pf_status.debug >= PF_DEBUG_NOISY) {
 		printf("pf: key setup: ");
 		pf_print_state_parts(NULL, *skw, *sks);
 		printf("\n");
@@ -920,7 +920,7 @@ pf_find_state(struct pfi_kif *kif, struct pf_state_key_cmp *key, u_int dir,
 	struct pf_state_item	*si;
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
-	if (pf_status.debug >= PF_DEBUG_MISC) {
+	if (pf_status.debug >= PF_DEBUG_NOISY) {
 		printf("pf: key search, if=%s: ", kif->pfik_name);
 		pf_print_state_parts(NULL, (struct pf_state_key *)key, NULL);
 		printf("\n");
