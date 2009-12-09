@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.122 2009/12/01 01:40:02 dlg Exp $ */
+/*	$OpenBSD: mpi.c,v 1.123 2009/12/09 04:59:41 marco Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2726,7 +2726,8 @@ mpi_bio_get_pg0_raid(struct mpi_softc *sc, int id)
 	    address, &hdr) != 0)
 		goto done;
 	if (mpi_cfg_page(sc, address, &hdr, 1, rpg0, len)) {
-		printf("%s: can't get RAID vol cfg page 0\n", DEVNAME(sc));
+		DNPRINTF(MPI_D_RAID, "%s: can't get RAID vol cfg page 0\n",
+		    DEVNAME(sc));
 		goto done;
 	}
 
