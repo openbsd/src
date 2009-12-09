@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sig.c,v 1.11 2008/05/01 11:53:26 miod Exp $	*/
+/*	$OpenBSD: hpux_sig.c,v 1.12 2009/12/09 16:29:56 jsg Exp $	*/
 /*	$NetBSD: hpux_sig.c,v 1.16 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -60,7 +60,8 @@ char hpuxtobsdsigmap[NSIG] = {
 /*01*/	SIGHUP,  SIGINT, SIGQUIT, SIGILL,   SIGTRAP, SIGIOT,  SIGEMT,   SIGFPE,
 /*09*/  SIGKILL, SIGBUS, SIGSEGV, SIGSYS,   SIGPIPE, SIGALRM, SIGTERM,  SIGUSR1,
 /*17*/  SIGUSR2, SIGCHLD, 0,      SIGVTALRM,SIGPROF, SIGIO,   SIGWINCH, SIGSTOP,
-/*25*/	SIGTSTP, SIGCONT,SIGTTIN, SIGTTOU,  SIGURG,  0,       0,        0
+/*25*/	SIGTSTP, SIGCONT,SIGTTIN, SIGTTOU,  SIGURG,  0,       0,        0,
+/*33*/	0
 };
 
 /* indexed by BSD signal number - 1 */
@@ -68,7 +69,8 @@ char bsdtohpuxsigmap[NSIG] = {
 /*01*/	 1,  2,  3,  4,  5,  6,  7,  8,
 /*09*/   9, 10, 11, 12, 13, 14, 15, 29,
 /*17*/  24, 25, 26, 18, 27, 28, 22,  0,
-/*25*/	 0, 20, 21, 23,  0, 16, 17,  0
+/*25*/	 0, 20, 21, 23,  0, 16, 17,  0,
+/*33*/	 0
 };
 
 /*

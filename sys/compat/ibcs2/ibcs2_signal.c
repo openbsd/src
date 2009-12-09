@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_signal.c,v 1.9 2009/06/01 20:11:38 weingart Exp $	*/
+/*	$OpenBSD: ibcs2_signal.c,v 1.10 2009/12/09 16:29:56 jsg Exp $	*/
 /*	$NetBSD: ibcs2_signal.c,v 1.8 1996/05/03 17:05:27 christos Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #define ibcs2_sigismember(s, n)	(*(s) & ibcs2_sigmask(n))
 #define ibcs2_sigaddset(s, n)	(*(s) |= ibcs2_sigmask(n))
 
-int bsd_to_ibcs2_sig[] = {
+int bsd_to_ibcs2_sig[NSIG] = {
 	0,			/* 0 */
 	IBCS2_SIGHUP,		/* 1 */
 	IBCS2_SIGINT,		/* 2 */
@@ -89,6 +89,7 @@ int bsd_to_ibcs2_sig[] = {
 	0,			/* 29 */
 	IBCS2_SIGUSR1,		/* 30 */
 	IBCS2_SIGUSR2,		/* 31 */
+	0,			/* 32 - SIGTHR */
 };
 
 int ibcs2_to_bsd_sig[] = {
