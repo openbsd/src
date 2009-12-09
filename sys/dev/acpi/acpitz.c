@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.33 2009/12/04 23:49:29 sthen Exp $ */
+/* $OpenBSD: acpitz.c,v 1.34 2009/12/09 04:55:00 marco Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -166,7 +166,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_lasttmp = -1;
 	if ((sc->sc_tmp = acpitz_gettempreading(sc, "_TMP")) == -1) {
-		printf(": failed to read _TMP\n");
+		dnprintf(10, ": failed to read _TMP\n");
 		return;
 	}
 
