@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.13 2009/12/08 20:37:58 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.14 2009/12/09 18:41:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -956,7 +956,8 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	int desc, s;
 	int timeout;
 
-	if (sc->sc_tx_cnt >= sc->sc_vd->vd_nentries)
+	if (sc->sc_vio_state != VIO_ESTABLISHED ||
+	    sc->sc_tx_cnt >= sc->sc_vd->vd_nentries)
 		return (NO_CCB);
 
 	desc = sc->sc_tx_prod;
