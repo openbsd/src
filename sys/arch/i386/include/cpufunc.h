@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.15 2009/08/13 13:24:48 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.16 2009/12/09 14:28:46 oga Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -63,6 +63,8 @@ static __inline void enable_intr(void);
 static __inline u_int read_eflags(void);
 static __inline void write_eflags(u_int);
 static __inline void wbinvd(void);
+static __inline void clflush(u_int32_t addr);
+static __inline void mfence(void);
 static __inline void wrmsr(u_int, u_int64_t);
 static __inline u_int64_t rdmsr(u_int);
 static __inline void breakpoint(void);
@@ -220,6 +222,17 @@ wbinvd(void)
         __asm __volatile("wbinvd");
 }
 
+static __inline void
+clflush(u_int32_t addr)
+{
+	__asm __volatile("clflush %0" : "+m" (addr));
+}
+
+static __inline void
+mfence(void)
+{
+	__asm __volatile("mfence" : : : "memory");
+}
 
 static __inline void
 wrmsr(u_int msr, u_int64_t newval)
