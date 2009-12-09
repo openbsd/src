@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.280 2009/11/29 21:24:26 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.281 2009/12/09 21:30:24 matthieu Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -199,6 +199,8 @@ atapiscsi* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
+uhts*	 at uhidev?		# USB HID touch screen
+wsmouse* at uhts? mux 0
 uts*	at uhub?		# USB touchscreen
 wsmouse* at uts? mux 0
 ukbd*	at uhidev?		# USB keyboard
