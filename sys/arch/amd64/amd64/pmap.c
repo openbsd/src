@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.51 2009/08/11 17:15:54 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.52 2009/12/09 14:31:57 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1259,6 +1259,26 @@ void
 pmap_zero_page(struct vm_page *pg)
 {
 	pagezero(pmap_map_direct(pg));
+}
+
+/*
+ * pmap_flush_cache: flush the cache for a virtual address.
+ */
+void
+pmap_flush_cache(vaddr_t addr, vsize_t len)
+{
+	vaddr_t	i;
+
+	if (curcpu()->ci_cflushsz == 0) {
+		wbinvd();
+		return;
+	}
+
+	/* all cpus that have clflush also have mfence. */
+	mfence();
+	for (i = addr; i < addr + len; i += curcpu()->ci_cflushsz)
+		clflush(i);
+	mfence();
 }
 
 /*

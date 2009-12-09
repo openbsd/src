@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.145 2009/08/11 17:15:54 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.146 2009/12/09 14:31:57 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -309,8 +309,8 @@ struct pool pmap_pmap_pool;
  * special VAs and the PTEs that map them
  */
 
-static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
-static caddr_t csrcp, cdstp, zerop, ptpp;
+static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *flsh_pte;
+static caddr_t csrcp, cdstp, zerop, ptpp, flshp;
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
 /* stuff to fix the pentium f00f bug */
@@ -863,6 +863,8 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	ptpp = (caddr_t) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
 
+	flshp = (caddr_t) virtual_avail+PAGE_SIZE*4;  flsh_pte = pte+4;
+
 	virtual_avail += PAGE_SIZE * MAXCPUS * NPTECL;
 	pte += MAXCPUS * NPTECL;
 #else
@@ -876,6 +878,9 @@ pmap_bootstrap(vaddr_t kva_start)
 	virtual_avail += PAGE_SIZE; pte++;
 
 	ptpp = (caddr_t) virtual_avail;  ptp_pte = pte;
+	virtual_avail += PAGE_SIZE; pte++;
+
+	flshp = (caddr_t) virtual_avail;  flsh_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 #endif
 
@@ -1796,6 +1801,47 @@ pmap_zero_page_uncached(paddr_t pa)
 	*zpte = 0;
 
 	return (TRUE);
+}
+
+/*
+ * pmap_flush_cache: flush the cache for a virtual address.
+ */
+void
+pmap_flush_cache(vaddr_t addr, vsize_t len)
+{
+	vaddr_t i;
+
+	if (curcpu()->ci_cflushsz == 0) {
+		wbinvd();
+		return;
+	}
+	
+	mfence();
+	for (i = addr; i < addr + len; i += curcpu()->ci_cflushsz)
+		clflush(i);
+	mfence();
+}
+
+void
+pmap_flush_page(paddr_t pa)
+{
+#ifdef MULTIPROCESSOR
+	int id = cpu_number();
+#endif
+	pt_entry_t *pte = PTESLEW(flsh_pte, id);
+	caddr_t va = VASLEW(flshp, id);
+
+	KDASSERT(PHYS_TO_VM_PAGE(pa) != NULL);
+#ifdef DIAGNOSTIC
+	if (*pte)
+		panic("pmap_flush_page: lock botch");
+#endif
+
+	*pte = (pa & PG_FRAME) | PG_V | PG_RW;
+	pmap_update_pg(va);
+	pmap_flush_cache((vaddr_t)va, PAGE_SIZE);
+	*pte = 0;
+	pmap_update_pg(va);
 }
 
 /*

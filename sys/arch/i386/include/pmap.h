@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.53 2009/08/11 17:15:54 oga Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.54 2009/12/09 14:31:57 oga Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -401,6 +401,14 @@ void	pmap_tlb_shootwait(void);
 #endif
 
 void	pmap_prealloc_lowmem_ptp(paddr_t);
+
+/* 
+ * functions for flushing the cache for vaddrs and pages.
+ * these functions are not part of the MI pmap interface and thus
+ * should not be used as such.
+ */
+void	pmap_flush_cache(vaddr_t, vsize_t);
+void	pmap_flush_page(paddr_t);
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
