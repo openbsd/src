@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.223 2009/11/22 22:00:24 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.224 2009/12/09 21:21:57 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3641,7 +3641,8 @@ setcarp_nodes(const char *val, int d)
 	str = strtok(optlist, ",");
 	for (i = 0; str != NULL; i++) {
 		u_int vhid, advskew;
-		if (i > CARP_MAXNODES)
+
+		if (i >= CARP_MAXNODES)
 			errx(1, "too many carp nodes");
 		if (sscanf(str, "%u:%u", &vhid, &advskew) != 2) {
 			errx(1, "non parsable arg: %s", str);
