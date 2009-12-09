@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.29 2009/12/09 14:31:57 oga Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.30 2009/12/09 18:45:49 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ void	pagezero(vaddr_t);
  */
 void	pmap_flush_cache(vaddr_t, vsize_t);
 #define pmap_flush_page(paddr) do {					\
-	KDASSERT(PHYS_TO_VM_PAGE(paddr) != NULL);			\	
+	KDASSERT(PHYS_TO_VM_PAGE(paddr) != NULL);			\
 	pmap_flush_cache(PMAP_DIRECT_MAP(paddr), PAGE_SIZE);		\
 } while (/* CONSTCOND */ 0)
 
