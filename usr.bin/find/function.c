@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.34 2009/10/27 23:59:38 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.35 2009/12/09 13:59:43 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -398,6 +398,10 @@ c_exec(char *unused, char ***argvp, int isok)
 	PLAN *new;			/* node returned */
 	int cnt;
 	char **argv, **ap, *p;
+
+	/* make sure the current directory is readable */
+	if (dotfd == -1)
+		errx(1, "%s: cannot open \".\"", isok ? "-ok" : "-exec");
 
 	isoutput = 1;
     
