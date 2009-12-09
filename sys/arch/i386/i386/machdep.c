@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.467 2009/12/01 18:59:13 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.468 2009/12/09 14:27:34 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1718,6 +1718,15 @@ identifycpu(struct cpu_info *ci)
 			cpuid(0x80000006, regs);
 			cachesize = (regs[2] >> 16);
 		}
+	}
+
+	if (vendor == CPUVENDOR_INTEL &&
+	    curcpu()->ci_feature_flags & CPUID_CFLUSH) {
+		/* to get the cachline size you must do cpuid with eax 0x01 */
+		u_int regs[4];
+
+		cpuid(0x01, regs); 
+		ci->ci_cflushsz = ((regs[1] >> 8) & 0xff) * 8;
 	}
 
 	/* Remove leading and duplicated spaces from cpu_brandstr */
