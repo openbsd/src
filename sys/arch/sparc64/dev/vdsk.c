@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.14 2009/12/09 18:41:14 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.15 2009/12/09 22:39:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -414,7 +414,6 @@ vdsk_rx_intr(void *arg)
 	}
 
 	if (rx_state != lc->lc_rx_state) {
-		sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
 		sc->sc_vio_state = 0;
 		lc->lc_tx_seqid = 0;
 		lc->lc_state = 0;
@@ -621,13 +620,34 @@ vdsk_rx_vio_rdx(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	case VIO_SUBTYPE_ACK:
+	{
+		int prod;
+
 		DPRINTF(("CTRL/ACK/RDX\n"));
 		if (!ISSET(sc->sc_vio_state, VIO_SND_RDX)) {
 			ldc_reset(&sc->sc_lc);
 			break;
 		}
 		sc->sc_vio_state |= VIO_ACK_RDX;
+
+		/*
+		 * If this ACK is the result of a reconnect, we may
+		 * have pending I/O that we need to resubmit.  We need
+		 * to rebuild the ring descriptors though since the
+		 * vDisk server on the other side may have touched
+		 * them already.  So we just clean up the ring and the
+		 * LDC map and resubmit the SCSI commands based on our
+		 * soft descriptors.
+		 */
+		prod = sc->sc_tx_prod;
+		sc->sc_tx_prod = sc->sc_tx_cons;
+		sc->sc_tx_cnt = 0;
+		sc->sc_lm->lm_next = 1;
+		sc->sc_lm->lm_count = 1;
+		while (sc->sc_tx_prod != prod)
+			vdsk_scsi_cmd(sc->sc_vsd[sc->sc_tx_prod].vsd_xs);
 		break;
+	}
 
 	default:
 		DPRINTF(("CTRL/0x%02x/RDX (VIO)\n", tag->stype));
@@ -716,7 +736,6 @@ vdsk_ldc_reset(struct ldc_conn *lc)
 {
 	struct vdsk_softc *sc = lc->lc_sc;
 
-	sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
 	sc->sc_vio_state = 0;
 }
 
@@ -1125,4 +1144,3 @@ vdsk_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flags,
 	printf("%s\n", __func__);
 	return (ENOTTY);
 }
-
