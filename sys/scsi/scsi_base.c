@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.146 2009/12/07 00:09:27 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.147 2009/12/09 21:02:51 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -727,7 +727,7 @@ scsi_xs_exec(struct scsi_xfer *xs)
 	/*
 	 * scsi_xs_exec() guarantees that scsi_done() will be called on the xs
 	 * it was given. The adapter is responsible for calling scsi_done()
-	 * except if its scsi_cmd() routine returns NO_CCB or TRY_AGAIN_LATER.
+	 * except if its scsi_cmd() routine returns NO_CCB.
 	 * In those cases we must call scsi_done() for it.
 	 */
 
