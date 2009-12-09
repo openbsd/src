@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldp.h,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: ldp.h,v 1.2 2009/12/09 12:19:29 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -214,7 +214,14 @@ struct label_tlv {
 	u_int32_t	label;
 };
 
-#define LABEL_TLV_LEN	8
-#define	NO_LABEL	UINT_MAX
+#define LABEL_TLV_LEN		8
+
+struct hello_opt_parms_tlv {
+	u_int16_t	type;
+	u_int16_t	length;
+	u_int32_t	value;
+};
+
+#define	NO_LABEL		UINT_MAX
 
 #endif /* !_LDP_H_ */

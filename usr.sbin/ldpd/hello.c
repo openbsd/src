@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
+/*	$OpenBSD: hello.c,v 1.3 2009/12/09 12:19:29 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -37,7 +37,8 @@
 #include "ldpe.h"
 
 struct hello_prms_tlv	*tlv_decode_hello_prms(char *, u_int16_t);
-int			 tlv_decode_opt_hello_prms(char *, u_int16_t);
+int			 tlv_decode_opt_hello_prms(char *, u_int16_t,
+			    struct in_addr *, u_int32_t *);
 int			 gen_hello_prms_tlv(struct iface *, struct buf *,
 			    u_int16_t);
 
@@ -88,6 +89,8 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 	struct nbr		*nbr = NULL;
 	struct hello_prms_tlv	*cpt;
 	struct ldp_hdr		*ldp;
+	struct in_addr		 address;
+	u_int32_t		 conf_number;
 
 	log_debug("recv_hello: neighbor %s", inet_ntoa(src));
 
@@ -113,14 +116,18 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 	buf += sizeof(struct hello_prms_tlv);
 	len -= sizeof(struct hello_prms_tlv);
 
-	tlv_decode_opt_hello_prms(buf, len);
+	tlv_decode_opt_hello_prms(buf, len, &address, &conf_number);
 
 	nbr = nbr_find_ldpid(iface, ldp->lsr_id, ldp->lspace_id);
 	if (!nbr) {
 		nbr = nbr_new(ldp->lsr_id, ldp->lspace_id, iface, 0);
 
 		/* set neighbor parameters */
-		nbr->addr.s_addr = src.s_addr;
+		if (address.s_addr == INADDR_ANY)
+			nbr->addr.s_addr = src.s_addr;
+		else
+			nbr->addr.s_addr = address.s_addr;
+
 		nbr->hello_type = cpt->reserved;
 
 		if (cpt->holdtime == 0) {
@@ -142,7 +149,7 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 
 	nbr_fsm(nbr, NBR_EVT_HELLO_RCVD);
 
-	if (nbr->addr.s_addr < nbr->iface->addr.s_addr &&
+	if (ntohl(nbr->addr.s_addr) < ntohl(nbr->iface->addr.s_addr) &&
 	    nbr->state == NBR_STA_PRESENT && !nbr_pending_idtimer(nbr))
 		nbr_act_session_establish(nbr, 1);
 }
@@ -186,8 +193,34 @@ tlv_decode_hello_prms(char *buf, u_int16_t len)
 }
 
 int
-tlv_decode_opt_hello_prms(char *buf, u_int16_t len)
+tlv_decode_opt_hello_prms(char *buf, u_int16_t len, struct in_addr *addr,
+    u_int32_t *conf_number)
 {
-	/* XXX: todo */
+	struct hello_opt_parms_tlv	*tlv;
+
+	bzero(addr, sizeof(*addr));
+	*conf_number = 0;
+
+	while (len >= sizeof(*tlv)) {
+		tlv = (struct hello_opt_parms_tlv *)buf;
+
+		if (tlv->length < sizeof(u_int32_t))
+			return (-1);
+
+		switch (ntohs(tlv->type)) {
+		case TLV_TYPE_IPV4TRANSADDR:
+			addr->s_addr = tlv->value;
+			break;
+		case TLV_TYPE_CONFIG:
+			*conf_number = ntohl(tlv->value);
+			break;
+		default:
+			return (-1);
+		}
+
+		len -= sizeof(*tlv);
+		buf += sizeof(*tlv);
+	}
+
 	return (0);
 }
