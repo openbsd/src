@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.25 2009/12/09 14:27:33 oga Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.26 2009/12/09 21:42:10 deraadt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ void
 identifycpu(struct cpu_info *ci)
 {
 	u_int64_t last_tsc;
-	u_int32_t dummy, val, pnfeatset, cflushsz;
+	u_int32_t dummy, val, pnfeatset;
 	u_int32_t brand[12];
 	u_int32_t vendor[4];
 	int i, max;
@@ -354,6 +354,8 @@ identifycpu(struct cpu_info *ci)
 	}
 
 	if (!strncmp(cpu_model, "Intel", 5)) {
+		u_int32_t cflushsz;
+
 		CPUID(0x01, dummy, cflushsz, dummy, dummy);
 		/* cflush cacheline size is equal to bits 15-8 of ebx * 8 */
 		ci->ci_cflushsz = ((cflushsz >> 8) & 0xff) * 8;
