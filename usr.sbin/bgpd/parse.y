@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.244 2009/12/09 11:12:50 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.245 2009/12/09 12:52:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -128,7 +128,7 @@ void		 move_filterset(struct filter_set_head *,
 struct filter_rule	*get_rule(enum action_types);
 
 int		 getcommunity(char *);
-int		 parsecommunity(char *, int *, int *);
+int		 parsecommunity(struct filter_community *, char *);
 
 typedef struct {
 	union {
@@ -1459,8 +1459,7 @@ filter_elm	: filter_prefix_h	{
 				free($2);
 				YYERROR;
 			}
-			if (parsecommunity($2, &fmopts.m.community.as,
-			    &fmopts.m.community.type) == -1) {
+			if (parsecommunity(&fmopts.m.community, $2) == -1) {
 				free($2);
 				YYERROR;
 			}
@@ -1778,8 +1777,7 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			else
 				$$->type = ACTION_SET_COMMUNITY;
 
-			if (parsecommunity($3, &$$->action.community.as,
-			    &$$->action.community.type) == -1) {
+			if (parsecommunity(&$$->action.community, $3) == -1) {
 				free($3);
 				free($$);
 				YYERROR;
@@ -2508,27 +2506,27 @@ getcommunity(char *s)
 }
 
 int
-parsecommunity(char *s, int *as, int *type)
+parsecommunity(struct filter_community *c, char *s)
 {
 	char *p;
-	int i;
+	int i, as;
 
 	/* Well-known communities */
 	if (strcasecmp(s, "NO_EXPORT") == 0) {
-		*as = COMMUNITY_WELLKNOWN;
-		*type = COMMUNITY_NO_EXPORT;
+		c->as = COMMUNITY_WELLKNOWN;
+		c->type = COMMUNITY_NO_EXPORT;
 		return (0);
 	} else if (strcasecmp(s, "NO_ADVERTISE") == 0) {
-		*as = COMMUNITY_WELLKNOWN;
-		*type = COMMUNITY_NO_ADVERTISE;
+		c->as = COMMUNITY_WELLKNOWN;
+		c->type = COMMUNITY_NO_ADVERTISE;
 		return (0);
 	} else if (strcasecmp(s, "NO_EXPORT_SUBCONFED") == 0) {
-		*as = COMMUNITY_WELLKNOWN;
-		*type = COMMUNITY_NO_EXPSUBCONFED;
+		c->as = COMMUNITY_WELLKNOWN;
+		c->type = COMMUNITY_NO_EXPSUBCONFED;
 		return (0);
 	} else if (strcasecmp(s, "NO_PEER") == 0) {
-		*as = COMMUNITY_WELLKNOWN;
-		*type = COMMUNITY_NO_PEER;
+		c->as = COMMUNITY_WELLKNOWN;
+		c->type = COMMUNITY_NO_PEER;
 		return (0);
 	}
 
@@ -2544,11 +2542,12 @@ parsecommunity(char *s, int *as, int *type)
 		yyerror("Bad community AS number");
 		return (-1);
 	}
-	*as = i;
+	as = i;
 
 	if ((i = getcommunity(p)) == COMMUNITY_ERROR)
 		return (-1);
-	*type = i;
+	c->as = as;
+	c->type = i;
 
 	return (0);
 }
