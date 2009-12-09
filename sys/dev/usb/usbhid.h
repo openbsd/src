@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.h,v 1.12 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: usbhid.h,v 1.13 2009/12/09 21:27:19 matthieu Exp $ */
 /*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
@@ -135,6 +135,9 @@ typedef struct usb_hid_descriptor {
 
 /* Usages Digitizers */
 #define HUD_UNDEFINED		0x0000
+#define HUD_DIGITIZER		0x0001
+#define HUD_PEN			0x0002
+#define HUD_TOUCHSCREEN		0x0004
 #define HUD_TIP_PRESSURE	0x0030
 #define HUD_BARREL_PRESSURE	0x0031
 #define HUD_IN_RANGE		0x0032
