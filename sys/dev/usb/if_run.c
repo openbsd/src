@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.34 2009/11/17 20:13:42 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.35 2009/12/10 21:04:16 oga Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1747,7 +1747,7 @@ run_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	for (i = 0; i < rs->rs_nrates; i++) {
 		rate = rs->rs_rates[i] & IEEE80211_RATE_VAL;
 		/* convert 802.11 rate to hardware rate index */
-		for (ridx = 0; ridx <= RT2860_RIDX_MAX; ridx++)
+		for (ridx = 0; ridx < RT2860_RIDX_MAX; ridx++)
 			if (rt2860_rates[ridx].rate == rate)
 				break;
 		rn->ridx[i] = ridx;
