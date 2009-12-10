@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.115 2009/10/01 20:19:19 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.116 2009/12/10 16:45:59 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1402,7 +1402,8 @@ kcopy(const void *from, void *to, size_t size)
 /* prototype for locore function */
 void cpu_switchto_asm(struct proc *oldproc, struct proc *newproc);
 
-void cpu_switchto( struct proc *oldproc, struct proc *newproc)
+void
+cpu_switchto(struct proc *oldproc, struct proc *newproc)
 {
 	/*
 	 * if this CPU is running a new process, flush the
