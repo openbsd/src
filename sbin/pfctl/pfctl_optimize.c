@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.22 2009/11/23 21:29:21 henning Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.23 2009/12/10 15:57:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -914,6 +914,7 @@ load_feedback_profile(struct pfctl *pf, struct superblocks *superblocks)
 		pr.nr = nr;
 		if (ioctl(pf->dev, DIOCGETRULE, &pr)) {
 			warn("DIOCGETRULES");
+			free(por);
 			return (1);
 		}
 		memcpy(&por->por_rule, &pr.rule, sizeof(por->por_rule));
