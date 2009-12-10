@@ -186,7 +186,7 @@ roken_gethostby(const char *hostname)
 #define MAX_ADDRS 16
 	static struct hostent he;
 	static char addrs[4 * MAX_ADDRS];
-	static char *addr_list[MAX_ADDRS];
+	static char *addr_list[MAX_ADDRS + 1];
 	int num_addrs = 0;
 	
 	he.h_name = p;

@@ -101,6 +101,7 @@ acl_parse_format(krb5_context context,
 	    krb5_set_error_string(context, "acl_parse_format: "
 				  "unknown format specifier %c", *p);
 	    acl_free_list(acl, 0);
+	    free(tmp);
 	    return EINVAL;
 	}
 	tmp->next = NULL;
