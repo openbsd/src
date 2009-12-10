@@ -297,7 +297,7 @@ init_sockets(struct descr **desc)
 {
     krb5_error_code ret;
     int i, j;
-    struct descr *d;
+    struct descr *d, *tmp;
     int num = 0;
     krb5_addresses addresses;
 
@@ -335,10 +335,13 @@ init_sockets(struct descr **desc)
 	}
     }
     krb5_free_addresses (context, &addresses);
-    d = realloc(d, num * sizeof(*d));
-    if (d == NULL && num != 0)
+    tmp = realloc(d, num * sizeof(*d));
+    if (tmp == NULL && num != 0) {
+	free(d);
 	krb5_errx(context, 1, "realloc(%lu) failed",
 		  (unsigned long)num * sizeof(*d));
+    }
+    d = tmp;
     reinit_descrs (d, num);
     *desc = d;
     return num;
