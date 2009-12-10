@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.125 2009/10/19 22:24:18 jsg Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.126 2009/12/10 16:41:45 beck Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1465,7 +1465,16 @@ nfs_remove(void *v)
 int
 nfs_removeit(struct sillyrename *sp)
 {
-
+	/*
+	 * Make sure that the directory vnode is still valid.
+	 * XXX we should lock sp->s_dvp here.
+	 *
+	 * NFS can potentially try to nuke a silly *after* the directory
+	 * has already been pushed out on a forced unmount. Since the silly
+	 * is going to go away anyway, this is fine.
+	 */
+	if (sp->s_dvp->v_type == VBAD)
+		return (0);
 	return (nfs_removerpc(sp->s_dvp, sp->s_name, sp->s_namlen, sp->s_cred,
 		NULL));
 }
