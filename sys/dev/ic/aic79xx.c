@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.45 2009/07/11 17:31:22 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.46 2009/12/10 00:18:44 chl Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1081,7 +1081,6 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 			struct	scb *scb;
 			struct	ahd_initiator_tinfo *targ_info;
 			struct	ahd_tmode_tstate *tstate;
-			struct	ahd_transinfo *tinfo;
 			u_int	scbid;
 
 			/*
@@ -1114,7 +1113,6 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 							devinfo.our_scsiid,
 							devinfo.target,
 							&tstate);
-			tinfo = &targ_info->curr;
 			ahd_set_width(ahd, &devinfo, MSG_EXT_WDTR_BUS_8_BIT,
 				      AHD_TRANS_ACTIVE, /*paused*/TRUE);
 			ahd_set_syncrate(ahd, &devinfo, /*period*/0,
