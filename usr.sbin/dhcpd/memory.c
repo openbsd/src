@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.15 2008/05/07 12:19:20 beck Exp $ */
+/*	$OpenBSD: memory.c,v 1.16 2009/12/10 01:22:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -802,8 +802,10 @@ add_class(int type, char *name)
 	if (!user_class_hash)
 		user_class_hash = new_hash();
 
-	if (!tname || !class || !vendor_class_hash || !user_class_hash)
+	if (!tname || !class || !vendor_class_hash || !user_class_hash) {
+		free(tname);
 		return NULL;
+	}
 
 	memset(class, 0, sizeof *class);
 	strlcpy(tname, name, strlen(name) + 1);
