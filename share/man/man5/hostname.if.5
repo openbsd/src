@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.53 2009/11/22 22:01:55 deraadt Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.54 2009/12/10 00:51:55 todd Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 22 2009 $
+.Dd $Mdocdate: December 10 2009 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -275,17 +275,11 @@ and
 .Xr pppoe 8 )
 consists of
 .Bd -ragged -offset indent
-.Va state
 .Va options
 .Ed
 .Pp
 The above format has the following field values:
 .Bl -tag -width indent -offset indent
-.It Va state
-The administrative state in which to put the interface, either
-.Dq up
-or
-.Dq down .
 .It Va options
 Miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
