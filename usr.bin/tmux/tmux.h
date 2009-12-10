@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.193 2009/12/08 07:49:31 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.194 2009/12/10 09:16:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1235,6 +1235,7 @@ struct set_option_entry {
 };
 
 /* tmux.c */
+extern struct options global_options;
 extern struct options global_s_options;
 extern struct options global_w_options;
 extern struct environ global_environ;
@@ -1391,6 +1392,7 @@ extern const char clock_table[14][5][5];
 void		 clock_draw(struct screen_write_ctx *, int, int);
 
 /* cmd-set-option.c */
+extern const struct set_option_entry set_option_table[];
 extern const struct set_option_entry set_session_option_table[];
 extern const struct set_option_entry set_window_option_table[];
 const char	*cmd_set_option_print(

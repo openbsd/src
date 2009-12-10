@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.15 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.16 2009/12/10 09:16:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -224,7 +224,7 @@ key_bindings_info(struct cmd_ctx *ctx, const char *fmt, ...)
 	va_list	ap;
 	char   *msg;
 
-	if (be_quiet)
+	if (options_get_number(&global_options, "quiet"))
 		return;
 
 	va_start(ap, fmt);
