@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.54 2009/12/10 00:51:55 todd Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.55 2009/12/10 22:04:59 deraadt Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -44,7 +44,18 @@ One file should exist for each interface that is to be configured, such as
 .Pa hostname.fxp0
 or
 .Pa hostname.bridge0 .
-However, a configuration file is not needed for lo0.
+A configuration file is not needed for lo0.
+.Pp
+The configuration information is expressed in a line-by-line packed format
+which makes the most common cases simpler; those dense formats are described
+below.
+Any lines not matching these packed formats are passed directly to
+.Xr ifconfig 8 .
+The packed formats are converted using a somewhat inflexible parser and
+the administrator should not expect magic \(em if in doubt study
+.Xr ifconfig 8
+and the
+per-driver manual pages to see what arguments are permitted.
 .Pp
 Arguments containing either whitespace or single quote
 characters must be double quoted.
@@ -53,10 +64,8 @@ For example:
 inet 10.0.0.1 255.255.255.0 10.0.0.255 description "Bob's uplink"
 .Ed
 .Sh STATIC ADDRESS CONFIGURATION
-The following three
-.Nm hostname.*\&
-formats are valid for configuring network interfaces with static
-addresses:
+The following packed formats are valid for configuring network
+interfaces with static addresses:
 .Pp
 Regular IPv4 network setup:
 .Bd -ragged -offset indent
@@ -100,6 +109,8 @@ inet alias 10.0.1.16 0xffffffff
 # This is an example comment line.
 inet6 alias fec0::1 64
 inet6 alias fec0::2 64 anycast
+!route add 65.65.65.65 10.0.1.13
+up
 .Ed
 .Pp
 The above formats have the following field values:
@@ -192,20 +203,13 @@ It is worth noting that
 in a command line will be replaced by the interface name.
 .El
 .Sh DYNAMIC ADDRESS CONFIGURATION
-The following
-.Nm hostname.*\&
-formats are valid for configuring network interfaces with dynamic
-addresses:
+The following packed formats are valid for configuring network
+interfaces with dynamic addresses:
 .Pp
 A DHCP-configured network interface setup consists of
 .Bd -ragged -offset indent
 .Li dhcp
 .Va options
-.Ed
-.Pp
-For example:
-.Bd -literal -offset indent
-dhcp media 100baseTX mediaopt full-duplex
 .Ed
 .Pp
 The above format has the following field values:
@@ -259,27 +263,6 @@ Add the following lines into
 net.inet6.ip6.forwarding=0
 net.inet6.ip6.accept_rtadv=1
 .Ed
-.It Va options
-Miscellaneous options to set on the interface, e.g.,
-.Dq media 100baseTX mediaopt full-duplex .
-Valid options for a particular interface type can be found in
-.Xr ifconfig 8 .
-.El
-.Sh ADDRESS-LESS CONFIGURATION
-A network interface that does not require an IP address
-(such as
-.Xr bridge 4
-member interfaces and interfaces to be used with
-.Xr ppp 8
-and
-.Xr pppoe 8 )
-consists of
-.Bd -ragged -offset indent
-.Va options
-.Ed
-.Pp
-The above format has the following field values:
-.Bl -tag -width indent -offset indent
 .It Va options
 Miscellaneous options to set on the interface, e.g.,
 .Dq media 100baseTX mediaopt full-duplex .
