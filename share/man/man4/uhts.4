@@ -1,4 +1,4 @@
-.\" $OpenBSD: uhts.4,v 1.1 2009/12/09 21:27:19 matthieu Exp $
+.\" $OpenBSD: uhts.4,v 1.2 2009/12/10 16:25:41 deraadt Exp $
 .\"
 .\" Copyright (c) 2009 Matthieu Herrb <matthieu@herrb.eu>
 .\" Copyright (c) 2005 Robert Nagy <robert@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2009 $
+.Dd $Mdocdate: December 10 2009 $
 .Dt UHTS 4
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd USB HID touchscreen support
 .Sh SYNOPSIS
 .Cd "uhts*     at uhidev?"
-.Cd "wsmouse* at uts? mux 0"
+.Cd "wsmouse* at uhts? mux 0"
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,7 +54,6 @@ Iyama ProLite T1730SR-B2
 .Xr xtsscale 1 ,
 .Xr uhub 4 ,
 .Xr usb 4 ,
-.Xr uts 4 ,
 .Xr wscons 4 ,
 .Xr wsmouse 4
 .Sh HISTORY
