@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.16 2009/10/27 23:59:23 deraadt Exp $	*/
+/*	$OpenBSD: com2.c,v 1.17 2009/12/10 23:53:03 beck Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ murder(void)
 
 	if (inc_wordnumber(words[wordnumber], "whom"))
 		return;
-	for (n = 0; !((n == SWORD || n == KNIFE || n == TWO_HANDED || n == MACE || n == CLEAVER || n == BROAD || n == CHAIN || n == SHOVEL || n == HALBERD) && TestBit(inven, n)) && n < NUMOFOBJECTS; n++)
+	for (n = 0; n < NUMOFOBJECTS && !((n == SWORD || n == KNIFE || n == TWO_HANDED || n == MACE || n == CLEAVER || n == BROAD || n == CHAIN || n == SHOVEL || n == HALBERD) && TestBit(inven, n)); n++)
 		;
 	if (n == NUMOFOBJECTS) {
 		if (TestBit(inven, LASER)) {
