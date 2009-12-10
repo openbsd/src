@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.33 2007/11/30 10:39:01 otto Exp $	 */
+/* $OpenBSD: display.c,v 1.34 2009/12/10 13:16:02 tedu Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -87,11 +87,7 @@ static char   **procstate_names;
 static char   **cpustate_names;
 static char   **memory_names;
 
-static int      num_procstates;
 static int      num_cpustates;
-
-static int     *lprocstates;
-static int64_t **lcpustates;
 
 static int     *cpustate_columns;
 static int      cpustate_total_length;
@@ -103,6 +99,7 @@ int y_header;
 int y_idlecursor;
 int y_procs;
 extern int ncpu;
+extern int combine_cpus;
 int Header_lines;
 
 int header_status = Yes;
@@ -128,12 +125,18 @@ int
 display_resize(void)
 {
 	int display_lines;
+	int cpu_lines = (combine_cpus ? 1 : ncpu);
+
+	y_mem = 2 + cpu_lines;
+	y_header = 4 + cpu_lines;
+	y_procs = 5 + cpu_lines;
+	Header_lines = 5 + cpu_lines;
 
 	/* calculate the current dimensions */
 	/* if operating in "dumb" mode, we only need one line */
 	display_lines = smart_terminal ? screen_length - Header_lines : 1;
 
-	y_idlecursor = y_message = 3 + ncpu;
+	y_idlecursor = y_message = 3 + (combine_cpus ? 1 : ncpu);
 	if (screen_length <= y_message)
 		y_idlecursor = y_message = screen_length - 1;
 
@@ -154,7 +157,7 @@ display_resize(void)
 int
 display_init(struct statics * statics)
 {
-	int display_lines, *ip, i, cpu;
+	int display_lines, *ip, i;
 	char **pp;
 
 	if (smart_terminal) {
@@ -169,32 +172,15 @@ display_init(struct statics * statics)
 		standendp = empty;
 	}
 
-	y_mem = 2 + ncpu;
-	y_header = 4 + ncpu;
-	y_procs = 5 + ncpu;
-	Header_lines = 5 + ncpu;
-
 	/* call resize to do the dirty work */
 	display_lines = display_resize();
 
 	/* only do the rest if we need to */
 	/* save pointers and allocate space for names */
 	procstate_names = statics->procstate_names;
-	num_procstates = string_count(procstate_names);
-	lprocstates = calloc(num_procstates, sizeof(int));
-	if (lprocstates == NULL)
-		err(1, NULL);
 
 	cpustate_names = statics->cpustate_names;
 	num_cpustates = string_count(cpustate_names);
-	lcpustates = calloc(ncpu, sizeof(int64_t *));
-	if (lcpustates == NULL)
-		err(1, NULL);
-	for (cpu = 0; cpu < ncpu; cpu++) {
-		lcpustates[cpu] = calloc(num_cpustates, sizeof(int64_t));
-		if (lcpustates[cpu] == NULL)
-			err(1, NULL);
-	}
 	
 	cpustate_columns = calloc(num_cpustates, sizeof(int));
 	if (cpustate_columns == NULL)
@@ -354,20 +340,61 @@ cpustates_tag(int cpu)
 		}
 		return (tag);
 	} else
-		return ('\0');
+		return ("\0");
 }
 
 void
 i_cpustates(int64_t *ostates)
 {
-	int i, cpu, value;
+	int i, first, cpu;
+	double value;
 	int64_t *states;
-	char **names = cpustate_names, *thisname;
+	char **names, *thisname;
 
+	if (combine_cpus) {
+		static double *values;
+		if (!values) {
+			values = calloc(num_cpustates, sizeof(*values));
+			if (!values)
+				err(1, NULL);
+		}
+		memset(values, 0, num_cpustates * sizeof(*values));
+		for (cpu = 0; cpu < ncpu; cpu++) {
+			names = cpustate_names;
+			states = ostates + (CPUSTATES * cpu);
+			i = 0;
+			while ((thisname = *names++) != NULL) {
+				if (*thisname != '\0') {
+					/* retrieve the value and remember it */
+					values[i++] += *states++;
+				}
+			}
+		}
+		if (screen_length > 2 || !smart_terminal) {
+			names = cpustate_names;
+			i = 0;
+			first = 0;
+			move(2, 0);
+			clrtoeol();
+			addstrp("All CPUs: ");
+
+			while ((thisname = *names++) != NULL) {
+				if (*thisname != '\0') {
+					value = values[i++] / ncpu;
+					/* if percentage is >= 1000, print it as 100% */
+					printwp((value >= 1000 ? "%s%4.0f%% %s" :
+					    "%s%4.1f%% %s"), first++ == 0 ? "" : ", ",
+					    value / 10., thisname);
+				}
+			}
+			putn();
+		}
+		return;
+	}
 	for (cpu = 0; cpu < ncpu; cpu++) {
 		/* now walk thru the names and print the line */
 		names = cpustate_names;
-		i = 0;
+		first = 0;
 		states = ostates + (CPUSTATES * cpu);
 
 		if (screen_length > 2 + cpu || !smart_terminal) {
@@ -382,8 +409,8 @@ i_cpustates(int64_t *ostates)
 
 					/* if percentage is >= 1000, print it as 100% */
 					printwp((value >= 1000 ? "%s%4.0f%% %s" :
-					    "%s%4.1f%% %s"), i++ == 0 ? "" : ", ",
-					    ((float) value) / 10., thisname);
+					    "%s%4.1f%% %s"), first++ == 0 ? "" : ", ",
+					    value / 10., thisname);
 				}
 			}
 			putn();

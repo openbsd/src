@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.50 2007/11/17 09:29:59 jmc Exp $
+.\"	$OpenBSD: top.1,v 1.51 2009/12/10 13:16:02 tedu Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 17 2007 $
+.Dd $Mdocdate: December 10 2009 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm top
 .Bk -words
-.Op Fl bCIinqSTu
+.Op Fl 1bCIinqSTu
 .Op Fl d Ar count
 .Op Fl g Ar string
 .Op Fl o Ar field
@@ -74,6 +74,8 @@ terminal.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl 1
+Combine all CPU lines into a single line.
 .It Fl b
 Use
 .Em batch
