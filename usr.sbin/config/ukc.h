@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.11 2003/06/25 21:10:12 deraadt Exp $ */
+/*	$OpenBSD: ukc.h,v 1.12 2009/12/10 22:07:19 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -48,9 +48,7 @@
 #define I_NMBCLUSTERS	18
 #define I_BUFCACHEPCT	19
 #define I_NKMEMPG	20
-#define I_SHMSEG	21
-#define I_SHMMAXPGS	22
-#define NLENTRIES	23
+#define NLENTRIES	21
 
 #ifdef UKC_MAIN
 struct nlist nl[] = {
@@ -75,8 +73,6 @@ struct nlist nl[] = {
 	{ "_nmbclust" },
 	{ "_bufcachepercent" },
 	{ "_nkmempages" },
-	{ "_shmseg" },
-	{ "_shmmaxpgs" },
 	{ NULL },
 };
 struct nlist knl[] = {
@@ -101,8 +97,6 @@ struct nlist knl[] = {
 	{ "_nmbclust" },
 	{ "_bufcachepercent" },
 	{ "_nkmempages" },
-	{ "_shmseg" },
-	{ "_shmmaxpgs" },
 	{ NULL },
 };
 int	maxdev = 0;
