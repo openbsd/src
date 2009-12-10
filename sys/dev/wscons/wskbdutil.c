@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.7 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.8 2009/12/10 16:35:28 oga Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -174,7 +174,7 @@ static struct compose_tab_s {
 	{ { KS_acute,			KS_y },			KS_yacute }
 };
 
-#define COMPOSE_SIZE	sizeof(compose_tab)/sizeof(compose_tab[0])
+#define COMPOSE_SIZE	nitems(compose_tab)
 
 static int compose_tab_inorder = 0;
 
@@ -428,7 +428,7 @@ wskbd_load_keymap(mapdata, map, maplen)
 			mp++;
 		}
 
-		if (stack_ptr == sizeof(stack)/sizeof(stack[0]))
+		if (stack_ptr == nitems(stack))
 			panic("wskbd_load_keymap: %d: recursion too deep",
 			      mapdata->layout);
 		if (mp->map_size <= 0)

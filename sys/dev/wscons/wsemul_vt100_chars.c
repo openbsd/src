@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_chars.c,v 1.6 2007/11/27 16:37:27 miod Exp $ */
+/* $OpenBSD: wsemul_vt100_chars.c,v 1.7 2009/12/10 16:35:28 oga Exp $ */
 /* $NetBSD: wsemul_vt100_chars.c,v 1.4 1999/02/20 18:20:02 drochner Exp $ */
 
 /*
@@ -150,7 +150,7 @@ vt100_setnrc(struct wsemul_vt100_emuldata *edp, int nrc)
 	if (edp->nrctab == NULL)
 		return (0);
 
-	if (nrc < 0 || nrc >= sizeof(nrctable) / sizeof(nrctable[0]))
+	if (nrc < 0 || nrc >= nitems(nrctable))
 		return (ERANGE);
 
 	for (i = 0; i < 128; i++)
