@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.37 2009/11/03 17:36:58 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.38 2009/12/10 21:01:29 oga Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -789,7 +789,7 @@ rt2860_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	for (i = 0; i < rs->rs_nrates; i++) {
 		rate = rs->rs_rates[i] & IEEE80211_RATE_VAL;
 		/* convert 802.11 rate to hardware rate index */
-		for (ridx = 0; ridx <= RT2860_RIDX_MAX; ridx++)
+		for (ridx = 0; ridx < RT2860_RIDX_MAX; ridx++)
 			if (rt2860_rates[ridx].rate == rate)
 				break;
 		rn->ridx[i] = ridx;
