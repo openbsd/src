@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.4 2005/08/04 16:33:05 espie Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.5 2009/12/10 05:46:29 miod Exp $	*/
 /*	$NetBSD: crt0.c,v 1.7 1995/06/03 13:16:15 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -80,14 +80,10 @@ __start()
  *  Do GP register setup. Differs depending on shared lib stuff or not.
  */
 #if defined(_NO_ABICALLS)
-	asm("	la	$28,_gp");
-	asm("	addiu	%0,$29,32" : "=r" (kfp));
+	asm("	dla	$28,_gp");
+	asm("	daddiu	%0,$29,32" : "=r" (kfp));
 #else
-#ifdef __LP64__
-	asm("	addiu	%0,$29,80" : "=r" (kfp));
-#else
-	asm("	addiu	%0,$29,56" : "=r" (kfp));
-#endif
+	asm("	daddiu	%0,$29,80" : "=r" (kfp));
 #endif
 	/* just above the saved frame pointer
 	kfp = (struct kframe *) (&param-1);*/
