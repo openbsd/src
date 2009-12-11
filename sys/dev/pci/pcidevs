@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1514 2009/12/11 07:37:07 oga Exp $
+$OpenBSD: pcidevs,v 1.1515 2009/12/11 21:50:36 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2799,6 +2799,8 @@ product INTEL 82Q45_HB		0x2e10	Q45 Host
 product INTEL 82Q45_PCIE	0x2e11	Q45 PCIE
 product INTEL 82Q45_IGD_1	0x2e12	Q45 Video
 product INTEL 82Q45_IGD_2	0x2e13	Q45 Video
+product INTEL 82Q45_HECI_1	0x2e14	Q45 HECI
+product INTEL 82Q45_HECI_2	0x2e15	Q45 HECI
 product INTEL 82Q45_PT_IDER	0x2e16	Q45 PT IDER
 product INTEL 82Q45_KT		0x2e17	Q45 KT
 product INTEL 82G45_HB		0x2e20	G45 Host
