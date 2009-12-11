@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radlib.c,v 1.9 2007/09/25 11:20:34 chl Exp $
+ *	$OpenBSD: radlib.c,v 1.10 2009/12/11 18:17:09 oga Exp $
  */
 
 #include <sys/types.h>
@@ -182,8 +182,13 @@ put_password_attr(struct rad_handle *h, int type, const void *value, size_t len)
 	}
 	if (len > PASSSIZE)
 		len = PASSSIZE;
-	padded_len = len == 0 ? 16 : (len+15) & ~0xf;
-	pad_len = padded_len - len;
+	if (len % 16)
+		pad_len = 16 - (len % 16);
+	else if (len == 0)
+		pad_len = 16;
+	else
+		pad_len = 0;
+	padded_len = len + pad_len;
 
 	/*
 	 * Put in a place-holder attribute containing all zeros, and
