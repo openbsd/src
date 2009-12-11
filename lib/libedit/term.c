@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.12 2009/10/27 23:59:28 deraadt Exp $	*/
+/*	$OpenBSD: term.c,v 1.13 2009/12/11 18:58:59 jacekm Exp $	*/
 /*	$NetBSD: term.c,v 1.38 2003/09/14 21:48:55 christos Exp $	*/
 
 /*-
@@ -325,26 +325,40 @@ term_init(EditLine *el)
 
 	el->el_term.t_buf = (char *) el_malloc(TC_BUFSIZE);
 	if (el->el_term.t_buf == NULL)
-		return (-1);
+		goto fail;
 	el->el_term.t_cap = (char *) el_malloc(TC_BUFSIZE);
 	if (el->el_term.t_cap == NULL)
-		return (-1);
+		goto fail2;
 	el->el_term.t_fkey = (fkey_t *) el_malloc(A_K_NKEYS * sizeof(fkey_t));
 	if (el->el_term.t_fkey == NULL)
-		return (-1);
+		goto fail3;
 	el->el_term.t_loc = 0;
 	el->el_term.t_str = (char **) el_malloc(T_str * sizeof(char *));
 	if (el->el_term.t_str == NULL)
-		return (-1);
+		goto fail4;
 	(void) memset(el->el_term.t_str, 0, T_str * sizeof(char *));
 	el->el_term.t_val = (int *) el_malloc(T_val * sizeof(int));
 	if (el->el_term.t_val == NULL)
-		return (-1);
+		goto fail5;
 	(void) memset(el->el_term.t_val, 0, T_val * sizeof(int));
 	term_outfile = el->el_outfile;
 	(void) term_set(el, NULL);
 	term_init_arrow(el);
 	return (0);
+fail5:
+	el_free(el->el_term.t_str);
+	el->el_term.t_str = NULL;
+fail4:
+	el_free(el->el_term.t_fkey);
+	el->el_term.t_fkey = NULL;
+fail3:
+	el_free(el->el_term.t_cap);
+	el->el_term.t_cap = NULL;
+fail2:
+	el_free(el->el_term.t_buf);
+	el->el_term.t_buf = NULL;
+fail:
+	return (-1);
 }
 
 /* term_end():
@@ -455,32 +469,39 @@ term_rebuffer_display(EditLine *el)
 private int
 term_alloc_display(EditLine *el)
 {
-	int i;
+	int i, rv = -1;
 	char **b;
 	coord_t *c = &el->el_term.t_size;
 
 	b = (char **) el_malloc((size_t) (sizeof(char *) * (c->v + 1)));
 	if (b == NULL)
-		return (-1);
+		goto done;
+	b[0] = NULL;
 	for (i = 0; i < c->v; i++) {
 		b[i] = (char *) el_malloc((size_t) (sizeof(char) * (c->h + 1)));
 		if (b[i] == NULL)
-			return (-1);
+			goto done;
+		b[i + 1] = NULL;
 	}
-	b[c->v] = NULL;
 	el->el_display = b;
 
 	b = (char **) el_malloc((size_t) (sizeof(char *) * (c->v + 1)));
 	if (b == NULL)
-		return (-1);
+		goto done;
+	b[0] = NULL;
 	for (i = 0; i < c->v; i++) {
 		b[i] = (char *) el_malloc((size_t) (sizeof(char) * (c->h + 1)));
 		if (b[i] == NULL)
-			return (-1);
+			goto done;
+		b[i + 1] = NULL;
 	}
-	b[c->v] = NULL;
 	el->el_vdisplay = b;
-	return (0);
+
+	rv = 0;
+done:
+	if (rv)
+		term_free_display(el);
+	return (rv);
 }
 
 
