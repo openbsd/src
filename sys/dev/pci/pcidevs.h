@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1513 2009/12/01 17:07:59 jasper Exp 
+ *	OpenBSD: pcidevs,v 1.1514 2009/12/11 07:37:07 oga Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1295,7 +1295,7 @@
 #define	PCI_PRODUCT_ATI_RS690_PCIE_5	0x7917		/* RS690 PCIE */
 #define	PCI_PRODUCT_ATI_RS690_HDA	0x7919		/* RS690 HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_X1250	0x791e		/* Radeon X1250 */
-#define	PCI_PRODUCT_ATI_RADEON_X1250IGP	0x791e		/* Radeon X1250 IGP */
+#define	PCI_PRODUCT_ATI_RADEON_X1250IGP	0x791f		/* Radeon X1250 IGP */
 #define	PCI_PRODUCT_ATI_RADEON_2100	0x796e		/* Radeon 2100 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4870	0x9440		/* Radeon HD 4870 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4850	0x9442		/* Radeon HD 4850 */
