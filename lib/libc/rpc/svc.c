@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.c,v 1.22 2009/06/05 20:23:38 deraadt Exp $ */
+/*	$OpenBSD: svc.c,v 1.23 2009/12/11 22:03:08 schwarze Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -179,7 +179,7 @@ svc_fd_insert(int sock)
 			if (__svc_fdset != &svc_fdset)
 				free(__svc_fdset);
 			__svc_fdset = fds;
-			__svc_fdsetsize = bytes / sizeof(fd_mask);
+			__svc_fdsetsize = bytes / sizeof(fd_mask) * NFDBITS;
 		}
 	}
 
