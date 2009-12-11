@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.68 2009/11/22 22:01:55 deraadt Exp $
+.\"	$OpenBSD: bridge.4,v 1.69 2009/12/11 07:43:59 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 22 2009 $
+.Dd $Mdocdate: December 11 2009 $
 .Dt BRIDGE 4
 .Os
 .Sh NAME
@@ -244,12 +244,12 @@ in the address cache is not forwarded to this interface.
 The default for newly added interfaces has both flags set.
 If the flag
 .Dv IFBIF_BLOCKNONIP
-is set, packets that are one of
+is set, only
 .Xr ip 4 ,
 .Xr ip6 4 ,
 .Xr arp 4 ,
-or
-Reverse ARP will not be bridged from and to the interface.
+and
+Reverse ARP packets will be bridged from and to the interface.
 .It Dv SIOCBRDGGIFFLGS Fa "struct ifbreq *"
 Retrieve the bridge member interface flags for the interface named in
 .Va ifbr_ifsname
