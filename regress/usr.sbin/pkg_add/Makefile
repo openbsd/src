@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.20 2009/12/11 13:02:59 espie Exp $
+# $OpenBSD: Makefile,v 1.21 2009/12/11 20:57:45 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
 	collision-check3 partial-update-test conflict-update \
-	merge-update split-update
+	merge-update split-update big-merge
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -102,6 +102,13 @@ split-update: old/o-0.0.tgz new/o-1.0.tgz new/p-0.0.tgz
 	ROOT=${D13} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -u o
 	PKG_DBDIR=${D13}/pkgdb pkg_info -q |diff - ${.CURDIR}/list5.out
 
+big-merge: old/q1-0.0.tgz old/q2-0.0.tgz old/q3-0.0.tgz old/q4-0.0.tgz \
+	new/q1-1.0.tgz new/q2-1.0.tgz new/q3-1.0.tgz new/q4-1.0.tgz
+	-rm -rf ${D14}
+	ROOT=${D14} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} q1 q2 q3 q4
+	ROOT=${D14} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -F update -u q1 q2 q3 q4 2>&1|fgrep XXX|fgrep -v @|diff - ${.CURDIR}/list6.out
+
+	
 plist1:
 	@echo "@owner "`whoami` >$@
 	@echo ${LONG1} >>$@
@@ -210,6 +217,29 @@ old/h-0.0.tgz:
 new/h-1.0.tgz:
 	${PKG_CREATE} -P'test/j:j->=1:j-1.0' -f ${.CURDIR}/empty $@
 
+depend_q1=
+depend_q2=-P'test/q1:q1-*:q1-0.0'
+depend_q3=-P'test/q2:q2-*:q2-0.0'
+depend_q4=-P'test/q3:q3-*:q3-0.0'
+
+.for n in q1 q2 q3 q4
+plist-old-$n:
+	@echo "@unexec echo 1>&2 'XXXold $n'" >$@
+
+old/$n-0.0.tgz: plist-old-$n
+	${PKG_CREATE} ${depend_$n} -f plist-old-$n $@
+new/$n-1.0.tgz: plist-new-$n
+	${PKG_CREATE} ${depend_$n} -f plist-new-$n $@
+
+plist-new-$n:
+	@echo "@conflict q1-0.0" >$@
+	@echo "@conflict q2-0.0" >>$@
+	@echo "@conflict q3-0.0" >>$@
+	@echo "@conflict q4-0.0" >>$@
+	@echo "@exec echo 1>&2 'XXXnew $n'" >>$@
+
+.endfor
+	
 
 # some extra tests do not yet pass correctly
 .PHONY: ${REGRESS_TARGETS} \
