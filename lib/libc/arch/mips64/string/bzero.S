@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.4 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: bzero.S,v 1.5 2009/12/11 05:10:17 miod Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,26 +38,26 @@
 LEAF(bzero, 0)
 	.set	noreorder
 	blt	a1, 12, smallclr	# small amount to clear?
-	subu	a3, zero, a0		# compute # bytes to word align address
+	dsubu	a3, zero, a0		# compute # bytes to word align address
 	and	a3, a3, 3
 	beq	a3, zero, 1f		# skip if word aligned
-	subu	a1, a1, a3		# subtract from remaining count
+	dsubu	a1, a1, a3		# subtract from remaining count
 	SWHI	zero, 0(a0)		# clear 1, 2, or 3 bytes to align
-	addu	a0, a0, a3
+	daddu	a0, a0, a3
 1:
 	and	v0, a1, 3		# compute number of words left
-	subu	a3, a1, v0
+	dsubu	a3, a1, v0
 	move	a1, v0
-	addu	a3, a3, a0		# compute ending address
+	daddu	a3, a3, a0		# compute ending address
 2:
-	addu	a0, a0, 4		# clear words
+	daddu	a0, a0, 4		# clear words
 	bne	a0, a3, 2b		#   unrolling loop does not help
 	sw	zero, -4(a0)		#   since we are limited by memory speed
 smallclr:
 	ble	a1, zero, 2f
-	addu	a3, a1, a0		# compute ending address
+	daddu	a3, a1, a0		# compute ending address
 1:
-	addu	a0, a0, 1		# clear bytes
+	daddu	a0, a0, 1		# clear bytes
 	bne	a0, a3, 1b
 	sb	zero, -1(a0)
 2:

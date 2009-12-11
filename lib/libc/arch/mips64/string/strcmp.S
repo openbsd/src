@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.S,v 1.3 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: strcmp.S,v 1.4 2009/12/11 05:10:17 miod Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,14 +45,14 @@ LEAF(strcmp, 0)
 	bne	t0, t1, NotEq
 	lbu	t0, 1(a0)		# unroll loop
 	lbu	t1, 1(a1)
-	add	a0, a0, 2
+	dadd	a0, a0, 2
 	beq	t0, zero, LessOrEq	# end of first string?
-	add	a1, a1, 2
+	dadd	a1, a1, 2
 	beq	t0, t1, 1b
 NotEq:
-	subu	v0, t0, t1
+	dsubu	v0, t0, t1
 	j	ra
 LessOrEq:
-	subu	v0, zero, t1
+	dsubu	v0, zero, t1
 	j	ra
 END(strcmp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rindex.S,v 1.3 2005/08/07 16:40:15 espie Exp $ */
+/*	$OpenBSD: rindex.S,v 1.4 2009/12/11 05:10:17 miod Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,9 +38,9 @@ LEAF(rindex, 0)
 	move	v0, zero		# default if not found
 1:
 	lbu	a3, 0(a0)		# get a byte
-	addu	a0, a0, 1
+	daddu	a0, a0, 1
 	bne	a3, a1, 2f
-	subu	v0, a0, 1		# save address of last match
+	dsubu	v0, a0, 1		# save address of last match
 2:
 	bne	a3, zero, 1b		# continue if not end
 	j	ra

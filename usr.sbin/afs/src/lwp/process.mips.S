@@ -29,10 +29,14 @@
 #define	REGSIZE	8
 #define	REG_S	sd
 #define	REG_L	ld
+#define	ADDU	daddu
+#define	SUBU	dsubu
 #else
 #define	REGSIZE	4
 #define	REG_S	sw
 #define	REG_L	lw
+#define	ADDU	addu
+#define	SUBU	subu
 #endif
 	
 #ifdef HAVE_PIC
@@ -61,7 +65,7 @@ savecontext:
         .set    noreorder
         .cpload t9                      # set up gp for KPIC
         .set    reorder
-        subu sp, regspace
+        SUBU sp, regspace
         .cprestore GPOFF                # trigger t9/jalr
 	.set	noreorder
 	li	t0, 1
@@ -126,7 +130,7 @@ returnto:
 	l.d	$f28, floats + 32(sp)
 	l.d	$f30, floats + 40(sp)
 	.set	noreorder
-	addu	sp, regspace
+	ADDU	sp, regspace
 	sw	zero, PRE_Block
 	j	ra
 	 nop
@@ -171,7 +175,7 @@ savecontext:
 	li	t0, 1
 	.extern	PRE_Block
 	sw	t0, PRE_Block
-	subu	sp, regspace
+	SUBU	sp, regspace
 	.frame	sp, regspace, ra
 /* Save registers. */
 	REG_S	s0, registers + (0 * REGSIZE)(sp)

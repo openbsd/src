@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.8 2009/09/30 06:22:00 syuu Exp $ */
+/*	$OpenBSD: asm.h,v 1.9 2009/12/11 05:10:17 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -185,17 +185,17 @@
  */
 #if defined(XGPROF) || defined(XPROF)
 #define	MCOUNT			\
-	PTR_SUBU sp, sp, 32;	\
+	PTR_SUBU sp, sp, 64;	\
 	SAVE_GP(16);		\
-	sw	ra, 28(sp);	\
-	sw	gp, 24(sp);	\
+	sd	ra, 56(sp);	\
+	sd	gp, 48(sp);	\
 	.set	noat;		\
 	.set	noreorder;	\
 	move	AT, ra;		\
 	jal	_mcount;	\
-	PTR_SUBU sp, sp, 8;	\
-	lw	ra, 28(sp);	\
-	PTR_ADDU sp, sp, 32;	\
+	PTR_SUBU sp, sp, 16;	\
+	ld	ra, 56(sp);	\
+	PTR_ADDU sp, sp, 64;	\
 	.set reorder;		\
 	.set	at;
 #else
@@ -279,7 +279,7 @@ x: ;				\
 	MSG(msg)
 
 #define	PRINTF(msg) \
-	la	a0, 9f; \
+	LA	a0, 9f; \
 	jal	printf; \
 	nop	;	\
 	MSG(msg)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: index.S,v 1.4 2009/11/01 20:04:30 miod Exp $ */
+/*	$OpenBSD: index.S,v 1.5 2009/12/11 05:10:17 miod Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,13 +37,13 @@ LEAF(index, 0)
 	.set	reorder
 0:
 	lbu	a2, 0(a0)		# get a byte
-	addu	a0, a0, 1
+	daddu	a0, a0, 1
 	beq	a2, a1, fnd
 	bne	a2, zero, 0b
 notfnd:
 	move	v0, zero
 	j	ra
 fnd:
-	subu	v0, a0, 1
+	dsubu	v0, a0, 1
 	j	ra
 END(index)
