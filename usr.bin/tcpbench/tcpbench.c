@@ -193,9 +193,9 @@ print_header(void)
 }
 
 static void
-kget(kvm_t *kh, u_long addr, void *buf, int size)
+kget(kvm_t *kh, u_long addr, void *buf, size_t size)
 {
-	if (kvm_read(kh, addr, buf, size) != size)
+	if (kvm_read(kh, addr, buf, size) != (ssize_t)size)
 		errx(1, "kvm_read: %s", kvm_geterr(kh));
 }
 
@@ -333,7 +333,7 @@ kupdate_stats(kvm_t *kh, u_long tcbaddr,
 static void
 check_kvar(const char *var)
 {
-	size_t i;
+	u_int i;
 
 	for (i = 0; allowed_kvars[i] != NULL; i++)
 		if (strcmp(allowed_kvars[i], var) == 0)
@@ -344,7 +344,7 @@ check_kvar(const char *var)
 static void
 list_kvars(void)
 {
-	size_t i;
+	u_int i;
 
 	fprintf(stderr, "Supported kernel variables:\n");
 	for (i = 0; allowed_kvars[i] != NULL; i++)
@@ -355,7 +355,7 @@ static char **
 check_prepare_kvars(char *list)
 {
 	char *item, **ret = NULL;
-	size_t n = 0;
+	u_int n = 0;
 
 	while ((item = strsep(&list, ", \t\n")) != NULL) {
 		check_kvar(item);
