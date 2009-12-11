@@ -726,6 +726,7 @@ listowned_1 (struct rx_connection *conn, const char *user)
     }
 
     free(pr.val);
+    free(name);
     return 0;
 }
 
