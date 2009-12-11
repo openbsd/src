@@ -2775,6 +2775,7 @@ static int do_multi(int multi)
 			close(fd[1]);
 			mr=1;
 			usertime=0;
+			free(fds);
 			return 0;
 			}
 		printf("Forked child %d\n",n);
@@ -2924,6 +2925,7 @@ static int do_multi(int multi)
 				fprintf(stderr,"Unknown type '%s' from child %d\n",buf,n);
 			}
 		}
+	free(fds);
 	return 1;
 	}
 #endif
