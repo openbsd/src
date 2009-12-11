@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.17 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: keynote.l,v 1.18 2009/12/11 17:25:43 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -287,11 +287,9 @@ keynote_lex_add(void *s, int type)
     }
 
     if (p != keynote_lex_list)
-    {
-	free(keynote_lex_list);
-        keynote_lex_list = p;
-    }
+ 	free(keynote_lex_list);
 
+    keynote_lex_list = p;
     keynote_lex_list[i].lex_s = s;
     keynote_lex_list[i++].lex_type = type;
     keynote_lex_counter++;
