@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.419 2009/12/07 13:41:02 espie Exp $
+# $OpenBSD: pkg_add,v 1.420 2009/12/11 21:04:01 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -326,6 +326,49 @@ sub partial_install
 	return failed_message($base_msg, $state->{interrupted}, save_partial_set($set, $state));
 }
 
+sub iterate
+{
+	my $sub = pop @_;
+	for my $p (@_) {
+		&$sub($p);
+	}
+}
+
+sub okay
+{
+	my ($h, $c) = @_;
+
+	for my $d (@{$c->{before}}) {
+		return 0 if !$h->{$d};
+	}
+	return 1;
+}
+
+sub iterate2
+{
+	my $sub = pop @_;
+	my $done = {};
+	my $something_done;
+
+	do {
+		$something_done = 0;
+
+		for my $c (@_) {
+			next if $done->{$c->pkgname};
+			if (okay($done, $c)) {
+				&$sub($c);
+				$done->{$c->pkgname} = 1;
+				$something_done = 1;
+			}
+		}
+	} while ($something_done);
+	# if we can't do stuff in order, do it anyways
+	for my $c (@_) {
+		next if $done->{$c->pkgname};
+		&$sub($c);
+	}
+}
+
 sub really_add
 {
 	my ($set, $state) = @_;
@@ -414,7 +457,8 @@ sub really_add
 		}
 
 		$set->{solver}->record_old_dependencies($state);
-		for my $o ($set->older_to_do) {
+		iterate($set->older_to_do, sub {
+			my $o = shift;
 			$set->setup_header($state, $o, "deleting");
 			my $oldname = $o->pkgname;
 			$state->set_name_from_handle($o);
@@ -433,12 +477,14 @@ sub really_add
 			}
 			OpenBSD::PkgCfl::unregister($o->plist, $state);
 			$state->progress->clear;
-		}
+		});
 		# Here there should be code to handle old libs
 	}
 
 	my $first = 1;
-	for my $handle ($set->newer) {
+	iterate2($set->newer, sub {
+		my $handle = shift;
+
 		if (!$first) {
 			$state->progress->next;
 			$first = 0;
@@ -466,7 +512,7 @@ sub really_add
 			Fatal partial_install("Installation of $pkgname failed",
 			    $set, $state);
 		}
-	}
+	});
 	$set->setup_header($state);
 	$state->progress->next($state->{todo}-1);
 	for my $handle ($set->newer) {

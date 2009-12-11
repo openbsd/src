@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.96 2009/12/07 13:41:02 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.97 2009/12/11 21:04:01 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -283,7 +283,7 @@ sub find_dep_in_stuff_to_install
 
 sub solve_dependency
 {
-	my ($self, $state, $dep) = @_;
+	my ($self, $state, $dep, $package) = @_;
 
 	my $v;
 
@@ -291,6 +291,7 @@ sub solve_dependency
 		
 		$v = $self->find_dep_in_self($state, $dep);
 		if ($v) {
+			push(@{$package->{before}}, $v);
 			return $v;
 		}
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
@@ -347,7 +348,7 @@ sub solve_depends
 
 	for my $package ($self->{set}->newer) {
 		for my $dep (@{$package->{plist}->{depend}}) {
-			my $v = $self->solve_dependency($state, $dep);
+			my $v = $self->solve_dependency($state, $dep, $package);
 			$self->{all_dependencies}->{$v} = $dep;
 			$self->{to_register}->{$package}->{$v} = $dep;
 		}
