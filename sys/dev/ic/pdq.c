@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq.c,v 1.13 2007/02/14 00:53:48 jsg Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.14 2009/12/11 01:43:19 guenther Exp $	*/
 /*	$NetBSD: pdq.c,v 1.9 1996/10/13 01:37:26 christos Exp $	*/
 
 /*-
@@ -357,82 +357,60 @@ static const struct {
     size_t rsp_len;
     const char *cmd_name;
 } pdq_cmd_info[] = {
-    { sizeof(pdq_cmd_generic_t),		/* 0 - PDQC_START */
-      sizeof(pdq_response_generic_t),
-      "Start"
-    },
-    { sizeof(pdq_cmd_filter_set_t),		/* 1 - PDQC_FILTER_SET */
-      sizeof(pdq_response_generic_t),
-      "Filter Set"
-    },
-    { sizeof(pdq_cmd_generic_t),		/* 2 - PDQC_FILTER_GET */
-      sizeof(pdq_response_filter_get_t),
-      "Filter Get"
-    },
-    { sizeof(pdq_cmd_chars_set_t),		/* 3 - PDQC_CHARS_SET */
-      sizeof(pdq_response_generic_t),
-      "Chars Set"
-    },
-    { sizeof(pdq_cmd_generic_t),		/* 4 - PDQC_STATUS_CHARS_GET */
-      sizeof(pdq_response_status_chars_get_t),
-      "Status Chars Get"
-    },
-#if 0
-    { sizeof(pdq_cmd_generic_t),		/* 5 - PDQC_COUNTERS_GET */
-      sizeof(pdq_response_counters_get_t),
-      "Counters Get"
-    },
-    { sizeof(pdq_cmd_counters_set_t),		/* 6 - PDQC_COUNTERS_SET */
-      sizeof(pdq_response_generic_t),
-      "Counters Set"
-    },
-#else
-    { 0, 0, "Counters Get" },
-    { 0, 0, "Counters Set" },
-#endif
-    { sizeof(pdq_cmd_addr_filter_set_t),	/* 7 - PDQC_ADDR_FILTER_SET */
-      sizeof(pdq_response_generic_t),
-      "Addr Filter Set"
-    },
-    { sizeof(pdq_cmd_generic_t),		/* 8 - PDQC_ADDR_FILTER_GET */
-      sizeof(pdq_response_addr_filter_get_t),
-      "Addr Filter Get"
-    },
-#if 0
-    { sizeof(pdq_cmd_generic_t),		/* 9 - PDQC_ERROR_LOG_CLEAR */
-      sizeof(pdq_response_generic_t),
-      "Error Log Clear"
-    },
-    { sizeof(pdq_cmd_generic_t),		/* 10 - PDQC_ERROR_LOG_SET */
-      sizeof(pdq_response_generic_t),
-      "Error Log Set"
-    },
-    { sizeof(pdq_cmd_generic_t),		/* 11 - PDQC_FDDI_MIB_GET */
-      sizeof(pdq_response_generic_t),
-      "FDDI MIB Get"
-    },
-    { sizeof(pdq_cmd_generic_t),		/* 12 - PDQC_DEC_EXT_MIB_GET */
-      sizeof(pdq_response_generic_t),
-      "DEC Ext MIB Get"
-    },
-    { sizeof(pdq_cmd_generic_t),		/* 13 - PDQC_DEC_SPECIFIC_GET */
-      sizeof(pdq_response_generic_t),
-      "DEC Specific Get"
-    },
-    { sizeof(pdq_cmd_generic_t),		/* 14 - PDQC_SNMP_SET */
-      sizeof(pdq_response_generic_t),
-      "SNMP Set"
-    },
-    { 0, 0, "N/A" },
-    { sizeof(pdq_cmd_generic_t),		/* 16 - PDQC_SMT_MIB_GET */
-      sizeof(pdq_response_generic_t),
-      "SMT MIB Get"
-    },
-    { sizeof(pdq_cmd_generic_t),		/* 17 - PDQC_SMT_MIB_SET */
-      sizeof(pdq_response_generic_t),
-      "SMT MIB Set",
-    },
-#endif
+#define YES(cmd, rsp, name)	{ sizeof(cmd), sizeof(rsp), name }
+#define NO(cmd, rsp, name)	{ 0, 0, name }
+    YES(pdq_cmd_generic_t,		/* 0 - PDQC_START */
+	pdq_response_generic_t,
+	"Start"),
+    YES(pdq_cmd_filter_set_t,		/* 1 - PDQC_FILTER_SET */
+	pdq_response_generic_t,
+	"Filter Set"),
+    YES(pdq_cmd_generic_t,		/* 2 - PDQC_FILTER_GET */
+	pdq_response_filter_get_t,
+	"Filter Get"),
+    YES(pdq_cmd_chars_set_t,		/* 3 - PDQC_CHARS_SET */
+	pdq_response_generic_t,
+	"Chars Set"),
+    YES(pdq_cmd_generic_t,		/* 4 - PDQC_STATUS_CHARS_GET */
+	pdq_response_status_chars_get_t,
+	"Status Chars Get"),
+    NO(pdq_cmd_generic_t,		/* 5 - PDQC_COUNTERS_GET */
+	pdq_response_counters_get_t,
+	"Counters Get"),
+    NO(pdq_cmd_counters_set_t,		/* 6 - PDQC_COUNTERS_SET */
+	pdq_response_generic_t,
+	"Counters Set"),
+    YES(pdq_cmd_addr_filter_set_t,	/* 7 - PDQC_ADDR_FILTER_SET */
+	pdq_response_generic_t,
+	"Addr Filter Set"),
+    YES(pdq_cmd_generic_t,		/* 8 - PDQC_ADDR_FILTER_GET */
+	pdq_response_addr_filter_get_t,
+	"Addr Filter Get"),
+    NO(pdq_cmd_generic_t,		/* 9 - PDQC_ERROR_LOG_CLEAR */
+	pdq_response_generic_t,
+	"Error Log Clear"),
+    NO(pdq_cmd_generic_t,		/* 10 - PDQC_ERROR_LOG_SET */
+	pdq_response_generic_t,
+	"Error Log Set"),
+    NO(pdq_cmd_generic_t,		/* 11 - PDQC_FDDI_MIB_GET */
+	pdq_response_generic_t,
+	"FDDI MIB Get"),
+    NO(pdq_cmd_generic_t,		/* 12 - PDQC_DEC_EXT_MIB_GET */
+	pdq_response_generic_t,
+	"DEC Ext MIB Get"),
+    NO(pdq_cmd_generic_t,		/* 13 - PDQC_DEC_SPECIFIC_GET */
+	pdq_response_generic_t,
+	"DEC Specific Get"),
+    NO(pdq_cmd_generic_t,		/* 14 - PDQC_SNMP_SET */
+	pdq_response_generic_t,
+	"SNMP Set"),
+    NO(XXX, XXX, "N/A"),		/* 15 - XXX */
+    NO(pdq_cmd_generic_t,		/* 16 - PDQC_SMT_MIB_GET */
+	pdq_response_generic_t,
+	"SMT MIB Get"),
+    NO(pdq_cmd_generic_t,		/* 17 - PDQC_SMT_MIB_SET */
+	pdq_response_generic_t,
+	"SMT MIB Set"),
 };
 
 static void
