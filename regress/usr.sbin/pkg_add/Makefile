@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.19 2009/12/03 18:45:50 espie Exp $
+# $OpenBSD: Makefile,v 1.20 2009/12/11 13:02:59 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
 	collision-check3 partial-update-test conflict-update \
@@ -140,16 +140,12 @@ plist7:
 	@echo "@conflict m-<1.0" >$@
 	@echo "@pkgpath test/m" >>$@
 
-plist-p/PLIST:
+plist8:
 	@mkdir -p ${@D}
 	@echo "@conflict o-<1.0" >$@
 	@echo "@pkgpath test/o" >>$@
 	@echo "@owner "`whoami` >>$@
-	@echo "%%SHARED%%" >>$@
-
-plist-p/PFRAG.shared:
-	@mkdir -p ${@D}
-	@echo '@lib lib/libcoincoin.so.$${LIBcoincoin_VERSION}' >$@
+	@echo '@lib lib/libcoincoin.so.$${LIBcoincoin_VERSION}' >>$@
 
 old/a-0.0.tgz:
 	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
@@ -162,10 +158,10 @@ old/n-0.0.tgz new/m-1.0.tgz old/o-0.0.tgz:
 new/o-1.0.tgz:
 	${PKG_CREATE} -P'test/p:p-*:p-0.0' -W'coincoin.0.0' -f ${.CURDIR}/empty $@
 
-new/p-0.0.tgz: p/PLIST p/PFRAG.shared
+new/p-0.0.tgz: plist8
 	mkdir -p ${SRC13}/lib
 	@touch ${SRC13}/lib/libcoincoin.so.0.0
-	${PKG_CREATE} -B src13 -DSHARED_LIBS=1 -DLIBcoincoin_VERSION=0.0 -f p/PLIST $@
+	${PKG_CREATE} -B src13 -DLIBcoincoin_VERSION=0.0 -f plist8 $@
 
 
 new/b-1.0.tgz:
