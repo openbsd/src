@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ccp.c,v 1.32 2005/07/17 19:13:24 brad Exp $
+ * $OpenBSD: ccp.c,v 1.33 2009/12/11 18:15:17 oga Exp $
  */
 
 #include <sys/param.h>
@@ -133,7 +133,7 @@ protoname(int proto)
     "DEFLATE",		/* 26: Deflate (rfc1979) */
   };
 
-  if (proto < 0 || proto > sizeof cftypes / sizeof *cftypes ||
+  if (proto < 0 || proto >= sizeof cftypes / sizeof *cftypes ||
       cftypes[proto] == NULL) {
     if (proto == -1)
       return "none";
