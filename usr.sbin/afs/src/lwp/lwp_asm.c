@@ -465,11 +465,13 @@ LWP_CreateProcess(void (*ep)(), int stacksize, int priority,
 #else /* !AFS_AIX32_ENV */
     if ((stackptr = (char *) lwp_stackmalloc(stacksize)) == NULL) {
 	Set_LWP_RC();
+	free(temp);
 	return LWP_ENOMEM;
     }
 #endif /* AFS_AIX32_ENV */
     if (priority < 0 || priority >= MAX_PRIORITIES) {
 	Set_LWP_RC();
+	free(temp);
 	return LWP_EBADPRI;
     }
     Initialize_Stack(stackptr, stacksize);
