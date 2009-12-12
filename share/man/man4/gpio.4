@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.15 2008/11/27 14:15:02 jmc Exp $
+.\"	$OpenBSD: gpio.4,v 1.16 2009/12/12 03:19:29 krw Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2008 $
+.Dd $Mdocdate: December 12 2009 $
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -160,7 +160,7 @@ Only GPIO pins that have been set using
 .Ar GPIOPINSET
 will be accessible at securelevels greater than 0.
 .It Dv GPIOPINUNSET (struct gpio_pin_set)
-Unset the specified pin, i.e. clear its name and make it unaccessible
+Unset the specified pin, i.e. clear its name and make it inaccessible
 at securelevels greater than 0.
 .It Dv GPIOATTACH (struct gpio_attach)
 Attach the device described in the
