@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.15 2009/12/09 22:39:52 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.16 2009/12/12 13:24:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -975,9 +975,12 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	int desc, s;
 	int timeout;
 
+	s = splbio();
 	if (sc->sc_vio_state != VIO_ESTABLISHED ||
-	    sc->sc_tx_cnt >= sc->sc_vd->vd_nentries)
+	    sc->sc_tx_cnt >= sc->sc_vd->vd_nentries) {
+		splx(s);
 		return (NO_CCB);
+	}
 
 	desc = sc->sc_tx_prod;
 
@@ -1033,10 +1036,11 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	dm.start_idx = dm.end_idx = desc;
 	vdsk_sendmsg(sc, &dm, sizeof(dm));
 
-	if (!ISSET(xs->flags, SCSI_POLL))
+	if (!ISSET(xs->flags, SCSI_POLL)) {
+		splx(s);
 		return (SUCCESSFULLY_QUEUED);
+	}
 
-	s = splbio();
 	timeout = 1000;
 	do {
 		if (vdsk_rx_intr(sc) &&
