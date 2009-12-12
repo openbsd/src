@@ -1,4 +1,4 @@
-/*	$OpenBSD: htons.S,v 1.3 2004/09/09 15:41:18 pefo Exp $	*/
+/*	$OpenBSD: htons.S,v 1.4 2009/12/12 20:03:54 miod Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -40,11 +40,16 @@
  */
 LEAF(htons, 0)
 ALEAF(ntohs)
+#ifdef __MIPSEL__
 	.set	noreorder
 	srl	v0, a0, 8
 	and	v0, v0, 0xff
 	sll	v1, a0, 8
 	and	v1, v1, 0xff00
 	j	ra
-	 or	v0, v0, v1
+	or	v0, v0, v1
+#else
+	j	ra
+	move	v0, a0
+#endif
 END(htons)

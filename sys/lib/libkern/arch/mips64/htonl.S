@@ -1,4 +1,4 @@
-/*	$OpenBSD: htonl.S,v 1.3 2004/09/09 15:41:18 pefo Exp $	*/
+/*	$OpenBSD: htonl.S,v 1.4 2009/12/12 20:03:54 miod Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -40,6 +40,7 @@
  */
 LEAF(htonl, 0)				# a0 = 0x11223344, return 0x44332211
 ALEAF(ntohl)
+#ifdef __MIPSEL__
 	.set	noreorder
 	srl	v1, a0, 24		# v1 = 0x00000011
 	sll	v0, a0, 24		# v0 = 0x44000000
@@ -51,4 +52,8 @@ ALEAF(ntohl)
 	and	v1, v1, 0xff00		# v1 = 0x00002200
 	j	ra
 	or	v0, v0, v1
+#else
+	j	ra
+	move	v0, a0
+#endif
 END(htonl)
