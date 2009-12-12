@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.24 2009/12/07 19:05:59 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.25 2009/12/12 20:07:10 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -56,6 +56,7 @@
  */
 	.set	noat
 
+#if defined(CPU_R5000) || defined(CPU_RM7000)
 	.globl	tlb_miss_err_r5k
 	.ent	tlb_miss_err_r5k, 0
 tlb_miss_err_r5k:
@@ -80,6 +81,7 @@ tlb_miss_err_r5k:
 	j	k_tlb_inv
 	 nop
 	.end	tlb_miss_err_r5k
+#endif	/* CPU_R5000 || CPU_RM7000 */
 
 	.globl	tlb_miss
 	.ent	tlb_miss, 0

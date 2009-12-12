@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.9 2009/11/07 21:42:07 miod Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.10 2009/12/12 20:07:10 miod Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -35,6 +35,9 @@ option		RAMDISK_HOOKS
 
 # Define what targets to support
 option		TGT_O2		# O2, O2+
+option		CPU_R5000	# R5000/RM5200 support
+option		CPU_RM7000	# RM7000 support
+option		CPU_R10000	# R10000/R12000/R14000/R16000 support
 
 # Specify storage configuration using ramdisk
 config		bsd	root on rd0a swap on rd0b

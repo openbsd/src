@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.33 2009/12/08 22:14:43 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.34 2009/12/12 20:07:10 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -72,27 +72,11 @@ LEAF(savectx, 0)
 END(savectx)
 
 LEAF(cpu_idle_enter, 0)
-#if defined(TGT_CP7000) || defined(TGT_CP7000G)
-	PTR_L	t2, misc_h		# if non zero, do Ocelot LEDs.
-	beqz	t2, 1f
-	li	t0, 0x40
-	sb	t0, 0x0d(t2)
-1:
-#endif
-
 	j	ra
 	nop
 END(cpu_idle_enter)
 
 LEAF(cpu_idle_leave, 0)
-#if defined(TGT_CP7000) || defined(TGT_CP7000G)
-	PTR_L	t2, misc_h		# if non zero, do Ocelot LEDs.
-	beqz	t2, 1f
-	li	t0, 0x40
-	sb	t0, 0x0c(t2)
-1:
-#endif
-
 	j	ra
 	nop
 END(cpu_idle_leave)

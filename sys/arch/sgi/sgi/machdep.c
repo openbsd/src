@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.93 2009/12/07 19:05:59 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.94 2009/12/12 20:07:10 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -61,7 +61,9 @@
 #include <machine/mnode.h>
 #endif
 
+#ifdef CPU_RM7000
 #include <mips64/rm7000.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -144,10 +146,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	extern char start[], edata[], end[];
 	extern char exception[], e_exception[];
 	extern char *hw_vendor;
-	extern void tlb_miss;
-	extern void tlb_miss_err_r5k;
-	extern void xtlb_miss;
-	extern void xtlb_miss_err_r5k;
 
 	/*
 	 * Make sure we can access the extended address space.
@@ -355,6 +353,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		 * Configure TLB.
 		 */
 		switch(sys_config.cpu[0].type) {
+#ifdef CPU_RM7000
 		case MIPS_RM7000:
 			/*
 			 * Rev A (version >= 2) CPU's have 64 TLB entries.
@@ -398,13 +397,14 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 					sys_config.cpu[0].tlbsize = 64;
 			}
 			break;
-
+#endif
+#ifdef CPU_R10000
 		case MIPS_R10000:
 		case MIPS_R12000:
 		case MIPS_R14000:
 			sys_config.cpu[0].tlbsize = 64;
 			break;
-
+#endif
 		default:
 			sys_config.cpu[0].tlbsize = 48;
 			break;
@@ -419,17 +419,25 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 * Configure cache.
 	 */
 	switch(sys_config.cpu[0].type) {
+#ifdef CPU_R10000
 	case MIPS_R10000:
 	case MIPS_R12000:
 	case MIPS_R14000:
 		cputype = MIPS_R10000;
 		break;
+#endif
+#ifdef CPU_R5000
 	case MIPS_R5000:
-	case MIPS_RM7000:
 	case MIPS_RM52X0:
+		cputype = MIPS_R5000;
+		break;
+#endif
+#ifdef CPU_RM7000
+	case MIPS_RM7000:
 	case MIPS_RM9000:
 		cputype = MIPS_R5000;
 		break;
+#endif
 	default:
 		/*
 		 * If we can't identify the cpu type, it must be
@@ -450,16 +458,8 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		break;
 	}
 	switch (cputype) {
-	case MIPS_R10000:
-		Mips10k_ConfigCache();
-		sys_config._SyncCache = Mips10k_SyncCache;
-		sys_config._InvalidateICache = Mips10k_InvalidateICache;
-		sys_config._SyncDCachePage = Mips10k_SyncDCachePage;
-		sys_config._HitSyncDCache = Mips10k_HitSyncDCache;
-		sys_config._IOSyncDCache = Mips10k_IOSyncDCache;
-		sys_config._HitInvalidateDCache = Mips10k_HitInvalidateDCache;
-		break;
 	default:
+#if defined(CPU_R5000) || defined(CPU_RM7000)
 	case MIPS_R5000:
 		Mips5k_ConfigCache();
 		sys_config._SyncCache = Mips5k_SyncCache;
@@ -469,6 +469,18 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		sys_config._IOSyncDCache = Mips5k_IOSyncDCache;
 		sys_config._HitInvalidateDCache = Mips5k_HitInvalidateDCache;
 		break;
+#endif
+#ifdef CPU_R10000
+	case MIPS_R10000:
+		Mips10k_ConfigCache();
+		sys_config._SyncCache = Mips10k_SyncCache;
+		sys_config._InvalidateICache = Mips10k_InvalidateICache;
+		sys_config._SyncDCachePage = Mips10k_SyncDCachePage;
+		sys_config._HitSyncDCache = Mips10k_HitSyncDCache;
+		sys_config._IOSyncDCache = Mips10k_IOSyncDCache;
+		sys_config._HitInvalidateDCache = Mips10k_HitInvalidateDCache;
+		break;
+#endif
 	}
 
 	/*
@@ -518,7 +530,9 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	 * Build proper TLB refill handler trampolines.
 	 */
 	switch (cputype) {
+#if defined(CPU_R5000) || defined(CPU_RM7000)
 	case MIPS_R5000:
+	    {
 		/*
 		 * R5000 processors need a specific chip bug workaround
 		 * in their tlb handlers.  Theoretically only revision 1
@@ -528,12 +542,20 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		 * This is also necessary on RM52x0 and most RM7k/RM9k,
 		 * and is a documented errata for these chips.
 		 */
+		extern void tlb_miss_err_r5k;
+		extern void xtlb_miss_err_r5k;
 		tlb_handler = (vaddr_t)&tlb_miss_err_r5k;
 		xtlb_handler = (vaddr_t)&xtlb_miss_err_r5k;
+	    }
 		break;
+#endif
 	default:
+	    {
+		extern void tlb_miss;
+		extern void xtlb_miss;
 		tlb_handler = (vaddr_t)&tlb_miss;
 		xtlb_handler = (vaddr_t)&xtlb_miss;
+	    }
 		break;
 	}
 
@@ -807,7 +829,7 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
 	p->p_md.md_regs->sr = SR_FR_32 | SR_XX | SR_KSU_USER | SR_KX | SR_UX |
 	    SR_EXL | SR_INT_ENAB;
-#if !defined(TGT_COHERENT)
+#if defined(CPU_R10000) && !defined(TGT_COHERENT)
 	if (sys_config.cpu[0].type == MIPS_R12000)
 		p->p_md.md_regs->sr |= SR_DSD;
 #endif
@@ -1001,8 +1023,8 @@ initcpu()
 {
 }
 
+#ifdef CPU_RM7000
 #ifdef	RM7K_PERFCNTR
-
 /*
  * RM7000 Performance counter support.
  */
@@ -1075,6 +1097,7 @@ rm7k_watchintr(trapframe)
 }
 
 #endif	/* RM7K_PERFCNTR */
+#endif	/* CPU_RM7000 */
 
 #ifdef DEBUG
 /*

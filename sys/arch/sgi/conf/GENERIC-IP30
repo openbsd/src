@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.19 2009/11/10 15:50:09 jsing Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.20 2009/12/12 20:07:10 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -28,6 +28,7 @@ option		USBVERBOSE
 # Define what targets to support
 option		TGT_OCTANE	# Octane, Octane 2
 option		TGT_COHERENT
+option		CPU_R10000	# R10000/R12000/R14000/R16000 support
 
 # Specify storage configuration (it's a joke..)
 config		bsd	swap generic

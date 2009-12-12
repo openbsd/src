@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP30,v 1.12 2009/11/07 21:42:07 miod Exp $
+#	$OpenBSD: RAMDISK-IP30,v 1.13 2009/12/12 20:07:10 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 
@@ -36,6 +36,7 @@ option		RAMDISK_HOOKS
 # Define what targets to support
 option		TGT_OCTANE	# Octane, Octane 2
 option		TGT_COHERENT
+option		CPU_R10000	# R10000/R12000/R14000/R16000 support
 
 # Specify storage configuration using ramdisk
 config		bsd	root on rd0a swap on rd0b

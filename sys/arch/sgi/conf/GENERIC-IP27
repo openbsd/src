@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.24 2009/11/18 19:03:25 miod Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.25 2009/12/12 20:07:10 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -28,6 +28,7 @@ option		USBVERBOSE
 # Define what targets to support
 option		TGT_ORIGIN	# IP27/IP35
 option		TGT_COHERENT
+option		CPU_R10000	# R10000/R12000/R14000/R16000 support
 
 # Specify storage configuration (it's a joke..)
 config		bsd	swap generic
