@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.3 2009/11/30 18:41:13 miod Exp $	*/
+/*	$OpenBSD: exec.h,v 1.4 2009/12/12 20:03:16 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
@@ -41,15 +41,9 @@
 /*
  *  If included from sys/exec.h define kernels ELF format.
  */
-#ifdef __LP64__
 #define	ARCH_ELFSIZE 64
 #define DB_ELFSIZE 64
 #define ELF_TARG_CLASS  ELFCLASS64
-#else
-#define	ARCH_ELFSIZE 32
-#define DB_ELFSIZE 32
-#define ELF_TARG_CLASS  ELFCLASS32
-#endif
 
 #if defined(__MIPSEB__)
 #define ELF_TARG_DATA		ELFDATA2MSB
@@ -60,11 +54,7 @@
 
 #define _NLIST_DO_ELF
 
-#if defined(_LP64)
 #define _KERN_DO_ELF64
-#else
-#define _KERN_DO_ELF
-#endif
 
 /* Information taken from MIPS ABI supplemental */
 
