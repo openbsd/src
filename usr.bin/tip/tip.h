@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.32 2009/12/12 13:38:09 nicm Exp $	*/
+/*	$OpenBSD: tip.h,v 1.33 2009/12/12 18:14:00 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -168,15 +168,10 @@ typedef
 typedef
 	struct {
 		char	e_char;			/* char to match on */
-		char	e_flags;		/* experimental, privileged */
 		char	*e_help;		/* help string */
 		void	(*e_func)(int);		/* command */
 	}
 	esctable_t;
-
-#define NORM	00		/* normal protection, execute anyone */
-#define EXP	01		/* experimental, mark it with a `*' on help */
-#define PRIV	02		/* privileged, root execute only */
 
 extern int	vflag;		/* verbose during reading of .tiprc file */
 extern int	noesc;		/* no escape `~' char */
@@ -245,8 +240,6 @@ pid_t	tipin_pid;		/* pid of tipin */
 int	tipin_fd;		/* tipin side of socketpair */
 pid_t	tipout_pid;		/* pid of tipout */
 int	tipout_fd;		/* tipout side of socketpair */
-uid_t	uid, euid;		/* real and effective user id's */
-gid_t	gid, egid;		/* real and effective group id's */
 volatile sig_atomic_t stop;	/* stop transfer session flag */
 volatile sig_atomic_t quit;	/* same; but on other end */
 volatile sig_atomic_t stoprompt;/* for interrupting a prompt session */
@@ -303,7 +296,6 @@ void	cour_disconnect(void);
 void	cu_put(int);
 void	cu_take(int);
 void	cumain(int, char **);
-void	daemon_uid(void);
 void	df_abort(void);
 void	df_disconnect(void);
 void	disconnect(char *);
@@ -326,14 +318,12 @@ void	sendfile(int);
 void	setparity(char *);
 void	setscript(void);
 void	shell(int);
-void	shell_uid(void);
 void	suspend(int);
 void	t3000_disconnect(void);
 void	t3000_abort(void);
 void	timeout(int);
 void	tipabort(char *);
 void	tipout(void);
-void	user_uid(void);
 void	unraw(void);
 void	v3451_abort(void);
 void	v3451_disconnect(void);

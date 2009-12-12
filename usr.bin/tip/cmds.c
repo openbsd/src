@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.29 2009/12/12 13:38:09 nicm Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.30 2009/12/12 18:13:59 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -588,7 +588,6 @@ shell(int c)
 			cp = value(SHELL);
 		else
 			cp++;
-		shell_uid();
 		execl(value(SHELL), cp, (char *)NULL);
 		printf("\r\ncan't execl!\r\n");
 		exit(1);
@@ -650,7 +649,6 @@ tipabort(char *msg)
 	if (msg != NULL)
 		printf("\r\n%s", msg);
 	printf("\r\n[EOT]\r\n");
-	daemon_uid();
 	(void)uu_unlock(uucplock);
 	unraw();
 	exit(0);
@@ -687,7 +685,6 @@ execute(char *s)
 		cp = value(SHELL);
 	else
 		cp++;
-	shell_uid();
 	execl(value(SHELL), cp, "-c", s, (char *)NULL);
 }
 
@@ -925,7 +922,6 @@ expand(char name[])
 		dup(pivec[1]);
 		close(pivec[1]);
 		close(2);
-		shell_uid();
 		execl(Shell, Shell, "-c", cmdbuf, (char *)NULL);
 		_exit(1);
 	}

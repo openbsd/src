@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.8 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.9 2009/12/12 18:14:00 nicm Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.3 1994/12/08 09:30:46 jtc Exp $	*/
 
 /*
@@ -33,24 +33,24 @@
 #include "tip.h"
 
 esctable_t etable[] = {
-	{ '!',	NORM,	"shell",			 shell },
-	{ '<',	NORM,	"receive file from remote host", getfl },
-	{ '>',	NORM,	"send file to remote host",	 sendfile },
-	{ 't',	NORM,	"take file from remote UNIX",	 cu_take },
-	{ 'p',	NORM,	"put file to remote UNIX",	 cu_put },
-	{ '|',	NORM,	"pipe remote file",		 pipefile },
-	{ '$',	NORM,	"pipe local command to remote host", pipeout },
+	{ '!',		"shell",				shell },
+	{ '<',		"receive file from remote host",	getfl },
+	{ '>',		"send file to remote host",		sendfile },
+	{ 't',		"take file from remote UNIX",		cu_take },
+	{ 'p',		"put file to remote UNIX",		cu_put },
+	{ '|',		"pipe remote file",			pipefile },
+	{ '$',		"pipe local command to remote host",	pipeout },
 #ifdef CONNECT
-	{ 'C',  NORM,	"connect program to remote host",consh },
+	{ 'C',  	"connect program to remote host",	consh },
 #endif
-	{ 'c',	NORM,	"change directory",		 chdirectory },
-	{ '.',	NORM,	"exit from tip",		 finish },
-	{CTRL('d'),NORM,"exit from tip",		 finish },
-	{CTRL('y'),NORM,"suspend tip (local+remote)",	 suspend },
-	{CTRL('z'),NORM,"suspend tip (local only)",	 suspend },
-	{ 's',	NORM,	"set variable",			 variable },
-	{ 'v',	NORM,	"list variables",		 listvariables },
-	{ '?',	NORM,	"get this summary",		 help },
-	{ '#',	NORM,	"send break",			 genbrk },
+	{ 'c',		"change directory",		 	chdirectory },
+	{ '.',		"exit from tip",			finish },
+	{ CTRL('d'),	"exit from tip",			finish },
+	{ CTRL('y'),	"suspend tip (local+remote)",		suspend },
+	{ CTRL('z'),	"suspend tip (local only)",		suspend },
+	{ 's',		"set variable",				variable },
+	{ 'v',		"list variables",			listvariables },
+	{ '?',		"get this summary",			help },
+	{ '#',		"send break",				genbrk },
 	{ 0, 0, 0 }
 };
