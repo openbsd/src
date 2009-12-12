@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.153 2009/12/06 01:12:52 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.154 2009/12/12 13:03:56 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -94,10 +94,9 @@ int	cdactivate(struct device *, int);
 int	cddetach(struct device *, int);
 
 void	cdstart(void *);
-void	cdrestart(void *);
+void	cd_buf_done(struct scsi_xfer *);
 void	cdminphys(struct buf *);
 int	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
-void	cddone(struct scsi_xfer *);
 void	cd_kill_buffers(struct cd_softc *);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
 int	cd_getvol(struct cd_softc *cd, struct ioc_vol *, int);
@@ -115,6 +114,9 @@ int	cd_read_toc(struct cd_softc *, int, int, void *, int, int);
 int	cd_get_parms(struct cd_softc *, int);
 int	cd_load_toc(struct cd_softc *, struct cd_toc *, int);
 int	cd_interpret_sense(struct scsi_xfer *);
+
+struct buf *cd_buf_dequeue(struct cd_softc *);
+void	cd_buf_requeue(struct cd_softc *, struct buf *);
 
 int	dvd_auth(struct cd_softc *, union dvd_authinfo *);
 int	dvd_read_physical(struct cd_softc *, union dvd_struct *);
@@ -145,7 +147,7 @@ struct scsi_device cd_switch = {
 	cd_interpret_sense,
 	cdstart,		/* we have a queue, which is started by this */
 	NULL,			/* we do not have an async handler */
-	cddone,			/* deal with stats at interrupt time */
+	NULL,			/* no per driver cddone */
 };
 
 const struct scsi_inquiry_pattern cd_patterns[] = {
@@ -190,6 +192,9 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach:\n"));
 
+	mtx_init(&cd->sc_queue_mtx, IPL_BIO);
+	mtx_init(&cd->sc_start_mtx, IPL_BIO);
+
 	/*
 	 * Store information needed to contact our base driver
 	 */
@@ -215,7 +220,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	timeout_set(&cd->sc_timeout, cdrestart, cd);
+	timeout_set(&cd->sc_timeout, cdstart, cd);
 
 	if ((cd->sc_cdpwrhook = powerhook_establish(cd_powerhook, cd)) == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
@@ -494,12 +499,12 @@ cdstrategy(struct buf *bp)
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 
-	s = splbio();
-
 	/*
 	 * Place it in the queue of disk activities for this disk
 	 */
+	mtx_enter(&cd->sc_queue_mtx);
 	disksort(&cd->buf_queue, bp);
+	mtx_leave(&cd->sc_queue_mtx);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -508,7 +513,6 @@ cdstrategy(struct buf *bp)
 	cdstart(cd);
 
 	device_unref(&cd->sc_dev);
-	splx(s);
 	return;
 
 bad:
@@ -525,6 +529,29 @@ done:
 		device_unref(&cd->sc_dev);
 }
 
+struct buf *
+cd_buf_dequeue(struct cd_softc *sc)
+{
+	struct buf *bp;
+
+	mtx_enter(&sc->sc_queue_mtx);
+	bp = sc->buf_queue.b_actf;
+	if (bp != NULL)
+		sc->buf_queue.b_actf = bp->b_actf;
+	mtx_leave(&sc->sc_queue_mtx);
+
+	return (bp);
+}
+
+void
+cd_buf_requeue(struct cd_softc *sc, struct buf *bp)
+{
+	mtx_enter(&sc->sc_queue_mtx);
+	bp->b_actf = sc->buf_queue.b_actf;
+	sc->buf_queue.b_actf = bp;
+	mtx_leave(&sc->sc_queue_mtx);
+}
+
 /*
  * cdstart looks to see if there is a buf waiting for the device
  * and that the device is not already busy. If both are true,
@@ -539,46 +566,39 @@ done:
  * continues to be drained.
  *
  * must be called at the correct (highish) spl level
- * cdstart() is called at splbio from cdstrategy, cdrestart and scsi_done
+ * cdstart() is called at splbio from cdstrategy and scsi_done
  */
 void
 cdstart(void *v)
 {
 	struct cd_softc *cd = v;
 	struct scsi_link *sc_link = cd->sc_link;
-	struct buf *bp = 0;
-	struct buf *dp;
-	struct scsi_rw_big cmd_big;
-	struct scsi_rw cmd_small;
-	struct scsi_generic *cmdp;
-	int blkno, nblks, cmdlen, error;
+	struct buf *bp;
+	struct scsi_rw_big *cmd_big;
+	struct scsi_rw *cmd_small;
+	int blkno, nblks;
 	struct partition *p;
-
-	splassert(IPL_BIO);
+	struct scsi_xfer *xs;
+	int read;
+	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart\n"));
 	/*
 	 * Check if the device has room for another command
 	 */
-	while (sc_link->openings > 0) {
-		/*
-		 * there is excess capacity, but a special waits
-		 * It'll need the adapter as soon as we clear out of the
-		 * way and let it run (user level wait).
-		 */
-		if (sc_link->flags & SDEV_WAITING) {
-			sc_link->flags &= ~SDEV_WAITING;
-			wakeup((caddr_t)sc_link);
-			return;
-		}
 
-		/*
-		 * See if there is a buf with work for us to do..
-		 */
-		dp = &cd->buf_queue;
-		if ((bp = dp->b_actf) == NULL)	/* yes, an assign */
-			return;
-		dp->b_actf = bp->b_actf;
+	mtx_enter(&cd->sc_start_mtx);
+	if (ISSET(cd->flags, CDF_STARTING)) {
+		mtx_leave(&cd->sc_start_mtx);
+		return;
+	}
+
+	SET(cd->flags, CDF_STARTING);
+	mtx_leave(&cd->sc_start_mtx);
+
+	CLR(cd->flags, CDF_WAITING);
+	while (!ISSET(cd->flags, CDF_WAITING) &&
+	    (bp = cd_buf_dequeue(cd)) != NULL) {
 
 		/*
 		 * If the device has become invalid, abort all the
@@ -589,8 +609,16 @@ cdstart(void *v)
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
+			s = splbio();
 			biodone(bp);
+			splx(s);
 			continue;
+		}
+
+		xs = scsi_xs_get(sc_link, SCSI_NOSLEEP);
+		if (xs == NULL) {
+			cd_buf_requeue(cd, bp);
+			break;
 		}
 
 		/*
@@ -605,6 +633,8 @@ cdstart(void *v)
 		blkno += DL_GETPOFFSET(p);
 		nblks = howmany(bp->b_bcount, cd->sc_dk.dk_label->d_secsize);
 
+		read = (bp->b_flags & B_READ);
+
 		/*
 		 *  Fill out the scsi command.  If the transfer will
 		 *  fit in a "small" cdb, use it.
@@ -616,76 +646,92 @@ cdstart(void *v)
 			/*
 			 * We can fit in a small cdb.
 			 */
-			bzero(&cmd_small, sizeof(cmd_small));
-			cmd_small.opcode = (bp->b_flags & B_READ) ?
+			cmd_small = (struct scsi_rw *)xs->cmd;
+			cmd_small->opcode = read ?
 			    READ_COMMAND : WRITE_COMMAND;
-			_lto3b(blkno, cmd_small.addr);
-			cmd_small.length = nblks & 0xff;
-			cmdlen = sizeof(cmd_small);
-			cmdp = (struct scsi_generic *)&cmd_small;
+			_lto3b(blkno, cmd_small->addr);
+			cmd_small->length = nblks & 0xff;
+			xs->cmdlen = sizeof(*cmd_small);
 		} else {
 			/*
 			 * Need a large cdb.
 			 */
-			bzero(&cmd_big, sizeof(cmd_big));
-			cmd_big.opcode = (bp->b_flags & B_READ) ?
+			cmd_big = (struct scsi_rw_big *)xs->cmd;
+			cmd_big->opcode = read ?
 			    READ_BIG : WRITE_BIG;
-			_lto4b(blkno, cmd_big.addr);
-			_lto2b(nblks, cmd_big.length);
-			cmdlen = sizeof(cmd_big);
-			cmdp = (struct scsi_generic *)&cmd_big;
+			_lto4b(blkno, cmd_big->addr);
+			_lto2b(nblks, cmd_big->length);
+			xs->cmdlen = sizeof(*cmd_big);
 		}
+
+		xs->flags |= (read ? SCSI_DATA_IN : SCSI_DATA_OUT);
+		xs->timeout = 30000;
+		xs->data = bp->b_data;
+		xs->datalen = bp->b_bcount;
+		xs->done = cd_buf_done;
+		xs->cookie = bp;
 
 		/* Instrumentation. */
 		disk_busy(&cd->sc_dk);
 
-		/*
-		 * Call the routine that chats with the adapter.
-		 * Note: we cannot sleep as we may be an interrupt
-		 */
-		error = scsi_scsi_cmd(sc_link, cmdp, cmdlen,
-		    (u_char *) bp->b_data, bp->b_bcount, SCSI_RETRIES, 30000,
-		    bp, SCSI_NOSLEEP | ((bp->b_flags & B_READ) ? SCSI_DATA_IN :
-		    SCSI_DATA_OUT));
-		switch (error) {
-		case 0:
-			timeout_del(&cd->sc_timeout);
-			break;
-		case EAGAIN:
-			/*
-			 * The device can't start another i/o. Try again later.
-			 */
-			dp->b_actf = bp;
-			disk_unbusy(&cd->sc_dk, 0, 0);
-			timeout_add(&cd->sc_timeout, 1);
-			return;
-		default:
-			disk_unbusy(&cd->sc_dk, 0, 0);
-			printf("%s: not queued, error %d\n",
-			    cd->sc_dev.dv_xname, error);
-			break;
-		}
+		scsi_xs_exec(xs);
 	}
+	mtx_enter(&cd->sc_start_mtx);
+	CLR(cd->flags, CDF_STARTING);
+	mtx_leave(&cd->sc_start_mtx);
 }
 
 void
-cdrestart(void *v)
+cd_buf_done(struct scsi_xfer *xs)
 {
-	int s;
+	struct cd_softc *sc = xs->sc_link->device_softc;
+	struct buf *bp = xs->cookie;
 
-	s = splbio();
-	cdstart(v);
-	splx(s);
-}
+	splassert(IPL_BIO);
+         
+	switch (xs->error) {
+	case XS_NOERROR:
+		bp->b_error = 0;
+		bp->b_resid = xs->resid;
+		break;
 
-void
-cddone(struct scsi_xfer *xs)
-{
-	struct cd_softc *cd = xs->sc_link->device_softc;
+	case XS_NO_CCB:
+		/* The adapter is busy, requeue the buf and try it later. */
+		disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
+		    bp->b_flags & B_READ);
+		cd_buf_requeue(sc, bp);
+		scsi_xs_put(xs);
+		SET(sc->flags, CDF_WAITING); /* break out of cdstart loop */
+		timeout_add(&sc->sc_timeout, 1);
+		return;
 
-	if (xs->bp != NULL)
-		disk_unbusy(&cd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid,
-		    (xs->bp->b_flags & B_READ));
+	case XS_SENSE:
+	case XS_SHORTSENSE:
+		if (scsi_interpret_sense(xs) != ERESTART)
+			xs->retries = 0;
+
+		/* FALLTHROUGH */
+	case XS_BUSY:
+	case XS_TIMEOUT:
+		if (xs->retries--) {
+			scsi_xs_exec(xs);
+			return;
+		}
+
+		/* FALLTHROUGH */
+	default:
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		break;
+	}
+
+	disk_unbusy(&sc->sc_dk, bp->b_bcount - xs->resid,
+	    bp->b_flags & B_READ);
+
+	biodone(bp);
+	scsi_xs_put(xs);
+	cdstart(sc); /* restart io */
 }
 
 void
@@ -1941,18 +1987,16 @@ cd_interpret_sense(struct scsi_xfer *xs)
 void
 cd_kill_buffers(struct cd_softc *cd)
 {
-	struct buf *dp, *bp;
+	struct buf *bp;
 	int s;
 
-	s = splbio();
-	for (dp = &cd->buf_queue; (bp = dp->b_actf) != NULL; ) {
-		dp->b_actf = bp->b_actf;
-
+	while ((bp = cd_buf_dequeue(cd)) != NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
+		s = splbio();
 		biodone(bp);
+		splx(s);
 	}
-	splx(s);
 }
 
 #if defined(__macppc__)

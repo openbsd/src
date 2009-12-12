@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.21 2009/06/17 01:30:30 thib Exp $	*/
+/*	$OpenBSD: cd.h,v 1.22 2009/12/12 13:03:56 dlg Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -285,6 +285,8 @@ struct cd_softc {
 #ifdef CDDA
 #define CDF_CDDA	0x20
 #endif
+#define CDF_WAITING	0x100
+#define CDF_STARTING	0x200
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {
 		u_int32_t blksize;
@@ -294,6 +296,8 @@ struct cd_softc {
 	struct cd_parms orig_params;    /* filled in when CD-DA mode starts */
 #endif
 	struct buf buf_queue;
+	struct mutex sc_queue_mtx;
+	struct mutex sc_start_mtx;
 	struct timeout sc_timeout;
 	void *sc_cdpwrhook;		/* our power hook */
 };
