@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.28 2009/12/12 07:44:03 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.29 2009/12/12 17:18:11 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -90,7 +90,6 @@ sub find($$)
 		push(@bad, $pkgname);
 	}
 	if (!defined $state->{conflict_list}) {
-		$state->{conflict_list} = {};
 		fill_conflict_lists($state);
 	}
 	while (my ($name, $l) = each %{$state->{conflict_list}}) {
