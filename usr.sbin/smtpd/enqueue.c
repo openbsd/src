@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.26 2009/11/13 20:34:51 chl Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.27 2009/12/12 10:14:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -478,7 +478,7 @@ qualify_addr(char *in)
 {
 	char	*out;
 
-	if (strchr(in, '@') == NULL) {
+	if (strlen(in) > 0 && strchr(in, '@') == NULL) {
 		if (asprintf(&out, "%s@%s", in, host) == -1)
 			err(1, "qualify asprintf");
 	} else
