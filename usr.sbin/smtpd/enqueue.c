@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.28 2009/12/12 10:33:11 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.29 2009/12/12 14:03:59 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -27,6 +27,7 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
@@ -190,7 +191,8 @@ enqueue(int argc, char *argv[])
 	msg.fd = open_connection();
 
 	/* init session */
-	pcb = client_init(msg.fd, "localhost", verbose);
+	pcb = client_init(msg.fd, open("/dev/null", O_RDONLY), "localhost",
+	    verbose);
 
 	/* parse message */
 	if ((body = buf_dynamic(0, SIZE_T_MAX)) < 0)
@@ -208,25 +210,25 @@ enqueue(int argc, char *argv[])
 
 	/* add From */
 	if (!msg.saw_from)
-		client_data_printf(pcb, "From: %s%s<%s>\n",
+		client_printf(pcb, "From: %s%s<%s>\n",
 		    msg.fromname ? msg.fromname : "",
 		    msg.fromname ? " " : "", 
 		    msg.from);
 
 	/* add Date */
 	if (!msg.saw_date)
-		client_data_printf(pcb, "Date: %s\n", time_to_text(timestamp));
+		client_printf(pcb, "Date: %s\n", time_to_text(timestamp));
 
 	/* add Message-Id */
 	if (!msg.saw_msgid)
-		client_data_printf(pcb, "Message-Id: <%llu.enqueue@%s>\n",
+		client_printf(pcb, "Message-Id: <%llu.enqueue@%s>\n",
 		    generate_uid(), host);
 
 	/* add separating newline */
 	if (noheader)
-		client_data_printf(pcb, "\n");
+		client_printf(pcb, "\n");
 
-	client_data_printf(pcb, "%.*s", buf_size(body), body->buf);
+	client_printf(pcb, "%.*s", buf_size(body), body->buf);
 	buf_free(body);
 
 	/* run the protocol engine */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.h,v 1.5 2009/12/12 10:33:11 jacekm Exp $	*/
+/*	$OpenBSD: client.h,v 1.6 2009/12/12 14:03:59 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -81,7 +81,8 @@ struct smtp_client {
 	size_t			 rcptokay;
 	struct buf_read		 r;
 	struct msgbuf		 w;
-	struct buf		*data;
+	struct buf		*head;
+	FILE			*body;
 	struct client_ext	 exts[CLIENT_EXT_MAX];
 	int			(*handler)(struct smtp_client *);
 	void			*ssl_state;
@@ -92,7 +93,7 @@ struct smtp_client {
 	FILE			*verbose;
 };
 
-struct smtp_client	*client_init(int, char *, int);
+struct smtp_client	*client_init(int, int, char *, int);
 void			 client_ssl_smtps(struct smtp_client *);
 void			 client_ssl_optional(struct smtp_client *);
 void			 client_certificate(struct smtp_client *, char *,
@@ -100,7 +101,6 @@ void			 client_certificate(struct smtp_client *, char *,
 void			 client_auth(struct smtp_client *, char *);
 void			 client_sender(struct smtp_client *, char *, ...);
 void			 client_rcpt(struct smtp_client *, void *, char *, ...);
-void			 client_data_fd(struct smtp_client *, int);
-void			 client_data_printf(struct smtp_client *, char *, ...);
+void			 client_printf(struct smtp_client *, char *, ...);
 int			 client_talk(struct smtp_client *);
 void			 client_close(struct smtp_client *);

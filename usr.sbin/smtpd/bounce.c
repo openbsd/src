@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.13 2009/12/12 10:33:11 jacekm Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.14 2009/12/12 14:03:59 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -58,10 +58,14 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 	int			 msgfd = -1;
 	char			*reason;
 
+	/* get message content */
+	if ((msgfd = queue_open_message_file(messagep->message_id)) == -1)
+		goto fail;
+
 	/* init smtp session */
 	if ((cc = calloc(1, sizeof(*cc))) == NULL)
 		goto fail;
-	cc->pcb = client_init(fd, env->sc_hostname, 1);
+	cc->pcb = client_init(fd, msgfd, env->sc_hostname, 1);
 	cc->m = *messagep;
 
 	client_ssl_optional(cc->pcb);
@@ -77,7 +81,7 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 	
 	/* create message header */
 	/* XXX - The Date: header should be added during SMTP pickup. */
-	client_data_printf(cc->pcb,
+	client_printf(cc->pcb,
 	    "Subject: Delivery status notification\n"
 	    "From: Mailer Daemon <MAILER-DAEMON@%s>\n"
 	    "To: %s@%s\n"
@@ -99,13 +103,6 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 	    time_to_text(time(NULL)),
 	    messagep->recipient.user, messagep->recipient.domain,
 	    reason);
-
-	/* append original message */
-	if ((msgfd = queue_open_message_file(messagep->message_id)) == -1)
-		goto fail;
-	client_data_fd(cc->pcb, msgfd);
-	close(msgfd);
-	msgfd = -1;
 
 	/* setup event */
 	session_socket_blockmode(fd, BM_NONBLOCK);

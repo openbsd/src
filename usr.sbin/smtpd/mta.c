@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.80 2009/12/12 10:33:11 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.81 2009/12/12 14:03:59 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -636,7 +636,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		 */
 		log_debug("mta: entering smtp phase");
 
-		pcb = client_init(s->fd, s->env->sc_hostname, 1);
+		pcb = client_init(s->fd, s->datafd, s->env->sc_hostname, 1);
 
 		/* lookup SSL certificate */
 		if (s->cert) {
@@ -678,9 +678,6 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		TAILQ_FOREACH(m, &s->recipients, entry)
 			client_rcpt(pcb, m, "%s@%s", m->recipient.user,
 			    m->recipient.domain);
-
-		/* load message body */
-		client_data_fd(pcb, s->datafd);
 
 		s->pcb = pcb;
 		event_set(&s->ev, s->fd, EV_WRITE, mta_event, s);

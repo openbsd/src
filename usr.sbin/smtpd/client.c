@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.18 2009/12/12 10:33:11 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.19 2009/12/12 14:03:59 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -45,7 +45,7 @@ void		 client_status(struct smtp_client *, char *, ...);
 
 int		 client_getln(struct smtp_client *);
 void		 client_putln(struct smtp_client *, char *, ...);
-void		 client_data_add(struct smtp_client *, char *, size_t);
+void		 client_body(struct msgbuf *, FILE *);
 
 #ifndef CLIENT_NO_SSL
 int		 client_ssl_connect(struct smtp_client *);
@@ -65,7 +65,7 @@ void		 fatalx(const char *);	/* XXX */
  * Initialize SMTP session.
  */
 struct smtp_client *
-client_init(int fd, char *ehlo, int verbose)
+client_init(int fd, int body, char *ehlo, int verbose)
 {
 	struct smtp_client	*sp = NULL;
 
@@ -92,8 +92,8 @@ client_init(int fd, char *ehlo, int verbose)
 		sp->verbose = stdout;
 	else if ((sp->verbose = fopen("/dev/null", "a")) == NULL)
 		fatal("client_init: fopen");
-	if ((sp->data = buf_dynamic(0, SIZE_T_MAX)) == NULL)
-		fatal(NULL);
+	if ((sp->body = fdopen(body, "r")) == NULL)
+		fatal("client_init: fdopen");
 	sp->state = CLIENT_INIT;
 	sp->handler = client_write;
 	sp->timeout.tv_sec = 300;
@@ -208,44 +208,41 @@ client_rcpt(struct smtp_client *sp, void *p, char *fmt, ...)
 }
 
 /*
- * Append file referenced by fd to the data buffer.
- */
-void
-client_data_fd(struct smtp_client *sp, int fd)
-{
-	struct stat	 sb;
-	char		*map;
-
-	if (fstat(fd, &sb) == -1)
-		fatal("client_data_fd: fstat");
-	if ((size_t)sb.st_size > SIZE_T_MAX)
-		fatalx("client_data_fd: file too large");
-	if (!S_ISREG(sb.st_mode))
-		fatalx("client_data_fd: non-regular file");
-	map = mmap(NULL, sb.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd,
-	    (off_t)0);
-	if (map == MAP_FAILED)
-		fatal("client_data_fd: mmap failed");
-	madvise(map, sb.st_size, MADV_SEQUENTIAL);
-	client_data_add(sp, map, sb.st_size);
-	munmap(map, sb.st_size);
-}
-
-/*
  * Append string to the data buffer.
  */
 void
-client_data_printf(struct smtp_client *sp, char *fmt, ...)
+client_printf(struct smtp_client *sp, char *fmt, ...)
 {
 	va_list	 ap;
-	char	*p = NULL;
+	char	*p, *ln, *tmp;
 	int	 len;
+
+	if (sp->head == NULL)
+		sp->head = buf_dynamic(0, SIZE_T_MAX);
+	if (sp->head == NULL)
+		fatal(NULL);
 
 	va_start(ap, fmt);
 	if ((len = vasprintf(&p, fmt, ap)) == -1)
 		fatal("client_data_printf: vasprintf");
 	va_end(ap);
-	client_data_add(sp, p, len);
+
+	/* must end with a newline */
+	if (len == 0 || p[len - 1] != '\n')
+		fatalx("client_printf: invalid use");
+	p[len - 1] = '\0';
+
+	/* split into lines, deal with dot escaping etc. */
+	tmp = p;
+	while ((ln = strsep(&tmp, "\n"))) {
+		if (*ln == '.' && buf_add(sp->head, ".", 1))
+			fatal(NULL);
+		if (buf_add(sp->head, ln, strlen(ln)))
+			fatal(NULL);
+		if (buf_add(sp->head, "\r\n", 2))
+			fatal(NULL);
+	}
+
 	free(p);
 }
 
@@ -503,10 +500,11 @@ client_write(struct smtp_client *sp)
 
 	case CLIENT_DATA_BODY:
 		sp->timeout.tv_sec = 180;
-		if (buf_add(sp->data, ".\r\n", 3) < 0)
-			fatal("client_write: buf_add failed");
-		buf_close(&sp->w, sp->data);
-		sp->data = NULL;
+		if (sp->head) {
+			buf_close(&sp->w, sp->head);
+			sp->head = NULL;
+		}
+		client_body(&sp->w, sp->body);
 		break;
 
 	case CLIENT_QUIT:
@@ -545,11 +543,12 @@ write:
 		}
 	}
 
-	/*
-	 * Extend timeout after having sent final "." character.
-	 */
-	if (sp->state == CLIENT_DATA_BODY && sp->w.queued == 0)
-		sp->timeout.tv_sec = 600;
+	if (sp->state == CLIENT_DATA_BODY) {
+		if (!feof(sp->body))
+			return (CLIENT_WANT_WRITE);
+		else
+			sp->timeout.tv_sec = 600;
+	}
 
 	return (sp->w.queued ? CLIENT_WANT_WRITE : CLIENT_WANT_READ);
 }
@@ -616,8 +615,8 @@ client_close(struct smtp_client *sp)
 	free(sp->auth.plain);
 	free(sp->auth.cert);
 	free(sp->auth.key);
-	if (sp->data)
-		buf_free(sp->data);
+	if (sp->head)
+		buf_free(sp->head);
 	msgbuf_clear(&sp->w);
 	while ((rp = TAILQ_FIRST(&sp->recipients))) {
 		TAILQ_REMOVE(&sp->recipients, rp, entry);
@@ -775,9 +774,9 @@ client_putln(struct smtp_client *sp, char *fmt, ...)
 
 	if ((cmd = buf_open(len + 2)) == NULL)
 		fatal(NULL);
-	if (buf_add(cmd, p, len) < 0)
+	if (buf_add(cmd, p, len))
 		fatal(NULL);
-	if (buf_add(cmd, "\r\n", 2) < 0)
+	if (buf_add(cmd, "\r\n", 2))
 		fatal(NULL);
 	buf_close(&sp->w, cmd);
 
@@ -785,27 +784,35 @@ client_putln(struct smtp_client *sp, char *fmt, ...)
 }
 
 /*
- * Append buffer to the data buffer, performing necessary transformations.
+ * Put chunk of message content to output buffer.
  */
 void
-client_data_add(struct smtp_client *sp, char *buf, size_t len)
+client_body(struct msgbuf *out, FILE *fp)
 {
-	char	*ln;
+	struct buf	*b;
+	char		*ln;
+	size_t		 len, total = 0;
 
-	/* must end with a newline */
-	if (len == 0 || buf[len - 1] != '\n')
-		fatalx("client_data_add: bad buffer");
-	buf[len - 1] = '\0';
+	if ((b = buf_dynamic(0, SIZE_T_MAX)) == NULL)
+		fatal(NULL);
 
-	/* split into lines, deal with dot escaping etc. */
-	while ((ln = strsep(&buf, "\n"))) {
-		if (*ln == '.' && buf_add(sp->data, ".", 1) < 0)
+	while ((ln = fgetln(fp, &len)) && total < 4096) {
+		if (ln[len - 1] == '\n')
+			len--;
+		if (*ln == '.' && buf_add(b, ".", 1))
 			fatal(NULL);
-		if (buf_add(sp->data, ln, strlen(ln)) < 0)
+		if (buf_add(b, ln, len))
 			fatal(NULL);
-		if (buf_add(sp->data, "\r\n", 2) < 0)
+		if (buf_add(b, "\r\n", 2))
 			fatal(NULL);
+		total += len;
 	}
+	if (ferror(fp))
+		fatal("client_body: fgetln");
+	if (feof(fp) && buf_add(b, ".\r\n", 3))
+		fatal(NULL);
+
+	buf_close(out, b);
 }
 
 /*
