@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 2009/12/07 19:05:59 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.5 2009/12/12 20:08:08 miod Exp $ */
 
 /*
  * Copyright (c) 2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -39,7 +39,13 @@
 
 #define MID_MACHINE	MID_MIPS64	/* None but has to be defined */
 
+#ifdef _KERNEL
+#if defined(CPU_R10000) && !defined(CPU_R5000) && !defined(CPU_RM7000)
+#define	PAGE_SHIFT	14
+#else
 #define	PAGE_SHIFT	12
+#endif
+#endif	/* _KERNEL */
 
 #include <mips64/param.h>
 
