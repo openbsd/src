@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.22 2009/12/12 07:06:45 espie Exp $
+# $OpenBSD: Makefile,v 1.23 2009/12/12 17:15:58 espie Exp $
 
 REGRESS_TARGETS=pkgnames depends-check longnames always-update \
 	collision-check3 partial-update-test conflict-update \
-	merge-update split-update big-merge
+	merge-update split-update big-merge family-circus
 
 PKG_ADD=perl ${.CURDIR}/myadd
 PKG_CREATE=perl ${.CURDIR}/mycreate
@@ -109,7 +109,11 @@ big-merge: old/q1-0.0.tgz old/q2-0.0.tgz old/q3-0.0.tgz old/q4-0.0.tgz \
 	ROOT=${D14} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} q1 q2 q3 q4 q5 q6
 	ROOT=${D14} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -F update -u 2>&1|fgrep XXX|fgrep -v @|diff - ${.CURDIR}/list6.out
 
-	
+family-circus: old/glib-0.0.tgz old/fam-0.0.tgz new/fam-1.0.tgz new/glib-1.0.tgz new/gamin-0.0.tgz
+	-rm -rf ${D15}
+	ROOT=${D15} PKG_PATH=${.OBJDIR}/old ${PKG_ADD} glib
+	ROOT=${D15} PKG_PATH=${.OBJDIR}/new ${PKG_ADD} -F updatedepends -u glib
+
 plist1:
 	@echo "@owner "`whoami` >$@
 	@echo ${LONG1} >>$@
@@ -149,18 +153,24 @@ plist7:
 	@echo "@pkgpath test/m" >>$@
 
 plist8:
-	@mkdir -p ${@D}
 	@echo "@conflict o-<1.0" >$@
 	@echo "@pkgpath test/o" >>$@
 	@echo "@owner "`whoami` >>$@
 	@echo '@lib lib/libcoincoin.so.$${LIBcoincoin_VERSION}' >>$@
+
+plist9:
+	@echo "@conflict gamin-*" >$@
+
+plist10:
+	@echo "@conflict fam-*" >$@
+	@echo "@pkgpath test/fam" >>$@
 
 old/a-0.0.tgz:
 	${PKG_CREATE} -P'test/b:b-*:b-0.0' -f ${.CURDIR}/empty $@
 
 new/a-1.0.tgz old/b-0.0.tgz old/i-0.0.tgz old/j-0.0.tgz new/j-1.0.tgz \
 new/i-1.0.tgz old/k-0.0.tgz old/l-0.0.tgz new/l-1.0.tgz old/m-0.0.tgz \
-old/n-0.0.tgz new/m-1.0.tgz old/o-0.0.tgz:
+old/n-0.0.tgz new/m-1.0.tgz old/o-0.0.tgz old/fam-0.0.tgz:
 	${PKG_CREATE} -f ${.CURDIR}/empty $@
 
 new/o-1.0.tgz:
@@ -252,6 +262,18 @@ old/q6-0.0.tgz:
 
 new/q6-1.0.tgz:
 	${PKG_CREATE} -P'test/q3:q3-*:q3-0.0' -f ${.CURDIR}/empty $@
+
+old/glib-0.0.tgz:
+	${PKG_CREATE} -P 'test/fam:fam-*:fam-0.0' -f ${.CURDIR}/empty $@
+
+new/glib-1.0.tgz:
+	${PKG_CREATE} -P 'test/gamin:gamin-*:gamin-0.0' -f ${.CURDIR}/empty $@
+
+new/fam-1.0.tgz: plist9
+	${PKG_CREATE} -f plist9 $@
+
+new/gamin-0.0.tgz: plist10
+	${PKG_CREATE} -f plist10 $@
 
 # some extra tests do not yet pass correctly
 .PHONY: ${REGRESS_TARGETS} \
