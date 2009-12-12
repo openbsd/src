@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.8 2009/09/27 11:51:20 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.9 2009/12/12 15:15:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -98,12 +98,12 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par, short **map)
 		return 0;
 	}
 	rate = letoh32(fmt.rate);
-	if (rate < RATE_MIN || rate >= RATE_MAX) {
+	if (rate < RATE_MIN || rate > RATE_MAX) {
 		warnx("%u: bad sample rate", rate);
 		return 0;
 	}
 	bits = letoh16(fmt.bits);
-	if (bits == 0 || bits >= 32) {
+	if (bits == 0 || bits > 32) {
 		warnx("%u: bad number of bits", bits);
 		return 0;
 	}
