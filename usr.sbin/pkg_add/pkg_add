@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.421 2009/12/12 07:06:09 espie Exp $
+# $OpenBSD: pkg_add,v 1.422 2009/12/12 16:42:04 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -289,6 +289,22 @@ sub can_install
 	}
 
 	$set->mark_as_manual_install if $manual_install;
+	return 1;
+}
+
+sub recheck_conflicts
+{
+	my ($set, $state) = @_;
+	
+	for my $h ($set->newer) {
+		for my $h2 ($set->newer) {
+			next if $h2 == $h;
+			if ($h->plist->conflict_list->conflicts_with($h2->pkgname)) {
+				$state->errsay($set->short_print, ": internal conflict between ", $h->pkgname, " and ", $h2->pkgname);
+				return 0;
+			}
+		}
+	}
 	return 1;
 }
 
@@ -642,6 +658,11 @@ sub install_set
 #			return ();
 #		}
 #	}
+	if (!$set->recheck_conflicts($state)) {
+		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+		$state->tracker->cant($set);
+		return ();
+	}
 	really_add($set, $state);
 	$set->cleanup;
 	$state->tracker->done($set);
