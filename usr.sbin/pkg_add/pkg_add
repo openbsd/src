@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.420 2009/12/11 21:04:01 espie Exp $
+# $OpenBSD: pkg_add,v 1.421 2009/12/12 07:06:09 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -326,11 +326,14 @@ sub partial_install
 	return failed_message($base_msg, $state->{interrupted}, save_partial_set($set, $state));
 }
 
-sub iterate
+sub build_before
 {
-	my $sub = pop @_;
-	for my $p (@_) {
-		&$sub($p);
+	my %known = map {($_->pkgname, 1)} @_;
+	require OpenBSD::RequiredBy;
+	for my $c (@_) {
+		for my $d (OpenBSD::RequiredBy->new($c->pkgname)->list) {
+			push(@{$c->{before}}, $d) if $known{$d};
+		}
 	}
 }
 
@@ -344,7 +347,7 @@ sub okay
 	return 1;
 }
 
-sub iterate2
+sub iterate
 {
 	my $sub = pop @_;
 	my $done = {};
@@ -457,6 +460,7 @@ sub really_add
 		}
 
 		$set->{solver}->record_old_dependencies($state);
+		build_before($set->older_to_do);
 		iterate($set->older_to_do, sub {
 			my $o = shift;
 			$set->setup_header($state, $o, "deleting");
@@ -482,7 +486,7 @@ sub really_add
 	}
 
 	my $first = 1;
-	iterate2($set->newer, sub {
+	iterate($set->newer, sub {
 		my $handle = shift;
 
 		if (!$first) {
