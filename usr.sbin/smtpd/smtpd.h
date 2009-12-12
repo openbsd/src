@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.159 2009/11/13 11:27:52 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.160 2009/12/12 10:33:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -793,7 +793,7 @@ struct mta_session {
 	int			 datafd;
 	struct event		 ev;
 	char			*cert;
-	void			*smtp_state;
+	void			*pcb;
 };
 
 /* aliases.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.79 2009/12/10 15:02:30 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.80 2009/12/12 10:33:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -56,10 +56,10 @@ void			 mta_event(int, short, void *);
 
 void			 mta_status(struct mta_session *, const char *, ...);
 void			 mta_message_status(struct message *, char *);
+void			 mta_message_log(struct mta_session *, struct message *);
 void			 mta_message_done(struct mta_session *, struct message *);
 void			 mta_connect_done(int, short, void *);
 void			 mta_request_datafd(struct mta_session *);
-size_t			 mta_todo(struct mta_session *);
 
 void
 mta_sig_handler(int sig, short event, void *p)
@@ -537,6 +537,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 	struct mta_relay	*relay;
 	struct sockaddr		*sa;
 	struct message		*m;
+	struct smtp_client	*pcb;
 	int			 max_reuse;
 
 	s->state = newstate;
@@ -606,7 +607,8 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 
 			if (connect(s->fd, sa, sa->sa_len) == -1) {
 				if (errno != EINPROGRESS) {
-					mta_status(s, "110 connect error: %s", strerror(errno));
+					mta_status(s, "110 connect error: %s",
+					    strerror(errno));
 					close(s->fd);
 					continue;
 				}
@@ -634,10 +636,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		 */
 		log_debug("mta: entering smtp phase");
 
-		s->smtp_state = client_init(s->fd, s->env->sc_hostname);
-		if (s->smtp_state == NULL)
-			fatal("mta: client_init failed");
-		client_verbose(s->smtp_state, stderr);
+		pcb = client_init(s->fd, s->env->sc_hostname, 1);
 
 		/* lookup SSL certificate */
 		if (s->cert) {
@@ -646,57 +645,46 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			strlcpy(key.ssl_name, s->cert, sizeof(key.ssl_name));
 			res = SPLAY_FIND(ssltree, s->env->sc_ssl, &key);
 			if (res == NULL) {
-				client_close(s->smtp_state);
-				s->smtp_state = NULL;
+				client_close(pcb);
 				mta_status(s, "190 certificate not found");
 				mta_enter_state(s, MTA_DONE, NULL);
 				break;
 			}
-			if (client_certificate(s->smtp_state,
+			client_certificate(pcb,
 			    res->ssl_cert, res->ssl_cert_len,
-			    res->ssl_key, res->ssl_key_len) < 0)
-				fatal("mta: client_certificate failed");
+			    res->ssl_key, res->ssl_key_len);
 		}
 
 		/* choose SMTPS vs. STARTTLS */
 		relay = TAILQ_FIRST(&s->relays);
-		if ((s->flags & MTA_FORCE_ANYSSL) && relay->used == 1) {
-			if (client_ssl_smtps(s->smtp_state) < 0)
-				fatal("mta: client_ssl_smtps failed");
-		} else if (s->flags & MTA_FORCE_SMTPS) {
-			if (client_ssl_smtps(s->smtp_state) < 0)
-				fatal("mta: client_ssl_smtps failed");
-		} else if (s->flags & MTA_ALLOW_PLAIN) {
-			if (client_ssl_optional(s->smtp_state) < 0)
-				fatal("mta: client_ssl_optional failed");
-		}
+		if ((s->flags & MTA_FORCE_ANYSSL) && relay->used == 1)
+			client_ssl_smtps(pcb);
+		else if (s->flags & MTA_FORCE_SMTPS)
+			client_ssl_smtps(pcb);
+		else if (s->flags & MTA_ALLOW_PLAIN)
+			client_ssl_optional(pcb);
 
 		/* enable AUTH */
 		if (s->secret)
-			if (client_auth(s->smtp_state, s->secret) < 0)
-				fatal("mta: client_auth failed");
+			client_auth(pcb, s->secret);
 
 		/* set envelope sender */
 		m = TAILQ_FIRST(&s->recipients);
 		if (m->sender.user[0] && m->sender.domain[0])
-			if (client_sender(s->smtp_state, "%s@%s",
-			    m->sender.user, m->sender.domain) < 0)
-				fatal("mta: client_sender failed");
+			client_sender(pcb, "%s@%s", m->sender.user,
+			    m->sender.domain);
 			
 		/* set envelope recipients */
-		TAILQ_FOREACH(m, &s->recipients, entry) {
-			if (client_rcpt(s->smtp_state, "%s@%s", m->recipient.user,
-			    m->recipient.domain) < 0)
-				fatal("mta: client_rcpt failed");
-			client_udata_set(s->smtp_state, m);
-		}
+		TAILQ_FOREACH(m, &s->recipients, entry)
+			client_rcpt(pcb, m, "%s@%s", m->recipient.user,
+			    m->recipient.domain);
 
 		/* load message body */
-		if (client_data_fd(s->smtp_state, s->datafd) < 0)
-			fatal("mta: client_data_fd failed");
+		client_data_fd(pcb, s->datafd);
 
+		s->pcb = pcb;
 		event_set(&s->ev, s->fd, EV_WRITE, mta_event, s);
-		event_add(&s->ev, client_timeout(s->smtp_state));
+		event_add(&s->ev, &pcb->timeout);
 		break;
 
 	case MTA_DONE:
@@ -781,7 +769,7 @@ mta_pickup(struct mta_session *s, void *p)
 		/* Remote accepted/rejected connection. */
 		error = session_socket_error(s->fd);
 		if (error) {
-			mta_status(s, "110 connect error");
+			mta_status(s, "110 connect error: %s", strerror(error));
 			close(s->fd);
 			mta_enter_state(s, MTA_CONNECT, NULL);
 		} else
@@ -801,57 +789,48 @@ void
 mta_event(int fd, short event, void *p)
 {
 	struct mta_session	*s = p;
-	int			 error = 0;
-	int			(*iofunc)(struct smtp_client *);
+	struct smtp_client	*pcb = s->pcb;
 
 	if (event & EV_TIMEOUT) {
-		log_debug("mta: leaving smtp phase due to timeout");
 		mta_status(s, "150 timeout");
-
-		client_close(s->smtp_state);
-		s->smtp_state = NULL;
-
-		mta_enter_state(s, MTA_CONNECT, NULL);
-		return;
+		goto out;
 	}
 
-	if (event & EV_READ)
-		iofunc = client_read;
-	else
-		iofunc = client_write;
-
-	switch (iofunc(s->smtp_state)) {
-	case CLIENT_RCPT_FAIL:
-		mta_message_status(client_udata_get(s->smtp_state),
-		    client_reply(s->smtp_state));
-	case CLIENT_WANT_WRITE:
-		event_set(&s->ev, fd, EV_WRITE, mta_event, s);
-		event_add(&s->ev, client_timeout(s->smtp_state));
-		return;
+	switch (client_talk(pcb)) {
 	case CLIENT_WANT_READ:
-		event_set(&s->ev, fd, EV_READ, mta_event, s);
-		event_add(&s->ev, client_timeout(s->smtp_state));
-		return;
-	case CLIENT_ERROR:
-		error = 1;
+		goto read;
+	case CLIENT_WANT_WRITE:
+		goto write;
+	case CLIENT_RCPT_FAIL:
+		mta_message_status(pcb->rcptfail->p, pcb->reply);
+		mta_message_log(s, pcb->rcptfail->p);
+		mta_message_done(s, pcb->rcptfail->p);
+		goto write;
 	case CLIENT_DONE:
+		mta_status(s, "%s", pcb->status);
 		break;
+	default:
+		fatalx("mta_event: unexpected code");
 	}
 
-	log_debug("mta: leaving smtp phase");
+out:
+	client_close(pcb);
+	pcb = NULL;
 
-	if (error)
-		mta_status(s, "%s", client_strerror(s->smtp_state));
-	else
-		mta_status(s, "%s", client_reply(s->smtp_state));
-
-	client_close(s->smtp_state);
-	s->smtp_state = NULL;
-
-	if (mta_todo(s) == 0)
+	if (TAILQ_EMPTY(&s->recipients))
 		mta_enter_state(s, MTA_DONE, NULL);
 	else
 		mta_enter_state(s, MTA_CONNECT, NULL);
+	return;
+
+read:
+	event_set(&s->ev, fd, EV_READ, mta_event, s);
+	event_add(&s->ev, &pcb->timeout);
+	return;
+
+write:
+	event_set(&s->ev, fd, EV_WRITE, mta_event, s);
+	event_add(&s->ev, &pcb->timeout);
 }
 
 void
@@ -859,7 +838,6 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 {
 	char			*status;
 	struct message		*m, *next;
-	struct mta_relay	*relay;
 	va_list			 ap;
 
 	va_start(ap, fmt);
@@ -873,19 +851,9 @@ mta_status(struct mta_session *s, const char *fmt, ...)
 		/* save new status */
 		mta_message_status(m, status);
 
-		relay = TAILQ_FIRST(&s->relays);
-
 		/* remove queue entry */
 		if (*status == '2' || *status == '5' || *status == '6') {
-			log_info("%s: to=<%s@%s>, delay=%d, relay=%s [%s],"
-			    " stat=%s (%s)",
-			    m->message_id, m->recipient.user,
-			    m->recipient.domain, time(NULL) - m->creation,
-			    relay ? relay->fqdn : "(none)",
-			    relay ? ss_to_text(&relay->sa) : "",
-			    *status == '2' ? "Sent" :
-			    *status == '5' ?  "RemoteError" : "LocalError",
-			    m->session_errorline + 4);
+			mta_message_log(s, m);
 			mta_message_done(s, m);
 		}
 	}
@@ -908,6 +876,23 @@ mta_message_status(struct message *m, char *status)
 	log_debug("mta: new status for %s@%s: %s", m->recipient.user,
 	    m->recipient.domain, status);
 	strlcpy(m->session_errorline, status, sizeof(m->session_errorline));
+}
+
+void
+mta_message_log(struct mta_session *s, struct message *m)
+{
+	struct mta_relay	*relay = TAILQ_FIRST(&s->relays);
+	char			*status = m->session_errorline;
+
+	log_info("%s: to=<%s@%s>, delay=%d, relay=%s [%s], stat=%s (%s)",
+	    m->message_id, m->recipient.user,
+	    m->recipient.domain, time(NULL) - m->creation,
+	    relay ? relay->fqdn : "(none)",
+	    relay ? ss_to_text(&relay->sa) : "",
+	    *status == '2' ? "Sent" :
+	    *status == '5' ? "RemoteError" :
+	    *status == '4' ? "RemoteError" : "LocalError",
+	    status + 4);
 }
 
 void
@@ -948,17 +933,6 @@ mta_request_datafd(struct mta_session *s)
 	strlcpy(b.message_id, m->message_id, sizeof(b.message_id));
 	imsg_compose_event(s->env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
 	    0, 0, -1, &b, sizeof(b));
-}
-
-size_t
-mta_todo(struct mta_session *s)
-{
-	struct message	*m;
-	size_t		 n = 0;
-
-	TAILQ_FOREACH(m, &s->recipients, entry)
-		n++;
-	return (n);
 }
 
 SPLAY_GENERATE(mtatree, mta_session, entry, mta_session_cmp);

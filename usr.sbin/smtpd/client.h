@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.h,v 1.4 2009/09/22 12:24:06 jacekm Exp $	*/
+/*	$OpenBSD: client.h,v 1.5 2009/12/12 10:33:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -24,10 +24,9 @@ struct smtp_client;
 
 /* return codes for io routines */
 #define CLIENT_DONE		 0	/* finished ok */
-#define CLIENT_ERROR		-1	/* generic error */
-#define CLIENT_WANT_READ	-2	/* need more data */
-#define CLIENT_WANT_WRITE	-3	/* have to send sth */
-#define CLIENT_RCPT_FAIL	-4	/* recipient refused */
+#define CLIENT_WANT_READ	-1	/* need more data */
+#define CLIENT_WANT_WRITE	-2	/* have to send sth */
+#define CLIENT_RCPT_FAIL	-3	/* recipient refused */
 
 /* client states */
 #define CLIENT_SSL_INIT		0x1
@@ -41,6 +40,7 @@ struct smtp_client;
 #define CLIENT_RCPTTO		0x9
 #define CLIENT_DATA		0xa
 #define CLIENT_DATA_BODY	0xb
+#define CLIENT_QUIT		0xc
 
 /* smtp extensions */
 #define CLIENT_EXT_STARTTLS	0
@@ -50,7 +50,7 @@ struct smtp_client;
 struct rcpt {
 	TAILQ_ENTRY(rcpt)	 entry;
 	char			*mbox;
-	void			*udata;
+	void			*p;
 };
 
 struct client_auth {
@@ -76,35 +76,31 @@ struct smtp_client {
 	char			*ehlo;
 	char			*sender;
 	TAILQ_HEAD(rlist,rcpt)	 recipients;
-	struct rcpt		*rcptsent;
+	struct rcpt		*rcpt;
+	struct rcpt		*rcptfail;
+	size_t			 rcptokay;
 	struct buf_read		 r;
 	struct msgbuf		 w;
 	struct buf		*data;
 	struct client_ext	 exts[CLIENT_EXT_MAX];
+	int			(*handler)(struct smtp_client *);
 	void			*ssl_state;
 	struct client_auth	 auth;
 	struct timeval		 timeout;
 	char			 reply[1024];
-	char			 ebuf[1024];
+	char			 status[1024];
 	FILE			*verbose;
 };
 
-struct smtp_client	*client_init(int, char *);
-struct timeval		*client_timeout(struct smtp_client *);
-void			 client_verbose(struct smtp_client *, FILE *);
-int			 client_ssl_smtps(struct smtp_client *);
-int			 client_ssl_optional(struct smtp_client *);
-int			 client_certificate(struct smtp_client *, char *,
+struct smtp_client	*client_init(int, char *, int);
+void			 client_ssl_smtps(struct smtp_client *);
+void			 client_ssl_optional(struct smtp_client *);
+void			 client_certificate(struct smtp_client *, char *,
 			     size_t, char *, size_t);
-int			 client_auth(struct smtp_client *, char *);
-int			 client_sender(struct smtp_client *, char *, ...);
-int			 client_rcpt(struct smtp_client *, char *, ...);
-void			 client_udata_set(struct smtp_client *, void *);
-void			*client_udata_get(struct smtp_client *);
-int			 client_data_fd(struct smtp_client *, int);
-int			 client_data_printf(struct smtp_client *, char *, ...);
-int			 client_read(struct smtp_client *);
-int			 client_write(struct smtp_client *);
+void			 client_auth(struct smtp_client *, char *);
+void			 client_sender(struct smtp_client *, char *, ...);
+void			 client_rcpt(struct smtp_client *, void *, char *, ...);
+void			 client_data_fd(struct smtp_client *, int);
+void			 client_data_printf(struct smtp_client *, char *, ...);
+int			 client_talk(struct smtp_client *);
 void			 client_close(struct smtp_client *);
-char			*client_reply(struct smtp_client *);
-char			*client_strerror(struct smtp_client *);
