@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.35 2009/12/07 15:09:08 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.36 2009/12/12 17:08:07 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -156,7 +156,8 @@ sub older_to_do
 	require OpenBSD::PackageInfo;
 	my @l = ();
 	for my $h ($self->older) {
-		if (OpenBSD::PackageInfo::is_installed($h->pkgname)) {
+		if (!defined $h->{keepit} && 
+		    OpenBSD::PackageInfo::is_installed($h->pkgname)) {
 			push(@l, $h);
 		}
 	}
@@ -262,7 +263,6 @@ sub merge
 		$set->{finished} = 1;
 		# XXX and mark it as merged, for eventual updates
 		$set->{merged} = $self;
-		$self->{updates} += $set->{updates};
 	}
 	# then regen tracker info for $self
 	$tracker->todo($self);
