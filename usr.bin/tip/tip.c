@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.35 2009/10/27 23:59:45 deraadt Exp $	*/
+/*	$OpenBSD: tip.c,v 1.36 2009/12/12 13:38:09 nicm Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -36,6 +36,10 @@
  * or
  *  cu phone-number [-s speed] [-l line] [-a acu]
  */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include "tip.h"
 #include "pathnames.h"
 
@@ -50,7 +54,7 @@ int
 main(int argc, char *argv[])
 {
 	char *sys = NULL, sbuf[12], *p;
-	int i;
+	int i, pair[2];
 
 	/* XXX preserve previous braindamaged behavior */
 	setboolean(value(DC), TRUE);
@@ -213,13 +217,18 @@ cucommon:
 	    term.c_cc[VLNEXT] = _POSIX_VDISABLE;
 	raw();
 
-	pipe(fildes); pipe(repdes);
 	(void)signal(SIGALRM, timeout);
 
 	if (value(LINEDISC) != TTYDISC) {
 		int ld = (int)value(LINEDISC);
 		ioctl(FD, TIOCSETD, &ld);
 	}		
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0) {
+		daemon_uid();
+		(void)uu_unlock(uucplock);
+		err(3, "socketpair");
+	}
 
 	/*
 	 * Everything's set up now:
@@ -230,10 +239,20 @@ cucommon:
 	 */
 	printf(cumode ? "Connected\r\n" : "\07connected\r\n");
 	tipin_pid = getpid();
-	if ((tipout_pid = fork()))
-		tipin();
-	else
+	switch (tipout_pid = fork()) {
+	case -1:
+		daemon_uid();
+		(void)uu_unlock(uucplock);
+		err(3, "fork");
+	case 0:
+		close(pair[1]);
+		tipin_fd = pair[0];
 		tipout();
+	default:
+		close(pair[0]);
+		tipout_fd = pair[1];
+		tipin();
+	}
 	/*NOTREACHED*/
 	exit(0);
 }

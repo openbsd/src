@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.19 2009/10/27 23:59:45 deraadt Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.20 2009/12/12 13:38:09 nicm Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -54,8 +54,8 @@ static void	intSYS(int);
 static void
 intIOT(int signo)
 {
-	write(repdes[1],&ccc,1);
-	read(fildes[0], &ccc,1);
+	write(tipin_fd, &ccc, 1);
+	read(tipin_fd, &ccc, 1);
 	longjmp(sigbuf, 1);
 }
 
@@ -71,10 +71,10 @@ intEMT(int signo)
 	char *pline = line;
 	char reply;
 
-	read(fildes[0], &c, 1);
+	read(tipin_fd, &c, 1);
 	while (c != '\n' && pline - line < sizeof(line)) {
 		*pline++ = c;
-		read(fildes[0], &c, 1);
+		read(tipin_fd, &c, 1);
 	}
 	*pline = '\0';
 	if (boolean(value(SCRIPT)) && fscript != NULL)
@@ -90,7 +90,7 @@ intEMT(int signo)
 			setboolean(value(SCRIPT), TRUE);
 		}
 	}
-	write(repdes[1], &reply, 1);
+	write(tipin_fd, &reply, 1);
 	longjmp(sigbuf, 1);
 }
 

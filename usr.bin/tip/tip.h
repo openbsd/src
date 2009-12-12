@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.31 2007/09/11 18:20:21 cloder Exp $	*/
+/*	$OpenBSD: tip.h,v 1.32 2009/12/12 13:38:09 nicm Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -236,15 +236,15 @@ int	gotdefterm;
 
 FILE	*fscript;		/* FILE for scripting */
 
-int	fildes[2];		/* file transfer synchronization channel */
-int	repdes[2];		/* read process sychronization channel */
 int	FD;			/* open file descriptor to remote host */
 int	AC;			/* open file descriptor to dialer (v831 only) */
 int	vflag;			/* print .tiprc initialization sequence */
 int	noesc;			/* no `~' escape char */
 int	sfd;			/* for ~< operation */
 pid_t	tipin_pid;		/* pid of tipin */
+int	tipin_fd;		/* tipin side of socketpair */
 pid_t	tipout_pid;		/* pid of tipout */
+int	tipout_fd;		/* tipout side of socketpair */
 uid_t	uid, euid;		/* real and effective user id's */
 gid_t	gid, egid;		/* real and effective group id's */
 volatile sig_atomic_t stop;	/* stop transfer session flag */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.28 2009/10/27 23:59:44 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.29 2009/12/12 13:38:09 nicm Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ transfer(char *buf, int fd, char *eofchars)
 	parwrite(FD, buf, size(buf));
 	quit = 0;
 	kill(tipout_pid, SIGIOT);
-	read(repdes[0], (char *)&ccc, 1);  /* Wait until read process stops */
+	read(tipout_fd, (char *)&ccc, 1);  /* Wait until read process stops */
 
 	/*
 	 * finish command
@@ -189,7 +189,7 @@ transfer(char *buf, int fd, char *eofchars)
 	if (boolean(value(VERBOSE)))
 		prtime(" lines transferred in ", time(0)-start);
 	tcsetattr(0, TCSAFLUSH, &term);
-	write(fildes[1], (char *)&ccc, 1);
+	write(tipout_fd, (char *)&ccc, 1);
 	signal(SIGINT, f);
 	close(fd);
 }
@@ -301,7 +301,7 @@ transmit(FILE *fp, char *eofchars, char *command)
 	stop = 0;
 	f = signal(SIGINT, stopsnd);
 	tcsetattr(0, TCSAFLUSH, &defchars);
-	read(repdes[0], (char *)&ccc, 1);
+	read(tipout_fd, (char *)&ccc, 1);
 	if (command != NULL) {
 		for (pc = command; *pc; pc++)
 			send(*pc);
@@ -378,7 +378,7 @@ out:
 		else
 			prtime(" lines transferred in ", stop_t-start_t);
 	}
-	write(fildes[1], (char *)&ccc, 1);
+	write(tipout_fd, (char *)&ccc, 1);
 	tcsetattr(0, TCSAFLUSH, &term);
 }
 
@@ -476,7 +476,7 @@ pipeout(int c)
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	tcsetattr(0, TCSAFLUSH, &defchars);
-	read(repdes[0], (char *)&ccc, 1);
+	read(tipout_fd, (char *)&ccc, 1);
 	/*
 	 * Set up file descriptors in the child and
 	 *  let it go...
@@ -501,7 +501,7 @@ pipeout(int c)
 	}
 	if (boolean(value(VERBOSE)))
 		prtime("away for ", time(0)-start);
-	write(fildes[1], (char *)&ccc, 1);
+	write(tipout_fd, (char *)&ccc, 1);
 	tcsetattr(0, TCSAFLUSH, &term);
 	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_DFL);
@@ -529,7 +529,7 @@ consh(int c)
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	tcsetattr(0, TCSAFLUSH, &defchars);
-	read(repdes[0], (char *)&ccc, 1);
+	read(tipout_fd, (char *)&ccc, 1);
 	/*
 	 * Set up file descriptors in the child and
 	 *  let it go...
@@ -552,7 +552,7 @@ consh(int c)
 	}
 	if (boolean(value(VERBOSE)))
 		prtime("away for ", time(0)-start);
-	write(fildes[1], (char *)&ccc, 1);
+	write(tipout_fd, (char *)&ccc, 1);
 	tcsetattr(0, TCSAFLUSH, &term);
 	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_DFL);
@@ -609,12 +609,12 @@ setscript(void)
 	 */
 	kill(tipout_pid, SIGEMT);
 	if (boolean(value(SCRIPT)))
-		write(fildes[1], value(RECORD), size(value(RECORD)));
-	write(fildes[1], "\n", 1);
+		write(tipout_fd, value(RECORD), size(value(RECORD)));
+	write(tipout_fd, "\n", 1);
 	/*
 	 * wait for TIPOUT to finish
 	 */
-	read(repdes[0], &c, 1);
+	read(tipout_fd, &c, 1);
 	if (c == 'n')
 		printf("can't create %s\r\n", value(RECORD));
 }
