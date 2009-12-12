@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.92 2009/11/15 08:46:36 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.93 2009/12/12 07:44:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -97,6 +97,16 @@ sub infodir
 {
 	my $self = shift;
 	return ${$self->{infodir}};
+}
+
+sub conflict_list
+{
+	require OpenBSD::PkgCfl;
+
+	my $self = shift;
+	
+	$self->{conflict_list} //= OpenBSD::PkgCfl->make_conflict_list($self);
+	return $self->{conflict_list};
 }
 
 sub read
