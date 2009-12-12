@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.24 2009/12/12 20:08:07 miod Exp $ */
+/*      $OpenBSD: param.h,v 1.25 2009/12/12 20:10:22 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,18 +68,21 @@
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define USPACE		(16384)
+#ifdef _KERNEL
 #define	UPAGES		(USPACE >> PAGE_SHIFT)
 #if PAGE_SHIFT > 12
 #define	USPACE_ALIGN	0
 #else
 #define	USPACE_ALIGN	(2 * PAGE_SIZE)	/* align to an even TLB boundary */
 #endif
+#endif	/* _KERNEL */
 
 /*
  * Constants related to network buffer management.
  */
 #define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
 
+#ifdef _KERNEL
 #if PAGE_SHIFT > 12
 #define	MSGBUFSIZE	PAGE_SIZE
 #else
@@ -98,12 +101,11 @@
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define dbtob(x)	((x) << DEV_BSHIFT)
 
-#ifdef _KERNEL
 #ifndef _LOCORE
 
 #define	DELAY(n)	delay(n)
 void delay(int);
 #endif
-#endif /* !_KERNEL */
+#endif /* _KERNEL */
 
 #endif /* !_MIPS_PARAM_H_ */
