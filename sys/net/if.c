@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.201 2009/11/21 14:08:14 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.202 2009/12/13 09:41:04 jsing Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -471,6 +471,9 @@ if_attach_common(struct ifnet *ifp)
 void
 if_start(struct ifnet *ifp)
 {
+
+	splassert(IPL_NET);
+
 	if (ifp->if_snd.ifq_len >= min(8, ifp->if_snd.ifq_maxlen) &&
 	    !ISSET(ifp->if_flags, IFF_OACTIVE)) {
 		if (ISSET(ifp->if_xflags, IFXF_TXREADY)) {
