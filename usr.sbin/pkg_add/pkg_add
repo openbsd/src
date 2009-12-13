@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.422 2009/12/12 16:42:04 espie Exp $
+# $OpenBSD: pkg_add,v 1.423 2009/12/13 17:54:15 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -81,7 +81,7 @@ sub deptree_header
 {
 	my ($state, $pkg) = @_;
 	if (defined $state->{deptree}->{$pkg}) {
-		return $state->{deptree}->{$pkg}->shorter_print.':';
+		return $state->{deptree}->{$pkg}->short_print.':';
 	} else {
 		return '';
 	}
@@ -132,7 +132,7 @@ sub setup_header
 	if (defined $handle) {
 		$header .= $handle->pkgname;
 	} else {
-		$header .= $set->short_print;
+		$header .= $set->print;
 	}
 	if (defined $info) {
 		$header.=" ($info)";
@@ -232,7 +232,7 @@ sub can_install
 
 	return 1 if @conflicts == 0;
 	if (!$state->{allow_replacing}) {
-		$state->errsay("Can't install ", $set->short_print, 
+		$state->errsay("Can't install ", $set->print, 
 		    " because of conflicts (",join(',', @conflicts), ")");
 		return 0;
 	}
@@ -246,7 +246,7 @@ sub can_install
 	for my $toreplace (@conflicts) {
 		if ($state->tracker->is_installed($toreplace)) {
 			$state->errsay("Cannot replace $toreplace in ", 
-			    $set->short_print, ": just got installed");
+			    $set->print, ": just got installed");
 			return 0;
 		}
 
@@ -279,7 +279,7 @@ sub can_install
 		if (!OpenBSD::Replace::can_old_package_be_replaced($old->plist, 
 		    $set, $state)) {
 			$state->errsay("Can't update $name into ", 
-			    $set->short_print);
+			    $set->print);
 			return 0;
 		}
 
@@ -300,7 +300,7 @@ sub recheck_conflicts
 		for my $h2 ($set->newer) {
 			next if $h2 == $h;
 			if ($h->plist->conflict_list->conflicts_with($h2->pkgname)) {
-				$state->errsay($set->short_print, ": internal conflict between ", $h->pkgname, " and ", $h2->pkgname);
+				$state->errsay($set->print, ": internal conflict between ", $h->pkgname, " and ", $h2->pkgname);
 				return 0;
 			}
 		}
@@ -630,7 +630,7 @@ sub install_set
 	my @baddeps = $set->{solver}->check_depends;
 
 	if (@baddeps) {
-		$state->errsay("Can't install ", $set->short_print,
+		$state->errsay("Can't install ", $set->print,
 		    ": can't resolve ", join(',', @baddeps));
 		for my $handle ($set->newer) {
 			$handle->location->close_now;

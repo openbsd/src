@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.36 2009/12/12 17:08:07 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.37 2009/12/13 17:54:15 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -167,32 +167,19 @@ sub older_to_do
 sub print
 {
 	my $self = shift;
-	my @l = ();
-	if ($self->newer > 0) {
-		push(@l, "installing", $self->newer_names);
-	}
+	my $result = "";
 	if ($self->older > 0) {
-		push(@l, "deinstalling", $self->older_names);
+		$result .= join('+',$self->older_names)."->";
 	}
-	return join(' ', @l);
+	if ($self->newer > 0) {
+		$result .= join('+', $self->newer_names);
+	} elsif ($self->hints > 0) {
+		$result .= join('+', $self->hint_names);
+	}
+	return $result;
 }
 
 sub short_print
-{
-	my $self = shift;
-	my @l = ();
-	if ($self->older > 0) {
-		push(@l, join('+',$self->older_names));
-	}
-	if ($self->newer > 0) {
-		push(@l, join('+', $self->newer_names));
-	} elsif ($self->hints > 0) {
-		push(@l, join('+', $self->hint_names));
-	}
-	return join('->', @l);
-}
-
-sub shorter_print
 {
 	my $self = shift;
 	return join('+', $self->newer_names);
