@@ -486,7 +486,7 @@ static int find_allowdeny(request_rec *r, array_header *a, int method)
 		masked.s6_addr[10] = masked.s6_addr[11] = 0xff;
 		memcpy(&masked.s6_addr[12],
 		    &((struct sockaddr_in *)&r->connection->remote_addr)->sin_addr.s_addr,
-		    sizeof(struct in_addr_t));
+		    sizeof(in_addr_t));
 		for (j = 0; j < sizeof(struct in6_addr); j++)
 			masked.s6_addr[j] &= ap[i].x.ip6.mask6.s6_addr[j];
 		if (memcmp(&masked, &ap[i].x.ip6.net6, sizeof(masked)) == 0)
