@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.124 2009/11/17 10:16:41 espie Exp $
+# $OpenBSD: pkg_create,v 1.125 2009/12/13 08:54:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -720,7 +720,7 @@ if ($opt_n) {
 	local $SIG{'HUP'} = $h;
 	local $SIG{'KILL'} = $h;
 	local $SIG{'TERM'} = $h;
-	open(my $fh, "|-", OpenBSD::Paths->gzip, "-o", $wname);
+	open(my $fh, "|-", OpenBSD::Paths->gzip, "-f", "-o", $wname);
 	my $wrarc = OpenBSD::Ustar->new($fh, $plist->infodir);
 
 	$plist->create_package($wrarc, $base, $opt_v);
