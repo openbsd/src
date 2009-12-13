@@ -1,4 +1,4 @@
-/*	$OpenBSD: tireg.h,v 1.2 2009/11/21 23:35:30 miod Exp $	*/
+/*	$OpenBSD: tireg.h,v 1.3 2009/12/13 13:21:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1142,7 +1142,6 @@ struct ti_softc {
 	u_int32_t		ti_rx_max_coal_bds;
 	u_int32_t		ti_tx_max_coal_bds;
 	u_int32_t		ti_tx_buf_ratio;
-	int			ti_if_flags;
 	int			ti_txcnt;
 };
 

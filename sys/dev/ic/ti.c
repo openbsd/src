@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.1 2009/08/29 21:12:55 kettenis Exp $	*/
+/*	$OpenBSD: ti.c,v 1.2 2009/12/13 13:21:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -142,7 +142,7 @@ int ti_read_eeprom(struct ti_softc *, caddr_t, int, int);
 
 void ti_add_mcast(struct ti_softc *, struct ether_addr *);
 void ti_del_mcast(struct ti_softc *, struct ether_addr *);
-void ti_setmulti(struct ti_softc *);
+void ti_iff(struct ti_softc *);
 
 void ti_mem_read(struct ti_softc *, u_int32_t, u_int32_t, void *);
 void ti_mem_write(struct ti_softc *, u_int32_t, u_int32_t, const void*);
@@ -1156,59 +1156,62 @@ ti_del_mcast(struct ti_softc *sc, struct ether_addr *addr)
  * any given time.
  */
 void
-ti_setmulti(struct ti_softc *sc)
+ti_iff(struct ti_softc *sc)
 {
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct arpcom		*ac = &sc->arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
 	struct ti_cmd_desc	cmd;
 	struct ti_mc_entry	*mc;
 	u_int32_t		intrs;
- 
-	ifp = &sc->arpcom.ac_if;
 
-allmulti:
-	if (ifp->if_flags & IFF_ALLMULTI) {
-		TI_DO_CMD(TI_CMD_SET_ALLMULTI, TI_CMD_CODE_ALLMULTI_ENB, 0);
-		return;
-	} else {
-		TI_DO_CMD(TI_CMD_SET_ALLMULTI, TI_CMD_CODE_ALLMULTI_DIS, 0);
-	}
+	TI_DO_CMD(TI_CMD_SET_ALLMULTI, TI_CMD_CODE_ALLMULTI_DIS, 0);
+	TI_DO_CMD(TI_CMD_SET_PROMISC_MODE, TI_CMD_CODE_PROMISC_DIS, 0);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	/* Disable interrupts. */
-	intrs = CSR_READ_4(sc, TI_MB_HOSTINTR);
-	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 1);
-
-	/* First, zot all the existing filters. */
-	while (SLIST_FIRST(&sc->ti_mc_listhead) != NULL) {
-		mc = SLIST_FIRST(&sc->ti_mc_listhead);
-		ti_del_mcast(sc, &mc->mc_addr);
-		SLIST_REMOVE_HEAD(&sc->ti_mc_listhead, mc_entries);
-		free(mc, M_DEVBUF);
-	}
-
-	/* Now program new ones. */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/* Re-enable interrupts. */
-			CSR_WRITE_4(sc, TI_MB_HOSTINTR, intrs);
-
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {  
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC) {
+			TI_DO_CMD(TI_CMD_SET_PROMISC_MODE,
+			    TI_CMD_CODE_PROMISC_ENB, 0);
+		} else {
+			TI_DO_CMD(TI_CMD_SET_ALLMULTI,
+			    TI_CMD_CODE_ALLMULTI_ENB, 0);
 		}
-		mc = malloc(sizeof(struct ti_mc_entry), M_DEVBUF, M_NOWAIT);
-		if (mc == NULL)
-			panic("ti_setmulti");
-		bcopy(enm->enm_addrlo, (char *)&mc->mc_addr, ETHER_ADDR_LEN);
-		SLIST_INSERT_HEAD(&sc->ti_mc_listhead, mc, mc_entries);
-		ti_add_mcast(sc, &mc->mc_addr);
-		ETHER_NEXT_MULTI(step, enm);
-	}
+	} else {
+		/* Disable interrupts. */
+		intrs = CSR_READ_4(sc, TI_MB_HOSTINTR);
+		CSR_WRITE_4(sc, TI_MB_HOSTINTR, 1);
 
-	/* Re-enable interrupts. */
-	CSR_WRITE_4(sc, TI_MB_HOSTINTR, intrs);
+		/* First, zot all the existing filters. */
+		while (SLIST_FIRST(&sc->ti_mc_listhead) != NULL) {
+			mc = SLIST_FIRST(&sc->ti_mc_listhead);
+			ti_del_mcast(sc, &mc->mc_addr);
+			SLIST_REMOVE_HEAD(&sc->ti_mc_listhead, mc_entries);
+			free(mc, M_DEVBUF);
+		}
+
+		/* Now program new ones. */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			mc = malloc(sizeof(struct ti_mc_entry), M_DEVBUF,
+			    M_NOWAIT);
+			if (mc == NULL)
+				panic("ti_iff");
+
+			bcopy(enm->enm_addrlo, (char *)&mc->mc_addr,
+			    ETHER_ADDR_LEN);
+			SLIST_INSERT_HEAD(&sc->ti_mc_listhead, mc,
+			    mc_entries);
+			ti_add_mcast(sc, &mc->mc_addr);
+
+                        ETHER_NEXT_MULTI(step, enm);
+                }
+
+                /* Re-enable interrupts. */
+                CSR_WRITE_4(sc, TI_MB_HOSTINTR, intrs);
+        }
 }
 
 /*
@@ -2250,23 +2253,15 @@ ti_init2(struct ti_softc *sc)
 	CSR_WRITE_4(sc, TI_GCR_PAR1, (htons(m[1]) << 16) | htons(m[2]));
 	TI_DO_CMD(TI_CMD_SET_MAC_ADDR, 0, 0);
 
-	/* Enable or disable promiscuous mode as needed. */
-	if (ifp->if_flags & IFF_PROMISC) {
-		TI_DO_CMD(TI_CMD_SET_PROMISC_MODE, TI_CMD_CODE_PROMISC_ENB, 0);
-	} else {
-		TI_DO_CMD(TI_CMD_SET_PROMISC_MODE, TI_CMD_CODE_PROMISC_DIS, 0);
-	}
-
-	/* Program multicast filter. */
-	ti_setmulti(sc);
+	/* Program promiscuous mode and multicast filters. */
+	ti_iff(sc);
 
 	/*
 	 * If this is a Tigon 1, we should tell the
 	 * firmware to use software packet filtering.
 	 */
-	if (sc->ti_hwrev == TI_HWREV_TIGON) {
+	if (sc->ti_hwrev == TI_HWREV_TIGON)
 		TI_DO_CMD(TI_CMD_FDR_FILTERING, TI_CMD_CODE_FILT_ENB, 0);
-	}
 
 	/* Init RX ring. */
 	if (ti_init_rx_ring_std(sc) == ENOBUFS)
@@ -2431,7 +2426,6 @@ ti_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
-	struct ti_cmd_desc	cmd;
 
 	s = splnet();
 
@@ -2443,38 +2437,19 @@ ti_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-#endif /* INET */
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			/*
-			 * If only the state of the PROMISC flag changed,
-			 * then just use the 'set promisc mode' command
-			 * instead of reinitializing the entire NIC. Doing
-			 * a full re-init means reloading the firmware and
-			 * waiting for it to start up, which may take a
-			 * second or two.
-			 */
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->ti_if_flags & IFF_PROMISC)) {
-				TI_DO_CMD(TI_CMD_SET_PROMISC_MODE,
-				    TI_CMD_CODE_PROMISC_ENB, 0);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->ti_if_flags & IFF_PROMISC) {
-				TI_DO_CMD(TI_CMD_SET_PROMISC_MODE,
-				    TI_CMD_CODE_PROMISC_DIS, 0);
-			} else {
-				if ((ifp->if_flags & IFF_RUNNING) == 0)
-					ti_init(sc);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				ti_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				ti_stop(sc);
 		}
-		sc->ti_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCSIFMEDIA:
@@ -2488,7 +2463,7 @@ ti_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			ti_setmulti(sc);
+			ti_iff(sc);
 		error = 0;
 	}
 
