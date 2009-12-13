@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.114 2009/12/12 17:08:07 espie Exp $
+# $OpenBSD: Update.pm,v 1.115 2009/12/13 17:58:55 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -80,7 +80,6 @@ sub process_handle
 			$state->say("Not updating .libs*, remember to clean them");
 			$first = 0;
 		}
-		$h->{keepit} = 1;
 		return 0;
 	}
 	if ($pkgname =~ m/^partial\-/o) {
@@ -93,6 +92,7 @@ sub process_handle
 	eval {
 		if ($state->quirks->is_base_system($h, $state)) {
 			$h->{update_found} = 1;
+			$set->{updates}++;
 		}
 	};
 	return 1 if $h->{update_found};
@@ -275,7 +275,7 @@ sub process_set
 	if ($problem) {
 		$state->tracker->cant($set) if !$set->{quirks};
 		return 0;
-	} elsif ($set->older_to_do == 0 && $set->newer == 0) {
+	} elsif ($set->{updates} == 0) {
 		$state->tracker->uptodate($set);
 		return 0;
 	} 

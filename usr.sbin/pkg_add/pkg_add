@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.423 2009/12/13 17:54:15 espie Exp $
+# $OpenBSD: pkg_add,v 1.424 2009/12/13 17:58:54 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -296,6 +296,7 @@ sub recheck_conflicts
 {
 	my ($set, $state) = @_;
 	
+	# no conflicts between newer sets
 	for my $h ($set->newer) {
 		for my $h2 ($set->newer) {
 			next if $h2 == $h;
@@ -303,6 +304,17 @@ sub recheck_conflicts
 				$state->errsay($set->print, ": internal conflict between ", $h->pkgname, " and ", $h2->pkgname);
 				return 0;
 			}
+		}
+	}
+
+	# and between newer sets and kept sets neither
+	for my $h ($set->newer) {
+		for my $h2 ($set->older) {
+			next unless $h2->{keepit};
+			if ($h->plist->conflict_list->conflicts_with($h2->pkgname) || $h2->plist->conflict_list->conflicts_with($h->pkgname)) {
+				$state->errsay($set->print, ": internal conflict between ", $h->pkgname, " and ", $h2->pkgname);
+				return 0;
+ 			}
 		}
 	}
 	return 1;
