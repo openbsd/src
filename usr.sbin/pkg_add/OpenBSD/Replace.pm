@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.57 2009/11/29 11:22:25 espie Exp $
+# $OpenBSD: Replace.pm,v 1.58 2009/12/13 17:57:57 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -424,57 +424,68 @@ sub adjust_depends_closure
 	}
 }
 
+sub do_save_libs
+{
+	my ($o, $libs, $state) = @_;
+
+	my $oldname = $o->pkgname;
+
+	($o->{plist}, my $stub_list) = split_libs($o->plist, $libs);
+	my $stub_name = $stub_list->pkgname;
+	my $dest = installed_info($stub_name);
+	$state->say("Keeping them in $stub_name") 
+	    if $state->{verbose};
+	if ($state->{not}) {
+		$stub_list->to_cache;
+		$o->plist->to_cache;
+	} else {
+		mkdir($dest);
+		open my $descr, '>', $dest.DESC;
+		print $descr "Stub libraries for $oldname\n";
+		close $descr;
+		my $f = OpenBSD::PackingElement::FDESC->add($stub_list, DESC);
+		$f->{ignore} = 1;
+		$f->add_digest($f->compute_digest($dest.DESC));
+		$stub_list->to_installation;
+		$o->plist->to_installation;
+	}
+	add_installed($stub_name);
+
+	require OpenBSD::PkgCfl;
+	OpenBSD::PkgCfl::register($stub_list, $state);
+
+	adjust_depends_closure($oldname, $stub_list, $state);
+}
+
+sub save_libs_from_handle
+{
+	my ($o, $set, $state) = @_;
+
+	my $libs = {};
+	my $p = {};
+
+	$state->say("Looking for changes in shared libraries") 
+	    if $state->{beverbose};
+	$o->plist->mark_lib($libs, $p);
+	for my $n ($set->newer) {
+		$n->plist->unmark_lib($libs, $p);
+	}
+
+	if (%$libs) {
+		$state->say("Libraries to keep: ", 
+		    join(",", sort(keys %$libs))) if $state->{verbose};
+		do_save_libs($o, $libs, $state);
+	} else {
+		$state->say("No libraries to keep") if $state->{verbose};
+	}
+}
 
 sub save_old_libraries
 {
 	my ($set, $state) = @_;
 
 	for my $o ($set->older) {
-
-		my $oldname = $o->pkgname;
-		my $libs = {};
-		my $p = {};
-
-		$state->say("Looking for changes in shared libraries") 
-		    if $state->{beverbose};
-		$o->{plist}->mark_lib($libs, $p);
-		for my $n ($set->newer) {
-			$n->{plist}->unmark_lib($libs, $p);
-		}
-
-		if (%$libs) {
-			$state->say("Libraries to keep: ", 
-			    join(",", sort(keys %$libs))) 
-			    if $state->{verbose};
-			($o->{plist}, my $stub_list) = split_libs($o->{plist}, $libs);
-			my $stub_name = $stub_list->pkgname;
-			my $dest = installed_info($stub_name);
-			$state->say("Keeping them in $stub_name") 
-			    if $state->{verbose};
-			if ($state->{not}) {
-				$stub_list->to_cache;
-				$o->{plist}->to_cache;
-			} else {
-				mkdir($dest);
-				open my $descr, '>', $dest.DESC;
-				print $descr "Stub libraries for $oldname\n";
-				close $descr;
-				my $f = OpenBSD::PackingElement::FDESC->add($stub_list, DESC);
-				$f->{ignore} = 1;
-				$f->add_digest($f->compute_digest($dest.DESC));
-				$stub_list->to_installation;
-				$o->{plist}->to_installation;
-			}
-			add_installed($stub_name);
-
-			require OpenBSD::PkgCfl;
-			OpenBSD::PkgCfl::register($stub_list, $state);
-
-			adjust_depends_closure($oldname, $stub_list, $state);
-		} else {
-			$state->say("No libraries to keep") 
-			    if $state->{verbose};
-		}
+		save_libs_from_handle($o, $set, $state);
 	}
 }
 
