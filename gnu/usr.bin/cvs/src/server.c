@@ -355,14 +355,19 @@ create_adm_p (base_dir, dir)
 	return ENOMEM;
 
     dir_where_cvsadm_lives = malloc (strlen (base_dir) + strlen (dir) + 100);
-    if (dir_where_cvsadm_lives == NULL)
+    if (dir_where_cvsadm_lives == NULL) {
+	free(p);
 	return ENOMEM;
+    }
 
     /* Allocate some space for the temporary string in which we will
        construct filenames. */
     tmp = malloc (strlen (base_dir) + strlen (dir) + 100);
-    if (tmp == NULL)
+    if (tmp == NULL) {
+	free(p);
+	free(dir_where_cvsadm_lives);
 	return ENOMEM;
+    }
 
     
     /* We make several passes through this loop.  On the first pass,
@@ -1397,6 +1402,8 @@ receive_file (size, file, gzipped)
 			pending_error = status;
 		    }
 		}
+		if (filebuf != NULL)
+		    free(filebuf);
 		return;
 	    }
 

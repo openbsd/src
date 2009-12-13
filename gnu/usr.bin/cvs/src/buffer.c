@@ -101,9 +101,13 @@ allocate_buffer_datas ()
 
     alc = ((struct buffer_data *)
 	   malloc (ALLOC_COUNT * sizeof (struct buffer_data)));
-    space = (char *) valloc (ALLOC_COUNT * BUFFER_DATA_SIZE);
-    if (alc == NULL || space == NULL)
+    if (alc == NULL)
 	return;
+    space = (char *) valloc (ALLOC_COUNT * BUFFER_DATA_SIZE);
+    if (space == NULL) {
+	free(alc);
+	return; 
+    }
     for (i = 0; i < ALLOC_COUNT; i++, alc++, space += BUFFER_DATA_SIZE)
     {
 	alc->next = free_buffer_data;
