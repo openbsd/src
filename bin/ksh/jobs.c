@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.38 2009/12/12 04:28:44 deraadt Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.39 2009/12/13 04:36:48 deraadt Exp $	*/
 
 /*
  * Process and job control
@@ -1102,7 +1102,7 @@ j_sigchld(int sig)
 	for (j = job_list; j; j = j->next)
 		if (j->ppid == procpid && !(j->flags & JF_STARTED)) {
 			held_sigchld = 1;
-			return;
+			goto finished;
 		}
 
 	getrusage(RUSAGE_CHILDREN, &ru0);
@@ -1148,6 +1148,7 @@ found:
 		check_job(j);	/* check to see if entire job is done */
 	} while (1);
 
+finished:
 	errno = errno_;
 }
 
