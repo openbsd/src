@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.28 2008/01/24 22:46:58 jmc Exp $
+.\"	$OpenBSD: inet6.4,v 1.29 2009/12/13 15:48:21 sobrado Exp $
 .\"	$KAME: inet6.4,v 1.19 2000/11/24 10:13:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 24 2008 $
+.Dd $Mdocdate: December 13 2009 $
 .Dt INET6 4
 .Os
 .Sh NAME
@@ -211,64 +211,6 @@ message protocol is accessible from a raw socket.
 .\" .It Dv SIOCGIFNETMASK
 .\" Get interface network mask.
 .\" .El
-.\" .Sh ROUTING
-.\" The current implementation of Internet protocols includes some routing-table
-.\" adaptations to provide enhanced caching of certain end-to-end
-.\" information necessary for Transaction TCP and Path MTU Discovery.  The
-.\" following changes are the most significant:
-.\" .Bl -enum
-.\" .It
-.\" All IP routes, except those with the
-.\" .Dv RTF_CLONING
-.\" flag and those to multicast destinations, have the
-.\" .Dv RTF_PRCLONING
-.\" flag forcibly enabled (they are thus said to be
-.\" .Dq "protocol cloning" . )
-.\" .It
-.\" When the last reference to an IP route is dropped, the route is
-.\" examined to determine if it was created by cloning such a route.  If
-.\" this is the case, the
-.\" .Dv RTF_PROTO3
-.\" flag is turned on, and the expiration timer is initialized to go off
-.\" in net.inet.ip.rtexpire seconds.  If such a route is re-referenced,
-.\" the flag and expiration timer are reset.
-.\" .It
-.\" A kernel timeout runs once every ten minutes, or sooner if there are
-.\" soon-to-expire routes in the kernel routing table, and deletes the
-.\" expired routes.
-.\" .El
-.\" .Pp
-.\" A dynamic process is in place to modify the value of
-.\" net.inet.ip.rtexpire if the number of cached routes grows too large.
-.\" If after an expiration run there are still more than
-.\" net.inet.ip.rtmaxcache unreferenced routes remaining, the rtexpire
-.\" value is multiplied by 3/4, and any routes which have longer
-.\" expiration times have those times adjusted.  This process is damped
-.\" somewhat by specification of a minimum rtexpire value
-.\" (net.inet.ip.rtminexpire), and by restricting the reduction to once in
-.\" a ten-minute period.
-.\" .Pp
-.\" If some external process deletes the original route from which a
-.\" protocol-cloned route was generated, the ``child route'' is deleted.
-.\" (This is actually a generic mechanism in the routing code support for
-.\" protocol-requested cloning.)
-.\" .Pp
-.\" No attempt is made to manage routes which were not created by protocol
-.\" cloning; these are assumed to be static, under the management of an
-.\" external routing process, or under the management of a link layer
-.\" (e.g.,
-.\" .Tn ARP
-.\" for Ethernets).
-.\" .Pp
-.\" Only certain types of network activity will result in the cloning of a
-.\" route using this mechanism.  Specifically, those protocols (such as
-.\" .Tn TCP
-.\" and
-.\" .Tn UDP )
-.\" which themselves cache a long-lasting reference to route for a destination
-.\" will trigger the mechanism; whereas raw
-.\" .Tn IP
-.\" packets, whether locally-generated or forwarded, will not.
 .Ss Interaction between IPv4/v6 sockets
 .Ox
 does not route IPv4 traffic to an
