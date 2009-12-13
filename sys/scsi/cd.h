@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.23 2009/12/13 03:29:01 dlg Exp $	*/
+/*	$OpenBSD: cd.h,v 1.24 2009/12/13 03:31:13 dlg Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -282,9 +282,6 @@ struct cd_softc {
 #define	CDF_WLABEL	0x04		/* label is writable */
 #define	CDF_LABELLING	0x08		/* writing label */
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
-#ifdef CDDA
-#define CDF_CDDA	0x20
-#endif
 #define CDF_WAITING	0x100
 #define CDF_STARTING	0x200
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
@@ -292,9 +289,6 @@ struct cd_softc {
 		u_int32_t blksize;
 		daddr64_t disksize;	/* total number sectors */
 	} sc_params;
-#ifdef CDDA
-	struct cd_parms sc_orig_params;    /* filled in when CD-DA mode starts */
-#endif
 	struct buf sc_buf_queue;
 	struct mutex sc_queue_mtx;
 	struct mutex sc_start_mtx;
