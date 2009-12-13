@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.29 2009/11/08 21:40:05 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.30 2009/12/13 22:02:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -24,6 +24,7 @@
 #include <sys/tree.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/resource.h>
 
 #include <err.h>
 #include <ctype.h>
@@ -448,4 +449,33 @@ generate_uid(void)
 	usleep(1);
 
 	return (id);
+}
+
+void
+fdlimit(int n)
+{
+	struct rlimit rl;
+
+	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
+		fatal("fdlimit: getrlimit");
+	if ((u_int)n > rl.rlim_max) {
+		log_warnx("fdlimit: need %d, limit %llu", n, rl.rlim_max);
+		fatalx("fdlimit: hard limit reached");
+	}
+	rl.rlim_cur = n;
+	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
+		fatal("fdlimit: getrlimit");
+}
+
+int
+availdesc(void)
+{
+	int avail;
+
+	avail = getdtablesize();
+	avail -= 3;		/* stdin, stdout, stderr */
+	avail -= PROC_COUNT;	/* imsg channels */
+	avail -= 5;		/* safety buffer */
+
+	return (avail);
 }

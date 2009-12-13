@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.89 2009/11/14 18:48:05 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.90 2009/12/13 22:02:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
-#include <sys/resource.h>
 #include <sys/mman.h>
 
 #include <err.h>
@@ -867,7 +866,6 @@ main(int argc, char *argv[])
 	struct event	 ev_sigchld;
 	struct event	 ev_sighup;
 	struct timeval	 tv;
-	struct rlimit	 rl;
 	struct peer	 peers[] = {
 		{ PROC_CONTROL,	parent_dispatch_control },
 		{ PROC_LKA,	parent_dispatch_lka },
@@ -949,22 +947,6 @@ main(int argc, char *argv[])
 
 	env.stats->parent.start = time(NULL);
 
-	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("smtpd: failed to get resource limit");
-
-	log_debug("smtpd: max open files %lld", rl.rlim_max);
-
-	/*
-	 * Allow the maximum number of open file descriptors for this
-	 * login class (which should be the class "daemon" by default).
-	 */
-	rl.rlim_cur = rl.rlim_max;
-	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("smtpd: failed to set resource limit");
-
-	env.sc_maxconn = (rl.rlim_cur / 4) * 3;
-	log_debug("smtpd: will accept at most %d clients", env.sc_maxconn);
-
 	fork_peers(&env);
 
 	event_init();
@@ -995,6 +977,15 @@ void
 fork_peers(struct smtpd *env)
 {
 	SPLAY_INIT(&env->children);
+
+	/*
+	 * Each process has fd soft limit doubled.  This is done with smtp,
+	 * mta and mda in mind, because all of them require 2 fds per one
+	 * session.  Additionally, processes such as queue may bump it even
+	 * further as in the worst case scenarios they could hold many more
+	 * fds open.
+	 */
+	fdlimit(getdtablesize() * 2);
 
 	env->sc_instances[PROC_CONTROL] = 1;
 	env->sc_instances[PROC_LKA] = 1;

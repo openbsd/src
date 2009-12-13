@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.94 2009/11/13 11:27:51 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.95 2009/12/13 22:02:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -664,6 +664,12 @@ lka(struct smtpd *env)
 	signal_add(&ev_sigchld, NULL);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
+
+	/*
+	 * lka opens all kinds of files and sockets, so bump the limit further.
+	 * XXX: need to analyse the exact hard limit.
+	 */
+	fdlimit(getdtablesize() * 2);
 
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));

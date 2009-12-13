@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.72 2009/11/08 23:08:56 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.73 2009/12/13 22:02:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -547,6 +547,9 @@ runner(struct smtpd *env)
 	signal_add(&ev_sigterm, NULL);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
+
+	/* see fdlimit()-related comment in queue.c */
+	fdlimit(getdtablesize() * 2);
 
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));

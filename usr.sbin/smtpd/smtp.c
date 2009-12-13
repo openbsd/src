@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.64 2009/11/08 21:40:05 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.65 2009/12/13 22:02:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/socket.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <event.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -48,9 +49,9 @@ void		smtp_dispatch_runner(int, short, void *);
 void		smtp_setup_events(struct smtpd *);
 void		smtp_disable_events(struct smtpd *);
 void		smtp_pause(struct smtpd *);
-void		smtp_resume(struct smtpd *);
+int		smtp_enqueue(struct smtpd *, uid_t *);
 void		smtp_accept(int, short, void *);
-void		session_auth_pickup(struct session *, char *, size_t);
+struct session *smtp_new(struct listener *);
 struct session *session_lookup(struct smtpd *, u_int64_t);
 
 void
@@ -507,66 +508,11 @@ smtp_dispatch_control(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_SMTP_ENQUEUE: {
-			static struct listener	 l;
-			struct addrinfo		 hints, *res;
-			struct session		*s;
-			uid_t			 euid;
-			int			 fd[2];
-
-			bzero(&l, sizeof(l));
-			l.env = env;
-
-			memcpy(&euid, imsg.data, sizeof(euid));
-
-			if (env->stats->smtp.sessions_active >=
-			    env->sc_maxconn) {
-				log_warnx("denying local connection, too many"
-				    " sessions active");
-				imsg_compose_event(iev, IMSG_SMTP_ENQUEUE,
-				    imsg.hdr.peerid, 0, -1, NULL, 0);
-				break;
-			}
-
-			if (socketpair(
-			    AF_UNIX, SOCK_STREAM, PF_UNSPEC, fd) == -1)
-				fatal("socketpair");
-
-			if ((s = calloc(1, sizeof(*s))) == NULL)
-				fatal(NULL);
-
-			s->s_id = generate_uid();
-			s->s_fd = fd[0];
-			s->s_env = env;
-			s->s_l = &l;
-			s->s_msg.flags |= F_MESSAGE_ENQUEUED;
-			(void)strlcpy(s->s_msg.tag, s->s_l->tag, sizeof(s->s_msg.tag));
-
-			bzero(&hints, sizeof(hints));
-			hints.ai_family = PF_UNSPEC;
-			hints.ai_flags = AI_NUMERICHOST;
-
-			if (getaddrinfo("::1", NULL, &hints, &res) != 0)
-				fatal("getaddrinfo");
-
-			memcpy(&s->s_ss, res->ai_addr, res->ai_addrlen);
-
-			env->stats->smtp.sessions++;
-			env->stats->smtp.sessions_active++;
-
-			bsnprintf(s->s_hostname, sizeof(s->s_hostname),
-			    "%d@localhost", euid);
-			strlcpy(s->s_msg.session_hostname, s->s_hostname,
-			    sizeof(s->s_msg.session_hostname));
-
-			SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
-
-			session_init(s->s_l, s);
-
+		case IMSG_SMTP_ENQUEUE:
 			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE,
-			    imsg.hdr.peerid, 0, fd[1], NULL, 0);
+			    imsg.hdr.peerid, 0, smtp_enqueue(env, imsg.data),
+			    NULL, 0);
 			break;
-		}
 		case IMSG_SMTP_PAUSE:
 			smtp_pause(env);
 			break;
@@ -618,62 +564,11 @@ smtp_dispatch_runner(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_SMTP_ENQUEUE: {
-			static struct listener	 l;
-			struct addrinfo		 hints, *res;
-			struct session		*s;
-			int			 fd[2];
-
-			bzero(&l, sizeof(l));
-			l.env = env;
-
-			if (env->stats->smtp.sessions_active >=
-			    env->sc_maxconn) {
-				log_warnx("denying internal connection, too many"
-				    " sessions active");
-				imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0, -1,
-				    imsg.data, sizeof(struct message));
-				break;
-			}
-
-			if (socketpair(
-			    AF_UNIX, SOCK_STREAM, PF_UNSPEC, fd) == -1)
-				fatal("socketpair");
-
-			if ((s = calloc(1, sizeof(*s))) == NULL)
-				fatal(NULL);
-
-			s->s_id = generate_uid();
-			s->s_fd = fd[0];
-			s->s_env = env;
-			s->s_l = &l;
-			s->s_msg.flags |= F_MESSAGE_ENQUEUED|F_MESSAGE_BOUNCE;
-
-			bzero(&hints, sizeof(hints));
-			hints.ai_family = PF_UNSPEC;
-			hints.ai_flags = AI_NUMERICHOST;
-
-			if (getaddrinfo("::1", NULL, &hints, &res) != 0)
-				fatal("getaddrinfo");
-
-			memcpy(&s->s_ss, res->ai_addr, res->ai_addrlen);
-
-			env->stats->smtp.sessions++;
-			env->stats->smtp.sessions_active++;
-
-			strlcpy(s->s_hostname, "localhost",
-			    sizeof(s->s_hostname));
-			strlcpy(s->s_msg.session_hostname, s->s_hostname,
-			    sizeof(s->s_msg.session_hostname));
-
-			SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
-
-			session_init(s->s_l, s);
-
-			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0, fd[1],
-			    imsg.data, sizeof(struct message));
+		case IMSG_SMTP_ENQUEUE:
+			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0,
+			    smtp_enqueue(env, NULL), imsg.data,
+			    sizeof(struct message));
 			break;
-		}
 		default:
 			log_warnx("smtp_dispatch_runner: got imsg %d",
 			    imsg.hdr.type);
@@ -764,6 +659,7 @@ void
 smtp_setup_events(struct smtpd *env)
 {
 	struct listener *l;
+	int avail = availdesc();
 
 	TAILQ_FOREACH(l, env->sc_listeners, entry) {
 		log_debug("smtp_setup_events: listen on %s port %d flags 0x%01x"
@@ -774,10 +670,17 @@ smtp_setup_events(struct smtpd *env)
 		if (listen(l->fd, SMTPD_BACKLOG) == -1)
 			fatal("listen");
 		l->env = env;
-		event_set(&l->ev, l->fd, EV_READ, smtp_accept, l);
+		event_set(&l->ev, l->fd, EV_READ|EV_PERSIST, smtp_accept, l);
 		event_add(&l->ev, NULL);
 		ssl_setup(env, l);
+		avail--;
 	}
+
+	/* guarantee 2 fds to each accepted client */
+	if ((env->sc_maxconn = avail / 2) < 1)
+		fatalx("smtp_setup_events: fd starvation");
+
+	log_debug("smtp: will accept at most %d clients", env->sc_maxconn);
 }
 
 void
@@ -794,6 +697,7 @@ smtp_disable_events(struct smtpd *env)
 	}
 	free(env->sc_listeners);
 	env->sc_listeners = NULL;
+	env->sc_maxconn = 0;
 }
 
 void
@@ -820,45 +724,115 @@ smtp_resume(struct smtpd *env)
 		event_add(&l->ev, NULL);
 }
 
+int
+smtp_enqueue(struct smtpd *env, uid_t *euid)
+{
+	static struct listener		 local, *l;
+	static struct sockaddr_storage	 sa;
+	struct session			*s;
+	int				 fd[2];
+
+	if (l == NULL) {
+		struct addrinfo hints, *res;
+
+		l = &local;
+		strlcpy(l->tag, "local", sizeof(l->tag));
+
+		bzero(&hints, sizeof(hints));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_flags = AI_NUMERICHOST;
+
+		if (getaddrinfo("::1", NULL, &hints, &res))
+			fatal("getaddrinfo");
+		memcpy(&sa, res->ai_addr, res->ai_addrlen);
+		freeaddrinfo(res);
+	}
+	l->env = env;
+
+	/*
+	 * Some enqueue requests buffered in IMSG may still arrive even after
+	 * call to smtp_pause() because enqueue listener is not a real socket
+	 * and thus cannot be paused properly.
+	 */
+	if (env->sc_opts & SMTPD_SMTP_PAUSED)
+		return (-1);
+
+	if ((s = smtp_new(l)) == NULL)
+		return (-1);
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fd))
+		fatal("socketpair");
+
+	s->s_fd = fd[0];
+	s->s_ss = sa;
+	s->s_msg.flags |= F_MESSAGE_ENQUEUED;
+
+	if (euid)
+		bsnprintf(s->s_hostname, sizeof(s->s_hostname), "%d@localhost",
+		    *euid);
+	else {
+		strlcpy(s->s_hostname, "localhost", sizeof(s->s_hostname));
+		s->s_msg.flags |= F_MESSAGE_BOUNCE;
+	}
+
+	strlcpy(s->s_msg.session_hostname, s->s_hostname,
+	    sizeof(s->s_msg.session_hostname));
+
+	session_init(l, s);
+
+	return (fd[1]);
+}
+
 void
 smtp_accept(int fd, short event, void *p)
 {
-	int			 s_fd;
-	struct sockaddr_storage	 ss;
 	struct listener		*l = p;
 	struct session		*s;
 	socklen_t		 len;
 
-	log_debug("smtp_accept: incoming client on listener: %p", l);
-	len = sizeof(struct sockaddr_storage);
-	if ((s_fd = accept(l->fd, (struct sockaddr *)&ss, &len)) == -1) {
-		event_del(&l->ev);
+	if ((s = smtp_new(l)) == NULL)
 		return;
+
+	len = sizeof(s->s_ss);
+	if ((s->s_fd = accept(fd, (struct sockaddr *)&s->s_ss, &len)) == -1) {
+		if (errno == EINTR || errno == ECONNABORTED)
+			return;
+		fatal("smtp_accept");
 	}
 
-	log_debug("smtp_accept: accepted client on listener: %p", l);
+	dns_query_ptr(l->env, &s->s_ss, s->s_id);
+}
+
+
+struct session *
+smtp_new(struct listener *l)
+{
+	struct smtpd	*env = l->env;
+	struct session	*s;
+
+	log_debug("smtp_new: incoming client on listener: %p", l);
+
+	if (env->sc_opts & SMTPD_SMTP_PAUSED)
+		fatalx("smtp_new: unexpected client");
+
+	if (env->stats->smtp.sessions_active >= env->sc_maxconn) {
+		log_warnx("client limit hit, disabling incoming connections");
+		smtp_pause(env);
+		return (NULL);
+	}
+	
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		fatal(NULL);
-	len = sizeof(s->s_ss);
-
 	s->s_id = generate_uid();
-	s->s_fd = s_fd;
-	s->s_env = l->env;
+	s->s_env = env;
 	s->s_l = l;
+	strlcpy(s->s_msg.tag, l->tag, sizeof(s->s_msg.tag));
+	SPLAY_INSERT(sessiontree, &env->sc_sessions, s);
 
-	(void)memcpy(&s->s_ss, &ss, sizeof(s->s_ss));
+	env->stats->smtp.sessions++;
+	env->stats->smtp.sessions_active++;
 
-	event_add(&l->ev, NULL);
-
-	s->s_env->stats->smtp.sessions++;
-	s->s_env->stats->smtp.sessions_active++;
-
-	if (s->s_env->stats->smtp.sessions_active == s->s_env->sc_maxconn)
-		event_del(&l->ev);
-
-	dns_query_ptr(l->env, &s->s_ss, s->s_id);
-
-	SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
+	return (s);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.126 2009/11/16 10:38:11 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.127 2009/12/13 22:02:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -418,7 +418,6 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	s->s_msg.id = s->s_id;
 	s->s_msg.session_id = s->s_id;
 	s->s_msg.session_ss = s->s_ss;
-	(void)strlcpy(s->s_msg.tag, s->s_l->tag, sizeof(s->s_msg.tag));
 
 	log_debug("session_rfc5321_mail_handler: sending notification to mfa");
 
@@ -945,6 +944,8 @@ session_error(struct bufferevent *bev, short event, void *p)
 void
 session_destroy(struct session *s)
 {
+	size_t resume;
+
 	log_debug("session_destroy: killing client: %p", s);
 
 	if (s->s_flags & F_WRITEONLY)
@@ -967,14 +968,12 @@ session_destroy(struct session *s)
 		fatal("session_destroy: close");
 
 	s->s_env->stats->smtp.sessions_active--;
-	if (s->s_env->stats->smtp.sessions_active < s->s_env->sc_maxconn &&
-	    !(s->s_msg.flags & F_MESSAGE_ENQUEUED)) {
-		/*
-		 * if our session_destroy occurs because of a configuration
-		 * reload, our listener no longer exist and s->s_l is NULL.
-		 */
-		if (s->s_l != NULL)
-			event_add(&s->s_l->ev, NULL);
+
+	/* resume when session count decreases to 95% */
+	resume = s->s_env->sc_maxconn * 95 / 100;
+	if (s->s_env->stats->smtp.sessions_active == resume) {
+		log_warnx("re-enabling incoming connections");
+		smtp_resume(s->s_env);
 	}
 
 	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.42 2009/12/02 19:10:02 mk Exp $	*/
+/*	$OpenBSD: control.c,v 1.43 2009/12/13 22:02:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,11 +47,11 @@ struct {
 
 __dead void	 control_shutdown(void);
 int		 control_init(void);
-int		 control_listen(struct smtpd *);
+void		 control_listen(struct smtpd *);
 void		 control_cleanup(void);
 void		 control_accept(int, short, void *);
 struct ctl_conn	*control_connbyfd(int);
-void		 control_close(int);
+void		 control_close(struct smtpd *, int);
 void		 control_sig_handler(int, short, void *);
 void		 control_dispatch_ext(int, short, void *);
 void		 control_dispatch_lka(int, short, void *);
@@ -185,19 +185,22 @@ control_shutdown(void)
 	_exit(0);
 }
 
-int
+void
 control_listen(struct smtpd *env)
 {
-	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
-		log_warn("control_listen: listen");
-		return (-1);
-	}
+	int avail = availdesc();
 
-	event_set(&control_state.ev, control_state.fd, EV_READ | EV_PERSIST,
+	if (listen(control_state.fd, CONTROL_BACKLOG) == -1)
+		fatal("control_listen");
+	avail--;
+
+	event_set(&control_state.ev, control_state.fd, EV_READ|EV_PERSIST,
 	    control_accept, env);
 	event_add(&control_state.ev, NULL);
 
-	return (0);
+	/* guarantee 2 fds to each accepted client */
+	if ((env->sc_maxconn = avail / 2) < 1)
+		fatalx("control_listen: fd starvation");
 }
 
 void
@@ -217,21 +220,16 @@ control_accept(int listenfd, short event, void *arg)
 	struct smtpd		*env = arg;
 
 	len = sizeof(sun);
-	if ((connfd = accept(listenfd,
-	    (struct sockaddr *)&sun, &len)) == -1) {
-		if (errno != EWOULDBLOCK && errno != EINTR)
-			log_warn("control_accept: accept");
-		return;
+	if ((connfd = accept(listenfd, (struct sockaddr *)&sun, &len)) == -1) {
+		if (errno == EINTR || errno == ECONNABORTED)
+			return;
+		fatal("control_accept: accept");
 	}
 
 	session_socket_blockmode(connfd, BM_NONBLOCK);
 
-	if ((c = calloc(1, sizeof(struct ctl_conn))) == NULL) {
-		close(connfd);
-		log_warn("control_accept");
-		return;
-	}
-
+	if ((c = calloc(1, sizeof(*c))) == NULL)
+		fatal(NULL);
 	imsg_init(&c->iev.ibuf, connfd);
 	c->iev.handler = control_dispatch_ext;
 	c->iev.events = EV_READ;
@@ -239,8 +237,15 @@ control_accept(int listenfd, short event, void *arg)
 	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
 	    c->iev.handler, env);
 	event_add(&c->iev.ev, NULL);
-
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
+
+	env->stats->control.sessions++;
+	env->stats->control.sessions_active++;
+
+	if (env->stats->control.sessions_active >= env->sc_maxconn) {
+		log_warnx("ctl client limit hit, disabling new connections");
+		event_del(&control_state.ev);
+	}
 }
 
 struct ctl_conn *
@@ -256,7 +261,7 @@ control_connbyfd(int fd)
 }
 
 void
-control_close(int fd)
+control_close(struct smtpd *env, int fd)
 {
 	struct ctl_conn	*c;
 
@@ -264,13 +269,19 @@ control_close(int fd)
 		log_warn("control_close: fd %d: not found", fd);
 		return;
 	}
-
-	msgbuf_clear(&c->iev.ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
-
 	event_del(&c->iev.ev);
-	close(c->iev.ibuf.fd);
+	imsg_clear(&c->iev.ibuf);
+	close(fd);
 	free(c);
+
+	env->stats->control.sessions_active--;
+
+	if (!event_pending(&control_state.ev, EV_READ, NULL) &&
+	    env->stats->control.sessions_active < env->sc_maxconn) {
+		log_warnx("re-enabling ctl connections");
+		event_add(&control_state.ev, NULL);
+	}
 }
 
 /* ARGSUSED */
@@ -294,21 +305,21 @@ control_dispatch_ext(int fd, short event, void *arg)
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(&c->iev.ibuf)) == -1 || n == 0) {
-			control_close(fd);
+			control_close(env, fd);
 			return;
 		}
 	}
 
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&c->iev.ibuf.w) < 0) {
-			control_close(fd);
+			control_close(env, fd);
 			return;
 		}
 	}
 
 	for (;;) {
 		if ((n = imsg_get(&c->iev.ibuf, &imsg)) == -1) {
-			control_close(fd);
+			control_close(env, fd);
 			return;
 		}
 

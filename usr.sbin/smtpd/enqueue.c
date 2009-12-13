@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.29 2009/12/12 14:03:59 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.30 2009/12/13 22:02:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -188,7 +188,8 @@ enqueue(int argc, char *argv[])
 	signal(SIGALRM, sighdlr);
 	alarm(300);
 
-	msg.fd = open_connection();
+	if ((msg.fd = open_connection()) == -1)
+		errx(1, "server too busy");
 
 	/* init session */
 	pcb = client_init(msg.fd, open("/dev/null", O_RDONLY), "localhost",
