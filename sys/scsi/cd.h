@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.22 2009/12/12 13:03:56 dlg Exp $	*/
+/*	$OpenBSD: cd.h,v 1.23 2009/12/13 03:29:01 dlg Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ struct cd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
 
-	int flags;
+	int sc_flags;
 #define	CDF_LOCKED	0x01
 #define	CDF_WANTED	0x02
 #define	CDF_WLABEL	0x04		/* label is writable */
@@ -291,11 +291,11 @@ struct cd_softc {
 	struct cd_parms {
 		u_int32_t blksize;
 		daddr64_t disksize;	/* total number sectors */
-	} params;
+	} sc_params;
 #ifdef CDDA
-	struct cd_parms orig_params;    /* filled in when CD-DA mode starts */
+	struct cd_parms sc_orig_params;    /* filled in when CD-DA mode starts */
 #endif
-	struct buf buf_queue;
+	struct buf sc_buf_queue;
 	struct mutex sc_queue_mtx;
 	struct mutex sc_start_mtx;
 	struct timeout sc_timeout;

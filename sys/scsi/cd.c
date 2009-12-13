@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.155 2009/12/13 01:20:14 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.156 2009/12/13 03:29:01 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (!(sc_link->flags & SDEV_ATAPI) &&
 	    SCSISPC(sa->sa_inqbuf->version) == 0)
-		sc->flags |= CDF_ANCIENT;
+		sc->sc_flags |= CDF_ANCIENT;
 
 	printf("\n");
 
@@ -496,14 +496,14 @@ cdstrategy(struct buf *bp)
 	 * If end of partition, just return.
 	 */
 	if (bounds_check_with_label(bp, sc->sc_dk.dk_label,
-	    (sc->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
+	    (sc->sc_flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 
 	/*
 	 * Place it in the queue of disk activities for this disk
 	 */
 	mtx_enter(&sc->sc_queue_mtx);
-	disksort(&sc->buf_queue, bp);
+	disksort(&sc->sc_buf_queue, bp);
 	mtx_leave(&sc->sc_queue_mtx);
 
 	/*
@@ -535,9 +535,9 @@ cd_buf_dequeue(struct cd_softc *sc)
 	struct buf *bp;
 
 	mtx_enter(&sc->sc_queue_mtx);
-	bp = sc->buf_queue.b_actf;
+	bp = sc->sc_buf_queue.b_actf;
 	if (bp != NULL)
-		sc->buf_queue.b_actf = bp->b_actf;
+		sc->sc_buf_queue.b_actf = bp->b_actf;
 	mtx_leave(&sc->sc_queue_mtx);
 
 	return (bp);
@@ -547,8 +547,8 @@ void
 cd_buf_requeue(struct cd_softc *sc, struct buf *bp)
 {
 	mtx_enter(&sc->sc_queue_mtx);
-	bp->b_actf = sc->buf_queue.b_actf;
-	sc->buf_queue.b_actf = bp;
+	bp->b_actf = sc->sc_buf_queue.b_actf;
+	sc->sc_buf_queue.b_actf = bp;
 	mtx_leave(&sc->sc_queue_mtx);
 }
 
@@ -588,16 +588,16 @@ cdstart(void *v)
 	 */
 
 	mtx_enter(&sc->sc_start_mtx);
-	if (ISSET(sc->flags, CDF_STARTING)) {
+	if (ISSET(sc->sc_flags, CDF_STARTING)) {
 		mtx_leave(&sc->sc_start_mtx);
 		return;
 	}
 
-	SET(sc->flags, CDF_STARTING);
+	SET(sc->sc_flags, CDF_STARTING);
 	mtx_leave(&sc->sc_start_mtx);
 
-	CLR(sc->flags, CDF_WAITING);
-	while (!ISSET(sc->flags, CDF_WAITING) &&
+	CLR(sc->sc_flags, CDF_WAITING);
+	while (!ISSET(sc->sc_flags, CDF_WAITING) &&
 	    (bp = cd_buf_dequeue(sc)) != NULL) {
 
 		/*
@@ -677,7 +677,7 @@ cdstart(void *v)
 		scsi_xs_exec(xs);
 	}
 	mtx_enter(&sc->sc_start_mtx);
-	CLR(sc->flags, CDF_STARTING);
+	CLR(sc->sc_flags, CDF_STARTING);
 	mtx_leave(&sc->sc_start_mtx);
 }
 
@@ -701,7 +701,7 @@ cd_buf_done(struct scsi_xfer *xs)
 		    bp->b_flags & B_READ);
 		cd_buf_requeue(sc, bp);
 		scsi_xs_put(xs);
-		SET(sc->flags, CDF_WAITING); /* break out of cdstart loop */
+		SET(sc->sc_flags, CDF_WAITING); /* break out of cdstart loop */
 		timeout_add(&sc->sc_timeout, 1);
 		return;
 
@@ -755,7 +755,7 @@ cdminphys(struct buf *bp)
 	 * ancient device gets confused by length == 0.  A length of 0
 	 * in a 10-byte read/write actually means 0 blocks.
 	 */
-	if (sc->flags & CDF_ANCIENT) {
+	if (sc->sc_flags & CDF_ANCIENT) {
 		max = sc->sc_dk.dk_label->d_secsize * 0xff;
 
 		if (bp->b_bcount > max)
@@ -869,14 +869,14 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		if ((error = cdlock(sc)) != 0)
 			break;
 
-		sc->flags |= CDF_LABELLING;
+		sc->sc_flags |= CDF_LABELLING;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*cd->sc_dk.dk_openmask : */0);
 		if (error == 0) {
 		}
 
-		sc->flags &= ~CDF_LABELLING;
+		sc->sc_flags &= ~CDF_LABELLING;
 		cdunlock(sc);
 		break;
 
@@ -1174,11 +1174,11 @@ cdgetdisklabel(dev_t dev, struct cd_softc *sc, struct disklabel *lp,
 
 	toc = malloc(sizeof(*toc), M_TEMP, M_WAITOK | M_ZERO);
 
-	lp->d_secsize = sc->params.blksize;
+	lp->d_secsize = sc->sc_params.blksize;
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
 	lp->d_secpercyl = 100;
-	lp->d_ncylinders = (sc->params.disksize / 100) + 1;
+	lp->d_ncylinders = (sc->sc_params.disksize / 100) + 1;
 
 	if (sc->sc_link->flags & SDEV_ATAPI) {
 		strncpy(lp->d_typename, "ATAPI CD-ROM", sizeof(lp->d_typename));
@@ -1189,7 +1189,7 @@ cdgetdisklabel(dev_t dev, struct cd_softc *sc, struct disklabel *lp,
 	}
 
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
-	DL_SETDSIZE(lp, sc->params.disksize);
+	DL_SETDSIZE(lp, sc->sc_params.disksize);
 	lp->d_rpm = 300;
 	lp->d_interleave = 1;
 	lp->d_version = 1;
@@ -1583,20 +1583,21 @@ int
 cd_get_parms(struct cd_softc *sc, int flags)
 {
 	/* Reasonable defaults for drives that don't support READ_CAPACITY */
-	sc->params.blksize = 2048;
-	sc->params.disksize = 400000;
+	sc->sc_params.blksize = 2048;
+	sc->sc_params.disksize = 400000;
 
 	if (sc->sc_link->quirks & ADEV_NOCAPACITY)
 		return (0);
 
-	sc->params.disksize = scsi_size(sc->sc_link, flags,
-	    &sc->params.blksize);
+	sc->sc_params.disksize = scsi_size(sc->sc_link, flags,
+	    &sc->sc_params.blksize);
 
-	if ((sc->params.blksize < 512) || ((sc->params.blksize & 511) != 0))
-		sc->params.blksize = 2048;	/* some drives lie ! */
+	if ((sc->sc_params.blksize < 512) ||
+	    ((sc->sc_params.blksize & 511) != 0))
+		sc->sc_params.blksize = 2048;	/* some drives lie ! */
 
-	if (sc->params.disksize < 100)
-		sc->params.disksize = 400000;
+	if (sc->sc_params.disksize < 100)
+		sc->sc_params.disksize = 400000;
 
 	return (0);
 }
