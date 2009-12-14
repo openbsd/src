@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.14 2009/12/12 14:03:59 jacekm Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.15 2009/12/14 18:21:53 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -40,6 +40,7 @@ struct client_ctx {
 	struct event		 ev;
 	struct message		 m;
 	struct smtp_client	*pcb;
+	struct smtpd		*env;
 };
 
 void		 bounce_event(int, short, void *);
@@ -66,6 +67,7 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 	if ((cc = calloc(1, sizeof(*cc))) == NULL)
 		goto fail;
 	cc->pcb = client_init(fd, msgfd, env->sc_hostname, 1);
+	cc->env = env;
 	cc->m = *messagep;
 
 	client_ssl_optional(cc->pcb);
@@ -156,6 +158,8 @@ out:
 		queue_message_update(&cc->m);
 	}
 
+	cc->env->stats->runner.active--;
+	cc->env->stats->runner.bounces_active--;
 	client_close(cc->pcb);
 	free(cc);
 	return;
