@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.116 2009/12/14 09:35:56 espie Exp $
+# $OpenBSD: Update.pm,v 1.117 2009/12/14 11:19:04 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -269,17 +269,19 @@ sub process_hint2
 sub process_set
 {
 	my ($self, $set, $state) = @_;
-	my $problem;
+	my @problems = ();
 	for my $h ($set->older, $set->hints) {
 		next if $h->{update_found};
 		if (!defined $h->update($self, $set, $state)) {
-			$problem = 1;
+			push(@problems, $h->pkgname);
 		}
 	}
-	if ($problem) {
+	if (@problems > 0) {
 		$state->tracker->cant($set) if !$set->{quirks};
 		if ($set->{updates} != 0) {
-			$state->say("Can't update ", $set->print);
+			$state->say("Can't update ", $set->print, 
+			    ": no update found for ", 
+			    join(',', @problems));
 		}
 		return 0;
 	} elsif ($set->{updates} == 0) {
