@@ -546,6 +546,9 @@ int i915_getparam(struct drm_device *dev, void *data,
 	case I915_PARAM_HAS_GEM:
 		value = 0;
 		break;
+	case I915_PARAM_NUM_FENCES_AVAIL:
+		value = 0;
+		break;
 	default:
 		DRM_ERROR("Unknown parameter %d\n", param->param);
 		return EINVAL;
