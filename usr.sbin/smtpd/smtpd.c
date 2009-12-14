@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.90 2009/12/13 22:02:55 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.91 2009/12/14 13:17:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1342,12 +1342,12 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 
 	log_debug("executing filter as user: %s", pw->pw_name);
 
-	if (pipe(pipefd) == -1) {
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefd) == -1) {
 		if (errno == ENFILE) {
-			log_warn("parent_external_mda: pipe");
+			log_warn("parent_external_mda: socketpair");
 			return -1;
 		}
-		fatal("parent_external_mda: pipe");
+		fatal("parent_external_mda: socketpair");
 	}
 
 	pid = fork();

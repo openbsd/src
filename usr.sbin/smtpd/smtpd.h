@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.161 2009/12/13 22:02:55 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.162 2009/12/14 13:17:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -481,7 +481,10 @@ struct batch {
 
 	FILE			*mboxfp;
 	FILE			*datafp;
+	void			*rbuf;
+	int			 rbufsz;
 	int			 cleanup_parent;
+	struct event		 ev;
 };
 
 enum child_type {

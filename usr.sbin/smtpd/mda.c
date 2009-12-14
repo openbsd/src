@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.32 2009/11/13 12:01:54 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.33 2009/12/14 13:17:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -42,7 +42,9 @@ void		mda_dispatch_queue(int, short, void *);
 void		mda_dispatch_runner(int, short, void *);
 void		mda_setup_events(struct smtpd *);
 void		mda_disable_events(struct smtpd *);
-int		mda_store(struct batch *);
+void		mda_store(struct batch *);
+void		mda_event(int, short, void *);
+void		mda_store_done(struct batch *);
 void		mda_done(struct smtpd *, struct batch *);
 
 void
@@ -145,28 +147,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 			}
 
 			/* got message content, copy it to mbox */
-			if (! mda_store(b)) {
-				env->stats->mda.write_error++;
-				mda_done(env, b);
-				break;
-			}
-			fclose(b->datafp);
-			b->datafp = NULL;
-
-			/* closing mboxfd will trigger EOF in forked mda */
-			fsync(fileno(b->mboxfp));
-			fclose(b->mboxfp);
-			b->mboxfp = NULL;
-
-			/* ... unless it is maildir, in which case we need to
-			 * "trigger EOF" differently */
-			if (b->message.recipient.rule.r_action == A_MAILDIR)
-				imsg_compose_event(env->sc_ievs[PROC_PARENT],
-				    IMSG_PARENT_MAILDIR_RENAME, 0, 0, -1, b,
-				    sizeof(*b));
-			
-			/* Waiting for IMSG_MDA_FINALIZE... */
-			b->cleanup_parent = 0;
+			mda_store(b);
 			break;
 		}
 
@@ -420,36 +401,93 @@ mda(struct smtpd *env)
 	return (0);
 }
 
-int
+void
 mda_store(struct batch *b)
 {
-	FILE	 *src = b->datafp;
-	FILE	 *dst = b->mboxfp;
-	int	  ch;
- 
-	/* add Return-Path to preserve envelope sender */
-	/* XXX: remove user provided Return-Path, if any */
-	if (b->message.sender.user[0] &&
-	    b->message.sender.domain[0]) {
-		fprintf(dst, "Return-Path: %s@%s\n",
-		    b->message.sender.user,
-		    b->message.sender.domain);
-	}
-	 
-	/* add Delivered-To to help loop detection */
-	fprintf(dst, "Delivered-To: %s@%s\n",
-	    b->message.session_rcpt.user,
-	    b->message.session_rcpt.domain);
+	char		*p;
+	int		 ch, ret;
+	socklen_t	 len;
 
-	/* write message data */
-	/* XXX: it blocks in !mdir case */
-	while ((ch = fgetc(src)) != EOF)
-		if (fputc(ch, dst) == EOF)
-			break;
-	if (ferror(src) || fflush(dst) || ferror(dst))
-		return 0;
-	
-	return 1;
+	if (b->message.sender.user[0] && b->message.sender.domain[0])
+		/* XXX: remove user provided Return-Path, if any */
+		ret = asprintf(&p, "Return-Path: %s@%s\nDelivered-To: %s@%s\n",
+		    b->message.sender.user,
+		    b->message.sender.domain,
+		    b->message.session_rcpt.user,
+		    b->message.session_rcpt.domain);
+	else
+		ret = asprintf(&p, "Delivered-To: %s@%s\n",
+		    b->message.session_rcpt.user,
+		    b->message.session_rcpt.domain);
+
+	if (ret == -1)
+		fatal("mda_store: asprintf");
+
+	if (b->message.recipient.rule.r_action == A_MAILDIR) {
+		fprintf(b->mboxfp, "%s", p);
+		while ((ch = fgetc(b->datafp)) != EOF)
+			if (fputc(ch, b->mboxfp) == EOF)
+				break;
+		if (ferror(b->datafp))
+			fatal("mda_store: cannot read message in queue");
+		if (fflush(b->mboxfp) || ferror(b->mboxfp))
+			fatal("mda_store: cannot write to file");
+		mda_store_done(b);
+	} else {
+		session_socket_blockmode(fileno(b->mboxfp), BM_NONBLOCK);
+		len = sizeof(b->rbufsz);
+		if (getsockopt(fileno(b->mboxfp), SOL_SOCKET, SO_SNDLOWAT,
+		    &b->rbufsz, &len) == -1)
+			fatal("mda_store: getsockopt");
+		if ((b->rbuf = malloc(b->rbufsz)) == NULL)
+			fatal(NULL);
+		if (write(fileno(b->mboxfp), p, ret) != ret)
+			fatal("mda_store: write");
+		event_set(&b->ev, fileno(b->mboxfp), EV_WRITE|EV_PERSIST,
+		    mda_event, b);
+		event_add(&b->ev, NULL);
+	}
+
+	free(p);
+}
+
+void
+mda_event(int fd, short event, void *p)
+{
+	struct batch	*b = p;
+	size_t		 len;
+
+	len = fread(b->rbuf, 1, b->rbufsz, b->datafp);
+	if (ferror(b->datafp))
+		fatal("mda_event: fread");
+	if (write(fd, b->rbuf, len) != (ssize_t)len)
+		fatal("mda_event: write");
+	if (feof(b->datafp)) {
+		event_del(&b->ev);
+		mda_store_done(b);
+	}
+}
+
+void
+mda_store_done(struct batch *b)
+{
+	fclose(b->datafp);
+	b->datafp = NULL;
+
+	/* closing mboxfd will trigger EOF in forked mda */
+	fsync(fileno(b->mboxfp));
+	fclose(b->mboxfp);
+	b->mboxfp = NULL;
+
+	/* ... unless it is maildir, in which case we need to
+	 * "trigger EOF" differently */
+	if (b->message.recipient.rule.r_action == A_MAILDIR)
+		imsg_compose_event(b->env->sc_ievs[PROC_PARENT],
+		    IMSG_PARENT_MAILDIR_RENAME, 0, 0, -1, b,
+		    sizeof(*b));
+
+	/* Waiting for IMSG_MDA_FINALIZE... */
+	b->cleanup_parent = 0;
 }
 
 void
@@ -513,6 +551,7 @@ mda_done(struct smtpd *env, struct batch *b)
 			fclose(b->mboxfp);
 		if (b->datafp)
 			fclose(b->datafp);
+		free(b->rbuf);
 		free(b);
 	}
 }
