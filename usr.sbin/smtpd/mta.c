@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.81 2009/12/12 14:03:59 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.82 2009/12/14 16:44:14 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -249,9 +249,6 @@ mta_dispatch_runner(int sig, short event, void *p)
 			TAILQ_INIT(&s->recipients);
 			TAILQ_INIT(&s->relays);
 			SPLAY_INSERT(mtatree, &env->mta_sessions, s);
-
-			env->stats->mta.sessions++;
-			env->stats->mta.sessions_active++;
 			break;
 		}
 
@@ -693,9 +690,11 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		while ((m = TAILQ_FIRST(&s->recipients)))
 			mta_message_done(s, m);
 
+		imsg_compose_event(s->env->sc_ievs[PROC_RUNNER],
+		    IMSG_BATCH_DONE, 0, 0, -1, NULL, 0);
+
 		/* deallocate resources */
 		SPLAY_REMOVE(mtatree, &s->env->mta_sessions, s);
-		s->env->stats->mta.sessions_active--;
 		while ((relay = TAILQ_FIRST(&s->relays))) {
 			TAILQ_REMOVE(&s->relays, relay, entry);
 			free(relay);

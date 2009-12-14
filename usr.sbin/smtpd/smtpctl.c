@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.42 2009/12/13 22:02:55 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.43 2009/12/14 16:44:14 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -276,7 +276,9 @@ show_stats_output(struct imsg *imsg)
 	printf("control.sessions=%zd\n", stats->control.sessions);
 	printf("control.sessions_active=%zd\n", stats->control.sessions_active);
 
-	printf("mda.errors.write_system=%zd\n", stats->mda.write_error);
+	printf("mda.sessions=%zd\n", stats->mda.sessions);
+	printf("mda.sessions.active=%zd\n", stats->mda.sessions_active);
+
 	printf("mta.sessions=%zd\n", stats->mta.sessions);
 	printf("mta.sessions.active=%zd\n", stats->mta.sessions_active);
 

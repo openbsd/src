@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.73 2009/12/13 22:02:55 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.74 2009/12/14 16:44:14 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -304,6 +304,10 @@ runner_dispatch_mda(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_BATCH_DONE:
+			env->stats->mda.sessions_active--;
+			break;
+
 		default:
 			log_warnx("runner_dispatch_mda: got imsg %d",
 			    imsg.hdr.type);
@@ -349,6 +353,9 @@ runner_dispatch_mta(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_BATCH_DONE:
+			env->stats->mta.sessions_active--;
+			break;
 
 		default:
 			log_warnx("runner_dispatch_mta: got imsg %d",
@@ -550,6 +557,8 @@ runner(struct smtpd *env)
 
 	/* see fdlimit()-related comment in queue.c */
 	fdlimit(getdtablesize() * 2);
+	if ((env->sc_maxconn = availdesc() / 4) < 1)
+		fatalx("runner: fd starvation");
 
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));
@@ -632,13 +641,19 @@ runner_process_queue(struct smtpd *env)
 		if (! queue_load_envelope(&message, basename(path)))
 			continue;
 
-		if (message.type & T_MDA_MESSAGE)
+		if (message.type & T_MDA_MESSAGE) {
 			if (env->sc_opts & SMTPD_MDA_PAUSED)
 				continue;
+			if (env->stats->mda.sessions_active >= env->sc_maxconn)
+				continue;
+		}
 
-		if (message.type & T_MTA_MESSAGE)
+		if (message.type & T_MTA_MESSAGE) {
 			if (env->sc_opts & SMTPD_MTA_PAUSED)
 				continue;
+			if (env->stats->mta.sessions_active >= env->sc_maxconn)
+				continue;
+		}
 
 		if (! runner_message_schedule(&message, now))
 			continue;
@@ -664,6 +679,16 @@ runner_process_queue(struct smtpd *env)
 			if (errno == ENOSPC)
 				break;
 			fatal("runner_process_queue: symlink");
+		}
+
+		if (message.type & T_MDA_MESSAGE) {
+			env->stats->mda.sessions_active++;
+			env->stats->mda.sessions++;
+		}
+
+		if (message.type & T_MTA_MESSAGE) {
+			env->stats->mta.sessions_active++;
+			env->stats->mta.sessions++;
 		}
 	}
 	

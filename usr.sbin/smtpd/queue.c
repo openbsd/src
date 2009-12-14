@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.74 2009/12/13 22:02:55 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.75 2009/12/14 16:44:14 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -585,6 +585,8 @@ queue(struct smtpd *env)
 	 * increase relative to default.
 	 */
 	fdlimit(getdtablesize() * 2);
+	if ((env->sc_maxconn = availdesc() / 4) < 1)
+		fatalx("runner: fd starvation");
 
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));

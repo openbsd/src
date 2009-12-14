@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.33 2009/12/14 13:17:51 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.34 2009/12/14 16:44:14 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -534,6 +534,9 @@ mda_done(struct smtpd *env, struct batch *b)
 		imsg_compose_event(env->sc_ievs[PROC_QUEUE],
 		    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1,
 		    &b->message, sizeof(b->message));
+
+		imsg_compose_event(env->sc_ievs[PROC_RUNNER],
+		    IMSG_BATCH_DONE, 0, 0, -1, NULL, 0);
 
 		/* log status */
 		log_info("%s: to=<%s@%s>, delay=%d, stat=%s",
