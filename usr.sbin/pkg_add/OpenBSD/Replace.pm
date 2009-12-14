@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.59 2009/12/14 09:12:43 espie Exp $
+# $OpenBSD: Replace.pm,v 1.60 2009/12/14 18:11:26 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -344,7 +344,8 @@ sub can_old_package_be_replaced
 				$state->errsay("Error: $wanting missing from installation");
 			} else {
 				$p2->validate_depend($state, $wanting, 
-				    $old_plist->pkgname, $set->newer_names);
+				    $old_plist->pkgname, $set->newer_names, 
+				    $set->kept_names);
 			}
 		}
 	}
@@ -470,8 +471,7 @@ sub save_libs_from_handle
 	for my $n ($set->newer) {
 		$n->plist->unmark_lib($libs, $p);
 	}
-	for my $n ($set->older) {
-		next unless $n->{keepit};
+	for my $n ($set->kept) {
 		$n->plist->unmark_lib($libs, $p);
 	}
 
@@ -489,7 +489,6 @@ sub save_old_libraries
 	my ($set, $state) = @_;
 
 	for my $o ($set->older) {
-		next if $o->{keepit};
 		save_libs_from_handle($o, $set, $state);
 	}
 }

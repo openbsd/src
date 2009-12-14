@@ -1,7 +1,7 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.38 2009/12/13 17:58:55 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.39 2009/12/14 18:11:26 espie Exp $
 #
-# Copyright (c) 2007 Marc Espie <espie@openbsd.org>
+# Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -17,10 +17,11 @@
 
 
 # an UpdateSet is a list of packages to remove/install.
-# it contains three things:
+# it contains several things:
 # -> a list of older packages to remove (installed locations)
 # -> a list of newer packages to add (might be very simple locations)
 # -> a list of "hints", as package names to install
+# -> a list of packages that are kept throughout an update
 # every add/remove operations manipulate UpdateSet.
 #
 # Since older packages are always installed, they're organized as a hash.
@@ -32,6 +33,14 @@
 # Normal UpdateSets contain one newer package at most.
 # Bigger UpdateSets can be created through the merge operation, which
 # will be used only when necessary.
+#
+# kept packages are needed after merges, where some dependencies may
+# not need updating, and to distinguish from old packages that will be
+# removed.
+#
+# for instance, package installation will check UpdateSets for internal
+# dependencies and for conflicts. For that to work, we need kept stuff
+#
 use strict;
 use warnings;
 
@@ -56,7 +65,7 @@ package OpenBSD::UpdateSet;
 sub new
 {
 	my $class = shift;
-	return bless {newer => {}, older => {}, hints => [], updates => 0}, 
+	return bless {newer => {}, older => {}, kept => {}, hints => [], updates => 0}, 
 	    $class;
 }
 
@@ -94,6 +103,16 @@ sub add_older
 	return $self;
 }
 
+sub move_kept
+{
+	my $self = shift;
+	for my $h (@_) {
+		delete $self->{older}->{$h->pkgname};
+		$self->{kept}->{$h->pkgname} = $h;
+	}
+	return $self;
+}
+
 sub add_hints
 {
 	my $self = shift;
@@ -124,6 +143,12 @@ sub older
 	return values %{$self->{older}};
 }
 
+sub kept
+{
+	my $self = shift;
+	return values %{$self->{kept}};
+}
+
 sub hints
 {
 	my $self =shift;
@@ -142,6 +167,12 @@ sub newer_names
 	return keys %{$self->{newer}};
 }
 
+sub kept_names
+{
+	my $self = shift;
+	return keys %{$self->{kept}};
+}
+
 sub hint_names
 {
 	my $self =shift;
@@ -157,8 +188,7 @@ sub older_to_do
 	require OpenBSD::PackageInfo;
 	my @l = ();
 	for my $h ($self->older) {
-		if (!defined $h->{keepit} && 
-		    OpenBSD::PackageInfo::is_installed($h->pkgname)) {
+		if (OpenBSD::PackageInfo::is_installed($h->pkgname)) {
 			push(@l, $h);
 		}
 	}
@@ -169,6 +199,9 @@ sub print
 {
 	my $self = shift;
 	my $result = "";
+	if ($self->kept > 0) {
+		$result = "[".join('+', $self->kept_names)."]";
+	}
 	if ($self->older > 0) {
 		$result .= join('+',$self->older_names)."->";
 	}

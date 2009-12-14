@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.117 2009/12/14 11:19:04 espie Exp $
+# $OpenBSD: Update.pm,v 1.118 2009/12/14 18:11:26 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -92,7 +92,7 @@ sub process_handle
 	}
 	if ($pkgname =~ m/^partial\-/o) {
 		$state->say("Not updating $pkgname, remember to clean it");
-		$h->{keepit} = 1;
+		$set->move_kept($h);
 		return 0;
 	}
 
@@ -174,7 +174,7 @@ sub process_handle
 	if (@$l == 0) {
 		if ($oldfound) {
 			$h->{update_found} = $h;
-			$h->{keepit} = 1;
+			$set->move_kept($h);
 
 			$self->progress_message($state, 
 			    "No need to update $pkgname");
@@ -187,7 +187,7 @@ sub process_handle
 		if (defined $found && $found eq $l->[0] &&
 		    !$plist->uses_old_libs && !$state->{defines}->{installed}) {
 			$h->{update_found} = $h;
-			$h->{keepit} = 1;
+			$set->move_kept($h);
 
 			$self->progress_message($state, 
 			    "No need to update $pkgname");
