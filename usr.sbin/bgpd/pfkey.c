@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.39 2009/12/06 11:42:22 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.40 2009/12/14 17:38:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,6 +74,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	int			len = 0;
 	int			iov_cnt;
 	struct sockaddr_storage	ssrc, sdst, speer, smask, dmask;
+	struct sockaddr		*saptr;
 
 	if (!pid)
 		pid = getpid();
@@ -81,7 +82,8 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	/* we need clean sockaddr... no ports set */
 	bzero(&ssrc, sizeof(ssrc));
 	bzero(&smask, sizeof(smask));
-	memcpy(&ssrc, addr2sa(src, 0), sizeof(ssrc));
+	if ((saptr = addr2sa(src, 0)))
+		memcpy(&ssrc, saptr, sizeof(ssrc));
 	switch (src->aid) {
 	case AID_INET:
 		memset(&((struct sockaddr_in *)&smask)->sin_addr, 0xff, 32/8);
@@ -101,7 +103,8 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 
 	bzero(&sdst, sizeof(sdst));
 	bzero(&dmask, sizeof(dmask));
-	memcpy(&sdst, addr2sa(dst, 0), sizeof(sdst));
+	if ((saptr = addr2sa(dst, 0)))
+		memcpy(&sdst, saptr, sizeof(sdst));
 	switch (dst->aid) {
 	case AID_INET:
 		memset(&((struct sockaddr_in *)&dmask)->sin_addr, 0xff, 32/8);
