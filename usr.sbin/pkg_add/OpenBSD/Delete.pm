@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.90 2009/12/05 09:26:42 espie Exp $
+# $OpenBSD: Delete.pm,v 1.91 2009/12/14 09:35:56 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -115,7 +115,8 @@ sub delete_package
 	$state->vstat->synchronize;
 
 	delete_plist($plist, $state);
-	$state->progress->next($state->{todo}-1);
+	$state->{todo}--;
+	$state->progress->next($state->ntogo);
 }
 
 sub unregister_dependencies

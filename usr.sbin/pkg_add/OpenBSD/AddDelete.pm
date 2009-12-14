@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.5 2009/12/05 10:08:58 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.6 2009/12/14 09:35:56 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -216,6 +216,17 @@ sub init
 	$self->{l} = OpenBSD::Log->new;
 	$self->{vstat} = OpenBSD::MyStat->new;
 	$self->{progressmeter} = bless {}, "OpenBSD::StubProgress";
+}
+
+sub ntogo
+{
+	my $self = shift;
+
+	if (defined $self->{todo} && $self->{todo} > 0) {
+		return " ($self->{todo} to go)";
+	} else {
+		return "";
+	}
 }
 
 sub vstat
