@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.15 2009/12/14 18:21:53 jacekm Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.16 2009/12/14 23:17:04 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -150,7 +150,7 @@ out:
 	if (*ep == '2')
 		queue_remove_envelope(&cc->m);
 	else {
-		if (*ep == '5')
+		if (*ep == '5' || *ep == '6')
 			cc->m.status = S_MESSAGE_PERMFAILURE;
 		else
 			cc->m.status = S_MESSAGE_TEMPFAILURE;
