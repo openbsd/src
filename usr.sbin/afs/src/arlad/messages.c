@@ -2375,8 +2375,11 @@ viocgetvolstat(int fd, struct nnpfs_message_pioctl *h, u_int size)
     char volumename[AFSNAMEMAX];
     char offlinemsg[AFSOPAQUEMAX];
     char motd[AFSOPAQUEMAX];
-    char out[SYSNAMEMAXLEN];
+    char out[NNPFS_MSG_MAX_DATASIZE];
+    char * outstr;
     int32_t outsize = 0;
+    int32_t os = 0;
+    int32_t osmax = 0;
     int error;
 
     if (!h->handle.a && !h->handle.b && !h->handle.c && !h->handle.d)
@@ -2393,7 +2396,8 @@ viocgetvolstat(int fd, struct nnpfs_message_pioctl *h, u_int size)
     memset (volumename, 0, AFSNAMEMAX);
     memset (offlinemsg, 0, AFSOPAQUEMAX);
     memset (motd, 0, AFSOPAQUEMAX);
-    memset (out, 0, SYSNAMEMAXLEN);
+
+    memset (out, 0, sizeof(out));
 
     do {
 	error = getvolstat (fid, ce, &volstat,
@@ -2409,33 +2413,39 @@ viocgetvolstat(int fd, struct nnpfs_message_pioctl *h, u_int size)
 
     memcpy (out, (char *) &volstat, sizeof (AFSFetchVolumeStatus));
     outsize = sizeof (AFSFetchVolumeStatus);
+    outstr = out + outsize;
+    os = 0;
+    osmax = sizeof(out) - outsize;
 
-    if (volumename[0]) {
-	strncpy (out+outsize, volumename, AFSNAMEMAX);
-	outsize += strlen (volumename);
-    }
+    if (os < osmax && (volumename[0]))
+	os = strlcat(outstr, volumename, osmax);
     else {
-	out[outsize] = 0;
+	*outstr++ = '\0';
 	outsize++;
+	osmax--;
     }
-
-    if (offlinemsg[0]) {
-	strncpy (out+outsize, offlinemsg, AFSOPAQUEMAX);
-	outsize += strlen (offlinemsg);
-    }
+    if (os < osmax && (offlinemsg[0]))
+	os = strlcat(outstr, offlinemsg, osmax);
     else {
-	out[outsize] = 0;
+	*outstr++ = '\0';
 	outsize++;
+	osmax--;
     }
-
-    if (motd[0]) {
-	strncpy (out+outsize, motd, AFSOPAQUEMAX);
-	outsize += strlen (motd);
-    }
+    if (os < osmax && (motd[0]))
+	os = strlcat(outstr, motd, osmax);
     else {
-	out[outsize] = 0;
+	*outstr++ = '\0';
 	outsize++;
+	osmax--;
     }
+    /* this can potentially truncate the motd..  who cares */
+    if (os + outsize >= sizeof(out)) {
+	    /* XXX warn about trucated motd */
+	    arla_warnx(ADEBMSG,
+		"truncated motd by %d bytes", os + outsize - sizeof(out));
+	    outsize = sizeof(out);
+    } else
+	    outsize += os;
 
     nnpfs_send_message_wakeup_data (fd, h->header.sequence_num, error,
 				    out, outsize);
@@ -3433,7 +3443,7 @@ vioc_fpriostatus (int fd, struct nnpfs_message_pioctl *h, u_int size)
 	    error = EINVAL;
 	    break;
 	}
-	
+
 	prio = fprio_get(fid);
 	nnpfs_send_message_wakeup_data (fd,
 					h->header.sequence_num,

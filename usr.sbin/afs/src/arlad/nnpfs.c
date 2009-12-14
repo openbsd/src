@@ -306,19 +306,22 @@ nnpfs_send_message_wakeup_data (int fd, u_int seqnum, int error,
 			      void *data, int size)
 {
      struct nnpfs_message_wakeup_data msg;
-     
+
      msg.header.opcode = NNPFS_MSG_WAKEUP_DATA;
      msg.sleepers_sequence_num = seqnum;
      msg.error = error;
      arla_warnx (ADEBMSG,
 		 "sending wakeup: seq = %u, error = %d", seqnum, error);
 
-     if (sizeof(msg) >= size && size != 0) {
-	 memcpy(msg.msg, data, size);
-     }
-
+     if (sizeof(msg.msg) < size || size < 0) {
+	     errno = EINVAL;
+	     arla_warn (ADEBMSG,
+		 "nnpfs_send_message_wakeup_data: invalid message size %d",
+		 size);
+	     return errno;
+     } else
+	     memcpy(msg.msg, data, size);
      msg.len = size;
-
      return nnpfs_message_send (fd, (struct nnpfs_message_header *)&msg, 
 			      sizeof(msg));
 }
