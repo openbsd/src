@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.20 2009/12/14 21:08:45 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.21 2009/12/14 22:38:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -377,20 +377,21 @@ vnet_rx_intr(void *arg)
 	}
 
 	if (rx_state != lc->lc_rx_state) {
-		sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
-		sc->sc_vio_state = 0;
-		lc->lc_tx_seqid = 0;
-		lc->lc_state = 0;
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
 			DPRINTF(("Rx link down\n"));
+			lc->lc_tx_seqid = 0;
+			lc->lc_state = 0;
+			lc->lc_reset(lc);
 			break;
 		case LDC_CHANNEL_UP:
 			DPRINTF(("Rx link up\n"));
-			ldc_send_vers(lc);
 			break;
 		case LDC_CHANNEL_RESET:
 			DPRINTF(("Rx link reset\n"));
+			lc->lc_tx_seqid = 0;
+			lc->lc_state = 0;
+			lc->lc_reset(lc);
 			break;
 		}
 		lc->lc_rx_state = rx_state;
@@ -887,6 +888,7 @@ vnet_ldc_reset(struct ldc_conn *lc)
 {
 	struct vnet_softc *sc = lc->lc_sc;
 
+	sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
 	sc->sc_vio_state = 0;
 	vnet_link_state(sc);
 }
