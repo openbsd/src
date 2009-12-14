@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.18 2009/12/14 20:01:11 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.19 2009/12/14 20:50:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -93,6 +93,15 @@ struct vnet_desc {
 	struct ldc_cookie	cookie[2];
 };
 
+struct vnet_desc_msg {
+	struct vio_msg_tag	tag;
+	uint64_t		seq_no;
+	uint64_t		desc_handle;
+	uint32_t		nbytes;
+	uint32_t		ncookies;
+	struct ldc_cookie	cookie[1];
+};
+
 struct vnet_dring {
 	bus_dmamap_t		vd_map;
 	bus_dma_segment_t	vd_seg;
@@ -145,7 +154,8 @@ struct vnet_softc {
 #define VIO_SND_RDX		0x0200
 #define VIO_ACK_RDX		0x0400
 #define VIO_RCV_RDX		0x0800
-#define VIO_ESTABLISHED		0x0fff
+
+	uint8_t		sc_xfer_mode;
 
 	uint32_t	sc_local_sid;
 	uint64_t	sc_dring_ident;
@@ -190,6 +200,7 @@ void	vnet_rx_vio_attr_info(struct vnet_softc *, struct vio_msg_tag *);
 void	vnet_rx_vio_dring_reg(struct vnet_softc *, struct vio_msg_tag *);
 void	vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *);
 void	vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *);
+void	vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *);
 void	vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *);
 
 void	vnet_ldc_reset(struct ldc_conn *);
@@ -202,6 +213,7 @@ void	vnet_send_dring_reg(struct vnet_softc *);
 void	vio_send_rdx(struct vnet_softc *);
 
 void	vnet_start(struct ifnet *);
+void	vnet_start_desc(struct ifnet *);
 int	vnet_ioctl(struct ifnet *, u_long, caddr_t);
 void	vnet_watchdog(struct ifnet *);
 
@@ -526,6 +538,7 @@ vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 	switch (ai->tag.stype) {
 	case VIO_SUBTYPE_INFO:
 		DPRINTF(("CTRL/INFO/ATTR_INFO\n"));
+		sc->sc_xfer_mode = ai->xfer_mode;
 
 		ai->tag.stype = VIO_SUBTYPE_ACK;
 		ai->tag.sid = sc->sc_local_sid;
@@ -548,8 +561,12 @@ vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 	}
 
 	if (ISSET(sc->sc_vio_state, VIO_RCV_ATTR_INFO) &&
-	    ISSET(sc->sc_vio_state, VIO_ACK_ATTR_INFO))
-		vnet_send_dring_reg(sc);
+	    ISSET(sc->sc_vio_state, VIO_ACK_ATTR_INFO)) {
+		if (sc->sc_xfer_mode == VIO_DRING_MODE)
+			vnet_send_dring_reg(sc);
+		else
+			vio_send_rdx(sc);
+	}
 }
 
 void
@@ -623,7 +640,8 @@ vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 	}
 
-	if (sc->sc_vio_state == VIO_ESTABLISHED) {
+	if (ISSET(sc->sc_vio_state, VIO_RCV_RDX) &&
+	    ISSET(sc->sc_vio_state, VIO_ACK_RDX)) {
 		/* Link is up! */
 		vnet_link_state(sc);
 
@@ -638,19 +656,107 @@ vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *vm)
 {
 	struct vio_msg_tag *tag = (struct vio_msg_tag *)&vm->type;
 
-	if (sc->sc_vio_state != VIO_ESTABLISHED) {
+	if (!ISSET(sc->sc_vio_state, VIO_RCV_RDX) ||
+	    !ISSET(sc->sc_vio_state, VIO_ACK_RDX)) {
 		DPRINTF(("Spurious DATA/0x%02x/0x%04x\n", tag->stype,
 		    tag->stype_env));
 		return;
 	}
 
 	switch(tag->stype_env) {
+	case VIO_DESC_DATA:
+		vnet_rx_vio_desc_data(sc, tag);
+		break;
+
 	case VIO_DRING_DATA:
 		vnet_rx_vio_dring_data(sc, tag);
 		break;
 
 	default:
 		DPRINTF(("DATA/0x%02x/0x%04x\n", tag->stype, tag->stype_env));
+		break;
+	}
+}
+
+void
+vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
+{
+	struct vnet_desc_msg *dm = (struct vnet_desc_msg *)tag;
+	struct ldc_conn *lc = &sc->sc_lc;
+	struct ldc_map *map = sc->sc_lm;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mbuf *m;
+	caddr_t buf;
+	paddr_t pa;
+	psize_t nbytes;
+	int err;
+
+	switch(tag->stype) {
+	case VIO_SUBTYPE_INFO:
+		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
+		if (buf == NULL) {
+			ifp->if_ierrors++;
+			goto skip;
+		}
+		nbytes = roundup(dm->nbytes, 8);
+
+		pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
+		err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
+		    dm->cookie[0].addr, pa, nbytes, &nbytes);
+		if (err != H_EOK) {
+			pool_put(&sc->sc_pool, buf);
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
+		/* Stupid OBP doesn't align properly. */
+                m = m_devget(buf, dm->nbytes, ETHER_ALIGN, ifp, NULL);
+		pool_put(&sc->sc_pool, buf);
+		if (m == NULL) {
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
+		ifp->if_ipackets++;
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+#endif /* NBPFILTER > 0 */
+
+		/* Pass it on. */
+		ether_input_mbuf(ifp, m);
+
+	skip:
+		dm->tag.stype = VIO_SUBTYPE_ACK;
+		dm->tag.sid = sc->sc_local_sid;
+		vio_sendmsg(sc, dm, sizeof(*dm));
+		break;
+
+	case VIO_SUBTYPE_ACK:
+		DPRINTF(("DATA/ACK/DESC_DATA\n"));
+
+		if (dm->desc_handle != sc->sc_tx_cons) {
+			printf("out of order\n");
+			return;
+		}
+
+		map->lm_slot[sc->sc_vsd[sc->sc_tx_cons].vsd_map_idx].entry = 0;
+		map->lm_count--;
+
+		pool_put(&sc->sc_pool, sc->sc_vsd[sc->sc_tx_cons].vsd_buf);
+
+		sc->sc_tx_cons++;
+		sc->sc_tx_cons &= (sc->sc_vd->vd_nentries - 1);
+		sc->sc_tx_cnt--;
+		break;
+
+	case VIO_SUBTYPE_NACK:
+		DPRINTF(("DATA/NACK/DESC_DATA\n"));
+		break;
+
+	default:
+		DPRINTF(("DATA/0x%02x/DESC_DATA\n", tag->stype));
 		break;
 	}
 }
@@ -852,7 +958,7 @@ vnet_send_attr_info(struct vnet_softc *sc)
 	ai.tag.sid = sc->sc_local_sid;
 	ai.xfer_mode = VIO_DRING_MODE;
 	ai.addr_type = VNET_ADDR_ETHERMAC;
-	ai.ack_freq = 0;
+	ai.ack_freq = 1;
 	ai.addr = 0;
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		ai.addr <<= 8;
@@ -923,7 +1029,8 @@ vnet_start(struct ifnet *ifp)
 	 * We cannot transmit packets until a VIO connection has been
 	 * established.
 	 */
-	if (sc->sc_vio_state != VIO_ESTABLISHED)
+	if (!ISSET(sc->sc_vio_state, VIO_RCV_RDX) ||
+	    !ISSET(sc->sc_vio_state, VIO_ACK_RDX))
 		return;
 
 	/*
@@ -1013,6 +1120,79 @@ vnet_start(struct ifnet *ifp)
 	sc->sc_tx_prod = desc;
 }
 
+void
+vnet_start_desc(struct ifnet *ifp)
+{
+	struct vnet_softc *sc = ifp->if_softc;
+	struct ldc_map *map = sc->sc_lm;
+	struct vnet_desc_msg dm;
+	struct mbuf *m;
+	paddr_t pa;
+	caddr_t buf;
+
+	for (;;) {
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+
+		if (sc->sc_tx_cnt >= sc->sc_vd->vd_nentries ||
+		    map->lm_count >= map->lm_nentries) {
+			ifp->if_flags |= IFF_OACTIVE;
+			return;
+		}
+
+		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
+		if (buf == NULL) {
+			ifp->if_flags |= IFF_OACTIVE;
+			return;
+		}
+		m_copydata(m, 0, m->m_pkthdr.len, buf);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+
+#if NBPFILTER > 0
+		/*
+		 * If BPF is listening on this interface, let it see the
+		 * packet before we commit it to the wire.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+
+		pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
+		KASSERT((pa & ~PAGE_MASK) == (pa & LDC_MTE_RA_MASK));
+		while (map->lm_slot[map->lm_next].entry != 0) {
+			map->lm_next++;
+			map->lm_next &= (map->lm_nentries - 1);
+		}
+		map->lm_slot[map->lm_next].entry = (pa & LDC_MTE_RA_MASK);
+		map->lm_slot[map->lm_next].entry |= LDC_MTE_CPR;
+		map->lm_count++;
+
+		sc->sc_vsd[sc->sc_tx_prod].vsd_map_idx = map->lm_next;
+		sc->sc_vsd[sc->sc_tx_prod].vsd_buf = buf;
+
+		bzero(&dm, sizeof(dm));
+		dm.tag.type = VIO_TYPE_DATA;
+		dm.tag.stype = VIO_SUBTYPE_INFO;
+		dm.tag.stype_env = VIO_DESC_DATA;
+		dm.tag.sid = sc->sc_local_sid;
+		dm.seq_no = sc->sc_seq_no++;
+		dm.desc_handle = sc->sc_tx_prod;
+		dm.nbytes = max(m->m_pkthdr.len, 60);
+		dm.ncookies = 1;
+		dm.cookie[0].addr =
+			map->lm_next << PAGE_SHIFT | (pa & PAGE_MASK);
+		dm.cookie[0].size = 2048;
+		vio_sendmsg(sc, &dm, sizeof(dm));
+
+		sc->sc_tx_prod++;
+		sc->sc_tx_prod &= (sc->sc_vd->vd_nentries - 1);
+		sc->sc_tx_cnt++;
+
+		m_freem(m);
+	}
+}
+
 int
 vnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -1095,7 +1275,8 @@ vnet_link_state(struct vnet_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	int link_state = LINK_STATE_DOWN;
 
-	if (sc->sc_vio_state == VIO_ESTABLISHED)
+	if (ISSET(sc->sc_vio_state, VIO_RCV_RDX) &&
+	    ISSET(sc->sc_vio_state, VIO_ACK_RDX))
 		link_state = LINK_STATE_FULL_DUPLEX;
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
@@ -1112,7 +1293,8 @@ vnet_setmulti(struct vnet_softc *sc, int set)
 	struct vnet_mcast_info mi;
 	int count = 0;
 
-	if (sc->sc_vio_state != VIO_ESTABLISHED)
+	if (!ISSET(sc->sc_vio_state, VIO_RCV_RDX) ||
+	    !ISSET(sc->sc_vio_state, VIO_ACK_RDX))
 		return;
 
 	bzero(&mi, sizeof(mi));
