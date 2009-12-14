@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.6 2009/05/10 12:48:24 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.7 2009/12/14 16:06:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -129,6 +129,34 @@ cbus_intr_map(int node, int ino, uint64_t *sysino)
 
 	*sysino = INTIGN(reg) | INTINO(ino);
 	err = hv_vintr_setcookie(reg, ino, *sysino);
+	if (err != H_EOK)
+		return (-1);
+
+	return (0);
+}
+
+int
+cbus_intr_setstate(uint64_t sysino, uint64_t state)
+{
+	uint64_t devhandle = INTIGN(sysino);
+	uint64_t devino = INTINO(sysino);
+	int err;
+
+	err = hv_vintr_setstate(devhandle, devino, state);
+	if (err != H_EOK)
+		return (-1);
+
+	return (0);
+}
+
+int
+cbus_intr_setenabled(uint64_t sysino, uint64_t enabled)
+{
+	uint64_t devhandle = INTIGN(sysino);
+	uint64_t devino = INTINO(sysino);
+	int err;
+
+	err = hv_vintr_setenabled(devhandle, devino, enabled);
 	if (err != H_EOK)
 		return (-1);
 
