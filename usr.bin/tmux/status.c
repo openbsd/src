@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.55 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.56 2009/12/14 10:47:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1129,6 +1129,10 @@ status_prompt_complete(const char *s)
 	for (cmdent = cmd_table; *cmdent != NULL; cmdent++) {
 		if (strncmp((*cmdent)->name, s, strlen(s)) == 0)
 			ARRAY_ADD(&list, (*cmdent)->name);
+	}
+	for (entry = set_option_table; entry->name != NULL; entry++) {
+		if (strncmp(entry->name, s, strlen(s)) == 0)
+			ARRAY_ADD(&list, entry->name);
 	}
 	for (entry = set_session_option_table; entry->name != NULL; entry++) {
 		if (strncmp(entry->name, s, strlen(s)) == 0)
