@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.17 2009/08/09 11:40:58 deraadt Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.18 2009/12/14 20:01:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -125,6 +125,8 @@ struct vnet_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 
+	uint64_t	sc_tx_sysino;
+	uint64_t	sc_rx_sysino;
 	void		*sc_tx_ih;
 	void		*sc_rx_ih;
 
@@ -231,7 +233,6 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	struct cbus_attach_args *ca = aux;
 	struct ldc_conn *lc;
 	struct ifnet *ifp;
-	uint64_t sysino[2];
 
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
@@ -240,12 +241,12 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	    ETHER_ADDR_LEN) <= 0)
 		myetheraddr(sc->sc_ac.ac_enaddr);
 
-	if (cbus_intr_map(ca->ca_node, ca->ca_tx_ino, &sysino[0]) ||
-	    cbus_intr_map(ca->ca_node, ca->ca_rx_ino, &sysino[1])) {
+	if (cbus_intr_map(ca->ca_node, ca->ca_tx_ino, &sc->sc_tx_sysino) ||
+	    cbus_intr_map(ca->ca_node, ca->ca_rx_ino, &sc->sc_rx_sysino)) {
 		printf(": can't map interrupt\n");
 		return;
 	}
-	printf(": ivec 0x%lx, 0x%lx", sysino[0], sysino[1]);
+	printf(": ivec 0x%lx, 0x%lx", sc->sc_tx_sysino, sc->sc_tx_sysino);
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
@@ -254,14 +255,22 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	hv_ldc_tx_qconf(ca->ca_id, 0, 0);
 	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
 
-	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sysino[0], IPL_NET,
-	    0, vnet_tx_intr, sc, sc->sc_dv.dv_xname);
-	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sysino[1], IPL_NET,
-	    0, vnet_rx_intr, sc, sc->sc_dv.dv_xname);
+	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_tx_sysino,
+	    IPL_NET, 0, vnet_tx_intr, sc, sc->sc_dv.dv_xname);
+	sc->sc_rx_ih = bus_intr_establish(ca->ca_bustag, sc->sc_rx_sysino,
+	    IPL_NET, 0, vnet_rx_intr, sc, sc->sc_dv.dv_xname);
 	if (sc->sc_tx_ih == NULL || sc->sc_rx_ih == NULL) {
 		printf(", can't establish interrupt\n");
 		return;
 	}
+
+	/*
+	 * Disable interrupts while we have no queues allocated.
+	 * Otherwise we may end up with an interrupt storm as soon as
+	 * our peer places a packet in their transmit queue.
+	 */
+	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
 
 	lc = &sc->sc_lc;
 	lc->lc_id = ca->ca_id;
@@ -1174,6 +1183,9 @@ vnet_init(struct ifnet *ifp)
 	if (err != H_EOK)
 		printf("hv_ldc_rx_qconf %d\n", err);
 
+	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_ENABLED);
+	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_ENABLED);
+
 	ldc_send_vers(lc);
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -1187,6 +1199,9 @@ vnet_stop(struct ifnet *ifp)
 	struct ldc_conn *lc = &sc->sc_lc;
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	cbus_intr_setenabled(sc->sc_tx_sysino, INTR_DISABLED);
+	cbus_intr_setenabled(sc->sc_rx_sysino, INTR_DISABLED);
 
 	hv_ldc_tx_qconf(lc->lc_id, 0, 0);
 	hv_ldc_rx_qconf(lc->lc_id, 0, 0);
