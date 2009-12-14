@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.225 2009/12/14 17:14:56 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.226 2009/12/14 17:22:58 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -655,8 +655,7 @@ main(int argc, char *argv[])
 #ifndef SMALL
 		if (strcmp(*argv, "rule") == 0) {
 			argc--, argv++;
-			bridge_rule(argc, argv, -1);
-			return;
+			return bridge_rule(argc, argv, -1);
 		}
 #endif
 		if (p->c_name == 0 && setaddr)
