@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.58 2009/12/13 17:57:57 espie Exp $
+# $OpenBSD: Replace.pm,v 1.59 2009/12/14 09:12:43 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -470,6 +470,10 @@ sub save_libs_from_handle
 	for my $n ($set->newer) {
 		$n->plist->unmark_lib($libs, $p);
 	}
+	for my $n ($set->older) {
+		next unless $n->{keepit};
+		$n->plist->unmark_lib($libs, $p);
+	}
 
 	if (%$libs) {
 		$state->say("Libraries to keep: ", 
@@ -485,6 +489,7 @@ sub save_old_libraries
 	my ($set, $state) = @_;
 
 	for my $o ($set->older) {
+		next if $o->{keepit};
 		save_libs_from_handle($o, $set, $state);
 	}
 }
