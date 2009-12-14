@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.26 2009/11/08 21:40:05 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.27 2009/12/14 18:16:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -329,6 +329,7 @@ bounce_record_message(struct message *messagep)
 
 	mbounce = *messagep;
 	mbounce.type = T_BOUNCE_MESSAGE;
+	mbounce.status &= ~S_MESSAGE_PERMFAILURE;
 
 	if (! bounce_create_layout(msgid, messagep))
 		return 0;
