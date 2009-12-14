@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.19 2009/12/14 20:50:46 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.20 2009/12/14 21:08:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -958,7 +958,7 @@ vnet_send_attr_info(struct vnet_softc *sc)
 	ai.tag.sid = sc->sc_local_sid;
 	ai.xfer_mode = VIO_DRING_MODE;
 	ai.addr_type = VNET_ADDR_ETHERMAC;
-	ai.ack_freq = 1;
+	ai.ack_freq = 0;
 	ai.addr = 0;
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		ai.addr <<= 8;
@@ -1044,6 +1044,11 @@ vnet_start(struct ifnet *ifp)
 	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(struct ldc_pkt)) - 1);
 	if (tx_tail == tx_head) {
 		ifp->if_flags |= IFF_OACTIVE;
+		return;
+	}
+
+	if (sc->sc_xfer_mode == VIO_DESC_MODE) {
+		vnet_start_desc(ifp);
 		return;
 	}
 
