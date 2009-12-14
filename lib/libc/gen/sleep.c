@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.11 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: sleep.c,v 1.12 2009/12/14 05:10:13 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,8 +42,8 @@ sleep(unsigned int seconds)
 	rqt.tv_sec = seconds;
 	rqt.tv_nsec = 0;
 
-	if (nanosleep(&rqt, &rmt) < 0)
-		;
+	if (nanosleep(&rqt, &rmt) == 0)
+		rmt.tv_sec = 0;
 
 	return(rmt.tv_sec);
 }
