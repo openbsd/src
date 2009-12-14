@@ -1,4 +1,4 @@
-/*	$OpenBSD: proxy_ftp.c,v 1.16 2008/05/25 11:46:27 mbalmer Exp $ */
+/*	$OpenBSD: proxy_ftp.c,v 1.17 2009/12/14 19:35:38 deraadt Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1182,7 +1182,7 @@ lpsvagain:
                 len = 0;
             }
             else if (i == 213) {/* Size command ok */
-                for (j = 0; j < sizeof resp && ap_isdigit(resp[j]); j++);
+                for (j = 0; j < sizeof(resp)-1 && ap_isdigit(resp[j]); j++);
                 resp[j] = '\0';
                 if (resp[0] != '\0')
                     size = ap_pstrdup(p, resp);
