@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.64 2009/12/11 13:58:48 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.65 2009/12/14 10:43:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -317,6 +317,7 @@ main(int argc, char **argv)
 	options_init(&global_options, NULL);
 	oo = &global_options;
 	options_set_number(oo, "quiet", quiet);
+	options_set_number(oo, "escape-time", 500);
 
 	options_init(&global_s_options, NULL);
 	so = &global_s_options;

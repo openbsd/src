@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.30 2009/12/11 13:58:48 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.31 2009/12/14 10:43:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -74,6 +74,7 @@ const char *set_option_bell_action_list[] = {
 };
 
 const struct set_option_entry set_option_table[] = {
+	{ "escape-time", SET_OPTION_NUMBER, 0, INT_MAX, NULL },
 	{ "quiet", SET_OPTION_FLAG, 0, 0, NULL },
 	{ NULL, 0, 0, 0, NULL }
 };
