@@ -277,7 +277,7 @@ char *ssl_util_ptxtsub(
     pool *p, const char *cpLine, const char *cpMatch, char *cpSubst)
 {
 #define MAX_PTXTSUB 100
-    char *cppMatch[MAX_PTXTSUB];
+    char *cppMatch[MAX_PTXTSUB + 1];
     char *cpResult;
     int nResult;
     int nLine;
