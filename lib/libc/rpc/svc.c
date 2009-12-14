@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.c,v 1.23 2009/12/11 22:03:08 schwarze Exp $ */
+/*	$OpenBSD: svc.c,v 1.24 2009/12/14 23:57:22 schwarze Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -190,7 +190,7 @@ svc_fd_insert(int sock)
 		svc_max_pollfd = slot + 1;
 	if (sock < FD_SETSIZE)
 		FD_SET(sock, &svc_fdset);
-	else if (sock < __svc_fdsetsize)
+	if (sock < __svc_fdsetsize && __svc_fdset != &svc_fdset)
 		FD_SET(sock, __svc_fdset);
 	svc_maxfd = max(svc_maxfd, sock);
 
@@ -217,7 +217,7 @@ svc_fd_remove(int sock)
 			svc_used_pollfd--;
 			if (sock < FD_SETSIZE)
 				FD_CLR(sock, &svc_fdset);
-			else if (sock < __svc_fdsetsize)
+			if (sock < __svc_fdsetsize && __svc_fdset != &svc_fdset)
 				FD_CLR(sock, __svc_fdset);
 			if (sock == svc_maxfd) {
 				for (svc_maxfd--; svc_maxfd >= 0; svc_maxfd--)
