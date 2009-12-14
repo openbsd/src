@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.224 2009/12/09 21:21:57 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.225 2009/12/14 17:14:56 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1713,6 +1713,7 @@ void
 setifchan(const char *val, int d)
 {
 	struct ieee80211chanreq channel;
+	const char *errstr;
 	int chan;
 
 	if (val == NULL) {
@@ -1724,9 +1725,9 @@ setifchan(const char *val, int d)
 	if (d != 0)
 		chan = IEEE80211_CHAN_ANY;
 	else {
-		chan = atoi(val);
-		if (chan < 1 || chan > 256) {
-			warnx("invalid channel: %s", val);
+		chan = strtonum(val, 1, 256, &errstr);
+		if (errstr) {
+			warnx("invalid channel %s: %s", val, errstr);
 			return;
 		}
 	}
