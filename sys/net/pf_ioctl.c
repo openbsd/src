@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.228 2009/11/24 13:23:55 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.229 2009/12/14 12:31:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -159,6 +159,8 @@ pfattach(int num)
 	    &pool_allocator_nointr);
 	pool_init(&pf_src_tree_pl, sizeof(struct pf_src_node), 0, 0, 0,
 	    "pfsrctrpl", NULL);
+	pool_init(&pf_sn_item_pl, sizeof(struct pf_sn_item), 0, 0, 0,
+	    "pfsnitempl", NULL);
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
 	    NULL);
 	pool_init(&pf_state_key_pl, sizeof(struct pf_state_key), 0, 0, 0,
@@ -2793,13 +2795,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_state		*state;
 
 		RB_FOREACH(state, pf_state_tree_id, &tree_id)
-			state->src_node = NULL;
-		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
+			pf_src_tree_remove_state(state);
+		RB_FOREACH(n, pf_src_tree, &tree_src_tracking)
 			n->expire = 1;
-			n->states = 0;
-		}
 		pf_purge_expired_src_nodes(1);
-		pf_status.src_nodes = 0;
 		break;
 	}
 
@@ -2820,13 +2819,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				&psnk->psnk_dst.addr.v.a.mask,
 				&sn->raddr, sn->af)) {
 				/* Handle state to src_node linkage */
-				if (sn->states != 0) {
+				if (sn->states != 0)
 					RB_FOREACH(s, pf_state_tree_id,
-					    &tree_id)
-						if (s->src_node == sn)
-							s->src_node = NULL;
-					sn->states = 0;
-				}
+					   &tree_id)
+						pf_state_rm_src_node(s, sn);
 				sn->expire = 1;
 				killed++;
 			}

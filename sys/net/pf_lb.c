@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.8 2009/11/03 10:59:04 claudio Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.9 2009/12/14 12:31:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -174,7 +174,8 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 	u_int16_t		cut;
 
 	bzero(&init_addr, sizeof(init_addr));
-	if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn, &r->nat))
+	if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn, &r->nat,
+	    PF_SN_NAT))
 		return (1);
 
 	if (proto == IPPROTO_ICMP || proto == IPPROTO_ICMPV6) {
@@ -247,7 +248,7 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 		case PF_POOL_RANDOM:
 		case PF_POOL_ROUNDROBIN:
 			if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn,
-			    &r->nat))
+			    &r->nat, PF_SN_NAT))
 				return (1);
 			break;
 		case PF_POOL_NONE:
@@ -262,8 +263,8 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 
 int
 pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
-    struct pf_addr *naddr, struct pf_addr *init_addr, struct pf_src_node **sn,
-    struct pf_pool *rpool)
+    struct pf_addr *naddr, struct pf_addr *init_addr, struct pf_src_node **sns,
+    struct pf_pool *rpool, enum pf_sn_types type)
 {
 	unsigned char		 hash[16];
 	struct pf_addr		*raddr = &rpool->cur->addr.v.a.addr;
@@ -271,21 +272,20 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	struct pf_pooladdr	*acur = rpool->cur;
 	struct pf_src_node	 k;
 
-	if (*sn == NULL && rpool->opts & PF_POOL_STICKYADDR &&
+	if (sns[type] == NULL && rpool->opts & PF_POOL_STICKYADDR &&
 	    (rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_NONE) {
 		k.af = af;
+		k.type = type;
 		PF_ACPY(&k.addr, saddr, af);
-		if (r->rule_flag & PFRULE_RULESRCTRACK ||
-		    rpool->opts & PF_POOL_STICKYADDR)
-			k.rule.ptr = r;
-		else
-			k.rule.ptr = NULL;
+		k.rule.ptr = r;
 		pf_status.scounters[SCNT_SRC_NODE_SEARCH]++;
-		*sn = RB_FIND(pf_src_tree, &tree_src_tracking, &k);
-		if (*sn != NULL && !PF_AZERO(&(*sn)->raddr, af)) {
-			PF_ACPY(naddr, &(*sn)->raddr, af);
+		sns[type] = RB_FIND(pf_src_tree, &tree_src_tracking, &k);
+		if (sns[type] != NULL) {
+			if (!PF_AZERO(&(sns[type])->raddr, af))
+				PF_ACPY(naddr, &(sns[type])->raddr, af);
 			if (pf_status.debug >= PF_DEBUG_MISC) {
-				printf("pf_map_addr: src tracking maps ");
+				printf("pf_map_addr: src tracking (%u) maps ",
+				    type);
 				pf_print_host(&k.addr, 0, af);
 				printf(" to ");
 				pf_print_host(naddr, 0, af);
@@ -428,8 +428,16 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		PF_AINC(&rpool->counter, af);
 		break;
 	}
-	if (*sn != NULL)
-		PF_ACPY(&(*sn)->raddr, naddr, af);
+
+	if (rpool->opts & PF_POOL_STICKYADDR) {
+		if (sns[type] != NULL) {
+			pf_remove_src_node(sns[type]);
+			sns[type] = NULL;
+		}
+		if (pf_insert_src_node(&sns[type], r, type, af, saddr, naddr,
+		    0))
+			return (1);
+	}
 
 	if (pf_status.debug >= PF_DEBUG_NOISY &&
 	    (rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_NONE) {
@@ -443,19 +451,18 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 
 int
 pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
-    u_int16_t *sport, struct pf_addr *daddr, u_int16_t *dport)
+    u_int16_t *sport, struct pf_addr *daddr, u_int16_t *dport,
+    struct pf_src_node **sns)
 {
 	struct pf_addr	naddr;
 	u_int16_t	nport = 0;
-
-	struct pf_src_node srcnode, *sn = &srcnode;
 
 	if (!TAILQ_EMPTY(&r->nat.list)) {
 		/* XXX is this right? what if rtable is changed at the same
 		 * XXX time? where do I need to figure out the sport? */
 		if (pf_get_sport(pd->af, pd->proto, r, saddr,
 		    daddr, *dport, &naddr, &nport, r->nat.proxy_port[0],
-		    r->nat.proxy_port[1], &sn, pd->rdomain)) {
+		    r->nat.proxy_port[1], sns, pd->rdomain)) {
 			DPFPRINTF(PF_DEBUG_MISC,
 			    ("pf: NAT proxy port allocation "
 			    "(%u-%u) failed\n",
@@ -468,7 +475,8 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
 			*sport = nport;
 	}
 	if (!TAILQ_EMPTY(&r->rdr.list)) {
-		if (pf_map_addr(pd->af, r, saddr, &naddr, NULL, &sn, &r->rdr))
+		if (pf_map_addr(pd->af, r, saddr, &naddr, NULL, sns, &r->rdr,
+		    PF_SN_RDR))
 			return (-1);
 		if ((r->rdr.opts & PF_POOL_TYPEMASK) == PF_POOL_BITMASK)
 			PF_POOLMASK(&naddr, &naddr,  &r->rdr.cur->addr.v.a.mask,
@@ -497,4 +505,3 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd, struct pf_addr *saddr,
 
 	return (0);
 }
-

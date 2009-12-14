@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.252 2009/11/23 21:29:21 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.253 2009/12/14 12:31:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -619,9 +619,20 @@ print_src_node(struct pf_src_node *sn, int opts)
 
 	aw.v.a.addr = sn->addr;
 	print_addr(&aw, sn->af, opts & PF_OPT_VERBOSE2);
-	printf(" -> ");
-	aw.v.a.addr = sn->raddr;
-	print_addr(&aw, sn->af, opts & PF_OPT_VERBOSE2);
+
+	if (!PF_AZERO(&sn->raddr, sn->af)) {
+		if (sn->type == PF_SN_NAT)
+			printf(" nat-to ");
+		else if (sn->type == PF_SN_RDR)
+			printf(" rdr-to ");
+		else if (sn->type == PF_SN_ROUTE)
+			printf(" route-to ");
+		else
+			printf(" ??? (%u) ", sn->type);
+		aw.v.a.addr = sn->raddr;
+		print_addr(&aw, sn->af, opts & PF_OPT_VERBOSE2);
+	}
+
 	printf(" ( states %u, connections %u, rate %u.%u/%us )\n", sn->states,
 	    sn->conn, sn->conn_rate.count / 1000,
 	    (sn->conn_rate.count % 1000) / 100, sn->conn_rate.seconds);
@@ -642,13 +653,8 @@ print_src_node(struct pf_src_node *sn, int opts)
 		printf(", %llu pkts, %llu bytes",
 		    sn->packets[0] + sn->packets[1],
 		    sn->bytes[0] + sn->bytes[1]);
-		switch (sn->ruletype) {
-		case PF_PASS:
-		case PF_MATCH:
-			if (sn->rule.nr != -1)
-				printf(", filter rule %u", sn->rule.nr);
-			break;
-		}
+		if (sn->rule.nr != -1)
+			printf(", rule %u", sn->rule.nr);
 		printf("\n");
 	}
 }

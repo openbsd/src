@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.134 2009/12/03 12:23:52 otto Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.135 2009/12/14 12:31:45 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -429,7 +429,7 @@ pfsync_state_export(struct pfsync_state *sp, struct pf_state *st)
 	sp->log = st->log;
 	sp->timeout = st->timeout;
 	sp->state_flags = st->state_flags;
-	if (st->src_node)
+	if (!SLIST_EMPTY(&st->src_nodes))
 		sp->sync_flags |= PFSYNC_FLAG_SRCNODE;
 
 	bcopy(&st->id, &sp->id, sizeof(sp->id));
