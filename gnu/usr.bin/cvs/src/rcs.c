@@ -6758,10 +6758,7 @@ linevector_copy (to, from)
     }
     if (from->nlines > to->lines_alloced)
     {
-	if (to->lines_alloced == 0)
-	    to->lines_alloced = 10;
-	while (from->nlines > to->lines_alloced)
-	    to->lines_alloced *= 2;
+	to->lines_alloced = from->nlines;
 	to->vector = (struct line **)
 	    xrealloc (to->vector, to->lines_alloced * sizeof (*to->vector));
     }
@@ -7184,6 +7181,8 @@ RCS_deltas (rcs, fp, rcsbuf, version, op, text, len, log, loglen)
 		    vers = trunk_vers;
 		    next = vers->next;
 		    linevector_copy (&curlines, &trunklines);
+		    linevector_free (&trunklines);
+		    linevector_init (&trunklines);
 		}
 	    }
 	    else
