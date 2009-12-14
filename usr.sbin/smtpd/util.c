@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2009/12/13 22:02:55 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.31 2009/12/14 19:56:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -452,19 +452,17 @@ generate_uid(void)
 }
 
 void
-fdlimit(int n)
+fdlimit(double percent)
 {
 	struct rlimit rl;
 
+	if (percent < 0 || percent > 1)
+		fatalx("fdlimit: parameter out of range");
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
 		fatal("fdlimit: getrlimit");
-	if ((u_int)n > rl.rlim_max) {
-		log_warnx("fdlimit: need %d, limit %llu", n, rl.rlim_max);
-		fatalx("fdlimit: hard limit reached");
-	}
-	rl.rlim_cur = n;
+	rl.rlim_cur = percent * rl.rlim_max;
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
-		fatal("fdlimit: getrlimit");
+		fatal("fdlimit: setrlimit");
 }
 
 int

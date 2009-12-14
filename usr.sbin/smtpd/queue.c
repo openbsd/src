@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.75 2009/12/14 16:44:14 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.76 2009/12/14 19:56:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -581,10 +581,10 @@ queue(struct smtpd *env)
 
 	/*
 	 * queue opens fds for four purposes: smtp, mta, mda, and bounces.
-	 * Therefore, double the fdlimit the second time to achieve a 4x
-	 * increase relative to default.
+	 * Therefore, use all available fd space and set the maxconn (=max
+	 * session count for mta and mda) to a quarter of this value.
 	 */
-	fdlimit(getdtablesize() * 2);
+	fdlimit(1.0);
 	if ((env->sc_maxconn = availdesc() / 4) < 1)
 		fatalx("runner: fd starvation");
 

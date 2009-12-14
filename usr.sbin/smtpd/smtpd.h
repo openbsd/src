@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.164 2009/12/14 18:21:53 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.165 2009/12/14 19:56:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1026,5 +1026,5 @@ char		*message_get_errormsg(struct message *);
 void		 sa_set_port(struct sockaddr *, int);
 struct path	*path_dup(struct path *);
 u_int64_t	 generate_uid(void);
-void		 fdlimit(int);
+void		 fdlimit(double);
 int		 availdesc(void);
