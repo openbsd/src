@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.42 2009/10/22 12:35:53 sobrado Exp $
+.\"	$OpenBSD: ping.8,v 1.43 2009/12/15 21:15:49 mpf Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: October 22 2009 $
+.Dd $Mdocdate: December 15 2009 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -177,15 +177,6 @@ Specifies the number of data bytes to be sent.
 The default is 56,
 which translates into 64 ICMP data bytes
 when combined with the 8 bytes of ICMP header data.
-If the
-.Fl D
-or
-.Fl T
-options are specified, or the
-.Fl t
-option to a unicast destination, a raw socket will be used and the 8 bytes of
-header data are included in
-.Ar packetsize .
 .It Fl T Ar tos
 Use the specified type of service.
 .It Fl t Ar ttl
