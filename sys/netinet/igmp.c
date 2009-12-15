@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.26 2007/12/14 18:33:40 deraadt Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.27 2009/12/15 11:35:54 jsing Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -492,6 +492,7 @@ igmp_leavegroup(inm)
 	case IGMP_DELAYING_MEMBER:
 	case IGMP_IDLE_MEMBER:
 		if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
+		    inm->inm_ia->ia_ifp &&
 		    (inm->inm_ia->ia_ifp->if_flags & IFF_LOOPBACK) == 0)
 			if (inm->inm_rti->rti_type != IGMP_v1_ROUTER)
 				igmp_sendpkt(inm, IGMP_HOST_LEAVE_MESSAGE,
