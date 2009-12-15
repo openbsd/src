@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.11 2009/12/07 14:27:12 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.12 2009/12/15 13:19:37 jsing Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -55,11 +55,19 @@
 #include <net/if_aoe.h>
 
 /* AOE initiator functions. */
+int	sr_aoe_create(struct sr_discipline *, struct bioc_createraid *,
+	    int, int64t);
+int	sr_aoe_assemble(struct sr_discipline *, struct bioc_createraid *,
+	    int);
 int	sr_aoe_alloc_resources(struct sr_discipline *);
 int	sr_aoe_free_resources(struct sr_discipline *);
 int	sr_aoe_rw(struct sr_workunit *);
 
 /* AOE target functions. */
+int	sr_aoe_server_create(struct sr_discipline *, struct bioc_createraid *,
+	    int, int64t);
+int	sr_aoe_server_assemble(struct sr_discipline *, struct bioc_createraid *,
+	    int);
 int	sr_aoe_server_alloc_resources(struct sr_discipline *);
 int	sr_aoe_server_free_resources(struct sr_discipline *);
 int	sr_aoe_server_start(struct sr_discipline *);
@@ -76,10 +84,11 @@ sr_aoe_discipline_init(struct sr_discipline *sd)
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_AOE_INIT;
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK;
-	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
 	sd->sd_max_wu = SR_RAIDAOE_NOWU;
 
 	/* Setup discipline pointers. */
+	sd->sd_create = sr_aoe_create;
+	sd->sd_assemble = sr_aoe_assemble;
 	sd->sd_alloc_resources = sr_aoe_alloc_resources;
 	sd->sd_free_resources = sr_aoe_free_resources;
 	sd->sd_start_discipline = NULL;
@@ -102,10 +111,11 @@ sr_aoe_server_discipline_init(struct sr_discipline *sd)
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_AOE_TARG;
 	sd->sd_capabilities = 0;
-	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
 	sd->sd_max_wu = SR_RAIDAOE_NOWU;
 
 	/* Setup discipline pointers. */
+	sd->sd_create = sr_aoe_server_create;
+	sd->sd_assemble = sr_aoe_server_assemble;
 	sd->sd_alloc_resources = sr_aoe_server_alloc_resources;
 	sd->sd_free_resources = sr_aoe_server_free_resources;
 	sd->sd_start_discipline = sr_aoe_server_start;
@@ -121,6 +131,31 @@ sr_aoe_server_discipline_init(struct sr_discipline *sd)
 }
 
 /* AOE initiator */
+int
+sr_aoe_create(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunk, int64t coerced_size)
+{
+
+	if (no_chunk != 1)
+		return EINVAL;
+
+	strlcpy(sd->sd_name, "AOE INIT", sizeof(sd->sd_name));
+
+	sd->sd_max_ccb_per_wu = no_chunk;
+
+	return 0;
+}
+
+int
+sr_aoe_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunk);
+{
+
+	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
+
+	return 0;
+}
+
 void
 sr_aoe_setup(struct aoe_handler *ah, struct mbuf *m)
 {
@@ -568,6 +603,33 @@ sr_aoe_timeout(void *v)
 void		sr_aoe_server(struct aoe_handler *, struct mbuf *);
 void		sr_aoe_server_create_thread(void *);
 void		sr_aoe_server_thread(void *);
+
+int
+sr_aoe_server_create(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunk, int64t coerced_size)
+{
+
+	if (no_chunk != 1)
+		return EINVAL;
+
+	sd->sd_meta->ssdi.ssd_size = coerced_size;
+
+	strlcpy(sd->sd_name, "AOE TARG", sizeof(sd->sd_name));
+
+	sd->sd_max_ccb_per_wu = no_chunk;
+
+	return 0;
+}
+
+int
+sr_aoe_server_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunk);
+{
+
+	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
+
+	return 0;
+}
 
 int
 sr_aoe_server_alloc_resources(struct sr_discipline *sd)

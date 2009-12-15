@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.9 2009/12/07 14:33:38 jsing Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.10 2009/12/15 13:19:37 jsing Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -49,6 +49,10 @@ uint8_t	gf_pow[768];
 int	gf_log[256];
 
 /* RAID 6 functions. */
+int	sr_raid6_create(struct sr_discipline *, struct bioc_createraid *,
+	    int, int64_t);
+int	sr_raid6_assemble(struct sr_discipline *, struct bioc_createraid *,
+	    int);
 int	sr_raid6_alloc_resources(struct sr_discipline *);
 int	sr_raid6_free_resources(struct sr_discipline *);
 int	sr_raid6_rw(struct sr_workunit *);
@@ -131,10 +135,11 @@ sr_raid6_discipline_init(struct sr_discipline *sd)
 	/* fill out discipline members. */
 	sd->sd_type = SR_MD_RAID6;
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
-	sd->sd_max_ccb_per_wu = max(6, 2 * sd->sd_meta->ssdi.ssd_chunk_no); /* only if stripsize <= MAXPHYS */
 	sd->sd_max_wu = SR_RAID6_NOWU;
 
 	/* setup discipline pointers. */
+	sd->sd_create = sr_raid6_create;
+	sd->sd_assemble = sr_raid6_assemble;
 	sd->sd_alloc_resources = sr_raid6_alloc_resources;
 	sd->sd_free_resources = sr_raid6_free_resources;
 	sd->sd_start_discipline = NULL;
@@ -148,6 +153,42 @@ sr_raid6_discipline_init(struct sr_discipline *sd)
 	sd->sd_set_chunk_state = sr_raid6_set_chunk_state;
 	sd->sd_set_vol_state = sr_raid6_set_vol_state;
 	sd->sd_openings = sr_raid6_openings;
+}
+
+int
+sr_raid6_create(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunk, int64_t coerced_size)
+{
+
+	if (no_chunk < 4)
+		return EINVAL;
+
+	strlcpy(sd->sd_name, "RAID 6", sizeof(sd->sd_name));
+
+	/*
+	 * XXX add variable strip size later even though MAXPHYS is really
+	 * the clever value, users like * to tinker with that type of stuff.
+	 */
+        sd->sd_meta->ssdi.ssd_strip_size = MAXPHYS;
+        sd->sd_meta->ssdi.ssd_size = (coerced_size &
+	    ~((sd->sd_meta->ssdi.ssd_strip_size >> DEV_BSHIFT) - 1)) *
+	    (no_chunk - 2);
+
+	/* only if stripsize <= MAXPHYS */
+	sd->sd_max_ccb_per_wu = max(6, 2 * no_chunk);
+
+	return 0;
+}
+
+int
+sr_raid6_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunk)
+{
+
+	/* only if stripsize <= MAXPHYS */
+	sd->sd_max_ccb_per_wu = max(6, 2 * sd->sd_meta->ssdi.ssd_chunk_no);
+
+	return 0;
 }
 
 int

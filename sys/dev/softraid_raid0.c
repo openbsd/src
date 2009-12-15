@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.17 2009/12/07 14:27:12 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.18 2009/12/15 13:19:37 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -44,6 +44,10 @@
 #include <dev/rndvar.h>
 
 /* RAID 0 functions. */
+int	sr_raid0_create(struct sr_discipline *, struct bioc_createraid *,
+	    int, int64_t);
+int	sr_raid0_assemble(struct sr_discipline *, struct bioc_createraid *,
+	    int);
 int	sr_raid0_alloc_resources(struct sr_discipline *);
 int	sr_raid0_free_resources(struct sr_discipline *);
 int	sr_raid0_rw(struct sr_workunit *);
@@ -59,12 +63,11 @@ sr_raid0_discipline_init(struct sr_discipline *sd)
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_RAID0;
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
-	sd->sd_max_ccb_per_wu =
-	    (MAXPHYS / sd->sd_meta->ssdi.ssd_strip_size + 1) *
-	    SR_RAID0_NOWU * sd->sd_meta->ssdi.ssd_chunk_no;
 	sd->sd_max_wu = SR_RAID0_NOWU;
 
 	/* Setup discipline pointers. */
+	sd->sd_create = sr_raid0_create;
+	sd->sd_assemble = sr_raid0_assemble;
 	sd->sd_alloc_resources = sr_raid0_alloc_resources;
 	sd->sd_free_resources = sr_raid0_free_resources;
 	sd->sd_start_discipline = NULL;
@@ -77,6 +80,42 @@ sr_raid0_discipline_init(struct sr_discipline *sd)
 	sd->sd_scsi_rw = sr_raid0_rw;
 	sd->sd_set_chunk_state = sr_raid0_set_chunk_state;
 	sd->sd_set_vol_state = sr_raid0_set_vol_state;
+}
+
+int
+sr_raid0_create(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunk, int64_t coerced_size)
+{
+
+	if (no_chunk < 2)
+		return EINVAL;
+
+	/*
+	 * XXX add variable strip size later even though MAXPHYS is really
+	 * the clever value, users like to tinker with that type of stuff.
+	 */
+	strlcpy(sd->sd_name, "RAID 0", sizeof(sd->sd_name));
+	sd->sd_meta->ssdi.ssd_strip_size = MAXPHYS;
+	sd->sd_meta->ssdi.ssd_size = (coerced_size &
+	    ~((sd->sd_meta->ssdi.ssd_strip_size >> DEV_BSHIFT) - 1)) * no_chunk;
+
+	sd->sd_max_ccb_per_wu =
+	    (MAXPHYS / sd->sd_meta->ssdi.ssd_strip_size + 1) *
+	    SR_RAID0_NOWU * no_chunk;
+
+	return 0;
+}
+
+int
+sr_raid0_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunks)
+{
+
+	sd->sd_max_ccb_per_wu =
+	    (MAXPHYS / sd->sd_meta->ssdi.ssd_strip_size + 1) *
+	    SR_RAID0_NOWU * sd->sd_meta->ssdi.ssd_chunk_no;
+
+	return 0;
 }
 
 int

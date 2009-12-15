@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.86 2009/12/07 14:33:38 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.87 2009/12/15 13:19:37 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -475,6 +475,10 @@ struct sr_discipline {
 	u_int64_t		sd_wu_collisions;
 
 	/* discipline functions */
+	int			(*sd_create)(struct sr_discipline *,
+				    struct bioc_createraid *, int, int64_t);
+	int			(*sd_assemble)(struct sr_discipline *,
+				    struct bioc_createraid *, int);
 	int			(*sd_alloc_resources)(struct sr_discipline *);
 	int			(*sd_free_resources)(struct sr_discipline *);
 	int			(*sd_ioctl_handler)(struct sr_discipline *,

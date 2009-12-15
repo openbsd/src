@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.43 2009/12/07 14:27:12 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.44 2009/12/15 13:19:37 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -64,6 +64,10 @@ int		sr_crypto_encrypt(u_char *, u_char *, u_char *, size_t, int);
 int		sr_crypto_decrypt_key(struct sr_discipline *);
 int		sr_crypto_change_maskkey(struct sr_discipline *,
 		    struct sr_crypto_kdfinfo *, struct sr_crypto_kdfinfo *);
+int		sr_crypto_create(struct sr_discipline *,
+		    struct bioc_createraid *, int, int64_t);
+int		sr_crypto_assemble(struct sr_discipline *,
+		    struct bioc_createraid *, int);
 int		sr_crypto_alloc_resources(struct sr_discipline *);
 int		sr_crypto_free_resources(struct sr_discipline *);
 int		sr_crypto_ioctl(struct sr_discipline *,
@@ -86,14 +90,19 @@ void		 sr_crypto_dumpkeys(struct sr_discipline *);
 void
 sr_crypto_discipline_init(struct sr_discipline *sd)
 {
+	int i;
 
 	/* Fill out discipline members. */
 	sd->sd_type = SR_MD_CRYPTO;
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK;
-	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
 	sd->sd_max_wu = SR_CRYPTO_NOWU;
 
+	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++)
+		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
+
 	/* Setup discipline pointers. */
+	sd->sd_create = sr_crypto_create;
+	sd->sd_assemble = sr_crypto_assemble;
 	sd->sd_alloc_resources = sr_crypto_alloc_resources;
 	sd->sd_free_resources = sr_crypto_free_resources;
 	sd->sd_start_discipline = NULL;
@@ -108,6 +117,77 @@ sr_crypto_discipline_init(struct sr_discipline *sd)
 	/* XXX reuse raid 1 functions for now FIXME */
 	sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
 	sd->sd_set_vol_state = sr_raid1_set_vol_state;
+}
+
+int
+sr_crypto_create(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunk, int64_t coerced_size)
+{
+	int	rv = EINVAL;
+
+	if (no_chunk != 1)
+		goto done;
+
+	/* no hint available yet */
+	if (bc->bc_opaque_flags & BIOC_SOOUT) {
+		bc->bc_opaque_status = BIOC_SOINOUT_FAILED;
+		rv = EAGAIN;
+		goto done;
+	}
+
+	if (!(bc->bc_flags & BIOC_SCNOAUTOASSEMBLE))
+		goto done;
+
+	if (sr_crypto_get_kdf(bc, sd))
+		goto done;
+
+	strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
+	sd->sd_meta->ssdi.ssd_size = coerced_size;
+
+	sr_crypto_create_keys(sd);
+
+	sd->sd_max_ccb_per_wu = no_chunk;
+
+	rv = 0;
+done:
+	return (rv);
+}
+
+int
+sr_crypto_assemble(struct sr_discipline *sd, struct bioc_createraid *bc,
+    int no_chunk)
+{
+	int	rv = EINVAL;
+
+	/* provide userland with kdf hint */
+	if (bc->bc_opaque_flags & BIOC_SOOUT) {
+		if (bc->bc_opaque == NULL)
+			goto done;
+
+		if (sizeof(sd->mds.mdd_crypto.scr_meta.scm_kdfhint) <
+		    bc->bc_opaque_size)
+			goto done;
+
+		if (copyout(sd->mds.mdd_crypto.scr_meta.scm_kdfhint,
+		    bc->bc_opaque, bc->bc_opaque_size))
+			goto done;
+
+		/* we're done */
+		bc->bc_opaque_status = BIOC_SOINOUT_OK;
+		rv = EAGAIN;
+ 		goto done;
+	}
+
+	/* get kdf with maskkey from userland */
+	if (bc->bc_opaque_flags & BIOC_SOIN)
+		if (sr_crypto_get_kdf(bc, sd))
+			goto done;
+
+	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
+
+	rv = 0;
+done:
+	return (rv);
 }
 
 struct cryptop *
@@ -594,16 +674,17 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 	sr_hotplug_unregister(sd, sr_crypto_hotplug);
 
 	for (i = 0; sd->mds.mdd_crypto.scr_sid[i] != (u_int64_t)-1; i++) {
-		crypto_freesession(
-		    sd->mds.mdd_crypto.scr_sid[i]);
+		crypto_freesession(sd->mds.mdd_crypto.scr_sid[i]);
 		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
 	}
 
 	sr_wu_free(sd);
 	sr_ccb_free(sd);
 
-	pool_destroy(&sd->mds.mdd_crypto.sr_uiopl);
-	pool_destroy(&sd->mds.mdd_crypto.sr_iovpl);
+	if (sd->mds.mdd_crypto.sr_uiopl.pr_serial != 0)
+		pool_destroy(&sd->mds.mdd_crypto.sr_uiopl);
+	if (sd->mds.mdd_crypto.sr_iovpl.pr_serial != 0)
+		pool_destroy(&sd->mds.mdd_crypto.sr_iovpl);
 
 	rv = 0;
 	return (rv);
