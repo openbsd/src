@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.163 2009/12/15 21:22:04 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.164 2009/12/15 22:14:28 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2912,6 +2912,8 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 		this->d.volume.cap = result;
 		break;
 	case COP_AWTYPE_POWER:
+		/* FALLTHROUGH */
+	case COP_AWTYPE_VENDOR_DEFINED:
 		this->enable = 0;
 		break;
 	}
