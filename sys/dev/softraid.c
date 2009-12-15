@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.186 2009/12/15 13:19:37 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.187 2009/12/15 15:51:43 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -530,6 +530,7 @@ sr_meta_init(struct sr_discipline *sd, struct sr_chunk_head *cl)
 	sm->ssdi.ssd_version = SR_META_VERSION;
 	sm->ssd_ondisk = 0;
 	sm->ssdi.ssd_flags = sd->sd_meta_flags;
+
 	/* get uuid from chunk 0 */
 	bcopy(&sd->sd_vol.sv_chunks[0]->src_meta.scmi.scm_uuid,
 	    &sm->ssdi.ssd_uuid,
@@ -2848,6 +2849,15 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	/* allocate all resources */
 	if ((rv = sd->sd_alloc_resources(sd)))
 		goto unwind;
+
+	/* Adjust flags if necessary. */
+	if ((sd->sd_capabilities & SR_CAP_AUTO_ASSEMBLE) &&
+	    (bc->bc_flags & BIOC_SCNOAUTOASSEMBLE) !=
+	    (sd->sd_meta->ssdi.ssd_flags & BIOC_SCNOAUTOASSEMBLE)) {
+		sd->sd_meta->ssdi.ssd_flags &= ~BIOC_SCNOAUTOASSEMBLE;
+		sd->sd_meta->ssdi.ssd_flags |=
+		    bc->bc_flags & BIOC_SCNOAUTOASSEMBLE;
+	}
 
 	if (sd->sd_capabilities & SR_CAP_SYSTEM_DISK) {
 		/* set volume status */
