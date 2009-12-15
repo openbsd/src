@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.84 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.85 2009/12/15 21:09:43 mpf Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -753,16 +753,19 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
+			if (cc - 8 < datalen)
+				(void)printf(" (TRUNC!)");
 			cp = (u_char *)&icp->icmp_data[sizeof(struct tvi)];
 			dp = &outpack[8 + sizeof(struct tvi)];
-			for (i = 8 + sizeof(struct tvi); i < datalen;
+			for (i = 8 + sizeof(struct tvi); i < cc && i < datalen;
 			    ++i, ++cp, ++dp) {
 				if (*cp != *dp) {
 					(void)printf("\nwrong data byte #%d "
 					    "should be 0x%x but was 0x%x",
-					    i, *dp, *cp);
+					    i - 8, *dp, *cp);
 					cp = (u_char *)&icp->icmp_data[0];
-					for (i = 8; i < datalen; ++i, ++cp) {
+					for (i = 8; i < cc && i < datalen;
+					     ++i, ++cp) {
 						if ((i % 32) == 8)
 							(void)printf("\n\t");
 						(void)printf("%x ", *cp);
