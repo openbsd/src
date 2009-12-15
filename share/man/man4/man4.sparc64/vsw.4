@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vsw.4,v 1.1 2009/12/15 19:46:55 kettenis Exp $
+.\"     $OpenBSD: vsw.4,v 1.2 2009/12/15 21:19:26 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -28,11 +28,11 @@ The
 .Nm
 driver provides a network switch using the services provided by the
 UltraSPARC Hypervisor as found on sun4v systems.
-It attaches a seperate
+It attaches a separate
 .Xr vnet 4
 interface for each switch port.
 These ports can be added to a
-.Xr bridge
+.Xr bridge 4
 to create a functional network switch.
 .Pp
 The
