@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.40 2009/04/20 00:44:48 oga Exp $
+.\"	$OpenBSD: uvm.9,v 1.41 2009/12/15 07:34:58 jmc Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: April 20 2009 $
+.Dd $Mdocdate: December 15 2009 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -698,7 +698,7 @@ If
 is non-zero, no segment of the list may cross this power-of-two
 boundary, relative to zero.
 .Fa nsegs
-is the maximum number of physically contigous segments.
+is the maximum number of physically contiguous segments.
 The allocated memory is returned in the
 .Fa rlist
 list.
