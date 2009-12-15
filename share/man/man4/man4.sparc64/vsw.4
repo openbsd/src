@@ -1,4 +1,4 @@
-.\"     $OpenBSD: cbus.4,v 1.4 2009/12/15 19:46:55 kettenis Exp $
+.\"     $OpenBSD: vsw.4,v 1.1 2009/12/15 19:46:55 kettenis Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -15,40 +15,39 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: December 15 2009 $
-.Dt CBUS 4 sparc64
+.Dt VSW 4 sparc64
 .Os
 .Sh NAME
-.Nm cbus
-.Nd channel device bus
+.Nm vsw
+.Nd virtual network switch
 .Sh SYNOPSIS
-.Cd "cbus* at vbus?"
+.Cd "vsw* at cbus?"
+.Cd "vnet* at vsw?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides a virtual bus for channel devices provided by the
-UltraSPARC Hypervisor as found on sun4v logical domains.
+driver provides a network switch using the services provided by the
+UltraSPARC Hypervisor as found on sun4v systems.
+It attaches a seperate
+.Xr vnet 4
+interface for each switch port.
+These ports can be added to a
+.Xr bridge
+to create a functional network switch.
 .Pp
-.Ox
-provides support for the following devices:
-.Pp
-.Bl -tag -width "vdisk(4)XX" -offset 3n -compact
-.It Xr vcc 4
-virtual console concentrator
-.It Xr vdsk 4
-virtual disk
-.It Xr vnet 4
-virtual network interface
-.It Xr vsw 4
-virtual network switch
-.El
+The
+.Nm
+driver supports version 1.0 of the vNet protocol.
 .Sh SEE ALSO
+.Xr bridge 4 ,
+.Xr cbus 4 ,
 .Xr intro 4 ,
-.Xr vbus 4
+.Xr netintro 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 4.5 .
+.Ox 4.7 .
 .Sh AUTHORS
 The
 .Nm
