@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.19 2009/12/12 14:03:59 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.20 2009/12/15 11:45:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -101,12 +101,11 @@ client_init(int fd, int body, char *ehlo, int verbose)
 	sp->w.fd = fd;
 	TAILQ_INIT(&sp->recipients);
 
+	sp->exts[CLIENT_EXT_STARTTLS].want = 1;
+	sp->exts[CLIENT_EXT_STARTTLS].must = 1;
 #ifdef CLIENT_NO_SSL
 	sp->exts[CLIENT_EXT_STARTTLS].want = 0;
 	sp->exts[CLIENT_EXT_STARTTLS].must = 0;
-#else
-	sp->exts[CLIENT_EXT_STARTTLS].want = 1;
-	sp->exts[CLIENT_EXT_STARTTLS].must = 1;
 #endif
 	sp->exts[CLIENT_EXT_STARTTLS].state = CLIENT_STARTTLS;
 	sp->exts[CLIENT_EXT_STARTTLS].name = "STARTTLS";
@@ -273,12 +272,10 @@ client_read(struct smtp_client *sp)
 #ifndef CLIENT_NO_SSL
 	if (sp->state == CLIENT_SSL_CONNECT)
 		return client_ssl_connect(sp);
-#endif
 
 	/* read data from the socket */
-#ifndef CLIENT_NO_SSL
-	if (sp->ssl_state) {
-		switch (ssl_buf_read(sp->ssl_state, &sp->r)) {
+	if (sp->ssl) {
+		switch (ssl_buf_read(sp->ssl, &sp->r)) {
 		case SSL_ERROR_NONE:
 			break;
 
@@ -292,10 +289,9 @@ client_read(struct smtp_client *sp)
 			client_status(sp, "130 ssl_buf_read error");
 			return (CLIENT_DONE);
 		}
-#else
-	if (0) {
+	}
 #endif
-	} else {
+	if (sp->ssl == NULL) {
 		errno = 0;
 		if (buf_read(sp->w.fd, &sp->r) == -1) {
 			if (errno)
@@ -441,10 +437,10 @@ client_write(struct smtp_client *sp)
 #ifndef CLIENT_NO_SSL
 	case CLIENT_SSL_INIT:
 		log_debug("client: ssl handshake started");
-		sp->ssl_state = ssl_client_init(sp->w.fd,
+		sp->ssl = ssl_client_init(sp->w.fd,
 		    sp->auth.cert, sp->auth.certsz,
 		    sp->auth.key, sp->auth.keysz);
-		if (sp->ssl_state == NULL) {
+		if (sp->ssl == NULL) {
 			client_status(sp, "130 SSL init failed");
 			return (CLIENT_DONE);
 		} else {
@@ -518,8 +514,8 @@ client_write(struct smtp_client *sp)
 
 write:
 #ifndef CLIENT_NO_SSL
-	if (sp->ssl_state) {
-		switch (ssl_buf_write(sp->ssl_state, &sp->w)) {
+	if (sp->ssl) {
+		switch (ssl_buf_write(sp->ssl, &sp->w)) {
 		case SSL_ERROR_NONE:
 			break;
 
@@ -533,10 +529,9 @@ write:
 			client_status(sp, "130 ssl_buf_write error");
 			return (CLIENT_DONE);
 		}
-#else
-	if (0) {
+	}
 #endif
-	} else {
+	if (sp->ssl == NULL) {
 		if (buf_write(&sp->w) < 0) {
 			client_status(sp, "130 buf_write error");
 			return (CLIENT_DONE);
@@ -562,9 +557,9 @@ client_ssl_connect(struct smtp_client *sp)
 {
 	int	 ret;
 
-	ret = SSL_connect(sp->ssl_state);
+	ret = SSL_connect(sp->ssl);
 
-	switch (SSL_get_error(sp->ssl_state, ret)) {
+	switch (SSL_get_error(sp->ssl, ret)) {
 	case SSL_ERROR_WANT_READ:
 		return (CLIENT_WANT_READ);
 
@@ -579,8 +574,8 @@ client_ssl_connect(struct smtp_client *sp)
 
 		if (sp->exts[CLIENT_EXT_STARTTLS].want) {
 			sp->exts[CLIENT_EXT_STARTTLS].fail = 1;
-			SSL_free(sp->ssl_state);
-			sp->ssl_state = NULL;
+			SSL_free(sp->ssl);
+			sp->ssl = NULL;
 			if ((sp->state = client_next_state(sp)) != 0)
 				return (CLIENT_WANT_WRITE);
 		} else
@@ -624,8 +619,8 @@ client_close(struct smtp_client *sp)
 		free(rp);
 	}
 #ifndef CLIENT_NO_SSL
-	if (sp->ssl_state)
-		SSL_free(sp->ssl_state);
+	if (sp->ssl)
+		SSL_free(sp->ssl);
 #endif
 	close(sp->w.fd);
 	free(sp);
