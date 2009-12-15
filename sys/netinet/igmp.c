@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.28 2009/12/15 13:23:53 jsing Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.29 2009/12/15 13:28:23 jsing Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -464,6 +464,7 @@ igmp_joingroup(struct in_multi *inm)
 	inm->inm_state = IGMP_IDLE_MEMBER;
 
 	if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
+	    inm->inm_ia->ia_ifp &&
 	    (inm->inm_ia->ia_ifp->if_flags & IFF_LOOPBACK) == 0) {
 		if ((i = rti_fill(inm)) == -1) {
 			splx(s);
