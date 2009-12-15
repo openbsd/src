@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_file.c,v 1.25 2006/06/25 15:01:53 sturm Exp $	*/
+/*	$OpenBSD: freebsd_file.c,v 1.26 2009/12/15 20:26:21 jasper Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -53,8 +53,6 @@
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_util.h>
 
-#define	ARRAY_LENGTH(array)	(sizeof(array)/sizeof(array[0]))
-
 const char freebsd_emul_path[] = "/emul/freebsd";
 
 static char * convert_from_freebsd_mount_type(int);
@@ -107,7 +105,7 @@ convert_from_freebsd_mount_type(type)
 #endif
 	};
 
-	if (type < 0 || type >= ARRAY_LENGTH(freebsd_mount_type))
+	if (type < 0 || type >= nitems(freebsd_mount_type))
 		return (NULL);
 	return (freebsd_mount_type[type]);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.39 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.40 2009/12/15 20:26:21 jasper Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -885,9 +885,8 @@ tuple_name(int type)
 	    "VERS_2", "FORMAT", "GEOMETRY", "BYTEORDER",	  /* 40-43 */
 	    "DATE", "BATTERY", "ORG", "FORMAT_A"		  /* 44-47 */
 	};
-#define NAME_LEN(x) (sizeof(x)/sizeof(x[0]))
 
-	if (type > 0 && type < NAME_LEN(tuple_name_s))
+	if (type > 0 && type < nitems(tuple_name_s))
 		return (tuple_name_s[type]);
 	else if (0xff == type)
 		return ("END");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.13 2008/11/17 06:56:56 brad Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.14 2009/12/15 20:26:21 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -86,14 +86,13 @@ const struct pci_matchid ciss_pci_devices[] = {
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSA_11 },
 	{ PCI_VENDOR_HP,	PCI_PRODUCT_HP_HPSA_12 }
 };
-#define	CISS_PCI_NDEVS	sizeof(ciss_pci_devices)/sizeof(ciss_pci_devices[0])
 
 int
 ciss_pci_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	return pci_matchbyid(pa, ciss_pci_devices, CISS_PCI_NDEVS);
+	return pci_matchbyid(pa, ciss_pci_devices, nitems(ciss_pci_devices));
 }
 
 void

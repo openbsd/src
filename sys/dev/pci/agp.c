@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.32 2009/05/10 16:57:44 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.33 2009/12/15 20:26:21 jasper Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -163,7 +163,6 @@ agp_attach(struct device *parent, struct device *self, void *aux)
 		{2048,		1920},
 		{4096,		3932}
 	};
-#define	agp_max_size	 (sizeof(agp_max)/sizeof(agp_max[0]))
 
 	/*
 	 * Work out an upper bound for agp memory allocation. This
@@ -171,10 +170,10 @@ agp_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	memsize = ptoa(physmem) >> 20;
 
-	for (i = 0; i < agp_max_size && memsize > agp_max[i][0]; i++)
+	for (i = 0; i < nitems(agp_max) && memsize > agp_max[i][0]; i++)
 		;
-	if (i == agp_max_size)
-		i = agp_max_size - 1;
+	if (i == nitems(agp_max))
+		i = nitems(agp_max) - 1;
 	sc->sc_maxmem = agp_max[i][1] << 20;
 
 	/*
