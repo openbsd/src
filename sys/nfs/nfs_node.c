@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.49 2009/12/15 16:20:07 beck Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.50 2009/12/15 17:04:00 beck Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -124,7 +124,6 @@ loop:
 
 	np = RB_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
-		vgone(nvp); /*remove from mnt queue - don't leak vnodes*/
 		rw_exit_write(&nfs_hashlock);
 		goto loop;
 	}
