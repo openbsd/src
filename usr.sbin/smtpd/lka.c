@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.96 2009/12/14 19:56:55 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.97 2009/12/15 00:23:38 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1037,7 +1037,7 @@ lka_resolve_path(struct smtpd *env, struct lkasession *lkasession, struct path *
 			path->flags |= F_PATH_VIRTUAL;
 			if (! aliases_virtual_get(env, path->cond->c_map,
 				&lkasession->expandtree, path))
-				return 9;
+				return 0;
 			return 1;
 		}
 		break;
