@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_isa.c,v 1.4 2005/10/24 14:22:34 fgsch Exp $	*/
+/*	$OpenBSD: com_isa.c,v 1.5 2009/12/15 21:58:55 fgsch Exp $	*/
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
  *
@@ -129,7 +129,7 @@ com_isa_attach(struct device *parent, struct device *self, void *aux)
 	iobase = ia->ia_iobase;
 	iot = ia->ia_iot;
 
-#ifdef KGBD
+#ifdef KGDB
 	if ((iobase != comconsaddr) &&
 	    (iobase != com_kgdb_addr)) {
 #else
