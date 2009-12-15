@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.184 2009/12/07 14:33:38 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.185 2009/12/15 13:04:04 jsing Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3152,6 +3152,12 @@ sr_chunks_unwind(struct sr_softc *sc, struct sr_chunk_head *cl)
 		DNPRINTF(SR_D_IOCTL, "%s: sr_chunks_unwind closing: %s\n",
 		    DEVNAME(sc), ch_entry->src_devname);
 		if (ch_entry->src_vn) {
+			/*
+			 * XXX - explicitly lock the vnode until we can resolve
+			 * the problem introduced by vnode aliasing... specfs
+			 * has no locking, whereas ufs/ffs does!
+			 */
+			vn_lock(ch_entry->src_vn, LK_EXCLUSIVE | LK_RETRY, 0);
 			VOP_CLOSE(ch_entry->src_vn, FREAD | FWRITE, NOCRED, 0);
 			vput(ch_entry->src_vn);
 		}
