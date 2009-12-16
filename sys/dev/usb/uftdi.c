@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.54 2009/10/13 19:33:17 pirofti Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.55 2009/12/16 21:41:29 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -261,6 +261,7 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_OPENPORT_13M },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_OPENPORT_13S },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_OPENPORT_13U },
+	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_OPENRD },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_PCDJ_DAC2 },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_PYRAMID },
 	{ USB_VENDOR_FTDI, USB_PRODUCT_FTDI_SEMC_DSS20 },
@@ -426,6 +427,12 @@ uftdi_match(struct device *parent, void *match, void *aux)
 			return (UMATCH_NONE);
 		usbd_set_config_index(uaa->device, USB_UNCONFIG_INDEX, 1);
 	}
+
+	/* JTAG on USB interface 0 */
+	if (uaa->vendor == USB_VENDOR_FTDI &&
+	    uaa->product == USB_PRODUCT_FTDI_OPENRD &&
+	    uaa->ifaceno == 0)
+		return (UMATCH_NONE);
 
 	if (nifaces <= 1)
 		return (UMATCH_VENDOR_PRODUCT);
