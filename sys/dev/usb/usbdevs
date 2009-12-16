@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.462 2009/12/08 07:25:50 kevlo Exp $
+$OpenBSD: usbdevs,v 1.463 2009/12/16 21:40:46 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1414,6 +1414,7 @@ product FTDI FT232_6		0x6009	Serial
 product FTDI SERIAL_2232C	0x6010	2232C Serial
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial
+product FTDI OPENRD		0x9e90	OpenRD JTAGKey
 product FTDI LOCOBUFFER		0xc7d0	RR-CirKits LocoBuffer
 product FTDI DMX4ALL		0xc850	DMX4ALL DMX interface
 product FTDI ASK_RDR4X7_1	0xc990	ASK RDR 4X7
