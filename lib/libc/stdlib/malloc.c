@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.122 2009/12/07 18:47:38 miod Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.123 2009/12/16 08:23:53 otto Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -66,7 +66,7 @@
 
 #define MALLOC_MAXCHUNK		(1 << (MALLOC_PAGESHIFT-1))
 #define MALLOC_MAXCACHE		256
-#define MALLOC_DELAYED_CHUNKS	16	/* should be power of 2 */
+#define MALLOC_DELAYED_CHUNKS	15	/* max of getrnibble() */
 /*
  * When the P option is active, we move allocations between half a page
  * and a whole page towards the end, subject to alignment constraints.
@@ -112,7 +112,7 @@ struct dir_info {
 					/* free pages cache */
 	struct region_info free_regions[MALLOC_MAXCACHE];
 					/* delayed free chunk slots */
-	void *delayed_chunks[MALLOC_DELAYED_CHUNKS];
+	void *delayed_chunks[MALLOC_DELAYED_CHUNKS + 1];
 #ifdef MALLOC_STATS
 	size_t inserts;
 	size_t insert_collisions;
@@ -185,9 +185,9 @@ static int	malloc_active;		/* status of malloc */
 static size_t	malloc_guarded;		/* bytes used for guards */
 static size_t	malloc_used;		/* bytes allocated */
 
-static size_t rbytesused;		/* random bytes used */
+static size_t rnibblesused;		/* random nibbles used */
 static u_char rbytes[512];		/* random bytes */
-static u_char getrbyte(void);
+static u_char getrnibble(void);
 
 extern char	*__progname;
 
@@ -380,6 +380,24 @@ wrterror(char *p)
 		abort();
 }
 
+static void
+rbytes_init(void)
+{
+	arc4random_buf(rbytes, sizeof(rbytes));
+	rnibblesused = 0;
+}
+
+static inline u_char
+getrnibble(void)
+{
+	u_char x;
+
+	if (rnibblesused >= 2 * sizeof(rbytes))
+		rbytes_init();
+	x = rbytes[rnibblesused++ / 2];
+	return (rnibblesused & 1 ? x & 0xf : x >> 4);
+}
+
 /*
  * Cache maintenance. We keep at most malloc_cache pages cached.
  * If the cache is becoming full, unmap pages in the cache for real,
@@ -410,7 +428,7 @@ unmap(struct dir_info *d, void *p, size_t sz)
 	rsz = mopts.malloc_cache - d->free_regions_size;
 	if (psz > rsz)
 		tounmap = psz - rsz;
-	offset = getrbyte();
+	offset = getrnibble();
 	for (i = 0; tounmap > 0 && i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p != NULL) {
@@ -491,7 +509,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		/* zero fill not needed */
 		return p;
 	}
-	offset = getrbyte();
+	offset = getrnibble();
 	for (i = 0; i < mopts.malloc_cache; i++) {
 		r = &d->free_regions[(i + offset) & (mopts.malloc_cache - 1)];
 		if (r->p != NULL) {
@@ -536,21 +554,6 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		wrterror("malloc cache");
 	/* zero fill not needed */
 	return p;
-}
-
-static void
-rbytes_init(void)
-{
-	arc4random_buf(rbytes, sizeof(rbytes));
-	rbytesused = 0;
-}
-
-static u_char
-getrbyte(void)
-{
-	if (rbytesused >= sizeof(rbytes))
-		rbytes_init();
-	return rbytes[rbytesused++];
 }
 
 /*
@@ -1012,7 +1015,7 @@ malloc_bytes(struct dir_info *d, size_t size)
 	}
 
 	/* advance a random # of positions */
-	i = (getrbyte() & (MALLOC_DELAYED_CHUNKS - 1)) % bp->free;
+	i = getrnibble() % bp->free;
 	while (i > 0) {
 		u += u;
 		k++;
@@ -1275,7 +1278,7 @@ ofree(void *p)
 		if (mopts.malloc_junk && sz > 0)
 			memset(p, SOME_FREEJUNK, sz);
 		if (!mopts.malloc_freeprot) {
-			i = getrbyte() & (MALLOC_DELAYED_CHUNKS - 1);
+			i = getrnibble();
 			tmp = p;
 			p = g_pool->delayed_chunks[i];
 			g_pool->delayed_chunks[i] = tmp;
