@@ -1,4 +1,4 @@
-/*	$OpenBSD: uda.c,v 1.6 2005/11/12 03:44:24 pedro Exp $	*/
+/*	$OpenBSD: uda.c,v 1.7 2009/12/16 06:56:40 deraadt Exp $	*/
 /*	$NetBSD: uda.c,v 1.36 2000/06/04 06:17:05 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -250,7 +250,7 @@ err2:		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_uda,
 
 	/*
 	 * The only thing that differ UDA's and Tape ctlr's is
-	 * their vcid. Beacuse there are no way to determine which
+	 * their vcid. Because there is no way to determine which
 	 * ctlr type it is, we check what is generated and later
 	 * set the correct vcid.
 	 */
