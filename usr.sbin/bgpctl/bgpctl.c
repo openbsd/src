@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.153 2009/12/08 17:36:12 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.154 2009/12/16 15:42:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -74,7 +74,6 @@ void		 print_flags(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
 int		 show_rib_detail_msg(struct imsg *, int);
 void		 show_community(u_char *, u_int16_t);
-const char	*get_ext_subtype(u_int8_t);
 void		 show_ext_community(u_char *, u_int16_t);
 char		*fmt_mem(int64_t);
 int		 show_rib_memory_msg(struct imsg *);
@@ -1372,30 +1371,6 @@ show_community(u_char *data, u_int16_t len)
 	}
 }
 
-const char *
-get_ext_subtype(u_int8_t type)
-{
-	static char etype[6];
-
-	switch (type) {
-	case EXT_COMMUNITY_ROUTE_TGT:
-		return "rt";	/* route target */
-	case EXT_CUMMUNITY_ROUTE_ORIG:
-		return "soo";	/* source of origin */
-	case EXT_COMMUNITY_OSPF_DOM_ID:
-		return "odi";	/* ospf domain id */
-	case EXT_COMMUNITY_OSPF_RTR_TYPE:
-		return "ort";	/* ospf route type */
-	case EXT_COMMUNITY_OSPF_RTR_ID:
-		return "ori";	/* ospf router id */
-	case EXT_COMMUNITY_BGP_COLLECT:
-		return "bdc";	/* bgp data collection */
-	default:
-		snprintf(etype, sizeof(etype), "[%i]", (int)type);
-		return etype;
-	}
-}
-
 void
 show_ext_community(u_char *data, u_int16_t len)
 {
@@ -1416,25 +1391,25 @@ show_ext_community(u_char *data, u_int16_t len)
 		case EXT_COMMUNITY_TWO_AS:
 			memcpy(&as2, data + i + 2, sizeof(as2));
 			memcpy(&u32, data + i + 4, sizeof(u32));
-			printf("%s %s:%u", get_ext_subtype(subtype),
+			printf("%s %s:%u", log_ext_subtype(subtype),
 			    log_as(ntohs(as2)), ntohl(u32));
 			break;
 		case EXT_COMMUNITY_IPV4:
 			memcpy(&ip, data + i + 2, sizeof(ip));
 			memcpy(&u16, data + i + 6, sizeof(u16));
-			printf("%s %s:%hu", get_ext_subtype(subtype),
+			printf("%s %s:%hu", log_ext_subtype(subtype),
 			    inet_ntoa(ip), ntohs(u16));
 			break;
 		case EXT_COMMUNITY_FOUR_AS:
 			memcpy(&as4, data + i + 2, sizeof(as4));
 			memcpy(&u16, data + i + 6, sizeof(u16));
-			printf("%s %s:%hu", get_ext_subtype(subtype),
+			printf("%s %s:%hu", log_ext_subtype(subtype),
 			    log_as(ntohl(as4)), ntohs(u16));
 			break;
 		case EXT_COMMUNITY_OPAQUE:
 			memcpy(&ext, data + i, sizeof(ext));
 			ext = betoh64(ext) & 0xffffffffffffLL;
-			printf("%s 0x%llx", get_ext_subtype(subtype), ext); 
+			printf("%s 0x%llx", log_ext_subtype(subtype), ext); 
 			break;
 		default:
 			memcpy(&ext, data + i, sizeof(ext));
