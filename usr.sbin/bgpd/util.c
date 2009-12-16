@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2009/12/08 14:03:40 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.9 2009/12/16 15:40:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -88,6 +88,32 @@ log_as(u_int32_t as)
 			return ("?");
 	}
 	return (buf);
+}
+
+/* XXX this function does not check if the type/subtype combo is
+ * actually valid. */
+const char *
+log_ext_subtype(u_int8_t subtype)
+{
+	static char etype[6];
+
+	switch (subtype) {
+	case EXT_COMMUNITY_ROUTE_TGT:
+		return ("rt");	/* route target */
+	case EXT_CUMMUNITY_ROUTE_ORIG:
+		return ("soo");	/* source of origin */
+	case EXT_COMMUNITY_OSPF_DOM_ID:
+		return ("odi");	/* ospf domain id */
+	case EXT_COMMUNITY_OSPF_RTR_TYPE:
+		return ("ort");	/* ospf route type */
+	case EXT_COMMUNITY_OSPF_RTR_ID:
+		return ("ori");	/* ospf router id */
+	case EXT_COMMUNITY_BGP_COLLECT:
+		return ("bdc");	/* bgp data collection */
+	default:
+		snprintf(etype, sizeof(etype), "[%i]", (int)subtype);
+		return (etype);
+	}
 }
 
 int

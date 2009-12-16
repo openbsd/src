@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.276 2009/12/08 14:03:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.277 2009/12/16 15:40:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1375,6 +1375,22 @@ bad_flags:
 		goto optattr;
 	case ATTR_COMMUNITIES:
 		if ((attr_len & 0x3) != 0) {
+			/*
+			 * mark update as bad and withdraw all routes as per
+			 * draft-ietf-idr-optional-transitive-00.txt
+			 * but only if partial bit is set
+			 */
+			if ((flags & ATTR_PARTIAL) == 0)
+				goto bad_len;
+			else
+				a->flags |= F_ATTR_PARSE_ERR;
+		}
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
+		    ATTR_PARTIAL))
+			goto bad_flags;
+		goto optattr;
+	case ATTR_EXT_COMMUNITIES:
+		if ((attr_len & 0x7) != 0) {
 			/*
 			 * mark update as bad and withdraw all routes as per
 			 * draft-ietf-idr-optional-transitive-00.txt

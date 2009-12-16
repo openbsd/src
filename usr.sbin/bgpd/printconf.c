@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.75 2009/12/08 14:03:40 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.76 2009/12/16 15:40:55 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,7 @@
 
 void		 print_op(enum comp_ops);
 void		 print_community(int, int);
+void		 print_extcommunity(struct filter_extcommunity *);
 void		 print_origin(u_int8_t);
 void		 print_set(struct filter_set_head *);
 void		 print_mainconf(struct bgpd_config *);
@@ -92,6 +93,32 @@ print_community(int as, int type)
 		printf("neighbor-as ");
 	else
 		printf("%d ", type);
+}
+
+void
+print_extcommunity(struct filter_extcommunity *c)
+{
+	switch (c->type & EXT_COMMUNITY_VALUE) {
+	case EXT_COMMUNITY_TWO_AS:
+		printf("%s %i:%i", log_ext_subtype(c->subtype),
+		    c->data.ext_as.as, c->data.ext_as.val);
+		break;
+	case EXT_COMMUNITY_IPV4:
+		printf("%s %s:%i", log_ext_subtype(c->subtype),
+		    inet_ntoa(c->data.ext_ip.addr), c->data.ext_ip.val);
+		break;
+	case EXT_COMMUNITY_FOUR_AS:
+		printf("%s %s:%i", log_ext_subtype(c->subtype),
+		    log_as(c->data.ext_as4.as4), c->data.ext_as.val);
+		break;
+	case EXT_COMMUNITY_OPAQUE:
+		printf("%s 0x%x", log_ext_subtype(c->subtype),
+		    c->data.ext_opaq);
+		break;
+	default:
+		printf("0x%x 0x%llx", c->type, c->data.ext_opaq);
+		break;
+	}
 }
 
 void
@@ -183,6 +210,16 @@ print_set(struct filter_set_head *set)
 		case ACTION_PFTABLE_ID:
 			/* not possible */
 			printf("king bula saiz: config broken");
+			break;
+		case ACTION_SET_EXT_COMMUNITY:
+			printf("ext-community ");
+			print_extcommunity(&s->action.ext_community);
+			printf(" ");
+			break;
+		case ACTION_DEL_EXT_COMMUNITY:
+			printf("ext-community delete ");
+			print_extcommunity(&s->action.ext_community);
+			printf(" ");
 			break;
 		}
 	}

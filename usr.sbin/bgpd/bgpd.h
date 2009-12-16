@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.249 2009/12/08 14:03:40 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.250 2009/12/16 15:40:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -548,6 +548,27 @@ struct filter_community {
 	int			type;
 };
 
+struct filter_extcommunity {
+	u_int8_t	type;
+	u_int8_t	subtype;	/* if extended type */
+	union {
+		struct ext_as {
+			u_int16_t	as;
+			u_int32_t	val;
+		}		ext_as;
+		struct ext_as4 {
+			u_int32_t	as4;
+			u_int16_t	val;
+		}		ext_as4;
+		struct ext_ip {
+			struct in_addr	addr;
+			u_int16_t	val;
+		}		ext_ip;
+		u_int64_t	ext_opaq;	/* only 48 bits */
+	}		data;
+};
+
+
 struct ctl_show_rib_request {
 	char			rib[PEER_DESCR_LEN];
 	struct ctl_neighbor	neighbor;
@@ -625,6 +646,27 @@ struct filter_peers {
 #define EXT_COMMUNITY_OSPF_RTR_TYPE	6	/* RFC 4577 */
 #define EXT_COMMUNITY_OSPF_RTR_ID	7	/* RFC 4577 */
 #define EXT_COMMUNITY_BGP_COLLECT	8	/* RFC 4384 */
+/* other handy defines */
+#define EXT_COMMUNITY_OPAQUE_MAX	0xffffffffffffULL
+
+struct ext_comm_pairs {
+	u_int8_t	type;
+	u_int8_t	subtype;
+	u_int8_t	transitive;	/* transitive bit needs to be set */
+};
+
+#define IANA_EXT_COMMUNITIES	{					\
+	{ EXT_COMMUNITY_TWO_AS, EXT_COMMUNITY_ROUTE_TGT, 0 },		\
+	{ EXT_COMMUNITY_TWO_AS, EXT_CUMMUNITY_ROUTE_ORIG, 0 },		\
+	{ EXT_COMMUNITY_TWO_AS, EXT_COMMUNITY_OSPF_DOM_ID, 0 },		\
+	{ EXT_COMMUNITY_TWO_AS, EXT_COMMUNITY_BGP_COLLECT, 0 },		\
+	{ EXT_COMMUNITY_FOUR_AS, EXT_COMMUNITY_ROUTE_TGT, 0 },		\
+	{ EXT_COMMUNITY_FOUR_AS, EXT_CUMMUNITY_ROUTE_ORIG, 0 },		\
+	{ EXT_COMMUNITY_IPV4, EXT_COMMUNITY_ROUTE_TGT, 0 },		\
+	{ EXT_COMMUNITY_IPV4, EXT_CUMMUNITY_ROUTE_ORIG, 0 },		\
+	{ EXT_COMMUNITY_IPV4, EXT_COMMUNITY_OSPF_RTR_ID, 0 },		\
+	{ EXT_COMMUNITY_OPAQUE, EXT_COMMUNITY_OSPF_RTR_TYPE, 0 }	\
+}
 
 
 struct filter_prefix {
@@ -675,6 +717,8 @@ enum action_types {
 	ACTION_SET_NEXTHOP_SELF,
 	ACTION_SET_COMMUNITY,
 	ACTION_DEL_COMMUNITY,
+	ACTION_SET_EXT_COMMUNITY,
+	ACTION_DEL_EXT_COMMUNITY,
 	ACTION_PFTABLE,
 	ACTION_PFTABLE_ID,
 	ACTION_RTLABEL,
@@ -691,6 +735,7 @@ struct filter_set {
 		int32_t			relative;
 		struct bgpd_addr	nexthop;
 		struct filter_community	community;
+		struct filter_extcommunity	ext_community;
 		char			pftable[PFTABLE_LEN];
 		char			rtlabel[RTLABEL_LEN];
 		u_int8_t		origin;
@@ -810,6 +855,7 @@ const char	*log_addr(const struct bgpd_addr *);
 const char	*log_in6addr(const struct in6_addr *);
 const char	*log_sockaddr(struct sockaddr *);
 const char	*log_as(u_int32_t);
+const char	*log_ext_subtype(u_int8_t);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);

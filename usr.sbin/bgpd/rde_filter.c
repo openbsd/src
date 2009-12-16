@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.59 2009/12/01 14:28:05 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.60 2009/12/16 15:40:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -253,6 +253,14 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 		case ACTION_SET_ORIGIN:
 			asp->origin = set->action.origin;
 			break;
+		case ACTION_SET_EXT_COMMUNITY:
+			community_ext_set(asp, &set->action.ext_community,
+			    peer->conf.remote_as);
+			break;
+		case ACTION_DEL_EXT_COMMUNITY:
+			community_ext_delete(asp, &set->action.ext_community,
+			    peer->conf.remote_as);
+			break;
 		}
 	}
 }
@@ -486,6 +494,12 @@ filterset_cmp(struct filter_set *a, struct filter_set *b)
 		return (a->action.community.type - b->action.community.type);
 	}
 
+	if (a->type == ACTION_SET_EXT_COMMUNITY ||
+	    a->type == ACTION_DEL_EXT_COMMUNITY) {	/* a->type == b->type */
+		return (memcmp(&a->action.ext_community,
+		    &b->action.ext_community, sizeof(a->action.ext_community)));
+	}
+
 	if (a->type == ACTION_SET_NEXTHOP && b->type == ACTION_SET_NEXTHOP) {
 		/*
 		 * This is the only interesting case, all others are considered
@@ -589,6 +603,14 @@ filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
 			    a->action.origin == b->action.origin)
 				continue;
 			break;
+		case ACTION_SET_EXT_COMMUNITY:
+		case ACTION_DEL_EXT_COMMUNITY:
+			if (a->type == b->type && memcmp(
+			    &a->action.ext_community,
+			    &b->action.ext_community,
+			    sizeof(a->action.ext_community)) == 0)
+				continue;
+			break;
 		}
 		/* compare failed */
 		return (0);
@@ -633,6 +655,10 @@ filterset_name(enum action_types type)
 		return ("rtlabel");
 	case ACTION_SET_ORIGIN:
 		return ("origin");
+	case ACTION_SET_EXT_COMMUNITY:
+		return ("ext-community");
+	case ACTION_DEL_EXT_COMMUNITY:
+		return ("ext-community delete");
 	}
 
 	fatalx("filterset_name: got lost");

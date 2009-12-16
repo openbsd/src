@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.102 2009/11/26 13:40:43 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.103 2009/12/16 15:40:55 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2009 $
+.Dd $Mdocdate: December 16 2009 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -538,7 +538,7 @@ The demotion counter will be increased as soon as
 .Xr bgpd 8
 starts and decreased
 60 seconds after the session went to state
-.Em ESTABLISHED.
+.Em ESTABLISHED .
 For neighbors added at runtime, the demotion counter is only increased after
 the session has been
 .Em ESTABLISHED
@@ -1118,6 +1118,48 @@ Alternately, well-known communities may be specified by name:
 .Ic NO_EXPORT_SUBCONFED ,
 or
 .Ic NO_PEER .
+.Pp
+.It Xo
+.Ic ext-community Op Ar delete
+.Ar subtype Ar as-number Ns Li : Ns Ar local
+.Xc
+.It Xo
+.Ic ext-community Op Ar delete
+.Ar subtype Ar IP Ns Li : Ns Ar local
+.Xc
+.It Xo
+.Ic ext-community Op Ar delete
+.Ar subtype Ar numvalue
+.Xc
+Set or delete the
+.Em Extended Community
+AS path attribute.
+Extended Communities are specified by a
+.Ar subtype
+and normally two values, a globally unique part (e.g. the AS number) and a
+local part.
+The type is selected depending on the encoding of the global part.
+Two-octet AS Specific Extended Communities and Four-octet AS Specific Extended
+Communities are encoded as
+.Ar as-number Ns Li : Ns Ar local .
+Four-octet encoding is used if the
+.Ar as-number
+is bigger then 65535 or if the AS_DOT encoding is used.
+IPv4 Address Specific Extended Communities are encoded as
+.Ar IP Ns Li : Ns Ar local .
+Opaque Extended Communities are encoded with a single numeric value.
+Currently the following subtypes are supported:
+.Bd -literal -offset indent
+rt       Route Target
+soo      Source of Origin
+odi      OSPF Domain Identifier
+ort      OSPF Route Type
+ori      OSPF Router ID
+bdc      BGP Data Collection
+.Ed
+.Pp
+Not all type and subtype value pairs are allowed by IANA and the parser
+will ensure that no invalid combination is created.
 .Pp
 .It Ic localpref Ar number
 Set the
