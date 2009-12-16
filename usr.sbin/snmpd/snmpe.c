@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.24 2009/06/06 05:52:01 pyr Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.25 2009/12/16 22:17:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -574,7 +574,7 @@ snmpe_parse(struct sockaddr_storage *ss,
 		goto fail;
 	}
 
-	/* SNMP PDU */		    
+	/* SNMP PDU */
 	if (ber_scanf_elements(a, "iiie{et",
 	    &req, &errval, &erridx, &msg->sm_pduend,
 	    &msg->sm_varbind, &class, &type) != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.8 2009/06/06 05:52:00 pyr Exp $	*/
+/*	$OpenBSD: parser.c,v 1.9 2009/12/16 22:17:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -155,8 +155,8 @@ static struct parse_result	 res;
 static struct imsgbuf		*ibuf;
 static struct snmp_imsg		 sm;
 
-const struct token      *match_token(char *, const struct token []);
-void                     show_valid_args(const struct token []);
+const struct token		*match_token(char *, const struct token []);
+void				 show_valid_args(const struct token []);
 
 struct parse_result *
 parse(int argc, char *argv[])

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.31 2009/08/14 19:44:14 cnst Exp $	*/
+/*	$OpenBSD: mib.c,v 1.32 2009/12/16 22:17:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1232,7 +1232,7 @@ static struct oid openbsd_mib[] = {
 	{ MIB(memMIBObjects),		OID_MIB },
 	{ MIB(memMIBVersion),		OID_RD, mps_getint, NULL, NULL,
 	    OIDVER_OPENBSD_MEM },
-	{ MIB(memIfName), 		OID_TRD, mib_memiftable },
+	{ MIB(memIfName),		OID_TRD, mib_memiftable },
 	{ MIB(memIfLiveLocks),		OID_TRD, mib_memiftable },
 	{ MIBEND }
 };
@@ -1269,14 +1269,14 @@ mib_sensors(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	struct sensor		 sensor;
 	size_t			 slen = sizeof(sensor);
 	int			 mib[] = { CTL_HW, HW_SENSORS, 0, 0, 0 };
-	int			 i, c, j, k;
+	int			 i, j, k;
 	u_int32_t		 idx = 0, n;
 	char			*s;
 
 	/* Get and verify the current row index */
 	idx = o->bo_id[OIDIDX_sensorEntry];
 
-	for (i = c = 0, n = 1; i < MAXSENSORDEVICES; i++) {
+	for (i = 0, n = 1; i < MAXSENSORDEVICES; i++) {
 		mib[2] = i;
 		if (sysctl(mib, 3, &sensordev, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)

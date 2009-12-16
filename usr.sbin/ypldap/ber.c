@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.3 2009/11/12 15:28:34 deraadt Exp $ */
+/*	$OpenBSD: ber.c,v 1.4 2009/12/16 22:17:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -415,13 +415,11 @@ ber_oid2ber(struct ber_oid *o, u_int8_t *buf, size_t len)
 int
 ber_string2oid(const char *oidstr, struct ber_oid *o)
 {
-	size_t			 len;
 	char			*sp, *p, str[BUFSIZ];
 	const char		*errstr;
 
 	if (strlcpy(str, oidstr, sizeof(str)) >= sizeof(str))
 		return (-1);
-	len = strlen(str);
 	bzero(o, sizeof(*o));
 
 	/* Parse OID strings in the common forms n.n.n, n_n_n_n, or n-n-n */
@@ -867,7 +865,7 @@ static int
 ber_dump_element(struct ber *ber, struct ber_element *root)
 {
 	unsigned long long l;
-	int i, pos;
+	int i;
 	uint8_t u;
 
 	ber_dump_header(ber, root);
@@ -876,7 +874,6 @@ ber_dump_element(struct ber *ber, struct ber_element *root)
 	case BER_TYPE_BOOLEAN:
 	case BER_TYPE_INTEGER:
 	case BER_TYPE_ENUMERATED:
-		pos = (root->be_numeric > 0);
 		l = (unsigned long long)root->be_numeric;
 		for (i = root->be_len; i > 0; i--) {
 			u = (l >> ((i - 1) * 8)) & 0xff;
