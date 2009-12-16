@@ -1,4 +1,4 @@
-.\"	$OpenBSD: signal.3,v 1.34 2007/05/31 19:19:28 jmc Exp $
+.\"	$OpenBSD: signal.3,v 1.35 2009/12/16 07:36:56 guenther Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 16 2009 $
 .Dt SIGNAL 3
 .Os
 .Sh NAME
@@ -136,6 +136,7 @@ is possible on a descriptor (see
 .It Dv SIGINFO No "	discard signal" "	status request from keyboard"
 .It Dv SIGUSR1 No "	terminate process" "	user-defined signal 1"
 .It Dv SIGUSR2 No "	terminate process" "	user-defined signal 2"
+.It Dv SIGTHR No "	discard signal" "	thread AST"
 .El
 .Pp
 The
@@ -237,15 +238,20 @@ function;
 ignored signals remain ignored.
 .Pp
 The following functions are either reentrant or not interruptible
-by signals and are asynchronous-signal safe.
+by signals and are async-signal safe.
 Therefore applications may
 invoke them, without restriction, from signal-catching functions:
 .Pp
 Base Interfaces:
 .Pp
+.Fn _Exit ,
 .Fn _exit ,
+.\" SUSv7 says abort() is safe, but since it flushes stdio buffers,
+.\" that's not practical
+.Fn accept ,
 .Fn access ,
 .Fn alarm ,
+.Fn bind ,
 .Fn cfgetispeed ,
 .Fn cfgetospeed ,
 .Fn cfsetispeed ,
@@ -253,54 +259,84 @@ Base Interfaces:
 .Fn chdir ,
 .Fn chmod ,
 .Fn chown ,
+.Fn clock_gettime ,
 .Fn close ,
+.Fn connect ,
 .Fn creat ,
 .Fn dup ,
 .Fn dup2 ,
+.Fn execl ,
 .Fn execle ,
+.Fn execv ,
 .Fn execve ,
+.Fn fchdir ,
+.Fn fchmod ,
+.Fn fchown ,
 .Fn fcntl ,
 .Fn fork ,
 .Fn fpathconf ,
 .Fn fstat ,
 .Fn fsync ,
+.Fn ftruncate ,
+.Fn futimes ,
 .Fn getegid ,
 .Fn geteuid ,
 .Fn getgid ,
 .Fn getgroups ,
+.Fn getpeername ,
 .Fn getpgrp ,
 .Fn getpid ,
 .Fn getppid ,
+.Fn getsockname ,
+.Fn getsockopt ,
 .Fn getuid ,
 .Fn kill ,
 .Fn link ,
+.Fn listen ,
 .Fn lseek ,
+.Fn lstate ,
 .Fn mkdir ,
 .Fn mkfifo ,
+.Fn mknod ,
 .Fn open ,
 .Fn pathconf ,
 .Fn pause ,
 .Fn pipe ,
+.Fn poll ,
 .Fn raise ,
 .Fn read ,
+.Fn readlink ,
+.Fn recv ,
+.Fn recvfrom ,
+.Fn recvmsg ,
 .Fn rename ,
 .Fn rmdir ,
+.Fn select ,
+.Fn send ,
+.Fn sendmsg ,
+.Fn sendto ,
 .Fn setgid ,
 .Fn setpgid ,
 .Fn setsid ,
+.Fn setsockopt ,
 .Fn setuid ,
+.Fn shutdown ,
 .Fn sigaction ,
 .Fn sigaddset ,
 .Fn sigdelset ,
 .Fn sigemptyset ,
-.Fn sigfillset ,
+.Fn sigfillset  ,
 .Fn sigismember ,
 .Fn signal ,
+.Fn sigpause ,
 .Fn sigpending ,
 .Fn sigprocmask ,
 .Fn sigsuspend ,
 .Fn sleep ,
+.Fn socket ,
+.Fn socketpair ,
 .Fn stat ,
+.Fn symlink ,
 .Fn sysconf ,
 .Fn tcdrain ,
 .Fn tcflow ,
@@ -316,53 +352,97 @@ Base Interfaces:
 .Fn uname ,
 .Fn unlink ,
 .Fn utime ,
+.Fn utimes ,
 .Fn wait ,
 .Fn waitpid ,
 .Fn write .
 .Pp
-Realtime Interfaces:
-.Pp
-.Fn aio_error ,
-.Fn clock_gettime ,
-.Fn sigpause ,
-.Fn timer_getoverrun ,
-.Fn aio_return ,
-.Fn fdatasync ,
-.Fn sigqueue ,
-.Fn timer_gettime ,
-.Fn aio_suspend ,
-.Fn sem_post ,
-.Fn sigset ,
-.Fn timer_settime .
-.Pp
+.\" unimplemented functions that should be async-sig-safe, if we had them
+.\" SUSv[56] additions
+.\" .Fn pselect ,
+.\" .Fn sockatmark .
+.\"
+.\" SUSv7 additions
+.\" .Pp
+.\" .Fn faccessat ,
+.\" .Fn fchmodat ,
+.\" .Fn fchownat ,
+.\" .Fn fexecve ,
+.\" .Fn fstatat ,
+.\" .Fn futimens ,
+.\" .Fn linkat ,
+.\" .Fn mkdirat ,
+.\" .Fn mkfifoat ,
+.\" .Fn mknodat ,
+.\" .Fn openat ,
+.\" .Fn readlinkat ,
+.\" .Fn renameat ,
+.\" .Fn symlinkat ,
+.\" .Fn unlinkat ,
+.\" .Fn utimensat .
+.\"
+.\" Realtime Interfaces:
+.\" .Pp
+.\" .Fn aio_error ,
+.\" .Fn aio_return ,
+.\" .Fn aio_suspend ,
+.\" .Fn fdatasync ,
+.\" .Fn sem_post ,
+.\" .Fn sigqueue ,
+.\" .Fn timer_getoverrun ,
+.\" .Fn timer_gettime ,
+.\" .Fn timer_settime .
 ANSI C Interfaces:
 .Pp
-.Fn strcpy ,
 .Fn strcat ,
-.Fn strncpy ,
+.Fn strcpy ,
 .Fn strncat ,
+.Fn strncpy ,
 and perhaps some others.
 .Pp
 Extension Interfaces:
 .Pp
+.Fn chflags ,
+.Fn fchflags ,
+.Fn getresgid ,
+.Fn getresuid ,
+.Fn setresgid ,
+.Fn setresuid ,
+.Fn strlcat ,
 .Fn strlcpy ,
-.Fn strlcat .
+.Fn wait3 ,
+.Fn wait4 .
 .Pp
+In addition, access and updates to
+.Va errno
+are guaranteed to be safe.
 Most functions not in the above lists are considered to be unsafe
 with respect to signals.
-That is to say, the behaviour of such functions when called from a
-signal handler is undefined.
+That is to say, the behaviour of such functions when called from
+a signal handler is undefined.
 In general though, signal handlers should do little more than set a
-flag; most other actions are not safe.
+flag, ideally of type volatile sig_atomic_t; most other actions are not safe.
 .Pp
-Additionally, inside the signal handler it is also considered more safe to
-make a copy of the global variable
+Additionally, it is advised that signal handlers guard against
+modification of the external symbol
 .Va errno
-and restore it before returning from the signal handler.
+by the above functions, saving it at entry and restoring
+it on return, thus:
+.Bd -literal -offset indent
+void
+handler(int sig)
+{
+	int save_errno = errno;
+
+	...
+	errno = save_errno;
+}
+.Ed
 .Pp
-A few other functions are signal race safe in
+The functions below are async-signal-safe in
 .Ox
-but probably not on other systems:
+except when used with floating-point arguments or directives,
+but are probably unsafe on other systems:
 .Pp
 .Bl -tag -offset indent -compact -width foofoofoofoo
 .It Fn snprintf

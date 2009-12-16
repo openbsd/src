@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.44 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: sigaction.2,v 1.45 2009/12/16 07:36:56 guenther Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 16 2009 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -125,7 +125,10 @@ call is made).
 This mask is formed by taking the union of the current signal mask set,
 the signal to be delivered, and the signal mask
 .Em sa_mask
-associated with the handler to be invoked.
+associated with the handler to be invoked, but always excluding
+.Dv SIGKILL
+and
+.Dv SIGSTOP .
 .Pp
 .Fn sigaction
 assigns an action for a signal specified by
@@ -335,138 +338,8 @@ is possible on a descriptor (see
 .It Dv SIGINFO No "	discard signal" "	status request from keyboard"
 .It Dv SIGUSR1 No "	terminate process" "	user defined signal 1"
 .It Dv SIGUSR2 No "	terminate process" "	user defined signal 2"
+.It Dv SIGTHR No "	discard signal" "	thread AST"
 .El
-.Sh NOTE
-The
-.Fa sa_mask
-field specified in
-.Fa act
-is not allowed to block
-.Dv SIGKILL
-or
-.Dv SIGSTOP .
-Any attempt to do so will be silently ignored.
-.Pp
-The following functions are either reentrant or not interruptible
-by signals and are async-signal safe.
-Therefore applications may invoke them, without restriction, from
-signal-catching functions:
-.Bd -ragged -offset indent
-.Xr _exit 2 ,
-.Xr access 2 ,
-.Xr alarm 3 ,
-.Xr cfgetispeed 3 ,
-.Xr cfgetospeed 3 ,
-.Xr cfsetispeed 3 ,
-.Xr cfsetospeed 3 ,
-.Xr chdir 2 ,
-.Xr chmod 2 ,
-.Xr chown 2 ,
-.Xr close 2 ,
-.Xr creat 3 ,
-.Xr dup 2 ,
-.Xr dup2 2 ,
-.Xr execle 3 ,
-.Xr execve 2 ,
-.Xr fcntl 2 ,
-.Xr fork 2 ,
-.Xr fpathconf 2 ,
-.Xr fstat 2 ,
-.Xr fsync 2 ,
-.Xr getegid 2 ,
-.Xr geteuid 2 ,
-.Xr getgid 2 ,
-.Xr getgroups 2 ,
-.Xr getpgrp 2 ,
-.Xr getpid 2 ,
-.Xr getppid 2 ,
-.Xr getuid 2 ,
-.Xr kill 2 ,
-.Xr link 2 ,
-.Xr lseek 2 ,
-.Xr mkdir 2 ,
-.Xr mkfifo 2 ,
-.Xr open 2 ,
-.Xr pathconf 2 ,
-.Xr pause 3 ,
-.Xr pipe 2 ,
-.Xr raise 3 ,
-.Xr read 2 ,
-.Xr rename 2 ,
-.Xr rmdir 2 ,
-.Xr setgid 2 ,
-.Xr setpgid 2 ,
-.Xr setsid 2 ,
-.Xr setuid 2 ,
-.Xr sigaction 2 ,
-.Xr sigaddset 3 ,
-.Xr sigdelset 3 ,
-.Xr sigemptyset 3 ,
-.Xr sigfillset 3 ,
-.Xr sigismember 3 ,
-.Xr signal 3 ,
-.Xr sigpause 3 ,
-.Xr sigpending 2 ,
-.Xr sigprocmask 2 ,
-.Xr sigsuspend 2 ,
-.Xr sleep 3 ,
-.Xr stat 2 ,
-.Xr sysconf 3 ,
-.Xr tcdrain 3 ,
-.Xr tcflow 3 ,
-.Xr tcflush 3 ,
-.Xr tcgetattr 3 ,
-.Xr tcgetpgrp 3 ,
-.Xr tcsendbreak 3 ,
-.Xr tcsetattr 3 ,
-.Xr tcsetpgrp 3 ,
-.Xr time 3 ,
-.Xr times 3 ,
-.Xr umask 2 ,
-.Xr uname 3 ,
-.Xr unlink 2 ,
-.Xr utime 3 ,
-.Xr wait 2 ,
-.Xr waitpid 2 ,
-.Xr write 2 .
-.\" .Fn aio_error ,
-.\" .Fn clock_gettime ,
-.\" .Fn timer_getoverrun ,
-.\" .Fn aio_return ,
-.\" .Fn fdatasync ,
-.\" .Fn sigqueue ,
-.\" .Fn timer_gettime ,
-.\" .Fn aio_suspend ,
-.\" .Fn sem_post ,
-.\" .Fn timer_settime .
-.Ed
-.Pp
-Please see
-.Xr signal 3
-for a more detailed list.
-.Pp
-All functions not in the above list are considered to be unsafe
-with respect to signals.
-That is to say, the behaviour of such functions when called from
-a signal handler is undefined.
-In general though, signal handlers should do little more than set a
-flag; most other actions are not safe.
-.Pp
-Additionally, it is advised that signal handlers guard against
-modification of the external symbol
-.Va errno
-by the above functions, saving it at entry and restoring
-it on return, thus:
-.Bd -literal -offset indent
-void
-handler(int sig)
-{
-	int save_errno = errno;
-
-	...
-	errno = save_errno;
-}
-.Ed
 .Sh RETURN VALUES
 A 0 value indicates that the call succeeded.
 A \-1 return value indicates an error occurred and
@@ -594,9 +467,14 @@ invoke them, without restriction, from signal-catching functions:
 .Pp
 Base Interfaces:
 .Pp
+.Fn _Exit ,
 .Fn _exit ,
+.\" SUSv7 says abort() is safe, but since it flushes stdio buffers,
+.\" that's not practical
+.Fn accept ,
 .Fn access ,
 .Fn alarm ,
+.Fn bind ,
 .Fn cfgetispeed ,
 .Fn cfgetospeed ,
 .Fn cfsetispeed ,
@@ -604,42 +482,68 @@ Base Interfaces:
 .Fn chdir ,
 .Fn chmod ,
 .Fn chown ,
+.Fn clock_gettime ,
 .Fn close ,
+.Fn connect ,
 .Fn creat ,
 .Fn dup ,
 .Fn dup2 ,
+.Fn execl ,
 .Fn execle ,
+.Fn execv ,
 .Fn execve ,
+.Fn fchdir ,
+.Fn fchmod ,
+.Fn fchown ,
 .Fn fcntl ,
 .Fn fork ,
 .Fn fpathconf ,
 .Fn fstat ,
 .Fn fsync ,
+.Fn ftruncate ,
+.Fn futimes ,
 .Fn getegid ,
 .Fn geteuid ,
 .Fn getgid ,
 .Fn getgroups ,
+.Fn getpeername ,
 .Fn getpgrp ,
 .Fn getpid ,
 .Fn getppid ,
+.Fn getsockname ,
+.Fn getsockopt ,
 .Fn getuid ,
 .Fn kill ,
 .Fn link ,
+.Fn listen ,
 .Fn lseek ,
+.Fn lstate ,
 .Fn mkdir ,
 .Fn mkfifo ,
+.Fn mknod ,
 .Fn open ,
 .Fn pathconf ,
 .Fn pause ,
 .Fn pipe ,
+.Fn poll ,
 .Fn raise ,
 .Fn read ,
+.Fn readlink ,
+.Fn recv ,
+.Fn recvfrom ,
+.Fn recvmsg ,
 .Fn rename ,
 .Fn rmdir ,
+.Fn select ,
+.Fn send ,
+.Fn sendmsg ,
+.Fn sendto ,
 .Fn setgid ,
 .Fn setpgid ,
 .Fn setsid ,
+.Fn setsockopt ,
 .Fn setuid ,
+.Fn shutdown ,
 .Fn sigaction ,
 .Fn sigaddset ,
 .Fn sigdelset ,
@@ -647,11 +551,15 @@ Base Interfaces:
 .Fn sigfillset  ,
 .Fn sigismember ,
 .Fn signal ,
+.Fn sigpause ,
 .Fn sigpending ,
 .Fn sigprocmask ,
 .Fn sigsuspend ,
 .Fn sleep ,
+.Fn socket ,
+.Fn socketpair ,
 .Fn stat ,
+.Fn symlink ,
 .Fn sysconf ,
 .Fn tcdrain ,
 .Fn tcflow ,
@@ -667,25 +575,46 @@ Base Interfaces:
 .Fn uname ,
 .Fn unlink ,
 .Fn utime ,
+.Fn utimes ,
 .Fn wait ,
 .Fn waitpid ,
 .Fn write .
 .Pp
+.\" unimplemented functions that should be async-sig-safe, if we had them
+.\" SUSv[56] additions
+.\" .Fn pselect ,
+.\" .Fn sockatmark .
+.\"
+.\" SUSv7 additions
+.\" .Pp
+.\" .Fn faccessat ,
+.\" .Fn fchmodat ,
+.\" .Fn fchownat ,
+.\" .Fn fexecve ,
+.\" .Fn fstatat ,
+.\" .Fn futimens ,
+.\" .Fn linkat ,
+.\" .Fn mkdirat ,
+.\" .Fn mkfifoat ,
+.\" .Fn mknodat ,
+.\" .Fn openat ,
+.\" .Fn readlinkat ,
+.\" .Fn renameat ,
+.\" .Fn symlinkat ,
+.\" .Fn unlinkat ,
+.\" .Fn utimensat .
+.\"
 .\" Realtime Interfaces:
 .\" .Pp
 .\" .Fn aio_error ,
 .\" .Fn aio_return ,
 .\" .Fn aio_suspend ,
-.\" .Fn clock_gettime ,
 .\" .Fn fdatasync ,
 .\" .Fn sem_post ,
-.\" .Fn sigpause ,
 .\" .Fn sigqueue ,
-.\" .Fn sigset ,
 .\" .Fn timer_getoverrun ,
 .\" .Fn timer_gettime ,
 .\" .Fn timer_settime .
-.\" .Pp
 ANSI C Interfaces:
 .Pp
 .Fn strcat ,
@@ -696,22 +625,47 @@ and perhaps some others.
 .Pp
 Extension Interfaces:
 .Pp
+.Fn chflags ,
+.Fn fchflags ,
+.Fn getresgid ,
+.Fn getresuid ,
+.Fn setresgid ,
+.Fn setresuid ,
 .Fn strlcat ,
-.Fn strlcpy .
+.Fn strlcpy ,
+.Fn wait3 ,
+.Fn wait4 .
 .Pp
+In addition, access and updates to
+.Va errno
+are guaranteed to be safe.
 Most functions not in the above lists are considered to be unsafe
 with respect to signals.
 That is to say, the behaviour of such functions when called from
 a signal handler is undefined.
+In general though, signal handlers should do little more than set a
+flag, ideally of type volatile sig_atomic_t; most other actions are not safe.
 .Pp
-Additionally, inside the signal handler it is also considered safer to
-make a copy of the global variable
+Additionally, it is advised that signal handlers guard against
+modification of the external symbol
 .Va errno
-and restore it before returning from the signal handler.
+by the above functions, saving it at entry and restoring
+it on return, thus:
+.Bd -literal -offset indent
+void
+handler(int sig)
+{
+	int save_errno = errno;
+
+	...
+	errno = save_errno;
+}
+.Ed
 .Pp
-A few other functions are signal race safe in
+The functions below are async-signal-safe in
 .Ox
-but probably not on other systems:
+except when used with floating-point arguments or directives,
+but are probably unsafe on other systems:
 .Pp
 .Bl -tag -offset indent -compact -width foofoofoofoo
 .It Fn snprintf
