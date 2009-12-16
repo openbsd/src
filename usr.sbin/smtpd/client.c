@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.21 2009/12/16 02:20:32 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.22 2009/12/16 21:40:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -791,7 +791,7 @@ client_body(struct msgbuf *out, FILE *fp)
 	if ((b = buf_dynamic(0, SIZE_T_MAX)) == NULL)
 		fatal(NULL);
 
-	while ((ln = fgetln(fp, &len)) && total < 4096) {
+	while (total < 4096 && (ln = fgetln(fp, &len))) {
 		if (ln[len - 1] == '\n')
 			len--;
 		if (*ln == '.' && buf_add(b, ".", 1))
