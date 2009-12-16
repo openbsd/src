@@ -1948,6 +1948,7 @@
 ./usr/share/man/cat4/sparc64/vpci.0
 ./usr/share/man/cat4/sparc64/vrng.0
 ./usr/share/man/cat4/sparc64/vrtc.0
+./usr/share/man/cat4/sparc64/vsw.0
 ./usr/share/man/cat4/sparc64/xbox.0
 ./usr/share/man/cat4/sparc64/zs.0
 ./usr/share/man/cat4/sparc64/zskbd.0
