@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.44 2009/12/02 20:11:17 deraadt Exp $	*/
+/*	$OpenBSD: creator.c,v 1.45 2009/12/16 11:06:17 jasper Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -490,7 +490,7 @@ const struct creator_mappings {
 	{ FFB_VOFF_PROM, FFB_POFF_PROM, FFB_VLEN_PROM },
 	{ FFB_VOFF_EXP, FFB_POFF_EXP, FFB_VLEN_EXP },
 };
-#define	CREATOR_NMAPPINGS	(sizeof(creator_map)/sizeof(creator_map[0]))
+#define	CREATOR_NMAPPINGS       nitems(creator_map)
 
 paddr_t
 creator_mmap(vsc, off, prot)
