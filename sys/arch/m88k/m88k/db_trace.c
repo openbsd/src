@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.10 2007/11/17 05:36:23 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.11 2009/12/16 16:54:43 jasper Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -165,8 +165,8 @@ m88k_instruction_info(u_int32_t instruction)
 		{ 0xfc00ffe0U, 0xf400fc00U, /* rte */      FLOW_CTRL},
 		{ 0xfc000000U, 0xf8000000U, /* tbnd */     0},
 	};
-#define ctrl_count (sizeof(control)/sizeof(control[0]))
-	for (ptr = &control[0]; ptr < &control[ctrl_count]; ptr++)
+
+	for (ptr = &control[0]; ptr < &control[nitems(control)]; ptr++)
 		if ((instruction & ptr->mask) == ptr->value)
 			return ptr->flags;
 	return 0;

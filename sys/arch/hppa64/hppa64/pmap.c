@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 2009/04/14 16:01:04 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 2009/12/16 16:54:42 jasper Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -393,7 +393,6 @@ const pt_entry_t hppa_pgs[] = {
 	PTE_PG16M,
 	PTE_PG64M
 };
-#define	nhppa_pgs	sizeof(hppa_pgs)/sizeof(hppa_pgs[0])
 
 void
 pmap_maphys(paddr_t spa, paddr_t epa)
@@ -407,22 +406,22 @@ pmap_maphys(paddr_t spa, paddr_t epa)
 	s = ffs(spa) - 12;
 	e = ffs(epa) - 12;
 
-	if (s < e || (s == e && s / 2 < nhppa_pgs)) {
+	if (s < e || (s == e && s / 2 < nitems(hppa_pgs))) {
 		i = s / 2;
-		if (i > nhppa_pgs)
-			i = nhppa_pgs;
+		if (i > nitems(hppa_pgs))
+			i = nitems(hppa_pgs);
 		pa = spa;
 		spa = tpa = 0x1000 << ((i + 1) * 2);
 	} else if (s > e) {
 		i = e / 2;
-		if (i > nhppa_pgs)
-			i = nhppa_pgs;
+		if (i > nitems(hppa_pgs))
+			i = nitems(hppa_pgs);
 		epa = pa = epa & (0xfffff000 << ((i + 1) * 2));
 		tpa = epa;
 	} else {
 		i = s / 2;
-		if (i > nhppa_pgs)
-			i = nhppa_pgs;
+		if (i > nitems(hppa_pgs))
+			i = nitems(hppa_pgs);
 		pa = spa;
 		spa = tpa = epa;
 	}
