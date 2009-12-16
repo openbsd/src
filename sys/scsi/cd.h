@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.24 2009/12/13 03:31:13 dlg Exp $	*/
+/*	$OpenBSD: cd.h,v 1.25 2009/12/16 10:51:28 dlg Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -270,31 +270,4 @@ struct scsi_read_dvd_structure_data {
 	u_int8_t	data[2048];
 };
 
-#ifdef _KERNEL
-
-struct cd_softc {
-	struct device sc_dev;
-	struct disk sc_dk;
-
-	int sc_flags;
-#define	CDF_LOCKED	0x01
-#define	CDF_WANTED	0x02
-#define	CDF_WLABEL	0x04		/* label is writable */
-#define	CDF_LABELLING	0x08		/* writing label */
-#define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
-#define CDF_WAITING	0x100
-#define CDF_STARTING	0x200
-	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
-	struct cd_parms {
-		u_int32_t blksize;
-		daddr64_t disksize;	/* total number sectors */
-	} sc_params;
-	struct buf sc_buf_queue;
-	struct mutex sc_queue_mtx;
-	struct mutex sc_start_mtx;
-	struct timeout sc_timeout;
-	void *sc_cdpwrhook;		/* our power hook */
-};
-
-#endif /* _KERNEL */
 #endif

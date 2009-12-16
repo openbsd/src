@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.156 2009/12/13 03:29:01 dlg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.157 2009/12/16 10:51:28 dlg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -92,6 +92,30 @@ int	cdmatch(struct device *, void *, void *);
 void	cdattach(struct device *, struct device *, void *);
 int	cdactivate(struct device *, int);
 int	cddetach(struct device *, int);
+
+struct cd_softc {
+	struct device sc_dev;
+	struct disk sc_dk;
+
+	int sc_flags;
+#define	CDF_LOCKED	0x01
+#define	CDF_WANTED	0x02
+#define	CDF_WLABEL	0x04		/* label is writable */
+#define	CDF_LABELLING	0x08		/* writing label */
+#define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
+#define CDF_WAITING	0x100
+#define CDF_STARTING	0x200
+	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
+	struct cd_parms {
+		u_int32_t blksize;
+		daddr64_t disksize;	/* total number sectors */
+	} sc_params;
+	struct buf sc_buf_queue;
+	struct mutex sc_queue_mtx;
+	struct mutex sc_start_mtx;
+	struct timeout sc_timeout;
+	void *sc_cdpwrhook;		/* our power hook */
+};
 
 void	cdstart(void *);
 void	cd_buf_done(struct scsi_xfer *);
