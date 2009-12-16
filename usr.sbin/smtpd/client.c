@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.20 2009/12/15 11:45:51 jacekm Exp $	*/
+/*	$OpenBSD: client.c,v 1.21 2009/12/16 02:20:32 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -257,7 +257,7 @@ client_talk(struct smtp_client *sp)
 
 	if (ret == CLIENT_WANT_READ)
 		sp->handler = client_read;
-	else if (ret == CLIENT_WANT_WRITE)
+	else if (ret == CLIENT_WANT_WRITE || ret == CLIENT_RCPT_FAIL)
 		sp->handler = client_write;
 
 	return (ret);
