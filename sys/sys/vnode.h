@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.103 2009/08/12 16:42:24 beck Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.104 2009/12/17 16:30:45 beck Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -136,10 +136,11 @@ struct vnode {
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VCLONED		0x0400	/* vnode was cloned */
 #define	VALIASED	0x0800	/* vnode has an alias */
+#define	VLARVAL		0x1000	/* vnode data not yet set up by higher level */
 #define	VLOCKSWORK	0x4000	/* FS supports locking discipline */
 #define	VCLONE		0x8000	/* vnode is a clone */
 #define	VBITS	"\010\001ROOT\002TEXT\003SYSTEM\004ISTTY\010XLOCK" \
-    "\011XWANT\013ALIASED\016LOCKSWORK\017CLONE"
+    "\011XWANT\013ALIASED\014LARVAL\016LOCKSWORK\017CLONE"
 
 /*
  * (v_bioflag) Flags that may be manipulated by interrupt handlers

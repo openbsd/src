@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.50 2009/12/15 17:04:00 beck Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.51 2009/12/17 16:30:47 beck Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -115,15 +115,17 @@ loop:
 	 */
 	rw_exit_write(&nfs_hashlock);
 	error = getnewvnode(VT_NFS, mnt, nfsv2_vnodeop_p, &nvp);
+	/* note that we don't have this vnode set up completely yet */
 	rw_enter_write(&nfs_hashlock);
 	if (error) {
 		*npp = NULL;
 		rw_exit_write(&nfs_hashlock);
 		return (error);
 	}
-
+	nvp->v_flag |= VLARVAL;
 	np = RB_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
+		vgone(nvp);
 		rw_exit_write(&nfs_hashlock);
 		goto loop;
 	}
@@ -131,6 +133,8 @@ loop:
 	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK | PR_ZERO);
 	vp->v_data = np;
+	/* we now have an nfsnode on this vnode */
+	vp->v_flag &= ~VLARVAL;
 	np->n_vnode = vp;
 
 	rw_init(&np->n_commitlock, "nfs_commitlk");
@@ -161,14 +165,25 @@ int
 nfs_inactive(void *v)
 {
 	struct vop_inactive_args	*ap = v;
-	struct nfsnode			*np = VTONFS(ap->a_vp);
+	struct nfsnode			*np;
 	struct sillyrename		*sp;
 
 #ifdef DIAGNOSTIC
 	if (prtactive && ap->a_vp->v_usecount != 0)
 		vprint("nfs_inactive: pushing active", ap->a_vp);
 #endif
-
+	if (ap->a_vp->v_flag & VLARVAL)
+		/*
+		 * vnode was incompletely set up, just return
+		 * as we are throwing it away.
+		 */
+		return(0);
+#ifdef DIAGNOSTIC
+	if (ap->a_vp->v_data == NULL)
+		panic("NULL v_data (no nfsnode set up?) in vnode %p\n",
+		    ap->a_vp);
+#endif
+	np = VTONFS(ap->a_vp);
 	if (ap->a_vp->v_type != VDIR) {
 		sp = np->n_sillyrename;
 		np->n_sillyrename = NULL;
@@ -198,14 +213,25 @@ nfs_reclaim(void *v)
 {
 	struct vop_reclaim_args	*ap = v;
 	struct vnode		*vp = ap->a_vp;
-	struct nfsmount		*nmp = VFSTONFS(vp->v_mount);
+	struct nfsmount		*nmp;
 	struct nfsnode		*np = VTONFS(vp);
 
 #ifdef DIAGNOSTIC
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
 #endif
-
+	if (ap->a_vp->v_flag & VLARVAL)
+		/*
+		 * vnode was incompletely set up, just return
+		 * as we are throwing it away.
+		 */
+		return(0);
+#ifdef DIAGNOSTIC
+	if (ap->a_vp->v_data == NULL)
+		panic("NULL v_data (no nfsnode set up?) in vnode %p\n",
+		    ap->a_vp);
+#endif
+	nmp = VFSTONFS(vp->v_mount);
 	rw_enter_write(&nfs_hashlock);
 	RB_REMOVE(nfs_nodetree, &nmp->nm_ntree, np);
 	rw_exit_write(&nfs_hashlock);
