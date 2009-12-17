@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.97 2009/11/16 14:42:18 espie Exp $
+# $OpenBSD: Add.pm,v 1.98 2009/12/17 08:21:09 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -103,6 +103,7 @@ sub perform_installation
 		$handle->{partial} = {};
 	}
 	$state->{partial} = $handle->{partial};
+	$state->progress->show(0, $totsize);
 	$handle->{plist}->install_and_progress($state, \$donesize, $totsize);
 	$handle->{location}->finish_and_close;
 }

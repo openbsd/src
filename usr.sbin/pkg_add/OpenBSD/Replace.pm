@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.60 2009/12/14 18:11:26 espie Exp $
+# $OpenBSD: Replace.pm,v 1.61 2009/12/17 08:21:09 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -436,7 +436,12 @@ sub do_save_libs
 	my $dest = installed_info($stub_name);
 	$state->say("Keeping them in $stub_name") 
 	    if $state->{verbose};
+
+
 	if ($state->{not}) {
+		require OpenBSD::SharedLibs;
+
+		OpenBSD::SharedLibs::add_libs_from_plist($stub_list);
 		$stub_list->to_cache;
 		$o->plist->to_cache;
 	} else {

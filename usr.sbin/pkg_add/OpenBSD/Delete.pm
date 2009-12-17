@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.91 2009/12/14 09:35:56 espie Exp $
+# $OpenBSD: Delete.pm,v 1.92 2009/12/17 08:21:09 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -148,6 +148,7 @@ sub delete_plist
 	$ENV{'PKG_PREFIX'} = $plist->localbase;
 	$plist->register_manpage($state);
 	manpages_unindex($state);
+	$state->progress->show(0, $totsize);
 	$plist->delete_and_progress($state, \$donesize, $totsize);
 	if ($plist->has(UNDISPLAY)) {
 		$plist->get(UNDISPLAY)->prepare($state);
