@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.52 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.53 2009/12/17 11:07:24 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -629,7 +629,7 @@ sub new
 
 sub create
 {
-	my $self = shift;
+	my ($self, $callback) = @_;
 	$self->make_basedir($self->name);
 	my $buffer;
 	my $out = OpenBSD::CompactWriter->new($self->{destdir}.$self->name);
@@ -654,6 +654,9 @@ sub create
 		}
 			
 		$toread -= $actual;
+		if ($toread > 0 && defined $callback) {
+			&$callback($self->{size} - $toread);
+		}
 	}
 	$out->close or die "Error closing $self->{destdir}", $self->name, 
 	    ": $!";

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.98 2009/12/17 08:21:09 espie Exp $
+# $OpenBSD: Add.pm,v 1.99 2009/12/17 11:07:24 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -171,6 +171,10 @@ sub prepare_for_addition
 sub install_and_progress
 {
 	my ($self, $state, $donesize, $totsize) = @_;
+	$state->{callback} = sub {
+		my $done = shift;
+		$state->progress->show($$donesize + $done, $totsize);
+	};
 	unless ($state->{do_faked} && $state->{end_faked}) {
 		$self->install($state);
 	}
@@ -406,7 +410,7 @@ sub install
 			$state->{archive}->skip;
 			return;
 		} else {
-			$file->create;
+			$file->create($state->{callback});
 			$self->may_check_digest($file, $state);
 
 		}
