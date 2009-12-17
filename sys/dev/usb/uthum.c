@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.4 2009/12/10 04:44:27 deraadt Exp $   */
+/*	$OpenBSD: uthum.c,v 1.5 2009/12/17 08:28:03 yuo Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -66,7 +66,6 @@ static uint8_t cmd_end[8] =
 #define UTHUM_TYPE_SHT1x	1
 
 struct uthum_softc {
-	struct device		 sc_dev;
 	struct uhidev		 sc_hdev;
 	usbd_device_handle	 sc_udev;
 	u_char			 sc_dying;
@@ -177,7 +176,7 @@ uthum_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensortype = uthum_check_sensortype(sc);
 
 	/* attach sensor */
-	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	strlcpy(sc->sc_sensordev.xname, sc->sc_hdev.sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
 	switch (sc->sc_sensortype) {
