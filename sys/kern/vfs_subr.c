@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.183 2009/08/17 13:11:58 jasper Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.184 2009/12/17 16:44:12 oga Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -630,6 +630,8 @@ vref(struct vnode *vp)
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount == 0)
 		panic("vref used where vget required");
+	if (vp->v_type == VNON)
+		panic("vref on a VNON vnode");
 #endif
 	vp->v_usecount++;
 }
