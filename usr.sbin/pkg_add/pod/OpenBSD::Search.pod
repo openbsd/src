@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Search.pod,v 1.2 2009/11/10 11:01:15 espie Exp $
+$OpenBSD: OpenBSD::Search.pod,v 1.3 2009/12/17 11:41:30 espie Exp $
 
 =head1 NAME
 
@@ -6,7 +6,7 @@ OpenBSD::Search - package names matching framework
 
 =head1 SYNOPSIS
 
-   use OpenBSD::Search; 
+   use OpenBSD::Search;
 
    # pkgspec objects
    my $search_object = OpenBSD::Search::PkgSpec->new($pattern);
@@ -23,13 +23,13 @@ OpenBSD::Search - package names matching framework
 
 =head1 DESCRIPTION
 
-C<OpenBSD::Search> provides a search infrastructure 
+C<OpenBSD::Search> provides a search infrastructure
 for C<OpenBSD::PackageRepository> objects.
 
 A given repository can be searched for existing packages using
 C<$repo-E<gt>match_locations($search1, $filter1, ...);>
 
-It returns a reference to a list of matching C<OpenBSD::PackageLocation> 
+It returns a reference to a list of matching C<OpenBSD::PackageLocation>
 objects.
 
 A repository list can be searched in a similar way: the search

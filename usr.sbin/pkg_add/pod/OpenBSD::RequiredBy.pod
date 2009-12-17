@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::RequiredBy.pod,v 1.3 2007/06/01 22:35:47 espie Exp $
+$OpenBSD: OpenBSD::RequiredBy.pod,v 1.4 2009/12/17 11:41:30 espie Exp $
 
 =head1 NAME
 
@@ -42,9 +42,9 @@ for installed packages.
 If C<$main::not> is true, all change operations are done internally and
 never written to disk.
 
-C<$o = OpenBSD::RequiredBy-E<gt>new($pkgname)> gives access to the reverse 
+C<$o = OpenBSD::RequiredBy-E<gt>new($pkgname)> gives access to the reverse
 dependencies,
-C<$o =OpenBSD::Requiring-E<gt>new($pkgname)>  gives access to the forward 
+C<$o =OpenBSD::Requiring-E<gt>new($pkgname)>  gives access to the forward
 dependencies.
 
 Such an object can be used to list the dependencies C<$o-E<gt>list>,
@@ -52,7 +52,7 @@ add names to them C<$o-E<gt>add(name1, name2, ...)> or remove name from
 them C<$o-E<gt>delete(name1, name2, ...)>.
 
 The full list of forward dependencies (transitive closure) from a set of
-packages is given by 
+packages is given by
 C<OpenBSD::RequiredBy-E<gt>compute_closure($name1, name2, ...)>.
 Likewise,
 C<OpenBSD::Requiring-E<gt>compute_closure($name1, name2, ...)>
@@ -61,7 +61,7 @@ yields the list of reverse dependencies.
 Those lists of dependencies trim duplicates and, unless C<$main::not> is true,
 disk files are automatically synchronized whenever the lists change.
 
-C<OpenBSD::RequiredBy> maintains a cache for efficiency. When an 
-installed package is deleted completely, 
-C<OpenBSD::RequiredBy-E<gt>forget($dir)> and 
+C<OpenBSD::RequiredBy> maintains a cache for efficiency. When an
+installed package is deleted completely,
+C<OpenBSD::RequiredBy-E<gt>forget($dir)> and
 C<OpenBSD::Requiring-E<gt>forget($dir)> will remove the cache entries.

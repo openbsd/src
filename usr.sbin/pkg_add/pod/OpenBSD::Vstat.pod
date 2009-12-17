@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Vstat.pod,v 1.3 2007/04/17 00:00:55 espie Exp $
+$OpenBSD: OpenBSD::Vstat.pod,v 1.4 2009/12/17 11:41:30 espie Exp $
 
 =head1 NAME
 
@@ -21,7 +21,7 @@ before doing them for real.
 
 The functions C<OpenBSD::Vstat::add> (respectively
 C<OpenBSD::Vstat::remove>) can be used to add a filename to
-the file system (resp. remove a filename from the file system).  
+the file system (resp. remove a filename from the file system).
 The function C<OpenBSD::Vstat:vexists> looks for
 a given filename: first it checks if it has been added or removed in
 the virtual filesystem. Failing that, it looks into the real file system
@@ -63,7 +63,7 @@ the C<$tag> specified as an optional argument. Otherwise, it returns 1.
 C<OpenBSD::Vstat:tally> displays a summary of filesystem manipulations
 after a series of additions and removals.
 
-Due to the way packages get updated, size modifications through 
+Due to the way packages get updated, size modifications through
 C<OpenBSD::Vstat::remove> are delayed until the next call to
 C<OpenBSD::Vstat::synchronize>: old files must be removed before
 adding the new files in order to properly account for collisions,

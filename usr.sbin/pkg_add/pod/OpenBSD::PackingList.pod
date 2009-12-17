@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingList.pod,v 1.7 2007/05/02 15:17:36 espie Exp $
+$OpenBSD: OpenBSD::PackingList.pod,v 1.8 2009/12/17 11:41:30 espie Exp $
 
 =head1 NAME
 
@@ -57,7 +57,7 @@ Packing-lists can be obtained using the following methods: from an
 opened file handle using C<OpenBSD::PackingList-E<gt>read($fh)>, from
 an existing file using C<OpenBSD::PackingList-E<gt>fromfile($filename)>,
 from a scalar in memory using C<OpenBSD::PackingList-E<gt>fromfile(\$scalar)>,
-or from an installed package using 
+or from an installed package using
 C<OpenBSD::PackingList-E<gt>from_installation($pkgname)>.
 
 Since building a full packing-list is a complex operation and can consume
@@ -68,7 +68,7 @@ obtain partial packing-lists with only some information:
 
 =item SharedItemsOnly
 
-read only stuff that may be shared between packages, e.g., new users, 
+read only stuff that may be shared between packages, e.g., new users,
 groups and directories.
 
 =item LibraryOnly
@@ -93,15 +93,15 @@ read only what is needed to decide to update a package.
 
 =back
 
-A complete packing-list C<$plist> may be written to disk using the 
+A complete packing-list C<$plist> may be written to disk using the
 following methods:
 C<$plist-E<gt>write($fh)> will write a packing-list to an
 opened file handle C<$fh>, C<$plist-E<gt>tofile($filename)> will
-write a packing-list to a file named C<$filename>, and 
+write a packing-list to a file named C<$filename>, and
 C<$plist-E<gt>to_installation()> will write a packing-list during
 registration of a package.
 
-In addition C<$plist-E<gt>to_cache()> will register enough 
+In addition C<$plist-E<gt>to_cache()> will register enough
 information from a package to let the framework believe the package has
 been installed. This is used for the simulation modes of C<pkg_add(1)>
 and friends.
@@ -112,9 +112,9 @@ in the same order.  It is a good way to validate packing-lists and normalize
 them, though.
 
 Building packing-lists entails cooperation with C<OpenBSD::PackingElement>.
-Packing-lists are usually built by adding objects from an 
+Packing-lists are usually built by adding objects from an
 C<OpenBSD::PackingElement> subclass to the packing-list, either with
-the C<add> constructor:  
+the C<add> constructor:
 C<OpenBSD::PackingElement::SUBCLASS-E<gt>add($plist, $args)>, which builds
 a packing element and adds it to the packing-list in one operation, or with
 the C<add_object> method, which takes an existing packing element and adds it
@@ -129,5 +129,5 @@ of the package name and dependency information.
 C<$plist-E<gt>visit($method, @args)> is a visitor pattern, calling
 C<method(@args)> on each element of the packing-list in a specific order.
 
-As a feature, if C<OpenBSD::PackingElement-E<gt>can(method)>, 
+As a feature, if C<OpenBSD::PackingElement-E<gt>can(method)>,
 C<$plist-E<gt>method(@args)> will be turned into a visitor call automatically.

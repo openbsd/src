@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackageName.pod,v 1.2 2006/02/22 18:34:49 bernd Exp $
+$OpenBSD: OpenBSD::PackageName.pod,v 1.3 2009/12/17 11:41:30 espie Exp $
 
 =head1 NAME
 
@@ -13,7 +13,7 @@ OpenBSD::PackageName - package names handling
    ($stem, $version, @flavors) = OpenBSD::PackageName::splitname($pkgname);
    $stem = OpenBSD::PackageName::splitstem($pkgname);
 
-   OpenBSD::PackageName::is_stem($stem) == 1 
+   OpenBSD::PackageName::is_stem($stem) == 1;
    OpenBSD::PackageName::is_stem($pkgname) == 0;
 
    @candidates = OpenBSD::PackageName::findstem($stem, @pkgnames);

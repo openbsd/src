@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.8 2008/10/28 18:10:04 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.9 2009/12/17 11:41:30 espie Exp $
 
 =head1 NAME
 
@@ -26,7 +26,7 @@ OpenBSD::PackingElement - C<pkg_add(1)> packing-elements object hierarchy
 
 =head1 DESCRIPTION
 
-C<OpenBSD::PackingElement> is the base class for all elements in a 
+C<OpenBSD::PackingElement> is the base class for all elements in a
 packing-list (see L<OpenBSD::PackingList(3p)> and C<pkg_create(1)>).
 
 Manipulation of packing-lists mostly occurs through visitor patterns
@@ -247,7 +247,7 @@ C<::Extra>, C<::Sample> and C<::Sampledir>
 abstract class corresponding to files and directories.
 Default constructor depends on a C<dirclass> property, that may
 create objects from another class if their name ends with a C</>.
-The full object name is normally computed relative to the current 
+The full object name is normally computed relative to the current
 working directory as set in C<::State>.
 
 =over 4
