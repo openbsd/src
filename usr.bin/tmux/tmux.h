@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.195 2009/12/14 10:43:41 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.196 2009/12/17 17:39:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1021,9 +1021,9 @@ struct tty_ctx {
 	const struct grid_utf8 *utf8;
 
 	u_int		 num;
-	void		*ptr; 
+	void		*ptr;
 
-	/* 
+	/*
 	 * Cursor and region position before the screen was updated - this is
 	 * where the command should be applied; the values in the screen have
 	 * already been updated.
