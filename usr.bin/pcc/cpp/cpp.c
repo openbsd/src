@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpp.c,v 1.11 2008/08/18 20:54:10 ragge Exp $	*/
+/*	$OpenBSD: cpp.c,v 1.12 2009/12/17 17:52:54 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -182,6 +182,12 @@ main(int argc, char **argv)
 	struct symtab *nl;
 	register int ch;
 
+#ifdef TIMING
+	struct timeval t1, t2;
+
+	(void)gettimeofday(&t1, NULL);
+#endif
+
 	while ((ch = getopt(argc, argv, "CD:I:MPS:U:d:i:tvV?")) != -1)
 		switch (ch) {
 		case 'C': /* Do not discard comments */
@@ -311,6 +317,17 @@ main(int argc, char **argv)
 
 	flbuf();
 	close(ofd);
+#ifdef TIMING
+	(void)gettimeofday(&t2, NULL);
+	t2.tv_sec -= t1.tv_sec;
+	t2.tv_usec -= t1.tv_usec;
+	if (t2.tv_usec < 0) {
+		t2.tv_usec += 1000000;
+		t2.tv_sec -= 1;
+	}
+	fprintf(stderr, "cpp total time: %ld s %ld us\n",
+	     t2.tv_sec, t2.tv_usec);
+#endif
 	return 0;
 }
 
@@ -327,12 +344,11 @@ gotident(struct symtab *nl)
 	int c;
 
 	thisnl = NULL;
-	slow = 1;
 	readmac++;
 	base = osp = stringbuf;
 	goto found;
 
-	while ((c = yylex()) != 0) {
+	while ((c = sloscan()) != 0) {
 		switch (c) {
 		case IDENT:
 			if (flslvl)
@@ -348,22 +364,22 @@ gotident(struct symtab *nl)
 				goto found;
 			}
 			ss2 = stringbuf;
-			if ((c = yylex()) == WSPACE) {
+			if ((c = sloscan()) == WSPACE) {
 				savstr((usch *)yytext);
-				c = yylex();
+				c = sloscan();
 			}
 			if (c != EXPAND) {
 				unpstr((usch *)yytext);
 				if (ss2 != stringbuf)
 					unpstr(ss2);
 				unpstr(nl->namep);
-				(void)yylex(); /* get yytext correct */
+				(void)sloscan(); /* get yytext correct */
 				nl = 0; /* ignore */
 			} else {
 				thisnl = NULL;
 				if (nl->value[0] == OBJCT) {
 					unpstr(nl->namep);
-					(void)yylex(); /* get yytext correct */
+					(void)sloscan(); /* get yytext correct */
 					nl = 0;
 				}
 			}
@@ -395,10 +411,14 @@ found:			if (nl == 0 || subst(nl, NULL) == 0) {
 			getcmnt();
 			break;
 
-		case STRING:
 		case '\n':
+			/* sloscan() will not eat */
+			(void)cinput();
+			savch(c);
+			break;
+
+		case STRING:
 		case NUMBER:
-		case FPOINT:
 		case WSPACE:
 			savstr((usch *)yytext);
 			break;
@@ -411,7 +431,6 @@ found:			if (nl == 0 || subst(nl, NULL) == 0) {
 			break;
 		}
 		if (thisnl == NULL) {
-			slow = 0;
 			readmac--;
 			savch(0);
 			return base;
@@ -427,39 +446,36 @@ line()
 {
 	static usch *lbuf;
 	static int llen;
+	usch *p;
 	int c;
 
-	slow = 1;
-	if (yylex() != WSPACE)
+	if ((c = yylex()) != NUMBER)
 		goto bad;
-	if ((c = yylex()) != IDENT || !isdigit((int)yytext[0]))
-		goto bad;
-	ifiles->lineno = atoi(yytext);
+	ifiles->lineno = (int)(yylval.node.nd_val - 1);
 
-	if ((c = yylex()) != '\n' && c != WSPACE)
-		goto bad;
-	if (c == '\n') {
-		slow = 0;
+	if ((c = yylex()) == '\n')
 		return;
-	}
-	if (yylex() != STRING || yytext[0] == 'L')
+
+	if (c != STRING)
 		goto bad;
-	c = strlen((char *)yytext);
+
+	p = (usch *)yytext;
+	if (*p == 'L')
+		p++;
+	c = strlen((char *)p);
 	if (llen < c) {
 		/* XXX may loose heap space */
 		lbuf = stringbuf;
 		stringbuf += c;
 		llen = c;
 	}
-	yytext[strlen(yytext)-1] = 0;
-	if (strlcpy((char *)lbuf, &yytext[1], SBSIZE) >= SBSIZE)
+	p[strlen((char *)p)-1] = 0;
+	if (strlcpy((char *)lbuf, (char *)&p[1], SBSIZE) >= SBSIZE)
 		error("line exceeded buffer size");
 
 	ifiles->fname = lbuf;
-	if (yylex() != '\n')
-		goto bad;
-	slow = 0;
-	return;
+	if (yylex() == '\n')
+		return;
 
 bad:	error("bad line directive");
 }
@@ -472,8 +488,8 @@ bad:	error("bad line directive");
 void
 include()
 {
-	struct incs *w;
 	struct symtab *nl;
+	struct incs *w;
 	usch *osp;
 	usch *fn, *safefn;
 	int i, c, it;
@@ -481,30 +497,29 @@ include()
 	if (flslvl)
 		return;
 	osp = stringbuf;
-	slow = 1;
-again:
-	if ((c = yylex()) == WSPACE)
-		c = yylex();
-	if (c != STRING && c != '<' && c != IDENT)
-		goto bad;
 
+	while ((c = sloscan()) == WSPACE)
+		;
 	if (c == IDENT) {
+		/* sloscan() will not expand idents */
 		if ((nl = lookup((usch *)yytext, FIND)) == NULL)
 			goto bad;
-		if (subst(nl, NULL) == 0)
-			goto bad;
-		savch('\0');
-		unpstr(osp);
-		goto again;
-	} else if (c == '<') {
+		unpstr(gotident(nl));
+		stringbuf = osp;
+		c = yylex();
+	}
+	if (c != STRING && c != '<')
+		goto bad;
+
+	if (c == '<') {
 		fn = stringbuf;
-		while ((c = yylex()) != '>' && c != '\n') {
+		while ((c = sloscan()) != '>' && c != '\n') {
 			if (c == '\n')
 				goto bad;
 			savstr((usch *)yytext);
 		}
 		savch('\0');
-		while ((c = yylex()) == WSPACE)
+		while ((c = sloscan()) == WSPACE)
 			;
 		if (c != '\n')
 			goto bad;
@@ -527,18 +542,15 @@ again:
 		}
 		safefn = stringbuf;
 		savstr(fn); savch(0);
-		while ((c = yylex()) == WSPACE)
-			;
+		c = yylex();
 		if (c != '\n')
 			goto bad;
-		slow = 0;
 		if (pushfile(nm) == 0)
-			return;
+			goto okret;
 		/* XXX may loose stringbuf space */
 	}
 
 	/* create search path and try to open file */
-	slow = 0;
 	for (i = 0; i < 2; i++) {
 		for (w = incdir[i]; w; w = w->next) {
 			usch *nm = stringbuf;
@@ -546,7 +558,7 @@ again:
 			savstr(w->dir); savch('/');
 			savstr(safefn); savch(0);
 			if (pushfile(nm) == 0)
-				return;
+				goto okret;
 			stringbuf = nm;
 		}
 	}
@@ -555,6 +567,8 @@ again:
 
 bad:	error("bad include");
 	/* error() do not return */
+okret:
+	prtline();
 }
 
 static int
@@ -563,7 +577,7 @@ definp(void)
 	int c;
 
 	do
-		c = yylex();
+		c = sloscan();
 	while (c == WSPACE);
 	return c;
 }
@@ -617,6 +631,23 @@ cmprepl(usch *o, usch *n)
 	return 0;
 }
 
+static int
+isell(void)
+{
+	int ch;
+
+	if ((ch = cinput()) != '.') {
+		cunput(ch);
+		return 0;
+	}
+	if ((ch = cinput()) != '.') {
+		cunput(ch);
+		cunput('.');
+		return 0;
+	}
+	return 1;
+}
+
 void
 define()
 {
@@ -632,8 +663,7 @@ define()
 
 	if (flslvl)
 		return;
-	slow = 1;
-	if (yylex() != WSPACE || yylex() != IDENT)
+	if (sloscan() != WSPACE || sloscan() != IDENT)
 		goto bad;
 
 	if (isdigit((int)yytext[0]))
@@ -644,14 +674,14 @@ define()
 
 	readmac = 1;
 	sbeg = stringbuf;
-	if ((c = yylex()) == '(') {
+	if ((c = sloscan()) == '(') {
 		narg = 0;
 		/* function-like macros, deal with identifiers */
 		c = definp();
 		for (;;) {
 			if (c == ')')
 				break;
-			if (c == ELLIPS) {
+			if (c == '.' && isell()) {
 				ellips = 1;
 				if (definp() != ')')
 					goto bad;
@@ -670,7 +700,7 @@ define()
 					continue;
 				}
 #ifdef GCC_VARI
-				if (c == ELLIPS) {
+				if (c == '.' && isell()) {
 					if (definp() != ')')
 						goto bad;
 					gccvari = args[--narg];
@@ -682,7 +712,7 @@ define()
 			}
 			goto bad;
 		}
-		c = yylex();
+		c = sloscan();
 	} else if (c == '\n') {
 		/* #define foo */
 		;
@@ -690,11 +720,18 @@ define()
 		goto bad;
 
 	while (c == WSPACE)
-		c = yylex();
+		c = sloscan();
 
 	/* replacement list cannot start with ## operator */
-	if (c == CONCAT)
-		goto bad;
+	if (c == '#') {
+		if ((c = sloscan()) == '#')
+			goto bad;
+		savch('\0');
+#ifdef GCC_VARI
+		wascon = 0;
+#endif
+		goto in2;
+	}
 
 	/* parse replacement-list, substituting arguments */
 	savch('\0');
@@ -708,12 +745,14 @@ loop:
 			/* remove spaces if it surrounds a ## directive */
 			ubuf = stringbuf;
 			savstr((usch *)yytext);
-			c = yylex();
-			if (c == CONCAT) {
+			c = sloscan();
+			if (c == '#') {
+				if ((c = sloscan()) != '#')
+					goto in2;
 				stringbuf = ubuf;
 				savch(CONC);
-				if ((c = yylex()) == WSPACE)
-					c = yylex();
+				if ((c = sloscan()) == WSPACE)
+					c = sloscan();
 #ifdef GCC_VARI
 				if (c == '\n')
 					break;
@@ -723,36 +762,46 @@ loop:
 			}
 			continue;
 
-		case CONCAT:
-			/* No spaces before concat op */
-			savch(CONC);
-			if ((c = yylex()) == WSPACE)
-				c = yylex();
+		case '#':
+			c = sloscan();
+			if (c == '#') {
+				/* concat op */
+				savch(CONC);
+				if ((c = sloscan()) == WSPACE)
+					c = sloscan();
 #ifdef GCC_VARI
-			if (c == '\n')
-				break;
-			wascon = 1;
-			goto loop;
+				if (c == '\n')
+					break;
+				wascon = 1;
+				goto loop;
 #else
-			continue;
+				continue;
 #endif
-
-		case MKSTR:
-			if (narg < 0) {
+			} 
+in2:			if (narg < 0) {
 				/* no meaning in object-type macro */
 				savch('#');
-				break;
+				continue;
 			}
 			/* remove spaces between # and arg */
 			savch(SNUFF);
-			if ((c = yylex()) == WSPACE)
-				c = yylex(); /* whitespace, ignore */
+			if (c == WSPACE)
+				c = sloscan(); /* whitespace, ignore */
 			mkstr = 1;
-			if (c == VA_ARGS)
+			if (c == IDENT && strcmp(yytext, "__VA_ARGS__") == 0)
 				continue;
 
 			/* FALLTHROUGH */
 		case IDENT:
+			if (strcmp(yytext, "__VA_ARGS__") == 0) {
+				if (ellips == 0)
+					error("unwanted %s", yytext);
+				savch(VARG);
+				savch(WARN);
+				if (mkstr)
+					savch(SNUFF), mkstr = 0;
+				break;
+			}
 			if (narg < 0)
 				goto id; /* just add it if object */
 			/* check if its an argument */
@@ -780,15 +829,6 @@ loop:
 				savch(SNUFF), mkstr = 0;
 			break;
 
-		case VA_ARGS:
-			if (ellips == 0)
-				error("unwanted %s", yytext);
-			savch(VARG);
-			savch(WARN);
-			if (mkstr)
-				savch(SNUFF), mkstr = 0;
-			break;
-
 		case CMNT: /* save comments */
 			getcmnt();
 			break;
@@ -797,7 +837,7 @@ loop:
 id:			savstr((usch *)yytext);
 			break;
 		}
-		c = yylex();
+		c = sloscan();
 	}
 	readmac = 0;
 	/* remove trailing whitespace */
@@ -849,7 +889,6 @@ id:			savstr((usch *)yytext);
 		putchar('\n');
 	}
 #endif
-	slow = 0;
 	for (i = 0; i < narg; i++)
 		free(args[i]);
 	return;
@@ -862,6 +901,7 @@ xwarning(usch *s)
 {
 	usch *t;
 	usch *sb = stringbuf;
+	int dummy;
 
 	flbuf();
 	savch(0);
@@ -869,8 +909,8 @@ xwarning(usch *s)
 		t = sheap("%s:%d: warning: ", ifiles->fname, ifiles->lineno);
 		write (2, t, strlen((char *)t));
 	}
-	write (2, s, strlen((char *)s));
-	write (2, "\n", 1);
+	dummy = write (2, s, strlen((char *)s));
+	dummy = write (2, "\n", 1);
 	stringbuf = sb;
 }
 
@@ -878,15 +918,16 @@ void
 xerror(usch *s)
 {
 	usch *t;
+	int dummy;
 
 	flbuf();
 	savch(0);
 	if (ifiles != NULL) {
 		t = sheap("%s:%d: error: ", ifiles->fname, ifiles->lineno);
-		write (2, t, strlen((char *)t));
+		dummy = write (2, t, strlen((char *)t));
 	}
-	write (2, s, strlen((char *)s));
-	write (2, "\n", 1);
+	dummy = write (2, s, strlen((char *)s));
+	dummy = write (2, "\n", 1);
 	exit(1);
 }
 
@@ -894,10 +935,10 @@ xerror(usch *s)
  * store a character into the "define" buffer.
  */
 void
-savch(c)
+savch(int c)
 {
 	if (stringbuf-sbf < SBSIZE) {
-		*stringbuf++ = c;
+		*stringbuf++ = (usch)c;
 	} else {
 		stringbuf = sbf; /* need space to write error message */
 		error("Too much defining");
@@ -913,15 +954,14 @@ pragoper(void)
 	usch *opb;
 	int t, plev;
 
-	slow++;
-	if ((t = yylex()) == WSPACE)
-		t = yylex();
+	if ((t = sloscan()) == WSPACE)
+		t = sloscan();
 	if (t != '(')
 		goto bad;
-	if ((t = yylex()) == WSPACE)
-		t = yylex();
+	if ((t = sloscan()) == WSPACE)
+		t = sloscan();
 	opb = stringbuf;
-	for (plev = 0; ; t = yylex()) {
+	for (plev = 0; ; t = sloscan()) {
 		if (t == '(')
 			plev++;
 		if (t == ')')
@@ -940,7 +980,7 @@ pragoper(void)
 	while (stringbuf > opb)
 		cunput(*--stringbuf);
 	savch(PRAGS);
-	while ((t = yylex()) != '\n') {
+	while ((t = sloscan()) != '\n') {
 		if (t == WSPACE)
 			continue;
 		if (t != STRING)
@@ -951,7 +991,6 @@ pragoper(void)
 	savch(PRAGE);
 	while (stringbuf > opb)
 		cunput(*--stringbuf);
-	slow--;
 	return;
 bad:	error("bad pragma operator");
 }
@@ -997,7 +1036,7 @@ struct recur *rp;
 		nl = 0;
 		do {
 			c = cinput();
-			*stringbuf++ = c;
+			*stringbuf++ = (usch)c;
 			if (c == WARN) {
 				gotwarn++;
 				if (rp == NULL)
@@ -1019,7 +1058,7 @@ struct recur *rp;
 	 		*stringbuf = 0;
 			unpstr(obp);
 			unpstr(sp->namep);
-			if ((c = yylex()) != IDENT)
+			if ((c = sloscan()) != IDENT)
 				error("internal sync error");
 			stringbuf = obp;
 			return 0;
@@ -1034,6 +1073,18 @@ struct recur *rp;
 		}
 		expmac(&rp2);
 	}
+	return 1;
+}
+
+/*
+ * Maybe an indentifier (for macro expansion).
+ */
+static int
+mayid(usch *s)
+{
+	for (; *s; s++)
+		if (!isdigit(*s) && !isalpha(*s) && *s != '_')
+			return 0;
 	return 1;
 }
 
@@ -1061,18 +1112,22 @@ expmac(struct recur *rp)
 	}
 #endif
 	readmac++;
-	while ((c = yylex()) != WARN) {
+	while ((c = sloscan()) != WARN) {
 		switch (c) {
 		case NOEXP: noexp++; break;
 		case EXPAND: noexp--; break;
 
+		case NUMBER: /* handled as ident if no .+- in it */
+			if (!mayid((usch *)yytext))
+				goto def;
+			/* FALLTHROUGH */
 		case IDENT:
 			/*
 			 * Handle argument concatenation here.
 			 * If an identifier is found and directly 
 			 * after EXPAND or NOEXP then push the
 			 * identifier back on the input stream and
-			 * call yylex() again.
+			 * call sloscan() again.
 			 * Be careful to keep the noexp balance.
 			 */
 			och = stringbuf;
@@ -1080,7 +1135,7 @@ expmac(struct recur *rp)
 			DDPRINT(("id: str %s\n", och));
 
 			orgexp = 0;
-			while ((c = yylex()) == EXPAND || c == NOEXP)
+			while ((c = sloscan()) == EXPAND || c == NOEXP)
 				if (c == EXPAND)
 					orgexp--;
 				else
@@ -1088,7 +1143,8 @@ expmac(struct recur *rp)
 
 			DDPRINT(("id1: typ %d noexp %d orgexp %d\n",
 			    c, noexp, orgexp));
-			if (c == IDENT) { /* XXX numbers? */
+			if (c == IDENT ||
+			    (c == NUMBER && mayid((usch *)yytext))) {
 				DDPRINT(("id2: str %s\n", yytext));
 				/* OK to always expand here? */
 				savstr((usch *)yytext);
@@ -1129,7 +1185,7 @@ expmac(struct recur *rp)
 			stringbuf = och;
 
 
-			yylex(); /* XXX reget last identifier */
+			sloscan(); /* XXX reget last identifier */
 
 			if ((nl = lookup((usch *)yytext, FIND)) == NULL)
 				goto def;
@@ -1152,9 +1208,9 @@ expmac(struct recur *rp)
 			if (noexp != 1)
 				error("bad noexp %d", noexp);
 			stksv = NULL;
-			if ((c = yylex()) == WSPACE) {
+			if ((c = sloscan()) == WSPACE) {
 				stksv = xstrdup(yytext);
-				c = yylex();
+				c = sloscan();
 			}
 			/* only valid for expansion if fun macro */
 			if (c == EXPAND && *nl->value != OBJCT) {
@@ -1176,6 +1232,11 @@ expmac(struct recur *rp)
 
 		case CMNT:
 			getcmnt();
+			break;
+
+		case '\n':
+			cinput();
+			savch(' ');
 			break;
 
 		case STRING:
@@ -1204,20 +1265,18 @@ def:		default:
 /*
  * expand a function-like macro.
  * vp points to end of replacement-list
- * reads function arguments from yylex()
+ * reads function arguments from sloscan()
  * result is written on top of heap
  */
 void
-expdef(vp, rp, gotwarn)
-	usch *vp;
-	struct recur *rp;
+expdef(usch *vp, struct recur *rp, int gotwarn)
 {
 	usch **args, *sptr, *ap, *bp, *sp;
 	int narg, c, i, plev, snuff, instr;
 	int ellips = 0;
 
 	DPRINT(("expdef rp %s\n", (rp ? (char *)rp->sp->namep : "")));
-	if ((c = yylex()) != '(')
+	if ((c = sloscan()) != '(')
 		error("got %c, expected (", c);
 	if (vp[1] == VARG) {
 		narg = *vp--;
@@ -1231,14 +1290,14 @@ expdef(vp, rp, gotwarn)
 	 * read arguments and store them on heap.
 	 * will be removed just before return from this function.
 	 */
-	inmac = 1;
 	sptr = stringbuf;
 	instr = 0;
 	for (i = 0; i < narg && c != ')'; i++) {
 		args[i] = stringbuf;
 		plev = 0;
-		while ((c = yylex()) == WSPACE || c == '\n')
-			;
+		while ((c = sloscan()) == WSPACE || c == '\n')
+			if (c == '\n')
+				putch(cinput());
 		DDPRINT((":AAA (%d)", c));
 		if (instr == -1)
 			savch(NOEXP), instr = 1;
@@ -1252,11 +1311,13 @@ expdef(vp, rp, gotwarn)
 			if (c == ')')
 				plev--;
 			savstr((usch *)yytext);
-			while ((c = yylex()) == '\n')
+			while ((c = sloscan()) == '\n') {
+				putch(cinput());
 				savch('\n');
+			}
 			while (c == CMNT) {
 				getcmnt();
-				c = yylex();
+				c = sloscan();
 			}
 			if (c == EXPAND)
 				instr = 0;
@@ -1276,7 +1337,7 @@ expdef(vp, rp, gotwarn)
 		args[i] = stringbuf;
 		plev = 0;
 		instr = 0;
-		while ((c = yylex()) == WSPACE)
+		while ((c = sloscan()) == WSPACE)
 			;
 		if (c == NOEXP)
 			instr++;
@@ -1294,8 +1355,10 @@ expdef(vp, rp, gotwarn)
 				savch(NOEXP);
 			} else
 				savstr((usch *)yytext);
-			while ((c = yylex()) == '\n')
+			while ((c = sloscan()) == '\n') {
+				cinput();
 				savch('\n');
+			}
 			if (c == EXPAND)
 				instr--;
 		}
@@ -1306,13 +1369,13 @@ expdef(vp, rp, gotwarn)
 		
 	}
 	if (narg == 0 && ellips == 0)
-		while ((c = yylex()) == WSPACE || c == '\n')
-			;
+		while ((c = sloscan()) == WSPACE || c == '\n')
+			if (c == '\n')
+				cinput();
 
 	if (c != ')' || (i != narg && ellips == 0) || (i < narg && ellips == 1))
 		error("wrong arg count");
 
-	inmac = 0;
 	while (gotwarn--)
 		cunput(WARN);
 
@@ -1442,7 +1505,7 @@ flbuf()
 void
 putch(int ch)
 {
-	outbuf[obufp++] = ch;
+	outbuf[obufp++] = (usch)ch;
 	if (obufp == CPPBUF || (istty && ch == '\n'))
 		flbuf();
 }
@@ -1474,7 +1537,8 @@ num2str(int num)
 	if (num < 0)
 		num = -num, m = 1;
 	do {
-		*b++ = num % 10 + '0', num /= 10;
+		*b++ = (usch)(num % 10 + '0');
+		num /= 10;
 	} while (num);
 	if (m)
 		*b++ = '-';

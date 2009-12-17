@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.12 2008/08/21 16:34:10 ragge Exp $   */
+/*	$OpenBSD: scanner.l,v 1.13 2009/12/17 17:52:54 ragge Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -371,11 +371,12 @@ inch(void)
 
 again:	switch (c = inpch()) {
 	case '\\': /* continued lines */
-		if ((c = inpch()) == '\n') {
+msdos:		if ((c = inpch()) == '\n') {
 			ifiles->lineno++;
 			putch('\n');
 			goto again;
-		}
+		} else if (c == '\r')
+			goto msdos;
 		unch(c);
 		return '\\';
 	case '?': /* trigraphs */
