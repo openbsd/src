@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.40 2009/11/29 10:32:58 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.41 2009/12/17 11:57:02 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -46,7 +46,7 @@ sub init_path($)
 	my $destdir = shift;
 	$path={};
 	if ($destdir ne '') {
-		unshift @ldconfig, OpenBSD::Paths->chroot, $destdir;
+		unshift @ldconfig, OpenBSD::Paths->chroot, '--', $destdir;
 	}
 	open my $fh, "-|", @ldconfig, "-r";
 	if (defined $fh) {

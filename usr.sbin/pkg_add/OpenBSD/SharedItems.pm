@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.16 2009/11/11 13:00:40 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.17 2009/12/17 11:57:02 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -88,7 +88,8 @@ sub cleanup
 			$state->progress->show($done, $total);
 			next if $remaining->{users}->{$user};
 			if ($state->{extra}) {
-				$state->system(OpenBSD::Paths->userdel, $user);
+				$state->system(OpenBSD::Paths->userdel, '--', 
+				    $user);
 			} else {
 				$state->log->set_context($pkgname);
 				$state->log("You should also run /usr/sbin/userdel $user\n");
@@ -101,7 +102,8 @@ sub cleanup
 			$state->progress->show($done, $total);
 			next if $remaining->{groups}->{$group};
 			if ($state->{extra}) {
-				$state->system(OpenBSD::Paths->groupdel, $group);
+				$state->system(OpenBSD::Paths->groupdel, '--',
+				    $group);
 			} else {
 				$state->log->set_context($pkgname);
 				$state->log("You should also run /usr/sbin/groupdel $group\n");

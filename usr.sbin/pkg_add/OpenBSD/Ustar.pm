@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.53 2009/12/17 11:07:24 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.54 2009/12/17 11:57:02 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -527,7 +527,7 @@ sub create
 	my $self = shift;
 	$self->make_basedir($self->name);
 	system(OpenBSD::Paths->mknod, 
-	    '-m', $self->{mode}, $self->{destdir}.$self->name, 
+	    '-m', $self->{mode}, '--', $self->{destdir}.$self->name, 
 	    $self->devicetype, $self->{major}, $self->{minor});
 	$self->set_modes;
 }

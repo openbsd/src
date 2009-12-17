@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.163 2009/11/11 13:00:40 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.164 2009/12/17 11:57:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -537,7 +537,7 @@ sub format
 	open my $oldout, '>&STDOUT';
 	open STDOUT, '>', "$base/$out" or die "Can't write to $base/$out";
 	system(OpenBSD::Paths->groff,
-	    '-Tascii', '-mandoc', '-Wall', '-mtty-char', @extra, $fname);
+	    '-Tascii', '-mandoc', '-Wall', '-mtty-char', @extra, '--', $fname);
 	open STDOUT, '>&', $oldout;
 }
 
@@ -1380,12 +1380,12 @@ sub finish_fontdirs
 		$state->say("You may wish to update your font path for ", 
 		    join(' ', @l));
 		return if $state->{not};
-		run_if_exists($state, OpenBSD::Paths->mkfontscale, @l);
-		run_if_exists($state, OpenBSD::Paths->mkfontdir, @l);
+		run_if_exists($state, OpenBSD::Paths->mkfontscale, '--', @l);
+		run_if_exists($state, OpenBSD::Paths->mkfontdir, '--', @l);
 
 		map { restore_fontdir($_) } @l;
 
-		run_if_exists($state, OpenBSD::Paths->fc_cache, @l);
+		run_if_exists($state, OpenBSD::Paths->fc_cache, '--', @l);
 	}
 }
 
