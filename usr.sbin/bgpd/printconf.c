@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.76 2009/12/16 15:40:55 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.77 2009/12/17 09:32:59 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,7 +112,7 @@ print_extcommunity(struct filter_extcommunity *c)
 		    log_as(c->data.ext_as4.as4), c->data.ext_as.val);
 		break;
 	case EXT_COMMUNITY_OPAQUE:
-		printf("%s 0x%x", log_ext_subtype(c->subtype),
+		printf("%s 0x%llx", log_ext_subtype(c->subtype),
 		    c->data.ext_opaq);
 		break;
 	default:
