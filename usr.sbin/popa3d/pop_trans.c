@@ -1,4 +1,4 @@
-/* $OpenBSD: pop_trans.c,v 1.5 2009/12/16 20:42:26 sobrado Exp $ */
+/* $OpenBSD: pop_trans.c,v 1.6 2009/12/17 11:04:39 sobrado Exp $ */
 
 /*
  * TRANSACTION state handling.
@@ -212,8 +212,8 @@ int do_pop_trans(char *spool, char *mailbox)
 
 	if (db_load(spool, mailbox)) {
 		syslog(SYSLOG_PRI_HI,
-			"Failure reading %s/%s or mailbox limits exceeded",
-			spool, mailbox);
+		    "Failure reading %s/%s or mailbox limits exceeded",
+		    spool, mailbox);
 		pop_reply_error();
 		return 0;
 	}
@@ -230,17 +230,17 @@ int do_pop_trans(char *spool, char *mailbox)
 		if (mailbox_update()) {
 			if (db.flags & DB_STALE) break;
 			syslog(SYSLOG_PRI_ERROR,
-				"Failed to update %s/%s",
-				spool, mailbox);
+			    "Failed to update %s/%s",
+			    spool, mailbox);
 			pop_reply_error();
 			break;
 		}
 
 		syslog(SYSLOG_PRI_LO, "%u (%lu) deleted, %u (%lu) left",
-			db.total_count - db.visible_count,
-			db.total_size - db.visible_size,
-			db.visible_count,
-			db.visible_size);
+		    db.total_count - db.visible_count,
+		    db.total_size - db.visible_size,
+		    db.visible_count,
+		    db.visible_size);
 		pop_reply_ok();
 		break;
 
@@ -257,8 +257,8 @@ int do_pop_trans(char *spool, char *mailbox)
 	else
 	if (event == POP_CRASH_SERVER)
 		syslog(SYSLOG_PRI_ERROR,
-			"Server failure accessing %s/%s",
-			spool, mailbox);
+		    "Server failure accessing %s/%s",
+		    spool, mailbox);
 
 	mailbox_close();
 
