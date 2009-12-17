@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.35 2009/11/15 14:13:12 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.36 2009/12/17 19:42:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -125,6 +125,7 @@ ciss_get_ccb(struct ciss_softc *sc)
 	if ((ccb = TAILQ_LAST(&sc->sc_free_ccb, ciss_queue_head))) {
 		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_link);
 		ccb->ccb_state = CISS_CCB_READY;
+		ccb->ccb_xs = NULL;
 	}
 	return ccb;
 }
