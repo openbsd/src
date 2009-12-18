@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.116 2009/12/10 08:12:29 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.117 2009/12/18 05:58:15 jmc Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2009 $
+.Dd $Mdocdate: December 18 2009 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -175,8 +175,6 @@ Belkin USB serial adapter
 WinChipHead CH341/340 based USB serial adapter
 .It Xr ucom 4
 USB tty support
-.It Xr ucycom 4
-Cypress microcontroller based USB serial adapter
 .It Xr uftdi 4
 FTDI USB serial adapter
 .It Xr uipaq 4
@@ -232,6 +230,8 @@ D-Link DSB-R100 USB radio device
 .Bl -tag -width 12n -offset ind -compact
 .It Xr tpms 4
 Apple touchpad mouse
+.It Xr ucycom 4
+Cypress microcontroller based USB serial adapter
 .It Xr uhid 4
 Generic driver for Human Interface Devices
 .It Xr uhidev 4
@@ -245,6 +245,10 @@ keyboards that follow the boot protocol
 .It Xr ums 4
 .Tn USB
 mouse devices
+.It Xr uthum 4
+TEMPerHUM USB temperature and humidity sensor
+.It Xr utrh 4
+USBRH temperature and humidity sensor
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
@@ -260,8 +264,6 @@ Prolific based host-to-host adapters
 USB scanner support
 .It Xr usscanner 4
 SCSI-over-USB scanners
-.It Xr uthum 4
-TEMPerHUM USB temperature and humidity sensor
 .It Xr uts 4
 USB touchscreen support
 .It Xr uyap 4
