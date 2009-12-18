@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.277 2009/12/16 15:40:55 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.278 2009/12/18 15:51:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1938,7 +1938,7 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 		    !aspath_match(p->aspath->aspath, req->as.type, req->as.as))
 			return;
 		if (req->type == IMSG_CTL_SHOW_RIB_COMMUNITY &&
-		    !rde_filter_community(p->aspath, req->community.as,
+		    !community_match(p->aspath, req->community.as,
 		    req->community.type))
 			return;
 		rde_dump_rib_as(p, p->aspath, req->pid, req->flags);
