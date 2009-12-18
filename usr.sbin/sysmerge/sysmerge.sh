@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.54 2009/12/18 13:51:03 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.55 2009/12/18 15:33:02 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -132,7 +132,7 @@ do_populate() {
 		SRCSUM=srcsum
 		cd ${SRCDIR}/etc
 		make DESTDIR=${TEMPROOT} distribution-etc-root-var > /dev/null 2>&1
-		(cd ${TEMPROOT} && find . -type f | xargs cksum >> ${WRKDIR}/${SRCSUM})
+		(cd ${TEMPROOT} && find . -type f | xargs cksum > ${WRKDIR}/${SRCSUM})
 	fi
 
 	if [ "${TGZ}" -o "${XTGZ}" ]; then
@@ -142,12 +142,12 @@ do_populate() {
 		if [ "${TGZ}" ]; then
 			ETCSUM=etcsum
 			_E=$(cd `dirname ${TGZ}` && pwd)/`basename ${TGZ}`
-			(cd ${TEMPROOT} && tar -tzf ${_E} | xargs cksum >> ${WRKDIR}/${ETCSUM})
+			(cd ${TEMPROOT} && tar -tzf ${_E} | xargs cksum > ${WRKDIR}/${ETCSUM})
 		fi
 		if [ "${XTGZ}" ]; then
 			XETCSUM=xetcsum
 			_X=$(cd `dirname ${XTGZ}` && pwd)/`basename ${XTGZ}`
-			(cd ${TEMPROOT} && tar -tzf ${_X} | xargs cksum >> ${WRKDIR}/${XETCSUM})
+			(cd ${TEMPROOT} && tar -tzf ${_X} | xargs cksum > ${WRKDIR}/${XETCSUM})
 		fi
 	fi
 
