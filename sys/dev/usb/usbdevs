@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.464 2009/12/17 09:12:06 mpf Exp $
+$OpenBSD: usbdevs,v 1.465 2009/12/18 04:16:14 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -523,6 +523,7 @@ vendor AXESSTEL		0x1726	Axesstel
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
 vendor ASUS2		0x1761	ASUS
+vendor STRAWBERRYLINUX	0x1774	Strawberry linux Co., Ltd.
 vendor SWEEX2		0x177f	Sweex
 vendor MECANIQUE	0x1781	Mecanique
 vendor DISPLAYLINK	0x17e9	DisplayLink
@@ -2970,6 +2971,9 @@ product	STARTECH ICUSB232X	0x3410	ICUSB2321X/2X/4X
 /* STMicroelectronics products */
 product STMICRO BIOMETRIC_COPR	0x2016	Biometric Coprocessor
 product STMICRO COMMUNICATOR	0x7554	Communicator
+
+/* Strawberry Linux products */
+product STRAWBERRYLINUX USBRH 	0x1001	USBRH sensor
 
 /* STSN products */
 product STSN STSN0001		0x0001	Internet Access Device

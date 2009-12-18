@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.86 2009/12/09 21:27:19 matthieu Exp $
+#	$OpenBSD: files.usb,v 1.87 2009/12/18 04:16:14 yuo Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -153,6 +153,11 @@ file	dev/usb/udsbr.c			udsbr
 device	uthum: hid
 attach	uthum at uhidbus
 file	dev/usb/uthum.c			uthum
+
+# Strawberry Linux USBRH
+device	utrh: hid
+attach	utrh at uhidbus
+file	dev/usb/utrh.c			utrh
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus
