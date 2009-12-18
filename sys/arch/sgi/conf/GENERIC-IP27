@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.26 2009/12/18 11:40:16 jsing Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.27 2009/12/18 11:56:42 jsing Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -238,6 +238,8 @@ ses*		at scsibus?
 uk*		at scsibus?
 
 #### Crypto devices
-hifn*		at pci?		# Hi/fn 7751 crypto card
+lofn*		at pci?		# Hifn6500
+hifn*		at pci?		# Hifn7751/7811/7951
+ubsec*		at pci?		# Broadcom 58xx
 
 pseudo-device	crypto	1
