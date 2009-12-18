@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.29 2009/12/06 16:21:36 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.30 2009/12/18 13:51:02 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2009 $
+.Dd $Mdocdate: December 18 2009 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -150,6 +150,8 @@ The following files will always be skipped from comparison:
 .Pa /etc/motd ,
 .Pa /etc/myname ,
 .Pa /var/db/locate.database ,
+.Pa /var/db/sysmerge/etcsum ,
+.Pa /var/db/sysmerge/xetcsum ,
 .Pa /var/games/tetris.scores ,
 .Pa /var/mail/root .
 .Pp

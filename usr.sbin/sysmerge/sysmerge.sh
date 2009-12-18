@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.53 2009/12/06 16:21:36 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.54 2009/12/18 13:51:03 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -196,6 +196,7 @@ do_populate() {
 		      /etc/motd
 		      /etc/myname
 		      /var/db/locate.database
+		      /var/db/sysmerge/{etc,xetc}sum
 		      /var/games/tetris.scores
 		      /var/mail/root"
 	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
