@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.35 2009/11/09 00:18:27 kurt Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.36 2009/12/19 22:41:39 schwarze Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -271,11 +271,13 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 #endif
 	char **members;
 	char *line;
+	int saved_errno;
 
 	if (gs == NULL)
 		return 0;
 	members = gs->members;
 	line = gs->line;
+	saved_errno = errno;
 
 	for (;;) {
 #ifdef YP
@@ -285,35 +287,33 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 				    __ypcurrent, __ypcurrentlen,
 				    &key, &keylen, &data, &datalen);
 				free(__ypcurrent);
-				if (r) {
-					__ypcurrent = NULL;
-					__ypmode = 0;
-					free(data);
-					continue;
-				}
 				__ypcurrent = key;
 				__ypcurrentlen = keylen;
-				bcopy(data, line, datalen);
-				free(data);
 			} else {
 				r = yp_first(__ypdomain, "group.byname",
 				    &__ypcurrent, &__ypcurrentlen,
 				    &data, &datalen);
-				if (r) {
-					__ypmode = 0;
-					free(data);
-					continue;
-				}
-				bcopy(data, line, datalen);
-				free(data);
 			}
+			if (r) {
+				__ypmode = 0;
+				__ypcurrent = NULL;
+				if (r == YPERR_NOMORE)
+					continue;
+				else
+					return 0;
+			}
+			bcopy(data, line, datalen);
+			free(data);
 			line[datalen] = '\0';
 			bp = line;
 			goto parse;
 		}
 #endif
-		if (!fgets(line, sizeof(gs->line), _gr_fp))
-			return(0);
+		if (!fgets(line, sizeof(gs->line), _gr_fp)) {
+			if (feof(_gr_fp) && !ferror(_gr_fp))
+				errno = saved_errno;
+			return 0;
+		}
 		bp = line;
 		/* skip lines that are too big */
 		if (!strchr(line, '\n')) {
@@ -346,7 +346,8 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 			case '\n':
 				if (foundyp) {
 					*foundyp = 1;
-					return (NULL);
+					errno = saved_errno;
+					return 0;
 				}
 				if (!search) {
 					__ypmode = 1;
@@ -362,8 +363,14 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 					r = yp_match(__ypdomain, "group.bygid",
 					    buf, strlen(buf), &data, &datalen);
 				}
-				if (r != 0)
+				switch (r) {
+				case 0:
+					break;
+				case YPERR_KEY:
 					continue;
+				default:
+					return 0;
+				}
 				bcopy(data, line, datalen);
 				free(data);
 				line[datalen] = '\0';
@@ -390,20 +397,28 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 					continue;
 				r = yp_match(__ypdomain, "group.byname",
 				    bp, strlen(bp), &data, &datalen);
-				if (r)
+				switch (r) {
+				case 0:
+					break;
+				case YPERR_KEY:
 					continue;
+				default:
+					return 0;
+				}
 				bcopy(data, line, datalen);
 				free(data);
 				line[datalen] = '\0';
 				bp = line;
 			}
 		} else if (line[0] == '-') {
-			if(!__ypexclude_add(&__ypexhead,
-					    strsep(&line, ":\n") + 1))
-				if (foundyp) {
-					*foundyp = -1;
-					return (NULL);
-				}
+			if (__ypexclude_add(&__ypexhead,
+			    strsep(&line, ":\n") + 1))
+				return 0;
+			if (foundyp) {
+				*foundyp = -1;
+				errno = saved_errno;
+				return 0;
+			}
 			continue;
 		}
 parse:
@@ -449,7 +464,8 @@ parse:
 				cp = bp;
 		}
 		*m = NULL;
-		return(1);
+		errno = saved_errno;
+		return 1;
 	}
 	/* NOTREACHED */
 }
