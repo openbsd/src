@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.428 2009/12/17 21:33:20 espie Exp $
+# $OpenBSD: pkg_add,v 1.429 2009/12/19 09:21:04 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -789,7 +789,6 @@ sub process_parameters
 
 		if (@ARGV == 0) {
 			@ARGV = sort(installed_packages());
-			$state->{full_update} = 1;
 		}
 		my $inst = OpenBSD::PackageRepository::Installed->new;
 		for my $pkgname (@ARGV) {
