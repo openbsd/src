@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.16 2009/12/14 18:11:26 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.17 2009/12/19 14:21:14 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -38,6 +38,22 @@ sub new
 	return bless {}, $class;
 }
 
+sub sets_todo
+{
+	my $self = shift;
+
+	return scalar keys %{$self->{todo}};
+}
+sub handle_set
+{
+	my ($self, $set) = @_;
+	if ($set->{finished}) {
+		delete $self->{todo}->{$set};
+	} else {
+		$self->{todo}->{$set} = 1;
+	}
+}
+
 sub known
 {
 	my ($self, $set) = @_;
@@ -60,6 +76,7 @@ sub add_set
 		$self->{uptodate}->{$n->pkgname} = 1;
 	}
 	$self->known($set);
+	$self->handle_set($set);
 	return $self;
 }
 
@@ -82,11 +99,13 @@ sub remove_set
 		delete $self->{to_update}->{$n->pkgname};
 		delete $self->{cant_update}->{$n->pkgname};
 	}
+	$self->handle_set($set);
 }
 
 sub uptodate
 {
 	my ($self, $set) = @_;
+	$set->{finished} = 1;
 	$self->remove_set($set);
 	for my $n ($set->older, $set->kept) {
 		$self->{uptodate}->{$n->pkgname} = 1;
@@ -96,6 +115,7 @@ sub uptodate
 sub cant
 {
 	my ($self, $set) = @_;
+	$set->{finished} = 1;
 	$self->remove_set($set);
 	for my $n ($set->older) {
 		$self->{cant_update}->{$n->pkgname} = 1;
@@ -106,6 +126,7 @@ sub done
 {
 	my ($self, $set) = @_;
 
+	$set->{finished} = 1;
 	$self->remove_set($set);
 	$self->known($set);
 

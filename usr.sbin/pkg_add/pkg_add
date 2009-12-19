@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.429 2009/12/19 09:21:04 espie Exp $
+# $OpenBSD: pkg_add,v 1.430 2009/12/19 14:21:14 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -75,6 +75,12 @@ sub build_deptree
 		$state->{deptree}->{$dep} = $set unless
 		    defined $state->{deptree}->{$dep};
 	}
+}
+
+sub todo
+{
+	my $state = shift;
+	return $state->tracker->sets_todo;
 }
 
 sub deptree_header
@@ -536,7 +542,7 @@ sub really_add
 		}
 	});
 	$set->setup_header($state);
-	$state->progress->next($state->ntogo);
+	$state->progress->next($state->ntogo(-1));
 	for my $handle ($set->newer) {
 		my $pkgname = $handle->pkgname;
 		my $plist = $handle->plist;
@@ -571,7 +577,6 @@ sub install_set
 	}
 
 	if (!$state->updater->process_set($set, $state)) {
-		$set->{finished} = 1;
 		return ();
 	}
 
@@ -845,7 +850,6 @@ framework(
 sub {
 	if ($state->{allow_replacing}) {
 		$state->progress->set_header("Looking for packages");
-		$state->{todo} = (scalar @todo2) + 1;
 		do_quirks($state);
 	}
 
@@ -853,7 +857,6 @@ sub {
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
 		$state->progress->set_header("Looking for packages");
-		$state->{todo} = scalar @todo2;
 		unshift(@todo2, install_set($set, $state));
 		eval {
 			$state->quirks->tweak_list(\@todo2, $state);

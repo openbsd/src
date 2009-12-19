@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.39 2009/12/14 18:11:26 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.40 2009/12/19 14:21:14 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -282,6 +282,7 @@ sub merge
 		$self->add_older($set->older);
 		# ... and mark it as already done
 		$set->{finished} = 1;
+		$tracker->handle_set($set);
 		$self->{updates} += $set->{updates};
 		$set->{updates} = 0;
 		# XXX and mark it as merged, for eventual updates

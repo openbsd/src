@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.7 2009/12/17 11:11:51 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.8 2009/12/19 14:21:14 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -220,9 +220,9 @@ sub init
 
 sub ntogo
 {
-	my $self = shift;
+	my ($self, $offset) = @_;
 
-	return $self->progress->ntogo($self->{todo});
+	return $self->progress->ntogo($self->todo, $offset);
 }
 
 sub vstat
