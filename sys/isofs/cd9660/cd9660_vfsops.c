@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.52 2009/12/12 06:44:46 krw Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.53 2009/12/19 00:27:17 krw Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -225,7 +225,6 @@ iso_mountfs(devvp, mp, p, argp)
 	struct buf *pribp = NULL, *supbp = NULL;
 	dev_t dev = devvp->v_rdev;
 	int error = EINVAL;
-	int needclose = 0;
 	int ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 	extern struct vnode *rootvp;
 	int iso_bsize;
@@ -260,7 +259,6 @@ iso_mountfs(devvp, mp, p, argp)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
-	needclose = 1;
 	
 	/*
 	 * This is the "logical sector size".  The standard says this
@@ -446,11 +444,10 @@ out:
 		brelse(bp);
 	if (supbp)
 		brelse(supbp);
-	if (needclose) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-		VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-		VOP_UNLOCK(devvp, 0, p);
-	}
+
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+	VOP_UNLOCK(devvp, 0, p);
 
 	if (isomp) {
 		free((caddr_t)isomp, M_ISOFSMNT);

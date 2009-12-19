@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.120 2009/07/09 22:29:56 thib Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.121 2009/12/19 00:27:17 krw Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -915,7 +915,11 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
+
+	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
+	VOP_UNLOCK(devvp, 0, p);
+
 	if (ump) {
 		free(ump->um_fs, M_UFSMNT);
 		free(ump, M_UFSMNT);
