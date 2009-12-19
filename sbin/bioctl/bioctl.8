@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.78 2009/11/25 18:51:58 jsing Exp $
+.\"	$OpenBSD: bioctl.8,v 1.79 2009/12/19 16:27:54 jsing Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 25 2009 $
+.Dd $Mdocdate: December 19 2009 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -165,7 +165,7 @@ Force the operation;
 for example, force the creation of volumes
 with unclean data in the metadata areas.
 .It Ar noauto
-Ignore this RAID volume upon reboot.
+Do not automatically assemble this volume at boot time.
 .El
 .It Fl c Ar raidlevel
 Create a
