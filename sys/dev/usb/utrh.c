@@ -1,4 +1,4 @@
-/*	$OpenBSD: utrh.c,v 1.1 2009/12/18 04:16:14 yuo Exp $   */
+/*	$OpenBSD: utrh.c,v 1.2 2009/12/19 05:49:58 yuo Exp $   */
 
 /*
  * Copyright (c) 2009 Yojiro UO <yuo@nui.org>
@@ -250,8 +250,8 @@ utrh_refresh(void *arg)
 	    cmdbuf, sc->sc_olen))
 		return;
 
-	/* wait till sensor data are updated, 1000ms will be enough */
-	tsleep(&sc->sc_sensortask, 0, "utrh", 1000);
+	/* wait till sensor data are updated, 1s will be enough */
+	tsleep(&sc->sc_sensortask, 0, "utrh", (1*hz));
 
 	temp_tick = (sc->sc_ibuf[2] * 256 + sc->sc_ibuf[3]) & 0x3fff;
 	humidity_tick = (sc->sc_ibuf[0] * 256 + sc->sc_ibuf[1]) & 0x0fff;
