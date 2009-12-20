@@ -1,4 +1,4 @@
-# $OpenBSD: dot.login,v 1.13 2009/05/06 22:02:05 millert Exp $
+# $OpenBSD: dot.login,v 1.14 2009/12/20 15:35:35 deraadt Exp $
 #
 # csh login file
 
@@ -13,8 +13,4 @@ if ( -x /usr/bin/tset ) then
 	finish:
 	unset noglob histchars
 	onintr
-endif
-
-if ( `logname` == `whoami` ) then
-	echo "Read the afterboot(8) man page for administration advice."
 endif
