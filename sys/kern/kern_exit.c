@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.88 2009/12/20 23:36:04 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.89 2009/12/20 23:54:11 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -169,7 +169,6 @@ exit1(struct proc *p, int rv, int flags)
 	 * wake up the parent early to avoid deadlock.
 	 */
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
-	atomic_clearbits_int(&p->p_flag, P_TRACED);
 	if (p->p_flag & P_PPWAIT) {
 		atomic_clearbits_int(&p->p_flag, P_PPWAIT);
 		wakeup(p->p_pptr);
@@ -521,6 +520,7 @@ proc_finish_wait(struct proc *waiter, struct proc *p)
 	 * we need to give it back to the old parent.
 	 */
 	if (p->p_oppid && (t = pfind(p->p_oppid))) {
+		atomic_clearbits_int(&p->p_flag, P_TRACED);
 		p->p_oppid = 0;
 		proc_reparent(p, t);
 		if (p->p_exitsig != 0)
