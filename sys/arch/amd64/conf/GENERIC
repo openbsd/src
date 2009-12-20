@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.281 2009/12/09 21:30:24 matthieu Exp $
+#	$OpenBSD: GENERIC,v 1.282 2009/12/20 15:36:10 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -238,6 +238,7 @@ upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 urtw*	at uhub?		# RealTek 8187
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 uthum*	at uhidev?		# TEMPerHUM sensor
+utrh*	at uhidev?		# USBRH sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 uvideo*	at uhub?		# USB Video
