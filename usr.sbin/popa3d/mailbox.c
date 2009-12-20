@@ -1,4 +1,4 @@
-/* $OpenBSD: mailbox.c,v 1.6 2003/05/12 19:28:22 camield Exp $ */
+/* $OpenBSD: mailbox.c,v 1.7 2009/12/20 15:57:26 tobias Exp $ */
 
 /*
  * Mailbox access.
@@ -336,7 +336,6 @@ static int mailbox_parse(int init)
 int mailbox_open(char *spool, char *mailbox)
 {
 	char *pathname;
-	struct stat stat;
 	int result;
 
 	mailbox_fd = -1;
@@ -344,22 +343,8 @@ int mailbox_open(char *spool, char *mailbox)
 	if (asprintf(&pathname, "%s/%s", spool, mailbox) == -1)
 		return 1;
 
-	if (lstat(pathname, &stat)) {
-		free(pathname);
-		return errno != ENOENT;
-	}
-
-	if (!S_ISREG(stat.st_mode)) {
-		free(pathname);
-		return 1;
-	}
-
-	if (!stat.st_size) {
-		free(pathname);
-		return 0;
-	}
-
-	mailbox_fd = open(pathname, O_RDWR | O_NOCTTY | O_NONBLOCK);
+	mailbox_fd = open(pathname,
+	    O_RDWR | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK);
 
 	free(pathname);
 
