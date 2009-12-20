@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.28 2009/11/17 10:17:21 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.29 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -25,7 +25,7 @@ use OpenBSD::PackageInfo;
 sub find_collisions
 {
 	my ($todo, $state) = @_;
-	my $verbose = $state->{verbose};
+	my $verbose = $state->verbose >= 3;
 	my $bypkg = {};
 	for my $name (keys %$todo) {
 		my $p = $state->vstat->exists($name);
@@ -132,7 +132,7 @@ sub collision_report($$)
 	if ($dorepair == 1) {
 		for my $f (@$list) {
 
-			if ($state->unlink($state->{verbose}, 
+			if ($state->unlink($state->verbose >= 2, 
 			    $destdir.$f->fullname)) {
 				$state->{problems}--;
 			} else {

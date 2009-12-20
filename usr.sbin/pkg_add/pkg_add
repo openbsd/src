@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.430 2009/12/19 14:21:14 espie Exp $
+# $OpenBSD: pkg_add,v 1.431 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -54,7 +54,7 @@ sub has_new_sig
 		my $n = OpenBSD::PackingList->from_installation($plist->pkgname)->signature;
 		my $o = $plist->signature;
 		$state->say("Comparing full signature for ", $plist->pkgname, " \"$o\" vs. \"$n\": ", $n eq $o ? "equal" : "different") 
-		    if $state->{very_verbose};
+		    if $state->verbose >= 3;
 		$plist->{new_sig} = $n ne $o;
 	}
 	return $plist->{new_sig};
@@ -145,6 +145,7 @@ sub setup_header
 	}
 
 	if (!$state->progress->set_header($header)) {
+		return unless $state->verbose;
 		if (!defined $info) {
 			$header = "Adding $header";
 		}
@@ -160,6 +161,35 @@ sub setup_header
 		}
 		print "\n";
 	}
+}
+
+sub status
+{
+	my ($set, $state, $handle, $info) = @_;
+
+	my $header = $state->deptree_header($set);
+	if (defined $handle) {
+		$header .= $handle->pkgname;
+	} else {
+		$header .= $set->print;
+	}
+	if (defined $info) {
+		$header.=" ($info)";
+	}
+
+	if (!defined $info) {
+		$header = "Adding $header";
+	}
+	if (defined $state->{lastheader} && 
+	    $header eq $state->{lastheader}) {
+		return;
+	}
+	$state->{lastheader} = $header;
+	$header .= "(pretending) " if $state->{not};
+	if ($state->{do_faked}) {
+		$header .= " under ".$state->{destdir};
+	}
+	$state->say($header);
 }
 
 sub complete
@@ -432,6 +462,7 @@ sub really_add
 	}
 
 	$set->setup_header($state);
+	local $SIG{'INFO'} = sub { $set->status($state); };
 
 	# XXX in `combined' updates, some dependencies may remove extra 
 	# packages, so we do a double-take on the list of packages we 
@@ -465,6 +496,7 @@ sub really_add
 
 	if ($replacing) {
 		for my $handle ($set->newer) {
+			next if $state->{size_only};
 			$set->setup_header($state, $handle, "extracting");
 
 			try {
@@ -486,6 +518,7 @@ sub really_add
 		$set->{solver}->record_old_dependencies($state);
 		build_before($set->older_to_do);
 		iterate($set->older_to_do, sub {
+			return if $state->{size_only};
 			my $o = shift;
 			$set->setup_header($state, $o, "deleting");
 			my $oldname = $o->pkgname;
@@ -511,6 +544,7 @@ sub really_add
 
 	my $first = 1;
 	iterate($set->newer, sub {
+		return if $state->{size_only};
 		my $handle = shift;
 
 		if (!$first) {
@@ -621,7 +655,7 @@ sub install_set
 	if (!defined $set->{solver}) {
 		$set->{solver} = OpenBSD::Dependencies::Solver->new($set);
 		my @deps = $set->{solver}->solve_depends($state);
-		if ($state->{verbose}) {
+		if ($state->verbose >= 2) {
 			$set->{solver}->dump;
 		}
 		if (@deps > 0) {
@@ -775,6 +809,7 @@ sub do_quirks
 		$state->{quirks} = OpenBSD::Quirks->new(1);
 	};
 }
+
 sub process_parameters
 {
 	# match fuzzily against a list
@@ -810,9 +845,8 @@ sub process_parameters
 				push(@todo2, OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->from_location($l)));
 			}
 		}
-
-
 	} else {
+
 	# actual names
 		my $m = $opt_z ? "add_hints" : "add_hints2";
 		for my $pkgname (@ARGV) {
@@ -856,6 +890,7 @@ sub {
 	$state->tracker->todo(@todo2);
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
+		local $SIG{INFO} = sub { $state->say($set->print, "(", $state->todo, ")"); };
 		$state->progress->set_header("Looking for packages");
 		unshift(@todo2, install_set($set, $state));
 		eval {

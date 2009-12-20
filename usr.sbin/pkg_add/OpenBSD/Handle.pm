@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.12 2009/11/28 12:50:25 espie Exp $
+# $OpenBSD: Handle.pm,v 1.13 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -179,7 +179,7 @@ sub get_plist
 	my $location = $handle->{location};
 	my $pkg = $handle->pkgname;
 
-	if ($state->{verbose}) {
+	if ($state->verbose >= 2) {
 		$state->say($state->deptree_header($pkg), "parsing $pkg");
 	}
 	my $plist = $location->grabPlist;
@@ -207,7 +207,7 @@ sub get_plist
 		$handle->{tweaked} = 
 		    OpenBSD::Add::tweak_package_status($pkgname, $state);
 		$state->say("Not reinstalling $pkgname")
-		    if $state->{verbose} and !$handle->{tweaked};
+		    if $state->verbose >= 2 and !$handle->{tweaked};
 		$state->tracker->{installed}->{$pkgname} = 1;
 		$location->close_now;
 		$location->wipe_info;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.164 2009/12/17 11:57:02 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.165 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -409,7 +409,7 @@ sub check_digest
 		$state->log->fatal("checksum for ", $self->fullname, 
 		    " does not match");
 	}
-	if ($state->{very_verbose}) {
+	if ($state->verbose >= 3) {
 		$state->say("Checksum match for ", $self->fullname);
 	}
 }
@@ -1196,7 +1196,7 @@ sub run
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 	$state->say($self->keyword, " ", $self->{expanded}) 
-	    if $state->{beverbose};
+	    if $state->verbose >= 2;
 	$state->log->system(OpenBSD::Paths->sh, '-c', $self->{expanded}) 
 	    unless $state->{not};
 }
@@ -1503,7 +1503,6 @@ sub run
 {
 	my ($self, $state, @args) = @_;
 
-	my $not = $state->{not};
 	my $pkgname = $state->{pkgname};
 	my $name = $self->fullname;
 
@@ -1511,8 +1510,8 @@ sub run
 
 	OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 	$state->say($self->beautify, " script: $name $pkgname ", 
-	    join(' ', @args)) if $state->{beverbose};
-	return if $not;
+	    join(' ', @args)) if $state->verbose >= 2;
+	return if $state->{not};
 	chmod 0755, $name;
 	return if $state->log->system($name, $pkgname, @args) == 0;
 	if ($state->{defines}->{scripts}) {

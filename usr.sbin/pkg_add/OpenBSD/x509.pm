@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: x509.pm,v 1.3 2009/11/11 11:13:16 espie Exp $
+# $OpenBSD: x509.pm,v 1.4 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -111,7 +111,7 @@ sub check_signature
 	    	$state->log->warn("Bad signature");
 		return 0;
 	}
-	if ($state->{verbose}) {
+	if ($state->verbose >= 2) {
 		dump_certificate_info($fname2);
 	}
 	unlink $fname;

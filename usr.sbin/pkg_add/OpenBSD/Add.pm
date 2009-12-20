@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.100 2009/12/17 11:57:02 espie Exp $
+# $OpenBSD: Add.pm,v 1.101 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -35,7 +35,7 @@ sub manpages_index
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
 		if ($state->{not}) {
-			$state->say("Merging manpages in $destdir$k: ", join(@l)) if $state->{verbose};
+			$state->say("Merging manpages in $destdir$k: ", join(@l)) if $state->verbose >= 2;
 		} else {
 			try { 
 				OpenBSD::Makewhatis::merge($destdir.$k, \@l); 
@@ -284,11 +284,11 @@ sub install
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	my $auth = $self->name;
-	$state->say("adding ", $self->type, " ", $auth) if $state->{verbose};
+	$state->say("adding ", $self->type, " ", $auth) if $state->verbose >= 2;
 	return if $state->{not};
 	return if defined $self->{okay};
 	my $l=[];
-	push(@$l, "-v") if $state->{very_verbose};
+	push(@$l, "-v") if $state->verbose >= 2;
 	$self->build_args($l);
 	$state->vsystem($self->command,, @$l, '--', $auth);
 }
@@ -340,7 +340,7 @@ sub install
 		return;
 	}
 	if ($state->{not}) {
-		$state->say("sysctl -w $name != ".  $self->{value});
+		$state->say("sysctl -w $name != ".  $self->{value}) if $state->verbose >= 2;
 		return;
 	}
 	$state->vsystem(OpenBSD::Paths->sysctl, '--', $name.'='.$self->{value});
@@ -388,7 +388,7 @@ sub install
 
 	if ($state->{replacing}) {
 		if ($state->{not}) {
-			$state->say("moving tempfile -> $destdir$fullname") if $state->{very_verbose};
+			$state->say("moving tempfile -> $destdir$fullname") if $state->verbose >= 5;
 			return;
 		}
 		File::Path::mkpath(dirname($destdir.$fullname));
@@ -399,13 +399,13 @@ sub install
 		} else {
 			rename($self->{tempname}, $destdir.$fullname) or 
 			    Fatal "Can't move ", $self->{tempname}, " to $fullname: $!";
-			$state->say("moving ", $self->{tempname}, " -> $destdir$fullname") if $state->{very_verbose};
+			$state->say("moving ", $self->{tempname}, " -> $destdir$fullname") if $state->verbose >= 5;
 			undef $self->{tempname};
 		}
 	} else {
 		my $file = $self->prepare_to_extract($state);
 
-		$state->say("extracting $destdir$fullname") if $state->{very_verbose};
+		$state->say("extracting $destdir$fullname") if $state->verbose >= 5;
 		if ($state->{not}) {
 			$state->{archive}->skip;
 			return;
@@ -508,7 +508,7 @@ sub install
 	my $orig = $self->{copyfrom};
 	my $origname = $destdir.$orig->fullname;
 	if (-e $filename) {
-		if ($state->{verbose}) {
+		if ($state->verbose) {
 		    $state->say("The existing file $filename has NOT been changed");
 		    if (defined $orig->{d}) {
 
@@ -524,13 +524,13 @@ sub install
 		}
 	} else {
 		if ($state->{not}) {
-			$state->say("The file $filename would be installed from $origname");
+			$state->say("The file $filename would be installed from $origname") if $state->verbose >= 2;
 		} else {
 			if (!copy($origname, $filename)) {
 				$state->errsay("File $filename could not be installed:\n\t$!");
 			}
 			$self->set_modes($filename);
-			if ($state->{verbose}) {
+			if ($state->verbose >= 2) {
 			    $state->say("installed $filename from $origname");
 			}
 		}
@@ -596,7 +596,7 @@ sub install
 	print $shells2 $fullname, "\n";
 	close $shells2;
 	$state->say("Shell $fullname appended to $destdir",
-	    OpenBSD::Paths->shells);
+	    OpenBSD::Paths->shells) if $state->verbose;
 }
 
 package OpenBSD::PackingElement::Dir;
@@ -607,7 +607,7 @@ sub install
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
-	$state->say("new directory ", $destdir, $fullname) if $state->{very_verbose};
+	$state->say("new directory ", $destdir, $fullname) if $state->verbose >= 5;
 	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
 	$self->set_modes($destdir.$fullname);

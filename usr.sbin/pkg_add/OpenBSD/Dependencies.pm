@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.98 2009/12/13 17:54:15 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.99 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -87,7 +87,7 @@ sub find_in_already_done
 	    $self->{known});
 	if ($r) {
 		$state->say("found libspec $obj in package $r") 
-		    if $state->{verbose};
+		    if $state->verbose >= 3;
 		return $r;
 	} else {
 		return undef;
@@ -103,7 +103,7 @@ sub find_in_extra_sources
 	for my $dir (OpenBSD::SharedLibs::system_dirs()) {
 		if ($solver->check_lib_spec($dir, $obj, {system => 1})) {
 			$state->say("found libspec $obj in $dir/lib")
-			    if $state->{verbose};
+			    if $state->verbose >= 3;
 			return 'system';
 		}
 	}
@@ -122,7 +122,7 @@ sub find_in_new_source
 	if ($solver->check_lib_spec($solver->{localbase}, $obj, 
 	    {$dep => 1})) {
 		$state->say("found libspec $obj in package $dep") 
-		    if $state->{verbose};
+		    if $state->verbose >= 3;
 		return $dep;
 	} 
 	return undef;
@@ -138,7 +138,7 @@ sub find_elsewhere
 			    $solver->{localbase}, $dep->{pattern}, $obj);
 			if ($r) {
 				$state->say("found libspec $obj in old package $r")
-				    if $state->{verbose};
+				    if $state->verbose;
 				return $r;
 			}
 		}
@@ -161,7 +161,7 @@ sub find_in_already_done
 	my ($self, $solver, $state, $obj) = @_;
 	my $r = $self->{known_tags}->{$obj};
 	if (defined $r) {
-		$state->say("Found tag $obj in $r") if $state->{verbose};
+		$state->say("Found tag $obj in $r") if $state->verbose >= 3;
 	}
 	return $r;
 }
@@ -427,15 +427,15 @@ sub adjust_old_dependency_on
 		my $oldname = $o->pkgname;
 
 		$state->say("Adjusting dependencies for ",
-		    "$oldname->$pkgname") if $state->{beverbose};
+		    "$oldname->$pkgname") if $state->verbose >= 3;
 		my $d = OpenBSD::RequiredBy->new($pkgname);
 		for my $dep (@{$o->{wantlist}}) {
 			if (defined $set->{older}->{$dep}) {
 				$state->say("\tskipping $dep")
-				    if $state->{beverbose};
+				    if $state->verbose >= 4;
 				next;
 			}
-			$state->say("\t$dep") if $state->{beverbose};
+			$state->say("\t$dep") if $state->verbose >= 4;
 			$d->add($dep);
 			OpenBSD::Replace::adjust_dependency($dep, 
 			    $oldname, $pkgname) if $oldname ne $pkgname;

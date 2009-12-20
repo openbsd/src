@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.93 2009/12/17 11:57:02 espie Exp $
+# $OpenBSD: Delete.pm,v 1.94 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,7 @@ sub manpages_unindex
 	while (my ($k, $v) = each %{$state->{mandirs}}) {
 		my @l = map { $destdir.$_ } @$v;
 		if ($state->{not}) {
-			$state->say("Removing manpages in $destdir$k: ", join(@l)) if $state->{verbose};
+			$state->say("Removing manpages in $destdir$k: ", join(@l)) if $state->verbose >= 2;
 		} else {
 			eval { OpenBSD::Makewhatis::remove($destdir.$k, \@l); };
 			if ($@) {
@@ -127,7 +127,7 @@ sub unregister_dependencies
 
 	for my $name (OpenBSD::Requiring->new($pkgname)->list) {
 		$state->say("remove dependency on $name") 
-		    if $state->{very_verbose} or $state->{not};
+		    if $state->verbose >= 3;
 		local $@;
 		try { 
 			OpenBSD::RequiredBy->new($name)->delete($pkgname);
@@ -278,7 +278,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 
-	if ($state->{beverbose}) {
+	if ($state->verbose >= 2) {
 		$state->say("rmuser: ", $self->name);
 	}
 
@@ -296,7 +296,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 
-	if ($state->{beverbose}) {
+	if ($state->verbose >= 2) {
 		$state->say("rmgroup: ", $self->name);
 	}
 
@@ -321,7 +321,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 
-	if ($state->{very_verbose}) {
+	if ($state->verbose >= 5) {
 		$state->say("rmdir: ", $self->fullname);
 	}
 
@@ -424,7 +424,7 @@ sub delete
 			}
 		}
 	}
-	if ($state->{very_verbose}) {
+	if ($state->verbose >= 5) {
 		$state->say("deleting: $realname");
 	}
 	return if $state->{not};
@@ -533,7 +533,7 @@ sub delete
 	} else {
 		my $d = $self->compute_digest($realname, $orig->{d});
 		if ($d->equals($orig->{d})) {
-			$state->say("File $realname identical to sample") if $state->{not} or $state->{verbose};
+			$state->say("File $realname identical to sample") if $state->verbose >= 2;
 		} else {
 			unless ($state->{extra}) {
 				$self->mark_dir($state);
@@ -542,8 +542,8 @@ sub delete
 			}
 		}
 	}
+	$state->say("deleting $realname") if $state->verbose >= 2;
 	return if $state->{not};
-	$state->say("deleting $realname") if $state->{verbose};
 	if (!unlink $realname) {
 		$state->say("Problem deleting $realname");
 		$state->log("deleting $realname failed: $!\n");
@@ -587,7 +587,7 @@ sub delete
 			print $shells2 @l;
 			close $shells2;
 			$state->say("Shell $fullname removed from $destdir",
-			    OpenBSD::Paths->shells);
+			    OpenBSD::Paths->shells) if $state->verbose;
 		}
 	}
 	$self->SUPER::delete($state);
@@ -600,7 +600,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 	my $realname = $self->realname($state);
-	if ($state->{beverbose} && $state->{extra}) {
+	if ($state->verbose >= 2 && $state->{extra}) {
 		$state->say("deleting extra file: $realname");
 	}
 	return if $state->{not};

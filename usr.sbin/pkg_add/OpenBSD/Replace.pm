@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.61 2009/12/17 08:21:09 espie Exp $
+# $OpenBSD: Replace.pm,v 1.62 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -116,7 +116,7 @@ sub extract
 	}
 	if ($state->{not}) {
 		$state->say("extracting tempfile under $d") 
-		    if $state->{very_verbose};
+		    if $state->verbose >= 3;
 		$state->{archive}->skip;
 	} else {
 		if (!-e _) {
@@ -124,7 +124,7 @@ sub extract
 		}
 		my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
 
-		$state->say("extracting $tempname") if $state->{very_verbose};
+		$state->say("extracting $tempname") if $state->verbose >= 3;
 		$self->{tempname} = $tempname;
 
 		# XXX don't apply destdir twice
@@ -145,7 +145,7 @@ sub extract
 	return if -e $destdir.$fullname;
 	$self->SUPER::extract($state);
 	$state->say("new directory ", $destdir, $fullname) 
-	    if $state->{very_verbose};
+	    if $state->verbose >= 3;
 	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
 }
@@ -336,7 +336,7 @@ sub can_old_package_be_replaced
 	}
 	if (@r) {
 		$state->say("Verifying dependencies still match for ", 
-		    join(', ', @r)) if $state->{verbose};
+		    join(', ', @r)) if $state->verbose >= 2;
 		for my $wanting (@wantlist) {
 			my $p2 = OpenBSD::PackingList->from_installation(
 			    $wanting, \&OpenBSD::PackingList::DependOnly);
@@ -415,11 +415,11 @@ sub adjust_depends_closure
 	my ($oldname, $plist, $state) = @_;
 
 	$state->say("Packages that depend on those shared libraries:") 
-	    if $state->{beverbose};
+	    if $state->verbose >= 3;
 
 	my $write = OpenBSD::RequiredBy->new($plist->pkgname);
 	for my $pkg (OpenBSD::RequiredBy->compute_closure($oldname)) {
-		$state->say("\t", $pkg) if $state->{beverbose};
+		$state->say("\t", $pkg) if $state->verbose >= 3;
 		$write->add($pkg);
 		OpenBSD::Requiring->new($pkg)->add($plist->pkgname);
 	}
@@ -435,7 +435,7 @@ sub do_save_libs
 	my $stub_name = $stub_list->pkgname;
 	my $dest = installed_info($stub_name);
 	$state->say("Keeping them in $stub_name") 
-	    if $state->{verbose};
+	    if $state->verbose >= 2;
 
 
 	if ($state->{not}) {
@@ -471,7 +471,7 @@ sub save_libs_from_handle
 	my $p = {};
 
 	$state->say("Looking for changes in shared libraries") 
-	    if $state->{beverbose};
+	    if $state->verbose >= 2;
 	$o->plist->mark_lib($libs, $p);
 	for my $n ($set->newer) {
 		$n->plist->unmark_lib($libs, $p);
@@ -482,10 +482,10 @@ sub save_libs_from_handle
 
 	if (%$libs) {
 		$state->say("Libraries to keep: ", 
-		    join(",", sort(keys %$libs))) if $state->{verbose};
+		    join(",", sort(keys %$libs))) if $state->verbose >= 2;
 		do_save_libs($o, $libs, $state);
 	} else {
-		$state->say("No libraries to keep") if $state->{verbose};
+		$state->say("No libraries to keep") if $state->verbose >= 2;
 	}
 }
 

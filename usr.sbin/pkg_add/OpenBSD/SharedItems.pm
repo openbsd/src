@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.17 2009/12/17 11:57:02 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.18 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -27,14 +27,15 @@ use OpenBSD::Paths;
 
 sub find_items_in_installed_packages
 {
-	my $progress = shift;
+	my $state = shift;
 	my $db = OpenBSD::SharedItemsRecorder->new;
 	my @list = installed_packages();
 	my $total = @list;
-	$progress->set_header("Read shared items");
+	local $SIG{INFO} = sub { $state->say("Read shared items"); };
+	$state->progress->set_header("Read shared items");
 	my $done = 0;
 	for my $e (@list) {
-		$progress->show($done, $total);
+		$state->progress->show($done, $total);
 		my $plist = OpenBSD::PackingList->from_installation($e, 
 		    \&OpenBSD::PackingList::SharedItemsOnly) or next;
 		next if !defined $plist;
@@ -48,9 +49,10 @@ sub cleanup
 {
 	my ($recorder, $state) = @_;
 
-	my $remaining = find_items_in_installed_packages($state->progress);
+	my $remaining = find_items_in_installed_packages($state);
 
 	$state->progress->clear;
+	local $SIG{INFO} = sub { $state->say("Clean shared items"); };
 	$state->progress->set_header("Clean shared items");
 	my $h = $recorder->{dirs};
 	my $u = $recorder->{users};

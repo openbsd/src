@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.8 2009/12/19 14:21:14 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.9 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ our $bad = 0;
 our %defines = ();
 our $state;
 
-our ($opt_n, $opt_x, $opt_v, $opt_B, $opt_L, $opt_i, $opt_q, $opt_c, $opt_I);
+our ($opt_n, $opt_x, $opt_v, $opt_B, $opt_L, $opt_i, $opt_q, $opt_c, $opt_I, $opt_s);
 $opt_v = 0;
 
 sub handle_options
@@ -36,7 +36,7 @@ sub handle_options
 		}
 	};
 	try {
-		getopts('hciInqvxB:f:F:L:'.$opt_string, $hash);
+		getopts('hciInqvsxB:f:F:L:'.$opt_string, $hash);
 	} catchall {
 		Usage($_);
 	};
@@ -44,15 +44,17 @@ sub handle_options
 	$opt_L = OpenBSD::Paths->localbase unless defined $opt_L;
 
 	$state->{recorder} = OpenBSD::SharedItemsRecorder->new;
+	if ($opt_s) {
+		$opt_n = 1;
+	}
 	$state->{not} = $opt_n;
 	# XXX RequiredBy
 	$main::not = $opt_n;
 	$state->{defines} = \%defines;
-	$state->{very_verbose} = $opt_v >= 2;
-	$state->{verbose} = $opt_v;
 	$state->{interactive} = $opt_i;
-	$state->{beverbose} = $opt_n || ($opt_v >= 2);
+	$state->{v} = $opt_v;
 	$state->{localbase} = $opt_L;
+	$state->{size_only} = $opt_s;
 	$state->{quick} = $opt_q;
 	$state->{extra} = $opt_c;
 	$state->{dont_run_scripts} = $opt_I;
@@ -95,12 +97,12 @@ sub framework
 		$state->{recorder}->cleanup($state);
 		OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
 		OpenBSD::PackingElement::Fontdir::finish_fontdirs($state);
-		if ($state->{beverbose}) {
-			$state->vstat->tally;
-		}
 		$state->progress->clear;
 		$state->log->dump;
 		finish_display();
+		if ($state->verbose >= 2 || $opt_s) {
+			$state->vstat->tally;
+		}
 		# show any error, and show why we died...
 		rethrow $dielater;
 	} catch {
@@ -216,6 +218,7 @@ sub init
 	$self->{l} = OpenBSD::Log->new;
 	$self->{vstat} = OpenBSD::MyStat->new;
 	$self->{progressmeter} = bless {}, "OpenBSD::StubProgress";
+	$self->{v} = 0;
 }
 
 sub ntogo
@@ -223,6 +226,11 @@ sub ntogo
 	my ($self, $offset) = @_;
 
 	return $self->progress->ntogo($self->todo, $offset);
+}
+
+sub verbose
+{
+	return shift->{v};
 }
 
 sub vstat
@@ -274,7 +282,7 @@ sub vsystem
 {
 	my $self = shift;
 	$self->progress->clear;
-	OpenBSD::Error::VSystem($self->{very_verbose}, @_);
+	OpenBSD::Error::VSystem($self->verbose >= 2, @_);
 }
 
 sub system
@@ -295,7 +303,7 @@ sub unlink
 sub setup_progressmeter
 {
 	my ($self, $opt_x) = @_;
-	if (!$opt_x && !$self->{beverbose}) {
+	if (!$opt_x && $self->verbose) {
 		require OpenBSD::ProgressMeter;
 		$self->{progressmeter} = OpenBSD::ProgressMeter->new;
 	}
@@ -306,7 +314,7 @@ sub check_root
 	my $state = shift;
 	if ($< && !$state->{defines}->{nonroot}) {
 		if ($state->{not}) {
-			$state->errsay("$0 should be run as root");
+			$state->errsay("$0 should be run as root") if $state->verbose;
 		} else {
 			Fatal "$0 must be run as root";
 		}
@@ -317,7 +325,7 @@ sub choose_location
 {
 	my ($state, $name, $list, $is_quirks) = @_;
 	if (@$list == 0) {
-		$state->say("Can't find $name") unless $is_quirks;
+		$state->errsay("Can't find $name") unless $is_quirks;
 		return undef;
 	} elsif (@$list == 1) {
 		return $list->[0];
@@ -332,7 +340,7 @@ sub choose_location
 		my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $name", 1, sort keys %h);
 		return $h{$result};
 	} else {
-		$state->say("Ambiguous: $name could be ", join(' ', keys %h));
+		$state->errsay("Ambiguous: $name could be ", join(' ', keys %h));
 		return undef;
 	}
 }

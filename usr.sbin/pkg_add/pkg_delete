@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.129 2009/12/19 14:21:14 espie Exp $
+# $OpenBSD: pkg_delete,v 1.130 2009/12/20 22:38:45 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -83,7 +83,7 @@ sub process_parameters
 	@todo = OpenBSD::RequiredBy->compute_closure(@realnames);
 
 	if (@todo > @realnames) {
-		my $details = $state->{very_verbose} || $defines{verbosedeps};
+		my $details = $state->verbose >= 2 || $defines{verbosedeps};
 		my $show    = sub {
 			my ($p, $d) = @_;
 			$state->say("Can't remove ", join(' ', @$p), 
@@ -132,7 +132,7 @@ sub {
 			$state->{todo} = scalar @todo - scalar keys %done;
 			next if $done{$pkgname};
 			unless (is_installed($pkgname)) {
-				$state->say("$pkgname was not installed");
+				$state->errsay("$pkgname was not installed");
 				$done{$pkgname} = 1;
 				$removed++;
 				next;
@@ -151,10 +151,16 @@ sub {
 					next;
 				}
 			}
-			if (!$state->progress->set_header($pkgname)) {
-				print $state->{not} ? "Pretending to delete " : 
+			my $info = sub {
+				$state->say($state->{not} ? 
+				    "Pretending to delete " : 
 				    "Deleting ", 
-				    "$pkgname\n";
+				    $pkgname);
+			};
+
+			local $SIG{'INFO'} = $info;
+			if (!$state->progress->set_header($pkgname)) {
+				&$info if $state->verbose;
 			}
 			$state->log->set_context($pkgname);
 			OpenBSD::Delete::delete_package($pkgname, $state);
