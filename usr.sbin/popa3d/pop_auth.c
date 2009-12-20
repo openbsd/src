@@ -1,4 +1,4 @@
-/* $OpenBSD: pop_auth.c,v 1.3 2003/05/12 19:28:22 camield Exp $ */
+/* $OpenBSD: pop_auth.c,v 1.4 2009/12/20 15:55:42 tobias Exp $ */
 
 /*
  * AUTHORIZATION state handling.
@@ -37,8 +37,14 @@ static int pop_auth_user(char *params)
 
 static int pop_auth_pass(char *params)
 {
-	if (!params || !pop_user) return POP_ERROR;
-	if (!(pop_pass = strdup(params))) return POP_CRASH_SERVER;
+	if (!params) return POP_ERROR;
+	if (!pop_user) {
+		memset(params, 0, strlen(params));
+		return POP_ERROR;
+	}
+	pop_pass = strdup(params);
+	memset(params, 0, strlen(params));
+	if (pop_pass == NULL) return POP_CRASH_SERVER;
 	return POP_STATE;
 }
 
@@ -61,6 +67,7 @@ int do_pop_auth(int channel)
 		write_loop(channel, (char *)&pop_buffer, sizeof(pop_buffer));
 		write_loop(channel, pop_user, strlen(pop_user) + 1);
 		write_loop(channel, pop_pass, strlen(pop_pass) + 1);
+		memset(pop_pass, 0, strlen(pop_pass));
 		if (close(channel)) return 1;
 	}
 
