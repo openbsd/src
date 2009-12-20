@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2009/12/09 13:59:43 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2009/12/20 16:15:26 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -75,6 +75,8 @@ main(int argc, char *argv[])
 		switch(ch) {
 		case 'H':
 			ftsoptions |= FTS_COMFOLLOW;
+			ftsoptions |= FTS_PHYSICAL;
+			ftsoptions &= ~FTS_LOGICAL;
 			break;
 		case 'd':
 			isdepth = 1;
@@ -84,6 +86,7 @@ main(int argc, char *argv[])
 			break;
 		case 'h':
 		case 'L':
+			ftsoptions &= ~FTS_COMFOLLOW;
 			ftsoptions &= ~FTS_PHYSICAL;
 			ftsoptions |= FTS_LOGICAL;
 			break;

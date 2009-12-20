@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.74 2009/04/09 14:30:39 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.75 2009/12/20 16:15:26 schwarze Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 9 2009 $
+.Dd $Mdocdate: December 20 2009 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -96,6 +96,9 @@ If the referenced file does not exist, the file information and type will
 be for the link itself.
 File information of all symbolic links not on
 the command line is that of the link itself.
+This option overrides
+.Fl L
+given earlier on the command line.
 .It Fl h
 An alias for the
 .Fl L
@@ -108,6 +111,9 @@ returned for each symbolic link to be those of the file referenced by the
 link, not the link itself.
 If the referenced file does not exist, the file information and type will
 be for the link itself.
+This option overrides
+.Fl H
+given earlier on the command line.
 .It Fl X
 Permit
 .Nm
