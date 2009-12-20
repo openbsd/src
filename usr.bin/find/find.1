@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.75 2009/12/20 16:15:26 schwarze Exp $
+.\"	$OpenBSD: find.1,v 1.76 2009/12/20 20:19:49 schwarze Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -96,9 +96,6 @@ If the referenced file does not exist, the file information and type will
 be for the link itself.
 File information of all symbolic links not on
 the command line is that of the link itself.
-This option overrides
-.Fl L
-given earlier on the command line.
 .It Fl h
 An alias for the
 .Fl L
@@ -111,9 +108,6 @@ returned for each symbolic link to be those of the file referenced by the
 link, not the link itself.
 If the referenced file does not exist, the file information and type will
 be for the link itself.
-This option overrides
-.Fl H
-given earlier on the command line.
 .It Fl X
 Permit
 .Nm
@@ -145,6 +139,14 @@ Prevents
 from descending into directories that have a device number different
 than that of the file from which the descent began.
 .El
+.Pp
+It is not an error to specify more than one of
+the mutually exclusive options
+.Fl H
+and
+.Fl L .
+Where more than one of these options is specified,
+the last option given overrides the others.
 .Sh PRIMARIES
 .Bl -tag -width Ds
 .It Ic -amin Ar n
