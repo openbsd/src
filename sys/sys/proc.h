@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.120 2009/11/27 20:05:50 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.121 2009/12/20 23:36:04 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -442,6 +442,7 @@ int	groupmember(gid_t, struct ucred *);
 void	child_return(void *);
 
 int	proc_cansugid(struct proc *);
+void	proc_finish_wait(struct proc *, struct proc *);
 void	proc_zap(struct proc *);
 
 struct sleep_state {

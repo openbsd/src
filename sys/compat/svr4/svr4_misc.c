@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.50 2009/07/09 22:29:55 thib Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.51 2009/12/20 23:36:04 guenther Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -1042,7 +1042,7 @@ svr4_sys_waitsys(q, v, retval)
 	struct svr4_sys_waitsys_args *uap = v;
 	int nfound;
 	int error;
-	struct proc *p, *t;
+	struct proc *p;
 
 	switch (SCARG(uap, grp)) {
 	case SVR4_P_PID:	
@@ -1086,24 +1086,7 @@ loop:
 				DPRINTF(("Don't wait\n"));
 				return (0);
 			}
-
-			/*
-			 * If we got the child via a ptrace 'attach',
-			 * we need to give it back to the old parent.
-			 */
-			if (p->p_oppid && (t = pfind(p->p_oppid))) {
-				p->p_oppid = 0;
-				proc_reparent(p, t);
-				psignal(t, SIGCHLD);
-				wakeup((caddr_t)t);
-				return (0);
-			}
-
-			scheduler_wait_hook(q, p);
-			p->p_xstat = 0;
-			ruadd(&q->p_stats->p_cru, p->p_ru);
-
-			proc_zap(p);
+			proc_finish_wait(q, p);
 			return (0);
 		}
 		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
