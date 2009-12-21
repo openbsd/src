@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.193 2009/06/24 11:38:40 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.194 2009/12/21 22:17:37 matthieu Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -289,6 +289,7 @@ run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 zyd*	at uhub?		# Zydas ZD1211
 udcf*	at uhub?		# Gude Expert mouseCLOCK
 umbg*	at uhub?		# Meinberg Funkuhren USB5131
+uthum*	at uhidev?		# TEMPerHUM sensor
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?
 
