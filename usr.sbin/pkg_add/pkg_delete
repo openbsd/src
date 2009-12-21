@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.130 2009/12/20 22:38:45 espie Exp $
+# $OpenBSD: pkg_delete,v 1.131 2009/12/21 10:38:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -44,6 +44,7 @@ our ($opt_d, $opt_p, $opt_i);
 handle_options('chixDdnqpS:', {},
     'pkg_delete [-cIinqvx] [-B pkg-destdir] [-F keywords] pkg-name [...]');
 
+local $SIG{'INFO'} = sub { $state->status->print($state); };
 $opt_B = $ENV{'PKG_DESTDIR'} unless defined $opt_B;
 $opt_B = '' unless defined $opt_B;
 if ($opt_B ne '') {
@@ -128,6 +129,11 @@ sub {
 	# and finally, handle the removal
 	do {
 		$removed = 0;
+		if ($state->{not}) {
+			$state->status->what("Pretending to delete");
+		} else {
+			$state->status->what("Deleting");
+		}
 		DELETE: for my $pkgname (@todo) {
 			$state->{todo} = scalar @todo - scalar keys %done;
 			next if $done{$pkgname};
@@ -152,17 +158,16 @@ sub {
 				}
 			}
 			my $info = sub {
+			};
+
+			$state->status->object($pkgname);
+			if (!$state->progress->set_header($pkgname)) {
 				$state->say($state->{not} ? 
 				    "Pretending to delete " : 
 				    "Deleting ", 
-				    $pkgname);
-			};
-
-			local $SIG{'INFO'} = $info;
-			if (!$state->progress->set_header($pkgname)) {
-				&$info if $state->verbose;
+				    $pkgname) if $state->verbose;
 			}
-			$state->log->set_context($pkgname);
+			$state->log->set_context('-'.$pkgname);
 			OpenBSD::Delete::delete_package($pkgname, $state);
 			$done{$pkgname} = 1;
 			$removed++;

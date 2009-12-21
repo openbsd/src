@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.9 2009/12/20 22:38:45 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.10 2009/12/21 10:38:58 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -43,7 +43,6 @@ sub handle_options
 
 	$opt_L = OpenBSD::Paths->localbase unless defined $opt_L;
 
-	$state->{recorder} = OpenBSD::SharedItemsRecorder->new;
 	if ($opt_s) {
 		$opt_n = 1;
 	}
@@ -218,6 +217,8 @@ sub init
 	$self->{l} = OpenBSD::Log->new;
 	$self->{vstat} = OpenBSD::MyStat->new;
 	$self->{progressmeter} = bless {}, "OpenBSD::StubProgress";
+	$self->{status} = OpenBSD::Status->new;
+	$self->{recorder} = OpenBSD::SharedItemsRecorder->new;
 	$self->{v} = 0;
 }
 
@@ -226,6 +227,21 @@ sub ntogo
 	my ($self, $offset) = @_;
 
 	return $self->progress->ntogo($self->todo, $offset);
+}
+
+sub ntogo_string
+{
+	my ($self, $todo, $offset) = @_;
+
+	$todo //= 0;
+	$offset //= 0;
+	$todo += $offset;
+
+	if ($todo > 0) {
+		return " ($todo to go)";
+	} else {
+		return "";
+	}
 }
 
 sub verbose
@@ -352,6 +368,64 @@ sub confirm
 	return 0 if !$state->{interactive};
 	require OpenBSD::Interactive;
 	return OpenBSD::Interactive::confirm($prompt, $default);
+}
+
+sub status
+{
+	my $self = shift;
+
+	return $self->{status};
+}
+
+# the object that gets displayed during status updates
+package OpenBSD::Status;
+
+sub print
+{
+	my ($self, $state) = @_;
+
+	my $what = $self->{what};
+	$what //= "Processing";
+	my $object;
+	if (defined $self->{object}) {
+		$object = $self->{object};
+	} elsif (defined $self->{set}) {
+		$object = $self->{set}->print;
+	} else {
+		$object = "Parameters";
+	}
+
+	$state->say($what." ".$object.$state->ntogo_string($state->todo));
+}
+
+sub set
+{
+	my ($self, $set) = @_;
+	delete $self->{object};
+	$self->{set} = $set;
+	return $self;
+}
+
+sub object
+{
+	my ($self, $object) = @_;
+	delete $self->{set};
+	$self->{object} = $object;
+	return $self;
+}
+
+sub what
+{
+	my ($self, $what) = @_;
+	$self->{what} = $what;
+	return $self;
+}
+
+sub new
+{
+	my $class = shift;
+
+	bless {}, $class;
 }
 
 # stub class when no actual progressmeter that still prints out.

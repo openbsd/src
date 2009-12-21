@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.431 2009/12/20 22:38:45 espie Exp $
+# $OpenBSD: pkg_add,v 1.432 2009/12/21 10:38:58 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -95,8 +95,9 @@ sub deptree_header
 
 sub set_name_from_handle
 {
-	my ($state, $h) = @_;
-	$state->log->set_context($h->pkgname);
+	my ($state, $h, $extra) = @_;
+	$extra //= '';
+	$state->log->set_context($extra.$h->pkgname);
 }
 
 sub updater
@@ -161,35 +162,6 @@ sub setup_header
 		}
 		print "\n";
 	}
-}
-
-sub status
-{
-	my ($set, $state, $handle, $info) = @_;
-
-	my $header = $state->deptree_header($set);
-	if (defined $handle) {
-		$header .= $handle->pkgname;
-	} else {
-		$header .= $set->print;
-	}
-	if (defined $info) {
-		$header.=" ($info)";
-	}
-
-	if (!defined $info) {
-		$header = "Adding $header";
-	}
-	if (defined $state->{lastheader} && 
-	    $header eq $state->{lastheader}) {
-		return;
-	}
-	$state->{lastheader} = $header;
-	$header .= "(pretending) " if $state->{not};
-	if ($state->{do_faked}) {
-		$header .= " under ".$state->{destdir};
-	}
-	$state->say($header);
 }
 
 sub complete
@@ -438,7 +410,7 @@ sub really_add
 
 	my $errors = 0;
 	for my $handle ($set->newer) {
-		$state->set_name_from_handle($handle);
+		$state->set_name_from_handle($handle, '+');
 		my $plist = $handle->plist;
 		if ($plist->is_signed) {
 			if ($state->{defines}->{nosig}) {
@@ -461,8 +433,12 @@ sub really_add
 		}
 	}
 
+	if ($state->{not}) {
+		$state->status->what("Pretending to add");
+	} else {
+		$state->status->what("Adding");
+	}
 	$set->setup_header($state);
-	local $SIG{'INFO'} = sub { $set->status($state); };
 
 	# XXX in `combined' updates, some dependencies may remove extra 
 	# packages, so we do a double-take on the list of packages we 
@@ -522,7 +498,7 @@ sub really_add
 			my $o = shift;
 			$set->setup_header($state, $o, "deleting");
 			my $oldname = $o->pkgname;
-			$state->set_name_from_handle($o);
+			$state->set_name_from_handle($o, '-');
 			require OpenBSD::Delete;
 			try {
 			    OpenBSD::Delete::delete_plist($o->plist, $state);
@@ -555,7 +531,7 @@ sub really_add
 		my $plist = $handle->plist;
 		$set->setup_header($state, $handle,
 		    $replacing ? "installing" : undef);
-		$state->set_name_from_handle($handle);
+		$state->set_name_from_handle($handle, '+');
 
 		try {
 			OpenBSD::Add::perform_installation($handle, $state);
@@ -642,6 +618,7 @@ sub install_set
 
 		if ($handle->plist->has('arch')) {
 			unless ($handle->plist->{arch}->check($state->{arch})) {
+				$state->set_name_from_handle($handle);
 				$state->log($handle->pkgname, " is not for the right architecture");
 				if (!$defines{arch}) {
 					$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
@@ -718,6 +695,7 @@ handle_options('aqchruUzl:A:P:Q:', {},
     'pkg_add [-acIinqrUuvxz] [-A arch] [-B pkg-destdir] [-F keywords]',
     '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
 
+local $SIG{'INFO'} = sub { $state->status->print($state); };
 $state->{do_faked} = 0;
 $state->{arch} = $opt_A;
 
@@ -890,8 +868,9 @@ sub {
 	$state->tracker->todo(@todo2);
 	# This is the actual very small loop that adds all packages
 	while (my $set = shift @todo2) {
-		local $SIG{INFO} = sub { $state->say($set->print, "(", $state->todo, ")"); };
 		$state->progress->set_header("Looking for packages");
+
+		$state->status->what->set($set);
 		unshift(@todo2, install_set($set, $state));
 		eval {
 			$state->quirks->tweak_list(\@todo2, $state);
