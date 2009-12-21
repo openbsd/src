@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.27 2009/09/14 18:59:20 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.28 2009/12/21 19:58:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -576,7 +576,7 @@ tsec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
-				tsec_iff(sc);
+				error = ENETRESET;
 			else
 				tsec_up(sc);
 		} else {
@@ -1021,6 +1021,9 @@ tsec_up(struct tsec_softc *sc)
 	if (LIST_FIRST(&sc->sc_mii.mii_phys))
 		mii_mediachg(&sc->sc_mii);
 
+	/* Program promiscuous mode and multicast filters. */
+	tsec_iff(sc);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1091,38 +1094,30 @@ tsec_iff(struct tsec_softc *sc)
 	uint32_t rctrl;
 	int i;
 
+	rctrl = tsec_read(sc, TSEC_RCTRL);
+	rctrl &= ~TSEC_RCTRL_PROM;
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	bzero(hash, sizeof(hash));
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		goto domulti;
-	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0)
-		goto allmulti;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		rctrl |= TSEC_RCTRL_PROM;
+		bzero(hash, sizeof(hash));
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			crc = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN);
 
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-		crc >>= 24;
-		hash[crc / 32] |= 1 << (31 - (crc % 32));
+			crc >>= 24;
+			hash[crc / 32] |= 1 << (31 - (crc % 32));
 
-		ETHER_NEXT_MULTI(step, enm);
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
-	goto domulti;
-
-allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
-	bzero(hash, sizeof(hash));
-	
-domulti:
 	for (i = 0; i < nitems(hash); i++)
 		tsec_write(sc, TSEC_GADDR0 + i * 4, hash[i]);
 
-	rctrl = tsec_read(sc, TSEC_RCTRL);
-	if (ifp->if_flags & IFF_ALLMULTI)
-		rctrl |= TSEC_RCTRL_PROM;
-	else
-		rctrl &= ~TSEC_RCTRL_PROM;
 	tsec_write(sc, TSEC_RCTRL, rctrl);
 }
 
