@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.10 2009/12/21 10:38:58 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.11 2009/12/21 13:24:57 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -47,6 +47,7 @@ sub handle_options
 		$opt_n = 1;
 	}
 	$state->{not} = $opt_n;
+	$state->vstat->{not} = $opt_n;
 	# XXX RequiredBy
 	$main::not = $opt_n;
 	$state->{defines} = \%defines;
@@ -181,8 +182,8 @@ sub tally
 
 sub synchronize
 {
-	shift;
-	&OpenBSD::Vstat::synchronize;
+	my $self = shift;
+	OpenBSD::Vstat::synchronize($self->{not});
 }
 
 package OpenBSD::Log;

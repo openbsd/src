@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.45 2009/12/20 22:38:45 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.46 2009/12/21 13:24:57 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -30,7 +30,7 @@ use OpenBSD::Paths;
 
 my $devinfo = {};
 my $devinfo2 = {};
-my $virtual = {};
+our $virtual = {};
 my $giveup;
 
 sub create_device($)
@@ -154,10 +154,13 @@ sub account_later($$)
 
 sub synchronize
 {
+	my $not = shift;
 	while (my ($k, $v) = each %$devinfo) {
 		$v->{used} += $v->{delayed};
 		$v->{delayed} = 0;
 	}
+	# Grab back all memory if we can !
+	$virtual = {} unless $not;
 }
 
 sub add($$;$)
