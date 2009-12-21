@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.433 2009/12/21 11:03:00 espie Exp $
+# $OpenBSD: pkg_add,v 1.434 2009/12/21 17:15:46 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -246,10 +246,6 @@ sub can_install
 	}
 
 
-	if (!$set->is_new_stuff_safe($state)) {
-		return 0;
-	}
-
 	my $later = 0;
 	for my $toreplace (@conflicts) {
 		if ($state->tracker->is_installed($toreplace)) {
@@ -271,6 +267,10 @@ sub can_install
 	}
 
 	return if $later;
+
+	if (!$set->is_new_stuff_safe($state)) {
+		return 0;
+	}
 
 	my $manual_install = 0;
 
