@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.88 2009/12/06 07:53:08 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.89 2009/12/21 11:03:00 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: December 6 2009 $
+.Dd $Mdocdate: December 21 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Bk -words
-.Op Fl acIinqrUuvxz
+.Op Fl acIinqrsUuvxz
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl F Ar keywords
@@ -342,6 +342,13 @@ use
 .Fl F Ar updatedepends
 to force the replacement
 .Pc .
+.It Fl s
+Don't actually install packages, skip as many steps as needed and report
+only the disk size changes that would happen.
+Similar to
+.Fl n ,
+except it also skips fetching full packages and stops at getting the
+information it needs.
 .It Fl U
 Update dependencies if required before installing the new package(s).
 .It Fl u
@@ -361,6 +368,24 @@ Turn on verbose output.
 Several
 .Fl v
 turn on more verbose output.
+By default,
+.Nm
+is almost completely silent, but it reacts to keyboard status requests
+.Po
+see
+.Xr stty 1
+.Pc .
+.Fl v
+turns on basic messages,
+.Fl vv
+adds relevant system operations,
+.Fl vvv
+shows most internal computations apart from individual file/directory
+additions,
+.Fl vvvv
+also shows dependencies adjustments, and
+.Fl vvvvv
+shows everything.
 .It Fl x
 Disable progress-meter.
 .It Fl z

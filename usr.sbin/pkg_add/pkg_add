@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.432 2009/12/21 10:38:58 espie Exp $
+# $OpenBSD: pkg_add,v 1.433 2009/12/21 11:03:00 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -692,7 +692,7 @@ sub install_set
 our ($opt_a, $opt_A, $opt_P, $opt_Q, $opt_r, $opt_u, $opt_U, $opt_l, $opt_z);
 
 handle_options('aqchruUzl:A:P:Q:', {},
-    'pkg_add [-acIinqrUuvxz] [-A arch] [-B pkg-destdir] [-F keywords]',
+    'pkg_add [-acIinqrsUuvxz] [-A arch] [-B pkg-destdir] [-F keywords]',
     '[-L localbase] [-l file] [-P type] [-Q quick-destdir] pkg-name [...]');
 
 local $SIG{'INFO'} = sub { $state->status->print($state); };

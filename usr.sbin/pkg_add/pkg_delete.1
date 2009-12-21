@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.29 2009/04/14 17:53:58 espie Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.30 2009/12/21 11:03:00 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: April 14 2009 $
+.Dd $Mdocdate: December 21 2009 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Nd delete software package distributions
 .Sh SYNOPSIS
 .Nm pkg_delete
-.Op Fl cIinqvx
+.Op Fl cIinqsvx
 .Op Fl B Ar pkg-destdir
 .Op Fl F Ar keywords
 .Ar pkg-name Op Ar ...
@@ -96,11 +96,30 @@ files.
 For signed packages, do not bother verifying signatures either.
 If used twice,
 it will not bother with checksums for configuration files either.
+.It Fl s
+Don't actually deinstall packages, report the disk size changes
+that would happen.
 .It Fl v
 Turn on verbose output.
 Several
 .Fl v
 turn on more verbose output.
+By default,
+.Nm
+is almost completely silent, but it reacts to keyboard status requests
+.Po
+see
+.Xr stty 1
+.Pc .
+.Fl v
+turns on basic messages,
+.Fl vv
+adds relevant system operations,
+.Fl vvv
+shows most internal computations apart from individual file/directory
+additions, and
+.Fl vvvvv
+shows everything.
 .It Fl x
 Disable progress-meter.
 .El

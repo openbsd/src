@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.131 2009/12/21 10:38:58 espie Exp $
+# $OpenBSD: pkg_delete,v 1.132 2009/12/21 11:03:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -39,10 +39,8 @@ use OpenBSD::Delete;
 use OpenBSD::PackageInfo;
 use OpenBSD::UpdateSet;
 
-our ($opt_d, $opt_p, $opt_i);
-
-handle_options('chixDdnqpS:', {},
-    'pkg_delete [-cIinqvx] [-B pkg-destdir] [-F keywords] pkg-name [...]');
+handle_options('chxDnq', {},
+    'pkg_delete [-cIinqsvx] [-B pkg-destdir] [-F keywords] pkg-name [...]');
 
 local $SIG{'INFO'} = sub { $state->status->print($state); };
 $opt_B = $ENV{'PKG_DESTDIR'} unless defined $opt_B;
@@ -51,13 +49,6 @@ if ($opt_B ne '') {
 	$opt_B.='/' unless $opt_B =~ m/\/$/o;
 }
 $ENV{'PKG_DESTDIR'} = $opt_B;
-
-if (defined $opt_p) {
-	Usage "Option p is obsolete";
-}
-if (defined $opt_d) {
-	Usage "Option d is obsolete";
-}
 
 $state->{destdir} = $opt_B;
 if ($opt_B eq '') {
