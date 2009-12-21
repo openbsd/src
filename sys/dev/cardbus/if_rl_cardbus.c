@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.17 2009/06/02 17:27:39 jsg Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.18 2009/12/21 18:14:51 naddy Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -132,10 +132,7 @@ struct cfattach rl_cardbus_ca = {
 };
 
 int
-rl_cardbus_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+rl_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
 	    rl_cardbus_devices,
@@ -144,19 +141,18 @@ rl_cardbus_match(parent, match, aux)
 
 
 void
-rl_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct rl_cardbus_softc *csc = (struct rl_cardbus_softc *)self;
-	struct rl_softc *sc = &csc->sc_rl;
-	struct cardbus_attach_args *ca = aux;
-	struct cardbus_softc *psc =
+	struct rl_cardbus_softc		*csc =
+	    (struct rl_cardbus_softc *)self;
+	struct rl_softc			*sc = &csc->sc_rl;
+	struct cardbus_attach_args	*ca = aux;
+	struct cardbus_softc		*psc =
 	    (struct cardbus_softc *)sc->sc_dev.dv_parent;
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;                            
-	cardbus_devfunc_t ct = ca->ca_ct;
-	bus_addr_t adr;
+	cardbus_chipset_tag_t		cc = psc->sc_cc;
+	cardbus_function_tag_t		cf = psc->sc_cf;                            
+	cardbus_devfunc_t		ct = ca->ca_ct;
+	bus_addr_t			adr;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -213,14 +209,12 @@ rl_cardbus_attach(parent, self, aux)
 }
 
 int 
-rl_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+rl_cardbus_detach(struct device *self, int flags)
 {
-	struct rl_cardbus_softc *csc = (void *) self;
-	struct rl_softc *sc = &csc->sc_rl;
-	struct cardbus_devfunc *ct = csc->sc_ct;
-	int	rv;
+	struct rl_cardbus_softc	*csc = (void *) self;
+	struct rl_softc		*sc = &csc->sc_rl;
+	struct cardbus_devfunc	*ct = csc->sc_ct;
+	int			rv;
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
@@ -246,15 +240,14 @@ rl_cardbus_detach(self, flags)
 }
 
 void 
-rl_cardbus_setup(csc)
-	struct rl_cardbus_softc *csc;
+rl_cardbus_setup(struct rl_cardbus_softc *csc)
 {
-	struct rl_softc *sc = &csc->sc_rl;
-	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-	pcireg_t	reg, command;
-	int		pmreg;
+	struct rl_softc		*sc = &csc->sc_rl;
+	cardbus_devfunc_t	ct = csc->sc_ct;
+	cardbus_chipset_tag_t	cc = ct->ct_cc;
+	cardbus_function_tag_t	cf = ct->ct_cf;
+	pcireg_t		reg, command;
+	int			pmreg;
 
 	/*
 	 * Handle power management nonsense.
