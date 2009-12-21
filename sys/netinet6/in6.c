@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.82 2009/06/04 19:07:21 henning Exp $	*/
+/*	$OpenBSD: in6.c,v 1.83 2009/12/21 23:46:25 sthen Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ in6_ifremloop(struct ifaddr *ifa)
 		 * route surely exists.  With this check, we can avoid to
 		 * delete an interface direct route whose destination is same
 		 * as the address being removed.  This can happen when removing
-		 * a subnet-router anycast address on an interface attahced
+		 * a subnet-router anycast address on an interface attached
 		 * to a shared medium.
 		 */
 		rt = rtalloc1(ifa->ifa_addr, 0, 0);
