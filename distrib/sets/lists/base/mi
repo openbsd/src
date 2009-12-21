@@ -2145,6 +2145,8 @@
 ./usr/sbin/kstash
 ./usr/sbin/ktutil
 ./usr/sbin/kvm_mkdb
+./usr/sbin/ldpctl
+./usr/sbin/ldpd
 ./usr/sbin/logresolve
 ./usr/sbin/lpc
 ./usr/sbin/lpd
@@ -2175,6 +2177,8 @@
 ./usr/sbin/nsupdate
 ./usr/sbin/ntpd
 ./usr/sbin/openssl
+./usr/sbin/ospf6ctl
+./usr/sbin/ospf6d
 ./usr/sbin/ospfctl
 ./usr/sbin/ospfd
 ./usr/sbin/pac

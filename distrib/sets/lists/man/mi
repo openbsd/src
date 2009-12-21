@@ -2229,6 +2229,7 @@
 ./usr/share/man/cat5/landisk
 ./usr/share/man/cat5/landisk/boot.conf.0
 ./usr/share/man/cat5/lastlog.0
+./usr/share/man/cat5/ldpd.conf.0
 ./usr/share/man/cat5/link.0
 ./usr/share/man/cat5/login.conf.0
 ./usr/share/man/cat5/luna88k
@@ -2255,6 +2256,7 @@
 ./usr/share/man/cat5/networks.0
 ./usr/share/man/cat5/newsyslog.conf.0
 ./usr/share/man/cat5/ntpd.conf.0
+./usr/share/man/cat5/ospf6d.conf.0
 ./usr/share/man/cat5/ospfd.conf.0
 ./usr/share/man/cat5/package.0
 ./usr/share/man/cat5/palm
@@ -2530,6 +2532,8 @@
 ./usr/share/man/cat8/landisk/xxboot.0
 ./usr/share/man/cat8/ldattach.0
 ./usr/share/man/cat8/ldconfig.0
+./usr/share/man/cat8/ldpctl.0
+./usr/share/man/cat8/ldpd.0
 ./usr/share/man/cat8/lmccontrol.0
 ./usr/share/man/cat8/locate.updatedb.0
 ./usr/share/man/cat8/login_activ.0
@@ -2630,6 +2634,8 @@
 ./usr/share/man/cat8/nsupdate.0
 ./usr/share/man/cat8/ntalkd.0
 ./usr/share/man/cat8/ntpd.0
+./usr/share/man/cat8/ospf6ctl.0
+./usr/share/man/cat8/ospf6d.0
 ./usr/share/man/cat8/ospfctl.0
 ./usr/share/man/cat8/ospfd.0
 ./usr/share/man/cat8/pac.0
