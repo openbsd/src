@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.13 2009/09/20 20:27:53 stsp Exp $ */
+/*	$OpenBSD: kroute.c,v 1.14 2009/12/21 18:29:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1048,7 +1048,7 @@ fetchtable(void)
 	mib[0] = CTL_NET;
 	mib[1] = AF_ROUTE;
 	mib[2] = 0;
-	mib[3] = AF_INET;
+	mib[3] = AF_INET6;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
 	mib[6] = 0;	/* rtableid */
