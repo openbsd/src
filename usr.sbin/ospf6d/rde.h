@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.17 2009/03/29 21:42:30 stsp Exp $ */
+/*	$OpenBSD: rde.h,v 1.18 2009/12/22 17:54:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -30,7 +30,7 @@ struct v_nexthop {
 	TAILQ_ENTRY(v_nexthop)	 entry;
 	struct vertex		*prev;
 	struct in6_addr		 nexthop;
-	u_int32_t		 ifindex;
+	unsigned int		 ifindex;
 };
 
 TAILQ_HEAD(v_nexthead, v_nexthop);
@@ -91,6 +91,7 @@ struct rt_nexthop {
 	TAILQ_ENTRY(rt_nexthop)	entry;
 	struct in6_addr		nexthop;
 	struct in_addr		adv_rtr;
+	unsigned int		ifindex;
 	time_t			uptime;
 	u_int8_t		connected;
 	u_int8_t		invalid;

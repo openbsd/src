@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.17 2009/11/02 20:24:58 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.18 2009/12/22 17:54:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -458,6 +458,7 @@ struct ctl_rt {
 	time_t			 uptime;
 	u_int32_t		 cost;
 	u_int32_t		 cost2;
+	unsigned int		 ifindex;	/* scope of nexthop */
 	enum path_type		 p_type;
 	enum dst_type		 d_type;
 	u_int8_t		 flags;

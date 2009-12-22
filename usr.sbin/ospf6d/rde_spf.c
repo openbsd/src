@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.17 2009/12/22 17:42:46 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.18 2009/12/22 17:54:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -40,9 +40,9 @@ void		 calc_nexthop_clear(struct vertex *);
 void		 calc_nexthop_add(struct vertex *, struct vertex *,
 		     const struct in6_addr *, u_int32_t);
 struct in6_addr	*calc_nexthop_lladdr(struct vertex *, struct lsa_rtr_link *,
-		     u_int32_t);
+		     unsigned int);
 void		 calc_nexthop_transit_nbr(struct vertex *, struct vertex *,
-		     u_int32_t);
+		     unsigned int);
 void		 calc_nexthop(struct vertex *, struct vertex *,
 		     struct area *, struct lsa_rtr_link *);
 void		 rt_nexthop_clear(struct rt_node *);
@@ -213,7 +213,6 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 	struct in6_addr		 ia6;
 	u_int16_t		 i, off;
 	u_int8_t		 flags;
-	enum path_type		 type;
 
 	lsa_age(v);
 	if (ntohs(v->lsa->hdr.age) == MAX_AGE)
@@ -270,15 +269,9 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 
 				adv_rtr.s_addr = htonl(w->adv_rtr);
 
-				if (prefix->prefixlen == 128 ||
-				    prefix->options & OSPF_PREFIX_LA)
-					type = DT_RTR;
-				else
-					type = DT_NET;
-
 				rt_update(&ia6, prefix->prefixlen, &w->nexthop,
 				    w->cost + ntohs(prefix->metric), 0,
-				    area->id, adv_rtr, PT_INTRA_AREA, type,
+				    area->id, adv_rtr, PT_INTRA_AREA, DT_NET,
 				    flags, 0);
 			}
 			off += sizeof(struct lsa_prefix)
@@ -412,7 +405,7 @@ calc_nexthop_add(struct vertex *dst, struct vertex *parent,
 
 struct in6_addr *
 calc_nexthop_lladdr(struct vertex *dst, struct lsa_rtr_link *rtr_link,
-    u_int32_t ifindex)
+    unsigned int ifindex)
 {
 	struct iface		*iface;
 	struct vertex		*link;
@@ -446,7 +439,7 @@ calc_nexthop_lladdr(struct vertex *dst, struct lsa_rtr_link *rtr_link,
 
 void
 calc_nexthop_transit_nbr(struct vertex *dst, struct vertex *parent,
-    u_int32_t ifindex)
+    unsigned int ifindex)
 {
 	struct lsa_rtr_link	*rtr_link;
 	unsigned int		 i;
@@ -846,6 +839,7 @@ rt_nexthop_add(struct rt_node *r, struct v_nexthead *vnh,
 
 		clock_gettime(CLOCK_MONOTONIC, &now);
 		rn->nexthop = vn->nexthop;
+		rn->ifindex = vn->ifindex;
 		rn->adv_rtr.s_addr = adv_rtr.s_addr;
 		rn->uptime = now.tv_sec;
 		rn->connected = vn->prev == spf_root;
@@ -909,6 +903,7 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 
 			rtctl.prefix = r->prefix;
 			rtctl.nexthop = rn->nexthop;
+			rtctl.ifindex = rn->ifindex;
 			rtctl.area.s_addr = r->area.s_addr;
 			rtctl.adv_rtr.s_addr = rn->adv_rtr.s_addr;
 			rtctl.cost = r->cost;
