@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.15 2009/12/03 22:50:10 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.16 2009/12/22 10:20:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -549,10 +549,10 @@ session_group_synchronize1(struct session *target, struct session *s)
 		return;
 
 	/* If the current window has vanished, move to the next now. */
-	if (s->curw != NULL) {
-		while (winlink_find_by_index(ww, s->curw->idx) == NULL)
-			session_next(s, 0);
-	}
+	if (s->curw != NULL &&
+	    winlink_find_by_index(ww, s->curw->idx) == NULL &&
+	    session_last(s) != 0 && session_previous(s, 0) != 0)
+		session_next(s, 0);
 
 	/* Save the old pointer and reset it. */
 	memcpy(&old_windows, &s->windows, sizeof old_windows);
