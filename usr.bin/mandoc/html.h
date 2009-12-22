@@ -1,4 +1,4 @@
-/*	$Id: html.h,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: html.h,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -58,6 +58,7 @@ enum	htmlattr {
 	ATTR_VALIGN,
 	ATTR_TARGET,
 	ATTR_ID,
+	ATTR_SUMMARY,
 	ATTR_MAX
 };
 
@@ -93,6 +94,9 @@ struct	htmlpair {
 #define	PAIR_STYLE_INIT(p, h) \
 	do { (p)->key = ATTR_STYLE; \
 	(p)->val = (h)->buf; } while (/* CONSTCOND */ 0)
+#define	PAIR_SUMMARY_INIT(p, v) \
+	do { (p)->key = ATTR_SUMMARY; \
+	(p)->val = (v); } while (/* CONSTCOND */ 0)
 
 struct	html {
 	int		  flags;
@@ -131,6 +135,8 @@ void		  bufcat_style(struct html *,
 			const char *, const char *);
 void		  bufncat(struct html *, const char *, size_t);
 void		  bufinit(struct html *);
+
+void		  html_idcat(char *, const char *, int);
 
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,7 +18,6 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -229,7 +228,7 @@ a2width(const struct man_node *n, struct roffsu *su)
 static int
 man_root_pre(MAN_ARGS)
 {
-	struct htmlpair	 tag[2];
+	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
 	char		 b[BUFSIZ], title[BUFSIZ];
 
@@ -243,7 +242,9 @@ man_root_pre(MAN_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "header");
 	bufcat_style(h, "width", "100%");
 	PAIR_STYLE_INIT(&tag[1], h);
-	t = print_otag(h, TAG_TABLE, 2, tag);
+	PAIR_SUMMARY_INIT(&tag[2], "header");
+
+	t = print_otag(h, TAG_TABLE, 3, tag);
 	tt = print_otag(h, TAG_TR, 0, NULL);
 
 	bufinit(h);
@@ -277,7 +278,7 @@ man_root_pre(MAN_ARGS)
 static void
 man_root_post(MAN_ARGS)
 {
-	struct htmlpair	 tag[2];
+	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
 	char		 b[DATESIZ];
 
@@ -286,7 +287,9 @@ man_root_post(MAN_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "footer");
 	bufcat_style(h, "width", "100%");
 	PAIR_STYLE_INIT(&tag[1], h);
-	t = print_otag(h, TAG_TABLE, 2, tag);
+	PAIR_SUMMARY_INIT(&tag[2], "footer");
+
+	t = print_otag(h, TAG_TABLE, 3, tag);
 	tt = print_otag(h, TAG_TR, 0, NULL);
 
 	bufinit(h);
@@ -325,6 +328,9 @@ man_br_pre(MAN_ARGS)
 	bufcat_su(h, "height", &su);
 	PAIR_STYLE_INIT(&tag, h);
 	print_otag(h, TAG_DIV, 1, &tag);
+	/* So the div isn't empty: */
+	print_text(h, "\\~");
+
 	return(0);
 }
 

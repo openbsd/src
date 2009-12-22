@@ -1,4 +1,4 @@
-/*	$Id: msec.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: msec.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -16,6 +16,7 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "libmdoc.h"
 

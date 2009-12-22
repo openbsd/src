@@ -1,4 +1,4 @@
-/*	$Id: chars.c,v 1.2 2009/10/19 09:56:35 schwarze Exp $ */
+/*	$Id: chars.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <assert.h>
-#include <err.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -89,13 +89,17 @@ chars_init(enum chars type)
 	 * (they're in-line re-ordered during lookup).
 	 */
 
-	if (NULL == (tab = malloc(sizeof(struct tbl))))
-		err(1, "malloc");
-	tab->type = type;
+	tab = malloc(sizeof(struct tbl));
+	if (NULL == tab) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
 
 	htab = calloc(PRINT_HI - PRINT_LO + 1, sizeof(struct ln **));
-	if (NULL == htab)
-		err(1, "malloc");
+	if (NULL == htab) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
 
 	for (i = 0; i < LINES_MAX; i++) {
 		hash = (int)lines[i].code[0] - PRINT_LO;
@@ -111,6 +115,7 @@ chars_init(enum chars type)
 	}
 
 	tab->htab = htab;
+	tab->type = type;
 	return(tab);
 }
 

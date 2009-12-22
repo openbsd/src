@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.18 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: term.c,v 1.19 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -15,10 +15,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <assert.h>
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "chars.h"
 #include "out.h"
@@ -76,9 +76,11 @@ term_alloc(enum termenc enc)
 {
 	struct termp *p;
 
-	if (NULL == (p = malloc(sizeof(struct termp))))
-		return(NULL);
-	bzero(p, sizeof(struct termp));
+	p = calloc(1, sizeof(struct termp));
+	if (NULL == p) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
 	p->maxrmargin = 78;
 	p->enc = enc;
 	return(p);
@@ -119,36 +121,44 @@ term_alloc(enum termenc enc)
  *  If TERMP_NOBREAK is specified and the line overruns the right
  *  margin, it will break and pad-right to the right margin after
  *  writing.  If maxrmargin is violated, it will break and continue
- *  writing from the right-margin, which will lead to the above
- *  scenario upon exit.
- *
- *  Otherwise, the line will break at the right margin.  Extremely long
- *  lines will cause the system to emit a warning (TODO: hyphenate, if
- *  possible).
+ *  writing from the right-margin, which will lead to the above scenario
+ *  upon exit.  Otherwise, the line will break at the right margin.
  */
 void
 term_flushln(struct termp *p)
 {
-	int		 i, j;
-	size_t		 vbl, vsz, vis, maxvis, mmax, bp;
+	int		 i;     /* current input position in p->buf */
+	size_t		 vis;   /* current visual position on output */
+	size_t		 vbl;   /* number of blanks to prepend to output */
+	size_t		 vsz;   /* visual characters to write to output */
+	size_t		 bp;    /* visual right border position */
+	int		 j;     /* temporary loop index */
+	size_t		 maxvis, mmax;
 	static int	 overstep = 0;
 
 	/*
 	 * First, establish the maximum columns of "visible" content.
 	 * This is usually the difference between the right-margin and
 	 * an indentation, but can be, for tagged lists or columns, a
-	 * small set of values.
+	 * small set of values. 
 	 */
 
 	assert(p->offset < p->rmargin);
-	assert((int)(p->rmargin - p->offset) - overstep > 0);
 
-	maxvis = /* LINTED */
-		p->rmargin - p->offset - overstep;
-	mmax = /* LINTED */
-		p->maxrmargin - p->offset - overstep;
+	maxvis = (int)(p->rmargin - p->offset) - overstep < 0 ?
+		/* LINTED */ 
+		0 : p->rmargin - p->offset - overstep;
+	mmax = (int)(p->maxrmargin - p->offset) - overstep < 0 ?
+		/* LINTED */
+		0 : p->maxrmargin - p->offset - overstep;
 
 	bp = TERMP_NOBREAK & p->flags ? mmax : maxvis;
+
+	/* 
+	 * FIXME: if bp is zero, we still output the first word before
+	 * breaking the line.
+	 */
+
 	vis = 0;
 
 	/*
@@ -534,8 +544,10 @@ buffer(struct termp *p, char c)
 			p->maxcols = 256;
 		s = p->maxcols * 2;
 		p->buf = realloc(p->buf, s);
-		if (NULL == p->buf)
-			err(1, "realloc"); /* FIXME: shouldn't be here! */
+		if (NULL == p->buf) {
+			perror(NULL);
+			exit(EXIT_FAILURE);
+		}
 		p->maxcols = s;
 	}
 	p->buf[(int)(p->col)++] = c;

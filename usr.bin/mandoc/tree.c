@@ -1,4 +1,4 @@
-/*	$Id: tree.c,v 1.5 2009/10/21 19:13:51 schwarze Exp $ */
+/*	$Id: tree.c,v 1.6 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -15,9 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <assert.h>
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "mdoc.h"
 #include "man.h"

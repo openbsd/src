@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.38 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.39 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,7 +18,6 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>

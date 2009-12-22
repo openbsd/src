@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.18 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: main.c,v 1.19 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -17,7 +17,6 @@
 #include <sys/stat.h>
 
 #include <assert.h>
-#include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -95,7 +94,7 @@ static	struct mdoc	 *mdoc_init(struct curparse *);
 __dead	static void	  version(void);
 __dead	static void	  usage(void);
 
-extern	char		 *__progname;
+static	const char	 *progname;
 
 
 int
@@ -105,7 +104,13 @@ main(int argc, char *argv[])
 	struct buf	 ln, blk;
 	struct curparse	 curp;
 
-	bzero(&curp, sizeof(struct curparse));
+	progname = strrchr(argv[0], '/');
+	if (progname == NULL)
+		progname = argv[0];
+	else
+		++progname;
+
+	memset(&curp, 0, sizeof(struct curparse));
 
 	curp.inttype = INTT_AUTO;
 	curp.outtype = OUTT_ASCII;
@@ -144,8 +149,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	bzero(&ln, sizeof(struct buf));
-	bzero(&blk, sizeof(struct buf));
+	memset(&ln, 0, sizeof(struct buf));
+	memset(&blk, 0, sizeof(struct buf));
 
 	rc = 1;
 
@@ -170,11 +175,9 @@ main(int argc, char *argv[])
 		argv++;
 		if (*argv && rc) {
 			if (curp.lastman)
-				if ( ! man_reset(curp.lastman))
-					rc = 0;
+				man_reset(curp.lastman);
 			if (curp.lastmdoc)
-				if ( ! mdoc_reset(curp.lastmdoc))
-					rc = 0;
+				mdoc_reset(curp.lastmdoc);
 			curp.lastman = NULL;
 			curp.lastmdoc = NULL;
 		}
@@ -199,7 +202,7 @@ __dead static void
 version(void)
 {
 
-	(void)printf("%s %s\n", __progname, VERSION);
+	(void)printf("%s %s\n", progname, VERSION);
 	exit(EXIT_SUCCESS);
 }
 
@@ -210,7 +213,7 @@ usage(void)
 
 	(void)fprintf(stderr, "usage: %s [-V] [-foption...] "
 			"[-mformat] [-Ooption] [-Toutput] "
-			"[-Werr...]\n", __progname);
+			"[-Werr...]\n", progname);
 	exit(EXIT_FAILURE);
 }
 
@@ -219,7 +222,6 @@ static struct man *
 man_init(struct curparse *curp)
 {
 	int		 pflags;
-	struct man	*man;
 	struct man_cb	 mancb;
 
 	mancb.man_err = merr;
@@ -236,10 +238,7 @@ man_init(struct curparse *curp)
 	if (curp->fflags & NO_IGN_ESCAPE)
 		pflags &= ~MAN_IGN_ESCAPE;
 
-	if (NULL == (man = man_alloc(curp, pflags, &mancb)))
-		warnx("memory exhausted");
-
-	return(man);
+	return(man_alloc(curp, pflags, &mancb));
 }
 
 
@@ -247,7 +246,6 @@ static struct mdoc *
 mdoc_init(struct curparse *curp)
 {
 	int		 pflags;
-	struct mdoc	*mdoc;
 	struct mdoc_cb	 mdoccb;
 
 	mdoccb.mdoc_err = merr;
@@ -266,10 +264,7 @@ mdoc_init(struct curparse *curp)
 	if (curp->fflags & NO_IGN_CHARS)
 		pflags &= ~MDOC_IGN_CHARS;
 
-	if (NULL == (mdoc = mdoc_alloc(curp, pflags, &mdoccb)))
-		warnx("memory exhausted");
-
-	return(mdoc);
+	return(mdoc_alloc(curp, pflags, &mdoccb));
 }
 
 
@@ -281,14 +276,14 @@ ffile(struct buf *blk, struct buf *ln,
 
 	curp->file = file;
 	if (-1 == (curp->fd = open(curp->file, O_RDONLY, 0))) {
-		warn("%s", curp->file);
+		perror(curp->file);
 		return(-1);
 	}
 
 	c = fdesc(blk, ln, curp);
 
 	if (-1 == close(curp->fd))
-		warn("%s", curp->file);
+		perror(curp->file);
 
 	return(c);
 }
@@ -315,15 +310,15 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 	 */
 
 	if (-1 == fstat(curp->fd, &st))
-		warn("%s", curp->file);
+		perror(curp->file);
 	else if ((size_t)st.st_blksize > sz)
 		sz = st.st_blksize;
 
 	if (sz > blk->sz) {
 		blk->buf = realloc(blk->buf, sz);
 		if (NULL == blk->buf) {
-			warn("realloc");
-			return(-1);
+			perror(NULL);
+			exit(EXIT_FAILURE);
 		}
 		blk->sz = sz;
 	}
@@ -332,7 +327,7 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 
 	for (lnn = pos = comment = 0; ; ) {
 		if (-1 == (ssz = read(curp->fd, blk->buf, sz))) {
-			warn("%s", curp->file);
+			perror(curp->file);
 			return(-1);
 		} else if (0 == ssz) 
 			break;
@@ -344,8 +339,8 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 				ln->sz += 256; /* Step-size. */
 				ln->buf = realloc(ln->buf, ln->sz);
 				if (NULL == ln->buf) {
-					warn("realloc");
-					return(-1);
+					perror(NULL);
+					return(EXIT_FAILURE);
 				}
 			}
 
@@ -408,8 +403,7 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 	/* NOTE a parser may not have been assigned, yet. */
 
 	if ( ! (man || mdoc)) {
-		(void)fprintf(stderr, "%s: not a manual\n", 
-				curp->file);
+		fprintf(stderr, "%s: Not a manual\n", curp->file);
 		return(0);
 	}
 
@@ -524,7 +518,7 @@ moptions(enum intt *tflags, char *arg)
 	else if (0 == strcmp(arg, "an"))
 		*tflags = INTT_MAN;
 	else {
-		warnx("bad argument: -m%s", arg);
+		fprintf(stderr, "%s: Bad argument", arg);
 		return(0);
 	}
 
@@ -545,7 +539,7 @@ toptions(enum outt *tflags, char *arg)
 	else if (0 == strcmp(arg, "html"))
 		*tflags = OUTT_HTML;
 	else {
-		warnx("bad argument: -T%s", arg);
+		fprintf(stderr, "%s: Bad argument", arg);
 		return(0);
 	}
 
@@ -557,7 +551,7 @@ static int
 foptions(int *fflags, char *arg)
 {
 	char		*v, *o;
-	const char	*toks[7];
+	const char	*toks[8];
 
 	toks[0] = "ign-scope";
 	toks[1] = "no-ign-escape";
@@ -565,7 +559,8 @@ foptions(int *fflags, char *arg)
 	toks[3] = "no-ign-chars";
 	toks[4] = "ign-errors";
 	toks[5] = "strict";
-	toks[6] = NULL;
+	toks[6] = "ign-escape";
+	toks[7] = NULL;
 
 	while (*arg) {
 		o = arg;
@@ -589,8 +584,11 @@ foptions(int *fflags, char *arg)
 			*fflags |= NO_IGN_ESCAPE | 
 			 	   NO_IGN_MACRO | NO_IGN_CHARS;
 			break;
+		case (6):
+			*fflags &= ~NO_IGN_ESCAPE;
+			break;
 		default:
-			warnx("bad argument: -f%s", o);
+			fprintf(stderr, "%s: Bad argument", o);
 			return(0);
 		}
 	}
@@ -619,7 +617,7 @@ woptions(int *wflags, char *arg)
 			*wflags |= WARN_WERR;
 			break;
 		default:
-			warnx("bad argument: -W%s", o);
+			fprintf(stderr, "%s: Bad argument", o);
 			return(0);
 		}
 	}

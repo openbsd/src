@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.18 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.19 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "libmdoc.h"
+#include "libmandoc.h"
 
 /*
  * Routines to parse arguments of macros.  Arguments follow the syntax
@@ -266,23 +267,12 @@ mdoc_argv(struct mdoc *m, int line, int tok,
 	if ( ! argv(m, line, &tmp, pos, buf))
 		return(ARGV_ERROR);
 
-	if (NULL == (arg = *v)) {
-		*v = calloc(1, sizeof(struct mdoc_arg));
-		if (NULL == *v) {
-			(void)mdoc_nerr(m, m->last, EMALLOC);
-			return(ARGV_ERROR);
-		}
-		arg = *v;
-	} 
+	if (NULL == (arg = *v))
+		arg = *v = mandoc_calloc(1, sizeof(struct mdoc_arg));
 
 	arg->argc++;
-	arg->argv = realloc(arg->argv, arg->argc * 
-			sizeof(struct mdoc_argv));
-
-	if (NULL == arg->argv) {
-		(void)mdoc_nerr(m, m->last, EMALLOC);
-		return(ARGV_ERROR);
-	}
+	arg->argv = mandoc_realloc
+		(arg->argv, arg->argc * sizeof(struct mdoc_argv));
 
 	(void)memcpy(&arg->argv[(int)arg->argc - 1], 
 			&tmp, sizeof(struct mdoc_argv));
@@ -673,16 +663,11 @@ argv_multi(struct mdoc *m, int line,
 		else if (ARGS_EOLN == c)
 			break;
 
-		if (0 == v->sz % MULTI_STEP) {
-			v->value = realloc(v->value, 
+		if (0 == v->sz % MULTI_STEP)
+			v->value = mandoc_realloc(v->value, 
 				(v->sz + MULTI_STEP) * sizeof(char *));
-			if (NULL == v->value) {
-				(void)mdoc_nerr(m, m->last, EMALLOC);
-				return(ARGV_ERROR);
-			}
-		}
-		if (NULL == (v->value[(int)v->sz] = strdup(p)))
-			return(mdoc_nerr(m, m->last, EMALLOC));
+
+		v->value[(int)v->sz] = mandoc_strdup(p);
 	}
 
 	return(1);
@@ -706,10 +691,8 @@ argv_opt_single(struct mdoc *m, int line,
 		return(1);
 
 	v->sz = 1;
-	if (NULL == (v->value = calloc(1, sizeof(char *))))
-		return(mdoc_nerr(m, m->last, EMALLOC));
-	if (NULL == (v->value[0] = strdup(p)))
-		return(mdoc_nerr(m, m->last, EMALLOC));
+	v->value = mandoc_malloc(sizeof(char *));
+	v->value[0] = mandoc_strdup(p);
 
 	return(1);
 }
@@ -734,10 +717,8 @@ argv_single(struct mdoc *m, int line,
 		return(mdoc_perr(m, line, ppos, EARGVAL));
 
 	v->sz = 1;
-	if (NULL == (v->value = calloc(1, sizeof(char *))))
-		return(mdoc_nerr(m, m->last, EMALLOC));
-	if (NULL == (v->value[0] = strdup(p)))
-		return(mdoc_nerr(m, m->last, EMALLOC));
+	v->value = mandoc_malloc(sizeof(char *));
+	v->value[0] = mandoc_strdup(p);
 
 	return(1);
 }

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -19,7 +19,6 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -451,7 +450,7 @@ print_mdoc_node(MDOC_ARGS)
 static void
 mdoc_root_post(MDOC_ARGS)
 {
-	struct htmlpair	 tag[2];
+	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
 	char		 b[DATESIZ];
 
@@ -466,7 +465,9 @@ mdoc_root_post(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "footer");
 	bufcat_style(h, "width", "100%");
 	PAIR_STYLE_INIT(&tag[1], h);
-	t = print_otag(h, TAG_TABLE, 2, tag);
+	PAIR_SUMMARY_INIT(&tag[2], "footer");
+
+	t = print_otag(h, TAG_TABLE, 3, tag);
 	tt = print_otag(h, TAG_TR, 0, NULL);
 
 	bufinit(h);
@@ -490,7 +491,7 @@ mdoc_root_post(MDOC_ARGS)
 static int
 mdoc_root_pre(MDOC_ARGS)
 {
-	struct htmlpair	 tag[2];
+	struct htmlpair	 tag[3];
 	struct tag	*t, *tt;
 	char		 b[BUFSIZ], title[BUFSIZ];
 
@@ -510,7 +511,10 @@ mdoc_root_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "header");
 	bufcat_style(h, "width", "100%");
 	PAIR_STYLE_INIT(&tag[1], h);
-	t = print_otag(h, TAG_TABLE, 2, tag);
+	PAIR_SUMMARY_INIT(&tag[2], "header");
+
+	t = print_otag(h, TAG_TABLE, 3, tag);
+
 	tt = print_otag(h, TAG_TR, 0, NULL);
 
 	bufinit(h);
@@ -546,7 +550,7 @@ mdoc_sh_pre(MDOC_ARGS)
 {
 	struct htmlpair		 tag[2];
 	const struct mdoc_node	*nn;
-	char			 lbuf[BUFSIZ];
+	char			 buf[BUFSIZ];
 	struct roffsu		 su;
 
 	if (MDOC_BODY == n->type) {
@@ -573,11 +577,11 @@ mdoc_sh_pre(MDOC_ARGS)
 		return(1);
 	}
 
-	lbuf[0] = 0;
+	buf[0] = '\0';
 	for (nn = n->child; nn; nn = nn->next) {
-		(void)strlcat(lbuf, nn->string, BUFSIZ);
+		html_idcat(buf, nn->string, BUFSIZ);
 		if (nn->next)
-			(void)strlcat(lbuf, "_", BUFSIZ);
+			html_idcat(buf, " ", BUFSIZ);
 	}
 
 	/* 
@@ -587,7 +591,7 @@ mdoc_sh_pre(MDOC_ARGS)
 
 	PAIR_CLASS_INIT(&tag[0], "sec-head");
 	tag[1].key = ATTR_ID;
-	tag[1].val = lbuf;
+	tag[1].val = buf;
 	print_otag(h, TAG_DIV, 2, tag);
 	return(1);
 }
@@ -599,7 +603,7 @@ mdoc_ss_pre(MDOC_ARGS)
 {
 	struct htmlpair	 	 tag[3];
 	const struct mdoc_node	*nn;
-	char			 lbuf[BUFSIZ];
+	char			 buf[BUFSIZ];
 	struct roffsu		 su;
 
 	SCALE_VS_INIT(&su, 1);
@@ -626,11 +630,11 @@ mdoc_ss_pre(MDOC_ARGS)
 
 	/* TODO: see note in mdoc_sh_pre() about duplicates. */
 
-	lbuf[0] = 0;
+	buf[0] = '\0';
 	for (nn = n->child; nn; nn = nn->next) {
-		(void)strlcat(lbuf, nn->string, BUFSIZ);
+		html_idcat(buf, nn->string, BUFSIZ);
 		if (nn->next)
-			(void)strlcat(lbuf, "_", BUFSIZ);
+			html_idcat(buf, " ", BUFSIZ);
 	}
 
 	SCALE_HS_INIT(&su, INDENT - HALFINDENT);
@@ -640,7 +644,7 @@ mdoc_ss_pre(MDOC_ARGS)
 	PAIR_CLASS_INIT(&tag[0], "ssec-head");
 	PAIR_STYLE_INIT(&tag[1], h);
 	tag[2].key = ATTR_ID;
-	tag[2].val = lbuf;
+	tag[2].val = buf;
 	print_otag(h, TAG_DIV, 3, tag);
 	return(1);
 }
@@ -944,8 +948,7 @@ mdoc_it_head_pre(MDOC_ARGS, int type, struct roffsu *width)
 	case (MDOC_Item):
 		/* FALLTHROUGH */
 	case (MDOC_Ohang):
-		print_otag(h, TAG_DIV, 0, NULL);
-		break;
+		return(0);
 	case (MDOC_Column):
 		bufcat_su(h, "min-width", width);
 		bufcat_style(h, "clear", "none");
@@ -1106,8 +1109,10 @@ mdoc_bl_pre(MDOC_ARGS)
 		return(1);
 
 	ord = malloc(sizeof(struct ord));
-	if (NULL == ord)
-		err(EXIT_FAILURE, "malloc");
+	if (NULL == ord) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
 	ord->cookie = n;
 	ord->pos = 1;
 	ord->next = h->ords.head;
@@ -1287,11 +1292,11 @@ mdoc_sx_pre(MDOC_ARGS)
 
 	/* FIXME: duplicates? */
 
-	(void)strlcpy(buf, "#", BUFSIZ);
+	strlcpy(buf, "#", BUFSIZ);
 	for (nn = n->child; nn; nn = nn->next) {
-		(void)strlcat(buf, nn->string, BUFSIZ);
+		html_idcat(buf, nn->string, BUFSIZ);
 		if (nn->next)
-			(void)strlcat(buf, "_", BUFSIZ);
+			html_idcat(buf, " ", BUFSIZ);
 	}
 
 	PAIR_CLASS_INIT(&tag[0], "link-sec");
@@ -1708,7 +1713,10 @@ mdoc_sp_pre(MDOC_ARGS)
 	bufcat_su(h, "height", &su);
 	PAIR_STYLE_INIT(&tag, h);
 	print_otag(h, TAG_DIV, 1, &tag);
-	return(1);
+	/* So the div isn't empty: */
+	print_text(h, "\\~");
+
+	return(0);
 
 }
 
@@ -1855,6 +1863,7 @@ mdoc_in_pre(MDOC_ARGS)
 	for (nn = n->child; nn; nn = nn->next) {
 		PAIR_CLASS_INIT(&tag[0], "link-includes");
 		i = 1;
+		bufinit(h);
 		if (h->base_includes) {
 			buffmt_includes(h, nn->string);
 			tag[i].key = ATTR_HREF;

@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: html.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -17,7 +17,7 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <err.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -80,6 +80,7 @@ static	const char	 *const htmlattrs[ATTR_MAX] = {
 	"valign",
 	"target",
 	"id",
+	"summary",
 };
 
 void *
@@ -94,16 +95,15 @@ html_alloc(char *outopts)
 	toks[2] = "includes";
 	toks[3] = NULL;
 
-	if (NULL == (h = calloc(1, sizeof(struct html))))
-		return(NULL);
+	h = calloc(1, sizeof(struct html));
+	if (NULL == h) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
 
 	h->tags.head = NULL;
 	h->ords.head = NULL;
-
-	if (NULL == (h->symtab = chars_init(CHARS_HTML))) {
-		free(h);
-		return(NULL);
-	}
+	h->symtab = chars_init(CHARS_HTML);
 
 	while (outopts && *outopts)
 		switch (getsubopt(&outopts, UNCONST(toks), &v)) {
@@ -348,8 +348,11 @@ print_otag(struct html *h, enum htmltag tag,
 	struct tag	*t;
 
 	if ( ! (HTML_NOSTACK & htmltags[tag].flags)) {
-		if (NULL == (t = malloc(sizeof(struct tag))))
-			err(EXIT_FAILURE, "malloc");
+		t = malloc(sizeof(struct tag));
+		if (NULL == t) {
+			perror(NULL);
+			exit(EXIT_FAILURE);
+		}
 		t->tag = tag;
 		t->next = h->tags.head;
 		h->tags.head = t;
@@ -385,11 +388,11 @@ print_ctag(struct html *h, enum htmltag tag)
 {
 	
 	printf("</%s>", htmltags[tag].name);
-	if (HTML_CLRLINE & htmltags[tag].flags)
+	if (HTML_CLRLINE & htmltags[tag].flags) {
 		h->flags |= HTML_NOSPACE;
-	if (HTML_CLRLINE & htmltags[tag].flags)
 		h->flags |= HTML_NEWLINE;
-	else
+		printf("\n");
+	} else
 		h->flags &= ~HTML_NEWLINE;
 }
 
@@ -643,3 +646,30 @@ bufcat_su(struct html *h, const char *p, const struct roffsu *su)
 		buffmt(h, "%s: %d%s;", p, (int)v, u);
 }
 
+
+void
+html_idcat(char *dst, const char *src, int sz)
+{
+	int		 ssz;
+
+	assert(sz);
+
+	/* Cf. <http://www.w3.org/TR/html4/types.html#h-6.2>. */
+
+	for ( ; *dst != '\0' && sz; dst++, sz--)
+		/* Jump to end. */ ;
+
+	assert(sz > 2);
+
+	/* We can't start with a number (bah). */
+
+	*dst++ = 'x';
+	*dst = '\0';
+	sz--;
+
+	for ( ; *src != '\0' && sz > 1; src++) {
+		ssz = snprintf(dst, (size_t)sz, "%.2x", *src);
+		sz -= ssz;
+		dst += ssz;
+	}
+}

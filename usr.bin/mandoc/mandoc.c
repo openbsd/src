@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.3 2009/08/22 15:18:11 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.4 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -19,6 +19,8 @@
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "libmandoc.h"
 
@@ -103,3 +105,61 @@ mandoc_special(const char *p)
 	return(*p == ']' ? c : 0);
 }
 
+
+void *
+mandoc_calloc(size_t num, size_t size)
+{
+	void		*ptr;
+
+	ptr = calloc(num, size);
+	if (NULL == ptr) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	return(ptr);
+}
+
+
+void *
+mandoc_malloc(size_t size)
+{
+	void		*ptr;
+
+	ptr = malloc(size);
+	if (NULL == ptr) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	return(ptr);
+}
+
+
+void *
+mandoc_realloc(void *ptr, size_t size)
+{
+
+	ptr = realloc(ptr, size);
+	if (NULL == ptr) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	return(ptr);
+}
+
+
+char *
+mandoc_strdup(const char *ptr)
+{
+	char		*p;
+
+	p = strdup(ptr);
+	if (NULL == p) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	return(p);
+}

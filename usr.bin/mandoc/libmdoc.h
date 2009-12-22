@@ -1,4 +1,4 @@
-/*	$Id: libmdoc.h,v 1.23 2009/10/21 19:13:50 schwarze Exp $ */
+/*	$Id: libmdoc.h,v 1.24 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -44,7 +44,6 @@ enum	merr {
 	ETAILWS = 0,
 	EQUOTPARM,
 	EQUOTTERM,
-	EMALLOC,
 	EARGVAL,	
 	EBODYPROL,
 	EPROLBODY,

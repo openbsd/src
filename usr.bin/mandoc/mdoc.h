@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.15 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.16 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -292,7 +292,7 @@ struct	mdoc;
 
 void	 	  mdoc_free(struct mdoc *);
 struct	mdoc	 *mdoc_alloc(void *, int, const struct mdoc_cb *);
-int		  mdoc_reset(struct mdoc *);
+void		  mdoc_reset(struct mdoc *);
 int	 	  mdoc_parseln(struct mdoc *, int, char *buf);
 const struct mdoc_node *mdoc_node(const struct mdoc *);
 const struct mdoc_meta *mdoc_meta(const struct mdoc *);

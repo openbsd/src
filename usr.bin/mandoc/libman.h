@@ -1,4 +1,4 @@
-/*	$Id: libman.h,v 1.10 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: libman.h,v 1.11 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -41,7 +41,6 @@ struct	man {
 
 enum	merr {
 	WNPRINT = 0,
-	WNMEM,
 	WMSEC,
 	WDATE,
 	WLNSCOPE,

@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.31 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.32 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -24,12 +24,12 @@
 #include <string.h>
 
 #include "libmdoc.h"
+#include "libmandoc.h"
 
 const	char *const __mdoc_merrnames[MERRMAX] = {		 
 	"trailing whitespace", /* ETAILWS */
 	"unexpected quoted parameter", /* EQUOTPARM */
 	"unterminated quoted parameter", /* EQUOTTERM */
-	"system: malloc error", /* EMALLOC */
 	"argument parameter suggested", /* EARGVAL */
 	"macro disallowed in prologue", /* EBODYPROL */
 	"macro disallowed in body", /* EPROLBODY */
@@ -137,7 +137,7 @@ const	char * const *mdoc_macronames = __mdoc_macronames;
 const	char * const *mdoc_argnames = __mdoc_argnames;
 
 static	void		  mdoc_free1(struct mdoc *);
-static	int		  mdoc_alloc1(struct mdoc *);
+static	void		  mdoc_alloc1(struct mdoc *);
 static	struct mdoc_node *node_alloc(struct mdoc *, int, int, 
 				int, enum mdoc_type);
 static	int		  node_append(struct mdoc *, 
@@ -190,21 +190,17 @@ mdoc_free1(struct mdoc *mdoc)
 /*
  * Allocate all volatile resources (parse tree, meta-data, fields).
  */
-static int
+static void
 mdoc_alloc1(struct mdoc *mdoc)
 {
 
-	bzero(&mdoc->meta, sizeof(struct mdoc_meta));
+	memset(&mdoc->meta, 0, sizeof(struct mdoc_meta));
 	mdoc->flags = 0;
 	mdoc->lastnamed = mdoc->lastsec = SEC_NONE;
-	mdoc->last = calloc(1, sizeof(struct mdoc_node));
-	if (NULL == mdoc->last)
-		return(0);
-
+	mdoc->last = mandoc_calloc(1, sizeof(struct mdoc_node));
 	mdoc->first = mdoc->last;
 	mdoc->last->type = MDOC_ROOT;
 	mdoc->next = MDOC_NEXT_CHILD;
-	return(1);
 }
 
 
@@ -214,12 +210,12 @@ mdoc_alloc1(struct mdoc *mdoc)
  * and the parser is ready for re-invocation on a new tree; however,
  * cross-parse non-volatile data is kept intact.
  */
-int
+void
 mdoc_reset(struct mdoc *mdoc)
 {
 
 	mdoc_free1(mdoc);
-	return(mdoc_alloc1(mdoc));
+	mdoc_alloc1(mdoc);
 }
 
 
@@ -244,21 +240,17 @@ mdoc_alloc(void *data, int pflags, const struct mdoc_cb *cb)
 {
 	struct mdoc	*p;
 
-	if (NULL == (p = calloc(1, sizeof(struct mdoc))))
-		return(NULL);
-	if (cb)
-		(void)memcpy(&p->cb, cb, sizeof(struct mdoc_cb));
+	p = mandoc_calloc(1, sizeof(struct mdoc));
 
-	mdoc_hash_init();
+	if (cb)
+		memcpy(&p->cb, cb, sizeof(struct mdoc_cb));
 
 	p->data = data;
 	p->pflags = pflags;
 
-	if (mdoc_alloc1(p))
-		return(p);
-
-	free(p);
-	return(NULL);
+	mdoc_hash_init();
+	mdoc_alloc1(p);
+	return(p);
 }
 
 
@@ -434,11 +426,7 @@ node_alloc(struct mdoc *m, int line,
 {
 	struct mdoc_node *p;
 
-	if (NULL == (p = calloc(1, sizeof(struct mdoc_node)))) {
-		(void)mdoc_nerr(m, m->last, EMALLOC);
-		return(NULL);
-	}
-
+	p = mandoc_calloc(1, sizeof(struct mdoc_node));
 	p->sec = m->lastsec;
 	p->line = line;
 	p->pos = pos;
@@ -456,8 +444,6 @@ mdoc_tail_alloc(struct mdoc *m, int line, int pos, int tok)
 	struct mdoc_node *p;
 
 	p = node_alloc(m, line, pos, tok, MDOC_TAIL);
-	if (NULL == p)
-		return(0);
 	if ( ! node_append(m, p))
 		return(0);
 	m->next = MDOC_NEXT_CHILD;
@@ -474,8 +460,6 @@ mdoc_head_alloc(struct mdoc *m, int line, int pos, int tok)
 	assert(m->last);
 
 	p = node_alloc(m, line, pos, tok, MDOC_HEAD);
-	if (NULL == p)
-		return(0);
 	if ( ! node_append(m, p))
 		return(0);
 	m->next = MDOC_NEXT_CHILD;
@@ -489,8 +473,6 @@ mdoc_body_alloc(struct mdoc *m, int line, int pos, int tok)
 	struct mdoc_node *p;
 
 	p = node_alloc(m, line, pos, tok, MDOC_BODY);
-	if (NULL == p)
-		return(0);
 	if ( ! node_append(m, p))
 		return(0);
 	m->next = MDOC_NEXT_CHILD;
@@ -505,8 +487,6 @@ mdoc_block_alloc(struct mdoc *m, int line, int pos,
 	struct mdoc_node *p;
 
 	p = node_alloc(m, line, pos, tok, MDOC_BLOCK);
-	if (NULL == p)
-		return(0);
 	p->args = args;
 	if (p->args)
 		(args->refcnt)++;
@@ -524,8 +504,6 @@ mdoc_elem_alloc(struct mdoc *m, int line, int pos,
 	struct mdoc_node *p;
 
 	p = node_alloc(m, line, pos, tok, MDOC_ELEM);
-	if (NULL == p)
-		return(0);
 	p->args = args;
 	if (p->args)
 		(args->refcnt)++;
@@ -543,15 +521,7 @@ pstring(struct mdoc *m, int line, int pos, const char *p, size_t len)
 	size_t		  sv;
 
 	n = node_alloc(m, line, pos, -1, MDOC_TEXT);
-	if (NULL == n)
-		return(mdoc_nerr(m, m->last, EMALLOC));
-
-	n->string = malloc(len + 1);
-	if (NULL == n->string) {
-		free(n);
-		return(mdoc_nerr(m, m->last, EMALLOC));
-	}
-
+	n->string = mandoc_malloc(len + 1);
 	sv = strlcpy(n->string, p, len + 1);
 
 	/* Prohibit truncation. */

@@ -1,4 +1,4 @@
-/*	$Id: libmandoc.h,v 1.1 2009/07/08 00:04:10 schwarze Exp $ */
+/*	$Id: libmandoc.h,v 1.2 2009/12/22 23:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -20,6 +20,10 @@
 __BEGIN_DECLS
 
 int		 mandoc_special(const char *);
+void		*mandoc_calloc(size_t, size_t);
+char		*mandoc_strdup(const char *);
+void		*mandoc_malloc(size_t);
+void		*mandoc_realloc(void *, size_t);
 
 __END_DECLS
 
