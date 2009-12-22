@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.4 2009/11/02 20:24:58 claudio Exp $ */
+/*	$OpenBSD: log.h,v 1.5 2009/12/22 17:45:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,7 @@ void	 fatal(const char *) __dead;
 void	 fatalx(const char *) __dead;
 
 const char	*log_in6addr(const struct in6_addr *);
+const char	*log_in6addr_scope(const struct in6_addr *, unsigned int);
 const char	*log_rtr_id(u_int32_t);
 const char	*log_sockaddr(void *);
 

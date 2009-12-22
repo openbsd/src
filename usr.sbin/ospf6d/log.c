@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2009/11/02 20:24:58 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.6 2009/12/22 17:45:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -195,6 +195,25 @@ log_in6addr(const struct in6_addr *addr)
 		sa_in6.sin6_scope_id = ntohs(tmp16);
 		sa_in6.sin6_addr.s6_addr[2] = 0;
 		sa_in6.sin6_addr.s6_addr[3] = 0;
+	}
+
+	return (log_sockaddr(&sa_in6));
+}
+
+const char *
+log_in6addr_scope(const struct in6_addr *addr, unsigned int ifindex)
+{
+	struct sockaddr_in6	sa_in6;
+
+	bzero(&sa_in6, sizeof(sa_in6));
+	sa_in6.sin6_len = sizeof(sa_in6);
+	sa_in6.sin6_family = AF_INET6;
+	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
+
+	/* XXX thanks, IPv6 & KAME, for this ugliness... */
+	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
+		sa_in6.sin6_scope_id = ifindex;
 	}
 
 	return (log_sockaddr(&sa_in6));
