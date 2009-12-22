@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.87 2009/10/15 17:54:54 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.88 2009/12/22 21:10:25 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -178,9 +178,9 @@ int xl_mii_writereg(struct xl_softc *, struct xl_mii_frame *);
 
 void xl_setcfg(struct xl_softc *);
 void xl_setmode(struct xl_softc *, int);
-void xl_setmulti(struct xl_softc *);
-void xl_setmulti_hash(struct xl_softc *);
-void xl_setpromisc(struct xl_softc *);
+void xl_iff(struct xl_softc *);
+void xl_iff_90x(struct xl_softc *);
+void xl_iff_905b(struct xl_softc *);
 void xl_reset(struct xl_softc *);
 int xl_list_rx_init(struct xl_softc *);
 int xl_list_tx_init(struct xl_softc *);
@@ -556,109 +556,109 @@ xl_read_eeprom(struct xl_softc *sc, caddr_t dest, int off, int cnt, int swap)
 	return (err ? 1 : 0);
 }
 
+void
+xl_iff(struct xl_softc *sc)
+{
+	if (sc->xl_type == XL_TYPE_905B)
+		xl_iff_905b(sc);
+	else
+		xl_iff_90x(sc);
+}
+
 /*
  * NICs older than the 3c905B have only one multicast option, which
  * is to enable reception of all multicast frames.
  */
 void
-xl_setmulti(struct xl_softc *sc)
+xl_iff_90x(struct xl_softc *sc)
 {
-	struct ifnet	*ifp;
+	struct ifnet	*ifp = &sc->sc_arpcom.ac_if;
 	struct arpcom	*ac = &sc->sc_arpcom;
 	u_int8_t	rxfilt;
 
-	ifp = &sc->sc_arpcom.ac_if;
-
 	XL_SEL_WIN(5);
-	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
 
-	if (ifp->if_flags & IFF_ALLMULTI) {
-		rxfilt |= XL_RXFILTER_ALLMULTI;
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
-		return;
+	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
+	rxfilt &= ~(XL_RXFILTER_ALLFRAMES | XL_RXFILTER_ALLMULTI |
+	    XL_RXFILTER_BROADCAST | XL_RXFILTER_INDIVIDUAL);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	/*
+	 * Always accept broadcast frames.
+	 * Always accept frames destined to our station address.
+	 */
+	rxfilt |= XL_RXFILTER_BROADCAST | XL_RXFILTER_INDIVIDUAL;
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
+	    ac->ac_multicnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			rxfilt |= XL_RXFILTER_ALLFRAMES;
+		else
+			rxfilt |= XL_RXFILTER_ALLMULTI;
 	}
 
-	if (ac->ac_multicnt > 0)
-		rxfilt |= XL_RXFILTER_ALLMULTI;
-	else
-		rxfilt &= ~XL_RXFILTER_ALLMULTI;
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT | rxfilt);
 
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
+	XL_SEL_WIN(7);
 }
 
 /*
  * 3c905B adapters have a hash filter that we can program.
  */
 void
-xl_setmulti_hash(struct xl_softc *sc)
+xl_iff_905b(struct xl_softc *sc)
 {
-	struct ifnet	*ifp;
-	int		h = 0, i;
+	struct ifnet	*ifp = &sc->sc_arpcom.ac_if;
 	struct arpcom	*ac = &sc->sc_arpcom;
+	int		h = 0, i;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	u_int8_t	rxfilt;
-	int		mcnt = 0;
-
-	ifp = &sc->sc_arpcom.ac_if;
 
 	XL_SEL_WIN(5);
+
 	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
+	rxfilt &= ~(XL_RXFILTER_ALLFRAMES | XL_RXFILTER_ALLMULTI |
+	    XL_RXFILTER_BROADCAST | XL_RXFILTER_INDIVIDUAL |
+	    XL_RXFILTER_MULTIHASH);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_ALLMULTI) {
-allmulti:
-		rxfilt |= XL_RXFILTER_ALLMULTI;
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
-		return;
-	} else
-		rxfilt &= ~XL_RXFILTER_ALLMULTI;
+	/*
+	 * Always accept broadcast frames.
+	 * Always accept frames destined to our station address.
+	 */
+	rxfilt |= XL_RXFILTER_BROADCAST | XL_RXFILTER_INDIVIDUAL;
 
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			rxfilt |= XL_RXFILTER_ALLFRAMES;
+		else
+			rxfilt |= XL_RXFILTER_ALLMULTI;
+	} else {
+		rxfilt |= XL_RXFILTER_MULTIHASH;
 
-	/* first, zot all the existing hash bits */
-	for (i = 0; i < XL_HASHFILT_SIZE; i++)
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_HASH|i);
+		/* first, zot all the existing hash bits */
+		for (i = 0; i < XL_HASHFILT_SIZE; i++)
+			CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_HASH|i);
 
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
+		/* now program new ones */
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
+			    0x000000FF;
+			CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_HASH |
+			    XL_HASH_SET | h);
+
+			ETHER_NEXT_MULTI(step, enm);
 		}
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
-		    0x000000FF;
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_HASH|XL_HASH_SET|h);
-		mcnt++;
-		ETHER_NEXT_MULTI(step, enm);
 	}
 
-	if (mcnt)
-		rxfilt |= XL_RXFILTER_MULTIHASH;
-	else
-		rxfilt &= ~XL_RXFILTER_MULTIHASH;
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT | rxfilt);
 
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
+	XL_SEL_WIN(7);
 }
-
-void
-xl_setpromisc(struct xl_softc *sc)
-{
-	struct ifnet *ifp;
-	u_int8_t rxfilt;
-
-	ifp = &sc->sc_arpcom.ac_if;
-
-	XL_SEL_WIN(5);
-	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
-
-	if (ifp->if_flags & IFF_PROMISC)
-		rxfilt |= XL_RXFILTER_ALLFRAMES;
-	else
-		rxfilt &= ~XL_RXFILTER_ALLFRAMES;
-
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
-}
-
 
 #ifdef notdef
 void
@@ -1936,7 +1936,6 @@ xl_init(void *xsc)
 	struct xl_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
 	int			s, i;
-	u_int16_t		rxfilt = 0;
 	struct mii_data		*mii = NULL;
 
 	s = splnet();
@@ -2014,37 +2013,8 @@ xl_init(void *xsc)
 		    XL_CMD_SET_TX_RECLAIM|(XL_PACKET_SIZE >> 4));
 	}
 
-	/* Set RX filter bits. */
-	XL_SEL_WIN(5);
-	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
-
-	/* Set the individual bit to receive frames for this host only. */
-	rxfilt |= XL_RXFILTER_INDIVIDUAL;
-
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
-
-	/* Set promiscuous mode. */
-	xl_setpromisc(sc);
-
-	rxfilt = CSR_READ_1(sc, XL_W5_RX_FILTER);
-
-	/*
-	 * Set capture broadcast bit to capture broadcast frames.
-	 */
-	if (ifp->if_flags & IFF_BROADCAST)
-		rxfilt |= XL_RXFILTER_BROADCAST;
-	else
-		rxfilt &= ~XL_RXFILTER_BROADCAST;
-
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_FILT|rxfilt);
-
-	/*
-	 * Program the multicast filter, if necessary.
-	 */
-	if (sc->xl_type == XL_TYPE_905B)
-		xl_setmulti_hash(sc);
-	else
-		xl_setmulti(sc);
+	/* Program promiscuous mode and multicast filters. */
+	xl_iff(sc);
 
 	/*
 	 * Load the address of the RX list. We have to
@@ -2278,27 +2248,21 @@ xl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif /* INET */
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
-		XL_SEL_WIN(5);
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->xl_if_flags) &
-			     IFF_PROMISC) {
-				xl_setpromisc(sc);
-				XL_SEL_WIN(7);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					xl_init(sc);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				xl_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				xl_stop(sc);
 		}
-		sc->xl_if_flags = ifp->if_flags;
 		break;
+
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		if (sc->xl_hasmii != 0)
@@ -2310,17 +2274,14 @@ xl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			error = ifmedia_ioctl(ifp, ifr,
 			    &mii->mii_media, command);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}
 
 	if (error == ENETRESET) {
-		if (ifp->if_flags & IFF_RUNNING) {
-			if (sc->xl_type == XL_TYPE_905B)
-				xl_setmulti_hash(sc);
-			else
-				xl_setmulti(sc);
-		}
+		if (ifp->if_flags & IFF_RUNNING)
+			xl_iff(sc);
 		error = 0;
 	}
 
