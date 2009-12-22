@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2003/06/26 00:12:39 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2009/12/22 19:47:02 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -61,7 +61,8 @@ void	 onepass(u_char **, int, long, long *, u_char *, FILE *);
 int	 optval(int, int);
 void	 order(union f_handle,
 	    int (*)(int, union f_handle, int, RECHEADER *, u_char *, struct field *),
-	    struct field *);
+	    struct field *,
+	    int c_warn);
 void	 putline(RECHEADER *, FILE *);
 void	 putrec(RECHEADER *, FILE *);
 void	 rd_append(int, union f_handle, int, FILE *, u_char *, u_char *);

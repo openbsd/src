@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.22 2009/10/27 23:59:43 deraadt Exp $	*/
+/*	$OpenBSD: msort.c,v 1.23 2009/12/22 19:47:02 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -232,7 +232,8 @@ insert(struct mfile **flist, struct mfile **rec, int ttop,
 void
 order(union f_handle infile,
     int (*get)(int, union f_handle, int, RECHEADER *, u_char *, struct field *),
-    struct field *ftbl)
+    struct field *ftbl,
+    int c_warn)
 {
 	u_char *crec_end, *prec_end, *trec_end;
 	int c;
@@ -256,13 +257,19 @@ order(union f_handle infile,
 		while (get(-1, infile, 1, crec, crec_end, ftbl) == 0) {
 			if (0 < (c = cmp(prec, crec))) {
 				crec->data[crec->length-1] = 0;
-				errx(1, "found disorder: %s",
-				    crec->data+crec->offset);
+				if (c_warn)
+					errx(1, "found disorder: %s",
+					    crec->data+crec->offset);
+				else
+					exit(1);
 			}
 			if (UNIQUE && !c) {
 				crec->data[crec->length-1] = 0;
-				errx(1, "found non-uniqueness: %s",
-				    crec->data+crec->offset);
+				if (c_warn)
+					errx(1, "found non-uniqueness: %s",
+					    crec->data+crec->offset);
+				else
+					exit(1);
 			}
 			/* Swap pointers so that this record is on place
 			 * pointed to by prec and new record is read to place

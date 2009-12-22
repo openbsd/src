@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.34 2009/08/16 09:41:08 sobrado Exp $
+.\"	$OpenBSD: sort.1,v 1.35 2009/12/22 19:47:02 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 16 2009 $
+.Dd $Mdocdate: December 22 2009 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd sort or merge text files
 .Sh SYNOPSIS
 .Nm sort
-.Op Fl bcdfHimnrsuz
+.Op Fl bCcdfHimnrsuz
 .Sm off
 .Op Fl k\ \& Ar field1 Op , Ar field2
 .Sm on
@@ -63,17 +63,16 @@ regards each input line as a single field.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c
+.It Fl C
 Check that the single input file is sorted.
-If the file is not sorted,
-.Nm
-produces the appropriate error messages and exits with code 1; otherwise,
-.Nm
-returns 0.
-.Nm
-.Fl c
-produces no output, except the error messages on
-.Em stderr .
+If it is, exit 0; if it's not, exit 1.
+In either case, produce no output.
+.It Fl c
+Like
+.Fl C ,
+but write a message to
+.Em stderr
+if the input file is not sorted.
 .It Fl m
 Merge only; the input files are assumed to be pre-sorted.
 .It Fl o Ar output
@@ -95,8 +94,10 @@ does not exist.
 .It Fl u
 Unique: suppress all but one in each set of lines having equal keys.
 If used with the
+.Fl C
+or
 .Fl c
-option, also check that there are no lines with duplicate keys.
+options, also check that there are no lines with duplicate keys.
 .El
 .Pp
 The following options override the default ordering rules.
@@ -338,15 +339,21 @@ equivalent.
 .Pp
 The
 .Nm
-utility shall exit with one of the following values:
+utility exits with one of the following values:
 .Pp
 .Bl -tag -width flag -compact
 .It 0
 Normal behavior.
 .It 1
-On disorder (or non-uniqueness) with the
+The input file is not sorted and
+.Fl C
+or
 .Fl c
-option.
+was given, or there are duplicate keys and
+.Fl Cu
+or
+.Fl cu
+was given.
 .It 2
 An error occurred.
 .El
