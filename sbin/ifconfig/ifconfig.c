@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.226 2009/12/14 17:22:58 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.227 2009/12/22 17:48:49 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1333,8 +1333,10 @@ setifgroup(const char *group_name, int dummy)
 
 	if (strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
 		errx(1, "setifgroup: group name too long");
-	if (ioctl(s, SIOCAIFGROUP, (caddr_t)&ifgr) == -1)
-		err(1," SIOCAIFGROUP");
+	if (ioctl(s, SIOCAIFGROUP, (caddr_t)&ifgr) == -1) {
+		if (errno != EEXIST)
+			err(1," SIOCAIFGROUP");
+	}
 }
 
 /* ARGSUSED */
