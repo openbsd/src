@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.31 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.32 2009/12/22 12:08:30 jasper Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -988,7 +988,7 @@ file_flush(int fd, char *fname, int isempt)
 
 /*
  * rdfile_close()
- *	close a file we have beed reading (to copy or archive). If we have to
+ *	close a file we have been reading (to copy or archive). If we have to
  *	reset access time (tflag) do so (the times are stored in arcn).
  */
 
