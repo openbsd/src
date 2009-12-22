@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.30 2009/11/02 20:25:27 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.31 2009/12/22 17:55:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1026,8 +1026,9 @@ show_rib_msg(struct imsg *imsg)
 		}
 
 		printf("%-20s %-17s %-12s %-9s %-7d %s\n", dstnet,
-		    log_in6addr(&rt->nexthop), path_type_name(rt->p_type),
-		    dst_type_name(rt->d_type), rt->cost,
+		    log_in6addr_scope(&rt->nexthop, rt->ifindex),
+		    path_type_name(rt->p_type), dst_type_name(rt->d_type),
+		    rt->cost,
 		    rt->uptime == 0 ? "-" : fmt_timeframe_core(rt->uptime));
 		free(dstnet);
 		break;
