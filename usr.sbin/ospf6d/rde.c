@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.34 2009/11/02 20:24:58 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.35 2009/12/22 19:32:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -812,6 +812,9 @@ rde_send_change_kroute(struct rt_node *r)
 	bzero(&kr, sizeof(kr));
 	kr.prefix = r->prefix;
 	kr.nexthop = rn->nexthop;
+	if (IN6_IS_ADDR_LINKLOCAL(&rn->nexthop) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&rn->nexthop))
+		kr.scope = rn->ifindex;
 	kr.prefixlen = r->prefixlen;
 	kr.ext_tag = r->ext_tag;
 

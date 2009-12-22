@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.15 2009/12/21 18:35:43 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.16 2009/12/22 19:32:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -62,7 +62,7 @@ int	kroute_compare(struct kroute_node *, struct kroute_node *);
 
 struct kroute_node	*kroute_find(const struct in6_addr *, u_int8_t);
 struct kroute_node	*kroute_matchgw(struct kroute_node *,
-			    struct in6_addr *);
+			    struct in6_addr *, unsigned int);
 int			 kroute_insert(struct kroute_node *);
 int			 kroute_remove(struct kroute_node *);
 void			 kroute_clear(void);
@@ -184,7 +184,8 @@ kr_change(struct kroute *kroute)
 	 * Ingnore updates that did not change the route.
 	 * Currently only the nexthop can change.
 	 */
-	if (kr && IN6_ARE_ADDR_EQUAL(&kr->r.nexthop, &kroute->nexthop))
+	if (kr && kr->r.scope == kroute->scope &&
+	    IN6_ARE_ADDR_EQUAL(&kr->r.nexthop, &kroute->nexthop))
 		return (0);
 
 	if (send_rtmsg(kr_state.fd, action, kroute) == -1)
@@ -198,14 +199,17 @@ kr_change(struct kroute *kroute)
 		kr->r.prefix = kroute->prefix;
 		kr->r.prefixlen = kroute->prefixlen;
 		kr->r.nexthop = kroute->nexthop;
+		kr->r.scope = kroute->scope;
 		kr->r.flags = kroute->flags | F_OSPFD_INSERTED;
 		kr->r.ext_tag = kroute->ext_tag;
 		kr->r.rtlabel = kroute->rtlabel;
 
 		if (kroute_insert(kr) == -1)
 			free(kr);
-	} else if (kr)
+	} else if (kr) {
 		kr->r.nexthop = kroute->nexthop;
+		kr->r.scope = kroute->scope;
+	}
 
 	return (0);
 }
@@ -502,10 +506,11 @@ kroute_find(const struct in6_addr *prefix, u_int8_t prefixlen)
 }
 
 struct kroute_node *
-kroute_matchgw(struct kroute_node *kr, struct in6_addr *nh)
+kroute_matchgw(struct kroute_node *kr, struct in6_addr *nh, unsigned int scope)
 {
 	while (kr) {
-		if (IN6_ARE_ADDR_EQUAL(&kr->r.nexthop, nh))
+		if (scope == kr->r.scope &&
+		    IN6_ARE_ADDR_EQUAL(&kr->r.nexthop, nh))
 			return (kr);
 		kr = kr->next;
 	}
@@ -941,7 +946,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_flags = RTF_PROTO2;
+	hdr.rtm_flags = RTF_UP|RTF_PROTO2;
 	hdr.rtm_priority = RTP_OSPF;
 	if (action == RTM_CHANGE)	/* force PROTO2 reset the other flags */
 		hdr.rtm_fmask = RTF_PROTO2|RTF_PROTO1|RTF_REJECT|RTF_BLACKHOLE;
@@ -967,6 +972,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 		nexthop.sin6_len = sizeof(nexthop);
 		nexthop.sin6_family = AF_INET6;
 		nexthop.sin6_addr = kroute->nexthop;
+		nexthop.sin6_scope_id = kroute->scope;
 		/* adjust header */
 		hdr.rtm_flags |= RTF_GATEWAY;
 		hdr.rtm_addrs |= RTA_GATEWAY;
@@ -981,6 +987,8 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	mask.sin6_family = AF_INET6;
 	mask.sin6_addr = *prefixlen2mask(kroute->prefixlen);
 	/* adjust header */
+	if (kroute->prefixlen == 128)
+		hdr.rtm_flags |= RTF_HOST;
 	hdr.rtm_addrs |= RTA_NETMASK;
 	hdr.rtm_msglen += sizeof(mask);
 	/* adjust iovec */
@@ -1121,6 +1129,8 @@ fetchtable(void)
 			case AF_INET6:
 				kr->r.nexthop =
 				    ((struct sockaddr_in6 *)sa)->sin6_addr;
+				kr->r.scope =
+				    ((struct sockaddr_in6 *)sa)->sin6_scope_id;
 				break;
 			case AF_LINK:
 				kr->r.flags |= F_CONNECTED;
@@ -1236,6 +1246,7 @@ dispatch_rtmsg(void)
 	struct in6_addr		 prefix, nexthop;
 	u_int8_t		 prefixlen;
 	int			 flags, mpath;
+	unsigned int		 scope;
 	u_short			 ifindex = 0;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
@@ -1256,6 +1267,7 @@ dispatch_rtmsg(void)
 
 		bzero(&prefix, sizeof(prefix));
 		bzero(&nexthop, sizeof(nexthop));
+		scope = 0;
 		prefixlen = 0;
 		flags = F_KERNEL;
 		mpath = 0;
@@ -1312,6 +1324,8 @@ dispatch_rtmsg(void)
 				case AF_INET6:
 					nexthop = ((struct sockaddr_in6 *)
 					    sa)->sin6_addr;
+					scope = ((struct sockaddr_in6 *)
+					    sa)->sin6_scope_id;
 					break;
 				case AF_LINK:
 					flags |= F_CONNECTED;
@@ -1323,7 +1337,7 @@ dispatch_rtmsg(void)
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
 		case RTM_CHANGE:
-			if (IN6_IS_ADDR_UNSPECIFIED(&nexthop) == 0 &&
+			if (!IN6_IS_ADDR_UNSPECIFIED(&nexthop) &&
 			    !(flags & F_CONNECTED)) {
 				log_warnx("dispatch_rtmsg no nexthop for %s/%u",
 				    log_in6addr(&prefix), prefixlen);
@@ -1338,7 +1352,7 @@ dispatch_rtmsg(void)
 				/* get the correct route */
 				kr = okr;
 				if (mpath && (kr = kroute_matchgw(okr,
-				    &nexthop)) == NULL) {
+				    &nexthop, scope)) == NULL) {
 					log_warnx("dispatch_rtmsg mpath route"
 					    " not found");
 					/* add routes we missed out earlier */
@@ -1355,6 +1369,7 @@ dispatch_rtmsg(void)
 				if (kr->r.flags & F_REDISTRIBUTED)
 					flags |= F_REDISTRIBUTED;
 				kr->r.nexthop = nexthop;
+				kr->r.scope = scope;
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
 
@@ -1386,6 +1401,7 @@ add:
 				kr->r.prefix = prefix;
 				kr->r.prefixlen = prefixlen;
 				kr->r.nexthop = nexthop;
+				kr->r.scope = scope;
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
 
@@ -1408,8 +1424,8 @@ add:
 				continue;
 			/* get the correct route */
 			okr = kr;
-			if (mpath &&
-			    (kr = kroute_matchgw(kr, &nexthop)) == NULL) {
+			if (mpath && (kr = kroute_matchgw(kr, &nexthop,
+			    scope)) == NULL) {
 				log_warnx("dispatch_rtmsg mpath route"
 				    " not found");
 				return (-1);
