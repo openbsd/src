@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.22 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.23 2009/12/22 12:09:36 jasper Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -943,7 +943,7 @@ buf_flush(int bufcnt)
 		} else if (cnt > 0) {
 			/*
 			 * Oh drat we got a partial write!
-			 * if format doesnt care about alignment let it go,
+			 * if format does not care about alignment let it go,
 			 * we warned the user in ar_write().... but this means
 			 * the last record on this volume violates pax spec....
 			 */

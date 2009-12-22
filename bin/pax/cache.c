@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.18 2009/10/27 23:59:22 deraadt Exp $	*/
+/*	$OpenBSD: cache.c,v 1.19 2009/12/22 12:09:36 jasper Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -267,7 +267,7 @@ name_gid(gid_t gid, int frc)
 	if ((gr = getgrgid(gid)) == NULL) {
 		/*
 		 * no match for this gid in the local group file, put in
-		 * a string that is the gid in numberic format
+		 * a string that is the gid in numeric format
 		 */
 		if (ptr == NULL)
 			return("");
