@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.15 2009/07/28 19:20:40 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.16 2009/12/22 16:29:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -39,9 +39,10 @@ struct vertex			*spf_root = NULL;
 void		 calc_nexthop_clear(struct vertex *);
 void		 calc_nexthop_add(struct vertex *, struct vertex *,
 		     const struct in6_addr *, u_int32_t);
-struct in6_addr	*calc_nexthop_lladdr(struct vertex *, struct lsa_rtr_link *);
+struct in6_addr	*calc_nexthop_lladdr(struct vertex *, struct lsa_rtr_link *,
+		     u_int32_t);
 void		 calc_nexthop_transit_nbr(struct vertex *, struct vertex *,
-		     u_int32_t ifindex);
+		     u_int32_t);
 void		 calc_nexthop(struct vertex *, struct vertex *,
 		     struct area *, struct lsa_rtr_link *);
 void		 rt_nexthop_clear(struct rt_node *);
@@ -410,26 +411,28 @@ calc_nexthop_add(struct vertex *dst, struct vertex *parent,
 }
 
 struct in6_addr *
-calc_nexthop_lladdr(struct vertex *dst, struct lsa_rtr_link *rtr_link)
+calc_nexthop_lladdr(struct vertex *dst, struct lsa_rtr_link *rtr_link,
+    u_int32_t ifindex)
 {
-	struct iface	*iface;
-	struct vertex	*link;
-	struct rde_nbr	*nbr;
+	struct iface		*iface;
+	struct vertex		*link;
+	struct rde_nbr		*nbr;
 
 	/* Find outgoing interface, we need its LSA tree */
 	LIST_FOREACH(iface, &dst->area->iface_list, entry) {
-		if (ntohl(rtr_link->iface_id) == iface->ifindex)
+		if (ifindex == iface->ifindex)
 			break;
 	}
 	if (!iface) {
-		warnx("calc_nexthop_lladdr: no interface found for ifindex");
+		log_warnx("calc_nexthop_lladdr: no interface found for "
+		    "ifindex %d", ntohl(rtr_link->iface_id));
 		return (NULL);
 	}
 
 	/* Determine neighbor's link-local address.
 	 * Try to get it from link LSA first. */
 	link = lsa_find_tree(&iface->lsa_tree,
-		htons(LSA_TYPE_LINK), rtr_link->nbr_iface_id,
+		htons(LSA_TYPE_LINK), rtr_link->iface_id,
 		htonl(dst->adv_rtr));
 	if (link)
 		return &link->lsa->data.link.lladdr;
@@ -461,7 +464,7 @@ calc_nexthop_transit_nbr(struct vertex *dst, struct vertex *parent,
 		if (rtr_link->type == LINK_TYPE_TRANSIT_NET &&
 		    rtr_link->nbr_rtr_id == parent->lsa->hdr.adv_rtr &&
 		    rtr_link->nbr_iface_id == parent->lsa->hdr.ls_id) {
-			lladdr = calc_nexthop_lladdr(dst, rtr_link);
+			lladdr = calc_nexthop_lladdr(dst, rtr_link, ifindex);
 			calc_nexthop_add(dst, parent, lladdr, ifindex);
 		}
 	}
@@ -480,7 +483,8 @@ calc_nexthop(struct vertex *dst, struct vertex *parent,
 		case LSA_TYPE_ROUTER:
 			if (rtr_link->type != LINK_TYPE_POINTTOPOINT)
 				fatalx("inconsistent SPF tree");
-			nexthop = calc_nexthop_lladdr(dst, rtr_link);
+			nexthop = calc_nexthop_lladdr(dst, rtr_link, 
+			    ntohl(rtr_link->nbr_iface_id));
 			break;
 		case LSA_TYPE_NETWORK:
 			if (rtr_link->type != LINK_TYPE_TRANSIT_NET)
