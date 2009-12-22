@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.282 2009/10/25 05:23:58 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.283 2009/12/22 14:13:14 ajacoutot Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -254,6 +254,11 @@ distribution-etc-root-var: distrib-dirs
 distribution:
 	exec ${SUDO} ${MAKE} distribution-etc-root-var
 	cd .. && exec ${SUDO} ${MAKE} install
+	TMPSUM=`mktemp /tmp/_etcsum.XXXXXXXXXX` || exit 1; \
+	sort ../distrib/sets/lists/etc/{mi,md.${MACHINE}} > $${TMPSUM}; \
+	cd ${DESTDIR} && \
+		xargs cksum < $${TMPSUM} > ${DESTDIR}/var/db/sysmerge/etcsum; \
+	rm -f $${TMPSUM}
 
 distrib-dirs:
 	if [ ! -d ${DESTDIR}/. ]; then \
