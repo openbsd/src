@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.57 2009/11/24 10:00:39 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.58 2009/12/22 08:48:14 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -693,6 +693,7 @@ typedef struct codec_t {
 	nid_t speaker;		/* fixed (internal) speaker */
 	nid_t spkr_dac;
 	nid_t input_mixer;
+	nid_t fhp;		/* front headphone jack */
 	nid_t fhp_dac;
 	int nout_jacks;		/* number of default output jacks */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.164 2009/12/15 22:14:28 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.165 2009/12/22 08:48:14 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1643,7 +1643,8 @@ azalia_codec_init(codec_t *this)
 
 	this->na_dacs = this->na_dacs_d = 0;
 	this->na_adcs = this->na_adcs_d = 0;
-	this->speaker = this->spkr_dac = this->mic = this->mic_adc = -1;
+	this->speaker = this->spkr_dac = this->fhp = this->fhp_dac =
+	    this->mic = this->mic_adc = -1;
 	this->nsense_pins = 0;
 	this->nout_jacks = 0;
 	nspdif = nhdmi = 0;
@@ -1704,6 +1705,13 @@ azalia_codec_init(codec_t *this)
 			case CORB_CD_JACK:
 				if (w->d.pin.device == CORB_CD_LINEOUT)
 					this->nout_jacks++;
+				else if (w->d.pin.device == CORB_CD_HEADPHONE &&
+				    CORB_CD_LOC_GEO(w->d.pin.config) ==
+				    CORB_CD_FRONT) {
+					this->fhp = i;
+					this->fhp_dac =
+					    azalia_codec_find_defdac(this, i, 0);
+				}
 				if (this->nsense_pins >= HDA_MAX_SENSE_PINS ||
 				    !(w->d.pin.cap & COP_PINCAP_PRESENCE))
 					break;
@@ -1749,10 +1757,9 @@ azalia_codec_init(codec_t *this)
 		return err;
 
 	/* If the codec can do multichannel, select different DACs for
-	 * the multichannel jack group.  Also select a unique DAC for
-	 * the front headphone jack, if one exists.
+	 * the multichannel jack group.  Also be sure to keep track of
+	 * which DAC the front headphone is connected to.
 	 */
-	this->fhp_dac = -1;
 	if (this->na_dacs >= 3 && this->nopins >= 3) {
 		err = azalia_codec_select_dacs(this);
 		if (err)
@@ -2106,7 +2113,7 @@ azalia_codec_select_dacs(codec_t *this)
 	widget_t *w;
 	nid_t *convs;
 	int nconv, conv;
-	int i, j, k, err, isfhp;
+	int i, j, k, err;
 
 	convs = malloc(this->na_dacs * sizeof(nid_t), M_DEVBUF,
 	    M_NOWAIT | M_ZERO);
@@ -2116,13 +2123,7 @@ azalia_codec_select_dacs(codec_t *this)
 	err = 0;
 	nconv = 0;
 	for (i = 0; i < this->nopins; i++) {
-		isfhp = 0;
 		w = &this->w[this->opins[i].nid];
-
-		if (w->d.pin.device == CORB_CD_HEADPHONE &&
-		    CORB_CD_LOC_GEO(w->d.pin.config) == CORB_CD_FRONT) {
-			isfhp = 1;
-		}
 
 		conv = this->opins[i].conv;
 		for (j = 0; j < nconv; j++) {
@@ -2131,7 +2132,7 @@ azalia_codec_select_dacs(codec_t *this)
 		}
 		if (j == nconv) {
 			convs[nconv++] = conv;
-			if (isfhp)
+			if (w->nid == this->fhp)
 				this->fhp_dac = conv;
 			if (nconv >= this->na_dacs) {
 				break;
@@ -2161,7 +2162,7 @@ azalia_codec_select_dacs(codec_t *this)
 					break;
 				w->selected = j;
 				this->opins[i].conv = conv;
-				if (isfhp)
+				if (w->nid == this->fhp)
 					this->fhp_dac = conv;
 				convs[nconv++] = conv;
 				if (nconv >= this->na_dacs)
@@ -2406,7 +2407,7 @@ azalia_codec_init_volgroups(codec_t *this)
 		if (dac == -1)
 			continue;
 		if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
-		    dac != this->spkr_dac)
+		    dac != this->spkr_dac && dac != this->fhp_dac)
 			continue;
 		cap = w->outamp_cap;
 		if ((cap & COP_AMPCAP_MUTE) && COP_AMPCAP_NUMSTEPS(cap)) {
@@ -2432,7 +2433,7 @@ azalia_codec_init_volgroups(codec_t *this)
 			if (dac == -1)
 				continue;
 			if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
-			    dac != this->spkr_dac)
+			    dac != this->spkr_dac && dac != this->fhp_dac)
 				continue;
 			if (w->type == COP_AWTYPE_BEEP_GENERATOR)
 				continue;
