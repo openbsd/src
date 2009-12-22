@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.16 2009/11/02 20:24:58 claudio Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.17 2009/12/22 19:44:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -447,11 +447,13 @@ main_dispatch_rde(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_KROUTE_CHANGE:
+log_debug("IMSG_KROUTE_CHANGE");
 			if (kr_change(imsg.data))
 				log_warn("main_dispatch_rde: error changing "
 				    "route");
 			break;
 		case IMSG_KROUTE_DELETE:
+log_debug("IMSG_KROUTE_DELETE");
 			if (kr_delete(imsg.data))
 				log_warn("main_dispatch_rde: error deleting "
 				    "route");

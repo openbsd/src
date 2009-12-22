@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.16 2009/12/22 19:32:36 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.17 2009/12/22 19:44:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -972,7 +972,15 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 		nexthop.sin6_len = sizeof(nexthop);
 		nexthop.sin6_family = AF_INET6;
 		nexthop.sin6_addr = kroute->nexthop;
-		nexthop.sin6_scope_id = kroute->scope;
+		/*
+		 * XXX we should set the sin6_scope_id but the kernel
+		 * XXX does not expect it that way. It must be fiddled
+		 * XXX into the sin6_addr. Welcome to the typical
+		 * XXX IPv6 insanity and all without wine bottles.
+		 */
+		/* nexthop.sin6_scope_id = kroute->scope; */
+		nexthop.sin6_addr.s6_addr[2] = (kroute->scope >> 8) & 0xff;
+		nexthop.sin6_addr.s6_addr[3] = kroute->scope & 0xff;
 		/* adjust header */
 		hdr.rtm_flags |= RTF_GATEWAY;
 		hdr.rtm_addrs |= RTA_GATEWAY;

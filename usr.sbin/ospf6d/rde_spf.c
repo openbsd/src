@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.18 2009/12/22 17:54:04 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.19 2009/12/22 19:44:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -618,6 +618,9 @@ spf_timer(int fd, short event, void *arg)
 		RB_FOREACH(r, rt_tree, &rt) {
 			LIST_FOREACH(area, &conf->area_list, entry)
 				rde_summary_update(r, area);
+
+log_debug("rt_calced: %s/%u  type %d inval %d",
+    log_in6addr(&r->prefix), r->prefixlen, r->d_type, r->invalid);
 
 			if (r->d_type != DT_NET)
 				continue;
