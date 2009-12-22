@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.11 2009/12/21 13:24:57 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.12 2009/12/22 18:26:47 deraadt Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -320,7 +320,7 @@ sub unlink
 sub setup_progressmeter
 {
 	my ($self, $opt_x) = @_;
-	if (!$opt_x && $self->verbose) {
+	if (!$opt_x) {
 		require OpenBSD::ProgressMeter;
 		$self->{progressmeter} = OpenBSD::ProgressMeter->new;
 	}
