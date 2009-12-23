@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.17 2009/12/22 19:44:52 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.18 2009/12/23 15:11:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -861,7 +861,8 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 		ifa->sin6_addr.s6_addr[3] = 0;
 	}
 
-	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr))
+	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr) ||
+	    iface->flags & IFF_LOOPBACK)
 		iface->addr = ifa->sin6_addr;
 
 	if ((ia = calloc(1, sizeof(struct iface_addr))) == NULL)
