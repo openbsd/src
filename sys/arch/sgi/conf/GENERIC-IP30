@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.22 2009/12/18 11:56:42 jsing Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.23 2009/12/23 18:03:07 jasper Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -128,6 +128,7 @@ urtw*		at uhub?	# RealTek 8187
 wi*		at uhub?	# WaveLAN IEEE 802.11DS
 zyd*		at uhub?	# Zydas ZD1211
 ugen*		at uhub?	# USB Generic driver
+uthum*		at uhidev?	# TEMPerHUM sensor
 
 # USB Video
 uvideo*		at uhub?

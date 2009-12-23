@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2009/09/06 20:09:34 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.13 2009/12/23 18:03:07 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -76,6 +76,7 @@ ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 zyd*	at uhub?		# Zydas ZD1211
+uthum*	at uhidev?		# TEMPerHUM sensor
 
 udl*		at uhub?
 wsdisplay*	at udl?

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.15 2009/12/18 11:56:42 jsing Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.16 2009/12/23 18:03:07 jasper Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -124,6 +124,7 @@ urtw*		at uhub?	# RealTek 8187
 wi*		at uhub?	# WaveLAN IEEE 802.11DS
 zyd*		at uhub?	# Zydas ZD1211
 ugen*		at uhub?	# USB Generic driver
+uthum*		at uhidev?	# TEMPerHUM sensor
 
 # USB Video
 uvideo*		at uhub?
