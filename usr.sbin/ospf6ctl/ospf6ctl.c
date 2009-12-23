@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.31 2009/12/22 17:55:04 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.32 2009/12/23 18:01:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1138,7 +1138,7 @@ show_rib_detail_msg(struct imsg *imsg)
 				errx(1, "unknown route type");
 			}
 			printf("%-18s %-15s ", dstnet,
-			    log_in6addr(&rt->nexthop));
+			    log_in6addr_scope(&rt->nexthop, rt->ifindex));
 			printf("%-15s %-12s %-7d", inet_ntoa(rt->adv_rtr),
 			    path_type_name(rt->p_type), rt->cost);
 			free(dstnet);
@@ -1159,7 +1159,7 @@ show_rib_detail_msg(struct imsg *imsg)
 				err(1, NULL);
 
 			printf("%-18s %-15s ", dstnet,
-			    log_in6addr(&rt->nexthop));
+			    log_in6addr_scope(&rt->nexthop, rt->ifindex));
 			printf("%-15s %-12s %-7d %-7d\n",
 			    inet_ntoa(rt->adv_rtr), path_type_name(rt->p_type),
 			    rt->cost, rt->cost2);
@@ -1226,7 +1226,7 @@ show_fib_msg(struct imsg *imsg)
 		free(p);
 
 		if (!IN6_IS_ADDR_UNSPECIFIED(&k->nexthop))
-			printf("%s", log_in6addr(&k->nexthop));
+			printf("%s", log_in6addr_scope(&k->nexthop, k->scope));
 		else if (k->flags & F_CONNECTED)
 			printf("link#%u", k->ifindex);
 		printf("\n");
