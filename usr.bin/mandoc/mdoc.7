@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.18 2009/10/27 21:40:07 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.19 2009/12/23 22:30:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2009 $
+.Dd $Mdocdate: December 23 2009 $
 .Dt MDOC 7
 .Os
 .
@@ -212,9 +212,8 @@ In free-form mode, quotes are regarded as opaque text.
 .Ss Dates
 There are several macros in
 .Nm
-that require a date argument.  The 
-.Em canonical form
-for dates is the American format:
+that require a date argument.  The canonical form for dates is the
+American format:
 .Pp
 .D1 Cm Month Day , Year
 .Pp
@@ -226,26 +225,16 @@ value is the full month name.  The
 .Cm Year
 value is the full four-digit year.
 .Pp
-The
-.Em non-canonical form
-is the same as the canonical form, but without the comma between the
-.Cm Day
-and
-.Cm Year
-field.
+Reduced form dates are broken-down canonical form dates:
 .Pp
-Lastly,
-.Em reduced form
-dates range from only a
-.Cm Year
-to the full canonical or non-canonical form.
+.D1 Cm Month , Year
+.D1 Cm Year
 .Pp
 Some examples of valid dates follow:
 .Pp
 .D1 "May, 2009" Pq reduced form
 .D1 "2009" Pq reduced form
 .D1 "May 20, 2009" Pq canonical form
-.D1 "May 20 2009" Pq non-canonical form
 .
 .Ss Scaling Widths
 Many macros support scaled widths for their arguments, such as
@@ -374,38 +363,185 @@ The sections in a
 .Nm
 document are conventionally ordered as they appear above.  Sections
 should be composed as follows:
-.Bl -tag -width Ds -offset Ds
-.It NAME
-Must contain at least one
+.Bl -ohang -offset Ds
+.It Em NAME
+The name(s) and a short description of the documented material.  The
+syntax for this as follows:
+.Bd -literal -offset indent
+\&.Nm name0
+\&.Nm name1
+\&.Nm name2
+\&.Nd a short description
+.Ed
+.Pp
+The
 .Sx \&Nm
-followed by
-.Sx \&Nd .
-The name needs re-stating since one
-.Nm
-documents can be used for more than one utility or function, such as
-.Xr grep 1
-also being referenced as
-.Xr egrep 1
-and
-.Xr fgrep 1 .
-.It LIBRARY
-.It SYNOPSIS
-.It DESCRIPTION
-.It IMPLEMENTATION NOTES
-.It EXIT STATUS
-.It RETURN VALUES
-.It ENVIRONMENT
-.It FILES
-.It EXAMPLES
-.It DIAGNOSTICS
-.It ERRORS
-.It SEE ALSO
-.It STANDARDS
-.It HISTORY
-.It AUTHORS
-.It CAVEATS
-.It BUGS
-.It SECURITY CONSIDERATIONS
+macro(s) must precede the
+.Sx \&Nd
+macro.
+.
+.It Em LIBRARY
+The name of the library containing the documented material, which is
+assumed to be a function in a section 2 or 3 manual.  The syntax for
+this is as follows:
+.Bd -literal -offset indent
+\&.Lb libarm
+.Ed
+.Pp
+See
+.Sx \&Lb
+for details.
+.
+.It Em SYNOPSIS
+Documents the utility invocation syntax, function call syntax, or device
+configuration. 
+.Pp
+For the first, utilities (sections 1, 6, and 8), this is
+generally structured as follows:
+.Bd -literal -offset indent
+\&.Nm foo
+\&.Op Fl v
+\&.Op Fl o Ar file
+\&.Op Ar
+\&.Nm bar
+\&.Op Fl v
+\&.Op Fl o Ar file
+\&.Op Ar
+.Ed
+.Pp
+For the second, function calls (sections 2, 3, 9):
+.Bd -literal -offset indent
+\&.Vt extern const char *global;
+\&.In header.h
+\&.Ft "char *"
+\&.Fn foo "const char *src"
+\&.Ft "char *"
+\&.Fn bar "const char *src"
+.Ed
+.Pp
+And for the third, configurations (section 4):
+.Bd -literal -offset indent
+\&.Cd \*qit* at isa? port 0x2e\*q
+\&.Cd \*qit* at isa? port 0x4e\*q
+.Ed
+.Pp
+Manuals not in these sections generally don't need a 
+.Em SYNOPSIS .
+.
+.It Em DESCRIPTION
+This expands upon the brief, one-line description in 
+.Em NAME .
+It usually contains a break-down of the options (if documenting a
+command), such as:
+.Bd -literal -offset indent
+The arguments are as follows:
+\&.Bl \-tag \-width Ds
+\&.It Fl v
+Print verbose information.
+\&.El
+.Ed
+Manuals not documenting a command won't include the above fragment.
+.
+.It Em IMPLEMENTATION NOTES
+Implementation-specific notes should be kept here.  This is useful when
+implementing standard functions that may have side effects or notable
+algorithmic implications.
+.
+.It Em EXIT STATUS
+Command exit status for section 1, 6, and 8 manuals.  This section is
+the dual of
+.Em RETURN VALUES ,
+which is used for functions.  Historically, this information was
+described in
+.Em DIAGNOSTICS ,
+a practise that is now discouraged.
+.Pp
+See
+.Sx \&Ex .
+.
+.It Em RETURN VALUES
+This section is the dual of
+.Em EXIT STATUS ,
+which is used for commands.  It documents the return values of functions
+in sections 2, 3, and 9.
+.Pp
+See
+.Sx \&Rv .
+.
+.It Em ENVIRONMENT
+Documents any usages of environment variables, e.g.,
+.Xr environ 7 .
+.Pp
+See
+.Sx \&Ev .
+.
+.It Em FILES
+Documents files used.  It's helpful to document both the file and a
+short description of how the file is used (created, modified, etc.).
+.Pp
+See
+.Sx \&Pa .
+.
+.It Em EXAMPLES
+Example usages.  This often contains snippets of well-formed,
+well-tested invocations.  Make doubly sure that your examples work
+properly!
+.
+.It Em DIAGNOSTICS
+Documents error conditions.  This is most useful in section 4 manuals.
+Historically, this section was used in place of
+.Em EXIT STATUS
+for manuals in sections 1, 6, and 8; however, this practise is
+discouraged.
+.Pp
+See
+.Sx \&Bl No \-diag .
+.
+.It Em ERRORS
+Documents error handling in sections 2, 3, and 9.
+.Pp
+See
+.Sx \&Er .
+.
+.It Em SEE ALSO
+References other manuals with related topics.  This section should exist
+for most manuals.  Cross-references should conventionally be ordered
+first by section, then alphabetically.
+.Pp
+See
+.Sx \&Xr .
+.
+.It Em STANDARDS
+References any standards implemented or used.  If not adhering to any
+standards, the
+.Em HISTORY
+section should be used instead.
+.Pp
+See
+.Sx \&St .
+.
+.It Em HISTORY
+The history of any manual without a
+.Em STANDARDS
+section should be described in this section.
+.
+.It Em AUTHORS
+Credits to authors, if applicable, should appear in this section.
+Authors should generally be noted by both name and an e-mail address.
+.Pp
+See
+.Sx \&An .
+.
+.It Em CAVEATS
+Explanations of common misuses and misunderstandings should be explained
+in this section.
+.
+.It Em BUGS
+Extant bugs should be described in this section.
+.
+.It Em SECURITY CONSIDERATIONS
+Documents any security precautions that operators should consider.
+.
 .El
 .
 .
@@ -710,10 +846,9 @@ this macro is not implemented in
 .Ss \&%D
 Publication date of an
 .Sx \&Rs
-block.  This should follow the reduced syntax for 
+block.  This should follow the reduced or canonical form syntax
+described in
 .Sx Dates .
-Canonical or non-canonical form is not necessary since publications are
-often referenced only by year, or month and year.
 .
 .Ss \&%I
 Publisher or issuer name of an
@@ -1152,9 +1287,10 @@ The
 field may be either
 .Ar $\&Mdocdate$ ,
 which signifies the current manual revision date dictated by
-.Xr cvs 1
+.Xr cvs 1 ,
 or instead a valid canonical date as specified by
 .Sx Dates .
+If a date does not conform, the current date is used instead.
 .Pp
 Examples:
 .Bd -literal -offset indent
@@ -1344,7 +1480,7 @@ See also
 .Sx \&Er .
 .
 .Ss \&Dx
-Format the DragonFlyBSD version provided as an argument, or a default
+Format the DragonFly BSD version provided as an argument, or a default
 value if no argument is provided.
 .Pp
 Examples:

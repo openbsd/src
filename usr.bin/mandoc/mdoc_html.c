@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.4 2009/12/23 22:30:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -805,7 +805,7 @@ mdoc_xx_pre(MDOC_ARGS)
 		pp = "BSDI BSD/OS";
 		break;
 	case (MDOC_Dx):
-		pp = "DragonFlyBSD";
+		pp = "DragonFly";
 		break;
 	case (MDOC_Fx):
 		pp = "FreeBSD";
@@ -946,9 +946,10 @@ mdoc_it_head_pre(MDOC_ARGS, int type, struct roffsu *width)
 
 	switch (type) {
 	case (MDOC_Item):
-		/* FALLTHROUGH */
-	case (MDOC_Ohang):
 		return(0);
+	case (MDOC_Ohang):
+		print_otag(h, TAG_DIV, 0, &tag);
+		return(1);
 	case (MDOC_Column):
 		bufcat_su(h, "min-width", width);
 		bufcat_style(h, "clear", "none");
@@ -1062,6 +1063,8 @@ mdoc_it_pre(MDOC_ARGS)
 	/* Override width in some cases. */
 
 	switch (type) {
+	case (MDOC_Ohang):
+		/* FALLTHROUGH */
 	case (MDOC_Item):
 		/* FALLTHROUGH */
 	case (MDOC_Inset):

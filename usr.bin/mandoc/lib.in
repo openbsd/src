@@ -1,4 +1,4 @@
-/*	$Id: lib.in,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: lib.in,v 1.3 2009/12/23 22:30:17 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,8 +23,10 @@
  * Be sure to escape strings.
  */
 
+LINE("libarchive",	"Reading and Writing Streaming Archives Library (libarchive, \\-larchive)")
 LINE("libarm",		"ARM Architecture Library (libarm, \\-larm)")
 LINE("libarm32",	"ARM32 Architecture Library (libarm32, \\-larm32)")
+LINE("libbluetooth",	"Bluetooth Library (libbluetooth, \\-lbluetooth)")
 LINE("libc",		"Standard C Library (libc, \\-lc)")
 LINE("libcdk",		"Curses Development Kit Library (libcdk, \\-lcdk)")
 LINE("libcompat",	"Compatibility Library (libcompat, \\-lcompat)")
@@ -32,24 +34,31 @@ LINE("libcrypt",	"Crypt Library (libcrypt, \\-lcrypt)")
 LINE("libcurses",	"Curses Library (libcurses, \\-lcurses)")
 LINE("libedit",		"Command Line Editor Library (libedit, \\-ledit)")
 LINE("libevent",	"Event Notification Library (libevent, \\-levent)")
+LINE("libfetch",	"File Transfer Library for URLs (libfetch, \\-lfetch)")
 LINE("libform",		"Curses Form Library (libform, \\-lform)")
 LINE("libi386",		"i386 Architecture Library (libi386, \\-li386)")
 LINE("libintl",		"Internationalized Message Handling Library (libintl, \\-lintl)")
 LINE("libipsec",	"IPsec Policy Control Library (libipsec, \\-lipsec)")
+LINE("libiscsi",	"iSCSI protocol library (libiscsi, \\-liscsi)")
 LINE("libkvm",		"Kernel Data Access Library (libkvm, \\-lkvm)")
 LINE("libm",		"Math Library (libm, \\-lm)")
 LINE("libm68k",		"m68k Architecture Library (libm68k, \\-lm68k)")
 LINE("libmagic",	"Magic Number Recognition Library (libmagic, \\-lmagic)")
 LINE("libmenu",		"Curses Menu Library (libmenu, \\-lmenu)")
+LINE("libnetpgp",	"Netpgp signing, verification, encryption and decryption (libnetpgp, \\-lnetpgp)")
 LINE("libossaudio",	"OSS Audio Emulation Library (libossaudio, \\-lossaudio)")
 LINE("libpam",		"Pluggable Authentication Module Library (libpam, \\-lpam)")
 LINE("libpcap",		"Capture Library (libpcap, \\-lpcap)")
 LINE("libpci",		"PCI Bus Access Library (libpci, \\-lpci)")
 LINE("libpmc",		"Performance Counters Library (libpmc, \\-lpmc)")
 LINE("libposix",	"POSIX Compatibility Library (libposix, \\-lposix)")
+LINE("libprop",		"Property Container Object Library (libprop, \\-lprop)")
 LINE("libpthread",	"POSIX Threads Library (libpthread, \\-lpthread)")
+LINE("libpuffs",	"puffs Convenience Library (libpuffs, \\-lpuffs)")
+LINE("librefuse",	"File System in Userspace Convenience Library (librefuse, \\-lrefuse)")
 LINE("libresolv",	"DNS Resolver Library (libresolv, \\-lresolv)")
 LINE("librt",		"POSIX Real\\-time Library (librt, -lrt)")
+LINE("libssp",		"Buffer Overflow Protection Library (libssp, \\-lssp)")
 LINE("libtermcap",	"Termcap Access Library (libtermcap, \\-ltermcap)")
 LINE("libusbhid",	"USB Human Interface Devices Library (libusbhid, \\-lusbhid)")
 LINE("libutil",		"System Utilities Library (libutil, \\-lutil)")

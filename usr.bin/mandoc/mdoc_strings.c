@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.11 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.12 2009/12/23 22:30:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -118,28 +118,6 @@ mdoc_atosec(const char *p)
 			return(secnames[i].sec);
 
 	return(SEC_CUSTOM);
-}
-
-
-time_t
-mdoc_atotime(const char *p)
-{
-	struct tm	 tm;
-	char		*pp;
-
-	memset(&tm, 0, sizeof(struct tm));
-
-	if (0 == strcmp(p, "$" "Mdocdate$"))
-		return(time(NULL));
-	if ((pp = strptime(p, "$" "Mdocdate: %b %d %Y $", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-	/* XXX - this matches "June 1999", which is wrong. */
-	if ((pp = strptime(p, "%b %d %Y", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-	if ((pp = strptime(p, "%b %d, %Y", &tm)) && 0 == *pp)
-		return(mktime(&tm));
-
-	return(0);
 }
 
 

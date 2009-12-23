@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.25 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.26 2009/12/23 22:30:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -814,8 +814,7 @@ post_ar(POST_ARGS)
 
 
 /*
- * Parse the date field in `Dd', primarily through mdoc_atotime().
- * FIXME: push mdoc_atotime() into here.
+ * Parse the date field in `Dd'.
  */
 static int
 post_dd(POST_ARGS)
@@ -825,7 +824,9 @@ post_dd(POST_ARGS)
 	if ( ! concat(m, buf, n->child, DATESIZ))
 		return(0);
 
-	m->meta.date = mdoc_atotime(buf);
+	m->meta.date = mandoc_a2time
+		(MTIME_MDOCDATE | MTIME_CANONICAL, buf);
+
 	if (0 == m->meta.date) {
 		if ( ! mdoc_nwarn(m, n, EBADDATE))
 			return(0);

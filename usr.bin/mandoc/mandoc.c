@@ -1,4 +1,4 @@
-/*	$Id: mandoc.c,v 1.4 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: mandoc.c,v 1.5 2009/12/23 22:30:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -21,8 +21,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "libmandoc.h"
+
+static int	 a2time(time_t *, const char *, const char *);
+
 
 int
 mandoc_special(const char *p)
@@ -163,3 +167,57 @@ mandoc_strdup(const char *ptr)
 
 	return(p);
 }
+
+
+static int
+a2time(time_t *t, const char *fmt, const char *p)
+{
+	struct tm	 tm;
+	char		*pp;
+
+	memset(&tm, 0, sizeof(struct tm));
+
+	pp = strptime(p, fmt, &tm);
+	if (NULL != pp && '\0' == *pp) {
+		*t = mktime(&tm);
+		return(1);
+	}
+
+	return(0);
+}
+
+
+/*
+ * Convert from a manual date string (see mdoc(7) and man(7)) into a
+ * date according to the stipulated date type.
+ */
+time_t
+mandoc_a2time(int flags, const char *p)
+{
+	time_t		 t;
+
+	if (MTIME_MDOCDATE & flags) {
+		if (0 == strcmp(p, "$" "Mdocdate$"))
+			return(time(NULL));
+		if (a2time(&t, "$" "Mdocdate: %b %d %Y $", p))
+			return(t);
+	}
+
+	if (MTIME_CANONICAL & flags || MTIME_REDUCED & flags) 
+		if (a2time(&t, "%b %d, %Y", p))
+			return(t);
+
+	if (MTIME_ISO_8601 & flags) 
+		if (a2time(&t, "%Y-%m-%d", p))
+			return(t);
+
+	if (MTIME_REDUCED & flags) {
+		if (a2time(&t, "%d, %Y", p))
+			return(t);
+		if (a2time(&t, "%Y", p))
+			return(t);
+	}
+
+	return(0);
+}
+

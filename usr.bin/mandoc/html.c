@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: html.c,v 1.4 2009/12/23 22:30:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,8 +18,8 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -185,15 +185,13 @@ static void
 print_spec(struct html *h, const char *p, int len)
 {
 	const char	*rhs;
-	int		 i;
 	size_t		 sz;
 
 	rhs = chars_a2ascii(h->symtab, p, (size_t)len, &sz);
 
 	if (NULL == rhs) 
 		return;
-	for (i = 0; i < (int)sz; i++) 
-		putchar(rhs[i]);
+	fwrite(rhs, 1, sz, stdout);
 }
 
 
@@ -201,15 +199,13 @@ static void
 print_res(struct html *h, const char *p, int len)
 {
 	const char	*rhs;
-	int		 i;
 	size_t		 sz;
 
 	rhs = chars_a2res(h->symtab, p, (size_t)len, &sz);
 
 	if (NULL == rhs)
 		return;
-	for (i = 0; i < (int)sz; i++) 
-		putchar(rhs[i]);
+	fwrite(rhs, 1, sz, stdout);
 }
 
 
@@ -316,26 +312,27 @@ print_escape(struct html *h, const char **p)
 static void
 print_encode(struct html *h, const char *p)
 {
+	size_t		 sz;
 
 	for (; *p; p++) {
+		sz = strcspn(p, "\\<>&");
+
+		fwrite(p, 1, sz, stdout);
+		p += /* LINTED */
+			sz;
+
 		if ('\\' == *p) {
 			print_escape(h, &p);
 			continue;
-		}
-		switch (*p) {
-		case ('<'):
+		} else if ('\0' == *p)
+			break;
+
+		if ('<' == *p)
 			printf("&lt;");
-			break;
-		case ('>'):
+		else if ('>' == *p)
 			printf("&gt;");
-			break;
-		case ('&'):
+		else if ('&' == *p)
 			printf("&amp;");
-			break;
-		default:
-			putchar(*p);
-			break;
-		}
 	}
 }
 
@@ -361,16 +358,16 @@ print_otag(struct html *h, enum htmltag tag,
 
 	if ( ! (HTML_NOSPACE & h->flags))
 		if ( ! (HTML_CLRLINE & htmltags[tag].flags))
-			printf(" ");
+			putchar(' ');
 
 	printf("<%s", htmltags[tag].name);
 	for (i = 0; i < sz; i++) {
 		printf(" %s=\"", htmlattrs[p[i].key]);
 		assert(p->val);
 		print_encode(h, p[i].val);
-		printf("\"");
+		putchar('\"');
 	}
-	printf(">");
+	putchar('>');
 
 	h->flags |= HTML_NOSPACE;
 	if (HTML_CLRLINE & htmltags[tag].flags)
@@ -391,7 +388,7 @@ print_ctag(struct html *h, enum htmltag tag)
 	if (HTML_CLRLINE & htmltags[tag].flags) {
 		h->flags |= HTML_NOSPACE;
 		h->flags |= HTML_NEWLINE;
-		printf("\n");
+		putchar('\n');
 	} else
 		h->flags &= ~HTML_NEWLINE;
 }
@@ -437,7 +434,7 @@ print_text(struct html *h, const char *p)
 		}
 
 	if ( ! (h->flags & HTML_NOSPACE))
-		printf(" ");
+		putchar(' ');
 
 	h->flags &= ~HTML_NOSPACE;
 	h->flags &= ~HTML_NEWLINE;

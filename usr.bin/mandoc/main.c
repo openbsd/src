@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.19 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: main.c,v 1.20 2009/12/23 22:30:17 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -91,8 +91,8 @@ static	int		  pset(const char *, int, struct curparse *,
 				struct man **, struct mdoc **);
 static	struct man	 *man_init(struct curparse *);
 static	struct mdoc	 *mdoc_init(struct curparse *);
-__dead	static void	  version(void);
-__dead	static void	  usage(void);
+static	void		  version(void) __attribute__((noreturn));
+static	void		  usage(void) __attribute__((noreturn));
 
 static	const char	 *progname;
 
@@ -198,7 +198,7 @@ main(int argc, char *argv[])
 }
 
 
-__dead static void
+static void
 version(void)
 {
 
@@ -207,7 +207,7 @@ version(void)
 }
 
 
-__dead static void
+static void
 usage(void)
 {
 
@@ -518,7 +518,7 @@ moptions(enum intt *tflags, char *arg)
 	else if (0 == strcmp(arg, "an"))
 		*tflags = INTT_MAN;
 	else {
-		fprintf(stderr, "%s: Bad argument", arg);
+		fprintf(stderr, "%s: Bad argument\n", arg);
 		return(0);
 	}
 
@@ -539,7 +539,7 @@ toptions(enum outt *tflags, char *arg)
 	else if (0 == strcmp(arg, "html"))
 		*tflags = OUTT_HTML;
 	else {
-		fprintf(stderr, "%s: Bad argument", arg);
+		fprintf(stderr, "%s: Bad argument\n", arg);
 		return(0);
 	}
 
@@ -588,7 +588,7 @@ foptions(int *fflags, char *arg)
 			*fflags &= ~NO_IGN_ESCAPE;
 			break;
 		default:
-			fprintf(stderr, "%s: Bad argument", o);
+			fprintf(stderr, "%s: Bad argument\n", o);
 			return(0);
 		}
 	}
@@ -617,7 +617,7 @@ woptions(int *wflags, char *arg)
 			*wflags |= WARN_WERR;
 			break;
 		default:
-			fprintf(stderr, "%s: Bad argument", o);
+			fprintf(stderr, "%s: Bad argument\n", o);
 			return(0);
 		}
 	}
