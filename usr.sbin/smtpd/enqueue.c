@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.30 2009/12/13 22:02:55 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.31 2009/12/23 17:16:03 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -53,6 +53,7 @@ void	 parse_addr_terminal(int);
 char	*qualify_addr(char *);
 void	 rcpt_add(char *);
 int	 open_connection(void);
+void	 enqueue_event(int, short, void *);
 
 enum headerfields {
 	HDR_NONE,
@@ -99,6 +100,9 @@ struct {
 	int	  saw_date;
 	int	  saw_msgid;
 	int	  saw_from;
+
+	struct smtp_client	*pcb;
+	struct event		 ev;
 } msg;
 
 struct {
@@ -125,7 +129,6 @@ enqueue(int argc, char *argv[])
 	int			 i, ch, tflag = 0, noheader;
 	char			*fake_from = NULL;
 	struct passwd		*pw;
-	struct smtp_client	*pcb;
 	struct buf		*body;
 
 	bzero(&msg, sizeof(msg));
@@ -192,7 +195,7 @@ enqueue(int argc, char *argv[])
 		errx(1, "server too busy");
 
 	/* init session */
-	pcb = client_init(msg.fd, open("/dev/null", O_RDONLY), "localhost",
+	msg.pcb = client_init(msg.fd, open("/dev/null", O_RDONLY), "localhost",
 	    verbose);
 
 	/* parse message */
@@ -201,62 +204,82 @@ enqueue(int argc, char *argv[])
 	noheader = parse_message(stdin, fake_from == NULL, tflag, body);
 
 	/* set envelope from */
-	client_sender(pcb, "%s", msg.from);
+	client_sender(msg.pcb, "%s", msg.from);
 
 	/* add recipients */
 	if (msg.rcpt_cnt == 0)
 		errx(1, "no recipients");
 	for (i = 0; i < msg.rcpt_cnt; i++)
-		client_rcpt(pcb, "%s", msg.rcpts[i]);
+		client_rcpt(msg.pcb, "%s", msg.rcpts[i]);
 
 	/* add From */
 	if (!msg.saw_from)
-		client_printf(pcb, "From: %s%s<%s>\n",
+		client_printf(msg.pcb, "From: %s%s<%s>\n",
 		    msg.fromname ? msg.fromname : "",
 		    msg.fromname ? " " : "", 
 		    msg.from);
 
 	/* add Date */
 	if (!msg.saw_date)
-		client_printf(pcb, "Date: %s\n", time_to_text(timestamp));
+		client_printf(msg.pcb, "Date: %s\n", time_to_text(timestamp));
 
 	/* add Message-Id */
 	if (!msg.saw_msgid)
-		client_printf(pcb, "Message-Id: <%llu.enqueue@%s>\n",
+		client_printf(msg.pcb, "Message-Id: <%llu.enqueue@%s>\n",
 		    generate_uid(), host);
 
 	/* add separating newline */
 	if (noheader)
-		client_printf(pcb, "\n");
+		client_printf(msg.pcb, "\n");
 
-	client_printf(pcb, "%.*s", buf_size(body), body->buf);
+	client_printf(msg.pcb, "%.*s", buf_size(body), body->buf);
 	buf_free(body);
 
-	/* run the protocol engine */
-	for (;;) {
-		alarm(pcb->timeout.tv_sec);
+	alarm(0);
+	event_init();
+	session_socket_blockmode(msg.fd, BM_NONBLOCK);
+	event_set(&msg.ev, msg.fd, EV_READ|EV_WRITE, enqueue_event, NULL);
+	event_add(&msg.ev, &msg.pcb->timeout);
 
-		switch (client_talk(pcb)) {
-		case CLIENT_WANT_READ:
-		case CLIENT_WANT_WRITE:
-			continue;
-		case CLIENT_RCPT_FAIL:
-			errx(1, "%s", pcb->reply);
-		case CLIENT_DONE:
-			break;
-		default:
-			errx(1, "client_talk: unexpected code");
-		}
+	event_dispatch();
 
-		if (pcb->status[0] != '2')
-			errx(1, "%s", pcb->status);
+	client_close(msg.pcb);
+	exit(0);
+}
+
+void
+enqueue_event(int fd, short event, void *p)
+{
+	if (event & EV_TIMEOUT)
+		errx(1, "timeout");
+
+	switch (client_talk(msg.pcb, event & EV_WRITE)) {
+	case CLIENT_WANT_WRITE:
+		goto rw;
+	case CLIENT_STOP_WRITE:
+		goto ro;
+	case CLIENT_RCPT_FAIL:
+		errx(1, "%s", msg.pcb->reply);
+	case CLIENT_DONE:
 		break;
+	default:
+		errx(1, "enqueue_event: unexpected code");
 	}
 
-	client_close(pcb);
+	if (msg.pcb->status[0] != '2')
+		errx(1, "%s", msg.pcb->status);
 
-	close(msg.fd);
-	exit (0);
+	event_loopexit(NULL);
+	return;
+
+ro:
+	event_set(&msg.ev, msg.fd, EV_READ, enqueue_event, NULL);
+	event_add(&msg.ev, &msg.pcb->timeout);
+	return;
+
+rw:
+	event_set(&msg.ev, msg.fd, EV_READ|EV_WRITE, enqueue_event, NULL);
+	event_add(&msg.ev, &msg.pcb->timeout);
 }
 
 void

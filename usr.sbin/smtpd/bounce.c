@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.16 2009/12/14 23:17:04 jacekm Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.17 2009/12/23 17:16:03 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@openbsd.org>
@@ -71,8 +71,7 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 	cc->m = *messagep;
 
 	client_ssl_optional(cc->pcb);
-
-	/* assign recipient */
+	client_sender(cc->pcb, "");
 	client_rcpt(cc->pcb, NULL, "%s@%s", messagep->sender.user,
 	    messagep->sender.domain);
 
@@ -108,7 +107,7 @@ bounce_session(struct smtpd *env, int fd, struct message *messagep)
 
 	/* setup event */
 	session_socket_blockmode(fd, BM_NONBLOCK);
-	event_set(&cc->ev, fd, EV_WRITE, bounce_event, cc);
+	event_set(&cc->ev, fd, EV_READ|EV_WRITE, bounce_event, cc);
 	event_add(&cc->ev, &cc->pcb->timeout);
 
 	return 1;
@@ -131,11 +130,11 @@ bounce_event(int fd, short event, void *p)
 		goto out;
 	}
 
-	switch (client_talk(cc->pcb)) {
-	case CLIENT_WANT_READ:
-		goto read;
+	switch (client_talk(cc->pcb, event & EV_WRITE)) {
+	case CLIENT_STOP_WRITE:
+		goto ro;
 	case CLIENT_WANT_WRITE:
-		goto write;
+		goto rw;
 	case CLIENT_RCPT_FAIL:
 		ep = cc->pcb->reply;
 		break;
@@ -164,12 +163,12 @@ out:
 	free(cc);
 	return;
 
-read:
+ro:
 	event_set(&cc->ev, fd, EV_READ, bounce_event, cc);
 	event_add(&cc->ev, &cc->pcb->timeout);
 	return;
 
-write:
-	event_set(&cc->ev, fd, EV_WRITE, bounce_event, cc);
+rw:
+	event_set(&cc->ev, fd, EV_READ|EV_WRITE, bounce_event, cc);
 	event_add(&cc->ev, &cc->pcb->timeout);
 }

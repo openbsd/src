@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.82 2009/12/14 16:44:14 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.83 2009/12/23 17:16:03 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -670,6 +670,8 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 		if (m->sender.user[0] && m->sender.domain[0])
 			client_sender(pcb, "%s@%s", m->sender.user,
 			    m->sender.domain);
+		else
+			client_sender(pcb, "");
 			
 		/* set envelope recipients */
 		TAILQ_FOREACH(m, &s->recipients, entry)
@@ -677,7 +679,7 @@ mta_enter_state(struct mta_session *s, int newstate, void *p)
 			    m->recipient.domain);
 
 		s->pcb = pcb;
-		event_set(&s->ev, s->fd, EV_WRITE, mta_event, s);
+		event_set(&s->ev, s->fd, EV_READ|EV_WRITE, mta_event, s);
 		event_add(&s->ev, &pcb->timeout);
 		break;
 
@@ -792,16 +794,16 @@ mta_event(int fd, short event, void *p)
 		goto out;
 	}
 
-	switch (client_talk(pcb)) {
-	case CLIENT_WANT_READ:
-		goto read;
+	switch (client_talk(pcb, event & EV_WRITE)) {
 	case CLIENT_WANT_WRITE:
-		goto write;
+		goto rw;
+	case CLIENT_STOP_WRITE:
+		goto ro;
 	case CLIENT_RCPT_FAIL:
-		mta_message_status(pcb->rcptfail->p, pcb->reply);
-		mta_message_log(s, pcb->rcptfail->p);
-		mta_message_done(s, pcb->rcptfail->p);
-		goto write;
+		mta_message_status(pcb->rcptfail, pcb->reply);
+		mta_message_log(s, pcb->rcptfail);
+		mta_message_done(s, pcb->rcptfail);
+		goto rw;
 	case CLIENT_DONE:
 		mta_status(s, "%s", pcb->status);
 		break;
@@ -811,7 +813,7 @@ mta_event(int fd, short event, void *p)
 
 out:
 	client_close(pcb);
-	pcb = NULL;
+	s->pcb = NULL;
 
 	if (TAILQ_EMPTY(&s->recipients))
 		mta_enter_state(s, MTA_DONE, NULL);
@@ -819,13 +821,13 @@ out:
 		mta_enter_state(s, MTA_CONNECT, NULL);
 	return;
 
-read:
-	event_set(&s->ev, fd, EV_READ, mta_event, s);
+rw:
+	event_set(&s->ev, fd, EV_READ|EV_WRITE, mta_event, s);
 	event_add(&s->ev, &pcb->timeout);
 	return;
 
-write:
-	event_set(&s->ev, fd, EV_WRITE, mta_event, s);
+ro:
+	event_set(&s->ev, fd, EV_READ, mta_event, s);
 	event_add(&s->ev, &pcb->timeout);
 }
 

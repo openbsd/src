@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.31 2009/12/14 19:56:55 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.32 2009/12/23 17:16:03 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -26,10 +26,11 @@
 #include <sys/stat.h>
 #include <sys/resource.h>
 
-#include <err.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <libgen.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -476,4 +477,43 @@ availdesc(void)
 	avail -= 5;		/* safety buffer */
 
 	return (avail);
+}
+
+void
+session_socket_blockmode(int fd, enum blockmodes bm)
+{
+	int	flags;
+
+	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
+		fatal("fcntl F_GETFL");
+
+	if (bm == BM_NONBLOCK)
+		flags |= O_NONBLOCK;
+	else
+		flags &= ~O_NONBLOCK;
+
+	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
+		fatal("fcntl F_SETFL");
+}
+
+void
+session_socket_no_linger(int fd)
+{
+	struct linger	 lng;
+
+	bzero(&lng, sizeof(lng));
+	if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &lng, sizeof(lng)) == -1)
+		fatal("session_socket_no_linger");
+}
+
+int
+session_socket_error(int fd)
+{
+	int	 error, len;
+
+	len = sizeof(error);
+	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1)
+		fatal("session_socket_error: getsockopt");
+
+	return (error);
 }
