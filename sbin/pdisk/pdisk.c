@@ -137,7 +137,7 @@ main(int argc, char **argv)
     init_program_name(argv);
 
     if (sizeof(DPME) != PBLOCK_SIZE) {
-	fatal(-1, "Size of partion map entry (%d) "
+	fatal(-1, "Size of partition map entry (%d) "
 		"is not equal to block size (%d)\n",
 		sizeof(DPME), PBLOCK_SIZE);
     }

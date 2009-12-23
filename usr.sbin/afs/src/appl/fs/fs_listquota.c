@@ -83,7 +83,7 @@ afs_listquota(char *path)
 	   used_part > 97 ? "<<" : "  ",
 
 	   /* Print a warning if more than 90% on home volume or 97% on */
-	   /* the partion is being used */
+	   /* the partition is being used */
 	   (used_vol > 90 || used_part > 97) ? "\t<<WARNING" : "");
 
     free(a_params.out);

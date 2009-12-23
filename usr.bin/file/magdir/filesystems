@@ -1,4 +1,4 @@
-#	$OpenBSD: filesystems,v 1.4 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: filesystems,v 1.5 2009/12/23 02:24:39 krw Exp $
 
 #------------------------------------------------------------------------------
 # filesystems:  file(1) magic for different filesystems
@@ -178,7 +178,7 @@
 # http://www.bcdwb.de/bcdw/index_e.htm
 >3	string	BCDL				
 >>498	string	BCDL\ \ \ \ BIN			\b, Bootable CD Loader (1.50Z)
-# mbr partion table entries
+# mbr partition table entries
 # OEM-ID not Microsoft,SYSLINUX,or MTOOLs
 >3			string		!MS
 >>3			string		!SYSLINUX
@@ -233,7 +233,7 @@
 #>>>>>>>>>>>>496		ubeshort&1023	x	\b, startcylinder? %d
 >>>>>>>>>>>>502		ulelong		x	\b, startsector %u
 >>>>>>>>>>>>506		ulelong		x	\b, %u sectors
-# mbr partion table entries end
+# mbr partition table entries end
 # http://www.acronis.de/
 #FAT label=ACRONIS\ SZ
 #OEM-ID=BOOTWIZ0
