@@ -1,0 +1,18 @@
+.Dd $Mdocdate: December 23 2009 $
+.Dt SPACE-NOBREAK 1
+.Os
+.Sh NAME
+.Nm space-nobreak
+.Nd non-breaking, non-collapsing space
+.Sh DESCRIPTION
+The following line has 78 characters and fits:
+.Pp
+78 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx x x
+.Pp
+The following line has 79 characters and breaks:
+.Pp
+79 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx x x
+.Pp
+With a non-breaking space, it breaks earlier:
+.Pp
+79 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx x\~x
