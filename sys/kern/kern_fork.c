@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.105 2009/11/27 20:05:50 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.106 2009/12/23 07:40:31 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -153,15 +153,19 @@ sys_rfork(struct proc *p, void *v, register_t *retval)
  * Allocate and initialize a new process.
  */
 void
-process_new(struct proc *newproc, struct proc *parent)
+process_new(struct proc *newproc, struct proc *parentproc)
 {
-	struct process *pr;
+	struct process *pr, *parent;
 
 	pr = pool_get(&process_pool, PR_WAITOK);
 	pr->ps_mainproc = newproc;
 	TAILQ_INIT(&pr->ps_threads);
 	TAILQ_INSERT_TAIL(&pr->ps_threads, newproc, p_thr_link);
 	pr->ps_refcnt = 1;
+
+	parent = parentproc->p_p;
+	pr->ps_rdomain = parent->ps_rdomain;
+
 	newproc->p_p = pr;
 }
 
@@ -265,8 +269,6 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	 * Increase reference counts on shared objects.
 	 * The p_stats and p_sigacts substructs are set in vm_fork.
 	 */
-	p2->p_emul = p1->p_emul;
-	p2->p_rdomain = p1->p_rdomain;
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 	atomic_setbits_int(&p2->p_flag, p1->p_flag & (P_SUGID | P_SUGIDEXEC));

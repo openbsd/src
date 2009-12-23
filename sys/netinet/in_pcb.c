@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.109 2009/11/27 20:05:50 guenther Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.110 2009/12/23 07:40:31 guenther Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ in_pcballoc(so, v)
 	inp->inp_seclevel[SL_ESP_TRANS] = ipsec_esp_trans_default_level;
 	inp->inp_seclevel[SL_ESP_NETWORK] = ipsec_esp_network_default_level;
 	inp->inp_seclevel[SL_IPCOMP] = ipsec_ipcomp_default_level;
-	inp->inp_rdomain = curproc->p_rdomain;
+	inp->inp_rdomain = curproc->p_p->ps_rdomain;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
 	LIST_INSERT_HEAD(INPCBLHASH(table, inp->inp_lport,

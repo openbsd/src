@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.201 2009/12/11 17:50:57 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.202 2009/12/23 07:40:31 guenther Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1423,7 +1423,8 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 			}
 			rtid = *mtod(m, u_int *);
-			if (p->p_rdomain != 0 && p->p_rdomain != rtid &&
+			if (p->p_p->ps_rdomain != 0 &&
+			    p->p_p->ps_rdomain != rtid &&
 			    (error = suser(p, 0)) != 0) {
 				error = EACCES;
 				break;

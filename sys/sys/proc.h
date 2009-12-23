@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.121 2009/12/20 23:36:04 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.122 2009/12/23 07:40:31 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -145,6 +145,8 @@ struct process {
 
 	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
 	int	ps_refcnt;		/* Number of references. */
+
+	u_int	ps_rdomain;		/* Process routing domain. */
 };
 #else
 struct process;
@@ -220,7 +222,6 @@ struct proc {
 
 	struct	vnode *p_textvp;	/* Vnode of executable. */
 
-	struct	emul *p_emul;		/* Emulation information */
 	void	*p_emuldata;		/* Per-process emulation data, or */
 					/* NULL. Malloc type M_EMULDATA */
 	struct	klist p_klist;		/* knotes attached to this process */
@@ -243,6 +244,7 @@ struct proc {
 	char	p_nice;		/* Process "nice" value. */
 	char	p_comm[MAXCOMLEN+1];
 
+	struct	emul *p_emul;		/* Emulation information */
 	struct 	pgrp *p_pgrp;	/* Pointer to process group. */
 	vaddr_t	p_sigcode;	/* user pointer to the signal code. */
 
@@ -255,8 +257,6 @@ struct proc {
 	u_short	p_xstat;	/* Exit status for wait; also stop signal. */
 	u_short	p_acflag;	/* Accounting flags. */
 	struct	rusage *p_ru;	/* Exit information. XXX */
-
-	u_int	p_rdomain;	/* Process routing domain. */
 };
 
 #define	p_session	p_pgrp->pg_session

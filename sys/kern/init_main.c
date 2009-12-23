@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.163 2009/11/27 20:05:50 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.164 2009/12/23 07:40:31 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -264,6 +264,9 @@ main(void *framep)
 	process0.ps_refcnt = 1;
 	p->p_p = &process0;
 
+	/* Set the default routing domain. */
+	process0.ps_rdomain = 0;
+
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	p->p_pgrp = &pgrp0;
 	LIST_INSERT_HEAD(PIDHASH(0), p, p_hash);
@@ -313,9 +316,6 @@ main(void *framep)
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
 	limit0.p_refcnt = 1;
-
-	/* Set the default routing domain. */
-	p->p_rdomain = 0;
 
 	/* Allocate a prototype map so we have something to fork. */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),

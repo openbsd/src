@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.73 2009/11/27 20:05:50 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.74 2009/12/23 07:40:31 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1105,14 +1105,14 @@ sys_setrdomain(struct proc *p, void *v, register_t *retval)
 
 	rdomain = SCARG(uap, rdomain);
 
-	if (p->p_rdomain == (u_int)rdomain)
+	if (p->p_p->ps_rdomain == (u_int)rdomain)
 		return (0);
-	if (p->p_rdomain != 0 && (error = suser(p, 0)) != 0)
+	if (p->p_p->ps_rdomain != 0 && (error = suser(p, 0)) != 0)
 		return (error);
 	if (rdomain < 0 || !rtable_exists((u_int)rdomain))
 		return (EINVAL);
 
-	p->p_rdomain = (u_int)rdomain;
+	p->p_p->ps_rdomain = (u_int)rdomain;
 	return (0);
 }
 
@@ -1120,6 +1120,6 @@ sys_setrdomain(struct proc *p, void *v, register_t *retval)
 int
 sys_getrdomain(struct proc *p, void *v, register_t *retval)
 {
-	*retval = (int)p->p_rdomain;
+	*retval = (int)p->p_p->ps_rdomain;
 	return (0);
 }
