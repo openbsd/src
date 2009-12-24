@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.165 2009/12/22 08:48:14 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.166 2009/12/24 10:12:19 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -45,6 +45,8 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/types.h>
+#include <sys/timeout.h>
 #include <uvm/uvm_param.h>
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
@@ -167,6 +169,7 @@ typedef struct azalia_t {
 	int unsolq_wp;
 	int unsolq_rp;
 	boolean_t unsolq_kick;
+	struct timeout unsol_to;
 
 	boolean_t ok64;
 	int nistreams, nostreams, nbstreams;
@@ -206,7 +209,7 @@ int	azalia_init_rirb(azalia_t *, int);
 int	azalia_delete_rirb(azalia_t *);
 int	azalia_set_command(azalia_t *, nid_t, int, uint32_t, uint32_t);
 int	azalia_get_response(azalia_t *, uint32_t *);
-void	azalia_rirb_kick_unsol_events(azalia_t *);
+void	azalia_rirb_kick_unsol_events(void *);
 void	azalia_rirb_intr(azalia_t *);
 int	azalia_alloc_dmamem(azalia_t *, size_t, size_t, azalia_dma_t *);
 int	azalia_free_dmamem(const azalia_t *, azalia_dma_t*);
@@ -543,6 +546,7 @@ int
 azalia_pci_detach(struct device *self, int flags)
 {
 	azalia_t *az;
+	uint32_t gctl;
 	int i;
 
 	DPRINTF(("%s\n", __func__));
@@ -551,6 +555,12 @@ azalia_pci_detach(struct device *self, int flags)
 		config_detach(az->audiodev, flags);
 		az->audiodev = NULL;
 	}
+
+	/* disable unsolicited response */
+	gctl = AZ_READ_4(az, GCTL);
+	AZ_WRITE_4(az, GCTL, gctl & ~(HDA_GCTL_UNSOL));
+
+	timeout_del(&az->unsol_to);
 
 	DPRINTF(("%s: delete streams\n", __func__));
 	azalia_stream_delete(&az->rstream, az);
@@ -629,6 +639,8 @@ azalia_shutdown(void *v)
 	/* disable unsolicited response */
 	gctl = AZ_READ_4(az, GCTL);
 	AZ_WRITE_4(az, GCTL, gctl & ~(HDA_GCTL_UNSOL));
+
+	timeout_del(&az->unsol_to);
 
 	/* halt CORB/RIRB */
 	azalia_halt_corb(az);
@@ -947,6 +959,7 @@ azalia_init_corb(azalia_t *az, int resuming)
 		}
 		DPRINTF(("%s: CORB allocation succeeded.\n", __func__));
 	}
+	timeout_set(&az->unsol_to, azalia_rirb_kick_unsol_events, az);
 
 	AZ_WRITE_4(az, CORBLBASE, (uint32_t)AZALIA_DMA_DMAADDR(&az->corb_dma));
 	AZ_WRITE_4(az, CORBUBASE, PTR_UPPER32(AZALIA_DMA_DMAADDR(&az->corb_dma)));
@@ -1196,8 +1209,10 @@ azalia_get_response(azalia_t *az, uint32_t *result)
 }
 
 void
-azalia_rirb_kick_unsol_events(azalia_t *az)
+azalia_rirb_kick_unsol_events(void *v)
 {
+	azalia_t *az = v;
+
 	if (az->unsolq_kick)
 		return;
 	az->unsolq_kick = TRUE;
@@ -1238,7 +1253,7 @@ azalia_rirb_intr(azalia_t *az)
 			DPRINTF(("%s: dropped solicited response\n", __func__));
 		}
 	}
-	azalia_rirb_kick_unsol_events(az);
+	timeout_add_msec(&az->unsol_to, 1);
 
 	AZ_WRITE_1(az, RIRBSTS,
 	    rirbsts | HDA_RIRBSTS_RIRBOIS | HDA_RIRBSTS_RINTFL);
@@ -1306,6 +1321,8 @@ azalia_suspend(azalia_t *az)
 
 	/* disable unsolicited responses */
 	AZ_WRITE_4(az, GCTL, AZ_READ_4(az, GCTL) & ~HDA_GCTL_UNSOL);
+
+	timeout_del(&az->unsol_to);
 
 	azalia_save_mixer(&az->codecs[az->codecno]);
 
