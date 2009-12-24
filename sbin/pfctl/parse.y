@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.577 2009/12/24 04:24:19 dlg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.578 2009/12/24 10:06:35 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -548,7 +548,7 @@ include		: INCLUDE STRING		{
 		;
 
 /*
- * apply to previouslys specified rule: must be careful to note
+ * apply to previously specified rule: must be careful to note
  * what that is: pf or nat or binat or rdr
  */
 fakeanchor	: fakeanchor '\n'

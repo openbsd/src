@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.224 2009/11/12 16:21:03 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.225 2009/12/24 10:06:35 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -715,7 +715,7 @@ editor_add(struct disklabel *lp, char *p)
 
 	/*
 	 * Increase d_npartitions if necessary. Ensure all new partitions are
-	 * zero'ed to avoid inadvertant overlaps.
+	 * zero'ed to avoid inadvertent overlaps.
 	 */
 	for(; lp->d_npartitions <= partno; lp->d_npartitions++)
 		memset(&lp->d_partitions[lp->d_npartitions], 0, sizeof(*pp));

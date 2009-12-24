@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.85 2009/12/15 21:09:43 mpf Exp $	*/
+/*	$OpenBSD: ping.c,v 1.86 2009/12/24 10:06:35 sobrado Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -1085,7 +1085,7 @@ pr_icmph(struct icmp *icp)
 			(void)printf("Destination Net Unreachable for TOS\n");
 			break;
 		case ICMP_UNREACH_TOSHOST:
-			(void)printf("Desination Host Unreachable for TOS\n");
+			(void)printf("Destination Host Unreachable for TOS\n");
 			break;
 		case ICMP_UNREACH_FILTER_PROHIB:
 			(void)printf("Route administratively prohibited\n");

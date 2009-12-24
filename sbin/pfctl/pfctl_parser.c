@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.254 2009/12/24 04:24:19 dlg Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.255 2009/12/24 10:06:35 sobrado Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1249,7 +1249,7 @@ ifa_exists(const char *ifa_name)
 	if (iftab == NULL)
 		ifa_load();
 
-	/* check wether this is a group */
+	/* check whether this is a group */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		err(1, "socket");
 	bzero(&ifgr, sizeof(ifgr));

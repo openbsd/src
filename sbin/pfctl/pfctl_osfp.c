@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.15 2006/12/13 05:10:15 itojun Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.16 2009/12/24 10:06:35 sobrado Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -976,7 +976,7 @@ get_tcpopts(const char *filename, int lineno, const char *tcpopts,
 	return (0);
 }
 
-/* rip the next field ouf of a formatted config file line */
+/* rip the next field out of a formatted config file line */
 char *
 get_field(char **line, size_t *len, int *fieldlen)
 {

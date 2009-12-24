@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.76 2009/11/02 22:31:50 sobrado Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.77 2009/12/24 10:06:35 sobrado Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * let the kerel pass extension headers of incoming packets,
+	 * let the kernel pass extension headers of incoming packets,
 	 * for privileged socket options
 	 */
 	if ((options & F_VERBOSE) != 0) {
@@ -664,7 +664,7 @@ main(int argc, char *argv[])
     }
 #endif /*ICMP6_FILTER*/
 
-	/* let the kerel pass extension headers of incoming packets */
+	/* let the kernel pass extension headers of incoming packets */
 	if ((options & F_VERBOSE) != 0) {
 		int opton = 1;
 

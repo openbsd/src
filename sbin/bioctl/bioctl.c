@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.86 2009/11/24 06:06:06 jmc Exp $       */
+/* $OpenBSD: bioctl.c,v 1.87 2009/12/24 10:06:35 sobrado Exp $       */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -613,7 +613,7 @@ bio_setblink(char *name, char *arg, int blink)
 	if (rv == 0)
 		return;
 
-	/* if the blink didnt work, try to find something that will */
+	/* if the blink didn't work, try to find something that will */
 
 	memset(&bi, 0, sizeof(bi));
 	bi.bi_cookie = bl.bl_cookie;

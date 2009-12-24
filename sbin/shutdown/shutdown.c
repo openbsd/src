@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.35 2009/10/27 23:59:34 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.36 2009/12/24 10:06:35 sobrado Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ timewarn(int timeleft)
 
 	/*
 	 * play some games, just in case wall doesn't come back
-	 * probably unecessary, given that wall is careful.
+	 * probably unnecessary, given that wall is careful.
 	 */
 	if (!setjmp(alarmbuf)) {
 		(void)signal(SIGALRM, timeout);

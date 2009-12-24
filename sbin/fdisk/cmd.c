@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.43 2009/02/08 18:03:18 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.44 2009/12/24 10:06:35 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -294,7 +294,7 @@ Xselect(cmd_t *cmd, disk_t *disk, mbr_t *mbr, mbr_t *tt, int offset)
 		printf("New MBR at offset %d.\n", off);
 	}
 
-	/* Recursion is beautifull! */
+	/* Recursion is beautiful! */
 	USER_modify(disk, tt, off, firstoff);
 	return (CMD_CONT);
 }
