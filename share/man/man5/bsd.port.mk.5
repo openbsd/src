@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.235 2009/10/13 14:40:24 landry Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.236 2009/12/24 13:58:14 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 13 2009 $
+.Dd $Mdocdate: December 24 2009 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2305,6 +2305,10 @@ instead.
 The framework will automatically detect the presence of
 .Pa .tar.bz2
 files to extract.
+See also
+.Ev BZIP2 , EXTRACT_CASES ,
+and
+.Ev EXTRACT_SUFX .
 .It Ev USE_IMAKE
 Use
 .Ev CONFIGURE_STYLE
@@ -2313,6 +2317,10 @@ instead.
 The framework will automatically detect the presence of
 .Pa .zip
 files to extract.
+See also
+.Ev ZIP , EXTRACT_CASES ,
+and
+.Ev EXTRACT_SUFX .
 .It Ev VARNAME
 Use make show=name instead of make show VARNAME=name.
 .It Ev WRKPKG
