@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.119 2009/12/20 22:38:45 espie Exp $
+# $OpenBSD: Update.pm,v 1.120 2009/12/24 14:06:43 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -92,6 +92,7 @@ sub process_handle
 	}
 	if ($pkgname =~ m/^partial\-/o) {
 		$state->say("Not updating $pkgname, remember to clean it");
+		$h->{update_found} = $h;
 		$set->move_kept($h);
 		return 0;
 	}
