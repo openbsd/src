@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.576 2009/12/10 15:57:20 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.577 2009/12/24 04:24:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -242,6 +242,7 @@ struct filter_opts {
 #define FOM_SCRUB_TCP	0x0200
 	struct node_uid		*uid;
 	struct node_gid		*gid;
+	struct node_if		*rcv;
 	struct {
 		u_int8_t	 b1;
 		u_int8_t	 b2;
@@ -349,7 +350,8 @@ void		 expand_rule(struct pf_rule *, int, struct node_if *,
 		    struct node_proto *,
 		    struct node_os *, struct node_host *, struct node_port *,
 		    struct node_host *, struct node_port *, struct node_uid *,
-		    struct node_gid *, struct node_icmp *, const char *);
+		    struct node_gid *, struct node_if *, struct node_icmp *,
+		    const char *);
 int		 expand_altq(struct pf_altq *, struct node_if *,
 		    struct node_queue *, struct node_queue_bw bwspec,
 		    struct node_queue_opt *);
@@ -463,7 +465,7 @@ int	parseport(char *, struct range *r, int);
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE SETTOS
-%token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO RDRTO
+%token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO RDRTO RECEIVEDON
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %token	<v.i>			PORTBINARY
@@ -906,7 +908,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 
 			expand_rule(&r, 0, $5, NULL, NULL, NULL, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
-			    $9.uid, $9.gid, $9.icmpspec,
+			    $9.uid, $9.gid, $9.rcv, $9.icmpspec,
 			    pf->astack[pf->asd + 1] ? pf->alast->name : $2);
 			free($2);
 			pf->astack[pf->asd + 1] = NULL;
@@ -1075,7 +1077,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				if (h != NULL)
 					expand_rule(&r, 0, j, NULL, NULL, NULL,
 					    NULL, NULL, h, NULL, NULL, NULL,
-					    NULL, NULL, NULL, "");
+					    NULL, NULL, NULL, NULL, "");
 
 				if ((i->ifa_flags & IFF_LOOPBACK) == 0) {
 					bzero(&r, sizeof(r));
@@ -1097,7 +1099,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 						expand_rule(&r, 0, NULL, NULL,
 						    NULL, NULL, NULL, NULL, h,
 						    NULL, NULL, NULL, NULL,
-						    NULL, NULL, "");
+						    NULL, NULL, NULL, "");
 				} else
 					free(hh);
 			}
@@ -2101,7 +2103,7 @@ pfrule		: action dir logquick interface af proto fromto
 			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, &$8.rroute, $6,
 			    $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
-			    $8.uid, $8.gid, $8.icmpspec, "");
+			    $8.uid, $8.gid, $8.rcv, $8.icmpspec, "");
 		}
 		;
 
@@ -2310,6 +2312,13 @@ filter_opt	: USER uids {
 			filter_opts.route.pool_opts = $3.type | $3.opts;
 			if ($3.key != NULL)
 				filter_opts.route.key = $3.key;
+		}
+		| RECEIVEDON if_item {
+			if (filter_opts.rcv) {
+				yyerror("cannot respecify received-on");
+				YYERROR;
+			}
+			filter_opts.rcv = $2;
 		}
 		;
 
@@ -4546,8 +4555,8 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
     struct node_proto *protos, struct node_os *src_oses,
     struct node_host *src_hosts, struct node_port *src_ports,
     struct node_host *dst_hosts, struct node_port *dst_ports,
-    struct node_uid *uids, struct node_gid *gids, struct node_icmp *icmp_types,
-    const char *anchor_call)
+    struct node_uid *uids, struct node_gid *gids, struct node_if *rcv,
+    struct node_icmp *icmp_types, const char *anchor_call)
 {
 	sa_family_t		 af = r->af;
 	int			 added = 0, error = 0;
@@ -4649,6 +4658,10 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 		r->gid.op = gid->op;
 		r->gid.gid[0] = gid->gid[0];
 		r->gid.gid[1] = gid->gid[1];
+		if (rcv) {
+			strlcpy(r->rcv_ifname, rcv->ifname,
+			    sizeof(r->rcv_ifname));
+		}
 		r->type = icmp_type->type;
 		r->code = icmp_type->code;
 
@@ -4759,7 +4772,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 			expand_rule(&rb, 1, interface, NULL, &binat, NULL,
 			    proto,
 			    src_os, dst_host, dst_port, dsth, src_port,
-			    uid, gid, icmp_type, anchor_call);
+			    uid, gid, rcv, icmp_type, anchor_call);
 		}
 
 	))))))))));
@@ -4933,6 +4946,7 @@ lookup(char *s)
 		{ "rdr-to",		RDRTO},
 		{ "realtime",		REALTIME},
 		{ "reassemble",		REASSEMBLE},
+		{ "received-on",	RECEIVEDON},
 		{ "reply-to",		REPLYTO},
 		{ "require-order",	REQUIREORDER},
 		{ "return",		RETURN},

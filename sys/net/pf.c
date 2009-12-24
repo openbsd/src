@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.679 2009/12/14 12:31:45 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.680 2009/12/24 04:24:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -233,6 +233,7 @@ struct pf_state		*pf_find_state(struct pfi_kif *,
 			    struct pf_state_key_cmp *, u_int, struct mbuf *);
 int			 pf_src_connlimit(struct pf_state **);
 int			 pf_check_congestion(struct ifqueue *);
+int			 pf_match_rcvif(struct mbuf *, struct pf_rule *);
 
 extern struct pool pfr_ktable_pl;
 extern struct pool pfr_kentry_pl;
@@ -2260,6 +2261,30 @@ pf_match_tag(struct mbuf *m, struct pf_rule *r, int *tag)
 }
 
 int
+pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
+{
+	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct pfi_kif *kif;
+
+	if (ifp == NULL)
+		return (0);
+
+	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
+		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
+	else
+		kif = (struct pfi_kif *)ifp->if_pf_kif;
+
+	if (kif == NULL) {
+		DPFPRINTF(PF_DEBUG_URGENT,
+		    ("pf_test_via: kif == NULL, @%d via %s\n", r->nr,
+		    r->rcv_ifname));
+		return (0);
+	}
+
+	return (pfi_kif_match(r->rcv_kif, kif));
+}
+
+int
 pf_tag_packet(struct mbuf *m, int tag, int rtableid)
 {
 	if (tag <= 0 && rtableid < 0)
@@ -2842,6 +2867,8 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    r->prob <= arc4random_uniform(UINT_MAX - 1) + 1)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->match_tag && !pf_match_tag(m, r, &tag))
+			r = TAILQ_NEXT(r, entries);
+		else if (r->rcv_kif && !pf_match_rcvif(m, r))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY &&
 		    (pd->proto != IPPROTO_TCP || !pf_osfp_match(

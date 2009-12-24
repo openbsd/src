@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.302 2009/12/14 12:31:45 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.303 2009/12/24 04:24:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -529,6 +529,7 @@ struct pf_rule {
 	char			 label[PF_RULE_LABEL_SIZE];
 #define PF_QNAME_SIZE		 64
 	char			 ifname[IFNAMSIZ];
+	char			 rcv_ifname[IFNAMSIZ];
 	char			 qname[PF_QNAME_SIZE];
 	char			 pqname[PF_QNAME_SIZE];
 #define	PF_TAG_NAME_SIZE	 64
@@ -547,6 +548,7 @@ struct pf_rule {
 	u_int64_t		 bytes[2];
 
 	struct pfi_kif		*kif;
+	struct pfi_kif		*rcv_kif;
 	struct pf_anchor	*anchor;
 	struct pfr_ktable	*overload_tbl;
 

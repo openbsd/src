@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.229 2009/12/14 12:31:45 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.230 2009/12/24 04:24:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -366,6 +366,7 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		if (rule->overload_tbl)
 			pfr_detach_table(rule->overload_tbl);
 	}
+	pfi_kif_unref(rule->rcv_kif, PFI_KIF_REF_RULE);
 	pfi_kif_unref(rule->kif, PFI_KIF_REF_RULE);
 	pf_anchor_remove(rule);
 	pf_empty_pool(&rule->rdr.list);
@@ -773,6 +774,7 @@ pf_hash_rule(MD5_CTX *ctx, struct pf_rule *rule)
 	pf_hash_rule_addr(ctx, &rule->dst);
 	PF_MD5_UPD_STR(rule, label);
 	PF_MD5_UPD_STR(rule, ifname);
+	PF_MD5_UPD_STR(rule, rcv_ifname);
 	PF_MD5_UPD_STR(rule, match_tagname);
 	PF_MD5_UPD_HTONS(rule, match_tag, x); /* dup? */
 	PF_MD5_UPD_HTONL(rule, os_fingerprint, y);
@@ -1076,6 +1078,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		rule->cpid = p->p_pid;
 		rule->anchor = NULL;
 		rule->kif = NULL;
+		rule->rcv_kif = NULL;
 		TAILQ_INIT(&rule->rdr.list);
 		TAILQ_INIT(&rule->nat.list);
 		TAILQ_INIT(&rule->route.list);
@@ -1114,6 +1117,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 			pfi_kif_ref(rule->kif, PFI_KIF_REF_RULE);
+		}
+		if (rule->rcv_ifname[0]) {
+			rule->rcv_kif = pfi_kif_get(rule->rcv_ifname);
+			if (rule->rcv_kif == NULL) {
+				error = EINVAL;
+			} else
+				pfi_kif_ref(rule->rcv_kif, PFI_KIF_REF_RULE);
 		}
 
 		if (rule->rtableid > 0 && !rtable_exists(rule->rtableid))
@@ -1344,6 +1354,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					break;
 				}
 				pfi_kif_ref(newrule->kif, PFI_KIF_REF_RULE);
+			} else
+				newrule->kif = NULL;
+
+			if (newrule->rcv_ifname[0]) {
+				newrule->rcv_kif =
+				    pfi_kif_get(newrule->rcv_ifname);
+				if (newrule->rcv_kif == NULL) {
+					error = EINVAL;
+				} else {
+					pfi_kif_ref(newrule->rcv_kif,
+					    PFI_KIF_REF_RULE);
+				}
 			} else
 				newrule->kif = NULL;
 
