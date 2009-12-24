@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.20 2009/12/21 10:46:16 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.21 2009/12/24 14:37:28 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -113,7 +113,11 @@ sub cleanup
 			$done++;
 		}
 	}
-	$state->progress->next;
+	if ($state->verbose >= 2) {
+		$state->progress->next;
+	} else {
+		$state->progress->clear;
+	}
 }
 
 package OpenBSD::PackingElement;
