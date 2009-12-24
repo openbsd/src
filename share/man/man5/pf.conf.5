@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.467 2009/12/24 09:35:33 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.468 2009/12/24 17:00:48 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -620,12 +620,9 @@ pass in proto tcp to port 22 queue(ssh_bulk, ssh_prio)
 .Ed
 .Pp
 .It Ar received-on Aq Ar interface
-When packets are received by the system, the interface they enter
-the system through is stored in the packet.
-The
-.Ar received-on
-option allows packet filtering based on the interface or
-interface group they were received on.
+Only match packets which were received on the specified
+.Ar interface
+(or interface group).
 .Pp
 .It Ar rtable Aq Ar number
 Used to select an alternate routing table for the routing lookup.
