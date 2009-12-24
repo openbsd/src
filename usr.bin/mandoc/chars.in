@@ -1,4 +1,4 @@
-/*	$Id: chars.in,v 1.2 2009/10/19 09:56:35 schwarze Exp $ */
+/*	$Id: chars.in,v 1.3 2009/12/24 02:08:14 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -30,11 +30,16 @@
  * XXX - update LINES_MAX if adding more!
  */
 
+/* Non-breaking, non-collapsing space uses unit separator. */
+static const char ascii_nbrsp[2] = { 31, 0 };
+
+CHAR_TBL_START
+
 /* Spacing. */
 CHAR("c",			1,	"",		0,	"",		0)
 CHAR("0",			1,	" ",		1,	"&#8194;",	7)
 CHAR(" ",			1,	" ",		1,	"&#8194;",	7)
-CHAR("~",			1,	" ",		1,	"&#160;",	6)
+CHAR("~",			1,	ascii_nbrsp,	1,	"&#160;",	6)
 CHAR("%",			1,	"",		0,	"",		0)
 CHAR("&",			1,	"",		0,	"",		0)
 CHAR("^",			1,	"",		0,	"",		0)
@@ -416,3 +421,5 @@ CHAR("%0",			2,	"%o",		2,	"&#8240;",	7)
 CHAR("fm",			2,	"\'",		1,	"&#8242;",	7)
 CHAR("sd",			2,	"\"",		1,	"&#8243;",	7)
 CHAR("mc",			2,	"mu",		2,	"&#181;",	6)
+
+CHAR_TBL_END

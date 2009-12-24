@@ -1,4 +1,4 @@
-.\"	$Id: man.7,v 1.14 2009/12/23 22:30:17 schwarze Exp $
+.\"	$Id: man.7,v 1.15 2009/12/24 02:08:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2009 $
+.Dd $Mdocdate: December 24 2009 $
 .Dt MAN 7
 .Os
 .
@@ -67,14 +67,6 @@ line termination.
 Blank lines are acceptable; where found, the output will assert a
 vertical space.
 .
-.Pp
-The
-.Sq \ec
-escape is common in historical
-.Nm
-documents; if encountered at the end of a word, it ensures that the
-subsequent word isn't off-set by whitespace.
-.
 .
 .Ss Comments
 Text following a
@@ -109,8 +101,45 @@ and
 .Ss Text Decoration
 Terms may be text-decorated using the
 .Sq \ef
-escape followed by an indicator: B (bold), I, (italic), or P and R
-(Roman, or reset).
+escape followed by an indicator: B (bold), I, (italic), R (Roman), or P
+(revert to previous mode):  
+.Pp
+.D1 \efBbold\efR \efIitalic\efP
+.Pp
+A numerical representation 3, 2, or 1 (bold, italic, and Roman,
+respectively) may be used instead.  A text decoration is only valid, if
+specified in free-form text, until the next macro invocation; if
+specified within a macro, it's only valid until the macro closes scope.
+Note that macros like
+.Sx \&BR
+open and close a font scope with each argument.
+.Pp
+Text may also be sized with the
+.Sq \es
+escape, whose syntax is one of
+.Sq \es+-n
+for one-digit numerals;
+.Sq \es(+-nn
+or
+.Sq \es+-(nn
+for two-digit numerals; and
+.Sq \es[+-N] ,
+.Sq \es+-[N] ,
+.Sq \es'+-N' ,
+or
+.Sq \es+-'N'
+for arbitrary-digit numerals:
+.Pp
+.D1 \es+1bigger\es-1
+.D1 \es[+10]much bigger\es[-10]
+.D1 \es+(10much bigger\es-(10
+.D1 \es+'100'much much bigger\es-'100'
+.Pp
+Both
+.Sq \es
+and
+.Sq \ef
+attributes are forgotten when entering or exiting a macro block.
 .
 .
 .Ss Whitespace
@@ -890,8 +919,8 @@ End literal mode begun by
 .
 .
 .Ss \&i
-Italicise arguments.  If no arguments are specified, all subsequent text
-is italicised.
+Italicise arguments.  Synonym for
+.Sx \&I .
 .Pp
 See also
 .Sx \&B ,
@@ -947,14 +976,21 @@ See also
 This section documents compatibility with other roff implementations, at
 this time limited to
 .Xr groff 1 .
-.Bl -hyphen
+.Pp
+.Bl -dash -compact
+.It
+The
+.Xr groff 1
+.Sx \&i
+macro will italicise all subsequent text if a line argument is not
+provided.  This behaviour is not implemented.
 .It
 In quoted literals, groff allowed pair-wise double-quotes to produce a
 standalone double-quote in formatted output.  This idiosyncratic
 behaviour is no longer applicable.
 .It
 The
-.Sq sp
+.Sx \&sp
 macro does not accept negative numbers.
 .It
 Blocks of whitespace are stripped from both macro and free-form text

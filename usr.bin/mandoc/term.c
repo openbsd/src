@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.19 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: term.c,v 1.20 2009/12/24 02:08:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -14,7 +14,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,19 +30,14 @@
 #include "mdoc.h"
 #include "main.h"
 
-/* FIXME: accomodate non-breaking, non-collapsing white-space. */
-/* FIXME: accomodate non-breaking, collapsing white-space. */
-
 static	struct termp	 *term_alloc(enum termenc);
 static	void		  term_free(struct termp *);
-
-static	void		  do_escaped(struct termp *, const char **);
-static	void		  do_special(struct termp *,
-				const char *, size_t);
-static	void		  do_reserved(struct termp *,
-				const char *, size_t);
-static	void		  buffer(struct termp *, char);
-static	void		  encode(struct termp *, char);
+static	void		  spec(struct termp *, const char *, size_t);
+static	void		  res(struct termp *, const char *, size_t);
+static	void		  buffera(struct termp *, const char *, size_t);
+static	void		  bufferc(struct termp *, char);
+static	void		  adjbuf(struct termp *p, size_t);
+static	void		  encode(struct termp *, const char *, size_t);
 
 
 void *
@@ -229,7 +227,12 @@ term_flushln(struct termp *p)
 		for ( ; i < (int)p->col; i++) {
 			if (' ' == p->buf[i])
 				break;
-			putchar(p->buf[i]);
+
+			/* The unit sep. is a non-breaking space. */
+			if (31 == p->buf[i])
+				putchar(' ');
+			else
+				putchar(p->buf[i]);
 		}
 		vis += vsz;
 	}
@@ -315,152 +318,91 @@ term_vspace(struct termp *p)
 
 
 static void
-do_special(struct termp *p, const char *word, size_t len)
+spec(struct termp *p, const char *word, size_t len)
 {
 	const char	*rhs;
 	size_t		 sz;
-	int		 i;
 
 	rhs = chars_a2ascii(p->symtab, word, len, &sz);
-
-	if (NULL == rhs) {
-#if 0
-		fputs("Unknown special character: ", stderr);
-		for (i = 0; i < (int)len; i++)
-			fputc(word[i], stderr);
-		fputc('\n', stderr);
-#endif
-		return;
-	}
-	for (i = 0; i < (int)sz; i++) 
-		encode(p, rhs[i]);
+	if (rhs) 
+		encode(p, rhs, sz);
 }
 
 
 static void
-do_reserved(struct termp *p, const char *word, size_t len)
+res(struct termp *p, const char *word, size_t len)
 {
 	const char	*rhs;
 	size_t		 sz;
-	int		 i;
 
 	rhs = chars_a2res(p->symtab, word, len, &sz);
-
-	if (NULL == rhs) {
-#if 0
-		fputs("Unknown reserved word: ", stderr);
-		for (i = 0; i < (int)len; i++)
-			fputc(word[i], stderr);
-		fputc('\n', stderr);
-#endif
-		return;
-	}
-	for (i = 0; i < (int)sz; i++) 
-		encode(p, rhs[i]);
+	if (rhs)
+		encode(p, rhs, sz);
 }
 
 
-/*
- * Handle an escape sequence: determine its length and pass it to the
- * escape-symbol look table.  Note that we assume mdoc(3) has validated
- * the escape sequence (we assert upon badly-formed escape sequences).
- */
-static void
-do_escaped(struct termp *p, const char **word)
+void
+term_fontlast(struct termp *p)
 {
-	int		 j, type;
-	const char	*wp;
+	enum termfont	 f;
 
-	wp = *word;
-	type = 1;
+	f = p->fontl;
+	p->fontl = p->fontq[p->fonti];
+	p->fontq[p->fonti] = f;
+}
 
-	if (0 == *(++wp)) {
-		*word = wp;
-		return;
-	}
 
-	if ('(' == *wp) {
-		wp++;
-		if (0 == *wp || 0 == *(wp + 1)) {
-			*word = 0 == *wp ? wp : wp + 1;
-			return;
-		}
+void
+term_fontrepl(struct termp *p, enum termfont f)
+{
 
-		do_special(p, wp, 2);
-		*word = ++wp;
-		return;
+	p->fontl = p->fontq[p->fonti];
+	p->fontq[p->fonti] = f;
+}
 
-	} else if ('*' == *wp) {
-		if (0 == *(++wp)) {
-			*word = wp;
-			return;
-		}
 
-		switch (*wp) {
-		case ('('):
-			wp++;
-			if (0 == *wp || 0 == *(wp + 1)) {
-				*word = 0 == *wp ? wp : wp + 1;
-				return;
-			}
+void
+term_fontpush(struct termp *p, enum termfont f)
+{
 
-			do_reserved(p, wp, 2);
-			*word = ++wp;
-			return;
-		case ('['):
-			type = 0;
-			break;
-		default:
-			do_reserved(p, wp, 1);
-			*word = wp;
-			return;
-		}
-	
-	} else if ('f' == *wp) {
-		if (0 == *(++wp)) {
-			*word = wp;
-			return;
-		}
+	assert(p->fonti + 1 < 10);
+	p->fontl = p->fontq[p->fonti];
+	p->fontq[++p->fonti] = f;
+}
 
-		switch (*wp) {
-		case ('B'):
-			p->bold++;
-			break;
-		case ('I'):
-			p->under++;
-			break;
-		case ('P'):
-			/* FALLTHROUGH */
-		case ('R'):
-			p->bold = p->under = 0;
-			break;
-		default:
-			break;
-		}
 
-		*word = wp;
-		return;
+const void *
+term_fontq(struct termp *p)
+{
 
-	} else if ('[' != *wp) {
-		do_special(p, wp, 1);
-		*word = wp;
-		return;
-	}
+	return(&p->fontq[p->fonti]);
+}
 
-	wp++;
-	for (j = 0; *wp && ']' != *wp; wp++, j++)
-		/* Loop... */ ;
 
-	if (0 == *wp) {
-		*word = wp;
-		return;
-	}
+enum termfont
+term_fonttop(struct termp *p)
+{
 
-	if (type)
-		do_special(p, wp - j, (size_t)j);
-	else
-		do_reserved(p, wp - j, (size_t)j);
-	*word = wp;
+	return(p->fontq[p->fonti]);
+}
+
+
+void
+term_fontpopq(struct termp *p, const void *key)
+{
+
+	while (p->fonti >= 0 && key != &p->fontq[p->fonti])
+		p->fonti--;
+	assert(p->fonti >= 0);
+}
+
+
+void
+term_fontpop(struct termp *p)
+{
+
+	assert(p->fonti);
+	p->fonti--;
 }
 
 
@@ -472,11 +414,14 @@ do_escaped(struct termp *p, const char **word)
 void
 term_word(struct termp *p, const char *word)
 {
-	const char	 *sv;
+	const char	*sv, *seq;
+	int		 sz;
+	size_t		 ssz;
+	enum roffdeco	 deco;
 
 	sv = word;
 
-	if (word[0] && 0 == word[1])
+	if (word[0] && '\0' == word[1])
 		switch (word[0]) {
 		case('.'):
 			/* FALLTHROUGH */
@@ -503,16 +448,50 @@ term_word(struct termp *p, const char *word)
 		}
 
 	if ( ! (TERMP_NOSPACE & p->flags))
-		buffer(p, ' ');
+		bufferc(p, ' ');
 
 	if ( ! (p->flags & TERMP_NONOSPACE))
 		p->flags &= ~TERMP_NOSPACE;
 
-	for ( ; *word; word++)
-		if ('\\' != *word)
-			encode(p, *word);
-		else
-			do_escaped(p, &word);
+	/* FIXME: use strcspn. */
+
+	while (*word) {
+		if ('\\' != *word) {
+			encode(p, word, 1);
+			word++;
+			continue;
+		}
+
+		seq = ++word;
+		sz = a2roffdeco(&deco, &seq, &ssz);
+
+		switch (deco) {
+		case (DECO_RESERVED):
+			res(p, seq, ssz);
+			break;
+		case (DECO_SPECIAL):
+			spec(p, seq, ssz);
+			break;
+		case (DECO_BOLD):
+			term_fontrepl(p, TERMFONT_BOLD);
+			break;
+		case (DECO_ITALIC):
+			term_fontrepl(p, TERMFONT_UNDER);
+			break;
+		case (DECO_ROMAN):
+			term_fontrepl(p, TERMFONT_NONE);
+			break;
+		case (DECO_PREVIOUS):
+			term_fontlast(p);
+			break;
+		default:
+			break;
+		}
+
+		word += sz;
+		if (DECO_NOSPACE == deco && '\0' == *word)
+			p->flags |= TERMP_NOSPACE;
+	}
 
 	if (sv[0] && 0 == sv[1])
 		switch (sv[0]) {
@@ -529,46 +508,77 @@ term_word(struct termp *p, const char *word)
 }
 
 
-/*
- * Insert a single character into the line-buffer.  If the buffer's
- * space is exceeded, then allocate more space by doubling the buffer
- * size.
- */
 static void
-buffer(struct termp *p, char c)
+adjbuf(struct termp *p, size_t sz)
 {
-	size_t		 s;
 
-	if (p->col + 1 >= p->maxcols) {
-		if (0 == p->maxcols)
-			p->maxcols = 256;
-		s = p->maxcols * 2;
-		p->buf = realloc(p->buf, s);
-		if (NULL == p->buf) {
-			perror(NULL);
-			exit(EXIT_FAILURE);
-		}
-		p->maxcols = s;
+	if (0 == p->maxcols)
+		p->maxcols = 1024;
+	while (sz >= p->maxcols)
+		p->maxcols <<= 2;
+
+	p->buf = realloc(p->buf, p->maxcols);
+	if (NULL == p->buf) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
 	}
-	p->buf[(int)(p->col)++] = c;
 }
 
 
 static void
-encode(struct termp *p, char c)
+buffera(struct termp *p, const char *word, size_t sz)
 {
-	
-	if (' ' != c) {
-		if (p->under) {
-			buffer(p, '_');
-			buffer(p, 8);
-		}
-		if (p->bold) {
-			buffer(p, c);
-			buffer(p, 8);
-		}
+
+	if (p->col + sz >= p->maxcols) 
+		adjbuf(p, p->col + sz);
+
+	memcpy(&p->buf[(int)p->col], word, sz);
+	p->col += sz;
+}
+
+
+static void
+bufferc(struct termp *p, char c)
+{
+
+	if (p->col + 1 >= p->maxcols)
+		adjbuf(p, p->col + 1);
+
+	p->buf[(int)p->col++] = c;
+}
+
+
+static void
+encode(struct termp *p, const char *word, size_t sz)
+{
+	enum termfont	  f;
+	int		  i;
+
+	/*
+	 * Encode and buffer a string of characters.  If the current
+	 * font mode is unset, buffer directly, else encode then buffer
+	 * character by character.
+	 */
+
+	if (TERMFONT_NONE == (f = term_fonttop(p))) {
+		buffera(p, word, sz);
+		return;
 	}
-	buffer(p, c);
+
+	for (i = 0; i < (int)sz; i++) {
+		if ( ! isgraph((u_char)word[i])) {
+			bufferc(p, word[i]);
+			continue;
+		}
+
+		if (TERMFONT_UNDER == f)
+			bufferc(p, '_');
+		else
+			bufferc(p, word[i]);
+
+		bufferc(p, 8);
+		bufferc(p, word[i]);
+	}
 }
 
 

@@ -1,4 +1,4 @@
-/*	$Id: man_html.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: man_html.c,v 1.4 2009/12/24 02:08:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -183,8 +183,19 @@ print_man_node(MAN_ARGS)
 		break;
 	case (MAN_TEXT):
 		print_text(h, n->string);
-		break;
+		return;
 	default:
+		/* 
+		 * Close out scope of font prior to opening a macro
+		 * scope.  Assert that the metafont is on the top of the
+		 * stack (it's never nested).
+		 */
+		if (h->metaf) {
+			assert(h->metaf == t);
+			print_tagq(h, h->metaf);
+			assert(NULL == h->metaf);
+			t = h->tags.head;
+		}
 		if (mans[n->tok].pre)
 			child = (*mans[n->tok].pre)(m, n, h);
 		break;
@@ -193,6 +204,7 @@ print_man_node(MAN_ARGS)
 	if (child && n->child)
 		print_man_nodelist(m, n->child, h);
 
+	/* This will automatically close out any font scope. */
 	print_stagq(h, t);
 
 	bufinit(h);
@@ -236,8 +248,7 @@ man_root_pre(MAN_ARGS)
 	if (m->vol)
 		(void)strlcat(b, m->vol, BUFSIZ);
 
-	(void)snprintf(title, BUFSIZ - 1, 
-			"%s(%d)", m->title, m->msec);
+	snprintf(title, BUFSIZ - 1, "%s(%d)", m->title, m->msec);
 
 	PAIR_CLASS_INIT(&tag[0], "header");
 	bufcat_style(h, "width", "100%");
@@ -328,6 +339,7 @@ man_br_pre(MAN_ARGS)
 	bufcat_su(h, "height", &su);
 	PAIR_STYLE_INIT(&tag, h);
 	print_otag(h, TAG_DIV, 1, &tag);
+
 	/* So the div isn't empty: */
 	print_text(h, "\\~");
 
@@ -379,30 +391,27 @@ man_alt_pre(MAN_ARGS)
 	const struct man_node	*nn;
 	struct tag		*t;
 	int			 i;
-	struct htmlpair		 tagi, tagb, *tagp;
-
-	PAIR_CLASS_INIT(&tagi, "italic");
-	PAIR_CLASS_INIT(&tagb, "bold");
+	enum htmlfont		 fp;
 
 	for (i = 0, nn = n->child; nn; nn = nn->next, i++) {
 		switch (n->tok) {
 		case (MAN_BI):
-			tagp = i % 2 ? &tagi : &tagb;
+			fp = i % 2 ? HTMLFONT_ITALIC : HTMLFONT_BOLD;
 			break;
 		case (MAN_IB):
-			tagp = i % 2 ? &tagb : &tagi;
+			fp = i % 2 ? HTMLFONT_BOLD : HTMLFONT_ITALIC;
 			break;
 		case (MAN_RI):
-			tagp = i % 2 ? &tagi : NULL;
+			fp = i % 2 ? HTMLFONT_ITALIC : HTMLFONT_NONE;
 			break;
 		case (MAN_IR):
-			tagp = i % 2 ? NULL : &tagi;
+			fp = i % 2 ? HTMLFONT_NONE : HTMLFONT_ITALIC;
 			break;
 		case (MAN_BR):
-			tagp = i % 2 ? NULL : &tagb;
+			fp = i % 2 ? HTMLFONT_NONE : HTMLFONT_BOLD;
 			break;
 		case (MAN_RB):
-			tagp = i % 2 ? &tagb : NULL;
+			fp = i % 2 ? HTMLFONT_BOLD : HTMLFONT_NONE;
 			break;
 		default:
 			abort();
@@ -412,12 +421,14 @@ man_alt_pre(MAN_ARGS)
 		if (i)
 			h->flags |= HTML_NOSPACE;
 
-		if (tagp) {
-			t = print_otag(h, TAG_SPAN, 1, tagp);
-			print_man_node(m, nn, h);
-			print_tagq(h, t);
-		} else
-			print_man_node(m, nn, h);
+		/* 
+		 * Open and close the scope with each argument, so that
+		 * internal \f escapes, which are common, are also
+		 * closed out with the scope.
+		 */
+		t = print_ofont(h, fp);
+		print_man_node(m, nn, h);
+		print_tagq(h, t);
 	}
 
 	return(0);
@@ -430,6 +441,7 @@ man_SB_pre(MAN_ARGS)
 {
 	struct htmlpair	 tag;
 	
+	/* FIXME: print_ofont(). */
 	PAIR_CLASS_INIT(&tag, "small bold");
 	print_otag(h, TAG_SPAN, 1, &tag);
 	return(1);
@@ -504,19 +516,19 @@ man_PP_pre(MAN_ARGS)
 
 	i = 0;
 
-	if (MAN_ROOT == n->parent->tok) {
+	if (MAN_ROOT == n->parent->type) {
 		SCALE_HS_INIT(&su, INDENT);
 		bufcat_su(h, "margin-left", &su);
-		i++;
+		i = 1;
 	}
-	if (n->next && n->next->child) {
+	if (n->prev) {
 		SCALE_VS_INIT(&su, 1);
-		bufcat_su(h, "margin-bottom", &su);
-		i++;
+		bufcat_su(h, "margin-top", &su);
+		i = 1;
 	}
 
 	PAIR_STYLE_INIT(&tag, h);
-	print_otag(h, TAG_DIV, i ? 1 : 0, &tag);
+	print_otag(h, TAG_DIV, i, &tag);
 	return(1);
 }
 
@@ -643,10 +655,8 @@ man_HP_pre(MAN_ARGS)
 static int
 man_B_pre(MAN_ARGS)
 {
-	struct htmlpair	 tag;
 
-	PAIR_CLASS_INIT(&tag, "bold");
-	print_otag(h, TAG_SPAN, 1, &tag);
+	print_ofont(h, HTMLFONT_BOLD);
 	return(1);
 }
 
@@ -655,10 +665,8 @@ man_B_pre(MAN_ARGS)
 static int
 man_I_pre(MAN_ARGS)
 {
-	struct htmlpair	 tag;
-
-	PAIR_CLASS_INIT(&tag, "italic");
-	print_otag(h, TAG_SPAN, 1, &tag);
+	
+	print_ofont(h, HTMLFONT_ITALIC);
 	return(1);
 }
 

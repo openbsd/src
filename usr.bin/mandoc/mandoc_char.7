@@ -1,4 +1,4 @@
-.\"	$Id: mandoc_char.7,v 1.7 2009/10/21 19:13:50 schwarze Exp $
+.\"	$Id: mandoc_char.7,v 1.8 2009/12/24 02:08:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" 
-.Dd $Mdocdate: October 21 2009 $
+.Dd $Mdocdate: December 24 2009 $
 .Dt MANDOC_CHAR 7
 .Os
 .
@@ -76,25 +76,6 @@ Note that each output mode will have a different rendering of the
 characters.  It's guaranteed that each input symbol will correspond to a
 (more or less) meaningful output rendering, regardless the mode.
 .
-.Ss ASCII output
-Formatting documents with ASCII output results in a 7-bit ASCII
-approximation of zero or more characters, for example, the
-.Dq aleph
-character
-.Sq \e(Ah
-will render as
-.Sq N .
-Approximations are a best-effort, and naturally some clarity will be lost.
-.
-.Ss HTML output
-The HTML output mode uses decimal-encoded UTF-8 for sequences, for
-example, the
-.Dq aleph
-character
-.Sq \e(Ah
-will render as
-.Sq &#8501; .
-.
 .
 .Sh SPECIAL CHARACTERS
 These are the preferred input symbols for producing special characters.
@@ -110,6 +91,7 @@ Spacing:
 .It \e&      Ta zero-width space
 .It \e|      Ta zero-width space
 .It \e0      Ta breaking, non-collapsing digit-width space
+.It \ec      Ta removes any trailing space (if applicable)
 .El
 .
 .Pp

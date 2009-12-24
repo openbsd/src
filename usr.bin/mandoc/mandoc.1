@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.19 2009/12/22 23:58:00 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.20 2009/12/24 02:08:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2009 $
+.Dd $Mdocdate: December 24 2009 $
 .Dt MANDOC 1
 .Os
 .
@@ -96,53 +96,12 @@ or
 .Xr man 7
 text from stdin, implying
 .Fl m Ns Ar andoc ,
-and prints 78-column backspace-encoded output to stdout as if
+and produces
 .Fl T Ns Ar ascii
-were provided.
+output.
 .
 .Pp
 .Ex -std mandoc
-.
-.
-.Ss Punctuation and Spacing
-If punctuation is set apart from words, such as in the phrase
-.Dq to be \&, or not to be ,
-it's processed by
-.Nm
-according to the following rules:  opening punctuation
-.Po
-.Sq \&( ,
-.Sq \&[ ,
-and
-.Sq \&{
-.Pc
-is not followed by a space; closing punctuation
-.Po
-.Sq \&. ,
-.Sq \&, ,
-.Sq \&; ,
-.Sq \&: ,
-.Sq \&? ,
-.Sq \&! ,
-.Sq \&) ,
-.Sq \&]
-and
-.Sq \&}
-.Pc
-is not preceded by whitespace.
-.
-.Pp
-If the input is
-.Xr mdoc 7 ,
-these rules are also applied to macro arguments when appropriate.
-.
-.Pp
-White-space, in non-literal (normal) mode, is stripped from input and
-replaced on output by a single space.  Thus, if you wish to preserve multiple
-spaces, they must be space-escaped or used in a literal display mode, e.g.,
-.Sq \&Bd \-literal
-in
-.Xr mdoc 7 .
 .
 .
 .Ss Input Formats
@@ -195,15 +154,18 @@ The
 .Nm
 utility accepts the following
 .Fl T
-arguments:
+arguments (see
+.Sx OUTPUT ) :
 .
 .Bl -tag -width Ds
 .It Fl T Ns Ar ascii
 Produce 7-bit ASCII output, backspace-encoded for bold and underline
-styles.  This is the default.
+styles.  This is the default.  See
+.Sx ASCII Output .
 .
 .It Fl T Ns Ar html
-Produce strict HTML-4.01 output, with a sane default style.
+Produce strict HTML-4.01 output, with a sane default style.  See
+.Sx HTML Output .
 .
 .It Fl T Ns Ar tree
 Produce an indented parse tree.
@@ -255,10 +217,11 @@ Don't halt when encountering parse errors.  Useful with
 over a large set of manuals passed on the command line.
 .El
 .
+.
 .Ss Output Options
 For the time being, only
 .Fl T Ns Ar html
-is the only mode with output options:
+accepts output options:
 .Bl -tag -width Ds
 .It Fl O Ns Ar style=style.css
 The file
@@ -292,6 +255,99 @@ If no section is included, section 1 is assumed.  The default is not to
 present a hyperlink.
 .El
 .
+.
+.Sh OUTPUT
+This section documents output details of
+.Nm .
+In general, output conforms to the traditional manual style of a header,
+a body composed of sections and sub-sections, and a footer.  
+.Pp
+The text style of output characters (non-macro characters, punctuation,
+and white-space) is dictated by context.
+.Pp
+White-space is generally stripped from input.  This can be changed with
+character escapes (specified in
+.Xr mandoc_char 7 )
+or literal modes (specified in
+.Xr mdoc 7
+and
+.Xr man 7 ) .
+.Pp
+If non-macro punctuation is set apart from words, such as in the phrase
+.Dq to be \&, or not to be ,
+it's processed by
+.Nm ,
+regardless of output format, according to the following rules:  opening
+punctuation
+.Po
+.Sq \&( ,
+.Sq \&[ ,
+and
+.Sq \&{
+.Pc
+is not followed by a space; closing punctuation
+.Po
+.Sq \&. ,
+.Sq \&, ,
+.Sq \&; ,
+.Sq \&: ,
+.Sq \&? ,
+.Sq \&! ,
+.Sq \&) ,
+.Sq \&]
+and
+.Sq \&}
+.Pc
+is not preceded by white-space.
+.
+.Pp
+If the input is
+.Xr mdoc 7 ,
+however, these rules are also applied to macro arguments when appropriate.
+.
+.
+.Ss ASCII Output
+Output produced by 
+.Fl T Ns Ar ascii ,
+which is the default, is rendered in standard 7-bit ASCII documented in
+.Xr ascii 7 .
+.Pp
+Font styles are applied by using back-spaced encoding such that an
+underlined character
+.Sq c
+is rendered as
+.Sq _ Ns \e[bs] Ns c ,
+where
+.Sq \e[bs]
+is the back-space character number 8.  Emboldened characters are rendered as
+.Sq c Ns \e[bs] Ns c .
+.Pp
+The special characters documented in
+.Xr mandoc_char 7
+are rendered best-effort in an ASCII equivalent.
+.Pp
+Output width is limited to 78 visible columns unless literal input lines
+exceed this limit.
+.
+.
+.Ss HTML Output
+Output produced by
+.Fl T Ns Ar html
+comforms to HTML-4.01 strict.
+.Pp
+Font styles and page structure are applied using CSS2.  By default, no
+font style is applied to any text, although CSS2 is hard-coded to format
+the basic structure of output.
+.Pp
+The
+.Pa example.style.css
+file documents the range of styles applied to output and, if used, will
+cause rendered documents to appear as they do in
+.Fl T Ns Ar ascii .
+.Pp
+Special characters are rendered in decimal-encoded UTF-8.
+.
+.
 .Sh EXAMPLES
 To page manuals to the terminal:
 .
@@ -304,7 +360,7 @@ To produce HTML manuals with
 .Ar style.css
 as the style-sheet:
 .Pp
-.D1 % mandoc \-Thtml -ostyle=style.css mdoc.7 > mdoc.7.html
+.D1 % mandoc \-Thtml -Ostyle=style.css mdoc.7 > mdoc.7.html
 .Pp
 To check over a large set of manuals:
 .
@@ -320,7 +376,7 @@ compatibility with
 Each input and output format is separately noted.
 .
 .
-.Ss ASCII output
+.Ss ASCII Compatibility
 .Bl -bullet -compact
 .It
 The 
@@ -380,8 +436,19 @@ retains spaces.
 Sentences are unilaterally monospaced.
 .El
 .
-.Ss HTML output
+.
+.Ss HTML Compatibility
 .Bl -bullet -compact
+.It
+The
+.Sq \efP
+escape will revert the font to the previous
+.Sq \ef
+escape, not to the last rendered decoration, which is now dictated by
+CSS instead of hard-coded.  It also will not span past the current
+scope, for the same reason.  Note that in 
+.Sx ASCII Output
+mode, this will work fine.
 .It
 The
 .Xr mdoc 7
@@ -399,7 +466,8 @@ and
 .Sq TP
 lists render similarly.
 .El
-.\" SECTION
+.
+.
 .Sh SEE ALSO
 .Xr mandoc_char 7 ,
 .Xr mdoc 7 ,
@@ -411,11 +479,28 @@ The
 utility was written by
 .An Kristaps Dzonsons Aq kristaps@kth.se .
 .
+.
 .Sh CAVEATS
+The
+.Fl T Ns Ar html
+CSS2 styling used for
+.Fl m Ns Ar doc
+input lists does not render properly in brain-dead browsers, such as
+Internet Explorer 6 and earlier.
+.Pp
 In
 .Fl T Ns Ar html ,
 the maximum size of an element attribute is determined by
 .Dv BUFSIZ ,
 which is usually 1024 bytes.  Be aware of this when setting long link
-formats with
-.Fl O Ns Ar man=fmt .
+formats, e.g.,
+.Fl O Ns Ar style=really/long/link .
+.Pp
+The
+.Fl T Ns Ar html
+output mode doesn't render the
+.Sq \es
+font size escape documented in
+.Xr mdoc 7
+and
+.Xr man 7 .

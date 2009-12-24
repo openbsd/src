@@ -1,4 +1,4 @@
-/*	$Id: mdoc_html.c,v 1.4 2009/12/23 22:30:17 schwarze Exp $ */
+/*	$Id: mdoc_html.c,v 1.5 2009/12/24 02:08:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -419,7 +419,7 @@ print_mdoc_node(MDOC_ARGS)
 		break;
 	case (MDOC_TEXT):
 		print_text(h, n->string);
-		break;
+		return;
 	default:
 		if (mdocs[n->tok].pre)
 			child = (*mdocs[n->tok].pre)(m, n, h);
@@ -435,8 +435,6 @@ print_mdoc_node(MDOC_ARGS)
 	switch (n->type) {
 	case (MDOC_ROOT):
 		mdoc_root_post(m, n, h);
-		break;
-	case (MDOC_TEXT):
 		break;
 	default:
 		if (mdocs[n->tok].post)
@@ -720,12 +718,11 @@ mdoc_nm_pre(MDOC_ARGS)
 {
 	struct htmlpair	tag;
 
-	if ( ! (HTML_NEWLINE & h->flags))
-		if (SEC_SYNOPSIS == n->sec) {
-			bufcat_style(h, "clear", "both");
-			PAIR_STYLE_INIT(&tag, h);
-			print_otag(h, TAG_BR, 1, &tag);
-		}
+	if (SEC_SYNOPSIS == n->sec && n->prev) {
+		bufcat_style(h, "clear", "both");
+		PAIR_STYLE_INIT(&tag, h);
+		print_otag(h, TAG_BR, 1, &tag);
+	}
 
 	PAIR_CLASS_INIT(&tag, "name");
 	print_otag(h, TAG_SPAN, 1, &tag);

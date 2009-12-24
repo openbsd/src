@@ -1,4 +1,4 @@
-/*	$Id: out.h,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: out.h,v 1.3 2009/12/24 02:08:14 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -35,6 +35,19 @@ enum	roffscale {
 	SCALE_MAX
 };
 
+enum	roffdeco {
+	DECO_NONE,
+	DECO_SPECIAL,
+	DECO_RESERVED,
+	DECO_BOLD,
+	DECO_ITALIC,
+	DECO_ROMAN,
+	DECO_PREVIOUS,
+	DECO_SIZE,
+	DECO_NOSPACE,
+	DECO_MAX
+};
+
 struct	roffsu {
 	enum roffscale	  unit;
 	double		  scale;
@@ -42,18 +55,24 @@ struct	roffsu {
 };
 
 #define	SCALE_INVERT(p) \
-	do { (p)->scale = -(p)->scale; } while (/*CONSTCOND*/0)
+	do { (p)->scale = -(p)->scale; } \
+	while (/* CONSTCOND */ 0)
+
 #define	SCALE_VS_INIT(p, v) \
 	do { (p)->unit = SCALE_VS; \
 	     (p)->scale = (v); \
-	     (p)->pt = 0; } while (/*CONSTCOND*/0)
+	     (p)->pt = 0; } \
+	while (/* CONSTCOND */ 0)
+
 #define	SCALE_HS_INIT(p, v) \
 	do { (p)->unit = SCALE_BU; \
 	     (p)->scale = (v); \
-	     (p)->pt = 0; } while (/*CONSTCOND*/0)
+	     (p)->pt = 0; } \
+	while (/* CONSTCOND */ 0)
 
 int		  a2roffsu(const char *, 
 			struct roffsu *, enum roffscale);
+int		  a2roffdeco(enum roffdeco *, const char **, size_t *);
 void		  time2a(time_t, char *, size_t);
 
 __END_DECLS

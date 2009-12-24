@@ -1,4 +1,4 @@
-/*	$Id: html.c,v 1.4 2009/12/23 22:30:17 schwarze Exp $ */
+/*	$Id: html.c,v 1.5 2009/12/24 02:08:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -66,7 +66,13 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"base",	HTML_CLRLINE | HTML_NOSTACK}, /* TAG_BASE */
 };
 
-static	const char	 *const htmlattrs[ATTR_MAX] = {
+static	const char	*const htmlfonts[HTMLFONT_MAX] = {
+	"roman",
+	"bold",
+	"italic"
+};
+
+static	const char	*const htmlattrs[ATTR_MAX] = {
 	"http-equiv",
 	"content",
 	"name",
@@ -82,6 +88,14 @@ static	const char	 *const htmlattrs[ATTR_MAX] = {
 	"id",
 	"summary",
 };
+
+
+static	void		  print_spec(struct html *, const char *, size_t);
+static	void		  print_res(struct html *, const char *, size_t);
+static	void		  print_ctag(struct html *, enum htmltag);
+static	int		  print_encode(struct html *, const char *, int);
+static	void		  print_metaf(struct html *, enum roffdeco);
+
 
 void *
 html_alloc(char *outopts)
@@ -182,12 +196,12 @@ print_gen_head(struct html *h)
 
 
 static void
-print_spec(struct html *h, const char *p, int len)
+print_spec(struct html *h, const char *p, size_t len)
 {
 	const char	*rhs;
 	size_t		 sz;
 
-	rhs = chars_a2ascii(h->symtab, p, (size_t)len, &sz);
+	rhs = chars_a2ascii(h->symtab, p, len, &sz);
 
 	if (NULL == rhs) 
 		return;
@@ -196,12 +210,12 @@ print_spec(struct html *h, const char *p, int len)
 
 
 static void
-print_res(struct html *h, const char *p, int len)
+print_res(struct html *h, const char *p, size_t len)
 {
 	const char	*rhs;
 	size_t		 sz;
 
-	rhs = chars_a2res(h->symtab, p, (size_t)len, &sz);
+	rhs = chars_a2res(h->symtab, p, len, &sz);
 
 	if (NULL == rhs)
 		return;
@@ -209,110 +223,61 @@ print_res(struct html *h, const char *p, int len)
 }
 
 
-static void
-print_escape(struct html *h, const char **p)
+struct tag *
+print_ofont(struct html *h, enum htmlfont font)
 {
-	int		 j, type;
-	const char	*wp;
+	struct htmlpair	 tag;
 
-	wp = *p;
-	type = 1;
+	h->metal = h->metac;
+	h->metac = font;
 
-	if (0 == *(++wp)) {
-		*p = wp;
-		return;
-	}
+	/* FIXME: DECO_ROMAN should just close out preexisting. */
 
-	if ('(' == *wp) {
-		wp++;
-		if (0 == *wp || 0 == *(wp + 1)) {
-			*p = 0 == *wp ? wp : wp + 1;
-			return;
-		}
+	if (h->metaf && h->tags.head == h->metaf)
+		print_tagq(h, h->metaf);
 
-		print_spec(h, wp, 2);
-		*p = ++wp;
-		return;
-
-	} else if ('*' == *wp) {
-		if (0 == *(++wp)) {
-			*p = wp;
-			return;
-		}
-
-		switch (*wp) {
-		case ('('):
-			wp++;
-			if (0 == *wp || 0 == *(wp + 1)) {
-				*p = 0 == *wp ? wp : wp + 1;
-				return;
-			}
-
-			print_res(h, wp, 2);
-			*p = ++wp;
-			return;
-		case ('['):
-			type = 0;
-			break;
-		default:
-			print_res(h, wp, 1);
-			*p = wp;
-			return;
-		}
-	
-	} else if ('f' == *wp) {
-		if (0 == *(++wp)) {
-			*p = wp;
-			return;
-		}
-
-		switch (*wp) {
-		case ('B'):
-			/* TODO */
-			break;
-		case ('I'):
-			/* TODO */
-			break;
-		case ('P'):
-			/* FALLTHROUGH */
-		case ('R'):
-			/* TODO */
-			break;
-		default:
-			break;
-		}
-
-		*p = wp;
-		return;
-
-	} else if ('[' != *wp) {
-		print_spec(h, wp, 1);
-		*p = wp;
-		return;
-	}
-
-	wp++;
-	for (j = 0; *wp && ']' != *wp; wp++, j++)
-		/* Loop... */ ;
-
-	if (0 == *wp) {
-		*p = wp;
-		return;
-	}
-
-	if (type)
-		print_spec(h, wp - j, j);
-	else
-		print_res(h, wp - j, j);
-
-	*p = wp;
+	PAIR_CLASS_INIT(&tag, htmlfonts[font]);
+	h->metaf = print_otag(h, TAG_SPAN, 1, &tag);
+	return(h->metaf);
 }
 
 
 static void
-print_encode(struct html *h, const char *p)
+print_metaf(struct html *h, enum roffdeco deco)
+{
+	enum htmlfont	 font;
+
+	switch (deco) {
+	case (DECO_PREVIOUS):
+		font = h->metal;
+		break;
+	case (DECO_ITALIC):
+		font = HTMLFONT_ITALIC;
+		break;
+	case (DECO_BOLD):
+		font = HTMLFONT_BOLD;
+		break;
+	case (DECO_ROMAN):
+		font = HTMLFONT_NONE;
+		break;
+	default:
+		abort();
+		/* NOTREACHED */
+	}
+
+	(void)print_ofont(h, font);
+}
+
+
+static int
+print_encode(struct html *h, const char *p, int norecurse)
 {
 	size_t		 sz;
+	int		 len, nospace;
+	const char	*seq;
+	enum roffdeco	 deco;
+
+	nospace = 0;
 
 	for (; *p; p++) {
 		sz = strcspn(p, "\\<>&");
@@ -321,19 +286,50 @@ print_encode(struct html *h, const char *p)
 		p += /* LINTED */
 			sz;
 
-		if ('\\' == *p) {
-			print_escape(h, &p);
+		if ('<' == *p) {
+			printf("&lt;");
+			continue;
+		} else if ('>' == *p) {
+			printf("&gt;");
+			continue;
+		} else if ('&' == *p) {
+			printf("&amp;");
 			continue;
 		} else if ('\0' == *p)
 			break;
 
-		if ('<' == *p)
-			printf("&lt;");
-		else if ('>' == *p)
-			printf("&gt;");
-		else if ('&' == *p)
-			printf("&amp;");
+		seq = ++p;
+		len = a2roffdeco(&deco, &seq, &sz);
+
+		switch (deco) {
+		case (DECO_RESERVED):
+			print_res(h, seq, sz);
+			break;
+		case (DECO_SPECIAL):
+			print_spec(h, seq, sz);
+			break;
+		case (DECO_PREVIOUS):
+			/* FALLTHROUGH */
+		case (DECO_BOLD):
+			/* FALLTHROUGH */
+		case (DECO_ITALIC):
+			/* FALLTHROUGH */
+		case (DECO_ROMAN):
+			if (norecurse)
+				break;
+			print_metaf(h, deco);
+			break;
+		default:
+			break;
+		}
+
+		p += len - 1;
+
+		if (DECO_NOSPACE == deco && '\0' == *(p + 1))
+			nospace = 1;
 	}
+
+	return(nospace);
 }
 
 
@@ -364,22 +360,16 @@ print_otag(struct html *h, enum htmltag tag,
 	for (i = 0; i < sz; i++) {
 		printf(" %s=\"", htmlattrs[p[i].key]);
 		assert(p->val);
-		print_encode(h, p[i].val);
+		(void)print_encode(h, p[i].val, 1);
 		putchar('\"');
 	}
 	putchar('>');
 
 	h->flags |= HTML_NOSPACE;
-	if (HTML_CLRLINE & htmltags[tag].flags)
-		h->flags |= HTML_NEWLINE;
-	else
-		h->flags &= ~HTML_NEWLINE;
-
 	return(t);
 }
 
 
-/* ARGSUSED */
 static void
 print_ctag(struct html *h, enum htmltag tag)
 {
@@ -387,10 +377,8 @@ print_ctag(struct html *h, enum htmltag tag)
 	printf("</%s>", htmltags[tag].name);
 	if (HTML_CLRLINE & htmltags[tag].flags) {
 		h->flags |= HTML_NOSPACE;
-		h->flags |= HTML_NEWLINE;
 		putchar('\n');
-	} else
-		h->flags &= ~HTML_NEWLINE;
+	} 
 }
 
 
@@ -436,11 +424,9 @@ print_text(struct html *h, const char *p)
 	if ( ! (h->flags & HTML_NOSPACE))
 		putchar(' ');
 
-	h->flags &= ~HTML_NOSPACE;
-	h->flags &= ~HTML_NEWLINE;
-
-	if (p)
-		print_encode(h, p);
+	assert(p);
+	if ( ! print_encode(h, p, 0))
+		h->flags &= ~HTML_NOSPACE;
 
 	if (*p && 0 == *(p + 1))
 		switch (*p) {
@@ -463,6 +449,8 @@ print_tagq(struct html *h, const struct tag *until)
 	struct tag	*tag;
 
 	while ((tag = h->tags.head) != NULL) {
+		if (tag == h->metaf)
+			h->metaf = NULL;
 		print_ctag(h, tag->tag);
 		h->tags.head = tag->next;
 		free(tag);
@@ -480,6 +468,8 @@ print_stagq(struct html *h, const struct tag *suntil)
 	while ((tag = h->tags.head) != NULL) {
 		if (suntil && tag == suntil)
 			return;
+		if (tag == h->metaf)
+			h->metaf = NULL;
 		print_ctag(h, tag->tag);
 		h->tags.head = tag->next;
 		free(tag);

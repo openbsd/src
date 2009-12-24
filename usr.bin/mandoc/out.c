@@ -1,4 +1,4 @@
-/*	$Id: out.c,v 1.2 2009/10/27 21:40:07 schwarze Exp $ */
+/*	$Id: out.c,v 1.3 2009/12/24 02:08:14 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -24,6 +24,26 @@
 #include <time.h>
 
 #include "out.h"
+
+/* See a2roffdeco(). */
+#define	C2LIM(c, l) do { \
+	(l) = 1; \
+	if ('[' == (c) || '\'' == (c)) \
+		(l) = 0; \
+	else if ('(' == (c)) \
+		(l) = 2; } \
+	while (/* CONSTCOND */ 0)
+
+/* See a2roffdeco(). */
+#define	C2TERM(c, t) do { \
+	(t) = 0; \
+	if ('\'' == (c)) \
+		(t) = 1; \
+	else if ('[' == (c)) \
+		(t) = 2; \
+	else if ('(' == (c)) \
+		(t) = 3; } \
+	while (/* CONSTCOND */ 0)
 
 /* 
  * Convert a `scaling unit' to a consistent form, or fail.  Scaling
@@ -162,3 +182,171 @@ time2a(time_t t, char *dst, size_t sz)
 	(void)strftime(p, sz, "%Y", &tm);
 }
 
+
+/* 
+ * Returns length of parsed string (the leading "\" should NOT be
+ * included).  This can be zero if the current character is the nil
+ * terminator.  "d" is set to the type of parsed decorator, which may
+ * have an adjoining "word" of size "sz" (e.g., "(ab" -> "ab", 2).
+ */
+int
+a2roffdeco(enum roffdeco *d,
+		const char **word, size_t *sz)
+{
+	int		 j, type, term, lim;
+	const char	*wp, *sp;
+
+	*d = DECO_NONE;
+	wp = *word;
+	type = 1;
+
+	switch (*wp) {
+	case ('\0'):
+		return(0);
+
+	case ('('):
+		if ('\0' == *(++wp))
+			return(1);
+		if ('\0' == *(wp + 1))
+			return(2);
+
+		*d = DECO_SPECIAL;
+		*sz = 2;
+		*word = wp;
+		return(3);
+
+	case ('*'):
+		switch (*(++wp)) {
+		case ('\0'):
+			return(1);
+
+		case ('('):
+			if ('\0' == *(++wp))
+				return(2);
+			if ('\0' == *(wp + 1))
+				return(3);
+
+			*d = DECO_RESERVED;
+			*sz = 2;
+			*word = wp;
+			return(4);
+
+		case ('['):
+			type = 0;
+			break;
+
+		default:
+			*d = DECO_RESERVED;
+			*sz = 1;
+			*word = wp;
+			return(2);
+		}
+		break;
+
+	case ('s'):
+		sp = wp;
+		if ('\0' == *(++wp))
+			return(1);
+
+		C2LIM(*wp, lim);
+		C2TERM(*wp, term);
+
+		if (term) 
+			wp++;
+
+		*word = wp;
+
+		if (*wp == '+' || *wp == '-')
+			++wp;
+
+		switch (*wp) {
+		case ('\''):
+			/* FALLTHROUGH */
+		case ('['):
+			/* FALLTHROUGH */
+		case ('('):
+			if (term) 
+				return((int)(wp - sp));
+
+			C2LIM(*wp, lim);
+			C2TERM(*wp, term);
+			wp++;
+			break;
+		default:
+			break;
+		}
+
+		if ( ! isdigit((u_char)*wp))
+			return((int)(wp - sp));
+
+		for (j = 0; isdigit((u_char)*wp); j++) {
+			if (lim && j >= lim)
+				break;
+			++wp;
+		}
+
+		if (term && term < 3) {
+			if (1 == term && *wp != '\'')
+				return((int)(wp - sp));
+			if (2 == term && *wp != ']')
+				return((int)(wp - sp));
+			++wp;
+		}
+
+		*d = DECO_SIZE;
+		return((int)(wp - sp));
+
+	case ('f'):
+		switch (*(++wp)) {
+		case ('\0'):
+			return(1);
+		case ('3'):
+			/* FALLTHROUGH */
+		case ('B'):
+			*d = DECO_BOLD;
+			break;
+		case ('2'):
+			/* FALLTHROUGH */
+		case ('I'):
+			*d = DECO_ITALIC;
+			break;
+		case ('P'):
+			*d = DECO_PREVIOUS;
+			break;
+		case ('1'):
+			/* FALLTHROUGH */
+		case ('R'):
+			*d = DECO_ROMAN;
+			break;
+		default:
+			break;
+		}
+
+		return(2);
+
+	case ('['):
+		break;
+
+	case ('c'):
+		*d = DECO_NOSPACE;
+		*sz = 1;
+		return(1);
+
+	default:
+		*d = DECO_SPECIAL;
+		*word = wp;
+		*sz = 1;
+		return(1);
+	}
+
+	*word = ++wp;
+	for (j = 0; *wp && ']' != *wp; wp++, j++)
+		/* Loop... */ ;
+
+	if ('\0' == *wp)
+		return(j + 1);
+
+	*d = type ? DECO_SPECIAL : DECO_RESERVED;
+	*sz = (size_t)j;
+	return (j + 2);
+}

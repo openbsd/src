@@ -1,4 +1,4 @@
-/*	$Id: chars.c,v 1.3 2009/12/22 23:58:00 schwarze Exp $ */
+/*	$Id: chars.c,v 1.4 2009/12/24 02:08:14 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -35,7 +35,7 @@ struct	ln {
 	int		  type;
 #define	CHARS_CHAR	 (1 << 0)
 #define	CHARS_STRING	 (1 << 1)
-#define CHARS_BOTH	 (0x03)
+#define CHARS_BOTH	 (CHARS_CHAR | CHARS_STRING)
 };
 
 #define	LINES_MAX	  351
@@ -47,9 +47,10 @@ struct	ln {
 #define BOTH(w, x, y, z, a, b) \
 	{ NULL, (w), (y), (a), (x), (z), (b), CHARS_BOTH },
 
-static	struct ln lines[LINES_MAX] = {
+#define	CHAR_TBL_START	  static struct ln lines[LINES_MAX] = {
+#define	CHAR_TBL_END	  };
+
 #include "chars.in"
-};
 
 struct	tbl {
 	enum chars	  type;
