@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.165 2009/12/14 19:56:55 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.166 2009/12/24 14:19:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -71,8 +71,6 @@
 #define PATH_ENVELOPES		"/envelopes"
 
 #define PATH_RUNQUEUE		"/runqueue"
-#define PATH_RUNQUEUEHIGH	"/runqueue-high"
-#define PATH_RUNQUEUELOW	"/runqueue-low"
 
 #define PATH_OFFLINE		"/offline"
 #define PATH_BOUNCE		"/bounce"

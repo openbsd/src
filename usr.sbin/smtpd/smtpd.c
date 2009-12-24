@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.92 2009/12/14 19:56:55 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.93 2009/12/24 14:19:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1070,8 +1070,7 @@ setup_spool(uid_t uid, gid_t gid)
 {
 	unsigned int	 n;
 	char		*paths[] = { PATH_INCOMING, PATH_ENQUEUE, PATH_QUEUE,
-				     PATH_RUNQUEUE, PATH_RUNQUEUELOW,
-				     PATH_RUNQUEUEHIGH, PATH_PURGE,
+				     PATH_RUNQUEUE, PATH_PURGE,
 				     PATH_OFFLINE, PATH_BOUNCE };
 	char		 pathname[MAXPATHLEN];
 	struct stat	 sb;
