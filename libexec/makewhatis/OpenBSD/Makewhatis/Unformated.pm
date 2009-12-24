@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Unformated.pm,v 1.3 2005/01/13 11:22:24 espie Exp $
+# $OpenBSD: Unformated.pm,v 1.4 2009/12/24 14:08:20 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -50,6 +50,8 @@ sub add_unformated_subject
     s/\\\|\\\(em\\\|/-/g;
 	# em dashes
     s/\\\(em\s+/- /g;
+    	# single quotes
+    s/\\\(aq/\'/g;
     	# em dashes in the middle of lines
     s/\\\(em/-/g;
     s/\\\*[LO]//g;
@@ -114,7 +116,8 @@ sub handle
 	next unless m/^\./ || $found_old || $found_new;
 	next if m/^\.\\\"/;
 	next if m/^\.if\s+t\s+/;
-	s/^\.if\s+n\s+//;
+	s/^\.i[ef]\s+n\s+//;
+	s/^\.i[ef]\s+\\n\(\.g\s+//;
 	if (m/^\.\s*de/) {
 	    while (<$f>) {
 		last if m/^\.\s*\./;
