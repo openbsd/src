@@ -1,0 +1,55 @@
+.Dd $Mdocdate: December 24 2009 $
+.Dt BL-COLUMN 1
+.Os
+.Sh NAME
+.Nm Bl-column
+.Nd lists with multiple columns
+.Sh DESCRIPTION
+.Bl -column "a"
+.It a
+.El
+.Bl -column "a" "b"
+.It a Ta b
+.El
+.\" avoid "c" which means "cm"
+.Bl -column "a" "b" "cc"
+.It a Ta b Ta cc
+.El
+.Bl -column "a" "b" "cc" "d"
+.It a Ta b Ta cc Ta d
+.El
+.Bl -column "a" "b" "cc" "d" "e"
+.It a Ta b Ta cc Ta d Ta e
+.El
+.\" Probing up to the utter limits of groff.
+.\" With more than 5 columns or more than 78 characters per line,
+.\" groff .Bl -column turns completely mad.
+.\" mandoc can do more, but it's no use testing that.
+.Bd -literal
+5 + 35 + 4 + 34 = 78:
+.Ed
+.Bl -column "x35xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  "x34xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+.It          x35xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Ta x34xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+.It a Ta b
+.El
+.Bd -literal
+5 + (22+4)*2 + 21 = 78:
+.Ed
+.Bl -column "x22xxxxxxxxxxxxxxxxxxx"  "x22xxxxxxxxxxxxxxxxxxx"  "x21xxxxxxxxxxxxxxxxxx"
+.It          x22xxxxxxxxxxxxxxxxxxx Ta x22xxxxxxxxxxxxxxxxxxx Ta x21xxxxxxxxxxxxxxxxxx
+.It a Ta b Ta c
+.El
+.Bd -literal
+5 + 16 + (4+15)*3 = 78:
+.Ed
+.Bl -column "x16xxxxxxxxxxxxx"  "x15xxxxxxxxxxxx"  "x15xxxxxxxxxxxx"  "x15xxxxxxxxxxxx"
+.It          x16xxxxxxxxxxxxx Ta x15xxxxxxxxxxxx Ta x15xxxxxxxxxxxx Ta x15xxxxxxxxxxxx
+.It a Ta b Ta c Ta d
+.El
+.Bd -literal
+5 + 13 + (3+12)*4 = 78:
+.Ed
+.Bl -column "x13xxxxxxxxxx"  "x12xxxxxxxxx"  "x12xxxxxxxxx"  "x12xxxxxxxxx"  "x12xxxxxxxxx"
+.It          x13xxxxxxxxxx Ta x12xxxxxxxxx Ta x12xxxxxxxxx Ta x12xxxxxxxxx Ta x12xxxxxxxxx
+.It a Ta b Ta c Ta d Ta e
+.El
