@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1517 2009/12/17 00:55:19 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1518 2009/12/25 22:01:34 miod Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -682,6 +682,7 @@
 #define	PCI_PRODUCT_AMD_GEODE_LX_PCHB	0x2080		/* Geode LX */
 #define	PCI_PRODUCT_AMD_GEODE_LX_VIDEO	0x2081		/* Geode LX Video */
 #define	PCI_PRODUCT_AMD_GEODE_LX_CRYPTO	0x2082		/* Geode LX Crypto */
+#define	PCI_PRODUCT_AMD_CS5536_PCISB	0x208f		/* CS5536 PCI */
 #define	PCI_PRODUCT_AMD_CS5536_PCIB	0x2090		/* CS5536 ISA */
 #define	PCI_PRODUCT_AMD_CS5536_AUDIO	0x2093		/* CS5536 Audio */
 #define	PCI_PRODUCT_AMD_CS5536_OHCI	0x2094		/* CS5536 USB */
