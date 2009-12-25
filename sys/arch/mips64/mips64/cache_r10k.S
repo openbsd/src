@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r10k.S,v 1.9 2009/08/06 21:06:30 miod Exp $ */
+/*	$OpenBSD: cache_r10k.S,v 1.10 2009/12/25 20:59:45 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB (www.opsycon.se)
@@ -279,7 +279,6 @@ END(Mips10k_SyncCache)
  *
  * Side effects:
  *	The contents of the L1 Instruction cache is flushed.
- *	Must not touch v0.
  *
  *----------------------------------------------------------------------------
  */
@@ -302,7 +301,7 @@ LEAF(Mips10k_InvalidateICache, 0)
 	PTR_ADDU a0, 64
 
 	j	ra
-	move	v0, zero
+	nop
 END(Mips10k_InvalidateICache)
 
 /*----------------------------------------------------------------------------

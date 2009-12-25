@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.26 2009/11/19 20:16:27 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.27 2009/12/25 20:59:45 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -526,7 +526,6 @@ END(Mips5k_SyncCache)
  *
  * Side effects:
  *	The contents of the L1 Instruction cache is flushed.
- *	Must not touch v0.
  *
  *----------------------------------------------------------------------------
  */
@@ -573,7 +572,7 @@ LEAF(Mips5k_InvalidateICache, 0)
 	NOP10
 #endif
 	j	ra
-	move	v0, zero
+	nop
 END(Mips5k_InvalidateICache)
 
 /*----------------------------------------------------------------------------
