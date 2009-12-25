@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.56 2009/09/21 07:41:18 mglocker Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.57 2009/12/25 22:02:47 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -124,6 +124,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_ZAURUS	16	/* Sharp Zaurus */
 #define		WSKBD_TYPE_DOMAIN	17	/* Apollo Domain */
 #define		WSKBD_TYPE_BLUETOOTH	18	/* Bluetooth keyboard */
+#define		WSKBD_TYPE_KPC		19	/* Palm keypad */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -309,6 +310,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_MACHFB	59	/* Sun PGX/PGX64 */
 #define		WSDISPLAY_TYPE_GFXP	60	/* Sun PGX32 */
 #define		WSDISPLAY_TYPE_RADEONFB	61	/* Sun XVR-100 */
+#define		WSDISPLAY_TYPE_SMFB	62	/* SiliconMotion SM712 */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
