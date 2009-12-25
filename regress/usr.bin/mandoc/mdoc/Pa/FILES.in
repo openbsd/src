@@ -1,0 +1,92 @@
+.Dd $Mdocdate: December 25 2009 $
+.Dt PA-FILES 1
+.Os
+.Sh NAME
+.Nm Pa-FILES
+.Nd pathnames in the FILES section
+.Sh DESCRIPTION
+Usually, a
+.Pa pathname
+will be underlined, even in lists:
+.Bl -item
+.It
+.Pa item
+.El
+.Bl -dash
+.It
+.Pa dash
+.El
+.Bl -bullet
+.It
+.Pa bullet
+.El
+.Bl -enum
+.It
+.Pa enum
+.El
+.Bl -inset
+.It inset Pa key
+inset
+.Pa text
+.El
+.Bl -hang
+.It hang Pa key
+hang
+.Pa text
+.El
+.Bl -ohang
+.It ohang Pa key
+ohang
+.Pa text
+.El
+.Bl -tag -width Ds
+.It tag Pa key
+tag
+.Pa text
+.El
+.Bl -column "one" "two"
+.It Pa one Ta Pa two
+.El
+.Sh FILES
+Even in the FILES section, a
+.Pa pathname
+will still be underlined, but not in all list contexts:
+.Bl -item
+.It
+.Pa item
+.El
+.Bl -dash
+.It
+.Pa dash
+.El
+.Bl -bullet
+.It
+.Pa bullet
+.El
+.Bl -enum
+.It
+.Pa enum
+.El
+.Bl -inset
+.It inset Pa key
+inset
+.Pa text
+.El
+.Bl -hang
+.It hang Pa key
+hang
+.Pa text
+.El
+.Bl -ohang
+.It ohang Pa key
+ohang
+.Pa text
+.El
+.Bl -tag -width Ds
+.It tag Pa key
+tag
+.Pa text
+.El
+.Bl -column "one" "two"
+.It Pa one Ta Pa two
+.El
