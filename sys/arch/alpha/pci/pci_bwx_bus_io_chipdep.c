@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_bwx_bus_io_chipdep.c,v 1.8 2009/09/17 19:28:20 miod Exp $ */
+/* $OpenBSD: pci_bwx_bus_io_chipdep.c,v 1.9 2009/12/25 20:52:34 miod Exp $ */
 /* $NetBSD: pcs_bus_io_common.c,v 1.14 1996/12/02 22:19:35 cgd Exp $ */
 
 /*
@@ -68,6 +68,9 @@ int		__C(CHIP,_io_alloc)(void *, bus_addr_t, bus_addr_t,
                     bus_space_handle_t *);
 void		__C(CHIP,_io_free)(void *, bus_space_handle_t,
 		    bus_size_t);
+
+/* get kernel virtual address */
+void *		__C(CHIP,_io_vaddr)(void *, bus_space_handle_t);
 
 /* barrier */
 inline void	__C(CHIP,_io_barrier)(void *, bus_space_handle_t,
@@ -204,6 +207,9 @@ __C(CHIP,_bus_io_init)(t, v)
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_io_alloc);
 	t->abs_free = 		__C(CHIP,_io_free);
+
+	/* get kernel virtual address */
+	t->abs_vaddr =		__C(CHIP,_io_vaddr);
 
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_io_barrier);
@@ -377,6 +383,18 @@ __C(CHIP,_io_free)(v, bsh, size)
 
 	/* XXX XXX XXX XXX XXX XXX */
 	panic("%s not implemented", __S(__C(CHIP,_io_free)));
+}
+
+void *
+__C(CHIP,_io_vaddr)(v, bsh)
+	void *v;
+	bus_space_handle_t bsh;
+{
+	/*
+	 * _io_map() catches BUS_SPACE_MAP_LINEAR,
+	 * so we shouldn't get here
+	 */
+	panic("_io_vaddr");
 }
 
 inline void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.27 2009/07/30 21:39:15 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.28 2009/12/25 20:52:32 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -61,6 +61,9 @@ struct alpha_bus_space {
 			    bus_addr_t *, bus_space_handle_t *);
 	void		(*abs_free)(void *, bus_space_handle_t,
 			    bus_size_t);
+
+	/* get kernel virtual address */
+	void *		(*abs_vaddr)(void *, bus_space_handle_t);
 
 	/* barrier */
 	void		(*abs_barrier)(void *, bus_space_handle_t,
@@ -231,6 +234,11 @@ struct alpha_bus_space {
 #define	bus_space_free(t, h, s)						\
 	(*(t)->abs_free)((t)->abs_cookie, (h), (s))
 
+/*
+ * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
+ */
+#define bus_space_vaddr(t, h)						\
+	(*(t)->abs_vaddr)((t)->abs_cookie, (h))
 
 /*
  * Bus barrier operations.

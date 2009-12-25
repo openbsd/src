@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_bus_mem.c,v 1.15 2009/09/17 19:28:22 miod Exp $ */
+/* $OpenBSD: tc_bus_mem.c,v 1.16 2009/12/25 20:52:36 miod Exp $ */
 /* $NetBSD: tc_bus_mem.c,v 1.25 2001/09/04 05:31:28 thorpej Exp $ */
 
 /*
@@ -57,6 +57,9 @@ int		tc_mem_alloc(void *, bus_addr_t, bus_addr_t, bus_size_t,
 		    bus_size_t, bus_addr_t, int, bus_addr_t *,
 		    bus_space_handle_t *);
 void		tc_mem_free(void *, bus_space_handle_t, bus_size_t);
+
+/* get kernel virtual address */
+void *		tc_mem_vaddr(void *, bus_space_handle_t);
 
 /* barrier */
 inline void	tc_mem_barrier(void *, bus_space_handle_t,
@@ -160,6 +163,9 @@ struct alpha_bus_space tc_mem_space = {
 	/* allocation/deallocation */
 	tc_mem_alloc,
 	tc_mem_free,
+
+	/* get kernel virtual address */
+	tc_mem_vaddr,
 
 	/* barrier */
 	tc_mem_barrier,
@@ -306,6 +312,21 @@ tc_mem_free(v, bsh, size)
 
 	/* XXX XXX XXX XXX XXX XXX */
 	panic("tc_mem_free unimplemented");
+}
+
+void *
+tc_mem_vaddr(void *v, bus_space_handle_t bsh)
+{
+#ifdef DIAGNOSTIC
+	if ((bsh & TC_SPACE_SPARSE) != 0) {
+		/*
+		 * tc_mem_map() catches linear && !cacheable,
+		 * so we shouldn't come here
+		 */
+		panic("tc_mem_vaddr");
+	}
+#endif
+	return ((void *)bsh);
 }
 
 inline void

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.8 2009/07/30 21:39:15 miod Exp $ */
+/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.9 2009/12/25 20:52:34 miod Exp $ */
 /* $NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $ */
 
 /*
@@ -76,6 +76,9 @@ int		__C(CHIP,_mem_alloc)(void *, bus_addr_t, bus_addr_t,
                     bus_space_handle_t *);
 void		__C(CHIP,_mem_free)(void *, bus_space_handle_t,
 		    bus_size_t);
+
+/* get kernel virtual address */
+void *		__C(CHIP,_mem_vaddr)(void *, bus_space_handle_t);
 
 /* barrier */
 inline void	__C(CHIP,_mem_barrier)(void *, bus_space_handle_t,
@@ -212,6 +215,9 @@ __C(CHIP,_bus_mem_init)(t, v)
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_mem_alloc);
 	t->abs_free = 		__C(CHIP,_mem_free);
+
+	/* get kernel virtual address */
+	t->abs_vaddr =		__C(CHIP,_mem_vaddr);
 
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_mem_barrier);
@@ -405,6 +411,15 @@ __C(CHIP,_mem_free)(v, bsh, size)
 
 	/* Unmap does all we need to do. */
 	__C(CHIP,_mem_unmap)(v, bsh, size);
+}
+
+void *
+__C(CHIP,_mem_vaddr)(v, bsh)
+	void *v;
+	bus_space_handle_t bsh;
+{
+
+	return ((void *)bsh);
 }
 
 inline void

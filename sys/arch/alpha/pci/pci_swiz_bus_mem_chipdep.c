@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.7 2009/09/17 19:26:53 miod Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.8 2009/12/25 20:52:34 miod Exp $	*/
 /*	$NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $	*/
 
 /*
@@ -76,6 +76,9 @@ int		__C(CHIP,_mem_alloc)(void *, bus_addr_t, bus_addr_t,
                     bus_space_handle_t *);
 void		__C(CHIP,_mem_free)(void *, bus_space_handle_t,
 		    bus_size_t);
+
+/* get kernel virtual address */
+void *		__C(CHIP,_mem_vaddr)(void *, bus_space_handle_t);
 
 /* barrier */
 inline void	__C(CHIP,_mem_barrier)(void *, bus_space_handle_t,
@@ -213,6 +216,8 @@ __C(CHIP,_bus_mem_init)(t, v)
 	t->abs_alloc =		__C(CHIP,_mem_alloc);
 	t->abs_free = 		__C(CHIP,_mem_free);
 
+	/* get kernel virtual address */
+	t->abs_vaddr =		__C(CHIP,_mem_vaddr);
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_mem_barrier);
 	
@@ -695,6 +700,21 @@ __C(CHIP,_mem_free)(v, bsh, size)
 
 	/* XXX XXX XXX XXX XXX XXX */
 	panic("%s not implemented", __S(__C(CHIP,_mem_free)));
+}
+
+void *
+__C(CHIP,_mem_vaddr)(v, bsh)
+	void *v;
+	bus_space_handle_t bsh;
+{
+	/*
+	 * XXX should check that the range was mapped
+	 * with BUS_SPACE_MAP_LINEAR for sanity
+	 */
+	if ((bsh >> 63) != 0)
+		return ((void *)bsh);
+
+	return (0);
 }
 
 inline void
