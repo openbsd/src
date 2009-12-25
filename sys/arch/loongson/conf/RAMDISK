@@ -1,0 +1,103 @@
+#	$OpenBSD: RAMDISK,v 1.1.1.1 2009/12/25 22:16:31 miod Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		loongson mips64
+
+maxusers	8
+
+option		CPU_LOONGSON2
+makeoption	LINK_ADDRESS="0xffffffff80200000"
+
+option		TIMEZONE=0
+option		DST=0
+
+option		PCIVERBOSE
+option		USBVERBOSE
+
+option		DIAGNOSTIC
+option		DDB
+
+option		CD9660
+option		FIFO
+option		FFS
+option		EXT2FS
+option		MSDOSFS
+option		NFSCLIENT
+
+option		INET
+option		INET6
+
+option		MINIROOTSIZE=8192
+option		RAMDISK_HOOKS
+
+config	bsd	root on rd0a swap on rd0b
+
+mainbus0	at root
+cpu0		at mainbus0
+clock0		at mainbus0
+
+bonito*		at mainbus0
+pci*		at bonito?
+glxpcib*	at pci?
+
+isa0		at glxpcib?
+mcclock0	at isa? port 0x70
+pckbc0		at isa?
+pckbd*		at pckbc?
+wskbd*		at pckbd? mux 1
+pmsi*		at pckbc?
+wsmouse*	at pmsi? mux 0
+
+pciide*		at pci?
+wd*		at pciide? flags 0x0000
+smfb*		at pci?
+wsdisplay*	at smfb?
+ohci*		at pci?
+uhci*		at pci?
+ehci*		at pci?
+
+rl*		at pci?
+rlphy*		at mii?
+ukphy*		at mii?
+
+usb*		at ohci?
+usb*		at uhci?
+usb*		at ehci?
+uhub*		at usb?
+uhub*		at uhub?
+umass*		at uhub?
+atapiscsi*	at umass?
+scsibus*	at atapiscsi?
+scsibus*	at umass?
+uhidev*		at uhub?
+uhid*		at uhidev?
+ums*		at uhidev?
+wsmouse*	at ums? mux 0
+ukbd*		at uhidev?
+wskbd*		at ukbd? mux 1
+urtw*		at uhub?
+
+url*		at uhub?
+urlphy*		at mii?
+
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+#ch*		at scsibus?
+#ss*		at scsibus?
+#uk*		at scsibus?
+
+pseudo-device	loop		1
+pseudo-device	bpfilter	1
+
+pseudo-device	rd		1
+
+option		BOOT_CONFIG
