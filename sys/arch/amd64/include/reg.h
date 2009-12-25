@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.4 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: reg.h,v 1.5 2009/12/25 20:54:48 miod Exp $	*/
 /*	$NetBSD: reg.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #ifndef _AMD64_REG_H_
 #define _AMD64_REG_H_
 
-#include <machine/mcontext.h>
 #include <machine/fpu.h>
 
 /*
