@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.64 2009/11/25 11:23:30 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.65 2009/12/25 21:02:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -867,7 +867,7 @@ xbridge_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	}
 #endif
 
-	xbridge_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &device, NULL);
+	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &device, NULL);
 
 	if (pa->pa_bridgetag) {
 		pin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin, device);
@@ -1933,9 +1933,9 @@ xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 * Make sure we don't cross any boundaries.
 		 */
 		if (map->_dm_boundary > 0) {
-			baddr = (pa + map->_dm_boundary) & bmask;
-			if (sgsize > (baddr - pa))
-				sgsize = baddr - pa;
+			baddr = (busaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - busaddr))
+				sgsize = baddr - busaddr;
 		}
 
 		/*
@@ -1945,7 +1945,8 @@ xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		if (first) {
 			map->dm_segs[seg].ds_addr = busaddr;
 			map->dm_segs[seg].ds_len = sgsize;
-			map->dm_segs[seg]._ds_vaddr = (vaddr_t)vaddr;
+			map->dm_segs[seg]._ds_paddr = pa;
+			map->dm_segs[seg]._ds_vaddr = vaddr;
 			first = 0;
 		} else {
 			if (busaddr == lastaddr &&
@@ -1964,7 +1965,8 @@ xbridge_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 				}
 				map->dm_segs[seg].ds_addr = busaddr;
 				map->dm_segs[seg].ds_len = sgsize;
-				map->dm_segs[seg]._ds_vaddr = (vaddr_t)vaddr;
+				map->dm_segs[seg]._ds_paddr = pa;
+				map->dm_segs[seg]._ds_vaddr = vaddr;
 			}
 		}
 

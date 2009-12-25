@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 2009/12/07 18:58:34 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.42 2009/12/25 21:02:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -583,7 +583,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				continue;
 			if ((entry & PG_M) != 0 /* && p != PG_M */)
 				if ((entry & PG_CACHEMODE) == PG_CACHED)
-					Mips_HitSyncDCache(sva, PAGE_SIZE);
+					Mips_HitSyncDCache(sva,
+					    pfn_to_pad(entry), PAGE_SIZE);
 			entry = (entry & ~(PG_M | PG_RO)) | p;
 			*pte = entry;
 			/*
@@ -620,7 +621,8 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				continue;
 			if ((entry & PG_M) != 0 /* && p != PG_M */)
 				if ((entry & PG_CACHEMODE) == PG_CACHED)
-					Mips_SyncDCachePage(sva);
+					Mips_SyncDCachePage(sva,
+					    pfn_to_pad(entry));
 			entry = (entry & ~(PG_M | PG_RO)) | p;
 			*pte = entry;
 			if (pmap->pm_tlbgen == tlbpid_gen)
@@ -841,7 +843,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		entry = *pte;
 		if (!(entry & PG_V))
 			continue;
-		Mips_HitSyncDCache(va, PAGE_SIZE);
+		Mips_HitSyncDCache(va, pfn_to_pad(entry), PAGE_SIZE);
 		*pte = PG_NV | PG_G;
 		tlb_flush_addr(va);
 	}
@@ -912,9 +914,9 @@ pmap_prefer(paddr_t foff, vaddr_t *vap)
 {
 	if (CpuCacheAliasMask != 0) {
 #if 1
-	*vap += (foff - *vap) & (CpuCacheAliasMask | PAGE_MASK);
+		*vap += (foff - *vap) & (CpuCacheAliasMask | PAGE_MASK);
 #else
-	*vap += (*vap ^ foff) & CpuCacheAliasMask;
+		*vap += (*vap ^ foff) & CpuCacheAliasMask;
 #endif
 	}
 }
@@ -955,10 +957,10 @@ pmap_zero_page(struct vm_page *pg)
 	pv = pg_to_pvh(pg);
 	if ((pg->pg_flags & PV_CACHED) &&
 	    ((pv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
-		Mips_SyncDCachePage(pv->pv_va);
+		Mips_SyncDCachePage(pv->pv_va, phys);
 	}
 	mem_zero_page(va);
-	Mips_HitSyncDCache(va, PAGE_SIZE);
+	Mips_HitSyncDCache(va, phys, PAGE_SIZE);
 }
 
 /*
@@ -987,20 +989,20 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	pv = pg_to_pvh(srcpg);
 	if ((srcpg->pg_flags & PV_CACHED) &&
 	    (sf = ((pv->pv_va ^ s) & CpuCacheAliasMask) != 0)) {
-		Mips_SyncDCachePage(pv->pv_va);
+		Mips_SyncDCachePage(pv->pv_va, src);
 	}
 	pv = pg_to_pvh(dstpg);
 	if ((dstpg->pg_flags & PV_CACHED) &&
 	    (df = ((pv->pv_va ^ d) & CpuCacheAliasMask) != 0)) {
-		Mips_SyncDCachePage(pv->pv_va);
+		Mips_SyncDCachePage(pv->pv_va, dst);
 	}
 
 	memcpy((void *)d, (void *)s, PAGE_SIZE);
 
 	if (sf) {
-		Mips_HitSyncDCache(s, PAGE_SIZE);
+		Mips_HitSyncDCache(s, src, PAGE_SIZE);
 	}
-	Mips_HitSyncDCache(d, PAGE_SIZE);
+	Mips_HitSyncDCache(d, dst, PAGE_SIZE);
 }
 
 /*
@@ -1024,7 +1026,7 @@ pmap_clear_modify(struct vm_page *pg)
 		rv = TRUE;
 	}
 	if (pg->pg_flags & PV_CACHED)
-		Mips_SyncDCachePage(pv->pv_va);
+		Mips_SyncDCachePage(pv->pv_va, VM_PAGE_TO_PHYS(pg));
 
 	for (; pv != NULL; pv = pv->pv_next) {
 		if (pv->pv_pmap == pmap_kernel()) {
@@ -1272,7 +1274,8 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 				    VM_PAGE_TO_PHYS(pg), npv->pv_va, va);
 #endif
 				pmap_page_cache(pg, PV_UNCACHED);
-				Mips_SyncDCachePage(pv->pv_va);
+				Mips_SyncDCachePage(pv->pv_va,
+				    VM_PAGE_TO_PHYS(pg));
 				*npte = (*npte & ~PG_CACHEMODE) | PG_UNCACHED;
 			}
 		}
@@ -1341,7 +1344,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 	 */
 	if (pmap == pv->pv_pmap && va == pv->pv_va) {
 		if (pg->pg_flags & PV_CACHED)
-			Mips_SyncDCachePage(va);
+			Mips_SyncDCachePage(va, pa);
 		npv = pv->pv_next;
 		if (npv) {
 			*pv = *npv;
@@ -1361,7 +1364,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 		}
 		if (npv != NULL) {
 			if (pg->pg_flags & PV_CACHED)
-				Mips_SyncDCachePage(va);
+				Mips_SyncDCachePage(va, pa);
 			pv->pv_next = npv->pv_next;
 			pmap_pv_free(npv);
 		} else {
@@ -1409,9 +1412,9 @@ void
 pmap_pg_free(struct pool *pp, void *item)
 {
 	vaddr_t va = (vaddr_t)item;
-	vm_page_t pg;
+	paddr_t pa = XKPHYS_TO_PHYS(va);
+	vm_page_t pg = PHYS_TO_VM_PAGE(pa);
 
-	Mips_HitInvalidateDCache(va, PAGE_SIZE);
-	pg = PHYS_TO_VM_PAGE(XKPHYS_TO_PHYS(va));
+	Mips_HitInvalidateDCache(va, pa, PAGE_SIZE);
 	uvm_pagefree(pg);
 }
