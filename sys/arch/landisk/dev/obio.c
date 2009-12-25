@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.6 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: obio.c,v 1.7 2009/12/25 20:52:55 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -219,6 +219,7 @@ int obio_iomem_alloc(void *v, bus_addr_t rstart, bus_addr_t rend,
     bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
     bus_addr_t *bpap, bus_space_handle_t *bshp);
 void obio_iomem_free(void *v, bus_space_handle_t bsh, bus_size_t size);
+void *obio_iomem_vaddr(void *v, bus_space_handle_t bsh);
 
 int obio_iomem_add_mapping(bus_addr_t, bus_size_t, int,
     bus_space_handle_t *);
@@ -355,6 +356,12 @@ obio_iomem_free(void *v, bus_space_handle_t bsh, bus_size_t size)
 	obio_iomem_unmap(v, bsh, size);
 }
 
+void *
+obio_iomem_vaddr(void *v, bus_space_handle_t bsh)
+{
+	return ((void *)bsh);
+}
+
 /*
  * on-board I/O bus space read/write
  */
@@ -437,6 +444,8 @@ struct _bus_space obio_bus_io =
 	.bs_alloc = obio_iomem_alloc,
 	.bs_free = obio_iomem_free,
 
+	.bs_vaddr = obio_iomem_vaddr,
+
 	.bs_r_1 = obio_iomem_read_1,
 	.bs_r_2 = obio_iomem_read_2,
 	.bs_r_4 = obio_iomem_read_4,
@@ -496,6 +505,8 @@ struct _bus_space obio_bus_mem =
 
 	.bs_alloc = obio_iomem_alloc,
 	.bs_free = obio_iomem_free,
+
+	.bs_vaddr = obio_iomem_vaddr,
 
 	.bs_r_1 = obio_iomem_read_1,
 	.bs_r_2 = obio_iomem_read_2,

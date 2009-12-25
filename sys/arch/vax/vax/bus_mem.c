@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_mem.c,v 1.5 2009/07/26 18:48:55 miod Exp $	*/
+/*	$OpenBSD: bus_mem.c,v 1.6 2009/12/25 20:52:57 miod Exp $	*/
 /*	$NetBSD: bus_mem.c,v 1.8 2000/06/29 07:14:23 mrg Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
@@ -46,14 +46,19 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-static int
-vax_mem_bus_space_map(
-	void *t,
-	bus_addr_t pa,
-	bus_size_t size,
-	int flags,
-	bus_space_handle_t *bshp,
-	int f2)
+int	 vax_mem_bus_space_map(void *, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *, int);
+void	 vax_mem_bus_space_unmap(void *, bus_space_handle_t, bus_size_t, int);
+int	 vax_mem_bus_space_subregion(void *, bus_space_handle_t, bus_size_t,
+	    bus_size_t, bus_space_handle_t *);
+int	 vax_mem_bus_space_alloc(void *, bus_addr_t, bus_addr_t, bus_size_t,
+	    bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
+void	 vax_mem_bus_space_free(void *, bus_space_handle_t, bus_size_t);
+void	*vax_mem_bus_space_vaddr(void *, bus_space_handle_t);
+
+int
+vax_mem_bus_space_map(void *t, bus_addr_t pa, bus_size_t size, int flags,
+    bus_space_handle_t *bshp, int f2)
 {
 	vaddr_t va;
 
@@ -69,24 +74,16 @@ vax_mem_bus_space_map(
 	return 0;   
 } 
 
-static int
-vax_mem_bus_space_subregion(
-	void *t,
-	bus_space_handle_t h,
-	bus_size_t o,
-	bus_size_t s,
-	bus_space_handle_t *hp)
+int
+vax_mem_bus_space_subregion(void *t, bus_space_handle_t h, bus_size_t o,
+    bus_size_t s, bus_space_handle_t *hp)
 {
 	*hp = h + o;
 	return (0);             
 }
 
-static void
-vax_mem_bus_space_unmap(
-	void *t,
-	bus_space_handle_t h,
-	bus_size_t size,
-	int f)
+void
+vax_mem_bus_space_unmap(void *t, bus_space_handle_t h, bus_size_t size, int f)
 {
 	u_long va = trunc_page(h);
 	u_long endva = round_page(h + size);
@@ -98,28 +95,23 @@ vax_mem_bus_space_unmap(
 	uvm_km_free(kernel_map, va, endva - va);
 }
 
-static int
-vax_mem_bus_space_alloc(
-	void *t,
-	bus_addr_t rs,
-	bus_addr_t re,
-	bus_size_t s,
-	bus_size_t a,
-	bus_size_t b,
-	int f,
-	bus_addr_t *ap,
-	bus_space_handle_t *hp)
+int
+vax_mem_bus_space_alloc(void *t, bus_addr_t rs, bus_addr_t re, bus_size_t s,
+    bus_size_t a, bus_size_t b, int f, bus_addr_t *ap, bus_space_handle_t *hp)
 {
 	panic("vax_mem_bus_alloc not implemented");
 }
 
-static void
-vax_mem_bus_space_free(
-	void *t,
-	bus_space_handle_t h,
-	bus_size_t s)
+void
+vax_mem_bus_space_free(void *t, bus_space_handle_t h, bus_size_t s)
 {    
 	panic("vax_mem_bus_free not implemented");
+}
+
+void *
+vax_mem_bus_space_vaddr(void *t, bus_space_handle_t h)
+{
+	return ((void *)h);
 }
 	
 struct vax_bus_space vax_mem_bus_space = {
@@ -128,5 +120,6 @@ struct vax_bus_space vax_mem_bus_space = {
 	vax_mem_bus_space_unmap,
 	vax_mem_bus_space_subregion,
 	vax_mem_bus_space_alloc,
-	vax_mem_bus_space_free
+	vax_mem_bus_space_free,
+	vax_mem_bus_space_vaddr
 };

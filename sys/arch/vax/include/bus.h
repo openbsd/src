@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.12 2009/04/20 00:42:06 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.13 2009/12/25 20:52:57 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.14 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*-
@@ -95,6 +95,9 @@ struct vax_bus_space {
 			    bus_addr_t *, bus_space_handle_t *);
 	void		(*vbs_free)(void *, bus_space_handle_t,
 			    bus_size_t);
+
+	/* get kernel virtual address */
+	void *		(*vbs_vaddr)(void *, bus_space_handle_t);
 };
 
 /*
@@ -158,6 +161,15 @@ struct vax_bus_space {
 
 #define bus_space_free(t, h, s)						\
 	(*(t)->vbs_free)((t)->vbs_cookie, (h), (s))
+
+/*
+ *	void *bus_space_vaddr(bus_space_tag_t t, bus_space_handle_t h);
+ *
+ * Get kernel virtual address.
+ */
+
+#define	bus_space_vaddr(t, h)						\
+	(*(t)->vbs_vaddr)((t)->vbs_cookie, (h))
 
 /*
  *	u_intN_t bus_space_read_N(bus_space_tag_t tag,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcicvar.h,v 1.3 2006/10/19 03:36:38 drahn Exp $	*/
+/*	$OpenBSD: shpcicvar.h,v 1.4 2009/12/25 20:52:57 miod Exp $	*/
 /*	$NetBSD: shpcicvar.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
 
 /*-
@@ -80,6 +80,7 @@ int shpcic_iomem_alloc(void *v, bus_addr_t rstart, bus_addr_t rend,
     bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
     bus_addr_t *bpap, bus_space_handle_t *bshp);
 void shpcic_iomem_free(void *v, bus_space_handle_t bsh, bus_size_t size);
+void *shpcic_iomem_vaddr(void *v, bus_space_handle_t bsh);
 
 /* read single */
 uint8_t shpcic_io_read_1(void *v, bus_space_handle_t bsh, bus_size_t offset);

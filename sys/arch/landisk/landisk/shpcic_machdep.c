@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic_machdep.c,v 1.3 2006/10/19 03:39:54 drahn Exp $	*/
+/*	$OpenBSD: shpcic_machdep.c,v 1.4 2009/12/25 20:52:57 miod Exp $	*/
 /*	$NetBSD: shpcic_machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -188,6 +188,8 @@ struct _bus_space landisk_pci_bus_io =
 	.bs_alloc = shpcic_iomem_alloc,
 	.bs_free = shpcic_iomem_free,
 
+	.bs_vaddr = shpcic_iomem_vaddr,
+
 	.bs_r_1 = shpcic_io_read_1,
 	.bs_r_2 = shpcic_io_read_2,
 	.bs_r_4 = shpcic_io_read_4,
@@ -247,6 +249,8 @@ struct _bus_space landisk_pci_bus_mem =
 
 	.bs_alloc = shpcic_iomem_alloc,
 	.bs_free = shpcic_iomem_free,
+
+	.bs_vaddr = shpcic_iomem_vaddr,
 
 	.bs_r_1 = shpcic_mem_read_1,
 	.bs_r_2 = shpcic_mem_read_2,
