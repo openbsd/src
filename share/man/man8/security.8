@@ -1,8 +1,8 @@
-.\" $OpenBSD: security.8,v 1.17 2009/05/24 22:25:12 schwarze Exp $
+.\" $OpenBSD: security.8,v 1.18 2009/12/25 23:11:00 schwarze Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: May 24 2009 $
+.Dd $Mdocdate: December 25 2009 $
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -124,6 +124,7 @@ The following variables can be set in
 .It Ev SUIDSKIP
 A whitespace-separated list of absolute paths to be skipped
 in setuid/setgid file checks and in device special file checks.
+Avoid trailing slashes.
 .El
 .Sh FILES
 .Bl -tag -width /dev/changelist -compact
