@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.94 2009/12/12 17:18:48 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.95 2009/12/26 16:58:11 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,9 @@ package OpenBSD::PackingList::hashpath;
 sub match
 {
 	my ($h, $plist) = @_;
-	return $h->{$plist->{extrainfo}->{subdir}};
+	return
+	    defined $plist->{extrainfo} && 
+	    $h->{$plist->{extrainfo}->{subdir}};
 }
 
 package OpenBSD::PackingList;
