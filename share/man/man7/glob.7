@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.7,v 1.2 2009/12/15 00:49:15 schwarze Exp $
+.\"	$OpenBSD: glob.7,v 1.3 2009/12/26 15:24:54 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 15 2009 $
+.Dd $Mdocdate: December 26 2009 $
 .Dt GLOB 7
 .Os
 .Sh NAME
@@ -96,6 +96,19 @@ A character class may not be used as an endpoint of a range.
 .It [!..]
 Like [..],
 except it matches any character not inside the brackets.
+.It \e
+Matches the character following it verbatim.
+This is useful to quote the special characters
+.Ql \&? ,
+.Ql \&* ,
+.Ql \&[ ,
+and
+.Ql \e
+such that they lose their special meaning.
+For example, the pattern
+.Dq \e\e\e\&*\e[x]\e\&?
+matches the string
+.Dq \e\&*[x]\&? .
 .El
 .Pp
 Note that when matching a pathname, the path separator
