@@ -1,4 +1,4 @@
-/*	$OpenBSD: termios.h,v 1.10 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: termios.h,v 1.11 2009/12/26 09:46:17 jmc Exp $	*/
 /*	$NetBSD: termios.h,v 1.14 1996/04/09 20:55:41 cgd Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  * Input flags - software input processing
  */
 #define	IGNBRK		0x00000001	/* ignore BREAK condition */
-#define	BRKINT		0x00000002	/* map BREAK to SIGINTR */
+#define	BRKINT		0x00000002	/* map BREAK to SIGINT */
 #define	IGNPAR		0x00000004	/* ignore (discard) parity errors */
 #define	PARMRK		0x00000008	/* mark parity and framing errors */
 #define	INPCK		0x00000010	/* enable checking of parity errors */
