@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldc.c,v 1.6 2009/05/12 22:31:45 kettenis Exp $	*/
+/*	$OpenBSD: ldc.c,v 1.7 2009/12/26 21:21:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -72,6 +72,7 @@ ldc_rx_ctrl_vers(struct ldc_conn *lc, struct ldc_pkt *lp)
 {
 	switch (lp->stype) {
 	case LDC_INFO:
+		DPRINTF(("CTRL/INFO/VERS\n"));
 		if (lp->major == LDC_VERSION_MAJOR &&
 		    lp->minor == LDC_VERSION_MINOR)
 			ldc_send_ack(lc);
@@ -203,6 +204,8 @@ ldc_rx_ctrl_rdx(struct ldc_conn *lc, struct ldc_pkt *lp)
 void
 ldc_rx_data(struct ldc_conn *lc, struct ldc_pkt *lp)
 {
+	size_t len;
+
 	if (lp->stype != LDC_INFO) {
 		DPRINTF(("DATA/0x%02x\n", lp->stype));
 		ldc_reset(lc);
@@ -216,7 +219,23 @@ ldc_rx_data(struct ldc_conn *lc, struct ldc_pkt *lp)
 		return;
 	}
 
-	lc->lc_rx_data(lc, lp);
+	if (lp->env & LDC_FRAG_START) {
+		lc->lc_len = (lp->env & LDC_LEN_MASK) + 8;
+		KASSERT(lc->lc_len <= sizeof(lc->lc_msg));
+		memcpy((uint8_t *)lc->lc_msg, lp, lc->lc_len);
+	} else {
+		len = (lp->env & LDC_LEN_MASK);
+		if (lc->lc_len + len > sizeof(lc->lc_msg)) {
+			DPRINTF(("Buffer overrun\n"));
+			ldc_reset(lc);
+			return;
+		}
+		memcpy(((uint8_t *)lc->lc_msg) + lc->lc_len, &lp->major, len);
+		lc->lc_len += len;
+	}
+
+	if (lp->env & LDC_FRAG_STOP)
+		lc->lc_rx_data(lc, (struct ldc_pkt *)lc->lc_msg);
 }
 
 void

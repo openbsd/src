@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldcvar.h,v 1.3 2009/05/12 21:52:30 kettenis Exp $	*/
+/*	$OpenBSD: ldcvar.h,v 1.4 2009/12/26 21:21:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -35,6 +35,8 @@ void	ldc_queue_free(bus_dma_tag_t, struct ldc_queue *);
 
 #define LDC_VERSION_MAJOR	1
 #define LDC_VERSION_MINOR	0
+
+#define LDC_PKT_PAYLOAD		56
 
 struct ldc_pkt {
 	uint8_t		type;
@@ -74,6 +76,12 @@ struct ldc_pkt {
 #define LDC_FRAG_START	0x40
 #define LDC_FRAG_STOP	0x80
 
+/*
+ * XXX Get rid of the +8 once we no longer need to store the header of
+ * the first packet.
+ */
+#define LDC_MSG_MAX	(128 + 8)
+
 struct ldc_conn {
 	uint64_t	lc_id;
 
@@ -89,6 +97,9 @@ struct ldc_conn {
 #define LDC_SND_RTS	3
 #define LDC_SND_RTR	4
 #define LDC_SND_RDX	5
+
+	uint64_t	lc_msg[LDC_MSG_MAX / 8];
+	size_t		lc_len;
 
 	void		*lc_sc;
 	void		(*lc_reset)(struct ldc_conn *);
