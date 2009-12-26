@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.65 2009/12/25 21:02:18 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.66 2009/12/26 20:16:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -84,6 +84,7 @@ struct xbpci_attach_args {
 	int16_t	xaa_nasid;
 	int	xaa_widget;
 	uint	xaa_devio_skew;
+	int	xaa_revision;
 
 	bus_space_tag_t	xaa_regt;
 	bus_addr_t	xaa_offset;
@@ -115,10 +116,11 @@ struct xbpci_softc {
 	int16_t		xb_nasid;
 	int		xb_widget;
 	uint		xb_devio_skew;	/* upper bits of devio ARCS mappings */
+	int		xb_revision;
 
 	struct mips_pci_chipset xb_pc;
 
-	bus_space_tag_t xb_regt;
+	bus_space_tag_t	xb_regt;
 	bus_space_handle_t xb_regh;
 
 	struct mips_bus_space *xb_mem_bus_space;
@@ -127,6 +129,10 @@ struct xbpci_softc {
 
 	struct xbridge_intr	*xb_intr[BRIDGE_NINTRS];
 	char	xb_intrstr[BRIDGE_NINTRS][sizeof("irq #, xbow irq ###")];
+
+	int		xb_err_intrsrc;
+
+	uint64_t	xb_ier;		/* copy of BRIDGE_IER value */
 
 	/*
 	 * Device information.
@@ -209,7 +215,8 @@ int	xbridge_ppb_setup(void *, pcitag_t, bus_addr_t *, bus_addr_t *,
 void	*xbridge_rbus_parent_io(struct pci_attach_args *);
 void	*xbridge_rbus_parent_mem(struct pci_attach_args *);
 
-int	xbridge_intr_handler(void *);
+int	xbridge_pci_intr_handler(void *);
+int	xbridge_err_intr_handler(void *);
 
 uint8_t xbridge_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 uint16_t xbridge_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -266,6 +273,9 @@ uint64_t xbridge_ate_read(struct xbpci_softc *, uint);
 void	xbridge_ate_unref(struct xbpci_softc *, uint, uint);
 void	xbridge_ate_write(struct xbpci_softc *, uint, uint64_t);
 
+void	xbridge_err_clear(struct xbpci_softc *, uint64_t);
+void	xbridge_err_handle(struct xbpci_softc *, uint64_t);
+
 int	xbridge_allocate_devio(struct xbpci_softc *, int, int);
 void	xbridge_set_devio(struct xbpci_softc *, int, uint32_t);
 
@@ -282,7 +292,8 @@ struct extent *
 	xbridge_mapping_setup(struct xbpci_softc *, int);
 void	xbridge_resource_setup(struct xbpci_softc *);
 void	xbridge_rrb_setup(struct xbpci_softc *, int);
-void	xbridge_setup(struct xbpci_softc *);
+const char *
+	xbridge_setup(struct xbpci_softc *);
 
 uint64_t bridge_read_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t);
 void	bridge_write_reg(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
@@ -419,6 +430,7 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 		xbpa.xaa_nasid = xaa->xaa_nasid;
 		xbpa.xaa_widget = xaa->xaa_widget;
 		xbpa.xaa_devio_skew = devio_skew;
+		xbpa.xaa_revision = xaa->xaa_revision;
 		xbpa.xaa_regt = &sc->sc_regt;
 		xbpa.xaa_offset = i != 0 ? BRIDGE_BUS_OFFSET : 0;
 
@@ -463,6 +475,7 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	struct xbpci_softc *xb = (struct xbpci_softc *)self;
 	struct xbpci_attach_args *xaa = (struct xbpci_attach_args *)aux;
 	struct pcibus_attach_args pba;
+	const char *errmsg = NULL;
 
 	printf(": ");
 
@@ -473,6 +486,7 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	xb->xb_nasid = xaa->xaa_nasid;
 	xb->xb_widget = xaa->xaa_widget;
 	xb->xb_devio_skew = xaa->xaa_devio_skew;
+	xb->xb_revision = xaa->xaa_revision;
 
 	if (ISSET(xb->xb_flags, XF_PIC)) {
 		xb->xb_nslots = PIC_NSLOTS;
@@ -576,7 +590,8 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	 * RRB allocation, etc).
 	 */
 
-	xbridge_setup(xb);
+	if ((errmsg = xbridge_setup(xb)) != NULL)
+		goto fail4;
 	printf("\n");
 
 	/*
@@ -605,13 +620,16 @@ xbpci_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &pba, xbpci_print);
 	return;
 
+fail4:
+	free(xb->xb_dmat, M_DEVBUF);
 fail3:
 	free(xb->xb_io_bus_space, M_DEVBUF);
 fail2:
 	free(xb->xb_mem_bus_space, M_DEVBUF);
 fail1:
-	printf("not enough memory to build bus access structures\n");
-	return;
+	if (errmsg == NULL)
+		errmsg = "not enough memory to build bus access structures";
+	printf("%s\n", errmsg);
 }
 
 int
@@ -672,7 +690,9 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 	int skip;
 	int s;
 
-	/* XXX should actually disable interrupts? */
+	/* Disable interrupts on this bridge (especially error interrupts) */
+	xbridge_write_reg(xb, BRIDGE_IER, 0);
+	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 	s = splhigh();
 
 	xbridge_decompose_tag(cookie, tag, &bus, &dev, &fn);
@@ -738,7 +758,9 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 	}
 
 	splx(s);
-	return(data);
+	xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
+	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+	return data;
 }
 
 void
@@ -750,7 +772,9 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 	int skip;
 	int s;
 
-	/* XXX should actually disable interrupts? */
+	/* Disable interrupts on this bridge (especially error interrupts) */
+	xbridge_write_reg(xb, BRIDGE_IER, 0);
+	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 	s = splhigh();
 
 	xbridge_decompose_tag(cookie, tag, &bus, &dev, &fn);
@@ -812,6 +836,8 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 	}
 
 	splx(s);
+	xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
+	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 }
 
 /*
@@ -983,7 +1009,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		 * XXX at IPL_BIO, in case the interrupt will be shared
 		 * XXX between devices of different levels.
 		 */
-		if (xbow_intr_establish(xbridge_intr_handler, xi, intrsrc,
+		if (xbow_intr_establish(xbridge_pci_intr_handler, xi, intrsrc,
 		    IPL_BIO, NULL, NULL)) {
 			printf("%s: unable to register interrupt handler\n",
 			    DEVNAME(xb));
@@ -1017,10 +1043,10 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		else
 			int_addr = ((xbow_intr_widget_register >> 30) &
 			    0x0003ff00) | intrsrc;
+		xb->xb_ier |= 1 << intrbit;
 
 		xbridge_write_reg(xb, BRIDGE_INT_ADDR(intrbit), int_addr);
-		xbridge_write_reg(xb, BRIDGE_IER,
-		    xbridge_read_reg(xb, BRIDGE_IER) | (1 << intrbit));
+		xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
 		/*
 		 * INT_MODE register controls which interrupt pins cause
 		 * ``interrupt clear'' packets to be sent for high->low
@@ -1051,9 +1077,9 @@ xbridge_intr_disestablish(void *cookie, void *vih)
 	LIST_REMOVE(xih, xih_nxt);
 
 	if (LIST_EMPTY(&xi->xi_handlers)) {
+		xb->xb_ier &= ~(1 << intrbit);
 		xbridge_write_reg(xb, BRIDGE_INT_ADDR(intrbit), 0);
-		xbridge_write_reg(xb, BRIDGE_IER,
-		    xbridge_read_reg(xb, BRIDGE_IER) & ~(1 << intrbit));
+		xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
 		xbridge_write_reg(xb, BRIDGE_INT_MODE,
 		    xbridge_read_reg(xb, BRIDGE_INT_MODE) & ~(1 << intrbit));
 		xbridge_write_reg(xb, BRIDGE_INT_DEV,
@@ -1078,7 +1104,21 @@ xbridge_intr_line(void *cookie, pci_intr_handle_t ih)
 }
 
 int
-xbridge_intr_handler(void *v)
+xbridge_err_intr_handler(void *v)
+{
+	struct xbpci_softc *xb = (struct xbpci_softc *)v;
+	uint64_t isr;
+
+	isr = xbridge_read_reg(xb, BRIDGE_ISR) & ~BRIDGE_ISR_HWINTR_MASK;
+	xbridge_err_handle(xb, isr);
+
+	xbow_intr_clear(xb->xb_err_intrsrc);
+
+	return 1;
+}
+
+int
+xbridge_pci_intr_handler(void *v)
 {
 	struct xbridge_intr *xi = (struct xbridge_intr *)v;
 	struct xbpci_softc *xb = xi->xi_bus;
@@ -1099,6 +1139,16 @@ xbridge_intr_handler(void *v)
 		xbridge_read_reg(xb, BRIDGE_DEVICE_WBFLUSH(xih->xih_device));
 
 	isr = xbridge_read_reg(xb, BRIDGE_ISR);
+	if ((isr & ~BRIDGE_ISR_HWINTR_MASK) != 0) {
+		/*
+		 * This is an error interrupt triggered by a particular
+		 * device.
+		 */
+		xbridge_err_handle(xb, isr & ~BRIDGE_ISR_HWINTR_MASK);
+		if ((isr &= BRIDGE_ISR_HWINTR_MASK) == 0)
+			return 1;
+	}
+
 	if ((isr & (1L << xi->xi_intrbit)) == 0) {
 		/*
 		 * May be a result of the lost interrupt workaround (see
@@ -2068,7 +2118,7 @@ xbridge_device_to_pa(bus_addr_t addr)
  ********************* Bridge configuration code.
  */
 
-void
+const char *
 xbridge_setup(struct xbpci_softc *xb)
 {
 	paddr_t pa;
@@ -2156,6 +2206,17 @@ xbridge_setup(struct xbpci_softc *xb)
 	xbridge_resource_setup(xb);
 
 	/*
+	 * Older Bridge chips needs to run with pci timeouts
+	 * disabled.
+	 */
+
+	if (!ISSET(xb->xb_flags, XF_XBRIDGE) && xb->xb_revision < 4) {
+		xbridge_write_reg(xb, BRIDGE_BUS_TIMEOUT,
+		    xbridge_read_reg(xb, BRIDGE_BUS_TIMEOUT) &
+		    ~BRIDGE_BUS_PCI_RETRY_CNT_MASK);
+	}
+
+	/*
 	 * Setup interrupt handling.
 	 *
 	 * Note that, on PIC, the `lower address' register is a 64 bit
@@ -2174,16 +2235,106 @@ xbridge_setup(struct xbpci_softc *xb)
 #ifdef TGT_OCTANE
 	if (sys_config.system_type == SGI_OCTANE &&
 	    xb->xb_widget == IP30_BRIDGE_WIDGET)
-		xbridge_write_reg(xb, BRIDGE_IER, 1 << 6);
+		xb->xb_ier = 1 << 6;
 	else
 #endif
-		xbridge_write_reg(xb, BRIDGE_IER, 0);
+		xb->xb_ier = 0;
+	xbridge_write_reg(xb, BRIDGE_IER, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_MODE, 0);
 	xbridge_write_reg(xb, BRIDGE_INT_DEV, 0);
 	int_addr = ((uint64_t)xbow_intr_widget << 48) |
 	    (xbow_intr_widget_register & ((1UL << 48) - 1));
 	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_LOWER, int_addr);
 	xbridge_write_reg(xb, WIDGET_INTDEST_ADDR_UPPER, int_addr >> 32);
+
+	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+
+	/*
+	 * Register an error interrupt handler.
+	 */
+
+	if (xbow_intr_register(xb->xb_widget, IPL_HIGH,
+	    &xb->xb_err_intrsrc) != 0)
+		return "can't allocate error interrupt source";
+	if (xbow_intr_establish(xbridge_err_intr_handler, xb,
+	    xb->xb_err_intrsrc, IPL_HIGH, DEVNAME(xb), NULL))
+		return "unable to register error interrupt handler";
+
+	xbridge_err_clear(xb, 0);
+	xbridge_write_reg(xb, BRIDGE_INT_HOST_ERR, xb->xb_err_intrsrc);
+
+	/*
+	 * Enable as many error interrupt sources as possible; older
+	 * Bridge chips need to have a few of them kept masked to
+	 * avoid hitting hardware issues.
+	 */
+	xb->xb_ier |= (ISSET(xb->xb_flags, XF_PIC) ?
+	    PIC_ISR_ERRMASK : BRIDGE_ISR_ERRMASK) &
+	      ~(BRIDGE_ISR_MULTIPLE_ERR | BRIDGE_ISR_SSRAM_PERR |
+		BRIDGE_ISR_GIO_BENABLE_ERR);
+	if (xb->xb_busno != 0) {
+		/* xtalk errors will only show up on bus #0 */
+		xb->xb_ier &= ~(BRIDGE_ISR_UNSUPPORTED_XOP |
+		    BRIDGE_ISR_LLP_REC_SNERR | BRIDGE_ISR_LLP_REC_CBERR |
+		    BRIDGE_ISR_LLP_RCTY | BRIDGE_ISR_LLP_TX_RETRY |
+		    BRIDGE_ISR_LLP_TCTY);
+	}
+	if (!ISSET(xb->xb_flags, XF_XBRIDGE)) {
+		if (xb->xb_revision < 2)
+			xb->xb_ier &= ~(BRIDGE_ISR_UNEXPECTED_RESP |
+			    BRIDGE_ISR_PCI_MASTER_TMO |
+			    BRIDGE_ISR_RESP_XTALK_ERR |
+			    BRIDGE_ISR_LLP_TX_RETRY | BRIDGE_ISR_XREAD_REQ_TMO);
+		if (xb->xb_revision < 3)
+			xb->xb_ier &= ~BRIDGE_ISR_BAD_XRESP_PACKET;
+	}
+
+	xbridge_write_reg(xb, BRIDGE_IER, xb->xb_ier);
+
+	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
+
+	return NULL;
+}
+
+/*
+ * Handle PCI errors.
+ */
+void
+xbridge_err_handle(struct xbpci_softc *xb, uint64_t isr)
+{
+	uint64_t pci_err, wid_err, resp_err;
+
+	wid_err = xbridge_read_reg(xb, WIDGET_ERR_ADDR_LOWER);
+	if (!ISSET(xb->xb_flags, XF_PIC))
+		wid_err |= xbridge_read_reg(xb, WIDGET_ERR_ADDR_UPPER) << 32;
+	pci_err = xbridge_read_reg(xb, BRIDGE_PCI_ERR_LOWER);
+	if (!ISSET(xb->xb_flags, XF_PIC))
+		pci_err |= xbridge_read_reg(xb, BRIDGE_PCI_ERR_UPPER) << 32;
+	resp_err = xbridge_read_reg(xb, BRIDGE_WIDGET_RESP_LOWER);
+	if (!ISSET(xb->xb_flags, XF_PIC))
+		resp_err |=
+		    xbridge_read_reg(xb, BRIDGE_WIDGET_RESP_UPPER) << 32;
+
+	/* XXX give more detailed information */
+	printf("%s: error interrupt, isr %p wid %p pci %p resp %p\n",
+	    DEVNAME(xb), isr, wid_err, pci_err, resp_err);
+
+	xbridge_err_clear(xb, isr);
+}
+
+/*
+ * Clear any error condition.
+ */
+void
+xbridge_err_clear(struct xbpci_softc *xb, uint64_t isr)
+{
+	if (ISSET(xb->xb_flags, XF_PIC)) {
+		if (isr == 0)
+			isr = xbridge_read_reg(xb, BRIDGE_ISR) &
+			    ~BRIDGE_ISR_HWINTR_MASK;
+		xbridge_write_reg(xb, BRIDGE_ICR, isr);
+	} else
+		xbridge_write_reg(xb, BRIDGE_ICR, BRIDGE_ICR_ALL);
 
 	(void)xbridge_read_reg(xb, WIDGET_TFLUSH);
 }

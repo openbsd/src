@@ -1,7 +1,7 @@
-/*	$OpenBSD: xbridgereg.h,v 1.10 2009/10/22 19:55:45 miod Exp $	*/
+/*	$OpenBSD: xbridgereg.h,v 1.11 2009/12/26 20:16:19 miod Exp $	*/
 
 /*
- * Copyright (c) 2008 Miodrag Vallat.
+ * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,6 +43,10 @@
 #define	BRIDGE_WIDGET_CONTROL_SPEED_MASK	0x00000030
 #define	BRIDGE_WIDGET_CONTROL_SPEED_SHIFT	4
 
+/* Response Buffer Address */
+#define	BRIDGE_WIDGET_RESP_UPPER	0x00000060
+#define	BRIDGE_WIDGET_RESP_LOWER	0x00000068
+
 /*
  * DMA Direct Window
  *
@@ -66,7 +70,14 @@
 #define	BRIDGE_PCI_IO_SPACE_LENGTH	0x0000000100000000ULL
 
 #define	BRIDGE_NIC			0x000000b0
+
 #define	BRIDGE_BUS_TIMEOUT		0x000000c0
+#define	BRIDGE_BUS_PCI_RETRY_CNT_SHIFT		0
+#define	BRIDGE_BUS_PCI_RETRY_CNT_MASK	0x000003ff
+#define	BRIDGE_BUS_GIO_TIMEOUT		0x00001000
+#define	BRIDGE_BUS_PCI_RETRY_HOLD_SHIFT		16
+#define	BRIDGE_BUS_PCI_RETRY_HOLD_MASK	0x001f0000
+
 #define	BRIDGE_PCI_CFG			0x000000c8
 #define	BRIDGE_PCI_ERR_UPPER		0x000000d0
 #define	BRIDGE_PCI_ERR_LOWER		0x000000d8
@@ -85,6 +96,105 @@
 /* the following two are XBridge-only */
 #define	BRIDGE_INT_FORCE_ALWAYS(d)	(0x00000180 + 8 * (d))
 #define	BRIDGE_INT_FORCE_PIN(d)		(0x000001c0 + 8 * (d))
+
+/*
+ * BRIDGE_ISR bits (bits 32 and beyond are PIC only)
+ */
+
+/* PCI-X split completion message parity error */
+#define	BRIDGE_ISR_PCIX_SPLIT_MSG_PARITY	0x0000200000000000ULL
+/* PCI-X split completion error message */
+#define	BRIDGE_ISR_PCIX_SPLIT_EMSG		0x0000100000000000ULL
+/* PCI-X split completion timeout */
+#define	BRIDGE_ISR_PCIX_SPLIT_TO		0x0000080000000000ULL
+/* PCI-X unexpected completion cycle */
+#define	BRIDGE_ISR_PCIX_UNEX_COMP		0x0000040000000000ULL
+/* internal RAM parity error */
+#define	BRIDGE_ISR_INT_RAM_PERR			0x0000020000000000ULL
+/* PCI/PCI-X arbitration error */
+#define	BRIDGE_ISR_PCIX_ARB_ERR			0x0000010000000000ULL
+/* PCI-X read request timeout */
+#define	BRIDGE_ISR_PCIX_REQ_TMO			0x0000008000000000ULL
+/* PCI-X target abort */
+#define	BRIDGE_ISR_PCIX_TABORT			0x0000004000000000ULL
+/* PCI-X PERR */
+#define	BRIDGE_ISR_PCIX_PERR			0x0000002000000000ULL
+/* PCI-X SERR */
+#define	BRIDGE_ISR_PCIX_SERR			0x0000001000000000ULL
+/* PCI-X PIO retry counter exceeded */
+#define	BRIDGE_ISR_PCIX_MRETRY			0x0000000800000000ULL
+/* PCI-X master timeout */
+#define	BRIDGE_ISR_PCIX_MTMO			0x0000000400000000ULL
+/* PCI-X data cycle parity error */
+#define	BRIDGE_ISR_PCIX_D_PARITY		0x0000000200000000ULL
+/* PCI-X address or attribute cycle parity error */
+#define	BRIDGE_ISR_PCIX_A_PARITY		0x0000000100000000ULL
+/* multiple errors occured - bridge only */
+#define	BRIDGE_ISR_MULTIPLE_ERR			0x0000000080000000ULL
+/* PMU access fault */
+#define	BRIDGE_ISR_PMU_ESIZE_FAULT		0x0000000040000000ULL
+/* unexpected xtalk incoming response */
+#define	BRIDGE_ISR_UNEXPECTED_RESP		0x0000000020000000ULL
+/* xtalk incoming response framing error */
+#define	BRIDGE_ISR_BAD_XRESP_PACKET		0x0000000010000000ULL
+/* xtalk incoming request framing error */
+#define	BRIDGE_ISR_BAD_XREQ_PACKET		0x0000000008000000ULL
+/* xtalk incoming response command word error bit set */
+#define	BRIDGE_ISR_RESP_XTALK_ERR		0x0000000004000000ULL
+/* xtalk incoming request command word error bit set */
+#define	BRIDGE_ISR_REQ_XTALK_ERR		0x0000000002000000ULL
+/* request packet has invalid address for this widget */
+#define	BRIDGE_ISR_INVALID_ADDRESS		0x0000000001000000ULL
+/* request operation not supported by the bridge */
+#define	BRIDGE_ISR_UNSUPPORTED_XOP		0x0000000000800000ULL
+/* request packet overflow */
+#define	BRIDGE_ISR_XREQ_FIFO_OFLOW		0x0000000000400000ULL
+/* LLP receiver sequence number error */
+#define	BRIDGE_ISR_LLP_REC_SNERR		0x0000000000200000ULL
+/* LLP receiver check bit error */
+#define	BRIDGE_ISR_LLP_REC_CBERR		0x0000000000100000ULL
+/* LLP receiver retry count exceeded */
+#define	BRIDGE_ISR_LLP_RCTY			0x0000000000080000ULL
+/* LLP transmitter side required retry */
+#define	BRIDGE_ISR_LLP_TX_RETRY			0x0000000000040000ULL
+/* LLP transmitter retry count exceeded */
+#define	BRIDGE_ISR_LLP_TCTY			0x0000000000020000ULL
+/* (ATE) SSRAM parity error - bridge only */
+#define	BRIDGE_ISR_SSRAM_PERR			0x0000000000010000ULL
+/* PCI abort condition */
+#define	BRIDGE_ISR_PCI_ABORT			0x0000000000008000ULL
+/* PCI bridge detected parity error */
+#define	BRIDGE_ISR_PCI_PARITY			0x0000000000004000ULL
+/* PCI address or command parity error */
+#define	BRIDGE_ISR_PCI_SERR			0x0000000000002000ULL
+/* PCI device parity error */
+#define	BRIDGE_ISR_PCI_PERR			0x0000000000001000ULL
+/* PCI device selection timeout */
+#define	BRIDGE_ISR_PCI_MASTER_TMO		0x0000000000000800ULL
+/* PCI retry count exceeded */
+#define	BRIDGE_ISR_PCI_RETRY_CNT		0x0000000000000400ULL
+/* PCI to xtalk read request timeout */
+#define	BRIDGE_ISR_XREAD_REQ_TMO		0x0000000000000200ULL
+/* GIO non-contiguous byte enable in xtalk packet - bridge only */
+#define	BRIDGE_ISR_GIO_BENABLE_ERR		0x0000000000000100ULL
+#define	BRIDGE_ISR_HWINTR_MASK			0x00000000000000ffULL
+
+#define	BRIDGE_ISR_ERRMASK			0x00000000fffffe00ULL
+#define	PIC_ISR_ERRMASK				0x00003fff7ffffe00ULL
+
+/*
+ * BRIDGE_ICR bits, for Bridge and XBridge chips only (error interrupts
+ * being cleared in groups)
+ */
+
+#define	BRIDGE_ICR_MULTIPLE		0x00000040
+#define	BRIDGE_ICR_CRP			0x00000020
+#define	BRIDGE_ICR_RESP_BUF		0x00000010
+#define	BRIDGE_ICR_REQ_DSP		0x00000008
+#define	BRIDGE_ICR_LLP			0x00000004
+#define	BRIDGE_ICR_SSRAM		0x00000002
+#define	BRIDGE_ICR_PCI			0x00000001
+#define	BRIDGE_ICR_ALL			0x0000007f
 
 /*
  * PCI Resource Mapping control
