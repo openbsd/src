@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.120 2009/12/24 14:06:43 espie Exp $
+# $OpenBSD: Update.pm,v 1.121 2009/12/26 16:58:55 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -77,23 +77,12 @@ sub progress_message
 	$state->say($msg) if $state->verbose >= 2;
 }
 
-my $first = 1;
 sub process_handle
 {
 	my ($self, $set, $h, $state) = @_;
 	my $pkgname = $h->pkgname;
 
 	if ($pkgname =~ m/^\.libs\d*\-/o) {
-		if ($first) {
-			$state->say("Not updating .libs*, remember to clean them");
-			$first = 0;
-		}
-		return 0;
-	}
-	if ($pkgname =~ m/^partial\-/o) {
-		$state->say("Not updating $pkgname, remember to clean it");
-		$h->{update_found} = $h;
-		$set->move_kept($h);
 		return 0;
 	}
 
@@ -113,7 +102,11 @@ sub process_handle
 	}
 
 	my @search = ();
-	push(@search, OpenBSD::Search::Stem->split($pkgname));
+
+	my $sname = $pkgname;
+	while ($sname =~ s/^partial\-//o) {
+	}
+	push(@search, OpenBSD::Search::Stem->split($sname));
 
 	eval {
 		$state->quirks->tweak_search(\@search, $h, $state);
@@ -126,13 +119,13 @@ sub process_handle
 	# conflict should be enough  to "match".
 	for my $n ($set->newer) {
 		if ($n->location->update_info->match_pkgpath($plist) &&
-			$n->plist->conflict_list->conflicts_with($pkgname)) {
+			$n->plist->conflict_list->conflicts_with($sname)) {
 				$self->add_handle($set, $h, $n);
 				return 1;
 		}
 	}
 	if (!$state->{defines}->{downgrade}) {
-		push(@search, OpenBSD::Search::FilterLocation->more_recent_than($pkgname, \$oldfound));
+		push(@search, OpenBSD::Search::FilterLocation->more_recent_than($sname, \$oldfound));
 	}
 	push(@search, OpenBSD::Search::FilterLocation->new(
 	    sub {
