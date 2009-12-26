@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.99 2009/12/20 22:38:45 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.100 2009/12/26 21:14:57 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -373,7 +373,7 @@ sub dump
 {
 	my $self = shift;
 	if ($self->dependencies) {
-	    print "Dependencies for ", $self->{set}->print, 
+	    print "Direct dependencies for ", $self->{set}->print, 
 	    	" resolve to: ", join(', ',  $self->dependencies);
 	    print " (todo: ", 
 	    	join(',', (map {$_->print} @{$self->{deplist}})), 
