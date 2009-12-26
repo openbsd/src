@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.79 2009/12/14 21:33:38 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.80 2009/12/26 10:39:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -1231,7 +1231,6 @@ tty_colours(struct tty *tty, const struct grid_cell *gc, u_char *attr)
 	if (fg == tc->fg && bg == tc->bg &&
 	    ((flags ^ tc->flags) & (GRID_FLAG_FG256|GRID_FLAG_BG256)) == 0)
 		return;
-	log_debug("fg was %hhu, now %hhu", tc->fg, fg);
 
 	/*
 	 * Is either the default colour? This is handled specially because the
