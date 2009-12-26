@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.62 2009/12/20 22:38:45 espie Exp $
+# $OpenBSD: Replace.pm,v 1.63 2009/12/26 17:00:49 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -27,13 +27,8 @@ sub can_update
 	my $issue = $self->update_issue($installing);
 	
 	if (defined $issue) {
-		$state->{okay} = 0;
 	    	push(@{$state->{journal}}, $issue);
 	}
-}
-
-sub validate_depend
-{
 }
 
 sub update_issue { undef }
@@ -223,33 +218,6 @@ sub separate_element
 package OpenBSD::PackingElement::Dependency;
 use OpenBSD::Error;
 
-sub validate_depend
-{
-	my ($self, $state, $wanting, $toreplace, @replacement) = @_;
-
-	# nothing to validate if old dependency doesn't concern us.
-	return unless $self->spec->filter($toreplace);
-	# nothing to do if new dependency just matches
-	return if $self->spec->filter(@replacement);
-
-	if ($state->{defines}->{updatedepends}) {
-	    $state->errsay("Forward dependency of $wanting on $toreplace doesn't match @replacement, forcing it");
-	    $state->{forcedupdates} = {} unless defined $state->{forcedupdates};
-	    $state->{forcedupdates}->{$wanting} = 1;
-	} elsif ($state->{interactive}) {
-
-	    if ($state->confirm("Forward dependency of $wanting on $toreplace doesn't match @replacement, proceed with update anyways", 0)) {
-		$state->{forcedupdates} = {} unless defined $state->{forcedupdates};
-		$state->{forcedupdates}->{$wanting} = 1;
-	    } else {
-		$state->{okay} = 0;
-	    }
-	} else {
-	    $state->{okay} = 0;
-	    $state->errsay("Can't update forward dependency of $wanting on $toreplace: @replacement doesn't match (use -F updatedepends to force it)");
-	}
-}
-
 package OpenBSD::PackingElement::Lib;
 sub mark_lib
 {
@@ -306,75 +274,65 @@ sub perform_extraction
 	$handle->{plist}->extract_and_progress($state, \$donesize, $totsize);
 }
 
+sub check_plist_exec
+{
+	my ($plist, $state, $new) = @_;
+
+	$state->{journal} = [];
+	$plist->can_update($new, $state);
+	return 1 if @{$state->{journal}} == 0;
+
+	$state->errsay($new ? "New": "Old", " package ", $plist->pkgname, 
+	    " contains potentially unsafe operations");
+	for my $i (@{$state->{journal}}) {
+		$state->errsay("| ", $i);
+	}
+	return 0;
+}
+
 sub can_old_package_be_replaced
 {
-	my ($old_plist, $set, $state) = @_;
-
-	$state->{okay} = 1;
-	$state->{journal} = [];
-	$old_plist->can_update(0, $state);
-	if ($state->{okay} == 0) {
-		$state->errsay("Old package ", $old_plist->pkgname, 
-		    " contains potentially unsafe operations");
-		for my $i (@{$state->{journal}}) {
-			$state->errsay("\t", $i);
-		}
-		if ($state->{defines}->{update}) {
-			$state->errsay("(forcing update)");
-			$state->{okay} = 1;
-		} elsif ($state->{interactive}) {
-
-			if ($state->confirm("proceed with update anyways", 0)) {
-			    $state->{okay} = 1;
-			}
-		}
-	}
-	my @wantlist = OpenBSD::RequiredBy->new($old_plist->pkgname)->list;
-	my @r = ();
-	for my $wanting (@wantlist) {
-		push(@r, $wanting) if !defined $set->{older}->{$wanting};
-	}
-	if (@r) {
-		$state->say("Verifying dependencies still match for ", 
-		    join(', ', @r)) if $state->verbose >= 2;
-		for my $wanting (@wantlist) {
-			my $p2 = OpenBSD::PackingList->from_installation(
-			    $wanting, \&OpenBSD::PackingList::DependOnly);
-			if (!defined $p2) {
-				$state->errsay("Error: $wanting missing from installation");
-			} else {
-				$p2->validate_depend($state, $wanting, 
-				    $old_plist->pkgname, $set->newer_names, 
-				    $set->kept_names);
-			}
-		}
-	}
-	return $state->{okay};
+	my ($plist, $state) = @_;
+	return check_plist_exec($plist, $state, 0);
 }
 
 sub is_new_package_safe
 {
 	my ($plist, $state) = @_;
-	$state->{okay} = 1;
-	$state->{journal} = [];
-	$plist->can_update(1, $state);
-	if ($state->{okay} == 0) {
-		$state->errsay("New package ", $plist->pkgname, 
-		    " contains potentially unsafe operations");
-		for my $i (@{$state->{journal}}) {
-			$state->errsay("\t", $i);
-		}
-		if ($state->{defines}->{update}) {
-			$state->errsay("(forcing update)");
-			$state->{okay} = 1;
-		} elsif ($state->{interactive}) {
-			if ($state->confirm("proceed with update anyways", 0)) {
-			    $state->{okay} = 1;
-			}
-		}
-	}
-	return $state->{okay};
+	return check_plist_exec($plist, $state, 1);
 }
+
+sub is_set_safe
+{
+	my ($set, $state) = @_;
+
+	my $ok = 1;
+
+	for my $pkg ($set->older) {
+		$ok = 0 unless can_old_package_be_replaced($pkg->plist, $state);
+	}
+	for my $pkg ($set->newer) {
+		$ok = 0 unless is_new_package_safe($pkg->plist, $state);
+	}
+	return 1 if $ok;
+
+	if ($state->{defines}->{update}) {
+		$state->errsay("Forcing update");
+		return 1;
+	} elsif ($state->{interactive}) {
+
+		if ($state->confirm("proceed with update anyways", 0)) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else {
+		$state->errsay("Cannot install ", $set->print, 
+		    " (use -F update)");
+		return 0;
+    	}
+}
+
 
 sub split_some_libs
 {
