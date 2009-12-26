@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.21 2009/12/14 22:38:03 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.22 2009/12/26 18:54:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -365,7 +365,6 @@ vnet_rx_intr(void *arg)
 	struct ldc_conn *lc = &sc->sc_lc;
 	uint64_t rx_head, rx_tail, rx_state;
 	struct ldc_pkt *lp;
-	uint64_t *msg;
 	int err;
 
 	err = hv_ldc_rx_get_state(lc->lc_id, &rx_head, &rx_tail, &rx_state);
@@ -398,7 +397,6 @@ vnet_rx_intr(void *arg)
 		return (1);
 	}
 
-	msg = (uint64_t *)(lc->lc_rxq->lq_va + rx_head);
 	lp = (struct ldc_pkt *)(lc->lc_rxq->lq_va + rx_head);
 	switch (lp->type) {
 	case LDC_CTRL:
