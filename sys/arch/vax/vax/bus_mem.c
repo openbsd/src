@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_mem.c,v 1.6 2009/12/25 20:52:57 miod Exp $	*/
+/*	$OpenBSD: bus_mem.c,v 1.7 2009/12/26 14:45:36 miod Exp $	*/
 /*	$NetBSD: bus_mem.c,v 1.8 2000/06/29 07:14:23 mrg Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
@@ -47,8 +47,8 @@
 #include <machine/intr.h>
 
 int	 vax_mem_bus_space_map(void *, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *, int);
-void	 vax_mem_bus_space_unmap(void *, bus_space_handle_t, bus_size_t, int);
+	    bus_space_handle_t *);
+void	 vax_mem_bus_space_unmap(void *, bus_space_handle_t, bus_size_t);
 int	 vax_mem_bus_space_subregion(void *, bus_space_handle_t, bus_size_t,
 	    bus_size_t, bus_space_handle_t *);
 int	 vax_mem_bus_space_alloc(void *, bus_addr_t, bus_addr_t, bus_size_t,
@@ -58,7 +58,7 @@ void	*vax_mem_bus_space_vaddr(void *, bus_space_handle_t);
 
 int
 vax_mem_bus_space_map(void *t, bus_addr_t pa, bus_size_t size, int flags,
-    bus_space_handle_t *bshp, int f2)
+    bus_space_handle_t *bshp)
 {
 	vaddr_t va;
 
@@ -83,7 +83,7 @@ vax_mem_bus_space_subregion(void *t, bus_space_handle_t h, bus_size_t o,
 }
 
 void
-vax_mem_bus_space_unmap(void *t, bus_space_handle_t h, bus_size_t size, int f)
+vax_mem_bus_space_unmap(void *t, bus_space_handle_t h, bus_size_t size)
 {
 	u_long va = trunc_page(h);
 	u_long endva = round_page(h + size);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.13 2009/12/25 20:52:57 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.14 2009/12/26 14:45:35 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.14 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*-
@@ -83,9 +83,9 @@ struct vax_bus_space {
 
 	/* mapping/unmapping */
 	int		(*vbs_map)(void *, bus_addr_t, bus_size_t,
-			    int, bus_space_handle_t *, int);
+			    int, bus_space_handle_t *);
 	void		(*vbs_unmap)(void *, bus_space_handle_t,
-			    bus_size_t, int);
+			    bus_size_t);
 	int		(*vbs_subregion)(void *, bus_space_handle_t,
 			    bus_size_t, bus_size_t, bus_space_handle_t *);
 
@@ -112,9 +112,7 @@ struct vax_bus_space {
 #define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 #define	bus_space_map(t, a, s, f, hp)					\
-	(*(t)->vbs_map)((t)->vbs_cookie, (a), (s), (f), (hp), 1)
-#define	vax_bus_space_map_noacct(t, a, s, f, hp)			\
-	(*(t)->vbs_map)((t)->vbs_cookie, (a), (s), (f), (hp), 0)
+	(*(t)->vbs_map)((t)->vbs_cookie, (a), (s), (f), (hp))
 
 /*
  *	int bus_space_unmap(bus_space_tag_t t,
@@ -124,9 +122,7 @@ struct vax_bus_space {
  */
 
 #define bus_space_unmap(t, h, s)					\
-	(*(t)->vbs_unmap)((t)->vbs_cookie, (h), (s), 1)
-#define vax_bus_space_unmap_noacct(t, h, s)				\
-	(*(t)->vbs_unmap)((t)->vbs_cookie, (h), (s), 0)
+	(*(t)->vbs_unmap)((t)->vbs_cookie, (h), (s))
 
 /*
  *	int bus_space_subregion(bus_space_tag_t t,
