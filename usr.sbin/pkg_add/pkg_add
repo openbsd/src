@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.436 2009/12/26 17:05:43 espie Exp $
+# $OpenBSD: pkg_add,v 1.437 2009/12/26 21:15:51 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -247,20 +247,22 @@ sub can_install
 		}
 	}
 
+	return if $later;
 
 	require OpenBSD::ForwardDependencies;
-	my $forward = OpenBSD::ForwardDependencies->find($set);
-	my $bad = $forward->check($set, $state);
+	if (!defined $set->{forward}) {
+		$set->{forward} = OpenBSD::ForwardDependencies->find($set);
+		my $bad = $set->{forward}->check($set, $state);
 
-	if (keys %$bad > 0) {
-		if ($state->{defines}->{updatedepends}) {
-		    $state->errsay("Forcing update");
-		} elsif ($state->{interactive}) {
-			if ($state->confirm("Proceed with update anyways", 0)) {
+		if (keys %$bad > 0) {
+			if ($state->{defines}->{updatedepends}) {
+			    $state->errsay("Forcing update");
+			} elsif ($state->{interactive}) {
+				if ($state->confirm("Proceed with update anyways", 0)) {
+				}
+			} else {
+				return 0;
 			}
-		} else {
-			return 0;
-		}
 #		XXX can't do this yet, have to protect updates against loops
 #		$later = 1;
 #		for my $m (keys %$bad) {
@@ -272,11 +274,9 @@ sub can_install
 #				    $state));
 #			}
 #		}
+		}
 	}
 
-	return if $later;
-
-	$set->{forward} = $forward;
 
 	my $manual_install = 0;
 
