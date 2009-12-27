@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.43 2009/11/25 18:47:36 dms Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.44 2009/12/27 13:12:58 fkr Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -4751,7 +4751,7 @@ em_acquire_eeprom(struct em_hw *hw)
         return -E1000_ERR_SWFW_SYNC;
     eecd = E1000_READ_REG(hw, EECD);
 
-    if ((hw->mac_type != em_82573) &&(hw->mac_type != em_82574)) {
+    if ((hw->mac_type != em_82573) && (hw->mac_type != em_82574)) {
         /* Request EEPROM Access */
         if (hw->mac_type > em_82544) {
             eecd |= E1000_EECD_REQ;
