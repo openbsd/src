@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.437 2009/12/26 21:15:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.438 2009/12/27 01:24:42 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -631,7 +631,8 @@ sub install_set
 		}
 	}
 
-	if (!defined $set->{solver}) {
+	if (!defined $set->{solver} || $set->{solver}->{not_ready}) {
+		delete $set->{solver};
 		$set->{solver} = OpenBSD::Dependencies::Solver->new($set);
 		my @deps = $set->{solver}->solve_depends($state);
 		if ($state->verbose >= 2) {
@@ -639,9 +640,7 @@ sub install_set
 		}
 		if (@deps > 0) {
 			$state->build_deptree($set, @deps);
-			if ($set->{solver}->{not_ready}) {
-				delete($set->{solver});
-			}
+			# here I can check for loops
 			return (@deps, $set);
 		}
 	}
