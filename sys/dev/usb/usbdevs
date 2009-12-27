@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.465 2009/12/18 04:16:14 yuo Exp $
+$OpenBSD: usbdevs,v 1.466 2009/12/27 21:07:23 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1725,6 +1725,7 @@ product HTC SMARTPHONE		0x0a51	SmartPhone
 product HUAWEI E618		0x1001	HUAWEI Mobile E618
 product HUAWEI E220		0x1003	HUAWEI Mobile Modem
 product HUAWEI Mobile		0x1008	HUAWEI Mobile Modem
+product HUAWEI E180		0x140c	HUAWEI Mobile E180
 product HUAWEI E510		0x1411	HUAWEI Mobile E510
 product HUAWEI E161		0x1446	HUAWEI Mobile E161
 
