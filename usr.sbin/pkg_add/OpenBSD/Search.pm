@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.18 2009/12/05 10:53:04 espie Exp $
+# $OpenBSD: Search.pm,v 1.19 2009/12/27 00:22:44 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -138,14 +138,22 @@ our @ISA=(qw(OpenBSD::Search::Stem));
 sub match
 {
 	my ($self, $o) = @_;
-	return $o->stemlist->find_partial($self->{stem});
+	my @r = ();
+	for my $k (keys %$self) {
+		push(@r, $o->stemlist->find_partial($k));
+	}
+	return @r;
 }
 
 sub _keep
 {
 	my ($self, $stem) = @_;
-	my $partial = $self->{stem};
-	return $stem =~ /\Q$partial\E/;
+	for my $partial (keys %$self) {
+		if ($stem =~ /\Q$partial\E/) {
+			return 1;
+		}
+	}
+	return 0;
 }
 
 package OpenBSD::Search::FilterLocation;
