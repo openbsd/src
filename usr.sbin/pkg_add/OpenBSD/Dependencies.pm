@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.100 2009/12/26 21:14:57 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.101 2009/12/27 22:26:28 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -210,6 +210,36 @@ sub new
 	    deplist => [], to_register => {}, all_dependencies => {} }, $class;
 }
 
+sub check_for_loops
+{
+	my ($self, $state) = @_;
+
+	my $initial = $self->{set};
+
+	my @todo = ();
+	push(@todo, $initial);
+	my $done = {};
+
+	while (my $set = shift @todo) {
+		next unless defined $set->{solver};
+		for my $l (@{$set->{solver}->{deplist}}) {
+			next if $done->{$l};
+			push(@todo, $l);
+			if ($l eq $initial) {
+				my $k = $set;
+				while ($k ne $initial) {
+					$initial->merge($state->tracker, $k);
+					$k = $done->{$k};
+				}
+				$state->say("Merging ", $initial->print, $state->ntogo);
+				return 1;
+			}
+			$done->{$l} = $set;
+		}
+	}
+	return 0;
+}
+
 sub dependencies
 {
 	my $self = shift;
@@ -347,6 +377,7 @@ sub solve_depends
 	my ($self, $state) = @_;
 
 	for my $package ($self->{set}->newer) {
+		$package->{before} = [];
 		for my $dep (@{$package->{plist}->{depend}}) {
 			my $v = $self->solve_dependency($state, $dep, $package);
 			$self->{all_dependencies}->{$v} = $dep;
