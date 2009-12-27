@@ -4876,7 +4876,6 @@
 ./var/db/ns
 ./var/db/pkg
 ./var/db/sysmerge
-./var/db/sysmerge/etcsum
 ./var/empty
 ./var/empty/dev
 ./var/games
