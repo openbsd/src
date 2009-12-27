@@ -944,6 +944,7 @@
 ./usr/libdata/perl5/OpenBSD/Delete.pm
 ./usr/libdata/perl5/OpenBSD/Dependencies.pm
 ./usr/libdata/perl5/OpenBSD/Error.pm
+./usr/libdata/perl5/OpenBSD/ForwardDependencies.pm
 ./usr/libdata/perl5/OpenBSD/Getopt.pm
 ./usr/libdata/perl5/OpenBSD/Handle.pm
 ./usr/libdata/perl5/OpenBSD/IdCache.pm
@@ -4875,6 +4876,7 @@
 ./var/db/ns
 ./var/db/pkg
 ./var/db/sysmerge
+./var/db/sysmerge/etcsum
 ./var/empty
 ./var/empty/dev
 ./var/games
