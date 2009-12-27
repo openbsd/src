@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.92 2009/11/27 19:45:53 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.93 2009/12/27 04:59:43 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -430,7 +430,7 @@ sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 			/* already passed: still do the unlock */
 			if (lock)
 				copyout(&unlocked, lock, sizeof(unlocked));
-			return (ETIMEDOUT);
+			return (EWOULDBLOCK);
 		}
 
 		timespecsub(&ats, &now, &ats);
