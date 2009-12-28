@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.5 2009/04/26 02:20:58 cnst Exp $ */
+/*	$OpenBSD: vmt.c,v 1.6 2009/12/28 14:22:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -17,8 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(__i386__)
-#error vmt(4) is only supported on i386
+#if !defined(__i386__) && !defined(__amd64__)
+#error vmt(4) is only supported on i386 and amd64
 #endif
 
 #include <dev/vmtvar.h>
@@ -36,7 +36,7 @@
 #include <sys/timeout.h>
 
 /* "The" magic number, always occupies the EAX register. */
-#define VM_MAGIC			0x564D5868UL
+#define VM_MAGIC			0x564D5868
 
 /* Port numbers, passed on EDX.LOW . */
 #define VM_PORT_CMD			0x5658
@@ -86,6 +86,13 @@ union vm_reg {
 		uint16_t high;
 	} part;
 	uint32_t word;
+#ifdef __amd64__
+	struct {
+		uint32_t low;
+		uint32_t high;
+	} words;
+	uint64_t quad;
+#endif
 } __packed;
 
 /* A register frame. */
@@ -94,9 +101,9 @@ struct vm_backdoor {
 	union vm_reg ebx;
 	union vm_reg ecx;
 	union vm_reg edx;
-	union vm_reg ebp;
-	union vm_reg edi;
 	union vm_reg esi;
+	union vm_reg edi;
+	union vm_reg ebp;
 } __packed;
 
 /* RPC context. */
@@ -341,46 +348,79 @@ out:
 	timeout_add_sec(&sc->sc_tick, 15);
 }
 
-#define BACKDOOR_OP(op, frame)			\
-	__asm__ __volatile__ (			\
-		"pushal;"                       \
-		"pushl %%eax;"			\
-		"movl 0x18(%%eax), %%esi;"	\
+#define BACKDOOR_OP_I386(op, frame) \
+	__asm__ __volatile__ (        \
+		"pushal;"                   \
+		"pushl %%eax;"              \
+		"movl 0x18(%%eax), %%ebp;"	\
 		"movl 0x14(%%eax), %%edi;"	\
-		"movl 0x10(%%eax), %%ebp;"	\
+		"movl 0x10(%%eax), %%esi;"	\
 		"movl 0x0c(%%eax), %%edx;"	\
 		"movl 0x08(%%eax), %%ecx;"	\
 		"movl 0x04(%%eax), %%ebx;"	\
 		"movl 0x00(%%eax), %%eax;"	\
 		op				\
 		"xchgl %%eax, 0x00(%%esp);"	\
-		"movl %%esi, 0x18(%%eax);"	\
+		"movl %%ebp, 0x18(%%eax);"	\
 		"movl %%edi, 0x14(%%eax);"	\
-		"movl %%ebp, 0x10(%%eax);"	\
+		"movl %%esi, 0x10(%%eax);"	\
 		"movl %%edx, 0x0c(%%eax);"	\
 		"movl %%ecx, 0x08(%%eax);"	\
 		"movl %%ebx, 0x04(%%eax);"	\
-		"popl 0x00(%%eax);"		\
-		"popal;"                        \
-		::"a"(frame)			\
+		"popl 0x00(%%eax);"         \
+		"popal;"                    \
+		::"a"(frame)                \
 	)
+
+#define BACKDOOR_OP_AMD64(op, frame) \
+	__asm__ __volatile__ (        \
+		"pushq %%rbp;               \n\t" \
+		"pushq %%rax;               \n\t" \
+		"movq 0x30(%%rax), %%rbp;   \n\t"  \
+		"movq 0x28(%%rax), %%rdi;   \n\t"  \
+		"movq 0x20(%%rax), %%rsi;   \n\t"  \
+		"movq 0x18(%%rax), %%rdx;   \n\t"  \
+		"movq 0x10(%%rax), %%rcx;   \n\t"  \
+		"movq 0x08(%%rax), %%rbx;   \n\t"  \
+		"movq 0x00(%%rax), %%rax;   \n\t"  \
+		op                         "\n\t"  \
+		"xchgq %%rax, 0x00(%%rsp);  \n\t" \
+		"movq %%rbp, 0x30(%%rax);   \n\t"  \
+		"movq %%rdi, 0x28(%%rax);   \n\t"  \
+		"movq %%rsi, 0x20(%%rax);   \n\t"  \
+		"movq %%rdx, 0x18(%%rax);   \n\t"  \
+		"movq %%rcx, 0x10(%%rax);   \n\t"  \
+		"movq %%rbx, 0x08(%%rax);   \n\t"  \
+		"popq 0x00(%%rax);          \n\t"  \
+		"popq %%rbp;                \n\t"  \
+		: /* No outputs. */ : "a" (frame) \
+		  /* No pushal on amd64 so warn gcc about the clobbered registers. */ \
+		: "rbx", "rcx", "rdx", "rdi", "rsi", "cc", "memory" \
+	)
+
+
+#ifdef __i386__
+#define BACKDOOR_OP(op, frame) BACKDOOR_OP_I386(op, frame)
+#else
+#define BACKDOOR_OP(op, frame) BACKDOOR_OP_AMD64(op, frame)
+#endif
 
 void
 vm_cmd(struct vm_backdoor *frame)
 {
-	BACKDOOR_OP("inl (%%dx);", frame);
+	BACKDOOR_OP("inl %%dx, %%eax;", frame);
 }
 
 void
 vm_ins(struct vm_backdoor *frame)
 {
-	BACKDOOR_OP("pushf; cld; rep insb; popf;", frame);
+	BACKDOOR_OP("cld;\n\trep insb;", frame);
 }
 
 void
 vm_outs(struct vm_backdoor *frame)
 {
-	BACKDOOR_OP("pushf; cld; rep outsb; popf;", frame);
+	BACKDOOR_OP("cld;\n\trep outsb;", frame);
 }
 
 int
@@ -388,6 +428,7 @@ vm_rpc_open(struct vm_rpc *rpc)
 {
 	struct vm_backdoor frame;
 
+  bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = VM_RPC_OPEN_RPCI_ENH;
 	frame.ecx.part.low  = VM_CMD_RPC;
@@ -397,8 +438,7 @@ vm_rpc_open(struct vm_rpc *rpc)
 
 	vm_cmd(&frame);
 
-	if (frame.eax.word != 0 || frame.ecx.part.high != 1
-				|| frame.edx.part.low != 0) {
+	if (frame.ecx.part.high != 1 || frame.edx.part.low != 0) {
 		printf("vmware: open failed, eax=%08x, ecx=%08x, edx=%08x\n",
 			frame.eax.word, frame.ecx.word, frame.edx.word);
 		return EIO;
@@ -416,20 +456,19 @@ vm_rpc_close(struct vm_rpc *rpc)
 {
 	struct vm_backdoor frame;
 
+  bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = 0;
 	frame.ecx.part.low  = VM_CMD_RPC;
 	frame.ecx.part.high = VM_RPC_CLOSE;
 	frame.edx.part.low  = VM_PORT_CMD;
 	frame.edx.part.high = rpc->channel;
-	frame.esi.word      = rpc->cookie1;
 	frame.edi.word      = rpc->cookie2;
-	frame.ebp.word      = 0;
+	frame.esi.word      = rpc->cookie1;
 
 	vm_cmd(&frame);
 
-	if (frame.eax.word != 0 || frame.ecx.part.high == 0
-				|| frame.ecx.part.low != 0) {
+	if (frame.ecx.part.high == 0 || frame.ecx.part.low != 0) {
 		printf("vmware: close failed, eax=%08x, ecx=%08x\n",
 				frame.eax.word, frame.ecx.word);
 		return EIO;
@@ -448,6 +487,7 @@ vm_rpc_send(const struct vm_rpc *rpc, const uint8_t *buf, uint32_t length)
 	struct vm_backdoor frame;
 
 	/* Send the length of the command. */
+  bzero(&frame, sizeof(frame));
 	frame.eax.word = VM_MAGIC;
 	frame.ebx.word = length;
 	frame.ecx.part.low  = VM_CMD_RPC;
@@ -459,7 +499,7 @@ vm_rpc_send(const struct vm_rpc *rpc, const uint8_t *buf, uint32_t length)
 
 	vm_cmd(&frame);
 
-	if (frame.eax.word != 0 || frame.ecx.part.high == 0) {
+	if (frame.ecx.part.high == 0) {
 		printf("vmware: sending length failed, eax=%08x, ecx=%08x\n",
 				frame.eax.word, frame.ecx.word);
 		return EIO;
@@ -469,14 +509,19 @@ vm_rpc_send(const struct vm_rpc *rpc, const uint8_t *buf, uint32_t length)
 		return 0; /* Only need to poke once if command is null. */
 
 	/* Send the command using enhanced RPC. */
+  bzero(&frame, sizeof(frame));
 	frame.eax.word = VM_MAGIC;
 	frame.ebx.word = VM_RPC_ENH_DATA;
 	frame.ecx.word = length;
-	frame.edx.part.low  = VM_PORT_RPC;
+	frame.edx.part.low  = VM_PORT_RPC;  // XXX we are here
 	frame.edx.part.high = rpc->channel;
-	frame.esi.word = (uint32_t)buf;
-	frame.edi.word = rpc->cookie2;
 	frame.ebp.word = rpc->cookie1;
+	frame.edi.word = rpc->cookie2;
+#ifdef __amd64__
+	frame.esi.quad = (uint64_t)buf;
+#else
+	frame.esi.word = (uint32_t)buf;
+#endif
 
 	vm_outs(&frame);
 
@@ -495,13 +540,18 @@ vm_rpc_get_data(const struct vm_rpc *rpc, char *data, uint32_t length,
 	struct vm_backdoor frame;
 
 	/* Get data using enhanced RPC. */
+  bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = VM_RPC_ENH_DATA;
 	frame.ecx.word      = length;
 	frame.edx.part.low  = VM_PORT_RPC;
 	frame.edx.part.high = rpc->channel;
 	frame.esi.word      = rpc->cookie1;
+#ifdef __amd64__
+	frame.edi.quad      = (uint64_t)data;
+#else
 	frame.edi.word      = (uint32_t)data;
+#endif
 	frame.ebp.word      = rpc->cookie2;
 
 	vm_ins(&frame);
@@ -513,6 +563,7 @@ vm_rpc_get_data(const struct vm_rpc *rpc, char *data, uint32_t length,
 	}
 
 	/* Acknowledge data received. */
+  bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = dataid;
 	frame.ecx.part.low  = VM_CMD_RPC;
@@ -524,7 +575,7 @@ vm_rpc_get_data(const struct vm_rpc *rpc, char *data, uint32_t length,
 
 	vm_cmd(&frame);
 
-	if (frame.eax.word != 0 || frame.ecx.part.high == 0) {
+	if (frame.ecx.part.high == 0) {
 		printf("vmware: ack data failed, eax=%08x, ecx=%08x\n",
 				frame.eax.word, frame.ecx.word);
 		return EIO;
@@ -538,6 +589,7 @@ vm_rpc_get_length(const struct vm_rpc *rpc, uint32_t *length, uint16_t *dataid)
 {
 	struct vm_backdoor frame;
 
+  bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = 0;
 	frame.ecx.part.low  = VM_CMD_RPC;
@@ -549,7 +601,7 @@ vm_rpc_get_length(const struct vm_rpc *rpc, uint32_t *length, uint16_t *dataid)
 
 	vm_cmd(&frame);
 
-	if (frame.eax.word != 0 || frame.ecx.part.high == 0) {
+	if (frame.ecx.part.high == 0) {
 		printf("vmware: get length failed, eax=%08x, ecx=%08x\n",
 				frame.eax.word, frame.ecx.word);
 		return EIO;

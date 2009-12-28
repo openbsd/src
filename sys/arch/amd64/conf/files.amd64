@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.54 2009/11/26 21:15:48 deraadt Exp $
+#	$OpenBSD: files.amd64,v 1.55 2009/12/28 14:22:09 dlg Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -238,6 +238,9 @@ include "dev/onewire/files.onewire"
 # IPMI
 #
 attach	ipmi at mainbus
+
+# VMware Tools
+attach	vmt at mainbus
 
 #
 # device major numbers

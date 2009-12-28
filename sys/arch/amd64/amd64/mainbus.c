@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.21 2009/11/23 15:34:48 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.22 2009/12/28 14:22:09 dlg Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include "ipmi.h"
 #include "bios.h"
 #include "mpbios.h"
+#include "vmt.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -57,6 +58,10 @@
 
 #if NIPMI > 0
 #include <dev/ipmivar.h>
+#endif
+
+#if NVMT > 0
+#include <dev/vmtvar.h>
 #endif
 
 #if NBIOS > 0
@@ -164,6 +169,13 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_iaa.iaa_memt = X86_BUS_SPACE_MEM;
 		if (ipmi_probe(&mba.mba_iaa))
 			config_found(self, &mba.mba_iaa, mainbus_print);
+	}
+#endif
+
+#if NVMT > 0
+	if (vmt_probe()) {
+		mba.mba_busname = "vmware";
+		config_found(self, &mba.mba_busname, mainbus_print);
 	}
 #endif
 
