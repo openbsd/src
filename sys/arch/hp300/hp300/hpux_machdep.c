@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.23 2009/03/25 22:42:58 weingart Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.24 2009/12/28 16:40:44 miod Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
@@ -138,12 +138,9 @@ hpux_cpu_makecmds(p, epp)
 }
 
 /*
- * We need to stash the exec header in the pcb, so we define
+ * We need to setup pcb cacheability information correctly, so we define
  * this vmcmd to do it for us, since vmcmds are executed once
  * we're committed to the exec (i.e. the old program has been unmapped).
- *
- * The address of the header is in ev->ev_addr and the length is
- * in ev->ev_len.
  */
 int
 hpux_cpu_vmcmd(p, ev)
@@ -151,11 +148,6 @@ hpux_cpu_vmcmd(p, ev)
 	struct exec_vmcmd *ev;
 {
 	struct hpux_exec *execp = (struct hpux_exec *)ev->ev_addr;
-
-	/* Make sure we have room. */
-	if (ev->ev_len <= sizeof(p->p_addr->u_md.md_exec))
-		bcopy((caddr_t)ev->ev_addr, p->p_addr->u_md.md_exec,
-		    ev->ev_len);
 
 	/* Deal with misc. HP-UX process attributes. */
 	if (execp->ha_trsize & HPUXM_VALID) {
