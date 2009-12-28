@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.443 2009/12/28 19:27:58 espie Exp $
+# $OpenBSD: pkg_add,v 1.444 2009/12/28 21:29:42 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -500,7 +500,6 @@ sub really_add
 			}
 		}
 
-		$set->{solver}->record_old_dependencies($state);
 		build_before($set->older_to_do);
 		iterate($set->older_to_do, sub {
 			return if $state->{size_only};
@@ -580,9 +579,8 @@ sub really_add
 		$set->{solver}->register_dependencies($state);
 	}
 	if ($replacing) {
-#		$set->{forward}->adjust($state);
+		$set->{forward}->adjust($state);
 	}
-	$set->{solver}->adjust_old_dependencies($state);
 	if ($state->{repairdependencies}) {
 		$set->{solver}->repair_dependencies($state);
 	}
