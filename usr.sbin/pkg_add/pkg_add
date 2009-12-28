@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.440 2009/12/28 10:42:02 espie Exp $
+# $OpenBSD: pkg_add,v 1.441 2009/12/28 12:51:26 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -297,9 +297,7 @@ sub can_install
 
 	$set->mark_as_manual_install if $manual_install;
 
-	require OpenBSD::Replace;
-
-	return OpenBSD::Replace::is_set_safe($set, $state);
+	return 1;
 }
 
 sub recheck_conflicts
@@ -400,17 +398,9 @@ sub iterate
 	}
 }
 
-sub really_add
+sub check_x509_signature
 {
 	my ($set, $state) = @_;
-
-	for my $h ($set->newer) {
-		$h->plist->set_infodir($h->location->info);
-	}
-
-	$set->validate_plists($state);
-
-	my $errors = 0;
 	for my $handle ($set->newer) {
 		$state->set_name_from_handle($handle, '+');
 		my $plist = $handle->plist;
@@ -434,6 +424,21 @@ sub really_add
 			$state->{check_digest} = 0;
 		}
 	}
+}
+
+sub really_add
+{
+	my ($set, $state) = @_;
+
+	for my $h ($set->newer) {
+		$h->plist->set_infodir($h->location->info);
+	}
+
+	$set->validate_plists($state);
+
+	my $errors = 0;
+
+	check_x509_signature($set, $state);
 
 	if ($state->{not}) {
 		$state->status->what("Pretending to add");
@@ -578,6 +583,40 @@ sub really_add
 	}
 }
 
+sub newer_has_errors
+{
+	my ($set, $state) = @_;
+
+	for my $handle ($set->newer) {
+		if ($handle->has_error(OpenBSD::Handle::ALREADY_INSTALLED)) {
+			$set->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
+			return 1;
+		}
+		if ($handle->has_error) {
+			$state->set_name_from_handle($handle);
+			$state->log("Can't install ", $handle->pkgname, ":",
+				$handle->error_message, "\n"); 
+			$bad++;
+			$set->cleanup($handle->has_error);
+			$state->tracker->cant($set);
+			return 1;
+		}
+
+		if ($handle->plist->has('arch')) {
+			unless ($handle->plist->{arch}->check($state->{arch})) {
+				$state->set_name_from_handle($handle);
+				$state->log($handle->pkgname, " is not for the right architecture");
+				if (!$defines{arch}) {
+					$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+					$state->tracker->cant($set);
+					return 1;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 sub install_set
 {
 	my ($set, $state) = @_;
@@ -603,32 +642,8 @@ sub install_set
 		return $set;
 	}
 
-	for my $handle ($set->newer) {
-		if ($handle->has_error(OpenBSD::Handle::ALREADY_INSTALLED)) {
-			$set->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
-			return ();
-		}
-		if ($handle->has_error) {
-			$state->set_name_from_handle($handle);
-			$state->log("Can't install ", $handle->pkgname, ":",
-				$handle->error_message, "\n"); 
-			$bad++;
-			$set->cleanup($handle->has_error);
-			$state->tracker->cant($set);
-			return ();
-		}
-
-		if ($handle->plist->has('arch')) {
-			unless ($handle->plist->{arch}->check($state->{arch})) {
-				$state->set_name_from_handle($handle);
-				$state->log($handle->pkgname, " is not for the right architecture");
-				if (!$defines{arch}) {
-					$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
-					$state->tracker->cant($set);
-					return ();
-				}
-			}
-		}
+	if (newer_has_errors($set, $state)) {
+		return ();
 	}
 
 	if (!defined $set->{solver} || $set->{solver}->{not_ready}) {
@@ -683,6 +698,14 @@ sub install_set
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 		$state->tracker->cant($set);
 		return ();
+	}
+	if ($set->older_to_do) {
+		require OpenBSD::Replace;
+		if (!OpenBSD::Replace::is_set_safe($set, $state)) {
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+			$state->tracker->cant($set);
+			return ();
+		}
 	}
 	really_add($set, $state);
 	$set->cleanup;
