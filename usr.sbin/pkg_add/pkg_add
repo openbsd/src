@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.441 2009/12/28 12:51:26 espie Exp $
+# $OpenBSD: pkg_add,v 1.442 2009/12/28 14:38:51 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -176,12 +176,10 @@ sub complete
 		$o->complete_old($state);
 	}
 
-	return 1 if defined $set->{installable};
+	my $check = $set->can_install($state);
+	return 0 if !defined $check;
 
-	$set->{installable} = $set->can_install($state);
-	return 0 if !defined $set->{installable};
-
-	if (!$set->{installable}) {
+	if (!$check) {
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 		$state->tracker->cant($set);
 	}
@@ -249,34 +247,6 @@ sub can_install
 
 	return if $later;
 
-	require OpenBSD::ForwardDependencies;
-	if (!defined $set->{forward}) {
-		$set->{forward} = OpenBSD::ForwardDependencies->find($set);
-		my $bad = $set->{forward}->check($set, $state);
-
-		if (keys %$bad > 0) {
-#			for my $m (keys %$bad) {
-#				my $s = $state->tracker->is_to_update($m);
-#				if (defined $s) {
-#					$set->merge($state->tracker, $s);
-#				} else {
-#					$set->add_older(OpenBSD::Handle->create_old($m, 
-#					    $state));
-#				}
-#			}
-#			$state->say("Merging ", $set->print, $state->ntogo);
-#			return;
-			if ($state->{defines}->{updatedepends}) {
-			    $state->errsay("Forcing update");
-			} elsif ($state->{interactive}) {
-				if ($state->confirm("Proceed with update anyways", 0)) {
-				}
-			} else {
-				return 0;
-			}
-		}
-	}
-
 
 	my $manual_install = 0;
 
@@ -297,6 +267,38 @@ sub can_install
 
 	$set->mark_as_manual_install if $manual_install;
 
+	return 1;
+}
+
+sub check_forward_dependencies
+{
+	my ($set, $state) = @_;
+
+	require OpenBSD::ForwardDependencies;
+	$set->{forward} = OpenBSD::ForwardDependencies->find($set);
+	my $bad = $set->{forward}->check($set, $state);
+
+	if (keys %$bad > 0) {
+#		for my $m (keys %$bad) {
+#			my $s = $state->tracker->is_to_update($m);
+#			if (defined $s) {
+#				$set->merge($state->tracker, $s);
+#			} else {
+#				$set->add_older(OpenBSD::Handle->create_old($m, 
+#				    $state));
+#			}
+#		}
+#		$state->say("Merging ", $set->print, $state->ntogo);
+#		return;
+		if ($state->{defines}->{updatedepends}) {
+		    $state->errsay("Forcing update");
+		} elsif ($state->{interactive}) {
+			if ($state->confirm("Proceed with update anyways", 0)) {
+			}
+		} else {
+			return 0;
+		}
+	}
 	return 1;
 }
 
@@ -662,15 +664,20 @@ sub install_set
 		}
 	}
 
+	if ($set->older_to_do) {
+		if (!$set->check_forward_dependencies($state)) {
+			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
+			$state->tracker->cant($set);
+			return ();
+		}
+	}
+
 	# verify dependencies have been installed
 	my @baddeps = $set->{solver}->check_depends;
 
 	if (@baddeps) {
 		$state->errsay("Can't install ", $set->print,
 		    ": can't resolve ", join(',', @baddeps));
-		for my $handle ($set->newer) {
-			$handle->location->close_now;
-		}
 		$bad++;
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 		$state->tracker->cant($set);
@@ -679,16 +686,12 @@ sub install_set
 
 #	print "Didn't need to process: ", join(',', @{$set->{solver}->{todo}}), "\n";
 	if (!$set->{solver}->solve_wantlibs($state)) {
-		for my $handle ($set->newer) {
-			$handle->location->close_now;
-		}
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 		$state->tracker->cant($set);
 		$bad++;
 		return ();
 	}
 #	if (!$set->{solver}->solve_tags($state)) {
-#		$location->close_now;
 #		if (!$defines{libdepends}) {
 #			$bad++;
 #			return ();
