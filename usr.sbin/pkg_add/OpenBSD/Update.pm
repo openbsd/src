@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.121 2009/12/26 16:58:55 espie Exp $
+# $OpenBSD: Update.pm,v 1.122 2009/12/28 19:28:59 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -118,7 +118,8 @@ sub process_handle
 	# because of conflicts, in which case the pkgpath + 
 	# conflict should be enough  to "match".
 	for my $n ($set->newer) {
-		if ($n->location->update_info->match_pkgpath($plist) &&
+		if (($state->{hard_replace} || 
+		    $n->location->update_info->match_pkgpath($plist)) &&
 			$n->plist->conflict_list->conflicts_with($sname)) {
 				$self->add_handle($set, $h, $n);
 				return 1;
