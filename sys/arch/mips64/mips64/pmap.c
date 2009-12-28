@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2009/12/25 21:02:15 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.43 2009/12/28 06:55:27 syuu Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -70,6 +70,15 @@ struct pool_allocator pmap_pg_allocator = {
 	pmap_pg_alloc, pmap_pg_free
 };
 
+static void pmap_invalidate_kernel_page(vaddr_t);
+static void pmap_invalidate_user_page(pmap_t, vaddr_t);
+#ifdef MULTIPROCESSOR
+static void pmap_invalidate_kernel_page_action(void *);
+static void pmap_invalidate_user_page_action(void *);
+static void pmap_update_kernel_page_action(void *);
+static void pmap_update_user_page_action(void *);
+#endif
+
 #ifdef PMAPDEBUG
 struct {
 	int kernel;	/* entering kernel mapping */
@@ -131,13 +140,190 @@ psize_t	mem_size;	/* memory size in bytes */
 vaddr_t	virtual_start;  /* VA of first avail page (after kernel bss)*/
 vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
-u_int		tlbpid_gen = 1;		/* TLB PID generation count */
-u_int		tlbpid_cnt = 2;		/* next available TLB PID */
+u_int		tlbpid_gen[MAXCPUS];	/* TLB PID generation count */
+u_int		tlbpid_cnt[MAXCPUS];	/* next available TLB PID */
 
 pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
 const vaddr_t	Sysmapbase = VM_MIN_KERNEL_ADDRESS;	/* for libkvm */
 
+
+#ifdef MULTIPROCESSOR
+
+struct pmap_invalidate_page_arg {
+	pmap_t pmap;
+	vaddr_t va;
+};
+
+static void
+pmap_invalidate_kernel_page(vaddr_t va)
+{
+	struct pmap_invalidate_page_arg arg;
+	unsigned int cpumask = 0;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) 
+		if (cpuset_isset(&cpus_running, ci))
+			cpumask |= 1 << ci->ci_cpuid;
+	arg.va = va;
+
+	smp_rendezvous_cpus(cpumask, pmap_invalidate_kernel_page_action, &arg);
+}
+
+static void
+pmap_invalidate_kernel_page_action(void *arg)
+{
+	vaddr_t va = ((struct pmap_invalidate_page_arg *)arg)->va;
+
+	tlb_flush_addr(va);
+}
+
+static void
+pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
+{
+	struct pmap_invalidate_page_arg arg;
+	unsigned int cpumask = 0;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) 
+		if (cpuset_isset(&cpus_running, ci)) {
+			unsigned int i = ci->ci_cpuid;
+			unsigned int m = 1 << i;
+			if (pmap->pm_tlbgen[i] != tlbpid_gen[i])
+				continue;
+			else if (!(pmap->pm_active & m)) {
+				pmap->pm_tlbgen[i] = 0;
+				continue;
+			}
+			cpumask |= m;
+		}
+
+	arg.pmap = pmap;
+	arg.va = va;
+
+	smp_rendezvous_cpus(cpumask, pmap_invalidate_user_page_action, &arg);
+}
+
+static void
+pmap_invalidate_user_page_action(void *arg)
+{
+	pmap_t pmap = ((struct pmap_invalidate_page_arg *)arg)->pmap;
+	vaddr_t va = ((struct pmap_invalidate_page_arg *)arg)->va;
+	unsigned int cpuid = cpu_number();
+	u_long asid;
+
+	asid = pmap->pm_tlbpid[cpuid] << VMTLB_PID_SHIFT;
+	tlb_flush_addr(va | asid);
+}
+
+struct pmap_update_page_arg {
+	pmap_t pmap;
+	vaddr_t va;
+	pt_entry_t entry;
+};
+
+void
+pmap_update_kernel_page(vaddr_t va, pt_entry_t entry)
+{
+	struct pmap_update_page_arg arg;
+	unsigned long cpumask = 0;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) 
+		if (cpuset_isset(&cpus_running, ci))
+			cpumask |= 1 << ci->ci_cpuid;
+
+	arg.va = va;
+	arg.entry = entry;
+	smp_rendezvous_cpus(cpumask,
+			    pmap_update_kernel_page_action, &arg);
+}
+
+static void
+pmap_update_kernel_page_action(void *arg)
+{
+	vaddr_t va = ((struct pmap_update_page_arg *)arg)->va;
+	pt_entry_t entry = ((struct pmap_update_page_arg *)arg)->entry;
+
+	tlb_update(va, entry);
+}
+
+void
+pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
+{
+	struct pmap_update_page_arg arg;
+	unsigned long cpumask = 0;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) 
+		if (cpuset_isset(&cpus_running, ci)) {
+			unsigned int i = ci->ci_cpuid;
+			unsigned int m = 1 << i;
+			if (pmap->pm_tlbgen[i] != tlbpid_gen[i])
+				continue;
+			else if (!(pmap->pm_active & m)) {
+				pmap->pm_tlbgen[i] = 0;
+				continue;
+			}
+			cpumask |= m;
+		}
+
+	arg.pmap = pmap;
+	arg.va = va;
+	arg.entry = entry;
+	smp_rendezvous_cpus(cpumask,
+			    pmap_update_user_page_action, &arg);
+}
+
+static void
+pmap_update_user_page_action(void *arg)
+{
+	pmap_t pmap = ((struct pmap_update_page_arg *)arg)->pmap;
+	vaddr_t va = ((struct pmap_update_page_arg *)arg)->va;
+	pt_entry_t entry = ((struct pmap_update_page_arg *)arg)->entry;
+	unsigned int cpuid = cpu_number();
+	u_long asid;
+
+	asid = pmap->pm_tlbpid[cpuid] << VMTLB_PID_SHIFT;
+	tlb_update(va | asid, entry);
+}
+#else
+static void
+pmap_invalidate_kernel_page(vaddr_t va)
+{
+	tlb_flush_addr(va);
+}
+
+static void
+pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
+{
+	u_long cpuid = cpu_number();
+	u_long asid = pmap->pm_tlbpid[cpuid] << VMTLB_PID_SHIFT;
+
+	if (pmap->pm_tlbgen[cpuid] == tlbpid_gen[cpuid])
+		tlb_flush_addr(va | asid);
+}
+
+void
+pmap_update_kernel_page(vaddr_t va, pt_entry_t entry)
+{
+	tlb_update(va, entry);
+}
+
+void
+pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
+{
+	u_long cpuid = cpu_number();
+	u_long asid = pmap->pm_tlbpid[cpuid] << VMTLB_PID_SHIFT;
+
+	if (pmap->pm_tlbgen[cpuid] == tlbpid_gen[cpuid])
+		tlb_update(va | asid, entry);
+}
+#endif
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -183,6 +369,11 @@ pmap_bootstrap()
 	 */
 	for (i = Sysmapsize, spte = Sysmap; i != 0; i--, spte++)
 		*spte = PG_G;
+
+	for (i = 0; i < MAXCPUS; i++) {
+		tlbpid_gen[i] = 1;
+		tlbpid_cnt[i] = 2;
+	}
 }
 
 /*
@@ -283,7 +474,8 @@ pmap_t
 pmap_create()
 {
 	pmap_t pmap;
-	int s;
+	vaddr_t va;
+	int i, s;
 
 extern struct vmspace vmspace0;
 extern struct user *proc0paddr;
@@ -305,12 +497,16 @@ extern struct user *proc0paddr;
 		 * The initial process has already been allocated a TLBPID
 		 * in mach_init().
 		 */
-		pmap->pm_tlbpid = 1;
-		pmap->pm_tlbgen = tlbpid_gen;
+		for (i = 0; i < MAXCPUS; i++) {
+			pmap->pm_tlbpid[i] = 1;
+			pmap->pm_tlbgen[i] = tlbpid_gen[i];
+		}
 		proc0paddr->u_pcb.pcb_segtab = pmap->pm_segtab;
 	} else {
-		pmap->pm_tlbpid = 0;
-		pmap->pm_tlbgen = 0;
+		for (i = 0; i < MAXCPUS; i++) {
+			pmap->pm_tlbpid[i] = 0;
+			pmap->pm_tlbgen[i] = 0;
+		}
 	}
 
 	return (pmap);
@@ -391,6 +587,10 @@ void
 pmap_activate(struct proc *p)
 {
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	unsigned int cpuid = cpu_number();
+	unsigned int cpumask = (1 << cpuid);
+
+	atomic_setbits_int(&pmap->pm_active, cpumask);
 	p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab;
 	pmap_alloc_tlbpid(p);
 }
@@ -401,7 +601,11 @@ pmap_activate(struct proc *p)
 void
 pmap_deactivate(struct proc *p)
 {
-	/* Empty */
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	unsigned int cpuid = cpu_number();
+	unsigned int cpumask = (1 << cpuid);
+
+	atomic_clearbits_int(&pmap->pm_active, cpumask);
 }
 
 /*
@@ -442,7 +646,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			/*
 			 * Flush the TLB for the given address.
 			 */
-			tlb_flush_addr(sva);
+			pmap_invalidate_kernel_page(sva);
 			stat_count(remove_stats.flushes);
 		}
 		return;
@@ -478,11 +682,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			/*
 			 * Flush the TLB for the given address.
 			 */
-			if (pmap->pm_tlbgen == tlbpid_gen) {
-				tlb_flush_addr(sva |
-				    (pmap->pm_tlbpid << VMTLB_PID_SHIFT));
-				stat_count(remove_stats.flushes);
-			}
+			pmap_invalidate_user_page(pmap, sva);
+			stat_count(remove_stats.flushes);
 		}
 	}
 }
@@ -590,7 +791,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			/*
 			 * Update the TLB if the given address is in the cache.
 			 */
-			tlb_update(sva, entry);
+			pmap_update_kernel_page(sva, entry);
 		}
 		return;
 	}
@@ -625,10 +826,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 					    pfn_to_pad(entry));
 			entry = (entry & ~(PG_M | PG_RO)) | p;
 			*pte = entry;
-			if (pmap->pm_tlbgen == tlbpid_gen)
-				tlb_update(sva |
-				    (pmap->pm_tlbpid << VMTLB_PID_SHIFT),
-				    entry);
+			pmap_update_user_page(pmap, sva, entry);
 		}
 	}
 }
@@ -647,6 +845,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	pt_entry_t *pte, npte;
 	vm_page_t pg;
+	u_long cpuid = cpu_number();
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
 		("pmap_enter(%p, %p, %p, %p, %p)\n", pmap, va, pa, prot, flags));
@@ -729,7 +928,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * Update the same virtual address entry.
 		 */
 		*pte = npte;
-		tlb_update(va, npte);
+		pmap_update_kernel_page(va, npte);
 		return 0;
 	}
 
@@ -766,9 +965,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * MIPS pages in a OpenBSD page.
 	 */
 	npte |= vad_to_pfn(pa);
-	if (pmap->pm_tlbgen == tlbpid_gen) {
+	if (pmap->pm_tlbgen[cpuid] == tlbpid_gen[cpuid]) {
 		DPRINTF(PDB_ENTER, ("pmap_enter: new pte 0x%08x tlbpid %u\n",
-			npte, pmap->pm_tlbpid));
+			npte, pmap->pm_tlbpid[cpuid]));
 	} else {
 		DPRINTF(PDB_ENTER, ("pmap_enter: new pte 0x%08x\n", npte));
 	}
@@ -782,9 +981,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap->pm_stats.resident_count++;
 	}
 	*pte = npte;
-	if (pmap->pm_tlbgen == tlbpid_gen) {
-		tlb_update(va | (pmap->pm_tlbpid << VMTLB_PID_SHIFT), npte);
-	}
+	pmap_update_user_page(pmap, va, npte);
 
 	/*
 	 *  If mapping a memory space address invalidate ICache.
@@ -816,7 +1013,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		npte |= PG_ROPAGE;
 	pte = kvtopte(va);
 	*pte = npte;
-	tlb_update(va, npte);
+	pmap_update_kernel_page(va, npte);
 }
 
 /*
@@ -845,7 +1042,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			continue;
 		Mips_HitSyncDCache(va, pfn_to_pad(entry), PAGE_SIZE);
 		*pte = PG_NV | PG_G;
-		tlb_flush_addr(va);
+		pmap_invalidate_kernel_page(va);
 	}
 }
 
@@ -1041,7 +1238,7 @@ pmap_clear_modify(struct vm_page *pg)
 				rv = TRUE;
 				entry &= ~PG_M;
 				*pte = entry;
-				tlb_update(pv->pv_va, entry);
+				pmap_update_kernel_page(pv->pv_va, entry);
 			}
 		} else if (pv->pv_pmap != NULL) {
 			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va)) == NULL)
@@ -1052,10 +1249,7 @@ pmap_clear_modify(struct vm_page *pg)
 				rv = TRUE;
 				entry &= ~PG_M;
 				*pte = entry;
-				if (pv->pv_pmap->pm_tlbgen == tlbpid_gen)
-					tlb_update(pv->pv_va |
-					    (pv->pv_pmap->pm_tlbpid <<
-					      VMTLB_PID_SHIFT), entry);
+				pmap_update_user_page(pv->pv_pmap, pv->pv_va, entry);
 			}
 		}
 	}
@@ -1155,7 +1349,7 @@ pmap_page_cache(vm_page_t pg, int mode)
 			if (entry & PG_V) {
 				entry = (entry & ~PG_CACHEMODE) | newmode;
 				*pte = entry;
-				tlb_update(pv->pv_va, entry);
+				pmap_update_kernel_page(pv->pv_va, entry);
 			}
 		} else {
 			if ((pte = pmap_segmap(pv->pv_pmap, pv->pv_va))) {
@@ -1164,10 +1358,7 @@ pmap_page_cache(vm_page_t pg, int mode)
 				if (entry & PG_V) {
 					entry = (entry & ~PG_CACHEMODE) | newmode;
 					*pte = entry;
-					if (pv->pv_pmap->pm_tlbgen == tlbpid_gen)
-						tlb_update(pv->pv_va |
-						    (pv->pv_pmap->pm_tlbpid <<
-						     VMTLB_PID_SHIFT), entry);
+					pmap_update_user_page(pv->pv_pmap, pv->pv_va, entry);
 				}
 			}
 		}
@@ -1191,22 +1382,23 @@ pmap_alloc_tlbpid(struct proc *p)
 {
 	pmap_t pmap;
 	uint id;
+	u_long cpuid = cpu_number();
 
 	pmap = p->p_vmspace->vm_map.pmap;
-	if (pmap->pm_tlbgen != tlbpid_gen) {
-		id = tlbpid_cnt;
+	if (pmap->pm_tlbgen[cpuid] != tlbpid_gen[cpuid]) {
+		id = tlbpid_cnt[cpuid];
 		if (id >= VMNUM_PIDS) {
 			tlb_flush(sys_config.cpu[0].tlbsize);
 			/* reserve tlbpid_gen == 0 to alway mean invalid */
-			if (++tlbpid_gen == 0)
-				tlbpid_gen = 1;
+			if (++tlbpid_gen[cpuid] == 0)
+				tlbpid_gen[cpuid] = 1;
 			id = 1;
 		}
-		tlbpid_cnt = id + 1;
-		pmap->pm_tlbpid = id;
-		pmap->pm_tlbgen = tlbpid_gen;
+		tlbpid_cnt[cpuid] = id + 1;
+		pmap->pm_tlbpid[cpuid] = id;
+		pmap->pm_tlbgen[cpuid] = tlbpid_gen[cpuid];
 	} else {
-		id = pmap->pm_tlbpid;
+		id = pmap->pm_tlbpid[cpuid];
 	}
 
 	if (curproc) {

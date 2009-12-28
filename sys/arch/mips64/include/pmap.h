@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.16 2009/12/07 18:58:32 miod Exp $ */
+/*      $OpenBSD: pmap.h,v 1.17 2009/12/28 06:55:27 syuu Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -98,8 +98,9 @@ typedef struct pmap {
 	int			pm_count;	/* pmap reference count */
 	simple_lock_data_t	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	u_int			pm_tlbpid;	/* address space tag */
-	u_int			pm_tlbgen;	/* TLB PID generation number */
+	u_int			pm_tlbpid[MAXCPUS];	/* address space tag */
+	u_int			pm_tlbgen[MAXCPUS];	/* TLB PID generation number */
+	int                     pm_active;
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 } *pmap_t;
 
@@ -136,6 +137,8 @@ void	pmap_page_cache(vm_page_t, int);
 #define pmap_unuse_final(p)		do { /* nothing yet */ } while (0)
 #define	pmap_remove_holes(map)		do { /* nothing */ } while (0)
 
+void pmap_update_user_page(pmap_t, vaddr_t, pt_entry_t);
+void pmap_update_kernel_page(vaddr_t, pt_entry_t);
 #endif	/* _KERNEL */
 
 #endif	/* !_MIPS_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.39 2009/12/02 01:52:28 syuu Exp $ */
+/*	$OpenBSD: intr.h,v 1.40 2009/12/28 06:55:27 syuu Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -185,6 +185,14 @@ void	set_intr(int, uint32_t, uint32_t(*)(uint32_t, struct trap_frame *));
 
 uint32_t updateimask(uint32_t);
 void	dosoftint(void);
+
+#ifdef MULTIPROCESSOR
+#if defined (TGT_OCTANE)
+#define ENABLEIPI() updateimask(~CR_INT_2) /* enable IPI interrupt level */
+#else
+#error MULTIPROCESSOR kernel not supported on this configuration
+#endif
+#endif
 
 #endif /* _LOCORE */
 

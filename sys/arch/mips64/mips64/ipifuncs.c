@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.1 2009/11/25 17:39:51 syuu Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.2 2009/12/28 06:55:27 syuu Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -41,10 +41,18 @@
 #include <machine/intr.h>
 #include <machine/atomic.h>
 
-static int      mips64_ipi_intr(void *);
+static int	mips64_ipi_intr(void *);
 static void	mips64_ipi_nop(void);
-
+static void	smp_rendezvous_action(void);
+static void	mips64_multicast_ipi(unsigned int, unsigned int);
 static unsigned int ipi_mailbox[MAXCPUS];
+
+/* Variables needed for SMP rendezvous. */
+struct mutex smp_ipi_mtx;
+static volatile unsigned long smp_rv_map;
+static void (*volatile smp_rv_action_func)(void *arg);
+static void * volatile smp_rv_func_arg;
+static volatile unsigned int smp_rv_waiters[2];
 
 /*
  * NOTE: This table must be kept in order with the bit definitions
@@ -54,6 +62,7 @@ typedef void (*ipifunc_t)(void);
 
 ipifunc_t ipifuncs[MIPS64_NIPIS] = {
 	mips64_ipi_nop,
+	smp_rendezvous_action
 };
 
 /*
@@ -64,6 +73,9 @@ mips64_ipi_init(void)
 {
 	cpuid_t cpuid = cpu_number();
 	int error;
+
+	if (!cpuid)
+		mtx_init(&smp_ipi_mtx, IPL_IPI);
 
 	hw_ipi_intr_clear(cpuid);
 
@@ -80,24 +92,22 @@ mips64_ipi_intr(void *arg)
 {
 	unsigned int pending_ipis, bit;
 	unsigned int cpuid = (unsigned int)(unsigned long)arg;
-	int sr;
 
 	KASSERT (cpuid == cpu_number());
 
-	sr = disableintr();
-
-	/* Load the mailbox register to figure out what we're supposed to do */
+	/* figure out which ipi are pending */
 	pending_ipis = ipi_mailbox[cpuid];
+	/* clear ipi interrupt */
+	hw_ipi_intr_clear(cpuid);
+	
 	if (pending_ipis > 0) {
+		/* clear pending ipi, since we're about to handle them */
+		atomic_clearbits_int(&ipi_mailbox[cpuid], pending_ipis);
+
 		for (bit = 0; bit < MIPS64_NIPIS; bit++)
 			if (pending_ipis & (1UL << bit))
 				(*ipifuncs[bit])();
-
-		/* Clear the mailbox to clear the interrupt */
-		atomic_clearbits_int(&ipi_mailbox[cpuid], pending_ipis);
 	}
-	hw_ipi_intr_clear(cpuid);
-	setsr(sr);
 
 	return 1;
 }
@@ -115,25 +125,9 @@ mips64_send_ipi(unsigned int cpuid, unsigned int ipimask)
 	        panic("mips_send_ipi: CPU %ld not running", cpuid);
 #endif
 
-	atomic_setbits_int(&ipi_mailbox[cpuid], ipimask);
+	atomic_wait_and_setbits_int(&ipi_mailbox[cpuid], ipimask);
 
 	hw_ipi_intr_set(cpuid);
-}
-
-/*
- * Broadcast an IPI to all but ourselves.
- */
-void
-mips64_broadcast_ipi(unsigned int ipimask)
-{
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	CPU_INFO_FOREACH(cii, ci) {
-		if (curcpu() == ci || !cpuset_isset(&cpus_running, ci))
-			continue;
-		mips64_send_ipi(ci->ci_cpuid, ipimask);
-	}
 }
 
 /*
@@ -145,7 +139,7 @@ mips64_multicast_ipi(unsigned int cpumask, unsigned int ipimask)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	cpumask &= ~(1UL << cpu_number());
+	cpumask &= ~(1 << cpu_number());
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (!(cpumask & (1UL << ci->ci_cpuid)) || 
@@ -161,4 +155,70 @@ mips64_ipi_nop(void)
 #ifdef DEBUG
 	printf("mips64_ipi_nop on cpu%d\n", cpu_number());
 #endif
+}
+
+/*
+ * All-CPU rendezvous.  CPUs are signalled, all execute the setup function 
+ * (if specified), rendezvous, execute the action function (if specified),
+ * rendezvous again, execute the teardown function (if specified), and then
+ * resume.
+ *
+ * Note that the supplied external functions _must_ be reentrant and aware
+ * that they are running in parallel and in an unknown lock context.
+ */
+
+void
+smp_rendezvous_action(void)
+{
+	void* local_func_arg = smp_rv_func_arg;
+	void (*local_action_func)(void*) = smp_rv_action_func;
+	unsigned int cpumask = 1 << cpu_number();
+
+	/* Ensure we have up-to-date values. */
+	atomic_setbits_int(&smp_rv_waiters[0], cpumask);
+	while (smp_rv_waiters[0] != smp_rv_map)
+		;
+
+	/* action function */
+	if (local_action_func != NULL)
+		local_action_func(local_func_arg);
+
+	/* spin on exit rendezvous */
+	atomic_setbits_int(&smp_rv_waiters[1], cpumask);
+}
+
+void
+smp_rendezvous_cpus(unsigned long map,
+	void (* action_func)(void *),
+	void *arg)
+{
+	unsigned int cpumask = 1 << cpu_number();
+
+	if (ncpus == 1) {
+		if (action_func != NULL)
+			action_func(arg);
+		return;
+	}
+
+	/* obtain rendezvous lock */
+        mtx_enter(&smp_ipi_mtx);
+
+	/* set static function pointers */
+	smp_rv_map = map;
+	smp_rv_action_func = action_func;
+	smp_rv_func_arg = arg;
+	smp_rv_waiters[0] = 0;
+	smp_rv_waiters[1] = 0;
+
+	/* signal other processors, which will enter the IPI with interrupts off */
+	mips64_multicast_ipi(map & ~cpumask, MIPS64_IPI_RENDEZVOUS);
+
+	/* Check if the current CPU is in the map */
+	if (map & cpumask)
+		smp_rendezvous_action();
+
+	while (smp_rv_waiters[1] != smp_rv_map)
+		;
+	/* release lock */
+	mtx_leave(&smp_ipi_mtx);
 }

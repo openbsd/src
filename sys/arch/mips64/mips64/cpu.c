@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.21 2009/12/02 01:42:14 syuu Exp $ */
+/*	$OpenBSD: cpu.c,v 1.22 2009/12/28 06:55:27 syuu Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -113,10 +113,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		if (ci == NULL)
 			panic("unable to allocate cpu_info\n");
 		bzero((char *)ci, sizeof(*ci));
-		ci->ci_ipiih = 
-			(struct intrhand *)smp_malloc(sizeof(*ci->ci_ipiih));
-		if (ci->ci_ipiih == NULL)
-			panic("unable to allocate ipi intrhand\n");
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
 		ci->ci_flags |= CPUF_PRESENT;
@@ -347,6 +343,8 @@ cpu_boot_secondary_processors(void)
 void
 cpu_unidle(struct cpu_info *ci)
 {
+	if (ci != curcpu())
+		mips64_send_ipi(ci->ci_cpuid, MIPS64_IPI_NOP);
 }
 
 vaddr_t 

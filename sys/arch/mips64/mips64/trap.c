@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2009/11/22 00:19:49 syuu Exp $	*/
+/*	$OpenBSD: trap.c,v 1.53 2009/12/28 06:55:27 syuu Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -238,12 +238,15 @@ trap(trapframe)
 			}
 			entry |= PG_M;
 			*pte = entry;
-			tlb_update(trapframe->badvaddr & ~PGOFSET, entry);
+			KERNEL_LOCK();
+			pmap_update_kernel_page(trapframe->badvaddr & ~PGOFSET,
+			    entry);
 			pa = pfn_to_pad(entry);
 			pg = PHYS_TO_VM_PAGE(pa);
 			if (pg == NULL)
 				panic("trap: ktlbmod: unmanaged page");
 			pmap_set_modify(pg);
+			KERNEL_UNLOCK();
 			return;
 		}
 		/* FALLTHROUGH */
@@ -271,13 +274,21 @@ trap(trapframe)
 		}
 		entry |= PG_M;
 		*pte = entry;
-		tlb_update((trapframe->badvaddr & ~PGOFSET) |
-		    (pmap->pm_tlbpid << VMTLB_PID_SHIFT), entry);
+		if (USERMODE(trapframe->sr))
+			KERNEL_PROC_LOCK(p);
+		else
+			KERNEL_LOCK();
+		pmap_update_user_page(pmap, (trapframe->badvaddr & ~PGOFSET), 
+		    entry);
 		pa = pfn_to_pad(entry);
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg == NULL)
 			panic("trap: utlbmod: unmanaged page");
 		pmap_set_modify(pg);
+		if (USERMODE(trapframe->sr))
+			KERNEL_PROC_UNLOCK(p);
+		else
+			KERNEL_UNLOCK();
 		if (!USERMODE(trapframe->sr))
 			return;
 		goto out;

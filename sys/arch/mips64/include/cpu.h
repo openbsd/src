@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.48 2009/12/25 21:02:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.49 2009/12/28 06:55:27 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -384,7 +384,7 @@ struct cpu_info {
 	u_int32_t        ci_pendingticks;
 #ifdef MULTIPROCESSOR
 	u_long           ci_flags;		/* flags; see below */
-	struct intrhand  *ci_ipiih;
+	struct intrhand  ci_ipiih;
 #endif
 };
 
@@ -416,12 +416,12 @@ void cpu_boot_secondary_processors(void);
 vaddr_t smp_malloc(size_t);
 
 #define MIPS64_IPI_NOP		0x00000001
-#define MIPS64_NIPIS		1	/* must not exceed 32 */
+#define MIPS64_IPI_RENDEZVOUS	0x00000002
+#define MIPS64_NIPIS		2	/* must not exceed 32 */
 
-void    mips64_ipi_init(void);
-void    mips64_send_ipi(unsigned int, unsigned int);
-void    mips64_broadcast_ipi(unsigned int);
-void    mips64_multicast_ipi(unsigned int, unsigned int);
+void	mips64_ipi_init(void);
+void	mips64_send_ipi(unsigned int, unsigned int);
+void	smp_rendezvous_cpus(unsigned long, void (*)(void *), void *arg);
 
 #include <sys/mplock.h>
 #else
@@ -479,7 +479,11 @@ extern int int_nest_cntr;
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
+#ifdef MULTIPROCESSOR
+#define	signotify(p)		(aston(p), cpu_unidle(p->p_cpu))
+#else
 #define	signotify(p)		aston(p)
+#endif
 
 #define	aston(p)		p->p_md.md_astpending = 1
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.27 2009/12/07 19:05:59 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.28 2009/12/28 06:55:27 syuu Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -377,6 +377,7 @@ void
 hw_cpu_hatch(struct cpu_info *ci)
 {
        int cpuid = ci->ci_cpuid;
+       int s;
 
        /*
         * Make sure we can access the extended address space.
@@ -405,7 +406,7 @@ hw_cpu_hatch(struct cpu_info *ci)
        tlb_flush(sys_config.cpu[cpuid].tlbsize);
        tlb_set_wired(sys_config.cpu[cpuid].tlbwired);
 
-       tlb_set_pid(1);
+       tlb_set_pid(0);
 
        /*
         * Turn off bootstrap exception vectors.
@@ -428,19 +429,14 @@ hw_cpu_hatch(struct cpu_info *ci)
        spl0();
        (void)updateimask(0);
 
-#ifdef notyet
        SCHED_LOCK(s);
        cpu_switchto(NULL, sched_chooseproc());
-#else
-       for(;;)
-	       ;
-#endif
 }
 
 int hw_ipi_intr_establish(int (*func)(void *), u_long cpuid)
 {
 	return xheart_intr_establish(func, (void *)cpuid, HEART_ISR_IPI(cpuid), 
-	    IPL_IPI, NULL, curcpu()->ci_ipiih);
+	    IPL_IPI, NULL, &curcpu()->ci_ipiih);
 };
 
 void hw_ipi_intr_set(u_long cpuid)

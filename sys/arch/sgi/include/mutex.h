@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.5 2009/11/04 02:26:24 syuu Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.6 2009/12/28 06:55:27 syuu Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -28,9 +28,6 @@
 #ifndef _MACHINE_MUTEX_H_
 #define _MACHINE_MUTEX_H_
 
-/*
- * Simple non-mp implementation.
- */
 struct mutex {
 	int mtx_lock;
 	int mtx_wantipl;
