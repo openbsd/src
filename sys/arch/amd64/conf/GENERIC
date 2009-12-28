@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.283 2009/12/28 14:22:09 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.284 2009/12/28 23:52:32 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -59,7 +59,7 @@ acpipwrres*	at acpi?
 mpbios0		at bios0
 
 ipmi0	at mainbus? disable	# IPMI
-vmt0	at mainbus?		# VMware Tools
+#vmt0	at mainbus?		# VMware Tools
 
 option		PCIVERBOSE
 option		USBVERBOSE
