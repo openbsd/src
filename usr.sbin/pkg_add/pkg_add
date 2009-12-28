@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.439 2009/12/27 22:27:03 espie Exp $
+# $OpenBSD: pkg_add,v 1.440 2009/12/28 10:42:02 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -235,7 +235,7 @@ sub can_install
 			return 0;
 		}
 
-		next if $set->{older}->{$toreplace};
+		next if defined $set->{older}->{$toreplace};
 
 		$later = 1;
 		my $s = $state->tracker->is_to_update($toreplace);

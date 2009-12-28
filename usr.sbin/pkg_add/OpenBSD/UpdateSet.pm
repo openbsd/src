@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.42 2009/12/27 22:24:48 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.43 2009/12/28 10:42:02 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -134,7 +134,7 @@ sub add_hints2
 
 sub newer
 {
-	my $self =shift;
+	my $self = shift;
 	return values %{$self->{newer}};
 }
 
@@ -152,7 +152,7 @@ sub kept
 
 sub hints
 {
-	my $self =shift;
+	my $self = shift;
 	return @{$self->{hints}};
 }
 
@@ -164,7 +164,7 @@ sub older_names
 
 sub newer_names
 {
-	my $self =shift;
+	my $self = shift;
 	return keys %{$self->{newer}};
 }
 
@@ -176,7 +176,7 @@ sub kept_names
 
 sub hint_names
 {
-	my $self =shift;
+	my $self = shift;
 	return map {$_->pkgname} $self->hints;
 }
 
