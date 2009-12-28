@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ForwardDependencies.pm,v 1.1 2009/12/26 17:00:49 espie Exp $
+# $OpenBSD: ForwardDependencies.pm,v 1.2 2009/12/28 19:27:58 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -34,12 +34,30 @@ sub find
 			$forward->{$f} = 1;
 		}
 	}
-	bless $forward, $class;
+	bless { forward => $forward, set => $set}, $class;
+}
+
+sub adjust
+{
+	my ($self, $state) = @_;
+	my $set = $self->{set};
+
+	for my $f (keys %{$self->{forward}}) {
+		my $deps_f = OpenBSD::Requiring->new($f);
+		for my $check ($deps_f->list) {
+			if (defined $set->{older}->{$check}) {
+				my $r = $set->{older}->{$check}->{update_found}->pkgname;
+				$state->say("Should adjust $check to $r in $f");
+			}
+		}
+	}
 }
 
 sub check
 {
-	my ($forward, $set, $state) = @_;
+	my ($self, $state) = @_;
+	my $forward = $self->{forward};
+	my $set = $self->{set};
 
 	my @r = keys %$forward;
 

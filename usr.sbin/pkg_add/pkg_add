@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.442 2009/12/28 14:38:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.443 2009/12/28 19:27:58 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -276,7 +276,7 @@ sub check_forward_dependencies
 
 	require OpenBSD::ForwardDependencies;
 	$set->{forward} = OpenBSD::ForwardDependencies->find($set);
-	my $bad = $set->{forward}->check($set, $state);
+	my $bad = $set->{forward}->check($state);
 
 	if (keys %$bad > 0) {
 #		for my $m (keys %$bad) {
@@ -579,6 +579,9 @@ sub really_add
 	for my $handle ($set->newer) {
 		$set->{solver}->register_dependencies($state);
 	}
+	if ($replacing) {
+#		$set->{forward}->adjust($state);
+	}
 	$set->{solver}->adjust_old_dependencies($state);
 	if ($state->{repairdependencies}) {
 		$set->{solver}->repair_dependencies($state);
@@ -764,6 +767,7 @@ if (defined $state->{destdir}) {
 
 $state->{automatic} = $opt_a;
 $state->{allow_replacing} = $opt_r || $opt_u || $opt_U;
+$state->{hard_replace} = $opt_r;
 $state->{newupdates} = $opt_u || $opt_U;
 
 if (@ARGV == 0 && !$opt_u && !$opt_l) {
