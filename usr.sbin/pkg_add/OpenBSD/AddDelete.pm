@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.12 2009/12/22 18:26:47 deraadt Exp $
+# $OpenBSD: AddDelete.pm,v 1.13 2009/12/28 14:46:48 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -397,6 +397,10 @@ sub print
 	}
 
 	$state->say($what." ".$object.$state->ntogo_string($state->todo));
+	if ($state->{defines}->{carp}) {
+		require Carp;
+		Carp::cluck("currently here");
+	}
 }
 
 sub set
