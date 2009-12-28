@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.6 2009/12/28 14:22:09 dlg Exp $ */
+/*	$OpenBSD: vmt.c,v 1.7 2009/12/28 14:25:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -138,7 +138,7 @@ struct cfattach vmt_ca = {
 };
  
 struct cfdriver vmt_cd = {
-        NULL,
+	NULL,
 	"vmt",
 	DV_DULL
 };
@@ -348,10 +348,10 @@ out:
 	timeout_add_sec(&sc->sc_tick, 15);
 }
 
-#define BACKDOOR_OP_I386(op, frame) \
-	__asm__ __volatile__ (        \
-		"pushal;"                   \
-		"pushl %%eax;"              \
+#define BACKDOOR_OP_I386(op, frame)		\
+	__asm__ __volatile__ (			\
+		"pushal;"			\
+		"pushl %%eax;"			\
 		"movl 0x18(%%eax), %%ebp;"	\
 		"movl 0x14(%%eax), %%edi;"	\
 		"movl 0x10(%%eax), %%esi;"	\
@@ -367,32 +367,32 @@ out:
 		"movl %%edx, 0x0c(%%eax);"	\
 		"movl %%ecx, 0x08(%%eax);"	\
 		"movl %%ebx, 0x04(%%eax);"	\
-		"popl 0x00(%%eax);"         \
-		"popal;"                    \
-		::"a"(frame)                \
+		"popl 0x00(%%eax);"		\
+		"popal;"			\
+		::"a"(frame)			\
 	)
 
-#define BACKDOOR_OP_AMD64(op, frame) \
-	__asm__ __volatile__ (        \
-		"pushq %%rbp;               \n\t" \
-		"pushq %%rax;               \n\t" \
-		"movq 0x30(%%rax), %%rbp;   \n\t"  \
-		"movq 0x28(%%rax), %%rdi;   \n\t"  \
-		"movq 0x20(%%rax), %%rsi;   \n\t"  \
-		"movq 0x18(%%rax), %%rdx;   \n\t"  \
-		"movq 0x10(%%rax), %%rcx;   \n\t"  \
-		"movq 0x08(%%rax), %%rbx;   \n\t"  \
-		"movq 0x00(%%rax), %%rax;   \n\t"  \
-		op                         "\n\t"  \
-		"xchgq %%rax, 0x00(%%rsp);  \n\t" \
-		"movq %%rbp, 0x30(%%rax);   \n\t"  \
-		"movq %%rdi, 0x28(%%rax);   \n\t"  \
-		"movq %%rsi, 0x20(%%rax);   \n\t"  \
-		"movq %%rdx, 0x18(%%rax);   \n\t"  \
-		"movq %%rcx, 0x10(%%rax);   \n\t"  \
-		"movq %%rbx, 0x08(%%rax);   \n\t"  \
-		"popq 0x00(%%rax);          \n\t"  \
-		"popq %%rbp;                \n\t"  \
+#define BACKDOOR_OP_AMD64(op, frame)		\
+	__asm__ __volatile__ (			\
+		"pushq %%rbp;			\n\t" \
+		"pushq %%rax;			\n\t" \
+		"movq 0x30(%%rax), %%rbp;	\n\t" \
+		"movq 0x28(%%rax), %%rdi;	\n\t" \
+		"movq 0x20(%%rax), %%rsi;	\n\t" \
+		"movq 0x18(%%rax), %%rdx;	\n\t" \
+		"movq 0x10(%%rax), %%rcx;	\n\t" \
+		"movq 0x08(%%rax), %%rbx;	\n\t" \
+		"movq 0x00(%%rax), %%rax;	\n\t" \
+		op				"\n\t" \
+		"xchgq %%rax, 0x00(%%rsp);	\n\t" \
+		"movq %%rbp, 0x30(%%rax);	\n\t" \
+		"movq %%rdi, 0x28(%%rax);	\n\t" \
+		"movq %%rsi, 0x20(%%rax);	\n\t" \
+		"movq %%rdx, 0x18(%%rax);	\n\t" \
+		"movq %%rcx, 0x10(%%rax);	\n\t" \
+		"movq %%rbx, 0x08(%%rax);	\n\t" \
+		"popq 0x00(%%rax);		\n\t" \
+		"popq %%rbp;			\n\t" \
 		: /* No outputs. */ : "a" (frame) \
 		  /* No pushal on amd64 so warn gcc about the clobbered registers. */ \
 		: "rbx", "rcx", "rdx", "rdi", "rsi", "cc", "memory" \
@@ -428,7 +428,7 @@ vm_rpc_open(struct vm_rpc *rpc)
 {
 	struct vm_backdoor frame;
 
-  bzero(&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = VM_RPC_OPEN_RPCI_ENH;
 	frame.ecx.part.low  = VM_CMD_RPC;
@@ -456,7 +456,7 @@ vm_rpc_close(struct vm_rpc *rpc)
 {
 	struct vm_backdoor frame;
 
-  bzero(&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = 0;
 	frame.ecx.part.low  = VM_CMD_RPC;
@@ -487,7 +487,7 @@ vm_rpc_send(const struct vm_rpc *rpc, const uint8_t *buf, uint32_t length)
 	struct vm_backdoor frame;
 
 	/* Send the length of the command. */
-  bzero(&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 	frame.eax.word = VM_MAGIC;
 	frame.ebx.word = length;
 	frame.ecx.part.low  = VM_CMD_RPC;
@@ -509,7 +509,7 @@ vm_rpc_send(const struct vm_rpc *rpc, const uint8_t *buf, uint32_t length)
 		return 0; /* Only need to poke once if command is null. */
 
 	/* Send the command using enhanced RPC. */
-  bzero(&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 	frame.eax.word = VM_MAGIC;
 	frame.ebx.word = VM_RPC_ENH_DATA;
 	frame.ecx.word = length;
@@ -540,7 +540,7 @@ vm_rpc_get_data(const struct vm_rpc *rpc, char *data, uint32_t length,
 	struct vm_backdoor frame;
 
 	/* Get data using enhanced RPC. */
-  bzero(&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = VM_RPC_ENH_DATA;
 	frame.ecx.word      = length;
@@ -563,7 +563,7 @@ vm_rpc_get_data(const struct vm_rpc *rpc, char *data, uint32_t length,
 	}
 
 	/* Acknowledge data received. */
-  bzero(&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = dataid;
 	frame.ecx.part.low  = VM_CMD_RPC;
@@ -589,7 +589,7 @@ vm_rpc_get_length(const struct vm_rpc *rpc, uint32_t *length, uint16_t *dataid)
 {
 	struct vm_backdoor frame;
 
-  bzero(&frame, sizeof(frame));
+	bzero(&frame, sizeof(frame));
 	frame.eax.word      = VM_MAGIC;
 	frame.ebx.word      = 0;
 	frame.ecx.part.low  = VM_CMD_RPC;
