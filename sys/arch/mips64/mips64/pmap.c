@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2009/12/28 06:55:27 syuu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 2009/12/28 07:18:39 syuu Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -474,7 +474,6 @@ pmap_t
 pmap_create()
 {
 	pmap_t pmap;
-	vaddr_t va;
 	int i, s;
 
 extern struct vmspace vmspace0;
