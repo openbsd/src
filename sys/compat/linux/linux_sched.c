@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.c,v 1.6 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: linux_sched.c,v 1.7 2009/12/28 02:54:24 guenther Exp $	*/
 /*	$NetBSD: linux_sched.c,v 1.6 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*-
@@ -59,26 +59,67 @@ linux_sys_clone(p, v, retval)
 		syscallarg(int) flags;
 		syscallarg(void *) stack;
 	} */ *uap = v;
+	int cflags = SCARG(uap, flags);
 	int flags = FORK_RFORK, sig;
 
 	/*
-	 * We don't support the Linux CLONE_PID or CLONE_PTRACE flags.
+	 * We only support certain bits.  The Linux crew keep adding more,
+	 * so let's test for anything outside of what we support and complain
+	 * about them.  Not everything in this list is completely supported,
+	 * they just aren't _always_ an error.
+	 * To make nptl threads work we need to add support for at least
+	 * CLONE_SETTLS, CLONE_PARENT_SETTID, and CLONE_CHILD_CLEARTID.
 	 */
-	if (SCARG(uap, flags) & (LINUX_CLONE_PID | LINUX_CLONE_PTRACE))
+	if (cflags & ~(LINUX_CLONE_CSIGNAL | LINUX_CLONE_VM | LINUX_CLONE_FS |
+	    LINUX_CLONE_FILES | LINUX_CLONE_SIGHAND | LINUX_CLONE_VFORK |
+	    LINUX_CLONE_PARENT | LINUX_CLONE_THREAD | LINUX_CLONE_SYSVSEM |
+	    LINUX_CLONE_UNTRACED))
 		return (EINVAL);
 
-	if (SCARG(uap, flags) & LINUX_CLONE_VM)
+	if (cflags & LINUX_CLONE_VM)
 		flags |= FORK_SHAREVM;
-	/* XXX We pretend to support CLONE_FS for the moment.  */
-	if (SCARG(uap, flags) & LINUX_CLONE_FILES)
+	if (cflags & LINUX_CLONE_FILES)
 		flags |= FORK_SHAREFILES;
-	if (SCARG(uap, flags) & LINUX_CLONE_SIGHAND)
+	if (cflags & LINUX_CLONE_SIGHAND) {
+		/* According to Linux, SIGHAND requires VM */
+		if ((cflags & LINUX_CLONE_VM) == 0)
+			return (EINVAL);
 		flags |= FORK_SIGHAND;
-	if (SCARG(uap, flags) & LINUX_CLONE_VFORK) {
-		flags |= FORK_PPWAIT;
 	}
+	if (cflags & LINUX_CLONE_VFORK)
+		flags |= FORK_PPWAIT;
+	if (cflags & LINUX_CLONE_THREAD) {
+		/*
+		 * Linux agrees with us: THREAD requires SIGHAND.
+		 * Unlike Linux, we also also require FS and SYSVSEM.
+		 * Also, we decree it to be incompatible with VFORK, as
+		 * I don't want to work out whether that's 100% safe.
+		 */
+#define REQUIRED	\
+	(LINUX_CLONE_SIGHAND | LINUX_CLONE_FS | LINUX_CLONE_SYSVSEM)
+#define BANNED		\
+	LINUX_CLONE_VFORK
+		if ((cflags & (REQUIRED | BANNED)) != REQUIRED)
+			return (EINVAL);
+		/*
+		 * Linux says that THREAD means no signal will be
+		 * sent on exit (even if a non-standard signal is
+		 * requested via LINUX_CLONE_CSIGNAL), so pass
+		 * FORK_NOZOMBIE too.
+		 */
+		flags |= FORK_THREAD | FORK_NOZOMBIE;
+	} else {
+		/* only supported with THREAD */
+		if (cflags & (LINUX_CLONE_FS | LINUX_CLONE_PARENT |
+		    LINUX_CLONE_SYSVSEM))
+			return (EINVAL);
+	}
+	/*
+	 * Since we don't support CLONE_PTRACE, the CLONE_UNTRACED
+	 * flag can be silently ignored.
+	 */
 
-	sig = SCARG(uap, flags) & LINUX_CLONE_CSIGNAL;
+	sig = cflags & LINUX_CLONE_CSIGNAL;
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
 	sig = linux_to_bsd_sig[sig];

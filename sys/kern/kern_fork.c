@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.106 2009/12/23 07:40:31 guenther Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.107 2009/12/28 02:54:24 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -141,10 +141,9 @@ sys_rfork(struct proc *p, void *v, register_t *retval)
 
 	if (rforkflags & RFMEM)
 		flags |= FORK_SHAREVM;
-#ifdef RTHREADS
+
 	if (rforkflags & RFTHREAD)
-		flags |= FORK_THREAD | FORK_SIGHAND;
-#endif
+		flags |= FORK_THREAD | FORK_SIGHAND | FORK_NOZOMBIE;
 
 	return (fork1(p, SIGCHLD, flags, NULL, 0, NULL, NULL, retval, NULL));
 }
@@ -189,6 +188,20 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 #if NSYSTRACE > 0
 	void *newstrp = NULL;
 #endif
+
+	/* sanity check some flag combinations */
+	if (flags & FORK_THREAD)
+	{
+#ifdef RTHREADS
+		if ((flags & (FORK_SIGHAND | FORK_NOZOMBIE)) !=
+		    (FORK_SIGHAND | FORK_NOZOMBIE))
+			return (EINVAL);
+#else
+		return (ENOTSUP);
+#endif
+	}
+	if (flags & FORK_SIGHAND && (flags & FORK_SHAREVM) == 0)
+		return (EINVAL);
 
 	/*
 	 * Although process entries are dynamically created, we still keep

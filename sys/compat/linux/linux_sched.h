@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_sched.h,v 1.2 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: linux_sched.h,v 1.3 2009/12/28 02:54:24 guenther Exp $	*/
 /*	$NetBSD: linux_sched.h,v 1.1 1999/05/12 19:49:09 thorpej Exp $	*/
 
 /*-
@@ -42,11 +42,22 @@
 #define	LINUX_CLONE_FS		0x00000200	/* share "file system" info */
 #define	LINUX_CLONE_FILES	0x00000400	/* share file descriptors */
 #define	LINUX_CLONE_SIGHAND	0x00000800	/* share signal actions */
-#define	LINUX_CLONE_PID		0x00001000	/* share process ID */
+#define	LINUX_CLONE_PID		0x00001000	/* no longer supported */
 #define	LINUX_CLONE_PTRACE	0x00002000	/* ptrace(2) continues on
 						   child */
 #define	LINUX_CLONE_VFORK	0x00004000	/* parent blocks until child
 						   exits */
+#define	LINUX_CLONE_PARENT	0x00008000	/* create sibling, not child */
+#define	LINUX_CLONE_THREAD	0x00010000	/* new thread */
+#define	LINUX_CLONE_NEWNS	0x00020000	/* don't share mount changes */
+#define	LINUX_CLONE_SYSVSEM	0x00040000	/* share sysV SEM_UNDO */
+#define	LINUX_CLONE_SETTLS	0x00080000	/* new thread-local-storage? */
+#define	LINUX_CLONE_PARENT_SETTID  0x00100000	/* set the TID in the parent */
+#define	LINUX_CLONE_CHILD_CLEARTID 0x00200000	/* clear the TID in the child */
+#define	LINUX_CLONE_DETACHED	0x00400000	/* Unused, ignored */
+#define	LINUX_CLONE_UNTRACED	0x00800000	/* undo LINUX_CLONE_PTRACE */
+#define	LINUX_CLONE_CHILD_SETTID 0x01000000	/* set the TID in the child */
+#define	LINUX_CLONE_STOPPED	0x02000000	/* Start in stopped state */
 
 struct linux_sched_param {
 	int	sched_priority;
