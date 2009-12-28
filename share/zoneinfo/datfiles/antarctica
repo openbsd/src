@@ -1,6 +1,6 @@
-# $OpenBSD: antarctica,v 1.20 2009/11/09 20:45:05 millert Exp $
+# $OpenBSD: antarctica,v 1.21 2009/12/28 22:03:23 millert Exp $
 # <pre>
-# @(#)antarctica	8.6
+# @(#)antarctica	8.7
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
