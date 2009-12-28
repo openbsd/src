@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.17 2008/10/20 10:25:16 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.18 2009/12/28 21:27:03 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,7 @@ sub fill_entries
 sub synch
 {
 	my $self = shift;
-	return if $main::not;
+	return $self if $main::not;
 
 	if (!unlink $self->{filename}) {
 		if ($self->{nonempty}) {
@@ -68,6 +68,7 @@ sub synch
 	} else {
 		$self->{nonempty} = 0;
 	}
+	return $self;
 } 
 
 sub list
@@ -85,6 +86,13 @@ sub list
 		}
 		return $self->{nonempty};
 	}
+}
+
+sub erase
+{
+	my $self = shift;
+	$self->{entries} = {};
+	$self->synch;
 }
 
 sub delete
