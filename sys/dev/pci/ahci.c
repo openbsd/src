@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.155 2009/12/08 08:41:59 dlg Exp $ */
+/*	$OpenBSD: ahci.c,v 1.156 2009/12/28 01:36:12 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -446,6 +446,8 @@ static const struct ahci_device ahci_devices[] = {
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP65_AHCI_2,
 	    NULL,		ahci_nvidia_mcp_attach },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP67_AHCI_1,
+	    NULL,		ahci_nvidia_mcp_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP73_AHCI_5,
 	    NULL,		ahci_nvidia_mcp_attach },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_MCP73_AHCI_9,
 	    NULL,		ahci_nvidia_mcp_attach },
