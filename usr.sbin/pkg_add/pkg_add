@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.444 2009/12/28 21:29:42 espie Exp $
+# $OpenBSD: pkg_add,v 1.445 2009/12/29 13:58:18 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -170,6 +170,21 @@ sub complete
 
 	for my $n ($set->newer) {
 		$n->complete($state);
+		my $pkgname = $n->pkgname;
+		my $plist = $n->plist;
+		if (is_installed($pkgname) && 
+		    (!$state->{allow_replacing} ||	
+		      !$state->{defines}->{installed} &&
+		      !$plist->has_new_sig($state) && 
+		      !$plist->uses_old_libs)) {
+			$n->{tweaked} = 
+			    OpenBSD::Add::tweak_package_status($pkgname, $state);
+			$state->say("Not reinstalling $pkgname")
+			    if $state->verbose >= 2 and !$n->{tweaked};
+			$state->tracker->uptodate($set);
+			$state->tracker->{uptodate}->{$pkgname} = 1;
+			$n->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
+		}
 		return 1 if $n->has_error;
 	}
 	for my $o ($set->older) {
