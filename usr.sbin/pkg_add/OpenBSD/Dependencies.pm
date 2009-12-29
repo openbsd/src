@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.107 2009/12/29 14:21:47 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.108 2009/12/29 14:36:53 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -474,14 +474,18 @@ sub solve_dependency
 	my $v;
 
 	if (defined $self->cached($dep)) {
-#		if (defined $global_cache->{$dep->{pattern}}) {
-#			$state->say("Global cache hit on $dep->{pattern}");
-#		}
-#		$state->say("Cache hit on $dep->{pattern}:", ref($self->cached($dep)));
+		if ($state->{defines}->{stat_cache}) {
+			if (defined $global_cache->{$dep->{pattern}}) {
+				$state->print("Global ");
+			}
+			$state->say("Cache hit on $dep->{pattern}:", ref($self->cached($dep)));
+		}
 		$v = $self->cached($dep)->do($self, $state, $dep, $package);
 		return $v if $v;
 	}
-#	$state->say("No cache hit on $dep->{pattern}");
+	if ($state->{defines}->{stat_cache}) {
+		$state->say("No cache hit on $dep->{pattern}");
+	}
 
 	if ($state->{allow_replacing}) {
 		
@@ -575,7 +579,6 @@ sub dump
 	    	join(',', (map {$_->print} @{$self->{deplist}})), 
 		")" 
 	    	if @{$self->{deplist}} > 0;
-	    print "!!" if $self->{not_ready};
 	    print "\n";
 	}
 }
