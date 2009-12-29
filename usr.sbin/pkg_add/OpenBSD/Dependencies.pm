@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.106 2009/12/29 14:11:46 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.107 2009/12/29 14:21:47 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -188,6 +188,81 @@ sub find_in_new_source
 	return $self->find_in_already_done($solver, $state, $obj);
 }
 
+package _cache;
+sub new
+{
+	my ($class, $v) = @_;
+	bless \$v, $class;
+}
+
+package _cache::self;
+our @ISA=(qw(_cache));
+sub do
+{
+	my ($v, $solver, $state, $dep, $package) = @_;
+	push(@{$package->{before}}, $$v);
+	return $$v;
+}
+
+package _cache::installed;
+our @ISA=(qw(_cache));
+sub do
+{
+	my ($v, $solver, $state, $dep, $package) = @_;
+	return $$v;
+}
+
+package _cache::to_install;
+our @ISA=(qw(_cache));
+sub do
+{
+	my ($v, $solver, $state, $dep, $package) = @_;
+	if ($state->tracker->{installed}{$$v}) {
+		bless $v, "_cache::installed";
+		set_global($dep, $v);
+		return $$v;
+	}
+	if ($state->tracker->{uptodate}{$$v}) {
+		bless $v, "_cache::installed";
+		set_global($dep, $v);
+		return $$v;
+	}
+	if ($state->tracker->{to_install}{$$v}) {
+		push(@{$solver->{deplist}}, 
+		    $state->tracker->{to_install}{$$v});
+		return $$v;
+	}
+	return;
+}
+
+package _cache::to_update;
+our @ISA=(qw(_cache));
+sub do
+{
+	my ($v, $solver, $state, $dep, $package) = @_;
+	if ($state->tracker->{to_update}{$$v}) {
+		push(@{$solver->{deplist}},
+			$state->tracker->{to_update}{$$v});
+	    	return $$v;
+	}
+	if ($state->tracker->{uptodate}{$$v}) {
+		bless $v, "_cache::installed";
+		set_global($dep, $v);
+		return $$v;
+	}
+	if ($state->tracker->{cant_update}{$$v}) {
+		bless $v, "_cache::installed";
+		set_global($dep, $v);
+		return $$v;
+	}
+	my @candidates = $dep->spec->filter(keys %{$state->tracker->{installed}});
+	if (@candidates > 0) {
+		set_global($dep, _cache::installed->new($candidates[0]));
+		return $candidates[0];
+	}
+	return;
+}
+
 package OpenBSD::Cloner;
 sub clone
 {
@@ -204,6 +279,8 @@ package OpenBSD::Dependencies::Solver;
 our @ISA = (qw(OpenBSD::Cloner));
 
 use OpenBSD::PackageInfo;
+
+my $global_cache = {};
 
 sub merge
 {
@@ -226,8 +303,7 @@ sub find_candidate
 sub new
 {
 	my ($class, $set) = @_;
-	bless {set => $set, 
-	    deplist => [], to_register => {}, all_dependencies => {} }, $class;
+	bless { set => $set }, $class;
 }
 
 sub check_for_loops
@@ -243,7 +319,7 @@ sub check_for_loops
 
 	while (my $set = shift @todo) {
 		next unless defined $set->{solver};
-		for my $l (@{$set->{solver}->{deplist}}) {
+		for my $l (@{$set->solver->{deplist}}) {
 			if ($l eq $initial) {
 				push(@to_merge, $set);
 			}
@@ -324,6 +400,17 @@ sub find_dep_in_stuff_to_install
 {
 	my ($self, $state, $dep) = @_;
 
+	my $v = find_candidate($dep->spec, keys %{$state->tracker->{installed}});
+	if ($v) {
+		set_global($dep, _cache::installed->new($v));
+		return $v;
+	}
+
+	$v = find_candidate($dep->spec, keys %{$state->tracker->{uptodate}});
+	if ($v) {
+		set_global($dep, _cache::installed->new($v));
+		return $v;
+	}
 	# this is tricky, we don't always know what we're going to actually
 	# install yet.
 	my @candidates = $dep->spec->filter(keys %{$state->tracker->{to_update}});
@@ -332,15 +419,52 @@ sub find_dep_in_stuff_to_install
 			my $set = $state->tracker->{to_update}{$k};
 			push(@{$self->{deplist}}, $set);
 		}
-		$self->{not_ready} = 1;
+		if (@candidates == 1) {
+			$self->set_cache($dep, 
+			    _cache::to_update->new($candidates[0]));
+		}
 		return $candidates[0];
 	}
 
-	my $v = find_candidate($dep->spec, keys %{$state->tracker->{to_install}});
+	$v = find_candidate($dep->spec, keys %{$state->tracker->{to_install}});
 	if ($v) {
+		$self->set_cache($dep, _cache::to_install->new($v));
 		push(@{$self->{deplist}}, $state->tracker->{to_install}->{$v});
 	}
 	return $v;
+}
+
+sub cached
+{
+	my ($self, $dep) = @_;
+	return $global_cache->{$dep->{pattern}} or 
+	    $self->{cache}{$dep->{pattern}};
+}
+
+sub set_cache
+{
+	my ($self, $dep, $value) = @_;
+	$self->{cache}{$dep->{pattern}} = $value;
+}
+
+sub set_global
+{
+	my ($dep, $value) = @_;
+	$global_cache->{$dep->{pattern}} = $value;
+}
+
+sub installed_list
+{
+	my $self = shift;
+
+	if (!defined $self->{installed}) {
+		my @l = installed_packages();
+		for my $o ($self->{set}->older_names) {
+			@l = grep {$_ ne $o} @l;
+		}
+		$self->{installed} = \@l;
+	}
+	return $self->{installed};
 }
 
 sub solve_dependency
@@ -349,24 +473,29 @@ sub solve_dependency
 
 	my $v;
 
+	if (defined $self->cached($dep)) {
+#		if (defined $global_cache->{$dep->{pattern}}) {
+#			$state->say("Global cache hit on $dep->{pattern}");
+#		}
+#		$state->say("Cache hit on $dep->{pattern}:", ref($self->cached($dep)));
+		$v = $self->cached($dep)->do($self, $state, $dep, $package);
+		return $v if $v;
+	}
+#	$state->say("No cache hit on $dep->{pattern}");
+
 	if ($state->{allow_replacing}) {
 		
 		$v = $self->find_dep_in_self($state, $dep);
 		if ($v) {
+			$self->set_cache($dep, _cache::self->new($v));
 			push(@{$package->{before}}, $v);
 			return $v;
 		}
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
-		if ($v) {
-			return $v;
-		}
+		return $v if $v;
 	}
 
-	my @l = installed_packages();
-	for my $o ($self->{set}->older_names) {
-		@l = grep {$_ ne $o} @l;
-	}
-	$v = find_candidate($dep->spec, @l);
+	$v = find_candidate($dep->spec, @{$self->installed_list});
 	if ($v) {
 		if ($state->{newupdates}) {
 			if ($state->tracker->is_known($v)) {
@@ -375,15 +504,12 @@ sub solve_dependency
 			my $set = OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->create_old($v, $state));
 			push(@{$self->{deplist}}, $set);
 			$state->tracker->todo($set);
-			$self->{not_ready} = 1;
 		}
 		return $v;
 	}
 	if (!$state->{allow_replacing}) {
 		$v = $self->find_dep_in_stuff_to_install($state, $dep);
-		if ($v) {
-			return $v;
-		}
+		return $v if $v;
 	}
 
 	$v = $self->find_dep_in_repositories($state, $dep);
@@ -393,6 +519,7 @@ sub solve_dependency
 		$state->tracker->todo($s);
 		
 		push(@{$self->{deplist}}, $s);
+		$self->set_cache($dep, _cache::to_install->new($v->{name}));
 		return $v->{name};
 	}
 
@@ -407,6 +534,11 @@ sub solve_dependency
 sub solve_depends
 {
 	my ($self, $state) = @_;
+
+	$self->{all_dependencies} = {};
+	$self->{to_register} = {};
+	$self->{deplist} = [];
+	$self->{installed} = [];
 
 	for my $package ($self->{set}->newer) {
 		$package->{before} = [];
