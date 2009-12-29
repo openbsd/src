@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.162 2009/07/29 20:00:47 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.163 2009/12/29 16:37:10 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2898,6 +2898,14 @@ LEAF_ENTRY(cpu_idle_leave)
 EXIT(cpu_idle_leave)
 
 ENTRY(switch_trampoline,0)
+#ifdef MULTIPROCESSOR
+	copy	t4, r3
+	copy	arg0, r4
+	bl	proc_trampoline_mp, rp
+	nop
+	copy	r4, arg0
+	copy	r3, t4
+#endif
 	ldil	L%cpl, t1
 	stw	r0, R%cpl(t1)
 	.call
