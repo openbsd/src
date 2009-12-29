@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.446 2009/12/29 14:11:46 espie Exp $
+# $OpenBSD: pkg_add,v 1.447 2009/12/29 14:15:53 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -254,14 +254,12 @@ sub find_conflicts
 {
 	my ($set, $state) = @_;
 
-	my @conflicts;
+	my $c = $set->conflict_cache;
 
 	for my $handle ($set->newer) {
-		push(@conflicts, 
-		    OpenBSD::PkgCfl::find_all($handle->plist, $state));
+		$c->add($handle);
 	}
-	my %conflicts = map {($_,1)} @conflicts;
-	return keys %conflicts;
+	return $c->list;
 }
 
 sub mark_as_manual_install
