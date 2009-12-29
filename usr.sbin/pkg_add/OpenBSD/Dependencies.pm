@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.103 2009/12/28 21:30:09 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.104 2009/12/29 13:51:50 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -191,6 +191,10 @@ sub find_in_new_source
 package OpenBSD::Dependencies::Solver;
 
 use OpenBSD::PackageInfo;
+
+sub merge
+{
+}
 
 sub find_candidate
 {

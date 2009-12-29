@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.43 2009/12/28 10:42:02 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.44 2009/12/29 13:51:50 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -77,6 +77,7 @@ sub cleanup
 	}
 	$self->{error} //= $error;
 	delete $self->{solver};
+	delete $self->{conflict_cache};
 	$self->{finished} = 1;
 }
 
@@ -273,10 +274,22 @@ sub from_location
 	return $set;
 }
 
+sub merge_if_exists
+{
+	my ($self, $k, @extra) = @_;
+
+	if (defined $self->{$k}) {
+		$self->{$k}->merge(map {$_->{$k}} @extra);
+	}
+}
+
 # Merge several updatesets together
 sub merge
 {
 	my ($self, $tracker, @sets) = @_;
+
+	$self->merge_if_exists('solver', @sets);
+	$self->merge_if_exists('conflict_cache', @sets);
 	# Apparently simple, just add the missing parts
 	for my $set (@sets) {
 		$self->add_newer($set->newer);
@@ -291,7 +304,9 @@ sub merge
 	}
 	# then regen tracker info for $self
 	$tracker->todo($self);
-	delete $self->{solver};
+	if (defined $self->{solver}) {
+		delete $self->{solver}->{deplist};
+	}
 	return $self;
 }
 
