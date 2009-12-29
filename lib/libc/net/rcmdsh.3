@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmdsh.3,v 1.12 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: rcmdsh.3,v 1.13 2009/12/29 10:25:43 sobrado Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 29 2009 $
 .Dt RCMDSH 3
 .Os
 .Sh NAME
@@ -70,8 +70,8 @@ is ignored; it is only included to provide an interface similar to
 .Xr rcmd 3 .
 .Pp
 If the connection succeeds, a socket in the
-.Tn UNIX
-domain of type
+.Ux Ns -domain
+of type
 .Dv SOCK_STREAM
 is returned to the caller, and given to the remote
 command as stdin and stdout, and stderr.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bind.2,v 1.15 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: bind.2,v 1.16 2009/12/29 10:25:43 sobrado Exp $
 .\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)bind.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 29 2009 $
 .Dt BIND 2
 .Os
 .Sh NAME
@@ -56,9 +56,10 @@ indicates the amount of space pointed to by
 .Fa name ,
 in bytes.
 .Sh NOTES
-Binding a name in the UNIX domain creates a socket in the file
-system that must be deleted by the caller when it is no longer
-needed (using
+Binding a name in the
+.Ux Ns -domain
+creates a socket in the file system that must be deleted by the caller
+when it is no longer needed (using
 .Xr unlink 2 ) .
 .Pp
 The rules used in name binding vary between communication domains.
@@ -98,7 +99,8 @@ The
 parameter is not in a valid part of the user address space.
 .El
 .Pp
-The following errors are specific to binding names in the UNIX domain.
+The following errors are specific to binding names in the
+.Ux Ns -domain .
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.

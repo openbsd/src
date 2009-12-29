@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.21 2008/04/15 07:54:48 ajacoutot Exp $
+.\"	$OpenBSD: lpd.8,v 1.22 2009/12/29 10:25:43 sobrado Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lpd.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 15 2008 $
+.Dd $Mdocdate: December 29 2009 $
 .Dt LPD 8
 .Os
 .Sh NAME
@@ -130,8 +130,8 @@ flag selects
 mode, in which
 .Nm
 does not listen on a TCP socket but only takes commands from a
-.Ux
-domain socket.
+.Ux Ns -domain
+socket.
 This is valuable when the machine on which
 .Nm
 runs is subject to attack over the network and it is desired that the

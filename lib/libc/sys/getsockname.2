@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockname.2,v 1.24 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: getsockname.2,v 1.25 2009/12/29 10:25:43 sobrado Exp $
 .\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockname.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 29 2009 $
 .Dt GETSOCKNAME 2
 .Os
 .Sh NAME
@@ -157,6 +157,8 @@ The
 function call appeared in
 .Bx 4.2 .
 .Sh BUGS
-Names bound to sockets in the UNIX domain are inaccessible;
+Names bound to sockets in the
+.Ux Ns -domain
+are inaccessible;
 .Nm getsockname
 returns a zero length name.

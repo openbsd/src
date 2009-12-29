@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inetd.8,v 1.33 2008/06/28 10:54:45 sobrado Exp $
+.\"	$OpenBSD: inetd.8,v 1.34 2009/12/29 10:25:43 sobrado Exp $
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
 .\"
-.Dd $Mdocdate: June 28 2008 $
+.Dd $Mdocdate: December 29 2009 $
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -168,8 +168,8 @@ This can simply be a single numeric argument or a range of versions.
 A range is bounded by the low version to the high version -
 .Dq rusers/1-3 .
 For
-.Ux
-domain sockets this field specifies the path name of the socket.
+.Ux Ns -domain
+sockets this field specifies the path name of the socket.
 .Pp
 The
 .Em socket type
@@ -211,8 +211,7 @@ A
 of
 .Dq unix
 is used to specify a socket in the
-.Ux
-domain.
+.Ux Ns -domain .
 .Pp
 The
 .Em wait/nowait
