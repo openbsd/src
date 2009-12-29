@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.105 2009/12/29 14:03:31 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.106 2009/12/29 14:11:46 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -188,12 +188,28 @@ sub find_in_new_source
 	return $self->find_in_already_done($solver, $state, $obj);
 }
 
+package OpenBSD::Cloner;
+sub clone
+{
+	my ($self, $h, @extra) = @_;
+	for my $extra (@extra) {
+		next unless defined $extra;
+		while (my ($k, $e) = each %{$extra->{$h}}) {
+			$self->{$h}{$k} //= $e;
+		}
+    	}
+}
+
 package OpenBSD::Dependencies::Solver;
+our @ISA = (qw(OpenBSD::Cloner));
 
 use OpenBSD::PackageInfo;
 
 sub merge
 {
+	my ($solver, @extra) = @_;
+
+	$solver->clone('cache', @extra);
 }
 
 sub find_candidate
