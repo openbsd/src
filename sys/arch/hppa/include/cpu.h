@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.61 2009/12/29 13:11:40 jsing Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.62 2009/12/29 13:40:09 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -69,6 +69,8 @@
 
 struct cpu_info {
 	struct proc	*ci_curproc;
+
+	int		ci_want_resched;
 
 	struct schedstate_percpu ci_schedstate;
 	u_int32_t	ci_randseed;
@@ -156,11 +158,11 @@ extern register_t kpsw;
 #define	signotify(p)		setsoftast(p)
 #define	need_resched(ci)						\
 	do {								\
-		want_resched = 1;					\
+		(ci)->ci_want_resched = 1;				\
 		if ((ci)->ci_curproc != NULL)				\
 			setsoftast((ci)->ci_curproc);			\
 	} while (0)
-#define clear_resched(ci) 	want_resched = 0
+#define clear_resched(ci) 	(ci)->ci_want_resched = 0
 #define	need_proftick(p)	setsoftast(p)
 #define	PROC_PC(p)		((p)->p_md.md_regs->tf_iioq_head)
 
@@ -170,8 +172,6 @@ extern register_t kpsw;
 #define MD_CACHE_PURGE 1
 #define MD_CACHE_CTL(a,s,t)	\
 	(((t)? pdcache : fdcache) (HPPA_SID_KERNEL,(vaddr_t)(a),(s)))
-
-extern int want_resched;
 
 #define DELAY(x) delay(x)
 
