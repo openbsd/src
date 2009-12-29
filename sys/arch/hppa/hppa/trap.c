@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.101 2009/02/04 17:23:18 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.102 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -93,7 +93,7 @@ const char *trap_type[] = {
 };
 int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
 
-int want_resched, astpending;
+int want_resched;
 
 #define	frame_regmap(tf,r)	(((u_int *)(tf))[hppa_regmap[(r)]])
 u_char hppa_regmap[32] = {
@@ -136,8 +136,8 @@ userret(struct proc *p)
 {
 	int sig;
 
-	if (astpending) {
-		astpending = 0;
+	if (p->p_md.md_astpending) {
+		p->p_md.md_astpending = 0;
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
 			ADDUPROF(p);

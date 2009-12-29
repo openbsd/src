@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.25 2009/03/15 19:40:40 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -59,7 +59,6 @@
 
 extern volatile int cpl;
 extern volatile u_long ipending, imask[NIPL];
-extern int astpending;
 
 #ifdef DIAGNOSTIC
 void splassert_fail(int, int, const char *);
@@ -126,7 +125,7 @@ splx(int ncpl)
 #define	SOFTINT_MASK ((1 << (IPL_SOFTCLOCK - 1)) | \
     (1 << (IPL_SOFTNET - 1)) | (1 << (IPL_SOFTTTY - 1)))
 
-#define	setsoftast()	(astpending = 1)
+#define	setsoftast(p)	(p->p_md.md_astpending = 1)
 #define	setsoftnet()	softintr(1 << (IPL_SOFTNET - 1))
 
 void	*softintr_establish(int, void (*)(void *), void *);

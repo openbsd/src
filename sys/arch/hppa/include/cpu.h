@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.60 2009/02/01 14:53:04 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.61 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -153,10 +153,15 @@ extern register_t kpsw;
 #define	CLKF_USERMODE(framep)	((framep)->tf_flags & T_USER)
 #define	CLKF_SYSCALL(framep)	((framep)->tf_flags & TFF_SYS)
 
-#define	signotify(p)		(setsoftast())
-#define	need_resched(ci)	(want_resched = 1, setsoftast())
+#define	signotify(p)		setsoftast(p)
+#define	need_resched(ci)						\
+	do {								\
+		want_resched = 1;					\
+		if ((ci)->ci_curproc != NULL)				\
+			setsoftast((ci)->ci_curproc);			\
+	} while (0)
 #define clear_resched(ci) 	want_resched = 0
-#define	need_proftick(p)	setsoftast()
+#define	need_proftick(p)	setsoftast(p)
 #define	PROC_PC(p)		((p)->p_md.md_regs->tf_iioq_head)
 
 #ifndef _LOCORE
