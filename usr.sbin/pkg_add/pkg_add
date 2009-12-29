@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.449 2009/12/29 18:16:14 espie Exp $
+# $OpenBSD: pkg_add,v 1.450 2009/12/29 20:52:44 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -226,14 +226,20 @@ sub complete
 		      !$state->{defines}->{installed} &&
 		      !$plist->has_new_sig($state) && 
 		      !$plist->uses_old_libs)) {
-			$n->{tweaked} = 
+		      	my $o = $set->{older}->{$pkgname};
+			if (!defined $o) {
+				$o = OpenBSD::Handle->create_old($pkgname, $state);
+				$set->add_older($o);
+			}
+			$o->{update_found} = $o;
+			$set->move_kept($o);
+			$o->{tweaked} = 
 			    OpenBSD::Add::tweak_package_status($pkgname, $state);
 			$state->say("Not reinstalling $pkgname")
 			    if $state->verbose >= 2 and !$n->{tweaked};
-			$state->tracker->uptodate($set);
-			$state->tracker->{uptodate}->{$pkgname} = 1;
-			$n->cleanup(OpenBSD::Handle::ALREADY_INSTALLED);
-		}
+			delete $set->{newer}->{$pkgname};
+			$n->cleanup;
+		} 
 		return 1 if $n->has_error;
 	}
 	for my $o ($set->older) {
@@ -775,7 +781,9 @@ sub install_set
 			return ();
 		}
 	}
-	really_add($set, $state);
+	if ($set->newer > 0 || $set->older_to_do > 0) {
+		really_add($set, $state);
+	}
 	$set->cleanup;
 	$state->tracker->done($set);
 	return ();
