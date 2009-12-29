@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.447 2009/12/29 14:15:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.448 2009/12/29 14:29:49 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -711,20 +711,16 @@ sub install_set
 		return ();
 	}
 
-	if (!defined $set->{solver} || $set->{solver}->{not_ready}) {
-		delete $set->{solver};
-		$set->{solver} = OpenBSD::Dependencies::Solver->new($set);
-		my @deps = $set->{solver}->solve_depends($state);
-		if ($state->verbose >= 2) {
-			$set->{solver}->dump;
+	my @deps = $set->solver->solve_depends($state);
+	if ($state->verbose >= 2) {
+		$set->solver->dump;
+	}
+	if (@deps > 0) {
+		$state->build_deptree($set, @deps);
+		if ($set->solver->check_for_loops($state)) {
+			return $set;
 		}
-		if (@deps > 0) {
-			$state->build_deptree($set, @deps);
-			if ($set->{solver}->check_for_loops($state)) {
-				return $set;
-			}
-			return (@deps, $set);
-		}
+		return (@deps, $set);
 	}
 
 	if ($set->older_to_do) {
@@ -736,7 +732,7 @@ sub install_set
 	}
 
 	# verify dependencies have been installed
-	my @baddeps = $set->{solver}->check_depends;
+	my @baddeps = $set->solver->check_depends;
 
 	if (@baddeps) {
 		$state->errsay("Can't install ", $set->print,
@@ -747,14 +743,13 @@ sub install_set
 		return ();
 	}
 
-#	print "Didn't need to process: ", join(',', @{$set->{solver}->{todo}}), "\n";
-	if (!$set->{solver}->solve_wantlibs($state)) {
+	if (!$set->solver->solve_wantlibs($state)) {
 		$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 		$state->tracker->cant($set);
 		$bad++;
 		return ();
 	}
-#	if (!$set->{solver}->solve_tags($state)) {
+#	if (!$set->solver->solve_tags($state)) {
 #		if (!$defines{libdepends}) {
 #			$bad++;
 #			return ();
