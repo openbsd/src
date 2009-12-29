@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.9 2007/05/31 19:19:34 jmc Exp $
+.\"	$OpenBSD: utimes.2,v 1.10 2009/12/29 16:12:28 sobrado Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 29 2009 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -115,6 +115,7 @@ does not match the owner of the file and is not the superuser.
 .It Bq Er EROFS
 The file system containing the file is mounted read-only.
 .El
+.Pp
 .Fn futimes
 will fail if:
 .Bl -tag -width Er
