@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.108 2009/12/29 14:36:53 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.109 2009/12/29 15:21:02 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -217,11 +217,6 @@ our @ISA=(qw(_cache));
 sub do
 {
 	my ($v, $solver, $state, $dep, $package) = @_;
-	if ($state->tracker->{installed}{$$v}) {
-		bless $v, "_cache::installed";
-		set_global($dep, $v);
-		return $$v;
-	}
 	if ($state->tracker->{uptodate}{$$v}) {
 		bless $v, "_cache::installed";
 		set_global($dep, $v);
@@ -400,13 +395,7 @@ sub find_dep_in_stuff_to_install
 {
 	my ($self, $state, $dep) = @_;
 
-	my $v = find_candidate($dep->spec, keys %{$state->tracker->{installed}});
-	if ($v) {
-		set_global($dep, _cache::installed->new($v));
-		return $v;
-	}
-
-	$v = find_candidate($dep->spec, keys %{$state->tracker->{uptodate}});
+	my $v = find_candidate($dep->spec, keys %{$state->tracker->{uptodate}});
 	if ($v) {
 		set_global($dep, _cache::installed->new($v));
 		return $v;
