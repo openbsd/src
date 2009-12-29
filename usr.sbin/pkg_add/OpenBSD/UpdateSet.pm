@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.44 2009/12/29 13:51:50 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.45 2009/12/29 18:16:14 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -101,6 +101,15 @@ sub add_older
 	my $self = shift;
 	for my $h (@_) {
 		$self->{older}->{$h->pkgname} = $h;
+	}
+	return $self;
+}
+
+sub add_kept
+{
+	my $self = shift;
+	for my $h (@_) {
+		$self->{kept}->{$h->pkgname} = $h;
 	}
 	return $self;
 }
@@ -218,7 +227,12 @@ sub print
 sub short_print
 {
 	my $self = shift;
-	return join('+', sort $self->newer_names);
+	my $result = join('+', sort $self->newer_names);
+	if (length $result > 30) {
+		return substr($result, 0, 27)."...";
+	} else {
+		return $result;
+	}
 }
 
 sub validate_plists
@@ -278,9 +292,13 @@ sub merge_if_exists
 {
 	my ($self, $k, @extra) = @_;
 
-	if (defined $self->{$k}) {
-		$self->{$k}->merge(map {$_->{$k}} @extra);
+	my @list = ();
+	for my $s (@extra) {
+		if ($s ne $self && defined $s->{$k}) {
+			push(@list, $s->{$k});
+		}
 	}
+	$self->$k->merge(@list);
 }
 
 # Merge several updatesets together
@@ -292,8 +310,10 @@ sub merge
 	$self->merge_if_exists('conflict_cache', @sets);
 	# Apparently simple, just add the missing parts
 	for my $set (@sets) {
+		next if $set eq $self;
 		$self->add_newer($set->newer);
 		$self->add_older($set->older);
+		$self->add_kept($set->kept);
 		# ... and mark it as already done
 		$set->{finished} = 1;
 		$tracker->handle_set($set);
@@ -301,12 +321,11 @@ sub merge
 		$set->{updates} = 0;
 		# XXX and mark it as merged, for eventual updates
 		$set->{merged} = $self;
+		delete $set->{solver};
+		delete $set->{conflict_cache};
 	}
 	# then regen tracker info for $self
 	$tracker->todo($self);
-	if (defined $self->{solver}) {
-		delete $self->{solver}->{deplist};
-	}
 	return $self;
 }
 

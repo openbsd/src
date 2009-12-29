@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.109 2009/12/29 15:21:02 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.110 2009/12/29 18:16:14 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -223,8 +223,7 @@ sub do
 		return $$v;
 	}
 	if ($state->tracker->{to_install}{$$v}) {
-		push(@{$solver->{deplist}}, 
-		    $state->tracker->{to_install}{$$v});
+		$solver->add_dep($state->tracker->{to_install}{$$v});
 		return $$v;
 	}
 	return;
@@ -236,8 +235,7 @@ sub do
 {
 	my ($v, $solver, $state, $dep, $package) = @_;
 	if ($state->tracker->{to_update}{$$v}) {
-		push(@{$solver->{deplist}},
-			$state->tracker->{to_update}{$$v});
+		$solver->add_dep($state->tracker->{to_update}{$$v});
 	    	return $$v;
 	}
 	if ($state->tracker->{uptodate}{$$v}) {
@@ -277,6 +275,12 @@ use OpenBSD::PackageInfo;
 
 my $global_cache = {};
 
+sub add_dep
+{
+	my ($self, $d) = @_;
+	$self->{deplist}{$d} = $d;
+}
+
 sub merge
 {
 	my ($solver, @extra) = @_;
@@ -314,7 +318,7 @@ sub check_for_loops
 
 	while (my $set = shift @todo) {
 		next unless defined $set->{solver};
-		for my $l (@{$set->solver->{deplist}}) {
+		for my $l (values %{$set->solver->{deplist}}) {
 			if ($l eq $initial) {
 				push(@to_merge, $set);
 			}
@@ -331,16 +335,18 @@ sub check_for_loops
 		for my $set (@to_merge) {
 			my $k = $set;
 			while ($k ne $initial && !$merged->{$k}) {
-				$state->say("| ", $k->print);
-				push(@real, $k);
+				unless ($k->{finished}) {
+					$state->say("| ", $k->print);
+					delete $k->solver->{deplist};
+					push(@real, $k);
+				}
 				$merged->{$k} = 1;
 				$k = $done->{$k};
 			}
 		}
+		delete $initial->solver->{deplist};
 		$initial->merge($state->tracker, @real);
-		return 1;
 	}
-	return 0;
 }
 
 sub dependencies
@@ -406,7 +412,7 @@ sub find_dep_in_stuff_to_install
 	if (@candidates > 0) {
 		for my $k (@candidates) {
 			my $set = $state->tracker->{to_update}{$k};
-			push(@{$self->{deplist}}, $set);
+			$self->add_dep($set);
 		}
 		if (@candidates == 1) {
 			$self->set_cache($dep, 
@@ -418,7 +424,7 @@ sub find_dep_in_stuff_to_install
 	$v = find_candidate($dep->spec, keys %{$state->tracker->{to_install}});
 	if ($v) {
 		$self->set_cache($dep, _cache::to_install->new($v));
-		push(@{$self->{deplist}}, $state->tracker->{to_install}->{$v});
+		$self->add_dep($state->tracker->{to_install}->{$v});
 	}
 	return $v;
 }
@@ -495,7 +501,7 @@ sub solve_dependency
 				return $v;
 			}
 			my $set = OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->create_old($v, $state));
-			push(@{$self->{deplist}}, $set);
+			$self->add_dep($set);
 			$state->tracker->todo($set);
 		}
 		return $v;
@@ -511,7 +517,7 @@ sub solve_dependency
 
 		$state->tracker->todo($s);
 		
-		push(@{$self->{deplist}}, $s);
+		$self->add_dep($s);
 		$self->set_cache($dep, _cache::to_install->new($v->{name}));
 		return $v->{name};
 	}
@@ -520,7 +526,7 @@ sub solve_dependency
 	$v = $dep->{def};
 	my $s = OpenBSD::UpdateSet->create_new($v);
 	$state->tracker->todo($s);
-	push(@{$self->{deplist}}, $s);
+	$self->add_dep($s);
 	return $v;
 }
 
@@ -530,7 +536,7 @@ sub solve_depends
 
 	$self->{all_dependencies} = {};
 	$self->{to_register} = {};
-	$self->{deplist} = [];
+	$self->{deplist} = {};
 	$self->{installed} = [];
 
 	for my $package ($self->{set}->newer) {
@@ -542,7 +548,7 @@ sub solve_depends
 		}
 	}
 
-	return @{$self->{deplist}};
+	return values %{$self->{deplist}};
 }
 
 sub check_depends
@@ -565,9 +571,9 @@ sub dump
 	    print "Direct dependencies for ", $self->{set}->print, 
 	    	" resolve to: ", join(', ',  $self->dependencies);
 	    print " (todo: ", 
-	    	join(',', (map {$_->print} @{$self->{deplist}})), 
+	    	join(',', (map {$_->print} values %{$self->{deplist}})), 
 		")" 
-	    	if @{$self->{deplist}} > 0;
+	    	if %{$self->{deplist}};
 	    print "\n";
 	}
 }
@@ -586,9 +592,6 @@ sub register_dependencies
 			OpenBSD::RequiredBy->new($dep)->add($pkgname);
 		}
 	}
-	delete $self->{toregister};
-	delete $self->{all_dependencies};
-	delete $self->{deplist};
 }
 
 sub repair_dependencies

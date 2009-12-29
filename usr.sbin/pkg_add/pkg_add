@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.448 2009/12/29 14:29:49 espie Exp $
+# $OpenBSD: pkg_add,v 1.449 2009/12/29 18:16:14 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -340,25 +340,30 @@ sub check_forward_dependencies
 	$set->{forward} = OpenBSD::ForwardDependencies->find($set);
 	my $bad = $set->{forward}->check($state);
 
-	if (keys %$bad > 0) {
-#		for my $m (keys %$bad) {
-#			my $s = $state->tracker->is_to_update($m);
-#			if (defined $s) {
-#				$set->merge($state->tracker, $s);
-#			} else {
-#				$set->add_older(OpenBSD::Handle->create_old($m, 
-#				    $state));
-#			}
-#		}
-#		$state->say("Merging ", $set->print, $state->ntogo);
-#		return;
-		if ($state->{defines}->{updatedepends}) {
-		    $state->errsay("Forcing update");
+	if (%$bad) {
+		if ($state->{defines}->{mergeupdates}) {
+			for my $m (keys %$bad) {
+				my $s = $state->tracker->is_to_update($m);
+				if (defined $s) {
+					$set->merge($state->tracker, $s);
+				} else {
+					$set->add_older(OpenBSD::Handle->create_old(
+					    $m, $state));
+				}
+			}
+			$state->say("Merging ", $set->print, $state->ntogo);
+			return 0;
+		} elsif ($state->{defines}->{updatedepends}) {
+			$state->errsay("Forcing update");
+			return 1;
 		} elsif ($state->{interactive}) {
 			if ($state->confirm("Proceed with update anyways", 0)) {
+				return 1;
+			} else {
+				return undef;
 			}
 		} else {
-			return 0;
+			return undef;
 		}
 	}
 	return 1;
@@ -717,17 +722,19 @@ sub install_set
 	}
 	if (@deps > 0) {
 		$state->build_deptree($set, @deps);
-		if ($set->solver->check_for_loops($state)) {
-			return $set;
-		}
+		$set->solver->check_for_loops($state);
 		return (@deps, $set);
 	}
 
 	if ($set->older_to_do) {
-		if (!$set->check_forward_dependencies($state)) {
+		my $r = $set->check_forward_dependencies($state);
+		if (!defined $r) {
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL);
 			$state->tracker->cant($set);
 			return ();
+		} 
+		if ($r == 0) {
+			return $set;
 		}
 	}
 
