@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.66 2009/12/28 21:30:09 espie Exp $
+# $OpenBSD: Replace.pm,v 1.67 2009/12/29 20:34:10 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -379,7 +379,10 @@ sub adjust_depends_closure
 	for my $pkg (OpenBSD::RequiredBy->compute_closure($oldname)) {
 		$state->say("\t", $pkg) if $state->verbose >= 3;
 		$write->add($pkg);
-		OpenBSD::Requiring->new($pkg)->add($plist->pkgname);
+		my $r = OpenBSD::Requiring->new($pkg)->add($plist->pkgname);
+		if ($oldname =~ m/^\.libs\d*\-/o) {
+			$r->delete($oldname);
+		}
 	}
 }
 
