@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.49 2009/12/28 06:55:27 syuu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.50 2009/12/30 01:17:59 syuu Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -369,22 +369,23 @@ struct cpu_info {
 	struct cpu_info *ci_self;	/* pointer to this structure */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct proc	*ci_curproc;
-	struct user *ci_curprocpaddr;
+	struct user	*ci_curprocpaddr;
 
 	struct schedstate_percpu
-			 ci_schedstate;
-	int		 ci_want_resched;	/* need_resched() invoked */
-	cpuid_t          ci_cpuid;              /* our CPU ID */
-	uint32_t	 ci_randseed;		/* per cpu random seed */
-	int		 ci_ipl;		/* software IPL */
-	uint32_t	 ci_softpending;	/* pending soft interrupts */
-	int	         ci_clock_started;
-	u_int32_t        ci_cpu_counter_last;
-	u_int32_t        ci_cpu_counter_interval;
-	u_int32_t        ci_pendingticks;
+			ci_schedstate;
+	int		ci_want_resched;	/* need_resched() invoked */
+	cpuid_t		ci_cpuid;              /* our CPU ID */
+	uint32_t	ci_randseed;		/* per cpu random seed */
+	int		ci_ipl;		/* software IPL */
+	uint32_t	ci_softpending;	/* pending soft interrupts */
+	int		ci_clock_started;
+	u_int32_t	ci_cpu_counter_last;
+	u_int32_t	ci_cpu_counter_interval;
+	u_int32_t	ci_pendingticks;
+	struct pmap	*ci_curpmap;
 #ifdef MULTIPROCESSOR
-	u_long           ci_flags;		/* flags; see below */
-	struct intrhand  ci_ipiih;
+	u_long		ci_flags;		/* flags; see below */
+	struct intrhand	ci_ipiih;
 #endif
 };
 

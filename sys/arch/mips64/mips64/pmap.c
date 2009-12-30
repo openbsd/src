@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 2009/12/28 07:18:39 syuu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.45 2009/12/30 01:17:59 syuu Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -193,7 +193,7 @@ pmap_invalidate_user_page(pmap_t pmap, vaddr_t va)
 			unsigned int m = 1 << i;
 			if (pmap->pm_tlbgen[i] != tlbpid_gen[i])
 				continue;
-			else if (!(pmap->pm_active & m)) {
+			else if (ci->ci_curpmap != pmap) {
 				pmap->pm_tlbgen[i] = 0;
 				continue;
 			}
@@ -265,7 +265,7 @@ pmap_update_user_page(pmap_t pmap, vaddr_t va, pt_entry_t entry)
 			unsigned int m = 1 << i;
 			if (pmap->pm_tlbgen[i] != tlbpid_gen[i])
 				continue;
-			else if (!(pmap->pm_active & m)) {
+			else if (ci->ci_curpmap != pmap) {
 				pmap->pm_tlbgen[i] = 0;
 				continue;
 			}
@@ -586,10 +586,9 @@ void
 pmap_activate(struct proc *p)
 {
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	unsigned int cpuid = cpu_number();
-	unsigned int cpumask = (1 << cpuid);
+	struct cpu_info *ci = curcpu();
 
-	atomic_setbits_int(&pmap->pm_active, cpumask);
+	ci->ci_curpmap = pmap;
 	p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab;
 	pmap_alloc_tlbpid(p);
 }
@@ -600,11 +599,9 @@ pmap_activate(struct proc *p)
 void
 pmap_deactivate(struct proc *p)
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	unsigned int cpuid = cpu_number();
-	unsigned int cpumask = (1 << cpuid);
+	struct cpu_info *ci = curcpu();
 
-	atomic_clearbits_int(&pmap->pm_active, cpumask);
+	ci->ci_curpmap = NULL;
 }
 
 /*
