@@ -1,4 +1,4 @@
-.\"	$OpenBSD: write.2,v 1.32 2009/12/29 10:25:43 sobrado Exp $
+.\"	$OpenBSD: write.2,v 1.33 2009/12/30 09:46:23 fgsch Exp $
 .\"	$NetBSD: write.2,v 1.6 1995/02/27 12:39:43 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)write.2	8.5 (Berkeley) 4/2/94
 .\"
-.Dd $Mdocdate: December 29 2009 $
+.Dd $Mdocdate: December 30 2009 $
 .Dt WRITE 2
 .Os
 .Sh NAME
@@ -182,6 +182,12 @@ An I/O error occurred while reading from or writing to the file system.
 .It Bq Er EAGAIN
 The file was marked for non-blocking I/O, and no data could be
 written immediately.
+.It Bq Er EFAULT
+Part of
+.Fa iov
+or
+.Fa buf
+points outside the process's allocated address space.
 .El
 .Pp
 In addition,
@@ -190,18 +196,22 @@ and
 .Fn pwrite
 may return the following error:
 .Bl -tag -width Er
-.It Bq Er EFAULT
-Part of
-.Fa iov
-or data to be written to the file points outside the process's
-allocated address space.
 .It Bq Er EINVAL
 .Fa nbytes
 was larger than
 .Ev SSIZE_MAX .
 .El
 .Pp
-Also,
+.Fn pwrite
+and
+.Fn pwritev
+may return the following error:
+.Bl -tag -width Er
+.It Bq Er ESPIPE
+.Fa d
+is associated with a pipe, socket, or FIFO.
+.El
+.Pp
 .Fn writev
 and
 .Fn pwritev
