@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.22 2009/11/10 14:32:31 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.23 2009/12/30 09:43:34 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -199,7 +199,7 @@ sub new
 
 	bless { 
 	    exactstem => qr{^$stemspec$}, 
-	    fuzzystem => qr{^$stemspec-.*$}, 
+	    fuzzystem => qr{^$stemspec\-\d.*$}, 
 	    constraints => $constraints, 
 	}, $class;
 }
@@ -207,11 +207,10 @@ sub new
 sub match_ref
 {
 	my ($o, $list) = @_;
-	my @l = grep($o->{fuzzystem}, @$list);
 	my @result = ();
 	# Now, have to extract the version number, and the flavor...
 LOOP1:
-	for my $s (@l) {
+	for my $s (grep($o->{fuzzystem}, @$list)) {
 		my $name = OpenBSD::PackageName->from_string($s);
 		next unless $name->{stem} =~ m/^$o->{exactstem}$/;
 		for my $c (@{$o->{constraints}}) {
@@ -226,11 +225,10 @@ LOOP1:
 sub match_locations
 {
 	my ($o, $list) = @_;
-	my @l = grep { $_->name =~ m/$o->{fuzzystem}/} @$list;
 	my $result = [];
 	# Now, have to extract the version number, and the flavor...
 LOOP2:
-	for my $s (@l) {
+	for my $s (grep { $_->name =~ m/$o->{fuzzystem}/} @$list) {
 		my $name = $s->pkgname;
 		next unless $name->{stem} =~ m/^$o->{exactstem}$/;
 		for my $c (@{$o->{constraints}}) {
@@ -250,7 +248,11 @@ sub new
 	my ($class, $pattern) = @_;
 	my @l = map { $class->subpattern_class->new($_) } 
 		(split /\|/o, $pattern);
-	bless \@l, $class;
+	if (@l == 1) {
+		return $l[0];
+	} else {
+		return bless \@l, $class;
+	}
 }
 
 sub match_ref
