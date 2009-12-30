@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.18 2009/12/30 09:56:26 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.19 2009/12/30 17:37:36 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -94,6 +94,7 @@ sub remove_set
 	my ($self, $set) = @_;
 	for my $n ($set->newer) {
 		delete $self->{to_install}->{$n->pkgname};
+		delete $self->{cant_install}->{$n->pkgname};
 	}
 	for my $n ($set->kept, $set->older, $set->hints) {
 		delete $self->{to_update}->{$n->pkgname};
@@ -117,8 +118,15 @@ sub cant
 	my ($self, $set) = @_;
 	$set->{finished} = 1;
 	$self->remove_set($set);
+	$self->known($set);
 	for my $n ($set->older) {
 		$self->{cant_update}->{$n->pkgname} = 1;
+	}
+	for my $n ($set->newer) {
+		$self->{cant_install}->{$n->pkgname} = 1;
+	}
+	for my $n ($set->kept) {
+		$self->{uptodate}->{$n->pkgname} = 1;
 	}
 }
 
