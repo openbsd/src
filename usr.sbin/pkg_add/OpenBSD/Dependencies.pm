@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.112 2009/12/30 17:37:36 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.113 2009/12/30 17:40:45 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -536,6 +536,10 @@ sub solve_dependency
 
 	# resort to default if nothing else
 	$v = $dep->{def};
+	if (defined $state->{tracker}{cant_install}{$v}) {
+		set_global($dep, _cache::bad->new($v));
+		return $v;
+	}
 	my $s = OpenBSD::UpdateSet->create_new($v);
 	$state->tracker->todo($s);
 	$self->add_dep($s);
