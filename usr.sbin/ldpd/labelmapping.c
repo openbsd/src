@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.3 2009/12/10 21:47:11 michele Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.4 2009/12/30 11:05:58 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -42,7 +42,7 @@ void		gen_label_tlv(struct buf *, u_int32_t);
 
 u_int32_t	tlv_decode_label(struct label_tlv *);
 u_int32_t	decode_fec_elm(char *);
-u_int8_t	decode_fec_len_elm(char *);
+int		decode_fec_len_elm(char *, u_int8_t);
 int		validate_fec_elm(char *);
 
 /* Label Mapping Message */
@@ -95,7 +95,7 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 	struct fec_tlv		*ft;
 	struct label_tlv	*lt;
 	struct map		 map;
-	int			 feclen;
+	int			 feclen, addr_type;
 
 	log_debug("recv_labelmapping: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -137,14 +137,15 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 	len -= sizeof(struct fec_tlv);
 
 	while (feclen >= FEC_ELM_MIN_LEN) {
-		if (validate_fec_elm(buf) < 0) {
+		addr_type = validate_fec_elm(buf);
+		if (addr_type < 0) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid,
 			    lm->type);
 			return (-1);
 		}
 
 		map.prefix = decode_fec_elm(buf);
-		map.prefixlen = decode_fec_len_elm(buf);
+		map.prefixlen = decode_fec_len_elm(buf, addr_type);
 		map.prefix &= prefixlen2mask(map.prefixlen);
 
 		ldpe_imsg_compose_lde(IMSG_LABEL_MAPPING, nbr->peerid, 0, &map,
@@ -207,7 +208,7 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 	struct ldp_msg	*lr;
 	struct fec_tlv	*ft;
 	struct map	 map;
-	int		 feclen;
+	int		 feclen, addr_type;
 
 	log_debug("recv_labelrequest: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -239,14 +240,15 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 	len -= sizeof(struct fec_tlv);
 
 	while (feclen >= FEC_ELM_MIN_LEN) {
-		if (validate_fec_elm(buf) < 0) {
+		addr_type = validate_fec_elm(buf);
+		if (addr_type < 0) {
 			session_shutdown(nbr, S_BAD_TLV_VAL, lr->msgid,
 			    lr->type);
 			return (-1);
 		}
 
 		map.prefix = decode_fec_elm(buf);
-		map.prefixlen = decode_fec_len_elm(buf);
+		map.prefixlen = decode_fec_len_elm(buf, addr_type);
 		map.prefix &= prefixlen2mask(map.prefixlen);
 		map.messageid = lr->msgid;
 
@@ -525,9 +527,12 @@ int
 validate_fec_elm(char *buf)
 {
 	u_int16_t	*family;
+	u_int8_t	 type;
 
-	if (*buf != FEC_WILDCARD && *buf != FEC_PREFIX && *buf !=
-	    FEC_ADDRESS)
+	type = *buf;
+
+	if (type != FEC_WILDCARD && type != FEC_PREFIX &&
+	    type != FEC_ADDRESS)
 		return (-1);
 
 	buf += sizeof(u_int8_t);
@@ -536,7 +541,7 @@ validate_fec_elm(char *buf)
 	if (*family != htons(FEC_IPV4))
 		return (-1);
 
-	return (0);
+	return (type);
 }
 
 u_int32_t
@@ -547,12 +552,29 @@ decode_fec_elm(char *buf)
 	return (fe->addr);
 }
 
-u_int8_t
-decode_fec_len_elm(char *buf)
+int
+decode_fec_len_elm(char *buf, u_int8_t type)
 {
+	u_int8_t len;
+
 	/* Skip type and family */
 	buf += sizeof(u_int8_t);
 	buf += sizeof(u_int16_t);
 
-	return (*buf);
+	len = *buf;
+
+	switch (type) {
+	case FEC_PREFIX:
+		return (len);
+	case FEC_ADDRESS:
+		return (len * 8);
+	case FEC_WILDCARD:
+		/* XXX: not handled for now */
+	default:
+		/* Should not happen */
+		return (-1);
+	}
+
+	/* NOTREACHED */
+	return (-1);
 }
