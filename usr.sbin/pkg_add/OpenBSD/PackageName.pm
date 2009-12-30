@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.36 2009/11/10 11:36:56 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.37 2009/12/30 16:43:08 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -43,7 +43,36 @@ sub splitname
 	}
 }
 
+my $cached = {};
+my $calls = 0;
+my $nohits = 0;
+my $tocalls = 0;
+my $strings = 0;
+
+sub stats
+{
+	require Devel::Size;
+
+	print STDERR "Size=", Devel::Size::total_size($cached), "\n";
+	print STDERR "Total calls: ", $calls, "\n";
+	print STDERR "Cache hits: ", $calls - $nohits, "\n";
+	print STDERR "to_string calls: ", $tocalls, "\n";
+	print STDERR "string compares: ", $strings, "\n";
+	print STDERR join(',', sort keys %$cached), "\n";
+}
+
 sub from_string
+{
+	my ($class, $_) = @_;
+	$calls++;
+	if (!defined $cached->{$_}) {
+		$cached->{$_} = $class->new_from_string($_);
+		$nohits++;
+	}
+	return $cached->{$_};
+}
+
+sub new_from_string
 {
 	my ($class, $_) = @_;
 	if (/^(.*?)\-(\d.*)$/o) {
@@ -51,11 +80,10 @@ sub from_string
 		my $rest = $2;
 		my @all = split /\-/o, $rest;
 		my $version = OpenBSD::PackageName::version->from_string(shift @all);
-		my %flavors = map {($_,1)}  @all;
 		return bless {
 			stem => $stem,
 			version => $version,
-			flavors => \%flavors,
+			flavors => { map {($_, 1)} @all },
 		}, "OpenBSD::PackageName::Name";
 	} else {
 		return bless {
@@ -156,24 +184,33 @@ sub make_dewey
 	}
 }
 
+sub p
+{
+	my $self = shift;
+
+	return defined $self->{p} ? $self->{p} : -1;
+}
+
+sub v
+{
+	my $self = shift;
+
+	return defined $self->{v} ? $self->{v} : -1;
+}
+
 sub from_string
 {
 	my ($class, $string) = @_;
-	my $vnum = -1;
-	my $pnum = -1;
+	my $o = bless {}, $class;
 	if ($string =~ m/^(.*)v(\d+)$/o) {
-		$vnum = $2;
+		$o->{v} = $2;
 		$string = $1;
 	}
 	if ($string =~ m/^(.*)p(\d+)$/o) {
-		$pnum = $2;
+		$o->{p} = $2;
 		$string = $1;
 	}
-	my $o = bless {
-		pnum => $pnum,
-		vnum => $vnum,
-		string => $string,
-	}, $class;
+	$o->{string} = $string;
 
 	$o->make_dewey;
 	return $o;
@@ -182,12 +219,13 @@ sub from_string
 sub to_string
 {
 	my $o = shift;
+	$tocalls++;
 	my $string = $o->{string};
-	if ($o->{pnum} > -1) {
-		$string .= 'p'.$o->{pnum};
+	if (defined $o->{p}) {
+		$string .= 'p'.$o->{p};
 	}
-	if ($o->{vnum} > -1) {
-		$string .= 'v'.$o->{vnum};
+	if (defined $o->{v}) {
+		$string .= 'v'.$o->{v};
 	}
 	return $string;
 }
@@ -195,18 +233,19 @@ sub to_string
 sub pnum_compare
 {
 	my ($a, $b) = @_;
-	return $a->{pnum} <=> $b->{pnum}
+	return $a->p <=> $b->p;
 }
 
 sub compare
 {
 	my ($a, $b) = @_;
 	# Simple case: epoch number
-	if ($a->{vnum} != $b->{vnum}) {
-		return $a->{vnum} <=> $b->{vnum};
+	if ($a->v != $b->v) {
+		return $a->v <=> $b->v;
 	}
 	# Simple case: only p number differs
 	if ($a->{string} eq $b->{string}) {
+		$strings++;
 		return $a->pnum_compare($b);
 	} 
 	# Try a diff in dewey numbers first
@@ -280,7 +319,7 @@ sub from_string
 sub pnum_compare
 {
 	my ($spec, $b) = @_;
-	if ($spec->{pnum} == -1) {
+	if (!defined $spec->{p}) {
 		return 0;
 	} else {
 		return $spec->SUPER::pnum_compare($b);
