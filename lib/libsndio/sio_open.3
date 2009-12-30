@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.21 2009/07/25 11:15:56 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.22 2009/12/30 08:27:12 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2009 $
+.Dd $Mdocdate: December 30 2009 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -142,6 +142,9 @@ function closes the stream and frees all allocated resources
 associated with the
 .Nm libsndio
 handle.
+If the stream is not stopped it will be stopped first as if
+.Fn sio_stop
+is called.
 .Ss Negotiating audio parameters
 Audio streams always use linear interleaved encoding.
 A frame consists of one sample for each channel in the stream.
@@ -421,6 +424,9 @@ Samples in the play buffers are not discarded, and will continue to
 be played after
 .Fn sio_stop
 returns.
+If samples to play are queued but playback hasn't started yet
+then playback is forced immediately; the stream will actually stop
+once the buffer is drained.
 .Ss Playing and recording
 When record mode is selected, the
 .Fn sio_read
@@ -538,6 +544,9 @@ The
 argument contains the number of frames the hardware moved in the stream
 since the last call of
 .Va cb .
+When the stream starts, the callback is invoked with a zero
+.Va delta
+argument.
 The value of the
 .Va arg
 pointer is passed to the callback and can contain anything.
@@ -550,9 +559,6 @@ is called) and adding to the current position
 every time
 .Fn cb
 is called.
-Note that at the beginning the current position might be
-negative indicating that the stream is being buffered,
-but has not reached the hardware yet.
 .Ss Measuring the latency and buffers usage
 The playback latency is the delay it will take for the
 frame just written to become audible, expressed in number of frames.
@@ -567,18 +573,14 @@ There's a phase during which
 .Fn sio_write
 only queues data;
 once there's enough data, actual playback starts.
-During this phase the current position is negative and
-the latency might be longer than
-.Va bufsz .
+During this phase talking about latency is meaningless.
 .Pp
 In any cases, at most
 .Va bufsz
 frames are buffered.
 This value takes into account all buffers,
 including device, kernel and socket buffers.
-During the buffering phase, the number of frames stored
-is equal to the number of frames written.
-Once playback is started, it is equal to the number of frames
+The number of frames stored is equal to the number of frames
 written minus the current position.
 .Pp
 The recording latency is obtained similarly, by subtracting
@@ -770,11 +772,9 @@ The
 server doesn't implement flow control (for performance reasons).
 If the application doesn't consume recorded data fast enough then
 .Dq "control messages"
-are delayed (or lost) and consequently
-overruns and underruns stay unnoticed by the application in the
-.Va SIO_SYNC
-mode (overruns and underruns are handled on the server side, so
-synchronization is never lost).
+are delayed and consequently
+.Va sio_onmove
+callback or volume changes may be delayed.
 .Pp
 The
 .Fn sio_open ,
