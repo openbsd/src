@@ -1,4 +1,4 @@
-/* $OpenBSD: library.c,v 1.2 2006/05/13 16:33:40 deraadt Exp $ */
+/* $OpenBSD: library.c,v 1.3 2009/12/30 04:30:01 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -35,7 +35,7 @@
 #include "prebind_struct.h"
 
 /* TODO - library path from ldconfig */
-#define DEFAULT_PATH "/usr/lib:/usr/X11R6/lib:/usr/local/qte/lib"
+#define DEFAULT_PATH "/usr/lib"
 
 elf_object_t * elf_load_shlib_hint(struct sod *sod, struct sod *req_sod,
     int ignore_hints, const char *libpath);
