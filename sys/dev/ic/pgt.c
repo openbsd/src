@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.55 2009/11/12 15:27:49 deraadt Exp $  */
+/*	$OpenBSD: pgt.c,v 1.56 2009/12/30 01:24:54 chl Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -716,11 +716,10 @@ pgt_update_intr(struct pgt_softc *sc, int hack)
 	 * Check completion of rx into their dirty queues.
 	 */
 	for (i = 0; i < PGT_QUEUE_COUNT; i++) {
-		size_t qdirty, qfree, qtotal;
+		size_t qdirty, qfree;
 
 		qdirty = sc->sc_dirtyq_count[pqs[i]];
 		qfree = sc->sc_freeq_count[pqs[i]];
-		qtotal = qdirty + qfree;
 		/*
 		 * We want the wrap-around here.
 		 */
@@ -734,8 +733,8 @@ pgt_update_intr(struct pgt_softc *sc, int hack)
 #endif
 			npend = pgt_queue_frags_pending(sc, pqs[i]);
 			/*
-			 * Receive queues clean up below, so qfree must
-			 * always be qtotal (qdirty is 0).
+			 * Receive queues clean up below, so qdirty must
+			 * always be 0.
 			 */
 			if (npend > qfree) {
 				if (sc->sc_debug & SC_DEBUG_UNEXPECTED)
@@ -929,7 +928,7 @@ pgt_input_frames(struct pgt_softc *sc, struct mbuf *m)
 	struct mbuf *next;
 	unsigned int n;
 	uint32_t rstamp;
-	uint8_t rate, rssi;
+	uint8_t rssi;
 
 	ic = &sc->sc_ic;
 	ifp = &ic->ic_if;
@@ -1006,7 +1005,6 @@ input:
 		 */
 		rssi = pha->pra_rssi;
 		rstamp = letoh32(pha->pra_clock);
-		rate = pha->pra_rate;
 		n = ieee80211_mhz2ieee(letoh32(pha->pra_frequency), 0);
 		if (n <= IEEE80211_CHAN_MAX)
 			chan = &ic->ic_channels[n];
@@ -3179,33 +3177,26 @@ int
 pgt_dma_alloc_queue(struct pgt_softc *sc, enum pgt_queue pq)
 {
 	struct pgt_desc *pd;
-	struct pgt_frag *pcbqueue;
 	size_t i, qsize;
 	int error, nsegs;
 
 	switch (pq) {
 		case PGT_QUEUE_DATA_LOW_RX:
-			pcbqueue = sc->sc_cb->pcb_data_low_rx;
 			qsize = PGT_QUEUE_DATA_RX_SIZE;
 			break;
 		case PGT_QUEUE_DATA_LOW_TX:
-			pcbqueue = sc->sc_cb->pcb_data_low_tx;
 			qsize = PGT_QUEUE_DATA_TX_SIZE;
 			break;
 		case PGT_QUEUE_DATA_HIGH_RX:
-			pcbqueue = sc->sc_cb->pcb_data_high_rx;
 			qsize = PGT_QUEUE_DATA_RX_SIZE;
 			break;
 		case PGT_QUEUE_DATA_HIGH_TX:
-			pcbqueue = sc->sc_cb->pcb_data_high_tx;
 			qsize = PGT_QUEUE_DATA_TX_SIZE;
 			break;
 		case PGT_QUEUE_MGMT_RX:
-			pcbqueue = sc->sc_cb->pcb_mgmt_rx;
 			qsize = PGT_QUEUE_MGMT_SIZE;
 			break;
 		case PGT_QUEUE_MGMT_TX:
-			pcbqueue = sc->sc_cb->pcb_mgmt_tx;
 			qsize = PGT_QUEUE_MGMT_SIZE;
 			break;
 	}
