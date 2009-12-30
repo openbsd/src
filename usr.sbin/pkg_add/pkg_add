@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.450 2009/12/29 20:52:44 espie Exp $
+# $OpenBSD: pkg_add,v 1.451 2009/12/30 09:41:44 espie Exp $
 #
 # Copyright (c) 2003-2009 Marc Espie <espie@openbsd.org>
 #
@@ -87,10 +87,14 @@ sub deptree_header
 {
 	my ($state, $pkg) = @_;
 	if (defined $state->{deptree}->{$pkg}) {
-		return $state->{deptree}->{$pkg}->short_print.':';
-	} else {
-		return '';
+		my $s = $state->{deptree}->{$pkg}->real_set;
+		if ($s eq $pkg) {
+			delete $state->{deptree}->{$pkg};
+		} else {
+			return $s->short_print.':';
+		}
 	}
+	return '';
 }
 
 sub set_name_from_handle
