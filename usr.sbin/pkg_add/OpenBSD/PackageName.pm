@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.37 2009/12/30 16:43:08 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.38 2009/12/30 19:04:06 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -46,6 +46,8 @@ sub splitname
 my $cached = {};
 my $calls = 0;
 my $nohits = 0;
+my $dewey_calls = 0;
+my $dewey_hits = 0;
 my $tocalls = 0;
 my $strings = 0;
 
@@ -56,9 +58,11 @@ sub stats
 	print STDERR "Size=", Devel::Size::total_size($cached), "\n";
 	print STDERR "Total calls: ", $calls, "\n";
 	print STDERR "Cache hits: ", $calls - $nohits, "\n";
+	print STDERR "Dewey calls: ", $dewey_calls, "\n";
+	print STDERR "Dewey hits: ", $dewey_hits, "\n";
 	print STDERR "to_string calls: ", $tocalls, "\n";
 	print STDERR "string compares: ", $strings, "\n";
-	print STDERR join(',', sort keys %$cached), "\n";
+#	print STDERR join(',', sort keys %$cached), "\n";
 }
 
 sub from_string
@@ -66,10 +70,11 @@ sub from_string
 	my ($class, $_) = @_;
 	$calls++;
 	if (!defined $cached->{$_}) {
-		$cached->{$_} = $class->new_from_string($_);
 		$nohits++;
+		return $cached->{$_} = $class->new_from_string($_);
+	} else {
+		return $cached->{$_};
 	}
-	return $cached->{$_};
 }
 
 sub new_from_string
@@ -170,84 +175,50 @@ sub find_partial
 	return @result;
 }
 	
-package OpenBSD::PackageName::version;
+package OpenBSD::PackageName::dewey;
 
-sub make_dewey
+my $cache = {};
+
+sub from_string
 {
-	my $o = shift;
-	$o->{deweys} = [ split(/\./o, $o->{string}) ];
+	my ($class, $string) = @_;
+	my $o = bless { deweys => [ split(/\./o, $string) ]}, $class;
 	for my $suffix (qw(rc beta pre pl)) {
 		if ($o->{deweys}->[-1] =~ m/^(\d+)$suffix(\d*)$/) {
 			$o->{deweys}->[-1] = $1;
 			$o->{$suffix} = $2;
 		}
 	}
+	return $o;
 }
 
-sub p
-{
-	my $self = shift;
-
-	return defined $self->{p} ? $self->{p} : -1;
-}
-
-sub v
-{
-	my $self = shift;
-
-	return defined $self->{v} ? $self->{v} : -1;
-}
-
-sub from_string
+sub make
 {
 	my ($class, $string) = @_;
-	my $o = bless {}, $class;
-	if ($string =~ m/^(.*)v(\d+)$/o) {
-		$o->{v} = $2;
-		$string = $1;
+	$dewey_calls++;
+	if (!defined $cache->{$string}) {
+		return $cache->{$string} = $class->from_string($string);
+	} else {
+		$dewey_hits++;
+		return $cache->{$string};
 	}
-	if ($string =~ m/^(.*)p(\d+)$/o) {
-		$o->{p} = $2;
-		$string = $1;
-	}
-	$o->{string} = $string;
-
-	$o->make_dewey;
-	return $o;
 }
 
 sub to_string
 {
-	my $o = shift;
-	$tocalls++;
-	my $string = $o->{string};
-	if (defined $o->{p}) {
-		$string .= 'p'.$o->{p};
+	my $self = shift;
+	my $r = join('.', [$self->{deweys}]);
+	for my $suffix (qw(pl pre beta rc)) {
+		if (defined $self->{$suffix}) {
+			$r .= $suffix . $self->{$suffix};
+		}
 	}
-	if (defined $o->{v}) {
-		$string .= 'v'.$o->{v};
-	}
-	return $string;
-}
-
-sub pnum_compare
-{
-	my ($a, $b) = @_;
-	return $a->p <=> $b->p;
+	return $r;
 }
 
 sub compare
 {
 	my ($a, $b) = @_;
-	# Simple case: epoch number
-	if ($a->v != $b->v) {
-		return $a->v <=> $b->v;
-	}
-	# Simple case: only p number differs
-	if ($a->{string} eq $b->{string}) {
-		$strings++;
-		return $a->pnum_compare($b);
-	} 
 	# Try a diff in dewey numbers first
 	for (my $i = 0; ; $i++) {
 		if (!defined $a->{deweys}->[$i]) {
@@ -301,8 +272,85 @@ sub dewey_compare
 	return $a cmp $b;
 }
 
+package OpenBSD::PackageName::version;
+
+sub p
+{
+	my $self = shift;
+
+	return defined $self->{p} ? $self->{p} : -1;
+}
+
+sub v
+{
+	my $self = shift;
+
+	return defined $self->{v} ? $self->{v} : -1;
+}
+
+sub from_string
+{
+	my ($class, $string) = @_;
+	my $o = bless {}, $class;
+	if ($string =~ m/^(.*)v(\d+)$/o) {
+		$o->{v} = $2;
+		$string = $1;
+	}
+	if ($string =~ m/^(.*)p(\d+)$/o) {
+		$o->{p} = $2;
+		$string = $1;
+	}
+	$o->{dewey} = OpenBSD::PackageName::dewey->make($string);
+
+	return $o;
+}
+
+sub to_string
+{
+	my $o = shift;
+	$tocalls++;
+	my $string = $o->{dewey}->to_string;
+	if (defined $o->{p}) {
+		$string .= 'p'.$o->{p};
+	}
+	if (defined $o->{v}) {
+		$string .= 'v'.$o->{v};
+	}
+	return $string;
+}
+
+sub pnum_compare
+{
+	my ($a, $b) = @_;
+	return $a->p <=> $b->p;
+}
+
+sub compare
+{
+	my ($a, $b) = @_;
+	# Simple case: epoch number
+	if ($a->v != $b->v) {
+		return $a->v <=> $b->v;
+	}
+	# Simple case: only p number differs
+	if ($a->{dewey} eq $b->{dewey}) {
+		$strings++;
+		return $a->pnum_compare($b);
+	} 
+
+	return $a->{dewey}->compare($b->{dewey});
+}
+
 package OpenBSD::PackageName::versionspec;
 our @ISA = qw(OpenBSD::PackageName::version);
+
+my $ops = {
+	'<' => 'lt', 
+	'<=' => 'le', 
+	'>' => 'gt',
+	'>=' => 'ge',
+	'=' => 'eq' 
+};
 
 sub from_string
 {
@@ -311,9 +359,8 @@ sub from_string
 	if ($s =~ m/^(\>\=|\>|\<\=|\<|\=)(.*)$/) {
 		($op, $version) = ($1, $2);
 	}
-	my $self = $class->SUPER::from_string($version);
-	$self->{op} = $op;
-	return $self;
+	bless $class->SUPER::from_string($version), 
+		"OpenBSD::PackageName::version::$ops->{$op}";
 }
 
 sub pnum_compare
@@ -326,18 +373,52 @@ sub pnum_compare
 	}
 }
 
+sub is_exact
+{
+	return 0;
+}
+package OpenBSD::PackageName::version::lt;
+our @ISA = qw(OpenBSD::PackageName::versionspec);
 sub match
 {
 	my ($self, $b) = @_;
-	
-	my $op = $self->{op};
+	-$self->compare($b) >= 0 ? 0 : 1;
+}
 
-	my $compare = - $self->compare($b);
-	return 0 if $op eq '<' && $compare >= 0;
-	return 0 if $op eq '<=' && $compare > 0;
-	return 0 if $op eq '>' && $compare <= 0;
-	return 0 if $op eq '>=' && $compare < 0;
-	return 0 if $op eq '=' && $compare != 0;
+package OpenBSD::PackageName::version::le;
+our @ISA = qw(OpenBSD::PackageName::versionspec);
+sub match
+{
+	my ($self, $b) = @_;
+	-$self->compare($b) <= 0 ? 1 : 0;
+}
+
+package OpenBSD::PackageName::version::gt;
+our @ISA = qw(OpenBSD::PackageName::versionspec);
+sub match
+{
+	my ($self, $b) = @_;
+	-$self->compare($b) > 0 ? 1 : 0;
+}
+
+package OpenBSD::PackageName::version::ge;
+our @ISA = qw(OpenBSD::PackageName::versionspec);
+sub match
+{
+	my ($self, $b) = @_;
+	-$self->compare($b) >= 0 ? 1 : 0;
+}
+
+package OpenBSD::PackageName::version::eq;
+our @ISA = qw(OpenBSD::PackageName::versionspec);
+sub match
+{
+	my ($self, $b) = @_;
+	-$self->compare($b) == 0 ? 1 : 0;
+}
+
+sub is_exact
+{
 	return 1;
 }
 
