@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.17 2009/12/19 14:21:14 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.18 2009/12/30 09:56:26 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -133,6 +133,9 @@ sub done
 	for my $n ($set->newer) {
 		$self->{uptodate}->{$n->pkgname} = 1;
 		$self->{installed}->{$n->pkgname} = 1;
+	}
+	for my $n ($set->kept) {
+		$self->{uptodate}->{$n->pkgname} = 1;
 	}
 }
 
