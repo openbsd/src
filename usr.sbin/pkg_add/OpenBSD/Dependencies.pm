@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.110 2009/12/29 18:16:14 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.111 2009/12/30 09:36:16 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -473,7 +473,7 @@ sub solve_dependency
 			if (defined $global_cache->{$dep->{pattern}}) {
 				$state->print("Global ");
 			}
-			$state->say("Cache hit on $dep->{pattern}:", ref($self->cached($dep)));
+			$state->say("Cache hit on $dep->{pattern}: ", ref($self->cached($dep)));
 		}
 		$v = $self->cached($dep)->do($self, $state, $dep, $package);
 		return $v if $v;
