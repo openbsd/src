@@ -1,0 +1,56 @@
+.\"     $OpenBSD: vds.4,v 1.1 2009/12/31 12:28:45 kettenis Exp $
+.\"
+.\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 31 2009 $
+.Dt VDS 4 sparc64
+.Os
+.Sh NAME
+.Nm vds
+.Nd virtual disk server
+.Sh SYNOPSIS
+.Cd "vds* at cbus?"
+.Cd "vdsp* at vds?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides a virtual disk server using the services provided by
+the UltraSPARC Hypervisor as found on sun4v systems.
+It provides the backing storage for virtual disks in other logical
+domains through a logical domain channel provided by the UltraSPARC
+Hypervisor.
+The
+.Nm
+driver uses disk images in the form of regular files.
+The name of the file used for the disk image is taken from the
+domain'smachine description.
+.Pp
+The
+.Nm
+driver supports version 1.0 of the vDisk protocol.
+.Sh SEE ALSO
+.Xr cbus 4 ,
+.Xr intro 4 ,
+.Xr vdsk 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.7 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Mark Kettenis Aq kettenis@openbsd.org .
