@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.113 2009/12/30 17:40:45 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.114 2009/12/31 11:52:25 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -227,12 +227,23 @@ sub do
 	my ($v, $solver, $state, $dep, $package) = @_;
 	if ($state->tracker->{uptodate}{$$v}) {
 		bless $v, "_cache::installed";
-		set_global($dep, $v);
+		$solver->set_global($dep, $v);
+		return $$v;
+	}
+	if ($state->tracker->{cant_install}{$$v}) {
+		bless $v, "_cache::bad";
+		$solver->set_global($dep, $v);
 		return $$v;
 	}
 	if ($state->tracker->{to_install}{$$v}) {
-		$solver->add_dep($state->tracker->{to_install}{$$v});
-		return $$v;
+		my $set = $state->tracker->{to_install}{$$v};
+		if ($set->real_set eq $solver->{set}) {
+			bless $v, "_cache::self";
+			return $v->do($solver, $state, $dep, $package);
+		} else {
+			$solver->add_dep($set);
+			return $$v;
+		}
 	}
 	return;
 }
@@ -248,17 +259,17 @@ sub do
 	}
 	if ($state->tracker->{uptodate}{$$v}) {
 		bless $v, "_cache::installed";
-		set_global($dep, $v);
+		$solver->set_global($dep, $v);
 		return $$v;
 	}
 	if ($state->tracker->{cant_update}{$$v}) {
-		bless $v, "_cache::installed";
-		set_global($dep, $v);
+		bless $v, "_cache::bad";
+		$solver->set_global($dep, $v);
 		return $$v;
 	}
 	my @candidates = $dep->spec->filter(keys %{$state->tracker->{installed}});
 	if (@candidates > 0) {
-		set_global($dep, _cache::installed->new($candidates[0]));
+		$solver->set_global($dep, _cache::installed->new($candidates[0]));
 		return $candidates[0];
 	}
 	return;
@@ -411,7 +422,7 @@ sub find_dep_in_stuff_to_install
 
 	my $v = find_candidate($dep->spec, keys %{$state->tracker->{uptodate}});
 	if ($v) {
-		set_global($dep, _cache::installed->new($v));
+		$self->set_global($dep, _cache::installed->new($v));
 		return $v;
 	}
 	# this is tricky, we don't always know what we're going to actually
@@ -440,7 +451,7 @@ sub find_dep_in_stuff_to_install
 sub cached
 {
 	my ($self, $dep) = @_;
-	return $global_cache->{$dep->{pattern}} or 
+	return $global_cache->{$dep->{pattern}} ||
 	    $self->{cache}{$dep->{pattern}};
 }
 
@@ -452,7 +463,7 @@ sub set_cache
 
 sub set_global
 {
-	my ($dep, $value) = @_;
+	my ($self, $dep, $value) = @_;
 	$global_cache->{$dep->{pattern}} = $value;
 }
 
@@ -510,6 +521,7 @@ sub solve_dependency
 			}
 			my $set = OpenBSD::UpdateSet->new->add_older(OpenBSD::Handle->create_old($v, $state));
 			$self->add_dep($set);
+			$self->set_cache($dep, _cache::to_update->new($v));
 			$state->tracker->todo($set);
 		}
 		return $v;
@@ -521,14 +533,8 @@ sub solve_dependency
 
 	$v = $self->find_dep_in_repositories($state, $dep);
 	if ($v) {
-		if (defined $state->{tracker}{cant_install}{$v->name}) {
-			set_global($dep, _cache::bad->new($v->name));
-			return $v->name;
-		}
 		my $s = OpenBSD::UpdateSet->from_location($v);
-
 		$state->tracker->todo($s);
-		
 		$self->add_dep($s);
 		$self->set_cache($dep, _cache::to_install->new($v->name));
 		return $v->name;
@@ -536,13 +542,10 @@ sub solve_dependency
 
 	# resort to default if nothing else
 	$v = $dep->{def};
-	if (defined $state->{tracker}{cant_install}{$v}) {
-		set_global($dep, _cache::bad->new($v));
-		return $v;
-	}
 	my $s = OpenBSD::UpdateSet->create_new($v);
 	$state->tracker->todo($s);
 	$self->add_dep($s);
+	$self->set_cache($dep, _cache::to_install->new($v));
 	return $v;
 }
 
