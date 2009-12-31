@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.41 2009/12/17 11:57:02 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.42 2009/12/31 13:12:27 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -94,7 +94,11 @@ sub register_lib
 	if (defined $stem) {
 		push(@{$registered_libs->{$stem}->{$dir}->{$major}},
 		    [$minor, $pkgname]);
+	} else {
+		print STDERR "Bogus library in $pkgname: $name\n"
+		    unless $pkgname eq 'system';
 	}
+
 }
 
 my $done_plist = {};
@@ -112,6 +116,7 @@ sub add_libs_from_system
 	for my $dirname (system_dirs()) {
 		opendir(my $dir, $destdir.$dirname."/lib") or next;
 		while (my $d = readdir($dir)) {
+			next unless $d =~ m/\.so/;
 			register_lib("$dirname/lib/$d", 'system');
 		}
 		closedir($dir);
